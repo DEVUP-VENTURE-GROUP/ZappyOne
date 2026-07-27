@@ -111,8 +111,10 @@ const SERVICE_ICONS = {
 const CATEGORIES = [
   { key: 'all',          label: 'All'           },
   { key: 'mobile',       label: 'Phone'         },
+  { key: 'laptop',       label: 'Laptop'        },
+  { key: 'car',          label: 'Car Service'   },
+  { key: 'bike',         label: 'Bike Repair'   },
   { key: 'smart_device', label: 'Smart Devices' },
-  { key: 'vehicle',      label: 'Vehicle'       },
   { key: 'helper',       label: 'Family'        },
   { key: 'event',        label: 'Events'        },
   { key: 'pet',          label: 'Pets'          },
@@ -122,7 +124,10 @@ const CATEGORIES = [
 // Use code-prefix matching to distinguish them on the frontend.
 const CATEGORY_MATCHERS = {
   mobile:       (s) => s.category === 'mobile',
-  vehicle:      (s) => s.category === 'vehicle',
+  laptop:       (s) => s.category === 'laptop' || s.code?.startsWith('laptop_'),
+  car:          (s) => s.category === 'car' || s.code?.startsWith('car_') || s.code === 'periodic_car_service',
+  bike:         (s) => s.category === 'bike' || s.code?.startsWith('bike_'),
+  vehicle:      (s) => s.category === 'car' || s.category === 'bike' || s.category === 'vehicle',
   helper:       (s) => s.category === 'helper',
   smart_device: (s) => s.category === 'other' && !s.code?.startsWith('event_') && !s.code?.startsWith('pet_'),
   event:        (s) => s.code?.startsWith('event_'),

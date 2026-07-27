@@ -1,6 +1,5 @@
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { useState } from 'react';
 import { LayoutGrid } from 'lucide-react';
 import { categoryMap } from '../../constants/categoryMap';
 import { useIsMobile } from '../../hooks/useIsMobile';
@@ -16,43 +15,14 @@ const SERVICES = categoryMap;
 
 export default function CharacterServiceGrid() {
   const nav = useNavigate();
-  const [playingVideo, setPlayingVideo] = useState(null);
   const isMobile = useIsMobile();
 
   const handleServiceClick = (svc) => {
-    if (svc.id === 'phones' || svc.id === 'laptops' || svc.id === 'cars' || svc.id === 'elders' || svc.id === 'pets' || svc.id === 'events' || svc.id === 'home') {
-      setPlayingVideo(svc.id);
-    } else {
-      nav(svc.id === 'more' ? '/services' : `/services?q=${encodeURIComponent(svc.label)}`);
-    }
+    nav(svc.id === 'more' ? '/services' : `/services?q=${encodeURIComponent(svc.label)}`);
   };
 
   return (
     <>
-      <AnimatePresence>
-        {playingVideo && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center"
-            onClick={() => setPlayingVideo(null)}
-          >
-            <video
-              src={`/${playingVideo}.mp4`}
-              autoPlay
-              playsInline
-              className="w-full h-full object-cover"
-              onEnded={() => {
-                const vid = playingVideo;
-                setPlayingVideo(null);
-                nav(`/services?q=${vid === 'phones' ? 'Phones' : vid === 'laptops' ? 'Laptops' : vid === 'cars' ? 'Cars' : vid === 'elders' ? 'Elder Care' : vid === 'pets' ? 'Pets' : vid === 'events' ? 'Events' : 'Home'}`);
-              }}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {isMobile ? (
         /* ── Mobile: bordered category cards ── */
         <div className="grid grid-cols-4 gap-3 w-full">

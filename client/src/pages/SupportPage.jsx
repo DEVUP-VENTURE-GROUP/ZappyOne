@@ -352,7 +352,22 @@ export default function SupportPage() {
           </div>
         </header>
 
-        <div className="w-full max-w-2xl mx-auto px-4 pt-4">
+        <div className="w-full max-w-2xl mx-auto px-4 pt-4 space-y-4">
+          <div className="bg-indigo-950/80 border border-indigo-800/50 rounded-2xl p-4 text-white flex items-center justify-between">
+            <div>
+              <p className="text-xs font-bold text-indigo-300 uppercase tracking-wider">Direct Email Support</p>
+              <a href="mailto:support@zappyone.com" className="text-sm font-extrabold text-white hover:text-indigo-200 transition">
+                support@zappyone.com
+              </a>
+              <p className="text-[11px] text-slate-400">24/7 Dedicated Customer Resolution Desk</p>
+            </div>
+            <a
+              href="mailto:support@zappyone.com"
+              className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl transition"
+            >
+              Email Us
+            </a>
+          </div>
           {isLoading ? (
             <div className="flex items-center justify-center py-16">
               <Loader2 size={24} className="animate-spin text-slate-400" />

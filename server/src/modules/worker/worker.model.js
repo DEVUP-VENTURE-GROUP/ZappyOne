@@ -5,6 +5,9 @@ const workerSchema = new mongoose.Schema(
     phone: { type: String, required: true, unique: true, index: true },
     name: { type: String, required: true, trim: true },
     email: { type: String, lowercase: true, sparse: true },
+    // Worker-chosen login ID (#2) — approved workers can sign in with
+    // username / email / phone + password instead of an OTP every time.
+    username: { type: String, unique: true, sparse: true, lowercase: true, trim: true, minlength: 3, maxlength: 30 },
     passwordHash: { type: String, select: false },
 
     // Work attributes
@@ -140,6 +143,18 @@ const workerSchema = new mongoose.Schema(
       moduleName: { type: String, required: true },
       score:      { type: Number, default: 0 },
       earnedAt:   { type: Date, default: Date.now },
+    }],
+
+    // Detailed service expertise, per category (#4). `skills` above stays the flat
+    // dispatch match-set (hot path); this is the rich, customer-facing breakdown the
+    // worker configures in their portal and that powers the booking worker-comparison.
+    // `skills` is kept in sync from expertise.services on update.
+    expertise: [{
+      category:        { type: String, required: true },   // 'mobile' | 'laptop' | 'car' | ...
+      brands:          { type: [String], default: [] },     // ['Apple','Samsung'] — empty = all brands
+      services:        { type: [String], default: [] },     // issue/service codes handled
+      yearsExperience: { type: Number, default: 0, min: 0, max: 60 },
+      certUrls:        { type: [String], default: [] },      // S3 keys of uploaded proof/certs
     }],
 
     // Earnings goals (daily / weekly targets set by worker)

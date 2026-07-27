@@ -180,7 +180,46 @@ async function verifySensitiveOtp(req, res, next) {
   } catch (err) { next(err); }
 }
 
+// ── Worker credential login (#2) ──────────────────────────────────────────────
+async function setWorkerCredentials(req, res, next) {
+  try {
+    const result = await authService.setWorkerCredentials({ workerId: req.auth.sub, ...req.body });
+    res.json(result);
+  } catch (err) { next(err); }
+}
+
+async function loginWorkerPassword(req, res, next) {
+  try {
+    const result = await authService.loginWorkerWithPassword(req.body);
+    setRtCookie(res, result.refreshToken);
+    res.json(withMobileRt(req, { accessToken: result.accessToken, worker: result.worker }, result.refreshToken));
+  } catch (err) { next(err); }
+}
+
+async function forgotWorkerPassword(req, res, next) {
+  try {
+    const result = await authService.requestWorkerPasswordReset(req.body);
+    res.json(result);
+  } catch (err) { next(err); }
+}
+
+async function resetWorkerPassword(req, res, next) {
+  try {
+    const result = await authService.resetWorkerPassword(req.body);
+    res.json(result);
+  } catch (err) { next(err); }
+}
+
+async function changeWorkerPassword(req, res, next) {
+  try {
+    const result = await authService.changeWorkerPassword({ workerId: req.auth.sub, ...req.body });
+    res.json(result);
+  } catch (err) { next(err); }
+}
+
 module.exports = {
   requestOtp, resendOtp, loginUser, loginWorker, loginPartner, googlePartnerLogin,
   loginAdmin, refresh, logout, revokeAll, verifySensitiveOtp,
+  setWorkerCredentials, loginWorkerPassword, forgotWorkerPassword,
+  resetWorkerPassword, changeWorkerPassword,
 };

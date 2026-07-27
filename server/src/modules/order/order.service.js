@@ -22,7 +22,7 @@ const logger = require('../../utils/logger');
 const TIER_MULTIPLIERS = { standard: 1.0, priority: 1.2, express: 1.4 };
 
 async function createOrder({ userId, service, subCategory, pickupLocation, dropLocation, description, images, scheduledAt, paymentMethod, priority, promoCode,
-  deviceBrand, deviceModel, serviceMode, vehicleType, pricingModel, estimatedHours,
+  deviceBrand, deviceModel, deviceSeries, partsTier, serviceMode, vehicleType, pricingModel, estimatedHours,
   teamSize, diagnosisAnswers, diagnosisUrgency, quotedTotalRupees, tier, tipAmount,
   preferredWorkerId,
 }) {
@@ -137,7 +137,7 @@ async function createOrder({ userId, service, subCategory, pickupLocation, dropL
     : { lat: pickupLocation.lat + 0.00045, lng: pickupLocation.lng }; // ~50m nominal
 
   let pricing = await Promise.race([
-    pricingService.quote({ origin, dest, service, userId, priority, vehicleType }),
+    pricingService.quote({ origin, dest, service, userId, priority, vehicleType, deviceBrand, deviceModel, deviceSeries, partsTier, pricingModel, estimatedHours }),
     new Promise((_, reject) => setTimeout(
       () => reject(Object.assign(new Error('Pricing service timed out. Please try again.'), { status: 503, code: 'PRICING_TIMEOUT' })),
       appConfig.dispatch.pricingTimeoutMs
@@ -308,6 +308,9 @@ async function createOrder({ userId, service, subCategory, pickupLocation, dropL
     // Vertical-specific fields
     ...(deviceBrand && { deviceBrand }),
     ...(deviceModel && { deviceModel }),
+    ...(deviceSeries && { deviceSeries }),
+    ...(partsTier && { partsTier }),
+    ...(pricing && pricing.warrantyDays != null && { partWarrantyDays: pricing.warrantyDays }),
     ...(serviceMode && { serviceMode }),
     ...(vehicleType && { vehicleType }),
     ...(pricingModel && { pricingModel }),
@@ -1693,6 +1696,8 @@ async function rebookOrder({ userId, sourceOrderId }) {
     priority: src.priority === 'emergency' ? 'emergency' : 'normal',
     deviceBrand: src.deviceBrand || undefined,
     deviceModel: src.deviceModel || undefined,
+    deviceSeries: src.deviceSeries || undefined,
+    partsTier: src.partsTier || undefined,
     serviceMode: src.serviceMode || undefined,
     vehicleType: src.vehicleType || undefined,
     pricingModel: src.pricingModel || undefined,

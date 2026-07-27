@@ -89,9 +89,11 @@ const createOrderSchema = Joi.object({
   dropLocation: locationSchema.optional(),
   paymentMethod: Joi.string().valid('cash', 'upi', 'card').default('upi'),
   priority: Joi.string().valid('normal', 'emergency').default('normal'),
-  // Mobile extras
+  // Device extras
   deviceBrand: Joi.string().max(50).allow('', null),
   deviceModel: Joi.string().max(100).allow('', null),
+  deviceSeries: Joi.string().max(100).allow('', null),
+  partsTier: Joi.string().valid('OEM', 'Premium', 'Compatible', 'Budget').allow('', null),
   serviceMode: Joi.string().valid('doorstep', 'pickup').default('doorstep'),
   // Vehicle extras
   vehicleType: Joi.string().valid('bike', 'scooter', 'car').allow('', null),
@@ -124,6 +126,8 @@ const quoteSchema = Joi.object({
   dropLng: Joi.number().optional(),
   deviceBrand: Joi.string().max(50).allow('', null),
   deviceModel: Joi.string().max(100).allow('', null),
+  deviceSeries: Joi.string().max(100).allow('', null),
+  partsTier: Joi.string().valid('OEM', 'Premium', 'Compatible', 'Budget').allow('', null),
   vehicleType: Joi.string().allow('', null),
   pricingModel: Joi.string().valid('standard', 'hourly', 'project').optional(),
   estimatedHours: Joi.number().optional(),

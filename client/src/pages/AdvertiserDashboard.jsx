@@ -600,7 +600,10 @@ export default function AdvertiserDashboard() {
               <LogOut size={16} />
             </button>
           </div>
-          <div className="flex items-center gap-3 w-full sm:w-auto">
+          <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto">
+            <a href="mailto:vendors@zappyone.com" className="hidden md:flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-indigo-600 bg-slate-50 px-3 py-2 rounded-xl border border-slate-200">
+              vendors@zappyone.com
+            </a>
             <div className="hidden sm:flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-[14px] px-4 py-2.5 shadow-sm shadow-emerald-100">
               <Wallet size={16} className="text-emerald-600" />
               <span className="text-sm font-black text-emerald-700">{fmtRupees(wallet?.creditsPaise)}</span>

@@ -66,9 +66,18 @@ const orderSchema = new mongoose.Schema(
     images: [{ type: String }], // S3 URLs, max 5
     scheduledAt: { type: Date, default: null, index: true }, // null = book now
 
-    // Mobile phone service extras
-    deviceBrand: { type: String, enum: ['Apple', 'Samsung', 'OnePlus', 'Xiaomi', 'Vivo', 'Oppo', 'Others'] },
+    // Device service extras (mobile / laptop / etc.)
+    // deviceBrand is a free string on purpose: the Brand collection is the source of
+    // truth (Apple, Samsung, Realme, Google, Dell, HP, Lenovo, ...) and grows over
+    // time, so a hardcoded enum here would reject valid catalog brands at order save.
+    deviceBrand: { type: String, maxlength: 50 },
     deviceModel: { type: String, maxlength: 100 },
+    deviceSeries: { type: String, maxlength: 100 },
+    // Part quality tier the customer chose — drives price and tells the worker which
+    // grade of part to bring. Mirrors ServiceVariant.qualityTier.
+    partsTier: { type: String, enum: ['OEM', 'Premium', 'Compatible', 'Budget'] },
+    partName: { type: String, maxlength: 120 },
+    partWarrantyDays: { type: Number, min: 0 },
     serviceMode: { type: String, enum: ['doorstep', 'pickup'], default: 'doorstep' },
 
     // Vehicle service extras

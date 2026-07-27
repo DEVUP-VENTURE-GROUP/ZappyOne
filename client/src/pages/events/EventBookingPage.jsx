@@ -185,7 +185,7 @@ export default function EventBookingPage() {
       
       {/* ─── Premium Glassy Header ────────────────────────────────────────────── */}
       <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-2xl border-b border-slate-200/50 pt-10 pb-8 px-4 shadow-[0_4px_30px_rgba(0,0,0,0.03)]">
-        <div className="max-w-md mx-auto">
+        <div className="max-w-md lg:max-w-2xl mx-auto">
           <div className="flex items-center gap-4 mb-4">
             <button onClick={() => step > 0 ? setStep(s => s - 1) : navigate(-1)} className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-700 hover:bg-slate-200 hover:scale-105 transition-all">
               <ArrowLeft size={18} />
@@ -200,12 +200,12 @@ export default function EventBookingPage() {
         </div>
       </div>
 
-      <div className="max-w-md mx-auto px-4 py-8">
+      <div className="max-w-md lg:max-w-2xl mx-auto px-4 py-8">
         <AnimatePresence mode="wait">
           
           {/* ─── Step 0: Date & Time ────────────────────────────────────────────── */}
           {step === 0 && (
-            <motion.div key="step0" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-8">
+            <motion.div key="step0" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-8 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-6 lg:items-start">
               
               <div className="bg-white rounded-[2rem] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100">
                 <div className="flex items-center gap-3 mb-4">
@@ -326,10 +326,23 @@ export default function EventBookingPage() {
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-2xl p-1.5 shadow-inner">
-                  <button onClick={() => set('guestCount', Math.max(1, form.guestCount - 1))} className="w-10 h-10 flex items-center justify-center rounded-xl bg-white hover:bg-slate-100 text-slate-600 shadow-sm transition-all active:scale-95"><Minus size={18} /></button>
-                  <span className="font-black text-xl text-slate-900 w-8 text-center">{form.guestCount}</span>
-                  <button onClick={() => set('guestCount', form.guestCount + 1)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-white hover:bg-slate-100 text-slate-600 shadow-sm transition-all active:scale-95"><Plus size={18} /></button>
+                <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-2xl p-1.5 shadow-inner">
+                  <button onClick={() => set('guestCount', Math.max(1, (Number(form.guestCount) || 1) - 1))} className="w-10 h-10 flex items-center justify-center rounded-xl bg-white hover:bg-slate-100 text-slate-600 shadow-sm transition-all active:scale-95" aria-label="Fewer guests"><Minus size={18} /></button>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min={1}
+                    max={5000}
+                    value={form.guestCount}
+                    onChange={e => set('guestCount', e.target.value === '' ? '' : Math.max(0, Math.floor(Number(e.target.value)) || 0))}
+                    onBlur={e => {
+                      const n = Math.floor(Number(e.target.value)) || 1;
+                      set('guestCount', Math.min(5000, Math.max(1, n)));
+                    }}
+                    className="font-black text-xl text-slate-900 w-16 text-center bg-transparent outline-none focus:ring-2 focus:ring-rose-400/30 rounded-lg [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    aria-label="Total guests"
+                  />
+                  <button onClick={() => set('guestCount', Math.min(5000, (Number(form.guestCount) || 0) + 1))} className="w-10 h-10 flex items-center justify-center rounded-xl bg-white hover:bg-slate-100 text-slate-600 shadow-sm transition-all active:scale-95" aria-label="More guests"><Plus size={18} /></button>
                 </div>
               </div>
 
@@ -472,7 +485,7 @@ export default function EventBookingPage() {
 
       {/* ─── Floating Neon Action Bar ─────────────────────────────────────────── */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-slate-50 via-slate-50 to-transparent pb-6 z-50">
-        <div className="max-w-md mx-auto">
+        <div className="max-w-md lg:max-w-2xl mx-auto">
           {step < 3 ? (
             <button 
               onClick={() => setStep(s => s + 1)} 

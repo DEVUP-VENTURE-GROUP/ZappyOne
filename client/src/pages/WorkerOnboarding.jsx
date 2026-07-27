@@ -3,57 +3,24 @@
  * completed their profile. Collects: full name, confirms phone, selects skills,
  * optional emergency contact.
  */
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   User, Phone, Briefcase, Heart, ChevronRight,
   CheckCircle2, Loader2, ArrowLeft,
 } from 'lucide-react';
-import { useWorkerCompleteOnboardingMutation, useGetWorkerMeQuery } from '../services/api';
+import {
+  useWorkerCompleteOnboardingMutation, useGetWorkerMeQuery, useListServicesQuery,
+} from '../services/api';
+import { groupCatalog } from '../lib/serviceCatalogGroups';
 import { ZappyLogo } from '../components/common/ZappyLogo';
 import toast from 'react-hot-toast';
-
-const ALL_SKILLS = [
-  // Vehicle
-  { id: 'puncture',              label: 'Puncture Repair',        emoji: '🛞' },
-  { id: 'bike_wash',             label: 'Bike Wash',              emoji: '🏍️' },
-  { id: 'car_wash',              label: 'Car Wash',               emoji: '🚗' },
-  { id: 'battery_jump_start',    label: 'Battery Jump Start',     emoji: '⚡' },
-  { id: 'fuel_delivery',         label: 'Fuel Delivery',          emoji: '⛽' },
-  { id: 'minor_roadside_repair', label: 'Minor Roadside Repair',  emoji: '🔧' },
-  { id: 'car_towing',            label: 'Car Towing',             emoji: '🚛' },
-  { id: 'bike_towing',           label: 'Bike Towing',            emoji: '🛻' },
-  // Home services
-  { id: 'electrical',            label: 'Electrical',             emoji: '💡' },
-  { id: 'plumbing',              label: 'Plumbing',               emoji: '🚿' },
-  { id: 'ac_repair',             label: 'AC Repair',              emoji: '❄️' },
-  { id: 'carpenter',             label: 'Carpentry',              emoji: '🪚' },
-  { id: 'cleaning',              label: 'Cleaning',               emoji: '🧹' },
-  { id: 'painting',              label: 'Painting',               emoji: '🎨' },
-  { id: 'helper',                label: 'Helper / Labour',        emoji: '🧑‍🔧' },
-  { id: 'delivery',              label: 'Delivery',               emoji: '📦' },
-  { id: 'laundry',               label: 'Laundry',                emoji: '👕' },
-  { id: 'beauty',                label: 'Beauty / Grooming',      emoji: '💇' },
-  { id: 'gardening',             label: 'Gardening',              emoji: '🌱' },
-  { id: 'security',              label: 'Security',               emoji: '🔒' },
-  { id: 'appliance',             label: 'Appliance Repair',       emoji: '🔌' },
-  { id: 'tank_cleaning',         label: 'Tank & Water Cleaning',  emoji: '🪣' },
-  { id: 'internet',              label: 'Internet / Networking',  emoji: '📡' },
-  // Mobile repair
-  { id: 'screen_replacement',    label: 'Phone Screen Repair',    emoji: '📱' },
-  { id: 'battery_replacement',   label: 'Phone Battery',          emoji: '🔋' },
-  { id: 'charging_issue',        label: 'Charging Issue',         emoji: '🔌' },
-  { id: 'speaker_mic_issue',     label: 'Speaker / Mic Repair',   emoji: '🎙️' },
-  { id: 'software_issue',        label: 'Software Issue',         emoji: '💻' },
-  { id: 'water_damage_check',    label: 'Water Damage Check',     emoji: '💧' },
-  // Construction
-  { id: 'mason',                 label: 'Masonry / Construction', emoji: '🧱' },
-];
 
 const STEPS = ['name', 'skills', 'emergency'];
 
 export default function WorkerOnboarding({ onComplete }) {
   const { data: meData } = useGetWorkerMeQuery();
+  const { data: catalog, isLoading: catalogLoading } = useListServicesQuery();
   const [complete, { isLoading }] = useWorkerCompleteOnboardingMutation();
 
   const [step, setStep]         = useState(0);
@@ -64,10 +31,26 @@ export default function WorkerOnboarding({ onComplete }) {
 
   const phone = meData?.worker?.phone ?? '';
 
+  // Skills come straight from the live catalog, grouped into the same categories
+  // customers see — so a worker opts into services by their real dispatch codes.
+  const groups = useMemo(() => groupCatalog(catalog?.list ?? []), [catalog]);
+  const selectedSet = useMemo(() => new Set(skills), [skills]);
+
   function toggleSkill(id) {
     setSkills(prev =>
       prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]
     );
+  }
+
+  function toggleGroup(group) {
+    const codes = group.services.map(s => s.code);
+    const allOn = codes.every(c => selectedSet.has(c));
+    setSkills(prev => {
+      const next = new Set(prev);
+      if (allOn) codes.forEach(c => next.delete(c));
+      else codes.forEach(c => next.add(c));
+      return [...next];
+    });
   }
 
   async function handleFinish() {
@@ -133,29 +116,54 @@ export default function WorkerOnboarding({ onComplete }) {
           <Briefcase size={28} className="text-green-600" />
         </div>
         <h2 className="text-xl font-black text-slate-900">What services do you offer?</h2>
-        <p className="text-sm text-slate-400">Select all that apply. You can change these later.</p>
+        <p className="text-sm text-slate-400">Tap a category to add all its services, or pick individual ones. You can change these later.</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 max-h-[50vh] overflow-y-auto pr-1">
-        {ALL_SKILLS.map(({ id, label, emoji }) => {
-          const selected = skills.includes(id);
-          return (
-            <button
-              key={id}
-              onClick={() => toggleSkill(id)}
-              className={`flex items-center gap-2 px-3 py-3 rounded-2xl border-2 text-left transition font-semibold text-sm ${
-                selected
-                  ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
-                  : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
-              }`}
-            >
-              <span className="text-lg">{emoji}</span>
-              <span className="leading-tight">{label}</span>
-              {selected && <CheckCircle2 size={14} className="text-indigo-500 ml-auto shrink-0" />}
-            </button>
-          );
-        })}
-      </div>
+      {catalogLoading ? (
+        <div className="flex items-center justify-center h-40">
+          <Loader2 size={24} className="animate-spin text-indigo-400" />
+        </div>
+      ) : (
+        <div className="space-y-3 max-h-[50vh] overflow-y-auto pr-1">
+          {groups.map((group) => {
+            const codes = group.services.map(s => s.code);
+            const selectedCount = codes.filter(c => selectedSet.has(c)).length;
+            const allOn = selectedCount === codes.length && codes.length > 0;
+            return (
+              <div key={group.key} className="border border-slate-200 rounded-2xl overflow-hidden">
+                <div className="flex items-center gap-2 px-3 py-2.5 bg-slate-50">
+                  <p className="text-sm font-black text-slate-800 flex-1">{group.label}</p>
+                  {selectedCount > 0 && <span className="text-[10px] font-bold text-indigo-600">{selectedCount}/{codes.length}</span>}
+                  <button
+                    onClick={() => toggleGroup(group)}
+                    className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full border transition ${allOn ? 'bg-indigo-600 text-white border-transparent' : 'bg-white text-indigo-600 border-indigo-200'}`}>
+                    {allOn ? 'Clear' : 'All'}
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 gap-1.5 p-2">
+                  {group.services.map((svc) => {
+                    const selected = selectedSet.has(svc.code);
+                    return (
+                      <button
+                        key={svc.code}
+                        onClick={() => toggleSkill(svc.code)}
+                        className={`flex items-center gap-1.5 px-2.5 py-2 rounded-xl border-2 text-left transition font-semibold text-[13px] ${
+                          selected
+                            ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                            : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                        }`}
+                      >
+                        <span className="leading-tight line-clamp-2">{svc.name}</span>
+                        {selected && <CheckCircle2 size={13} className="text-indigo-500 ml-auto shrink-0" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       <div className="flex gap-2">
         <button onClick={() => setStep(0)} className="flex items-center gap-1 text-slate-500 font-semibold text-sm px-4 py-3 rounded-2xl border border-slate-200 hover:bg-slate-50 transition">

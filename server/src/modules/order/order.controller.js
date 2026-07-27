@@ -4,7 +4,7 @@ const abuseService = require('./abuse.service');
 
 async function getQuote(req, res, next) {
   try {
-    const { service, deviceBrand, deviceModel, priority, pricingModel, estimatedHours, vehicleType } = req.query;
+    const { service, deviceBrand, deviceModel, deviceSeries, partsTier, priority, pricingModel, estimatedHours, vehicleType } = req.query;
     const pickupLat = parseFloat(req.query.pickupLat);
     const pickupLng = parseFloat(req.query.pickupLng);
     const dropLat   = req.query.dropLat  != null ? parseFloat(req.query.dropLat)  : null;
@@ -20,6 +20,8 @@ async function getQuote(req, res, next) {
       priority: priority || 'normal',
       deviceBrand,
       deviceModel,
+      deviceSeries,
+      partsTier,
       pricingModel,
       vehicleType,
       estimatedHours: estimatedHours ? Number(estimatedHours) : undefined,
@@ -250,22 +252,45 @@ async function nearbyPros(req, res, next) {
     if (topIds.length === 0) return res.json({ pros: [] });
 
     const workers = await Worker.find({ _id: { $in: topIds } })
-      .select('name rating completedJobs profilePhoto avatarUrl')
+      .select('name rating completedJobs profilePhoto avatarUrl expertise location')
       .lean();
     const byId = new Map(workers.map((w) => [String(w._id), w]));
+
+    // Haversine distance (km) between the pickup and the worker's last known location.
+    const distKm = (lat1, lng1, lat2, lng2) => {
+      const R = 6371, toRad = (d) => (d * Math.PI) / 180;
+      const dLat = toRad(lat2 - lat1), dLng = toRad(lng2 - lng1);
+      const a = Math.sin(dLat / 2) ** 2 +
+        Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    };
 
     // Preserve dispatch rank order; #1 is the recommended match.
     const pros = topIds
       .map((id, i) => {
         const w = byId.get(String(id));
         if (!w) return null;
+        // Pull the experience + specialties for THIS service from the worker's
+        // configured expertise (#4) so the customer can compare like-for-like.
+        const exp = (w.expertise || []).find((e) => (e.services || []).includes(service));
+        // Distance + rough ETA (≈3 min/km urban + 5 min prep) for the comparison card.
+        const coords = w.location?.coordinates;
+        let distanceKm = null, etaMin = null;
+        if (Array.isArray(coords) && coords.length === 2 && (coords[0] !== 0 || coords[1] !== 0)) {
+          distanceKm = Number(distKm(lat, lng, coords[1], coords[0]).toFixed(1));
+          etaMin = Math.max(5, Math.round(distanceKm * 3) + 5);
+        }
         return {
-          workerId:      String(id),
-          name:          w.name || 'Pro',
-          rating:        Number((w.rating ?? 5).toFixed(1)),
-          completedJobs: w.completedJobs || 0,
-          photo:         w.profilePhoto || w.avatarUrl || null,
-          recommended:   i === 0,
+          workerId:        String(id),
+          name:            w.name || 'Pro',
+          rating:          Number((w.rating ?? 5).toFixed(1)),
+          completedJobs:   w.completedJobs || 0,
+          photo:           w.profilePhoto || w.avatarUrl || null,
+          yearsExperience: exp?.yearsExperience || 0,
+          specialties:     exp?.brands || [],
+          distanceKm,
+          etaMin,
+          recommended:     i === 0,
         };
       })
       .filter(Boolean);

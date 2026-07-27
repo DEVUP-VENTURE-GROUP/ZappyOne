@@ -130,6 +130,22 @@ export const api = createApi({
     loginWorker: b.mutation({
       query: (body) => ({ url: '/auth/worker/login', method: 'POST', body }),
     }),
+    // Worker credential login (#2)
+    loginWorkerPassword: b.mutation({
+      query: (body) => ({ url: '/auth/worker/login-password', method: 'POST', body }),
+    }),
+    setWorkerCredentials: b.mutation({
+      query: (body) => ({ url: '/auth/worker/set-credentials', method: 'POST', body }),
+    }),
+    forgotWorkerPassword: b.mutation({
+      query: (body) => ({ url: '/auth/worker/forgot-password', method: 'POST', body }),
+    }),
+    resetWorkerPassword: b.mutation({
+      query: (body) => ({ url: '/auth/worker/reset-password', method: 'POST', body }),
+    }),
+    changeWorkerPassword: b.mutation({
+      query: (body) => ({ url: '/auth/worker/change-password', method: 'POST', body }),
+    }),
     loginAdmin: b.mutation({
       query: (body) => ({ url: '/auth/admin/login', method: 'POST', body }),
     }),
@@ -1080,9 +1096,32 @@ export const api = createApi({
     adminUpdateCatalogService: b.mutation({
       query: ({ code, ...body }) => ({ url: `/catalog/admin/services/${code}`, method: 'PUT', body }),
     }),
+    adminCreateCatalogService: b.mutation({
+      query: (body) => ({ url: '/catalog/admin/services', method: 'POST', body }),
+    }),
+    adminDeleteCatalogService: b.mutation({
+      query: (code) => ({ url: `/catalog/admin/services/${code}`, method: 'DELETE' }),
+    }),
     adminServiceActiveOrderCount: b.query({
       query: (code) => `/catalog/admin/services/${code}/active-orders`,
     }),
+
+    // --- Dynamic Catalog & Models APIs ---
+    getCatalogBrands: b.query({ query: (category = 'mobile') => `/catalog/services/brands?category=${category}` }),
+    getCatalogModels: b.query({ query: ({ brandCode, search } = {}) => `/catalog/services/models?brandCode=${brandCode || ''}&search=${search || ''}` }),
+    getCatalogVariants: b.query({ query: ({ serviceCode, modelCode } = {}) => `/catalog/services/variants?serviceCode=${serviceCode || ''}&modelCode=${modelCode || ''}` }),
+    getDiagnosticFlow: b.query({ query: (code = 'mobile_diagnostic') => `/catalog/services/diagnostics/${code}` }),
+    recordDemandEvent: b.mutation({ query: (body) => ({ url: '/catalog/services/demand-event', method: 'POST', body }) }),
+
+    // --- Admin Brand, Model & Import APIs ---
+    adminGetBrands: b.query({ query: () => '/catalog/admin/brands' }),
+    adminCreateBrand: b.mutation({ query: (body) => ({ url: '/catalog/admin/brands', method: 'POST', body }) }),
+    adminGetModels: b.query({ query: (brandCode = '') => `/catalog/admin/models?brandCode=${brandCode}` }),
+    adminCreateModel: b.mutation({ query: (body) => ({ url: '/catalog/admin/models', method: 'POST', body }) }),
+    adminImportModelsBulk: b.mutation({ query: (rows) => ({ url: '/catalog/admin/models/import', method: 'POST', body: { rows } }) }),
+    adminGetVariants: b.query({ query: ({ modelCode = '', serviceCode = '' } = {}) => `/catalog/admin/variants?modelCode=${modelCode}&serviceCode=${serviceCode}` }),
+    adminCreateVariant: b.mutation({ query: (body) => ({ url: '/catalog/admin/variants', method: 'POST', body }) }),
+    adminGetDemandEvents: b.query({ query: (cityCode = '') => `/catalog/admin/demand-events?cityCode=${cityCode}` }),
     // --- Admin Verticals (correct server path: /${slug}/verticals mounted in routes) ---
     adminGetVerticals: b.query({ query: () => `${adminApiPath('/verticals')}` }),
     adminUpdateVertical: b.mutation({
@@ -1678,6 +1717,11 @@ export const {
   useResendOtpMutation,
   useLoginUserMutation,
   useLoginWorkerMutation,
+  useLoginWorkerPasswordMutation,
+  useSetWorkerCredentialsMutation,
+  useForgotWorkerPasswordMutation,
+  useResetWorkerPasswordMutation,
+  useChangeWorkerPasswordMutation,
   useLoginAdminMutation,
   useLogoutMutation,
   useRevokeAllSessionsMutation,
@@ -1946,6 +1990,8 @@ export const {
   useListServicesQuery,
   useAdminGetCatalogServicesQuery,
   useAdminUpdateCatalogServiceMutation,
+  useAdminCreateCatalogServiceMutation,
+  useAdminDeleteCatalogServiceMutation,
   useAdminServiceActiveOrderCountQuery,
   useAdminGetVerticalsQuery,
   useAdminUpdateVerticalMutation,
@@ -2064,6 +2110,21 @@ export const {
   useSetWorkerGoalMutation,
   useRequestPayoutMutation,
   useGetPlansQuery,
+
+  // Catalog & Models Dynamic Engine
+  useGetCatalogBrandsQuery,
+  useGetCatalogModelsQuery,
+  useGetCatalogVariantsQuery,
+  useGetDiagnosticFlowQuery,
+  useRecordDemandEventMutation,
+  useAdminGetBrandsQuery,
+  useAdminCreateBrandMutation,
+  useAdminGetModelsQuery,
+  useAdminCreateModelMutation,
+  useAdminImportModelsBulkMutation,
+  useAdminGetVariantsQuery,
+  useAdminCreateVariantMutation,
+  useAdminGetDemandEventsQuery,
   // Batch 2 user features
   useGetNotificationPrefsQuery,
   useUpdateNotificationPrefsMutation,

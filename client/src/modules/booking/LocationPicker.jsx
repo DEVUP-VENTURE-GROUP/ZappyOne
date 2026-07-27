@@ -800,7 +800,7 @@ export default function LocationPicker({ onConfirm, onCancel, serviceLabel, serv
     <div className="flex flex-col h-full bg-[#F3F6FB]">
 
       {/* ── Top controls: step label + search + current location ─────── */}
-      <div className="shrink-0 w-full max-w-md mx-auto px-4 pt-3 pb-2.5 space-y-3">
+      <div className="shrink-0 w-full max-w-md lg:max-w-3xl mx-auto px-4 pt-3 pb-2.5 space-y-3">
 
         {/* Step label */}
         <div className="flex items-center gap-1.5">
@@ -870,7 +870,7 @@ export default function LocationPicker({ onConfirm, onCancel, serviceLabel, serv
       </div>
 
       {/* ── Map zone ─────────────────────────────────────────────────── */}
-      <div className="relative flex-1 min-h-0 w-full max-w-md mx-auto overflow-hidden">
+      <div className="relative flex-1 min-h-0 w-full max-w-md lg:max-w-3xl mx-auto overflow-hidden">
         {/* Map container */}
         <div id="zappy-locpick-map" className="absolute inset-0" style={{ width: '100%', height: '100%' }} />
 
@@ -1011,8 +1011,10 @@ export default function LocationPicker({ onConfirm, onCancel, serviceLabel, serv
               <div className="w-12 h-1.5 rounded-full bg-slate-300/80 hover:bg-slate-400 transition-colors" />
             </div>
 
-            {/* Scrollable sheet body — overscroll isolated so window never scrolls */}
-            <div className="px-5 pb-5 overflow-y-auto overscroll-contain touch-pan-y flex-1 min-h-0">
+            {/* Scrollable sheet body — overscroll isolated so window never scrolls.
+                On desktop the map spans wide, but the address/confirm content stays a
+                readable centred width. */}
+            <div className="px-5 pb-5 overflow-y-auto overscroll-contain touch-pan-y flex-1 min-h-0 w-full lg:max-w-lg lg:mx-auto">
 
               {/* Label + edit */}
               <div className="flex items-center justify-between mb-2">

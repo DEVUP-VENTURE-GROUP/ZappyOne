@@ -422,14 +422,24 @@ async function getLeaderboard(req, res, next) {
 async function updateProfile(req, res, next) {
   try {
     const workerId = req.auth.sub;
-    const { name, skills, bio } = req.body;
+    const { name, skills, bio, expertise } = req.body;
     const update = {};
     if (name)   update.name   = name;
-    if (skills) update.skills = skills;
     if (bio !== undefined) update.bio = bio;
 
+    // When rich expertise is provided, it becomes the source of truth and the flat
+    // `skills` dispatch match-set is derived from the union of all handled services.
+    // An explicit `skills` array still wins if sent without expertise (legacy path).
+    let effectiveSkills = skills;
+    if (Array.isArray(expertise)) {
+      update.expertise = expertise;
+      const derived = [...new Set(expertise.flatMap(e => e.services || []))];
+      if (derived.length) effectiveSkills = derived;
+    }
+    if (effectiveSkills) update.skills = effectiveSkills;
+
     // Capture the previous skills so removed ones can be pruned from Redis.
-    const before = skills
+    const before = effectiveSkills
       ? await require('./worker.model').findById(workerId).select('skills').lean()
       : null;
 
@@ -437,15 +447,15 @@ async function updateProfile(req, res, next) {
       workerId,
       { $set: update },
       { new: true, runValidators: true }
-    ).select('name skills bio').lean();
+    ).select('name skills bio expertise').lean();
 
     if (!worker) return res.status(404).json({ error: 'Worker not found' });
 
     // Resync the Redis skill sets. (markOnline alone only ADDS — it never removed
     // skills the worker dropped, so they kept getting offers for them.)
-    if (skills) {
+    if (effectiveSkills) {
       const geoService = require('./geo.service');
-      await geoService.syncSkills(workerId, before?.skills || [], skills).catch(() => {});
+      await geoService.syncSkills(workerId, before?.skills || [], effectiveSkills).catch(() => {});
     }
 
     res.json({ worker });
@@ -845,23 +855,31 @@ async function getReadyMode(req, res, next) {
 async function updateSkills(req, res, next) {
   try {
     const workerId = req.auth.sub;
-    const { skills, skillPrimary } = req.body;
+    const { skills, skillPrimary, expertise } = req.body;
 
     // Read the current skills BEFORE the write so we can diff the Redis sets.
     const before = await Worker.findById(workerId).select('skills').lean();
     const oldSkills = before?.skills || [];
 
     const update = {};
-    if (Array.isArray(skills)) update.skills = skills;
+    // Rich expertise (#4) is the source of truth when present; the flat `skills`
+    // dispatch set is derived from the union of its services so the two never drift.
+    let effectiveSkills = Array.isArray(skills) ? skills : null;
+    if (Array.isArray(expertise)) {
+      update.expertise = expertise;
+      const derived = [...new Set(expertise.flatMap(e => e.services || []))];
+      if (derived.length) effectiveSkills = derived;
+    }
+    if (Array.isArray(effectiveSkills)) update.skills = effectiveSkills;
     if (skillPrimary !== undefined) update.skillPrimary = skillPrimary ?? null;
     await Worker.updateOne({ _id: workerId }, { $set: update });
 
     // Dispatch matches on the Redis skill sets, not Mongo. Without this resync an
     // online worker who adds a skill would never be offered those jobs (and a
     // removed skill would keep producing offers) until they toggled offline/online.
-    if (Array.isArray(skills)) {
+    if (Array.isArray(effectiveSkills)) {
       const geoService = require('./geo.service');
-      await geoService.syncSkills(workerId, oldSkills, skills).catch(() => {});
+      await geoService.syncSkills(workerId, oldSkills, effectiveSkills).catch(() => {});
     }
 
     res.json({ ok: true });

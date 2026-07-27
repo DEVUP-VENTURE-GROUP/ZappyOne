@@ -522,7 +522,7 @@ export default function WorkerDashboard() {
           backgroundSize: '32px 32px',
         }} />
 
-        <div className="relative z-10 max-w-lg mx-auto px-5 pt-6 pb-8">
+        <div className="relative z-10 max-w-lg lg:max-w-5xl mx-auto px-5 pt-6 pb-8">
           {/* ── Top bar ─────────────────────────────────────── */}
           <div className="flex items-center justify-between mb-7">
             <ZappyLogo size={26} />
@@ -675,14 +675,17 @@ export default function WorkerDashboard() {
       </div>
 
       {/* ── Scrollable content ───────────────────────────────── */}
-      <div className="max-w-lg mx-auto px-4 mt-4 space-y-3.5 pb-40">
+      {/* Mobile: single column (space-y). Desktop (lg+): widen and reflow the stacked
+          cards into a balanced two-column masonry so the layout uses the screen instead
+          of a narrow centred phone column (#17). break-inside-avoid keeps each card whole. */}
+      <div className="max-w-lg lg:max-w-5xl mx-auto px-4 mt-4 pb-40 space-y-3.5 lg:space-y-0 lg:columns-2 lg:gap-4 lg:[&>*]:mb-4 lg:[&>*]:break-inside-avoid">
 
         {!kycApproved && (
           <motion.button
             onClick={() => nav('/worker/kyc')}
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`w-full rounded-2xl p-4 text-left ring-1 ${
+            className={`w-full rounded-2xl p-4 text-left ring-1 lg:[column-span:all] ${
               kycStatus === 'rejected' ? 'bg-red-50 ring-red-200' : 'bg-amber-50 ring-amber-200'
             }`}
           >
@@ -710,7 +713,7 @@ export default function WorkerDashboard() {
             initial={{ opacity: 0, scale: 0.97 }}
             animate={{ opacity: 1, scale: 1 }}
             onClick={() => nav(`/worker/jobs/${me.currentOrderId}`)}
-            className="w-full flex items-center gap-3 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-4 text-left shadow-lg"
+            className="w-full flex items-center gap-3 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-4 text-left shadow-lg lg:[column-span:all]"
           >
             <span className="relative flex h-3 w-3 shrink-0">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
@@ -729,7 +732,7 @@ export default function WorkerDashboard() {
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
-          className="rounded-2xl overflow-hidden"
+          className="rounded-2xl overflow-hidden lg:[column-span:all]"
           style={{
             background: isBusy
               ? 'linear-gradient(135deg, #fffbeb, #fef3c7)'

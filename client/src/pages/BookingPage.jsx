@@ -9,9 +9,10 @@ import {
   Layers, Ticket, Tag, Smartphone, Battery,
   Bike, Fuel, ShieldCheck, Navigation, AlertTriangle, Flame, Lock,
   Camera, Tv, Wifi, Heart, Dog, ShieldAlert, Cpu, MonitorSmartphone,
-  Laptop,
+  Laptop, Wind,
 } from 'lucide-react';
 import LocationPicker from '../modules/booking/LocationPicker';
+import PhoneDiagnosticWizard from '../modules/booking/PhoneDiagnosticWizard';
 import SmartPricingPanel from '../components/booking/SmartPricingPanel';
 import BookingMapView from '../components/booking/BookingMapView';
 import SurgeInfoCard from '../components/booking/SurgeInfoCard';
@@ -98,7 +99,15 @@ const SERVICE_META = {
   smart_lock_install:    { label: 'Smart Lock Install',   icon: Lock,          gradient: 'from-indigo-600 to-violet-700',  accent: '#4f46e5', vertical: 'smart_device' },
   home_automation_setup: { label: 'Home Automation',      icon: Zap,           gradient: 'from-amber-500 to-orange-600',   accent: '#f59e0b', vertical: 'smart_device' },
   // ── Vehicle Care ──────────────────────────────────────────────────────────
-  puncture:              { label: 'Puncture Repair',       icon: Car,          gradient: 'from-slate-500 to-slate-700',    accent: '#64748b', vertical: 'vehicle'      },
+  // ── Vehicle Care (Car & Bike) ───────────────────────────────────────────────
+  car_puncture:          { label: 'Car Tyre Puncture',     icon: Car,          gradient: 'from-slate-600 to-slate-800',    accent: '#475569', vertical: 'vehicle'      },
+  bike_puncture:         { label: 'Bike Tyre Puncture',    icon: Bike,         gradient: 'from-emerald-500 to-teal-600',   accent: '#059669', vertical: 'vehicle'      },
+  periodic_car_service:  { label: 'Periodic Car Service',  icon: Wrench,       gradient: 'from-blue-600 to-indigo-700',    accent: '#2563eb', vertical: 'vehicle'      },
+  car_foam_wash_detailing:{ label: 'Car Wash & Detailing', icon: Sparkles,     gradient: 'from-indigo-500 to-violet-600',  accent: '#6366f1', vertical: 'vehicle'      },
+  car_ac_gas_refill:     { label: 'Car AC Gas Refill',     icon: Wind,         gradient: 'from-sky-500 to-blue-600',       accent: '#0ea5e9', vertical: 'vehicle'      },
+  car_battery_replacement:{ label: 'Car Battery Fitting',  icon: Battery,      gradient: 'from-amber-500 to-orange-600',   accent: '#f59e0b', vertical: 'vehicle'      },
+  bike_periodic_service: { label: 'Bike Full Engine Service',icon: Bike,       gradient: 'from-emerald-600 to-teal-700',   accent: '#059669', vertical: 'vehicle'      },
+  bike_foam_wash:        { label: 'Bike Foam Wash',        icon: Bike,         gradient: 'from-teal-500 to-cyan-600',      accent: '#14b8a6', vertical: 'vehicle'      },
   bike_chain_issue:      { label: 'Bike Chain Issue',      icon: Bike,         gradient: 'from-amber-500 to-orange-600',   accent: '#f59e0b', vertical: 'vehicle'      },
   bike_brake_issue:      { label: 'Bike Brake Repair',     icon: Bike,         gradient: 'from-red-500 to-rose-600',       accent: '#ef4444', vertical: 'vehicle'      },
   bike_battery_issue:    { label: 'Bike Battery Issue',    icon: Battery,      gradient: 'from-emerald-500 to-green-600',  accent: '#10b981', vertical: 'vehicle'      },
@@ -108,12 +117,17 @@ const SERVICE_META = {
   car_wash:              { label: 'Car Wash',              icon: Car,          gradient: 'from-sky-500 to-blue-600',       accent: '#3b82f6', vertical: 'vehicle'      },
   car_detailing:         { label: 'Car Detailing',         icon: Sparkles,     gradient: 'from-indigo-500 to-violet-600',  accent: '#6366f1', vertical: 'vehicle'      },
   battery_jump_start:    { label: 'Battery Jump Start',    icon: Zap,          gradient: 'from-yellow-500 to-amber-600',   accent: '#f59e0b', vertical: 'vehicle'      },
-  car_puncture:          { label: 'Car Tyre Puncture',     icon: Car,          gradient: 'from-slate-600 to-slate-800',    accent: '#475569', vertical: 'vehicle'      },
   car_breakdown:         { label: 'Car Breakdown',         icon: AlertTriangle, gradient: 'from-red-500 to-rose-600',      accent: '#ef4444', vertical: 'vehicle'      },
   fuel_delivery:         { label: 'Fuel Delivery',         icon: Fuel,         gradient: 'from-orange-500 to-red-500',     accent: '#f97316', vertical: 'vehicle'      },
   car_service:           { label: 'Car Full Service',      icon: Wrench,       gradient: 'from-blue-600 to-indigo-700',    accent: '#2563eb', vertical: 'vehicle'      },
   car_towing:            { label: 'Car Towing',            icon: Car,          gradient: 'from-slate-700 to-slate-900',    accent: '#334155', vertical: 'towing'       },
   bike_towing:           { label: 'Bike Towing',           icon: Bike,         gradient: 'from-slate-600 to-slate-800',    accent: '#475569', vertical: 'towing'       },
+  // ── Laptop Repair ──────────────────────────────────────────────────────────
+  laptop_screen_replacement: { label: 'Laptop Display Panel', icon: Laptop,    gradient: 'from-cyan-500 to-blue-600',      accent: '#0891b2', vertical: 'laptop'       },
+  laptop_battery_replacement:{ label: 'Laptop Battery Replacement', icon: Battery, gradient: 'from-indigo-500 to-purple-600', accent: '#6366f1', vertical: 'laptop' },
+  laptop_keyboard_repair:    { label: 'Laptop Keyboard Repair', icon: Laptop,  gradient: 'from-slate-600 to-slate-800',    accent: '#475569', vertical: 'laptop'       },
+  laptop_thermal_service:    { label: 'Laptop Thermal Cleaning', icon: Wind,   gradient: 'from-teal-500 to-emerald-600',   accent: '#14b8a6', vertical: 'laptop'       },
+  laptop_ssd_ram_upgrade:    { label: 'SSD & RAM Upgrade',     icon: Zap,          gradient: 'from-amber-500 to-orange-600',   accent: '#f59e0b', vertical: 'laptop'       },
   // ── Tank & Water Cleaning ────────────────────────────────────────────────
   water_tank_cleaning:       { label: 'Water Tank Cleaning',       icon: Droplets, gradient: 'from-sky-500 to-blue-600',    accent: '#0ea5e9', vertical: 'tank_cleaning' },
   overhead_tank_cleaning:    { label: 'Overhead Tank Cleaning',    icon: Droplets, gradient: 'from-cyan-500 to-sky-600',    accent: '#06b6d4', vertical: 'tank_cleaning' },
@@ -279,7 +293,6 @@ const SERVICE_SUBCATEGORIES = {
   ],
 };
 
-const DEVICE_BRANDS = ['Apple', 'Samsung', 'OnePlus', 'Xiaomi', 'Vivo', 'Oppo', 'Others'];
 const VEHICLE_TYPES = [
   { key: 'bike',    label: 'Bike',    icon: '🏍️' },
   { key: 'scooter', label: 'Scooter', icon: '🛵' },
@@ -396,6 +409,8 @@ export default function BookingPage() {
   // Mobile-specific state
   const [deviceBrand,   setDeviceBrand]   = useState('');
   const [deviceModel,   setDeviceModel]   = useState('');
+  const [deviceSeries,  setDeviceSeries]  = useState('');
+  const [partsTier,     setPartsTier]     = useState(''); // OEM | Premium | Compatible | Budget (from wizard)
   const [serviceMode,   setServiceMode]   = useState('doorstep'); // doorstep | pickup
 
   // Vehicle-specific state
@@ -457,6 +472,8 @@ export default function BookingPage() {
       service, pickupLat: loc.lat, pickupLng: loc.lng,
       ...(deviceBrand && { deviceBrand }),
       ...(deviceModel && { deviceModel }),
+      ...(deviceSeries && { deviceSeries }),
+      ...(partsTier && { partsTier }),
       ...(vehicleType && { vehicleType }),
       ...(isTowing && { vehicleType: service === 'car_towing' ? 'car' : 'bike' }),
       ...(isTowing && towDest && { dropLat: towDest.lat, dropLng: towDest.lng }),
@@ -561,6 +578,8 @@ export default function BookingPage() {
       // Mobile extras
       ...(isMobile && deviceBrand && { deviceBrand }),
       ...(isMobile && deviceModel && { deviceModel }),
+      ...(isMobile && deviceSeries && { deviceSeries }),
+      ...(isMobile && partsTier && { partsTier }),
       ...(isMobile && { serviceMode }),
       // Vehicle extras
       ...(isVehicle && vehicleType && { vehicleType }),
@@ -822,6 +841,33 @@ export default function BookingPage() {
           </motion.div>
         )}
 
+        {/* Mobile Phone Repair In-Depth Diagnostic & Model Selector */}
+        {isMobile && (
+          <motion.div variants={fadeInUp}>
+            <PhoneDiagnosticWizard
+              onSelectServiceQuote={({ deviceBrand: b, deviceModel: m, deviceSeries: s, partsTier: t, estimatedPriceRs, warrantyDays }) => {
+                // Lift the wizard's picks into booking state so they actually flow into
+                // the quote + order body (previously this callback only toasted).
+                if (b) setDeviceBrand(b);
+                if (m) setDeviceModel(m);
+                setDeviceSeries(s || '');
+                if (t) setPartsTier(t);
+                toast.success(`Quote locked: ${b} ${m} (${t}) — ₹${estimatedPriceRs}`);
+                // Re-price on the tier so the header quote matches the wizard.
+                if (location) {
+                  fetchQuote({
+                    service, pickupLat: location.lat, pickupLng: location.lng,
+                    ...(b && { deviceBrand: b }),
+                    ...(m && { deviceModel: m }),
+                    ...(s && { deviceSeries: s }),
+                    ...(t && { partsTier: t }),
+                  });
+                }
+              }}
+            />
+          </motion.div>
+        )}
+
         {/* Location card — with map preview */}
         <motion.div
           className="rounded-2xl overflow-hidden bg-white ring-1 ring-slate-100"
@@ -860,28 +906,17 @@ export default function BookingPage() {
               <div className={`w-8 h-8 rounded-xl bg-gradient-to-br ${meta.gradient} flex items-center justify-center`}>
                 <Smartphone size={14} strokeWidth={2.5} className="text-white" />
               </div>
-              <p className="font-bold text-[#0F172A] text-sm">Phone Details</p>
+              <p className="font-bold text-[#0F172A] text-sm">Service Preference</p>
             </div>
-            {/* Brand picker */}
-            <div>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Brand</p>
-              <div className="flex flex-wrap gap-2">
-                {DEVICE_BRANDS.map(brand => (
-                  <motion.button key={brand} onClick={() => setDeviceBrand(b => b === brand ? '' : brand)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold border-2 transition-all ${deviceBrand === brand ? 'text-white border-transparent' : 'bg-slate-50 text-slate-600 border-slate-150'}`}
-                    style={deviceBrand === brand ? { background: `linear-gradient(135deg, ${meta.accent}ee, ${meta.accent})` } : {}}
-                    whileTap={{ scale: 0.95 }}>
-                    {brand}
-                  </motion.button>
-                ))}
+            {/* Device summary — brand / model / part tier are chosen in the diagnostic
+                wizard above; shown here read-only so the customer can confirm. */}
+            {(deviceBrand || deviceModel || partsTier) && (
+              <div className="flex flex-wrap items-center gap-2">
+                {deviceBrand && <span className="px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-150 text-xs font-bold text-slate-700">{deviceBrand}</span>}
+                {deviceModel && <span className="px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-150 text-xs font-semibold text-slate-600">{deviceModel}</span>}
+                {partsTier && <span className="px-2.5 py-1 rounded-lg bg-amber-50 border border-amber-150 text-xs font-bold text-amber-700">{partsTier}</span>}
               </div>
-            </div>
-            {/* Model input */}
-            <div>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Model (optional)</p>
-              <input value={deviceModel} onChange={e => setDeviceModel(e.target.value)} placeholder="e.g. iPhone 14, Galaxy S23…"
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#111827] placeholder:text-slate-400 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/20 transition-all" />
-            </div>
+            )}
             {/* Service Mode */}
             <div>
               <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">How should we help?</p>

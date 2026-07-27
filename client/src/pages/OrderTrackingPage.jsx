@@ -234,9 +234,9 @@ export default function OrderTrackingPage() {
       const res = await fetch(`${API_BASE}/api/orders/${id}/call`, {
         method: 'POST', headers: { Authorization: `Bearer ${token}` },
       });
-      const r = await res.json();
-      if (r.proxyNumber) window.location.href = `tel:${r.proxyNumber}`;
-      else toast.error('Call service unavailable');
+      const r = await res.json().catch(() => ({}));
+      if (res.ok && r.proxyNumber) { window.location.href = `tel:${r.proxyNumber}`; return; }
+      toast.error(r.error || 'Calling is available once a pro is assigned');
     } catch { toast.error('Could not start call'); }
   }
 
@@ -353,13 +353,13 @@ export default function OrderTrackingPage() {
 
         {/* ── BODY ── */}
         <motion.div
-          className="w-full max-w-2xl lg:max-w-4xl mx-auto px-4 sm:px-6 pt-4 space-y-3.5"
+          className="w-full max-w-2xl lg:max-w-4xl mx-auto px-4 sm:px-6 pt-4 space-y-3.5 lg:space-y-0 lg:columns-2 lg:gap-4 lg:[&>*]:mb-3.5 lg:[&>*]:break-inside-avoid"
           variants={staggerContainer} initial="initial" animate="animate"
         >
 
           {/* Failed state — expansion hype card */}
           {status === 'failed' && (
-            <motion.div variants={fadeInUp} className="rounded-[24px] overflow-hidden"
+            <motion.div variants={fadeInUp} className="rounded-[24px] overflow-hidden lg:[column-span:all]"
               style={{ background: 'linear-gradient(135deg, #0F172A 0%, #1a1060 60%, #0f2a5e 100%)', boxShadow: '0 12px 40px rgba(15,23,42,0.45)' }}>
               <div className="h-1 w-full" style={{ background: 'linear-gradient(90deg,#6366f1,#8b5cf6,#ec4899,#f59e0b)' }} />
               <div className="px-5 pt-5 pb-6">
@@ -393,9 +393,9 @@ export default function OrderTrackingPage() {
             </motion.div>
           )}
 
-          {/* MAP HERO (with floating ETA chip) */}
+          {/* MAP HERO (with floating ETA chip) — full width on desktop */}
           {!terminal && (
-            <motion.div variants={fadeInUp} ref={mapAnchorRef} className="relative">
+            <motion.div variants={fadeInUp} ref={mapAnchorRef} className="relative lg:[column-span:all]">
               <LiveTrackingMap
                 pickup={pickup}
                 workerLocation={liveOrder.workerLocation || (status === 'arrived' && pickup ? pickup : null)}
@@ -410,7 +410,7 @@ export default function OrderTrackingPage() {
 
           {/* Cancelled terminal card */}
           {status === 'cancelled' && (
-            <motion.div variants={fadeInUp} className="rounded-[24px] bg-white border border-slate-900/5 p-6 text-center"
+            <motion.div variants={fadeInUp} className="rounded-[24px] bg-white border border-slate-900/5 p-6 text-center lg:[column-span:all]"
               style={{ boxShadow: '0 12px 32px -4px rgba(15,23,42,0.08)' }}>
               <div className="w-16 h-16 rounded-2xl bg-red-50 flex items-center justify-center mx-auto mb-4">
                 <AlertCircle size={30} strokeWidth={2} className="text-red-500" />
@@ -429,13 +429,15 @@ export default function OrderTrackingPage() {
             <SearchingHero etaMinutes={eta} />
           )}
 
-          {/* WORKER card (rich) */}
+          {/* WORKER card (rich) — full width on desktop */}
           {workerVisible && (
-            <WorkerRichCard
-              order={order} eta={eta} status={status}
-              onCall={callWorker} onChat={() => nav(`/orders/${id}/chat`)}
-              onLive={focusMap} onProfile={() => setShowProfile(true)}
-            />
+            <div className="lg:[column-span:all]">
+              <WorkerRichCard
+                order={order} eta={eta} status={status}
+                onCall={callWorker} onChat={() => nav(`/orders/${id}/chat`)}
+                onLive={focusMap} onProfile={() => setShowProfile(true)}
+              />
+            </div>
           )}
 
           {/* LIVE STATUS timeline */}

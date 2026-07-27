@@ -632,12 +632,116 @@ async function getOtpStats(days = 7) {
   return result;
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// Worker credential login (#2) — password + Worker ID/username, plus
+// forgot/reset/change. OTP login still works; this adds a password path so an
+// approved worker doesn't repeat OTP on every sign-in.
+// ═══════════════════════════════════════════════════════════════════════════
+const WORKER_USERNAME_RE = /^[a-z0-9_]{3,30}$/;
+const normId = (v) => String(v == null ? '' : v).trim().toLowerCase();
+
+async function setWorkerCredentials({ workerId, username, password }) {
+  if (!password || password.length < 8) {
+    throw Object.assign(new Error('Password must be at least 8 characters'), { status: 400, code: 'WEAK_PASSWORD' });
+  }
+  const worker = await Worker.findById(workerId);
+  if (!worker) throw Object.assign(new Error('Worker not found'), { status: 404 });
+
+  if (username != null && username !== '') {
+    const uname = normId(username);
+    if (!WORKER_USERNAME_RE.test(uname)) {
+      throw Object.assign(new Error('Worker ID must be 3–30 chars: letters, numbers or underscore'), { status: 400, code: 'BAD_USERNAME' });
+    }
+    const clash = await Worker.findOne({ username: uname, _id: { $ne: worker._id } }).select('_id').lean();
+    if (clash) throw Object.assign(new Error('That Worker ID is already taken'), { status: 409, code: 'USERNAME_TAKEN' });
+    worker.username = uname;
+  }
+  worker.passwordHash = await hashPassword(password);
+  await worker.save();
+  return { ok: true, username: worker.username || null };
+}
+
+async function loginWorkerWithPassword({ identifier, password }) {
+  const id = normId(identifier);
+  if (!id || !password) {
+    throw Object.assign(new Error('Enter your Worker ID / email / phone and password'), { status: 400, code: 'MISSING_CREDENTIALS' });
+  }
+  const failKey = `worker:pwfail:${id}`;
+  if ((Number(await redis.get(failKey)) || 0) >= 8) {
+    throw Object.assign(new Error('Too many attempts. Try again later or reset your password.'), { status: 429, code: 'LOGIN_LOCKED' });
+  }
+  const bump = async () => { await redis.incr(failKey); await redis.expire(failKey, 900); };
+
+  const worker = await Worker.findOne({
+    $or: [{ username: id }, { email: id }, { phone: id }],
+  }).select('+passwordHash');
+
+  if (!worker || !worker.passwordHash) { await bump(); throw Object.assign(new Error('Invalid credentials'), { status: 401, code: 'AUTH_INVALID' }); }
+  const okPw = await comparePassword(password, worker.passwordHash);
+  if (!okPw) { await bump(); throw Object.assign(new Error('Invalid credentials'), { status: 401, code: 'AUTH_INVALID' }); }
+  if (worker.isBlocked) { throw Object.assign(new Error('Account is blocked'), { status: 403, code: 'ACCOUNT_BLOCKED' }); }
+
+  await redis.del(failKey);
+  const tokens = await tokenService.issueTokenPair({ sub: worker._id.toString(), role: 'worker', phone: worker.phone });
+  return { worker, ...tokens };
+}
+
+async function requestWorkerPasswordReset({ identifier }) {
+  const id = normId(identifier);
+  const worker = await Worker.findOne({
+    $or: [{ username: id }, { email: id }, { phone: id }],
+  }).select('phone').lean();
+  // Don't leak whether the account exists — always return the same shape; only
+  // actually send an OTP when a matching worker with a phone is found.
+  if (worker?.phone) {
+    await requestOtp(worker.phone, 'worker');
+    const p = worker.phone;
+    return { sent: true, maskedPhone: p.length > 4 ? `${'*'.repeat(p.length - 4)}${p.slice(-4)}` : p };
+  }
+  return { sent: true, maskedPhone: null };
+}
+
+async function resetWorkerPassword({ phone, otp, newPassword }) {
+  if (!newPassword || newPassword.length < 8) {
+    throw Object.assign(new Error('Password must be at least 8 characters'), { status: 400, code: 'WEAK_PASSWORD' });
+  }
+  const ok = await verifyOtp(phone, otp);
+  if (!ok) throw Object.assign(new Error('Invalid or expired OTP'), { status: 401, code: 'OTP_INVALID' });
+  const worker = await Worker.findOne({ phone });
+  if (!worker) throw Object.assign(new Error('Account not found'), { status: 404 });
+  worker.passwordHash = await hashPassword(newPassword);
+  await worker.save();
+  return { ok: true };
+}
+
+async function changeWorkerPassword({ workerId, currentPassword, newPassword }) {
+  if (!newPassword || newPassword.length < 8) {
+    throw Object.assign(new Error('New password must be at least 8 characters'), { status: 400, code: 'WEAK_PASSWORD' });
+  }
+  const worker = await Worker.findById(workerId).select('+passwordHash');
+  if (!worker) throw Object.assign(new Error('Worker not found'), { status: 404 });
+  // If a password already exists, the current one must match. First-time set (no
+  // existing hash) is allowed directly so a worker can create their first password.
+  if (worker.passwordHash) {
+    const ok = await comparePassword(currentPassword || '', worker.passwordHash);
+    if (!ok) throw Object.assign(new Error('Current password is incorrect'), { status: 401, code: 'BAD_CURRENT_PASSWORD' });
+  }
+  worker.passwordHash = await hashPassword(newPassword);
+  await worker.save();
+  return { ok: true };
+}
+
 module.exports = {
   hashPassword,
   comparePassword,
   requestOtp,
   resendOtp,
   verifyOtp,
+  setWorkerCredentials,
+  loginWorkerWithPassword,
+  requestWorkerPasswordReset,
+  resetWorkerPassword,
+  changeWorkerPassword,
   markOtpActionVerified,
   getOtpStats,
   loginUserWithOtp,

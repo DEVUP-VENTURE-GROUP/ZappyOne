@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Star, CheckCircle2, Sparkles, Users, Info } from 'lucide-react';
+import { Star, CheckCircle2, Sparkles, Users, Info, MapPin, Clock, Award } from 'lucide-react';
 import { useGetNearbyProsQuery } from '../../services/api';
 import WorkerProfileSheet from '../worker/WorkerProfileSheet';
 
@@ -39,7 +39,7 @@ export default function ProPicker({ service, lat, lng, value, onChange }) {
         <button
           type="button"
           onClick={() => onChange(null)}
-          className={`shrink-0 w-32 rounded-xl border p-3 text-left transition-colors ${
+          className={`shrink-0 w-44 rounded-xl border p-3 text-left transition-colors ${
             !value ? 'border-indigo-500 bg-indigo-50/60 ring-1 ring-indigo-400' : 'border-slate-200 bg-white'
           }`}
         >
@@ -52,7 +52,7 @@ export default function ProPicker({ service, lat, lng, value, onChange }) {
         </button>
 
         {isLoading && (
-          <div className="shrink-0 w-32 rounded-xl border border-slate-100 p-3 animate-pulse">
+          <div className="shrink-0 w-44 rounded-xl border border-slate-100 p-3 animate-pulse">
             <div className="w-9 h-9 rounded-full bg-slate-200 mb-2" />
             <div className="h-3 bg-slate-200 rounded w-4/5 mb-1.5" />
             <div className="h-2.5 bg-slate-100 rounded w-3/5" />
@@ -68,7 +68,7 @@ export default function ProPicker({ service, lat, lng, value, onChange }) {
               role="button"
               tabIndex={0}
               onClick={() => onChange(active ? null : p.workerId)}
-              className={`relative shrink-0 w-32 rounded-xl border p-3 text-left transition-colors cursor-pointer ${
+              className={`relative shrink-0 w-44 rounded-xl border p-3 text-left transition-colors cursor-pointer ${
                 active ? 'border-indigo-500 bg-indigo-50/60 ring-1 ring-indigo-400' : 'border-slate-200 bg-white'
               }`}
             >
@@ -94,6 +94,28 @@ export default function ProPicker({ service, lat, lng, value, onChange }) {
                 <Star size={11} className="text-amber-400 fill-amber-400" />
                 <span className="text-[11px] font-semibold text-slate-600">{p.rating}</span>
                 <span className="text-[11px] text-slate-400">· {p.completedJobs} jobs</span>
+              </div>
+              {/* Comparison metrics (#3): experience, distance + ETA, specialties */}
+              <div className="mt-1.5 space-y-1">
+                {p.yearsExperience > 0 && (
+                  <div className="flex items-center gap-1 text-[11px] text-slate-500">
+                    <Award size={11} className="text-indigo-400 shrink-0" />
+                    <span>{p.yearsExperience}+ yr{p.yearsExperience > 1 ? 's' : ''} experience</span>
+                  </div>
+                )}
+                {p.distanceKm != null && (
+                  <div className="flex items-center gap-2 text-[11px] text-slate-500">
+                    <span className="flex items-center gap-1"><MapPin size={11} className="text-rose-400 shrink-0" />{p.distanceKm} km</span>
+                    {p.etaMin != null && <span className="flex items-center gap-1"><Clock size={11} className="text-emerald-500 shrink-0" />~{p.etaMin} min</span>}
+                  </div>
+                )}
+                {p.specialties?.length > 0 && (
+                  <div className="flex flex-wrap gap-1 pt-0.5">
+                    {p.specialties.slice(0, 3).map((b) => (
+                      <span key={b} className="text-[9px] font-bold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded">{b}</span>
+                    ))}
+                  </div>
+                )}
               </div>
               {active && <CheckCircle2 size={15} className="text-indigo-600 mt-2" />}
             </div>

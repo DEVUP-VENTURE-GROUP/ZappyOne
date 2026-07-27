@@ -85,9 +85,10 @@ export default function ChatPage() {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });
-      const r = await res.json();
-      if (r.proxyNumber) window.location.href = `tel:${r.proxyNumber}`;
-      else toast.error('Call service unavailable');
+      const r = await res.json().catch(() => ({}));
+      if (res.ok && r.proxyNumber) { window.location.href = `tel:${r.proxyNumber}`; return; }
+      // Surface the real reason (e.g. "Calling is only available during an active order").
+      toast.error(r.error || 'Calling is available once a pro is assigned');
     } catch {
       toast.error('Could not start call');
     }

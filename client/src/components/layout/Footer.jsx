@@ -81,15 +81,22 @@ export default function Footer() {
               <ZappyLogo className="w-9 h-9 text-indigo-400" />
               <span className="text-2xl font-black text-white tracking-tight">Zappy</span>
             </a>
-            <p className="text-slate-400 text-sm leading-relaxed mb-6 max-w-xs">
+            <p className="text-slate-400 text-sm leading-relaxed mb-4 max-w-xs">
               India's fastest on-demand home services platform. Book verified professionals in 60 seconds — puncture repair, phone repair, laptop repair, electrician, plumber and 100+ services across India.
             </p>
+
+            <div className="space-y-1.5 mb-6 text-xs text-slate-400">
+              <p><strong className="text-slate-200">General:</strong> <a href="mailto:contact@zappyone.com" className="text-indigo-400 hover:underline">contact@zappyone.com</a></p>
+              <p><strong className="text-slate-200">Support:</strong> <a href="mailto:support@zappyone.com" className="text-indigo-400 hover:underline">support@zappyone.com</a></p>
+              <p><strong className="text-slate-200">Partners:</strong> <a href="mailto:partners@zappyone.com" className="text-indigo-400 hover:underline">partners@zappyone.com</a></p>
+              <p><strong className="text-slate-200">Vendors:</strong> <a href="mailto:vendors@zappyone.com" className="text-indigo-400 hover:underline">vendors@zappyone.com</a></p>
+            </div>
+
             <div className="flex flex-col gap-2 text-xs text-slate-500">
               <div className="flex items-center gap-2"><Star size={11} className="text-amber-400 fill-amber-400" /><span>4.8 ★ rated by 5,000+ customers</span></div>
               <div className="flex items-center gap-2"><ShieldCheck size={11} className="text-emerald-400" /><span>Background-verified professionals</span></div>
               <div className="flex items-center gap-2"><Zap size={11} className="text-indigo-400" /><span>Arrives in 15–30 minutes</span></div>
               <div className="flex items-center gap-2"><MapPin size={11} className="text-rose-400" /><span>Live GPS tracking</span></div>
-              <div className="flex items-center gap-2"><Phone size={11} className="text-sky-400" /><span>24/7 customer support</span></div>
             </div>
           </div>
 

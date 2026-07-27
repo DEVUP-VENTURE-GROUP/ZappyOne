@@ -499,31 +499,77 @@ async function calculateMobilePrice({ service, priority, deviceBrand, deviceMode
   const inspectionFeePaise    = cfg.inspectionFeePaise    || 15000;
   const urgentSurchargePaise  = priority === 'emergency'  ? (cfg.urgentSurchargePaise || 10000) : 0;
 
-  /* Tier-aware pricing from phone catalog */
-  const phoneCatalog = require('../service/phone-catalog');
+  /* Tier-aware pricing from DB ServiceVariant matrix (falling back to static phone catalog) */
+  const ServiceVariant = require('../service/service-variant.model');
+  const phoneCatalog   = require('../service/phone-catalog');
   let sparePartCostPaise = 0;
+  let estimatedLaborPaise = 0;
   let warrantyDays       = cfg.warrantyDays || 30;
   let pricingSource      = 'fallback';
 
-  if (deviceBrand && ['screen_replacement', 'battery_replacement', 'charging_issue', 'speaker_mic_issue'].includes(service)) {
-    const catalogResult = phoneCatalog.lookupPrice({
-      brand:      deviceBrand,
-      seriesName: deviceSeries || null,
-      service,
-      tier:       partsTier,
-    });
-    if (catalogResult) {
-      sparePartCostPaise = catalogResult.paise;
-      warrantyDays       = catalogResult.warrantyDays;
-      pricingSource      = `catalog:${deviceBrand}:${partsTier}`;
+  if (deviceBrand && service) {
+    const cleanBrand = deviceBrand.toLowerCase();
+    const cleanModel = deviceModel ? deviceModel.toLowerCase() : null;
+
+    // 1. Try DB lookup by exact model + service + partsTier.
+    //    The old code built `new RegExp(cleanModel.replace(/[^a-z0-9]/g,'.*'))`,
+    //    which (a) is a ReDoS vector on user input and (b) mis-matches models —
+    //    "iphone-15" also matched "iphone-155-pro" and could return the WRONG
+    //    (cheaper/pricier) part. We normalise to a slug, try an exact code match
+    //    first, then a hyphen-token-anchored match built from an ESCAPED string.
+    let dbVariant = null;
+    if (cleanModel) {
+      const { escapeRegex, slug } = require('../../utils/text');
+      const modelSlug = slug(cleanModel);
+      if (modelSlug) {
+        dbVariant = await ServiceVariant.findOne({
+          serviceCode: service.toLowerCase(),
+          brandCode: cleanBrand,
+          qualityTier: partsTier,
+          isActive: true,
+          $or: [
+            { modelCode: modelSlug },
+            { modelCode: { $regex: `(^|-)${escapeRegex(modelSlug)}(-|$)`, $options: 'i' } },
+          ],
+        }).lean();
+      }
+    }
+
+    if (!dbVariant) {
+      // 2. Try DB lookup by brandCode + serviceCode + qualityTier (brand average)
+      dbVariant = await ServiceVariant.findOne({
+        serviceCode: service.toLowerCase(),
+        brandCode: cleanBrand,
+        qualityTier: partsTier,
+        isActive: true,
+      }).lean();
+    }
+
+    if (dbVariant) {
+      sparePartCostPaise  = dbVariant.partPricePaise || 0;
+      estimatedLaborPaise = dbVariant.laborPricePaise || 0;
+      warrantyDays        = dbVariant.warrantyDays || warrantyDays;
+      pricingSource       = `db_variant:${deviceBrand}:${partsTier}`;
     } else {
-      /* Fall back to vertical config spare parts lookup */
-      const partCost = await verticalConfigService.lookupSparePartCost({
-        brand: deviceBrand, service, model: deviceModel || 'all',
+      // 3. Fallback to static catalog lookup
+      const catalogResult = phoneCatalog.lookupPrice({
+        brand:      deviceBrand,
+        seriesName: deviceSeries || null,
+        service,
+        tier:       partsTier,
       });
-      if (partCost !== null) {
-        sparePartCostPaise = partCost;
-        pricingSource      = 'vertical_config';
+      if (catalogResult) {
+        sparePartCostPaise = catalogResult.paise;
+        warrantyDays       = catalogResult.warrantyDays;
+        pricingSource      = `catalog:${deviceBrand}:${partsTier}`;
+      } else {
+        const partCost = await verticalConfigService.lookupSparePartCost({
+          brand: deviceBrand, service, model: deviceModel || 'all',
+        });
+        if (partCost !== null) {
+          sparePartCostPaise = partCost;
+          pricingSource      = 'vertical_config';
+        }
       }
     }
   }
@@ -537,10 +583,12 @@ async function calculateMobilePrice({ service, priority, deviceBrand, deviceMode
     software_issue:      { min:  30000, max:  80000 },
     water_damage_check:  { min:  20000, max:  50000 },
   };
-  const labor = LABOR_FALLBACK[service] || { min: 50000, max: 150000 };
-  const estimatedLaborPaise = sparePartCostPaise > 0
-    ? Math.round(sparePartCostPaise * 0.30)
-    : Math.round((labor.min + labor.max) / 2);
+  if (!estimatedLaborPaise) {
+    const labor = LABOR_FALLBACK[service] || { min: 50000, max: 150000 };
+    estimatedLaborPaise = sparePartCostPaise > 0
+      ? Math.round(sparePartCostPaise * 0.30)
+      : Math.round((labor.min + labor.max) / 2);
+  }
 
   const subtotalPaise = inspectionFeePaise + estimatedLaborPaise + sparePartCostPaise;
   const totalPaise    = subtotalPaise + urgentSurchargePaise;

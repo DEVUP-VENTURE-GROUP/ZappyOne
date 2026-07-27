@@ -123,14 +123,13 @@ export function MobileCategoryPanel({ config, onSave, saving }) {
 
   return (
     <Accordion title="Category Fees & Spare Parts" Icon={DollarSign} accentClass="text-indigo-600">
-      <InfoBox variant="blue"><p><strong>Formula:</strong> Inspection Fee + Labor (mid-range) + Spare Part Cost + [Urgent Surcharge]</p></InfoBox>
       <div className="grid grid-cols-3 gap-4">
-        {[{ key: 'inspectionFeePaise', label: 'Inspection Fee (₹)', isPaise: true }, { key: 'urgentSurchargePaise', label: 'Urgent Surcharge (₹)', isPaise: true }, { key: 'warrantyDays', label: 'Warranty (days)', isPaise: false }].map(({ key, label, isPaise }) => (
-          <FieldRow key={key} label={label}><NumInput prefix={isPaise ? '₹' : '📅'} value={isPaise ? rupees(form[key]) : form[key]} onChange={e => setForm(f => ({ ...f, [key]: isPaise ? paise(e.target.value) : Number(e.target.value) }))} /></FieldRow>
-        ))}
+        <FieldRow label="Inspection Fee (₹)"><NumInput value={rupees(form.inspectionFeePaise)} step="10" prefix="₹" onChange={e => setForm(f => ({ ...f, inspectionFeePaise: paise(e.target.value) }))} /></FieldRow>
+        <FieldRow label="Urgent Surcharge (₹)"><NumInput value={rupees(form.urgentSurchargePaise)} step="10" prefix="₹" onChange={e => setForm(f => ({ ...f, urgentSurchargePaise: paise(e.target.value) }))} /></FieldRow>
+        <FieldRow label="Default Warranty (Days)"><NumInput value={form.warrantyDays} min="0" step="1" onChange={e => setForm(f => ({ ...f, warrantyDays: Number(e.target.value) }))} /></FieldRow>
       </div>
       <motion.button onClick={() => onSave('mobile', form)} disabled={saving} className="px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 disabled:opacity-50" whileTap={{ scale: 0.96 }}>
-        {saving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />} Save Fees
+        {saving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />} Save Mobile Fees
       </motion.button>
       <div className="border-t border-slate-100 pt-4">
         <div className="flex items-center justify-between mb-3">
@@ -210,31 +209,67 @@ export function ConstructionCategoryPanel({ config, onSave, saving }) {
   );
 }
 
-/* ── Vehicle category ── */
-export function VehicleCategoryPanel({ config, onSave, saving }) {
+/* ── Car category ── */
+export function CarCategoryPanel({ config, onSave, saving }) {
   const [form, setForm] = useState({ baseVisitFeePaise: config?.baseVisitFeePaise ?? 5000, perKmFeePaise: config?.perKmFeePaise ?? 1500, emergencySurchargePaise: config?.emergencySurchargePaise ?? 10000, nightSurchargePaise: config?.nightSurchargePaise ?? 8000, nightStartHour: config?.nightStartHour ?? 22, nightEndHour: config?.nightEndHour ?? 6 });
   useEffect(() => { if (config) setForm({ baseVisitFeePaise: config.baseVisitFeePaise ?? 5000, perKmFeePaise: config.perKmFeePaise ?? 1500, emergencySurchargePaise: config.emergencySurchargePaise ?? 10000, nightSurchargePaise: config.nightSurchargePaise ?? 8000, nightStartHour: config.nightStartHour ?? 22, nightEndHour: config.nightEndHour ?? 6 }); }, [config]);
 
   return (
-    <Accordion title="Category Pricing Configuration" Icon={DollarSign} accentClass="text-blue-600">
+    <Accordion title="Car Service Pricing Configuration" Icon={DollarSign} accentClass="text-blue-600">
       <InfoBox variant="blue">
         <p><strong>Formula:</strong> Base visit fee + (Distance km × per km fee) + [Emergency surcharge] + [Night surcharge]</p>
-        <p>Night surcharge: {form.nightStartHour}:00 – {form.nightEndHour}:00</p>
       </InfoBox>
       <div className="grid grid-cols-2 gap-4">
         {[{ key: 'baseVisitFeePaise', label: 'Base Visit Fee (₹)', isPaise: true }, { key: 'perKmFeePaise', label: 'Per KM Fee (₹)', isPaise: true }, { key: 'emergencySurchargePaise', label: 'Emergency Surcharge (₹)', isPaise: true }, { key: 'nightSurchargePaise', label: 'Night Surcharge (₹)', isPaise: true }].map(({ key, label }) => (
           <FieldRow key={key} label={label}><NumInput prefix="₹" value={rupees(form[key])} onChange={e => setForm(f => ({ ...f, [key]: paise(e.target.value) }))} /></FieldRow>
         ))}
       </div>
-      <div className="bg-slate-50 rounded-xl p-3 ring-1 ring-slate-100">
-        <p className="text-[10px] font-bold text-slate-600 flex items-center gap-1 mb-2"><Moon size={10} className="text-indigo-400" /> Night Window (24-hr)</p>
-        <div className="grid grid-cols-2 gap-3">
-          <FieldRow label="Night Starts (hour)"><NumInput value={form.nightStartHour} min="0" max="23" onChange={e => setForm(f => ({ ...f, nightStartHour: parseInt(e.target.value, 10) }))} /></FieldRow>
-          <FieldRow label="Night Ends (hour)"><NumInput value={form.nightEndHour} min="0" max="23" onChange={e => setForm(f => ({ ...f, nightEndHour: parseInt(e.target.value, 10) }))} /></FieldRow>
-        </div>
-      </div>
       <motion.button onClick={() => onSave('vehicle', form)} disabled={saving} className="px-4 py-2 bg-blue-600 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 disabled:opacity-50" whileTap={{ scale: 0.96 }}>
-        {saving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />} Save Configuration
+        {saving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />} Save Car Service Fees
+      </motion.button>
+    </Accordion>
+  );
+}
+
+/* ── Bike category ── */
+export function BikeCategoryPanel({ config, onSave, saving }) {
+  const [form, setForm] = useState({ inspectionFeePaise: config?.inspectionFeePaise ?? 15000, urgentSurchargePaise: config?.urgentSurchargePaise ?? 10000, warrantyDays: config?.warrantyDays ?? 30 });
+  useEffect(() => { if (config) setForm({ inspectionFeePaise: config.inspectionFeePaise ?? 15000, urgentSurchargePaise: config.urgentSurchargePaise ?? 10000, warrantyDays: config.warrantyDays ?? 30 }); }, [config]);
+
+  return (
+    <Accordion title="Bike Repair Category Fees" Icon={DollarSign} accentClass="text-emerald-600">
+      <div className="grid grid-cols-3 gap-4">
+        <FieldRow label="Inspection Fee (₹)"><NumInput value={rupees(form.inspectionFeePaise)} step="10" prefix="₹" onChange={e => setForm(f => ({ ...f, inspectionFeePaise: paise(e.target.value) }))} /></FieldRow>
+        <FieldRow label="Urgent Surcharge (₹)"><NumInput value={rupees(form.urgentSurchargePaise)} step="10" prefix="₹" onChange={e => setForm(f => ({ ...f, urgentSurchargePaise: paise(e.target.value) }))} /></FieldRow>
+        <FieldRow label="Default Warranty (Days)"><NumInput value={form.warrantyDays} min="0" step="1" onChange={e => setForm(f => ({ ...f, warrantyDays: Number(e.target.value) }))} /></FieldRow>
+      </div>
+      <motion.button onClick={() => onSave('bike', form)} disabled={saving} className="px-4 py-2 bg-emerald-600 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 disabled:opacity-50" whileTap={{ scale: 0.96 }}>
+        {saving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />} Save Bike Fees
+      </motion.button>
+    </Accordion>
+  );
+}
+
+export function VehicleCategoryPanel(props) {
+  return <CarCategoryPanel {...props} />;
+}
+
+/* ── Laptop category panel ── */
+export function LaptopCategoryPanel({ config, onSave, saving }) {
+  const [form, setForm] = useState({ inspectionFeePaise: config?.inspectionFeePaise ?? 20000, urgentSurchargePaise: config?.urgentSurchargePaise ?? 15000, warrantyDays: config?.warrantyDays ?? 60 });
+  useEffect(() => {
+    if (config) setForm({ inspectionFeePaise: config.inspectionFeePaise ?? 20000, urgentSurchargePaise: config.urgentSurchargePaise ?? 15000, warrantyDays: config.warrantyDays ?? 60 });
+  }, [config]);
+
+  return (
+    <Accordion title="Laptop Repair Category Fees" Icon={DollarSign} accentClass="text-cyan-600">
+      <div className="grid grid-cols-3 gap-4">
+        <FieldRow label="Inspection Fee (₹)"><NumInput value={rupees(form.inspectionFeePaise)} step="10" prefix="₹" onChange={e => setForm(f => ({ ...f, inspectionFeePaise: paise(e.target.value) }))} /></FieldRow>
+        <FieldRow label="Urgent Surcharge (₹)"><NumInput value={rupees(form.urgentSurchargePaise)} step="10" prefix="₹" onChange={e => setForm(f => ({ ...f, urgentSurchargePaise: paise(e.target.value) }))} /></FieldRow>
+        <FieldRow label="Default Warranty (Days)"><NumInput value={form.warrantyDays} min="0" step="1" onChange={e => setForm(f => ({ ...f, warrantyDays: Number(e.target.value) }))} /></FieldRow>
+      </div>
+      <motion.button onClick={() => onSave('laptop', form)} disabled={saving} className="px-4 py-2 bg-cyan-600 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 disabled:opacity-50" whileTap={{ scale: 0.96 }}>
+        {saving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />} Save Laptop Fees
       </motion.button>
     </Accordion>
   );

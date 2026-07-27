@@ -5,9 +5,9 @@ import {
   ArrowLeft, Save, User, FileText, Wrench,
   Building2, CreditCard, AlertCircle, GraduationCap,
   Target, TrendingUp, Star, ChevronRight, Award,
-  Loader2, BarChart2, Shield,
+  Loader2, BarChart2, Shield, KeyRound,
 } from 'lucide-react';
-import { useGetWorkerMeQuery, useUpdateWorkerProfileMutation } from '../services/api';
+import { useGetWorkerMeQuery, useUpdateWorkerProfileMutation, useSetWorkerCredentialsMutation } from '../services/api';
 import toast from 'react-hot-toast';
 
 const ALL_SKILLS = [
@@ -79,10 +79,27 @@ export default function WorkerEditProfilePage() {
   const { data: meData, isLoading } = useGetWorkerMeQuery();
   const me = meData?.worker;
   const [updateProfile, { isLoading: isSaving }] = useUpdateWorkerProfileMutation();
+  const [setCredentials, { isLoading: savingCreds }] = useSetWorkerCredentialsMutation();
 
   const [name,   setName]   = useState('');
   const [bio,    setBio]    = useState('');
   const [skills, setSkills] = useState(null);
+  // Login credentials (#2)
+  const [username, setUsername]   = useState('');
+  const [newPw,    setNewPw]      = useState('');
+  const [confirmPw, setConfirmPw] = useState('');
+
+  async function saveCredentials() {
+    if (newPw.length < 8) { toast.error('Password must be at least 8 characters'); return; }
+    if (newPw !== confirmPw) { toast.error('Passwords do not match'); return; }
+    try {
+      await setCredentials({ ...(username.trim() ? { username: username.trim() } : {}), password: newPw }).unwrap();
+      toast.success('Login credentials saved — you can now sign in with your password');
+      setNewPw(''); setConfirmPw('');
+    } catch (err) {
+      toast.error(err.data?.error || 'Could not save credentials');
+    }
+  }
 
   if (me && skills === null) {
     setName(me.name ?? '');
@@ -207,6 +224,39 @@ export default function WorkerEditProfilePage() {
           <button onClick={() => nav('/worker/skills')} className="mt-3 text-xs text-indigo-600 hover:underline flex items-center gap-0.5">
             Advanced skills & certifications <ChevronRight size={11} />
           </button>
+        </div>
+
+        {/* Login Credentials (#2) — set a Worker ID + password to sign in without OTP */}
+        <div className="bg-white rounded-2xl p-5 shadow-sm">
+          <div className="flex items-center gap-2 mb-1">
+            <KeyRound size={15} className="text-indigo-500" />
+            <span className="text-sm font-semibold text-slate-700">Login Credentials</span>
+          </div>
+          <p className="text-xs text-slate-400 mb-3">Set a Worker ID and password so you can sign in without an OTP each time.</p>
+          <div className="space-y-2.5">
+            <div>
+              <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Worker ID {me?.username ? `(current: ${me.username})` : '(optional)'}</label>
+              <input value={username} onChange={e => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))} maxLength={30}
+                placeholder={me?.username || 'e.g. ravi_kumar'}
+                className="mt-1 w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-300 transition" />
+            </div>
+            <div>
+              <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">New Password</label>
+              <input type="password" value={newPw} onChange={e => setNewPw(e.target.value)}
+                placeholder="At least 8 characters"
+                className="mt-1 w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-300 transition" />
+            </div>
+            <div>
+              <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Confirm Password</label>
+              <input type="password" value={confirmPw} onChange={e => setConfirmPw(e.target.value)}
+                placeholder="Re-enter password"
+                className="mt-1 w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-300 transition" />
+            </div>
+            <button onClick={saveCredentials} disabled={savingCreds || newPw.length < 8}
+              className="w-full flex items-center justify-center gap-1.5 bg-indigo-600 text-white text-sm font-bold rounded-xl py-2.5 disabled:opacity-50 hover:bg-indigo-700 transition">
+              {savingCreds ? <Loader2 size={13} className="animate-spin" /> : <KeyRound size={13} />} Save Login Credentials
+            </button>
+          </div>
         </div>
 
         {/* Navigation hub */}

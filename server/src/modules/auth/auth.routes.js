@@ -3,7 +3,7 @@ const Joi = require('joi');
 const ctrl = require('./auth.controller');
 const { validate } = require('../../middlewares/validate');
 const { authLimiter, adminAuthLimiter, otpPhoneLimiter } = require('../../middlewares/rateLimit');
-const { authenticate } = require('../../middlewares/auth');
+const { authenticate, requireRole } = require('../../middlewares/auth');
 
 const router = express.Router();
 
@@ -46,6 +46,63 @@ router.post(
     deviceId: Joi.string().max(200).optional(), // hardware fingerprint for multi-account detection
   })),
   ctrl.loginWorker
+);
+
+// ── Worker credential login (#2): password + Worker ID, forgot/reset/change ──
+// Set (or update) a Worker ID + password — authenticated worker, after approval.
+router.post(
+  '/worker/set-credentials',
+  authenticate,
+  requireRole('worker'),
+  validate(Joi.object({
+    username: Joi.string().lowercase().pattern(/^[a-z0-9_]{3,30}$/).allow('', null).optional(),
+    password: Joi.string().min(8).max(100).required(),
+  })),
+  ctrl.setWorkerCredentials,
+);
+
+// Sign in with Worker ID / email / phone + password (no OTP).
+router.post(
+  '/worker/login-password',
+  authLimiter,
+  validate(Joi.object({
+    identifier: Joi.string().max(100).required(),
+    password:   Joi.string().min(1).max(100).required(),
+  })),
+  ctrl.loginWorkerPassword,
+);
+
+// Forgot password → sends an OTP to the account's phone.
+router.post(
+  '/worker/forgot-password',
+  otpPhoneLimiter,
+  authLimiter,
+  validate(Joi.object({ identifier: Joi.string().max(100).required() })),
+  ctrl.forgotWorkerPassword,
+);
+
+// Reset password using the phone OTP.
+router.post(
+  '/worker/reset-password',
+  authLimiter,
+  validate(Joi.object({
+    phone:       phoneSchema,
+    otp:         Joi.string().min(4).max(6).required(),
+    newPassword: Joi.string().min(8).max(100).required(),
+  })),
+  ctrl.resetWorkerPassword,
+);
+
+// Change password — authenticated worker.
+router.post(
+  '/worker/change-password',
+  authenticate,
+  requireRole('worker'),
+  validate(Joi.object({
+    currentPassword: Joi.string().max(100).allow('', null).optional(),
+    newPassword:     Joi.string().min(8).max(100).required(),
+  })),
+  ctrl.changeWorkerPassword,
 );
 
 router.post(
