@@ -23,11 +23,6 @@ export const categoryMap = [
     price: '₹149', tint: 'rgba(5, 150, 105, 0.1)', shadow: 'rgba(5, 150, 105, 0.18)',
   },
   {
-    id: 'elders', label: 'Elders', targetId: 'shelf-elders', catalogKey: 'helper',
-    img: '/images/characters/elders.mp4', thumb: '/images/characters/thumb/elders.png',
-    price: '₹299', tint: 'rgba(225, 29, 116, 0.1)', shadow: 'rgba(225, 29, 116, 0.18)',
-  },
-  {
     id: 'pets', label: 'Pets', targetId: 'shelf-pets', catalogKey: 'pet',
     img: '/images/characters/pet.mp4#t=1', thumb: '/images/characters/thumb/pets.png',
     price: '₹149', tint: 'rgba(245, 158, 11, 0.1)', shadow: 'rgba(245, 158, 11, 0.18)',

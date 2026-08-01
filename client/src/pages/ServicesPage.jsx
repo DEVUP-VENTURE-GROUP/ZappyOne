@@ -140,7 +140,12 @@ export default function ServicesPage() {
   const [services, setServices] = useState([]);
   // Seed the query from ?q= so voice search from the Home page lands here.
   const [query, setQuery] = useState(() => searchParams.get('q') || '');
-  const [category, setCategory] = useState('all');
+  // Seed the active category from ?category= so a Home tile (e.g. Phones) opens
+  // the catalog already filtered to that vertical instead of the "All" tab.
+  const [category, setCategory] = useState(() => {
+    const c = searchParams.get('category');
+    return c && CATEGORIES.some((cat) => cat.key === c) ? c : 'all';
+  });
   const [spotOpen, setSpotOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);

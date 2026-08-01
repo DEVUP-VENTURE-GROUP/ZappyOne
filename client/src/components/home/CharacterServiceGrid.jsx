@@ -18,7 +18,11 @@ export default function CharacterServiceGrid() {
   const isMobile = useIsMobile();
 
   const handleServiceClick = (svc) => {
-    nav(svc.id === 'more' ? '/services' : `/services?q=${encodeURIComponent(svc.label)}`);
+    // Open the catalog pre-filtered to this category (via its catalogKey) rather
+    // than text-searching the label — a label search lands on the "All" tab and
+    // shows unrelated services. 'More' opens the full catalog unfiltered.
+    if (svc.id === 'more' || !svc.catalogKey) nav('/services');
+    else nav(`/services?category=${encodeURIComponent(svc.catalogKey)}`);
   };
 
   return (
