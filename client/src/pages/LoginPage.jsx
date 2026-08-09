@@ -6,6 +6,7 @@ import { Phone, ArrowRight, ChevronLeft, CheckCircle2, Loader2, Zap, Shield, Sta
 import { useRequestOtpMutation, useLoginUserMutation, useUpdateMeMutation } from '../services/api';
 import { CONSUMER_URL } from '../config/hosts';
 import ResendOtp from '../components/auth/ResendOtp';
+import OtpOrbit from '../components/auth/OtpOrbit';
 import { setAuth, updateProfile } from '../modules/auth/authSlice';
 import { ZappyLogo } from '../components/common/ZappyLogo';
 import toast from 'react-hot-toast';
@@ -64,6 +65,11 @@ export default function LoginPage() {
   const dispatch = useDispatch();
   const isLoading = loggingUser;
   const otpRefs   = useRef([]);
+  const otpRowRef = useRef(null);
+  const verifiedAuth = useRef(null);   // server response held while the ring lands
+  const landingTimer = useRef(null);
+  const landedRef    = useRef(false);
+  const [otpStatus, setOtpStatus] = useState('idle'); // idle|verifying|success|error
 
   const otp = otpDigits.join('');
 
@@ -151,24 +157,41 @@ export default function LoginPage() {
     setStep('phone');
   }
 
+  // The orbit animation runs while the server checks the code; the session is
+  // applied when the ring lands. A timeout fallback guarantees the user is never
+  // stranded if the animation callback doesn't fire.
+  function finishLogin() {
+    const r = verifiedAuth.current;
+    if (!r || landedRef.current) return;
+    landedRef.current = true;
+    window.clearTimeout(landingTimer.current);
+    const profile = r.user;
+    dispatch(setAuth({ accessToken: r.accessToken, refreshToken: r.refreshToken, profile, role: 'user' }));
+    if (!profile.name || !profile.email) {
+      setPendingProfile(profile);
+      setName(profile.name || '');
+      setEmail(profile.email || '');
+      setStep('complete');
+      return;
+    }
+    nav(loc.state?.from || '/', { replace: true });
+  }
+
   async function verify() {
+    setOtpStatus('verifying');
     try {
       const r = await loginUser({
         phone,
         otp,
         ...(name.trim() ? { name: name.trim() } : {}),
       }).unwrap();
-      const profile = r.user;
-      dispatch(setAuth({ accessToken: r.accessToken, refreshToken: r.refreshToken, profile, role: 'user' }));
-      if (!profile.name || !profile.email) {
-        setPendingProfile(profile);
-        setName(profile.name || '');
-        setEmail(profile.email || '');
-        setStep('complete');
-        return;
-      }
-      nav(loc.state?.from || '/', { replace: true });
+      verifiedAuth.current = r;
+      landedRef.current = false;
+      setOtpStatus('success');
+      landingTimer.current = window.setTimeout(finishLogin, 2200);
     } catch (err) {
+      setOtpStatus('error');
+      window.setTimeout(() => setOtpStatus('idle'), 650);
       const detail = typeof err.data?.details?.[0] === 'string' ? err.data.details[0] : err.data?.error || 'Verification failed';
       toast.error(detail);
       console.error('[verify] status:', err.status, 'body:', err.data);
@@ -396,7 +419,18 @@ export default function LoginPage() {
                 >
                   <p className="text-center text-sm text-slate-500 mb-8 font-medium">Enter the 6-digit code sent to +91 {phone}</p>
 
-                  <div className="flex justify-between gap-1 sm:gap-2 mb-8" onPaste={handleOtpPaste}>
+                  <motion.div
+                    ref={otpRowRef}
+                    className="relative mb-8"
+                    animate={{ height: otpStatus === 'idle' ? 'auto' : 236 }}
+                    transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+                  >
+                  <div
+                    className={`flex justify-between gap-1 sm:gap-2 transition-opacity duration-300 ${
+                      otpStatus === 'idle' ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                    }`}
+                    onPaste={handleOtpPaste}
+                  >
                     {otpDigits.map((d, i) => (
                       <input
                         key={i}
@@ -411,6 +445,17 @@ export default function LoginPage() {
                       />
                     ))}
                   </div>
+
+                    <OtpOrbit
+                      digits={otpDigits}
+                      status={otpStatus}
+                      accent="#0d5cf3"
+                      tone="light"
+                      inputRefs={otpRefs}
+                      containerRef={otpRowRef}
+                      onSuccessComplete={finishLogin}
+                    />
+                  </motion.div>
 
                   <div className="flex flex-col gap-4 mb-8">
                     <div className="flex items-center justify-between w-full">

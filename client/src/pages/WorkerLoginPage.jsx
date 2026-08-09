@@ -9,6 +9,7 @@ import {
 import { useRequestOtpMutation, useLoginWorkerMutation,
   useLoginWorkerPasswordMutation, useForgotWorkerPasswordMutation, useResetWorkerPasswordMutation } from '../services/api';
 import ResendOtp from '../components/auth/ResendOtp';
+import OtpOrbit from '../components/auth/OtpOrbit';
 import { setAuth } from '../modules/auth/authSlice';
 import { ZappyLogo } from '../components/common/ZappyLogo';
 import toast from 'react-hot-toast';
@@ -68,6 +69,11 @@ export default function WorkerLoginPage() {
   const loc      = useLocation();
   const dispatch = useDispatch();
   const otpRefs  = useRef([]);
+  const otpRowRef = useRef(null);
+  const verifiedAuth = useRef(null);   // server response held while the ring lands
+  const landingTimer = useRef(null);
+  const landedRef    = useRef(false);
+  const [otpStatus, setOtpStatus] = useState('idle'); // idle|verifying|success|error
 
   const otp = otpDigits.join('');
 
@@ -141,7 +147,20 @@ export default function WorkerLoginPage() {
     setStep('phone');
   }
 
+  // Hands off to the orbit animation: the ring only turns green once the server
+  // has actually confirmed the code, and the session is applied when the
+  // animation lands (with a timeout fallback so login can never get stuck).
+  function finishLogin() {
+    const r = verifiedAuth.current;
+    if (!r || landedRef.current) return;
+    landedRef.current = true;
+    window.clearTimeout(landingTimer.current);
+    dispatch(setAuth({ accessToken: r.accessToken, refreshToken: r.refreshToken, profile: r.worker, role: 'worker' }));
+    nav(loc.state?.from || '/worker', { replace: true });
+  }
+
   async function verify() {
+    setOtpStatus('verifying');
     try {
       const r = await loginWorker({
         phone,
@@ -149,10 +168,13 @@ export default function WorkerLoginPage() {
         ...(name.trim()  ? { name: name.trim() } : {}),
         ...(skills.length ? { skills }            : {}),
       }).unwrap();
-      const profile = r.worker;
-      dispatch(setAuth({ accessToken: r.accessToken, refreshToken: r.refreshToken, profile, role: 'worker' }));
-      nav(loc.state?.from || '/worker', { replace: true });
+      verifiedAuth.current = r;
+      landedRef.current = false;
+      setOtpStatus('success');
+      landingTimer.current = window.setTimeout(finishLogin, 2200);
     } catch (err) {
+      setOtpStatus('error');
+      window.setTimeout(() => setOtpStatus('idle'), 650);
       const detail = typeof err.data?.details?.[0] === 'string' ? err.data.details[0] : err.data?.error || 'Verification failed';
       toast.error(detail);
     }
@@ -515,8 +537,20 @@ export default function WorkerLoginPage() {
                     transition={{ duration: 0.3 }}
                     className="w-full"
                   >
-                    {/* OTP boxes */}
-                    <div className="flex justify-between gap-1.5 sm:gap-2 mb-6" onPaste={handleOtpPaste}>
+                    {/* OTP boxes — the orbit animation overlays this row while
+                        verifying, so the row itself is untouched. */}
+                    <motion.div
+                      ref={otpRowRef}
+                      className="relative mb-6"
+                      animate={{ height: otpStatus === 'idle' ? 'auto' : 236 }}
+                      transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+                    >
+                    <div
+                      className={`flex justify-between gap-1.5 sm:gap-2 transition-opacity duration-300 ${
+                        otpStatus === 'idle' ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                      }`}
+                      onPaste={handleOtpPaste}
+                    >
                       {otpDigits.map((d, i) => (
                         <input
                           key={i}
@@ -535,6 +569,17 @@ export default function WorkerLoginPage() {
                         />
                       ))}
                     </div>
+
+                      <OtpOrbit
+                        digits={otpDigits}
+                        status={otpStatus}
+                        accent="#F59E0B"
+                        tone="dark"
+                        inputRefs={otpRefs}
+                        containerRef={otpRowRef}
+                        onSuccessComplete={finishLogin}
+                      />
+                    </motion.div>
 
                     {/* Resend + change */}
                     <div className="flex items-center justify-between mb-6">
