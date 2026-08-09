@@ -6,18 +6,17 @@ import { AlertTriangle, Heart, SearchX } from 'lucide-react';
 import PageTransition from '../common/PageTransition';
 import CatalogHeader from './CatalogHeader';
 import FacetRail from './FacetRail';
-import FeaturedBanner from './FeaturedBanner';
 import ServiceCard from './ServiceCard';
 import ServiceTile from './ServiceTile';
 import CategoryStrip from './CategoryStrip';
-import { BannerSkeleton, FacetRailSkeleton, ServiceGridSkeleton } from './CatalogSkeletons';
+import { FacetRailSkeleton, ServiceGridSkeleton } from './CatalogSkeletons';
 import useServiceCatalog from '../../hooks/useServiceCatalog';
 import useFavorites from '../../hooks/useFavorites';
 import { useGetAvailablePromosQuery } from '../../services/api';
 import { selectAuth } from '../../modules/auth/authSlice';
 import { getCategoryConfig, themeVars } from '../../constants/catalogCategories';
 import { applyFacet, buildFacets, categoryStats, sortForDisplay } from '../../lib/serviceFacets';
-import { buildPromoMap, headlinePromo } from '../../lib/servicePromos';
+import { buildPromoMap } from '../../lib/servicePromos';
 import { searchServices } from '../../lib/serviceSearch';
 
 /**
@@ -101,7 +100,6 @@ export default function ServiceCatalogView({ categoryKey = null }) {
     return { list: next, noExactMatch: true };
   }, [pool, facets, activeFacet, savedOnly, favorites, query]);
 
-  const banner = useMemo(() => headlinePromo(promoMap, pool), [promoMap, pool]);
 
   /* ── URL sync ──────────────────────────────────────────────────────────── */
 
@@ -142,9 +140,6 @@ export default function ServiceCatalogView({ categoryKey = null }) {
     setSavedOnly(false);
   }, []);
 
-  const scrollToGrid = useCallback(() => {
-    document.getElementById('catalog-grid')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, []);
 
   /* ── Render ────────────────────────────────────────────────────────────── */
 
@@ -178,12 +173,6 @@ export default function ServiceCatalogView({ categoryKey = null }) {
         </CatalogHeader>
 
         <div className="page-container mt-5 space-y-6">
-          {loading ? (
-            <BannerSkeleton />
-          ) : (
-            !error && <FeaturedBanner category={category} promo={banner} onCta={scrollToGrid} />
-          )}
-
           {/* All-services view: the verticals are the primary navigation. */}
           {!categoryKey && !loading && !error && (
             <CategoryStrip services={services} title="Browse by category" />

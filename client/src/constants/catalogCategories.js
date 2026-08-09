@@ -130,6 +130,48 @@ export const CAR_ILLUSTRATION_RULES = [
   [kw('inspection', 'inspect', 'pre-purchase', 'pre purchase', 'checkup', 'health'), 'inspection'],
 ];
 
+/** Phone-repair keyword → illustration (identity-first, order matters). */
+export const MOBILE_ILLUSTRATION_RULES = [
+  [kw('camera', 'lens'),                                          'phone-camera'],
+  // Board BEFORE audio: "Micro-soldering" contains "mic", and the board terms
+  // are more specific. 'mic ' (trailing space) avoids matching "micro".
+  [kw('motherboard', 'mother board', 'logic board', ' ic ', 'micro-solder', 'microsolder', 'chip'), 'phone-board'],
+  [kw('charging', 'charge', 'wireless charg', 'charging port'),   'phone-charging'],
+  [kw('microphone', 'mic ', 'speaker', 'earpiece', 'loudspeaker', 'audio', 'sound'), 'phone-audio'],
+  [kw('water', 'liquid'),                                         'phone-water'],
+  [kw('screen', 'display', 'touch', 'digitizer', 'glass', 'panel', 'line'), 'phone-screen'],
+  [kw('battery'),                                                 'battery'],
+  // software / os / data / buttons / dead device → the plain handset
+  [kw('phone', 'device', 'software', 'os', 'data', 'button', 'volume', 'turning', 'power'), 'phone'],
+];
+
+/** Laptop-repair keyword → illustration. */
+export const LAPTOP_ILLUSTRATION_RULES = [
+  [kw('screen', 'display', 'panel'),                             'laptop-screen'],
+  [kw('ssd', 'ram', 'nvme', 'storage', 'upgrade', 'memory'),    'laptop-storage'],
+  // 'motherboard'/'logic board' — NOT bare 'board' (that matches "keyboard").
+  [kw('motherboard', 'mother board', 'logic board', 'chip'),    'phone-board'],
+  [kw('battery', 'charging', 'magsafe', 'adapter', 'power', 'port'), 'battery'],
+  // keyboard / thermal / fan / slow / virus / data → the laptop body
+  [kw('laptop', 'keyboard', 'trackpad', 'thermal', 'fan', 'dust', 'clean', 'slow', 'virus', 'malware', 'data', 'software'), 'laptop'],
+];
+
+/** Appliance / smart-device keyword → illustration. */
+export const APPLIANCE_ILLUSTRATION_RULES = [
+  [kw('cctv', 'surveillance', 'camera'),                        'cctv'],
+  [kw('tv', 'television'),                                      'tv'],
+  [kw('router', 'wifi', 'network', 'internet'),                'router'],
+  [kw('washing', 'laundry', 'dryer', 'fridge', 'refrigerator', 'freezer', 'geyser', 'water heater', 'purifier', 'microwave', 'oven', 'chimney', 'stove', 'dishwasher'), 'appliance'],
+];
+
+/** Event-crew keyword → illustration (codes are event_*, so match on specifics first). */
+export const EVENT_ILLUSTRATION_RULES = [
+  [kw('sound', 'light', 'dj', ' av', 'lighting'),               'event-av'],
+  [kw('photo', 'video', 'camera'),                             'cctv'],
+  [kw('security', 'usher', 'guard'),                           'helper'],
+  [kw('clean'),                                                'cleaning'],
+];
+
 export const GENERIC_ILLUSTRATION_RULES = [
   [kw('screen', 'display', 'touch'),          'phone-screen'],
   [kw('battery', 'charging', 'charger'),      'battery'],
@@ -168,10 +210,6 @@ const CONFIG = {
     illustration: 'periodic-service',
     illustrationRules: CAR_ILLUSTRATION_RULES,
     searchPlaceholder: 'What service are you looking for?',
-    // Bento mosaic: mixed tile sizes, illustration + label only. Flip this on
-    // for any vertical whose art is strong enough to carry a tile on its own
-    // (the automotive set is). Everything else uses the denser 'compact' card.
-    cardStyle: 'mosaic',
     banner: {
       eyebrow: 'Doorstep, not the workshop',
       title: 'Car care that\ncomes to your address',
@@ -229,6 +267,7 @@ const CONFIG = {
     eyebrow: 'Zappy Device Care',
     theme: THEMES.violet,
     illustration: 'phone',
+    illustrationRules: MOBILE_ILLUSTRATION_RULES,
     banner: {
       eyebrow: 'No shop drop-off',
       title: 'Phone repairs\nat your address',
@@ -255,6 +294,7 @@ const CONFIG = {
     eyebrow: 'Zappy Device Care',
     theme: THEMES.slate,
     illustration: 'laptop',
+    illustrationRules: LAPTOP_ILLUSTRATION_RULES,
     banner: {
       eyebrow: 'Desk-side service',
       title: 'Laptop repairs\nwhere you work',
@@ -280,6 +320,7 @@ const CONFIG = {
     eyebrow: 'Zappy Smart Home',
     theme: THEMES.cyan,
     illustration: 'smart-home',
+    illustrationRules: APPLIANCE_ILLUSTRATION_RULES,
     banner: {
       eyebrow: 'Out of the box to online',
       title: 'Smart devices,\nset up at home',
@@ -303,6 +344,7 @@ const CONFIG = {
     eyebrow: 'Zappy Home Care',
     theme: THEMES.amber,
     illustration: 'appliance',
+    illustrationRules: APPLIANCE_ILLUSTRATION_RULES,
     banner: {
       eyebrow: 'No hauling it to a shop',
       title: 'Appliance repair\nat home',
@@ -435,6 +477,7 @@ const CONFIG = {
     eyebrow: 'Zappy Events',
     theme: THEMES.violet,
     illustration: 'event',
+    illustrationRules: EVENT_ILLUSTRATION_RULES,
     banner: {
       eyebrow: 'Hosting soon?',
       title: 'Crew for\nyour event',
@@ -515,6 +558,7 @@ export const ALL_CATEGORY = {
   theme: THEMES.blue,
   illustration: 'tools',
   searchPlaceholder: 'What service are you looking for?',
+  cardStyle: 'mosaic',
   match: () => true,
   banner: {
     eyebrow: 'One app, every job',
@@ -550,7 +594,12 @@ export const CATALOG_CATEGORIES = [
     illustration: conf.illustration || 'tools',
     illustrationRules: conf.illustrationRules || GENERIC_ILLUSTRATION_RULES,
     searchPlaceholder: conf.searchPlaceholder || 'What service are you looking for?',
-    cardStyle: conf.cardStyle || 'compact',
+    // Bento mosaic — mixed-size, illustration-forward tiles — is the catalog's
+    // default presentation for every vertical. The illustration set covers all
+    // of them (automotive + the generic device/home/people drawings), so the
+    // tiles carry their own meaning. A vertical can opt back into the denser
+    // detail card with `cardStyle: 'compact'` in its CONFIG entry.
+    cardStyle: conf.cardStyle || 'mosaic',
     banner: conf.banner || null,
     facets: conf.facets || [POPULAR, QUICK, BUDGET],
   };

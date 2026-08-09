@@ -626,6 +626,95 @@ const DRAWINGS = {
     </>
   ),
 
+  'phone-camera': () => (
+    <>
+      <rect x="17" y="6" width="26" height="46" rx="6" fill={BODY} />
+      <rect x="20" y="12" width="20" height="32" rx="3" fill={PALE} />
+      <circle cx="30" cy="26" r="7.5" fill={WHITE} />
+      <circle cx="30" cy="26" r="7.5" fill="none" stroke={INK} strokeWidth="2" />
+      <circle cx="30" cy="26" r="3.2" fill={BODY} />
+      <circle cx="35.5" cy="20.5" r="1.6" fill={WARM} />
+      <circle cx="30" cy="48.5" r="2" fill={PALE} />
+    </>
+  ),
+
+  'phone-charging': () => (
+    <>
+      <rect x="17" y="6" width="26" height="46" rx="6" fill={BODY} />
+      <rect x="20" y="12" width="20" height="32" rx="3" fill={PALE} />
+      <circle cx="30" cy="48.5" r="2" fill={PALE} />
+      <Bolt x={30} y={27} s={1.05} />
+    </>
+  ),
+
+  'phone-audio': () => (
+    <>
+      <rect x="15" y="6" width="26" height="46" rx="6" fill={BODY} />
+      <rect x="18" y="12" width="20" height="32" rx="3" fill={PALE} />
+      <circle cx="28" cy="48.5" r="2" fill={PALE} />
+      <rect x="24" y="24" width="8" height="8" rx="1.5" fill={INK} />
+      <g fill="none" stroke={WARM} strokeWidth="2.6" strokeLinecap="round">
+        <path d="M45 22a10 10 0 0 1 0 16" />
+        <path d="M50 16a18 18 0 0 1 0 28" />
+      </g>
+    </>
+  ),
+
+  'phone-water': () => (
+    <>
+      <rect x="15" y="8" width="26" height="46" rx="6" fill={BODY} />
+      <rect x="18" y="14" width="20" height="32" rx="3" fill={PALE} />
+      <circle cx="28" cy="50" r="2" fill={PALE} />
+      <Drop x={28} y={24} s={1.15} />
+      <Drop x={47} y={12} s={0.7} />
+      <Drop x={51} y={24} s={0.6} />
+    </>
+  ),
+
+  'phone-board': () => (
+    <>
+      <rect x="10" y="12" width="44" height="40" rx="5" fill={BODY} />
+      <rect x="21" y="23" width="18" height="18" rx="2.5" fill={INK} />
+      <rect x="26" y="28" width="8" height="8" rx="1" fill={PALE} />
+      <g stroke={INK} strokeWidth="2" strokeLinecap="round">
+        <path d="M21 28h-6M21 34h-6M45 28h-6M45 34h-6M28 23v-6M34 23v-6M28 47v-6M34 47v-6" />
+      </g>
+      <g fill={WARM}>
+        <circle cx="16" cy="19" r="2" />
+        <circle cx="48" cy="45" r="2" />
+      </g>
+    </>
+  ),
+
+  'laptop-screen': () => (
+    <>
+      <rect x="12" y="12" width="40" height="27" rx="3" fill={INK} />
+      <rect x="15" y="15" width="34" height="21" rx="2" fill={PALE} />
+      <path d="M4 42h56l-4 7H8Z" fill={BODY} />
+      <path
+        d="M24 18l8 6-5 4 7 7"
+        fill="none"
+        stroke={WARM}
+        strokeWidth="2.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </>
+  ),
+
+  'laptop-storage': () => (
+    <>
+      <rect x="12" y="12" width="40" height="27" rx="3" fill={INK} />
+      <rect x="15" y="15" width="34" height="21" rx="2" fill={PALE} />
+      <path d="M4 42h56l-4 7H8Z" fill={BODY} />
+      <rect x="24" y="19" width="16" height="12" rx="2" fill={BODY} />
+      <g stroke={PALE} strokeWidth="1.6" strokeLinecap="round">
+        <path d="M28 31v3M32 31v3M36 31v3" />
+      </g>
+      <circle cx="28" cy="25" r="1.4" fill={PALE} />
+    </>
+  ),
+
   laptop: () => (
     <>
       <rect x="12" y="12" width="40" height="27" rx="3" fill={INK} />
