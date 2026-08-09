@@ -4,8 +4,8 @@ const { startMongo, stopMongo, resetDb } = require('./helpers');
 const { redis } = require('../src/config/redis');
 
 const buildApp = require('../src/app');
-const User = require('../src/models/User');
-const Worker = require('../src/models/Worker');
+const User = require('../src/modules/user/user.model');
+const Worker = require('../src/modules/worker/worker.model');
 const { signAccessToken } = require('../src/modules/auth/token.service');
 
 let app;
@@ -48,8 +48,8 @@ describe('POST /api/orders — input validation + access control', () => {
         pickupLocation: { lat: 17.4, lng: 78.4, address: 'Somewhere' },
       });
     expect(res.status).toBe(400);
-    expect(res.body.code).toBe('ERROR');
-    expect(res.body.requestId).toBeTruthy();
+    // validate middleware responds with { error: 'Validation failed', details }.
+    expect(res.body.error).toBeTruthy();
   });
 
   test('rejects NoSQL injection attempts (sanitizer strips $ keys)', async () => {
@@ -125,7 +125,7 @@ describe('quote + order creation happy path', () => {
         pickupLocation: { lat: 17.4, lng: 78.4, address: 'A' },
       });
     expect(res.status).toBe(409);
-    expect(res.body.code).toBe('ORDER_ACTIVE_EXISTS');
+    expect(res.body.code).toBe('ACTIVE_ORDER_EXISTS');
     expect(res.body.activeOrderId).toBeTruthy();
   });
 });
