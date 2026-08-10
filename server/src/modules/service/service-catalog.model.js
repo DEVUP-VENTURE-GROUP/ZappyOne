@@ -24,7 +24,13 @@ const serviceCatalogSchema = new mongoose.Schema(
 
     estimatedDurationMinutes: { type: Number, required: true, default: 30 },
 
-    // Price hints & floor ranges
+    // Fixed market service price (the actual job — e.g. a puncture is ₹150 at any
+    // shop). When set (> 0) the pricing engine switches to the ADDITIVE model:
+    // servicePrice + travel + platform, then surge/tier — instead of a floor that
+    // swallows travel. 0 = legacy floor/meter model (backward compatible).
+    servicePricePaise:  { type: Number, default: 0 },
+
+    // Price hints & floor ranges (priceRangeMax doubles as a safety ceiling)
     priceRangeMinPaise: { type: Number, required: true },
     priceRangeMaxPaise: { type: Number, required: true },
     inspectionFeePaise: { type: Number, default: 15000 }, // default ₹150 inspection fee if required

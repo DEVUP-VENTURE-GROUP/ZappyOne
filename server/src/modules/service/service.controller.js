@@ -181,7 +181,7 @@ async function adminUpdateService(req, res, next) {
     const { code } = req.params;
     const {
       name, description, shortDescription,
-      priceRangeMinRs, priceRangeMaxRs, inspectionFeeRs,
+      priceRangeMinRs, priceRangeMaxRs, inspectionFeeRs, servicePriceRs,
       estimatedDurationMinutes, imageUrl, coverImage, galleryImages,
       isActive, isFeatured,
       category, subcategory, sortOrder,
@@ -198,6 +198,8 @@ async function adminUpdateService(req, res, next) {
     if (priceRangeMinRs          != null) update.priceRangeMinPaise = Math.round(Number(priceRangeMinRs) * 100);
     if (priceRangeMaxRs          != null) update.priceRangeMaxPaise = Math.round(Number(priceRangeMaxRs) * 100);
     if (inspectionFeeRs          != null) update.inspectionFeePaise = Math.round(Number(inspectionFeeRs) * 100);
+    // Fixed service price → additive model (0 keeps legacy floor model).
+    if (servicePriceRs           != null) update.servicePricePaise  = Math.round(Number(servicePriceRs) * 100);
 
     if (estimatedDurationMinutes != null) update.estimatedDurationMinutes = Number(estimatedDurationMinutes);
     if (isActive                 != null) update.isActive = Boolean(isActive);

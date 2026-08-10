@@ -1056,10 +1056,40 @@ async function calculatePrice({ origin, dest, service, userId, priority = 'norma
     const ServiceCatalog = require('../service/service-catalog.model');
     const catalogEntry = await ServiceCatalog.findOne(
       { code: service },
-      'priceRangeMinPaise priceRangeMaxPaise'
+      'servicePricePaise priceRangeMinPaise priceRangeMaxPaise'
     ).lean();
 
-    if (catalogEntry) {
+    if (catalogEntry && catalogEntry.servicePricePaise > 0) {
+      // ── ADDITIVE MODEL ────────────────────────────────────────────────────
+      // Total = fixed service price (the actual job) + travel + platform, then
+      // surge, then ceiling. The service price is the worker's core earning; travel
+      // and platform are ADDED on top (never swallowed), so distance genuinely
+      // affects the bill and the breakdown is transparent to the customer.
+      const surge = Math.max(result.surgeMultiplier || 1, _pendingSurge || 1);
+      const travelPaise = result.paise?.distanceFee ?? 0;
+      let platformPaise = result.paise?.platformFee;
+      if (platformPaise == null) {
+        try { platformPaise = (await getActiveConfig()).platformFeePaise ?? 0; } catch { platformPaise = 0; }
+      }
+      const preSurgePaise = catalogEntry.servicePricePaise + travelPaise + platformPaise;
+      let finalPaise = Math.round(preSurgePaise * surge);
+      // Safety ceiling (only if a sensible max above the service price is configured)
+      if (
+        catalogEntry.priceRangeMaxPaise &&
+        catalogEntry.priceRangeMaxPaise > catalogEntry.servicePricePaise &&
+        finalPaise > catalogEntry.priceRangeMaxPaise
+      ) {
+        finalPaise = catalogEntry.priceRangeMaxPaise;
+        result.ceilingApplied = true;
+      }
+      result.pricingModel   = 'additive';
+      result.servicePrice   = paiseToRupees(catalogEntry.servicePricePaise);
+      result.travelFee      = paiseToRupees(travelPaise);
+      result.platformFee    = paiseToRupees(platformPaise);
+      result.surgeMultiplier = surge;
+      result.total          = paiseToRupees(finalPaise);
+      result.paise = { ...(result.paise || {}), servicePrice: catalogEntry.servicePricePaise, total: finalPaise };
+    } else if (catalogEntry) {
       // Step 1 — Floor on raw pre-surge price
       if (catalogEntry.priceRangeMinPaise) {
         const rawPaise = result.paise?.total ?? Math.round((result.total || 0) * 100);

@@ -70,6 +70,7 @@ export default function ServicePricingCard({ svc, accent, gradFrom, gradTo, tabC
       minRs:            rupees(svc.priceRangeMinPaise),
       maxRs:            rupees(svc.priceRangeMaxPaise),
       inspectionFeeRs:  rupees(svc.inspectionFeePaise || 15000),
+      servicePriceRs:   rupees(svc.servicePricePaise || 0),
       durationMin:      svc.estimatedDurationMinutes,
       isActive:         svc.isActive,
       isFeatured:       svc.isFeatured || false,
@@ -120,6 +121,7 @@ export default function ServicePricingCard({ svc, accent, gradFrom, gradTo, tabC
         priceRangeMinRs: form.minRs,
         priceRangeMaxRs: form.maxRs,
         inspectionFeeRs: form.inspectionFeeRs,
+        servicePriceRs: form.servicePriceRs,
         estimatedDurationMinutes: form.durationMin,
         isActive: form.isActive,
         isFeatured: form.isFeatured,
@@ -268,10 +270,20 @@ export default function ServicePricingCard({ svc, accent, gradFrom, gradTo, tabC
                 </FieldRow>
               </div>
 
+              {/* Service price — additive model */}
+              <div>
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-1.5 block">
+                  <Tag size={10} /> Fixed Service Price (the job itself)
+                </label>
+                <FieldRow label="Service Price (₹)" hint="Market rate for the work. When set (>0), price = this + travel + platform, then surge/tier. 0 = legacy model.">
+                  <NumInput value={form.servicePriceRs} min="0" step="10" prefix="₹" onChange={f('servicePriceRs')} />
+                </FieldRow>
+              </div>
+
               {/* Pricing Floor & Inspection */}
               <div>
                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-1.5 block">
-                  <Tag size={10} /> Base Price Ranges & Inspection Fee
+                  <Tag size={10} /> Floor / Ceiling &amp; Inspection Fee
                 </label>
                 <div className="grid grid-cols-3 gap-3">
                   <FieldRow label="Min Floor (₹)" hint="Hard minimum quote floor">
