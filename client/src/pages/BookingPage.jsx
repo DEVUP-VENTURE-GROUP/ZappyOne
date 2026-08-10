@@ -427,7 +427,7 @@ export default function BookingPage() {
   const nudgeTimer = useRef(null);
   const fileInputRef = useRef(null);
 
-  const [fetchQuote,     { data: quoteData, isFetching: quoting }] = useLazyGetQuoteQuery();
+  const [fetchQuote,     { data: quoteData, isFetching: quoting, isError: quoteFailed, error: quoteError }] = useLazyGetQuoteQuery();
   const [createOrder,    { isLoading: creating }]                  = useCreateOrderMutation();
   const [presignUpload]                                             = usePresignUploadMutation();
   const [fetchNearby,    { data: nearbyData }]                     = useLazyGetNearbyWorkersQuery();
@@ -1120,10 +1120,25 @@ export default function BookingPage() {
               pricingConfig={pricingConfig}
             />
           ) : (
-            <div className="rounded-2xl bg-white ring-1 ring-slate-100 p-4" style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }}>
-              <p className="text-sm text-slate-400 font-medium text-center py-2">
-                Could not load fare estimate
+            <div className="rounded-2xl bg-white ring-1 ring-slate-100 p-4 text-center space-y-2" style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }}>
+              <p className="text-sm text-slate-500 font-medium">
+                {quoteFailed ? "Couldn't load the fare — check your connection and retry." : 'Fare estimate unavailable'}
               </p>
+              {quoteError?.status && (
+                <p className="text-[10px] text-slate-300 font-mono">ref: {quoteError.status}</p>
+              )}
+              {location && (
+                <button
+                  onClick={() => fetchQuote({
+                    service, pickupLat: location.lat, pickupLng: location.lng,
+                    ...(deviceBrand && { deviceBrand }), ...(deviceModel && { deviceModel }),
+                    ...(deviceSeries && { deviceSeries }), ...(partsTier && { partsTier }),
+                    ...(vehicleType && { vehicleType }),
+                  })}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition">
+                  Retry
+                </button>
+              )}
             </div>
           )}
         </motion.div>
