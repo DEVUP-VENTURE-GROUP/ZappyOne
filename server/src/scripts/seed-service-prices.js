@@ -1,11 +1,13 @@
 /**
- * Seed the fixed "service price" (the actual job's market rate) per service, which
- * switches those services to the ADDITIVE pricing model:
- *   total = servicePrice + travel + platform, then surge x tier.
+ * One-time fixup for the service catalog:
+ *   1. Short, clear display NAMES ("Bike Puncture" instead of
+ *      "Doorstep Bike & Scooter Puncture Repair"). The old long text is kept as the
+ *      shortDescription so nothing is lost.
+ *   2. A fixed SERVICE PRICE (the job's market rate) → switches the service to the
+ *      additive pricing model (servicePrice + travel + platform, then surge x tier).
  *
- * These are STARTING market-rate estimates (₹) — review and adjust to your real
- * rates in the admin Service editor. A service left at 0 keeps the legacy model.
- * Idempotent (updates by code).
+ * Prices are starting estimates in ₹ — tune each in the admin Service editor.
+ * Idempotent (updates by code); a code not in the catalog is skipped.
  *
  *   node src/scripts/seed-service-prices.js
  */
@@ -15,51 +17,63 @@ const ServiceCatalog = require('../modules/service/service-catalog.model');
 
 const MONGO_URI = process.env.MONGO_URI || process.env.MONGODB_URI || 'mongodb://localhost:27017/hyperlocal';
 
-// code → fixed service price in RUPEES (the job itself, before travel/platform/surge).
-const PRICES = {
-  // ── Vehicle ──────────────────────────────────────────────
-  puncture:            100,   // bike puncture
-  car_puncture:        150,
-  bike_chain_issue:    150,
-  bike_brake_issue:    200,
-  bike_battery_issue:  250,
-  bike_wash:           150,
-  bike_service:        400,
-  bike_breakdown:      300,
-  car_wash:            300,
-  car_detailing:      1500,
-  battery_jump_start:  200,
-  car_breakdown:       350,
-  fuel_delivery:       100,   // service fee; fuel billed separately
-  car_service:         600,
-  // ── Home / generic ───────────────────────────────────────
-  electrical:          250,
-  plumbing:            250,
-  ac_repair:           500,
-  carpenter:           300,
-  cleaning:            600,
-  painting:            400,
-  helper:              400,
-  // ── Pet ──────────────────────────────────────────────────
-  pet_grooming:        500,
-  pet_walking:         150,
-  pet_transport:       300,
-  pet_sitting:         250,
+// code → { name: short display name, price: fixed service price in ₹ (0 = don't set) }
+const SERVICES = {
+  // ── Bike ──────────────────────────────────────────────
+  bike_puncture:            { name: 'Bike Puncture',        price: 120 },
+  bike_foam_wash:           { name: 'Bike Wash',            price: 150 },
+  bike_periodic_service:    { name: 'Bike Service',         price: 400 },
+  bike_towing:              { name: 'Bike Towing',          price: 0   }, // towing priced by distance
+  bike_chain_issue:         { name: 'Bike Chain Repair',    price: 150 },
+  bike_brake_issue:         { name: 'Bike Brake Repair',    price: 200 },
+  bike_battery_issue:       { name: 'Bike Battery',         price: 250 },
+  bike_breakdown:           { name: 'Bike Breakdown Help',  price: 300 },
+  // ── Car ───────────────────────────────────────────────
+  car_puncture:             { name: 'Car Puncture',         price: 150 },
+  car_foam_wash_detailing:  { name: 'Car Wash',             price: 500 },
+  periodic_car_service:     { name: 'Car Service',          price: 800 },
+  car_ac_gas_refill:        { name: 'Car AC Service',       price: 600 },
+  car_battery_replacement:  { name: 'Car Battery',          price: 300 },
+  battery_jump_start:       { name: 'Jump Start',           price: 200 },
+  fuel_delivery:            { name: 'Fuel Delivery',        price: 100 },
+  car_breakdown:            { name: 'Car Breakdown Help',   price: 350 },
+  // ── Home ──────────────────────────────────────────────
+  fan_installation:         { name: 'Fan Installation',     price: 250 },
+  mcb_switch_repair:        { name: 'Switch / MCB Repair',  price: 250 },
+  tap_repair:               { name: 'Tap Repair',           price: 200 },
+  geyser_install:           { name: 'Geyser Service',       price: 400 },
+  door_lock_install:        { name: 'Door Lock Repair',     price: 300 },
+  washing_machine_repair:   { name: 'Washing Machine Repair', price: 350 },
+  refrigerator_repair:      { name: 'Fridge Repair',        price: 400 },
+  // ── Pet ───────────────────────────────────────────────
+  pet_grooming:             { name: 'Pet Grooming',         price: 500 },
+  pet_walking:              { name: 'Pet Walking',          price: 150 },
 };
 
 async function run() {
   await mongoose.connect(MONGO_URI);
-  console.log('Seeding fixed service prices (additive model)…');
-  let updated = 0;
-  for (const [code, rupees] of Object.entries(PRICES)) {
-    const res = await ServiceCatalog.updateOne(
-      { code },
-      { $set: { servicePricePaise: Math.round(rupees * 100) } }
-    );
-    if (res.matchedCount) { updated += 1; console.log(`  ✓ ${code} → ₹${rupees}`); }
-    else console.log(`  – ${code} not in catalog (skipped)`);
+  console.log('Fixing service names + prices…\n');
+  let renamed = 0, priced = 0;
+  for (const [code, { name, price }] of Object.entries(SERVICES)) {
+    const svc = await ServiceCatalog.findOne({ code }).lean();
+    if (!svc) { console.log(`  – ${code} (not in catalog)`); continue; }
+
+    const set = {};
+    if (name && svc.name !== name) {
+      // Preserve the old descriptive name as the subtitle if none is set.
+      if (!svc.shortDescription) set.shortDescription = svc.name;
+      set.name = name;
+    }
+    if (price > 0) set.servicePricePaise = Math.round(price * 100);
+
+    if (Object.keys(set).length) {
+      await ServiceCatalog.updateOne({ code }, { $set: set });
+      if (set.name) renamed += 1;
+      if (set.servicePricePaise) priced += 1;
+      console.log(`  ✓ ${code} → "${name}"${price > 0 ? `  ₹${price}` : ''}`);
+    }
   }
-  console.log(`✅ Set service price on ${updated} services. Adjust in admin as needed.`);
+  console.log(`\n✅ Renamed ${renamed}, priced ${priced}. Adjust anything in the admin Service editor.`);
   await mongoose.disconnect();
 }
 
