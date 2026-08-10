@@ -20,7 +20,7 @@ export const SERVICE_CATEGORY_GROUPS = [
   { key: 'laptop',     label: 'Laptop Repair',          match: (s) => s.category === 'laptop' || s.code?.startsWith('laptop_') },
   { key: 'car',        label: 'Car Services',           match: (s) => s.category === 'car' || s.code?.startsWith('car_') || s.code === 'periodic_car_service' },
   { key: 'bike',       label: 'Bike Services',          match: (s) => s.category === 'bike' || s.code?.startsWith('bike_') },
-  { key: 'event',      label: 'Event Crew',             match: (s) => s.code?.startsWith('event_') },
+  { key: 'event',      label: 'Event Crew',             match: (s) => s.category === 'event' || s.code?.startsWith('event_') },
   { key: 'pet',        label: 'Pet Care',               match: (s) => s.category === 'pet' || s.code?.startsWith('pet_') },
   { key: 'family',     label: 'Family & Elder Assist',  match: (s) => s.category === 'helper' },
   { key: 'smart',      label: 'Smart Home Devices',     match: (s) => s.category === 'other' },
