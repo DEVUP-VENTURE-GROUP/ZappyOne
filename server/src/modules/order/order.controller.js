@@ -580,7 +580,15 @@ async function rescheduleOrder(req, res, next) {
     if (!['searching', 'created'].includes(order.status)) {
       return res.status(400).json({ error: 'Order can only be rescheduled before a worker is assigned' });
     }
+    // Mongoose casts invalid Date to null (= "book now"), which would silently
+    // convert a scheduled order into an immediate one. Reject explicitly.
     const newTime = new Date(req.body.scheduledAt);
+    if (!req.body.scheduledAt || isNaN(newTime.getTime())) {
+      return res.status(400).json({ error: 'scheduledAt is required and must be a valid ISO date' });
+    }
+    if (newTime.getTime() <= Date.now()) {
+      return res.status(400).json({ error: 'scheduledAt must be in the future' });
+    }
     order.scheduledAt = newTime;
     await order.save();
     res.json({ order });

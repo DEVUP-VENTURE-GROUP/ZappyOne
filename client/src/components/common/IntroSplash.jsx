@@ -38,7 +38,9 @@ export default function IntroSplash({ onComplete }) {
       // Play for exactly 5.5 seconds
       const timer = setTimeout(() => {
         setIsVisible(false);
-        localStorage.setItem('hasSeenIntro', 'true');
+        // Safari private mode / quota errors would otherwise throw inside the
+        // setTimeout, skipping onComplete and stalling parents that depend on it.
+        try { localStorage.setItem('hasSeenIntro', 'true'); } catch { /* ignore */ }
         if (onComplete) onComplete();
       }, 5500);
       return () => clearTimeout(timer);

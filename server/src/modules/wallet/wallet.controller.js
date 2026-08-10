@@ -30,7 +30,8 @@ async function listTransactions(req, res, next) {
       kind: req.auth.role,
       id: req.auth.sub,
       page: Number(req.query.page),
-      limit: Number(req.query.limit),
+      // Cap client-supplied limit — same reason as the notifications endpoint.
+      limit: Math.min(Number(req.query.limit) || 50, 100),
       reason: req.query.reason,
     });
     res.json(result);
