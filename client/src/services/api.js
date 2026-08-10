@@ -1219,7 +1219,7 @@ export const api = createApi({
 
     // --- Surge Info ---
     getSurgeInfo: b.query({
-      query: ({ lat, lng }) => `/pricing/surge?lat=${lat}&lng=${lng}`,
+      query: ({ lat, lng }) => `/pricing/surge-info?lat=${lat}&lng=${lng}`,
     }),
 
     // --- Diagnosis Flow ---
