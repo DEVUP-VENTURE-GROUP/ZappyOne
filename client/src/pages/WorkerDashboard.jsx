@@ -799,6 +799,10 @@ export default function WorkerDashboard() {
   );
 }
 
+// Seconds the worker has to accept an offer, by tier (express is fastest).
+// Fallback is 35s (see `?? 35` below).
+const TIER_DISPLAY_SEC = { express: 20, priority: 30, standard: 35 };
+
 function OfferModal({ offer, onAccept, onReject, accepting }) {
   const isExpress  = offer.tier === 'express';
   const isPriority = offer.tier === 'priority';
