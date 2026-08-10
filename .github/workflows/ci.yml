@@ -31,6 +31,8 @@ jobs:
           cache: npm
           cache-dependency-path: client/package-lock.json
       - run: npm ci
+      - name: Lint (no-undef — catches runtime ReferenceErrors the build can't)
+        run: npm run lint
       - name: Build
         run: npm run build
       - name: Dependency audit (report-only)

@@ -638,7 +638,7 @@ export default function LocationPicker({ onConfirm, onCancel, serviceLabel, serv
       stateRef.current.ready = false;
       setMapReady(false);
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps — map mounts once for the whole screen
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- map mounts once for the whole screen
 
   async function _loadNearbyWorkers(map, loc) {
     const workerEmoji = SERVICE_WORKER_EMOJI[service] ?? '👷';
