@@ -126,7 +126,7 @@ async function analyzeImage({ imageUrls, catalog, model }) {
 
       if (res.status === 429 || res.status >= 500) {
         lastErr = new Error(`OpenRouter ${res.status}`);
-        await new Promise((r) => setTimeout(r, 400 * (attempt + 1)));
+        await new Promise((r) => { setTimeout(r, 400 * (attempt + 1)); });
         continue;
       }
       if (!res.ok) {

@@ -1253,7 +1253,7 @@ function recordOutcomes(acceptedBy, acceptOutcome, rejected, ignored) {
 /* ─── Helpers ───────────────────────────────────────────────────── */
 
 function sleep(ms) {
-  return new Promise((r) => setTimeout(r, ms));
+  return new Promise((r) => { setTimeout(r, ms); });
 }
 
 async function markOrderFailed(order, reason) {

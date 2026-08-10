@@ -14,8 +14,8 @@ export async function downscaleImage(fileOrBlob, maxDim = 1024, quality = 0.85) 
   ctx.drawImage(bitmap, 0, 0, w, h);
   bitmap.close?.();
 
-  const blob = await new Promise((resolve) =>
-    canvas.toBlob((b) => resolve(b), 'image/jpeg', quality)
-  );
+  const blob = await new Promise((resolve) => {
+    canvas.toBlob((b) => resolve(b), 'image/jpeg', quality);
+  });
   return blob || fileOrBlob;
 }

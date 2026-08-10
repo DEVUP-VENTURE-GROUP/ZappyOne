@@ -454,6 +454,27 @@ export default function BookingPage() {
     return () => { clearTimeout(initial); clearInterval(nudgeTimer.current); };
   }, [stage]);
 
+  // The full arg set for /api/orders/quote. Extracted so the primary call and
+  // every retry site (SmartPricingPanel refresh, "Couldn't load fare" Retry
+  // button) stay in sync. A retry that skipped e.g. `dropLat`/`dropLng` would
+  // silently re-price a car-towing job as if the drop were 50m from pickup
+  // (was a real bug); keeping it all here means every future arg is picked up
+  // by every retry automatically.
+  function buildQuoteArgs(lat, lng) {
+    return {
+      service, pickupLat: lat, pickupLng: lng,
+      ...(deviceBrand && { deviceBrand }),
+      ...(deviceModel && { deviceModel }),
+      ...(deviceSeries && { deviceSeries }),
+      ...(partsTier && { partsTier }),
+      ...(vehicleType && { vehicleType }),
+      ...(isTowing && { vehicleType: service === 'car_towing' ? 'car' : 'bike' }),
+      ...(isTowing && towDest && { dropLat: towDest.lat, dropLng: towDest.lng }),
+      ...(pricingModel !== 'standard' && { pricingModel }),
+      ...(pricingModel === 'hourly' && { estimatedHours }),
+    };
+  }
+
   async function onLocationConfirmed(loc) {
     // Test 34: warn if user confirmed location while GPS was inaccurate (>150m).
     // This commonly happens when booking from a moving vehicle or inside a building.
@@ -470,18 +491,7 @@ export default function BookingPage() {
     // Also stash coords so the visitor session inherits city/district/state.
     try { localStorage.setItem('zappy:lastCoords', JSON.stringify({ lat: loc.lat, lng: loc.lng })); } catch { /* ignore */ }
     trackSearch({ category: service, lat: loc.lat, lng: loc.lng, result: 'served', userType: 'user' });
-    fetchQuote({
-      service, pickupLat: loc.lat, pickupLng: loc.lng,
-      ...(deviceBrand && { deviceBrand }),
-      ...(deviceModel && { deviceModel }),
-      ...(deviceSeries && { deviceSeries }),
-      ...(partsTier && { partsTier }),
-      ...(vehicleType && { vehicleType }),
-      ...(isTowing && { vehicleType: service === 'car_towing' ? 'car' : 'bike' }),
-      ...(isTowing && towDest && { dropLat: towDest.lat, dropLng: towDest.lng }),
-      ...(pricingModel !== 'standard' && { pricingModel }),
-      ...(pricingModel === 'hourly' && { estimatedHours }),
-    });
+    fetchQuote(buildQuoteArgs(loc.lat, loc.lng));
     fetchNearby({ lat: loc.lat, lng: loc.lng });
     fetchSurge({ lat: loc.lat, lng: loc.lng });
   }
@@ -1110,7 +1120,7 @@ export default function BookingPage() {
               quote={q}
               mode={pricingMode}
               onModeChange={setPricingMode}
-              onRefetch={() => fetchQuote({ service, pickupLat: location.lat, pickupLng: location.lng })}
+              onRefetch={() => fetchQuote(buildQuoteArgs(location.lat, location.lng))}
               accentGradient={meta.gradient}
               selectedTier={selectedTier}
               onTierChange={setSelectedTier}
@@ -1129,12 +1139,7 @@ export default function BookingPage() {
               )}
               {location && (
                 <button
-                  onClick={() => fetchQuote({
-                    service, pickupLat: location.lat, pickupLng: location.lng,
-                    ...(deviceBrand && { deviceBrand }), ...(deviceModel && { deviceModel }),
-                    ...(deviceSeries && { deviceSeries }), ...(partsTier && { partsTier }),
-                    ...(vehicleType && { vehicleType }),
-                  })}
+                  onClick={() => fetchQuote(buildQuoteArgs(location.lat, location.lng))}
                   className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition">
                   Retry
                 </button>

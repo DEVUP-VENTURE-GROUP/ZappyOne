@@ -138,10 +138,12 @@ async function createOrder({ userId, service, subCategory, pickupLocation, dropL
 
   let pricing = await Promise.race([
     pricingService.quote({ origin, dest, service, userId, priority, vehicleType, deviceBrand, deviceModel, deviceSeries, partsTier, pricingModel, estimatedHours }),
-    new Promise((_, reject) => setTimeout(
-      () => reject(Object.assign(new Error('Pricing service timed out. Please try again.'), { status: 503, code: 'PRICING_TIMEOUT' })),
-      appConfig.dispatch.pricingTimeoutMs
-    )),
+    new Promise((_, reject) => {
+      setTimeout(
+        () => reject(Object.assign(new Error('Pricing service timed out. Please try again.'), { status: 503, code: 'PRICING_TIMEOUT' })),
+        appConfig.dispatch.pricingTimeoutMs,
+      );
+    }),
   ]);
 
   // Apply tier multiplier (standard 1.0×, priority 1.2×, express 1.4×).
