@@ -383,8 +383,14 @@ export const api = createApi({
       invalidatesTags: (r, e, a) => [{ type: 'Order', id: a?.id ?? a }],
     }),
     workerArrive: b.mutation({
-      query: (id) => ({ url: `/orders/${id}/arrived`, method: 'POST' }),
-      invalidatesTags: (r, e, id) => [{ type: 'Order', id }],
+      // Body is optional — server falls back to last known Redis GPS ping when
+      // client can't get a fresh fix, but sending fresh coords is preferred.
+      query: ({ id, lat, lng } = {}) => ({
+        url: `/orders/${id}/arrived`,
+        method: 'POST',
+        body: (lat != null && lng != null) ? { lat, lng } : undefined,
+      }),
+      invalidatesTags: (r, e, arg) => [{ type: 'Order', id: arg?.id ?? arg }],
     }),
     workerStartService: b.mutation({
       query: ({ id, otp }) => ({ url: `/orders/${id}/start-service`, method: 'POST', body: { otp } }),
