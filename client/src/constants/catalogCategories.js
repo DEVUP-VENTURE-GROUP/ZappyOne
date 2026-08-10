@@ -663,7 +663,7 @@ export function getCategoryConfig(raw) {
 export function getCategoryForService(service) {
   if (!service) return ALL_CATEGORY;
   const key = groupKeyForService(service);
-  return CATALOG_CATEGORIES.find((c) => c.key === key) || ALL_CATEGORY;
+  return buildCatalogCategories().find((c) => c.key === key) || ALL_CATEGORY;
 }
 
 /**
