@@ -1099,6 +1099,17 @@ export const api = createApi({
     adminCreateCatalogService: b.mutation({
       query: (body) => ({ url: '/catalog/admin/services', method: 'POST', body }),
     }),
+    // Admin category taxonomy
+    adminGetCategories: b.query({ query: () => '/catalog/admin/categories' }),
+    adminCreateCategory: b.mutation({
+      query: (body) => ({ url: '/catalog/admin/categories', method: 'POST', body }),
+    }),
+    adminUpdateCategory: b.mutation({
+      query: ({ key, ...body }) => ({ url: `/catalog/admin/categories/${key}`, method: 'PUT', body }),
+    }),
+    adminDeleteCategory: b.mutation({
+      query: (key) => ({ url: `/catalog/admin/categories/${key}`, method: 'DELETE' }),
+    }),
     adminDeleteCatalogService: b.mutation({
       query: (code) => ({ url: `/catalog/admin/services/${code}`, method: 'DELETE' }),
     }),
@@ -1992,6 +2003,10 @@ export const {
   useAdminUpdateCatalogServiceMutation,
   useAdminCreateCatalogServiceMutation,
   useAdminDeleteCatalogServiceMutation,
+  useAdminGetCategoriesQuery,
+  useAdminCreateCategoryMutation,
+  useAdminUpdateCategoryMutation,
+  useAdminDeleteCategoryMutation,
   useAdminServiceActiveOrderCountQuery,
   useAdminGetVerticalsQuery,
   useAdminUpdateVerticalMutation,

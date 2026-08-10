@@ -15,6 +15,7 @@ import useFavorites from '../../hooks/useFavorites';
 import { useGetAvailablePromosQuery } from '../../services/api';
 import { selectAuth } from '../../modules/auth/authSlice';
 import { getCategoryConfig, themeVars } from '../../constants/catalogCategories';
+import { useCategoryGroups } from '../../lib/serviceCatalogGroups';
 import { applyFacet, buildFacets, categoryStats, sortForDisplay } from '../../lib/serviceFacets';
 import { buildPromoMap } from '../../lib/servicePromos';
 import { searchServices } from '../../lib/serviceSearch';
@@ -53,7 +54,8 @@ export default function ServiceCatalogView({ categoryKey = null }) {
   const { services, loading, error, refetch } = useServiceCatalog();
   const { favorites, count: savedCount } = useFavorites();
 
-  const category = useMemo(() => getCategoryConfig(categoryKey), [categoryKey]);
+  const groups = useCategoryGroups(); // re-render + recompute when admin taxonomy loads
+  const category = useMemo(() => getCategoryConfig(categoryKey), [categoryKey, groups]);
   const mosaic = category.cardStyle === 'mosaic';
 
   const [query, setQuery] = useState(() => searchParams.get('q') || '');

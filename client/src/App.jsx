@@ -8,6 +8,7 @@ import { useFCM } from './hooks/useFCM.jsx';
 import useTelemetry from './hooks/useTelemetry';
 import { prefetchMainTabs, onIdle } from './lib/routePrefetch';
 import { prefetchServiceCatalog } from './hooks/useServiceCatalog';
+import { loadCategories } from './hooks/useCategories';
 import { adminPath } from './config/admin';
 import { getSubdomainRedirect, isExternalRedirect } from './config/hosts';
 import { RequireAuth } from './components/common/RequireAuth';
@@ -108,6 +109,10 @@ export default function App() {
       window.location.replace(subdomainRedirect);
     }
   }, [subdomainRedirect]);
+
+  // Load the admin-managed category taxonomy once at startup so the customer
+  // catalog, worker skill pickers and booking all reflect admin categories.
+  useEffect(() => { loadCategories(); }, []);
 
   // Warm the main tab chunks once the browser is idle after first paint, so
   // tapping Home/Bookings/Track/Profile/Book is instant (no chunk-load spinner).

@@ -2,7 +2,8 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ChevronRight } from 'lucide-react';
 import ServiceIllustration from './ServiceIllustration';
-import { CATALOG_CATEGORIES, themeVars } from '../../constants/catalogCategories';
+import { buildCatalogCategories, themeVars } from '../../constants/catalogCategories';
+import { useCategoryGroups } from '../../lib/serviceCatalogGroups';
 import { easeSoft } from '../../lib/animations';
 
 /**
@@ -14,7 +15,8 @@ import { easeSoft } from '../../lib/animations';
  * reads as one system while still being colour-coded per vertical.
  */
 export default function CategoryStrip({ services = [], activeKey, title = 'Browse by category' }) {
-  const tiles = CATALOG_CATEGORIES.map((category) => ({
+  useCategoryGroups(); // re-render when the admin category taxonomy loads/changes
+  const tiles = buildCatalogCategories().filter((c) => c.showInCustomer !== false).map((category) => ({
     category,
     count: services.reduce((n, s) => n + (category.match(s) ? 1 : 0), 0),
   })).filter((t) => t.count > 0 && t.category.key !== activeKey);

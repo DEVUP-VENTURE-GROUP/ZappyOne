@@ -27,7 +27,7 @@
  * the DB's own.
  */
 
-import { SERVICE_CATEGORY_GROUPS, groupKeyForService } from '../lib/serviceCatalogGroups';
+import { groupKeyForService, getGroups } from '../lib/serviceCatalogGroups';
 import { kw, isFeatured, fasterThan, cheaperThan } from '../lib/serviceFacets';
 
 /* ── Themes ───────────────────────────────────────────────────────────────────
@@ -579,10 +579,12 @@ export const ALL_CATEGORY = {
  * portal already uses. A group with no entry in CONFIG still gets a working
  * page from the defaults — it just isn't individually art-directed yet.
  */
-export const CATALOG_CATEGORIES = [
-  ...SERVICE_CATEGORY_GROUPS,
-  { key: 'other_services', label: 'Other Services' },
-].map((group) => {
+/**
+ * Build a display config for one group. Built-in verticals use their rich CONFIG
+ * (facets, art direction); an admin-created category falls back to its DB theme +
+ * label + generic facets/illustration — a working, on-brand page with no code.
+ */
+function buildCategoryConfig(group) {
   const conf = CONFIG[group.key] || {};
   return {
     key: group.key,
@@ -590,20 +592,28 @@ export const CATALOG_CATEGORIES = [
     title: conf.title || group.label,
     subtitle: conf.subtitle || 'Booked in the app, done at your address',
     eyebrow: conf.eyebrow || 'Zappy Catalog',
-    theme: conf.theme || THEMES.blue,
+    theme: conf.theme || group.theme || THEMES.blue,
     illustration: conf.illustration || 'tools',
     illustrationRules: conf.illustrationRules || GENERIC_ILLUSTRATION_RULES,
     searchPlaceholder: conf.searchPlaceholder || 'What service are you looking for?',
-    // Bento mosaic — mixed-size, illustration-forward tiles — is the catalog's
-    // default presentation for every vertical. The illustration set covers all
-    // of them (automotive + the generic device/home/people drawings), so the
-    // tiles carry their own meaning. A vertical can opt back into the denser
-    // detail card with `cardStyle: 'compact'` in its CONFIG entry.
     cardStyle: conf.cardStyle || 'mosaic',
     banner: conf.banner || null,
     facets: conf.facets || [POPULAR, QUICK, BUDGET],
+    showInCustomer: group.showInCustomer !== false,
   };
-});
+}
+
+/**
+ * Every configurable vertical, in display order — built LIVE from the runtime
+ * category store so admin-managed categories are included. A group with no CONFIG
+ * entry still gets a working page from the defaults; it just isn't art-directed yet.
+ */
+export function buildCatalogCategories() {
+  return [
+    ...getGroups(),
+    { key: 'other_services', label: 'Other Services' },
+  ].map(buildCategoryConfig);
+}
 
 /**
  * Legacy / cross-surface keys that must keep resolving.
@@ -636,16 +646,17 @@ export function normalizeCategoryKey(raw) {
   if (!raw) return null;
   const key = String(raw).toLowerCase().trim();
   if (key === 'all') return 'all';
-  if (CATALOG_CATEGORIES.some((c) => c.key === key)) return key;
+  const cats = buildCatalogCategories();
+  if (cats.some((c) => c.key === key)) return key;
   const aliased = ALIASES[key];
-  return aliased && CATALOG_CATEGORIES.some((c) => c.key === aliased) ? aliased : null;
+  return aliased && cats.some((c) => c.key === aliased) ? aliased : null;
 }
 
 /** Config for a category key, or the All-Services config. Never returns null. */
 export function getCategoryConfig(raw) {
   const key = normalizeCategoryKey(raw);
   if (!key || key === 'all') return ALL_CATEGORY;
-  return CATALOG_CATEGORIES.find((c) => c.key === key) || ALL_CATEGORY;
+  return buildCatalogCategories().find((c) => c.key === key) || ALL_CATEGORY;
 }
 
 /** The one category a service belongs to — same answer the worker portal gives. */

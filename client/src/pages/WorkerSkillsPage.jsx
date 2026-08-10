@@ -13,7 +13,7 @@ import {
 } from '../services/api';
 import {
   groupCatalog, groupKeyForService,
-  DEVICE_EXPERTISE_GROUPS, CATEGORY_BRANDS,
+  DEVICE_EXPERTISE_GROUPS, CATEGORY_BRANDS, useCategoryGroups,
 } from '../lib/serviceCatalogGroups';
 
 // Per-group icon + accent. Keyed by the group keys in serviceCatalogGroups.js.
@@ -74,7 +74,8 @@ export default function WorkerSkillsPage() {
 
   // Build the grouped catalog. Group order and membership come straight from the
   // shared catalog-grouping module, so this mirrors the customer booking flow.
-  const groups = useMemo(() => groupCatalog(catalog?.list ?? []), [catalog]);
+  const taxonomy = useCategoryGroups(); // re-group when the admin taxonomy loads/changes
+  const groups = useMemo(() => groupCatalog(catalog?.list ?? []), [catalog, taxonomy]);
 
   // Seed the open groups ONCE, after both the catalog and the profile are ready:
   // any category the worker already has a pick in starts expanded so they see it

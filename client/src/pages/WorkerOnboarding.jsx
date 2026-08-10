@@ -12,7 +12,7 @@ import {
 import {
   useWorkerCompleteOnboardingMutation, useGetWorkerMeQuery, useListServicesQuery,
 } from '../services/api';
-import { groupCatalog } from '../lib/serviceCatalogGroups';
+import { groupCatalog, useCategoryGroups } from '../lib/serviceCatalogGroups';
 import { ZappyLogo } from '../components/common/ZappyLogo';
 import toast from 'react-hot-toast';
 
@@ -33,7 +33,8 @@ export default function WorkerOnboarding({ onComplete }) {
 
   // Skills come straight from the live catalog, grouped into the same categories
   // customers see — so a worker opts into services by their real dispatch codes.
-  const groups = useMemo(() => groupCatalog(catalog?.list ?? []), [catalog]);
+  const taxonomy = useCategoryGroups(); // re-group when the admin taxonomy loads/changes
+  const groups = useMemo(() => groupCatalog(catalog?.list ?? []), [catalog, taxonomy]);
   const selectedSet = useMemo(() => new Set(skills), [skills]);
 
   function toggleSkill(id) {

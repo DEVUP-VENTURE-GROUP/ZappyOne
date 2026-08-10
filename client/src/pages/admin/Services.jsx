@@ -9,6 +9,7 @@ const NEW_SVC_CATEGORIES = ['mobile', 'laptop', 'car', 'bike', 'home', 'helper',
 const BLANK_SVC = { code: '', name: '', category: 'home', priceRangeMinRs: '', priceRangeMaxRs: '', estimatedDurationMinutes: 30 };
 import { TABS, CAT_MAP } from './components/services/_service-shared';
 import ServicePricingCard from './components/services/ServicePricingCard';
+import CategoryManager from './components/services/CategoryManager';
 import { HomeCategoryPanel, MobileCategoryPanel, LaptopCategoryPanel, CarCategoryPanel, BikeCategoryPanel, ConstructionCategoryPanel } from './components/services/CategoryPanels';
 
 export default function Services() {
@@ -83,6 +84,9 @@ export default function Services() {
           <Plus size={15} /> New Service
         </button>
       </div>
+
+      {/* Category taxonomy manager — create/edit/delete the tabs services group under */}
+      <CategoryManager />
 
       <div className="flex gap-2 flex-wrap">
         {TABS.map(({ key, label, Icon, color, bg, border }) => (

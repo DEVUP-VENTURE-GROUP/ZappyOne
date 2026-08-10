@@ -15,6 +15,7 @@ const optionalAuth = (req, res, next) => {
 };
 
 // Public Catalog & Dynamic Engine APIs
+router.get('/categories', ctrl.listCategories);
 router.get('/services', ctrl.listServices);
 router.get('/services/brands', ctrl.listBrands);
 router.get('/services/models', ctrl.listModels);
@@ -30,6 +31,12 @@ router.get('/invoices/:orderId', authenticate, ctrl.getInvoice);
 router.get('/heatmap/worker', authenticate, requireRole('worker'), ctrl.getWorkerHeatmap);
 
 // Admin Catalog Management
+// Admin category taxonomy CRUD
+router.get('/admin/categories', authenticate, requireRole('admin'), ctrl.adminListCategories);
+router.post('/admin/categories', authenticate, requireRole('admin'), ctrl.adminCreateCategory);
+router.put('/admin/categories/:key', authenticate, requireRole('admin'), ctrl.adminUpdateCategory);
+router.delete('/admin/categories/:key', authenticate, requireRole('admin'), ctrl.adminDeleteCategory);
+
 router.get('/admin/services', authenticate, requireRole('admin'), ctrl.adminListServices);
 router.post('/admin/services', authenticate, requireRole('admin'), ctrl.adminCreateService);
 router.put('/admin/services/:code', authenticate, requireRole('admin'), ctrl.adminUpdateService);
