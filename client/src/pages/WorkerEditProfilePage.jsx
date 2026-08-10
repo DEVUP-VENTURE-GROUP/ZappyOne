@@ -7,31 +7,12 @@ import {
   Target, TrendingUp, Star, ChevronRight, Award,
   Loader2, BarChart2, Shield, KeyRound,
 } from 'lucide-react';
-import { useGetWorkerMeQuery, useUpdateWorkerProfileMutation, useSetWorkerCredentialsMutation } from '../services/api';
+import { useGetWorkerMeQuery, useUpdateWorkerProfileMutation, useSetWorkerCredentialsMutation, useListServicesQuery } from '../services/api';
 import toast from 'react-hot-toast';
 
-const ALL_SKILLS = [
-  { code: 'electrical',            label: 'Electrical' },
-  { code: 'plumbing',              label: 'Plumbing' },
-  { code: 'ac_repair',             label: 'AC Repair' },
-  { code: 'carpenter',             label: 'Carpenter' },
-  { code: 'helper',                label: 'Helper' },
-  { code: 'puncture',              label: 'Puncture Repair' },
-  { code: 'cleaning',              label: 'Cleaning' },
-  { code: 'painting',              label: 'Painting' },
-  { code: 'screen_replacement',    label: 'Screen Replacement' },
-  { code: 'battery_replacement',   label: 'Battery Replacement' },
-  { code: 'charging_issue',        label: 'Charging Issue' },
-  { code: 'speaker_mic_issue',     label: 'Speaker / Mic' },
-  { code: 'software_issue',        label: 'Software Issue' },
-  { code: 'water_damage_check',    label: 'Water Damage Check' },
-  { code: 'mason',                 label: 'Mason' },
-  { code: 'battery_jump_start',    label: 'Battery Jump Start' },
-  { code: 'fuel_delivery',         label: 'Fuel Delivery' },
-  { code: 'bike_wash',             label: 'Bike Wash' },
-  { code: 'car_wash',              label: 'Car Wash' },
-  { code: 'minor_roadside_repair', label: 'Roadside Repair' },
-];
+// Skills come from the LIVE admin catalog (/api/catalog/services), never a hardcoded
+// list — a hardcoded set silently drifts from the catalog, and dispatch matches
+// worker.skills to order.service by exact code, so a missing code = no eligible worker.
 
 const NAV_SECTIONS = [
   {
@@ -80,6 +61,11 @@ export default function WorkerEditProfilePage() {
   const me = meData?.worker;
   const [updateProfile, { isLoading: isSaving }] = useUpdateWorkerProfileMutation();
   const [setCredentials, { isLoading: savingCreds }] = useSetWorkerCredentialsMutation();
+  const { data: catalog } = useListServicesQuery();
+  // Live skill options, sorted by name — mirrors the customer catalog exactly.
+  const skillOptions = (catalog?.list ?? [])
+    .map((s) => ({ code: s.code, label: s.name }))
+    .sort((a, b) => a.label.localeCompare(b.label));
 
   const [name,   setName]   = useState('');
   const [bio,    setBio]    = useState('');
@@ -205,7 +191,7 @@ export default function WorkerEditProfilePage() {
             <span className="ml-auto text-xs text-slate-400">{skills.length}/10 selected</span>
           </div>
           <div className="flex flex-wrap gap-2">
-            {ALL_SKILLS.map(({ code, label }) => {
+            {skillOptions.map(({ code, label }) => {
               const sel = skills.includes(code);
               return (
                 <button key={code}

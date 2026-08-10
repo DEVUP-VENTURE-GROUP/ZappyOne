@@ -7,7 +7,8 @@ import {
   Zap, Star, Wallet, TrendingUp, Clock, BadgeCheck, Wrench, Users
 } from 'lucide-react';
 import { useRequestOtpMutation, useLoginWorkerMutation,
-  useLoginWorkerPasswordMutation, useForgotWorkerPasswordMutation, useResetWorkerPasswordMutation } from '../services/api';
+  useLoginWorkerPasswordMutation, useForgotWorkerPasswordMutation, useResetWorkerPasswordMutation,
+  useListServicesQuery } from '../services/api';
 import ResendOtp from '../components/auth/ResendOtp';
 import OtpOrbit from '../components/auth/OtpOrbit';
 import { setAuth } from '../modules/auth/authSlice';
@@ -15,17 +16,12 @@ import { ZappyLogo } from '../components/common/ZappyLogo';
 import toast from 'react-hot-toast';
 import SEO, { LOGIN_SCHEMA, BASE_URL } from '../components/SEO';
 
-/* ── Skills ──────────────────────────────────────────────────────────── */
-const SKILLS = [
-  'puncture','plumbing','electrical','helper','carpenter','ac_repair',
-  'screen_replacement','battery_replacement','mason','bike_wash','car_wash',
-];
-const SKILL_LABELS = {
-  puncture: 'Puncture', plumbing: 'Plumbing', electrical: 'Electrical',
-  helper: 'Helper', carpenter: 'Carpenter', ac_repair: 'AC Repair',
-  screen_replacement: 'Screen Fix', battery_replacement: 'Battery',
-  mason: 'Mason', bike_wash: 'Bike Wash', car_wash: 'Car Wash',
-};
+/* ── Skills ──────────────────────────────────────────────────────────────
+   Onboarding skills come from the LIVE admin catalog, never a hardcoded list —
+   worker registration must match the customer catalog, and dispatch matches
+   worker.skills to order.service by exact code, so a hardcoded/subset list would
+   leave new admin services with no eligible workers. Sourced inside the component
+   via useListServicesQuery. */
 
 /* ── Stats for the showcase ──────────────────────────────────────────── */
 const STATS = [
@@ -54,6 +50,10 @@ export default function WorkerLoginPage() {
   const pendingOtp = useRef(null);
   const [requestOtp, { isLoading: sending }]      = useRequestOtpMutation();
   const [loginWorker, { isLoading: loggingIn }]    = useLoginWorkerMutation();
+  const { data: catalog } = useListServicesQuery();
+  const skillOptions = (catalog?.list ?? [])
+    .map((s) => ({ code: s.code, name: s.name }))
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   // Credential login (#2): password path + forgot/reset
   const [loginMode, setLoginMode]   = useState('otp'); // 'otp' | 'password'
@@ -613,14 +613,17 @@ export default function WorkerLoginPage() {
                         </div>
                         <div>
                           <label className="block text-[11px] font-bold text-white/40 lg:text-slate-500 uppercase tracking-widest mb-2.5">Select Your Skills</label>
-                          <div className="flex flex-wrap gap-2">
-                            {SKILLS.map(s => {
-                              const on = skills.includes(s);
+                          <div className="flex flex-wrap gap-2 max-h-52 overflow-y-auto">
+                            {skillOptions.length === 0 && (
+                              <p className="text-[12px] text-white/40 lg:text-slate-400">Loading services…</p>
+                            )}
+                            {skillOptions.map(({ code, name }) => {
+                              const on = skills.includes(code);
                               return (
                                 <button
-                                  key={s}
+                                  key={code}
                                   type="button"
-                                  onClick={() => setSkills(p => on ? p.filter(x => x !== s) : [...p, s])}
+                                  onClick={() => setSkills(p => on ? p.filter(x => x !== code) : [...p, code])}
                                   className={`px-3.5 py-2 rounded-xl text-[13px] font-semibold transition-all border ${
                                     on
                                       ? 'bg-amber-500 text-slate-900 border-amber-500 shadow-sm shadow-amber-500/20'
@@ -628,7 +631,7 @@ export default function WorkerLoginPage() {
                                   }`}
                                 >
                                   {on && <CheckCircle2 size={13} className="inline-block mr-1 -mt-0.5" />}
-                                  {SKILL_LABELS[s]}
+                                  {name}
                                 </button>
                               );
                             })}
