@@ -3,24 +3,38 @@
  * Appears as a dismissible bottom strip on HomePage and OrderTrackingPage.
  * Disappears permanently once permission is granted.
  */
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, X, BellOff } from 'lucide-react';
 import { useNotificationPermission, FIREBASE_CONFIGURED } from '../../hooks/useFCM.jsx';
 
+const PROMPT_KEY = 'notif_banner_dismissed';        // session — re-ask each visit
+const DENIED_KEY = 'notif_banner_denied_dismissed'; // permanent — not in-app fixable
+
 export default function NotificationBanner() {
   const perm = useNotificationPermission();
-  const [dismissed, setDismissed] = useState(
-    () => sessionStorage.getItem('notif_banner_dismissed') === '1'
-  );
+  const isDenied = perm === 'denied';
+  const [dismissed, setDismissed] = useState(false);
 
-  // Don't render if: granted, not configured, not supported, or dismissed this session
+  // Evaluate dismissal against the right store once permission resolves. The
+  // "blocked" (denied) banner isn't actionable inside the app — the user has to
+  // change browser settings — so dismissing it should stick forever rather than
+  // nag on every session. The "enable" prompt stays session-scoped so we can
+  // re-ask on a later visit.
+  useEffect(() => {
+    const deniedDismissed = localStorage.getItem(DENIED_KEY) === '1';
+    const promptDismissed = sessionStorage.getItem(PROMPT_KEY) === '1';
+    setDismissed(isDenied ? deniedDismissed : promptDismissed);
+  }, [isDenied]);
+
+  // Don't render if: granted, not configured, not supported, or dismissed
   if (perm === 'granted' || perm === 'not_supported' || perm === 'not_configured' || dismissed) {
     return null;
   }
 
   function dismiss() {
-    sessionStorage.setItem('notif_banner_dismissed', '1');
+    if (isDenied) localStorage.setItem(DENIED_KEY, '1');
+    else sessionStorage.setItem(PROMPT_KEY, '1');
     setDismissed(true);
   }
 
@@ -33,16 +47,14 @@ export default function NotificationBanner() {
     }
   }
 
-  const isDenied = perm === 'denied';
-
   return (
     <AnimatePresence>
       <motion.div
-        initial={{ y: 60, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        exit={{ y: 60, opacity: 0 }}
-        transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-        className="fixed bottom-[72px] inset-x-0 z-40 px-4 pointer-events-none"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
+        className="fixed bottom-[calc(104px_+_env(safe-area-inset-bottom))] inset-x-0 z-40 px-4 pointer-events-none"
       >
         <div
           className="w-full max-w-lg mx-auto flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl pointer-events-auto"
