@@ -11,13 +11,14 @@ import {
   CheckCircle, Lock, TrendingUp, MapPin, Loader2,
   Laptop, Tv, Wifi, Camera, Heart, PartyPopper, Dog,
   ShieldAlert, Cpu, MonitorSmartphone, Repeat2,
-  Tag, Headphones, ArrowRight, ThumbsUp,
+  Tag, Headphones, ArrowRight, ThumbsUp, X,
 } from 'lucide-react';
 import { selectAuth, selectIsAuthed } from '../modules/auth/authSlice';
 import toast from 'react-hot-toast';
 import { useT } from '../i18n/I18nProvider';
 import { useListOrdersQuery, useGetGamificationQuery, useGetRecommendationsQuery, useListServicesQuery, useRebookOrderMutation, useListNotificationsQuery } from '../services/api';
 import { useGeolocation, loadGeoLocation } from '../hooks/useGeolocation';
+import { saveGeoLocation } from '../utils/geoCache';
 import { reverseGeocode } from '../utils/reverseGeocode';
 import { serviceLabel } from '../constants/services';
 import { ZappyLogo } from '../components/common/ZappyLogo';
@@ -552,6 +553,18 @@ export default function HomePage() {
   const [locDetecting, setLocDetecting] = useState(false);
 
   useEffect(() => {
+    // If we already have a recent, trusted location (GPS sample or a location
+    // the user picked last visit), show it and DON'T re-gate — just resolve its
+    // name in the background. This is what stops the "Set your location" sheet
+    // re-appearing on every reload.
+    const cached = loadGeoLocation();
+    if (cached) {
+      reverseGeocode(cached.lat, cached.lng)
+        .then(({ primary, secondary }) => setLoc({ primary, secondary, loading: false, lat: cached.lat, lng: cached.lng }))
+        .catch(() => setLoc({ primary: 'Location set', secondary: null, loading: false, lat: cached.lat, lng: cached.lng }));
+      return;
+    }
+
     getCurrent()
       .then(async ({ lat, lng, accuracy }) => {
         // If accuracy is worse than 500m (IP-based location on laptops/desktops),
@@ -565,15 +578,9 @@ export default function HomePage() {
         setLoc({ primary, secondary, loading: false, lat, lng });
       })
       .catch(() => {
-        // Try cached coords for reverse geocode on GPS denial
-        const cached = loadGeoLocation();
-        if (cached) {
-          reverseGeocode(cached.lat, cached.lng)
-            .then(({ primary, secondary }) => setLoc({ primary, secondary, loading: false }));
-        } else {
-          setLoc({ primary: 'Set your location', secondary: 'Tap to choose', loading: false });
-          setLocSheet(true);
-        }
+        // No cache and GPS denied — this is the one case where we must ask.
+        setLoc({ primary: 'Set your location', secondary: 'Tap to choose', loading: false });
+        setLocSheet(true);
       });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -622,6 +629,9 @@ export default function HomePage() {
     const region = get('region');
     const primary = neighborhood || locality || feat.text;
     const secondary = [place || locality, region].filter(Boolean).join(', ') || null;
+    // Persist the manual pick (accuracy 0 = user-confirmed, fully trusted) so a
+    // reload finds it in cache and doesn't re-open the sheet.
+    saveGeoLocation({ lat, lng, accuracy: 0 });
     setLoc({ primary, secondary, loading: false, lat, lng });
     setLocSheet(false);
     setLocSearch('');
@@ -1079,7 +1089,16 @@ export default function HomePage() {
               </div>
 
               <div className="px-5 pt-2 pb-10">
-                <h2 className="text-lg font-black text-slate-900 mb-4">Set your location</h2>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-black text-slate-900">Set your location</h2>
+                  <button
+                    onClick={() => { setLocSheet(false); setLocSearch(''); setLocResults([]); }}
+                    aria-label="Close"
+                    className="w-8 h-8 -mr-1 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 active:scale-95 transition"
+                  >
+                    <X size={18} strokeWidth={2.5} />
+                  </button>
+                </div>
 
                 {/* Search input */}
                 <div className="relative mb-4">
