@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -6,8 +6,9 @@ import {
   ClipboardList, Wallet, Bell, Star, MapPin, HelpCircle,
   LogOut, ChevronRight, ShieldCheck, Home, Briefcase, Plus,
   Trash2, X, Loader2, Scale, HeadphonesIcon, CreditCard,
-  Pencil, Check, TrendingUp, Tag, Calendar, Shield, Gift,
+  Pencil, Check, TrendingUp, Tag, Calendar, Shield, Gift, Search,
 } from 'lucide-react';
+import { reverseGeocode } from '../utils/reverseGeocode';
 import LanguageSwitcher from '../i18n/LanguageSwitcher';
 import { selectAuth, logout } from '../modules/auth/authSlice';
 import {
@@ -43,6 +44,48 @@ export default function ProfilePage() {
   const [newAddr,       setNewAddr]       = useState(EMPTY_ADDR);
   const [editAddr,      setEditAddr]      = useState(EMPTY_ADDR);
   const [addrGeoErr,    setAddrGeoErr]    = useState('');
+  // Address autocomplete (replaces raw lat/lng entry — no user knows their coords)
+  const [addrQuery,     setAddrQuery]     = useState('');
+  const [addrResults,   setAddrResults]   = useState([]);
+  const [addrSearching, setAddrSearching] = useState(false);
+
+  // Debounced Mapbox forward-geocode — same source the Home location sheet uses.
+  useEffect(() => {
+    if (!addrQuery.trim() || addrQuery.length < 3) { setAddrResults([]); return; }
+    const token = import.meta.env.VITE_MAPBOX_TOKEN;
+    if (!token) return;
+    const ctrl = new AbortController();
+    setAddrSearching(true);
+    const t = setTimeout(() => {
+      fetch(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(addrQuery)}.json` +
+        `?access_token=${token}&language=en&country=IN&types=address,neighborhood,locality,place&limit=5`,
+        { signal: ctrl.signal },
+      )
+        .then((r) => r.json())
+        .then((d) => { setAddrResults(d.features || []); setAddrSearching(false); })
+        .catch(() => setAddrSearching(false));
+    }, 250);
+    return () => { clearTimeout(t); ctrl.abort(); };
+  }, [addrQuery]);
+
+  function resetAddrForm() {
+    setNewAddr(EMPTY_ADDR);
+    setAddrQuery('');
+    setAddrResults([]);
+    setAddrGeoErr('');
+  }
+
+  // Picking a suggestion fills the address + coordinates in one tap. The search
+  // box is cleared (not set to the picked address) so the debounced effect
+  // doesn't immediately re-open the dropdown; the pinned address shows below.
+  function pickAddrResult(feat) {
+    const [lng, lat] = feat.center;
+    const full = feat.place_name || feat.text;
+    setNewAddr((p) => ({ ...p, address: full, lat: String(lat), lng: String(lng) }));
+    setAddrQuery('');
+    setAddrResults([]);
+  }
 
   const user      = data?.user || profile;
   const addresses = addrData?.addresses || [];
@@ -64,8 +107,18 @@ export default function ProfilePage() {
     setAddrGeoErr('');
     if (!navigator.geolocation) { setAddrGeoErr('Geolocation not supported'); return; }
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setNewAddr(prev => ({ ...prev, lat: pos.coords.latitude.toFixed(6), lng: pos.coords.longitude.toFixed(6) }));
+      async (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        // Reverse-geocode so the address text is filled too — the form needs a
+        // non-empty address, and the user shouldn't have to type it after detect.
+        let address = '';
+        try {
+          const g = await reverseGeocode(lat, lng);
+          address = [g.primary, g.secondary].filter(Boolean).join(', ');
+        } catch { /* keep coords even if naming fails */ }
+        setNewAddr((prev) => ({ ...prev, lat: lat.toFixed(6), lng: lng.toFixed(6), address: address || prev.address }));
+        if (address) setAddrQuery(address);
       },
       () => setAddrGeoErr('Could not detect location')
     );
@@ -86,7 +139,7 @@ export default function ProfilePage() {
         tag: newAddr.tag,
       }).unwrap();
       toast.success('Address saved');
-      setNewAddr(EMPTY_ADDR);
+      resetAddrForm();
       setShowAddrForm(false);
     } catch { toast.error('Could not save address'); }
   }
@@ -242,7 +295,7 @@ export default function ProfilePage() {
                       <div className="card space-y-2.5">
                         <div className="flex items-center justify-between mb-1">
                           <p className="text-sm font-bold text-[#0F172A]">New Address</p>
-                          <button type="button" onClick={() => setShowAddrForm(false)}>
+                          <button type="button" onClick={() => { setShowAddrForm(false); resetAddrForm(); }}>
                             <X size={15} className="text-slate-400" />
                           </button>
                         </div>
@@ -266,37 +319,58 @@ export default function ProfilePage() {
                           value={newAddr.label}
                           onChange={e => setNewAddr(p => ({ ...p, label: e.target.value }))}
                         />
-                        <input
-                          className="input text-sm"
-                          placeholder="Full address"
-                          value={newAddr.address}
-                          onChange={e => setNewAddr(p => ({ ...p, address: e.target.value }))}
-                        />
-                        <div className="flex gap-2">
+
+                        {/* Address autocomplete — search and pick; coordinates fill automatically */}
+                        <div className="relative">
+                          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                           <input
-                            className="input text-sm flex-1"
-                            placeholder="Latitude"
-                            type="number"
-                            step="any"
-                            value={newAddr.lat}
-                            onChange={e => setNewAddr(p => ({ ...p, lat: e.target.value }))}
+                            className="input text-sm !pl-9"
+                            placeholder="Search your address…"
+                            value={addrQuery}
+                            onChange={e => {
+                              setAddrQuery(e.target.value);
+                              // Editing the query invalidates any previously pinned pick.
+                              setNewAddr(p => ({ ...p, address: '', lat: '', lng: '' }));
+                            }}
                           />
-                          <input
-                            className="input text-sm flex-1"
-                            placeholder="Longitude"
-                            type="number"
-                            step="any"
-                            value={newAddr.lng}
-                            onChange={e => setNewAddr(p => ({ ...p, lng: e.target.value }))}
-                          />
+                          {addrSearching && (
+                            <Loader2 size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-400 animate-spin" />
+                          )}
+                          {addrResults.length > 0 && (
+                            <div className="absolute z-20 left-0 right-0 mt-1 bg-white rounded-xl border border-slate-100 shadow-lg overflow-hidden divide-y divide-slate-50">
+                              {addrResults.map((feat) => (
+                                <button
+                                  key={feat.id}
+                                  type="button"
+                                  onClick={() => pickAddrResult(feat)}
+                                  className="w-full flex items-start gap-2.5 px-3 py-2.5 text-left hover:bg-slate-50 transition"
+                                >
+                                  <MapPin size={13} className="text-slate-400 mt-0.5 shrink-0" />
+                                  <div className="min-w-0">
+                                    <p className="text-xs font-semibold text-[#0F172A] truncate">{feat.text}</p>
+                                    <p className="text-[11px] text-slate-400 truncate">{feat.place_name}</p>
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          )}
                         </div>
+
+                        {/* Pinned-location confirmation */}
+                        {newAddr.lat && newAddr.lng && (
+                          <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600">
+                            <Check size={13} strokeWidth={2.5} />
+                            <span className="truncate">Location pinned{newAddr.address ? ` · ${newAddr.address}` : ''}</span>
+                          </div>
+                        )}
+
                         <button
                           type="button"
                           onClick={detectLocation}
                           className="text-xs font-semibold text-blue-600 flex items-center gap-1"
                         >
                           <MapPin size={11} strokeWidth={2} />
-                          Detect my location
+                          Use my current location
                         </button>
                         {addrGeoErr && <p className="text-xs text-red-500">{addrGeoErr}</p>}
                         <button type="submit" disabled={addingAddr} className="btn-primary w-full text-sm">
