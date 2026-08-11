@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -6,9 +6,10 @@ import {
   ClipboardList, Wallet, Bell, Star, MapPin, HelpCircle,
   LogOut, ChevronRight, ShieldCheck, Home, Briefcase, Plus,
   Trash2, X, Loader2, Scale, HeadphonesIcon, CreditCard,
-  Pencil, Check, TrendingUp, Tag, Calendar, Shield, Gift, Search,
+  Pencil, Check, TrendingUp, Tag, Calendar, Shield, Gift,
 } from 'lucide-react';
 import { reverseGeocode } from '../utils/reverseGeocode';
+import AddressAutocomplete from '../components/common/AddressAutocomplete';
 import LanguageSwitcher from '../i18n/LanguageSwitcher';
 import { selectAuth, logout } from '../modules/auth/authSlice';
 import {
@@ -44,47 +45,30 @@ export default function ProfilePage() {
   const [newAddr,       setNewAddr]       = useState(EMPTY_ADDR);
   const [editAddr,      setEditAddr]      = useState(EMPTY_ADDR);
   const [addrGeoErr,    setAddrGeoErr]    = useState('');
-  // Address autocomplete (replaces raw lat/lng entry — no user knows their coords)
+  // Address search — coordinates come from picking a Mapbox suggestion (raw
+  // lat/lng entry is impossible for real users). One query per form.
   const [addrQuery,     setAddrQuery]     = useState('');
-  const [addrResults,   setAddrResults]   = useState([]);
-  const [addrSearching, setAddrSearching] = useState(false);
-
-  // Debounced Mapbox forward-geocode — same source the Home location sheet uses.
-  useEffect(() => {
-    if (!addrQuery.trim() || addrQuery.length < 3) { setAddrResults([]); return; }
-    const token = import.meta.env.VITE_MAPBOX_TOKEN;
-    if (!token) return;
-    const ctrl = new AbortController();
-    setAddrSearching(true);
-    const t = setTimeout(() => {
-      fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(addrQuery)}.json` +
-        `?access_token=${token}&language=en&country=IN&types=address,neighborhood,locality,place&limit=5`,
-        { signal: ctrl.signal },
-      )
-        .then((r) => r.json())
-        .then((d) => { setAddrResults(d.features || []); setAddrSearching(false); })
-        .catch(() => setAddrSearching(false));
-    }, 250);
-    return () => { clearTimeout(t); ctrl.abort(); };
-  }, [addrQuery]);
+  const [editAddrQuery, setEditAddrQuery] = useState('');
+  const [editGeoErr,    setEditGeoErr]    = useState('');
 
   function resetAddrForm() {
     setNewAddr(EMPTY_ADDR);
     setAddrQuery('');
-    setAddrResults([]);
     setAddrGeoErr('');
   }
 
   // Picking a suggestion fills the address + coordinates in one tap. The search
-  // box is cleared (not set to the picked address) so the debounced effect
-  // doesn't immediately re-open the dropdown; the pinned address shows below.
+  // box is cleared (not set to the picked address) so the dropdown doesn't
+  // linger; the pinned address shows below instead.
   function pickAddrResult(feat) {
     const [lng, lat] = feat.center;
-    const full = feat.place_name || feat.text;
-    setNewAddr((p) => ({ ...p, address: full, lat: String(lat), lng: String(lng) }));
+    setNewAddr((p) => ({ ...p, address: feat.place_name || feat.text, lat: String(lat), lng: String(lng) }));
     setAddrQuery('');
-    setAddrResults([]);
+  }
+  function pickEditAddrResult(feat) {
+    const [lng, lat] = feat.center;
+    setEditAddr((p) => ({ ...p, address: feat.place_name || feat.text, lat: String(lat), lng: String(lng) }));
+    setEditAddrQuery('');
   }
 
   const user      = data?.user || profile;
@@ -103,26 +87,28 @@ export default function ProfilePage() {
     toast.success('Logged out successfully');
   }
 
-  function detectLocation() {
-    setAddrGeoErr('');
-    if (!navigator.geolocation) { setAddrGeoErr('Geolocation not supported'); return; }
+  // Fill a form's {address, lat, lng} from current GPS. Reverse-geocodes so the
+  // address text is populated too (the form requires a non-empty address, and
+  // the user shouldn't have to type it after tapping "use current location").
+  function detectInto(setAddr, setErr) {
+    setErr('');
+    if (!navigator.geolocation) { setErr('Geolocation not supported'); return; }
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const lat = pos.coords.latitude;
         const lng = pos.coords.longitude;
-        // Reverse-geocode so the address text is filled too — the form needs a
-        // non-empty address, and the user shouldn't have to type it after detect.
         let address = '';
         try {
           const g = await reverseGeocode(lat, lng);
           address = [g.primary, g.secondary].filter(Boolean).join(', ');
         } catch { /* keep coords even if naming fails */ }
-        setNewAddr((prev) => ({ ...prev, lat: lat.toFixed(6), lng: lng.toFixed(6), address: address || prev.address }));
-        if (address) setAddrQuery(address);
+        setAddr((prev) => ({ ...prev, lat: lat.toFixed(6), lng: lng.toFixed(6), address: address || prev.address }));
       },
-      () => setAddrGeoErr('Could not detect location')
+      () => setErr('Could not detect location'),
     );
   }
+  const detectLocation     = () => detectInto(setNewAddr, setAddrGeoErr);
+  const detectEditLocation = () => detectInto(setEditAddr, setEditGeoErr);
 
   async function submitAddress(e) {
     e.preventDefault();
@@ -160,6 +146,8 @@ export default function ProfilePage() {
       lng: String(lng),
       tag: a.tag || 'other',
     });
+    setEditAddrQuery('');
+    setEditGeoErr('');
     setEditingAddrId(a._id);
   }
 
@@ -320,41 +308,17 @@ export default function ProfilePage() {
                           onChange={e => setNewAddr(p => ({ ...p, label: e.target.value }))}
                         />
 
-                        {/* Address autocomplete — search and pick; coordinates fill automatically */}
-                        <div className="relative">
-                          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                          <input
-                            className="input text-sm !pl-9"
-                            placeholder="Search your address…"
-                            value={addrQuery}
-                            onChange={e => {
-                              setAddrQuery(e.target.value);
-                              // Editing the query invalidates any previously pinned pick.
-                              setNewAddr(p => ({ ...p, address: '', lat: '', lng: '' }));
-                            }}
-                          />
-                          {addrSearching && (
-                            <Loader2 size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-400 animate-spin" />
-                          )}
-                          {addrResults.length > 0 && (
-                            <div className="absolute z-20 left-0 right-0 mt-1 bg-white rounded-xl border border-slate-100 shadow-lg overflow-hidden divide-y divide-slate-50">
-                              {addrResults.map((feat) => (
-                                <button
-                                  key={feat.id}
-                                  type="button"
-                                  onClick={() => pickAddrResult(feat)}
-                                  className="w-full flex items-start gap-2.5 px-3 py-2.5 text-left hover:bg-slate-50 transition"
-                                >
-                                  <MapPin size={13} className="text-slate-400 mt-0.5 shrink-0" />
-                                  <div className="min-w-0">
-                                    <p className="text-xs font-semibold text-[#0F172A] truncate">{feat.text}</p>
-                                    <p className="text-[11px] text-slate-400 truncate">{feat.place_name}</p>
-                                  </div>
-                                </button>
-                              ))}
-                            </div>
-                          )}
-                        </div>
+                        {/* Address search — pick a suggestion; coordinates fill automatically */}
+                        <AddressAutocomplete
+                          value={addrQuery}
+                          onChange={(v) => {
+                            setAddrQuery(v);
+                            // Editing the query invalidates any previously pinned pick.
+                            setNewAddr(p => ({ ...p, address: '', lat: '', lng: '' }));
+                          }}
+                          onSelect={pickAddrResult}
+                          placeholder="Search your address…"
+                        />
 
                         {/* Pinned-location confirmation */}
                         {newAddr.lat && newAddr.lng && (
@@ -450,8 +414,24 @@ export default function ProfilePage() {
                                   </div>
                                   <input className="input text-sm w-full" placeholder="Label"
                                     value={editAddr.label} onChange={e => setEditAddr(p => ({ ...p, label: e.target.value }))} />
-                                  <input className="input text-sm w-full" placeholder="Full address"
-                                    value={editAddr.address} onChange={e => setEditAddr(p => ({ ...p, address: e.target.value }))} />
+                                  {/* Current address + search to change it (updates coordinates too) */}
+                                  {editAddr.address && (
+                                    <p className="text-[11px] text-slate-500 px-0.5 truncate">
+                                      Address: <span className="font-semibold text-[#0F172A]">{editAddr.address}</span>
+                                    </p>
+                                  )}
+                                  <AddressAutocomplete
+                                    value={editAddrQuery}
+                                    onChange={setEditAddrQuery}
+                                    onSelect={pickEditAddrResult}
+                                    placeholder="Search to change address…"
+                                  />
+                                  <button type="button" onClick={detectEditLocation}
+                                    className="text-xs font-semibold text-blue-600 flex items-center gap-1">
+                                    <MapPin size={11} strokeWidth={2} />
+                                    Use my current location
+                                  </button>
+                                  {editGeoErr && <p className="text-xs text-red-500">{editGeoErr}</p>}
                                   <div className="flex gap-2 pt-1">
                                     <button type="button" onClick={() => setEditingAddrId(null)}
                                       className="flex-1 h-9 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600">Cancel</button>
