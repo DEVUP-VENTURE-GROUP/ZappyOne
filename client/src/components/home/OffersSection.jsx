@@ -39,13 +39,13 @@ export default function OffersSection() {
     <div className="mt-8 mb-6 w-full">
       <div className="mb-4 flex items-end justify-between px-4 md:px-6">
         <div>
-          <h3 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight leading-none uppercase">Special Offers</h3>
+          <h3 className="text-[20px] md:text-[28px] font-bold text-slate-900 tracking-tight leading-none">Special Offers</h3>
         </div>
         <button
           onClick={() => nav('/offers')}
-          className="flex items-center gap-1 text-[13px] font-bold text-slate-500 hover:text-black transition-colors"
+          className="group flex items-center gap-1 text-[14px] font-semibold text-zappy-600 hover:text-zappy-700 transition-colors"
         >
-          See all <ArrowRight size={14} strokeWidth={2.5} />
+          See all <ArrowRight size={15} strokeWidth={2.5} className="transition-transform group-hover:translate-x-0.5" />
         </button>
       </div>
 

@@ -467,12 +467,12 @@ function SectionHeader({ title, badge, badgeColor = 'bg-slate-100 text-slate-800
   return (
     <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-2 mb-4 md:mb-6">
       <div className="flex flex-wrap items-center gap-3">
-        <h2 className="text-[20px] md:text-[28px] font-bold text-black tracking-tight">{title}</h2>
+        <h2 className="text-[20px] md:text-[28px] font-bold text-slate-900 tracking-tight">{title}</h2>
         {badge && <span className={`text-[10px] md:text-xs font-medium px-2 py-0.5 rounded-md ${badgeColor}`}>{badge}</span>}
       </div>
       {onSeeAll && (
-        <button onClick={onSeeAll} className="text-sm md:text-[15px] font-medium text-black hover:text-slate-600">
-          See all
+        <button onClick={onSeeAll} className="group flex items-center gap-1 text-[14px] md:text-[15px] font-semibold text-zappy-600 hover:text-zappy-700 transition-colors">
+          See all <ArrowRight size={15} strokeWidth={2.5} className="transition-transform group-hover:translate-x-0.5" />
         </button>
       )}
     </div>
@@ -805,9 +805,9 @@ export default function HomePage() {
                 <h2 className="text-[20px] font-bold text-slate-900 tracking-tight">Popular Services</h2>
                 <button
                   onClick={() => nav('/services')}
-                  className="flex items-center gap-1 text-[14px] font-semibold text-zappy-600 hover:text-zappy-700 transition-colors"
+                  className="group flex items-center gap-1 text-[14px] font-semibold text-zappy-600 hover:text-zappy-700 transition-colors"
                 >
-                  View all <ArrowRight size={15} strokeWidth={2.5} />
+                  See all <ArrowRight size={15} strokeWidth={2.5} className="transition-transform group-hover:translate-x-0.5" />
                 </button>
               </div>
               <CharacterServiceGrid />
