@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useIsMobile } from '../../hooks/useIsMobile';
+import { useT } from '../../i18n/I18nProvider';
 
 const OFFERS = [
   {
@@ -34,18 +35,19 @@ const OFFERS = [
 export default function OffersSection() {
   const nav = useNavigate();
   const isMobile = useIsMobile();
+  const t = useT();
 
   return (
     <div className="mt-8 mb-6 w-full">
       <div className="mb-4 flex items-end justify-between px-4 md:px-6">
         <div>
-          <h3 className="text-[20px] md:text-[28px] font-bold text-slate-900 tracking-tight leading-none">Special Offers</h3>
+          <h3 className="text-[20px] md:text-[28px] font-bold text-slate-900 tracking-tight leading-none">{t('home.specialOffers', 'Special Offers')}</h3>
         </div>
         <button
           onClick={() => nav('/offers')}
           className="group flex items-center gap-1 text-[14px] font-semibold text-zappy-600 hover:text-zappy-700 transition-colors"
         >
-          See all <ArrowRight size={15} strokeWidth={2.5} className="transition-transform group-hover:translate-x-0.5" />
+          {t('home.seeAll', 'See all')} <ArrowRight size={15} strokeWidth={2.5} className="transition-transform group-hover:translate-x-0.5" />
         </button>
       </div>
 
