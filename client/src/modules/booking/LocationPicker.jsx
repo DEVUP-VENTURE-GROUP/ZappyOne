@@ -18,6 +18,7 @@ import { saveGeoLocation, loadGeoLocation } from '../../utils/geoCache';
 import { useGeolocation } from '../../hooks/useGeolocation';
 import { useGoogleMaps, GOOGLE_MAPS_KEY } from '../../services/maps';
 import { SERVICE_WORKER_EMOJI, SERVICE_COLORS } from '../../constants/services';
+import { useT } from '../../i18n/I18nProvider';
 import { setLocation as setReduxLocation, selectLocation, selectHasLocation } from '../../store/locationSlice';
 
 const TOKEN    = import.meta.env.VITE_MAPBOX_TOKEN;
@@ -33,10 +34,10 @@ const TAG_META = {
 
 // Quick note chips for precise pin placement (§7/§8). Tapping prefixes the note.
 const NOTE_CHIPS = [
-  { label: 'Gate', prefix: 'Near Gate ' },
-  { label: 'Flat / Door', prefix: 'Ring Flat ' },
-  { label: 'Basement', prefix: 'Basement ' },
-  { label: 'Landmark', prefix: 'Opposite ' },
+  { key: 'gate',     label: 'Gate', prefix: 'Near Gate ' },
+  { key: 'flatDoor', label: 'Flat / Door', prefix: 'Ring Flat ' },
+  { key: 'basement', label: 'Basement', prefix: 'Basement ' },
+  { key: 'landmark', label: 'Landmark', prefix: 'Opposite ' },
 ];
 
 // Haversine distance (km) between two lat/lng points.
@@ -324,6 +325,7 @@ function makeUserLocationEl() {
 function ensureWorkerDotStyles() { ensureLocPickStyles(); }
 
 export default function LocationPicker({ onConfirm, onCancel, serviceLabel, service }) {
+  const tr = useT();
   const { getCurrent } = useGeolocation();
   const { isLoaded: gmapsLoaded } = useGoogleMaps();
   const dispatch    = useDispatch();
@@ -797,16 +799,18 @@ export default function LocationPicker({ onConfirm, onCancel, serviceLabel, serv
   const density    = DENSITY_META[nearbyInfo?.density] || DENSITY_META.high;
 
   return (
-    <div className="flex flex-col h-full bg-[#F3F6FB]">
+    /* Mobile: full-bleed sheet experience. Desktop (lg+): the same flow framed
+       as a centred, contained card so the wide page doesn't stretch it edge-to-edge. */
+    <div className="flex flex-col h-full bg-[#F3F6FB] lg:max-w-2xl lg:mx-auto lg:my-6 lg:h-[calc(100%-3rem)] lg:rounded-[28px] lg:overflow-hidden lg:shadow-[0_24px_70px_-24px_rgba(15,23,42,0.45)] lg:ring-1 lg:ring-slate-200">
 
       {/* ── Top controls: step label + search + current location ─────── */}
-      <div className="shrink-0 w-full max-w-md lg:max-w-3xl mx-auto px-4 pt-3 pb-2.5 space-y-3">
+      <div className="shrink-0 w-full max-w-md lg:max-w-none mx-auto px-4 pt-3 pb-2.5 space-y-3">
 
         {/* Step label */}
         <div className="flex items-center gap-1.5">
           <MapPin size={13} strokeWidth={2.6} className="text-[#2563EB]" />
           <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#2563EB]">
-            Step 1 of 2 • Choose location
+            {tr('locpick.step', 'Step 1 of 2 • Choose location')}
           </p>
         </div>
 
@@ -819,7 +823,7 @@ export default function LocationPicker({ onConfirm, onCancel, serviceLabel, serv
               ref={searchInputRef}
               value={searchQ}
               onChange={(e) => setSearchQ(e.target.value)}
-              placeholder="Search for area, landmark or full address"
+              placeholder={tr('locpick.searchPlaceholder', 'Search for area, landmark or full address')}
               className="flex-1 min-w-0 bg-transparent py-2 text-[13.5px] font-medium text-slate-800 placeholder:text-slate-400 outline-none"
             />
             {searching ? (
@@ -859,8 +863,8 @@ export default function LocationPicker({ onConfirm, onCancel, serviceLabel, serv
                 ))}
                 {results.length === 0 && searchQ.length >= 3 && !searching && (
                   <div className="px-4 py-5 text-center">
-                    <p className="text-[13px] font-semibold text-slate-500">No results for “{searchQ}”</p>
-                    <p className="text-[11px] text-slate-400 mt-1">Drag the map pin to set it manually</p>
+                    <p className="text-[13px] font-semibold text-slate-500">{tr('locpick.noResults', 'No results for "{q}"').replace('{q}', searchQ)}</p>
+                    <p className="text-[11px] text-slate-400 mt-1">{tr('locpick.dragHint', 'Drag the map pin to set it manually')}</p>
                   </div>
                 )}
               </motion.div>
@@ -870,7 +874,7 @@ export default function LocationPicker({ onConfirm, onCancel, serviceLabel, serv
       </div>
 
       {/* ── Map zone ─────────────────────────────────────────────────── */}
-      <div className="relative flex-1 min-h-0 w-full max-w-md lg:max-w-3xl mx-auto overflow-hidden">
+      <div className="relative flex-1 min-h-0 w-full max-w-md lg:max-w-none mx-auto overflow-hidden">
         {/* Map container */}
         <div id="zappy-locpick-map" className="absolute inset-0" style={{ width: '100%', height: '100%' }} />
 
@@ -891,7 +895,7 @@ export default function LocationPicker({ onConfirm, onCancel, serviceLabel, serv
                 animate={{ scale: [1, 1.1, 1] }} transition={{ duration: 1.2, repeat: Infinity }}>
                 <MapPin size={22} strokeWidth={2} className="text-white" />
               </motion.div>
-              <p className="text-[13px] font-bold text-slate-400">Loading map…</p>
+              <p className="text-[13px] font-bold text-slate-400">{tr('locpick.loadingMap', 'Loading map…')}</p>
             </motion.div>
           )}
         </AnimatePresence>
@@ -915,19 +919,19 @@ export default function LocationPicker({ onConfirm, onCancel, serviceLabel, serv
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[14.5px] font-bold text-slate-900">Use my current location</p>
+            <p className="text-[14.5px] font-bold text-slate-900">{tr('locpick.useCurrent', 'Use my current location')}</p>
             {geoState === 'loading' ? (
               <p className="text-[12px] font-semibold text-[#2563EB] mt-0.5 flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" /> GPS acquiring signal…
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" /> {tr('locpick.acquiring', 'GPS acquiring signal…')}
               </p>
             ) : geoState === 'error' ? (
               <p className="text-[12px] font-medium text-red-500 mt-0.5">{geoError}</p>
             ) : gpsReady ? (
               <p className="text-[12px] font-semibold text-[#16A34A] mt-0.5">
-                GPS locked • ±{acc != null ? Math.round(acc) : '<50'}m accurate
+                {tr('locpick.gpsLocked', 'GPS locked • ±{n}m accurate').replace('{n}', acc != null ? Math.round(acc) : '<50')}
               </p>
             ) : (
-              <p className="text-[12px] font-medium text-slate-400 mt-0.5">Fastest &amp; most accurate</p>
+              <p className="text-[12px] font-medium text-slate-400 mt-0.5">{tr('locpick.fastest', 'Fastest & most accurate')}</p>
             )}
           </div>
           <ChevronRight size={20} strokeWidth={2.2} className="text-slate-300 shrink-0" />
@@ -949,13 +953,13 @@ export default function LocationPicker({ onConfirm, onCancel, serviceLabel, serv
               <div className="leading-tight min-w-0">
                 {nearbyCount === 0 ? (
                   <>
-                    <p className="text-[12px] font-extrabold text-slate-800">No workers here yet</p>
-                    <p className="text-[10.5px] font-medium text-slate-400">Try a nearby area</p>
+                    <p className="text-[12px] font-extrabold text-slate-800">{tr('locpick.noWorkers', 'No workers here yet')}</p>
+                    <p className="text-[10.5px] font-medium text-slate-400">{tr('locpick.tryNearby', 'Try a nearby area')}</p>
                   </>
                 ) : (
                   <>
-                    <p className="text-[12px] font-extrabold text-slate-800">Nearest pro ~{nearbyInfo?.etaMin ?? 5} min</p>
-                    <p className="text-[10.5px] font-medium text-slate-400">{density.label}</p>
+                    <p className="text-[12px] font-extrabold text-slate-800">{tr('locpick.nearestPro', 'Nearest pro ~{n} min').replace('{n}', nearbyInfo?.etaMin ?? 5)}</p>
+                    <p className="text-[10.5px] font-medium text-slate-400">{tr(`locpick.density.${nearbyInfo?.density || 'high'}`, density.label)}</p>
                   </>
                 )}
               </div>
@@ -1018,13 +1022,13 @@ export default function LocationPicker({ onConfirm, onCancel, serviceLabel, serv
 
               {/* Label + edit */}
               <div className="flex items-center justify-between mb-2">
-                <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#2563EB]">Service Location</p>
+                <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#2563EB]">{tr('locpick.serviceLocation', 'Service Location')}</p>
                 <div className="flex items-center gap-1.5">
                   <button
                     onClick={() => setSheetMinimized((m) => !m)}
                     className="text-[11px] font-bold text-slate-400 hover:text-slate-600 px-2 py-1 rounded-lg hover:bg-slate-100 transition"
                   >
-                    {sheetMinimized ? 'Expand' : 'Collapse'}
+                    {sheetMinimized ? tr('locpick.expand', 'Expand') : tr('locpick.collapse', 'Collapse')}
                   </button>
                   <button onClick={() => searchInputRef.current?.focus()} aria-label="Edit address"
                     className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center active:scale-95 transition">
@@ -1043,10 +1047,10 @@ export default function LocationPicker({ onConfirm, onCancel, serviceLabel, serv
                 </div>
                 <div className="min-w-0 flex-1">
                   {isDragging ? (
-                    <p className="text-[15px] font-bold text-slate-400 italic pt-1">Move map to pin location…</p>
+                    <p className="text-[15px] font-bold text-slate-400 italic pt-1">{tr('locpick.moveToPin', 'Move map to pin location…')}</p>
                   ) : geocoding ? (
                     <p className="text-[15px] font-bold text-slate-400 flex items-center gap-1.5 pt-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" /> Looking up address…
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" /> {tr('locpick.lookingUp', 'Looking up address…')}
                     </p>
                   ) : address ? (
                     <>
@@ -1054,7 +1058,7 @@ export default function LocationPicker({ onConfirm, onCancel, serviceLabel, serv
                       <p className="text-[12.5px] text-slate-500 leading-snug mt-0.5 line-clamp-2">{address}</p>
                     </>
                   ) : (
-                    <p className="text-[15px] font-semibold text-slate-400 pt-1">Drag the map to pin your location</p>
+                    <p className="text-[15px] font-semibold text-slate-400 pt-1">{tr('locpick.dragToPin', 'Drag the map to pin your location')}</p>
                   )}
                 </div>
               </div>
@@ -1076,7 +1080,7 @@ export default function LocationPicker({ onConfirm, onCancel, serviceLabel, serv
                         return (
                           <button key={c.label} onClick={() => toggleChip(c)}
                             className={`flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[12.5px] font-bold border transition-colors ${on ? 'bg-[#2563EB] border-[#2563EB] text-white' : 'bg-white border-blue-100 text-[#2563EB]'}`}>
-                            <Icon size={14} strokeWidth={2.2} /> {c.label}
+                            <Icon size={14} strokeWidth={2.2} /> {tr(`locpick.tag.${c.key}`, c.label)}
                           </button>
                         );
                       })}
@@ -1089,7 +1093,7 @@ export default function LocationPicker({ onConfirm, onCancel, serviceLabel, serv
                           <input
                             value={locNote}
                             onChange={(e) => setLocNote(e.target.value.slice(0, 140))}
-                            placeholder={`Add ${activeChip.toLowerCase()} details — number, floor, landmark…`}
+                            placeholder={tr('locpick.noteDetails', 'Add {x} details — number, floor, landmark…').replace('{x}', activeChip.toLowerCase())}
                             className="w-full mt-2.5 rounded-xl bg-slate-50 border border-slate-200 px-3.5 py-2.5 text-[13px] text-slate-800 placeholder:text-slate-400 outline-none focus:border-blue-300"
                           />
                         </motion.div>
@@ -1100,7 +1104,7 @@ export default function LocationPicker({ onConfirm, onCancel, serviceLabel, serv
                     <button onClick={() => setShowSaved((s) => !s)}
                       className="w-full flex items-center gap-2.5 mt-3.5 rounded-xl bg-slate-50 px-4 py-3 text-left">
                       <Clock size={15} strokeWidth={2.2} className="text-slate-500 shrink-0" />
-                      <span className="flex-1 text-[13.5px] font-semibold text-slate-700">Saved places{savedCount ? ` (${savedCount})` : ''}</span>
+                      <span className="flex-1 text-[13.5px] font-semibold text-slate-700">{tr('locpick.savedPlaces', 'Saved places')}{savedCount ? ` (${savedCount})` : ''}</span>
                       <ChevronDown size={17} className={`text-slate-400 transition-transform ${showSaved ? 'rotate-180' : ''}`} />
                     </button>
                     <AnimatePresence initial={false}>
@@ -1132,7 +1136,7 @@ export default function LocationPicker({ onConfirm, onCancel, serviceLabel, serv
                               </button>
                             ))}
                             {savedCount === 0 && (
-                              <p className="text-[12.5px] text-slate-400 text-center py-3">No saved places yet</p>
+                              <p className="text-[12.5px] text-slate-400 text-center py-3">{tr('locpick.noSavedPlaces', 'No saved places yet')}</p>
                             )}
                           </div>
                         </motion.div>
@@ -1144,14 +1148,14 @@ export default function LocationPicker({ onConfirm, onCancel, serviceLabel, serv
                       className="w-full h-14 rounded-full mt-4 flex items-center justify-center gap-2 text-[15px] font-extrabold text-white transition-colors"
                       style={{ background: canConfirm ? '#2563EB' : '#CBD5E1', boxShadow: canConfirm ? '0 10px 26px rgba(37,99,235,0.4)' : 'none' }}>
                       {geocoding
-                        ? <><Loader2 size={18} className="animate-spin" /> Detecting address…</>
-                        : <>Confirm This Location <ArrowRight size={18} strokeWidth={2.6} /></>}
+                        ? <><Loader2 size={18} className="animate-spin" /> {tr('locpick.detecting', 'Detecting address…')}</>
+                        : <>{tr('locpick.confirm', 'Confirm This Location')} <ArrowRight size={18} strokeWidth={2.6} /></>}
                     </motion.button>
 
                     {/* Trust line */}
                     <div className="flex items-center justify-center gap-1.5 mt-3">
                       <Lock size={12} className="text-slate-400" />
-                      <p className="text-[11.5px] font-medium text-slate-400">Your location is secure and encrypted</p>
+                      <p className="text-[11.5px] font-medium text-slate-400">{tr('locpick.secure', 'Your location is secure and encrypted')}</p>
                     </div>
                   </motion.div>
                 )}
