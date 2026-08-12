@@ -59,7 +59,13 @@ async function getConfig(vertical) {
   }
 
   const doc = await VerticalConfig.findOne({ vertical, isActive: true }).lean();
-  const data = doc ? doc[vertical] : DEFAULTS[vertical];
+  // Always resolve to an object. Verticals without a seeded doc AND without a
+  // DEFAULTS entry (family_assist, event_crew, pet, laptop, smart_device) would
+  // otherwise return undefined — every pricing engine reads `cfg.x` and would
+  // throw a 500. Callers all self-default via `cfg.x || fallback`, so {} is safe.
+  // (Also prevents caching `undefined`, which JSON.stringify turns into the
+  // string "undefined" and poisons the cache on the next read.)
+  const data = (doc ? doc[vertical] : DEFAULTS[vertical]) || {};
 
   await redis.setex(CACHE_KEY(vertical), CACHE_TTL, JSON.stringify(data));
   _localCache[vertical] = data;
