@@ -213,7 +213,7 @@ export const translations = {
     'svc.electrician': 'इलेक्ट्रीशियन',
     'svc.plumber': 'प्लंबर',
     // Status labels
-    'status.placed': 'रखा गया',
+    'status.created': 'रखा गया',
     'status.searching': 'खोज रहे हैं',
     'status.assigned': 'असाइन किया गया',
     'status.on_the_way': 'रास्ते में',
@@ -450,7 +450,7 @@ export const translations = {
     'svc.electrician': 'ఎలక్ట్రీషియన్',
     'svc.plumber': 'ప్లంబర్',
     // Status labels
-    'status.placed': 'ఉంచబడింది',
+    'status.created': 'ఉంచబడింది',
     'status.searching': 'వెతుకుతోంది',
     'status.assigned': 'కేటాయించబడింది',
     'status.on_the_way': 'దారిలో ఉన్నారు',
