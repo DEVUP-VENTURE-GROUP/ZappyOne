@@ -13,6 +13,8 @@ import PageTransition from '../components/common/PageTransition';
 import { categoryMap } from '../constants/categoryMap';
 import { SkeletonList, SkeletonOrderCard } from '../components/common/Skeleton';
 import { staggerContainer, fadeInUp } from '../lib/animations';
+import { useT, useI18n } from '../i18n/I18nProvider';
+import { serviceNameKey } from '../i18n/translations';
 import toast from 'react-hot-toast';
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
@@ -47,19 +49,20 @@ function fmtTime(d) {
 
 // Human-readable date bucket: "Today", "Yesterday", "14 Jul", or "Older".
 // Used as sticky section headers instead of repeating a full date on every row.
-function dateBucket(d) {
+function dateBucket(d, t = (k, f) => f, lang = 'en') {
   const date = new Date(d);
   const now = new Date();
   const startOf = (x) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
   const dayMs = 86_400_000;
   const diffDays = Math.round((startOf(now) - startOf(date)) / dayMs);
-  if (diffDays === 0) return 'Today';
-  if (diffDays === 1) return 'Yesterday';
-  if (diffDays < 7)   return date.toLocaleString('en-IN', { weekday: 'long' });
+  const loc = `${lang}-IN`;
+  if (diffDays === 0) return t('date.today', 'Today');
+  if (diffDays === 1) return t('date.yesterday', 'Yesterday');
+  if (diffDays < 7)   return date.toLocaleString(loc, { weekday: 'long' });
   if (date.getFullYear() === now.getFullYear()) {
-    return date.toLocaleString('en-IN', { day: 'numeric', month: 'short' });
+    return date.toLocaleString(loc, { day: 'numeric', month: 'short' });
   }
-  return date.toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+  return date.toLocaleString(loc, { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
 // Service-type character for the compact rows (like Uber's auto/bike thumbnails).
@@ -79,8 +82,9 @@ function serviceVisual(code = '') {
 
 /* ─── Status pill ────────────────────────────────────────────────────────── */
 function StatusPill({ status }) {
+  const t = useT();
   const style = STATUS_STYLE[status];
-  const label = STATUS_MAP[status] || status;
+  const label = t(`status.${status}`, STATUS_MAP[status] || status);
   if (!style) return <span className="text-xs font-semibold text-slate-500">{label}</span>;
   return (
     <span className={`inline-flex items-center text-[11px] font-bold px-2 py-0.5 rounded-full ring-1 ${style.bg} ${style.text} ${style.ring}`}>
@@ -91,7 +95,10 @@ function StatusPill({ status }) {
 
 /* ─── Compact past-trip row — clean, scannable, one line ──────────────────── */
 function CompactRow({ order, nav }) {
+  const t = useT();
   const character = serviceVisual(order.service);
+  const svc = order.service?.replace(/_/g, ' ') || '';
+  const svcLabel = t(serviceNameKey(svc), svc);
   return (
     <div className="flex items-center gap-3 py-3.5 border-b border-slate-100 last:border-0">
       <button
@@ -107,7 +114,7 @@ function CompactRow({ order, nav }) {
       </button>
       <button onClick={() => nav(`/orders/${order._id}`)} className="flex-1 min-w-0 text-left">
         <div className="flex items-center gap-2">
-          <p className="font-bold text-[#0F172A] capitalize leading-tight truncate">{order.service?.replace(/_/g, ' ')}</p>
+          <p className="font-bold text-[#0F172A] capitalize leading-tight truncate">{svcLabel}</p>
           <StatusPill status={order.status} />
         </div>
         <p className="text-xs text-slate-500 mt-1">
@@ -117,7 +124,7 @@ function CompactRow({ order, nav }) {
       </button>
       <button
         onClick={() => nav(`/book/${order.service}`)}
-        aria-label={`Rebook ${order.service?.replace(/_/g, ' ')}`}
+        aria-label={`${t('activity.rebook', 'Rebook')} ${svcLabel}`}
         className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-600 shrink-0 active:bg-slate-50">
         <Repeat2 size={16} />
       </button>
@@ -127,6 +134,9 @@ function CompactRow({ order, nav }) {
 
 /* ─── Hero past-trip card — ONLY for completed orders (no map on cancelled) ─ */
 function PastHero({ order, nav, onInvoice, downloadingId }) {
+  const t = useT();
+  const { lang } = useI18n();
+  const svc = order.service?.replace(/_/g, ' ') || '';
   const url = mapSnapshot(order);
   return (
     <motion.div variants={fadeInUp} className="rounded-2xl bg-white ring-1 ring-slate-200 overflow-hidden shadow-sm">
@@ -139,16 +149,16 @@ function PastHero({ order, nav, onInvoice, downloadingId }) {
           </div>
         )}
         <div className="absolute top-3 left-3 inline-flex items-center gap-1 bg-white/95 backdrop-blur-sm text-[10px] font-bold text-emerald-700 uppercase tracking-wider px-2 py-1 rounded-full ring-1 ring-emerald-100">
-          <Sparkles size={10} strokeWidth={2.5} /> Last completed
+          <Sparkles size={10} strokeWidth={2.5} /> {t('activity.lastCompleted', 'Last completed')}
         </div>
       </button>
       <div className="p-4">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="font-bold text-[#0F172A] text-lg capitalize leading-tight">{order.service?.replace(/_/g, ' ')}</h3>
+          <h3 className="font-bold text-[#0F172A] text-lg capitalize leading-tight">{t(serviceNameKey(svc), svc)}</h3>
           <StatusPill status={order.status} />
         </div>
         <p className="text-sm text-slate-500 mt-1">
-          {dateBucket(order.createdAt)} · {fmtTime(order.createdAt)}
+          {dateBucket(order.createdAt, t, lang)} · {fmtTime(order.createdAt)}
         </p>
         <p className="text-sm text-slate-500 mt-0.5">
           <span className="font-bold text-[#0F172A]">₹{order.pricing?.total ?? '0.00'}</span>
@@ -159,17 +169,17 @@ function PastHero({ order, nav, onInvoice, downloadingId }) {
           {order.userRating == null && (
             <button onClick={() => nav(`/orders/${order._id}`)}
               className="flex items-center gap-1.5 border border-slate-200 rounded-full px-4 py-2 text-sm font-semibold text-[#0F172A] active:bg-slate-50">
-              <Star size={14} /> Rate
+              <Star size={14} /> {t('activity.rate', 'Rate')}
             </button>
           )}
           <button onClick={() => nav(`/book/${order.service}`)}
             className="flex items-center gap-1.5 border border-slate-200 rounded-full px-4 py-2 text-sm font-semibold text-[#0F172A] active:bg-slate-50">
-            <Repeat2 size={14} /> Rebook
+            <Repeat2 size={14} /> {t('activity.rebook', 'Rebook')}
           </button>
           <button onClick={(e) => onInvoice(e, order._id)} disabled={downloadingId === order._id}
             className="flex items-center gap-1.5 border border-slate-200 rounded-full px-4 py-2 text-sm font-semibold text-slate-500 active:bg-slate-50 disabled:opacity-50 ml-auto">
             {downloadingId === order._id ? <Loader2 size={14} className="animate-spin" /> : <FileDown size={14} />}
-            Invoice
+            {t('activity.invoice', 'Invoice')}
           </button>
         </div>
       </div>
@@ -179,20 +189,22 @@ function PastHero({ order, nav, onInvoice, downloadingId }) {
 
 /* ─── Active/upcoming card ────────────────────────────────────────────────── */
 function UpcomingCard({ order, nav }) {
+  const t = useT();
+  const svc = order.service?.replace(/_/g, ' ') || '';
   return (
     <motion.button variants={fadeInUp} onClick={() => nav(`/orders/${order._id}`)}
       className="block w-full text-left rounded-2xl bg-white ring-1 ring-slate-200 shadow-sm p-4">
       <div className="flex items-center gap-3">
         <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse shrink-0" />
         <div className="flex-1 min-w-0">
-          <p className="font-bold text-[#0F172A] capitalize">{order.service?.replace(/_/g, ' ')}</p>
+          <p className="font-bold text-[#0F172A] capitalize">{t(serviceNameKey(svc), svc)}</p>
           <p className="text-xs text-slate-400 truncate mt-0.5">{order.pickupLocation?.address}</p>
         </div>
-        <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full shrink-0">{STATUS_MAP[order.status]}</span>
+        <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full shrink-0">{t(`status.${order.status}`, STATUS_MAP[order.status])}</span>
       </div>
       <div className="flex items-center justify-between mt-3">
         <span className="font-black text-[#0F172A]">₹{order.pricing?.total ?? '—'}</span>
-        <span className="flex items-center gap-1 text-xs font-bold text-blue-600">Track <ArrowRight size={13} /></span>
+        <span className="flex items-center gap-1 text-xs font-bold text-blue-600">{t('activity.track', 'Track')} <ArrowRight size={13} /></span>
       </div>
     </motion.button>
   );
@@ -200,6 +212,7 @@ function UpcomingCard({ order, nav }) {
 
 /* ─── Empty-upcoming card ─ gradient + quick-book shortcuts ───────────────── */
 function EmptyUpcoming({ nav, suggestions }) {
+  const t = useT();
   return (
     <div className="space-y-3">
       <button onClick={() => nav('/services')}
@@ -207,10 +220,10 @@ function EmptyUpcoming({ nav, suggestions }) {
         style={{ background: 'linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%)' }}>
         <div className="flex items-center justify-between gap-4">
           <div className="min-w-0">
-            <p className="font-bold text-[#0F172A] text-base">No upcoming bookings</p>
-            <p className="text-sm text-slate-500 mt-1">Book a service in under a minute.</p>
+            <p className="font-bold text-[#0F172A] text-base">{t('activity.noUpcoming', 'No upcoming bookings')}</p>
+            <p className="text-sm text-slate-500 mt-1">{t('activity.bookInMinute', 'Book a service in under a minute.')}</p>
             <p className="text-sm text-blue-600 font-semibold mt-2 flex items-center gap-1">
-              Browse services <ArrowRight size={14} />
+              {t('activity.browse', 'Browse services')} <ArrowRight size={14} />
             </p>
           </div>
           <div className="w-14 h-14 rounded-2xl bg-white/70 ring-1 ring-white shadow-sm flex items-center justify-center shrink-0">
@@ -221,7 +234,7 @@ function EmptyUpcoming({ nav, suggestions }) {
 
       {suggestions.length > 0 && (
         <div>
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-1 mb-2">Book again</p>
+          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-1 mb-2">{t('activity.bookAgain', 'Book again')}</p>
           <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1 no-scrollbar">
             {suggestions.map((s) => (
               <button key={s.service} onClick={() => nav(`/book/${s.service}`)}
@@ -232,7 +245,7 @@ function EmptyUpcoming({ nav, suggestions }) {
                     ? <img src={s.character.thumb} alt="" width={22} height={22} className="w-5.5 h-5.5 object-contain" />
                     : <Wrench size={14} className="text-slate-500" />}
                 </span>
-                <span className="text-xs font-bold text-[#0F172A] capitalize">{s.service.replace(/_/g, ' ')}</span>
+                <span className="text-xs font-bold text-[#0F172A] capitalize">{t(serviceNameKey(s.service.replace(/_/g, ' ')), s.service.replace(/_/g, ' '))}</span>
               </button>
             ))}
           </div>
@@ -244,10 +257,11 @@ function EmptyUpcoming({ nav, suggestions }) {
 
 /* ─── Filter chip row ─────────────────────────────────────────────────────── */
 function FilterChips({ filter, setFilter, counts }) {
+  const t = useT();
   const opts = [
-    { key: 'all',       label: 'All',       n: counts.all },
-    { key: 'completed', label: 'Completed', n: counts.completed },
-    { key: 'cancelled', label: 'Cancelled', n: counts.cancelled },
+    { key: 'all',       label: t('activity.filter.all', 'All'),             n: counts.all },
+    { key: 'completed', label: t('activity.filter.completed', 'Completed'), n: counts.completed },
+    { key: 'cancelled', label: t('activity.filter.cancelled', 'Cancelled'), n: counts.cancelled },
   ];
   return (
     <div className="flex gap-1.5 mb-3" role="tablist">
@@ -269,6 +283,8 @@ function FilterChips({ filter, setFilter, counts }) {
 
 export default function OrdersListPage() {
   const nav = useNavigate();
+  const t = useT();
+  const { lang } = useI18n();
   const { accessToken: token } = useSelector(selectAuth);
   const [page, setPage] = useState(1);
   const [downloadingId, setDownloadingId] = useState(null);
@@ -281,13 +297,13 @@ export default function OrdersListPage() {
     setDownloadingId(orderId);
     try {
       const res = await fetch(`${API_BASE}/api/orders/${orderId}/invoice`, { headers: { Authorization: `Bearer ${token}` } });
-      if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || 'Failed to download invoice'); }
+      if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || t('activity.invoiceFailed', 'Failed to download invoice')); }
       const blob = new Blob([await res.text()], { type: 'text/html;charset=utf-8' });
       const url = URL.createObjectURL(blob);
       const win = window.open(url, '_blank', 'noopener');
       if (!win) { const a = document.createElement('a'); a.href = url; a.download = `invoice-${orderId.slice(-8)}.html`; a.click(); }
       setTimeout(() => URL.revokeObjectURL(url), 60000);
-    } catch (err) { toast.error(err.message || 'Could not download invoice'); }
+    } catch (err) { toast.error(err.message || t('activity.invoiceError', 'Could not download invoice')); }
     finally { setDownloadingId(null); }
   }
 
@@ -327,12 +343,12 @@ export default function OrdersListPage() {
   const grouped = useMemo(() => {
     const map = new Map();
     for (const o of filteredRest) {
-      const key = dateBucket(o.createdAt);
+      const key = dateBucket(o.createdAt, t, lang);
       if (!map.has(key)) map.set(key, []);
       map.get(key).push(o);
     }
     return [...map.entries()];
-  }, [filteredRest]);
+  }, [filteredRest, t, lang]);
 
   // "Book again" quick chips — top 3 unique services from past orders.
   const suggestions = useMemo(() => {
@@ -353,8 +369,8 @@ export default function OrdersListPage() {
        <div className="mx-auto w-full max-w-[480px] md:max-w-[960px]">
         <PullToRefresh onRefresh={() => refetch()}>
         <header className="px-5 md:px-8 pt-8 pb-2" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 2rem)' }}>
-          <h1 className="text-3xl font-black text-[#0F172A] tracking-tight">Activity</h1>
-          <p className="text-sm text-slate-500 mt-1">Track live bookings and revisit what you've done.</p>
+          <h1 className="text-3xl font-black text-[#0F172A] tracking-tight">{t('activity.title', 'Activity')}</h1>
+          <p className="text-sm text-slate-500 mt-1">{t('activity.subtitle', "Track live bookings and revisit what you've done.")}</p>
         </header>
 
         {isError ? (
@@ -363,14 +379,14 @@ export default function OrdersListPage() {
           <div className="px-5 md:px-8 pt-4"><SkeletonList count={4} Item={SkeletonOrderCard} /></div>
         ) : allOrders.length === 0 ? (
           <div className="px-5 md:px-8 pt-6">
-            <h2 className="text-lg font-bold text-[#0F172A] mb-3">Upcoming</h2>
+            <h2 className="text-lg font-bold text-[#0F172A] mb-3">{t('activity.upcoming', 'Upcoming')}</h2>
             <EmptyUpcoming nav={nav} suggestions={[]} />
           </div>
         ) : (
           <motion.div className="px-5 md:px-8 pt-4 space-y-7" variants={staggerContainer} initial="initial" animate="animate">
             {/* Upcoming */}
             <section>
-              <h2 className="text-lg font-bold text-[#0F172A] mb-3">Upcoming</h2>
+              <h2 className="text-lg font-bold text-[#0F172A] mb-3">{t('activity.upcoming', 'Upcoming')}</h2>
               {upcoming.length === 0 ? (
                 <EmptyUpcoming nav={nav} suggestions={suggestions} />
               ) : (
@@ -384,8 +400,8 @@ export default function OrdersListPage() {
             {past.length > 0 && (
               <section>
                 <div className="flex items-baseline justify-between mb-3">
-                  <h2 className="text-lg font-bold text-[#0F172A]">Past</h2>
-                  <span className="text-xs font-semibold text-slate-400">{past.length} total</span>
+                  <h2 className="text-lg font-bold text-[#0F172A]">{t('activity.past', 'Past')}</h2>
+                  <span className="text-xs font-semibold text-slate-400">{t('activity.total', '{n} total').replace('{n}', past.length)}</span>
                 </div>
 
                 <div className="space-y-4">
@@ -400,7 +416,9 @@ export default function OrdersListPage() {
                       {grouped.length === 0 ? (
                         <div className="rounded-2xl bg-white ring-1 ring-slate-200 p-6 text-center">
                           <p className="text-sm font-semibold text-slate-500">
-                            {heroExplainsEmpty ? 'Your only completed booking is featured above.' : `No ${filter} bookings yet`}
+                            {heroExplainsEmpty
+                              ? t('activity.featuredAbove', 'Your only completed booking is featured above.')
+                              : t('activity.noneYet', 'No {x} bookings yet').replace('{x}', t(`activity.filter.${filter}`, filter))}
                           </p>
                         </div>
                       ) : (
@@ -425,12 +443,12 @@ export default function OrdersListPage() {
               <div className="flex items-center justify-between pt-1 pb-4">
                 <button disabled={page === 1 || isFetching} onClick={() => setPage((p) => p - 1)}
                   className="flex items-center gap-1.5 border border-slate-200 rounded-full px-4 py-2 text-sm font-semibold disabled:opacity-40">
-                  <ChevronLeft size={14} /> Previous
+                  <ChevronLeft size={14} /> {t('activity.prev', 'Previous')}
                 </button>
-                <span className="text-xs font-semibold text-slate-400">Page {page} of {totalPages}</span>
+                <span className="text-xs font-semibold text-slate-400">{t('activity.pageOf', 'Page {p} of {n}').replace('{p}', page).replace('{n}', totalPages)}</span>
                 <button disabled={page >= totalPages || isFetching} onClick={() => setPage((p) => p + 1)}
                   className="flex items-center gap-1.5 border border-slate-200 rounded-full px-4 py-2 text-sm font-semibold disabled:opacity-40">
-                  Next <ChevronRight size={14} />
+                  {t('activity.next', 'Next')} <ChevronRight size={14} />
                 </button>
               </div>
             )}
