@@ -48,6 +48,59 @@ const SERVICES = {
   // ── Pet ───────────────────────────────────────────────
   pet_grooming:             { name: 'Pet Grooming',         price: 500 },
   pet_walking:              { name: 'Pet Walking',          price: 150 },
+
+  // ── Fixed market price for the remaining SIMPLE single-rate services ──────
+  // (grounded in the pricing engine's serviceOverrides.minFarePaise). Phone &
+  // laptop repairs are intentionally EXCLUDED — they price by brand/model/tier
+  // (depth). Towing is distance-priced. Both keep their own engines.
+  // Price only; names are already clean so they're left untouched.
+  // ── Smart home / appliances ──
+  smart_tv_install:         { price: 800  },
+  smart_tv_repair:          { price: 1000 },
+  cctv_install:             { price: 1200 },
+  cctv_repair:              { price: 800  },
+  router_setup:             { price: 500  },
+  router_troubleshoot:      { price: 450  },
+  home_automation_setup:    { price: 2000 },
+  smart_lock_install:       { price: 1000 },
+  // ── Events ──
+  event_decorator:          { price: 1000 },
+  event_setup_crew:         { price: 800  },
+  event_helper:             { price: 500  },
+  event_sound_crew:         { price: 1000 },
+  event_lighting_crew:      { price: 1000 },
+  event_security_crew:      { price: 800  },
+  event_birthday_setup:     { price: 1000 },
+  event_wedding_setup:      { price: 3000 },
+  event_photography_assist: { price: 800  },
+  event_catering_assist:    { price: 800  },
+  event_cleaning_crew:      { price: 600  },
+  // ── Commercial & auto ──
+  commercial_emergency:              { price: 800  },
+  commercial_scheduled_maintenance:  { price: 600  },
+  fleet_support:                     { price: 1000 },
+  auto_repair:                       { price: 400  },
+  van_repair:                        { price: 500  },
+  minor_roadside_repair:             { price: 200  },
+  // ── Family & elder assist ──
+  medicine_pickup:          { price: 50  },
+  hospital_companion:       { price: 500 },
+  grocery_assistance:       { price: 30  },
+  bill_payment_assist:      { price: 20  },
+  document_submission:      { price: 100 },
+  home_visit_check:         { price: 300 },
+  elder_doctor_visit:       { price: 600 },
+  elder_companion:          { price: 400 },
+  elder_home_visit:         { price: 350 },
+  elder_transport:          { price: 450 },
+  // ── Tank & water cleaning ──
+  water_tank_cleaning:      { price: 600 },
+  overhead_tank_cleaning:   { price: 500 },
+  underground_sump_cleaning:{ price: 800 },
+  sintex_tank_cleaning:     { price: 400 },
+  // ── Pet ──
+  pet_vet_assist:           { price: 500 },
+  pet_training_assist:      { price: 600 },
 };
 
 async function run() {
