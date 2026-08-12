@@ -98,19 +98,33 @@ jobs:
     # (Settings → Secrets and variables → Actions → Variables) — flip it on once the
     # four secrets below are added.
     if: github.ref == 'refs/heads/main' && github.event_name == 'push' && vars.AUTO_DEPLOY == 'true'
+    # Needs read access to the repo contents so the job's GITHUB_TOKEN can fetch.
+    permissions:
+      contents: read
     steps:
       - name: SSH deploy (pull + prod deps + PM2 reload)
         uses: appleboy/ssh-action@v1.2.0
+        env:
+          # Ephemeral, auto-generated per run — expires when the job ends, so no
+          # long-lived PAT lives on the server. Scoped to this repo's contents.
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script_stop: true
+          # Forward the two vars above into the remote shell.
+          envs: GH_TOKEN,GH_REPO
           script: |
             set -e
             cd "${{ secrets.EC2_APP_PATH }}"
-            git fetch origin main
-            git reset --hard origin/main   # exact match to main; .env is gitignored so it survives
+            # Fetch over an authenticated one-shot URL instead of the server's
+            # origin remote (which is https with no stored credentials — the repo
+            # is private, so a bare `git fetch origin` prompts for a username and
+            # dies in CI). The token is never persisted to .git/config.
+            git fetch "https://x-access-token:${GH_TOKEN}@github.com/${GH_REPO}.git" main
+            git reset --hard FETCH_HEAD   # .env is gitignored so it survives
             cd server
             npm ci --omit=dev
             pm2 startOrReload ecosystem.lean.config.js --update-env
