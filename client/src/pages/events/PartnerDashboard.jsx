@@ -211,7 +211,7 @@ function MobileOverviewTab({ onNavigate }) {
           <span className="text-[10px] text-slate-400 font-medium z-10">Events next 7 days</span>
           <div className="absolute bottom-0 left-0 right-0 h-10 opacity-60">
             <svg viewBox="0 0 100 30" preserveAspectRatio="none" className="w-full h-full stroke-blue-400 fill-none" strokeWidth="1.5">
-              <path d="M0,20 C15,25 25,10 40,20 C50,25 65,10 75,15 C85,25 100,10" />
+              <path d="M0,20 C15,25 25,10 40,20 C50,25 65,10 75,15 C85,25 95,10 100,15" />
             </svg>
           </div>
         </div>
@@ -425,7 +425,7 @@ function OverviewTab({ onNavigate }) {
             </div>
           </div>
           <div className="absolute bottom-0 left-0 right-0 h-12 opacity-60">
-            <svg viewBox="0 0 100 30" preserveAspectRatio="none" className="w-full h-full stroke-blue-400 fill-none" strokeWidth="1.5"><path d="M0,20 C15,25 25,10 40,20 C50,25 65,10 75,15 C85,25 100,10" /></svg>
+            <svg viewBox="0 0 100 30" preserveAspectRatio="none" className="w-full h-full stroke-blue-400 fill-none" strokeWidth="1.5"><path d="M0,20 C15,25 25,10 40,20 C50,25 65,10 75,15 C85,25 95,10 100,15" /></svg>
           </div>
         </div>
 
