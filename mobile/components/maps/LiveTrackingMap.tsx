@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, Dimensions } from 'react-native';
-import MapView, { Marker, Polyline } from 'react-native-maps';
-import { useSocket } from '../../hooks/useSocket';
-import type { WorkerLocationEvent } from '../../services/socket/events';
+import React, { useEffect, useState } from "react";
+import { View, StyleSheet, Dimensions } from "react-native";
+import MapView, { Marker, Polyline } from "react-native-maps";
+import { useSocket } from "../../hooks/useSocket";
+import type { WorkerLocationEvent } from "../../services/socket/events";
 
 interface LiveTrackingMapProps {
   orderId: string;
@@ -18,13 +18,17 @@ export const LiveTrackingMap: React.FC<LiveTrackingMapProps> = ({
   pickupLng,
   initialWorkerLocation = null,
 }) => {
-  const [workerLocation, setWorkerLocation] = useState<{ lat: number; lng: number } | null>(initialWorkerLocation);
+  const [workerLocation, setWorkerLocation] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(initialWorkerLocation);
   const socketClient = useSocket(orderId);
 
   useEffect(() => {
-    const handler = (data: WorkerLocationEvent) => setWorkerLocation({ lat: data.lat, lng: data.lng });
-    socketClient.on('worker.location', handler);
-    return () => socketClient.off('worker.location', handler);
+    const handler = (data: WorkerLocationEvent) =>
+      setWorkerLocation({ lat: data.lat, lng: data.lng });
+    socketClient.on("worker.location", handler);
+    return () => socketClient.off("worker.location", handler);
   }, [socketClient]);
 
   const initialRegion = {
@@ -37,22 +41,25 @@ export const LiveTrackingMap: React.FC<LiveTrackingMapProps> = ({
   return (
     <View style={styles.container}>
       <MapView style={styles.map} initialRegion={initialRegion}>
-        <Marker 
-          coordinate={{ latitude: pickupLat, longitude: pickupLng }} 
-          title="Pickup Location" 
-          pinColor="green" 
+        <Marker
+          coordinate={{ latitude: pickupLat, longitude: pickupLng }}
+          title="Pickup Location"
+          pinColor="green"
         />
-        
+
         {workerLocation && (
-          <Marker 
-            coordinate={{ latitude: workerLocation.lat, longitude: workerLocation.lng }} 
-            title="Worker" 
+          <Marker
+            coordinate={{
+              latitude: workerLocation.lat,
+              longitude: workerLocation.lng,
+            }}
+            title="Worker"
             pinColor="blue"
           />
         )}
 
         {workerLocation && (
-          <Polyline 
+          <Polyline
             coordinates={[
               { latitude: pickupLat, longitude: pickupLng },
               { latitude: workerLocation.lat, longitude: workerLocation.lng },
@@ -69,13 +76,13 @@ export const LiveTrackingMap: React.FC<LiveTrackingMapProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    height: Dimensions.get('window').height * 0.4,
-    width: '100%',
-    overflow: 'hidden',
+    height: Dimensions.get("window").height * 0.4,
+    width: "100%",
+    overflow: "hidden",
     borderRadius: 16,
   },
   map: {
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
   },
 });
