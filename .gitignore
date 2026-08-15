@@ -1,32 +1,24 @@
 node_modules/
 dist/
 build/
-
 # ── Environment files ────────────────────────────────────────────────────────
-# DENY-BY-DEFAULT. This block was previously a hand-maintained list
+# DENY-BY-DEFAULT. This was previously a hand-maintained list
 # (.env, .env.local, .env.production) which did not cover new variants — that
-# gap is how server/.env.development reached a public commit carrying a live
-# MongoDB Atlas credential.
+# gap is how server/.env.development reached a public commit (6dc972b)
+# carrying a live MongoDB Atlas credential.
 #
-# The rule is now pattern-based: ANYTHING starting with `.env` is ignored at any
-# depth — `.env`, `.env.staging`, and even a typo'd `.envlocal` (which a
-# `.env.*` rule would miss, and which is already present in this repo). Only
-# explicitly-safe template files are allowed back in. Adding a new environment
-# needs no change here and cannot be committed by accident.
+# A wildcard cannot have that gap. `.env*` has no slash, so git applies it at
+# EVERY depth — it catches .env.staging, and also a typo'd `.envlocal`
+# (already present in this repo) that a `.env.*` rule would miss.
 #
-# If you add a genuinely public template, whitelist it explicitly below —
-# never loosen the deny rules above it.
+# Templates are committed deliberately, so they are explicitly un-ignored.
+# `.env*.example` covers .env.example and .env.local.example at any depth.
+# If you add another template convention, whitelist it here — never loosen
+# the deny rule above it.
 .env*
-**/.env*
-
-# Safe templates: shape only, no real values. Keep this list short.
-!.env.example
-!**/.env.example
-!.env.sample
-!**/.env.sample
-!.env.template
-!**/.env.template
-
+!.env*.example
+!.env*.sample
+!.env*.template
 *.log
 .DS_Store
 .vscode/
