@@ -47,6 +47,7 @@ async function topup(req, res, next) {
       owner: { kind: req.auth.role, id: req.auth.sub },
       purpose: 'wallet_topup',
       amountPaise: req.body.amountPaise,
+      returnUrl: req.body.returnUrl,
     });
     res.status(201).json({
       paymentIntentId:  result.paymentIntent._id,

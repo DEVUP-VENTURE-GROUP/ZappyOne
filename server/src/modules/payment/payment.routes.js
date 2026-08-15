@@ -19,6 +19,10 @@ router.post(
     planCode:    Joi.string().when('purpose', { is: 'subscription', then: Joi.required() }),
     amountPaise: Joi.number().integer().min(100).when('purpose', { is: 'wallet_topup', then: Joi.required() }),
     orderId:     Joi.string().hex().length(24).when('purpose', { is: 'order_payment', then: Joi.required() }),
+    // Mobile only — the web Drop.js checkout resolves in-page and never sends
+    // this. Native has no in-page callback, so Cashfree's hosted checkout
+    // needs somewhere to redirect back to (a custom URL scheme deep link).
+    returnUrl:   Joi.string().uri().max(500).optional(),
   })),
   ctrl.createOrder
 );

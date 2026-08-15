@@ -47,7 +47,7 @@ async function resolveCustomer(owner) {
  * Create a Cashfree order for one of three purposes.
  * Returns { paymentIntent, cfOrder } — frontend uses cfOrder.payment_session_id.
  */
-async function createOrderForPurpose({ owner, purpose, planCode, amountPaise, orderId }) {
+async function createOrderForPurpose({ owner, purpose, planCode, amountPaise, orderId, returnUrl }) {
   let resolvedAmount = amountPaise;
   let planId = null;
   let subscriptionId = null;
@@ -86,6 +86,7 @@ async function createOrderForPurpose({ owner, purpose, planCode, amountPaise, or
     orderId: cfOrderId,
     amountPaise: resolvedAmount,
     customer,
+    returnUrl,
     tags: {
       purpose,
       ownerKind: owner.kind,

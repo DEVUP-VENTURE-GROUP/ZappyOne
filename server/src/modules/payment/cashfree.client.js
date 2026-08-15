@@ -53,8 +53,11 @@ async function cfRequest(method, path, body) {
  * @param {object} p.customer        { id, phone, email, name }
  * @param {object} [p.tags]          Key-value tags stored on the Cashfree order
  * @param {string} [p.notifyUrl]     Webhook URL for this order
+ * @param {string} [p.returnUrl]     Mobile only — hosted-checkout redirect target
+ *                                   (a custom URL scheme deep link). Cashfree
+ *                                   appends order_id/order_token as query params.
  */
-async function createOrder({ orderId, amountPaise, customer, tags = {}, notifyUrl }) {
+async function createOrder({ orderId, amountPaise, customer, tags = {}, notifyUrl, returnUrl }) {
   const amountRupees = +(amountPaise / 100).toFixed(2);
   return cfRequest('POST', '/orders', {
     order_id:       orderId,
@@ -67,6 +70,7 @@ async function createOrder({ orderId, amountPaise, customer, tags = {}, notifyUr
       customer_name:  customer.name  || undefined,
     },
     order_meta: {
+      ...(returnUrl ? { return_url: returnUrl } : {}),
       notify_url: notifyUrl || process.env.CASHFREE_WEBHOOK_URL || undefined,
       payment_methods: 'upi,cc,dc,nb,emi,paylater,app',
     },
