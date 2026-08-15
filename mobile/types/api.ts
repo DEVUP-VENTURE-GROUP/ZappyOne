@@ -320,12 +320,142 @@ export interface CreatePaymentOrderRequest {
   planCode?: string;
   amountPaise?: number;
   orderId?: string;
+  /** Mobile only — where Cashfree's hosted checkout redirects after payment. */
+  returnUrl?: string;
 }
 
 /** `POST /api/payments/verify` body — Cashfree identifiers, not Razorpay. */
 export interface VerifyPaymentRequest {
   cfOrderId: string;
   cfPaymentId: string;
+}
+
+// ── User profile sub-resources ───────────────────────────────────────────────
+
+/** `users/addresses` entry. Coordinates stored as separate lat/lng on the user. */
+export interface SavedAddress {
+  _id: string;
+  label?: string;
+  tag?: 'home' | 'work' | 'other';
+  address: string;
+  lat: number;
+  lng: number;
+  landmark?: string;
+  flatNumber?: string;
+  isDefault?: boolean;
+}
+
+/** `users/payment-methods` entry — tokenized reference, never raw card data. */
+export interface StoredPaymentMethod {
+  _id: string;
+  type: PaymentMethod;
+  label?: string;
+  last4?: string;
+  upiId?: string;
+  isDefault?: boolean;
+}
+
+// ── Wallet ───────────────────────────────────────────────────────────────────
+
+export interface Wallet {
+  balancePaise: number;
+  currency?: string;
+}
+
+export interface WalletTransaction {
+  _id: string;
+  type: 'credit' | 'debit';
+  amountPaise: number;
+  reason?: string;
+  description?: string;
+  balanceAfterPaise?: number;
+  createdAt: string;
+}
+
+export interface PaginatedWalletTransactions {
+  transactions: WalletTransaction[];
+  total?: number;
+  page?: number;
+}
+
+// ── Rewards ──────────────────────────────────────────────────────────────────
+
+export interface ScratchCard {
+  _id: string;
+  status: 'locked' | 'unlocked' | 'scratched';
+  rewardType?: 'points' | 'cashback' | 'discount';
+  rewardValue?: number;
+  scratchedAt?: string | null;
+}
+
+export interface RewardsSummary {
+  points: number;
+  tier?: string;
+  lifetimePoints?: number;
+  scratchCards?: ScratchCard[];
+  history?: { _id: string; points: number; reason?: string; createdAt: string }[];
+}
+
+// ── Plans / subscription ─────────────────────────────────────────────────────
+
+export interface Plan {
+  _id: string;
+  code: string;
+  name: string;
+  pricePaise: number;
+  durationDays?: number;
+  benefits?: string[];
+  tagline?: string;
+}
+
+export interface Subscription {
+  _id?: string;
+  planCode?: string;
+  status?: 'active' | 'expired' | 'cancelled' | 'none';
+  startedAt?: string;
+  expiresAt?: string | null;
+  autoRenew?: boolean;
+}
+
+// ── Payments (Cashfree order-create response) ────────────────────────────────
+
+export interface PaymentOrderResponse {
+  paymentIntentId: string;
+  cfOrderId: string;
+  paymentSessionId: string;
+  amountPaise: number;
+  currency: string;
+  /** 'sandbox' | 'production' — picks the hosted-checkout host on mobile. */
+  cashfreeEnv: 'sandbox' | 'production';
+}
+
+// ── Search / discovery ───────────────────────────────────────────────────────
+
+export interface SearchResult {
+  code: string;
+  name: string;
+  category?: string;
+  icon?: string;
+  priceFromPaise?: number;
+  reason?: string;
+}
+
+// ── Content ──────────────────────────────────────────────────────────────────
+
+export interface Faq {
+  _id: string;
+  question: string;
+  answer: string;
+  category?: string;
+  sortOrder?: number;
+}
+
+export interface PolicyDoc {
+  _id: string;
+  slug: string;
+  title: string;
+  body: string;
+  updatedAt?: string;
 }
 
 // ── Error envelope ───────────────────────────────────────────────────────────

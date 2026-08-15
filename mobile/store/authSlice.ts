@@ -1,47 +1,58 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+/**
+ * Auth UI state.
+ * ----------------------------------------------------------------------------
+ * Tokens are intentionally NOT stored here. `services/api/tokenStorage.ts` is
+ * their single owner (expo-secure-store / Keychain) — axiosClient and
+ * socketClient both read from it directly, and duplicating tokens into Redux
+ * would create a second source of truth that can drift (e.g. a rotation
+ * saved to SecureStore but not dispatched here). This slice only tracks who
+ * is signed in and how, for rendering — see `app/_layout.tsx` for the actual
+ * session bootstrap against tokenStorage.
+ * ----------------------------------------------------------------------------
+ */
+
+import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
+import type { Role, UserProfile } from '../types/api';
 
 interface AuthState {
-  accessToken: string | null;
-  refreshToken: string | null;
-  user: any | null; // Replace with proper User type later
-  role: 'user' | 'worker' | 'admin' | null;
+  user: UserProfile | null;
+  role: Role | null;
   isAuthenticated: boolean;
+  /** True once the cold-start session check (SecureStore + /users/me) has resolved. */
+  hydrated: boolean;
 }
 
 const initialState: AuthState = {
-  accessToken: null,
-  refreshToken: null,
   user: null,
   role: null,
   isAuthenticated: false,
+  hydrated: false,
 };
 
 const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    setCredentials: (
-      state,
-      action: PayloadAction<{ accessToken: string; refreshToken: string; user: any; role: 'user' | 'worker' | 'admin' }>
-    ) => {
-      state.accessToken = action.payload.accessToken;
-      state.refreshToken = action.payload.refreshToken;
+    setSession: (state, action: PayloadAction<{ user: UserProfile | null; role: Role }>) => {
       state.user = action.payload.user;
       state.role = action.payload.role;
       state.isAuthenticated = true;
+      state.hydrated = true;
     },
-    updateAccessToken: (state, action: PayloadAction<string>) => {
-      state.accessToken = action.payload;
+    setUser: (state, action: PayloadAction<UserProfile>) => {
+      state.user = action.payload;
+    },
+    markHydrated: (state) => {
+      state.hydrated = true;
     },
     logout: (state) => {
-      state.accessToken = null;
-      state.refreshToken = null;
       state.user = null;
       state.role = null;
       state.isAuthenticated = false;
+      state.hydrated = true;
     },
   },
 });
 
-export const { setCredentials, updateAccessToken, logout } = authSlice.actions;
+export const { setSession, setUser, markHydrated, logout } = authSlice.actions;
 export default authSlice.reducer;
