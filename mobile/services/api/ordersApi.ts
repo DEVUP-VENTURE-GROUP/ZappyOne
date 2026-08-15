@@ -1,88 +1,129 @@
+/**
+ * Order + booking endpoints (customer side).
+ * ----------------------------------------------------------------------------
+ * URLs and request shapes mirror the live web client (client/src/services/api.js)
+ * and server/src/modules/order/order.routes.js — the same backend, no new routes.
+ * Worker-side order actions (accept/arrive/complete) live in workerApi, not here.
+ * ----------------------------------------------------------------------------
+ */
+
 import { apiSlice } from './apiSlice';
+import type {
+  Order,
+  OrderPricing,
+  OrderStatusHistoryEntry,
+  PaginatedOrders,
+  CreateOrderRequest,
+  QuoteRequest,
+  ChatMessage,
+} from '../../types/api';
+
+/** `GET /orders/quote` returns the pricing snapshot under `quote`. */
+interface QuoteEnvelope {
+  quote: OrderPricing & { pricingModel?: string; servicePrice?: number; travelFee?: number };
+}
+interface OrderEnvelope { order: Order }
+interface NearbyPro {
+  workerId: string;
+  name?: string;
+  rating?: number;
+  jobs?: number;
+  etaMin?: number;
+  distanceKm?: number;
+}
 
 export const ordersApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
-    getOrders: builder.query<any[], void>({
-      query: () => ({
-        url: '/orders',
-      }),
-      transformResponse: (r: any) => r?.orders ?? r ?? [],
-      providesTags: ['Order'],
-    }),
-    getOrderById: builder.query<any, string>({
-      query: (id) => ({
-        url: `/orders/${id}`,
-      }),
-      transformResponse: (r: any) => r?.order ?? r,
-      providesTags: (_result, _error, id) => [{ type: 'Order', id }],
-    }),
-    getQuote: builder.query<any, { service: string; pickupLat: number; pickupLng: number }>({
+    // ── Pre-checkout: price + supply ─────────────────────────────────────────
+    getQuote: builder.query<QuoteEnvelope['quote'], QuoteRequest>({
       query: (params) => ({ url: '/orders/quote', params }),
+      transformResponse: (r: QuoteEnvelope) => r.quote ?? (r as unknown as QuoteEnvelope['quote']),
     }),
-    createOrder: builder.mutation<any, any>({
-      query: (data) => ({
-        url: '/orders',
-        method: 'POST',
-        data,
-      }),
+    getNearbyPros: builder.query<NearbyPro[], { service: string; pickupLat: number; pickupLng: number }>({
+      query: (params) => ({ url: '/orders/nearby-pros', params }),
+      transformResponse: (r: { pros?: NearbyPro[] } | NearbyPro[]) =>
+        Array.isArray(r) ? r : r.pros ?? [],
+    }),
+    getWarmDispatch: builder.query<{ ready: boolean; etaMin?: number }, { service: string; pickupLat: number; pickupLng: number }>({
+      query: (params) => ({ url: '/orders/warm', params }),
+    }),
+
+    // ── Create + read ────────────────────────────────────────────────────────
+    createOrder: builder.mutation<Order, CreateOrderRequest>({
+      query: (data) => ({ url: '/orders', method: 'POST', data }),
+      transformResponse: (r: OrderEnvelope) => r.order ?? (r as unknown as Order),
       invalidatesTags: ['Order'],
     }),
-    cancelOrder: builder.mutation<any, string>({
-      query: (id) => ({
-        url: `/orders/${id}/cancel`,
-        method: 'POST',
-      }),
-      invalidatesTags: (_result, _error, id) => [{ type: 'Order', id }, 'Order'],
+    getOrder: builder.query<Order, string>({
+      query: (id) => ({ url: `/orders/${id}` }),
+      transformResponse: (r: OrderEnvelope) => r.order ?? (r as unknown as Order),
+      providesTags: (_r, _e, id) => [{ type: 'Order', id }],
     }),
-    acceptOffer: builder.mutation<any, string>({
-      query: (id) => ({
-        url: `/orders/${id}/accept`,
-        method: 'POST',
-      }),
-      invalidatesTags: (_result, _error, id) => [{ type: 'Order', id }, 'Order'],
+    getOrderTimeline: builder.query<OrderStatusHistoryEntry[], string>({
+      query: (id) => ({ url: `/orders/${id}/timeline` }),
+      transformResponse: (r: { timeline?: OrderStatusHistoryEntry[] } | OrderStatusHistoryEntry[]) =>
+        Array.isArray(r) ? r : r.timeline ?? [],
+      providesTags: (_r, _e, id) => [{ type: 'Order', id }],
     }),
-    startTrip: builder.mutation<any, string>({
-      query: (id) => ({
-        url: `/orders/${id}/start-trip`,
-        method: 'POST',
-      }),
-      invalidatesTags: (_result, _error, id) => [{ type: 'Order', id }],
+    listOrders: builder.query<PaginatedOrders, number | void>({
+      query: (page = 1) => ({ url: `/orders/mine`, params: { page } }),
+      providesTags: ['Order'],
     }),
-    arrive: builder.mutation<any, string>({
-      query: (id) => ({
-        url: `/orders/${id}/arrived`,
-        method: 'POST',
-      }),
-      invalidatesTags: (_result, _error, id) => [{ type: 'Order', id }],
+
+    // ── Lifecycle actions (customer) ─────────────────────────────────────────
+    getCancelPreview: builder.query<{ feePaise?: number; refundPaise?: number; message?: string }, string>({
+      query: (id) => ({ url: `/orders/${id}/cancel-preview` }),
     }),
-    startService: builder.mutation<any, { id: string; otp: string }>({
-      query: ({ id, otp }) => ({
-        url: `/orders/${id}/start-service`,
-        method: 'POST',
-        data: { otp },
-      }),
-      invalidatesTags: (_result, _error, arg) => [{ type: 'Order', id: arg.id }],
+    cancelOrder: builder.mutation<Order, { id: string; reason?: string }>({
+      query: ({ id, reason }) => ({ url: `/orders/${id}/cancel`, method: 'POST', data: { reason } }),
+      invalidatesTags: (_r, _e, a) => ['Order', { type: 'Order', id: a.id }],
     }),
-    completeService: builder.mutation<any, { id: string; paymentMethod: string }>({
-      query: ({ id, paymentMethod }) => ({
-        url: `/orders/${id}/complete`,
+    rebookOrder: builder.mutation<Order, string>({
+      query: (id) => ({ url: `/orders/${id}/rebook`, method: 'POST' }),
+      transformResponse: (r: OrderEnvelope) => r.order ?? (r as unknown as Order),
+      invalidatesTags: ['Order'],
+    }),
+    rateOrder: builder.mutation<Order, { id: string; rating: number; review?: string }>({
+      query: ({ id, rating, review }) => ({ url: `/orders/${id}/rate`, method: 'POST', data: { rating, review } }),
+      invalidatesTags: (_r, _e, a) => [{ type: 'Order', id: a.id }],
+    }),
+    getOrderInvoiceUrl: builder.query<{ url?: string } | string, string>({
+      query: (id) => ({ url: `/orders/${id}/invoice` }),
+    }),
+
+    // ── In-order chat ────────────────────────────────────────────────────────
+    getChatMessages: builder.query<ChatMessage[], { orderId: string; limit?: number }>({
+      query: ({ orderId, limit = 50 }) => ({ url: `/orders/${orderId}/chat`, params: { limit } }),
+      transformResponse: (r: { messages?: ChatMessage[] } | ChatMessage[]) =>
+        Array.isArray(r) ? r : r.messages ?? [],
+      providesTags: (_r, _e, a) => [{ type: 'Chat', id: a.orderId }],
+    }),
+    sendChatMessage: builder.mutation<ChatMessage, { orderId: string; text?: string; cannedCode?: string }>({
+      query: ({ orderId, text, cannedCode }) => ({
+        url: `/orders/${orderId}/chat`,
         method: 'POST',
-        data: { paymentMethod },
+        data: { text, cannedCode },
       }),
-      invalidatesTags: (_result, _error, arg) => [{ type: 'Order', id: arg.id }, 'Order', 'Wallet'],
+      invalidatesTags: (_r, _e, a) => [{ type: 'Chat', id: a.orderId }],
     }),
   }),
 });
 
 export const {
-  useGetOrdersQuery,
-  useGetOrderByIdQuery,
+  useGetQuoteQuery,
   useLazyGetQuoteQuery,
+  useGetNearbyProsQuery,
+  useGetWarmDispatchQuery,
   useCreateOrderMutation,
+  useGetOrderQuery,
+  useGetOrderTimelineQuery,
+  useListOrdersQuery,
+  useGetCancelPreviewQuery,
+  useLazyGetCancelPreviewQuery,
   useCancelOrderMutation,
-  useAcceptOfferMutation,
-  useStartTripMutation,
-  useArriveMutation,
-  useStartServiceMutation,
-  useCompleteServiceMutation,
+  useRebookOrderMutation,
+  useRateOrderMutation,
+  useLazyGetOrderInvoiceUrlQuery,
+  useGetChatMessagesQuery,
+  useSendChatMessageMutation,
 } = ordersApi;

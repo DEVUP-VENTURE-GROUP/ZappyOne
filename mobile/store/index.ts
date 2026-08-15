@@ -1,6 +1,8 @@
 import { configureStore } from '@reduxjs/toolkit';
 import authReducer from './authSlice';
 import { apiSlice } from '../services/api/apiSlice';
+// Registers every endpoint module on apiSlice — see services/api/index.ts.
+import '../services/api';
 
 export const store = configureStore({
   reducer: {

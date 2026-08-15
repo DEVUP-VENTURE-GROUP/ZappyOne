@@ -2,7 +2,9 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { LayoutGrid } from 'lucide-react';
 import { categoryMap } from '../../constants/categoryMap';
+import { normalizeCategoryKey } from '../../constants/catalogCategories';
 import { useIsMobile } from '../../hooks/useIsMobile';
+import { useT } from '../../i18n/I18nProvider';
 
 /**
  * Category grid. Two presentations off the single-source `categoryMap`:
@@ -15,14 +17,16 @@ const SERVICES = categoryMap;
 
 export default function CharacterServiceGrid() {
   const nav = useNavigate();
+  const t = useT();
   const isMobile = useIsMobile();
 
   const handleServiceClick = (svc) => {
-    // Open the catalog pre-filtered to this category (via its catalogKey) rather
-    // than text-searching the label — a label search lands on the "All" tab and
-    // shows unrelated services. 'More' opens the full catalog unfiltered.
-    if (svc.id === 'more' || !svc.catalogKey) nav('/services');
-    else nav(`/services?category=${encodeURIComponent(svc.catalogKey)}`);
+    // Open that vertical's own catalog page (its own hero, filters and offers)
+    // rather than the all-services grid. `normalizeCategoryKey` maps the tile's
+    // catalogKey onto the canonical route key, so `smart_device` → `/services/smart`.
+    // 'More' opens the full catalog unfiltered.
+    const key = svc.id === 'more' ? null : normalizeCategoryKey(svc.catalogKey);
+    nav(key ? `/services/${key}` : '/services');
   };
 
   return (
@@ -65,7 +69,7 @@ export default function CharacterServiceGrid() {
                   ) : (
                     <motion.img
                       src={svc.img}
-                      alt={svc.label}
+                      alt={t(`category.${svc.id}`, svc.label)}
                       className="absolute inset-0 w-full h-full object-contain p-2 z-10 transition-transform duration-300 group-hover:scale-[1.05] mix-blend-multiply"
                       loading="lazy"
                       animate={{ y: [0, -3, 0] }}
@@ -76,11 +80,11 @@ export default function CharacterServiceGrid() {
 
                 <div className="px-2 py-2 text-center">
                   <span className="block text-[13px] leading-[16px] font-bold text-[#14152A] truncate">
-                    {svc.label}
+                    {t(`category.${svc.id}`, svc.label)}
                   </span>
                   <span className="block text-[11px] leading-[14px] font-medium text-[var(--text-mid,#4A4D68)] truncate mt-[2px]">
                     {isMore ? (
-                      <span className="font-semibold text-[var(--text-hi,#14152A)]">View all</span>
+                      <span className="font-semibold text-[var(--text-hi,#14152A)]">{t('home.viewAll', 'View all')}</span>
                     ) : (
                       <>From <span className="font-semibold text-[var(--text-hi,#14152A)] tabular-nums">{svc.price}</span></>
                     )}
@@ -135,7 +139,7 @@ export default function CharacterServiceGrid() {
                 ) : (
                   <motion.img
                     src={svc.img}
-                    alt={svc.label}
+                    alt={t(`category.${svc.id}`, svc.label)}
                     className="absolute inset-0 w-full h-full object-contain p-2 z-10 transition-transform duration-300 group-hover:scale-[1.05] mix-blend-multiply"
                     loading="lazy"
                     animate={{ y: [0, -3, 0] }}
@@ -146,7 +150,7 @@ export default function CharacterServiceGrid() {
 
               <div className="text-center w-full mt-[6px]">
                 <span className="block text-[13px] leading-[18px] font-bold text-[#14152A] truncate">
-                  {svc.label}
+                  {t(`category.${svc.id}`, svc.label)}
                 </span>
                 <span className="block text-[11px] leading-[14px] tracking-[0.04em] font-medium text-[var(--text-mid,#4A4D68)] truncate mt-[2px]">
                   {svc.id === 'more' ? (

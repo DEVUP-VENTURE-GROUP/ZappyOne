@@ -406,9 +406,11 @@ export default function BookingPage() {
   const [noWorkersModal,   setNoWorkersModal]   = useState(false);
   const [priceChangedModal, setPriceChangedModal] = useState(null); // { quotedTotal, freshTotal, pendingBody }
 
-  // Mobile-specific state
-  const [deviceBrand,   setDeviceBrand]   = useState('');
-  const [deviceModel,   setDeviceModel]   = useState('');
+  // Device / vehicle identity. Seeded from `/book/:service?brand=&model=`, which
+  // is how the service detail page hands over the brand the customer picked —
+  // the mobile diagnostic wizard below can still overwrite both.
+  const [deviceBrand,   setDeviceBrand]   = useState(() => searchParams.get('brand') || '');
+  const [deviceModel,   setDeviceModel]   = useState(() => searchParams.get('model') || '');
   const [deviceSeries,  setDeviceSeries]  = useState('');
   const [partsTier,     setPartsTier]     = useState(''); // OEM | Premium | Compatible | Budget (from wizard)
   const [serviceMode,   setServiceMode]   = useState('doorstep'); // doorstep | pickup
@@ -425,7 +427,7 @@ export default function BookingPage() {
   const nudgeTimer = useRef(null);
   const fileInputRef = useRef(null);
 
-  const [fetchQuote,     { data: quoteData, isFetching: quoting }] = useLazyGetQuoteQuery();
+  const [fetchQuote,     { data: quoteData, isFetching: quoting, isError: quoteFailed, error: quoteError }] = useLazyGetQuoteQuery();
   const [createOrder,    { isLoading: creating }]                  = useCreateOrderMutation();
   const [presignUpload]                                             = usePresignUploadMutation();
   const [fetchNearby,    { data: nearbyData }]                     = useLazyGetNearbyWorkersQuery();
@@ -452,6 +454,27 @@ export default function BookingPage() {
     return () => { clearTimeout(initial); clearInterval(nudgeTimer.current); };
   }, [stage]);
 
+  // The full arg set for /api/orders/quote. Extracted so the primary call and
+  // every retry site (SmartPricingPanel refresh, "Couldn't load fare" Retry
+  // button) stay in sync. A retry that skipped e.g. `dropLat`/`dropLng` would
+  // silently re-price a car-towing job as if the drop were 50m from pickup
+  // (was a real bug); keeping it all here means every future arg is picked up
+  // by every retry automatically.
+  function buildQuoteArgs(lat, lng) {
+    return {
+      service, pickupLat: lat, pickupLng: lng,
+      ...(deviceBrand && { deviceBrand }),
+      ...(deviceModel && { deviceModel }),
+      ...(deviceSeries && { deviceSeries }),
+      ...(partsTier && { partsTier }),
+      ...(vehicleType && { vehicleType }),
+      ...(isTowing && { vehicleType: service === 'car_towing' ? 'car' : 'bike' }),
+      ...(isTowing && towDest && { dropLat: towDest.lat, dropLng: towDest.lng }),
+      ...(pricingModel !== 'standard' && { pricingModel }),
+      ...(pricingModel === 'hourly' && { estimatedHours }),
+    };
+  }
+
   async function onLocationConfirmed(loc) {
     // Test 34: warn if user confirmed location while GPS was inaccurate (>150m).
     // This commonly happens when booking from a moving vehicle or inside a building.
@@ -468,18 +491,7 @@ export default function BookingPage() {
     // Also stash coords so the visitor session inherits city/district/state.
     try { localStorage.setItem('zappy:lastCoords', JSON.stringify({ lat: loc.lat, lng: loc.lng })); } catch { /* ignore */ }
     trackSearch({ category: service, lat: loc.lat, lng: loc.lng, result: 'served', userType: 'user' });
-    fetchQuote({
-      service, pickupLat: loc.lat, pickupLng: loc.lng,
-      ...(deviceBrand && { deviceBrand }),
-      ...(deviceModel && { deviceModel }),
-      ...(deviceSeries && { deviceSeries }),
-      ...(partsTier && { partsTier }),
-      ...(vehicleType && { vehicleType }),
-      ...(isTowing && { vehicleType: service === 'car_towing' ? 'car' : 'bike' }),
-      ...(isTowing && towDest && { dropLat: towDest.lat, dropLng: towDest.lng }),
-      ...(pricingModel !== 'standard' && { pricingModel }),
-      ...(pricingModel === 'hourly' && { estimatedHours }),
-    });
+    fetchQuote(buildQuoteArgs(loc.lat, loc.lng));
     fetchNearby({ lat: loc.lat, lng: loc.lng });
     fetchSurge({ lat: loc.lat, lng: loc.lng });
   }
@@ -575,9 +587,12 @@ export default function BookingPage() {
       tipAmount: tipAmount > 0 ? tipAmount : undefined,
       // Worker-choice: if the customer picked a specific pro, dispatch offers them first.
       ...(preferredWorkerId && { preferredWorkerId }),
-      // Mobile extras
-      ...(isMobile && deviceBrand && { deviceBrand }),
-      ...(isMobile && deviceModel && { deviceModel }),
+      // Brand/model apply to every vertical that has a brand catalog (phones,
+      // laptops, cars, bikes) — the order schema and its Joi validator both
+      // take them unconditionally, and pricing looks up parts by brand+model.
+      ...(deviceBrand && { deviceBrand }),
+      ...(deviceModel && { deviceModel }),
+      // Series and parts tier only come from the mobile diagnostic wizard.
       ...(isMobile && deviceSeries && { deviceSeries }),
       ...(isMobile && partsTier && { partsTier }),
       ...(isMobile && { serviceMode }),
@@ -693,7 +708,7 @@ export default function BookingPage() {
             </div>
           </div>
         </header>
-        <div className="flex-1 min-h-0 relative">
+        <div className="flex-1 min-h-0 relative lg:bg-slate-200/50">
           <LocationPicker onConfirm={onLocationConfirmed} onCancel={() => nav(-1)} serviceLabel={meta.label} service={service} />
         </div>
       </div>
@@ -717,7 +732,7 @@ export default function BookingPage() {
           </div>
           <div className="absolute bottom-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
         </header>
-        <div className="flex-1 min-h-0 relative">
+        <div className="flex-1 min-h-0 relative lg:bg-slate-200/50">
           <LocationPicker onConfirm={onTowDestConfirmed} onCancel={() => setShowDestPicker(false)} serviceLabel="Tow destination" service={service} />
         </div>
       </div>
@@ -936,6 +951,28 @@ export default function BookingPage() {
           </motion.div>
         )}
 
+        {/* ── Brand/model carried over from the service detail page ──────
+            Mobile already shows this inside its own card above. */}
+        {!isMobile && (deviceBrand || deviceModel) && (
+          <motion.div className="rounded-2xl bg-white ring-1 ring-slate-100 p-4" style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }} variants={fadeInUp}>
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+              {isVehicle ? 'Your vehicle' : 'Your device'}
+            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              {deviceBrand && (
+                <span className="px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-150 text-xs font-bold text-slate-700 capitalize">
+                  {deviceBrand.replace(/-/g, ' ')}
+                </span>
+              )}
+              {deviceModel && (
+                <span className="px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-150 text-xs font-semibold text-slate-600 capitalize">
+                  {deviceModel.replace(/-/g, ' ')}
+                </span>
+              )}
+            </div>
+          </motion.div>
+        )}
+
         {/* ── Towing: destination picker ────────────────────────────── */}
         {isTowing && (
           <motion.div className="rounded-2xl bg-white ring-1 ring-slate-100 p-4" style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }} variants={fadeInUp}>
@@ -1083,7 +1120,7 @@ export default function BookingPage() {
               quote={q}
               mode={pricingMode}
               onModeChange={setPricingMode}
-              onRefetch={() => fetchQuote({ service, pickupLat: location.lat, pickupLng: location.lng })}
+              onRefetch={() => fetchQuote(buildQuoteArgs(location.lat, location.lng))}
               accentGradient={meta.gradient}
               selectedTier={selectedTier}
               onTierChange={setSelectedTier}
@@ -1093,10 +1130,20 @@ export default function BookingPage() {
               pricingConfig={pricingConfig}
             />
           ) : (
-            <div className="rounded-2xl bg-white ring-1 ring-slate-100 p-4" style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }}>
-              <p className="text-sm text-slate-400 font-medium text-center py-2">
-                Could not load fare estimate
+            <div className="rounded-2xl bg-white ring-1 ring-slate-100 p-4 text-center space-y-2" style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }}>
+              <p className="text-sm text-slate-500 font-medium">
+                {quoteFailed ? "Couldn't load the fare — check your connection and retry." : 'Fare estimate unavailable'}
               </p>
+              {quoteError?.status && (
+                <p className="text-[10px] text-slate-300 font-mono">ref: {quoteError.status}</p>
+              )}
+              {location && (
+                <button
+                  onClick={() => fetchQuote(buildQuoteArgs(location.lat, location.lng))}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition">
+                  Retry
+                </button>
+              )}
             </div>
           )}
         </motion.div>

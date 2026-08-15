@@ -13,7 +13,7 @@ import {
 } from '../services/api';
 import {
   groupCatalog, groupKeyForService,
-  DEVICE_EXPERTISE_GROUPS, CATEGORY_BRANDS,
+  DEVICE_EXPERTISE_GROUPS, CATEGORY_BRANDS, useCategoryGroups,
 } from '../lib/serviceCatalogGroups';
 
 // Per-group icon + accent. Keyed by the group keys in serviceCatalogGroups.js.
@@ -74,7 +74,8 @@ export default function WorkerSkillsPage() {
 
   // Build the grouped catalog. Group order and membership come straight from the
   // shared catalog-grouping module, so this mirrors the customer booking flow.
-  const groups = useMemo(() => groupCatalog(catalog?.list ?? []), [catalog]);
+  const taxonomy = useCategoryGroups(); // re-group when the admin taxonomy loads/changes
+  const groups = useMemo(() => groupCatalog(catalog?.list ?? []), [catalog, taxonomy]);
 
   // Seed the open groups ONCE, after both the catalog and the profile are ready:
   // any category the worker already has a pick in starts expanded so they see it
@@ -200,8 +201,8 @@ export default function WorkerSkillsPage() {
   const totalSelected = selected.size;
 
   return (
-    <div className="min-h-screen bg-slate-50 md:flex md:justify-center">
-      <div className="w-full max-w-lg bg-slate-50 min-h-screen relative shadow-[0_0_40px_rgba(0,0,0,0.05)] md:border-x border-slate-200/60 pb-8 overflow-hidden">
+    <div className="min-h-screen bg-slate-50 md:flex md:justify-center md:bg-gradient-to-br md:from-slate-100 md:to-indigo-50/40">
+      <div className="w-full max-w-lg lg:max-w-2xl bg-slate-50 min-h-screen relative shadow-[0_0_40px_rgba(0,0,0,0.05)] lg:shadow-[0_0_60px_rgba(0,0,0,0.08)] md:border-x border-slate-200/60 pb-8 overflow-hidden">
 
         {/* Cinematic Header */}
         <header className="relative pt-6 pb-28 overflow-hidden rounded-b-[2.5rem] shadow-sm z-10" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #1e3a5f 100%)' }}>

@@ -31,7 +31,7 @@ async function goOnline({ workerId, lng, lat }) {
   }
 
   // Load first to check KYC status — cheap guard before we write anything.
-  const existing = await Worker.findById(workerId).select('kyc.status isBlocked').lean();
+  const existing = await Worker.findById(workerId).select('kyc.status isBlocked isOnline onlineSince').lean();
   if (!existing) throw Object.assign(new Error('Worker not found'), { status: 404, code: 'WORKER_NOT_FOUND' });
   if (existing.isBlocked) {
     throw Object.assign(new Error('Account is blocked'), { status: 403, code: 'WORKER_BLOCKED' });
@@ -56,6 +56,10 @@ async function goOnline({ workerId, lng, lat }) {
         'currentLocation.coordinates': [lng, lat],
         'currentLocation.updatedAt': new Date(),
         lastSeenAt: new Date(),
+        // Stamp the session start only on the offline→online transition. A
+        // redundant goOnline mid-session (reconnect, second device) keeps the
+        // original timestamp, so the "online for" clock doesn't reset.
+        onlineSince: existing.isOnline && existing.onlineSince ? existing.onlineSince : new Date(),
       },
     },
     { new: true }
@@ -82,7 +86,7 @@ async function goOffline({ workerId }) {
 
   const worker = await Worker.findByIdAndUpdate(
     workerId,
-    { $set: { isOnline: false, isAvailable: false, lastSeenAt: new Date() } },
+    { $set: { isOnline: false, isAvailable: false, lastSeenAt: new Date(), onlineSince: null } },
     { new: true }
   );
   await geoService.markOffline(workerId);

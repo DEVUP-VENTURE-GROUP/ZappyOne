@@ -225,7 +225,7 @@ export default function WorkerKycPage() {
           <button onClick={() => nav('/worker')} className="back-btn"><ArrowLeft size={18} strokeWidth={2.5} /></button>
           <h1 className="h-card">KYC Verification</h1>
         </div></header>
-        <div className="max-w-lg mx-auto px-4 pt-4 space-y-3">
+        <div className="max-w-lg lg:max-w-2xl mx-auto px-4 pt-4 space-y-3">
           <div className="card bg-amber-50 ring-1 ring-amber-200 flex items-center gap-3">
             <Clock size={18} className="text-amber-500 shrink-0" />
             <div>
@@ -246,7 +246,7 @@ export default function WorkerKycPage() {
           <button onClick={() => nav('/worker')} className="back-btn"><ArrowLeft size={18} strokeWidth={2.5} /></button>
           <h1 className="h-card">KYC Verification</h1>
         </div></header>
-        <div className="max-w-lg mx-auto px-4 pt-4 space-y-3">
+        <div className="max-w-lg lg:max-w-2xl mx-auto px-4 pt-4 space-y-3">
           <div className="card bg-success-50 ring-1 ring-success-200 flex items-center gap-3">
             <ShieldCheck size={18} className="text-success-600 shrink-0" />
             <div>
@@ -334,7 +334,7 @@ export default function WorkerKycPage() {
           </div>
         </header>
 
-        <div className="max-w-lg mx-auto px-4 pt-4 space-y-3">
+        <div className="max-w-lg lg:max-w-2xl mx-auto px-4 pt-4 space-y-3">
 
           {/* Admin clarification — action needed, re-upload requested */}
           {needsClarification && (
@@ -495,7 +495,7 @@ export default function WorkerKycPage() {
 
         {/* submit bar */}
         <div className="fixed bottom-0 inset-x-0 bg-white border-t border-slate-100 safe-pb">
-          <div className="max-w-lg mx-auto px-4 pt-3 pb-2">
+          <div className="max-w-lg lg:max-w-2xl mx-auto px-4 pt-3 pb-2">
             <button
               onClick={submit}
               disabled={submitting || !urls.aadhaarUrl || !urls.licenseUrl || !urls.selfieUrl}

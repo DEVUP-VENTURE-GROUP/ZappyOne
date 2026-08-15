@@ -2,26 +2,29 @@ import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, Dimensions } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import { useSocket } from '../../hooks/useSocket';
+import type { WorkerLocationEvent } from '../../services/socket/events';
 
 interface LiveTrackingMapProps {
   orderId: string;
   pickupLat: number;
   pickupLng: number;
+  /** Seeds the marker before the first socket tick — see Order.workerCurrentLocation. */
+  initialWorkerLocation?: { lat: number; lng: number } | null;
 }
 
-export const LiveTrackingMap: React.FC<LiveTrackingMapProps> = ({ orderId, pickupLat, pickupLng }) => {
-  const [workerLocation, setWorkerLocation] = useState<{ lat: number; lng: number } | null>(null);
+export const LiveTrackingMap: React.FC<LiveTrackingMapProps> = ({
+  orderId,
+  pickupLat,
+  pickupLng,
+  initialWorkerLocation = null,
+}) => {
+  const [workerLocation, setWorkerLocation] = useState<{ lat: number; lng: number } | null>(initialWorkerLocation);
   const socketClient = useSocket(orderId);
 
   useEffect(() => {
-    // Listen for worker location updates
-    socketClient.on('worker.location', (data: { lat: number; lng: number; at: string }) => {
-      setWorkerLocation({ lat: data.lat, lng: data.lng });
-    });
-
-    return () => {
-      socketClient.off('worker.location');
-    };
+    const handler = (data: WorkerLocationEvent) => setWorkerLocation({ lat: data.lat, lng: data.lng });
+    socketClient.on('worker.location', handler);
+    return () => socketClient.off('worker.location', handler);
   }, [socketClient]);
 
   const initialRegion = {

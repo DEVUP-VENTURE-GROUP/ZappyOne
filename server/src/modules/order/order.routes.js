@@ -80,7 +80,7 @@ const ALL_SERVICES = [
 ];
 
 const createOrderSchema = Joi.object({
-  service: Joi.string().valid(...ALL_SERVICES).required(),
+  service: Joi.string().max(60).pattern(/^[a-z0-9_]+$/).required(), // any live catalog code (no hardcoded whitelist)
   subCategory: Joi.string().max(100).allow('', null),
   description: Joi.string().max(500).allow(''),
   images: Joi.array().items(Joi.string()).max(5).default([]),
@@ -119,7 +119,7 @@ const createOrderSchema = Joi.object({
 });
 
 const quoteSchema = Joi.object({
-  service: Joi.string().valid(...ALL_SERVICES).required(),
+  service: Joi.string().max(60).pattern(/^[a-z0-9_]+$/).required(), // any live catalog code (no hardcoded whitelist)
   pickupLat: Joi.number().required(),
   pickupLng: Joi.number().required(),
   dropLat: Joi.number().optional(),
@@ -141,7 +141,7 @@ const rateSchema = Joi.object({
 router.get('/quote', authenticate, requireRole('user'), quoteLimiter, validate(quoteSchema, 'query'), ctrl.getQuote);
 // Worker-choice: top-ranked available pros near the pickup (optional picker at checkout).
 router.get('/nearby-pros', authenticate, requireRole('user'), quoteLimiter, validate(Joi.object({
-  service: Joi.string().valid(...ALL_SERVICES).required(),
+  service: Joi.string().max(60).pattern(/^[a-z0-9_]+$/).required(), // any live catalog code (no hardcoded whitelist)
   lat: Joi.number().required(),
   lng: Joi.number().required(),
 }), 'query'), ctrl.nearbyPros);
@@ -149,7 +149,7 @@ router.get('/nearby-pros', authenticate, requireRole('user'), quoteLimiter, vali
 // ZeroWait L2 — Warm Dispatch: pre-check the Ready Pool at checkout so we can
 // promise an instant match BEFORE the customer pays. Notifies no workers.
 router.get('/warm', authenticate, requireRole('user'), quoteLimiter, validate(Joi.object({
-  service: Joi.string().valid(...ALL_SERVICES).required(),
+  service: Joi.string().max(60).pattern(/^[a-z0-9_]+$/).required(), // any live catalog code (no hardcoded whitelist)
   lat: Joi.number().required(),
   lng: Joi.number().required(),
 }), 'query'), ctrl.warmDispatch);

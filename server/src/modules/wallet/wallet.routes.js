@@ -21,7 +21,11 @@ router.get(
 router.post(
   '/topup',
   authenticate,
-  validate(Joi.object({ amountPaise: Joi.number().integer().min(1000).max(10000000).required() })),
+  validate(Joi.object({
+    amountPaise: Joi.number().integer().min(1000).max(10000000).required(),
+    // Mobile only — see payment.routes.js's create-order for why.
+    returnUrl: Joi.string().uri().max(500).optional(),
+  })),
   ctrl.topup
 );
 

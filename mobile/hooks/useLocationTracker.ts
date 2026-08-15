@@ -1,6 +1,9 @@
 import { useEffect, useRef } from 'react';
 import * as Location from 'expo-location';
 import { socketClient } from '../services/socket/socketClient';
+import { createLogger } from '../lib/logger';
+
+const log = createLogger('location-tracker');
 
 export const useLocationTracker = (isActive: boolean, orderId?: string) => {
   const locationSubRef = useRef<Location.LocationSubscription | null>(null);
@@ -9,7 +12,7 @@ export const useLocationTracker = (isActive: boolean, orderId?: string) => {
     const startTracking = async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        console.error('Permission to access location was denied');
+        log.warn('location permission denied');
         return;
       }
 
@@ -25,6 +28,9 @@ export const useLocationTracker = (isActive: boolean, orderId?: string) => {
             lat: location.coords.latitude,
             lng: location.coords.longitude,
             orderId,
+            hdg: location.coords.heading ?? undefined,
+            spd: location.coords.speed ?? undefined,
+            acc: location.coords.accuracy ?? undefined,
           });
         }
       );

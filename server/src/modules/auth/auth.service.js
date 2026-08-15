@@ -228,11 +228,16 @@ async function requestOtp(phone, role) {
     isNewUser = !p;
   }
 
-  // devOtp is only returned in non-production so the dev UI can auto-fill.
+  // devOtp is only ever exposed to the client in non-production, so the dev UI
+  // can auto-fill. In production it is force-nulled even if no SMS provider is
+  // configured — the real code still goes out via the delivery channel; it must
+  // never be leaked in the API response. `TWO_FACTOR_API_KEY` already nulls it
+  // when set; this NODE_ENV guard is the belt-and-suspenders for a misconfigured
+  // prod deploy.
   // cooldown/resend metadata lets the client render an accurate resend countdown
   // from the first send, instead of hardcoding numbers that drift from the server.
   return {
-    otp: devOtp,
+    otp: process.env.NODE_ENV === 'production' ? null : devOtp,
     isNewUser,
     cooldownSec:  Math.ceil(OTP_COOLDOWN_MS / 1000),
     resendsLeft:  OTP_MAX_RESENDS,
@@ -305,7 +310,7 @@ async function resendOtp(phone) {
   // Hand the client everything it needs to render an accurate countdown + limit,
   // instead of the UI guessing (and drifting out of sync with the server).
   return {
-    otp: devOtp,                                   // null in production — dev auto-fill only
+    otp: process.env.NODE_ENV === 'production' ? null : devOtp,  // dev auto-fill only; never leaked in prod
     cooldownSec:  Math.ceil(OTP_COOLDOWN_MS / 1000),
     resendsLeft:  Math.max(0, OTP_MAX_RESENDS - (resendCount + 1)),
     expiresInSec: OTP_TTL_SEC,

@@ -95,19 +95,27 @@ async function getActiveConfig() {
   const now = Date.now();
   if (_localCache.data && now - _localCache.at < CACHE_TTL_LOCAL_MS) return _localCache.data;
 
-  const cached = await redis.get(CACHE_KEY);
-  if (cached) {
-    try {
+  // Redis is a cache, not a dependency — a Redis hiccup must NEVER take down pricing
+  // (that would blank the fare on the whole booking flow). Read is best-effort;
+  // on any error we fall through to the DB / env defaults.
+  try {
+    const cached = await redis.get(CACHE_KEY);
+    if (cached) {
       const parsed = JSON.parse(cached);
       _localCache = { data: parsed, at: now };
       return parsed;
-    } catch { /* ignore */ }
+    }
+  } catch { /* Redis unavailable or bad JSON — fall through to DB/env */ }
+
+  let view;
+  try {
+    const fromDb = await PricingConfig.findOne({ isActive: true }).lean();
+    view = fromDb ? toView(fromDb) : envFallback();
+  } catch {
+    view = envFallback(); // DB blip — still return usable fares rather than throwing
   }
 
-  const fromDb = await PricingConfig.findOne({ isActive: true }).lean();
-  const view = fromDb ? toView(fromDb) : envFallback();
-
-  await redis.setex(CACHE_KEY, CACHE_TTL_REDIS, JSON.stringify(view));
+  try { await redis.setex(CACHE_KEY, CACHE_TTL_REDIS, JSON.stringify(view)); } catch { /* cache write is best-effort */ }
   _localCache = { data: view, at: now };
   return view;
 }
@@ -1048,10 +1056,40 @@ async function calculatePrice({ origin, dest, service, userId, priority = 'norma
     const ServiceCatalog = require('../service/service-catalog.model');
     const catalogEntry = await ServiceCatalog.findOne(
       { code: service },
-      'priceRangeMinPaise priceRangeMaxPaise'
+      'servicePricePaise priceRangeMinPaise priceRangeMaxPaise'
     ).lean();
 
-    if (catalogEntry) {
+    if (catalogEntry && catalogEntry.servicePricePaise > 0) {
+      // ── ADDITIVE MODEL ────────────────────────────────────────────────────
+      // Total = fixed service price (the actual job) + travel + platform, then
+      // surge, then ceiling. The service price is the worker's core earning; travel
+      // and platform are ADDED on top (never swallowed), so distance genuinely
+      // affects the bill and the breakdown is transparent to the customer.
+      const surge = Math.max(result.surgeMultiplier || 1, _pendingSurge || 1);
+      const travelPaise = result.paise?.distanceFee ?? 0;
+      let platformPaise = result.paise?.platformFee;
+      if (platformPaise == null) {
+        try { platformPaise = (await getActiveConfig()).platformFeePaise ?? 0; } catch { platformPaise = 0; }
+      }
+      const preSurgePaise = catalogEntry.servicePricePaise + travelPaise + platformPaise;
+      let finalPaise = Math.round(preSurgePaise * surge);
+      // Safety ceiling (only if a sensible max above the service price is configured)
+      if (
+        catalogEntry.priceRangeMaxPaise &&
+        catalogEntry.priceRangeMaxPaise > catalogEntry.servicePricePaise &&
+        finalPaise > catalogEntry.priceRangeMaxPaise
+      ) {
+        finalPaise = catalogEntry.priceRangeMaxPaise;
+        result.ceilingApplied = true;
+      }
+      result.pricingModel   = 'additive';
+      result.servicePrice   = paiseToRupees(catalogEntry.servicePricePaise);
+      result.travelFee      = paiseToRupees(travelPaise);
+      result.platformFee    = paiseToRupees(platformPaise);
+      result.surgeMultiplier = surge;
+      result.total          = paiseToRupees(finalPaise);
+      result.paise = { ...(result.paise || {}), servicePrice: catalogEntry.servicePricePaise, total: finalPaise };
+    } else if (catalogEntry) {
       // Step 1 — Floor on raw pre-surge price
       if (catalogEntry.priceRangeMinPaise) {
         const rawPaise = result.paise?.total ?? Math.round((result.total || 0) * 100);

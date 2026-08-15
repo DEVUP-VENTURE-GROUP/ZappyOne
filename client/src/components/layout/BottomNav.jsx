@@ -1,5 +1,6 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, ClipboardList, Zap, MapPin, User } from 'lucide-react';
+import { Home, ClipboardList, MapPin, User } from 'lucide-react';
+import ZappyMark from '../common/ZappyMark';
 import { api, useListNotificationsQuery } from '../../services/api';
 import { useSelector } from 'react-redux';
 import { selectIsAuthed } from '../../modules/auth/authSlice';
@@ -109,7 +110,7 @@ export default function BottomNav({ active }) {
             whileTap={{ scale: 0.92 }}
             className="w-16 h-16 rounded-full flex items-center justify-center border-4 border-white shadow-[0_8px_24px_-4px_rgba(37,99,235,0.35)] bg-zappy-gradient"
           >
-            <Zap size={30} color="#fff" strokeWidth={2.75} fill="#fff" />
+            <ZappyMark size={34} />
           </motion.div>
           <span className={`text-[10px] font-bold mt-1 ${isBook ? 'text-zappy-700' : 'text-zappy-600'}`}>{tr('nav.book', 'Book Now')}</span>
         </button>

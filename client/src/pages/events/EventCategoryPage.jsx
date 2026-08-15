@@ -227,7 +227,7 @@ export default function EventCategoryPage() {
               </div>
               <h3 className="text-xl font-black text-slate-800 mb-2">No themes found</h3>
               <p className="text-slate-500 font-medium">Try adjusting your filters or searching for something else.</p>
-              <button onClick={() => { setBudgetMax(''); setGuestCount(''); setCity(''); setSearch(''); }} className="mt-6 px-6 py-3 bg-slate-900 text-white rounded-xl font-bold text-sm shadow-lg hover:bg-slate-800 transition-colors">
+              <button onClick={() => { setBudgetMax(''); setGuestCount(''); setCity(''); }} className="mt-6 px-6 py-3 bg-slate-900 text-white rounded-xl font-bold text-sm shadow-lg hover:bg-slate-800 transition-colors">
                 Clear all filters
               </button>
             </div>

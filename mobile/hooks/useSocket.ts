@@ -1,21 +1,21 @@
 import { useEffect } from 'react';
 import { socketClient } from '../services/socket/socketClient';
 
-export const useSocket = (roomId?: string) => {
+/** Connects the socket and, if given an order id, subscribes to its room for the component's lifetime. */
+export const useSocket = (orderId?: string) => {
   useEffect(() => {
     socketClient.connect();
 
-    if (roomId) {
-      // Subscribe to specific room if needed
-      socketClient.emit('order:subscribe', { orderId: roomId });
+    if (orderId) {
+      socketClient.subscribeOrder(orderId);
     }
 
     return () => {
-      if (roomId) {
-        socketClient.emit('order:unsubscribe', { orderId: roomId });
+      if (orderId) {
+        socketClient.unsubscribeOrder(orderId);
       }
     };
-  }, [roomId]);
+  }, [orderId]);
 
   return socketClient;
 };

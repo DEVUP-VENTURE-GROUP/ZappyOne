@@ -37,7 +37,7 @@ router.patch('/profile', authenticate, requireRole('worker'),
     name:   Joi.string().min(2).max(100).optional(),
     // Skills are per-service dispatch codes (one per bookable service), so the cap
     // must exceed the full catalog size — a worker may legitimately do everything.
-    skills: Joi.array().items(Joi.string()).min(1).max(300).optional(),
+    skills: Joi.array().items(Joi.string().max(60).pattern(/^[a-z0-9_]+$/)).min(1).max(300).optional(),
     bio:    Joi.string().max(300).allow('', null).optional(),
     // Rich per-category expertise (#4). When provided, `skills` is derived from the
     // union of all services so dispatch matching stays in sync automatically.
@@ -61,7 +61,7 @@ router.post('/onboarding/complete', authenticate, requireRole('worker'),
   validate(Joi.object({
     name:  Joi.string().min(2).max(100).required(),
     phone: Joi.string().max(15).optional(),
-    skills: Joi.array().items(Joi.string()).min(1).max(200).required(),
+    skills: Joi.array().items(Joi.string().max(60).pattern(/^[a-z0-9_]+$/)).min(1).max(200).required(),
     emergencyContact: Joi.object({
       name:  Joi.string().max(100).optional(),
       phone: Joi.string().max(15).optional(),
@@ -148,7 +148,7 @@ router.patch(
   authenticate,
   requireRole('worker'),
   validate(Joi.object({
-    skills:       Joi.array().items(Joi.string().max(60)).max(300).optional(),
+    skills:       Joi.array().items(Joi.string().max(60).pattern(/^[a-z0-9_]+$/)).max(300).optional(),
     skillPrimary: Joi.string().max(60).allow(null, '').optional(),
     expertise: Joi.array().items(Joi.object({
       category:        Joi.string().max(40).required(),

@@ -1,4 +1,5 @@
 const ServiceCatalog = require('./service-catalog.model');
+const Category       = require('./category.model');
 const Brand          = require('./brand.model');
 const DeviceModel    = require('./device-model.model');
 const ServiceVariant = require('./service-variant.model');
@@ -180,7 +181,7 @@ async function adminUpdateService(req, res, next) {
     const { code } = req.params;
     const {
       name, description, shortDescription,
-      priceRangeMinRs, priceRangeMaxRs, inspectionFeeRs,
+      priceRangeMinRs, priceRangeMaxRs, inspectionFeeRs, servicePriceRs,
       estimatedDurationMinutes, imageUrl, coverImage, galleryImages,
       isActive, isFeatured,
       category, subcategory, sortOrder,
@@ -197,6 +198,8 @@ async function adminUpdateService(req, res, next) {
     if (priceRangeMinRs          != null) update.priceRangeMinPaise = Math.round(Number(priceRangeMinRs) * 100);
     if (priceRangeMaxRs          != null) update.priceRangeMaxPaise = Math.round(Number(priceRangeMaxRs) * 100);
     if (inspectionFeeRs          != null) update.inspectionFeePaise = Math.round(Number(inspectionFeeRs) * 100);
+    // Fixed service price → additive model (0 keeps legacy floor model).
+    if (servicePriceRs           != null) update.servicePricePaise  = Math.round(Number(servicePriceRs) * 100);
 
     if (estimatedDurationMinutes != null) update.estimatedDurationMinutes = Number(estimatedDurationMinutes);
     if (isActive                 != null) update.isActive = Boolean(isActive);
@@ -447,10 +450,97 @@ async function adminDeleteService(req, res, next) {
   } catch (err) { next(err); }
 }
 
+// ── Service categories (admin-managed taxonomy) ──────────────────────────────
+async function listCategories(req, res, next) {
+  try {
+    const categories = await Category.find({ isActive: true }).sort({ sortOrder: 1, customerLabel: 1 }).lean();
+    res.json({ categories });
+  } catch (err) { next(err); }
+}
+
+async function adminListCategories(req, res, next) {
+  try {
+    const categories = await Category.find({}).sort({ sortOrder: 1, customerLabel: 1 }).lean();
+    res.json({ categories });
+  } catch (err) { next(err); }
+}
+
+function categoryPatchFromBody(body) {
+  const {
+    customerLabel, workerLabel, icon, theme, brands, brandCategory,
+    matchCategories, codePrefixes, showInCustomer, sortOrder, isActive,
+  } = body;
+  const patch = {};
+  if (customerLabel   != null) patch.customerLabel = String(customerLabel);
+  if (workerLabel     != null) patch.workerLabel = String(workerLabel);
+  if (icon            != null) patch.icon = String(icon);
+  if (theme && typeof theme === 'object') patch.theme = theme;
+  if (Array.isArray(brands))          patch.brands = brands.map(String);
+  if (brandCategory   != null) patch.brandCategory = String(brandCategory).toLowerCase();
+  if (Array.isArray(matchCategories)) patch.matchCategories = matchCategories.map((v) => String(v).toLowerCase());
+  if (Array.isArray(codePrefixes))    patch.codePrefixes = codePrefixes.map((v) => String(v).toLowerCase());
+  if (showInCustomer  != null) patch.showInCustomer = Boolean(showInCustomer);
+  if (sortOrder       != null) patch.sortOrder = Number(sortOrder);
+  if (isActive        != null) patch.isActive = Boolean(isActive);
+  return patch;
+}
+
+async function adminCreateCategory(req, res, next) {
+  try {
+    const key = String(req.body.key || '').toLowerCase().trim();
+    if (!/^[a-z0-9_]+$/.test(key)) {
+      return res.status(400).json({ error: 'key must be lowercase letters, numbers or underscore' });
+    }
+    if (!req.body.customerLabel) return res.status(400).json({ error: 'customerLabel is required' });
+    const existing = await Category.findOne({ key }).lean();
+    if (existing) return res.status(409).json({ error: 'A category with this key already exists' });
+
+    const patch = categoryPatchFromBody(req.body);
+    // A brand-new admin category owns exactly its own key unless told otherwise.
+    if (!patch.matchCategories || patch.matchCategories.length === 0) patch.matchCategories = [key];
+    const count = await Category.countDocuments();
+    const cat = await Category.create({ key, sortOrder: patch.sortOrder ?? count, ...patch });
+    await bustCatalogCache();
+    res.status(201).json({ category: cat.toObject() });
+  } catch (err) { next(err); }
+}
+
+async function adminUpdateCategory(req, res, next) {
+  try {
+    const key = String(req.params.key).toLowerCase();
+    const patch = categoryPatchFromBody(req.body);
+    if (Object.keys(patch).length === 0) return res.status(400).json({ error: 'No fields to update' });
+    const cat = await Category.findOneAndUpdate({ key }, { $set: patch }, { new: true }).lean();
+    if (!cat) return res.status(404).json({ error: 'Category not found' });
+    await bustCatalogCache();
+    res.json({ category: cat });
+  } catch (err) { next(err); }
+}
+
+async function adminDeleteCategory(req, res, next) {
+  try {
+    const key = String(req.params.key).toLowerCase();
+    // Block delete while services still reference it — they'd fall into "Other".
+    const inUse = await ServiceCatalog.countDocuments({ category: { $in: [key] } });
+    if (inUse > 0) {
+      return res.status(409).json({
+        error: `Cannot delete: ${inUse} service(s) are in this category. Move them first, or disable the category instead.`,
+        serviceCount: inUse,
+      });
+    }
+    const cat = await Category.findOneAndDelete({ key });
+    if (!cat) return res.status(404).json({ error: 'Category not found' });
+    await bustCatalogCache();
+    res.json({ ok: true, key });
+  } catch (err) { next(err); }
+}
+
 module.exports = {
   listServices, getService, listBrands, listModels, listVariants,
   getDiagnosticFlow, recordDemandEvent, getInvoice, getWorkerHeatmap,
+  listCategories,
   adminListServices, adminUpdateService, adminCreateService, adminDeleteService,
+  adminListCategories, adminCreateCategory, adminUpdateCategory, adminDeleteCategory,
   adminListBrands, adminCreateBrand,
   adminListModels, adminCreateModel, adminImportModelsBulk, adminListVariants,
   adminCreateVariant, adminGetDemandEvents, adminServiceActiveOrderCount,

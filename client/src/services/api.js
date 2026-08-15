@@ -383,8 +383,14 @@ export const api = createApi({
       invalidatesTags: (r, e, a) => [{ type: 'Order', id: a?.id ?? a }],
     }),
     workerArrive: b.mutation({
-      query: (id) => ({ url: `/orders/${id}/arrived`, method: 'POST' }),
-      invalidatesTags: (r, e, id) => [{ type: 'Order', id }],
+      // Body is optional — server falls back to last known Redis GPS ping when
+      // client can't get a fresh fix, but sending fresh coords is preferred.
+      query: ({ id, lat, lng } = {}) => ({
+        url: `/orders/${id}/arrived`,
+        method: 'POST',
+        body: (lat != null && lng != null) ? { lat, lng } : undefined,
+      }),
+      invalidatesTags: (r, e, arg) => [{ type: 'Order', id: arg?.id ?? arg }],
     }),
     workerStartService: b.mutation({
       query: ({ id, otp }) => ({ url: `/orders/${id}/start-service`, method: 'POST', body: { otp } }),
@@ -1099,6 +1105,17 @@ export const api = createApi({
     adminCreateCatalogService: b.mutation({
       query: (body) => ({ url: '/catalog/admin/services', method: 'POST', body }),
     }),
+    // Admin category taxonomy
+    adminGetCategories: b.query({ query: () => '/catalog/admin/categories' }),
+    adminCreateCategory: b.mutation({
+      query: (body) => ({ url: '/catalog/admin/categories', method: 'POST', body }),
+    }),
+    adminUpdateCategory: b.mutation({
+      query: ({ key, ...body }) => ({ url: `/catalog/admin/categories/${key}`, method: 'PUT', body }),
+    }),
+    adminDeleteCategory: b.mutation({
+      query: (key) => ({ url: `/catalog/admin/categories/${key}`, method: 'DELETE' }),
+    }),
     adminDeleteCatalogService: b.mutation({
       query: (code) => ({ url: `/catalog/admin/services/${code}`, method: 'DELETE' }),
     }),
@@ -1208,7 +1225,7 @@ export const api = createApi({
 
     // --- Surge Info ---
     getSurgeInfo: b.query({
-      query: ({ lat, lng }) => `/pricing/surge?lat=${lat}&lng=${lng}`,
+      query: ({ lat, lng }) => `/pricing/surge-info?lat=${lat}&lng=${lng}`,
     }),
 
     // --- Diagnosis Flow ---
@@ -1992,6 +2009,10 @@ export const {
   useAdminUpdateCatalogServiceMutation,
   useAdminCreateCatalogServiceMutation,
   useAdminDeleteCatalogServiceMutation,
+  useAdminGetCategoriesQuery,
+  useAdminCreateCategoryMutation,
+  useAdminUpdateCategoryMutation,
+  useAdminDeleteCategoryMutation,
   useAdminServiceActiveOrderCountQuery,
   useAdminGetVerticalsQuery,
   useAdminUpdateVerticalMutation,

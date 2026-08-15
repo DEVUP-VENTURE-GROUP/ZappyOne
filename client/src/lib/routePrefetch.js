@@ -12,7 +12,15 @@ const loaders = {
   '/orders':   () => import('../pages/OrdersListPage'),
   '/track':    () => import('../pages/TrackPage'),
   '/profile':  () => import('../pages/ProfilePage'),
+  // Category catalog is the #1 destination from the Home tiles, so it's worth
+  // warming alongside the tabs. The service detail chunk is only prefetched on
+  // demand (prefetchRoute) — it's one level deeper in the funnel.
+  '/services/:category': () => import('../pages/CategoryCatalogPage'),
+  '/service/:code':      () => import('../pages/ServiceDetailPage'),
 };
+
+// The chunks warmed by prefetchMainTabs — everything a user can reach in one tap.
+const MAIN_TABS = ['/', '/services', '/orders', '/track', '/profile', '/services/:category'];
 
 const warmed = new Set();
 
@@ -26,7 +34,7 @@ export function prefetchRoute(path) {
 
 // Warm every primary tab — call from an idle callback after first paint.
 export function prefetchMainTabs() {
-  Object.keys(loaders).forEach(prefetchRoute);
+  MAIN_TABS.forEach(prefetchRoute);
 }
 
 // requestIdleCallback with a setTimeout fallback (Safari / older browsers).

@@ -11,13 +11,15 @@ import {
   CheckCircle, Lock, TrendingUp, MapPin, Loader2,
   Laptop, Tv, Wifi, Camera, Heart, PartyPopper, Dog,
   ShieldAlert, Cpu, MonitorSmartphone, Repeat2,
-  Tag, Headphones, ArrowRight, ThumbsUp,
+  Tag, Headphones, ArrowRight, ThumbsUp, X,
 } from 'lucide-react';
 import { selectAuth, selectIsAuthed } from '../modules/auth/authSlice';
 import toast from 'react-hot-toast';
 import { useT } from '../i18n/I18nProvider';
+import { serviceNameKey } from '../i18n/translations';
 import { useListOrdersQuery, useGetGamificationQuery, useGetRecommendationsQuery, useListServicesQuery, useRebookOrderMutation, useListNotificationsQuery } from '../services/api';
 import { useGeolocation, loadGeoLocation } from '../hooks/useGeolocation';
+import { saveGeoLocation } from '../utils/geoCache';
 import { reverseGeocode } from '../utils/reverseGeocode';
 import { serviceLabel } from '../constants/services';
 import { ZappyLogo } from '../components/common/ZappyLogo';
@@ -51,20 +53,20 @@ import {
 import SEO, { HOME_SCHEMA, BASE_URL } from '../components/SEO';
 import { useIsMobile } from '../hooks/useIsMobile';
 
-const SEARCH_PLACEHOLDERS = [
-  "Search 'Puncture Repair'...",
-  "Search 'Laptop Service'...",
-  "Search 'Electrician'...",
-  "Search 'Car Wash'...",
-  "Search 'Plumber'..."
-];
+// Service terms cycled through the search placeholder. Localized at render via
+// the "home.searchFor" template + the svc.* name map, so the whole hint
+// (e.g. "Search 'Car Wash'…") translates, not just the frame.
+const SEARCH_TERMS = ['Puncture Repair', 'Laptop Service', 'Electrician', 'Car Wash', 'Plumber'];
 
 function AnimatedSearchPlaceholder() {
+  const t = useT();
   const [index, setIndex] = useState(0);
   useEffect(() => {
-    const id = setInterval(() => setIndex(i => (i + 1) % SEARCH_PLACEHOLDERS.length), 2500);
+    const id = setInterval(() => setIndex(i => (i + 1) % SEARCH_TERMS.length), 2500);
     return () => clearInterval(id);
   }, []);
+  const term = t(serviceNameKey(SEARCH_TERMS[index]), SEARCH_TERMS[index]);
+  const hint = t('home.searchFor', "Search '{x}'...").replace('{x}', term);
   return (
     <div className="flex-1 h-full relative overflow-hidden flex items-center">
       <AnimatePresence>
@@ -76,7 +78,7 @@ function AnimatedSearchPlaceholder() {
           transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
           className="absolute left-0 right-0 truncate text-slate-400 font-medium text-[14px] sm:text-[15px]"
         >
-          {SEARCH_PLACEHOLDERS[index]}
+          {hint}
         </motion.span>
       </AnimatePresence>
     </div>
@@ -278,25 +280,26 @@ function NotifBell({ nav, isAuthed }) {
 // Static brand promises (copy, not data). Rebuilt as a crisp live card so it
 // no longer relies on the screenshot's baked-in white box.
 const TRUST_BADGES = [
-  { Icon: ShieldCheck, l1: 'Verified',     l2: 'Professionals' },
-  { Icon: Tag,         l1: 'Upfront',      l2: 'Pricing' },
-  { Icon: Clock,       l1: 'On-time',      l2: 'Service' },
-  { Icon: ThumbsUp,    l1: 'Satisfaction', l2: 'Guaranteed' },
+  { Icon: ShieldCheck, id: 'verified',     fallback: 'Verified Professionals' },
+  { Icon: Tag,         id: 'pricing',      fallback: 'Upfront Pricing' },
+  { Icon: Clock,       id: 'ontime',       fallback: 'On-time Service' },
+  { Icon: ThumbsUp,    id: 'satisfaction', fallback: 'Satisfaction Guaranteed' },
 ];
 
 function HeroTrustBar() {
+  const t = useT();
   return (
     <div className="relative z-10 -mt-2.5 md:-mt-6 mx-2.5 md:mx-6">
       <div className="bg-white rounded-2xl border border-slate-100 shadow-[0_14px_36px_-14px_rgba(15,23,42,0.24)] px-1.5 py-3 md:px-4 md:py-3.5">
         <div className="grid grid-cols-4 divide-x divide-slate-200/60">
-          {TRUST_BADGES.map(({ Icon, l1, l2 }) => (
+          {TRUST_BADGES.map(({ Icon, id, fallback }) => (
             <div
-              key={l1}
+              key={id}
               className="flex items-center justify-center gap-1.5 md:gap-2.5 px-1 md:px-2"
             >
               <Icon size={16} strokeWidth={2} className="text-zappy-600 shrink-0" />
               <span className="text-[10px] md:text-[12.5px] font-semibold text-slate-700 leading-[1.18]">
-                {l1}<br />{l2}
+                {t(`home.trust.${id}`, fallback)}
               </span>
             </div>
           ))}
@@ -338,6 +341,7 @@ function TrustOfferCards() {
 
 /* ─── UC-style image service card ──────────────────────────────────────── */
 function ServiceImageCard({ item, nav }) {
+  const t = useT();
   // Live price from the admin Service Catalog — single source of truth. When the
   // catalog hasn't loaded yet (or a request failed), fall back to a snapshot of
   // catalog minimums so the card shows a real "From ₹X" instead of "Get Quote".
@@ -346,7 +350,8 @@ function ServiceImageCard({ item, nav }) {
   const livePrice = svc?.priceRangeMinPaise != null ? Math.round(svc.priceRangeMinPaise / 100) : null;
   const price = livePrice ?? SERVICE_PRICE_FALLBACK[item.key] ?? null;
   const isServiceCode = /^[a-z][a-z0-9_]+$/.test(item.key || '');
-  const badge = item.badge || 'Popular';
+  const rawBadge = item.badge || 'Popular';
+  const badge = t(`home.badge.${rawBadge.toLowerCase()}`, rawBadge);
 
   return (
     <div
@@ -365,11 +370,11 @@ function ServiceImageCard({ item, nav }) {
           {badge}
         </span>
       </div>
-      <p className="text-[13px] md:text-[15px] font-bold text-[#0f172a] leading-snug mb-0.5 truncate">{item.name}</p>
+      <p className="text-[13px] md:text-[15px] font-bold text-[#0f172a] leading-snug mb-0.5 truncate">{t(serviceNameKey(item.name), item.name)}</p>
       <div className="flex items-center gap-1.5">
         {price != null ? (
           <>
-            <span className="text-[11px] md:text-[12px] text-slate-400 font-medium">From</span>
+            <span className="text-[11px] md:text-[12px] text-slate-400 font-medium">{t('common.from', 'From')}</span>
             <span className="text-[13px] md:text-[15px] font-bold text-[#0f172a]">₹{price}</span>
           </>
         ) : isServiceCode ? (
@@ -382,6 +387,7 @@ function ServiceImageCard({ item, nav }) {
 
 /* ─── Gradient poster tile ─────────────────────────────────────────────── */
 function PosterTile({ svc, nav }) {
+  const t = useT();
   const { key, name, Icon, grad, shadow, eta } = svc;
   return (
     <motion.button onClick={() => nav(`/book/${key}`)} className="w-[104px] sm:w-[124px] md:w-[140px] lg:w-[156px] flex flex-col items-center gap-2.5 group shrink-0"
@@ -404,13 +410,14 @@ function PosterTile({ svc, nav }) {
         )}
         <motion.div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       </div>
-      <span className="text-xs sm:text-[13px] font-bold text-slate-700 text-center leading-tight">{name}</span>
+      <span className="text-xs sm:text-[13px] font-bold text-slate-700 text-center leading-tight">{t(serviceNameKey(name), name)}</span>
     </motion.button>
   );
 }
 
 /* ─── Compact poster tile ──────────────────────────────────────────────── */
 function CompactTile({ svc, nav }) {
+  const t = useT();
   const { key, name, Icon, grad, eta } = svc;
   // nav can be a function (event tiles) or a useNavigate instance (service tiles)
   const handleClick = typeof nav === 'function' && nav.length === 0 ? nav : () => nav(`/book/${key}`);
@@ -432,7 +439,7 @@ function CompactTile({ svc, nav }) {
           </div>
         )}
       </div>
-      <span className="text-[11px] sm:text-xs font-semibold text-slate-700 text-center leading-tight">{name}</span>
+      <span className="text-[11px] sm:text-xs font-semibold text-slate-700 text-center leading-tight">{t(serviceNameKey(name), name)}</span>
     </motion.button>
   );
 }
@@ -464,15 +471,16 @@ function CompactImageTile({ svc, nav }) {
 
 /* ─── Section header ───────────────────────────────────────────────────── */
 function SectionHeader({ title, badge, badgeColor = 'bg-slate-100 text-slate-800', onSeeAll }) {
+  const t = useT();
   return (
     <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-2 mb-4 md:mb-6">
       <div className="flex flex-wrap items-center gap-3">
-        <h2 className="text-[20px] md:text-[28px] font-bold text-black tracking-tight">{title}</h2>
+        <h2 className="text-[20px] md:text-[28px] font-bold text-slate-900 tracking-tight">{title}</h2>
         {badge && <span className={`text-[10px] md:text-xs font-medium px-2 py-0.5 rounded-md ${badgeColor}`}>{badge}</span>}
       </div>
       {onSeeAll && (
-        <button onClick={onSeeAll} className="text-sm md:text-[15px] font-medium text-black hover:text-slate-600">
-          See all
+        <button onClick={onSeeAll} className="group flex items-center gap-1 text-[14px] md:text-[15px] font-semibold text-zappy-600 hover:text-zappy-700 transition-colors">
+          {t('home.seeAll', 'See all')} <ArrowRight size={15} strokeWidth={2.5} className="transition-transform group-hover:translate-x-0.5" />
         </button>
       )}
     </div>
@@ -552,6 +560,18 @@ export default function HomePage() {
   const [locDetecting, setLocDetecting] = useState(false);
 
   useEffect(() => {
+    // If we already have a recent, trusted location (GPS sample or a location
+    // the user picked last visit), show it and DON'T re-gate — just resolve its
+    // name in the background. This is what stops the "Set your location" sheet
+    // re-appearing on every reload.
+    const cached = loadGeoLocation();
+    if (cached) {
+      reverseGeocode(cached.lat, cached.lng)
+        .then(({ primary, secondary }) => setLoc({ primary, secondary, loading: false, lat: cached.lat, lng: cached.lng }))
+        .catch(() => setLoc({ primary: 'Location set', secondary: null, loading: false, lat: cached.lat, lng: cached.lng }));
+      return;
+    }
+
     getCurrent()
       .then(async ({ lat, lng, accuracy }) => {
         // If accuracy is worse than 500m (IP-based location on laptops/desktops),
@@ -565,15 +585,9 @@ export default function HomePage() {
         setLoc({ primary, secondary, loading: false, lat, lng });
       })
       .catch(() => {
-        // Try cached coords for reverse geocode on GPS denial
-        const cached = loadGeoLocation();
-        if (cached) {
-          reverseGeocode(cached.lat, cached.lng)
-            .then(({ primary, secondary }) => setLoc({ primary, secondary, loading: false }));
-        } else {
-          setLoc({ primary: 'Set your location', secondary: 'Tap to choose', loading: false });
-          setLocSheet(true);
-        }
+        // No cache and GPS denied — this is the one case where we must ask.
+        setLoc({ primary: 'Set your location', secondary: 'Tap to choose', loading: false });
+        setLocSheet(true);
       });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -622,6 +636,9 @@ export default function HomePage() {
     const region = get('region');
     const primary = neighborhood || locality || feat.text;
     const secondary = [place || locality, region].filter(Boolean).join(', ') || null;
+    // Persist the manual pick (accuracy 0 = user-confirmed, fully trusted) so a
+    // reload finds it in cache and doesn't re-open the sheet.
+    saveGeoLocation({ lat, lng, accuracy: 0 });
     setLoc({ primary, secondary, loading: false, lat, lng });
     setLocSheet(false);
     setLocSearch('');
@@ -802,12 +819,12 @@ export default function HomePage() {
               transition={{ delay: 0.12 }}
             >
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-[20px] font-bold text-slate-900 tracking-tight">Popular Services</h2>
+                <h2 className="text-[20px] font-bold text-slate-900 tracking-tight">{tHome('home.popularServices','Popular Services')}</h2>
                 <button
                   onClick={() => nav('/services')}
-                  className="flex items-center gap-1 text-[14px] font-semibold text-zappy-600 hover:text-zappy-700 transition-colors"
+                  className="group flex items-center gap-1 text-[14px] font-semibold text-zappy-600 hover:text-zappy-700 transition-colors"
                 >
-                  View all <ArrowRight size={15} strokeWidth={2.5} />
+                  {tHome('home.seeAll', 'See all')} <ArrowRight size={15} strokeWidth={2.5} className="transition-transform group-hover:translate-x-0.5" />
                 </button>
               </div>
               <CharacterServiceGrid />
@@ -908,7 +925,7 @@ export default function HomePage() {
 
           {/* ─── Electronics Rescue — Most Booked ────────────────────── */}
           <div className="mt-7">
-            <SectionHeader title="Electronics Rescue" badge="Most Booked" badgeColor="bg-indigo-50 text-indigo-600 ring-indigo-100" onSeeAll={() => nav('/services')} />
+            <SectionHeader title={tHome('home.sec.electronics','Electronics Rescue')} badge={tHome('home.sec.electronics.badge','Most Booked')} badgeColor="bg-indigo-50 text-indigo-600 ring-indigo-100" onSeeAll={() => nav('/services')} />
             <div className="flex gap-3 md:gap-4 overflow-x-auto no-scrollbar pb-2 -mx-4 md:-mx-6 snap-x snap-mandatory">
               <div className="shrink-0 w-1 md:w-2" />
               {MOST_BOOKED.map((item, i) => (
@@ -925,7 +942,7 @@ export default function HomePage() {
           {/* ─── Phone Repair ────────────────────────────────────── */}
           <div className="mt-7">
             <div>
-              <SectionHeader title="Phone Repair" badge="Android & iPhone" badgeColor="bg-slate-100 text-slate-800" onSeeAll={() => nav('/services')} />
+              <SectionHeader title={tHome('home.sec.phoneRepair','Phone Repair')} badge={tHome('home.sec.phoneRepair.badge','Android & iPhone')} badgeColor="bg-slate-100 text-slate-800" onSeeAll={() => nav('/services')} />
             </div>
             <div className="flex gap-3 md:gap-4 overflow-x-auto no-scrollbar pb-2 -mx-4 md:-mx-6 snap-x snap-mandatory">
               <div className="shrink-0 w-1 md:w-2" />
@@ -939,7 +956,7 @@ export default function HomePage() {
           {/* ─── Laptop Services ──────────────────────────────────────── */}
           <div className="mt-7">
             <div>
-              <SectionHeader title="Laptop Services" badge="All Brands" badgeColor="bg-slate-100 text-slate-800" onSeeAll={() => nav('/services')} />
+              <SectionHeader title={tHome('home.sec.laptop','Laptop Services')} badge={tHome('home.sec.laptop.badge','All Brands')} badgeColor="bg-slate-100 text-slate-800" onSeeAll={() => nav('/services')} />
             </div>
             <div className="flex gap-3 md:gap-4 overflow-x-auto no-scrollbar pb-2 -mx-4 md:-mx-6 snap-x snap-mandatory">
               <div className="shrink-0 w-1 md:w-2" />
@@ -953,7 +970,7 @@ export default function HomePage() {
           {/* ─── Smart Devices ────────────────────────────────────────── */}
           <div className="mt-7">
             <div>
-              <SectionHeader title="Smart Devices" badge="Install & Fix" badgeColor="bg-slate-100 text-slate-800" onSeeAll={() => nav('/services')} />
+              <SectionHeader title={tHome('home.sec.smart','Smart Devices')} badge={tHome('home.sec.smart.badge','Install & Fix')} badgeColor="bg-slate-100 text-slate-800" onSeeAll={() => nav('/services')} />
             </div>
             <div className="flex gap-3 md:gap-4 overflow-x-auto no-scrollbar pb-2 -mx-4 md:-mx-6 snap-x snap-mandatory">
               <div className="shrink-0 w-1 md:w-2" />
@@ -970,7 +987,7 @@ export default function HomePage() {
           {/* ─── Vehicle Care ───────────────────────────── */}
           <div className="mt-7">
             <div>
-              <SectionHeader title="Vehicle Care" badge="On-Road Help" badgeColor="bg-slate-100 text-slate-800" onSeeAll={() => nav('/services')} />
+              <SectionHeader title={tHome('home.sec.vehicle','Vehicle Care')} badge={tHome('home.sec.vehicle.badge','On-Road Help')} badgeColor="bg-slate-100 text-slate-800" onSeeAll={() => nav('/services')} />
             </div>
             <div className="flex gap-3 md:gap-4 overflow-x-auto no-scrollbar pb-2 -mx-4 md:-mx-6 snap-x snap-mandatory">
               <div className="shrink-0 w-1 md:w-2" />
@@ -986,7 +1003,7 @@ export default function HomePage() {
           {/* ─── Family & Elder Assist ────────────────────────────────── */}
           <div className="mt-7">
             <div>
-              <SectionHeader title="Family Assist" badge="Trusted Help" badgeColor="bg-slate-100 text-slate-800" onSeeAll={() => nav('/services')} />
+              <SectionHeader title={tHome('home.sec.family','Family Assist')} badge={tHome('home.sec.family.badge','Trusted Help')} badgeColor="bg-slate-100 text-slate-800" onSeeAll={() => nav('/services')} />
             </div>
             <div className="flex gap-3 md:gap-4 overflow-x-auto no-scrollbar pb-2 -mx-4 md:-mx-6 snap-x snap-mandatory">
               <div className="shrink-0 w-1 md:w-2" />
@@ -1000,7 +1017,7 @@ export default function HomePage() {
           {/* ─── Tank & Water Cleaning ─────────────────────────────────── */}
           <div className="mt-7">
             <div>
-              <SectionHeader title="Tank & Water Cleaning" badge="Home Care" badgeColor="bg-slate-100 text-slate-800" onSeeAll={() => nav('/services')} />
+              <SectionHeader title={tHome('home.sec.tank','Tank & Water Cleaning')} badge={tHome('home.sec.tank.badge','Home Care')} badgeColor="bg-slate-100 text-slate-800" onSeeAll={() => nav('/services')} />
             </div>
             <div className="flex gap-3 md:gap-4 overflow-x-auto no-scrollbar pb-2 -mx-4 md:-mx-6 snap-x snap-mandatory">
               <div className="shrink-0 w-1 md:w-2" />
@@ -1016,7 +1033,7 @@ export default function HomePage() {
           {/* ─── Event Decorations ─────────────────────────────────── */}
           <div className="mt-7">
             <div>
-              <SectionHeader title="Event Decorations" badge="🎉 Book a Theme" badgeColor="bg-slate-100 text-slate-800" onSeeAll={() => nav('/events')} />
+              <SectionHeader title={tHome('home.sec.events','Event Decorations')} badge={tHome('home.sec.events.badge','🎉 Book a Theme')} badgeColor="bg-slate-100 text-slate-800" onSeeAll={() => nav('/events')} />
             </div>
             <div className="flex gap-3 md:gap-4 overflow-x-auto no-scrollbar pb-2 -mx-4 md:-mx-6 snap-x snap-mandatory">
               <div className="shrink-0 w-1 md:w-2" />
@@ -1079,7 +1096,16 @@ export default function HomePage() {
               </div>
 
               <div className="px-5 pt-2 pb-10">
-                <h2 className="text-lg font-black text-slate-900 mb-4">Set your location</h2>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-black text-slate-900">Set your location</h2>
+                  <button
+                    onClick={() => { setLocSheet(false); setLocSearch(''); setLocResults([]); }}
+                    aria-label="Close"
+                    className="w-8 h-8 -mr-1 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 active:scale-95 transition"
+                  >
+                    <X size={18} strokeWidth={2.5} />
+                  </button>
+                </div>
 
                 {/* Search input */}
                 <div className="relative mb-4">

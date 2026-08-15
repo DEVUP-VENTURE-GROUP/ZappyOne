@@ -1,0 +1,166 @@
+name: CI
+
+# Build, test and audit every push to main and every pull request.
+# Jobs are independent so a client-only change doesn't wait on the server suite.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# One in-flight run per ref — a new push cancels the previous run.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  client:
+    name: Client · build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: client
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+      - run: npm ci
+      - name: Lint (no-undef — catches runtime ReferenceErrors the build can't)
+        run: npm run lint
+      - name: Build
+        run: npm run build
+      - name: Dependency audit (report-only)
+        # Surfaces vulnerable prod deps in the log without blocking the build.
+        # Dependabot (see .github/dependabot.yml) raises the actual upgrade PRs.
+        run: npm audit --omit=dev --audit-level=moderate || true
+
+  server:
+    name: Server · test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+      - run: npm ci
+      - name: Jest
+        # The suite runs fully in-memory (mongodb-memory-server + ioredis-mock),
+        # so no service containers are needed.
+        run: npm test
+      - name: Dependency audit (report-only)
+        run: npm audit --omit=dev --audit-level=moderate || true
+
+  mobile:
+    name: Mobile · deps
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+      - run: npm ci
+      - name: Dependency audit (report-only)
+        run: npm audit --omit=dev --audit-level=moderate || true
+
+  # ── Did the server actually change? ───────────────────────────────────────────
+  # Gates the deploy so a frontend-only push (Vercel's job) doesn't needlessly
+  # reload PM2 on EC2. Pure git, no third-party action. FAIL-SAFE: whenever the
+  # diff base can't be determined, it reports server=true so we deploy rather than
+  # risk skipping a real server change.
+  changes:
+    name: Detect · server changed?
+    runs-on: ubuntu-latest
+    outputs:
+      server: ${{ steps.filter.outputs.server }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # full history so the previous SHA is present to diff
+      - id: filter
+        env:
+          BEFORE: ${{ github.event.before }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -e
+          # New branch, or a base we can't resolve (e.g. after a force-push) →
+          # deploy to be safe rather than silently skip.
+          if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ] \
+             || ! git cat-file -e "${BEFORE}^{commit}" 2>/dev/null; then
+            echo "server=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          if git diff --name-only "$BEFORE" "$SHA" | grep -qE '^server/'; then
+            echo "server=true"  >> "$GITHUB_OUTPUT"
+          else
+            echo "server=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  # ── Auto-deploy the API to EC2 ────────────────────────────────────────────────
+  # Runs ONLY on a push to main that TOUCHED server/**, and ONLY after client
+  # build/lint + server tests pass — so a broken commit can never reach the live
+  # server. SSHes in, pulls the new code, installs prod deps, and reloads PM2.
+  # The frontend is deployed separately by Vercel, so this handles the server only.
+  #
+  # REQUIRED GitHub repo secrets (Settings → Secrets and variables → Actions):
+  #   EC2_HOST      — server public IP or DNS (e.g. 13.201.x.x)
+  #   EC2_USER      — SSH user (usually "ubuntu" or "ec2-user")
+  #   EC2_SSH_KEY   — the PRIVATE key (full contents of your .pem file)
+  #   EC2_APP_PATH  — absolute path to the repo on the server
+  #                   (e.g. /home/ubuntu/zappy-platform-v7/hyperlocal-platform)
+  deploy:
+    name: Deploy · API → EC2
+    runs-on: ubuntu-latest
+    needs: [client, server, changes]
+    # Stays SKIPPED (not failed) unless ALL hold: on main, a push, AUTO_DEPLOY=true
+    # (Settings → Secrets and variables → Actions → Variables), AND server/** changed.
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'push' &&
+      vars.AUTO_DEPLOY == 'true' &&
+      needs.changes.outputs.server == 'true'
+    # Needs read access to the repo contents so the job's GITHUB_TOKEN can fetch.
+    permissions:
+      contents: read
+    steps:
+      - name: SSH deploy (pull + prod deps + PM2 reload)
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          # Ephemeral, auto-generated per run — expires when the job ends, so no
+          # long-lived PAT lives on the server. Scoped to this repo's contents.
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script_stop: true
+          # Forward the two vars above into the remote shell.
+          envs: GH_TOKEN,GH_REPO
+          script: |
+            set -e
+            cd "${{ secrets.EC2_APP_PATH }}"
+            # Fetch over an authenticated one-shot URL instead of the server's
+            # origin remote (which is https with no stored credentials — the repo
+            # is private, so a bare `git fetch origin` prompts for a username and
+            # dies in CI). The token is never persisted to .git/config.
+            git fetch "https://x-access-token:${GH_TOKEN}@github.com/${GH_REPO}.git" main
+            git reset --hard FETCH_HEAD   # .env is gitignored so it survives
+            cd server
+            npm ci --omit=dev
+            pm2 startOrReload ecosystem.lean.config.js --update-env
+            pm2 save

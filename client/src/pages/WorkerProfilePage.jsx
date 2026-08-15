@@ -148,7 +148,7 @@ export default function WorkerProfilePage() {
       </div>
 
       {/* ── Content cards ────────────────────────────────────────── */}
-      <div className="max-w-lg mx-auto px-4 space-y-3">
+      <div className="max-w-lg lg:max-w-2xl mx-auto px-4 space-y-3">
 
         {/* Trust badges row */}
         <motion.div

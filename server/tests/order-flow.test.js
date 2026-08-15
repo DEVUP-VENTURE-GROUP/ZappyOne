@@ -4,11 +4,29 @@ const { startMongo, stopMongo, resetDb } = require('./helpers');
 const { redis } = require('../src/config/redis');
 
 const buildApp = require('../src/app');
-const User = require('../src/models/User');
-const Worker = require('../src/models/Worker');
+const User = require('../src/modules/user/user.model');
+const Worker = require('../src/modules/worker/worker.model');
+const ServiceCatalog = require('../src/modules/service/service-catalog.model');
 const { signAccessToken } = require('../src/modules/auth/token.service');
 
 let app;
+
+// Mirror production: every live service has a catalog entry with a fixed
+// servicePricePaise, which switches the pricing engine to the ADDITIVE model
+// (service price + travel + platform). puncture is seeded at ₹120 in prod
+// (see scripts/seed-service-prices.js), so the quote must reflect that — not
+// the bare vehicle-path fallback that only appears when no catalog exists.
+async function seedPunctureCatalog() {
+  await ServiceCatalog.create({
+    code: 'puncture',
+    name: 'Bike Puncture',
+    category: 'vehicle',
+    servicePricePaise: 12000,      // ₹120 fixed job rate
+    priceRangeMinPaise: 10000,     // ₹100
+    priceRangeMaxPaise: 30000,     // ₹300 safety ceiling
+    requiredSkills: ['puncture'],
+  });
+}
 
 beforeAll(async () => {
   await startMongo();
@@ -48,8 +66,8 @@ describe('POST /api/orders — input validation + access control', () => {
         pickupLocation: { lat: 17.4, lng: 78.4, address: 'Somewhere' },
       });
     expect(res.status).toBe(400);
-    expect(res.body.code).toBe('ERROR');
-    expect(res.body.requestId).toBeTruthy();
+    // validate middleware responds with { error: 'Validation failed', details }.
+    expect(res.body.error).toBeTruthy();
   });
 
   test('rejects NoSQL injection attempts (sanitizer strips $ keys)', async () => {
@@ -89,13 +107,17 @@ describe('worker KYC gate', () => {
 describe('quote + order creation happy path', () => {
   test('order creates with correct pricing snapshot', async () => {
     const { userToken } = await setupUserAndWorker();
+    await seedPunctureCatalog();
 
     const q = await request(app)
       .get('/api/orders/quote')
       .set('Authorization', `Bearer ${userToken}`)
       .query({ service: 'puncture', pickupLat: 17.4, pickupLng: 78.4 });
     expect(q.status).toBe(200);
-    expect(q.body.quote.total).toBeGreaterThanOrEqual(60);
+    // Additive model must engage: total = ₹120 service price + travel + platform,
+    // so it can never drop below the fixed service price.
+    expect(q.body.quote.pricingModel).toBe('additive');
+    expect(q.body.quote.total).toBeGreaterThanOrEqual(120);
 
     const create = await request(app)
       .post('/api/orders')
@@ -125,7 +147,7 @@ describe('quote + order creation happy path', () => {
         pickupLocation: { lat: 17.4, lng: 78.4, address: 'A' },
       });
     expect(res.status).toBe(409);
-    expect(res.body.code).toBe('ORDER_ACTIVE_EXISTS');
+    expect(res.body.code).toBe('ACTIVE_ORDER_EXISTS');
     expect(res.body.activeOrderId).toBeTruthy();
   });
 });

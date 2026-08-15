@@ -9,7 +9,9 @@ async function list(req, res, next) {
       kind: req.auth.role,
       id: req.auth.sub,
       page: Number(req.query.page),
-      limit: Number(req.query.limit),
+      // Cap client-supplied limit so a single request can't ask for millions
+      // of rows (memory-exhaustion DoS on an authenticated endpoint).
+      limit: Math.min(Number(req.query.limit) || 20, 100),
       unreadOnly: req.query.unreadOnly === 'true' || req.query.unreadOnly === true,
     });
     res.json(result);

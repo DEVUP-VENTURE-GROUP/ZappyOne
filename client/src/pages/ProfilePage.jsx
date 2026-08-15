@@ -8,6 +8,9 @@ import {
   Trash2, X, Loader2, Scale, HeadphonesIcon, CreditCard,
   Pencil, Check, TrendingUp, Tag, Calendar, Shield, Gift,
 } from 'lucide-react';
+import { reverseGeocode } from '../utils/reverseGeocode';
+import AddressAutocomplete from '../components/common/AddressAutocomplete';
+import { useT } from '../i18n/I18nProvider';
 import LanguageSwitcher from '../i18n/LanguageSwitcher';
 import { selectAuth, logout } from '../modules/auth/authSlice';
 import {
@@ -29,6 +32,7 @@ const EMPTY_ADDR = { label: '', address: '', lat: '', lng: '', tag: 'other' };
 
 export default function ProfilePage() {
   const nav = useNavigate();
+  const t = useT();
   const dispatch = useDispatch();
   const { profile, role } = useSelector(selectAuth);
   const { data, isLoading } = useGetMeQuery();
@@ -43,6 +47,31 @@ export default function ProfilePage() {
   const [newAddr,       setNewAddr]       = useState(EMPTY_ADDR);
   const [editAddr,      setEditAddr]      = useState(EMPTY_ADDR);
   const [addrGeoErr,    setAddrGeoErr]    = useState('');
+  // Address search — coordinates come from picking a Mapbox suggestion (raw
+  // lat/lng entry is impossible for real users). One query per form.
+  const [addrQuery,     setAddrQuery]     = useState('');
+  const [editAddrQuery, setEditAddrQuery] = useState('');
+  const [editGeoErr,    setEditGeoErr]    = useState('');
+
+  function resetAddrForm() {
+    setNewAddr(EMPTY_ADDR);
+    setAddrQuery('');
+    setAddrGeoErr('');
+  }
+
+  // Picking a suggestion fills the address + coordinates in one tap. The search
+  // box is cleared (not set to the picked address) so the dropdown doesn't
+  // linger; the pinned address shows below instead.
+  function pickAddrResult(feat) {
+    const [lng, lat] = feat.center;
+    setNewAddr((p) => ({ ...p, address: feat.place_name || feat.text, lat: String(lat), lng: String(lng) }));
+    setAddrQuery('');
+  }
+  function pickEditAddrResult(feat) {
+    const [lng, lat] = feat.center;
+    setEditAddr((p) => ({ ...p, address: feat.place_name || feat.text, lat: String(lat), lng: String(lng) }));
+    setEditAddrQuery('');
+  }
 
   const user      = data?.user || profile;
   const addresses = addrData?.addresses || [];
@@ -57,24 +86,36 @@ export default function ProfilePage() {
   function handleLogout() {
     dispatch(logout());
     nav('/login', { replace: true });
-    toast.success('Logged out successfully');
+    toast.success(t('profile.toast.loggedOut', 'Logged out successfully'));
   }
 
-  function detectLocation() {
-    setAddrGeoErr('');
-    if (!navigator.geolocation) { setAddrGeoErr('Geolocation not supported'); return; }
+  // Fill a form's {address, lat, lng} from current GPS. Reverse-geocodes so the
+  // address text is populated too (the form requires a non-empty address, and
+  // the user shouldn't have to type it after tapping "use current location").
+  function detectInto(setAddr, setErr) {
+    setErr('');
+    if (!navigator.geolocation) { setErr(t('profile.toast.geoUnsupported', 'Geolocation not supported')); return; }
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setNewAddr(prev => ({ ...prev, lat: pos.coords.latitude.toFixed(6), lng: pos.coords.longitude.toFixed(6) }));
+      async (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        let address = '';
+        try {
+          const g = await reverseGeocode(lat, lng);
+          address = [g.primary, g.secondary].filter(Boolean).join(', ');
+        } catch { /* keep coords even if naming fails */ }
+        setAddr((prev) => ({ ...prev, lat: lat.toFixed(6), lng: lng.toFixed(6), address: address || prev.address }));
       },
-      () => setAddrGeoErr('Could not detect location')
+      () => setErr(t('profile.toast.geoFailed', 'Could not detect location')),
     );
   }
+  const detectLocation     = () => detectInto(setNewAddr, setAddrGeoErr);
+  const detectEditLocation = () => detectInto(setEditAddr, setEditGeoErr);
 
   async function submitAddress(e) {
     e.preventDefault();
     if (!newAddr.label.trim() || !newAddr.address.trim() || !newAddr.lat || !newAddr.lng) {
-      toast.error('Fill in all fields');
+      toast.error(t('profile.toast.fillFields', 'Fill in all fields'));
       return;
     }
     try {
@@ -85,17 +126,17 @@ export default function ProfilePage() {
         lng: parseFloat(newAddr.lng),
         tag: newAddr.tag,
       }).unwrap();
-      toast.success('Address saved');
-      setNewAddr(EMPTY_ADDR);
+      toast.success(t('profile.toast.addressSaved', 'Address saved'));
+      resetAddrForm();
       setShowAddrForm(false);
-    } catch { toast.error('Could not save address'); }
+    } catch { toast.error(t('profile.toast.saveFailed', 'Could not save address')); }
   }
 
   async function handleDeleteAddr(addrId, label) {
     try {
       await deleteAddress(addrId).unwrap();
-      toast.success(`Removed ${label}`);
-    } catch { toast.error('Could not delete address'); }
+      toast.success(`${t('profile.toast.removed', 'Removed')} ${label}`);
+    } catch { toast.error(t('profile.toast.deleteFailed', 'Could not delete address')); }
   }
 
   function startEditAddr(a) {
@@ -107,13 +148,15 @@ export default function ProfilePage() {
       lng: String(lng),
       tag: a.tag || 'other',
     });
+    setEditAddrQuery('');
+    setEditGeoErr('');
     setEditingAddrId(a._id);
   }
 
   async function submitEditAddr(e) {
     e.preventDefault();
     if (!editAddr.label.trim() || !editAddr.address.trim()) {
-      toast.error('Label and address are required');
+      toast.error(t('profile.toast.fillFields', 'Fill in all fields'));
       return;
     }
     try {
@@ -125,16 +168,16 @@ export default function ProfilePage() {
         lng: parseFloat(editAddr.lng),
         tag: editAddr.tag,
       }).unwrap();
-      toast.success('Address updated');
+      toast.success(t('profile.toast.addressUpdated', 'Address updated'));
       setEditingAddrId(null);
-    } catch { toast.error('Could not update address'); }
+    } catch { toast.error(t('profile.toast.updateFailed', 'Could not update address')); }
   }
 
   async function handleSetDefault(addrId) {
     try {
       await setDefaultAddress(addrId).unwrap();
-      toast.success('Default address set');
-    } catch { toast.error('Could not set default'); }
+      toast.success(t('profile.toast.defaultSet', 'Default address set'));
+    } catch { toast.error(t('profile.toast.defaultFailed', 'Could not set default')); }
   }
 
   return (
@@ -142,7 +185,7 @@ export default function ProfilePage() {
       <div className="min-h-screen bg-[#F9FAFB] pb-40">
         <header className="page-header !bg-transparent border-none">
           <div className="page-header-inner justify-center pt-4">
-            <h1 className="text-xl font-black tracking-tight text-[#0F172A]">Profile</h1>
+            <h1 className="text-xl font-black tracking-tight text-[#0F172A]">{t('profile.title', 'Profile')}</h1>
             <span className="absolute right-4 chip-neutral bg-white/60 backdrop-blur-md capitalize font-bold">{role}</span>
           </div>
         </header>
@@ -187,7 +230,7 @@ export default function ProfilePage() {
                 </div>
                 <div className="flex items-center gap-1.5 bg-success-50/80 backdrop-blur-md px-3 py-1.5 rounded-full mt-2 shadow-sm border border-success-100">
                   <ShieldCheck size={14} strokeWidth={3} className="text-success-600" />
-                  <span className="text-xs font-black tracking-wide text-success-700">VERIFIED</span>
+                  <span className="text-xs font-black tracking-wide text-success-700">{t('profile.verified', 'Verified')}</span>
                 </div>
               </div>
             </motion.div>
@@ -195,21 +238,21 @@ export default function ProfilePage() {
             {/* Menu */}
             <div className="pt-5 lg:pt-0 space-y-4">
               <motion.div variants={fadeInUp}>
-                <MenuSection title="Activity">
-                  <MenuItem Icon={ClipboardList} label="My Bookings" sublabel="View order history" onClick={() => nav('/orders')} />
-                  <MenuItem Icon={Wallet} label="Wallet" sublabel="Balance & transactions" onClick={() => nav('/wallet')} />
-                  <MenuItem Icon={Gift} label="Rewards" sublabel="Points & scratch cards" onClick={() => nav('/rewards')} />
-                  <MenuItem Icon={CreditCard} label="Payment Methods" sublabel="Cards, UPI & more" onClick={() => nav('/payments')} />
-                  <MenuItem Icon={Bell} label="Notifications" onClick={() => nav('/notifications')} />
-                  <MenuItem Icon={TrendingUp} label="Spending Analytics" sublabel="Monthly & service breakdown" onClick={() => nav('/spending')} />
-                  <MenuItem Icon={Tag} label="Promo Codes" sublabel="Browse all active offers" onClick={() => nav('/promos')} />
-                  <MenuItem Icon={Calendar} label="Scheduled Bookings" sublabel="View & reschedule" onClick={() => nav('/scheduled')} />
+                <MenuSection title={t('profile.section.activity', 'Activity')}>
+                  <MenuItem Icon={ClipboardList} label={t('profile.bookings', 'My Bookings')} sublabel={t('profile.bookings.sub', 'View order history')} onClick={() => nav('/orders')} />
+                  <MenuItem Icon={Wallet} label={t('profile.wallet', 'Wallet')} sublabel={t('profile.wallet.sub', 'Balance & transactions')} onClick={() => nav('/wallet')} />
+                  <MenuItem Icon={Gift} label={t('profile.rewards', 'Rewards')} sublabel={t('profile.rewards.sub', 'Points & scratch cards')} onClick={() => nav('/rewards')} />
+                  <MenuItem Icon={CreditCard} label={t('profile.payments', 'Payment Methods')} sublabel={t('profile.payments.sub', 'Cards, UPI & more')} onClick={() => nav('/payments')} />
+                  <MenuItem Icon={Bell} label={t('profile.notifications', 'Notifications')} onClick={() => nav('/notifications')} />
+                  <MenuItem Icon={TrendingUp} label={t('profile.spending', 'Spending Analytics')} sublabel={t('profile.spending.sub', 'Monthly & service breakdown')} onClick={() => nav('/spending')} />
+                  <MenuItem Icon={Tag} label={t('profile.promos', 'Promo Codes')} sublabel={t('profile.promos.sub', 'Browse all active offers')} onClick={() => nav('/promos')} />
+                  <MenuItem Icon={Calendar} label={t('profile.scheduled', 'Scheduled Bookings')} sublabel={t('profile.scheduled.sub', 'View & reschedule')} onClick={() => nav('/scheduled')} />
                 </MenuSection>
               </motion.div>
 
               {/* ── Language ── */}
               <motion.div variants={fadeInUp}>
-                <p className="section-title px-1 mb-2">Language</p>
+                <p className="section-title px-1 mb-2">{t('profile.language', 'Language')}</p>
                 <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-3">
                   <LanguageSwitcher variant="menu" />
                 </div>
@@ -218,13 +261,13 @@ export default function ProfilePage() {
               {/* ── Saved Addresses ── */}
               <motion.div variants={fadeInUp}>
                 <div className="flex items-center justify-between px-1 mb-2">
-                  <p className="section-title">Saved Addresses</p>
+                  <p className="section-title">{t('profile.savedAddresses', 'Saved Addresses')}</p>
                   <button
                     onClick={() => setShowAddrForm(v => !v)}
                     className="flex items-center gap-1 text-xs font-bold text-blue-600"
                   >
                     <Plus size={12} strokeWidth={2.5} />
-                    Add
+                    {t('common.add', 'Add')}
                   </button>
                 </div>
 
@@ -241,8 +284,8 @@ export default function ProfilePage() {
                     >
                       <div className="card space-y-2.5">
                         <div className="flex items-center justify-between mb-1">
-                          <p className="text-sm font-bold text-[#0F172A]">New Address</p>
-                          <button type="button" onClick={() => setShowAddrForm(false)}>
+                          <p className="text-sm font-bold text-[#0F172A]">{t('profile.newAddress', 'New Address')}</p>
+                          <button type="button" onClick={() => { setShowAddrForm(false); resetAddrForm(); }}>
                             <X size={15} className="text-slate-400" />
                           </button>
                         </div>
@@ -256,51 +299,48 @@ export default function ProfilePage() {
                                 newAddr.tag === tag ? 'bg-[#0F172A] text-white' : 'bg-slate-100 text-slate-600'
                               }`}
                             >
-                              {tag}
+                              {t(`profile.tag.${tag}`, tag)}
                             </button>
                           ))}
                         </div>
                         <input
                           className="input text-sm"
-                          placeholder="Label (e.g. Mom's House)"
+                          placeholder={t('profile.labelPlaceholder', "Label (e.g. Mom's House)")}
                           value={newAddr.label}
                           onChange={e => setNewAddr(p => ({ ...p, label: e.target.value }))}
                         />
-                        <input
-                          className="input text-sm"
-                          placeholder="Full address"
-                          value={newAddr.address}
-                          onChange={e => setNewAddr(p => ({ ...p, address: e.target.value }))}
+
+                        {/* Address search — pick a suggestion; coordinates fill automatically */}
+                        <AddressAutocomplete
+                          value={addrQuery}
+                          onChange={(v) => {
+                            setAddrQuery(v);
+                            // Editing the query invalidates any previously pinned pick.
+                            setNewAddr(p => ({ ...p, address: '', lat: '', lng: '' }));
+                          }}
+                          onSelect={pickAddrResult}
+                          placeholder={t('profile.searchAddress', 'Search your address…')}
                         />
-                        <div className="flex gap-2">
-                          <input
-                            className="input text-sm flex-1"
-                            placeholder="Latitude"
-                            type="number"
-                            step="any"
-                            value={newAddr.lat}
-                            onChange={e => setNewAddr(p => ({ ...p, lat: e.target.value }))}
-                          />
-                          <input
-                            className="input text-sm flex-1"
-                            placeholder="Longitude"
-                            type="number"
-                            step="any"
-                            value={newAddr.lng}
-                            onChange={e => setNewAddr(p => ({ ...p, lng: e.target.value }))}
-                          />
-                        </div>
+
+                        {/* Pinned-location confirmation */}
+                        {newAddr.lat && newAddr.lng && (
+                          <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600">
+                            <Check size={13} strokeWidth={2.5} />
+                            <span className="truncate">{t('profile.locationPinned', 'Location pinned')}{newAddr.address ? ` · ${newAddr.address}` : ''}</span>
+                          </div>
+                        )}
+
                         <button
                           type="button"
                           onClick={detectLocation}
                           className="text-xs font-semibold text-blue-600 flex items-center gap-1"
                         >
                           <MapPin size={11} strokeWidth={2} />
-                          Detect my location
+                          {t('profile.useCurrentLocation', 'Use my current location')}
                         </button>
                         {addrGeoErr && <p className="text-xs text-red-500">{addrGeoErr}</p>}
                         <button type="submit" disabled={addingAddr} className="btn-primary w-full text-sm">
-                          {addingAddr ? <Loader2 size={14} className="animate-spin" /> : 'Save Address'}
+                          {addingAddr ? <Loader2 size={14} className="animate-spin" /> : t('profile.saveAddress', 'Save Address')}
                         </button>
                       </div>
                     </motion.form>
@@ -323,7 +363,7 @@ export default function ProfilePage() {
                               <div className="flex items-center gap-1.5">
                                 <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">{a.label}</p>
                                 {a.isDefault && (
-                                  <span className="text-[9px] font-black text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded-full">DEFAULT</span>
+                                  <span className="text-[9px] font-black text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded-full">{t('profile.default', 'Default')}</span>
                                 )}
                               </div>
                               <p className="text-sm font-medium text-[#0F172A] truncate">{a.address}</p>
@@ -332,7 +372,7 @@ export default function ProfilePage() {
                               {!a.isDefault && (
                                 <button
                                   onClick={() => handleSetDefault(a._id)}
-                                  title="Set as default"
+                                  title={t('profile.setDefault', 'Set as default')}
                                   className="w-7 h-7 rounded-lg bg-amber-50 flex items-center justify-center hover:bg-amber-100 transition"
                                 >
                                   <Check size={11} strokeWidth={2.5} className="text-amber-600" />
@@ -370,21 +410,37 @@ export default function ProfilePage() {
                                           editAddr.tag === tag ? 'bg-[#0F172A] text-white' : 'bg-white text-slate-600 border border-slate-200'
                                         }`}
                                       >
-                                        {tag}
+                                        {t(`profile.tag.${tag}`, tag)}
                                       </button>
                                     ))}
                                   </div>
-                                  <input className="input text-sm w-full" placeholder="Label"
+                                  <input className="input text-sm w-full" placeholder={t('common.label', 'Label')}
                                     value={editAddr.label} onChange={e => setEditAddr(p => ({ ...p, label: e.target.value }))} />
-                                  <input className="input text-sm w-full" placeholder="Full address"
-                                    value={editAddr.address} onChange={e => setEditAddr(p => ({ ...p, address: e.target.value }))} />
+                                  {/* Current address + search to change it (updates coordinates too) */}
+                                  {editAddr.address && (
+                                    <p className="text-[11px] text-slate-500 px-0.5 truncate">
+                                      {t('profile.addressLabel', 'Address')}: <span className="font-semibold text-[#0F172A]">{editAddr.address}</span>
+                                    </p>
+                                  )}
+                                  <AddressAutocomplete
+                                    value={editAddrQuery}
+                                    onChange={setEditAddrQuery}
+                                    onSelect={pickEditAddrResult}
+                                    placeholder={t('profile.searchToChange', 'Search to change address…')}
+                                  />
+                                  <button type="button" onClick={detectEditLocation}
+                                    className="text-xs font-semibold text-blue-600 flex items-center gap-1">
+                                    <MapPin size={11} strokeWidth={2} />
+                                    {t('profile.useCurrentLocation', 'Use my current location')}
+                                  </button>
+                                  {editGeoErr && <p className="text-xs text-red-500">{editGeoErr}</p>}
                                   <div className="flex gap-2 pt-1">
                                     <button type="button" onClick={() => setEditingAddrId(null)}
-                                      className="flex-1 h-9 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600">Cancel</button>
+                                      className="flex-1 h-9 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600">{t('common.cancel', 'Cancel')}</button>
                                     <button type="submit" disabled={editingAddr}
                                       className="flex-1 h-9 rounded-lg bg-[#0F172A] text-white text-xs font-bold flex items-center justify-center gap-1.5">
                                       {editingAddr ? <Loader2 size={12} className="animate-spin" /> : null}
-                                      Save
+                                      {t('common.save', 'Save')}
                                     </button>
                                   </div>
                                 </div>
@@ -398,26 +454,26 @@ export default function ProfilePage() {
                 ) : !showAddrForm && (
                   <div className="card text-center py-4">
                     <MapPin size={18} strokeWidth={1.5} className="text-slate-300 mx-auto mb-2" />
-                    <p className="text-sm text-slate-400">No saved addresses yet</p>
+                    <p className="text-sm text-slate-400">{t('profile.noAddresses', 'No saved addresses yet')}</p>
                     <button onClick={() => setShowAddrForm(true)} className="text-xs font-bold text-blue-600 mt-1">
-                      Add Home or Work
+                      {t('profile.addHomeWork', 'Add Home or Work')}
                     </button>
                   </div>
                 )}
               </motion.div>
 
               <motion.div variants={fadeInUp}>
-                <MenuSection title="Account">
-                  <MenuItem Icon={Star} label="Plans & Subscriptions" sublabel="Premium & Pro benefits" onClick={() => nav('/plans')} />
+                <MenuSection title={t('profile.section.account', 'Account')}>
+                  <MenuItem Icon={Star} label={t('profile.plans', 'Plans & Subscriptions')} sublabel={t('profile.plans.sub', 'Premium & Pro benefits')} onClick={() => nav('/plans')} />
                 </MenuSection>
               </motion.div>
 
               <motion.div variants={fadeInUp}>
-                <MenuSection title="Help">
-                  <MenuItem Icon={HeadphonesIcon} label="Help & Support" sublabel="Create a support ticket" onClick={() => nav('/support')} />
-                  <MenuItem Icon={Scale} label="Disputes" sublabel="Raise or track an issue" onClick={() => nav('/disputes')} />
-                  <MenuItem Icon={Bell} label="Notification Settings" sublabel="Manage what you receive" onClick={() => nav('/notification-prefs')} />
-                  <MenuItem Icon={Shield} label="Account Security" sublabel="Login history & deletion" onClick={() => nav('/account-security')} />
+                <MenuSection title={t('profile.section.help', 'Help')}>
+                  <MenuItem Icon={HeadphonesIcon} label={t('profile.support', 'Help & Support')} sublabel={t('profile.support.sub', 'Create a support ticket')} onClick={() => nav('/support')} />
+                  <MenuItem Icon={Scale} label={t('profile.disputes', 'Disputes')} sublabel={t('profile.disputes.sub', 'Raise or track an issue')} onClick={() => nav('/disputes')} />
+                  <MenuItem Icon={Bell} label={t('profile.notifSettings', 'Notification Settings')} sublabel={t('profile.notifSettings.sub', 'Manage what you receive')} onClick={() => nav('/notification-prefs')} />
+                  <MenuItem Icon={Shield} label={t('profile.security', 'Account Security')} sublabel={t('profile.security.sub', 'Login history & deletion')} onClick={() => nav('/account-security')} />
                 </MenuSection>
               </motion.div>
 
@@ -438,7 +494,7 @@ export default function ProfilePage() {
                       <div className="w-9 h-9 rounded-xl bg-red-50 flex items-center justify-center">
                         <LogOut size={16} strokeWidth={2} className="text-red-500" />
                       </div>
-                      <span className="font-semibold text-sm flex-1 text-left">Log Out</span>
+                      <span className="font-semibold text-sm flex-1 text-left">{t('profile.logout', 'Log Out')}</span>
                     </motion.button>
                   ) : (
                     <motion.div
@@ -449,17 +505,17 @@ export default function ProfilePage() {
                       exit={{ opacity: 0, scale: 0.97 }}
                       transition={{ duration: 0.18 }}
                     >
-                      <p className="text-sm font-semibold text-red-800">Are you sure you want to log out?</p>
+                      <p className="text-sm font-semibold text-red-800">{t('profile.logoutConfirm', 'Are you sure you want to log out?')}</p>
                       <div className="flex gap-2">
-                        <button onClick={() => setShowLogout(false)} className="btn-secondary flex-1">Cancel</button>
-                        <button onClick={handleLogout} className="btn-danger flex-1">Log Out</button>
+                        <button onClick={() => setShowLogout(false)} className="btn-secondary flex-1">{t('common.cancel', 'Cancel')}</button>
+                        <button onClick={handleLogout} className="btn-danger flex-1">{t('profile.logout', 'Log Out')}</button>
                       </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
               </motion.div>
 
-              <p className="text-center text-xs text-slate-300 pb-4">Zappy Platform · v1.0</p>
+              <p className="text-center text-xs text-slate-300 pb-4">{t('profile.version', 'Zappy Platform · v1.0')}</p>
             </div>
           </motion.div>
         )}

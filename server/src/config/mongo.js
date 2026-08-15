@@ -76,7 +76,12 @@ function isMongoConnected() { return _isConnected; }
  * Prevents requests from hanging indefinitely. (#91)
  */
 function requireMongo(req, res, next) {
-  if (!_isConnected) {
+  // Gate on the actual driver state as well as our flag. `_isConnected` is only
+  // set on the connectMongo() path; `readyState === 1` is authoritative for any
+  // live connection (including ones opened directly, e.g. in tests), so the
+  // guard reflects real reachability instead of assuming a single connect path.
+  const connected = _isConnected || mongoose.connection.readyState === 1;
+  if (!connected) {
     return res.status(503).json({
       error: 'Service temporarily unavailable. Please try again in a moment.',
       code: 'DB_UNAVAILABLE',

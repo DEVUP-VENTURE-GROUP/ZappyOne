@@ -13,7 +13,7 @@ import {
   ShieldCheck, TrendingDown, Siren, ArrowUpRight,
   ArrowDownRight, Minus, Smartphone, Battery, Layers,
   Home, Bike, Fuel, Pencil, Bell, Building2, ArrowRightLeft,
-  GraduationCap, Scale, Wallet
+  GraduationCap, Scale, Wallet, Menu
 } from 'lucide-react';
 import {
   useGetWorkerMeQuery, useGoOnlineMutation, useGoOfflineMutation,
@@ -30,10 +30,12 @@ import { reverseGeocode } from '../utils/reverseGeocode';
 import { getSocket } from '../services/socket';
 import { ZappyLogo } from '../components/common/ZappyLogo';
 import WorkerOnboarding from './WorkerOnboarding';
-import ShiftSlotsWidget from '../components/worker/ShiftSlotsWidget';
-import WellnessWidget from '../components/worker/WellnessWidget';
-import EarnedWageWidget from '../components/worker/EarnedWageWidget';
 import ReadyModeCard from '../components/worker/ReadyModeCard';
+import {
+  Avatar, GreetingCard, StatCard, Panel, EarningsOverview, PerformanceGrid,
+  QuickAccess, JobRequests, TodaySchedule, RecentlyCompleted,
+  WorkerSidebar, WorkerBottomNav, OnlineControl, NAV_ITEMS, inr,
+} from '../components/worker/DashboardUI';
 import toast from 'react-hot-toast';
 
 /* ─── Constants (mirror backend incentive.service.js) ─────────── */
@@ -102,17 +104,17 @@ function NotifBell({ token, onTap }) {
   return (
     <motion.button
       onClick={onTap}
-      className="relative flex items-center justify-center w-9 h-9 rounded-full transition-colors hover:text-white/80"
-      style={{ border: '1px solid rgba(255,255,255,0.14)', background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(8px)' }}
+      aria-label={`Notifications${count ? `, ${count} unread` : ''}`}
+      className="relative flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50"
       whileTap={{ scale: 0.9 }}
     >
-      <Bell size={15} className="text-white/70" />
+      <Bell size={17} strokeWidth={2.2} />
       {count > 0 && (
         <motion.span
           key={count}
           initial={{ scale: 1.4 }}
           animate={{ scale: 1 }}
-          className="absolute -top-1 -right-1 min-w-[16px] h-4 px-0.5 rounded-full bg-red-500 text-white text-[9px] font-black flex items-center justify-center"
+          className="absolute -right-1 -top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-0.5 text-[9px] font-black text-white"
         >
           {count > 99 ? '99+' : count}
         </motion.span>
@@ -205,6 +207,8 @@ export default function WorkerDashboard() {
   const { data: weekData }    = useGetEarningsQuery('week',   { skip: !token });
   const { data: kycData }     = useGetKycStatusQuery(undefined, { skip: !token });
   const { data: jobsData }    = useGetWorkerOrdersQuery(1,    { skip: !token });
+  const { data: notifData }   = useListNotificationsQuery({ page: 1, unreadOnly: true }, { skip: !token, pollingInterval: 60000 });
+  const unreadCount = notifData?.unread ?? 0;
 
   // Profile avatar — fetched from server proxy (permanent, no URL expiry)
   const [avatarUrl, setAvatarUrl] = useState(null);
@@ -232,6 +236,8 @@ export default function WorkerDashboard() {
   const [areaName,     setAreaName]     = useState(null);
   const [toggling,     setToggling]     = useState(false);
   const [onlineTimer,  setOnlineTimer]  = useState(0); // seconds online this session
+  const [jobTab,       setJobTab]       = useState('new');
+  const [drawerOpen,   setDrawerOpen]   = useState(false);
   const onlineStart = useRef(null);
 
   const me          = meData?.worker;
@@ -275,19 +281,18 @@ export default function WorkerDashboard() {
   const weekAvgRs    = weekData?.avgEarningPerJobRupees ?? 0;
   const totalWallet  = Math.round((me?.wallet?.totalEarnings ?? 0) / 100);
 
-  // session online timer
+  // Online timer. Prefer the server `onlineSince` so the clock is accurate
+  // across a page refresh or a switch between phone and web; fall back to a
+  // local session start only if the server hasn't stamped it yet.
   useEffect(() => {
-    if (isOnline) {
-      onlineStart.current = onlineStart.current ?? Date.now();
-      const id = setInterval(() => {
-        setOnlineTimer(Math.floor((Date.now() - onlineStart.current) / 1000));
-      }, 1000);
-      return () => clearInterval(id);
-    } else {
-      onlineStart.current = null;
-      setOnlineTimer(0);
-    }
-  }, [isOnline]);
+    if (!isOnline) { onlineStart.current = null; setOnlineTimer(0); return undefined; }
+    const serverBase = me?.onlineSince ? Date.parse(me.onlineSince) : null;
+    const base = serverBase || (onlineStart.current ?? (onlineStart.current = Date.now()));
+    const tick = () => setOnlineTimer(Math.max(0, Math.floor((Date.now() - base) / 1000)));
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [isOnline, me?.onlineSince]);
 
   useEffect(() => { dispatch(setOnline(isOnline)); }, [isOnline, dispatch]);
 
@@ -493,643 +498,293 @@ export default function WorkerDashboard() {
     try { await rejectOffer(worker.currentOffer._id).unwrap(); } finally { dispatch(clearOffer()); }
   }
 
-  const initials = (me?.name || 'W').split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
-  const fmtTimer = onlineTimer > 0
-    ? `${Math.floor(onlineTimer / 3600)}h ${Math.floor((onlineTimer % 3600) / 60)}m online`
-    : null;
+  /* ── Derived view state (all from real API data) ─────────────────────── */
+  const firstName   = (me?.name || 'Worker').trim().split(/\s+/)[0];
+  const initials    = (me?.name || 'W').split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
+  const walletBalanceRs = Math.round((me?.wallet?.balance ?? 0) / 100);
+  const totalJobs   = me?.totalJobs ?? 0;
+  const completionRate = totalJobs > 0 ? Math.round((completedJobs / totalJobs) * 100) : null;
+  const hoursLabel  = isOnline
+    ? `${String(Math.floor(onlineTimer / 3600)).padStart(2, '0')}h ${String(Math.floor((onlineTimer % 3600) / 60)).padStart(2, '0')}m`
+    : '00h 00m';
+
+  // Buckets from the worker's own order list + the live socket offer.
+  const orders       = jobsData?.orders ?? [];
+  const ONGOING      = ['on_the_way', 'arrived', 'in_progress'];
+  const acceptedJobs = orders.filter((o) => o.status === 'assigned');
+  const ongoingJobs  = orders.filter((o) => ONGOING.includes(o.status));
+  const doneJobs     = orders.filter((o) => o.status === 'completed');
+  const newJobs      = worker.currentOffer ? [worker.currentOffer] : [];
+  const startToday   = new Date(); startToday.setHours(0, 0, 0, 0);
+  const endToday     = new Date(startToday.getTime() + 86400000);
+  const scheduledToday = orders.filter((o) =>
+    o.scheduledAt && new Date(o.scheduledAt) >= startToday && new Date(o.scheduledAt) < endToday
+    && !['completed', 'cancelled'].includes(o.status));
+
+  const jobTabs = [
+    { key: 'new',       label: 'New',       count: newJobs.length },
+    { key: 'accepted',  label: 'Accepted',  count: acceptedJobs.length },
+    { key: 'ongoing',   label: 'Ongoing',   count: ongoingJobs.length },
+    { key: 'completed', label: 'Completed', count: doneJobs.length },
+  ];
+  const jobsForTab = ({ new: newJobs, accepted: acceptedJobs, ongoing: ongoingJobs, completed: doneJobs }[jobTab]) ?? [];
+
+  // Week-over-week from the 30-day daily breakdown the earnings API returns.
+  const byDatePaise = Object.fromEntries((weekData?.dailyBreakdown ?? []).map((d) => [d.date, d.earningsPaise]));
+  const sumDays = (from, to) => {
+    let s = 0;
+    for (let i = from; i < to; i++) {
+      const d = new Date(); d.setDate(d.getDate() - i);
+      s += byDatePaise[d.toISOString().slice(0, 10)] || 0;
+    }
+    return s;
+  };
+  const thisWeekPaise = sumDays(0, 7);
+  const lastWeekPaise = sumDays(7, 14);
+  const deltaPct = lastWeekPaise > 0
+    ? Math.round(((thisWeekPaise - lastWeekPaise) / lastWeekPaise) * 100)
+    : (thisWeekPaise > 0 ? 100 : 0);
+  const chartPoints = chart7d.map((d) => ({
+    label: new Date(d.date).toLocaleDateString('en-IN', { weekday: 'short' }),
+    value: Math.round(d.earningsPaise / 100),
+  }));
+
+  const perfItems = [
+    { label: 'Completion Rate', value: completionRate != null ? `${completionRate}%` : '—', sub: `${completedJobs} jobs` },
+    { label: 'Acceptance Rate', value: acceptRate != null ? `${acceptRate}%` : '—', sub: hasOfferData ? `${totalOffers} offers` : 'No offers yet' },
+    { label: 'Jobs Completed',  value: weekData?.jobs ?? 0, sub: 'This week' },
+    { label: 'Total Earnings',  value: inr(weekRs), sub: 'This week' },
+  ];
+
+  const ratingDisplay = hasRatingData ? Number(rating).toFixed(1) : '0.0';
+  const locationLabel = areaName || null;
+  const openJob = (j) => nav(`/worker/jobs/${j._id}`);
+
+  function goSection(id) {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  function handleNav(item) {
+    setDrawerOpen(false);
+    if (item?.scroll) {
+      if (item.scroll === 'job-requests') setJobTab(newJobs.length ? 'new' : 'accepted');
+      goSection(item.scroll);
+      return;
+    }
+    if (item?.to) nav(item.to);
+  }
+
+  const statCards = [
+    { Icon: Wallet,           tone: 'blue',   label: 'Wallet Balance',   value: inr(walletBalanceRs), sub: 'View balance', onClick: () => nav('/wallet') },
+    { Icon: BadgeIndianRupee, tone: 'green',  label: "Today's Earnings", value: inr(todayRs),         sub: 'View details', onClick: () => nav('/worker/earnings') },
+    { Icon: Briefcase,        tone: 'amber',  label: "Today's Jobs",     value: todayJobs,            sub: 'View all',     onClick: () => handleNav({ scroll: 'job-requests' }) },
+    { Icon: Star,             tone: 'violet', label: 'Your Rating',      value: ratingDisplay,        sub: 'Reviews',      onClick: () => nav('/worker/appeals') },
+    { Icon: Clock,            tone: 'cyan',   label: "Today's Hours",    value: hoursLabel,           sub: null },
+    { Icon: CheckCircle,      tone: 'rose',   label: 'Acceptance Rate',  value: acceptRate != null ? `${acceptRate}%` : '0%', sub: 'View details', onClick: () => goSection('performance') },
+  ];
 
   return (
-    <div className="min-h-screen bg-slate-100">
+    <div className="min-h-screen bg-[#F8FAFC] font-sans lg:pl-64">
+      <WorkerSidebar
+        activeKey="dashboard"
+        unread={unreadCount}
+        onNavigate={handleNav}
+        onGoOnline={toggleOnline}
+        isOnline={isOnline}
+      />
 
-      {/* ── Cinematic Header ──────────────────────────────────── */}
-      <div className="relative overflow-hidden pb-10" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #1e3a5f 100%)' }}>
-        {/* Animated orbs */}
-        <motion.div
-          className="absolute -top-20 -right-20 w-72 h-72 rounded-full blur-3xl"
-          style={{ background: 'radial-gradient(circle, rgba(99,102,241,0.4), transparent)' }}
-          animate={{ scale: [1, 1.25, 1], opacity: [0.3, 0.5, 0.3] }}
-          transition={{ duration: 6, repeat: Infinity }}
-        />
-        <motion.div
-          className="absolute -bottom-10 -left-10 w-48 h-48 rounded-full blur-3xl"
-          style={{ background: 'radial-gradient(circle, rgba(234,179,8,0.25), transparent)' }}
-          animate={{ scale: [1, 1.3, 1], opacity: [0.2, 0.4, 0.2] }}
-          transition={{ duration: 8, repeat: Infinity, delay: 2 }}
-        />
-        {/* Grid overlay */}
-        <div className="absolute inset-0 opacity-[0.03]" style={{
-          backgroundImage: 'linear-gradient(rgba(255,255,255,1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,1) 1px, transparent 1px)',
-          backgroundSize: '32px 32px',
-        }} />
-
-        <div className="relative z-10 max-w-lg lg:max-w-5xl mx-auto px-5 pt-6 pb-8">
-          {/* ── Top bar ─────────────────────────────────────── */}
-          <div className="flex items-center justify-between mb-7">
-            <ZappyLogo size={26} />
-            <div className="flex items-center gap-2">
-              {/* Notification bell */}
-              <NotifBell token={token} onTap={() => nav('/worker/notifications')} />
-              <div className="flex items-center gap-1.5">
-                <motion.button
-                  onClick={async () => { try { await callLogout().unwrap(); } catch {} dispatch(logout()); nav('/worker/login'); }}
-                  className="flex items-center gap-1.5 text-[11px] font-bold text-white/50 px-3.5 py-2 rounded-full transition-colors hover:text-white/80"
-                  style={{ border: '1px solid rgba(255,255,255,0.14)', background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(8px)' }}
-                  whileTap={{ scale: 0.93 }}
-                >
-                  <LogOut size={12} strokeWidth={2.5} />
-                  Logout
-                </motion.button>
-                <motion.button
-                  onClick={async () => {
-                    if (!window.confirm('Sign out from ALL devices? You will need to log in again.')) return;
-                    try { await revokeAll().unwrap(); } catch {}
-                    dispatch(logout());
-                    nav('/worker/login');
-                  }}
-                  className="flex items-center gap-1 text-[10px] font-bold text-red-400/70 px-2.5 py-2 rounded-full hover:text-red-400"
-                  style={{ border: '1px solid rgba(239,68,68,0.2)', background: 'rgba(239,68,68,0.06)' }}
-                  whileTap={{ scale: 0.93 }}
-                  title="Sign out from all devices"
-                >
-                  <LogOut size={11} strokeWidth={2.5} />
-                  All devices
-                </motion.button>
-              </div>
-            </div>
-          </div>
-
-          {/* ── Profile row ─────────────────────────────────── */}
-          <div className="flex items-center gap-4 mb-7">
-            {/* Avatar */}
+      {/* Mobile slide-over drawer */}
+      <AnimatePresence>
+        {drawerOpen && (
+          <>
             <motion.div
-              className="w-16 h-16 rounded-2xl shrink-0 relative overflow-hidden"
-              style={{
-                border: '2px solid rgba(255,255,255,0.2)',
-                boxShadow: '0 8px 32px rgba(99,102,241,0.25)',
-              }}
-              animate={{ boxShadow: ['0 0 0 0px rgba(99,102,241,0.35)', '0 0 0 10px rgba(99,102,241,0)', '0 0 0 0px rgba(99,102,241,0)'] }}
-              transition={{ duration: 3.5, repeat: Infinity, delay: 1 }}
+              className="fixed inset-0 z-50 bg-black/40 lg:hidden"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setDrawerOpen(false)}
+            />
+            <motion.aside
+              className="fixed inset-y-0 left-0 z-50 w-72 overflow-y-auto bg-white p-4 lg:hidden"
+              initial={{ x: '-100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }}
+              transition={{ type: 'spring', stiffness: 400, damping: 38 }}
             >
-              {avatarUrl ? (
-                <img src={avatarUrl} alt={me?.name} className="w-full h-full object-cover rounded-2xl" />
-              ) : (
-                <div
-                  className="w-full h-full flex items-center justify-center text-white font-black text-2xl"
-                  style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.5), rgba(139,92,246,0.4))', backdropFilter: 'blur(12px)' }}
-                >
-                  {initials}
+              <div className="flex items-center justify-between px-2 py-2">
+                <div className="flex items-center gap-2">
+                  <ZappyLogo size={22} />
+                  <span className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">Worker</span>
                 </div>
-              )}
-              {/* Online dot */}
-              {isOnline && (
-                <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-[#0f172a]" />
-              )}
-            </motion.div>
-
-            {/* Name + meta */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-0.5">
-                <p className="text-white/45 text-[11px] font-semibold tracking-wide">{getGreeting()}</p>
-                <button
-                  onClick={() => nav('/worker/profile')}
-                  className="p-1 rounded-full hover:bg-white/10 transition-colors"
-                  title="Edit profile"
-                >
-                  <Pencil size={11} className="text-white/40" />
+                <button onClick={() => setDrawerOpen(false)} className="rounded-full p-1.5 hover:bg-slate-100" aria-label="Close menu">
+                  <X size={18} className="text-slate-500" />
                 </button>
               </div>
-              <p className="text-white font-black text-2xl leading-tight truncate">{me?.name ?? '…'}</p>
-              <div className="flex items-center gap-2.5 mt-1.5 flex-wrap">
-                <span className="flex items-center gap-1 text-amber-300 text-xs font-bold">
-                  <Star size={10} className="fill-amber-300 stroke-amber-300" />
-                  {hasRatingData ? rating.toFixed(1) : 'New'}
-                </span>
-                <span className="w-px h-3 bg-white/15" />
-                <span className="text-white/45 text-xs font-semibold">{completedJobs} jobs</span>
-                {me?.skills?.length > 0 && (
-                  <>
-                    <span className="w-px h-3 bg-white/15" />
-                    <span className="text-white/45 text-xs font-semibold capitalize">
-                      {me.skills.slice(0, 3).map(s => s.replace(/_/g, ' ')).join(' · ')}
-                      {me.skills.length > 3 && <span className="text-white/25"> +{me.skills.length - 3}</span>}
-                    </span>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* Verified badge */}
-            {kycApproved && (
-              <motion.div
-                className="flex items-center gap-1.5 px-3 py-2 rounded-full shrink-0"
-                style={{
-                  background: 'rgba(34,197,94,0.12)',
-                  border: '1px solid rgba(34,197,94,0.3)',
-                  backdropFilter: 'blur(8px)',
-                }}
-                animate={{ boxShadow: ['0 0 0 0px rgba(34,197,94,0.25)', '0 0 0 6px rgba(34,197,94,0)', '0 0 0 0px rgba(34,197,94,0)'] }}
-                transition={{ duration: 3, repeat: Infinity }}
-              >
-                <BadgeCheck size={13} strokeWidth={2.5} className="text-green-400" />
-                <span className="text-[10px] font-extrabold text-green-400 tracking-wide">Verified</span>
-              </motion.div>
-            )}
-          </div>
-
-          {/* ── Earnings strip ─────────────────────────────── */}
-          <div
-            className="rounded-2xl overflow-hidden"
-            style={{
-              background: 'rgba(255,255,255,0.07)',
-              border: '1px solid rgba(255,255,255,0.11)',
-              backdropFilter: 'blur(16px)',
-            }}
-          >
-            <div className="grid grid-cols-3">
-              {[
-                { label: 'TODAY', value: todayRs, sub: `${todayJobs} job${todayJobs !== 1 ? 's' : ''}`, highlight: true },
-                { label: 'THIS WEEK', value: weekRs, sub: `avg ₹${weekAvgRs}` },
-                { label: 'ALL TIME', value: totalWallet, sub: 'total earned' },
-              ].map(({ label, value, sub, highlight }, i) => (
-                <div
-                  key={label}
-                  className={`px-4 py-4 ${i === 1 ? 'border-x border-white/10' : ''}`}
-                >
-                  <p className="text-white/35 text-[9px] font-black uppercase tracking-[0.15em] mb-2">{label}</p>
-                  <motion.p
-                    className={`font-black text-2xl leading-none tabular-nums ${
-                      highlight && (isOnline || isBusy) ? 'text-green-300' : 'text-white'
+              <nav className="mt-2 space-y-1">
+                {NAV_ITEMS.map((item) => (
+                  <button
+                    key={item.key}
+                    onClick={() => handleNav(item)}
+                    className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[14px] font-semibold ${
+                      item.key === 'dashboard' ? 'bg-zappy-600 text-white' : 'text-slate-600 hover:bg-slate-100'
                     }`}
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.08 + 0.15, type: 'spring', stiffness: 300 }}
                   >
-                    ₹{value}
-                  </motion.p>
-                  <p className="text-white/35 text-[10px] mt-1.5 font-medium">{sub}</p>
-                </div>
-              ))}
+                    <item.Icon size={18} strokeWidth={2.2} />
+                    <span className="flex-1 text-left">{item.label}</span>
+                    {item.key === 'notifications' && unreadCount > 0 && (
+                      <span className="rounded-full bg-zappy-600 px-1.5 py-0.5 text-[10px] font-black text-white">
+                        {unreadCount > 99 ? '99+' : unreadCount}
+                      </span>
+                    )}
+                  </button>
+                ))}
+                <button
+                  onClick={async () => { try { await callLogout().unwrap(); } catch { /* ignore */ } dispatch(logout()); nav('/worker/login'); }}
+                  className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[14px] font-semibold text-rose-600 hover:bg-rose-50"
+                >
+                  <LogOut size={18} /> <span>Sign Out</span>
+                </button>
+              </nav>
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Top bar */}
+      <header
+        className="sticky top-0 z-30 border-b border-slate-200 bg-white/85 backdrop-blur-xl"
+        style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
+      >
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 lg:px-8">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <button
+              className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-slate-100 lg:hidden"
+              onClick={() => setDrawerOpen(true)}
+              aria-label="Open menu"
+            >
+              <Menu size={20} className="text-slate-700" />
+            </button>
+            <div className="flex items-center gap-2 lg:hidden">
+              <ZappyLogo size={20} />
+              <span className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">Worker</span>
             </div>
+            <div className="hidden min-w-0 lg:block">
+              <h1 className="truncate text-[19px] font-black tracking-tight text-navy-900">Hello, {firstName} 👋</h1>
+              <p className="truncate text-[12.5px] font-medium text-slate-500">
+                Complete more jobs to earn more and grow with Zappy.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 lg:gap-3">
+            <div className="hidden lg:block">
+              <OnlineControl isOnline={isOnline} busy={toggling} disabled={!canGoOnline} onToggle={toggleOnline} />
+            </div>
+            <NotifBell token={token} onTap={() => nav('/worker/notifications')} />
+            <button onClick={() => nav('/worker/profile')} className="flex items-center gap-2">
+              <Avatar url={avatarUrl} initials={initials} size={36} />
+              <span className="hidden text-[13px] font-bold text-navy-900 lg:block">{firstName}</span>
+            </button>
           </div>
         </div>
-      </div>
+      </header>
 
-      {/* ── Scrollable content ───────────────────────────────── */}
-      {/* Mobile: single column (space-y). Desktop (lg+): widen and reflow the stacked
-          cards into a balanced two-column masonry so the layout uses the screen instead
-          of a narrow centred phone column (#17). break-inside-avoid keeps each card whole. */}
-      <div className="max-w-lg lg:max-w-5xl mx-auto px-4 mt-4 pb-40 space-y-3.5 lg:space-y-0 lg:columns-2 lg:gap-4 lg:[&>*]:mb-4 lg:[&>*]:break-inside-avoid">
-
-        {!kycApproved && (
-          <motion.button
+      <main className="mx-auto max-w-6xl px-4 pb-28 pt-4 lg:px-8 lg:pb-10">
+        {/* KYC gate banner */}
+        {token && !kycApproved && (
+          <button
             onClick={() => nav('/worker/kyc')}
-            initial={{ opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            className={`w-full rounded-2xl p-4 text-left ring-1 lg:[column-span:all] ${
-              kycStatus === 'rejected' ? 'bg-red-50 ring-red-200' : 'bg-amber-50 ring-amber-200'
+            className={`mb-4 flex w-full items-center gap-3 rounded-2xl border p-3.5 text-left ${
+              kycStatus === 'rejected' ? 'border-red-200 bg-red-50' : 'border-amber-200 bg-amber-50'
             }`}
           >
-            <div className="flex items-center gap-3">
-              <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
-                kycStatus === 'rejected' ? 'bg-red-100' : 'bg-amber-100'
-              }`}>
-                <AlertTriangle size={16} strokeWidth={2} className={kycStatus === 'rejected' ? 'text-red-600' : 'text-amber-600'} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className={`text-xs font-bold ${kycStatus === 'rejected' ? 'text-red-700' : 'text-amber-800'}`}>
-                  {kycStatus === 'pending_review' ? 'KYC Under Review — 24h processing'
-                   : kycStatus === 'rejected' ? 'KYC Rejected — Tap to resubmit'
-                   : 'KYC Required to start accepting jobs'}
-                </p>
-              </div>
-              <ChevronRight size={14} className="text-slate-400 shrink-0" />
-            </div>
-          </motion.button>
-        )}
-
-        {/* ── Active Job Banner ────────────────────────────────── */}
-        {me?.currentOrderId && (
-          <motion.button
-            initial={{ opacity: 0, scale: 0.97 }}
-            animate={{ opacity: 1, scale: 1 }}
-            onClick={() => nav(`/worker/jobs/${me.currentOrderId}`)}
-            className="w-full flex items-center gap-3 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-4 text-left shadow-lg lg:[column-span:all]"
-          >
-            <span className="relative flex h-3 w-3 shrink-0">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-white" />
+            <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${kycStatus === 'rejected' ? 'bg-red-100' : 'bg-amber-100'}`}>
+              <ShieldCheck size={17} className={kycStatus === 'rejected' ? 'text-red-600' : 'text-amber-600'} />
             </span>
-            <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-bold text-white/60 uppercase tracking-widest">Active Job</p>
-              <p className="text-sm font-bold text-white">Continue working</p>
-            </div>
-            <ArrowRight size={18} className="text-white/80 shrink-0" />
-          </motion.button>
+            <span className="min-w-0 flex-1">
+              <span className={`block text-[13px] font-bold ${kycStatus === 'rejected' ? 'text-red-700' : 'text-amber-800'}`}>
+                {kycStatus === 'pending_review' ? 'KYC under review'
+                  : kycStatus === 'rejected' ? 'KYC rejected — tap to resubmit'
+                  : 'Complete KYC to start earning'}
+              </span>
+              <span className="block text-[11.5px] font-medium text-slate-500">Verification is required before you can go online.</span>
+            </span>
+            <ChevronRight size={18} className="shrink-0 text-slate-400" />
+          </button>
         )}
 
-        {/* ── Online Toggle ────────────────────────────────────── */}
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.05 }}
-          className="rounded-2xl overflow-hidden lg:[column-span:all]"
-          style={{
-            background: isBusy
-              ? 'linear-gradient(135deg, #fffbeb, #fef3c7)'
-              : isOnline
-                ? 'linear-gradient(135deg, #f0fdf4, #dcfce7)'
-                : 'white',
-            border: isOnline ? '1px solid rgba(34,197,94,0.25)' : isBusy ? '1px solid rgba(245,158,11,0.25)' : '1px solid rgba(0,0,0,0.06)',
-            boxShadow: isOnline ? '0 4px 24px rgba(34,197,94,0.12)' : '0 2px 12px rgba(0,0,0,0.05)',
-          }}
-        >
-          {/* Animated green bar on top when online */}
-          {isOnline && (
-            <div className="h-0.5 w-full overflow-hidden">
-              <motion.div
-                className="h-full bg-green-500"
-                animate={{ x: ['-100%', '100%'] }}
-                transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
-                style={{ width: '60%' }}
-              />
-            </div>
-          )}
-          <div className="p-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <motion.div
-                className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors ${
-                  isBusy ? 'bg-amber-100' : isOnline ? 'bg-green-100' : 'bg-slate-100'
-                }`}
-                animate={isOnline && !isBusy ? {
-                  boxShadow: ['0 0 0 0px rgba(34,197,94,0.4)', '0 0 0 10px rgba(34,197,94,0)', '0 0 0 0px rgba(34,197,94,0)']
-                } : {}}
-                transition={{ duration: 2, repeat: Infinity }}
-              >
-                {isBusy
-                  ? <Briefcase size={20} strokeWidth={1.75} className="text-amber-600" />
-                  : isOnline
-                    ? <Navigation size={20} strokeWidth={1.75} className="text-green-600" />
-                    : <WifiOff size={20} strokeWidth={1.75} className="text-slate-400" />}
-              </motion.div>
-              <div>
-                <p className={`font-black text-base ${isOnline ? 'text-green-800' : isBusy ? 'text-amber-800' : 'text-slate-800'}`}>
-                  {isBusy ? 'On a job' : isOnline ? 'Online · Accepting jobs' : 'Offline'}
-                </p>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  <motion.div
-                    className={`w-1.5 h-1.5 rounded-full ${gpsOn ? 'bg-green-500' : 'bg-red-400'}`}
-                    animate={gpsOn ? { opacity: [1, 0.4, 1] } : {}}
-                    transition={{ duration: 1.5, repeat: Infinity }}
-                  />
-                  <p className="text-[11px] text-slate-500 font-medium truncate max-w-[180px]">
-                    {gpsOn
-                      ? areaName
-                        ? <><span className="text-green-600 font-semibold">{areaName}</span></>
-                        : 'GPS active'
-                      : 'GPS off'}
-                    {fmtTimer && <span className="text-green-600 font-bold"> · {fmtTimer}</span>}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {!isBusy && (
-              <motion.button
-                onClick={toggleOnline}
-                disabled={toggling || !canGoOnline}
-                className={`relative w-16 h-8 rounded-full transition-colors duration-300 shrink-0 disabled:opacity-50 ${
-                  isOnline ? 'bg-green-500' : 'bg-slate-200'
-                }`}
-                style={{ boxShadow: isOnline ? '0 4px 16px rgba(34,197,94,0.4)' : 'none' }}
-                whileTap={{ scale: 0.93 }}
-              >
-                {toggling
-                  ? <Loader2 size={14} className="absolute inset-0 m-auto animate-spin text-white" />
-                  : (
-                    <motion.span
-                      className="absolute top-1 w-6 h-6 bg-white rounded-full shadow-md"
-                      animate={{ left: isOnline ? 'calc(100% - 28px)' : '4px' }}
-                      transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                    />
-                  )
-                }
-              </motion.button>
-            )}
-          </div>
-        </motion.div>
-
-        {/* ── Earnings Chart ───────────────────────────────────── */}
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.08 }}
-          className="bg-white rounded-2xl overflow-hidden"
-          style={{ boxShadow: '0 2px 16px rgba(0,0,0,0.06)', border: '1px solid rgba(0,0,0,0.04)' }}
-        >
-          <div className="flex items-center justify-between px-4 pt-4 pb-3">
-            <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">7-Day Earnings</p>
-              {hasChartData && (
-                <motion.p
-                  className="text-xl font-black text-slate-900 mt-0.5"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.4 }}
-                >
-                  ₹{weekRs}
-                </motion.p>
-              )}
-            </div>
-            <motion.button
-              onClick={() => nav('/wallet')}
-              className="flex items-center gap-1 text-xs font-bold text-indigo-600 px-3 py-1.5 rounded-xl bg-indigo-50"
-              whileTap={{ scale: 0.94 }}
-            >
-              Full history <ChevronRight size={10} strokeWidth={3} />
-            </motion.button>
-          </div>
-
-          {hasChartData ? (
-            <div className="px-4 pb-5">
-              {/* Bars — fixed 104px zone, labels float above via absolute */}
-              <div className="flex items-end gap-2" style={{ height: 104 }}>
-                {chart7d.map((d, i) => {
-                  const barH = Math.max(Math.round((d.earningsPaise / chartMax) * 88), 4);
-                  const isToday = i === chart7d.length - 1;
-                  const rs = Math.round(d.earningsPaise / 100);
-                  return (
-                    <div key={d.date} className="flex-1 relative flex items-end">
-                      {isToday && rs > 0 && (
-                        <motion.p
-                          className="absolute -top-5 left-0 right-0 text-center text-[9px] font-black text-indigo-600"
-                          initial={{ opacity: 0, y: 4 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.6 }}
-                        >
-                          ₹{rs}
-                        </motion.p>
-                      )}
-                      <motion.div
-                        className="w-full rounded-lg"
-                        initial={{ height: 0 }}
-                        animate={{ height: barH }}
-                        transition={{ duration: 0.5, delay: i * 0.06, ease: [0.34, 1.56, 0.64, 1] }}
-                        style={{
-                          background: isToday
-                            ? 'linear-gradient(180deg, #818cf8 0%, #4f46e5 100%)'
-                            : 'linear-gradient(180deg, #e2e8f0 0%, #cbd5e1 100%)',
-                          boxShadow: isToday ? '0 4px 14px rgba(99,102,241,0.4)' : 'none',
-                        }}
-                      />
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Day labels — own row, never overlaps bars */}
-              <div className="flex gap-2 mt-2.5">
-                {chart7d.map((d, i) => {
-                  const isToday = i === chart7d.length - 1;
-                  const DAY = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
-                  const dayLabel = DAY[new Date(d.date + 'T00:00').getDay()];
-                  return (
-                    <span
-                      key={d.date}
-                      className={`flex-1 text-center text-[9px] font-bold ${
-                        isToday ? 'text-indigo-500' : 'text-slate-300'
-                      }`}
-                    >
-                      {isToday ? 'Today' : dayLabel}
-                    </span>
-                  );
-                })}
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-8 gap-2">
-              <BarChart2 size={32} strokeWidth={1} className="text-slate-100" />
-              <p className="text-sm font-bold text-slate-300">No earnings yet this week</p>
-              <p className="text-xs text-slate-300">Go online to start earning</p>
-            </div>
-          )}
-        </motion.div>
-
-        {/* ── Trust Score + Next Milestone row ────────────────── */}
-        <div className="grid grid-cols-2 gap-3">
-          {/* Trust Score */}
-          <motion.div
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.11 }}
-            className="bg-white rounded-2xl p-4 shadow-sm flex flex-col items-center justify-center gap-2"
+        {/* Active job banner */}
+        {isBusy && (
+          <button
+            onClick={() => nav(`/worker/jobs/${me.currentOrderId}`)}
+            className="mb-4 flex w-full items-center gap-3 rounded-2xl bg-zappy-600 p-3.5 text-left text-white shadow-[0_12px_28px_-16px_rgba(37,99,235,0.9)]"
           >
-            <TrustScoreRing score={trustScore} />
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider text-center">Trust Score</p>
-            <p className="text-[10px] text-slate-400 text-center leading-tight">
-              {trustScore === null
-                ? 'Complete jobs to earn score'
-                : trustScore >= 80 ? 'Excellent — top partner'
-                : trustScore >= 60 ? 'Good standing'
-                : 'Needs improvement'}
-            </p>
-          </motion.div>
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/20">
+              <Navigation size={17} />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-[13px] font-bold">Active job in progress</span>
+              <span className="block text-[11.5px] font-medium text-white/80">Tap to open your current job</span>
+            </span>
+            <ChevronRight size={18} className="shrink-0 text-white/80" />
+          </button>
+        )}
 
-          {/* Milestone */}
-          {nextMilestone ? (
-            <motion.div
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.13 }}
-              className="bg-amber-50 rounded-2xl p-4 shadow-sm ring-1 ring-amber-100 flex flex-col justify-between"
-            >
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
-                  <Trophy size={14} strokeWidth={2} className="text-amber-600" />
-                </div>
-                <p className="text-[10px] font-bold text-amber-700 uppercase tracking-wide leading-tight">
-                  Next Bonus
-                </p>
-              </div>
-              <div>
-                <p className="text-xl font-extrabold text-amber-700 leading-none">₹{nextMilestone.bonusRs}</p>
-                <p className="text-[10px] text-amber-600 mt-0.5">
-                  {nextMilestone.jobs - completedJobs} more jobs
-                </p>
-              </div>
-              <div className="mt-2.5 w-full h-1.5 bg-amber-200 rounded-full overflow-hidden">
-                <motion.div
-                  className="h-full bg-amber-500 rounded-full"
-                  initial={{ width: 0 }}
-                  animate={{ width: `${msProgress}%` }}
-                  transition={{ duration: 0.9, ease: 'easeOut', delay: 0.4 }}
-                />
-              </div>
-              <p className="text-[9px] text-amber-500 mt-1">{completedJobs}/{nextMilestone.jobs} jobs</p>
-            </motion.div>
-          ) : (
-            <motion.div
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.13 }}
-              className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-2xl p-4 shadow-sm ring-1 ring-purple-100 flex flex-col items-center justify-center gap-2"
-            >
-              <Trophy size={24} strokeWidth={1.5} className="text-purple-500" />
-              <p className="text-xs font-bold text-purple-700 text-center">All Milestones Reached</p>
-            </motion.div>
-          )}
+        {/* Mobile greeting / online control */}
+        <div className="lg:hidden">
+          <GreetingCard
+            name={firstName}
+            locationLabel={locationLabel}
+            isOnline={isOnline}
+            busy={toggling}
+            disabled={!canGoOnline}
+            onToggle={toggleOnline}
+          />
         </div>
 
-        {/* ── Badges ───────────────────────────────────────────── */}
-        <motion.div
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-          className="bg-white rounded-2xl p-4 shadow-sm"
-        >
-          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Achievements</p>
-          <div className="grid grid-cols-5 gap-2">
-            {BADGES.map(({ id, label, Icon, threshold }) => {
-              const earned = completedJobs >= threshold;
-              return (
-                <div key={id} className="flex flex-col items-center gap-1.5">
-                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${
-                    earned
-                      ? 'bg-gradient-to-br from-amber-100 to-orange-100 ring-1 ring-amber-200 shadow-sm'
-                      : 'bg-slate-100'
-                  }`}>
-                    <Icon
-                      size={20}
-                      strokeWidth={earned ? 2 : 1.5}
-                      className={earned ? 'text-amber-600' : 'text-slate-300'}
-                    />
-                  </div>
-                  <p className={`text-[9px] font-bold text-center leading-tight ${
-                    earned ? 'text-amber-700' : 'text-slate-300'
-                  }`}>{label}</p>
-                </div>
-              );
-            })}
-          </div>
-        </motion.div>
+        {/* Stat cards — 4 on mobile, 6 on web */}
+        <div className="mt-4 grid grid-cols-4 gap-2.5 lg:grid-cols-6 lg:gap-3">
+          {statCards.map((s, i) => (
+            <div key={s.label} className={i >= 4 ? 'hidden lg:block' : ''}>
+              <StatCard {...s} />
+            </div>
+          ))}
+        </div>
 
-        {/* ── ZeroWait: Ready Mode (pre-accept next job) ──────────────── */}
-        {isOnline && (
-          <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
-            <ReadyModeCard />
-          </motion.div>
-        )}
-
-        {/* ── Earned Wage Access ───────────────────────────────────── */}
-        <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.155 }}>
-          <EarnedWageWidget />
-        </motion.div>
-
-        {/* ── Shift Slots (Predictive Availability) ────────────── */}
-        <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.16 }}>
-          <ShiftSlotsWidget currentLat={myLat} currentLng={myLng} />
-        </motion.div>
-
-        {/* ── Wellness System ───────────────────────────────────── */}
-        <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.17 }}>
-          <WellnessWidget />
-        </motion.div>
-
-        {/* ── Performance ──────────────────────────────────────── */}
-        <motion.div
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.18 }}
-          className="bg-white rounded-2xl p-4 shadow-sm"
-        >
-          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Performance</p>
-          <div className="space-y-3">
-            <PerformanceRow
-              label="Acceptance Rate"
-              value={acceptRate}
-              max={100}
-              display={acceptRate !== null ? `${acceptRate}%` : null}
-              noDataLabel="No offers yet"
-              good={acceptRate !== null && acceptRate >= 80}
-              warn={acceptRate !== null && acceptRate < 60}
-              trackColor={
-                acceptRate === null ? 'bg-slate-200'
-                : acceptRate >= 80 ? 'bg-green-500'
-                : acceptRate >= 60 ? 'bg-amber-400'
-                : 'bg-red-500'
-              }
+        {/* Main grid */}
+        <div className="mt-5 grid gap-5 lg:grid-cols-3">
+          <div className="space-y-5 lg:col-span-2">
+            <JobRequests
+              tabs={jobTabs}
+              activeTab={jobTab}
+              onTab={setJobTab}
+              jobs={jobsForTab}
+              isOnline={isOnline}
+              onGoOnline={toggleOnline}
+              onOpenJob={openJob}
             />
-            <PerformanceRow
-              label="Cancellation Rate"
-              value={cancelRate !== null ? cancelRate : null}
-              max={100}
-              display={cancelRate !== null ? `${cancelRate}%` : null}
-              noDataLabel="No jobs yet"
-              good={cancelRate !== null && cancelRate <= 5}
-              warn={cancelRate !== null && cancelRate > 15}
-              trackColor={
-                cancelRate === null ? 'bg-slate-200'
-                : cancelRate <= 5 ? 'bg-green-500'
-                : cancelRate <= 15 ? 'bg-amber-400'
-                : 'bg-red-500'
-              }
-              invert
-            />
-            <PerformanceRow
-              label="Customer Rating"
-              value={hasRatingData ? rating : null}
-              max={5}
-              display={hasRatingData ? `${rating.toFixed(1)} / 5.0` : null}
-              noDataLabel="Not rated yet"
-              good={hasRatingData && rating >= 4.5}
-              warn={hasRatingData && rating < 3.5}
-              trackColor={
-                !hasRatingData ? 'bg-slate-200'
-                : rating >= 4.5 ? 'bg-amber-400'
-                : rating >= 4 ? 'bg-blue-500'
-                : 'bg-red-500'
-              }
-            />
+            {isOnline && <ReadyModeCard />}
+            <div className="hidden lg:block">
+              <RecentlyCompleted jobs={doneJobs.slice(0, 5)} onOpenJob={openJob} onViewAll={() => setJobTab('completed')} />
+            </div>
           </div>
 
-          {(acceptRate !== null && acceptRate < 70) || (cancelRate !== null && cancelRate > 20) ? (
-            <div className="mt-3 flex items-start gap-2 bg-red-50 rounded-xl px-3 py-2.5 ring-1 ring-red-100">
-              <AlertTriangle size={13} strokeWidth={2} className="text-red-500 mt-0.5 shrink-0" />
-              <p className="text-xs text-red-700 font-medium leading-snug">
-                {acceptRate !== null && acceptRate < 70
-                  ? 'Low acceptance rate reduces job visibility. Try to accept more offers.'
-                  : 'High cancellation rate may result in account penalties.'}
-              </p>
-            </div>
-          ) : !hasOfferData && !hasJobData ? (
-            <div className="mt-3 flex items-start gap-2 bg-blue-50 rounded-xl px-3 py-2.5 ring-1 ring-blue-100">
-              <ShieldCheck size={13} strokeWidth={2} className="text-blue-500 mt-0.5 shrink-0" />
-              <p className="text-xs text-blue-700 font-medium leading-snug">
-                Your performance stats will appear here after your first job.
-              </p>
-            </div>
-          ) : null}
-        </motion.div>
+          <div className="space-y-5">
+            <TodaySchedule jobs={scheduledToday} onOpenJob={openJob} onViewCalendar={() => nav('/worker/goals')} />
+            <EarningsOverview weekRupees={weekRs} deltaPct={deltaPct} points={chartPoints} onViewDetails={() => nav('/worker/earnings')} />
+            <Panel
+              id="performance"
+              title="Performance"
+              action={<button type="button" onClick={() => nav('/worker/earnings')} className="text-[12.5px] font-bold text-zappy-600 hover:underline">View details</button>}
+            >
+              <PerformanceGrid items={perfItems} />
+            </Panel>
+          </div>
+        </div>
 
-        {/* ── Recent Jobs ──────────────────────────────────────── */}
-        <RecentJobsList orders={jobsData?.orders} onNav={nav} />
+        {/* Quick access — worker tools */}
+        <div className="mt-5">
+          <QuickAccess onOpen={(to) => nav(to)} walletRs={walletBalanceRs} />
+        </div>
+      </main>
 
-        {/* ── Leaderboard ──────────────────────────────────────── */}
-        <LeaderboardWidget workerId={me?._id} />
+      <WorkerBottomNav activeKey="dashboard" onNavigate={handleNav} />
 
-        {/* ── Demand Zones ─────────────────────────────────────── */}
-        {isOnline && <DemandZonesWidget />}
-
-        {/* ── Earnings Goals ───────────────────────────────────── */}
-        <GoalsWidget />
-
-        {/* ── Zone Benchmark ───────────────────────────────────── */}
-        <BenchmarkWidget />
-
-        {/* ── Worker Tools Grid ─────────────────────────────────── */}
-        <WorkerToolsGrid nav={nav} totalWallet={totalWallet} />
-      </div>
-
-      {/* ── Offer Modal ──────────────────────────────────────── */}
+      {/* Job offer modal — preserved from the live dispatch flow */}
       <AnimatePresence>
         {worker.currentOffer && (
           <OfferModal
@@ -1144,532 +799,9 @@ export default function WorkerDashboard() {
   );
 }
 
-/* ─── Trust Score Ring ───────────────────────────────────────── */
-
-function TrustScoreRing({ score }) {
-  const r    = 30;
-  const circ = 2 * Math.PI * r;
-  const isNew = score === null;
-  const displayScore = isNew ? 0 : score;
-  const offset = circ * (1 - displayScore / 100);
-  const color  = isNew ? '#CBD5E1' : score >= 80 ? '#22C55E' : score >= 60 ? '#F59E0B' : '#EF4444';
-
-  return (
-    <div className="relative w-20 h-20 flex items-center justify-center">
-      <svg width="80" height="80" viewBox="0 0 80 80" className="-rotate-90 absolute">
-        <circle cx="40" cy="40" r={r} fill="none" stroke="#F1F5F9" strokeWidth="6" />
-        <motion.circle
-          cx="40" cy="40" r={r} fill="none"
-          stroke={color} strokeWidth="6"
-          strokeDasharray={circ}
-          strokeLinecap="round"
-          initial={{ strokeDashoffset: circ }}
-          animate={{ strokeDashoffset: isNew ? circ : offset }}
-          transition={{ duration: 1.2, ease: 'easeOut', delay: 0.3 }}
-        />
-      </svg>
-      <div className="text-center relative z-10">
-        {isNew ? (
-          <>
-            <p className="text-[11px] font-extrabold text-slate-400 leading-tight">NEW</p>
-            <p className="text-[8px] font-bold text-slate-300 tracking-widest">WORKER</p>
-          </>
-        ) : (
-          <>
-            <p className="text-2xl font-extrabold text-[#0F172A] leading-none">{score}</p>
-            <p className="text-[8px] font-bold text-slate-400 tracking-widest">TRUST</p>
-          </>
-        )}
-      </div>
-    </div>
-  );
-}
-
-/* ─── Performance Row ────────────────────────────────────────── */
-
-function PerformanceRow({ label, value, max, display, noDataLabel, good, warn, trackColor, invert }) {
-  const noData = value === null || value === undefined;
-  // For inverted metrics (cancellation rate): lower value → fuller bar
-  const pct = noData ? 0 : Math.min((value / max) * 100, 100);
-  const barPct = noData ? 0 : invert ? Math.max(0, 100 - pct) : pct;
-
-  return (
-    <div>
-      <div className="flex items-center justify-between mb-1">
-        <p className="text-xs font-semibold text-slate-500">{label}</p>
-        <div className="flex items-center gap-1">
-          {noData ? (
-            <Minus size={11} strokeWidth={2} className="text-slate-300" />
-          ) : good ? (
-            <ArrowUpRight size={11} strokeWidth={2.5} className="text-green-500" />
-          ) : warn ? (
-            <ArrowDownRight size={11} strokeWidth={2.5} className="text-red-500" />
-          ) : (
-            <Minus size={11} strokeWidth={2.5} className="text-amber-400" />
-          )}
-          <p className={`text-xs font-bold ${
-            noData ? 'text-slate-300'
-            : good ? 'text-green-600'
-            : warn ? 'text-red-600'
-            : 'text-amber-600'
-          }`}>
-            {noData ? (noDataLabel ?? '—') : display}
-          </p>
-        </div>
-      </div>
-      <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-        <motion.div
-          className={`h-full rounded-full ${noData ? 'bg-slate-200' : trackColor}`}
-          initial={{ width: 0 }}
-          animate={{ width: `${barPct}%` }}
-          transition={{ duration: 0.8, ease: 'easeOut', delay: 0.2 }}
-        />
-      </div>
-    </div>
-  );
-}
-
-/* ─── Recent Jobs ────────────────────────────────────────────── */
-
-function RecentJobsList({ orders, onNav }) {
-  const [expanded, setExpanded] = useState(false);
-  if (!orders?.length) return null;
-  const visible = expanded ? orders : orders.slice(0, 3);
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 6 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.2 }}
-      className="bg-white rounded-2xl shadow-sm overflow-hidden"
-    >
-      <div className="flex items-center justify-between px-4 pt-4 pb-2">
-        <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Recent Jobs</p>
-        {orders.length > 3 && (
-          <button
-            onClick={() => setExpanded((v) => !v)}
-            className="text-[10px] font-bold text-blue-600 flex items-center gap-0.5"
-          >
-            {expanded ? 'Show less' : `${orders.length - 3} more`}
-            {expanded ? <ChevronUp size={10} strokeWidth={2.5} /> : <ChevronDown size={10} strokeWidth={2.5} />}
-          </button>
-        )}
-      </div>
-
-      <div className="divide-y divide-slate-50">
-        {visible.map((order, i) => {
-          const svc = SERVICE_ICON_MAP[order.service] || { Icon: Wrench, bg: 'bg-slate-100', color: 'text-slate-500' };
-          const { Icon } = svc;
-          return (
-            <motion.button
-              key={order._id}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: i * 0.04 }}
-              onClick={() => onNav(`/worker/jobs/${order._id}`)}
-              className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-slate-50 transition"
-            >
-              <div className={`w-9 h-9 rounded-xl ${svc.bg} flex items-center justify-center shrink-0`}>
-                <Icon size={14} strokeWidth={2} className={svc.color} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-[#0F172A] capitalize leading-none">
-                  {order.service.replace(/_/g, ' ')}
-                </p>
-                <p className="text-[10px] text-slate-400 mt-0.5">
-                  {new Date(order.completedAt || order.createdAt).toLocaleDateString('en-IN', {
-                    day: 'numeric', month: 'short', year: 'numeric',
-                  })}
-                </p>
-              </div>
-              <div className="text-right shrink-0">
-                <p className="text-sm font-extrabold text-[#0F172A]">₹{order.pricing?.total ?? '—'}</p>
-                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
-                  order.status === 'completed' ? 'bg-green-50 text-green-600' : 'bg-slate-100 text-slate-500'
-                }`}>
-                  {order.status === 'completed' ? 'Completed' : order.status.replace(/_/g, ' ')}
-                </span>
-              </div>
-            </motion.button>
-          );
-        })}
-      </div>
-    </motion.div>
-  );
-}
-
-/* ─── Leaderboard Widget ─────────────────────────────────────── */
-
-const MOCK_LEADERS = [
-  { rank: 1, name: 'R*** K.', weekEarnings: 8400, isMe: false },
-  { rank: 2, name: 'A*** S.', weekEarnings: 7200, isMe: false },
-  { rank: 3, name: 'M*** P.', weekEarnings: 6800, isMe: false },
-  { rank: 4, name: 'S*** R.', weekEarnings: 5900, isMe: false },
-  { rank: 5, name: 'K*** V.', weekEarnings: 5100, isMe: false },
-];
-
-const RANK_COLORS = {
-  1: 'text-amber-500',
-  2: 'text-slate-400',
-  3: 'text-orange-500',
-};
-
-function LeaderboardWidget({ workerId }) {
-  const { data, isLoading } = useGetWorkerLeaderboardQuery(undefined, {
-    // Tolerate missing endpoint gracefully
-    refetchOnMountOrArgChange: true,
-  });
-
-  const leaders = data?.leaders?.length ? data.leaders : MOCK_LEADERS;
-  const myRank  = data?.myRank?.rank  ?? 12;
-  const total   = data?.myRank?.total ?? 847;
-  const maxEarnings = Math.max(...leaders.map((l) => l.weekEarnings), 1);
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 6 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.22 }}
-      className="bg-white rounded-2xl shadow-sm overflow-hidden"
-      style={{ border: '1px solid rgba(0,0,0,0.04)' }}
-    >
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 pt-4 pb-3">
-        <div className="flex items-center gap-2">
-          <Trophy size={14} strokeWidth={2} className="text-amber-500" />
-          <p className="text-xs font-bold text-slate-700">Top Earners · This Week</p>
-        </div>
-        <span className="text-[10px] font-extrabold text-amber-700 bg-amber-100 px-2.5 py-1 rounded-full">
-          You&apos;re #{myRank}
-        </span>
-      </div>
-
-      {/* List */}
-      <div className="divide-y divide-slate-50 px-0">
-        {isLoading
-          ? Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="flex items-center gap-3 px-4 py-3 animate-pulse">
-                <div className="w-5 h-4 bg-slate-100 rounded" />
-                <div className="flex-1 h-3 bg-slate-100 rounded" />
-                <div className="w-12 h-3 bg-slate-100 rounded" />
-              </div>
-            ))
-          : leaders.map((leader, i) => {
-              const isHighlighted = leader.isMe;
-              const barPct = Math.round((leader.weekEarnings / maxEarnings) * 100);
-              const rankColor = RANK_COLORS[leader.rank] ?? 'text-slate-400';
-              return (
-                <motion.div
-                  key={leader.rank}
-                  initial={{ opacity: 0, x: -6 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.25 + i * 0.05 }}
-                  className={`flex items-center gap-3 px-4 py-3 ${
-                    isHighlighted ? 'bg-indigo-50' : ''
-                  }`}
-                >
-                  {/* Rank */}
-                  <p className={`text-sm font-black w-5 text-center shrink-0 ${rankColor}`}>
-                    {leader.rank}
-                  </p>
-
-                  {/* Name + bar */}
-                  <div className="flex-1 min-w-0">
-                    <p className={`text-xs font-bold truncate ${isHighlighted ? 'text-indigo-700' : 'text-slate-700'}`}>
-                      {leader.name}
-                    </p>
-                    <div className="w-full h-1 bg-slate-100 rounded-full mt-1 overflow-hidden">
-                      <motion.div
-                        className={`h-full rounded-full ${isHighlighted ? 'bg-indigo-500' : 'bg-amber-400'}`}
-                        initial={{ width: 0 }}
-                        animate={{ width: `${barPct}%` }}
-                        transition={{ duration: 0.7, ease: 'easeOut', delay: 0.3 + i * 0.06 }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Earnings */}
-                  <p className={`text-xs font-extrabold shrink-0 ${isHighlighted ? 'text-indigo-600' : 'text-slate-700'}`}>
-                    ₹{leader.weekEarnings.toLocaleString('en-IN')}
-                  </p>
-                </motion.div>
-              );
-            })
-        }
-      </div>
-
-      {/* Footer */}
-      <div className="px-4 py-3 border-t border-slate-50">
-        <p className="text-[10px] font-semibold text-slate-400 text-center">
-          Your rank: #{myRank} of {total.toLocaleString('en-IN')} workers
-        </p>
-      </div>
-    </motion.div>
-  );
-}
-
-/* ─── Demand Zones ───────────────────────────────────────────── */
-
-const LEVEL_META = {
-  very_high: { label: 'Very High', bg: 'bg-red-50',   ring: 'ring-red-100',   dot: 'bg-red-500',   text: 'text-red-700',   bar: 'bg-red-400'    },
-  high:      { label: 'High',      bg: 'bg-amber-50', ring: 'ring-amber-100', dot: 'bg-amber-500', text: 'text-amber-700', bar: 'bg-amber-400'  },
-  medium:    { label: 'Moderate',  bg: 'bg-blue-50',  ring: 'ring-blue-100',  dot: 'bg-blue-400',  text: 'text-blue-700',  bar: 'bg-blue-300'   },
-  low:       { label: 'Low',       bg: 'bg-slate-50', ring: 'ring-slate-100', dot: 'bg-slate-300', text: 'text-slate-500', bar: 'bg-slate-200'  },
-};
-
-const TOOLS = [
-  { to: '/worker/earnings',  icon: BarChart2,     label: 'Earnings',   sub: 'Job breakdown',       bg: 'from-indigo-50/80 to-indigo-100/80',  ring: 'ring-indigo-200/50',   iconColor: 'text-indigo-600',   iconBg: 'bg-white/60' },
-  { to: '/worker/goals',     icon: Target,        label: 'Goals',      sub: 'Daily & weekly',      bg: 'from-purple-50/80 to-purple-100/80',  ring: 'ring-purple-200/50',   iconColor: 'text-purple-600',   iconBg: 'bg-white/60' },
-  { to: '/worker/bank',      icon: Building2,     label: 'Bank & UPI', sub: 'Add accounts',        bg: 'from-blue-50/80 to-blue-100/80',      ring: 'ring-blue-200/50',     iconColor: 'text-blue-600',     iconBg: 'bg-white/60' },
-  { to: '/worker/withdraw',  icon: ArrowRightLeft,label: 'Withdraw',   sub: 'Transfer to bank',    bg: 'from-emerald-50/80 to-emerald-100/80', ring: 'ring-emerald-200/50', iconColor: 'text-emerald-600',  iconBg: 'bg-white/60' },
-  { to: '/worker/skills',    icon: Star,          label: 'Skills',     sub: 'Specialise & earn',   bg: 'from-amber-50/80 to-amber-100/80',    ring: 'ring-amber-200/50',    iconColor: 'text-amber-600',    iconBg: 'bg-white/60' },
-  { to: '/worker/training',  icon: GraduationCap, label: 'Training',   sub: 'Get certified',       bg: 'from-rose-50/80 to-rose-100/80',      ring: 'ring-rose-200/50',     iconColor: 'text-rose-600',     iconBg: 'bg-white/60' },
-  { to: '/worker/appeals',   icon: Scale,         label: 'Appeals',    sub: 'Contest ratings',     bg: 'from-orange-50/80 to-orange-100/80',  ring: 'ring-orange-200/50',   iconColor: 'text-orange-600',   iconBg: 'bg-white/60' },
-  { to: '/plans',            icon: Gem,           label: 'Go Pro',     sub: 'Lower commission',    bg: 'from-stone-50/80 to-stone-100/80',    ring: 'ring-stone-200/50',    iconColor: 'text-stone-600',    iconBg: 'bg-white/60' },
-  { to: '/wallet',           icon: Wallet,        label: 'Wallet',     sub: null,                  bg: 'from-teal-50/80 to-teal-100/80',      ring: 'ring-teal-200/50',     iconColor: 'text-teal-600',     iconBg: 'bg-white/60' },
-];
-
-function WorkerToolsGrid({ nav, totalWallet }) {
-  return (
-    <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28 }} className="mt-8">
-      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 px-1">Quick Access</p>
-      <div className="grid grid-cols-3 gap-3">
-        {TOOLS.map((t, i) => {
-          const Icon = t.icon;
-          return (
-            <motion.button key={t.to + t.label} onClick={() => nav(t.to)}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 + (i * 0.05) }}
-              className={`bg-gradient-to-br ${t.bg} rounded-[1.25rem] p-3.5 text-left ring-1 ${t.ring} shadow-sm active:scale-[0.94] hover:shadow-md transition-all duration-200 group overflow-hidden relative`}
-            >
-              {/* Decorative background blur */}
-              <div className={`absolute -right-4 -bottom-4 w-16 h-16 rounded-full blur-2xl opacity-40 group-hover:opacity-60 transition-opacity bg-current ${t.iconColor}`} />
-              
-              <div className={`w-8 h-8 rounded-xl ${t.iconBg} flex items-center justify-center mb-2.5 shadow-sm ring-1 ring-black/5`}>
-                <Icon size={16} strokeWidth={2.5} className={t.iconColor} />
-              </div>
-              <p className="font-black text-[13px] text-slate-800 leading-tight mb-0.5">{t.label}</p>
-              <p className="text-[10px] font-medium text-slate-500 leading-tight truncate relative z-10">
-                {t.label === 'Wallet' ? `₹${totalWallet} available` : t.sub}
-              </p>
-            </motion.button>
-          );
-        })}
-      </div>
-    </motion.div>
-  );
-}
-
-function GoalsWidget() {
-  const nav = useNavigate();
-  const { data } = useGetWorkerGoalsQuery();
-  const goals = data?.goals ?? [];
-  if (goals.length === 0) return null;
-
-  return (
-    <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.22 }}
-      className="bg-white rounded-2xl p-4 shadow-sm">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-indigo-50 flex items-center justify-center">
-            <Target size={13} strokeWidth={2.5} className="text-indigo-600" />
-          </div>
-          <p className="text-xs font-bold text-[#0F172A]">Earnings Goals</p>
-        </div>
-        <button onClick={() => nav('/worker/goals')} className="text-[10px] font-bold text-blue-600 flex items-center gap-0.5">
-          Details <ChevronRight size={10} strokeWidth={2.5} />
-        </button>
-      </div>
-      <div className="space-y-2">
-        {goals.map(g => {
-          const pct = g.targetPaise > 0 ? Math.min(100, Math.round((g.earnedPaise / g.targetPaise) * 100)) : 0;
-          const color = pct >= 100 ? '#10b981' : pct >= 60 ? '#6366f1' : '#f59e0b';
-          return (
-            <div key={g.period}>
-              <div className="flex justify-between text-[11px] mb-1">
-                <span className="font-semibold text-slate-600 capitalize">{g.period} goal</span>
-                <span className="font-bold" style={{ color }}>{pct}% · ₹{(g.earnedPaise / 100).toFixed(0)} / ₹{(g.targetPaise / 100).toFixed(0)}</span>
-              </div>
-              <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, backgroundColor: color }} />
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </motion.div>
-  );
-}
-
-function BenchmarkWidget() {
-  const nav = useNavigate();
-  const { data } = useGetZoneBenchmarkQuery();
-  if (!data) return null;
-  const top = Math.round(100 - data.percentile);
-  const color = top <= 20 ? '#10b981' : top <= 50 ? '#6366f1' : '#f59e0b';
-
-  return (
-    <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.26 }}
-      className="bg-white rounded-2xl p-4 shadow-sm">
-      <div className="flex items-center gap-3">
-        <div className="w-9 h-9 rounded-xl bg-indigo-50 flex items-center justify-center shrink-0">
-          <TrendingUp size={16} strokeWidth={2} className="text-indigo-600" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-xs font-bold text-[#0F172A]">Zone Ranking</p>
-          <p className="text-[10px] text-slate-400">vs workers in your area</p>
-        </div>
-        <div className="text-right">
-          <p className="text-lg font-extrabold" style={{ color }}>Top {top}%</p>
-          <p className="text-[10px] text-slate-400">avg ₹{(data.zoneAvgPaise / 100).toFixed(0)}/wk</p>
-        </div>
-      </div>
-      <div className="mt-3 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-        <div className="h-full rounded-full transition-all" style={{ width: `${data.percentile}%`, backgroundColor: color }} />
-      </div>
-      <button onClick={() => nav('/worker/goals')} className="mt-2 text-[10px] text-blue-600 font-bold flex items-center gap-0.5">
-        Set earnings goal <ChevronRight size={10} strokeWidth={2.5} />
-      </button>
-    </motion.div>
-  );
-}
-
-function DemandZonesWidget() {
-  const [expanded, setExpanded] = useState(false);
-  const [coords, setCoords]     = useState(null);
-
-  // Real GPS — watch position while component is mounted
-  useEffect(() => {
-    if (!navigator.geolocation) return;
-    const id = navigator.geolocation.watchPosition(
-      (pos) => setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-      () => {},
-      { enableHighAccuracy: true, maximumAge: 60000 },
-    );
-    return () => navigator.geolocation.clearWatch(id);
-  }, []);
-
-  const { data, isLoading } = useGetDemandZonesQuery(
-    coords ? { lat: coords.lat, lng: coords.lng } : undefined,
-    { skip: !coords, pollingInterval: 60000 },
-  );
-
-  const zones = data?.zones ?? [];
-  const top = zones[0];
-
-  if (!coords || isLoading || !top) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.24 }}
-        className="bg-white rounded-2xl p-4 shadow-sm flex items-center gap-3"
-      >
-        <div className="w-8 h-8 rounded-xl bg-red-50 flex items-center justify-center shrink-0">
-          <Flame size={14} strokeWidth={2} className="text-red-600" />
-        </div>
-        <div>
-          <p className="text-xs font-bold text-[#0F172A]">High Demand Zones</p>
-          <p className="text-[10px] text-slate-400 mt-0.5">
-            {!coords ? 'Waiting for GPS location…' : 'Loading nearby zones…'}
-          </p>
-        </div>
-      </motion.div>
-    );
-  }
-
-  const topMeta = LEVEL_META[top.level] ?? LEVEL_META.low;
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 6 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.24 }}
-      className="bg-white rounded-2xl p-4 shadow-sm overflow-hidden"
-    >
-      <div className="flex gap-0.5 -mx-4 -mt-4 mb-4 h-1">
-        {[0,1,2,3,4,5].map((i) => (
-          <motion.div key={i} className={`flex-1 ${topMeta.bar}`}
-            animate={{ opacity: [0.2, 1, 0.2] }}
-            transition={{ duration: 2, repeat: Infinity, delay: i * 0.2 }}
-          />
-        ))}
-      </div>
-      <div className="flex items-center gap-2.5 mb-3">
-        <div className="w-8 h-8 rounded-xl bg-red-50 flex items-center justify-center shrink-0">
-          <Flame size={14} strokeWidth={2} className="text-red-600" />
-        </div>
-        <div className="flex-1">
-          <p className="text-xs font-bold text-[#0F172A]">High Demand Zones</p>
-          <p className="text-[10px] text-slate-400 mt-0.5">Move here to receive more requests</p>
-        </div>
-        <button onClick={() => setExpanded((v) => !v)} className="text-[10px] font-bold text-blue-600 flex items-center gap-0.5">
-          {expanded ? 'Less' : 'All zones'}
-          <ChevronRight size={10} strokeWidth={2.5} className={`transition-transform ${expanded ? 'rotate-90' : ''}`} />
-        </button>
-      </div>
-
-      {/* Top zone highlight */}
-      <div className={`flex items-center gap-3 p-3 rounded-xl ring-1 ${topMeta.bg} ${topMeta.ring}`}>
-        <div className="relative shrink-0">
-          <div className={`w-2.5 h-2.5 rounded-full ${topMeta.dot}`} />
-          <motion.div className={`absolute inset-0 rounded-full ${topMeta.dot}`}
-            animate={{ scale: [1, 2.2], opacity: [0.6, 0] }}
-            transition={{ duration: 1.2, repeat: Infinity }} />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className={`text-sm font-bold ${topMeta.text}`}>
-            {top.name}
-            <span className={`ml-1.5 text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-full bg-white/60 ${topMeta.text}`}>
-              {topMeta.label}
-            </span>
-            {top.level === 'very_high' && (
-              <span className="ml-1 text-[9px] font-extrabold bg-amber-400 text-white px-1.5 py-0.5 rounded-full">2× Surge</span>
-            )}
-            {top.level === 'high' && (
-              <span className="ml-1 text-[9px] font-extrabold bg-orange-400 text-white px-1.5 py-0.5 rounded-full">1.5× Surge</span>
-            )}
-          </p>
-          <p className="text-[10px] text-slate-500 mt-0.5">
-            {top.distKm} km away · jobs in {top.waitMin} min
-          </p>
-        </div>
-        <div className="flex items-center gap-1 shrink-0">
-          <Zap size={11} strokeWidth={2.5} className={topMeta.text} />
-          <span className={`text-xs font-extrabold ${topMeta.text}`}>Go</span>
-        </div>
-      </div>
-
-      {/* Expanded list */}
-      <AnimatePresence>
-        {expanded && (
-          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.22 }} className="overflow-hidden">
-            <div className="space-y-1.5 pt-2">
-              {zones.slice(1).map((z) => {
-                const m = LEVEL_META[z.level] ?? LEVEL_META.low;
-                return (
-                  <div key={z.name} className="flex items-center gap-2.5 px-1 py-1.5">
-                    <div className={`w-2 h-2 rounded-full shrink-0 ${m.dot}`} />
-                    <p className="text-xs font-semibold text-[#0F172A] flex-1">{z.name}</p>
-                    {z.level === 'very_high' && <span className="text-[9px] font-bold bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full">2×</span>}
-                    {z.level === 'high' && <span className="text-[9px] font-bold bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded-full">1.5×</span>}
-                    <span className={`text-[9px] font-bold ${m.text}`}>{m.label}</span>
-                    <span className="text-[10px] text-slate-400">{z.distKm} km</span>
-                  </div>
-                );
-              })}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.div>
-  );
-}
-
-/* ─── Offer Modal — Uber driver style ──────────────────────────── */
-
-// Per-tier display window (fresh from receipt — independent of server expiresAt)
-const TIER_DISPLAY_SEC = { express: 20, priority: 28, standard: 35 };
+// Seconds the worker has to accept an offer, by tier (express is fastest).
+// Fallback is 35s (see `?? 35` below).
+const TIER_DISPLAY_SEC = { express: 20, priority: 30, standard: 35 };
 
 function OfferModal({ offer, onAccept, onReject, accepting }) {
   const isExpress  = offer.tier === 'express';

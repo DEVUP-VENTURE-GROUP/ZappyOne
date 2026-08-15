@@ -104,6 +104,11 @@ const workerSchema = new mongoose.Schema(
     // Availability + location — SOURCE OF TRUTH; Redis is a cache.
     isOnline: { type: Boolean, default: false, index: true },
     isAvailable: { type: Boolean, default: false, index: true },
+    // Timestamp of the current online session (set on goOnline, cleared on
+    // goOffline). Lets any client show an accurate "online for Xh Ym" that
+    // survives a page refresh or a switch between phone and web, instead of a
+    // device-local timer that resets. Null when offline.
+    onlineSince: { type: Date, default: null },
     currentLocation: {
       type: { type: String, enum: ['Point'], default: 'Point' },
       coordinates: { type: [Number], default: [0, 0] }, // [lng, lat]

@@ -2,16 +2,18 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
-import { Phone, ArrowRight, ChevronLeft, CheckCircle2, Loader2, Zap, Shield, Star, Smartphone, Laptop, Car, Bike, PawPrint, HeartHandshake, Clock, Percent, Lock, Headset, Users, CalendarDays } from 'lucide-react';
+import { Phone, ArrowRight, ChevronLeft, CheckCircle2, Loader2, Zap, Shield, Star, Smartphone, Laptop, Car, Bike, PawPrint, HeartHandshake } from 'lucide-react';
 import { useRequestOtpMutation, useLoginUserMutation, useUpdateMeMutation } from '../services/api';
 import { CONSUMER_URL } from '../config/hosts';
 import ResendOtp from '../components/auth/ResendOtp';
+import OtpOrbit from '../components/auth/OtpOrbit';
 import { setAuth, updateProfile } from '../modules/auth/authSlice';
 import { ZappyLogo } from '../components/common/ZappyLogo';
 import toast from 'react-hot-toast';
 import SEO, { LOGIN_SCHEMA, BASE_URL } from '../components/SEO';
 import { easeSoft, springSnap, fadeInUp, staggerContainer } from '../lib/animations';
-import useIsMobile from '../hooks/useIsMobile';
+
+
 
 /* ─── Animated background orb ─────────────────────────────────────────── */
 function Orb({ x, y, size, color, delay = 0 }) {
@@ -63,7 +65,11 @@ export default function LoginPage() {
   const dispatch = useDispatch();
   const isLoading = loggingUser;
   const otpRefs   = useRef([]);
-  const isMobile = useIsMobile(1024);
+  const otpRowRef = useRef(null);
+  const verifiedAuth = useRef(null);   // server response held while the ring lands
+  const landingTimer = useRef(null);
+  const landedRef    = useRef(false);
+  const [otpStatus, setOtpStatus] = useState('idle'); // idle|verifying|success|error
 
   const otp = otpDigits.join('');
 
@@ -151,24 +157,41 @@ export default function LoginPage() {
     setStep('phone');
   }
 
+  // The orbit animation runs while the server checks the code; the session is
+  // applied when the ring lands. A timeout fallback guarantees the user is never
+  // stranded if the animation callback doesn't fire.
+  function finishLogin() {
+    const r = verifiedAuth.current;
+    if (!r || landedRef.current) return;
+    landedRef.current = true;
+    window.clearTimeout(landingTimer.current);
+    const profile = r.user;
+    dispatch(setAuth({ accessToken: r.accessToken, refreshToken: r.refreshToken, profile, role: 'user' }));
+    if (!profile.name || !profile.email) {
+      setPendingProfile(profile);
+      setName(profile.name || '');
+      setEmail(profile.email || '');
+      setStep('complete');
+      return;
+    }
+    nav(loc.state?.from || '/', { replace: true });
+  }
+
   async function verify() {
+    setOtpStatus('verifying');
     try {
       const r = await loginUser({
         phone,
         otp,
         ...(name.trim() ? { name: name.trim() } : {}),
       }).unwrap();
-      const profile = r.user;
-      dispatch(setAuth({ accessToken: r.accessToken, refreshToken: r.refreshToken, profile, role: 'user' }));
-      if (!profile.name || !profile.email) {
-        setPendingProfile(profile);
-        setName(profile.name || '');
-        setEmail(profile.email || '');
-        setStep('complete');
-        return;
-      }
-      nav(loc.state?.from || '/', { replace: true });
+      verifiedAuth.current = r;
+      landedRef.current = false;
+      setOtpStatus('success');
+      landingTimer.current = window.setTimeout(finishLogin, 2200);
     } catch (err) {
+      setOtpStatus('error');
+      window.setTimeout(() => setOtpStatus('idle'), 650);
       const detail = typeof err.data?.details?.[0] === 'string' ? err.data.details[0] : err.data?.error || 'Verification failed';
       toast.error(detail);
       console.error('[verify] status:', err.status, 'body:', err.data);
@@ -189,325 +212,6 @@ export default function LoginPage() {
   }
 
 
-  if (isMobile) {
-    return (
-      <>
-        <SEO
-          title="Login to Zappy — Book Home Services Instantly"
-          description="Login to Zappy with your phone number. Book verified professionals for home services instantly — puncture repair, phone repair, laptop repair and more."
-          canonical={`${BASE_URL}/login`}
-          keywords="Zappy login, book home services India, on-demand services app login"
-          jsonLd={LOGIN_SCHEMA}
-        />
-        <div className="min-h-screen w-full flex flex-col font-sans bg-[#f8f9fc] relative overflow-hidden items-center">
-          
-          {/* Main Content Container matching Mobile Width */}
-          <div className="w-full max-w-[430px] flex flex-col relative z-10 mx-auto min-h-screen bg-[#f4f7fa] overflow-hidden shadow-2xl pb-10">
-            
-            {/* Top Hero Section (Gradient Background + Content) */}
-            <div className="relative pt-12 pb-[130px] px-6 flex flex-col bg-gradient-to-b from-[#e8f0fe] to-[#f4f7fa]">
-               {/* Logo */}
-               <div className="flex items-center gap-2 mb-8 relative z-10">
-                 <img src="/logo.png" alt="Zappy Logo" className="h-7 w-auto" />
-                 <div className="flex flex-col">
-                   <span className="text-[17px] font-bold text-[#031542] leading-none tracking-tight">Zappy<span className="text-[#0d5cf3]">one</span></span>
-                   <span className="text-[9px] text-slate-500 font-medium tracking-wide">One Platform, Every Service</span>
-                 </div>
-               </div>
-
-               {/* Hero Text */}
-               <div className="relative z-10 max-w-[240px]">
-                 <h1 className="text-[32px] font-extrabold text-[#031542] leading-[1.15] tracking-tight mb-3">
-                   Everything<br />you need,<br />
-                   <span className="text-[#0d5cf3]">Just a tap away!</span>
-                 </h1>
-                 <p className="text-[14px] text-slate-600 font-medium leading-relaxed pr-4">
-                   Book trusted professionals for every service, anytime, anywhere.
-                 </p>
-               </div>
-
-               {/* Hero Illustration */}
-               <img src="/images/hero_couch_man.png" alt="Hero" className="absolute -right-8 top-16 h-[260px] object-contain drop-shadow-xl z-0 pointer-events-none" />
-            </div>
-
-            {/* Feature Cards Section (Overlapping) */}
-            <div className="px-5 -mt-24 relative z-20 mb-6">
-               <div className="bg-white rounded-[24px] shadow-[0_8px_30px_rgba(0,0,0,0.04)] p-4 flex justify-between items-start">
-                  <div className="flex flex-col items-center gap-1.5 flex-1">
-                    <div className="w-10 h-10 rounded-full bg-[#eff4ff] flex items-center justify-center text-[#0d5cf3]">
-                      <Shield size={18} strokeWidth={2.5} />
-                    </div>
-                    <span className="text-[10px] font-bold text-center text-slate-700 leading-tight px-1">Verified<br/>Professionals</span>
-                  </div>
-                  <div className="flex flex-col items-center gap-1.5 flex-1">
-                    <div className="w-10 h-10 rounded-full bg-[#eff4ff] flex items-center justify-center text-[#0d5cf3]">
-                      <Clock size={18} strokeWidth={2.5} />
-                    </div>
-                    <span className="text-[10px] font-bold text-center text-slate-700 leading-tight px-1">On-time<br/>Service</span>
-                  </div>
-                  <div className="flex flex-col items-center gap-1.5 flex-1">
-                    <div className="w-10 h-10 rounded-full bg-[#eff4ff] flex items-center justify-center text-[#0d5cf3]">
-                      <Percent size={18} strokeWidth={2.5} />
-                    </div>
-                    <span className="text-[10px] font-bold text-center text-slate-700 leading-tight px-1">Best<br/>Prices</span>
-                  </div>
-                  <div className="flex flex-col items-center gap-1.5 flex-1">
-                    <div className="w-10 h-10 rounded-full bg-[#eff4ff] flex items-center justify-center text-[#0d5cf3]">
-                      <Lock size={18} strokeWidth={2.5} />
-                    </div>
-                    <span className="text-[10px] font-bold text-center text-slate-700 leading-tight px-1">Secure &<br/>Safe</span>
-                  </div>
-               </div>
-               
-               {/* Indicator Pill */}
-               <div className="flex justify-center mt-4">
-                 <div className="flex gap-1">
-                   <div className="w-4 h-1.5 rounded-full bg-[#0d5cf3]"></div>
-                   <div className="w-8 h-1.5 rounded-full bg-slate-200"></div>
-                 </div>
-               </div>
-            </div>
-
-            {/* Login Card */}
-            <div className="bg-white flex-1 mx-4 rounded-[32px] shadow-[0_8px_30px_rgba(0,0,0,0.06)] px-6 pt-8 pb-10 flex flex-col z-20">
-               
-               {/* Header */}
-               <div className="flex flex-col items-center mb-8">
-                 <h2 className="text-[22px] font-extrabold text-[#031542] mb-1.5 tracking-tight">Welcome to Zappy</h2>
-                 <div className="flex items-center gap-1.5 mb-2">
-                   <div className="w-6 h-1 rounded-full bg-[#0d5cf3]"></div>
-                   <div className="w-1.5 h-1.5 rounded-full bg-[#0d5cf3]"></div>
-                 </div>
-                 <p className="text-[13px] font-medium text-slate-500">Log in to continue</p>
-               </div>
-
-               {/* Single Login Tab */}
-               <div className="flex mb-6">
-                 <div className="w-full py-3.5 bg-white border border-[#0d5cf3]/20 shadow-[0_2px_8px_rgba(13,92,243,0.08)] rounded-xl flex justify-center items-center relative overflow-hidden">
-                   <span className="text-[14px] font-bold text-[#0d5cf3]">Login</span>
-                   <div className="absolute bottom-0 left-3 right-3 h-[3px] rounded-t-full bg-[#0d5cf3]"></div>
-                 </div>
-               </div>
-
-               <AnimatePresence mode="wait">
-                {step === 'phone' ? (
-                  <motion.div
-                    key="phone"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.3 }}
-                    className="w-full flex flex-col"
-                  >
-                    {/* Phone Input */}
-                    <div className="mb-6">
-                      <div className="flex rounded-xl overflow-hidden border border-slate-200 focus-within:border-[#0d5cf3] focus-within:ring-1 focus-within:ring-[#0d5cf3] transition-all bg-white h-[52px]">
-                        <div className="flex items-center justify-center px-4 bg-white border-r border-slate-200 text-slate-800 font-semibold gap-1.5 cursor-pointer">
-                          +91
-                          <ChevronLeft size={14} className="-rotate-90 text-slate-500" strokeWidth={3} />
-                        </div>
-                        <input
-                          type="tel"
-                          inputMode="numeric"
-                          className="w-full h-full px-4 outline-none text-slate-900 font-medium placeholder-slate-400 bg-transparent text-[14px]"
-                          placeholder="Enter your phone number"
-                          value={phone}
-                          onChange={e => setPhone(e.target.value.replace(/\D/g, '').slice(0, 15))}
-                          onKeyDown={e => e.key === 'Enter' && send()}
-                        />
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={send}
-                      disabled={sending || phone.length < 10}
-                      className="w-full h-[52px] rounded-xl bg-[#0d5cf3] hover:bg-[#0047b3] text-white font-semibold text-[15px] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mb-8 relative"
-                    >
-                      {sending ? <Loader2 size={18} className="animate-spin" /> : <span>Continue</span>}
-                      {!sending && <ArrowRight size={18} className="absolute right-4" />}
-                    </button>
-
-                    {/* Safe Data Card */}
-                    <div className="bg-[#f8fafc] border border-slate-100 rounded-xl p-4 flex items-start gap-3 mb-8">
-                      <div className="w-8 h-8 rounded-full bg-white shadow-[0_2px_8px_rgba(0,0,0,0.04)] flex items-center justify-center text-[#0d5cf3] shrink-0 border border-slate-100">
-                        <Shield size={16} strokeWidth={2.5} />
-                      </div>
-                      <div className="flex flex-col pt-0.5">
-                        <span className="text-[12px] font-bold text-slate-800 mb-0.5">Your data is safe with us.</span>
-                        <span className="text-[11px] font-medium text-slate-500">We never share your information with anyone.</span>
-                      </div>
-                    </div>
-
-                    {/* Bottom Stats */}
-                    <div className="flex justify-between items-center border-t border-slate-100 pt-6 mt-auto">
-                      <div className="flex items-center gap-1.5">
-                        <Users size={18} className="text-[#0d5cf3]" strokeWidth={2.5} />
-                        <div className="flex flex-col">
-                          <span className="text-[11px] font-extrabold text-[#0d5cf3] leading-none mb-1">10M+</span>
-                          <span className="text-[8px] font-bold text-slate-500 leading-none">Happy Users</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <CalendarDays size={18} className="text-[#0d5cf3]" strokeWidth={2.5} />
-                        <div className="flex flex-col">
-                          <span className="text-[11px] font-extrabold text-[#0d5cf3] leading-none mb-1">50M+</span>
-                          <span className="text-[8px] font-bold text-slate-500 leading-none">Services Booked</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <Star size={18} className="text-[#0d5cf3]" strokeWidth={2.5} />
-                        <div className="flex flex-col">
-                          <span className="text-[11px] font-extrabold text-[#0d5cf3] leading-none mb-1">4.8/5</span>
-                          <span className="text-[8px] font-bold text-slate-500 leading-none">User Rating</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <Headset size={18} className="text-[#0d5cf3]" strokeWidth={2.5} />
-                        <div className="flex flex-col">
-                          <span className="text-[11px] font-extrabold text-[#0d5cf3] leading-none mb-1">24x7</span>
-                          <span className="text-[8px] font-bold text-slate-500 leading-none">Support</span>
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                ) : step === 'otp' ? (
-                  <motion.div
-                    key="otp"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.3 }}
-                    className="w-full flex flex-col"
-                  >
-                    <p className="text-center text-sm text-slate-500 mb-8 font-medium">Enter the 6-digit code sent to +91 {phone}</p>
-
-                    <div className="flex justify-between gap-1 sm:gap-2 mb-8" onPaste={handleOtpPaste}>
-                      {otpDigits.map((d, i) => (
-                        <input
-                          key={i}
-                          ref={el => otpRefs.current[i] = el}
-                          type="text"
-                          inputMode="numeric"
-                          maxLength={1}
-                          value={d}
-                          onChange={e => handleOtpChange(i, e.target.value)}
-                          onKeyDown={e => handleOtpKey(i, e)}
-                          className={`w-11 h-12 sm:w-12 sm:h-14 text-center text-[22px] font-bold rounded-xl border outline-none transition-all shadow-[0_1px_2px_rgba(0,0,0,0.02)] ${d ? 'border-[#0d5cf3] ring-1 ring-[#0d5cf3] text-slate-900 bg-blue-50/30' : 'border-slate-300 focus:border-[#0d5cf3] text-slate-900 bg-white'}`}
-                        />
-                      ))}
-                    </div>
-
-                    <div className="flex flex-col gap-4 mb-8">
-                      <div className="flex items-center justify-between w-full">
-                        <ResendOtp
-                          phone={phone}
-                          cooldownSec={otpMeta.cooldownSec}
-                          resendsLeft={otpMeta.resendsLeft}
-                          onResent={handleResent}
-                          onStartOver={startOver}
-                        />
-                        <button
-                          onClick={startOver}
-                          className="text-[13px] text-[#0d5cf3] hover:underline font-semibold"
-                        >
-                          Change number
-                        </button>
-                      </div>
-                    </div>
-
-                    {isNewUser && (
-                      <div className="space-y-5 mb-8">
-                        <div>
-                          <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Your Name</label>
-                          <input
-                            type="text"
-                            className="w-full h-[52px] px-4 rounded-xl border border-slate-300 focus:border-[#0d5cf3] focus:ring-1 focus:ring-[#0d5cf3] outline-none text-slate-900 font-medium bg-white transition-all shadow-sm"
-                            placeholder="e.g. Priya Sharma"
-                            value={name}
-                            onChange={e => setName(e.target.value)}
-                          />
-                        </div>
-                      </div>
-                    )}
-
-                    <button
-                      onClick={verify}
-                      disabled={isLoading || otp.length < 4}
-                      className="w-full h-[52px] rounded-xl bg-[#0d5cf3] hover:bg-[#0047b3] text-white font-semibold text-[15px] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mb-4"
-                    >
-                      {isLoading ? <Loader2 size={18} className="animate-spin" /> : null}
-                      Verify & Continue
-                    </button>
-                  </motion.div>
-                ) : step === 'complete' ? (
-                  <motion.div
-                    key="complete"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.3 }}
-                    className="w-full"
-                  >
-                    <p className="text-center text-sm text-slate-500 mb-8 font-medium">Complete your profile to continue.</p>
-
-                    <div className="space-y-5 mb-8">
-                      {!pendingProfile?.name && (
-                        <div>
-                          <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Your Name</label>
-                          <input
-                            type="text"
-                            className="w-full h-[52px] px-4 rounded-xl border border-slate-300 focus:border-[#0d5cf3] focus:ring-1 focus:ring-[#0d5cf3] outline-none text-slate-900 font-medium bg-white transition-all shadow-sm"
-                            placeholder="e.g. Priya Sharma"
-                            value={name}
-                            onChange={e => setName(e.target.value)}
-                            autoFocus
-                          />
-                        </div>
-                      )}
-
-                      <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Email <span className="text-slate-400 font-medium normal-case">(for receipts)</span></label>
-                        <input
-                          type="email"
-                          inputMode="email"
-                          className="w-full h-[52px] px-4 rounded-xl border border-slate-300 focus:border-[#0d5cf3] focus:ring-1 focus:ring-[#0d5cf3] outline-none text-slate-900 font-medium bg-white transition-all shadow-sm"
-                          placeholder="you@example.com"
-                          value={email}
-                          onChange={e => setEmail(e.target.value)}
-                          onKeyDown={e => e.key === 'Enter' && saveProfileAndContinue()}
-                          autoFocus={!!pendingProfile?.name}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col gap-3">
-                      <button
-                        onClick={saveProfileAndContinue}
-                        disabled={savingProfile || (!pendingProfile?.name && !name.trim())}
-                        className="w-full h-[52px] rounded-xl bg-[#0d5cf3] hover:bg-[#0047b3] text-white font-semibold text-[15px] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                      >
-                        {savingProfile ? <Loader2 size={18} className="animate-spin" /> : null}
-                        Continue
-                      </button>
-                      <button
-                        onClick={() => nav(loc.state?.from || '/', { replace: true })}
-                        className="w-full py-3 text-center text-sm text-slate-500 hover:text-slate-700 font-semibold transition-colors"
-                      >
-                        Skip for now
-                      </button>
-                    </div>
-                  </motion.div>
-                ) : null}
-               </AnimatePresence>
-
-            </div>
-          </div>
-        </div>
-      </>
-    );
-  }
-
-  // DESKTOP UI
   return (
     <>
       <SEO
@@ -715,7 +419,18 @@ export default function LoginPage() {
                 >
                   <p className="text-center text-sm text-slate-500 mb-8 font-medium">Enter the 6-digit code sent to +91 {phone}</p>
 
-                  <div className="flex justify-between gap-1 sm:gap-2 mb-8" onPaste={handleOtpPaste}>
+                  <motion.div
+                    ref={otpRowRef}
+                    className="relative mb-8"
+                    animate={{ height: otpStatus === 'idle' ? 'auto' : 236 }}
+                    transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+                  >
+                  <div
+                    className={`flex justify-between gap-1 sm:gap-2 transition-opacity duration-300 ${
+                      otpStatus === 'idle' ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                    }`}
+                    onPaste={handleOtpPaste}
+                  >
                     {otpDigits.map((d, i) => (
                       <input
                         key={i}
@@ -730,6 +445,17 @@ export default function LoginPage() {
                       />
                     ))}
                   </div>
+
+                    <OtpOrbit
+                      digits={otpDigits}
+                      status={otpStatus}
+                      accent="#0d5cf3"
+                      tone="light"
+                      inputRefs={otpRefs}
+                      containerRef={otpRowRef}
+                      onSuccessComplete={finishLogin}
+                    />
+                  </motion.div>
 
                   <div className="flex flex-col gap-4 mb-8">
                     <div className="flex items-center justify-between w-full">

@@ -81,9 +81,9 @@ export default function EventBookingPage() {
     if (!navigator.geolocation) { toast.error('Geolocation not supported by your browser'); return; }
     setLocating(true);
     try {
-      const pos = await new Promise((res, rej) =>
-        navigator.geolocation.getCurrentPosition(res, rej, { timeout: 10000, enableHighAccuracy: true })
-      );
+      const pos = await new Promise((res, rej) => {
+        navigator.geolocation.getCurrentPosition(res, rej, { timeout: 10000, enableHighAccuracy: true });
+      });
       const { latitude, longitude } = pos.coords;
       const resp = await fetch(
         `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&addressdetails=1`,

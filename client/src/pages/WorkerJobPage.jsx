@@ -196,8 +196,9 @@ const STATUS_CONFIG = {
 
 const ACTIVE_STATUSES = new Set(['assigned', 'on_the_way', 'arrived', 'in_progress']);
 
-/* Maximum distance (metres) the worker must be within to tap "I've Arrived". */
-const ARRIVED_GEOFENCE_M = 10;
+/* Maximum distance (metres) the worker must be within to tap "I've Arrived".
+   Matches ARRIVE_BLOCK_KM (0.100) on the server. */
+const ARRIVED_GEOFENCE_M = 100;
 
 function haversineMeters(a, b) {
   const R     = 6_371_000;
@@ -795,7 +796,7 @@ export default function WorkerJobPage() {
       toast.error(`You're ${Math.round(distM)} m away — move within ${ARRIVED_GEOFENCE_M} m to mark arrived`);
       return;
     }
-    try { await arrive(id).unwrap(); toast.success('Marked as arrived'); refetch(); }
+    try { await arrive({ id, lat: myLocation.lat, lng: myLocation.lng }).unwrap(); toast.success('Marked as arrived'); refetch(); }
     catch (err) { toast.error(err.data?.error || 'Failed'); }
   }
   async function onStartService() {
@@ -1327,8 +1328,8 @@ export default function WorkerJobPage() {
           {status === 'on_the_way' && (() => {
             const distM   = myLocation && pickup ? haversineMeters(myLocation, pickup) : null;
             const withinFence = distM !== null && distM <= ARRIVED_GEOFENCE_M;
-            // Progress 0→1 as distance drops from 300m → 0m (feels responsive)
-            const progress = distM !== null ? Math.max(0, Math.min(1, 1 - distM / 50)) : 0;
+            // Progress 0→1 as distance drops from 5× the geofence radius → 0.
+            const progress = distM !== null ? Math.max(0, Math.min(1, 1 - distM / (ARRIVED_GEOFENCE_M * 5))) : 0;
             const pct      = Math.round(progress * 100);
 
             // ETA countdown from trip deadline stored on order

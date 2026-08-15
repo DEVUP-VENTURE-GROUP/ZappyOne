@@ -47,18 +47,18 @@ export default function InstallPrompt() {
             key="install-prompt"
             role="dialog"
             aria-label="Install the Zappy app"
-            initial={{ opacity: 0, y: 60 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 60 }}
-            transition={{ type: 'spring', stiffness: 320, damping: 30, mass: 0.9 }}
+            initial={false}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
             className="fixed z-[110] pointer-events-none
                        left-3 right-3 sm:left-auto sm:right-6 sm:w-[400px]
-                       bottom-[calc(64px+env(safe-area-inset-bottom)+16px)]
+                       bottom-[calc(104px_+_env(safe-area-inset-bottom))]
                        sm:bottom-6"
           >
             <div
               className="pointer-events-auto relative overflow-hidden rounded-[24px]
-                         border border-white/60 bg-white/80 backdrop-blur-2xl
+                         border border-white/60 bg-white/95 backdrop-blur-2xl
                          shadow-[0_20px_50px_-12px_rgba(15,23,42,0.28)]
                          p-4 sm:p-5"
             >

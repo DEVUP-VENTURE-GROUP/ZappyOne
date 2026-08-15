@@ -309,8 +309,17 @@ export default function SmartPricingPanel({
             {expanded && (
               <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden">
                 <div className="px-3.5 pb-3.5 space-y-2 border-t border-slate-100 pt-3">
-                  {/* Standard pricing */}
-                  {quote.baseFee != null && !quote.vertical && (
+                  {/* Additive model: fixed service price + travel + platform */}
+                  {quote.pricingModel === 'additive' && (
+                    <>
+                      <BRow label="Service price" value={`₹${quote.servicePrice}`} />
+                      {quote.travelFee > 0 && <BRow label={`Travel · ${quote.distanceKm} km`} value={`₹${quote.travelFee}`} />}
+                      {quote.platformFee > 0 && <BRow label="Platform fee" value={`₹${quote.platformFee}`} />}
+                      {hasSurge && <BRow label={`Surge · ${quote.surgeMultiplier}×`} value={`+₹${Math.round(quote.total - quote.total / quote.surgeMultiplier)}`} cls="text-amber-600 font-bold" />}
+                    </>
+                  )}
+                  {/* Standard meter pricing (legacy, non-additive) */}
+                  {quote.pricingModel !== 'additive' && quote.baseFee != null && !quote.vertical && (
                     <>
                       <BRow label="Base fee"                       value={`₹${quote.baseFee}`} />
                       <BRow label={`Distance · ${quote.distanceKm} km`} value={`₹${quote.distanceFee}`} />
@@ -338,8 +347,8 @@ export default function SmartPricingPanel({
                       {quote.pricingModel === 'project' && <BRow label="Project quote" value="After site visit" cls="text-blue-600" />}
                     </>
                   )}
-                  {/* Vehicle */}
-                  {quote.vertical === 'vehicle' && (
+                  {/* Vehicle (legacy meter — additive services use the block above) */}
+                  {quote.vertical === 'vehicle' && quote.pricingModel !== 'additive' && (
                     <>
                       <BRow label="Base visit fee" value={`₹${quote.baseVisitFee}`} />
                       {quote.distanceFee > 0 && <BRow label={`Distance · ${quote.distanceKm} km`} value={`₹${quote.distanceFee}`} />}

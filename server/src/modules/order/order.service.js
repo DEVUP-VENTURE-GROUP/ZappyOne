@@ -138,10 +138,12 @@ async function createOrder({ userId, service, subCategory, pickupLocation, dropL
 
   let pricing = await Promise.race([
     pricingService.quote({ origin, dest, service, userId, priority, vehicleType, deviceBrand, deviceModel, deviceSeries, partsTier, pricingModel, estimatedHours }),
-    new Promise((_, reject) => setTimeout(
-      () => reject(Object.assign(new Error('Pricing service timed out. Please try again.'), { status: 503, code: 'PRICING_TIMEOUT' })),
-      appConfig.dispatch.pricingTimeoutMs
-    )),
+    new Promise((_, reject) => {
+      setTimeout(
+        () => reject(Object.assign(new Error('Pricing service timed out. Please try again.'), { status: 503, code: 'PRICING_TIMEOUT' })),
+        appConfig.dispatch.pricingTimeoutMs,
+      );
+    }),
   ]);
 
   // Apply tier multiplier (standard 1.0×, priority 1.2×, express 1.4×).
@@ -490,37 +492,47 @@ async function workerStartTrip({ orderId, workerId, workerLat, workerLng }) {
   return order;
 }
 
-// Max distance (km) allowed between worker's GPS and pickup pin to mark arrived.
-// Frontend enforces 10 m; backend allows 50 m to absorb GPS drift on cheap phones.
-const ARRIVE_WARN_KM  = 0.020;
-const ARRIVE_BLOCK_KM = 0.050;
+// Max distance (km) between worker's GPS and pickup pin to mark arrived.
+// Frontend soft-caps at 100 m (button disabled beyond that); backend enforces
+// the same threshold as the source of truth so a Postman/curl client can't
+// bypass the client-side fence.
+const ARRIVE_WARN_KM  = 0.050;
+const ARRIVE_BLOCK_KM = 0.100;
 
 async function workerArrive({ orderId, workerId, workerLat, workerLng }) {
-  // Proximity check — if coordinates supplied by the client, verify the worker
-  // is actually near the pickup. This catches slow-walk GPS spoofing where the
-  // velocity guard doesn't trigger (the worker fakes being close gradually).
-  if (workerLat != null && workerLng != null) {
-    const order = await orderRepo.findByIdLean(orderId);
-    if (order?.pickupLocation?.coordinates) {
-      const [pickupLng, pickupLat] = order.pickupLocation.coordinates;
-      const { haversineKm } = require('../worker/maps.service');
-      const distKm = haversineKm(
-        { lat: workerLat, lng: workerLng },
-        { lat: pickupLat, lng: pickupLng },
+  const order = await orderRepo.findByIdLean(orderId);
+  if (order?.pickupLocation?.coordinates) {
+    // Resolve worker position: body first, then last known Redis GPS ping.
+    // The Redis fallback closes the pre-existing bypass where the client
+    // simply omitted lat/lng and the check silently no-op'd.
+    let lat = workerLat;
+    let lng = workerLng;
+    if (lat == null || lng == null) {
+      const pos = await geoService.getWorkerPosition(workerId).catch(() => null);
+      if (pos) { lat = pos.lat; lng = pos.lng; }
+    }
+    if (lat == null || lng == null) {
+      throw Object.assign(
+        new Error('GPS location required to mark arrived. Enable location and try again.'),
+        { status: 400, code: 'WORKER_LOCATION_REQUIRED' },
       );
-      if (distKm > ARRIVE_BLOCK_KM) {
-        logger.warn(
-          { workerId, orderId, distKm: distKm.toFixed(3) },
-          '[ARRIVE] Worker too far from pickup — possible GPS spoof',
-        );
-        throw Object.assign(
-          new Error(`You are ${Math.round(distKm * 1000)}m from the pickup location. Get closer before marking arrived.`),
-          { status: 409, code: 'WORKER_TOO_FAR', distanceMetres: Math.round(distKm * 1000) },
-        );
-      }
-      if (distKm > ARRIVE_WARN_KM) {
-        logger.info({ workerId, orderId, distKm: distKm.toFixed(3) }, '[ARRIVE] Worker arrived with marginal GPS accuracy');
-      }
+    }
+
+    const [pickupLng, pickupLat] = order.pickupLocation.coordinates;
+    const { haversineKm } = require('../worker/maps.service');
+    const distKm = haversineKm({ lat, lng }, { lat: pickupLat, lng: pickupLng });
+    if (distKm > ARRIVE_BLOCK_KM) {
+      logger.warn(
+        { workerId, orderId, distKm: distKm.toFixed(3) },
+        '[ARRIVE] Worker too far from pickup — possible GPS spoof',
+      );
+      throw Object.assign(
+        new Error(`You are ${Math.round(distKm * 1000)}m from the pickup location. Get closer before marking arrived.`),
+        { status: 409, code: 'WORKER_TOO_FAR', distanceMetres: Math.round(distKm * 1000) },
+      );
+    }
+    if (distKm > ARRIVE_WARN_KM) {
+      logger.info({ workerId, orderId, distKm: distKm.toFixed(3) }, '[ARRIVE] Worker arrived with marginal GPS accuracy');
     }
   }
   const arrivedOrder = await guardedTransition(orderId, workerId, ['on_the_way'], 'arrived');
