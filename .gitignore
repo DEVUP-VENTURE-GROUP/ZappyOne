@@ -1,9 +1,33 @@
 node_modules/
 dist/
 build/
+
+# ── Environment files ────────────────────────────────────────────────────────
+# DENY-BY-DEFAULT. This block was previously a hand-maintained list
+# (.env, .env.local, .env.production) which did not cover new variants — that
+# gap is how server/.env.development reached a public commit carrying a live
+# MongoDB Atlas credential.
+#
+# The rule is now pattern-based: anything named `.env` or starting with `.env.`
+# is ignored ANYWHERE in the tree, and only explicitly-safe template files are
+# allowed back in. Adding a new environment (.env.staging, .env.qa, …) needs no
+# change here and cannot be committed by accident.
+#
+# If you add a genuinely public template, whitelist it explicitly below —
+# never loosen the deny rules above it.
 .env
-.env.local
-.env.production
+.env.*
+**/.env
+**/.env.*
+
+# Safe templates: shape only, no real values. Keep this list short.
+!.env.example
+!**/.env.example
+!.env.sample
+!**/.env.sample
+!.env.template
+!**/.env.template
+
 *.log
 .DS_Store
 .vscode/
