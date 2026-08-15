@@ -8,17 +8,16 @@ build/
 # gap is how server/.env.development reached a public commit carrying a live
 # MongoDB Atlas credential.
 #
-# The rule is now pattern-based: anything named `.env` or starting with `.env.`
-# is ignored ANYWHERE in the tree, and only explicitly-safe template files are
-# allowed back in. Adding a new environment (.env.staging, .env.qa, …) needs no
-# change here and cannot be committed by accident.
+# The rule is now pattern-based: ANYTHING starting with `.env` is ignored at any
+# depth — `.env`, `.env.staging`, and even a typo'd `.envlocal` (which a
+# `.env.*` rule would miss, and which is already present in this repo). Only
+# explicitly-safe template files are allowed back in. Adding a new environment
+# needs no change here and cannot be committed by accident.
 #
 # If you add a genuinely public template, whitelist it explicitly below —
 # never loosen the deny rules above it.
-.env
-.env.*
-**/.env
-**/.env.*
+.env*
+**/.env*
 
 # Safe templates: shape only, no real values. Keep this list short.
 !.env.example
