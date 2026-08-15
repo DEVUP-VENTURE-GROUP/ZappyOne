@@ -1,4 +1,33 @@
-require('dotenv').config({ path: require('path').resolve(__dirname, '../../.env') });
+/**
+ * Environment configuration.
+ * ----------------------------------------------------------------------------
+ * Loads `.env` as the BASE, then overlays `.env.<NODE_ENV>` when that file
+ * exists, with the overlay winning.
+ *
+ * This keeps production behaviour byte-identical (no `.env.production` file is
+ * deployed, so only `.env` is read) while letting development point at an
+ * isolated database and sandbox credentials without ever editing the shared
+ * `.env`.
+ *
+ * WHY THIS EXISTS: `NODE_ENV=development` previously said nothing about which
+ * DATABASE was in use — a local dev process was connected to the live Atlas
+ * `zappy` database. Environment now selects the data store, not just the
+ * process mode.
+ * ----------------------------------------------------------------------------
+ */
+const path = require('path');
+const fs = require('fs');
+
+const projectRoot = path.resolve(__dirname, '../../');
+
+// Base config — always loaded.
+require('dotenv').config({ path: path.join(projectRoot, '.env') });
+
+// Environment overlay. `override: true` lets it win over the base file.
+const overlayPath = path.join(projectRoot, `.env.${process.env.NODE_ENV || 'development'}`);
+if (fs.existsSync(overlayPath)) {
+  require('dotenv').config({ path: overlayPath, override: true });
+}
 const Joi = require('joi');
 
 const schema = Joi.object({

@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
+import { useFonts } from 'expo-font';
+import { fontAssets } from '../theme';
 import { Provider } from 'react-redux';
 import { store } from '../store';
 import '../global.css'; // NativeWind v4 requires this
@@ -62,13 +64,16 @@ async function bootstrapSession(): Promise<void> {
 function RootLayoutNav() {
   const segments = useSegments();
   const router = useRouter();
-  const [ready, setReady] = useState(false);
+  const [sessionReady, setSessionReady] = useState(false);
+  // A font failure must not brick the app — fall through to the system face.
+  const [fontsLoaded, fontError] = useFonts(fontAssets);
+  const ready = sessionReady && (fontsLoaded || Boolean(fontError));
   const bootstrapped = useRef(false);
 
   useEffect(() => {
     if (bootstrapped.current) return;
     bootstrapped.current = true;
-    bootstrapSession().finally(() => setReady(true));
+    bootstrapSession().finally(() => setSessionReady(true));
   }, []);
 
   // Any session-ending event (refresh failure, multi-device eviction, manual
