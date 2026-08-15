@@ -1,9 +1,14 @@
 node_modules/
 dist/
 build/
-.env
-.env.local
-.env.production
+# Every .env variant is ignored by default — .env.development just leaked a
+# live Atlas credential (server/.env.development, commit 6dc972b) because the
+# old pattern was a hand-maintained list that only covered .env/.env.local/
+# .env.production and nobody added the new overlay file to it. A wildcard
+# can't have that gap. .env.example files are intentionally committed
+# templates, so they're explicitly un-ignored.
+.env*
+!.env*.example
 *.log
 .DS_Store
 .vscode/
