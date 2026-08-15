@@ -76,10 +76,13 @@ function RootLayoutNav() {
   useEffect(() => {
     return onSessionEnd((reason: SessionEndReason) => {
       log.warn('session ended', { reason });
+      // Capture the role BEFORE clearing it — a worker's session ending
+      // should return them to the worker login, not the customer one.
+      const wasWorker = store.getState().auth.role === 'worker';
       socketClient.destroy();
       store.dispatch(apiSlice.util.resetApiState());
       store.dispatch(logoutAction());
-      router.replace('/(auth)/login');
+      router.replace((wasWorker ? '/worker/login' : '/(auth)/login') as never);
     });
   }, [router]);
 
@@ -87,17 +90,31 @@ function RootLayoutNav() {
     if (!ready) return;
     const state = store.getState();
     const inAuthGroup = segments[0] === '(auth)';
+    // The worker app is a separate role-scoped zone with its own login —
+    // reachable directly (a "Log in as a professional" link from the
+    // customer login) without first passing the customer auth guard below.
+    // `as string`: typed-routes hasn't rescanned since app/worker/ was
+    // restructured — same stale-cache note as the `as never` pushes below.
+    const inWorkerZone = (segments[0] as string) === 'worker';
 
-    if (!state.auth.isAuthenticated && !inAuthGroup) {
+    if (!state.auth.isAuthenticated && !inAuthGroup && !inWorkerZone) {
       router.replace('/(auth)/login');
     } else if (state.auth.isAuthenticated && inAuthGroup) {
       if (state.auth.role === 'worker') {
-        // expo-router's typed routes don't know this path yet — the worker
-        // screens (dashboard/offers/earnings) are a separate build phase.
+        // expo-router's typed routes don't know this path yet — the route
+        // is real (app/worker/(tabs)/dashboard.tsx; group segments are
+        // invisible in the URL, so /worker/dashboard resolves correctly).
         router.replace('/worker/dashboard' as never);
       } else {
         router.replace('/(tabs)/home');
       }
+    }
+    // A worker landing on /worker/login while already signed in as a worker
+    // (e.g. back-navigation) — send them straight to the dashboard. Their
+    // own local guard (app/worker/_layout.tsx) also covers this; this is a
+    // fast path so there's no flash of the login screen.
+    else if (state.auth.isAuthenticated && state.auth.role === 'worker' && inWorkerZone && (segments[1] as string) === '(auth)') {
+      router.replace('/worker/dashboard' as never);
     }
   }, [ready, segments, router]);
 

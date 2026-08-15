@@ -458,6 +458,91 @@ export interface PolicyDoc {
   updatedAt?: string;
 }
 
+// ── Worker ───────────────────────────────────────────────────────────────────
+
+export type KycStatus = 'not_submitted' | 'pending_review' | 'approved' | 'rejected' | 'suspended';
+
+export interface WorkerKyc {
+  status: KycStatus;
+  aadhaarUrl?: string;
+  licenseUrl?: string;
+  selfieUrl?: string;
+  clarification?: { active: boolean; message?: string } | null;
+  changeRequest?: { status: 'pending' | 'approved' | 'denied' | null; message?: string; denialReason?: string } | null;
+}
+
+/** `worker.model.js`, as returned by `GET /workers/me`. */
+export interface WorkerProfile {
+  _id: string;
+  phone: string;
+  name: string;
+  email?: string;
+  avatarUrl?: string;
+  skills: string[];
+  rating: number;
+  totalJobs: number;
+  completedJobs: number;
+  kyc: WorkerKyc;
+  isOnline: boolean;
+  isAvailable: boolean;
+  isBlocked?: boolean;
+  currentLocation?: { coordinates: [number, number] };
+}
+
+/** `POST /workers/kyc/submit` body — `*Url` fields are actually S3 keys from the presign flow. */
+export interface SubmitKycRequest {
+  aadhaarUrl: string;
+  licenseUrl: string;
+  selfieUrl: string;
+  selfieMetadata?: {
+    capturedAt?: string;
+    captureMethod?: 'live_camera' | 'upload';
+    lat?: number | null;
+    lng?: number | null;
+    geoStatus?: string;
+  };
+}
+
+/** `GET /workers/earnings` response. */
+export interface WorkerEarnings {
+  range: string;
+  jobs: number;
+  earningsPaise: number;
+  earningsRupees: number;
+  commissionPaidPaise: number;
+  avgEarningPerJobRupees: number;
+  cashJobs: number;
+  onlineJobs: number;
+  dailyBreakdown: { date: string; jobs: number; earningsPaise: number }[];
+}
+
+/**
+ * `new_job_request` socket payload (dispatch.worker.js's orderPayload) — a
+ * DIFFERENT, lighter shape than `Order`. Broadcast to possibly several
+ * workers at once; whoever accepts first wins (`POST /orders/:id/accept`).
+ */
+export interface JobOffer {
+  _id: string;
+  service: string;
+  pickupAddress: string;
+  pickupCoords: [number, number];
+  price: number;
+  basePrice: number;
+  boostAmountPaise?: number;
+  urgencyBonusPaise?: number;
+  distanceKm?: string | null;
+  etaMinutes?: number | null;
+  expiresAt: string;
+  tier: BookingTier;
+  tierMultiplier?: number;
+  description?: string | null;
+  images?: string[];
+  diagnosisUrgency?: string;
+  requiredTools?: string[];
+  vehicleType?: string | null;
+  deviceBrand?: string | null;
+}
+
 // ── Error envelope ───────────────────────────────────────────────────────────
 
 /**

@@ -21,3 +21,5 @@ export * from './notificationsApi';
 export * from './contentApi';
 export * from './paymentsApi';
 export * from './promosApi';
+export * from './workerApi';
+export * from './uploadApi';

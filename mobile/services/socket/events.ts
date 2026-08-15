@@ -22,7 +22,7 @@
  * ----------------------------------------------------------------------------
  */
 
-import type { ChatMessage, OrderStatus } from '../../types/api';
+import type { ChatMessage, OrderStatus, JobOffer } from '../../types/api';
 
 // ── Server → client payloads ─────────────────────────────────────────────────
 
@@ -107,6 +107,47 @@ export interface OrderLocationUpdatedEvent {
   [key: string]: unknown;
 }
 
+// ── Worker-facing events ─────────────────────────────────────────────────────
+// Bridged from Redis pub/sub by sockets/index.js's channel → event map. Every
+// name here was read out of that bridge, not guessed — see the big switch in
+// `subscriber.on('message', ...)`.
+
+/** `new_job_request` — worker:offer channel. Broadcast model: first accept wins. */
+export type JobOfferEvent = JobOffer;
+
+/** `offer.cancelled` — another worker took it first; dismiss the offer popup. */
+export interface OfferCancelledEvent {
+  orderId: string;
+}
+
+/** `job.assigned` — force-assigned by admin/system, no accept step needed. */
+export interface JobAssignedEvent {
+  workerId: string;
+  orderId: string;
+  service: string;
+  pickupAddress: string;
+  price: number;
+}
+
+/** `offer.boosted` — customer/admin raised the price on an offer being viewed. */
+export interface OfferBoostedEvent {
+  orderId: string;
+  amountPaise: number;
+  rupees: number;
+  newTotal: number;
+}
+
+/** `kyc.rejected` — admin rejected KYC; force the worker's UI offline. */
+export interface KycRejectedEvent {
+  status: string;
+  reason?: string;
+}
+
+/** `job.pulled` — the stale-order watchdog pulled this job from the worker. */
+export interface JobPulledEvent {
+  orderId: string;
+}
+
 /**
  * Server → client event map. Used to type `socketClient.on(...)` so a typo in
  * an event name is a compile error rather than a listener that never fires.
@@ -132,6 +173,15 @@ export interface ServerToClientEvents {
   // Session / infrastructure
   'session:replaced': (payload: SessionReplacedEvent) => void;
   'server:rooms_reset': (payload: ServerRoomsResetEvent) => void;
+
+  // Worker personal room (`worker:<id>`, joined automatically on connect
+  // for a worker-role socket — see sockets/index.js's room-join on connect)
+  new_job_request: (payload: JobOfferEvent) => void;
+  'offer.cancelled': (payload: OfferCancelledEvent) => void;
+  'job.assigned': (payload: JobAssignedEvent) => void;
+  'offer.boosted': (payload: OfferBoostedEvent) => void;
+  'kyc.rejected': (payload: KycRejectedEvent) => void;
+  'job.pulled': (payload: JobPulledEvent) => void;
 }
 
 /** Client → server events the customer app is allowed to emit. */

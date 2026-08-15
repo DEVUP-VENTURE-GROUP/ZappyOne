@@ -5,10 +5,15 @@ import { useSelector } from 'react-redux';
 import { ChevronLeft, Send } from 'lucide-react-native';
 import { useSocket } from '../../hooks/useSocket';
 import { useGetChatMessagesQuery, useSendChatMessageMutation } from '../../services/api/ordersApi';
+import { useGetWorkerMeQuery } from '../../services/api/workerApi';
 import type { RootState } from '../../store';
 import type { ChatMessage } from '../../types/api';
 
 /**
+ * Shared between the customer and worker apps — an order's chat has exactly
+ * two participants, one of each kind, and this screen renders for whichever
+ * one is viewing it.
+ *
  * Sending goes over HTTP (`POST /orders/:id/chat`), not the socket — the
  * canonical event contract (services/socket/events.ts) has no client→server
  * `chat.send` event. The server broadcasts the resulting `chat.message` to
@@ -24,7 +29,11 @@ export default function ChatScreen() {
   const listRef = useRef<FlatList<ChatMessage>>(null);
 
   const socketClient = useSocket(orderId);
+  const role = useSelector((state: RootState) => state.auth.role);
   const user = useSelector((state: RootState) => state.auth.user);
+  const { data: workerMe } = useGetWorkerMeQuery(undefined, { skip: role !== 'worker' });
+  const myKind: 'user' | 'worker' = role === 'worker' ? 'worker' : 'user';
+  const myId = role === 'worker' ? workerMe?._id : user?._id;
 
   const { data: history = [], isLoading } = useGetChatMessagesQuery({ orderId: String(orderId) });
   const [sendChatMessage, { isLoading: sending }] = useSendChatMessageMutation();
@@ -53,7 +62,7 @@ export default function ChatScreen() {
   };
 
   const renderMessage = ({ item }: { item: ChatMessage }) => {
-    const isMe = item.from?.kind === 'user' && item.from.id === user?._id;
+    const isMe = item.from?.kind === myKind && item.from.id === myId;
     return (
       <View className={`p-3 rounded-2xl max-w-[80%] my-1 ${isMe ? 'bg-primary self-end' : 'bg-gray-100 self-start'}`}>
         <Text className={isMe ? 'text-white' : 'text-navy'}>{item.text}</Text>

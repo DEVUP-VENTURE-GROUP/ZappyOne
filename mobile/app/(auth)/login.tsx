@@ -79,6 +79,12 @@ export default function LoginScreen() {
           <Text className="text-xs text-gray-400 mt-6 text-center">
             By continuing, you agree to Zappy's Terms of Service and Privacy Policy.
           </Text>
+
+          <TouchableOpacity className="mt-8" onPress={() => router.push('/worker/login' as never)}>
+            <Text className="text-center text-gray-400 text-sm">
+              Looking to earn with Zappy? <Text className="text-primary font-semibold">Log in as a professional</Text>
+            </Text>
+          </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>

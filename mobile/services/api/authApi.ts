@@ -10,7 +10,14 @@ import type {
   UserLoginResponse,
   SavedAddress,
   StoredPaymentMethod,
+  WorkerProfile,
 } from '../../types/api';
+
+interface WorkerLoginResponse {
+  accessToken: string;
+  refreshToken: string;
+  worker: WorkerProfile;
+}
 
 interface MeEnvelope { user: UserProfile }
 interface AddressesEnvelope { addresses: SavedAddress[] }
@@ -27,6 +34,9 @@ export const authApi = apiSlice.injectEndpoints({
     }),
     loginUser: builder.mutation<UserLoginResponse, { phone: string; otp: string; name?: string }>({
       query: (data) => ({ url: '/auth/user/login', method: 'POST', data }),
+    }),
+    loginWorker: builder.mutation<WorkerLoginResponse, { phone: string; otp: string; name?: string; skills?: string[]; deviceId?: string }>({
+      query: (data) => ({ url: '/auth/worker/login', method: 'POST', data }),
     }),
     logout: builder.mutation<void, { refreshToken: string }>({
       query: (data) => ({ url: '/auth/logout', method: 'POST', data }),
@@ -102,6 +112,7 @@ export const {
   useRequestOtpMutation,
   useResendOtpMutation,
   useLoginUserMutation,
+  useLoginWorkerMutation,
   useLogoutMutation,
   useRevokeAllSessionsMutation,
   useGetMeQuery,

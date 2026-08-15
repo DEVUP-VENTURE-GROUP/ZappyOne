@@ -42,7 +42,7 @@ const axiosBaseQuery =
 export const apiSlice = createApi({
   reducerPath: 'api',
   baseQuery: axiosBaseQuery(),
-  tagTypes: ['Order', 'Worker', 'User', 'Wallet', 'Catalog', 'Chat', 'Notification', 'Rewards'],
+  tagTypes: ['Order', 'Worker', 'User', 'Wallet', 'Catalog', 'Chat', 'Notification', 'Rewards', 'Earnings', 'Kyc'],
   endpoints: () => ({}),
 });
 
