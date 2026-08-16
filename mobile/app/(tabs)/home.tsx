@@ -133,7 +133,7 @@ export default function HomeScreen() {
   const categorySlot = Math.floor((width - screenPadding * 2) / categoryColumns);
 
   const openCategory = useCallback(
-    (key: string) => router.push({ pathname: '/(tabs)/services', params: { category: key } }),
+    (key: string) => router.push(`/category/${key}` as never),
     [router],
   );
 

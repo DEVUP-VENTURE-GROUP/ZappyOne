@@ -35,6 +35,11 @@ import {
   Text,
 } from '../../components/ui';
 import { CategoryCard, ServiceCard } from '../../components/catalog/ServiceCard';
+import {
+  categoryForService,
+  countByCategory,
+  serviceMatchesCategory,
+} from '../../components/catalog/matchCategory';
 import { useGetCategoriesQuery, useGetServicesQuery } from '../../services/api/catalogApi';
 import { getApiErrorMessage } from '../../services/api/apiSlice';
 import { colors } from '../../theme/colors';
@@ -42,24 +47,6 @@ import { radius } from '../../theme/radius';
 import { spacing, screenPadding, bottomNavClearance } from '../../theme/spacing';
 import type { ServiceCatalogItem, ServiceCategory } from '../../types/api';
 
-/**
- * Does this service belong to this category?
- * Mirrors the server's matching rules so mobile groups services exactly as the
- * website does.
- */
-function serviceMatchesCategory(
-  service: ServiceCatalogItem,
-  category: ServiceCategory,
-): boolean {
-  const owned =
-    category.matchCategories && category.matchCategories.length > 0
-      ? category.matchCategories
-      : [category.key];
-
-  if (owned.includes(service.category)) return true;
-
-  return (category.codePrefixes ?? []).some((prefix) => service.code.startsWith(prefix));
-}
 
 export default function ServicesScreen() {
   const router = useRouter();
@@ -85,15 +72,10 @@ export default function ServicesScreen() {
   }, [params.category]);
 
   /** Service counts per category, for the rail's subtitle. */
-  const countsByKey = useMemo(() => {
-    const counts: Record<string, number> = {};
-    for (const category of categories) {
-      counts[category.key] = services.filter((s) =>
-        serviceMatchesCategory(s, category),
-      ).length;
-    }
-    return counts;
-  }, [categories, services]);
+  const countsByKey = useMemo(
+    () => countByCategory(services, categories),
+    [services, categories],
+  );
 
   const activeCategory = useMemo(
     () => categories.find((c) => c.key === activeKey) ?? null,
@@ -122,8 +104,7 @@ export default function ServicesScreen() {
 
   /** Category that owns a service — supplies the card's accent colour. */
   const categoryFor = useCallback(
-    (service: ServiceCatalogItem) =>
-      categories.find((c) => serviceMatchesCategory(service, c)) ?? null,
+    (service: ServiceCatalogItem) => categoryForService(service, categories),
     [categories],
   );
 
@@ -132,10 +113,12 @@ export default function ServicesScreen() {
     [router],
   );
 
-  const toggleCategory = useCallback(
-    (category: ServiceCategory) =>
-      setActiveKey((prev) => (prev === category.key ? null : category.key)),
-    [],
+  // Tapping a category card opens its dedicated marketplace screen. The
+  // in-place `activeKey` filter is still used when arriving with a ?category
+  // param, so both entry points keep working.
+  const openCategory = useCallback(
+    (category: ServiceCategory) => router.push(`/category/${category.key}` as never),
+    [router],
   );
 
   const renderItem = useCallback(
@@ -201,7 +184,7 @@ export default function ServicesScreen() {
                       category={item}
                       selected={activeKey === item.key}
                       count={countsByKey[item.key]}
-                      onPress={toggleCategory}
+                      onPress={openCategory}
                     />
                   )}
                 />
