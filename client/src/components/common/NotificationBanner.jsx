@@ -4,6 +4,7 @@
  * Disappears permanently once permission is granted.
  */
 import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, X, BellOff } from 'lucide-react';
 import { useNotificationPermission, FIREBASE_CONFIGURED } from '../../hooks/useFCM.jsx';
@@ -15,6 +16,12 @@ export default function NotificationBanner() {
   const perm = useNotificationPermission();
   const isDenied = perm === 'denied';
   const [dismissed, setDismissed] = useState(false);
+  // The worker portal's bottom nav is mobile-only (lg:hidden), so on worker
+  // desktop there's nothing to clear at the bottom — the 104px offset would
+  // leave the banner floating over content. There, dock it to a bottom-right
+  // corner toast instead. Customer routes keep the bottom-nav clearance.
+  const { pathname } = useLocation();
+  const isWorkerDesktop = pathname.startsWith('/worker');
 
   // Evaluate dismissal against the right store once permission resolves. The
   // "blocked" (denied) banner isn't actionable inside the app — the user has to
@@ -54,10 +61,10 @@ export default function NotificationBanner() {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.2 }}
-        className="fixed bottom-[calc(104px_+_env(safe-area-inset-bottom))] inset-x-0 z-40 px-4 pointer-events-none"
+        className={`fixed bottom-[calc(104px_+_env(safe-area-inset-bottom))] inset-x-0 z-40 px-4 pointer-events-none ${isWorkerDesktop ? 'lg:bottom-6 lg:right-6 lg:left-auto lg:inset-x-auto lg:px-0' : ''}`}
       >
         <div
-          className="w-full max-w-lg mx-auto flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl pointer-events-auto"
+          className={`w-full max-w-lg mx-auto flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl pointer-events-auto ${isWorkerDesktop ? 'lg:mx-0 lg:w-[380px]' : ''}`}
           style={{
             background: isDenied
               ? 'linear-gradient(135deg,#1e293b,#0f172a)'
