@@ -4,9 +4,12 @@ import { useDispatch } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Phone, ArrowRight, ChevronLeft, CheckCircle2, Loader2, ShieldCheck,
-  Wallet, Lock, User, Check,
+  Wallet, Lock, User, Check, Eye, EyeOff, KeyRound,
 } from 'lucide-react';
-import { useRequestOtpMutation, useLoginWorkerMutation } from '../services/api';
+import {
+  useRequestOtpMutation, useLoginWorkerMutation,
+  useLoginWorkerPasswordMutation, useForgotWorkerPasswordMutation,
+} from '../services/api';
 import ResendOtp from '../components/auth/ResendOtp';
 import { setAuth } from '../modules/auth/authSlice';
 import { ZappyLogo } from '../components/common/ZappyLogo';
@@ -173,8 +176,15 @@ export default function WorkerLoginPage() {
   const [otpMeta, setOtpMeta] = useState({ cooldownSec: 30, resendsLeft: 3 });
   const [isNewUser, setIsNewUser] = useState(true);
   const pendingOtp = useRef(null);
+  // Login method: OTP (default) or password (Worker ID / email / phone + password).
+  const [mode, setMode] = useState('otp');
+  const [identifier, setIdentifier] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [requestOtp, { isLoading: sending }] = useRequestOtpMutation();
   const [loginWorker, { isLoading: loggingIn }] = useLoginWorkerMutation();
+  const [loginWorkerPassword, { isLoading: pwLoggingIn }] = useLoginWorkerPasswordMutation();
+  const [forgotWorkerPassword, { isLoading: sendingReset }] = useForgotWorkerPasswordMutation();
   const nav = useNavigate();
   const loc = useLocation();
   const dispatch = useDispatch();
@@ -274,6 +284,30 @@ export default function WorkerLoginPage() {
     }
   }
 
+  // ── Password sign-in (Worker ID / email / phone + password) ──────────────
+  async function passwordLogin() {
+    if (!identifier.trim() || !password) { toast.error('Enter your Worker ID / email / phone and password'); return; }
+    try {
+      const r = await loginWorkerPassword({ identifier: identifier.trim(), password }).unwrap();
+      const profile = r.worker;
+      dispatch(setAuth({ accessToken: r.accessToken, refreshToken: r.refreshToken, profile, role: 'worker' }));
+      nav(loc.state?.from || '/worker', { replace: true });
+    } catch (err) {
+      toast.error(err.data?.error || 'Invalid credentials');
+    }
+  }
+
+  // Forgot password → server sends a reset OTP to the account's phone.
+  async function forgotPassword() {
+    if (!identifier.trim()) { toast.error('Enter your Worker ID / email / phone first'); return; }
+    try {
+      await forgotWorkerPassword({ identifier: identifier.trim() }).unwrap();
+      toast.success('If the account exists, a reset code has been sent to its phone.');
+    } catch (err) {
+      toast.error(err.data?.error || 'Could not start password reset');
+    }
+  }
+
   return (
     <>
       <SEO
@@ -329,13 +363,33 @@ export default function WorkerLoginPage() {
           <div className="w-full lg:max-w-md bg-white rounded-t-[34px] lg:rounded-[28px] shadow-[0_-10px_44px_rgba(15,23,42,0.10)] lg:shadow-[0_24px_70px_-24px_rgba(30,64,175,0.30)] lg:ring-1 lg:ring-slate-100 px-6 pt-6 pb-7 lg:p-9 -mt-8 lg:mt-0 max-h-[60vh] lg:max-h-none overflow-y-auto lg:overflow-visible">
 
             <h2 className="text-[24px] lg:text-[26px] font-black tracking-tight text-slate-900">Worker Login</h2>
-            <p className="text-[13.5px] lg:text-[14px] font-medium text-slate-400 mt-1 mb-5 lg:mb-7">Sign in to your worker dashboard</p>
+            <p className="text-[13.5px] lg:text-[14px] font-medium text-slate-400 mt-1 mb-4 lg:mb-5">Sign in to your worker dashboard</p>
 
-            <AnimatePresence mode="wait">
-              {step === 'phone' ? (
-                /* ── PHONE STEP ── */
-                <motion.div key="phone" initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -12 }} transition={{ duration: 0.22 }} className="w-full">
+            {/* OTP / Password method toggle — only on the entry step */}
+            {step === 'phone' && (
+              <div className="flex gap-1.5 p-1 rounded-2xl bg-slate-100 mb-5" role="tablist">
+                {[['otp', 'OTP'], ['password', 'Password']].map(([m, label]) => (
+                  <button
+                    key={m}
+                    type="button"
+                    role="tab"
+                    aria-selected={mode === m}
+                    onClick={() => setMode(m)}
+                    className={`flex-1 h-10 rounded-xl text-[13.5px] font-bold transition-all ${
+                      mode === m ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <AnimatePresence>
+              {step === 'phone' && mode === 'otp' ? (
+                /* ── OTP: phone entry ── */
+                <motion.div key="phone" initial={false} animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.18 }} className="w-full">
 
                   <label className="block text-[11px] font-black uppercase tracking-[0.1em] text-slate-500 mb-2">
                     Phone Number
@@ -394,10 +448,99 @@ export default function WorkerLoginPage() {
                   </div>
                 </motion.div>
 
+              ) : step === 'phone' && mode === 'password' ? (
+                /* ── PASSWORD SIGN-IN ── */
+                <motion.div key="password" initial={false} animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.18 }} className="w-full">
+
+                  <label className="block text-[11px] font-black uppercase tracking-[0.1em] text-slate-500 mb-2">
+                    Worker ID / Email / Phone
+                  </label>
+                  <div className="relative mb-4">
+                    <User size={18} strokeWidth={2.2} className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-500" />
+                    <input
+                      type="text"
+                      autoFocus
+                      value={identifier}
+                      onChange={(e) => setIdentifier(e.target.value)}
+                      placeholder="Enter your Worker ID, email or phone"
+                      className="w-full h-[54px] pl-11 pr-4 rounded-2xl border-2 border-slate-200 bg-slate-50/60 text-[15px] font-semibold text-slate-900 placeholder:text-slate-400 placeholder:font-medium outline-none transition-all focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-blue-600/10"
+                    />
+                  </div>
+
+                  <label className="block text-[11px] font-black uppercase tracking-[0.1em] text-slate-500 mb-2">
+                    Password
+                  </label>
+                  <div className="relative mb-4">
+                    <Lock size={18} strokeWidth={2.2} className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-500" />
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && passwordLogin()}
+                      placeholder="Enter your password"
+                      className="w-full h-[54px] pl-11 pr-12 rounded-2xl border-2 border-slate-200 bg-slate-50/60 text-[15px] font-semibold text-slate-900 placeholder:text-slate-400 placeholder:font-medium outline-none transition-all focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-blue-600/10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((v) => !v)}
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition"
+                    >
+                      {showPassword ? <EyeOff size={18} strokeWidth={2.1} /> : <Eye size={18} strokeWidth={2.1} />}
+                    </button>
+                  </div>
+
+                  <div className="flex items-center justify-between mb-6">
+                    <label className="flex items-center gap-2.5 cursor-pointer w-fit select-none">
+                      <span
+                        onClick={() => setRemember((v) => !v)}
+                        className={`w-5 h-5 rounded-md flex items-center justify-center transition-colors ${remember ? 'bg-blue-600' : 'bg-white border-2 border-slate-300'}`}
+                      >
+                        {remember && <Check size={13} strokeWidth={3.5} className="text-white" />}
+                      </span>
+                      <span className="text-[13.5px] font-semibold text-slate-600">Remember me</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={forgotPassword}
+                      disabled={sendingReset}
+                      className="text-[13px] font-bold text-blue-600 hover:text-blue-700 hover:underline transition-colors disabled:opacity-60"
+                    >
+                      {sendingReset ? 'Sending…' : 'Forgot password?'}
+                    </button>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={passwordLogin}
+                    disabled={pwLoggingIn}
+                    className="w-full h-[54px] rounded-2xl font-bold text-[15.5px] text-white flex items-center justify-center gap-2.5 bg-gradient-to-r from-blue-600 to-blue-700 shadow-lg shadow-blue-600/25 hover:shadow-xl hover:shadow-blue-600/35 active:scale-[0.99] transition-all disabled:opacity-60"
+                  >
+                    {pwLoggingIn ? <Loader2 size={19} className="animate-spin" /> : <>Sign in <ArrowRight size={19} strokeWidth={2.6} /></>}
+                  </button>
+
+                  <div className="flex items-center gap-3 my-6">
+                    <span className="flex-1 h-px bg-slate-100" />
+                    <span className="text-[12px] font-semibold text-slate-300">or</span>
+                    <span className="flex-1 h-px bg-slate-100" />
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
+                      <KeyRound size={19} className="text-blue-600" strokeWidth={2.2} />
+                    </div>
+                    <div>
+                      <p className="text-[13.5px] font-bold text-slate-800 leading-tight">Password set up after approval</p>
+                      <p className="text-[12px] font-medium text-slate-400 leading-tight mt-0.5">New here? Use OTP to get started</p>
+                    </div>
+                  </div>
+                </motion.div>
+
               ) : (
                 /* ── OTP STEP ── */
-                <motion.div key="otp" initial={{ opacity: 0, x: 15 }} animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -15 }} transition={{ duration: 0.22 }} className="w-full">
+                <motion.div key="otp" initial={false} animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.18 }} className="w-full">
 
                   <p className="text-[13.5px] font-medium text-slate-500 mb-4">
                     Enter the 6-digit code sent to{' '}
