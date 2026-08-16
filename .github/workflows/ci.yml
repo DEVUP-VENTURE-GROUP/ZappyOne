@@ -138,7 +138,7 @@ jobs:
       contents: read
     steps:
       - name: SSH deploy (pull + prod deps + PM2 reload)
-        uses: appleboy/ssh-action@v1.2.0
+        uses: appleboy/ssh-action@v1.2.5
         env:
           # Ephemeral, auto-generated per run — expires when the job ends, so no
           # long-lived PAT lives on the server. Scoped to this repo's contents.
