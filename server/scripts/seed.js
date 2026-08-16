@@ -1,9 +1,23 @@
 /**
  * Local dev seed. Run: node scripts/seed.js
- * Creates an admin user, a customer, and a few workers around Hyderabad.
+ * Creates a customer and a few workers — all marked isOnline + KYC approved —
+ * around Hyderabad.
+ *
+ * This once ran against production (before src/config/index.js's dev/prod
+ * database split existed) and seeded 8 fake "online, KYC-approved" workers
+ * straight into the live dispatch pool — one of them was actually matched to
+ * a real customer's puncture booking, which then went nowhere and was
+ * cancelled. Discovered and cleaned up 2026-08-16, see git history.
+ *
+ * connectMongo() → config/index.js already resolves the correct database via
+ * the .env + .env.<NODE_ENV> overlay, so this is redundant protection, not
+ * the only line of defense — but a script that seeds "online, approved"
+ * workers into whatever database it connects to should never rely on an
+ * indirect default. It refuses outright unless that resolved database is
+ * unambiguously the dev one.
  */
-require('dotenv').config();
 const { connectMongo } = require('../src/config/mongo');
+const mongoose = require('mongoose');
 const User = require('../src/modules/user/user.model');
 const Worker = require('../src/modules/worker/worker.model');
 const geoService = require('../src/modules/worker/geo.service');
@@ -19,6 +33,19 @@ function jitter(coord, radiusKm = 3) {
 
 (async () => {
   await connectMongo();
+
+  const dbName = mongoose.connection.name;
+  if (!/dev/i.test(dbName)) {
+    console.error(
+      `\nRefusing to seed fake "online, KYC-approved" workers into database "${dbName}" — ` +
+      `its name doesn't contain "dev". This script only runs against an isolated ` +
+      `development database (name must contain "dev", e.g. zappy_dev).\n\n` +
+      `If this really is your isolated dev database, rename it to include "dev". ` +
+      `Do not weaken this check — this exact gap once put fake workers into production.`
+    );
+    process.exit(1);
+  }
+  console.log(`Seeding into "${dbName}" (confirmed dev database).`);
 
   // Customer
   const user = await User.findOneAndUpdate(
