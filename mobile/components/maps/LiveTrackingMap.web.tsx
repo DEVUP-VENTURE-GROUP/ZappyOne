@@ -30,11 +30,20 @@ import { radius } from '../../theme/radius';
 import { spacing } from '../../theme/spacing';
 import type { WorkerLocationEvent } from '../../services/socket/events';
 
-interface LiveTrackingMapProps {
+/**
+ * Must stay prop-compatible with the native variant — Metro picks one or the
+ * other by filename, so a prop the native map accepts and this one doesn't is
+ * a web-only crash that no typecheck of the native path would catch.
+ */
+export interface LiveTrackingMapProps {
   orderId: string;
   pickupLat: number;
   pickupLng: number;
   initialWorkerLocation?: { lat: number; lng: number } | null;
+  /** Accepted for parity; there is no camera to follow without a map. */
+  followWorker?: boolean;
+  onUserPan?: () => void;
+  style?: object;
 }
 
 export const LiveTrackingMap: React.FC<LiveTrackingMapProps> = ({
@@ -42,6 +51,7 @@ export const LiveTrackingMap: React.FC<LiveTrackingMapProps> = ({
   pickupLat,
   pickupLng,
   initialWorkerLocation = null,
+  style,
 }) => {
   const socketClient = useSocket(orderId);
   const [workerLocation, setWorkerLocation] = useState(initialWorkerLocation);
@@ -57,7 +67,7 @@ export const LiveTrackingMap: React.FC<LiveTrackingMapProps> = ({
   }, [socketClient]);
 
   return (
-    <View style={styles.container} accessibilityLabel="Live tracking summary">
+    <View style={[styles.container, style]} accessibilityLabel="Live tracking summary">
       <View style={styles.row}>
         <View style={styles.pin}>
           <MapPin size={18} color={colors.pinCustomer} />
