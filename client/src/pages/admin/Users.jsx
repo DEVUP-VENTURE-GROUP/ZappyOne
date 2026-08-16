@@ -7,7 +7,7 @@ import {
 import {
   Search, ShieldOff, ShieldCheck, Users as UsersIcon,
   X, Phone, Mail, Star, Calendar, Package, AlertTriangle,
-  ChevronRight,
+  ChevronRight, MapPin,
 } from 'lucide-react';
 import {
   SectionHeader, Pagination, StatusBadge, Card, Th, Td,
@@ -15,11 +15,32 @@ import {
 } from './_shared';
 import toast from 'react-hot-toast';
 
+/**
+ * Best-known location for a user, as a readable address — never raw
+ * coordinates. Prefers the most recently used location (by `usedAt`) over
+ * saved addresses, since it reflects where the customer actually was, not
+ * just a label they saved once; falls back to their default saved address.
+ */
+function bestKnownLocation(u) {
+  const recents = u?.recentLocations || [];
+  const latestRecent = [...recents]
+    .filter((r) => r.address)
+    .sort((a, b) => new Date(b.usedAt || 0) - new Date(a.usedAt || 0))[0];
+  if (latestRecent) return { address: latestRecent.address, when: latestRecent.usedAt };
+
+  const saved = u?.savedAddresses || [];
+  const defaultSaved = saved.find((a) => a.isDefault && a.address) || saved.find((a) => a.address);
+  if (defaultSaved) return { address: defaultSaved.address, when: null };
+
+  return null;
+}
+
 /* ─── User detail drawer ────────────────────────────────────────────────── */
 function UserDrawer({ userId, onClose, onBlock }) {
   const { data, isFetching } = useAdminGetUserQuery(userId, { skip: !userId });
   const u = data?.user;
   const orders = data?.orders || [];
+  const location = bestKnownLocation(u);
 
   const statusColor = {
     completed: 'bg-green-100 text-green-700',
@@ -67,6 +88,21 @@ function UserDrawer({ userId, onClose, onBlock }) {
                     {u.email && (
                       <div className="flex items-center gap-1.5 text-sm text-slate-500">
                         <Mail size={12} />{u.email}
+                      </div>
+                    )}
+                    {location ? (
+                      <div className="flex items-start gap-1.5 text-sm text-slate-500">
+                        <MapPin size={12} className="mt-0.5 shrink-0" />
+                        <span className="truncate">
+                          {location.address}
+                          {location.when && (
+                            <span className="text-slate-400"> · seen {fmtDate(location.when)}</span>
+                          )}
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1.5 text-sm text-slate-400">
+                        <MapPin size={12} />No location on record
                       </div>
                     )}
                   </div>
