@@ -3,10 +3,8 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Phone, ArrowRight, ChevronLeft, CheckCircle2, Loader2, Shield,
-  Zap, Star, Wallet, TrendingUp, Clock, BadgeCheck, Wrench, Users,
-  Paintbrush, Sparkles, Smartphone, Laptop, HardHat, ChevronDown,
-  MapPin, Globe, Check, Hammer, Lock, Award, HeartHandshake, Headphones
+  Phone, ArrowRight, ChevronLeft, CheckCircle2, Loader2, ShieldCheck,
+  Wallet, Lock, User, Check,
 } from 'lucide-react';
 import { useRequestOtpMutation, useLoginWorkerMutation } from '../services/api';
 import ResendOtp from '../components/auth/ResendOtp';
@@ -15,7 +13,7 @@ import { ZappyLogo } from '../components/common/ZappyLogo';
 import toast from 'react-hot-toast';
 import SEO, { LOGIN_SCHEMA, BASE_URL } from '../components/SEO';
 
-/* ── Skills for New User Registration ────────────────────────────────────── */
+/* Skills shown to first-time workers during registration. */
 const SKILLS = [
   'puncture', 'plumbing', 'electrical', 'helper', 'carpenter', 'ac_repair',
   'screen_replacement', 'battery_replacement', 'mason', 'bike_wash', 'car_wash',
@@ -27,37 +25,147 @@ const SKILL_LABELS = {
   mason: 'Mason', bike_wash: 'Bike Wash', car_wash: 'Car Wash',
 };
 
-/* ── Services for the Left Section Curved Arc ─────────────────────────────── */
-const SERVICES_ARC = [
-  { id: 'plumbing', label: 'Plumbing', icon: Wrench, color: 'text-blue-600 bg-blue-50', border: 'border-blue-200/80', pos: 'top-[3%] right-[16%]' },
-  { id: 'electrical', label: 'Electrical', icon: Zap, color: 'text-amber-600 bg-amber-50', border: 'border-amber-200/80', pos: 'top-[18%] right-[3%]' },
-  { id: 'carpentry', label: 'Carpentry', icon: Hammer, color: 'text-indigo-600 bg-indigo-50', border: 'border-indigo-200/80', pos: 'top-[35%] right-[0%]' },
-  { id: 'painting', label: 'Painting', icon: Paintbrush, color: 'text-blue-600 bg-blue-50', border: 'border-blue-200/80', pos: 'top-[53%] right-[3%]' },
-  { id: 'cleaning', label: 'Cleaning', icon: Sparkles, color: 'text-teal-600 bg-teal-50', border: 'border-teal-200/80', pos: 'top-[70%] right-[12%]' },
-  { id: 'phone_repair', label: 'Phone Repair', icon: Smartphone, color: 'text-violet-600 bg-violet-50', border: 'border-violet-200/80', pos: 'top-[83%] right-[26%]' },
-  { id: 'laptop_repair', label: 'Laptop Repair', icon: Laptop, color: 'text-sky-600 bg-sky-50', border: 'border-sky-200/80', pos: 'top-[10%] right-[42%]' },
-  { id: 'daily_workers', label: 'Daily Workers', icon: HardHat, color: 'text-orange-600 bg-orange-50', border: 'border-orange-200/80', pos: 'top-[78%] right-[52%]' },
-];
+const PHONE_KEY = 'zappy:workerPhone';
 
-/* ── Left Hero Bottom Features (4 items) ─────────────────────────────────── */
-const LEFT_FEATURES = [
-  { icon: '₹', title: 'Great Earnings', desc: 'Earn more with more jobs', color: 'bg-blue-50 text-blue-600', isTextIcon: true },
-  { icon: Clock, title: 'Flexible Time', desc: 'Work on your own time', color: 'bg-purple-50 text-purple-600', isTextIcon: false },
-  { icon: Shield, title: 'Trusted Platform', desc: '100% safe and verified', color: 'bg-emerald-50 text-emerald-600', isTextIcon: false },
-  { icon: Users, title: 'Many Jobs', desc: 'Jobs available near you', color: 'bg-amber-50 text-amber-600', isTextIcon: false },
-];
+/* ── Hero illustration — city skyline, courier on a scooter, floating stat
+   card. Pure inline SVG + one HTML card so it stays crisp and needs no asset. */
+function HeroScene() {
+  return (
+    <div className="relative w-full max-w-[460px] mx-auto lg:mx-0 aspect-[5/4] select-none pointer-events-none">
+      <svg viewBox="0 0 500 400" className="absolute inset-0 w-full h-full" aria-hidden>
+        <defs>
+          <linearGradient id="wlp-wave" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stopColor="#3B82F6" />
+            <stop offset="1" stopColor="#1D4ED8" />
+          </linearGradient>
+          <linearGradient id="wlp-scoot" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="#2E6BFF" />
+            <stop offset="1" stopColor="#1E40AF" />
+          </linearGradient>
+          <linearGradient id="wlp-jacket" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="#3B82F6" />
+            <stop offset="1" stopColor="#2450C8" />
+          </linearGradient>
+        </defs>
 
-/* ── Right Card Bottom Informational Features (Replacing Social Logins) ──── */
-const RIGHT_FEATURES = [
-  { icon: Wallet, title: 'Instant Payouts', desc: 'Get paid instantly in your wallet', color: 'bg-blue-50 text-blue-600' },
-  { icon: MapPin, title: 'Nearby Jobs', desc: 'Get jobs near your area', color: 'bg-emerald-50 text-emerald-600' },
-  { icon: BadgeCheck, title: 'Verified Platform', desc: '100% safe and verified', color: 'bg-purple-50 text-purple-600' },
-  { icon: Clock, title: 'Flexible Hours', desc: 'Work on your own schedule', color: 'bg-amber-50 text-amber-600' },
-];
+        {/* Skyline silhouette */}
+        <g fill="#DCE7FB">
+          <rect x="250" y="150" width="34" height="150" rx="3" />
+          <rect x="288" y="120" width="30" height="180" rx="3" />
+          <rect x="322" y="170" width="26" height="130" rx="3" />
+          <rect x="352" y="100" width="34" height="200" rx="3" />
+          <rect x="390" y="160" width="28" height="140" rx="3" />
+          <rect x="422" y="135" width="32" height="165" rx="3" />
+          <rect x="458" y="185" width="26" height="115" rx="3" />
+        </g>
+        <g fill="#EAF1FE">
+          <rect x="300" y="150" width="6" height="10" /><rect x="300" y="172" width="6" height="10" />
+          <rect x="362" y="130" width="6" height="10" /><rect x="362" y="152" width="6" height="10" />
+          <rect x="432" y="160" width="6" height="10" /><rect x="432" y="182" width="6" height="10" />
+        </g>
+
+        {/* Dashed courier route + destination pin */}
+        <path d="M470 70 C470 150 300 150 250 250" fill="none" stroke="#B7CBF5"
+          strokeWidth="2.5" strokeDasharray="4 7" strokeLinecap="round" />
+        <circle cx="250" cy="250" r="5" fill="#F59E0B" />
+        <g transform="translate(452,44)">
+          <path d="M18 0C8 0 0 8 0 18c0 12 18 30 18 30s18-18 18-30C36 8 28 0 18 0z" fill="#2563EB" />
+          <circle cx="18" cy="17" r="7" fill="#fff" />
+        </g>
+
+        {/* Bottom brand wave */}
+        <path d="M250 400 C250 320 330 300 400 300 C470 300 500 340 500 400 Z" fill="url(#wlp-wave)" opacity="0.9" />
+        <path d="M300 400 C300 356 360 344 410 348 C470 352 500 372 500 400 Z" fill="#1E3A8A" opacity="0.25" />
+
+        {/* ═══ Courier on a scooter (facing right) ═══ */}
+        <g transform="translate(70,150)">
+          {/* ground shadow */}
+          <ellipse cx="150" cy="196" rx="150" ry="15" fill="#1E3A8A" opacity="0.10" />
+
+          {/* delivery box behind the rider */}
+          <rect x="10" y="70" width="62" height="62" rx="13" fill="url(#wlp-scoot)" />
+          <text x="41" y="114" fontSize="36" fontWeight="900" fill="#fff" textAnchor="middle"
+            style={{ fontFamily: 'Inter, sans-serif' }}>Z</text>
+
+          {/* ── scooter body ── */}
+          {/* rear mudguard hump + seat post */}
+          <path d="M42 168 q0 -40 44 -42 l36 -1 4 40 -60 20z" fill="#1E40AF" />
+          {/* seat */}
+          <rect x="86" y="120" width="70" height="16" rx="8" fill="#1E293B" />
+          {/* floor deck */}
+          <path d="M120 158 l104 0 q10 0 10 8 l-2 8 -118 0z" fill="url(#wlp-scoot)" />
+          {/* front leg-shield sweeping up to the handlebar */}
+          <path d="M214 168 q34 -2 40 -44 l6 -46 q1 -12 -12 -12 q-12 0 -13 12 l-6 40 q-4 30 -30 40z" fill="url(#wlp-scoot)" />
+          {/* handlebar */}
+          <path d="M236 40 l30 -12 q7 -3 9 4 q2 6 -5 9 l-28 11z" fill="#1E293B" />
+          <circle cx="248" cy="34" r="8" fill="#1E293B" />
+
+          {/* ── rider ── */}
+          {/* thigh (on seat) + shin down to deck */}
+          <path d="M120 108 q30 -6 44 8 l6 30 q2 12 -12 12 q-12 0 -14 -10z" fill="url(#wlp-jacket)" />
+          <path d="M150 128 q16 8 18 30 l-2 18 q-1 10 -12 9 q-10 -1 -10 -12 l-2 -30z" fill="#1E3A8A" />
+          {/* boot on deck */}
+          <path d="M138 172 l26 0 q8 0 8 8 l0 4 -40 0 q-4 -10 6 -12z" fill="#0F172A" />
+          {/* torso — leaning forward toward the bars */}
+          <path d="M108 66 q10 -30 40 -28 q26 2 34 24 q6 16 -4 30 l-40 24 q-24 12 -36 -8 q-8 -14 6 -38z" fill="url(#wlp-jacket)" />
+          {/* zip highlight */}
+          <path d="M132 44 l14 44" fill="none" stroke="#DCEBFF" strokeWidth="2.5" strokeLinecap="round" opacity="0.6" />
+          {/* forward arm to the handlebar */}
+          <path d="M160 66 q40 -10 78 -24" fill="none" stroke="url(#wlp-jacket)" strokeWidth="17" strokeLinecap="round" />
+          <circle cx="240" cy="40" r="9" fill="#F3C6A0" />
+          {/* head + helmet */}
+          <circle cx="132" cy="10" r="22" fill="#F3C6A0" />
+          <path d="M110 8 a22 22 0 0 1 44 0 q-2 -6 -8 -8 l-30 0 q-4 3 -6 8z" fill="#1E3A8A" />
+          <path d="M108 8 a24 24 0 0 1 48 0 l-8 0 a16 16 0 0 0 -32 0z" fill="#2E6BFF" />
+          {/* helmet visor */}
+          <path d="M150 8 q10 2 9 12 l-14 2 q-3 -10 5 -14z" fill="#1E293B" opacity="0.8" />
+
+          {/* wheels (drawn last, on top) */}
+          <g>
+            <circle cx="66" cy="170" r="32" fill="#1E293B" />
+            <circle cx="66" cy="170" r="13" fill="#CBD5E1" />
+            <circle cx="66" cy="170" r="5" fill="#64748B" />
+            <circle cx="228" cy="170" r="32" fill="#1E293B" />
+            <circle cx="228" cy="170" r="13" fill="#CBD5E1" />
+            <circle cx="228" cy="170" r="5" fill="#64748B" />
+          </g>
+        </g>
+      </svg>
+
+      {/* Floating stats card — sits top-right, clear of the rider */}
+      <div className="absolute top-[8%] right-[0%] w-[52%] max-w-[212px] bg-white rounded-2xl shadow-[0_16px_40px_-12px_rgba(30,64,175,0.35)] ring-1 ring-blue-100/60 p-3.5 space-y-3">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center shrink-0">
+            <Wallet size={17} className="text-white" strokeWidth={2.2} />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 leading-none">Earnings</p>
+            <p className="text-[17px] font-black text-slate-900 leading-tight">₹1,750</p>
+          </div>
+        </div>
+        <div className="h-px bg-slate-100" />
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-indigo-950 flex items-center justify-center shrink-0">
+            <CheckCircle2 size={17} className="text-white" strokeWidth={2.2} />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 leading-none">Jobs Completed</p>
+            <p className="text-[17px] font-black text-slate-900 leading-tight">12</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function WorkerLoginPage() {
-  const [phone, setPhone] = useState('');
   const OTP_LEN = 6;
+  const [phone, setPhone] = useState(() => {
+    try { return localStorage.getItem(PHONE_KEY) || ''; } catch { return ''; }
+  });
+  const [remember, setRemember] = useState(() => {
+    try { return !!localStorage.getItem(PHONE_KEY); } catch { return true; }
+  });
   const [otpDigits, setOtpDigits] = useState(Array(OTP_LEN).fill(''));
   const [name, setName] = useState('');
   const [skills, setSkills] = useState([]);
@@ -87,7 +195,7 @@ export default function WorkerLoginPage() {
   // Auto-submit for returning users
   useEffect(() => {
     if (step === 'otp' && otp.length === OTP_LEN && !isNewUser) verify();
-  }, [otp]);
+  }, [otp]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleOtpChange(i, char) {
     const d = char.replace(/\D/g, '').slice(-1);
@@ -117,6 +225,11 @@ export default function WorkerLoginPage() {
   async function send() {
     if (!/^[0-9]{10,15}$/.test(phone)) { toast.error('Enter a valid phone number'); return; }
     try {
+      // Remember (or forget) the phone number for next time.
+      try {
+        if (remember) localStorage.setItem(PHONE_KEY, phone);
+        else localStorage.removeItem(PHONE_KEY);
+      } catch { /* private mode */ }
       const r = await requestOtp({ phone, role: 'worker' }).unwrap();
       pendingOtp.current = r.otp || null;
       setIsNewUser(r.isNewUser ?? true);
@@ -164,356 +277,153 @@ export default function WorkerLoginPage() {
   return (
     <>
       <SEO
-        title="Worker Login — Join Zappy & Earn Daily | Zappy India"
-        description="Join Zappy as a service professional. Earn ₹500–₹2000/day. Verified workers get instant job notifications and daily payments."
+        title="Worker Login — Zappy Partner Portal"
+        description="Sign in to your Zappy worker dashboard. Accept nearby jobs, track earnings and get paid instantly."
         canonical={`${BASE_URL}/worker/login`}
-        keywords="join Zappy as worker, earn money home services, service professional jobs India"
         jsonLd={LOGIN_SCHEMA}
       />
 
-      {/* ─── MAIN WRAPPER (Light background matching reference spec) ─── */}
-      <div className="min-h-screen w-full bg-[#F8FAFC] flex flex-col lg:flex-row items-center justify-between p-4 sm:p-6 md:p-8 lg:p-10 xl:p-12 font-sans overflow-x-hidden relative">
+      <div className="h-[100dvh] w-full overflow-hidden bg-gradient-to-b from-[#EAF1FF] via-[#EEF3FF] to-[#F4F7FF] flex flex-col lg:h-auto lg:min-h-[100dvh] lg:overflow-visible lg:flex-row">
 
-        {/* ─── LEFT HERO SECTION ─── */}
-        <div className="w-full lg:w-[50%] xl:w-[54%] flex flex-col justify-between min-h-[580px] lg:min-h-[720px] px-2 sm:px-6 lg:px-8 xl:px-12 py-4 sm:py-6 relative z-10">
+        {/* ═══════════ HERO (mobile: top · desktop: left) ═══════════ */}
+        <section className="relative flex-1 min-h-0 lg:flex-none lg:w-[54%] lg:min-h-[100dvh] flex flex-col justify-between lg:justify-center px-6 pt-7 pb-0 lg:px-16 lg:py-14 overflow-hidden">
+          {/* soft ambient blobs */}
+          <div className="pointer-events-none absolute -top-24 -left-24 w-72 h-72 rounded-full bg-blue-200/40 blur-3xl" />
+          <div className="pointer-events-none absolute top-1/3 right-0 w-72 h-72 rounded-full bg-indigo-200/30 blur-3xl" />
 
-          {/* Top Header: Logo & Branding */}
-          <div className="flex items-center gap-3">
-            <ZappyLogo size={46} />
-            <div className="flex flex-col">
-              <span className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 leading-none">
-                ZAPPY
-              </span>
-              <span className="text-[11px] sm:text-xs font-bold text-blue-600 mt-0.5 tracking-wide">
-                On-Demand. On-Time.
-              </span>
+          <div>
+            {/* Brand */}
+            <div className="relative z-10 flex items-center gap-2.5 mb-4 lg:mb-10">
+              <ZappyLogo size={40} />
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-lg lg:text-xl font-black text-slate-900 leading-none">Zappy</span>
+                  <span className="text-[10px] font-black text-white bg-blue-600 px-2 py-[3px] rounded-md tracking-wide leading-none">WORKER</span>
+                </div>
+                <p className="text-[10px] lg:text-[10.5px] font-bold text-slate-400 uppercase tracking-[0.18em] mt-1">Worker Portal</p>
+              </div>
             </div>
-          </div>
 
-          {/* Hero Heading & Subtitle */}
-          <div className="mt-6 sm:mt-8 lg:mt-10">
-            <motion.div
-              initial={{ opacity: 0, y: 18 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <h1 className="text-4xl sm:text-5xl xl:text-[56px] font-black text-slate-900 leading-[1.08] tracking-tight">
-                Real People.<br />
-                Real Skills.<br />
-                Real <span className="text-blue-600">Zappy.</span>
+            {/* Headline */}
+            <div className="relative z-10 max-w-md">
+              <h1 className="text-[30px] sm:text-[42px] lg:text-[52px] font-black leading-[1.05] tracking-tight text-slate-900">
+                Work on<br />your time.<br />
+                <span className="text-blue-600">Earn on<br />every job.</span>
               </h1>
-              <p className="mt-4 sm:mt-5 text-slate-600 text-base xl:text-lg font-medium leading-relaxed max-w-md">
-                Join Zappy and start earning by helping customers with services they can count on.
-              </p>
-            </motion.div>
-          </div>
-
-          {/* ── Center Visual Area (Phone Mockup + Zappy Scooter + Dashed Service Arc) ── */}
-          <div className="relative w-full min-h-[340px] sm:min-h-[380px] xl:min-h-[420px] my-6 flex items-center justify-start overflow-visible">
-
-            {/* Subtle City Skyline Silhouette Background */}
-            <div className="absolute inset-x-0 bottom-0 h-36 opacity-20 pointer-events-none select-none overflow-hidden">
-              <svg viewBox="0 0 1200 240" fill="none" className="w-full h-full object-cover">
-                <path d="M0 240V140H40V100H80V140H120V60H180V140H220V90H280V140H340V30H420V140H480V70H540V140H600V50H680V140H740V90H800V140H860V40H940V140H1000V80H1060V140H1120V110H1200V240H0Z" fill="#3B82F6" />
-              </svg>
-            </div>
-
-            {/* SVG Dashed Arc Path connecting Services (Desktop) */}
-            <svg className="hidden lg:block absolute inset-0 w-full h-full pointer-events-none z-0" viewBox="0 0 600 420" fill="none">
-              <path
-                d="M 500,20 C 580,100 580,320 500,380 C 440,420 380,380 340,320"
-                stroke="#60A5FA"
-                strokeWidth="2.5"
-                strokeDasharray="7 7"
-                fill="none"
-              />
-              <circle cx="500" cy="20" r="4" fill="#3B82F6" />
-              <circle cx="560" cy="90" r="4" fill="#3B82F6" />
-              <circle cx="580" cy="190" r="4" fill="#3B82F6" />
-              <circle cx="560" cy="290" r="4" fill="#3B82F6" />
-              <circle cx="480" cy="370" r="4" fill="#3B82F6" />
-            </svg>
-
-            <div className="flex items-center gap-4 sm:gap-6 relative z-10 w-full">
-
-              {/* 1) CSS Phone Mockup showing "Book trusted services in a few taps" */}
-              <motion.div
-                className="w-44 sm:w-52 md:w-56 rounded-[2.2rem] sm:rounded-[2.5rem] border-[5px] sm:border-[6px] border-slate-900 bg-white shadow-2xl p-2 sm:p-2.5 relative shrink-0 -rotate-3"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6, delay: 0.1 }}
-              >
-                {/* Phone Speaker Notch */}
-                <div className="w-12 sm:w-14 h-3 sm:h-3.5 bg-slate-900 mx-auto rounded-full mb-2" />
-
-                {/* App Screen Content */}
-                <div className="px-1 py-1">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-1">
-                      <ZappyLogo size={14} />
-                      <span className="text-[9px] font-black text-slate-800">ZAPPY</span>
-                    </div>
-                    <span className="text-[8px] font-bold bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full">PRO</span>
-                  </div>
-
-                  <p className="text-[10px] sm:text-[11px] font-black text-slate-900 text-center leading-tight my-2">
-                    Book trusted services<br />in a few taps
-                  </p>
-
-                  {/* Mini Services Grid inside Phone Screen */}
-                  <div className="grid grid-cols-3 gap-1.5 sm:gap-2 my-2 sm:my-3">
-                    {[
-                      { icon: Wrench, label: 'Plumbing', bg: 'bg-blue-50 text-blue-600' },
-                      { icon: Zap, label: 'Electrical', bg: 'bg-amber-50 text-amber-600' },
-                      { icon: Hammer, label: 'Carpentry', bg: 'bg-indigo-50 text-indigo-600' },
-                      { icon: Paintbrush, label: 'Painting', bg: 'bg-blue-50 text-blue-600' },
-                      { icon: Sparkles, label: 'Cleaning', bg: 'bg-teal-50 text-teal-600' },
-                      { icon: Smartphone, label: 'Repair', bg: 'bg-violet-50 text-violet-600' },
-                    ].map((m, idx) => (
-                      <div key={idx} className="flex flex-col items-center p-1 sm:p-1.5 rounded-lg bg-slate-50 border border-slate-100">
-                        <div className={`w-5 sm:w-6 h-5 sm:h-6 rounded-full flex items-center justify-center ${m.bg}`}>
-                          <m.icon size={11} />
-                        </div>
-                        <span className="text-[7px] sm:text-[8px] font-bold text-slate-700 mt-1 truncate max-w-full">{m.label}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Phone Screen Bottom Banner */}
-                  <div className="mt-2 p-2 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 text-white text-center">
-                    <p className="text-[8px] font-bold">100% Verified Partners</p>
-                    <p className="text-[7px] opacity-80">Instant booking & live tracking</p>
-                  </div>
-                </div>
-              </motion.div>
-
-              {/* 2) Blue Zappy Partner Scooter / Delivery Bike Graphic */}
-              <motion.div
-                className="relative shrink-0 flex items-center justify-center -ml-4 sm:-ml-6"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-              >
-                {/* Glowing light behind scooter */}
-                <div className="absolute w-40 sm:w-56 h-40 sm:h-56 rounded-full bg-blue-500/15 blur-2xl -z-10" />
-
-                {/* Scooter illustration with ZAPPY PARTNER delivery box */}
-                <div className="relative flex items-center justify-center">
-                  <img
-                    src="/assets/hero_vehicle_care_1780323182530.png"
-                    alt="Zappy Partner Scooter"
-                    className="w-52 sm:w-64 md:w-72 lg:w-80 object-contain drop-shadow-2xl"
-                    onError={(e) => {
-                      // Crisp SVG fallback if image is unavailable
-                      e.currentTarget.style.display = 'none';
-                      e.currentTarget.nextElementSibling.style.display = 'flex';
-                    }}
-                  />
-                  {/* High Quality Vector Scooter Fallback */}
-                  <div className="hidden flex-col items-center justify-center p-4 bg-white/80 backdrop-blur-md rounded-3xl border border-blue-100 shadow-xl">
-                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-600 text-white font-black text-xs">
-                      <ZappyLogo size={18} />
-                      <span>ZAPPY PARTNER</span>
-                    </div>
-                    <p className="text-xs font-bold text-slate-700 mt-2">Instant Service Delivery</p>
-                  </div>
-                </div>
-              </motion.div>
-
-            </div>
-
-            {/* 3) Services Arc Bubbles (Desktop layout positioned along curve) */}
-            <div className="hidden lg:block absolute inset-0 pointer-events-none overflow-visible">
-              {SERVICES_ARC.map((s, idx) => (
-                <motion.div
-                  key={s.id}
-                  className={`absolute ${s.pos} pointer-events-auto`}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.4, delay: 0.15 + idx * 0.05 }}
-                >
-                  <div className={`flex items-center gap-2.5 bg-white/95 backdrop-blur-md px-3.5 py-2 rounded-full shadow-lg shadow-blue-500/10 border ${s.border} hover:scale-105 hover:border-blue-300 transition-all cursor-default select-none group`}>
-                    <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${s.color} group-hover:bg-blue-600 group-hover:text-white transition-colors`}>
-                      <s.icon size={14} />
-                    </div>
-                    <span className="text-xs font-bold text-slate-800 whitespace-nowrap">{s.label}</span>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-
-          </div>
-
-          {/* Responsive Services Row for Mobile (< lg screens) */}
-          <div className="lg:hidden w-full my-4">
-            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Zappy Services</p>
-            <div className="flex flex-wrap gap-2">
-              {SERVICES_ARC.map(s => (
-                <div key={s.id} className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-full border border-slate-200/80 shadow-sm">
-                  <div className={`w-5 h-5 rounded-full flex items-center justify-center ${s.color}`}>
-                    <s.icon size={11} />
-                  </div>
-                  <span className="text-xs font-bold text-slate-700">{s.label}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* ── Left Hero Bottom Features (4 Horizontal Cards) ── */}
-          <motion.div
-            className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 bg-white/80 backdrop-blur-md p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-sm mt-6 sm:mt-8"
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-          >
-            {LEFT_FEATURES.map((f, i) => (
-              <div key={i} className="flex items-start gap-3">
-                <div className={`w-10 h-10 rounded-xl ${f.color} flex items-center justify-center shrink-0 shadow-sm`}>
-                  {f.isTextIcon ? (
-                    <span className="text-lg font-black">{f.icon}</span>
-                  ) : (
-                    <f.icon size={18} />
-                  )}
-                </div>
-                <div>
-                  <p className="text-xs sm:text-[13px] font-bold text-slate-900 leading-tight">{f.title}</p>
-                  <p className="text-[11px] font-medium text-slate-500 leading-snug mt-0.5">{f.desc}</p>
-                </div>
-              </div>
-            ))}
-          </motion.div>
-
-        </div>
-
-        {/* ─── RIGHT PANEL — WHITE LOGIN CARD & OTP FLOW ─── */}
-        <div className="w-full lg:w-[460px] xl:w-[500px] shrink-0 mt-8 lg:mt-0 relative z-10 flex flex-col justify-center">
-
-          <div className="bg-white rounded-[2rem] sm:rounded-[2.5rem] shadow-2xl shadow-slate-300/60 border border-slate-100 p-6 sm:p-8 lg:p-10 xl:p-11 flex flex-col justify-between">
-
-            {/* Top Right: Language Selector Button */}
-            <div className="flex justify-end mb-4 sm:mb-6">
-              <button
-                type="button"
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs sm:text-sm font-semibold transition-colors"
-              >
-                <Globe size={14} className="text-slate-500" />
-                <span>English</span>
-                <ChevronDown size={14} className="text-slate-400" />
-              </button>
-            </div>
-
-            {/* Welcome Emblem / Avatar Illustration */}
-            <div className="w-20 sm:w-24 h-20 sm:h-24 rounded-full bg-blue-50 border-4 border-blue-100/70 mx-auto mb-5 sm:mb-6 flex items-center justify-center relative overflow-hidden shadow-inner">
-              <div className="flex flex-col items-center justify-center text-blue-600">
-                <div className="w-9 h-14 rounded-xl border-2 border-blue-600 bg-white flex flex-col items-center justify-between p-1 shadow-sm">
-                  <div className="w-4 h-1 bg-blue-600 rounded-full" />
-                  <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center">
-                    <Users size={12} className="text-blue-600" />
-                  </div>
-                  <div className="w-3 h-0.5 bg-blue-400 rounded-full" />
-                </div>
-              </div>
-              {/* Decorative side accents */}
-              <div className="absolute left-2 bottom-4 w-2 h-5 bg-blue-200/80 rounded-full rotate-12" />
-              <div className="absolute right-2 bottom-4 w-2 h-5 bg-blue-200/80 rounded-full -rotate-12" />
-            </div>
-
-            {/* Title & Subtitle */}
-            <div className="text-center mb-6 sm:mb-8">
-              <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-                {step === 'phone' ? 'Welcome Back!' : step === 'otp' ? 'Verify OTP' : 'Welcome Partner!'}
-              </h2>
-              <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm font-medium text-slate-500">
-                {step === 'phone'
-                  ? 'Login to continue to your Zappy partner account'
-                  : step === 'otp'
-                    ? `We sent a 6-digit verification code to +91 ${phone}`
-                    : 'Set up your profile to start earning'}
+              <div className="w-12 lg:w-14 h-[5px] lg:h-[6px] rounded-full bg-amber-400 mt-3.5 mb-3 lg:mt-5 lg:mb-4" />
+              <p className="text-[13px] lg:text-base font-medium text-slate-500 leading-relaxed max-w-xs">
+                Join thousands of professionals earning{' '}
+                <span className="font-bold text-slate-700">₹500 – ₹2,000</span> daily with Zappy.
               </p>
             </div>
+          </div>
+
+          {/* Illustration */}
+          <div className="relative z-10 w-full max-w-[270px] sm:max-w-[360px] lg:max-w-[460px] mx-auto lg:mx-0 lg:mt-8">
+            <HeroScene />
+          </div>
+        </section>
+
+        {/* ═══════════ LOGIN CARD (mobile: bottom · desktop: right) ═══════════ */}
+        <section className="relative z-20 shrink-0 lg:flex-1 lg:w-[46%] flex items-stretch lg:items-center justify-center lg:px-10">
+          <div className="w-full lg:max-w-md bg-white rounded-t-[34px] lg:rounded-[28px] shadow-[0_-10px_44px_rgba(15,23,42,0.10)] lg:shadow-[0_24px_70px_-24px_rgba(30,64,175,0.30)] lg:ring-1 lg:ring-slate-100 px-6 pt-6 pb-7 lg:p-9 -mt-8 lg:mt-0 max-h-[60vh] lg:max-h-none overflow-y-auto lg:overflow-visible">
+
+            <h2 className="text-[24px] lg:text-[26px] font-black tracking-tight text-slate-900">Worker Login</h2>
+            <p className="text-[13.5px] lg:text-[14px] font-medium text-slate-400 mt-1 mb-5 lg:mb-7">Sign in to your worker dashboard</p>
 
             <AnimatePresence mode="wait">
-              {/* ── PHONE NUMBER STEP ── */}
               {step === 'phone' ? (
-                <motion.div
-                  key="phone"
-                  initial={{ opacity: 0, x: 15 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -15 }}
-                  transition={{ duration: 0.25 }}
-                  className="w-full"
-                >
-                  <div className="mb-6">
-                    <label className="block text-xs sm:text-sm font-bold text-slate-700 mb-2">
-                      Mobile Number
-                    </label>
-                    <div className="flex items-center rounded-xl border-2 border-slate-200 bg-white overflow-hidden transition-all focus-within:border-blue-600 focus-within:ring-4 focus-within:ring-blue-600/10 hover:border-slate-300">
-                      {/* Country Code Flag Selector Box */}
-                      <div className="flex items-center gap-1.5 px-3.5 sm:px-4 py-3.5 sm:py-4 border-r border-slate-200 bg-slate-50 text-slate-800 font-bold text-sm sm:text-base select-none shrink-0">
-                        <span className="text-base sm:text-lg">🇮🇳</span>
-                        <span>+91</span>
-                        <ChevronDown size={14} className="text-slate-400 ml-0.5" />
-                      </div>
+                /* ── PHONE STEP ── */
+                <motion.div key="phone" initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -12 }} transition={{ duration: 0.22 }} className="w-full">
 
-                      {/* Phone Input Field */}
-                      <input
-                        type="tel"
-                        inputMode="numeric"
-                        className="w-full px-3.5 sm:px-4 py-3.5 sm:py-4 text-slate-900 font-semibold text-sm sm:text-base outline-none bg-transparent placeholder:text-slate-400 placeholder:font-normal"
-                        placeholder="Enter mobile number"
-                        value={phone}
-                        onChange={e => setPhone(e.target.value.replace(/\D/g, '').slice(0, 15))}
-                        onKeyDown={e => e.key === 'Enter' && send()}
-                        autoFocus
-                      />
-                    </div>
+                  <label className="block text-[11px] font-black uppercase tracking-[0.1em] text-slate-500 mb-2">
+                    Phone Number
+                  </label>
+                  <div className="relative mb-5">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 text-slate-400">
+                      <Phone size={18} strokeWidth={2.2} className="text-blue-500" />
+                      <span className="text-[14px] font-semibold text-slate-500">+91</span>
+                      <span className="w-px h-5 bg-slate-200" />
+                    </span>
+                    <input
+                      type="tel"
+                      inputMode="numeric"
+                      autoFocus
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 15))}
+                      onKeyDown={(e) => e.key === 'Enter' && send()}
+                      placeholder="Enter your registered phone"
+                      className="w-full h-[54px] pl-[104px] pr-4 rounded-2xl border-2 border-slate-200 bg-slate-50/60 text-[15px] font-semibold text-slate-900 placeholder:text-slate-400 placeholder:font-medium outline-none transition-all focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-blue-600/10"
+                    />
                   </div>
 
-                  {/* Continue Button (Blue Gradient with Arrow) */}
+                  <label className="flex items-center gap-2.5 mb-6 cursor-pointer w-fit select-none">
+                    <span
+                      onClick={() => setRemember((v) => !v)}
+                      className={`w-5 h-5 rounded-md flex items-center justify-center transition-colors ${remember ? 'bg-blue-600' : 'bg-white border-2 border-slate-300'}`}
+                    >
+                      {remember && <Check size={13} strokeWidth={3.5} className="text-white" />}
+                    </span>
+                    <span className="text-[13.5px] font-semibold text-slate-600">Remember me</span>
+                  </label>
+
                   <button
                     type="button"
                     onClick={send}
-                    disabled={sending || phone.length < 10}
-                    className="w-full py-4 rounded-xl font-bold text-base text-white transition-all duration-200 flex items-center justify-center gap-2.5 bg-gradient-to-r from-blue-600 via-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg shadow-blue-600/25 hover:shadow-xl hover:shadow-blue-600/35 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={sending}
+                    className="w-full h-[54px] rounded-2xl font-bold text-[15.5px] text-white flex items-center justify-center gap-2.5 bg-gradient-to-r from-blue-600 to-blue-700 shadow-lg shadow-blue-600/25 hover:shadow-xl hover:shadow-blue-600/35 active:scale-[0.99] transition-all disabled:opacity-60"
                   >
-                    {sending ? <Loader2 size={18} className="animate-spin" /> : null}
-                    <span>Continue</span>
-                    {!sending && <ArrowRight size={18} className="stroke-[2.5]" />}
+                    {sending ? <Loader2 size={19} className="animate-spin" /> : <>Sign in <ArrowRight size={19} strokeWidth={2.6} /></>}
                   </button>
+
+                  <div className="flex items-center gap-3 my-6">
+                    <span className="flex-1 h-px bg-slate-100" />
+                    <span className="text-[12px] font-semibold text-slate-300">or</span>
+                    <span className="flex-1 h-px bg-slate-100" />
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
+                      <ShieldCheck size={19} className="text-blue-600" strokeWidth={2.2} />
+                    </div>
+                    <div>
+                      <p className="text-[13.5px] font-bold text-slate-800 leading-tight">Secure login for your account</p>
+                      <p className="text-[12px] font-medium text-slate-400 leading-tight mt-0.5">Your data is always protected</p>
+                    </div>
+                  </div>
                 </motion.div>
 
-              ) : step === 'otp' ? (
-                /* ── OTP VERIFICATION STEP ── */
-                <motion.div
-                  key="otp"
-                  initial={{ opacity: 0, x: 15 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -15 }}
-                  transition={{ duration: 0.25 }}
-                  className="w-full"
-                >
-                  {/* OTP 6-Digit Boxes */}
-                  <div className="flex justify-between gap-1.5 sm:gap-2 mb-6" onPaste={handleOtpPaste}>
+              ) : (
+                /* ── OTP STEP ── */
+                <motion.div key="otp" initial={{ opacity: 0, x: 15 }} animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -15 }} transition={{ duration: 0.22 }} className="w-full">
+
+                  <p className="text-[13.5px] font-medium text-slate-500 mb-4">
+                    Enter the 6-digit code sent to{' '}
+                    <span className="font-bold text-slate-800">+91 {phone}</span>
+                  </p>
+
+                  <div className="flex justify-between gap-1.5 sm:gap-2 mb-5" onPaste={handleOtpPaste}>
                     {otpDigits.map((d, i) => (
                       <input
                         key={i}
-                        ref={el => (otpRefs.current[i] = el)}
+                        ref={(el) => (otpRefs.current[i] = el)}
                         type="text"
                         inputMode="numeric"
                         maxLength={1}
                         value={d}
-                        onChange={e => handleOtpChange(i, e.target.value)}
-                        onKeyDown={e => handleOtpKey(i, e)}
-                        className={`w-11 sm:w-13 h-12 sm:h-14 text-center text-xl sm:text-2xl font-black rounded-xl border-2 outline-none transition-all ${
+                        onChange={(e) => handleOtpChange(i, e.target.value)}
+                        onKeyDown={(e) => handleOtpKey(i, e)}
+                        className={`w-full aspect-[5/6] max-w-[52px] text-center text-xl sm:text-2xl font-black rounded-xl border-2 outline-none transition-all ${
                           d
                             ? 'border-blue-600 bg-blue-50/40 text-slate-900 shadow-sm'
-                            : 'border-slate-200 bg-slate-50/50 text-slate-900 focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-blue-600/10'
+                            : 'border-slate-200 bg-slate-50/60 text-slate-900 focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-blue-600/10'
                         }`}
                       />
                     ))}
                   </div>
 
-                  {/* Resend OTP + Change Number Link */}
                   <div className="flex items-center justify-between mb-6">
                     <ResendOtp
                       phone={phone}
@@ -533,33 +443,35 @@ export default function WorkerLoginPage() {
                     </button>
                   </div>
 
-                  {/* New User Profile Fields */}
                   {isNewUser && (
                     <div className="space-y-5 mb-6 text-left">
                       <div>
-                        <label className="block text-xs sm:text-sm font-bold text-slate-700 mb-2">
+                        <label className="block text-[11px] font-black uppercase tracking-[0.1em] text-slate-500 mb-2">
                           Your Name
                         </label>
-                        <input
-                          type="text"
-                          className="w-full py-3.5 px-4 rounded-xl border-2 border-slate-200 outline-none font-medium transition-all text-slate-900 placeholder-slate-400 bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10"
-                          placeholder="e.g. Rajesh Kumar"
-                          value={name}
-                          onChange={e => setName(e.target.value)}
-                        />
+                        <div className="relative">
+                          <User size={18} strokeWidth={2.2} className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-500" />
+                          <input
+                            type="text"
+                            className="w-full h-[52px] pl-11 pr-4 rounded-2xl border-2 border-slate-200 bg-slate-50/60 outline-none font-semibold text-slate-900 placeholder:text-slate-400 placeholder:font-medium transition-all focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-blue-600/10"
+                            placeholder="e.g. Rajesh Kumar"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                          />
+                        </div>
                       </div>
                       <div>
-                        <label className="block text-xs sm:text-sm font-bold text-slate-700 mb-2.5">
+                        <label className="block text-[11px] font-black uppercase tracking-[0.1em] text-slate-500 mb-2.5">
                           Select Your Skills
                         </label>
                         <div className="flex flex-wrap gap-2">
-                          {SKILLS.map(s => {
+                          {SKILLS.map((s) => {
                             const on = skills.includes(s);
                             return (
                               <button
                                 key={s}
                                 type="button"
-                                onClick={() => setSkills(p => (on ? p.filter(x => x !== s) : [...p, s]))}
+                                onClick={() => setSkills((p) => (on ? p.filter((x) => x !== s) : [...p, s]))}
                                 className={`px-3.5 py-2 rounded-xl text-xs sm:text-[13px] font-semibold transition-all border ${
                                   on
                                     ? 'bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-500/20'
@@ -576,57 +488,25 @@ export default function WorkerLoginPage() {
                     </div>
                   )}
 
-                  {/* Verify Button (Blue Gradient with Arrow) */}
                   <button
                     type="button"
                     onClick={verify}
-                    disabled={loggingIn || otp.length < 4}
-                    className="w-full py-4 rounded-xl font-bold text-base text-white transition-all duration-200 flex items-center justify-center gap-2.5 bg-gradient-to-r from-blue-600 via-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg shadow-blue-600/25 hover:shadow-xl hover:shadow-blue-600/35 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={loggingIn || otp.length < OTP_LEN}
+                    className="w-full h-[54px] rounded-2xl font-bold text-[15.5px] text-white flex items-center justify-center gap-2.5 bg-gradient-to-r from-blue-600 to-blue-700 shadow-lg shadow-blue-600/25 hover:shadow-xl hover:shadow-blue-600/35 active:scale-[0.99] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {loggingIn ? <Loader2 size={18} className="animate-spin" /> : null}
-                    <span>Verify & Start Earning</span>
-                    {!loggingIn && <ArrowRight size={18} className="stroke-[2.5]" />}
+                    {loggingIn ? <Loader2 size={19} className="animate-spin" /> : <>Verify &amp; Start Earning <ArrowRight size={19} strokeWidth={2.6} /></>}
                   </button>
-                </motion.div>
 
-              ) : null}
-            </AnimatePresence>
-
-            {/* ── BOTTOM INFORMATIONAL FEATURES ──
-                 (Replacing Google / Facebook / Apple social logins completely) */}
-            <div className="mt-8 pt-6 sm:mt-10 sm:pt-8 border-t border-slate-100">
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-                {RIGHT_FEATURES.map((feat, idx) => (
-                  <div
-                    key={idx}
-                    className="flex flex-col items-center text-center p-3 sm:p-3.5 rounded-2xl bg-slate-50/70 border border-slate-100 hover:bg-slate-50 hover:border-slate-200 transition-all"
-                  >
-                    <div className={`w-10 h-10 rounded-xl ${feat.color} flex items-center justify-center mb-2 shadow-sm`}>
-                      <feat.icon size={18} />
-                    </div>
-                    <p className="font-bold text-xs sm:text-[13px] text-slate-800 leading-tight mb-0.5">
-                      {feat.title}
-                    </p>
-                    <p className="font-medium text-[11px] text-slate-500 leading-snug">
-                      {feat.desc}
-                    </p>
+                  <div className="mt-6 flex items-center justify-center gap-2 text-slate-400 text-xs font-medium">
+                    <Lock size={13} className="text-slate-400" />
+                    <span>Your data is 256-bit SSL encrypted &amp; secure</span>
                   </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Security Note at Bottom */}
-            <div className="mt-6 flex items-center justify-center gap-2 text-slate-400 text-xs font-medium">
-              <Lock size={13} className="text-slate-400" />
-              <span>Your data is 256-bit SSL encrypted & secure</span>
-            </div>
-
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
-
-        </div>
-
+        </section>
       </div>
     </>
   );
 }
-
