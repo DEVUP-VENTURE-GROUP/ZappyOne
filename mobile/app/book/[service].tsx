@@ -531,6 +531,7 @@ export default function BookServiceScreen() {
               tipRupees={boost}
               promoCode={appliedPromo}
               onRetry={retryQuote}
+              onEditLocation={openLocationPicker}
             />
           </Appear>
 
