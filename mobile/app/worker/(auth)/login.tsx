@@ -1,82 +1,114 @@
+/**
+ * Worker login — phone entry.
+ * ----------------------------------------------------------------------------
+ * The same shell and fields as the customer login, so a pro sees one product.
+ * The only differences are the ones that are actually true: the copy names the
+ * professional side, and `role: 'worker'` goes to the OTP request — which is
+ * what routes the account to the worker login endpoint afterwards.
+ *
+ * Previously this screen was navy-on-orange with its own hand-rolled input.
+ * `#F97316` is not the Zappy accent, and a separate visual language here made
+ * the pro app look like a different company's product.
+ * ----------------------------------------------------------------------------
+ */
+
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, SafeAreaView, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Phone, Wrench } from 'lucide-react-native';
+import { Button, Text } from '../../../components/ui';
+import { AuthShell } from '../../../components/auth/AuthShell';
+import { PhoneField } from '../../../components/auth/AuthFields';
 import { useRequestOtpMutation } from '../../../services/api/authApi';
 import { getApiErrorMessage } from '../../../services/api/apiSlice';
+import { colors } from '../../../theme/colors';
+import { spacing } from '../../../theme/spacing';
 
+/** Mirrors the server's `phoneSchema`: 10–15 digits, numeric. */
 const PHONE_RE = /^[0-9]{10,15}$/;
 
 export default function WorkerLoginScreen() {
+  const router = useRouter();
   const [phone, setPhone] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
-  const router = useRouter();
   const [requestOtp, { isLoading }] = useRequestOtpMutation();
 
-  const digits = phone.replace(/\D/g, '');
-  const isValid = PHONE_RE.test(digits);
+  const isValid = PHONE_RE.test(phone);
 
   const handleSendOtp = async () => {
     setFormError(null);
-    if (!isValid) { setFormError('Enter a valid phone number.'); return; }
+    if (!isValid) {
+      setFormError('Enter a valid phone number.');
+      return;
+    }
     try {
-      const res = await requestOtp({ phone: digits, role: 'worker' }).unwrap();
+      const res = await requestOtp({ phone, role: 'worker' }).unwrap();
       router.push({
         pathname: '/worker/(auth)/otp' as never,
         params: {
-          phone: digits,
+          phone,
           isNewUser: res.isNewUser ? '1' : '0',
           cooldownSec: String(res.cooldownSec ?? 30),
         },
       });
     } catch (err) {
       const status = (err as { status?: number })?.status;
-      setFormError(status === 429 ? 'Too many attempts. Please wait a moment.' : getApiErrorMessage(err, 'Could not send OTP.'));
+      setFormError(
+        status === 429
+          ? 'Too many attempts. Please wait a moment and try again.'
+          : getApiErrorMessage(err, 'Could not send the code. Please try again.'),
+      );
     }
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-navy">
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} className="flex-1">
-        <View className="flex-1 px-6 justify-center">
-          <View className="w-14 h-14 rounded-2xl bg-orange-500/15 items-center justify-center mb-5">
-            <Wrench size={26} color="#F97316" />
-          </View>
-          <Text className="text-3xl font-bold text-white mb-2">Zappy Pro</Text>
-          <Text className="text-slate-400 mb-8">Log in to start earning</Text>
-
-          <View className="flex-row items-center border border-slate-700 rounded-xl px-4 mb-2">
-            <Phone size={18} color="#64748B" />
-            <TextInput
-              className="flex-1 p-4 text-lg ml-2 text-white"
-              placeholder="10-digit mobile number"
-              placeholderTextColor="#64748B"
-              keyboardType="phone-pad"
-              value={phone}
-              onChangeText={(t) => { setPhone(t); setFormError(null); }}
-              maxLength={15}
-              autoComplete="tel"
-            />
-          </View>
-
-          {formError ? <Text className="text-red-400 mb-4 text-sm">{formError}</Text> : <View className="mb-4" />}
-
-          <TouchableOpacity
-            className={`rounded-xl p-4 items-center justify-center flex-row ${isValid ? 'bg-orange-500' : 'bg-slate-700'}`}
-            onPress={handleSendOtp}
-            disabled={isLoading || !isValid}
-          >
-            {isLoading ? <ActivityIndicator color="#fff" style={{ marginRight: 8 }} /> : null}
-            <Text className="text-white text-lg font-bold">Continue</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity className="mt-6" onPress={() => router.replace('/(auth)/login')}>
-            <Text className="text-center text-slate-400 text-sm">
-              Looking to book a service? <Text className="text-orange-400 font-semibold">Customer app</Text>
+    <AuthShell
+      title="Zappy for Professionals"
+      subtitle="Log in to start earning"
+      footer={
+        <Pressable
+          onPress={() => router.replace('/(auth)/login')}
+          accessibilityRole="button"
+          accessibilityLabel="Switch to the customer app"
+        >
+          <Text variant="bodySmall" color={colors.textSecondary} align="center">
+            Looking to book a service?{' '}
+            <Text variant="bodySmall" weight="semibold" color={colors.primary}>
+              Customer app
             </Text>
-          </TouchableOpacity>
-        </View>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+          </Text>
+        </Pressable>
+      }
+    >
+      <PhoneField
+        value={phone}
+        onChangeText={(next) => {
+          setPhone(next);
+          setFormError(null);
+        }}
+        error={formError}
+        returnKeyType="go"
+        onSubmitEditing={isValid ? handleSendOtp : undefined}
+        autoFocus
+      />
+
+      <Button
+        label="Continue"
+        onPress={handleSendOtp}
+        loading={isLoading}
+        disabled={!isValid}
+        fullWidth
+        size="large"
+        style={styles.submit}
+      />
+
+      <Text variant="caption" color={colors.textMuted} align="center" style={styles.legal}>
+        By continuing, you agree to Zappy&apos;s Terms of Service and Privacy Policy.
+      </Text>
+    </AuthShell>
   );
 }
+
+const styles = StyleSheet.create({
+  submit: { marginTop: spacing.base },
+  legal: { marginTop: spacing.lg },
+});

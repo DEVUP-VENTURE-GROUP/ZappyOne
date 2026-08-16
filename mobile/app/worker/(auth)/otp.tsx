@@ -1,52 +1,86 @@
-import React, { useEffect, useRef, useState } from 'react';
-import {
-  View, Text, TextInput, TouchableOpacity, SafeAreaView, ActivityIndicator,
-  KeyboardAvoidingView, Platform, ScrollView,
-} from 'react-native';
+/**
+ * Worker OTP verification.
+ * ----------------------------------------------------------------------------
+ * The customer OTP card, plus the two things a NEW pro must supply on the same
+ * call: a name and at least one skill. Both are required by
+ * `POST /auth/worker/login`, and the skill list is the live catalog rather
+ * than a hardcoded one.
+ *
+ * Auth flow is unchanged — same mutation, same `saveSession`, same
+ * `setSession({ role: 'worker' })`, same socket connect, and the worker layout
+ * guard still owns the redirect.
+ *
+ * No auto-submit here, unlike the customer screen: a new pro has a name and
+ * skills to fill in after the code, so submitting on the sixth digit would
+ * fire before the form is complete.
+ * ----------------------------------------------------------------------------
+ */
+
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useDispatch } from 'react-redux';
-import { ChevronLeft, Check } from 'lucide-react-native';
-import { useLoginWorkerMutation, useResendOtpMutation } from '../../../services/api/authApi';
-import { useGetServicesQuery, useGetCategoriesQuery } from '../../../services/api/catalogApi';
+import { Button, Card, Chip, Input, SectionTitle, Text } from '../../../components/ui';
+import { AuthShell } from '../../../components/auth/AuthShell';
+import { OtpBoxes } from '../../../components/auth/AuthFields';
+import {
+  useLoginWorkerMutation,
+  useResendOtpMutation,
+} from '../../../services/api/authApi';
+import { useGetServicesQuery } from '../../../services/api/catalogApi';
 import { getApiErrorCode, getApiErrorMessage } from '../../../services/api/apiSlice';
 import { saveSession } from '../../../services/api/tokenStorage';
 import { setSession } from '../../../store/authSlice';
+import { useAppDispatch } from '../../../store/hooks';
 import { socketClient } from '../../../services/socket/socketClient';
+import { humanizeCode } from '../../../components/catalog/categoryIcons';
+import { colors } from '../../../theme/colors';
+import { spacing } from '../../../theme/spacing';
+
+const OTP_LENGTH = 6;
 
 export default function WorkerOtpScreen() {
+  const router = useRouter();
+  const dispatch = useAppDispatch();
+
   const { phone, isNewUser, cooldownSec } = useLocalSearchParams<{
-    phone: string; isNewUser?: string; cooldownSec?: string;
+    phone?: string;
+    isNewUser?: string;
+    cooldownSec?: string;
   }>();
+
   const [otp, setOtp] = useState('');
   const [name, setName] = useState('');
   const [selectedSkills, setSelectedSkills] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(Number(cooldownSec ?? 30));
 
-  const router = useRouter();
-  const dispatch = useDispatch();
-  const [loginWorker, { isLoading }] = useLoginWorkerMutation();
+  const [loginWorker, { isLoading: verifying }] = useLoginWorkerMutation();
   const [resendOtp, { isLoading: resending }] = useResendOtpMutation();
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const isNew = isNewUser === '1';
   const { data: services = [] } = useGetServicesQuery(undefined, { skip: !isNew });
-  const { data: categories = [] } = useGetCategoriesQuery(undefined, { skip: !isNew });
 
   useEffect(() => {
-    timerRef.current = setInterval(() => setCooldown((c) => (c > 0 ? c - 1 : 0)), 1000);
-    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+    const id = setInterval(() => setCooldown((c) => (c > 0 ? c - 1 : 0)), 1000);
+    return () => clearInterval(id);
   }, []);
 
-  const toggleSkill = (code: string) => {
+  const toggleSkill = useCallback((code: string) => {
     setSelectedSkills((prev) => {
       const next = new Set(prev);
-      if (next.has(code)) next.delete(code); else next.add(code);
+      if (next.has(code)) next.delete(code);
+      else next.add(code);
       return next;
     });
-  };
+  }, []);
 
-  const canVerify = otp.length >= 4 && (!isNew || (name.trim().length > 0 && selectedSkills.size > 0));
+  const complete = otp.length === OTP_LENGTH;
+  const canVerify =
+    complete && (!isNew || (name.trim().length > 0 && selectedSkills.size > 0));
+
+  // The catalog is long; a pro picking skills at signup does not need all of
+  // it on this card. The full list is editable later from their profile.
+  const skillOptions = useMemo(() => services.slice(0, 12), [services]);
 
   const handleVerify = async () => {
     setError(null);
@@ -58,22 +92,30 @@ export default function WorkerOtpScreen() {
         ...(isNew ? { name: name.trim(), skills: Array.from(selectedSkills) } : {}),
       }).unwrap();
 
-      await saveSession({ accessToken: data.accessToken, refreshToken: data.refreshToken, role: 'worker' });
+      await saveSession({
+        accessToken: data.accessToken,
+        refreshToken: data.refreshToken,
+        role: 'worker',
+      });
       dispatch(setSession({ user: null, role: 'worker' }));
       socketClient.connect();
-      // Navigation to /worker/dashboard is handled by worker/_layout.tsx's guard.
+      // The worker layout guard owns the redirect from here.
     } catch (err) {
       const code = getApiErrorCode(err);
-      if (code === 'OTP_INVALID') setError('Incorrect code. Please check and try again.');
-      else if (code === 'ACCOUNT_BLOCKED') setError('This account has been blocked. Contact support for help.');
-      else if (code === 'WORKER_ONBOARDING_REQUIRED') setError('Enter your name and pick at least one skill.');
-      else setError(getApiErrorMessage(err, 'Verification failed. Please try again.'));
+      if (code === 'OTP_INVALID') {
+        setError('Incorrect code. Please check and try again.');
+      } else if (code === 'ACCOUNT_BLOCKED') {
+        setError('This account has been blocked. Contact support for help.');
+      } else {
+        setError(getApiErrorMessage(err, 'Verification failed. Please try again.'));
+      }
     }
   };
 
   const handleResend = async () => {
     if (cooldown > 0 || resending) return;
     setError(null);
+    setOtp('');
     try {
       const res = await resendOtp({ phone: String(phone) }).unwrap();
       setCooldown(res.cooldownSec ?? 30);
@@ -83,88 +125,119 @@ export default function WorkerOtpScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-navy">
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} className="flex-1">
-        <View className="px-6 pt-4">
-          <TouchableOpacity onPress={() => router.back()} className="w-9 h-9 rounded-xl bg-white/10 items-center justify-center">
-            <ChevronLeft size={20} color="#fff" />
-          </TouchableOpacity>
-        </View>
+    <AuthShell title="Zappy for Professionals" subtitle="Log in to start earning">
+      <Text variant="bodySmall" color={colors.textSecondary} align="center" style={styles.sentTo}>
+        Enter the {OTP_LENGTH}-digit code sent to +91 {phone}
+      </Text>
 
-        <ScrollView className="flex-1 px-6" contentContainerStyle={{ paddingBottom: 40, justifyContent: isNew ? undefined : 'center', flexGrow: 1 }} keyboardShouldPersistTaps="handled">
-          <Text className="text-3xl font-bold text-white mb-2 mt-4">Verify your number</Text>
-          <Text className="text-slate-400 mb-8">Code sent to +91 {phone}</Text>
+      <OtpBoxes
+        value={otp}
+        onChangeText={(next) => {
+          setOtp(next);
+          setError(null);
+        }}
+        length={OTP_LENGTH}
+        error={Boolean(error)}
+        autoFocus
+      />
 
-          <TextInput
-            className="border border-slate-700 rounded-xl p-4 text-2xl mb-4 text-center tracking-[10px] text-white"
-            placeholder="••••••"
-            placeholderTextColor="#475569"
-            keyboardType="number-pad"
-            maxLength={6}
-            value={otp}
-            onChangeText={(t) => { setOtp(t.replace(/\D/g, '')); setError(null); }}
-            autoFocus
+      <View style={styles.metaRow}>
+        <Pressable
+          onPress={handleResend}
+          disabled={cooldown > 0 || resending}
+          accessibilityRole="button"
+          accessibilityLabel={
+            cooldown > 0 ? `Resend available in ${cooldown} seconds` : 'Resend code'
+          }
+        >
+          <Text
+            variant="bodySmall"
+            weight="semibold"
+            color={cooldown > 0 ? colors.textMuted : colors.primary}
+          >
+            {resending ? 'Sending…' : cooldown > 0 ? `Resend OTP in ${cooldown}s` : 'Resend OTP'}
+          </Text>
+        </Pressable>
+
+        <Pressable
+          onPress={() => router.back()}
+          accessibilityRole="button"
+          accessibilityLabel="Change phone number"
+        >
+          <Text variant="bodySmall" weight="semibold" color={colors.primary}>
+            Change number
+          </Text>
+        </Pressable>
+      </View>
+
+      {/* New pros only — both fields are required by the login endpoint. */}
+      {isNew ? (
+        <View style={styles.signupBlock}>
+          <Input
+            label="Your name"
+            placeholder="What should customers call you?"
+            value={name}
+            onChangeText={setName}
+            autoCapitalize="words"
+            maxLength={60}
           />
 
-          {isNew ? (
-            <>
-              <Text className="text-xs font-bold text-slate-400 uppercase mb-2 mt-2">Your name</Text>
-              <TextInput
-                className="border border-slate-700 rounded-xl p-4 text-base mb-5 text-white"
-                placeholder="Full name"
-                placeholderTextColor="#64748B"
-                value={name}
-                onChangeText={setName}
-                autoCapitalize="words"
-              />
-
-              <Text className="text-xs font-bold text-slate-400 uppercase mb-3">What can you do?</Text>
-              <Text className="text-xs text-slate-500 mb-3">Pick every service you're able to take on — this decides which jobs you'll be offered.</Text>
-              {categories.map((cat) => {
-                const catServices = services.filter((s) => s.category === cat.key);
-                if (catServices.length === 0) return null;
-                return (
-                  <View key={cat._id} className="mb-4">
-                    <Text className="text-sm font-bold text-slate-300 mb-2">{cat.customerLabel}</Text>
-                    <View className="flex-row flex-wrap gap-2">
-                      {catServices.map((s) => {
-                        const on = selectedSkills.has(s.code);
-                        return (
-                          <TouchableOpacity
-                            key={s.code}
-                            onPress={() => toggleSkill(s.code)}
-                            className={`flex-row items-center gap-1.5 px-3 py-2 rounded-full border ${on ? 'bg-orange-500 border-orange-500' : 'border-slate-700'}`}
-                          >
-                            {on ? <Check size={12} color="#fff" /> : null}
-                            <Text className={`text-xs font-semibold ${on ? 'text-white' : 'text-slate-300'}`}>{s.name}</Text>
-                          </TouchableOpacity>
-                        );
-                      })}
-                    </View>
-                  </View>
-                );
-              })}
-            </>
-          ) : null}
-
-          {error ? <Text className="text-red-400 mb-4 text-sm">{error}</Text> : null}
-
-          <TouchableOpacity
-            className={`rounded-xl p-4 items-center justify-center flex-row mt-2 ${canVerify ? 'bg-orange-500' : 'bg-slate-700'}`}
-            onPress={handleVerify}
-            disabled={isLoading || !canVerify}
-          >
-            {isLoading ? <ActivityIndicator color="#fff" style={{ marginRight: 8 }} /> : null}
-            <Text className="text-white text-lg font-bold">{isNew ? 'Create account' : 'Verify & Continue'}</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={handleResend} disabled={cooldown > 0 || resending} className="mt-5">
-            <Text className={`text-center text-sm font-semibold ${cooldown > 0 ? 'text-slate-500' : 'text-orange-400'}`}>
-              {resending ? 'Sending…' : cooldown > 0 ? `Resend code in ${cooldown}s` : 'Resend code'}
+          <View>
+            <SectionTitle>What can you do?</SectionTitle>
+            <View style={styles.skillRow}>
+              {skillOptions.map((service) => (
+                <Chip
+                  key={service.code}
+                  label={service.name || humanizeCode(service.code)}
+                  selected={selectedSkills.has(service.code)}
+                  tone={selectedSkills.has(service.code) ? 'blue' : 'neutral'}
+                  onPress={() => toggleSkill(service.code)}
+                />
+              ))}
+            </View>
+            <Text variant="caption" color={colors.textMuted} style={styles.skillHint}>
+              Pick at least one. You can change these later from your profile.
             </Text>
-          </TouchableOpacity>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+          </View>
+        </View>
+      ) : null}
+
+      {error ? (
+        <Card variant="outline" style={styles.errorCard} padding={spacing.md}>
+          <Text variant="bodySmall" color={colors.errorDark} align="center">
+            {error}
+          </Text>
+        </Card>
+      ) : null}
+
+      <Button
+        label="Verify & Continue"
+        onPress={handleVerify}
+        loading={verifying}
+        disabled={!canVerify}
+        fullWidth
+        size="large"
+        style={styles.submit}
+      />
+    </AuthShell>
   );
 }
+
+const styles = StyleSheet.create({
+  sentTo: { marginBottom: spacing.lg },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: spacing.lg,
+  },
+  signupBlock: { marginTop: spacing.lg, gap: spacing.lg },
+  skillRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.xs },
+  skillHint: { marginTop: spacing.sm },
+  errorCard: {
+    marginTop: spacing.base,
+    backgroundColor: colors.errorTint,
+    borderColor: colors.errorTint,
+  },
+  submit: { marginTop: spacing.lg },
+});
