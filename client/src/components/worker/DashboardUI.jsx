@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import {
   LayoutDashboard, ClipboardList, CalendarDays, IndianRupee, Wallet as WalletIcon,
   Bell, Star, LifeBuoy, User, FileText, Home as HomeIcon, ChevronRight,
-  Wifi, Clock, CheckCircle2, TrendingUp, TrendingDown, Search, Radio,
+  Wifi, Clock, CheckCircle2, TrendingUp, TrendingDown, Search, Radio, Loader2,
   BarChart2, Target, Building2, ArrowRightLeft, GraduationCap, Scale, Gem,
 } from 'lucide-react';
 import { ZappyLogo } from '../common/ZappyLogo';
@@ -88,44 +88,41 @@ export function Avatar({ url, initials, size = 40, ring = true }) {
   );
 }
 
-/* ── Online pill + Go Online button (shared web + mobile) ─────────────────── */
-export function OnlineControl({ isOnline, busy, disabled, onToggle, compact = false }) {
+/* ── Online / Offline toggle (shared web + mobile) ────────────────────────────
+   Single control: the pill shows the current state AND flips it. (A second
+   "Go Online" button here was redundant — same onToggle — so it was removed.) */
+export function OnlineControl({ isOnline, busy, onToggle }) {
   return (
-    <div className={`flex items-center gap-2 ${compact ? '' : 'gap-3'}`}>
-      <button
-        type="button"
-        onClick={onToggle}
-        disabled={busy}
-        aria-pressed={isOnline}
-        className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 shadow-sm transition-colors disabled:opacity-60"
+    <button
+      type="button"
+      onClick={onToggle}
+      disabled={busy}
+      aria-pressed={isOnline}
+      aria-label={isOnline ? 'Go offline' : 'Go online'}
+      className={`flex items-center gap-2 rounded-full border px-3.5 py-2 shadow-sm transition-colors disabled:opacity-60 ${
+        isOnline
+          ? 'border-emerald-200 bg-emerald-50 hover:bg-emerald-100'
+          : 'border-slate-200 bg-white hover:bg-slate-50'
+      }`}
+    >
+      {busy
+        ? <Loader2 size={15} className="animate-spin text-slate-500" />
+        : <Radio size={15} strokeWidth={2.6} className={isOnline ? 'text-emerald-600' : 'text-slate-400'} />}
+      <span className={`text-[13px] font-bold ${isOnline ? 'text-emerald-600' : 'text-slate-600'}`}>
+        {isOnline ? 'Online' : 'Go Online'}
+      </span>
+      <span
+        className={`relative h-5 w-9 rounded-full transition-colors ${
+          isOnline ? 'bg-emerald-500' : 'bg-slate-300'
+        }`}
       >
-        <span className={`text-[13px] font-bold ${isOnline ? 'text-emerald-600' : 'text-slate-500'}`}>
-          {isOnline ? 'Online' : 'Offline'}
-        </span>
         <span
-          className={`relative h-5 w-9 rounded-full transition-colors ${
-            isOnline ? 'bg-emerald-500' : 'bg-slate-300'
+          className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all ${
+            isOnline ? 'left-[18px]' : 'left-0.5'
           }`}
-        >
-          <span
-            className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all ${
-              isOnline ? 'left-[18px]' : 'left-0.5'
-            }`}
-          />
-        </span>
-      </button>
-      {!isOnline && !compact && (
-        <button
-          type="button"
-          onClick={onToggle}
-          disabled={busy || disabled}
-          className="flex items-center gap-2 rounded-xl bg-zappy-600 px-4 py-2 text-[13px] font-bold text-white shadow-sm transition-colors hover:bg-zappy-700 active:scale-95 disabled:opacity-60"
-        >
-          <Radio size={15} strokeWidth={2.6} />
-          Go Online
-        </button>
-      )}
-    </div>
+        />
+      </span>
+    </button>
   );
 }
 
