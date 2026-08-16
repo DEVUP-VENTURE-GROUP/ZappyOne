@@ -47,6 +47,7 @@ export interface DevLoginResult {
 export async function devLogin(
   phone = '9101010101',
   name = 'Dev Tester',
+  role: 'user' | 'worker' = 'user',
 ): Promise<DevLoginResult> {
   try {
     const headers = { 'Content-Type': 'application/json', 'X-Client-Type': 'mobile' };
@@ -54,7 +55,7 @@ export async function devLogin(
     const otpRes = await fetch(`${API_BASE_URL}/auth/otp/request`, {
       method: 'POST',
       headers,
-      body: JSON.stringify({ phone, role: 'user' }),
+      body: JSON.stringify({ phone, role }),
     });
     const otpBody = await otpRes.json();
 
@@ -70,11 +71,17 @@ export async function devLogin(
       };
     }
 
-    const loginRes = await fetch(`${API_BASE_URL}/auth/user/login`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ phone, otp, name }),
-    });
+    // Workers authenticate on their own route and need at least one skill.
+    const loginRes = await fetch(
+      `${API_BASE_URL}/auth/${role === 'worker' ? 'worker' : 'user'}/login`,
+      {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(
+          role === 'worker' ? { phone, otp, name, skills: ['car_wash'] } : { phone, otp, name },
+        ),
+      },
+    );
     const loginBody = await loginRes.json();
 
     if (!loginRes.ok || !loginBody?.accessToken) {
@@ -88,9 +95,11 @@ export async function devLogin(
     await saveSession({
       accessToken: loginBody.accessToken,
       refreshToken: loginBody.refreshToken,
-      role: 'user',
+      role,
     });
-    store.dispatch(setSession({ user: loginBody.user ?? null, role: 'user' }));
+    store.dispatch(
+      setSession({ user: loginBody.user ?? loginBody.worker ?? null, role }),
+    );
 
     log.info('dev session established');
     return { ok: true, phone, name: loginBody?.user?.name };
@@ -105,8 +114,14 @@ export async function devLogin(
  */
 export function installDevLogin(): void {
   if (!__DEV__) return;
-  const scope = globalThis as unknown as { devLogin?: typeof devLogin };
+  const scope = globalThis as unknown as {
+    devLogin?: typeof devLogin;
+    devState?: () => unknown;
+  };
   if (scope.devLogin) return;
   scope.devLogin = devLogin;
-  log.debug('devLogin() available on the global scope (development only)');
+  // Read-only peek at auth state, for diagnosing route-guard behaviour during
+  // QA. Development only, alongside devLogin.
+  scope.devState = () => store.getState().auth;
+  log.debug('devLogin() / devState() available on the global scope (development only)');
 }

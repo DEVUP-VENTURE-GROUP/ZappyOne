@@ -85,8 +85,13 @@ export const workerApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: (_r, _e, a) => ['Order', 'Earnings', { type: 'Order', id: a.id }],
     }),
-    getWorkerOrders: builder.query<PaginatedOrders, number | void>({
+    // `/workers/orders` returns `{ orders }` only — no total/totalPages/page,
+    // unlike the customer's `/orders/mine`. Typed as the envelope it actually
+    // is so nothing reads a pagination field that will always be undefined.
+    getWorkerOrders: builder.query<{ orders: Order[] }, number | void>({
       query: (page = 1) => ({ url: '/workers/orders', params: { page } }),
+      transformResponse: (r: { orders?: Order[] } | Order[]) =>
+        Array.isArray(r) ? { orders: r } : { orders: r.orders ?? [] },
       providesTags: ['Order'],
     }),
     getWorkerCancelPreview: builder.query<{ penaltyPaise?: number; message?: string }, { id: string; reason?: string }>({

@@ -1,66 +1,155 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import {
-  View, Text, TouchableOpacity, SafeAreaView, ActivityIndicator, ScrollView,
-  Switch, Alert, Modal, TextInput,
-} from 'react-native';
+/**
+ * Worker dashboard — Zappy for Professionals.
+ * ----------------------------------------------------------------------------
+ * Rebuilt on the customer app's design system so a pro is using the same
+ * product, not a separate one: same Card, Button, tokens and type scale. The
+ * only shift in emphasis is that earnings lead, because that is what this
+ * screen is opened for.
+ *
+ * ── LOGIC IS UNCHANGED ─────────────────────────────────────────────────────
+ * Every API call, socket subscription and lifecycle handler is carried over
+ * verbatim. In particular these behaviours are load-bearing and were kept:
+ *
+ *   · Accept only PUBLISHES an accept signal. The dispatch worker holds the
+ *     atomic lock and picks between everyone who tapped at once. A 200 does
+ *     not mean this worker won — the outcome arrives as `job.assigned` /
+ *     `offer.cancelled`, or by the job appearing in the next refetch. 410 and
+ *     404 are swallowed for that reason: they mean someone else was faster,
+ *     which is not an error worth interrupting the pro over.
+ *   · The offer countdown is derived from the payload's `expiresAt`, not from
+ *     a timer started when the card rendered.
+ *   · Start-trip and arrive send GPS when they can and let the server fall
+ *     back to the last Redis ping when they can't.
+ *   · `useLocationTracker(isOnline, activeOrder)` keeps the live feed running.
+ *
+ * ── NO INVENTED METRICS ────────────────────────────────────────────────────
+ * Every figure comes from `/workers/me` or `/workers/earnings`. The one new
+ * data source is `worker.currentOrderId`, which the API already returned and
+ * this screen previously ignored in favour of scanning the orders list — the
+ * server's own pointer is used first now, with the scan as a fallback.
+ * ----------------------------------------------------------------------------
+ */
+
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
+import { BellRing, ChevronRight, ShieldAlert } from 'lucide-react-native';
 import {
-  MapPin, Zap, ShieldAlert, Clock, Navigation, CheckCircle2, X, MessageSquare, Camera,
-} from 'lucide-react-native';
+  Appear,
+  Avatar,
+  BottomSheet,
+  Button,
+  Card,
+  EmptyState,
+  Input,
+  SectionTitle,
+  Skeleton,
+  Text,
+} from '../../../components/ui';
+import { EarningsSummary, OnlineHero } from '../../../components/worker/WorkerUI';
+import { ActiveJobCard, OfferCard } from '../../../components/worker/JobCards';
 import {
-  useGetWorkerMeQuery, useGoOnlineMutation, useGoOfflineMutation,
-  useWorkerAcceptMutation, useWorkerRejectMutation, useWorkerStartTripMutation,
-  useWorkerArriveMutation, useWorkerStartServiceMutation, useWorkerCompleteMutation,
+  useGetWorkerMeQuery,
   useGetWorkerOrdersQuery,
+  useGetEarningsQuery,
+  useGoOnlineMutation,
+  useGoOfflineMutation,
+  useWorkerAcceptMutation,
+  useWorkerRejectMutation,
+  useWorkerStartTripMutation,
+  useWorkerArriveMutation,
+  useWorkerStartServiceMutation,
+  useWorkerCompleteMutation,
 } from '../../../services/api/workerApi';
 import { getApiErrorMessage } from '../../../services/api/apiSlice';
 import { useSocket } from '../../../hooks/useSocket';
 import { useLocationTracker } from '../../../hooks/useLocationTracker';
-import { ACTIVE_ORDER_STATUSES } from '../../../types/api';
-import type { JobOffer } from '../../../types/api';
-import type { OfferCancelledEvent, JobAssignedEvent, OfferBoostedEvent, KycRejectedEvent } from '../../../services/socket/events';
+import { ACTIVE_ORDER_STATUSES, type JobOffer, type Order } from '../../../types/api';
+import type {
+  JobAssignedEvent,
+  KycRejectedEvent,
+  OfferBoostedEvent,
+  OfferCancelledEvent,
+} from '../../../services/socket/events';
+import { colors } from '../../../theme/colors';
+import { bottomNavClearance, screenPadding, spacing } from '../../../theme/spacing';
 
+/** Copy per KYC state. Statuses come from `worker.kyc.status`. */
 const KYC_MESSAGE: Record<string, { title: string; body: string; canRetry: boolean }> = {
-  not_submitted: { title: 'Complete your KYC', body: 'Submit your documents to start receiving jobs.', canRetry: true },
-  pending_review: { title: 'KYC under review', body: "We're verifying your documents — usually takes under 24 hours.", canRetry: false },
-  rejected: { title: 'KYC needs attention', body: 'Your documents were rejected. Please resubmit.', canRetry: true },
-  suspended: { title: 'Account suspended', body: 'Contact support to resolve this.', canRetry: false },
+  not_submitted: {
+    title: 'Complete your KYC',
+    body: 'Submit your documents to start receiving jobs.',
+    canRetry: true,
+  },
+  pending_review: {
+    title: 'KYC under review',
+    body: "We're verifying your documents — usually within 24 hours.",
+    canRetry: false,
+  },
+  rejected: {
+    title: 'KYC needs attention',
+    body: 'Your documents were rejected. Please resubmit.',
+    canRetry: true,
+  },
+  suspended: {
+    title: 'Account suspended',
+    body: 'Contact support to resolve this.',
+    canRetry: false,
+  },
 };
 
 export default function WorkerDashboardScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
+
   const { data: worker, isLoading, refetch: refetchWorker } = useGetWorkerMeQuery();
   const { data: ordersPage, refetch: refetchOrders } = useGetWorkerOrdersQuery(1);
+  const { data: earnings } = useGetEarningsQuery('today');
+
   const [goOnline, { isLoading: goingOnline }] = useGoOnlineMutation();
   const [goOffline, { isLoading: goingOffline }] = useGoOfflineMutation();
   const [workerAccept, { isLoading: accepting }] = useWorkerAcceptMutation();
   const [workerReject] = useWorkerRejectMutation();
   const [workerStartTrip, { isLoading: startingTrip }] = useWorkerStartTripMutation();
   const [workerArrive, { isLoading: arriving }] = useWorkerArriveMutation();
-  const [workerStartService, { isLoading: startingService }] = useWorkerStartServiceMutation();
+  const [workerStartService, { isLoading: startingService }] =
+    useWorkerStartServiceMutation();
   const [workerComplete, { isLoading: completing }] = useWorkerCompleteMutation();
 
   const [offer, setOffer] = useState<JobOffer | null>(null);
   const [offerSecondsLeft, setOfferSecondsLeft] = useState(0);
   const [otpInput, setOtpInput] = useState('');
-  const [otpModalOpen, setOtpModalOpen] = useState(false);
+  const [otpSheetOpen, setOtpSheetOpen] = useState(false);
+  const [completeSheetOpen, setCompleteSheetOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const socketClient = useSocket();
   const kycStatus = worker?.kyc?.status ?? 'not_submitted';
   const kycApproved = kycStatus === 'approved';
   const isOnline = worker?.isOnline ?? false;
 
-  const activeOrder = useMemo(
-    () => (ordersPage?.orders ?? []).find((o) => (ACTIVE_ORDER_STATUSES as readonly string[]).includes(o.status)),
-    [ordersPage],
-  );
+  const orders = ordersPage?.orders ?? [];
 
-  // Live GPS while online — the socket client picks this up via
-  // 'worker:location', which dispatch/tracking consume server-side.
+  /**
+   * The server tells us which job is held via `currentOrderId`; prefer that,
+   * and fall back to scanning for an active status when it isn't populated.
+   */
+  const activeOrder: Order | undefined = useMemo(() => {
+    if (worker?.currentOrderId) {
+      const byId = orders.find((o) => o._id === worker.currentOrderId);
+      if (byId) return byId;
+    }
+    return orders.find((o) =>
+      (ACTIVE_ORDER_STATUSES as readonly string[]).includes(o.status),
+    );
+  }, [orders, worker?.currentOrderId]);
+
+  // Live GPS while online — unchanged.
   useLocationTracker(isOnline, activeOrder?._id);
 
-  // ── Incoming offers + force-assignment + boosts + KYC push ──────────────
+  // ── Sockets — subscriptions carried over verbatim ────────────────────────
   useEffect(() => {
     const onOffer = (payload: JobOffer) => setOffer(payload);
     const onOfferCancelled = (payload: OfferCancelledEvent) => {
@@ -69,13 +158,16 @@ export default function WorkerDashboardScreen() {
     const onJobAssigned = (_payload: JobAssignedEvent) => {
       setOffer(null);
       refetchOrders();
+      refetchWorker();
     };
     const onOfferBoosted = (payload: OfferBoostedEvent) => {
-      setOffer((cur) => (cur && cur._id === payload.orderId ? { ...cur, price: payload.newTotal } : cur));
+      setOffer((cur) =>
+        cur && cur._id === payload.orderId ? { ...cur, price: payload.newTotal } : cur,
+      );
     };
     const onKycRejected = (payload: KycRejectedEvent) => {
       refetchWorker();
-      Alert.alert('KYC rejected', payload.reason || 'Please check your KYC status.');
+      setError(payload.reason || 'Your KYC was rejected. Check your KYC status.');
     };
     const onJobPulled = () => refetchOrders();
 
@@ -85,7 +177,7 @@ export default function WorkerDashboardScreen() {
     socketClient.on('offer.boosted', onOfferBoosted);
     socketClient.on('kyc.rejected', onKycRejected);
     socketClient.on('job.pulled', onJobPulled);
-    socketClient.on('order.status', () => refetchOrders());
+    socketClient.on('order.status', onJobPulled);
 
     return () => {
       socketClient.off('new_job_request', onOffer);
@@ -94,14 +186,21 @@ export default function WorkerDashboardScreen() {
       socketClient.off('offer.boosted', onOfferBoosted);
       socketClient.off('kyc.rejected', onKycRejected);
       socketClient.off('job.pulled', onJobPulled);
+      socketClient.off('order.status', onJobPulled);
     };
   }, [socketClient, refetchOrders, refetchWorker]);
 
-  // Countdown on the visible offer.
+  // Countdown driven by the payload's own expiry.
   useEffect(() => {
-    if (!offer) { setOfferSecondsLeft(0); return; }
+    if (!offer) {
+      setOfferSecondsLeft(0);
+      return;
+    }
     const tick = () => {
-      const left = Math.max(0, Math.round((new Date(offer.expiresAt).getTime() - Date.now()) / 1000));
+      const left = Math.max(
+        0,
+        Math.round((new Date(offer.expiresAt).getTime() - Date.now()) / 1000),
+      );
       setOfferSecondsLeft(left);
       if (left <= 0) setOffer(null);
     };
@@ -110,290 +209,428 @@ export default function WorkerDashboardScreen() {
     return () => clearInterval(id);
   }, [offer]);
 
-  const toggleOnline = async (next: boolean) => {
-    if (!kycApproved) {
-      Alert.alert('KYC required', 'Complete KYC verification before going online.');
-      return;
-    }
-    if (!next) {
-      try { await goOffline().unwrap(); } catch (e) { Alert.alert('Failed', getApiErrorMessage(e)); }
-      return;
-    }
-    try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Location needed', 'Enable location access to go online.');
+  // ── Actions ──────────────────────────────────────────────────────────────
+  const toggleOnline = useCallback(
+    async (next: boolean) => {
+      setError(null);
+      if (!kycApproved && next) {
+        setError('Complete KYC verification before going online.');
         return;
       }
-      const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
-      await goOnline({ lat: pos.coords.latitude, lng: pos.coords.longitude }).unwrap();
-    } catch (e) {
-      Alert.alert('Could not go online', getApiErrorMessage(e, 'Please try again.'));
-    }
-  };
+      if (!next) {
+        try {
+          await goOffline().unwrap();
+        } catch (e) {
+          setError(getApiErrorMessage(e, "We couldn't take you offline."));
+        }
+        return;
+      }
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          setError('Enable location access to go online.');
+          return;
+        }
+        const pos = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.High,
+        });
+        await goOnline({ lat: pos.coords.latitude, lng: pos.coords.longitude }).unwrap();
+      } catch (e) {
+        setError(getApiErrorMessage(e, "We couldn't take you online."));
+      }
+    },
+    [kycApproved, goOffline, goOnline],
+  );
 
-  const handleAccept = async () => {
+  const handleAccept = useCallback(async () => {
     if (!offer) return;
-    // Accepting only PUBLISHES an accept signal — the dispatch worker holds the
-    // real atomic lock and decides who actually wins if several workers tapped
-    // Accept at once (order.service.js's acceptOffer). A 200 here means the
-    // signal was sent, not that this worker won the job; the real outcome
-    // arrives moments later via 'job.assigned'/'offer.cancelled' or simply by
-    // the job appearing (or not) in the next getWorkerOrders refetch.
+    // See the header: this only publishes a signal. Dismiss optimistically so
+    // the card doesn't sit there while dispatch decides.
+    const id = offer._id;
     setOffer(null);
     try {
-      await workerAccept(offer._id).unwrap();
+      await workerAccept(id).unwrap();
       refetchOrders();
     } catch (e) {
       const status = (e as { status?: number })?.status;
+      // 410/404 mean another pro won it — expected, not an error.
       if (status !== 410 && status !== 404) {
-        Alert.alert('Could not accept', getApiErrorMessage(e, 'This job may have been taken.'));
+        setError(getApiErrorMessage(e, 'This job may have been taken.'));
       }
     }
-  };
+  }, [offer, workerAccept, refetchOrders]);
 
-  const handleReject = async () => {
+  const handleReject = useCallback(() => {
     if (!offer) return;
     const id = offer._id;
     setOffer(null);
     workerReject(id).catch(() => {});
-  };
+  }, [offer, workerReject]);
 
-  const handleStartTrip = async () => {
-    if (!activeOrder) return;
+  /** Best-effort GPS; the server falls back to the last Redis ping. */
+  const currentCoords = useCallback(async () => {
     try {
-      let coords: { lat: number; lng: number } | undefined;
-      try {
-        const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
-        coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-      } catch { /* server falls back to last known Redis ping */ }
-      await workerStartTrip({ id: activeOrder._id, ...coords }).unwrap();
-    } catch (e) { Alert.alert('Failed', getApiErrorMessage(e)); }
-  };
+      const pos = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+      });
+      return { lat: pos.coords.latitude, lng: pos.coords.longitude };
+    } catch {
+      return undefined;
+    }
+  }, []);
 
-  const handleArrive = async () => {
+  const handleStartTrip = useCallback(async () => {
     if (!activeOrder) return;
+    setError(null);
     try {
-      let coords: { lat: number; lng: number } | undefined;
-      try {
-        const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
-        coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-      } catch { /* fallback handled server-side */ }
-      await workerArrive({ id: activeOrder._id, ...coords }).unwrap();
-    } catch (e) { Alert.alert('Failed', getApiErrorMessage(e)); }
-  };
+      await workerStartTrip({ id: activeOrder._id, ...(await currentCoords()) }).unwrap();
+    } catch (e) {
+      setError(getApiErrorMessage(e, "We couldn't start the trip."));
+    }
+  }, [activeOrder, workerStartTrip, currentCoords]);
 
-  const handleStartService = async () => {
+  const handleArrive = useCallback(async () => {
+    if (!activeOrder) return;
+    setError(null);
+    try {
+      await workerArrive({ id: activeOrder._id, ...(await currentCoords()) }).unwrap();
+    } catch (e) {
+      setError(getApiErrorMessage(e, "We couldn't mark you as arrived."));
+    }
+  }, [activeOrder, workerArrive, currentCoords]);
+
+  const handleStartService = useCallback(async () => {
     if (!activeOrder || otpInput.length < 4) return;
+    setError(null);
     try {
       await workerStartService({ id: activeOrder._id, otp: otpInput }).unwrap();
-      setOtpModalOpen(false);
+      setOtpSheetOpen(false);
       setOtpInput('');
     } catch (e) {
-      Alert.alert('Incorrect OTP', getApiErrorMessage(e, 'Ask the customer for the correct code.'));
+      setError(getApiErrorMessage(e, 'Ask the customer for the correct code.'));
     }
-  };
+  }, [activeOrder, otpInput, workerStartService]);
 
-  const handleComplete = async () => {
+  const handleComplete = useCallback(async () => {
     if (!activeOrder) return;
-    Alert.alert('Complete service', 'Mark this job as complete?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Complete', onPress: async () => {
-          try {
-            await workerComplete({ id: activeOrder._id }).unwrap();
-            refetchOrders();
-          } catch (e) { Alert.alert('Failed', getApiErrorMessage(e)); }
-        },
-      },
-    ]);
-  };
+    setError(null);
+    try {
+      await workerComplete({ id: activeOrder._id }).unwrap();
+      setCompleteSheetOpen(false);
+      refetchOrders();
+      refetchWorker();
+    } catch (e) {
+      setError(getApiErrorMessage(e, "We couldn't complete this job."));
+    }
+  }, [activeOrder, workerComplete, refetchOrders, refetchWorker]);
 
-  if (isLoading || !worker) {
-    return <SafeAreaView className="flex-1 bg-navy items-center justify-center"><ActivityIndicator color="#F97316" /></SafeAreaView>;
-  }
+  /** The single next lifecycle step for the held job. */
+  const jobAction = useMemo(() => {
+    if (!activeOrder) return null;
+    switch (activeOrder.status) {
+      case 'assigned':
+        return { label: 'Start trip', run: handleStartTrip, busy: startingTrip };
+      case 'on_the_way':
+        return { label: "I've arrived", run: handleArrive, busy: arriving };
+      case 'arrived':
+        return {
+          label: 'Enter start code',
+          run: () => setOtpSheetOpen(true),
+          busy: startingService,
+        };
+      case 'in_progress':
+        return {
+          label: 'Complete job',
+          run: () => setCompleteSheetOpen(true),
+          busy: completing,
+        };
+      default:
+        return null;
+    }
+  }, [
+    activeOrder,
+    handleStartTrip,
+    handleArrive,
+    startingTrip,
+    arriving,
+    startingService,
+    completing,
+  ]);
 
   const kycMsg = KYC_MESSAGE[kycStatus];
 
+  if (isLoading || !worker) {
+    return (
+      <View style={[styles.root, { paddingTop: insets.top + spacing.lg }]}>
+        <View style={styles.pad}>
+          <Skeleton width="60%" height={22} />
+          <Skeleton width="100%" height={180} style={{ marginTop: spacing.lg }} />
+          <Skeleton width="100%" height={140} style={{ marginTop: spacing.lg }} />
+        </View>
+      </View>
+    );
+  }
+
   return (
-    <SafeAreaView className="flex-1 bg-lightBg">
-      <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 24 }}>
-        {/* Header */}
-        <View className="bg-navy px-5 pt-6 pb-8 rounded-b-3xl">
-          <View className="flex-row items-center justify-between">
-            <View>
-              <Text className="text-slate-400 text-sm">Hey,</Text>
-              <Text className="text-white text-2xl font-bold">{worker.name}</Text>
-            </View>
-            <View className="items-end">
-              <Text className={`text-xs font-bold uppercase mb-1 ${isOnline ? 'text-emerald-400' : 'text-slate-400'}`}>
-                {isOnline ? 'Online' : 'Offline'}
+    <View style={[styles.root, { paddingTop: insets.top + spacing.sm }]}>
+      <ScrollView
+        contentContainerStyle={[
+          styles.scroll,
+          { paddingBottom: bottomNavClearance + insets.bottom },
+        ]}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* ── Header ───────────────────────────────────────────────────── */}
+        <View style={styles.header}>
+          <Avatar name={worker.name} uri={worker.avatarUrl} size={44} />
+          <View style={styles.flex}>
+            <Text variant="caption" color={colors.textMuted}>
+              Zappy for Professionals
+            </Text>
+            <Text variant="heading3" numberOfLines={1}>
+              {worker.name}
+            </Text>
+          </View>
+        </View>
+
+        {/* ── KYC gate ─────────────────────────────────────────────────── */}
+        {!kycApproved && kycMsg ? (
+          <Appear>
+            <Card variant="outline" style={styles.kycCard}>
+              <View style={styles.kycRow}>
+                <View style={styles.kycIcon}>
+                  <ShieldAlert size={18} color={colors.accentDark} />
+                </View>
+                <View style={styles.flex}>
+                  <Text variant="body" weight="semibold">
+                    {kycMsg.title}
+                  </Text>
+                  <Text variant="caption" color={colors.textSecondary}>
+                    {kycMsg.body}
+                  </Text>
+                </View>
+              </View>
+              {kycMsg.canRetry ? (
+                <Button
+                  label="Go to KYC"
+                  variant="secondary"
+                  size="small"
+                  onPress={() => router.push('/worker/kyc')}
+                  style={styles.kycButton}
+                />
+              ) : null}
+            </Card>
+          </Appear>
+        ) : null}
+
+        {/* ── Online status ────────────────────────────────────────────── */}
+        <Appear delay={40}>
+          <OnlineHero
+            online={isOnline}
+            onlineSince={worker.onlineSince}
+            canGoOnline={kycApproved}
+            busy={goingOnline || goingOffline}
+            onToggle={toggleOnline}
+          />
+        </Appear>
+
+        {error ? (
+          <Card variant="outline" style={styles.errorCard}>
+            <Text variant="bodySmall" color={colors.errorDark}>
+              {error}
+            </Text>
+          </Card>
+        ) : null}
+
+        {/* ── Live offer ───────────────────────────────────────────────── */}
+        {offer ? (
+          <Appear offsetY={8}>
+            <OfferCard
+              offer={offer}
+              secondsLeft={offerSecondsLeft}
+              accepting={accepting}
+              onAccept={handleAccept}
+              onReject={handleReject}
+            />
+          </Appear>
+        ) : null}
+
+        {/* ── Current job ──────────────────────────────────────────────── */}
+        {activeOrder ? (
+          <Appear delay={80}>
+            <ActiveJobCard
+              order={activeOrder}
+              busy={jobAction?.busy}
+              actionLabel={jobAction?.label}
+              onAction={jobAction?.run}
+              onChat={() => router.push(`/chat/${activeOrder._id}`)}
+            />
+          </Appear>
+        ) : isOnline && !offer ? (
+          <Appear delay={80}>
+            <Card variant="outline" style={styles.waitingCard}>
+              <BellRing size={20} color={colors.textMuted} />
+              <Text variant="bodySmall" weight="semibold">
+                Waiting for job requests
               </Text>
-              <Switch
-                value={isOnline}
-                onValueChange={toggleOnline}
-                disabled={goingOnline || goingOffline || !kycApproved}
-                trackColor={{ false: '#334155', true: '#16A34A' }}
-                thumbColor="#fff"
+              <Text variant="caption" color={colors.textSecondary} align="center">
+                You&apos;ll get a notification the moment something comes in near you.
+              </Text>
+            </Card>
+          </Appear>
+        ) : null}
+
+        {/* ── Earnings ─────────────────────────────────────────────────── */}
+        <Appear delay={120}>
+          <EarningsSummary
+            earningsRupees={earnings?.earningsRupees}
+            jobs={earnings?.jobs}
+            avgPerJobRupees={earnings?.avgEarningPerJobRupees}
+            cashJobs={earnings?.cashJobs}
+            onlineJobs={earnings?.onlineJobs}
+            lifetimeRupees={worker.wallet?.totalEarnings}
+            onPress={() => router.push('/worker/(tabs)/earnings')}
+          />
+        </Appear>
+
+        {/* ── Today's activity ─────────────────────────────────────────── */}
+        <Appear delay={160}>
+          <View style={styles.block}>
+            <View style={styles.blockHead}>
+              <SectionTitle style={styles.blockTitle}>Recent jobs</SectionTitle>
+              <Button
+                label="See all"
+                variant="ghost"
+                size="small"
+                iconRight={<ChevronRight size={14} color={colors.primary} />}
+                onPress={() => router.push('/worker/(tabs)/offers')}
               />
             </View>
-          </View>
 
-          <View className="flex-row gap-4 mt-6">
-            <View className="flex-1 bg-white/10 rounded-2xl p-3">
-              <Text className="text-slate-300 text-[11px] font-bold uppercase">Rating</Text>
-              <Text className="text-white text-xl font-extrabold mt-0.5">{worker.rating?.toFixed(1) ?? '5.0'}</Text>
-            </View>
-            <View className="flex-1 bg-white/10 rounded-2xl p-3">
-              <Text className="text-slate-300 text-[11px] font-bold uppercase">Completed</Text>
-              <Text className="text-white text-xl font-extrabold mt-0.5">{worker.completedJobs}</Text>
-            </View>
+            {orders.length === 0 ? (
+              <EmptyState
+                title="No jobs yet"
+                message={
+                  kycApproved
+                    ? 'Go online and your first request will show up here.'
+                    : 'Finish KYC to start receiving job requests.'
+                }
+              />
+            ) : (
+              orders.slice(0, 3).map((order) => (
+                <Card
+                  key={order._id}
+                  variant="outline"
+                  onPress={() => router.push('/worker/(tabs)/offers')}
+                  padding={spacing.md}
+                >
+                  <View style={styles.recentRow}>
+                    <View style={styles.flex}>
+                      <Text variant="bodySmall" weight="semibold" numberOfLines={1}>
+                        {order.service.replace(/_/g, ' ')}
+                      </Text>
+                      <Text variant="caption" color={colors.textSecondary}>
+                        {order.status.replace(/_/g, ' ')}
+                      </Text>
+                    </View>
+                    {typeof order.pricing?.total === 'number' ? (
+                      <Text variant="bodySmall" weight="semibold">
+                        ₹{order.pricing.total}
+                      </Text>
+                    ) : null}
+                  </View>
+                </Card>
+              ))
+            )}
           </View>
-        </View>
-
-        {/* KYC banner */}
-        {!kycApproved ? (
-          <TouchableOpacity
-            className="mx-5 -mt-4 bg-amber-50 border border-amber-200 rounded-2xl p-4 flex-row items-center gap-3"
-            onPress={() => kycMsg.canRetry && router.push('/worker/kyc' as never)}
-          >
-            <ShieldAlert size={20} color="#B45309" />
-            <View className="flex-1">
-              <Text className="text-sm font-bold text-amber-800">{kycMsg.title}</Text>
-              <Text className="text-xs text-amber-700 mt-0.5">{kycMsg.body}</Text>
-            </View>
-          </TouchableOpacity>
-        ) : null}
-
-        {/* Active job */}
-        {activeOrder ? (
-          <View className="mx-5 mt-5 bg-white rounded-3xl border border-gray-100 p-5">
-            <View className="flex-row items-center justify-between mb-1">
-              <Text className="text-lg font-bold text-navy capitalize">{String(activeOrder.service).replace(/_/g, ' ')}</Text>
-              <Text className="text-primary font-bold">₹{activeOrder.pricing?.total ?? '—'}</Text>
-            </View>
-            <View className="flex-row items-start gap-2 mt-2">
-              <MapPin size={14} color="#64748B" style={{ marginTop: 2 }} />
-              <Text className="text-sm text-gray-500 flex-1">{activeOrder.pickupLocation?.address}</Text>
-            </View>
-
-            <View className="flex-row items-center gap-3 mt-4">
-              <TouchableOpacity
-                className="flex-1 flex-row items-center justify-center gap-2 border border-gray-200 rounded-xl p-3"
-                onPress={() => router.push(`/chat/${activeOrder._id}` as never)}
-              >
-                <MessageSquare size={16} color="#2563EB" /><Text className="font-semibold text-navy">Chat</Text>
-              </TouchableOpacity>
-            </View>
-
-            <View className="mt-3">
-              {activeOrder.status === 'assigned' ? (
-                <TouchableOpacity className="bg-orange-500 rounded-xl p-4 items-center flex-row justify-center gap-2" onPress={handleStartTrip} disabled={startingTrip}>
-                  {startingTrip ? <ActivityIndicator color="#fff" /> : <Navigation size={16} color="#fff" />}
-                  <Text className="text-white font-bold">Start trip</Text>
-                </TouchableOpacity>
-              ) : activeOrder.status === 'on_the_way' ? (
-                <TouchableOpacity className="bg-orange-500 rounded-xl p-4 items-center flex-row justify-center gap-2" onPress={handleArrive} disabled={arriving}>
-                  {arriving ? <ActivityIndicator color="#fff" /> : <MapPin size={16} color="#fff" />}
-                  <Text className="text-white font-bold">I've arrived</Text>
-                </TouchableOpacity>
-              ) : activeOrder.status === 'arrived' ? (
-                <TouchableOpacity className="bg-orange-500 rounded-xl p-4 items-center flex-row justify-center gap-2" onPress={() => setOtpModalOpen(true)}>
-                  <CheckCircle2 size={16} color="#fff" />
-                  <Text className="text-white font-bold">Start service (enter OTP)</Text>
-                </TouchableOpacity>
-              ) : activeOrder.status === 'in_progress' ? (
-                <TouchableOpacity className="bg-emerald-600 rounded-xl p-4 items-center flex-row justify-center gap-2" onPress={handleComplete} disabled={completing}>
-                  {completing ? <ActivityIndicator color="#fff" /> : <Camera size={16} color="#fff" />}
-                  <Text className="text-white font-bold">Mark complete</Text>
-                </TouchableOpacity>
-              ) : null}
-            </View>
-          </View>
-        ) : isOnline ? (
-          <View className="mx-5 mt-8 items-center py-10">
-            <View className="w-16 h-16 rounded-full bg-orange-50 items-center justify-center mb-3">
-              <Zap size={26} color="#F97316" />
-            </View>
-            <Text className="text-navy font-bold text-base">Waiting for jobs…</Text>
-            <Text className="text-gray-400 text-sm mt-1">We'll alert you the moment one comes in</Text>
-          </View>
-        ) : (
-          <View className="mx-5 mt-8 items-center py-10">
-            <Text className="text-gray-400 text-sm">Go online to start receiving jobs</Text>
-          </View>
-        )}
+        </Appear>
       </ScrollView>
 
-      {/* Incoming offer modal */}
-      <Modal visible={!!offer} transparent animationType="slide">
-        {offer ? (
-          <View className="flex-1 justify-end bg-black/50">
-            <View className="bg-white rounded-t-3xl p-6">
-              <View className="flex-row items-center justify-between mb-3">
-                <View className="flex-row items-center gap-2">
-                  <Clock size={16} color="#F97316" />
-                  <Text className="text-sm font-bold text-orange-600">New job · {offerSecondsLeft}s</Text>
-                </View>
-                <TouchableOpacity onPress={handleReject}><X size={20} color="#94A3B8" /></TouchableOpacity>
-              </View>
+      {/* ── Start code ───────────────────────────────────────────────────── */}
+      <BottomSheet
+        visible={otpSheetOpen}
+        onClose={() => setOtpSheetOpen(false)}
+        title="Enter the start code"
+      >
+        <Text variant="bodySmall" color={colors.textSecondary}>
+          Ask the customer for the 4-digit code shown in their app.
+        </Text>
+        <Input
+          placeholder="0000"
+          value={otpInput}
+          onChangeText={setOtpInput}
+          keyboardType="number-pad"
+          maxLength={6}
+          containerStyle={styles.otpInput}
+        />
+        <Button
+          label="Start service"
+          onPress={handleStartService}
+          disabled={otpInput.length < 4}
+          loading={startingService}
+          fullWidth
+        />
+      </BottomSheet>
 
-              <Text className="text-xl font-bold text-navy capitalize">{offer.service.replace(/_/g, ' ')}</Text>
-              <View className="flex-row items-start gap-2 mt-2">
-                <MapPin size={14} color="#64748B" style={{ marginTop: 2 }} />
-                <Text className="text-sm text-gray-500 flex-1">{offer.pickupAddress}</Text>
-              </View>
-              {offer.distanceKm ? <Text className="text-xs text-gray-400 mt-1">{offer.distanceKm} km away</Text> : null}
-              {offer.description ? <Text className="text-sm text-gray-600 mt-2">{offer.description}</Text> : null}
-
-              <View className="bg-orange-50 rounded-2xl p-4 mt-4 flex-row items-center justify-between">
-                <Text className="text-sm font-semibold text-orange-700">You'll earn</Text>
-                <Text className="text-2xl font-extrabold text-orange-700">₹{Math.round(offer.price)}</Text>
-              </View>
-
-              <View className="flex-row gap-3 mt-4">
-                <TouchableOpacity className="flex-1 border border-gray-200 rounded-xl p-4 items-center" onPress={handleReject}>
-                  <Text className="font-bold text-gray-500">Decline</Text>
-                </TouchableOpacity>
-                <TouchableOpacity className="flex-1 bg-orange-500 rounded-xl p-4 items-center flex-row justify-center gap-2" onPress={handleAccept} disabled={accepting}>
-                  {accepting ? <ActivityIndicator color="#fff" /> : null}
-                  <Text className="font-bold text-white">Accept</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        ) : null}
-      </Modal>
-
-      {/* Start-service OTP modal */}
-      <Modal visible={otpModalOpen} transparent animationType="fade" onRequestClose={() => setOtpModalOpen(false)}>
-        <View className="flex-1 justify-center items-center bg-black/50 px-6">
-          <View className="bg-white rounded-3xl p-6 w-full">
-            <Text className="text-lg font-bold text-navy mb-1">Enter start OTP</Text>
-            <Text className="text-sm text-gray-500 mb-4">Ask the customer for the 4-6 digit code to begin the service.</Text>
-            <TextInput
-              className="border border-gray-200 rounded-xl p-4 text-2xl text-center tracking-[10px] mb-4"
-              placeholder="••••"
-              keyboardType="number-pad"
-              maxLength={6}
-              value={otpInput}
-              onChangeText={(t) => setOtpInput(t.replace(/\D/g, ''))}
-              autoFocus
-            />
-            <TouchableOpacity
-              className={`rounded-xl p-4 items-center flex-row justify-center gap-2 ${otpInput.length >= 4 ? 'bg-orange-500' : 'bg-gray-300'}`}
-              onPress={handleStartService}
-              disabled={otpInput.length < 4 || startingService}
-            >
-              {startingService ? <ActivityIndicator color="#fff" /> : null}
-              <Text className="text-white font-bold">Confirm & start</Text>
-            </TouchableOpacity>
-            <TouchableOpacity className="mt-3 items-center" onPress={() => { setOtpModalOpen(false); setOtpInput(''); }}>
-              <Text className="text-gray-400 font-semibold">Cancel</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-    </SafeAreaView>
+      {/* ── Completion ───────────────────────────────────────────────────── */}
+      <BottomSheet
+        visible={completeSheetOpen}
+        onClose={() => setCompleteSheetOpen(false)}
+        title="Complete this job?"
+      >
+        <Text variant="bodySmall" color={colors.textSecondary}>
+          Mark the work as finished. The customer is asked to rate you afterwards.
+        </Text>
+        <Button
+          label="Yes, complete"
+          variant="success"
+          onPress={handleComplete}
+          loading={completing}
+          fullWidth
+          style={styles.sheetPrimary}
+        />
+        <Button
+          label="Not yet"
+          variant="secondary"
+          onPress={() => setCompleteSheetOpen(false)}
+          fullWidth
+          style={styles.sheetSecondary}
+        />
+      </BottomSheet>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: colors.background },
+  flex: { flex: 1 },
+  pad: { paddingHorizontal: screenPadding },
+  scroll: { paddingHorizontal: screenPadding, gap: spacing.lg },
+
+  header: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+
+  kycCard: { backgroundColor: colors.warningTint, borderColor: colors.warningTint, gap: spacing.md },
+  kycRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  kycIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  kycButton: { alignSelf: 'flex-start' },
+
+  errorCard: { backgroundColor: colors.errorTint, borderColor: colors.errorTint },
+
+  waitingCard: { alignItems: 'center', gap: spacing.xs, paddingVertical: spacing.xl },
+
+  block: { gap: spacing.sm },
+  blockHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  blockTitle: { marginBottom: 0 },
+  recentRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+
+  otpInput: { marginTop: spacing.base, marginBottom: spacing.lg },
+  sheetPrimary: { marginTop: spacing.lg },
+  sheetSecondary: { marginTop: spacing.sm },
+});

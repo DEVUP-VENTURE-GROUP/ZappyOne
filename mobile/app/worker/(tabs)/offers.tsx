@@ -18,7 +18,9 @@ export default function WorkerJobsScreen() {
   const { data, isLoading, refetch, isFetching } = useGetWorkerOrdersQuery(page);
 
   const orders = data?.orders ?? [];
-  const totalPages = data?.totalPages ?? 1;
+  // `/workers/orders` sends no pagination metadata, so there is no total to
+  // read — a full page implies there may be more.
+  const hasMore = orders.length > 0 && orders.length % 20 === 0;
 
   return (
     <SafeAreaView className="flex-1 bg-white">
@@ -59,14 +61,14 @@ export default function WorkerJobsScreen() {
             </View>
           }
           ListFooterComponent={
-            totalPages > 1 ? (
+            page > 1 || hasMore ? (
               <View className="flex-row items-center justify-center gap-4 mt-2">
                 <TouchableOpacity disabled={page <= 1} onPress={() => setPage((p) => p - 1)}>
                   <Text className={`text-sm font-bold ${page <= 1 ? 'text-gray-300' : 'text-orange-500'}`}>Previous</Text>
                 </TouchableOpacity>
-                <Text className="text-xs text-gray-400">Page {page} of {totalPages}</Text>
-                <TouchableOpacity disabled={page >= totalPages} onPress={() => setPage((p) => p + 1)}>
-                  <Text className={`text-sm font-bold ${page >= totalPages ? 'text-gray-300' : 'text-orange-500'}`}>Next</Text>
+                <Text className="text-xs text-gray-400">Page {page}</Text>
+                <TouchableOpacity disabled={!hasMore} onPress={() => setPage((p) => p + 1)}>
+                  <Text className={`text-sm font-bold ${!hasMore ? 'text-gray-300' : 'text-orange-500'}`}>Next</Text>
                 </TouchableOpacity>
               </View>
             ) : null

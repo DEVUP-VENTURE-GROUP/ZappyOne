@@ -657,6 +657,14 @@ export interface WorkerKyc {
 }
 
 /** `worker.model.js`, as returned by `GET /workers/me`. */
+/**
+ * `GET /workers/me`, unwrapped from its `{ worker: … }` envelope.
+ *
+ * The fields after `currentLocation` are all returned by the live endpoint and
+ * were simply missing from this type — `currentOrderId` in particular is the
+ * server's own pointer at the job in progress, which is more reliable than
+ * scanning the orders list for an active status.
+ */
 export interface WorkerProfile {
   _id: string;
   phone: string;
@@ -672,6 +680,20 @@ export interface WorkerProfile {
   isAvailable: boolean;
   isBlocked?: boolean;
   currentLocation?: { coordinates: [number, number] };
+
+  /** ISO timestamp of when this online session began; null when offline. */
+  onlineSince?: string | null;
+  /** The job currently held, straight from the server. */
+  currentOrderId?: string | null;
+  /** Rupees. `balance` is withdrawable, `totalEarnings` is lifetime. */
+  wallet?: { balance: number; totalEarnings: number };
+  skillPrimary?: string | null;
+  /** Offer/reject counters the server keeps for acceptance-rate enforcement. */
+  penalties?: {
+    totalOffers?: number;
+    totalRejects?: number;
+    [key: string]: unknown;
+  };
 }
 
 /** `POST /workers/kyc/submit` body — `*Url` fields are actually S3 keys from the presign flow. */
