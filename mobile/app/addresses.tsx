@@ -16,7 +16,10 @@ const TAG_ICON: Record<string, React.ReactNode> = {
 
 export default function AddressesScreen() {
   const router = useRouter();
-  const { data: addresses = [], isLoading, refetch } = useGetAddressesQuery();
+  // `getAddresses` returns both saved addresses and recent locations; this
+  // screen manages the saved ones only.
+  const { data: savedLocations, isLoading, refetch } = useGetAddressesQuery();
+  const addresses = savedLocations?.addresses ?? [];
   const [addAddress, { isLoading: adding }] = useAddAddressMutation();
   const [deleteAddress] = useDeleteAddressMutation();
   const [setDefaultAddress] = useSetDefaultAddressMutation();

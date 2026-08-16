@@ -10,6 +10,8 @@ import type {
   UserLoginResponse,
   SavedAddress,
   SavedAddressWire,
+  SavedLocations,
+  RecentLocation,
   StoredPaymentMethod,
   WorkerProfile,
 } from '../../types/api';
@@ -21,7 +23,16 @@ interface WorkerLoginResponse {
 }
 
 interface MeEnvelope { user: UserProfile }
-interface AddressesEnvelope { addresses: SavedAddressWire[] }
+/**
+ * `GET /users/addresses` returns BOTH lists in one payload, in two different
+ * coordinate formats: `addresses` carry a GeoJSON point, `recentLocations`
+ * carry flat lat/lng (`user.model.js`). The server sorts recents by `usedAt`
+ * and caps them at 5 (`user.controller.js:getAddresses`).
+ */
+interface AddressesEnvelope {
+  addresses?: SavedAddressWire[];
+  recentLocations?: RecentLocation[];
+}
 
 /**
  * Flattens the server's GeoJSON point onto the address.
@@ -83,14 +94,23 @@ export const authApi = apiSlice.injectEndpoints({
     }),
 
     // ── Saved addresses ───────────────────────────────────────────────────────
-    getAddresses: builder.query<SavedAddress[], void>({
+    getAddresses: builder.query<SavedLocations, void>({
       query: () => ({ url: '/users/addresses' }),
-      transformResponse: (r: AddressesEnvelope | SavedAddressWire[]) =>
-        (Array.isArray(r) ? r : (r.addresses ?? []))
-          // An entry with no coordinates can't be dispatched against, so it is
-          // dropped rather than shown as a bookable option.
-          .filter((a) => Array.isArray(a.location?.coordinates) && a.location.coordinates.length === 2)
-          .map(normalizeAddress),
+      transformResponse: (r: AddressesEnvelope | SavedAddressWire[]): SavedLocations => {
+        const wire = Array.isArray(r) ? r : (r.addresses ?? []);
+        return {
+          addresses: wire
+            // An entry with no coordinates can't be dispatched against, so it
+            // is dropped rather than shown as a bookable option.
+            .filter(
+              (a) => Array.isArray(a.location?.coordinates) && a.location.coordinates.length === 2,
+            )
+            .map(normalizeAddress),
+          recentLocations: (Array.isArray(r) ? [] : (r.recentLocations ?? [])).filter(
+            (l) => typeof l.lat === 'number' && typeof l.lng === 'number' && Boolean(l.address),
+          ),
+        };
+      },
       providesTags: ['User'],
     }),
     addAddress: builder.mutation<SavedAddress, Omit<SavedAddress, '_id'>>({

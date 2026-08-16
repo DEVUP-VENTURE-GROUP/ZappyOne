@@ -33,7 +33,7 @@
  * ----------------------------------------------------------------------------
  */
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -73,8 +73,13 @@ import {
   Text,
   formatRupees,
 } from '../../components/ui';
-import { AddressSheet, type BookingLocation } from '../../components/booking/AddressSheet';
 import { QuoteCard } from '../../components/booking/QuoteCard';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import {
+  locationDraftCleared,
+  locationSeeded,
+  type DraftLocation,
+} from '../../store/locationDraftSlice';
 import {
   normalizeQuote,
   quotedTotalForGuard,
@@ -128,7 +133,7 @@ export default function BookServiceScreen() {
   const insets = useSafeAreaInsets();
 
   // ── Selection state ───────────────────────────────────────────────────────
-  const [location, setLocation] = useState<BookingLocation | null>(null);
+  const [location, setLocation] = useState<DraftLocation | null>(null);
   const [tier, setTier] = useState<BookingTierKey>('standard');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
   const [boost, setBoost] = useState(0);
@@ -137,7 +142,6 @@ export default function BookServiceScreen() {
   const [appliedPromo, setAppliedPromo] = useState<string | null>(null);
   const [promoError, setPromoError] = useState<string | null>(null);
 
-  const [addressSheetOpen, setAddressSheetOpen] = useState(false);
   const [detailsSheetOpen, setDetailsSheetOpen] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [payingOnline, setPayingOnline] = useState(false);
@@ -145,7 +149,8 @@ export default function BookServiceScreen() {
   // ── Data ──────────────────────────────────────────────────────────────────
   const { data: services = [], isLoading: catalogLoading } = useGetServicesQuery();
   const { data: categories = [] } = useGetCategoriesQuery();
-  const { data: savedAddresses = [], isLoading: addressesLoading } = useGetAddressesQuery();
+  const { data: savedLocations, isLoading: addressesLoading } = useGetAddressesQuery();
+  const savedAddresses = savedLocations?.addresses ?? [];
 
   const [fetchQuote, quoteState] = useLazyGetQuoteQuery();
   const [validatePromo, { isLoading: validatingPromo }] = useValidatePromoMutation();
@@ -164,6 +169,30 @@ export default function BookServiceScreen() {
   );
 
   const quote = useMemo(() => normalizeQuote(quoteState.data), [quoteState.data]);
+
+  // ── Location picker hand-off ──────────────────────────────────────────────
+  // The picker is its own screen, so it returns through the locationDraft slice
+  // rather than a callback. `requestId` is tracked so a result is applied once
+  // and not re-applied on every subsequent render of this screen.
+  const dispatch = useAppDispatch();
+  const draft = useAppSelector((state) => state.locationDraft);
+  const consumedRequestId = useRef(0);
+
+  useEffect(() => {
+    if (!draft.picked || draft.requestId === consumedRequestId.current) return;
+    consumedRequestId.current = draft.requestId;
+    setLocation(draft.picked);
+    setSubmitError(null);
+    dispatch(locationDraftCleared());
+  }, [draft, dispatch]);
+
+  const openLocationPicker = useCallback(() => {
+    // Seeds the map where the booking already stands so it doesn't jump. Goes
+    // through the store, not router params — the address is personal data and
+    // params end up in the URL. See locationDraftSlice.
+    dispatch(locationSeeded(location));
+    router.push('/location/picker');
+  }, [dispatch, router, location]);
   const quoteError = quoteState.error
     ? getApiErrorMessage(quoteState.error, 'Pricing is unavailable right now.')
     : null;
@@ -433,7 +462,7 @@ export default function BookServiceScreen() {
             <SectionTitle>Where</SectionTitle>
             <Card
               variant="outline"
-              onPress={() => setAddressSheetOpen(true)}
+              onPress={openLocationPicker}
               accessibilityLabel={
                 location ? 'Change service location' : 'Set service location'
               }
@@ -744,26 +773,13 @@ export default function BookServiceScreen() {
                   : 'Confirm booking'
           }
           icon={busy ? undefined : <Zap size={17} color={colors.textInverse} />}
-          onPress={location ? confirm : () => setAddressSheetOpen(true)}
+          onPress={location ? confirm : openLocationPicker}
           loading={busy}
           disabled={Boolean(location) && !canConfirm}
           fullWidth
           size="large"
         />
       </View>
-
-      <AddressSheet
-        visible={addressSheetOpen}
-        onClose={() => setAddressSheetOpen(false)}
-        onConfirm={(next) => {
-          setLocation(next);
-          setAddressSheetOpen(false);
-          setSubmitError(null);
-        }}
-        savedAddresses={savedAddresses}
-        savedLoading={addressesLoading}
-        initial={location}
-      />
 
       <BottomSheet
         visible={detailsSheetOpen}

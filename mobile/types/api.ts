@@ -424,6 +424,28 @@ export interface SavedAddress {
   isDefault?: boolean;
 }
 
+/**
+ * A place the customer booked to recently.
+ *
+ * Unlike `savedAddresses`, these are stored with FLAT `lat`/`lng` on the server
+ * (`user.model.js` → `recentLocations`), so no coordinate normalisation applies.
+ * They are write-on-book: `POST /users/recent-location` de-duplicates by address
+ * and keeps the newest 10; the read endpoint returns the newest 5 by `usedAt`.
+ * There is no id — the address string is the key the server de-duplicates on.
+ */
+export interface RecentLocation {
+  address: string;
+  lat: number;
+  lng: number;
+  usedAt?: string;
+}
+
+/** Both lists from `GET /users/addresses`, which returns them together. */
+export interface SavedLocations {
+  addresses: SavedAddress[];
+  recentLocations: RecentLocation[];
+}
+
 /** Raw `GET /users/addresses` entry, before normalisation. */
 export interface SavedAddressWire {
   _id: string;
