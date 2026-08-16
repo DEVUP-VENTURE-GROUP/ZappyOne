@@ -125,7 +125,8 @@ export default function ProfileScreen() {
               right={
                 <IconButton
                   icon={<Pencil size={16} color={colors.primary} />}
-                  onPress={() => router.push('/account/edit')}
+                  // `as never`: typed-routes stale-cache artifact — route is real (app/account/edit.tsx).
+                  onPress={() => router.push('/account/edit' as never)}
                   variant="surface"
                   accessibilityLabel="Edit your profile"
                 />
