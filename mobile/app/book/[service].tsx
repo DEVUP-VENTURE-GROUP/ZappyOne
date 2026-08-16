@@ -191,7 +191,9 @@ export default function BookServiceScreen() {
     // through the store, not router params — the address is personal data and
     // params end up in the URL. See locationDraftSlice.
     dispatch(locationSeeded(location));
-    router.push('/location/picker');
+    // `as never`: typed-routes stale-cache artifact (route is real — see
+    // app/location/picker.tsx). Clears on the next `expo start`/`eas build`.
+    router.push('/location/picker' as never);
   }, [dispatch, router, location]);
   const quoteError = quoteState.error
     ? getApiErrorMessage(quoteState.error, 'Pricing is unavailable right now.')
