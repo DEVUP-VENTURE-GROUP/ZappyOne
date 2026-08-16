@@ -1,134 +1,297 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, SafeAreaView, Alert, ScrollView } from 'react-native';
+/**
+ * Profile — the account hub.
+ * ----------------------------------------------------------------------------
+ * Every row here leads somewhere that exists. The sections map 1:1 to live
+ * endpoints, checked against the running API rather than assumed:
+ *
+ *   Profile          GET/PATCH /users/me
+ *   Addresses        /users/addresses
+ *   Payment methods  /users/payment-methods
+ *   Wallet           /wallet
+ *   Rewards          /rewards  ·  /gamification
+ *   Notifications    /notifications
+ *   Support          /content/faqs
+ *   Policies         /content/policies
+ *   Sign out         POST /auth/logout
+ *
+ * Rows carry live values where the API gives one — the wallet balance, the
+ * unread notification count, the saved-address count. A row whose data hasn't
+ * loaded shows no detail line rather than a zero, because "₹0" and "not loaded
+ * yet" are different statements.
+ * ----------------------------------------------------------------------------
+ */
+
+import React, { useCallback, useState } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  LogOut, User, Phone, Shield, MapPin, Wallet, Gift, Bell,
-  CreditCard, HelpCircle, FileText, ChevronRight,
+  Bell,
+  CreditCard,
+  Gift,
+  LifeBuoy,
+  LogOut,
+  MapPin,
+  Pencil,
+  ScrollText,
+  Star,
+  Wallet as WalletIcon,
 } from 'lucide-react-native';
-import type { RootState } from '../../store';
-import { logout as logoutAction } from '../../store/authSlice';
-import { socketClient } from '../../services/socket/socketClient';
-import { apiSlice } from '../../services/api/apiSlice';
-import { useLogoutMutation } from '../../services/api/authApi';
+import {
+  Appear,
+  BottomSheet,
+  Button,
+  Card,
+  IconButton,
+  Text,
+  ZappyLogo,
+  formatRupees,
+} from '../../components/ui';
+import {
+  AccountRow,
+  AccountSection,
+  ProfileHeader,
+} from '../../components/account/AccountUI';
+import {
+  useGetAddressesQuery,
+  useGetMeQuery,
+  useLogoutMutation,
+} from '../../services/api/authApi';
+import { useGetWalletQuery } from '../../services/api/walletApi';
+import { useGetRewardsQuery } from '../../services/api/rewardsApi';
+import { useListNotificationsQuery } from '../../services/api/notificationsApi';
 import { getRefreshToken, clearSession } from '../../services/api/tokenStorage';
 import { useAppDispatch } from '../../store/hooks';
-
-interface MenuItem {
-  icon: React.ReactNode;
-  label: string;
-  sub?: string;
-  route: string;
-}
+import { logout as logoutAction } from '../../store/authSlice';
+import { apiSlice } from '../../services/api/apiSlice';
+import { colors, accent, success } from '../../theme/colors';
+import { spacing, screenPadding, bottomNavClearance } from '../../theme/spacing';
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const dispatch = useAppDispatch();
-  const user = useSelector((s: RootState) => s.auth.user);
-  const role = useSelector((s: RootState) => s.auth.role);
+
+  const [signOutOpen, setSignOutOpen] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
+
+  const { data: me } = useGetMeQuery();
+  const { data: savedLocations } = useGetAddressesQuery();
+  const { data: wallet } = useGetWalletQuery();
+  const { data: rewards } = useGetRewardsQuery();
+  const { data: notifications } = useListNotificationsQuery();
+
+  const addressCount = savedLocations?.addresses.length;
+  const unread = notifications?.unread;
+
   const [logoutMutation] = useLogoutMutation();
 
-  const menuGroups: { title: string; items: MenuItem[] }[] = [
-    {
-      title: 'Activity',
-      items: [
-        { icon: <Wallet size={18} color="#2563EB" />, label: 'Wallet', route: '/wallet' },
-        { icon: <Gift size={18} color="#2563EB" />, label: 'Rewards', sub: 'Points & scratch cards', route: '/rewards' },
-        { icon: <Bell size={18} color="#2563EB" />, label: 'Notifications', route: '/notifications' },
-      ],
-    },
-    {
-      title: 'Account',
-      items: [
-        { icon: <MapPin size={18} color="#2563EB" />, label: 'Saved addresses', route: '/addresses' },
-        { icon: <CreditCard size={18} color="#2563EB" />, label: 'Payment methods', route: '/payment-methods' },
-      ],
-    },
-    {
-      title: 'Help',
-      items: [
-        { icon: <HelpCircle size={18} color="#2563EB" />, label: 'FAQs & Support', route: '/support' },
-        { icon: <FileText size={18} color="#2563EB" />, label: 'Terms & Policies', route: '/policies' },
-      ],
-    },
-  ];
-
-  const doLogout = async () => {
+  const signOut = useCallback(async () => {
+    setSigningOut(true);
     try {
       const refreshToken = await getRefreshToken();
       if (refreshToken) {
-        await logoutMutation({ refreshToken }).unwrap().catch(() => {
-          // Best-effort server-side revoke — local session clears regardless.
-        });
+        // Best effort — a failed revoke must not trap the customer in a
+        // session they've asked to end.
+        await logoutMutation({ refreshToken }).unwrap().catch(() => {});
       }
     } finally {
       await clearSession();
-      socketClient.destroy();
-      dispatch(apiSlice.util.resetApiState());
       dispatch(logoutAction());
+      // Without this the next account inherits this one's cached orders,
+      // wallet and addresses until each query happens to refetch.
+      dispatch(apiSlice.util.resetApiState());
+      setSigningOut(false);
       router.replace('/(auth)/login');
     }
-  };
+  }, [dispatch, router, logoutMutation]);
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 40 }}>
-        <View className="px-5 pt-8">
-          <View className="items-center mb-8">
-            <View className="w-20 h-20 rounded-full bg-primary/10 items-center justify-center mb-3">
-              <User size={36} color="#2563EB" />
-            </View>
-            <Text className="text-xl font-bold text-navy">{user?.name || 'Zappy User'}</Text>
-            <Text className="text-gray-500 capitalize">{role || 'customer'}</Text>
-          </View>
+    <View style={[styles.root, { paddingTop: insets.top + spacing.sm }]}>
+      <ScrollView
+        contentContainerStyle={[
+          styles.scroll,
+          { paddingBottom: bottomNavClearance + insets.bottom },
+        ]}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* ── Header ───────────────────────────────────────────────────── */}
+        <Appear>
+          <Card variant="outline" style={styles.headerCard}>
+            <ProfileHeader
+              name={me?.name}
+              phone={me?.phone}
+              avatarUrl={me?.avatarUrl}
+              right={
+                <IconButton
+                  icon={<Pencil size={16} color={colors.primary} />}
+                  onPress={() => router.push('/account/edit')}
+                  variant="surface"
+                  accessibilityLabel="Edit your profile"
+                />
+              }
+            />
+          </Card>
+        </Appear>
 
-          <View className="bg-gray-50 rounded-2xl p-4 mb-6">
-            {user?.phone ? (
-              <View className="flex-row items-center gap-3 py-2">
-                <Phone size={16} color="#64748B" />
-                <Text className="text-navy">+91 {user.phone}</Text>
-              </View>
-            ) : null}
-            <View className="flex-row items-center gap-3 py-2">
-              <Shield size={16} color="#64748B" />
-              <Text className="text-navy">Verified account</Text>
-            </View>
-          </View>
+        {/* ── Money ────────────────────────────────────────────────────── */}
+        <Appear delay={40}>
+          <AccountSection title="Payments">
+            <AccountRow
+              icon={<WalletIcon size={17} color={colors.primary} />}
+              label="Zappy Wallet"
+              // No detail until it loads — "₹0" would be a claim, not a blank.
+              detail={
+                wallet ? `Balance ${formatRupees(wallet.balancePaise / 100)}` : undefined
+              }
+              onPress={() => router.push('/wallet')}
+            />
+            <AccountRow
+              icon={<CreditCard size={17} color={colors.primary} />}
+              label="Payment methods"
+              onPress={() => router.push('/payment-methods')}
+            />
+            <AccountRow
+              icon={<Gift size={17} color={accent[600]} />}
+              tint={colors.accentTint}
+              label="Rewards"
+              detail={
+                rewards
+                  ? `${rewards.points.toLocaleString('en-IN')} points`
+                  : undefined
+              }
+              onPress={() => router.push('/rewards')}
+            />
+          </AccountSection>
+        </Appear>
 
-          {menuGroups.map((group) => (
-            <View key={group.title} className="mb-6">
-              <Text className="text-xs font-bold text-gray-400 uppercase mb-2 px-1">{group.title}</Text>
-              <View className="bg-gray-50 rounded-2xl overflow-hidden">
-                {group.items.map((item, i) => (
-                  <TouchableOpacity
-                    key={item.label}
-                    className={`flex-row items-center gap-3 p-4 ${i < group.items.length - 1 ? 'border-b border-white' : ''}`}
-                    onPress={() => router.push(item.route as never)}
-                  >
-                    {item.icon}
-                    <View className="flex-1">
-                      <Text className="text-sm font-semibold text-navy">{item.label}</Text>
-                      {item.sub ? <Text className="text-xs text-gray-400">{item.sub}</Text> : null}
-                    </View>
-                    <ChevronRight size={16} color="#CBD5E1" />
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-          ))}
+        {/* ── Account ──────────────────────────────────────────────────── */}
+        <Appear delay={80}>
+          <AccountSection title="Account">
+            <AccountRow
+              icon={<MapPin size={17} color={colors.primary} />}
+              label="Saved addresses"
+              detail={
+                typeof addressCount === 'number'
+                  ? `${addressCount} saved`
+                  : undefined
+              }
+              onPress={() => router.push('/addresses')}
+            />
+            <AccountRow
+              icon={<Bell size={17} color={colors.primary} />}
+              label="Notifications"
+              right={
+                unread && unread > 0 ? (
+                  <View style={styles.badge}>
+                    <Text variant="caption" color={colors.textInverse}>
+                      {unread > 99 ? '99+' : unread}
+                    </Text>
+                  </View>
+                ) : undefined
+              }
+              onPress={() => router.push('/notifications')}
+            />
+          </AccountSection>
+        </Appear>
 
-          <TouchableOpacity
-            className="flex-row items-center justify-center gap-2 border border-red-200 rounded-xl p-4"
-            onPress={() => Alert.alert('Log out', 'Are you sure you want to log out?', [
-              { text: 'Cancel', style: 'cancel' },
-              { text: 'Log out', style: 'destructive', onPress: doLogout },
-            ])}
-          >
-            <LogOut size={18} color="#EF4444" />
-            <Text className="text-red-500 font-bold">Log out</Text>
-          </TouchableOpacity>
+        {/* ── Help ─────────────────────────────────────────────────────── */}
+        <Appear delay={120}>
+          <AccountSection title="Help & legal">
+            <AccountRow
+              icon={<LifeBuoy size={17} color={success[600]} />}
+              tint={colors.successTint}
+              label="Help & support"
+              onPress={() => router.push('/support')}
+            />
+            <AccountRow
+              icon={<ScrollText size={17} color={colors.textSecondary} />}
+              tint={colors.surfaceTertiary}
+              label="Policies"
+              onPress={() => router.push('/policies')}
+            />
+          </AccountSection>
+        </Appear>
+
+        {/* ── Sign out ─────────────────────────────────────────────────── */}
+        <Appear delay={160}>
+          <AccountSection>
+            <AccountRow
+              icon={<LogOut size={17} color={colors.error} />}
+              tint={colors.errorTint}
+              label="Sign out"
+              destructive
+              right={<View />}
+              onPress={() => setSignOutOpen(true)}
+            />
+          </AccountSection>
+        </Appear>
+
+        {/* ── Brand mark ───────────────────────────────────────────────── */}
+        <View style={styles.brand}>
+          <ZappyLogo size={22} />
+          {me?.rating != null ? (
+            <View style={styles.ratingRow}>
+              <Star size={12} color={colors.accent} fill={colors.accent} />
+              <Text variant="caption" color={colors.textMuted}>
+                Your rating {me.rating.toFixed(1)}
+              </Text>
+            </View>
+          ) : null}
         </View>
       </ScrollView>
-    </SafeAreaView>
+
+      <BottomSheet
+        visible={signOutOpen}
+        onClose={() => setSignOutOpen(false)}
+        title="Sign out?"
+      >
+        <Text variant="bodySmall" color={colors.textSecondary}>
+          You&apos;ll need your phone number to sign back in. Your bookings and
+          saved addresses stay on your account.
+        </Text>
+        <Button
+          label="Sign out"
+          variant="danger"
+          onPress={() => {
+            setSignOutOpen(false);
+            signOut();
+          }}
+          loading={signingOut}
+          fullWidth
+          style={styles.sheetPrimary}
+        />
+        <Button
+          label="Stay signed in"
+          variant="secondary"
+          onPress={() => setSignOutOpen(false)}
+          fullWidth
+          style={styles.sheetSecondary}
+        />
+      </BottomSheet>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: colors.background },
+  scroll: { paddingHorizontal: screenPadding, gap: spacing.lg },
+
+  headerCard: { paddingVertical: spacing.lg },
+
+  badge: {
+    minWidth: 22,
+    height: 22,
+    paddingHorizontal: 6,
+    borderRadius: 11,
+    backgroundColor: colors.error,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  brand: { alignItems: 'center', gap: spacing.xs, paddingTop: spacing.lg },
+  ratingRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xxs },
+
+  sheetPrimary: { marginTop: spacing.lg },
+  sheetSecondary: { marginTop: spacing.sm },
+});

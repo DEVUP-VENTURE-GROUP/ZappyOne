@@ -500,9 +500,16 @@ export interface StoredPaymentMethod {
 
 // ── Wallet ───────────────────────────────────────────────────────────────────
 
+/**
+ * `GET /wallet`, unwrapped from its `{ wallet: … }` envelope.
+ * `dues` is only present when the account carries an outstanding amount
+ * (`wallet.controller.js` merges it in conditionally).
+ */
 export interface Wallet {
   balancePaise: number;
   currency?: string;
+  isFrozen?: boolean;
+  dues?: { amountPaise?: number; reason?: string } | null;
 }
 
 export interface WalletTransaction {
@@ -515,10 +522,16 @@ export interface WalletTransaction {
   createdAt: string;
 }
 
+/**
+ * `GET /wallet/transactions`. The array is under `items`, NOT `transactions` —
+ * verified against the live response. The client previously read
+ * `r.transactions`, so the history list was permanently empty.
+ */
 export interface PaginatedWalletTransactions {
-  transactions: WalletTransaction[];
+  items: WalletTransaction[];
   total?: number;
   page?: number;
+  limit?: number;
 }
 
 // ── Rewards ──────────────────────────────────────────────────────────────────
@@ -531,12 +544,41 @@ export interface ScratchCard {
   scratchedAt?: string | null;
 }
 
+/**
+ * `GET /rewards`. Field names verified against the live response — the previous
+ * declaration had `tier` and `lifetimePoints`, neither of which the server
+ * sends, and omitted the redemption rules the screen needs to explain itself.
+ */
 export interface RewardsSummary {
+  /** False when the rewards programme is switched off server-side. */
+  enabled?: boolean;
   points: number;
-  tier?: string;
-  lifetimePoints?: number;
+  /** What `points` is worth today, already computed by the server. */
+  redeemableRupees?: number;
+  /** Redemption floor; below this the redeem action is refused. */
+  minRedeemPoints?: number;
+  redeemPaisePerPoint?: number;
+  lifetimeEarned?: number;
+  lifetimeRedeemed?: number;
   scratchCards?: ScratchCard[];
   history?: { _id: string; points: number; reason?: string; createdAt: string }[];
+}
+
+/**
+ * `GET /gamification`, unwrapped from its `{ gamification: … }` envelope.
+ * The previous inline type claimed a `nextMilestone` the server never sends.
+ */
+export interface Gamification {
+  level: number;
+  label: string;
+  xp: number;
+  nextLevelXp: number;
+  nextLevelLabel?: string;
+  /** 0–1 toward the next level. */
+  progress: number;
+  streak: number;
+  totalOrders: number;
+  badges: string[];
 }
 
 // ── Plans / subscription ─────────────────────────────────────────────────────

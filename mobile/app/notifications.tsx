@@ -15,7 +15,8 @@ export default function NotificationsScreen() {
   const [markAllRead, { isLoading: markingAll }] = useMarkAllNotificationsReadMutation();
   const socketClient = useSocket();
 
-  const notifications = data?.notifications ?? [];
+  // `items`, not `notifications` — see NotificationsEnvelope.
+  const notifications = data?.items ?? [];
 
   // New notifications push live over the personal room — refresh the list.
   useEffect(() => {

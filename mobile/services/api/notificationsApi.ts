@@ -3,7 +3,18 @@
 import { apiSlice } from './apiSlice';
 import type { AppNotification } from '../../types/api';
 
-interface NotificationsEnvelope { notifications: AppNotification[]; unreadCount?: number }
+/**
+ * `GET /notifications` → `{ items, unread }`. Verified against the live
+ * response. The previous declaration named them `notifications` and
+ * `unreadCount`, neither of which the server sends, so the unread badge could
+ * never appear and the list relied on the array fallback below.
+ */
+export interface NotificationsEnvelope {
+  items: AppNotification[];
+  unread: number;
+  total?: number;
+  page?: number;
+}
 
 export const notificationsApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
@@ -12,8 +23,8 @@ export const notificationsApi = apiSlice.injectEndpoints({
         url: '/notifications',
         params: { page, unreadOnly },
       }),
-      transformResponse: (r: NotificationsEnvelope | AppNotification[]) =>
-        Array.isArray(r) ? { notifications: r } : r,
+      transformResponse: (r: NotificationsEnvelope | AppNotification[]): NotificationsEnvelope =>
+        Array.isArray(r) ? { items: r, unread: 0 } : { ...r, items: r.items ?? [], unread: r.unread ?? 0 },
       providesTags: ['Notification'],
     }),
     markNotificationRead: builder.mutation<void, string>({

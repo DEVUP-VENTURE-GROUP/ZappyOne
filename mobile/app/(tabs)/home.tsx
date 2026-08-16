@@ -127,7 +127,10 @@ export default function HomeScreen() {
     [orders],
   );
 
-  const unreadCount = notifData?.unreadCount ?? notifData?.notifications?.length ?? 0;
+  // `unread` is the server's own count — the previous read was `unreadCount`
+  // falling back to `notifications.length`, and neither key exists, so this
+  // badge was permanently 0.
+  const unreadCount = notifData?.unread ?? 0;
 
   // Actual pixel width of one grid slot, so long labels wrap on word boundaries.
   const categorySlot = Math.floor((width - screenPadding * 2) / categoryColumns);
