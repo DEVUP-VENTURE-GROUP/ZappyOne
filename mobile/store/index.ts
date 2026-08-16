@@ -1,6 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 import authReducer from './authSlice';
 import locationDraftReducer from './locationDraftSlice';
+import offersReducer from './offersSlice';
 import { apiSlice } from '../services/api/apiSlice';
 // Registers every endpoint module on apiSlice — see services/api/index.ts.
 import '../services/api';
@@ -9,6 +10,7 @@ export const store = configureStore({
   reducer: {
     auth: authReducer,
     locationDraft: locationDraftReducer,
+    offers: offersReducer,
     [apiSlice.reducerPath]: apiSlice.reducer,
   },
   middleware: (getDefaultMiddleware) =>

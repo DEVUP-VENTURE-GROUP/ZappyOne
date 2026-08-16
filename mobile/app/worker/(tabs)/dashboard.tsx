@@ -6,9 +6,15 @@
  * only shift in emphasis is that earnings lead, because that is what this
  * screen is opened for.
  *
- * ── LOGIC IS UNCHANGED ─────────────────────────────────────────────────────
- * Every API call, socket subscription and lifecycle handler is carried over
- * verbatim. In particular these behaviours are load-bearing and were kept:
+ * ── LOGIC ──────────────────────────────────────────────────────────────────
+ * Every API call and lifecycle handler is carried over unchanged. The one
+ * structural change is WHERE offer events are handled: `new_job_request`,
+ * `offer.cancelled` and `offer.boosted` now feed `offersSlice` via
+ * `useJobOffers` in the worker tab layout, so an offer arriving while the pro
+ * is on another tab is still captured — previously it landed in this
+ * component's local state and was lost if the dashboard wasn't mounted. The
+ * events, payloads and dispatch behaviour are untouched; only the listener
+ * moved. These behaviours are load-bearing and were kept:
  *
  *   · Accept only PUBLISHES an accept signal. The dispatch worker holds the
  *     atomic lock and picks between everyone who tapped at once. A 200 does
@@ -66,13 +72,10 @@ import {
 import { getApiErrorMessage } from '../../../services/api/apiSlice';
 import { useSocket } from '../../../hooks/useSocket';
 import { useLocationTracker } from '../../../hooks/useLocationTracker';
-import { ACTIVE_ORDER_STATUSES, type JobOffer, type Order } from '../../../types/api';
-import type {
-  JobAssignedEvent,
-  KycRejectedEvent,
-  OfferBoostedEvent,
-  OfferCancelledEvent,
-} from '../../../services/socket/events';
+import { ACTIVE_ORDER_STATUSES, type Order } from '../../../types/api';
+import type { JobAssignedEvent, KycRejectedEvent } from '../../../services/socket/events';
+import { useAppDispatch, useAppSelector } from '../../../store/hooks';
+import { offerRemoved, offersCleared } from '../../../store/offersSlice';
 import { colors } from '../../../theme/colors';
 import { bottomNavClearance, screenPadding, spacing } from '../../../theme/spacing';
 
@@ -118,14 +121,21 @@ export default function WorkerDashboardScreen() {
     useWorkerStartServiceMutation();
   const [workerComplete, { isLoading: completing }] = useWorkerCompleteMutation();
 
-  const [offer, setOffer] = useState<JobOffer | null>(null);
-  const [offerSecondsLeft, setOfferSecondsLeft] = useState(0);
   const [otpInput, setOtpInput] = useState('');
   const [otpSheetOpen, setOtpSheetOpen] = useState(false);
   const [completeSheetOpen, setCompleteSheetOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const socketClient = useSocket();
+  const dispatch = useAppDispatch();
+
+  // Offers are shared state now — the subscription lives in the worker tab
+  // layout so one arriving on another tab is still captured. The dashboard
+  // shows the newest.
+  const offers = useAppSelector((state) => state.offers.items);
+  const offer = offers[0] ?? null;
+  const [offerSecondsLeft, setOfferSecondsLeft] = useState(0);
+
   const kycStatus = worker?.kyc?.status ?? 'not_submitted';
   const kycApproved = kycStatus === 'approved';
   const isOnline = worker?.isOnline ?? false;
@@ -149,21 +159,15 @@ export default function WorkerDashboardScreen() {
   // Live GPS while online — unchanged.
   useLocationTracker(isOnline, activeOrder?._id);
 
-  // ── Sockets — subscriptions carried over verbatim ────────────────────────
+  // ── Sockets ──────────────────────────────────────────────────────────────
+  // Offer events (new_job_request / offer.cancelled / offer.boosted) are owned
+  // by `useJobOffers` in the tab layout. What remains here is what only the
+  // dashboard cares about: refetching after an assignment or status change,
+  // and surfacing a KYC rejection.
   useEffect(() => {
-    const onOffer = (payload: JobOffer) => setOffer(payload);
-    const onOfferCancelled = (payload: OfferCancelledEvent) => {
-      setOffer((cur) => (cur?._id === payload.orderId ? null : cur));
-    };
     const onJobAssigned = (_payload: JobAssignedEvent) => {
-      setOffer(null);
       refetchOrders();
       refetchWorker();
-    };
-    const onOfferBoosted = (payload: OfferBoostedEvent) => {
-      setOffer((cur) =>
-        cur && cur._id === payload.orderId ? { ...cur, price: payload.newTotal } : cur,
-      );
     };
     const onKycRejected = (payload: KycRejectedEvent) => {
       refetchWorker();
@@ -171,19 +175,13 @@ export default function WorkerDashboardScreen() {
     };
     const onJobPulled = () => refetchOrders();
 
-    socketClient.on('new_job_request', onOffer);
-    socketClient.on('offer.cancelled', onOfferCancelled);
     socketClient.on('job.assigned', onJobAssigned);
-    socketClient.on('offer.boosted', onOfferBoosted);
     socketClient.on('kyc.rejected', onKycRejected);
     socketClient.on('job.pulled', onJobPulled);
     socketClient.on('order.status', onJobPulled);
 
     return () => {
-      socketClient.off('new_job_request', onOffer);
-      socketClient.off('offer.cancelled', onOfferCancelled);
       socketClient.off('job.assigned', onJobAssigned);
-      socketClient.off('offer.boosted', onOfferBoosted);
       socketClient.off('kyc.rejected', onKycRejected);
       socketClient.off('job.pulled', onJobPulled);
       socketClient.off('order.status', onJobPulled);
@@ -197,12 +195,9 @@ export default function WorkerDashboardScreen() {
       return;
     }
     const tick = () => {
-      const left = Math.max(
-        0,
-        Math.round((new Date(offer.expiresAt).getTime() - Date.now()) / 1000),
+      setOfferSecondsLeft(
+        Math.max(0, Math.round((new Date(offer.expiresAt).getTime() - Date.now()) / 1000)),
       );
-      setOfferSecondsLeft(left);
-      if (left <= 0) setOffer(null);
     };
     tick();
     const id = setInterval(tick, 1000);
@@ -220,6 +215,8 @@ export default function WorkerDashboardScreen() {
       if (!next) {
         try {
           await goOffline().unwrap();
+          // Offline means no longer eligible — held offers are dead.
+          dispatch(offersCleared());
         } catch (e) {
           setError(getApiErrorMessage(e, "We couldn't take you offline."));
         }
@@ -239,7 +236,7 @@ export default function WorkerDashboardScreen() {
         setError(getApiErrorMessage(e, "We couldn't take you online."));
       }
     },
-    [kycApproved, goOffline, goOnline],
+    [kycApproved, goOffline, goOnline, dispatch],
   );
 
   const handleAccept = useCallback(async () => {
@@ -247,7 +244,7 @@ export default function WorkerDashboardScreen() {
     // See the header: this only publishes a signal. Dismiss optimistically so
     // the card doesn't sit there while dispatch decides.
     const id = offer._id;
-    setOffer(null);
+    dispatch(offerRemoved(id));
     try {
       await workerAccept(id).unwrap();
       refetchOrders();
@@ -258,14 +255,14 @@ export default function WorkerDashboardScreen() {
         setError(getApiErrorMessage(e, 'This job may have been taken.'));
       }
     }
-  }, [offer, workerAccept, refetchOrders]);
+  }, [offer, workerAccept, refetchOrders, dispatch]);
 
   const handleReject = useCallback(() => {
     if (!offer) return;
     const id = offer._id;
-    setOffer(null);
+    dispatch(offerRemoved(id));
     workerReject(id).catch(() => {});
-  }, [offer, workerReject]);
+  }, [offer, workerReject, dispatch]);
 
   /** Best-effort GPS; the server falls back to the last Redis ping. */
   const currentCoords = useCallback(async () => {

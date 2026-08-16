@@ -14,11 +14,16 @@
  */
 
 import { Tabs } from 'expo-router';
+import { useJobOffers } from '../../../hooks/useJobOffers';
 import { Briefcase, Home, User, Wallet } from 'lucide-react-native';
 import { colors } from '../../../theme/colors';
 import { typography } from '../../../theme/typography';
 
 export default function WorkerTabsLayout() {
+  // Mounted here, not on a screen: an offer arriving while the pro is looking
+  // at another tab must still be captured. Feeds `offersSlice`.
+  useJobOffers();
+
   return (
     <Tabs
       screenOptions={{

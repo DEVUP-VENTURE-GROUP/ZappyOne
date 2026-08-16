@@ -29,6 +29,7 @@ import { createLogger } from './logger';
 import { saveSession } from '../services/api/tokenStorage';
 import { store } from '../store';
 import { setSession } from '../store/authSlice';
+import { offerReceived } from '../store/offersSlice';
 
 const log = createLogger('dev-login');
 
@@ -109,6 +110,48 @@ export async function devLogin(
 }
 
 /**
+ * Push a job offer through the SAME slice action the socket handler uses.
+ *
+ * Dispatch is gated behind the `dispatchEnabled` pricing flag, so on a dev
+ * backend with it off no `new_job_request` is ever broadcast and the offer UI
+ * is otherwise unreachable. The payload below mirrors `orderPayload` in
+ * `jobs/dispatch.worker.js` field for field — it is the shape the server
+ * actually sends, not an invented one.
+ *
+ * This injects into the CLIENT store only. It creates no order, signals no
+ * dispatch, and accepting the resulting card will hit the real endpoint and
+ * fail as it should, because the order does not exist.
+ */
+export function devOffer(overrides: Record<string, unknown> = {}): string {
+  const id = String(overrides._id ?? `dev-${Date.now()}`);
+  store.dispatch(
+    offerReceived({
+      _id: id,
+      service: 'car_wash',
+      pickupAddress: 'Road No 12, Banjara Hills, Hyderabad',
+      pickupCoords: [78.4347, 17.4156],
+      price: 420,
+      basePrice: 360,
+      boostAmountPaise: 6000,
+      urgencyBonusPaise: 0,
+      distanceKm: '2.4',
+      etaMinutes: 9,
+      expiresAt: new Date(Date.now() + 30_000).toISOString(),
+      tier: 'priority',
+      tierMultiplier: 1.2,
+      description: 'Car is quite dusty, parked in basement B2.',
+      images: [],
+      diagnosisUrgency: 'normal',
+      requiredTools: [],
+      vehicleType: 'car',
+      deviceBrand: null,
+      ...overrides,
+    } as never),
+  );
+  return id;
+}
+
+/**
  * Attach `devLogin` to the global scope in development builds only.
  * Call once from the root layout. No-ops entirely when `__DEV__` is false.
  */
@@ -117,11 +160,13 @@ export function installDevLogin(): void {
   const scope = globalThis as unknown as {
     devLogin?: typeof devLogin;
     devState?: () => unknown;
+    devOffer?: typeof devOffer;
   };
   if (scope.devLogin) return;
   scope.devLogin = devLogin;
+  scope.devOffer = devOffer;
   // Read-only peek at auth state, for diagnosing route-guard behaviour during
   // QA. Development only, alongside devLogin.
   scope.devState = () => store.getState().auth;
-  log.debug('devLogin() / devState() available on the global scope (development only)');
+  log.debug('devLogin() / devState() / devOffer() available (development only)');
 }
