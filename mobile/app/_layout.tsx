@@ -12,6 +12,10 @@ import { setSession, logout as logoutAction } from '../store/authSlice';
 import { onSessionEnd, type SessionEndReason } from '../lib/sessionBus';
 import { socketClient } from '../services/socket/socketClient';
 import { createLogger } from '../lib/logger';
+import { installDevLogin } from '../lib/devLogin';
+
+// Development-only QA helper. Stripped from release builds by __DEV__.
+installDevLogin();
 
 const log = createLogger('root-layout');
 
