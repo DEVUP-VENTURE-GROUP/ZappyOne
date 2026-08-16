@@ -1,10 +1,36 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, SafeAreaView, ActivityIndicator, ScrollView, Alert } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
-import { ChevronLeft, MessageSquare, X, Star, CreditCard } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ChevronLeft, CreditCard, LocateFixed, Star } from 'lucide-react-native';
 import {
   useGetOrderQuery, useCancelOrderMutation, useRateOrderMutation,
+  useGetCancelPreviewQuery, useRebookOrderMutation,
 } from '../../../services/api/ordersApi';
+import { SearchingState } from '../../../components/tracking/SearchingState';
+import {
+  BookingCancelled,
+  BookingFailed,
+  WorkerFound,
+} from '../../../components/tracking/DispatchOutcome';
+import {
+  BottomSheet,
+  Button,
+  Card,
+  IconButton,
+  ScreenHeader,
+} from '../../../components/ui';
+import { TrackingCard } from '../../../components/tracking/TrackingCard';
+import { shadows } from '../../../theme/shadows';
+import { colors } from '../../../theme/colors';
 import { useCreatePaymentOrderMutation, useVerifyPaymentMutation } from '../../../services/api/paymentsApi';
 import { openCashfreeCheckout, parseReturnUrl, paymentReturnUrl } from '../../../services/payments/cashfreeCheckout';
 import { getApiErrorMessage } from '../../../services/api/apiSlice';
@@ -13,19 +39,6 @@ import { useSocket } from '../../../hooks/useSocket';
 import type { OrderStatus } from '../../../types/api';
 import type { OrderDispatchUpdateEvent, OrderEtaEvent } from '../../../services/socket/events';
 
-const STAGES: OrderStatus[] = ['searching', 'assigned', 'on_the_way', 'arrived', 'in_progress', 'completed'];
-const LABEL: Record<string, string> = {
-  created: 'Booking placed',
-  searching: 'Finding a professional…',
-  assigned: 'Professional assigned',
-  on_the_way: 'On the way to you',
-  arrived: 'Arrived at your location',
-  in_progress: 'Service in progress',
-  completed: 'Service completed',
-  cancelled: 'Booking cancelled',
-  failed: 'Booking failed',
-};
-const CANCELLABLE: OrderStatus[] = ['created', 'searching', 'assigned', 'on_the_way'];
 
 export default function OrderTrackingScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -37,6 +50,30 @@ export default function OrderTrackingScreen() {
   const [rateOrder, { isLoading: rating }] = useRateOrderMutation();
   const [createPaymentOrder, { isLoading: startingPayment }] = useCreatePaymentOrderMutation();
   const [verifyPayment] = useVerifyPaymentMutation();
+
+  // Whether cancelling is allowed — and what it costs — is the server's call,
+  // never this screen's. Skipped once the order is terminal.
+  const isTerminal = ['completed', 'cancelled', 'failed'].includes(order?.status ?? '');
+  const { data: cancelPreview } = useGetCancelPreviewQuery(orderId, {
+    skip: !order || isTerminal,
+  });
+  const [rebookOrder, { isLoading: rebooking }] = useRebookOrderMutation();
+
+  // The moment the search resolves is worth its own beat — someone who has been
+  // watching a pulse for two minutes should be told plainly that it worked,
+  // not silently dropped onto a map. Shown only on the searching → assigned
+  // transition, and dismissed by the customer rather than a timer.
+  const [showAssigned, setShowAssigned] = useState(false);
+  const prevStatus = useRef<OrderStatus | undefined>(undefined);
+
+  const insets = useSafeAreaInsets();
+
+  // Camera ownership. Auto-framing is handed to the customer the moment they
+  // pan, and only given back when they ask for it — a map that keeps snapping
+  // back while you are trying to look around is worse than no map.
+  const [followWorker, setFollowWorker] = useState(true);
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [rateOpen, setRateOpen] = useState(false);
 
   const [dispatchUpdate, setDispatchUpdate] = useState<OrderDispatchUpdateEvent | null>(null);
   const [eta, setEta] = useState<OrderEtaEvent | null>(null);
@@ -65,24 +102,20 @@ export default function OrderTrackingScreen() {
     };
   }, [socketClient, refetch]);
 
+  useEffect(() => {
+    const next = order?.status;
+    const previous = prevStatus.current;
+    if (next === 'assigned' && (previous === 'searching' || previous === 'created')) {
+      setShowAssigned(true);
+    }
+    prevStatus.current = next;
+  }, [order?.status]);
+
   const pickup = order?.pickupLocation?.coordinates
     ? { lat: order.pickupLocation.coordinates[1], lng: order.pickupLocation.coordinates[0] }
     : null;
 
   const status = order?.status;
-  const stageIdx = status ? STAGES.indexOf(status) : -1;
-
-  const doCancel = () => {
-    Alert.alert('Cancel booking', 'Are you sure you want to cancel?', [
-      { text: 'No', style: 'cancel' },
-      {
-        text: 'Yes, cancel', style: 'destructive', onPress: async () => {
-          try { await cancelOrder({ id: orderId }).unwrap(); }
-          catch (e) { Alert.alert('Failed', getApiErrorMessage(e, 'Please try again.')); }
-        },
-      },
-    ]);
-  };
 
   const payNow = async () => {
     try {
@@ -117,139 +150,279 @@ export default function OrderTrackingScreen() {
     return <SafeAreaView className="flex-1 bg-white items-center justify-center"><ActivityIndicator color="#2563EB" /></SafeAreaView>;
   }
 
-  const needsPayment = order.payment?.method !== 'cash' && order.payment?.status === 'pending' && status !== 'cancelled';
+  // ── Dispatch states take over the whole screen ──────────────────────────
+  // While dispatch is still running there is no worker, no position and no ETA,
+  // so the map and the stage list below would be empty chrome around a blank.
+  // These render instead, and yield to the tracking UI the moment the server
+  // says `assigned`.
+  const doRebook = async () => {
+    try {
+      const next = await rebookOrder(orderId).unwrap();
+      router.replace(`/tracking/order/${next._id}`);
+    } catch (e) {
+      Alert.alert('Could not rebook', getApiErrorMessage(e, 'Please try again.'));
+    }
+  };
+
+  if (status === 'created' || status === 'searching') {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+        <Stack.Screen options={{ headerShown: false }} />
+        <ScreenHeader title="Finding your pro" onBack={() => router.back()} />
+        <ScrollView showsVerticalScrollIndicator={false}>
+          <SearchingState
+            order={order}
+            dispatchUpdate={dispatchUpdate}
+            cancelPreview={cancelPreview}
+            cancelling={cancelling}
+            onCancel={(reason) => {
+              cancelOrder({ id: orderId, reason }).unwrap().catch((e) => {
+                Alert.alert('Could not cancel', getApiErrorMessage(e, 'Please try again.'));
+              });
+            }}
+          />
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
+  if (status === 'assigned' && showAssigned) {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+        <Stack.Screen options={{ headerShown: false }} />
+        <ScrollView showsVerticalScrollIndicator={false}>
+          <WorkerFound order={order} />
+          <View style={{ paddingHorizontal: 20, marginTop: 24 }}>
+            <Button label="Track your pro" onPress={() => setShowAssigned(false)} fullWidth />
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
+  if (status === 'cancelled' || status === 'failed') {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+        <Stack.Screen options={{ headerShown: false }} />
+        <ScreenHeader title="Booking" onBack={() => router.back()} />
+        <ScrollView showsVerticalScrollIndicator={false}>
+          {status === 'cancelled' ? (
+            <BookingCancelled
+              onRebook={rebooking ? undefined : doRebook}
+              onDone={() => router.replace('/(tabs)/home')}
+            />
+          ) : (
+            <BookingFailed
+              order={order}
+              onRebook={rebooking ? undefined : doRebook}
+              onDone={() => router.replace('/(tabs)/home')}
+            />
+          )}
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
+  // ── Live tracking ───────────────────────────────────────────────────────
+  // Map fills the screen, card floats over it. Only presentation changed here:
+  // the socket contract, the tracking APIs and the location hooks are as they
+  // were — LiveTrackingMap still owns the `worker.location` subscription and
+  // this screen still owns `order.status`, `order.eta` and the dispatch feed.
+  const needsPayment =
+    order.payment?.method !== 'cash' && order.payment?.status === 'pending';
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <View style={styles.root}>
       <Stack.Screen options={{ headerShown: false }} />
-      <View className="flex-row items-center px-4 pt-3 pb-2">
-        <TouchableOpacity onPress={() => router.back()} className="w-9 h-9 rounded-xl bg-gray-100 items-center justify-center">
-          <ChevronLeft size={20} color="#0F172A" />
-        </TouchableOpacity>
-        <Text className="text-lg font-bold text-navy ml-3">Track Booking</Text>
-      </View>
 
-      {/* Map */}
-      <View style={{ height: 280 }}>
+      {/* Map — full bleed behind everything. */}
+      <View style={styles.mapLayer}>
         {pickup ? (
           <LiveTrackingMap
             orderId={orderId}
             pickupLat={pickup.lat}
             pickupLng={pickup.lng}
             initialWorkerLocation={order.workerCurrentLocation ?? null}
+            followWorker={followWorker}
+            onUserPan={() => setFollowWorker(false)}
           />
         ) : (
-          <View className="flex-1 bg-gray-100 items-center justify-center"><Text className="text-gray-400">Map unavailable</Text></View>
+          <View style={styles.mapFallback}>
+            <Text style={{ color: colors.textMuted }}>Map unavailable for this booking</Text>
+          </View>
         )}
       </View>
 
-      <ScrollView className="flex-1 px-5">
-        {/* Status */}
-        <View className="bg-primary/5 rounded-2xl p-4 mt-4">
-          <Text className="text-lg font-bold text-navy">{LABEL[status ?? ''] || status}</Text>
-          <Text className="text-xs text-gray-500 mt-0.5 capitalize">
-            {String(order.service || '').replace(/_/g, ' ')} · ₹{order.pricing?.total ?? '—'}
-          </Text>
-          {dispatchUpdate?.message && status === 'searching' ? (
-            <Text className="text-xs text-primary font-semibold mt-2">{dispatchUpdate.message}</Text>
-          ) : null}
-          {eta?.etaMinutes != null && status === 'on_the_way' ? (
-            <Text className="text-xs text-primary font-semibold mt-2">Arriving in ~{Math.round(eta.etaMinutes)} min</Text>
-          ) : null}
-        </View>
+      {/* Floating controls over the map. */}
+      <View style={[styles.topBar, { paddingTop: insets.top + 8 }]} pointerEvents="box-none">
+        <IconButton
+          icon={<ChevronLeft size={20} color={colors.textHeading} />}
+          onPress={() => router.back()}
+          variant="surface"
+          accessibilityLabel="Go back"
+          style={styles.floatingControl}
+        />
+        {/* Recentre appears only once the customer has taken control of the
+            camera — offering it before then would be a no-op button. */}
+        {!followWorker && order.workerCurrentLocation ? (
+          <IconButton
+            icon={<LocateFixed size={19} color={colors.primary} />}
+            onPress={() => setFollowWorker(true)}
+            variant="surface"
+            accessibilityLabel="Recentre the map"
+            style={styles.floatingControl}
+          />
+        ) : null}
+      </View>
 
-        {/* Payment pending */}
+      {/* Bottom sheet. */}
+      <ScrollView
+        style={styles.sheetScroll}
+        contentContainerStyle={styles.sheetContent}
+        showsVerticalScrollIndicator={false}
+      >
         {needsPayment ? (
-          <TouchableOpacity
-            className="flex-row items-center justify-between bg-amber-50 border border-amber-200 rounded-2xl p-4 mt-3"
-            onPress={payNow}
-            disabled={startingPayment}
+          <Card
+            variant="outline"
+            onPress={startingPayment ? undefined : payNow}
+            style={styles.payBanner}
           >
-            <View className="flex-row items-center gap-2">
-              <CreditCard size={16} color="#B45309" />
-              <Text className="text-sm font-bold text-amber-800">Payment pending</Text>
+            <View style={styles.payRow}>
+              <CreditCard size={16} color={colors.accentDark} />
+              <Text style={styles.payText}>Payment pending</Text>
+              {startingPayment ? (
+                <ActivityIndicator size="small" color={colors.accentDark} />
+              ) : (
+                <Text style={styles.payAction}>Pay now</Text>
+              )}
             </View>
-            {startingPayment ? <ActivityIndicator size="small" color="#B45309" /> : <Text className="text-xs font-bold text-amber-800">Pay now</Text>}
-          </TouchableOpacity>
+          </Card>
         ) : null}
 
-        {/* Progress */}
-        {status !== 'cancelled' && status !== 'failed' ? (
-          <View className="mt-5">
-            {STAGES.slice(0, 5).map((s) => {
-              const done = stageIdx >= STAGES.indexOf(s);
-              return (
-                <View key={s} className="flex-row items-center mb-3">
-                  <View className={`w-3 h-3 rounded-full ${done ? 'bg-primary' : 'bg-gray-200'}`} />
-                  <Text className={`ml-3 ${done ? 'text-navy font-semibold' : 'text-gray-400'}`}>{LABEL[s]}</Text>
-                </View>
-              );
-            })}
-          </View>
-        ) : null}
-
-        {/* Start-service OTP */}
-        {order.otp && ['assigned', 'on_the_way', 'arrived'].includes(status ?? '') ? (
-          <View className="bg-accent/10 rounded-2xl p-4 mt-3">
-            <Text className="text-xs font-bold text-accent uppercase">Start OTP</Text>
-            <Text className="text-2xl font-extrabold text-navy tracking-widest mt-1">{order.otp}</Text>
-            <Text className="text-xs text-gray-500 mt-1">Share this with the professional to start the service</Text>
-          </View>
-        ) : null}
-
-        {/* Worker info + chat */}
-        {order.workerId ? (
-          <View className="mt-4">
-            {order.workerName ? (
-              <View className="flex-row items-center justify-between mb-3">
-                <Text className="font-bold text-navy">{order.workerName}</Text>
-                {order.workerRating != null ? (
-                  <View className="flex-row items-center gap-1">
-                    <Star size={13} color="#F59E0B" fill="#F59E0B" />
-                    <Text className="text-xs font-semibold text-gray-500">{order.workerRating.toFixed(1)}</Text>
-                  </View>
-                ) : null}
-              </View>
-            ) : null}
-            <TouchableOpacity
-              className="flex-1 flex-row items-center justify-center gap-2 border border-gray-200 rounded-xl p-3"
-              onPress={() => router.push(`/chat/${orderId}`)}
-            >
-              <MessageSquare size={16} color="#2563EB" /><Text className="font-semibold text-navy">Chat</Text>
-            </TouchableOpacity>
-          </View>
-        ) : null}
-
-        {/* Rating (completed, not yet rated) */}
-        {status === 'completed' && order.userRating == null ? (
-          <View className="bg-gray-50 rounded-2xl p-4 mt-4">
-            <Text className="font-bold text-navy mb-3">Rate your experience</Text>
-            <View className="flex-row gap-2 mb-4">
-              {[1, 2, 3, 4, 5].map((n) => (
-                <TouchableOpacity key={n} onPress={() => setRatingValue(n)}>
-                  <Star size={30} color="#F59E0B" fill={n <= ratingValue ? '#F59E0B' : 'transparent'} />
-                </TouchableOpacity>
-              ))}
-            </View>
-            <TouchableOpacity
-              className={`rounded-xl p-3 items-center ${ratingValue ? 'bg-primary' : 'bg-gray-300'}`}
-              onPress={submitRating}
-              disabled={!ratingValue || rating}
-            >
-              {rating ? <ActivityIndicator color="#fff" /> : <Text className="text-white font-bold">Submit rating</Text>}
-            </TouchableOpacity>
-          </View>
-        ) : null}
-
-        {/* Cancel */}
-        {status && CANCELLABLE.includes(status) ? (
-          <TouchableOpacity className="flex-row items-center justify-center gap-2 mt-5 mb-10" onPress={doCancel} disabled={cancelling}>
-            <X size={16} color="#EF4444" /><Text className="text-red-500 font-semibold">Cancel booking</Text>
-          </TouchableOpacity>
-        ) : (
-          <View className="mb-10" />
-        )}
+        <TrackingCard
+          order={order}
+          eta={eta}
+          cancelPreview={cancelPreview}
+          onChat={() => router.push(`/chat/${orderId}`)}
+          onCancel={() => setCancelOpen(true)}
+          onRate={() => setRateOpen(true)}
+        />
       </ScrollView>
-    </SafeAreaView>
+
+      {/* Cancel — gated on the server's own canCancel, wording from its preview. */}
+      <BottomSheet
+        visible={cancelOpen}
+        onClose={() => setCancelOpen(false)}
+        title="Cancel this booking?"
+      >
+        {cancelPreview?.message ? (
+          <View
+            style={[
+              styles.feeNotice,
+              { backgroundColor: cancelPreview.isFree ? colors.successTint : colors.warningTint },
+            ]}
+          >
+            <Text
+              style={{
+                color: cancelPreview.isFree ? colors.successDark : colors.accentDark,
+                fontFamily: 'Poppins-SemiBold',
+              }}
+            >
+              {cancelPreview.message}
+            </Text>
+          </View>
+        ) : null}
+        <Button
+          label="Yes, cancel booking"
+          variant="danger"
+          onPress={() => {
+            setCancelOpen(false);
+            cancelOrder({ id: orderId, reason: 'user_cancelled' }).unwrap().catch((e) => {
+              Alert.alert('Could not cancel', getApiErrorMessage(e, 'Please try again.'));
+            });
+          }}
+          loading={cancelling}
+          fullWidth
+          style={{ marginTop: 16 }}
+        />
+        <Button
+          label="Keep my booking"
+          variant="secondary"
+          onPress={() => setCancelOpen(false)}
+          fullWidth
+          style={{ marginTop: 8 }}
+        />
+      </BottomSheet>
+
+      {/* Rating — completed orders only, and only until one is submitted. */}
+      <BottomSheet visible={rateOpen} onClose={() => setRateOpen(false)} title="Rate your experience">
+        <View style={styles.starRow}>
+          {[1, 2, 3, 4, 5].map((n) => (
+            <IconButton
+              key={n}
+              icon={
+                <Star
+                  size={30}
+                  color={colors.accent}
+                  fill={n <= ratingValue ? colors.accent : 'transparent'}
+                />
+              }
+              onPress={() => setRatingValue(n)}
+              variant="plain"
+              accessibilityLabel={`${n} star${n === 1 ? '' : 's'}`}
+            />
+          ))}
+        </View>
+        <Button
+          label="Submit rating"
+          onPress={async () => {
+            await submitRating();
+            setRateOpen(false);
+          }}
+          disabled={!ratingValue}
+          loading={rating}
+          fullWidth
+        />
+      </BottomSheet>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: colors.background },
+  mapLayer: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
+  mapFallback: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surfaceTertiary,
+  },
+
+  topBar: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+  },
+  floatingControl: { backgroundColor: colors.surface, ...shadows.soft },
+
+  // The sheet sits at the bottom; the scroll view above it is transparent so
+  // the map stays visible and pannable through the gap.
+  sheetScroll: { flex: 1 },
+  sheetContent: { flexGrow: 1, justifyContent: 'flex-end', gap: 10 },
+
+  payBanner: {
+    marginHorizontal: 20,
+    backgroundColor: colors.warningTint,
+    borderColor: colors.warningTint,
+  },
+  payRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  payText: { flex: 1, color: colors.accentDark, fontFamily: 'Poppins-SemiBold', fontSize: 14 },
+  payAction: { color: colors.accentDark, fontFamily: 'Poppins-Bold', fontSize: 13 },
+
+  feeNotice: { borderRadius: 8, padding: 12, marginTop: 12 },
+  starRow: { flexDirection: 'row', justifyContent: 'center', gap: 4, marginBottom: 20 },
+});

@@ -1,21 +1,37 @@
 /**
- * Quote card — the price panel of the booking flow.
+ * Quote card — the price summary of the booking flow.
  * ----------------------------------------------------------------------------
  * Renders every state the quote can be in: waiting for a location, loading,
  * loaded, and failed. The parent decides which; this component owns how each
  * one looks so the states can't drift apart visually.
  *
- * The itemised breakdown appears ONLY when `linesReconcile` is true. See
- * `quote.ts` — for several verticals the server's fee components do not add up
- * to the total (the total is floored to the catalog price), and showing them
- * side by side would misstate the bill. When they don't reconcile the card
- * shows the total alone, which is the figure the server will actually charge.
+ * ── WHAT IS AND ISN'T SHOWN ────────────────────────────────────────────────
+ * Charges are grouped by `normalizeQuote` into Service price / Additional
+ * charges / Fees, and each group renders only when the server actually sent
+ * something for it.
+ *
+ * There is NO taxes row, ever. The pricing engine emits no GST, VAT or tax
+ * field for any vertical — every rupee key it can produce is enumerated in
+ * `quote.ts`. A "Taxes" line would be a fabrication.
+ *
+ * There is NO discount amount either. `GET /orders/quote` carries none;
+ * `discountPaise` is written to the ORDER after the promo is validated at
+ * creation. So an applied promo is acknowledged in words and its value is left
+ * to the server, which is the only thing that knows it.
+ *
+ * ── THE RECONCILIATION RULE ────────────────────────────────────────────────
+ * The itemised breakdown appears ONLY when `linesReconcile` is true. For
+ * several verticals the server's fee components do not add up to the total —
+ * `car_wash` returns ₹50 + ₹1 against a total of ₹300, because the total is
+ * floored to the catalog price — and showing them side by side would misstate
+ * the bill. When they don't reconcile the card shows the total alone, which is
+ * the figure the server will charge.
  * ----------------------------------------------------------------------------
  */
 
 import React, { memo } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
-import { AlertCircle, Info, MapPin, RefreshCw, Zap } from 'lucide-react-native';
+import { AlertCircle, Info, MapPin, Pencil, RefreshCw, Tag, Zap } from 'lucide-react-native';
 import { Appear, Button, Card, Divider, SectionTitle, Text, formatRupees } from '../ui';
 import type { BookingTierKey, NormalizedQuote } from './quote';
 import { TIER_MULTIPLIERS } from './quote';
@@ -36,6 +52,22 @@ export interface QuoteCardProps {
   /** Applied promo, if any. The server, not this card, computes the discount. */
   promoCode?: string | null;
   onRetry: () => void;
+  /** The price depends on the pin, so the card offers the way to change it. */
+  onEditLocation?: () => void;
+}
+
+/** One `label … ₹value` row. */
+function ChargeRow({ label, value, tone }: { label: string; value: string; tone?: string }) {
+  return (
+    <View style={styles.line}>
+      <Text variant="bodySmall" color={colors.textSecondary} style={styles.flex}>
+        {label}
+      </Text>
+      <Text variant="bodySmall" color={tone}>
+        {value}
+      </Text>
+    </View>
+  );
 }
 
 function QuoteCardBase({
@@ -47,6 +79,7 @@ function QuoteCardBase({
   tipRupees = 0,
   promoCode,
   onRetry,
+  onEditLocation,
 }: QuoteCardProps) {
   // ── No location yet ───────────────────────────────────────────────────────
   if (!hasLocation) {
@@ -57,7 +90,9 @@ function QuoteCardBase({
             <MapPin size={18} color={colors.textMuted} />
           </View>
           <View style={styles.flex}>
-            <Text variant="body" weight="semibold">Set your location for a price</Text>
+            <Text variant="body" weight="semibold">
+              Set your location for a price
+            </Text>
             <Text variant="bodySmall" color={colors.textSecondary}>
               Pricing depends on where your pro has to travel.
             </Text>
@@ -76,7 +111,9 @@ function QuoteCardBase({
             <ActivityIndicator size="small" color={colors.primary} />
           </View>
           <View style={styles.flex}>
-            <Text variant="body" weight="semibold">Getting your price…</Text>
+            <Text variant="body" weight="semibold">
+              Getting your price…
+            </Text>
             <Text variant="bodySmall" color={colors.textSecondary}>
               Checking rates for your area.
             </Text>
@@ -91,24 +128,35 @@ function QuoteCardBase({
     return (
       <Card variant="outline" style={[styles.stateCard, styles.errorCard]}>
         <View style={styles.stateRow}>
-          <View style={[styles.stateIcon, { backgroundColor: colors.errorTint }]}>
+          <View style={[styles.stateIcon, { backgroundColor: colors.surface }]}>
             <AlertCircle size={18} color={colors.error} />
           </View>
           <View style={styles.flex}>
-            <Text variant="body" weight="semibold">Couldn't get a price</Text>
+            <Text variant="body" weight="semibold">
+              Couldn&apos;t get a price
+            </Text>
             <Text variant="bodySmall" color={colors.textSecondary}>
               {errorMessage}
             </Text>
           </View>
         </View>
-        <Button
-          label="Try again"
-          variant="secondary"
-          size="small"
-          icon={<RefreshCw size={15} color={colors.primary} />}
-          onPress={onRetry}
-          style={styles.retry}
-        />
+        <View style={styles.errorActions}>
+          <Button
+            label="Try again"
+            variant="primary"
+            size="small"
+            icon={<RefreshCw size={15} color={colors.textInverse} />}
+            onPress={onRetry}
+          />
+          {onEditLocation ? (
+            <Button
+              label="Edit location"
+              variant="secondary"
+              size="small"
+              onPress={onEditLocation}
+            />
+          ) : null}
+        </View>
       </Card>
     );
   }
@@ -116,81 +164,93 @@ function QuoteCardBase({
   if (!quote) return null;
 
   // ── Loaded ────────────────────────────────────────────────────────────────
-  const multiplier = TIER_MULTIPLIERS[tier];
-  const tierTotal = Math.round(quote.total * multiplier);
+  // Tier and boost are the only client-side arithmetic here, both required by
+  // the server's own surge-guard contract — see the booking screen's header.
+  const tierTotal = Math.round(quote.total * TIER_MULTIPLIERS[tier]);
   const tierSurcharge = tierTotal - quote.total;
-  const payable = tierTotal + Math.round(tipRupees);
+  const boost = Math.round(tipRupees);
+  const payable = tierTotal + boost;
+
+  const showBreakdown = quote.linesReconcile;
+  const hasAdjustments = tierSurcharge > 0 || boost > 0;
 
   return (
     <Appear offsetY={6}>
       <Card variant="outline" style={styles.card}>
-        {/* Breakdown — only when the server's own numbers add up. */}
-        {quote.linesReconcile ? (
-          <>
-            {quote.lines.map((line) => (
-              <View key={line.key} style={styles.line}>
-                <Text variant="bodySmall" color={colors.textSecondary} style={styles.flex}>
-                  {line.label}
-                </Text>
-                <Text variant="bodySmall">{formatRupees(line.value)}</Text>
+        {/* ── Grouped breakdown, when the server's own numbers add up ────── */}
+        {showBreakdown
+          ? quote.sections.map((section, index) => (
+              <View key={section.group} style={index > 0 ? styles.sectionGap : undefined}>
+                <SectionTitle style={styles.groupTitle}>{section.title}</SectionTitle>
+                {section.lines.map((line) => (
+                  <ChargeRow
+                    key={line.key}
+                    label={line.label}
+                    value={formatRupees(line.value)}
+                  />
+                ))}
               </View>
-            ))}
-            <Divider style={styles.divider} />
-          </>
-        ) : null}
+            ))
+          : null}
 
-        {/* Tier surcharge is shown separately because the quote endpoint takes
-            no tier — the server applies this multiplier when it creates the
-            order. Labelling it keeps the arithmetic on screen honest. */}
-        {tierSurcharge > 0 ? (
-          <>
-            <View style={styles.line}>
-              <Text variant="bodySmall" color={colors.textSecondary} style={styles.flex}>
-                Service price
-              </Text>
-              <Text variant="bodySmall">{formatRupees(quote.total)}</Text>
-            </View>
-            <View style={styles.line}>
-              <Text variant="bodySmall" color={colors.textSecondary} style={styles.flex}>
-                {tier === 'express' ? 'Express' : 'Priority'} matching
-              </Text>
-              <Text variant="bodySmall" color={colors.accentDark}>
-                +{formatRupees(tierSurcharge)}
-              </Text>
-            </View>
-          </>
-        ) : null}
-
-        {tipRupees > 0 ? (
-          <View style={styles.line}>
-            <Text variant="bodySmall" color={colors.textSecondary} style={styles.flex}>
-              Boost for your pro
-            </Text>
-            <Text variant="bodySmall" color={colors.successDark}>
-              +{formatRupees(tipRupees)}
-            </Text>
-          </View>
-        ) : null}
-
-        {tierSurcharge > 0 || tipRupees > 0 ? <Divider style={styles.divider} /> : null}
-
-        {/* The headline figure. Always the server's total, tier and boost aside. */}
-        <View style={styles.totalRow}>
-          <View style={styles.flex}>
-            <SectionTitle style={styles.totalLabel}>Estimated total</SectionTitle>
-            {quote.surgeMultiplier ? (
-              <View style={styles.surgeRow}>
-                <Zap size={12} color={colors.accentDark} />
-                <Text variant="caption" color={colors.accentDark}>
-                  {quote.surgeMultiplier}× surge pricing in effect
-                </Text>
-              </View>
+        {/* ── Adjustments this screen contributes ────────────────────────── */}
+        {hasAdjustments ? (
+          <View style={showBreakdown ? styles.sectionGap : undefined}>
+            <SectionTitle style={styles.groupTitle}>Your choices</SectionTitle>
+            {/* Without a reconciling breakdown the customer has no anchor for
+                what the surcharge is a surcharge ON, so name the base here. */}
+            {showBreakdown ? null : (
+              <ChargeRow label="Service price" value={formatRupees(quote.total)} />
+            )}
+            {tierSurcharge > 0 ? (
+              <ChargeRow
+                label={`${tier === 'express' ? 'Express' : 'Priority'} matching`}
+                value={`+${formatRupees(tierSurcharge)}`}
+                tone={colors.accentDark}
+              />
+            ) : null}
+            {boost > 0 ? (
+              <ChargeRow
+                label="Boost for your pro"
+                value={`+${formatRupees(boost)}`}
+                tone={colors.successDark}
+              />
             ) : null}
           </View>
-          <Text variant="heading1">{formatRupees(payable)}</Text>
+        ) : null}
+
+        {/* ── TOTAL — the dominant element ───────────────────────────────── */}
+        <View style={styles.totalBlock}>
+          <View style={styles.totalRow}>
+            <View style={styles.flex}>
+              <Text variant="label" color={colors.primaryDark}>
+                Estimated total
+              </Text>
+              {quote.surgeMultiplier ? (
+                <View style={styles.surgeRow}>
+                  <Zap size={12} color={colors.accentDark} />
+                  <Text variant="caption" color={colors.accentDark}>
+                    {quote.surgeMultiplier}× surge pricing in effect
+                  </Text>
+                </View>
+              ) : null}
+            </View>
+            <Text variant="display" style={styles.totalValue}>
+              {formatRupees(payable)}
+            </Text>
+          </View>
+
+          {promoCode ? (
+            <View style={styles.promoRow}>
+              <Tag size={13} color={colors.successDark} />
+              <Text variant="caption" color={colors.successDark} style={styles.flex}>
+                {promoCode} applied — your discount comes off this total at booking.
+              </Text>
+            </View>
+          ) : null}
         </View>
 
-        {/* Contextual facts — distance, warranty, crew. Never money. */}
+        {/* ── Contextual facts — never money ─────────────────────────────── */}
         {quote.facts.length > 0 ? (
           <View style={styles.facts}>
             {quote.facts.map((fact) => (
@@ -198,15 +258,17 @@ function QuoteCardBase({
                 <Text variant="caption" color={colors.textMuted}>
                   {fact.label}
                 </Text>
-                <Text variant="caption" weight="semibold">{fact.value}</Text>
+                <Text variant="caption" weight="semibold">
+                  {fact.value}
+                </Text>
               </View>
             ))}
           </View>
         ) : null}
 
-        {/* Caveats. The promo line is a promise about who computes what — the
-            discount is applied server-side at order creation, so no figure is
-            shown here that this screen would have had to invent. */}
+        <Divider style={styles.footDivider} />
+
+        {/* ── Caveats + the one action that changes the price ────────────── */}
         <View style={styles.notes}>
           {quote.note ? (
             <View style={styles.noteRow}>
@@ -216,22 +278,25 @@ function QuoteCardBase({
               </Text>
             </View>
           ) : null}
-          {promoCode ? (
-            <View style={styles.noteRow}>
-              <Info size={13} color={colors.successDark} />
-              <Text variant="caption" color={colors.successDark} style={styles.flex}>
-                {promoCode} is applied — the discount comes off your final bill.
-              </Text>
-            </View>
-          ) : null}
           <View style={styles.noteRow}>
             <Info size={13} color={colors.textMuted} />
             <Text variant="caption" color={colors.textSecondary} style={styles.flex}>
-              This is an estimate. Your pro confirms the final amount before any
-              extra work.
+              Priced by Zappy for this address. Your pro confirms the final amount
+              before any extra work.
             </Text>
           </View>
         </View>
+
+        {onEditLocation ? (
+          <Button
+            label="Edit location"
+            variant="ghost"
+            size="small"
+            icon={<Pencil size={14} color={colors.primary} />}
+            onPress={onEditLocation}
+            style={styles.editLocation}
+          />
+        ) : null}
       </Card>
     </Appear>
   );
@@ -242,9 +307,10 @@ export const QuoteCard = memo(QuoteCardBase);
 const styles = StyleSheet.create({
   flex: { flex: 1 },
 
-  card: { gap: spacing.xs },
+  card: { gap: 0 },
   stateCard: { gap: spacing.md },
-  errorCard: { borderColor: colors.errorTint, backgroundColor: colors.errorTint },
+  errorCard: { borderColor: colors.error, backgroundColor: colors.errorTint },
+  errorActions: { flexDirection: 'row', gap: spacing.sm, flexWrap: 'wrap' },
 
   stateRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   stateIcon: {
@@ -254,26 +320,41 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  retry: { alignSelf: 'flex-start' },
 
-  line: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  divider: { marginVertical: spacing.sm },
+  groupTitle: { marginBottom: spacing.xs },
+  sectionGap: { marginTop: spacing.base },
+  line: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    paddingVertical: 3,
+  },
 
-  totalRow: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.md },
-  totalLabel: { marginBottom: 0 },
+  // The total must survive a glance: its own tinted slab in Zappy blue, the
+  // display type scale, and more visual weight than everything above it.
+  totalBlock: {
+    marginTop: spacing.lg,
+    backgroundColor: colors.primaryTint,
+    borderRadius: radius.medium,
+    padding: spacing.base,
+    gap: spacing.sm,
+  },
+  totalRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  totalValue: { letterSpacing: -1 },
   surgeRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xxs, marginTop: 2 },
+  promoRow: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.xs },
 
   facts: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: spacing.lg,
     marginTop: spacing.base,
-    paddingTop: spacing.base,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.divider,
   },
   fact: { gap: 1 },
 
-  notes: { gap: spacing.xs, marginTop: spacing.base },
+  footDivider: { marginTop: spacing.base, marginBottom: spacing.md },
+  notes: { gap: spacing.xs },
   noteRow: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.xs },
+
+  editLocation: { alignSelf: 'flex-start', marginTop: spacing.sm },
 });

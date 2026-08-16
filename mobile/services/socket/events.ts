@@ -43,11 +43,27 @@ export interface WorkerLocationEvent {
   spd: number | null;
 }
 
-/** `order.eta` — eta.service.js. Only emitted while status is `on_the_way`. */
+/**
+ * `order.eta` — eta.service.js. Only emitted while status is `on_the_way`.
+ *
+ * Field names verified against the emit site. The previous declaration had
+ * `distanceMetres` and `arrivingSoon`, neither of which the server sends: it
+ * publishes `distKm` (kilometres) and `isArrivingSoon`. Any consumer reading
+ * the old names got `undefined` and silently rendered nothing.
+ *
+ * Broadcasts are delta-suppressed server-side — first fix, a change of 30s or
+ * more, or the arriving-soon flag flipping — so ticks are sparse by design and
+ * the UI must not treat a quiet period as a dropped connection.
+ */
 export interface OrderEtaEvent {
+  /** Road distance in KILOMETRES, to 3dp. */
+  distKm?: number;
   etaMinutes?: number;
-  distanceMetres?: number;
-  arrivingSoon?: boolean;
+  /** True within 500m. Server also fires a one-time push at this threshold. */
+  isArrivingSoon?: boolean;
+  /** `google` when traffic-aware, `haversine` when the fallback was used. */
+  source?: 'google' | 'haversine' | string;
+  at?: number;
   [key: string]: unknown;
 }
 

@@ -43,6 +43,15 @@ export interface QuoteLine {
   label: string;
   /** Rupees, exactly as the server returned them. */
   value: number;
+  group: ChargeGroup;
+}
+
+export interface QuoteSection {
+  group: ChargeGroup;
+  title: string;
+  lines: QuoteLine[];
+  /** Sum of this section only. Presentational — never the authoritative total. */
+  subtotal: number;
 }
 
 export interface QuoteFact {
@@ -57,6 +66,8 @@ export interface NormalizedQuote {
   currency: string;
   /** Charge components the server returned, in a stable display order. */
   lines: QuoteLine[];
+  /** The same lines bucketed for display. Empty groups are omitted. */
+  sections: QuoteSection[];
   /** True only when `lines` sum to `total` — see the header note. */
   linesReconcile: boolean;
   /** Non-monetary context: distance, ETA, warranty, crew size, parts tier. */
@@ -72,23 +83,46 @@ export interface NormalizedQuote {
  * Charge keys → customer-facing labels, in display order.
  * Ordering is deliberate: what the visit costs, then the work, then travel,
  * then platform, then surcharges last.
+ *
+ * GROUPING. Charges are bucketed so the customer can see what the work costs
+ * separately from what getting there costs and what the platform takes:
+ *
+ *   service   what the job itself costs
+ *   extra     what the circumstances add — travel, time, night, urgency
+ *   fee       what Zappy charges on top
+ *
+ * There is deliberately NO tax group. `pricing.service.js` emits no GST, VAT
+ * or tax field of any kind for any vertical — every rupee key it can produce is
+ * listed below — so a "Taxes" row would be an invented one.
+ *
+ * There is also no discount amount here. `discountPaise` and
+ * `subtotalBeforeDiscount` exist only on the ORDER, written after a promo is
+ * validated at creation (`order.service.js`); `GET /orders/quote` never carries
+ * either. The quote can say a promo will apply, and must not print a figure.
  */
-const CHARGE_LABELS: ReadonlyArray<readonly [string, string]> = [
-  ['baseFee', 'Base fee'],
-  ['baseVisitFee', 'Visit fee'],
-  ['visitFee', 'Visit fee'],
-  ['inspectionFee', 'Inspection'],
-  ['diagnostic', 'Diagnostics'],
-  ['laborFee', 'Labour'],
-  ['labourFee', 'Labour'],
-  ['serviceFee', 'Service charge'],
-  ['sparePartFee', 'Spare parts'],
-  ['distanceFee', 'Travel'],
-  ['timeFee', 'Time'],
-  ['platformFee', 'Platform fee'],
-  ['emergencySurcharge', 'Emergency surcharge'],
-  ['nightSurcharge', 'Night surcharge'],
-  ['urgentSurcharge', 'Urgent surcharge'],
+type ChargeGroup = 'service' | 'extra' | 'fee';
+
+const CHARGE_LABELS: ReadonlyArray<readonly [string, string, ChargeGroup]> = [
+  // ── What the job costs ──────────────────────────────────────────────────
+  ['baseFee', 'Base fee', 'service'],
+  ['baseVisitFee', 'Visit fee', 'service'],
+  ['visitFee', 'Visit fee', 'service'],
+  ['baseHookupFee', 'Hook-up fee', 'service'],
+  ['inspectionFee', 'Inspection', 'service'],
+  ['diagnostic', 'Diagnostics', 'service'],
+  ['laborFee', 'Labour', 'service'],
+  ['labourFee', 'Labour', 'service'],
+  ['serviceFee', 'Service charge', 'service'],
+  ['sparePartFee', 'Spare parts', 'service'],
+  // ── What the circumstances add ──────────────────────────────────────────
+  ['towFee', 'Towing', 'extra'],
+  ['distanceFee', 'Travel', 'extra'],
+  ['timeFee', 'Time', 'extra'],
+  ['emergencySurcharge', 'Emergency surcharge', 'extra'],
+  ['nightSurcharge', 'Night surcharge', 'extra'],
+  ['urgentSurcharge', 'Urgent surcharge', 'extra'],
+  // ── What Zappy charges on top ───────────────────────────────────────────
+  ['platformFee', 'Platform fee', 'fee'],
 ];
 
 /** Anything numeric that is NOT a charge — totals, metadata, nested paise. */
@@ -139,19 +173,21 @@ export function normalizeQuote(
   const lines: QuoteLine[] = [];
 
   // Mapped charges first, in the curated order above.
-  for (const [key, label] of CHARGE_LABELS) {
+  for (const [key, label, group] of CHARGE_LABELS) {
     const value = num(raw[key]);
     seen.add(key);
     // Zero-value surcharges are noise — the server returns them as 0 by default.
-    if (value != null && value > 0) lines.push({ key, label, value });
+    if (value != null && value > 0) lines.push({ key, label, value, group });
   }
 
   // Any fee the server adds later still shows up rather than silently vanishing.
+  // An unmapped charge is filed under `extra`: calling it part of the service
+  // price would be a guess, and calling it a platform fee would be worse.
   for (const [key, value] of Object.entries(raw)) {
     if (seen.has(key) || NON_CHARGE_KEYS.has(key)) continue;
     const amount = num(value);
     if (amount != null && amount > 0) {
-      lines.push({ key, label: humanizeKey(key), value: amount });
+      lines.push({ key, label: humanizeKey(key), value: amount, group: 'extra' });
     }
   }
 
@@ -159,6 +195,23 @@ export function normalizeQuote(
   // tightest tolerance that doesn't produce false mismatches.
   const sum = lines.reduce((acc, line) => acc + line.value, 0);
   const linesReconcile = lines.length > 0 && Math.abs(sum - total) <= 1;
+
+  const SECTION_TITLES: Record<ChargeGroup, string> = {
+    service: 'Service price',
+    extra: 'Additional charges',
+    fee: 'Fees',
+  };
+  const sections: QuoteSection[] = (['service', 'extra', 'fee'] as const)
+    .map((group) => {
+      const groupLines = lines.filter((line) => line.group === group);
+      return {
+        group,
+        title: SECTION_TITLES[group],
+        lines: groupLines,
+        subtotal: groupLines.reduce((acc, line) => acc + line.value, 0),
+      };
+    })
+    .filter((section) => section.lines.length > 0);
 
   const facts: QuoteFact[] = [];
   const distanceKm = num(raw.distanceKm);
@@ -207,6 +260,7 @@ export function normalizeQuote(
     total,
     currency: typeof raw.currency === 'string' ? raw.currency : 'INR',
     lines,
+    sections,
     linesReconcile,
     facts,
     note: typeof raw.note === 'string' && raw.note ? raw.note : undefined,

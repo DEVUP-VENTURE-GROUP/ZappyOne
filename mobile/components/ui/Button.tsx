@@ -25,7 +25,8 @@ export type ButtonVariant =
   | 'outline'
   | 'secondary'
   | 'danger'
-  | 'ghost';
+  | 'ghost'
+  | 'dangerGhost';
 
 export type ButtonSize = 'small' | 'medium' | 'large';
 
@@ -90,6 +91,16 @@ const VARIANTS: Record<ButtonVariant, VariantStyle> = {
     container: { backgroundColor: 'transparent' },
     labelColor: zappy[600],
     spinnerColor: zappy[600],
+  },
+  /**
+   * A destructive action that shouldn't shout. `ghost` forces the brand blue,
+   * which made "Cancel booking" read as a primary link with a stray red icon —
+   * the label and the icon were saying different things.
+   */
+  dangerGhost: {
+    container: { backgroundColor: 'transparent' },
+    labelColor: danger[500],
+    spinnerColor: danger[500],
   },
 };
 
