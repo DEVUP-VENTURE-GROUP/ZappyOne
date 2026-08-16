@@ -1,116 +1,298 @@
-import React, { useMemo, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, SafeAreaView, ActivityIndicator, TextInput, Image } from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
-import { Search, Wrench, X } from 'lucide-react-native';
-import { useGetServicesQuery, useGetCategoriesQuery } from '../../services/api/catalogApi';
-import type { ServiceCatalogItem } from '../../types/api';
+/**
+ * Services — catalog discovery.
+ * ----------------------------------------------------------------------------
+ * ONE screen serves every vertical; only the data differs. Categories come from
+ * `GET /catalog/categories` and services from `GET /catalog/services` — nothing
+ * about the catalog is hardcoded here.
+ *
+ * CATEGORY MATCHING mirrors the server's own rules (`category.model.js`):
+ *   1. `matchCategories` when present, else the category `key`
+ *   2. legacy `codePrefixes` fallback
+ * The previous implementation used plain `service.category === key`, which
+ * silently dropped services whose `category` value differs from the group key
+ * (the `family` group owns `helper`, `commercial` owns `vehicle`) and every
+ * service relying on a code-prefix match.
+ *
+ * PERFORMANCE: the list is virtualised, rows are memoised, and filtering is
+ * memoised on [services, categories, active, query] so typing doesn't re-filter
+ * on unrelated renders.
+ * ----------------------------------------------------------------------------
+ */
+
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { FlatList, StyleSheet, View } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SearchX } from 'lucide-react-native';
+import {
+  Chip,
+  EmptyState,
+  ErrorState,
+  Heading,
+  SearchBar,
+  SectionTitle,
+  Skeleton,
+  Text,
+} from '../../components/ui';
+import { CategoryCard, ServiceCard } from '../../components/catalog/ServiceCard';
+import { useGetCategoriesQuery, useGetServicesQuery } from '../../services/api/catalogApi';
+import { getApiErrorMessage } from '../../services/api/apiSlice';
+import { colors } from '../../theme/colors';
+import { radius } from '../../theme/radius';
+import { spacing, screenPadding, bottomNavClearance } from '../../theme/spacing';
+import type { ServiceCatalogItem, ServiceCategory } from '../../types/api';
+
+/**
+ * Does this service belong to this category?
+ * Mirrors the server's matching rules so mobile groups services exactly as the
+ * website does.
+ */
+function serviceMatchesCategory(
+  service: ServiceCatalogItem,
+  category: ServiceCategory,
+): boolean {
+  const owned =
+    category.matchCategories && category.matchCategories.length > 0
+      ? category.matchCategories
+      : [category.key];
+
+  if (owned.includes(service.category)) return true;
+
+  return (category.codePrefixes ?? []).some((prefix) => service.code.startsWith(prefix));
+}
 
 export default function ServicesScreen() {
   const router = useRouter();
-  const { category: initialCategory } = useLocalSearchParams<{ category?: string }>();
-  const { data: services = [], isLoading, refetch, isFetching } = useGetServicesQuery();
+  const insets = useSafeAreaInsets();
+  const params = useLocalSearchParams<{ category?: string }>();
+
+  const [query, setQuery] = useState('');
+  const [activeKey, setActiveKey] = useState<string | null>(params.category ?? null);
+
+  const {
+    data: services = [],
+    isLoading,
+    error,
+    refetch,
+    isFetching,
+  } = useGetServicesQuery();
   const { data: categories = [] } = useGetCategoriesQuery();
-  const [q, setQ] = useState('');
-  const [activeCategory, setActiveCategory] = useState<string | null>(initialCategory ?? null);
+
+  // The tab stays mounted, so arriving from a Home category tile only changes
+  // the route param — the initial useState value never re-runs.
+  useEffect(() => {
+    if (params.category) setActiveKey(params.category);
+  }, [params.category]);
+
+  /** Service counts per category, for the rail's subtitle. */
+  const countsByKey = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const category of categories) {
+      counts[category.key] = services.filter((s) =>
+        serviceMatchesCategory(s, category),
+      ).length;
+    }
+    return counts;
+  }, [categories, services]);
+
+  const activeCategory = useMemo(
+    () => categories.find((c) => c.key === activeKey) ?? null,
+    [categories, activeKey],
+  );
 
   const filtered = useMemo(() => {
-    let list = services;
+    let result = services;
+
     if (activeCategory) {
-      list = list.filter((s) => s.category === activeCategory);
+      result = result.filter((s) => serviceMatchesCategory(s, activeCategory));
     }
-    const term = q.trim().toLowerCase();
+
+    const term = query.trim().toLowerCase();
     if (term) {
-      list = list.filter((s) =>
-        (s.name || '').toLowerCase().includes(term) || (s.code || '').toLowerCase().includes(term),
+      result = result.filter(
+        (s) =>
+          (s.name || '').toLowerCase().includes(term) ||
+          s.code.toLowerCase().includes(term) ||
+          (s.shortDescription || '').toLowerCase().includes(term),
       );
     }
-    return list;
-  }, [services, q, activeCategory]);
+
+    return result;
+  }, [services, activeCategory, query]);
+
+  /** Category that owns a service — supplies the card's accent colour. */
+  const categoryFor = useCallback(
+    (service: ServiceCatalogItem) =>
+      categories.find((c) => serviceMatchesCategory(service, c)) ?? null,
+    [categories],
+  );
+
+  const openService = useCallback(
+    (service: ServiceCatalogItem) => router.push(`/service/${service.code}` as never),
+    [router],
+  );
+
+  const toggleCategory = useCallback(
+    (category: ServiceCategory) =>
+      setActiveKey((prev) => (prev === category.key ? null : category.key)),
+    [],
+  );
+
+  const renderItem = useCallback(
+    ({ item }: { item: ServiceCatalogItem }) => (
+      <ServiceCard service={item} category={categoryFor(item)} onPress={openService} />
+    ),
+    [categoryFor, openService],
+  );
+
+  const clearFilters = useCallback(() => {
+    setQuery('');
+    setActiveKey(null);
+  }, []);
+
+  const hasFilters = Boolean(query) || Boolean(activeKey);
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      <View className="px-5 pt-4 pb-2">
-        <Text className="text-2xl font-bold text-navy">Services</Text>
-        <Text className="text-gray-500 mb-3">Book a verified professional</Text>
-        <View className="flex-row items-center bg-gray-100 rounded-xl px-3">
-          <Search size={18} color="#94A3B8" />
-          <TextInput
-            className="flex-1 p-3 text-base"
-            placeholder="Search services"
-            value={q}
-            onChangeText={setQ}
-          />
-        </View>
+    <View style={[styles.root, { paddingTop: insets.top + spacing.sm }]}>
+      {/* ── Header ───────────────────────────────────────────────────── */}
+      <View style={styles.header}>
+        <Heading level={1}>Services</Heading>
+        <Text variant="muted">Book a verified professional</Text>
+        <SearchBar
+          value={query}
+          onChangeText={setQuery}
+          placeholder="Search services"
+          style={styles.search}
+        />
       </View>
 
-      {categories.length > 0 ? (
-        <View className="mb-2">
-          <FlatList
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            data={categories}
-            keyExtractor={(c) => c._id}
-            contentContainerStyle={{ paddingHorizontal: 20, gap: 8 }}
-            renderItem={({ item }) => {
-              const on = activeCategory === item.key;
-              return (
-                <TouchableOpacity
-                  onPress={() => setActiveCategory(on ? null : item.key)}
-                  className={`px-4 py-2 rounded-full border flex-row items-center gap-1 ${on ? 'bg-primary border-primary' : 'bg-white border-gray-200'}`}
-                >
-                  {on ? <X size={12} color="#fff" /> : null}
-                  <Text className={`text-xs font-bold ${on ? 'text-white' : 'text-navy'}`}>{item.customerLabel}</Text>
-                </TouchableOpacity>
-              );
-            }}
-          />
-        </View>
-      ) : null}
+      <FlatList
+        data={filtered}
+        keyExtractor={(item) => item.code}
+        renderItem={renderItem}
+        contentContainerStyle={[
+          styles.list,
+          { paddingBottom: bottomNavClearance + insets.bottom },
+        ]}
+        ItemSeparatorComponent={Separator}
+        refreshing={isFetching && !isLoading}
+        onRefresh={refetch}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        // Tuned for mid-range Android: a screenful plus a little, reclaim the rest.
+        initialNumToRender={6}
+        maxToRenderPerBatch={6}
+        windowSize={7}
+        removeClippedSubviews
+        ListHeaderComponent={
+          <View>
+            {/* Category rail — themed cards, matching the website's strip */}
+            {categories.length > 0 ? (
+              <View style={styles.railBlock}>
+                <SectionTitle>Browse by category</SectionTitle>
+                <FlatList
+                  horizontal
+                  data={categories}
+                  keyExtractor={(item) => item._id ?? item.key}
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.rail}
+                  renderItem={({ item }) => (
+                    <CategoryCard
+                      category={item}
+                      selected={activeKey === item.key}
+                      count={countsByKey[item.key]}
+                      onPress={toggleCategory}
+                    />
+                  )}
+                />
+              </View>
+            ) : null}
 
-      {isLoading ? (
-        <View className="flex-1 items-center justify-center"><ActivityIndicator color="#2563EB" /></View>
-      ) : (
-        <FlatList
-          data={filtered}
-          keyExtractor={(item) => item.code}
-          contentContainerStyle={{ padding: 16 }}
-          refreshing={isFetching}
-          onRefresh={refetch}
-          renderItem={({ item }: { item: ServiceCatalogItem }) => {
-            const price = item.servicePricePaise
-              ? Math.round(item.servicePricePaise / 100)
-              : Math.round((item.priceRangeMinPaise || 0) / 100);
-            return (
-              <TouchableOpacity
-                className="bg-white border border-gray-100 rounded-2xl p-4 mb-3 flex-row items-center justify-between"
-                // `as never`: typed-routes stale-cache artifact (see home.tsx) — route is real.
-                onPress={() => router.push(`/service/${item.code}` as never)}
-              >
-                <View className="flex-row items-center flex-1 pr-3">
-                  <View className="w-11 h-11 rounded-xl bg-gray-50 items-center justify-center mr-3 overflow-hidden">
-                    {item.imageUrl ? (
-                      <Image source={{ uri: item.imageUrl }} className="w-full h-full" resizeMode="cover" />
-                    ) : (
-                      <Wrench size={18} color="#CBD5E1" />
-                    )}
+            {/* Active filter summary */}
+            <View style={styles.resultRow}>
+              <SectionTitle style={styles.flex}>
+                {activeCategory ? activeCategory.customerLabel : 'All services'}
+                {!isLoading ? `  ·  ${filtered.length}` : ''}
+              </SectionTitle>
+              {hasFilters ? (
+                <Chip label="Clear" tone="neutral" onPress={clearFilters} />
+              ) : null}
+            </View>
+          </View>
+        }
+        ListEmptyComponent={
+          isLoading ? (
+            <View style={styles.skeletons}>
+              {Array.from({ length: 5 }, (_, i) => (
+                <View key={i} style={styles.skeletonCard}>
+                  <View style={styles.skeletonTop}>
+                    <Skeleton width={56} height={56} borderRadius={radius.medium} />
+                    <View style={styles.flex}>
+                      <Skeleton width="70%" height={15} />
+                      <Skeleton width="90%" height={11} style={{ marginTop: spacing.sm }} />
+                    </View>
                   </View>
-                  <View className="flex-1">
-                    <Text className="text-base font-bold text-navy capitalize">{(item.name || item.code || '').replace(/_/g, ' ')}</Text>
-                    {item.shortDescription ? (
-                      <Text className="text-xs text-gray-500 mt-0.5" numberOfLines={1}>{item.shortDescription}</Text>
-                    ) : null}
-                    <Text className="text-sm font-semibold text-primary mt-1">{price > 0 ? `From ₹${price}` : 'Get Quote'}</Text>
-                  </View>
+                  <Skeleton width="45%" height={22} style={{ marginTop: spacing.lg }} />
                 </View>
-                <View className="bg-primary rounded-xl px-4 py-2">
-                  <Text className="text-white font-bold text-xs">Book</Text>
-                </View>
-              </TouchableOpacity>
-            );
-          }}
-          ListEmptyComponent={<Text className="text-center text-gray-400 mt-10">No services found</Text>}
-        />
-      )}
-    </SafeAreaView>
+              ))}
+            </View>
+          ) : error ? (
+            <ErrorState
+              message={getApiErrorMessage(error, 'We could not load the service catalog.')}
+              onRetry={refetch}
+            />
+          ) : (
+            <EmptyState
+              icon={<SearchX size={28} color={colors.textMuted} />}
+              title="No services found"
+              message={
+                query
+                  ? `Nothing matches “${query}”${
+                      activeCategory ? ` in ${activeCategory.customerLabel}` : ''
+                    }.`
+                  : 'This category has no services yet.'
+              }
+              actionLabel={hasFilters ? 'Clear filters' : undefined}
+              onAction={hasFilters ? clearFilters : undefined}
+            />
+          )
+        }
+      />
+    </View>
   );
 }
+
+function Separator() {
+  return <View style={styles.separator} />;
+}
+
+const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: colors.background },
+  flex: { flex: 1 },
+
+  header: { paddingHorizontal: screenPadding, gap: spacing.xxs },
+  search: { marginTop: spacing.md },
+
+  list: { paddingHorizontal: screenPadding, paddingTop: spacing.base, flexGrow: 1 },
+  separator: { height: spacing.md },
+
+  railBlock: { marginBottom: spacing.lg },
+  rail: { gap: spacing.md, paddingTop: spacing.sm, paddingRight: spacing.lg },
+
+  resultRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing.md,
+  },
+
+  skeletons: { gap: spacing.md },
+  skeletonCard: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.large,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+    padding: spacing.base,
+  },
+  skeletonTop: { flexDirection: 'row', gap: spacing.md, alignItems: 'center' },
+});
