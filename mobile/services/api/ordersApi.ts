@@ -14,6 +14,7 @@ import type {
   PaginatedOrders,
   CreateOrderRequest,
   QuoteRequest,
+  CancelPreview,
   ServiceQuote,
   ChatMessage,
 } from '../../types/api';
@@ -74,7 +75,7 @@ export const ordersApi = apiSlice.injectEndpoints({
     }),
 
     // ── Lifecycle actions (customer) ─────────────────────────────────────────
-    getCancelPreview: builder.query<{ feePaise?: number; refundPaise?: number; message?: string }, string>({
+    getCancelPreview: builder.query<CancelPreview, string>({
       query: (id) => ({ url: `/orders/${id}/cancel-preview` }),
     }),
     cancelOrder: builder.mutation<Order, { id: string; reason?: string }>({

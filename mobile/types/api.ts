@@ -308,6 +308,35 @@ export interface CreateOrderRequest {
   preferredWorkerId?: string | null;
 }
 
+/**
+ * `GET /api/orders/:id/cancel-preview`.
+ *
+ * Verified against the live response and `cancellation.service.js`. The
+ * previous client type declared `refundPaise`, which the server never sends,
+ * and omitted `canCancel` — the field that decides whether the button should
+ * exist at all.
+ *
+ * NOTE a real inconsistency in the backend: `canCancel` is false for `arrived`,
+ * but `cancelByUser` still accepts `arrived`. The preview is the stricter of
+ * the two, so gating the UI on it can only ever hide a cancel the server would
+ * have allowed — never offer one it would reject.
+ */
+export interface CancelPreview {
+  /** Cancellation fee in paise. 0 before a worker commits. */
+  feePaise: number;
+  /** Same figure in rupees, server-rounded. */
+  feeRupees: number;
+  isFree: boolean;
+  /** Why this fee applies, e.g. `no_worker_assigned`, `within_grace_period`. */
+  reason?: string;
+  /** Seconds left in the free-cancel window; null before assignment. */
+  secsLeft?: number | null;
+  workerCompensationPaise?: number;
+  /** Server-authored explanation. Display this rather than composing one. */
+  message?: string;
+  canCancel: boolean;
+}
+
 /** `GET /api/orders/mine` response envelope. */
 export interface PaginatedOrders {
   orders: Order[];

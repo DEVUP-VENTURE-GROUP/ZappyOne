@@ -1,10 +1,19 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, SafeAreaView, ActivityIndicator, ScrollView, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { ChevronLeft, MessageSquare, X, Star, CreditCard } from 'lucide-react-native';
 import {
   useGetOrderQuery, useCancelOrderMutation, useRateOrderMutation,
+  useGetCancelPreviewQuery, useRebookOrderMutation,
 } from '../../../services/api/ordersApi';
+import { SearchingState } from '../../../components/tracking/SearchingState';
+import {
+  BookingCancelled,
+  BookingFailed,
+  WorkerFound,
+} from '../../../components/tracking/DispatchOutcome';
+import { Button, ScreenHeader } from '../../../components/ui';
+import { colors } from '../../../theme/colors';
 import { useCreatePaymentOrderMutation, useVerifyPaymentMutation } from '../../../services/api/paymentsApi';
 import { openCashfreeCheckout, parseReturnUrl, paymentReturnUrl } from '../../../services/payments/cashfreeCheckout';
 import { getApiErrorMessage } from '../../../services/api/apiSlice';
@@ -38,6 +47,21 @@ export default function OrderTrackingScreen() {
   const [createPaymentOrder, { isLoading: startingPayment }] = useCreatePaymentOrderMutation();
   const [verifyPayment] = useVerifyPaymentMutation();
 
+  // Whether cancelling is allowed — and what it costs — is the server's call,
+  // never this screen's. Skipped once the order is terminal.
+  const isTerminal = ['completed', 'cancelled', 'failed'].includes(order?.status ?? '');
+  const { data: cancelPreview } = useGetCancelPreviewQuery(orderId, {
+    skip: !order || isTerminal,
+  });
+  const [rebookOrder, { isLoading: rebooking }] = useRebookOrderMutation();
+
+  // The moment the search resolves is worth its own beat — someone who has been
+  // watching a pulse for two minutes should be told plainly that it worked,
+  // not silently dropped onto a map. Shown only on the searching → assigned
+  // transition, and dismissed by the customer rather than a timer.
+  const [showAssigned, setShowAssigned] = useState(false);
+  const prevStatus = useRef<OrderStatus | undefined>(undefined);
+
   const [dispatchUpdate, setDispatchUpdate] = useState<OrderDispatchUpdateEvent | null>(null);
   const [eta, setEta] = useState<OrderEtaEvent | null>(null);
   const [ratingValue, setRatingValue] = useState(0);
@@ -64,6 +88,15 @@ export default function OrderTrackingScreen() {
       socketClient.off('order.worker_cancelled', onCancelled);
     };
   }, [socketClient, refetch]);
+
+  useEffect(() => {
+    const next = order?.status;
+    const previous = prevStatus.current;
+    if (next === 'assigned' && (previous === 'searching' || previous === 'created')) {
+      setShowAssigned(true);
+    }
+    prevStatus.current = next;
+  }, [order?.status]);
 
   const pickup = order?.pickupLocation?.coordinates
     ? { lat: order.pickupLocation.coordinates[1], lng: order.pickupLocation.coordinates[0] }
@@ -117,7 +150,81 @@ export default function OrderTrackingScreen() {
     return <SafeAreaView className="flex-1 bg-white items-center justify-center"><ActivityIndicator color="#2563EB" /></SafeAreaView>;
   }
 
-  const needsPayment = order.payment?.method !== 'cash' && order.payment?.status === 'pending' && status !== 'cancelled';
+  // ── Dispatch states take over the whole screen ──────────────────────────
+  // While dispatch is still running there is no worker, no position and no ETA,
+  // so the map and the stage list below would be empty chrome around a blank.
+  // These render instead, and yield to the tracking UI the moment the server
+  // says `assigned`.
+  const doRebook = async () => {
+    try {
+      const next = await rebookOrder(orderId).unwrap();
+      router.replace(`/tracking/order/${next._id}`);
+    } catch (e) {
+      Alert.alert('Could not rebook', getApiErrorMessage(e, 'Please try again.'));
+    }
+  };
+
+  if (status === 'created' || status === 'searching') {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+        <Stack.Screen options={{ headerShown: false }} />
+        <ScreenHeader title="Finding your pro" onBack={() => router.back()} />
+        <ScrollView showsVerticalScrollIndicator={false}>
+          <SearchingState
+            order={order}
+            dispatchUpdate={dispatchUpdate}
+            cancelPreview={cancelPreview}
+            cancelling={cancelling}
+            onCancel={(reason) => {
+              cancelOrder({ id: orderId, reason }).unwrap().catch((e) => {
+                Alert.alert('Could not cancel', getApiErrorMessage(e, 'Please try again.'));
+              });
+            }}
+          />
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
+  if (status === 'assigned' && showAssigned) {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+        <Stack.Screen options={{ headerShown: false }} />
+        <ScrollView showsVerticalScrollIndicator={false}>
+          <WorkerFound order={order} />
+          <View style={{ paddingHorizontal: 20, marginTop: 24 }}>
+            <Button label="Track your pro" onPress={() => setShowAssigned(false)} fullWidth />
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
+  if (status === 'cancelled' || status === 'failed') {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+        <Stack.Screen options={{ headerShown: false }} />
+        <ScreenHeader title="Booking" onBack={() => router.back()} />
+        <ScrollView showsVerticalScrollIndicator={false}>
+          {status === 'cancelled' ? (
+            <BookingCancelled
+              onRebook={rebooking ? undefined : doRebook}
+              onDone={() => router.replace('/(tabs)/home')}
+            />
+          ) : (
+            <BookingFailed
+              order={order}
+              onRebook={rebooking ? undefined : doRebook}
+              onDone={() => router.replace('/(tabs)/home')}
+            />
+          )}
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
+  const needsPayment =
+    order.payment?.method !== 'cash' && order.payment?.status === 'pending';
 
   return (
     <SafeAreaView className="flex-1 bg-white">
@@ -150,9 +257,6 @@ export default function OrderTrackingScreen() {
           <Text className="text-xs text-gray-500 mt-0.5 capitalize">
             {String(order.service || '').replace(/_/g, ' ')} · ₹{order.pricing?.total ?? '—'}
           </Text>
-          {dispatchUpdate?.message && status === 'searching' ? (
-            <Text className="text-xs text-primary font-semibold mt-2">{dispatchUpdate.message}</Text>
-          ) : null}
           {eta?.etaMinutes != null && status === 'on_the_way' ? (
             <Text className="text-xs text-primary font-semibold mt-2">Arriving in ~{Math.round(eta.etaMinutes)} min</Text>
           ) : null}
@@ -174,8 +278,7 @@ export default function OrderTrackingScreen() {
         ) : null}
 
         {/* Progress */}
-        {status !== 'cancelled' && status !== 'failed' ? (
-          <View className="mt-5">
+        <View className="mt-5">
             {STAGES.slice(0, 5).map((s) => {
               const done = stageIdx >= STAGES.indexOf(s);
               return (
@@ -185,8 +288,7 @@ export default function OrderTrackingScreen() {
                 </View>
               );
             })}
-          </View>
-        ) : null}
+        </View>
 
         {/* Start-service OTP */}
         {order.otp && ['assigned', 'on_the_way', 'arrived'].includes(status ?? '') ? (
