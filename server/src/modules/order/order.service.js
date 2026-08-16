@@ -6,6 +6,7 @@ const geoService = require('../worker/geo.service');
 const abuseService = require('./abuse.service');
 const ledgerService = require('../wallet/ledger.service');
 const Worker = require('../worker/worker.model');
+const User = require('../user/user.model');
 const { dispatchQueue, emergencyDispatchQueue } = require('../../jobs');
 const { redis } = require('../../config/redis');
 const appConfig = require('../../config');
@@ -340,6 +341,19 @@ async function createOrder({ userId, service, subCategory, pickupLocation, dropL
   if (pendingCancellationFeePaise > 0) {
     shieldService.collectPendingFees(userId, order._id).catch((err) =>
       logger.warn({ err: err.message, userId, orderId: order._id }, 'Deferred shield fee collection failed at order creation')
+    );
+  }
+
+  // Record where this customer actually was — guaranteed for every order
+  // regardless of client (the previous mechanism was an explicit endpoint a
+  // screen had to remember to call separately; most orders never called it).
+  if (pickupLocation.address) {
+    User.recordRecentLocation(userId, {
+      address: pickupLocation.address,
+      lat: pickupLocation.lat,
+      lng: pickupLocation.lng,
+    }).catch((err) =>
+      logger.warn({ err: err.message, userId, orderId: order._id }, 'recordRecentLocation failed at order creation')
     );
   }
 

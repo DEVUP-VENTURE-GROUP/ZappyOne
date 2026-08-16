@@ -81,4 +81,26 @@ const userSchema = new mongoose.Schema(
 
 userSchema.index({ 'savedAddresses.location': '2dsphere' });
 
+/**
+ * Record a location the user was just at — dedupe by address, most-recent
+ * first, capped at 10. Single source of truth for `recentLocations` writes:
+ * called both from the explicit `POST /users/recent-location` endpoint AND
+ * automatically on every order creation (order.service.js), so this is
+ * guaranteed to fill in for every user regardless of which client placed
+ * the order — it never depended on a screen remembering to call it.
+ */
+userSchema.statics.recordRecentLocation = async function recordRecentLocation(userId, { address, lat, lng }) {
+  if (!address) return;
+  await this.updateOne({ _id: userId }, { $pull: { recentLocations: { address } } });
+  await this.updateOne({ _id: userId }, {
+    $push: {
+      recentLocations: {
+        $each: [{ address, lat, lng, usedAt: new Date() }],
+        $position: 0,
+        $slice: 10,
+      },
+    },
+  });
+};
+
 module.exports = mongoose.model('User', userSchema);

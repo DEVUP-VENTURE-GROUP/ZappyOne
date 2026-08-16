@@ -229,17 +229,7 @@ async function setDefaultPaymentMethod(req, res, next) {
 async function saveRecentLocation(req, res, next) {
   try {
     const { address, lat, lng } = req.body;
-    // Remove duplicate, unshift new entry, keep most recent 10
-    await User.updateOne({ _id: req.auth.sub }, { $pull: { recentLocations: { address } } });
-    await User.updateOne({ _id: req.auth.sub }, {
-      $push: {
-        recentLocations: {
-          $each: [{ address, lat, lng, usedAt: new Date() }],
-          $position: 0,
-          $slice: 10,
-        },
-      },
-    });
+    await User.recordRecentLocation(req.auth.sub, { address, lat, lng });
     res.json({ ok: true });
   } catch (err) { next(err); }
 }
