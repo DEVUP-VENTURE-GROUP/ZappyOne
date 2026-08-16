@@ -1,132 +1,272 @@
-import React, { useEffect, useState } from 'react';
-import {
-  View, Text, TouchableOpacity, SafeAreaView, ActivityIndicator, TextInput,
-  ScrollView, Alert, KeyboardAvoidingView, Platform,
-} from 'react-native';
-import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
-import * as Location from 'expo-location';
-import { MapPin, ChevronLeft, Zap, Wallet, CreditCard, Tag, Check } from 'lucide-react-native';
-import { useLazyGetQuoteQuery, useCreateOrderMutation } from '../../services/api/ordersApi';
-import { useValidatePromoMutation } from '../../services/api/promosApi';
-import { useCreatePaymentOrderMutation, useVerifyPaymentMutation } from '../../services/api/paymentsApi';
-import { useSaveRecentLocationMutation } from '../../services/api/authApi';
-import { getApiErrorMessage } from '../../services/api/apiSlice';
-import { openCashfreeCheckout, parseReturnUrl, paymentReturnUrl } from '../../services/payments/cashfreeCheckout';
-import type { BookingTier, PaymentMethod } from '../../types/api';
+/**
+ * Booking — service → location → quote → confirm → searching.
+ * ----------------------------------------------------------------------------
+ * One screen, progressive disclosure. Uber and Urban Company both keep booking
+ * on a single surface with a sheet for the address rather than a wizard, and
+ * that suits this flow: everything except the address is a one-tap choice, so
+ * splitting it across routes would cost taps and lose context.
+ *
+ * ── WHO OWNS THE PRICE ─────────────────────────────────────────────────────
+ * The server does. `GET /orders/quote` is the only source of a price here and
+ * nothing on this screen recomputes one. Two client-side arithmetic operations
+ * survive, both required by the server's own contract:
+ *
+ *   1. The tier multiplier. `/orders/quote` accepts no tier, so the server
+ *      cannot price a tier in advance. It applies the multiplier itself at
+ *      order creation and — per the comment on `quotedTotalRupees` in
+ *      `order.routes.js` — expects the client to send the TIER-ADJUSTED total
+ *      so its surge guard compares like with like. Sending the un-tiered total
+ *      would make every priority (+20%) and express (+40%) booking fail the
+ *      10% tolerance and 409 with PRICE_CHANGED.
+ *   2. Adding the tip, which the server also applies before that guard.
+ *
+ * The promo discount is deliberately NOT subtracted from `quotedTotalRupees`.
+ * The server applies promos AFTER the surge check, so a discounted figure makes
+ * the fresh total look inflated by exactly the discount and the booking is
+ * rejected. The previous version of this screen sent the discounted total and
+ * would 409 on any promo worth more than 10% of the bill.
+ *
+ * ── STATES ────────────────────────────────────────────────────────────────
+ * Location: unset · locating · resolved · permission denied
+ * Quote:    idle (no location) · loading · loaded · error
+ * Submit:   idle · creating · paying · failed (with a reason per error code)
+ * ----------------------------------------------------------------------------
+ */
 
-const TIERS: { key: BookingTier; label: string; hint: string }[] = [
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  Banknote,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  CreditCard,
+  MapPin,
+  Pencil,
+  SearchX,
+  Tag,
+  X,
+  Zap,
+} from 'lucide-react-native';
+import {
+  Appear,
+  BottomSheet,
+  Button,
+  Card,
+  Chip,
+  Divider,
+  EmptyState,
+  Heading,
+  IconButton,
+  Input,
+  SectionTitle,
+  Skeleton,
+  Text,
+  formatRupees,
+} from '../../components/ui';
+import { AddressSheet, type BookingLocation } from '../../components/booking/AddressSheet';
+import { QuoteCard } from '../../components/booking/QuoteCard';
+import {
+  normalizeQuote,
+  quotedTotalForGuard,
+  TIER_MULTIPLIERS,
+  type BookingTierKey,
+} from '../../components/booking/quote';
+import {
+  humanizeCode,
+  resolveServiceIcon,
+} from '../../components/catalog/categoryIcons';
+import { categoryForService } from '../../components/catalog/matchCategory';
+import { useGetCategoriesQuery, useGetServicesQuery } from '../../services/api/catalogApi';
+import {
+  useCreateOrderMutation,
+  useLazyGetQuoteQuery,
+} from '../../services/api/ordersApi';
+import { useValidatePromoMutation } from '../../services/api/promosApi';
+import {
+  useCreatePaymentOrderMutation,
+  useVerifyPaymentMutation,
+} from '../../services/api/paymentsApi';
+import {
+  useGetAddressesQuery,
+  useSaveRecentLocationMutation,
+} from '../../services/api/authApi';
+import { getApiErrorMessage } from '../../services/api/apiSlice';
+import {
+  openCashfreeCheckout,
+  parseReturnUrl,
+  paymentReturnUrl,
+} from '../../services/payments/cashfreeCheckout';
+import { colors, zappy } from '../../theme/colors';
+import { radius } from '../../theme/radius';
+import { screenPadding, spacing } from '../../theme/spacing';
+import { shadows } from '../../theme/shadows';
+import type { PaymentMethod } from '../../types/api';
+
+const TIERS: { key: BookingTierKey; label: string; hint: string }[] = [
   { key: 'standard', label: 'Standard', hint: 'Best value' },
-  { key: 'priority', label: 'Priority', hint: '+20% · faster match' },
-  { key: 'express', label: 'Express', hint: '+40% · fastest match' },
+  { key: 'priority', label: 'Priority', hint: 'Faster match' },
+  { key: 'express', label: 'Express', hint: 'Fastest match' },
 ];
+
+/** Boost amounts. The server caps `tipAmount` at ₹500 (`order.routes.js`). */
+const BOOSTS = [0, 20, 50, 100];
 
 export default function BookServiceScreen() {
   const { service } = useLocalSearchParams<{ service: string }>();
+  const serviceCode = String(service);
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
-  // ── Location ────────────────────────────────────────────────────────────
-  const [loc, setLoc] = useState<{ lat: number; lng: number } | null>(null);
-  const [address, setAddress] = useState('');
-  const [landmark, setLandmark] = useState('');
-  const [flatNumber, setFlatNumber] = useState('');
-  const [locating, setLocating] = useState(true);
-
-  // ── Booking options ─────────────────────────────────────────────────────
-  const [tier, setTier] = useState<BookingTier>('standard');
+  // ── Selection state ───────────────────────────────────────────────────────
+  const [location, setLocation] = useState<BookingLocation | null>(null);
+  const [tier, setTier] = useState<BookingTierKey>('standard');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
-  const [promoCode, setPromoCode] = useState('');
-  const [appliedPromo, setAppliedPromo] = useState<{ code: string; discountPaise: number } | null>(null);
+  const [boost, setBoost] = useState(0);
   const [description, setDescription] = useState('');
+  const [promoInput, setPromoInput] = useState('');
+  const [appliedPromo, setAppliedPromo] = useState<string | null>(null);
+  const [promoError, setPromoError] = useState<string | null>(null);
 
-  const [fetchQuote, { data: quote, isFetching: quoting }] = useLazyGetQuoteQuery();
+  const [addressSheetOpen, setAddressSheetOpen] = useState(false);
+  const [detailsSheetOpen, setDetailsSheetOpen] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [payingOnline, setPayingOnline] = useState(false);
+
+  // ── Data ──────────────────────────────────────────────────────────────────
+  const { data: services = [], isLoading: catalogLoading } = useGetServicesQuery();
+  const { data: categories = [] } = useGetCategoriesQuery();
+  const { data: savedAddresses = [], isLoading: addressesLoading } = useGetAddressesQuery();
+
+  const [fetchQuote, quoteState] = useLazyGetQuoteQuery();
   const [validatePromo, { isLoading: validatingPromo }] = useValidatePromoMutation();
   const [createOrder, { isLoading: creatingOrder }] = useCreateOrderMutation();
   const [createPaymentOrder] = useCreatePaymentOrderMutation();
   const [verifyPayment] = useVerifyPaymentMutation();
   const [saveRecentLocation] = useSaveRecentLocationMutation();
-  const [payingOnline, setPayingOnline] = useState(false);
 
-  // Get current GPS on mount + reverse-geocode for a readable address.
+  const catalogService = useMemo(
+    () => services.find((s) => s.code === serviceCode) ?? null,
+    [services, serviceCode],
+  );
+  const category = useMemo(
+    () => (catalogService ? categoryForService(catalogService, categories) : null),
+    [catalogService, categories],
+  );
+
+  const quote = useMemo(() => normalizeQuote(quoteState.data), [quoteState.data]);
+  const quoteError = quoteState.error
+    ? getApiErrorMessage(quoteState.error, 'Pricing is unavailable right now.')
+    : null;
+
+  // Default to the saved address marked default, so the common case is zero
+  // taps. Only seeds once, and never overrides an explicit choice.
   useEffect(() => {
-    (async () => {
-      try {
-        const { status } = await Location.requestForegroundPermissionsAsync();
-        if (status !== 'granted') { setLocating(false); return; }
-        const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
-        const lat = pos.coords.latitude, lng = pos.coords.longitude;
-        setLoc({ lat, lng });
-        try {
-          const [a] = await Location.reverseGeocodeAsync({ latitude: lat, longitude: lng });
-          if (a) setAddress([a.name, a.street, a.city, a.region].filter(Boolean).join(', '));
-        } catch { /* reverse geocode is a convenience — user can still type the address */ }
-        fetchQuote({ service: String(service), pickupLat: lat, pickupLng: lng });
-      } catch {
-        Alert.alert('Location error', 'Could not get your location. Enable GPS and try again.');
-      } finally {
-        setLocating(false);
-      }
-    })();
-  }, [service]);
+    if (location || savedAddresses.length === 0) return;
+    const preferred = savedAddresses.find((a) => a.isDefault) ?? savedAddresses[0];
+    if (!preferred) return;
+    setLocation({
+      lat: preferred.lat,
+      lng: preferred.lng,
+      address: preferred.address,
+      landmark: preferred.landmark,
+      flatNumber: preferred.flatNumber,
+      source: 'saved',
+      savedLabel: preferred.label || preferred.tag,
+    });
+  }, [savedAddresses, location]);
 
-  const basePrice = quote?.total ?? 0;
-  const tierMultiplier = tier === 'priority' ? 1.2 : tier === 'express' ? 1.4 : 1.0;
-  const tieredPrice = basePrice * tierMultiplier;
-  const discount = appliedPromo ? appliedPromo.discountPaise / 100 : 0;
-  const finalPrice = Math.max(0, tieredPrice - discount);
+  /** Re-quote whenever the pin moves. Price depends on pickup, nothing else. */
+  useEffect(() => {
+    if (!location) return;
+    fetchQuote({
+      service: serviceCode,
+      pickupLat: location.lat,
+      pickupLng: location.lng,
+    });
+  }, [location?.lat, location?.lng, serviceCode, fetchQuote]);
 
-  const handleApplyPromo = async () => {
-    if (!promoCode.trim()) return;
+  const retryQuote = useCallback(() => {
+    if (!location) return;
+    fetchQuote(
+      { service: serviceCode, pickupLat: location.lat, pickupLng: location.lng },
+      false,
+    );
+  }, [location, serviceCode, fetchQuote]);
+
+  // ── Promo ─────────────────────────────────────────────────────────────────
+  const applyPromo = useCallback(async () => {
+    const code = promoInput.trim().toUpperCase();
+    if (!code || !quote) return;
+    setPromoError(null);
     try {
-      const res = await validatePromo({
-        code: promoCode.trim(),
-        service: String(service),
-        totalPaise: Math.round(tieredPrice * 100),
+      const result = await validatePromo({
+        code,
+        service: serviceCode,
+        // Validation is checked against the tier-adjusted, pre-discount total —
+        // the same figure the order carries.
+        totalPaise: quotedTotalForGuard(quote.total, tier, boost) * 100,
       }).unwrap();
-      if (res.valid) {
-        setAppliedPromo({ code: res.code || promoCode.trim(), discountPaise: res.discountPaise || 0 });
+
+      if (result.valid) {
+        setAppliedPromo(result.code || code);
+        setPromoInput('');
       } else {
-        Alert.alert('Promo code', res.message || 'This code is not valid for this booking.');
+        setPromoError(result.message || 'This code is not valid for this booking.');
       }
     } catch (err) {
-      Alert.alert('Promo code', getApiErrorMessage(err, 'Could not apply this code.'));
+      setPromoError(getApiErrorMessage(err, 'Could not check this code.'));
     }
-  };
+  }, [promoInput, quote, serviceCode, tier, boost, validatePromo]);
 
-  const confirm = async () => {
-    if (!loc) { Alert.alert('Location needed', 'We need your location to find a nearby pro.'); return; }
-    if (!address.trim()) { Alert.alert('Address needed', 'Please enter your address.'); return; }
+  // ── Confirm ───────────────────────────────────────────────────────────────
+  const confirm = useCallback(async () => {
+    if (!location || !quote) return;
+    setSubmitError(null);
 
     try {
       const order = await createOrder({
-        service: String(service),
+        service: serviceCode,
         pickupLocation: {
-          lat: loc.lat,
-          lng: loc.lng,
-          address: address.trim(),
-          ...(landmark.trim() ? { landmark: landmark.trim() } : {}),
-          ...(flatNumber.trim() ? { flatNumber: flatNumber.trim() } : {}),
+          lat: location.lat,
+          lng: location.lng,
+          address: location.address,
+          ...(location.landmark ? { landmark: location.landmark } : {}),
+          ...(location.flatNumber ? { flatNumber: location.flatNumber } : {}),
         },
         ...(description.trim() ? { description: description.trim() } : {}),
         paymentMethod,
         tier,
-        ...(appliedPromo ? { promoCode: appliedPromo.code } : {}),
-        ...(finalPrice ? { quotedTotalRupees: Math.round(finalPrice) } : {}),
+        ...(boost > 0 ? { tipAmount: boost } : {}),
+        ...(appliedPromo ? { promoCode: appliedPromo } : {}),
+        // Pre-discount on purpose — see the header note.
+        quotedTotalRupees: quotedTotalForGuard(quote.total, tier, boost),
       }).unwrap();
 
-      // Best-effort — speeds up the address picker on the next booking. Never
-      // blocks the flow if it fails.
-      saveRecentLocation({ lat: loc.lat, lng: loc.lng, address: address.trim() }).catch(() => {});
+      // Best effort: speeds up the address picker next time. Never blocks.
+      saveRecentLocation({
+        lat: location.lat,
+        lng: location.lng,
+        address: location.address,
+      }).catch(() => {});
 
       if (paymentMethod === 'cash') {
         router.replace(`/tracking/order/${order._id}`);
         return;
       }
 
-      // Online payment: the order is already created and dispatch has already
-      // started (matches how the server works — payment never blocks
-      // matching). We just try to collect payment now for a better UX; if it
-      // fails or is cancelled, the booking is still live and payment can be
-      // completed later from the tracking screen.
+      // Online payment. The order already exists and dispatch has already
+      // started — payment never blocks matching on this backend — so a failed
+      // or abandoned checkout still leaves a live booking.
       setPayingOnline(true);
       try {
         const paymentOrder = await createPaymentOrder({
@@ -135,218 +275,588 @@ export default function BookServiceScreen() {
           returnUrl: paymentReturnUrl(),
         }).unwrap();
 
-        const outcome = await openCashfreeCheckout(paymentOrder.paymentSessionId, paymentOrder.cashfreeEnv);
+        const outcome = await openCashfreeCheckout(
+          paymentOrder.paymentSessionId,
+          paymentOrder.cashfreeEnv,
+        );
         if (outcome.kind === 'returned') {
           const { cfOrderId, cfPaymentId } = parseReturnUrl(outcome.url);
           if (cfOrderId && cfPaymentId) {
-            await verifyPayment({ cfOrderId, cfPaymentId }).unwrap().catch(() => {
-              // Non-fatal — the Cashfree webhook is the source of truth and
-              // will settle the order's payment status server-side regardless.
-            });
+            // Non-fatal: the Cashfree webhook is the source of truth and
+            // settles payment status server-side either way.
+            await verifyPayment({ cfOrderId, cfPaymentId }).unwrap().catch(() => {});
           }
         }
-      } catch (payErr) {
-        Alert.alert(
-          'Payment not completed',
-          'Your booking is confirmed — you can pay online again from the tracking screen, or pay cash on completion.',
-        );
+      } catch {
+        /* Booking is live; tracking screen offers payment again. */
       } finally {
         setPayingOnline(false);
       }
 
       router.replace(`/tracking/order/${order._id}`);
-    } catch (e) {
-      const code = (e as { data?: { code?: string } })?.data?.code;
+    } catch (err) {
+      const code = (err as { data?: { code?: string } })?.data?.code;
       if (code === 'NO_WORKERS_IN_AREA') {
-        Alert.alert("We're not in your area yet", 'No workers available here right now — we are expanding fast!');
+        setSubmitError(
+          "We're not live in your area yet — no pros are covering this location right now.",
+        );
       } else if (code === 'PRICE_CHANGED') {
-        Alert.alert('Price changed', 'The price changed since your quote. Refreshing…');
-        if (loc) fetchQuote({ service: String(service), pickupLat: loc.lat, pickupLng: loc.lng });
+        setSubmitError('The price changed while you were booking. Refreshing your quote…');
+        retryQuote();
       } else if (code === 'ACTIVE_ORDER_EXISTS') {
-        Alert.alert('You have an active booking', 'Complete or cancel it before placing a new one.');
+        setSubmitError(
+          'You already have a booking in progress. Finish or cancel it before starting another.',
+        );
       } else {
-        Alert.alert('Booking failed', getApiErrorMessage(e, 'Please try again.'));
+        setSubmitError(getApiErrorMessage(err, 'We could not place this booking.'));
       }
     }
-  };
+  }, [
+    location,
+    quote,
+    serviceCode,
+    description,
+    paymentMethod,
+    tier,
+    boost,
+    appliedPromo,
+    createOrder,
+    saveRecentLocation,
+    router,
+    createPaymentOrder,
+    verifyPayment,
+    retryQuote,
+  ]);
 
-  const title = String(service || '').replace(/_/g, ' ');
+  // ── Derived presentation ──────────────────────────────────────────────────
+  const accent = category?.theme?.accent ?? zappy[600];
+  const Icon = resolveServiceIcon(catalogService?.icon, serviceCode);
+  const name = catalogService?.name || humanizeCode(serviceCode);
+  const duration = catalogService?.estimatedDurationMinutes;
+
+  const payable = quote ? quotedTotalForGuard(quote.total, tier, boost) : 0;
   const busy = creatingOrder || payingOnline;
+  const canConfirm = Boolean(location) && Boolean(quote) && !busy;
+
+  // Service isn't in the catalog — a stale deep link or a retired code.
+  if (!catalogLoading && !catalogService) {
+    return (
+      <View style={[styles.root, { paddingTop: insets.top }]}>
+        <Stack.Screen options={{ headerShown: false }} />
+        <View style={styles.plainBar}>
+          <IconButton
+            icon={<ChevronLeft size={20} color={colors.textHeading} />}
+            onPress={() => router.back()}
+            accessibilityLabel="Go back"
+          />
+        </View>
+        <EmptyState
+          icon={<SearchX size={28} color={colors.textMuted} />}
+          title="Service unavailable"
+          message="This service is no longer available to book."
+          actionLabel="Browse services"
+          onAction={() => router.replace('/(tabs)/services')}
+        />
+      </View>
+    );
+  }
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <View style={styles.root}>
       <Stack.Screen options={{ headerShown: false }} />
-      <View className="flex-row items-center px-4 pt-4 pb-2">
-        <TouchableOpacity onPress={() => router.back()} className="w-9 h-9 rounded-xl bg-gray-100 items-center justify-center">
-          <ChevronLeft size={20} color="#0F172A" />
-        </TouchableOpacity>
-        <Text className="text-lg font-bold text-navy ml-3 capitalize">{title}</Text>
+
+      {/* ── Header ─────────────────────────────────────────────────────── */}
+      <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
+        <IconButton
+          icon={<ChevronLeft size={20} color={colors.textHeading} />}
+          onPress={() => router.back()}
+          accessibilityLabel="Go back"
+        />
+        <View style={styles.flex}>
+          <Text variant="caption" color={colors.textMuted}>
+            Confirm your booking
+          </Text>
+          <Heading level={3} numberOfLines={1}>
+            {catalogLoading ? 'Loading…' : name}
+          </Heading>
+        </View>
       </View>
 
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} className="flex-1">
-        <ScrollView className="flex-1 px-5" contentContainerStyle={{ paddingBottom: 140 }} keyboardShouldPersistTaps="handled">
-          {/* Location */}
-          <Text className="text-sm font-bold text-gray-400 uppercase mt-4 mb-2">Service location</Text>
-          <View className="bg-gray-50 rounded-2xl p-4 flex-row items-start gap-3">
-            <MapPin size={18} color="#2563EB" />
-            <View className="flex-1">
-              {locating ? (
-                <Text className="text-gray-400">Getting your location…</Text>
-              ) : loc ? (
-                <Text className="text-xs text-gray-400">{loc.lat.toFixed(5)}, {loc.lng.toFixed(5)}</Text>
-              ) : (
-                <Text className="text-red-500 text-xs">Location unavailable — enable GPS</Text>
-              )}
-            </View>
-          </View>
-
-          <TextInput
-            className="border border-gray-200 rounded-xl p-3 text-base mt-3"
-            placeholder="House / flat, area, landmark"
-            value={address}
-            onChangeText={setAddress}
-            multiline
-          />
-          <View className="flex-row gap-3 mt-3">
-            <TextInput
-              className="flex-1 border border-gray-200 rounded-xl p-3 text-sm"
-              placeholder="Flat / house no. (optional)"
-              value={flatNumber}
-              onChangeText={setFlatNumber}
-            />
-            <TextInput
-              className="flex-1 border border-gray-200 rounded-xl p-3 text-sm"
-              placeholder="Landmark (optional)"
-              value={landmark}
-              onChangeText={setLandmark}
-            />
-          </View>
-
-          {/* Issue description */}
-          <Text className="text-sm font-bold text-gray-400 uppercase mt-5 mb-2">Tell us more (optional)</Text>
-          <TextInput
-            className="border border-gray-200 rounded-xl p-3 text-base"
-            placeholder="What's the issue? Any details help your pro prepare."
-            value={description}
-            onChangeText={setDescription}
-            multiline
-          />
-
-          {/* Tier */}
-          <Text className="text-sm font-bold text-gray-400 uppercase mt-5 mb-2">Speed</Text>
-          <View className="flex-row gap-2">
-            {TIERS.map((t) => {
-              const on = tier === t.key;
-              return (
-                <TouchableOpacity
-                  key={t.key}
-                  onPress={() => setTier(t.key)}
-                  className={`flex-1 rounded-xl border p-3 ${on ? 'bg-primary border-primary' : 'bg-white border-gray-200'}`}
-                >
-                  <Text className={`text-sm font-bold ${on ? 'text-white' : 'text-navy'}`}>{t.label}</Text>
-                  <Text className={`text-[11px] mt-0.5 ${on ? 'text-blue-100' : 'text-gray-400'}`}>{t.hint}</Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-
-          {/* Payment method */}
-          <Text className="text-sm font-bold text-gray-400 uppercase mt-5 mb-2">Payment</Text>
-          <View className="flex-row gap-3">
-            <TouchableOpacity
-              onPress={() => setPaymentMethod('cash')}
-              className={`flex-1 flex-row items-center gap-2 rounded-xl border p-3 ${paymentMethod === 'cash' ? 'bg-primary/5 border-primary' : 'border-gray-200'}`}
-            >
-              <Wallet size={16} color={paymentMethod === 'cash' ? '#2563EB' : '#64748B'} />
-              <Text className={`text-sm font-semibold ${paymentMethod === 'cash' ? 'text-primary' : 'text-navy'}`}>Cash</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => setPaymentMethod('upi')}
-              className={`flex-1 flex-row items-center gap-2 rounded-xl border p-3 ${paymentMethod !== 'cash' ? 'bg-primary/5 border-primary' : 'border-gray-200'}`}
-            >
-              <CreditCard size={16} color={paymentMethod !== 'cash' ? '#2563EB' : '#64748B'} />
-              <Text className={`text-sm font-semibold ${paymentMethod !== 'cash' ? 'text-primary' : 'text-navy'}`}>Pay online</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Promo code */}
-          <Text className="text-sm font-bold text-gray-400 uppercase mt-5 mb-2">Promo code</Text>
-          {appliedPromo ? (
-            <View className="flex-row items-center justify-between bg-emerald-50 rounded-xl p-3">
-              <View className="flex-row items-center gap-2">
-                <Check size={16} color="#16A34A" />
-                <Text className="text-sm font-bold text-emerald-700">{appliedPromo.code} applied</Text>
-              </View>
-              <TouchableOpacity onPress={() => { setAppliedPromo(null); setPromoCode(''); }}>
-                <Text className="text-xs font-semibold text-emerald-700">Remove</Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <View className="flex-row gap-2">
-              <View className="flex-1 flex-row items-center border border-gray-200 rounded-xl px-3">
-                <Tag size={16} color="#94A3B8" />
-                <TextInput
-                  className="flex-1 p-3 text-sm"
-                  placeholder="Enter code"
-                  autoCapitalize="characters"
-                  value={promoCode}
-                  onChangeText={setPromoCode}
-                />
-              </View>
-              <TouchableOpacity
-                onPress={handleApplyPromo}
-                disabled={!promoCode.trim() || validatingPromo}
-                className="bg-navy rounded-xl px-5 items-center justify-center"
-              >
-                {validatingPromo ? <ActivityIndicator color="#fff" size="small" /> : <Text className="text-white font-bold text-sm">Apply</Text>}
-              </TouchableOpacity>
-            </View>
-          )}
-
-          {/* Price breakdown */}
-          <Text className="text-sm font-bold text-gray-400 uppercase mt-5 mb-2">Price</Text>
-          <View className="bg-primary/5 rounded-2xl p-4">
-            {quoting ? (
-              <ActivityIndicator color="#2563EB" />
-            ) : basePrice ? (
-              <>
-                <View className="flex-row justify-between mb-1">
-                  <Text className="text-sm text-gray-500">Fare{tier !== 'standard' ? ` (${tier})` : ''}</Text>
-                  <Text className="text-sm text-navy font-semibold">₹{Math.round(tieredPrice)}</Text>
-                </View>
-                {discount > 0 ? (
-                  <View className="flex-row justify-between mb-1">
-                    <Text className="text-sm text-emerald-600">Promo discount</Text>
-                    <Text className="text-sm text-emerald-600 font-semibold">-₹{Math.round(discount)}</Text>
-                  </View>
-                ) : null}
-                <View className="flex-row justify-between mt-2 pt-2 border-t border-primary/10">
-                  <Text className="text-base font-bold text-navy">Total</Text>
-                  <Text className="text-2xl font-extrabold text-navy">₹{Math.round(finalPrice)}</Text>
-                </View>
-                {quote?.surgeMultiplier && quote.surgeMultiplier > 1 ? (
-                  <Text className="text-xs text-accent mt-1">{quote.surgeMultiplier}× surge in effect</Text>
-                ) : null}
-              </>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={styles.flex}
+      >
+        <ScrollView
+          contentContainerStyle={[styles.scroll, { paddingBottom: 150 + insets.bottom }]}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* ── 1. Service ───────────────────────────────────────────── */}
+          <Appear>
+            <SectionTitle>Service</SectionTitle>
+            {catalogLoading ? (
+              <Skeleton width="100%" height={78} borderRadius={radius.large} />
             ) : (
-              <Text className="text-gray-400">Quote will appear after location is set</Text>
+              <Card variant="outline">
+                <View style={styles.serviceRow}>
+                  <View style={[styles.serviceIcon, { backgroundColor: `${accent}14` }]}>
+                    <Icon size={22} strokeWidth={1.9} color={accent} />
+                  </View>
+                  <View style={styles.flex}>
+                    <Text variant="body" weight="semibold" numberOfLines={1}>
+                      {name}
+                    </Text>
+                    <View style={styles.serviceMeta}>
+                      {category ? (
+                        <Text variant="caption" color={colors.textSecondary}>
+                          {category.customerLabel}
+                        </Text>
+                      ) : null}
+                      {duration ? (
+                        <>
+                          <View style={styles.dot} />
+                          <Clock size={11} color={colors.textMuted} />
+                          <Text variant="caption" color={colors.textSecondary}>
+                            {duration} min
+                          </Text>
+                        </>
+                      ) : null}
+                    </View>
+                  </View>
+                </View>
+              </Card>
             )}
-          </View>
+          </Appear>
+
+          {/* ── 2. Location ──────────────────────────────────────────── */}
+          <Appear delay={40}>
+            <SectionTitle>Where</SectionTitle>
+            <Card
+              variant="outline"
+              onPress={() => setAddressSheetOpen(true)}
+              accessibilityLabel={
+                location ? 'Change service location' : 'Set service location'
+              }
+            >
+              <View style={styles.serviceRow}>
+                <View
+                  style={[
+                    styles.serviceIcon,
+                    {
+                      backgroundColor: location ? colors.primaryTint : colors.surfaceTertiary,
+                    },
+                  ]}
+                >
+                  <MapPin size={20} color={location ? colors.primary : colors.textMuted} />
+                </View>
+                <View style={styles.flex}>
+                  {location ? (
+                    <>
+                      <Text variant="body" weight="semibold" numberOfLines={1}>
+                        {location.savedLabel
+                          ? location.savedLabel
+                          : location.source === 'gps'
+                            ? 'Current location'
+                            : 'Service address'}
+                      </Text>
+                      <Text variant="caption" color={colors.textSecondary} numberOfLines={2}>
+                        {[location.flatNumber, location.address, location.landmark]
+                          .filter(Boolean)
+                          .join(', ')}
+                      </Text>
+                    </>
+                  ) : addressesLoading ? (
+                    <>
+                      <Skeleton width="55%" height={14} />
+                      <Skeleton width="85%" height={11} style={{ marginTop: spacing.xs }} />
+                    </>
+                  ) : (
+                    <>
+                      <Text variant="body" weight="semibold">
+                        Add your address
+                      </Text>
+                      <Text variant="caption" color={colors.textSecondary}>
+                        We need it to price the job and find nearby pros.
+                      </Text>
+                    </>
+                  )}
+                </View>
+                {location ? (
+                  <Pencil size={16} color={colors.textMuted} />
+                ) : (
+                  <ChevronRight size={18} color={colors.textMuted} />
+                )}
+              </View>
+            </Card>
+          </Appear>
+
+          {/* ── 3. Quote ─────────────────────────────────────────────── */}
+          <Appear delay={80}>
+            <SectionTitle>Price</SectionTitle>
+            <QuoteCard
+              quote={quote}
+              loading={quoteState.isFetching}
+              errorMessage={quoteError}
+              hasLocation={Boolean(location)}
+              tier={tier}
+              tipRupees={boost}
+              promoCode={appliedPromo}
+              onRetry={retryQuote}
+            />
+          </Appear>
+
+          {/* ── 4. Speed ─────────────────────────────────────────────── */}
+          <Appear delay={120}>
+            <SectionTitle>How soon</SectionTitle>
+            <View style={styles.tierRow}>
+              {TIERS.map((option) => {
+                const selected = tier === option.key;
+                const uplift = Math.round((TIER_MULTIPLIERS[option.key] - 1) * 100);
+                return (
+                  <Card
+                    key={option.key}
+                    variant={selected ? 'default' : 'outline'}
+                    onPress={() => setTier(option.key)}
+                    padding={spacing.md}
+                    style={[styles.tierCard, selected ? styles.tierCardActive : null]}
+                    accessibilityLabel={`${option.label}, ${option.hint}`}
+                  >
+                    <Text
+                      variant="bodySmall"
+                      weight="semibold"
+                      color={selected ? colors.primary : colors.textHeading}
+                    >
+                      {option.label}
+                    </Text>
+                    <Text variant="caption" color={colors.textSecondary}>
+                      {option.hint}
+                    </Text>
+                    {uplift > 0 ? (
+                      <Text variant="caption" color={colors.accentDark}>
+                        +{uplift}%
+                      </Text>
+                    ) : null}
+                  </Card>
+                );
+              })}
+            </View>
+          </Appear>
+
+          {/* ── 5. Payment ───────────────────────────────────────────── */}
+          <Appear delay={160}>
+            <SectionTitle>Payment</SectionTitle>
+            <View style={styles.payRow}>
+              <Card
+                variant={paymentMethod === 'cash' ? 'default' : 'outline'}
+                onPress={() => setPaymentMethod('cash')}
+                padding={spacing.md}
+                style={[
+                  styles.payCard,
+                  paymentMethod === 'cash' ? styles.tierCardActive : null,
+                ]}
+                accessibilityLabel="Pay cash after the job"
+              >
+                <Banknote
+                  size={18}
+                  color={paymentMethod === 'cash' ? colors.primary : colors.textSecondary}
+                />
+                <Text
+                  variant="bodySmall"
+                  weight="semibold"
+                  color={paymentMethod === 'cash' ? colors.primary : colors.textHeading}
+                >
+                  Cash
+                </Text>
+                <Text variant="caption" color={colors.textSecondary}>
+                  Pay after the job
+                </Text>
+              </Card>
+              <Card
+                variant={paymentMethod !== 'cash' ? 'default' : 'outline'}
+                onPress={() => setPaymentMethod('upi')}
+                padding={spacing.md}
+                style={[
+                  styles.payCard,
+                  paymentMethod !== 'cash' ? styles.tierCardActive : null,
+                ]}
+                accessibilityLabel="Pay online now"
+              >
+                <CreditCard
+                  size={18}
+                  color={paymentMethod !== 'cash' ? colors.primary : colors.textSecondary}
+                />
+                <Text
+                  variant="bodySmall"
+                  weight="semibold"
+                  color={paymentMethod !== 'cash' ? colors.primary : colors.textHeading}
+                >
+                  Pay online
+                </Text>
+                <Text variant="caption" color={colors.textSecondary}>
+                  UPI, card, wallet
+                </Text>
+              </Card>
+            </View>
+          </Appear>
+
+          {/* ── 6. Extras ────────────────────────────────────────────── */}
+          <Appear delay={200}>
+            <SectionTitle>Booking details</SectionTitle>
+            <Card variant="outline" padding={0} style={styles.extrasCard}>
+              <Card
+                variant="flat"
+                onPress={() => setDetailsSheetOpen(true)}
+                padding={spacing.base}
+                style={styles.extrasRow}
+                accessibilityLabel="Add a note for your pro"
+              >
+                <View style={styles.flex}>
+                  <Text variant="bodySmall" weight="semibold">
+                    Note for your pro
+                  </Text>
+                  <Text variant="caption" color={colors.textSecondary} numberOfLines={1}>
+                    {description.trim() || 'Optional — what should they know?'}
+                  </Text>
+                </View>
+                <ChevronRight size={16} color={colors.textMuted} />
+              </Card>
+
+              <Divider style={styles.flushDivider} />
+
+              {/* Boost is a real server field (`tipAmount`, capped at ₹500) and
+                  goes 100% to the worker. */}
+              <View style={styles.boostBlock}>
+                <Text variant="bodySmall" weight="semibold">
+                  Boost for your pro
+                </Text>
+                <Text variant="caption" color={colors.textSecondary}>
+                  Added to the fare — 100% goes to the pro who takes the job.
+                </Text>
+                <View style={styles.boostRow}>
+                  {BOOSTS.map((amount) => (
+                    <Chip
+                      key={amount}
+                      label={amount === 0 ? 'None' : `+${formatRupees(amount)}`}
+                      selected={boost === amount}
+                      tone={boost === amount ? 'blue' : 'neutral'}
+                      onPress={() => setBoost(amount)}
+                    />
+                  ))}
+                </View>
+              </View>
+
+              <Divider style={styles.flushDivider} />
+
+              <View style={styles.boostBlock}>
+                <Text variant="bodySmall" weight="semibold">
+                  Promo code
+                </Text>
+                {appliedPromo ? (
+                  <View style={styles.promoApplied}>
+                    <Check size={15} color={colors.successDark} />
+                    <Text variant="bodySmall" color={colors.successDark} style={styles.flex}>
+                      {appliedPromo} applied
+                    </Text>
+                    <IconButton
+                      icon={<X size={15} color={colors.textSecondary} />}
+                      onPress={() => {
+                        setAppliedPromo(null);
+                        setPromoError(null);
+                      }}
+                      variant="surface"
+                      accessibilityLabel="Remove promo code"
+                    />
+                  </View>
+                ) : (
+                  <View style={styles.promoRow}>
+                    <Input
+                      placeholder="Enter code"
+                      value={promoInput}
+                      onChangeText={(next) => {
+                        setPromoInput(next);
+                        setPromoError(null);
+                      }}
+                      autoCapitalize="characters"
+                      autoCorrect={false}
+                      leadingIcon={<Tag size={15} color={colors.textMuted} />}
+                      containerStyle={styles.flex}
+                      error={promoError}
+                    />
+                    <Button
+                      label="Apply"
+                      variant="secondary"
+                      onPress={applyPromo}
+                      loading={validatingPromo}
+                      disabled={!promoInput.trim() || !quote}
+                      style={styles.promoButton}
+                    />
+                  </View>
+                )}
+              </View>
+            </Card>
+          </Appear>
+
+          {/* ── Submit failure ───────────────────────────────────────── */}
+          {submitError ? (
+            <Appear>
+              <Card variant="outline" style={styles.submitError}>
+                <Text variant="bodySmall" color={colors.errorDark}>
+                  {submitError}
+                </Text>
+              </Card>
+            </Appear>
+          ) : null}
         </ScrollView>
       </KeyboardAvoidingView>
 
-      <View className="absolute bottom-0 left-0 right-0 px-5 pb-8 pt-3 bg-white border-t border-gray-100">
-        <TouchableOpacity
-          className="bg-primary rounded-2xl p-4 items-center flex-row justify-center gap-2"
-          onPress={confirm}
-          disabled={busy || locating}
-        >
-          {busy ? <ActivityIndicator color="#fff" /> : <Zap size={18} color="#fff" />}
-          <Text className="text-white text-lg font-bold">
-            {payingOnline ? 'Waiting for payment…' : creatingOrder ? 'Booking…' : 'Confirm Booking'}
-          </Text>
-        </TouchableOpacity>
+      {/* ── Floating CTA ───────────────────────────────────────────────── */}
+      <View style={[styles.cta, { paddingBottom: insets.bottom + spacing.base }]}>
+        <View style={styles.ctaTop}>
+          {quote ? (
+            <View style={styles.flex}>
+              <Text variant="caption" color={colors.textMuted}>
+                Estimated total
+              </Text>
+              <Text variant="heading2">{formatRupees(payable)}</Text>
+            </View>
+          ) : (
+            <Text
+              variant="caption"
+              color={quoteError ? colors.errorDark : colors.textSecondary}
+              style={styles.flex}
+            >
+              {!location
+                ? 'Add an address to see your price'
+                : quoteError
+                  ? 'No price yet — retry above to continue'
+                  : 'Working out your price…'}
+            </Text>
+          )}
+        </View>
+        <Button
+          label={
+            payingOnline
+              ? 'Waiting for payment…'
+              : creatingOrder
+                ? 'Placing your booking…'
+                : !location
+                  ? 'Add your address'
+                  : 'Confirm booking'
+          }
+          icon={busy ? undefined : <Zap size={17} color={colors.textInverse} />}
+          onPress={location ? confirm : () => setAddressSheetOpen(true)}
+          loading={busy}
+          disabled={Boolean(location) && !canConfirm}
+          fullWidth
+          size="large"
+        />
       </View>
-    </SafeAreaView>
+
+      <AddressSheet
+        visible={addressSheetOpen}
+        onClose={() => setAddressSheetOpen(false)}
+        onConfirm={(next) => {
+          setLocation(next);
+          setAddressSheetOpen(false);
+          setSubmitError(null);
+        }}
+        savedAddresses={savedAddresses}
+        savedLoading={addressesLoading}
+        initial={location}
+      />
+
+      <BottomSheet
+        visible={detailsSheetOpen}
+        onClose={() => setDetailsSheetOpen(false)}
+        title="Note for your pro"
+      >
+        <Input
+          placeholder="What's the issue? Any detail helps them arrive prepared."
+          value={description}
+          onChangeText={setDescription}
+          multiline
+          multilineHeight={120}
+          maxLength={500}
+          helper={`${description.length}/500`}
+        />
+        <Button
+          label="Done"
+          onPress={() => setDetailsSheetOpen(false)}
+          fullWidth
+          style={styles.sheetDone}
+        />
+      </BottomSheet>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: colors.background },
+  flex: { flex: 1 },
+
+  plainBar: { paddingHorizontal: screenPadding, paddingVertical: spacing.sm },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    paddingHorizontal: screenPadding,
+    paddingBottom: spacing.base,
+    backgroundColor: colors.surface,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+  },
+
+  scroll: { paddingHorizontal: screenPadding, paddingTop: spacing.lg, gap: spacing.lg },
+
+  serviceRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  serviceIcon: {
+    width: 46,
+    height: 46,
+    borderRadius: radius.medium,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  serviceMeta: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginTop: 2 },
+  dot: { width: 3, height: 3, borderRadius: 1.5, backgroundColor: colors.textMuted },
+
+  tierRow: { flexDirection: 'row', gap: spacing.sm },
+  tierCard: { flex: 1, gap: 1 },
+  tierCardActive: { borderWidth: 1.5, borderColor: colors.primary },
+
+  payRow: { flexDirection: 'row', gap: spacing.sm },
+  payCard: { flex: 1, gap: spacing.xxs },
+
+  extrasCard: { overflow: 'hidden' },
+  extrasRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, borderRadius: 0 },
+  flushDivider: { marginVertical: 0 },
+  boostBlock: { padding: spacing.base, gap: spacing.xxs },
+  boostRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.sm },
+
+  promoRow: { flexDirection: 'row', gap: spacing.sm, alignItems: 'flex-start', marginTop: spacing.sm },
+  promoButton: { marginTop: 0 },
+  promoApplied: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginTop: spacing.sm,
+  },
+
+  submitError: { backgroundColor: colors.errorTint, borderColor: colors.errorTint },
+
+  cta: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingHorizontal: screenPadding,
+    paddingTop: spacing.md,
+    backgroundColor: colors.surface,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.border,
+    gap: spacing.md,
+    ...shadows.softLarge,
+  },
+  ctaTop: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+
+  sheetDone: { marginTop: spacing.base },
+});

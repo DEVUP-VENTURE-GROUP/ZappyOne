@@ -51,5 +51,8 @@ export type {
 export { BottomSheet } from './BottomSheet';
 export type { BottomSheetProps } from './BottomSheet';
 
+export { Appear } from './Appear';
+export type { AppearProps } from './Appear';
+
 export { ZappyLogo } from './ZappyLogo';
 export type { ZappyLogoProps } from './ZappyLogo';

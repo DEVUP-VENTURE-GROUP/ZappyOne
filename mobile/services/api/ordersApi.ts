@@ -10,17 +10,20 @@
 import { apiSlice } from './apiSlice';
 import type {
   Order,
-  OrderPricing,
   OrderStatusHistoryEntry,
   PaginatedOrders,
   CreateOrderRequest,
   QuoteRequest,
+  ServiceQuote,
   ChatMessage,
 } from '../../types/api';
 
-/** `GET /orders/quote` returns the pricing snapshot under `quote`. */
+/**
+ * `GET /orders/quote` returns the pricing snapshot under `quote`. The shape
+ * varies by vertical — see `ServiceQuote` and `normalizeQuote`.
+ */
 interface QuoteEnvelope {
-  quote: OrderPricing & { pricingModel?: string; servicePrice?: number; travelFee?: number };
+  quote: ServiceQuote;
 }
 interface OrderEnvelope { order: Order }
 interface NearbyPro {

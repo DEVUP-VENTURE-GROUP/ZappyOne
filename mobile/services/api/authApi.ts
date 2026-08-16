@@ -9,6 +9,7 @@ import type {
   OtpRequestResponse,
   UserLoginResponse,
   SavedAddress,
+  SavedAddressWire,
   StoredPaymentMethod,
   WorkerProfile,
 } from '../../types/api';
@@ -20,7 +21,31 @@ interface WorkerLoginResponse {
 }
 
 interface MeEnvelope { user: UserProfile }
-interface AddressesEnvelope { addresses: SavedAddress[] }
+interface AddressesEnvelope { addresses: SavedAddressWire[] }
+
+/**
+ * Flattens the server's GeoJSON point onto the address.
+ *
+ * `GET /users/addresses` returns `location.coordinates` as [lng, lat] and no
+ * flat fields; screens all want `lat`/`lng`. Doing this once at the boundary
+ * means a saved address can be handed straight to the quote and order APIs.
+ * Before this, `saved.lat` was `undefined` at runtime everywhere.
+ */
+function normalizeAddress(wire: SavedAddressWire): SavedAddress {
+  const [lng, lat] = wire.location?.coordinates ?? [];
+  return {
+    _id: wire._id,
+    label: wire.label,
+    tag: wire.tag,
+    address: wire.address,
+    lat: typeof lat === 'number' ? lat : 0,
+    lng: typeof lng === 'number' ? lng : 0,
+    landmark: wire.landmark,
+    flatNumber: wire.flatNumber,
+    notes: wire.notes,
+    isDefault: wire.isDefault,
+  };
+}
 interface PaymentMethodsEnvelope { methods: StoredPaymentMethod[] }
 
 export const authApi = apiSlice.injectEndpoints({
@@ -60,7 +85,12 @@ export const authApi = apiSlice.injectEndpoints({
     // ── Saved addresses ───────────────────────────────────────────────────────
     getAddresses: builder.query<SavedAddress[], void>({
       query: () => ({ url: '/users/addresses' }),
-      transformResponse: (r: AddressesEnvelope | SavedAddress[]) => (Array.isArray(r) ? r : r.addresses ?? []),
+      transformResponse: (r: AddressesEnvelope | SavedAddressWire[]) =>
+        (Array.isArray(r) ? r : (r.addresses ?? []))
+          // An entry with no coordinates can't be dispatched against, so it is
+          // dropped rather than shown as a bookable option.
+          .filter((a) => Array.isArray(a.location?.coordinates) && a.location.coordinates.length === 2)
+          .map(normalizeAddress),
       providesTags: ['User'],
     }),
     addAddress: builder.mutation<SavedAddress, Omit<SavedAddress, '_id'>>({

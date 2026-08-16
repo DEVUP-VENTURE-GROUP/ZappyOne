@@ -136,6 +136,71 @@ export interface OrderPricing {
   currency?: string;
 }
 
+/**
+ * `GET /api/orders/quote` response, unwrapped from its `quote` envelope.
+ *
+ * The pricing engine returns a DIFFERENT set of keys per vertical — the fields
+ * below are the union observed across all 13 live service categories, and none
+ * of them is guaranteed except `total` and `currency`. `OrderPricing` above
+ * describes only the legacy home-services shape, which is why this is separate.
+ *
+ * The index signature is intentional: a new vertical (or a new fee inside an
+ * existing one) must not be a compile error, and `normalizeQuote` in
+ * components/booking/quote.ts is written to surface unmapped fees rather than
+ * drop them. Read it through `normalizeQuote`, not field by field.
+ */
+export interface ServiceQuote {
+  total: number;
+  currency?: string;
+  subtotal?: number;
+  vertical?: string;
+  service?: string;
+
+  // Legacy home services (electrical, carpentry, appliance, plumbing)
+  baseFee?: number;
+  distanceKm?: number;
+  distanceFee?: number;
+  etaMinutes?: number;
+  timeFee?: number;
+  platformFee?: number;
+  surgeMultiplier?: number;
+  isUserPremium?: boolean;
+
+  // Vehicle
+  baseVisitFee?: number;
+  emergencySurcharge?: number;
+  nightSurcharge?: number;
+
+  // Electronics (mobile / laptop / smart_device)
+  inspectionFee?: number;
+  visitFee?: number;
+  diagnostic?: number;
+  /** `mobile` spells it -or-, `laptop`/`smart_device` spell it -our-. Both live. */
+  laborFee?: number;
+  labourFee?: number;
+  sparePartFee?: number;
+  urgentSurcharge?: number;
+  warrantyDays?: number;
+  partsTier?: string;
+  pricingSource?: string;
+
+  // Family assist / pet
+  serviceFee?: number;
+
+  // Event crew
+  crewSize?: number;
+  estimatedHours?: number;
+  perHourPerMember?: number;
+  ceilingApplied?: boolean;
+
+  /** Server-authored caveat, e.g. "Parts cost quoted separately after diagnosis". */
+  note?: string;
+  /** Present on some verticals; mirrors the rupee fields in paise. */
+  paise?: Record<string, number>;
+
+  [key: string]: unknown;
+}
+
 /** Query params accepted by `GET /api/orders/quote`. */
 export interface QuoteRequest {
   service: string;
@@ -333,6 +398,19 @@ export interface VerifyPaymentRequest {
 // ── User profile sub-resources ───────────────────────────────────────────────
 
 /** `users/addresses` entry. Coordinates stored as separate lat/lng on the user. */
+/**
+ * A saved address as the app uses it — coordinates flattened to `lat`/`lng`.
+ *
+ * The wire format is NOT this. `GET /users/addresses` returns each entry with a
+ * GeoJSON `location: { type: 'Point', coordinates: [lng, lat] }` and no flat
+ * fields at all (`user.model.js` → `savedAddresses`), while `POST` accepts flat
+ * `lat`/`lng`. The read side is normalised in `authApi.getAddresses` so screens
+ * see one shape; writes keep sending flat coordinates, which is what the route
+ * expects.
+ *
+ * Note the axis order: GeoJSON is [longitude, latitude], the reverse of how
+ * every screen names them.
+ */
 export interface SavedAddress {
   _id: string;
   label?: string;
@@ -342,6 +420,20 @@ export interface SavedAddress {
   lng: number;
   landmark?: string;
   flatNumber?: string;
+  notes?: string;
+  isDefault?: boolean;
+}
+
+/** Raw `GET /users/addresses` entry, before normalisation. */
+export interface SavedAddressWire {
+  _id: string;
+  label?: string;
+  tag?: 'home' | 'work' | 'other';
+  address: string;
+  location?: { type?: string; coordinates?: number[] };
+  landmark?: string;
+  flatNumber?: string;
+  notes?: string;
   isDefault?: boolean;
 }
 
