@@ -107,7 +107,8 @@ export default function AddressesScreen() {
   const openPicker = useCallback(
     (seed?: DraftLocation | null) => {
       dispatch(locationSeeded(seed ?? null));
-      router.push('/location/picker');
+      // `as never`: typed-routes stale-cache artifact (route is real — see app/location/picker.tsx).
+      router.push('/location/picker' as never);
     },
     [dispatch, router],
   );
