@@ -157,7 +157,28 @@ export default function WorkerEarningsScreen() {
   const { data: worker } = useGetWorkerMeQuery();
   const { data: payout } = useGetPayoutDestinationsQuery();
 
-  const jobs = useMemo(() => ledger?.jobs ?? [], [ledger]);
+  /**
+   * `/workers/job-earnings` accepts week | month | 3months — there is no
+   * "today". Sending no period returns ALL time, which put an all-time list
+   * directly under a "Today ₹0" headline: the two halves of the screen
+   * disagreeing about the same question. For Today the rows are filtered
+   * client-side to jobs completed since local midnight, so the list can only
+   * ever be a subset of what the headline counts.
+   */
+  const jobs = useMemo(() => {
+    const all = ledger?.jobs ?? [];
+    if (range !== 'today') return all;
+    const midnight = new Date();
+    midnight.setHours(0, 0, 0, 0);
+    return all.filter(
+      (j) => j.completedAt && new Date(j.completedAt).getTime() >= midnight.getTime(),
+    );
+  }, [ledger, range]);
+
+  // The server's summary covers the period it was asked for. On Today the rows
+  // were narrowed here, so its count and tip total describe a different window
+  // and are not shown.
+  const summary = range === 'today' ? null : (ledger?.summary ?? null);
   const hasDestination =
     (payout?.banks.length ?? 0) > 0 || (payout?.upiIds.length ?? 0) > 0;
 
@@ -287,9 +308,9 @@ export default function WorkerEarningsScreen() {
           <View style={styles.block}>
             <View style={styles.blockHead}>
               <SectionTitle style={styles.blockTitle}>Recent jobs</SectionTitle>
-              {ledger?.summary?.count ? (
+              {summary?.count ? (
                 <Text variant="caption" color={colors.textMuted}>
-                  {ledger.summary.count} total
+                  {summary.count} total
                 </Text>
               ) : null}
             </View>
@@ -328,7 +349,7 @@ export default function WorkerEarningsScreen() {
 
                 {/* Tips are called out separately: they are the worker's own,
                     not part of the fare Zappy takes a cut of. */}
-                {ledger && ledger.summary.totalTips > 0 ? (
+                {summary && summary.totalTips > 0 ? (
                   <>
                     <Divider style={styles.jobDivider} />
                     <View style={styles.splitRow}>
@@ -336,7 +357,7 @@ export default function WorkerEarningsScreen() {
                         Tips in this period
                       </Text>
                       <Text variant="bodySmall" weight="semibold" color={colors.successDark}>
-                        {formatRupees(ledger.summary.totalTips / 100)}
+                        {formatRupees(summary.totalTips / 100)}
                       </Text>
                     </View>
                   </>
@@ -344,7 +365,7 @@ export default function WorkerEarningsScreen() {
               </Card>
             )}
 
-            {ledger && ledger.totalPages > 1 ? (
+            {range !== 'today' && ledger && ledger.totalPages > 1 ? (
               <Text variant="caption" color={colors.textMuted} align="center">
                 Showing the {jobs.length} most recent of {ledger.total}
               </Text>
