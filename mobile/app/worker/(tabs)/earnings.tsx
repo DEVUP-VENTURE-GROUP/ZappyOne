@@ -1,90 +1,498 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, SafeAreaView, ActivityIndicator, ScrollView } from 'react-native';
-import { TrendingUp, Wallet, Banknote, CreditCard } from 'lucide-react-native';
-import { useGetEarningsQuery } from '../../../services/api/workerApi';
+/**
+ * Worker earnings.
+ * ----------------------------------------------------------------------------
+ * Financial hierarchy, top to bottom: what you've earned in the selected
+ * period, what made it up, then the line-by-line ledger, then where the money
+ * goes.
+ *
+ * ── UNITS ──────────────────────────────────────────────────────────────────
+ * The two endpoints disagree, and getting this wrong is a 100× error on
+ * someone's income:
+ *   `/workers/earnings`      → `earningsRupees` (RUPEES), `earningsPaise`
+ *   `/workers/job-earnings`  → gross / net / tip / bonus, all PAISE
+ * Everything is converted to rupees exactly once, at the render site, through
+ * `formatRupees`. Nothing is added across the two sources.
+ *
+ * ── THE LEDGER WAS NEVER WIRED UP ──────────────────────────────────────────
+ * `/workers/job-earnings` is the real per-job breakdown — gross, platform fee,
+ * commission percent, tip, bonus and net per completed job — and no client
+ * code referenced it. The old screen showed only the rolled-up summary, so a
+ * pro could see a total but never what produced it.
+ *
+ * ── PAYOUTS ────────────────────────────────────────────────────────────────
+ * There is NO worker-facing payout endpoint: every payout route on the server
+ * lives under `modules/admin` and requires an admin. So there is no payout
+ * schedule, no "next payout on Monday", no pending-payout figure — those would
+ * all be invented. What a worker CAN see is the destination the money goes to
+ * (`/workers/bank-accounts`, already masked server-side), and that is all this
+ * section claims.
+ *
+ * No charts either: `dailyBreakdown` exists, but a trend line over a handful
+ * of days invites reading a pattern that isn't there.
+ * ----------------------------------------------------------------------------
+ */
 
-const RANGES: { key: 'today' | 'week' | 'month'; label: string }[] = [
-  { key: 'today', label: 'Today' },
-  { key: 'week', label: 'This week' },
-  { key: 'month', label: 'This month' },
-];
+import React, { useMemo, useState } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  Banknote,
+  CreditCard,
+  Landmark,
+  ReceiptText,
+  TrendingUp,
+  Wallet as WalletIcon,
+} from 'lucide-react-native';
+import {
+  Appear,
+  Card,
+  Chip,
+  Divider,
+  EmptyState,
+  ErrorState,
+  Gradient,
+  Heading,
+  SectionTitle,
+  Skeleton,
+  Text,
+  formatRupees,
+} from '../../../components/ui';
+import {
+  useGetEarningsQuery,
+  useGetJobEarningsQuery,
+  useGetPayoutDestinationsQuery,
+  useGetWorkerMeQuery,
+} from '../../../services/api/workerApi';
+import { getApiErrorMessage } from '../../../services/api/apiSlice';
+import { accent, colors } from '../../../theme/colors';
+import { radius } from '../../../theme/radius';
+import { bottomNavClearance, screenPadding, spacing } from '../../../theme/spacing';
+import type { WorkerJobEarning } from '../../../types/api';
 
-export default function WorkerEarningsScreen() {
-  const [range, setRange] = useState<'today' | 'week' | 'month'>('today');
-  const { data: earnings, isLoading } = useGetEarningsQuery(range);
+/** The three windows `/workers/earnings` accepts, and their ledger equivalents. */
+const RANGES = [
+  { key: 'today', label: 'Today', period: undefined },
+  { key: 'week', label: 'This week', period: 'week' },
+  { key: 'month', label: 'This month', period: 'month' },
+] as const;
 
+type RangeKey = (typeof RANGES)[number]['key'];
+
+function formatDay(iso?: string): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+}
+
+/** One completed job. All figures paise → rupees here and nowhere else. */
+function JobRow({ job }: { job: WorkerJobEarning }) {
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      <View className="px-5 pt-4 pb-2">
-        <Text className="text-2xl font-bold text-navy">Earnings</Text>
+    <View style={styles.jobRow}>
+      <View style={styles.jobIcon}>
+        <ReceiptText size={16} color={colors.textSecondary} />
       </View>
 
-      <View className="flex-row gap-2 px-5 mb-4">
-        {RANGES.map((r) => {
-          const on = range === r.key;
-          return (
-            <TouchableOpacity
-              key={r.key}
-              onPress={() => setRange(r.key)}
-              className={`flex-1 rounded-full py-2 items-center border ${on ? 'bg-navy border-navy' : 'border-gray-200'}`}
-            >
-              <Text className={`text-xs font-bold ${on ? 'text-white' : 'text-navy'}`}>{r.label}</Text>
-            </TouchableOpacity>
-          );
-        })}
+      <View style={styles.flex}>
+        <Text variant="bodySmall" weight="semibold" numberOfLines={1}>
+          {job.serviceLabel || job.service}
+        </Text>
+        <Text variant="caption" color={colors.textMuted}>
+          {formatDay(job.completedAt)} · #{job.orderId}
+        </Text>
+
+        {/* Only shown when the server says there was one. */}
+        <View style={styles.jobExtras}>
+          {job.tip > 0 ? (
+            <Text variant="caption" color={colors.successDark}>
+              +{formatRupees(job.tip / 100)} tip
+            </Text>
+          ) : null}
+          {job.bonus > 0 ? (
+            <Text variant="caption" color={colors.accentDark}>
+              +{formatRupees(job.bonus / 100)} bonus
+            </Text>
+          ) : null}
+          {job.surgeMultiplier > 1 ? (
+            <Text variant="caption" color={colors.accentDark}>
+              {job.surgeMultiplier}× surge
+            </Text>
+          ) : null}
+        </View>
       </View>
 
-      {isLoading || !earnings ? (
-        <View className="flex-1 items-center justify-center"><ActivityIndicator color="#F97316" /></View>
-      ) : (
-        <ScrollView className="flex-1 px-5" contentContainerStyle={{ paddingBottom: 40 }}>
-          <View className="bg-navy rounded-3xl p-6 mb-5">
-            <View className="flex-row items-center gap-2 mb-2">
-              <TrendingUp size={16} color="#93C5FD" />
-              <Text className="text-blue-200 text-xs font-bold uppercase">Net earnings</Text>
-            </View>
-            <Text className="text-white text-4xl font-extrabold">₹{earnings.earningsRupees.toLocaleString('en-IN')}</Text>
-            <Text className="text-slate-400 text-xs mt-2">{earnings.jobs} job{earnings.jobs === 1 ? '' : 's'} completed</Text>
-          </View>
-
-          <View className="flex-row gap-3 mb-5">
-            <View className="flex-1 bg-gray-50 rounded-2xl p-4">
-              <Wallet size={16} color="#64748B" />
-              <Text className="text-lg font-extrabold text-navy mt-2">₹{earnings.avgEarningPerJobRupees}</Text>
-              <Text className="text-[11px] text-gray-400 font-semibold">Avg per job</Text>
-            </View>
-            <View className="flex-1 bg-gray-50 rounded-2xl p-4">
-              <Banknote size={16} color="#64748B" />
-              <Text className="text-lg font-extrabold text-navy mt-2">{earnings.cashJobs}</Text>
-              <Text className="text-[11px] text-gray-400 font-semibold">Cash jobs</Text>
-            </View>
-            <View className="flex-1 bg-gray-50 rounded-2xl p-4">
-              <CreditCard size={16} color="#64748B" />
-              <Text className="text-lg font-extrabold text-navy mt-2">{earnings.onlineJobs}</Text>
-              <Text className="text-[11px] text-gray-400 font-semibold">Online jobs</Text>
-            </View>
-          </View>
-
-          {earnings.dailyBreakdown.length > 0 ? (
-            <View>
-              <Text className="text-base font-bold text-navy mb-3">Last 30 days</Text>
-              {[...earnings.dailyBreakdown].reverse().map((d) => (
-                <View key={d.date} className="flex-row items-center justify-between py-2.5 border-b border-gray-50">
-                  <Text className="text-sm text-gray-600">
-                    {new Date(d.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', weekday: 'short' })}
-                  </Text>
-                  <View className="flex-row items-center gap-3">
-                    <Text className="text-xs text-gray-400">{d.jobs} job{d.jobs === 1 ? '' : 's'}</Text>
-                    <Text className="text-sm font-bold text-navy">₹{Math.round(d.earningsPaise / 100)}</Text>
-                  </View>
-                </View>
-              ))}
-            </View>
-          ) : (
-            <Text className="text-gray-400 text-center mt-8">No completed jobs in the last 30 days</Text>
-          )}
-        </ScrollView>
-      )}
-    </SafeAreaView>
+      <View style={styles.jobAmount}>
+        <Text variant="bodySmall" weight="semibold">
+          {formatRupees(job.net / 100)}
+        </Text>
+        {/* The gross and the cut, so "net" isn't a number without provenance. */}
+        <Text variant="caption" color={colors.textMuted}>
+          of {formatRupees(job.gross / 100)}
+        </Text>
+      </View>
+    </View>
   );
 }
+
+export default function WorkerEarningsScreen() {
+  const insets = useSafeAreaInsets();
+  const [range, setRange] = useState<RangeKey>('today');
+
+  const activeRange = RANGES.find((r) => r.key === range) ?? RANGES[0];
+
+  const {
+    data: earnings,
+    isLoading: earningsLoading,
+    error: earningsError,
+    refetch: refetchEarnings,
+    isFetching,
+  } = useGetEarningsQuery(range);
+
+  const {
+    data: ledger,
+    isLoading: ledgerLoading,
+    refetch: refetchLedger,
+  } = useGetJobEarningsQuery({ page: 1, period: activeRange.period });
+
+  const { data: worker } = useGetWorkerMeQuery();
+  const { data: payout } = useGetPayoutDestinationsQuery();
+
+  const jobs = useMemo(() => ledger?.jobs ?? [], [ledger]);
+  const hasDestination =
+    (payout?.banks.length ?? 0) > 0 || (payout?.upiIds.length ?? 0) > 0;
+
+  const reload = () => {
+    refetchEarnings();
+    refetchLedger();
+  };
+
+  return (
+    <View style={[styles.root, { paddingTop: insets.top + spacing.sm }]}>
+      <View style={styles.header}>
+        <Heading level={1}>Earnings</Heading>
+        <Text variant="muted">Everything you&apos;ve made with Zappy</Text>
+      </View>
+
+      <ScrollView
+        contentContainerStyle={[
+          styles.scroll,
+          { paddingBottom: bottomNavClearance + insets.bottom },
+        ]}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* ── Range ─────────────────────────────────────────────────────── */}
+        <View style={styles.rangeRow}>
+          {RANGES.map((option) => (
+            <Chip
+              key={option.key}
+              label={option.label}
+              selected={range === option.key}
+              tone={range === option.key ? 'blue' : 'neutral'}
+              onPress={() => setRange(option.key)}
+            />
+          ))}
+        </View>
+
+        {/* ── Headline ──────────────────────────────────────────────────── */}
+        {earningsLoading ? (
+          <Skeleton width="100%" height={170} borderRadius={radius.large} />
+        ) : earningsError ? (
+          <ErrorState
+            message={getApiErrorMessage(earningsError, "We couldn't load your earnings.")}
+            onRetry={reload}
+          />
+        ) : (
+          <Appear>
+            {/* Amber ramp, not amber→navy: that pair's midpoint is brown.
+                Same fix as the customer rewards hero. */}
+            <Gradient colors={[accent[500], accent[700]]} style={styles.headline}>
+              <Text variant="label" color="rgba(255,255,255,0.8)">
+                {activeRange.label.toUpperCase()}
+              </Text>
+              {/* `earningsRupees` is already rupees — do NOT divide. */}
+              <Text variant="display" color={colors.textInverse} style={styles.headlineValue}>
+                {formatRupees(earnings?.earningsRupees ?? 0)}
+              </Text>
+
+              <View style={styles.headlineStats}>
+                <HeadlineStat label="Jobs" value={String(earnings?.jobs ?? 0)} />
+                <HeadlineStat
+                  label="Avg / job"
+                  value={formatRupees(earnings?.avgEarningPerJobRupees ?? 0)}
+                />
+                <HeadlineStat
+                  label="Zappy fee"
+                  value={formatRupees((earnings?.commissionPaidPaise ?? 0) / 100)}
+                />
+              </View>
+            </Gradient>
+          </Appear>
+        )}
+
+        {/* ── Completed jobs + lifetime ──────────────────────────────────── */}
+        <Appear delay={40}>
+          <View style={styles.tileRow}>
+            <Card variant="outline" style={styles.tile}>
+              <View style={[styles.tileIcon, { backgroundColor: colors.successTint }]}>
+                <TrendingUp size={16} color={colors.successDark} />
+              </View>
+              <Text variant="heading2">{worker?.completedJobs ?? 0}</Text>
+              <Text variant="caption" color={colors.textMuted}>
+                Jobs completed
+              </Text>
+            </Card>
+
+            <Card variant="outline" style={styles.tile}>
+              <View style={[styles.tileIcon, { backgroundColor: colors.accentTint }]}>
+                <WalletIcon size={16} color={accent[600]} />
+              </View>
+              <Text variant="heading2">
+                {formatRupees(worker?.wallet?.totalEarnings ?? 0)}
+              </Text>
+              <Text variant="caption" color={colors.textMuted}>
+                Lifetime earned
+              </Text>
+            </Card>
+          </View>
+        </Appear>
+
+        {/* ── How this period splits ────────────────────────────────────── */}
+        {earnings && earnings.jobs > 0 ? (
+          <Appear delay={80}>
+            <Card variant="outline" style={styles.splitCard}>
+              <SectionTitle>How you were paid</SectionTitle>
+              <View style={styles.splitRow}>
+                <Text variant="bodySmall" color={colors.textSecondary} style={styles.flex}>
+                  Collected in cash
+                </Text>
+                <Text variant="bodySmall" weight="semibold">
+                  {earnings.cashJobs} {earnings.cashJobs === 1 ? 'job' : 'jobs'}
+                </Text>
+              </View>
+              <Divider style={styles.splitDivider} />
+              <View style={styles.splitRow}>
+                <Text variant="bodySmall" color={colors.textSecondary} style={styles.flex}>
+                  Paid online
+                </Text>
+                <Text variant="bodySmall" weight="semibold">
+                  {earnings.onlineJobs} {earnings.onlineJobs === 1 ? 'job' : 'jobs'}
+                </Text>
+              </View>
+            </Card>
+          </Appear>
+        ) : null}
+
+        {/* ── Ledger ────────────────────────────────────────────────────── */}
+        <Appear delay={120}>
+          <View style={styles.block}>
+            <View style={styles.blockHead}>
+              <SectionTitle style={styles.blockTitle}>Recent jobs</SectionTitle>
+              {ledger?.summary?.count ? (
+                <Text variant="caption" color={colors.textMuted}>
+                  {ledger.summary.count} total
+                </Text>
+              ) : null}
+            </View>
+
+            {ledgerLoading ? (
+              <Card variant="outline" padding={spacing.base}>
+                {[0, 1, 2].map((i) => (
+                  <View key={i} style={styles.jobRow}>
+                    <Skeleton width={34} height={34} borderRadius={radius.small} />
+                    <View style={styles.flex}>
+                      <Skeleton width="60%" height={13} />
+                      <Skeleton width="35%" height={10} style={{ marginTop: spacing.xs }} />
+                    </View>
+                    <Skeleton width={54} height={13} />
+                  </View>
+                ))}
+              </Card>
+            ) : jobs.length === 0 ? (
+              <EmptyState
+                icon={<Banknote size={26} color={colors.textMuted} />}
+                title="No earnings yet"
+                message={
+                  range === 'today'
+                    ? "Jobs you complete today will appear here with what you earned on each."
+                    : 'Complete a job and its full breakdown shows up here.'
+                }
+              />
+            ) : (
+              <Card variant="outline" padding={spacing.base}>
+                {jobs.map((job, index) => (
+                  <View key={job._id}>
+                    {index > 0 ? <Divider style={styles.jobDivider} /> : null}
+                    <JobRow job={job} />
+                  </View>
+                ))}
+
+                {/* Tips are called out separately: they are the worker's own,
+                    not part of the fare Zappy takes a cut of. */}
+                {ledger && ledger.summary.totalTips > 0 ? (
+                  <>
+                    <Divider style={styles.jobDivider} />
+                    <View style={styles.splitRow}>
+                      <Text variant="bodySmall" color={colors.successDark} style={styles.flex}>
+                        Tips in this period
+                      </Text>
+                      <Text variant="bodySmall" weight="semibold" color={colors.successDark}>
+                        {formatRupees(ledger.summary.totalTips / 100)}
+                      </Text>
+                    </View>
+                  </>
+                ) : null}
+              </Card>
+            )}
+
+            {ledger && ledger.totalPages > 1 ? (
+              <Text variant="caption" color={colors.textMuted} align="center">
+                Showing the {jobs.length} most recent of {ledger.total}
+              </Text>
+            ) : null}
+          </View>
+        </Appear>
+
+        {/* ── Payout destination ────────────────────────────────────────── */}
+        <Appear delay={160}>
+          <View style={styles.block}>
+            <SectionTitle>Where you get paid</SectionTitle>
+
+            {hasDestination ? (
+              <Card variant="outline" padding={spacing.base}>
+                {payout?.banks.map((bank, index) => (
+                  <View key={bank._id ?? bank.accountNumber}>
+                    {index > 0 ? <Divider style={styles.jobDivider} /> : null}
+                    <View style={styles.jobRow}>
+                      <View style={styles.jobIcon}>
+                        <Landmark size={16} color={colors.primary} />
+                      </View>
+                      <View style={styles.flex}>
+                        <Text variant="bodySmall" weight="semibold">
+                          {bank.bankName || bank.label || 'Bank account'}
+                        </Text>
+                        {/* Server sends this already masked. */}
+                        <Text variant="caption" color={colors.textMuted}>
+                          {bank.accountNumber}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                ))}
+
+                {payout?.upiIds.map((upi, index) => (
+                  <View key={upi._id ?? upi.upiId}>
+                    {(payout?.banks.length ?? 0) > 0 || index > 0 ? (
+                      <Divider style={styles.jobDivider} />
+                    ) : null}
+                    <View style={styles.jobRow}>
+                      <View style={styles.jobIcon}>
+                        <CreditCard size={16} color={colors.primary} />
+                      </View>
+                      <View style={styles.flex}>
+                        <Text variant="bodySmall" weight="semibold">
+                          {upi.upiLabel || 'UPI'}
+                        </Text>
+                        <Text variant="caption" color={colors.textMuted}>
+                          {upi.upiId}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                ))}
+              </Card>
+            ) : (
+              <Card variant="outline">
+                <Text variant="bodySmall" color={colors.textSecondary}>
+                  No payout account added yet. Add a bank account or UPI ID from
+                  your profile so Zappy knows where to send your earnings.
+                </Text>
+              </Card>
+            )}
+          </View>
+        </Appear>
+
+        {isFetching && !earningsLoading ? (
+          <Text variant="caption" color={colors.textMuted} align="center">
+            Refreshing…
+          </Text>
+        ) : null}
+      </ScrollView>
+    </View>
+  );
+}
+
+function HeadlineStat({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.headlineStat}>
+      <Text variant="body" weight="semibold" color={colors.textInverse}>
+        {value}
+      </Text>
+      <Text variant="caption" color="rgba(255,255,255,0.7)">
+        {label}
+      </Text>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: colors.background },
+  flex: { flex: 1 },
+
+  header: { paddingHorizontal: screenPadding, gap: spacing.xxs, marginBottom: spacing.base },
+  scroll: { paddingHorizontal: screenPadding, gap: spacing.lg },
+
+  rangeRow: { flexDirection: 'row', gap: spacing.sm },
+
+  headline: { padding: spacing.lg, borderRadius: radius.large, gap: spacing.xxs },
+  headlineValue: { letterSpacing: -1 },
+  headlineStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: spacing.lg,
+    paddingTop: spacing.base,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(255,255,255,0.25)',
+  },
+  headlineStat: { gap: 1 },
+
+  tileRow: { flexDirection: 'row', gap: spacing.md },
+  tile: { flex: 1, gap: spacing.xxs },
+  tileIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: radius.small,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.xs,
+  },
+
+  splitCard: { gap: spacing.xs },
+  splitRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  splitDivider: { marginVertical: spacing.sm },
+
+  block: { gap: spacing.sm },
+  blockHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  blockTitle: { marginBottom: 0 },
+
+  jobRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  jobIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: radius.small,
+    backgroundColor: colors.surfaceTertiary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  jobExtras: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: 1 },
+  jobAmount: { alignItems: 'flex-end' },
+  jobDivider: { marginVertical: 0 },
+});

@@ -5,7 +5,8 @@
 
 import { apiSlice } from './apiSlice';
 import type {
-  WorkerProfile, WorkerEarnings, WorkerKyc, SubmitKycRequest, Order, PaginatedOrders,
+  WorkerProfile, WorkerEarnings, WorkerKyc, SubmitKycRequest, Order,
+  WorkerJobEarnings, WorkerPayoutDestinations,
 } from '../../types/api';
 
 interface WorkerEnvelope { worker: WorkerProfile }
@@ -88,6 +89,31 @@ export const workerApi = apiSlice.injectEndpoints({
     // `/workers/orders` returns `{ orders }` only — no total/totalPages/page,
     // unlike the customer's `/orders/mine`. Typed as the envelope it actually
     // is so nothing reads a pagination field that will always be undefined.
+    /**
+     * The per-job ledger. Distinct from `/workers/earnings`, which is a rolled-up
+     * summary — this is the line-by-line list, and it was never wired up before.
+     */
+    getJobEarnings: builder.query<
+      WorkerJobEarnings,
+      { page?: number; period?: 'week' | 'month' | '3months' } | void
+    >({
+      query: ({ page = 1, period } = {}) => ({
+        url: '/workers/job-earnings',
+        params: { page, ...(period ? { period } : {}) },
+      }),
+      providesTags: ['Worker'],
+    }),
+
+    /** Where payouts are sent. Account numbers arrive masked. */
+    getPayoutDestinations: builder.query<WorkerPayoutDestinations, void>({
+      query: () => ({ url: '/workers/bank-accounts' }),
+      transformResponse: (r: Partial<WorkerPayoutDestinations>) => ({
+        banks: r.banks ?? [],
+        upiIds: r.upiIds ?? [],
+      }),
+      providesTags: ['Worker'],
+    }),
+
     getWorkerOrders: builder.query<{ orders: Order[] }, number | void>({
       query: (page = 1) => ({ url: '/workers/orders', params: { page } }),
       transformResponse: (r: { orders?: Order[] } | Order[]) =>
@@ -138,6 +164,8 @@ export const {
   useWorkerStartServiceMutation,
   useWorkerCompleteMutation,
   useGetWorkerOrdersQuery,
+  useGetJobEarningsQuery,
+  useGetPayoutDestinationsQuery,
   useLazyGetWorkerCancelPreviewQuery,
   useWorkerCancelMutation,
   useGetKycStatusQuery,

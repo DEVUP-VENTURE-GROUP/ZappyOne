@@ -711,6 +711,68 @@ export interface SubmitKycRequest {
 }
 
 /** `GET /workers/earnings` response. */
+/**
+ * One completed job from `GET /workers/job-earnings`.
+ *
+ * EVERY MONETARY FIELD IS IN PAISE, including `gross`, which the controller
+ * derives as `pricing.total * 100`. Divide by 100 for rupees — mixing these
+ * with `WorkerEarnings.earningsRupees` without converting would be a 100×
+ * error on a pro's income.
+ */
+export interface WorkerJobEarning {
+  _id: string;
+  /** Short human reference, e.g. `A1B2C3D4`. */
+  orderId: string;
+  service: string;
+  serviceLabel: string;
+  completedAt?: string;
+  /** What the customer paid. */
+  gross: number;
+  /** Zappy's cut. */
+  platformFee: number;
+  /** What the worker keeps: worker share + bonus + tip. */
+  net: number;
+  bonus: number;
+  tip: number;
+  surgeMultiplier: number;
+  /** Commission as a whole percent, server-computed. */
+  commissionPct: number;
+}
+
+/** `GET /workers/job-earnings`. Paginated, 25 per page. */
+export interface WorkerJobEarnings {
+  jobs: WorkerJobEarning[];
+  total: number;
+  page: number;
+  totalPages: number;
+  /** Totals across the whole period, not just this page. All paise. */
+  summary: {
+    totalNet: number;
+    totalTips: number;
+    count: number;
+    surgeCount: number;
+  };
+}
+
+/**
+ * `GET /workers/bank-accounts` — where earnings are sent.
+ * Account numbers arrive already masked by the server (`XXXX1234`); the raw
+ * number is never exposed to the client.
+ */
+export interface WorkerPayoutDestinations {
+  banks: {
+    _id?: string;
+    label?: string;
+    accountName?: string;
+    /** Masked, e.g. `XXXX4321`. */
+    accountNumber: string;
+    bankName?: string;
+    ifsc?: string;
+    isDefault?: boolean;
+  }[];
+  upiIds: { _id?: string; upiId: string; upiLabel?: string; isDefault?: boolean }[];
+}
+
 export interface WorkerEarnings {
   range: string;
   jobs: number;
