@@ -1,162 +1,177 @@
 /**
  * Customer tab bar.
  * ----------------------------------------------------------------------------
- * The website's `.bottom-nav` is a FLOATING PILL:
+ * Matches the website's bottom nav: five slots — Home, Bookings, a raised
+ * Book Now disc, Track, Profile — on a white bar with rounded top corners.
  *
- *   fixed bottom-4 inset-x-4 bg-white/90 backdrop-blur-xl
- *   border border-slate-200/50 rounded-full
- *   shadow-[0_8px_32px_-4px_rgba(15,23,42,0.1)] max-w-md
+ * ── WHY A CUSTOM BAR ───────────────────────────────────────────────────────
+ * The centre disc has to overflow ABOVE the bar and carry its own label. A
+ * stock `tabBarIcon` is clipped to its slot, so the raised button is only
+ * possible with a custom `tabBar`. Everything else — routing, focus state,
+ * accessibility roles — still comes from React Navigation's descriptors; this
+ * only draws them.
  *
- * (verified in client/src/styles/index.css). That silhouette is one of the most
- * recognisable parts of the Zappy UI, so the native tab bar reproduces it
- * rather than the default docked rectangular bar.
+ * ── ROUTES ─────────────────────────────────────────────────────────────────
+ * Book Now is an ACTION, not a tab: it pushes the services catalogue, which is
+ * where a booking actually starts. `services` and `chat` therefore stay
+ * registered but hidden (`href: null`) — both are still reached from Home,
+ * category tiles and the tracking screen, and dropping their files would break
+ * those links.
  *
- * Tab order and screen names are UNCHANGED from upstream — this is a visual
- * change only; no navigation architecture is introduced or replaced.
+ * `track` is a new screen that resolves the customer's active order and
+ * forwards to `/tracking/order/[id]`; see it for why it exists.
  * ----------------------------------------------------------------------------
  */
 
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
-import { Tabs } from 'expo-router';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { Tabs, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  Calendar,
+  ClipboardList,
   Home,
-  MessageSquare,
-  Search,
+  MapPin,
   User,
   type LucideIcon,
 } from 'lucide-react-native';
 import { Text } from '../../components/ui/Text';
-import { colors, zappy, slate } from '../../theme/colors';
+import {
+  BOOK_NOW_LIFT,
+  BookNowButton,
+} from '../../components/navigation/BookNowButton';
+import { colors, slate, zappy } from '../../theme/colors';
 import { radius } from '../../theme/radius';
 import { shadows } from '../../theme/shadows';
 import { spacing } from '../../theme/spacing';
-import { sizes } from '../../theme/dimensions';
 
-interface TabIconProps {
-  Icon: LucideIcon;
-  label: string;
-  focused: boolean;
-}
+/** The four real tabs, in bar order. Book Now is injected between 2 and 3. */
+const ITEMS: { name: string; label: string; Icon: LucideIcon }[] = [
+  { name: 'home', label: 'Home', Icon: Home },
+  { name: 'bookings', label: 'Bookings', Icon: ClipboardList },
+  { name: 'track', label: 'Track', Icon: MapPin },
+  { name: 'profile', label: 'Profile', Icon: User },
+];
+
+const BAR_HEIGHT = 62;
 
 /**
- * Matches `.bottom-nav-item` — 10px semibold, slate-400 at rest, brand blue
- * when active. The active state is carried by BOTH colour and stroke weight,
- * so it never depends on colour alone.
+ * `@react-navigation/bottom-tabs` is not a direct dependency — expo-router
+ * bundles it under `build/`. Deriving the prop type from `Tabs` itself keeps
+ * this correct without importing through a build path that could move between
+ * router versions.
  */
-function TabIcon({ Icon, label, focused }: TabIconProps) {
-  return (
-    <View style={styles.item}>
-      <Icon
-        size={20}
-        strokeWidth={focused ? 2.4 : 1.9}
-        color={focused ? zappy[600] : slate[400]}
-      />
-      <Text
-        variant="navLabel"
-        color={focused ? zappy[600] : slate[400]}
-        numberOfLines={1}
+type TabBarProps = Parameters<
+  NonNullable<React.ComponentProps<typeof Tabs>['tabBar']>
+>[0];
+
+function TabBar({ state, navigation }: TabBarProps) {
+  const insets = useSafeAreaInsets();
+  const router = useRouter();
+
+  const renderItem = (item: (typeof ITEMS)[number]) => {
+    const routeIndex = state.routes.findIndex((r: { name: string }) => r.name === item.name);
+    const focused = state.index === routeIndex;
+    const { Icon } = item;
+
+    const onPress = () => {
+      const route = state.routes[routeIndex];
+      const event = navigation.emit({
+        type: 'tabPress',
+        target: route.key,
+        canPreventDefault: true,
+      });
+      // Respect a screen that wants to handle the press itself.
+      if (!focused && !event.defaultPrevented) {
+        navigation.navigate(route.name as never);
+      }
+    };
+
+    return (
+      <Pressable
+        key={item.name}
+        onPress={onPress}
+        style={styles.slot}
+        accessibilityRole="button"
+        accessibilityState={{ selected: focused }}
+        accessibilityLabel={item.label}
       >
-        {label}
-      </Text>
+        {/* Active state is carried by colour AND stroke weight, never colour
+            alone. */}
+        <Icon
+          size={22}
+          strokeWidth={focused ? 2.4 : 1.9}
+          color={focused ? zappy[600] : slate[400]}
+        />
+        <Text
+          variant="navLabel"
+          color={focused ? zappy[600] : slate[400]}
+          numberOfLines={1}
+        >
+          {item.label}
+        </Text>
+      </Pressable>
+    );
+  };
+
+  return (
+    <View
+      style={[
+        styles.bar,
+        { paddingBottom: insets.bottom, height: BAR_HEIGHT + insets.bottom },
+      ]}
+    >
+      {renderItem(ITEMS[0])}
+      {renderItem(ITEMS[1])}
+
+      <BookNowButton
+        barHeight={BAR_HEIGHT}
+        onPress={() => router.push('/(tabs)/services')}
+      />
+
+      {renderItem(ITEMS[2])}
+      {renderItem(ITEMS[3])}
     </View>
   );
 }
 
 export default function TabsLayout() {
-  const insets = useSafeAreaInsets();
-
   return (
     <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarShowLabel: false,
-        // Absolute positioning is what makes it read as floating rather than
-        // docked — content scrolls beneath it.
-        tabBarStyle: [
-          styles.bar,
-          {
-            bottom: Math.max(insets.bottom, spacing.md),
-            height: sizes.bottomNavHeight,
-          },
-        ],
-        tabBarItemStyle: styles.barItem,
-      }}
+      tabBar={(props) => <TabBar {...props} />}
+      screenOptions={{ headerShown: false }}
     >
-      <Tabs.Screen
-        name="home"
-        options={{
-          title: 'Home',
-          tabBarAccessibilityLabel: 'Home',
-          tabBarIcon: ({ focused }) => <TabIcon Icon={Home} label="Home" focused={focused} />,
-        }}
-      />
-      <Tabs.Screen
-        name="services"
-        options={{
-          title: 'Services',
-          tabBarAccessibilityLabel: 'Services',
-          tabBarIcon: ({ focused }) => (
-            <TabIcon Icon={Search} label="Services" focused={focused} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="bookings"
-        options={{
-          title: 'Bookings',
-          tabBarAccessibilityLabel: 'Bookings',
-          tabBarIcon: ({ focused }) => (
-            <TabIcon Icon={Calendar} label="Bookings" focused={focused} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="chat"
-        options={{
-          title: 'Chats',
-          tabBarAccessibilityLabel: 'Chats',
-          tabBarIcon: ({ focused }) => (
-            <TabIcon Icon={MessageSquare} label="Chats" focused={focused} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: 'Profile',
-          tabBarAccessibilityLabel: 'Profile',
-          tabBarIcon: ({ focused }) => <TabIcon Icon={User} label="Profile" focused={focused} />,
-        }}
-      />
+      <Tabs.Screen name="home" options={{ title: 'Home' }} />
+      <Tabs.Screen name="bookings" options={{ title: 'Bookings' }} />
+      <Tabs.Screen name="track" options={{ title: 'Track' }} />
+      <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
+
+      {/* Registered but not in the bar — still reachable by route. */}
+      <Tabs.Screen name="services" options={{ href: null, title: 'Services' }} />
+      <Tabs.Screen name="chat" options={{ href: null, title: 'Chats' }} />
     </Tabs>
   );
 }
 
 const styles = StyleSheet.create({
   bar: {
-    position: 'absolute',
-    left: spacing.base,
-    right: spacing.base,
-    borderRadius: radius.pill,
+    flexDirection: 'row',
+    alignItems: 'flex-end',
     backgroundColor: colors.surface,
-    borderTopWidth: 0,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
-    paddingHorizontal: spacing.sm,
+    borderTopLeftRadius: radius.large,
+    borderTopRightRadius: radius.large,
+    paddingHorizontal: spacing.xs,
+    // The disc overflows upward, so the bar must not clip its children.
+    overflow: 'visible',
     ...shadows.softLarge,
   },
-  barItem: {
-    height: sizes.bottomNavHeight,
-    paddingVertical: 0,
-  },
-  item: {
+  slot: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 2,
-    height: sizes.bottomNavHeight,
-    minWidth: 56,
+    gap: 3,
+    height: BAR_HEIGHT,
   },
 });
+
+/** Exported so screens can clear the raised disc when padding their content. */
+export const TAB_BAR_LIFT = BOOK_NOW_LIFT;
