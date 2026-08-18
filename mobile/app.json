@@ -5,14 +5,11 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "mobile",
+    "scheme": "zappy",
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.zappyone.app",
-      "config": {
-        "googleMapsApiKey": "YOUR_GOOGLE_MAPS_IOS_KEY"
-      },
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Zappy uses your location to find nearby professionals and track your booking in real time.",
         "NSCameraUsageDescription": "Zappy needs the camera for KYC verification and service photos.",
@@ -32,8 +29,7 @@
         "android.permission.ACCESS_FINE_LOCATION",
         "android.permission.ACCESS_COARSE_LOCATION",
         "android.permission.CAMERA",
-        "android.permission.POST_NOTIFICATIONS",
-        "android.permission.RECORD_AUDIO"
+        "android.permission.POST_NOTIFICATIONS"
       ],
       "config": {
         "googleMaps": {
@@ -67,14 +63,16 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Zappy needs the camera for KYC verification and service photos."
+          "cameraPermission": "Zappy needs the camera for KYC verification and service photos.",
+          "recordAudioAndroid": false
         }
       ],
       "expo-notifications",
       [
         "expo-image-picker",
         {
-          "photosPermission": "Zappy needs photo access to upload service images."
+          "photosPermission": "Zappy needs photo access to upload service images.",
+          "microphonePermission": false
         }
       ]
     ],
