@@ -83,9 +83,9 @@ function Ring({
 
   return (
     <Animated.View
-      pointerEvents="none"
       style={[
         styles.ring,
+        styles.noTouch,
         { width: size, height: size, borderRadius: size / 2, borderColor: color },
         style,
       ]}
@@ -122,6 +122,8 @@ function SearchPulseBase({ size = 168, color = colors.primary, children }: Searc
 export const SearchPulse = memo(SearchPulseBase);
 
 const styles = StyleSheet.create({
+  /** RN 0.85 deprecates the pointerEvents PROP; it belongs in style now. */
+  noTouch: { pointerEvents: 'none' },
   root: { alignItems: 'center', justifyContent: 'center' },
   ring: { position: 'absolute', borderWidth: 1.5 },
   core: {

@@ -627,21 +627,49 @@ export interface SearchResult {
 
 // ── Content ──────────────────────────────────────────────────────────────────
 
+/**
+ * One question, as `GET /content/faqs` actually returns it.
+ *
+ * NOTE THE KEY: the server sends `id`, not `_id` — `content.service.js`
+ * projects `{ id: String(f._id), question, answer }`. This type previously
+ * declared `_id`, which is why the Support screen keyed its list on
+ * `undefined`.
+ */
 export interface Faq {
-  _id: string;
+  id: string;
   question: string;
   answer: string;
-  category?: string;
-  sortOrder?: number;
 }
 
+/**
+ * `GET /content/faqs` returns FAQs GROUPED BY CATEGORY, not as a flat list:
+ *
+ *   { faqs: [ { category: 'Bookings', items: [ …Faq ] }, … ] }
+ *
+ * The screen used to map the group array as if each element were a question,
+ * so every row rendered blank.
+ */
+export interface FaqGroup {
+  category: string;
+  items: Faq[];
+}
+
+/**
+ * A policy page.
+ *
+ * `body` IS ONLY PRESENT ON THE DETAIL ENDPOINT. `GET /content/policies`
+ * projects `slug title` alone, so a list entry can never render its text —
+ * the body has to be fetched per slug from `GET /content/policy/:slug`.
+ */
 export interface PolicyDoc {
-  _id: string;
   slug: string;
   title: string;
-  body: string;
+  body?: string;
   updatedAt?: string;
 }
+
+/** A list entry: guaranteed to carry a slug and a title, never a body. */
+export type PolicySummary = Pick<PolicyDoc, 'slug' | 'title'>;
 
 // ── Worker ───────────────────────────────────────────────────────────────────
 

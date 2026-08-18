@@ -59,8 +59,8 @@ function GradientBase({
         <Svg
           width={size.width}
           height={size.height}
-          style={StyleSheet.absoluteFill}
-          pointerEvents="none"
+          // RN 0.85 deprecates the pointerEvents PROP; it belongs in style now.
+          style={[StyleSheet.absoluteFill, { pointerEvents: 'none' }]}
         >
           <Defs>
             {/* x1,y1 → x2,y2 of (0,0)→(1,1) is the 135° diagonal the site uses. */}

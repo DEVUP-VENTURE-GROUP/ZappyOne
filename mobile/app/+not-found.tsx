@@ -1,40 +1,44 @@
-import { Link, Stack } from 'expo-router';
-import { StyleSheet } from 'react-native';
+/**
+ * 404 — a route that does not exist.
+ * ----------------------------------------------------------------------------
+ * Reachable from a stale deep link or a push notification pointing at a screen
+ * this build does not have, so it offers a way back rather than a dead end.
+ *
+ * Previously rendered through the Expo starter's `Themed` components, which
+ * carried their own palette (`#2f95dc`) and light/dark switching that nothing
+ * else in the app uses. It is now on the design system like every other screen.
+ * ----------------------------------------------------------------------------
+ */
 
-import { Text, View } from '@/components/Themed';
+import React from 'react';
+import { StyleSheet, View } from 'react-native';
+import { Stack, useRouter } from 'expo-router';
+import { Compass } from 'lucide-react-native';
+import { EmptyState } from '../components/ui';
+import { colors } from '../theme/colors';
+import { screenPadding } from '../theme/spacing';
 
 export default function NotFoundScreen() {
+  const router = useRouter();
   return (
-    <>
-      <Stack.Screen options={{ title: 'Oops!' }} />
-      <View style={styles.container}>
-        <Text style={styles.title}>This screen doesn't exist.</Text>
-
-        <Link href="/(tabs)/home" style={styles.link}>
-          <Text style={styles.linkText}>Go to home screen!</Text>
-        </Link>
-      </View>
-    </>
+    <View style={styles.root}>
+      <Stack.Screen options={{ title: 'Not found' }} />
+      <EmptyState
+        icon={<Compass size={28} color={colors.textMuted} />}
+        title="This page doesn't exist"
+        message="The link you followed may be broken, or the page may have moved."
+        actionLabel="Go home"
+        onAction={() => router.replace('/(tabs)/home')}
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  root: {
     flex: 1,
-    alignItems: 'center',
     justifyContent: 'center',
-    padding: 20,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  link: {
-    marginTop: 15,
-    paddingVertical: 15,
-  },
-  linkText: {
-    fontSize: 14,
-    color: '#2e78b7',
+    paddingHorizontal: screenPadding,
+    backgroundColor: colors.background,
   },
 });

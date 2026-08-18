@@ -84,7 +84,7 @@ import {
   uploadToPresignedUrl,
 } from '../../services/api/uploadApi';
 import { getApiErrorCode, getApiErrorMessage } from '../../services/api/apiSlice';
-import { colors, success } from '../../theme/colors';
+import { accent, colors, success } from '../../theme/colors';
 import { screenPadding, spacing } from '../../theme/spacing';
 import type { SubmitKycRequest } from '../../types/api';
 
@@ -353,14 +353,14 @@ export default function WorkerKycScreen() {
           ) : view.phase === 'review' ? (
             <StatusBanner
               tone="warning"
-              icon={<Clock size={18} color="#B45309" />}
+              icon={<Clock size={18} color={accent[700]} />}
               title="Documents under review"
               body="Our team is checking your submission. This usually takes less than 24 hours, and you'll get a notification either way."
             />
           ) : view.phase === 'clarify' ? (
             <StatusBanner
               tone="warning"
-              icon={<MessageSquare size={18} color="#B45309" />}
+              icon={<MessageSquare size={18} color={accent[700]} />}
               title="We need something fixed"
               body="Your submission is on hold until you re-upload. Here's what our reviewer asked for:"
               quote={view.clarificationMessage}
@@ -434,7 +434,7 @@ export default function WorkerKycScreen() {
               {changeRequestStatus === 'pending' ? (
                 <StatusBanner
                   tone="warning"
-                  icon={<Clock size={16} color="#B45309" />}
+                  icon={<Clock size={16} color={accent[700]} />}
                   title="Change request awaiting approval"
                   body="An admin is reviewing your request. You'll be able to upload new documents once it's approved."
                   quote={kyc?.changeRequest?.message}

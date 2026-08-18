@@ -8,7 +8,7 @@
  * The decoration is built from plain Views rather than SVG or an image. Two
  * circles and a 5×5 dot grid do not justify a rasterised asset that would need
  * @2x/@3x variants, and Views keep it resolution-independent for free. All of
- * it is `pointerEvents="none"` so nothing competes with the form for touches.
+ * it is `pointerEvents: 'none'` so nothing competes with the form for touches.
  *
  * The card keeps a max width so the layout still reads as a card on a tablet
  * instead of stretching edge to edge.
@@ -41,7 +41,7 @@ export interface AuthShellProps {
 /** 5×5 dotted grid, matching the website's top-left motif. */
 const DotGrid = memo(function DotGrid() {
   return (
-    <View style={styles.dotGrid} pointerEvents="none">
+    <View style={[styles.dotGrid, styles.noTouch]}>
       {Array.from({ length: 5 }, (_, row) => (
         <View key={row} style={styles.dotRow}>
           {Array.from({ length: 5 }, (__, col) => (
@@ -59,9 +59,9 @@ function AuthShellBase({ title, subtitle, children, footer }: AuthShellProps) {
   return (
     <View style={styles.root}>
       {/* ── Decoration ───────────────────────────────────────────────────── */}
-      <View style={styles.circleTopRight} pointerEvents="none" />
-      <View style={styles.circleBottomLeft} pointerEvents="none" />
-      <View style={[styles.dotWrap, { top: insets.top + spacing.xl }]} pointerEvents="none">
+      <View style={[styles.circleTopRight, styles.noTouch]} />
+      <View style={[styles.circleBottomLeft, styles.noTouch]} />
+      <View style={[styles.dotWrap, styles.noTouch, { top: insets.top + spacing.xl }]}>
         <DotGrid />
       </View>
 
@@ -110,7 +110,12 @@ const FIELD = '#F1F4FD';
 const BLOB = '#E2E9FB';
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: FIELD },
+  /** RN 0.85 deprecates the pointerEvents PROP; it belongs in style now. */
+  noTouch: { pointerEvents: 'none' },
+  // The decorative blobs are positioned to bleed past every edge. Without
+  // clipping here that bleed is real layout: the document grows ~120px wider
+  // than the viewport and the whole auth screen can be dragged sideways.
+  root: { flex: 1, backgroundColor: FIELD, overflow: 'hidden' },
   flex: { flex: 1 },
 
   circleTopRight: {

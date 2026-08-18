@@ -576,8 +576,7 @@ export default function LocationPickerScreen() {
       {!overlayVisible ? (
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          style={styles.panelWrap}
-          pointerEvents="box-none"
+          style={[styles.panelWrap, styles.passThrough]}
         >
           <View style={[styles.panel, { paddingBottom: insets.bottom + spacing.base }]}>
             <View style={styles.handle} />
@@ -672,6 +671,8 @@ export default function LocationPickerScreen() {
 }
 
 const styles = StyleSheet.create({
+  /** RN 0.85 deprecates the pointerEvents PROP; it belongs in style now. */
+  passThrough: { pointerEvents: 'box-none' },
   root: { flex: 1, backgroundColor: colors.background },
   flex: { flex: 1 },
 

@@ -1,33 +1,85 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, SafeAreaView, ActivityIndicator, Alert, ScrollView } from 'react-native';
+/**
+ * Worker profile.
+ * ----------------------------------------------------------------------------
+ * The pro's own account: who they are, what they're approved to do, where
+ * their verification stands, and the way out.
+ *
+ * KYC state is the one thing on this screen that gates income, so it gets a
+ * full card rather than a status line, and it reuses the SAME labels as the
+ * KYC screen itself — a pro should not read "Action needed" here and
+ * "Rejected" one tap later.
+ *
+ * Signing out confirms in a BottomSheet, matching the customer app, and tears
+ * down the socket before clearing the session: the connection is authenticated
+ * with the token being discarded, so leaving it open would keep a dead
+ * authenticated socket alive until the server times it out.
+ * ----------------------------------------------------------------------------
+ */
+
+import React, { useCallback, useState } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useDispatch } from 'react-redux';
-import { User, Phone, Star, Briefcase, ShieldCheck, ShieldAlert, LogOut, ChevronRight } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  Briefcase,
+  ChevronRight,
+  LogOut,
+  Phone,
+  ShieldAlert,
+  ShieldCheck,
+  Star,
+} from 'lucide-react-native';
+import {
+  Appear,
+  Avatar,
+  BottomSheet,
+  Button,
+  Card,
+  ErrorState,
+  Heading,
+  LoadingState,
+  Text,
+} from '../../../components/ui';
+import { AccountRow, AccountSection } from '../../../components/account/AccountUI';
 import { useGetWorkerMeQuery } from '../../../services/api/workerApi';
 import { useLogoutMutation } from '../../../services/api/authApi';
 import { getRefreshToken, clearSession } from '../../../services/api/tokenStorage';
 import { socketClient } from '../../../services/socket/socketClient';
 import { apiSlice } from '../../../services/api/apiSlice';
+import { getApiErrorMessage } from '../../../services/api/apiSlice';
 import { logout as logoutAction } from '../../../store/authSlice';
+import { colors, accent, danger, slate, success } from '../../../theme/colors';
+import { radius } from '../../../theme/radius';
+import { bottomNavClearance, screenPadding, spacing } from '../../../theme/spacing';
+import type { KycStatus } from '../../../types/api';
 
-const KYC_BADGE: Record<string, { label: string; color: string; bg: string }> = {
-  approved: { label: 'Verified', color: '#16A34A', bg: '#ECFDF5' },
-  pending_review: { label: 'Under review', color: '#B45309', bg: '#FFFBEB' },
-  rejected: { label: 'Action needed', color: '#DC2626', bg: '#FEF2F2' },
-  not_submitted: { label: 'Not submitted', color: '#64748B', bg: '#F8FAFC' },
-  suspended: { label: 'Suspended', color: '#DC2626', bg: '#FEF2F2' },
+/** Same wording the KYC screen uses, so the two never disagree. */
+const KYC_BADGE: Record<KycStatus, { label: string; fg: string; bg: string }> = {
+  approved: { label: "You're verified", fg: success[700], bg: colors.successTint },
+  pending_review: { label: 'Under review', fg: accent[700], bg: colors.warningTint },
+  rejected: { label: 'Action needed', fg: colors.errorDark, bg: colors.errorTint },
+  not_submitted: { label: 'Not submitted', fg: slate[600], bg: colors.surfaceSecondary },
+  suspended: { label: 'Verification locked', fg: colors.errorDark, bg: colors.errorTint },
 };
 
 export default function WorkerProfileScreen() {
   const router = useRouter();
   const dispatch = useDispatch();
-  const { data: worker, isLoading } = useGetWorkerMeQuery();
-  const [logoutMutation] = useLogoutMutation();
+  const insets = useSafeAreaInsets();
 
-  const doLogout = async () => {
+  const { data: worker, isLoading, error, refetch } = useGetWorkerMeQuery();
+  const [logoutMutation] = useLogoutMutation();
+  const [signOutOpen, setSignOutOpen] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
+
+  const signOut = useCallback(async () => {
+    setSigningOut(true);
     try {
       const refreshToken = await getRefreshToken();
       if (refreshToken) {
+        // Best effort — a failed revoke must not trap the pro in a session
+        // they've asked to end.
         await logoutMutation({ refreshToken }).unwrap().catch(() => {});
       }
     } finally {
@@ -35,69 +87,170 @@ export default function WorkerProfileScreen() {
       socketClient.destroy();
       dispatch(apiSlice.util.resetApiState());
       dispatch(logoutAction());
+      setSigningOut(false);
       router.replace('/worker/login' as never);
     }
-  };
+  }, [dispatch, router, logoutMutation]);
 
-  if (isLoading || !worker) {
-    return <SafeAreaView className="flex-1 bg-white items-center justify-center"><ActivityIndicator color="#F97316" /></SafeAreaView>;
+  if (isLoading) {
+    return (
+      <View style={[styles.root, { paddingTop: insets.top }]}>
+        <LoadingState label="Loading your profile…" />
+      </View>
+    );
+  }
+
+  if (error || !worker) {
+    return (
+      <View style={[styles.root, styles.centered, { paddingTop: insets.top }]}>
+        <ErrorState
+          message={getApiErrorMessage(error, "We couldn't load your profile.")}
+          onRetry={refetch}
+        />
+      </View>
+    );
   }
 
   const kyc = KYC_BADGE[worker.kyc.status] ?? KYC_BADGE.not_submitted;
+  const verified = worker.kyc.status === 'approved';
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 40 }}>
-        <View className="px-5 pt-8">
-          <View className="items-center mb-6">
-            <View className="w-20 h-20 rounded-full bg-orange-500/10 items-center justify-center mb-3">
-              <User size={36} color="#F97316" />
-            </View>
-            <Text className="text-xl font-bold text-navy">{worker.name}</Text>
-            <View className="flex-row items-center gap-1 mt-1">
-              <Star size={13} color="#F59E0B" fill="#F59E0B" />
-              <Text className="text-gray-500 text-sm">{worker.rating.toFixed(1)} · {worker.completedJobs} jobs</Text>
-            </View>
-          </View>
-
-          <View className="bg-gray-50 rounded-2xl p-4 mb-4">
-            <View className="flex-row items-center gap-3 py-2">
-              <Phone size={16} color="#64748B" />
-              <Text className="text-navy">+91 {worker.phone}</Text>
-            </View>
-            <View className="flex-row items-center gap-3 py-2">
-              <Briefcase size={16} color="#64748B" />
-              <Text className="text-navy flex-1" numberOfLines={2}>
-                {worker.skills.length ? worker.skills.map((s) => s.replace(/_/g, ' ')).join(', ') : 'No skills set'}
+    <View style={[styles.root, { paddingTop: insets.top + spacing.sm }]}>
+      <ScrollView
+        contentContainerStyle={[
+          styles.scroll,
+          { paddingBottom: bottomNavClearance + insets.bottom },
+        ]}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* ── Identity ─────────────────────────────────────────────────── */}
+        <Appear>
+          <Card variant="outline" style={styles.headerCard}>
+            <Avatar name={worker.name} uri={worker.avatarUrl} size={72} />
+            <Heading level={3} align="center" style={styles.name}>
+              {worker.name}
+            </Heading>
+            <View style={styles.statRow}>
+              <Star size={13} color={accent[500]} fill={accent[500]} />
+              <Text variant="caption" color={colors.textSecondary}>
+                {worker.rating.toFixed(1)} · {worker.completedJobs} job
+                {worker.completedJobs === 1 ? '' : 's'} completed
               </Text>
             </View>
-          </View>
+          </Card>
+        </Appear>
 
-          <TouchableOpacity
-            className="rounded-2xl p-4 mb-6 flex-row items-center gap-3"
-            style={{ backgroundColor: kyc.bg }}
-            onPress={() => router.push('/worker/kyc' as never)}
+        {/* ── Verification — the thing that gates earning ───────────────── */}
+        <Appear delay={40}>
+          <Card
+            variant="outline"
+            style={[styles.kycCard, { backgroundColor: kyc.bg, borderColor: kyc.bg }]}
+            onPress={() => router.push('/worker/kyc')}
+            accessibilityLabel={`Identity verification: ${kyc.label}`}
+            accessibilityHint="Opens your verification documents"
           >
-            {worker.kyc.status === 'approved' ? <ShieldCheck size={20} color={kyc.color} /> : <ShieldAlert size={20} color={kyc.color} />}
-            <View className="flex-1">
-              <Text className="text-xs font-bold uppercase" style={{ color: kyc.color }}>KYC status</Text>
-              <Text className="text-sm font-semibold mt-0.5" style={{ color: kyc.color }}>{kyc.label}</Text>
+            <View style={styles.kycRow}>
+              {verified ? (
+                <ShieldCheck size={22} color={kyc.fg} />
+              ) : (
+                <ShieldAlert size={22} color={kyc.fg} />
+              )}
+              <View style={styles.flex}>
+                <Text variant="caption" weight="bold" color={kyc.fg} style={styles.kycLabel}>
+                  IDENTITY VERIFICATION
+                </Text>
+                <Text variant="bodySmall" weight="semibold" color={kyc.fg}>
+                  {kyc.label}
+                </Text>
+              </View>
+              <ChevronRight size={17} color={kyc.fg} />
             </View>
-            <ChevronRight size={16} color={kyc.color} />
-          </TouchableOpacity>
+          </Card>
+        </Appear>
 
-          <TouchableOpacity
-            className="flex-row items-center justify-center gap-2 border border-red-200 rounded-xl p-4"
-            onPress={() => Alert.alert('Log out', 'Are you sure you want to log out?', [
-              { text: 'Cancel', style: 'cancel' },
-              { text: 'Log out', style: 'destructive', onPress: doLogout },
-            ])}
-          >
-            <LogOut size={18} color="#EF4444" />
-            <Text className="text-red-500 font-bold">Log out</Text>
-          </TouchableOpacity>
-        </View>
+        {/* ── Details straight from /workers/me ─────────────────────────── */}
+        <Appear delay={80}>
+          <AccountSection title="Your details">
+            <AccountRow
+              icon={<Phone size={17} color={colors.primary} />}
+              label="Phone"
+              detail={`+91 ${worker.phone}`}
+              right={<View />}
+            />
+            <AccountRow
+              icon={<Briefcase size={17} color={colors.primary} />}
+              label="Skills"
+              detail={
+                worker.skills.length
+                  ? worker.skills.map((s) => s.replace(/_/g, ' ')).join(', ')
+                  : 'No skills set'
+              }
+              right={<View />}
+            />
+          </AccountSection>
+        </Appear>
+
+        {/* ── Sign out ─────────────────────────────────────────────────── */}
+        <Appear delay={120}>
+          <AccountSection>
+            <AccountRow
+              icon={<LogOut size={17} color={colors.error} />}
+              tint={colors.errorTint}
+              label="Log out"
+              destructive
+              right={<View />}
+              onPress={() => setSignOutOpen(true)}
+            />
+          </AccountSection>
+        </Appear>
       </ScrollView>
-    </SafeAreaView>
+
+      <BottomSheet
+        visible={signOutOpen}
+        onClose={() => setSignOutOpen(false)}
+        title="Log out?"
+      >
+        <Text variant="bodySmall" color={colors.textSecondary}>
+          You&apos;ll stop receiving job offers until you log back in. Your
+          earnings and verification stay on your account.
+        </Text>
+        <Button
+          label="Log out"
+          variant="danger"
+          onPress={() => {
+            setSignOutOpen(false);
+            signOut();
+          }}
+          loading={signingOut}
+          fullWidth
+          style={styles.sheetPrimary}
+        />
+        <Button
+          label="Stay logged in"
+          variant="secondary"
+          onPress={() => setSignOutOpen(false)}
+          fullWidth
+          style={styles.sheetSecondary}
+        />
+      </BottomSheet>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: colors.background },
+  flex: { flex: 1 },
+  centered: { justifyContent: 'center', paddingHorizontal: screenPadding },
+  scroll: { paddingHorizontal: screenPadding, gap: spacing.lg },
+
+  headerCard: { alignItems: 'center', paddingVertical: spacing.xl, gap: spacing.sm },
+  name: { marginTop: spacing.sm },
+  statRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+
+  kycCard: { paddingVertical: spacing.base },
+  kycRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  kycLabel: { marginBottom: 2, letterSpacing: 0.4 },
+
+  sheetPrimary: { marginTop: spacing.lg },
+  sheetSecondary: { marginTop: spacing.sm },
+});

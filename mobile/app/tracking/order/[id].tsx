@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
@@ -26,10 +25,12 @@ import {
   Button,
   Card,
   IconButton,
+  LoadingState,
   ScreenHeader,
 } from '../../../components/ui';
 import { TrackingCard } from '../../../components/tracking/TrackingCard';
 import { shadows } from '../../../theme/shadows';
+import { fontFamily } from '../../../theme/typography';
 import { colors } from '../../../theme/colors';
 import { useCreatePaymentOrderMutation, useVerifyPaymentMutation } from '../../../services/api/paymentsApi';
 import { openCashfreeCheckout, parseReturnUrl, paymentReturnUrl } from '../../../services/payments/cashfreeCheckout';
@@ -147,7 +148,12 @@ export default function OrderTrackingScreen() {
   };
 
   if (isLoading || !order) {
-    return <SafeAreaView className="flex-1 bg-white items-center justify-center"><ActivityIndicator color="#2563EB" /></SafeAreaView>;
+    return (
+      <View style={[styles.screen, { paddingTop: insets.top }]}>
+        <Stack.Screen options={{ headerShown: false }} />
+        <LoadingState label="Loading your booking…" />
+      </View>
+    );
   }
 
   // ── Dispatch states take over the whole screen ──────────────────────────
@@ -166,7 +172,7 @@ export default function OrderTrackingScreen() {
 
   if (status === 'created' || status === 'searching') {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+      <View style={[styles.screen, { paddingTop: insets.top }]}>
         <Stack.Screen options={{ headerShown: false }} />
         <ScreenHeader title="Finding your pro" onBack={() => router.back()} />
         <ScrollView showsVerticalScrollIndicator={false}>
@@ -182,13 +188,13 @@ export default function OrderTrackingScreen() {
             }}
           />
         </ScrollView>
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (status === 'assigned' && showAssigned) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+      <View style={[styles.screen, { paddingTop: insets.top }]}>
         <Stack.Screen options={{ headerShown: false }} />
         <ScrollView showsVerticalScrollIndicator={false}>
           <WorkerFound order={order} />
@@ -196,13 +202,13 @@ export default function OrderTrackingScreen() {
             <Button label="Track your pro" onPress={() => setShowAssigned(false)} fullWidth />
           </View>
         </ScrollView>
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (status === 'cancelled' || status === 'failed') {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+      <View style={[styles.screen, { paddingTop: insets.top }]}>
         <Stack.Screen options={{ headerShown: false }} />
         <ScreenHeader title="Booking" onBack={() => router.back()} />
         <ScrollView showsVerticalScrollIndicator={false}>
@@ -219,7 +225,7 @@ export default function OrderTrackingScreen() {
             />
           )}
         </ScrollView>
-      </SafeAreaView>
+      </View>
     );
   }
 
@@ -254,7 +260,7 @@ export default function OrderTrackingScreen() {
       </View>
 
       {/* Floating controls over the map. */}
-      <View style={[styles.topBar, { paddingTop: insets.top + 8 }]} pointerEvents="box-none">
+      <View style={[styles.topBar, { paddingTop: insets.top + 8, pointerEvents: 'box-none' }]}>
         <IconButton
           icon={<ChevronLeft size={20} color={colors.textHeading} />}
           onPress={() => router.back()}
@@ -325,7 +331,7 @@ export default function OrderTrackingScreen() {
             <Text
               style={{
                 color: cancelPreview.isFree ? colors.successDark : colors.accentDark,
-                fontFamily: 'Poppins-SemiBold',
+                fontFamily: fontFamily.semibold,
               }}
             >
               {cancelPreview.message}
@@ -389,6 +395,7 @@ export default function OrderTrackingScreen() {
 }
 
 const styles = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: colors.background },
   root: { flex: 1, backgroundColor: colors.background },
   mapLayer: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
   mapFallback: {
@@ -420,8 +427,8 @@ const styles = StyleSheet.create({
     borderColor: colors.warningTint,
   },
   payRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  payText: { flex: 1, color: colors.accentDark, fontFamily: 'Poppins-SemiBold', fontSize: 14 },
-  payAction: { color: colors.accentDark, fontFamily: 'Poppins-Bold', fontSize: 13 },
+  payText: { flex: 1, color: colors.accentDark, fontFamily: fontFamily.semibold, fontSize: 14 },
+  payAction: { color: colors.accentDark, fontFamily: fontFamily.bold, fontSize: 13 },
 
   feeNotice: { borderRadius: 8, padding: 12, marginTop: 12 },
   starRow: { flexDirection: 'row', justifyContent: 'center', gap: 4, marginBottom: 20 },

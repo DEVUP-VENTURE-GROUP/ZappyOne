@@ -39,7 +39,7 @@ import {
   X,
 } from 'lucide-react-native';
 import { Button, Card, Chip, Text } from '../ui';
-import { colors, slate, success, zappy } from '../../theme/colors';
+import { accent, colors, slate, success, zappy } from '../../theme/colors';
 import { radius } from '../../theme/radius';
 import { spacing } from '../../theme/spacing';
 import type { ChipTone } from '../ui';
@@ -53,7 +53,7 @@ export type BannerTone = 'info' | 'success' | 'warning' | 'danger';
 const BANNER: Record<BannerTone, { bg: string; fg: string; border: string }> = {
   info: { bg: colors.infoTint, fg: zappy[700], border: colors.primarySoft },
   success: { bg: colors.successTint, fg: success[700], border: success[100] },
-  warning: { bg: colors.warningTint, fg: '#B45309', border: colors.warningTint },
+  warning: { bg: colors.warningTint, fg: accent[700], border: colors.warningTint },
   danger: { bg: colors.errorTint, fg: colors.errorDark, border: colors.errorTint },
 };
 
