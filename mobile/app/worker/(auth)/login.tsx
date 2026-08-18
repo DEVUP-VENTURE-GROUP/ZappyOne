@@ -20,6 +20,7 @@ import { AuthShell } from '../../../components/auth/AuthShell';
 import { PhoneField } from '../../../components/auth/AuthFields';
 import { useRequestOtpMutation } from '../../../services/api/authApi';
 import { getApiErrorMessage } from '../../../services/api/apiSlice';
+import { stashDevOtp } from '../../../lib/devOtp';
 import { colors } from '../../../theme/colors';
 import { spacing } from '../../../theme/spacing';
 
@@ -42,6 +43,8 @@ export default function WorkerLoginScreen() {
     }
     try {
       const res = await requestOtp({ phone, role: 'worker' }).unwrap();
+      // Dev only, and a no-op in release builds. See lib/devOtp.
+      stashDevOtp(phone, res.otp);
       router.push({
         pathname: '/worker/(auth)/otp' as never,
         params: {

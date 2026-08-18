@@ -26,6 +26,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Button, Card, Input, Text } from '../../components/ui';
 import { AuthShell } from '../../components/auth/AuthShell';
 import { OtpBoxes } from '../../components/auth/AuthFields';
+import { DevOtpPanel } from '../../components/auth/DevOtpPanel';
+import { clearDevOtp, readDevOtp, stashDevOtp } from '../../lib/devOtp';
 import { useLoginUserMutation, useResendOtpMutation } from '../../services/api/authApi';
 import { getApiErrorCode, getApiErrorMessage } from '../../services/api/apiSlice';
 import { saveSession } from '../../services/api/tokenStorage';
@@ -51,6 +53,9 @@ export default function OtpScreen() {
   const [name, setName] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(Number(cooldownSec ?? 30));
+  // Development convenience only — `readDevOtp` returns `{ kind: 'off' }` in
+  // release builds, and the panel renders nothing for that state.
+  const [devOtp, setDevOtp] = useState(() => readDevOtp(String(phone)));
 
   const [loginUser, { isLoading: verifying }] = useLoginUserMutation();
   const [resendOtp, { isLoading: resending }] = useResendOtpMutation();
@@ -81,6 +86,7 @@ export default function OtpScreen() {
         role: 'user',
       });
       dispatch(setSession({ user: data.user, role: 'user' }));
+      clearDevOtp();
       socketClient.connect();
       // The root layout's auth guard owns the redirect from here.
     } catch (err) {
@@ -114,6 +120,9 @@ export default function OtpScreen() {
       const res = await resendOtp({ phone: String(phone) }).unwrap();
       // The server decides the next window, not this screen.
       setCooldown(res.cooldownSec ?? 30);
+      // A resend invalidates the previous code, so the panel must follow it.
+      stashDevOtp(String(phone), res.otp);
+      setDevOtp(readDevOtp(String(phone)));
     } catch (err) {
       setError(getApiErrorMessage(err, 'Could not resend the code.'));
     }
@@ -124,6 +133,20 @@ export default function OtpScreen() {
       <Text variant="bodySmall" color={colors.textSecondary} align="center" style={styles.sentTo}>
         Enter the {OTP_LENGTH}-digit code sent to +91 {phone}
       </Text>
+
+      {/* Development only. `__DEV__` is a literal `false` in release builds,
+          so this branch is constant-folded out entirely. */}
+      {__DEV__ ? (
+        <DevOtpPanel
+          state={devOtp}
+          onFill={(code) => {
+            setOtp(code);
+            setError(null);
+            // Filling is all it does — the existing auto-submit effect and the
+            // Verify button still drive the real `POST /auth/user/login`.
+          }}
+        />
+      ) : null}
 
       <OtpBoxes
         value={otp}

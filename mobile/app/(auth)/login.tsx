@@ -20,6 +20,7 @@ import { AuthShell } from '../../components/auth/AuthShell';
 import { PhoneField } from '../../components/auth/AuthFields';
 import { useRequestOtpMutation } from '../../services/api/authApi';
 import { getApiErrorMessage } from '../../services/api/apiSlice';
+import { stashDevOtp } from '../../lib/devOtp';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
 
@@ -42,6 +43,10 @@ export default function LoginScreen() {
     }
     try {
       const res = await requestOtp({ phone, role: 'user' }).unwrap();
+      // Dev only, and a no-op in release builds. The server already returns
+      // `otp` outside production; this carries it in memory to the next screen
+      // rather than through router params, which would be persisted state.
+      stashDevOtp(phone, res.otp);
       router.push({
         pathname: '/(auth)/otp',
         params: {

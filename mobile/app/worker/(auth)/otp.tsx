@@ -22,6 +22,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Button, Card, Chip, Input, SectionTitle, Text } from '../../../components/ui';
 import { AuthShell } from '../../../components/auth/AuthShell';
 import { OtpBoxes } from '../../../components/auth/AuthFields';
+import { DevOtpPanel } from '../../../components/auth/DevOtpPanel';
+import { clearDevOtp, readDevOtp, stashDevOtp } from '../../../lib/devOtp';
 import {
   useLoginWorkerMutation,
   useResendOtpMutation,
@@ -53,6 +55,8 @@ export default function WorkerOtpScreen() {
   const [selectedSkills, setSelectedSkills] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(Number(cooldownSec ?? 30));
+  // Development convenience only — `{ kind: 'off' }` in release builds.
+  const [devOtp, setDevOtp] = useState(() => readDevOtp(String(phone)));
 
   const [loginWorker, { isLoading: verifying }] = useLoginWorkerMutation();
   const [resendOtp, { isLoading: resending }] = useResendOtpMutation();
@@ -98,6 +102,7 @@ export default function WorkerOtpScreen() {
         role: 'worker',
       });
       dispatch(setSession({ user: null, role: 'worker' }));
+      clearDevOtp();
       socketClient.connect();
       // The worker layout guard owns the redirect from here.
     } catch (err) {
@@ -119,6 +124,9 @@ export default function WorkerOtpScreen() {
     try {
       const res = await resendOtp({ phone: String(phone) }).unwrap();
       setCooldown(res.cooldownSec ?? 30);
+      // A resend invalidates the previous code, so the panel must follow it.
+      stashDevOtp(String(phone), res.otp);
+      setDevOtp(readDevOtp(String(phone)));
     } catch (err) {
       setError(getApiErrorMessage(err, 'Could not resend the code.'));
     }
@@ -129,6 +137,17 @@ export default function WorkerOtpScreen() {
       <Text variant="bodySmall" color={colors.textSecondary} align="center" style={styles.sentTo}>
         Enter the {OTP_LENGTH}-digit code sent to +91 {phone}
       </Text>
+
+      {/* Development only — constant-folded out of release builds. */}
+      {__DEV__ ? (
+        <DevOtpPanel
+          state={devOtp}
+          onFill={(code) => {
+            setOtp(code);
+            setError(null);
+          }}
+        />
+      ) : null}
 
       <OtpBoxes
         value={otp}
