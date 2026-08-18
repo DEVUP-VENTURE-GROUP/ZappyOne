@@ -647,6 +647,17 @@ export interface PolicyDoc {
 
 export type KycStatus = 'not_submitted' | 'pending_review' | 'approved' | 'rejected' | 'suspended';
 
+/**
+ * `GET /workers/kyc/status`, unwrapped from its `{ kyc: … }` envelope.
+ *
+ * The controller returns the whole `kyc` sub-document, so everything the model
+ * defines is on the wire. The fields below are the ones the app has a use for.
+ *
+ * THE `*Url` FIELDS ARE PRIVATE S3 KEYS, NOT URLS. They are not fetchable
+ * without an authenticated round-trip through `/workers/kyc/stream/:docType`.
+ * The app treats them ONLY as a boolean "this document is on file" signal —
+ * it never renders them, puts them in a route, or logs them.
+ */
 export interface WorkerKyc {
   status: KycStatus;
   aadhaarUrl?: string;
@@ -654,6 +665,17 @@ export interface WorkerKyc {
   selfieUrl?: string;
   clarification?: { active: boolean; message?: string } | null;
   changeRequest?: { status: 'pending' | 'approved' | 'denied' | null; message?: string; denialReason?: string } | null;
+
+  /** Admin's free-text reason, set when a submission is rejected. */
+  rejectionReason?: string | null;
+  /** Lifetime rejections. The server suspends KYC at 5. */
+  rejectionCount?: number;
+  /** ISO. Start of the 24h resubmission cooldown the server enforces. */
+  lastRejectedAt?: string | null;
+  submittedAt?: string | null;
+  reviewedAt?: string | null;
+  /** True when this submission replaces already-approved documents. */
+  isUpdate?: boolean;
 }
 
 /** `worker.model.js`, as returned by `GET /workers/me`. */
@@ -707,6 +729,8 @@ export interface SubmitKycRequest {
     lat?: number | null;
     lng?: number | null;
     geoStatus?: string;
+    /** Which client produced the submission. The route caps this at 300 chars. */
+    userAgent?: string;
   };
 }
 
