@@ -4,6 +4,7 @@ import { useFonts } from 'expo-font';
 import { fontAssets } from '../theme';
 import { Provider } from 'react-redux';
 import { store } from '../store';
+import { useAppSelector } from '../store/hooks';
 import '../global.css'; // NativeWind v4 requires this
 import { getSession, clearSession } from '../services/api/tokenStorage';
 import { apiSlice } from '../services/api/apiSlice';
@@ -74,6 +75,22 @@ function RootLayoutNav() {
   const ready = sessionReady && (fontsLoaded || Boolean(fontError));
   const bootstrapped = useRef(false);
 
+  /**
+   * SUBSCRIBED, not read imperatively.
+   *
+   * The routing effect below used to call `store.getState()` and list only
+   * `[ready, segments, router]` as dependencies. Signing in dispatches
+   * `setSession`, which changes none of those three — so the effect never
+   * re-ran and the guard never fired. Cold start worked, because `ready`
+   * flipping false→true re-ran it; logging in did not, which stranded a fully
+   * authenticated user on the OTP screen with a valid session.
+   *
+   * Selecting the two fields the guard actually branches on puts them in the
+   * dependency array, so a session change re-runs the effect.
+   */
+  const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated);
+  const role = useAppSelector((s) => s.auth.role);
+
   useEffect(() => {
     if (bootstrapped.current) return;
     bootstrapped.current = true;
@@ -97,7 +114,6 @@ function RootLayoutNav() {
 
   useEffect(() => {
     if (!ready) return;
-    const state = store.getState();
     const inAuthGroup = segments[0] === '(auth)';
     // The worker app is a separate role-scoped zone with its own login —
     // reachable directly (a "Log in as a professional" link from the
@@ -106,10 +122,10 @@ function RootLayoutNav() {
     // restructured — same stale-cache note as the `as never` pushes below.
     const inWorkerZone = (segments[0] as string) === 'worker';
 
-    if (!state.auth.isAuthenticated && !inAuthGroup && !inWorkerZone) {
+    if (!isAuthenticated && !inAuthGroup && !inWorkerZone) {
       router.replace('/(auth)/login');
-    } else if (state.auth.isAuthenticated && inAuthGroup) {
-      if (state.auth.role === 'worker') {
+    } else if (isAuthenticated && inAuthGroup) {
+      if (role === 'worker') {
         // expo-router's typed routes don't know this path yet — the route
         // is real (app/worker/(tabs)/dashboard.tsx; group segments are
         // invisible in the URL, so /worker/dashboard resolves correctly).
@@ -122,10 +138,10 @@ function RootLayoutNav() {
     // (e.g. back-navigation) — send them straight to the dashboard. Their
     // own local guard (app/worker/_layout.tsx) also covers this; this is a
     // fast path so there's no flash of the login screen.
-    else if (state.auth.isAuthenticated && state.auth.role === 'worker' && inWorkerZone && (segments[1] as string) === '(auth)') {
+    else if (isAuthenticated && role === 'worker' && inWorkerZone && (segments[1] as string) === '(auth)') {
       router.replace('/worker/dashboard' as never);
     }
-  }, [ready, segments, router]);
+  }, [ready, segments, router, isAuthenticated, role]);
 
   if (!ready) return null;
 
