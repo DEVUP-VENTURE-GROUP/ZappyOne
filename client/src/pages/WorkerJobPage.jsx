@@ -627,9 +627,11 @@ export default function WorkerJobPage() {
       await fetch(uploadUrl, { method: 'PUT', body: file, headers: { 'Content-Type': file.type || 'image/jpeg' } });
       setProofPhotos((prev) => prev.map((p) => p.id === photoId ? { ...p, key, uploading: false } : p));
     } catch {
-      /* S3 failed — mark with error so we can block completion */
+      /* Upload to S3 failed — mark with error so we can block completion.
+         Most often this is a network/permissions block on the upload host,
+         not a bad photo, so don't tell the worker to "retake" in circles. */
       setProofPhotos((prev) => prev.map((p) => p.id === photoId ? { ...p, key: null, uploading: false, error: true } : p));
-      toast.error('Photo upload failed — retake the photo');
+      toast.error('Could not upload the photo. Check your connection and try again — if it keeps failing, contact support.');
     }
   }, [proofPhotos.length, presign]);
 
