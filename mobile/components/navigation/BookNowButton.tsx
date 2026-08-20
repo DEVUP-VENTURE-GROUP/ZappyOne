@@ -35,6 +35,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Gradient, Text, ZappyLogo } from '../ui';
 import { colors, navy, zappy } from '../../theme/colors';
+import { shadows } from '../../theme/shadows';
 import { spacing } from '../../theme/spacing';
 import { springSnap } from '../../theme/animation';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
@@ -48,9 +49,9 @@ export interface BookNowButtonProps {
   onPress: () => void;
 }
 
-/** Disc diameter. Sized so roughly its top third clears the bar. */
-const SIZE = 58;
-/** White ring separating the disc from the bar behind it. */
+/** `w-16 h-16` on the web button. */
+const SIZE = 64;
+/** `border-4 border-white`. */
 const RING = 4;
 
 function BookNowButtonBase({ label = 'Book Now', barHeight, onPress }: BookNowButtonProps) {
@@ -116,7 +117,7 @@ function BookNowButtonBase({ label = 'Book Now', barHeight, onPress }: BookNowBu
       <Animated.View style={[styles.discWrap, discStyle]}>
         <Gradient colors={[zappy[600], navy[900]]} borderRadius={SIZE / 2} style={styles.disc}>
           <Animated.View style={markStyle}>
-            <ZappyLogo size={30} />
+            <ZappyLogo size={34} />
           </Animated.View>
         </Gradient>
       </Animated.View>
@@ -132,12 +133,13 @@ function BookNowButtonBase({ label = 'Book Now', barHeight, onPress }: BookNowBu
 
 export const BookNowButton = memo(BookNowButtonBase);
 
-/** How far the disc rises above the bar. Consumed by the tab bar for padding. */
-export const BOOK_NOW_LIFT = 22;
+/** The web button's `-top-6` — 24px above the bar's top edge. */
+export const BOOK_NOW_LIFT = 24;
 
 const styles = StyleSheet.create({
   // Height comes from the bar so `top: -LIFT` measures from the bar's top edge.
-  root: { alignItems: 'center', justifyContent: 'flex-end', width: 78 },
+  // `w-20` — the spacer the web nav reserves for this button.
+  root: { alignItems: 'center', justifyContent: 'flex-end', width: 80 },
 
   discWrap: {
     position: 'absolute',
@@ -157,6 +159,8 @@ const styles = StyleSheet.create({
     borderRadius: SIZE / 2,
     alignItems: 'center',
     justifyContent: 'center',
+    // `shadow-[0_8px_24px_-4px_rgba(37,99,235,0.35)]` on the web button.
+    ...shadows.glowBlue,
   },
 
   // Lines the label up with the other tab labels rather than the disc.

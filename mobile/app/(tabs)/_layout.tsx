@@ -24,7 +24,7 @@
  */
 
 import React from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import { Tabs, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -36,11 +36,12 @@ import {
 } from 'lucide-react-native';
 import { Text } from '../../components/ui/Text';
 import { useAppSelector } from '../../store/hooks';
+import { useListNotificationsQuery } from '../../services/api/notificationsApi';
 import {
   BOOK_NOW_LIFT,
   BookNowButton,
 } from '../../components/navigation/BookNowButton';
-import { colors, slate, zappy } from '../../theme/colors';
+import { colors, danger, slate, zappy } from '../../theme/colors';
 import { radius } from '../../theme/radius';
 import { shadows } from '../../theme/shadows';
 import { spacing } from '../../theme/spacing';
@@ -53,7 +54,8 @@ const ITEMS: { name: string; label: string; Icon: LucideIcon }[] = [
   { name: 'profile', label: 'Profile', Icon: User },
 ];
 
-const BAR_HEIGHT = 62;
+/** `h-[calc(64px+env(safe-area-inset-bottom))]` on the web nav. */
+const BAR_HEIGHT = 64;
 
 /**
  * `@react-navigation/bottom-tabs` is not a direct dependency — expo-router
@@ -68,6 +70,10 @@ type TabBarProps = Parameters<
 function TabBar({ state, navigation }: TabBarProps) {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+
+  // The web nav hangs the unread count off the PROFILE tab, not a bell.
+  const { data: notifications } = useListNotificationsQuery();
+  const unread = notifications?.unread ?? 0;
 
   const renderItem = (item: (typeof ITEMS)[number]) => {
     const routeIndex = state.routes.findIndex((r: { name: string }) => r.name === item.name);
@@ -98,11 +104,20 @@ function TabBar({ state, navigation }: TabBarProps) {
       >
         {/* Active state is carried by colour AND stroke weight, never colour
             alone. */}
-        <Icon
-          size={22}
-          strokeWidth={focused ? 2.4 : 1.9}
-          color={focused ? zappy[600] : slate[400]}
-        />
+        <View>
+          <Icon
+            size={22}
+            strokeWidth={focused ? 2.5 : 2}
+            color={focused ? zappy[600] : slate[400]}
+          />
+          {item.name === 'profile' && unread > 0 ? (
+            <View style={styles.badge}>
+              <Text variant="caption" color={colors.textInverse} style={styles.badgeText}>
+                {unread > 9 ? '9+' : unread}
+              </Text>
+            </View>
+          ) : null}
+        </View>
         <Text
           variant="navLabel"
           color={focused ? zappy[600] : slate[400]}
@@ -174,13 +189,42 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-end',
     backgroundColor: colors.surface,
-    borderTopLeftRadius: radius.large,
-    borderTopRightRadius: radius.large,
+    // Square corners and a top border, matching the live BottomNav.jsx. The
+    // rounded floating pill in the site's index.css (`.bottom-nav`) is dead
+    // CSS — no component references it.
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
     paddingHorizontal: spacing.xs,
     // The disc overflows upward, so the bar must not clip its children.
     overflow: 'visible',
-    ...shadows.softLarge,
+    // `shadow-[0_-2px_12px_rgba(20,21,42,0.06)]` — cast UPWARD.
+    ...Platform.select({
+      ios: {
+        shadowColor: '#14152A',
+        shadowOffset: { width: 0, height: -2 },
+        shadowOpacity: 0.06,
+        shadowRadius: 6,
+      },
+      android: { elevation: 8 },
+      default: {},
+    }),
   },
+  // `-top-1.5 -right-2 min-w-[16px] h-[16px] bg-rose-500 ring-2 ring-white`.
+  badge: {
+    position: 'absolute',
+    top: -6,
+    right: -8,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    paddingHorizontal: 3,
+    backgroundColor: danger[500],
+    borderWidth: 2,
+    borderColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  badgeText: { fontSize: 9, lineHeight: 11 },
   slot: {
     flex: 1,
     alignItems: 'center',
