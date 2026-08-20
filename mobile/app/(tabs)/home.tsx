@@ -26,7 +26,7 @@ import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Location from 'expo-location';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Bell, ChevronRight, MapPin, Search } from 'lucide-react-native';
+import { ArrowRight, Bell, ChevronRight, MapPin, Search } from 'lucide-react-native';
 import { useSelector } from 'react-redux';
 import {
   Badge,
@@ -46,6 +46,8 @@ import {
   resolveCategoryIcon,
   resolveServiceIcon,
 } from '../../components/catalog/categoryIcons';
+import { HomeHero } from '../../components/home/HomeHero';
+import { CharacterGrid } from '../../components/home/CharacterGrid';
 import { useGetCategoriesQuery, useGetServicesQuery } from '../../services/api/catalogApi';
 import { useListOrdersQuery } from '../../services/api/ordersApi';
 import { useListNotificationsQuery } from '../../services/api/notificationsApi';
@@ -172,8 +174,8 @@ export default function HomeScreen() {
               locationLabel ? `Current location: ${locationLabel}` : 'Set your location'
             }
           >
-            <Text variant="label" numberOfLines={1}>
-              Service location
+            <Text variant="label" numberOfLines={1} color={colors.primary}>
+              DELIVERING TO
             </Text>
             <View style={styles.locationRow}>
               <MapPin size={14} color={zappy[600]} />
@@ -215,9 +217,16 @@ export default function HomeScreen() {
           accessibilityLabel="Search for a service"
         >
           <Search size={18} color={colors.textMuted} />
-          <Text variant="body" color={colors.textMuted}>
+          <Text variant="body" color={colors.textMuted} style={styles.flex}>
             Search for a service
           </Text>
+          {/* The site's "50+" pill. Verified against the live catalog rather
+              than copied as decoration — GET /catalog/services returns 86. */}
+          <View style={styles.countPill}>
+            <Text variant="caption" weight="bold" color={colors.primary}>
+              50+
+            </Text>
+          </View>
         </ScalePressable>
 
         {/* ── Active booking ───────────────────────────────────────────── */}
@@ -249,74 +258,45 @@ export default function HomeScreen() {
               </View>
             </Card>
           </View>
-        ) : (
-          <Card variant="hero" style={styles.section}>
-            <Text variant="heading2" color={colors.textInverse}>
-              Need help right now?
-            </Text>
-            <Text variant="body" color="rgba(255,255,255,0.85)" style={styles.heroBody}>
-              Verified professionals, at your door in minutes.
-            </Text>
+        ) : null}
+
+        {/* ── Hero banner + trust bar ──────────────────────────────────── */}
+        {/* Replaces the old "Need help right now?" placeholder card with the
+            site's actual hero artwork. See components/home/HomeHero. */}
+        <View style={styles.section}>
+          <HomeHero />
+        </View>
+
+        {/* ── Popular Services — the site's character grid ─────────────── */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <SectionTitle style={styles.flex}>Popular Services</SectionTitle>
             <ScalePressable
-              style={styles.heroButton}
+              style={styles.seeAll}
               onPress={() => router.push('/(tabs)/services')}
               accessibilityRole="button"
-              accessibilityLabel="Explore all services"
+              accessibilityLabel="See all services"
             >
-              <Text variant="buttonSmall" color={zappy[600]}>
-                Explore services
+              <Text variant="bodySmall" weight="semibold" color={colors.primary}>
+                See all
               </Text>
-              <ChevronRight size={16} color={zappy[600]} />
+              <ArrowRight size={15} color={colors.primary} />
             </ScalePressable>
-          </Card>
-        )}
-
-        {/* ── Categories (data-driven) ─────────────────────────────────── */}
-        <View style={styles.section}>
-          <SectionTitle>Browse by category</SectionTitle>
-          <View style={styles.categoryGrid}>
-            {catsLoading
-              ? Array.from({ length: 8 }, (_, i) => (
-                  <View key={i} style={[styles.categorySlot, { width: categorySlot }]}>
-                    <Skeleton width={56} height={56} borderRadius={radius.medium} />
-                    <Skeleton width={52} height={10} style={{ marginTop: spacing.sm }} />
-                  </View>
-                ))
-              : categories.map((category) => {
-                  const Icon = resolveCategoryIcon(category.icon, category.key);
-                  const tint = category.theme?.tint ?? zappy[50];
-                  const accent = category.theme?.accent ?? zappy[600];
-                  return (
-                    <ScalePressable
-                      key={category._id ?? category.key}
-                      style={[styles.categorySlot, { width: categorySlot }]}
-                      onPress={() => openCategory(category.key)}
-                      accessibilityRole="button"
-                      accessibilityLabel={category.customerLabel}
-                    >
-                      <View style={[styles.categoryIcon, { backgroundColor: tint }]}>
-                        <Icon size={26} strokeWidth={1.75} color={accent} />
-                      </View>
-                      <Text
-                        variant="bodySmall"
-                        weight="semibold"
-                        align="center"
-                        color={colors.textPrimary}
-                        numberOfLines={2}
-                      >
-                        {category.customerLabel}
-                      </Text>
-                    </ScalePressable>
-                  );
-                })}
           </View>
+          <CharacterGrid
+            onSelect={(item) =>
+              item.routeKey
+                ? openCategory(item.routeKey)
+                : router.push('/(tabs)/services')
+            }
+          />
         </View>
 
         {/* ── Popular services ─────────────────────────────────────────── */}
         {servicesLoading || featuredServices.length > 0 ? (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <SectionTitle style={styles.flex}>Popular services</SectionTitle>
+              <SectionTitle style={styles.flex}>Featured services</SectionTitle>
               <ScalePressable
                 onPress={() => router.push('/(tabs)/services')}
                 accessibilityRole="button"
@@ -469,6 +449,13 @@ const styles = StyleSheet.create({
 
   section: { marginTop: spacing.xl },
   sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  seeAll: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+  countPill: {
+    backgroundColor: colors.primaryTint,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 3,
+  },
 
   liveRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   livePulse: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.success },
