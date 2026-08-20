@@ -35,6 +35,7 @@ import {
   type LucideIcon,
 } from 'lucide-react-native';
 import { Text } from '../../components/ui/Text';
+import { useAppSelector } from '../../store/hooks';
 import {
   BOOK_NOW_LIFT,
   BookNowButton,
@@ -135,6 +136,22 @@ function TabBar({ state, navigation }: TabBarProps) {
 }
 
 export default function TabsLayout() {
+  /**
+   * Don't mount the customer tabs without a session.
+   *
+   * The root guard redirects an unauthenticated user to /login, but that runs
+   * in an effect — it commits one frame AFTER this subtree has already
+   * rendered. In that frame Home mounts and fires its authenticated queries
+   * (wallet, rewards, notifications), which all 401. Opening the app straight
+   * onto a protected URL therefore logged a burst of 401s before the redirect
+   * landed.
+   *
+   * Rendering nothing for that single frame costs nothing visually — the
+   * redirect is already on its way — and the requests are never made.
+   */
+  const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated);
+  if (!isAuthenticated) return null;
+
   return (
     <Tabs
       tabBar={(props) => <TabBar {...props} />}

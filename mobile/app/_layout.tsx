@@ -101,6 +101,12 @@ function RootLayoutNav() {
   // logout) funnels through here — the single place that owns navigation.
   useEffect(() => {
     return onSessionEnd((reason: SessionEndReason) => {
+      // Defence in depth. axiosClient now latches so it announces this once
+      // per session, but the bus has other publishers (the socket's
+      // `session_replaced`), and tearing down twice would fire a second
+      // `router.replace` at a login screen we are already on.
+      if (!store.getState().auth.isAuthenticated) return;
+
       log.warn('session ended', { reason });
       // Capture the role BEFORE clearing it — a worker's session ending
       // should return them to the worker login, not the customer one.

@@ -30,6 +30,7 @@ import {
   clearSession,
   getAccessToken,
   getRefreshToken,
+  onAccessTokenChange,
   saveRotatedTokens,
 } from './tokenStorage';
 
@@ -57,6 +58,36 @@ interface QueuedRequest {
 
 let isRefreshing = false;
 let failedQueue: QueuedRequest[] = [];
+
+/**
+ * Latched once the session is known to be unrecoverable.
+ *
+ * `isRefreshing` only de-duplicates refreshes that OVERLAP IN TIME. A screen
+ * like Home fires wallet + rewards + notifications together, but their 401s
+ * come back one after another — each round trip finishes, `finally` clears
+ * `isRefreshing`, and the next 401 starts a whole new refresh cycle. With a
+ * genuinely dead session that meant three failed refreshes and three
+ * `session_end` events, so the root layout tore the session down and called
+ * `router.replace('/login')` three times over.
+ *
+ * The mutex answers "is a refresh running?". This answers "is there any point
+ * trying?" — which is the question a second 401 is actually asking.
+ *
+ * Cleared the moment a real access token is installed again, so signing back
+ * in fully re-arms the refresh path.
+ */
+let sessionDead = false;
+
+onAccessTokenChange((token) => {
+  if (token) sessionDead = false;
+});
+
+/** Announce the end of the session exactly once per session. */
+function endSession(reason: 'refresh_failed'): void {
+  if (sessionDead) return;
+  sessionDead = true;
+  emitSessionEnd(reason);
+}
 
 function processQueue(error: unknown, token: string | null) {
   for (const pending of failedQueue) {
@@ -95,6 +126,12 @@ axiosClient.interceptors.response.use(
       return Promise.reject(error);
     }
 
+    // The session is already known dead. Every other in-flight request is
+    // about to 401 too; retrying each one only produces duplicate teardowns.
+    if (sessionDead) {
+      return Promise.reject(error);
+    }
+
     // A refresh is already running: park this request until it resolves.
     if (isRefreshing) {
       return new Promise<string>((resolve, reject) => {
@@ -114,7 +151,7 @@ axiosClient.interceptors.response.use(
         // Nothing to refresh with — the session is over.
         processQueue(error, null);
         await clearSession();
-        emitSessionEnd('refresh_failed');
+        endSession('refresh_failed');
         return Promise.reject(error);
       }
 
@@ -143,7 +180,7 @@ axiosClient.interceptors.response.use(
       log.warn('token refresh failed — ending session');
       processQueue(refreshError, null);
       await clearSession();
-      emitSessionEnd('refresh_failed');
+      endSession('refresh_failed');
       return Promise.reject(refreshError);
     } finally {
       isRefreshing = false;
@@ -188,7 +225,7 @@ export async function refreshAccessToken(): Promise<string | null> {
     log.warn('on-demand token refresh failed');
     processQueue(err, null);
     await clearSession();
-    emitSessionEnd('refresh_failed');
+    endSession('refresh_failed');
     return null;
   } finally {
     isRefreshing = false;
