@@ -78,8 +78,38 @@ let failedQueue: QueuedRequest[] = [];
  */
 let sessionDead = false;
 
+/**
+ * When the last refresh completed, and the token it produced.
+ *
+ * `isRefreshing` only collapses refreshes that OVERLAP. Real 401s from one
+ * screen's fan-out arrive a few hundred ms apart: the first cycle finishes,
+ * `finally` clears the flag, and the next 401 starts a SECOND rotation.
+ * Measured on the profile screen — four 401s produced two refreshes.
+ *
+ * Two rotations back to back is not merely wasteful. `/auth/refresh` rotates,
+ * and the server revokes the entire token family if an old generation is ever
+ * replayed (ENTERPRISE-ADDITIONS.md §1). A second cycle that reads the stored
+ * token a moment before the first one persists its rotation replays a dead
+ * generation and logs the user out of every device.
+ *
+ * So a 401 arriving just after a successful refresh is treated as what it
+ * almost always is — a request that set off with the old header — and is
+ * retried with the current token instead of rotating again.
+ */
+let lastRefreshAt = 0;
+let lastRefreshToken: string | null = null;
+
+/** How long a completed refresh satisfies later 401s. */
+const REFRESH_GRACE_MS = 10_000;
+
 onAccessTokenChange((token) => {
   if (token) sessionDead = false;
+  if (!token) {
+    // Logout. The grace window must not carry a dead session's token into the
+    // next one.
+    lastRefreshAt = 0;
+    lastRefreshToken = null;
+  }
 });
 
 /** Announce the end of the session exactly once per session. */
@@ -142,6 +172,15 @@ axiosClient.interceptors.response.use(
       });
     }
 
+    // A refresh landed moments ago: this 401 is from a request that was
+    // already in flight with the previous header. Retry it rather than
+    // rotating a second time.
+    if (lastRefreshToken && Date.now() - lastRefreshAt < REFRESH_GRACE_MS) {
+      originalRequest._retry = true;
+      originalRequest.headers.Authorization = `Bearer ${lastRefreshToken}`;
+      return axiosClient(originalRequest);
+    }
+
     originalRequest._retry = true;
     isRefreshing = true;
 
@@ -167,6 +206,8 @@ axiosClient.interceptors.response.use(
 
       // Persist the ROTATED pair. This also notifies the socket client (S1).
       await saveRotatedTokens(data.accessToken, data.refreshToken);
+      lastRefreshAt = Date.now();
+      lastRefreshToken = data.accessToken;
       log.debug('access token refreshed');
 
       axiosClient.defaults.headers.common.Authorization = `Bearer ${data.accessToken}`;
@@ -219,6 +260,8 @@ export async function refreshAccessToken(): Promise<string | null> {
     );
 
     await saveRotatedTokens(data.accessToken, data.refreshToken);
+    lastRefreshAt = Date.now();
+    lastRefreshToken = data.accessToken;
     processQueue(null, data.accessToken);
     return data.accessToken;
   } catch (err) {

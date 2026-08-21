@@ -13,6 +13,7 @@ import type { BaseQueryFn } from '@reduxjs/toolkit/query';
 import { AxiosError, type AxiosRequestConfig } from 'axios';
 import { axiosClient } from './axiosClient';
 import type { ApiError, ApiErrorBody } from '../../types/api';
+import { toApiError, normalizeError } from './apiError';
 
 export interface AxiosBaseQueryArgs {
   url: string;
@@ -24,18 +25,25 @@ export interface AxiosBaseQueryArgs {
 
 const axiosBaseQuery =
   (): BaseQueryFn<AxiosBaseQueryArgs, unknown, ApiError> =>
-  async ({ url, method = 'GET', data, params, headers }) => {
+  async ({ url, method = 'GET', data, params, headers }, api) => {
     try {
-      const result = await axiosClient({ url, method, data, params, headers });
+      // `api.signal` aborts when the last subscriber unsubscribes or the query
+      // arg changes. Forwarding it is what actually cancels the HTTP request —
+      // without it a search-as-you-type keeps every superseded request alive to
+      // completion, and a screen that unmounts mid-flight still pays for its
+      // responses. Axios has supported AbortSignal since 0.22.
+      const result = await axiosClient({
+        url,
+        method,
+        data,
+        params,
+        headers,
+        signal: api.signal,
+      });
       return { data: result.data };
     } catch (axiosError) {
       const err = axiosError as AxiosError<ApiErrorBody>;
-      return {
-        error: {
-          status: err.response?.status,
-          data: err.response?.data ?? err.message,
-        },
-      };
+      return { error: toApiError(err) };
     }
   };
 
@@ -61,10 +69,26 @@ export function getApiErrorCode(error: unknown): string | undefined {
   return getApiErrorBody(error)?.code;
 }
 
+/**
+ * A message that is always safe to render.
+ *
+ * Order: the server's own `error` string, then the classified fallback for the
+ * failure kind, then the caller's fallback. It no longer returns a bare string
+ * `data` — that path is how axios's "Network Error" and "timeout of 20000ms
+ * exceeded" reached the UI as user-facing copy.
+ */
 export function getApiErrorMessage(error: unknown, fallback = 'Something went wrong'): string {
   const body = getApiErrorBody(error);
   if (body?.error) return body.error;
-  const data = (error as ApiError | undefined)?.data;
-  if (typeof data === 'string') return data;
+
+  const normalized = (error as ApiError | undefined)?.normalized;
+  if (normalized) {
+    // A caller-supplied fallback is more specific than the generic
+    // "something went wrong", so it wins for the unclassifiable case only.
+    return normalized.kind === 'UNKNOWN_ERROR' ? fallback : normalized.message;
+  }
   return fallback;
 }
+
+export { normalizeError, isCancelled } from './apiError';
+export type { ApiErrorKind, NormalizedApiError } from './apiError';

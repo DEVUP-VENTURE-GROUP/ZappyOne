@@ -879,5 +879,12 @@ export interface ApiErrorBody {
 
 export interface ApiError {
   status?: number;
+  /**
+   * The server's body, when there was one. A transport failure leaves this
+   * undefined rather than smuggling axios's own message in as a string — that
+   * is what used to surface "Network Error" to users.
+   */
   data?: ApiErrorBody | string;
+  /** Classification added by `services/api/apiError.ts`. */
+  normalized?: import('../services/api/apiError').NormalizedApiError;
 }
