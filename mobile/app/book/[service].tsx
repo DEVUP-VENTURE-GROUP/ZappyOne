@@ -88,8 +88,9 @@ import {
 } from '../../components/booking/quote';
 import {
   humanizeCode,
-  resolveServiceIcon,
 } from '../../components/catalog/categoryIcons';
+import { ServiceIllustration } from '../../components/catalog/ServiceIllustration';
+import { illustrationFor } from '../../components/catalog/illustrations/resolve';
 import { categoryForService } from '../../components/catalog/matchCategory';
 import { useGetCategoriesQuery, useGetServicesQuery } from '../../services/api/catalogApi';
 import {
@@ -361,7 +362,7 @@ export default function BookServiceScreen() {
 
   // ── Derived presentation ──────────────────────────────────────────────────
   const accent = category?.theme?.accent ?? zappy[600];
-  const Icon = resolveServiceIcon(catalogService?.icon, serviceCode);
+  const drawing = illustrationFor(catalogService ?? { code: serviceCode }, catalogService?.category);
   const name = catalogService?.name || humanizeCode(serviceCode);
   const duration = catalogService?.estimatedDurationMinutes;
 
@@ -431,7 +432,7 @@ export default function BookServiceScreen() {
               <Card variant="outline">
                 <View style={styles.serviceRow}>
                   <View style={[styles.serviceIcon, { backgroundColor: `${accent}14` }]}>
-                    <Icon size={22} strokeWidth={1.9} color={accent} />
+                    <ServiceIllustration name={drawing} size={34} categoryKey={catalogService?.category} />
                   </View>
                   <View style={styles.flex}>
                     <Text variant="body" weight="semibold" numberOfLines={1}>

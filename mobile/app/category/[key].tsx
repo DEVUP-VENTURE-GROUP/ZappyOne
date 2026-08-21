@@ -38,7 +38,8 @@ import {
   Text,
 } from '../../components/ui';
 import { ServiceCard } from '../../components/catalog/ServiceCard';
-import { resolveCategoryIcon } from '../../components/catalog/categoryIcons';
+import { ServiceIllustration } from '../../components/catalog/ServiceIllustration';
+import { CATEGORY_THEME, DEFAULT_THEME } from '../../components/catalog/illustrations/palette';
 import { serviceMatchesCategory } from '../../components/catalog/matchCategory';
 import { useGetCategoriesQuery, useGetServicesQuery } from '../../services/api/catalogApi';
 import { getApiErrorMessage } from '../../services/api/apiSlice';
@@ -103,7 +104,7 @@ export default function CategoryScreen() {
 
   const accent = category?.theme?.accent ?? zappy[600];
   const deep = category?.theme?.deep ?? zappy[900];
-  const Icon = resolveCategoryIcon(category?.icon, categoryKey);
+  const drawing = CATEGORY_THEME[categoryKey]?.illustration ?? DEFAULT_THEME.illustration;
   const brands = category?.brands ?? [];
 
   // Category not found once the list has loaded — a stale deep link.
@@ -163,7 +164,7 @@ export default function CategoryScreen() {
 
               <View style={styles.heroBody}>
                 <View style={styles.heroIcon}>
-                  <Icon size={30} strokeWidth={1.8} color={colors.textInverse} />
+                  <ServiceIllustration name={drawing} size={44} onColor spotlight={false} />
                 </View>
 
                 {catsLoading ? (

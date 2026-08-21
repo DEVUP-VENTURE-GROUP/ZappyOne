@@ -67,8 +67,9 @@ import { ServiceCard } from '../../components/catalog/ServiceCard';
 import {
   humanizeCode,
   paiseToRupees,
-  resolveServiceIcon,
 } from '../../components/catalog/categoryIcons';
+import { ServiceIllustration } from '../../components/catalog/ServiceIllustration';
+import { illustrationFor } from '../../components/catalog/illustrations/resolve';
 import { categoryForService } from '../../components/catalog/matchCategory';
 import { useGetCategoriesQuery, useGetServicesQuery } from '../../services/api/catalogApi';
 import { getApiErrorMessage } from '../../services/api/apiSlice';
@@ -183,7 +184,7 @@ export default function ServiceDetailScreen() {
   }
 
   // ── Derived, all from catalog data ────────────────────────────────────────
-  const Icon = resolveServiceIcon(service.icon, service.code);
+  const drawing = illustrationFor(service, service.category);
   const accent = category?.theme?.accent ?? zappy[600];
   const deep = category?.theme?.deep ?? zappy[900];
 
@@ -232,7 +233,7 @@ export default function ServiceDetailScreen() {
               />
             ) : (
               <View style={styles.heroIcon}>
-                <Icon size={40} strokeWidth={1.6} color={colors.textInverse} />
+                <ServiceIllustration name={drawing} size={64} onColor spotlight={false} />
               </View>
             )}
           </View>

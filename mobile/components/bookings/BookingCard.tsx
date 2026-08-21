@@ -34,7 +34,9 @@ import Animated, {
 } from 'react-native-reanimated';
 import { ChevronRight, RotateCcw } from 'lucide-react-native';
 import { Button, Card, ScalePressable, StatusBadge, Text, formatRupees } from '../ui';
-import { humanizeCode, resolveServiceIcon } from '../catalog/categoryIcons';
+import { humanizeCode } from '../catalog/categoryIcons';
+import { ServiceIllustration } from '../catalog/ServiceIllustration';
+import { illustrationFor } from '../catalog/illustrations/resolve';
 import { colors, statusColors } from '../../theme/colors';
 import { radius } from '../../theme/radius';
 import { spacing } from '../../theme/spacing';
@@ -85,7 +87,7 @@ function LiveDot({ color }: { color: string }) {
 
 function BookingCardBase({ order, onPress, onRebook, rebooking }: BookingCardProps) {
   const palette = statusColors[order.status] ?? statusColors.created;
-  const Icon = resolveServiceIcon(undefined, order.service);
+  const drawing = illustrationFor({ code: order.service }, null);
   const isLive = (ACTIVE_ORDER_STATUSES as readonly string[]).includes(order.status);
   const total = order.pricing?.total;
 
@@ -120,7 +122,7 @@ function BookingCardBase({ order, onPress, onRebook, rebooking }: BookingCardPro
         >
           <View style={styles.topRow}>
           <View style={[styles.iconTile, { backgroundColor: palette.bg }]}>
-            <Icon size={20} strokeWidth={1.9} color={palette.fg} />
+            <ServiceIllustration name={drawing} size={30} />
           </View>
 
           <View style={styles.flex}>

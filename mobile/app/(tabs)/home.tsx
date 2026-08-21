@@ -48,6 +48,8 @@ import {
 } from '../../components/catalog/categoryIcons';
 import { HomeHero } from '../../components/home/HomeHero';
 import { CharacterGrid } from '../../components/home/CharacterGrid';
+import { ServiceIllustration } from '../../components/catalog/ServiceIllustration';
+import { illustrationFor } from '../../components/catalog/illustrations/resolve';
 import { useGetCategoriesQuery, useGetServicesQuery } from '../../services/api/catalogApi';
 import { useListOrdersQuery } from '../../services/api/ordersApi';
 import { useListNotificationsQuery } from '../../services/api/notificationsApi';
@@ -322,7 +324,7 @@ export default function HomeScreen() {
                     </View>
                   ))
                 : featuredServices.map((service) => {
-                    const Icon = resolveServiceIcon(service.icon, service.code);
+                    const drawing = illustrationFor(service, service.category);
                     const price = paiseToRupees(
                       service.servicePricePaise || service.priceRangeMinPaise,
                     );
@@ -337,7 +339,7 @@ export default function HomeScreen() {
                         }`}
                       >
                         <View style={styles.tileArt}>
-                          <Icon size={30} strokeWidth={1.6} color={zappy[600]} />
+                          <ServiceIllustration name={drawing} size={40} categoryKey={service.category} />
                         </View>
                         <Text variant="bodySmall" weight="semibold" numberOfLines={2}>
                           {service.name}
@@ -372,7 +374,7 @@ export default function HomeScreen() {
 
             <View style={styles.stack}>
               {recentCompleted.map((order) => {
-                const Icon = resolveServiceIcon(null, order.service);
+                const drawing = illustrationFor({ code: order.service }, null);
                 return (
                   <Card
                     key={order._id}
@@ -382,7 +384,7 @@ export default function HomeScreen() {
                   >
                     <View style={styles.rebookRow}>
                       <View style={styles.rebookIcon}>
-                        <Icon size={20} strokeWidth={1.75} color={zappy[600]} />
+                        <ServiceIllustration name={drawing} size={28} />
                       </View>
                       <View style={styles.flex}>
                         <Text variant="heading3" numberOfLines={1}>

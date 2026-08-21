@@ -28,12 +28,10 @@ import { Card } from '../ui/Card';
 import { Text } from '../ui/Text';
 import { ScalePressable } from '../ui/Pressable';
 import { formatRupees } from '../ui/Misc';
-import {
-  humanizeCode,
-  paiseToRupees,
-  resolveCategoryIcon,
-  resolveServiceIcon,
-} from './categoryIcons';
+import { humanizeCode, paiseToRupees } from './categoryIcons';
+import { ServiceIllustration } from './ServiceIllustration';
+import { illustrationFor } from './illustrations/resolve';
+import { CATEGORY_THEME, DEFAULT_THEME } from './illustrations/palette';
 import { colors, zappy, slate } from '../../theme/colors';
 import { radius } from '../../theme/radius';
 import { spacing } from '../../theme/spacing';
@@ -51,7 +49,9 @@ export interface ServiceCardProps {
 }
 
 function ServiceCardBase({ service, category, onPress }: ServiceCardProps) {
-  const Icon = resolveServiceIcon(service.icon, service.code);
+  // The site draws services with its own illustration set, resolved from the
+  // service's own text — not with a glyph. See components/catalog/illustrations.
+  const drawing = illustrationFor(service, category?.key);
   const accent = category?.theme?.accent ?? zappy[600];
   const tint = category?.theme?.tint ?? zappy[50];
 
@@ -80,7 +80,11 @@ function ServiceCardBase({ service, category, onPress }: ServiceCardProps) {
               accessibilityIgnoresInvertColors
             />
           ) : (
-            <Icon size={24} strokeWidth={1.75} color={accent} />
+            <ServiceIllustration
+              name={drawing}
+              size={42}
+              categoryKey={category?.key}
+            />
           )}
         </View>
 
@@ -151,7 +155,9 @@ export interface CategoryCardProps {
 }
 
 function CategoryCardBase({ category, selected, count, onPress }: CategoryCardProps) {
-  const Icon = resolveCategoryIcon(category.icon, category.key);
+  // The site's category cards render the category's DEFAULT DRAWING at size 32
+  // (`CategoryStrip.jsx`), never a glyph.
+  const drawing = CATEGORY_THEME[category.key]?.illustration ?? DEFAULT_THEME.illustration;
   const accent = category.theme?.accent ?? zappy[600];
   const tint = category.theme?.tint ?? zappy[50];
 
@@ -173,7 +179,7 @@ function CategoryCardBase({ category, selected, count, onPress }: CategoryCardPr
           { backgroundColor: selected ? colors.surface : tint },
         ]}
       >
-        <Icon size={22} strokeWidth={1.9} color={accent} />
+        <ServiceIllustration name={drawing} size={32} categoryKey={category.key} />
       </View>
 
       <Text
