@@ -14,6 +14,7 @@ import { onSessionEnd, type SessionEndReason } from '../lib/sessionBus';
 import { socketClient } from '../services/socket/socketClient';
 import { createLogger } from '../lib/logger';
 import { installDevLogin } from '../lib/devLogin';
+import { usePushNotifications } from '../hooks/usePushNotifications';
 
 // Development-only QA helper. Stripped from release builds by __DEV__.
 installDevLogin();
@@ -90,6 +91,11 @@ function RootLayoutNav() {
    */
   const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated);
   const role = useAppSelector((s) => s.auth.role);
+
+  // Push lifecycle: registers this device once signed in, and routes taps.
+  // Mounted here because it must outlive every screen — a tap can arrive while
+  // any screen, or none, is on top.
+  usePushNotifications();
 
   useEffect(() => {
     if (bootstrapped.current) return;
