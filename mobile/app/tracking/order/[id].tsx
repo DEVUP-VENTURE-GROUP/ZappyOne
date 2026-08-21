@@ -87,8 +87,18 @@ export default function OrderTrackingScreen() {
     const onDispatch = (payload: OrderDispatchUpdateEvent) => setDispatchUpdate(payload);
     const onEta = (payload: OrderEtaEvent) => setEta(payload);
     const onCancelled = () => refetch();
+    // `order.assigned` fires the moment a pro takes the job — ahead of the
+    // `order.status` transition — so it is the earliest point the search can
+    // stop. Refetching here is what ends the dispatch UI promptly instead of
+    // waiting up to 15s for the poll.
+    const onAssigned = () => refetch();
+    // Dispatch gave up. `order.status` follows, but this carries the reason
+    // and arrives first.
+    const onFailed = () => refetch();
 
     socketClient.on('order.status', onStatus);
+    socketClient.on('order.assigned', onAssigned);
+    socketClient.on('order.failed', onFailed);
     socketClient.on('order.dispatch_update', onDispatch);
     socketClient.on('order.eta', onEta);
     socketClient.on('order.cancelled', onCancelled);
@@ -96,6 +106,8 @@ export default function OrderTrackingScreen() {
 
     return () => {
       socketClient.off('order.status', onStatus);
+      socketClient.off('order.assigned', onAssigned);
+      socketClient.off('order.failed', onFailed);
       socketClient.off('order.dispatch_update', onDispatch);
       socketClient.off('order.eta', onEta);
       socketClient.off('order.cancelled', onCancelled);

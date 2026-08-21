@@ -32,6 +32,23 @@ export interface OrderStatusEvent {
   at: string;
 }
 
+/**
+ * `order.assigned` — dispatch.worker.js, both the instant and the normal path.
+ * Fires the moment a pro takes the job, ahead of the `order.status` transition,
+ * so it is the earliest signal the search is over.
+ */
+export interface OrderAssignedEvent {
+  orderId: string;
+  workerId: string;
+  /** Present only on the instant-assign path. */
+  instant?: boolean;
+}
+
+/** `order.failed` — dispatch.worker.js, when no pro could be found. */
+export interface OrderFailedEvent {
+  reason: string;
+}
+
 /** `worker.location` — sockets/index.js. Throttled server-side to 1/sec/order. */
 export interface WorkerLocationEvent {
   lat: number;
@@ -171,6 +188,8 @@ export interface JobPulledEvent {
 export interface ServerToClientEvents {
   // Order room — customer-facing
   'order.status': (payload: OrderStatusEvent) => void;
+  'order.assigned': (payload: OrderAssignedEvent) => void;
+  'order.failed': (payload: OrderFailedEvent) => void;
   'order.eta': (payload: OrderEtaEvent) => void;
   'order.dispatch_update': (payload: OrderDispatchUpdateEvent) => void;
   'order.cancelled': (payload: OrderCancelledEvent) => void;

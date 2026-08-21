@@ -21,6 +21,7 @@
  * ----------------------------------------------------------------------------
  */
 
+import { AppState, type AppStateStatus } from 'react-native';
 import { io, type Socket } from 'socket.io-client';
 import { SOCKET_URL } from '../../config/env';
 import { createLogger } from '../../lib/logger';
@@ -38,9 +39,31 @@ class SocketClient {
   private connecting: Promise<void> | null = null;
   private subscribedOrderIds = new Set<string>();
   private unsubscribeTokenListener: (() => void) | null = null;
+  private unsubscribeAppState: (() => void) | null = null;
+
+  /**
+   * App-level listeners, owned by THIS class rather than by the socket.
+   *
+   * They used to be registered straight onto `this.socket`, which had two
+   * consequences. A handler added before `connect()` resolved hit a null
+   * socket and vanished silently. And every reconnect ran `teardownSocket()`
+   * → `removeAllListeners()` → a brand new `io()`, so after any network blip,
+   * token refresh or server restart the screens kept their `off` cleanups but
+   * received nothing — the tracking map, chat and worker offers all went
+   * quiet until the component happened to remount.
+   *
+   * Holding them here makes registration independent of connection state:
+   * `attachHandlers()` replays the whole registry onto each new socket.
+   */
+  private handlers = new Map<string, Set<(...args: unknown[]) => void>>();
+
+  /** Set by `destroy()`. Blocks any later reconnect attempt after logout. */
+  private stopped = false;
 
   /** Idempotent — safe to call from multiple screens mounting concurrently. */
   async connect(): Promise<void> {
+    // A fresh connect after logout re-arms the client.
+    this.stopped = false;
     if (this.socket?.connected) return;
     if (this.connecting) return this.connecting;
 
@@ -71,10 +94,19 @@ class SocketClient {
       auth: { token },
       reconnection: true,
       reconnectionAttempts: Infinity,
+      // Exponential backoff with jitter: 1s doubling to a 10s ceiling, ±50%.
+      // The randomisation is what stops a server restart from bringing every
+      // client back in the same instant — without it the whole fleet retries
+      // on identical boundaries and hammers the socket server as it comes up.
       reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
+      reconnectionDelayMax: 10000,
+      randomizationFactor: 0.5,
+      timeout: 20000,
       transports: ['websocket'],
     }) as AppSocket;
+
+    this.attachHandlers();
+    this.watchAppState();
 
     this.socket.on('connect', () => {
       log.debug('connected', { id: this.socket?.id });
@@ -126,6 +158,40 @@ class SocketClient {
     }
   }
 
+  /** Replay every registered handler onto the current socket. */
+  private attachHandlers() {
+    if (!this.socket) return;
+    for (const [event, set] of this.handlers) {
+      for (const handler of set) {
+        this.socket.on(event as keyof ServerToClientEvents, handler as never);
+      }
+    }
+  }
+
+  /**
+   * Reconnect when the app comes back to the foreground.
+   *
+   * Socket.io's own reconnect loop is suspended while the OS has the process
+   * frozen, and both platforms close idle sockets in the background — so a
+   * resume routinely lands with `connected === false` and no retry pending.
+   * `connect()` is idempotent and the `connect` handler re-joins every order
+   * room, so this is the whole restore path.
+   *
+   * Nothing is torn down on the way OUT. A brief background (a notification
+   * shade, a glance at another app) would otherwise drop a live tracking
+   * session and pay a full reconnect on return.
+   */
+  private watchAppState() {
+    if (this.unsubscribeAppState) return;
+    const sub = AppState.addEventListener('change', (next: AppStateStatus) => {
+      if (next !== 'active') return;
+      if (this.stopped) return;
+      if (this.socket?.connected) return;
+      void this.connect();
+    });
+    this.unsubscribeAppState = () => sub.remove();
+  }
+
   private teardownSocket() {
     if (this.socket) {
       this.socket.removeAllListeners();
@@ -140,10 +206,19 @@ class SocketClient {
   }
 
   /** Fully tear down — call on logout so no listener leaks across sessions. */
+  /**
+   * Full teardown for logout. `stopped` latches so a late AppState resume or a
+   * token event cannot quietly bring the socket back on the previous session's
+   * behalf; `connect()` clears it when a new session starts.
+   */
   destroy(): void {
+    this.stopped = true;
     this.disconnect();
+    this.handlers.clear();
     this.unsubscribeTokenListener?.();
     this.unsubscribeTokenListener = null;
+    this.unsubscribeAppState?.();
+    this.unsubscribeAppState = null;
   }
 
   // ── Order room subscriptions ────────────────────────────────────────────
@@ -173,13 +248,33 @@ class SocketClient {
 
   // ── Typed listener passthrough ──────────────────────────────────────────
 
+  /**
+   * Register a listener. Safe before the socket exists and safe across
+   * reconnects — the registry is the source of truth, the live socket is just
+   * where it is currently mirrored.
+   */
   on<E extends keyof ServerToClientEvents>(event: E, handler: ServerToClientEvents[E]): void {
+    const key = event as string;
+    let set = this.handlers.get(key);
+    if (!set) {
+      set = new Set();
+      this.handlers.set(key, set);
+    }
+    // A Set makes a double-subscribe idempotent, so a StrictMode double-effect
+    // or a remount cannot deliver the same message twice.
+    set.add(handler as (...args: unknown[]) => void);
     this.socket?.on(event, handler as never);
   }
 
   off<E extends keyof ServerToClientEvents>(event: E, handler?: ServerToClientEvents[E]): void {
-    if (handler) this.socket?.off(event, handler as never);
-    else this.socket?.off(event);
+    const key = event as string;
+    if (handler) {
+      this.handlers.get(key)?.delete(handler as (...args: unknown[]) => void);
+      this.socket?.off(event, handler as never);
+    } else {
+      this.handlers.delete(key);
+      this.socket?.off(event);
+    }
   }
 
   get isConnected(): boolean {
