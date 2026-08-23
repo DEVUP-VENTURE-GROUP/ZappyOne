@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -7,7 +7,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
+import { useLocalSearchParams, useRouter, useFocusEffect, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronLeft, CreditCard, LocateFixed, Star } from 'lucide-react-native';
 import {
@@ -82,7 +82,21 @@ export default function OrderTrackingScreen() {
 
   const socketClient = useSocket(orderId);
 
-  useEffect(() => {
+  /**
+   * Only the FOCUSED tracking screen may act on order-room events.
+   *
+   * `order.dispatch_update` and `order.eta` carry no order id — they are
+   * room-scoped only (dispatch.worker.js / eta.service.js). Expo Router keeps
+   * pushed screens mounted, so opening tracking for a second order leaves the
+   * first one subscribed as well, and its "Still searching…" message and ETA
+   * would be written onto the other order's screen. Nothing distinguishes them
+   * in the payload, so the screen has to distinguish itself.
+   */
+  // `useFocusEffect` subscribes on focus and tears down on blur, which is
+  // exactly the lifetime wanted here — no extra state, and a blurred screen
+  // holds no listeners at all.
+  useFocusEffect(
+    useCallback(() => {
     const onStatus = () => refetch();
     const onDispatch = (payload: OrderDispatchUpdateEvent) => setDispatchUpdate(payload);
     const onEta = (payload: OrderEtaEvent) => setEta(payload);
@@ -113,7 +127,8 @@ export default function OrderTrackingScreen() {
       socketClient.off('order.cancelled', onCancelled);
       socketClient.off('order.worker_cancelled', onCancelled);
     };
-  }, [socketClient, refetch]);
+    }, [socketClient, refetch]),
+  );
 
   useEffect(() => {
     const next = order?.status;

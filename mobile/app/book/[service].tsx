@@ -261,8 +261,24 @@ export default function BookServiceScreen() {
   }, [promoInput, quote, serviceCode, tier, boost, validatePromo]);
 
   // ── Confirm ───────────────────────────────────────────────────────────────
+  /**
+   * Synchronous in-flight latch.
+   *
+   * `creatingOrder` comes from RTK Query and only flips on the NEXT render, so
+   * taps landing in the same tick all pass the disabled check. Measured: three
+   * rapid taps sent three `POST /orders`. Only one order existed afterwards —
+   * the server's `ACTIVE_ORDER_EXISTS` guard rejected the rest — but relying on
+   * that means the client is one backend change away from duplicate bookings,
+   * and it burns two pointless round trips every time.
+   *
+   * A ref flips synchronously, so the second tap returns before it can dispatch.
+   */
+  const submitting = useRef(false);
+
   const confirm = useCallback(async () => {
     if (!location || !quote) return;
+    if (submitting.current) return;
+    submitting.current = true;
     setSubmitError(null);
 
     try {
@@ -292,6 +308,8 @@ export default function BookServiceScreen() {
       }).catch(() => {});
 
       if (paymentMethod === 'cash') {
+        // Left latched: the screen is being replaced, and re-enabling it would
+        // allow a tap on the way out.
         router.replace(`/tracking/order/${order._id}`);
         return;
       }
@@ -342,6 +360,8 @@ export default function BookServiceScreen() {
       } else {
         setSubmitError(getApiErrorMessage(err, 'We could not place this booking.'));
       }
+      // Failed: let them try again.
+      submitting.current = false;
     }
   }, [
     location,
