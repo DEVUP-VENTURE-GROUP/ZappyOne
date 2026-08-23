@@ -17,9 +17,10 @@
  *
  * `resolveRoute` translates the links the server actually produces (verified by
  * grepping every `deepLink:` in the server source) into mobile routes, and
- * returns null for the ones with no mobile equivalent — disputes, event
- * bookings, the partner console. A row with no route is still readable and
- * still marks itself read; it just doesn't pretend to lead somewhere.
+ * returns null for the ones with no mobile equivalent — event bookings and the
+ * partner console. A row with no route is still readable and still marks
+ * itself read; it just doesn't pretend to lead somewhere. (Disputes USED to be
+ * on that list; Phase 8 gave them a screen, so they now resolve.)
  * ----------------------------------------------------------------------------
  */
 
@@ -161,6 +162,18 @@ export function resolveRoute(deepLink?: string | null): string | null {
   const bookService = path.match(/^\/book\/([^/]+)$/);
   if (bookService) return `/book/${bookService[1]}`;
 
+  // Dispute detail. `dispute.service.js` emits `deepLink: /disputes/:id` when
+  // one is opened or resolved; this used to fall through to null because there
+  // was no mobile screen behind it. There is now.
+  const disputeDetail = path.match(/^\/disputes\/([^/]+)$/);
+  if (disputeDetail) return `/disputes/${disputeDetail[1]}`;
+
+  // Support ticket detail. No server notification currently carries this link
+  // — the ticket routes emit none — but the screen exists, so an in-app row
+  // pointing here resolves rather than dead-ending.
+  const ticketDetail = path.match(/^\/support\/([^/]+)$/);
+  if (ticketDetail && ticketDetail[1] !== 'mine') return `/support/${ticketDetail[1]}`;
+
   switch (path) {
     case '/':
       return '/(tabs)/home';
@@ -175,8 +188,8 @@ export function resolveRoute(deepLink?: string | null): string | null {
     case '/worker/kyc':
       return '/worker/kyc';
     default:
-      // Disputes, event bookings, the partner console, worker wellness and
-      // shield payouts have no mobile screen. Say so by returning null.
+      // Event bookings, the partner console, worker wellness and shield
+      // payouts have no mobile screen. Say so by returning null.
       return null;
   }
 }

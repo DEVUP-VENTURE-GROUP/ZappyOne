@@ -52,10 +52,39 @@ export const catalogApi = apiSlice.injectEndpoints({
       transformResponse: (r: { trending?: string[] } | string[]) => (Array.isArray(r) ? r : r.trending ?? []),
     }),
 
-    getRecommendations: builder.query<ServiceCatalogItem[], void>({
+    /**
+     * Personalised service recommendations. NOT WIRED TO ANY SCREEN.
+     *
+     * The old signature claimed `ServiceCatalogItem[]`, which was simply
+     * untrue: `GET /recommendations` returns `{ services: [{ service, reason
+     * }], trending: [...] }` — a SLUG and a human reason, with no name, price,
+     * icon or `_id`. Rendering it as a catalog item would have produced blank
+     * tiles, the same class of bug the FAQ list had. The type now describes
+     * the real payload.
+     *
+     * ── WHY IT IS STILL NOT ON THE HOME SCREEN ─────────────────────────────
+     * `recommendations.service.js` pads its results from a hardcoded
+     * `ALL_SERVICES` list — electrical, plumbing, ac_repair, carpenter,
+     * helper, puncture, cleaning, painting — that predates the current
+     * catalog. Checked against the live `/catalog/services` (86 entries), only
+     * ONE of the six slugs returned for this account actually exists as a
+     * bookable service. The personal and trending entries are real; the
+     * padding is not.
+     *
+     * So wiring this up today would render mostly-unbookable tiles, and
+     * filtering to the valid ones leaves too few to justify a section. The
+     * fix belongs in that service's fallback list, which is server-side and
+     * out of scope. Left connected-but-unused, with an honest type.
+     */
+    getRecommendations: builder.query<
+      { services: { service: string; reason: string }[]; trending: string[] },
+      void
+    >({
       query: () => ({ url: '/recommendations' }),
-      transformResponse: (r: ServicesEnvelope | ServiceCatalogItem[]) =>
-        Array.isArray(r) ? r : r.services ?? [],
+      transformResponse: (r: {
+        services?: { service: string; reason: string }[];
+        trending?: string[];
+      }) => ({ services: r.services ?? [], trending: r.trending ?? [] }),
     }),
   }),
 });

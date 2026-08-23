@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter, useFocusEffect, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ChevronLeft, CreditCard, LocateFixed, Star } from 'lucide-react-native';
+import { ChevronLeft, CreditCard, Flag, LocateFixed, Star } from 'lucide-react-native';
 import {
   useGetOrderQuery, useCancelOrderMutation, useRateOrderMutation,
   useGetCancelPreviewQuery, useRebookOrderMutation,
@@ -29,6 +29,8 @@ import {
   ScreenHeader,
 } from '../../../components/ui';
 import { TrackingCard } from '../../../components/tracking/TrackingCard';
+import { RaiseDisputeSheet } from '../../../components/support/RaiseDisputeSheet';
+import { canRaiseDispute } from '../../../components/support/statusMeta';
 import { shadows } from '../../../theme/shadows';
 import { fontFamily } from '../../../theme/typography';
 import { colors } from '../../../theme/colors';
@@ -75,6 +77,7 @@ export default function OrderTrackingScreen() {
   const [followWorker, setFollowWorker] = useState(true);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [rateOpen, setRateOpen] = useState(false);
+  const [disputeOpen, setDisputeOpen] = useState(false);
 
   const [dispatchUpdate, setDispatchUpdate] = useState<OrderDispatchUpdateEvent | null>(null);
   const [eta, setEta] = useState<OrderEtaEvent | null>(null);
@@ -251,7 +254,27 @@ export default function OrderTrackingScreen() {
               onDone={() => router.replace('/(tabs)/home')}
             />
           )}
+
+          {/* A cancelled or failed booking can still have gone wrong in a way
+              worth reporting — a no-show, or being charged for it. */}
+          {canRaiseDispute(order) ? (
+            <View style={styles.disputeRow}>
+              <Button
+                label="Report an issue"
+                variant="secondary"
+                icon={<Flag size={15} color={colors.primary} />}
+                onPress={() => setDisputeOpen(true)}
+                fullWidth
+              />
+            </View>
+          ) : null}
         </ScrollView>
+
+        <RaiseDisputeSheet
+          visible={disputeOpen}
+          onClose={() => setDisputeOpen(false)}
+          orderId={orderId}
+        />
       </View>
     );
   }
@@ -340,6 +363,20 @@ export default function OrderTrackingScreen() {
           onCancel={() => setCancelOpen(true)}
           onRate={() => setRateOpen(true)}
         />
+
+        {/* Reporting sits below the rating, not beside it: rating is the
+            expected end of a good job, and this is the exception. */}
+        {canRaiseDispute(order) ? (
+          <View style={styles.disputeRow}>
+            <Button
+              label="Report an issue"
+              variant="secondary"
+              icon={<Flag size={15} color={colors.primary} />}
+              onPress={() => setDisputeOpen(true)}
+              fullWidth
+            />
+          </View>
+        ) : null}
       </ScrollView>
 
       {/* Cancel — gated on the server's own canCancel, wording from its preview. */}
@@ -417,12 +454,19 @@ export default function OrderTrackingScreen() {
           fullWidth
         />
       </BottomSheet>
+
+      <RaiseDisputeSheet
+        visible={disputeOpen}
+        onClose={() => setDisputeOpen(false)}
+        orderId={orderId}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
+  disputeRow: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 24 },
   root: { flex: 1, backgroundColor: colors.background },
   mapLayer: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
   mapFallback: {

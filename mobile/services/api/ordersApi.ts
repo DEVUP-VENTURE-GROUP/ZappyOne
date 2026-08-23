@@ -43,12 +43,44 @@ export const ordersApi = apiSlice.injectEndpoints({
       query: (params) => ({ url: '/orders/quote', params }),
       transformResponse: (r: QuoteEnvelope) => r.quote ?? (r as unknown as QuoteEnvelope['quote']),
     }),
-    getNearbyPros: builder.query<NearbyPro[], { service: string; pickupLat: number; pickupLng: number }>({
+    /**
+     * Supply near a pickup point. NOT WIRED TO ANY SCREEN — see below.
+     *
+     * The parameter names were wrong: this sent `pickupLat`/`pickupLng`, but
+     * `order.routes.js` validates `lat`/`lng` and rejected every call with
+     * HTTP 400 `"lat" is required`. Nothing called the hook, so the failure
+     * was never seen. Corrected here so the next caller inherits a working
+     * endpoint rather than this trap.
+     *
+     * Still unwired deliberately: with dispatch paused in development it
+     * returns `{ pros: [] }` for every coordinate, so any UI built on it
+     * could not be verified against real data, and "0 pros nearby" is worse
+     * than saying nothing.
+     */
+    getNearbyPros: builder.query<NearbyPro[], { service: string; lat: number; lng: number }>({
       query: (params) => ({ url: '/orders/nearby-pros', params }),
       transformResponse: (r: { pros?: NearbyPro[] } | NearbyPro[]) =>
         Array.isArray(r) ? r : r.pros ?? [],
     }),
-    getWarmDispatch: builder.query<{ ready: boolean; etaMin?: number }, { service: string; pickupLat: number; pickupLng: number }>({
+    /**
+     * Warm-dispatch readiness. Same wrong-parameter bug, same fix, also
+     * unwired. Its real response is richer than the old type claimed —
+     * `{ warm, instantAvailable, readyCount, nearbyCount, etaMinutes,
+     * candidates }`, verified against the dev backend — so the type now
+     * matches what the server actually sends instead of a `ready`/`etaMin`
+     * shape that appears nowhere in the API.
+     */
+    getWarmDispatch: builder.query<
+      {
+        warm: boolean;
+        instantAvailable: boolean;
+        readyCount: number;
+        nearbyCount: number;
+        etaMinutes: number | null;
+        candidates: unknown[];
+      },
+      { service: string; lat: number; lng: number }
+    >({
       query: (params) => ({ url: '/orders/warm', params }),
     }),
 

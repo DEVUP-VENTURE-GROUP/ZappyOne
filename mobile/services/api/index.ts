@@ -23,3 +23,5 @@ export * from './paymentsApi';
 export * from './promosApi';
 export * from './workerApi';
 export * from './uploadApi';
+export * from './supportApi';
+export * from './disputesApi';

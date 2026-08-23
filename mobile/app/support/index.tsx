@@ -18,9 +18,10 @@ import React, { useCallback, useState } from 'react';
 import { Linking, ScrollView, StyleSheet, View } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ChevronDown, MessageCircle, Phone } from 'lucide-react-native';
+import { ChevronDown, ChevronRight, Headphones, MessageCircle, Phone, Scale } from 'lucide-react-native';
 import {
   Appear,
+  Badge,
   Button,
   Card,
   EmptyState,
@@ -30,11 +31,13 @@ import {
   SectionTitle,
   SkeletonList,
   Text,
-} from '../components/ui';
-import { useGetFaqsQuery } from '../services/api/contentApi';
-import { getApiErrorMessage } from '../services/api/apiSlice';
-import { colors } from '../theme/colors';
-import { screenPadding, spacing } from '../theme/spacing';
+} from '../../components/ui';
+import { useGetFaqsQuery } from '../../services/api/contentApi';
+import { useListMyTicketsQuery } from '../../services/api/supportApi';
+import { getApiErrorMessage } from '../../services/api/apiSlice';
+import { colors } from '../../theme/colors';
+import { radius } from '../../theme/radius';
+import { screenPadding, spacing } from '../../theme/spacing';
 
 const SUPPORT_PHONE = 'tel:+911800000000';
 
@@ -43,6 +46,16 @@ export default function SupportScreen() {
   const insets = useSafeAreaInsets();
   const { data: groups = [], isLoading, error, refetch } = useGetFaqsQuery();
   const [openId, setOpenId] = useState<string | null>(null);
+
+  // Ticket counts for the "My tickets" row. A failure here must not take the
+  // FAQ down with it, so the error is unused on purpose — the row simply
+  // falls back to its neutral wording.
+  const { data: tickets = [], isLoading: ticketsLoading } = useListMyTicketsQuery();
+  const openTickets = tickets.filter(
+    (t) => t.status !== 'resolved' && t.status !== 'closed',
+  ).length;
+  /** Tickets stalled on US — the badge exists to make these hard to miss. */
+  const needsReply = tickets.filter((t) => t.status === 'waiting_user').length;
 
   const toggle = useCallback(
     (id: string) => setOpenId((current) => (current === id ? null : id)),
@@ -68,14 +81,80 @@ export default function SupportScreen() {
               onPress={() => Linking.openURL(SUPPORT_PHONE)}
               style={styles.action}
             />
+            {/*
+              This used to read "Chat with us" and push `/(tabs)/chat` — the
+              list of bookings you can message your assigned PRO about. Nobody
+              from Zappy is on the other end of that, and with no active
+              booking it opens an empty screen. The real support channel is
+              the ticket system the backend has always exposed.
+            */}
             <Button
-              label="Chat with us"
+              label="Message us"
               variant="secondary"
               icon={<MessageCircle size={15} color={colors.primary} />}
-              onPress={() => router.push('/(tabs)/chat')}
+              onPress={() => router.push('/support/tickets')}
               style={styles.action}
             />
           </View>
+        </Appear>
+
+        <Appear delay={60}>
+          <ScalePressable
+            onPress={() => router.push('/support/tickets')}
+            accessibilityRole="button"
+            accessibilityLabel={
+              openTickets > 0
+                ? `My tickets, ${openTickets} still open`
+                : 'My support tickets'
+            }
+          >
+            <Card>
+              <View style={styles.ticketsRow}>
+                <View style={styles.ticketsIcon}>
+                  <Headphones size={17} color={colors.primary} />
+                </View>
+                <View style={styles.flex}>
+                  <Text variant="bodySmall" weight="semibold">
+                    My tickets
+                  </Text>
+                  <Text variant="caption" color={colors.textSecondary}>
+                    {ticketsLoading
+                      ? 'Checking your tickets…'
+                      : openTickets > 0
+                        ? `${openTickets} still open`
+                        : 'Track anything you have raised with us'}
+                  </Text>
+                </View>
+                {needsReply > 0 ? <Badge count={needsReply} /> : null}
+                <ChevronRight size={16} color={colors.textMuted} />
+              </View>
+            </Card>
+          </ScalePressable>
+        </Appear>
+
+        <Appear delay={90}>
+          <ScalePressable
+            onPress={() => router.push('/disputes')}
+            accessibilityRole="button"
+            accessibilityLabel="Issues I have reported about a booking"
+          >
+            <Card>
+              <View style={styles.ticketsRow}>
+                <View style={styles.ticketsIcon}>
+                  <Scale size={17} color={colors.primary} />
+                </View>
+                <View style={styles.flex}>
+                  <Text variant="bodySmall" weight="semibold">
+                    Reported issues
+                  </Text>
+                  <Text variant="caption" color={colors.textSecondary}>
+                    Problems you've raised about a specific booking
+                  </Text>
+                </View>
+                <ChevronRight size={16} color={colors.textMuted} />
+              </View>
+            </Card>
+          </ScalePressable>
         </Appear>
 
         {isLoading ? (
@@ -158,6 +237,16 @@ const styles = StyleSheet.create({
 
   actions: { flexDirection: 'row', gap: spacing.md },
   action: { flex: 1 },
+
+  ticketsRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  ticketsIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: radius.button,
+    backgroundColor: colors.primaryTint,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 
   group: { gap: spacing.sm },
   faq: { padding: spacing.base, gap: spacing.sm },

@@ -888,3 +888,109 @@ export interface ApiError {
   /** Classification added by `services/api/apiError.ts`. */
   normalized?: import('../services/api/apiError').NormalizedApiError;
 }
+
+// ── Support tickets ─────────────────────────────────────────────────────────
+// Mirrors server/src/modules/engagement/support-ticket.model.js. A ticket is
+// general help ("I can't log in", "KYC is stuck") and may reference an order
+// without requiring one — which is what separates it from a Dispute.
+
+export const SUPPORT_CATEGORIES = [
+  'payment', 'account', 'order', 'kyc', 'app_bug', 'other',
+] as const;
+export type SupportCategory = (typeof SUPPORT_CATEGORIES)[number];
+
+export const SUPPORT_PRIORITIES = ['low', 'normal', 'high', 'urgent'] as const;
+export type SupportPriority = (typeof SUPPORT_PRIORITIES)[number];
+
+export type SupportStatus =
+  | 'open' | 'in_progress' | 'waiting_user' | 'resolved' | 'closed';
+
+/** One entry in a ticket or dispute thread. `from` says which side wrote it. */
+export interface ThreadMessage {
+  from: 'user' | 'worker' | 'admin';
+  fromId?: string;
+  text: string;
+  at: string;
+}
+
+export interface SupportTicket {
+  _id: string;
+  category: SupportCategory;
+  subject: string;
+  description: string;
+  attachments?: string[];
+  orderId?: string;
+  status: SupportStatus;
+  priority: SupportPriority;
+  messages?: ThreadMessage[];
+  firstResponseAt?: string;
+  resolvedAt?: string;
+  slaDeadline?: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface CreateTicketRequest {
+  category: SupportCategory;
+  subject: string;
+  description: string;
+  orderId?: string;
+  priority?: SupportPriority;
+}
+
+// ── Disputes ────────────────────────────────────────────────────────────────
+// Mirrors server/src/modules/dispute/dispute.model.js. Order-specific, with a
+// financial resolution attached — refunds, worker penalties.
+
+export const DISPUTE_CATEGORIES = [
+  'service_not_done', 'poor_quality', 'overcharged', 'no_show',
+  'wrong_address', 'damage', 'rude_behavior', 'safety_concern', 'other',
+] as const;
+export type DisputeCategory = (typeof DISPUTE_CATEGORIES)[number];
+
+/**
+ * NOTE the value is `under_review`, not `in_review`. The website's
+ * DisputesPage.jsx keys its badge map on `in_review`, so a dispute in this
+ * state falls through to its "Open" fallback there. The server enum is the
+ * authority and is what mobile uses.
+ */
+export type DisputeStatus = 'open' | 'under_review' | 'resolved' | 'closed';
+
+export type DisputeResolutionType =
+  | 'refund_full' | 'refund_partial' | 'no_action'
+  | 'worker_penalty' | 'worker_warning' | 'split_decision';
+
+export interface DisputeResolution {
+  type?: DisputeResolutionType;
+  refundAmountPaise?: number;
+  penaltyAmountPaise?: number;
+  adminNotes?: string;
+  resolvedAt?: string;
+}
+
+export interface Dispute {
+  _id: string;
+  orderId?: string;
+  category: DisputeCategory;
+  description: string;
+  evidenceUrls?: string[];
+  status: DisputeStatus;
+  resolution?: DisputeResolution;
+  messages?: ThreadMessage[];
+  slaDeadline?: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface OpenDisputeRequest {
+  /**
+   * Optional in the route's Joi schema, but `dispute.service.open()` does an
+   * unconditional `Order.findById(orderId)` and 404s when it misses — so in
+   * practice it is required. Mobile only ever raises a dispute from an order,
+   * so it is always supplied.
+   */
+  orderId: string;
+  category: DisputeCategory;
+  description: string;
+  evidenceUrls?: string[];
+}
