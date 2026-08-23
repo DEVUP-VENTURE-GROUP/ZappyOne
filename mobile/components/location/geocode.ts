@@ -3,10 +3,22 @@
  * ----------------------------------------------------------------------------
  * WHY NOT GOOGLE PLACES
  * `app.json` carries PLACEHOLDER Maps keys — `YOUR_GOOGLE_MAPS_IOS_KEY` and
- * `YOUR_GOOGLE_MAPS_ANDROID_KEY`. There is no Places key in the project, and no
- * server route proxies one (adding either is out of scope: `/server` is
- * frozen). So a Places-style typeahead is not available, and shipping a key in
- * the client would be the wrong fix anyway.
+ * `YOUR_GOOGLE_MAPS_ANDROID_KEY` — and shipping a real one in the client would
+ * be the wrong fix regardless.
+ *
+ * THE SERVER DOES PROXY ONE, AND IT DOES NOT WORK YET. An earlier version of
+ * this note claimed no server route existed. That was wrong:
+ * `server/src/modules/maps/maps.routes.js` exposes authenticated
+ * `/api/maps/autocomplete`, `/geocode`, `/reverse-geocode`, `/route`, `/eta`,
+ * `/place` and `/static`. Every one of them was exercised against the dev
+ * backend and every one returns HTTP 500 `REQUEST_DENIED`, because no Maps key
+ * is provisioned server-side. Routing search through them today would replace
+ * working address search with a guaranteed failure.
+ *
+ * So the platform geocoder stays for now. When a key is provisioned server-side
+ * these routes become the better source — they give real Places-quality
+ * typeahead and keep the key off the device — and this module is the single
+ * place that has to change.
  *
  * WHAT THIS DOES INSTEAD
  * `expo-location` exposes the PLATFORM geocoder — CLGeocoder on iOS, Android's

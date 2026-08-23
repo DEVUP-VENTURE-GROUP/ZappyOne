@@ -53,6 +53,7 @@ import { illustrationFor } from '../../components/catalog/illustrations/resolve'
 import { useGetCategoriesQuery, useGetServicesQuery } from '../../services/api/catalogApi';
 import { useListOrdersQuery } from '../../services/api/ordersApi';
 import { useListNotificationsQuery } from '../../services/api/notificationsApi';
+import { useGetAddressesQuery } from '../../services/api/authApi';
 import type { RootState } from '../../store';
 import { colors, zappy } from '../../theme/colors';
 import { radius } from '../../theme/radius';
@@ -85,9 +86,32 @@ export default function HomeScreen() {
   } = useListOrdersQuery(1);
   const { data: notifData } = useListNotificationsQuery({ unreadOnly: true, page: 1 });
 
-  const [locationLabel, setLocationLabel] = useState<string | null>(null);
+  const { data: savedAddresses } = useGetAddressesQuery();
 
-  // Best-effort location label. A denied permission just leaves the prompt.
+  const [gpsLabel, setGpsLabel] = useState<string | null>(null);
+
+  /**
+   * What the header shows, in order of how well it reflects intent.
+   *
+   * GPS wins when we have it, but it used to be the ONLY source: the label
+   * appeared only with a GRANTED permission AND a cached fix. A customer who
+   * declined location — or simply had no last-known position yet — was shown
+   * "Set location" even with a default address saved, which the app was
+   * already using to seed the booking screen. The header claimed not to know
+   * a location the rest of the app was quietly booking against.
+   *
+   * So the saved default is the fallback, and the prompt is what's left when
+   * there is genuinely nothing to show.
+   */
+  const locationLabel = useMemo(() => {
+    if (gpsLabel) return gpsLabel;
+    const list = savedAddresses?.addresses ?? [];
+    const preferred = list.find((a) => a.isDefault) ?? list[0];
+    if (!preferred) return null;
+    return preferred.label || preferred.address || null;
+  }, [gpsLabel, savedAddresses]);
+
+  // Best-effort location label. A denied permission just leaves the fallback.
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -101,7 +125,7 @@ export default function HomeScreen() {
           longitude: position.coords.longitude,
         });
         if (place && !cancelled) {
-          setLocationLabel(
+          setGpsLabel(
             [place.name, place.district ?? place.city].filter(Boolean).join(', '),
           );
         }
@@ -172,9 +196,13 @@ export default function HomeScreen() {
           <ScalePressable
             style={styles.location}
             accessibilityRole="button"
+            // Announced as a button and styled as one, but it had no onPress —
+            // tapping "Set location" did nothing at all.
+            onPress={() => router.push('/location/picker' as never)}
             accessibilityLabel={
               locationLabel ? `Current location: ${locationLabel}` : 'Set your location'
             }
+            accessibilityHint="Opens the location picker"
           >
             <Text variant="label" numberOfLines={1} color={colors.primary}>
               DELIVERING TO

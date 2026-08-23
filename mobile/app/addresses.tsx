@@ -24,6 +24,7 @@ import {
   Clock,
   House,
   MapPin,
+  Pencil,
   Plus,
   Star,
   Trash2,
@@ -46,6 +47,7 @@ import {
 import { AccountRow, AccountSection } from '../components/account/AccountUI';
 import {
   useAddAddressMutation,
+  useEditAddressMutation,
   useDeleteAddressMutation,
   useGetAddressesQuery,
   useSetDefaultAddressMutation,
@@ -80,6 +82,10 @@ export default function AddressesScreen() {
 
   const { data, isLoading, error, refetch } = useGetAddressesQuery();
   const [addAddress, { isLoading: adding }] = useAddAddressMutation();
+  // The backend has supported PATCH /users/addresses/:id all along; the app
+  // never called it, so the only way to fix a typo in a label was to delete the
+  // address and re-add it — losing its default flag in the process.
+  const [editAddress, { isLoading: renaming }] = useEditAddressMutation();
   const [deleteAddress] = useDeleteAddressMutation();
   const [setDefaultAddress] = useSetDefaultAddressMutation();
 
@@ -91,6 +97,9 @@ export default function AddressesScreen() {
   const [tag, setTag] = useState<'home' | 'work' | 'other'>('home');
   const [saveError, setSaveError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<SavedAddress | null>(null);
+  const [renameTarget, setRenameTarget] = useState<SavedAddress | null>(null);
+  const [renameValue, setRenameValue] = useState('');
+  const [renameError, setRenameError] = useState<string | null>(null);
 
   // The picker hands its result back through the store; `requestId` makes sure
   // it is consumed once rather than re-applied on every render.
@@ -134,6 +143,23 @@ export default function AddressesScreen() {
       setSaveError(getApiErrorMessage(err, "We couldn't save that address."));
     }
   }, [pending, label, tag, addAddress, refetch]);
+
+  const submitRename = useCallback(async () => {
+    if (!renameTarget) return;
+    const label = renameValue.trim();
+    if (!label) {
+      setRenameError('Give this address a name.');
+      return;
+    }
+    setRenameError(null);
+    try {
+      await editAddress({ addrId: renameTarget._id, label }).unwrap();
+      setRenameTarget(null);
+      setRenameValue('');
+    } catch (err) {
+      setRenameError(getApiErrorMessage(err, "We couldn't rename that address."));
+    }
+  }, [renameTarget, renameValue, editAddress]);
 
   const saveRecent = useCallback((recent: RecentLocation) => {
     setPending({
@@ -209,6 +235,17 @@ export default function AddressesScreen() {
                               onPress={() => setDefaultAddress(address._id)}
                             />
                           ) : null}
+                          <Button
+                            label="Rename"
+                            variant="ghost"
+                            size="small"
+                            icon={<Pencil size={13} color={colors.primary} />}
+                            onPress={() => {
+                              setRenameError(null);
+                              setRenameValue(address.label || address.tag || '');
+                              setRenameTarget(address);
+                            }}
+                          />
                           <Button
                             label="Remove"
                             variant="dangerGhost"
@@ -320,6 +357,48 @@ export default function AddressesScreen() {
             setPending(null);
             openPicker(seed);
           }}
+          fullWidth
+          style={styles.sheetSecondary}
+        />
+      </BottomSheet>
+
+      {/* ── Rename ──────────────────────────────────────────────────────── */}
+      <BottomSheet
+        visible={Boolean(renameTarget)}
+        onClose={() => setRenameTarget(null)}
+        title="Rename this address"
+      >
+        <Text variant="bodySmall" color={colors.textSecondary} numberOfLines={2}>
+          {renameTarget?.address}
+        </Text>
+        <Input
+          label="Label"
+          placeholder="e.g. Home, Mum's place"
+          value={renameValue}
+          onChangeText={(next) => {
+            setRenameValue(next);
+            setRenameError(null);
+          }}
+          maxLength={40}
+          containerStyle={styles.labelInput}
+        />
+        {renameError ? (
+          <Text variant="caption" color={colors.error}>
+            {renameError}
+          </Text>
+        ) : null}
+        <Button
+          label="Save name"
+          onPress={submitRename}
+          loading={renaming}
+          disabled={!renameValue.trim()}
+          fullWidth
+          style={styles.sheetPrimary}
+        />
+        <Button
+          label="Cancel"
+          variant="secondary"
+          onPress={() => setRenameTarget(null)}
           fullWidth
           style={styles.sheetSecondary}
         />
