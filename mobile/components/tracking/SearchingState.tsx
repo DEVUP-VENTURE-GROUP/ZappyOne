@@ -116,20 +116,17 @@ function SearchingStateBase({
 
   return (
     <View style={styles.root}>
-      {/* ── The wait ──────────────────────────────────────────────────────── */}
-      <Appear style={styles.hero}>
-        <SearchPulse size={172}>
-          <Radar size={28} color={colors.primary} strokeWidth={1.8} />
-        </SearchPulse>
+      {/*
+        ── The wait ────────────────────────────────────────────────────────
+        The radar pulse and "Finding your professional" heading that used to
+        lead here have moved up into `SearchingHero`, which is the website's
+        equivalent surface. Repeating them under it said the same thing twice.
 
-        <Text variant="heading2" align="center" style={styles.title}>
-          Finding your professional
-        </Text>
-        <Text variant="bodySmall" color={colors.textSecondary} align="center">
-          We&apos;ve got your booking and we&apos;re reaching out to verified pros
-          near you.
-        </Text>
-
+        The elapsed timer stays: it is the one fact about the wait that the
+        hero does not carry, and it counts from `createdAt` — a fact about the
+        past, not a prediction.
+      */}
+      <Appear style={styles.elapsedOnly}>
         <View style={styles.elapsedRow}>
           <Clock size={13} color={colors.textMuted} />
           <Text variant="caption" color={colors.textSecondary}>
@@ -305,6 +302,7 @@ const styles = StyleSheet.create({
   root: { padding: screenPadding, gap: spacing.lg },
   flex: { flex: 1 },
 
+  elapsedOnly: { alignItems: 'center' },
   hero: { alignItems: 'center', paddingTop: spacing.xl, paddingBottom: spacing.sm },
   title: { marginTop: spacing.lg, marginBottom: spacing.xs },
   elapsedRow: {

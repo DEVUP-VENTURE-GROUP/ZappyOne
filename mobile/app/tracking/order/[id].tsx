@@ -12,7 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronLeft, CreditCard, Flag, LocateFixed, Star } from 'lucide-react-native';
 import {
   useGetOrderQuery, useCancelOrderMutation, useRateOrderMutation,
-  useGetCancelPreviewQuery, useRebookOrderMutation,
+  useGetCancelPreviewQuery, useRebookOrderMutation, useGetOrderTimelineQuery,
 } from '../../../services/api/ordersApi';
 import { SearchingState } from '../../../components/tracking/SearchingState';
 import {
@@ -29,6 +29,11 @@ import {
   ScreenHeader,
 } from '../../../components/ui';
 import { TrackingCard } from '../../../components/tracking/TrackingCard';
+import { TrackingHeader } from '../../../components/tracking/TrackingHeader';
+import { SearchingHero } from '../../../components/tracking/SearchingHero';
+import { StatusTimeline } from '../../../components/tracking/StatusTimeline';
+import { MapETAChip } from '../../../components/tracking/MapETAChip';
+import { activeStepIndex } from '../../../components/tracking/trackingMeta';
 import { RaiseDisputeSheet } from '../../../components/support/RaiseDisputeSheet';
 import { canRaiseDispute } from '../../../components/support/statusMeta';
 import { shadows } from '../../../theme/shadows';
@@ -62,6 +67,13 @@ export default function OrderTrackingScreen() {
   });
   const [rebookOrder, { isLoading: rebooking }] = useRebookOrderMutation();
 
+  /**
+   * Real status timestamps for the lifecycle rail. `GET /orders/:id/timeline`
+   * returns the order's own `statusHistory`, so every time shown is one the
+   * server recorded. The hook already existed and had no consumer until now.
+   */
+  const { data: timeline = [] } = useGetOrderTimelineQuery(orderId, { skip: !order });
+
   // The moment the search resolves is worth its own beat — someone who has been
   // watching a pulse for two minutes should be told plainly that it worked,
   // not silently dropped onto a map. Shown only on the searching → assigned
@@ -82,6 +94,35 @@ export default function OrderTrackingScreen() {
   const [dispatchUpdate, setDispatchUpdate] = useState<OrderDispatchUpdateEvent | null>(null);
   const [eta, setEta] = useState<OrderEtaEvent | null>(null);
   const [ratingValue, setRatingValue] = useState(0);
+
+  /**
+   * Cancellation latch — the same synchronous guard the booking CTA uses.
+   *
+   * `cancelling` from RTK Query is React state, so it is not true until the
+   * next render; four taps inside one frame all read the old value and all
+   * fire. Measured: four rapid taps produced four POSTs to /cancel. The server
+   * is idempotent — the order ends up cancelled once either way — but three of
+   * those requests are pure waste, and on a flaky connection they are three
+   * more chances to surface a spurious failure alert.
+   *
+   * A ref flips synchronously, so the second tap in the same frame sees it.
+   * Cleared on failure so a genuine retry is still possible.
+   */
+  const cancelling_ref = useRef(false);
+
+  const requestCancel = useCallback(
+    (reason?: string) => {
+      if (cancelling_ref.current) return;
+      cancelling_ref.current = true;
+      cancelOrder({ id: orderId, reason })
+        .unwrap()
+        .catch((e) => {
+          cancelling_ref.current = false;
+          Alert.alert('Could not cancel', getApiErrorMessage(e, 'Please try again.'));
+        });
+    },
+    [cancelOrder, orderId],
+  );
 
   const socketClient = useSocket(orderId);
 
@@ -202,19 +243,34 @@ export default function OrderTrackingScreen() {
 
   if (status === 'created' || status === 'searching') {
     return (
-      <View style={[styles.screen, { paddingTop: insets.top }]}>
+      <View style={styles.screen}>
         <Stack.Screen options={{ headerShown: false }} />
-        <ScreenHeader title="Finding your pro" onBack={() => router.back()} />
-        <ScrollView showsVerticalScrollIndicator={false}>
+        <View style={{ paddingTop: insets.top }}>
+          <TrackingHeader
+            service={order.service}
+            orderId={orderId}
+            status={status}
+            eta={eta?.etaMinutes ?? null}
+            onBack={() => router.back()}
+            onSupport={() => router.push('/support')}
+          />
+        </View>
+        <ScrollView
+          contentContainerStyle={styles.trackingScroll}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* The website leads the searching pane with this card. */}
+          <SearchingHero etaMinutes={eta?.etaMinutes ?? null} />
+
+          <StatusTimeline activeStepIdx={activeStepIndex(status)} history={timeline} />
+
           <SearchingState
             order={order}
             dispatchUpdate={dispatchUpdate}
             cancelPreview={cancelPreview}
             cancelling={cancelling}
             onCancel={(reason) => {
-              cancelOrder({ id: orderId, reason }).unwrap().catch((e) => {
-                Alert.alert('Could not cancel', getApiErrorMessage(e, 'Please try again.'));
-              });
+              requestCancel(reason);
             }}
           />
         </ScrollView>
@@ -308,6 +364,16 @@ export default function OrderTrackingScreen() {
           </View>
         )}
       </View>
+
+      {/* Live ETA over the map — the website's MapETAChip. Renders only when
+          the server has actually sent an ETA and a worker is en route.
+          `distKm` is the field name in the server's order.eta payload. */}
+      <MapETAChip
+        eta={eta?.etaMinutes ?? null}
+        distanceKm={eta?.distKm ?? null}
+        status={status}
+        topOffset={insets.top + 64}
+      />
 
       {/* Floating controls over the map. */}
       <View style={[styles.topBar, { paddingTop: insets.top + 8, pointerEvents: 'box-none' }]}>
@@ -407,9 +473,7 @@ export default function OrderTrackingScreen() {
           variant="danger"
           onPress={() => {
             setCancelOpen(false);
-            cancelOrder({ id: orderId, reason: 'user_cancelled' }).unwrap().catch((e) => {
-              Alert.alert('Could not cancel', getApiErrorMessage(e, 'Please try again.'));
-            });
+            requestCancel('user_cancelled');
           }}
           loading={cancelling}
           fullWidth
@@ -466,6 +530,8 @@ export default function OrderTrackingScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
+  // The website stacks its tracking cards with a 14px rhythm on a tinted page.
+  trackingScroll: { padding: 20, gap: 14 },
   disputeRow: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 24 },
   root: { flex: 1, backgroundColor: colors.background },
   mapLayer: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
