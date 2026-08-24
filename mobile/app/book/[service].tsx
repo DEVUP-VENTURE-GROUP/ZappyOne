@@ -51,7 +51,6 @@ import {
   Clock,
   CreditCard,
   MapPin,
-  Pencil,
   SearchX,
   Tag,
   X,
@@ -390,6 +389,17 @@ export default function BookServiceScreen() {
   const busy = creatingOrder || payingOnline;
   const canConfirm = Boolean(location) && Boolean(quote) && !busy;
 
+  /**
+   * What the CTA shows. Same figure the server will be sent as
+   * `quotedTotalRupees` — tier and tip applied, promo deliberately not, per
+   * `quotedTotalForGuard`. Showing anything else here would advertise a price
+   * the booking does not actually quote.
+   */
+  const ctaTotal =
+    quote && typeof quote.total === 'number'
+      ? quotedTotalForGuard(quote.total, tier, boost)
+      : null;
+
   // Service isn't in the catalog — a stale deep link or a retired code.
   if (!catalogLoading && !catalogService) {
     return (
@@ -417,20 +427,57 @@ export default function BookServiceScreen() {
     <View style={styles.root}>
       <Stack.Screen options={{ headerShown: false }} />
 
-      {/* ── Header ─────────────────────────────────────────────────────── */}
+      {/*
+        ── Header ───────────────────────────────────────────────────────────
+        The website's booking header is a dark navy bar — `rgba(15,23,42,0.97)`
+        with a translucent back button, a tracked eyebrow, the service name
+        beside its category-tinted chip, and two step pills. It is the one
+        element that makes the booking flow feel separate from browsing, so it
+        is reproduced here rather than left as a plain light title.
+
+        The eyebrow does NOT say "Step 2" the way the web does: the website
+        always routes through its location step, whereas this screen seeds from
+        the default address and is frequently the only step. The pills tell the
+        same story honestly — the first fills once a location exists.
+      */}
       <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
         <IconButton
-          icon={<ChevronLeft size={20} color={colors.textHeading} />}
+          icon={<ChevronLeft size={20} color={colors.textInverse} />}
           onPress={() => router.back()}
+          variant="plain"
           accessibilityLabel="Go back"
+          style={styles.headerBack}
         />
+
         <View style={styles.flex}>
-          <Text variant="caption" color={colors.textMuted}>
-            Confirm your booking
+          <Text variant="eyebrow" color="rgba(255,255,255,0.5)">
+            Confirm booking
           </Text>
-          <Heading level={3} numberOfLines={1}>
-            {catalogLoading ? 'Loading…' : name}
-          </Heading>
+          <View style={styles.headerTitleRow}>
+            <View style={[styles.headerChip, { backgroundColor: accent }]}>
+              <ServiceIllustration
+                name={drawing}
+                size={13}
+                onColor
+                spotlight={false}
+              />
+            </View>
+            <Text
+              variant="body"
+              weight="bold"
+              color={colors.textInverse}
+              numberOfLines={1}
+              style={styles.flex}
+            >
+              {catalogLoading ? 'Loading…' : name}
+            </Text>
+          </View>
+        </View>
+
+        {/* Two-segment progress, matching the website's step pills. */}
+        <View style={styles.steps}>
+          <View style={[styles.step, location ? styles.stepDone : styles.stepIdle]} />
+          <View style={[styles.step, styles.stepActive]} />
         </View>
       </View>
 
@@ -533,8 +580,15 @@ export default function BookServiceScreen() {
                     </>
                   )}
                 </View>
+                {/* The website offers a blue "Change ›" pill here rather than a
+                    bare icon — a clearer affordance, and the same one. */}
                 {location ? (
-                  <Pencil size={16} color={colors.textMuted} />
+                  <View style={styles.changePill}>
+                    <Text variant="chip" weight="bold" color={colors.primary}>
+                      Change
+                    </Text>
+                    <ChevronRight size={11} strokeWidth={2.5} color={colors.primary} />
+                  </View>
                 ) : (
                   <ChevronRight size={18} color={colors.textMuted} />
                 )}
@@ -565,6 +619,14 @@ export default function BookServiceScreen() {
               {TIERS.map((option) => {
                 const selected = tier === option.key;
                 const uplift = Math.round((TIER_MULTIPLIERS[option.key] - 1) * 100);
+                // The website prices each tier outright rather than showing an
+                // uplift percentage. Derived from the server quote, so it is a
+                // real figure — and it falls back to the percentage until the
+                // quote lands.
+                const tierPrice =
+                  quote && typeof quote.total === 'number'
+                    ? quotedTotalForGuard(quote.total, option.key, 0)
+                    : null;
                 return (
                   <Card
                     key={option.key}
@@ -584,7 +646,15 @@ export default function BookServiceScreen() {
                     <Text variant="caption" color={colors.textSecondary}>
                       {option.hint}
                     </Text>
-                    {uplift > 0 ? (
+                    {tierPrice != null ? (
+                      <Text
+                        variant="bodySmall"
+                        weight="bold"
+                        color={selected ? colors.primary : colors.textHeading}
+                      >
+                        {formatRupees(tierPrice)}
+                      </Text>
+                    ) : uplift > 0 ? (
                       <Text variant="caption" color={colors.accentDark}>
                         +{uplift}%
                       </Text>
@@ -786,6 +856,13 @@ export default function BookServiceScreen() {
             </Text>
           )}
         </View>
+        {/*
+          The website's confirm button is GREEN — `linear-gradient(135deg,
+          #22c55e, #16a34a)` with a matching glow — not brand blue, and it
+          carries the price in the label. Both are reproduced: `success` is the
+          existing variant for #22C55E, so this reuses the Button primitive
+          rather than introducing a bespoke one.
+        */}
         <Button
           label={
             payingOnline
@@ -794,14 +871,18 @@ export default function BookServiceScreen() {
                 ? 'Placing your booking…'
                 : !location
                   ? 'Add your address'
-                  : 'Confirm booking'
+                  : ctaTotal != null
+                    ? `Confirm booking · ${formatRupees(ctaTotal)}`
+                    : 'Confirm booking'
           }
           icon={busy ? undefined : <Zap size={17} color={colors.textInverse} />}
           onPress={location ? confirm : openLocationPicker}
           loading={busy}
           disabled={Boolean(location) && !canConfirm}
+          variant={location && canConfirm ? 'success' : 'primary'}
           fullWidth
           size="large"
+          style={location && canConfirm ? styles.ctaGlow : undefined}
         />
       </View>
 
@@ -835,16 +916,65 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
 
   plainBar: { paddingHorizontal: screenPadding, paddingVertical: spacing.sm },
+  // `rgba(15,23,42,0.97)` on the web. Opaque here — there is nothing behind it
+  // to blur, and a translucent bar over a scrolling list costs a compositing
+  // layer on Android for no visual gain.
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
     paddingHorizontal: screenPadding,
     paddingBottom: spacing.base,
-    backgroundColor: colors.surface,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
+    backgroundColor: colors.textHeading,
   },
+  headerBack: { backgroundColor: 'rgba(255,255,255,0.10)' },
+
+  // `text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1.5 rounded-lg
+  //  ring-1 ring-blue-100` — the website's Change affordance.
+  changePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    backgroundColor: colors.primaryTint,
+    borderWidth: 1,
+    borderColor: colors.primarySoft,
+    borderRadius: radius.small,
+    paddingHorizontal: spacing.sm + 2,
+    paddingVertical: spacing.xs + 2,
+  },
+
+  // `shadow-[0_8px_24px_rgba(34,197,94,0.35)]` under the confirm button.
+  ctaGlow: Platform.select({
+    ios: {
+      shadowColor: '#22C55E',
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.35,
+      shadowRadius: 12,
+    },
+    android: { elevation: 4 },
+    default: {},
+  }) as object,
+  headerTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginTop: spacing.xxs,
+  },
+  // `w-5 h-5 rounded-lg` with the category gradient behind the service glyph.
+  headerChip: {
+    width: 22,
+    height: 22,
+    borderRadius: radius.small,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  // `w-6 h-1.5 rounded-full` step pills.
+  steps: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs + 2 },
+  step: { width: 24, height: 6, borderRadius: radius.pill },
+  stepIdle: { backgroundColor: 'rgba(255,255,255,0.20)' },
+  stepDone: { backgroundColor: 'rgba(255,255,255,0.40)' },
+  stepActive: { backgroundColor: colors.textInverse },
 
   scroll: { paddingHorizontal: screenPadding, paddingTop: spacing.lg, gap: spacing.lg },
 
