@@ -15,13 +15,25 @@
 
 import { colors } from './colors';
 
-/** Font-family names registered via `useFonts` in the root layout. */
+/**
+ * Font-family names registered via `useFonts` in the root layout.
+ *
+ * The mapping mirrors the weights the website actually loads
+ * (`client/index.html` requests Poppins 300;400;500;600;700;800;900):
+ *
+ *   400 → Regular · 500 → Medium · 600 → SemiBold
+ *   700 → Bold    · 800 → ExtraBold · 900 → Black
+ *
+ * React Native picks a face by NAME, not by numeric weight, so every weight the
+ * design uses has to exist as its own file. `black` is the one that was missing.
+ */
 export const fontFamily = {
   regular: 'Poppins-Regular',
   medium: 'Poppins-Medium',
   semibold: 'Poppins-SemiBold',
   bold: 'Poppins-Bold',
   extrabold: 'Poppins-ExtraBold',
+  black: 'Poppins-Black',
 } as const;
 
 export type FontFamilyKey = keyof typeof fontFamily;
@@ -49,6 +61,34 @@ export const typography = {
     color: colors.textHeading,
   },
 
+  /**
+   * The catalog hero title — `ServicesPage` / category pages.
+   * Measured on the live site: 30px/32.4px, weight 900, #0F172A, ls -0.75px.
+   * Poppins Black is what gives this its weight; it read a step lighter before
+   * the 900 face was bundled.
+   */
+  pageTitle: {
+    fontFamily: fontFamily.black,
+    fontSize: 30,
+    lineHeight: 34,
+    letterSpacing: -0.75,
+    color: colors.textHeading,
+  },
+
+  /**
+   * The little tracked label above a hero title — "ZAPPY CATALOG".
+   * 10px/15px, weight 900, brand blue, ls 2px, uppercase. Colour is left to the
+   * call site because the site tints it per section.
+   */
+  eyebrow: {
+    fontFamily: fontFamily.black,
+    fontSize: 10,
+    lineHeight: 15,
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+    color: colors.primary,
+  },
+
   /** Website `h1` scale — 28/36. Screen titles. */
   heading1: {
     fontFamily: fontFamily.bold,
@@ -64,6 +104,27 @@ export const typography = {
     fontSize: 20,
     lineHeight: 28,
     letterSpacing: -0.2,
+    color: colors.textHeading,
+  },
+
+  /**
+   * The website's content-section header.
+   *
+   * `HomePage.jsx` → `SectionHeader`: `text-[20px] font-bold text-slate-900
+   * tracking-tight`, measured live at 20px/30px, weight 700, #0F172A,
+   * letter-spacing -0.5px. This is the heading above every rail and grid on the
+   * site — "Popular Services", "Electronics Rescue", "Phone Repair".
+   *
+   * Distinct from `sectionTitle` (12px uppercase muted), which the website uses
+   * ONLY for settings groups on the profile page. Mobile had been rendering all
+   * of these as the small grey label, which is the single biggest reason the app
+   * read as generic rather than as Zappy.
+   */
+  sectionHeading: {
+    fontFamily: fontFamily.bold,
+    fontSize: 20,
+    lineHeight: 30,
+    letterSpacing: -0.5,
     color: colors.textHeading,
   },
 

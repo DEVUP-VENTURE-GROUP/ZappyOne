@@ -21,7 +21,7 @@
  * ----------------------------------------------------------------------------
  */
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Location from 'expo-location';
@@ -34,6 +34,7 @@ import {
   Heading,
   IconButton,
   ScalePressable,
+  SectionHeader,
   SectionTitle,
   Skeleton,
   Text,
@@ -50,6 +51,7 @@ import { HomeHero } from '../../components/home/HomeHero';
 import { CharacterGrid } from '../../components/home/CharacterGrid';
 import { ServiceIllustration } from '../../components/catalog/ServiceIllustration';
 import { illustrationFor } from '../../components/catalog/illustrations/resolve';
+import { serviceMatchesCategory } from '../../components/catalog/matchCategory';
 import { useGetCategoriesQuery, useGetServicesQuery } from '../../services/api/catalogApi';
 import { useListOrdersQuery } from '../../services/api/ordersApi';
 import { useListNotificationsQuery } from '../../services/api/notificationsApi';
@@ -59,7 +61,7 @@ import { colors, zappy } from '../../theme/colors';
 import { radius } from '../../theme/radius';
 import { spacing, screenPadding, bottomNavClearance } from '../../theme/spacing';
 import { useLayout } from '../../theme/dimensions';
-import { ACTIVE_ORDER_STATUSES, type Order } from '../../types/api';
+import { ACTIVE_ORDER_STATUSES, type Order, type ServiceCatalogItem } from '../../types/api';
 
 const STATUS_LABEL: Record<string, string> = {
   created: 'Booking placed',
@@ -69,6 +71,47 @@ const STATUS_LABEL: Record<string, string> = {
   arrived: 'Pro has arrived',
   in_progress: 'Service in progress',
 };
+
+/** How many category rails Home shows before it gets long. */
+const MAX_RAILS = 5;
+
+/**
+ * One tile in a horizontal service rail.
+ *
+ * Extracted from the Featured rail so the per-category rails below render the
+ * exact same tile — the alternative was a second copy of this markup, which is
+ * how two rails end up drifting apart.
+ */
+const ServiceTile = memo(function ServiceTile({
+  service,
+  onPress,
+}: {
+  service: ServiceCatalogItem;
+  onPress: (service: ServiceCatalogItem) => void;
+}) {
+  const drawing = illustrationFor(service, service.category);
+  const price = paiseToRupees(service.servicePricePaise || service.priceRangeMinPaise);
+  return (
+    <ScalePressable
+      style={styles.tile}
+      onPress={() => onPress(service)}
+      accessibilityRole="button"
+      accessibilityLabel={`${service.name}${price > 0 ? `, from ${formatRupees(price)}` : ''}`}
+    >
+      <View style={styles.tileArt}>
+        <ServiceIllustration name={drawing} size={40} categoryKey={service.category} />
+      </View>
+      <Text variant="bodySmall" weight="semibold" numberOfLines={2}>
+        {service.name}
+      </Text>
+      {price > 0 ? (
+        <Text variant="caption" weight="semibold" color={colors.primary}>
+          From {formatRupees(price)}
+        </Text>
+      ) : null}
+    </ScalePressable>
+  );
+});
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -150,6 +193,36 @@ export default function HomeScreen() {
     return (featured.length >= 4 ? featured : services).slice(0, 10);
   }, [services]);
 
+  /**
+   * Per-category service rails — the website's "Electronics Rescue",
+   * "Phone Repair", "Laptop Services" strips, each a titled header over a
+   * horizontally scrolling row.
+   *
+   * The website hardcodes both the rail titles AND their contents in
+   * `HomePage.jsx` (`MOST_BOOKED`, `PHONE_TILES`, …). Mobile must not carry
+   * invented business data, so the rails are derived instead: one per real
+   * category from `/catalog/categories`, in the server's own `sortOrder`,
+   * filled from the live catalog via the same matcher the Services tab uses.
+   *
+   * The badge is the category's true service count rather than a curated
+   * tagline — the website's taglines exist nowhere in the API, and making
+   * them up is exactly what "no fake data" rules out.
+   */
+  const categoryRails = useMemo(() => {
+    if (services.length === 0 || categories.length === 0) return [];
+
+    return [...categories]
+      .filter((c) => c.isActive !== false)
+      .sort((a, b) => (a.sortOrder ?? 999) - (b.sortOrder ?? 999))
+      .map((category) => ({
+        category,
+        items: services.filter((s) => serviceMatchesCategory(s, category)).slice(0, 8),
+      }))
+      // A rail of one or two tiles looks broken rather than curated.
+      .filter((rail) => rail.items.length >= 3)
+      .slice(0, MAX_RAILS);
+  }, [services, categories]);
+
   const recentCompleted = useMemo(
     () => orders.filter((o) => o.status === 'completed').slice(0, 3),
     [orders],
@@ -162,6 +235,11 @@ export default function HomeScreen() {
 
   // Actual pixel width of one grid slot, so long labels wrap on word boundaries.
   const categorySlot = Math.floor((width - screenPadding * 2) / categoryColumns);
+
+  const openService = useCallback(
+    (service: ServiceCatalogItem) => router.push(`/service/${service.code}` as never),
+    [router],
+  );
 
   const openCategory = useCallback(
     (key: string) => router.push(`/category/${key}` as never),
@@ -299,20 +377,10 @@ export default function HomeScreen() {
 
         {/* ── Popular Services — the site's character grid ─────────────── */}
         <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <SectionTitle style={styles.flex}>Popular Services</SectionTitle>
-            <ScalePressable
-              style={styles.seeAll}
-              onPress={() => router.push('/(tabs)/services')}
-              accessibilityRole="button"
-              accessibilityLabel="See all services"
-            >
-              <Text variant="bodySmall" weight="semibold" color={colors.primary}>
-                See all
-              </Text>
-              <ArrowRight size={15} color={colors.primary} />
-            </ScalePressable>
-          </View>
+          <SectionHeader
+            title="Popular Services"
+            onSeeAll={() => router.push('/(tabs)/services')}
+          />
           <CharacterGrid
             onSelect={(item) =>
               item.routeKey
@@ -325,18 +393,11 @@ export default function HomeScreen() {
         {/* ── Popular services ─────────────────────────────────────────── */}
         {servicesLoading || featuredServices.length > 0 ? (
           <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <SectionTitle style={styles.flex}>Featured services</SectionTitle>
-              <ScalePressable
-                onPress={() => router.push('/(tabs)/services')}
-                accessibilityRole="button"
-                accessibilityLabel="See all services"
-              >
-                <Text variant="bodySmall" weight="semibold" color={colors.primary}>
-                  See all
-                </Text>
-              </ScalePressable>
-            </View>
+            <SectionHeader
+              title="Featured services"
+              badge="Most booked"
+              onSeeAll={() => router.push('/(tabs)/services')}
+            />
 
             <ScrollView
               horizontal
@@ -351,54 +412,46 @@ export default function HomeScreen() {
                       <Skeleton width={80} height={12} style={{ marginTop: spacing.sm }} />
                     </View>
                   ))
-                : featuredServices.map((service) => {
-                    const drawing = illustrationFor(service, service.category);
-                    const price = paiseToRupees(
-                      service.servicePricePaise || service.priceRangeMinPaise,
-                    );
-                    return (
-                      <ScalePressable
-                        key={service.code}
-                        style={styles.tile}
-                        onPress={() => router.push(`/service/${service.code}` as never)}
-                        accessibilityRole="button"
-                        accessibilityLabel={`${service.name}${
-                          price > 0 ? `, from ${formatRupees(price)}` : ''
-                        }`}
-                      >
-                        <View style={styles.tileArt}>
-                          <ServiceIllustration name={drawing} size={40} categoryKey={service.category} />
-                        </View>
-                        <Text variant="bodySmall" weight="semibold" numberOfLines={2}>
-                          {service.name}
-                        </Text>
-                        {price > 0 ? (
-                          <Text variant="caption" weight="semibold" color={colors.primary}>
-                            From {formatRupees(price)}
-                          </Text>
-                        ) : null}
-                      </ScalePressable>
-                    );
-                  })}
+                : featuredServices.map((service) => (
+                    <ServiceTile key={service.code} service={service} onPress={openService} />
+                  ))}
             </ScrollView>
           </View>
         ) : null}
 
+        {/*
+          ── Per-category rails ────────────────────────────────────────────
+          The website's titled service strips. Each header is a real category
+          and each rail is filled from the live catalog, so nothing here is
+          curated copy or invented data.
+        */}
+        {categoryRails.map(({ category, items }) => (
+          <View key={category.key} style={styles.section}>
+            <SectionHeader
+              title={category.customerLabel}
+              badge={`${items.length} services`}
+              onSeeAll={() => openCategory(category.key)}
+            />
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.rail}
+              removeClippedSubviews
+            >
+              {items.map((service) => (
+                <ServiceTile key={service.code} service={service} onPress={openService} />
+              ))}
+            </ScrollView>
+          </View>
+        ))}
+
         {/* ── Book again ───────────────────────────────────────────────── */}
         {recentCompleted.length > 0 ? (
           <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <SectionTitle style={styles.flex}>Book again</SectionTitle>
-              <ScalePressable
-                onPress={() => router.push('/(tabs)/bookings')}
-                accessibilityRole="button"
-                accessibilityLabel="See all bookings"
-              >
-                <Text variant="bodySmall" weight="semibold" color={colors.primary}>
-                  See all
-                </Text>
-              </ScalePressable>
-            </View>
+            <SectionHeader
+              title="Book again"
+              onSeeAll={() => router.push('/(tabs)/bookings')}
+            />
 
             <View style={styles.stack}>
               {recentCompleted.map((order) => {

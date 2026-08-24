@@ -122,6 +122,7 @@ export default function ProfileScreen() {
               name={me?.name}
               phone={me?.phone}
               avatarUrl={me?.avatarUrl}
+              verified
               right={
                 <IconButton
                   icon={<Pencil size={16} color={colors.primary} />}

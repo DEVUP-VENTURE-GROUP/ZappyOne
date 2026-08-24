@@ -6,6 +6,9 @@
 export { Text, Heading, SectionTitle } from './Text';
 export type { TextProps, HeadingProps } from './Text';
 
+export { SectionHeader } from './SectionHeader';
+export type { SectionHeaderProps } from './SectionHeader';
+
 export { ScalePressable } from './Pressable';
 export type { ScalePressableProps } from './Pressable';
 

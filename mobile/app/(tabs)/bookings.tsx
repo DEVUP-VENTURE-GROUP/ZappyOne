@@ -32,7 +32,6 @@ import {
   Appear,
   EmptyState,
   ErrorState,
-  Heading,
   SectionTitle,
   SkeletonList,
   Text,
@@ -158,7 +157,7 @@ export default function BookingsScreen() {
     return (
       <View style={[styles.root, { paddingTop: insets.top + spacing.sm }]}>
         <View style={styles.header}>
-          <Heading level={1}>My bookings</Heading>
+          <Text variant="pageTitle">My bookings</Text>
           <Text variant="muted">Everything you&apos;ve booked with Zappy</Text>
         </View>
         <View style={styles.listPad}>
@@ -173,7 +172,7 @@ export default function BookingsScreen() {
     return (
       <View style={[styles.root, { paddingTop: insets.top + spacing.sm }]}>
         <View style={styles.header}>
-          <Heading level={1}>My bookings</Heading>
+          <Text variant="pageTitle">My bookings</Text>
         </View>
         <ErrorState
           message={getApiErrorMessage(error, "We couldn't load your bookings.")}
@@ -186,7 +185,7 @@ export default function BookingsScreen() {
   return (
     <View style={[styles.root, { paddingTop: insets.top + spacing.sm }]}>
       <View style={styles.header}>
-        <Heading level={1}>My bookings</Heading>
+        <Text variant="pageTitle">My bookings</Text>
         <Text variant="muted">Everything you&apos;ve booked with Zappy</Text>
       </View>
 

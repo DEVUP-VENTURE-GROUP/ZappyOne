@@ -20,7 +20,6 @@ import {
   Card,
   EmptyState,
   ErrorState,
-  Heading,
   SkeletonList,
   StatusBadge,
   Text,
@@ -47,7 +46,7 @@ export default function ChatListScreen() {
   return (
     <View style={[styles.root, { paddingTop: insets.top + spacing.sm }]}>
       <View style={styles.header}>
-        <Heading level={1}>Chats</Heading>
+        <Text variant="pageTitle">Chats</Text>
         <Text variant="muted">Message the pro handling your booking</Text>
       </View>
 

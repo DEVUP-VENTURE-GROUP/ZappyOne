@@ -40,4 +40,8 @@ export const fontAssets = {
   'Poppins-SemiBold': require('../assets/fonts/Poppins-SemiBold.ttf'),
   'Poppins-Bold': require('../assets/fonts/Poppins-Bold.ttf'),
   'Poppins-ExtraBold': require('../assets/fonts/Poppins-ExtraBold.ttf'),
+  // 900. The website loads Poppins 300–900 and leans on Black for its punchiest
+  // headings — section titles, price figures, and almost every heading on the
+  // worker surface. Without it those rendered a weight lighter than the web.
+  'Poppins-Black': require('../assets/fonts/Poppins-Black.ttf'),
 } as const;

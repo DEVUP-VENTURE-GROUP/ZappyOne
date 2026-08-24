@@ -26,7 +26,7 @@ export interface TextProps extends RNTextProps {
   color?: string;
   align?: TextStyle['textAlign'];
   /** Convenience for the common "make this line bolder" case. */
-  weight?: 'regular' | 'medium' | 'semibold' | 'bold' | 'extrabold';
+  weight?: 'regular' | 'medium' | 'semibold' | 'bold' | 'extrabold' | 'black';
   children?: React.ReactNode;
 }
 
@@ -36,6 +36,7 @@ const weightFamily = {
   semibold: 'Poppins-SemiBold',
   bold: 'Poppins-Bold',
   extrabold: 'Poppins-ExtraBold',
+  black: 'Poppins-Black',
 } as const;
 
 function TextBase({

@@ -36,7 +36,7 @@
  */
 
 import React, { useCallback, useMemo } from 'react';
-import { Image, ScrollView, StyleSheet, View } from 'react-native';
+import { Image, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -44,9 +44,12 @@ import {
   ChevronLeft,
   Clock,
   Info,
+  ListChecks,
   PackageCheck,
   SearchX,
   ShieldCheck,
+  Sparkles,
+  type LucideIcon,
 } from 'lucide-react-native';
 import {
   Button,
@@ -77,7 +80,36 @@ import { colors, zappy } from '../../theme/colors';
 import { radius } from '../../theme/radius';
 import { shadows } from '../../theme/shadows';
 import { spacing, screenPadding } from '../../theme/spacing';
+import { fontFamily } from '../../theme/typography';
 import type { ServiceCatalogItem } from '../../types/api';
+
+/**
+ * A section heading on this screen.
+ *
+ * `ServiceDetailPage.jsx` → `Section`:
+ *   h2, 17px font-black tracking-tight text-navy-900, mb-3,
+ *   with a category-accent icon at 17px / strokeWidth 2.6 and an 8px gap.
+ *
+ * Deliberately not `SectionHeader` — that is the 20px catalog heading with a
+ * "See all" affordance. This one is smaller, carries an accent icon, and has
+ * no action, so sharing one component would mean bending both out of shape.
+ */
+function DetailHeading({
+  title,
+  icon: Icon,
+  accent,
+}: {
+  title: string;
+  icon: LucideIcon;
+  accent: string;
+}) {
+  return (
+    <View style={styles.detailHeading}>
+      <Icon size={17} strokeWidth={2.6} color={accent} />
+      <Text style={styles.detailHeadingText}>{title}</Text>
+    </View>
+  );
+}
 
 function formatDuration(minutes?: number): string | null {
   if (!minutes) return null;
@@ -222,7 +254,33 @@ export default function ServiceDetailScreen() {
             style={styles.heroBack}
           />
 
-          <View style={styles.heroArt}>
+          {/*
+            Title block left, artwork right — the website's hero layout. The
+            eyebrow, name, description and quick facts all sit ON the gradient
+            here rather than below it, which is what makes the category colour
+            read as the page's identity instead of a decorative band.
+          */}
+          <View style={styles.heroRow}>
+            <View style={styles.heroText}>
+              {category ? (
+                <View style={styles.heroEyebrow}>
+                  <Text variant="eyebrow" color={colors.textInverse} style={styles.heroEyebrowText}>
+                    {category.customerLabel}
+                  </Text>
+                </View>
+              ) : null}
+
+              <Text style={styles.heroTitle} numberOfLines={3}>
+                {name}
+              </Text>
+
+              {description ? (
+                <Text style={styles.heroSubtitle} numberOfLines={3}>
+                  {description}
+                </Text>
+              ) : null}
+            </View>
+
             {artwork ? (
               <Image
                 source={{ uri: artwork }}
@@ -233,44 +291,42 @@ export default function ServiceDetailScreen() {
               />
             ) : (
               <View style={styles.heroIcon}>
-                <ServiceIllustration name={drawing} size={64} onColor spotlight={false} />
+                <ServiceIllustration name={drawing} size={56} onColor spotlight={false} />
               </View>
             )}
           </View>
 
-          {category ? (
-            <Text variant="label" color="rgba(255,255,255,0.8)" style={styles.heroCategory}>
-              {category.customerLabel}
-            </Text>
-          ) : null}
-          <Heading level={1} color={colors.textInverse}>
-            {name}
-          </Heading>
+          {/* Quick facts. The duration is the solid-white "primary" chip on the
+              website; everything else is a translucent one. */}
+          <View style={styles.heroChips}>
+            {duration ? (
+              <View style={[styles.heroChip, styles.heroChipSolid]}>
+                <Clock size={12} strokeWidth={2.8} color={deep} />
+                <Text variant="chip" weight="black" color={deep}>
+                  {duration}
+                </Text>
+              </View>
+            ) : null}
+            {checklist.length > 0 ? (
+              <View style={styles.heroChip}>
+                <ListChecks size={12} strokeWidth={2.8} color={colors.textInverse} />
+                <Text variant="chip" weight="bold" color={colors.textInverse}>
+                  {checklist.length}-point checklist
+                </Text>
+              </View>
+            ) : null}
+            <View style={styles.heroChip}>
+              <ShieldCheck size={12} strokeWidth={2.8} color={colors.textInverse} />
+              <Text variant="chip" weight="bold" color={colors.textInverse}>
+                Verified pros
+              </Text>
+            </View>
+          </View>
         </Gradient>
 
         <View style={styles.body}>
-          {/* ── Quick facts ────────────────────────────────────────────── */}
-          <View style={styles.chips}>
-            {duration ? (
-              <Chip
-                label={duration}
-                tone="neutral"
-                icon={<Clock size={12} color={colors.textSecondary} />}
-              />
-            ) : null}
-            {service.isFeatured ? <Chip label="Popular" tone="accent" /> : null}
-            <Chip
-              label="Verified pros"
-              tone="success"
-              icon={<ShieldCheck size={12} color={colors.successDark} />}
-            />
-          </View>
-
-          {description ? (
-            <Text variant="body" style={styles.description}>
-              {description}
-            </Text>
-          ) : null}
+          {/* The description is rendered in the hero, on the gradient, the way
+              the website does it — repeating it here showed it twice. */}
 
           {/* ── Price ──────────────────────────────────────────────────── */}
           <Card variant="flat" style={styles.priceCard}>
@@ -307,7 +363,7 @@ export default function ServiceDetailScreen() {
           {/* ── What's included ────────────────────────────────────────── */}
           {checklist.length > 0 ? (
             <View style={styles.section}>
-              <SectionTitle>What&apos;s included</SectionTitle>
+              <DetailHeading title="What's included" icon={ListChecks} accent={accent} />
               <Card variant="outline">
                 {checklist.map((entry, index) => (
                   <View key={`${entry.item}-${index}`}>
@@ -329,7 +385,7 @@ export default function ServiceDetailScreen() {
           {/* ── What the pro brings ────────────────────────────────────── */}
           {tools.length > 0 ? (
             <View style={styles.section}>
-              <SectionTitle>What your pro brings</SectionTitle>
+              <DetailHeading title="What your pro brings" icon={PackageCheck} accent={accent} />
               <View style={styles.toolRow}>
                 {tools.map((tool) => (
                   <Chip
@@ -348,7 +404,7 @@ export default function ServiceDetailScreen() {
           {/* ── Related ────────────────────────────────────────────────── */}
           {related.length > 0 ? (
             <View style={styles.section}>
-              <SectionTitle>Related services</SectionTitle>
+              <DetailHeading title="Related services" icon={Sparkles} accent={accent} />
               <View style={styles.relatedStack}>
                 {related.map((item) => (
                   <ServiceCard
@@ -374,12 +430,18 @@ export default function ServiceDetailScreen() {
             </Text>
           </View>
         ) : null}
+        {/*
+          The website's CTA is `bg-[var(--cat-accent)]` with a category-tinted
+          glow, not brand blue — the whole screen carries the vertical's colour,
+          and a blue button here would be the one element that ignores it.
+        */}
         <Button
           label="Book now"
           onPress={() => router.push(`/book/${service.code}` as never)}
           size="large"
           fullWidth
           accessibilityLabel={`Book ${name}`}
+          style={[styles.cta, { backgroundColor: accent, shadowColor: accent }]}
         />
       </View>
     </View>
@@ -398,23 +460,97 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: radius.extraLarge,
     borderBottomRightRadius: radius.extraLarge,
   },
-  heroBack: { backgroundColor: 'rgba(255,255,255,0.18)' },
-  heroArt: { marginTop: spacing.base, alignItems: 'flex-start' },
+  heroBack: { backgroundColor: 'rgba(255,255,255,0.15)' },
+
+  // `shadow-[0_10px_24px_-10px_var(--cat-glow)]` — the colour is applied at the
+  // call site because it follows the category.
+  cta: Platform.select({
+    ios: { shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.35, shadowRadius: 12 },
+    android: { elevation: 4 },
+    default: {},
+  }) as object,
+
+  // `text-[17px] font-black tracking-tight text-navy-900`, mb-3, gap-2
+  detailHeading: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  detailHeadingText: {
+    fontFamily: fontFamily.black,
+    fontSize: 17,
+    lineHeight: 24,
+    letterSpacing: -0.4,
+    color: colors.textHeading,
+  },
+
+  // Title block and artwork side by side — `mt-5 flex items-end` on the web.
+  heroRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.base,
+    marginTop: spacing.lg,
+  },
+  heroText: { flex: 1 },
+
+  // `rounded-full bg-white/15 px-2.5 py-1`
+  heroEyebrow: {
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.sm + 2,
+    paddingVertical: spacing.xs,
+  },
+  // The website tracks this at 0.14em; `eyebrow` ships 2px for the 10px size.
+  heroEyebrowText: { letterSpacing: 1.4 },
+
+  // `text-[26px] font-black leading-[1.12] tracking-tight`
+  heroTitle: {
+    marginTop: spacing.sm,
+    fontFamily: fontFamily.black,
+    fontSize: 26,
+    lineHeight: 29,
+    letterSpacing: -0.65,
+    color: colors.textInverse,
+  },
+  // 13.5/21.9 medium, white at 80%.
+  heroSubtitle: {
+    marginTop: spacing.sm,
+    fontFamily: fontFamily.medium,
+    fontSize: 13.5,
+    lineHeight: 22,
+    color: 'rgba(255,255,255,0.8)',
+  },
+
+  heroChips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.base },
+  // `rounded-full bg-white/15 px-2.5 py-1`
+  heroChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs + 2,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.sm + 2,
+    paddingVertical: spacing.xs,
+  },
+  // The duration chip is solid white with the category's deep tone.
+  heroChipSolid: { backgroundColor: colors.surface },
+
   heroImage: {
-    width: '100%',
-    height: 140,
-    borderRadius: radius.large,
+    width: 76,
+    height: 76,
+    borderRadius: radius.medium,
     backgroundColor: 'rgba(255,255,255,0.12)',
   },
   heroIcon: {
-    width: 72,
-    height: 72,
+    width: 76,
+    height: 76,
     borderRadius: radius.medium,
     backgroundColor: 'rgba(255,255,255,0.18)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  heroCategory: { marginTop: spacing.base, marginBottom: spacing.xxs },
 
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   description: { marginTop: spacing.base },

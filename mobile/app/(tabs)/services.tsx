@@ -28,11 +28,11 @@ import {
   Chip,
   EmptyState,
   ErrorState,
-  Heading,
   SearchBar,
   SectionTitle,
   Skeleton,
   Text,
+  formatRupees,
 } from '../../components/ui';
 import { CategoryCard, ServiceCard } from '../../components/catalog/ServiceCard';
 import {
@@ -40,6 +40,7 @@ import {
   countByCategory,
   serviceMatchesCategory,
 } from '../../components/catalog/matchCategory';
+import { StatPill } from '../../components/catalog/StatPill';
 import { useGetCategoriesQuery, useGetServicesQuery } from '../../services/api/catalogApi';
 import { getApiErrorMessage } from '../../services/api/apiSlice';
 import { colors } from '../../theme/colors';
@@ -70,6 +71,32 @@ export default function ServicesScreen() {
   useEffect(() => {
     if (params.category) setActiveKey(params.category);
   }, [params.category]);
+
+  /**
+   * The three figures in the hero pills, computed from the catalog we already
+   * hold. Null while it is still loading so the row doesn't flash zeroes.
+   */
+  const catalogStats = useMemo(() => {
+    if (services.length === 0) return null;
+
+    let fromPaise = Infinity;
+    let fastestMin = Infinity;
+    let withChecklist = 0;
+    for (const s of services) {
+      const paise = s.servicePricePaise || s.priceRangeMinPaise || 0;
+      if (paise > 0 && paise < fromPaise) fromPaise = paise;
+      const mins = s.estimatedDurationMinutes || 0;
+      if (mins > 0 && mins < fastestMin) fastestMin = mins;
+      if ((s.checklist?.length ?? 0) > 0) withChecklist += 1;
+    }
+
+    return {
+      count: services.length,
+      fromRupees: Number.isFinite(fromPaise) ? Math.round(fromPaise / 100) : null,
+      fastestMin: Number.isFinite(fastestMin) ? fastestMin : null,
+      withChecklist,
+    };
+  }, [services]);
 
   /** Service counts per category, for the rail's subtitle. */
   const countsByKey = useMemo(
@@ -137,10 +164,34 @@ export default function ServicesScreen() {
 
   return (
     <View style={[styles.root, { paddingTop: insets.top + spacing.sm }]}>
-      {/* ── Header ───────────────────────────────────────────────────── */}
+      {/*
+        ── Hero ───────────────────────────────────────────────────────────
+        Matches the website's catalog hero: a tracked blue eyebrow, a Black
+        30px title, a medium slate subtitle, then the at-a-glance stat pills.
+        Every figure is derived from the live catalog — nothing is hardcoded.
+      */}
       <View style={styles.header}>
-        <Heading level={1}>Services</Heading>
-        <Text variant="muted">Book a verified professional</Text>
+        <Text variant="eyebrow">Zappy catalog</Text>
+        <Text variant="pageTitle">All Services</Text>
+        <Text variant="muted" style={styles.subtitle}>
+          Every Zappy service, one place
+        </Text>
+
+        {catalogStats ? (
+          <View style={styles.stats}>
+            <StatPill label={`${catalogStats.count} services`} />
+            {catalogStats.fromRupees != null ? (
+              <StatPill label={`From ${formatRupees(catalogStats.fromRupees)}`} />
+            ) : null}
+            {catalogStats.fastestMin != null ? (
+              <StatPill label={`Fastest ${catalogStats.fastestMin} min`} />
+            ) : null}
+            {catalogStats.withChecklist > 0 ? (
+              <StatPill label={`${catalogStats.withChecklist} with job checklists`} />
+            ) : null}
+          </View>
+        ) : null}
+
         <SearchBar
           value={query}
           onChangeText={setQuery}
@@ -253,7 +304,9 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   flex: { flex: 1 },
 
-  header: { paddingHorizontal: screenPadding, gap: spacing.xxs },
+  header: { paddingHorizontal: screenPadding },
+  subtitle: { marginTop: spacing.xs },
+  stats: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.base },
   search: { marginTop: spacing.md },
 
   list: { paddingHorizontal: screenPadding, paddingTop: spacing.base, flexGrow: 1 },
