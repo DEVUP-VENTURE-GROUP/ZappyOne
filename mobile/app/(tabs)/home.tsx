@@ -51,6 +51,7 @@ import { HomeHero } from '../../components/home/HomeHero';
 import { CharacterGrid } from '../../components/home/CharacterGrid';
 import { ServiceIllustration } from '../../components/catalog/ServiceIllustration';
 import { illustrationFor } from '../../components/catalog/illustrations/resolve';
+import { ServiceTile } from '../../components/catalog/ServiceTile';
 import { serviceMatchesCategory } from '../../components/catalog/matchCategory';
 import { useGetCategoriesQuery, useGetServicesQuery } from '../../services/api/catalogApi';
 import { useListOrdersQuery } from '../../services/api/ordersApi';
@@ -74,44 +75,6 @@ const STATUS_LABEL: Record<string, string> = {
 
 /** How many category rails Home shows before it gets long. */
 const MAX_RAILS = 5;
-
-/**
- * One tile in a horizontal service rail.
- *
- * Extracted from the Featured rail so the per-category rails below render the
- * exact same tile — the alternative was a second copy of this markup, which is
- * how two rails end up drifting apart.
- */
-const ServiceTile = memo(function ServiceTile({
-  service,
-  onPress,
-}: {
-  service: ServiceCatalogItem;
-  onPress: (service: ServiceCatalogItem) => void;
-}) {
-  const drawing = illustrationFor(service, service.category);
-  const price = paiseToRupees(service.servicePricePaise || service.priceRangeMinPaise);
-  return (
-    <ScalePressable
-      style={styles.tile}
-      onPress={() => onPress(service)}
-      accessibilityRole="button"
-      accessibilityLabel={`${service.name}${price > 0 ? `, from ${formatRupees(price)}` : ''}`}
-    >
-      <View style={styles.tileArt}>
-        <ServiceIllustration name={drawing} size={40} categoryKey={service.category} />
-      </View>
-      <Text variant="bodySmall" weight="semibold" numberOfLines={2}>
-        {service.name}
-      </Text>
-      {price > 0 ? (
-        <Text variant="caption" weight="semibold" color={colors.primary}>
-          From {formatRupees(price)}
-        </Text>
-      ) : null}
-    </ScalePressable>
-  );
-});
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -575,15 +538,6 @@ const styles = StyleSheet.create({
 
   rail: { gap: spacing.md, paddingTop: spacing.md, paddingRight: spacing.lg },
   tile: { width: 108, gap: spacing.sm },
-  tileArt: {
-    width: 108,
-    height: 108,
-    borderRadius: radius.large,
-    backgroundColor: zappy[50],
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
 
   stack: { gap: spacing.md, marginTop: spacing.sm },
   rebookRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
