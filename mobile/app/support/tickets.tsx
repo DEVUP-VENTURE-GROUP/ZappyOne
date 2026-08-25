@@ -19,10 +19,10 @@
  */
 
 import React, { useCallback, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Linking, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { AlertCircle, ChevronRight, Clock, MessageCircle, Plus } from 'lucide-react-native';
+import { AlertCircle, ChevronRight, Clock, Headphones, MessageCircle, Plus } from 'lucide-react-native';
 import {
   Appear,
   BottomSheet,
@@ -32,10 +32,10 @@ import {
   EmptyState,
   ErrorState,
   ScalePressable,
-  ScreenHeader,
   SkeletonList,
   Text,
 } from '../../components/ui';
+import { SupportHeader } from '../../components/support/SupportHeader';
 import {
   humanizeCategory,
   PRIORITY_SLA_HOURS,
@@ -49,7 +49,7 @@ import { getApiErrorMessage } from '../../services/api/apiSlice';
 import { colors } from '../../theme/colors';
 import { radius } from '../../theme/radius';
 import { screenPadding, spacing } from '../../theme/spacing';
-import { typography } from '../../theme/typography';
+import { fontFamily, typography } from '../../theme/typography';
 import {
   SUPPORT_CATEGORIES,
   SUPPORT_PRIORITIES,
@@ -69,6 +69,9 @@ const CATEGORY_LABEL: Record<SupportCategory, string> = {
 };
 
 const MIN_DESCRIPTION = 10; // server: Joi.string().min(10)
+
+/** The support address the website publishes on this page. */
+const SUPPORT_EMAIL = 'support@zappyone.com';
 
 export default function TicketsScreen() {
   const router = useRouter();
@@ -128,7 +131,14 @@ export default function TicketsScreen() {
     <View style={styles.root}>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={{ paddingTop: insets.top }}>
-        <ScreenHeader title="My tickets" onBack={() => router.back()} />
+        <SupportHeader
+          title="Help & Support"
+          icon={Headphones}
+          iconColor="#A78BFA"
+          onBack={() => router.back()}
+          actionLabel="New ticket"
+          onAction={() => setSheetOpen(true)}
+        />
       </View>
 
       <ScrollView
@@ -138,6 +148,31 @@ export default function TicketsScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
+        {/*
+          Direct email support — the website leads this page with it, on a dark
+          indigo card, so the fastest route to a human is visible before any
+          ticket list. The address is the website's own published one.
+        */}
+        <Appear>
+          <View style={styles.emailCard}>
+            <View style={styles.flex}>
+              <Text variant="eyebrow" color="#A5B4FC">
+                Direct email support
+              </Text>
+              <Text style={styles.emailAddress}>{SUPPORT_EMAIL}</Text>
+              <Text variant="caption" color="rgba(255,255,255,0.55)">
+                24/7 dedicated customer resolution desk
+              </Text>
+            </View>
+            <Button
+              label="Email us"
+              size="small"
+              onPress={() => Linking.openURL(`mailto:${SUPPORT_EMAIL}`)}
+              style={styles.emailButton}
+            />
+          </View>
+        </Appear>
+
         {isLoading ? (
           <SkeletonList count={3} />
         ) : error ? (
@@ -331,6 +366,24 @@ export default function TicketsScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
+  // `bg-indigo-950/80 border border-indigo-800/50 rounded-2xl p-4`
+  emailCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    backgroundColor: '#1E1B4B',
+    borderWidth: 1,
+    borderColor: 'rgba(55,48,163,0.5)',
+    borderRadius: radius.medium,
+    padding: spacing.base,
+  },
+  emailAddress: {
+    fontFamily: fontFamily.extrabold,
+    fontSize: 14,
+    lineHeight: 20,
+    color: colors.textInverse,
+  },
+  emailButton: { backgroundColor: '#4F46E5' },
   scroll: { paddingHorizontal: screenPadding, paddingTop: spacing.base, gap: spacing.md },
   flex: { flex: 1 },
   card: { gap: spacing.sm },

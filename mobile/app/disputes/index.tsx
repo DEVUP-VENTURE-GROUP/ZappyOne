@@ -13,7 +13,7 @@ import React, { useMemo } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ChevronRight, Clock, MessageCircle } from 'lucide-react-native';
+import { ChevronRight, Clock, MessageCircle, Scale } from 'lucide-react-native';
 import {
   Appear,
   Card,
@@ -21,10 +21,10 @@ import {
   EmptyState,
   ErrorState,
   ScalePressable,
-  ScreenHeader,
   SkeletonList,
   Text,
 } from '../../components/ui';
+import { SupportHeader } from '../../components/support/SupportHeader';
 import { disputeStatusMeta, humanizeCategory } from '../../components/support/statusMeta';
 import { useListMyDisputesQuery } from '../../services/api/disputesApi';
 import { getApiErrorMessage } from '../../services/api/apiSlice';
@@ -48,7 +48,14 @@ export default function DisputesScreen() {
     <View style={styles.root}>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={{ paddingTop: insets.top }}>
-        <ScreenHeader title="Reported issues" onBack={() => router.back()} />
+        {/* Same bar as Support — the website uses one header for both, tinting
+            the icon per page (blue here, violet there). */}
+        <SupportHeader
+          title="My Disputes"
+          icon={Scale}
+          iconColor="#60A5FA"
+          onBack={() => router.back()}
+        />
       </View>
 
       <ScrollView

@@ -91,6 +91,9 @@ function NotificationRow({
         padding={spacing.base}
         style={unread ? styles.rowUnread : undefined}
       >
+        {/* The website marks an unread card with a left accent bar in addition
+            to the tint — colour alone is never the only signal. */}
+        {unread ? <View style={styles.unreadBar} /> : null}
         <View style={styles.row}>
           <View style={[styles.icon, { backgroundColor: palette.bg }]}>
             <Icon size={18} color={palette.fg} />
@@ -144,14 +147,42 @@ export default function NotificationsScreen() {
     return () => socketClient.off('notification', handler);
   }, [socketClient, refetch]);
 
-  /** New / Earlier, so a fresh alert isn't lost in a long history. */
+  /**
+   * Grouped by DAY — Today / Yesterday / Earlier — which is how the website
+   * sections this list (`groupByDay` in NotificationsPage.jsx).
+   *
+   * This replaces a New/Earlier split on read-state. Read-state is still
+   * unmistakable on each card (tinted surface, accent bar, heavier title, dot),
+   * so it did not need to drive the sectioning too — and a date is the more
+   * useful axis once a few things have been read.
+   */
   const sections = useMemo(() => {
-    const unread = notifications.filter((n) => !n.readAt);
-    const read = notifications.filter((n) => n.readAt);
-    const out: { title: string; data: AppNotification[] }[] = [];
-    if (unread.length > 0) out.push({ title: 'New', data: unread });
-    if (read.length > 0) out.push({ title: 'Earlier', data: read });
-    return out;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+
+    const buckets: Record<string, AppNotification[]> = {
+      Today: [],
+      Yesterday: [],
+      Earlier: [],
+    };
+
+    for (const n of notifications) {
+      const d = new Date(n.createdAt);
+      if (Number.isNaN(d.getTime())) {
+        buckets.Earlier.push(n);
+        continue;
+      }
+      d.setHours(0, 0, 0, 0);
+      if (d >= today) buckets.Today.push(n);
+      else if (d >= yesterday) buckets.Yesterday.push(n);
+      else buckets.Earlier.push(n);
+    }
+
+    return (['Today', 'Yesterday', 'Earlier'] as const)
+      .filter((k) => buckets[k].length > 0)
+      .map((k) => ({ title: k, data: buckets[k] }));
   }, [notifications]);
 
   const open = useCallback(
@@ -187,6 +218,12 @@ export default function NotificationsScreen() {
             ) : undefined
           }
         />
+        {/* The website sets expectations under the title rather than leaving
+            the page to explain itself through its contents. */}
+        <Text variant="muted" style={styles.subtitle}>
+          Stay updated with your bookings, payments, account activity, and
+          service updates.
+        </Text>
       </View>
 
       {isLoading ? (
@@ -241,6 +278,7 @@ export default function NotificationsScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   flex: { flex: 1 },
+  subtitle: { paddingHorizontal: screenPadding, paddingBottom: spacing.md },
   pad: { paddingHorizontal: screenPadding },
 
   list: { paddingHorizontal: screenPadding, flexGrow: 1 },
@@ -260,6 +298,16 @@ const styles = StyleSheet.create({
   // Unread carries a tinted surface AND a dot AND a heavier title — colour on
   // its own is not a reliable signal.
   rowUnread: { backgroundColor: colors.primaryTint, borderColor: colors.primarySoft },
+  unreadBar: {
+    position: 'absolute',
+    left: 0,
+    top: spacing.md,
+    bottom: spacing.md,
+    width: 4,
+    borderTopRightRadius: radius.pill,
+    borderBottomRightRadius: radius.pill,
+    backgroundColor: colors.primary,
+  },
 
   icon: {
     width: 38,
