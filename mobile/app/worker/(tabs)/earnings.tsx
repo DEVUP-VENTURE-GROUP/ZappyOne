@@ -42,6 +42,7 @@ import {
   ReceiptText,
   TrendingUp,
   Wallet as WalletIcon,
+  Info,
 } from 'lucide-react-native';
 import {
   Appear,
@@ -64,12 +65,15 @@ import {
   useGetWorkerMeQuery,
 } from '../../../services/api/workerApi';
 import { getApiErrorMessage } from '../../../services/api/apiSlice';
-import { accent, colors } from '../../../theme/colors';
+import { accent, colors, zappy } from '../../../theme/colors';
 import { radius } from '../../../theme/radius';
 import { bottomNavClearance, screenPadding, spacing } from '../../../theme/spacing';
 import type { WorkerJobEarning } from '../../../types/api';
 
 /** The three windows `/workers/earnings` accepts, and their ledger equivalents. */
+/** `linear-gradient(135deg,#0f172a,#1e1b4b,#1e3a5f)` on the web. */
+const EARNINGS_GRADIENT = ['#0F172A', '#1E3A5F'] as const;
+
 const RANGES = [
   { key: 'today', label: 'Today', period: undefined },
   { key: 'week', label: 'This week', period: 'week' },
@@ -224,9 +228,14 @@ export default function WorkerEarningsScreen() {
           />
         ) : (
           <Appear>
-            {/* Amber ramp, not amber→navy: that pair's midpoint is brown.
-                Same fix as the customer rewards hero. */}
-            <Gradient colors={[accent[500], accent[700]]} style={styles.headline}>
+            {/*
+              The website's earnings header is a dark navy→indigo sweep —
+              `linear-gradient(135deg,#0f172a 0%,#1e1b4b 50%,#1e3a5f 100%)` —
+              with the total sitting on it in Black, not an amber card. The
+              two-stop primitive takes its endpoints; the indigo midpoint reads
+              through the blend.
+            */}
+            <Gradient colors={EARNINGS_GRADIENT} style={styles.headline}>
               <Text variant="label" color="rgba(255,255,255,0.8)">
                 {activeRange.label.toUpperCase()}
               </Text>
@@ -307,7 +316,19 @@ export default function WorkerEarningsScreen() {
         <Appear delay={120}>
           <View style={styles.block}>
             <View style={styles.blockHead}>
-              <SectionTitle style={styles.blockTitle}>Recent jobs</SectionTitle>
+              {/*
+                The website calls this "Job Breakdown" and precedes it with a
+                note that the platform fee is deducted per job — the one thing
+                a worker most needs to understand about these figures.
+              */}
+              <View style={styles.feeNote}>
+                <Info size={15} color={zappy[600]} />
+                <Text variant="caption" color={zappy[800]} style={styles.flex}>
+                  A platform fee is deducted from each job. Your plan decides
+                  how much.
+                </Text>
+              </View>
+              <SectionTitle style={styles.blockTitle}>Job breakdown</SectionTitle>
               {summary?.count ? (
                 <Text variant="caption" color={colors.textMuted}>
                   {summary.count} total
@@ -496,6 +517,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  // `bg-indigo-50/50 border border-indigo-100/50 rounded-2xl p-4` on the web.
+  feeNote: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.md,
+    backgroundColor: zappy[50],
+    borderWidth: 1,
+    borderColor: zappy[100],
+    borderRadius: radius.medium,
+    padding: spacing.base,
+    marginBottom: spacing.base,
   },
   blockTitle: { marginBottom: 0 },
 

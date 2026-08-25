@@ -54,6 +54,7 @@ import {
   Skeleton,
   Text,
 } from '../../../components/ui';
+import { WorkerStatGrid } from '../../../components/worker/WorkerStatGrid';
 import { EarningsSummary, OnlineHero } from '../../../components/worker/WorkerUI';
 import { ActiveJobCard, OfferCard } from '../../../components/worker/JobCards';
 import {
@@ -476,6 +477,22 @@ export default function WorkerDashboardScreen() {
             </Card>
           </Appear>
         ) : null}
+
+        {/*
+          ── Stat grid ──────────────────────────────────────────────────────
+          The website leads its dashboard with a grid of tinted stat cards.
+          Only the ones the mobile API can genuinely fill are rendered — see
+          `WorkerStatGrid` for which, and why the wallet card is absent.
+        */}
+        <Appear delay={100}>
+          <WorkerStatGrid
+            worker={worker}
+            earningsRupees={earnings?.earningsRupees}
+            jobsToday={earnings?.jobs}
+            onOpenEarnings={() => router.push('/worker/(tabs)/earnings')}
+            onOpenJobs={() => router.push('/worker/(tabs)/offers')}
+          />
+        </Appear>
 
         {/* ── Earnings ─────────────────────────────────────────────────── */}
         <Appear delay={120}>
