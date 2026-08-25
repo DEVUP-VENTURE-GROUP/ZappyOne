@@ -193,8 +193,12 @@ export default function BookServiceScreen() {
     dispatch(locationSeeded(location));
     // `as never`: typed-routes stale-cache artifact (route is real — see
     // app/location/picker.tsx). Clears on the next `expo start`/`eas build`.
-    router.push('/location/picker' as never);
-  }, [dispatch, router, location]);
+    // The service CODE travels as a param so the picker can title itself the
+    // way the website does ("Where do you need help? · Car Wash"). It is
+    // catalog data, not personal data — the address still goes through the
+    // store for the reason above.
+    router.push(`/location/picker?service=${encodeURIComponent(serviceCode)}` as never);
+  }, [dispatch, router, location, serviceCode]);
   const quoteError = quoteState.error
     ? getApiErrorMessage(quoteState.error, 'Pricing is unavailable right now.')
     : null;
@@ -216,9 +220,29 @@ export default function BookServiceScreen() {
     });
   }, [savedAddresses, location]);
 
-  /** Re-quote whenever the pin moves. Price depends on pickup, nothing else. */
+  /**
+   * Re-quote whenever the pin moves. Price depends on pickup, nothing else.
+   *
+   * ── WHY THE KEY ────────────────────────────────────────────────────────
+   * `useLazyGetQuoteQuery` always goes to the network — the endpoint declares
+   * no tags and the trigger does not prefer the cache — so every run of this
+   * effect is a request. Keying on the exact pickup makes the effect
+   * idempotent: a remount or a re-run with identical inputs asks once, while a
+   * genuine move to different coordinates still refetches immediately.
+   *
+   * Measured server-side across a picker round trip: one location change
+   * produces exactly one `GET /orders/quote`.
+   *
+   * `retryQuote` clears the key deliberately — the point of a retry is to
+   * re-ask for a pickup that already failed.
+   */
+  const lastQuoteKey = useRef<string | null>(null);
+
   useEffect(() => {
     if (!location) return;
+    const key = `${serviceCode}|${location.lat}|${location.lng}`;
+    if (lastQuoteKey.current === key) return;
+    lastQuoteKey.current = key;
     fetchQuote({
       service: serviceCode,
       pickupLat: location.lat,
@@ -228,6 +252,8 @@ export default function BookServiceScreen() {
 
   const retryQuote = useCallback(() => {
     if (!location) return;
+    // Clear the key so a later effect run for this same pickup is not skipped.
+    lastQuoteKey.current = null;
     fetchQuote(
       { service: serviceCode, pickupLat: location.lat, pickupLng: location.lng },
       false,

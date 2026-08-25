@@ -36,7 +36,7 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-import { Stack, useRouter } from 'expo-router';
+import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
 import {
@@ -51,6 +51,8 @@ import {
   Search,
   SearchX,
   X,
+  ArrowRight,
+  Lock,
 } from 'lucide-react-native';
 import {
   Appear,
@@ -70,6 +72,10 @@ import {
   type GeoResult,
 } from '../../components/location/geocode';
 import { useGetAddressesQuery } from '../../services/api/authApi';
+import { useGetCategoriesQuery, useGetServicesQuery } from '../../services/api/catalogApi';
+import { categoryForService } from '../../components/catalog/matchCategory';
+import { ServiceIllustration } from '../../components/catalog/ServiceIllustration';
+import { illustrationFor } from '../../components/catalog/illustrations/resolve';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { locationPicked, type DraftLocation } from '../../store/locationDraftSlice';
 import { colors } from '../../theme/colors';
@@ -134,6 +140,41 @@ export default function LocationPickerScreen() {
   const [search, setSearch] = useState<SearchState>({ kind: 'idle' });
 
   const { data: saved, isLoading: savedLoading } = useGetAddressesQuery();
+
+  /**
+   * Real header height, measured.
+   *
+   * The permission notice floats below the header and used to sit at a
+   * hardcoded `insets.top + 116` — tuned to the header as it was. Adding the
+   * service row and the step line made the header taller and the notice
+   * overlapped the search field by 11px. Measuring means the notice cannot
+   * drift out of place again the next time the header changes.
+   */
+  const [headerHeight, setHeaderHeight] = useState(0);
+
+  /**
+   * Booking context. `service` is the catalog CODE, passed by the booking
+   * screen so this header can name what is being booked the way the website
+   * does. Absent when the picker is reached any other way, in which case the
+   * plain "Choose location" title renders instead.
+   */
+  const { service: serviceParam } = useLocalSearchParams<{ service?: string }>();
+  const { data: catalogServices = [] } = useGetServicesQuery();
+  const { data: catalogCategories = [] } = useGetCategoriesQuery();
+
+  const bookingService = useMemo(
+    () => (serviceParam ? catalogServices.find((s) => s.code === serviceParam) ?? null : null),
+    [catalogServices, serviceParam],
+  );
+  const serviceName = bookingService?.name ?? null;
+  const serviceCategory = useMemo(
+    () => (bookingService ? categoryForService(bookingService, catalogCategories) : null),
+    [bookingService, catalogCategories],
+  );
+  const serviceAccent = serviceCategory?.theme?.accent ?? colors.primary;
+  const serviceDrawing = bookingService
+    ? illustrationFor(bookingService, bookingService.category)
+    : 'tools';
   const savedAddresses = saved?.addresses ?? [];
   const recentLocations = saved?.recentLocations ?? [];
 
@@ -513,20 +554,90 @@ export default function LocationPickerScreen() {
         </View>
       ) : null}
 
-      {/* ── Header + search ────────────────────────────────────────────── */}
-      <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
+      {/*
+        ── Header + search ──────────────────────────────────────────────────
+        The website opens its location step behind a dark navy bar carrying the
+        SERVICE being booked — "Where do you need help? · Car Wash" — plus two
+        step pills, then a blue "Step 1 of 2 · Choose location" line above the
+        search field. Without that context the picker reads as a detached map
+        screen rather than the first half of a booking.
+
+        The service name is resolved from the catalog via the `service` param,
+        so it is real catalog data; when the picker is opened outside a booking
+        there is no param and it falls back to the plain title.
+      */}
+      <View
+        onLayout={(e) => {
+          const h = e.nativeEvent.layout.height;
+          setHeaderHeight((prev) => (Math.abs(prev - h) < 1 ? prev : h));
+        }}
+        style={[
+          styles.header,
+          serviceName ? styles.headerDark : null,
+          { paddingTop: insets.top + spacing.sm },
+        ]}
+      >
         <View style={styles.headerRow}>
           <IconButton
-            icon={<ChevronLeft size={20} color={colors.textHeading} />}
+            icon={
+              <ChevronLeft
+                size={20}
+                color={serviceName ? colors.textInverse : colors.textHeading}
+              />
+            }
             onPress={() => (overlayVisible ? closeSearch() : router.back())}
-            variant="surface"
+            variant={serviceName ? 'plain' : 'surface'}
             accessibilityLabel={overlayVisible ? 'Close search' : 'Go back'}
-            style={styles.headerButton}
+            style={serviceName ? styles.headerButtonOnDark : styles.headerButton}
           />
-          <Text variant="heading3" style={styles.flex} numberOfLines={1}>
-            Choose location
-          </Text>
+
+          {serviceName ? (
+            <>
+              <View style={styles.flex}>
+                <Text variant="eyebrow" color="rgba(255,255,255,0.45)">
+                  Where do you need help?
+                </Text>
+                <View style={styles.headerTitleRow}>
+                  <View style={[styles.headerChip, { backgroundColor: serviceAccent }]}>
+                    <ServiceIllustration
+                      name={serviceDrawing}
+                      size={13}
+                      onColor
+                      spotlight={false}
+                    />
+                  </View>
+                  <Text
+                    variant="body"
+                    weight="extrabold"
+                    color={colors.textInverse}
+                    numberOfLines={1}
+                    style={styles.flex}
+                  >
+                    {serviceName}
+                  </Text>
+                </View>
+              </View>
+              {/* Step pills — this screen is step 1 of the website's two. */}
+              <View style={styles.steps}>
+                <View style={[styles.step, styles.stepActive]} />
+                <View style={[styles.step, styles.stepIdle]} />
+              </View>
+            </>
+          ) : (
+            <Text variant="heading3" style={styles.flex} numberOfLines={1}>
+              Choose location
+            </Text>
+          )}
         </View>
+
+        {serviceName ? (
+          <View style={styles.stepLine}>
+            <MapPin size={12} color={colors.primaryLight} />
+            <Text variant="eyebrow" color={colors.primaryLight}>
+              Step 1 of 2 · Choose location
+            </Text>
+          </View>
+        ) : null}
 
         <Input
           placeholder="Search for area, street or landmark"
@@ -549,7 +660,10 @@ export default function LocationPickerScreen() {
 
       {/* ── Permission / GPS notices ───────────────────────────────────── */}
       {!overlayVisible && (permission === 'denied' || permission === 'servicesOff') ? (
-        <Appear style={[styles.notice, { top: insets.top + 116 }]} offsetY={-6}>
+        <Appear
+          style={[styles.notice, { top: headerHeight + spacing.md }]}
+          offsetY={-6}
+        >
           <Card variant="elevated" padding={spacing.md}>
             <View style={styles.noticeRow}>
               <View style={styles.noticeIcon}>
@@ -655,14 +769,23 @@ export default function LocationPickerScreen() {
               </View>
             </ScrollView>
 
+            {/* The website's CTA reads "Confirm This Location →" and is
+                followed by a reassurance line. Both are reproduced. */}
             <Button
-              label="Confirm location"
+              label="Confirm this location"
+              iconRight={<ArrowRight size={17} color={colors.textInverse} />}
               onPress={confirm}
               disabled={!canConfirm}
               loading={permission === 'checking' && !hasPin}
               fullWidth
               size="large"
             />
+            <View style={styles.secureRow}>
+              <Lock size={11} color={colors.textMuted} />
+              <Text variant="caption" color={colors.textMuted}>
+                Your location is secure and encrypted
+              </Text>
+            </View>
           </View>
         </KeyboardAvoidingView>
       ) : null}
@@ -686,7 +809,41 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: radius.large,
     ...shadows.soft,
   },
+  // The website's booking header — `linear-gradient(135deg,#0B1120,#0E1526)`
+  // with a rounded bottom so the content below sits in a card.
+  headerDark: { backgroundColor: '#0B1120' },
   headerRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  headerButtonOnDark: { backgroundColor: 'rgba(255,255,255,0.10)' },
+  headerTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginTop: spacing.xxs,
+  },
+  headerChip: {
+    width: 24,
+    height: 24,
+    borderRadius: radius.small,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  steps: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs + 2 },
+  step: { width: 24, height: 6, borderRadius: radius.pill },
+  stepActive: { backgroundColor: colors.primary },
+  stepIdle: { backgroundColor: 'rgba(255,255,255,0.20)' },
+  secureRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    marginTop: spacing.md,
+  },
+  stepLine: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs + 2,
+    marginTop: spacing.md,
+  },
   headerButton: { backgroundColor: colors.surfaceTertiary },
   search: { marginTop: spacing.md },
 

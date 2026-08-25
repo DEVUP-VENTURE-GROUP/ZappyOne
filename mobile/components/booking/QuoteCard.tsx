@@ -250,6 +250,36 @@ function QuoteCardBase({
           ) : null}
         </View>
 
+        {/*
+          ── What went into the price ──────────────────────────────────────
+          The website lists these components — base visit fee, distance, night
+          surcharge — and then prints "Total" beneath them. For car_wash those
+          rows are ₹50 + ₹1 + ₹80 = ₹131 against a ₹300 total, because the
+          total is floored to the service's catalog price and the components
+          were only inputs to that decision. So the same fields are shown, but
+          under a heading that says what they are rather than implying a sum
+          the customer would find does not add up.
+
+          Rendered only when the lines do NOT reconcile; when they do, the
+          grouped breakdown above already carries them as real addends.
+        */}
+        {!showBreakdown && quote.lines.length > 0 ? (
+          <View style={styles.inputsBlock}>
+            <SectionTitle style={styles.groupTitle}>What went into this price</SectionTitle>
+            {quote.lines.map((line) => (
+              <ChargeRow
+                key={line.key}
+                label={line.label}
+                value={formatRupees(line.value)}
+              />
+            ))}
+            <Text variant="caption" color={colors.textMuted} style={styles.inputsNote}>
+              These are the inputs Zappy priced from. The total above is the
+              amount you pay.
+            </Text>
+          </View>
+        ) : null}
+
         {/* ── Contextual facts — never money ─────────────────────────────── */}
         {quote.facts.length > 0 ? (
           <View style={styles.facts}>
@@ -344,6 +374,8 @@ const styles = StyleSheet.create({
   surgeRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xxs, marginTop: 2 },
   promoRow: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.xs },
 
+  inputsBlock: { marginTop: spacing.base },
+  inputsNote: { marginTop: spacing.sm },
   facts: {
     flexDirection: 'row',
     flexWrap: 'wrap',
