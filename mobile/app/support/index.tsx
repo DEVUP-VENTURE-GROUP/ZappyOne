@@ -92,7 +92,8 @@ export default function SupportScreen() {
               label="Message us"
               variant="secondary"
               icon={<MessageCircle size={15} color={colors.primary} />}
-              onPress={() => router.push('/support/tickets')}
+              // `as never`: typed-routes stale-cache artifact — route is real.
+              onPress={() => router.push('/support/tickets' as never)}
               style={styles.action}
             />
           </View>
@@ -100,7 +101,8 @@ export default function SupportScreen() {
 
         <Appear delay={60}>
           <ScalePressable
-            onPress={() => router.push('/support/tickets')}
+            // `as never`: typed-routes stale-cache artifact — route is real.
+            onPress={() => router.push('/support/tickets' as never)}
             accessibilityRole="button"
             accessibilityLabel={
               openTickets > 0
@@ -134,7 +136,8 @@ export default function SupportScreen() {
 
         <Appear delay={90}>
           <ScalePressable
-            onPress={() => router.push('/disputes')}
+            // `as never`: typed-routes stale-cache artifact — route is real.
+            onPress={() => router.push('/disputes' as never)}
             accessibilityRole="button"
             accessibilityLabel="Issues I have reported about a booking"
           >

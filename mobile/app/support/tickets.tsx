@@ -113,7 +113,7 @@ export default function TicketsScreen() {
       }).unwrap();
       setSheetOpen(false);
       reset();
-      router.push(`/support/${ticket._id}`);
+      router.push(`/support/${ticket._id}` as never);
     } catch (e) {
       setFormError(getApiErrorMessage(e, "We couldn't create that ticket."));
     }
@@ -195,7 +195,7 @@ export default function TicketsScreen() {
             return (
               <Appear key={ticket._id} delay={index * 40}>
                 <ScalePressable
-                  onPress={() => router.push(`/support/${ticket._id}`)}
+                  onPress={() => router.push(`/support/${ticket._id}` as never)}
                   accessibilityRole="button"
                   accessibilityLabel={`Ticket: ${ticket.subject}, ${meta.label}`}
                 >

@@ -65,7 +65,7 @@ export function RaiseDisputeSheet({ visible, onClose, orderId }: RaiseDisputeShe
         description: description.trim(),
       }).unwrap();
       close();
-      router.push(`/disputes/${dispute._id}`);
+      router.push(`/disputes/${dispute._id}` as never);
     } catch (e) {
       // The server's wording is better than anything generic here: it names
       // the window, the limit, or the existing dispute.

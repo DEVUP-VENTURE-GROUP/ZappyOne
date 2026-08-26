@@ -87,7 +87,8 @@ export default function DisputesScreen() {
             return (
               <Appear key={dispute._id} delay={index * 40}>
                 <ScalePressable
-                  onPress={() => router.push(`/disputes/${dispute._id}`)}
+                  // `as never`: typed-routes stale-cache artifact — route is real.
+                  onPress={() => router.push(`/disputes/${dispute._id}` as never)}
                   accessibilityRole="button"
                   accessibilityLabel={`Report: ${humanizeCategory(dispute.category)}, ${meta.label}`}
                 >
