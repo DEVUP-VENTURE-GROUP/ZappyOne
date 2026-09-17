@@ -180,10 +180,10 @@ afterAll(async () => { await stopMongo(); });
    ═══════════════════════════════════════════════════════════════════════ */
 
 describe('the provider journey', () => {
-  it('1. shows him the five kinds of work, in order', async () => {
+  it('1. shows him the six kinds of work, in order', async () => {
     const res = await request(app).get('/api/provider/onboarding/domains').set(auth(ctx.shopToken));
     expect(res.body.domains.map((d) => d.code))
-      .toEqual(['electronics', 'vehicles', 'home_services', 'family_assist', 'helping_services']);
+      .toEqual(['electronics', 'vehicles', 'home_services', 'family_assist', 'helping_services', 'pet_services']);
   });
 
   it('2. tells him plainly which services are open', async () => {

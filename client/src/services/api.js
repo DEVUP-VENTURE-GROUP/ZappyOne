@@ -118,6 +118,7 @@ export const api = createApi({
   tagTypes: ['Me', 'Order', 'Worker', 'Earnings', 'AdminMetrics', 'Kyc', 'Plan', 'Subscription', 'Wallet', 'Notification', 'AdminUsers', 'Disputes', 'Payouts', 'Incentives', 'CancellationConfig', 'PricingCfg', 'AuditLogs', 'Addresses', 'Ad', 'Promo', 'Gamification', 'Recommendations', 'FeatureFlags', 'SupportTickets', 'Referral', 'ShieldFund', 'EventTheme', 'EventBooking', 'EventPartner', 'EventConfig', 'EventCategory', 'PartnerNotification', 'Fraud', 'Zone', 'City', 'PaymentMethods', 'UserDisputes', 'UserTickets', 'AdminAppeals', 'AdminTraining', 'WorkerGoals', 'Plans', 'Content', 'Rewards', 'WorkerOps', 'ReadyMode', 'Shop', 'ShopWorkers', 'ShopKyc',
     'RepairCatalog', 'RepairConfig', 'RepairPricing', 'RepairRequests', 'RepairBookings', 'RepairProvider', 'MyAssets',
     'HelpingConfig', 'HelpingTasks', 'HelpingAvailable', 'AdminHelpingTasks',
+    'PetCatalog', 'MyPets', 'PetBookings', 'PetAvailable', 'PetRecurring', 'AdminPetBookings', 'AdminPetPricing', 'AdminPetCapabilities',
     'RepairIdentification', 'Onboarding'],
   endpoints: (b) => ({
     // --- Auth ---
@@ -2036,6 +2037,115 @@ export const api = createApi({
       query: ({ id, ...body }) => ({ url: adminApiPath(`/helping/tasks/${id}/refund-outcome`), method: 'POST', body }),
       invalidatesTags: ['AdminHelpingTasks'],
     }),
+
+    /* ── Pet Services ── */
+    petCategories: b.query({ query: () => '/pet/categories', providesTags: ['PetCatalog'] }),
+    petVariants: b.query({ query: (params) => ({ url: '/pet/variants', params }), providesTags: ['PetCatalog'] }),
+    petBreeds: b.query({ query: (params) => ({ url: '/pet/breeds', params }), providesTags: ['PetCatalog'] }),
+    petAddons: b.query({ query: (params) => ({ url: '/pet/addons', params }), providesTags: ['PetCatalog'] }),
+    petPackages: b.query({ query: (params) => ({ url: '/pet/packages', params }), providesTags: ['PetCatalog'] }),
+    petServiceAreas: b.query({ query: () => '/pet/service-areas', providesTags: ['PetCatalog'] }),
+    petCompatibility: b.query({ query: (params) => ({ url: '/pet/compatibility', params }) }),
+
+    myPets: b.query({ query: () => '/pet/my-pets', providesTags: ['MyPets'] }),
+    createMyPet: b.mutation({
+      query: (body) => ({ url: '/pet/my-pets', method: 'POST', body }),
+      invalidatesTags: ['MyPets'],
+    }),
+    updateMyPet: b.mutation({
+      query: ({ id, ...body }) => ({ url: `/pet/my-pets/${id}`, method: 'PATCH', body }),
+      invalidatesTags: ['MyPets'],
+    }),
+    deleteMyPet: b.mutation({
+      query: (id) => ({ url: `/pet/my-pets/${id}`, method: 'DELETE' }),
+      invalidatesTags: ['MyPets'],
+    }),
+    myPetHistory: b.query({ query: (id) => `/pet/my-pets/${id}/history` }),
+
+    petQuote: b.mutation({ query: (body) => ({ url: '/pet/quote', method: 'POST', body }) }),
+    petProviderSearch: b.mutation({ query: (body) => ({ url: '/pet/providers/search', method: 'POST', body }) }),
+
+    createPetBooking: b.mutation({
+      query: (body) => ({ url: '/pet/bookings', method: 'POST', body }),
+      invalidatesTags: ['PetBookings'],
+    }),
+    myPetBookings: b.query({
+      query: (params) => ({ url: '/pet/bookings', params }),
+      providesTags: ['PetBookings'],
+    }),
+    getPetBooking: b.query({
+      query: (id) => `/pet/bookings/${id}`,
+      providesTags: (r, e, id) => [{ type: 'PetBookings', id }],
+    }),
+    cancelPetBooking: b.mutation({
+      query: ({ id, ...body }) => ({ url: `/pet/bookings/${id}/cancel`, method: 'POST', body }),
+      invalidatesTags: (r, e, a) => [{ type: 'PetBookings', id: a.id }, 'PetBookings'],
+    }),
+    ratePetBooking: b.mutation({
+      query: ({ id, ...body }) => ({ url: `/pet/bookings/${id}/rate`, method: 'POST', body }),
+      invalidatesTags: (r, e, a) => [{ type: 'PetBookings', id: a.id }],
+    }),
+
+    availablePetBookings: b.query({ query: (params) => ({ url: '/pet/bookings/available', params }), providesTags: ['PetAvailable'] }),
+    acceptPetBooking: b.mutation({
+      query: (id) => ({ url: `/pet/bookings/${id}/accept`, method: 'POST' }),
+      invalidatesTags: (r, e, id) => [{ type: 'PetBookings', id }, 'PetAvailable'],
+    }),
+    advancePetBookingStatus: b.mutation({
+      query: ({ id, ...body }) => ({ url: `/pet/bookings/${id}/status`, method: 'POST', body }),
+      invalidatesTags: (r, e, a) => [{ type: 'PetBookings', id: a.id }],
+    }),
+    addPetBookingProof: b.mutation({
+      query: ({ id, ...body }) => ({ url: `/pet/bookings/${id}/proof`, method: 'POST', body }),
+      invalidatesTags: (r, e, a) => [{ type: 'PetBookings', id: a.id }],
+    }),
+    updatePetBookingExecution: b.mutation({
+      query: ({ id, ...body }) => ({ url: `/pet/bookings/${id}/execution`, method: 'PATCH', body }),
+      invalidatesTags: (r, e, a) => [{ type: 'PetBookings', id: a.id }],
+    }),
+
+    createPetRecurring: b.mutation({
+      query: (body) => ({ url: '/pet/recurring', method: 'POST', body }),
+      invalidatesTags: ['PetRecurring', 'PetBookings'],
+    }),
+    myPetRecurring: b.query({ query: () => '/pet/recurring', providesTags: ['PetRecurring'] }),
+    pausePetRecurring: b.mutation({
+      query: (id) => ({ url: `/pet/recurring/${id}/pause`, method: 'POST' }),
+      invalidatesTags: ['PetRecurring'],
+    }),
+    resumePetRecurring: b.mutation({
+      query: (id) => ({ url: `/pet/recurring/${id}/resume`, method: 'POST' }),
+      invalidatesTags: ['PetRecurring'],
+    }),
+    cancelPetRecurring: b.mutation({
+      query: (id) => ({ url: `/pet/recurring/${id}/cancel`, method: 'POST' }),
+      invalidatesTags: ['PetRecurring'],
+    }),
+    skipPetRecurringDate: b.mutation({
+      query: ({ id, date }) => ({ url: `/pet/recurring/${id}/skip`, method: 'POST', body: { date } }),
+      invalidatesTags: ['PetRecurring'],
+    }),
+
+    adminPetBookings: b.query({
+      query: (params) => ({ url: adminApiPath('/pet/bookings'), params }),
+      providesTags: ['AdminPetBookings'],
+    }),
+    adminPetPricing: b.query({
+      query: () => adminApiPath('/pet/pricing'),
+      providesTags: ['AdminPetPricing'],
+    }),
+    adminUpdatePetPricing: b.mutation({
+      query: ({ id, ...body }) => ({ url: adminApiPath(`/pet/pricing/${id}`), method: 'PUT', body }),
+      invalidatesTags: ['AdminPetPricing'],
+    }),
+    adminPetCapabilities: b.query({
+      query: (params) => ({ url: adminApiPath('/pet/capabilities'), params }),
+      providesTags: ['AdminPetCapabilities'],
+    }),
+    adminUpdatePetCapability: b.mutation({
+      query: ({ id, ...body }) => ({ url: adminApiPath(`/pet/capabilities/${id}`), method: 'PUT', body }),
+      invalidatesTags: ['AdminPetCapabilities'],
+    }),
     repairProviders: b.query({ query: (params) => ({ url: '/repair/providers', params }) }),
     createRepairBooking: b.mutation({
       query: (body) => ({ url: '/repair/bookings', method: 'POST', body }),
@@ -2822,6 +2932,18 @@ export const {
   useAddHelpingProofMutation, useRecordHelpingHandoverMutation, useCompleteHelpingTaskMutation,
   useAdminHelpingTasksQuery, useAdminHelpingConfigQuery,
   useAdminUpdateHelpingConfigMutation, useAdminHelpingRefundOutcomeMutation,
+  usePetCategoriesQuery, usePetVariantsQuery, usePetBreedsQuery, usePetAddonsQuery,
+  usePetPackagesQuery, usePetServiceAreasQuery, usePetCompatibilityQuery, useLazyPetCompatibilityQuery,
+  useMyPetsQuery, useCreateMyPetMutation, useUpdateMyPetMutation, useDeleteMyPetMutation, useMyPetHistoryQuery,
+  usePetQuoteMutation, usePetProviderSearchMutation,
+  useCreatePetBookingMutation, useMyPetBookingsQuery, useGetPetBookingQuery,
+  useCancelPetBookingMutation, useRatePetBookingMutation,
+  useAvailablePetBookingsQuery, useAcceptPetBookingMutation, useAdvancePetBookingStatusMutation,
+  useAddPetBookingProofMutation, useUpdatePetBookingExecutionMutation,
+  useCreatePetRecurringMutation, useMyPetRecurringQuery, usePausePetRecurringMutation,
+  useResumePetRecurringMutation, useCancelPetRecurringMutation, useSkipPetRecurringDateMutation,
+  useAdminPetBookingsQuery, useAdminPetPricingQuery, useAdminUpdatePetPricingMutation,
+  useAdminPetCapabilitiesQuery, useAdminUpdatePetCapabilityMutation,
   useRepairProvidersQuery,
   useCreateRepairBookingMutation,
   useMyRepairBookingsQuery,

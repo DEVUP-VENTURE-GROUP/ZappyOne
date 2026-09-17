@@ -19,6 +19,7 @@ const DOMAINS = [
   { code: 'home_services', name: 'Home Services', icon: 'Home', displayOrder: 3, description: 'Repairs and upkeep inside the home' },
   { code: 'family_assist', name: 'Family Assist', icon: 'HeartHandshake', displayOrder: 4, description: 'Help for children, elders and the household' },
   { code: 'helping_services', name: 'Helping Services', icon: 'ShoppingBag', displayOrder: 5, description: 'A trusted person for a real-world errand — shopping, pickup, returns' },
+  { code: 'pet_services', name: 'Pet Services', icon: 'PawPrint', displayOrder: 6, description: 'Grooming, boarding, walking and care for your dog or cat' },
 ];
 
 const LINES = [
@@ -67,6 +68,33 @@ const LINES = [
     description: 'Tank and sump cleaning, health inspection, pipe flushing, repair and protection',
     customerPath: '/repair/water-tank-care', tagline: 'Photographed before and after', isPopular: true,
   },
+
+  /*
+   * Pet Services. Not the repair engine and not the helping-task engine —
+   * its own booking/pricing/matching stack (server/src/modules/pet) — so
+   * `repairVertical` stays null. It still goes through the same visibility
+   * gate as everything else: `liveCatalog` requires an APPROVED
+   * ProviderEnrolment for this exact line code before a customer ever sees
+   * it, and the pet demo-provider seeder creates one for the same reason the
+   * repair and helping seeders do.
+   */
+  /*
+   * One real line per category (§2), the same pattern as Helping Services'
+   * two lines — a single umbrella line here would show one card that just
+   * repeats the domain name, which is exactly the bug this replaced.
+   * `customerPath` matches PetBookingFlowPage's route exactly
+   * (`/pet/book/:categoryCode`), so registering the line needed no route
+   * change. Each is `live` only because a demo provider genuinely covers it
+   * (see pet/seed/providers.seed.js) — the same verified-provider gate every
+   * other vertical goes through.
+   */
+  { code: 'pet_grooming', name: 'Pet Grooming & Hygiene', domainCode: 'pet_services', status: 'live', displayOrder: 1, icon: 'Scissors', customerPath: '/pet/book/pet_grooming', description: 'Bath, haircut and hygiene care at home or at the provider', tagline: 'Before and after photos, every time', isPopular: true },
+  { code: 'pet_boarding', name: 'Pet Stay & Daycare', domainCode: 'pet_services', status: 'live', displayOrder: 2, icon: 'Home', customerPath: '/pet/book/pet_boarding', description: 'Overnight boarding and daytime care while you are away' },
+  { code: 'pet_walk', name: 'Pet Walk & Activity', domainCode: 'pet_services', status: 'live', displayOrder: 3, icon: 'Footprints', customerPath: '/pet/book/pet_walk', description: 'Walks and play sessions matched to your pet', isPopular: true },
+  { code: 'pet_home_care', name: 'Pet Home Care', domainCode: 'pet_services', status: 'live', displayOrder: 4, icon: 'HeartHandshake', customerPath: '/pet/book/pet_home_care', description: 'Feeding, litter care and companionship visits at home' },
+  { code: 'pet_transport', name: 'Pet Pickup & Assistance', domainCode: 'pet_services', status: 'live', displayOrder: 5, icon: 'Car', customerPath: '/pet/book/pet_transport', description: 'Safe transport to the vet, groomer or boarding' },
+  { code: 'pet_vet_assist', name: 'Vet & Appointment Assistance', domainCode: 'pet_services', status: 'live', displayOrder: 6, icon: 'Stethoscope', customerPath: '/pet/book/pet_vet_assist', description: 'Logistics support for a vet visit — not a substitute for one' },
+  { code: 'pet_check', name: 'Pet Check & Home Visit', domainCode: 'pet_services', status: 'live', displayOrder: 7, icon: 'ClipboardCheck', customerPath: '/pet/book/pet_check', description: 'A quick visual check-in on your pet while you are out' },
   { code: 'electrical', name: 'Electrical', domainCode: 'home_services', status: 'coming_soon', displayOrder: 2, icon: 'Zap' },
   { code: 'plumbing', name: 'Plumbing', domainCode: 'home_services', status: 'coming_soon', displayOrder: 3, icon: 'Droplet' },
   { code: 'appliance', name: 'Appliances & AC', domainCode: 'home_services', status: 'coming_soon', displayOrder: 4, icon: 'AirVent' },
@@ -230,6 +258,42 @@ const REQUIREMENT_SETS = [
     declarations: [
       'I will buy or collect only what the customer approved, at the price they approved.',
       'I will never spend beyond my advance limit without the customer funding it first.',
+    ],
+  },
+
+  /**
+   * Pet Services. A provider handles a living animal, sometimes alone with it
+   * for hours (boarding, home sitting) — the bar sits between Home Services
+   * and Family Assist: real verification, without demanding police clearance
+   * for a 20-minute walk.
+   */
+  {
+    name: 'Pet Services — individual',
+    domainCode: 'pet_services', lineCode: null, providerKind: 'individual',
+    documents: [
+      ...IDENTITY_DOCS,
+      { code: 'address_proof', label: 'Address proof', required: true },
+    ],
+    fields: [
+      { code: 'species_experience', label: 'Which animals have you handled before?', required: true },
+      { code: 'experience_years', label: 'Years of experience', required: true },
+    ],
+    declarations: [
+      'I will never leave an animal in my care unattended in an unsafe situation.',
+      'I will report any injury, illness or incident to the customer immediately, and will not attempt to diagnose or treat it myself.',
+    ],
+  },
+  {
+    name: 'Pet Services — shop / facility',
+    domainCode: 'pet_services', lineCode: null, providerKind: 'shop',
+    documents: [
+      ...SHOP_DOCS,
+      { code: 'facility_photo', label: 'Photo of the boarding/grooming area', capture: 'environment', required: true },
+    ],
+    fields: SHOP_FIELDS,
+    declarations: [
+      'Every animal in our care has a safe, clean space appropriate to its size.',
+      'Every staff member handling animals has been verified by us and by ZappyOne.',
     ],
   },
 

@@ -68,7 +68,7 @@ describe('choosing what you work on', () => {
     const res = await request(app).get(`${BASE}/domains`).set(auth(ctx.shopToken));
     expect(res.status).toBe(200);
     expect(res.body.domains.map((d) => d.code))
-      .toEqual(['electronics', 'vehicles', 'home_services', 'family_assist', 'helping_services']);
+      .toEqual(['electronics', 'vehicles', 'home_services', 'family_assist', 'helping_services', 'pet_services']);
   });
 
   it('shows which electronics services are actually open', async () => {
@@ -413,7 +413,7 @@ describe('the catalog is data', () => {
     await request(app)
       .post(`${ADMIN}/onboarding/lines`)
       .set(auth(ctx.adminToken))
-      .send({ code: 'pet_grooming', name: 'Pet Grooming', domainCode: 'pets', status: 'live' });
+      .send({ code: 'aquarium_care', name: 'Aquarium Care', domainCode: 'pets', status: 'live' });
 
     await request(app)
       .post(`${ADMIN}/onboarding/requirements`)
@@ -427,16 +427,16 @@ describe('the catalog is data', () => {
       });
 
     const enrol = await request(app)
-      .post(`${BASE}/enrolments`).set(auth(ctx.workerToken)).send({ lineCode: 'pet_grooming' });
+      .post(`${BASE}/enrolments`).set(auth(ctx.workerToken)).send({ lineCode: 'aquarium_care' });
     expect(enrol.status).toBe(201);
 
     const reqs = await request(app)
-      .get(`${BASE}/lines/pet_grooming/requirements`).set(auth(ctx.workerToken));
+      .get(`${BASE}/lines/aquarium_care/requirements`).set(auth(ctx.workerToken));
     expect(reqs.body.requirements.documents.map((d) => d.code)).toEqual(['aadhaar']);
   });
 
   it('archives a line instead of deleting it', async () => {
-    const line = await ServiceLine.findOne({ code: 'pet_grooming' });
+    const line = await ServiceLine.findOne({ code: 'aquarium_care' });
     const res = await request(app)
       .delete(`${ADMIN}/onboarding/lines/${line._id}`)
       .set(auth(ctx.adminToken));
@@ -448,7 +448,7 @@ describe('the catalog is data', () => {
 
     // The provider who already enrolled keeps their record — it is not orphaned.
     const rows = await request(app).get(`${BASE}/enrolments`).set(auth(ctx.workerToken));
-    expect(rows.body.enrolments.some((e) => e.lineCode === 'pet_grooming')).toBe(true);
+    expect(rows.body.enrolments.some((e) => e.lineCode === 'aquarium_care')).toBe(true);
   });
 });
 

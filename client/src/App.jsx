@@ -80,6 +80,15 @@ const ReturnTaskPage                = lazy(() => import('./pages/helping/ReturnT
 const HelpingTaskDetailPage         = lazy(() => import('./pages/helping/HelpingTaskDetailPage'));
 const WorkerHelpingTasksPage        = lazy(() => import('./pages/helping/WorkerHelpingTasksPage'));
 const WorkerHelpingJobPage          = lazy(() => import('./pages/helping/WorkerHelpingJobPage'));
+const PetServicesPage               = lazy(() => import('./pages/pet/PetServicesPage'));
+const MyPetsPage                    = lazy(() => import('./pages/pet/MyPetsPage'));
+const PetDetailPage                 = lazy(() => import('./pages/pet/PetDetailPage'));
+const PetBookingFlowPage            = lazy(() => import('./pages/pet/PetBookingFlowPage'));
+const PetBookingDetailPage          = lazy(() => import('./pages/pet/PetBookingDetailPage'));
+const PetBookingsListPage           = lazy(() => import('./pages/pet/PetBookingsListPage'));
+const PetRecurringPage              = lazy(() => import('./pages/pet/PetRecurringPage'));
+const WorkerPetJobsPage             = lazy(() => import('./pages/pet/WorkerPetJobsPage'));
+const WorkerPetJobPage              = lazy(() => import('./pages/pet/WorkerPetJobPage'));
 const WorkerRepairJobPage          = lazy(() => import('./pages/repair/WorkerRepairJobPage'));
 const ProviderRepairSetupPage      = lazy(() => import('./pages/repair/ProviderRepairSetupPage'));
 const ShopPublicProfilePage        = lazy(() => import('./pages/ShopPublicProfilePage'));
@@ -275,6 +284,15 @@ export default function App() {
         <Route path="/helping/tasks/:id" element={<RequireAuth role="user"><HelpingTaskDetailPage /></RequireAuth>} />
         <Route path="/worker/helping" element={<RequireAuth role="worker"><WorkerHelpingTasksPage /></RequireAuth>} />
         <Route path="/worker/helping/:id" element={<RequireAuth role="worker"><WorkerHelpingJobPage /></RequireAuth>} />
+        <Route path="/pet" element={<RequireAuth role="user"><PetServicesPage /></RequireAuth>} />
+        <Route path="/pet/my-pets" element={<RequireAuth role="user"><MyPetsPage /></RequireAuth>} />
+        <Route path="/pet/my-pets/:id" element={<RequireAuth role="user"><PetDetailPage /></RequireAuth>} />
+        <Route path="/pet/book/:categoryCode" element={<RequireAuth role="user"><PetBookingFlowPage /></RequireAuth>} />
+        <Route path="/pet/bookings" element={<RequireAuth role="user"><PetBookingsListPage /></RequireAuth>} />
+        <Route path="/pet/bookings/:id" element={<RequireAuth role="user"><PetBookingDetailPage /></RequireAuth>} />
+        <Route path="/pet/recurring" element={<RequireAuth role="user"><PetRecurringPage /></RequireAuth>} />
+        <Route path="/worker/pet" element={<RequireAuth role="worker"><WorkerPetJobsPage /></RequireAuth>} />
+        <Route path="/worker/pet/:id" element={<RequireAuth role="worker"><WorkerPetJobPage /></RequireAuth>} />
         {/* One heading — Display, Storage, Connectivity — and everything under it. */}
         <Route
           path="/repair/category/:vertical/:categoryCode"

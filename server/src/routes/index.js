@@ -7,6 +7,7 @@ const workerRoutes = require('../modules/worker/worker.routes');
 const shopRoutes = require('../modules/shop/shop.routes');
 const repairRoutes = require('../modules/repair/repair.routes');
 const helpingRoutes = require('../modules/helping/helping.routes');
+const petRoutes = require('../modules/pet/pet.routes');
 const onboardingRoutes = require('../modules/onboarding/onboarding.routes');
 const kycRoutes = require('../modules/worker/kyc.routes');
 const orderRoutes = require('../modules/order/order.routes');
@@ -54,6 +55,8 @@ function mountRoutes(app) {
   app.use('/api/repair', repairRoutes);
   app.use('/api/helping', helpingRoutes);
   app.use(`/api/${slug}/helping`, helpingRoutes.adminRouter);
+  app.use('/api/pet', petRoutes);
+  app.use(`/api/${slug}/pet`, petRoutes.adminRouter);
   // Provider onboarding — domain, service line, per-service verification.
   app.use('/api/provider/onboarding', onboardingRoutes);
   app.use('/api/workers/kyc', kycRoutes);

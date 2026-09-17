@@ -9,7 +9,7 @@ import {
   Megaphone, Ticket, Server, ToggleRight, Bell, Repeat2,
   HeadphonesIcon, Radio, Globe, Layers, Zap, Sparkles, TrendingUp,
   Shield, PartyPopper, ShieldAlert, Map as MapIcon,
-  AlertCircle, GraduationCap, Search, Store, ChevronDown, Smartphone, Laptop, Bike, Car, Droplets,
+  AlertCircle, GraduationCap, Search, Store, ChevronDown, Smartphone, Laptop, Bike, Car, Droplets, PawPrint,
 } from 'lucide-react';
 import { logout } from '../modules/auth/authSlice';
 import { useLogoutMutation } from '../services/api';
@@ -17,6 +17,7 @@ import { adminPath } from '../config/admin';
 
 const Overview = lazy(() => import('./admin/Overview'));
 const Helping = lazy(() => import('./admin/Helping'));
+const Pet = lazy(() => import('./admin/Pet'));
 const Orders = lazy(() => import('./admin/Orders'));
 const AdminUsers = lazy(() => import('./admin/Users'));
 const Workers = lazy(() => import('./admin/Workers'));
@@ -164,6 +165,7 @@ const NAV_TREES = [
       { id: 'repair-four-wheeler', label: 'Four-Wheeler', icon: Car },
       { id: 'repair-water-tank-care', label: 'Water & Tank Care', icon: Droplets },
       { id: 'helping', label: 'Helping Services', icon: ShoppingBag },
+      { id: 'pet', label: 'Pet Services', icon: PawPrint },
     ],
   },
 ];
@@ -182,6 +184,7 @@ const SECTION_MAP = {
   'repair-four-wheeler': RepairFourWheeler,
   'repair-water-tank-care': RepairWaterTankCare,
   helping: Helping,
+  pet: Pet,
   kyc: AdminKycReview, pricing: Pricing, services: Services, wallet: AdminWallet,
   disputes: Disputes, payouts: Payouts, intelligence: Intelligence,
   analytics: Analytics, business: BusinessIntelligence, notifications: NotificationsAdmin, heatmap: Heatmap,

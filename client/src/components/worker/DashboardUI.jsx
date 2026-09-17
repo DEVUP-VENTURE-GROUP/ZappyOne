@@ -4,7 +4,7 @@ import {
   LayoutDashboard, ClipboardList, CalendarDays, IndianRupee, Wallet as WalletIcon,
   Bell, Star, LifeBuoy, User, ChevronRight,
   Wifi, Clock, CheckCircle2, TrendingUp, TrendingDown, Search, Radio, Loader2,
-  Target, Building2, ArrowRightLeft, GraduationCap, Gem, ShieldCheck, ShoppingBag,
+  Target, Building2, ArrowRightLeft, GraduationCap, Gem, ShieldCheck, ShoppingBag, PawPrint,
 } from 'lucide-react';
 import { ZappyLogo } from '../common/ZappyLogo';
 
@@ -50,6 +50,7 @@ export const NAV_ITEMS = [
   { key: 'jobs', label: 'My Jobs', Icon: ClipboardList, scroll: 'job-requests', primary: true },
   { key: 'bookings', label: 'Bookings', Icon: CalendarDays, scroll: 'schedule' },
   { key: 'helping', label: 'Helping Errands', Icon: ShoppingBag, to: '/worker/helping' },
+  { key: 'pet', label: 'Pet Jobs', Icon: PawPrint, to: '/worker/pet' },
   { key: 'earnings', label: 'Earnings', Icon: IndianRupee, to: '/worker/earnings', primary: true },
   { key: 'wallet', label: 'Wallet', Icon: WalletIcon, to: '/wallet' },
   { key: 'notifications', label: 'Notifications', Icon: Bell, to: '/worker/notifications' },

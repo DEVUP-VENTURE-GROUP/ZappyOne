@@ -1,9 +1,10 @@
 import { useNavigate } from 'react-router-dom';
 import {
   Smartphone, Laptop, Cpu, Bike, Car, Truck, Home, HeartHandshake, Baby, Users,
-  Zap, Droplet, AirVent, Sparkles, Wrench, ChevronRight, ArrowRight,
+  Zap, Droplet, Droplets, AirVent, Sparkles, Wrench, ChevronRight, ArrowRight,
   Monitor, Battery, Plug, Keyboard, Volume2, Camera, HardDrive, Gauge,
   Wifi, Thermometer, CircuitBoard, Database, ArrowUpCircle, Wand2, ShieldAlert,
+  ClipboardCheck, Footprints, PackageCheck, PawPrint, Scissors, ShoppingBag, ShoppingBasket, Stethoscope,
 } from 'lucide-react';
 import { useLiveCatalogQuery } from '../../services/api';
 
@@ -27,7 +28,8 @@ import { useLiveCatalogQuery } from '../../services/api';
 /** Icon names are stored as data; this maps them, with a sane fallback. */
 const ICONS = {
   Smartphone, Laptop, Cpu, Bike, Car, Truck, Home, HeartHandshake, Baby, Users,
-  Zap, Droplet, AirVent, Sparkles, Wrench,
+  Zap, Droplet, Droplets, AirVent, Sparkles, Wrench,
+  ClipboardCheck, Footprints, PackageCheck, PawPrint, Scissors, ShoppingBag, ShoppingBasket, Stethoscope,
 };
 
 /**
