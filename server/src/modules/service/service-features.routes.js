@@ -101,8 +101,23 @@ router.post('/maintenance-plans',
     service:           Joi.string().required(),
     frequencyDays:     Joi.number().integer().min(7).max(365).optional(),
     paymentMethod:     Joi.string().valid('cash', 'upi', 'card').default('upi'),
-    basePriceRupees:   Joi.number().positive().required(),
+    // Repair-engine plans price each visit when it is booked, so no base price
+    // is required up front; legacy order plans still need one.
+    basePriceRupees:   Joi.number().positive().when('vertical', {
+      is: Joi.exist(), then: Joi.optional(), otherwise: Joi.required(),
+    }),
     preferredWorkerId: Joi.string().hex().length(24).optional().allow(null),
+    /*
+     * Repair-engine AMC. Declared here or `stripUnknown` deletes them and the
+     * plan silently reverts to booking a legacy Order against a service string
+     * that does not exist in the repair catalog.
+     */
+    vertical:          Joi.string().max(30).optional().allow(null),
+    repairCode:        Joi.string().max(80).optional().allow(null),
+    brandCode:         Joi.string().max(60).optional().allow(null),
+    modelCode:         Joi.string().max(120).optional().allow(null),
+    shopId:            Joi.string().hex().length(24).optional().allow(null),
+    visitsPerYear:     Joi.number().integer().min(1).max(12).optional().allow(null),
     pickupLocation:    Joi.object({
       lat: Joi.number().required(), lng: Joi.number().required(), address: Joi.string().required(),
     }).required(),

@@ -116,6 +116,11 @@ const createOrderSchema = Joi.object({
   tipAmount: Joi.number().integer().min(0).max(500).default(0),
   // Worker-choice: customer picked this pro at checkout — dispatch offers them first.
   preferredWorkerId: Joi.string().pattern(/^[a-f0-9]{24}$/i).optional().allow('', null),
+  // Shop routing ("Nearby Shops" path) — pick a specific verified shop, and
+  // whether the customer wants the shop's worker to come to them or will
+  // bring/collect the item at the shop themselves ("Pick & Go").
+  preferredShopId: Joi.string().pattern(/^[a-f0-9]{24}$/i).optional().allow('', null),
+  fulfillmentMode: Joi.string().valid('on_site', 'pickup_at_shop').optional(),
 });
 
 const quoteSchema = Joi.object({
@@ -200,6 +205,22 @@ router.post(
   ctrl.arrive,
 );
 router.post('/:id/start-service', authenticate, requireRole('worker'), validate(Joi.object({ otp: Joi.string().length(6).required() })), ctrl.startService);
+// Pick & Go mid-job escalation: worker requests, customer confirms/declines.
+router.post(
+  '/:id/shop-handoff/request',
+  authenticate, requireRole('worker'),
+  validate(Joi.object({
+    shopId: Joi.string().pattern(/^[a-f0-9]{24}$/i).optional().allow('', null),
+    reason: Joi.string().max(300).optional().allow('', null),
+  })),
+  ctrl.requestShopHandoff,
+);
+router.post(
+  '/:id/shop-handoff/respond',
+  authenticate,
+  validate(Joi.object({ accept: Joi.boolean().required() })),
+  ctrl.respondShopHandoff,
+);
 router.post('/:id/complete', authenticate, requireRole('worker'), validate(Joi.object({ completionPhotos: Joi.array().items(Joi.string()).max(5).default([]) })), ctrl.completeOrder);
 router.get('/:id/worker-cancel-preview', authenticate, requireRole('worker'), ctrl.workerCancelPreview);
 router.post('/:id/worker-cancel', authenticate, requireRole('worker'), validate(Joi.object({ reason: Joi.string().max(300).allow('', null) })), ctrl.workerCancelOrder);

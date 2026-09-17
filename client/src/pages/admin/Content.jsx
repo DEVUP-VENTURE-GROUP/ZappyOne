@@ -12,6 +12,9 @@ import {
 const AUDIENCES = ['all', 'user', 'worker'];
 
 /* ── Editor modal (FAQ or policy) ─────────────────────────────────────────── */
+/** Shared input styling. Declared above its users so the file reads top-down. */
+const inp = 'w-full text-sm border border-slate-200 rounded-xl px-3 py-2.5 outline-none focus:ring-2 focus:ring-indigo-400';
+
 function Editor({ type, initial, onClose }) {
   const isFaq = type === 'faq';
   const [form, setForm] = useState(
@@ -79,7 +82,6 @@ function Editor({ type, initial, onClose }) {
     </div>
   );
 }
-const inp = 'w-full text-sm border border-slate-200 rounded-xl px-3 py-2.5 outline-none focus:ring-2 focus:ring-indigo-400';
 function Field({ label, children }) {
   return <div className="flex-1"><p className="text-xs font-bold text-slate-500 mb-1">{label}</p>{children}</div>;
 }

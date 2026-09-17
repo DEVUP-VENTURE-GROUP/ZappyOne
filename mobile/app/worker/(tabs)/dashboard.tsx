@@ -69,6 +69,7 @@ import {
   useWorkerArriveMutation,
   useWorkerStartServiceMutation,
   useWorkerCompleteMutation,
+  useWorkerRequestShopHandoffMutation,
 } from '../../../services/api/workerApi';
 import { getApiErrorMessage } from '../../../services/api/apiSlice';
 import { useSocket } from '../../../hooks/useSocket';
@@ -121,10 +122,14 @@ export default function WorkerDashboardScreen() {
   const [workerStartService, { isLoading: startingService }] =
     useWorkerStartServiceMutation();
   const [workerComplete, { isLoading: completing }] = useWorkerCompleteMutation();
+  const [workerRequestShopHandoff, { isLoading: requestingHandoff }] =
+    useWorkerRequestShopHandoffMutation();
 
   const [otpInput, setOtpInput] = useState('');
   const [otpSheetOpen, setOtpSheetOpen] = useState(false);
   const [completeSheetOpen, setCompleteSheetOpen] = useState(false);
+  const [shopHandoffSheetOpen, setShopHandoffSheetOpen] = useState(false);
+  const [handoffReason, setHandoffReason] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   const socketClient = useSocket();
@@ -322,6 +327,19 @@ export default function WorkerDashboardScreen() {
     }
   }, [activeOrder, workerComplete, refetchOrders, refetchWorker]);
 
+  /** Pick & Go — job needs shop tools; customer must confirm before it takes effect. */
+  const handleRequestShopHandoff = useCallback(async () => {
+    if (!activeOrder) return;
+    setError(null);
+    try {
+      await workerRequestShopHandoff({ id: activeOrder._id, reason: handoffReason.trim() || undefined }).unwrap();
+      setShopHandoffSheetOpen(false);
+      setHandoffReason('');
+    } catch (e) {
+      setError(getApiErrorMessage(e, "We couldn't send this to your shop."));
+    }
+  }, [activeOrder, handoffReason, workerRequestShopHandoff]);
+
   /** The single next lifecycle step for the held job. */
   const jobAction = useMemo(() => {
     if (!activeOrder) return null;
@@ -354,6 +372,15 @@ export default function WorkerDashboardScreen() {
     startingService,
     completing,
   ]);
+
+  /** Pick & Go escalation is only offered once the job has started, and never
+   * twice (a pending or already-confirmed handoff hides the button). */
+  const canRequestShopHandoff =
+    !!activeOrder &&
+    ['on_the_way', 'arrived', 'in_progress'].includes(activeOrder.status) &&
+    activeOrder.fulfillmentMode !== 'pickup_at_shop' &&
+    activeOrder.shopHandoff?.status !== 'pending_confirmation';
+  const shopHandoffPending = activeOrder?.shopHandoff?.status === 'pending_confirmation';
 
   const kycMsg = KYC_MESSAGE[kycStatus];
 
@@ -464,7 +491,30 @@ export default function WorkerDashboardScreen() {
               onChat={() => router.push(`/chat/${activeOrder._id}`)}
             />
           </Appear>
-        ) : isOnline && !offer ? (
+        ) : null}
+
+        {/* ── Pick & Go — send an in-progress job to the shop ────────────── */}
+        {shopHandoffPending ? (
+          <Appear delay={90}>
+            <Card variant="outline" style={styles.waitingCard}>
+              <Text variant="bodySmall" weight="semibold">Waiting for customer to confirm</Text>
+              <Text variant="caption" color={colors.textSecondary} align="center">
+                They&apos;ve been asked to bring the item to the shop.
+              </Text>
+            </Card>
+          </Appear>
+        ) : canRequestShopHandoff ? (
+          <Appear delay={90}>
+            <Button
+              label="Too complex — send to shop"
+              variant="secondary"
+              onPress={() => setShopHandoffSheetOpen(true)}
+              fullWidth
+            />
+          </Appear>
+        ) : null}
+
+        {isOnline && !offer && !activeOrder ? (
           <Appear delay={80}>
             <Card variant="outline" style={styles.waitingCard}>
               <BellRing size={20} color={colors.textMuted} />
@@ -607,6 +657,37 @@ export default function WorkerDashboardScreen() {
           label="Not yet"
           variant="secondary"
           onPress={() => setCompleteSheetOpen(false)}
+          fullWidth
+          style={styles.sheetSecondary}
+        />
+      </BottomSheet>
+
+      {/* ── Pick & Go handoff ──────────────────────────────────────────────── */}
+      <BottomSheet
+        visible={shopHandoffSheetOpen}
+        onClose={() => setShopHandoffSheetOpen(false)}
+        title="Send this job to your shop?"
+      >
+        <Text variant="bodySmall" color={colors.textSecondary}>
+          The customer will be asked to bring the item to your shop instead. They must confirm before anything changes.
+        </Text>
+        <Input
+          placeholder="Reason (e.g. needs motherboard rework)"
+          value={handoffReason}
+          onChangeText={setHandoffReason}
+          containerStyle={styles.otpInput}
+        />
+        <Button
+          label="Send request"
+          onPress={handleRequestShopHandoff}
+          loading={requestingHandoff}
+          fullWidth
+          style={styles.sheetPrimary}
+        />
+        <Button
+          label="Cancel"
+          variant="secondary"
+          onPress={() => setShopHandoffSheetOpen(false)}
           fullWidth
           style={styles.sheetSecondary}
         />

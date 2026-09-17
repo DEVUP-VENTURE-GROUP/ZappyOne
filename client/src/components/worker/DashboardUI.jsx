@@ -2,9 +2,9 @@ import { memo } from 'react';
 import { motion } from 'framer-motion';
 import {
   LayoutDashboard, ClipboardList, CalendarDays, IndianRupee, Wallet as WalletIcon,
-  Bell, Star, LifeBuoy, User, FileText, Home as HomeIcon, ChevronRight,
+  Bell, Star, LifeBuoy, User, ChevronRight,
   Wifi, Clock, CheckCircle2, TrendingUp, TrendingDown, Search, Radio, Loader2,
-  BarChart2, Target, Building2, ArrowRightLeft, GraduationCap, Scale, Gem,
+  Target, Building2, ArrowRightLeft, GraduationCap, Gem, ShieldCheck,
 } from 'lucide-react';
 import { ZappyLogo } from '../common/ZappyLogo';
 
@@ -36,34 +36,30 @@ export function prettyService(code = '') {
    (`scroll`) for surfaces that live on the dashboard itself (My Jobs, Bookings).
    Keeping this as data means the sidebar and bottom bar can't drift apart.
 ──────────────────────────────────────────────────────────────────────────────*/
+/**
+ * Worker navigation — ONE list, three presentations.
+ *
+ * Every destination appears exactly once. The sidebar shows the full list on
+ * desktop, the bottom bar shows the `primary` ones on mobile, and the Quick
+ * Access panel shows only what is NOT in navigation. Repeating a link across
+ * surfaces is how a worker ends up with three routes to Earnings and no idea
+ * where anything lives.
+ */
 export const NAV_ITEMS = [
-  { key: 'dashboard', label: 'Dashboard', Icon: LayoutDashboard, to: '/worker' },
-  { key: 'jobs', label: 'My Jobs', Icon: ClipboardList, scroll: 'job-requests' },
+  { key: 'dashboard', label: 'Dashboard', Icon: LayoutDashboard, to: '/worker', primary: true },
+  { key: 'jobs', label: 'My Jobs', Icon: ClipboardList, scroll: 'job-requests', primary: true },
   { key: 'bookings', label: 'Bookings', Icon: CalendarDays, scroll: 'schedule' },
-  { key: 'earnings', label: 'Earnings', Icon: IndianRupee, to: '/worker/earnings' },
+  { key: 'earnings', label: 'Earnings', Icon: IndianRupee, to: '/worker/earnings', primary: true },
   { key: 'wallet', label: 'Wallet', Icon: WalletIcon, to: '/wallet' },
   { key: 'notifications', label: 'Notifications', Icon: Bell, to: '/worker/notifications' },
   { key: 'reviews', label: 'Reviews', Icon: Star, to: '/worker/appeals' },
   { key: 'support', label: 'Support', Icon: LifeBuoy, to: '/faq' },
-  { key: 'profile', label: 'Profile', Icon: User, to: '/worker/profile' },
-  { key: 'documents', label: 'Documents', Icon: FileText, to: '/worker/kyc' },
+  { key: 'profile', label: 'Profile', Icon: User, to: '/worker/profile', primary: true },
 ];
 
-const BOTTOM_NAV = [
-  { key: 'dashboard', label: 'Home', Icon: HomeIcon, to: '/worker' },
-  { key: 'jobs', label: 'My Jobs', Icon: ClipboardList, scroll: 'job-requests' },
-  { key: 'earnings', label: 'Earnings', Icon: IndianRupee, to: '/worker/earnings' },
-  { key: 'wallet', label: 'Wallet', Icon: WalletIcon, to: '/wallet' },
-  { key: 'profile', label: 'Profile', Icon: User, to: '/worker/profile' },
-];
+/** The mobile bar is the primary subset — derived, never a second list. */
+const BOTTOM_NAV = NAV_ITEMS.filter((i) => i.primary);
 
-export const QUICK_ACTIONS = [
-  { key: 'jobs', label: 'My Jobs', Icon: ClipboardList, tone: 'blue', scroll: 'job-requests' },
-  { key: 'bookings', label: 'Bookings', Icon: CalendarDays, tone: 'amber', scroll: 'schedule' },
-  { key: 'earnings', label: 'Earnings', Icon: IndianRupee, tone: 'green', to: '/worker/earnings' },
-  { key: 'documents', label: 'Documents', Icon: FileText, tone: 'violet', to: '/worker/kyc' },
-  { key: 'support', label: 'Support', Icon: LifeBuoy, tone: 'cyan', to: '/faq' },
-];
 
 const TONE = {
   blue: { bg: 'bg-blue-50', fg: 'text-blue-600' },
@@ -403,25 +399,29 @@ export function PerformanceGrid({ items }) {
    The full set of worker tools carried over from the original dashboard, each
    routing to a real, existing worker route. Shown on both web and mobile.
 ──────────────────────────────────────────────────────────────────────────────*/
+/**
+ * Tools that are NOT in the navigation.
+ *
+ * Earnings, Wallet and Reviews used to sit here as well as in the sidebar; a
+ * panel that repeats the menu above it is noise. What is left is the things a
+ * worker reaches for occasionally and would otherwise have to hunt for.
+ */
 const QUICK_ACCESS_TOOLS = [
-  { to: '/worker/earnings', Icon: BarChart2,     tone: 'blue',   label: 'Earnings',  sub: 'Job breakdown' },
-  { to: '/worker/goals',    Icon: Target,        tone: 'violet', label: 'Goals',     sub: 'Daily & weekly' },
-  { to: '/worker/bank',     Icon: Building2,     tone: 'blue',   label: 'Bank & UPI', sub: 'Add accounts' },
-  { to: '/worker/withdraw', Icon: ArrowRightLeft, tone: 'green', label: 'Withdraw',  sub: 'Transfer to bank' },
-  { to: '/worker/skills',   Icon: Star,          tone: 'amber',  label: 'Skills',    sub: 'Specialise & earn' },
-  { to: '/worker/training', Icon: GraduationCap, tone: 'rose',   label: 'Training',  sub: 'Get certified' },
-  { to: '/worker/appeals',  Icon: Scale,         tone: 'amber',  label: 'Appeals',   sub: 'Contest ratings' },
-  { to: '/plans',           Icon: Gem,           tone: 'cyan',   label: 'Go Pro',    sub: 'Lower commission' },
-  { to: '/wallet',          Icon: WalletIcon,    tone: 'green',  label: 'Wallet',    sub: null },
+  { to: '/provider/onboarding', Icon: ShieldCheck, tone: 'blue', label: 'Services', sub: 'What you are verified for' },
+  { to: '/worker/goals', Icon: Target, tone: 'violet', label: 'Goals', sub: 'Daily & weekly' },
+  { to: '/worker/bank', Icon: Building2, tone: 'blue', label: 'Bank & UPI', sub: 'Add accounts' },
+  { to: '/worker/withdraw', Icon: ArrowRightLeft, tone: 'green', label: 'Withdraw', sub: 'Transfer to bank' },
+  { to: '/worker/training', Icon: GraduationCap, tone: 'rose', label: 'Training', sub: 'Get certified' },
+  { to: '/plans', Icon: Gem, tone: 'cyan', label: 'Go Pro', sub: 'Lower commission' },
 ];
 
-export function QuickAccess({ onOpen, walletRs }) {
+export function QuickAccess({ onOpen }) {
   return (
-    <Panel title="Quick Access">
+    <Panel title="More">
       <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
         {QUICK_ACCESS_TOOLS.map((t) => {
           const tone = TONE[t.tone] || TONE.blue;
-          const sub = t.label === 'Wallet' ? `${inr(walletRs)} available` : t.sub;
+          const sub = t.sub;
           return (
             <button
               key={t.label}
@@ -442,31 +442,6 @@ export function QuickAccess({ onOpen, walletRs }) {
   );
 }
 
-/* ── Quick actions (mobile) ───────────────────────────────────────────────── */
-export function QuickActions({ onAction }) {
-  return (
-    <Panel title="Quick Actions" className="lg:hidden">
-      <div className="grid grid-cols-5 gap-2">
-        {QUICK_ACTIONS.map((a) => {
-          const t = TONE[a.tone] || TONE.blue;
-          return (
-            <button
-              key={a.key}
-              type="button"
-              onClick={() => onAction(a)}
-              className="flex flex-col items-center gap-1.5"
-            >
-              <span className={`flex h-12 w-12 items-center justify-center rounded-2xl ${t.bg}`}>
-                <a.Icon size={20} strokeWidth={2.2} className={t.fg} />
-              </span>
-              <span className="text-[10.5px] font-bold text-slate-600">{a.label}</span>
-            </button>
-          );
-        })}
-      </div>
-    </Panel>
-  );
-}
 
 /* ── Job requests (tabbed) ────────────────────────────────────────────────── */
 export function JobRequests({ tabs, activeTab, onTab, jobs, isOnline, onGoOnline, onOpenJob }) {

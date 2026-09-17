@@ -128,9 +128,18 @@ async function computeAndBroadcast({ orderId, workerId, workerLat, workerLng, or
     await redis.set(ETA_LAST_KEY(orderId), JSON.stringify(payload), 'EX', 3600);
     // Read-model for fast reconnect/resync
     redis.set(LASTPOS_KEY(orderId), JSON.stringify({ lat: workerLat, lng: workerLng, ...payload }), 'EX', 3600).catch(() => {});
+    /**
+     * `eta.update` is the name every client actually listens for.
+     *
+     * This published `order.eta`, and the socket gateway forwards the event
+     * name verbatim — so no listener has ever matched it and the ETA has never
+     * reached a customer, on orders OR repairs. The clients are right and the
+     * publisher was wrong: the name is not order-specific, and repairs share
+     * this exact rail.
+     */
     await redis.publish('order:event', JSON.stringify({
       orderId: String(orderId),
-      event: 'order.eta',
+      event: 'eta.update',
       payload,
     }));
   }

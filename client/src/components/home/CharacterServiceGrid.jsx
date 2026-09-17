@@ -1,32 +1,66 @@
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { LayoutGrid } from 'lucide-react';
-import { categoryMap } from '../../constants/categoryMap';
-import { normalizeCategoryKey } from '../../constants/catalogCategories';
+import { getCharacterByCatalogKey } from '../../constants/categoryMap';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { useT } from '../../i18n/I18nProvider';
+import { useLiveCatalogQuery } from '../../services/api';
 
 /**
- * Category grid. Two presentations off the single-source `categoryMap`:
- *   • Desktop (md+): the original floating 3D characters on bare white.
- *   • Mobile (<md):  bordered white cards with a category-tinted image area and
- *                    a label strip — the redesigned mobile Home.
- * Characters, prices, tints and click behaviour are identical in both.
+ * The hero service grid. Two presentations, one data source:
+ *   • Desktop (md+): floating 3D characters on bare white.
+ *   • Mobile (<md):  bordered cards with a tinted image area and a label strip.
+ *
+ * The tiles are the LIVE catalog, not a fixed list. A service appears here when
+ * an operator sets it live and providers are verified for it — so the grid can
+ * never advertise a category whose booking flow does not exist. Character art
+ * is matched by `artKey`; a service with no artwork yet still renders, using the
+ * generic tile rather than being dropped.
  */
-const SERVICES = categoryMap;
+
+/** A neutral look for a live service that has no character asset. */
+const FALLBACK_ART = {
+  img: '/images/characters/more.mp4',
+  thumb: '/images/characters/thumb/more.png',
+  tint: 'rgba(37, 99, 235, 0.08)',
+  shadow: 'rgba(37, 99, 235, 0.18)',
+};
 
 export default function CharacterServiceGrid() {
   const nav = useNavigate();
   const t = useT();
   const isMobile = useIsMobile();
+  const { data } = useLiveCatalogQuery();
+
+  const services = (data?.domains || []).flatMap((d) => d.services);
+
+  const SERVICES = [
+    ...services.map((s) => {
+      const art = getCharacterByCatalogKey(s.artKey) || FALLBACK_ART;
+      return {
+        id: s.code,
+        label: s.name,
+        caption: s.tagline || 'Book now',
+        path: s.path,
+        img: art.img,
+        thumb: art.thumb,
+        tint: art.tint,
+        shadow: art.shadow,
+      };
+    }),
+    // Kept as an honest end-cap: it says more is coming rather than opening a
+    // catalog full of services nobody can book yet.
+    {
+      id: 'more',
+      label: t('home.more', 'More soon'),
+      caption: t('home.moreSoon', 'In progress'),
+      path: null,
+      ...FALLBACK_ART,
+    },
+  ];
 
   const handleServiceClick = (svc) => {
-    // Open that vertical's own catalog page (its own hero, filters and offers)
-    // rather than the all-services grid. `normalizeCategoryKey` maps the tile's
-    // catalogKey onto the canonical route key, so `smart_device` → `/services/smart`.
-    // 'More' opens the full catalog unfiltered.
-    const key = svc.id === 'more' ? null : normalizeCategoryKey(svc.catalogKey);
-    nav(key ? `/services/${key}` : '/services');
+    if (svc.path) nav(svc.path);
   };
 
   return (
@@ -69,7 +103,7 @@ export default function CharacterServiceGrid() {
                   ) : (
                     <motion.img
                       src={svc.img}
-                      alt={t(`category.${svc.id}`, svc.label)}
+                      alt={svc.label}
                       className="absolute inset-0 w-full h-full object-contain p-2 z-10 transition-transform duration-300 group-hover:scale-[1.05] mix-blend-multiply"
                       loading="lazy"
                       animate={{ y: [0, -3, 0] }}
@@ -80,14 +114,10 @@ export default function CharacterServiceGrid() {
 
                 <div className="px-2 py-2 text-center">
                   <span className="block text-[13px] leading-[16px] font-bold text-[#14152A] truncate">
-                    {t(`category.${svc.id}`, svc.label)}
+                    {svc.label}
                   </span>
                   <span className="block text-[11px] leading-[14px] font-medium text-[var(--text-mid,#4A4D68)] truncate mt-[2px]">
-                    {isMore ? (
-                      <span className="font-semibold text-[var(--text-hi,#14152A)]">{t('home.viewAll', 'View all')}</span>
-                    ) : (
-                      <>From <span className="font-semibold text-[var(--text-hi,#14152A)] tabular-nums">{svc.price}</span></>
-                    )}
+                    {svc.caption}
                   </span>
                 </div>
               </motion.button>
@@ -139,7 +169,7 @@ export default function CharacterServiceGrid() {
                 ) : (
                   <motion.img
                     src={svc.img}
-                    alt={t(`category.${svc.id}`, svc.label)}
+                    alt={svc.label}
                     className="absolute inset-0 w-full h-full object-contain p-2 z-10 transition-transform duration-300 group-hover:scale-[1.05] mix-blend-multiply"
                     loading="lazy"
                     animate={{ y: [0, -3, 0] }}
@@ -150,14 +180,10 @@ export default function CharacterServiceGrid() {
 
               <div className="text-center w-full mt-[6px]">
                 <span className="block text-[13px] leading-[18px] font-bold text-[#14152A] truncate">
-                  {t(`category.${svc.id}`, svc.label)}
+                  {svc.label}
                 </span>
                 <span className="block text-[11px] leading-[14px] tracking-[0.04em] font-medium text-[var(--text-mid,#4A4D68)] truncate mt-[2px]">
-                  {svc.id === 'more' ? (
-                    <span className="font-semibold text-[var(--text-hi,#14152A)] tabular-nums">{svc.price}</span>
-                  ) : (
-                    <>from <span className="font-semibold text-[var(--text-hi,#14152A)] tabular-nums">{svc.price}</span></>
-                  )}
+                  {svc.caption}
                 </span>
               </div>
             </motion.button>

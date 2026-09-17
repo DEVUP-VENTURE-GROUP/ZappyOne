@@ -25,8 +25,23 @@ const TIER_MULTIPLIERS = { standard: 1.0, priority: 1.2, express: 1.4 };
 async function createOrder({ userId, service, subCategory, pickupLocation, dropLocation, description, images, scheduledAt, paymentMethod, priority, promoCode,
   deviceBrand, deviceModel, deviceSeries, partsTier, serviceMode, vehicleType, pricingModel, estimatedHours,
   teamSize, diagnosisAnswers, diagnosisUrgency, quotedTotalRupees, tier, tipAmount,
-  preferredWorkerId,
+  preferredWorkerId, preferredShopId, fulfillmentMode,
 }) {
+  // Shop-routed booking ("Nearby Shops" path) — validate the shop is real,
+  // discoverable and actually offers this service before we spend a dispatch
+  // cycle on it.
+  let resolvedShop = null;
+  if (preferredShopId) {
+    const Shop = require('../shop/shop.model');
+    resolvedShop = await Shop.findById(preferredShopId).select('isActive isBlocked kyc services').lean();
+    if (!resolvedShop || !resolvedShop.isActive || resolvedShop.isBlocked || resolvedShop.kyc?.status !== 'approved') {
+      throw Object.assign(new Error('This shop is not currently available for booking.'), { status: 400, code: 'SHOP_UNAVAILABLE' });
+    }
+    if (Array.isArray(resolvedShop.services) && resolvedShop.services.length && !resolvedShop.services.includes(service)) {
+      throw Object.assign(new Error('This shop does not offer the selected service.'), { status: 400, code: 'SHOP_SERVICE_MISMATCH' });
+    }
+  }
+  const resolvedFulfillmentMode = fulfillmentMode === 'pickup_at_shop' && preferredShopId ? 'pickup_at_shop' : 'on_site';
   // Dispatch queue depth circuit breaker — shed load before the queue backs up
   // and adds latency to ALL in-flight orders. (#62/#63)
   // Emergency orders bypass the cap — they're always urgent.
@@ -73,10 +88,13 @@ async function createOrder({ userId, service, subCategory, pickupLocation, dropL
         lng: pickupLocation.lng,
         skill: service,
         radiusKm: geoReadinessKm,
+        shopId: preferredShopId || undefined,
       });
       if (candidates.length === 0) {
         throw Object.assign(
-          new Error('No service providers are available in your area right now. Please try again later or schedule for a future time.'),
+          preferredShopId
+            ? new Error('This shop has no available workers right now. Please try another shop or Zappy Express.')
+            : new Error('No service providers are available in your area right now. Please try again later or schedule for a future time.'),
           { status: 503, code: 'NO_WORKERS_IN_AREA' }
         );
       }
@@ -146,6 +164,23 @@ async function createOrder({ userId, service, subCategory, pickupLocation, dropL
       );
     }),
   ]);
+
+  // Pick & Go — customer brings the item to the shop themselves, so there's no
+  // travel leg to charge for. Strip the distance fee before it flows into the
+  // tier/tip/team/commission math below (all of which operate on pricing.total).
+  if (resolvedFulfillmentMode === 'pickup_at_shop') {
+    const distanceFeePaise = pricing.paise?.distanceFee ?? Math.round((pricing.distanceFee || 0) * 100);
+    if (distanceFeePaise > 0) {
+      const newTotalPaise = Math.max(0, (pricing.paise?.total ?? Math.round(pricing.total * 100)) - distanceFeePaise);
+      pricing = {
+        ...pricing,
+        distanceFee: 0,
+        distanceKm: 0,
+        total: Math.round(newTotalPaise / 100),
+        paise: { ...(pricing.paise || {}), distanceFee: 0, total: newTotalPaise },
+      };
+    }
+  }
 
   // Apply tier multiplier (standard 1.0×, priority 1.2×, express 1.4×).
   // This must happen BEFORE surge protection so quotedTotalRupees comparison is apples-to-apples
@@ -315,6 +350,7 @@ async function createOrder({ userId, service, subCategory, pickupLocation, dropL
     ...(partsTier && { partsTier }),
     ...(pricing && pricing.warrantyDays != null && { partWarrantyDays: pricing.warrantyDays }),
     ...(serviceMode && { serviceMode }),
+    ...(preferredShopId && { preferredShopId, fulfillmentMode: resolvedFulfillmentMode }),
     ...(vehicleType && { vehicleType }),
     ...(pricingModel && { pricingModel }),
     ...(estimatedHours && { estimatedHours }),
@@ -888,7 +924,16 @@ async function workerComplete({ orderId, workerId, completionPhotos = [] }) {
       $inc: {
         totalJobs: 1,
         completedJobs: 1,
-        'wallet.totalEarnings': Math.round(earnings.workerPaise / 100),
+        /**
+         * Paise, like every other money field.
+         *
+         * This wrote RUPEES while the training bonus path wrote paise into
+         * the same counter and both dashboards divide by 100 to display it —
+         * so a worker's lifetime earnings read 100x short for every job they
+         * completed. Historical values are repaired from the transaction
+         * ledger by migrations/repair-wallet-units.js.
+         */
+        'wallet.totalEarnings': earnings.workerPaise,
       },
     }
   );
@@ -1731,8 +1776,119 @@ async function rebookOrder({ userId, sourceOrderId }) {
   });
 }
 
+/**
+ * Mid-job "Pick & Go" escalation — the assigned worker determines the repair
+ * needs shop tools/equipment and asks the customer to bring the device to a
+ * shop instead of finishing on-site. Does not change order.status; it only
+ * records the request and waits for the customer to confirm.
+ */
+async function requestShopHandoff({ orderId, workerId, shopId, reason }) {
+  const order = await orderRepo.findById(orderId);
+  if (!order) throw Object.assign(new Error('Order not found'), { status: 404 });
+  if (String(order.workerId) !== String(workerId)) {
+    throw Object.assign(new Error('Not your order'), { status: 403 });
+  }
+  if (!['on_the_way', 'arrived', 'in_progress'].includes(order.status)) {
+    throw Object.assign(new Error('Shop handoff can only be requested once the job has started'), { status: 409, code: 'INVALID_STATUS' });
+  }
+  if (order.fulfillmentMode === 'pickup_at_shop') {
+    throw Object.assign(new Error('This order is already routed through a shop'), { status: 409, code: 'ALREADY_PICKUP' });
+  }
+
+  let resolvedShopId = shopId;
+  if (!resolvedShopId) {
+    resolvedShopId = (await Worker.findById(workerId).select('shopId').lean())?.shopId;
+  }
+  if (!resolvedShopId) {
+    throw Object.assign(new Error('No shop to hand this job off to — you are not linked to a shop.'), { status: 400, code: 'NO_SHOP_LINKED' });
+  }
+
+  await Order.findByIdAndUpdate(orderId, {
+    $set: {
+      shopHandoff: {
+        shopId: resolvedShopId,
+        requestedBy: 'worker',
+        reason: reason || undefined,
+        requestedAt: new Date(),
+        status: 'pending_confirmation',
+      },
+    },
+  });
+
+  redis.publish('order:event', JSON.stringify({
+    orderId: String(orderId),
+    event: 'order.shop_handoff_requested',
+    payload: { shopId: String(resolvedShopId), reason: reason || null },
+  })).catch(() => {});
+
+  try {
+    const notificationService = require('../notification/notification.service');
+    const Shop = require('../shop/shop.model');
+    const shop = await Shop.findById(resolvedShopId).select('businessName').lean();
+    await notificationService.notify({
+      recipient: { kind: 'user', id: order.userId },
+      type: 'shop_handoff_requested',
+      title: '🔧 This repair needs shop tools',
+      body: `${reason ? reason + ' — ' : ''}Confirm sending your device to ${shop?.businessName || 'the shop'} to continue.`,
+      deepLink: `/orders/${orderId}`,
+      data: { orderId: String(orderId), shopId: String(resolvedShopId) },
+    });
+  } catch {}
+
+  return orderRepo.findById(orderId);
+}
+
+/** Customer's response to a worker-initiated shop handoff request. */
+async function respondShopHandoff({ orderId, userId, accept }) {
+  const order = await orderRepo.findById(orderId);
+  if (!order) throw Object.assign(new Error('Order not found'), { status: 404 });
+  if (String(order.userId) !== String(userId)) {
+    throw Object.assign(new Error('Not your order'), { status: 403 });
+  }
+  if (order.shopHandoff?.status !== 'pending_confirmation') {
+    throw Object.assign(new Error('No pending shop handoff request for this order'), { status: 409, code: 'NO_PENDING_HANDOFF' });
+  }
+
+  const shopId = order.shopHandoff.shopId;
+  const update = accept
+    ? {
+        'shopHandoff.status': 'confirmed',
+        'shopHandoff.respondedAt': new Date(),
+        fulfillmentMode: 'pickup_at_shop',
+        preferredShopId: shopId,
+      }
+    : {
+        'shopHandoff.status': 'declined',
+        'shopHandoff.respondedAt': new Date(),
+      };
+
+  await Order.findByIdAndUpdate(orderId, { $set: update });
+
+  redis.publish('order:event', JSON.stringify({
+    orderId: String(orderId),
+    event: 'order.shop_handoff_responded',
+    payload: { accept: !!accept },
+  })).catch(() => {});
+
+  try {
+    const notificationService = require('../notification/notification.service');
+    await notificationService.notify({
+      recipient: { kind: 'worker', id: order.workerId },
+      type: accept ? 'shop_handoff_confirmed' : 'shop_handoff_declined',
+      title: accept ? '✅ Customer confirmed shop drop-off' : 'Customer declined shop drop-off',
+      body: accept ? 'They will bring the item to the shop.' : 'Continue the job on-site as originally planned.',
+      deepLink: `/worker/jobs/${orderId}`,
+      data: { orderId: String(orderId) },
+    });
+  } catch {}
+
+  return orderRepo.findById(orderId);
+}
+
 module.exports = {
   createOrder,
+  requestShopHandoff,
+  respondShopHandoff,
   rebookOrder,
   acceptOffer,
   rejectOffer,

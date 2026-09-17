@@ -1,30 +1,25 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapPin, ChevronRight, Loader2, Zap } from 'lucide-react';
-import { useListOrdersQuery } from '../services/api';
+import { useMyJobs } from '../hooks/useMyJobs';
 import { useT } from '../i18n/I18nProvider';
 
-const ACTIVE_STATUSES = new Set(['created', 'searching', 'assigned', 'on_the_way', 'arrived', 'in_progress']);
-
-const STATUS_LABELS = {
-  created:     'Order placed — waiting to be assigned',
-  searching:   'Finding the best worker for you',
-  assigned:    'Worker assigned — preparing to leave',
-  on_the_way:  'Your worker is on the way',
-  arrived:     'Worker has arrived at your location',
-  in_progress: 'Service is currently in progress',
-};
-
+/**
+ * This tab is a redirect: if something is happening, go and watch it.
+ *
+ * It used to decide "is anything happening" from its own two status lists, and
+ * carried a third list of labels it never rendered. `useMyJobs` already answers
+ * the question for orders AND repairs — and answers it the same way the Home
+ * and Activity screens do, which is the point.
+ */
 export default function TrackPage() {
   const nav = useNavigate();
   const t = useT();
-  const { data, isLoading } = useListOrdersQuery(1);
-
-  const activeOrder = data?.orders?.find((o) => ACTIVE_STATUSES.has(o.status));
+  const { current, isLoading } = useMyJobs();
 
   useEffect(() => {
-    if (activeOrder) nav(`/orders/${activeOrder._id}`, { replace: true });
-  }, [activeOrder, nav]);
+    if (current) nav(current.href, { replace: true });
+  }, [current, nav]);
 
   if (isLoading) {
     return (
@@ -35,7 +30,7 @@ export default function TrackPage() {
     );
   }
 
-  if (activeOrder) return null;
+  if (current) return null;
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] pb-40">

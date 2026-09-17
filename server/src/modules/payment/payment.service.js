@@ -73,6 +73,36 @@ async function createOrderForPurpose({ owner, purpose, planCode, amountPaise, or
     if (order.payment?.status === 'paid') throw Object.assign(new Error('Order already paid'), { status: 409, code: 'ORDER_ALREADY_PAID' });
     resolvedAmount = order.pricing.total * 100;
     cfOrderIdPrefix = 'ord';
+  } else if (purpose === 'repair_payment') {
+    /**
+     * Repair bookings are a separate collection from Order, with their own
+     * immutable price snapshot. The amount is taken from that snapshot rather
+     * than from anything the client sends, so a tampered request cannot
+     * under-pay a booking.
+     */
+    if (!orderId) throw Object.assign(new Error('bookingId required'), { status: 400, code: 'BOOKING_ID_REQUIRED' });
+    const { RepairBooking } = require('../repair/models/booking.model');
+    const booking = await RepairBooking.findById(orderId).lean();
+    if (!booking) throw Object.assign(new Error('Repair booking not found'), { status: 404 });
+    if (String(booking.userId) !== String(owner.id)) throw Object.assign(new Error('Not your booking'), { status: 403 });
+    if (booking.paymentStatus === 'paid') {
+      throw Object.assign(new Error('This repair is already paid'), { status: 409, code: 'ALREADY_PAID' });
+    }
+
+    // A diagnosis-first repair must not be charged its estimate before the
+    // customer has approved a real quote — that is the §53 promise.
+    if (booking.priceSnapshot?.isEstimate && booking.status !== 'APPROVED') {
+      throw Object.assign(
+        new Error('This repair is priced after diagnosis — approve the quote before paying.'),
+        { status: 409, code: 'QUOTE_APPROVAL_REQUIRED' },
+      );
+    }
+
+    resolvedAmount = booking.priceSnapshot?.totalPaise;
+    if (!resolvedAmount || resolvedAmount <= 0) {
+      throw Object.assign(new Error('This booking has no payable amount yet'), { status: 409, code: 'NO_AMOUNT' });
+    }
+    cfOrderIdPrefix = 'rpr';
   } else {
     throw Object.assign(new Error('Unknown purpose'), { status: 400, code: 'BAD_PURPOSE' });
   }
@@ -226,6 +256,33 @@ async function capturePayment({ cfOrderId, cfPaymentId, amountPaise, eventName, 
         order.payment.transactionId = cfPaymentId;
         order.payment.paidAt = new Date();
         await order.save();
+      }
+
+    } else if (intent.purpose === 'repair_payment') {
+      // The webhook is the source of truth for payment, never the client's
+      // "success" callback — this is the only place a repair is marked paid.
+      const { RepairBooking } = require('../repair/models/booking.model');
+      const booking = await RepairBooking.findById(intent.orderId);
+      if (booking) {
+        booking.paymentStatus = 'paid';
+        booking.paymentId = intent._id;
+        await booking.save();
+
+        // Book only the platform's own cut here. The provider's share is paid
+        // at settlement, so crediting the gross to the platform would overstate
+        // revenue and double-count once the payout runs.
+        const commissionPaise = booking.priceSnapshot?.commissionPaise || 0;
+        if (commissionPaise > 0) {
+          await Transaction.create({
+            type: 'credit',
+            owner: { kind: 'platform', id: null },
+            amountPaise: commissionPaise,
+            reason: Transaction.REASONS.PLATFORM_COMMISSION,
+            refPaymentIntentId: intent._id,
+            idempotencyKey: `platform:repair:${cfPaymentId}`,
+            description: `Repair commission — ${booking.reference}`,
+          }).catch((e) => { if (e.code !== 11000) throw e; });
+        }
       }
     }
 

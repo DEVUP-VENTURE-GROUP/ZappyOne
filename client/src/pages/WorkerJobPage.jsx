@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -6,7 +6,7 @@ import {
   ArrowLeft, Navigation, MapPin, FileText, BadgeIndianRupee,
   KeyRound, Loader2, CheckCircle2, MessageCircle, Phone, Image as ImageIcon,
   Camera, X, CheckCircle, Zap, AlertCircle, Timer, TimerOff, Play, Pause,
-  ClipboardCheck, ShieldCheck, Car, Wrench,
+  ClipboardCheck, ShieldCheck, Car, Wrench, Store,
 } from 'lucide-react';
 import {
   useGetOrderQuery,
@@ -25,6 +25,7 @@ import {
   useWorkerReportNoResponseMutation,
   useWorkerReportPartUnavailableMutation,
   useBlockCustomerByWorkerMutation,
+  useRequestShopHandoffMutation,
 } from '../services/api';
 import { useOrderSocket, useSocketStatus } from '../hooks/useSocket';
 import { useGeolocation } from '../hooks/useGeolocation';
@@ -37,6 +38,10 @@ import SOSButton from '../components/worker/SOSButton';
 import WorkerCancelSheet from '../components/worker/WorkerCancelSheet';
 import ServiceChecklistPanel from '../components/worker/ServiceChecklistPanel';
 import toast from 'react-hot-toast';
+import ProofPhotos, { readyKeys } from '../components/common/ProofPhotos';
+import ArrivalProximity from '../components/common/ArrivalProximity';
+import OtpEntry from '../components/common/OtpEntry';
+import { metresBetween, ARRIVAL_RADIUS_M } from '../utils/distance';
 
 /* ── WorkerETACard — live countdown with penalty preview ───────────── */
 function WorkerETACard({ deadlineAt, etaMins }) {
@@ -195,20 +200,6 @@ const STATUS_CONFIG = {
 };
 
 const ACTIVE_STATUSES = new Set(['assigned', 'on_the_way', 'arrived', 'in_progress']);
-
-/* Maximum distance (metres) the worker must be within to tap "I've Arrived".
-   Matches ARRIVE_BLOCK_KM (0.100) on the server. */
-const ARRIVED_GEOFENCE_M = 100;
-
-function haversineMeters(a, b) {
-  const R     = 6_371_000;
-  const toRad = d => d * Math.PI / 180;
-  const dLat  = toRad(b.lat - a.lat);
-  const dLng  = toRad(b.lng - a.lng);
-  const s     = Math.sin(dLat / 2) ** 2
-    + Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(s), Math.sqrt(1 - s));
-}
 
 const PHONE_SERVICES = new Set(['screen_replacement', 'battery_replacement', 'charging_issue', 'speaker_mic_issue', 'software_issue', 'water_damage_check']);
 const VEHICLE_SERVICES = new Set(['puncture', 'battery_jump_start', 'fuel_delivery', 'bike_wash', 'car_wash', 'minor_roadside_repair']);
@@ -530,18 +521,18 @@ export default function WorkerJobPage() {
   const [arrive,       { isLoading: arriving }]         = useWorkerArriveMutation();
   const [startService, { isLoading: startingService }]  = useWorkerStartServiceMutation();
   const [complete,     { isLoading: completing }]       = useWorkerCompleteMutation();
-  const [presign]                                        = usePresignUploadMutation();
   const [reportNoResponse, { isLoading: reportingNoResponse }] = useWorkerReportNoResponseMutation();
   const [reportPartUnavailable, { isLoading: reportingPart }]  = useWorkerReportPartUnavailableMutation();
   const [blockCustomer, { isLoading: blocking }]               = useBlockCustomerByWorkerMutation();
+  const [requestShopHandoff, { isLoading: requestingHandoff }] = useRequestShopHandoffMutation();
   const [otp, setOtp]                     = useState('');
   const [myLocation, setMyLocation]       = useState(null);
   const [proofPhotos, setProofPhotos]     = useState([]);
   const [showNoResponseConfirm, setShowNoResponseConfirm]   = useState(false);
   const [showPartUnavailableForm, setShowPartUnavailableForm] = useState(false);
   const [partName, setPartName]           = useState('');
-  const photoInputRef                     = useRef(null);
-  const otpInputRef                       = useRef(null);
+  const [showShopHandoffForm, setShowShopHandoffForm] = useState(false);
+  const [handoffReason, setHandoffReason] = useState('');
   const watchCancelRef                    = useRef(null);
   const lastSentRef                       = useRef(0);
   const [idleSeconds,  setIdleSeconds]    = useState(0);
@@ -566,14 +557,6 @@ export default function WorkerJobPage() {
     if (!status || !ACTIVE_STATUSES.has(status) || !token) return;
     const socket = getSocket(token);
     let lastJobPos = null;
-    function jobHaverMetres(a, b) {
-      const R = 6371000;
-      const dLat = (b.lat - a.lat) * Math.PI / 180;
-      const dLng = (b.lng - a.lng) * Math.PI / 180;
-      const x = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * Math.PI / 180) * Math.cos(b.lat * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
-      return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
-    }
-
     // Stationary tracking: if worker hasn't moved 15m in 45s, drop to 60s heartbeat.
     let stationaryRef = { lastMovedAt: Date.now(), lastPos: null };
 
@@ -582,7 +565,7 @@ export default function WorkerJobPage() {
         setMyLocation({ lat: pos.lat, lng: pos.lng, accuracy: pos.accuracy ?? null });
         const now = Date.now();
         const cur = { lat: pos.lat, lng: pos.lng };
-        const distMoved = lastJobPos ? jobHaverMetres(lastJobPos, cur) : 999;
+        const distMoved = lastJobPos ? (metresBetween(lastJobPos, cur) ?? 999) : 999;
         const moved = distMoved >= 15;
 
         if (moved) {
@@ -611,29 +594,6 @@ export default function WorkerJobPage() {
     );
     return () => { watchCancelRef.current?.(); watchCancelRef.current = null; };
   }, [status, token, id, watch]);
-
-  const handlePhotoCapture = useCallback(async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    e.target.value = '';
-    if (proofPhotos.length >= 3) { toast.error('Maximum 3 photos allowed'); return; }
-
-    const preview = URL.createObjectURL(file);
-    const photoId = Date.now();
-    setProofPhotos((prev) => [...prev, { id: photoId, preview, key: null, uploading: true }]);
-
-    try {
-      const { uploadUrl, key } = await presign({ folder: 'order-proof', contentType: file.type || 'image/jpeg' }).unwrap();
-      await fetch(uploadUrl, { method: 'PUT', body: file, headers: { 'Content-Type': file.type || 'image/jpeg' } });
-      setProofPhotos((prev) => prev.map((p) => p.id === photoId ? { ...p, key, uploading: false } : p));
-    } catch {
-      /* Upload to S3 failed — mark with error so we can block completion.
-         Most often this is a network/permissions block on the upload host,
-         not a bad photo, so don't tell the worker to "retake" in circles. */
-      setProofPhotos((prev) => prev.map((p) => p.id === photoId ? { ...p, key: null, uploading: false, error: true } : p));
-      toast.error('Could not upload the photo. Check your connection and try again — if it keeps failing, contact support.');
-    }
-  }, [proofPhotos.length, presign]);
 
   /* ── Idle alert: count seconds since order was assigned ── */
   useEffect(() => {
@@ -793,9 +753,9 @@ export default function WorkerJobPage() {
       toast.error('Customer location unavailable');
       return;
     }
-    const distM = haversineMeters(myLocation, pickup);
-    if (distM > ARRIVED_GEOFENCE_M) {
-      toast.error(`You're ${Math.round(distM)} m away — move within ${ARRIVED_GEOFENCE_M} m to mark arrived`);
+    const distM = metresBetween(myLocation, pickup);
+    if (distM !== null && distM > ARRIVAL_RADIUS_M) {
+      toast.error(`You're ${Math.round(distM)} m away — move within ${ARRIVAL_RADIUS_M} m to mark arrived`);
       return;
     }
     try { await arrive({ id, lat: myLocation.lat, lng: myLocation.lng }).unwrap(); toast.success('Marked as arrived'); refetch(); }
@@ -807,12 +767,8 @@ export default function WorkerJobPage() {
     catch (err) { toast.error(err.data?.error || 'Invalid OTP'); }
   }
 
-  function removePhoto(photoId) {
-    setProofPhotos((prev) => prev.filter((p) => p.id !== photoId));
-  }
-
   /* Only photos that successfully uploaded to S3 are accepted */
-  const validPhotos = proofPhotos.filter((p) => !p.uploading && p.key && !p.error);
+  const validPhotoKeys = readyKeys(proofPhotos);
 
   async function onComplete() {
     if (proofPhotos.some((p) => p.uploading)) {
@@ -822,11 +778,11 @@ export default function WorkerJobPage() {
     if (failed.length > 0) {
       toast.error('Some photos failed to upload. Remove them and retake.'); return;
     }
-    if (validPhotos.length === 0) {
+    if (validPhotoKeys.length === 0) {
       toast.error('Please take at least 1 proof-of-work photo'); return;
     }
     try {
-      await complete({ id, completionPhotos: validPhotos.map((p) => p.key) }).unwrap();
+      await complete({ id, completionPhotos: validPhotoKeys }).unwrap();
       toast.success('Job completed!');
       nav('/worker', { replace: true });
     } catch (err) { toast.error(err.data?.error || 'Failed'); }
@@ -1077,34 +1033,9 @@ export default function WorkerJobPage() {
               <div className="absolute inset-0 pointer-events-none"
                 style={{ background: 'radial-gradient(ellipse at 80% 10%, rgba(251,191,36,0.15) 0%, transparent 60%)' }} />
               <div className="relative">
-                <div className="flex items-center gap-2 mb-5">
-                  <div className="w-8 h-8 rounded-xl bg-amber-400/20 flex items-center justify-center">
-                    <KeyRound size={15} strokeWidth={2} className="text-amber-300" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-extrabold text-amber-200 uppercase tracking-widest">Customer OTP</p>
-                    <p className="text-[10px] text-amber-300/50 font-medium mt-0.5">Ask the customer for their 6-digit code</p>
-                  </div>
-                </div>
-                <div className="flex gap-2 justify-center mb-2">
-                  {Array.from({ length: 6 }).map((_, i) => (
-                    <div key={i} onClick={() => otpInputRef.current?.focus()}
-                      className={`flex-1 aspect-square max-w-[52px] rounded-2xl flex items-center justify-center text-xl font-black border-2 transition-all cursor-text ${
-                        otp[i]
-                          ? 'bg-amber-400/25 border-amber-400 text-white shadow-lg shadow-amber-500/20'
-                          : 'bg-white/5 border-white/12 text-white/20'
-                      }`}>
-                      {otp[i] ? '●' : '–'}
-                    </div>
-                  ))}
-                </div>
-                <input ref={otpInputRef} className="w-full opacity-0 h-1 absolute" inputMode="numeric"
-                  maxLength={6} value={otp} autoFocus
-                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))} />
-                <button className="w-full mt-3 py-3 rounded-xl bg-white/5 border border-white/10 text-amber-200/60 text-xs font-semibold"
-                  onClick={() => otpInputRef.current?.focus()}>
-                  Tap here → enter OTP
-                </button>
+                {/* Shared with the repair flow, which asks for a code at
+                    three different moments. */}
+                <OtpEntry value={otp} onChange={setOtp} title="Customer OTP" tone="dark" />
               </div>
             </motion.div>
           )}
@@ -1123,110 +1054,8 @@ export default function WorkerJobPage() {
             <ServiceChecklistPanel orderId={order._id} service={order.service}
               onChecked={(ids) => console.log('[Checklist] Completed:', ids)} />
 
-            {/* Proof of work photo upload */}
-            <motion.div
-              className="rounded-2xl overflow-hidden"
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15 }}
-              style={{
-                background: validPhotos.length > 0
-                  ? 'linear-gradient(135deg, #f0fdf4, #dcfce7)'
-                  : 'linear-gradient(135deg, #faf5ff, #f3e8ff)',
-                border: validPhotos.length > 0
-                  ? '1px solid rgba(34,197,94,0.25)'
-                  : '1px solid rgba(139,92,246,0.2)',
-              }}
-            >
-              {/* Header */}
-              <div className="flex items-center gap-3 px-4 pt-4 pb-3">
-                <motion.div
-                  className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 ${
-                    validPhotos.length > 0 ? 'bg-green-100' : 'bg-violet-100'
-                  }`}
-                  animate={validPhotos.length === 0 ? {
-                    boxShadow: ['0 0 0 0px rgba(139,92,246,0.3)', '0 0 0 8px rgba(139,92,246,0)', '0 0 0 0px rgba(139,92,246,0)']
-                  } : {}}
-                  transition={{ duration: 2.5, repeat: Infinity }}
-                >
-                  {validPhotos.length > 0
-                    ? <CheckCircle size={20} strokeWidth={2} className="text-green-600" />
-                    : <Camera size={20} strokeWidth={1.75} className="text-violet-600" />
-                  }
-                </motion.div>
-                <div className="flex-1 min-w-0">
-                  <p className={`text-sm font-extrabold ${validPhotos.length > 0 ? 'text-green-800' : 'text-violet-900'}`}>
-                    {validPhotos.length > 0 ? 'Proof photos ready' : 'Add proof-of-work photos'}
-                  </p>
-                  <p className={`text-[11px] font-medium mt-0.5 ${validPhotos.length > 0 ? 'text-green-600' : 'text-violet-500'}`}>
-                    {validPhotos.length > 0
-                      ? `${validPhotos.length} photo${validPhotos.length > 1 ? 's' : ''} uploaded — you can add ${3 - proofPhotos.length} more`
-                      : 'Minimum 1 photo required before marking complete'}
-                  </p>
-                </div>
-                {/* Counter pill */}
-                <div className={`px-2.5 py-1 rounded-full text-xs font-extrabold shrink-0 ${
-                  validPhotos.length >= 1 ? 'bg-green-500 text-white' : 'bg-violet-200 text-violet-700'
-                }`}>
-                  {validPhotos.length}/3
-                </div>
-              </div>
-
-              {/* Photo grid */}
-              {proofPhotos.length > 0 && (
-                <div className="grid grid-cols-3 gap-2 px-4 pb-3">
-                  {proofPhotos.map((photo) => (
-                    <div key={photo.id} className="relative aspect-square">
-                      <img src={photo.preview} alt="Proof"
-                        className={`w-full h-full object-cover rounded-2xl ${
-                          photo.error ? 'ring-2 ring-red-400' : photo.uploading ? 'ring-2 ring-violet-300' : 'ring-2 ring-green-400'
-                        }`}
-                        style={{ boxShadow: photo.error ? '0 4px 12px rgba(239,68,68,0.25)' : '0 4px 12px rgba(0,0,0,0.12)' }}
-                      />
-                      {photo.uploading ? (
-                        <div className="absolute inset-0 bg-black/50 rounded-2xl flex flex-col items-center justify-center gap-1">
-                          <Loader2 size={18} className="text-white animate-spin" />
-                          <p className="text-[9px] text-white font-bold">Uploading…</p>
-                        </div>
-                      ) : (
-                        <>
-                          <div className={`absolute top-1.5 right-1.5 w-5 h-5 rounded-full flex items-center justify-center shadow ${
-                            photo.error ? 'bg-red-500' : 'bg-green-500'
-                          }`}>
-                            {photo.error
-                              ? <X size={10} strokeWidth={3} className="text-white" />
-                              : <CheckCircle size={11} strokeWidth={3} className="text-white" />
-                            }
-                          </div>
-                          <button onClick={() => removePhoto(photo.id)}
-                            className="absolute top-1.5 left-1.5 w-5 h-5 bg-black/60 backdrop-blur-sm rounded-full flex items-center justify-center">
-                            <X size={9} strokeWidth={3} className="text-white" />
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Add photo button */}
-              {proofPhotos.length < 3 && (
-                <div className="px-4 pb-4">
-                  <input ref={photoInputRef} type="file" accept="image/*" capture="environment"
-                    className="hidden" onChange={handlePhotoCapture} />
-                  <button 
-                    onClick={() => photoInputRef.current?.click()}
-                    className="w-full py-3 rounded-xl bg-white text-violet-700 font-bold text-sm ring-1 ring-violet-200 flex items-center justify-center gap-2"
-                  >
-                    <Camera size={17} strokeWidth={2} />
-                    <span>{proofPhotos.length === 0 ? 'Take Proof Photo' : 'Add Another Photo'}</span>
-                    {proofPhotos.length === 0 && (
-                      <span className="ml-1 text-[10px] font-black bg-red-500 text-white px-1.5 py-0.5 rounded-full">Required</span>
-                    )}
-                  </button>
-                </div>
-              )}
-            </motion.div>
+            {/* Proof of work photo upload — shared with the repair flow. */}
+            <ProofPhotos photos={proofPhotos} onChange={setProofPhotos} folder="order-proof" />
 
             {isPhone && <PhoneHealthPanel orderId={order._id} />}
           </>
@@ -1249,7 +1078,7 @@ export default function WorkerJobPage() {
             const ctdSec = secsToRedispatch % 60;
             const isNearby  = myLocation && pickup
               && (myLocation.accuracy == null || myLocation.accuracy <= 120)
-              && haversineMeters(myLocation, pickup) <= 200;
+              && (metresBetween(myLocation, pickup) ?? Infinity) <= 200;
             return (
               <div className="space-y-2">
 
@@ -1328,11 +1157,8 @@ export default function WorkerJobPage() {
           })()}
 
           {status === 'on_the_way' && (() => {
-            const distM   = myLocation && pickup ? haversineMeters(myLocation, pickup) : null;
-            const withinFence = distM !== null && distM <= ARRIVED_GEOFENCE_M;
-            // Progress 0→1 as distance drops from 5× the geofence radius → 0.
-            const progress = distM !== null ? Math.max(0, Math.min(1, 1 - distM / (ARRIVED_GEOFENCE_M * 5))) : 0;
-            const pct      = Math.round(progress * 100);
+            const distM = metresBetween(myLocation, pickup);
+            const withinFence = distM !== null && distM <= ARRIVAL_RADIUS_M;
 
             // ETA countdown from trip deadline stored on order
             const deadlineAt = order.tripDeadlineAt ? new Date(order.tripDeadlineAt) : null;
@@ -1343,55 +1169,8 @@ export default function WorkerJobPage() {
 
                 {/* ── ETA countdown card ─────────────────────────────── */}
                 {deadlineAt && <WorkerETACard deadlineAt={deadlineAt} etaMins={etaMins} />}
-                {/* Proximity indicator — only while GPS is available */}
-                {distM !== null && (
-                  <div className={`rounded-2xl px-4 py-3 flex items-center gap-3 transition-colors ${
-                    withinFence
-                      ? 'bg-green-50 ring-1 ring-green-200'
-                      : 'bg-amber-50 ring-1 ring-amber-200'
-                  }`}>
-                    {/* Arc progress ring */}
-                    <div className="relative w-10 h-10 shrink-0">
-                      <svg width="40" height="40" viewBox="0 0 40 40" className="-rotate-90">
-                        <circle cx="20" cy="20" r="16" fill="none" stroke="#e2e8f0" strokeWidth="4" />
-                        <circle
-                          cx="20" cy="20" r="16" fill="none"
-                          stroke={withinFence ? '#16a34a' : '#d97706'}
-                          strokeWidth="4"
-                          strokeLinecap="round"
-                          strokeDasharray={`${2 * Math.PI * 16}`}
-                          strokeDashoffset={`${2 * Math.PI * 16 * (1 - progress)}`}
-                          style={{ transition: 'stroke-dashoffset 0.6s ease, stroke 0.4s ease' }}
-                        />
-                      </svg>
-                      <span className="absolute inset-0 flex items-center justify-center text-[9px] font-black"
-                            style={{ color: withinFence ? '#16a34a' : '#d97706' }}>
-                        {pct}%
-                      </span>
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      {withinFence ? (
-                        <>
-                          <p className="text-sm font-extrabold text-green-800">You're at the location!</p>
-                          <p className="text-xs text-green-600 font-medium">{Math.round(distM)} m · tap to confirm arrival</p>
-                        </>
-                      ) : (
-                        <>
-                          <p className="text-sm font-extrabold text-amber-800">
-                            {Math.round(distM)} m away
-                          </p>
-                          <p className="text-xs text-amber-600 font-medium">
-                            Get within {ARRIVED_GEOFENCE_M} m to enable arrived
-                          </p>
-                        </>
-                      )}
-                    </div>
-
-                    <MapPin size={16} strokeWidth={2}
-                      className={withinFence ? 'text-green-600 shrink-0' : 'text-amber-500 shrink-0'} />
-                  </div>
-                )}
+                {/* Proximity indicator — shared with the repair flow. */}
+                <ArrivalProximity metres={distM} />
 
                 {/* Arrived button + Navigate side by side */}
                 <div className="flex gap-2">
@@ -1483,14 +1262,14 @@ export default function WorkerJobPage() {
 
           {status === 'in_progress' && (
             <div className="space-y-2">
-              {validPhotos.length === 0 && (
+              {validPhotoKeys.length === 0 && (
                 <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                   className="text-center text-xs font-bold text-amber-700 bg-amber-50 ring-1 ring-amber-200 py-2.5 rounded-xl">
                   📷 Take at least 1 proof photo above to complete
                 </motion.p>
               )}
               <motion.button onClick={onComplete}
-                disabled={completing || validPhotos.length === 0 || proofPhotos.some(p => p.uploading)}
+                disabled={completing || validPhotoKeys.length === 0 || proofPhotos.some(p => p.uploading)}
                 className="w-full relative overflow-hidden rounded-2xl py-4 flex items-center justify-center gap-2.5 text-white font-black text-base disabled:opacity-50"
                 style={{ background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)', boxShadow: '0 8px 24px rgba(22,163,74,0.4)' }}
                 whileTap={{ scale: 0.98 }}>
@@ -1541,6 +1320,56 @@ export default function WorkerJobPage() {
                 </div>
               )}
             </div>
+          )}
+
+          {/* Pick & Go — mid-job escalation when the repair turns out to need
+              shop tools/equipment. Customer must confirm before it takes effect. */}
+          {['on_the_way', 'arrived', 'in_progress'].includes(status) && order?.fulfillmentMode !== 'pickup_at_shop' && (
+            order?.shopHandoff?.status === 'pending_confirmation' ? (
+              <div className="rounded-2xl bg-amber-500/10 ring-1 ring-amber-500/30 p-4 flex items-center gap-3">
+                <Store size={18} className="text-amber-400 shrink-0" />
+                <div>
+                  <p className="text-sm font-bold text-amber-300">Waiting for customer to confirm</p>
+                  <p className="text-xs text-amber-400/80 mt-0.5">They've been asked to bring the item to the shop.</p>
+                </div>
+              </div>
+            ) : (
+              <div className="rounded-2xl bg-slate-800/60 ring-1 ring-slate-700/40 p-4 space-y-2">
+                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Too complex for on-site?</p>
+                {!showShopHandoffForm ? (
+                  <button onClick={() => setShowShopHandoffForm(true)}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-slate-700/50 text-slate-300 text-sm font-bold ring-1 ring-slate-600/40">
+                    <Store size={14} /> Send this job to the shop
+                  </button>
+                ) : (
+                  <div className="space-y-2">
+                    <p className="text-xs text-slate-400">Customer will be asked to bring the item to your shop instead. They must confirm first.</p>
+                    <input value={handoffReason} onChange={(e) => setHandoffReason(e.target.value)}
+                      placeholder="Reason (e.g. needs motherboard rework)"
+                      className="w-full px-3 py-2 rounded-xl bg-slate-700 text-white text-sm placeholder:text-slate-500 outline-none" />
+                    <div className="flex gap-2">
+                      <button
+                        onClick={async () => {
+                          try {
+                            await requestShopHandoff({ id, reason: handoffReason.trim() || undefined }).unwrap();
+                            toast.success('Sent — waiting for customer to confirm');
+                            setShowShopHandoffForm(false);
+                            setHandoffReason('');
+                          } catch (err) { toast.error(err?.data?.error || 'Failed to send request'); }
+                        }}
+                        disabled={requestingHandoff}
+                        className="flex-1 py-2.5 rounded-xl bg-indigo-700 text-white text-sm font-bold disabled:opacity-50"
+                      >
+                        {requestingHandoff ? 'Sending…' : 'Send Request'}
+                      </button>
+                      <button onClick={() => setShowShopHandoffForm(false)} className="px-4 py-2.5 rounded-xl bg-white/5 text-white/50 text-sm">
+                        Back
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )
           )}
 
           {terminal && (

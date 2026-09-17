@@ -11,17 +11,21 @@ import {
   CheckCircle, Lock, TrendingUp, MapPin, Loader2,
   Laptop, Tv, Wifi, Camera, Heart, PartyPopper, Dog,
   ShieldAlert, Cpu, MonitorSmartphone, Repeat2,
-  Tag, Headphones, ArrowRight, ThumbsUp, X,
+  Tag, Headphones, ArrowRight, ThumbsUp, X, Store,
 } from 'lucide-react';
 import { selectAuth, selectIsAuthed } from '../modules/auth/authSlice';
 import toast from 'react-hot-toast';
 import { useT } from '../i18n/I18nProvider';
 import { serviceNameKey } from '../i18n/translations';
-import { useListOrdersQuery, useGetGamificationQuery, useGetRecommendationsQuery, useListServicesQuery, useRebookOrderMutation, useListNotificationsQuery } from '../services/api';
+import { useGetGamificationQuery, useGetRecommendationsQuery, useListServicesQuery, useRebookOrderMutation, useListNotificationsQuery } from '../services/api';
+import { useMyJobs } from '../hooks/useMyJobs';
 import { useGeolocation, loadGeoLocation } from '../hooks/useGeolocation';
 import { saveGeoLocation } from '../utils/geoCache';
 import { reverseGeocode } from '../utils/reverseGeocode';
 import { serviceLabel } from '../constants/services';
+import LiveServices from '../components/home/LiveServices';
+import GaneshFestiveHeader from '../components/home/GaneshFestiveHeader';
+import FestiveCategories from '../components/home/FestiveCategories';
 import { ZappyLogo } from '../components/common/ZappyLogo';
 import Footer from '../components/layout/Footer';
 import VoiceSearchButton from '../components/common/VoiceSearchButton';
@@ -45,10 +49,7 @@ import CharacterServiceGrid from '../components/home/CharacterServiceGrid';
 import { SERVICE_PRICE_FALLBACK } from '../constants/servicePriceFallback';
 import OffersSection from '../components/home/OffersSection';
 import { 
-  PromoBannerVehicle, 
-  PromoBannerElectronics,
-  PromoBannerFamily,
-  PromoBannerEvents
+  PromoBannerEvents,
 } from '../components/home/PromoBanners';
 import SEO, { HOME_SCHEMA, BASE_URL } from '../components/SEO';
 import { useIsMobile } from '../hooks/useIsMobile';
@@ -120,81 +121,21 @@ function timeAgo(date) {
 }
 
 /* ─── Most booked — Electronics Rescue ────────────────────────────────── */
-const MOST_BOOKED = [
-  { key: 'screen_replacement',  name: 'Screen Replacement', img: 'https://images.unsplash.com/photo-1601784551446-20c9e07cdbdb?auto=format&fit=crop&w=400&h=300&q=80', badge: 'Popular' },
-  { key: 'battery_replacement', name: 'Battery Replacement',img: 'https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?auto=format&fit=crop&w=400&h=300&q=80', badge: 'Popular' },
-  { key: 'laptop_slow',         name: 'Laptop Speed Fix',   img: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=400&h=300&q=80', badge: 'Popular' },
-  { key: 'charging_issue',      name: 'Charging Port Fix',  img: 'https://images.unsplash.com/photo-1585771724684-38269d6639fd?auto=format&fit=crop&w=400&h=300&q=80', badge: 'Popular' },
-  { key: 'data_recovery',       name: 'Data Recovery',      img: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=400&h=300&q=80', badge: 'Popular' },
-];
 
 /* ─── Vehicle care highlights ──────────────────────────────────────────── */
-const VEHICLE_HIGHLIGHTS = [
-  { key: 'puncture',         name: 'Puncture Repair',  img: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=400&h=300&q=80', badge: 'Popular' },
-  { key: 'car_wash',         name: 'Car Wash',         img: 'https://images.unsplash.com/photo-1520340356584-f9917d1eea6f?auto=format&fit=crop&w=400&h=300&q=80', badge: 'Popular' },
-  { key: 'battery_jump_start',name: 'Jump Start',      img: 'https://images.unsplash.com/photo-1621905252507-b35492cc74b4?auto=format&fit=crop&w=400&h=300&q=80', badge: 'Popular' },
-  { key: 'bike_service',     name: 'Bike Full Service',img: 'https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?auto=format&fit=crop&w=400&h=300&q=80', badge: 'Popular' },
-  { key: 'car_detailing',    name: 'Car Detailing',    img: 'https://images.unsplash.com/photo-1507136566006-cfc505b114fc?auto=format&fit=crop&w=400&h=300&q=80', badge: 'Popular' },
-  { key: 'car_towing',       name: 'Vehicle Towing',   img: 'https://images.unsplash.com/photo-1591543620767-582b2e76369e?auto=format&fit=crop&w=400&h=300&q=80', badge: 'New' },
-];
 
 /* ─── Service tile data ────────────────────────────────────────────────── */
 // Electronics Rescue — Mobile
-const PHONE_TILES = [
-  { key: 'screen_replacement',  name: 'Screen Fix',    img: '/images/services/phone_screen.webp',  eta: '25 mins' },
-  { key: 'battery_replacement', name: 'Battery',       img: '/images/services/phone_battery.webp', eta: '30 mins' },
-  { key: 'charging_issue',      name: 'Charging',      img: '/images/services/phone_charging.webp',eta: '20 mins' },
-  { key: 'camera_issue',        name: 'Camera',        img: '/images/services/phone_camera.webp',  eta: null      },
-  { key: 'software_issue',      name: 'Software',      img: '/images/services/phone_software.webp',eta: null      },
-  { key: 'water_damage',        name: 'Water Damage',  img: '/images/services/phone_water.webp',   eta: null      },
-  { key: 'data_recovery',       name: 'Data Recovery', img: '/images/services/phone_data.webp',    eta: null      },
-];
 
 // Electronics Rescue — Laptop
-const LAPTOP_TILES = [
-  { key: 'laptop_slow',             name: 'Slow Laptop',    img: '/images/services/laptop_slow.webp',     eta: '45 mins' },
-  { key: 'laptop_ssd_upgrade',      name: 'SSD Upgrade',    img: '/images/services/laptop_ssd.webp',      eta: null      },
-  { key: 'laptop_screen_issue',     name: 'Screen Repair',  img: '/images/services/laptop_screen.webp',   eta: null      },
-  { key: 'laptop_virus_removal',    name: 'Virus Removal',  img: '/images/services/laptop_virus.webp',    eta: null      },
-  { key: 'laptop_data_recovery',    name: 'Data Recovery',  img: '/images/services/laptop_data.webp',     eta: null      },
-  { key: 'laptop_charging_issue',   name: 'Charging Fix',   img: '/images/services/laptop_charging.webp', eta: '40 mins' },
-];
 
 // Smart Devices
-const SMART_TILES = [
-  { key: 'smart_tv_install',    name: 'Smart TV',         img: '/images/smart_tv.webp',       eta: '60 mins' },
-  { key: 'router_setup',        name: 'WiFi Setup',       img: '/images/wifi_setup.webp',     eta: '30 mins' },
-  { key: 'cctv_install',        name: 'CCTV Install',     img: '/images/cctv_install.webp',   eta: null      },
-  { key: 'smart_lock_install',  name: 'Smart Lock',       img: '/images/smart_lock.webp',       eta: null      },
-  { key: 'home_automation_setup',name: 'Home Auto',       img: '/images/home_auto.webp',      eta: null      },
-];
 
 // Vehicle Care
-const VEHICLE_TILES = [
-  { key: 'puncture',           name: 'Puncture',      Icon: AlertTriangle, grad: 'from-slate-600 to-slate-800',  shadow: 'rgba(100,116,139,0.4)', eta: '18 mins' },
-  { key: 'battery_jump_start', name: 'Jump Start',    Icon: Zap,           grad: 'from-yellow-500 to-amber-600', shadow: 'rgba(245,158,11,0.4)',  eta: '15 mins' },
-  { key: 'bike_wash',          name: 'Bike Wash',     Icon: Bike,          grad: 'from-cyan-500 to-blue-600',    shadow: 'rgba(6,182,212,0.35)', eta: '30 mins' },
-  { key: 'car_wash',           name: 'Car Wash',      Icon: Car,           grad: 'from-sky-500 to-blue-700',     shadow: 'rgba(14,165,233,0.35)',eta: '35 mins' },
-  { key: 'car_breakdown',      name: 'Breakdown',     Icon: Hammer,        grad: 'from-red-500 to-rose-700',     shadow: 'rgba(239,68,68,0.35)', eta: '20 mins' },
-  { key: 'fuel_delivery',      name: 'Fuel Delivery', Icon: Fuel,          grad: 'from-orange-500 to-red-500',   shadow: 'rgba(249,115,22,0.4)', eta: '25 mins' },
-];
 
 // Family & Elder Assist
-const FAMILY_TILES = [
-  { key: 'medicine_pickup',    name: 'Medicine',      img: '/images/medicine_delivery.webp', eta: '40 mins' },
-  { key: 'hospital_companion', name: 'Hospital Help', img: '/images/hospital_companion.webp', eta: null      },
-  { key: 'grocery_assistance', name: 'Grocery',       img: '/images/grocery_delivery.webp',   eta: '45 mins' },
-  { key: 'elder_companion',    name: 'Elder Care',    img: '/images/elder_care.webp',         eta: null      },
-  { key: 'home_visit_check',   name: 'Home Visit',    img: '/images/home_visit.webp',         eta: null      },
-];
 
 // Tank & Water Cleaning
-const TANK_TILES = [
-  { key: 'water_tank_cleaning',      name: 'Water Tank',      img: '/images/water_tank_cleaning.webp', badge: 'New' },
-  { key: 'overhead_tank_cleaning',   name: 'Overhead Tank',   img: '/images/overhead_tank_cleaning.webp', badge: 'New' },
-  { key: 'underground_sump_cleaning',name: 'Underground Sump',img: '/images/underground_sump_cleaning.webp', badge: 'New' },
-  { key: 'sintex_tank_cleaning',     name: 'Sintex Tank',     img: '/images/sintex_tank_cleaning.webp', badge: 'New' },
-];
 
 // Event Commerce tiles — navigate to event commerce module
 const EVENT_TILES = [
@@ -206,13 +147,6 @@ const EVENT_TILES = [
 ];
 
 // Pet Assistance
-const PET_TILES = [
-  { key: 'pet_grooming',       name: 'Grooming',    img: 'https://images.unsplash.com/photo-1516734212186-a967f81ad0d7?auto=format&fit=crop&w=400&h=400&q=80',  eta: '60 mins' },
-  { key: 'pet_walking',        name: 'Walking',     img: 'https://images.unsplash.com/photo-1541599540903-216a46ca1dc0?auto=format&fit=crop&w=400&h=400&q=80', eta: '20 mins' },
-  { key: 'pet_sitting',        name: 'Pet Sitting', img: 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?auto=format&fit=crop&w=400&h=400&q=80',     eta: null      },
-  { key: 'pet_vet_assist',     name: 'Vet Help',    img: 'https://images.unsplash.com/photo-1576201836106-db1758fd1c97?auto=format&fit=crop&w=400&h=400&q=80',   eta: null      },
-  { key: 'pet_transport',      name: 'Transport',   img: 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=400&h=400&q=80', eta: null      },
-];
 
 const HERO_POSTERS = [
   { Icon: Smartphone, label: 'Phone Repair',  grad: 'from-indigo-500 via-violet-600 to-purple-700' },
@@ -221,11 +155,6 @@ const HERO_POSTERS = [
   { Icon: Dog,        label: 'Pet Care',      grad: 'from-amber-400 via-orange-500 to-red-500'     },
 ];
 
-const ACTIVE_STATUSES = ['created','searching','assigned','on_the_way','arrived','in_progress'];
-const STATUS_LABELS = {
-  searching: 'Finding a worker', assigned: 'Worker assigned', on_the_way: 'On the way',
-  arrived: 'Arrived', in_progress: 'In progress', created: 'Order placed',
-};
 const LEVEL_COLORS = {
   Rookie: 'from-slate-400 to-slate-500',    Explorer: 'from-green-400 to-emerald-500',
   Regular: 'from-blue-400 to-blue-600',     Pro: 'from-violet-400 to-purple-600',
@@ -290,15 +219,27 @@ function HeroTrustBar() {
   const t = useT();
   return (
     <div className="relative z-10 -mt-2.5 md:-mt-6 mx-2.5 md:mx-6">
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-[0_14px_36px_-14px_rgba(15,23,42,0.24)] px-1.5 py-3 md:px-4 md:py-3.5">
-        <div className="grid grid-cols-4 divide-x divide-slate-200/60">
+      {/*
+        * Icon ABOVE the label, not beside it.
+        *
+        * Side by side, each badge had roughly 40px of text width on a phone, so
+        * "Satisfaction Guaranteed" wrapped to two lines while "Upfront Pricing"
+        * stayed on one — and the vertical dividers then cut through badges of
+        * different heights, which is what made the row look broken rather than
+        * merely tight. Stacking gives every label the full column width, and a
+        * fixed row height keeps all four baselines aligned however they wrap.
+        */}
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-[0_14px_36px_-14px_rgba(15,23,42,0.24)] px-2 py-3 md:px-4 md:py-3.5">
+        <div className="grid grid-cols-4 gap-1 md:gap-2">
           {TRUST_BADGES.map(({ Icon, id, fallback }) => (
             <div
               key={id}
-              className="flex items-center justify-center gap-1.5 md:gap-2.5 px-1 md:px-2"
+              className="flex flex-col items-center justify-start gap-1.5 px-0.5 text-center md:flex-row md:gap-2.5 md:px-2 md:text-left"
             >
-              <Icon size={16} strokeWidth={2} className="text-zappy-600 shrink-0" />
-              <span className="text-[10px] md:text-[12.5px] font-semibold text-slate-700 leading-[1.18]">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-zappy-50 md:h-auto md:w-auto md:bg-transparent">
+                <Icon size={15} strokeWidth={2.2} className="text-zappy-600" />
+              </span>
+              <span className="text-[10.5px] md:text-[12.5px] font-semibold text-slate-700 leading-[1.25] [text-wrap:balance]">
                 {t(`home.trust.${id}`, fallback)}
               </span>
             </div>
@@ -488,6 +429,56 @@ function SectionHeader({ title, badge, badgeColor = 'bg-slate-100 text-slate-800
 }
 
 /* ─── Main component ───────────────────────────────────────────────────── */
+/**
+ * Whatever is happening right now, at the top of the home screen.
+ *
+ * Nothing here surfaced a job in progress. A customer who had just booked a
+ * phone repair landed on a page that looked exactly as it did before they
+ * booked, and the Track tab told them "No active order" — because that screen,
+ * and this one, only ever read the ORDERS collection. Repairs live in their own
+ * and were invisible to both.
+ *
+ * Terminal repair statuses are listed rather than active ones: the repair
+ * machine has twenty-odd states, and a newly added one should default to "still
+ * going" rather than quietly disappearing from the customer's view.
+ */
+function ActiveJobCard({ job, onOpen }) {
+  if (!job) return null;
+
+  return (
+    <motion.button
+      onClick={onOpen}
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      className={`mb-4 flex w-full items-center gap-3 rounded-[20px] border p-4 text-left transition ${
+        job.needsYou ? 'border-amber-300 bg-amber-50' : 'border-indigo-200 bg-indigo-50/70'
+      }`}
+    >
+      <span className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white">
+        <Wrench size={18} strokeWidth={2.2} className={job.needsYou ? 'text-amber-600' : 'text-indigo-600'} />
+        <span className="absolute -right-0.5 -top-0.5 flex h-3 w-3">
+          <span className={`absolute inline-flex h-full w-full animate-ping rounded-full opacity-75 ${
+            job.needsYou ? 'bg-amber-400' : 'bg-indigo-400'
+          }`} />
+          <span className={`relative inline-flex h-3 w-3 rounded-full ${
+            job.needsYou ? 'bg-amber-500' : 'bg-indigo-500'
+          }`} />
+        </span>
+      </span>
+
+      <span className="min-w-0 flex-1">
+        <span className="block text-[10.5px] font-black uppercase tracking-[0.1em] text-indigo-500">
+          {job.needsYou ? 'Needs your approval' : 'Happening now'}
+        </span>
+        <span className="mt-0.5 block truncate text-[15px] font-black capitalize text-[#0F172A]">{job.title}</span>
+        <span className="mt-0.5 block truncate text-[12.5px] font-medium text-slate-500">{job.stage}</span>
+      </span>
+
+      <ChevronRight size={18} strokeWidth={2.5} className="shrink-0 text-indigo-400" />
+    </motion.button>
+  );
+}
+
 export default function HomePage() {
   const nav = useNavigate();
   const [spotOpen, setSpotOpen] = useState(false);
@@ -497,7 +488,14 @@ export default function HomePage() {
   // Redesigned Home renders on mobile only; desktop keeps the original layout.
   const isMobile = useIsMobile();
 
-  const { data }          = useListOrdersQuery(1, { skip: !isAuthed });
+  /**
+   * Orders and repairs in one list — see useMyJobs.
+   *
+   * `current` is already "the one thing to show when there is room for one",
+   * and it puts a job that is blocked on the customer ahead of a job that is
+   * merely running, which is the right order for the top of Home.
+   */
+  const { current: activeJob, past: pastJobs } = useMyJobs({ skip: !isAuthed });
   const { data: gamData } = useGetGamificationQuery(undefined, { skip: !isAuthed });
   const { data: recData } = useGetRecommendationsQuery(undefined, { skip: !isAuthed });
 
@@ -518,7 +516,6 @@ export default function HomePage() {
     }
   };
 
-  const activeOrder    = data?.orders?.find(o => ACTIVE_STATUSES.includes(o.status));
   const firstName      = profile?.name?.split(' ')[0] || 'there';
   const gam            = gamData?.gamification;
   const recommendations = recData?.recommendations || [];
@@ -527,22 +524,25 @@ export default function HomePage() {
   const quickRebooks = (() => {
     const seen = new Set();
     const result = [];
-    for (const o of (data?.orders ?? [])) {
-      if (o.status === 'completed' && !seen.has(o.service)) {
-        seen.add(o.service);
-        result.push({ id: o._id, service: o.service, date: o.completedAt || o.createdAt });
-        if (result.length === 3) break;
-      }
+    // Orders only — `rebookOrder` is an orders endpoint; a repair is rebooked
+    // by walking the repair flow again, which the Activity chips do.
+    for (const j of pastJobs) {
+      const o = j.raw;
+      if (j.kind !== 'order' || j.outcome !== 'completed' || seen.has(o.service)) continue;
+      seen.add(o.service);
+      result.push({ id: j.id, service: o.service, date: o.completedAt || o.createdAt });
+      if (result.length === 3) break;
     }
     return result;
   })();
 
   // Re-engagement banner (#99): show "book again" nudge if last completed order was >7 days ago
-  const lastCompleted = data?.orders?.find(o => o.status === 'completed');
+  const lastCompleted = pastJobs.find(j => j.outcome === 'completed');
   const daysSinceLastOrder = lastCompleted
-    ? Math.floor((Date.now() - new Date(lastCompleted.completedAt || lastCompleted.createdAt).getTime()) / 86_400_000)
+    ? Math.floor((Date.now() - new Date(lastCompleted.raw.completedAt || lastCompleted.createdAt).getTime()) / 86_400_000)
     : null;
-  const showReengagement = daysSinceLastOrder !== null && daysSinceLastOrder >= 7 && !activeOrder;
+  // Nothing to nudge about while something is already in flight.
+  const showReengagement = daysSinceLastOrder !== null && daysSinceLastOrder >= 7 && !activeJob;
 
   /* ── GPS location detection — high-accuracy multi-sample + smart reverse geocode ── */
   const { getCurrent } = useGeolocation();
@@ -664,13 +664,22 @@ export default function HomePage() {
 
           <div className="max-w-7xl w-full mx-auto px-4 md:px-6 h-[60px] md:h-[84px] flex items-center gap-3 md:gap-8">
             {/* Logo */}
-            <div className="flex items-center shrink-0 cursor-pointer" onClick={() => nav('/')}>
+            <button
+              type="button"
+              onClick={() => nav('/')}
+              aria-label="Zappy — home"
+              className="flex shrink-0 items-center rounded-xl transition active:scale-95"
+            >
               <img
-                src="/branding/zappylogo.png"
+                src="/logo.png"
                 alt="Zappy"
-                className="h-[46px] md:h-[60px] object-contain drop-shadow-sm"
+                width={60}
+                height={60}
+                /* Height-driven with object-contain so the same file works
+                   whether it is a square mark or a wider wordmark. */
+                className="h-[42px] w-auto object-contain md:h-[56px]"
               />
-            </div>
+            </button>
 
             {/* Location widget ─ world-class GPS chip */}
             <motion.button
@@ -789,6 +798,17 @@ export default function HomePage() {
           </div>
         </div>
 
+        {/* --- Ganesh Chaturthi Festive Theme --- */}
+        <GaneshFestiveHeader />
+        <FestiveCategories />
+
+        {/* Anything in flight comes first — it is why most people open the app. */}
+        {activeJob && (
+          <div className="mx-auto w-full max-w-7xl px-4 pt-3">
+            <ActiveJobCard job={activeJob} onOpen={() => nav(activeJob.href)} />
+          </div>
+        )}
+
         {isMobile ? (
           /* ═══ Mobile hero — banner + live trust bar + card grid + promo + offers ═══ */
           <div className="max-w-7xl w-full mx-auto px-4 pt-3 pb-2">
@@ -830,14 +850,16 @@ export default function HomePage() {
               <CharacterServiceGrid />
             </motion.div>
 
-            {/* Premium Vehicle Care promo */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15 }}
-            >
-              <PromoBannerVehicle />
-            </motion.div>
+            {/*
+              * The vehicle promo used to sit here AND appear again a screen
+              * later as the HeroCarousel's "Premium Vehicle Care" slide — two
+              * near-identical photo cards for the same thing, back to back.
+              * The carousel keeps it; this one goes.
+              *
+              * It also mattered more than a duplicate normally would: vehicles
+              * are not live yet, so both cards offered "Book Now" for something
+              * the catalog then describes as coming soon.
+              */}
 
             {/* Offer / trust cards */}
             <TrustOfferCards />
@@ -923,110 +945,13 @@ export default function HomePage() {
           {/* Ad Banners */}
           <AdBanner className="mt-4" />
 
-          {/* ─── Electronics Rescue — Most Booked ────────────────────── */}
-          <div className="mt-7">
-            <SectionHeader title={tHome('home.sec.electronics','Electronics Rescue')} badge={tHome('home.sec.electronics.badge','Most Booked')} badgeColor="bg-indigo-50 text-indigo-600 ring-indigo-100" onSeeAll={() => nav('/services')} />
-            <div className="flex gap-3 md:gap-4 overflow-x-auto no-scrollbar pb-2 -mx-4 md:-mx-6 snap-x snap-mandatory">
-              <div className="shrink-0 w-1 md:w-2" />
-              {MOST_BOOKED.map((item, i) => (
-                <ServiceImageCard key={i} item={item} nav={nav} />
-              ))}
-              <div className="shrink-0 w-12 flex items-center justify-center">
-                <motion.button onClick={() => nav('/services')} className="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center shadow-sm" whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.92 }}><ChevronRight size={18} strokeWidth={2.5} className="text-slate-600" /></motion.button>
-              </div>
-            </div>
-          </div>
-
-          <PromoBannerElectronics />
-
-          {/* ─── Phone Repair ────────────────────────────────────── */}
-          <div className="mt-7">
-            <div>
-              <SectionHeader title={tHome('home.sec.phoneRepair','Phone Repair')} badge={tHome('home.sec.phoneRepair.badge','Android & iPhone')} badgeColor="bg-slate-100 text-slate-800" onSeeAll={() => nav('/services')} />
-            </div>
-            <div className="flex gap-3 md:gap-4 overflow-x-auto no-scrollbar pb-2 -mx-4 md:-mx-6 snap-x snap-mandatory">
-              <div className="shrink-0 w-1 md:w-2" />
-              {PHONE_TILES.map((item, i) => <ServiceImageCard key={i} item={item} nav={nav} />)}
-              <div className="shrink-0 w-12 flex items-center justify-center">
-                <button onClick={() => nav('/services')} className="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center shadow-sm hover:scale-105"><ChevronRight size={18} strokeWidth={2.5} className="text-slate-600" /></button>
-              </div>
-            </div>
-          </div>
-
-          {/* ─── Laptop Services ──────────────────────────────────────── */}
-          <div className="mt-7">
-            <div>
-              <SectionHeader title={tHome('home.sec.laptop','Laptop Services')} badge={tHome('home.sec.laptop.badge','All Brands')} badgeColor="bg-slate-100 text-slate-800" onSeeAll={() => nav('/services')} />
-            </div>
-            <div className="flex gap-3 md:gap-4 overflow-x-auto no-scrollbar pb-2 -mx-4 md:-mx-6 snap-x snap-mandatory">
-              <div className="shrink-0 w-1 md:w-2" />
-              {LAPTOP_TILES.map((item, i) => <ServiceImageCard key={i} item={item} nav={nav} />)}
-              <div className="shrink-0 w-12 flex items-center justify-center">
-                <button onClick={() => nav('/services')} className="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center shadow-sm hover:scale-105"><ChevronRight size={18} strokeWidth={2.5} className="text-slate-600" /></button>
-              </div>
-            </div>
-          </div>
-
-          {/* ─── Smart Devices ────────────────────────────────────────── */}
-          <div className="mt-7">
-            <div>
-              <SectionHeader title={tHome('home.sec.smart','Smart Devices')} badge={tHome('home.sec.smart.badge','Install & Fix')} badgeColor="bg-slate-100 text-slate-800" onSeeAll={() => nav('/services')} />
-            </div>
-            <div className="flex gap-3 md:gap-4 overflow-x-auto no-scrollbar pb-2 -mx-4 md:-mx-6 snap-x snap-mandatory">
-              <div className="shrink-0 w-1 md:w-2" />
-              {SMART_TILES.map((item, i) => <ServiceImageCard key={i} item={item} nav={nav} />)}
-              <div className="shrink-0 w-12 flex items-center justify-center">
-                <button onClick={() => nav('/services')} className="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center shadow-sm hover:scale-105"><ChevronRight size={18} strokeWidth={2.5} className="text-slate-600" /></button>
-              </div>
-            </div>
-          </div>
-
-          {/* Vehicle promo (desktop only — mobile shows it in the hero) */}
-          {!isMobile && <PromoBannerVehicle />}
-
-          {/* ─── Vehicle Care ───────────────────────────── */}
-          <div className="mt-7">
-            <div>
-              <SectionHeader title={tHome('home.sec.vehicle','Vehicle Care')} badge={tHome('home.sec.vehicle.badge','On-Road Help')} badgeColor="bg-slate-100 text-slate-800" onSeeAll={() => nav('/services')} />
-            </div>
-            <div className="flex gap-3 md:gap-4 overflow-x-auto no-scrollbar pb-2 -mx-4 md:-mx-6 snap-x snap-mandatory">
-              <div className="shrink-0 w-1 md:w-2" />
-              {VEHICLE_HIGHLIGHTS.map((item, i) => <ServiceImageCard key={i} item={item} nav={nav} />)}
-              <div className="shrink-0 w-12 flex items-center justify-center">
-                <button onClick={() => nav('/services')} className="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center shadow-sm hover:scale-105"><ChevronRight size={18} strokeWidth={2.5} className="text-slate-600" /></button>
-              </div>
-            </div>
-          </div>
-
-          <PromoBannerFamily />
-
-          {/* ─── Family & Elder Assist ────────────────────────────────── */}
-          <div className="mt-7">
-            <div>
-              <SectionHeader title={tHome('home.sec.family','Family Assist')} badge={tHome('home.sec.family.badge','Trusted Help')} badgeColor="bg-slate-100 text-slate-800" onSeeAll={() => nav('/services')} />
-            </div>
-            <div className="flex gap-3 md:gap-4 overflow-x-auto no-scrollbar pb-2 -mx-4 md:-mx-6 snap-x snap-mandatory">
-              <div className="shrink-0 w-1 md:w-2" />
-              {FAMILY_TILES.map((item, i) => <ServiceImageCard key={i} item={item} nav={nav} />)}
-              <div className="shrink-0 w-12 flex items-center justify-center">
-                <button onClick={() => nav('/services')} className="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center shadow-sm hover:scale-105"><ChevronRight size={18} strokeWidth={2.5} className="text-slate-600" /></button>
-              </div>
-            </div>
-          </div>
-
-          {/* ─── Tank & Water Cleaning ─────────────────────────────────── */}
-          <div className="mt-7">
-            <div>
-              <SectionHeader title={tHome('home.sec.tank','Tank & Water Cleaning')} badge={tHome('home.sec.tank.badge','Home Care')} badgeColor="bg-slate-100 text-slate-800" onSeeAll={() => nav('/services')} />
-            </div>
-            <div className="flex gap-3 md:gap-4 overflow-x-auto no-scrollbar pb-2 -mx-4 md:-mx-6 snap-x snap-mandatory">
-              <div className="shrink-0 w-1 md:w-2" />
-              {TANK_TILES.map((item, i) => <ServiceImageCard key={i} item={item} nav={nav} />)}
-              <div className="shrink-0 w-12 flex items-center justify-center">
-                <button onClick={() => nav('/services')} className="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center shadow-sm hover:scale-105"><ChevronRight size={18} strokeWidth={2.5} className="text-slate-600" /></button>
-              </div>
-            </div>
-          </div>
+          {/* ─── What we actually do today ──────────────────────────────
+            Driven by the live service catalog rather than a hardcoded list of
+            rails. A category appears here when an operator sets it live and
+            providers are verified for it — never before, because a tile that
+            leads to a flow we cannot fulfil is worse than no tile.
+          ─────────────────────────────────────────────────────────────── */}
+          <LiveServices />
 
           <PromoBannerEvents />
 
@@ -1044,6 +969,23 @@ export default function HomePage() {
                 <button onClick={() => nav('/events')} className="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center shadow-sm hover:scale-105"><ChevronRight size={18} strokeWidth={2.5} className="text-slate-600" /></button>
               </div>
             </div>
+          </div>
+
+
+          {/* ─── Nearby Shops ── verified local businesses, browse + Pick & Go ── */}
+          <div className="px-4 mt-7">
+            <button onClick={() => nav('/nearby-shops')}
+              className="w-full flex items-center gap-4 rounded-2xl p-4 text-left ring-1 ring-indigo-100 hover:ring-indigo-200 transition"
+              style={{ background: 'linear-gradient(135deg,#eef2ff,#e0e7ff)' }}>
+              <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center shadow-sm shrink-0">
+                <Store size={22} className="text-indigo-600" strokeWidth={1.75} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-black text-[#0F172A] text-sm">Nearby Shops</p>
+                <p className="text-xs text-slate-500 mt-0.5">Verified local repair shops — visit, or have their worker come to you</p>
+              </div>
+              <ChevronRight size={18} className="text-indigo-400 shrink-0" />
+            </button>
           </div>
 
           {/* ─── Pet Assistance ── hidden until feature launch ────────── */}

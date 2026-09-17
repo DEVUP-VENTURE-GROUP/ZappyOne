@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { kmBetween } from '../../utils/distance';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -15,16 +16,15 @@ import {
   useLazyGetNearbyWorkersQuery,
 } from '../../services/api';
 import { saveGeoLocation, loadGeoLocation } from '../../utils/geoCache';
-import { useGeolocation } from '../../hooks/useGeolocation';
+import {
+  useGeolocation, ACCURACY_GOOD_M, ACCURACY_WARN_M, ACCURACY_BAD_M,
+} from '../../hooks/useGeolocation';
 import { useGoogleMaps, GOOGLE_MAPS_KEY } from '../../services/maps';
 import { SERVICE_WORKER_EMOJI, SERVICE_COLORS } from '../../constants/services';
 import { useT } from '../../i18n/I18nProvider';
 import { setLocation as setReduxLocation, selectLocation, selectHasLocation } from '../../store/locationSlice';
 
 const TOKEN    = import.meta.env.VITE_MAPBOX_TOKEN;
-
-const ACCURACY_GOOD_M = 50;
-const ACCURACY_WARN_M = 150;
 
 const TAG_META = {
   home:  { icon: Home,      bg: 'from-blue-500 to-blue-600',    ring: 'ring-blue-200'   },
@@ -40,19 +40,11 @@ const NOTE_CHIPS = [
   { key: 'landmark', label: 'Landmark', prefix: 'Opposite ' },
 ];
 
-// Haversine distance (km) between two lat/lng points.
-function haversineKm(aLat, aLng, bLat, bLng) {
-  const R = 6371, toR = Math.PI / 180;
-  const dLat = (bLat - aLat) * toR, dLng = (bLng - aLng) * toR;
-  const s = Math.sin(dLat / 2) ** 2 + Math.cos(aLat * toR) * Math.cos(bLat * toR) * Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(s), Math.sqrt(1 - s));
-}
-
 // Real ETA/density from nearby workers: ~24 km/h city speed → 2.5 min/km + 3 min base.
 function deriveNearbyInfo(pin, workers) {
   const count = workers.length;
   if (count === 0) return { count: 0, density: 'none' };
-  const nearestKm = Math.min(...workers.map((w) => haversineKm(pin.lat, pin.lng, w.lat, w.lng)));
+  const nearestKm = Math.min(...workers.map((w) => kmBetween(pin, w)));
   const etaMin = Math.max(3, Math.round(3 + nearestKm * 2.5));
   const density = count >= 4 ? 'high' : count >= 2 ? 'medium' : 'low';
   return { count, nearestKm: Math.round(nearestKm * 10) / 10, etaMin, density };
@@ -324,6 +316,46 @@ function makeUserLocationEl() {
 
 function ensureWorkerDotStyles() { ensureLocPickStyles(); }
 
+/**
+ * How good is this fix, and say so honestly.
+ *
+ * The card used to read "GPS locked • ±25000m accurate" in green, with a green
+ * badge, for a fix twenty-five KILOMETRES wide. That is not a GPS lock — it is a
+ * network lookup that has placed the customer somewhere in their city — and
+ * dressing it up as locked is how a technician gets sent to the wrong suburb.
+ *
+ * A browser on a desktop with no GPS radio genuinely cannot do better, so the
+ * answer is not to hide the number or keep retrying: it is to say the fix is
+ * rough and ask the customer to drag the pin, which they can do in a second and
+ * which no amount of sampling will beat.
+ *
+ * Thresholds are the ones useGeolocation already defines (50 / 150 / 500 m);
+ * they existed but nothing on screen applied them.
+ */
+function gradeAccuracy(metres) {
+  if (metres == null) return { grade: 'unknown', text: 'Location found', tone: 'text-slate-400', good: false };
+
+  const pretty = metres >= 1000
+    ? `${(metres / 1000).toFixed(metres >= 10000 ? 0 : 1)} km`
+    : `${Math.round(metres)} m`;
+
+  if (metres <= ACCURACY_GOOD_M) {
+    return { grade: 'good', text: `Located to within ${pretty}`, tone: 'text-[#16A34A]', good: true };
+  }
+  if (metres <= ACCURACY_WARN_M) {
+    return { grade: 'fair', text: `Close — within ${pretty}. Drag the pin to be exact.`, tone: 'text-[#B45309]', good: false };
+  }
+  if (metres <= ACCURACY_BAD_M) {
+    return { grade: 'poor', text: `Approximate — ±${pretty}. Drag the pin to your exact spot.`, tone: 'text-[#B45309]', good: false };
+  }
+  return {
+    grade: 'rough',
+    text: `Rough area only — ±${pretty}. Drag the pin to where you actually are.`,
+    tone: 'text-[#DC2626]',
+    good: false,
+  };
+}
+
 export default function LocationPicker({ onConfirm, onCancel, serviceLabel, service }) {
   const tr = useT();
   const { getCurrent } = useGeolocation();
@@ -365,6 +397,10 @@ export default function LocationPicker({ onConfirm, onCancel, serviceLabel, serv
   // mapReady flipping and the sheet height being measured both happen after the
   // map is created, and are the moments the flex zone reaches its final size.
   useEffect(() => {
+    // `mapRef` is read inside this effect, which runs after the whole
+    // component body has evaluated — so it is always initialised by the time
+    // this line executes. The rule is lexical and cannot see that.
+    // eslint-disable-next-line no-use-before-define
     if (mapReady) requestAnimationFrame(() => { try { mapRef.current?.resize(); } catch { /* map gone */ } });
   }, [mapReady, sheetH]);
   // Track the sheet's real height so the pin + reverse-geocode point stay
@@ -387,8 +423,24 @@ export default function LocationPicker({ onConfirm, onCancel, serviceLabel, serv
   const detectedLocRef = useRef(detectedLoc); // latest detected loc for async map callbacks
   useEffect(() => { detectedLocRef.current = detectedLoc; }, [detectedLoc]);
 
-  const { data: addrData }  = useGetAddressesQuery();
-  const [saveRecent]         = useSaveRecentLocationMutation();
+  /**
+   * Saved addresses and recent-location belong to CUSTOMERS.
+   *
+   * Both endpoints are `requireRole('user')`, so when this picker is used by a
+   * provider — setting their shop's location during repair setup — calling them
+   * returns 403 and fills the console with failures on a screen that is working
+   * perfectly well. A shop has one fixed address, not a saved address book, so
+   * there is nothing being withheld here: the feature simply does not apply.
+   */
+  const authRole = useSelector((st) => st.auth?.role);
+  const isCustomer = authRole === 'user';
+
+  const { data: addrData }  = useGetAddressesQuery(undefined, { skip: !isCustomer });
+  const [saveRecentRaw]     = useSaveRecentLocationMutation();
+  const saveRecent = isCustomer
+    ? saveRecentRaw
+    // Same shape, so every call site keeps working without a role check.
+    : () => Promise.resolve();
   const [fetchNearby]        = useLazyGetNearbyWorkersQuery();
 
   const savedAddresses  = addrData?.addresses      || [];
@@ -727,6 +779,10 @@ export default function LocationPicker({ onConfirm, onCancel, serviceLabel, serv
     if (!coords || !address) return;
     const notes = locNote.trim() || undefined;
     saveRecent({ address, lat: coords.lat, lng: coords.lng }).catch(() => {});
+    // Publish the CONFIRMED pin, not just the GPS fix. Every other screen reads
+    // the store, and what the customer dragged the pin to beats what the phone
+    // guessed — otherwise a corrected address is thrown away on navigation.
+    dispatch(setReduxLocation({ lat: coords.lat, lng: coords.lng, address }));
     onConfirm({ address, lat: coords.lat, lng: coords.lng, notes });
   }
 
@@ -793,6 +849,7 @@ export default function LocationPicker({ onConfirm, onCancel, serviceLabel, serv
   ════════════════════════════════════════════════════════════════ */
   const acc        = gpsAccuracy ?? detectedLoc?.accuracy ?? null;
   const gpsReady   = geoState === 'done' && !!detectedLoc;
+  const fix        = gradeAccuracy(acc);
   const canConfirm = !!coords && !!address && !geocoding;
   const savedCount = savedAddresses.length + recentLocations.length;
   const CHIP_ICONS = { 'Gate': DoorOpen, 'Flat / Door': Building2, 'Basement': ArrowDownToLine, 'Landmark': Landmark };
@@ -914,8 +971,13 @@ export default function LocationPicker({ onConfirm, onCancel, serviceLabel, serv
                 ? <Loader2 size={18} strokeWidth={2.4} className="text-white animate-spin" />
                 : <Navigation size={18} strokeWidth={2.4} className="text-white" />}
             </div>
+            {/* Green only for a fix worth trusting; amber otherwise. */}
             {gpsReady && (
-              <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-[#22C55E] rounded-full border-2 border-white" />
+              <span
+                className={`absolute -top-1 -right-1 h-3.5 w-3.5 rounded-full border-2 border-white ${
+                  fix.good ? 'bg-[#22C55E]' : 'bg-[#F59E0B]'
+                }`}
+              />
             )}
           </div>
           <div className="flex-1 min-w-0">
@@ -927,8 +989,8 @@ export default function LocationPicker({ onConfirm, onCancel, serviceLabel, serv
             ) : geoState === 'error' ? (
               <p className="text-[12px] font-medium text-red-500 mt-0.5">{geoError}</p>
             ) : gpsReady ? (
-              <p className="text-[12px] font-semibold text-[#16A34A] mt-0.5">
-                {tr('locpick.gpsLocked', 'GPS locked • ±{n}m accurate').replace('{n}', acc != null ? Math.round(acc) : '<50')}
+              <p className={`mt-0.5 text-[12px] font-semibold leading-snug ${fix.tone}`}>
+                {fix.text}
               </p>
             ) : (
               <p className="text-[12px] font-medium text-slate-400 mt-0.5">{tr('locpick.fastest', 'Fastest & most accurate')}</p>

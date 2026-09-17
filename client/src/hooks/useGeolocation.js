@@ -9,9 +9,14 @@ const OPTS_ONE  = { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 };
 const OPTS_WATCH = { enableHighAccuracy: true, timeout: 15000, maximumAge: 1000 };
 
 // Thresholds
-const ACCURACY_GOOD_M    = 50;   // ≤50m: show as confirmed, green
-const ACCURACY_WARN_M    = 150;  // 50–150m: show warning, still usable
-const ACCURACY_BAD_M     = 500;  // >500m: reject, ask user to pin manually
+/**
+ * Exported as constants, not just returned from the hook, so screens that grade
+ * a fix outside a component body can use the same numbers. Two sources of truth
+ * for "is this accurate enough" is how a 25km fix ends up labelled "GPS locked".
+ */
+export const ACCURACY_GOOD_M = 50;   // ≤50m: show as confirmed, green
+export const ACCURACY_WARN_M = 150;  // 50–150m: usable, ask them to confirm
+export const ACCURACY_BAD_M  = 500;  // >500m: rough area only — pin manually
 
 /**
  * Multi-sample GPS: collect up to `maxSamples` positions within `windowMs`,

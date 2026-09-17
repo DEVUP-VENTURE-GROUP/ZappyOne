@@ -7,8 +7,43 @@ const express = require('express');
 const Joi     = require('joi');
 const { authenticate, requireRole } = require('../../middlewares/auth');
 const { validate } = require('../../middlewares/validate');
+const { authLimiter } = require('../../middlewares/rateLimit');
 
 const router = express.Router({ mergeParams: true });
+
+/* ── Customer SOS ────────────────────────────────────────────────── */
+
+/**
+ * The customer's panic button, during a job.
+ *
+ * The screen has had this button all along and it posted here — to a route
+ * that did not exist. The client swallows the failure, so the phone dialled
+ * 112, the toast said support had been notified, and nothing reached Zappy.
+ *
+ * Rate-limited like the worker's: a panic button is tapped repeatedly by
+ * someone frightened, and each tap must not open another urgent ticket.
+ */
+router.post('/:id/sos',
+  authenticate, requireRole('user'), authLimiter,
+  validate(Joi.object({
+    lat: Joi.number().optional(),
+    lng: Joi.number().optional(),
+    message: Joi.string().max(300).optional(),
+  })),
+  async (req, res, next) => {
+    try {
+      const sosService = require('../worker/sos.service');
+      const result = await sosService.triggerCustomerSOS({
+        userId: req.auth.sub,
+        orderId: req.params.id,
+        lat: req.body.lat,
+        lng: req.body.lng,
+        message: req.body.message,
+      });
+      res.json(result);
+    } catch (err) { next(err); }
+  },
+);
 
 /* ── Feature 1: Live Service Photos ─────────────────────────────── */
 router.post('/:id/service-photos',

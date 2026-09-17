@@ -28,9 +28,15 @@ import { selectAuth, logout } from '../modules/auth/authSlice';
 import { useGeolocation } from '../hooks/useGeolocation';
 import { reverseGeocode } from '../utils/reverseGeocode';
 import { getSocket } from '../services/socket';
+import { metresBetween } from '../utils/distance';
 import { ZappyLogo } from '../components/common/ZappyLogo';
 import WorkerOnboarding from './WorkerOnboarding';
+import ProviderServicesCard from '../components/provider/ProviderServicesCard';
+import { playOfferAlert } from '../utils/alertSound';
+import { useProviderOnboardingStatusQuery } from '../services/api';
+import RepairOfferHost from '../components/repair/RepairOfferHost';
 import ReadyModeCard from '../components/worker/ReadyModeCard';
+import RepairJobsPanel from '../components/worker/RepairJobsPanel';
 import {
   Avatar, GreetingCard, StatCard, Panel, EarningsOverview, PerformanceGrid,
   QuickAccess, JobRequests, TodaySchedule, RecentlyCompleted,
@@ -142,47 +148,7 @@ function getLast7Days(breakdown = []) {
   });
 }
 
-/* ─── Offer alert sound ──────────────────────────────────────────────────────
- * Browsers create an AudioContext in the `suspended` state unless it is started
- * by a user gesture. An offer arrives over a socket (no gesture), so building a
- * fresh context per alert produced a SILENT beep every time. We keep ONE context
- * and unlock/resume it on the worker's first tap, then resume before each play. */
-let _audioCtx = null;
-function getAudioCtx() {
-  const AC = window.AudioContext || window.webkitAudioContext;
-  if (!AC) return null;
-  if (!_audioCtx) _audioCtx = new AC();
-  return _audioCtx;
-}
-if (typeof window !== 'undefined') {
-  const unlockAudio = () => {
-    const ctx = getAudioCtx();
-    if (ctx && ctx.state === 'suspended') ctx.resume().catch(() => {});
-  };
-  window.addEventListener('pointerdown', unlockAudio);
-  window.addEventListener('keydown', unlockAudio);
-}
 
-function playOfferAlert() {
-  try {
-    const ctx = getAudioCtx();
-    if (!ctx) return;
-    // Resume if the browser suspended it (backgrounded tab / not yet unlocked).
-    if (ctx.state === 'suspended') ctx.resume().catch(() => {});
-    [[0, 880], [0.2, 1100], [0.4, 880]].forEach(([delay, freq]) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.frequency.value = freq;
-      osc.type = 'sine';
-      gain.gain.setValueAtTime(0.3, ctx.currentTime + delay);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.18);
-      osc.start(ctx.currentTime + delay);
-      osc.stop(ctx.currentTime + delay + 0.18);
-    });
-  } catch {}
-}
 
 function computeTrustScore(acceptRate, rating, completedJobs) {
   return Math.min(100, Math.round(
@@ -244,6 +210,19 @@ export default function WorkerDashboard() {
   const isOnline    = me?.isOnline ?? false;
   const isBusy      = isOnline && !!me?.currentOrderId;
   const kycApproved = kycData?.kyc?.status === 'approved';
+
+  /**
+   * Do not ask for documents twice.
+   *
+   * Service verification collects the same Aadhaar and live selfie the old
+   * standalone KYC screen asks for. A worker who has just submitted those
+   * and then sees "Complete KYC to start earning" concludes the app lost
+   * their upload — so the banner stands down once a verification is in
+   * flight, and the services card carries the status instead.
+   */
+  const { data: providerStatus } = useProviderOnboardingStatusQuery();
+  const verificationInFlight = (providerStatus?.enrolments || [])
+    .some((e) => ['pending_review', 'approved'].includes(e.status));
   const kycStatus   = kycData?.kyc?.status;
   const canGoOnline = kycApproved;
 
@@ -382,15 +361,6 @@ export default function WorkerDashboard() {
     const socket = getSocket(token);
     let lastSocket = 0;
 
-    function haverMetres(a, b) {
-      const R = 6371000;
-      const dLat = (b.lat - a.lat) * Math.PI / 180;
-      const dLng = (b.lng - a.lng) * Math.PI / 180;
-      const x = Math.sin(dLat / 2) ** 2
-        + Math.cos(a.lat * Math.PI / 180) * Math.cos(b.lat * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
-      return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
-    }
-
     let stationaryState = { lastMovedAt: Date.now() };
 
     watchRef.current = watch(
@@ -401,7 +371,7 @@ export default function WorkerDashboard() {
         const now = Date.now();
         const cur = { lat: pos.lat, lng: pos.lng };
 
-        const distMoved = lastSentPosRef.current ? haverMetres(lastSentPosRef.current, cur) : 999;
+        const distMoved = lastSentPosRef.current ? (metresBetween(lastSentPosRef.current, cur) ?? 999) : 999;
         const moved = distMoved >= 15;
         if (moved) stationaryState.lastMovedAt = now;
 
@@ -684,8 +654,8 @@ export default function WorkerDashboard() {
       </header>
 
       <main className="mx-auto max-w-6xl px-4 pb-28 pt-4 lg:px-8 lg:pb-10">
-        {/* KYC gate banner */}
-        {token && !kycApproved && (
+        {/* KYC gate banner — only when nothing is already being verified. */}
+        {token && !kycApproved && !verificationInFlight && (
           <button
             onClick={() => nav('/worker/kyc')}
             className={`mb-4 flex w-full items-center gap-3 rounded-2xl border p-3.5 text-left ${
@@ -707,6 +677,8 @@ export default function WorkerDashboard() {
           </button>
         )}
 
+        {/* What this technician is verified for, and what is still blocking them. */}
+        <ProviderServicesCard className="mb-4" />
         {/* Active job banner */}
         {isBusy && (
           <button
@@ -764,6 +736,7 @@ export default function WorkerDashboard() {
           </div>
 
           <div className="space-y-5">
+            <RepairJobsPanel />
             <TodaySchedule jobs={scheduledToday} onOpenJob={openJob} onViewCalendar={() => nav('/worker/goals')} />
             <EarningsOverview weekRupees={weekRs} deltaPct={deltaPct} points={chartPoints} onViewDetails={() => nav('/worker/earnings')} />
             <Panel
@@ -778,9 +751,12 @@ export default function WorkerDashboard() {
 
         {/* Quick access — worker tools */}
         <div className="mt-5">
-          <QuickAccess onOpen={(to) => nav(to)} walletRs={walletBalanceRs} />
+          <QuickAccess onOpen={(to) => nav(to)} />
         </div>
       </main>
+
+      {/* Repair work rings through here, wherever the worker is on this screen. */}
+      <RepairOfferHost myLocation={me?.currentLocation?.coordinates} />
 
       <WorkerBottomNav activeKey="dashboard" onNavigate={handleNav} />
 

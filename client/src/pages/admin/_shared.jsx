@@ -1,4 +1,5 @@
 import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { formatPaise } from '../../utils/money';
 
 export function Spinner({ size = 20 }) {
   return <Loader2 size={size} className="animate-spin text-blue-600" />;
@@ -225,9 +226,8 @@ export function SaveBtn({ loading, onClick, children, label }) {
   );
 }
 
-export function fmt(paise) {
-  return `₹${Math.round(paise / 100).toLocaleString('en-IN')}`;
-}
+/** Admin money display. Takes PAISE, like everything stored. */
+export const fmt = formatPaise;
 
 export function fmtDate(d) {
   return new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: '2-digit' });

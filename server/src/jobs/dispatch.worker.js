@@ -95,7 +95,10 @@ async function processDispatchJob(job) {
    * their radius, time-boxed). So we can lock one atomically — no offer, no tap,
    * no wait. Sub-second assignment. If the pool is empty we fall straight through
    * to the normal acceptance-first dispatch below, so this is purely additive.  */
-  {
+  // Shop-routed orders (customer picked a specific shop, or a worker handed the
+  // job off mid-job) must stay with that shop's own workers — the Ready Pool is
+  // an open, shop-agnostic pool, so instant match is skipped for these entirely.
+  if (!order.preferredShopId) {
     const instant = await tryInstantMatch(order, cfg, lng, lat, jobStartMs);
     if (instant.ok) return instant;
   }
@@ -173,6 +176,13 @@ async function processDispatchJob(job) {
         const wIdStr = String(wId);
         if (alreadyNotified.has(wIdStr)) return;
         if (!_latestOrderPayload) return;
+        // Shop-scoped orders can't offer to whoever just came online — only
+        // workers tagged to the chosen shop are eligible (mirrors the shopId
+        // filter applied in the step loop below).
+        if (order.preferredShopId) {
+          const stillShopWorker = await WorkerModel.exists({ _id: wId, shopId: order.preferredShopId });
+          if (!stillShopWorker) return;
+        }
 
         // Only offer if this worker is within the radius we've already searched
         const distKm = haversineKm(lat, lng, wLat, wLng);
@@ -335,6 +345,7 @@ async function processDispatchJob(job) {
         skill: order.service,
         excludeIds: [...alreadyNotified],
         radiusKm,
+        shopId: order.preferredShopId || undefined,
       });
 
       logger.info(
@@ -359,6 +370,7 @@ async function processDispatchJob(job) {
             skill:      order.service,
             excludeIds: [...alreadyNotified],
             radiusKm:   radiusSteps.at(-1),
+            shopId:     order.preferredShopId || undefined,
           });
           if (anyLeft.length === 0) {
             logger.info(
@@ -847,6 +859,7 @@ async function attemptForceAssign(order, radiusKm) {
     excludeIds: [],
     radiusKm,
     skipSkillFilter: false,           // hard: never skip skill filter
+    shopId:     order.preferredShopId || undefined,
   });
 
   logger.info({ orderId, found: candidates.length, radiusKm }, '[DISPATCH] Force-assign skilled candidates');

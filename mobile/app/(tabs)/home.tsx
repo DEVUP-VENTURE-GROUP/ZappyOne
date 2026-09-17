@@ -26,7 +26,7 @@ import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Location from 'expo-location';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowRight, Bell, ChevronRight, MapPin, Search } from 'lucide-react-native';
+import { ArrowRight, Bell, ChevronRight, MapPin, Search, Store } from 'lucide-react-native';
 import { useSelector } from 'react-redux';
 import {
   Badge,
@@ -408,6 +408,30 @@ export default function HomeScreen() {
           </View>
         ))}
 
+        {/* ── Nearby Shops ── verified local businesses, browse + Pick & Go ── */}
+        <View style={styles.section}>
+          <ScalePressable
+            onPress={() => router.push('/shops' as never)}
+            accessibilityRole="button"
+            accessibilityLabel="Nearby Shops — verified local repair shops"
+          >
+            <Card style={styles.shopsPromo}>
+              <View style={styles.shopsPromoRow}>
+                <View style={styles.shopsPromoIcon}>
+                  <Store size={22} color={zappy[600]} strokeWidth={1.75} />
+                </View>
+                <View style={styles.flex}>
+                  <Text variant="bodySmall" weight="black">Nearby Shops</Text>
+                  <Text variant="caption" color={colors.textSecondary}>
+                    Verified local repair shops — visit, or have their worker come to you
+                  </Text>
+                </View>
+                <ChevronRight size={18} color={zappy[400]} />
+              </View>
+            </Card>
+          </ScalePressable>
+        </View>
+
         {/* ── Book again ───────────────────────────────────────────────── */}
         {recentCompleted.length > 0 ? (
           <View style={styles.section}>
@@ -464,6 +488,12 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   content: { paddingHorizontal: screenPadding },
   flex: { flex: 1 },
+  shopsPromo: { backgroundColor: zappy[50] },
+  shopsPromoRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  shopsPromoIcon: {
+    width: 44, height: 44, borderRadius: radius.medium, backgroundColor: colors.surface,
+    alignItems: 'center', justifyContent: 'center',
+  },
 
   header: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   brandMark: {

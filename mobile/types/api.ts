@@ -273,6 +273,18 @@ export interface Order {
   workerRating?: number | null;
   /** Worker's last known position — seeds the map before the first socket tick. */
   workerCurrentLocation?: LatLng;
+
+  // Shop routing (Nearby Shops / Pick & Go) — see server order.model.js
+  preferredShopId?: string | null;
+  fulfillmentMode?: 'on_site' | 'pickup_at_shop';
+  shopHandoff?: {
+    shopId: string | null;
+    requestedBy: 'customer' | 'worker' | null;
+    reason?: string;
+    requestedAt?: string;
+    status: 'none' | 'pending_confirmation' | 'confirmed' | 'declined';
+    respondedAt?: string;
+  };
 }
 
 /** `POST /api/orders` body — mirrors `createOrderSchema` in order.routes.js. */
@@ -306,6 +318,9 @@ export interface CreateOrderRequest {
   tier?: BookingTier;
   tipAmount?: number;
   preferredWorkerId?: string | null;
+  /** Shop routing — set only when booked via "Nearby Shops". */
+  preferredShopId?: string | null;
+  fulfillmentMode?: 'on_site' | 'pickup_at_shop';
 }
 
 /**
@@ -993,4 +1008,29 @@ export interface OpenDisputeRequest {
   category: DisputeCategory;
   description: string;
   evidenceUrls?: string[];
+}
+
+// ── Shops (Nearby Shops / Pick & Go — server/src/modules/shop) ──────────────
+export interface Shop {
+  _id: string;
+  businessName: string;
+  ownerName?: string;
+  phone?: string;
+  category?: string;
+  services?: string[];
+  address?: {
+    text?: string;
+    landmark?: string;
+    location?: { coordinates: [number, number] };
+  };
+  coverImageUrl?: string;
+  galleryImages?: string[];
+  bio?: string;
+  yearsActive?: number;
+  rating?: number;
+  reviewCount?: number;
+  completedJobs?: number;
+  isActive?: boolean;
+  isBlocked?: boolean;
+  kyc?: { status: 'not_submitted' | 'pending_review' | 'approved' | 'rejected' | 'suspended' };
 }

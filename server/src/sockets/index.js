@@ -269,7 +269,7 @@ function initSockets(httpServer) {
   // Dispatch worker publishes events; we relay them to the right rooms.
   const subscriber = subClient.duplicate();
 
-  subscriber.subscribe('order:event', 'worker:offer', 'worker:offer_cancel', 'worker:assigned', 'surge:alert', 'order:boost', 'worker:kyc_rejected', 'worker:job_pulled', (err) => {
+  subscriber.subscribe('order:event', 'worker:offer', 'worker:offer_cancel', 'worker:assigned', 'surge:alert', 'order:boost', 'worker:kyc_rejected', 'worker:job_pulled', 'provider:repair', (err) => {
     if (err) logger.error({ err }, 'Pub/sub subscribe failed');
   });
   // Notifications are per-recipient — `notification:<kind>:<id>`. Use pattern sub.
@@ -295,6 +295,13 @@ function initSockets(httpServer) {
       if (channel === 'order:event') {
         // { orderId, event, payload }
         io.to(`order:${data.orderId}`).emit(data.event, data.payload);
+        return;
+      }
+
+      if (channel === 'provider:repair') {
+        // { kind: 'worker' | 'shop', id, event, payload } — repair nudges are
+        // addressed to a provider rather than to an order room.
+        io.to(`${data.kind}:${data.id}`).emit(data.event, data.payload);
         return;
       }
 

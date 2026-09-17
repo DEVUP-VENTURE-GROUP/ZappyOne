@@ -73,14 +73,22 @@ export default function WorkerProfilePage() {
   const name         = worker?.name         ?? order?.workerName   ?? 'Worker';
   const rating       = worker?.rating       ?? order?.workerRating ?? 4.8;
   const completedJobs = worker?.completedJobs ?? order?.workerJobs  ?? 0;
-  const skills       = worker?.skills       ?? (order?.service ? [order.service] : []);
+  // Verified services replace the old self-declared skill list entirely.
+  const verifiedServices = worker?.verifiedServices ?? [];
   const isKyc        = worker?.kyc?.status === 'approved' || order?.workerId != null;
 
   const initials = name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
-  const primarySkill = skills[0] ?? 'electrical';
+  /**
+   * Booking this technician again starts the flow for a service they are
+   * actually verified for. The old path guessed a legacy service code from
+   * their first self-declared skill, which could send a customer into a
+   * flow this person is not approved to do.
+   */
+  const bookablePath = verifiedServices.find((s) => s.path)?.path || null;
 
   function handleRebook() {
-    nav(`/book/${primarySkill}?preferredWorker=${workerId}`);
+    if (!bookablePath) return nav('/services');
+    nav(`${bookablePath}?preferredWorker=${workerId}`);
   }
 
   return (
@@ -172,29 +180,32 @@ export default function WorkerProfilePage() {
           ))}
         </motion.div>
 
-        {/* Specialisations */}
-        {skills.length > 0 && (
+        {/*
+          What this technician is VERIFIED for.
+          A self-declared skill list told the customer nothing — anyone could
+          tick "screen repair". These are services a reviewer approved, so the
+          badge means the platform is standing behind it.
+        */}
+        {verifiedServices.length > 0 && (
           <motion.div
             className="bg-white rounded-2xl p-4 shadow-sm"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.27 }}
           >
-            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">Specialisations</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">
+              Verified to work on
+            </p>
             <div className="flex flex-wrap gap-2">
-              {skills.map((skill) => {
-                const svc = SERVICE_ICON_MAP[skill] ?? { Icon: Wrench, bg: 'bg-slate-100', color: 'text-slate-500' };
-                const { Icon } = svc;
-                return (
-                  <span
-                    key={skill}
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold ${svc.bg} ${svc.color}`}
-                  >
-                    <Icon size={12} strokeWidth={2} />
-                    {skill.replace(/_/g, ' ')}
-                  </span>
-                );
-              })}
+              {verifiedServices.map((s) => (
+                <span
+                  key={s.code}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700"
+                >
+                  <ShieldCheck size={12} strokeWidth={2.2} />
+                  {s.name}
+                </span>
+              ))}
             </div>
           </motion.div>
         )}

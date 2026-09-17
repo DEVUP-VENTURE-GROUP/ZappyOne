@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ClipboardList, Wallet, Bell, Star, MapPin, HelpCircle,
+  ClipboardList, Wallet, Bell, Star, MapPin, HelpCircle, Package, ShoppingBag,
   LogOut, ChevronRight, ShieldCheck, Home, Briefcase, Plus,
   Trash2, X, Loader2, Scale, HeadphonesIcon, CreditCard,
   Pencil, Check, TrendingUp, Tag, Calendar, Shield, Gift,
@@ -240,6 +240,8 @@ export default function ProfilePage() {
               <motion.div variants={fadeInUp}>
                 <MenuSection title={t('profile.section.activity', 'Activity')}>
                   <MenuItem Icon={ClipboardList} label={t('profile.bookings', 'My Bookings')} sublabel={t('profile.bookings.sub', 'View order history')} onClick={() => nav('/orders')} />
+                  <MenuItem Icon={Package} label={t('profile.myAssets', 'My Things')} sublabel={t('profile.myAssets.sub', 'Saved tanks, phones & vehicles')} onClick={() => nav('/my-assets')} />
+                  <MenuItem Icon={ShoppingBag} label={t('profile.helping', 'Helping Services')} sublabel={t('profile.helping.sub', 'Shopping, pickup, returns & exchange')} onClick={() => nav('/helping')} />
                   <MenuItem Icon={Wallet} label={t('profile.wallet', 'Wallet')} sublabel={t('profile.wallet.sub', 'Balance & transactions')} onClick={() => nav('/wallet')} />
                   <MenuItem Icon={Gift} label={t('profile.rewards', 'Rewards')} sublabel={t('profile.rewards.sub', 'Points & scratch cards')} onClick={() => nav('/rewards')} />
                   <MenuItem Icon={CreditCard} label={t('profile.payments', 'Payment Methods')} sublabel={t('profile.payments.sub', 'Cards, UPI & more')} onClick={() => nav('/payments')} />

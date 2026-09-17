@@ -9,24 +9,9 @@ const { getZoneLabel } = require('../../worker/maps.service');
 const logger = require('../../../utils/logger');
 
 /* ─── IST calendar boundaries ─────────────────────────────────────────────── */
-const IST_OFFSET = 330 * 60000;
-function istDayStart(d = new Date()) {
-  const ist = new Date(d.getTime() + IST_OFFSET);
-  ist.setUTCHours(0, 0, 0, 0);
-  return new Date(ist.getTime() - IST_OFFSET);
-}
-function istWeekStart() {
-  const start = istDayStart();
-  const ist = new Date(start.getTime() + IST_OFFSET);
-  const dow = ist.getUTCDay();            // 0=Sun
-  const back = (dow + 6) % 7;             // days since Monday
-  return new Date(start.getTime() - back * 86_400_000);
-}
-function istMonthStart() {
-  const ist = new Date(Date.now() + IST_OFFSET);
-  ist.setUTCDate(1); ist.setUTCHours(0, 0, 0, 0);
-  return new Date(ist.getTime() - IST_OFFSET);
-}
+// Moved to utils/ist so the shop's opening hours and this dashboard cannot
+// disagree about when "today" started.
+const { istDayStart, istWeekStart, istMonthStart } = require('../../../utils/ist');
 
 const ACTIVE_STATUSES = ['searching', 'assigned', 'on_the_way', 'arrived', 'in_progress'];
 

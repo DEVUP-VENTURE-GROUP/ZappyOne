@@ -103,15 +103,22 @@ export default function PartnerLoginPage() {
     setStep('phone');
   }
 
-  async function handleVerify() {
-    if (otp.length < 6) return toast.error('Enter all 6 digits');
+  /**
+   * @param {string} [codeOverride] the freshly-typed code, when auto-submitting
+   *   before React has re-rendered with it.
+   */
+  async function handleVerify(codeOverride) {
+    const code = typeof codeOverride === 'string' ? codeOverride : otp;
+    if (code.length < 6) return toast.error('Enter all 6 digits');
     if (isNew && step === 'otp') { setStep('register'); return; }
-    await doLogin();
+    await doLogin({}, code);
   }
 
-  async function doLogin(extra = {}) {
+  async function doLogin(extra = {}, codeOverride) {
+    // Same reason as handleVerify: on auto-submit, `otp` is one render behind.
+    const code = typeof codeOverride === 'string' ? codeOverride : otp;
     try {
-      const res = await loginPartner({ phone, otp, ...extra }).unwrap();
+      const res = await loginPartner({ phone, otp: code, ...extra }).unwrap();
       finishLogin(res);
     } catch (err) {
       toast.error(err?.data?.error || 'Invalid OTP');
@@ -145,7 +152,19 @@ export default function PartnerLoginPage() {
     next[i] = val;
     setDigits(next);
     if (val && i < 5) setTimeout(() => otpRefs.current[i + 1]?.focus(), 0);
-    if (next.every(d => d) && i === 5) setTimeout(handleVerify, 100);
+    /**
+     * Auto-submit on the last digit, using the code we just built.
+     *
+     * `handleVerify` used to be called with no argument, so it read `otp` from
+     * the render that was still on screen — the one BEFORE this digit landed.
+     * Typing the sixth digit therefore verified a five-character code and was
+     * rejected with "Enter all 6 digits", on a screen showing six filled boxes.
+     * Passing the value through sidesteps the stale closure entirely.
+     */
+    if (next.every((d) => d) && i === 5) {
+      const code = next.join('');
+      setTimeout(() => handleVerify(code), 100);
+    }
   }
 
   function handleKey(i, e) {

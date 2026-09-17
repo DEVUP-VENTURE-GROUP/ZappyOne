@@ -80,6 +80,29 @@ const orderSchema = new mongoose.Schema(
     partWarrantyDays: { type: Number, min: 0 },
     serviceMode: { type: String, enum: ['doorstep', 'pickup'], default: 'doorstep' },
 
+    // Shop routing — set when the customer booked via "Nearby Shops" (chose a
+    // specific verified shop) instead of open Zappy Express dispatch, or when a
+    // worker handed an in-progress job off to their shop (see shopHandoff below).
+    // Dispatch scopes its worker search to this shop only when set — see
+    // geoService.findCandidates's shopId param.
+    preferredShopId: { type: mongoose.Schema.Types.ObjectId, ref: 'Shop', default: null, index: true },
+    // 'on_site' = worker (or shop worker) comes to the customer, as usual.
+    // 'pickup_at_shop' = customer brings/collects the item at the shop themselves
+    // ("Pick & Go") — no travel fee is charged for this order.
+    fulfillmentMode: { type: String, enum: ['on_site', 'pickup_at_shop'], default: 'on_site' },
+
+    // Mid-job escalation: assigned worker determines the repair needs shop tools
+    // and asks the customer to bring the device to a shop instead. Customer must
+    // confirm before the order's fulfillmentMode actually changes.
+    shopHandoff: {
+      shopId:       { type: mongoose.Schema.Types.ObjectId, ref: 'Shop', default: null },
+      requestedBy:  { type: String, enum: ['customer', 'worker'], default: null },
+      reason:       { type: String, maxlength: 300 },
+      requestedAt:  Date,
+      status:       { type: String, enum: ['none', 'pending_confirmation', 'confirmed', 'declined'], default: 'none' },
+      respondedAt:  Date,
+    },
+
     // Vehicle service extras
     vehicleType: { type: String, enum: ['bike', 'scooter', 'car'] },
 

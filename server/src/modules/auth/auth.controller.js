@@ -88,6 +88,14 @@ async function loginPartner(req, res, next) {
   } catch (err) { next(err); }
 }
 
+async function loginShop(req, res, next) {
+  try {
+    const result = await authService.loginShopWithOtp(req.body);
+    setRtCookie(res, result.refreshToken);
+    res.json(withMobileRt(req, { accessToken: result.accessToken, shop: result.shop }, result.refreshToken));
+  } catch (err) { next(err); }
+}
+
 async function googlePartnerLogin(req, res, next) {
   try {
     const result = await authService.loginPartnerWithGoogle(req.body);
@@ -218,7 +226,7 @@ async function changeWorkerPassword(req, res, next) {
 }
 
 module.exports = {
-  requestOtp, resendOtp, loginUser, loginWorker, loginPartner, googlePartnerLogin,
+  requestOtp, resendOtp, loginUser, loginWorker, loginPartner, loginShop, googlePartnerLogin,
   loginAdmin, refresh, logout, revokeAll, verifySensitiveOtp,
   setWorkerCredentials, loginWorkerPassword, forgotWorkerPassword,
   resetWorkerPassword, changeWorkerPassword,

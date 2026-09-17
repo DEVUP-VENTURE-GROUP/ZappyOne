@@ -11,6 +11,9 @@ const locationSchema = Joi.object({
   lat: Joi.number().min(-90).max(90).required(),
   lng: Joi.number().min(-180).max(180).required(),
   orderId: Joi.string().hex().length(24).optional().allow(null, ''),
+  // A repair trip, rather than an order delivery. Same pipeline — spoof guard,
+  // Redis geo, throttled writes — fanned out to the repair booking's room.
+  repairBookingId: Joi.string().hex().length(24).optional().allow(null, ''),
 });
 
 const shiftSchema = Joi.object({
@@ -61,7 +64,10 @@ router.post('/onboarding/complete', authenticate, requireRole('worker'),
   validate(Joi.object({
     name:  Joi.string().min(2).max(100).required(),
     phone: Joi.string().max(15).optional(),
-    skills: Joi.array().items(Joi.string().max(60).pattern(/^[a-z0-9_]+$/)).min(1).max(200).required(),
+    // Optional: what a worker may do is decided by verified service enrolment
+    // (modules/onboarding), not by a list they submit about themselves. Still
+    // accepted so older clients keep working.
+    skills: Joi.array().items(Joi.string().max(60).pattern(/^[a-z0-9_]+$/)).max(200).optional(),
     emergencyContact: Joi.object({
       name:  Joi.string().max(100).optional(),
       phone: Joi.string().max(15).optional(),

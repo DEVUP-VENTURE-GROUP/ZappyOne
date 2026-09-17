@@ -4,6 +4,10 @@ const verticalConfigRoutes = require('../modules/service/vertical-config.routes'
 const userRoutes = require('../modules/user/user.routes');
 const uploadRoutes = require('../modules/user/upload.routes');
 const workerRoutes = require('../modules/worker/worker.routes');
+const shopRoutes = require('../modules/shop/shop.routes');
+const repairRoutes = require('../modules/repair/repair.routes');
+const helpingRoutes = require('../modules/helping/helping.routes');
+const onboardingRoutes = require('../modules/onboarding/onboarding.routes');
 const kycRoutes = require('../modules/worker/kyc.routes');
 const orderRoutes = require('../modules/order/order.routes');
 const featuresRoutes = require('../modules/order/features.routes');
@@ -45,6 +49,13 @@ function mountRoutes(app) {
   app.use('/api/users', userRoutes);
   app.use('/api/uploads', uploadRoutes);
   app.use('/api/workers', workerRoutes);
+  app.use('/api/shops', shopRoutes);
+  // Repair verticals — catalog, diagnostics, providers, bookings, quotes.
+  app.use('/api/repair', repairRoutes);
+  app.use('/api/helping', helpingRoutes);
+  app.use(`/api/${slug}/helping`, helpingRoutes.adminRouter);
+  // Provider onboarding — domain, service line, per-service verification.
+  app.use('/api/provider/onboarding', onboardingRoutes);
   app.use('/api/workers/kyc', kycRoutes);
   // Engagement FIRST — /orders/suggestions, /orders/:id/chat etc. must match
   // before the generic /api/orders/:id route below intercepts them.

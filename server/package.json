@@ -9,6 +9,7 @@
     "worker:dispatch": "node src/jobs/dispatch.worker.js",
     "worker:notifications": "node src/jobs/notifications.worker.js",
     "worker:stale": "node src/jobs/stale-order.worker.js",
+    "worker:repair-sla": "node src/jobs/repair-sla.worker.js",
     "worker:retention": "node src/jobs/retention.worker.js",
     "test": "jest --detectOpenHandles --forceExit",
     "test:watch": "jest --watch",

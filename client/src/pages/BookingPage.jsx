@@ -9,7 +9,7 @@ import {
   Layers, Ticket, Tag, Smartphone, Battery,
   Bike, Fuel, ShieldCheck, Navigation, AlertTriangle, Flame, Lock,
   Camera, Tv, Wifi, Heart, Dog, ShieldAlert, Cpu, MonitorSmartphone,
-  Laptop, Wind,
+  Laptop, Wind, Store,
 } from 'lucide-react';
 import LocationPicker from '../modules/booking/LocationPicker';
 import PhoneDiagnosticWizard from '../modules/booking/PhoneDiagnosticWizard';
@@ -24,6 +24,7 @@ import {
   usePresignUploadMutation, useLazyGetNearbyWorkersQuery,
   useValidatePromoMutation, useLazyGetSurgeInfoQuery,
   useGetPricingConfigQuery, useLazyGetLensScanQuery,
+  useGetShopProfileQuery,
 } from '../services/api';
 import PageTransition from '../components/common/PageTransition';
 import { staggerContainer, fadeInUp } from '../lib/animations';
@@ -415,6 +416,15 @@ export default function BookingPage() {
   const [partsTier,     setPartsTier]     = useState(''); // OEM | Premium | Compatible | Budget (from wizard)
   const [serviceMode,   setServiceMode]   = useState('doorstep'); // doorstep | pickup
 
+  // Shop routing — arrived here via a "Nearby Shops" pick (?shopId=...). When
+  // set, the customer chooses whether the shop's worker visits them ('on_site')
+  // or they'll bring/collect the item at the shop themselves ('pickup_at_shop',
+  // "Pick & Go" — no travel fee). Plain Zappy Express bookings never set this.
+  const preferredShopId = searchParams.get('shopId') || '';
+  const [fulfillmentMode, setFulfillmentMode] = useState('on_site');
+  const { data: shopData } = useGetShopProfileQuery(preferredShopId, { skip: !preferredShopId });
+  const bookingShop = shopData?.shop;
+
   // Vehicle-specific state
   const [vehicleType,   setVehicleType]   = useState('');
   // Towing destination { lat, lng, address } + its picker overlay
@@ -587,6 +597,8 @@ export default function BookingPage() {
       tipAmount: tipAmount > 0 ? tipAmount : undefined,
       // Worker-choice: if the customer picked a specific pro, dispatch offers them first.
       ...(preferredWorkerId && { preferredWorkerId }),
+      // Shop routing — set only when the customer arrived via "Nearby Shops".
+      ...(preferredShopId && { preferredShopId, fulfillmentMode }),
       // Brand/model apply to every vertical that has a brand catalog (phones,
       // laptops, cars, bikes) — the order schema and its Joi validator both
       // take them unconditionally, and pricing looks up parts by brand+model.
@@ -608,6 +620,10 @@ export default function BookingPage() {
       ...(isConstruction && pricingModel === 'hourly' && { estimatedHours }),
       // Surge price protection — send tier-adjusted price so server compares apples-to-apples.
       // Server will apply the same tier multiplier and reject if surge pushed price >20% higher.
+      // `tierPrice` is read inside the submit handler, which only runs on a
+      // tap — long after the component body has evaluated and given it a value.
+      // The rule is lexical and cannot see that.
+      // eslint-disable-next-line no-use-before-define
       quotedTotalRupees: tierPrice || undefined,
     };
     try {
@@ -1275,6 +1291,45 @@ export default function BookingPage() {
             />
           </div>
         </motion.div>
+
+        {/* Shop routing — only shown when arrived via "Nearby Shops" */}
+        {preferredShopId && bookingShop && (
+          <motion.div
+            className="rounded-2xl bg-white ring-1 ring-indigo-100 p-4"
+            style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }}
+            variants={fadeInUp}
+          >
+            <div className="flex items-center gap-2.5 mb-3">
+              <div className="w-8 h-8 rounded-xl bg-indigo-50 flex items-center justify-center">
+                <Store size={15} strokeWidth={2} className="text-indigo-600" />
+              </div>
+              <div>
+                <p className="font-bold text-[#0F172A] text-sm">Booking via {bookingShop.businessName}</p>
+                <p className="text-[11px] text-slate-400">How do you want this done?</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { key: 'on_site', label: 'Worker Visits Me', icon: Zap, sub: 'Shop sends a worker to you' },
+                { key: 'pickup_at_shop', label: 'Pick & Go', icon: Store, sub: "You bring it — no travel fee" },
+              ].map(({ key, label, icon: Icon, sub }) => (
+                <motion.button
+                  key={key}
+                  onClick={() => setFulfillmentMode(key)}
+                  className={`flex flex-col items-start p-3.5 rounded-xl border-2 transition-all text-left ${
+                    fulfillmentMode === key ? 'border-transparent text-white' : 'border-slate-100 bg-slate-50 text-slate-600 hover:border-slate-200'
+                  }`}
+                  style={fulfillmentMode === key ? { background: 'linear-gradient(135deg, #4f46e5 0%, #4338ca 100%)', borderColor: 'transparent' } : {}}
+                  whileTap={{ scale: 0.97 }}
+                >
+                  <Icon size={16} strokeWidth={2.5} className={fulfillmentMode === key ? 'text-white mb-2' : 'text-slate-500 mb-2'} />
+                  <p className={`text-xs font-bold ${fulfillmentMode === key ? 'text-white' : 'text-[#0F172A]'}`}>{label}</p>
+                  <p className={`text-[10px] mt-0.5 ${fulfillmentMode === key ? 'text-white/70' : 'text-slate-400'}`}>{sub}</p>
+                </motion.button>
+              ))}
+            </div>
+          </motion.div>
+        )}
 
         {/* Schedule booking */}
         <motion.div

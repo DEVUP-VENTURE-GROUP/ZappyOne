@@ -115,7 +115,10 @@ export const api = createApi({
   // Keep fetched data cached for 5 min after a component unmounts, so jumping
   // back to a tab shows data instantly (no skeleton) instead of refetching.
   keepUnusedDataFor: 300,
-  tagTypes: ['Me', 'Order', 'Worker', 'Earnings', 'AdminMetrics', 'Kyc', 'Plan', 'Subscription', 'Wallet', 'Notification', 'AdminUsers', 'Disputes', 'Payouts', 'Incentives', 'CancellationConfig', 'PricingCfg', 'AuditLogs', 'Addresses', 'Ad', 'Promo', 'Gamification', 'Recommendations', 'FeatureFlags', 'SupportTickets', 'Referral', 'ShieldFund', 'EventTheme', 'EventBooking', 'EventPartner', 'EventConfig', 'EventCategory', 'PartnerNotification', 'Fraud', 'Zone', 'City', 'PaymentMethods', 'UserDisputes', 'UserTickets', 'AdminAppeals', 'AdminTraining', 'WorkerGoals', 'Plans', 'Content', 'Rewards', 'WorkerOps', 'ReadyMode'],
+  tagTypes: ['Me', 'Order', 'Worker', 'Earnings', 'AdminMetrics', 'Kyc', 'Plan', 'Subscription', 'Wallet', 'Notification', 'AdminUsers', 'Disputes', 'Payouts', 'Incentives', 'CancellationConfig', 'PricingCfg', 'AuditLogs', 'Addresses', 'Ad', 'Promo', 'Gamification', 'Recommendations', 'FeatureFlags', 'SupportTickets', 'Referral', 'ShieldFund', 'EventTheme', 'EventBooking', 'EventPartner', 'EventConfig', 'EventCategory', 'PartnerNotification', 'Fraud', 'Zone', 'City', 'PaymentMethods', 'UserDisputes', 'UserTickets', 'AdminAppeals', 'AdminTraining', 'WorkerGoals', 'Plans', 'Content', 'Rewards', 'WorkerOps', 'ReadyMode', 'Shop', 'ShopWorkers', 'ShopKyc',
+    'RepairCatalog', 'RepairConfig', 'RepairPricing', 'RepairRequests', 'RepairBookings', 'RepairProvider', 'MyAssets',
+    'HelpingConfig', 'HelpingTasks', 'HelpingAvailable', 'AdminHelpingTasks',
+    'RepairIdentification', 'Onboarding'],
   endpoints: (b) => ({
     // --- Auth ---
     requestOtp: b.mutation({
@@ -154,6 +157,9 @@ export const api = createApi({
     }),
     googlePartnerLogin: b.mutation({
       query: (body) => ({ url: '/auth/partner/google', method: 'POST', body }),
+    }),
+    loginShop: b.mutation({
+      query: (body) => ({ url: '/auth/shop/login', method: 'POST', body }),
     }),
     logout: b.mutation({
       query: (refreshToken) => ({ url: '/auth/logout', method: 'POST', body: { refreshToken } }),
@@ -395,6 +401,15 @@ export const api = createApi({
     workerStartService: b.mutation({
       query: ({ id, otp }) => ({ url: `/orders/${id}/start-service`, method: 'POST', body: { otp } }),
       invalidatesTags: (r, e, a) => [{ type: 'Order', id: a.id }],
+    }),
+    // Pick & Go mid-job escalation — worker asks to send the job to their shop.
+    requestShopHandoff: b.mutation({
+      query: ({ id, shopId, reason }) => ({ url: `/orders/${id}/shop-handoff/request`, method: 'POST', body: { shopId, reason } }),
+      invalidatesTags: (r, e, a) => [{ type: 'Order', id: a.id }],
+    }),
+    respondShopHandoff: b.mutation({
+      query: ({ id, accept }) => ({ url: `/orders/${id}/shop-handoff/respond`, method: 'POST', body: { accept } }),
+      invalidatesTags: (r, e, a) => ['Order', { type: 'Order', id: a.id }],
     }),
     workerComplete: b.mutation({
       query: ({ id, completionPhotos = [] }) => ({
@@ -864,7 +879,9 @@ export const api = createApi({
 
     // Worker: request document change after approved KYC
     workerRequestDocumentChange: b.mutation({
-      query: (message) => ({ url: '/kyc/request-change', method: 'POST', body: { message } }),
+      // Mounted at /api/workers/kyc — the bare /kyc path 404s, so the worker's
+      // "request a change" button did nothing on approved KYC.
+      query: (message) => ({ url: '/workers/kyc/request-change', method: 'POST', body: { message } }),
       invalidatesTags: ['Kyc'],
     }),
     // Worker: complete onboarding
@@ -1343,7 +1360,8 @@ export const api = createApi({
 
     // --- Referrals ---
     getReferralCode: b.query({
-      query: () => '/referrals/my-code',
+      // Server route is /referrals/me (getMyCode); /my-code 404s.
+      query: () => '/referrals/me',
       providesTags: ['Referral'],
     }),
     applyReferralCode: b.mutation({
@@ -1589,6 +1607,639 @@ export const api = createApi({
     adminBlockEventPartner: b.mutation({
       query: ({ id, block }) => ({ url: adminApiPath(`/events/partners/${id}/block`), method: 'POST', body: { block } }),
       invalidatesTags: ['EventPartner'],
+    }),
+
+    // ── Shop owner dashboard ──────────────────────────────────────────────────
+    shopMe: b.query({ query: () => '/shops/me/profile', providesTags: ['Shop'] }),
+    updateShopMe: b.mutation({
+      query: (body) => ({ url: '/shops/me/profile', method: 'PATCH', body }),
+      invalidatesTags: ['Shop'],
+    }),
+    shopKycStatus: b.query({ query: () => '/shops/me/kyc/status', providesTags: ['ShopKyc'] }),
+    submitShopKyc: b.mutation({
+      query: (body) => ({ url: '/shops/me/kyc/submit', method: 'POST', body }),
+      invalidatesTags: ['ShopKyc', 'Shop'],
+    }),
+    shopWorkers: b.query({ query: () => '/shops/me/workers', providesTags: ['ShopWorkers'] }),
+    addShopWorker: b.mutation({
+      query: (body) => ({ url: '/shops/me/workers', method: 'POST', body }),
+      invalidatesTags: ['ShopWorkers'],
+    }),
+    removeShopWorker: b.mutation({
+      query: (workerId) => ({ url: `/shops/me/workers/${workerId}`, method: 'DELETE' }),
+      invalidatesTags: ['ShopWorkers'],
+    }),
+    shopEarnings: b.query({
+      query: (range = 'today') => `/shops/me/earnings?range=${range}`,
+      providesTags: ['Shop'],
+    }),
+
+    // ── Shops (customer-facing discovery) ─────────────────────────────────────
+    nearbyShops: b.query({
+      query: (params) => ({ url: '/shops/nearby', params }),
+      providesTags: ['Shop'],
+    }),
+    getShopProfile: b.query({
+      query: (id) => `/shops/${id}`,
+      providesTags: (r, e, id) => [{ type: 'Shop', id }],
+    }),
+
+    // ── Shops (admin) ──────────────────────────────────────────────────────────
+    adminShops: b.query({
+      query: (params = {}) => ({ url: adminApiPath('/shops'), params }),
+      providesTags: ['Shop'],
+    }),
+    adminShopKycPending: b.query({
+      query: () => adminApiPath('/shops/kyc/pending'),
+      providesTags: ['ShopKyc'],
+    }),
+    adminGetShop: b.query({
+      query: (id) => adminApiPath(`/shops/${id}`),
+      providesTags: (r, e, id) => [{ type: 'Shop', id }],
+    }),
+    adminApproveShopKyc: b.mutation({
+      query: (id) => ({ url: adminApiPath(`/shops/${id}/kyc/approve`), method: 'POST' }),
+      invalidatesTags: ['Shop', 'ShopKyc'],
+    }),
+    adminRejectShopKyc: b.mutation({
+      query: ({ id, reason }) => ({ url: adminApiPath(`/shops/${id}/kyc/reject`), method: 'POST', body: { reason } }),
+      invalidatesTags: ['Shop', 'ShopKyc'],
+    }),
+    adminBlockShop: b.mutation({
+      query: ({ id, blocked }) => ({ url: adminApiPath(`/shops/${id}/block`), method: 'POST', body: { blocked } }),
+      invalidatesTags: ['Shop'],
+    }),
+    adminShopKycDocUrls: b.query({
+      query: (id) => adminApiPath(`/shops/${id}/kyc/docs`),
+      providesTags: (r, e, id) => [{ type: 'ShopKyc', id }],
+    }),
+
+    // ── Repair vertical (admin) ───────────────────────────────────────────────
+    // One generic pair of hooks serves every catalog resource — the resource
+    // name is a parameter, so adding a new one needs no new endpoint.
+    adminRepairList: b.query({
+      query: ({ resource, vertical = 'mobile', ...params }) => ({
+        url: adminApiPath(`/repair/${resource}`), params: { ...params, vertical },
+      }),
+      providesTags: (r, e, a) => [{ type: 'RepairCatalog', id: `${a.vertical || 'mobile'}:${a.resource}` }],
+    }),
+    adminRepairCreate: b.mutation({
+      query: ({ resource, vertical = 'mobile', ...body }) => ({
+        url: adminApiPath(`/repair/${resource}`), method: 'POST', body: { ...body, vertical },
+      }),
+      invalidatesTags: (r, e, a) => [{ type: 'RepairCatalog', id: `${a.vertical || 'mobile'}:${a.resource}` }],
+    }),
+    adminRepairUpdate: b.mutation({
+      query: ({ resource, id, vertical = 'mobile', ...body }) => ({
+        url: adminApiPath(`/repair/${resource}/${id}`), method: 'PATCH', body,
+      }),
+      invalidatesTags: (r, e, a) => [{ type: 'RepairCatalog', id: `${a.vertical || 'mobile'}:${a.resource}` }],
+    }),
+    adminRepairArchive: b.mutation({
+      query: ({ resource, id }) => ({ url: adminApiPath(`/repair/${resource}/${id}`), method: 'DELETE' }),
+      invalidatesTags: (r, e, a) => [{ type: 'RepairCatalog', id: `${a.vertical || 'mobile'}:${a.resource}` }],
+    }),
+    adminRepairDashboard: b.query({
+      query: (vertical = 'mobile') => ({ url: adminApiPath('/repair/dashboard'), params: { vertical } }),
+      providesTags: ['RepairCatalog'],
+    }),
+    adminRepairConfig: b.query({
+      query: (vertical = 'mobile') => ({ url: adminApiPath('/repair/config'), params: { vertical } }),
+      providesTags: (r, e, a) => [{ type: 'RepairConfig', id: a || 'mobile' }],
+    }),
+    adminUpdateRepairConfig: b.mutation({
+      query: ({ vertical = 'mobile', ...body }) => ({
+        url: adminApiPath('/repair/config'), method: 'PUT', body: { ...body, vertical },
+      }),
+      invalidatesTags: (r, e, a) => [{ type: 'RepairConfig', id: a.vertical || 'mobile' }, 'RepairCatalog'],
+    }),
+    adminRepairPendingPrices: b.query({
+      query: () => adminApiPath('/repair/provider-pricing/pending'),
+      providesTags: ['RepairPricing'],
+    }),
+    adminDecideRepairPrice: b.mutation({
+      query: ({ id, decision, note }) => ({ url: adminApiPath(`/repair/provider-pricing/${id}/decide`), method: 'POST', body: { decision, note } }),
+      invalidatesTags: ['RepairPricing'],
+    }),
+    adminRepairIdentifications: b.query({
+      query: ({ vertical = 'mobile', ...params } = {}) => ({
+        url: adminApiPath('/repair/identification-requests'), params: { ...params, vertical },
+      }),
+      providesTags: ['RepairIdentification'],
+    }),
+    adminResolveRepairIdentification: b.mutation({
+      query: ({ id, ...body }) => ({
+        url: adminApiPath(`/repair/identification-requests/${id}/resolve`), method: 'POST', body,
+      }),
+      invalidatesTags: ['RepairIdentification'],
+    }),
+    adminRepairCatalogRequests: b.query({
+      query: (params = {}) => ({ url: adminApiPath('/repair/catalog-requests'), params }),
+      providesTags: ['RepairRequests'],
+    }),
+    adminApproveCatalogRequest: b.mutation({
+      query: ({ id, ...body }) => ({ url: adminApiPath(`/repair/catalog-requests/${id}/approve`), method: 'POST', body }),
+      invalidatesTags: ['RepairRequests', 'RepairCatalog'],
+    }),
+    adminRejectCatalogRequest: b.mutation({
+      query: ({ id, note }) => ({ url: adminApiPath(`/repair/catalog-requests/${id}/reject`), method: 'POST', body: { note } }),
+      invalidatesTags: ['RepairRequests'],
+    }),
+    adminRepairReferencePricing: b.query({
+      query: (params = {}) => ({ url: adminApiPath('/repair/reference-pricing'), params }),
+      providesTags: ['RepairPricing'],
+    }),
+    adminCreateReferencePrice: b.mutation({
+      query: (body) => ({ url: adminApiPath('/repair/reference-pricing'), method: 'POST', body }),
+      invalidatesTags: ['RepairPricing'],
+    }),
+    adminUpdateReferencePrice: b.mutation({
+      query: ({ id, ...body }) => ({ url: adminApiPath(`/repair/reference-pricing/${id}`), method: 'PATCH', body }),
+      invalidatesTags: ['RepairPricing'],
+    }),
+    adminRepairBookings: b.query({
+      query: (params = {}) => ({ url: adminApiPath('/repair/bookings'), params }),
+      providesTags: ['RepairBookings'],
+    }),
+
+
+    // ── Provider onboarding (shop owner OR individual technician) ─────────────
+    //
+    // One surface for both actors: the server reads which one is calling from
+    // the token and answers with the documents that kind of provider must show.
+    /** What a customer can book today — public, drives the home page. */
+    liveCatalog: b.query({
+      query: () => '/provider/onboarding/catalog',
+      providesTags: ['Onboarding'],
+    }),
+    providerOnboardingStatus: b.query({
+      query: () => '/provider/onboarding/status',
+      providesTags: ['Onboarding'],
+    }),
+    providerDomains: b.query({
+      query: () => '/provider/onboarding/domains',
+      providesTags: ['Onboarding'],
+    }),
+    providerServiceLines: b.query({
+      query: (domainCode) => ({ url: '/provider/onboarding/lines', params: { domainCode } }),
+      providesTags: ['Onboarding'],
+    }),
+    providerEnrolments: b.query({
+      query: () => '/provider/onboarding/enrolments',
+      providesTags: ['Onboarding'],
+    }),
+    providerLineRequirements: b.query({
+      query: (lineCode) => `/provider/onboarding/lines/${lineCode}/requirements`,
+      providesTags: ['Onboarding'],
+    }),
+    providerEnrol: b.mutation({
+      query: (body) => ({ url: '/provider/onboarding/enrolments', method: 'POST', body }),
+      invalidatesTags: ['Onboarding'],
+    }),
+    providerSaveEnrolment: b.mutation({
+      query: ({ id, ...body }) => ({ url: `/provider/onboarding/enrolments/${id}`, method: 'PATCH', body }),
+      invalidatesTags: ['Onboarding'],
+    }),
+    providerSubmitEnrolment: b.mutation({
+      query: (id) => ({ url: `/provider/onboarding/enrolments/${id}/submit`, method: 'POST' }),
+      invalidatesTags: ['Onboarding'],
+    }),
+    providerRequestServiceLine: b.mutation({
+      query: (body) => ({ url: '/provider/onboarding/line-requests', method: 'POST', body }),
+      invalidatesTags: ['Onboarding'],
+    }),
+
+    // ── Provider onboarding: admin ────────────────────────────────────────────
+    adminOnboardingList: b.query({
+      query: ({ resource, ...params }) => ({
+        url: adminApiPath(`/onboarding/${resource}`), params,
+      }),
+      providesTags: (r, e, a) => [{ type: 'Onboarding', id: a.resource }],
+    }),
+    adminOnboardingCreate: b.mutation({
+      query: ({ resource, ...body }) => ({
+        url: adminApiPath(`/onboarding/${resource}`), method: 'POST', body,
+      }),
+      invalidatesTags: (r, e, a) => [{ type: 'Onboarding', id: a.resource }],
+    }),
+    adminOnboardingUpdate: b.mutation({
+      query: ({ resource, id, ...body }) => ({
+        url: adminApiPath(`/onboarding/${resource}/${id}`), method: 'PATCH', body,
+      }),
+      invalidatesTags: (r, e, a) => [{ type: 'Onboarding', id: a.resource }],
+    }),
+    adminOnboardingArchive: b.mutation({
+      query: ({ resource, id }) => ({
+        url: adminApiPath(`/onboarding/${resource}/${id}`), method: 'DELETE',
+      }),
+      invalidatesTags: (r, e, a) => [{ type: 'Onboarding', id: a.resource }],
+    }),
+    adminOnboardingEnrolments: b.query({
+      query: (params = {}) => ({ url: adminApiPath('/onboarding/enrolments'), params }),
+      providesTags: ['Onboarding'],
+    }),
+    adminDecideEnrolment: b.mutation({
+      query: ({ id, ...body }) => ({
+        url: adminApiPath(`/onboarding/enrolments/${id}/decide`), method: 'POST', body,
+      }),
+      invalidatesTags: ['Onboarding'],
+    }),
+    adminOnboardingLineRequests: b.query({
+      query: (params = {}) => ({ url: adminApiPath('/onboarding/line-requests'), params }),
+      providesTags: ['Onboarding'],
+    }),
+    adminApproveLineRequest: b.mutation({
+      query: ({ id, ...body }) => ({
+        url: adminApiPath(`/onboarding/line-requests/${id}/approve`), method: 'POST', body,
+      }),
+      invalidatesTags: ['Onboarding'],
+    }),
+    adminRejectLineRequest: b.mutation({
+      query: ({ id, note }) => ({
+        url: adminApiPath(`/onboarding/line-requests/${id}/reject`), method: 'POST', body: { note },
+      }),
+      invalidatesTags: ['Onboarding'],
+    }),
+
+    // ── Repair vertical (customer + worker) ───────────────────────────────────
+    //
+    // `vertical` is threaded through every catalog call and defaults to mobile,
+    // so existing callers keep working while laptop (and whatever comes next)
+    // reads its own catalog from the same endpoints.
+    repairBrands: b.query({
+      query: (vertical = 'mobile') => ({ url: '/repair/brands', params: { vertical } }),
+      providesTags: (r, e, vertical = 'mobile') => [{ type: 'RepairCatalog', id: `${vertical}:brands` }],
+    }),
+    repairProductTypes: b.query({
+      query: (vertical = 'mobile') => ({ url: '/repair/product-types', params: { vertical } }),
+      providesTags: (r, e, vertical = 'mobile') => [{ type: 'RepairCatalog', id: `${vertical}:product-types` }],
+    }),
+    repairFamilies: b.query({
+      query: ({ brandCode, productTypeCode, vertical = 'mobile' }) => ({
+        url: `/repair/brands/${brandCode}/families`, params: { productTypeCode, vertical },
+      }),
+      providesTags: ['RepairCatalog'],
+    }),
+    repairSeries: b.query({
+      query: ({ brandCode, familyCode, vertical = 'mobile' }) => ({
+        url: `/repair/brands/${brandCode}/series`, params: { familyCode, vertical },
+      }),
+      providesTags: ['RepairCatalog'],
+    }),
+    repairModels: b.query({
+      query: ({ brandCode, q, page = 1, productTypeCode, familyCode, seriesCode, vertical = 'mobile' }) => ({
+        url: `/repair/brands/${brandCode}/models`,
+        params: { q, page, productTypeCode, familyCode, seriesCode, vertical },
+      }),
+      providesTags: ['RepairCatalog'],
+    }),
+    repairConfigurations: b.query({
+      query: ({ modelCode, vertical = 'mobile' }) => ({
+        url: `/repair/models/${modelCode}/configurations`, params: { vertical },
+      }),
+      providesTags: ['RepairCatalog'],
+    }),
+    repairProblems: b.query({
+      query: ({ vertical = 'mobile', ...params } = {}) => ({ url: '/repair/problems', params: { ...params, vertical } }),
+      providesTags: (r, e, a = {}) => [{ type: 'RepairCatalog', id: `${a.vertical || 'mobile'}:problems` }],
+    }),
+    repairDiagnosticFlow: b.query({
+      query: ({ problemCode, vertical = 'mobile' }) => ({ url: `/repair/diagnostics/${problemCode}`, params: { vertical } }),
+    }),
+    submitRepairDiagnostic: b.mutation({
+      query: ({ problemCode, answers, vertical = 'mobile' }) => ({
+        url: `/repair/diagnostics/${problemCode}`, method: 'POST', params: { vertical }, body: { answers },
+      }),
+    }),
+    /** "I don't know my model" — a human identifies it (§7). */
+    submitModelIdentification: b.mutation({
+      query: (body) => ({ url: '/repair/identify', method: 'POST', body }),
+      invalidatesTags: ['RepairIdentification'],
+    }),
+    myModelIdentifications: b.query({
+      query: (vertical = 'mobile') => ({ url: '/repair/identify/mine', params: { vertical } }),
+      providesTags: ['RepairIdentification'],
+    }),
+    repairPricePreview: b.query({ query: (params) => ({ url: '/repair/price-preview', params }) }),
+    // Add-ons priced by the chosen provider — see listAddOns on the server.
+    repairAddOns: b.query({ query: (params) => ({ url: '/repair/addons', params }) }),
+    // "My Water Assets" and the same for any other vertical — one saved
+    // tank/phone/vehicle the customer can rebook against without re-typing it.
+    myAssets: b.query({
+      query: (params) => ({ url: '/repair/assets', params }),
+      providesTags: ['MyAssets'],
+    }),
+    assetHistory: b.query({
+      query: (id) => `/repair/assets/${id}/history`,
+      providesTags: (r, e, id) => [{ type: 'MyAssets', id }],
+    }),
+    createAsset: b.mutation({
+      query: (body) => ({ url: '/repair/assets', method: 'POST', body }),
+      invalidatesTags: ['MyAssets'],
+    }),
+    updateAsset: b.mutation({
+      query: ({ id, ...body }) => ({ url: `/repair/assets/${id}`, method: 'PATCH', body }),
+      invalidatesTags: ['MyAssets'],
+    }),
+    deleteAsset: b.mutation({
+      query: (id) => ({ url: `/repair/assets/${id}`, method: 'DELETE' }),
+      invalidatesTags: ['MyAssets'],
+    }),
+
+    /* ── Helping Services ── */
+    helpingServices: b.query({
+      query: () => '/helping/services',
+      providesTags: ['HelpingConfig'],
+    }),
+    helpingQuote: b.mutation({ query: (body) => ({ url: '/helping/quote', method: 'POST', body }) }),
+    createHelpingTask: b.mutation({
+      query: (body) => ({ url: '/helping/tasks', method: 'POST', body }),
+      invalidatesTags: ['HelpingTasks'],
+    }),
+    myHelpingTasks: b.query({
+      query: (params) => ({ url: '/helping/tasks', params }),
+      providesTags: ['HelpingTasks'],
+    }),
+    getHelpingTask: b.query({
+      query: (id) => `/helping/tasks/${id}`,
+      providesTags: (r, e, id) => [{ type: 'HelpingTasks', id }],
+    }),
+    respondHelpingApproval: b.mutation({
+      query: ({ id, approvalId, approved }) => ({
+        url: `/helping/tasks/${id}/approvals/${approvalId}`, method: 'POST', body: { approved },
+      }),
+      invalidatesTags: (r, e, a) => [{ type: 'HelpingTasks', id: a.id }],
+    }),
+    cancelHelpingTask: b.mutation({
+      query: ({ id, reason }) => ({ url: `/helping/tasks/${id}/cancel`, method: 'POST', body: { reason } }),
+      invalidatesTags: (r, e, a) => [{ type: 'HelpingTasks', id: a.id }, 'HelpingTasks'],
+    }),
+    rateHelpingTask: b.mutation({
+      query: ({ id, ...body }) => ({ url: `/helping/tasks/${id}/rate`, method: 'POST', body }),
+      invalidatesTags: (r, e, a) => [{ type: 'HelpingTasks', id: a.id }],
+    }),
+
+    // Worker side
+    availableHelpingTasks: b.query({
+      query: () => '/helping/tasks/available',
+      providesTags: ['HelpingAvailable'],
+    }),
+    acceptHelpingTask: b.mutation({
+      query: (id) => ({ url: `/helping/tasks/${id}/accept`, method: 'POST' }),
+      invalidatesTags: (r, e, id) => [{ type: 'HelpingTasks', id }, 'HelpingAvailable', 'HelpingTasks'],
+    }),
+    advanceHelpingStatus: b.mutation({
+      query: ({ id, ...body }) => ({ url: `/helping/tasks/${id}/status`, method: 'POST', body }),
+      invalidatesTags: (r, e, a) => [{ type: 'HelpingTasks', id: a.id }],
+    }),
+    updateHelpingItem: b.mutation({
+      query: ({ id, itemId, ...body }) => ({ url: `/helping/tasks/${id}/items/${itemId}`, method: 'PATCH', body }),
+      invalidatesTags: (r, e, a) => [{ type: 'HelpingTasks', id: a.id }],
+    }),
+    proposeHelpingAlternative: b.mutation({
+      query: ({ id, itemId, ...body }) => ({ url: `/helping/tasks/${id}/items/${itemId}/alternative`, method: 'POST', body }),
+      invalidatesTags: (r, e, a) => [{ type: 'HelpingTasks', id: a.id }],
+    }),
+    recordHelpingAdvance: b.mutation({
+      query: ({ id, amountPaise }) => ({ url: `/helping/tasks/${id}/advance`, method: 'POST', body: { amountPaise } }),
+      invalidatesTags: (r, e, a) => [{ type: 'HelpingTasks', id: a.id }],
+    }),
+    addHelpingProof: b.mutation({
+      query: ({ id, ...body }) => ({ url: `/helping/tasks/${id}/proof`, method: 'POST', body }),
+      invalidatesTags: (r, e, a) => [{ type: 'HelpingTasks', id: a.id }],
+    }),
+    recordHelpingHandover: b.mutation({
+      query: ({ id, ...body }) => ({ url: `/helping/tasks/${id}/handover`, method: 'POST', body }),
+      invalidatesTags: (r, e, a) => [{ type: 'HelpingTasks', id: a.id }],
+    }),
+    completeHelpingTask: b.mutation({
+      query: (id) => ({ url: `/helping/tasks/${id}/complete`, method: 'POST' }),
+      invalidatesTags: (r, e, id) => [{ type: 'HelpingTasks', id }],
+    }),
+
+    // Admin
+    adminHelpingTasks: b.query({
+      query: (params) => ({ url: adminApiPath('/helping/tasks'), params }),
+      providesTags: ['AdminHelpingTasks'],
+    }),
+    adminHelpingConfig: b.query({
+      query: () => adminApiPath('/helping/config'),
+      providesTags: ['HelpingConfig'],
+    }),
+    adminUpdateHelpingConfig: b.mutation({
+      query: ({ serviceType, ...body }) => ({
+        url: adminApiPath(`/helping/config/${serviceType}`), method: 'PUT', body,
+      }),
+      invalidatesTags: ['HelpingConfig'],
+    }),
+    adminHelpingRefundOutcome: b.mutation({
+      query: ({ id, ...body }) => ({ url: adminApiPath(`/helping/tasks/${id}/refund-outcome`), method: 'POST', body }),
+      invalidatesTags: ['AdminHelpingTasks'],
+    }),
+    repairProviders: b.query({ query: (params) => ({ url: '/repair/providers', params }) }),
+    createRepairBooking: b.mutation({
+      query: (body) => ({ url: '/repair/bookings', method: 'POST', body }),
+      invalidatesTags: ['RepairBookings'],
+    }),
+    myRepairBookings: b.query({
+      query: (page = 1) => `/repair/bookings/mine?page=${page}`,
+      providesTags: ['RepairBookings'],
+    }),
+    getRepairBooking: b.query({
+      query: (id) => `/repair/bookings/${id}`,
+      providesTags: (r, e, id) => [{ type: 'RepairBookings', id }],
+    }),
+    transitionRepairBooking: b.mutation({
+      query: ({ id, status, reason }) => ({ url: `/repair/bookings/${id}/status`, method: 'POST', body: { status, reason } }),
+      invalidatesTags: (r, e, a) => ['RepairBookings', { type: 'RepairBookings', id: a.id }],
+    }),
+    /** The technician records taking the customer's cash. */
+    /** A shop owner hands a job to one of their own technicians. */
+    assignRepairWorker: b.mutation({
+      query: ({ id, workerId }) => ({ url: `/repair/bookings/${id}/assign-worker`, method: 'POST', body: { workerId } }),
+      invalidatesTags: ['RepairBookings', 'RepairProvider'],
+    }),
+    /** Provider passes on a job — it goes back for reassignment. */
+    declineRepairBooking: b.mutation({
+      query: ({ id, reason }) => ({ url: `/repair/bookings/${id}/decline`, method: 'POST', body: { reason } }),
+      invalidatesTags: ['RepairBookings', 'RepairProvider'],
+    }),
+    collectRepairCash: b.mutation({
+      query: (id) => ({ url: `/repair/bookings/${id}/collect-cash`, method: 'POST' }),
+      invalidatesTags: (r, e, id) => ['RepairBookings', { type: 'RepairBookings', id }],
+    }),
+    cancelRepairBooking: b.mutation({
+      query: ({ id, reason }) => ({ url: `/repair/bookings/${id}/cancel`, method: 'POST', body: { reason } }),
+      invalidatesTags: (r, e, a) => ['RepairBookings', { type: 'RepairBookings', id: a.id }],
+    }),
+    submitRepairQuote: b.mutation({
+      query: ({ id, ...body }) => ({ url: `/repair/bookings/${id}/quotes`, method: 'POST', body }),
+      invalidatesTags: (r, e, a) => [{ type: 'RepairBookings', id: a.id }],
+    }),
+    respondRepairQuote: b.mutation({
+      query: ({ quoteId, decision, reason }) => ({ url: `/repair/quotes/${quoteId}/respond`, method: 'POST', body: { decision, reason } }),
+      invalidatesTags: ['RepairBookings'],
+    }),
+    repairQaChecklist: b.query({ query: (id) => `/repair/bookings/${id}/qa-checklist` }),
+    submitRepairQa: b.mutation({
+      query: ({ id, ...body }) => ({ url: `/repair/bookings/${id}/qa`, method: 'POST', body }),
+      invalidatesTags: (r, e, a) => [{ type: 'RepairBookings', id: a.id }],
+    }),
+    submitRepairInspection: b.mutation({
+      query: ({ id, ...body }) => ({ url: `/repair/bookings/${id}/inspections`, method: 'POST', body }),
+    }),
+    submitRepairCatalogRequest: b.mutation({
+      query: (body) => ({ url: '/repair/catalog-requests', method: 'POST', body }),
+    }),
+
+    // ── Repair provider self-service ──────────────────────────────────────────
+    repairOnboardingStatus: b.query({
+      query: (vertical = 'mobile') => ({ url: '/repair/provider/onboarding', params: { vertical } }),
+      providesTags: ['RepairProvider'],
+    }),
+    repairProviderJobs: b.query({
+      query: (params = {}) => ({ url: '/repair/provider/jobs', params }),
+      providesTags: ['RepairBookings'],
+    }),
+    repairCapabilities: b.query({
+      query: (vertical = 'mobile') => ({ url: '/repair/provider/capabilities', params: { vertical } }),
+      providesTags: ['RepairProvider'],
+    }),
+    upsertRepairCapability: b.mutation({
+      query: (body) => ({ url: '/repair/provider/capabilities', method: 'PUT', body }),
+      invalidatesTags: ['RepairProvider'],
+    }),
+    removeRepairCapability: b.mutation({
+      query: (id) => ({ url: `/repair/provider/capabilities/${id}`, method: 'DELETE' }),
+      invalidatesTags: ['RepairProvider'],
+    }),
+    repairServiceAreas: b.query({
+      query: (vertical = 'mobile') => ({ url: '/repair/provider/service-areas', params: { vertical } }),
+      providesTags: ['RepairProvider'],
+    }),
+    upsertRepairServiceArea: b.mutation({
+      query: (body) => ({ url: '/repair/provider/service-areas', method: 'PUT', body }),
+      invalidatesTags: ['RepairProvider'],
+    }),
+    repairInventory: b.query({
+      query: (vertical = 'mobile') => ({ url: '/repair/provider/inventory', params: { vertical } }),
+      providesTags: ['RepairProvider'],
+    }),
+    upsertRepairInventory: b.mutation({
+      query: (body) => ({ url: '/repair/provider/inventory', method: 'PUT', body }),
+      invalidatesTags: ['RepairProvider'],
+    }),
+    repairProviderPricing: b.query({
+      query: (vertical = 'mobile') => ({ url: '/repair/provider/pricing', params: { vertical } }),
+      providesTags: ['RepairProvider'],
+    }),
+    /** Headings + the repairs under them, with what this provider already claims. */
+    repairWorkCatalog: b.query({
+      query: ({ vertical = 'mobile', cityCode } = {}) => ({
+        url: '/repair/provider/work-catalog', params: { vertical, cityCode },
+      }),
+      providesTags: ['RepairProvider'],
+    }),
+    /** Save a screenful of tick-boxes in one request. */
+    saveRepairCapabilities: b.mutation({
+      query: (body) => ({ url: '/repair/provider/capabilities/bulk', method: 'PUT', body }),
+      invalidatesTags: ['RepairProvider'],
+    }),
+    repairProviderCatalogRequests: b.query({
+      query: (vertical = 'mobile') => ({ url: '/repair/provider/catalog-requests', params: { vertical } }),
+      providesTags: ['RepairProvider'],
+    }),
+    requestRepairCatalogAddition: b.mutation({
+      query: (body) => ({ url: '/repair/provider/catalog-requests', method: 'POST', body }),
+      invalidatesTags: ['RepairProvider'],
+    }),
+
+    // --- Admin: provider-proposed repairs ---
+    adminProviderRequests: b.query({
+      query: ({ vertical = 'mobile', ...params } = {}) => ({
+        url: adminApiPath('/repair/provider-requests'), params: { ...params, vertical },
+      }),
+      providesTags: ['RepairRequests'],
+    }),
+    adminApproveProviderRequest: b.mutation({
+      query: ({ id, ...body }) => ({
+        url: adminApiPath(`/repair/provider-requests/${id}/approve`), method: 'POST', body,
+      }),
+      invalidatesTags: ['RepairRequests', 'RepairCatalog'],
+    }),
+    adminRejectProviderRequest: b.mutation({
+      query: ({ id, note }) => ({
+        url: adminApiPath(`/repair/provider-requests/${id}/reject`), method: 'POST', body: { note },
+      }),
+      invalidatesTags: ['RepairRequests'],
+    }),
+
+    // Provider-scoped catalog reads — these must NOT use the admin endpoints,
+    // which are gated behind requireRole('admin') and would 403 for a worker.
+    repairRepairsList: b.query({
+      query: (params = {}) => ({ url: '/repair/repairs', params }),
+      providesTags: ['RepairCatalog'],
+    }),
+    repairStockableParts: b.query({
+      query: (params = {}) => ({ url: '/repair/provider/parts', params }),
+      providesTags: ['RepairCatalog'],
+    }),
+    repairReferenceBand: b.query({
+      query: (params) => ({ url: '/repair/provider/pricing/reference', params }),
+    }),
+    submitRepairProviderPricing: b.mutation({
+      query: (body) => ({ url: '/repair/provider/pricing', method: 'POST', body }),
+      invalidatesTags: ['RepairProvider'],
+    }),
+    /**
+     * A model's whole price sheet in one request.
+     *
+     * The vertical rides in the query string as well as the body: the body is
+     * schema-validated with stripUnknown, so a field the schema forgets is
+     * dropped before the server reads it, and a laptop price would quietly be
+     * filed under mobile.
+     */
+    /** What cancelling would cost — asked before the customer commits. */
+    /** Photographs of the finished work. */
+    attachRepairCompletionPhotos: b.mutation({
+      query: ({ id, photos }) => ({
+        url: `/repair/bookings/${id}/completion-photos`, method: 'POST', body: { photos },
+      }),
+      invalidatesTags: (r, e, { id }) => [{ type: 'RepairBookings', id }],
+    }),
+    /** The customer rates a finished repair. Once. */
+    rateRepairBooking: b.mutation({
+      query: ({ id, rating, comment }) => ({
+        url: `/repair/bookings/${id}/rate`, method: 'POST', body: { rating, comment },
+      }),
+      invalidatesTags: (r, e, { id }) => [{ type: 'RepairBookings', id }],
+    }),
+    /** The customer's own code for whichever handover step is due. */
+    repairHandoverCode: b.query({
+      query: (id) => ({ url: `/repair/bookings/${id}/handover-code` }),
+      providesTags: (r, e, id) => [{ type: 'RepairBookings', id }],
+    }),
+    /** The technician types what the customer reads out. */
+    verifyRepairHandoverCode: b.mutation({
+      query: ({ id, kind, code }) => ({
+        url: `/repair/bookings/${id}/handover-code/verify`,
+        method: 'POST',
+        body: { kind, code },
+      }),
+      invalidatesTags: (r, e, { id }) => [{ type: 'RepairBookings', id }],
+    }),
+    repairCancellationQuote: b.query({
+      query: (id) => ({ url: `/repair/bookings/${id}/cancellation-quote` }),
+      providesTags: (r, e, id) => [{ type: 'RepairBooking', id }],
+    }),
+    bulkRepairProviderPricing: b.mutation({
+      query: ({ vertical = 'mobile', rows }) => ({
+        url: '/repair/provider/pricing/bulk',
+        method: 'POST',
+        params: { vertical },
+        body: { vertical, rows },
+      }),
+      invalidatesTags: ['RepairProvider'],
     }),
 
     // --- Admin: Fraud Detection ---
@@ -2083,6 +2734,132 @@ export const {
   useAdminApproveEventPartnerKycMutation,
   useAdminRejectEventPartnerKycMutation,
   useAdminBlockEventPartnerMutation,
+  // Shop
+  useLoginShopMutation,
+  useShopMeQuery,
+  useUpdateShopMeMutation,
+  useShopKycStatusQuery,
+  useSubmitShopKycMutation,
+  useShopWorkersQuery,
+  useAddShopWorkerMutation,
+  useRemoveShopWorkerMutation,
+  useShopEarningsQuery,
+  useNearbyShopsQuery,
+  useGetShopProfileQuery,
+  useAdminShopsQuery,
+  useAdminShopKycPendingQuery,
+  useAdminGetShopQuery,
+  useAdminApproveShopKycMutation,
+  useAdminRejectShopKycMutation,
+  useAdminBlockShopMutation,
+  useAdminShopKycDocUrlsQuery,
+  // Repair vertical (admin)
+  useAdminRepairListQuery,
+  useAdminRepairCreateMutation,
+  useAdminRepairUpdateMutation,
+  useAdminRepairArchiveMutation,
+  useAdminRepairDashboardQuery,
+  useAdminRepairConfigQuery,
+  useAdminUpdateRepairConfigMutation,
+  useAdminRepairPendingPricesQuery,
+  useAdminDecideRepairPriceMutation,
+  useAdminRepairCatalogRequestsQuery,
+  useAdminRepairIdentificationsQuery,
+  useAdminResolveRepairIdentificationMutation,
+  useAdminApproveCatalogRequestMutation,
+  useAdminRejectCatalogRequestMutation,
+  useAdminRepairReferencePricingQuery,
+  useAdminCreateReferencePriceMutation,
+  useAdminUpdateReferencePriceMutation,
+  useAdminRepairBookingsQuery,
+  // Repair vertical (customer + worker)
+  useLiveCatalogQuery,
+  useProviderOnboardingStatusQuery,
+  useProviderDomainsQuery,
+  useProviderServiceLinesQuery,
+  useProviderEnrolmentsQuery,
+  useProviderLineRequirementsQuery,
+  useProviderEnrolMutation,
+  useProviderSaveEnrolmentMutation,
+  useProviderSubmitEnrolmentMutation,
+  useProviderRequestServiceLineMutation,
+  useAdminOnboardingListQuery,
+  useAdminOnboardingCreateMutation,
+  useAdminOnboardingUpdateMutation,
+  useAdminOnboardingArchiveMutation,
+  useAdminOnboardingEnrolmentsQuery,
+  useAdminDecideEnrolmentMutation,
+  useAdminOnboardingLineRequestsQuery,
+  useAdminApproveLineRequestMutation,
+  useAdminRejectLineRequestMutation,
+  useRepairWorkCatalogQuery,
+  useSaveRepairCapabilitiesMutation,
+  useRepairProviderCatalogRequestsQuery,
+  useRequestRepairCatalogAdditionMutation,
+  useAdminProviderRequestsQuery,
+  useAdminApproveProviderRequestMutation,
+  useAdminRejectProviderRequestMutation,
+  useRepairBrandsQuery,
+  useRepairProductTypesQuery,
+  useRepairFamiliesQuery,
+  useRepairSeriesQuery,
+  useRepairModelsQuery,
+  useRepairConfigurationsQuery,
+  useRepairProblemsQuery,
+  useSubmitModelIdentificationMutation,
+  useMyModelIdentificationsQuery,
+  useRepairDiagnosticFlowQuery,
+  useSubmitRepairDiagnosticMutation,
+  useRepairPricePreviewQuery,
+  useRepairAddOnsQuery,
+  useMyAssetsQuery, useAssetHistoryQuery,
+  useCreateAssetMutation, useUpdateAssetMutation, useDeleteAssetMutation,
+  useHelpingServicesQuery, useHelpingQuoteMutation,
+  useCreateHelpingTaskMutation, useMyHelpingTasksQuery, useGetHelpingTaskQuery,
+  useRespondHelpingApprovalMutation, useCancelHelpingTaskMutation, useRateHelpingTaskMutation,
+  useAvailableHelpingTasksQuery, useAcceptHelpingTaskMutation, useAdvanceHelpingStatusMutation,
+  useUpdateHelpingItemMutation, useProposeHelpingAlternativeMutation, useRecordHelpingAdvanceMutation,
+  useAddHelpingProofMutation, useRecordHelpingHandoverMutation, useCompleteHelpingTaskMutation,
+  useAdminHelpingTasksQuery, useAdminHelpingConfigQuery,
+  useAdminUpdateHelpingConfigMutation, useAdminHelpingRefundOutcomeMutation,
+  useRepairProvidersQuery,
+  useCreateRepairBookingMutation,
+  useMyRepairBookingsQuery,
+  useGetRepairBookingQuery,
+  useTransitionRepairBookingMutation,
+  useAssignRepairWorkerMutation,
+  useDeclineRepairBookingMutation,
+  useCollectRepairCashMutation,
+  useCancelRepairBookingMutation,
+  useSubmitRepairQuoteMutation,
+  useRespondRepairQuoteMutation,
+  useRepairQaChecklistQuery,
+  useSubmitRepairQaMutation,
+  useSubmitRepairInspectionMutation,
+  useSubmitRepairCatalogRequestMutation,
+  // Repair provider self-service
+  useRepairOnboardingStatusQuery,
+  useRepairProviderJobsQuery,
+  useRepairCapabilitiesQuery,
+  useUpsertRepairCapabilityMutation,
+  useRemoveRepairCapabilityMutation,
+  useRepairServiceAreasQuery,
+  useUpsertRepairServiceAreaMutation,
+  useRepairInventoryQuery,
+  useUpsertRepairInventoryMutation,
+  useRepairProviderPricingQuery,
+  useLazyRepairReferenceBandQuery,
+  useSubmitRepairProviderPricingMutation,
+  useBulkRepairProviderPricingMutation,
+  useRepairCancellationQuoteQuery,
+  useRepairHandoverCodeQuery,
+  useAttachRepairCompletionPhotosMutation,
+  useRateRepairBookingMutation,
+  useVerifyRepairHandoverCodeMutation,
+  useRepairRepairsListQuery,
+  useRepairStockablePartsQuery,
+  useRequestShopHandoffMutation,
+  useRespondShopHandoffMutation,
   // Fraud Detection
   useAdminFraudSummaryQuery,
   useAdminFraudEventsQuery,

@@ -31,6 +31,50 @@ const browserGlobals = Object.fromEntries([
 
 const noopRule = { create: () => ({}) };
 
+/**
+ * `no-undef` for JSX components — the half the base rule cannot see.
+ *
+ * ESLint parses `<CancelSheet />` as a JSXIdentifier, not an Identifier, so
+ * `no-undef` never looks at it. A refactor that deletes a component while call
+ * sites still render it therefore lints clean, builds clean, and throws
+ * "CancelSheet is not defined" the moment the screen opens — which is exactly
+ * the crash class this config exists to stop, escaping through the one door it
+ * had left open.
+ *
+ * Lower-case names are HTML tags and are skipped. Member expressions
+ * (`<Motion.div>`) are checked on their root object only.
+ */
+const jsxNoUndef = {
+  create(context) {
+    function rootName(node) {
+      if (node.type === 'JSXIdentifier') return node.name;
+      if (node.type === 'JSXMemberExpression') return rootName(node.object);
+      return null;   // namespaced (<svg:path>) — not a component reference
+    }
+
+    function resolves(scope, name) {
+      for (let s = scope; s; s = s.upper) {
+        if (s.variables.some((v) => v.name === name)) return true;
+      }
+      return false;
+    }
+
+    return {
+      JSXOpeningElement(node) {
+        const name = rootName(node.name);
+        // Host elements are lower-case by JSX convention; components are not.
+        if (!name || !/^[A-Z]/.test(name)) return;
+
+        const scope = context.sourceCode.getScope(node);
+        if (resolves(scope, name)) return;
+        if (context.sourceCode.scopeManager.globalScope.through.every((r) => r.identifier.name !== name)) {
+          context.report({ node, message: `'${name}' is not defined.` });
+        }
+      },
+    };
+  },
+};
+
 export default [
   { ignores: ['dist/**', 'node_modules/**', '*.config.js', 'public/**'] },
   {
@@ -45,9 +89,33 @@ export default [
       globals: browserGlobals,
     },
     // Stub the react-hooks rule names so existing disable-directives resolve.
-    plugins: { 'react-hooks': { rules: { 'exhaustive-deps': noopRule, 'rules-of-hooks': noopRule } } },
+    plugins: {
+      'react-hooks': { rules: { 'exhaustive-deps': noopRule, 'rules-of-hooks': noopRule } },
+      local: { rules: { 'jsx-no-undef': jsxNoUndef } },
+    },
     rules: {
-      'no-undef': 'error', // the crash class — undefined identifier at runtime
+      'no-undef': 'error',            // the crash class — undefined identifier
+      'local/jsx-no-undef': 'error',  // …and the same class inside JSX
+
+      /**
+       * The OTHER crash class: a `const` read before the line that declares it.
+       *
+       * `no-undef` cannot see this one — the identifier does exist, it is just
+       * still in the temporal dead zone — so it lints clean, builds clean, and
+       * throws "Cannot access 'x' before initialization" the instant the
+       * component renders. Exactly that shipped to the worker's repair job page
+       * and took the whole screen down.
+       *
+       * Functions are exempt because hoisted function declarations are a normal
+       * and readable way to keep helpers below the component that uses them;
+       * classes and variables are not.
+       */
+      'no-use-before-define': ['error', {
+        functions: false,
+        classes: true,
+        variables: true,
+        allowNamedExports: true,
+      }],
     },
   },
 ];

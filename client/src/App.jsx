@@ -35,8 +35,8 @@ const TrackPage           = lazy(() => import('./pages/TrackPage'));
 const ProfilePage         = lazy(() => import('./pages/ProfilePage'));
 const NotificationsPage   = lazy(() => import('./pages/NotificationsPage'));
 const ChatPage            = lazy(() => import('./pages/ChatPage'));
-const ServicesPage        = lazy(() => import('./pages/ServicesPage'));
-const CategoryCatalogPage = lazy(() => import('./pages/CategoryCatalogPage'));
+// The all-services catalog is now the LIVE catalog — see AllServicesPage.
+const AllServicesPage     = lazy(() => import('./pages/AllServicesPage'));
 const ServiceDetailPage   = lazy(() => import('./pages/ServiceDetailPage'));
 const BrandSelectPage     = lazy(() => import('./pages/BrandSelectPage'));
 const WorkerDashboard     = lazy(() => import('./pages/WorkerDashboard'));
@@ -62,6 +62,27 @@ const EventBookingDetailPage       = lazy(() => import('./pages/events/EventBook
 const EventSavedThemesPage         = lazy(() => import('./pages/events/EventSavedThemesPage'));
 const PartnerLoginPage             = lazy(() => import('./pages/events/PartnerLoginPage'));
 const PartnerDashboard             = lazy(() => import('./pages/events/PartnerDashboard'));
+const ProviderOnboardingPage       = lazy(() => import('./pages/provider/ProviderOnboardingPage'));
+const ShopLoginPage                = lazy(() => import('./pages/shop/ShopLoginPage'));
+const ShopDashboard                = lazy(() => import('./pages/shop/ShopDashboard'));
+const ShopProfilePage              = lazy(() => import('./pages/shop/ShopProfilePage'));
+const ShopKycPage                  = lazy(() => import('./pages/shop/ShopKycPage'));
+const ShopWorkersPage              = lazy(() => import('./pages/shop/ShopWorkersPage'));
+const ShopEarningsPage             = lazy(() => import('./pages/shop/ShopEarningsPage'));
+const NearbyShopsPage              = lazy(() => import('./pages/NearbyShopsPage'));
+const RepairFlowPage               = lazy(() => import('./pages/repair/RepairFlowPage'));
+const CategoryProblemsPage         = lazy(() => import('./pages/repair/CategoryProblemsPage'));
+const RepairBookingPage            = lazy(() => import('./pages/repair/RepairBookingPage'));
+const MyAssetsPage                  = lazy(() => import('./pages/repair/MyAssetsPage'));
+const HelpingServicesPage           = lazy(() => import('./pages/helping/HelpingServicesPage'));
+const ShoppingTaskPage              = lazy(() => import('./pages/helping/ShoppingTaskPage'));
+const ReturnTaskPage                = lazy(() => import('./pages/helping/ReturnTaskPage'));
+const HelpingTaskDetailPage         = lazy(() => import('./pages/helping/HelpingTaskDetailPage'));
+const WorkerHelpingTasksPage        = lazy(() => import('./pages/helping/WorkerHelpingTasksPage'));
+const WorkerHelpingJobPage          = lazy(() => import('./pages/helping/WorkerHelpingJobPage'));
+const WorkerRepairJobPage          = lazy(() => import('./pages/repair/WorkerRepairJobPage'));
+const ProviderRepairSetupPage      = lazy(() => import('./pages/repair/ProviderRepairSetupPage'));
+const ShopPublicProfilePage        = lazy(() => import('./pages/ShopPublicProfilePage'));
 const AdvertiserDashboard          = lazy(() => import('./pages/AdvertiserDashboard'));
 const SpendingPage                 = lazy(() => import('./pages/SpendingPage'));
 const NotificationPrefsPage        = lazy(() => import('./pages/NotificationPrefsPage'));
@@ -72,7 +93,6 @@ const WorkerBankPage               = lazy(() => import('./pages/WorkerBankPage')
 const WorkerWithdrawPage           = lazy(() => import('./pages/WorkerWithdrawPage'));
 const WorkerAppealsPage            = lazy(() => import('./pages/WorkerAppealsPage'));
 const WorkerEarningsPage           = lazy(() => import('./pages/WorkerEarningsPage'));
-const WorkerSkillsPage             = lazy(() => import('./pages/WorkerSkillsPage'));
 const WorkerTrainingPage           = lazy(() => import('./pages/WorkerTrainingPage'));
 const WorkerGoalsPage              = lazy(() => import('./pages/WorkerGoalsPage'));
 const FaqPage                      = lazy(() => import('./pages/FaqPage'));
@@ -168,10 +188,13 @@ export default function App() {
         <Route element={<MainLayout />}>
           <Route path="/"       element={<HomeOrRedirect role={role} token={token} />} />
           <Route path="/home"   element={<HomeOrRedirect role={role} token={token} />} />
-          <Route path="/services" element={<RequireAuth role="user"><ServicesPage /></RequireAuth>} />
-          {/* One catalog experience per vertical — Car Services, Phone Repair,
-              Plumbing… all render from ServiceCatalogView via category config. */}
-          <Route path="/services/:category" element={<RequireAuth role="user"><CategoryCatalogPage /></RequireAuth>} />
+          <Route path="/services" element={<RequireAuth role="user"><AllServicesPage /></RequireAuth>} />
+          {/*
+            Per-vertical catalog pages are retired: a customer reaching one now
+            lands on the live list instead of a category whose booking flow is
+            being rebuilt. Old links keep working rather than 404ing.
+          */}
+          <Route path="/services/:category" element={<Navigate to="/services" replace />} />
           <Route path="/orders" element={<RequireAuth role="user"><OrdersListPage /></RequireAuth>} />
           <Route path="/track"  element={<RequireAuth role="user"><TrackPage /></RequireAuth>} />
           <Route path="/profile" element={<RequireAuth role="user"><ProfilePage /></RequireAuth>} />
@@ -214,7 +237,7 @@ export default function App() {
         <Route path="/worker/withdraw" element={<RequireAuth role="worker"><WorkerWithdrawPage /></RequireAuth>} />
         <Route path="/worker/appeals" element={<RequireAuth role="worker"><WorkerAppealsPage /></RequireAuth>} />
         <Route path="/worker/earnings" element={<RequireAuth role="worker"><WorkerEarningsPage /></RequireAuth>} />
-        <Route path="/worker/skills" element={<RequireAuth role="worker"><WorkerSkillsPage /></RequireAuth>} />
+        <Route path="/worker/skills" element={<Navigate to="/provider/onboarding" replace />} />
         <Route path="/worker/training" element={<RequireAuth role="worker"><WorkerTrainingPage /></RequireAuth>} />
         <Route path="/worker/goals" element={<RequireAuth role="worker"><WorkerGoalsPage /></RequireAuth>} />
 
@@ -222,6 +245,53 @@ export default function App() {
         <Route path="/partner/login" element={token ? <RedirectByRole role={role} /> : <PartnerLoginPage />} />
         <Route path="/partner" element={<RequireAuth role="event_partner"><PartnerDashboard /></RequireAuth>} />
         <Route path="/partner/advertise" element={<RequireAuth role="event_partner"><AdvertiserDashboard /></RequireAuth>} />
+
+        {/* Shop Partner — owner panel */}
+        <Route path="/shop/login" element={token ? <RedirectByRole role={role} /> : <ShopLoginPage />} />
+        <Route path="/shop" element={<RequireAuth role="shop"><ShopDashboard /></RequireAuth>} />
+        <Route path="/shop/profile" element={<RequireAuth role="shop"><ShopProfilePage /></RequireAuth>} />
+        <Route path="/shop/kyc" element={<RequireAuth role="shop"><ShopKycPage /></RequireAuth>} />
+        <Route path="/shop/workers" element={<RequireAuth role="shop"><ShopWorkersPage /></RequireAuth>} />
+        <Route path="/shop/earnings" element={<RequireAuth role="shop"><ShopEarningsPage /></RequireAuth>} />
+
+        {/* Provider onboarding — one path for shops and independent technicians */}
+        <Route
+          path="/provider/onboarding"
+          element={<RequireAuth role={['shop', 'worker']}><ProviderOnboardingPage /></RequireAuth>}
+        />
+
+        {/* Repair verticals — one flow component, the vertical is data */}
+        <Route path="/repair" element={<RequireAuth role="user"><RepairFlowPage vertical="mobile" /></RequireAuth>} />
+        <Route path="/repair/laptop" element={<RequireAuth role="user"><RepairFlowPage vertical="laptop" /></RequireAuth>} />
+        {/* Hyphenated in the URL, underscored in the data — the vertical code is
+            two_wheeler everywhere behind this line. */}
+        <Route path="/repair/two-wheeler" element={<RequireAuth role="user"><RepairFlowPage vertical="two_wheeler" /></RequireAuth>} />
+        <Route path="/repair/four-wheeler" element={<RequireAuth role="user"><RepairFlowPage vertical="four_wheeler" /></RequireAuth>} />
+        <Route path="/repair/water-tank-care" element={<RequireAuth role="user"><RepairFlowPage vertical="water_tank_care" /></RequireAuth>} />
+        <Route path="/my-assets" element={<RequireAuth role="user"><MyAssetsPage /></RequireAuth>} />
+        <Route path="/helping" element={<RequireAuth role="user"><HelpingServicesPage /></RequireAuth>} />
+        <Route path="/helping/shopping" element={<RequireAuth role="user"><ShoppingTaskPage /></RequireAuth>} />
+        <Route path="/helping/returns" element={<RequireAuth role="user"><ReturnTaskPage /></RequireAuth>} />
+        <Route path="/helping/tasks/:id" element={<RequireAuth role="user"><HelpingTaskDetailPage /></RequireAuth>} />
+        <Route path="/worker/helping" element={<RequireAuth role="worker"><WorkerHelpingTasksPage /></RequireAuth>} />
+        <Route path="/worker/helping/:id" element={<RequireAuth role="worker"><WorkerHelpingJobPage /></RequireAuth>} />
+        {/* One heading — Display, Storage, Connectivity — and everything under it. */}
+        <Route
+          path="/repair/category/:vertical/:categoryCode"
+          element={<RequireAuth role="user"><CategoryProblemsPage /></RequireAuth>}
+        />
+        <Route path="/repair/bookings/:id" element={<RequireAuth role="user"><RepairBookingPage /></RequireAuth>} />
+        <Route
+          path="/provider/services"
+          element={<RequireAuth role={['shop', 'worker']}><ProviderRepairSetupPage /></RequireAuth>}
+        />
+        {/* Kept so existing worker links and notifications still resolve. */}
+        <Route path="/worker/repair/setup" element={<Navigate to="/provider/services" replace />} />
+        <Route path="/worker/repair/:id" element={<RequireAuth role="worker"><WorkerRepairJobPage /></RequireAuth>} />
+
+        {/* Nearby Shops — customer-facing discovery */}
+        <Route path="/nearby-shops" element={<RequireAuth role="user"><NearbyShopsPage /></RequireAuth>} />
+        <Route path="/shops/:id" element={<RequireAuth role="user"><ShopPublicProfilePage /></RequireAuth>} />
 
         {/* Event Commerce */}
         <Route path="/events"                    element={<RequireAuth role="user"><EventsHomePage /></RequireAuth>} />
@@ -252,6 +322,7 @@ function RedirectByRole({ role }) {
   const dest = role === 'worker' ? '/worker'
     : role === 'admin' ? adminPath('/dashboard')
     : role === 'event_partner' ? '/partner'
+    : role === 'shop' ? '/shop'
     : '/';
   return <Navigate to={dest} replace />;
 }

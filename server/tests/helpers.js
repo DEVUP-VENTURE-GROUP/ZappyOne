@@ -87,4 +87,26 @@ async function resetDb() {
   await Promise.all(collections.map((c) => c.deleteMany({})));
 }
 
-module.exports = { startMongo, stopMongo, resetDb };
+/**
+ * Stand in for the customer reading their handover codes out.
+ *
+ * A repair cannot move a device without the owner's code — that is the point of
+ * the gate, and `repair-journey-full.test.js` exercises it properly by issuing
+ * and verifying each one. Suites whose subject is settlement, SLA or dispatch
+ * should not have to re-enact that conversation to reach COMPLETED; they say
+ * "the codes were given" in one line and get on with what they are testing.
+ *
+ * Deliberately marks the VERIFIED timestamps rather than bypassing the gate, so
+ * it proves the same thing a real handover proves and no test can reach a state
+ * the product cannot.
+ */
+async function passHandoverGates(bookingId) {
+  const { RepairBooking } = require('../src/modules/repair/models/booking.model');
+  const at = new Date();
+  await RepairBooking.updateOne(
+    { _id: bookingId },
+    { $set: { 'otpVerified.startAt': at, 'otpVerified.handoverAt': at, 'otpVerified.returnAt': at } },
+  );
+}
+
+module.exports = { startMongo, stopMongo, resetDb, passHandoverGates };

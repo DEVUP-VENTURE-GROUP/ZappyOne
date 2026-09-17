@@ -23,13 +23,14 @@ const lensMatchSchema = new mongoose.Schema(
     notesForWorker:{ type: String, default: '' },
     // Real quote from the pricing engine (null if location absent or no coverage).
     quote: {
-      total:      { type: Number, default: null },        // rupees
+      // Paise, like every other money field in the system.
+      total:      { type: Number, default: null },
       currency:   { type: String, default: 'INR' },
       etaMinutes: { type: Number, default: null },
       surge:      { type: Number, default: null },
     },
     // Catalog price hint (always present) — shown when a live quote isn't available.
-    priceHintMin: { type: Number, default: null },        // rupees
+    priceHintMin: { type: Number, default: null },        // paise
     priceHintMax: { type: Number, default: null },
   },
   { _id: false }

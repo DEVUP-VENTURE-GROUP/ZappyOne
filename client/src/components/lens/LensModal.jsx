@@ -8,6 +8,7 @@ import {
 import toast from 'react-hot-toast';
 import { useLensUploadUrlMutation, useAnalyzeLensMutation } from '../../services/api';
 import { downscaleImage } from '../../utils/downscaleImage';
+import { formatPaise, formatPaiseRange } from '../../utils/money';
 
 const CATEGORY_ICON = {
   mobile: Smartphone, vehicle: Car, home: Wrench, helper: Heart,
@@ -181,9 +182,10 @@ export default function LensModal({ open, onClose }) {
                   {list.map((m, i) => {
                     const Icon = matchIcon(m);
                     const sev = SEVERITY[m.severity] || SEVERITY.unknown;
+                    // Everything arrives in paise; rupees exist only here, on screen.
                     const price = m.quote?.total != null
-                      ? `₹${m.quote.total}`
-                      : (m.priceHintMin != null ? `₹${m.priceHintMin}–${m.priceHintMax}` : null);
+                      ? formatPaise(m.quote.total)
+                      : formatPaiseRange(m.priceHintMin, m.priceHintMax);
                     const best = showBest && i === 0;
                     return (
                       <button key={m.serviceCode} onClick={() => book(m)}

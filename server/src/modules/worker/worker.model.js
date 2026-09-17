@@ -116,10 +116,27 @@ const workerSchema = new mongoose.Schema(
     },
     currentOrderId: { type: mongoose.Schema.Types.ObjectId, ref: 'Order', default: null },
 
+    // Optional affiliation with a verified local Shop (shop.model.js) — e.g. a
+    // technician employed by "Sharma Mobile Repair". Purely a tag: dispatch's
+    // candidate-matching query (isOnline/isAvailable/kyc.approved/skills) never
+    // reads this field, so a shop worker stays fully eligible for ordinary
+    // Express auto-dispatch. It is read ONLY when an order carries a
+    // `preferredShopId` (order.model.js) — dispatch then scopes its candidate
+    // pool to workers with a matching shopId instead of open geo-radius search.
+    shopId: { type: mongoose.Schema.Types.ObjectId, ref: 'Shop', default: null, index: true },
+
     // Financials
+    /**
+     * Denormalised wallet figures, in PAISE.
+     *
+     * Money is stored in paise everywhere in this system and converted to
+     * rupees only for display. These two are a cache of the authoritative
+     * ledger (wallet.model.js + transaction.model.js); when they disagree,
+     * the ledger is right and these are rebuilt from it.
+     */
     wallet: {
-      balance: { type: Number, default: 0 },
-      totalEarnings: { type: Number, default: 0 },
+      balance: { type: Number, default: 0 },        // paise
+      totalEarnings: { type: Number, default: 0 },  // paise, lifetime
     },
 
     // Saved payout destinations — worker manages these; used to pre-fill withdrawal forms

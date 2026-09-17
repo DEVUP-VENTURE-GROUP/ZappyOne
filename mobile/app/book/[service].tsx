@@ -52,6 +52,7 @@ import {
   CreditCard,
   MapPin,
   SearchX,
+  Store,
   Tag,
   X,
   Zap,
@@ -96,6 +97,7 @@ import {
   useCreateOrderMutation,
   useLazyGetQuoteQuery,
 } from '../../services/api/ordersApi';
+import { useGetShopProfileQuery } from '../../services/api/shopApi';
 import { useValidatePromoMutation } from '../../services/api/promosApi';
 import {
   useCreatePaymentOrderMutation,
@@ -127,10 +129,17 @@ const TIERS: { key: BookingTierKey; label: string; hint: string }[] = [
 const BOOSTS = [0, 20, 50, 100];
 
 export default function BookServiceScreen() {
-  const { service } = useLocalSearchParams<{ service: string }>();
+  const { service, shopId } = useLocalSearchParams<{ service: string; shopId?: string }>();
   const serviceCode = String(service);
+  const preferredShopId = shopId ? String(shopId) : null;
   const router = useRouter();
   const insets = useSafeAreaInsets();
+
+  // Shop routing — arrived here via "Nearby Shops". Customer chooses whether
+  // the shop's worker visits them, or they bring/collect the item themselves
+  // ("Pick & Go" — no travel fee). Plain Zappy Express bookings never set this.
+  const [fulfillmentMode, setFulfillmentMode] = useState<'on_site' | 'pickup_at_shop'>('on_site');
+  const { data: bookingShop } = useGetShopProfileQuery(preferredShopId ?? '', { skip: !preferredShopId });
 
   // ── Selection state ───────────────────────────────────────────────────────
   const [location, setLocation] = useState<DraftLocation | null>(null);
@@ -321,6 +330,7 @@ export default function BookServiceScreen() {
         tier,
         ...(boost > 0 ? { tipAmount: boost } : {}),
         ...(appliedPromo ? { promoCode: appliedPromo } : {}),
+        ...(preferredShopId ? { preferredShopId, fulfillmentMode } : {}),
         // Pre-discount on purpose — see the header note.
         quotedTotalRupees: quotedTotalForGuard(quote.total, tier, boost),
       }).unwrap();
@@ -621,6 +631,41 @@ export default function BookServiceScreen() {
               </View>
             </Card>
           </Appear>
+
+          {/* ── Shop routing — only shown when arrived via "Nearby Shops" ── */}
+          {preferredShopId && bookingShop ? (
+            <Appear delay={70}>
+              <SectionTitle>Booking via {bookingShop.businessName}</SectionTitle>
+              <View style={styles.tierRow}>
+                {(
+                  [
+                    { key: 'on_site' as const, label: 'Worker Visits Me', hint: 'Shop sends a worker to you' },
+                    { key: 'pickup_at_shop' as const, label: 'Pick & Go', hint: 'You bring it — no travel fee' },
+                  ]
+                ).map((option) => {
+                  const selected = fulfillmentMode === option.key;
+                  return (
+                    <Card
+                      key={option.key}
+                      variant={selected ? 'default' : 'outline'}
+                      onPress={() => setFulfillmentMode(option.key)}
+                      padding={spacing.md}
+                      style={[styles.tierCard, selected ? styles.tierCardActive : null]}
+                      accessibilityLabel={`${option.label}, ${option.hint}`}
+                    >
+                      <Store size={16} color={selected ? colors.primary : colors.textMuted} />
+                      <Text variant="bodySmall" weight="semibold" color={selected ? colors.primary : colors.textHeading}>
+                        {option.label}
+                      </Text>
+                      <Text variant="caption" color={colors.textSecondary}>
+                        {option.hint}
+                      </Text>
+                    </Card>
+                  );
+                })}
+              </View>
+            </Appear>
+          ) : null}
 
           {/* ── 3. Quote ─────────────────────────────────────────────── */}
           <Appear delay={80}>

@@ -81,6 +81,13 @@ const TYPES = [
   'event_partner_kyc_rejected',
   'event_booking_declined_partner',
 
+  // Shops
+  'shop_kyc_approved',
+  'shop_kyc_rejected',
+  'shop_handoff_requested',   // user: worker asks to send the job to a shop
+  'shop_handoff_confirmed',   // worker: customer confirmed the shop drop-off
+  'shop_handoff_declined',    // worker: customer declined the shop drop-off
+
   // Platform-wide
   'promotional',
   'service_due',   // retention: recurring service is due for a rebook
@@ -90,7 +97,7 @@ const TYPES = [
 const notificationSchema = new mongoose.Schema(
   {
     recipient: {
-      kind: { type: String, enum: ['user', 'worker', 'event_partner'], required: true },
+      kind: { type: String, enum: ['user', 'worker', 'event_partner', 'shop'], required: true },
       id: { type: mongoose.Schema.Types.ObjectId, required: true },
     },
 

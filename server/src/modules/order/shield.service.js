@@ -117,14 +117,36 @@ async function updateConfig(patch, adminId) {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 /** Counts user-initiated cancels in the last 30 days (excluding this one). */
+/**
+ * How often this customer has cancelled in the last 30 days.
+ *
+ * Counts orders AND repair bookings. The tier decides how much a cancellation
+ * costs, so counting only half the business would let someone cancel on a
+ * technician every week and still be treated as a first-timer each time — and
+ * would price the two products differently for identical behaviour.
+ *
+ * Repair cancellations are counted from their fee records rather than from the
+ * bookings, because a record exists only where a cancellation was actually
+ * assessed — which is precisely the set that should count against someone.
+ */
 async function countRecentUserCancels(userId) {
   const since = new Date(Date.now() - 30 * 24 * 3600 * 1000);
-  return Order.countDocuments({
-    userId,
-    status: 'cancelled',
-    cancelledAt: { $gte: since },
-    cancellationReason: /^user/,
-  });
+
+  const [orders, repairs] = await Promise.all([
+    Order.countDocuments({
+      userId,
+      status: 'cancelled',
+      cancelledAt: { $gte: since },
+      cancellationReason: /^user/,
+    }),
+    CancellationFeeRecord.countDocuments({
+      userId,
+      kind: 'repair',
+      createdAt: { $gte: since },
+    }),
+  ]);
+
+  return orders + repairs;
 }
 
 /**
@@ -574,6 +596,9 @@ async function getSummary() {
 
 module.exports = {
   handleUserCancellation,
+  // Shared with the repair cancellation service so both price a repeat
+  // canceller from the same count.
+  countRecentUserCancels,
   getPendingFee,
   collectPendingFees,
   runWeeklyPayout,

@@ -26,7 +26,13 @@ async function goOffline(req, res, next) {
 
 async function updateLocation(req, res, next) {
   try {
-    await workerService.updateLocation({ workerId: req.auth.sub, lat: req.body.lat, lng: req.body.lng, orderId: req.body.orderId });
+    await workerService.updateLocation({
+      workerId: req.auth.sub,
+      lat: req.body.lat,
+      lng: req.body.lng,
+      orderId: req.body.orderId,
+      repairBookingId: req.body.repairBookingId,
+    });
     res.json({ ok: true });
   } catch (err) {
     // Location update is best-effort — Redis outages should not block the worker app.
@@ -317,6 +323,28 @@ async function getPublicProfile(req, res, next) {
       .lean();
     if (!worker) return res.status(404).json({ error: 'Worker not found' });
 
+    /**
+     * What this technician is VERIFIED to do, for the customer to see.
+     *
+     * `skills` was a list the worker typed about themselves; a customer reading
+     * it had no way to know whether anyone had checked. Verified services come
+     * from approved enrolments — a human reviewed their documents for each one —
+     * so it is a claim the platform is standing behind.
+     */
+    const { ProviderEnrolment } = require('../onboarding/onboarding.model');
+    const { ServiceLine } = require('../onboarding/onboarding.model');
+    const approved = await ProviderEnrolment.find({ workerId: worker._id, status: 'approved' })
+      .select('lineCode')
+      .lean();
+    const lines = approved.length
+      ? await ServiceLine.find({ code: { $in: approved.map((a) => a.lineCode) } })
+        .select('code name customerPath repairVertical')
+        .lean()
+      : [];
+    worker.verifiedServices = lines.map((l) => ({
+      code: l.code, name: l.name, path: l.customerPath, vertical: l.repairVertical,
+    }));
+
     // Trust signals: recent reviews + star breakdown + top services this pro does.
     const Order = require('../order/order.model');
     const rated = await Order.find({ workerId: worker._id, userRating: { $exists: true, $ne: null } })
@@ -466,12 +494,16 @@ async function completeOnboarding(req, res, next) {
   try {
     const { name, skills, emergencyContact } = req.body;
     const before = await Worker.findById(req.auth.sub).select('skills').lean();
+
+    // Only write `skills` when the caller actually sent them. Onboarding no
+    // longer collects them, and setting the field unconditionally would wipe
+    // the list of an existing worker who re-runs this step.
     const worker = await Worker.findByIdAndUpdate(
       req.auth.sub,
       {
         $set: {
           name,
-          skills,
+          ...(Array.isArray(skills) ? { skills } : {}),
           onboardingComplete: true,
           ...(emergencyContact && { emergencyContact }),
         },

@@ -20,6 +20,17 @@ const CONTENT_TYPE_EXTS = {
   'audio/webm':       ['.webm'],
   'audio/mp4':        ['.mp4', '.m4a'],
   'audio/ogg':        ['.ogg', '.oga'],
+  /**
+   * Video — short catalog clips of a symptom.
+   *
+   * A flickering screen or a boot loop cannot be photographed usefully, so the
+   * problem catalog accepts a clip. Same rule as everything else here: the
+   * content type and the filename extension must agree, so a script cannot be
+   * presigned by claiming to be a video.
+   */
+  'video/mp4':        ['.mp4', '.m4v'],
+  'video/webm':       ['.webm'],
+  'video/quicktime':  ['.mov'],
 };
 
 // Audio content types skip the extension check (browser blobs have no extension)
@@ -31,7 +42,10 @@ router.post(
   validate(Joi.object({
     folder: Joi.string().valid(
       'kyc', 'kyc-docs', 'profile', 'order-proof', 'vehicle-health',
-      'completion-photos', 'order-images', 'voice-tips', 'event-photos'
+      'completion-photos', 'order-images', 'voice-tips', 'event-photos', 'shop',
+      // Catalog artwork, uploaded by admin rather than pasted as a link.
+      'catalog', 'brands', 'device-models', 'problems', 'problem-categories',
+      'service-images',
     ).required(),
     contentType: Joi.string().valid(...Object.keys(CONTENT_TYPE_EXTS)).required(),
     // Optional original filename — used for extension validation only; never stored.

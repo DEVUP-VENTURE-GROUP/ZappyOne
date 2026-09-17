@@ -124,6 +124,7 @@ async function start() {
     startDispatchWorker();
     startNotificationsWorker();
     startStaleOrderWorker();
+    startRepairSlaWorker();
     startShieldPayoutWorker();
     logger.info('[BOOT] Inline workers started (dispatch, notifications, stale, shield). Set RUN_INLINE_WORKERS=false when using dedicated worker processes.');
   } else {
@@ -248,6 +249,27 @@ function startNotificationsWorker() {
       { err: err.message },
       "[NOTIFICATIONS] Failed to start worker",
     );
+  }
+}
+
+function startRepairSlaWorker() {
+  try {
+    const { sweep } = require("./jobs/repair-sla.worker");
+    // A repair stage is measured in minutes, so the sweep runs every minute —
+    // a job nobody answered must not sit unassigned while the customer waits.
+    sweep().catch((err) =>
+      logger.error({ err: err.message }, "[repair-sla] Initial sweep failed"),
+    );
+    setInterval(
+      () =>
+        sweep().catch((err) =>
+          logger.error({ err: err.message }, "[repair-sla] Sweep failed"),
+        ),
+      60 * 1000,
+    );
+    logger.info("[repair-sla] Repair SLA watchdog running in-process (sweeps every minute)");
+  } catch (err) {
+    logger.error({ err: err.message }, "[repair-sla] Failed to start watchdog");
   }
 }
 

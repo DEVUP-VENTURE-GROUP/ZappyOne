@@ -86,6 +86,15 @@ export const workerApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: (_r, _e, a) => ['Order', 'Earnings', { type: 'Order', id: a.id }],
     }),
+    /** Pick & Go mid-job escalation — worker asks to send the job to their shop. */
+    workerRequestShopHandoff: builder.mutation<Order, { id: string; shopId?: string; reason?: string }>({
+      query: ({ id, shopId, reason }) => ({
+        url: `/orders/${id}/shop-handoff/request`,
+        method: 'POST',
+        data: { shopId, reason },
+      }),
+      invalidatesTags: (_r, _e, a) => [{ type: 'Order', id: a.id }],
+    }),
     // `/workers/orders` returns `{ orders }` only — no total/totalPages/page,
     // unlike the customer's `/orders/mine`. Typed as the envelope it actually
     // is so nothing reads a pagination field that will always be undefined.
@@ -163,6 +172,7 @@ export const {
   useWorkerArriveMutation,
   useWorkerStartServiceMutation,
   useWorkerCompleteMutation,
+  useWorkerRequestShopHandoffMutation,
   useGetWorkerOrdersQuery,
   useGetJobEarningsQuery,
   useGetPayoutDestinationsQuery,

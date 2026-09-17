@@ -25,3 +25,4 @@ export * from './workerApi';
 export * from './uploadApi';
 export * from './supportApi';
 export * from './disputesApi';
+export * from './shopApi';

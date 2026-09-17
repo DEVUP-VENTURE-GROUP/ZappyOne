@@ -15,10 +15,14 @@ router.post(
   authenticate,
   authLimiter,
   validate(Joi.object({
-    purpose:     Joi.string().valid('subscription', 'wallet_topup', 'order_payment').required(),
+    purpose:     Joi.string().valid('subscription', 'wallet_topup', 'order_payment', 'repair_payment').required(),
     planCode:    Joi.string().when('purpose', { is: 'subscription', then: Joi.required() }),
     amountPaise: Joi.number().integer().min(100).when('purpose', { is: 'wallet_topup', then: Joi.required() }),
-    orderId:     Joi.string().hex().length(24).when('purpose', { is: 'order_payment', then: Joi.required() }),
+    // `orderId` carries the RepairBooking id for repair_payment — same field,
+    // since the payment intent stores a single generic reference.
+    orderId:     Joi.string().hex().length(24).when('purpose', {
+      is: Joi.valid('order_payment', 'repair_payment'), then: Joi.required(),
+    }),
     // Mobile only — the web Drop.js checkout resolves in-page and never sends
     // this. Native has no in-page callback, so Cashfree's hosted checkout
     // needs somewhere to redirect back to (a custom URL scheme deep link).

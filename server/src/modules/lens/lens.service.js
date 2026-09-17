@@ -24,8 +24,10 @@ async function getCatalog() {
     name: d.name,
     category: d.category,
     description: d.description || '',
-    priceMin: d.priceRangeMinPaise != null ? Math.round(d.priceRangeMinPaise / 100) : null,
-    priceMax: d.priceRangeMaxPaise != null ? Math.round(d.priceRangeMaxPaise / 100) : null,
+    // Paise, unconverted — the display layer turns it into rupees, and a
+    // number converted this early gets stored in the wrong unit.
+    priceMin: d.priceRangeMinPaise ?? null,
+    priceMax: d.priceRangeMaxPaise ?? null,
   }));
   try { await redis.setex(CATALOG_CACHE_KEY, CATALOG_TTL, JSON.stringify(catalog)); } catch { /* noop */ }
   return catalog;
@@ -80,7 +82,8 @@ async function attachQuote(match, location, userId) {
     });
     if (q) {
       match.quote = {
-        total: q.total ?? null,
+        // The quote carries both; take the paise one.
+        total: q.paise?.total ?? null,
         currency: q.currency || 'INR',
         etaMinutes: q.etaMinutes ?? null,
         surge: q.surgeMultiplier ?? null,

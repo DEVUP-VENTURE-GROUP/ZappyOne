@@ -136,6 +136,126 @@ async function triggerSOS({ workerId, lat, lng, orderId, message, type = 'worker
   return { ok: true, incidentKey, incident };
 }
 
+/**
+ * A CUSTOMER in trouble during a job.
+ *
+ * Reported from production: the customer's SOS button posted to
+ * `/api/orders/:id/sos`, which did not exist. The fetch was wrapped in
+ * `.catch(() => {})`, so the 404 vanished, the phone dialled 112 and the screen
+ * said "SOS triggered — emergency services notified". Zappy recorded nothing.
+ * Someone frightened enough to press it was told help was coming from us, and
+ * ops never knew the incident happened.
+ *
+ * It rides the SAME rails as the worker SOS deliberately — the same redis
+ * incident keys, the same ops broadcast, the same urgent ticket, the same
+ * 5-minute re-escalation — so it appears in the existing admin SOS queue with
+ * no second dashboard to watch. The `type` distinguishes who is in danger,
+ * which is the one thing that genuinely differs.
+ */
+async function triggerCustomerSOS({ userId, orderId, lat, lng, message }) {
+  const User = require('../user/user.model');
+
+  const [user, order] = await Promise.all([
+    User.findById(userId).select('name phone').lean(),
+    orderId ? Order.findById(orderId).select('userId workerId service pickupLocation').lean() : null,
+  ]);
+
+  if (!user) throw Object.assign(new Error('User not found'), { status: 404 });
+
+  // Object-level authorisation: never let one customer raise an alarm on
+  // another customer's order, which would put a stranger's address on an
+  // incident report.
+  if (order && String(order.userId) !== String(userId)) {
+    throw Object.assign(new Error('This is not your order'), { status: 403 });
+  }
+
+  const worker = order?.workerId
+    ? await Worker.findById(order.workerId).select('name phone').lean()
+    : null;
+
+  const now = Date.now();
+  const incident = {
+    type: 'customer_sos',
+    userId: String(userId),
+    customerName: user.name,
+    customerPhone: user.phone,
+    // Who is ON SITE with them — the first thing ops needs to know.
+    workerId: order?.workerId ? String(order.workerId) : null,
+    workerName: worker?.name || null,
+    workerPhone: worker?.phone || null,
+    lat,
+    lng,
+    orderId: orderId ? String(orderId) : null,
+    service: order?.service || null,
+    address: order?.pickupLocation?.address || null,
+    message: message || 'SOS triggered — customer needs assistance',
+    triggeredAt: new Date(now).toISOString(),
+    acknowledged: false,
+    acknowledgedBy: null,
+  };
+
+  /* 1. Same store, same queue the admin console already reads. */
+  const incidentKey = `sos:customer:${userId}:${now}`;
+  await redis.setex(incidentKey, 86400, JSON.stringify(incident));
+  await redis.lpush('sos:active', incidentKey);
+  await redis.expire('sos:active', 86400);
+
+  /* 2. Ops room, marked urgent. */
+  await redis.publish('notification:admin:ops', JSON.stringify({
+    type: 'customer_sos',
+    title: `🆘 CUSTOMER SOS: ${user.name}`,
+    body: `${incident.address || 'Unknown address'}${worker ? ` · worker on site: ${worker.name}` : ''}`,
+    data: { ...incident, incidentKey },
+    urgent: true,
+  }));
+
+  /* 3. Urgent ticket, so it survives a dropped socket. */
+  try {
+    const SupportTicket = require('../support/support-ticket.model');
+    await SupportTicket.create({
+      orderId: order ? order._id : undefined,
+      userId: user._id,
+      workerId: order?.workerId || undefined,
+      subject: `🆘 URGENT CUSTOMER SOS — ${user.name}`,
+      body: [
+        `Customer ${user.name} (${user.phone}) triggered SOS at ${new Date(now).toISOString()}.`,
+        lat && lng ? `Location: https://maps.google.com/?q=${lat},${lng}` : '',
+        order ? `Order: ${orderId} · Service: ${order.service} · ${incident.address}` : 'No active order.',
+        worker ? `Worker on site: ${worker.name} (${worker.phone})` : 'No worker assigned.',
+        `Incident key: ${incidentKey}`,
+      ].filter(Boolean).join('
+'),
+      source: 'sos',
+      priority: 'urgent',
+      status: 'open',
+    });
+  } catch (err) {
+    logger.error({ err: err.message }, '[SOS] Failed to create customer support ticket');
+  }
+
+  /* 4. Re-escalate if nobody picks it up. */
+  setTimeout(async () => {
+    try {
+      const raw = await redis.get(incidentKey);
+      if (!raw) return;
+      const stored = JSON.parse(raw);
+      if (!stored.acknowledged) {
+        logger.error({ incidentKey, customerName: user.name }, '[SOS] CUSTOMER SOS UNACKNOWLEDGED — RE-ESCALATING');
+        await redis.publish('notification:admin:ops', JSON.stringify({
+          type: 'customer_sos_unacknowledged',
+          title: `🆘🔁 UNACKNOWLEDGED CUSTOMER SOS: ${user.name}`,
+          body: 'No admin acknowledged this SOS in 5 minutes. Immediate action required.',
+          data: { ...stored, incidentKey },
+          urgent: true,
+        }));
+      }
+    } catch { /* non-fatal */ }
+  }, ESCALATION_DELAY_MS);
+
+  logger.warn({ userId, lat, lng, orderId }, '[SOS] CUSTOMER SOS TRIGGERED');
+  return { ok: true, incidentKey, incident };
+}
+
 async function updateEmergencyContact({ workerId, name, phone }) {
   const cleaned = phone.replace(/\D/g, '').replace(/^91/, '').slice(-10);
   if (cleaned.length !== 10) {
@@ -179,4 +299,6 @@ async function getActiveSOSAlerts() {
   };
 }
 
-module.exports = { triggerSOS, updateEmergencyContact, acknowledgeSOS, getActiveSOSAlerts };
+module.exports = {
+  triggerSOS, triggerCustomerSOS, updateEmergencyContact, acknowledgeSOS, getActiveSOSAlerts,
+};

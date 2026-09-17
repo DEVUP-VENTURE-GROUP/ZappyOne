@@ -198,6 +198,29 @@ async function rejectOffer(req, res, next) {
   } catch (err) { next(err); }
 }
 
+async function requestShopHandoff(req, res, next) {
+  try {
+    const order = await orderService.requestShopHandoff({
+      orderId:  req.params.id,
+      workerId: req.auth.sub,
+      shopId:   req.body?.shopId || undefined,
+      reason:   req.body?.reason,
+    });
+    res.json({ order });
+  } catch (err) { next(err); }
+}
+
+async function respondShopHandoff(req, res, next) {
+  try {
+    const order = await orderService.respondShopHandoff({
+      orderId: req.params.id,
+      userId:  req.auth.sub,
+      accept:  !!req.body?.accept,
+    });
+    res.json({ order });
+  } catch (err) { next(err); }
+}
+
 async function startTrip(req, res, next) {
   try {
     // Accept optional worker GPS from client for accurate ETA computation at trip start
@@ -595,4 +618,4 @@ async function rescheduleOrder(req, res, next) {
   } catch (err) { next(err); }
 }
 
-module.exports = { getQuote, nearbyPros, warmDispatch, createOrder, rebookOrder, listMine, getOne, getCancelPreview, cancelOrder, rateOrder, workerRateUser, getTimeline, acceptOffer, rejectOffer, startTrip, arrive, startService, completeOrder, workerCancelOrder, workerCancelPreview, workerReportNoResponse, workerReportPartUnavailable, reportWorker, getInvoice, updatePickupLocation, rescheduleOrder };
+module.exports = { getQuote, nearbyPros, warmDispatch, createOrder, rebookOrder, listMine, getOne, getCancelPreview, cancelOrder, rateOrder, workerRateUser, getTimeline, acceptOffer, rejectOffer, startTrip, arrive, startService, completeOrder, workerCancelOrder, workerCancelPreview, workerReportNoResponse, workerReportPartUnavailable, reportWorker, getInvoice, updatePickupLocation, rescheduleOrder, requestShopHandoff, respondShopHandoff };

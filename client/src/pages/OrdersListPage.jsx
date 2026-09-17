@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
 import { Star, Repeat2, Calendar, FileDown, Loader2, MapPin, ArrowRight,
   ChevronLeft, ChevronRight, Wrench, Sparkles } from 'lucide-react';
-import { useListOrdersQuery } from '../services/api';
+import { useMyJobs } from '../hooks/useMyJobs';
 import { ErrorState } from '../components/common/QueryState';
 import PullToRefresh from '../components/common/PullToRefresh';
 import { API_BASE } from '../services/apiBase';
@@ -15,17 +15,10 @@ import { SkeletonList, SkeletonOrderCard } from '../components/common/Skeleton';
 import { staggerContainer, fadeInUp } from '../lib/animations';
 import { useT, useI18n } from '../i18n/I18nProvider';
 import { serviceNameKey } from '../i18n/translations';
+import { formatPaise } from '../utils/money';
 import toast from 'react-hot-toast';
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
-const ACTIVE = new Set(['created', 'searching', 'assigned', 'on_the_way', 'arrived', 'in_progress']);
-
-const STATUS_MAP = {
-  created: 'Placed', searching: 'Searching', assigned: 'Assigned', on_the_way: 'On the way',
-  arrived: 'Arrived', in_progress: 'In progress', completed: 'Completed',
-  cancelled: 'Cancelled', failed: 'Failed',
-};
-
 // Colour tokens per terminal status. Uses subtle tints, not saturated fills,
 // so pills read as metadata (like Uber/Linear) rather than alerts.
 const STATUS_STYLE = {
@@ -34,10 +27,9 @@ const STATUS_STYLE = {
   failed:    { bg: 'bg-rose-50',    text: 'text-rose-700',    ring: 'ring-rose-100' },
 };
 
-function mapSnapshot(order) {
-  const c = order.pickupLocation?.coordinates;
-  if (!MAPBOX_TOKEN || !c?.length) return null;
-  const [lng, lat] = c;
+function mapSnapshot(coordinates) {
+  if (!MAPBOX_TOKEN || !coordinates?.length) return null;
+  const [lng, lat] = coordinates;
   return `https://api.mapbox.com/styles/v1/mapbox/dark-v11/static/`
     + `pin-l+2563eb(${lng},${lat})/${lng},${lat},14.5,0/640x320@2x`
     + `?access_token=${MAPBOX_TOKEN}&attribution=false&logo=false`;
@@ -71,7 +63,7 @@ function serviceVisual(code = '') {
   const s = code.toLowerCase();
   const byId = (id) => categoryMap.find((c) => c.id === id);
   if (/bike|puncture|chain|brake|scooter|car|wash|detail|fuel|jump|breakdown|auto|van|fleet|vehicle/.test(s)) return byId('cars');
-  if (/screen|battery|charging|phone|mic|speaker|camera|water|software|device|data_recovery/.test(s))          return byId('phones');
+  if (/screen|battery|charging|phone|mobile|mic|speaker|camera|water|software|device|data_recovery/.test(s))          return byId('phones');
   if (/laptop/.test(s))                                                                                        return byId('laptops');
   if (/cctv|tv|router|smart|home_automation|lock/.test(s))                                                     return byId('home');
   if (/elder|medicine|grocery|hospital|companion|doctor|bill|document/.test(s))                                return byId('elders');
@@ -81,10 +73,11 @@ function serviceVisual(code = '') {
 }
 
 /* ─── Status pill ────────────────────────────────────────────────────────── */
-function StatusPill({ status }) {
+function StatusPill({ job }) {
   const t = useT();
-  const style = STATUS_STYLE[status];
-  const label = t(`status.${status}`, STATUS_MAP[status] || status);
+  const style = STATUS_STYLE[job.outcome];
+  // The job carries its own translation key, so this never asks what kind it is.
+  const label = t(job.statusKey, job.stage);
   if (!style) return <span className="text-xs font-semibold text-slate-500">{label}</span>;
   return (
     <span className={`inline-flex items-center text-[11px] font-bold px-2 py-0.5 rounded-full ring-1 ${style.bg} ${style.text} ${style.ring}`}>
@@ -93,16 +86,20 @@ function StatusPill({ status }) {
   );
 }
 
-/* ─── Compact past-trip row — clean, scannable, one line ──────────────────── */
-function CompactRow({ order, nav }) {
+/** A service name for an order, the device for a repair — translated either way. */
+function useJobTitle(job) {
+  return useT()(job.titleKey, job.title);
+}
+
+/* ─── Compact past row — clean, scannable, one line ───────────────────────── */
+function CompactRow({ job, nav }) {
   const t = useT();
-  const character = serviceVisual(order.service);
-  const svc = order.service?.replace(/_/g, ' ') || '';
-  const svcLabel = t(serviceNameKey(svc), svc);
+  const character = serviceVisual(job.iconCode);
+  const title = useJobTitle(job);
   return (
     <div className="flex items-center gap-3 py-3.5 border-b border-slate-100 last:border-0">
       <button
-        onClick={() => nav(`/orders/${order._id}`)}
+        onClick={() => nav(job.href)}
         className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
         style={{ backgroundColor: character?.tint || 'rgba(100, 116, 139, 0.08)' }}
       >
@@ -112,35 +109,37 @@ function CompactRow({ order, nav }) {
           <Wrench size={22} className="text-slate-500" />
         )}
       </button>
-      <button onClick={() => nav(`/orders/${order._id}`)} className="flex-1 min-w-0 text-left">
+      <button onClick={() => nav(job.href)} className="flex-1 min-w-0 text-left">
         <div className="flex items-center gap-2">
-          <p className="font-bold text-[#0F172A] capitalize leading-tight truncate">{svcLabel}</p>
-          <StatusPill status={order.status} />
+          <p className="font-bold text-[#0F172A] capitalize leading-tight truncate">{title}</p>
+          <StatusPill job={job} />
         </div>
         <p className="text-xs text-slate-500 mt-1">
-          {fmtTime(order.createdAt)} · <span className="font-semibold text-[#0F172A]">₹{order.pricing?.total ?? 0}</span>
-          {order.userRating ? <span className="ml-1.5 inline-flex items-center gap-0.5"><Star size={10} className="fill-amber-400 text-amber-400" />{order.userRating}</span> : null}
+          {fmtTime(job.createdAt)} · <span className="font-semibold text-[#0F172A]">{formatPaise(job.totalPaise)}</span>
+          {job.rating ? <span className="ml-1.5 inline-flex items-center gap-0.5"><Star size={10} className="fill-amber-400 text-amber-400" />{job.rating}</span> : null}
         </p>
       </button>
-      <button
-        onClick={() => nav(`/book/${order.service}`)}
-        aria-label={`${t('activity.rebook', 'Rebook')} ${svcLabel}`}
-        className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-600 shrink-0 active:bg-slate-50">
-        <Repeat2 size={16} />
-      </button>
+      {job.rebookHref && (
+        <button
+          onClick={() => nav(job.rebookHref)}
+          aria-label={`${t('activity.rebook', 'Rebook')} ${title}`}
+          className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-600 shrink-0 active:bg-slate-50">
+          <Repeat2 size={16} />
+        </button>
+      )}
     </div>
   );
 }
 
-/* ─── Hero past-trip card — ONLY for completed orders (no map on cancelled) ─ */
-function PastHero({ order, nav, onInvoice, downloadingId }) {
+/* ─── Hero past card — ONLY for a completed job (no map on cancelled) ─────── */
+function PastHero({ job, nav, onInvoice, downloadingId }) {
   const t = useT();
   const { lang } = useI18n();
-  const svc = order.service?.replace(/_/g, ' ') || '';
-  const url = mapSnapshot(order);
+  const title = useJobTitle(job);
+  const url = mapSnapshot(job.coordinates);
   return (
     <motion.div variants={fadeInUp} className="rounded-2xl bg-white ring-1 ring-slate-200 overflow-hidden shadow-sm">
-      <button onClick={() => nav(`/orders/${order._id}`)} className="block w-full text-left relative">
+      <button onClick={() => nav(job.href)} className="block w-full text-left relative">
         {url ? (
           <img src={url} alt="trip map" className="w-full h-40 object-cover" loading="lazy" />
         ) : (
@@ -154,57 +153,86 @@ function PastHero({ order, nav, onInvoice, downloadingId }) {
       </button>
       <div className="p-4">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="font-bold text-[#0F172A] text-lg capitalize leading-tight">{t(serviceNameKey(svc), svc)}</h3>
-          <StatusPill status={order.status} />
+          <h3 className="font-bold text-[#0F172A] text-lg capitalize leading-tight">{title}</h3>
+          <StatusPill job={job} />
         </div>
         <p className="text-sm text-slate-500 mt-1">
-          {dateBucket(order.createdAt, t, lang)} · {fmtTime(order.createdAt)}
+          {dateBucket(job.createdAt, t, lang)} · {fmtTime(job.createdAt)}
         </p>
         <p className="text-sm text-slate-500 mt-0.5">
-          <span className="font-bold text-[#0F172A]">₹{order.pricing?.total ?? '0.00'}</span>
-          {order.userRating ? <span className="ml-1.5 inline-flex items-center gap-0.5"><Star size={11} className="fill-amber-400 text-amber-400" />{order.userRating}</span> : null}
+          <span className="font-bold text-[#0F172A]">{formatPaise(job.totalPaise)}</span>
+          {job.rating ? <span className="ml-1.5 inline-flex items-center gap-0.5"><Star size={11} className="fill-amber-400 text-amber-400" />{job.rating}</span> : null}
         </p>
 
         <div className="flex items-center gap-2 mt-3 flex-wrap">
-          {order.userRating == null && (
-            <button onClick={() => nav(`/orders/${order._id}`)}
+          {job.rating == null && (
+            <button onClick={() => nav(job.href)}
               className="flex items-center gap-1.5 border border-slate-200 rounded-full px-4 py-2 text-sm font-semibold text-[#0F172A] active:bg-slate-50">
               <Star size={14} /> {t('activity.rate', 'Rate')}
             </button>
           )}
-          <button onClick={() => nav(`/book/${order.service}`)}
-            className="flex items-center gap-1.5 border border-slate-200 rounded-full px-4 py-2 text-sm font-semibold text-[#0F172A] active:bg-slate-50">
-            <Repeat2 size={14} /> {t('activity.rebook', 'Rebook')}
-          </button>
-          <button onClick={(e) => onInvoice(e, order._id)} disabled={downloadingId === order._id}
-            className="flex items-center gap-1.5 border border-slate-200 rounded-full px-4 py-2 text-sm font-semibold text-slate-500 active:bg-slate-50 disabled:opacity-50 ml-auto">
-            {downloadingId === order._id ? <Loader2 size={14} className="animate-spin" /> : <FileDown size={14} />}
-            {t('activity.invoice', 'Invoice')}
-          </button>
+          {job.rebookHref && (
+            <button onClick={() => nav(job.rebookHref)}
+              className="flex items-center gap-1.5 border border-slate-200 rounded-full px-4 py-2 text-sm font-semibold text-[#0F172A] active:bg-slate-50">
+              <Repeat2 size={14} /> {t('activity.rebook', 'Rebook')}
+            </button>
+          )}
+          {job.canInvoice && (
+            <button onClick={(e) => onInvoice(e, job.id)} disabled={downloadingId === job.id}
+              className="flex items-center gap-1.5 border border-slate-200 rounded-full px-4 py-2 text-sm font-semibold text-slate-500 active:bg-slate-50 disabled:opacity-50 ml-auto">
+              {downloadingId === job.id ? <Loader2 size={14} className="animate-spin" /> : <FileDown size={14} />}
+              {t('activity.invoice', 'Invoice')}
+            </button>
+          )}
         </div>
       </div>
     </motion.div>
   );
 }
 
-/* ─── Active/upcoming card ────────────────────────────────────────────────── */
-function UpcomingCard({ order, nav }) {
+/**
+ * A job still in flight — order or repair, one card.
+ *
+ * The amber treatment is not decoration: `needsYou` means the job is STOPPED
+ * until the customer does something (today, approving a repair quote), so it
+ * has to outrank everything else on the screen. Orders never set it, so they
+ * render exactly as they always did.
+ */
+function UpcomingCard({ job, nav }) {
   const t = useT();
-  const svc = order.service?.replace(/_/g, ' ') || '';
+  const title = useJobTitle(job);
+  // A job that is BLOCKED on the customer says so; everything else shows where it is.
+  const label = job.needsYou
+    ? t('activity.approve', 'Approve')
+    : t(job.statusKey, job.stage);
+
   return (
-    <motion.button variants={fadeInUp} onClick={() => nav(`/orders/${order._id}`)}
-      className="block w-full text-left rounded-2xl bg-white ring-1 ring-slate-200 shadow-sm p-4">
+    <motion.button variants={fadeInUp} onClick={() => nav(job.href)}
+      className={`block w-full text-left rounded-2xl bg-white shadow-sm p-4 ring-1 ${
+        job.needsYou ? 'ring-amber-300' : 'ring-slate-200'
+      }`}>
       <div className="flex items-center gap-3">
-        <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse shrink-0" />
+        <span className={`w-2.5 h-2.5 rounded-full animate-pulse shrink-0 ${
+          job.needsYou ? 'bg-amber-500' : 'bg-blue-500'
+        }`} />
         <div className="flex-1 min-w-0">
-          <p className="font-bold text-[#0F172A] capitalize">{t(serviceNameKey(svc), svc)}</p>
-          <p className="text-xs text-slate-400 truncate mt-0.5">{order.pickupLocation?.address}</p>
+          <p className="font-bold text-[#0F172A] capitalize truncate">{title}</p>
+          <p className="text-xs text-slate-400 truncate mt-0.5">{job.address}</p>
         </div>
-        <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full shrink-0">{t(`status.${order.status}`, STATUS_MAP[order.status])}</span>
+        <span className={`text-xs font-bold px-2.5 py-1 rounded-full shrink-0 ${
+          job.needsYou ? 'bg-amber-50 text-amber-700' : 'bg-blue-50 text-blue-600'
+        }`}>{label}</span>
       </div>
       <div className="flex items-center justify-between mt-3">
-        <span className="font-black text-[#0F172A]">₹{order.pricing?.total ?? '—'}</span>
-        <span className="flex items-center gap-1 text-xs font-bold text-blue-600">{t('activity.track', 'Track')} <ArrowRight size={13} /></span>
+        {/* A repair's stage is the useful line before there is a final price. */}
+        <span className="font-black text-[#0F172A]">
+          {job.totalPaise != null
+            ? formatPaise(job.totalPaise)
+            : <span className="text-xs font-semibold text-slate-500">{job.stage}</span>}
+        </span>
+        <span className={`flex items-center gap-1 text-xs font-bold ${
+          job.needsYou ? 'text-amber-700' : 'text-blue-600'
+        }`}>{t('activity.track', 'Track')} <ArrowRight size={13} /></span>
       </div>
     </motion.button>
   );
@@ -237,7 +265,7 @@ function EmptyUpcoming({ nav, suggestions }) {
           <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-1 mb-2">{t('activity.bookAgain', 'Book again')}</p>
           <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1 no-scrollbar">
             {suggestions.map((s) => (
-              <button key={s.service} onClick={() => nav(`/book/${s.service}`)}
+              <button key={s.href} onClick={() => nav(s.href)}
                 className="shrink-0 flex items-center gap-2 pl-1.5 pr-3.5 py-1.5 rounded-full bg-white ring-1 ring-slate-200 active:bg-slate-50">
                 <span className="w-8 h-8 rounded-full flex items-center justify-center"
                   style={{ backgroundColor: s.character?.tint || 'rgba(100, 116, 139, 0.08)' }}>
@@ -245,7 +273,7 @@ function EmptyUpcoming({ nav, suggestions }) {
                     ? <img src={s.character.thumb} alt="" width={22} height={22} className="w-5.5 h-5.5 object-contain" />
                     : <Wrench size={14} className="text-slate-500" />}
                 </span>
-                <span className="text-xs font-bold text-[#0F172A] capitalize">{t(serviceNameKey(s.service.replace(/_/g, ' ')), s.service.replace(/_/g, ' '))}</span>
+                <span className="text-xs font-bold text-[#0F172A] capitalize">{t(s.labelKey, s.label)}</span>
               </button>
             ))}
           </div>
@@ -289,7 +317,16 @@ export default function OrdersListPage() {
   const [page, setPage] = useState(1);
   const [downloadingId, setDownloadingId] = useState(null);
   const [filter, setFilter] = useState('all');
-  const { data, isLoading, isFetching, isError, refetch } = useListOrdersQuery(page);
+  /**
+   * Orders AND repairs, as one list.
+   *
+   * The page used to query orders itself and then bolt repairs on beside them,
+   * which is how history ended up rendering one kind and not the other. There
+   * is now one source: if a screen can see a job at all, it can see both kinds.
+   */
+  const {
+    jobs, active: upcoming, past, isLoading, isFetching, isError, refetch, orderPages,
+  } = useMyJobs({ page });
 
   async function downloadInvoice(e, orderId) {
     e.stopPropagation();
@@ -307,31 +344,27 @@ export default function OrdersListPage() {
     finally { setDownloadingId(null); }
   }
 
-  const allOrders  = data?.orders || [];
-  const totalPages = data?.totalPages || 1;
-  const upcoming   = allOrders.filter((o) => ACTIVE.has(o.status));
-  const past       = allOrders.filter((o) => !ACTIVE.has(o.status));
-
-  // Hero (map card) only makes sense for a completed order — showing a big
+  // Hero (map card) only makes sense for a completed job — showing a big
   // pickup pin for a service that never happened misleads and gives cancelled
-  // orders undue weight. Everything else, including cancelled, uses compact rows.
-  const lastCompleted = past.find((o) => o.status === 'completed');
+  // jobs undue weight. Everything else, including cancelled, uses compact rows.
+  const lastCompleted = past.find((j) => j.outcome === 'completed');
 
-  // Always exclude the featured order from the compact list so it never
+  // Always exclude the featured job from the compact list so it never
   // appears twice. Counts stay stable across filters (better trust in tab labels).
-  const restPast = lastCompleted ? past.filter((o) => o._id !== lastCompleted._id) : past;
+  const restPast = lastCompleted ? past.filter((j) => j.id !== lastCompleted.id) : past;
 
-  const filteredRest = restPast.filter((o) =>
+  // One terminal vocabulary (see useMyJobs), so a repair filters like an order.
+  const filteredRest = restPast.filter((j) =>
     filter === 'all' ? true :
-    filter === 'completed' ? o.status === 'completed' :
-    filter === 'cancelled' ? (o.status === 'cancelled' || o.status === 'failed') :
+    filter === 'completed' ? j.outcome === 'completed' :
+    filter === 'cancelled' ? (j.outcome === 'cancelled' || j.outcome === 'failed') :
     true,
   );
 
   const counts = {
     all:       restPast.length,
-    completed: restPast.filter((o) => o.status === 'completed').length,
-    cancelled: restPast.filter((o) => o.status === 'cancelled' || o.status === 'failed').length,
+    completed: restPast.filter((j) => j.outcome === 'completed').length,
+    cancelled: restPast.filter((j) => j.outcome === 'cancelled' || j.outcome === 'failed').length,
   };
 
   // Under "Completed" with an empty list and a hero present, users would
@@ -342,22 +375,22 @@ export default function OrdersListPage() {
   // Group filtered rows by day so ten "14 Jul" rows collapse under one header.
   const grouped = useMemo(() => {
     const map = new Map();
-    for (const o of filteredRest) {
-      const key = dateBucket(o.createdAt, t, lang);
+    for (const j of filteredRest) {
+      const key = dateBucket(j.createdAt, t, lang);
       if (!map.has(key)) map.set(key, []);
-      map.get(key).push(o);
+      map.get(key).push(j);
     }
     return [...map.entries()];
   }, [filteredRest, t, lang]);
 
-  // "Book again" quick chips — top 3 unique services from past orders.
+  // "Book again" quick chips — the 3 most recent distinct things they booked.
   const suggestions = useMemo(() => {
     const seen = new Set();
     const out = [];
-    for (const o of past) {
-      if (!o.service || seen.has(o.service)) continue;
-      seen.add(o.service);
-      out.push({ service: o.service, character: serviceVisual(o.service) });
+    for (const j of past) {
+      if (!j.rebookHref || seen.has(j.rebookHref)) continue;
+      seen.add(j.rebookHref);
+      out.push({ href: j.rebookHref, label: j.title, labelKey: j.titleKey, character: serviceVisual(j.iconCode) });
       if (out.length >= 3) break;
     }
     return out;
@@ -377,7 +410,7 @@ export default function OrdersListPage() {
           <ErrorState onRetry={refetch} />
         ) : isLoading ? (
           <div className="px-5 md:px-8 pt-4"><SkeletonList count={4} Item={SkeletonOrderCard} /></div>
-        ) : allOrders.length === 0 ? (
+        ) : jobs.length === 0 ? (
           <div className="px-5 md:px-8 pt-6">
             <h2 className="text-lg font-bold text-[#0F172A] mb-3">{t('activity.upcoming', 'Upcoming')}</h2>
             <EmptyUpcoming nav={nav} suggestions={[]} />
@@ -390,8 +423,12 @@ export default function OrdersListPage() {
               {upcoming.length === 0 ? (
                 <EmptyUpcoming nav={nav} suggestions={suggestions} />
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-                  {upcoming.map((o) => <UpcomingCard key={o._id} order={o} nav={nav} />)}
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
+                  {/* Anything waiting on the customer leads, whatever kind it is. */}
+                  {upcoming
+                    .slice()
+                    .sort((a, b) => Number(b.needsYou) - Number(a.needsYou))
+                    .map((j) => <UpcomingCard key={j.id} job={j} nav={nav} />)}
                 </div>
               )}
             </section>
@@ -406,7 +443,7 @@ export default function OrdersListPage() {
 
                 <div className="space-y-4">
                   {lastCompleted && (
-                    <PastHero order={lastCompleted} nav={nav} onInvoice={downloadInvoice} downloadingId={downloadingId} />
+                    <PastHero job={lastCompleted} nav={nav} onInvoice={downloadInvoice} downloadingId={downloadingId} />
                   )}
 
                   {restPast.length > 0 && (
@@ -427,7 +464,7 @@ export default function OrdersListPage() {
                             <div key={label}>
                               <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-1 mb-1.5">{label}</p>
                               <div className="rounded-2xl bg-white ring-1 ring-slate-200 shadow-sm px-4 md:px-6">
-                                {rows.map((o) => <CompactRow key={o._id} order={o} nav={nav} />)}
+                                {rows.map((j) => <CompactRow key={j.id} job={j} nav={nav} />)}
                               </div>
                             </div>
                           ))}
@@ -439,14 +476,14 @@ export default function OrdersListPage() {
               </section>
             )}
 
-            {totalPages > 1 && (
+            {orderPages > 1 && (
               <div className="flex items-center justify-between pt-1 pb-4">
                 <button disabled={page === 1 || isFetching} onClick={() => setPage((p) => p - 1)}
                   className="flex items-center gap-1.5 border border-slate-200 rounded-full px-4 py-2 text-sm font-semibold disabled:opacity-40">
                   <ChevronLeft size={14} /> {t('activity.prev', 'Previous')}
                 </button>
-                <span className="text-xs font-semibold text-slate-400">{t('activity.pageOf', 'Page {p} of {n}').replace('{p}', page).replace('{n}', totalPages)}</span>
-                <button disabled={page >= totalPages || isFetching} onClick={() => setPage((p) => p + 1)}
+                <span className="text-xs font-semibold text-slate-400">{t('activity.pageOf', 'Page {p} of {n}').replace('{p}', page).replace('{n}', orderPages)}</span>
+                <button disabled={page >= orderPages || isFetching} onClick={() => setPage((p) => p + 1)}
                   className="flex items-center gap-1.5 border border-slate-200 rounded-full px-4 py-2 text-sm font-semibold disabled:opacity-40">
                   {t('activity.next', 'Next')} <ChevronRight size={14} />
                 </button>

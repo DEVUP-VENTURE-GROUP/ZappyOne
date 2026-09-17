@@ -9,11 +9,13 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter, useFocusEffect, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ChevronLeft, CreditCard, Flag, LocateFixed, Star } from 'lucide-react-native';
+import { ChevronLeft, CreditCard, Flag, LocateFixed, Star, Store } from 'lucide-react-native';
 import {
   useGetOrderQuery, useCancelOrderMutation, useRateOrderMutation,
   useGetCancelPreviewQuery, useRebookOrderMutation, useGetOrderTimelineQuery,
+  useRespondShopHandoffMutation,
 } from '../../../services/api/ordersApi';
+import { useGetShopProfileQuery } from '../../../services/api/shopApi';
 import { SearchingState } from '../../../components/tracking/SearchingState';
 import {
   BookingCancelled,
@@ -58,6 +60,12 @@ export default function OrderTrackingScreen() {
   const [rateOrder, { isLoading: rating }] = useRateOrderMutation();
   const [createPaymentOrder, { isLoading: startingPayment }] = useCreatePaymentOrderMutation();
   const [verifyPayment] = useVerifyPaymentMutation();
+  const [respondShopHandoff, { isLoading: respondingHandoff }] = useRespondShopHandoffMutation();
+
+  const shopHandoffPending = order?.shopHandoff?.status === 'pending_confirmation';
+  const { data: handoffShop } = useGetShopProfileQuery(order?.shopHandoff?.shopId ?? '', {
+    skip: !shopHandoffPending || !order?.shopHandoff?.shopId,
+  });
 
   // Whether cancelling is allowed — and what it costs — is the server's call,
   // never this screen's. Skipped once the order is terminal.
@@ -122,6 +130,18 @@ export default function OrderTrackingScreen() {
         });
     },
     [cancelOrder, orderId],
+  );
+
+  /** Pick & Go — customer confirms/declines a worker's mid-job shop handoff request. */
+  const respondToHandoff = useCallback(
+    (accept: boolean) => {
+      respondShopHandoff({ id: orderId, accept })
+        .unwrap()
+        .catch((e) => {
+          Alert.alert('Could not respond', getApiErrorMessage(e, 'Please try again.'));
+        });
+    },
+    [respondShopHandoff, orderId],
   );
 
   const socketClient = useSocket(orderId);
@@ -403,6 +423,35 @@ export default function OrderTrackingScreen() {
         contentContainerStyle={styles.sheetContent}
         showsVerticalScrollIndicator={false}
       >
+        {shopHandoffPending ? (
+          <Card variant="outline" style={styles.handoffBanner}>
+            <View style={styles.payRow}>
+              <Store size={16} color={colors.accentDark} />
+              <Text style={styles.payText}>This repair needs shop tools</Text>
+            </View>
+            <Text style={styles.handoffBody}>
+              {order?.shopHandoff?.reason ? `${order.shopHandoff.reason} — ` : ''}
+              Your worker suggests sending it to{' '}
+              {handoffShop?.businessName ?? 'the shop'}. Bring it there to continue.
+            </Text>
+            <View style={styles.handoffActions}>
+              <Button
+                label="Confirm"
+                onPress={() => respondToHandoff(true)}
+                loading={respondingHandoff}
+                style={styles.handoffActionBtn}
+              />
+              <Button
+                label="Decline"
+                variant="secondary"
+                onPress={() => respondToHandoff(false)}
+                disabled={respondingHandoff}
+                style={styles.handoffActionBtn}
+              />
+            </View>
+          </Card>
+        ) : null}
+
         {needsPayment ? (
           <Card
             variant="outline"
@@ -566,6 +615,16 @@ const styles = StyleSheet.create({
   payRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   payText: { flex: 1, color: colors.accentDark, fontFamily: fontFamily.semibold, fontSize: 14 },
   payAction: { color: colors.accentDark, fontFamily: fontFamily.bold, fontSize: 13 },
+
+  handoffBanner: {
+    marginHorizontal: 20,
+    backgroundColor: colors.accentTint,
+    borderColor: colors.accentTint,
+    gap: 10,
+  },
+  handoffBody: { color: colors.textSecondary, fontFamily: fontFamily.regular, fontSize: 13, lineHeight: 18 },
+  handoffActions: { flexDirection: 'row', gap: 8 },
+  handoffActionBtn: { flex: 1 },
 
   feeNotice: { borderRadius: 8, padding: 12, marginTop: 12 },
   starRow: { flexDirection: 'row', justifyContent: 'center', gap: 4, marginBottom: 20 },

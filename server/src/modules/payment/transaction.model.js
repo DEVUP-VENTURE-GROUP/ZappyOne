@@ -34,6 +34,20 @@ const REASONS = {
 
   // Worker Cancellation Shield Fund
   SHIELD_PAYOUT: 'shield_payout',             // weekly fund payout credited to worker
+
+  /*
+   * Helping Services — money that is NOT revenue.
+   *
+   * The whole category turns on one rule: what a helper spends in a shop is
+   * the customer's money passing through, never the helper's income and never
+   * ZappyOne's. Giving these their own reasons keeps them out of every
+   * earnings, commission and revenue sum by construction, instead of relying
+   * on a report remembering to exclude them.
+   */
+  WORKER_ADVANCE: 'worker_advance',            // helper fronted cash at the till
+  WORKER_REIMBURSEMENT: 'worker_reimbursement',// paying that cash straight back
+  PRODUCT_PURCHASE: 'product_purchase',        // customer's item money, held/charged
+  PRODUCT_REFUND: 'product_refund',            // unspent item budget returned
 };
 
 const transactionSchema = new mongoose.Schema(
@@ -53,6 +67,8 @@ const transactionSchema = new mongoose.Schema(
 
     // Cross-references
     refOrderId: { type: mongoose.Schema.Types.ObjectId, ref: 'Order', index: true },
+    /** Helping Services task this movement belongs to, where it is one. */
+    refHelpingTaskId: { type: mongoose.Schema.Types.ObjectId, ref: 'HelpingTask', index: true },
     refPaymentIntentId: { type: mongoose.Schema.Types.ObjectId, ref: 'PaymentIntent', index: true },
     refSubscriptionId: { type: mongoose.Schema.Types.ObjectId, ref: 'Subscription' },
 

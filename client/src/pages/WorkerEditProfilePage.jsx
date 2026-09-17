@@ -4,10 +4,13 @@ import { motion } from 'framer-motion';
 import {
   ArrowLeft, Save, User, FileText, Wrench,
   Building2, CreditCard, AlertCircle, GraduationCap,
-  Target, TrendingUp, Star, ChevronRight, Award,
+  Target, TrendingUp, Star, ChevronRight, Award, ShieldCheck,
   Loader2, BarChart2, Shield, KeyRound,
 } from 'lucide-react';
-import { useGetWorkerMeQuery, useUpdateWorkerProfileMutation, useSetWorkerCredentialsMutation, useListServicesQuery } from '../services/api';
+import {
+  useGetWorkerMeQuery, useUpdateWorkerProfileMutation, useSetWorkerCredentialsMutation,
+  useProviderOnboardingStatusQuery,
+} from '../services/api';
 import toast from 'react-hot-toast';
 
 // Skills come from the LIVE admin catalog (/api/catalog/services), never a hardcoded
@@ -25,9 +28,11 @@ const NAV_SECTIONS = [
     ],
   },
   {
-    title: 'Skills & Growth',
+    title: 'Services & Growth',
     items: [
-      { to: '/worker/skills',    Icon: Star,         label: 'Skills & Specialisation', desc: 'Set primary skill, unlock jobs', color: 'amber' },
+      // Replaces "Skills & Specialisation": what a worker may do is decided by
+      // verification per service, not by a list they set themselves.
+      { to: '/provider/onboarding', Icon: ShieldCheck, label: 'Services & Verification', desc: 'What you are approved to work on', color: 'emerald' },
       { to: '/worker/training',  Icon: GraduationCap,label: 'Training & Certification', desc: 'Video courses + quiz certs',   color: 'rose' },
       { to: '/worker/appeals',   Icon: AlertCircle,  label: 'Appeals',                  desc: 'Contest ratings & penalties',  color: 'orange' },
     ],
@@ -61,15 +66,20 @@ export default function WorkerEditProfilePage() {
   const me = meData?.worker;
   const [updateProfile, { isLoading: isSaving }] = useUpdateWorkerProfileMutation();
   const [setCredentials, { isLoading: savingCreds }] = useSetWorkerCredentialsMutation();
-  const { data: catalog } = useListServicesQuery();
-  // Live skill options, sorted by name — mirrors the customer catalog exactly.
-  const skillOptions = (catalog?.list ?? [])
-    .map((s) => ({ code: s.code, label: s.name }))
-    .sort((a, b) => a.label.localeCompare(b.label));
+  /**
+   * What this worker may do is read, not edited, here.
+   *
+   * The page used to offer the whole service catalog as tick-boxes, capped at
+   * ten, and a worker became dispatchable for whatever they ticked. Approval
+   * per service replaced that, so the profile reports the outcome and sends
+   * them to onboarding to change it.
+   */
+  const { data: providerStatus } = useProviderOnboardingStatusQuery();
+  const verifiedServices = (providerStatus?.enrolments ?? []).filter((e) => e.status === 'approved');
 
   const [name,   setName]   = useState('');
   const [bio,    setBio]    = useState('');
-  const [skills, setSkills] = useState(null);
+  const [loaded, setLoaded] = useState(false);
   // Login credentials (#2)
   const [username, setUsername]   = useState('');
   const [newPw,    setNewPw]      = useState('');
@@ -87,26 +97,18 @@ export default function WorkerEditProfilePage() {
     }
   }
 
-  if (me && skills === null) {
+  if (me && !loaded) {
     setName(me.name ?? '');
     setBio(me.bio ?? '');
-    setSkills(me.skills ?? []);
+    setLoaded(true);
   }
-
-  const toggleSkill = (code) => {
-    setSkills(prev => prev.includes(code) ? prev.filter(s => s !== code) : [...prev, code]);
-  };
 
   const handleSave = async () => {
     if (!name.trim()) return toast.error('Name is required');
-    if ((skills ?? []).length === 0) return toast.error('Select at least 1 skill');
 
     const body = {};
     if (name.trim() !== (me?.name ?? ''))  body.name   = name.trim();
     if (bio.trim()  !== (me?.bio  ?? ''))  body.bio    = bio.trim();
-    const orig = JSON.stringify([...(me?.skills ?? [])].sort());
-    const next = JSON.stringify([...(skills ?? [])].sort());
-    if (next !== orig) body.skills = skills;
 
     if (!Object.keys(body).length) { toast.success('No changes'); return; }
 
@@ -119,7 +121,7 @@ export default function WorkerEditProfilePage() {
     }
   };
 
-  if (isLoading || skills === null) {
+  if (isLoading || !loaded) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <Loader2 size={24} className="animate-spin text-indigo-300" />
@@ -134,7 +136,7 @@ export default function WorkerEditProfilePage() {
           <ArrowLeft size={20} className="text-slate-600" />
         </button>
         <h1 className="font-semibold text-slate-800">Profile & Settings</h1>
-        <button onClick={handleSave} disabled={isSaving || (skills ?? []).length === 0}
+        <button onClick={handleSave} disabled={isSaving}
           className="ml-auto flex items-center gap-1.5 bg-indigo-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg disabled:opacity-50">
           {isSaving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
           {isSaving ? 'Saving…' : 'Save'}
@@ -183,32 +185,42 @@ export default function WorkerEditProfilePage() {
             className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-800 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-300 transition" />
         </div>
 
-        {/* Skills */}
+        {/*
+          Services, not skills.
+          A worker used to tick up to ten codes here and become dispatchable for
+          all of them, with nothing verified behind the claim. That decision now
+          belongs to onboarding, where each service is approved on its own
+          evidence — so this card reports the outcome and links there.
+        */}
         <div className="bg-white rounded-2xl p-5 shadow-sm">
-          <div className="flex items-center gap-2 mb-4">
-            <Wrench size={15} className="text-indigo-500" />
-            <span className="text-sm font-semibold text-slate-700">Skills</span>
-            <span className="ml-auto text-xs text-slate-400">{skills.length}/10 selected</span>
+          <div className="flex items-center gap-2 mb-3">
+            <ShieldCheck size={15} className="text-emerald-500" />
+            <span className="text-sm font-semibold text-slate-700">Services you're verified for</span>
           </div>
-          <div className="flex flex-wrap gap-2">
-            {skillOptions.map(({ code, label }) => {
-              const sel = skills.includes(code);
-              return (
-                <button key={code}
-                  onClick={() => (skills.length < 10 || sel) ? toggleSkill(code) : toast.error('Max 10 skills')}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${sel ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
-                  {label}
-                </button>
-              );
-            })}
-          </div>
-          {skills.length === 0 && (
-            <p className="mt-3 text-xs text-red-500 flex items-center gap-1">
-              <AlertCircle size={11} /> Select at least 1 skill to appear in dispatch
+
+          {verifiedServices.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {verifiedServices.map((e) => (
+                <span
+                  key={e._id}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700"
+                >
+                  <ShieldCheck size={11} strokeWidth={2.4} />
+                  {e.line?.name || e.lineCode}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-slate-500">
+              Nothing yet — choose what you work on and get verified to start receiving jobs.
             </p>
           )}
-          <button onClick={() => nav('/worker/skills')} className="mt-3 text-xs text-indigo-600 hover:underline flex items-center gap-0.5">
-            Advanced skills & certifications <ChevronRight size={11} />
+
+          <button
+            onClick={() => nav('/provider/onboarding')}
+            className="mt-3 flex items-center gap-0.5 text-xs text-indigo-600 hover:underline"
+          >
+            Manage services &amp; verification <ChevronRight size={11} />
           </button>
         </div>
 

@@ -19,24 +19,43 @@ const DEFAULT_FREQUENCIES = {
   painting:  1825,
 };
 
-async function createPlan({ userId, service, frequencyDays, pickupLocation, paymentMethod, preferredWorkerId, basePriceRupees }) {
-  const freq = frequencyDays || DEFAULT_FREQUENCIES[service] || 90;
-  const disc = Math.round(basePriceRupees * SUBSCRIBER_DISCOUNT_PCT / 100);
-  const effectivePriceRupees = basePriceRupees - disc;
+async function createPlan({
+  userId, service, frequencyDays, pickupLocation, paymentMethod, preferredWorkerId, basePriceRupees,
+  vertical = null, repairCode = null, brandCode = null, modelCode = null, shopId = null,
+  visitsPerYear = null,
+}) {
+  /*
+   * A visits-per-year plan (§29 AMC: Basic 2 / Standard 3 / Premium 4) states
+   * its frequency as a count, which is the way a customer buys it. The
+   * scheduler works in days, so it is converted once, here.
+   */
+  const freq = frequencyDays
+    || (visitsPerYear ? Math.round(365 / visitsPerYear) : null)
+    || DEFAULT_FREQUENCIES[service]
+    || 90;
+
+  // A repair-engine plan prices each visit when it is booked, so there is no
+  // price to discount up front — see triggerRepairPlan.
+  const base = basePriceRupees || 0;
+  const disc = Math.round(base * SUBSCRIBER_DISCOUNT_PCT / 100);
+  const effectivePriceRupees = base - disc;
   const nextScheduledAt = new Date(Date.now() + freq * 86400000);
 
   const plan = await MaintenancePlan.create({
     userId, service,
-    label: `${service.replace(/_/g, ' ')} every ${freq} days`,
+    label: visitsPerYear
+      ? `${service.replace(/_/g, ' ')} — ${visitsPerYear} visits a year`
+      : `${service.replace(/_/g, ' ')} every ${freq} days`,
     frequencyDays: freq,
     preferredWorkerId: preferredWorkerId || null,
     pickupLocation,
-    basePriceRupees,
+    basePriceRupees: base,
     discountPct: SUBSCRIBER_DISCOUNT_PCT,
     effectivePriceRupees,
     status: 'active',
     nextScheduledAt,
     paymentMethod: paymentMethod || 'upi',
+    vertical, repairCode, brandCode, modelCode, shopId, visitsPerYear,
   });
 
   logger.info({ userId, service, freq, nextScheduledAt }, '[MaintenancePlan] Created');
@@ -73,6 +92,64 @@ async function cancelPlan(planId, userId) {
 }
 
 /** Called by a daily cron/scheduler. Creates orders for due plans. */
+/**
+ * One AMC visit, booked through the repair engine.
+ *
+ * The plan holds no price: each visit is priced at the moment it is booked,
+ * against the provider's CURRENT price, because a plan sold in January must
+ * not freeze a provider's rate for the rest of the year. The subscriber
+ * discount is applied as a discount line, so the provider is still paid their
+ * full rate and the discount is visibly ZappyOne's, not taken out of the
+ * technician's pocket.
+ */
+async function triggerRepairPlan(plan, now) {
+  const bookingService = require('../repair/services/booking.service');
+  const MaintenancePlanModel = require('./maintenance-plan.model');
+  const logger2 = require('../../utils/logger');
+
+  const { booking } = await bookingService.createBooking({
+    userId: plan.userId,
+    vertical: plan.vertical,
+    brandCode: plan.brandCode,
+    modelCode: plan.modelCode,
+    repairCode: plan.repairCode,
+    problemCodes: [],
+    serviceMode: 'doorstep',
+    shopId: plan.shopId || null,
+    workerId: plan.preferredWorkerId || null,
+    location: {
+      coordinates: plan.pickupLocation?.coordinates || [],
+      address: plan.pickupLocation?.address || '',
+    },
+    paymentMethod: plan.paymentMethod === 'cash' ? 'cash' : 'online',
+    // Idempotent per plan per due date: a cron that runs twice cannot book the
+    // same visit twice.
+    idempotencyKey: `amc-${plan._id}-${plan.nextScheduledAt?.toISOString?.() || now.toISOString()}`,
+  });
+
+  await MaintenancePlanModel.findByIdAndUpdate(plan._id, {
+    $set: {
+      lastCompletedAt: now,
+      nextScheduledAt: new Date(now.getTime() + plan.frequencyDays * 86400000),
+    },
+    $inc: { totalCompleted: 1 },
+    $push: { bookingHistory: booking._id },
+  });
+
+  const notifService = require('../notification/notification.service');
+  notifService.notify({
+    recipient: { kind: 'user', id: plan.userId },
+    type: 'order_placed',
+    title: '🔄 Your scheduled visit is booked',
+    body: `${plan.label || 'Your maintenance visit'} is booked.`,
+    deepLink: `/repair/bookings/${booking._id}`,
+    data: { repairBookingId: String(booking._id) },
+  }).catch(() => {});
+
+  logger2.info({ planId: plan._id, bookingId: booking._id }, '[MaintenancePlan] AMC repair booking created');
+  return booking;
+}
+
 async function triggerDuePlans() {
   const now = new Date();
   const duePlans = await MaintenancePlan.find({
@@ -84,6 +161,19 @@ async function triggerDuePlans() {
 
   for (const plan of duePlans) {
     try {
+      /*
+       * A repair-engine plan books a RepairBooking, not an Order.
+       *
+       * Everything downstream — dispatch, the technician's job card, QA,
+       * photos, settlement — already works off RepairBooking, so routing here
+       * means an AMC visit is an ordinary repair job that happens to have been
+       * created by a schedule rather than by a customer tapping "book".
+       */
+      if (plan.vertical) {
+        await triggerRepairPlan(plan, now);
+        continue;
+      }
+
       const crypto = require('crypto');
       const Order  = require('../order/order.model');
       const order  = await Order.create({
@@ -142,5 +232,6 @@ async function triggerDuePlans() {
 }
 
 module.exports = {
+  triggerRepairPlan,
   createPlan, getMyPlans, pausePlan, resumePlan, cancelPlan, triggerDuePlans, DEFAULT_FREQUENCIES,
 };

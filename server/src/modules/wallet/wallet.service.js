@@ -82,6 +82,7 @@ async function apply({
       amountPaise: signedAmount,
       reason,
       refOrderId: refs.orderId,
+      refHelpingTaskId: refs.helpingTaskId,
       refPaymentIntentId: refs.paymentIntentId,
       refSubscriptionId: refs.subscriptionId,
       description,

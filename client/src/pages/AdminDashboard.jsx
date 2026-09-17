@@ -1,4 +1,4 @@
-import { useState, useCallback, lazy, Suspense } from 'react';
+import { useState, useCallback, useEffect, lazy, Suspense } from 'react';
 import { useDispatch } from 'react-redux';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -9,7 +9,7 @@ import {
   Megaphone, Ticket, Server, ToggleRight, Bell, Repeat2,
   HeadphonesIcon, Radio, Globe, Layers, Zap, Sparkles, TrendingUp,
   Shield, PartyPopper, ShieldAlert, Map as MapIcon,
-  AlertCircle, GraduationCap, Search,
+  AlertCircle, GraduationCap, Search, Store, ChevronDown, Smartphone, Laptop, Bike, Car, Droplets,
 } from 'lucide-react';
 import { logout } from '../modules/auth/authSlice';
 import { useLogoutMutation } from '../services/api';
@@ -19,6 +19,20 @@ const Overview = lazy(() => import('./admin/Overview'));
 const Orders = lazy(() => import('./admin/Orders'));
 const AdminUsers = lazy(() => import('./admin/Users'));
 const Workers = lazy(() => import('./admin/Workers'));
+const Shops = lazy(() => import('./admin/Shops'));
+// What providers may sign up to do, and the verification each service demands.
+const ProviderOnboarding = lazy(() => import('./admin/ProviderOnboarding'));
+// One generic console, rendered per vertical — see RepairVertical.jsx.
+const RepairVertical = lazy(() => import('./admin/repair/RepairVertical'));
+const RepairMobile = () => <RepairVertical vertical="mobile" label="Mobile Repair" />;
+// Laptops are identified below model level, so the deep-catalog tabs apply.
+const RepairLaptop = () => <RepairVertical vertical="laptop" label="Laptop Services" deepCatalog />;
+// Two-wheelers identify at vehicle type -> brand -> model, so deep catalog applies.
+const RepairTwoWheeler = () => <RepairVertical vertical="two_wheeler" label="Two-Wheeler Services" deepCatalog />;
+const RepairFourWheeler = () => <RepairVertical vertical="four_wheeler" label="Four-Wheeler Services" deepCatalog />;
+// Shallow catalog — tank type sits in the brand slot, capacity in the model
+// slot, so there is no product-type tier to show.
+const RepairWaterTankCare = () => <RepairVertical vertical="water_tank_care" label="Water & Tank Care" />;
 const Pricing = lazy(() => import('./admin/Pricing'));
 const AdminWallet = lazy(() => import('./admin/Wallet'));
 const Disputes = lazy(() => import('./admin/Disputes'));
@@ -65,6 +79,8 @@ const NAV_GROUPS = [
       { id: 'orders',    label: 'Orders',       icon: ShoppingBag },
       { id: 'users',     label: 'Users',        icon: Users },
       { id: 'workers',   label: 'Workers',      icon: Briefcase },
+      { id: 'shops',     label: 'Shops',        icon: Store },
+      { id: 'onboarding', label: 'Provider Onboarding', icon: FileCheck },
       { id: 'workerops', label: 'Worker Ops',   icon: Briefcase },
       { id: 'kyc',       label: 'KYC Review',   icon: FileCheck },
     ],
@@ -127,10 +143,42 @@ const NAV_GROUPS = [
   },
 ];
 
-const ALL_NAV = NAV_GROUPS.flatMap(g => g.items);
+/**
+ * Expandable trees rendered above the flat groups.
+ *
+ * Each vertical gets its own console rather than being crammed into the shared
+ * "Service Catalog" screen, because a vertical owns its own taxonomy, pricing
+ * model and diagnostics — mobile repair has brands/models/problems that mean
+ * nothing to plumbing. New verticals are added as children here.
+ */
+const NAV_TREES = [
+  {
+    id: 'services',
+    label: 'Services',
+    icon: Layers,
+    children: [
+      { id: 'repair-mobile', label: 'Mobile', icon: Smartphone },
+      { id: 'repair-laptop', label: 'Laptop', icon: Laptop },
+      { id: 'repair-two-wheeler', label: 'Two-Wheeler', icon: Bike },
+      { id: 'repair-four-wheeler', label: 'Four-Wheeler', icon: Car },
+      { id: 'repair-water-tank-care', label: 'Water & Tank Care', icon: Droplets },
+    ],
+  },
+];
+
+const ALL_NAV = [
+  ...NAV_GROUPS.flatMap(g => g.items),
+  ...NAV_TREES.flatMap(t => t.children),
+];
 
 const SECTION_MAP = {
-  overview: Overview, orders: Orders, users: AdminUsers, workers: Workers,
+  overview: Overview, orders: Orders, users: AdminUsers, workers: Workers, shops: Shops,
+  onboarding: ProviderOnboarding,
+  'repair-mobile': RepairMobile,
+  'repair-laptop': RepairLaptop,
+  'repair-two-wheeler': RepairTwoWheeler,
+  'repair-four-wheeler': RepairFourWheeler,
+  'repair-water-tank-care': RepairWaterTankCare,
   kyc: AdminKycReview, pricing: Pricing, services: Services, wallet: AdminWallet,
   disputes: Disputes, payouts: Payouts, intelligence: Intelligence,
   analytics: Analytics, business: BusinessIntelligence, notifications: NotificationsAdmin, heatmap: Heatmap,
@@ -179,6 +227,73 @@ function NavItem({ item, isActive, onClick }) {
         />
       )}
     </motion.button>
+  );
+}
+
+/* ─── Expandable nav group ─────────────────────────────────────────────────
+ * "Services" is a container, not a destination — clicking it reveals the
+ * verticals underneath rather than navigating anywhere itself. Each vertical
+ * (Mobile today, others as they launch) is its own console section.
+ * Expansion is derived from whether a child is active, so deep-linking to
+ * ?tab=repair-mobile opens the tree already unfolded rather than looking
+ * like the item was reached from nowhere.
+ */
+function NavTree({ group, active, onClick }) {
+  const containsActive = group.children.some((c) => c.id === active);
+  const [open, setOpen] = useState(containsActive);
+
+  useEffect(() => { if (containsActive) setOpen(true); }, [containsActive]);
+
+  const { icon: Icon } = group;
+  return (
+    <div>
+      <motion.button
+        onClick={() => setOpen((o) => !o)}
+        className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium transition-all text-left ${
+          containsActive ? 'text-white bg-white/10' : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+        }`}
+        whileTap={{ scale: 0.98 }}
+        aria-expanded={open}
+      >
+        <Icon size={14} strokeWidth={containsActive ? 2.5 : 1.75} className={containsActive ? 'text-indigo-300' : 'text-slate-500'} />
+        <span className="flex-1 truncate">{group.label}</span>
+        <ChevronDown
+          size={13}
+          className={`text-slate-500 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+        />
+      </motion.button>
+
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.18 }}
+            className="overflow-hidden"
+          >
+            <div className="ml-4 pl-2 mt-0.5 space-y-0.5" style={{ borderLeft: '1px solid rgba(255,255,255,0.08)' }}>
+              {group.children.map((child) => {
+                const ChildIcon = child.icon;
+                const isActive = active === child.id;
+                return (
+                  <button
+                    key={child.id}
+                    onClick={() => onClick(child.id)}
+                    className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[12.5px] font-medium transition-all text-left ${
+                      isActive ? 'text-white bg-indigo-500/20' : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                    }`}
+                  >
+                    <ChildIcon size={13} strokeWidth={isActive ? 2.5 : 1.75} className={isActive ? 'text-indigo-300' : 'text-slate-500'} />
+                    <span className="flex-1 truncate">{child.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
 
@@ -259,8 +374,16 @@ export default function AdminDashboard() {
 
         {/* Nav groups */}
         <nav className="flex-1 overflow-y-auto py-2 px-2" style={{ scrollbarWidth: 'none' }}>
+          {/* Verticals — expandable, sits above the flat groups */}
+          <div>
+            <p className="text-[9px] font-black text-slate-600 uppercase tracking-[0.12em] px-3 mb-1">Verticals</p>
+            {NAV_TREES.map((tree) => (
+              <NavTree key={tree.id} group={tree} active={active} onClick={handleNav} />
+            ))}
+          </div>
+
           {NAV_GROUPS.map((group, gi) => (
-            <div key={group.label} className={gi > 0 ? 'mt-4' : ''}>
+            <div key={group.label} className="mt-4">
               <p className="text-[9px] font-black text-slate-600 uppercase tracking-[0.12em] px-3 mb-1">{group.label}</p>
               {group.items.map(item => (
                 <NavItem

@@ -5,9 +5,16 @@
  * Shows a liveness challenge (blink instruction + countdown) before capture.
  * Collects geo-coordinates and exact timestamp at moment of capture.
  *
+ * Also used for premises photos (storefront, workbench), where the REAR camera
+ * is the right one and the point is the same: the picture has to be taken here
+ * and now, not chosen from a gallery.
+ *
  * Props:
  *   onCapture(blob, metadata) — called when the user accepts the photo
  *   onCancel()               — called when the user closes the panel
+ *   facingMode               — 'user' (default, selfie) or 'environment' (rear)
+ *   title                    — panel heading; defaults to "Live Selfie"
+ *   instruction              — what to do before the shutter fires
  */
 
 import { useEffect, useRef, useState, useCallback } from 'react';
@@ -15,7 +22,13 @@ import { Camera, RefreshCw, CheckCircle2, X, Loader2, AlertTriangle, MapPin } fr
 
 const STEPS = ['ready', 'streaming', 'countdown', 'preview', 'error'];
 
-export default function LiveSelfieCapture({ onCapture, onCancel }) {
+export default function LiveSelfieCapture({
+  onCapture,
+  onCancel,
+  facingMode = 'user',
+  title = 'Live Selfie',
+  instruction,
+}) {
   const videoRef   = useRef(null);
   const canvasRef  = useRef(null);
   const streamRef  = useRef(null);
@@ -27,6 +40,8 @@ export default function LiveSelfieCapture({ onCapture, onCancel }) {
   const [previewUrl, setPreviewUrl] = useState(null);
   const [errorMsg, setErrorMsg]   = useState('');
   const [geoStatus, setGeoStatus] = useState('fetching'); // fetching | ok | denied
+
+  const isSelfie = facingMode === 'user';
 
   // Fetch geo — location is MANDATORY for onboarding, so allow retry.
   const fetchGeo = useCallback(() => {
@@ -56,7 +71,7 @@ export default function LiveSelfieCapture({ onCapture, onCancel }) {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
-          facingMode: 'user',          // front camera only
+          facingMode,                  // 'user' = selfie, 'environment' = premises
           width: { ideal: 720 },
           height: { ideal: 720 },
         },
@@ -167,7 +182,7 @@ export default function LiveSelfieCapture({ onCapture, onCancel }) {
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
           <div className="flex items-center gap-2">
             <Camera size={17} className="text-indigo-600" />
-            <span className="font-bold text-slate-800 text-sm">Live Selfie</span>
+            <span className="font-bold text-slate-800 text-sm">{title}</span>
           </div>
           <button onClick={() => { stopCamera(); onCancel(); }} className="text-slate-400 hover:text-slate-700 transition">
             <X size={18} />
@@ -206,17 +221,19 @@ export default function LiveSelfieCapture({ onCapture, onCancel }) {
               className={`w-full h-full object-cover ${
                 ['streaming', 'countdown'].includes(step) ? 'block' : 'hidden'
               }`}
-              style={{ transform: 'scaleX(-1)' }}  // mirror for selfie feel
+              // Mirrored for the selfie feel, but NOT for premises shots: a
+              // mirrored shop board reads backwards in the preview.
+              style={isSelfie ? { transform: 'scaleX(-1)' } : undefined}
             />
 
-            {/* face oval overlay */}
+            {/* Framing guide — an oval for a face, a rectangle for a place. */}
             {['streaming', 'countdown'].includes(step) && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <div
-                  className={`rounded-full border-4 transition-colors ${
+                  className={`border-4 transition-colors ${isSelfie ? 'rounded-full' : 'rounded-2xl'} ${
                     step === 'countdown' ? 'border-green-400 shadow-lg shadow-green-400/40' : 'border-white/50'
                   }`}
-                  style={{ width: '65%', height: '75%' }}
+                  style={isSelfie ? { width: '65%', height: '75%' } : { width: '86%', height: '70%' }}
                 />
               </div>
             )}
@@ -225,8 +242,14 @@ export default function LiveSelfieCapture({ onCapture, onCancel }) {
             {step === 'streaming' && (
               <div className="absolute bottom-4 inset-x-0 flex justify-center">
                 <div className="bg-black/60 rounded-xl px-4 py-2 text-center">
-                  <p className="text-white text-xs font-bold">Position your face inside the oval</p>
-                  <p className="text-white/70 text-[11px] mt-0.5">Look straight · Good lighting · No glasses</p>
+                  <p className="text-white text-xs font-bold">
+                    {isSelfie ? 'Position your face inside the oval' : 'Fit the whole thing in the frame'}
+                  </p>
+                  <p className="text-white/70 text-[11px] mt-0.5">
+                    {instruction || (isSelfie
+                      ? 'Look straight · Good lighting · No glasses'
+                      : 'Stand back · Keep any signage readable')}
+                  </p>
                 </div>
               </div>
             )}

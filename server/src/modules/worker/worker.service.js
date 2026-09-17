@@ -97,7 +97,17 @@ async function goOffline({ workerId }) {
  * Hot-path location update. Writes to Redis GEO only.
  * Mongo gets a throttled write every 30s via lastSeenAt.
  */
-async function updateLocation({ workerId, lng, lat, orderId }) {
+/**
+ * Statuses during which a technician's position may be shared.
+ *
+ * Deliberately a short list. A technician carries this app all day; broadcasting
+ * their position outside an active trip would track a person, not a job. Outside
+ * these statuses the ping still updates dispatch geo — it is simply never fanned
+ * out to a customer.
+ */
+const REPAIR_MOVING_STATUSES = ['ON_THE_WAY', 'OUT_FOR_RETURN', 'PICKUP_SCHEDULED', 'DEVICE_PICKED_UP'];
+
+async function updateLocation({ workerId, lng, lat, orderId, repairBookingId }) {
   // GPS spoof guard: reject location updates that imply impossible speed.
   // Stealth rejection — return ok:true so fraudsters don't know they're flagged.
   const lastLocKey = `worker:lastloc:${workerId}`;
@@ -134,6 +144,83 @@ async function updateLocation({ workerId, lng, lat, orderId }) {
         },
       }
     );
+  }
+
+  /**
+   * A repair trip broadcasts to the booking's room.
+   *
+   * Repair events already travel on `order:event` keyed by the booking id, so
+   * the customer's tracking screen subscribes the same way it does for an
+   * order. Two guards before anything is published: the booking must belong to
+   * THIS technician, and it must be in a status where they are genuinely
+   * travelling. Neither is negotiable — the first stops one worker watching
+   * another's job, the second stops a repair job becoming a tracking device.
+   */
+  {
+    const { RepairBooking } = require('../repair/models/booking.model');
+
+    /**
+     * Find the repair this ping belongs to, even when the caller did not say.
+     *
+     * Only the repair job page ever sent `repairBookingId`, so live tracking
+     * existed exclusively while a technician happened to be looking at that one
+     * screen. Everywhere else they publish position — the dashboard's
+     * continuous feed while online, the socket ping, the order job page — the
+     * ping carried an `orderId` or nothing at all, and the customer watching a
+     * repair saw "Live map starts as soon as their phone reports in" forever.
+     *
+     * The worker's active repair is a fact the SERVER can look up, so it does.
+     * Every publisher that already exists now feeds repairs too, with no client
+     * change and nothing new to keep in sync — the alternative was a
+     * `currentRepairBookingId` column that four call sites would have to
+     * remember to set and clear.
+     *
+     * Still scoped to this technician and still limited to statuses where they
+     * are genuinely travelling: a repair job must never become a tracking
+     * device.
+     */
+    const booking = repairBookingId
+      ? await RepairBooking.findOne({ _id: repairBookingId, workerId })
+        .select('status userId location').lean()
+      : await RepairBooking.findOne({ workerId, status: { $in: REPAIR_MOVING_STATUSES } })
+        .sort({ updatedAt: -1 })
+        .select('status userId location').lean();
+
+    const repairBookingIdResolved = booking?._id;
+
+    if (booking && REPAIR_MOVING_STATUSES.includes(booking.status)) {
+      await redis.publish(
+        'order:event',
+        JSON.stringify({
+          orderId: String(repairBookingIdResolved),
+          event: 'worker.location',
+          payload: { lng, lat, at: Date.now() },
+        }),
+      ).catch(() => {});
+
+      /**
+       * The same ETA engine orders use.
+       *
+       * It is keyed by an id and publishes to this same room, so a repair needs
+       * nothing of its own — only the destination cached once and a position to
+       * measure from. Personalised smoothed speed far out, traffic-aware near,
+       * throttled and delta-suppressed: all of that is already built and was
+       * simply never pointed at repairs.
+       */
+      const etaService = require('./eta.service');
+      const dest = booking.location?.coordinates;
+      if (Array.isArray(dest) && dest.length === 2) {
+        etaService.cacheOrderPickup(repairBookingIdResolved, dest[1], dest[0])
+          .then(() => etaService.computeAndBroadcast({
+            orderId: String(repairBookingIdResolved),
+            workerId,
+            workerLat: lat,
+            workerLng: lng,
+            orderUserId: booking.userId,
+          }))
+          .catch(() => { /* an ETA is a nicety; never fail a location ping for it */ });
+      }
+    }
   }
 
   // If worker is on a trip, broadcast location + ETA to the order room.
@@ -180,11 +267,18 @@ async function getEarnings({ workerId, range = 'today' }) {
         $group: {
           _id: null,
           jobs: { $sum: 1 },
-          // earnings.workerPaise is set on completion (post-commission).
-          // Fall back to pricing.total*100*(1-commissionRate) for legacy rows.
-          earningsPaise: { $sum: { $ifNull: ['$earnings.workerPaise', { $multiply: ['$pricing.total', 80] }] } },
-          commissionPaise: { $sum: { $ifNull: ['$earnings.platformPaise', { $multiply: ['$pricing.total', 20] }] } },
-          avgFarePaise: { $avg: { $ifNull: ['$earnings.workerPaise', { $multiply: ['$pricing.total', 80] }] } },
+          /*
+           * `earnings.workerPaise` is written at completion, post-commission.
+           *
+           * The old fallback multiplied the rupee total by 80 to guess an 80%
+           * share. That hardcoded a commission rate the config no longer uses,
+           * so every legacy row reported a number nobody had agreed to. A row
+           * with no recorded earnings now contributes nothing rather than an
+           * invented figure.
+           */
+          earningsPaise: { $sum: { $ifNull: ['$earnings.workerPaise', 0] } },
+          commissionPaise: { $sum: { $ifNull: ['$earnings.platformPaise', 0] } },
+          avgFarePaise: { $avg: { $ifNull: ['$earnings.workerPaise', 0] } },
           cashJobs: { $sum: { $cond: [{ $eq: ['$payment.method', 'cash'] }, 1, 0] } },
           onlineJobs: { $sum: { $cond: [{ $ne: ['$payment.method', 'cash'] }, 1, 0] } },
         },
@@ -198,7 +292,7 @@ async function getEarnings({ workerId, range = 'today' }) {
         $group: {
           _id: { $dateToString: { format: '%Y-%m-%d', date: '$completedAt' } },
           jobs: { $sum: 1 },
-          earningsPaise: { $sum: { $ifNull: ['$earnings.workerPaise', { $multiply: ['$pricing.total', 80] }] } },
+          earningsPaise: { $sum: { $ifNull: ['$earnings.workerPaise', 0] } },
         },
       },
       { $sort: { _id: 1 } },
@@ -206,17 +300,69 @@ async function getEarnings({ workerId, range = 'today' }) {
   ]);
 
   const summary = agg[0] || { jobs: 0, earningsPaise: 0, commissionPaise: 0, avgFarePaise: 0, cashJobs: 0, onlineJobs: 0 };
+
+  /**
+   * Repair work counts too.
+   *
+   * This only ever aggregated `Order`, so a technician whose whole day was
+   * phone, laptop or vehicle repairs opened their earnings screen and saw ₹0.
+   * It was not a fetching problem — the repair collection was simply never
+   * asked.
+   *
+   * `splitFor` is the same function the settlement run uses, so the number on
+   * screen and the number actually paid cannot drift apart.
+   */
+  const { RepairBooking } = require('../repair/models/booking.model');
+  const { splitFor } = require('../repair/services/settlement.service');
+
+  const repairs = await RepairBooking.find({
+    workerId: wid, status: 'COMPLETED', completedAt: { $gte: since },
+  }).select('priceSnapshot paymentMethod completedAt').lean();
+
+  let repairEarnings = 0;
+  let repairCommission = 0;
+  let repairCash = 0;
+  for (const b of repairs) {
+    const split = splitFor(b);
+    repairEarnings += split.providerPaise;
+    repairCommission += split.platformPaise;
+    if (b.paymentMethod === 'cash') repairCash += 1;
+  }
+
+  const jobs = summary.jobs + repairs.length;
+  const earningsPaise = Math.round(summary.earningsPaise + repairEarnings);
+  const commissionPaise = Math.round(summary.commissionPaise + repairCommission);
+
+  // Repair days folded into the same series, so the chart matches the total
+  // above it rather than telling a second, smaller story.
+  const byDay = new Map(daily.map((d) => [d._id, { date: d._id, jobs: d.jobs, earningsPaise: Math.round(d.earningsPaise) }]));
+  for (const b of repairs) {
+    if (!b.completedAt) continue;
+    const key = new Date(b.completedAt).toISOString().slice(0, 10);
+    const row = byDay.get(key) || { date: key, jobs: 0, earningsPaise: 0 };
+    row.jobs += 1;
+    row.earningsPaise += splitFor(b).providerPaise;
+    byDay.set(key, row);
+  }
+
   return {
     range,
     since,
-    jobs: summary.jobs,
-    earningsPaise: Math.round(summary.earningsPaise),
-    earningsRupees: Math.round(summary.earningsPaise / 100),
-    commissionPaidPaise: Math.round(summary.commissionPaise),
-    avgEarningPerJobRupees: summary.jobs > 0 ? Math.round(summary.avgFarePaise / 100) : 0,
-    cashJobs: summary.cashJobs,
-    onlineJobs: summary.onlineJobs,
-    dailyBreakdown: daily.map((d) => ({ date: d._id, jobs: d.jobs, earningsPaise: Math.round(d.earningsPaise) })),
+    jobs,
+    earningsPaise,
+    earningsRupees: Math.round(earningsPaise / 100),
+    commissionPaidPaise: commissionPaise,
+    avgEarningPerJobRupees: jobs > 0 ? Math.round(earningsPaise / jobs / 100) : 0,
+    cashJobs: summary.cashJobs + repairCash,
+    onlineJobs: summary.onlineJobs + (repairs.length - repairCash),
+    dailyBreakdown: [...byDay.values()]
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .map((d) => ({ ...d, earningsPaise: Math.round(d.earningsPaise) })),
+    /** Split out so a technician can see where the money came from. */
+    breakdown: {
+      orders: { jobs: summary.jobs, earningsPaise: Math.round(summary.earningsPaise) },
+      repairs: { jobs: repairs.length, earningsPaise: Math.round(repairEarnings) },
+    },
   };
 }
 

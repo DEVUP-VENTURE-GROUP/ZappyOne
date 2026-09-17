@@ -15,7 +15,7 @@ router.post(
   authLimiter,
   validate(Joi.object({
     phone: phoneSchema,
-    role:  Joi.string().valid('user', 'worker', 'event_partner').optional(),
+    role:  Joi.string().valid('user', 'worker', 'event_partner', 'shop').optional(),
   })),
   ctrl.requestOtp,
 );
@@ -128,6 +128,23 @@ router.post(
     cities:       Joi.alternatives().try(Joi.array().items(Joi.string()), Joi.string()).optional(),
   })),
   ctrl.googlePartnerLogin
+);
+
+// ── Shop owner (phone repair shops, laptop repair shops, decoration studios, …)
+// Same OTP-login-with-first-time-onboarding shape as /partner/login, for a
+// general-purpose local business rather than an events-only one.
+router.post(
+  '/shop/login',
+  authLimiter,
+  validate(Joi.object({
+    phone:        phoneSchema,
+    otp:          Joi.string().min(4).max(6).required(),
+    businessName: Joi.string().max(120).optional(),
+    ownerName:    Joi.string().max(100).optional(),
+    category:     Joi.string().max(60).optional(),
+    services:     Joi.alternatives().try(Joi.array().items(Joi.string()), Joi.string()).optional(),
+  })),
+  ctrl.loginShop,
 );
 
 router.post(

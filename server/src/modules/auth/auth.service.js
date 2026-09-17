@@ -5,6 +5,7 @@ const User = require('../user/user.model');
 const Worker = require('../worker/worker.model');
 const Admin = require('../admin/admin.model');
 const EventPartner = require('../events/event-partner.model');
+const Shop = require('../shop/shop.model');
 const tokenService = require('./token.service');
 const logger = require('../../utils/logger');
 
@@ -70,6 +71,7 @@ async function verify2FactorOtp(sessionId, otp) {
 
 // ---- Fallback SMS (dev / when 2Factor key absent) ----
 async function sendFallbackOtp(phone, otp) {
+  if (process.env.NODE_ENV === 'test') return;   // see the note in requestOtp
   const fast2smsKey = process.env.FAST2SMS_KEY;
   const msg91Key    = process.env.MSG91_AUTH_KEY;
   const mobile      = phone.replace(/^(\+?91)/, '');  // strip prefix → 10-digit
@@ -182,7 +184,19 @@ async function requestOtp(phone, role) {
   }
 
   // ── Send OTP via 2Factor AUTOGEN (prod) or fallback (dev) ────────────────
-  const use2Factor = !!process.env.TWO_FACTOR_API_KEY;
+  /**
+   * Never send a real message from a test run.
+   *
+   * The test env loads the project .env — including live SMS credentials —
+   * so a suite that requests an OTP would text whatever number the fixture
+   * used and bill the account for it. Blanking the key in the test setup
+   * does not help: config/index.js re-reads .env with `override: true`
+   * afterwards. The guard therefore lives here, at the point of sending,
+   * where it also covers scripts and any future caller.
+   */
+  const isTest = process.env.NODE_ENV === 'test';
+
+  const use2Factor = !!process.env.TWO_FACTOR_API_KEY && !isTest;
   let sessionId = null;
   let devOtp    = null;
 
@@ -197,7 +211,7 @@ async function requestOtp(phone, role) {
   } else {
     devOtp = Math.floor(100000 + Math.random() * 900000).toString();
     try {
-      await sendFallbackOtp(phone, devOtp);
+      if (!isTest) await sendFallbackOtp(phone, devOtp);
     } catch (err) {
       logger.error({ err: err.message, phone }, '[OTP] All fallback providers failed');
       throw Object.assign(new Error('Could not send OTP. Please try again.'), { status: 503, code: 'OTP_SEND_FAILED' });
@@ -226,6 +240,9 @@ async function requestOtp(phone, role) {
   } else if (role === 'event_partner' || role === 'partner') {
     const p = await EventPartner.findOne({ phone }).select('_id').lean();
     isNewUser = !p;
+  } else if (role === 'shop') {
+    const s = await Shop.findOne({ phone }).select('_id').lean();
+    isNewUser = !s;
   }
 
   // devOtp is only ever exposed to the client in non-production, so the dev UI
@@ -394,8 +411,20 @@ async function loginWorkerWithOtp({ phone, otp, name, skills, deviceId }) {
   const isNewWorker = !worker;
 
   if (isNewWorker) {
-    if (!name || !skills?.length) {
-      throw Object.assign(new Error('First-time login requires name and skills'), {
+    /**
+     * Signing up asks for a name and nothing else.
+     *
+     * Workers used to declare their own skills from a fixed chip list at the
+     * login screen, which was self-certification: anyone could tick "Screen
+     * Fix" and be dispatchable. What someone may work on is now decided by
+     * enrolling in a service and passing ITS verification, so the login form
+     * has no business collecting it — see modules/onboarding.
+     *
+     * `skills` is still accepted for older clients that send it, but it is
+     * never required and never grants anything on its own.
+     */
+    if (!name) {
+      throw Object.assign(new Error('First-time login requires your name'), {
         status: 400, code: 'WORKER_ONBOARDING_REQUIRED',
       });
     }
@@ -421,7 +450,7 @@ async function loginWorkerWithOtp({ phone, otp, name, skills, deviceId }) {
         .exec();
     }
 
-    worker = await Worker.create({ phone, name, skills });
+    worker = await Worker.create({ phone, name, skills: skills || [] });
   }
 
   if (worker.isBlocked) {
@@ -515,6 +544,46 @@ async function loginEventPartnerWithOtp({ phone, otp, businessName, ownerName, c
     sub: partner._id.toString(), role: 'event_partner', phone: partner.phone,
   });
   return { partner, isNew, ...tokens };
+}
+
+// ---- Shop owner (phone OTP) — self-registration allowed, admin approves KYC ----
+// Same shape as loginEventPartnerWithOtp above, for a general-purpose local
+// business (phone/laptop repair shops, decoration studios, …) rather than an
+// events-only one. First login only collects the identity fields a login form
+// can reasonably ask for; category/services/address are completed afterward
+// via the shop's own profile endpoint (shop.isDiscoverable() gates the rest).
+async function loginShopWithOtp({ phone, otp, businessName, ownerName, category, services }) {
+  const ok = await verifyOtp(phone, otp);
+  if (!ok) throw Object.assign(new Error('Invalid OTP'), { status: 401, code: 'OTP_INVALID' });
+
+  let shop = await Shop.findOne({ phone });
+  const isNew = !shop;
+
+  if (isNew) {
+    if (!businessName || !ownerName) {
+      throw Object.assign(
+        new Error('First-time registration requires businessName and ownerName'),
+        { status: 400, code: 'SHOP_ONBOARDING_REQUIRED' }
+      );
+    }
+    shop = await Shop.create({
+      phone, businessName, ownerName,
+      category: category || '',
+      services: Array.isArray(services) ? services : (services || '').split(',').map(s => s.trim()).filter(Boolean),
+      isActive: true,
+      kyc: { status: 'not_submitted' },
+    });
+    logger.info({ shopId: shop._id, phone }, '[AUTH] New shop self-registered');
+  }
+
+  if (shop.isBlocked) {
+    throw Object.assign(new Error('Shop account is blocked. Contact support.'), { status: 403, code: 'ACCOUNT_BLOCKED' });
+  }
+
+  const tokens = await tokenService.issueTokenPair({
+    sub: shop._id.toString(), role: 'shop', phone: shop.phone,
+  });
+  return { shop, isNew, ...tokens };
 }
 
 // ---- Admin (email + password) with lockout ----
@@ -752,6 +821,7 @@ module.exports = {
   loginUserWithOtp,
   loginWorkerWithOtp,
   loginEventPartnerWithOtp,
+  loginShopWithOtp,
   loginPartnerWithGoogle,
   loginAdmin,
   refresh: tokenService.rotateTokenPair,

@@ -332,7 +332,7 @@ async function findReadyCandidates({ lng, lat, skill, radiusKm = 12, minRating =
  *
  * Returns workerIds in order of preference (nearest + rating-boosted).
  */
-async function findCandidates({ lng, lat, skill, excludeIds = [], radiusKm: radiusKmOverride, skipSkillFilter = false } = {}) {
+async function findCandidates({ lng, lat, skill, excludeIds = [], radiusKm: radiusKmOverride, skipSkillFilter = false, shopId = null } = {}) {
   const excludeSet = new Set(excludeIds.map(String));
   const radiusKm = radiusKmOverride ?? config.dispatch.radiusKm;
   const maxCandidates = config.dispatch.maxCandidates;
@@ -368,7 +368,7 @@ async function findCandidates({ lng, lat, skill, excludeIds = [], radiusKm: radi
   const nearbyIds = nearbyEntries.map((e) => e.id);
 
   if (nearbyIds.length === 0) {
-    return mongoFallback({ lng, lat, skill, excludeIds, radiusKm, skipSkillFilter });
+    return mongoFallback({ lng, lat, skill, excludeIds, radiusKm, skipSkillFilter, shopId });
   }
 
   // Filter by availability + skill + freshness in one pipelined batch
@@ -403,7 +403,7 @@ async function findCandidates({ lng, lat, skill, excludeIds = [], radiusKm: radi
   logger.info({ radiusKm, skill, filtered: filtered.length }, '[GEO] After availability+skill+freshness filter');
 
   if (filtered.length === 0) {
-    return mongoFallback({ lng, lat, skill, excludeIds, radiusKm, skipSkillFilter });
+    return mongoFallback({ lng, lat, skill, excludeIds, radiusKm, skipSkillFilter, shopId });
   }
 
   // Rating + penalty + KYC — fetch from Mongo in one query.
@@ -417,6 +417,10 @@ async function findCandidates({ lng, lat, skill, excludeIds = [], radiusKm: radi
         isBlocked: false,
         'kyc.status': 'approved',       // never dispatch to unverified workers
         rating: { $gte: minRating },    // skip workers below quality threshold
+        // Shop-routed booking (customer picked a specific shop, or a worker
+        // handed the job off to their shop mid-job) — only that shop's own
+        // workers are eligible. Never widen a shop-scoped order to the open pool.
+        ...(shopId && { shopId }),
       },
       { _id: 1, rating: 1, completedJobs: 1, penalties: 1 }
     ).lean(),
@@ -517,10 +521,10 @@ async function findCandidates({ lng, lat, skill, excludeIds = [], radiusKm: radi
   return scored.map((s) => s.workerId).filter((id) => workingIds.has(String(id)));
 }
 
-async function mongoFallback({ lng, lat, skill, excludeIds, radiusKm, skipSkillFilter = false }) {
+async function mongoFallback({ lng, lat, skill, excludeIds, radiusKm, skipSkillFilter = false, shopId = null }) {
   const effectiveRadius = radiusKm ?? config.dispatch.radiusKm;
   const minRating = config.dispatch.minWorkerRating ?? 3.0;
-  logger.info({ lng, lat, skill, radiusKm: effectiveRadius, skipSkillFilter }, 'Falling back to Mongo $near query');
+  logger.info({ lng, lat, skill, radiusKm: effectiveRadius, skipSkillFilter, shopId }, 'Falling back to Mongo $near query');
 
   const query = {
     isOnline: true,
@@ -537,6 +541,7 @@ async function mongoFallback({ lng, lat, skill, excludeIds, radiusKm, skipSkillF
     },
   };
   if (!skipSkillFilter) query.skills = skill;
+  if (shopId) query.shopId = shopId;
 
   const docs = await Worker.find(query)
     .limit(config.dispatch.maxCandidates)

@@ -126,6 +126,11 @@ export const ordersApi = apiSlice.injectEndpoints({
     getOrderInvoiceUrl: builder.query<{ url?: string } | string, string>({
       query: (id) => ({ url: `/orders/${id}/invoice` }),
     }),
+    /** Pick & Go — customer confirms/declines a worker's mid-job shop handoff request. */
+    respondShopHandoff: builder.mutation<Order, { id: string; accept: boolean }>({
+      query: ({ id, accept }) => ({ url: `/orders/${id}/shop-handoff/respond`, method: 'POST', data: { accept } }),
+      invalidatesTags: (_r, _e, a) => ['Order', { type: 'Order', id: a.id }],
+    }),
 
     // ── In-order chat ────────────────────────────────────────────────────────
     getChatMessages: builder.query<ChatMessage[], { orderId: string; limit?: number }>({
@@ -160,6 +165,7 @@ export const {
   useRebookOrderMutation,
   useRateOrderMutation,
   useLazyGetOrderInvoiceUrlQuery,
+  useRespondShopHandoffMutation,
   useGetChatMessagesQuery,
   useSendChatMessageMutation,
 } = ordersApi;

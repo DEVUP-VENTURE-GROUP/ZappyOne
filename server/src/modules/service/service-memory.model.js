@@ -5,6 +5,7 @@
  * No competitor in India has this.
  */
 const mongoose = require('mongoose');
+const { pointField, stripEmptyPoints } = require('../../utils/geo-point');
 
 const serviceEntrySchema = new mongoose.Schema({
   orderId:     { type: mongoose.Schema.Types.ObjectId, ref: 'Order' },
@@ -24,10 +25,7 @@ const serviceMemorySchema = new mongoose.Schema({
   service:   { type: String, required: true },  // e.g. 'ac_repair'
   label:     { type: String, maxlength: 100 },  // e.g. "Living Room AC", "Kitchen Sink"
   address:   { type: String, maxlength: 300 },
-  location: {
-    type: { type: String, enum: ['Point'], default: 'Point' },
-    coordinates: [Number],
-  },
+  location: pointField(),
   entries:   [serviceEntrySchema],
   lastServiceAt: Date,
   nextReminderAt: Date,  // computed: suggest next service date
@@ -35,6 +33,8 @@ const serviceMemorySchema = new mongoose.Schema({
 }, { timestamps: true });
 
 serviceMemorySchema.index({ userId: 1, service: 1 });
+stripEmptyPoints(serviceMemorySchema, ['location']);
+
 serviceMemorySchema.index({ location: '2dsphere' });
 
 module.exports = mongoose.model('ServiceMemory', serviceMemorySchema);

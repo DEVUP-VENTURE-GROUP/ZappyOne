@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Phone, CheckCircle, MapPin, AlertCircle, Loader2, ShieldCheck, RefreshCw,
   X, Wallet, HeadphonesIcon, FileText,
-  Repeat2, CheckCircle2, HelpCircle, Share2, ShieldAlert, Copy,
+  Repeat2, CheckCircle2, HelpCircle, Share2, ShieldAlert, Copy, Store,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -14,6 +14,7 @@ import {
   useGetOrderQuery, useGetOrderTimelineQuery, useGetCancelPreviewQuery,
   useCancelOrderMutation, useRateOrderMutation, useGetPriceRevisionQuery,
   useGetPricingConfigQuery, useSendTipMutation, useGetWalletQuery,
+  useRespondShopHandoffMutation, useGetShopProfileQuery,
 } from '../services/api';
 import { API_BASE } from '../services/apiBase';
 import { useOrderSocket, useSocketStatus } from '../hooks/useSocket';
@@ -41,6 +42,38 @@ import {
 } from '../components/tracking/redesign';
 
 import { staggerContainer, fadeInUp } from '../lib/animations';
+
+/* Pick & Go handoff — worker asked mid-job to send this order to their shop;
+   customer must confirm before fulfillmentMode actually changes. */
+function ShopHandoffBanner({ shopId, reason, onRespond, loading }) {
+  const { data } = useGetShopProfileQuery(shopId, { skip: !shopId });
+  const shopName = data?.shop?.businessName || 'the shop';
+  return (
+    <motion.div variants={fadeInUp} className="rounded-2xl p-4 ring-1 ring-indigo-200 bg-indigo-50 lg:[column-span:all]">
+      <div className="flex items-start gap-3">
+        <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shrink-0 shadow-sm">
+          <Store size={18} className="text-indigo-600" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-bold text-sm text-indigo-900">This repair needs shop tools</p>
+          <p className="text-xs text-indigo-700 mt-0.5 leading-relaxed">
+            {reason ? `${reason} — ` : ''}Your worker suggests sending it to <span className="font-semibold">{shopName}</span>. Bring it there to continue.
+          </p>
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-2 mt-3">
+        <button onClick={() => onRespond(true)} disabled={loading}
+          className="flex items-center justify-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold text-sm py-2.5 rounded-xl transition">
+          {loading ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />} Confirm
+        </button>
+        <button onClick={() => onRespond(false)} disabled={loading}
+          className="flex items-center justify-center gap-1.5 bg-white text-indigo-700 ring-1 ring-indigo-200 font-bold text-sm py-2.5 rounded-xl transition">
+          Decline
+        </button>
+      </div>
+    </motion.div>
+  );
+}
 
 const CANCEL_REASONS = [
   { id: 'changed_mind',      label: 'Changed my mind' },
@@ -101,6 +134,7 @@ export default function OrderTrackingPage() {
   });
 
   const order = data?.order;
+  const [respondShopHandoff, { isLoading: respondingHandoff }] = useRespondShopHandoffMutation();
 
   // Seed socket store from the initial REST payload
   useEffect(() => {
@@ -256,15 +290,37 @@ export default function OrderTrackingPage() {
     }
   }
 
-  function triggerSOS() {
+  async function triggerSOS() {
     setShowSOSConfirm(false);
-    fetch(`${API_BASE}/api/orders/${id}/sos`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ lat: pickup?.lat, lng: pickup?.lng }),
-    }).catch(() => {});
+
+    /*
+     * The dialler first, always.
+     *
+     * Whatever happens to our request, 112 is the thing that actually brings
+     * help, and it must not wait on a network round-trip from someone who is
+     * frightened.
+     */
     window.location.href = 'tel:112';
-    toast('SOS triggered — emergency services dialled', { icon: '🚨', duration: 6000 });
+
+    /*
+     * Then tell Zappy — and say honestly whether that worked.
+     *
+     * This used to swallow every failure and promise "support has been
+     * notified" regardless. It was posting to a route that did not exist, so
+     * the promise was false every single time: ops never saw the incident.
+     */
+    try {
+      const res = await fetch(`${API_BASE}/api/orders/${id}/sos`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lat: pickup?.lat, lng: pickup?.lng }),
+      });
+      if (!res.ok) throw new Error(String(res.status));
+      toast('SOS sent — 112 dialled and our safety team has been alerted', { icon: '🚨', duration: 8000 });
+    } catch {
+      // Never claim we were told when we were not.
+      toast.error('112 dialled. We could not reach Zappy support — please call us on the help line too.', { duration: 10000 });
+    }
   }
 
   function shareTripLink() {
@@ -356,6 +412,21 @@ export default function OrderTrackingPage() {
           className="w-full max-w-2xl lg:max-w-4xl mx-auto px-4 sm:px-6 pt-4 space-y-3.5 lg:space-y-0 lg:columns-2 lg:gap-4 lg:[&>*]:mb-3.5 lg:[&>*]:break-inside-avoid"
           variants={staggerContainer} initial="initial" animate="animate"
         >
+
+          {/* Pick & Go handoff — worker asked to send the job to their shop */}
+          {order?.shopHandoff?.status === 'pending_confirmation' && (
+            <ShopHandoffBanner
+              shopId={order.shopHandoff.shopId}
+              reason={order.shopHandoff.reason}
+              onRespond={async (accept) => {
+                try {
+                  await respondShopHandoff({ id: order._id, accept }).unwrap();
+                  toast.success(accept ? 'Confirmed — bring your device to the shop' : 'Declined — continuing on-site');
+                } catch (err) { toast.error(err?.data?.error || 'Failed to respond'); }
+              }}
+              loading={respondingHandoff}
+            />
+          )}
 
           {/* Failed state — expansion hype card */}
           {status === 'failed' && (

@@ -168,6 +168,38 @@ export function useOrderSocket(orderId, callbacks = {}) {
  * without any client-side room rejoin. We only need to re-register event
  * listeners — which useEffect does on remount / token change.
  */
+/**
+ * Repair work arriving in real time.
+ *
+ * Separate from the order-offer socket because the two are different products
+ * with different payloads — sharing one handler would mean every repair change
+ * re-rendering the order popup and vice versa. The server addresses these to
+ * the provider's own room (worker:<id> / shop:<id>), so a shop owner and an
+ * independent technician both receive them without extra wiring.
+ */
+export function useRepairOfferSocket(onOffer, onClosed, onUpdate) {
+  const { accessToken: token } = useSelector(selectAuth);
+
+  useEffect(() => {
+    if (!token) return undefined;
+    const socket = getSocket(token);
+
+    const offerHandler = (payload) => onOffer?.(payload);
+    const closedHandler = (payload) => onClosed?.(payload);
+    const updateHandler = (payload) => onUpdate?.(payload);
+
+    socket.on('repair.offer', offerHandler);
+    socket.on('repair.offer_closed', closedHandler);
+    socket.on('repair.update', updateHandler);
+
+    return () => {
+      socket.off('repair.offer', offerHandler);
+      socket.off('repair.offer_closed', closedHandler);
+      socket.off('repair.update', updateHandler);
+    };
+  }, [token, onOffer, onClosed, onUpdate]);
+}
+
 export function useWorkerOfferSocket(onOffer, onCancelled, onForceAssigned, onBoost, onJobPulled) {
   const { accessToken: token } = useSelector(selectAuth);
 

@@ -16,17 +16,16 @@ import { ZappyLogo } from '../components/common/ZappyLogo';
 import toast from 'react-hot-toast';
 import SEO, { LOGIN_SCHEMA, BASE_URL } from '../components/SEO';
 
-/* Skills shown to first-time workers during registration. */
-const SKILLS = [
-  'puncture', 'plumbing', 'electrical', 'helper', 'carpenter', 'ac_repair',
-  'screen_replacement', 'battery_replacement', 'mason', 'bike_wash', 'car_wash',
-];
-const SKILL_LABELS = {
-  puncture: 'Puncture', plumbing: 'Plumbing', electrical: 'Electrical',
-  helper: 'Helper', carpenter: 'Carpenter', ac_repair: 'AC Repair',
-  screen_replacement: 'Screen Fix', battery_replacement: 'Battery',
-  mason: 'Mason', bike_wash: 'Bike Wash', car_wash: 'Car Wash',
-};
+/*
+ * Signing up collects a name and nothing else.
+ *
+ * This screen used to carry a fixed list of skill chips — puncture, plumbing,
+ * screen fix — which was both hardcoded and self-certified: ticking a box made
+ * you dispatchable for that work. What a worker may do is now decided by
+ * choosing a service and passing its verification, so that choice belongs in
+ * onboarding (/provider/onboarding), against the real service catalog, not in
+ * a login form against a list baked into the bundle.
+ */
 
 const PHONE_KEY = 'zappy:workerPhone';
 
@@ -171,7 +170,6 @@ export default function WorkerLoginPage() {
   });
   const [otpDigits, setOtpDigits] = useState(Array(OTP_LEN).fill(''));
   const [name, setName] = useState('');
-  const [skills, setSkills] = useState([]);
   const [step, setStep] = useState('phone');
   const [otpMeta, setOtpMeta] = useState({ cooldownSec: 30, resendsLeft: 3 });
   const [isNewUser, setIsNewUser] = useState(true);
@@ -273,11 +271,14 @@ export default function WorkerLoginPage() {
         phone,
         otp,
         ...(name.trim() ? { name: name.trim() } : {}),
-        ...(skills.length ? { skills } : {}),
       }).unwrap();
       const profile = r.worker;
       dispatch(setAuth({ accessToken: r.accessToken, refreshToken: r.refreshToken, profile, role: 'worker' }));
-      nav(loc.state?.from || '/worker', { replace: true });
+
+      // A brand-new worker has nothing they are allowed to do yet, so send them
+      // straight to picking a service rather than to an empty dashboard.
+      const next = loc.state?.from || (isNewUser ? '/provider/onboarding' : '/worker');
+      nav(next, { replace: true });
     } catch (err) {
       const detail = typeof err.data?.details?.[0] === 'string' ? err.data.details[0] : err.data?.error || 'Verification failed';
       toast.error(detail);
@@ -603,31 +604,10 @@ export default function WorkerLoginPage() {
                           />
                         </div>
                       </div>
-                      <div>
-                        <label className="block text-[11px] font-black uppercase tracking-[0.1em] text-slate-500 mb-2.5">
-                          Select Your Skills
-                        </label>
-                        <div className="flex flex-wrap gap-2">
-                          {SKILLS.map((s) => {
-                            const on = skills.includes(s);
-                            return (
-                              <button
-                                key={s}
-                                type="button"
-                                onClick={() => setSkills((p) => (on ? p.filter((x) => x !== s) : [...p, s]))}
-                                className={`px-3.5 py-2 rounded-xl text-xs sm:text-[13px] font-semibold transition-all border ${
-                                  on
-                                    ? 'bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-500/20'
-                                    : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
-                                }`}
-                              >
-                                {on && <CheckCircle2 size={13} className="inline-block mr-1 -mt-0.5" />}
-                                {SKILL_LABELS[s]}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
+                      <p className="text-[12.5px] leading-relaxed text-slate-500">
+                        Next you'll choose what you work on — phones, laptops and more — and we'll
+                        verify you for it. That takes a couple of minutes.
+                      </p>
                     </div>
                   )}
 
