@@ -16,6 +16,7 @@ import { useLogoutMutation } from '../services/api';
 import { adminPath } from '../config/admin';
 
 const Overview = lazy(() => import('./admin/Overview'));
+const Helping = lazy(() => import('./admin/Helping'));
 const Orders = lazy(() => import('./admin/Orders'));
 const AdminUsers = lazy(() => import('./admin/Users'));
 const Workers = lazy(() => import('./admin/Workers'));
@@ -162,6 +163,7 @@ const NAV_TREES = [
       { id: 'repair-two-wheeler', label: 'Two-Wheeler', icon: Bike },
       { id: 'repair-four-wheeler', label: 'Four-Wheeler', icon: Car },
       { id: 'repair-water-tank-care', label: 'Water & Tank Care', icon: Droplets },
+      { id: 'helping', label: 'Helping Services', icon: ShoppingBag },
     ],
   },
 ];
@@ -179,6 +181,7 @@ const SECTION_MAP = {
   'repair-two-wheeler': RepairTwoWheeler,
   'repair-four-wheeler': RepairFourWheeler,
   'repair-water-tank-care': RepairWaterTankCare,
+  helping: Helping,
   kyc: AdminKycReview, pricing: Pricing, services: Services, wallet: AdminWallet,
   disputes: Disputes, payouts: Payouts, intelligence: Intelligence,
   analytics: Analytics, business: BusinessIntelligence, notifications: NotificationsAdmin, heatmap: Heatmap,

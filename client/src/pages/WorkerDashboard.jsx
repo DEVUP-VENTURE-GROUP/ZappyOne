@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  LogOut, MapPin, Navigation, Loader2, Briefcase,
+  LogOut, MapPin, Navigation, Loader2, Briefcase, ShoppingBag,
   Flame, ChevronRight, TrendingUp, CheckCircle,
   AlertTriangle, X, Star, Award, Target,
   Wifi, WifiOff, BadgeCheck, Trophy, Zap, Gem,
@@ -550,6 +550,9 @@ export default function WorkerDashboard() {
     { Icon: Star,             tone: 'violet', label: 'Your Rating',      value: ratingDisplay,        sub: 'Reviews',      onClick: () => nav('/worker/appeals') },
     { Icon: Clock,            tone: 'cyan',   label: "Today's Hours",    value: hoursLabel,           sub: null },
     { Icon: CheckCircle,      tone: 'rose',   label: 'Acceptance Rate',  value: acceptRate != null ? `${acceptRate}%` : '0%', sub: 'View details', onClick: () => goSection('performance') },
+    // The sidebar carries this on desktop, but it is `lg:` only — most workers
+    // are on a phone, so the errand queue needs a reachable tile here too.
+    { Icon: ShoppingBag,      tone: 'blue',   label: 'Helping Errands',  value: 'Open',               sub: 'Shopping & returns', onClick: () => nav('/worker/helping') },
   ];
 
   return (
