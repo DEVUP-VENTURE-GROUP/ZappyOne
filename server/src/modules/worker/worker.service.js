@@ -68,6 +68,16 @@ async function goOnline({ workerId, lng, lat }) {
   await pricingService.recordSupply(worker._id, lat, lng);
   // Seed GPS baseline so first updateLocation has a reference point.
   redis.set(`worker:lastloc:${workerId}`, JSON.stringify({ lat, lng, ts: Date.now() }), 'EX', 600).catch(() => {});
+
+  /*
+   * An individual has no registered address (unlike a shop) — this is the
+   * first moment their real position is known at all, and the first chance
+   * to auto-provision the service area / pet capability their approved
+   * lines need to ever be matched to a job. Never blocks going online.
+   */
+  require('../onboarding/auto-provision.service')
+    .provisionCoverage({ workerId, coordinates: [lng, lat] })
+    .catch((err) => logger.warn({ err: err.message, workerId }, '[worker] auto-provision on goOnline failed'));
   return worker;
 }
 

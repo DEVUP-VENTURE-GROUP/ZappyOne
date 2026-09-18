@@ -259,6 +259,26 @@ async function decide({ enrolmentId, decision, note = '', adminId }) {
   enrolment.reviewedAt = new Date();
   enrolment.reviewNote = note;
   await enrolment.save();
+
+  /*
+   * A shop's registered address is real and known the moment they are
+   * approved — unlike an individual worker, who has no registered address at
+   * all and is only provisioned once they report a real GPS fix (see
+   * worker.service.js goOnline). Best-effort: an approval must never fail
+   * because provisioning did.
+   */
+  if (decision === 'approved' && enrolment.shopId) {
+    const Shop = require('../shop/shop.model');
+    const shop = await Shop.findById(enrolment.shopId).select('address.location').lean();
+    const coordinates = shop?.address?.location?.coordinates;
+    if (coordinates?.length === 2) {
+      const { provisionCoverage } = require('./auto-provision.service');
+      await provisionCoverage({ shopId: enrolment.shopId, coordinates }).catch((err) => {
+        require('../../utils/logger').warn({ err: err.message }, '[onboarding] auto-provision on approval failed');
+      });
+    }
+  }
+
   return enrolment;
 }
 
