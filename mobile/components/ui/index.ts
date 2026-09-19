@@ -41,15 +41,21 @@ export {
   Avatar,
   Rating,
   PriceRow,
-  ScreenHeader,
   formatRupees,
 } from './Misc';
 export type {
   AvatarProps,
   RatingProps,
   PriceRowProps,
-  ScreenHeaderProps,
 } from './Misc';
+
+// Moved out of ./Misc once it grew a subtitle, a rule and safe-area handling.
+// The barrel path is unchanged, so existing imports keep working.
+export { ScreenHeader } from './ScreenHeader';
+export type { ScreenHeaderProps } from './ScreenHeader';
+
+export { HScrollRail } from './HScrollRail';
+export type { HScrollRailProps } from './HScrollRail';
 
 export { BottomSheet } from './BottomSheet';
 export type { BottomSheetProps } from './BottomSheet';

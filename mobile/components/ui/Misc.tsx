@@ -1,16 +1,14 @@
 /**
- * Small shared primitives: Divider, Avatar, Rating, PriceRow, ScreenHeader.
+ * Small shared primitives: Divider, Avatar, Rating, PriceRow.
  * Kept together because each is a handful of lines and they are almost always
  * imported alongside one another.
  */
 
 import React, { memo } from 'react';
 import { Image, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
-import { ChevronLeft, Star, User } from 'lucide-react-native';
-import { IconButton } from './IconButton';
-import { Text, Heading } from './Text';
+import { Star, User } from 'lucide-react-native';
+import { Text } from './Text';
 import { colors, slate, accent } from '../../theme/colors';
-import { radius } from '../../theme/radius';
 import { spacing } from '../../theme/spacing';
 import { sizes } from '../../theme/dimensions';
 
@@ -128,37 +126,12 @@ function PriceRowBase({ label, value, emphasis, muted, style }: PriceRowProps) {
 }
 export const PriceRow = memo(PriceRowBase);
 
-export interface ScreenHeaderProps {
-  title?: string;
-  onBack?: () => void;
-  /** Rendered at the trailing edge — e.g. a notification bell. */
-  right?: React.ReactNode;
-  style?: StyleProp<ViewStyle>;
-}
-
-/** Consistent back-and-title bar, matching the website's `.page-header`. */
-function ScreenHeaderBase({ title, onBack, right, style }: ScreenHeaderProps) {
-  return (
-    <View style={[styles.header, style]}>
-      {onBack ? (
-        <IconButton
-          icon={<ChevronLeft size={20} color={colors.textHeading} />}
-          onPress={onBack}
-          accessibilityLabel="Go back"
-        />
-      ) : null}
-      {title ? (
-        <Heading level={3} style={styles.headerTitle} numberOfLines={1}>
-          {title}
-        </Heading>
-      ) : (
-        <View style={styles.headerTitle} />
-      )}
-      {right}
-    </View>
-  );
-}
-export const ScreenHeader = memo(ScreenHeaderBase);
+/**
+ * `ScreenHeader` used to live here. It moved to its own file once it grew a
+ * subtitle, a bottom rule and safe-area handling — see ./ScreenHeader.tsx.
+ * It is still re-exported from `@/components/ui`, so nothing that imported it
+ * from the barrel had to change.
+ */
 
 const styles = StyleSheet.create({
   divider: {
@@ -182,17 +155,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: spacing.xs,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    height: sizes.headerHeight,
-    paddingHorizontal: spacing.lg,
-    backgroundColor: colors.surface,
-  },
-  headerTitle: {
-    flex: 1,
   },
 });
 
