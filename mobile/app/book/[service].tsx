@@ -6,6 +6,27 @@
  * that suits this flow: everything except the address is a one-tap choice, so
  * splitting it across routes would cost taps and lose context.
  *
+ * ── THIS SCREEN USES THE LEGACY EXPRESS NAMESPACE, ON PURPOSE ──────────────
+ * It reads `/catalog/services`, and it must NOT be switched to the live
+ * ServiceLine catalog (`GET /provider/onboarding/catalog`), however retired
+ * the old endpoint looks next to it.
+ *
+ * `:service` here is an `Order.service` value — one of the 79 concrete JOBS in
+ * the enum on `order.model.js` (`screen_replacement`, `laptop_slow`). That is
+ * the namespace `POST /orders` and `GET /orders/quote` accept, so
+ * `/catalog/services` is the MATCHING catalog for this screen, not a stale one.
+ * The website's own BookingPage resolves its service the same way.
+ *
+ * The live catalog's codes are SERVICE LINES (`mobile_repair`, `laptop_repair`)
+ * — a line contains many jobs. Only 3 of its 14 live codes even appear in the
+ * order enum, and those three belong to the pet booking pipeline, so feeding
+ * them to `POST /orders` would create the wrong kind of booking while looking
+ * correct. The other 11 would be rejected outright by Mongoose.
+ *
+ * Live-catalog lines reach their own pipelines (`POST /repair/bookings`,
+ * `/pet/bookings`, `/helping/tasks`), which this screen does not implement.
+ * So: leave `useGetServicesQuery` and `categoryForService` where they are.
+ *
  * ── WHO OWNS THE PRICE ─────────────────────────────────────────────────────
  * The server does. `GET /orders/quote` is the only source of a price here and
  * nothing on this screen recomputes one. Two client-side arithmetic operations

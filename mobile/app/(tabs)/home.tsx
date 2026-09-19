@@ -31,17 +31,21 @@
  * curation of ours — and hands off to the Services tab for the rest. The
  * ordering decision stays server-side; the truncation is purely presentation.
  *
- * ── BOOKING BOUNDARY (Batch 4) ─────────────────────────────────────────────
- * "Book again" still routes to `/book/{order.service}` using the code from a
- * past ORDER, not from the catalog. That is deliberate: order service codes
- * come from the orders API and are a different namespace from catalog line
- * codes. It is left exactly as it was rather than fake-mapped onto the new
- * model — reconciling the booking screen is its own batch.
+ * ── BOOKING BOUNDARY ───────────────────────────────────────────────────────
+ * Two namespaces meet on this screen and they are NOT interchangeable:
+ *
+ *   catalog `service.code`  → a SERVICE LINE   (`mobile_repair`)
+ *   `Order.service`         → a concrete JOB   (`screen_replacement`)
+ *
+ * The catalog sections above speak the first. "Book again" speaks the second,
+ * and re-places the past order by ID so no translation is needed at all — see
+ * `handleRebook`. Nothing here maps one onto the other, because the data model
+ * does not contain that mapping.
  * ----------------------------------------------------------------------------
  */
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Alert, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Location from 'expo-location';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -71,10 +75,10 @@ import { HomeHero } from '../../components/home/HomeHero';
 import { ServiceIllustration } from '../../components/catalog/ServiceIllustration';
 import { illustrationFor } from '../../components/catalog/illustrations/resolve';
 import { useGetLiveCatalogQuery } from '../../services/api/catalogApi';
-import { useListOrdersQuery } from '../../services/api/ordersApi';
+import { useListOrdersQuery, useRebookOrderMutation } from '../../services/api/ordersApi';
 import { useListNotificationsQuery } from '../../services/api/notificationsApi';
 import { useGetAddressesQuery } from '../../services/api/authApi';
-import { getApiErrorMessage } from '../../services/api/apiSlice';
+import { getApiErrorBody, getApiErrorMessage } from '../../services/api/apiSlice';
 import type { RootState } from '../../store';
 import { colors, indigo, zappy } from '../../theme/colors';
 import { radius } from '../../theme/radius';
@@ -83,6 +87,7 @@ import {
   ACTIVE_ORDER_STATUSES,
   type LiveCatalogCategory,
   type LiveCatalogService,
+  type Order,
 } from '../../types/api';
 
 const STATUS_LABEL: Record<string, string> = {
@@ -199,6 +204,70 @@ export default function HomeScreen() {
     refetchOrders();
     refetchCatalog();
   }, [refetchOrders, refetchCatalog]);
+
+  /**
+   * Book again — re-place a past order by its ID.
+   *
+   * ── WHY BY ID AND NOT BY SERVICE CODE ──────────────────────────────────
+   * This used to push `/book/{order.service}`, which quietly assumed the
+   * order's service code and the catalog's service code were the same thing.
+   * They are not. `Order.service` is an enum of 79 concrete JOBS
+   * (`screen_replacement`, `laptop_slow`); the live catalog's codes are
+   * SERVICE LINES (`mobile_repair`, `laptop_repair`) — a line contains many
+   * jobs. Only 3 of the 14 live line codes even appear in the order enum, and
+   * those three (`pet_grooming`, `pet_transport`, `pet_vet_assist`) belong to
+   * the pet booking pipeline, so treating them as order codes would create
+   * the wrong KIND of booking while looking like it worked.
+   *
+   * `POST /orders/{id}/rebook` sidesteps the whole question: the server clones
+   * the past order itself, so no code is ever re-derived or re-validated
+   * against any catalog. This is the same approach the website takes, and the
+   * same mutation this app already uses on the tracking screen.
+   */
+  const [rebookOrder] = useRebookOrderMutation();
+  const [rebookingId, setRebookingId] = useState<string | null>(null);
+  /**
+   * Synchronous latch. RTK Query's `isLoading` only flips on the NEXT render,
+   * so a fast double-tap fires two rebooks before it turns true — the same
+   * trap the booking screen documents. A ref is updated immediately.
+   */
+  const rebooking = useRef(false);
+
+  const handleRebook = useCallback(
+    async (order: Order) => {
+      if (rebooking.current) return;
+      rebooking.current = true;
+      setRebookingId(order._id);
+
+      try {
+        const next = await rebookOrder(order._id).unwrap();
+        router.push(`/tracking/order/${next._id}` as never);
+      } catch (err) {
+        const message = getApiErrorMessage(err, 'Please try again.');
+        // The server attaches `activeOrderId` to its 409 and the error
+        // middleware spreads unknown fields into the body, so it reaches us —
+        // it just isn't in the shared `ApiErrorBody` type, hence the narrow.
+        const activeOrderId = (getApiErrorBody(err) as { activeOrderId?: string } | null)
+          ?.activeOrderId;
+
+        if (activeOrderId) {
+          Alert.alert('You already have a booking', message);
+          router.push(`/tracking/order/${activeOrderId}` as never);
+        } else {
+          // Same fallback as the website: drop the customer into the normal
+          // booking flow for that service rather than stranding them.
+          Alert.alert('Could not rebook', message);
+          router.push(`/book/${order.service}` as never);
+        }
+      } finally {
+        // Home stays mounted behind the pushed screen, so the latch has to be
+        // released or a returning customer could never rebook again.
+        rebooking.current = false;
+        setRebookingId(null);
+      }
+    },
+    [rebookOrder, router],
+  );
 
   return (
     <View style={styles.root}>
@@ -424,9 +493,8 @@ export default function HomeScreen() {
         </View>
 
         {/* ── Book again ───────────────────────────────────────────────────
-            Routes on a PAST ORDER's service code, which is the orders API's
-            namespace, not the catalog's. Left as-is on purpose — see the
-            booking-boundary note at the top of this file. */}
+            Re-places the past order by ID via `POST /orders/{id}/rebook`.
+            See `handleRebook` for why this cannot go through the catalog. */}
         {recentCompleted.length > 0 ? (
           <View style={styles.section}>
             <SectionHeader
@@ -437,12 +505,19 @@ export default function HomeScreen() {
             <View style={styles.stack}>
               {recentCompleted.map((order) => {
                 const drawing = illustrationFor({ code: order.service }, null);
+                const busy = rebookingId === order._id;
                 return (
                   <Card
                     key={order._id}
                     padding={spacing.md}
-                    onPress={() => router.push(`/book/${order.service}` as never)}
-                    accessibilityLabel={`Book ${humanizeCode(order.service)} again`}
+                    // Disabled while any rebook is in flight, matching how the
+                    // tracking screen withholds its own rebook handler.
+                    onPress={rebookingId ? undefined : () => handleRebook(order)}
+                    accessibilityLabel={
+                      busy
+                        ? `Rebooking ${humanizeCode(order.service)}`
+                        : `Book ${humanizeCode(order.service)} again`
+                    }
                   >
                     <View style={styles.rebookRow}>
                       <View style={styles.rebookIcon}>
@@ -461,7 +536,11 @@ export default function HomeScreen() {
                             : ''}
                         </Text>
                       </View>
-                      {order.pricing?.total != null ? (
+                      {busy ? (
+                        <Text variant="bodySmall" weight="bold" color={colors.primary}>
+                          Rebooking…
+                        </Text>
+                      ) : order.pricing?.total != null ? (
                         <Text variant="body" weight="bold" color={colors.textHeading}>
                           {formatRupees(order.pricing.total)}
                         </Text>
