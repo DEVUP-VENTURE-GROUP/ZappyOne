@@ -1,5 +1,25 @@
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { Sparkles, Lightbulb, Flower2, ChefHat, Wrench } from 'lucide-react';
+import { isFestiveActive } from './festive';
+
+/**
+ * Artwork.
+ *
+ * These tiles hotlinked five images from `images.unsplash.com`, and every one
+ * of them failed to load — the festive block rendered four broken-image icons
+ * as the first thing a visitor saw. There is no licensed local festive art in
+ * the project, so rather than swap one external dependency for another each
+ * tile now draws a tinted glyph. It is always present, costs no request, and
+ * matches the catalog tile's own art-less treatment.
+ */
+const CATEGORY_ART = {
+  'festive-cleaning': { Icon: Sparkles,  tint: 'from-rose-100 to-amber-100',   fg: 'text-rose-500'   },
+  'lighting-setup':   { Icon: Lightbulb, tint: 'from-amber-100 to-yellow-100', fg: 'text-amber-600'  },
+  'pandal-decor':     { Icon: Flower2,   tint: 'from-fuchsia-100 to-rose-100', fg: 'text-fuchsia-600' },
+  'kitchen-assist':   { Icon: ChefHat,   tint: 'from-orange-100 to-amber-100', fg: 'text-orange-600' },
+  'emergency-repairs':{ Icon: Wrench,    tint: 'from-sky-100 to-indigo-100',   fg: 'text-indigo-600' },
+};
 
 const CATEGORIES = [
   {
@@ -7,7 +27,6 @@ const CATEGORIES = [
     title: 'Festive Home Cleaning',
     price: '₹499',
     originalPrice: '₹999',
-    img: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=400&auto=format&fit=crop', // cleaning
     colSpan: 'col-span-1',
     rowSpan: 'row-span-2',
     bgColor: 'bg-white',
@@ -16,7 +35,6 @@ const CATEGORIES = [
   {
     id: 'lighting-setup',
     title: 'Smart Lighting Setup',
-    img: 'https://images.unsplash.com/photo-1563454790312-32b0a48b59d9?q=80&w=200&auto=format&fit=crop', // lights
     colSpan: 'col-span-1',
     rowSpan: 'row-span-1',
     bgColor: 'bg-white',
@@ -25,7 +43,6 @@ const CATEGORIES = [
   {
     id: 'pandal-decor',
     title: 'Puja & Pandal Decor',
-    img: 'https://images.unsplash.com/photo-1631558223947-bb71891d4d35?q=80&w=200&auto=format&fit=crop', // decor
     colSpan: 'col-span-1',
     rowSpan: 'row-span-1',
     bgColor: 'bg-white',
@@ -34,7 +51,6 @@ const CATEGORIES = [
   {
     id: 'kitchen-assist',
     title: 'Hosting & Kitchen Help',
-    img: 'https://images.unsplash.com/photo-1556910103-1c02745a872f?q=80&w=200&auto=format&fit=crop', // cooking/assist
     colSpan: 'col-span-1',
     rowSpan: 'row-span-1',
     bgColor: 'bg-white',
@@ -43,7 +59,6 @@ const CATEGORIES = [
   {
     id: 'emergency-repairs',
     title: 'Emergency Repairs',
-    img: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?q=80&w=200&auto=format&fit=crop', // tools
     colSpan: 'col-span-1',
     rowSpan: 'row-span-1',
     bgColor: 'bg-white',
@@ -53,6 +68,10 @@ const CATEGORIES = [
 
 export default function FestiveCategories() {
   const nav = useNavigate();
+
+  // After the hook, never before it — a conditional hook call would break the
+  // rules of hooks the moment the campaign window flips.
+  if (!isFestiveActive()) return null;
 
   const container = {
     hidden: { opacity: 0 },
@@ -102,34 +121,48 @@ export default function FestiveCategories() {
               )}
             </div>
             <div className="flex-1 flex items-end justify-center pt-2 relative">
-              <img 
-                src={cat.img} 
-                alt={cat.title}
-                className="w-24 h-24 md:w-32 md:h-32 object-cover rounded-t-xl group-hover:scale-110 transition-transform duration-500 ease-out"
-                style={{
-                   maskImage: 'linear-gradient(to top, rgba(0,0,0,1) 60%, rgba(0,0,0,0) 100%)',
-                   WebkitMaskImage: 'linear-gradient(to top, rgba(0,0,0,1) 60%, rgba(0,0,0,0) 100%)'
-                }}
-              />
+              {(() => {
+                const art = CATEGORY_ART[cat.id] || CATEGORY_ART['emergency-repairs'];
+                const { Icon, tint, fg } = art;
+                return (
+                  <div
+                    className={`w-24 h-24 md:w-32 md:h-32 rounded-t-xl bg-gradient-to-br ${tint} flex items-center justify-center group-hover:scale-110 transition-transform duration-500 ease-out`}
+                    style={{
+                      maskImage: 'linear-gradient(to top, rgba(0,0,0,1) 60%, rgba(0,0,0,0) 100%)',
+                      WebkitMaskImage: 'linear-gradient(to top, rgba(0,0,0,1) 60%, rgba(0,0,0,0) 100%)',
+                    }}
+                    aria-hidden="true"
+                  >
+                    <Icon size={34} strokeWidth={1.6} className={fg} />
+                  </div>
+                );
+              })()}
             </div>
           </motion.div>
         ))}
       </motion.div>
       
-      {/* Ganesha Centerpiece (Using a vibrant abstract placeholder to match vibe) */}
-      <div className="mt-8 relative h-48 md:h-64 flex justify-center overflow-hidden">
-         <motion.img
-            initial={{ y: 50, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ type: "spring", stiffness: 200, damping: 20, delay: 0.4 }}
-            src="https://images.unsplash.com/photo-1572943187122-83b63d76e73c?q=80&w=400&auto=format&fit=crop"
-            alt="Lord Ganesha"
-            className="h-full object-contain drop-shadow-2xl z-10"
-            style={{ mixBlendMode: 'multiply' }}
-         />
-         {/* Decorative leaves */}
-         <div className="absolute top-1/2 -left-4 w-16 h-16 bg-pink-300 rounded-full mix-blend-multiply filter blur-2xl opacity-50" />
-         <div className="absolute top-1/2 -right-4 w-16 h-16 bg-orange-300 rounded-full mix-blend-multiply filter blur-2xl opacity-50" />
+      {/* Centrepiece. Was a hotlinked Unsplash photograph that did not load and
+          rendered as a broken-image icon. Replaced with a purely decorative
+          motif — no request, nothing to break, and no depiction of a deity
+          sourced from a stock search. */}
+      <div className="mt-8 relative h-32 md:h-40 flex items-center justify-center overflow-hidden">
+        <motion.div
+          initial={{ y: 30, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ type: 'spring', stiffness: 200, damping: 20, delay: 0.4 }}
+          className="relative z-10 flex flex-col items-center gap-2"
+        >
+          <span className="text-5xl md:text-6xl leading-none" role="img" aria-label="Festive lamp">
+            🪔
+          </span>
+          <span className="text-[#C0265F] font-bold text-sm tracking-wide">
+            Ganpati Bappa Morya
+          </span>
+        </motion.div>
+        {/* Decorative glow */}
+        <div className="absolute top-1/2 -left-4 w-16 h-16 bg-pink-300 rounded-full mix-blend-multiply filter blur-2xl opacity-50" />
+        <div className="absolute top-1/2 -right-4 w-16 h-16 bg-orange-300 rounded-full mix-blend-multiply filter blur-2xl opacity-50" />
       </div>
       
       {/* Festive Top Picks */}

@@ -1,7 +1,11 @@
 import { motion } from 'framer-motion';
 import { Sparkles } from 'lucide-react';
+import { isFestiveActive } from './festive';
 
 export default function GaneshFestiveHeader() {
+  // Outside the campaign window Home renders its normal hero. See ./festive.js.
+  if (!isFestiveActive()) return null;
+
   // Simple floating animation for petals/leaves in the background
   const floatingVariants = {
     animate: {
