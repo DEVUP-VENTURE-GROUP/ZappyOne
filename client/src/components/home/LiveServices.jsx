@@ -11,6 +11,7 @@ import {
   PackagePlus, Navigation, Search, Square,
 } from 'lucide-react';
 import { useLiveCatalogQuery } from '../../services/api';
+import { ServiceCharacter, characterFor } from '../catalog/serviceCharacters';
 
 /**
  * What a customer can book today, and what each service covers.
@@ -224,14 +225,26 @@ export function CategoryTile({ category, onOpen, fallbackIcon, art = DEFAULT_ART
 function ServiceCard({ service, onOpenService, onOpenCategory, art = DEFAULT_ART }) {
   const Icon = ICONS[service.icon] || Wrench;
   const coverage = service.coverage || [];
+  // Resolution order: artwork the CATALOG supplies wins, because an operator
+  // uploading a picture is a deliberate act; then this service's character;
+  // then the domain-tinted icon. Every step degrades, none can render torn.
+  const character = service.imageUrl ? null : characterFor(service.code);
 
   return (
     <div className="overflow-hidden rounded-3xl bg-white ring-1 ring-slate-200/70 transition duration-200 hover:ring-slate-300 hover:shadow-[0_18px_34px_-24px_rgba(15,23,42,0.35)]">
       <button onClick={onOpenService} className="group flex w-full items-center gap-4 p-4 text-left">
-        <span className={`flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl ${art.chip}`}>
-          {service.imageUrl
-            ? <img src={service.imageUrl} alt="" className="h-full w-full object-cover" />
-            : <Icon size={22} className={art.fg} strokeWidth={1.75} />}
+        <span className={`flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl ${art.chip}`}>
+          {service.imageUrl ? (
+            <img src={service.imageUrl} alt="" className="h-full w-full object-cover" />
+          ) : character ? (
+            <ServiceCharacter
+              code={service.code}
+              size={52}
+              className="transition-transform duration-200 group-hover:scale-105"
+            />
+          ) : (
+            <Icon size={22} className={art.fg} strokeWidth={1.75} />
+          )}
         </span>
         <span className="min-w-0 flex-1">
           <span className="flex items-center gap-2">
