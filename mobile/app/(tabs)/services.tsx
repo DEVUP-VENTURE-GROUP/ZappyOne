@@ -1,334 +1,322 @@
 /**
- * Services — catalog discovery.
+ * Services — what a customer can actually book today.
  * ----------------------------------------------------------------------------
- * ONE screen serves every vertical; only the data differs. Categories come from
- * `GET /catalog/categories` and services from `GET /catalog/services` — nothing
- * about the catalog is hardcoded here.
+ * Rebuilt on the live catalog (`GET /provider/onboarding/catalog`) and the
+ * hierarchy the website now uses:
  *
- * CATEGORY MATCHING mirrors the server's own rules (`category.model.js`):
- *   1. `matchCategories` when present, else the category `key`
- *   2. legacy `codePrefixes` fallback
- * The previous implementation used plain `service.category === key`, which
- * silently dropped services whose `category` value differs from the group key
- * (the `family` group owns `helper`, `commercial` owns `vehicle`) and every
- * service relying on a code-prefix match.
+ *     DOMAIN → SERVICE → COVERAGE heading → PROBLEMS
  *
- * PERFORMANCE: the list is virtualised, rows are memoised, and filtering is
- * memoised on [services, categories, active, query] so typing doesn't re-filter
- * on unrelated renders.
+ * ── WHY THE OLD CATALOG MODEL IS GONE ──────────────────────────────────────
+ * This screen used to list `/catalog/services` — every service the platform
+ * had ever defined, filtered by a client-side category matcher. That list
+ * includes services with no verified provider behind them, so a customer could
+ * browse in, pick something, and reach a dead end nobody could fulfil. The
+ * website retired its catalog page over exactly that.
+ *
+ * The live catalog returns only lines that are live AND have an approved
+ * `ProviderEnrolment` — the same list providers are verified against, so the
+ * two sides cannot disagree.
+ *
+ * ── WHAT WENT AWAY WITH IT ─────────────────────────────────────────────────
+ * The search bar and the "from ₹X / fastest N min" stat pills are gone. They
+ * were derived from `price` and `estimatedDurationMinutes`, which the old rows
+ * carried and live-catalog rows do not. Keeping them would have meant either
+ * inventing figures or calling the retired endpoint alongside this one just to
+ * decorate a header. The website's own services page shows neither.
+ *
+ * ── WHY A HERO AND NOT `ScreenHeader` ──────────────────────────────────────
+ * This is a root TAB. `ScreenHeader` carries a back button, which would be a
+ * lie here — there is nothing to go back to. Pushed routes (category, service
+ * detail) use `ScreenHeader`; roots use the catalog hero.
  * ----------------------------------------------------------------------------
  */
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { SearchX } from 'lucide-react-native';
+import { ArrowRight, PackageSearch } from 'lucide-react-native';
 import {
-  Chip,
+  Card,
   EmptyState,
   ErrorState,
-  SearchBar,
-  SectionTitle,
+  ScalePressable,
   Skeleton,
   Text,
-  formatRupees,
 } from '../../components/ui';
-import { CategoryCard, ServiceCard } from '../../components/catalog/ServiceCard';
-import {
-  categoryForService,
-  countByCategory,
-  serviceMatchesCategory,
-} from '../../components/catalog/matchCategory';
-import { StatPill } from '../../components/catalog/StatPill';
-import { useGetCategoriesQuery, useGetServicesQuery } from '../../services/api/catalogApi';
+import { LiveServiceCard } from '../../components/catalog/LiveServiceCard';
+import { iconFor } from '../../components/catalog/liveCatalog';
+import { useGetLiveCatalogQuery } from '../../services/api/catalogApi';
 import { getApiErrorMessage } from '../../services/api/apiSlice';
-import { colors } from '../../theme/colors';
+import { colors, indigo } from '../../theme/colors';
 import { radius } from '../../theme/radius';
 import { spacing, screenPadding, bottomNavClearance } from '../../theme/spacing';
-import type { ServiceCatalogItem, ServiceCategory } from '../../types/api';
-
+import type { LiveCatalogCategory, LiveCatalogDomain, LiveCatalogService } from '../../types/api';
 
 export default function ServicesScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  // Deep link: `/(tabs)/services?category=electronics` narrows to one domain.
+  // An unknown value shows everything rather than an empty screen — a stale
+  // link should degrade to the full catalog, not to a dead end.
   const params = useLocalSearchParams<{ category?: string }>();
 
-  const [query, setQuery] = useState('');
-  const [activeKey, setActiveKey] = useState<string | null>(params.category ?? null);
+  const { data: domains, isLoading, isError, error, refetch, isFetching } =
+    useGetLiveCatalogQuery();
 
-  const {
-    data: services = [],
-    isLoading,
-    error,
-    refetch,
-    isFetching,
-  } = useGetServicesQuery();
-  const { data: categories = [] } = useGetCategoriesQuery();
-
-  // The tab stays mounted, so arriving from a Home category tile only changes
-  // the route param — the initial useState value never re-runs.
-  useEffect(() => {
-    if (params.category) setActiveKey(params.category);
-  }, [params.category]);
-
-  /**
-   * The three figures in the hero pills, computed from the catalog we already
-   * hold. Null while it is still loading so the row doesn't flash zeroes.
-   */
-  const catalogStats = useMemo(() => {
-    if (services.length === 0) return null;
-
-    let fromPaise = Infinity;
-    let fastestMin = Infinity;
-    let withChecklist = 0;
-    for (const s of services) {
-      const paise = s.servicePricePaise || s.priceRangeMinPaise || 0;
-      if (paise > 0 && paise < fromPaise) fromPaise = paise;
-      const mins = s.estimatedDurationMinutes || 0;
-      if (mins > 0 && mins < fastestMin) fastestMin = mins;
-      if ((s.checklist?.length ?? 0) > 0) withChecklist += 1;
-    }
-
-    return {
-      count: services.length,
-      fromRupees: Number.isFinite(fromPaise) ? Math.round(fromPaise / 100) : null,
-      fastestMin: Number.isFinite(fastestMin) ? fastestMin : null,
-      withChecklist,
-    };
-  }, [services]);
-
-  /** Service counts per category, for the rail's subtitle. */
-  const countsByKey = useMemo(
-    () => countByCategory(services, categories),
-    [services, categories],
-  );
-
-  const activeCategory = useMemo(
-    () => categories.find((c) => c.key === activeKey) ?? null,
-    [categories, activeKey],
-  );
-
-  const filtered = useMemo(() => {
-    let result = services;
-
-    if (activeCategory) {
-      result = result.filter((s) => serviceMatchesCategory(s, activeCategory));
-    }
-
-    const term = query.trim().toLowerCase();
-    if (term) {
-      result = result.filter(
-        (s) =>
-          (s.name || '').toLowerCase().includes(term) ||
-          s.code.toLowerCase().includes(term) ||
-          (s.shortDescription || '').toLowerCase().includes(term),
-      );
-    }
-
-    return result;
-  }, [services, activeCategory, query]);
-
-  /** Category that owns a service — supplies the card's accent colour. */
-  const categoryFor = useCallback(
-    (service: ServiceCatalogItem) => categoryForService(service, categories),
-    [categories],
-  );
+  const visibleDomains = useMemo(() => {
+    const all = domains ?? [];
+    if (!params.category) return all;
+    const needle = params.category.toLowerCase();
+    const scoped = all.filter((d) => d.code.toLowerCase() === needle);
+    return scoped.length ? scoped : all;
+  }, [domains, params.category]);
 
   const openService = useCallback(
-    (service: ServiceCatalogItem) => router.push(`/service/${service.code}` as never),
+    (service: LiveCatalogService) => router.push(`/service/${service.code}` as never),
     [router],
   );
 
-  // Tapping a category card opens its dedicated marketplace screen. The
-  // in-place `activeKey` filter is still used when arriving with a ?category
-  // param, so both entry points keep working.
+  // The heading code alone is ambiguous — "display" exists for phones AND
+  // laptops — so the service that owns it travels with the link.
   const openCategory = useCallback(
-    (category: ServiceCategory) => router.push(`/category/${category.key}` as never),
+    (category: LiveCatalogCategory, service: LiveCatalogService) =>
+      router.push(`/category/${category.code}?service=${service.code}` as never),
     [router],
   );
 
-  const renderItem = useCallback(
-    ({ item }: { item: ServiceCatalogItem }) => (
-      <ServiceCard service={item} category={categoryFor(item)} onPress={openService} />
-    ),
-    [categoryFor, openService],
-  );
-
-  const clearFilters = useCallback(() => {
-    setQuery('');
-    setActiveKey(null);
-  }, []);
-
-  const hasFilters = Boolean(query) || Boolean(activeKey);
-
-  return (
-    <View style={[styles.root, { paddingTop: insets.top + spacing.sm }]}>
-      {/*
-        ── Hero ───────────────────────────────────────────────────────────
-        Matches the website's catalog hero: a tracked blue eyebrow, a Black
-        30px title, a medium slate subtitle, then the at-a-glance stat pills.
-        Every figure is derived from the live catalog — nothing is hardcoded.
-      */}
-      <View style={styles.header}>
-        <Text variant="eyebrow">Zappy catalog</Text>
-        <Text variant="pageTitle">All Services</Text>
-        <Text variant="muted" style={styles.subtitle}>
-          Every Zappy service, one place
-        </Text>
-
-        {catalogStats ? (
-          <View style={styles.stats}>
-            <StatPill label={`${catalogStats.count} services`} />
-            {catalogStats.fromRupees != null ? (
-              <StatPill label={`From ${formatRupees(catalogStats.fromRupees)}`} />
-            ) : null}
-            {catalogStats.fastestMin != null ? (
-              <StatPill label={`Fastest ${catalogStats.fastestMin} min`} />
-            ) : null}
-            {catalogStats.withChecklist > 0 ? (
-              <StatPill label={`${catalogStats.withChecklist} with job checklists`} />
-            ) : null}
-          </View>
-        ) : null}
-
-        <SearchBar
-          value={query}
-          onChangeText={setQuery}
-          placeholder="Search services"
-          style={styles.search}
-        />
-      </View>
-
-      <FlatList
-        data={filtered}
-        keyExtractor={(item) => item.code}
-        renderItem={renderItem}
-        contentContainerStyle={[
-          styles.list,
-          { paddingBottom: bottomNavClearance + insets.bottom },
-        ]}
-        ItemSeparatorComponent={Separator}
-        refreshing={isFetching && !isLoading}
-        onRefresh={refetch}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        // Tuned for mid-range Android: a screenful plus a little, reclaim the rest.
-        initialNumToRender={6}
-        maxToRenderPerBatch={6}
-        windowSize={7}
-        removeClippedSubviews
-        ListHeaderComponent={
-          <View>
-            {/* Category rail — themed cards, matching the website's strip */}
-            {categories.length > 0 ? (
-              <View style={styles.railBlock}>
-                <SectionTitle>Browse by category</SectionTitle>
-                <FlatList
-                  horizontal
-                  data={categories}
-                  keyExtractor={(item) => item._id ?? item.key}
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={styles.rail}
-                  renderItem={({ item }) => (
-                    <CategoryCard
-                      category={item}
-                      selected={activeKey === item.key}
-                      count={countsByKey[item.key]}
-                      onPress={openCategory}
-                    />
-                  )}
-                />
-              </View>
-            ) : null}
-
-            {/* Active filter summary */}
-            <View style={styles.resultRow}>
-              <SectionTitle style={styles.flex}>
-                {activeCategory ? activeCategory.customerLabel : 'All services'}
-                {!isLoading ? `  ·  ${filtered.length}` : ''}
-              </SectionTitle>
-              {hasFilters ? (
-                <Chip label="Clear" tone="neutral" onPress={clearFilters} />
+  const renderDomain = useCallback(
+    ({ item }: { item: LiveCatalogDomain }) => {
+      const Icon = iconFor(item.icon);
+      return (
+        <View style={styles.domain}>
+          <View style={styles.domainHead}>
+            <View style={styles.domainIcon}>
+              <Icon size={17} strokeWidth={2} color={indigo[500]} />
+            </View>
+            <View style={styles.domainText}>
+              <Text variant="heading3" weight="black" numberOfLines={2}>
+                {item.name}
+              </Text>
+              {item.description ? (
+                <Text variant="bodySmall" numberOfLines={2}>
+                  {item.description}
+                </Text>
               ) : null}
             </View>
           </View>
+
+          <View style={styles.services}>
+            {item.services.map((service) => (
+              <LiveServiceCard
+                key={service.code}
+                service={service}
+                onPress={openService}
+                onPressCategory={openCategory}
+              />
+            ))}
+          </View>
+        </View>
+      );
+    },
+    [openCategory, openService],
+  );
+
+  const header = (
+    <View style={styles.hero}>
+      <Text variant="eyebrow">Zappy catalog</Text>
+      <Text variant="pageTitle">All Services</Text>
+      <Text variant="muted" style={styles.subtitle}>
+        What we can do for you today
+      </Text>
+    </View>
+  );
+
+  if (isLoading) {
+    return (
+      <View style={[styles.root, { paddingTop: insets.top + spacing.sm }]}>
+        {header}
+        <View style={styles.padded}>
+          <ServiceSkeletons />
+        </View>
+      </View>
+    );
+  }
+
+  if (isError) {
+    return (
+      <View style={[styles.root, { paddingTop: insets.top + spacing.sm }]}>
+        {header}
+        <ErrorState
+          message={getApiErrorMessage(error)}
+          onRetry={refetch}
+          style={styles.padded}
+        />
+      </View>
+    );
+  }
+
+  return (
+    <View style={[styles.root, { paddingTop: insets.top + spacing.sm }]}>
+      <FlatList
+        data={visibleDomains}
+        keyExtractor={(d) => d.code}
+        renderItem={renderDomain}
+        ListHeaderComponent={header}
+        ListEmptyComponent={<CatalogEmptyState />}
+        ListFooterComponent={
+          visibleDomains.length ? (
+            <MoreComing onBrowseShops={() => router.push('/shops' as never)} />
+          ) : null
         }
-        ListEmptyComponent={
-          isLoading ? (
-            <View style={styles.skeletons}>
-              {Array.from({ length: 5 }, (_, i) => (
-                <View key={i} style={styles.skeletonCard}>
-                  <View style={styles.skeletonTop}>
-                    <Skeleton width={56} height={56} borderRadius={radius.medium} />
-                    <View style={styles.flex}>
-                      <Skeleton width="70%" height={15} />
-                      <Skeleton width="90%" height={11} style={{ marginTop: spacing.sm }} />
-                    </View>
-                  </View>
-                  <Skeleton width="45%" height={22} style={{ marginTop: spacing.lg }} />
-                </View>
-              ))}
-            </View>
-          ) : error ? (
-            <ErrorState
-              message={getApiErrorMessage(error, 'We could not load the service catalog.')}
-              onRetry={refetch}
-            />
-          ) : (
-            <EmptyState
-              icon={<SearchX size={28} color={colors.textMuted} />}
-              title="No services found"
-              message={
-                query
-                  ? `Nothing matches “${query}”${
-                      activeCategory ? ` in ${activeCategory.customerLabel}` : ''
-                    }.`
-                  : 'This category has no services yet.'
-              }
-              actionLabel={hasFilters ? 'Clear filters' : undefined}
-              onAction={hasFilters ? clearFilters : undefined}
-            />
-          )
-        }
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.content}
+        refreshing={isFetching && !isLoading}
+        onRefresh={refetch}
       />
     </View>
   );
 }
 
-function Separator() {
-  return <View style={styles.separator} />;
+/**
+ * Shape-matched loading, not a spinner: an icon chip, two text lines and the
+ * coverage strip, at the sizes the real card uses, so nothing jumps when the
+ * data lands.
+ */
+function ServiceSkeletons() {
+  return (
+    <View accessibilityLabel="Loading services" accessibilityRole="progressbar">
+      {[0, 1].map((i) => (
+        <View key={i} style={[styles.skelCard, i > 0 && { marginTop: spacing.md }]}>
+          <View style={styles.skelRow}>
+            <Skeleton width={48} height={48} borderRadius={radius.medium} />
+            <View style={styles.skelBody}>
+              <Skeleton width="60%" height={14} />
+              <Skeleton width="85%" height={11} style={{ marginTop: spacing.sm }} />
+            </View>
+          </View>
+          <View style={styles.skelRail}>
+            {[0, 1, 2].map((t) => (
+              <Skeleton key={t} width={116} height={145} borderRadius={radius.medium} />
+            ))}
+          </View>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+/**
+ * The honest empty state.
+ *
+ * `{ domains: [] }` is a VALID response: a service line only appears once some
+ * provider holds an approved enrolment for it. So this means "nothing is
+ * bookable yet", not "something broke" — and it must never be papered over
+ * with placeholder services, which is the dead-end problem the live catalog
+ * exists to prevent.
+ */
+function CatalogEmptyState() {
+  return (
+    <EmptyState
+      icon={<PackageSearch size={28} color={colors.primary} />}
+      title="No services available yet"
+      message="Services appear here as soon as we have verified providers for them. Nothing is bookable in your area right now."
+      style={styles.padded}
+    />
+  );
+}
+
+/** The website's dashed "more on the way" card — a sentence, never a dead tile. */
+function MoreComing({ onBrowseShops }: { onBrowseShops: () => void }) {
+  return (
+    <Card variant="outline" style={styles.more} padding={spacing.base}>
+      <Text variant="bodySmall" weight="bold" color={colors.textPrimary} align="center">
+        More services are on the way
+      </Text>
+      <Text variant="caption" align="center" style={styles.moreSub}>
+        New services open as soon as we have verified providers for them.
+      </Text>
+      <ScalePressable
+        onPress={onBrowseShops}
+        accessibilityRole="button"
+        accessibilityLabel="Browse nearby shops"
+        hitSlop={8}
+      >
+        <View style={styles.moreCta}>
+          <Text variant="caption" weight="bold" color={colors.primary}>
+            Browse nearby shops meanwhile
+          </Text>
+          <ArrowRight size={13} color={colors.primary} />
+        </View>
+      </ScalePressable>
+    </Card>
+  );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
-  flex: { flex: 1 },
-
-  header: { paddingHorizontal: screenPadding },
+  content: { paddingBottom: bottomNavClearance },
+  padded: { paddingHorizontal: screenPadding },
+  hero: {
+    paddingHorizontal: screenPadding,
+    paddingBottom: spacing.lg,
+  },
   subtitle: { marginTop: spacing.xs },
-  stats: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.base },
-  search: { marginTop: spacing.md },
 
-  list: { paddingHorizontal: screenPadding, paddingTop: spacing.base, flexGrow: 1 },
-  separator: { height: spacing.md },
-
-  railBlock: { marginBottom: spacing.lg },
-  rail: { gap: spacing.md, paddingTop: spacing.sm, paddingRight: spacing.lg },
-
-  resultRow: {
+  domain: { marginTop: spacing.xl },
+  domainHead: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: spacing.md,
+    gap: spacing.md,
+    paddingHorizontal: screenPadding,
+  },
+  domainIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: radius.button,
+    backgroundColor: colors.primaryTint,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  domainText: { flex: 1, minWidth: 0 },
+  services: {
+    marginTop: spacing.md,
+    paddingHorizontal: screenPadding,
+    gap: spacing.md,
   },
 
-  skeletons: { gap: spacing.md },
-  skeletonCard: {
-    backgroundColor: colors.surface,
+  skelCard: {
     borderRadius: radius.large,
+    backgroundColor: colors.surface,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
+    overflow: 'hidden',
+  },
+  skelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.base,
     padding: spacing.base,
   },
-  skeletonTop: { flexDirection: 'row', gap: spacing.md, alignItems: 'center' },
+  skelBody: { flex: 1 },
+  skelRail: {
+    flexDirection: 'row',
+    gap: 10,
+    paddingHorizontal: spacing.base,
+    paddingBottom: 14,
+  },
+
+  more: {
+    marginTop: spacing.xl,
+    marginHorizontal: screenPadding,
+    borderStyle: 'dashed',
+  },
+  moreSub: { marginTop: 2 },
+  moreCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    marginTop: spacing.sm,
+  },
 });
