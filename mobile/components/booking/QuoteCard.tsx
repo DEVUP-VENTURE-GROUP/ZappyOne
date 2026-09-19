@@ -35,7 +35,7 @@ import { AlertCircle, Info, MapPin, Pencil, RefreshCw, Tag, Zap } from 'lucide-r
 import { Appear, Button, Card, Divider, SectionTitle, Text, formatRupees } from '../ui';
 import type { BookingTierKey, NormalizedQuote } from './quote';
 import { TIER_MULTIPLIERS } from './quote';
-import { colors } from '../../theme/colors';
+import { accent, colors } from '../../theme/colors';
 import { radius } from '../../theme/radius';
 import { spacing } from '../../theme/spacing';
 
@@ -54,6 +54,58 @@ export interface QuoteCardProps {
   onRetry: () => void;
   /** The price depends on the pin, so the card offers the way to change it. */
   onEditLocation?: () => void;
+}
+
+/**
+ * Surge explainer.
+ * ----------------------------------------------------------------------------
+ * This replaced a one-line chip that read "1.35× surge pricing in effect" —
+ * accurate, but it is jargon, and it left the two questions a customer
+ * actually has unanswered: is this on top of the total, and is the total going
+ * to move again?
+ *
+ * ── WHAT IT MAY AND MAY NOT SAY ────────────────────────────────────────────
+ * `GET /orders/quote` returns a MULTIPLIER and nothing else. The website's
+ * `SurgeInfoCard` shows a reason, live demand/supply counts, an ETA for the
+ * surge to clear and a three-hour sparkline — all from a richer surge payload
+ * this screen does not request and this phase does not add.
+ *
+ * So the copy describes the EFFECT only and never a cause. "Because more
+ * customers are booking right now" would be a plausible guess and still a
+ * fabrication: the multiplier alone does not establish why. The headline
+ * wording is the website's own (`{n}× surge pricing`); the second line says
+ * what it means for this total, which is the part the customer can act on.
+ *
+ * The multiplier is printed exactly as supplied, to one decimal like the web —
+ * never recomputed, and never applied to the price here. The server already
+ * folded it into `total`, which is why `quote.ts` classifies it as metadata
+ * rather than a charge line.
+ *
+ * Thresholds mirror the website's `surgeLevel()` (1.3 / 1.7). Mobile has no
+ * orange ramp, so high resolves to the deeper amber rather than inventing one;
+ * red is reserved for a genuinely steep multiplier so the common case stays
+ * calm rather than alarming.
+ */
+function SurgeNote({ multiplier }: { multiplier: number }) {
+  const tone =
+    multiplier > 1.7 ? colors.errorDark : multiplier > 1.3 ? accent[700] : colors.accentDark;
+
+  return (
+    <View style={styles.surgeNote}>
+      <View style={styles.surgeIcon}>
+        <Zap size={13} strokeWidth={2.2} color={tone} />
+      </View>
+      <View style={styles.flex}>
+        <Text variant="bodySmall" weight="bold" color={tone}>
+          {multiplier.toFixed(1)}× surge pricing
+        </Text>
+        <Text variant="caption" style={styles.surgeBody}>
+          Prices in your area are higher than usual right now. This total already
+          includes it.
+        </Text>
+      </View>
+    </View>
+  );
 }
 
 /** One `label … ₹value` row. */
@@ -226,14 +278,6 @@ function QuoteCardBase({
               <Text variant="label" color={colors.primaryDark}>
                 Estimated total
               </Text>
-              {quote.surgeMultiplier ? (
-                <View style={styles.surgeRow}>
-                  <Zap size={12} color={colors.accentDark} />
-                  <Text variant="caption" color={colors.accentDark}>
-                    {quote.surgeMultiplier}× surge pricing in effect
-                  </Text>
-                </View>
-              ) : null}
             </View>
             <Text variant="display" style={styles.totalValue}>
               {formatRupees(payable)}
@@ -248,6 +292,9 @@ function QuoteCardBase({
               </Text>
             </View>
           ) : null}
+
+          {/* Subordinate to the figure above, and only when there IS a surge. */}
+          {quote.surgeMultiplier ? <SurgeNote multiplier={quote.surgeMultiplier} /> : null}
         </View>
 
         {/*
@@ -371,8 +418,22 @@ const styles = StyleSheet.create({
   },
   totalRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   totalValue: { letterSpacing: -1 },
-  surgeRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xxs, marginTop: 2 },
   promoRow: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.xs },
+
+  // White surface on the tinted total block, so it reads as a note attached to
+  // the figure rather than as a second price panel.
+  surgeNote: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+    backgroundColor: colors.surface,
+    borderRadius: radius.medium,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+    padding: spacing.md,
+  },
+  surgeIcon: { paddingTop: 1 },
+  surgeBody: { marginTop: 2 },
 
   inputsBlock: { marginTop: spacing.base },
   inputsNote: { marginTop: spacing.sm },

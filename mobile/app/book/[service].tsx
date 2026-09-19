@@ -134,7 +134,7 @@ import {
   parseReturnUrl,
   paymentReturnUrl,
 } from '../../services/payments/cashfreeCheckout';
-import { colors, zappy } from '../../theme/colors';
+import { colors, success } from '../../theme/colors';
 import { radius } from '../../theme/radius';
 import { screenPadding, spacing } from '../../theme/spacing';
 import { shadows } from '../../theme/shadows';
@@ -437,7 +437,11 @@ export default function BookServiceScreen() {
   ]);
 
   // ── Derived presentation ──────────────────────────────────────────────────
-  const accent = category?.theme?.accent ?? zappy[600];
+  // The category's own accent when the API supplies one, otherwise the brand.
+  // This fell back to the legacy `zappy` blue, which left an un-themed category
+  // rendering its header chip and service tint in the old colour while the rest
+  // of the app had moved to indigo.
+  const accent = category?.theme?.accent ?? colors.primary;
   const drawing = illustrationFor(catalogService ?? { code: serviceCode }, catalogService?.category);
   const name = catalogService?.name || humanizeCode(serviceCode);
   const duration = catalogService?.estimatedDurationMinutes;
@@ -1036,9 +1040,11 @@ const styles = StyleSheet.create({
   },
 
   // `shadow-[0_8px_24px_rgba(34,197,94,0.35)]` under the confirm button.
+  // `success[500]` IS #22C55E — reading it from the ramp keeps the glow tied to
+  // the same token the `success` Button variant uses.
   ctaGlow: Platform.select({
     ios: {
-      shadowColor: '#22C55E',
+      shadowColor: success[500],
       shadowOffset: { width: 0, height: 8 },
       shadowOpacity: 0.35,
       shadowRadius: 12,
