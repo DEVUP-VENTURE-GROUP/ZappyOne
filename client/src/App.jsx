@@ -197,7 +197,21 @@ export default function App() {
         <Route element={<MainLayout />}>
           <Route path="/"       element={<HomeOrRedirect role={role} token={token} />} />
           <Route path="/home"   element={<HomeOrRedirect role={role} token={token} />} />
-          <Route path="/services" element={<RequireAuth role="user"><AllServicesPage /></RequireAuth>} />
+          {/*
+            PUBLIC. Discovery is not a protected action.
+
+            This sat behind `RequireAuth`, yet the catalog it renders is the
+            same public `/provider/onboarding/catalog` that Home already shows
+            to signed-out visitors — the server deliberately leaves that one
+            route unauthenticated because the home page renders before anyone
+            signs in. So a visitor could browse the catalog on Home, press
+            "See all", and hit a login wall for the identical data.
+
+            `AllServicesPage` and `LiveServices` read no auth state and call no
+            protected endpoint. Booking, orders and account remain gated; the
+            wall simply moved from discovery to the first protected action.
+          */}
+          <Route path="/services" element={<AllServicesPage />} />
           {/*
             Per-vertical catalog pages are retired: a customer reaching one now
             lands on the live list instead of a category whose booking flow is
@@ -294,9 +308,12 @@ export default function App() {
         <Route path="/worker/pet" element={<RequireAuth role="worker"><WorkerPetJobsPage /></RequireAuth>} />
         <Route path="/worker/pet/:id" element={<RequireAuth role="worker"><WorkerPetJobPage /></RequireAuth>} />
         {/* One heading — Display, Storage, Connectivity — and everything under it. */}
+        {/* PUBLIC, for the same reason as /services — this is the leaf of the
+            discovery path and reads only the public live catalog. Choosing a
+            symptom here routes into the repair flow, which IS gated. */}
         <Route
           path="/repair/category/:vertical/:categoryCode"
-          element={<RequireAuth role="user"><CategoryProblemsPage /></RequireAuth>}
+          element={<CategoryProblemsPage />}
         />
         <Route path="/repair/bookings/:id" element={<RequireAuth role="user"><RepairBookingPage /></RequireAuth>} />
         <Route
