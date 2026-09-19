@@ -4,13 +4,45 @@
  */
 
 import { apiSlice } from './apiSlice';
-import type { ServiceCatalogItem, ServiceCategory, SearchResult } from '../../types/api';
+import type {
+  ServiceCatalogItem, ServiceCategory, SearchResult,
+  LiveCatalogDomain, LiveCatalogResponse,
+} from '../../types/api';
 
 interface ServicesEnvelope { services: ServiceCatalogItem[] }
 interface CategoriesEnvelope { categories: ServiceCategory[] }
 
 export const catalogApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
+    /**
+     * What a customer can actually book today.
+     *
+     * `GET /provider/onboarding/catalog` is PUBLIC (verified in
+     * `onboarding.routes.js` — everything else in that router is
+     * provider-scoped, this one route deliberately is not, because the home
+     * page renders before anyone signs in).
+     *
+     * ── WHY THIS EXISTS ALONGSIDE `getServices` ────────────────────────────
+     * `/catalog/services` lists every service the platform has ever defined,
+     * including ones with no verified provider behind them. The website
+     * retired its catalog page over exactly that: a customer could browse in,
+     * pick a symptom, and reach a dead end nobody could fulfil. This endpoint
+     * returns only lines that are live AND have an approved provider
+     * enrolment, which is the same list providers are verified against, so
+     * the two sides cannot disagree.
+     *
+     * `getServices` is left in place — other screens still use it — but new
+     * discovery surfaces should prefer this one.
+     *
+     * An empty array is a VALID result meaning "nothing is bookable yet", not
+     * a failure. See `LiveCatalogResponse` in types/api.ts.
+     */
+    getLiveCatalog: builder.query<LiveCatalogDomain[], void>({
+      query: () => ({ url: '/provider/onboarding/catalog' }),
+      transformResponse: (r: LiveCatalogResponse) => r?.domains ?? [],
+      providesTags: ['Catalog'],
+    }),
+
     getServices: builder.query<ServiceCatalogItem[], void>({
       query: () => ({ url: '/catalog/services' }),
       transformResponse: (r: ServicesEnvelope | ServiceCatalogItem[]) =>
@@ -90,6 +122,7 @@ export const catalogApi = apiSlice.injectEndpoints({
 });
 
 export const {
+  useGetLiveCatalogQuery,
   useGetServicesQuery,
   useGetCategoriesQuery,
   useGetCatalogBrandsQuery,

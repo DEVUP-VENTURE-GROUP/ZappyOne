@@ -1034,3 +1034,83 @@ export interface Shop {
   isBlocked?: boolean;
   kyc?: { status: 'not_submitted' | 'pending_review' | 'approved' | 'rejected' | 'suspended' };
 }
+
+/* ─── Live catalog ─────────────────────────────────────────────────────────
+ *
+ * `GET /provider/onboarding/catalog` — PUBLIC, no auth. This is what a
+ * customer can book TODAY, and it is the list the website's services page is
+ * built from (`client/src/components/home/LiveServices.jsx`).
+ *
+ * Every field below is transcribed from the server's own response mapping in
+ * `server/src/modules/onboarding/onboarding.controller.js` (`liveCatalog`).
+ * Nothing here is widened to `any` and nothing is invented.
+ *
+ * ── WHY THIS LIST CAN COME BACK EMPTY ─────────────────────────────────────
+ * A service line is only included when it is `status: 'live'` AND some
+ * provider holds an APPROVED `ProviderEnrolment` for that exact line code.
+ * "Live" alone is an admin opinion; the enrolment is proof somebody can
+ * actually do the work. A domain with no live services is dropped entirely,
+ * and a heading with no symptoms under it is dropped too.
+ *
+ * So `{ domains: [] }` is a legitimate, expected response in an environment
+ * with no approved enrolments — it means "nothing is bookable yet", not "the
+ * request failed". Screens must render an empty state for it rather than
+ * treating it as an error.
+ * ------------------------------------------------------------------------ */
+
+/** Severity as stored on the problem catalog (`problem.model.js`). */
+export type ProblemSeverity = 'low' | 'normal' | 'high' | 'critical';
+
+/** One symptom a customer can pick. */
+export interface LiveCatalogProblem {
+  code: string;
+  name: string;
+  severity: ProblemSeverity;
+  /** Some symptoms can never be honestly priced up front. */
+  requiresDiagnosis: boolean;
+}
+
+/** A heading within a service — "Display", "Battery & Power". */
+export interface LiveCatalogCategory {
+  code: string;
+  name: string;
+  /** Lucide icon name; the client maps it to a component with a fallback. */
+  icon: string;
+  /** Admin artwork. Empty string (not null) when unset. */
+  imageUrl: string;
+  /** Never empty — the server drops headings with no problems. */
+  problems: LiveCatalogProblem[];
+}
+
+/** A bookable service line. */
+export interface LiveCatalogService {
+  code: string;
+  name: string;
+  description: string;
+  tagline: string;
+  icon: string;
+  imageUrl: string;
+  /** Artwork key, falling back to the repair vertical. May be ''. */
+  artKey: string;
+  /** The customer-facing route this service opens. */
+  path: string;
+  isPopular: boolean;
+  /** Shortlist of popular symptoms — server caps this at 8. */
+  highlights: { code: string; name: string }[];
+  coverage: LiveCatalogCategory[];
+}
+
+/** A top-level grouping — "Electronics", "Pet Care". */
+export interface LiveCatalogDomain {
+  code: string;
+  name: string;
+  description: string;
+  icon: string;
+  imageUrl: string;
+  /** Never empty — the server drops domains with nothing live in them. */
+  services: LiveCatalogService[];
+}
+
+export interface LiveCatalogResponse {
+  domains: LiveCatalogDomain[];
+}
