@@ -357,16 +357,38 @@ async function liveCatalog(req, res, next) {
       byDomain.get(l.domainCode).push({
         code: l.code,
         name: l.name,
-        description: l.description,
-        tagline: l.tagline,
-        icon: l.icon,
-        imageUrl: l.imageUrl,
+        // Strings are never undefined — both clients declare them as string,
+        // and the domain/category rows already honoured that.
+        description: l.description || '',
+        tagline: l.tagline || '',
+        icon: l.icon || '',
+        imageUrl: l.imageUrl || '',
         artKey: l.artKey || l.repairVertical || '',
         path: l.customerPath,
-        isPopular: l.isPopular,
+        isPopular: !!l.isPopular,
         highlights: highlightsByVertical.get(l.repairVertical) || [],
         coverage: coverageByVertical.get(l.repairVertical) || [],
       });
+    }
+
+    /*
+     * Catalog artwork is uploaded as a private S3 KEY (never a pasted URL), so
+     * it must be signed on the way out — an unsigned key renders as a broken
+     * image, which reads to everyone as "the artwork was never uploaded".
+     * This is the same failure that made brand logos vanish on refresh, and it
+     * was latent here only because no catalog art had been uploaded yet.
+     */
+    const s3Service = require('../../utils/s3.service');
+    for (const services of byDomain.values()) {
+      for (const svc of services) {
+        svc.imageUrl = (await s3Service.signMedia(svc.imageUrl)) || '';
+        for (const c of svc.coverage) {
+          c.imageUrl = (await s3Service.signMedia(c.imageUrl)) || '';
+        }
+      }
+    }
+    for (const d of domains) {
+      d.signedImageUrl = (await s3Service.signMedia(d.imageUrl)) || '';
     }
 
     // A domain with nothing live in it is not shown — an empty category is a
@@ -379,7 +401,7 @@ async function liveCatalog(req, res, next) {
           name: d.name,
           description: d.description,
           icon: d.icon,
-          imageUrl: d.imageUrl || '',
+          imageUrl: d.signedImageUrl || '',
           services: byDomain.get(d.code),
         })),
     });
