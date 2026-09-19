@@ -1,7 +1,11 @@
 /**
  * Brand gradient surface.
  * ----------------------------------------------------------------------------
- * Renders the website's signature 135° `#2563EB → #0F172A` gradient.
+ * Renders the website's signature 135° brand gradient — now indigo → violet
+ * (`#6366F1 → #7C3AED`), matching `from-indigo-500 to-violet-600` on the new
+ * vertical pages. Defaults to `gradients.zappy`, which is an ALIAS of
+ * `gradients.brand`; the previous blue → navy pair lives on as
+ * `gradients.legacyBlueNavy`. See the ramp note in theme/colors.ts.
  *
  * WHY react-native-svg AND NOT expo-linear-gradient:
  * `expo-linear-gradient` is not installed, and adding it is a new NATIVE

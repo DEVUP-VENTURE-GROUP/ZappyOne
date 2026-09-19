@@ -1,16 +1,42 @@
 /**
  * Zappy colour system.
  * ----------------------------------------------------------------------------
- * Ported verbatim from `client/tailwind.config.js` and `client/src/styles/
- * index.css`. These are the website's real values — do not "improve" them here,
- * or mobile and web drift apart.
+ * Ported from `client/tailwind.config.js` and `client/src/styles/index.css`.
+ * These are the website's real values — do not "improve" them here, or mobile
+ * and web drift apart.
  *
  * The accent is #F59E0B (amber). The mobile app previously used #F97316
  * (orange), which was an accidental divergence — see the Phase 1 audit.
+ *
+ * ── THE PRIMARY IS INDIGO, NOT `zappy` BLUE ───────────────────────────────
+ * `tailwind.config.js` still DEFINES `zappy` (#2563EB) and it is still a real
+ * token, but the website stopped painting with it. Counted across
+ * `client/src` during the Phase 0 architecture audit:
+ *
+ *     indigo  1,148 uses        zappy  113 uses
+ *     violet    306 uses
+ *
+ * and in the five verticals the new architecture introduced — pet, repair,
+ * helping, shop, provider — `zappy` appears exactly ZERO times while indigo
+ * appears 236 times. `LiveServices`, which now backs the whole services
+ * catalog, is indigo/violet throughout.
+ *
+ * So the config is not the source of truth for what the product LOOKS like;
+ * the applied classes are. The semantic tokens below therefore resolve to
+ * indigo/violet, which is what makes mobile match the current website.
+ *
+ * `zappy` stays exported, unchanged, immediately below. It is a LEGACY ramp,
+ * not a dead one: older and specialised surfaces may still reference it
+ * deliberately. What must not happen is a second competing semantic layer —
+ * anything structural reads from `colors`, and `colors` is indigo.
  * ----------------------------------------------------------------------------
  */
 
-/** Primary blue ramp. 600 is the brand hero. */
+/**
+ * LEGACY brand blue. Retained deliberately — see the note above. Reach for
+ * this only when a surface is meant to stay on the older blue; everything
+ * structural should use `colors.primary`.
+ */
 export const zappy = {
   50: '#EFF6FF',
   100: '#DBEAFE',
@@ -24,7 +50,38 @@ export const zappy = {
   900: '#1E3A8A',
 } as const;
 
-/** Deep navy — headings and the gradient target. */
+/**
+ * Indigo — the CURRENT primary ramp. Tailwind's default `indigo`, which is
+ * what `client/tailwind.config.js` resolves to (it does not override indigo).
+ * 600 is the brand hero; 500 opens the signature gradient.
+ */
+export const indigo = {
+  50: '#EEF2FF',
+  100: '#E0E7FF',
+  200: '#C7D2FE',
+  300: '#A5B4FC',
+  400: '#818CF8',
+  500: '#6366F1',
+  600: '#4F46E5', // brand hero
+  700: '#4338CA',
+  800: '#3730A3',
+  900: '#312E81',
+} as const;
+
+/**
+ * Violet — indigo's gradient partner and the accent on the new vertical
+ * surfaces. Tailwind default `violet`, also un-overridden by the website.
+ */
+export const violet = {
+  50: '#F5F3FF',
+  100: '#EDE9FE',
+  400: '#A78BFA',
+  500: '#8B5CF6',
+  600: '#7C3AED', // gradient target
+  700: '#6D28D9',
+} as const;
+
+/** Deep navy — headings and the legacy gradient target. */
 export const navy = {
   50: '#F8FAFC',
   100: '#F1F5F9',
@@ -79,12 +136,17 @@ export const slate = {
  * structural belongs here so a palette change lands everywhere at once.
  */
 export const colors = {
-  // Brand
-  primary: zappy[600],
-  primaryDark: zappy[700],
-  primaryLight: zappy[500],
-  primaryTint: zappy[50],
-  primarySoft: zappy[100],
+  // Brand — indigo. See the ramp note at the top of this file for why this is
+  // no longer `zappy`. Screens read these names, so the move lands everywhere
+  // at once without a single screen edit.
+  primary: indigo[600],      // #4F46E5
+  /** Pressed / hovered state. `primaryHover` is the same value, named for the
+   *  web idiom; both exist so neither call site has to guess. */
+  primaryDark: indigo[700],  // #4338CA
+  primaryHover: indigo[700], // #4338CA
+  primaryLight: indigo[500], // #6366F1
+  primaryTint: indigo[50],   // #EEF2FF
+  primarySoft: indigo[100],  // #E0E7FF
 
   // Surfaces — --zappy-bg is #FAFAFB on the website.
   background: '#FAFAFB',
@@ -132,9 +194,24 @@ export const colors = {
   pinWorker: accent[500],
 } as const;
 
-/** The signature 135° blue → navy gradient. */
+/**
+ * The signature 135° gradient — now indigo → violet, matching
+ * `from-indigo-500 to-violet-600`, the pair the website uses for every hero
+ * surface on the new vertical pages.
+ */
 export const gradients = {
-  zappy: [zappy[600], navy[900]] as const,
+  /** Preferred name. #6366F1 → #7C3AED. */
+  brand: [indigo[500], violet[600]] as const,
+  /**
+   * Kept as an alias of `brand` rather than as the old blue→navy pair.
+   *
+   * `Gradient` defaults to this key, so every hero card already in the app
+   * picks up the new look without a single component edit — which is the
+   * whole point of the rename being an alias instead of a replacement.
+   */
+  zappy: [indigo[500], violet[600]] as const,
+  /** The previous blue → navy pair, if a surface deliberately wants it back. */
+  legacyBlueNavy: [zappy[600], navy[900]] as const,
   /** expo-linear-gradient / react-native-svg use start/end fractions for 135°. */
   diagonal: { start: { x: 0, y: 0 }, end: { x: 1, y: 1 } },
 } as const;

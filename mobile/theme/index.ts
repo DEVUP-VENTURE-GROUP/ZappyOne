@@ -6,7 +6,13 @@
  * the specific CSS class or Tailwind key each one came from.
  */
 
-export { colors, gradients, statusColors, zappy, navy, success, accent, danger, slate } from './colors';
+export {
+  colors, gradients, statusColors,
+  // `indigo`/`violet` are the current brand ramps; `zappy` is the legacy blue,
+  // still exported on purpose. See the note at the top of ./colors.
+  indigo, violet, zappy,
+  navy, success, accent, danger, slate,
+} from './colors';
 export type { StatusColorKey } from './colors';
 
 export { typography, fontFamily } from './typography';
