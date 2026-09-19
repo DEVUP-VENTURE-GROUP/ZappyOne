@@ -1,36 +1,59 @@
 /**
- * Home.
+ * Home — the landing tab.
  * ----------------------------------------------------------------------------
- * Information architecture follows the website's HomePage, translated to a
- * phone:
- *   1. brand mark + location + notification bell   (web: sticky header)
- *   2. greeting                                    (web: "Hi {name}")
- *   3. search entry                                (web: SpotlightSearch trigger)
- *   4. active booking, when one exists             (web: active order card)
- *   5. hero CTA                                    (web: .card-hero gradient)
- *   6. categories — data-driven                    (web: CharacterServiceGrid)
- *   7. popular services rail                       (web: "Most booked" rails)
- *   8. book again                                  (web: quickRebooks)
+ * The catalog on this screen now speaks the SAME model as the Services tab,
+ * the category screen and service detail:
  *
- * Every section is driven by live backend data, and renders only when that data
- * exists — nothing is fabricated to fill space.
+ *     DOMAIN → SERVICE → COVERAGE heading → PROBLEMS
  *
- * PERFORMANCE: one ScrollView holds a handful of fixed sections; the rails are
- * short bounded horizontal lists. Long lists (Services, Bookings) stay
- * virtualised on their own screens rather than nested here.
+ * ── WHAT CHANGED AND WHY ───────────────────────────────────────────────────
+ * Home used to render three catalog sections off `/catalog/services` and
+ * `/catalog/categories`: a character grid, a "Featured services" rail, and
+ * per-category rails assembled with a client-side matcher. All three produced
+ * links in the OLD code namespace, so a tap from Home could land on a service
+ * the rest of the app no longer knows about — that was the integration gap
+ * left open at the end of the catalog rebuild.
+ *
+ * They are replaced by the live catalog, which is what the website's own home
+ * page renders (`<LiveServices />` in `client/src/pages/HomePage.jsx` — the
+ * very same component its services page uses). A service reaches this list
+ * only when it is live AND some provider holds an approved enrolment, so
+ * every link from Home now resolves in the same catalog the destination
+ * screens read.
+ *
+ * No compatibility shim was left behind: there is no `ServiceCatalogItem`, no
+ * static service list and no `matchCategory` lookup in this file any more.
+ *
+ * ── HOME IS A DIGEST, NOT THE WHOLE CATALOG ────────────────────────────────
+ * The website renders every domain here. On a phone that is a very long
+ * scroll in front of the rest of Home, so this shows the first
+ * `HOME_DOMAINS` domains — in the server's own `displayOrder`, not a
+ * curation of ours — and hands off to the Services tab for the rest. The
+ * ordering decision stays server-side; the truncation is purely presentation.
+ *
+ * ── BOOKING BOUNDARY (Batch 4) ─────────────────────────────────────────────
+ * "Book again" still routes to `/book/{order.service}` using the code from a
+ * past ORDER, not from the catalog. That is deliberate: order service codes
+ * come from the orders API and are a different namespace from catalog line
+ * codes. It is left exactly as it was rather than fake-mapped onto the new
+ * model — reconciling the booking screen is its own batch.
  * ----------------------------------------------------------------------------
  */
 
-import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Location from 'expo-location';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowRight, Bell, ChevronRight, MapPin, Search, Store } from 'lucide-react-native';
+import {
+  ArrowRight, Bell, ChevronRight, MapPin, PackageSearch, Search, Store,
+} from 'lucide-react-native';
 import { useSelector } from 'react-redux';
 import {
   Badge,
   Card,
+  EmptyState,
+  ErrorState,
   Heading,
   IconButton,
   ScalePressable,
@@ -41,28 +64,26 @@ import {
   ZappyLogo,
   formatRupees,
 } from '../../components/ui';
-import {
-  humanizeCode,
-  paiseToRupees,
-  resolveCategoryIcon,
-  resolveServiceIcon,
-} from '../../components/catalog/categoryIcons';
+import { humanizeCode } from '../../components/catalog/categoryIcons';
+import { LiveServiceCard } from '../../components/catalog/LiveServiceCard';
+import { allServices, iconFor } from '../../components/catalog/liveCatalog';
 import { HomeHero } from '../../components/home/HomeHero';
-import { CharacterGrid } from '../../components/home/CharacterGrid';
 import { ServiceIllustration } from '../../components/catalog/ServiceIllustration';
 import { illustrationFor } from '../../components/catalog/illustrations/resolve';
-import { ServiceTile } from '../../components/catalog/ServiceTile';
-import { serviceMatchesCategory } from '../../components/catalog/matchCategory';
-import { useGetCategoriesQuery, useGetServicesQuery } from '../../services/api/catalogApi';
+import { useGetLiveCatalogQuery } from '../../services/api/catalogApi';
 import { useListOrdersQuery } from '../../services/api/ordersApi';
 import { useListNotificationsQuery } from '../../services/api/notificationsApi';
 import { useGetAddressesQuery } from '../../services/api/authApi';
+import { getApiErrorMessage } from '../../services/api/apiSlice';
 import type { RootState } from '../../store';
-import { colors, zappy } from '../../theme/colors';
+import { colors, indigo, zappy } from '../../theme/colors';
 import { radius } from '../../theme/radius';
 import { spacing, screenPadding, bottomNavClearance } from '../../theme/spacing';
-import { useLayout } from '../../theme/dimensions';
-import { ACTIVE_ORDER_STATUSES, type Order, type ServiceCatalogItem } from '../../types/api';
+import {
+  ACTIVE_ORDER_STATUSES,
+  type LiveCatalogCategory,
+  type LiveCatalogService,
+} from '../../types/api';
 
 const STATUS_LABEL: Record<string, string> = {
   created: 'Booking placed',
@@ -73,17 +94,22 @@ const STATUS_LABEL: Record<string, string> = {
   in_progress: 'Service in progress',
 };
 
-/** How many category rails Home shows before it gets long. */
-const MAX_RAILS = 5;
+/** Domains shown on Home before handing off to the Services tab. */
+const HOME_DOMAINS = 2;
 
 export default function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { categoryColumns, width } = useLayout();
   const user = useSelector((state: RootState) => state.auth.user);
 
-  const { data: categories = [], isLoading: catsLoading } = useGetCategoriesQuery();
-  const { data: services = [], isLoading: servicesLoading } = useGetServicesQuery();
+  const {
+    data: domains,
+    isLoading: catalogLoading,
+    isError: catalogError,
+    error: catalogErrorObj,
+    refetch: refetchCatalog,
+  } = useGetLiveCatalogQuery();
+
   const {
     data: ordersPage,
     isLoading: ordersLoading,
@@ -91,7 +117,6 @@ export default function HomeScreen() {
     isFetching,
   } = useListOrdersQuery(1);
   const { data: notifData } = useListNotificationsQuery({ unreadOnly: true, page: 1 });
-
   const { data: savedAddresses } = useGetAddressesQuery();
 
   const [gpsLabel, setGpsLabel] = useState<string | null>(null);
@@ -99,15 +124,10 @@ export default function HomeScreen() {
   /**
    * What the header shows, in order of how well it reflects intent.
    *
-   * GPS wins when we have it, but it used to be the ONLY source: the label
-   * appeared only with a GRANTED permission AND a cached fix. A customer who
-   * declined location — or simply had no last-known position yet — was shown
-   * "Set location" even with a default address saved, which the app was
-   * already using to seed the booking screen. The header claimed not to know
-   * a location the rest of the app was quietly booking against.
-   *
-   * So the saved default is the fallback, and the prompt is what's left when
-   * there is genuinely nothing to show.
+   * GPS wins when we have it, but it must not be the ONLY source: a customer
+   * who declined location, or simply has no last-known fix yet, still has a
+   * saved default address that the rest of the app books against. The header
+   * should not claim ignorance of a location the booking screen already uses.
    */
   const locationLabel = useMemo(() => {
     if (gpsLabel) return gpsLabel;
@@ -132,11 +152,11 @@ export default function HomeScreen() {
         });
         if (place && !cancelled) {
           setGpsLabel(
-            [place.name, place.district ?? place.city].filter(Boolean).join(', '),
+            [place.name, place.district ?? place.city].filter(Boolean).join(', ') || null,
           );
         }
       } catch {
-        // Location is a nicety here — failure is silent by design.
+        // Location is a nicety here; the saved address covers the real need.
       }
     })();
     return () => {
@@ -145,69 +165,40 @@ export default function HomeScreen() {
   }, []);
 
   const orders = ordersPage?.orders ?? [];
-
-  const activeOrder = useMemo<Order | undefined>(
+  const activeOrder = useMemo(
     () => orders.find((o) => (ACTIVE_ORDER_STATUSES as readonly string[]).includes(o.status)),
     [orders],
   );
-
-  const featuredServices = useMemo(() => {
-    const featured = services.filter((s) => s.isFeatured);
-    return (featured.length >= 4 ? featured : services).slice(0, 10);
-  }, [services]);
-
-  /**
-   * Per-category service rails — the website's "Electronics Rescue",
-   * "Phone Repair", "Laptop Services" strips, each a titled header over a
-   * horizontally scrolling row.
-   *
-   * The website hardcodes both the rail titles AND their contents in
-   * `HomePage.jsx` (`MOST_BOOKED`, `PHONE_TILES`, …). Mobile must not carry
-   * invented business data, so the rails are derived instead: one per real
-   * category from `/catalog/categories`, in the server's own `sortOrder`,
-   * filled from the live catalog via the same matcher the Services tab uses.
-   *
-   * The badge is the category's true service count rather than a curated
-   * tagline — the website's taglines exist nowhere in the API, and making
-   * them up is exactly what "no fake data" rules out.
-   */
-  const categoryRails = useMemo(() => {
-    if (services.length === 0 || categories.length === 0) return [];
-
-    return [...categories]
-      .filter((c) => c.isActive !== false)
-      .sort((a, b) => (a.sortOrder ?? 999) - (b.sortOrder ?? 999))
-      .map((category) => ({
-        category,
-        items: services.filter((s) => serviceMatchesCategory(s, category)).slice(0, 8),
-      }))
-      // A rail of one or two tiles looks broken rather than curated.
-      .filter((rail) => rail.items.length >= 3)
-      .slice(0, MAX_RAILS);
-  }, [services, categories]);
-
   const recentCompleted = useMemo(
     () => orders.filter((o) => o.status === 'completed').slice(0, 3),
     [orders],
   );
 
-  // `unread` is the server's own count — the previous read was `unreadCount`
-  // falling back to `notifications.length`, and neither key exists, so this
-  // badge was permanently 0.
   const unreadCount = notifData?.unread ?? 0;
 
-  // Actual pixel width of one grid slot, so long labels wrap on word boundaries.
-  const categorySlot = Math.floor((width - screenPadding * 2) / categoryColumns);
+  const catalog = domains ?? [];
+  const shownDomains = catalog.slice(0, HOME_DOMAINS);
+  // Real figure off the real catalog — not the old "50+" decoration, which was
+  // counted against the retired endpoint and had stopped being true.
+  const serviceCount = allServices(catalog).length;
 
   const openService = useCallback(
-    (service: ServiceCatalogItem) => router.push(`/service/${service.code}` as never),
+    (service: LiveCatalogService) => router.push(`/service/${service.code}` as never),
     [router],
   );
 
+  // Heading codes are scoped per service — "display" exists for phones AND
+  // laptops — so the owning service always travels with the link.
   const openCategory = useCallback(
-    (key: string) => router.push(`/category/${key}` as never),
+    (category: LiveCatalogCategory, service: LiveCatalogService) =>
+      router.push(`/category/${category.code}?service=${service.code}` as never),
     [router],
   );
+
+  const refreshAll = useCallback(() => {
+    refetchOrders();
+    refetchCatalog();
+  }, [refetchOrders, refetchCatalog]);
 
   return (
     <View style={styles.root}>
@@ -223,7 +214,7 @@ export default function HomeScreen() {
         refreshControl={
           <RefreshControl
             refreshing={isFetching && !ordersLoading}
-            onRefresh={refetchOrders}
+            onRefresh={refreshAll}
             tintColor={colors.primary}
           />
         }
@@ -237,8 +228,6 @@ export default function HomeScreen() {
           <ScalePressable
             style={styles.location}
             accessibilityRole="button"
-            // Announced as a button and styled as one, but it had no onPress —
-            // tapping "Set location" did nothing at all.
             onPress={() => router.push('/location/picker' as never)}
             accessibilityLabel={
               locationLabel ? `Current location: ${locationLabel}` : 'Set your location'
@@ -249,7 +238,7 @@ export default function HomeScreen() {
               DELIVERING TO
             </Text>
             <View style={styles.locationRow}>
-              <MapPin size={14} color={zappy[600]} />
+              <MapPin size={14} color={colors.primary} />
               <Text
                 variant="bodySmall"
                 weight="semibold"
@@ -291,13 +280,13 @@ export default function HomeScreen() {
           <Text variant="body" color={colors.textMuted} style={styles.flex}>
             Search for a service
           </Text>
-          {/* The site's "50+" pill. Verified against the live catalog rather
-              than copied as decoration — GET /catalog/services returns 86. */}
-          <View style={styles.countPill}>
-            <Text variant="caption" weight="bold" color={colors.primary}>
-              50+
-            </Text>
-          </View>
+          {serviceCount > 0 ? (
+            <View style={styles.countPill}>
+              <Text variant="caption" weight="bold" color={colors.primary}>
+                {serviceCount}
+              </Text>
+            </View>
+          ) : null}
         </ScalePressable>
 
         {/* ── Active booking ───────────────────────────────────────────── */}
@@ -331,82 +320,84 @@ export default function HomeScreen() {
           </View>
         ) : null}
 
-        {/* ── Hero banner + trust bar ──────────────────────────────────── */}
-        {/* Replaces the old "Need help right now?" placeholder card with the
-            site's actual hero artwork. See components/home/HomeHero. */}
+        {/* ── Hero banner ──────────────────────────────────────────────── */}
         <View style={styles.section}>
           <HomeHero />
         </View>
 
-        {/* ── Popular Services — the site's character grid ─────────────── */}
+        {/* ── Live catalog ─────────────────────────────────────────────── */}
         <View style={styles.section}>
           <SectionHeader
-            title="Popular Services"
-            onSeeAll={() => router.push('/(tabs)/services')}
+            title="What we can do for you"
+            onSeeAll={catalog.length ? () => router.push('/(tabs)/services') : undefined}
           />
-          <CharacterGrid
-            onSelect={(item) =>
-              item.routeKey
-                ? openCategory(item.routeKey)
-                : router.push('/(tabs)/services')
-            }
-          />
-        </View>
 
-        {/* ── Popular services ─────────────────────────────────────────── */}
-        {servicesLoading || featuredServices.length > 0 ? (
-          <View style={styles.section}>
-            <SectionHeader
-              title="Featured services"
-              badge="Most booked"
-              onSeeAll={() => router.push('/(tabs)/services')}
+          {catalogLoading ? (
+            <HomeCatalogSkeleton />
+          ) : catalogError ? (
+            <ErrorState message={getApiErrorMessage(catalogErrorObj)} onRetry={refetchCatalog} />
+          ) : catalog.length === 0 ? (
+            <EmptyState
+              icon={<PackageSearch size={26} color={colors.primary} />}
+              title="No services available yet"
+              message="Services appear here as soon as we have verified providers for them."
             />
-
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.rail}
-              removeClippedSubviews
-            >
-              {servicesLoading
-                ? Array.from({ length: 4 }, (_, i) => (
-                    <View key={i} style={styles.tile}>
-                      <Skeleton width={108} height={108} borderRadius={radius.large} />
-                      <Skeleton width={80} height={12} style={{ marginTop: spacing.sm }} />
+          ) : (
+            <>
+              {shownDomains.map((domain) => {
+                const Icon = iconFor(domain.icon);
+                return (
+                  <View key={domain.code} style={styles.domain}>
+                    <View style={styles.domainHead}>
+                      <View style={styles.domainIcon}>
+                        <Icon size={17} strokeWidth={2} color={indigo[500]} />
+                      </View>
+                      <View style={styles.flex}>
+                        <Text variant="heading3" weight="black" numberOfLines={2}>
+                          {domain.name}
+                        </Text>
+                        {domain.description ? (
+                          <Text variant="bodySmall" numberOfLines={1}>
+                            {domain.description}
+                          </Text>
+                        ) : null}
+                      </View>
                     </View>
-                  ))
-                : featuredServices.map((service) => (
-                    <ServiceTile key={service.code} service={service} onPress={openService} />
-                  ))}
-            </ScrollView>
-          </View>
-        ) : null}
 
-        {/*
-          ── Per-category rails ────────────────────────────────────────────
-          The website's titled service strips. Each header is a real category
-          and each rail is filled from the live catalog, so nothing here is
-          curated copy or invented data.
-        */}
-        {categoryRails.map(({ category, items }) => (
-          <View key={category.key} style={styles.section}>
-            <SectionHeader
-              title={category.customerLabel}
-              badge={`${items.length} services`}
-              onSeeAll={() => openCategory(category.key)}
-            />
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.rail}
-              removeClippedSubviews
-            >
-              {items.map((service) => (
-                <ServiceTile key={service.code} service={service} onPress={openService} />
-              ))}
-            </ScrollView>
-          </View>
-        ))}
+                    <View style={styles.services}>
+                      {domain.services.map((service) => (
+                        <LiveServiceCard
+                          key={service.code}
+                          service={service}
+                          onPress={openService}
+                          onPressCategory={openCategory}
+                        />
+                      ))}
+                    </View>
+                  </View>
+                );
+              })}
+
+              {catalog.length > HOME_DOMAINS ? (
+                <ScalePressable
+                  onPress={() => router.push('/(tabs)/services')}
+                  accessibilityRole="button"
+                  accessibilityLabel={`See all ${serviceCount} services`}
+                  style={styles.seeAllCard}
+                >
+                  <Card variant="outline" padding={spacing.base}>
+                    <View style={styles.seeAllRow}>
+                      <Text variant="bodySmall" weight="bold" color={colors.primary}>
+                        See all {serviceCount} services
+                      </Text>
+                      <ArrowRight size={15} color={colors.primary} />
+                    </View>
+                  </Card>
+                </ScalePressable>
+              ) : null}
+            </>
+          )}
+        </View>
 
         {/* ── Nearby Shops ── verified local businesses, browse + Pick & Go ── */}
         <View style={styles.section}>
@@ -418,7 +409,7 @@ export default function HomeScreen() {
             <Card style={styles.shopsPromo}>
               <View style={styles.shopsPromoRow}>
                 <View style={styles.shopsPromoIcon}>
-                  <Store size={22} color={zappy[600]} strokeWidth={1.75} />
+                  <Store size={22} color={colors.primary} strokeWidth={1.75} />
                 </View>
                 <View style={styles.flex}>
                   <Text variant="bodySmall" weight="black">Nearby Shops</Text>
@@ -426,13 +417,16 @@ export default function HomeScreen() {
                     Verified local repair shops — visit, or have their worker come to you
                   </Text>
                 </View>
-                <ChevronRight size={18} color={zappy[400]} />
+                <ChevronRight size={18} color={colors.primaryLight} />
               </View>
             </Card>
           </ScalePressable>
         </View>
 
-        {/* ── Book again ───────────────────────────────────────────────── */}
+        {/* ── Book again ───────────────────────────────────────────────────
+            Routes on a PAST ORDER's service code, which is the orders API's
+            namespace, not the catalog's. Left as-is on purpose — see the
+            booking-boundary note at the top of this file. */}
         {recentCompleted.length > 0 ? (
           <View style={styles.section}>
             <SectionHeader
@@ -484,23 +478,41 @@ export default function HomeScreen() {
   );
 }
 
+/** Shape-matched: an icon chip, two text lines and the coverage strip. */
+function HomeCatalogSkeleton() {
+  return (
+    <View accessibilityLabel="Loading services" accessibilityRole="progressbar">
+      {[0, 1].map((i) => (
+        <View key={i} style={[styles.skelCard, i > 0 && { marginTop: spacing.md }]}>
+          <View style={styles.skelRow}>
+            <Skeleton width={48} height={48} borderRadius={radius.medium} />
+            <View style={styles.flex}>
+              <Skeleton width="60%" height={14} />
+              <Skeleton width="85%" height={11} style={{ marginTop: spacing.sm }} />
+            </View>
+          </View>
+          <View style={styles.skelRail}>
+            {[0, 1, 2].map((t) => (
+              <Skeleton key={t} width={116} height={145} borderRadius={radius.medium} />
+            ))}
+          </View>
+        </View>
+      ))}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   content: { paddingHorizontal: screenPadding },
-  flex: { flex: 1 },
-  shopsPromo: { backgroundColor: zappy[50] },
-  shopsPromoRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  shopsPromoIcon: {
-    width: 44, height: 44, borderRadius: radius.medium, backgroundColor: colors.surface,
-    alignItems: 'center', justifyContent: 'center',
-  },
+  flex: { flex: 1, minWidth: 0 },
 
   header: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   brandMark: {
     width: 42,
     height: 42,
     borderRadius: radius.button,
-    backgroundColor: zappy[600],
+    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -522,16 +534,14 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     paddingHorizontal: spacing.base,
   },
-
-  section: { marginTop: spacing.xl },
-  sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  seeAll: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   countPill: {
     backgroundColor: colors.primaryTint,
     borderRadius: radius.pill,
     paddingHorizontal: spacing.sm,
     paddingVertical: 3,
   },
+
+  section: { marginTop: spacing.xl },
 
   liveRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   livePulse: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.success },
@@ -543,31 +553,35 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
   },
 
-  heroBody: { marginTop: spacing.xs },
-  heroButton: {
-    marginTop: spacing.base,
-    alignSelf: 'flex-start',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    backgroundColor: colors.surface,
-    borderRadius: radius.pill,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-  },
-
-  categoryGrid: { flexDirection: 'row', flexWrap: 'wrap', marginTop: spacing.sm },
-  categorySlot: { alignItems: 'center', gap: spacing.sm, marginBottom: spacing.base },
-  categoryIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: radius.medium,
+  domain: { marginTop: spacing.lg },
+  domainHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  domainIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: radius.button,
+    backgroundColor: colors.primaryTint,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  services: { marginTop: spacing.md, gap: spacing.md },
+  seeAllCard: { marginTop: spacing.lg },
+  seeAllRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+  },
 
-  rail: { gap: spacing.md, paddingTop: spacing.md, paddingRight: spacing.lg },
-  tile: { width: 108, gap: spacing.sm },
+  shopsPromo: { backgroundColor: colors.primaryTint },
+  shopsPromoRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  shopsPromoIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.medium,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 
   stack: { gap: spacing.md, marginTop: spacing.sm },
   rebookRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
@@ -578,5 +592,26 @@ const styles = StyleSheet.create({
     backgroundColor: zappy[50],
     alignItems: 'center',
     justifyContent: 'center',
+  },
+
+  skelCard: {
+    marginTop: spacing.md,
+    borderRadius: radius.large,
+    backgroundColor: colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+    overflow: 'hidden',
+  },
+  skelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.base,
+    padding: spacing.base,
+  },
+  skelRail: {
+    flexDirection: 'row',
+    gap: 10,
+    paddingHorizontal: spacing.base,
+    paddingBottom: 14,
   },
 });
