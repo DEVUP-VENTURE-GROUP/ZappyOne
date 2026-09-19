@@ -141,9 +141,12 @@ function timeAgo(date) {
 const EVENT_TILES = [
   { key: 'birthday',      name: 'Birthday',    img: '/images/event_birthday.webp',  category: 'birthday'      },
   { key: 'anniversary',   name: 'Anniversary', img: '/images/event_anniversary.webp', category: 'anniversary'   },
-  { key: 'baby-shower',   name: 'Baby Shower', img: 'https://images.unsplash.com/photo-1519689680058-324335c77eba?auto=format&fit=crop&w=400&h=400&q=80',   category: 'baby-shower'   },
-  { key: 'romantic',      name: 'Romantic',    img: 'https://images.unsplash.com/photo-1494972308805-463bc619d34e?auto=format&fit=crop&w=400&h=400&q=80',      category: 'romantic'      },
-  { key: 'housewarming',  name: 'Housewarming',img: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=400&h=400&q=80',  category: 'housewarming'  },
+  // Local, like birthday and anniversary above. These three hotlinked Unsplash
+  // while the matching assets were already in public/images/events — an
+  // external request, and an external dependency, for art we ship.
+  { key: 'baby-shower',   name: 'Baby Shower', img: '/images/events/event_baby.webp',        category: 'baby-shower'   },
+  { key: 'romantic',      name: 'Romantic',    img: '/images/events/event_romantic.webp',    category: 'romantic'      },
+  { key: 'housewarming',  name: 'Housewarming',img: '/images/events/event_housewarming.webp',category: 'housewarming'  },
 ];
 
 // Pet Assistance

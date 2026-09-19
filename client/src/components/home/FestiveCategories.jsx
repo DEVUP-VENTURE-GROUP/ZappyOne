@@ -21,16 +21,32 @@ const CATEGORY_ART = {
   'emergency-repairs':{ Icon: Wrench,    tint: 'from-sky-100 to-indigo-100',   fg: 'text-indigo-600' },
 };
 
+/**
+ * Destinations.
+ *
+ * Every tile pointed at `/book/<something>` — `home-cleaning`, `electrician`,
+ * `event-decor`, `family-assist`, `plumber`. None of those are values the
+ * booking screen accepts: `Order.service` is a fixed enum and not one of them
+ * appears in it, so each tile was a guaranteed dead end.
+ *
+ * Checked against the catalog rather than guessed: the cleaning, electrical,
+ * plumbing and house-help service lines are all still `coming_soon`, so there
+ * is no live destination to send those four to. They are now honest — labelled
+ * and not clickable — rather than links into a 404. The invented "₹499, was
+ * ₹999" came off with them; a price on something you cannot book is a promise
+ * we would break.
+ *
+ * Puja & Pandal Decor is the exception: event decoration is a real, shipped
+ * module, so that tile points at it.
+ */
 const CATEGORIES = [
   {
     id: 'festive-cleaning',
     title: 'Festive Home Cleaning',
-    price: '₹499',
-    originalPrice: '₹999',
     colSpan: 'col-span-1',
     rowSpan: 'row-span-2',
     bgColor: 'bg-white',
-    path: '/book/home-cleaning'
+    comingSoon: true,
   },
   {
     id: 'lighting-setup',
@@ -38,7 +54,7 @@ const CATEGORIES = [
     colSpan: 'col-span-1',
     rowSpan: 'row-span-1',
     bgColor: 'bg-white',
-    path: '/book/electrician'
+    comingSoon: true,
   },
   {
     id: 'pandal-decor',
@@ -46,7 +62,7 @@ const CATEGORIES = [
     colSpan: 'col-span-1',
     rowSpan: 'row-span-1',
     bgColor: 'bg-white',
-    path: '/book/event-decor'
+    path: '/events',
   },
   {
     id: 'kitchen-assist',
@@ -54,7 +70,7 @@ const CATEGORIES = [
     colSpan: 'col-span-1',
     rowSpan: 'row-span-1',
     bgColor: 'bg-white',
-    path: '/book/family-assist'
+    comingSoon: true,
   },
   {
     id: 'emergency-repairs',
@@ -62,7 +78,7 @@ const CATEGORIES = [
     colSpan: 'col-span-1',
     rowSpan: 'row-span-1',
     bgColor: 'bg-white',
-    path: '/book/plumber'
+    comingSoon: true,
   },
 ];
 
@@ -100,23 +116,25 @@ export default function FestiveCategories() {
           <motion.div
             key={cat.id}
             variants={item}
-            whileHover={{ y: -4, scale: 1.02 }}
-            whileTap={{ scale: 0.95 }}
+            whileHover={cat.path ? { y: -4, scale: 1.02 } : undefined}
+            whileTap={cat.path ? { scale: 0.95 } : undefined}
             onClick={() => cat.path && nav(cat.path)}
+            role={cat.path ? 'button' : undefined}
+            aria-disabled={cat.path ? undefined : true}
             className={`
               ${cat.bgColor} ${cat.colSpan} ${cat.rowSpan}
               rounded-2xl shadow-sm border border-orange-100 overflow-hidden
-              flex flex-col relative cursor-pointer group
+              flex flex-col relative group
+              ${cat.path ? 'cursor-pointer' : 'cursor-default'}
             `}
           >
             <div className="p-3 pb-1 z-10 text-center md:text-left">
               <h3 className="font-bold text-[#4A2B29] text-xs md:text-sm leading-tight text-center">
                 {cat.title}
               </h3>
-              {cat.price && (
-                <div className="mt-2 inline-flex items-center gap-1.5 bg-[#C0265F] text-white px-2 py-0.5 rounded-full text-xs font-black shadow-sm mx-auto">
-                  <span className="line-through text-white/70 text-[10px] font-medium">{cat.originalPrice}</span>
-                  <span>{cat.price}</span>
+              {cat.comingSoon && (
+                <div className="mt-2 inline-flex items-center justify-center bg-white/80 text-[#8A5A57] ring-1 ring-orange-200 px-2 py-0.5 rounded-full text-[10px] font-bold mx-auto">
+                  Coming soon
                 </div>
               )}
             </div>
