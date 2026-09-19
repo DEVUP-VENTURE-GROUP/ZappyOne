@@ -28,14 +28,14 @@ function Tab({ t, isActive, onPress, onWarm, badge = 0 }) {
       aria-label={label}
     >
       <div className="relative">
-        <Icon size={22} strokeWidth={isActive ? 2.5 : 2} className={isActive ? 'text-zappy-600' : 'text-slate-400'} />
+        <Icon size={22} strokeWidth={isActive ? 2.5 : 2} className={isActive ? 'text-indigo-600' : 'text-slate-400'} />
         {badge > 0 && (
           <span className="absolute -top-1.5 -right-2 min-w-[16px] h-[16px] bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 leading-none ring-2 ring-white">
             {badge > 9 ? '9+' : badge}
           </span>
         )}
       </div>
-      <span className={`text-[10px] font-semibold ${isActive ? 'text-zappy-600' : 'text-slate-400'}`}>{label}</span>
+      <span className={`text-[10px] font-semibold ${isActive ? 'text-indigo-600' : 'text-slate-400'}`}>{label}</span>
     </button>
   );
 }
@@ -72,7 +72,10 @@ export default function BottomNav({ active }) {
   const right = SIDE_TABS.filter((t) => t.side === 'right');
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-[100] pointer-events-none">
+    // `lg:hidden` — this is the phone/tablet tab bar. It had no breakpoint
+    // gate, so a 64px mobile nav sat pinned across a 1440px desktop window
+    // while the real desktop navigation lived in the header above it.
+    <div className="fixed bottom-0 left-0 right-0 z-[100] pointer-events-none lg:hidden">
       <nav
         className="w-full bg-white/95 backdrop-blur-xl border-t border-slate-200 shadow-[0_-2px_12px_rgba(20,21,42,0.06)] h-[calc(64px+env(safe-area-inset-bottom))] pb-[env(safe-area-inset-bottom)] flex items-center pointer-events-auto relative"
       >
@@ -112,7 +115,7 @@ export default function BottomNav({ active }) {
           >
             <ZappyMark size={34} />
           </motion.div>
-          <span className={`text-[10px] font-bold mt-1 ${isBook ? 'text-zappy-700' : 'text-zappy-600'}`}>{tr('nav.book', 'Book Now')}</span>
+          <span className={`text-[10px] font-bold mt-1 ${isBook ? 'text-indigo-700' : 'text-indigo-600'}`}>{tr('nav.book', 'Book Now')}</span>
         </button>
       </nav>
     </div>

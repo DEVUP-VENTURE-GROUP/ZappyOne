@@ -34,8 +34,21 @@
 
 @layer base {
   :root {
-    --zappy-blue:    #2563EB;
+    /* Brand. The primary is INDIGO: every vertical added with the
+       multi-vertical architecture — repair, pet, helping, shop, provider —
+       paints in indigo/violet, and across src/ indigo outnumbers the older
+       `zappy` blue roughly ten to one. `--zappy-blue` is kept because older
+       surfaces still reference it deliberately; it is legacy, not dead. */
+    --brand:         #4F46E5;  /* indigo-600 */
+    --brand-hover:   #4338CA;  /* indigo-700 */
+    --brand-soft:    #E0E7FF;  /* indigo-100 */
+    --brand-tint:    #EEF2FF;  /* indigo-50  */
+    --brand-accent:  #7C3AED;  /* violet-600 — the gradient partner */
+
+    --zappy-blue:    #2563EB;  /* legacy brand blue */
     --zappy-navy:    #0F172A;
+    /* Semantic. These mean STATE, not brand, and must stay distinct from the
+       brand ramp above — a success that drifts indigo stops reading as success. */
     --zappy-success: #22C55E;
     --zappy-accent:  #F59E0B;
     --zappy-bg:      #FAFAFB;
@@ -131,10 +144,12 @@
     will-change: transform, box-shadow;
   }
 
+  /* Brand primary — indigo. `.btn-success` and `.btn-danger` below are
+     SEMANTIC and deliberately left on their own colours. */
   .btn-primary {
-    @apply btn bg-zappy-600 text-white shadow-[0_8px_24px_-4px_rgba(37,99,235,0.35)]
-           hover:bg-zappy-500 hover:shadow-lg hover:-translate-y-0.5
-           active:bg-zappy-700 active:translate-y-0 active:shadow-[0_8px_24px_-4px_rgba(37,99,235,0.35)];
+    @apply btn bg-indigo-600 text-white shadow-[0_8px_24px_-4px_rgba(79,70,229,0.35)]
+           hover:bg-indigo-500 hover:shadow-lg hover:-translate-y-0.5
+           active:bg-indigo-700 active:translate-y-0 active:shadow-[0_8px_24px_-4px_rgba(79,70,229,0.35)];
   }
 
   .btn-success {
@@ -144,8 +159,8 @@
   }
 
   .btn-outline {
-    @apply btn bg-white/80 backdrop-blur-sm text-zappy-700 border-2 border-zappy-100 shadow-sm
-           hover:bg-zappy-50 hover:border-zappy-200 hover:-translate-y-0.5;
+    @apply btn bg-white/80 backdrop-blur-sm text-indigo-700 border-2 border-indigo-100 shadow-sm
+           hover:bg-indigo-50 hover:border-indigo-200 hover:-translate-y-0.5;
   }
 
   .btn-secondary {
@@ -189,6 +204,45 @@
     @apply translate-y-0 shadow-card scale-[0.99];
   }
 
+  /* ---- Catalog tiles & rails ----------------------------------------------
+     The live catalog renders the same two shapes on every surface — a heading
+     tile, and a horizontal rail of them. They were hand-rolled per call site,
+     which is how the rail drifted: tiles clipped their own labels on one page
+     and not another. One definition, used everywhere.
+
+     WIDTH IS EXPLICIT AND NEVER A PERCENTAGE. Inside an overflow-x row a
+     percentage resolves against the VISIBLE width, not the scrollable content
+     width, so `w-1/6` collapses every tile to a sixth of the viewport. It grows
+     by breakpoint instead, so a 1440px desktop does not show a phone-sized rail. */
+  .tile {
+    @apply flex w-[132px] shrink-0 snap-start flex-col overflow-hidden rounded-2xl
+           bg-white text-left ring-1 ring-slate-200/80
+           transition duration-200 sm:w-[148px] lg:w-[164px]
+           hover:-translate-y-0.5 hover:ring-indigo-300
+           hover:shadow-[0_18px_34px_-22px_rgba(79,70,229,0.55)];
+  }
+
+  /* The artwork well. Catalog art is admin-uploaded and is usually absent, so
+     the empty state is the COMMON case and has to look deliberate rather than
+     like a failed image. `shrink-0` keeps it a fixed slab while the label below
+     is free to grow. */
+  .tile-art {
+    @apply relative flex aspect-[5/4] w-full shrink-0 items-center justify-center
+           overflow-hidden bg-gradient-to-br from-indigo-50 via-indigo-50 to-violet-100;
+  }
+
+  /* The label. Deliberately NOT a fixed height: a fixed 52px could not hold a
+     two-line name plus the count, so the second line collided with it
+     ("Tank & Sump Deep Cleaning" over "6 issues"). It grows with its content
+     and the rail equalises heights, which cannot clip. */
+  .tile-body {
+    @apply flex flex-1 flex-col px-2.5 pb-2.5 pt-2;
+  }
+
+  .rail {
+    @apply flex items-stretch gap-2.5 overflow-x-auto no-scrollbar snap-x scroll-smooth;
+  }
+
   .card-elevated {
     @apply rounded-[24px] bg-white/95 backdrop-blur-xl shadow-soft-lg ring-1 ring-slate-900/5 p-6;
   }
@@ -218,7 +272,10 @@
     @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold;
   }
 
-  .chip-blue    { @apply chip bg-zappy-50 text-zappy-700; }
+  /* `.chip-brand` is the brand tone. `.chip-blue` stays as an alias so the
+     existing call sites keep working; success/accent/red are SEMANTIC. */
+  .chip-brand   { @apply chip bg-indigo-50 text-indigo-700; }
+  .chip-blue    { @apply chip-brand; }
   .chip-success { @apply chip bg-success-50 text-success-700; }
   .chip-accent  { @apply chip bg-accent-50 text-accent-700; }
   .chip-neutral { @apply chip bg-slate-100 text-slate-600; }

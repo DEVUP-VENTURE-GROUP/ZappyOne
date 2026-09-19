@@ -5,6 +5,10 @@ import {
   Monitor, Battery, Plug, Keyboard, Volume2, Camera, HardDrive, Gauge,
   Wifi, Thermometer, CircuitBoard, Database, ArrowUpCircle, Wand2, ShieldAlert,
   ClipboardCheck, Footprints, PackageCheck, PawPrint, Scissors, ShoppingBag, ShoppingBasket, Stethoscope,
+  // Vehicle and tank headings — see CATEGORY_ICONS.
+  LifeBuoy, KeyRound, Cog, BatteryCharging, Lightbulb, Disc, CircleDot, Link2,
+  Waves, Fuel, Flame, Wind, Lock, Armchair, Radio, Radar, ShieldCheck,
+  PackagePlus, Navigation, Search, Square,
 } from 'lucide-react';
 import { useLiveCatalogQuery } from '../../services/api';
 
@@ -39,6 +43,7 @@ const ICONS = {
  * day one and an operator can replace it with a photo whenever they like.
  */
 export const CATEGORY_ICONS = {
+  /* Electronics — mobile + laptop */
   display: Monitor,
   battery_power: Battery,
   charging: Plug,
@@ -58,6 +63,82 @@ export const CATEGORY_ICONS = {
   data_recovery: Database,
   upgrade: ArrowUpCircle,
   maintenance: Sparkles,
+
+  /* Two-wheeler. The vehicle and tank headings were missing entirely, so all
+     53 of them fell through to the wrench — nine identical glyphs in a row,
+     which made the rail look broken rather than uniform. */
+  tw_roadside: LifeBuoy,
+  tw_starting: KeyRound,
+  tw_engine: Cog,
+  tw_battery_electrical: BatteryCharging,
+  tw_lights_controls: Lightbulb,
+  tw_brakes: Disc,
+  tw_tyres_wheels: CircleDot,
+  tw_chain_drive: Link2,
+  tw_clutch_gear: Cog,
+  tw_cvt: Cog,
+  tw_suspension_steering: Navigation,
+  tw_fuel: Fuel,
+  tw_cooling: Thermometer,
+  tw_body: Bike,
+  tw_maintenance: Sparkles,
+  tw_ev_battery: BatteryCharging,
+  tw_ev_charging: Plug,
+  tw_ev_motor: Zap,
+  tw_ev_controller: CircuitBoard,
+  tw_ev_dashboard: Gauge,
+
+  /* Four-wheeler */
+  fw_roadside: LifeBuoy,
+  fw_starting: KeyRound,
+  fw_engine: Cog,
+  fw_battery_electrical: BatteryCharging,
+  fw_fuel: Fuel,
+  fw_cng: Flame,
+  fw_transmission: Cog,
+  fw_clutch: Cog,
+  fw_brakes: Disc,
+  fw_steering: Navigation,
+  fw_suspension: Waves,
+  fw_tyres_wheels: CircleDot,
+  fw_ac: AirVent,
+  fw_cooling: Thermometer,
+  fw_exhaust: Wind,
+  fw_lights: Lightbulb,
+  fw_body: Car,
+  fw_glass: Square,
+  fw_doors_locks: Lock,
+  fw_interior: Armchair,
+  fw_infotainment: Radio,
+  fw_adas: Radar,
+  fw_diagnostics: Stethoscope,
+  fw_safety: ShieldCheck,
+  fw_maintenance: Sparkles,
+  fw_ev_battery: BatteryCharging,
+  fw_ev_charging: Plug,
+  fw_ev_motor: Zap,
+
+  /* Water & tank care */
+  wt_cleaning: Droplets,
+  wt_inspection: Search,
+  wt_flushing: Waves,
+  wt_repair: Wrench,
+  wt_addons: PackagePlus,
+};
+
+/**
+ * Per-vertical fallback, keyed by the service's `artKey`.
+ *
+ * An unmapped heading in a vehicle rail should still look like a vehicle
+ * heading rather than a generic wrench, so the fallback narrows by vertical
+ * before giving up. A genuinely unknown vertical still lands on the wrench.
+ */
+const VERTICAL_FALLBACK_ICON = {
+  mobile: Smartphone,
+  laptop: Laptop,
+  two_wheeler: Bike,
+  four_wheeler: Car,
+  water_tank_care: Droplets,
 };
 
 /**
@@ -75,16 +156,13 @@ export const CATEGORY_ICONS = {
  * Advanced" has to fit whatever we choose, so the layout is built around the
  * longest real name rather than the shortest.
  */
-export function CategoryTile({ category, onOpen }) {
-  const Icon = CATEGORY_ICONS[category.code] || Wrench;
+export function CategoryTile({ category, onOpen, fallbackIcon }) {
+  const Icon = CATEGORY_ICONS[category.code] || fallbackIcon || Wrench;
   const count = category.problems.length;
 
   return (
-    <button
-      onClick={onOpen}
-      className="group flex w-[116px] shrink-0 snap-start flex-col overflow-hidden rounded-2xl bg-white text-left ring-1 ring-slate-200/80 transition duration-200 hover:-translate-y-0.5 hover:ring-indigo-300 hover:shadow-[0_18px_34px_-22px_rgba(79,70,229,0.55)] sm:w-[132px]"
-    >
-      <span className="relative flex aspect-[5/4] w-full items-center justify-center overflow-hidden bg-gradient-to-br from-indigo-50 to-violet-50">
+    <button onClick={onOpen} className="tile group">
+      <span className="tile-art">
         {category.imageUrl ? (
           <img
             src={category.imageUrl}
@@ -93,16 +171,26 @@ export function CategoryTile({ category, onOpen }) {
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.05]"
           />
         ) : (
-          <Icon size={24} className="text-indigo-500 transition-transform duration-200 group-hover:scale-110" strokeWidth={1.6} />
+          <>
+            {/* A soft wash behind the glyph so an art-less tile reads as a
+                designed surface rather than an empty box. */}
+            <span className="pointer-events-none absolute -right-3 -top-3 h-12 w-12 rounded-full bg-white/50 blur-xl" />
+            <Icon
+              size={26}
+              strokeWidth={1.6}
+              className="relative text-indigo-500 transition-transform duration-200 group-hover:scale-110"
+            />
+          </>
         )}
       </span>
 
-      {/* Fixed height keeps one-line and two-line names on the same baseline. */}
-      <span className="flex h-[52px] flex-col justify-start px-2.5 pt-2">
-        <span className="line-clamp-2 text-[12px] font-bold leading-[1.25] tracking-[-0.01em] text-[#0F172A]">
+      {/* Grows with the name; the rail equalises heights so a two-line label
+          can never collide with the count beneath it. */}
+      <span className="tile-body">
+        <span className="line-clamp-2 text-[12px] font-bold leading-[1.3] tracking-[-0.01em] text-[#0F172A]">
           {category.name}
         </span>
-        <span className="mt-auto pb-2 text-[10.5px] font-medium text-slate-400">
+        <span className="mt-auto pt-1 text-[10.5px] font-medium text-slate-400">
           {count} {count === 1 ? 'issue' : 'issues'}
         </span>
       </span>
@@ -141,11 +229,12 @@ function ServiceCard({ service, onOpenService, onOpenCategory }) {
       {/* Horizontal scrollable carousel — Swiggy/Zomato style */}
       {coverage.length > 0 && (
         <div className="relative border-t border-slate-100">
-          <div className="flex gap-2.5 overflow-x-auto no-scrollbar px-4 py-3.5 snap-x scroll-smooth">
+          <div className="rail px-4 py-3.5">
             {coverage.map((group) => (
               <CategoryTile
                 key={group.code}
                 category={group}
+                fallbackIcon={VERTICAL_FALLBACK_ICON[service.artKey]}
                 onOpen={() => onOpenCategory(group)}
               />
             ))}
