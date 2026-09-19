@@ -12,15 +12,22 @@
  * are made. They are original, a few hundred bytes each, scale losslessly from
  * a 48px chip to a hero, and add no network request or third-party dependency.
  *
- * ── SWAPPING IN THE RENDERS LATER ──────────────────────────────────────────
- * Drop the files into `public/assets/service-characters/` using the filenames
- * in the manifest below — they derive deterministically from the service code —
- * then flip RASTER_READY to true. Every service switches at once and the SVG
- * stays as the automatic fallback for anything still missing.
+ * ── SWAPPING IN THE RENDERS ────────────────────────────────────────────────
+ * Drop a file into `public/assets/service-characters/` using the filename in
+ * the manifest below — they derive deterministically from the service code —
+ * then add that code to RENDERED below. That service switches to the render;
+ * every other one keeps its vector until its own file lands.
  *
- * It is a flag rather than a per-file existence check on purpose: probing for
- * files that are not there yet would fire fourteen 404s on every page load,
- * and a broken image is exactly what this system exists to remove.
+ * PER SERVICE, not one global switch. The renders arrive a few at a time, and
+ * a single all-or-nothing flag would mean flipping it after the first batch
+ * pointed the other eleven services at files that do not exist — eleven 404s
+ * and eleven torn images on every page load, which is the exact failure this
+ * system exists to prevent.
+ *
+ * It is an explicit list rather than a per-file existence check for the same
+ * reason: the browser cannot ask "is this file there?" without requesting it,
+ * and a request for a missing file IS the 404. Naming what exists costs one
+ * line per asset and keeps the network clean.
  *
  * ── THE SHARED VISUAL FAMILY ───────────────────────────────────────────────
  * Every character is drawn on the same 120×120 square, front-facing, centred,
@@ -31,8 +38,21 @@
  * ----------------------------------------------------------------------------
  */
 
-/** Flip to true once the rendered assets are in public/assets/service-characters/. */
-export const RASTER_READY = false;
+import { useState } from 'react';
+
+/**
+ * Service codes whose rendered asset is actually on disk.
+ *
+ * Add a code here ONLY once its file is in public/assets/service-characters/.
+ * A code listed without its file is a 404 and a torn image; a file present
+ * without its code just keeps rendering the vector, which is harmless. So when
+ * in doubt, land the file first and add the code second.
+ *
+ *   RENDERED = new Set(['mobile_repair', 'laptop_repair']);
+ */
+export const RENDERED = new Set([
+  // (empty — every service is on its vector character)
+]);
 
 /* ── Shared palette ────────────────────────────────────────────────────────
    Skin and hair stay natural; the UNIFORM carries the domain colour, so the
@@ -343,29 +363,34 @@ export function characterFor(code) {
   if (!entry) return null;
   return {
     ...entry,
-    src: RASTER_READY ? `${CHARACTER_DIR}/${entry.file}` : null,
+    // Only services named in RENDERED get a URL; the rest return null and the
+    // caller draws the vector, so nothing is ever requested that is not there.
+    src: RENDERED.has(code) ? `${CHARACTER_DIR}/${entry.file}` : null,
   };
 }
 
 /** Draws a character: the rendered asset when ready, else the vector original. */
 export function ServiceCharacter({ code, size = 56, className = '' }) {
+  // Last-resort net: a code listed in RENDERED whose file did not actually
+  // ship. Rather than hide the image and leave an empty chip, fall back to the
+  // vector — the customer sees a character either way.
+  const [rasterFailed, setRasterFailed] = useState(false);
+
   const character = characterFor(code);
   if (!character) return null;
 
   const { src, Art, title } = character;
 
-  if (src) {
+  if (src && !rasterFailed) {
     return (
       <img
         src={src}
-        alt=""
+        alt={title}
         width={size}
         height={size}
         loading="lazy"
         className={className}
-        // If a rendered file is ever missing the alt text keeps the row intact
-        // rather than showing a torn-image glyph.
-        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+        onError={() => setRasterFailed(true)}
       />
     );
   }
