@@ -226,9 +226,11 @@
      the empty state is the COMMON case and has to look deliberate rather than
      like a failed image. `shrink-0` keeps it a fixed slab while the label below
      is free to grow. */
+  /* The gradient itself is passed per DOMAIN by the caller, so phones, vehicles,
+     water, errands and pets read as distinct sections of one product. */
   .tile-art {
     @apply relative flex aspect-[5/4] w-full shrink-0 items-center justify-center
-           overflow-hidden bg-gradient-to-br from-indigo-50 via-indigo-50 to-violet-100;
+           overflow-hidden bg-indigo-50;
   }
 
   /* The label. Deliberately NOT a fixed height: a fixed 52px could not hold a

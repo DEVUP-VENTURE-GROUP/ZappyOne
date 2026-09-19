@@ -894,40 +894,6 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* ─── Book Again (card style) ──────────────────────────────── */}
-        {quickRebooks.length > 0 && (
-          <div className="max-w-7xl w-full mx-auto px-4 md:px-6 mt-6">
-            <div className="flex items-center gap-2 mb-3 px-1">
-              <Repeat2 size={16} className="text-indigo-500" />
-              <span className="text-xs font-black text-slate-600 uppercase tracking-widest">Book Again</span>
-            </div>
-            <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
-              {quickRebooks.map(({ id, service, date }) => (
-                <motion.button
-                  key={id || service}
-                  onClick={() => handleRebook(id, service)}
-                  disabled={rebooking}
-                  className="shrink-0 w-44 md:w-56 p-3 rounded-[22px] bg-white border border-slate-200 shadow-sm flex items-center justify-between group disabled:opacity-60"
-                  whileTap={{ scale: 0.96 }}
-                  whileHover={{ y: -2, boxShadow: '0 12px 24px -8px rgba(99,102,241,0.25)' }}
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-lg shadow-inner shrink-0">
-                      {serviceEmoji(service)}
-                    </div>
-                    <div className="text-left min-w-0">
-                      <span className="block text-sm font-bold text-slate-900 leading-tight mb-0.5 truncate">{serviceLabel(service)}</span>
-                      <span className="block text-[10px] font-medium text-indigo-500">Tap to book again · {timeAgo(date)}</span>
-                    </div>
-                  </div>
-                  {rebooking
-                    ? <Loader2 size={14} className="text-indigo-500 animate-spin shrink-0" />
-                    : <Repeat2 size={14} className="text-slate-400 group-hover:text-indigo-500 transition-colors shrink-0" />}
-                </motion.button>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* ─── Premium Dashboard Widgets Removed ─── */}
 
@@ -935,7 +901,84 @@ export default function HomePage() {
 
         <div className="max-w-7xl w-full mx-auto px-4 md:px-6">
 
-          {/* ─── Featured carousel (mobile only — desktop shows it in the hero) ─ */}
+          {/* ─── ORDER OF THIS COLUMN ───────────────────────────────────
+            Discovery first, promotion last.
+
+            The live catalog used to sit FOURTH here, below a mobile carousel,
+            the offers strip and an ad banner — so the one section that says
+            what Zappy actually does today was buried under promotional
+            photography, and on a phone you scrolled past three marketing
+            blocks before reaching a bookable service.
+
+            Now: what we do → where (nearby shops) → what you booked before →
+            then the promotional material, which is the part a visitor can
+            afford to miss.
+          ─────────────────────────────────────────────────────────────── */}
+
+          {/* ─── What we actually do today ──────────────────────────────
+            Driven by the live service catalog rather than a hardcoded list of
+            rails. A category appears here when an operator sets it live and
+            providers are verified for it — never before, because a tile that
+            leads to a flow we cannot fulfil is worse than no tile.
+          ─────────────────────────────────────────────────────────────── */}
+          <LiveServices />
+
+          {/* ─── Nearby Shops ── verified local businesses, browse + Pick & Go ── */}
+          <div className="mt-7">
+            <button onClick={() => nav('/nearby-shops')}
+              className="w-full flex items-center gap-4 rounded-2xl p-4 text-left ring-1 ring-indigo-100 hover:ring-indigo-200 transition"
+              style={{ background: 'linear-gradient(135deg,#eef2ff,#e0e7ff)' }}>
+              <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center shadow-sm shrink-0">
+                <Store size={22} className="text-indigo-600" strokeWidth={1.75} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-black text-[#0F172A] text-sm">Nearby Shops</p>
+                <p className="text-xs text-slate-500 mt-0.5">Verified local repair shops — visit, or have their worker come to you</p>
+              </div>
+              <ChevronRight size={18} className="text-indigo-400 shrink-0" />
+            </button>
+          </div>
+
+          {/* ─── Book Again ─────────────────────────────────────────────
+            Personal, so it sits under discovery rather than above it: a
+            first-time visitor has nothing here, and a returning one has
+            already found what they came for by this point. */}
+          {quickRebooks.length > 0 && (
+            <div className="mt-7">
+              <div className="flex items-center gap-2 mb-3 px-1">
+                <Repeat2 size={16} className="text-indigo-500" />
+                <span className="text-xs font-black text-slate-600 uppercase tracking-widest">Book Again</span>
+              </div>
+              <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
+                {quickRebooks.map(({ id, service, date }) => (
+                  <motion.button
+                    key={id || service}
+                    onClick={() => handleRebook(id, service)}
+                    disabled={rebooking}
+                    className="shrink-0 w-44 md:w-56 p-3 rounded-2xl bg-white ring-1 ring-slate-200 shadow-sm flex items-center justify-between group disabled:opacity-60"
+                    whileTap={{ scale: 0.96 }}
+                    whileHover={{ y: -2, boxShadow: '0 12px 24px -8px rgba(99,102,241,0.25)' }}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-lg shadow-inner shrink-0">
+                        {serviceEmoji(service)}
+                      </div>
+                      <div className="text-left min-w-0">
+                        <span className="block text-sm font-bold text-slate-900 leading-tight mb-0.5 truncate">{serviceLabel(service)}</span>
+                        <span className="block text-[10px] font-medium text-indigo-500">Tap to book again · {timeAgo(date)}</span>
+                      </div>
+                    </div>
+                    {rebooking
+                      ? <Loader2 size={14} className="text-indigo-500 animate-spin shrink-0" />
+                      : <Repeat2 size={14} className="text-slate-400 group-hover:text-indigo-500 transition-colors shrink-0" />}
+                  </motion.button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ─── Promotional, below discovery ──────────────────────────── */}
+          {/* Featured carousel (mobile only — desktop shows it in the hero) */}
           {isMobile && (
             <div className="mt-7">
               <HeroCarousel />
@@ -947,14 +990,6 @@ export default function HomePage() {
 
           {/* Ad Banners */}
           <AdBanner className="mt-4" />
-
-          {/* ─── What we actually do today ──────────────────────────────
-            Driven by the live service catalog rather than a hardcoded list of
-            rails. A category appears here when an operator sets it live and
-            providers are verified for it — never before, because a tile that
-            leads to a flow we cannot fulfil is worse than no tile.
-          ─────────────────────────────────────────────────────────────── */}
-          <LiveServices />
 
           <PromoBannerEvents />
 
@@ -975,21 +1010,8 @@ export default function HomePage() {
           </div>
 
 
-          {/* ─── Nearby Shops ── verified local businesses, browse + Pick & Go ── */}
-          <div className="px-4 mt-7">
-            <button onClick={() => nav('/nearby-shops')}
-              className="w-full flex items-center gap-4 rounded-2xl p-4 text-left ring-1 ring-indigo-100 hover:ring-indigo-200 transition"
-              style={{ background: 'linear-gradient(135deg,#eef2ff,#e0e7ff)' }}>
-              <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center shadow-sm shrink-0">
-                <Store size={22} className="text-indigo-600" strokeWidth={1.75} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-black text-[#0F172A] text-sm">Nearby Shops</p>
-                <p className="text-xs text-slate-500 mt-0.5">Verified local repair shops — visit, or have their worker come to you</p>
-              </div>
-              <ChevronRight size={18} className="text-indigo-400 shrink-0" />
-            </button>
-          </div>
+          {/* Nearby Shops moved up, directly under the catalog — it is
+              discovery, not an afterthought below the promotional rails. */}
 
           {/* ─── Pet Assistance ── hidden until feature launch ────────── */}
 

@@ -142,6 +142,29 @@ const VERTICAL_FALLBACK_ICON = {
 };
 
 /**
+ * Per-domain artwork tint.
+ *
+ * Every tile and icon chip drew the same indigo→violet wash, so five different
+ * businesses — phones, vehicles, water tanks, errands, pets — looked like one
+ * undifferentiated list. Each domain now gets its own second stop while the
+ * FIRST stop stays indigo, so the rails read as distinct sections of one
+ * product rather than five palettes competing.
+ *
+ * Keyed by domain code, with a brand default for anything an operator adds
+ * later — a new domain looks deliberate on day one rather than unstyled.
+ */
+const DOMAIN_ART = {
+  electronics:      { art: 'from-indigo-50 to-violet-100',  chip: 'bg-indigo-50',  fg: 'text-indigo-600',  glyph: 'text-indigo-500'  },
+  vehicles:         { art: 'from-indigo-50 to-sky-100',     chip: 'bg-sky-50',     fg: 'text-sky-700',     glyph: 'text-sky-600'     },
+  home_services:    { art: 'from-indigo-50 to-cyan-100',    chip: 'bg-cyan-50',    fg: 'text-cyan-700',    glyph: 'text-cyan-600'    },
+  helping_services: { art: 'from-indigo-50 to-amber-100',   chip: 'bg-amber-50',   fg: 'text-amber-700',   glyph: 'text-amber-600'   },
+  pet_services:     { art: 'from-indigo-50 to-fuchsia-100', chip: 'bg-fuchsia-50', fg: 'text-fuchsia-700', glyph: 'text-fuchsia-600' },
+};
+
+const DEFAULT_ART = DOMAIN_ART.electronics;
+const artFor = (domainCode) => DOMAIN_ART[domainCode] || DEFAULT_ART;
+
+/**
  * One heading tile in the scrolling strip.
  *
  * The width is FIXED, in pixels. It used to be
@@ -156,13 +179,13 @@ const VERTICAL_FALLBACK_ICON = {
  * Advanced" has to fit whatever we choose, so the layout is built around the
  * longest real name rather than the shortest.
  */
-export function CategoryTile({ category, onOpen, fallbackIcon }) {
+export function CategoryTile({ category, onOpen, fallbackIcon, art = DEFAULT_ART }) {
   const Icon = CATEGORY_ICONS[category.code] || fallbackIcon || Wrench;
   const count = category.problems.length;
 
   return (
     <button onClick={onOpen} className="tile group">
-      <span className="tile-art">
+      <span className={`tile-art bg-gradient-to-br ${art.art}`}>
         {category.imageUrl ? (
           <img
             src={category.imageUrl}
@@ -178,7 +201,7 @@ export function CategoryTile({ category, onOpen, fallbackIcon }) {
             <Icon
               size={26}
               strokeWidth={1.6}
-              className="relative text-indigo-500 transition-transform duration-200 group-hover:scale-110"
+              className={`relative ${art.glyph} transition-transform duration-200 group-hover:scale-110`}
             />
           </>
         )}
@@ -198,17 +221,17 @@ export function CategoryTile({ category, onOpen, fallbackIcon }) {
   );
 }
 
-function ServiceCard({ service, onOpenService, onOpenCategory }) {
+function ServiceCard({ service, onOpenService, onOpenCategory, art = DEFAULT_ART }) {
   const Icon = ICONS[service.icon] || Wrench;
   const coverage = service.coverage || [];
 
   return (
-    <div className="overflow-hidden rounded-3xl bg-white ring-1 ring-slate-200/70">
+    <div className="overflow-hidden rounded-3xl bg-white ring-1 ring-slate-200/70 transition duration-200 hover:ring-slate-300 hover:shadow-[0_18px_34px_-24px_rgba(15,23,42,0.35)]">
       <button onClick={onOpenService} className="group flex w-full items-center gap-4 p-4 text-left">
-        <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-indigo-50">
+        <span className={`flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl ${art.chip}`}>
           {service.imageUrl
             ? <img src={service.imageUrl} alt="" className="h-full w-full object-cover" />
-            : <Icon size={22} className="text-indigo-600" strokeWidth={1.75} />}
+            : <Icon size={22} className={art.fg} strokeWidth={1.75} />}
         </span>
         <span className="min-w-0 flex-1">
           <span className="flex items-center gap-2">
@@ -234,6 +257,7 @@ function ServiceCard({ service, onOpenService, onOpenCategory }) {
               <CategoryTile
                 key={group.code}
                 category={group}
+                art={art}
                 fallbackIcon={VERTICAL_FALLBACK_ICON[service.artKey]}
                 onOpen={() => onOpenCategory(group)}
               />
@@ -267,16 +291,25 @@ export default function LiveServices() {
     <div className="mt-7 space-y-7">
       {domains.map((d) => {
         const Icon = ICONS[d.icon] || Wrench;
+        const art = artFor(d.code);
+        const serviceCount = d.services.length;
         return (
           <section key={d.code}>
             <div className="flex items-center gap-2.5">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-indigo-50">
+              <span className={`flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl ${art.chip}`}>
                 {d.imageUrl
                   ? <img src={d.imageUrl} alt="" className="h-full w-full object-cover" />
-                  : <Icon size={17} className="text-indigo-500" strokeWidth={2} />}
+                  : <Icon size={18} className={art.fg} strokeWidth={2} />}
               </span>
-              <div className="min-w-0">
-                <h2 className="text-[17px] font-black tracking-tight text-[#0F172A]">{d.name}</h2>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-baseline gap-2">
+                  <h2 className="text-[18px] font-black tracking-tight text-[#0F172A]">{d.name}</h2>
+                  {/* The real number of live services in this domain — counted
+                      from the response, never a hardcoded figure. */}
+                  <span className="shrink-0 text-[11px] font-bold text-slate-400">
+                    {serviceCount} {serviceCount === 1 ? 'service' : 'services'}
+                  </span>
+                </div>
                 {d.description && <p className="text-xs text-slate-500">{d.description}</p>}
               </div>
             </div>
@@ -286,6 +319,7 @@ export default function LiveServices() {
                 <ServiceCard
                   key={s.code}
                   service={s}
+                  art={art}
                   onOpenService={() => nav(s.path)}
                   onOpenCategory={(group) => nav(`/repair/category/${s.artKey || s.code}/${group.code}`)}
                 />
