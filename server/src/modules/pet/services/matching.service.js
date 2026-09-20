@@ -219,6 +219,14 @@ async function findProviders({
 
   const isStay = ['boarding', 'daycare'].includes(serviceMode);
   const results = [];
+  /*
+   * Same gap the repair engine had: an empty list gave the customer nothing
+   * to go on and the screen guessed "try another location" even when the
+   * real cause was every nearby provider being full for those dates. Counts
+   * only — no provider's identity is ever part of this.
+   */
+  const rejectedCounts = {};
+  const reject = (reason) => { rejectedCounts[reason] = (rejectedCounts[reason] || 0) + 1; };
 
   for (const cap of capabilities) {
     const distanceKm = (serviceLocation && cap.baseLocation?.coordinates?.length === 2)
@@ -226,7 +234,9 @@ async function findProviders({
       : null;
 
     // Outside the radius they agreed to serve.
-    if (distanceKm != null && cap.serviceRadiusKm && distanceKm > cap.serviceRadiusKm) continue;
+    if (distanceKm != null && cap.serviceRadiusKm && distanceKm > cap.serviceRadiusKm) {
+      reject('outside_radius'); continue;
+    }
 
     let capacity = null;
     if (isStay && checkInAt && checkOutAt) {
@@ -238,14 +248,14 @@ async function findProviders({
         isDaycare: serviceMode === 'daycare',
       });
       // A full provider is not "a lower-ranked option" — they are unbookable.
-      if (!capacity.ok) continue;
+      if (!capacity.ok) { reject('no_capacity'); continue; }
     }
 
     const provider = cap.shopId
       ? await Shop.findById(cap.shopId).select('businessName phone rating reviewCount').lean()
       : await Worker.findById(cap.workerId).select('name phone rating reviewCount completedJobs acceptanceRate').lean();
 
-    if (!provider) continue;
+    if (!provider) { reject('profile_missing'); continue; }
 
     const rating = provider.rating || 0;
     const acceptance = provider.acceptanceRate ?? 100;
@@ -277,7 +287,24 @@ async function findProviders({
     });
   }
 
-  return results.sort((a, b) => b.score - a.score).slice(0, limit);
+  const ranked = results.sort((a, b) => b.score - a.score).slice(0, limit);
+  if (ranked.length) {
+    return { providers: ranked, nearbyCount: capabilities.length, primaryReason: null };
+  }
+
+  /*
+   * Zero candidates even matched species/size/category/mode is a DIFFERENT
+   * fact from "N providers matched but every one was too far or full" — the
+   * first means nobody has been onboarded for this at all, the second means
+   * real supply exists and the customer's own choices (dates, distance) are
+   * the reason. Collapsing them loses exactly the distinction the customer
+   * needs to know what to do next.
+   */
+  if (!capabilities.length) {
+    return { providers: [], nearbyCount: 0, primaryReason: 'no_capability' };
+  }
+  const primaryReason = Object.entries(rejectedCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || null;
+  return { providers: [], nearbyCount: capabilities.length, primaryReason };
 }
 
 /**

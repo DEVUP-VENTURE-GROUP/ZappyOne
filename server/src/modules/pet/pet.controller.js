@@ -175,12 +175,12 @@ async function findProviders(req, res, next) {
   try {
     const { pets: petEntries = [], ...rest } = req.body;
     const withPets = await bookingService.loadOwnedPets(req.auth.sub, petEntries);
-    const providers = await matchingService.findProviders({
+    const result = await matchingService.findProviders({
       ...rest,
       pets: withPets.map((e) => ({ pet: e.pet, variantCode: e.variantCode })),
       serviceLocation: rest.serviceLocation?.coordinates || null,
     });
-    res.json({ providers });
+    res.json(result);
   } catch (err) { next(err); }
 }
 

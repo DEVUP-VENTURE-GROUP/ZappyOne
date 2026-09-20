@@ -277,11 +277,23 @@ export default function PetBookingFlowPage() {
       {step === 'providers' && (
         <Shell>
           <p className="text-sm font-bold text-slate-500">{(providersData?.providers || []).length} providers available</p>
-          {!(providersData?.providers || []).length && (
-            <div className="text-center py-10 text-slate-400 text-sm">
-              No provider is free for this yet — try a different time.
-            </div>
-          )}
+          {!(providersData?.providers || []).length && (() => {
+            const nearby = providersData?.nearbyCount || 0;
+            const reason = providersData?.primaryReason;
+            let text = 'No provider is free for this yet — try a different time.';
+            if (nearby === 0) {
+              text = 'Nobody is onboarded for this service in your area yet.';
+            } else if (reason === 'outside_radius') {
+              text = `${nearby} ${nearby === 1 ? 'provider covers' : 'providers cover'} this service nearby, but not this address — try a location closer to town.`;
+            } else if (reason === 'no_capacity') {
+              text = `${nearby} ${nearby === 1 ? 'provider is' : 'providers are'} fully booked for those dates — try different dates.`;
+            }
+            return (
+              <div className="text-center py-10 text-slate-400 text-sm px-4">
+                {text}
+              </div>
+            );
+          })()}
           {(providersData?.providers || []).map((p) => (
             <button
               key={p.capabilityId} type="button"

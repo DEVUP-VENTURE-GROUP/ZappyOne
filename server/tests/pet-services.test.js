@@ -161,6 +161,83 @@ beforeEach(async () => {
   await seedCatalog();
 });
 
+/* ─── Honest reasons when nothing is offered ──────────────────────────── */
+
+describe('findProviders explains an empty result instead of going silent', () => {
+  const dogEntry = (pet) => [{ pet, variantCode: 'pw_walk_30' }];
+
+  it('says nobody at all is onboarded, when that is true', async () => {
+    const dog = await makeDog();
+    const result = await matchingService.findProviders({
+      categoryCode: 'pet_walk', variantCode: 'pw_walk_30', serviceMode: 'doorstep',
+      pets: dogEntry(dog), serviceLocation: [78.4, 17.4],
+    });
+    expect(result.providers).toEqual([]);
+    expect(result.nearbyCount).toBe(0);
+    expect(result.primaryReason).toBe('no_capability');
+  });
+
+  it('distinguishes "found but too far" from "nobody onboarded"', async () => {
+    await PetProviderCapability.create({
+      workerId: new mongoose.Types.ObjectId(), providerType: 'dog_walker',
+      species: ['dog'], sizes: ['small', 'medium', 'large', 'extra_large'],
+      categoryCodes: ['pet_walk'], modes: ['doorstep'], verificationStatus: 'verified',
+      baseLocation: { type: 'Point', coordinates: [79.5, 18.9] }, // far away
+      serviceRadiusKm: 5,
+    });
+    const dog = await makeDog();
+    const result = await matchingService.findProviders({
+      categoryCode: 'pet_walk', variantCode: 'pw_walk_30', serviceMode: 'doorstep',
+      pets: dogEntry(dog), serviceLocation: [78.4, 17.4],
+    });
+    expect(result.providers).toEqual([]);
+    // A real walker exists — the customer's radius, not an onboarding gap.
+    expect(result.nearbyCount).toBe(1);
+    expect(result.primaryReason).toBe('outside_radius');
+  });
+
+  it('reports a full boarding provider as a capacity reason, not a blank result', async () => {
+    const { shop } = await makeBoardingProvider(1);
+    const dogA = await makeDog({ name: 'A' });
+    const dogB = await PetPassport.create({ userId: otherUserId, name: 'B', species: 'dog', size: 'medium' });
+    const checkIn = new Date();
+    const checkOut = new Date(checkIn.getTime() + 2 * 86400000);
+
+    await bookingService.createBooking({
+      userId, categoryCode: 'pet_boarding', serviceMode: 'boarding',
+      pets: [{ petId: dogA._id, variantCode: 'pb_overnight', addonCodes: [] }],
+      checkInAt: checkIn, checkOutAt: checkOut, shopId: shop._id,
+      serviceLocation: { type: 'Point', coordinates: [78.4, 17.4], address: 'Home' },
+    });
+
+    const result = await matchingService.findProviders({
+      categoryCode: 'pet_boarding', variantCode: 'pb_overnight', serviceMode: 'boarding',
+      pets: [{ pet: dogB, variantCode: 'pb_overnight' }],
+      serviceLocation: [78.4, 17.4], checkInAt: checkIn, checkOutAt: checkOut,
+    });
+    expect(result.providers).toEqual([]);
+    expect(result.nearbyCount).toBe(1);
+    expect(result.primaryReason).toBe('no_capacity');
+  });
+
+  it('returns real candidates, ranked, when supply genuinely exists', async () => {
+    const walker = await Worker.create({ phone: '9800000099', name: 'Real Walker' });
+    await PetProviderCapability.create({
+      workerId: walker._id, providerType: 'dog_walker',
+      species: ['dog'], sizes: ['small', 'medium', 'large', 'extra_large'],
+      categoryCodes: ['pet_walk'], modes: ['doorstep'], verificationStatus: 'verified',
+      baseLocation: { type: 'Point', coordinates: [78.4, 17.4] }, serviceRadiusKm: 10,
+    });
+    const dog = await makeDog();
+    const result = await matchingService.findProviders({
+      categoryCode: 'pet_walk', variantCode: 'pw_walk_30', serviceMode: 'doorstep',
+      pets: dogEntry(dog), serviceLocation: [78.4, 17.4],
+    });
+    expect(result.providers).toHaveLength(1);
+    expect(result.primaryReason).toBeNull();
+  });
+});
+
 /* ─── Compatibility ────────────────────────────────────────────────────── */
 
 describe('compatibility is enforced before anything else', () => {
