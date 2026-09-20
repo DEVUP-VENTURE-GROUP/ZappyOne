@@ -12,9 +12,13 @@
  * one clearly-marked demo provider per live line and approves their
  * enrolment, which is the same path a real provider walks.
  *
- * Every record it writes is named `[DEMO]` and carries `isDemo: true`, so a
- * demo provider is never mistaken for a real one and can be removed in one
- * query. Refuses to run against production without an explicit flag.
+ * Every record it writes is named `[DEMO]` and uses a reserved 99999-prefixed
+ * phone, so a demo provider is never mistaken for a real one and `--remove`
+ * finds all of them. Refuses to run against production without a flag.
+ *
+ * What it does NOT do: give repair-line demo shops capabilities or prices.
+ * Those would be invented supply. A demo shop makes the line visible; it
+ * cannot take a repair until someone sets it up like a real shop would.
  *
  * Usage:
  *   NODE_ENV=development node src/modules/onboarding/seed/run-demo-providers.js
@@ -73,7 +77,6 @@ async function seedDemoProviders() {
         skills: [line.code],
         kyc: { status: 'approved' },
         location: { type: 'Point', coordinates: CENTRE },
-        isDemo: true,
       }))._id;
     } else {
       providerKind = 'shop';
@@ -86,7 +89,9 @@ async function seedDemoProviders() {
           text: '[DEMO] Gachibowli, Hyderabad',
           location: { type: 'Point', coordinates: CENTRE },
         },
-        isDemo: true,
+        // The matcher rejects any provider whose KYC is not approved, so a
+        // demo shop without this is visible in the catalog and never offered.
+        kyc: { status: 'approved' },
       }))._id;
     }
 
@@ -116,10 +121,16 @@ async function seedDemoProviders() {
   return { total: lines.length, created, already };
 }
 
-/** Undo — every demo record is findable by the flag it was written with. */
+/**
+ * Undo. Demo rows are found by their reserved phone range, NOT an `isDemo`
+ * flag: Shop and Worker are strict schemas with no such field, so a flag
+ * written at create time is silently dropped and a query on it finds nothing.
+ */
+const DEMO_PHONE = new RegExp(`^${String(DEMO_PHONE_BASE).slice(0, 5)}`);
+
 async function removeDemoProviders() {
-  const shops = await Shop.find({ isDemo: true }).select('_id').lean();
-  const workers = await Worker.find({ isDemo: true }).select('_id').lean();
+  const shops = await Shop.find({ phone: DEMO_PHONE }).select('_id').lean();
+  const workers = await Worker.find({ phone: DEMO_PHONE }).select('_id').lean();
 
   const removedEnrolments = await ProviderEnrolment.deleteMany({
     $or: [
@@ -127,8 +138,8 @@ async function removeDemoProviders() {
       { workerId: { $in: workers.map((w) => w._id) } },
     ],
   });
-  await Shop.deleteMany({ isDemo: true });
-  await Worker.deleteMany({ isDemo: true });
+  await Shop.deleteMany({ _id: { $in: shops.map((x) => x._id) } });
+  await Worker.deleteMany({ _id: { $in: workers.map((x) => x._id) } });
 
   return {
     shops: shops.length, workers: workers.length, enrolments: removedEnrolments.deletedCount,

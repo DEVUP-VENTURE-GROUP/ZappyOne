@@ -37,8 +37,24 @@ const PET_DEFAULT_MODES = {
 async function provisionRepairArea(key, coordinates) {
   const { ProviderServiceArea } = require('../repair/models/config.model');
 
-  const exists = await ProviderServiceArea.findOne(key).lean();
-  if (exists) return; // never overwrite a provider's own configuration
+  const rows = await ProviderServiceArea.find(key).lean();
+
+  /*
+   * A row with neither a map pin nor a pincode matches NOBODY — it is not a
+   * choice the provider made, it is an unfinished form that makes them
+   * invisible. Filling in the centre of such a row is repair, not override.
+   * A row that does reach someone is left exactly as the provider set it.
+   */
+  const reachable = (a) => a.center?.coordinates?.length === 2 || (a.pincodes || []).length > 0;
+  if (rows.some(reachable)) return;
+  if (rows.length) {
+    await ProviderServiceArea.updateMany(
+      { ...key, _id: { $in: rows.map((r) => r._id) } },
+      { $set: { center: { type: 'Point', coordinates } } },
+    );
+    logger.info({ ...key, coordinates }, '[auto-provision] repaired an unreachable service area');
+    return;
+  }
 
   await ProviderServiceArea.create({
     ...key,

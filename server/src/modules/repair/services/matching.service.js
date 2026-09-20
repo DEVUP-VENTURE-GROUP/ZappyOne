@@ -96,7 +96,23 @@ async function findServiceableProviders({ lat, lng, pincode = null, cityCode = n
     }
 
     if (!covered) continue;
+
+    /*
+     * One entry per PROVIDER, not per area row. A shop with two overlapping
+     * areas (a home area and a wider one, say) used to be listed twice — two
+     * identical cards in the customer's list, and a doubled "N shops nearby".
+     * Keep the nearer area: it decides the travel fee and the distance shown.
+     */
+    const owner = area.shopId ? `s:${area.shopId}` : `w:${area.workerId}`;
+    const prev = out.find((o) => o.owner === owner);
+    if (prev) {
+      if (distanceKm != null && (prev.distanceKm == null || distanceKm < prev.distanceKm)) {
+        Object.assign(prev, { distanceKm, areaId: area._id, workshopLocation: area.workshopLocation });
+      }
+      continue;
+    }
     out.push({
+      owner,
       shopId: area.shopId ? String(area.shopId) : null,
       workerId: area.workerId ? String(area.workerId) : null,
       distanceKm,
@@ -333,7 +349,30 @@ async function findProviders({
     });
   }
 
-  if (!candidates.length) return { recommended: null, providers: [], rejected, reason: 'no_eligible_provider' };
+  if (!candidates.length) {
+    /*
+     * "No technicians" was the only thing the customer ever heard, and the
+     * screen then offered to change the location — even when three shops sat
+     * inside the radius and the real answer was that none of them had listed
+     * THIS repair. The cause is known here, so it travels: how many providers
+     * cover the address, and the commonest reason they were not offered.
+     * Counts only — which shop failed which check never leaves the server.
+     */
+    const reasonCounts = rejected.reduce((acc, r) => {
+      acc[r.reason] = (acc[r.reason] || 0) + 1;
+      return acc;
+    }, {});
+    const primaryReason = Object.entries(reasonCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || null;
+    return {
+      recommended: null,
+      providers: [],
+      rejected,
+      reason: 'no_eligible_provider',
+      nearbyCount: serviceable.length,
+      primaryReason,
+      repairName: repair.name,
+    };
+  }
 
   const ranked = rank(candidates, cfg);
   const capped = ranked.slice(0, limit || cfg.maxProvidersShown || 10);

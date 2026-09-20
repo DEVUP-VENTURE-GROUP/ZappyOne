@@ -494,6 +494,10 @@ async function findProviders(req, res, next) {
       recommended: matchingService.toPublic(result.recommended),
       providers: result.providers.map(matchingService.toPublic),
       reason: result.reason,
+      // Aggregate only, so the empty state can say what is actually wrong.
+      nearbyCount: result.nearbyCount ?? 0,
+      primaryReason: result.primaryReason ?? null,
+      repairName: result.repairName ?? null,
     });
   } catch (err) { next(err); }
 }

@@ -811,7 +811,7 @@ function ModeStep({ diagnosis, inspectionFeePaise, onPick }) {
  */
 function ProviderStep({
   vertical, diagnosis, model, brand, configuration, problem,
-  location, hasLocation, serviceMode, onPick,
+  location, hasLocation, serviceMode, onPick, onInspectInstead,
 }) {
   const dispatch = useDispatch();
   const [picking, setPicking] = useState(false);
@@ -953,25 +953,61 @@ function ProviderStep({
 
       {(isLoading || isFetching) && !providers.length && <Spinner />}
 
-      {!isLoading && !isFetching && !providers.length && (
-        <div className="card py-8 text-center">
-          <Wrench size={24} className="mx-auto text-slate-300" />
-          <p className="mt-3 text-sm font-bold text-slate-700">No technicians available right now</p>
-          <p className="mt-1 text-xs leading-relaxed text-slate-500">
-            {data?.reason === 'no_provider_in_area'
-              ? 'Nobody covers this address for this repair yet. Moving the pin to a nearby area often finds someone.'
-              : data?.reason === 'service_mode_not_allowed'
-                ? 'This repair cannot be done the way you chose. Go back and pick another option.'
-                : 'We could not find anyone able to do this repair today.'}
-          </p>
-          <button
-            onClick={() => setPicking(true)}
-            className="mt-4 inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-bold text-slate-600"
-          >
-            <MapPin size={13} /> Change location
-          </button>
-        </div>
-      )}
+      {!isLoading && !isFetching && !providers.length && (() => {
+        /*
+         * Say what is actually wrong. This used to answer every failure with
+         * "no technicians" and a Change location button — even when shops sat
+         * right next to the pin and the real gap was that none of them had
+         * listed THIS repair. Moving the pin cannot fix that, so the screen
+         * must not suggest it.
+         */
+        const nearby = data?.nearbyCount || 0;
+        const repairName = data?.repairName || 'this repair';
+        const locationProblem = data?.reason === 'no_provider_in_area';
+        const notListed = nearby > 0 && ['no_capability', 'capability_scope', 'no_approved_price']
+          .includes(data?.primaryReason);
+
+        let title = 'No technicians available right now';
+        let body = 'We could not find anyone able to do this repair today.';
+        if (locationProblem) {
+          title = 'No repair shops cover this address yet';
+          body = 'Moving the pin to a nearby area often finds someone.';
+        } else if (data?.reason === 'service_mode_not_allowed') {
+          body = 'This repair cannot be done the way you chose. Go back and pick another option.';
+        } else if (notListed) {
+          title = `${nearby} ${nearby === 1 ? 'shop' : 'shops'} near you, none offering ${repairName} yet`;
+          body = 'An inspection finds the exact fault and gets you a firm quote from a nearby technician.';
+        } else if (nearby > 0) {
+          title = `${nearby} ${nearby === 1 ? 'shop' : 'shops'} near you, none free right now`;
+          body = 'Try again shortly, or book an inspection to hold your place.';
+        }
+
+        return (
+          <div className="card py-8 text-center">
+            <Wrench size={24} className="mx-auto text-slate-300" />
+            <p className="mt-3 text-sm font-bold text-slate-700">{title}</p>
+            <p className="mt-1 text-xs leading-relaxed text-slate-500">{body}</p>
+            <div className="mt-4 flex flex-wrap justify-center gap-2">
+              {nearby > 0 && onInspectInstead && (
+                <button
+                  onClick={onInspectInstead}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-[#0F172A] px-4 py-2.5 text-xs font-bold text-white"
+                >
+                  <ShieldCheck size={13} /> Book an inspection instead
+                </button>
+              )}
+              {(locationProblem || nearby === 0) && (
+                <button
+                  onClick={() => setPicking(true)}
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-bold text-slate-600"
+                >
+                  <MapPin size={13} /> Change location
+                </button>
+              )}
+            </div>
+          </div>
+        );
+      })()}
 
       {rankedAll.length > 0 && (
         <>
@@ -1624,6 +1660,7 @@ export default function RepairFlowPage({ vertical = 'mobile' }) {
           configuration={configuration} problem={problem}
           location={loc} hasLocation={hasLocation}
           serviceMode={serviceMode}
+          onInspectInstead={() => setServiceMode('diagnosis_only')}
           onPick={(p, code, quality) => {
             setProvider(p);
             setRepairCode(code);
