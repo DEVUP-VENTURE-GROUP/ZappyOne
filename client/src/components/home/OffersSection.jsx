@@ -2,40 +2,59 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { useT } from '../../i18n/I18nProvider';
+import { useGetAvailablePromosQuery } from '../../services/api';
+import { selectIsAuthed } from '../../modules/auth/authSlice';
 
-const OFFERS = [
-  {
-    id: 1,
-    title: 'FLAT 20% OFF',
-    desc: 'On your first AC Service or Repair',
-    code: 'ZAPPY20',
-    color: '#6366f1', // Indigo 500
-    tag: 'AC SERVICE'
-  },
-  {
-    id: 2,
-    title: 'FREE CHECKUP',
-    desc: 'With any premium car wash',
-    code: 'AUTO100',
-    color: '#0f172a', // Slate 900
-    tag: 'VEHICLE'
-  },
-  {
-    id: 3,
-    title: '₹100 CASHBACK',
-    desc: 'Pay via Zappy Wallet',
-    code: 'WALLET100',
-    color: '#ec4899', // Pink 500
-    tag: 'WALLET'
-  },
-];
+/**
+ * Real promotions, or nothing.
+ *
+ * This section used to render three hardcoded coupons — ZAPPY20, AUTO100,
+ * WALLET100 — with invented discounts attached. None of those codes exists on
+ * the server: grep the whole of server/src and they are not there. A customer
+ * who read one off the home page and typed it at checkout was told their code
+ * was invalid, by us, about an offer we had shown them ourselves.
+ *
+ * `GET /promos/available` was already built and already wired into the client,
+ * and returns the promotions this particular customer can actually use —
+ * active, in date, under their usage limit. It was simply never called here.
+ *
+ * Behaviour now: signed out renders nothing (the endpoint is per-customer and
+ * needs auth), signed in with no applicable promotions renders nothing, and an
+ * empty space is better than an offer we cannot honour.
+ *
+ * Card colours are rotated locally. A colour is presentation, not a claim —
+ * unlike a code, a discount or an expiry, which all come from the response.
+ */
+const CARD_COLORS = ['#4f46e5', '#0f172a', '#7c3aed'];
+
+/** The promo's own words. Never a discount this file computed. */
+function promoTag(promo) {
+  const svc = Array.isArray(promo.services) ? promo.services[0] : null;
+  if (!svc) return 'OFFER';
+  return String(svc).replace(/_/g, ' ').toUpperCase();
+}
 
 export default function OffersSection() {
   const nav = useNavigate();
   const isMobile = useIsMobile();
   const t = useT();
+  const isAuthed = useSelector(selectIsAuthed);
+
+  const { data } = useGetAvailablePromosQuery(undefined, { skip: !isAuthed });
+  const OFFERS = (data?.promos || []).map((p, i) => ({
+    id: p.code,
+    title: p.name,
+    desc: p.description,
+    code: p.code,
+    color: CARD_COLORS[i % CARD_COLORS.length],
+    tag: promoTag(p),
+  }));
+
+  // Nothing real to show — render nothing at all rather than a placeholder.
+  if (!OFFERS.length) return null;
 
   return (
     <div className="mt-8 mb-6 w-full">
