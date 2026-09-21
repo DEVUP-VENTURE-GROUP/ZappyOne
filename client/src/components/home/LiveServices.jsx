@@ -163,7 +163,10 @@ const DOMAIN_ART = {
 };
 
 const DEFAULT_ART = DOMAIN_ART.electronics;
-const artFor = (domainCode) => DOMAIN_ART[domainCode] || DEFAULT_ART;
+/** Exported so Home's rails tint from the same table rather than a copy. */
+export const artFor = (domainCode) => DOMAIN_ART[domainCode] || DEFAULT_ART;
+/** Domain/service icon names are catalog data; resolved here, shared with Home. */
+export const iconFor = (name) => ICONS[name] || Wrench;
 
 /**
  * One heading tile in the scrolling strip.

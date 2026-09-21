@@ -17,7 +17,7 @@ import { selectAuth, selectIsAuthed } from '../modules/auth/authSlice';
 import toast from 'react-hot-toast';
 import { useT } from '../i18n/I18nProvider';
 import { serviceNameKey } from '../i18n/translations';
-import { useGetGamificationQuery, useGetRecommendationsQuery, useListServicesQuery, useRebookOrderMutation, useListNotificationsQuery } from '../services/api';
+import { useGetGamificationQuery, useGetRecommendationsQuery, useListServicesQuery, useRebookOrderMutation, useListNotificationsQuery, useLiveCatalogQuery } from '../services/api';
 import { useMyJobs } from '../hooks/useMyJobs';
 import { useGeolocation, loadGeoLocation } from '../hooks/useGeolocation';
 import { saveGeoLocation } from '../utils/geoCache';
@@ -45,7 +45,7 @@ import AdBanner from '../components/common/AdBanner';
 import { springSnap, fadeInUp, staggerContainer } from '../lib/animations';
 import IntroSplash from '../components/common/IntroSplash';
 import HeroCarousel from '../components/home/HeroCarousel';
-import CharacterServiceGrid from '../components/home/CharacterServiceGrid';
+import ServiceRails from '../components/home/ServiceRails';
 import OffersSection from '../components/home/OffersSection';
 import { 
   PromoBannerEvents,
@@ -442,6 +442,11 @@ export default function HomePage() {
 
   const tHome = useT();
   const [rebook, { isLoading: rebooking }] = useRebookOrderMutation();
+  // The search pill said "50+ services" in two places. The real number is
+  // whatever the live catalog returns — currently 14 — and it is counted, not
+  // asserted. Hidden entirely at zero rather than advertising nothing.
+  const { data: liveCatalog } = useLiveCatalogQuery();
+  const liveServiceCount = (liveCatalog?.domains || []).reduce((n, d) => n + d.services.length, 0);
   // One-click rebook: re-place a past order with fresh pricing/dispatch, then jump
   // to tracking. Falls back to the normal booking flow on any issue.
   const handleRebook = async (id, service) => {
@@ -689,12 +694,14 @@ export default function HomePage() {
                   <Search size={18} strokeWidth={2} className="text-slate-400 shrink-0" />
                   <AnimatedSearchPlaceholder />
                 </button>
-                <motion.span
-                  className="text-xs font-black bg-indigo-50 text-indigo-600 px-3 py-1 rounded-full shrink-0"
-                  animate={{ opacity: [0.7, 1, 0.7] }} transition={{ duration: 2.5, repeat: Infinity }}
-                >
-                  50+ services
-                </motion.span>
+                {liveServiceCount > 0 && (
+                  <motion.span
+                    className="text-xs font-black bg-indigo-50 text-indigo-600 px-3 py-1 rounded-full shrink-0"
+                    animate={{ opacity: [0.7, 1, 0.7] }} transition={{ duration: 2.5, repeat: Infinity }}
+                  >
+                    {liveServiceCount} services
+                  </motion.span>
+                )}
                 <VoiceSearchButton onResult={(text) => nav(`/services?q=${encodeURIComponent(text)}`)} />
                 <LensButton onClick={() => setLensOpen(true)} />
               </div>
@@ -728,12 +735,14 @@ export default function HomePage() {
               <Search size={18} strokeWidth={2.5} className="text-slate-400 shrink-0" />
               <AnimatedSearchPlaceholder />
             </button>
-            <motion.span
-              className="text-[10px] font-black bg-indigo-50 text-indigo-600 px-2.5 py-1 rounded-full shrink-0 leading-none"
-              animate={{ opacity: [0.7, 1, 0.7] }} transition={{ duration: 2.5, repeat: Infinity }}
-            >
-              50+
-            </motion.span>
+            {liveServiceCount > 0 && (
+              <motion.span
+                className="text-[10px] font-black bg-indigo-50 text-indigo-600 px-2.5 py-1 rounded-full shrink-0 leading-none"
+                animate={{ opacity: [0.7, 1, 0.7] }} transition={{ duration: 2.5, repeat: Infinity }}
+              >
+                {liveServiceCount}
+              </motion.span>
+            )}
             <VoiceSearchButton onResult={(text) => nav(`/services?q=${encodeURIComponent(text)}`)} />
             <LensButton onClick={() => setLensOpen(true)} />
           </div>
@@ -772,8 +781,12 @@ export default function HomePage() {
             </p>
           </motion.div>
 
-          <motion.div className="mt-5" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}>
-            <CharacterServiceGrid />
+          {/* Discovery — one rail per domain, straight from the live catalog.
+              This replaced CharacterServiceGrid, which drew its artwork from a
+              static character map, which is why a dozen services shared one
+              blue mascot. */}
+          <motion.div className="mt-5 -mx-4 md:mx-0" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}>
+            <ServiceRails />
           </motion.div>
         </div>
 
