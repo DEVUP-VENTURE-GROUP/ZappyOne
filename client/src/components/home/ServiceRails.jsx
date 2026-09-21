@@ -33,8 +33,17 @@ import { useLiveCatalogQuery } from '../../services/api';
 import { ServiceCharacter } from '../catalog/serviceCharacters';
 import { artFor, iconFor } from './LiveServices';
 
-/** Fixed, never a percentage — a % width inside an overflow row collapses. */
-const CARD = 'w-[150px] sm:w-[168px] lg:w-auto';
+/**
+ * Fixed, never a percentage — a % width inside an overflow row collapses.
+ *
+ * 164 rather than 150: at the narrower width a two-line clamp held about forty
+ * characters, and real taglines run longer than that — "Logistics support for a
+ * vet visit, not a substitute for one" lost its second half on a phone. The
+ * extra fourteen pixels buy roughly four characters a line across two lines,
+ * which is the difference between most taglines fitting and most not. Two cards
+ * plus a peek still show at 390px, so the rail still reads as scrollable.
+ */
+const CARD = 'w-[164px] sm:w-[180px] lg:w-auto';
 
 function ServiceCard({ service, art, onOpen }) {
   const line = service.tagline || service.description || '';
@@ -128,7 +137,7 @@ function RailSkeleton() {
       </div>
       <div className="mt-3 flex gap-3 overflow-hidden px-4 lg:grid lg:grid-cols-4 lg:px-0">
         {[0, 1, 2, 3].map((i) => (
-          <div key={i} className="w-[150px] shrink-0 overflow-hidden rounded-2xl bg-white ring-1 ring-slate-200/80 sm:w-[168px] lg:w-auto">
+          <div key={i} className={`${CARD} shrink-0 overflow-hidden rounded-2xl bg-white ring-1 ring-slate-200/80`}>
             <div className="h-[92px] w-full animate-pulse bg-slate-100 md:h-[104px]" />
             <div className="px-3 pb-3 pt-2.5">
               <div className="h-3 w-3/4 animate-pulse rounded bg-slate-100" />
