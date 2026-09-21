@@ -8,7 +8,7 @@ import {
   Flame, Trophy, Smartphone, Battery, Layers,
   Bike, Fuel, AlertTriangle, ArrowUpRight,
   Clock, Wallet, User, ShieldCheck,
-  CheckCircle, Lock, TrendingUp, MapPin, Loader2,
+  CheckCircle, Lock, MapPin, Loader2,
   Laptop, Tv, Wifi, Camera, Heart, PartyPopper, Dog,
   ShieldAlert, Cpu, MonitorSmartphone, Repeat2,
   Tag, Headphones, ArrowRight, ThumbsUp, X, Store,
@@ -23,7 +23,7 @@ import { useGeolocation, loadGeoLocation } from '../hooks/useGeolocation';
 import { saveGeoLocation } from '../utils/geoCache';
 import { reverseGeocode } from '../utils/reverseGeocode';
 import { serviceLabel } from '../constants/services';
-import LiveServices from '../components/home/LiveServices';
+// LiveServices is /services' presentation now — not Home's. See below.
 import GaneshFestiveHeader from '../components/home/GaneshFestiveHeader';
 import FestiveCategories from '../components/home/FestiveCategories';
 import { ZappyLogo } from '../components/common/ZappyLogo';
@@ -46,7 +46,6 @@ import { springSnap, fadeInUp, staggerContainer } from '../lib/animations';
 import IntroSplash from '../components/common/IntroSplash';
 import HeroCarousel from '../components/home/HeroCarousel';
 import CharacterServiceGrid from '../components/home/CharacterServiceGrid';
-import { SERVICE_PRICE_FALLBACK } from '../constants/servicePriceFallback';
 import OffersSection from '../components/home/OffersSection';
 import { 
   PromoBannerEvents,
@@ -120,7 +119,9 @@ function timeAgo(date) {
   return `${Math.floor(days / 30)} months ago`;
 }
 
-/* ─── Most booked — Electronics Rescue ────────────────────────────────── */
+/* HeroTrustBar and TrustOfferCards were removed with the isMobile split:
+   Home carried three separate trust blocks, and one row of capability
+   statements says the same thing once. */
 
 /* ─── Vehicle care highlights ──────────────────────────────────────────── */
 
@@ -166,21 +167,11 @@ const LEVEL_COLORS = {
 };
 
 /* ─── Live worker badge ────────────────────────────────────────────────── */
-function LiveBadge() {
-  const [n, setN] = useState(47);
-  useEffect(() => {
-    const id = setInterval(() => setN(x => x + (Math.random() > 0.5 ? 1 : -1)), 6000);
-    return () => clearInterval(id);
-  }, []);
-  return (
-    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-50 ring-1 ring-green-200 whitespace-nowrap shrink-0">
-      <motion.span className="w-1.5 h-1.5 rounded-full bg-green-500"
-        animate={{ opacity: [1, 0.3, 1], scale: [1, 0.8, 1] }}
-        transition={{ duration: 1.5, repeat: Infinity }} />
-      <span className="text-[11px] font-bold text-green-700 whitespace-nowrap">{n} workers live</span>
-    </div>
-  );
-}
+/* `LiveBadge` lived here and is deliberately gone. It rendered
+   "{n} workers live" from `useState(47)` plus a setInterval nudging n by ±1 at
+   random every six seconds — a number invented in the browser, wrapped in a
+   pulsing green dot to read as live telemetry. There is no worker-count API to
+   replace it with, so nothing does. */
 
 /* ─── Notification bell with live unread count ─────────────────────────── */
 // Reuses the same real notifications source the BottomNav/WorkerDashboard use.
@@ -218,40 +209,6 @@ const TRUST_BADGES = [
   { Icon: ThumbsUp,    id: 'satisfaction', fallback: 'Satisfaction Guaranteed' },
 ];
 
-function HeroTrustBar() {
-  const t = useT();
-  return (
-    <div className="relative z-10 -mt-2.5 md:-mt-6 mx-2.5 md:mx-6">
-      {/*
-        * Icon ABOVE the label, not beside it.
-        *
-        * Side by side, each badge had roughly 40px of text width on a phone, so
-        * "Satisfaction Guaranteed" wrapped to two lines while "Upfront Pricing"
-        * stayed on one — and the vertical dividers then cut through badges of
-        * different heights, which is what made the row look broken rather than
-        * merely tight. Stacking gives every label the full column width, and a
-        * fixed row height keeps all four baselines aligned however they wrap.
-        */}
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-[0_14px_36px_-14px_rgba(15,23,42,0.24)] px-2 py-3 md:px-4 md:py-3.5">
-        <div className="grid grid-cols-4 gap-1 md:gap-2">
-          {TRUST_BADGES.map(({ Icon, id, fallback }) => (
-            <div
-              key={id}
-              className="flex flex-col items-center justify-start gap-1.5 px-0.5 text-center md:flex-row md:gap-2.5 md:px-2 md:text-left"
-            >
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-zappy-50 md:h-auto md:w-auto md:bg-transparent">
-                <Icon size={15} strokeWidth={2.2} className="text-zappy-600" />
-              </span>
-              <span className="text-[10.5px] md:text-[12.5px] font-semibold text-slate-700 leading-[1.25] [text-wrap:balance]">
-                {t(`home.trust.${id}`, fallback)}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 /* ─── Offer / trust cards (section 7) ──────────────────────────────────── */
 // Static brand copy — Zappy has no offers API, so these are local constants
@@ -262,37 +219,18 @@ const TRUST_OFFERS = [
   { Icon: Headphones, title: '24/7 SUPPORT',  line1: 'We are always', line2: 'here to help' },
 ];
 
-function TrustOfferCards() {
-  return (
-    <div className="mt-4 grid grid-cols-3 gap-2 md:gap-3">
-      {TRUST_OFFERS.map(({ Icon, title, line1, line2 }) => (
-        <div
-          key={title}
-          className="flex items-center gap-2 md:gap-2.5 rounded-[12px] bg-slate-50 border border-slate-200/70 px-2 py-2 md:px-3 md:py-2.5"
-        >
-          <div className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-zappy-50 flex items-center justify-center shrink-0">
-            <Icon size={14} strokeWidth={2} className="text-zappy-600" />
-          </div>
-          <div className="min-w-0 leading-tight">
-            <p className="text-[9px] md:text-[11px] font-bold text-zappy-600 uppercase tracking-wide leading-[1.15]">{title}</p>
-            <p className="text-[8.5px] md:text-[10px] text-slate-500 font-medium leading-[1.2]">{line1} {line2}</p>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
 
 /* ─── UC-style image service card ──────────────────────────────────────── */
 function ServiceImageCard({ item, nav }) {
   const t = useT();
-  // Live price from the admin Service Catalog — single source of truth. When the
-  // catalog hasn't loaded yet (or a request failed), fall back to a snapshot of
-  // catalog minimums so the card shows a real "From ₹X" instead of "Get Quote".
+  // Live price from the admin Service Catalog, or nothing. This used to fall
+  // back to SERVICE_PRICE_FALLBACK — a hardcoded map whose own docstring called
+  // itself "a snapshot, regenerate if catalog floors change", i.e. a price we
+  // knew could be wrong shown as if it were current. No price is honest; a
+  // stale one is not.
   const { data: catalog } = useListServicesQuery();
   const svc   = catalog?.byCode?.[item.key];
-  const livePrice = svc?.priceRangeMinPaise != null ? Math.round(svc.priceRangeMinPaise / 100) : null;
-  const price = livePrice ?? SERVICE_PRICE_FALLBACK[item.key] ?? null;
+  const price = svc?.priceRangeMinPaise != null ? Math.round(svc.priceRangeMinPaise / 100) : null;
   const isServiceCode = /^[a-z][a-z0-9_]+$/.test(item.key || '');
   const rawBadge = item.badge || 'Popular';
   const badge = t(`home.badge.${rawBadge.toLowerCase()}`, rawBadge);
@@ -812,87 +750,32 @@ export default function HomePage() {
           </div>
         )}
 
-        {isMobile ? (
-          /* ═══ Mobile hero — banner + live trust bar + card grid + promo + offers ═══ */
-          <div className="max-w-7xl w-full mx-auto px-4 pt-3 pb-2">
-            {/* Hero banner — cropped to the dark artwork only (headline, avatars,
-                "48+ Happy Customers" are baked into the PNG). The trust bar below
-                is a live HTML card that overlaps the banner's bottom edge. */}
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.05 }}
-            >
-              <div className="rounded-[20px] overflow-hidden shadow-soft">
-                <img
-                  src="/banner1_hero.webp"
-                  alt="Zappy — Your needs. Our experts. On demand. Trusted professionals at your doorstep in minutes."
-                  className="w-full h-auto block"
-                  loading="eager"
-                />
-              </div>
-              <HeroTrustBar />
-            </motion.div>
+        {/* ═══ Hero — ONE responsive composition ══════════════════════════
+            Home branched into two entirely separate layouts behind `isMobile`,
+            and they had already drifted: the mobile one led with a banner image
+            and a trust bar, the desktop one with a greeting and a "48 workers
+            live" badge. Two compositions meant two places to fix anything and
+            two chances for them to disagree.
 
-            {/* Popular Services */}
-            <motion.div
-              className="mt-6"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.12 }}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-[20px] font-bold text-slate-900 tracking-tight">{tHome('home.popularServices','Popular Services')}</h2>
-                <button
-                  onClick={() => nav('/services')}
-                  className="group flex items-center gap-1 text-[14px] font-semibold text-zappy-600 hover:text-zappy-700 transition-colors"
-                >
-                  {tHome('home.seeAll', 'See all')} <ArrowRight size={15} strokeWidth={2.5} className="transition-transform group-hover:translate-x-0.5" />
-                </button>
-              </div>
-              <CharacterServiceGrid />
-            </motion.div>
+            The badge is gone with the branch. It was `useState(47)` plus a
+            setInterval nudging it up or down at random every six seconds — a
+            number invented on the client, pulsing green to look like telemetry.
+            Nothing replaces it: there is no worker-count API to read, and a
+            trust signal we made up is worse than none. */}
+        <div className="max-w-7xl w-full mx-auto px-4 md:px-6 pt-3 md:pt-5 pb-2">
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
+            <h1 className="text-[26px] md:text-[34px] font-extrabold text-slate-900 leading-[1.08] tracking-[-0.025em]">
+              {tHome('home.greeting', 'What can we fix')}{firstName !== 'there' ? <>, <span className="text-indigo-600">{firstName}</span></> : ''}?
+            </h1>
+            <p className="mt-1 text-[14px] md:text-[15px] text-slate-500 font-medium">
+              {tHome('home.tagline', 'Trusted pros, at your door in minutes.')}
+            </p>
+          </motion.div>
 
-            {/*
-              * The vehicle promo used to sit here AND appear again a screen
-              * later as the HeroCarousel's "Premium Vehicle Care" slide — two
-              * near-identical photo cards for the same thing, back to back.
-              * The carousel keeps it; this one goes.
-              *
-              * It also mattered more than a duplicate normally would: vehicles
-              * are not live yet, so both cards offered "Book Now" for something
-              * the catalog then describes as coming soon.
-              */}
-
-            {/* Offer / trust cards */}
-            <TrustOfferCards />
-          </div>
-        ) : (
-          /* ═══ Desktop hero — original greeting + floating grid + carousel ═══ */
-          <div className="max-w-7xl w-full mx-auto px-4 md:px-6 pt-2 md:pt-5 pb-5">
-            <div className="mb-4 md:mb-5 flex items-end justify-between gap-3">
-              <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
-                <h1 className="text-[26px] md:text-[34px] font-extrabold text-slate-900 leading-[1.08] tracking-[-0.025em]">
-                  {tHome('home.greeting', 'What can we fix')}{firstName !== 'there' ? <>, <span className="text-indigo-600">{firstName}</span></> : ''}?
-                </h1>
-                <p className="mt-1 text-[14px] md:text-[15px] text-slate-500 font-medium">
-                  {tHome('home.tagline', 'Trusted pros, at your door in minutes.')}
-                </p>
-              </motion.div>
-              <div className="shrink-0 pb-1">
-                <LiveBadge />
-              </div>
-            </div>
-
-            <motion.div className="mb-6" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}>
-              <CharacterServiceGrid />
-            </motion.div>
-
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
-              <HeroCarousel />
-            </motion.div>
-          </div>
-        )}
+          <motion.div className="mt-5" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}>
+            <CharacterServiceGrid />
+          </motion.div>
+        </div>
 
 
         {/* ─── Premium Dashboard Widgets Removed ─── */}
@@ -921,7 +804,10 @@ export default function HomePage() {
             providers are verified for it — never before, because a tile that
             leads to a flow we cannot fulfil is worse than no tile.
           ─────────────────────────────────────────────────────────────── */}
-          <LiveServices />
+          {/* The deep catalog — domain → service → coverage → problem — is not
+              rendered here. Home carries the discovery layer; /services carries
+              the depth. Rendering both put the entire catalog on the landing
+              page twice. */}
 
           {/* ─── Nearby Shops ── verified local businesses, browse + Pick & Go ── */}
           <div className="mt-7">
@@ -977,13 +863,13 @@ export default function HomePage() {
             </div>
           )}
 
-          {/* ─── Promotional, below discovery ──────────────────────────── */}
-          {/* Featured carousel (mobile only — desktop shows it in the hero) */}
-          {isMobile && (
-            <div className="mt-7">
-              <HeroCarousel />
-            </div>
-          )}
+          {/* ─── Promotional, below discovery ────────────────────────────
+              One carousel, not two. It was mounted twice — once in the desktop
+              hero and again here for mobile — so the same slides appeared in
+              two places depending on width. */}
+          <div className="mt-7">
+            <HeroCarousel />
+          </div>
 
           {/* ─── Offers ──────────────────────────────────────────────── */}
           <OffersSection />
@@ -1020,10 +906,14 @@ export default function HomePage() {
             <div className="rounded-2xl p-4 ring-1 ring-slate-200/60" style={{ background: 'linear-gradient(135deg,#f8fafc,#f1f5f9)' }}>
               <div className="flex items-center justify-around">
                 {[
-                  { Icon: ShieldCheck, label: 'Insured Work',  color: 'text-indigo-500', bg: 'bg-indigo-50' },
-                  { Icon: CheckCircle, label: 'Verified Pros', color: 'text-green-600',  bg: 'bg-green-50'  },
-                  { Icon: Lock,        label: 'Secure Pay',    color: 'text-blue-600',   bg: 'bg-blue-50'   },
-                  { Icon: TrendingUp,  label: '4.8 Rated',     color: 'text-amber-600',  bg: 'bg-amber-50'  },
+                  /* Capability statements, not statistics. "4.8 Rated" used to
+                     sit in this row as a hardcoded string with no rating source
+                     behind it — a number we asserted. These four describe what
+                     the product does, which needs no API to be true. */
+                  { Icon: CheckCircle, label: 'Verified professionals', color: 'text-indigo-600', bg: 'bg-indigo-50' },
+                  { Icon: ShieldCheck, label: 'Upfront quotes',         color: 'text-indigo-600', bg: 'bg-indigo-50' },
+                  { Icon: Lock,        label: 'Secure payments',        color: 'text-indigo-600', bg: 'bg-indigo-50' },
+                  { Icon: Headphones,  label: 'Support',                color: 'text-indigo-600', bg: 'bg-indigo-50' },
                 ].map(({ Icon, label, color, bg }) => (
                   <div key={label} className="flex flex-col items-center gap-1.5">
                     <div className={`w-9 h-9 rounded-xl ${bg} flex items-center justify-center`}>
