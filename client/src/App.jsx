@@ -9,7 +9,6 @@ import useTelemetry from './hooks/useTelemetry';
 import { prefetchMainTabs, onIdle } from './lib/routePrefetch';
 import { prefetchServiceCatalog } from './hooks/useServiceCatalog';
 import { loadCategories } from './hooks/useCategories';
-import { adminPath, ADMIN_URL } from './config/admin';
 import { getSubdomainRedirect, isExternalRedirect } from './config/hosts';
 import { RequireAuth } from './components/common/RequireAuth';
 import NotificationBanner from './components/common/NotificationBanner';
@@ -171,7 +170,7 @@ export default function App() {
       ) : (
       <>
       {/* Show notification permission banner for logged-in users with non-admin roles */}
-      {token && role !== 'admin' && <NotificationBanner />}
+      {token && <NotificationBanner />}
       {/* Route-level boundary — a crash in one page shows the recovery screen but
           auto-resets when the user navigates elsewhere (keyed by path). */}
       <ErrorBoundary key={location.pathname}>
@@ -186,8 +185,6 @@ export default function App() {
           path="/worker/login"
           element={token ? <RedirectByRole role={role} /> : <WorkerLoginPage />}
         />
-        {/* The admin portal is its own app now — old bookmarks go there. */}
-        <Route path={adminPath('/*')} element={<GoToAdmin />} />
 
         {/* User app */}
         <Route element={<MainLayout />}>
@@ -326,13 +323,7 @@ export default function App() {
   );
 }
 
-function GoToAdmin() {
-  useEffect(() => { window.location.replace(ADMIN_URL); }, []);
-  return null;
-}
-
 function RedirectByRole({ role }) {
-  if (role === 'admin') return <GoToAdmin />;
   const dest = role === 'worker' ? '/worker'
     : role === 'event_partner' ? '/partner'
     : role === 'shop' ? '/shop'

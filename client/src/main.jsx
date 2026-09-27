@@ -49,6 +49,8 @@ async function restoreSession() {
       // Both survive browser close — no dependency on sessionStorage.
       const claims  = jwtPayload(data.accessToken);
       const role    = data.role ?? claims?.role ?? null;
+      // Admin sessions belong to the separate admin app, never this one.
+      if (role === 'admin') return;
 
       // Merge with any cached profile (name/avatar) if still in sessionStorage
       const cached  = (() => {

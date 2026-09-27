@@ -1,6 +1,7 @@
-// The portal owns its whole origin, so its screens live at the root
-// (/login, /dashboard). The API is still mounted under the secret slug —
-// that part comes from the shared client config.
+// Every admin screen lives under the secret slug — /<slug>/login,
+// /<slug>/dashboard. Any other path on this origin is a plain 404, so the
+// portal never advertises where its login is. The API sits under the same slug.
 export { ADMIN_SLUG, adminApiPath } from '@client/config/admin';
+import { ADMIN_SLUG } from '@client/config/admin';
 
-export const adminPath = (sub = '') => sub || '/';
+export const adminPath = (sub = '') => `/${ADMIN_SLUG}${sub}`;

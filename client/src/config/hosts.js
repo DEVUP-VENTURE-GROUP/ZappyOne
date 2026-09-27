@@ -1,4 +1,3 @@
-import { adminPath } from './admin';
 
 /**
  * Multi-tenant hosts — one SPA, three front doors (Zomato/Zepto model).
@@ -45,16 +44,13 @@ const isPublic = (p) => PUBLIC_PREFIXES.some((x) => p === x || p.startsWith(`${x
  *  - Each subdomain admits exactly ONE role. Anyone else is sent to the host
  *    that actually serves them (an absolute URL for a cross-host move), never
  *    left staring at the consumer homepage on the worker domain.
- *  - Admin is reachable from any host (ops log in from wherever they are).
  */
 export function getSubdomainRedirect(hostname, pathname, token, role) {
   const tenant = getTenant(hostname);
   if (tenant === 'consumer') return null;          // consumer app routes itself
   if (isPublic(pathname)) return null;
-  if (pathname.startsWith(adminPath(''))) return null; // admin login/dashboard
 
   if (tenant === 'worker') {
-    if (role === 'admin') return null;
     if (!token) return pathname === '/worker/login' ? null : '/worker/login';
     if (role === 'worker') return pathname.startsWith('/worker') ? null : '/worker';
     // Signed in as someone this host doesn't serve → send them to their own app.
@@ -63,7 +59,6 @@ export function getSubdomainRedirect(hostname, pathname, token, role) {
   }
 
   if (tenant === 'events') {
-    if (role === 'admin') return null;
     if (!token) return pathname === '/partner/login' ? null : '/partner/login';
     if (role === 'event_partner') return pathname.startsWith('/partner') ? null : '/partner';
     if (role === 'worker') return WORKER_URL;
