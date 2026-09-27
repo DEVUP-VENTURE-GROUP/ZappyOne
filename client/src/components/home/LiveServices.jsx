@@ -5,13 +5,8 @@ import {
   Monitor, Battery, Plug, Keyboard, Volume2, Camera, HardDrive, Gauge,
   Wifi, Thermometer, CircuitBoard, Database, ArrowUpCircle, Wand2, ShieldAlert,
   ClipboardCheck, Footprints, PackageCheck, PawPrint, Scissors, ShoppingBag, ShoppingBasket, Stethoscope,
-  // Vehicle and tank headings — see CATEGORY_ICONS.
-  LifeBuoy, KeyRound, Cog, BatteryCharging, Lightbulb, Disc, CircleDot, Link2,
-  Waves, Fuel, Flame, Wind, Lock, Armchair, Radio, Radar, ShieldCheck,
-  PackagePlus, Navigation, Search, Square,
 } from 'lucide-react';
 import { useLiveCatalogQuery } from '../../services/api';
-import { ServiceCharacter, characterFor } from '../catalog/serviceCharacters';
 
 /**
  * What a customer can book today, and what each service covers.
@@ -44,7 +39,6 @@ const ICONS = {
  * day one and an operator can replace it with a photo whenever they like.
  */
 export const CATEGORY_ICONS = {
-  /* Electronics — mobile + laptop */
   display: Monitor,
   battery_power: Battery,
   charging: Plug,
@@ -64,109 +58,7 @@ export const CATEGORY_ICONS = {
   data_recovery: Database,
   upgrade: ArrowUpCircle,
   maintenance: Sparkles,
-
-  /* Two-wheeler. The vehicle and tank headings were missing entirely, so all
-     53 of them fell through to the wrench — nine identical glyphs in a row,
-     which made the rail look broken rather than uniform. */
-  tw_roadside: LifeBuoy,
-  tw_starting: KeyRound,
-  tw_engine: Cog,
-  tw_battery_electrical: BatteryCharging,
-  tw_lights_controls: Lightbulb,
-  tw_brakes: Disc,
-  tw_tyres_wheels: CircleDot,
-  tw_chain_drive: Link2,
-  tw_clutch_gear: Cog,
-  tw_cvt: Cog,
-  tw_suspension_steering: Navigation,
-  tw_fuel: Fuel,
-  tw_cooling: Thermometer,
-  tw_body: Bike,
-  tw_maintenance: Sparkles,
-  tw_ev_battery: BatteryCharging,
-  tw_ev_charging: Plug,
-  tw_ev_motor: Zap,
-  tw_ev_controller: CircuitBoard,
-  tw_ev_dashboard: Gauge,
-
-  /* Four-wheeler */
-  fw_roadside: LifeBuoy,
-  fw_starting: KeyRound,
-  fw_engine: Cog,
-  fw_battery_electrical: BatteryCharging,
-  fw_fuel: Fuel,
-  fw_cng: Flame,
-  fw_transmission: Cog,
-  fw_clutch: Cog,
-  fw_brakes: Disc,
-  fw_steering: Navigation,
-  fw_suspension: Waves,
-  fw_tyres_wheels: CircleDot,
-  fw_ac: AirVent,
-  fw_cooling: Thermometer,
-  fw_exhaust: Wind,
-  fw_lights: Lightbulb,
-  fw_body: Car,
-  fw_glass: Square,
-  fw_doors_locks: Lock,
-  fw_interior: Armchair,
-  fw_infotainment: Radio,
-  fw_adas: Radar,
-  fw_diagnostics: Stethoscope,
-  fw_safety: ShieldCheck,
-  fw_maintenance: Sparkles,
-  fw_ev_battery: BatteryCharging,
-  fw_ev_charging: Plug,
-  fw_ev_motor: Zap,
-
-  /* Water & tank care */
-  wt_cleaning: Droplets,
-  wt_inspection: Search,
-  wt_flushing: Waves,
-  wt_repair: Wrench,
-  wt_addons: PackagePlus,
 };
-
-/**
- * Per-vertical fallback, keyed by the service's `artKey`.
- *
- * An unmapped heading in a vehicle rail should still look like a vehicle
- * heading rather than a generic wrench, so the fallback narrows by vertical
- * before giving up. A genuinely unknown vertical still lands on the wrench.
- */
-const VERTICAL_FALLBACK_ICON = {
-  mobile: Smartphone,
-  laptop: Laptop,
-  two_wheeler: Bike,
-  four_wheeler: Car,
-  water_tank_care: Droplets,
-};
-
-/**
- * Per-domain artwork tint.
- *
- * Every tile and icon chip drew the same indigo→violet wash, so five different
- * businesses — phones, vehicles, water tanks, errands, pets — looked like one
- * undifferentiated list. Each domain now gets its own second stop while the
- * FIRST stop stays indigo, so the rails read as distinct sections of one
- * product rather than five palettes competing.
- *
- * Keyed by domain code, with a brand default for anything an operator adds
- * later — a new domain looks deliberate on day one rather than unstyled.
- */
-const DOMAIN_ART = {
-  electronics:      { art: 'from-indigo-50 to-violet-100',  chip: 'bg-indigo-50',  fg: 'text-indigo-600',  glyph: 'text-indigo-500'  },
-  vehicles:         { art: 'from-indigo-50 to-sky-100',     chip: 'bg-sky-50',     fg: 'text-sky-700',     glyph: 'text-sky-600'     },
-  home_services:    { art: 'from-indigo-50 to-cyan-100',    chip: 'bg-cyan-50',    fg: 'text-cyan-700',    glyph: 'text-cyan-600'    },
-  helping_services: { art: 'from-indigo-50 to-amber-100',   chip: 'bg-amber-50',   fg: 'text-amber-700',   glyph: 'text-amber-600'   },
-  pet_services:     { art: 'from-indigo-50 to-fuchsia-100', chip: 'bg-fuchsia-50', fg: 'text-fuchsia-700', glyph: 'text-fuchsia-600' },
-};
-
-const DEFAULT_ART = DOMAIN_ART.electronics;
-/** Exported so Home's rails tint from the same table rather than a copy. */
-export const artFor = (domainCode) => DOMAIN_ART[domainCode] || DEFAULT_ART;
-/** Domain/service icon names are catalog data; resolved here, shared with Home. */
-export const iconFor = (name) => ICONS[name] || Wrench;
 
 /**
  * One heading tile in the scrolling strip.
@@ -183,13 +75,16 @@ export const iconFor = (name) => ICONS[name] || Wrench;
  * Advanced" has to fit whatever we choose, so the layout is built around the
  * longest real name rather than the shortest.
  */
-export function CategoryTile({ category, onOpen, fallbackIcon, art = DEFAULT_ART }) {
-  const Icon = CATEGORY_ICONS[category.code] || fallbackIcon || Wrench;
+export function CategoryTile({ category, onOpen }) {
+  const Icon = CATEGORY_ICONS[category.code] || Wrench;
   const count = category.problems.length;
 
   return (
-    <button onClick={onOpen} className="tile group">
-      <span className={`tile-art bg-gradient-to-br ${art.art}`}>
+    <button
+      onClick={onOpen}
+      className="group flex w-[116px] shrink-0 snap-start flex-col overflow-hidden rounded-2xl bg-white text-left ring-1 ring-slate-200/80 transition duration-200 hover:-translate-y-0.5 hover:ring-indigo-300 hover:shadow-[0_18px_34px_-22px_rgba(79,70,229,0.55)] sm:w-[132px]"
+    >
+      <span className="relative flex aspect-[5/4] w-full items-center justify-center overflow-hidden bg-gradient-to-br from-indigo-50 to-violet-50">
         {category.imageUrl ? (
           <img
             src={category.imageUrl}
@@ -198,26 +93,16 @@ export function CategoryTile({ category, onOpen, fallbackIcon, art = DEFAULT_ART
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.05]"
           />
         ) : (
-          <>
-            {/* A soft wash behind the glyph so an art-less tile reads as a
-                designed surface rather than an empty box. */}
-            <span className="pointer-events-none absolute -right-3 -top-3 h-12 w-12 rounded-full bg-white/50 blur-xl" />
-            <Icon
-              size={26}
-              strokeWidth={1.6}
-              className={`relative ${art.glyph} transition-transform duration-200 group-hover:scale-110`}
-            />
-          </>
+          <Icon size={24} className="text-indigo-500 transition-transform duration-200 group-hover:scale-110" strokeWidth={1.6} />
         )}
       </span>
 
-      {/* Grows with the name; the rail equalises heights so a two-line label
-          can never collide with the count beneath it. */}
-      <span className="tile-body">
-        <span className="line-clamp-2 text-[12px] font-bold leading-[1.3] tracking-[-0.01em] text-[#0F172A]">
+      {/* Fixed height keeps one-line and two-line names on the same baseline. */}
+      <span className="flex h-[52px] flex-col justify-start px-2.5 pt-2">
+        <span className="line-clamp-2 text-[12px] font-bold leading-[1.25] tracking-[-0.01em] text-[#0F172A]">
           {category.name}
         </span>
-        <span className="mt-auto pt-1 text-[10.5px] font-medium text-slate-400">
+        <span className="mt-auto pb-2 text-[10.5px] font-medium text-slate-400">
           {count} {count === 1 ? 'issue' : 'issues'}
         </span>
       </span>
@@ -225,29 +110,17 @@ export function CategoryTile({ category, onOpen, fallbackIcon, art = DEFAULT_ART
   );
 }
 
-function ServiceCard({ service, onOpenService, onOpenCategory, art = DEFAULT_ART }) {
+function ServiceCard({ service, onOpenService, onOpenCategory }) {
   const Icon = ICONS[service.icon] || Wrench;
   const coverage = service.coverage || [];
-  // Resolution order: artwork the CATALOG supplies wins, because an operator
-  // uploading a picture is a deliberate act; then this service's character;
-  // then the domain-tinted icon. Every step degrades, none can render torn.
-  const character = service.imageUrl ? null : characterFor(service.code);
 
   return (
-    <div className="overflow-hidden rounded-3xl bg-white ring-1 ring-slate-200/70 transition duration-200 hover:ring-slate-300 hover:shadow-[0_18px_34px_-24px_rgba(15,23,42,0.35)]">
+    <div className="overflow-hidden rounded-3xl bg-white ring-1 ring-slate-200/70">
       <button onClick={onOpenService} className="group flex w-full items-center gap-4 p-4 text-left">
-        <span className={`flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl ${art.chip}`}>
-          {service.imageUrl ? (
-            <img src={service.imageUrl} alt="" className="h-full w-full object-cover" />
-          ) : character ? (
-            <ServiceCharacter
-              code={service.code}
-              size={52}
-              className="transition-transform duration-200 group-hover:scale-105"
-            />
-          ) : (
-            <Icon size={22} className={art.fg} strokeWidth={1.75} />
-          )}
+        <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-indigo-50">
+          {service.imageUrl
+            ? <img src={service.imageUrl} alt="" className="h-full w-full object-cover" />
+            : <Icon size={22} className="text-indigo-600" strokeWidth={1.75} />}
         </span>
         <span className="min-w-0 flex-1">
           <span className="flex items-center gap-2">
@@ -268,13 +141,11 @@ function ServiceCard({ service, onOpenService, onOpenCategory, art = DEFAULT_ART
       {/* Horizontal scrollable carousel — Swiggy/Zomato style */}
       {coverage.length > 0 && (
         <div className="relative border-t border-slate-100">
-          <div className="rail px-4 py-3.5">
+          <div className="flex gap-2.5 overflow-x-auto no-scrollbar px-4 py-3.5 snap-x scroll-smooth">
             {coverage.map((group) => (
               <CategoryTile
                 key={group.code}
                 category={group}
-                art={art}
-                fallbackIcon={VERTICAL_FALLBACK_ICON[service.artKey]}
                 onOpen={() => onOpenCategory(group)}
               />
             ))}
@@ -307,25 +178,16 @@ export default function LiveServices() {
     <div className="mt-7 space-y-7">
       {domains.map((d) => {
         const Icon = ICONS[d.icon] || Wrench;
-        const art = artFor(d.code);
-        const serviceCount = d.services.length;
         return (
           <section key={d.code}>
             <div className="flex items-center gap-2.5">
-              <span className={`flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl ${art.chip}`}>
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-indigo-50">
                 {d.imageUrl
                   ? <img src={d.imageUrl} alt="" className="h-full w-full object-cover" />
-                  : <Icon size={18} className={art.fg} strokeWidth={2} />}
+                  : <Icon size={17} className="text-indigo-500" strokeWidth={2} />}
               </span>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-baseline gap-2">
-                  <h2 className="text-[18px] font-black tracking-tight text-[#0F172A]">{d.name}</h2>
-                  {/* The real number of live services in this domain — counted
-                      from the response, never a hardcoded figure. */}
-                  <span className="shrink-0 text-[11px] font-bold text-slate-400">
-                    {serviceCount} {serviceCount === 1 ? 'service' : 'services'}
-                  </span>
-                </div>
+              <div className="min-w-0">
+                <h2 className="text-[17px] font-black tracking-tight text-[#0F172A]">{d.name}</h2>
                 {d.description && <p className="text-xs text-slate-500">{d.description}</p>}
               </div>
             </div>
@@ -335,7 +197,6 @@ export default function LiveServices() {
                 <ServiceCard
                   key={s.code}
                   service={s}
-                  art={art}
                   onOpenService={() => nav(s.path)}
                   onOpenCategory={(group) => nav(`/repair/category/${s.artKey || s.code}/${group.code}`)}
                 />

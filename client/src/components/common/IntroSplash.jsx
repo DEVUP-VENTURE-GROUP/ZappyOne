@@ -23,10 +23,7 @@ const IMAGES = [
   'https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=400&h=400&q=80', // Pet Transport
   'https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=400&auto=format&fit=crop',     // Cleaning
   'https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=400&auto=format&fit=crop',     // Beauty
-  // A plumbing photo sat here and returned 404 — the montage rendered a broken
-  // frame on a first-time visitor's very first screen. There is no local
-  // plumbing asset to swap in, and adding another hotlink would repeat the
-  // mistake, so the frame is dropped; the montage reads fine without it.
+  'https://images.unsplash.com/photo-1607472586893-edb57cbca132?q=80&w=400&auto=format&fit=crop',     // Plumbing
   'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?q=80&w=400&auto=format&fit=crop'      // Painting
 ];
 

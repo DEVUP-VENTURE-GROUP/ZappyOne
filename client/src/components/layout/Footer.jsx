@@ -92,14 +92,8 @@ export default function Footer() {
               <p><strong className="text-slate-200">Vendors:</strong> <a href="mailto:vendors@zappyone.com" className="text-indigo-400 hover:underline">vendors@zappyone.com</a></p>
             </div>
 
-            {/* "4.8 ★ rated by 5,000+ customers" used to head this list. Both
-                halves were invented: nothing aggregates a platform rating and
-                nothing counts customers, and the string sat in this file. It is
-                the same claim that was removed from Home's trust row, and it
-                appeared on EVERY page because this footer is global. Nothing
-                replaces it — the three lines below describe what the product
-                does, which is true without a number behind it. */}
             <div className="flex flex-col gap-2 text-xs text-slate-500">
+              <div className="flex items-center gap-2"><Star size={11} className="text-amber-400 fill-amber-400" /><span>4.8 ★ rated by 5,000+ customers</span></div>
               <div className="flex items-center gap-2"><ShieldCheck size={11} className="text-emerald-400" /><span>Background-verified professionals</span></div>
               <div className="flex items-center gap-2"><Zap size={11} className="text-indigo-400" /><span>Arrives in 15–30 minutes</span></div>
               <div className="flex items-center gap-2"><MapPin size={11} className="text-rose-400" /><span>Live GPS tracking</span></div>

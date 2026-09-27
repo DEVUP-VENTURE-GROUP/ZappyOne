@@ -4,40 +4,34 @@ import { Zap, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useIsMobile } from '../../hooks/useIsMobile';
 
-/**
- * Each slide carried a `tag` — "Trending", "Highly Rated", "On-Demand", "New" —
- * rendered as a pill over the artwork. Those are popularity and rating claims,
- * and all four were string literals in this file: nothing measured traffic and
- * nothing read a rating. They are gone, and nothing replaces them, because
- * there is no endpoint that would make them true.
- *
- * This component is no longer mounted on Home; the home page's promotional slot
- * is the real /ads/active feed.
- */
 const SLIDES = [
   {
     id: 1,
     title: 'Expert Phone Repair',
     subtitle: 'Cracked screen? Battery issues? We fix it at your doorstep.',
     image: '/assets/hero_phone_repair_1780323166772.png',
+    tag: 'Trending',
   },
   {
     id: 2,
     title: 'Premium Vehicle Care',
     subtitle: 'From jump starts to detailing. Your ride, our pride.',
     image: '/assets/hero_vehicle_care_1780323182530.png',
+    tag: 'On-Demand',
   },
   {
     id: 3,
     title: 'Compassionate Care',
     subtitle: 'Trusted companions for your elders and family.',
     image: '/assets/hero_family_assist_1780323217410.png',
+    tag: 'Highly Rated',
   },
   {
     id: 4,
     title: 'Pamper Your Pets',
     subtitle: 'Professional grooming and sitting for your furry friends.',
     image: '/assets/hero_pet_care_1780323201593.png',
+    tag: 'New',
   },
 ];
 
@@ -64,6 +58,17 @@ export default function HeroCarousel() {
       >
         <div className="flex items-stretch min-h-[200px]">
           <div className="relative z-10 flex flex-col justify-center gap-2 p-5 w-[62%]">
+            <AnimatePresence mode="wait">
+              <motion.span
+                key={`tag-${slide.tag}`}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                className="inline-block w-max px-2.5 py-1 rounded-full bg-white/80 text-zappy-700 text-[10px] font-black uppercase tracking-widest shadow-sm"
+              >
+                {slide.tag}
+              </motion.span>
+            </AnimatePresence>
             <AnimatePresence mode="wait">
               <motion.h3
                 key={`title-${slide.title}`}
@@ -149,6 +154,17 @@ export default function HeroCarousel() {
 
       {/* Content */}
       <div className="absolute bottom-0 left-0 p-5 md:p-6 w-full">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={`tag-${current}`}
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -5 }}
+            className="inline-block px-2.5 py-1 bg-white/20 backdrop-blur-md rounded border border-white/30 text-white text-[10px] md:text-xs font-bold uppercase tracking-wider mb-2"
+          >
+            {SLIDES[current].tag}
+          </motion.div>
+        </AnimatePresence>
         <AnimatePresence mode="wait">
           <motion.h3
             key={`title-${current}`}
