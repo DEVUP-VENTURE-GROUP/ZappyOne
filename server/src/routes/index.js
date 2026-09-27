@@ -39,12 +39,18 @@ const lensRoutes = require('../modules/lens/lens.routes');
 const contentRoutes = require('../modules/content/content.routes');
 const rewardsRoutes = require('../modules/rewards/rewards.routes');
 
+const { requireAdminOrigin } = require('../middlewares/adminOrigin');
+
 function mountRoutes(app) {
   const slug = process.env.ADMIN_LOGIN_SLUG;
   if (!slug) throw new Error('ADMIN_LOGIN_SLUG env var is required');
 
   // SEO routes served at root — sitemap, robots, city/category landing pages
   app.use('/', seoRoutes);
+
+  // Admin surfaces answer only the admin portal's origin (see adminOrigin.js).
+  app.use(`/api/${slug}`, requireAdminOrigin);
+  app.use('/api/auth/admin', requireAdminOrigin);
 
   app.use('/api/auth', authRoutes);
   app.use('/api/users', userRoutes);

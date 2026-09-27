@@ -1,7 +1,6 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { selectAuth } from '../../modules/auth/authSlice';
-import { adminPath } from '../../config/admin';
 
 /**
  * `role` accepts a string or an array. Some screens legitimately serve more
@@ -19,7 +18,6 @@ export function RequireAuth({ role, children }) {
 
   if (!accessToken) {
     const loginPath = primary === 'worker' ? '/worker/login'
-      : primary === 'admin' ? adminPath('/login')
       : primary === 'event_partner' ? '/partner/login'
       : primary === 'shop' ? '/shop/login'
       : '/login';
@@ -27,7 +25,6 @@ export function RequireAuth({ role, children }) {
   }
   if (allowed && !allowed.includes(currentRole)) {
     const home = currentRole === 'worker' ? '/worker'
-      : currentRole === 'admin' ? adminPath('/dashboard')
       : currentRole === 'event_partner' ? '/partner'
       : currentRole === 'shop' ? '/shop'
       : '/';

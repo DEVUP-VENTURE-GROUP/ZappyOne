@@ -15,7 +15,15 @@ const PRODUCTION_ORIGINS = [
   'https://www.zappyone.com',       // consumer (www)
   'https://rakshak.zappyone.com',   // worker app
   'https://events.zappyone.com',    // event partner portal
+  'https://admin.zappyone.com',     // admin portal (admin/ app)
 ];
+
+/** Origins the admin portal is served from. `ADMIN_URL` adds staging. */
+function adminOrigins() {
+  const list = ['https://admin.zappyone.com'];
+  if (process.env.ADMIN_URL && !list.includes(process.env.ADMIN_URL)) list.push(process.env.ADMIN_URL);
+  return list;
+}
 
 /**
  * Origins allowed in production. `CLIENT_URL` (staging/preview) is appended when
@@ -27,6 +35,7 @@ function allowedOrigins() {
   if (process.env.CLIENT_URL && !list.includes(process.env.CLIENT_URL)) {
     list.push(process.env.CLIENT_URL);
   }
+  for (const o of adminOrigins()) if (!list.includes(o)) list.push(o);
   return list;
 }
 
@@ -40,4 +49,4 @@ function socketCorsOrigin() {
   return process.env.NODE_ENV === 'production' ? allowedOrigins() : '*';
 }
 
-module.exports = { PRODUCTION_ORIGINS, allowedOrigins, corsOrigin, socketCorsOrigin };
+module.exports = { PRODUCTION_ORIGINS, allowedOrigins, adminOrigins, corsOrigin, socketCorsOrigin };

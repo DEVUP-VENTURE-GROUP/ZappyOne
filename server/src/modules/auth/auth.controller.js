@@ -17,11 +17,38 @@ const RT_COOKIE_OPTS = {
   maxAge:   30 * 24 * 60 * 60 * 1000, // 30 days in ms — matches RT_EXPIRES_SEC
 };
 
+// The admin portal (admin/ app, its own origin) keeps its session in a cookie
+// of its own. Sharing `zappy_rt` meant signing into the customer site in the
+// same browser silently replaced the admin session, and vice versa.
+// sameSite 'strict' works because admin.zappyone.com and api.zappyone.com are
+// the same site; the shorter life bounds an unattended admin laptop.
+const ADMIN_RT_COOKIE_NAME = 'zappy_admin_rt';
+const ADMIN_RT_COOKIE_OPTS = {
+  ...RT_COOKIE_OPTS,
+  sameSite: config.env === 'production' ? 'strict' : 'lax',
+  maxAge:   12 * 60 * 60 * 1000, // 12 hours
+};
+
+function isAdminSurface(req) {
+  return req.headers['x-client-type'] === 'admin';
+}
+
 function setRtCookie(res, refreshToken) {
   res.cookie(RT_COOKIE_NAME, refreshToken, RT_COOKIE_OPTS);
 }
 function clearRtCookie(res) {
   res.clearCookie(RT_COOKIE_NAME, { ...RT_COOKIE_OPTS, maxAge: 0 });
+}
+function setAdminRtCookie(res, refreshToken) {
+  res.cookie(ADMIN_RT_COOKIE_NAME, refreshToken, ADMIN_RT_COOKIE_OPTS);
+}
+function clearAdminRtCookie(res) {
+  res.clearCookie(ADMIN_RT_COOKIE_NAME, { ...ADMIN_RT_COOKIE_OPTS, maxAge: 0 });
+}
+/** The refresh token for whichever app sent the request. */
+function readRt(req) {
+  if (isAdminSurface(req)) return req.cookies?.[ADMIN_RT_COOKIE_NAME];
+  return req.cookies?.[RT_COOKIE_NAME] || req.body?.refreshToken;
 }
 
 // Native apps can't use httpOnly cookies, so mobile clients send
@@ -118,7 +145,7 @@ async function loginAdmin(req, res, next) {
       ip:      req.ip,
       ua:      req.headers['user-agent'],
     }).catch(() => {});
-    setRtCookie(res, result.refreshToken);
+    setAdminRtCookie(res, result.refreshToken);
     res.json({ accessToken: result.accessToken, admin: result.admin });
   } catch (err) {
     // Audit failed attempts too — detects credential stuffing. (#79)
@@ -135,11 +162,21 @@ async function loginAdmin(req, res, next) {
 async function refresh(req, res, next) {
   try {
     // Prefer cookie (new clients); fall back to body for backward-compat.
-    const rt = req.cookies?.[RT_COOKIE_NAME] || req.body?.refreshToken;
+    const rt = readRt(req);
     if (!rt) {
       return res.status(401).json({ error: 'No refresh token', code: 'RT_MISSING' });
     }
     const tokens = await authService.refresh(rt);
+    if (isAdminSurface(req)) {
+      // The admin cookie can only ever hold an admin session.
+      if (tokens.role !== 'admin') {
+        await authService.revoke(tokens.refreshToken).catch(() => {});
+        clearAdminRtCookie(res);
+        return res.status(401).json({ error: 'Not an admin session', code: 'RT_INVALID' });
+      }
+      setAdminRtCookie(res, tokens.refreshToken);
+      return res.json({ accessToken: tokens.accessToken, role: tokens.role });
+    }
     setRtCookie(res, tokens.refreshToken);
     // Include role so clients can fully restore session without sessionStorage.
     // Mobile also needs the rotated refreshToken in the body to persist it.
@@ -149,9 +186,10 @@ async function refresh(req, res, next) {
 
 async function logout(req, res, next) {
   try {
-    const rt = req.cookies?.[RT_COOKIE_NAME] || req.body?.refreshToken;
+    const rt = readRt(req);
     if (rt) await authService.revoke(rt).catch(() => {});
-    clearRtCookie(res);
+    if (isAdminSurface(req)) clearAdminRtCookie(res);
+    else clearRtCookie(res);
     res.json({ ok: true });
   } catch (err) { next(err); }
 }

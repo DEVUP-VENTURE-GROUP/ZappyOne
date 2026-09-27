@@ -9,7 +9,7 @@ import useTelemetry from './hooks/useTelemetry';
 import { prefetchMainTabs, onIdle } from './lib/routePrefetch';
 import { prefetchServiceCatalog } from './hooks/useServiceCatalog';
 import { loadCategories } from './hooks/useCategories';
-import { adminPath } from './config/admin';
+import { adminPath, ADMIN_URL } from './config/admin';
 import { getSubdomainRedirect, isExternalRedirect } from './config/hosts';
 import { RequireAuth } from './components/common/RequireAuth';
 import NotificationBanner from './components/common/NotificationBanner';
@@ -42,8 +42,6 @@ const BrandSelectPage     = lazy(() => import('./pages/BrandSelectPage'));
 const WorkerDashboard     = lazy(() => import('./pages/WorkerDashboard'));
 const WorkerJobPage       = lazy(() => import('./pages/WorkerJobPage'));
 const WorkerKycPage       = lazy(() => import('./pages/WorkerKycPage'));
-const AdminDashboard      = lazy(() => import('./pages/AdminDashboard'));
-const AdminLoginPage      = lazy(() => import('./pages/AdminLoginPage'));
 const PlansPage           = lazy(() => import('./pages/PlansPage'));
 const WalletPage          = lazy(() => import('./pages/WalletPage'));
 const ReferralPage        = lazy(() => import('./pages/ReferralPage'));
@@ -188,10 +186,8 @@ export default function App() {
           path="/worker/login"
           element={token ? <RedirectByRole role={role} /> : <WorkerLoginPage />}
         />
-        <Route
-          path={adminPath('/login')}
-          element={token ? <RedirectByRole role={role} /> : <AdminLoginPage />}
-        />
+        {/* The admin portal is its own app now — old bookmarks go there. */}
+        <Route path={adminPath('/*')} element={<GoToAdmin />} />
 
         {/* User app */}
         <Route element={<MainLayout />}>
@@ -320,12 +316,6 @@ export default function App() {
         <Route path="/events/bookings/:id"       element={<RequireAuth role="user"><EventBookingDetailPage /></RequireAuth>} />
         <Route path="/events/saved"              element={<RequireAuth role="user"><EventSavedThemesPage /></RequireAuth>} />
 
-        {/* Admin */}
-        <Route
-          path={adminPath('/dashboard')}
-          element={<RequireAuth role="admin"><AdminDashboard /></RequireAuth>}
-        />
-
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       </ErrorBoundary>
@@ -336,9 +326,14 @@ export default function App() {
   );
 }
 
+function GoToAdmin() {
+  useEffect(() => { window.location.replace(ADMIN_URL); }, []);
+  return null;
+}
+
 function RedirectByRole({ role }) {
+  if (role === 'admin') return <GoToAdmin />;
   const dest = role === 'worker' ? '/worker'
-    : role === 'admin' ? adminPath('/dashboard')
     : role === 'event_partner' ? '/partner'
     : role === 'shop' ? '/shop'
     : '/';

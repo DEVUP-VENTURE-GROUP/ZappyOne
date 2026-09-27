@@ -22,6 +22,9 @@ const rawBaseQuery = fetchBaseQuery({
   prepareHeaders: (headers, { getState }) => {
     const token = getState().auth.accessToken;
     if (token) headers.set('authorization', `Bearer ${token}`);
+    // Set only by the admin portal's build — the server then uses the admin
+    // refresh cookie instead of the customer one.
+    if (import.meta.env.VITE_CLIENT_SURFACE) headers.set('x-client-type', import.meta.env.VITE_CLIENT_SURFACE);
     return headers;
   },
 });
