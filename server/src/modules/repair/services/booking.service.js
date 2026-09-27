@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const { RepairBooking } = require('../models/booking.model');
 const { RepairQuote } = require('../models/quote.model');
 const { Repair } = require('../models/repair.model');
-const { Problem } = require('../models/problem.model');
+const { Problem, ProblemCategory } = require('../models/problem.model');
 const { ProviderInventory } = require('../models/inventory.model');
 const { QAInspection } = require('../models/custody.model');
 const { QAChecklist } = require('../models/config.model');
@@ -183,6 +183,13 @@ async function createBooking({
   const problems = problemCodes.length
     ? await Problem.find({ code: { $in: problemCodes }, vertical }).lean()
     : [];
+  if (problems.length) {
+    const live = await ProblemCategory.find({
+      vertical, code: { $in: [...new Set(problems.map((p) => p.categoryCode))] }, isActive: true, isArchived: false,
+    }).distinct('code');
+    const hidden = problems.find((p) => !p.isActive || p.isArchived || !live.includes(p.categoryCode));
+    if (hidden) throw httpError(`"${hidden.name}" is not offered right now`, 400, 'PROBLEM_UNAVAILABLE');
+  }
   const problemForcesDiagnosis = problems.some((p) => p.requiresDiagnosis);
   const needsDiagnosis = problemForcesDiagnosis || !repair || repair.pricingMode === 'diagnosis_required';
 

@@ -241,7 +241,11 @@ async function listProblems(req, res, next) {
       .sort({ displayOrder: 1 })
       .lean();
 
-    const filter = { vertical: verticalOf(req), isActive: true, isArchived: false };
+    // Unpublishing a category hides its problems everywhere, including "popular".
+    const filter = {
+      vertical: verticalOf(req), isActive: true, isArchived: false,
+      categoryCode: { $in: categories.map((c) => c.code) },
+    };
 
     /**
      * Hide symptoms that cannot happen to THIS product, rather than confusing

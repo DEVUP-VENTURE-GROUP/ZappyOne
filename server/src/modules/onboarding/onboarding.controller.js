@@ -315,6 +315,9 @@ async function liveCatalog(req, res, next) {
       ])
       : [[], []];
 
+    const published = new Set(categories.map((c) => `${c.vertical}:${c.code}`));
+    const visibleProblems = problems.filter((p) => published.has(`${p.vertical}:${p.categoryCode}`));
+
     const coverageByVertical = new Map();
     const highlightsByVertical = new Map();
 
@@ -325,7 +328,7 @@ async function liveCatalog(req, res, next) {
         name: c.name,
         icon: c.icon,
         imageUrl: c.imageUrl || '',
-        problems: problems
+        problems: visibleProblems
           .filter((p) => p.vertical === c.vertical && p.categoryCode === c.code)
           .map((p) => ({
             code: p.code,
@@ -344,7 +347,7 @@ async function liveCatalog(req, res, next) {
     }
 
     // The shortlist shown before the full breakdown is expanded.
-    for (const p of problems) {
+    for (const p of visibleProblems) {
       if (!p.isPopular) continue;
       const list = highlightsByVertical.get(p.vertical) || [];
       if (list.length < 8) list.push({ code: p.code, name: p.name });

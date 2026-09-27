@@ -112,7 +112,7 @@ async function seedProblemCategories(V, seed) {
   for (const c of seed.PROBLEM_CATEGORIES) {
     const res = await ProblemCategory.updateOne(
       { vertical: V, code: c.code },
-      { $setOnInsert: { name: c.name, icon: c.icon, displayOrder: c.displayOrder, isActive: true } },
+      { $setOnInsert: { name: c.name, icon: c.icon, displayOrder: c.displayOrder, isActive: c.isActive !== false } },
       { upsert: true },
     );
     if (res.upsertedCount) created++;
