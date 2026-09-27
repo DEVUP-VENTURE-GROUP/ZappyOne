@@ -24,8 +24,6 @@ import { saveGeoLocation } from '../utils/geoCache';
 import { reverseGeocode } from '../utils/reverseGeocode';
 import { serviceLabel } from '../constants/services';
 import LiveServices from '../components/home/LiveServices';
-import GaneshFestiveHeader from '../components/home/GaneshFestiveHeader';
-import FestiveCategories from '../components/home/FestiveCategories';
 import { ZappyLogo } from '../components/common/ZappyLogo';
 import Footer from '../components/layout/Footer';
 import VoiceSearchButton from '../components/common/VoiceSearchButton';
@@ -797,10 +795,6 @@ export default function HomePage() {
             <LensButton onClick={() => setLensOpen(true)} />
           </div>
         </div>
-
-        {/* --- Ganesh Chaturthi Festive Theme --- */}
-        <GaneshFestiveHeader />
-        <FestiveCategories />
 
         {/* Anything in flight comes first — it is why most people open the app. */}
         {activeJob && (
