@@ -9,6 +9,7 @@ import {
   useCancelHelpingTaskMutation, useRateHelpingTaskMutation,
 } from '@shared/services/api';
 import { formatPaise } from '@shared/utils/money';
+import { PayNowButton } from '@shared/components/common/PayMethodPicker';
 
 /**
  * Customer tracking (§42) and the approval engine's customer half (§36, §6).
@@ -161,6 +162,21 @@ export default function HelpingTaskDetailPage() {
             <div className="flex justify-between text-slate-500"><span>Item budget</span><span>up to {formatPaise(authorisation.itemBudgetPaise)}</span></div>
           )}
           <p className="text-[11px] text-slate-400 pt-1">{authorisation.note}</p>
+          <p className="text-xs text-slate-500">
+            {task.paymentStatus === 'paid'
+              ? 'Service fee paid'
+              : task.paymentMethod === 'online' ? 'Service fee: online payment pending' : 'Pay the service fee in cash when the task is done'}
+          </p>
+          {task.paymentMethod === 'online' && task.paymentStatus !== 'paid'
+            && !['CANCELLED', 'REFUNDED', 'FAILED', 'EXPIRED', 'REJECTED'].includes(task.status) && (
+            <PayNowButton
+              bookingSource="helping"
+              bookingId={task._id}
+              amountLabel={formatPaise(authorisation.serviceChargePaise)}
+              label="Helper service charge"
+              className="mt-2"
+            />
+          )}
         </div>
 
         {task.pickupLocation?.address && (

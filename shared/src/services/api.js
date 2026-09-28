@@ -605,7 +605,19 @@ export const api = createApi({
     // --- Payments ---
     verifyPayment: b.mutation({
       query: (body) => ({ url: '/payments/verify', method: 'POST', body }),
-      invalidatesTags: ['Subscription', 'Wallet'],
+      invalidatesTags: ['Subscription', 'Wallet', 'RepairBookings', 'PetBookings', 'HelpingTasks'],
+    }),
+    // Whether "Pay online" may be offered. The server is the only side that knows.
+    getPaymentAvailability: b.query({
+      query: () => '/payments/availability',
+      keepUnusedDataFor: 60,
+    }),
+    // Cashfree order for a repair, pet or helping booking; the amount comes from the booking.
+    createBookingPayment: b.mutation({
+      query: ({ bookingSource, bookingId }) => ({
+        url: '/payments/create-order', method: 'POST',
+        body: { purpose: 'booking_payment', bookingSource, bookingId },
+      }),
     }),
 
     // --- Notifications ---
@@ -2039,6 +2051,16 @@ export const api = createApi({
       query: (id) => ({ url: `/helping/tasks/${id}/complete`, method: 'POST' }),
       invalidatesTags: (r, e, id) => [{ type: 'HelpingTasks', id }],
     }),
+    // The helper's own tasks still in hand.
+    assignedHelpingTasks: b.query({
+      query: () => '/helping/tasks/assigned',
+      providesTags: ['HelpingTasks'],
+    }),
+    // Helper took the service fee in cash.
+    collectHelpingCash: b.mutation({
+      query: (id) => ({ url: `/helping/tasks/${id}/collect-cash`, method: 'POST' }),
+      invalidatesTags: (r, e, id) => [{ type: 'HelpingTasks', id }],
+    }),
 
     // Admin
     adminHelpingTasks: b.query({
@@ -2116,6 +2138,16 @@ export const api = createApi({
     advancePetBookingStatus: b.mutation({
       query: ({ id, ...body }) => ({ url: `/pet/bookings/${id}/status`, method: 'POST', body }),
       invalidatesTags: (r, e, a) => [{ type: 'PetBookings', id: a.id }],
+    }),
+    // The provider's own pet jobs still in hand (incl. waiting for payment).
+    assignedPetBookings: b.query({
+      query: () => '/pet/bookings/assigned',
+      providesTags: ['PetBookings'],
+    }),
+    // Provider took the customer's cash.
+    collectPetCash: b.mutation({
+      query: (id) => ({ url: `/pet/bookings/${id}/collect-cash`, method: 'POST' }),
+      invalidatesTags: (r, e, id) => [{ type: 'PetBookings', id }],
     }),
     addPetBookingProof: b.mutation({
       query: ({ id, ...body }) => ({ url: `/pet/bookings/${id}/proof`, method: 'POST', body }),
@@ -2619,6 +2651,8 @@ export const {
   useWalletTransactionsQuery,
   useWalletTopupMutation,
   useVerifyPaymentMutation,
+  useGetPaymentAvailabilityQuery,
+  useCreateBookingPaymentMutation,
   useGetPricingConfigQuery,
   useAdminUpdatePricingMutation,
   useAdminTogglesMutation,
@@ -2973,7 +3007,7 @@ export const {
   useRespondHelpingApprovalMutation, useCancelHelpingTaskMutation, useRateHelpingTaskMutation,
   useAvailableHelpingTasksQuery, useAcceptHelpingTaskMutation, useAdvanceHelpingStatusMutation,
   useUpdateHelpingItemMutation, useProposeHelpingAlternativeMutation, useRecordHelpingAdvanceMutation,
-  useAddHelpingProofMutation, useRecordHelpingHandoverMutation, useCompleteHelpingTaskMutation,
+  useAddHelpingProofMutation, useRecordHelpingHandoverMutation, useCompleteHelpingTaskMutation, useCollectHelpingCashMutation, useAssignedHelpingTasksQuery,
   useAdminHelpingTasksQuery, useAdminHelpingConfigQuery,
   useAdminUpdateHelpingConfigMutation, useAdminHelpingRefundOutcomeMutation,
   usePetCategoriesQuery, usePetVariantsQuery, usePetBreedsQuery, usePetAddonsQuery,
@@ -2982,7 +3016,7 @@ export const {
   usePetQuoteMutation, usePetProviderSearchMutation,
   useCreatePetBookingMutation, useMyPetBookingsQuery, useGetPetBookingQuery,
   useCancelPetBookingMutation, useRatePetBookingMutation,
-  useAvailablePetBookingsQuery, useAcceptPetBookingMutation, useAdvancePetBookingStatusMutation,
+  useAvailablePetBookingsQuery, useAcceptPetBookingMutation, useAdvancePetBookingStatusMutation, useCollectPetCashMutation, useAssignedPetBookingsQuery,
   useAddPetBookingProofMutation, useUpdatePetBookingExecutionMutation,
   useCreatePetRecurringMutation, useMyPetRecurringQuery, usePausePetRecurringMutation,
   useResumePetRecurringMutation, useCancelPetRecurringMutation, useSkipPetRecurringDateMutation,

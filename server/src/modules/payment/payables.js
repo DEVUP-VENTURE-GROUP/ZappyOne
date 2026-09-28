@@ -8,7 +8,8 @@ const config = require('../../config');
  *   load(id)          the booking document (not lean — markPaid saves it)
  *   payable(b)        { amountPaise } or throws with the reason it can't be paid yet
  *   markPaid(b, ref)  record the capture on the booking
- *   commission(b)     the platform's own cut, booked to the ledger at capture
+ *   commission(b)     the platform's own cut (booked at settlement, not at capture)
+ *   afterPaid(b)      optional: what the engine does once the money has arrived
  *   isPaid(b)         already paid?
  */
 
@@ -39,6 +40,8 @@ const PAYABLES = {
     },
     markPaid(b, intentId) { b.paymentStatus = 'paid'; b.paymentId = String(intentId); },
     commission: (b) => b.pricing?.commissionPaise || 0,
+    // Paid after the service: close the booking and settle it.
+    afterPaid: (b) => require('../pet/services/payment.service').afterOnlinePayment(b),
   },
   helping: {
     load: (id) => require('../helping/models/task.model').HelpingTask.findById(id),

@@ -3,8 +3,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Loader2, Navigation, PawPrint, AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ProofPhotos, { readyKeys } from '../../components/common/ProofPhotos';
+import CollectPaymentCard from '../../components/common/CollectPaymentCard';
 import {
-  useGetPetBookingQuery, useAdvancePetBookingStatusMutation, useAddPetBookingProofMutation,
+  useGetPetBookingQuery, useAdvancePetBookingStatusMutation, useAddPetBookingProofMutation, useCollectPetCashMutation,
 } from '../../services/api';
 
 /**
@@ -27,6 +28,7 @@ export default function WorkerPetJobPage() {
   const { data, isLoading, refetch } = useGetPetBookingQuery(id, { pollingInterval: 10000 });
   const [advance] = useAdvancePetBookingStatusMutation();
   const [addProof] = useAddPetBookingProofMutation();
+  const [collectCash, { isLoading: collecting }] = useCollectPetCashMutation();
   const [beforePhotos, setBeforePhotos] = useState([]);
   const [afterPhotos, setAfterPhotos] = useState([]);
   const [completing, setCompleting] = useState(false);
@@ -52,9 +54,15 @@ export default function WorkerPetJobPage() {
     try {
       for (const key of readyKeys(beforePhotos)) await addProof({ id: booking._id, kind: 'before', key }).unwrap();
       for (const key of readyKeys(afterPhotos)) await addProof({ id: booking._id, kind: 'after', key }).unwrap();
-      await advance({ id: booking._id, status: 'SERVICE_COMPLETED' }).unwrap();
-      toast.success('Completed and settled');
-      nav('/worker/pet');
+      const res = await advance({ id: booking._id, status: 'SERVICE_COMPLETED' }).unwrap();
+      if (res.booking?.status === 'PAYMENT_PENDING') {
+        // Stay here: the payment card below is the last step.
+        toast.success('Service completed. Now take the payment.');
+        refetch();
+      } else {
+        toast.success('Completed and settled');
+        nav('/worker/pet');
+      }
     } catch (err) {
       if (err?.data?.code === 'PROOF_REQUIRED') toast.error(`A ${err.data.kind?.replace('_', ' ')} photo is required first`);
       else toast.error(err?.data?.error || 'Could not complete');
@@ -64,6 +72,16 @@ export default function WorkerPetJobPage() {
   }
 
   const nextMoves = NEXT[booking.status] || [];
+
+  async function recordCash() {
+    try {
+      await collectCash(booking._id).unwrap();
+      toast.success('Payment recorded');
+      nav('/worker/pet');
+    } catch (err) {
+      toast.error(err?.data?.error || 'Could not record the payment');
+    }
+  }
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -108,6 +126,16 @@ export default function WorkerPetJobPage() {
               {completing ? 'Completing…' : 'Complete service'}
             </button>
           </>
+        )}
+
+        {['SERVICE_COMPLETED', 'CUSTOMER_CONFIRMATION', 'PAYMENT_PENDING', 'PAYMENT_COMPLETED'].includes(booking.status) && (
+          <CollectPaymentCard
+            amountPaise={booking.pricing?.totalPaise}
+            paymentMethod={booking.paymentMethod}
+            paid={booking.paymentStatus === 'paid'}
+            collecting={collecting}
+            onCollect={recordCash}
+          />
         )}
       </div>
     </div>

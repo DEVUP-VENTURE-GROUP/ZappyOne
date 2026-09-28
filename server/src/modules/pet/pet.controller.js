@@ -16,6 +16,10 @@ const { PetPricingRule, PetProviderCapability } = require('./models/config.model
 const pricingService = require('./services/pricing.service');
 const matchingService = require('./services/matching.service');
 const bookingService = require('./services/booking.service');
+const paymentService = require('./services/payment.service');
+
+/** What a provider may move a booking to by hand; completion and payment have their own paths. */
+const PROVIDER_SETTABLE = ['PROVIDER_EN_ROUTE', 'PROVIDER_ARRIVED', 'PET_HANDOVER', 'SERVICE_STARTED', 'SERVICE_PAUSED'];
 const s3Service = require('../../core/storage/s3');
 
 function mayView(booking, auth) {
@@ -240,7 +244,7 @@ async function rateBooking(req, res, next) {
     const booking = await PetBooking.findOne({ _id: req.params.id, userId: req.auth.sub })
       .select('status workerId shopId rating ratedAt').lean();
     if (!booking) return res.status(404).json({ error: 'Booking not found' });
-    if (!['SERVICE_COMPLETED', 'CUSTOMER_CONFIRMATION', 'PAYMENT_COMPLETED', 'CLOSED'].includes(booking.status)) {
+    if (!['SERVICE_COMPLETED', 'CUSTOMER_CONFIRMATION', 'PAYMENT_PENDING', 'PAYMENT_COMPLETED', 'CLOSED'].includes(booking.status)) {
       return res.status(409).json({ error: 'You can rate this once the service is complete', code: 'NOT_COMPLETED' });
     }
     if (booking.ratedAt) return res.status(409).json({ error: 'Already rated', code: 'ALREADY_RATED' });
@@ -266,6 +270,20 @@ async function listAvailableBookings(req, res, next) {
     const filter = { workerId: null, shopId: null, status: { $in: ['BOOKED', 'PROVIDER_SEARCHING'] } };
     if (req.query.categoryCode) filter.categoryCode = req.query.categoryCode;
     const bookings = await PetBooking.find(filter).sort({ scheduledAt: 1, checkInAt: 1 }).limit(30).lean();
+    res.json({ bookings });
+  } catch (err) { next(err); }
+}
+
+/** The provider's own jobs still in hand, including ones waiting for payment. */
+const PROVIDER_ACTIVE = [
+  'PROVIDER_ASSIGNED', 'PROVIDER_ACCEPTED', 'PROVIDER_EN_ROUTE', 'PROVIDER_ARRIVED', 'PET_HANDOVER',
+  'SERVICE_STARTED', 'SERVICE_PAUSED', 'SERVICE_COMPLETED', 'CUSTOMER_CONFIRMATION', 'PAYMENT_PENDING',
+];
+async function listAssignedBookings(req, res, next) {
+  try {
+    const owner = req.auth.role === 'shop' ? { shopId: req.auth.sub } : { workerId: req.auth.sub };
+    const bookings = await PetBooking.find({ ...owner, status: { $in: PROVIDER_ACTIVE } })
+      .sort({ scheduledAt: 1, createdAt: 1 }).limit(50).lean();
     res.json({ bookings });
   } catch (err) { next(err); }
 }
@@ -301,10 +319,21 @@ async function advanceStatus(req, res, next) {
       const settled = await bookingService.completeBooking({ bookingId: booking._id, workerId: req.auth.sub });
       return res.json({ booking: settled });
     }
+    // Money states are reached by payment, never set by hand.
+    if (!PROVIDER_SETTABLE.includes(req.body.status)) {
+      return res.status(409).json({ error: 'That status is set by the system, not the provider', code: 'NOT_PROVIDER_STATUS' });
+    }
 
     booking.transitionTo(req.body.status, { by: req.auth.sub, byRole: req.auth.role, note: req.body.note || '' });
     await booking.save();
     res.json({ booking: booking.toObject() });
+  } catch (err) { next(err); }
+}
+
+/** The provider took the customer's cash. */
+async function collectCash(req, res, next) {
+  try {
+    res.json(await paymentService.recordCash({ bookingId: req.params.id, providerId: req.auth.sub }));
   } catch (err) { next(err); }
 }
 
@@ -466,7 +495,7 @@ module.exports = {
   listMyPets, createPet, updatePet, archivePet, getPetHistory,
   quote, findProviders,
   createBooking, listMyBookings, getBooking, cancelBooking, rateBooking,
-  listAvailableBookings, acceptBooking, advanceStatus, addProof, updateExecution,
+  listAvailableBookings, listAssignedBookings, acceptBooking, advanceStatus, collectCash, addProof, updateExecution,
   createRecurring, listMyRecurring, pauseRecurring, resumeRecurring, cancelRecurring, skipRecurringDate,
   adminListBookings, adminGetPricing, adminUpdatePricing, adminListCapabilities, adminUpdateCapability,
 };

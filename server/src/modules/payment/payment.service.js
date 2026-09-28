@@ -270,21 +270,10 @@ async function capturePayment({ cfOrderId, cfPaymentId, amountPaise, eventName, 
       if (booking) {
         payable.markPaid(booking, intent._id);
         await booking.save();
-
-        // Only the platform's own cut is revenue now; the provider's share is paid at
-        // settlement, so crediting the gross would double-count once the payout runs.
-        const commissionPaise = payable.commission(booking);
-        if (commissionPaise > 0) {
-          await Transaction.create({
-            type: 'credit',
-            owner: { kind: 'platform', id: null },
-            amountPaise: commissionPaise,
-            reason: Transaction.REASONS.PLATFORM_COMMISSION,
-            refPaymentIntentId: intent._id,
-            idempotencyKey: `platform:${source}:${cfPaymentId}`,
-            description: `${source} commission — ${booking.reference}`,
-          }).catch((e) => { if (e.code !== 11000) throw e; });
-        }
+        // Commission and the provider's share are booked at settlement, once the
+        // work is done — booking revenue here would count it twice, and would
+        // leave revenue behind if the payment is later refunded.
+        if (payable.afterPaid) await payable.afterPaid(booking);
       }
     }
 

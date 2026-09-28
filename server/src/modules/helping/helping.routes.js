@@ -83,6 +83,7 @@ router.post('/quote',
 /* Worker — literal paths first */
 
 router.get('/tasks/available', authenticate, requireRole('worker'), ctrl.listAvailable);
+router.get('/tasks/assigned', authenticate, requireRole('worker'), ctrl.listAssigned);
 
 /* Customer */
 
@@ -98,7 +99,7 @@ router.post('/tasks',
     items: Joi.array().items(itemSchema).max(30).default([]),
     returnDetail: returnDetailSchema.allow(null),
     scheduledAt: Joi.date().allow(null),
-    paymentMethod: Joi.string().valid('cash', 'online', 'wallet').default('online'),
+    paymentMethod: Joi.string().valid('cash', 'online').default('cash'),
     paymentModel: Joi.string().valid(...PAYMENT_MODELS).default('customer_preauth'),
     specialHandling: Joi.boolean().default(false),
     idempotencyKey: Joi.string().max(120).allow(null),
@@ -189,6 +190,7 @@ router.post('/tasks/:id/handover',
   ctrl.recordHandover);
 
 router.post('/tasks/:id/complete', authenticate, requireRole('worker'), ctrl.completeTask);
+router.post('/tasks/:id/collect-cash', authenticate, requireRole('worker'), ctrl.collectCash);
 
 module.exports = router;
 

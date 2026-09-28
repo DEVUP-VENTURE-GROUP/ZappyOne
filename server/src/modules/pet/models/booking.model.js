@@ -311,6 +311,7 @@ const petBookingSchema = new mongoose.Schema(
       index: true,
     },
     paymentId: { type: String, default: null },
+    cashCollectedAt: { type: Date, default: null },
     refundPaise: { type: Number, default: 0, min: 0 },
 
     cancellationPolicyCode: { type: String, default: null },

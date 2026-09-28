@@ -6,6 +6,8 @@ import LocationPicker from '@shared/modules/booking/LocationPicker';
 import ImageUploadField from '@shared/components/common/ImageUploadField';
 import { useHelpingQuoteMutation, useCreateHelpingTaskMutation } from '@shared/services/api';
 import { formatPaise } from '@shared/utils/money';
+import { PayMethodPicker } from '@shared/components/common/PayMethodPicker';
+import { usePayBooking } from '@shared/hooks/usePayBooking';
 
 /**
  * Return / Exchange — §22 to §31.
@@ -40,6 +42,10 @@ export default function ReturnTaskPage() {
 
   const [getQuote, { data: quoteData, isLoading: quoting }] = useHelpingQuoteMutation();
   const [create, { isLoading: booking }] = useCreateHelpingTaskMutation();
+  const [paymentMethod, setPaymentMethod] = useState('cash');
+  // One key per visit to this screen, so a double tap cannot book twice.
+  const [idempotencyKey] = useState(() => `web-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
+  const { pay, paying } = usePayBooking();
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -74,9 +80,13 @@ export default function ReturnTaskPage() {
         destination: destLoc
           ? { type: 'Point', coordinates: [destLoc.lng, destLoc.lat], address: destLoc.address } : undefined,
         returnDetail: { ...form, merchantInstructions: form.merchantInstructions || (invoiceKey ? `Invoice: ${invoiceKey}` : '') },
-        idempotencyKey: `web-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        paymentMethod,
+        idempotencyKey,
       }).unwrap();
       toast.success('Task requested');
+      if (res.task?.paymentMethod === 'online') {
+        await pay({ bookingSource: 'helping', bookingId: res.task._id, label: 'Helper service charge' });
+      }
       nav(`/helping/tasks/${res.task._id}`);
     } catch (err) {
       toast.error(err?.data?.error || 'Could not create the task');
@@ -195,12 +205,17 @@ export default function ReturnTaskPage() {
             <span>{formatPaise(charge.serviceChargePaise)}</span>
           </div>
         )}
+        <PayMethodPicker
+          value={paymentMethod}
+          onChange={setPaymentMethod}
+          cashNote="Pay the helper's service charge in cash when the task is done."
+        />
       </Shell>
 
       <div className="fixed bottom-0 inset-x-0 bg-white border-t border-slate-100 p-4">
-        <button type="button" onClick={book} disabled={booking || !pickupLoc}
+        <button type="button" onClick={book} disabled={booking || paying || !pickupLoc}
           className="max-w-lg mx-auto w-full block rounded-2xl bg-[#0F172A] text-white font-bold py-4 disabled:opacity-50">
-          {booking ? 'Requesting…' : 'Request a helper'}
+          {paying ? 'Opening payment…' : booking ? 'Requesting…' : 'Request a helper'}
         </button>
       </div>
 

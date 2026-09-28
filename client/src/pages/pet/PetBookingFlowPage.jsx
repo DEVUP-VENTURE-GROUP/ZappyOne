@@ -10,6 +10,8 @@ import {
   usePetQuoteMutation, usePetProviderSearchMutation, useCreatePetBookingMutation,
 } from '@shared/services/api';
 import { formatPaise } from '@shared/utils/money';
+import { PayMethodPicker } from '@shared/components/common/PayMethodPicker';
+import { usePayBooking } from '@shared/hooks/usePayBooking';
 
 /**
  * One adaptive booking flow for all seven categories (§3, §54).
@@ -45,6 +47,10 @@ export default function PetBookingFlowPage() {
   const [destLoc, setDestLoc] = useState(null);
   const [pickerFor, setPickerFor] = useState(null);
   const [provider, setProvider] = useState(null);
+  const [paymentMethod, setPaymentMethod] = useState('cash');
+  // One key per visit to this screen, so a double tap cannot book twice.
+  const [idempotencyKey] = useState(() => `web-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
+  const { pay, paying } = usePayBooking();
   const [checkCompat] = useLazyPetCompatibilityQuery();
 
   const selectedPets = pets.filter((p) => selectedPetIds.includes(p._id));
@@ -129,9 +135,13 @@ export default function PetBookingFlowPage() {
         destination: destLoc ? { type: 'Point', coordinates: [destLoc.lng, destLoc.lat], address: destLoc.address } : undefined,
         workerId: provider?.workerId || undefined,
         shopId: provider?.shopId || undefined,
-        idempotencyKey: `web-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        paymentMethod,
+        idempotencyKey,
       }).unwrap();
       toast.success('Booked');
+      if (res.booking?.paymentMethod === 'online') {
+        await pay({ bookingSource: 'pet', bookingId: res.booking._id, label: 'Pet care booking' });
+      }
       nav(`/pet/bookings/${res.booking._id}`);
     } catch (err) {
       if (err?.data?.code === 'NOT_COMPATIBLE') {
@@ -324,9 +334,10 @@ export default function PetBookingFlowPage() {
               <span>Total</span><span>{formatPaise(quote.totalPaise)}</span>
             </div>
           )}
-          <button type="button" onClick={book} disabled={booking}
+          <PayMethodPicker value={paymentMethod} onChange={setPaymentMethod} />
+          <button type="button" onClick={book} disabled={booking || paying}
             className="w-full rounded-2xl bg-[#0F172A] text-white font-bold py-4 disabled:opacity-50">
-            {booking ? 'Booking…' : 'Confirm booking'}
+            {paying ? 'Opening payment…' : booking ? 'Booking…' : 'Confirm booking'}
           </button>
         </Shell>
       )}

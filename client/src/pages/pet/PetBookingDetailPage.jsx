@@ -6,13 +6,17 @@ import {
   useGetPetBookingQuery, useCancelPetBookingMutation, useRatePetBookingMutation,
 } from '@shared/services/api';
 import { formatPaise } from '@shared/utils/money';
+import { PayNowButton } from '@shared/components/common/PayMethodPicker';
+
+// Statuses in which there is nothing left to pay online.
+const NOTHING_TO_PAY = ['CANCELLED', 'REFUNDED', 'FAILED', 'EXPIRED', 'REJECTED', 'PRICE_PENDING', 'AWAITING_CUSTOMER_APPROVAL'];
 
 const STATUS_LABEL = {
   REQUESTED: 'Requested', BOOKED: 'Booked', PROVIDER_SEARCHING: 'Finding a provider',
   PROVIDER_ASSIGNED: 'Provider assigned', PROVIDER_ACCEPTED: 'Provider accepted',
   PROVIDER_EN_ROUTE: 'On the way', PROVIDER_ARRIVED: 'Arrived', PET_HANDOVER: 'Pet handover',
   SERVICE_STARTED: 'In progress', SERVICE_COMPLETED: 'Completed', CUSTOMER_CONFIRMATION: 'Completed',
-  PAYMENT_COMPLETED: 'Completed', CANCELLED: 'Cancelled', DISPUTED: 'Under review', CLOSED: 'Closed',
+  PAYMENT_PENDING: 'Completed · payment due', PAYMENT_COMPLETED: 'Completed', CANCELLED: 'Cancelled', DISPUTED: 'Under review', CLOSED: 'Closed',
 };
 
 function Shell({ children }) { return <div className="max-w-lg mx-auto px-4 py-4 space-y-3 pb-10">{children}</div>; }
@@ -78,6 +82,20 @@ export default function PetBookingDetailPage() {
           {booking.pricing.travelPaise > 0 && <div className="flex justify-between"><span>Travel</span><span>{formatPaise(booking.pricing.travelPaise)}</span></div>}
           {booking.pricing.stayDiscountPaise > 0 && <div className="flex justify-between text-emerald-600"><span>Discount</span><span>−{formatPaise(booking.pricing.stayDiscountPaise)}</span></div>}
           <div className="flex justify-between font-black pt-1 border-t border-slate-100"><span>Total</span><span>{formatPaise(booking.pricing.totalPaise)}</span></div>
+          <p className="pt-1 text-xs text-slate-500">
+            {booking.paymentStatus === 'paid'
+              ? 'Paid'
+              : booking.paymentMethod === 'online' ? 'Online payment pending' : 'Pay the provider in cash after the service'}
+          </p>
+          {booking.paymentMethod === 'online' && booking.paymentStatus !== 'paid' && !NOTHING_TO_PAY.includes(booking.status) && (
+            <PayNowButton
+              bookingSource="pet"
+              bookingId={booking._id}
+              amountLabel={formatPaise(booking.pricing.totalPaise)}
+              label="Pet care booking"
+              className="mt-2"
+            />
+          )}
         </div>
 
         {!!(booking.proofs || []).length && (
@@ -91,7 +109,7 @@ export default function PetBookingDetailPage() {
           </div>
         )}
 
-        {['SERVICE_COMPLETED', 'CUSTOMER_CONFIRMATION', 'PAYMENT_COMPLETED', 'CLOSED'].includes(booking.status) && !booking.ratedAt && (
+        {['SERVICE_COMPLETED', 'CUSTOMER_CONFIRMATION', 'PAYMENT_PENDING', 'PAYMENT_COMPLETED', 'CLOSED'].includes(booking.status) && !booking.ratedAt && (
           <RateCard bookingId={booking._id} onDone={refetch} />
         )}
         {booking.ratedAt && (

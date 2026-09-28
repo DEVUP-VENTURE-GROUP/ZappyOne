@@ -1,7 +1,14 @@
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Loader2, MapPin, Package, Banknote, AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { useAvailableHelpingTasksQuery, useAcceptHelpingTaskMutation } from '../../services/api';
+import { useAvailableHelpingTasksQuery, useAcceptHelpingTaskMutation, useAssignedHelpingTasksQuery } from '../../services/api';
+import ActiveJobs from '../../components/worker/ActiveJobs';
+
+const STATUS_LABEL = {
+  WORKER_ASSIGNED: 'Assigned', WORKER_ACCEPTED: 'Accepted', EN_ROUTE: 'On the way', ARRIVED: 'Arrived',
+  TASK_STARTED: 'Started', IN_PROGRESS: 'In progress', APPROVAL_REQUIRED: 'Waiting on customer',
+  RETURNING: 'Returning', AT_DROPOFF: 'At drop-off', HANDED_OVER: 'Handed over',
+};
 import { formatPaise } from '../../utils/money';
 
 /**
@@ -16,6 +23,15 @@ export default function WorkerHelpingTasksPage() {
   const nav = useNavigate();
   const { data, isLoading, refetch } = useAvailableHelpingTasksQuery(undefined, { pollingInterval: 20000 });
   const [accept, { isLoading: accepting }] = useAcceptHelpingTaskMutation();
+  const { data: mine } = useAssignedHelpingTasksQuery(undefined, { pollingInterval: 20000 });
+  const myJobs = (mine?.tasks || []).map((t) => ({
+    id: t._id,
+    to: `/worker/helping/${t._id}`,
+    title: t.title || t.reference,
+    subtitle: t.pickupLocation?.address || '',
+    status: STATUS_LABEL[t.status] || t.status,
+    attention: t.status === 'APPROVAL_REQUIRED',
+  }));
 
   async function take(id) {
     try {
@@ -40,6 +56,7 @@ export default function WorkerHelpingTasksPage() {
       </div>
 
       <div className="max-w-lg mx-auto px-4 py-4 space-y-2.5">
+        <ActiveJobs items={myJobs} />
         {isLoading && <div className="flex justify-center py-16"><Loader2 size={24} className="animate-spin text-indigo-400" /></div>}
 
         {!isLoading && !(data?.tasks || []).length && (

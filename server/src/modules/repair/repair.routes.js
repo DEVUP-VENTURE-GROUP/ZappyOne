@@ -1,6 +1,6 @@
 const express = require('express');
 const Joi = require('joi');
-const ctrl = require('./repair.controller');
+const ctrl = require('./controllers');
 const { authenticate, requireRole } = require('../../middlewares/auth');
 const { requireKnownVertical, VERTICALS } = require('./vertical');
 const { SERVICE_MODES } = require('./service-modes');
@@ -347,7 +347,7 @@ router.post(
 
 // Everything below is scoped to the caller's own records by the controller,
 // which resolves the owner from the token rather than from any path or body.
-const provider = require('./repair-provider.controller');
+const provider = require('./controllers/provider.controller');
 const providerOnly = [authenticate, requireRole('worker', 'shop')];
 
 router.get('/provider/onboarding', ...providerOnly, provider.onboardingStatus);

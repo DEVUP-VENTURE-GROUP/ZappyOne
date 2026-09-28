@@ -1,5 +1,5 @@
 const express = require('express');
-const ctrl = require('./repair-admin.controller');
+const ctrl = require('./controllers/admin.controller');
 
 /**
  * Admin repair routes.

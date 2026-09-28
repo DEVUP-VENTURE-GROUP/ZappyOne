@@ -6,10 +6,12 @@ import {
 import toast from 'react-hot-toast';
 import ProofPhotos, { readyKeys } from '../../components/common/ProofPhotos';
 import ImageUploadField from '../../components/common/ImageUploadField';
+import CollectPaymentCard from '../../components/common/CollectPaymentCard';
 import {
   useGetHelpingTaskQuery, useAdvanceHelpingStatusMutation, useUpdateHelpingItemMutation,
   useProposeHelpingAlternativeMutation, useRecordHelpingAdvanceMutation,
   useAddHelpingProofMutation, useRecordHelpingHandoverMutation, useCompleteHelpingTaskMutation,
+  useCollectHelpingCashMutation,
 } from '../../services/api';
 import { formatPaise } from '../../utils/money';
 
@@ -38,6 +40,7 @@ export default function WorkerHelpingJobPage() {
   const [advance] = useAdvanceHelpingStatusMutation();
   const [addProof] = useAddHelpingProofMutation();
   const [complete, { isLoading: completing }] = useCompleteHelpingTaskMutation();
+  const [collectCash, { isLoading: collecting }] = useCollectHelpingCashMutation();
   const [arrivalPhotos, setArrivalPhotos] = useState([]);
 
   if (isLoading) return <div className="flex justify-center py-24"><Loader2 size={24} className="animate-spin text-indigo-400" /></div>;
@@ -74,7 +77,19 @@ export default function WorkerHelpingJobPage() {
     }
   }
 
+  async function recordCash() {
+    try {
+      await collectCash(task._id).unwrap();
+      toast.success('Service fee recorded');
+      refetch();
+    } catch (err) {
+      toast.error(err?.data?.error || 'Could not record the payment');
+    }
+  }
+
   const nextMoves = NEXT_STATUS[task.status] || [];
+  const feePaise = task.charge?.serviceChargePaise || 0;
+  const feeSettled = task.paymentStatus === 'paid' || feePaise <= 0;
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -138,6 +153,17 @@ export default function WorkerHelpingJobPage() {
         )}
 
         {['IN_PROGRESS', 'AT_DROPOFF', 'HANDED_OVER'].includes(task.status) && !pendingApproval && (
+          <CollectPaymentCard
+            amountPaise={feePaise}
+            paymentMethod={task.paymentMethod}
+            paid={task.paymentStatus === 'paid'}
+            collecting={collecting}
+            onCollect={recordCash}
+            what="service fee"
+          />
+        )}
+
+        {['IN_PROGRESS', 'AT_DROPOFF', 'HANDED_OVER'].includes(task.status) && !pendingApproval && feeSettled && (
           <button type="button" onClick={finish} disabled={completing}
             className="w-full rounded-2xl bg-emerald-600 text-white font-bold py-3.5 disabled:opacity-50">
             {completing ? 'Completing…' : 'Complete task'}

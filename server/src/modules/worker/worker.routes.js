@@ -1,6 +1,6 @@
 const express = require('express');
 const Joi = require('joi');
-const ctrl = require('./worker.controller');
+const ctrl = require('./controllers');
 const { authenticate, requireRole, requireRecentOtp } = require('../../middlewares/auth');
 const { validate } = require('../../middlewares/validate');
 const { nearbyLimiter, workerOnlineLimiter } = require('../../middlewares/rateLimit');

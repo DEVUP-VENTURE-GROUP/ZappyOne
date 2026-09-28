@@ -1,22 +1,22 @@
-const Brand = require('../service/brand.model');
-const DeviceModel = require('../service/device-model.model');
-const { ProblemCategory, Problem } = require('./models/problem.model');
-const { Repair } = require('./models/repair.model');
-const { Part, PartQuality, Supplier } = require('./models/part.model');
-const { SkillLevel, ProviderCapability } = require('./models/capability.model');
-const { ZappyReferencePricing, ProviderPricing } = require('./models/pricing.model');
-const { RepairConfig, QAChecklist } = require('./models/config.model');
+const Brand = require('../../service/brand.model');
+const DeviceModel = require('../../service/device-model.model');
+const { ProblemCategory, Problem } = require('../models/problem.model');
+const { Repair } = require('../models/repair.model');
+const { Part, PartQuality, Supplier } = require('../models/part.model');
+const { SkillLevel, ProviderCapability } = require('../models/capability.model');
+const { ZappyReferencePricing, ProviderPricing } = require('../models/pricing.model');
+const { RepairConfig, QAChecklist } = require('../models/config.model');
 const {
   ApprovalRequest, CustomerCatalogRequest, RepairWarrantyClaim, ProviderCatalogRequest,
-} = require('./models/governance.model');
-const { RepairBooking } = require('./models/booking.model');
-const { RepairQuote } = require('./models/quote.model');
+} = require('../models/governance.model');
+const { RepairBooking } = require('../models/booking.model');
+const { RepairQuote } = require('../models/quote.model');
 const {
   ProductType, ProductFamily, ProductSeries, DeviceConfiguration, ModelIdentificationRequest,
-} = require('./models/catalog.model');
-const eventsService = require('./services/events.service');
-const pricingService = require('./services/pricing.service');
-const auditService = require('../admin/audit.service');
+} = require('../models/catalog.model');
+const eventsService = require('../services/events.service');
+const pricingService = require('../services/pricing.service');
+const auditService = require('../../admin/audit.service');
 
 /**
  * Admin catalog, pricing and approval management.
@@ -31,8 +31,8 @@ const auditService = require('../admin/audit.service');
  *   the figure they were actually sold on (§69).
  */
 
-const { verticalOf, verticalFilter } = require('./vertical');
-const s3Service = require('../../core/storage/s3');
+const { verticalOf, verticalFilter } = require('../vertical');
+const s3Service = require('../../../core/storage/s3');
 
 /** Generic list helper — pagination and search are identical across catalog types. */
 function listHandler(Model, { searchFields = [], defaultSort = { createdAt: -1 }, baseFilter = {} } = {}) {

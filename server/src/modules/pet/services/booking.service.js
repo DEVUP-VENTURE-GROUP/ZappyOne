@@ -387,6 +387,8 @@ async function completeBooking({ bookingId, workerId }) {
     booking,
   );
 
+  // Paid already → settle now; otherwise wait for cash or the online payment.
+  await require('./payment.service').afterServiceCompleted(booking, { by: workerId });
   return booking.toObject();
 }
 

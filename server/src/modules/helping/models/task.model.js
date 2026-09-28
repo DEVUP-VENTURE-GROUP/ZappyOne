@@ -381,6 +381,7 @@ const helpingTaskSchema = new mongoose.Schema(
       type: String, enum: ['pending', 'paid', 'failed', 'refunded', 'partially_refunded'], default: 'pending', index: true,
     },
     paymentId: { type: String, default: null },
+    cashCollectedAt: { type: Date, default: null },
     idempotencyKey: { type: String, default: null, index: true, sparse: true },
 
     cancellationReason: { type: String, default: '' },

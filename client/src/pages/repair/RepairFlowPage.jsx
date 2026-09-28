@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft, Search, ChevronRight, Loader2, ShieldCheck, Star, MapPin,
   Clock, Check, AlertTriangle, Smartphone, Laptop, Wrench, HelpCircle, X, Sparkles,
-  Home, Truck, Lock, Banknote, Plus,
+  Home, Truck, Lock, Plus,
 } from 'lucide-react';
 import {
   useRepairBrandsQuery, useRepairModelsQuery, useRepairProblemsQuery,
@@ -19,6 +19,8 @@ import {
 import { selectLocation, selectHasLocation, setLocation } from '@shared/store/locationSlice';
 import LocationPicker from '@shared/modules/booking/LocationPicker';
 import toast from 'react-hot-toast';
+import { PayMethodPicker } from '@shared/components/common/PayMethodPicker';
+import { usePayBooking } from '@shared/hooks/usePayBooking';
 
 /**
  * Customer repair booking flow — one engine, every vertical.
@@ -1326,6 +1328,8 @@ function ConfirmStep({
     { skip: !repairCode },
   );
   const onlineEnabled = !!payPreview?.payment?.onlineEnabled;
+  const [paymentMethod, setPaymentMethod] = useState('cash');
+  const { pay, paying } = usePayBooking();
 
   async function book() {
     try {
@@ -1366,9 +1370,14 @@ function ConfirmStep({
           coordinates: [location.lng, location.lat],
           address: location.address || 'Current location',
         },
+        paymentMethod: onlineEnabled ? paymentMethod : 'cash',
         idempotencyKey,
       }).unwrap();
       toast.success('Booking confirmed');
+      // A fixed price is paid now; a diagnosis-first job is paid once its quote is approved.
+      if (res.booking?.paymentMethod === 'online' && !res.booking?.priceSnapshot?.isEstimate) {
+        await pay({ bookingSource: 'repair', bookingId: res.booking._id, label: 'Repair booking' });
+      }
       onDone(res.booking);
     } catch (err) {
       toast.error(err?.data?.error || 'Could not create the booking');
@@ -1438,33 +1447,19 @@ function ConfirmStep({
         )}
       </div>
 
-      {/*
-        * How this gets paid, said plainly before the button.
-        *
-        * Cash is the whole payment story today — there is no gateway — so this
-        * states it as a fact rather than hiding it and surprising someone at
-        * the door. It reads from the server's list rather than assuming, so the
-        * day online is switched on this copy stops being true by itself.
-        */}
-      <div className="card bg-emerald-50 ring-emerald-100">
-        <div className="flex items-start gap-2.5">
-          <Banknote size={16} className="mt-0.5 shrink-0 text-emerald-700" />
-          <div className="min-w-0">
-            <p className="text-[12.5px] font-bold text-emerald-900">
-              {onlineEnabled ? 'Pay by cash or online' : 'Pay in cash'}
-            </p>
-            <p className="mt-0.5 text-[11.5px] leading-relaxed text-emerald-700">
-              {inspectionOnly
-                ? 'Pay the technician directly once the inspection is done. Nothing is charged now.'
-                : 'Pay the technician directly once the repair is done. Nothing is charged now.'}
-            </p>
-          </div>
-        </div>
-      </div>
+      {/* How this gets paid, said plainly before the button. Online appears only when the server can take it. */}
+      <PayMethodPicker
+        value={paymentMethod}
+        onChange={setPaymentMethod}
+        onlineAllowed={onlineEnabled}
+        cashNote={inspectionOnly
+          ? 'Pay the technician directly once the inspection is done.'
+          : 'Pay the technician directly once the repair is done.'}
+      />
 
-      <button onClick={book} disabled={isLoading} className="btn-primary w-full">
-        {isLoading
-          ? <><Loader2 size={15} className="animate-spin" /> Booking…</>
+      <button onClick={book} disabled={isLoading || paying} className="btn-primary w-full">
+        {isLoading || paying
+          ? <><Loader2 size={15} className="animate-spin" /> {paying ? 'Opening payment…' : 'Booking…'}</>
           : <><Check size={16} /> {inspectionOnly ? 'Book inspection' : 'Confirm booking'}</>}
       </button>
     </Shell>

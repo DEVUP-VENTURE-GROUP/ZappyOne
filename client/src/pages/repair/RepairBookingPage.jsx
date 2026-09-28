@@ -14,6 +14,7 @@ import { useRepairCancellationQuoteQuery, useRepairHandoverCodeQuery } from '@sh
 import HandoverCodeCard from '../../components/common/HandoverCodeCard';
 import { useRateRepairBookingMutation } from '@shared/services/api';
 import { formatPaise } from '@shared/utils/money';
+import { PayNowButton } from '@shared/components/common/PayMethodPicker';
 import { API_BASE } from '@shared/services/apiBase';
 import { useSelector } from 'react-redux';
 import { selectAuth } from '@shared/modules/auth/authSlice';
@@ -795,8 +796,25 @@ export default function RepairBookingPage() {
                   charged before that, and they cannot close the job without recording it.
                 </p>
               </>
+            ) : snap.isEstimate && booking.status !== 'APPROVED' ? (
+              <p className="text-[12px] font-semibold text-slate-600">
+                You pay online once you approve the technician's quote.
+              </p>
+            ) : ['CANCELLED', 'REFUNDED', 'FAILED', 'EXPIRED', 'REJECTED'].includes(booking.status) ? (
+              <p className="text-[12px] font-semibold text-slate-600">Nothing to pay</p>
             ) : (
-              <p className="text-[12px] font-semibold text-slate-600">Payment pending</p>
+              <>
+                <p className="text-[12px] font-bold text-[#0F172A]">Online payment pending</p>
+                <p className="mt-0.5 mb-2 text-[11px] leading-relaxed text-slate-500">
+                  If online payment is down, pay the technician in cash instead — they record it.
+                </p>
+                <PayNowButton
+                  bookingSource="repair"
+                  bookingId={booking._id}
+                  amountLabel={rupees(snap.totalPaise)}
+                  label="Repair booking"
+                />
+              </>
             )}
           </div>
         </div>

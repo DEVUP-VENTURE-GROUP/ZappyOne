@@ -56,6 +56,10 @@ beforeAll(async () => {
   await RepairConfig.create({
     vertical: 'mobile', commissionPct: 15, taxPct: 18, onlinePaymentsEnabled: true,
   });
+  // …and a gateway has to exist for the online choice to be accepted at all.
+  const config = require('../src/config');
+  config.cashfree.appId = config.cashfree.appId || 'test-app';
+  config.cashfree.secretKey = config.cashfree.secretKey || 'test-secret';
   await Repair.create({
     code: 'battery_replacement', name: 'Battery Replacement', vertical: 'mobile',
     pricingMode: 'fixed', minSkillLevel: 2, warrantyDays: 180,
@@ -111,6 +115,9 @@ async function bookAndComplete(
   // also the order the state machine insists on.
   if (paymentMethod === 'cash') {
     await bookingService.collectCash({ bookingId: booking._id, actorRole: 'worker', actorId: workerId });
+  } else {
+    // An online job cannot close until the gateway has the money (the capture marks it paid).
+    await RepairBooking.updateOne({ _id: booking._id }, { $set: { paymentStatus: 'paid' } });
   }
 
   return bookingService.transition(booking._id, 'COMPLETED', { actorRole: 'worker', actorId: workerId });

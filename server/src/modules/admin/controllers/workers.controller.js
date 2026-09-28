@@ -204,10 +204,6 @@ async function rejectKyc(req, res, next) {
       await redis.del(`worker:available:${req.params.id}`);
     }
 
-    // Force worker out of all geo/availability indices immediately
-    await redis.zrem('workers:online', String(req.params.id));
-    await redis.del(`worker:available:${req.params.id}`);
-
     // Push real-time force-offline event to the worker's socket session
     // so their dashboard flips to offline instantly without waiting for a poll.
     try {
@@ -240,7 +236,7 @@ async function rejectKyc(req, res, next) {
       before.kyc,
       worker.kyc,
     );
-    res.json({ worker, suspended: newRejectionCount >= SUSPENSION_THRESHOLD });
+    res.json({ worker, suspended: worker?.kyc?.status === 'suspended' });
   } catch (err) {
     next(err);
   }

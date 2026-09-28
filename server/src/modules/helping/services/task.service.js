@@ -343,7 +343,9 @@ async function recordWorkerAdvance({ taskId, workerId, amountPaise }) {
  *
  *   1. WORKER_REIMBURSEMENT — giving back exactly what the helper spent. Not
  *      income; it must never appear in an earnings report.
- *   2. WORKER_EARNING       — the fee for the errand, minus commission.
+ *   2. The service fee, through the shared settlement: paid online, the helper
+ *      is credited their earning; paid in cash, they already hold the fee and
+ *      are billed the platform's share instead.
  *
  * Unspent budget goes back to the customer as PRODUCT_REFUND, because
  * authorising ₹1,000 and spending ₹640 must not leave ₹360 sitting with the
@@ -377,19 +379,17 @@ async function settleTask({ taskId, actorId = null }) {
       task.itemMoney.workerReimbursedPaise = owed;
     }
 
-    // 2. Pay them for the work. A separate row, a separate reason.
-    if (task.charge.workerEarningPaise > 0) {
-      await walletService.apply({
-        kind: 'worker',
-        id: task.workerId,
-        type: 'credit',
-        amountPaise: task.charge.workerEarningPaise,
-        reason: Transaction.REASONS.WORKER_EARNING,
-        idempotencyKey: `helping-earning-${task._id}`,
-        refs: { helpingTaskId: task._id },
-        description: `Task earnings for ${task.reference}`,
-      });
-    }
+    // 2. The service fee. What the helper keeps is their earning; the rest is the platform's.
+    const feePaise = task.charge?.serviceChargePaise || 0;
+    await require('../../payment/settlement').settleProviderShare({
+      source: 'helping',
+      booking: task,
+      reference: task.reference,
+      paymentMethod: task.paymentMethod,
+      totalPaise: feePaise,
+      platformPaise: Math.max(0, feePaise - (task.charge?.workerEarningPaise || 0)),
+      refs: { helpingTaskId: task._id },
+    });
   }
 
   // 3. Return whatever the customer authorised but nobody spent.
@@ -412,6 +412,43 @@ async function settleTask({ taskId, actorId = null }) {
   await task.save();
 
   return task.toObject();
+}
+
+/**
+ * Whether the service fee is settled enough to finish the task: paid online,
+ * or taken in cash and recorded by the helper.
+ */
+function paymentBlocker(task) {
+  if (task.paymentStatus === 'paid' || (task.charge?.serviceChargePaise || 0) <= 0) return null;
+  return task.paymentMethod === 'cash'
+    ? { code: 'CASH_NOT_COLLECTED', message: 'Collect the service fee in cash and record it before completing' }
+    : { code: 'PAYMENT_PENDING', message: 'The customer has not paid online yet. Ask them to pay in the app, or collect cash before completing' };
+}
+
+/**
+ * The helper has the service fee in cash. Allowed on an online task the
+ * customer could not pay online, unless a payment is already in the gateway.
+ */
+async function recordCash({ taskId, workerId }) {
+  const task = await HelpingTask.findById(taskId);
+  if (!task) throw httpError('Task not found', 404, 'NOT_FOUND');
+  if (String(task.workerId || '') !== String(workerId)) throw httpError('This is not your task', 403, 'FORBIDDEN');
+  if (task.paymentStatus === 'paid') return { task: task.toObject(), alreadyPaid: true };
+  if (['CANCELLED', 'FAILED', 'SETTLED', 'DRAFT', 'REQUESTED', 'PAYMENT_PENDING'].includes(task.status)) {
+    throw httpError('There is no fee to collect on this task right now', 409, 'NOTHING_DUE');
+  }
+  if (task.paymentMethod !== 'cash') {
+    const PaymentIntent = require('../../payment/payment-intent.model');
+    const inGateway = await PaymentIntent.exists({
+      bookingSource: 'helping', bookingId: task._id, status: { $in: ['authorized', 'captured'] },
+    });
+    if (inGateway) throw httpError('The customer has already paid online; it is being confirmed', 409, 'ONLINE_PAYMENT_IN_PROGRESS');
+    task.paymentMethod = 'cash';
+  }
+  task.paymentStatus = 'paid';
+  task.cashCollectedAt = new Date();
+  await task.save();
+  return { task: task.toObject(), alreadyPaid: false };
 }
 
 /* Return & exchange (§28, §29, §30) */
@@ -484,6 +521,8 @@ module.exports = {
   respondToApproval,
   recordWorkerAdvance,
   settleTask,
+  paymentBlocker,
+  recordCash,
   recordHandover,
   recordMerchantRefundOutcome,
 };

@@ -7,7 +7,7 @@
 
 const { startMongo, stopMongo } = require('./helpers');
 const { ProblemCategory, Problem } = require('../src/modules/repair/models/problem.model');
-const { listProblems } = require('../src/modules/repair/repair.controller');
+const { listProblems } = require('../src/modules/repair/controllers/catalog.controller');
 const bookingService = require('../src/modules/repair/services/booking.service');
 const tw = require('../src/modules/repair/seed/two-wheeler.seed');
 const fw = require('../src/modules/repair/seed/four-wheeler.seed');

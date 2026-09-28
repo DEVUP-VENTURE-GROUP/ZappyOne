@@ -543,27 +543,39 @@ export default function WorkerRepairJobPage() {
           completion bills the provider their commission on the basis that they
           were paid.
         */}
-        {readyForPayment && booking.paymentMethod === 'cash' && (snap.totalPaise || 0) > 0 && (
+        {readyForPayment && (snap.totalPaise || 0) > 0 && (
           <div className={`card ${booking.paymentStatus === 'paid' ? 'ring-emerald-200 bg-emerald-50/40' : 'ring-amber-200 bg-amber-50/40'}`}>
             {booking.paymentStatus === 'paid' ? (
               <p className="flex items-center gap-1.5 text-sm font-bold text-emerald-800">
-                <Check size={15} /> {rupees(snap.totalPaise)} collected in cash
+                <Check size={15} /> {rupees(snap.totalPaise)} {booking.paymentMethod === 'cash' ? 'collected in cash' : 'paid online'}
               </p>
             ) : (
               <>
-                <p className="text-sm font-bold text-[#0F172A]">Collect {rupees(snap.totalPaise)} in cash</p>
-                <p className="mt-0.5 text-[11px] leading-relaxed text-slate-600">
-                  Take the payment from the customer, then record it here. Your commission is
-                  deducted from your wallet afterwards.
-                </p>
+                {booking.paymentMethod === 'cash' ? (
+                  <>
+                    <p className="text-sm font-bold text-[#0F172A]">Collect {rupees(snap.totalPaise)} in cash</p>
+                    <p className="mt-0.5 text-[11px] leading-relaxed text-slate-600">
+                      Take the payment from the customer, then record it here. Your commission is
+                      deducted from your wallet afterwards.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-sm font-bold text-[#0F172A]">Waiting for {rupees(snap.totalPaise)} online</p>
+                    <p className="mt-0.5 text-[11px] leading-relaxed text-slate-600">
+                      The customer chose to pay online and can pay from their booking screen. If they
+                      cannot, take cash instead and record it here.
+                    </p>
+                  </>
+                )}
                 <button
                   onClick={collect}
                   disabled={collecting}
-                  className="btn-primary w-full mt-2.5"
+                  className={`${booking.paymentMethod === 'cash' ? 'btn-primary' : 'btn-secondary'} w-full mt-2.5`}
                 >
                   {collecting
                     ? <><Loader2 size={15} className="animate-spin" /> Recording…</>
-                    : <>I've collected {rupees(snap.totalPaise)}</>}
+                    : <>I've collected {rupees(snap.totalPaise)} in cash</>}
                 </button>
               </>
             )}

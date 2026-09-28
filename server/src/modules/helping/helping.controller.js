@@ -224,6 +224,16 @@ const adminCancelTask = (req, res, next) => cancelTaskAs(req, res, next, { byRol
  * is shown too, separately, because a task needing a large advance is a
  * different proposition even at the same fee.
  */
+/** The helper's own tasks still in hand. */
+const HELPER_ACTIVE = ['WORKER_ASSIGNED', 'WORKER_ACCEPTED', 'EN_ROUTE', 'ARRIVED', 'TASK_STARTED', 'IN_PROGRESS', 'APPROVAL_REQUIRED', 'RETURNING', 'AT_DROPOFF', 'HANDED_OVER'];
+async function listAssigned(req, res, next) {
+  try {
+    const tasks = await HelpingTask.find({ workerId: req.auth.sub, status: { $in: HELPER_ACTIVE } })
+      .sort({ createdAt: 1 }).limit(50).lean();
+    res.json({ tasks });
+  } catch (err) { next(err); }
+}
+
 async function listAvailable(req, res, next) {
   try {
     const [worker, radiusKm] = await Promise.all([
@@ -394,11 +404,21 @@ async function completeTask(req, res, next) {
       });
     }
 
+    const unpaid = taskService.paymentBlocker(task);
+    if (unpaid) return res.status(409).json({ error: unpaid.message, code: unpaid.code });
+
     task.transitionTo('COMPLETED', { by: req.auth.sub, byRole: 'worker' });
     await task.save();
 
     const settled = await taskService.settleTask({ taskId: task._id, actorId: req.auth.sub });
     res.json({ task: settled });
+  } catch (err) { next(err); }
+}
+
+/** The helper took the service fee in cash. */
+async function collectCash(req, res, next) {
+  try {
+    res.json(await taskService.recordCash({ taskId: req.params.id, workerId: req.auth.sub }));
   } catch (err) { next(err); }
 }
 
@@ -462,7 +482,7 @@ async function adminRefundOutcome(req, res, next) {
 module.exports = {
   listServices, quote,
   createTask, listMyTasks, getTask, respondToApproval, cancelTask, rateTask,
-  listAvailable, acceptTask, advanceStatus, updateItem, proposeAlternative,
-  recordAdvance, addProof, recordHandover, completeTask,
+  listAvailable, listAssigned, acceptTask, advanceStatus, updateItem, proposeAlternative,
+  recordAdvance, addProof, recordHandover, completeTask, collectCash,
   adminListTasks, adminGetConfig, adminUpdateConfig, adminRefundOutcome, adminCancelTask,
 };

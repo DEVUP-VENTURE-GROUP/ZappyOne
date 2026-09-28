@@ -136,7 +136,7 @@ router.post('/bookings', authenticate, requireRole('user'),
     workerId: objectId.allow(null),
     shopId: objectId.allow(null),
     customerInstructions: Joi.string().max(2000).allow('', null),
-    paymentMethod: Joi.string().valid('cash', 'online', 'wallet').default('online'),
+    paymentMethod: Joi.string().valid('cash', 'online').default('cash'),
     packageCode: Joi.string().max(80).allow(null),
     needsPickup: Joi.boolean().default(false),
     needsReturn: Joi.boolean().default(false),
@@ -149,6 +149,7 @@ router.post('/bookings', authenticate, requireRole('user'),
 router.get('/bookings', authenticate, requireRole('user'), ctrl.listMyBookings);
 
 router.get('/bookings/available', authenticate, ctrl.listAvailableBookings);
+router.get('/bookings/assigned', authenticate, requireRole('worker', 'shop'), ctrl.listAssignedBookings);
 
 router.get('/bookings/:id', authenticate, ctrl.getBooking);
 
@@ -167,6 +168,8 @@ router.post('/bookings/:id/accept', authenticate, ctrl.acceptBooking);
 router.post('/bookings/:id/status', authenticate,
   validate(Joi.object({ status: Joi.string().required(), note: Joi.string().max(500).allow('', null) })),
   ctrl.advanceStatus);
+
+router.post('/bookings/:id/collect-cash', authenticate, ctrl.collectCash);
 
 router.post('/bookings/:id/proof', authenticate,
   validate(Joi.object({

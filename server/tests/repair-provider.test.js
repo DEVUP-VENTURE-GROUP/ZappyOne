@@ -19,7 +19,7 @@ const { RepairBooking } = require('../src/modules/repair/models/booking.model');
 const Warranty = require('../src/modules/service/warranty.model');
 const pricingService = require('../src/modules/repair/services/pricing.service');
 const bookingService = require('../src/modules/repair/services/booking.service');
-const providerCtrl = require('../src/modules/repair/repair-provider.controller');
+const providerCtrl = require('../src/modules/repair/controllers/provider.controller');
 
 jest.setTimeout(60000);
 

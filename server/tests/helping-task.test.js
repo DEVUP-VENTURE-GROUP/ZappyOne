@@ -195,6 +195,9 @@ describe('item money and service money never mix', () => {
     doc.items[0].status = 'purchased';
     doc.items[0].actualPricePaise = inr(240);
     doc.itemMoney.workerAdvancePaise = inr(240);
+    // Paid online: the platform holds the fee, so the helper is credited their earning.
+    doc.paymentMethod = 'online';
+    doc.paymentStatus = 'paid';
     await doc.save();
 
     await taskService.settleTask({ taskId: task._id });
@@ -213,6 +216,32 @@ describe('item money and service money never mix', () => {
       .filter((r) => r.reason === Transaction.REASONS.WORKER_EARNING)
       .reduce((s, r) => s + r.amountPaise, 0);
     expect(earnings).toBe(inr(88));
+  });
+
+  it('a cash fee is not paid to the helper again: they are billed the commission instead', async () => {
+    const { task } = await taskService.createTask(baseTask({ paymentModel: 'worker_advance' }));
+    const doc = await HelpingTask.findById(task._id);
+    doc.workerId = workerId;
+    doc.status = 'ARRIVED';
+    doc.items[0].status = 'purchased';
+    doc.items[0].actualPricePaise = inr(240);
+    await doc.save();
+
+    // The helper cannot finish before the fee is recorded.
+    expect(taskService.paymentBlocker(doc)).toMatchObject({ code: 'CASH_NOT_COLLECTED' });
+    await taskService.recordCash({ taskId: task._id, workerId });
+    const paid = await HelpingTask.findById(task._id);
+    expect(taskService.paymentBlocker(paid)).toBeNull();
+
+    paid.status = 'COMPLETED';
+    await paid.save();
+    await taskService.settleTask({ taskId: task._id });
+
+    const rows = await Transaction.find({ refHelpingTaskId: task._id }).lean();
+    expect(rows.some((r) => r.reason === Transaction.REASONS.WORKER_EARNING)).toBe(false);
+    const commission = rows.find((r) => r.reason === Transaction.REASONS.PLATFORM_COMMISSION);
+    expect(commission).toBeTruthy();
+    expect(Math.abs(commission.amountPaise)).toBe(paid.charge.serviceChargePaise - paid.charge.workerEarningPaise);
   });
 
   it('returns unspent budget rather than keeping it', async () => {
