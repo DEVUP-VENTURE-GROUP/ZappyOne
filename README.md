@@ -63,53 +63,45 @@ state machine, and rationale. High-level shape:
 
 ## Project structure
 
+One API and five web apps. Each web app is its own Vite project with its own
+port, domain, deploy and session cookie; code used by more than one app lives
+in `shared/`.
+
+| Folder | Who uses it | Local port | Domain |
+|---|---|---|---|
+| `client/` | Customers | 5173 | zappyone.com |
+| `admin/` | Operations (secret-slug login) | 5174 | admin.zappyone.com |
+| `servicepro/` | Shop owners (`/shop/login`) and their workers (`/shop/worker/login`) | 5175 | servicepro.zappyone.com |
+| `rakshak/` | Independent workers (`/login`) | 5176 | rakshak.zappyone.com |
+| `events/` | Event partners (`/partner/login`) | 5177 | events.zappyone.com |
+| `server/` | The API (Express, MongoDB, Redis, Socket.io) | 4000 | api.zappyone.com |
+| `mobile/` | React Native app | — | — |
+
 ```
-hyperlocal-platform/
-├── ARCHITECTURE.md
-├── docker-compose.yml
-├── deploy/
-│   └── nginx.conf                # edge reverse proxy
-├── server/
-│   ├── Dockerfile
-│   ├── package.json
-│   ├── scripts/
-│   │   ├── create-indexes.js
-│   │   └── seed.js
-│   └── src/
-│       ├── index.js              # API entry + graceful shutdown
-│       ├── app.js                # express wiring
-│       ├── config/               # env, mongo, redis
-│       ├── models/               # User, Worker, Order
-│       ├── middlewares/          # auth, validate, rate limit, error
-│       ├── services/             # maps, geo matching, s3
-│       ├── modules/
-│       │   ├── auth/             # OTP + JWT
-│       │   ├── user/             # profile, addresses, uploads
-│       │   ├── worker/           # online/offline, location, earnings
-│       │   ├── order/            # lifecycle, repository, service, routes
-│       │   ├── pricing/          # dynamic surge engine
-│       │   └── admin/            # metrics, management
-│       ├── queues/
-│       │   ├── index.js          # BullMQ queues
-│       │   ├── dispatch.worker.js       # THE matcher (separate process)
-│       │   └── notifications.worker.js  # FCM pushes
-│       ├── sockets/              # Socket.io + Redis adapter
-│       └── utils/logger.js
-└── client/
-    ├── Dockerfile
-    ├── nginx-client.conf
-    ├── vite.config.js
-    └── src/
-        ├── main.jsx
-        ├── App.jsx
-        ├── store/
-        ├── services/             # api.js (RTK Query), socket.js, maps.js
-        ├── features/             # auth, order, worker slices
-        ├── hooks/                # useSocket, useGeolocation
-        ├── components/           # LocationPicker, LiveTrackingMap, RequireAuth
-        └── pages/                # Login, Home, Booking, OrderTracking,
-                                  # WorkerDashboard, WorkerJobPage, AdminDashboard
+shared/
+├── vite.base.js            # defineZappyApp(): aliases, dedupe, dev proxy, chunks
+├── tailwind.preset.js      # the brand theme every app extends
+└── src/
+    ├── app/mountApp.jsx    # boot: session restore, store, router, i18n, toasts
+    ├── store/              # the Redux store every app uses
+    ├── services/           # api.js (RTK Query), socket, maps, payments
+    ├── modules/            # auth / order / worker / tracking slices and widgets
+    ├── components/         # UI used by 2+ apps (RequireAuth, banners, uploads…)
+    ├── config/portals.js   # every app's URL, for cross-app links
+    └── provider/           # worker screens + providerRoutes() for servicepro and rakshak
 ```
+
+Rules of thumb:
+
+- Import shared code as `@shared/...`. Code in `shared/` never imports from an app.
+- A file used by only one app lives in that app. Move it to `shared/` only when a
+  second app needs it — don't copy it.
+- Each app's `vite.config.js` sets its `surface` (sent as `x-client-type`), which
+  the API uses to keep that app's refresh cookie separate and to refuse logins
+  for roles the app does not serve.
+- A new app needs its origin added to `server/src/config/origins.js`.
+
+Run any app with `npm install && npm run dev` inside its folder, with the API on :4000.
 
 ## Local development
 
