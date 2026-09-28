@@ -54,7 +54,7 @@ const vehicleSchema = new mongoose.Schema(
   { _id: false }
 );
 
-// ── New vertical schemas ──────────────────────────────────────────────────────
+// New vertical schemas
 
 const laptopSchema = new mongoose.Schema({
   visitFeePaise:       { type: Number, default: 15000 },  // ₹150

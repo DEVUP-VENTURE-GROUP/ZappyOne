@@ -95,7 +95,7 @@ export default function ProPicker({ service, lat, lng, value, onChange }) {
                 <span className="text-[11px] font-semibold text-slate-600">{p.rating}</span>
                 <span className="text-[11px] text-slate-400">· {p.completedJobs} jobs</span>
               </div>
-              {/* Comparison metrics (#3): experience, distance + ETA, specialties */}
+              {/* Comparison metrics: experience, distance + ETA, specialties */}
               <div className="mt-1.5 space-y-1">
                 {p.yearsExperience > 0 && (
                   <div className="flex items-center gap-1 text-[11px] text-slate-500">

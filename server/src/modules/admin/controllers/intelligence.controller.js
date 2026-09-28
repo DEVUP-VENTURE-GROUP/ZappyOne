@@ -8,7 +8,7 @@ const { redis } = require('../../../config/redis');
 const { getZoneLabel } = require('../../worker/maps.service');
 const logger = require('../../../utils/logger');
 
-/* ─── IST calendar boundaries ─────────────────────────────────────────────── */
+/* IST calendar boundaries */
 // Moved to utils/ist so the shop's opening hours and this dashboard cannot
 // disagree about when "today" started.
 const { istDayStart, istWeekStart, istMonthStart } = require('../../../utils/ist');
@@ -21,9 +21,9 @@ function norm(vals) {
   return (v) => v / max;
 }
 
-/* ════════════════════════════════════════════════════════════════════════════
+/*
  * 1. LIVE TRAFFIC
- * ══════════════════════════════════════════════════════════════════════════ */
+ * */
 async function liveTraffic(req, res, next) {
   try {
     const activeNow = await activeNowCount();          // cheap Redis read — always fresh
@@ -69,7 +69,7 @@ async function liveTraffic(req, res, next) {
   } catch (err) { next(err); }
 }
 
-/* ── Visitor locations history — "where visitors come from" ───────────────── */
+/* Visitor locations history — "where visitors come from" */
 async function visitorLocations(req, res, next) {
   try {
     const days = Math.min(Number(req.query.days) || 30, 180);
@@ -109,9 +109,9 @@ async function visitorLocations(req, res, next) {
   } catch (err) { next(err); }
 }
 
-/* ════════════════════════════════════════════════════════════════════════════
+/*
  * 2. DEMAND INTELLIGENCE
- * ══════════════════════════════════════════════════════════════════════════ */
+ * */
 async function demandIntel(req, res, next) {
   try {
     const days = Math.min(Number(req.query.days) || 30, 180);
@@ -169,7 +169,7 @@ async function demandIntel(req, res, next) {
   } catch (err) { next(err); }
 }
 
-/* ── avg completed fare per service + global, used for lost-revenue math ───── */
+/* avg completed fare per service + global, used for lost-revenue math */
 async function fareMaps(since) {
   const rows = await Order.aggregate([
     { $match: { status: 'completed', completedAt: { $gte: since } } },
@@ -182,9 +182,9 @@ async function fareMaps(since) {
   return { byCat, global };
 }
 
-/* ════════════════════════════════════════════════════════════════════════════
+/*
  * 3. UNMET DEMAND  (No Service Available)
- * ══════════════════════════════════════════════════════════════════════════ */
+ * */
 async function unmetDemand(req, res, next) {
   try {
     const days = Math.min(Number(req.query.days) || 30, 180);
@@ -242,9 +242,9 @@ async function unmetDemand(req, res, next) {
   } catch (err) { next(err); }
 }
 
-/* ════════════════════════════════════════════════════════════════════════════
+/*
  * 4. CITY EXPANSION ENGINE  (composite score)
- * ══════════════════════════════════════════════════════════════════════════ */
+ * */
 async function computeExpansion(days) {
   const since = new Date(Date.now() - days * 86_400_000);
   const mid = new Date(Date.now() - (days / 2) * 86_400_000);
@@ -352,9 +352,9 @@ async function expansionEngine(req, res, next) {
   } catch (err) { next(err); }
 }
 
-/* ════════════════════════════════════════════════════════════════════════════
+/*
  * 5. CEO PULSE  (single-screen leadership view)
- * ══════════════════════════════════════════════════════════════════════════ */
+ * */
 async function ceoPulse(req, res, next) {
   try {
     const activeNow = await activeNowCount();
@@ -430,7 +430,7 @@ async function ceoPulse(req, res, next) {
   } catch (err) { next(err); }
 }
 
-/* ── Reverse-geocode top order buckets → city counts (shared by report) ────── */
+/* Reverse-geocode top order buckets → city counts (shared by report) */
 async function topCitiesFromOrders(since, limit = 5) {
   const buckets = await Order.aggregate([
     { $match: { createdAt: { $gte: since }, 'pickupLocation.coordinates.0': { $exists: true } } },
@@ -454,9 +454,9 @@ async function topCitiesFromOrders(since, limit = 5) {
   return Object.values(map).sort((a, b) => b.orders - a.orders).slice(0, limit);
 }
 
-/* ════════════════════════════════════════════════════════════════════════════
+/*
  * 6. CONVERSION FUNNEL  (visitor → search → booking → assigned → completed)
- * ══════════════════════════════════════════════════════════════════════════ */
+ * */
 async function funnel(req, res, next) {
   try {
     const days = Math.min(Number(req.query.days) || 30, 180);
@@ -501,9 +501,9 @@ async function funnel(req, res, next) {
   } catch (err) { next(err); }
 }
 
-/* ════════════════════════════════════════════════════════════════════════════
+/*
  * 10. DAILY / WEEKLY BUSINESS REPORT
- * ══════════════════════════════════════════════════════════════════════════ */
+ * */
 async function report(req, res, next) {
   try {
     const period = req.query.period === 'weekly' ? 'weekly' : 'daily';
@@ -559,9 +559,9 @@ async function report(req, res, next) {
   } catch (err) { next(err); }
 }
 
-/* ════════════════════════════════════════════════════════════════════════════
+/*
  * 8. PARTNER ANALYTICS  (event partners ranked by performance)
- * ══════════════════════════════════════════════════════════════════════════ */
+ * */
 async function partnerAnalytics(req, res, next) {
   try {
     const days = Math.min(Number(req.query.days) || 30, 180);

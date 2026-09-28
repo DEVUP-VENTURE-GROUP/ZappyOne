@@ -145,7 +145,7 @@ export default function Services() {
         </motion.div>
       </AnimatePresence>
 
-      {/* Create-service modal (#5) */}
+      {/* Create-service modal */}
       <AnimatePresence>
         {showCreate && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}

@@ -46,7 +46,7 @@ const helpingConfigSchema = new mongoose.Schema(
       type: String, enum: SERVICE_TYPES, required: true, index: true,
     },
 
-    /* ── The ZappyOne service charge (§52). Item cost is never in here. ── */
+    /* The ZappyOne service charge (§52). Item cost is never in here. */
 
     baseFeePaise: { type: Number, default: 0, min: 0 },
     distanceSlabs: { type: [distanceSlabSchema], default: [] },
@@ -66,14 +66,14 @@ const helpingConfigSchema = new mongoose.Schema(
 
     specialHandlingFeePaise: { type: Number, default: 0, min: 0 },
 
-    /* ── Platform economics. Same shape as the repair engine's config. ── */
+    /* Platform economics. Same shape as the repair engine's config. */
 
     /** Taken from the SERVICE CHARGE only — never from item money (§32). */
     commissionPct: { type: Number, default: 10, min: 0, max: 100 },
     platformFeePaise: { type: Number, default: 0, min: 0 },
     taxPct: { type: Number, default: 0, min: 0, max: 100 },
 
-    /* ── Item money controls (§35). ── */
+    /* Item money controls (§35). */
 
     allowedPaymentModels: {
       type: [String], enum: PAYMENT_MODELS, default: ['customer_preauth'],
@@ -92,7 +92,7 @@ const helpingConfigSchema = new mongoose.Schema(
      */
     priceTolerancePct: { type: Number, default: 0, min: 0, max: 100 },
 
-    /* ── Task shape ── */
+    /* Task shape */
 
     maxItems: { type: Number, default: 20, min: 1 },
     defaultDurationMinutes: { type: Number, default: 45, min: 1 },

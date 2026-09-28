@@ -7,7 +7,7 @@
  * Plumbing, Cleaning… all get the identical premium layout with zero duplicated
  * UI code.
  *
- * ── Membership is not defined here ──────────────────────────────────────────
+ * Membership is not defined here
  * A category owns exactly the services that `groupKeyForService()` assigns to
  * it — the same first-match-wins partition the worker portal uses to build its
  * skills selector. That is deliberate and load-bearing: dispatch matches a
@@ -18,7 +18,7 @@
  * makes every category an exclusive bucket (a service appears on exactly one
  * category page, never two).
  *
- * ── Copy rules ──────────────────────────────────────────────────────────────
+ * Copy rules
  * Nothing in this file claims a fact about the business. No ratings, no
  * customer counts, no warranty/parts/vetting promises, no invented service
  * names. Titles and one-liners describe what the vertical *is*; every number
@@ -30,13 +30,13 @@
 import { groupKeyForService, getGroups } from '../lib/serviceCatalogGroups';
 import { kw, isFeatured, fasterThan, cheaperThan } from '../lib/serviceFacets';
 
-/* ── Themes ───────────────────────────────────────────────────────────────────
+/* Themes
    Each vertical gets an accent drawn from the Zappy palette (primary blue is
    the hero; orange/green/violet are the sanctioned accents). Values are raw
    hex because they're injected as CSS custom properties on the page root —
    that keeps Tailwind's JIT happy (no dynamically-built class names) while
    still letting every component theme itself with `bg-[var(--cat-accent)]`.
-─────────────────────────────────────────────────────────────────────────────*/
+ */
 const THEMES = {
   blue:   { accent: '#2563EB', deep: '#1E3A8A', tint: '#EFF6FF', soft: '#DBEAFE', glow: 'rgba(37,99,235,0.20)' },
   teal:   { accent: '#0E9488', deep: '#134E4A', tint: '#F0FDFA', soft: '#CCFBF1', glow: 'rgba(14,148,136,0.20)' },
@@ -48,19 +48,19 @@ const THEMES = {
   slate:  { accent: '#334155', deep: '#0F172A', tint: '#F8FAFC', soft: '#E2E8F0', glow: 'rgba(51,65,85,0.20)' },
 };
 
-/* ── Shared facets ────────────────────────────────────────────────────────────
+/* Shared facets
    Data-derived and available to every vertical. They resolve against the live
    catalog, so a facet disappears when nothing matches it.
-─────────────────────────────────────────────────────────────────────────────*/
+ */
 const POPULAR = { key: 'popular', label: 'Popular', match: isFeatured };
 const QUICK   = { key: 'quick',   label: 'Under 45 min', match: fasterThan(45) };
 const BUDGET  = { key: 'budget',  label: 'Under ₹499',   match: cheaperThan(499) };
 
-/* ── How a Zappy booking actually works ──────────────────────────────────────
+/* How a Zappy booking actually works
    Each step maps to a screen that exists in this app: BookingPage → dispatch
    assignment → OrderTrackingPage + ChatPage → payment + the rate-order
    mutation. Shown on the detail page instead of marketing promises.
-─────────────────────────────────────────────────────────────────────────────*/
+ */
 export const HOW_IT_WORKS = [
   { title: 'Book it', body: 'Pick the service, your address and a time that suits you.' },
   { title: 'Get matched', body: 'A professional with the right skills accepts the job.' },
@@ -68,11 +68,11 @@ export const HOW_IT_WORKS = [
   { title: 'Pay and rate', body: 'Pay in the app, keep the invoice, rate the job.' },
 ];
 
-/* ── Platform FAQs ────────────────────────────────────────────────────────────
+/* Platform FAQs
    Only statements about how this app behaves — all verifiable in the codebase.
    Service-specific answers (duration, price, inspection fee) are generated on
    the detail page from that service's own catalog row.
-─────────────────────────────────────────────────────────────────────────────*/
+ */
 export const PLATFORM_FAQS = [
   {
     q: 'Who comes to do the job?',
@@ -92,11 +92,11 @@ export const PLATFORM_FAQS = [
   },
 ];
 
-/* ── Illustration keys ────────────────────────────────────────────────────────
+/* Illustration keys
    Resolved by `components/catalog/ServiceIllustration`. Rules run in order
    against the service's own text (code, name, subcategory, description), so a
    drawing is only ever picked for a service that genuinely exists.
-─────────────────────────────────────────────────────────────────────────────*/
+ */
 
 export const CAR_ILLUSTRATION_RULES = [
   [kw('ac gas', 'gas refill', 'refrigerant', 'r134'), 'ac-gas'],
@@ -195,11 +195,11 @@ export const GENERIC_ILLUSTRATION_RULES = [
   [kw('inspection', 'diagnostic', 'check'),   'inspection'],
 ];
 
-/* ── Category configuration ──────────────────────────────────────────────────
+/* Category configuration
    `title`/`subtitle`/`banner` describe the vertical. They make no claim about
    parts, staff vetting, warranties or volumes — those would be assertions the
    app can't back up. Numbers come from `categoryStats()` at render time.
-─────────────────────────────────────────────────────────────────────────────*/
+ */
 
 const CONFIG = {
   car: {
@@ -547,7 +547,7 @@ const CONFIG = {
   },
 };
 
-/* ── Public API ───────────────────────────────────────────────────────────── */
+/* Public API */
 
 /** The "All Services" view — the whole catalog in one grid. */
 export const ALL_CATEGORY = {

@@ -66,7 +66,7 @@ export default function Footer() {
 
       <div className="max-w-7xl mx-auto px-6 relative z-10">
 
-        {/* ── Brand row ────────────────────────────────────────────────── */}
+        {/* Brand row */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 mb-14">
 
           {/* Brand */}
@@ -162,7 +162,7 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* ── Service × City keyword grid (crawlable, subtle) ──────────── */}
+        {/* Service × City keyword grid (crawlable, subtle) */}
         <div className="border-t border-slate-800 pt-10 mb-10">
           <p className="text-xs font-bold text-slate-600 uppercase tracking-widest mb-5">Services Near You</p>
           <div className="flex flex-wrap gap-x-4 gap-y-2">
@@ -199,7 +199,7 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* ── Bottom bar ───────────────────────────────────────────────── */}
+        {/* Bottom bar */}
         <div className="border-t border-slate-800 pt-8 flex flex-col md:flex-row items-center justify-between gap-5">
           <p className="text-xs text-slate-500">
             © {new Date().getFullYear()} Zappy Technologies. All rights reserved.

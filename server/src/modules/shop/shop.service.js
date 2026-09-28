@@ -274,7 +274,7 @@ async function getShopEarnings(shopId, range = 'today') {
   const sid = mongoose.Types.ObjectId.createFromHexString(String(shopId));
   const workerIds = (await Worker.find({ shopId: sid }).select('_id').lean()).map((w) => w._id);
 
-  /* ── Legacy order flow ── */
+  /* Legacy order flow */
   const [orderAgg] = workerIds.length
     ? await Order.aggregate([
       { $match: { workerId: { $in: workerIds }, status: 'completed', completedAt: { $gte: since } } },
@@ -290,7 +290,7 @@ async function getShopEarnings(shopId, range = 'today') {
     ])
     : [];
 
-  /* ── Repair flow: the shop's own jobs AND its workers' ── */
+  /* Repair flow: the shop's own jobs AND its workers' */
   const repairs = await RepairBooking.find({
     $or: [{ shopId: sid }, ...(workerIds.length ? [{ workerId: { $in: workerIds } }] : [])],
     status: 'COMPLETED',

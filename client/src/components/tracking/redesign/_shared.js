@@ -1,4 +1,4 @@
-/* ─── Shared constants + utils for the redesigned tracking screen ───────── */
+/* Shared constants + utils for the redesigned tracking screen */
 
 // Service-agnostic lifecycle steps.
 // key must match `order.status` values from the server (see order.model.js).

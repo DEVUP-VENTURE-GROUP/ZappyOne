@@ -1,10 +1,10 @@
-/* ─── Zappy Premium Animation System ──────────────────────────────────────
+/* Zappy Premium Animation System
    60fps GPU-accelerated, spring-physics-based motion tokens.
    Used across every page for a consistent cinematic feel.
-─────────────────────────────────────────────────────────────────────────── */
+ */
 
-// ── prefers-reduced-motion ────────────────────────────────────────────────
-// Users with vestibular disorders, epilepsy, or low-memory devices (#67)
+// prefers-reduced-motion
+// Users with vestibular disorders, epilepsy, or low-memory devices
 // opt into reduced motion via OS settings. We respect it platform-wide.
 //
 // Usage in components:
@@ -32,19 +32,19 @@ export function noLoop(animateObj) {
   return { ...rest, transition: safeTransition };
 }
 
-// ─── Easing curves ────────────────────────────────────────────────────────
+// Easing curves
 export const ease = [0.25, 0.46, 0.45, 0.94];
 export const easeSnap  = [0.34, 1.56, 0.64, 1];   // overshoot spring feel
 export const easeSoft  = [0.16, 1, 0.3, 1];         // smooth deceleration
 export const easeSharp = [0.4, 0, 0.2, 1];          // material-like
 
-// ─── Spring configs ───────────────────────────────────────────────────────
+// Spring configs
 export const spring     = { type: 'spring', stiffness: 380, damping: 30 };
 export const springSnap = { type: 'spring', stiffness: 500, damping: 28 };
 export const springLazy = { type: 'spring', stiffness: 200, damping: 24 };
 export const springBouncy = { type: 'spring', stiffness: 600, damping: 22, mass: 0.8 };
 
-// ─── Page transitions ─────────────────────────────────────────────────────
+// Page transitions
 export const pageVariants = reducedMotion
   ? { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } }
   : {
@@ -58,7 +58,7 @@ export const pageTransition = reducedMotion
   ? { duration: 0.15, ease: 'linear' }
   : { duration: 0.26, ease: easeSoft };
 
-// ─── Stagger containers ───────────────────────────────────────────────────
+// Stagger containers
 export const staggerContainer = {
   initial: {},
   animate: { transition: { staggerChildren: 0.07, delayChildren: 0.06 } },
@@ -72,7 +72,7 @@ export const staggerSlow = {
   animate: { transition: { staggerChildren: 0.12, delayChildren: 0.1 } },
 };
 
-// ─── Item animations ──────────────────────────────────────────────────────
+// Item animations
 export const fadeInUp = {
   initial:  { opacity: 0, y: 20 },
   animate:  { opacity: 1, y: 0, transition: { duration: 0.32, ease: easeSoft } },
@@ -107,7 +107,7 @@ export const slideUp = {
   exit:     { opacity: 0, y: '100%', transition: { duration: 0.26, ease: easeSharp } },
 };
 
-// ─── Card / hover interactions ────────────────────────────────────────────
+// Card / hover interactions
 export const cardHover = {
   rest:  { y: 0, scale: 1, boxShadow: '0 1px 4px rgba(15,23,42,0.05)' },
   hover: { y: -4, scale: 1.01, boxShadow: '0 16px 40px rgba(15,23,42,0.12)', transition: { duration: 0.22, ease } },
@@ -125,8 +125,8 @@ export const iconPop = {
   whileTap:   { scale: 0.9, transition: { duration: 0.1 } },
 };
 
-// ─── Pulse / glow animation ───────────────────────────────────────────────
-// Infinite loops are skipped for users with prefers-reduced-motion. (#67)
+// Pulse / glow animation
+// Infinite loops are skipped for users with prefers-reduced-motion.
 export const pulseGlow = {
   animate: {
     boxShadow: [
@@ -152,7 +152,7 @@ export const pulseGreen = {
   },
 };
 
-// ─── Floating animation ───────────────────────────────────────────────────
+// Floating animation
 export const floatY = {
   animate: reducedMotion
     ? {}
@@ -164,7 +164,7 @@ export const floatX = {
     : { x: [-4, 4, -4], transition: { duration: 5, repeat: Infinity, ease: 'easeInOut' } },
 };
 
-// ─── Shimmer skeleton ─────────────────────────────────────────────────────
+// Shimmer skeleton
 export const shimmer = {
   animate: reducedMotion
     ? { opacity: [1, 0.5, 1], transition: { duration: 1.5, repeat: Infinity } }
@@ -174,7 +174,7 @@ export const shimmer = {
       },
 };
 
-// ─── Counter / number roll ────────────────────────────────────────────────
+// Counter / number roll
 export function counterVariants(from = 0, to = 100) {
   return {
     initial: { opacity: 0, y: 10 },
@@ -186,7 +186,7 @@ export function counterVariants(from = 0, to = 100) {
   };
 }
 
-// ─── Reveal on scroll helper props ────────────────────────────────────────
+// Reveal on scroll helper props
 export const revealProps = {
   initial: 'initial',
   whileInView: 'animate',

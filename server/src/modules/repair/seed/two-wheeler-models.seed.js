@@ -25,7 +25,7 @@ const ES = 'electric_scooter', EM = 'electric_motorcycle';
 const M = (brandCode, name, productTypeCode) => ({ brandCode, name, productTypeCode });
 
 const MODELS = [
-  /* ── Hero ──────────────────────────────────────────────────────────── */
+  /* Hero */
   M('hero', 'Splendor Plus', MC),
   M('hero', 'Splendor Plus XTEC', MC),
   M('hero', 'HF Deluxe', MC),
@@ -40,7 +40,7 @@ const MODELS = [
   M('hero', 'Maestro Edge 125', SC),
   M('hero', 'Xoom 110', SC),
 
-  /* ── Honda ─────────────────────────────────────────────────────────── */
+  /* Honda */
   M('honda-2w', 'Activa 6G', SC),
   M('honda-2w', 'Activa 125', SC),
   M('honda-2w', 'Dio 125', SC),
@@ -52,7 +52,7 @@ const MODELS = [
   M('honda-2w', 'CB300R', MC),
   M('honda-2w', 'Livo', MC),
 
-  /* ── TVS ───────────────────────────────────────────────────────────── */
+  /* TVS */
   M('tvs', 'Jupiter 110', SC),
   M('tvs', 'Jupiter 125', SC),
   M('tvs', 'Ntorq 125', SC),
@@ -67,7 +67,7 @@ const MODELS = [
   M('tvs', 'Ronin', MC),
   M('tvs', 'XL100', MO),
 
-  /* ── Bajaj ─────────────────────────────────────────────────────────── */
+  /* Bajaj */
   M('bajaj', 'Pulsar 125', MC),
   M('bajaj', 'Pulsar 150', MC),
   M('bajaj', 'Pulsar N160', MC),
@@ -79,7 +79,7 @@ const MODELS = [
   M('bajaj', 'Dominar 400', MC),
   M('bajaj', 'Freedom 125', MC),
 
-  /* ── Royal Enfield ─────────────────────────────────────────────────── */
+  /* Royal Enfield */
   M('royal-enfield', 'Classic 350', MC),
   M('royal-enfield', 'Bullet 350', MC),
   M('royal-enfield', 'Hunter 350', MC),
@@ -88,7 +88,7 @@ const MODELS = [
   M('royal-enfield', 'Interceptor 650', MC),
   M('royal-enfield', 'Continental GT 650', MC),
 
-  /* ── Yamaha ────────────────────────────────────────────────────────── */
+  /* Yamaha */
   M('yamaha', 'FZ-S FI', MC),
   M('yamaha', 'FZ-X', MC),
   M('yamaha', 'MT-15 V2', MC),
@@ -96,14 +96,14 @@ const MODELS = [
   M('yamaha', 'Fascino 125', SC),
   M('yamaha', 'RayZR 125', SC),
 
-  /* ── Suzuki ────────────────────────────────────────────────────────── */
+  /* Suzuki */
   M('suzuki', 'Access 125', SC),
   M('suzuki', 'Burgman Street 125', SC),
   M('suzuki', 'Avenis 125', SC),
   M('suzuki', 'Gixxer 150', MC),
   M('suzuki', 'Gixxer SF 250', MC),
 
-  /* ── KTM / Jawa / Yezdi ────────────────────────────────────────────── */
+  /* KTM / Jawa / Yezdi */
   M('ktm', 'Duke 200', MC),
   M('ktm', 'Duke 250', MC),
   M('ktm', 'Duke 390', MC),
@@ -113,12 +113,12 @@ const MODELS = [
   M('yezdi', 'Roadster', MC),
   M('yezdi', 'Adventure', MC),
 
-  /* ── Vespa / Aprilia ───────────────────────────────────────────────── */
+  /* Vespa / Aprilia */
   M('piaggio', 'Vespa SXL 125', SC),
   M('piaggio', 'Vespa VXL 150', SC),
   M('aprilia', 'SR 160', SC),
 
-  /* ── Electric scooters ─────────────────────────────────────────────── */
+  /* Electric scooters */
   M('ola-electric', 'S1 Pro', ES),
   M('ola-electric', 'S1 Air', ES),
   M('ola-electric', 'S1 X', ES),
@@ -142,7 +142,7 @@ const MODELS = [
   M('pure-ev', 'EPluto 7G', ES),
   M('river', 'Indie', ES),
 
-  /* ── Electric motorcycles ──────────────────────────────────────────── */
+  /* Electric motorcycles */
   M('revolt', 'RV400', EM),
   M('revolt', 'RV1', EM),
   M('ultraviolette', 'F77', EM),

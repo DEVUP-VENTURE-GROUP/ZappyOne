@@ -343,7 +343,7 @@ describe('warranty issuance', () => {
   });
 });
 
-/* ─── One provider, two verticals ──────────────────────────────────────── */
+/* One provider, two verticals */
 
 /**
  * A provider approved for both phones and laptops has TWO separate setups.

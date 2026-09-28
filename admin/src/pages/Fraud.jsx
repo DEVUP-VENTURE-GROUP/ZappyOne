@@ -80,7 +80,7 @@ function StatCard({ label, value, color, bg, Icon }) {
   );
 }
 
-/* ─── Actor history modal ───────────────────────────────────────────────── */
+/* Actor history modal */
 function ActorModal({ actor, onClose }) {
   const { data, isLoading } = useAdminFraudActorEventsQuery({ actorKind: actor.actorKind, actorId: actor.actorId });
 
@@ -123,7 +123,7 @@ function ActorModal({ actor, onClose }) {
   );
 }
 
-/* ─── Main ──────────────────────────────────────────────────────────────── */
+/* Main */
 export default function Fraud() {
   const [type, setType]       = useState('');
   const [severity, setSeverity] = useState('');

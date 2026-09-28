@@ -155,7 +155,7 @@ async function getMetrics(req, res, next) {
       const gmvPaise = orderRevenueAgg[0]?.gmvPaise || 0;
       const avgFarePaise = orderRevenueAgg[0]?.avgFarePaise || 0;
       const platformRevPaise = platformRevenueAgg[0]?.revenuePaise || 0;
-      // Implied commission sanity check: should be ≈ configured commission rate (#52).
+      // Implied commission sanity check: should be ≈ configured commission rate.
       const impliedCommissionPct =
         gmvPaise > 0
           ? Math.round((platformRevPaise / gmvPaise) * 1000) / 10

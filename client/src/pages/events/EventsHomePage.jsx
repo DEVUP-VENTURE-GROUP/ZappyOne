@@ -6,7 +6,7 @@ import { useGetEventCategoriesQuery, useGetEventThemesQuery, useToggleSaveEventT
 import CrossSellBanner from '../../components/ads/CrossSellBanner';
 import toast from 'react-hot-toast';
 
-/* ── Category Images Map ─────────────────────────────────────────────────── */
+/* Category Images Map */
 const CATEGORY_MAP = {
   'birthday': { img: '/images/events/event_birthday.webp', color: 'from-pink-500/80 to-transparent' },
   'baby-shower': { img: '/images/events/event_baby.webp', color: 'from-blue-500/80 to-transparent' },
@@ -33,7 +33,7 @@ function getBentoClass(idx) {
   return "col-span-1 row-span-1 min-h-[140px]";
 }
 
-/* ── Video reel card with auto-play on intersection ───────────────────── */
+/* Video reel card with auto-play on intersection */
 function VideoReelCard({ theme, onSave }) {
   const videoRef = useRef(null);
   const containerRef = useRef(null);
@@ -81,7 +81,7 @@ function VideoReelCard({ theme, onSave }) {
   );
 }
 
-/* ── Theme grid card ─────────────────────────────────────────────────────── */
+/* Theme grid card */
 function ThemeCard({ theme, onSave }) {
   const navigate = useNavigate();
   return (

@@ -5,7 +5,7 @@ import {
   Users, Timer, Sparkles, Star, Flame, CheckCircle,
 } from 'lucide-react';
 
-/* ─── Tier shape ─────────────────────────────────────────────────────────── */
+/* Tier shape */
 function buildTiers(priorityMult, expressMult) {
   return [
     {
@@ -29,7 +29,7 @@ function buildTiers(priorityMult, expressMult) {
   ];
 }
 
-/* ─── Helpers ────────────────────────────────────────────────────────────── */
+/* Helpers */
 function workerCountFromEta(etaMinutes) {
   if (!etaMinutes) return null;
   if (etaMinutes <= 4) return { count: '4–6', label: 'workers nearby', closest: etaMinutes };
@@ -52,7 +52,7 @@ function BRow({ label, value, cls = 'text-[#0F172A]' }) {
   );
 }
 
-/* ════════════════════════════════════════════════════════════════════════
+/*
    SmartPricingPanel
    Props:
      quote           — price quote from server
@@ -65,7 +65,7 @@ function BRow({ label, value, cls = 'text-[#0F172A]' }) {
      tipAmount       — number (₹ boost)
      onTipChange     — (amount) => void
      promoDiscount   — number (₹ discount applied)
-════════════════════════════════════════════════════════════════════════ */
+ */
 export default function SmartPricingPanel({
   quote,
   mode,
@@ -133,7 +133,7 @@ export default function SmartPricingPanel({
     <>
     <div className="rounded-2xl overflow-hidden bg-white ring-1 ring-slate-100" style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }}>
 
-      {/* ── Surge banner ─────────────────────────────────────────────── */}
+      {/* Surge banner */}
       {hasSurge && (
         <div className={`bg-gradient-to-r ${sl.bg} px-4 py-2.5 flex items-center gap-3`}>
           <TrendingUp size={14} className="text-white shrink-0" />
@@ -142,7 +142,7 @@ export default function SmartPricingPanel({
         </div>
       )}
 
-      {/* ── Promo saving banner ───────────────────────────────────────── */}
+      {/* Promo saving banner */}
       <AnimatePresence>
         {promoDiscount > 0 && (
           <motion.div
@@ -161,7 +161,7 @@ export default function SmartPricingPanel({
 
       <div className="p-4 space-y-4">
 
-        {/* ── Rapido-style tier cards ──────────────────────────────────── */}
+        {/* Rapido-style tier cards */}
         <div>
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2.5">Choose service tier</p>
           <div className="space-y-2">
@@ -233,7 +233,7 @@ export default function SmartPricingPanel({
           </div>
         </div>
 
-        {/* ── Wait & Save (surge only) ─────────────────────────────────── */}
+        {/* Wait & Save (surge only) */}
         {hasSurge && mode !== 'locked' && (
           <div className="grid grid-cols-2 gap-2">
             {[
@@ -259,7 +259,7 @@ export default function SmartPricingPanel({
           </div>
         )}
 
-        {/* ── Wait countdown ────────────────────────────────────────────── */}
+        {/* Wait countdown */}
         <AnimatePresence>
           {mode === 'wait' && countdown !== null && (
             <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
@@ -275,7 +275,7 @@ export default function SmartPricingPanel({
           )}
         </AnimatePresence>
 
-        {/* ── Nearby workers ────────────────────────────────────────────── */}
+        {/* Nearby workers */}
         {workers && (
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1.5 bg-green-50 px-2.5 py-1 rounded-full ring-1 ring-green-100">
@@ -291,7 +291,7 @@ export default function SmartPricingPanel({
             it's offered during searching on the tracking page (BoostOfferCard),
             so showing it pre-confirmation was a duplicate. */}
 
-        {/* ── Price summary ─────────────────────────────────────────────── */}
+        {/* Price summary */}
         <div className="bg-slate-50 rounded-xl overflow-hidden ring-1 ring-slate-100">
           <button onClick={() => setExpanded(e => !e)} className="w-full flex items-center justify-between px-3.5 py-2.5 text-xs font-semibold text-slate-500 hover:text-slate-700 transition">
             <span className="flex items-center gap-1.5">

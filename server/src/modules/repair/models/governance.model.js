@@ -137,7 +137,7 @@ const CustomerCatalogRequest = mongoose.model('CustomerCatalogRequest', catalogR
 const RepairWarrantyClaim = mongoose.model('RepairWarrantyClaim', warrantyClaimSchema);
 
 
-/* ─── Provider-proposed catalog additions ──────────────────────────────── */
+/* Provider-proposed catalog additions */
 
 /**
  * "I do a job you don't list."

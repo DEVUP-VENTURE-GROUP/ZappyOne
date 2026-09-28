@@ -22,16 +22,15 @@ const locationSchema = Joi.object({
   address: Joi.string().max(500).required(),
 });
 
-// ─── DISABLED VERTICALS (commented out — architecture preserved, not deleted) ───
+// DISABLED VERTICALS (commented out — architecture preserved, not deleted)
 // Generic Home Services → replaced by specialised assistance ecosystems
 // 'plumbing', 'electrical', 'helper', 'carpenter', 'ac_repair', 'cleaning', 'painting',
 // 'delivery', 'laundry', 'beauty', 'gardening', 'security', 'appliance', 'internet',
 // Generic Construction Services → replaced by specialised crew marketplace
 // 'mason',
-// ────────────────────────────────────────────────────────────────────────────────
 
 const ALL_SERVICES = [
-  // ── ELECTRONICS RESCUE NETWORK ──────────────────────────────────────────────
+  // ELECTRONICS RESCUE NETWORK
   // Mobile Phones
   'screen_replacement', 'battery_replacement', 'charging_issue',
   'speaker_mic_issue', 'microphone_issue', 'software_issue',
@@ -44,7 +43,7 @@ const ALL_SERVICES = [
   'smart_tv_install', 'smart_tv_repair', 'router_setup', 'router_troubleshoot',
   'cctv_install', 'cctv_repair', 'smart_lock_install', 'home_automation_setup',
 
-  // ── VEHICLE CARE NETWORK ─────────────────────────────────────────────────────
+  // VEHICLE CARE NETWORK
   // Bike
   'puncture', 'bike_chain_issue', 'bike_brake_issue', 'bike_battery_issue',
   'bike_wash', 'bike_breakdown', 'bike_service',
@@ -57,24 +56,24 @@ const ALL_SERVICES = [
   'commercial_emergency', 'commercial_scheduled_maintenance', 'fleet_support',
   'auto_repair', 'van_repair',
 
-  // ── FAMILY ASSIST NETWORK ────────────────────────────────────────────────────
+  // FAMILY ASSIST NETWORK
   'medicine_pickup', 'hospital_companion', 'grocery_assistance',
   'bill_payment_assist', 'document_submission', 'home_visit_check',
 
-  // ── ELDER ASSIST NETWORK ─────────────────────────────────────────────────────
+  // ELDER ASSIST NETWORK
   'elder_doctor_visit', 'elder_companion', 'elder_home_visit', 'elder_transport',
 
-  // ── EVENT CREW MARKETPLACE ───────────────────────────────────────────────────
+  // EVENT CREW MARKETPLACE
   'event_decorator', 'event_setup_crew', 'event_cleaning_crew',
   'event_helper', 'event_sound_crew', 'event_lighting_crew',
   'event_security_crew', 'event_birthday_setup', 'event_wedding_setup',
   'event_photography_assist', 'event_catering_assist',
 
-  // ── PET ASSISTANCE NETWORK ───────────────────────────────────────────────────
+  // PET ASSISTANCE NETWORK
   'pet_grooming', 'pet_walking', 'pet_transport',
   'pet_sitting', 'pet_vet_assist', 'pet_training_assist',
 
-  // ── TANK & WATER CLEANING ────────────────────────────────────────────────────
+  // TANK & WATER CLEANING
   'water_tank_cleaning', 'overhead_tank_cleaning',
   'underground_sump_cleaning', 'sintex_tank_cleaning',
 ];
@@ -225,16 +224,16 @@ router.post('/:id/complete', authenticate, requireRole('worker'), validate(Joi.o
 router.get('/:id/worker-cancel-preview', authenticate, requireRole('worker'), ctrl.workerCancelPreview);
 router.post('/:id/worker-cancel', authenticate, requireRole('worker'), validate(Joi.object({ reason: Joi.string().max(300).allow('', null) })), ctrl.workerCancelOrder);
 
-// Worker reports customer didn't respond — penalty-free cancel with arrival fee charged to customer. (#73)
+// Worker reports customer didn't respond — penalty-free cancel with arrival fee charged to customer.
 router.post('/:id/no-response', authenticate, requireRole('worker'), ctrl.workerReportNoResponse);
 
-// Worker reports spare part unavailable — diagnostic fee credited, order closed. (#71)
+// Worker reports spare part unavailable — diagnostic fee credited, order closed.
 router.post('/:id/part-unavailable', authenticate, requireRole('worker'),
   validate(Joi.object({ partName: Joi.string().max(120).required(), notes: Joi.string().max(500).allow('', null) })),
   ctrl.workerReportPartUnavailable
 );
 
-// Customer reports worker misconduct (harassment, safety concern) — lower friction than dispute. (#89)
+// Customer reports worker misconduct (harassment, safety concern) — lower friction than dispute.
 router.post('/:id/report-worker', authenticate, requireRole('user'),
   validate(Joi.object({
     category: Joi.string().valid('rude_behavior', 'safety_concern', 'inappropriate_contact', 'property_damage', 'other').required(),

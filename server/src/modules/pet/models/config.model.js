@@ -18,7 +18,7 @@ const { SPECIES, PET_SIZES } = require('../../service/pet-passport.model');
 const { SERVICE_MODES } = require('./catalog.model');
 const { pointField, stripEmptyPoints } = require('../../../utils/geo-point');
 
-/* ─── Pricing rules (§28, §47) ────────────────────────────────────────── */
+/* Pricing rules (§28, §47) */
 
 const pricingRuleSchema = new mongoose.Schema(
   {
@@ -33,7 +33,7 @@ const pricingRuleSchema = new mongoose.Schema(
     species: { type: String, enum: [...SPECIES, null], default: null, index: true },
     cityCode: { type: String, default: null, lowercase: true, index: true },
 
-    /* ── The base number ── */
+    /* The base number */
     basePaise: { type: Number, default: 0, min: 0 },
     /** For per-minute services: the rate the duration is multiplied by. */
     perMinutePaise: { type: Number, default: 0, min: 0 },
@@ -44,7 +44,7 @@ const pricingRuleSchema = new mongoose.Schema(
     /** Distance included before per-km billing starts. */
     includedKm: { type: Number, default: 0, min: 0 },
 
-    /* ── Size multipliers (§29 research) ── */
+    /* Size multipliers (§29 research) */
     sizeMultipliers: {
       small: { type: Number, default: 1, min: 0.1 },
       medium: { type: Number, default: 1.15, min: 0.1 },
@@ -60,10 +60,10 @@ const pricingRuleSchema = new mongoose.Schema(
     applyBreedComplexity: { type: Boolean, default: false },
     maxBreedComplexity: { type: Number, default: 2, min: 1 },
 
-    /* ── Additional pets on one booking (§33) ── */
+    /* Additional pets on one booking (§33) */
     additionalPetPct: { type: Number, default: 70, min: 0, max: 200 },
 
-    /* ── Time and travel ── */
+    /* Time and travel */
     waitingFreeMinutes: { type: Number, default: 15, min: 0 },
     waitingPerMinutePaise: { type: Number, default: 0, min: 0 },
     /** Charged per block once the estimated duration is exceeded. */
@@ -73,17 +73,17 @@ const pricingRuleSchema = new mongoose.Schema(
     returnPaise: { type: Number, default: 0, min: 0 },
     specialHandlingPaise: { type: Number, default: 0, min: 0 },
 
-    /* ── Demand pricing. Off by default; surge on pet care is a choice. ── */
+    /* Demand pricing. Off by default; surge on pet care is a choice. */
     peakMultiplier: { type: Number, default: 1, min: 1, max: 3 },
     holidayMultiplier: { type: Number, default: 1, min: 1, max: 3 },
 
-    /* ── Multi-night discounts (§29 research: 10-15% weekly, 20-30% monthly) ── */
+    /* Multi-night discounts (§29 research: 10-15% weekly, 20-30% monthly) */
     weeklyDiscountPct: { type: Number, default: 0, min: 0, max: 100 },
     weeklyThresholdNights: { type: Number, default: 7, min: 1 },
     monthlyDiscountPct: { type: Number, default: 0, min: 0, max: 100 },
     monthlyThresholdNights: { type: Number, default: 30, min: 1 },
 
-    /* ── Platform economics ── */
+    /* Platform economics */
     commissionPct: { type: Number, default: 15, min: 0, max: 100 },
     platformFeePaise: { type: Number, default: 0, min: 0 },
     taxPct: { type: Number, default: 0, min: 0, max: 100 },
@@ -115,7 +115,7 @@ pricingRuleSchema.methods.specificity = function specificity() {
   return (this.variantCode ? 4 : 0) + (this.species ? 2 : 0) + (this.cityCode ? 1 : 0);
 };
 
-/* ─── Provider capability (§26, §64) ──────────────────────────────────── */
+/* Provider capability (§26, §64) */
 
 /**
  * What a provider is actually able and approved to do.
@@ -200,7 +200,7 @@ providerCapabilitySchema.pre('validate', function oneOwner(next) {
   next();
 });
 
-/* ─── Cancellation policy (§37) ───────────────────────────────────────── */
+/* Cancellation policy (§37) */
 
 const cancellationPolicySchema = new mongoose.Schema(
   {

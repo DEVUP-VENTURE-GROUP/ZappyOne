@@ -61,7 +61,7 @@ beforeAll(async () => {
 
 afterAll(async () => { await stopMongo(); });
 
-/* ─── What a provider can sign up to ───────────────────────────────────── */
+/* What a provider can sign up to */
 
 describe('choosing what you work on', () => {
   it('lists the domains in order', async () => {
@@ -142,7 +142,7 @@ describe('choosing what you work on', () => {
   });
 });
 
-/* ─── The verification each service demands ────────────────────────────── */
+/* The verification each service demands */
 
 describe('verification requirements', () => {
   it('asks a shop and an individual for different things', async () => {
@@ -182,7 +182,7 @@ describe('verification requirements', () => {
   });
 });
 
-/* ─── Submitting, and being told exactly what is missing ───────────────── */
+/* Submitting, and being told exactly what is missing */
 
 describe('submitting for review', () => {
   it('refuses an incomplete application and names every gap', async () => {
@@ -256,7 +256,7 @@ describe('submitting for review', () => {
   });
 });
 
-/* ─── Admin review ─────────────────────────────────────────────────────── */
+/* Admin review */
 
 describe('admin review', () => {
   it('shows the queue with the business attached', async () => {
@@ -360,7 +360,7 @@ describe('admin review', () => {
   });
 });
 
-/* ─── "My service isn't listed" ────────────────────────────────────────── */
+/* "My service isn't listed" */
 
 describe('provider-proposed services', () => {
   it('records the request once, however often it is sent', async () => {
@@ -400,7 +400,7 @@ describe('provider-proposed services', () => {
   });
 });
 
-/* ─── Admin can change the rules without a deploy ──────────────────────── */
+/* Admin can change the rules without a deploy */
 
 describe('the catalog is data', () => {
   it('opens a new service line from the admin panel alone', async () => {
@@ -452,7 +452,7 @@ describe('the catalog is data', () => {
   });
 });
 
-/* ─── The customer-facing catalog ──────────────────────────────────────── */
+/* The customer-facing catalog */
 
 /**
  * Customers see the same rows providers are verified against, plus the jobs
@@ -571,7 +571,7 @@ describe('customer catalog', () => {
   });
 });
 
-/* ─── One verification, not two ────────────────────────────────────────── */
+/* One verification, not two */
 
 /**
  * A provider who has just had documents reviewed must not be asked for the same
@@ -664,7 +664,7 @@ describe('verification is not asked for twice', () => {
   });
 });
 
-/* ─── The shop's public listing follows its verification ───────────────── */
+/* The shop's public listing follows its verification */
 
 /**
  * "Nearby Shops" only shows shops whose `services` list is non-empty, and

@@ -170,7 +170,7 @@ async function getDemandZones(req, res, next) {
   } catch (err) { next(err); }
 }
 
-/* ── Shift Slots ─────────────────────────────────────────────────────────── */
+/* Shift Slots */
 
 async function getShifts(req, res, next) {
   try {
@@ -232,7 +232,7 @@ async function cancelShiftSlot(req, res, next) {
   } catch (err) { next(err); }
 }
 
-/* ── Wellness ──────────────────────────────────────────────────────────────── */
+/* Wellness */
 
 async function getWellness(req, res, next) {
   try {
@@ -252,7 +252,7 @@ async function claimBreakBonus(req, res, next) {
   } catch (err) { next(err); }
 }
 
-/* ── Neighborhood Reputation ───────────────────────────────────────────────── */
+/* Neighborhood Reputation */
 
 async function getNeighborhoodRep(req, res, next) {
   try {
@@ -532,7 +532,7 @@ async function streamAvatar(req, res, next) {
   }
 }
 
-/* ── Bank Account Management ──────────────────────────────────────────────── */
+/* Bank Account Management */
 
 async function getBankAccounts(req, res, next) {
   try {
@@ -606,7 +606,7 @@ async function setDefaultBankAccount(req, res, next) {
   } catch (err) { next(err); }
 }
 
-/* ── Block Customer ───────────────────────────────────────────────────────── */
+/* Block Customer */
 
 async function blockCustomer(req, res, next) {
   try {
@@ -621,7 +621,7 @@ async function blockCustomer(req, res, next) {
   } catch (err) { next(err); }
 }
 
-/* ── Zone Benchmark ───────────────────────────────────────────────────────── */
+/* Zone Benchmark */
 
 async function getZoneBenchmark(req, res, next) {
   try {
@@ -672,7 +672,7 @@ async function getZoneBenchmark(req, res, next) {
   } catch (err) { next(err); }
 }
 
-/* ── Per-Job Earnings Breakdown ──────────────────────────────────────────── */
+/* Per-Job Earnings Breakdown */
 
 const SERVICE_LABELS = {
   electrical: 'Electrical', plumbing: 'Plumbing', ac_repair: 'AC Repair',
@@ -765,7 +765,7 @@ async function getJobEarnings(req, res, next) {
   } catch (err) { next(err); }
 }
 
-/* ─── ZeroWait: Ready Mode (pre-accept) ───────────────────────────────────────
+/* ZeroWait: Ready Mode (pre-accept)
  * The worker pre-commits to auto-accept the next matching job (their skill, their
  * radius, time-boxed) in exchange for a bonus. This is what lets dispatch skip the
  * offer→accept round-trip entirely. Strictly opt-in and strictly gated: only
@@ -894,7 +894,7 @@ async function updateSkills(req, res, next) {
     const oldSkills = before?.skills || [];
 
     const update = {};
-    // Rich expertise (#4) is the source of truth when present; the flat `skills`
+    // Rich expertise is the source of truth when present; the flat `skills`
     // dispatch set is derived from the union of its services so the two never drift.
     let effectiveSkills = Array.isArray(skills) ? skills : null;
     if (Array.isArray(expertise)) {

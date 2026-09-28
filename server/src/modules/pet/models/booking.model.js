@@ -25,7 +25,7 @@ const { pointField, stripEmptyPoints } = require('../../../utils/geo-point');
 const { SPECIES, PET_SIZES } = require('../../service/pet-passport.model');
 const { SERVICE_MODES } = require('./catalog.model');
 
-/* ─── State machine (§34) ─────────────────────────────────────────────── */
+/* State machine (§34) */
 
 const BOOKING_STATUSES = [
   'REQUESTED',
@@ -92,7 +92,7 @@ const OCCUPYING_STATUSES = [
   'PROVIDER_ARRIVED', 'PET_HANDOVER', 'SERVICE_STARTED', 'SERVICE_PAUSED',
 ];
 
-/* ─── Per-pet lines (§33, §35) ────────────────────────────────────────── */
+/* Per-pet lines (§33, §35) */
 
 const bookingPetSchema = new mongoose.Schema(
   {
@@ -145,7 +145,7 @@ const bookingPetSchema = new mongoose.Schema(
   { _id: true },
 );
 
-/* ─── Money (§60) ─────────────────────────────────────────────────────── */
+/* Money (§60) */
 
 const pricingSnapshotSchema = new mongoose.Schema(
   {
@@ -182,7 +182,7 @@ const pricingSnapshotSchema = new mongoose.Schema(
   { _id: false },
 );
 
-/* ─── Execution & proof (§38, §39) ────────────────────────────────────── */
+/* Execution & proof (§38, §39) */
 
 const proofSchema = new mongoose.Schema(
   {
@@ -250,7 +250,7 @@ const statusEventSchema = new mongoose.Schema(
   { _id: false },
 );
 
-/* ─── The booking ─────────────────────────────────────────────────────── */
+/* The booking */
 
 const petBookingSchema = new mongoose.Schema(
   {

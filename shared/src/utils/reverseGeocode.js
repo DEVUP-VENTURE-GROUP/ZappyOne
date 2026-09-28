@@ -14,7 +14,7 @@
 const GOOGLE_KEY = import.meta.env.VITE_GOOGLE_MAPS_KEY;
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
 
-// ── Tier 1: Google Geocoding API ──────────────────────────────────────────────
+// Tier 1: Google Geocoding API
 
 async function reverseGeocodeGoogle(lat, lng) {
   if (!GOOGLE_KEY) return null;
@@ -60,7 +60,7 @@ async function reverseGeocodeGoogle(lat, lng) {
   }
 }
 
-// ── Tier 2: Mapbox ────────────────────────────────────────────────────────────
+// Tier 2: Mapbox
 
 async function reverseGeocodeMapbox(lat, lng) {
   if (!MAPBOX_TOKEN) return null;
@@ -99,7 +99,7 @@ async function reverseGeocodeMapbox(lat, lng) {
   }
 }
 
-// ── Tier 3: Nominatim ─────────────────────────────────────────────────────────
+// Tier 3: Nominatim
 
 async function reverseGeocodeNominatim(lat, lng) {
   try {
@@ -132,7 +132,7 @@ async function reverseGeocodeNominatim(lat, lng) {
   }
 }
 
-// ── Public API ─────────────────────────────────────────────────────────────────
+// Public API
 
 /**
  * Remove any part of `secondary` that duplicates `primary`, so we never render

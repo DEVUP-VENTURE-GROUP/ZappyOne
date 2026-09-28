@@ -50,7 +50,7 @@ export const CATEGORY_BRANDS = {
   laptop: ['Apple', 'Dell', 'HP', 'Lenovo', 'Asus', 'Acer', 'MSI'],
 };
 
-/* ── Runtime store: DB categories replace the built-ins once loaded ──────────── */
+/* Runtime store: DB categories replace the built-ins once loaded */
 let activeGroups = BUILTIN_GROUPS;
 let brandsByKey = { ...CATEGORY_BRANDS };
 const listeners = new Set();

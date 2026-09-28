@@ -66,7 +66,7 @@ export default function CharacterServiceGrid() {
   return (
     <>
       {isMobile ? (
-        /* ── Mobile: bordered category cards ── */
+        /* Mobile: bordered category cards */
         <div className="grid grid-cols-4 gap-3 w-full">
           {SERVICES.map((svc, i) => {
             const isMore = svc.id === 'more';
@@ -125,7 +125,7 @@ export default function CharacterServiceGrid() {
           })}
         </div>
       ) : (
-        /* ── Desktop: original floating characters ── */
+        /* Desktop: original floating characters */
         <div className="grid grid-cols-4 md:grid-cols-8 gap-3 md:gap-4 w-full">
           {SERVICES.map((svc, i) => (
             <motion.button

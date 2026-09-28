@@ -80,7 +80,7 @@ export default function WorkerEditProfilePage() {
   const [name,   setName]   = useState('');
   const [bio,    setBio]    = useState('');
   const [loaded, setLoaded] = useState(false);
-  // Login credentials (#2)
+  // Login credentials
   const [username, setUsername]   = useState('');
   const [newPw,    setNewPw]      = useState('');
   const [confirmPw, setConfirmPw] = useState('');
@@ -224,7 +224,7 @@ export default function WorkerEditProfilePage() {
           </button>
         </div>
 
-        {/* Login Credentials (#2) — set a Worker ID + password to sign in without OTP */}
+        {/* Login Credentials — set a Worker ID + password to sign in without OTP */}
         <div className="bg-white rounded-2xl p-5 shadow-sm">
           <div className="flex items-center gap-2 mb-1">
             <KeyRound size={15} className="text-indigo-500" />

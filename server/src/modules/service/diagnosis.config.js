@@ -16,7 +16,7 @@
 
 const DIAGNOSIS_FLOWS = {
 
-  /* ── Electrical ────────────────────────────────────────────────── */
+  /* Electrical */
   electrical: [
     {
       id: 'q1',
@@ -55,7 +55,7 @@ const DIAGNOSIS_FLOWS = {
     },
   ],
 
-  /* ── Plumbing ───────────────────────────────────────────────────── */
+  /* Plumbing */
   plumbing: [
     {
       id: 'q1',
@@ -95,7 +95,7 @@ const DIAGNOSIS_FLOWS = {
     },
   ],
 
-  /* ── AC Repair ──────────────────────────────────────────────────── */
+  /* AC Repair */
   ac_repair: [
     {
       id: 'q1',
@@ -134,7 +134,7 @@ const DIAGNOSIS_FLOWS = {
     },
   ],
 
-  /* ── Mobile Phone ──────────────────────────────────────────────── */
+  /* Mobile Phone */
   screen_replacement: [
     {
       id: 'q1',
@@ -159,7 +159,7 @@ const DIAGNOSIS_FLOWS = {
     },
   ],
 
-  /* ── Cleaning ──────────────────────────────────────────────────── */
+  /* Cleaning */
   cleaning: [
     {
       id: 'q1',
@@ -198,7 +198,7 @@ const DIAGNOSIS_FLOWS = {
     },
   ],
 
-  /* ── Puncture/Vehicle ──────────────────────────────────────────── */
+  /* Puncture/Vehicle */
   puncture: [
     {
       id: 'q1',
@@ -232,7 +232,7 @@ const DIAGNOSIS_FLOWS = {
     },
   ],
 
-  /* ── Car Puncture ─────────────────────────────────────────────── */
+  /* Car Puncture */
   car_puncture: [
     {
       id: 'q1',
@@ -256,7 +256,7 @@ const DIAGNOSIS_FLOWS = {
     },
   ],
 
-  /* ── Bike Breakdown ─────────────────────────────────────────── */
+  /* Bike Breakdown */
   bike_breakdown: [
     {
       id: 'q1',
@@ -282,7 +282,7 @@ const DIAGNOSIS_FLOWS = {
     },
   ],
 
-  /* ── Car Breakdown ──────────────────────────────────────────── */
+  /* Car Breakdown */
   car_breakdown: [
     {
       id: 'q1',
@@ -308,7 +308,7 @@ const DIAGNOSIS_FLOWS = {
     },
   ],
 
-  /* ── Battery Jump Start ─────────────────────────────────────── */
+  /* Battery Jump Start */
   battery_jump_start: [
     {
       id: 'q1',
@@ -332,7 +332,7 @@ const DIAGNOSIS_FLOWS = {
     },
   ],
 
-  /* ── Fuel Delivery ──────────────────────────────────────────── */
+  /* Fuel Delivery */
   fuel_delivery: [
     {
       id: 'q1',
@@ -356,7 +356,7 @@ const DIAGNOSIS_FLOWS = {
     },
   ],
 
-  /* ── Bike Battery Issue ─────────────────────────────────────── */
+  /* Bike Battery Issue */
   bike_battery_issue: [
     {
       id: 'q1',
@@ -371,7 +371,7 @@ const DIAGNOSIS_FLOWS = {
     },
   ],
 
-  /* ── Commercial Emergency ───────────────────────────────────── */
+  /* Commercial Emergency */
   commercial_emergency: [
     {
       id: 'q1',
@@ -397,7 +397,7 @@ const DIAGNOSIS_FLOWS = {
     },
   ],
 
-  /* ── Bike Brake Issue ───────────────────────────────────────── */
+  /* Bike Brake Issue */
   bike_brake_issue: [
     {
       id: 'q1',
@@ -422,7 +422,7 @@ const DIAGNOSIS_FLOWS = {
     },
   ],
 
-  /* ── Carpenter ─────────────────────────────────────────────── */
+  /* Carpenter */
   carpenter: [
     {
       id: 'q1',

@@ -94,7 +94,7 @@ beforeAll(async () => {
 
 afterAll(async () => { await stopMongo(); });
 
-/* ─── Catalog integrity ──────────────────────────────────────────────────── */
+/* Catalog integrity */
 
 describe('catalog integrity', () => {
   it('registers the vertical', () => {
@@ -172,7 +172,7 @@ describe('catalog integrity', () => {
   });
 });
 
-/* ─── Dual scoping ───────────────────────────────────────────────────────── */
+/* Dual scoping */
 
 /** What a customer on this exact car would actually be offered. */
 async function problemsFor(productTypeCode, fuelType) {
@@ -239,7 +239,7 @@ describe('a customer is only asked about systems their car has', () => {
   });
 });
 
-/* ─── AC: the §24 worked example ─────────────────────────────────────────── */
+/* AC: the §24 worked example */
 
 describe('"AC not cooling" does not become an automatic gas refill', () => {
   const flow = () => flowByCode.get('fw_ac_triage');
@@ -292,7 +292,7 @@ describe('"AC not cooling" does not become an automatic gas refill', () => {
   });
 });
 
-/* ─── Safety ─────────────────────────────────────────────────────────────── */
+/* Safety */
 
 describe('dangerous faults never become a priced repair', () => {
   it('forces diagnosis on every critical problem', async () => {
@@ -361,7 +361,7 @@ describe('dangerous faults never become a priced repair', () => {
   });
 });
 
-/* ─── Warning lights are systems, not parts ──────────────────────────────── */
+/* Warning lights are systems, not parts */
 
 describe('a warning light is never quoted as a component', () => {
   it('keeps every dashboard-warning problem diagnosis-required', async () => {
@@ -391,7 +391,7 @@ describe('a warning light is never quoted as a component', () => {
   });
 });
 
-/* ─── Starting, overheating, roadside ────────────────────────────────────── */
+/* Starting, overheating, roadside */
 
 describe('starting is triaged, never assumed', () => {
   const flow = () => flowByCode.get('fw_no_start');
@@ -461,7 +461,7 @@ describe('roadside work is genuinely offered roadside', () => {
   });
 });
 
-/* ─── Isolation ──────────────────────────────────────────────────────────── */
+/* Isolation */
 
 describe('verticals stay apart', () => {
   it('keeps every four-wheeler code in its own namespace', async () => {

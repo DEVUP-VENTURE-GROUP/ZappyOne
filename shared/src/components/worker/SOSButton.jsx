@@ -2,7 +2,7 @@
  * Worker SOS Emergency Button
  * 3-second hold to trigger. Sends GPS + order details to emergency contact.
  *
- * Pet service variant (#75): after trigger, shows emergency vet contacts
+ * Pet service variant: after trigger, shows emergency vet contacts
  * (AWBI helpline, Blue Cross India) alongside the standard 112 alert.
  */
 import { useState, useRef } from 'react';
@@ -136,7 +136,7 @@ export default function SOSButton({ orderId, lat, lng, service }) {
         </div>
       </div>
 
-      {/* ── Pet emergency contacts — shown after SOS triggers on a pet job (#75) ── */}
+      {/* Pet emergency contacts — shown after SOS triggers on a pet job */}
       <AnimatePresence>
         {triggered && isPetJob && (
           <motion.div

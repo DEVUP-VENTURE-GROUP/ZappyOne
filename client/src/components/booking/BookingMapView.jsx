@@ -5,7 +5,7 @@
  *  • Interactive Mapbox GL map centred on the service location
  *  • A pulsing radar ring expanding from the pin (scanning animation)
  *  • Animated vehicle emoji markers at actual worker GPS positions
- *  • Vehicle type adapts to service category (🛵 bikes, 🔧 repair vans, etc.)
+ *  • Vehicle type adapts to service category ( bikes, repair vans, etc.)
  *  • Worker count badge with live green pulse dot
  *
  * Worker positions come from GET /workers/nearby which returns real Redis GEO
@@ -18,7 +18,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 
 const TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || '';
 
-/* ─── Service → vehicle emoji ─────────────────────────────────── */
+/* Service → vehicle emoji */
 const VEHICLE_SERVICES = new Set([
   'puncture','bike_chain_issue','bike_brake_issue','bike_battery_issue',
   'bike_wash','bike_breakdown','bike_service',
@@ -51,7 +51,7 @@ function vehicleEmoji(service) {
   return '🔧';
 }
 
-/* ─── Service → accent colour (matches LiveTrackingMap) ───────── */
+/* Service → accent colour (matches LiveTrackingMap) */
 const SVC_COLORS = {
   puncture:'#FF6B6B', bike_wash:'#26de81', bike_chain_issue:'#fd9644',
   bike_brake_issue:'#fc5c65', bike_battery_issue:'#45aaf2',
@@ -63,7 +63,7 @@ const SVC_COLORS = {
 const DEFAULT_COLOR = '#4f46e5';
 function svcColor(service) { return SVC_COLORS[service] || DEFAULT_COLOR; }
 
-/* ─── Inject CSS once ─────────────────────────────────────────── */
+/* Inject CSS once */
 function ensureStyles() {
   if (document.getElementById('bmap-styles')) return;
   const s = document.createElement('style');
@@ -129,7 +129,7 @@ function ensureStyles() {
   document.head.appendChild(s);
 }
 
-/* ─── Component ───────────────────────────────────────────────── */
+/* Component */
 export default function BookingMapView({ location, workers = [], service }) {
   const containerRef = useRef(null);
   const mapRef       = useRef(null);
@@ -155,7 +155,7 @@ export default function BookingMapView({ location, workers = [], service }) {
     mapRef.current = map;
 
     map.on('load', () => {
-      // ── Service location pin with radar rings ──────────────────
+      // Service location pin with radar rings
       const pinEl = document.createElement('div');
       pinEl.style.cssText = 'position:relative; display:flex; align-items:center; justify-content:center; width:36px; height:36px;';
       pinEl.innerHTML = `
@@ -168,7 +168,7 @@ export default function BookingMapView({ location, workers = [], service }) {
         .setLngLat([location.lng, location.lat])
         .addTo(map);
 
-      // ── Worker markers at their actual GPS positions ────────────
+      // Worker markers at their actual GPS positions
       placeWorkerMarkers(map, workers, emoji, color);
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps

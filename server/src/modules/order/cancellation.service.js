@@ -75,7 +75,7 @@ async function updateConfig(patch, adminId) {
   return next;
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// Helpers
 
 /**
  * Find when the order was most recently assigned by reading statusHistory.
@@ -88,7 +88,7 @@ function getAssignedAt(order) {
   return entry?.at ? new Date(entry.at) : null;
 }
 
-// ─── User cancellation fee ────────────────────────────────────────────────────
+// User cancellation fee
 
 /**
  * Returns { feePaise, reason, secsLeft, workerCompensationPaise }.
@@ -141,7 +141,7 @@ async function calculateUserCancelFee(order) {
   };
 }
 
-// ─── Preview (no side effects) ────────────────────────────────────────────────
+// Preview (no side effects)
 
 /**
  * Same logic as calculateUserCancelFee but also returns human-readable info
@@ -181,7 +181,7 @@ async function previewCancelFee(order) {
   };
 }
 
-// ─── Worker cancellation penalty ─────────────────────────────────────────────
+// Worker cancellation penalty
 
 // Reasons a worker can cancel with. Genuine reasons are penalty-free AND do NOT
 // count toward the escalation threshold; the rest are penalised and counted

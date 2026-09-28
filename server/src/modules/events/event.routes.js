@@ -8,7 +8,7 @@ const p  = require('./event-partner-api.controller');
 const ep = require('./event-payment.controller');
 const notifCtrl = require('../notification/notification.controller');
 
-// ── User-facing routes (/api/events) ──────────────────────────────────────────
+// User-facing routes (/api/events)
 const router = express.Router();
 
 router.get('/config',        c.getConfig);
@@ -30,7 +30,7 @@ router.post('/bookings/:id/pay/advance/verify',  authenticate, requireRole('user
 router.post('/bookings/:id/pay/remaining',       authenticate, requireRole('user'), ep.createRemainingOrder);
 router.post('/bookings/:id/pay/remaining/verify',authenticate, requireRole('user'), ep.verifyRemainingPayment);
 
-// ── Partner routes (/api/events/partner) ──────────────────────────────────
+// Partner routes (/api/events/partner)
 const partnerRouter = express.Router();
 partnerRouter.use(authenticate, requireRole('event_partner'));
 
@@ -57,7 +57,7 @@ partnerRouter.get('/notifications',               notifCtrl.list);
 partnerRouter.post('/notifications/read-all',     notifCtrl.markAllRead);
 partnerRouter.post('/notifications/:id/read',     notifCtrl.markRead);
 
-// ── Admin routes (/api/{slug}/events) ─────────────────────────────────────────
+// Admin routes (/api/{slug}/events)
 const adminRouter = express.Router();
 adminRouter.use(authenticate, requireRole('admin'));
 

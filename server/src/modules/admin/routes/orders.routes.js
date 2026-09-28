@@ -9,7 +9,7 @@ const router = express.Router();
 
 router.get('/orders', ctrl.listOrders);
 
-/* ─── Manual Order Intervention ──────────────────────────────────────────── */
+/* Manual Order Intervention */
 const ORDER_STATUSES = Order.STATUSES;
 
 router.get('/orders/:id/nearby-workers', ctrl.nearbyWorkers);

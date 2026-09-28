@@ -53,7 +53,7 @@ async function loadThresholds() {
   } catch { /* keep defaults */ }
 }
 
-/* ─── Main sweep ────────────────────────────────────────────── */
+/* Main sweep */
 // One DB round-trip fetches ALL stale orders across every active status.
 // JS splits them by status — 5 queries → 1.
 
@@ -98,7 +98,7 @@ async function sweep() {
   ]);
 }
 
-/* ── 1. Assigned orders where worker never started the trip ── */
+/* 1. Assigned orders where worker never started the trip */
 
 async function handleStaleAssigned(now, stale) {
   const nudgeThreshold      = new Date(now - ASSIGNED_NUDGE_MIN * 60 * 1000);
@@ -245,7 +245,7 @@ async function redispatchFromAssigned(order) {
   }));
 }
 
-/* ── Helpers: how long has this order been actively searching? ── */
+/* Helpers: how long has this order been actively searching? */
 // Measured from the last time it ENTERED 'searching' (or createdAt), but never
 // before its scheduled time — so a scheduled order that sits in 'created' for
 // days until dispatch fires is NOT counted as "searching for days".
@@ -259,7 +259,7 @@ function searchingMinutes(order, now) {
   return (now - start) / 60000;
 }
 
-/* ── Auto-cancel an order that never found a worker ── */
+/* Auto-cancel an order that never found a worker */
 async function autoCancelNoWorker(order, now) {
   const orderId = String(order._id);
   // Idempotency lock — one cancel attempt per order per hour.
@@ -306,7 +306,7 @@ async function autoCancelNoWorker(order, now) {
   })).catch(() => {});
 }
 
-/* ── Strip a stuck on_the_way worker and re-dispatch the order ── */
+/* Strip a stuck on_the_way worker and re-dispatch the order */
 async function redispatchStuckOnTheWay(order) {
   const orderId = String(order._id);
   if (!(await redis.set(`stale:otw_redispatch:${orderId}`, '1', 'NX', 'EX', 1800))) return;
@@ -358,7 +358,7 @@ async function redispatchStuckOnTheWay(order) {
   })).catch(() => {});
 }
 
-/* ── 2. Orders stuck in searching (dispatch job dead/crashed) ── */
+/* 2. Orders stuck in searching (dispatch job dead/crashed) */
 
 async function handleStaleSearching(now, stale) {
   const threshold = new Date(now - SEARCHING_STALE_MIN * 60 * 1000);
@@ -398,7 +398,7 @@ async function handleStaleSearching(now, stale) {
   }
 }
 
-/* ── 3. On-the-way too long (worker GPS off or stuck) ── */
+/* 3. On-the-way too long (worker GPS off or stuck) */
 
 async function handleStaleOnTheWay(now, stale) {
   const threshold = new Date(now - OTW_ALERT_MIN * 60 * 1000);
@@ -445,7 +445,7 @@ async function handleStaleOnTheWay(now, stale) {
   }
 }
 
-/* ── 4. Arrived but OTP never entered (worker present but service not started) ── */
+/* 4. Arrived but OTP never entered (worker present but service not started) */
 
 async function handleStaleArrived(now, stale) {
   const threshold = new Date(now - ARRIVED_STALE_MIN * 60 * 1000);
@@ -519,7 +519,7 @@ async function handleStaleArrived(now, stale) {
   }
 }
 
-/* ── 5. In-progress too long — worker abandoned the job ── */
+/* 5. In-progress too long — worker abandoned the job */
 
 async function handleStaleInProgress(now, stale) {
   const nudgeThreshold = new Date(now - 60 * 60 * 1000);
@@ -602,7 +602,7 @@ async function handleStaleInProgress(now, stale) {
   }
 }
 
-/* ─── Worker bootstrap ───────────────────────────────────── */
+/* Worker bootstrap */
 
 async function main() {
   await connectMongo();

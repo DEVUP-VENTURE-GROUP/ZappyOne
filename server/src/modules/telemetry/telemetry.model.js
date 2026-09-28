@@ -15,7 +15,7 @@ const mongoose = require('mongoose');
 
 const NINETY_DAYS = 90 * 24 * 3600;
 
-/* ─── VisitorSession ──────────────────────────────────────────────────────── */
+/* VisitorSession */
 const visitorSessionSchema = new mongoose.Schema(
   {
     sessionId: { type: String, required: true, unique: true, index: true },
@@ -55,7 +55,7 @@ visitorSessionSchema.index({ city: 1, firstSeen: -1 });
 // Auto-expire 90 days after last activity
 visitorSessionSchema.index({ lastSeen: 1 }, { expireAfterSeconds: NINETY_DAYS });
 
-/* ─── SearchEvent (demand intelligence + unmet demand) ────────────────────── */
+/* SearchEvent (demand intelligence + unmet demand) */
 const searchEventSchema = new mongoose.Schema(
   {
     sessionId: { type: String, default: null, index: true },

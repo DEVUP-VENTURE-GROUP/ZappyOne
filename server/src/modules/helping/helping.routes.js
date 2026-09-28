@@ -64,7 +64,7 @@ const returnDetailSchema = Joi.object({
   desiredReplacement: Joi.string().max(200).allow('', null),
 });
 
-/* ─── Public-ish: catalog and pricing ─────────────────────────────────── */
+/* Public-ish: catalog and pricing */
 
 router.get('/services', authenticate, ctrl.listServices);
 
@@ -80,11 +80,11 @@ router.post('/quote',
   })),
   ctrl.quote);
 
-/* ─── Worker — literal paths first ────────────────────────────────────── */
+/* Worker — literal paths first */
 
 router.get('/tasks/available', authenticate, requireRole('worker'), ctrl.listAvailable);
 
-/* ─── Customer ────────────────────────────────────────────────────────── */
+/* Customer */
 
 router.post('/tasks',
   authenticate, requireRole('user'),
@@ -126,7 +126,7 @@ router.post('/tasks/:id/cancel',
   validate(Joi.object({ reason: Joi.string().max(500).allow('', null) })),
   ctrl.cancelTask);
 
-/* ─── Worker execution ────────────────────────────────────────────────── */
+/* Worker execution */
 
 router.post('/tasks/:id/accept', authenticate, requireRole('worker'), ctrl.acceptTask);
 
@@ -192,7 +192,7 @@ router.post('/tasks/:id/complete', authenticate, requireRole('worker'), ctrl.com
 
 module.exports = router;
 
-/* ─── Admin router, mounted under the admin slug ──────────────────────── */
+/* Admin router, mounted under the admin slug */
 
 const adminRouter = express.Router();
 

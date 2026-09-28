@@ -40,14 +40,14 @@ const repairConfigSchema = new mongoose.Schema(
     // makes Mongoose warn about a duplicate index at boot.
     vertical: { type: String, required: true, lowercase: true },
 
-    /* ── Provider price deviation bands (§12) ── */
+    /* Provider price deviation bands (§12) */
     // Percent deviation from the reference recommended price.
     greenMaxDeviationPct: { type: Number, default: 15 },
     yellowMaxDeviationPct: { type: Number, default: 35 },
     autoApproveGreen: { type: Boolean, default: true },
     blockRed: { type: Boolean, default: true },
 
-    /* ── Platform economics ── */
+    /* Platform economics */
     /**
      * The two sides of ZappyOne's take, and they are charged to different people.
      *
@@ -161,18 +161,18 @@ const repairConfigSchema = new mongoose.Schema(
     minBookingPaise: { type: Number, default: 0, min: 0 },
     maxBookingPaise: { type: Number, default: 0, min: 0 },
 
-    /* ── Matching and serviceability ── */
+    /* Matching and serviceability */
     serviceRadiusKm: { type: Number, default: 10, min: 0 },
     maxProvidersShown: { type: Number, default: 10, min: 1 },
     rankingWeights: { type: rankingWeightsSchema, default: () => ({}) },
 
-    /* ── Expiry and policy windows ── */
+    /* Expiry and policy windows */
     quoteExpiryHours: { type: Number, default: 48, min: 1 },
     bookingExpiryMinutes: { type: Number, default: 30, min: 1 },
     warrantyDefaultDays: { type: Number, default: 90, min: 0 },
     cancellationWindowMinutes: { type: Number, default: 15, min: 0 },
 
-    /* ── Presentation ── */
+    /* Presentation */
     popularBrandLimit: { type: Number, default: 8, min: 1 },
     popularModelLimit: { type: Number, default: 12, min: 1 },
 

@@ -33,7 +33,7 @@ async function signTask(task) {
   };
 }
 
-/* ─── Catalog & pricing ────────────────────────────────────────────────── */
+/* Catalog & pricing */
 
 /** What this category offers and what it costs — read by the customer UI. */
 async function listServices(req, res, next) {
@@ -85,7 +85,7 @@ async function quote(req, res, next) {
   } catch (err) { next(err); }
 }
 
-/* ─── Customer ─────────────────────────────────────────────────────────── */
+/* Customer */
 
 async function createTask(req, res, next) {
   try {
@@ -195,7 +195,7 @@ async function cancelTask(req, res, next) {
   } catch (err) { next(err); }
 }
 
-/* ─── Worker ───────────────────────────────────────────────────────────── */
+/* Worker */
 
 /**
  * Open work near the helper.
@@ -380,7 +380,7 @@ async function completeTask(req, res, next) {
   } catch (err) { next(err); }
 }
 
-/* ─── Admin (§37, §51) ─────────────────────────────────────────────────── */
+/* Admin (§37, §51) */
 
 async function adminListTasks(req, res, next) {
   try {

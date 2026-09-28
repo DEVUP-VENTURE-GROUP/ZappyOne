@@ -17,7 +17,7 @@ import {
 } from './_shared';
 import toast from 'react-hot-toast';
 
-/* ─── Permanent doc hook — server-proxied, no URL expiry ─────────────────── */
+/* Permanent doc hook — server-proxied, no URL expiry */
 function useKycDoc(shopId, docType, token, enabled = true) {
   const [url, setUrl] = useState(null);
   const [loading, setLoading] = useState(false);

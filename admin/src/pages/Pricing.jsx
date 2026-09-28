@@ -334,7 +334,7 @@ export default function Pricing() {
     <div className="space-y-6 p-6">
       <SectionHeader title="Platform Control Centre" subtitle="All pricing, bonuses, thresholds, and behaviour — controlled from here. Changes apply instantly." />
 
-      {/* ── Base Fare ── */}
+      {/* Base Fare */}
       <Card className="p-6">
         <h3 className="text-sm font-bold text-slate-700 mb-4">Fare Components</h3>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -348,7 +348,7 @@ export default function Pricing() {
         <div className="mt-5"><SaveBtn loading={saving} onClick={savePricing} /></div>
       </Card>
 
-      {/* ── Surge + Commission ── */}
+      {/* Surge + Commission */}
       <Card className="p-6">
         <h3 className="text-sm font-bold text-slate-700 mb-4">Surge &amp; Commission</h3>
         <div className="grid sm:grid-cols-3 gap-4">
@@ -377,7 +377,7 @@ export default function Pricing() {
         <div className="mt-5"><SaveBtn loading={savingToggles} onClick={saveToggles} /></div>
       </Card>
 
-      {/* ── Dispatch Kill-Switch ── */}
+      {/* Dispatch Kill-Switch */}
       <Card className={`p-6 ${!dispatchEnabled ? 'ring-2 ring-red-300 bg-red-50' : ''}`}>
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -429,7 +429,7 @@ export default function Pricing() {
         </div>
       </Card>
 
-      {/* ── Dispatch & Worker Behaviour ── */}
+      {/* Dispatch & Worker Behaviour */}
       <Card className="p-6">
         <h3 className="text-sm font-bold text-slate-700 mb-1">Dispatch &amp; Worker Behaviour</h3>
         <p className="text-xs text-slate-400 mb-4">Controls auto-assign bonus, reject-rate penalties, and quality thresholds.</p>
@@ -465,7 +465,7 @@ export default function Pricing() {
         </div>
       </Card>
 
-      {/* ── Acceptance-First Dispatch ── */}
+      {/* Acceptance-First Dispatch */}
       <Card className="p-6">
         <h3 className="text-sm font-bold text-slate-700 mb-1">Acceptance-First Dispatch</h3>
         <p className="text-xs text-slate-400 mb-4">Assign by voluntary acceptance: the best-ranked pro gets first dibs, a growing bonus incentivises workers to opt in, and no one is force-assigned unless you switch it on. If nobody accepts, the customer is refunded — never forced onto a reluctant worker.</p>
@@ -525,7 +525,7 @@ export default function Pricing() {
         </div>
       </Card>
 
-      {/* ── ZeroWait Instant Match ── */}
+      {/* ZeroWait Instant Match */}
       <Card className="p-6">
         <h3 className="text-sm font-bold text-slate-700 mb-1">⚡ ZeroWait — Instant Match</h3>
         <p className="text-xs text-slate-400 mb-4">
@@ -599,7 +599,7 @@ export default function Pricing() {
         </div>
       </Card>
 
-      {/* ── Stale Order Watchdog ── */}
+      {/* Stale Order Watchdog */}
       <Card className="p-6">
         <h3 className="text-sm font-bold text-slate-700 mb-1">Stale Order Watchdog</h3>
         <p className="text-xs text-slate-400 mb-4">Timers (in minutes) that trigger worker nudges and re-dispatch for stuck orders.</p>
@@ -619,7 +619,7 @@ export default function Pricing() {
         </div>
       </Card>
 
-      {/* ── Offer Boost Controls ── */}
+      {/* Offer Boost Controls */}
       <Card className="p-6">
         <div className="flex items-start justify-between mb-1">
           <h3 className="text-sm font-bold text-slate-700">Offer Boost Settings</h3>
@@ -657,7 +657,7 @@ export default function Pricing() {
         </div>
       </Card>
 
-      {/* ── Tip Controls ── */}
+      {/* Tip Controls */}
       <Card className="p-6">
         <h3 className="text-sm font-bold text-slate-700 mb-1">Post-Service Tip Settings</h3>
         <p className="text-xs text-slate-400 mb-4">Tips sent after service completion (voice note + credit).</p>
@@ -679,7 +679,7 @@ export default function Pricing() {
         </div>
       </Card>
 
-      {/* ── Referral Rewards ── */}
+      {/* Referral Rewards */}
       <Card className="p-6">
         <h3 className="text-sm font-bold text-slate-700 mb-1">Referral Rewards</h3>
         <p className="text-xs text-slate-400 mb-4">Bonus amounts credited when a user invites a friend who completes their first order.</p>
@@ -701,7 +701,7 @@ export default function Pricing() {
         </div>
       </Card>
 
-      {/* ── Late Arrival Penalty ── */}
+      {/* Late Arrival Penalty */}
       <Card className="p-6 ring-2 ring-red-100">
         <h3 className="text-sm font-bold text-slate-700 mb-1 flex items-center gap-2">
           <span>⏱️</span> Late Arrival Penalty
@@ -731,7 +731,7 @@ export default function Pricing() {
         </div>
       </Card>
 
-      {/* ── Service Tier Pricing ── */}
+      {/* Service Tier Pricing */}
       <Card className="p-6 ring-2 ring-indigo-100">
         <h3 className="text-sm font-bold text-slate-700 mb-1">Service Tier Pricing</h3>
         <p className="text-xs text-slate-400 mb-4">
@@ -782,7 +782,7 @@ export default function Pricing() {
         </div>
       </Card>
 
-      {/* ── Auto-Pricing Rules ── */}
+      {/* Auto-Pricing Rules */}
       <Card className="p-6 ring-2 ring-purple-100">
         <div className="flex items-center justify-between mb-1">
           <h3 className="text-sm font-bold text-slate-700">Auto-Pricing Rules</h3>
@@ -897,7 +897,7 @@ export default function Pricing() {
         <div className="mt-4"><SaveBtn loading={saving} onClick={saveAutoPricing} /></div>
       </Card>
 
-      {/* ── Rain Mode ── */}
+      {/* Rain Mode */}
       <Card className={`p-6 ${isRainActive ? 'ring-2 ring-blue-300 bg-blue-50' : ''}`}>
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -947,7 +947,7 @@ export default function Pricing() {
         </div>
       </Card>
 
-      {/* ── Earned Wage + Emergency Fund ── */}
+      {/* Earned Wage + Emergency Fund */}
       <Card className="p-6">
         <h3 className="text-sm font-bold text-slate-700 mb-1">Worker Finance</h3>
         <p className="text-xs text-slate-400 mb-4">Earned wage advance and emergency mutual fund settings.</p>

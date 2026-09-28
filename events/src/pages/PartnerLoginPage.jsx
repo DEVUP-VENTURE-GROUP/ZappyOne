@@ -174,7 +174,7 @@ export default function PartnerLoginPage() {
   return (
     <div className="min-h-screen bg-[#f8f7fc] flex flex-col lg:flex-row overflow-hidden font-sans">
 
-      {/* ── LEFT PANEL (Desktop) / TOP (Mobile) ── */}
+      {/* LEFT PANEL (Desktop) / TOP (Mobile) */}
       <div className="relative w-full lg:w-1/2 flex flex-col pt-10 pb-[220px] lg:pb-12 px-6 sm:px-12 lg:px-16 overflow-hidden min-h-[500px] lg:min-h-screen shrink-0">
 
         {/* Background Image & Gradient overlay */}
@@ -237,7 +237,7 @@ export default function PartnerLoginPage() {
         </div>
       </div>
 
-      {/* ── RIGHT PANEL (White Form Container) ── */}
+      {/* RIGHT PANEL (White Form Container) */}
       <div className="relative w-full lg:w-1/2 flex-1 flex flex-col items-center justify-center p-4 sm:p-6 lg:p-12 z-20 -mt-24 lg:mt-0 lg:bg-white overflow-hidden">
 
         {/* Subtle floral watermark top right (Desktop) */}
@@ -259,7 +259,7 @@ export default function PartnerLoginPage() {
 
           <AnimatePresence mode="wait">
 
-            {/* ── PHONE STEP (Matching reference exactly) ── */}
+            {/* PHONE STEP (Matching reference exactly) */}
             {step === 'phone' && (
               <motion.form key="phone" onSubmit={handleSendOtp} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex flex-col">
 
@@ -304,7 +304,7 @@ export default function PartnerLoginPage() {
               </motion.form>
             )}
 
-            {/* ── OTP STEP ── */}
+            {/* OTP STEP */}
             {step === 'otp' && (
               <motion.div key="otp" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex flex-col">
                 <button onClick={() => setStep('phone')} className="self-start flex items-center gap-1 text-[13px] font-bold text-violet-600 mb-6 hover:underline">
@@ -332,7 +332,7 @@ export default function PartnerLoginPage() {
               </motion.div>
             )}
 
-            {/* ── REGISTER STEP ── */}
+            {/* REGISTER STEP */}
             {step === 'register' && (
               <motion.form key="register" onSubmit={handleRegister} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex flex-col">
                 <div className="mb-6">

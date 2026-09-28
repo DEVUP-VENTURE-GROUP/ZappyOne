@@ -21,7 +21,7 @@ async function resolveUserContact(userId) {
   }
 }
 
-/* ── Create Cashfree order for advance payment ───────────────────────────── */
+/* Create Cashfree order for advance payment */
 async function createAdvanceOrder(req, res, next) {
   try {
     const booking = await EventBooking.findOne({
@@ -77,7 +77,7 @@ async function createAdvanceOrder(req, res, next) {
   } catch (e) { next(e); }
 }
 
-/* ── Verify advance payment + confirm booking ────────────────────────────── */
+/* Verify advance payment + confirm booking */
 async function verifyAdvancePayment(req, res, next) {
   try {
     const { cfOrderId, cfPaymentId } = req.body;
@@ -162,7 +162,7 @@ async function verifyAdvancePayment(req, res, next) {
   } catch (e) { next(e); }
 }
 
-/* ── Create Cashfree order for remaining payment ─────────────────────────── */
+/* Create Cashfree order for remaining payment */
 async function createRemainingOrder(req, res, next) {
   try {
     const booking = await EventBooking.findOne({
@@ -204,7 +204,7 @@ async function createRemainingOrder(req, res, next) {
   } catch (e) { next(e); }
 }
 
-/* ── Verify remaining payment ────────────────────────────────────────────── */
+/* Verify remaining payment */
 async function verifyRemainingPayment(req, res, next) {
   try {
     const { cfOrderId, cfPaymentId } = req.body;

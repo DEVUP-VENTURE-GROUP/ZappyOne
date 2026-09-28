@@ -84,7 +84,7 @@ function AnimatedSearchPlaceholder() {
   );
 }
 
-/* ─── Book Again helpers ───────────────────────────────────────────────── */
+/* Book Again helpers */
 // Emoji for the rebook card's icon tile, chosen from the service code keyword.
 function serviceEmoji(code = '') {
   const c = code.toLowerCase();
@@ -118,11 +118,11 @@ function timeAgo(date) {
   return `${Math.floor(days / 30)} months ago`;
 }
 
-/* ─── Most booked — Electronics Rescue ────────────────────────────────── */
+/* Most booked — Electronics Rescue */
 
-/* ─── Vehicle care highlights ──────────────────────────────────────────── */
+/* Vehicle care highlights */
 
-/* ─── Service tile data ────────────────────────────────────────────────── */
+/* Service tile data */
 // Electronics Rescue — Mobile
 
 // Electronics Rescue — Laptop
@@ -160,7 +160,7 @@ const LEVEL_COLORS = {
   Champion: 'from-pink-400 to-fuchsia-600', Legend: 'from-yellow-300 to-amber-500',
 };
 
-/* ─── Live worker badge ────────────────────────────────────────────────── */
+/* Live worker badge */
 function LiveBadge() {
   const [n, setN] = useState(47);
   useEffect(() => {
@@ -177,7 +177,7 @@ function LiveBadge() {
   );
 }
 
-/* ─── Notification bell with live unread count ─────────────────────────── */
+/* Notification bell with live unread count */
 // Reuses the same real notifications source the BottomNav/WorkerDashboard use.
 // No hardcoded count — the badge reflects genuine unread notifications.
 function NotifBell({ nav, isAuthed }) {
@@ -203,7 +203,7 @@ function NotifBell({ nav, isAuthed }) {
   );
 }
 
-/* ─── Hero trust bar (live, overlapping the banner's bottom edge) ──────── */
+/* Hero trust bar (live, overlapping the banner's bottom edge) */
 // Static brand promises (copy, not data). Rebuilt as a crisp live card so it
 // no longer relies on the screenshot's baked-in white box.
 const TRUST_BADGES = [
@@ -248,7 +248,7 @@ function HeroTrustBar() {
   );
 }
 
-/* ─── Offer / trust cards (section 7) ──────────────────────────────────── */
+/* Offer / trust cards (section 7) */
 // Static brand copy — Zappy has no offers API, so these are local constants
 // (the ZAPPY20 code matches the one already surfaced in OffersSection).
 const TRUST_OFFERS = [
@@ -278,7 +278,7 @@ function TrustOfferCards() {
   );
 }
 
-/* ─── UC-style image service card ──────────────────────────────────────── */
+/* UC-style image service card */
 function ServiceImageCard({ item, nav }) {
   const t = useT();
   // Live price from the admin Service Catalog — single source of truth. When the
@@ -324,7 +324,7 @@ function ServiceImageCard({ item, nav }) {
   );
 }
 
-/* ─── Gradient poster tile ─────────────────────────────────────────────── */
+/* Gradient poster tile */
 function PosterTile({ svc, nav }) {
   const t = useT();
   const { key, name, Icon, grad, shadow, eta } = svc;
@@ -354,7 +354,7 @@ function PosterTile({ svc, nav }) {
   );
 }
 
-/* ─── Compact poster tile ──────────────────────────────────────────────── */
+/* Compact poster tile */
 function CompactTile({ svc, nav }) {
   const t = useT();
   const { key, name, Icon, grad, eta } = svc;
@@ -383,7 +383,7 @@ function CompactTile({ svc, nav }) {
   );
 }
 
-/* ─── Compact image tile ───────────────────────────────────────────────── */
+/* Compact image tile */
 function CompactImageTile({ svc, nav }) {
   const { key, name, img, eta } = svc;
   return (
@@ -408,7 +408,7 @@ function CompactImageTile({ svc, nav }) {
   );
 }
 
-/* ─── Section header ───────────────────────────────────────────────────── */
+/* Section header */
 function SectionHeader({ title, badge, badgeColor = 'bg-slate-100 text-slate-800', onSeeAll }) {
   const t = useT();
   return (
@@ -426,7 +426,7 @@ function SectionHeader({ title, badge, badgeColor = 'bg-slate-100 text-slate-800
   );
 }
 
-/* ─── Main component ───────────────────────────────────────────────────── */
+/* Main component */
 /**
  * Whatever is happening right now, at the top of the home screen.
  *
@@ -534,7 +534,7 @@ export default function HomePage() {
     return result;
   })();
 
-  // Re-engagement banner (#99): show "book again" nudge if last completed order was >7 days ago
+  // Re-engagement banner: show "book again" nudge if last completed order was >7 days ago
   const lastCompleted = pastJobs.find(j => j.outcome === 'completed');
   const daysSinceLastOrder = lastCompleted
     ? Math.floor((Date.now() - new Date(lastCompleted.raw.completedAt || lastCompleted.createdAt).getTime()) / 86_400_000)
@@ -542,7 +542,7 @@ export default function HomePage() {
   // Nothing to nudge about while something is already in flight.
   const showReengagement = daysSinceLastOrder !== null && daysSinceLastOrder >= 7 && !activeJob;
 
-  /* ── GPS location detection — high-accuracy multi-sample + smart reverse geocode ── */
+  /* GPS location detection — high-accuracy multi-sample + smart reverse geocode */
   const { getCurrent } = useGeolocation();
   const [loc, setLoc] = useState(() => {
     const cached = loadGeoLocation();
@@ -656,7 +656,7 @@ export default function HomePage() {
       <IntroSplash />
       <div className="min-h-screen bg-white bg-noise overflow-x-hidden w-full">
 
-        {/* ─── Premium Navbar ───────────────────────────────────────── */}
+        {/* Premium Navbar */}
         <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-slate-900/5" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
 
 
@@ -679,7 +679,7 @@ export default function HomePage() {
               />
             </button>
 
-            {/* Location widget ─ world-class GPS chip */}
+            {/* Location widget world-class GPS chip */}
             <motion.button
               onClick={() => setLocSheet(true)}
               className="flex-1 md:flex-none md:w-[280px] min-w-0 flex items-center gap-2 md:gap-3 px-3 md:px-4 h-11 md:h-14 rounded-[20px] relative overflow-hidden text-left bg-slate-50/50 hover:bg-indigo-50/50 border border-slate-200/50 hover:border-indigo-200/80 transition-colors"
@@ -739,7 +739,7 @@ export default function HomePage() {
               <ChevronDown size={14} className="text-indigo-400 shrink-0" />
             </motion.button>
 
-            {/* ─── Desktop Search bar ───────────────────────────────────────────── */}
+            {/* Desktop Search bar */}
             <div className="hidden md:block flex-1 max-w-2xl mx-auto">
               <div className="w-full flex items-center gap-3 rounded-[24px] pl-6 pr-3 h-14 bg-slate-50 border border-slate-200/80 shadow-inner hover:bg-white hover:border-indigo-300/60 transition-colors">
                 <button onClick={() => setSpotOpen(true)} className="flex items-center gap-3 flex-1 text-left h-full min-w-0">
@@ -778,7 +778,7 @@ export default function HomePage() {
           </div>
         </header>
 
-        {/* ─── Mobile Search bar ───────────────────────────────────────────── */}
+        {/* Mobile Search bar */}
         <div className="md:hidden bg-white/80 backdrop-blur-md px-4 pt-3 pb-5 border-b border-slate-900/5">
           <div className="w-full flex items-center gap-2 rounded-[20px] pl-4 pr-2 h-14 bg-slate-50 border border-slate-200/80 shadow-inner">
             <button onClick={() => setSpotOpen(true)} className="flex items-center gap-3 flex-1 text-left h-full min-w-0">
@@ -804,7 +804,7 @@ export default function HomePage() {
         )}
 
         {isMobile ? (
-          /* ═══ Mobile hero — banner + live trust bar + card grid + promo + offers ═══ */
+          /* Mobile hero — banner + live trust bar + card grid + promo + offers */
           <div className="max-w-7xl w-full mx-auto px-4 pt-3 pb-2">
             {/* Hero banner — cropped to the dark artwork only (headline, avatars,
                 "48+ Happy Customers" are baked into the PNG). The trust bar below
@@ -859,7 +859,7 @@ export default function HomePage() {
             <TrustOfferCards />
           </div>
         ) : (
-          /* ═══ Desktop hero — original greeting + floating grid + carousel ═══ */
+          /* Desktop hero — original greeting + floating grid + carousel */
           <div className="max-w-7xl w-full mx-auto px-4 md:px-6 pt-2 md:pt-5 pb-5">
             <div className="mb-4 md:mb-5 flex items-end justify-between gap-3">
               <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
@@ -885,7 +885,7 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* ─── Book Again (card style) ──────────────────────────────── */}
+        {/* Book Again (card style) */}
         {quickRebooks.length > 0 && (
           <div className="max-w-7xl w-full mx-auto px-4 md:px-6 mt-6">
             <div className="flex items-center gap-2 mb-3 px-1">
@@ -920,20 +920,20 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* ─── Premium Dashboard Widgets Removed ─── */}
+        {/* Premium Dashboard Widgets Removed */}
 
 
 
         <div className="max-w-7xl w-full mx-auto px-4 md:px-6">
 
-          {/* ─── Featured carousel (mobile only — desktop shows it in the hero) ─ */}
+          {/* Featured carousel (mobile only — desktop shows it in the hero) */}
           {isMobile && (
             <div className="mt-7">
               <HeroCarousel />
             </div>
           )}
 
-          {/* ─── Offers ──────────────────────────────────────────────── */}
+          {/* Offers */}
           <OffersSection />
 
           {/* Ad Banners */}
@@ -949,7 +949,7 @@ export default function HomePage() {
 
           <PromoBannerEvents />
 
-          {/* ─── Event Decorations ─────────────────────────────────── */}
+          {/* Event Decorations */}
           <div className="mt-7">
             <div>
               <SectionHeader title={tHome('home.sec.events','Event Decorations')} badge={tHome('home.sec.events.badge','🎉 Book a Theme')} badgeColor="bg-slate-100 text-slate-800" onSeeAll={() => nav('/events')} />
@@ -966,7 +966,7 @@ export default function HomePage() {
           </div>
 
 
-          {/* ─── Nearby Shops ── verified local businesses, browse + Pick & Go ── */}
+          {/* Nearby Shops verified local businesses, browse + Pick & Go */}
           <div className="px-4 mt-7">
             <button onClick={() => nav('/nearby-shops')}
               className="w-full flex items-center gap-4 rounded-2xl p-4 text-left ring-1 ring-indigo-100 hover:ring-indigo-200 transition"
@@ -982,9 +982,9 @@ export default function HomePage() {
             </button>
           </div>
 
-          {/* ─── Pet Assistance ── hidden until feature launch ────────── */}
+          {/* Pet Assistance hidden until feature launch */}
 
-          {/* ─── Trust strip ──────────────────────────────────────────── */}
+          {/* Trust strip */}
           <div className="px-4 mt-7 mb-4">
             <div className="rounded-2xl p-4 ring-1 ring-slate-200/60" style={{ background: 'linear-gradient(135deg,#f8fafc,#f1f5f9)' }}>
               <div className="flex items-center justify-around">
@@ -1010,7 +1010,7 @@ export default function HomePage() {
         <LensModal open={lensOpen} onClose={() => setLensOpen(false)} />
       </div>
 
-      {/* ── Location Search Sheet ── */}
+      {/* Location Search Sheet */}
       <AnimatePresence>
         {locSheet && (
           <>

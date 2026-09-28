@@ -99,7 +99,7 @@ const petPassportSchema = new mongoose.Schema({
     phone: String,
   },
 
-  /* ── Safety. Shown to providers; decides whether a job may be taken. ── */
+  /* Safety. Shown to providers; decides whether a job may be taken. */
   temperament: {
     type: String,
     enum: ['calm', 'friendly', 'energetic', 'anxious', 'aggressive', 'unknown'],
@@ -113,7 +113,7 @@ const petPassportSchema = new mongoose.Schema({
   specialHandling: String,
   behaviourNotes: String,
 
-  /* ── Care instructions ── */
+  /* Care instructions */
   dietPreferences: String,
   feedingInstructions: String,
   walkingInstructions: String,

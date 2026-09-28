@@ -5,7 +5,7 @@ import { ArrowLeft, SlidersHorizontal, Star, Heart, TrendingUp, X, Play, SearchX
 import { useGetEventThemesQuery, useGetEventCategoriesQuery, useToggleSaveEventThemeMutation } from '@shared/services/api';
 import toast from 'react-hot-toast';
 
-/* ── Category Styles Map ─────────────────────────────────────────────────── */
+/* Category Styles Map */
 const CATEGORY_MAP = {
   'birthday': { img: '/images/events/event_birthday.webp', gradient: 'from-pink-600/90 via-pink-500/50 to-transparent' },
   'baby-shower': { img: '/images/events/event_baby.webp', gradient: 'from-blue-600/90 via-blue-500/50 to-transparent' },
@@ -34,7 +34,7 @@ const SORT_OPTIONS = [
   { value: 'newest',     label: 'Newest', icon: null },
 ];
 
-/* ── Theme Card (Reused from HomePage for consistency) ────────────────── */
+/* Theme Card (Reused from HomePage for consistency) */
 function ThemeCard({ theme, onSave }) {
   const navigate = useNavigate();
   return (
@@ -112,7 +112,7 @@ export default function EventCategoryPage() {
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-20 font-sans">
       
-      {/* ── Premium Hero Section ── */}
+      {/* Premium Hero Section */}
       <div className="relative overflow-hidden sm:rounded-b-[3rem] shadow-xl pb-10 pt-safe">
         {/* Background Image & Gradients */}
         <div className="absolute inset-0 bg-slate-900">
@@ -150,7 +150,7 @@ export default function EventCategoryPage() {
         </div>
       </div>
 
-      {/* ── Main Content Container ── */}
+      {/* Main Content Container */}
       <div className="max-w-5xl mx-auto px-5 -mt-6 relative z-20">
         
         {/* Sort & Filter Bar */}
@@ -203,7 +203,7 @@ export default function EventCategoryPage() {
           </div>
         </div>
 
-        {/* ── Grid ── */}
+        {/* Grid */}
         <div className="mt-8">
           {isLoading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">

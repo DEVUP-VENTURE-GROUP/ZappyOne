@@ -61,7 +61,7 @@ async function computeWellnessScore(workerId) {
 
   if (!worker) return null;
 
-  /* ── Compute signals ── */
+  /* Compute signals */
 
   const completedLast7d  = recentOrders.filter(o => o.status === 'completed').length;
   const cancelledLast7d  = recentOrders.filter(o => o.status === 'cancelled').length;
@@ -91,7 +91,7 @@ async function computeWellnessScore(workerId) {
     if (dayBuckets.has(d.toDateString())) { consecutiveDays++; } else { break; }
   }
 
-  /* ── Score calculation (each signal contributes deductions) ── */
+  /* Score calculation (each signal contributes deductions) */
 
   let score = 10;
 
@@ -121,7 +121,7 @@ async function computeWellnessScore(workerId) {
 
   score = Math.max(1, Math.min(10, Math.round(score * 10) / 10));
 
-  /* ── Intervention recommendation ── */
+  /* Intervention recommendation */
   let intervention = null;
   let badge = null;
 

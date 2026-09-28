@@ -11,7 +11,7 @@ import toast from 'react-hot-toast';
 import { selectAuth } from '@shared/modules/auth/authSlice';
 import { useGetReferralCodeQuery, useGetReferralHistoryQuery } from '@shared/services/api';
 
-// ── helpers ──────────────────────────────────────────────────────────────────
+// helpers
 
 function rupees(paise) {
   return Math.floor((paise || 0) / 100);
@@ -32,7 +32,7 @@ function timeAgo(iso) {
   return `${months} month${months > 1 ? 's' : ''} ago`;
 }
 
-// ── Confetti Particle Emitter ────────────────────────────────────────────────
+// Confetti Particle Emitter
 function Confetti({ active }) {
   if (!active) return null;
   return (
@@ -59,7 +59,7 @@ function Confetti({ active }) {
   )
 }
 
-// ── 3D Tilt Card ─────────────────────────────────────────────────────────────
+// 3D Tilt Card
 function TiltCard({ code, isLoading, copied, handleCopyCode }) {
   const x = useMotionValue(0);
   const y = useMotionValue(0);
@@ -133,7 +133,7 @@ function TiltCard({ code, isLoading, copied, handleCopyCode }) {
   )
 }
 
-// ── Main Page ─────────────────────────────────────────────────────────────────
+// Main Page
 export default function ReferralPage() {
   const navigate = useNavigate();
   const auth = useSelector(selectAuth);
@@ -205,7 +205,7 @@ export default function ReferralPage() {
     <div className="min-h-screen bg-[#030712] text-white pb-32 font-sans overflow-x-hidden selection:bg-indigo-500/30">
       <Confetti active={showConfetti} />
       
-      {/* ── Immersive Hero Background ─────────────────────────────────────────── */}
+      {/* Immersive Hero Background */}
       <div className="fixed inset-0 pointer-events-none z-0">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] md:w-[800px] h-[600px] bg-indigo-900/20 rounded-full blur-[120px]" />
         <div className="absolute bottom-0 right-0 w-[400px] md:w-[600px] h-[600px] bg-fuchsia-900/10 rounded-full blur-[100px]" />
@@ -213,7 +213,7 @@ export default function ReferralPage() {
       </div>
 
       <div className="relative z-10">
-        {/* ── Header ──────────────────────────────────────────────────────────── */}
+        {/* Header */}
         <div className="px-4 pt-12 pb-6 flex items-center justify-between">
           <motion.button 
             onClick={() => navigate(-1)} 
@@ -241,12 +241,12 @@ export default function ReferralPage() {
             </p>
           </motion.div>
 
-          {/* ── 3D VIP Card ───────────────────────────────────────────────────── */}
+          {/* 3D VIP Card */}
           <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.1, type: "spring", stiffness: 200, damping: 20 }}>
             <TiltCard code={code} isLoading={isLoading} copied={copied} handleCopyCode={handleCopyCode} />
           </motion.div>
 
-          {/* ── Bento Stats Grid ──────────────────────────────────────────────── */}
+          {/* Bento Stats Grid */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="grid grid-cols-3 gap-3 mt-8">
             <div className="bg-white/5 border border-white/10 rounded-2xl p-4 backdrop-blur-md flex flex-col items-center justify-center text-center relative overflow-hidden group hover:bg-white/10 transition-colors">
               <div className="absolute top-0 right-0 w-16 h-16 bg-indigo-500/20 rounded-full blur-xl transition-all group-hover:scale-150" />
@@ -280,7 +280,7 @@ export default function ReferralPage() {
              </motion.div>
           )}
 
-          {/* ── Share Actions ─────────────────────────────────────────────────── */}
+          {/* Share Actions */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="mt-8">
             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 pl-1">Share the wealth</p>
             <div className="grid grid-cols-2 gap-3">
@@ -301,7 +301,7 @@ export default function ReferralPage() {
             </motion.button>
           </motion.div>
 
-          {/* ── Recent Activity ───────────────────────────────────────────────── */}
+          {/* Recent Activity */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="mt-10 mb-8">
             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4 pl-1">Activity Log</p>
             

@@ -31,11 +31,11 @@ export function prettyService(code = '') {
     .trim();
 }
 
-/* ── Navigation model ─────────────────────────────────────────────────────────
+/* Navigation model
    Each item routes to a real worker route, or scrolls to an in-page section
    (`scroll`) for surfaces that live on the dashboard itself (My Jobs, Bookings).
    Keeping this as data means the sidebar and bottom bar can't drift apart.
-──────────────────────────────────────────────────────────────────────────────*/
+ */
 /**
  * Worker navigation — ONE list, three presentations.
  *
@@ -72,7 +72,7 @@ const TONE = {
   rose: { bg: 'bg-rose-50', fg: 'text-rose-600' },
 };
 
-/* ── Avatar ───────────────────────────────────────────────────────────────── */
+/* Avatar */
 export function Avatar({ url, initials, size = 40, ring = true }) {
   return (
     <span
@@ -86,7 +86,7 @@ export function Avatar({ url, initials, size = 40, ring = true }) {
   );
 }
 
-/* ── Online / Offline toggle (shared web + mobile) ────────────────────────────
+/* Online / Offline toggle (shared web + mobile)
    Single control: the pill shows the current state AND flips it. (A second
    "Go Online" button here was redundant — same onToggle — so it was removed.) */
 export function OnlineControl({ isOnline, busy, onToggle }) {
@@ -124,7 +124,7 @@ export function OnlineControl({ isOnline, busy, onToggle }) {
   );
 }
 
-/* ── Web sidebar ──────────────────────────────────────────────────────────── */
+/* Web sidebar */
 export const WorkerSidebar = memo(function WorkerSidebar({ activeKey, unread, onNavigate, onGoOnline, isOnline }) {
   return (
     <aside className="fixed inset-y-0 left-0 hidden w-64 flex-col border-r border-slate-200 bg-white lg:flex">
@@ -190,7 +190,7 @@ export const WorkerSidebar = memo(function WorkerSidebar({ activeKey, unread, on
   );
 });
 
-/* ── Mobile bottom nav ────────────────────────────────────────────────────── */
+/* Mobile bottom nav */
 export function WorkerBottomNav({ activeKey, onNavigate }) {
   return (
     <nav
@@ -223,7 +223,7 @@ export function WorkerBottomNav({ activeKey, onNavigate }) {
   );
 }
 
-/* ── Greeting / hero card ─────────────────────────────────────────────────── */
+/* Greeting / hero card */
 export function GreetingCard({ name, locationLabel, isOnline, busy, disabled, onToggle }) {
   return (
     <section className="rounded-2xl border border-slate-200 bg-zappy-50/60 p-4 sm:p-5">
@@ -249,7 +249,7 @@ export function GreetingCard({ name, locationLabel, isOnline, busy, disabled, on
   );
 }
 
-/* ── Stat card ────────────────────────────────────────────────────────────── */
+/* Stat card */
 export const StatCard = memo(function StatCard({ Icon, tone = 'blue', label, value, sub, subTone, onClick }) {
   const t = TONE[tone] || TONE.blue;
   return (
@@ -273,7 +273,7 @@ export const StatCard = memo(function StatCard({ Icon, tone = 'blue', label, val
   );
 });
 
-/* ── Card shell ───────────────────────────────────────────────────────────── */
+/* Card shell */
 export function Panel({ title, action, children, id, className = '' }) {
   return (
     <section id={id} className={`rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 ${className}`}>
@@ -301,7 +301,7 @@ export function EmptyState({ Icon = Search, title, sub, action }) {
   );
 }
 
-/* ── Earnings line chart (SVG, no dependency) ─────────────────────────────── */
+/* Earnings line chart (SVG, no dependency) */
 export function EarningsChart({ points }) {
   // `points` = [{ label, value }] for the last 7 days. Pure SVG so there's no
   // charting library to ship; the shape mirrors the reference exactly.
@@ -352,7 +352,7 @@ export function EarningsChart({ points }) {
   );
 }
 
-/* ── Earnings overview panel ──────────────────────────────────────────────── */
+/* Earnings overview panel */
 export function EarningsOverview({ weekRupees, deltaPct, points, onViewDetails }) {
   const up = deltaPct >= 0;
   return (
@@ -382,7 +382,7 @@ export function EarningsOverview({ weekRupees, deltaPct, points, onViewDetails }
   );
 }
 
-/* ── Performance grid ─────────────────────────────────────────────────────── */
+/* Performance grid */
 export function PerformanceGrid({ items }) {
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -397,10 +397,10 @@ export function PerformanceGrid({ items }) {
   );
 }
 
-/* ── Quick access — worker tools grid ─────────────────────────────────────────
+/* Quick access — worker tools grid
    The full set of worker tools carried over from the original dashboard, each
    routing to a real, existing worker route. Shown on both web and mobile.
-──────────────────────────────────────────────────────────────────────────────*/
+ */
 /**
  * Tools that are NOT in the navigation.
  *
@@ -445,7 +445,7 @@ export function QuickAccess({ onOpen }) {
 }
 
 
-/* ── Job requests (tabbed) ────────────────────────────────────────────────── */
+/* Job requests (tabbed) */
 export function JobRequests({ tabs, activeTab, onTab, jobs, isOnline, onGoOnline, onOpenJob }) {
   return (
     <Panel id="job-requests" title="Job Requests">
@@ -517,7 +517,7 @@ export function JobRequests({ tabs, activeTab, onTab, jobs, isOnline, onGoOnline
   );
 }
 
-/* ── Today's schedule ─────────────────────────────────────────────────────── */
+/* Today's schedule */
 export function TodaySchedule({ jobs, onOpenJob, onViewCalendar }) {
   return (
     <Panel
@@ -571,7 +571,7 @@ export function TodaySchedule({ jobs, onOpenJob, onViewCalendar }) {
   );
 }
 
-/* ── Recently completed (web) ─────────────────────────────────────────────── */
+/* Recently completed (web) */
 export function RecentlyCompleted({ jobs, onOpenJob, onViewAll }) {
   return (
     <Panel

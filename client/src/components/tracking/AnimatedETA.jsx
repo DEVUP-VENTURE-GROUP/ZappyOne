@@ -12,7 +12,7 @@ import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Zap, Navigation } from 'lucide-react';
 
-/* ─── CSS injected once ──────────────────────────────────────── */
+/* CSS injected once */
 function ensureStyles() {
   if (document.getElementById('aeta-css')) return;
   const s = document.createElement('style');

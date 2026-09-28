@@ -53,9 +53,9 @@ async function run() {
       { upsert: true, new: true }
     );
     i += 1;
-    console.log(`  ✓ ${c.key} (${c.customerLabel})`);
+    console.log(` ${c.key} (${c.customerLabel})`);
   }
-  console.log(`✅ Seeded ${CATEGORIES.length} categories.`);
+  console.log(`Seeded ${CATEGORIES.length} categories.`);
   await mongoose.disconnect();
 }
 

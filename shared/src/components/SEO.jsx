@@ -98,7 +98,7 @@ export default function SEO({
   return null;
 }
 
-/* ─── Service metadata map ────────────────────────────────────────────────── */
+/* Service metadata map */
 export const SERVICE_META = {
   // Vehicle
   puncture:           { name: 'Puncture Repair', desc: 'Doorstep tyre puncture repair for bike and car. Mechanic arrives in 30 minutes with all tools. Bike puncture from ₹150, car puncture from ₹250.', min: 150, max: 500, keywords: 'puncture repair near me, tyre puncture repair at home, bike puncture repair, car tyre puncture, doorstep puncture repair' },
@@ -148,7 +148,7 @@ export const SERVICE_META = {
   elder_companion:    { name: 'Elder Care Assistant', desc: 'Dedicated companion for senior citizens. Our trained helpers assist with daily activities, medicines, doctor visits.', min: 300, max: 1500, keywords: 'elder care at home near me, senior citizen helper, old age care service' },
 };
 
-/* ─── Build service-specific JSON-LD ──────────────────────────────────────── */
+/* Build service-specific JSON-LD */
 export function buildServiceJsonLd(serviceKey, city = null) {
   const m = SERVICE_META[serviceKey];
   if (!m) return [];
@@ -231,7 +231,7 @@ export function buildServiceJsonLd(serviceKey, city = null) {
   ];
 }
 
-/* ─── Pre-built schemas for static pages ─────────────────────────────────── */
+/* Pre-built schemas for static pages */
 export const HOME_SCHEMA = [
   {
     '@context': 'https://schema.org',

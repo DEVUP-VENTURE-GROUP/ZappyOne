@@ -15,7 +15,7 @@
  */
 
 const FLOWS = [
-  /* ─── Display: the §10 worked example ─────────────────────────────────── */
+  /* Display: the §10 worked example */
   {
     code: 'laptop_display',
     category: 'laptop',
@@ -150,7 +150,7 @@ const FLOWS = [
     ],
   },
 
-  /* ─── Power: the §11 worked example ───────────────────────────────────── */
+  /* Power: the §11 worked example */
   {
     code: 'laptop_power',
     category: 'laptop',
@@ -273,7 +273,7 @@ const FLOWS = [
     ],
   },
 
-  /* ─── Liquid damage: always inspected, never quoted blind ─────────────── */
+  /* Liquid damage: always inspected, never quoted blind */
   {
     code: 'laptop_liquid',
     category: 'laptop',
@@ -340,7 +340,7 @@ const FLOWS = [
     ],
   },
 
-  /* ─── Performance / storage triage ────────────────────────────────────── */
+  /* Performance / storage triage */
   {
     code: 'laptop_performance',
     category: 'laptop',
@@ -424,7 +424,7 @@ const FLOWS = [
     ],
   },
 
-  /* ─── "I don't know what's wrong" — §12 ───────────────────────────────── */
+  /* "I don't know what's wrong" — §12 */
   {
     code: 'laptop_triage',
     category: 'laptop',

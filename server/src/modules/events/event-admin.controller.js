@@ -46,7 +46,7 @@ async function upsertCategory(req, res, next) {
   try { res.json({ category: await svc.adminUpsertCategory(req.body) }); } catch (e) { next(e); }
 }
 
-/* ── Partner KYC actions ──────────────────────────────────────────────────── */
+/* Partner KYC actions */
 
 async function getPartner(req, res, next) {
   try {

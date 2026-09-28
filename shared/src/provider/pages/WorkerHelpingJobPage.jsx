@@ -148,7 +148,7 @@ export default function WorkerHelpingJobPage() {
   );
 }
 
-/* ─── Shopping / pickup execution — §12, §13, §14 ─────────────────────── */
+/* Shopping / pickup execution — §12, §13, §14 */
 
 function ShoppingExecution({ task, onChanged, disabled }) {
   const [updateItem] = useUpdateHelpingItemMutation();
@@ -295,7 +295,7 @@ function ItemRow({ item, disabled, onPurchase, onUnavailable, onAlternative }) {
   );
 }
 
-/* ─── Return / exchange execution — §27, §28, §29 ─────────────────────── */
+/* Return / exchange execution — §27, §28, §29 */
 
 function ReturnExecution({ task, onChanged }) {
   const [proofs, setProofs] = useState([]);

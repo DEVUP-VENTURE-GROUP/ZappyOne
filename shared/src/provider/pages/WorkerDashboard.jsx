@@ -44,7 +44,7 @@ import {
 } from '../../components/worker/DashboardUI';
 import toast from 'react-hot-toast';
 
-/* ─── Constants (mirror backend incentive.service.js) ─────────── */
+/* Constants (mirror backend incentive.service.js) */
 
 const MILESTONES = [
   { jobs: 10,  bonusRs: 200  },
@@ -89,7 +89,7 @@ const SERVICE_ICON_MAP = {
   minor_roadside_repair: { Icon: AlertTriangle,  bg: 'bg-red-100',     color: 'text-red-600'    },
 };
 
-/* ─── Notification bell with live unread count ───────────────── */
+/* Notification bell with live unread count */
 function NotifBell({ token, onTap }) {
   const { data } = useListNotificationsQuery(
     { page: 1, unreadOnly: true },
@@ -129,7 +129,7 @@ function NotifBell({ token, onTap }) {
   );
 }
 
-/* ─── Helpers ────────────────────────────────────────────────── */
+/* Helpers */
 
 function getGreeting() {
   const h = new Date().getHours();
@@ -158,7 +158,7 @@ function computeTrustScore(acceptRate, rating, completedJobs) {
   ));
 }
 
-/* ─── Main ───────────────────────────────────────────────────── */
+/* Main */
 
 export default function WorkerDashboard() {
   const nav      = useNavigate();
@@ -468,7 +468,7 @@ export default function WorkerDashboard() {
     try { await rejectOffer(worker.currentOffer._id).unwrap(); } finally { dispatch(clearOffer()); }
   }
 
-  /* ── Derived view state (all from real API data) ─────────────────────── */
+  /* Derived view state (all from real API data) */
   const firstName   = (me?.name || 'Worker').trim().split(/\s+/)[0];
   const initials    = (me?.name || 'W').split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
   const walletBalanceRs = Math.round((me?.wallet?.balance ?? 0) / 100);
@@ -1165,7 +1165,7 @@ function OfferModal({ offer, onAccept, onReject, accepting }) {
             </div>
           </div>
 
-          {/* ── Job Details — always visible ──────────────────────────── */}
+          {/* Job Details — always visible */}
           {(() => {
             const dark = isExpress || isPriority;
             const cardBg = dark ? 'rgba(255,255,255,0.07)' : '#f8fafc';

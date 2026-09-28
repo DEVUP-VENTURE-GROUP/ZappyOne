@@ -40,7 +40,7 @@ const inr = (rupees) => Math.round(rupees * 100);
  * is how customers end up feeling misled.
  */
 const MOBILE_PRICING = [
-  /* ── Display: glass-only vs full assembly ── */
+  /* Display: glass-only vs full assembly */
   { repair: 'glass_replacement', min: inr(700), typical: inr(1400), max: inr(2600), part: inr(700), labour: inr(600), warranty: 90 },
   { repair: 'glass_replacement', brand: 'apple', min: inr(2500), typical: inr(4500), max: inr(8000), part: inr(3000), labour: inr(1200), warranty: 90 },
 
@@ -51,23 +51,23 @@ const MOBILE_PRICING = [
 
   { repair: 'touch_digitizer_repair', min: inr(900), typical: inr(1700), max: inr(3200), part: inr(900), labour: inr(600), warranty: 90 },
 
-  /* ── Power ── */
+  /* Power */
   { repair: 'battery_replacement', min: inr(1100), typical: inr(1800), max: inr(2900), part: inr(1100), labour: inr(400), warranty: 180 },
   { repair: 'battery_replacement', brand: 'apple', min: inr(2500), typical: inr(4200), max: inr(7000), part: inr(3200), labour: inr(700), warranty: 180 },
   { repair: 'charging_port_repair', min: inr(600), typical: inr(1200), max: inr(2400), part: inr(500), labour: inr(600), warranty: 90 },
   { repair: 'wireless_charging_repair', min: inr(900), typical: inr(1800), max: inr(3500), part: inr(900), labour: inr(700), warranty: 90 },
   { repair: 'port_cleaning', min: inr(200), typical: inr(350), max: inr(600), part: 0, labour: inr(350), warranty: 0 },
 
-  /* ── Audio ── */
+  /* Audio */
   { repair: 'speaker_replacement', min: inr(500), typical: inr(950), max: inr(1800), part: inr(450), labour: inr(450), warranty: 90 },
   { repair: 'earpiece_replacement', min: inr(450), typical: inr(850), max: inr(1600), part: inr(400), labour: inr(400), warranty: 90 },
   { repair: 'microphone_repair', min: inr(500), typical: inr(1000), max: inr(2000), part: inr(450), labour: inr(500), warranty: 90 },
 
-  /* ── Camera ── */
+  /* Camera */
   { repair: 'camera_replacement', min: inr(1100), typical: inr(2300), max: inr(4800), part: inr(1600), labour: inr(600), warranty: 90 },
   { repair: 'camera_glass_replacement', min: inr(400), typical: inr(800), max: inr(1500), part: inr(300), labour: inr(450), warranty: 30 },
 
-  /* ── Body ── */
+  /* Body */
   { repair: 'back_glass_replacement', min: inr(700), typical: inr(1500), max: inr(3200), part: inr(800), labour: inr(600), warranty: 30 },
   { repair: 'back_glass_replacement', brand: 'apple', min: inr(2000), typical: inr(4500), max: inr(9000), part: inr(3000), labour: inr(1200), warranty: 30 },
   { repair: 'back_panel_replacement', min: inr(600), typical: inr(1300), max: inr(2800), part: inr(700), labour: inr(550), warranty: 30 },
@@ -76,7 +76,7 @@ const MOBILE_PRICING = [
   { repair: 'button_flex_repair', min: inr(500), typical: inr(1000), max: inr(2000), part: inr(400), labour: inr(550), warranty: 90 },
   { repair: 'vibration_motor_replacement', min: inr(400), typical: inr(800), max: inr(1500), part: inr(350), labour: inr(400), warranty: 90 },
 
-  /* ── Software ── */
+  /* Software */
   { repair: 'software_flash', min: inr(400), typical: inr(800), max: inr(1500), part: 0, labour: inr(800), warranty: 0 },
   { repair: 'software_optimisation', min: inr(250), typical: inr(500), max: inr(1000), part: 0, labour: inr(500), warranty: 0 },
   { repair: 'data_transfer_service', min: inr(300), typical: inr(600), max: inr(1200), part: 0, labour: inr(600), warranty: 0 },
@@ -90,52 +90,52 @@ const MOBILE_PRICING = [
  * band is deliberately wide and MacBooks carry their own row.
  */
 const LAPTOP_PRICING = [
-  /* ── Display ── */
+  /* Display */
   { repair: 'lt_screen_replacement', min: inr(3200), typical: inr(5500), max: inr(9500), part: inr(4000), labour: inr(900), warranty: 180 },
   { repair: 'lt_screen_replacement', brand: 'apple-laptop', min: inr(9000), typical: inr(18000), max: inr(38000), part: inr(15000), labour: inr(2000), warranty: 180 },
   { repair: 'lt_display_cable_repair', min: inr(900), typical: inr(1800), max: inr(3500), part: inr(800), labour: inr(900), warranty: 90 },
   { repair: 'lt_bezel_replacement', min: inr(700), typical: inr(1400), max: inr(2800), part: inr(700), labour: inr(600), warranty: 30 },
   { repair: 'lt_webcam_replacement', min: inr(700), typical: inr(1500), max: inr(3000), part: inr(800), labour: inr(600), warranty: 90 },
 
-  /* ── Power ── */
+  /* Power */
   { repair: 'lt_battery_replacement', min: inr(2200), typical: inr(3800), max: inr(6500), part: inr(2800), labour: inr(700), warranty: 180 },
   { repair: 'lt_battery_replacement', brand: 'apple-laptop', min: inr(6000), typical: inr(11000), max: inr(20000), part: inr(9000), labour: inr(1500), warranty: 180 },
   { repair: 'lt_adapter_replacement', min: inr(1200), typical: inr(2200), max: inr(4000), part: inr(1800), labour: inr(300), warranty: 180 },
   { repair: 'lt_charging_port_repair', min: inr(900), typical: inr(1700), max: inr(3200), part: inr(600), labour: inr(900), warranty: 90 },
   { repair: 'lt_power_button_repair', min: inr(700), typical: inr(1400), max: inr(2600), part: inr(500), labour: inr(800), warranty: 90 },
 
-  /* ── Input ── */
+  /* Input */
   { repair: 'lt_keyboard_replacement', min: inr(1200), typical: inr(2300), max: inr(4200), part: inr(1500), labour: inr(700), warranty: 90 },
   { repair: 'lt_keycap_repair', min: inr(200), typical: inr(450), max: inr(900), part: inr(150), labour: inr(300), warranty: 0 },
   { repair: 'lt_keyboard_cleaning', min: inr(400), typical: inr(700), max: inr(1300), part: 0, labour: inr(700), warranty: 0 },
   { repair: 'lt_trackpad_replacement', min: inr(1100), typical: inr(2200), max: inr(4200), part: inr(1500), labour: inr(700), warranty: 90 },
 
-  /* ── Body ── */
+  /* Body */
   { repair: 'lt_hinge_repair', min: inr(1000), typical: inr(1900), max: inr(3800), part: inr(700), labour: inr(1100), warranty: 90 },
   { repair: 'lt_body_panel_replacement', min: inr(1200), typical: inr(2400), max: inr(4800), part: inr(1500), labour: inr(900), warranty: 30 },
   { repair: 'lt_palmrest_replacement', min: inr(1400), typical: inr(2800), max: inr(5500), part: inr(1900), labour: inr(900), warranty: 30 },
 
-  /* ── Storage & memory ── */
+  /* Storage & memory */
   { repair: 'lt_ssd_upgrade', min: inr(2800), typical: inr(4500), max: inr(8000), part: inr(3500), labour: inr(700), warranty: 365 },
   { repair: 'lt_ssd_replacement', min: inr(2800), typical: inr(4500), max: inr(8000), part: inr(3500), labour: inr(700), warranty: 365 },
   { repair: 'lt_hdd_replacement', min: inr(1800), typical: inr(3000), max: inr(5200), part: inr(2400), labour: inr(600), warranty: 365 },
   { repair: 'lt_ram_upgrade', min: inr(1800), typical: inr(3000), max: inr(5500), part: inr(2300), labour: inr(600), warranty: 365 },
   { repair: 'lt_ram_replacement', min: inr(1800), typical: inr(3000), max: inr(5500), part: inr(2300), labour: inr(600), warranty: 365 },
 
-  /* ── Thermal ── */
+  /* Thermal */
   { repair: 'lt_thermal_service', min: inr(700), typical: inr(1300), max: inr(2400), part: inr(250), labour: inr(1000), warranty: 90 },
   { repair: 'lt_fan_replacement', min: inr(900), typical: inr(1800), max: inr(3400), part: inr(1100), labour: inr(700), warranty: 90 },
   { repair: 'lt_internal_cleaning', min: inr(600), typical: inr(1100), max: inr(2000), part: 0, labour: inr(1100), warranty: 0 },
   { repair: 'lt_full_service', min: inr(1200), typical: inr(2200), max: inr(4000), part: inr(300), labour: inr(1900), warranty: 90 },
 
-  /* ── Connectivity & audio ── */
+  /* Connectivity & audio */
   { repair: 'lt_wifi_card_replacement', min: inr(800), typical: inr(1600), max: inr(3000), part: inr(900), labour: inr(700), warranty: 90 },
   { repair: 'lt_speaker_replacement', min: inr(700), typical: inr(1400), max: inr(2800), part: inr(800), labour: inr(600), warranty: 90 },
   { repair: 'lt_audio_jack_repair', min: inr(600), typical: inr(1200), max: inr(2400), part: inr(400), labour: inr(800), warranty: 90 },
   { repair: 'lt_microphone_repair', min: inr(600), typical: inr(1200), max: inr(2400), part: inr(400), labour: inr(800), warranty: 90 },
   { repair: 'lt_port_repair', min: inr(800), typical: inr(1600), max: inr(3200), part: inr(500), labour: inr(1100), warranty: 90 },
 
-  /* ── Software ── */
+  /* Software */
   { repair: 'lt_os_installation', min: inr(500), typical: inr(900), max: inr(1600), part: 0, labour: inr(900), warranty: 0 },
   { repair: 'lt_os_repair', min: inr(500), typical: inr(900), max: inr(1600), part: 0, labour: inr(900), warranty: 0 },
   { repair: 'lt_virus_removal', min: inr(500), typical: inr(900), max: inr(1600), part: 0, labour: inr(900), warranty: 0 },

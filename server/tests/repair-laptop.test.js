@@ -130,7 +130,7 @@ beforeAll(async () => {
 
 afterAll(async () => { await stopMongo(); });
 
-/* ─── Catalog isolation ────────────────────────────────────────────────── */
+/* Catalog isolation */
 
 describe('vertical isolation', () => {
   it('keeps both catalogs in the same database without collision', async () => {
@@ -164,7 +164,7 @@ describe('vertical isolation', () => {
   });
 });
 
-/* ─── §10: symptom ≠ repair ────────────────────────────────────────────── */
+/* §10: symptom ≠ repair */
 
 describe('§10 — screen flickering must not assume a panel', () => {
   it('resolves to a CABLE repair when the fault follows the lid angle', async () => {
@@ -228,7 +228,7 @@ describe('§10 — screen flickering must not assume a panel', () => {
   });
 });
 
-/* ─── §11: the power tree ──────────────────────────────────────────────── */
+/* §11: the power tree */
 
 describe('§11 — power diagnosis', () => {
   it('identifies a faulty adapter before suggesting internal work', async () => {
@@ -275,7 +275,7 @@ describe('§11 — power diagnosis', () => {
   });
 });
 
-/* ─── §12: "I don't know what's wrong" ─────────────────────────────────── */
+/* §12: "I don't know what's wrong" */
 
 describe('§12 — guided triage', () => {
   it('turns a vague complaint into a concrete repair', async () => {
@@ -304,7 +304,7 @@ describe('§12 — guided triage', () => {
   });
 });
 
-/* ─── §16–§19: part specification and fitment ──────────────────────────── */
+/* §16–§19: part specification and fitment */
 
 describe('part specifications', () => {
   it('rejects a display part with no panel spec', async () => {
@@ -372,7 +372,7 @@ describe('part specifications', () => {
   });
 });
 
-/* ─── §27: doorstep eligibility is a real operational claim ────────────── */
+/* §27: doorstep eligibility is a real operational claim */
 
 describe('§27 — service mode eligibility', () => {
   it('keeps board-level work out of doorstep', async () => {

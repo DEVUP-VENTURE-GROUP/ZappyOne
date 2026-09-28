@@ -89,7 +89,7 @@ export default function BrandSelectPage() {
     nav(`/book/${code}${withSelection ? selectionToQuery(selection) : ''}`);
   };
 
-  /* ── Guards ────────────────────────────────────────────────────────── */
+  /* Guards */
 
   if (loading && !service) {
     return (
@@ -289,7 +289,7 @@ export default function BrandSelectPage() {
           </p>
         </div>
 
-        {/* ── Sticky continue bar ──────────────────────────────────────── */}
+        {/* Sticky continue bar */}
         <div
           className="sticky bottom-0 z-40 border-t border-slate-200/70 bg-white/90 backdrop-blur-xl"
           style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}

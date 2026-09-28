@@ -116,7 +116,7 @@ async function seedInDepthTaxonomy() {
     await ServiceCatalog.findOneAndUpdate({ code: s.code }, { ...s, isActive: true }, { upsert: true, new: true });
   }
 
-  console.log('✅ In-Depth Taxonomy Migration Completed! All home services cleanly separated.');
+  console.log('In-Depth Taxonomy Migration Completed! All home services cleanly separated.');
   await mongoose.disconnect();
 }
 

@@ -129,7 +129,7 @@ async function run() {
 
     console.log(`• ${w.name || w._id}`);
     console.log(`    old (${old.length}): ${old.join(', ')}`);
-    console.log(`    new (${newSkills.length}): ${newSkills.join(', ') || '⚠️  EMPTY — worker must re-pick in portal'}`);
+    console.log(`    new (${newSkills.length}): ${newSkills.join(', ') || 'EMPTY — worker must re-pick in portal'}`);
     if (newPrimary !== (w.skillPrimary ?? null)) console.log(`    primary: ${w.skillPrimary ?? '—'} -> ${newPrimary ?? '—'}`);
 
     if (APPLY) {

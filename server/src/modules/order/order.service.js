@@ -64,7 +64,7 @@ async function createOrder({ userId, service, subCategory, pickupLocation, dropL
   // Geo-readiness check: if there are zero approved workers within 25km of the
   // pickup location, fail fast with a user-friendly message instead of creating
   // an order that will sit in 'searching' until the 5-minute dispatch window
-  // exhausts and then silently fails. (#85)
+  // exhausts and then silently fails.
   // Geo-readiness fast-fail: if there are zero skilled workers near the pickup,
   // reject in seconds with a clear message instead of letting the order sit in
   // 'searching' for the full window and then silently failing.
@@ -1061,7 +1061,7 @@ async function workerComplete({ orderId, workerId, completionPhotos = [] }) {
     }).catch(() => {});
   }, 2 * 60 * 1000);
 
-  // Re-engagement trigger (#99): schedule a "book again" nudge for 7 days later.
+  // Re-engagement trigger: schedule a "book again" nudge for 7 days later.
   // Only fires if the user hasn't placed another order in that window.
   // Uses a Redis deferred key so we don't need a cron job.
   const reengagementKey = `reengagement:${order.userId}:scheduled`;
@@ -1337,7 +1337,7 @@ async function workerCancel({ orderId, workerId, reason }) {
     { jobId: `order_${orderId}_redispatch_${Date.now()}` }
   );
 
-  // ── Escalation: too many PENALISED cancels within the window → auto-offline ──
+  // Escalation: too many PENALISED cancels within the window → auto-offline
   // Genuine reasons (breakdown/emergency/…) are free and do NOT count here.
   let escalated = false;
   if (counts) {
@@ -1367,7 +1367,7 @@ async function workerCancel({ orderId, workerId, reason }) {
     }
   }
 
-  // ── ZeroWait anti-abuse ──────────────────────────────────────────────────
+  // ZeroWait anti-abuse
   // Ghosting a job you PRE-ACCEPTED is the one thing that can break instant match:
   // the customer was promised a pro with no accept step. So cancelling an
   // instant-matched job costs Ready Mode for a cooling-off period (on top of the
@@ -1431,7 +1431,7 @@ async function workerCancelPreview({ orderId, workerId, reason }) {
 }
 
 /**
- * Worker arrived but customer didn't respond after waiting. (#73)
+ * Worker arrived but customer didn't respond after waiting.
  * Penalty-free for worker. Customer charged arrived-cancellation fee.
  * Worker receives arrival compensation. Support ticket auto-created.
  */
@@ -1517,7 +1517,7 @@ async function workerNoResponseCancel({ orderId, workerId }) {
 }
 
 /**
- * Worker cannot complete job because required spare part is unavailable. (#71)
+ * Worker cannot complete job because required spare part is unavailable.
  * Worker receives a diagnostic fee. Customer refunded minus diagnostic fee.
  * Part request logged for admin to source.
  */
@@ -1597,7 +1597,7 @@ async function workerPartUnavailableCancel({ orderId, workerId, partName, notes 
 
 const RATING_WINDOW_SEC = 7 * 24 * 3600; // 7 days to rate after completion
 
-// Basic spam-word filter for review text (#88)
+// Basic spam-word filter for review text
 const REVIEW_SPAM_WORDS = ['http://', 'https://', 'whatsapp', 'telegram', 'instagram', 'call me at', 'contact me'];
 function containsSpam(text) {
   if (!text) return false;
@@ -1627,7 +1627,7 @@ async function rateOrder({ orderId, userId, rating, review }) {
     }
   }
 
-  // Review spam check (#88)
+  // Review spam check
   if (review && containsSpam(review)) {
     throw Object.assign(
       new Error('Review contains prohibited content (URLs or contact details not allowed)'),
@@ -1638,7 +1638,7 @@ async function rateOrder({ orderId, userId, rating, review }) {
     throw Object.assign(new Error('Review must be under 1000 characters'), { status: 400 });
   }
 
-  // Velocity limit: max 5 ratings per user per day (#87)
+  // Velocity limit: max 5 ratings per user per day
   // Blocks fake-account farms: new phone numbers batch-rating one worker.
   const ratingVelocityKey = `rating:velocity:${userId}:${new Date().toISOString().slice(0, 10)}`;
   const { redis: r } = require('../../config/redis');
@@ -1652,7 +1652,7 @@ async function rateOrder({ orderId, userId, rating, review }) {
     );
   }
 
-  // Cross-order duplicate guard: same user rating same worker within 48h (#87)
+  // Cross-order duplicate guard: same user rating same worker within 48h
   if (order.workerId) {
     const recent48h = new Date(Date.now() - 48 * 3600 * 1000);
     const recentRating = await orderRepo.model().findOne({

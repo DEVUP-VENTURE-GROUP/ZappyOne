@@ -11,7 +11,7 @@ import {
   useAdminWorkerDeductionsQuery, useAdminWorkerIncentivesQuery,
 } from '@shared/services/api';
 
-/* ─── Permanent doc hook — server-proxied, no URL expiry ─────────────────── */
+/* Permanent doc hook — server-proxied, no URL expiry */
 function useKycDoc(workerId, docType, token, enabled = true) {
   const [url, setUrl]       = useState(null);
   const [loading, setLoading] = useState(false);
@@ -52,7 +52,7 @@ import {
 } from './_shared';
 import toast from 'react-hot-toast';
 
-/* ─── Reverse geocoding (OpenStreetMap Nominatim — free, no key) ──────────── */
+/* Reverse geocoding (OpenStreetMap Nominatim — free, no key) */
 const geoCache = {};
 async function reverseGeocode(lat, lng) {
   const key = `${lat?.toFixed(4)},${lng?.toFixed(4)}`;
@@ -84,7 +84,7 @@ function useAddress(lat, lng) {
   return addr;
 }
 
-/* ─── KYC doc image viewer ───────────────────────────────────────────────── */
+/* KYC doc image viewer */
 function KycDocViewer({ workerId, onClose }) {
   const { accessToken: token } = useSelector(selectAuth);
   const { data, isLoading: metaLoading } = useAdminKycDocUrlsQuery(workerId);
@@ -215,7 +215,7 @@ function KycDocViewer({ workerId, onClose }) {
   );
 }
 
-/* ─── Earnings tab ───────────────────────────────────────────────────────── */
+/* Earnings tab */
 const REASON_LABEL = {
   cancellation_fee: 'Cancellation Fee',
   platform_commission: 'Commission',
@@ -347,7 +347,7 @@ function WorkerEarningsTab({ workerId }) {
   );
 }
 
-/* ─── Worker detail side panel ───────────────────────────────────────────── */
+/* Worker detail side panel */
 function WorkerDetailPanel({ worker, onClose, onRefetch }) {
   const [tab, setTab]           = useState('details');
   const [showDocs, setShowDocs] = useState(false);
@@ -642,7 +642,7 @@ function WorkerDetailPanel({ worker, onClose, onRefetch }) {
   );
 }
 
-/* ─── Main Workers page ──────────────────────────────────────────────────── */
+/* Main Workers page */
 const SKILLS = [
   'puncture', 'plumbing', 'electrical', 'helper', 'carpenter', 'ac_repair',
   'cleaning', 'painting', 'screen_replacement', 'battery_replacement',

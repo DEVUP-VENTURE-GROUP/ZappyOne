@@ -14,7 +14,7 @@ import { selectAuth } from '../../modules/auth/authSlice';
 import LiveSelfieCapture from '../../components/kyc/LiveSelfieCapture';
 import toast from 'react-hot-toast';
 
-/* ─── Hook: load worker's own doc as blob (no URL expiry) ─────────────────── */
+/* Hook: load worker's own doc as blob (no URL expiry) */
 function useMyDoc(docType, token, enabled) {
   const [url, setUrl]       = useState(null);
   const [loading, setLoading] = useState(false);
@@ -42,7 +42,7 @@ function useMyDoc(docType, token, enabled) {
   return { url, loading };
 }
 
-/* ─── Read-only doc viewer for the worker's own documents ─────────────────── */
+/* Read-only doc viewer for the worker's own documents */
 function MyDocuments({ token, kycStatus }) {
   const hasDoc = kycStatus !== 'not_submitted';
   const [lightbox, setLightbox] = useState(null);
@@ -140,7 +140,7 @@ export default function WorkerKycPage() {
     } catch (err) { toast.error(err.data?.error || 'Failed'); }
   }
 
-  /* ── Shared S3 PUT helper ──────────────────────────────────────────────── */
+  /* Shared S3 PUT helper */
   async function uploadToS3(signed, body, contentType) {
     let putRes;
     try {
@@ -155,7 +155,7 @@ export default function WorkerKycPage() {
     if (!putRes.ok) throw new Error('Upload failed. Please try again or use a smaller file.');
   }
 
-  /* ── File upload (Aadhaar / License) ──────────────────────────────────── */
+  /* File upload (Aadhaar / License) */
   async function handleUpload(docKey, file) {
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) { toast.error('File too large — max 5MB'); return; }
@@ -172,7 +172,7 @@ export default function WorkerKycPage() {
     }
   }
 
-  /* ── Live selfie capture callback ──────────────────────────────────────── */
+  /* Live selfie capture callback */
   async function handleSelfieCaptured(blob, metadata) {
     setShowCamera(false);
     try {
@@ -189,7 +189,7 @@ export default function WorkerKycPage() {
     }
   }
 
-  /* ── Submit ─────────────────────────────────────────────────────────────── */
+  /* Submit */
   async function submit() {
     if (!urls.aadhaarUrl || !urls.licenseUrl || !urls.selfieUrl) {
       toast.error('Aadhaar, driving license, and live selfie are all required');
@@ -209,7 +209,7 @@ export default function WorkerKycPage() {
     }
   }
 
-  /* ── Loading / status screens ───────────────────────────────────────────── */
+  /* Loading / status screens */
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center">
@@ -375,7 +375,7 @@ export default function WorkerKycPage() {
             </div>
           </div>
 
-          {/* ── Document uploads (Aadhaar + License) ───────────────────────── */}
+          {/* Document uploads (Aadhaar + License) */}
           {DOCS.map(({ key, label, sublabel, Icon, required }) => {
             const uploaded    = !!urls[key];
             const isUploading = uploading === key;
@@ -417,7 +417,7 @@ export default function WorkerKycPage() {
             );
           })}
 
-          {/* ── Live Selfie Card ────────────────────────────────────────────── */}
+          {/* Live Selfie Card */}
           <div className={`card ${selfieUploaded ? 'ring-success-200 bg-success-50/30' : 'ring-indigo-100 bg-indigo-50/30'}`}>
             <div className="flex items-start gap-3">
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${selfieUploaded ? 'bg-success-100' : 'bg-indigo-100'}`}>

@@ -118,7 +118,7 @@ function nextAction(status, serviceMode) {
 
 const QUOTABLE = ['ARRIVED', 'DIAGNOSING', 'AT_WORKSHOP', 'REPAIR_IN_PROGRESS'];
 
-/* ─── Quote builder ────────────────────────────────────────────────────── */
+/* Quote builder */
 
 /**
  * Raising a price for work the customer has not yet agreed to.
@@ -241,7 +241,7 @@ function QuoteBuilder({ bookingId, repairCode, additional = false, onSent, onCan
   );
 }
 
-/* ─── QA checklist ─────────────────────────────────────────────────────── */
+/* QA checklist */
 
 function QAPanel({ bookingId, onDone }) {
   const { data, isLoading } = useRepairQaChecklistQuery(bookingId);
@@ -335,7 +335,7 @@ function QAPanel({ bookingId, onDone }) {
   );
 }
 
-/* ─── Page ─────────────────────────────────────────────────────────────── */
+/* Page */
 
 export default function WorkerRepairJobPage() {
   const { id } = useParams();

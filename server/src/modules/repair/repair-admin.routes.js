@@ -38,7 +38,7 @@ mountCrud('product-families', ctrl.productFamilies);
 mountCrud('product-series', ctrl.productSeries);
 mountCrud('configurations', ctrl.configurations);
 
-/* ─── Pricing ──────────────────────────────────────────────────────────── */
+/* Pricing */
 // Literal paths before `/:id` so "history"/"pending" are not read as ids.
 router.get('/repair/reference-pricing/history', ctrl.referencePricing.history);
 router.get('/repair/reference-pricing', ctrl.referencePricing.list);
@@ -49,11 +49,11 @@ router.get('/repair/provider-pricing/pending', ctrl.providerPricing.pending);
 router.get('/repair/provider-pricing', ctrl.providerPricing.list);
 router.post('/repair/provider-pricing/:id/decide', ctrl.providerPricing.decide);
 
-/* ─── Configuration ────────────────────────────────────────────────────── */
+/* Configuration */
 router.get('/repair/config', ctrl.config.get);
 router.put('/repair/config', ctrl.config.update);
 
-/* ─── Approvals + customer requests ────────────────────────────────────── */
+/* Approvals + customer requests */
 router.get('/repair/approvals', ctrl.approvals.list);
 router.post('/repair/approvals/:id/decide', ctrl.approvals.decide);
 
@@ -67,7 +67,7 @@ router.post('/repair/provider-requests/:id/reject', ctrl.providerRequests.reject
 router.get('/repair/identification-requests', ctrl.identificationRequests.list);
 router.post('/repair/identification-requests/:id/resolve', ctrl.identificationRequests.resolve);
 
-/* ─── Operations ───────────────────────────────────────────────────────── */
+/* Operations */
 router.get('/repair/dashboard', ctrl.operations.dashboard);
 router.get('/repair/bookings', ctrl.operations.bookings);
 router.get('/repair/quotes', ctrl.operations.quotes);

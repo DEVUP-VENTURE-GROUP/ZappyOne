@@ -38,7 +38,7 @@ async function fixAllCategories() {
     { $set: { category: 'bike' } }
   );
 
-  console.log('✅ All services in MongoDB categorized with 100% precision!');
+  console.log('All services in MongoDB categorized with 100% precision!');
   await mongoose.disconnect();
 }
 

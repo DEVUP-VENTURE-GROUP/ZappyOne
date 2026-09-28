@@ -19,7 +19,7 @@ const MONGO_URI = process.env.MONGO_URI || process.env.MONGODB_URI || 'mongodb:/
 
 // code → { name: short display name, price: fixed service price in ₹ (0 = don't set) }
 const SERVICES = {
-  // ── Bike ──────────────────────────────────────────────
+  // Bike
   bike_puncture:            { name: 'Bike Puncture',        price: 120 },
   bike_foam_wash:           { name: 'Bike Wash',            price: 150 },
   bike_periodic_service:    { name: 'Bike Service',         price: 400 },
@@ -28,7 +28,7 @@ const SERVICES = {
   bike_brake_issue:         { name: 'Bike Brake Repair',    price: 200 },
   bike_battery_issue:       { name: 'Bike Battery',         price: 250 },
   bike_breakdown:           { name: 'Bike Breakdown Help',  price: 300 },
-  // ── Car ───────────────────────────────────────────────
+  // Car
   car_puncture:             { name: 'Car Puncture',         price: 150 },
   car_foam_wash_detailing:  { name: 'Car Wash',             price: 500 },
   periodic_car_service:     { name: 'Car Service',          price: 800 },
@@ -37,7 +37,7 @@ const SERVICES = {
   battery_jump_start:       { name: 'Jump Start',           price: 200 },
   fuel_delivery:            { name: 'Fuel Delivery',        price: 100 },
   car_breakdown:            { name: 'Car Breakdown Help',   price: 350 },
-  // ── Home ──────────────────────────────────────────────
+  // Home
   fan_installation:         { name: 'Fan Installation',     price: 250 },
   mcb_switch_repair:        { name: 'Switch / MCB Repair',  price: 250 },
   tap_repair:               { name: 'Tap Repair',           price: 200 },
@@ -45,16 +45,16 @@ const SERVICES = {
   door_lock_install:        { name: 'Door Lock Repair',     price: 300 },
   washing_machine_repair:   { name: 'Washing Machine Repair', price: 350 },
   refrigerator_repair:      { name: 'Fridge Repair',        price: 400 },
-  // ── Pet ───────────────────────────────────────────────
+  // Pet
   pet_grooming:             { name: 'Pet Grooming',         price: 500 },
   pet_walking:              { name: 'Pet Walking',          price: 150 },
 
-  // ── Fixed market price for the remaining SIMPLE single-rate services ──────
+  // Fixed market price for the remaining SIMPLE single-rate services
   // (grounded in the pricing engine's serviceOverrides.minFarePaise). Phone &
   // laptop repairs are intentionally EXCLUDED — they price by brand/model/tier
   // (depth). Towing is distance-priced. Both keep their own engines.
   // Price only; names are already clean so they're left untouched.
-  // ── Smart home / appliances ──
+  // Smart home / appliances
   smart_tv_install:         { price: 800  },
   smart_tv_repair:          { price: 1000 },
   cctv_install:             { price: 1200 },
@@ -63,7 +63,7 @@ const SERVICES = {
   router_troubleshoot:      { price: 450  },
   home_automation_setup:    { price: 2000 },
   smart_lock_install:       { price: 1000 },
-  // ── Events ──
+  // Events
   event_decorator:          { price: 1000 },
   event_setup_crew:         { price: 800  },
   event_helper:             { price: 500  },
@@ -75,14 +75,14 @@ const SERVICES = {
   event_photography_assist: { price: 800  },
   event_catering_assist:    { price: 800  },
   event_cleaning_crew:      { price: 600  },
-  // ── Commercial & auto ──
+  // Commercial & auto
   commercial_emergency:              { price: 800  },
   commercial_scheduled_maintenance:  { price: 600  },
   fleet_support:                     { price: 1000 },
   auto_repair:                       { price: 400  },
   van_repair:                        { price: 500  },
   minor_roadside_repair:             { price: 200  },
-  // ── Family & elder assist ──
+  // Family & elder assist
   medicine_pickup:          { price: 50  },
   hospital_companion:       { price: 500 },
   grocery_assistance:       { price: 30  },
@@ -93,12 +93,12 @@ const SERVICES = {
   elder_companion:          { price: 400 },
   elder_home_visit:         { price: 350 },
   elder_transport:          { price: 450 },
-  // ── Tank & water cleaning ──
+  // Tank & water cleaning
   water_tank_cleaning:      { price: 600 },
   overhead_tank_cleaning:   { price: 500 },
   underground_sump_cleaning:{ price: 800 },
   sintex_tank_cleaning:     { price: 400 },
-  // ── Pet ──
+  // Pet
   pet_vet_assist:           { price: 500 },
   pet_training_assist:      { price: 600 },
 };
@@ -123,10 +123,10 @@ async function run() {
       await ServiceCatalog.updateOne({ code }, { $set: set });
       if (set.name) renamed += 1;
       if (set.servicePricePaise) priced += 1;
-      console.log(`  ✓ ${code} → "${name}"${price > 0 ? `  ₹${price}` : ''}`);
+      console.log(` ${code} → "${name}"${price > 0 ? `  ₹${price}` : ''}`);
     }
   }
-  console.log(`\n✅ Renamed ${renamed}, priced ${priced}. Adjust anything in the admin Service editor.`);
+  console.log(`\nRenamed ${renamed}, priced ${priced}. Adjust anything in the admin Service editor.`);
   await mongoose.disconnect();
 }
 

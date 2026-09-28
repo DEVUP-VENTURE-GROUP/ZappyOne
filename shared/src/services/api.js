@@ -17,7 +17,7 @@ const rawBaseQuery = fetchBaseQuery({
   baseUrl: `${import.meta.env.VITE_API_URL || ''}/api`,
   // credentials: 'include' sends the httpOnly refresh-token cookie on every request.
   // The server only reads it on /auth/refresh and /auth/logout — all other routes
-  // ignore it. Required for the silent refresh flow. (#78)
+  // ignore it. Required for the silent refresh flow.
   credentials: 'include',
   prepareHeaders: (headers, { getState }) => {
     const token = getState().auth.accessToken;
@@ -137,7 +137,7 @@ export const api = createApi({
     loginWorker: b.mutation({
       query: (body) => ({ url: '/auth/worker/login', method: 'POST', body }),
     }),
-    // Worker credential login (#2)
+    // Worker credential login
     loginWorkerPassword: b.mutation({
       query: (body) => ({ url: '/auth/worker/login-password', method: 'POST', body }),
     }),
@@ -1448,7 +1448,7 @@ export const api = createApi({
       invalidatesTags: ['ShieldFund'],
     }),
 
-    // ── Event Partner dashboard ───────────────────────────────────────────────
+    // Event Partner dashboard
     partnerOverview: b.query({ query: () => '/events/partner/overview', providesTags: ['EventPartner'] }),
     partnerMe: b.query({ query: () => '/events/partner/me', providesTags: ['EventPartner'] }),
     updatePartnerMe: b.mutation({
@@ -1503,7 +1503,7 @@ export const api = createApi({
       invalidatesTags: ['EventBooking'],
     }),
 
-    // ── Events (user-facing) ──────────────────────────────────────────────────
+    // Events (user-facing)
     getEventCategories: b.query({ query: () => '/events/categories', providesTags: ['EventCategory'] }),
     getEventThemes: b.query({
       query: (params = {}) => ({ url: '/events/themes', params }),
@@ -1555,7 +1555,7 @@ export const api = createApi({
       invalidatesTags: ['EventBooking'],
     }),
 
-    // ── Events (admin) ────────────────────────────────────────────────────────
+    // Events (admin)
     adminEventThemes: b.query({
       query: (params = {}) => ({ url: adminApiPath('/events/themes'), params }),
       providesTags: ['EventTheme'],
@@ -1613,7 +1613,7 @@ export const api = createApi({
       invalidatesTags: ['EventPartner'],
     }),
 
-    // ── Shop owner dashboard ──────────────────────────────────────────────────
+    // Shop owner dashboard
     shopMe: b.query({ query: () => '/shops/me/profile', providesTags: ['Shop'] }),
     updateShopMe: b.mutation({
       query: (body) => ({ url: '/shops/me/profile', method: 'PATCH', body }),
@@ -1638,7 +1638,7 @@ export const api = createApi({
       providesTags: ['Shop'],
     }),
 
-    // ── Shops (customer-facing discovery) ─────────────────────────────────────
+    // Shops (customer-facing discovery)
     nearbyShops: b.query({
       query: (params) => ({ url: '/shops/nearby', params }),
       providesTags: ['Shop'],
@@ -1648,7 +1648,7 @@ export const api = createApi({
       providesTags: (r, e, id) => [{ type: 'Shop', id }],
     }),
 
-    // ── Shops (admin) ──────────────────────────────────────────────────────────
+    // Shops (admin)
     adminShops: b.query({
       query: (params = {}) => ({ url: adminApiPath('/shops'), params }),
       providesTags: ['Shop'],
@@ -1678,7 +1678,7 @@ export const api = createApi({
       providesTags: (r, e, id) => [{ type: 'ShopKyc', id }],
     }),
 
-    // ── Repair vertical (admin) ───────────────────────────────────────────────
+    // Repair vertical (admin)
     // One generic pair of hooks serves every catalog resource — the resource
     // name is a parameter, so adding a new one needs no new endpoint.
     adminRepairList: b.query({
@@ -1767,7 +1767,7 @@ export const api = createApi({
     }),
 
 
-    // ── Provider onboarding (shop owner OR individual technician) ─────────────
+    // Provider onboarding (shop owner OR individual technician)
     //
     // One surface for both actors: the server reads which one is calling from
     // the token and answers with the documents that kind of provider must show.
@@ -1813,7 +1813,7 @@ export const api = createApi({
       invalidatesTags: ['Onboarding'],
     }),
 
-    // ── Provider onboarding: admin ────────────────────────────────────────────
+    // Provider onboarding: admin
     adminOnboardingList: b.query({
       query: ({ resource, ...params }) => ({
         url: adminApiPath(`/onboarding/${resource}`), params,
@@ -1865,7 +1865,7 @@ export const api = createApi({
       invalidatesTags: ['Onboarding'],
     }),
 
-    // ── Repair vertical (customer + worker) ───────────────────────────────────
+    // Repair vertical (customer + worker)
     //
     // `vertical` is threaded through every catalog call and defaults to mobile,
     // so existing callers keep working while laptop (and whatever comes next)
@@ -1950,7 +1950,7 @@ export const api = createApi({
       invalidatesTags: ['MyAssets'],
     }),
 
-    /* ── Helping Services ── */
+    /* Helping Services */
     helpingServices: b.query({
       query: () => '/helping/services',
       providesTags: ['HelpingConfig'],
@@ -2041,7 +2041,7 @@ export const api = createApi({
       invalidatesTags: ['AdminHelpingTasks'],
     }),
 
-    /* ── Pet Services ── */
+    /* Pet Services */
     petCategories: b.query({ query: () => '/pet/categories', providesTags: ['PetCatalog'] }),
     petVariants: b.query({ query: (params) => ({ url: '/pet/variants', params }), providesTags: ['PetCatalog'] }),
     petBreeds: b.query({ query: (params) => ({ url: '/pet/breeds', params }), providesTags: ['PetCatalog'] }),
@@ -2205,7 +2205,7 @@ export const api = createApi({
       query: (body) => ({ url: '/repair/catalog-requests', method: 'POST', body }),
     }),
 
-    // ── Repair provider self-service ──────────────────────────────────────────
+    // Repair provider self-service
     repairOnboardingStatus: b.query({
       query: (vertical = 'mobile') => ({ url: '/repair/provider/onboarding', params: { vertical } }),
       providesTags: ['RepairProvider'],

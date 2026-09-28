@@ -5,7 +5,7 @@ const EventBooking = require('./event-booking.model');
 const EventCategory = require('./event-category.model');
 const logger = require('../../utils/logger');
 
-/* ── Profile ─────────────────────────────────────────────────────────────── */
+/* Profile */
 
 async function getMe(req, res, next) {
   try {
@@ -54,7 +54,7 @@ async function updateMe(req, res, next) {
   } catch (e) { next(e); }
 }
 
-/* ── Themes ──────────────────────────────────────────────────────────────── */
+/* Themes */
 
 async function getMyThemes(req, res, next) {
   try {
@@ -120,7 +120,7 @@ async function deleteTheme(req, res, next) {
   } catch (e) { next(e); }
 }
 
-/* ── Bookings ─────────────────────────────────────────────────────────────── */
+/* Bookings */
 
 async function getMyBookings(req, res, next) {
   try {
@@ -210,7 +210,7 @@ async function updateBookingStatus(req, res, next) {
   } catch (e) { next(e); }
 }
 
-/* ── Calendar ─────────────────────────────────────────────────────────────── */
+/* Calendar */
 
 async function getCalendar(req, res, next) {
   try {
@@ -245,7 +245,7 @@ async function unblockDate(req, res, next) {
   } catch (e) { next(e); }
 }
 
-/* ── Earnings ─────────────────────────────────────────────────────────────── */
+/* Earnings */
 
 async function getEarnings(req, res, next) {
   try {
@@ -283,7 +283,7 @@ async function getEarnings(req, res, next) {
   } catch (e) { next(e); }
 }
 
-/* ── Dashboard Overview ──────────────────────────────────────────────────── */
+/* Dashboard Overview */
 
 async function getOverview(req, res, next) {
   try {
@@ -314,7 +314,7 @@ async function getOverview(req, res, next) {
   } catch (e) { next(e); }
 }
 
-/* ── Categories (for theme upload form) ──────────────────────────────────── */
+/* Categories (for theme upload form) */
 
 async function getCategories(req, res, next) {
   try {

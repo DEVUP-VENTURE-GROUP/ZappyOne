@@ -17,7 +17,7 @@ async function deleteGenericPuncture() {
   const vRes = await ServiceVariant.deleteMany({ serviceCode: 'puncture' });
   console.log(`Deleted ${vRes.deletedCount} generic puncture service variant(s).`);
 
-  console.log('✅ Generic Puncture service permanently deleted! Only Car Puncture & Bike Puncture remain.');
+  console.log('Generic Puncture service permanently deleted! Only Car Puncture & Bike Puncture remain.');
   await mongoose.disconnect();
 }
 

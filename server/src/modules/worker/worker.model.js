@@ -5,7 +5,7 @@ const workerSchema = new mongoose.Schema(
     phone: { type: String, required: true, unique: true, index: true },
     name: { type: String, required: true, trim: true },
     email: { type: String, lowercase: true, sparse: true },
-    // Worker-chosen login ID (#2) — approved workers can sign in with
+    // Worker-chosen login ID — approved workers can sign in with
     // username / email / phone + password instead of an OTP every time.
     username: { type: String, unique: true, sparse: true, lowercase: true, trim: true, minlength: 3, maxlength: 30 },
     passwordHash: { type: String, select: false },
@@ -81,7 +81,7 @@ const workerSchema = new mongoose.Schema(
       reviewedAt: Date,
       reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin' },
       rejectionReason: String,
-      // Resubmission controls (#86)
+      // Resubmission controls
       rejectionCount: { type: Number, default: 0 },      // lifetime rejections
       lastRejectedAt: Date,                              // last rejection timestamp
       submissionHistory: [{                              // immutable audit trail
@@ -94,7 +94,7 @@ const workerSchema = new mongoose.Schema(
       }],
     },
 
-    // Trust signals — accumulated misconduct flags (#89)
+    // Trust signals — accumulated misconduct flags
     trust: {
       harassmentComplaints: { type: Number, default: 0 },   // safety complaints by users
       harassmentFlaggedAt: Date,                            // when auto-flagged for review
@@ -167,7 +167,7 @@ const workerSchema = new mongoose.Schema(
       earnedAt:   { type: Date, default: Date.now },
     }],
 
-    // Detailed service expertise, per category (#4). `skills` above stays the flat
+    // Detailed service expertise, per category. `skills` above stays the flat
     // dispatch match-set (hot path); this is the rich, customer-facing breakdown the
     // worker configures in their portal and that powers the booking worker-comparison.
     // `skills` is kept in sync from expertise.services on update.

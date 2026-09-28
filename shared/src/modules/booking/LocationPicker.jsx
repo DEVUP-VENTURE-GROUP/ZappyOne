@@ -146,7 +146,7 @@ function makeWorkerDot(emoji = '👷', accentColor = '#22c55e', serviceSlug = ''
   wrap.appendChild(bikeEl);
 
   if (isVehicle) {
-    // ── SVG Bike with spinning wheels ─────────────────────────────
+    // SVG Bike with spinning wheels
     const r = 10; // wheel radius
     const bikeW = 56, bikeH = 34;
     const wheelSpeedDur = isVehicle ? '0.55s' : '1.2s';
@@ -507,7 +507,7 @@ export default function LocationPicker({ onConfirm, onCancel, serviceLabel, serv
         finally { setSearching(false); }
       };
 
-      // ── Google Places Autocomplete (primary, if billing is enabled) ──────
+      // Google Places Autocomplete (primary, if billing is enabled)
       // Google gives the best Indian POI/landmark results, BUT if the GCP project
       // has no billing the SDK can return REQUEST_DENIED *or hang without ever
       // calling back*. A hard timeout guarantees we always fall back to Mapbox
@@ -842,11 +842,11 @@ export default function LocationPicker({ onConfirm, onCancel, serviceLabel, serv
     });
   }
 
-  /* ════════════════════════════════════════════════════════════════
+  /*
      SINGLE-SCREEN LOCATION PICKER (light) — Urban-Company style
      Search + GPS card float above an always-mounted map; a fixed centre
      pin + light bottom sheet let the user confirm the exact spot.
-  ════════════════════════════════════════════════════════════════ */
+ */
   const acc        = gpsAccuracy ?? detectedLoc?.accuracy ?? null;
   const gpsReady   = geoState === 'done' && !!detectedLoc;
   const fix        = gradeAccuracy(acc);
@@ -860,7 +860,7 @@ export default function LocationPicker({ onConfirm, onCancel, serviceLabel, serv
        as a centred, contained card so the wide page doesn't stretch it edge-to-edge. */
     <div className="flex flex-col h-full bg-[#F3F6FB] lg:max-w-2xl lg:mx-auto lg:my-6 lg:h-[calc(100%-3rem)] lg:rounded-[28px] lg:overflow-hidden lg:shadow-[0_24px_70px_-24px_rgba(15,23,42,0.45)] lg:ring-1 lg:ring-slate-200">
 
-      {/* ── Top controls: step label + search + current location ─────── */}
+      {/* Top controls: step label + search + current location */}
       <div className="shrink-0 w-full max-w-md lg:max-w-none mx-auto px-4 pt-3 pb-2.5 space-y-3">
 
         {/* Step label */}
@@ -930,7 +930,7 @@ export default function LocationPicker({ onConfirm, onCancel, serviceLabel, serv
         </div>
       </div>
 
-      {/* ── Map zone ─────────────────────────────────────────────────── */}
+      {/* Map zone */}
       <div className="relative flex-1 min-h-0 w-full max-w-md lg:max-w-none mx-auto overflow-hidden">
         {/* Map container */}
         <div id="zappy-locpick-map" className="absolute inset-0" style={{ width: '100%', height: '100%' }} />
@@ -1064,7 +1064,7 @@ export default function LocationPicker({ onConfirm, onCancel, serviceLabel, serv
             : <Crosshair size={18} strokeWidth={2.2} className="text-slate-700" />}
         </motion.button>
 
-        {/* ── Bottom sheet — overlays the bottom of the map ────────────── */}
+        {/* Bottom sheet — overlays the bottom of the map */}
         <div ref={sheetRef} className="absolute bottom-0 left-0 right-0 z-30 max-h-[82vh] max-h-[82dvh] flex flex-col justify-end pointer-events-auto select-none">
           <div className="bg-white rounded-t-3xl shadow-[0_-8px_30px_rgba(15,23,42,0.12)] border-t border-slate-100/80 flex flex-col max-h-[82vh] max-h-[82dvh] transition-all duration-300">
 

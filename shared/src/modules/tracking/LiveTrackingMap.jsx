@@ -9,7 +9,7 @@ const LERP_DURATION = 2400;
 const TRAIL_MAX = 14;
 const DRAW_DURATION = 1200;
 
-/* ─── Gen-Z neon service palette ───────────────────────────────── */
+/* Gen-Z neon service palette */
 const SVC_COLORS = {
   electrical: '#FFE66D',
   plumbing: '#4ECDC4',
@@ -38,7 +38,7 @@ function svcColor(service) {
   return SVC_COLORS[service] || DEFAULT_COLOR;
 }
 
-/* ─── CSS keyframes (injected once) ────────────────────────────── */
+/* CSS keyframes (injected once) */
 function ensureStyles() {
   if (document.getElementById('lt2-styles')) return;
   const s = document.createElement('style');
@@ -69,7 +69,7 @@ function ensureStyles() {
   document.head.appendChild(s);
 }
 
-/* ─── Top-down bike SVG (Rapido style) ─────────────────────────── */
+/* Top-down bike SVG (Rapido style) */
 function getBikeSvg(color) {
   return `<svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
     <!-- front wheel -->
@@ -89,7 +89,7 @@ function getBikeSvg(color) {
   </svg>`;
 }
 
-/* ─── Destination pin (red — customer's location) ───────────────────── */
+/* Destination pin (red — customer's location) */
 function makePickupEl(label = '📍 Go Here') {
   ensureStyles();
   const wrap = document.createElement('div');
@@ -131,7 +131,7 @@ function makePickupEl(label = '📍 Go Here') {
   return wrap;
 }
 
-/* ─── Bike marker (worker) with direction rotation ──────────────── */
+/* Bike marker (worker) with direction rotation */
 function makeWorkerEl(service, bearing = 0) {
   ensureStyles();
   const color = svcColor(service);
@@ -188,7 +188,7 @@ function makeWorkerEl(service, bearing = 0) {
   return wrap;
 }
 
-/* ─── Arrived marker (pulsing ring at pickup, no white bg) ─────── */
+/* Arrived marker (pulsing ring at pickup, no white bg) */
 function makeArrivedEl(service) {
   ensureStyles();
   const color = svcColor(service);
@@ -215,7 +215,7 @@ function makeArrivedEl(service) {
   return wrap;
 }
 
-/* ─── Bearing (heading) calculation ─────────────────────────────── */
+/* Bearing (heading) calculation */
 function calcBearing(from, to) {
   const toRad = d => d * Math.PI / 180;
   const dLng = toRad(to.lng - from.lng);
@@ -226,7 +226,7 @@ function calcBearing(from, to) {
   return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
 }
 
-/* ─── Smooth position LERP + bearing update ─────────────────────── */
+/* Smooth position LERP + bearing update */
 function animateMarkerTo(marker, from, to) {
   const bearing = calcBearing(from, to);
   const el = marker.getElement();
@@ -246,7 +246,7 @@ function animateMarkerTo(marker, from, to) {
   requestAnimationFrame(frame);
 }
 
-/* ─── Auto-fit bounds ────────────────────────────────────────────── */
+/* Auto-fit bounds */
 function fitBounds(map, pickup, worker) {
   if (!pickup) return;
   if (!worker) {
@@ -265,7 +265,7 @@ function fitBounds(map, pickup, worker) {
   });
 }
 
-/* ─── Animated route draw ────────────────────────────────────────── */
+/* Animated route draw */
 function animateRouteDraw(map, st, allCoords) {
   if (st.routeAnimFrame) cancelAnimationFrame(st.routeAnimFrame);
   const total = allCoords.length;
@@ -292,13 +292,13 @@ function animateRouteDraw(map, st, allCoords) {
   st.routeAnimFrame = requestAnimationFrame(frame);
 }
 
-/* ─── Route fetch — Google Directions primary, Mapbox fallback ──── */
+/* Route fetch — Google Directions primary, Mapbox fallback */
 async function fetchRoute(map, st, from, to) {
   const now = Date.now();
   if (st.lastRoute !== 0 && now - st.lastRoute < ROUTE_COOLDOWN) return;
   st.lastRoute = now;
 
-  // ── Google Directions via JS API (loaded globally by @react-google-maps/api)
+  // Google Directions via JS API (loaded globally by @react-google-maps/api)
   if (window.google?.maps?.DirectionsService) {
     try {
       const svc = new window.google.maps.DirectionsService();
@@ -324,7 +324,7 @@ async function fetchRoute(map, st, from, to) {
     } catch { /* fall through to Mapbox */ }
   }
 
-  // ── Mapbox Directions fallback ────────────────────────────────────
+  // Mapbox Directions fallback
   if (!TOKEN) return;
   try {
     const url =
@@ -339,7 +339,7 @@ async function fetchRoute(map, st, from, to) {
   } catch { /* non-critical */ }
 }
 
-/* ─── Speed trail ────────────────────────────────────────────────── */
+/* Speed trail */
 function updateTrail(map, st, pos) {
   st.trailPositions.push({ ...pos, t: Date.now() });
   if (st.trailPositions.length > TRAIL_MAX) st.trailPositions.shift();
@@ -352,9 +352,9 @@ function updateTrail(map, st, pos) {
   map.getSource('trail').setData({ type: 'FeatureCollection', features });
 }
 
-/* ════════════════════════════════════════════════════════════════
+/*
    Component
-════════════════════════════════════════════════════════════════ */
+ */
 export default function LiveTrackingMap({ pickup, workerLocation, service, status, height = '60vh', pickupLabel = '📍 Go Here' }) {
   const containerRef = useRef(null);
   const [mapReady, setMapReady] = useState(false);
@@ -376,7 +376,7 @@ export default function LiveTrackingMap({ pickup, workerLocation, service, statu
     drAnchor: null,   // { lat, lng, hdg, spd, anchoredAt }
   });
 
-  /* ── Init map ── */
+  /* Init map */
   useEffect(() => {
     if (!containerRef.current || !TOKEN) return;
     const st = sr.current;
@@ -402,7 +402,7 @@ export default function LiveTrackingMap({ pickup, workerLocation, service, statu
     map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right');
 
     map.on('load', () => {
-      /* ── Route source (lineMetrics = gradient along length) ── */
+      /* Route source (lineMetrics = gradient along length) */
       map.addSource('route', {
         type: 'geojson',
         lineMetrics: true,
@@ -440,7 +440,7 @@ export default function LiveTrackingMap({ pickup, workerLocation, service, statu
         },
       });
 
-      /* ── Speed trail dots ── */
+      /* Speed trail dots */
       map.addSource('trail', {
         type: 'geojson',
         data: { type: 'FeatureCollection', features: [] },
@@ -493,7 +493,7 @@ export default function LiveTrackingMap({ pickup, workerLocation, service, statu
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* ── Pickup prop ── */
+  /* Pickup prop */
   useEffect(() => {
     const st = sr.current;
     st.pendingPickup = pickup || null;
@@ -507,7 +507,7 @@ export default function LiveTrackingMap({ pickup, workerLocation, service, statu
     fitBounds(st.map, pickup, st.pendingWorker);
   }, [pickup]);
 
-  /* ── Worker location prop — anchor + dead reckoning loop ── */
+  /* Worker location prop — anchor + dead reckoning loop */
   useEffect(() => {
     const st = sr.current;
     st.pendingWorker = workerLocation || null;
@@ -567,7 +567,7 @@ export default function LiveTrackingMap({ pickup, workerLocation, service, statu
     st.drFrame = requestAnimationFrame(drStep);
   }, [workerLocation]);
 
-  /* ── Service colour change → rebuild worker marker ── */
+  /* Service colour change → rebuild worker marker */
   useEffect(() => {
     const st = sr.current;
     st.workerService = service || null;
@@ -583,7 +583,7 @@ export default function LiveTrackingMap({ pickup, workerLocation, service, statu
     }
   }, [service]);
 
-  /* ── Render ── */
+  /* Render */
   if (!TOKEN || mapError) {
     return (
       <div style={{ height }} className="rounded-2xl bg-slate-900 ring-1 ring-slate-700 flex flex-col items-center justify-center gap-2">
@@ -622,13 +622,13 @@ export default function LiveTrackingMap({ pickup, workerLocation, service, statu
         style={{ opacity: mapReady ? 1 : 0, transition: 'opacity 0.5s ease' }}
       />
 
-      {/* ── Bottom gradient fade (Rapido-style depth) ── */}
+      {/* Bottom gradient fade (Rapido-style depth) */}
       {mapReady && (
         <div className="absolute bottom-0 inset-x-0 h-20 pointer-events-none z-10"
           style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 100%)' }} />
       )}
 
-      {/* ── Status pill overlay ── */}
+      {/* Status pill overlay */}
       {mapReady && (
         <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 pointer-events-none whitespace-nowrap">
           {isArrived && (
@@ -668,7 +668,7 @@ export default function LiveTrackingMap({ pickup, workerLocation, service, statu
         </div>
       )}
 
-      {/* ── Top-right service color badge (brand accent) ── */}
+      {/* Top-right service color badge (brand accent) */}
       {mapReady && workerLocation && (
         <div
           className="absolute top-3 right-12 z-20 w-2.5 h-2.5 rounded-full pointer-events-none"

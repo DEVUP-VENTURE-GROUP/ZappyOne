@@ -17,7 +17,7 @@ import { selectAuth } from '../../modules/auth/authSlice';
 import { getSocket } from '../../services/socket';
 import toast from 'react-hot-toast';
 
-/* ─── Worker-specific type → visual config ──────────────────────────────── */
+/* Worker-specific type → visual config */
 const TYPE_CFG = {
   // KYC
   kyc_approved:         { emoji: '✅', label: 'KYC Approved',      bg: 'bg-green-50',  ring: 'ring-green-200',  color: 'text-green-700',  Icon: FileCheck          },
@@ -48,7 +48,7 @@ const TYPE_CFG = {
 };
 const DEFAULT_CFG = { emoji: '🔔', label: 'Notification', bg: 'bg-slate-50', ring: 'ring-slate-200', color: 'text-slate-600', Icon: Bell };
 
-/* ─── Tab filter config ─────────────────────────────────────────────────── */
+/* Tab filter config */
 const TABS = [
   { id: 'all',      label: 'All'      },
   { id: 'jobs',     label: 'Jobs'     },
@@ -61,7 +61,7 @@ const TAB_TYPES = {
   kyc:      ['kyc_approved', 'kyc_rejected', 'kyc_clarification'],
 };
 
-/* ─── Helpers ───────────────────────────────────────────────────────────── */
+/* Helpers */
 function timeAgo(d) {
   const m = Math.floor((Date.now() - new Date(d)) / 60000);
   if (m < 1)  return 'Just now';
@@ -95,7 +95,7 @@ function deepLinkPath(n) {
   return '/worker';
 }
 
-/* ─── Single notification card ──────────────────────────────────────────── */
+/* Single notification card */
 function NotifCard({ n, onRead, nav }) {
   const cfg = TYPE_CFG[n.type] ?? DEFAULT_CFG;
   const { Icon } = cfg;
@@ -162,7 +162,7 @@ function DaySection({ label, items, onRead, nav }) {
   );
 }
 
-/* ─── Empty state ───────────────────────────────────────────────────────── */
+/* Empty state */
 function EmptyState({ tab }) {
   return (
     <div className="flex flex-col items-center justify-center py-20 gap-4 text-center px-8">
@@ -184,7 +184,7 @@ function EmptyState({ tab }) {
   );
 }
 
-/* ─── Root ──────────────────────────────────────────────────────────────── */
+/* Root */
 export default function WorkerNotificationsPage() {
   const nav  = useNavigate();
   const { accessToken: token } = useSelector(selectAuth);

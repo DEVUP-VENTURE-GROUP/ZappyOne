@@ -20,7 +20,7 @@ function buildApp() {
   app.set("trust proxy", 1);
   app.use(requestIdMiddleware);
   app.use(cookieParser()); // needed for req.cookies (httpOnly refresh token)
-  // ── Helmet with explicit Content-Security-Policy (#77) ──────────────────
+  // Helmet with explicit Content-Security-Policy
   // Tight CSP eliminates most XSS vectors even if an attacker injects script.
   // Each directive is the minimum required for the app to function.
   app.use(helmet({
@@ -61,7 +61,7 @@ function buildApp() {
     referrerPolicy:  { policy: 'strict-origin-when-cross-origin' },
     hsts:            { maxAge: 31536000, includeSubDomains: true, preload: true },
   }));
-  // ── CORS ──────────────────────────────────────────────────────────────
+  // CORS
   // Origins live in config/origins.js so Express and socket.io can never drift
   // apart again (they did: the subdomains were allowed here but not on sockets).
   // Production: only our domains. Dev: allow everything for localhost.
@@ -79,7 +79,7 @@ function buildApp() {
   app.use(globalLimiter);
   app.use(timeoutMiddleware(30_000)); // kill requests hanging >30s
 
-  // Fail fast when MongoDB is disconnected — before routes but after health check (#91)
+  // Fail fast when MongoDB is disconnected — before routes but after health check
   // Health check is below this; payment webhook is mounted before express.json() above.
 
   // Deep health check — returns individual dependency status.
@@ -122,7 +122,7 @@ function buildApp() {
     res.status(status).json({ ok: isHealthy, ts: Date.now(), checks });
   });
 
-  // Return 503 immediately for all API routes when Mongo is down (#91)
+  // Return 503 immediately for all API routes when Mongo is down
   app.use('/api', requireMongo);
 
   mountRoutes(app);

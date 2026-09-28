@@ -88,7 +88,7 @@ beforeAll(async () => {
 
 afterAll(async () => { await stopMongo(); });
 
-/* ─── Catalog integrity ──────────────────────────────────────────────────── */
+/* Catalog integrity */
 
 describe('catalog integrity', () => {
   it('registers the vertical', () => {
@@ -149,7 +149,7 @@ describe('catalog integrity', () => {
   });
 });
 
-/* ─── Shallow catalog: tank type as brand, capacity as model ─────────────── */
+/* Shallow catalog: tank type as brand, capacity as model */
 
 describe('tank type occupies the brand slot, capacity the model slot', () => {
   it('seeds no product types — the flow stays shallow like mobile', () => {
@@ -182,7 +182,7 @@ describe('tank type occupies the brand slot, capacity the model slot', () => {
   });
 });
 
-/* ─── Safety: the confined-space / flooding gate ─────────────────────────── */
+/* Safety: the confined-space / flooding gate */
 
 describe('a confined-space or flooding report never becomes a priced repair', () => {
   it('asks the hazard question FIRST and unskippably on both safety-relevant trees', () => {
@@ -227,7 +227,7 @@ describe('a confined-space or flooding report never becomes a priced repair', ()
   });
 });
 
-/* ─── Diagnosis: a symptom is not a repair (§10) ─────────────────────────── */
+/* Diagnosis: a symptom is not a repair (§10) */
 
 describe('leakage is triaged by WHERE it leaks, not assumed', () => {
   const flow = () => flowByCode.get('wt_leak_triage');
@@ -308,7 +308,7 @@ describe('flushing is not offered again right after it was just done', () => {
   });
 });
 
-/* ─── QA & skill gating ───────────────────────────────────────────────────── */
+/* QA & skill gating */
 
 describe('QA and skill requirements', () => {
   it('has a QA checklist for every service category', async () => {
@@ -338,7 +338,7 @@ describe('QA and skill requirements', () => {
   });
 });
 
-/* ─── Isolation ──────────────────────────────────────────────────────────── */
+/* Isolation */
 
 describe('verticals stay apart', () => {
   it('keeps every water-tank-care code in its own namespace', async () => {

@@ -32,7 +32,7 @@ const PALE = 'var(--ill-pale, #EFF6FF)';
 const WARM = '#F59E0B';
 const WHITE = '#FFFFFF';
 
-/* ── Shared pieces ────────────────────────────────────────────────────────── */
+/* Shared pieces */
 
 /** The warm cone behind every subject — the signature of the set. */
 function Spotlight() {
@@ -141,10 +141,10 @@ function Spanner({ x, y, rotate = 0, s = 1, color = INK }) {
   );
 }
 
-/* ── The set ──────────────────────────────────────────────────────────────── */
+/* The set */
 
 const DRAWINGS = {
-  /* ─────────── Automotive ─────────── */
+  /* Automotive */
 
   'periodic-service': () => (
     <>
@@ -598,7 +598,7 @@ const DRAWINGS = {
     </>
   ),
 
-  /* ─────────── Devices ─────────── */
+  /* Devices */
 
   phone: () => (
     <>
@@ -809,7 +809,7 @@ const DRAWINGS = {
     </>
   ),
 
-  /* ─────────── Home trades ─────────── */
+  /* Home trades */
 
   electrical: () => (
     <>
@@ -866,7 +866,7 @@ const DRAWINGS = {
     </>
   ),
 
-  /* ─────────── People & occasions ─────────── */
+  /* People & occasions */
 
   helper: () => (
     <>
@@ -917,7 +917,7 @@ const DRAWINGS = {
     </>
   ),
 
-  /* ─────────── Fallback ─────────── */
+  /* Fallback */
 
   tools: () => (
     <>

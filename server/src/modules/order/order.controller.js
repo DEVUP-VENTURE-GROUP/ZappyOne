@@ -294,7 +294,7 @@ async function nearbyPros(req, res, next) {
         const w = byId.get(String(id));
         if (!w) return null;
         // Pull the experience + specialties for THIS service from the worker's
-        // configured expertise (#4) so the customer can compare like-for-like.
+        // configured expertise so the customer can compare like-for-like.
         const exp = (w.expertise || []).find((e) => (e.services || []).includes(service));
         // Distance + rough ETA (≈3 min/km urban + 5 min prep) for the comparison card.
         const coords = w.location?.coordinates;
@@ -410,7 +410,7 @@ async function workerCancelPreview(req, res, next) {
 }
 
 /**
- * Worker reports customer didn't answer door / respond. (#73)
+ * Worker reports customer didn't answer door / respond.
  * - Worker must be in 'arrived' status.
  * - Order is cancelled without worker penalty.
  * - Customer is charged the 'arrived' cancellation fee (same as if they cancelled).
@@ -427,7 +427,7 @@ async function workerReportNoResponse(req, res, next) {
 }
 
 /**
- * Worker reports required spare part is unavailable mid-diagnosis. (#71)
+ * Worker reports required spare part is unavailable mid-diagnosis.
  * - Order must be in 'in_progress' or 'arrived'.
  * - Order is cancelled; worker receives a diagnostic fee (₹150 default).
  * - Customer refunded minus diagnostic fee.
@@ -543,7 +543,7 @@ async function reportWorker(req, res, next) {
 
     const HARASSMENT_THRESHOLD = 3;
 
-    // Auto-flag worker for admin review after threshold complaints (#89)
+    // Auto-flag worker for admin review after threshold complaints
     if (worker && worker.trust.harassmentComplaints >= HARASSMENT_THRESHOLD && !worker.trust.harassmentFlaggedAt) {
       await Worker.updateOne({ _id: order.workerId }, {
         $set: {

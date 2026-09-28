@@ -6,7 +6,7 @@ const { validate } = require('../../middlewares/validate');
 
 const router = express.Router();
 
-// ── Customer-facing discovery — any authenticated role can browse ───────────
+// Customer-facing discovery — any authenticated role can browse
 router.get(
   '/nearby',
   authenticate,
@@ -20,7 +20,7 @@ router.get(
 );
 router.get('/:id', authenticate, ctrl.getPublicProfile);
 
-// ── Shop owner's own account — everything below requires role 'shop' ────────
+// Shop owner's own account — everything below requires role 'shop'
 router.use(authenticate, requireRole('shop'));
 
 router.get('/me/profile', ctrl.getMe);

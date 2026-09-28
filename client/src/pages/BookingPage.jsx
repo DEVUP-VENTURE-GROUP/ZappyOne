@@ -32,7 +32,7 @@ import { trackSearch } from '../hooks/useTelemetry';
 import toast from 'react-hot-toast';
 import SEO, { SERVICE_META as SEO_SERVICE_META, buildServiceJsonLd, BASE_URL } from '@shared/components/SEO';
 
-// ─── Vertical classification (mirrors server pricing.service.js) ─────────────
+// Vertical classification (mirrors server pricing.service.js)
 const MOBILE_SERVICES = new Set([
   'screen_replacement','battery_replacement','charging_issue',
   'speaker_mic_issue','microphone_issue','software_issue',
@@ -69,7 +69,7 @@ const PET_SERVICES = new Set([
 ]);
 
 const SERVICE_META = {
-  // ── Electronics — Mobile ──────────────────────────────────────────────────
+  // Electronics — Mobile
   screen_replacement:    { label: 'Screen Replacement',   icon: Smartphone,    gradient: 'from-indigo-500 to-violet-600',  accent: '#6366f1', vertical: 'mobile'       },
   battery_replacement:   { label: 'Battery Replacement',  icon: Battery,       gradient: 'from-emerald-500 to-green-600',  accent: '#10b981', vertical: 'mobile'       },
   charging_issue:        { label: 'Charging Issue',       icon: Bolt,          gradient: 'from-yellow-400 to-orange-500',  accent: '#f59e0b', vertical: 'mobile'       },
@@ -80,7 +80,7 @@ const SERVICE_META = {
   camera_issue:          { label: 'Camera Repair',        icon: Camera,        gradient: 'from-pink-500 to-rose-600',      accent: '#ec4899', vertical: 'mobile'       },
   data_recovery:         { label: 'Data Recovery',        icon: Layers,        gradient: 'from-teal-500 to-emerald-600',   accent: '#14b8a6', vertical: 'mobile'       },
   device_not_turning_on: { label: 'Device Not Turning On',icon: Smartphone,    gradient: 'from-slate-600 to-slate-800',    accent: '#475569', vertical: 'mobile'       },
-  // ── Electronics — Laptop ─────────────────────────────────────────────────
+  // Electronics — Laptop
   laptop_slow:             { label: 'Slow Laptop Fix',    icon: Laptop,        gradient: 'from-slate-600 to-slate-800',    accent: '#475569', vertical: 'laptop'       },
   laptop_ssd_upgrade:      { label: 'SSD Upgrade',        icon: Cpu,           gradient: 'from-blue-600 to-indigo-700',    accent: '#2563eb', vertical: 'laptop'       },
   laptop_ram_upgrade:      { label: 'RAM Upgrade',        icon: Cpu,           gradient: 'from-indigo-500 to-blue-600',    accent: '#4f46e5', vertical: 'laptop'       },
@@ -90,7 +90,7 @@ const SERVICE_META = {
   laptop_screen_issue:     { label: 'Laptop Screen',      icon: MonitorSmartphone, gradient: 'from-violet-500 to-purple-700', accent: '#7c3aed', vertical: 'laptop'    },
   laptop_virus_removal:    { label: 'Virus Removal',      icon: ShieldAlert,   gradient: 'from-red-500 to-rose-700',       accent: '#ef4444', vertical: 'laptop'       },
   laptop_data_recovery:    { label: 'Laptop Data Recovery',icon: Layers,       gradient: 'from-emerald-500 to-teal-700',   accent: '#10b981', vertical: 'laptop'       },
-  // ── Smart Devices ─────────────────────────────────────────────────────────
+  // Smart Devices
   smart_tv_install:      { label: 'Smart TV Install',     icon: Tv,            gradient: 'from-slate-700 to-slate-900',    accent: '#334155', vertical: 'smart_device' },
   smart_tv_repair:       { label: 'Smart TV Repair',      icon: Tv,            gradient: 'from-red-600 to-rose-700',       accent: '#dc2626', vertical: 'smart_device' },
   router_setup:          { label: 'Router & WiFi Setup',  icon: Wifi,          gradient: 'from-blue-500 to-cyan-600',      accent: '#0ea5e9', vertical: 'smart_device' },
@@ -99,8 +99,8 @@ const SERVICE_META = {
   cctv_repair:           { label: 'CCTV Repair',          icon: Camera,        gradient: 'from-amber-600 to-orange-700',   accent: '#d97706', vertical: 'smart_device' },
   smart_lock_install:    { label: 'Smart Lock Install',   icon: Lock,          gradient: 'from-indigo-600 to-violet-700',  accent: '#4f46e5', vertical: 'smart_device' },
   home_automation_setup: { label: 'Home Automation',      icon: Zap,           gradient: 'from-amber-500 to-orange-600',   accent: '#f59e0b', vertical: 'smart_device' },
-  // ── Vehicle Care ──────────────────────────────────────────────────────────
-  // ── Vehicle Care (Car & Bike) ───────────────────────────────────────────────
+  // Vehicle Care
+  // Vehicle Care (Car & Bike)
   car_puncture:          { label: 'Car Tyre Puncture',     icon: Car,          gradient: 'from-slate-600 to-slate-800',    accent: '#475569', vertical: 'vehicle'      },
   bike_puncture:         { label: 'Bike Tyre Puncture',    icon: Bike,         gradient: 'from-emerald-500 to-teal-600',   accent: '#059669', vertical: 'vehicle'      },
   periodic_car_service:  { label: 'Periodic Car Service',  icon: Wrench,       gradient: 'from-blue-600 to-indigo-700',    accent: '#2563eb', vertical: 'vehicle'      },
@@ -123,13 +123,13 @@ const SERVICE_META = {
   car_service:           { label: 'Car Full Service',      icon: Wrench,       gradient: 'from-blue-600 to-indigo-700',    accent: '#2563eb', vertical: 'vehicle'      },
   car_towing:            { label: 'Car Towing',            icon: Car,          gradient: 'from-slate-700 to-slate-900',    accent: '#334155', vertical: 'towing'       },
   bike_towing:           { label: 'Bike Towing',           icon: Bike,         gradient: 'from-slate-600 to-slate-800',    accent: '#475569', vertical: 'towing'       },
-  // ── Laptop Repair ──────────────────────────────────────────────────────────
+  // Laptop Repair
   laptop_screen_replacement: { label: 'Laptop Display Panel', icon: Laptop,    gradient: 'from-cyan-500 to-blue-600',      accent: '#0891b2', vertical: 'laptop'       },
   laptop_battery_replacement:{ label: 'Laptop Battery Replacement', icon: Battery, gradient: 'from-indigo-500 to-purple-600', accent: '#6366f1', vertical: 'laptop' },
   laptop_keyboard_repair:    { label: 'Laptop Keyboard Repair', icon: Laptop,  gradient: 'from-slate-600 to-slate-800',    accent: '#475569', vertical: 'laptop'       },
   laptop_thermal_service:    { label: 'Laptop Thermal Cleaning', icon: Wind,   gradient: 'from-teal-500 to-emerald-600',   accent: '#14b8a6', vertical: 'laptop'       },
   laptop_ssd_ram_upgrade:    { label: 'SSD & RAM Upgrade',     icon: Zap,          gradient: 'from-amber-500 to-orange-600',   accent: '#f59e0b', vertical: 'laptop'       },
-  // ── Tank & Water Cleaning ────────────────────────────────────────────────
+  // Tank & Water Cleaning
   water_tank_cleaning:       { label: 'Water Tank Cleaning',       icon: Droplets, gradient: 'from-sky-500 to-blue-600',    accent: '#0ea5e9', vertical: 'tank_cleaning' },
   overhead_tank_cleaning:    { label: 'Overhead Tank Cleaning',    icon: Droplets, gradient: 'from-cyan-500 to-sky-600',    accent: '#06b6d4', vertical: 'tank_cleaning' },
   underground_sump_cleaning: { label: 'Underground Sump Cleaning', icon: Droplets, gradient: 'from-blue-600 to-indigo-700', accent: '#2563eb', vertical: 'tank_cleaning' },
@@ -139,7 +139,7 @@ const SERVICE_META = {
   fleet_support:         { label: 'Fleet Support',         icon: Car,          gradient: 'from-indigo-600 to-blue-700',    accent: '#4f46e5', vertical: 'vehicle'      },
   auto_repair:           { label: 'Auto Repair',           icon: Wrench,       gradient: 'from-amber-500 to-orange-600',   accent: '#f59e0b', vertical: 'vehicle'      },
   van_repair:            { label: 'Van Repair',            icon: Car,          gradient: 'from-stone-600 to-stone-800',    accent: '#78716c', vertical: 'vehicle'      },
-  // ── Family Assist ─────────────────────────────────────────────────────────
+  // Family Assist
   medicine_pickup:       { label: 'Medicine Pickup',       icon: Heart,        gradient: 'from-rose-500 to-pink-600',      accent: '#f43f5e', vertical: 'family'       },
   hospital_companion:    { label: 'Hospital Companion',    icon: ShieldCheck,  gradient: 'from-blue-500 to-indigo-600',    accent: '#3b82f6', vertical: 'family'       },
   grocery_assistance:    { label: 'Grocery Shopping',      icon: Users,        gradient: 'from-green-500 to-emerald-600',  accent: '#10b981', vertical: 'family'       },
@@ -150,7 +150,7 @@ const SERVICE_META = {
   elder_companion:       { label: 'Elder Companion',       icon: Users,        gradient: 'from-purple-500 to-violet-600',  accent: '#8b5cf6', vertical: 'family'       },
   elder_home_visit:      { label: 'Elder Home Visit',      icon: ShieldCheck,  gradient: 'from-teal-500 to-emerald-600',   accent: '#14b8a6', vertical: 'family'       },
   elder_transport:       { label: 'Elder Transport',       icon: Car,          gradient: 'from-blue-500 to-indigo-600',    accent: '#3b82f6', vertical: 'family'       },
-  // ── Event Crew ────────────────────────────────────────────────────────────
+  // Event Crew
   event_decorator:           { label: 'Event Decorator',      icon: Sparkles,  gradient: 'from-violet-500 to-purple-600',  accent: '#8b5cf6', vertical: 'event'        },
   event_setup_crew:          { label: 'Event Setup Crew',     icon: Users,     gradient: 'from-blue-500 to-indigo-600',    accent: '#3b82f6', vertical: 'event'        },
   event_cleaning_crew:       { label: 'Event Cleaning',       icon: Sparkles,  gradient: 'from-teal-500 to-cyan-600',      accent: '#14b8a6', vertical: 'event'        },
@@ -162,7 +162,7 @@ const SERVICE_META = {
   event_wedding_setup:       { label: 'Wedding Setup',        icon: Star,      gradient: 'from-amber-400 to-orange-500',   accent: '#f59e0b', vertical: 'event'        },
   event_photography_assist:  { label: 'Photography Assist',   icon: Camera,    gradient: 'from-indigo-500 to-violet-600',  accent: '#6366f1', vertical: 'event'        },
   event_catering_assist:     { label: 'Catering Assist',      icon: Users,     gradient: 'from-orange-400 to-red-500',     accent: '#f97316', vertical: 'event'        },
-  // ── Pet Assistance ────────────────────────────────────────────────────────
+  // Pet Assistance
   pet_grooming:          { label: 'Pet Grooming',          icon: Dog,          gradient: 'from-amber-400 to-orange-500',   accent: '#f59e0b', vertical: 'pet'          },
   pet_walking:           { label: 'Pet Walking',           icon: Bike,         gradient: 'from-green-500 to-emerald-600',  accent: '#10b981', vertical: 'pet'          },
   pet_transport:         { label: 'Pet Transport',         icon: Car,          gradient: 'from-violet-500 to-purple-600',  accent: '#8b5cf6', vertical: 'pet'          },
@@ -340,10 +340,10 @@ export default function BookingPage() {
   const isVehicle = VEHICLE_SERVICES.has(service);
   // Towing: needs a destination (where to tow) + is priced on the tow distance.
   const isTowing  = service === 'car_towing' || service === 'bike_towing';
-  // Breakdown/tow services need a worker with specialised equipment (#72).
+  // Breakdown/tow services need a worker with specialised equipment.
   // We warn the customer upfront so they can also call a tow operator.
   const isTowRequired = service === 'car_breakdown' || service === 'bike_breakdown' || service === 'commercial_emergency';
-  // Team/crew bookings: multi-worker dispatch not yet implemented. Show info banner. (#74)
+  // Team/crew bookings: multi-worker dispatch not yet implemented. Show info banner.
   const isEventCrewService = EVENT_SERVICES.has(service) && service !== 'event_helper';
   // Construction/hourly-pricing services (mason, etc.) are disabled in this
   // catalog version. The pricing model picker is hidden until re-enabled.
@@ -355,7 +355,7 @@ export default function BookingPage() {
   const [description,   setDescription]   = useState('');
   const [images,        setImages]        = useState([]);
 
-  // ── ZappyLens hydration ──────────────────────────────────────────────
+  // ZappyLens hydration
   // Arrived from a Lens scan (/book/:service?lens=<scanId>) → prefill the
   // description with the AI diagnosis and attach the scanned photo so the
   // worker sees exactly what was scanned.
@@ -686,8 +686,8 @@ export default function BookingPage() {
     : `Book ${service?.replace(/_/g, ' ')} — Zappy`;
   const svcDesc = svcMeta.desc || `Book verified professionals for ${service?.replace(/_/g, ' ')} at your doorstep. Instant booking, live tracking, transparent pricing.`;
 
-  /* ── Location stage ── */
-  /* ── Location stage ── */
+  /* Location stage */
+  /* Location stage */
   if (stage === 'location') {
     return (
       <div className="fixed inset-0 h-[100dvh] w-full flex flex-col overflow-hidden bg-[#F3F6FB] z-50">
@@ -755,7 +755,7 @@ export default function BookingPage() {
     );
   }
 
-  /* ── Details stage ── */
+  /* Details stage */
   const hasUploadingImages = images.some(i => i.uploading);
   const canBook = !!q && !creating && pricingMode !== 'wait' && !hasUploadingImages && (!isTowing || !!towDest);
 
@@ -835,7 +835,7 @@ export default function BookingPage() {
         animate="animate"
       >
 
-        {/* ── Event crew: single-worker-only notice (#74) ─────────────────── */}
+        {/* Event crew: single-worker-only notice */}
         {isEventCrewService && (
           <motion.div variants={fadeInUp}
             className="rounded-2xl p-4 bg-violet-50 ring-1 ring-violet-200 flex items-start gap-3">
@@ -853,7 +853,7 @@ export default function BookingPage() {
           </motion.div>
         )}
 
-        {/* ── Tow service capability warning (#72) ───────────────────────── */}
+        {/* Tow service capability warning */}
         {isTowRequired && (
           <motion.div variants={fadeInUp}
             className="rounded-2xl p-4 bg-orange-50 ring-1 ring-orange-200 flex items-start gap-3">
@@ -930,7 +930,7 @@ export default function BookingPage() {
           </div>
         </motion.div>
 
-        {/* ── Mobile: Device Brand + Model + Service Mode ──────────── */}
+        {/* Mobile: Device Brand + Model + Service Mode */}
         {isMobile && (
           <motion.div className="rounded-2xl bg-white ring-1 ring-slate-100 p-4 space-y-4" style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }} variants={fadeInUp}>
             <div className="flex items-center gap-2.5 mb-1">
@@ -989,7 +989,7 @@ export default function BookingPage() {
           </motion.div>
         )}
 
-        {/* ── Towing: destination picker ────────────────────────────── */}
+        {/* Towing: destination picker */}
         {isTowing && (
           <motion.div className="rounded-2xl bg-white ring-1 ring-slate-100 p-4" style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }} variants={fadeInUp}>
             <div className="flex items-center gap-2.5 mb-3">
@@ -1020,7 +1020,7 @@ export default function BookingPage() {
           </motion.div>
         )}
 
-        {/* ── Vehicle: Vehicle Type picker ──────────────────────────── */}
+        {/* Vehicle: Vehicle Type picker */}
         {isVehicle && (
           <motion.div className="rounded-2xl bg-white ring-1 ring-slate-100 p-4" style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }} variants={fadeInUp}>
             <div className="flex items-center gap-2.5 mb-3">
@@ -1043,7 +1043,7 @@ export default function BookingPage() {
           </motion.div>
         )}
 
-        {/* ── Construction: Pricing Model picker ────────────────────── */}
+        {/* Construction: Pricing Model picker */}
         {isConstruction && (
           <motion.div className="rounded-2xl bg-white ring-1 ring-slate-100 p-4 space-y-3" style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }} variants={fadeInUp}>
             <div className="flex items-center gap-2.5 mb-1">
@@ -1653,7 +1653,7 @@ export default function BookingPage() {
     </div>
     </PageTransition>
 
-    {/* ── Rapido-style worker matching overlay ──────────────────────── */}
+    {/* Rapido-style worker matching overlay */}
     <AnimatePresence>
       {(creating || showOverlay) && (
         <motion.div
@@ -1832,7 +1832,7 @@ export default function BookingPage() {
       )}
     </AnimatePresence>
 
-    {/* ── No workers in area — emotional expansion modal ─────────────── */}
+    {/* No workers in area — emotional expansion modal */}
     <AnimatePresence>
       {noWorkersModal && (
         <motion.div
@@ -1922,7 +1922,7 @@ export default function BookingPage() {
       )}
     </AnimatePresence>
 
-    {/* ── Price Changed confirmation modal ────────────────────────────── */}
+    {/* Price Changed confirmation modal */}
     <AnimatePresence>
       {priceChangedModal && (
         <motion.div

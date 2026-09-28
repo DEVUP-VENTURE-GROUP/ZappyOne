@@ -35,7 +35,7 @@ function bestKnownLocation(u) {
   return null;
 }
 
-/* ─── User detail drawer ────────────────────────────────────────────────── */
+/* User detail drawer */
 function UserDrawer({ userId, onClose, onBlock }) {
   const { data, isFetching } = useAdminGetUserQuery(userId, { skip: !userId });
   const u = data?.user;
@@ -179,7 +179,7 @@ function Stat({ label, value, small }) {
   );
 }
 
-/* ─── Block confirm dialog ──────────────────────────────────────────────── */
+/* Block confirm dialog */
 function BlockConfirm({ user, onConfirm, onCancel, loading }) {
   const blocking = !user.isBlocked;
   return (
@@ -219,7 +219,7 @@ function BlockConfirm({ user, onConfirm, onCancel, loading }) {
   );
 }
 
-/* ─── Main ──────────────────────────────────────────────────────────────── */
+/* Main */
 export default function Users() {
   const [q, setQ] = useState('');
   const [blocked, setBlocked] = useState('');

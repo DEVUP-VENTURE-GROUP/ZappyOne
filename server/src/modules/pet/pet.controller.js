@@ -32,7 +32,7 @@ async function signBooking(booking) {
   return { ...booking, proofs: (booking.proofs || []).map((p, i) => ({ ...p, url: urls[i] || null })) };
 }
 
-/* ─── Catalog (public-ish; the customer needs it before signing in) ────── */
+/* Catalog (public-ish; the customer needs it before signing in) */
 
 async function listCategories(req, res, next) {
   try {
@@ -99,7 +99,7 @@ async function checkCompatibility(req, res, next) {
   } catch (err) { next(err); }
 }
 
-/* ─── Pet profiles (§4) ────────────────────────────────────────────────── */
+/* Pet profiles (§4) */
 
 async function listMyPets(req, res, next) {
   try {
@@ -156,7 +156,7 @@ async function getPetHistory(req, res, next) {
   } catch (err) { next(err); }
 }
 
-/* ─── Quote & matching ─────────────────────────────────────────────────── */
+/* Quote & matching */
 
 async function quote(req, res, next) {
   try {
@@ -184,7 +184,7 @@ async function findProviders(req, res, next) {
   } catch (err) { next(err); }
 }
 
-/* ─── Bookings ─────────────────────────────────────────────────────────── */
+/* Bookings */
 
 async function createBooking(req, res, next) {
   try {
@@ -259,7 +259,7 @@ async function rateBooking(req, res, next) {
   } catch (err) { next(err); }
 }
 
-/* ─── Worker execution ─────────────────────────────────────────────────── */
+/* Worker execution */
 
 async function listAvailableBookings(req, res, next) {
   try {
@@ -342,7 +342,7 @@ async function updateExecution(req, res, next) {
   } catch (err) { next(err); }
 }
 
-/* ─── Recurring bookings (§32) ─────────────────────────────────────────── */
+/* Recurring bookings (§32) */
 
 async function createRecurring(req, res, next) {
   try {
@@ -407,7 +407,7 @@ async function skipRecurringDate(req, res, next) {
   } catch (err) { next(err); }
 }
 
-/* ─── Admin (§46, §47) ─────────────────────────────────────────────────── */
+/* Admin (§46, §47) */
 
 async function adminListBookings(req, res, next) {
   try {

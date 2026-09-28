@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { useGetOrderQuery, useGetWorkerPublicProfileQuery } from '@shared/services/api';
 
-/* ─── Service icon map (mirrors WorkerDashboard) ─────────────── */
+/* Service icon map (mirrors WorkerDashboard) */
 const SERVICE_ICON_MAP = {
   electrical:            { Icon: Bolt,          bg: 'bg-amber-100',   color: 'text-amber-600'   },
   plumbing:              { Icon: Droplets,       bg: 'bg-blue-100',    color: 'text-blue-600'    },
@@ -94,7 +94,7 @@ export default function WorkerProfilePage() {
   return (
     <div className="min-h-screen pb-40" style={{ background: 'linear-gradient(180deg, #0f172a 0%, #f8fafc 180px)' }}>
 
-      {/* ── Back button ─────────────────────────────────────────── */}
+      {/* Back button */}
       <div className="sticky top-0 z-20 px-4 pt-4 pb-2 flex items-center" style={{ background: 'transparent' }}>
         <motion.button
           onClick={() => nav(-1)}
@@ -105,7 +105,7 @@ export default function WorkerProfilePage() {
         </motion.button>
       </div>
 
-      {/* ── Hero ─────────────────────────────────────────────────── */}
+      {/* Hero */}
       <div className="relative flex flex-col items-center pt-4 pb-8 px-4">
         {/* Animated orb */}
         <motion.div
@@ -155,7 +155,7 @@ export default function WorkerProfilePage() {
         </motion.div>
       </div>
 
-      {/* ── Content cards ────────────────────────────────────────── */}
+      {/* Content cards */}
       <div className="max-w-lg lg:max-w-2xl mx-auto px-4 space-y-3">
 
         {/* Trust badges row */}

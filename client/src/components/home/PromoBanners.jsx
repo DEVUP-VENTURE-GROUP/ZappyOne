@@ -11,7 +11,7 @@ import { useIsMobile } from '../../hooks/useIsMobile';
  *                    "Book Now" button, photo bleeding to the right edge.
  */
 
-/* ─── Mobile light-card layout ─────────────────────────────────────────── */
+/* Mobile light-card layout */
 function PromoCard({ tag, title, subtitle, image, buttonLabel = 'Book Now', onClick, dots = null }) {
   return (
     <div
@@ -88,7 +88,7 @@ function DotsMobile({ items, current }) {
   );
 }
 
-/* ─── Desktop full-bleed layout ────────────────────────────────────────── */
+/* Desktop full-bleed layout */
 function PromoFullBleed({ tag, title, subtitle, image, price, priceLabel = 'Explore', onClick, dots = null }) {
   return (
     <div

@@ -2,7 +2,7 @@
 
 const gmaps = require('./google-maps.service');
 
-// ── Reverse Geocode ────────────────────────────────────────────────────────────
+// Reverse Geocode
 // GET /api/maps/reverse-geocode?lat=...&lng=...
 async function reverseGeocode(req, res) {
   const lat = parseFloat(req.query.lat);
@@ -18,7 +18,7 @@ async function reverseGeocode(req, res) {
   }
 }
 
-// ── Forward Geocode ────────────────────────────────────────────────────────────
+// Forward Geocode
 // GET /api/maps/geocode?address=...
 async function geocode(req, res) {
   const { address } = req.query;
@@ -31,7 +31,7 @@ async function geocode(req, res) {
   }
 }
 
-// ── Route / Directions ─────────────────────────────────────────────────────────
+// Route / Directions
 // GET /api/maps/route?fromLat=...&fromLng=...&toLat=...&toLng=...
 async function getRoute(req, res) {
   const fromLat = parseFloat(req.query.fromLat);
@@ -50,7 +50,7 @@ async function getRoute(req, res) {
   }
 }
 
-// ── ETA ────────────────────────────────────────────────────────────────────────
+// ETA
 // GET /api/maps/eta?fromLat=...&fromLng=...&toLat=...&toLng=...
 async function getEta(req, res) {
   const fromLat = parseFloat(req.query.fromLat);
@@ -75,7 +75,7 @@ async function getEta(req, res) {
   }
 }
 
-// ── Places Autocomplete ────────────────────────────────────────────────────────
+// Places Autocomplete
 // GET /api/maps/autocomplete?input=...&lat=...&lng=...
 async function autocomplete(req, res) {
   const { input } = req.query;
@@ -93,7 +93,7 @@ async function autocomplete(req, res) {
   }
 }
 
-// ── Place Details ──────────────────────────────────────────────────────────────
+// Place Details
 // GET /api/maps/place?placeId=...
 async function placeDetail(req, res) {
   const { placeId } = req.query;
@@ -106,7 +106,7 @@ async function placeDetail(req, res) {
   }
 }
 
-// ── Static Map URL ─────────────────────────────────────────────────────────────
+// Static Map URL
 // GET /api/maps/static?lat=...&lng=...&zoom=...&width=...&height=...
 function staticMap(req, res) {
   const lat    = parseFloat(req.query.lat);

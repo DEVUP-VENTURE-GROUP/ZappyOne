@@ -30,7 +30,7 @@ async function getCityMap() {
   }
 }
 
-// ── robots.txt ───────────────────────────────────────────────────────────────
+// robots.txt
 router.get('/robots.txt', (req, res) => {
   const host = `${req.protocol}://${req.get('host')}`;
   const base = process.env.PUBLIC_URL || host;
@@ -44,7 +44,7 @@ router.get('/robots.txt', (req, res) => {
   );
 });
 
-// ── sitemap.xml ──────────────────────────────────────────────────────────────
+// sitemap.xml
 router.get('/sitemap.xml', async (req, res) => {
   try {
     const { redis } = require('../../config/redis');
@@ -55,7 +55,7 @@ router.get('/sitemap.xml', async (req, res) => {
   }
 });
 
-// ── City page (/in/:city) ────────────────────────────────────────────────────
+// City page (/in/:city)
 router.get('/in/:city', async (req, res) => {
   const { cityMap, cities } = await getCityMap();
   const city = cityMap[req.params.city];
@@ -65,7 +65,7 @@ router.get('/in/:city', async (req, res) => {
      .send(cityPage(city, CATEGORIES, cities));
 });
 
-// ── Category + City page (/in/:city/:slug) ───────────────────────────────────
+// Category + City page (/in/:city/:slug)
 router.get('/in/:city/:slug', async (req, res) => {
   const { cityMap, cities } = await getCityMap();
   const city = cityMap[req.params.city];
@@ -86,7 +86,7 @@ router.get('/in/:city/:slug', async (req, res) => {
   res.status(404).send('Page not found');
 });
 
-// ── Area + Category + City (/in/:city/:area/:category) ───────────────────────
+// Area + Category + City (/in/:city/:area/:category)
 router.get('/in/:city/:area/:category', async (req, res) => {
   const { cityMap } = await getCityMap();
   const city = cityMap[req.params.city];

@@ -29,7 +29,7 @@ import SEO, { LOGIN_SCHEMA, BASE_URL } from '../../components/SEO';
 
 const PHONE_KEY = 'zappy:workerPhone';
 
-/* ── Hero illustration — city skyline, courier on a scooter, floating stat
+/* Hero illustration — city skyline, courier on a scooter, floating stat
    card. Pure inline SVG + one HTML card so it stays crisp and needs no asset. */
 function HeroScene() {
   return (
@@ -79,7 +79,7 @@ function HeroScene() {
         <path d="M250 400 C250 320 330 300 400 300 C470 300 500 340 500 400 Z" fill="url(#wlp-wave)" opacity="0.9" />
         <path d="M300 400 C300 356 360 344 410 348 C470 352 500 372 500 400 Z" fill="#1E3A8A" opacity="0.25" />
 
-        {/* ═══ Courier on a scooter (facing right) ═══ */}
+        {/* Courier on a scooter (facing right) */}
         <g transform="translate(70,150)">
           {/* ground shadow */}
           <ellipse cx="150" cy="196" rx="150" ry="15" fill="#1E3A8A" opacity="0.10" />
@@ -89,7 +89,7 @@ function HeroScene() {
           <text x="41" y="114" fontSize="36" fontWeight="900" fill="#fff" textAnchor="middle"
             style={{ fontFamily: 'Inter, sans-serif' }}>Z</text>
 
-          {/* ── scooter body ── */}
+          {/* scooter body */}
           {/* rear mudguard hump + seat post */}
           <path d="M42 168 q0 -40 44 -42 l36 -1 4 40 -60 20z" fill="#1E40AF" />
           {/* seat */}
@@ -102,7 +102,7 @@ function HeroScene() {
           <path d="M236 40 l30 -12 q7 -3 9 4 q2 6 -5 9 l-28 11z" fill="#1E293B" />
           <circle cx="248" cy="34" r="8" fill="#1E293B" />
 
-          {/* ── rider ── */}
+          {/* rider */}
           {/* thigh (on seat) + shin down to deck */}
           <path d="M120 108 q30 -6 44 8 l6 30 q2 12 -12 12 q-12 0 -14 -10z" fill="url(#wlp-jacket)" />
           <path d="M150 128 q16 8 18 30 l-2 18 q-1 10 -12 9 q-10 -1 -10 -12 l-2 -30z" fill="#1E3A8A" />
@@ -290,7 +290,7 @@ export default function WorkerLoginPage({ allowSignup = true, portalLabel = 'Wor
     }
   }
 
-  // ── Password sign-in (Worker ID / email / phone + password) ──────────────
+  // Password sign-in (Worker ID / email / phone + password)
   async function passwordLogin() {
     if (!identifier.trim() || !password) { toast.error('Enter your Worker ID / email / phone and password'); return; }
     try {
@@ -325,7 +325,7 @@ export default function WorkerLoginPage({ allowSignup = true, portalLabel = 'Wor
 
       <div className="h-[100dvh] w-full overflow-hidden bg-gradient-to-b from-[#EAF1FF] via-[#EEF3FF] to-[#F4F7FF] flex flex-col lg:h-auto lg:min-h-[100dvh] lg:overflow-visible lg:flex-row">
 
-        {/* ═══════════ HERO (mobile: top · desktop: left) ═══════════ */}
+        {/* HERO (mobile: top · desktop: left) */}
         <section className="relative flex-1 min-h-0 lg:flex-none lg:w-[54%] lg:min-h-[100dvh] flex flex-col justify-between lg:justify-center px-6 pt-7 pb-0 lg:px-16 lg:py-14 overflow-hidden">
           {/* soft ambient blobs */}
           <div className="pointer-events-none absolute -top-24 -left-24 w-72 h-72 rounded-full bg-blue-200/40 blur-3xl" />
@@ -364,7 +364,7 @@ export default function WorkerLoginPage({ allowSignup = true, portalLabel = 'Wor
           </div>
         </section>
 
-        {/* ═══════════ LOGIN CARD (mobile: bottom · desktop: right) ═══════════ */}
+        {/* LOGIN CARD (mobile: bottom · desktop: right) */}
         <section className="relative z-20 shrink-0 lg:flex-1 lg:w-[46%] flex items-stretch lg:items-center justify-center lg:px-10">
           <div className="w-full lg:max-w-md bg-white rounded-t-[34px] lg:rounded-[28px] shadow-[0_-10px_44px_rgba(15,23,42,0.10)] lg:shadow-[0_24px_70px_-24px_rgba(30,64,175,0.30)] lg:ring-1 lg:ring-slate-100 px-6 pt-6 pb-7 lg:p-9 -mt-8 lg:mt-0 max-h-[60vh] lg:max-h-none overflow-y-auto lg:overflow-visible">
 
@@ -393,7 +393,7 @@ export default function WorkerLoginPage({ allowSignup = true, portalLabel = 'Wor
 
             <AnimatePresence>
               {step === 'phone' && mode === 'otp' ? (
-                /* ── OTP: phone entry ── */
+                /* OTP: phone entry */
                 <motion.div key="phone" initial={false} animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.18 }} className="w-full">
 
@@ -455,7 +455,7 @@ export default function WorkerLoginPage({ allowSignup = true, portalLabel = 'Wor
                 </motion.div>
 
               ) : step === 'phone' && mode === 'password' ? (
-                /* ── PASSWORD SIGN-IN ── */
+                /* PASSWORD SIGN-IN */
                 <motion.div key="password" initial={false} animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.18 }} className="w-full">
 
@@ -544,7 +544,7 @@ export default function WorkerLoginPage({ allowSignup = true, portalLabel = 'Wor
                 </motion.div>
 
               ) : (
-                /* ── OTP STEP ── */
+                /* OTP STEP */
                 <motion.div key="otp" initial={false} animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.18 }} className="w-full">
 

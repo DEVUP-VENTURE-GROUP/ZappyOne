@@ -9,7 +9,7 @@ const { validate } = require('../../middlewares/validate');
 
 const router = express.Router();
 
-/* ── Feature 1: Pre-Diagnosis Questionnaire ──────────────────────── */
+/* Feature 1: Pre-Diagnosis Questionnaire */
 router.get('/diagnosis/:service', async (req, res, next) => {
   try {
     const { getDiagnosisFlow } = require('./diagnosis.config');
@@ -36,7 +36,7 @@ router.post('/diagnosis/:service/analyse',
   }
 );
 
-/* ── Feature 3: Service Checklists ───────────────────────────────── */
+/* Feature 3: Service Checklists */
 router.get('/checklist/:service', async (req, res, next) => {
   try {
     const { getChecklist } = require('./checklist.config');
@@ -44,7 +44,7 @@ router.get('/checklist/:service', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-/* ── Feature 4: Warranty ─────────────────────────────────────────── */
+/* Feature 4: Warranty */
 router.get('/warranties', authenticate, requireRole('user'), async (req, res, next) => {
   try {
     const wSvc      = require('./warranty.service');
@@ -86,7 +86,7 @@ router.post('/warranties/:id/claim',
   }
 );
 
-/* ── Feature 5: Maintenance Plans ───────────────────────────────── */
+/* Feature 5: Maintenance Plans */
 router.get('/maintenance-plans', authenticate, requireRole('user'), async (req, res, next) => {
   try {
     const svc  = require('./maintenance-plan.service');
@@ -164,7 +164,7 @@ router.delete('/maintenance-plans/:id',       authenticate, requireRole('user'),
   } catch (err) { next(err); }
 });
 
-/* ── Feature 7: Worker Portfolio ─────────────────────────────────── */
+/* Feature 7: Worker Portfolio */
 router.get('/workers/:workerId/portfolio', authenticate, async (req, res, next) => {
   try {
     const PortfolioItem = require('./worker-portfolio.model');
@@ -194,7 +194,7 @@ router.post('/workers/portfolio',
   }
 );
 
-/* ── Feature 8: Time Estimator ───────────────────────────────────── */
+/* Feature 8: Time Estimator */
 router.get('/time-estimate', authenticate, async (req, res, next) => {
   try {
     const tSvc = require('./time-estimator.service');
@@ -210,7 +210,7 @@ router.get('/time-estimate', authenticate, async (req, res, next) => {
 
 module.exports = router;
 
-/* ── Order-scoped service feature routes ─────────────────────────── */
+/* Order-scoped service feature routes */
 const orderRouter = express.Router({ mergeParams: true });
 
 /* Feature 2: Materials Bill */

@@ -20,10 +20,10 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-/* ─── Tabs ──────────────────────────────────────────────────────────────────── */
+/* Tabs */
 const TABS = ['Overview', 'Weekly Funds', 'Fee Records', 'Fee Schedule'];
 
-/* ─── Helpers ───────────────────────────────────────────────────────────────── */
+/* Helpers */
 function pct(n) { return `${n ?? 0}%`; }
 
 function HarmBadge({ score }) {
@@ -35,7 +35,7 @@ function HarmBadge({ score }) {
   );
 }
 
-/* ─── Stage label ───────────────────────────────────────────────────────────── */
+/* Stage label */
 function StageLabel({ stage }) {
   const map = {
     created:    { label: 'Pre-search',  cls: 'bg-slate-100 text-slate-600' },
@@ -48,7 +48,7 @@ function StageLabel({ stage }) {
   return <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold ${cls}`}>{label}</span>;
 }
 
-/* ─── Overview tab ──────────────────────────────────────────────────────────── */
+/* Overview tab */
 function OverviewTab() {
   const { data: summary, isFetching } = useAdminShieldSummaryQuery();
   const { data: pending }             = useAdminShieldPendingSummaryQuery();
@@ -153,7 +153,7 @@ function OverviewTab() {
   );
 }
 
-/* ─── Weekly funds tab ──────────────────────────────────────────────────────── */
+/* Weekly funds tab */
 function WeeklyFundsTab() {
   const [page, setPage]       = useState(1);
   const [filter, setFilter]   = useState('');
@@ -256,7 +256,7 @@ function WeeklyFundsTab() {
   );
 }
 
-/* ─── Fee Records tab ───────────────────────────────────────────────────────── */
+/* Fee Records tab */
 function FeeRecordsTab() {
   const [page, setPage]       = useState(1);
   const [statusFilter, setStatusFilter] = useState('');
@@ -365,7 +365,7 @@ function FeeRecordsTab() {
   );
 }
 
-/* ─── Fee Schedule tab ──────────────────────────────────────────────────────── */
+/* Fee Schedule tab */
 function FeeScheduleTab() {
   const { data, refetch } = useAdminShieldFeeScheduleQuery();
   const [updateSchedule, { isLoading: saving }] = useAdminShieldUpdateFeeScheduleMutation();
@@ -607,7 +607,7 @@ function FeeScheduleTab() {
   );
 }
 
-/* ─── Root component ────────────────────────────────────────────────────────── */
+/* Root component */
 export default function ShieldFund() {
   const [tab, setTab] = useState('Overview');
 

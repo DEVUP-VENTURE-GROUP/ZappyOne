@@ -116,7 +116,7 @@ const LINES = [
   { code: 'returns_exchange', name: 'Returns & Exchange Assistant', domainCode: 'helping_services', status: 'live', displayOrder: 2, icon: 'PackageCheck', customerPath: '/helping/returns', tagline: 'We handle the physical trip, not the merchant’s decision', description: 'A helper takes your return or exchange to the store or courier and brings back proof' },
 ];
 
-/* ─── Verification requirements ────────────────────────────────────────── */
+/* Verification requirements */
 
 const IDENTITY_DOCS = [
   { code: 'aadhaar', label: 'Aadhaar card', hint: 'Front and back in one clear photo', required: true },

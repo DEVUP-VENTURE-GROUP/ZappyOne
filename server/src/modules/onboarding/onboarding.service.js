@@ -23,7 +23,7 @@ function httpError(message, status, code, extra = {}) {
   return Object.assign(new Error(message), { status, code, ...extra });
 }
 
-/* ─── Catalog reads ────────────────────────────────────────────────────── */
+/* Catalog reads */
 
 async function listDomains() {
   return ServiceDomain.find({ isActive: true, isArchived: false })
@@ -70,7 +70,7 @@ async function resolveRequirements({ lineCode, providerKind }) {
   return { line, set };
 }
 
-/* ─── Enrolment ────────────────────────────────────────────────────────── */
+/* Enrolment */
 
 function ownerFilter(owner) {
   return owner.kind === 'shop' ? { shopId: owner.id } : { workerId: owner.id };
@@ -233,7 +233,7 @@ async function submitForReview({ owner, enrolmentId }) {
   return enrolment;
 }
 
-/* ─── Admin decision ───────────────────────────────────────────────────── */
+/* Admin decision */
 
 /**
  * Approve, reject or suspend one enrolment.
@@ -282,7 +282,7 @@ async function decide({ enrolmentId, decision, note = '', adminId }) {
   return enrolment;
 }
 
-/* ─── "My service isn't listed" ────────────────────────────────────────── */
+/* "My service isn't listed" */
 
 async function requestLine({ owner, providerKind, domainCode = '', proposedName, description = '' }) {
   const filter = {

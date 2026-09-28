@@ -180,7 +180,7 @@ const repairBookingSchema = new mongoose.Schema(
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     vertical: { type: String, required: true, lowercase: true, index: true },
 
-    /* ── What is being repaired ── */
+    /* What is being repaired */
     brandCode: { type: String, required: true, lowercase: true, index: true },
     modelCode: { type: String, required: true, lowercase: true, index: true },
     modelId: { type: mongoose.Schema.Types.ObjectId, ref: 'DeviceModel', default: null },
@@ -233,13 +233,13 @@ const repairBookingSchema = new mongoose.Schema(
       index: true,
     },
 
-    /* ── Who is doing it ── */
+    /* Who is doing it */
     shopId: { type: mongoose.Schema.Types.ObjectId, ref: 'Shop', default: null, index: true },
     workerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Worker', default: null, index: true },
     /** True when the provider came from Zappy's ranking rather than customer choice. */
     zappyRecommended: { type: Boolean, default: false },
 
-    /* ── Where and when ── */
+    /* Where and when */
     location: {
       type: { type: String, enum: ['Point'], default: 'Point' },
       coordinates: { type: [Number], required: true },
@@ -252,7 +252,7 @@ const repairBookingSchema = new mongoose.Schema(
     scheduledAt: { type: Date, default: null, index: true },
     slotLabel: { type: String, default: '' },
 
-    /* ── Money ── */
+    /* Money */
     priceSnapshot: { type: priceSnapshotSchema, required: true },
     paymentId: { type: mongoose.Schema.Types.ObjectId, ref: 'PaymentIntent', default: null },
     /**
@@ -307,7 +307,7 @@ const repairBookingSchema = new mongoose.Schema(
     /** Proof of the finished work, shown to the customer on completion. */
     completionPhotos: { type: [String], default: [] },
 
-    /* ── After the job ── */
+    /* After the job */
     rating: { type: Number, min: 1, max: 5, default: null },
     ratingComment: { type: String, default: '', maxlength: 1000 },
     /** Set once. A rating that can be rewritten is not a rating. */
@@ -317,7 +317,7 @@ const repairBookingSchema = new mongoose.Schema(
     activeQuoteId: { type: mongoose.Schema.Types.ObjectId, ref: 'RepairQuote', default: null },
 
 
-    /* ── Timing ── */
+    /* Timing */
 
     /**
      * When the CURRENT stage is due.
@@ -350,7 +350,7 @@ const repairBookingSchema = new mongoose.Schema(
       default: [],
     },
 
-    /* ── Lifecycle ── */
+    /* Lifecycle */
     status: { type: String, enum: BOOKING_STATUSES, default: 'PENDING', index: true },
     statusHistory: { type: [statusEventSchema], default: [] },
 

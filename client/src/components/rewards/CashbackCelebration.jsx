@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, X, Wallet, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-/* ─── Confetti particle (pure CSS animation, no lib) ──────────────────── */
+/* Confetti particle (pure CSS animation, no lib) */
 const CONFETTI_COLORS = [
   '#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6',
   '#f97316', '#14b8a6', '#a855f7', '#eab308',
@@ -51,7 +51,7 @@ function Confetti() {
   );
 }
 
-/* ─── Orbiting sparkle ring ───────────────────────────────────────────── */
+/* Orbiting sparkle ring */
 function SparkleRing({ amount }) {
   return (
     <div className="relative flex items-center justify-center">
@@ -112,7 +112,7 @@ function SparkleRing({ amount }) {
   );
 }
 
-/* ─── Main export ─────────────────────────────────────────────────────── */
+/* Main export */
 export default function CashbackCelebration({ amountPaise, totalEarnedPaise, onClose }) {
   const nav = useNavigate();
   const timerRef = useRef(null);

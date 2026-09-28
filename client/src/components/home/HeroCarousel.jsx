@@ -49,7 +49,7 @@ export default function HeroCarousel() {
 
   const slide = SLIDES[current];
 
-  /* ── Mobile: light rounded card (matches the promo card language) ── */
+  /* Mobile: light rounded card (matches the promo card language) */
   if (isMobile) {
     return (
       <div
@@ -130,7 +130,7 @@ export default function HeroCarousel() {
     );
   }
 
-  /* ── Desktop: original full-bleed carousel ── */
+  /* Desktop: original full-bleed carousel */
   return (
     <div
       className="relative w-full h-[360px] md:h-[420px] rounded-2xl overflow-hidden shadow-soft-lg cursor-pointer group"

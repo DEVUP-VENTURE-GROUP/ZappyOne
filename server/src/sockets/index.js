@@ -33,7 +33,7 @@ function initSockets(httpServer) {
 
   // When Redis reconnects after a restart, the adapter's room memberships are
   // gone. Broadcast `server:rooms_reset` so all connected clients re-emit
-  // `order:subscribe` and rejoin their rooms. (#59)
+  // `order:subscribe` and rejoin their rooms.
   pubClient.on('ready', () => {
     if (io) {
       logger.warn('[SOCKET] Redis reconnected — broadcasting rooms_reset to all clients');
@@ -99,7 +99,7 @@ function initSockets(httpServer) {
         .catch(() => {});
     }
 
-    // Restore order room membership after server restart / reconnect (#60).
+    // Restore order room membership after server restart / reconnect.
     // Workers on an active job and users with an active order need to be
     // back in `order:<id>` without waiting for the client to call order:subscribe.
     try {

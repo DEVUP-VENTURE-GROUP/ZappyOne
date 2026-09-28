@@ -13,7 +13,7 @@
 
 const VERTICAL = 'laptop';
 
-/* ─── Brands (§4) ──────────────────────────────────────────────────────── */
+/* Brands (§4) */
 
 const BRANDS = [
   { code: 'hp', name: 'HP', sortOrder: 1 },
@@ -34,7 +34,7 @@ const BRANDS = [
   { code: 'gigabyte', name: 'Gigabyte / AORUS', sortOrder: 16 },
 ];
 
-/* ─── Product types (§6) ───────────────────────────────────────────────── */
+/* Product types (§6) */
 
 const PRODUCT_TYPES = [
   { code: 'laptop', name: 'Laptop', displayOrder: 1, isPopular: true },
@@ -47,7 +47,7 @@ const PRODUCT_TYPES = [
   { code: 'surface', name: 'Surface Device', displayOrder: 8 },
 ];
 
-/* ─── Problem taxonomy (§8) ────────────────────────────────────────────── */
+/* Problem taxonomy (§8) */
 
 const PROBLEM_CATEGORIES = [
   { code: 'display', name: 'Display', icon: 'monitor', displayOrder: 1 },
@@ -85,7 +85,7 @@ const P = (code, name, categoryCode, candidates = [], opts = {}) => ({
 });
 
 const PROBLEMS = [
-  // ── Display ───────────────────────────────────────────────────────────
+  // Display
   P('lt_cracked_screen', 'Cracked screen', 'display', ['lt_screen_replacement'], { isPopular: true }),
   P('lt_broken_screen', 'Broken screen', 'display', ['lt_screen_replacement']),
   P('lt_black_screen', 'Black screen', 'display', ['lt_screen_replacement', 'lt_display_cable_repair', 'lt_motherboard_repair'], { severity: 'high' }),
@@ -106,7 +106,7 @@ const PROBLEMS = [
   P('lt_bezel_damaged', 'Screen bezel/frame damaged', 'display', ['lt_bezel_replacement']),
   P('lt_display_hinge_damaged', 'Display hinge area damaged', 'display', ['lt_hinge_repair'], { severity: 'high' }),
 
-  // ── Battery & Power ───────────────────────────────────────────────────
+  // Battery & Power
   P('lt_battery_draining', 'Battery draining fast', 'battery_power', ['lt_battery_replacement'], { isPopular: true }),
   P('lt_battery_not_charging', 'Battery not charging', 'battery_power', ['lt_battery_replacement', 'lt_charging_port_repair', 'lt_motherboard_repair']),
   P('lt_battery_stuck_pct', 'Battery stuck at percentage', 'battery_power', ['lt_battery_replacement']),
@@ -120,7 +120,7 @@ const PROBLEMS = [
   P('lt_power_button', 'Power button not working', 'battery_power', ['lt_power_button_repair']),
   P('lt_sleep_wake', 'Sleep/wake problem', 'battery_power', ['lt_driver_installation', 'lt_os_repair']),
 
-  // ── Charging ──────────────────────────────────────────────────────────
+  // Charging
   P('lt_charger_not_working', 'Charger not working', 'charging', ['lt_adapter_replacement']),
   P('lt_charging_port_damaged', 'Charging port damaged', 'charging', ['lt_charging_port_repair'], { severity: 'high' }),
   P('lt_loose_charging_port', 'Loose charging port', 'charging', ['lt_charging_port_repair']),
@@ -131,7 +131,7 @@ const PROBLEMS = [
   P('lt_not_charging_usbc', 'Laptop not charging through USB-C', 'charging', ['lt_charging_port_repair']),
   P('lt_charging_angle', 'Charging only at certain angle', 'charging', ['lt_charging_port_repair']),
 
-  // ── Keyboard & Touchpad ───────────────────────────────────────────────
+  // Keyboard & Touchpad
   P('lt_keyboard_not_working', 'Keyboard not working', 'keyboard_touchpad', ['lt_keyboard_replacement'], { isPopular: true }),
   P('lt_single_key', 'Individual key not working', 'keyboard_touchpad', ['lt_keycap_repair', 'lt_keyboard_replacement']),
   P('lt_multiple_keys', 'Multiple keys not working', 'keyboard_touchpad', ['lt_keyboard_replacement']),
@@ -144,7 +144,7 @@ const PROBLEMS = [
   P('lt_trackpad_damaged', 'Trackpad physically damaged', 'keyboard_touchpad', ['lt_trackpad_replacement']),
   P('lt_palmrest_damage', 'Palm-rest damage', 'keyboard_touchpad', ['lt_palmrest_replacement']),
 
-  // ── Body & Hinge ──────────────────────────────────────────────────────
+  // Body & Hinge
   P('lt_hinge_broken', 'Hinge broken', 'body_hinge', ['lt_hinge_repair'], { severity: 'high', isPopular: true }),
   P('lt_hinge_stiff', 'Hinge stiff', 'body_hinge', ['lt_hinge_repair']),
   P('lt_hinge_loose', 'Hinge loose', 'body_hinge', ['lt_hinge_repair']),
@@ -157,7 +157,7 @@ const PROBLEMS = [
   P('lt_wont_close', 'Laptop will not close properly', 'body_hinge', ['lt_hinge_repair']),
   P('lt_wont_open', 'Laptop will not open properly', 'body_hinge', ['lt_hinge_repair']),
 
-  // ── Audio ─────────────────────────────────────────────────────────────
+  // Audio
   P('lt_speaker_not_working', 'Speaker not working', 'audio', ['lt_speaker_replacement', 'lt_driver_installation']),
   P('lt_speaker_low', 'Speaker low', 'audio', ['lt_speaker_replacement', 'lt_driver_installation']),
   P('lt_speaker_distorted', 'Speaker distorted', 'audio', ['lt_speaker_replacement']),
@@ -167,7 +167,7 @@ const PROBLEMS = [
   P('lt_mic_low', 'Microphone low', 'audio', ['lt_microphone_repair', 'lt_driver_installation']),
   P('lt_mic_not_detected', 'Internal microphone not detected', 'audio', ['lt_microphone_repair', 'lt_driver_installation']),
 
-  // ── Camera ────────────────────────────────────────────────────────────
+  // Camera
   P('lt_webcam_not_working', 'Webcam not working', 'camera', ['lt_webcam_replacement', 'lt_driver_installation']),
   P('lt_webcam_not_detected', 'Webcam not detected', 'camera', ['lt_webcam_replacement', 'lt_driver_installation']),
   P('lt_camera_blurry', 'Camera blurry', 'camera', ['lt_webcam_replacement']),
@@ -175,7 +175,7 @@ const PROBLEMS = [
   P('lt_camera_driver', 'Camera driver issue', 'camera', ['lt_driver_installation']),
   P('lt_privacy_shutter', 'Privacy shutter issue', 'camera', ['lt_webcam_replacement']),
 
-  // ── Storage ───────────────────────────────────────────────────────────
+  // Storage
   P('lt_ssd_failure', 'SSD failure', 'storage', ['lt_ssd_replacement', 'lt_data_recovery'], { severity: 'high' }),
   P('lt_hdd_failure', 'HDD failure', 'storage', ['lt_hdd_replacement', 'lt_data_recovery'], { severity: 'high' }),
   P('lt_storage_not_detected', 'Storage not detected', 'storage', ['lt_ssd_replacement', 'lt_motherboard_repair'], { severity: 'high' }),
@@ -187,7 +187,7 @@ const PROBLEMS = [
   P('lt_storage_upgrade_p', 'Storage upgrade', 'storage', ['lt_ssd_upgrade']),
   P('lt_data_migration_p', 'Data migration', 'storage', ['lt_data_migration']),
 
-  // ── Performance ───────────────────────────────────────────────────────
+  // Performance
   P('lt_ram_failure', 'RAM failure', 'performance', ['lt_ram_replacement'], { severity: 'high' }),
   P('lt_ram_not_detected', 'RAM not detected', 'performance', ['lt_ram_replacement', 'lt_motherboard_repair']),
   P('lt_ram_upgrade_p', 'RAM upgrade', 'performance', ['lt_ram_upgrade'], { isPopular: true }),
@@ -198,7 +198,7 @@ const PROBLEMS = [
   P('lt_blue_screen_p', 'Blue screen', 'performance', ['lt_os_repair', 'lt_ram_replacement', 'lt_ssd_replacement'], { severity: 'high' }),
   P('lt_performance_degradation', 'Performance degradation', 'performance', ['lt_thermal_service', 'lt_os_repair', 'lt_ssd_upgrade']),
 
-  // ── Software ──────────────────────────────────────────────────────────
+  // Software
   P('lt_windows_not_booting', 'Windows not booting', 'software', ['lt_os_repair', 'lt_os_installation'], { severity: 'high' }),
   P('lt_windows_corrupted', 'Windows corrupted', 'software', ['lt_os_repair', 'lt_os_installation']),
   P('lt_boot_loop', 'Boot loop', 'software', ['lt_os_repair', 'lt_os_installation'], { severity: 'high' }),
@@ -217,7 +217,7 @@ const PROBLEMS = [
   P('lt_malware', 'Malware/virus cleanup', 'software', ['lt_virus_removal'], { isPopular: true }),
   P('lt_startup_problems', 'Startup problems', 'software', ['lt_os_repair']),
 
-  // ── Connectivity ──────────────────────────────────────────────────────
+  // Connectivity
   P('lt_wifi_not_working', 'Wi-Fi not working', 'connectivity', ['lt_wifi_card_replacement', 'lt_driver_installation'], { isPopular: true }),
   P('lt_wifi_disconnecting', 'Wi-Fi disconnecting', 'connectivity', ['lt_wifi_card_replacement', 'lt_driver_installation']),
   P('lt_bluetooth', 'Bluetooth not working', 'connectivity', ['lt_wifi_card_replacement', 'lt_driver_installation']),
@@ -228,7 +228,7 @@ const PROBLEMS = [
   P('lt_thunderbolt', 'Thunderbolt/USB-C issue', 'connectivity', ['lt_port_repair', 'lt_motherboard_repair']),
   P('lt_sd_reader', 'SD card reader not working', 'connectivity', ['lt_port_repair']),
 
-  // ── Overheating ───────────────────────────────────────────────────────
+  // Overheating
   P('lt_overheating', 'Laptop overheating', 'overheating', ['lt_thermal_service', 'lt_fan_replacement'], { isPopular: true }),
   P('lt_fan_not_working', 'Fan not working', 'overheating', ['lt_fan_replacement'], { severity: 'high' }),
   P('lt_fan_noisy', 'Fan noisy', 'overheating', ['lt_fan_replacement', 'lt_internal_cleaning']),
@@ -239,7 +239,7 @@ const PROBLEMS = [
   P('lt_dust_cleaning', 'Internal dust cleaning', 'overheating', ['lt_internal_cleaning']),
   P('lt_cooling_service', 'Cooling system service', 'overheating', ['lt_thermal_service']),
 
-  // ── Advanced hardware — none of these can be priced remotely ──────────
+  // Advanced hardware — none of these can be priced remotely
   P('lt_motherboard_failure', 'Motherboard failure', 'advanced_hardware', ['lt_motherboard_repair'], { requiresDiagnosis: true, severity: 'critical' }),
   P('lt_completely_dead', 'Laptop completely dead', 'advanced_hardware', ['lt_motherboard_repair', 'lt_adapter_replacement', 'lt_battery_replacement'], { requiresDiagnosis: true, severity: 'critical' }),
   P('lt_no_power', 'No power', 'advanced_hardware', ['lt_motherboard_repair', 'lt_adapter_replacement', 'lt_power_button_repair'], { requiresDiagnosis: true, severity: 'critical' }),
@@ -254,7 +254,7 @@ const PROBLEMS = [
   P('lt_corrosion_adv', 'Corrosion', 'advanced_hardware', ['lt_liquid_damage_treatment', 'lt_motherboard_repair'], { requiresDiagnosis: true, severity: 'high' }),
   P('lt_chip_repair', 'Chip-level repair', 'advanced_hardware', ['lt_motherboard_repair'], { requiresDiagnosis: true, severity: 'high' }),
 
-  // ── Liquid damage — always inspected first ────────────────────────────
+  // Liquid damage — always inspected first
   P('lt_water_spilled', 'Water spilled', 'liquid_damage', ['lt_liquid_damage_treatment', 'lt_internal_cleaning'], { requiresDiagnosis: true, severity: 'critical', isPopular: true }),
   P('lt_coffee_spill', 'Coffee/tea spill', 'liquid_damage', ['lt_liquid_damage_treatment', 'lt_internal_cleaning'], { requiresDiagnosis: true, severity: 'critical' }),
   P('lt_liquid_keyboard', 'Liquid inside keyboard', 'liquid_damage', ['lt_liquid_damage_treatment', 'lt_keyboard_replacement'], { requiresDiagnosis: true, severity: 'high' }),
@@ -264,7 +264,7 @@ const PROBLEMS = [
   P('lt_keyboard_liquid', 'Keyboard liquid damage', 'liquid_damage', ['lt_liquid_damage_treatment', 'lt_keyboard_replacement'], { requiresDiagnosis: true, severity: 'high' }),
   P('lt_trackpad_liquid', 'Trackpad liquid damage', 'liquid_damage', ['lt_liquid_damage_treatment', 'lt_trackpad_replacement'], { requiresDiagnosis: true, severity: 'high' }),
 
-  // ── Data recovery — outcome is never guaranteed ───────────────────────
+  // Data recovery — outcome is never guaranteed
   P('lt_data_recovery_p', 'Data recovery', 'data_recovery', ['lt_data_recovery', 'lt_data_migration'], { requiresDiagnosis: true, severity: 'high', isPopular: true }),
   P('lt_deleted_files', 'Deleted files', 'data_recovery', ['lt_data_recovery'], { requiresDiagnosis: true }),
   P('lt_failed_ssd_recovery', 'Failed SSD data recovery', 'data_recovery', ['lt_data_recovery', 'lt_ssd_replacement'], { requiresDiagnosis: true, severity: 'high' }),
@@ -275,7 +275,7 @@ const PROBLEMS = [
   P('lt_data_transfer', 'Data transfer', 'data_recovery', ['lt_data_migration']),
   P('lt_drive_cloning', 'Drive cloning', 'data_recovery', ['lt_data_migration']),
 
-  // ── Upgrades ──────────────────────────────────────────────────────────
+  // Upgrades
   P('lt_ram_upgrade_u', 'RAM upgrade', 'upgrade', ['lt_ram_upgrade'], { isPopular: true }),
   P('lt_ssd_upgrade_u', 'SSD upgrade', 'upgrade', ['lt_ssd_upgrade'], { isPopular: true }),
   P('lt_hdd_to_ssd', 'HDD → SSD migration', 'upgrade', ['lt_ssd_upgrade', 'lt_data_migration']),
@@ -285,7 +285,7 @@ const PROBLEMS = [
   P('lt_thermal_upgrade', 'Thermal upgrade/service', 'upgrade', ['lt_thermal_service']),
   P('lt_os_upgrade', 'Operating system upgrade', 'upgrade', ['lt_os_installation']),
 
-  // ── Maintenance ───────────────────────────────────────────────────────
+  // Maintenance
   P('lt_internal_cleaning_m', 'Internal cleaning', 'maintenance', ['lt_internal_cleaning'], { isPopular: true }),
   P('lt_fan_cleaning', 'Fan cleaning', 'maintenance', ['lt_internal_cleaning']),
   P('lt_thermal_paste_m', 'Thermal paste replacement', 'maintenance', ['lt_thermal_service']),
@@ -295,7 +295,7 @@ const PROBLEMS = [
   P('lt_preventive_maintenance', 'Preventive maintenance', 'maintenance', ['lt_full_service']),
 ];
 
-/* ─── Repairs (§13) ────────────────────────────────────────────────────── */
+/* Repairs (§13) */
 
 const D = 'doorstep', W = 'workshop', PU = 'pickup_repair', R = 'remote_support';
 
@@ -347,7 +347,7 @@ const REPAIRS = [
   { code: 'lt_liquid_damage_treatment', name: 'Liquid Damage Treatment', pricingMode: 'diagnosis_required', minSkillLevel: 4, modes: [W, PU], durationMin: 480, warrantyDays: 30 },
 ];
 
-/* ─── Skill levels (§23) ───────────────────────────────────────────────── */
+/* Skill levels (§23) */
 
 const SKILL_LEVELS = [
   { level: 1, name: 'Basic', description: 'Cleaning, software, basic maintenance', requiresVerification: false },
@@ -356,7 +356,7 @@ const SKILL_LEVELS = [
   { level: 4, name: 'Board-level', description: 'Motherboard, component-level, IC, liquid, data recovery', requiresVerification: true },
 ];
 
-/* ─── QA checklists (§53) ──────────────────────────────────────────────── */
+/* QA checklists (§53) */
 
 const QA_CHECKLISTS = [
   {

@@ -249,7 +249,7 @@ describe('completed repair pays the provider', () => {
   });
 });
 
-/* ─── Cash settles the other way round ─────────────────────────────────── */
+/* Cash settles the other way round */
 
 /**
  * On a cash job the technician takes the customer's money directly, so there is
@@ -345,7 +345,7 @@ describe('cash repairs', () => {
   });
 });
 
-/* ─── Passing on a job ─────────────────────────────────────────────────── */
+/* Passing on a job */
 
 /**
  * A technician who is mid-job, out of the part, or simply too far must be able

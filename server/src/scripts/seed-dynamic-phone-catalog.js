@@ -110,11 +110,11 @@ async function seed() {
     await ServiceCatalog.findOneAndUpdate({ code: s.code }, { ...s, isActive: true }, { upsert: true, new: true });
   }
 
-  console.log('✅ Distinct Car Puncture & Bike Puncture Seeder Completed Successfully!');
+  console.log('Distinct Car Puncture & Bike Puncture Seeder Completed Successfully!');
   await mongoose.disconnect();
 }
 
 seed().catch((err) => {
-  console.error('❌ Seeding failed:', err);
+  console.error('Seeding failed:', err);
   process.exit(1);
 });

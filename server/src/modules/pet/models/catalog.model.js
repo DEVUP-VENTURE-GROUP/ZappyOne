@@ -58,7 +58,7 @@ const PRICING_UNITS = [
   'quote',       // must be quoted by a human
 ];
 
-/* ─── Breeds (§5, §6) ─────────────────────────────────────────────────── */
+/* Breeds (§5, §6) */
 
 const breedSchema = new mongoose.Schema(
   {
@@ -94,7 +94,7 @@ const breedSchema = new mongoose.Schema(
 
 breedSchema.index({ species: 1, isActive: 1, displayOrder: 1 });
 
-/* ─── Categories and variants (§2, §9–§21) ───────────────────────────── */
+/* Categories and variants (§2, §9–§21) */
 
 const categorySchema = new mongoose.Schema(
   {
@@ -153,7 +153,7 @@ const variantSchema = new mongoose.Schema(
 
 variantSchema.index({ categoryCode: 1, isActive: 1, displayOrder: 1 });
 
-/* ─── Compatibility (§51) ─────────────────────────────────────────────── */
+/* Compatibility (§51) */
 
 /**
  * Whether a species may receive a service at all.
@@ -189,7 +189,7 @@ compatibilitySchema.index(
   { unique: true },
 );
 
-/* ─── Add-ons (§30) ───────────────────────────────────────────────────── */
+/* Add-ons (§30) */
 
 const addonSchema = new mongoose.Schema(
   {
@@ -220,7 +220,7 @@ const addonSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-/* ─── Packages (§31) ──────────────────────────────────────────────────── */
+/* Packages (§31) */
 
 const packageSchema = new mongoose.Schema(
   {
@@ -266,7 +266,7 @@ packageSchema.pre('validate', function onlyOnePriceSource(next) {
   next();
 });
 
-/* ─── Service areas (§48) ─────────────────────────────────────────────── */
+/* Service areas (§48) */
 
 const serviceAreaSchema = new mongoose.Schema(
   {

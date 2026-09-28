@@ -76,7 +76,7 @@ function hexToRgb(hex) {
   return `${r}, ${g}, ${b}`;
 }
 
-/* ─── Zone form drawer ──────────────────────────────────────────────────── */
+/* Zone form drawer */
 function ZoneDrawer({ initial, coordinates, onClose, onSaved }) {
   const isEdit = !!initial?._id;
   const [form, setForm] = useState({
@@ -228,7 +228,7 @@ function ZoneDrawer({ initial, coordinates, onClose, onSaved }) {
   );
 }
 
-/* ─── Zone stats bar ────────────────────────────────────────────────────── */
+/* Zone stats bar */
 function ZoneStats({ zoneId }) {
   const { data, isLoading } = useAdminZoneStatsQuery(zoneId);
   if (isLoading) return (
@@ -262,7 +262,7 @@ function ZoneStats({ zoneId }) {
   );
 }
 
-/* ─── Main ──────────────────────────────────────────────────────────────── */
+/* Main */
 export default function Zones() {
   const { data, isLoading, refetch } = useAdminZonesQuery();
   const [deleteZone] = useAdminDeleteZoneMutation();

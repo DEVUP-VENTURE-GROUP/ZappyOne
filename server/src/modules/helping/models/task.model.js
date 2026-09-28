@@ -26,7 +26,7 @@ const mongoose = require('mongoose');
 const { pointField, stripEmptyPoints } = require('../../../utils/geo-point');
 const { SERVICE_TYPES, PAYMENT_MODELS } = require('./config.model');
 
-/* ─── State machine (§64) ─────────────────────────────────────────────── */
+/* State machine (§64) */
 
 const TASK_STATUSES = [
   'DRAFT',
@@ -100,7 +100,7 @@ const CANCELLABLE_FROM = [
   'IN_PROGRESS', 'APPROVAL_REQUIRED', 'ITEM_UNAVAILABLE',
 ];
 
-/* ─── Item-level tracking (§12, §14, §46) ─────────────────────────────── */
+/* Item-level tracking (§12, §14, §46) */
 
 const ITEM_STATUSES = [
   'requested', 'found', 'not_found', 'out_of_stock',
@@ -157,7 +157,7 @@ const shoppingItemSchema = new mongoose.Schema(
   { _id: true },
 );
 
-/* ─── Approvals — immutable, one row per decision (§36) ───────────────── */
+/* Approvals — immutable, one row per decision (§36) */
 
 const APPROVAL_KINDS = [
   'alternative_item', 'price_increase', 'additional_stop',
@@ -187,7 +187,7 @@ const approvalSchema = new mongoose.Schema(
   { _id: true },
 );
 
-/* ─── Proof (§13, §17, §29) ───────────────────────────────────────────── */
+/* Proof (§13, §17, §29) */
 
 const PROOF_KINDS = [
   'arrival', 'item', 'receipt', 'package_before', 'package_after',
@@ -207,7 +207,7 @@ const proofSchema = new mongoose.Schema(
   { _id: false },
 );
 
-/* ─── Stops (§15) ─────────────────────────────────────────────────────── */
+/* Stops (§15) */
 
 const stopSchema = new mongoose.Schema(
   {
@@ -227,7 +227,7 @@ const stopSchema = new mongoose.Schema(
   { _id: true },
 );
 
-/* ─── Return / exchange specifics (§47) ───────────────────────────────── */
+/* Return / exchange specifics (§47) */
 
 const RETURN_METHODS = ['store_dropoff', 'courier_dropoff', 'merchant_handover', 'exchange'];
 
@@ -273,7 +273,7 @@ const returnDetailSchema = new mongoose.Schema(
   { _id: false },
 );
 
-/* ─── Money (§7, §52) ─────────────────────────────────────────────────── */
+/* Money (§7, §52) */
 
 /** ZappyOne's charge. Item money is NOT here, on purpose. */
 const chargeSchema = new mongoose.Schema(
@@ -333,7 +333,7 @@ const statusEventSchema = new mongoose.Schema(
   { _id: false },
 );
 
-/* ─── The task ────────────────────────────────────────────────────────── */
+/* The task */
 
 const helpingTaskSchema = new mongoose.Schema(
   {

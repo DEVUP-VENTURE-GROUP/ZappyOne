@@ -35,7 +35,7 @@ const { CustomerAsset } = require('./models/customer-asset.model');
 
 const { verticalOf, verticalFilter } = require('./vertical');
 
-/* ─── Catalog ──────────────────────────────────────────────────────────── */
+/* Catalog */
 
 async function listBrands(req, res, next) {
   try {
@@ -109,7 +109,7 @@ async function listModels(req, res, next) {
   } catch (err) { next(err); }
 }
 
-/* ─── Deep catalog (§4-§6) ─────────────────────────────────────────────── */
+/* Deep catalog (§4-§6) */
 
 /**
  * The layers between a brand and a repairable unit.
@@ -181,7 +181,7 @@ async function listConfigurations(req, res, next) {
   } catch (err) { next(err); }
 }
 
-/* ─── "I don't know my model" (§7) ─────────────────────────────────────── */
+/* "I don't know my model" (§7) */
 
 /**
  * Capture what the customer CAN tell us and let a human finish the job.
@@ -389,7 +389,7 @@ async function listPartQualities(req, res, next) {
   } catch (err) { next(err); }
 }
 
-/* ─── Diagnostics ──────────────────────────────────────────────────────── */
+/* Diagnostics */
 
 async function getDiagnosticFlow(req, res, next) {
   try {
@@ -430,7 +430,7 @@ async function submitDiagnostic(req, res, next) {
   } catch (err) { next(err); }
 }
 
-/* ─── Price preview + providers ────────────────────────────────────────── */
+/* Price preview + providers */
 
 /**
  * Indicative price BEFORE a provider is chosen. Explicitly flagged as an
@@ -506,7 +506,7 @@ async function findProviders(req, res, next) {
   } catch (err) { next(err); }
 }
 
-/* ─── Bookings ─────────────────────────────────────────────────────────── */
+/* Bookings */
 
 async function createBooking(req, res, next) {
   try {
@@ -545,7 +545,7 @@ async function listMyBookings(req, res, next) {
  * Only for finished work. A report on a job still in progress would show a
  * half-filled checklist as though it were the final result.
  */
-/* ─── Saved assets — "my tank", "my phone", "my car" (§27) ─────────────── */
+/* Saved assets — "my tank", "my phone", "my car" (§27) */
 
 /**
  * The customer's saved things, with the real catalog names attached.
@@ -964,7 +964,7 @@ async function cancelBooking(req, res, next) {
   } catch (err) { next(err); }
 }
 
-/* ─── Proof and feedback ───────────────────────────────────────────────── */
+/* Proof and feedback */
 
 /**
  * Photographs of the finished work, attached before the job closes.
@@ -1031,7 +1031,7 @@ async function rateRepair(req, res, next) {
   } catch (err) { next(err); }
 }
 
-/* ─── Handover codes ───────────────────────────────────────────────────── */
+/* Handover codes */
 
 /**
  * The customer reads their own code.
@@ -1084,7 +1084,7 @@ async function verifyHandoverCode(req, res, next) {
   } catch (err) { next(err); }
 }
 
-/* ─── Quotes ───────────────────────────────────────────────────────────── */
+/* Quotes */
 
 async function submitQuote(req, res, next) {
   try {
@@ -1110,7 +1110,7 @@ async function respondToQuote(req, res, next) {
   } catch (err) { next(err); }
 }
 
-/* ─── Device custody + QA ──────────────────────────────────────────────── */
+/* Device custody + QA */
 
 async function createInspection(req, res, next) {
   try {
@@ -1169,7 +1169,7 @@ async function submitQA(req, res, next) {
   } catch (err) { next(err); }
 }
 
-/* ─── Customer catalog requests (§67) ──────────────────────────────────── */
+/* Customer catalog requests (§67) */
 
 async function submitCatalogRequest(req, res, next) {
   try {

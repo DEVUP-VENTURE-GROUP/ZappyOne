@@ -141,7 +141,7 @@ function crudHandlers(Model, entityName, { auditPrefix }) {
   };
 }
 
-/* ─── Catalog ──────────────────────────────────────────────────────────── */
+/* Catalog */
 
 const brands = {
   list: listHandler(Brand, { searchFields: ['name', 'code'], defaultSort: { sortOrder: 1 }, baseFilter: (req) => ({ category: verticalOf(req) }) }),
@@ -202,7 +202,7 @@ const qaChecklists = {
 };
 
 
-/* ─── Deep catalog (§4-§6) ─────────────────────────────────────────────── */
+/* Deep catalog (§4-§6) */
 
 /**
  * Product type / family / series / configuration are the layers laptops need
@@ -245,7 +245,7 @@ const configurations = {
   ...crudHandlers(DeviceConfiguration, 'device_configuration', { auditPrefix: 'repair.configuration' }),
 };
 
-/* ─── "I don't know my model" queue (§7) ───────────────────────────────── */
+/* "I don't know my model" queue (§7) */
 
 const identificationRequests = {
   list: listHandler(ModelIdentificationRequest, {
@@ -334,7 +334,7 @@ const identificationRequests = {
 };
 
 
-/* ─── Provider-proposed catalog additions ──────────────────────────────── */
+/* Provider-proposed catalog additions */
 
 const providerRequests = {
   list: listHandler(ProviderCatalogRequest, {
@@ -439,7 +439,7 @@ const providerRequests = {
   },
 };
 
-/* ─── Reference pricing (versioned) ────────────────────────────────────── */
+/* Reference pricing (versioned) */
 
 const referencePricing = {
   list: listHandler(ZappyReferencePricing, {
@@ -510,7 +510,7 @@ const referencePricing = {
   },
 };
 
-/* ─── Provider pricing approval (§12, §68) ─────────────────────────────── */
+/* Provider pricing approval (§12, §68) */
 
 const providerPricing = {
   list: listHandler(ProviderPricing, {
@@ -566,7 +566,7 @@ const providerPricing = {
   },
 };
 
-/* ─── Configuration (§42) ──────────────────────────────────────────────── */
+/* Configuration (§42) */
 
 const config = {
   get: async (req, res, next) => {
@@ -608,7 +608,7 @@ const config = {
   },
 };
 
-/* ─── Approval queues + catalog requests ───────────────────────────────── */
+/* Approval queues + catalog requests */
 
 const approvals = {
   list: listHandler(ApprovalRequest, { searchFields: ['title'], defaultSort: { createdAt: -1 } }),
@@ -691,7 +691,7 @@ const catalogRequests = {
   },
 };
 
-/* ─── Operations ───────────────────────────────────────────────────────── */
+/* Operations */
 
 const operations = {
   bookings: listHandler(RepairBooking, { searchFields: ['reference'], defaultSort: { createdAt: -1 } }),

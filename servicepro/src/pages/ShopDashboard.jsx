@@ -252,7 +252,7 @@ export default function ShopDashboard() {
       {/* Ring the owner when a job lands, exactly as a technician is rung. */}
       <RepairOfferHost myLocation={shop?.address?.location?.coordinates} />
 
-      {/* ── Header ── */}
+      {/* Header */}
       <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-600">
@@ -285,7 +285,7 @@ export default function ShopDashboard() {
 
       <div className="mx-auto max-w-6xl px-4 pt-4">
 
-        {/* ── Only shown when something genuinely blocks the shop ── */}
+        {/* Only shown when something genuinely blocks the shop */}
         {!isDiscoverable && (
           <div className={`mb-4 rounded-2xl border p-4 ${
             kycStatus === 'rejected' || kycStatus === 'suspended'
@@ -327,12 +327,12 @@ export default function ShopDashboard() {
           </div>
         )}
 
-        {/* ── Stats ── */}
+        {/* Stats */}
         <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6">
           {statCards.map((s) => <StatCard key={s.label} {...s} />)}
         </div>
 
-        {/* ── Main grid ── */}
+        {/* Main grid */}
         <div className="mt-5 grid gap-5 lg:grid-cols-3">
           <div className="space-y-5 lg:col-span-2">
             <Panel

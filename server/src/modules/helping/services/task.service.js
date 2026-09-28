@@ -50,7 +50,7 @@ const notify = (userId, title, body, task, extra = {}) => notificationService.no
   data: { helpingTaskId: String(task._id), ...extra },
 }).catch(() => {});
 
-/* ─── Creation ─────────────────────────────────────────────────────────── */
+/* Creation */
 
 /**
  * Create a task, priced by the server.
@@ -151,7 +151,7 @@ async function createTask({
   return { task: task.toObject(), replayed: false };
 }
 
-/* ─── Item execution (§12, §13) ────────────────────────────────────────── */
+/* Item execution (§12, §13) */
 
 /**
  * Record what the helper found for one item.
@@ -304,7 +304,7 @@ async function respondToApproval({ taskId, userId, approvalId, approved }) {
   return task.toObject();
 }
 
-/* ─── Money (§7, §8, §35) ──────────────────────────────────────────────── */
+/* Money (§7, §8, §35) */
 
 /**
  * Record that the helper paid the shop out of their own pocket.
@@ -413,7 +413,7 @@ async function settleTask({ taskId, actorId = null }) {
   return task.toObject();
 }
 
-/* ─── Return & exchange (§28, §29, §30) ────────────────────────────────── */
+/* Return & exchange (§28, §29, §30) */
 
 /**
  * The parcel changed hands. That is ALL this records.

@@ -195,7 +195,7 @@ const requirements = {
   ...crudHandlers(KycRequirementSet, 'requirement_set'),
 };
 
-/* ─── Verification queue ───────────────────────────────────────────────── */
+/* Verification queue */
 
 const enrolments = {
   /**
@@ -342,7 +342,7 @@ const enrolments = {
   },
 };
 
-/* ─── Provider-proposed services ───────────────────────────────────────── */
+/* Provider-proposed services */
 
 const lineRequests = {
   list: listHandler(ServiceLineRequest, {

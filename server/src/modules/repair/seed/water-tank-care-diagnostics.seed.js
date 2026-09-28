@@ -18,7 +18,7 @@
  */
 
 const FLOWS = [
-  /* ─── Leakage — the safety-gated worked example (§24) ─────────────────── */
+  /* Leakage — the safety-gated worked example (§24) */
   {
     code: 'wt_leak_triage',
     category: 'water_tank_care',
@@ -92,7 +92,7 @@ const FLOWS = [
     ],
   },
 
-  /* ─── Confined-space entry for damage/repair reports ──────────────────── */
+  /* Confined-space entry for damage/repair reports */
   {
     code: 'wt_confined_space_check',
     category: 'water_tank_care',
@@ -139,7 +139,7 @@ const FLOWS = [
     ],
   },
 
-  /* ─── Cleaning: when a symptom means "clean it" vs "look first" ───────── */
+  /* Cleaning: when a symptom means "clean it" vs "look first" */
   {
     code: 'wt_cleaning_triage',
     category: 'water_tank_care',
@@ -184,7 +184,7 @@ const FLOWS = [
     ],
   },
 
-  /* ─── Flushing: recently-serviced vs genuinely overdue ────────────────── */
+  /* Flushing: recently-serviced vs genuinely overdue */
   {
     code: 'wt_flushing_triage',
     category: 'water_tank_care',

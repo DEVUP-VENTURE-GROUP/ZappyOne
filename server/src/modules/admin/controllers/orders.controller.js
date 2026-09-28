@@ -163,7 +163,7 @@ async function refundOrder(req, res, next) {
   }
 }
 
-/* ─── Manual Order Intervention ──────────────────────────────────────────── */
+/* Manual Order Intervention */
 
 const REASSIGNABLE_STATUSES = ['searching', 'assigned', 'on_the_way'];
 
@@ -475,7 +475,7 @@ async function addAdminNote(req, res, next) {
   } catch (err) { next(err); }
 }
 
-/* ── Settlement helpers ─────────────────────────────────────────────────── */
+/* Settlement helpers */
 
 /**
  * Settle worker earnings on an admin-forced completion. Idempotent via

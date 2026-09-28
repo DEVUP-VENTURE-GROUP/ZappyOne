@@ -39,7 +39,7 @@ const locationSchema = Joi.object({
   pincode: Joi.string().max(10).allow('', null),
 });
 
-/* ─── Catalog (any signed-in user) ─────────────────────────────────────── */
+/* Catalog (any signed-in user) */
 
 /**
  * Deep catalog. Literal segments precede the parameterised model route so
@@ -56,7 +56,7 @@ router.get('/repairs', authenticate, requireKnownVertical, ctrl.listRepairs);
 router.get('/addons', authenticate, requireKnownVertical, ctrl.listAddOns);
 router.get('/part-qualities', authenticate, ctrl.listPartQualities);
 
-/* ─── Model identification (§7) ────────────────────────────────────────── */
+/* Model identification (§7) */
 
 /**
  * The customer cannot name their machine. Rather than guess — and order the
@@ -81,7 +81,7 @@ router.post(
   ctrl.submitIdentificationRequest,
 );
 
-/* ─── Diagnostics ──────────────────────────────────────────────────────── */
+/* Diagnostics */
 
 router.get('/diagnostics/:problemCode', authenticate, ctrl.getDiagnosticFlow);
 router.post(
@@ -91,12 +91,12 @@ router.post(
   ctrl.submitDiagnostic,
 );
 
-/* ─── Pricing preview + provider discovery ─────────────────────────────── */
+/* Pricing preview + provider discovery */
 
 router.get('/price-preview', authenticate, ctrl.previewPrice);
 router.get('/providers', authenticate, ctrl.findProviders);
 
-/* ─── Catalog gap requests (§67) ───────────────────────────────────────── */
+/* Catalog gap requests (§67) */
 
 router.post(
   '/catalog-requests',
@@ -113,7 +113,7 @@ router.post(
   ctrl.submitCatalogRequest,
 );
 
-/* ─── Bookings ─────────────────────────────────────────────────────────── */
+/* Bookings */
 
 // Literal path first — otherwise `/bookings/:id` would match "mine".
 router.get('/bookings/mine', authenticate, requireRole('user'), ctrl.listMyBookings);
@@ -158,7 +158,7 @@ router.post(
   ctrl.createBooking,
 );
 
-/* ─── Saved assets — the customer's own tanks, phones, vehicles ──────────── */
+/* Saved assets — the customer's own tanks, phones, vehicles */
 
 const assetBody = Joi.object({
   vertical: Joi.string().max(30).required(),
@@ -244,7 +244,7 @@ router.post(
   ctrl.cancelBooking,
 );
 
-/* ─── Proof and feedback ───────────────────────────────────────────────── */
+/* Proof and feedback */
 
 /** Photographs of the finished work, attached by whoever did it. */
 router.post(
@@ -270,7 +270,7 @@ router.post(
   ctrl.rateRepair,
 );
 
-/* ─── Handover codes ───────────────────────────────────────────────────── */
+/* Handover codes */
 
 /**
  * The customer's own code for whichever step is next.
@@ -298,7 +298,7 @@ router.post(
   ctrl.verifyHandoverCode,
 );
 
-/* ─── Quotes ───────────────────────────────────────────────────────────── */
+/* Quotes */
 
 // Only the provider side may quote; the customer only responds.
 router.post(
@@ -343,7 +343,7 @@ router.post(
   ctrl.respondToQuote,
 );
 
-/* ─── Provider self-service (§18) ──────────────────────────────────────── */
+/* Provider self-service (§18) */
 
 // Everything below is scoped to the caller's own records by the controller,
 // which resolves the owner from the token rather than from any path or body.
@@ -501,7 +501,7 @@ router.post(
   provider.bulkPricing,
 );
 
-/* ─── Device custody + QA (provider side) ──────────────────────────────── */
+/* Device custody + QA (provider side) */
 
 router.post(
   '/bookings/:id/inspections',

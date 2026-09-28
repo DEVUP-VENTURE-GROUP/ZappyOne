@@ -6,7 +6,7 @@ const mongoose = require('mongoose');
  * orders/referrals, redeemable to wallet cash. All rates are admin-configurable.
  */
 
-// ── Admin config (singleton) ────────────────────────────────────────────────
+// Admin config (singleton)
 const scratchTierSchema = new mongoose.Schema(
   {
     label:  { type: String, required: true },              // "₹10 cashback", "50 points"
@@ -37,7 +37,7 @@ const rewardsConfigSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// ── Per-user points balance (denormalised for fast reads) ────────────────────
+// Per-user points balance (denormalised for fast reads)
 const rewardAccountSchema = new mongoose.Schema(
   {
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, unique: true, index: true },
@@ -48,7 +48,7 @@ const rewardAccountSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// ── Points ledger (audit trail) ──────────────────────────────────────────────
+// Points ledger (audit trail)
 const pointsLedgerSchema = new mongoose.Schema(
   {
     userId:  { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
@@ -61,7 +61,7 @@ const pointsLedgerSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// ── Scratch cards ────────────────────────────────────────────────────────────
+// Scratch cards
 const scratchCardSchema = new mongoose.Schema(
   {
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },

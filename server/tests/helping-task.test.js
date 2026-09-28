@@ -92,7 +92,7 @@ const baseTask = (over = {}) => ({
   ...over,
 });
 
-/* ─── Pricing comes from config, never from code ─────────────────────── */
+/* Pricing comes from config, never from code */
 
 describe('pricing is configuration, not code', () => {
   it('prices an errand from the configured slabs', async () => {
@@ -159,7 +159,7 @@ describe('pricing is configuration, not code', () => {
   });
 });
 
-/* ─── The separation that defines this category ──────────────────────── */
+/* The separation that defines this category */
 
 describe('item money and service money never mix', () => {
   it('keeps the shopping budget out of the service charge', async () => {
@@ -245,7 +245,7 @@ describe('item money and service money never mix', () => {
   });
 });
 
-/* ─── Nothing substituted, nothing overspent ─────────────────────────── */
+/* Nothing substituted, nothing overspent */
 
 describe('a helper cannot substitute or overspend in silence', () => {
   async function assignedTask() {
@@ -372,7 +372,7 @@ describe('a helper cannot substitute or overspend in silence', () => {
   });
 });
 
-/* ─── The helper is not a lender ─────────────────────────────────────── */
+/* The helper is not a lender */
 
 describe('worker advance is capped', () => {
   it('allows an advance within the configured limit', async () => {
@@ -393,7 +393,7 @@ describe('worker advance is capped', () => {
   });
 });
 
-/* ─── The promise this product must never make ───────────────────────── */
+/* The promise this product must never make */
 
 describe('a refund is never claimed on the merchant\'s behalf', () => {
   async function returnTask() {
@@ -459,7 +459,7 @@ describe('a refund is never claimed on the merchant\'s behalf', () => {
   });
 });
 
-/* ─── State machine ──────────────────────────────────────────────────── */
+/* State machine */
 
 describe('the server owns the task state', () => {
   it('refuses an illegal jump', async () => {
@@ -478,7 +478,7 @@ describe('the server owns the task state', () => {
   });
 });
 
-/* ─── Restricted goods ───────────────────────────────────────────────── */
+/* Restricted goods */
 
 describe('restricted items', () => {
   it('refuses a task for something a helper must not buy', async () => {

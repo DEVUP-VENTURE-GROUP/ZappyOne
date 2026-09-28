@@ -24,7 +24,7 @@ async function run() {
     active.commissionRate  = COMMISSION;
     active.platformFeePaise = PLATFORM_PAISE;
     await active.save();
-    console.log(`✓ Updated active config v${active.version}: commission ${COMMISSION * 100}%, platform ₹${PLATFORM_PAISE / 100}`);
+    console.log(`Updated active config v${active.version}: commission ${COMMISSION * 100}%, platform ₹${PLATFORM_PAISE / 100}`);
   } else {
     // No active config yet (server was on env defaults) — create one.
     active = await PricingConfig.create({
@@ -33,7 +33,7 @@ async function run() {
       commissionRate: COMMISSION,
       platformFeePaise: PLATFORM_PAISE,
     });
-    console.log(`✓ Created active config v1: commission ${COMMISSION * 100}%, platform ₹${PLATFORM_PAISE / 100}`);
+    console.log(`Created active config v1: commission ${COMMISSION * 100}%, platform ₹${PLATFORM_PAISE / 100}`);
   }
 
   // Best-effort: clear the cached config so the change is instant (else it
@@ -41,7 +41,7 @@ async function run() {
   try {
     const { redis } = require('../config/redis');
     await redis.del('config:pricing:active');
-    console.log('✓ Cleared pricing config cache');
+    console.log('Cleared pricing config cache');
   } catch { console.log('(cache not cleared — refreshes within ~60s automatically)'); }
 
   await mongoose.disconnect();

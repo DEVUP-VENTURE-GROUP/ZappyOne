@@ -59,7 +59,7 @@ async function loadOwnedPets(userId, petEntries) {
   return petEntries.map((entry) => ({ ...entry, pet: byId.get(String(entry.petId)) }));
 }
 
-/* ─── Creation ─────────────────────────────────────────────────────────── */
+/* Creation */
 
 async function createBooking({
   userId,
@@ -227,7 +227,7 @@ async function createBooking({
   return { booking: booking.toObject(), replayed: false };
 }
 
-/* ─── Cancellation (§37) ──────────────────────────────────────────────── */
+/* Cancellation (§37) */
 
 /**
  * What a cancellation costs, read from the policy's tiers.
@@ -315,7 +315,7 @@ async function cancelBooking({ bookingId, actorId, by = 'customer', reason = '' 
   return { booking: booking.toObject(), ...quote };
 }
 
-/* ─── Completion & history (§40) ──────────────────────────────────────── */
+/* Completion & history (§40) */
 
 /**
  * Finish a job and write it into every pet's passport.
@@ -380,7 +380,7 @@ async function completeBooking({ bookingId, workerId }) {
   return booking.toObject();
 }
 
-/* ─── Recurring generation (§32) ──────────────────────────────────────── */
+/* Recurring generation (§32) */
 
 /**
  * Create the bookings a schedule is due for.

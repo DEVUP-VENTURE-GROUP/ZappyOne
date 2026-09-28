@@ -9,7 +9,7 @@ const SKILLS_SET_PREFIX = 'workers:skill:';    // set: skill -> workerIds
 const ALIVE_ZSET_KEY    = 'workers:alive';     // sorted set: workerId -> last_seen_timestamp
 const AVAIL_SINCE_ZSET  = 'workers:available_since'; // zset: workerId -> ts became available (idle fairness)
 
-/* ── ZeroWait Ready Pool ──────────────────────────────────────────────────────
+/* ZeroWait Ready Pool
  * Workers who opt in to auto-accept the next matching job. Dispatch can lock one
  * of these atomically with NO offer/accept round-trip — that round-trip is the
  * floor on match speed for every competitor, so removing it is the whole edge.
@@ -25,7 +25,7 @@ const READY_META_PREFIX = 'worker:ready:';
 
 const STALE_THRESHOLD_MS = 8 * 60 * 1000; // 8 min without ping = stale
 
-/* ── Geo-write buffer ─────────────────────────────────────────────────────────
+/* Geo-write buffer
  * High-frequency location updates are coalesced per-node and flushed every
  * ~1.5s in a single pipelined GEOADD+ZADD. Turns N writes/sec/worker into a
  * handful of batched ops — the difference between surviving 10k and 1M movers.
@@ -183,7 +183,7 @@ async function setAvailability(workerId, isAvailable) {
   }
 }
 
-/* ─── ZeroWait: Ready Pool ────────────────────────────────────────────────── */
+/* ZeroWait: Ready Pool */
 
 /** Opt a worker into Ready Mode (auto-accept) for their skills, time-boxed. */
 async function enterReady(workerId, skills = [], radiusKm = 5, minutes = 20) {

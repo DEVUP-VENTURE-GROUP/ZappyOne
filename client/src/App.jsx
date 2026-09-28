@@ -17,7 +17,7 @@ import RouteProgress from '@shared/components/common/RouteProgress';
 import MainLayout from './components/layout/MainLayout';
 import ErrorBoundary from '@shared/components/common/ErrorBoundary';
 
-// ── Route-level code splitting ─────────────────────────────────────────────
+// Route-level code splitting
 // Each page is a separate chunk. Browsers only download the chunk for the
 // route the user actually visits. Fixes #67 (memory) and #70 (slow browser).
 //

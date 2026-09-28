@@ -29,7 +29,7 @@ async function authenticate(req, res, next) {
 
   const { sub, role } = auth;
 
-  // ── Single-device enforcement (workers) ─────────────────────────
+  // Single-device enforcement (workers)
   // A worker may only be signed in on ONE device. Login records the active
   // session id (`wsid:<id>`) and stamps it into the access token. If this token's
   // sid isn't the active one, the account was opened on another device → reject.
@@ -45,7 +45,7 @@ async function authenticate(req, res, next) {
     }
   }
 
-  // ── Ban check — Redis-cached 60s, DB fallback ──────────────────
+  // Ban check — Redis-cached 60s, DB fallback
   if (role === 'worker' || role === 'user') {
     try {
       const cacheKey = `ban:${role}:${sub}`;

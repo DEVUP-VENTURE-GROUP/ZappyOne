@@ -76,7 +76,7 @@ function enrichGeoFromIpAsync(sessionId, ip) {
     .catch((err) => logger.warn({ err: err.message, sessionId }, 'telemetry ip geo enrich failed'));
 }
 
-/* ─── POST /api/telemetry/pageview ────────────────────────────────────────── */
+/* POST /api/telemetry/pageview */
 async function pageview(req, res) {
   res.status(204).end(); // respond immediately — ingest is fire-and-forget
   try {
@@ -122,7 +122,7 @@ async function pageview(req, res) {
   }
 }
 
-/* ─── POST /api/telemetry/heartbeat ───────────────────────────────────────── */
+/* POST /api/telemetry/heartbeat */
 async function heartbeat(req, res) {
   res.status(204).end();
   try {
@@ -137,7 +137,7 @@ async function heartbeat(req, res) {
   }
 }
 
-/* ─── POST /api/telemetry/search ──────────────────────────────────────────── */
+/* POST /api/telemetry/search */
 /**
  * One row per service search. result='no_service' is the unmet-demand signal
  * (user saw "No Service Available"). Geo is resolved synchronously-ish via the

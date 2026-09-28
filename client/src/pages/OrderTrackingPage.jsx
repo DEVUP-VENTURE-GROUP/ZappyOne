@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-// ── Data + state ─────────────────────────────────────────────────────────
+// Data + state
 import {
   useGetOrderQuery, useGetOrderTimelineQuery, useGetCancelPreviewQuery,
   useCancelOrderMutation, useRateOrderMutation, useGetPriceRevisionQuery,
@@ -21,7 +21,7 @@ import { useOrderSocket, useSocketStatus } from '@shared/hooks/useSocket';
 import { selectOrder, setActiveOrder, setWorkerLocation } from '@shared/modules/order/orderSlice';
 import { selectAuth } from '@shared/modules/auth/authSlice';
 
-// ── Existing tracking modules (preserved intact) ─────────────────────────
+// Existing tracking modules (preserved intact)
 import LiveTrackingMap from '@shared/modules/tracking/LiveTrackingMap';
 import PageTransition from '../components/common/PageTransition';
 import BoostOfferCard from '../components/tracking/BoostOfferCard';
@@ -34,7 +34,7 @@ import SmartMatchSheet from '../components/tracking/SmartMatchSheet';
 import QuickRebook from '../components/tracking/QuickRebook';
 import CashbackCelebration from '../components/rewards/CashbackCelebration';
 
-// ── The redesigned presentational pieces ─────────────────────────────────
+// The redesigned presentational pieces
 import {
   TrackingHeader, MapETAChip, WorkerRichCard, PremiumTimeline,
   ActivityFeed, BookingSummary, RatingPanel, ProofPhoto, SearchingHero,
@@ -91,7 +91,7 @@ export default function OrderTrackingPage() {
   const dispatch = useDispatch();
   const { accessToken: token } = useSelector(selectAuth);
 
-  // ── Server state ───────────────────────────────────────────────────────
+  // Server state
   // Socket delivers real-time state; REST poll is a safety net for missed events.
   const { data, isLoading, refetch } = useGetOrderQuery(id, { pollingInterval: 30000 });
   const [cancelOrder, { isLoading: cancelling }] = useCancelOrderMutation();
@@ -102,7 +102,7 @@ export default function OrderTrackingPage() {
   const pricingConfig = pricingConfigData?.pricing ?? {};
   const [sendTip] = useSendTipMutation();
 
-  // ── UI state ───────────────────────────────────────────────────────────
+  // UI state
   const [showCancel, setShowCancel]         = useState(false);
   const [showProfile, setShowProfile]       = useState(false);
   const [cancelReason, setCancelReason]     = useState('');
@@ -114,7 +114,7 @@ export default function OrderTrackingPage() {
   const matchShownRef      = useRef(false);
   const mapAnchorRef       = useRef(null);
 
-  // ── Worker-arrived confirmation flow ───────────────────────────────────
+  // Worker-arrived confirmation flow
   // OTP is only revealed after the user explicitly confirms the worker is present.
   // sessionStorage key persists the confirmation across same-session refreshes.
   const ssKey = `wc:${id}`;
@@ -239,7 +239,7 @@ export default function OrderTrackingPage() {
     return entries.sort((a, b) => new Date(b.at) - new Date(a.at));
   }, [timelineData, order?.workerName]);
 
-  // ── Loading ────────────────────────────────────────────────────────────
+  // Loading
   if (isLoading || !order) {
     return (
       <div className="min-h-screen flex items-center justify-center"
@@ -254,7 +254,7 @@ export default function OrderTrackingPage() {
     );
   }
 
-  // ── Derived flags ──────────────────────────────────────────────────────
+  // Derived flags
   const terminal  = ['completed', 'cancelled', 'failed'].includes(status);
   const canCancel = !terminal && !['arrived', 'in_progress'].includes(status);
   const eta         = liveOrder.etaMinutes;
@@ -262,7 +262,7 @@ export default function OrderTrackingPage() {
   const deviceLabel = [order.deviceBrand, order.deviceModel].filter(Boolean).join(' ');
   const workerVisible = order.workerId && !terminal && status !== 'searching' && status !== 'created';
 
-  // ── Actions ────────────────────────────────────────────────────────────
+  // Actions
   async function callWorker() {
     try {
       const res = await fetch(`${API_BASE}/api/orders/${id}/call`, {
@@ -400,14 +400,14 @@ export default function OrderTrackingPage() {
           )}
         </AnimatePresence>
 
-        {/* ── HEADER ── */}
+        {/* HEADER */}
         <TrackingHeader
           order={order} status={status} eta={eta} distanceKm={distanceKm} terminal={terminal}
           onBack={() => nav('/')} onShare={() => setShowShareTrip(true)}
           onSOS={() => setShowSOSConfirm(true)} onSupport={() => nav('/support')}
         />
 
-        {/* ── BODY ── */}
+        {/* BODY */}
         <motion.div
           className="w-full max-w-2xl lg:max-w-4xl mx-auto px-4 sm:px-6 pt-4 space-y-3.5 lg:space-y-0 lg:columns-2 lg:gap-4 lg:[&>*]:mb-3.5 lg:[&>*]:break-inside-avoid"
           variants={staggerContainer} initial="initial" animate="animate"
@@ -680,7 +680,7 @@ export default function OrderTrackingPage() {
           )}
         </motion.div>
 
-        {/* ── FLOATING BOTTOM ACTION BAR ── */}
+        {/* FLOATING BOTTOM ACTION BAR */}
         <div className="fixed bottom-0 inset-x-0 z-30" style={{
           background: 'linear-gradient(180deg, rgba(241,243,251,0) 0%, rgba(241,243,251,.92) 26%, #F1F3FB 62%)',
           backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)',
@@ -718,7 +718,7 @@ export default function OrderTrackingPage() {
           </div>
         </div>
 
-        {/* ── SHEETS ── */}
+        {/* SHEETS */}
         {/* Cancel — with real fee preview + reason picker */}
         <AnimatePresence>
           {showCancel && (

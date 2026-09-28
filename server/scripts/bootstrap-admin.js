@@ -41,7 +41,7 @@ const { hashPassword } = require('../src/modules/auth/auth.service');
     isActive: true,
   });
 
-  console.log(`✓ Created super admin: ${admin.email} (id=${admin._id})`);
+  console.log(`Created super admin: ${admin.email} (id=${admin._id})`);
   console.log('Log in at POST /api/auth/admin/login');
   process.exit(0);
 })().catch((err) => {

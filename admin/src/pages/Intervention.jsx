@@ -44,7 +44,7 @@ function isStale(o) {
   return false;
 }
 
-/* ─── Modal shell ───────────────────────────────────────────────────────── */
+/* Modal shell */
 function Modal({ title, onClose, children }) {
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={onClose}>
@@ -60,7 +60,7 @@ function Modal({ title, onClose, children }) {
   );
 }
 
-/* ─── Reassign modal ────────────────────────────────────────────────────── */
+/* Reassign modal */
 function ReassignModal({ order, onClose, onDone }) {
   const { data, isLoading } = useAdminOrderNearbyWorkersQuery(order._id);
   const [reassign, { isLoading: busy }] = useAdminReassignOrderMutation();
@@ -105,7 +105,7 @@ function ReassignModal({ order, onClose, onDone }) {
   );
 }
 
-/* ─── Force status modal ────────────────────────────────────────────────── */
+/* Force status modal */
 function ForceStatusModal({ order, onClose, onDone }) {
   const options = FORCE_TRANSITIONS[order.status] || ['cancelled', 'completed'];
   const [status, setStatus] = useState(options[0]);
@@ -157,7 +157,7 @@ function ForceStatusModal({ order, onClose, onDone }) {
   );
 }
 
-/* ─── Force cancel modal ────────────────────────────────────────────────── */
+/* Force cancel modal */
 function ForceCancelModal({ order, onClose, onDone }) {
   const [reason, setReason] = useState('');
   const [refundFull, setRefundFull] = useState(true);
@@ -200,7 +200,7 @@ function ForceCancelModal({ order, onClose, onDone }) {
   );
 }
 
-/* ─── Add note modal ────────────────────────────────────────────────────── */
+/* Add note modal */
 function NoteModal({ order, onClose, onDone }) {
   const [note, setNote] = useState('');
   const [addNote, { isLoading: busy }] = useAdminAddOrderNoteMutation();
@@ -240,7 +240,7 @@ function NoteModal({ order, onClose, onDone }) {
   );
 }
 
-/* ─── Order card ────────────────────────────────────────────────────────── */
+/* Order card */
 function OrderCard({ o, onAction }) {
   const stale = isStale(o);
   // Reassign is only meaningful before the worker has physically arrived.
@@ -339,7 +339,7 @@ function OrderCard({ o, onAction }) {
   );
 }
 
-/* ─── Main ──────────────────────────────────────────────────────────────── */
+/* Main */
 export default function Intervention() {
   const [filter, setFilter] = useState('active'); // 'active' | 'stale'
   const [search, setSearch] = useState('');

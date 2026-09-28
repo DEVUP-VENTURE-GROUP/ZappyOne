@@ -43,7 +43,7 @@ const MIN_STEP_WAIT_MS   = 3_000;      // wait per later empty step (was 10s)
 // — in dense cities nobody is within 500m, burning 4×10s here was wasteful.
 const INSTANT_SKIP_STEPS = 4;
 
-/* ─── Main job processor ────────────────────────────────────────── */
+/* Main job processor */
 
 async function processDispatchJob(job) {
   const { orderId, retryCount = 0 } = job.data;
@@ -67,7 +67,7 @@ async function processDispatchJob(job) {
     return { ok: false, reason: 'order_not_found' };
   }
 
-  // ── Team slot: fill an additional worker slot on an already-assigned team order ──
+  // Team slot: fill an additional worker slot on an already-assigned team order
   if (job.data.isTeamSlot) {
     return processTeamSlot(order, job);
   }
@@ -77,7 +77,7 @@ async function processDispatchJob(job) {
     return { ok: false, reason: 'bad_status' };
   }
 
-  /* ── Transition to searching ── */
+  /* Transition to searching */
   if (order.status === 'created') {
     order.status = 'searching';
     order.statusHistory.push({ status: 'searching' });
@@ -87,7 +87,7 @@ async function processDispatchJob(job) {
 
   const [lng, lat] = order.pickupLocation.coordinates;
 
-  /* ── ZeroWait: INSTANT MATCH (Ready Pool) ─────────────────────────────────
+  /* ZeroWait: INSTANT MATCH (Ready Pool)
    * Every competitor pays an offer→accept round-trip: publish the job, then wait
    * for a human to tap Accept. That round-trip is the floor on match speed.
    *
@@ -103,7 +103,7 @@ async function processDispatchJob(job) {
     if (instant.ok) return instant;
   }
 
-  /* ── Per-zone concurrency throttle (#64) ─────────────────────────────────
+  /* Per-zone concurrency throttle
    * When 100+ orders land in the same geo-bucket (warehouse, event, dense zone),
    * all their dispatches hit the same ~50 workers simultaneously. Workers get
    * flooded with offers, ignore most, and all 100 re-dispatch — storm.
@@ -155,7 +155,7 @@ async function processDispatchJob(job) {
     (order.dispatch?.attemptedWorkerIds || []).map(String)
   );
 
-  /* ── Background listener: worker comes online mid-dispatch ──────────────────
+  /* Background listener: worker comes online mid-dispatch
    * If a worker was offline when their radius step ran, they'd normally be
    * missed until force-assign. This subscriber receives `worker:came_online:{skill}`
    * events (published by geo.service.markOnline) and offers immediately if the
@@ -210,7 +210,7 @@ async function processDispatchJob(job) {
     }
   };
 
-  /* ── Preferred worker: user's last accepted worker for same service ── */
+  /* Preferred worker: user's last accepted worker for same service */
   const preferredWorkerId = await getPreferredWorker(order);
   if (preferredWorkerId) {
     logger.info({ orderId, preferredWorkerId }, '[DISPATCH] Offering preferred worker first');
@@ -226,7 +226,7 @@ async function processDispatchJob(job) {
     alreadyNotified.add(String(preferredWorkerId));
   }
 
-  /* ── Acceptance-first controls (all admin-tunable via pricing config) ── */
+  /* Acceptance-first controls (all admin-tunable via pricing config) */
   const urgencyOn      = cfg.urgencyBonusEnabled !== false;
   const urgencyStart   = cfg.urgencyBonusStartStep ?? 4;
   const urgencyStep    = cfg.urgencyBonusStepPaise ?? 500;
@@ -286,7 +286,7 @@ async function processDispatchJob(job) {
   boostRound:                                     // eslint-disable-line no-labels
   for (;;) {
 
-  /* ── Walk radius steps (voluntary accept window) ── */
+  /* Walk radius steps (voluntary accept window) */
   for (let stepIdx = 0; stepIdx < radiusSteps.length; stepIdx++) {
     const radiusKm = radiusSteps[stepIdx];
 
@@ -432,7 +432,7 @@ async function processDispatchJob(job) {
       // Keep the background (came-online) listener's payload current.
       _latestOrderPayload = orderPayload;
 
-      /* ── P2: best-first head-start ──────────────────────────────────────────
+      /* P2: best-first head-start
        * Give the top-scored pro(s) a short EXCLUSIVE window before the broadcast,
        * so the best-ranked worker wins — not merely whoever taps first. Runs once,
        * on the first productive step. Falls through to broadcast if they pass.     */
@@ -459,7 +459,7 @@ async function processDispatchJob(job) {
           if (hs.acceptedBy) {
             const locked = await lockOrderToWorker(order._id, hs.acceptedBy, order.service);
             if (locked) {
-              logger.info({ orderId, workerId: hs.acceptedBy }, '[DISPATCH] ✅ Assigned via best-first head-start');
+              logger.info({ orderId, workerId: hs.acceptedBy }, '[DISPATCH] Assigned via best-first head-start');
               await persistUrgencyBonus(order._id, activeUrgencyBonusPaise);
               releaseCameOnlineSub();
               await onOrderAssigned(order, hs.acceptedBy, []);
@@ -495,7 +495,7 @@ async function processDispatchJob(job) {
       });
 
       // Publish offers + enqueue notifications in parallel batches.
-      // addBulk is a single Redis transaction vs N individual LPUSH calls. (#62)
+      // addBulk is a single Redis transaction vs N individual LPUSH calls.
       const pubMessages = batchWorkers.map((workerId) =>
         redis.publish('worker:offer', JSON.stringify({ workerId, order: orderPayload }))
       );
@@ -526,7 +526,7 @@ async function processDispatchJob(job) {
       if (result.acceptedBy) {
         const locked = await lockOrderToWorker(order._id, result.acceptedBy, order.service);
         if (locked) {
-          logger.info({ orderId, workerId: result.acceptedBy }, '[DISPATCH] ✅ Order assigned via accept');
+          logger.info({ orderId, workerId: result.acceptedBy }, '[DISPATCH] Order assigned via accept');
           await persistUrgencyBonus(order._id, activeUrgencyBonusPaise);
           releaseCameOnlineSub();
           await onOrderAssigned(order, result.acceptedBy, [...result.rejected, ...result.ignored]);
@@ -546,7 +546,7 @@ async function processDispatchJob(job) {
     }
   }
 
-  /* ── Guarantee minimum search window before giving up ── */
+  /* Guarantee minimum search window before giving up */
   const elapsedMs = Date.now() - jobStartMs;
   const remainingMs = minSearchMs - elapsedMs;
   if (remainingMs > 0) {
@@ -598,12 +598,12 @@ async function processDispatchJob(job) {
 
   releaseCameOnlineSub();
 
-  /* ── All voluntary steps exhausted ──────────────────────────────────────────
+  /* All voluntary steps exhausted
    * ACCEPTANCE-FIRST: by default we NEVER force a non-consenting worker (that
    * produced reluctant workers who cancel/ghost). Admin may re-enable force-assign
    * as a last resort via pricing config `forceAssignEnabled`. Otherwise we fall
    * through to a retry (with the now-higher accept bonus) and, if still nobody,
-   * a graceful failure + full refund via markOrderFailed. ── */
+   * a graceful failure + full refund via markOrderFailed. */
   if (cfg.forceAssignEnabled) {
     logger.info({ orderId }, '[DISPATCH] Voluntary window elapsed — force-assign enabled by admin, attempting');
     await emitToOrderRoom(order._id, 'order.dispatch_update', {
@@ -612,14 +612,14 @@ async function processDispatchJob(job) {
     const forceAssignRadius = config.dispatch.forceAssignRadiusKm ?? 20;
     const forceResult = await attemptForceAssign(order, forceAssignRadius);
     if (forceResult.ok) {
-      logger.info({ orderId, workerId: forceResult.workerId }, '[DISPATCH] ✅ Force-assigned');
+      logger.info({ orderId, workerId: forceResult.workerId }, '[DISPATCH] Force-assigned');
       return forceResult;
     }
   } else {
     logger.info({ orderId }, '[DISPATCH] Voluntary window elapsed — no force-assign (acceptance-first)');
   }
 
-  /* ── Retry dispatch if under limit ── */
+  /* Retry dispatch if under limit */
   if (retryCount < MAX_RETRIES) {
     const nextRetry = retryCount + 1;
     logger.info({ orderId, nextRetry }, '[DISPATCH] No workers found — scheduling retry');
@@ -642,7 +642,7 @@ async function processDispatchJob(job) {
     return { ok: false, reason: 'retrying', retryCount: nextRetry };
   }
 
-  /* ── Truly no workers after all retries ── */
+  /* Truly no workers after all retries */
   logger.info({ orderId }, '[DISPATCH] All attempts exhausted — marking failed');
   const finalOrder = await Order.findById(orderId);
   if (finalOrder && finalOrder.status === 'searching') {
@@ -654,9 +654,9 @@ async function processDispatchJob(job) {
   }
 }
 
-/* ─── Preferred worker: check if user's last worker is online + skilled ── */
+/* Preferred worker: check if user's last worker is online + skilled */
 
-/* ─── ZeroWait: instant match from the Ready Pool ─────────────────────────────
+/* ZeroWait: instant match from the Ready Pool
  * Returns { ok: true, ... } when a pre-accepted worker was locked, else { ok:false }
  * so the caller falls through to normal dispatch. Never throws. */
 async function tryInstantMatch(order, cfg, lng, lat, jobStartMs) {
@@ -697,7 +697,7 @@ async function tryInstantMatch(order, cfg, lng, lat, jobStartMs) {
         },
       }).catch(() => {});
 
-      logger.info({ orderId, workerId, latencyMs }, '[ZEROWAIT] ⚡ Instant match — worker had pre-accepted');
+      logger.info({ orderId, workerId, latencyMs }, '[ZEROWAIT] Instant match — worker had pre-accepted');
       await onInstantAssigned(order, workerId, readyBonus, latencyMs);
       recordOutcomes(workerId, 'accept', [], []);
       return { ok: true, workerId, instant: true, latencyMs };
@@ -766,7 +766,7 @@ async function onInstantAssigned(order, workerId, readyBonusPaise, latencyMs) {
   );
 }
 
-/* ─── Persist the accept bonus in effect, so completion can credit it ── */
+/* Persist the accept bonus in effect, so completion can credit it */
 async function persistUrgencyBonus(orderId, bonusPaise) {
   if (!bonusPaise || bonusPaise <= 0) return;
   await Order.updateOne(
@@ -824,7 +824,7 @@ async function getPreferredWorker(order) {
   }
 }
 
-/* ─── Offer to a single worker and wait for their response ─────── */
+/* Offer to a single worker and wait for their response */
 
 async function offerToWorker(order, workerId, windowMs) {
   const expiresAt = new Date(Date.now() + windowMs);
@@ -845,7 +845,7 @@ async function offerToWorker(order, workerId, windowMs) {
   return { accepted: !!result.acceptedBy };
 }
 
-/* ─── Force-assign: skill-matched only, no bypass ──────────────── */
+/* Force-assign: skill-matched only, no bypass */
 
 async function attemptForceAssign(order, radiusKm) {
   const orderId = String(order._id);
@@ -875,7 +875,7 @@ async function attemptForceAssign(order, radiusKm) {
   return { ok: false, reason: 'no_lockable_skilled_workers' };
 }
 
-/* ─── Shared post-assignment actions ────────────────────────────── */
+/* Shared post-assignment actions */
 
 async function onOrderAssigned(order, workerId, losers = []) {
   const orderId = String(order._id);
@@ -990,7 +990,7 @@ async function onForceAssigned(order, workerId) {
   );
 }
 
-/* ─── Shared pub/sub subscriber for all concurrent dispatch batches ─
+/* Shared pub/sub subscriber for all concurrent dispatch batches
    One connection handles all in-flight batches instead of one per job.
    Saves up to concurrency (10) connections simultaneously.            */
 
@@ -1012,7 +1012,7 @@ function getBatchSub() {
   return _batchSub;
 }
 
-/* ─── Wait for any worker in the batch to accept within the window ─ */
+/* Wait for any worker in the batch to accept within the window */
 
 function waitForBatchWindow(orderId, workerIds, windowMs) {
   return new Promise((resolve) => {
@@ -1065,12 +1065,12 @@ function waitForBatchWindow(orderId, workerIds, windowMs) {
   });
 }
 
-/* ─── Atomic order + worker lock ───────────────────────────────── */
+/* Atomic order + worker lock */
 // Verifies the worker has the required skill before locking.
 // This is the final safety net — even if geo.service somehow returns
 // a wrong-skill worker, this transaction will abort.
 
-/* ─── Team slot processor ───────────────────────────────────────── */
+/* Team slot processor */
 // Finds one additional skilled worker for an already-assigned team order.
 // Runs the same progressive radius search as normal dispatch but uses
 // lockSecondaryWorker so it doesn't touch workerId or order status.
@@ -1102,7 +1102,7 @@ async function processTeamSlot(order, job) {
     for (const workerId of eligible.slice(0, 5)) {
       const locked = await lockSecondaryWorker(orderId, workerId, order.service, alreadyAssigned);
       if (locked) {
-        logger.info({ orderId, workerId, slotIndex }, '[TEAM] ✅ Secondary worker locked');
+        logger.info({ orderId, workerId, slotIndex }, '[TEAM] Secondary worker locked');
         // Notify new worker of the job
         try {
           const notificationService = require('../modules/notification/notification.service');
@@ -1189,7 +1189,7 @@ async function lockOrderToWorker(orderId, workerId, requiredSkill) {
   }
 }
 
-/* ─── Secondary worker lock (team orders) ──────────────────────── */
+/* Secondary worker lock (team orders) */
 // Adds an additional worker to an already-assigned order without changing
 // the primary workerId or order status. Each added worker sets their own
 // isAvailable=false and gets the order in their currentOrderId.
@@ -1237,7 +1237,7 @@ async function lockSecondaryWorker(orderId, workerId, requiredSkill, alreadyAssi
   }
 }
 
-/* ─── Enqueue secondary worker slots for team orders ────────────── */
+/* Enqueue secondary worker slots for team orders */
 async function enqueueTeamSlots(order, leadWorkerId) {
   const teamSize = order.teamSize || 1;
   if (teamSize <= 1) return;
@@ -1252,7 +1252,7 @@ async function enqueueTeamSlots(order, leadWorkerId) {
   }
 }
 
-/* ─── Record abuse-service outcomes (fire-and-forget) ──────────── */
+/* Record abuse-service outcomes (fire-and-forget) */
 
 function recordOutcomes(acceptedBy, acceptOutcome, rejected, ignored) {
   const abuseService = require('../modules/order/abuse.service');
@@ -1263,7 +1263,7 @@ function recordOutcomes(acceptedBy, acceptOutcome, rejected, ignored) {
   for (const wId of ignored)  abuseService.recordWorkerOutcome(wId, 'timeout').catch(() => {});
 }
 
-/* ─── Helpers ───────────────────────────────────────────────────── */
+/* Helpers */
 
 function sleep(ms) {
   return new Promise((r) => { setTimeout(r, ms); });
@@ -1325,7 +1325,7 @@ async function emitToOrderRoom(orderId, event, payload) {
   }));
 }
 
-/* ─── BullMQ worker bootstrap ───────────────────────────────────── */
+/* BullMQ worker bootstrap */
 
 async function main() {
   await connectMongo();

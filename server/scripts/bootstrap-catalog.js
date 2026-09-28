@@ -12,7 +12,7 @@ require('dotenv').config();
 const { connectMongo } = require('../src/config/mongo');
 const ServiceCatalog = require('../src/modules/service/service-catalog.model');
 
-/* ─── DISABLED (architecture preserved — set isActive: false) ─── */
+/* DISABLED (architecture preserved — set isActive: false) */
 const DISABLED_SERVICES = [
   { code: 'plumbing',    isActive: false },
   { code: 'electrical',  isActive: false },
@@ -24,14 +24,14 @@ const DISABLED_SERVICES = [
   { code: 'mason',       isActive: false },
 ];
 
-/* ─── ACTIVE SERVICES ───────────────────────────────────────────── */
+/* ACTIVE SERVICES */
 const SERVICES = [
 
-  /* ══════════════════════════════════════════════════════════════
+  /*
      ELECTRONICS RESCUE NETWORK
-     ══════════════════════════════════════════════════════════════ */
+ */
 
-  // ── Mobile Phones ──────────────────────────────────────────────
+  // Mobile Phones
   {
     code: 'screen_replacement', name: 'Screen Replacement', category: 'mobile',
     description: 'Cracked or broken display replacement — Android & iPhone.',
@@ -165,7 +165,7 @@ const SERVICES = [
     sortOrder: 110,
   },
 
-  // ── Laptops ────────────────────────────────────────────────────
+  // Laptops
   {
     code: 'laptop_slow', name: 'Slow Laptop Fix', category: 'mobile',
     description: 'Speed up a slow laptop — cleanup, optimization, upgrade advice.',
@@ -276,7 +276,7 @@ const SERVICES = [
     sortOrder: 209,
   },
 
-  // ── Smart Devices ──────────────────────────────────────────────
+  // Smart Devices
   {
     code: 'smart_tv_install', name: 'Smart TV Installation', category: 'other',
     description: 'Wall mount + setup for Smart TV — Android, WebOS, Tizen.',
@@ -374,11 +374,11 @@ const SERVICES = [
     sortOrder: 308,
   },
 
-  /* ══════════════════════════════════════════════════════════════
+  /*
      VEHICLE CARE NETWORK
-     ══════════════════════════════════════════════════════════════ */
+ */
 
-  // ── Bike ───────────────────────────────────────────────────────
+  // Bike
   {
     code: 'puncture', name: 'Puncture Repair', category: 'vehicle',
     description: 'Tyre puncture fix — bike, scooter, or car.',
@@ -465,7 +465,7 @@ const SERVICES = [
     sortOrder: 407,
   },
 
-  // ── Car ────────────────────────────────────────────────────────
+  // Car
   {
     code: 'car_wash', name: 'Car Wash', category: 'vehicle',
     description: 'Doorstep exterior + interior car wash.',
@@ -579,7 +579,7 @@ const SERVICES = [
     sortOrder: 419,
   },
 
-  // ── Commercial Vehicles ────────────────────────────────────────
+  // Commercial Vehicles
   {
     code: 'commercial_emergency', name: 'Commercial Vehicle Emergency', category: 'vehicle',
     description: 'Emergency roadside for lorry, auto, van, mini truck.',
@@ -634,9 +634,9 @@ const SERVICES = [
     sortOrder: 425,
   },
 
-  /* ══════════════════════════════════════════════════════════════
+  /*
      FAMILY ASSIST NETWORK
-     ══════════════════════════════════════════════════════════════ */
+ */
 
   {
     code: 'medicine_pickup', name: 'Medicine Pickup', category: 'helper',
@@ -714,7 +714,7 @@ const SERVICES = [
     sortOrder: 506,
   },
 
-  /* ── Elder Assist ──────────────────────────────────────────────── */
+  /* Elder Assist */
   {
     code: 'elder_doctor_visit', name: 'Elder Doctor Visit Assist', category: 'helper',
     description: 'Trained companion accompanies elder to doctor appointment.',
@@ -767,9 +767,9 @@ const SERVICES = [
     sortOrder: 514,
   },
 
-  /* ══════════════════════════════════════════════════════════════
+  /*
      EVENT CREW MARKETPLACE
-     ══════════════════════════════════════════════════════════════ */
+ */
 
   {
     code: 'event_decorator', name: 'Event Decorator', category: 'other',
@@ -899,9 +899,9 @@ const SERVICES = [
     sortOrder: 611,
   },
 
-  /* ══════════════════════════════════════════════════════════════
+  /*
      PET ASSISTANCE NETWORK
-     ══════════════════════════════════════════════════════════════ */
+ */
 
   {
     code: 'pet_grooming', name: 'Pet Grooming', category: 'other',
@@ -979,7 +979,7 @@ const SERVICES = [
     sortOrder: 706,
   },
 
-  // ── Tank & Water Cleaning ──────────────────────────────────────
+  // Tank & Water Cleaning
   {
     code: 'water_tank_cleaning', name: 'Water Tank Cleaning', category: 'home',
     description: 'Doorstep water tank cleaning — draining, scrubbing, sludge removal and disinfection.',

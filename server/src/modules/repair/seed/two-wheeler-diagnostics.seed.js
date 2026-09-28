@@ -21,7 +21,7 @@
  */
 
 const FLOWS = [
-  /* ─── Petrol: won't start — the §10 worked example ────────────────────── */
+  /* Petrol: won't start — the §10 worked example */
   {
     code: 'tw_no_start_petrol',
     category: 'two_wheeler',
@@ -127,7 +127,7 @@ const FLOWS = [
     ],
   },
 
-  /* ─── Electric: no power / won't move, WITH the safety gate ───────────── */
+  /* Electric: no power / won't move, WITH the safety gate */
   {
     code: 'tw_ev_no_power',
     category: 'two_wheeler',
@@ -228,7 +228,7 @@ const FLOWS = [
     ],
   },
 
-  /* ─── Puncture: decides the repair before the technician leaves ───────── */
+  /* Puncture: decides the repair before the technician leaves */
   {
     code: 'tw_puncture_triage',
     category: 'two_wheeler',
@@ -270,7 +270,7 @@ const FLOWS = [
     ],
   },
 
-  /* ─── Brakes: a safety system, triaged as one ─────────────────────────── */
+  /* Brakes: a safety system, triaged as one */
   {
     code: 'tw_brake_triage',
     category: 'two_wheeler',
@@ -318,7 +318,7 @@ const FLOWS = [
     ],
   },
 
-  /* ─── Scooter: poor pickup is a CVT question, not an engine one ───────── */
+  /* Scooter: poor pickup is a CVT question, not an engine one */
   {
     code: 'tw_cvt_triage',
     category: 'two_wheeler',
@@ -376,7 +376,7 @@ const FLOWS = [
     ],
   },
 
-  /* ─── Battery & charging on a petrol bike ─────────────────────────────── */
+  /* Battery & charging on a petrol bike */
   {
     code: 'tw_battery_triage',
     category: 'two_wheeler',

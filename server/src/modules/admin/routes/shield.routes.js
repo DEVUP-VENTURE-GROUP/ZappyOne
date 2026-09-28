@@ -6,7 +6,7 @@ const auditService       = require('../audit.service');
 
 const router = express.Router();
 
-/* ── Summary stats ─────────────────────────────────────────────────────────── */
+/* Summary stats */
 router.get('/shield/summary', async (req, res, next) => {
   try {
     const summary = await shieldService.getSummary();
@@ -14,7 +14,7 @@ router.get('/shield/summary', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-/* ── Weekly fund history ────────────────────────────────────────────────────── */
+/* Weekly fund history */
 router.get('/shield/weeks', async (req, res, next) => {
   try {
     const { page = 1, limit = 20, status } = req.query;
@@ -32,7 +32,7 @@ router.get('/shield/weeks', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-/* ── Worker payouts for a specific week ─────────────────────────────────────── */
+/* Worker payouts for a specific week */
 router.get('/shield/weeks/:weekId/payouts', async (req, res, next) => {
   try {
     const Worker = require('../../worker/worker.model');
@@ -54,7 +54,7 @@ router.get('/shield/weeks/:weekId/payouts', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-/* ── Fee records ────────────────────────────────────────────────────────────── */
+/* Fee records */
 router.get('/shield/fees', async (req, res, next) => {
   try {
     const { page = 1, limit = 50, status, userId } = req.query;
@@ -78,7 +78,7 @@ router.get('/shield/fees', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-/* ── Pending fee totals (how much is owed but uncollected) ──────────────────── */
+/* Pending fee totals (how much is owed but uncollected) */
 router.get('/shield/pending-summary', async (req, res, next) => {
   try {
     const agg = await CancellationFeeRecord.aggregate([
@@ -101,7 +101,7 @@ router.get('/shield/pending-summary', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-/* ── Manual payout trigger (admin override) ─────────────────────────────────── */
+/* Manual payout trigger (admin override) */
 router.post('/shield/trigger-payout', async (req, res, next) => {
   try {
     const results = await shieldService.runWeeklyPayout({
@@ -121,7 +121,7 @@ router.post('/shield/trigger-payout', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-/* ── Write-off a stale pending fee (admin decision) ─────────────────────────── */
+/* Write-off a stale pending fee (admin decision) */
 router.post('/shield/fees/:id/write-off', async (req, res, next) => {
   try {
     const fee = await CancellationFeeRecord.findById(req.params.id);
@@ -144,7 +144,7 @@ router.post('/shield/fees/:id/write-off', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-/* ── Config: update worker/platform split % ─────────────────────────────────── */
+/* Config: update worker/platform split % */
 router.post('/shield/config', async (req, res, next) => {
   try {
     const { workerPct, platformPct } = req.body;
@@ -178,7 +178,7 @@ router.post('/shield/config', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-/* ── Fee schedule — read ────────────────────────────────────────────────────── */
+/* Fee schedule — read */
 router.get('/shield/fee-schedule', async (req, res, next) => {
   try {
     const cfg = await shieldService.getConfig();
@@ -193,7 +193,7 @@ router.get('/shield/fee-schedule', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-/* ── Fee schedule — update ──────────────────────────────────────────────────── */
+/* Fee schedule — update */
 router.put('/shield/fee-schedule', async (req, res, next) => {
   try {
     const { feeSchedule, harmScores, splitWorkerPct, splitPlatformPct } = req.body;

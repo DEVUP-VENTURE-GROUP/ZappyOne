@@ -32,7 +32,7 @@ function httpError(message, status, code, extra = {}) {
   return Object.assign(new Error(message), { status, code, ...extra });
 }
 
-/* ─── Gate 1: compatibility (§51) ─────────────────────────────────────── */
+/* Gate 1: compatibility (§51) */
 
 /**
  * May this species have this service?
@@ -89,7 +89,7 @@ async function checkAllPets({ pets, categoryCode }) {
   return { allowed: true };
 }
 
-/* ─── Gate 3: capacity (§64, §65) ─────────────────────────────────────── */
+/* Gate 3: capacity (§64, §65) */
 
 /**
  * Beds already committed for an overlapping stay.
@@ -138,7 +138,7 @@ async function hasCapacity({
   };
 }
 
-/* ─── Gate 2 + ranking: find providers (§26, §27) ─────────────────────── */
+/* Gate 2 + ranking: find providers (§26, §27) */
 
 /**
  * Configurable ranking weights (§27).

@@ -8,7 +8,7 @@ const ServiceCatalog = require('../src/modules/service/service-catalog.model');
 const VerticalConfig = require('../src/modules/service/vertical-config.model');
 
 const SERVICES = [
-  // ─── MOBILE PHONE SERVICES ────────────────────────────────────────
+  // MOBILE PHONE SERVICES
   {
     code: 'screen_replacement',
     name: 'Screen Replacement',
@@ -144,7 +144,7 @@ const SERVICES = [
     sortOrder: 15,
   },
 
-  // ─── CONSTRUCTION SERVICES ────────────────────────────────────────
+  // CONSTRUCTION SERVICES
   {
     code: 'mason',
     name: 'Mason / Civil Work',
@@ -170,7 +170,7 @@ const SERVICES = [
     sortOrder: 20,
   },
 
-  // ─── CAR + BIKE SERVICES ──────────────────────────────────────────
+  // CAR + BIKE SERVICES
   {
     code: 'battery_jump_start',
     name: 'Battery Jump Start',
@@ -362,7 +362,7 @@ async function seed() {
       { $set: svc },
       { upsert: true, new: true }
     );
-    console.log(`✓ ServiceCatalog: ${svc.code}`);
+    console.log(`ServiceCatalog: ${svc.code}`);
   }
 
   // Upsert vertical configs
@@ -374,7 +374,7 @@ async function seed() {
       { $set: cfg },
       { upsert: true, new: true }
     );
-    console.log(`✓ VerticalConfig: ${cfg.vertical}`);
+    console.log(`VerticalConfig: ${cfg.vertical}`);
   }
 
   console.log('\nSeed complete.');

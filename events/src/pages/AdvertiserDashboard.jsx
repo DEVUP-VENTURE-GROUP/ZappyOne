@@ -16,7 +16,7 @@ import { openCheckout } from '@shared/services/cashfree';
 import { logout, selectAuth } from '@shared/modules/auth/authSlice';
 import toast from 'react-hot-toast';
 
-/* ─── Helpers ────────────────────────────────────────────────────────────────── */
+/* Helpers */
 const PLACEMENTS = [
   { id: 'home_banner',       label: '🏠 Home Banner',        desc: 'Top of homepage carousel — highest reach' },
   { id: 'category_listing',  label: '📋 Category Listing',   desc: 'Sponsored slot in event/service categories' },
@@ -57,7 +57,7 @@ const EMPTY_FORM = {
 function fmtRupees(paise) { return `₹${Math.round((paise||0)/100).toLocaleString('en-IN')}`; }
 function ctr(impressions, clicks) { return impressions > 0 ? ((clicks/impressions)*100).toFixed(2) : '0.00'; }
 
-/* ─── Stat box ────────────────────────────────────────────────────────────────── */
+/* Stat box */
 function StatBox({ label, value, sub, icon: Icon, color }) {
   return (
     <div className="bg-white rounded-3xl border border-slate-100 p-5 shadow-[0_8px_24px_rgba(0,0,0,0.03)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.08)] transition-all duration-300 hover:-translate-y-1 relative overflow-hidden group">
@@ -74,7 +74,7 @@ function StatBox({ label, value, sub, icon: Icon, color }) {
   );
 }
 
-/* ─── Campaign form modal ─────────────────────────────────────────────────────── */
+/* Campaign form modal */
 function CampaignModal({ initial, onClose, onSave }) {
   const [form, setForm] = useState(initial || EMPTY_FORM);
   const [saving, setSaving] = useState(false);
@@ -379,7 +379,7 @@ function CampaignModal({ initial, onClose, onSave }) {
   );
 }
 
-/* ─── Wallet top-up modal ─────────────────────────────────────────────────────── */
+/* Wallet top-up modal */
 const QUICK_TOPUP = [50000, 100000, 200000, 500000]; // paise
 
 function TopUpModal({ onClose, onSuccess }) {
@@ -464,7 +464,7 @@ function TopUpModal({ onClose, onSuccess }) {
   );
 }
 
-/* ─── Campaign row ────────────────────────────────────────────────────────────── */
+/* Campaign row */
 function CampaignRow({ ad, onEdit }) {
   const [updateCampaign] = useUpdateMyCampaignMutation();
 
@@ -538,7 +538,7 @@ function CampaignRow({ ad, onEdit }) {
   );
 }
 
-/* ─── Main Dashboard ──────────────────────────────────────────────────────────── */
+/* Main Dashboard */
 const TABS = [
   { id: 'campaigns', label: 'Campaigns',  Icon: Megaphone  },
   { id: 'wallet',    label: 'Wallet',     Icon: Wallet     },

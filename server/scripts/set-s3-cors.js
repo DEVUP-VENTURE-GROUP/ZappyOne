@@ -48,12 +48,12 @@ async function main() {
   await s3.send(new PutBucketCorsCommand({ Bucket: bucket, CORSConfiguration: { CORSRules } }));
 
   const check = await s3.send(new GetBucketCorsCommand({ Bucket: bucket }));
-  console.log('\n✓ CORS applied. Current rules:');
+  console.log('\nCORS applied. Current rules:');
   console.log(JSON.stringify(check.CORSRules, null, 2));
 }
 
 main().catch((err) => {
-  console.error('\n✗ Failed to set CORS:', err.message);
+  console.error('\nFailed to set CORS:', err.message);
   console.error('  (The IAM user needs s3:PutBucketCors on this bucket.)');
   process.exit(1);
 });

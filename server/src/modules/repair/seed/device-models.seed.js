@@ -22,7 +22,7 @@
  * DeviceModel, so seeding here is what puts a model in front of everyone.
  */
 
-/* ─── Phones ───────────────────────────────────────────────────────────── */
+/* Phones */
 
 /**
  * Compact per-brand lists.
@@ -191,7 +191,7 @@ const MOBILE_MODELS = MOBILE_BRANDS.flatMap((b) => b.models.map((m, i) => ({
   sortOrder: i + 1,
 })));
 
-/* ─── Laptops ──────────────────────────────────────────────────────────── */
+/* Laptops */
 
 /**
  * Families first — a laptop is found by its line before its exact model, which
@@ -306,7 +306,7 @@ const LAPTOP_FAMILIES = [
  * that is what a customer reads off the lid and what a technician quotes against.
  */
 const LAPTOP_BY_FAMILY = [
-  /* ── HP ─────────────────────────────────────────────────────────────── */
+  /* HP */
   ['hp', 'hp-15', ['HP 14s', 'HP 15s', 'HP 14', 'HP 15']],
   ['hp', 'pavilion', ['HP Pavilion 14', 'HP Pavilion 15', 'HP Pavilion Plus 14', 'HP Pavilion Plus 16']],
   ['hp', 'envy', ['HP Envy 13', 'HP Envy x360 13', 'HP Envy x360 15', 'HP Envy 16']],
@@ -317,7 +317,7 @@ const LAPTOP_BY_FAMILY = [
   ['hp', 'omnibook', ['HP OmniBook 3', 'HP OmniBook 5', 'HP OmniBook 7']],
   ['hp', 'spectre', ['HP Spectre x360 14', 'HP Spectre x360 16']],
 
-  /* ── Lenovo ─────────────────────────────────────────────────────────── */
+  /* Lenovo */
   ['lenovo', 'ideapad', [
     'Lenovo IdeaPad Slim 1', 'Lenovo IdeaPad Slim 3', 'Lenovo IdeaPad Slim 5',
     'Lenovo IdeaPad 3', 'Lenovo IdeaPad 5',
@@ -333,7 +333,7 @@ const LAPTOP_BY_FAMILY = [
   ['lenovo', 'loq', ['Lenovo LOQ 15', 'Lenovo LOQ 16']],
   ['lenovo', 'legion', ['Lenovo Legion 5', 'Lenovo Legion 5i', 'Lenovo Legion 7']],
 
-  /* ── Dell ───────────────────────────────────────────────────────────── */
+  /* Dell */
   ['dell', 'inspiron', ['Dell Inspiron 14', 'Dell Inspiron 15', 'Dell Inspiron 16']],
   ['dell', 'vostro', ['Dell Vostro 14', 'Dell Vostro 15', 'Dell Vostro 16']],
   ['dell', 'latitude', [
@@ -345,7 +345,7 @@ const LAPTOP_BY_FAMILY = [
   ['dell', 'g-series', ['Dell G15', 'Dell G16']],
   ['dell', 'alienware', ['Dell Alienware m16', 'Dell Alienware 16']],
 
-  /* ── ASUS ───────────────────────────────────────────────────────────── */
+  /* ASUS */
   ['asus', 'vivobook', [
     'ASUS VivoBook 14', 'ASUS VivoBook 15', 'ASUS VivoBook 16',
     'ASUS VivoBook S14', 'ASUS VivoBook S16',
@@ -366,7 +366,7 @@ const LAPTOP_BY_FAMILY = [
     'ASUS ROG Flow X13', 'ASUS ROG Flow Z13',
   ]],
 
-  /* ── Acer ───────────────────────────────────────────────────────────── */
+  /* Acer */
   ['acer', 'aspire', [
     'Acer Aspire 3', 'Acer Aspire 5', 'Acer Aspire Go 14', 'Acer Aspire Go 15',
     'Acer Aspire Lite 14', 'Acer Aspire Lite 15',
@@ -379,7 +379,7 @@ const LAPTOP_BY_FAMILY = [
     'Acer Predator Helios Neo 16', 'Acer Predator Helios 16', 'Acer Predator Triton 14',
   ]],
 
-  /* ── Apple ──────────────────────────────────────────────────────────── */
+  /* Apple */
   ['apple-laptop', 'macbook-air', [
     'Apple MacBook Air M1', 'Apple MacBook Air M2', 'Apple MacBook Air M3',
     'Apple MacBook Air M4', 'Apple MacBook Air M5',
@@ -397,7 +397,7 @@ const LAPTOP_BY_FAMILY = [
   // rather than being filed under a line it may not belong to.
   ['apple-laptop', 'macbook', ['Apple MacBook Neo']],
 
-  /* ── MSI ────────────────────────────────────────────────────────────── */
+  /* MSI */
   ['msi', 'msi-modern', ['MSI Modern 14', 'MSI Modern 15']],
   ['msi', 'msi-prestige', ['MSI Prestige 14', 'MSI Prestige 16']],
   ['msi', 'msi-creator', ['MSI Creator M16', 'MSI Creator Z16']],
@@ -411,7 +411,7 @@ const LAPTOP_BY_FAMILY = [
   ['msi', 'msi-stealth', ['MSI Stealth 14', 'MSI Stealth 16']],
   ['msi', 'msi-titan', ['MSI Titan 18']],
 
-  /* ── Microsoft ──────────────────────────────────────────────────────── */
+  /* Microsoft */
   ['microsoft', 'surface-laptop', [
     'Microsoft Surface Laptop Go 2', 'Microsoft Surface Laptop Go 3', 'Microsoft Surface Laptop Go 4',
     'Microsoft Surface Laptop 4', 'Microsoft Surface Laptop 5',
@@ -423,7 +423,7 @@ const LAPTOP_BY_FAMILY = [
     'Microsoft Surface Pro 10', 'Microsoft Surface Pro 11',
   ]],
 
-  /* ── Samsung ────────────────────────────────────────────────────────── */
+  /* Samsung */
   ['samsung-laptop', 'galaxy-book', [
     'Samsung Galaxy Book2', 'Samsung Galaxy Book2 360',
     'Samsung Galaxy Book3', 'Samsung Galaxy Book3 360',
@@ -434,20 +434,20 @@ const LAPTOP_BY_FAMILY = [
     'Samsung Galaxy Book6', 'Samsung Galaxy Book6 Pro', 'Samsung Galaxy Book6 Ultra',
   ]],
 
-  /* ── LG ─────────────────────────────────────────────────────────────── */
+  /* LG */
   ['lg', 'lg-gram', [
     'LG Gram 14', 'LG Gram 15', 'LG Gram 16', 'LG Gram 17',
     'LG Gram 2-in-1 14', 'LG Gram 2-in-1 16',
   ]],
   ['lg', 'lg-ultra', ['LG Ultra PC 14', 'LG Ultra PC 15', 'LG Ultra 15', 'LG Ultra 16']],
 
-  /* ── Huawei ─────────────────────────────────────────────────────────── */
+  /* Huawei */
   ['huawei', 'matebook-d', ['Huawei MateBook D14', 'Huawei MateBook D15', 'Huawei MateBook D16']],
   ['huawei', 'matebook', ['Huawei MateBook 14', 'Huawei MateBook 16']],
   ['huawei', 'matebook-x', ['Huawei MateBook X Pro', 'Huawei MateBook X']],
   ['huawei', 'matebook-e', ['Huawei MateBook E']],
 
-  /* ── Infinix ────────────────────────────────────────────────────────── */
+  /* Infinix */
   ['infinix-laptop', 'inbook', [
     'Infinix INBook X1', 'Infinix INBook X1 Slim',
     'Infinix INBook X2', 'Infinix INBook X2 Plus', 'Infinix INBook X2 Slim',
@@ -456,7 +456,7 @@ const LAPTOP_BY_FAMILY = [
   ]],
   ['infinix-laptop', 'zerobook', ['Infinix Zero Book', 'Infinix Zero Book Ultra']],
 
-  /* ── Xiaomi ─────────────────────────────────────────────────────────── */
+  /* Xiaomi */
   ['xiaomi-laptop', 'redmibook', [
     'Xiaomi RedmiBook 15', 'Xiaomi RedmiBook 15 Pro',
     'Xiaomi RedmiBook 14', 'Xiaomi RedmiBook 14 2023',
@@ -470,13 +470,13 @@ const LAPTOP_BY_FAMILY = [
     'Xiaomi Notebook Pro 120G',
   ]],
 
-  /* ── realme ─────────────────────────────────────────────────────────── */
+  /* realme */
   ['realme-laptop', 'realme-book', [
     'realme Book Slim', 'realme Book Prime',
     'realme Book Enhanced Air', 'realme Book Enhanced Edition',
   ]],
 
-  /* ── Gigabyte ───────────────────────────────────────────────────────── */
+  /* Gigabyte */
   ['gigabyte', 'gigabyte-g', ['Gigabyte G5', 'Gigabyte G6', 'Gigabyte G7', 'Gigabyte Gaming A16']],
   ['gigabyte', 'aorus', [
     'Gigabyte AORUS 5', 'Gigabyte AORUS 15', 'Gigabyte AORUS 15P', 'Gigabyte AORUS 15X',

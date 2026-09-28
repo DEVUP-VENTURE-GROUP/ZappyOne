@@ -1,7 +1,7 @@
 const adService = require('./ad.service');
 const AdWallet  = require('./ad-wallet.model');
 
-// ─── Public / user-facing ─────────────────────────────────────────────────────
+// Public / user-facing
 
 async function getActive(req, res, next) {
   try {
@@ -54,7 +54,7 @@ async function click(req, res, next) {
   } catch (err) { next(err); }
 }
 
-// ─── Self-serve advertiser (event_partner) ────────────────────────────────────
+// Self-serve advertiser (event_partner)
 
 async function myList(req, res, next) {
   try {
@@ -95,7 +95,7 @@ async function myAnalytics(req, res, next) {
   } catch (err) { next(err); }
 }
 
-// ─── Advertiser wallet ────────────────────────────────────────────────────────
+// Advertiser wallet
 
 async function myWallet(req, res, next) {
   try {
@@ -215,7 +215,7 @@ async function verifyTopUp(req, res, next) {
   } catch (err) { next(err); }
 }
 
-// ─── Admin ────────────────────────────────────────────────────────────────────
+// Admin
 
 async function adminList(req, res, next) {
   try {

@@ -25,7 +25,7 @@ const shiftSchema = Joi.object({
   zoneLabel:  Joi.string().max(100).optional(),
 });
 
-/* ── Core worker routes ── */
+/* Core worker routes */
 router.get('/me', authenticate, requireRole('worker'), ctrl.getMe);
 router.post('/online', authenticate, requireRole('worker'), workerOnlineLimiter,
   validate(Joi.object({ lat: Joi.number().required(), lng: Joi.number().required() })), ctrl.goOnline);
@@ -42,7 +42,7 @@ router.patch('/profile', authenticate, requireRole('worker'),
     // must exceed the full catalog size — a worker may legitimately do everything.
     skills: Joi.array().items(Joi.string().max(60).pattern(/^[a-z0-9_]+$/)).min(1).max(300).optional(),
     bio:    Joi.string().max(300).allow('', null).optional(),
-    // Rich per-category expertise (#4). When provided, `skills` is derived from the
+    // Rich per-category expertise. When provided, `skills` is derived from the
     // union of all services so dispatch matching stays in sync automatically.
     expertise: Joi.array().items(Joi.object({
       category:        Joi.string().max(40).required(),
@@ -81,7 +81,7 @@ router.get('/me/avatar', authenticate, requireRole('worker'), ctrl.streamAvatar)
 router.get('/nearby', authenticate, nearbyLimiter, ctrl.getNearbyWorkers);
 router.get('/demand-zones', authenticate, requireRole('worker'), ctrl.getDemandZones);
 
-/* ── Shift Slots — predictive availability ── */
+/* Shift Slots — predictive availability */
 router.get('/shifts', authenticate, requireRole('worker'), ctrl.getShifts);
 router.get('/shifts/preview', authenticate, requireRole('worker'), ctrl.previewShift);
 router.post('/shifts', authenticate, requireRole('worker'), validate(shiftSchema), ctrl.commitShift);
@@ -93,21 +93,21 @@ router.delete('/shifts/cancel',
   })),
   ctrl.cancelShiftSlot);
 
-/* ── Wellness system ── */
+/* Wellness system */
 router.get('/wellness', authenticate, requireRole('worker'), ctrl.getWellness);
 router.post('/wellness/break-bonus', authenticate, requireRole('worker'), ctrl.claimBreakBonus);
 
-/* ── Neighborhood reputation ── */
+/* Neighborhood reputation */
 router.get('/rep', authenticate, ctrl.getNeighborhoodRep);
 router.get('/:id/rep', authenticate, ctrl.getNeighborhoodRep);
 
-/* ── Leaderboard — week's top earners ── */
+/* Leaderboard — week's top earners */
 router.get('/leaderboard', authenticate, ctrl.getLeaderboard);
 
-/* ── Public profile — customer-facing ── */
+/* Public profile — customer-facing */
 router.get('/:id/public', authenticate, ctrl.getPublicProfile);
 
-/* ── Bank Accounts + UPI ── */
+/* Bank Accounts + UPI */
 router.get('/bank-accounts', authenticate, requireRole('worker'), ctrl.getBankAccounts);
 router.post(
   '/bank-accounts',
@@ -129,7 +129,7 @@ router.post(
 router.delete('/bank-accounts/:type/:id', authenticate, requireRole('worker'), ctrl.deleteBankAccount);
 router.patch('/bank-accounts/:type/:id/default', authenticate, requireRole('worker'), ctrl.setDefaultBankAccount);
 
-/* ── Customer Block ── */
+/* Customer Block */
 router.post(
   '/block-customer',
   authenticate,
@@ -142,13 +142,13 @@ router.post(
   ctrl.blockCustomer
 );
 
-/* ── Zone Benchmark ── */
+/* Zone Benchmark */
 router.get('/zone-benchmark', authenticate, requireRole('worker'), ctrl.getZoneBenchmark);
 
-/* ── Per-job earnings ── */
+/* Per-job earnings */
 router.get('/job-earnings', authenticate, requireRole('worker'), ctrl.getJobEarnings);
 
-/* ── Skills specialisation ── */
+/* Skills specialisation */
 router.patch(
   '/skills',
   authenticate,
@@ -167,7 +167,7 @@ router.patch(
   ctrl.updateSkills
 );
 
-/* ── ZeroWait: Ready Mode (pre-accept next matching job) ── */
+/* ZeroWait: Ready Mode (pre-accept next matching job) */
 router.get('/ready', authenticate, requireRole('worker'), ctrl.getReadyMode);
 router.post(
   '/ready',
@@ -182,7 +182,7 @@ router.post(
   ctrl.setReadyMode
 );
 
-/* ── Earnings goals ── */
+/* Earnings goals */
 router.get('/goals', authenticate, requireRole('worker'), ctrl.getGoals);
 router.post(
   '/goals',
@@ -195,7 +195,7 @@ router.post(
   ctrl.setGoal
 );
 
-/* ── Device token (FCM push notifications) ── */
+/* Device token (FCM push notifications) */
 router.post(
   '/device-token',
   authenticate,

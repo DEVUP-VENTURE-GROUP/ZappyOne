@@ -6,17 +6,17 @@ import Avatar from './Avatar';
 
 /**
  * The rich worker card shown once a technician is assigned.
- *  ┌────────────────────────────────────────┐
- *  │  [AV]  Name   ✓ Verified Pro           │
+ *  ┌ ┐
+ *  │  [AV]  Name Verified Pro           │
  *  │        Certified Zappy professional    │
- *  │  ┌──────┬──────┬──────┐                │
+ *  │  ┌ ┬ ┬ ┐                │
  *  │  │ 4.9  │ 1240 │  ID  │  stats         │
- *  │  └──────┴──────┴──────┘                │
- *  │  ┌────┬────┬────┬────┐                 │
+ *  │  └ ┴ ┴ ┘                │
+ *  │  ┌ ┬ ┬ ┬ ┐                 │
  *  │  │Call│Chat│Live│Prof│  actions        │
- *  │  └────┴────┴────┴────┘                 │
+ *  │  └ ┴ ┴ ┴ ┘                 │
  *  │  → Estimated arrival        13 mins    │
- *  └────────────────────────────────────────┘
+ *  └ ┘
  */
 export default function WorkerRichCard({ order, eta, status, onCall, onChat, onLive, onProfile }) {
   const rating = order.workerRating?.toFixed?.(1) || '—';

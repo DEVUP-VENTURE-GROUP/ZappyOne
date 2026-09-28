@@ -1,6 +1,6 @@
 /**
  * Worker Cancellation Shield Fund Service
- * ─────────────────────────────────────────────────────────────────────────────
+ *
  * Tiered cancellation fees (repeat-behaviour aware):
  *
  *   Stage        | 1st cancel | 2nd (30 days) | 3rd+
@@ -37,7 +37,7 @@ const ShieldConfig            = require('./shield-config.model');
 const logger                  = require('../../utils/logger');
 const { redis }               = require('../../config/redis');
 
-// ─── Default constants (used as fallback if DB/Redis unavailable) ─────────────
+// Default constants (used as fallback if DB/Redis unavailable)
 
 const DEFAULT_FEE_SCHEDULE = {
   created:    [0,    0,    0   ],
@@ -61,7 +61,7 @@ const PLATFORM_SPLIT_PCT = 15;
 const CONFIG_CACHE_KEY = 'config:shield:active';
 const CONFIG_CACHE_TTL = 60; // seconds
 
-// ─── Config helpers ───────────────────────────────────────────────────────────
+// Config helpers
 
 async function getConfig() {
   try {
@@ -114,7 +114,7 @@ async function updateConfig(patch, adminId) {
   return next;
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// Helpers
 
 /** Counts user-initiated cancels in the last 30 days (excluding this one). */
 /**
@@ -193,7 +193,7 @@ async function getOrCreateCurrentWeek(date = new Date()) {
   return week;
 }
 
-// ─── Fee contribution to fund ─────────────────────────────────────────────────
+// Fee contribution to fund
 
 /**
  * Atomically adds `feePaise` to the current week's pool
@@ -228,7 +228,7 @@ async function addToFund(feeRecordId, feePaise, workerId, harmScore) {
   return week;
 }
 
-// ─── Main cancellation handler ────────────────────────────────────────────────
+// Main cancellation handler
 
 /**
  * Called immediately after a user cancels an order.
@@ -263,7 +263,7 @@ async function handleUserCancellation(order, userId) {
     collectionStatus: isGrace || feePaise === 0 ? 'grace' : 'pending_next_order',
   });
 
-  // ── Grace / zero-fee path ──────────────────────────────────────────────────
+  // Grace / zero-fee path
   if (isGrace) {
     notifService.notify({
       recipient: { kind: 'user', id: userId },
@@ -289,7 +289,7 @@ async function handleUserCancellation(order, userId) {
     return { feePaise: 0, isGrace: false, collectionStatus: 'zero_fee', feeRecord };
   }
 
-  // ── Try wallet collection ──────────────────────────────────────────────────
+  // Try wallet collection
   let collectionStatus;
   try {
     await walletService.apply({
@@ -350,7 +350,7 @@ async function handleUserCancellation(order, userId) {
   return { feePaise, isGrace: false, collectionStatus, feeRecord };
 }
 
-// ─── Pending fee collection (called at next booking) ─────────────────────────
+// Pending fee collection (called at next booking)
 
 /**
  * Returns the total pending cancellation fee for a user (in paise).
@@ -419,7 +419,7 @@ async function collectPendingFees(userId, newOrderId) {
   }
 }
 
-// ─── Weekly payout ────────────────────────────────────────────────────────────
+// Weekly payout
 
 /**
  * Distribute the previous week's fund to all affected workers.
@@ -559,7 +559,7 @@ async function runWeeklyPayout({ triggeredBy = 'cron', triggeredById = null } = 
   return results;
 }
 
-// ─── Admin helpers ────────────────────────────────────────────────────────────
+// Admin helpers
 
 async function getSummary() {
   const now       = new Date();

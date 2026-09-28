@@ -253,7 +253,7 @@ export default function ProfilePage() {
                 </MenuSection>
               </motion.div>
 
-              {/* ── Language ── */}
+              {/* Language */}
               <motion.div variants={fadeInUp}>
                 <p className="section-title px-1 mb-2">{t('profile.language', 'Language')}</p>
                 <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-3">
@@ -261,7 +261,7 @@ export default function ProfilePage() {
                 </div>
               </motion.div>
 
-              {/* ── Saved Addresses ── */}
+              {/* Saved Addresses */}
               <motion.div variants={fadeInUp}>
                 <div className="flex items-center justify-between px-1 mb-2">
                   <p className="section-title">{t('profile.savedAddresses', 'Saved Addresses')}</p>

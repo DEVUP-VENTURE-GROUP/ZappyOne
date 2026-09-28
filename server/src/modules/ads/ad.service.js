@@ -5,7 +5,7 @@ const AdWallet = require('./ad-wallet.model');
 const { redis }  = require('../../config/redis');
 const logger   = require('../../utils/logger');
 
-// ─── Placement-aware ad serving ───────────────────────────────────────────────
+// Placement-aware ad serving
 
 /**
  * Serve ads for a specific placement with relevance scoring.
@@ -88,7 +88,7 @@ async function getActiveAds({ audience, limit = 8 }) {
   });
 }
 
-// ─── Event tracking + fraud detection ────────────────────────────────────────
+// Event tracking + fraud detection
 
 function fp(ip = '', ua = '') {
   return crypto.createHash('sha256').update(`${ip}:${ua}`).digest('hex').slice(0, 16);
@@ -162,7 +162,7 @@ async function recordLead(adId, { userId, meta } = {}) {
   }
 }
 
-// ─── Wallet ───────────────────────────────────────────────────────────────────
+// Wallet
 
 async function _chargeWallet(advertiserId, adId, costPaise) {
   if (costPaise <= 0) return;
@@ -226,7 +226,7 @@ async function getWallet(advertiserId) {
   return wallet;
 }
 
-// ─── Analytics ───────────────────────────────────────────────────────────────
+// Analytics
 
 async function getCampaignAnalytics(adId, days = 7) {
   const since = new Date(Date.now() - days * 86_400_000);
@@ -254,7 +254,7 @@ async function getCampaignAnalytics(adId, days = 7) {
   return { daily, summary };
 }
 
-// ─── Budget maintenance (run daily via cron) ──────────────────────────────────
+// Budget maintenance (run daily via cron)
 
 async function resetDailyCaps() {
   const today = new Date().toISOString().slice(0, 10);
@@ -296,7 +296,7 @@ async function _checkBudget(adId) {
   }
 }
 
-// ─── Self-serve CRUD ──────────────────────────────────────────────────────────
+// Self-serve CRUD
 
 async function advertiserCreate(data, advertiser) {
   // New campaigns go to pending_approval — admin must approve
@@ -329,7 +329,7 @@ async function advertiserUpdate(id, advertiserId, patch) {
   );
 }
 
-// ─── Admin CRUD (existing) ────────────────────────────────────────────────────
+// Admin CRUD (existing)
 
 async function listAll({ status, audience, page = 1, limit = 20 }) {
   const filter = {};

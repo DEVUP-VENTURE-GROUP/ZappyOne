@@ -40,7 +40,7 @@ const SIZE_MULTIPLIERS = {
   small: 1, medium: 1.15, large: 1.3, extra_large: 1.5,
 };
 
-/* ─── Pricing rules (§28, §29) ────────────────────────────────────────── */
+/* Pricing rules (§28, §29) */
 
 /**
  * `R(category, variant, species, fields)` — category-wide default when
@@ -74,7 +74,7 @@ const PRICING_RULES = [
   R('pet_home_care', null, null, { basePaise: inr(299), minPaise: inr(99), maxPaise: inr(2500), referenceNote: 'Category default; see per-variant rows for visit-based rates' }),
   R('pet_check', null, null, { basePaise: inr(299), minPaise: inr(149), maxPaise: inr(799), referenceNote: 'Category default; see per-variant rows for duration-based rates' }),
 
-  /* ── Grooming — thepetnest.com, wagnbush.com, furrvana.co.in, conbun.com ── */
+  /* Grooming — thepetnest.com, wagnbush.com, furrvana.co.in, conbun.com */
   R('pet_grooming', null, null, {
     basePaise: inr(800), minPaise: inr(400), maxPaise: inr(2500),
     applyBreedComplexity: true, maxBreedComplexity: 2,
@@ -109,7 +109,7 @@ const PRICING_RULES = [
   R('pet_grooming', 'pg_mat_removal', 'cat', { basePaise: inr(499), minPaise: inr(349), maxPaise: inr(899) }),
   R('pet_grooming', 'pg_longhair_grooming', 'cat', { basePaise: inr(999), minPaise: inr(699), maxPaise: inr(1799), applyBreedComplexity: true }),
 
-  /* ── Boarding & Daycare — petboard.in Tier-2/Hyderabad + Bangalore tables ── */
+  /* Boarding & Daycare — petboard.in Tier-2/Hyderabad + Bangalore tables */
   R('pet_boarding', 'pb_overnight_boarding', null, {
     perNightPaise: inr(800), minPaise: inr(500), maxPaise: inr(1500),
     weeklyDiscountPct: 12, weeklyThresholdNights: 7,
@@ -138,7 +138,7 @@ const PRICING_RULES = [
     weeklyDiscountPct: 15, monthlyDiscountPct: 28,
   }),
 
-  /* ── Walk & Activity — sploot.space, petbacker.com, homeguide.com ── */
+  /* Walk & Activity — sploot.space, petbacker.com, homeguide.com */
   R('pet_walk', 'pw_walk_20', null, { basePaise: inr(149), perMinutePaise: 0, minPaise: inr(100), maxPaise: inr(250), referenceNote: 'Mumbai dog walking from ₹149/walk (sploot.space)' }),
   R('pet_walk', 'pw_walk_30', null, { basePaise: inr(199), perMinutePaise: 0, minPaise: inr(150), maxPaise: inr(300) }),
   R('pet_walk', 'pw_walk_45', null, { basePaise: inr(279), perMinutePaise: 0, minPaise: inr(200), maxPaise: inr(400) }),
@@ -150,7 +150,7 @@ const PRICING_RULES = [
   R('pet_walk', 'pw_walk_play', null, { basePaise: inr(399), minPaise: inr(250), maxPaise: inr(600) }),
   R('pet_walk', 'pw_activity_visit', 'cat', { basePaise: inr(249), minPaise: inr(150), maxPaise: inr(400) }),
 
-  /* ── Home Care — petboard.in cat sitting page (only India-specific source) ── */
+  /* Home Care — petboard.in cat sitting page (only India-specific source) */
   R('pet_home_care', 'ph_feeding_visit', null, { basePaise: inr(249), minPaise: inr(199), maxPaise: inr(349), referenceNote: 'Feeding visit ₹199-349 (category brief §29), aligned with petboard cat drop-in Tier-2 ₹300-500' }),
   R('pet_home_care', 'ph_water_refill', null, { basePaise: inr(149), minPaise: inr(99), maxPaise: inr(249) }),
   R('pet_home_care', 'ph_litter_care', 'cat', { basePaise: inr(249), minPaise: inr(199), maxPaise: inr(349) }),
@@ -170,7 +170,7 @@ const PRICING_RULES = [
     referenceNote: 'Live-in overnight sitting ₹1,000-2,500/day metros/Tier-2 (petboard.in cat sitting page)',
   }),
 
-  /* ── Transport — pawspace.in Bangalore pet taxi (most detailed India source) ── */
+  /* Transport — pawspace.in Bangalore pet taxi (most detailed India source) */
   R('pet_transport', null, null, {
     basePaise: inr(299), perKmPaise: inr(20), includedKm: 3,
     waitingFreeMinutes: 15, waitingPerMinutePaise: inr(5),
@@ -181,7 +181,7 @@ const PRICING_RULES = [
   R('pet_transport', 'pt_wait_return', null, { basePaise: inr(499), perKmPaise: inr(20), includedKm: 3, waitingPerMinutePaise: inr(5), minPaise: inr(399), maxPaise: inr(1500) }),
   R('pet_transport', 'pt_pickup_service_return', null, { basePaise: inr(599), perKmPaise: inr(20), includedKm: 5, minPaise: inr(499), maxPaise: inr(1800) }),
 
-  /* ── Vet & Appointment Assistance — category brief §29, cross-checked against transport ── */
+  /* Vet & Appointment Assistance — category brief §29, cross-checked against transport */
   R('pet_vet_assist', null, null, {
     basePaise: inr(399), perKmPaise: inr(20), includedKm: 3,
     waitingFreeMinutes: 15, waitingPerMinutePaise: inr(6),
@@ -193,7 +193,7 @@ const PRICING_RULES = [
   R('pet_vet_assist', 'pv_clinic_coordination', null, { basePaise: inr(249), perVisitPaise: inr(249), minPaise: inr(199), maxPaise: inr(499) }),
   R('pet_vet_assist', 'pv_pickup_wait_return', null, { basePaise: inr(699), perKmPaise: inr(20), includedKm: 3, waitingPerMinutePaise: inr(6), minPaise: inr(599), maxPaise: inr(2499) }),
 
-  /* ── Pet Check — category brief §29, structurally identical to home care ── */
+  /* Pet Check — category brief §29, structurally identical to home care */
   R('pet_check', 'pc_check_15', null, { basePaise: inr(199), perVisitPaise: inr(199), minPaise: inr(149), maxPaise: inr(249) }),
   R('pet_check', 'pc_check_30', null, { basePaise: inr(319), perVisitPaise: inr(319), minPaise: inr(249), maxPaise: inr(399) }),
   R('pet_check', 'pc_check_45', null, { basePaise: inr(449), perVisitPaise: inr(449), minPaise: inr(349), maxPaise: inr(549) }),
@@ -204,7 +204,7 @@ const PRICING_RULES = [
   R('pet_check', 'pc_multi_pet_check', null, { basePaise: inr(549), perVisitPaise: inr(549), minPaise: inr(399), maxPaise: inr(799) }),
 ];
 
-/* ─── Add-ons (§30) ───────────────────────────────────────────────────── */
+/* Add-ons (§30) */
 
 function A(code, name, categoryCodes, pricePaise, opts = {}) {
   return {
@@ -254,7 +254,7 @@ const ADDONS = [
   A('addon_transport_toll', 'Toll/Parking', ['pet_transport', 'pet_vet_assist'], inr(80), { perPet: false }),
 ];
 
-/* ─── Packages (§31) ──────────────────────────────────────────────────── */
+/* Packages (§31) */
 
 const PACKAGES = [
   {
@@ -294,7 +294,7 @@ const PACKAGES = [
   },
 ];
 
-/* ─── Cancellation policies (§37, §49) ────────────────────────────────── */
+/* Cancellation policies (§37, §49) */
 
 const CANCELLATION_POLICIES = [
   {

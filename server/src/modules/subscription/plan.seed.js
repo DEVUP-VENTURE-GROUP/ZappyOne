@@ -7,7 +7,7 @@ const Plan = require('./plan.model');
 const logger = require('../../utils/logger');
 
 const DEFAULT_PLANS = [
-  // ── User plans ────────────────────────────────────────────────────────────
+  // User plans
   {
     code: 'ZAPPY_BASIC',
     name: 'Zappy Basic',
@@ -37,7 +37,7 @@ const DEFAULT_PLANS = [
     },
   },
 
-  // ── Worker plans ──────────────────────────────────────────────────────────
+  // Worker plans
   {
     code: 'PARTNER_STARTER',
     name: 'Partner Starter',

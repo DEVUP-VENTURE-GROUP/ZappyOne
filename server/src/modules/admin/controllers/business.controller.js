@@ -3,7 +3,7 @@ const Worker = require('../../worker/worker.model');
 const cachedAnalytics = require('../lib/cached-analytics');
 
 /**
- * Per-service P&L — revenue, worker cost, and platform margin. (#83)
+ * Per-service P&L — revenue, worker cost, and platform margin.
  * Uses earnings snapshots locked at completion for accuracy.
  * GMV ≠ revenue: GMV is what the customer paid; revenue is the platform's cut.
  */
@@ -75,7 +75,7 @@ async function getServicePnL(req, res, next) {
 }
 
 /**
- * Worker churn risk — identifies workers at risk of leaving due to low earnings. (#81)
+ * Worker churn risk — identifies workers at risk of leaving due to low earnings.
  * Thresholds are business-configurable in the response but default to:
  *   - Weekly earnings < ₹500 = at-risk
  *   - No job in 7 days but was active = dormant
@@ -224,7 +224,7 @@ async function getChurnRisk(req, res, next) {
 }
 
 /**
- * Dead category report — services with 0 orders in the last N days. (#84)
+ * Dead category report — services with 0 orders in the last N days.
  * Used to decide whether to disable a service and free up UX space.
  */
 async function getDeadCategories(req, res, next) {
@@ -294,7 +294,7 @@ async function getDeadCategories(req, res, next) {
 
 /**
  * Geo readiness — tells admin whether a lat/lng area has enough workers
- * to reliably fulfil orders. Used before launching in a new city. (#85)
+ * to reliably fulfil orders. Used before launching in a new city.
  */
 async function getGeoReadiness(req, res, next) {
   try {
@@ -393,7 +393,7 @@ async function getGeoReadiness(req, res, next) {
 }
 
 /**
- * Quote abandonment stats — quotes fetched but no order placed within 10 min. (#82)
+ * Quote abandonment stats — quotes fetched but no order placed within 10 min.
  * Proxy for price sensitivity: high abandonment at a given price = price too high.
  */
 async function getQuoteAbandonmentStats(req, res, next) {

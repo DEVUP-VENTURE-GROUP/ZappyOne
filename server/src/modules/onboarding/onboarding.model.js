@@ -40,7 +40,7 @@ const ENROLMENT_STATUSES = [
   'suspended',        // was approved, revoked later
 ];
 
-/* ─── Domain — the top-level bucket a provider signs up under ───────────── */
+/* Domain — the top-level bucket a provider signs up under */
 
 const serviceDomainSchema = new mongoose.Schema(
   {
@@ -58,7 +58,7 @@ const serviceDomainSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-/* ─── Service line — the actual thing the provider does ─────────────────── */
+/* Service line — the actual thing the provider does */
 
 const serviceLineSchema = new mongoose.Schema(
   {
@@ -121,7 +121,7 @@ const serviceLineSchema = new mongoose.Schema(
 
 serviceLineSchema.index({ domainCode: 1, displayOrder: 1, isActive: 1 });
 
-/* ─── What must be verified, per line, per provider kind ────────────────── */
+/* What must be verified, per line, per provider kind */
 
 const requirementDocumentSchema = new mongoose.Schema(
   {
@@ -197,7 +197,7 @@ kycRequirementSetSchema.index(
   { unique: true, partialFilterExpression: { isArchived: false } },
 );
 
-/* ─── The provider's own enrolment in one line ──────────────────────────── */
+/* The provider's own enrolment in one line */
 
 const submittedDocumentSchema = new mongoose.Schema(
   {
@@ -273,7 +273,7 @@ providerEnrolmentSchema.methods.ownerRef = function ownerRef() {
     : { kind: 'worker', id: this.workerId };
 };
 
-/* ─── "The service I do isn't listed" ───────────────────────────────────── */
+/* "The service I do isn't listed" */
 
 /**
  * A provider proposing a line we do not carry.

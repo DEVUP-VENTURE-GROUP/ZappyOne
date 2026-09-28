@@ -52,7 +52,7 @@ module.exports = {
       env: { NODE_ENV: 'production', RUN_INLINE_WORKERS: 'false' },
     },
 
-    // ── Matching ────────────────────────────────────────────────────────────
+    // Matching
     {
       ...common,
       name: 'zappy-dispatch',
@@ -72,7 +72,7 @@ module.exports = {
       max_memory_restart: '300M',
     },
 
-    // ── Money: the auto-refund pipeline (dispatch fails -> DLQ -> refund) ────
+    // Money: the auto-refund pipeline (dispatch fails -> DLQ -> refund)
     // These two were NOT running in production. Without them a paid customer with
     // no available worker is never refunded and support is never alerted.
     {
@@ -94,7 +94,7 @@ module.exports = {
       max_memory_restart: '300M',
     },
 
-    // ── Retention: "service due" rebook reminders ────────────────────────────
+    // Retention: "service due" rebook reminders
     {
       ...common,
       name: 'zappy-retention',

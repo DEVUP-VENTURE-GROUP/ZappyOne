@@ -41,7 +41,7 @@ const TABS = [
   { id: 'requirements', label: 'Requirements', icon: ShieldCheck },
 ];
 
-/* ─── Verification queue ───────────────────────────────────────────────── */
+/* Verification queue */
 
 function ProviderCell({ row }) {
   const p = row.provider;
@@ -188,7 +188,7 @@ function Queue() {
   );
 }
 
-/* ─── Provider-proposed services ───────────────────────────────────────── */
+/* Provider-proposed services */
 
 function Requests() {
   const { data, isLoading, refetch } = useAdminOnboardingLineRequestsQuery({ status: 'pending' });
@@ -268,7 +268,7 @@ function Requests() {
   );
 }
 
-/* ─── Generic catalog table ────────────────────────────────────────────── */
+/* Generic catalog table */
 
 const SPECS = {
   domains: {
@@ -585,7 +585,7 @@ function RequirementEditor({ items, onSaved }) {
   );
 }
 
-/* ─── Shell ────────────────────────────────────────────────────────────── */
+/* Shell */
 
 /**
  * One submitted document, shown rather than linked.

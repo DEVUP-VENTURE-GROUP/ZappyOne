@@ -24,7 +24,7 @@ import { logout } from '@shared/modules/auth/authSlice';
 import LiveSelfieCapture from '@shared/components/kyc/LiveSelfieCapture';
 import toast from 'react-hot-toast';
 
-/* ─── Status pill ───────────────────────────────────────────────────────────── */
+/* Status pill */
 const PILL = {
   pending: 'bg-amber-50  text-amber-700  border-amber-200',
   approved: 'bg-emerald-50 text-emerald-700 border-emerald-200',
@@ -46,7 +46,7 @@ function Pill({ status, className = '' }) {
   );
 }
 
-/* ─── Spinner / Empty ───────────────────────────────────────────────────────── */
+/* Spinner / Empty */
 function Spinner() {
   return (
     <div className="flex flex-col items-center justify-center py-16 gap-3">
@@ -69,7 +69,7 @@ function EmptyState({ icon: Icon, text, sub, action }) {
   );
 }
 
-/* ─── Stat card ─────────────────────────────────────────────────────────────── */
+/* Stat card */
 function StatCard({ label, value, icon: Icon, gradient, sub }) {
   return (
     <div className={`rounded-2xl p-4 ${gradient} relative overflow-hidden`}>
@@ -86,7 +86,7 @@ function StatCard({ label, value, icon: Icon, gradient, sub }) {
   );
 }
 
-/* ─── Mobile Overview (Redesign) ───────────────────────────────────────────── */
+/* Mobile Overview (Redesign) */
 function MobileOverviewTab({ onNavigate }) {
   const { data, isLoading } = usePartnerOverviewQuery();
   if (isLoading) return <Spinner />;
@@ -330,7 +330,7 @@ function MobileOverviewTab({ onNavigate }) {
   );
 }
 
-/* ─── Overview ──────────────────────────────────────────────────────────────── */
+/* Overview */
 function OverviewTab({ onNavigate }) {
   const { data, isLoading } = usePartnerOverviewQuery();
   if (isLoading) return <Spinner />;
@@ -569,7 +569,7 @@ function OverviewTab({ onNavigate }) {
   );
 }
 
-/* ─── Themes ────────────────────────────────────────────────────────────────── */
+/* Themes */
 function ThemesTab() {
   const { data, isLoading, refetch } = usePartnerThemesQuery();
   const [deleteTheme] = useDeleteEventThemeMutation();
@@ -663,7 +663,7 @@ function ThemesTab() {
   );
 }
 
-/* ─── Theme Upload Modal ────────────────────────────────────────────────────── */
+/* Theme Upload Modal */
 function ThemeUploadModal({ theme, onClose, onSuccess }) {
   const { data: catData } = useGetEventCategoriesQuery();
   const [createTheme] = useCreateEventThemeMutation();
@@ -831,7 +831,7 @@ function ThemeUploadModal({ theme, onClose, onSuccess }) {
   );
 }
 
-/* ─── Bookings ──────────────────────────────────────────────────────────────── */
+/* Bookings */
 function BookingsTab() {
   const [statusFilter, setStatusFilter] = useState('confirmed');
   const [page, setPage] = useState(1);
@@ -927,7 +927,7 @@ function BookingsTab() {
   );
 }
 
-/* ─── Calendar date action sheet ───────────────────────────────────────────── */
+/* Calendar date action sheet */
 function DateActionSheet({ day, isBlocked, booking, onBlock, onUnblock, onClose }) {
   const [loading, setLoading] = useState(false);
   const label = day.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
@@ -1011,7 +1011,7 @@ function DateActionSheet({ day, isBlocked, booking, onBlock, onUnblock, onClose 
   );
 }
 
-/* ─── Calendar ──────────────────────────────────────────────────────────────── */
+/* Calendar */
 function CalendarTab() {
   const { data, isLoading, refetch } = usePartnerCalendarQuery();
   const [blockDate] = useBlockEventDateMutation();
@@ -1143,7 +1143,7 @@ function CalendarTab() {
   );
 }
 
-/* ─── Earnings ──────────────────────────────────────────────────────────────── */
+/* Earnings */
 function EarningsTab() {
   const { data, isLoading } = usePartnerEarningsQuery();
   if (isLoading) return <Spinner />;
@@ -1211,7 +1211,7 @@ function EarningsTab() {
   );
 }
 
-/* ─── KYC Doc thumbnail ─────────────────────────────────────────────────────── */
+/* KYC Doc thumbnail */
 function KycDocThumb({ idx, token }) {
   const [url, setUrl] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -1260,7 +1260,7 @@ function KycDocThumb({ idx, token }) {
   );
 }
 
-/* ─── KYC Section ──────────────────────────────────────────────────────────── */
+/* KYC Section */
 const KYC_FIELDS = [
   { key: 'aadharFront', label: 'Aadhar Card — Front', emoji: '🪪', mandatory: true, hint: 'Front side of your Aadhar card' },
   { key: 'aadharBack', label: 'Aadhar Card — Back', emoji: '🪪', mandatory: true, hint: 'Back side of your Aadhar card' },
@@ -1528,7 +1528,7 @@ function KycSection({ partner, token, onRefresh }) {
   );
 }
 
-/* ─── Profile Graphic Helpers ───────────────────────────────────────────────── */
+/* Profile Graphic Helpers */
 function EventFloralArchIllustration() {
   return (
     <svg viewBox="0 0 320 125" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-auto">
@@ -1623,7 +1623,7 @@ function ConfettiStageBackground() {
   );
 }
 
-/* ─── Profile ───────────────────────────────────────────────────────────────── */
+/* Profile */
 function ProfileTab() {
   const { accessToken: token } = useSelector(selectAuth);
   const { data, refetch } = usePartnerMeQuery();
@@ -1813,7 +1813,7 @@ function ProfileTab() {
   );
 }
 
-/* ─── Notification icon config ─────────────────────────────────────────────── */
+/* Notification icon config */
 const NOTIF_META = {
   event_booking_new: { icon: '🎉', color: 'bg-violet-100 text-violet-600' },
   event_partner_kyc_approved: { icon: '✅', color: 'bg-emerald-100 text-emerald-600' },
@@ -1826,7 +1826,7 @@ const NOTIF_META = {
 };
 function notifMeta(type) { return NOTIF_META[type] || { icon: '🔔', color: 'bg-slate-100 text-slate-600' }; }
 
-/* ─── Notification Panel ────────────────────────────────────────────────────── */
+/* Notification Panel */
 function NotificationPanel({ onClose }) {
   const [page, setPage] = useState(1);
   const [unreadOnly, setUnreadOnly] = useState(false);
@@ -1957,7 +1957,7 @@ function NotificationPanel({ onClose }) {
   );
 }
 
-/* ─── Main Dashboard ────────────────────────────────────────────────────────── */
+/* Main Dashboard */
 const TABS = [
   { id: 'overview', label: 'Overview', Icon: LayoutDashboard },
   { id: 'themes', label: 'Themes', Icon: Star },
@@ -2020,7 +2020,7 @@ export default function PartnerDashboard() {
   return (
     <div className="min-h-screen bg-slate-50">
 
-      {/* ── DESKTOP layout (lg+): sidebar + content ── */}
+      {/* DESKTOP layout (lg+): sidebar + content */}
       <div className="hidden lg:flex min-h-screen">
 
         {/* Sidebar */}
@@ -2133,7 +2133,7 @@ export default function PartnerDashboard() {
         </main>
       </div>
 
-      {/* ── MOBILE layout (< lg): top bar + content + bottom tabs ── */}
+      {/* MOBILE layout (< lg): top bar + content + bottom tabs */}
       <div className="lg:hidden">
         {/* Mobile top bar */}
         <div className={`px-4 py-3 flex items-center justify-between relative z-50 transition-colors ${activeTab === 'overview' ? 'bg-transparent' : 'bg-white/90 backdrop-blur-md border-b border-slate-100'}`}>

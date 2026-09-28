@@ -247,7 +247,7 @@ function nextStepFor({ profile, enrolments, kind }) {
 }
 
 
-/* ─── Customer-facing catalog ──────────────────────────────────────────── */
+/* Customer-facing catalog */
 
 /**
  * What a customer can actually book today.

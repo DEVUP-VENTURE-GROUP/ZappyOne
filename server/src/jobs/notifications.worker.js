@@ -30,7 +30,7 @@ const { QUEUES } = require('./index');
 
 const SMS_URL = 'https://2factor.in/API/V1';
 
-/* ─── Firebase Admin SDK (lazy-initialised once) ──────────────── */
+/* Firebase Admin SDK (lazy-initialised once) */
 
 let _firebaseApp = null;
 
@@ -60,7 +60,7 @@ function getFirebaseApp() {
   }
 }
 
-/* ─── FCM ─────────────────────────────────────────────────────── */
+/* FCM */
 
 async function sendFcm({ tokens, title, body, data = {}, imageUrl } = {}) {
   if (!tokens?.length) return { skipped: true, reason: 'no_tokens' };
@@ -159,7 +159,7 @@ async function sendFcm({ tokens, title, body, data = {}, imageUrl } = {}) {
   return { ok: successCount > 0, success: successCount, failure: failureCount };
 }
 
-/* ─── SMS (2Factor.in) ────────────────────────────────────────── */
+/* SMS (2Factor.in) */
 
 async function sendSms({ phone, message }) {
   if (!phone) return { skipped: true, reason: 'no_phone' };
@@ -199,7 +199,7 @@ async function sendSms({ phone, message }) {
   }
 }
 
-/* ─── Token lookup helpers ───────────────────────────────────── */
+/* Token lookup helpers */
 
 async function getTokens({ kind, id }) {
   if (kind === 'worker') {
@@ -213,10 +213,10 @@ async function getTokens({ kind, id }) {
   return [];
 }
 
-/* ─── Job processor ──────────────────────────────────────────── */
+/* Job processor */
 
 async function processJob(job) {
-  /* ── Worker job offer push ── */
+  /* Worker job offer push */
   if (job.name === 'worker_offer') {
     const { workerId, orderId } = job.data;
     const [worker, order] = await Promise.all([
@@ -234,7 +234,7 @@ async function processJob(job) {
     });
   }
 
-  /* ── Generic push notification ── */
+  /* Generic push notification */
   if (job.name === 'push') {
     const { notificationId, recipient, title, body, data, bulkTokens } = job.data;
 
@@ -269,7 +269,7 @@ async function processJob(job) {
     return fcmResult;
   }
 
-  /* ── SMS notification ── */
+  /* SMS notification */
   if (job.name === 'sms') {
     const { notificationId, recipient, body: message } = job.data;
     const result = await getTokens({ kind: recipient.kind, id: recipient.id });
@@ -292,13 +292,13 @@ async function processJob(job) {
     return smsResult;
   }
 
-  /* ── Legacy order_status (no-op now, handled by socket) ── */
+  /* Legacy order_status (no-op now, handled by socket) */
   if (job.name === 'order_status') {
     logger.debug({ data: job.data }, '[Notif] order_status job (socket-handled, no push needed)');
     return { ok: true, skipped: true };
   }
 
-  /* ── Event booking reminder (24h before event) ── */
+  /* Event booking reminder (24h before event) */
   if (job.name === 'event_reminder') {
     const { bookingId, userId, partnerId } = job.data;
     try {
@@ -337,7 +337,7 @@ async function processJob(job) {
   return { ok: false, reason: 'unknown_job' };
 }
 
-/* ─── Main ───────────────────────────────────────────────────── */
+/* Main */
 
 async function main() {
   await connectMongo();

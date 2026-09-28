@@ -18,7 +18,7 @@ const logger  = require('../../utils/logger');
 const KEY  = process.env.GOOGLE_MAPS_KEY;
 const BASE = 'https://maps.googleapis.com/maps/api';
 
-// ── HTTP helper ────────────────────────────────────────────────────────────────
+// HTTP helper
 
 function httpsGet(url) {
   return new Promise((resolve, reject) => {
@@ -37,7 +37,7 @@ function requireKey() {
   if (!KEY) throw new Error('GOOGLE_MAPS_KEY env var is not set');
 }
 
-// ── Polyline decode ────────────────────────────────────────────────────────────
+// Polyline decode
 
 /**
  * Decode Google's encoded polyline to [[lat, lng], ...].
@@ -60,7 +60,7 @@ function decodePolyline(encoded) {
   return coords;
 }
 
-// ── Reverse Geocoding ──────────────────────────────────────────────────────────
+// Reverse Geocoding
 
 /**
  * Coordinates → rich address object.
@@ -107,7 +107,7 @@ async function reverseGeocode(lat, lng) {
   return payload;
 }
 
-// ── Forward Geocoding ──────────────────────────────────────────────────────────
+// Forward Geocoding
 
 /**
  * Address string → coordinates + metadata.
@@ -152,7 +152,7 @@ async function geocodeAddress(address) {
   return payload;
 }
 
-// ── Distance Matrix ────────────────────────────────────────────────────────────
+// Distance Matrix
 
 /**
  * Real road distance + traffic-aware ETA between two points.
@@ -206,7 +206,7 @@ async function getDistanceMatrix(oLat, oLng, dLat, dLng, mode = 'driving') {
   return result;
 }
 
-// ── Directions / Route ─────────────────────────────────────────────────────────
+// Directions / Route
 
 /**
  * Route polyline + metadata from Directions API.
@@ -276,7 +276,7 @@ async function getDirections(oLat, oLng, dLat, dLng) {
   return payload;
 }
 
-// ── Roads API — Snap to Road ───────────────────────────────────────────────────
+// Roads API — Snap to Road
 
 /**
  * Snap up to 100 GPS coordinates to the nearest road segment.
@@ -298,7 +298,7 @@ async function snapToRoads(path) {
   return data.snappedPoints.map((p) => [p.location.latitude, p.location.longitude]);
 }
 
-// ── Places Autocomplete ────────────────────────────────────────────────────────
+// Places Autocomplete
 
 /**
  * Google Places Autocomplete server-side proxy (avoids CORS from browser).
@@ -338,7 +338,7 @@ async function placesAutocomplete(input, lat, lng, radius = 50000) {
   }));
 }
 
-// ── Place Details ──────────────────────────────────────────────────────────────
+// Place Details
 
 /**
  * Resolve a Google Place ID to coordinates + address.
@@ -390,7 +390,7 @@ async function getPlaceDetails(placeId) {
   return payload;
 }
 
-// ── Static Map URL ─────────────────────────────────────────────────────────────
+// Static Map URL
 
 /**
  * Build a Google Static Maps URL (no API call needed — URL is the resource).

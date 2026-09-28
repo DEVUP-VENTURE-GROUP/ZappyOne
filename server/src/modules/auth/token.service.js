@@ -55,7 +55,7 @@ async function issueTokenPair({ sub, role, phone, email }) {
   const gen = 0;
   const tokenId = crypto.randomBytes(16).toString('hex');
 
-  // ── Workers = SINGLE active device ──────────────────────────────────────────
+  // Workers = SINGLE active device
   // A new worker login kills EVERY other session: all prior refresh families are
   // revoked (so old devices can't refresh) and `wsid:<id>` records the one active
   // session. The access token carries this sid so the auth middleware can reject

@@ -20,7 +20,7 @@ function slugify(str) {
   return str.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
 }
 
-/* ─── Area editor row ───────────────────────────────────────────────────── */
+/* Area editor row */
 function AreaRow({ area, onChange, onRemove }) {
   return (
     <div className="grid grid-cols-[1fr_1fr_auto] gap-2 items-center">
@@ -43,7 +43,7 @@ function AreaRow({ area, onChange, onRemove }) {
   );
 }
 
-/* ─── City form modal ───────────────────────────────────────────────────── */
+/* City form modal */
 function CityFormModal({ initial, onClose, onSave, saving }) {
   const isEdit = !!initial?._id;
   const [form, setForm] = useState(initial
@@ -202,7 +202,7 @@ function CityFormModal({ initial, onClose, onSave, saving }) {
   );
 }
 
-/* ─── Main ──────────────────────────────────────────────────────────────── */
+/* Main */
 export default function Cities() {
   const { data, isLoading } = useAdminCitiesQuery();
   const [createCity, { isLoading: creating }] = useAdminCreateCityMutation();

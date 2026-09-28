@@ -6,7 +6,7 @@ const { validate } = require('../../middlewares/validate');
 
 const router = express.Router();
 
-// ─── Public / authenticated user routes (/api/ads) ───────────────────────────
+// Public / authenticated user routes (/api/ads)
 
 // Legacy: all active ads (homepage banner)
 router.get('/', authenticate, ctrl.getActive);
@@ -18,7 +18,7 @@ router.get('/placement/:placement', ctrl.getByPlacement);
 router.post('/:id/impression', authenticate, ctrl.impression);
 router.post('/:id/click',      authenticate, ctrl.click);
 
-// ─── Self-serve advertiser routes (event_partner) (/api/ads/my) ──────────────
+// Self-serve advertiser routes (event_partner) (/api/ads/my)
 
 const myRouter = express.Router();
 myRouter.use(authenticate, requireRole('event_partner'));
@@ -35,7 +35,7 @@ myRouter.post('/wallet/topup/verify',   ctrl.verifyTopUp);
 
 router.use('/my', myRouter);
 
-// ─── Admin router (/api/:slug/ads) ───────────────────────────────────────────
+// Admin router (/api/:slug/ads)
 
 const adminSchema = Joi.object({
   title:    Joi.string().required(),

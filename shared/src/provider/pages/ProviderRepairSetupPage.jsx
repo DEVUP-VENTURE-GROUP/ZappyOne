@@ -64,7 +64,7 @@ const SERVICE_MODES = [
   { key: 'pickup_repair', label: 'Pickup & return', hint: 'You collect and drop back' },
 ];
 
-/* ─── Chrome ───────────────────────────────────────────────────────────── */
+/* Chrome */
 
 function Spinner({ pad = 'py-16' }) {
   return <div className={`flex justify-center ${pad}`}><Loader2 size={22} className="animate-spin text-indigo-400" /></div>;
@@ -131,7 +131,7 @@ function StepShell({ title, hint, children, onBack, onNext, nextLabel = 'Continu
   );
 }
 
-/* ─── 1. Brands ────────────────────────────────────────────────────────── */
+/* 1. Brands */
 
 /**
  * Which makes they handle.
@@ -193,7 +193,7 @@ function BrandsStep({ vertical, selected, onChange, onNext }) {
   );
 }
 
-/* ─── 2. What you fix ──────────────────────────────────────────────────── */
+/* 2. What you fix */
 
 /** Propose a repair the catalog is missing. Admin reviews it. */
 function MissingWorkSheet({ vertical, group, cityCode, onClose }) {
@@ -341,7 +341,7 @@ function WorkStep({ vertical, cityCode, brandCodes, onBack, onNext }) {
     }
   }
 
-  /* ── Inside one heading ── */
+  /* Inside one heading */
   if (openGroup) {
     const group = groups.find((g) => g.code === openGroup);
     return (
@@ -413,7 +413,7 @@ function WorkStep({ vertical, cityCode, brandCodes, onBack, onNext }) {
     );
   }
 
-  /* ── The headings ── */
+  /* The headings */
   return (
     <StepShell
       title="What do you fix?"
@@ -500,7 +500,7 @@ function WorkStep({ vertical, cityCode, brandCodes, onBack, onNext }) {
   );
 }
 
-/* ─── 3. Where you work ────────────────────────────────────────────────── */
+/* 3. Where you work */
 
 function AreaStep({ vertical, onBack, onNext, onCity }) {
   const { data, isLoading } = useRepairServiceAreasQuery(vertical);
@@ -717,7 +717,7 @@ function AreaStep({ vertical, onBack, onNext, onCity }) {
 }
 
 
-/* ─── 3b. When you are open ────────────────────────────────────────────── */
+/* 3b. When you are open */
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -823,7 +823,7 @@ function HoursStep({ profile, onBack, onNext }) {
   );
 }
 
-/* ─── 4. Prices ────────────────────────────────────────────────────────── */
+/* 4. Prices */
 
 /**
  * The part grades a repair can be quoted at, best first.
@@ -1067,7 +1067,7 @@ function PricingStep({ vertical, onBack, onNext }) {
     }
   }
 
-  /* ── The price sheet for one model (or the brand baseline) ── */
+  /* The price sheet for one model (or the brand baseline) */
   if (model !== undefined) {
     const label = model === null
       ? `Every ${brandName(activeBrand)} model`
@@ -1106,7 +1106,7 @@ function PricingStep({ vertical, onBack, onNext }) {
     );
   }
 
-  /* ── Brand, then the model list ── */
+  /* Brand, then the model list */
   return (
     <StepShell
       title="What do you charge?"
@@ -1210,7 +1210,7 @@ function PricingStep({ vertical, onBack, onNext }) {
   );
 }
 
-/* ─── Flow ─────────────────────────────────────────────────────────────── */
+/* Flow */
 
 export default function ProviderRepairSetupPage() {
   const nav = useNavigate();

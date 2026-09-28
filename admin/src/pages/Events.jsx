@@ -38,7 +38,7 @@ function Pill({ children, className }) {
   return <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border ${className}`}>{children}</span>;
 }
 
-/* ── Themes Tab ─────────────────────────────────────────────────────────────── */
+/* Themes Tab */
 function ThemesTab() {
   const [statusFilter, setStatusFilter] = useState('pending');
   const [page, setPage] = useState(1);
@@ -141,7 +141,7 @@ function ThemesTab() {
   );
 }
 
-/* ── Bookings Tab ────────────────────────────────────────────────────────────── */
+/* Bookings Tab */
 function BookingsTab() {
   const [statusFilter, setStatusFilter] = useState('');
   const [page, setPage] = useState(1);
@@ -204,7 +204,7 @@ function BookingsTab() {
   );
 }
 
-/* ── KYC Doc streamer hook ───────────────────────────────────────────────────── */
+/* KYC Doc streamer hook */
 function usePartnerKycDoc(partnerId, idx, token, enabled = true) {
   const [url, setUrl] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -232,7 +232,7 @@ function usePartnerKycDoc(partnerId, idx, token, enabled = true) {
   return { url, loading };
 }
 
-/* ── Admin KYC doc row (streams a named S3 doc) ─────────────────────────────── */
+/* Admin KYC doc row (streams a named S3 doc) */
 function AdminKycDocRow({ label, mandatory, s3Key, partnerId, docKey, token, onLightbox }) {
   const [url, setUrl]         = useState(null);
   const [loading, setLoading] = useState(false);
@@ -277,7 +277,7 @@ function AdminKycDocRow({ label, mandatory, s3Key, partnerId, docKey, token, onL
   );
 }
 
-/* ── Partner Detail Drawer ───────────────────────────────────────────────────── */
+/* Partner Detail Drawer */
 function PartnerDrawer({ partnerId, onClose, onRefresh }) {
   const { accessToken: token } = useSelector(selectAuth);
   const { data, isLoading, refetch } = useAdminGetEventPartnerQuery(partnerId);
@@ -464,7 +464,7 @@ function PartnerDrawer({ partnerId, onClose, onRefresh }) {
   );
 }
 
-/* ── Partners Tab ────────────────────────────────────────────────────────────── */
+/* Partners Tab */
 function PartnersTab() {
   const { data, isLoading, refetch } = useAdminEventPartnersQuery();
   const [createPartner] = useAdminCreateEventPartnerMutation();
@@ -563,7 +563,7 @@ function PartnersTab() {
   );
 }
 
-/* ── Analytics Tab ───────────────────────────────────────────────────────────── */
+/* Analytics Tab */
 function AnalyticsTab() {
   const { data, isLoading } = useAdminEventAnalyticsQuery();
   if (isLoading) return <div className="flex justify-center py-16"><Loader2 size={22} className="animate-spin text-slate-300" /></div>;
@@ -685,7 +685,7 @@ function AnalyticsTab() {
   );
 }
 
-/* ── Config Tab ──────────────────────────────────────────────────────────────── */
+/* Config Tab */
 function ConfigTab() {
   const { data: cfg, isLoading } = useAdminEventConfigQuery();
   const [updateConfig] = useAdminUpdateEventConfigMutation();
@@ -776,7 +776,7 @@ function ConfigTab() {
   );
 }
 
-/* ── Main ────────────────────────────────────────────────────────────────────── */
+/* Main */
 export default function Events() {
   const [activeTab, setActiveTab] = useState('themes');
 

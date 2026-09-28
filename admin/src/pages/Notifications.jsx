@@ -31,7 +31,7 @@ function StatCard({ label, value, sub, color = 'text-slate-800' }) {
   );
 }
 
-/* ── FCM Health Check ─────────────────────────────────────────────────── */
+/* FCM Health Check */
 function FcmHealth() {
   const [checkHealth, { data, isFetching: loading, error }] = useLazyAdminNotificationHealthQuery();
   const health = data ?? (error ? { ok: false, message: 'Failed to check — try again' } : null);
@@ -80,7 +80,7 @@ function FcmHealth() {
   );
 }
 
-/* ── Delivery Stats ──────────────────────────────────────────────────── */
+/* Delivery Stats */
 function DeliveryStats() {
   const [days, setDays] = useState(7);
   const [loadStats, { data: stats, isFetching: loading }] = useLazyAdminNotificationStatsQuery();
@@ -170,7 +170,7 @@ function DeliveryStats() {
   );
 }
 
-/* ── Live Preview Component ──────────────────────────────────────────── */
+/* Live Preview Component */
 function NotificationPreview({ title, body, type }) {
   return (
     <div className="sticky top-6">
@@ -225,7 +225,7 @@ function NotificationPreview({ title, body, type }) {
   );
 }
 
-/* ── Manual Send ─────────────────────────────────────────────────────── */
+/* Manual Send */
 function ManualSend() {
   const [form, setForm] = useState({
     recipientKind: 'user',
@@ -316,7 +316,7 @@ function ManualSend() {
   );
 }
 
-/* ── Broadcast ────────────────────────────────────────────────────────── */
+/* Broadcast */
 function Broadcast() {
   const [form, setForm] = useState({ recipientKind: 'user', type: 'promotional', title: '', body: '', deepLink: '', limit: 1000 });
   const [confirm, setConfirm] = useState(false);
@@ -339,7 +339,7 @@ function Broadcast() {
     }
   }
 
-  // ── Animated success state ──
+  // Animated success state
   if (result) {
     return (
       <Card className="p-8">
@@ -478,7 +478,7 @@ function Broadcast() {
   );
 }
 
-/* ── Main Page ────────────────────────────────────────────────────────── */
+/* Main Page */
 export default function NotificationsAdmin() {
   const [tab, setTab] = useState('stats');
 

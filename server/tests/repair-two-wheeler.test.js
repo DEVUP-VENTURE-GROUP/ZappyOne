@@ -98,7 +98,7 @@ beforeAll(async () => {
 
 afterAll(async () => { await stopMongo(); });
 
-/* ─── Catalog integrity ──────────────────────────────────────────────────── */
+/* Catalog integrity */
 
 describe('catalog integrity', () => {
   it('registers the vertical and the roadside service mode', () => {
@@ -183,7 +183,7 @@ describe('catalog integrity', () => {
   });
 });
 
-/* ─── Product-type scoping ───────────────────────────────────────────────── */
+/* Product-type scoping */
 
 /** The list a customer on this vehicle type would actually be offered. */
 async function problemsFor(productTypeCode) {
@@ -227,7 +227,7 @@ describe('a customer is only asked about parts their vehicle has', () => {
   });
 });
 
-/* ─── Safety ─────────────────────────────────────────────────────────────── */
+/* Safety */
 
 describe('safety-critical faults never become a priced repair', () => {
   it('forces diagnosis on every critical problem', async () => {
@@ -284,7 +284,7 @@ describe('safety-critical faults never become a priced repair', () => {
   });
 });
 
-/* ─── Diagnosis: a symptom is not a repair (§10) ─────────────────────────── */
+/* Diagnosis: a symptom is not a repair (§10) */
 
 describe('"won\'t start" is triaged, never assumed', () => {
   const flow = () => flowByCode.get('tw_no_start_petrol');
@@ -415,7 +415,7 @@ describe('scooter pickup is a transmission question', () => {
   });
 });
 
-/* ─── Roadside ───────────────────────────────────────────────────────────── */
+/* Roadside */
 
 describe('roadside work is genuinely offered roadside', () => {
   it('offers the stranding repairs at the roadside', async () => {
@@ -442,7 +442,7 @@ describe('roadside work is genuinely offered roadside', () => {
   });
 });
 
-/* ─── Isolation ──────────────────────────────────────────────────────────── */
+/* Isolation */
 
 describe('verticals stay apart', () => {
   it('never returns a two-wheeler repair for a phone', async () => {

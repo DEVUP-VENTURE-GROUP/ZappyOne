@@ -52,7 +52,7 @@ export default function EventThemePage() {
   return (
     <div className="min-h-screen bg-slate-50 pb-36 font-sans selection:bg-indigo-100 selection:text-indigo-900">
       
-      {/* ─── Top Floating Header ────────────────────────────────────────── */}
+      {/* Top Floating Header */}
       <div className="fixed top-0 left-0 right-0 z-50 p-4 flex justify-between items-center pointer-events-none">
         <motion.button 
           whileTap={{ scale: 0.9 }}
@@ -71,7 +71,7 @@ export default function EventThemePage() {
         </motion.button>
       </div>
 
-      {/* ─── Hero Image (Contained & Rounded) ───────────────────────────── */}
+      {/* Hero Image (Contained & Rounded) */}
       <div className="px-4 pt-16">
         <div className="relative w-full h-[40vh] md:h-[50vh] bg-gradient-to-br from-indigo-50 to-purple-50 rounded-[2rem] overflow-hidden shadow-sm border border-slate-200/50 flex items-center justify-center">
           
@@ -115,7 +115,7 @@ export default function EventThemePage() {
         </div>
       </div>
 
-      {/* ─── Thumbnail Interactive Slider ──────────────────────────────── */}
+      {/* Thumbnail Interactive Slider */}
       {!showVideo && allMedia.length > 1 && (
         <div className="px-4 mt-4">
           <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2">
@@ -132,7 +132,7 @@ export default function EventThemePage() {
         </div>
       )}
 
-      {/* ─── Modern Bento Box Layout ────────────────────────────────────── */}
+      {/* Modern Bento Box Layout */}
       <div className="px-4 mt-6 max-w-4xl mx-auto">
         
         <div className="mb-6">
@@ -299,7 +299,7 @@ export default function EventThemePage() {
         </div>
       </div>
 
-      {/* ─── Floating Light CTA Bar ────────────────────────────────────────────── */}
+      {/* Floating Light CTA Bar */}
       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-md z-50">
         <div className="bg-white/80 backdrop-blur-2xl border border-slate-200/60 rounded-[2rem] p-2.5 shadow-[0_20px_40px_-12px_rgba(0,0,0,0.15)] flex gap-2">
           <motion.button 

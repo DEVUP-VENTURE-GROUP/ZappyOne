@@ -111,7 +111,7 @@ async function start() {
   const server = http.createServer(app);
   initSockets(server);
 
-  /* ── Workers ───────────────────────────────────────────────────
+  /* Workers
      By default the API also runs the dispatch/notifications/stale/shield workers
      IN-PROCESS, so a single `npm start` works for dev and single-node prod.
 

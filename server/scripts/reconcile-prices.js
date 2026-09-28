@@ -91,9 +91,9 @@ const PRICES = [
     await redis.del(CACHE_KEY).catch(() => {});
   }
 
-  console.log(`\n✓ Catalog updated:   ${catalogUpdated}/${PRICES.length}`);
+  console.log(`\nCatalog updated:   ${catalogUpdated}/${PRICES.length}`);
   if (catalogMissing.length) console.log(`  (no catalog row for: ${catalogMissing.join(', ')})`);
-  console.log(`✓ Pricing floors set: ${cfg ? overridesSet : 'SKIPPED — no active PricingConfig doc (defaults in code are already aligned)'}`);
-  console.log('✓ Pricing cache busted.\n');
+  console.log(`Pricing floors set: ${cfg ? overridesSet : 'SKIPPED — no active PricingConfig doc (defaults in code are already aligned)'}`);
+  console.log('Pricing cache busted.\n');
   process.exit(0);
 })().catch((e) => { console.error(e); process.exit(1); });

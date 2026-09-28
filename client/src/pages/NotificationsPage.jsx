@@ -15,7 +15,7 @@ import { ErrorState } from '../components/common/QueryState';
 import PageTransition from '../components/common/PageTransition';
 import toast from 'react-hot-toast';
 
-/* ── Type → visual config ────────────────────────────────────────── */
+/* Type → visual config */
 const TYPE_CONFIG = {
   order_placed:         { icon: Package,      label: 'New Order',      color: 'text-[#0066FF]' },
   worker_assigned:      { icon: Zap,          label: 'Worker Found',   color: 'text-[#0066FF]' },
@@ -39,7 +39,7 @@ const TYPE_CONFIG = {
 };
 const DEFAULT_CFG = { icon: Bell, label: 'Notification', color: 'text-[#0066FF]' };
 
-/* ── Time helpers ─────────────────────────────────────────────────── */
+/* Time helpers */
 function timeAgo(dateStr) {
   const diff = Date.now() - new Date(dateStr).getTime();
   const m = Math.floor(diff / 60000);
@@ -63,7 +63,7 @@ function groupByDay(items) {
   return groups;
 }
 
-/* ── Animated empty state ─────────────────────────────────────────── */
+/* Animated empty state */
 function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center pt-24 pb-12 gap-5 text-center px-6">
@@ -82,7 +82,7 @@ function EmptyState() {
   );
 }
 
-/* ── Single notification card ────────────────────────────────────── */
+/* Single notification card */
 function NotifCard({ n, onTap }) {
   const cfg = TYPE_CONFIG[n.type] || DEFAULT_CFG;
   const unread = !n.readAt;
@@ -131,7 +131,7 @@ function NotifCard({ n, onTap }) {
   );
 }
 
-/* ── Section header ───────────────────────────────────────────────── */
+/* Section header */
 function SectionLabel({ label }) {
   return (
     <h3 className="px-1 pt-8 pb-4 text-[13px] font-semibold text-slate-400 uppercase tracking-widest font-['Poppins',sans-serif]">
@@ -140,7 +140,7 @@ function SectionLabel({ label }) {
   );
 }
 
-/* ── Main page ────────────────────────────────────────────────────── */
+/* Main page */
 export default function NotificationsPage() {
   const nav = useNavigate();
   

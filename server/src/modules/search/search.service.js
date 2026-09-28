@@ -15,7 +15,7 @@ const Worker = require('../worker/worker.model');
 const Order = require('../order/order.model');
 const logger = require('../../utils/logger');
 
-// ── Popularity (search demand, last 7d) — cached in Redis, category → 0..1 ──
+// Popularity (search demand, last 7d) — cached in Redis, category → 0..1
 const POP_KEY = 'search:popularity';
 const POP_TTL = 300;
 
@@ -41,7 +41,7 @@ async function getPopularity() {
   }
 }
 
-// ── Personalization — services this user booked before (boost them) ──
+// Personalization — services this user booked before (boost them)
 async function getUserAffinity(userId) {
   if (!userId) return new Set();
   const key = `search:affinity:${userId}`;
@@ -61,7 +61,7 @@ function popularityFor(entry, pop) {
   return pop.get((entry.category || entry.code || '').toLowerCase()) || 0;
 }
 
-// ── P2: nearby workers for the top matched service's skill ──
+// P2: nearby workers for the top matched service's skill
 async function nearbyWorkersForSkill(skill, lat, lng) {
   if (!skill || lat == null || lng == null) return [];
   try {
@@ -121,7 +121,7 @@ async function search({ q, lat, lng, userId, limit = 8 }) {
   const categories = scored.filter((x) => x.e.type === 'category').slice(0, 3).map((x) => toResult(x.e));
   const intents = scored.filter((x) => x.e.type === 'intent').slice(0, 2).map((x) => toResult(x.e));
 
-  // ── NEVER-EMPTY GUARANTEE (act like a PM: always give something bookable) ──
+  // NEVER-EMPTY GUARANTEE (act like a PM: always give something bookable)
   // Real matches come first; then we top up to a minimum with related (same
   // category as the best match) and finally the most popular services. So even a
   // garbage/misspelled query returns a full, useful list — never "no results".
@@ -177,7 +177,7 @@ function toResult(e) {
   };
 }
 
-// ── Autocomplete — fast prefix/fuzzy over corpus titles, popularity-ranked ──
+// Autocomplete — fast prefix/fuzzy over corpus titles, popularity-ranked
 async function suggest({ q, limit = 6 }) {
   const raw = String(q || '').trim().toLowerCase();
   if (!raw) return (await trending({})).map((t) => ({ title: t.title, code: t.code, type: t.type }));
@@ -197,7 +197,7 @@ async function suggest({ q, limit = 6 }) {
   return out;
 }
 
-// ── Trending — top searched categories (last 48h), Redis-cached ──
+// Trending — top searched categories (last 48h), Redis-cached
 const TREND_KEY = 'search:trending';
 async function trending() {
   try {

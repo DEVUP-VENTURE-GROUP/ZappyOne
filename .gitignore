@@ -23,13 +23,6 @@ build/
 .DS_Store
 .vscode/
 .idea/
-# AI-tooling config — stays local to each developer's machine so a public/
-# shared clone of this repo carries no trace of which tools were used to
-# build it. Matches at any depth (mobile/.claude/, mobile/AGENTS.md, etc.),
-# same as the .env* rule above.
-.claude/
-CLAUDE.md
-AGENTS.md
 coverage/
 deploy/certs/
 deploy/certbot-www/

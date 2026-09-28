@@ -46,7 +46,7 @@ beforeAll(async () => {
 
   await RepairConfig.insertMany([{ vertical: 'mobile' }, { vertical: 'laptop' }]);
 
-  /* ── Laptop side: a full chain down to two incompatible builds ── */
+  /* Laptop side: a full chain down to two incompatible builds */
   const lenovo = await Brand.create({ code: 'lenovo', name: 'Lenovo', category: 'laptop' });
   await ProductType.insertMany([
     { code: 'business_laptop', name: 'Business Laptop', vertical: 'laptop', displayOrder: 1, isPopular: true },
@@ -90,14 +90,14 @@ beforeAll(async () => {
     displaySize: '14', displayResolution: '1920x1080', displayPanel: 'IPS', isTouch: true,
   });
 
-  /* ── A configuration belonging to a DIFFERENT model ── */
+  /* A configuration belonging to a DIFFERENT model */
   const legion = await DeviceModel.findOne({ code: 'lenovo-legion-5-pro' });
   ctx.legionConfig = await DeviceConfiguration.create({
     code: 'legion-5-qhd', name: 'i7 / 16GB / RTX 4060 / QHD 165Hz', vertical: 'laptop',
     modelId: legion._id, modelCode: legion.code,
   });
 
-  /* ── Mobile side: a legacy row written before `vertical` existed ── */
+  /* Mobile side: a legacy row written before `vertical` existed */
   const samsung = await Brand.create({ code: 'samsung', name: 'Samsung', category: 'mobile' });
   const legacy = await DeviceModel.create({
     brandId: samsung._id, brandCode: 'samsung',
@@ -106,7 +106,7 @@ beforeAll(async () => {
   // Strip the field entirely — this is what production rows actually look like.
   await DeviceModel.collection.updateOne({ _id: legacy._id }, { $unset: { vertical: '' } });
 
-  /* ── The same checklist code in both verticals ── */
+  /* The same checklist code in both verticals */
   await QAChecklist.insertMany([
     {
       code: 'display', name: 'Mobile display QA', vertical: 'mobile',
@@ -130,7 +130,7 @@ beforeAll(async () => {
     partCostPaise: 480000, labourPaise: 140000, warrantyDays: 90,
   });
 
-  /* ── Actors ── */
+  /* Actors */
   const customer = await User.create({ phone: '9800000001', name: 'Laptop Owner' });
   const other = await User.create({ phone: '9800000002', name: 'Someone Else' });
   ctx.customerId = customer._id;
@@ -146,7 +146,7 @@ const auth = (token) => ({ Authorization: `Bearer ${token}` });
 // one and a hardcoded guess silently 404s every admin assertion.
 const ADMIN = `/api/${process.env.ADMIN_LOGIN_SLUG}`;
 
-/* ─── The picker ───────────────────────────────────────────────────────── */
+/* The picker */
 
 describe('deep catalog', () => {
   it('lists laptop product types, and none for mobile', async () => {
@@ -223,7 +223,7 @@ describe('deep catalog', () => {
   });
 });
 
-/* ─── "I don't know my model" ──────────────────────────────────────────── */
+/* "I don't know my model" */
 
 describe('model identification', () => {
   it('refuses an empty request — there is nothing for a human to work from', async () => {
@@ -320,7 +320,7 @@ describe('model identification', () => {
   });
 });
 
-/* ─── Configuration on the booking ─────────────────────────────────────── */
+/* Configuration on the booking */
 
 describe('booking with an exact build', () => {
   const base = {
@@ -359,7 +359,7 @@ describe('booking with an exact build', () => {
   });
 });
 
-/* ─── Per-vertical codes ───────────────────────────────────────────────── */
+/* Per-vertical codes */
 
 describe('codes are scoped to their vertical', () => {
   it('gives a laptop booking the laptop QA checklist, not the phone one', async () => {

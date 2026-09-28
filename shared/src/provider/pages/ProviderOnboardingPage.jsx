@@ -91,7 +91,7 @@ function Header({ title, subtitle, onBack }) {
   );
 }
 
-/* ─── Where the provider stands ────────────────────────────────────────── */
+/* Where the provider stands */
 
 function Summary({ status, onAddService, onOpenEnrolment }) {
   const nav = useNavigate();
@@ -195,7 +195,7 @@ function Summary({ status, onAddService, onOpenEnrolment }) {
   );
 }
 
-/* ─── Pick a domain ────────────────────────────────────────────────────── */
+/* Pick a domain */
 
 function DomainStep({ onPick }) {
   const { data, isLoading } = useProviderDomainsQuery();
@@ -220,7 +220,7 @@ function DomainStep({ onPick }) {
   );
 }
 
-/* ─── Pick the services inside it ──────────────────────────────────────── */
+/* Pick the services inside it */
 
 function LineStep({ domain, onPick, onRequest }) {
   const { data, isLoading } = useProviderServiceLinesQuery(domain.code);
@@ -314,7 +314,7 @@ function RequestSheet({ domain, onClose }) {
   );
 }
 
-/* ─── Prove you can do it ──────────────────────────────────────────────── */
+/* Prove you can do it */
 
 /**
  * The verification screen for ONE service.
@@ -576,7 +576,7 @@ function VerifyStep({ lineCode, onDone }) {
   );
 }
 
-/* ─── Flow controller ──────────────────────────────────────────────────── */
+/* Flow controller */
 
 export default function ProviderOnboardingPage() {
   const nav = useNavigate();

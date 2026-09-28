@@ -34,7 +34,7 @@ function Pill({ label, color }) {
   return <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ring-1 ${colors[color] || colors.slate}`}>{label}</span>;
 }
 
-/* ── Per-service P&L (#83) ────────────────────────────────────────────── */
+/* Per-service P&L */
 function ServicePnL({ days }) {
   const { data, isLoading } = useAdminServicePnLQuery(days);
   const services = data?.services || [];
@@ -92,7 +92,7 @@ function ServicePnL({ days }) {
   );
 }
 
-/* ── Worker churn risk (#81) ────────────────────────────────────────────── */
+/* Worker churn risk */
 function ChurnRisk() {
   const { data, isLoading, refetch, isFetching } = useAdminChurnRiskQuery();
 
@@ -143,7 +143,7 @@ function ChurnRisk() {
   );
 }
 
-/* ── Dead categories (#84) ───────────────────────────────────────────────── */
+/* Dead categories */
 function DeadCategories({ days }) {
   const { data, isLoading } = useAdminDeadCategoriesQuery(days);
 
@@ -193,7 +193,7 @@ function DeadCategories({ days }) {
   );
 }
 
-/* ── Quote abandonment / price sensitivity (#82) ─────────────────────────── */
+/* Quote abandonment / price sensitivity */
 function QuoteAbandonment({ days }) {
   const { data, isLoading } = useAdminQuoteAbandonmentQuery(days);
   const high = data?.highSensitivity || [];
@@ -226,7 +226,7 @@ function QuoteAbandonment({ days }) {
   );
 }
 
-/* ── Main page ────────────────────────────────────────────────────────────── */
+/* Main page */
 export default function BusinessIntelligence() {
   const [days, setDays] = useState(30);
 
@@ -257,13 +257,13 @@ export default function BusinessIntelligence() {
 
       <QuoteAbandonment days={days} />
 
-      {/* Geo Readiness — manual lookup tool (#85) */}
+      {/* Geo Readiness — manual lookup tool */}
       <GeoReadinessTool />
     </div>
   );
 }
 
-/* ── Geo readiness tool (#85) ────────────────────────────────────────────── */
+/* Geo readiness tool */
 function GeoReadinessTool() {
   const [coords, setCoords] = useState({ lat: '', lng: '', radius: 20 });
   const [query, setQuery] = useState(null);

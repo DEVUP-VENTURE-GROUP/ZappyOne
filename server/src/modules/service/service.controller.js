@@ -21,7 +21,7 @@ async function bustCatalogCache() {
   try { await redis.del(CATALOG_CACHE_KEY); } catch { /* non-blocking */ }
 }
 
-/* ── Public Catalog APIs ────────────────────────────────────────── */
+/* Public Catalog APIs */
 
 async function listServices(req, res, next) {
   try {
@@ -49,7 +49,7 @@ async function getService(req, res, next) {
   } catch (err) { next(err); }
 }
 
-/* ── Dynamic Brands & Models APIs ── */
+/* Dynamic Brands & Models APIs */
 
 async function listBrands(req, res, next) {
   try {
@@ -167,7 +167,7 @@ function haversineKm(a, b) {
   return 2 * R * Math.asin(Math.sqrt(s));
 }
 
-/* ── Admin Controllers ────────────────────────────────────────── */
+/* Admin Controllers */
 
 async function adminListServices(req, res, next) {
   try {
@@ -450,7 +450,7 @@ async function adminDeleteService(req, res, next) {
   } catch (err) { next(err); }
 }
 
-// ── Service categories (admin-managed taxonomy) ──────────────────────────────
+// Service categories (admin-managed taxonomy)
 async function listCategories(req, res, next) {
   try {
     const categories = await Category.find({ isActive: true }).sort({ sortOrder: 1, customerLabel: 1 }).lean();

@@ -45,7 +45,7 @@ const PLANS = [
 
   for (const p of PLANS) {
     await Plan.findOneAndUpdate({ code: p.code }, p, { upsert: true });
-    console.log(`✓ Plan upserted: ${p.code}  (₹${p.priceInPaise / 100}/mo)`);
+    console.log(`Plan upserted: ${p.code}  (₹${p.priceInPaise / 100}/mo)`);
   }
 
   // Initial pricing config (only if none exist)
@@ -73,7 +73,7 @@ const PLANS = [
       isActive: true,
       notes: 'Initial bootstrap config',
     });
-    console.log('✓ Pricing config v1 created');
+    console.log('Pricing config v1 created');
   } else {
     console.log(`Pricing config v${existing.version} already active — skipping.`);
   }

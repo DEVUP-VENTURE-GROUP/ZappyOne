@@ -52,7 +52,7 @@ export default function OffersSection() {
       </div>
 
       {isMobile ? (
-        /* ── Mobile: light coupon cards ── */
+        /* Mobile: light coupon cards */
         <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2 -mx-4 snap-x snap-mandatory px-4">
           {OFFERS.map((offer) => (
             <motion.div

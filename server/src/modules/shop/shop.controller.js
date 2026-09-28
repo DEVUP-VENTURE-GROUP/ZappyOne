@@ -1,7 +1,7 @@
 const Shop = require('./shop.model');
 const shopService = require('./shop.service');
 
-// ── Own profile ──────────────────────────────────────────────────────────────
+// Own profile
 
 async function getMe(req, res, next) {
   try {
@@ -24,9 +24,9 @@ async function updateProfile(req, res, next) {
   } catch (err) { next(err); }
 }
 
-// ── KYC — simpler v1 shape than worker's (submit → admin approve/reject →
+// KYC — simpler v1 shape than worker's (submit → admin approve/reject →
 // resubmit on rejection). No change-request/suspension machinery yet; add it
-// if shop KYC abuse turns out to need it, same as worker's did. ──────────────
+// if shop KYC abuse turns out to need it, same as worker's did.
 
 async function getKycStatus(req, res, next) {
   try {
@@ -75,7 +75,7 @@ async function submitKyc(req, res, next) {
   } catch (err) { next(err); }
 }
 
-// ── Owner's worker roster ─────────────────────────────────────────────────────
+// Owner's worker roster
 
 async function addWorker(req, res, next) {
   try {
@@ -105,7 +105,7 @@ async function getEarnings(req, res, next) {
   } catch (err) { next(err); }
 }
 
-// ── Customer-facing discovery — public-ish (any authenticated user) ─────────
+// Customer-facing discovery — public-ish (any authenticated user)
 
 async function listNearby(req, res, next) {
   try {

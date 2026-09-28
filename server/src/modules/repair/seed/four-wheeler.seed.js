@@ -29,7 +29,7 @@
 
 const VERTICAL = 'four_wheeler';
 
-/* ─── Body types (§4) ──────────────────────────────────────────────────── */
+/* Body types (§4) */
 
 const HATCH = 'hatchback', SEDAN = 'sedan', SUV = 'suv', MUV = 'muv', LUX = 'luxury';
 
@@ -44,7 +44,7 @@ const PRODUCT_TYPES = [
   { code: LUX, name: 'Premium / Luxury', displayOrder: 5 },
 ];
 
-/* ─── Powertrains (§5) ─────────────────────────────────────────────────── */
+/* Powertrains (§5) */
 
 const PETROL = 'petrol', DIESEL = 'diesel', CNG = 'cng', HYBRID = 'hybrid', EV = 'electric';
 
@@ -65,7 +65,7 @@ const FUEL_TYPES = [
   { code: EV, name: 'Electric', displayOrder: 5 },
 ];
 
-/* ─── Brands (§8) ──────────────────────────────────────────────────────── */
+/* Brands (§8) */
 
 const BRANDS = [
   { code: 'maruti-suzuki', name: 'Maruti Suzuki', sortOrder: 1 },
@@ -94,7 +94,7 @@ const BRANDS = [
   { code: 'tesla', name: 'Tesla', sortOrder: 24 },
 ];
 
-/* ─── Problem taxonomy (§12) ───────────────────────────────────────────── */
+/* Problem taxonomy (§12) */
 
 const PROBLEM_CATEGORIES = [
   { code: 'fw_roadside', name: 'Roadside Emergency', icon: 'alert-triangle', displayOrder: 1 },
@@ -122,7 +122,7 @@ const PROBLEM_CATEGORIES = [
   { code: 'fw_diagnostics', name: 'Warning Lights & Diagnostics', icon: 'activity', displayOrder: 23 },
   { code: 'fw_safety', name: 'Safety & Accident', icon: 'alert-octagon', displayOrder: 24 },
   { code: 'fw_maintenance', name: 'Service & Maintenance', icon: 'tool', displayOrder: 25 },
-  // ── Electrified only ──
+  // Electrified only
   { code: 'fw_ev_battery', name: 'EV Battery', icon: 'battery-charging', displayOrder: 26 },
   { code: 'fw_ev_charging', name: 'EV Charging', icon: 'plug', displayOrder: 27 },
   { code: 'fw_ev_motor', name: 'EV Motor & Controller', icon: 'zap', displayOrder: 28 },
@@ -141,7 +141,7 @@ const P = (code, name, categoryCode, candidates = [], opts = {}) => ({
 });
 
 const PROBLEMS = [
-  /* ── Roadside emergency ─────────────────────────────────────────────── */
+  /* Roadside emergency */
   P('fw_wont_start_roadside', 'Car won\'t start', 'fw_roadside',
     ['fw_jump_start', 'fw_battery_replacement', 'fw_starter_repair', 'fw_obd_scan', 'fw_roadside_minor_repair'],
     { isPopular: true, severity: 'high' }),
@@ -159,7 +159,7 @@ const PROBLEMS = [
   P('fw_ev_out_of_charge', 'Out of charge', 'fw_roadside',
     ['fw_towing', 'fw_ev_charge_assist'], { severity: 'high', appliesToFuelTypes: BEV }),
 
-  /* ── Starting & ignition ────────────────────────────────────────────── */
+  /* Starting & ignition */
   P('fw_cranks_no_start', 'Engine cranks but does not start', 'fw_starting',
     ['fw_obd_scan', 'fw_spark_plug_replacement', 'fw_fuel_pump_replacement', 'fw_ignition_coil_replacement'],
     { appliesToFuelTypes: ICE, severity: 'high', isPopular: true }),
@@ -175,7 +175,7 @@ const PROBLEMS = [
   P('fw_intermittent_start', 'Starts sometimes, not others', 'fw_starting',
     ['fw_obd_scan', 'fw_battery_replacement'], { requiresDiagnosis: true }),
 
-  /* ── Engine & performance — combustion only ─────────────────────────── */
+  /* Engine & performance — combustion only */
   P('fw_engine_stalls', 'Engine starts then stalls', 'fw_engine',
     ['fw_obd_scan', 'fw_fuel_injector_service', 'fw_throttle_body_cleaning'], { appliesToFuelTypes: ICE }),
   P('fw_rough_idle', 'Rough idle', 'fw_engine',
@@ -209,7 +209,7 @@ const PROBLEMS = [
   P('fw_power_loss_driving', 'Loses power while driving', 'fw_engine',
     ['fw_obd_scan', 'fw_fuel_pump_replacement'], { appliesToFuelTypes: ICE, severity: 'high', requiresDiagnosis: true }),
 
-  /* ── Battery & electrical ───────────────────────────────────────────── */
+  /* Battery & electrical */
   P('fw_battery_draining', 'Battery keeps draining', 'fw_battery_electrical',
     ['fw_battery_replacement', 'fw_alternator_repair', 'fw_electrical_diagnosis'], { isPopular: true }),
   P('fw_battery_not_charging', 'Battery not charging', 'fw_battery_electrical',
@@ -223,7 +223,7 @@ const PROBLEMS = [
   P('fw_12v_battery_ev', '12V battery issue', 'fw_battery_electrical',
     ['fw_battery_replacement'], { appliesToFuelTypes: ELECTRIFIED }),
 
-  /* ── Fuel system ────────────────────────────────────────────────────── */
+  /* Fuel system */
   P('fw_fuel_pump_issue', 'Fuel pump problem', 'fw_fuel', ['fw_fuel_pump_replacement'], { appliesToFuelTypes: ICE }),
   P('fw_fuel_injector_issue', 'Fuel injector problem', 'fw_fuel', ['fw_fuel_injector_service'], { appliesToFuelTypes: ICE }),
   P('fw_fuel_filter_issue', 'Fuel filter problem', 'fw_fuel', ['fw_fuel_filter_replacement'], { appliesToFuelTypes: ICE }),
@@ -232,7 +232,7 @@ const PROBLEMS = [
   P('fw_fuel_contamination', 'Wrong or contaminated fuel', 'fw_fuel',
     ['fw_fuel_system_flush'], { appliesToFuelTypes: ICE, severity: 'high' }),
 
-  /* ── CNG / LPG — gaseous fuel has its own safety rules ──────────────── */
+  /* CNG / LPG — gaseous fuel has its own safety rules */
   P('fw_cng_not_switching', 'Does not switch to CNG', 'fw_cng',
     ['fw_cng_system_service', 'fw_cng_regulator_repair'], { appliesToFuelTypes: GAS, isPopular: true }),
   P('fw_cng_poor_pickup', 'Poor pickup on CNG', 'fw_cng',
@@ -249,7 +249,7 @@ const PROBLEMS = [
   P('fw_cng_leak', 'Smell of gas / suspected CNG leak', 'fw_cng', ['fw_cng_safety_inspection'],
     { appliesToFuelTypes: GAS, severity: 'critical', requiresDiagnosis: true }),
 
-  /* ── Transmission & clutch ──────────────────────────────────────────── */
+  /* Transmission & clutch */
   P('fw_gear_not_shifting', 'Gears will not shift', 'fw_transmission',
     ['fw_transmission_repair', 'fw_clutch_replacement'], { severity: 'high', requiresDiagnosis: true }),
   P('fw_gear_hard', 'Gears shift hard', 'fw_transmission',
@@ -267,7 +267,7 @@ const PROBLEMS = [
     { appliesToFuelTypes: ICE }),
   P('fw_clutch_noise', 'Clutch noise', 'fw_clutch', ['fw_clutch_replacement'], { appliesToFuelTypes: ICE }),
 
-  /* ── Brakes ─────────────────────────────────────────────────────────── */
+  /* Brakes */
   P('fw_brake_noise', 'Brake noise', 'fw_brakes', ['fw_brake_pad_replacement', 'fw_brake_service'], { isPopular: true }),
   P('fw_brake_soft', 'Brake pedal soft or sinking', 'fw_brakes',
     ['fw_brake_bleeding', 'fw_brake_fluid_change'], { severity: 'high' }),
@@ -279,7 +279,7 @@ const PROBLEMS = [
   P('fw_abs_warning', 'ABS warning light', 'fw_brakes', ['fw_obd_scan'], { severity: 'high', requiresDiagnosis: true }),
   P('fw_parking_brake_issue', 'Parking brake problem', 'fw_brakes', ['fw_brake_service']),
 
-  /* ── Steering & suspension ──────────────────────────────────────────── */
+  /* Steering & suspension */
   P('fw_steering_hard', 'Steering feels hard', 'fw_steering', ['fw_power_steering_repair'], { severity: 'high' }),
   P('fw_steering_noise', 'Steering noise', 'fw_steering', ['fw_power_steering_repair', 'fw_suspension_repair']),
   P('fw_steering_vibration', 'Steering vibration', 'fw_steering', ['fw_wheel_balancing', 'fw_wheel_alignment']),
@@ -293,7 +293,7 @@ const PROBLEMS = [
   P('fw_bumpy_ride', 'Ride feels bumpy or bouncy', 'fw_suspension',
     ['fw_shock_absorber_replacement', 'fw_suspension_repair']),
 
-  /* ── Tyres & wheels ─────────────────────────────────────────────────── */
+  /* Tyres & wheels */
   P('fw_slow_puncture', 'Slow puncture', 'fw_tyres_wheels', ['fw_puncture_repair']),
   P('fw_tyre_wear', 'Uneven tyre wear', 'fw_tyres_wheels', ['fw_wheel_alignment', 'fw_tyre_replacement']),
   P('fw_tyre_replacement_req', 'Tyre replacement', 'fw_tyres_wheels', ['fw_tyre_replacement'], { isPopular: true }),
@@ -303,7 +303,7 @@ const PROBLEMS = [
   P('fw_rim_damage', 'Rim damage', 'fw_tyres_wheels', ['fw_rim_repair']),
   P('fw_tpms_warning', 'Tyre pressure warning', 'fw_tyres_wheels', ['fw_tpms_service']),
 
-  /* ── AC & climate — the §24 worked example ──────────────────────────── */
+  /* AC & climate — the §24 worked example */
   P('fw_ac_not_cooling', 'AC not cooling', 'fw_ac',
     // FIVE candidates on purpose. "Not cooling" is a symptom, and jumping
     // straight to a gas refill is how the same fault is paid for twice.
@@ -321,7 +321,7 @@ const PROBLEMS = [
   P('fw_heater_issue', 'Heater not working', 'fw_ac', ['fw_ac_service'], { appliesToFuelTypes: ICE }),
   P('fw_defogger_issue', 'Defogger not working', 'fw_ac', ['fw_ac_electrical_repair']),
 
-  /* ── Cooling ────────────────────────────────────────────────────────── */
+  /* Cooling */
   P('fw_coolant_leak', 'Coolant leak', 'fw_cooling', ['fw_coolant_service', 'fw_radiator_repair'], { severity: 'high' }),
   P('fw_radiator_issue', 'Radiator problem', 'fw_cooling', ['fw_radiator_repair']),
   P('fw_radiator_fan_issue', 'Radiator fan not working', 'fw_cooling', ['fw_radiator_fan_replacement'], { severity: 'high' }),
@@ -329,7 +329,7 @@ const PROBLEMS = [
   P('fw_thermostat_issue', 'Thermostat problem', 'fw_cooling', ['fw_thermostat_replacement'], { appliesToFuelTypes: ICE }),
   P('fw_coolant_change_req', 'Coolant replacement', 'fw_cooling', ['fw_coolant_service']),
 
-  /* ── Exhaust & emissions — combustion only ──────────────────────────── */
+  /* Exhaust & emissions — combustion only */
   P('fw_exhaust_noise', 'Exhaust noise', 'fw_exhaust', ['fw_exhaust_repair'], { appliesToFuelTypes: ICE }),
   P('fw_exhaust_leak', 'Exhaust leak', 'fw_exhaust', ['fw_exhaust_repair'], { appliesToFuelTypes: ICE }),
   P('fw_silencer_damage', 'Silencer damage', 'fw_exhaust', ['fw_exhaust_repair'], { appliesToFuelTypes: ICE }),
@@ -338,7 +338,7 @@ const PROBLEMS = [
   P('fw_dpf_issue', 'DPF warning', 'fw_exhaust', ['fw_dpf_service'],
     { appliesToFuelTypes: [DIESEL], requiresDiagnosis: true }),
 
-  /* ── Lights, body, glass, doors, interior ───────────────────────────── */
+  /* Lights, body, glass, doors, interior */
   P('fw_headlight_issue', 'Headlight not working', 'fw_lights', ['fw_light_repair'], { isPopular: true }),
   P('fw_tail_light_issue', 'Tail or brake light not working', 'fw_lights', ['fw_light_repair'], { severity: 'high' }),
   P('fw_indicator_issue', 'Indicator not working', 'fw_lights', ['fw_light_repair']),
@@ -366,7 +366,7 @@ const PROBLEMS = [
   P('fw_cabin_noise', 'Rattle or noise from the cabin', 'fw_interior', ['fw_interior_repair']),
   P('fw_interior_trim_damage', 'Interior trim damage', 'fw_interior', ['fw_interior_repair']),
 
-  /* ── Infotainment & ADAS ────────────────────────────────────────────── */
+  /* Infotainment & ADAS */
   P('fw_infotainment_dead', 'Infotainment not working', 'fw_infotainment', ['fw_infotainment_repair']),
   P('fw_touchscreen_issue', 'Touchscreen problem', 'fw_infotainment', ['fw_infotainment_repair']),
   P('fw_bluetooth_issue', 'Bluetooth not connecting', 'fw_infotainment', ['fw_infotainment_software_service']),
@@ -382,7 +382,7 @@ const PROBLEMS = [
   P('fw_cruise_control_issue', 'Adaptive cruise problem', 'fw_adas', ['fw_adas_calibration'], { requiresDiagnosis: true }),
   P('fw_blind_spot_issue', 'Blind-spot warning problem', 'fw_adas', ['fw_adas_calibration'], { requiresDiagnosis: true }),
 
-  /* ── Warning lights & diagnostics ───────────────────────────────────── */
+  /* Warning lights & diagnostics */
   P('fw_check_engine_light', 'Check-engine light', 'fw_diagnostics', ['fw_obd_scan'],
     { appliesToFuelTypes: ICE, severity: 'high', requiresDiagnosis: true, isPopular: true }),
   P('fw_unknown_warning_light', 'A warning light I do not recognise', 'fw_diagnostics', ['fw_obd_scan'],
@@ -390,7 +390,7 @@ const PROBLEMS = [
   P('fw_obd_scan_req', 'Computer / OBD scan', 'fw_diagnostics', ['fw_obd_scan']),
   P('fw_ecu_issue', 'ECU problem', 'fw_diagnostics', ['fw_obd_scan', 'fw_ecu_service'], { requiresDiagnosis: true }),
 
-  /* ── Safety & accident ──────────────────────────────────────────────── */
+  /* Safety & accident */
   // Never an ordinary doorstep job — the car may not be safe to drive at all.
   P('fw_accident_damage', 'Accident damage', 'fw_safety', ['fw_accident_inspection', 'fw_towing'],
     { severity: 'critical', requiresDiagnosis: true }),
@@ -402,7 +402,7 @@ const PROBLEMS = [
     { severity: 'high', requiresDiagnosis: true }),
   P('fw_vehicle_immobilised', 'Car cannot be moved', 'fw_safety', ['fw_towing'], { severity: 'high' }),
 
-  /* ── Maintenance ────────────────────────────────────────────────────── */
+  /* Maintenance */
   P('fw_periodic_service_req', 'Periodic service', 'fw_maintenance', ['fw_periodic_service'], { isPopular: true }),
   P('fw_oil_change_req', 'Engine oil change', 'fw_maintenance', ['fw_oil_change'],
     { appliesToFuelTypes: ICE, isPopular: true }),
@@ -414,7 +414,7 @@ const PROBLEMS = [
   P('fw_pre_trip_check', 'Pre-trip check', 'fw_maintenance', ['fw_multipoint_inspection']),
   P('fw_car_wash_req', 'Wash & detailing', 'fw_maintenance', ['fw_car_wash']),
 
-  /* ── EV battery ─────────────────────────────────────────────────────── *
+  /* EV battery *
    * The last five are safety incidents, not repairs — same rule as the
    * two-wheeler vertical, for the same physics.                             */
   P('fw_ev_not_charging', 'Not charging', 'fw_ev_battery',
@@ -434,7 +434,7 @@ const PROBLEMS = [
   P('fw_ev_battery_damage', 'Battery damaged after a crash', 'fw_ev_battery',
     ['fw_ev_safety_inspection'], { appliesToFuelTypes: ELECTRIFIED, severity: 'critical', requiresDiagnosis: true }),
 
-  /* ── EV charging & drive ────────────────────────────────────────────── */
+  /* EV charging & drive */
   P('fw_ev_slow_charging', 'Charging very slowly', 'fw_ev_charging',
     ['fw_ev_battery_diagnostic', 'fw_ev_charger_repair'], { appliesToFuelTypes: BEV }),
   P('fw_ev_charging_stops', 'Charging stops partway', 'fw_ev_charging',
@@ -455,7 +455,7 @@ const PROBLEMS = [
     ['fw_ev_diagnostic_scan'], { appliesToFuelTypes: ELECTRIFIED }),
 ];
 
-/* ─── Repairs (§49) ────────────────────────────────────────────────────── */
+/* Repairs (§49) */
 
 const D = 'doorstep', W = 'workshop', PU = 'pickup_repair', R = 'remote_support', RS = 'roadside';
 
@@ -469,7 +469,7 @@ const D = 'doorstep', W = 'workshop', PU = 'pickup_repair', R = 'remote_support'
  * set by the provider, not by Zappy (§66).
  */
 const REPAIRS = [
-  /* ── Roadside ──────────────────────────────────────────────────────── */
+  /* Roadside */
   { code: 'fw_jump_start', name: 'Jump Start', pricingMode: 'fixed', minSkillLevel: 1, modes: [RS, D], durationMin: 20, warrantyDays: 0 },
   { code: 'fw_puncture_repair', name: 'Puncture Repair', pricingMode: 'fixed', minSkillLevel: 1, modes: [RS, D, W], durationMin: 30, warrantyDays: 30 },
   { code: 'fw_spare_wheel_fitment', name: 'Spare Wheel Fitment', pricingMode: 'fixed', minSkillLevel: 1, modes: [RS, D], durationMin: 25, warrantyDays: 0 },
@@ -479,7 +479,7 @@ const REPAIRS = [
   { code: 'fw_lock_service', name: 'Lock & Key Service', pricingMode: 'diagnosis_required', minSkillLevel: 2, modes: [RS, D, W], durationMin: 60, warrantyDays: 30 },
   { code: 'fw_ev_charge_assist', name: 'EV Charging Assistance', pricingMode: 'fixed', minSkillLevel: 2, modes: [RS], durationMin: 60, warrantyDays: 0 },
 
-  /* ── Starting, engine & electrical ─────────────────────────────────── */
+  /* Starting, engine & electrical */
   { code: 'fw_battery_replacement', name: 'Battery Replacement', pricingMode: 'fixed', minSkillLevel: 1, modes: [RS, D, W], durationMin: 30, warrantyDays: 365, component: 'fw_battery' },
   { code: 'fw_starter_repair', name: 'Starter Motor Repair', pricingMode: 'diagnosis_required', minSkillLevel: 3, modes: [D, W, PU], durationMin: 150, warrantyDays: 90 },
   { code: 'fw_alternator_repair', name: 'Alternator Repair', pricingMode: 'diagnosis_required', minSkillLevel: 3, modes: [W, PU], durationMin: 180, warrantyDays: 90 },
@@ -493,7 +493,7 @@ const REPAIRS = [
   { code: 'fw_fuse_relay_replacement', name: 'Fuse & Relay Replacement', pricingMode: 'fixed', minSkillLevel: 1, modes: [RS, D, W], durationMin: 30, warrantyDays: 90, component: 'fw_fuse' },
   { code: 'fw_electrical_diagnosis', name: 'Electrical Fault Diagnosis', pricingMode: 'diagnosis_required', minSkillLevel: 3, modes: [D, W, PU], durationMin: 120, warrantyDays: 30 },
 
-  /* ── Fuel & CNG ────────────────────────────────────────────────────── */
+  /* Fuel & CNG */
   { code: 'fw_fuel_pump_replacement', name: 'Fuel Pump Replacement', pricingMode: 'fixed', minSkillLevel: 3, modes: [W, PU], durationMin: 180, warrantyDays: 180, component: 'fw_fuel_pump' },
   { code: 'fw_fuel_injector_service', name: 'Fuel Injector Service', pricingMode: 'fixed', minSkillLevel: 3, modes: [W, PU], durationMin: 150, warrantyDays: 90 },
   { code: 'fw_fuel_filter_replacement', name: 'Fuel Filter Replacement', pricingMode: 'fixed', minSkillLevel: 2, modes: [D, W], durationMin: 45, warrantyDays: 90, component: 'fw_fuel_filter' },
@@ -504,7 +504,7 @@ const REPAIRS = [
   { code: 'fw_cng_injector_service', name: 'CNG Injector Service', pricingMode: 'fixed', minSkillLevel: 4, modes: [W, PU], durationMin: 150, warrantyDays: 90 },
   { code: 'fw_cng_safety_inspection', name: 'CNG Safety Inspection', pricingMode: 'diagnosis_required', minSkillLevel: 4, modes: [W], durationMin: 90, warrantyDays: 0 },
 
-  /* ── Transmission, clutch, brakes ──────────────────────────────────── */
+  /* Transmission, clutch, brakes */
   { code: 'fw_transmission_repair', name: 'Transmission Repair', pricingMode: 'diagnosis_required', minSkillLevel: 4, modes: [W, PU], durationMin: 960, warrantyDays: 180 },
   { code: 'fw_transmission_oil_change', name: 'Transmission Oil Change', pricingMode: 'fixed', minSkillLevel: 2, modes: [W, PU], durationMin: 90, warrantyDays: 0, component: 'fw_transmission_oil' },
   { code: 'fw_clutch_replacement', name: 'Clutch Replacement', pricingMode: 'fixed', minSkillLevel: 4, modes: [W, PU], durationMin: 480, warrantyDays: 180, component: 'fw_clutch_kit' },
@@ -516,7 +516,7 @@ const REPAIRS = [
   { code: 'fw_brake_booster_repair', name: 'Brake Booster Repair', pricingMode: 'diagnosis_required', minSkillLevel: 4, modes: [W, PU], durationMin: 240, warrantyDays: 90 },
   { code: 'fw_brake_service', name: 'Brake Service', pricingMode: 'fixed', minSkillLevel: 2, modes: [D, W, PU], durationMin: 120, warrantyDays: 90 },
 
-  /* ── Steering, suspension, wheels ──────────────────────────────────── */
+  /* Steering, suspension, wheels */
   { code: 'fw_power_steering_repair', name: 'Power Steering Repair', pricingMode: 'diagnosis_required', minSkillLevel: 4, modes: [W, PU], durationMin: 240, warrantyDays: 90 },
   { code: 'fw_suspension_repair', name: 'Suspension Repair', pricingMode: 'diagnosis_required', minSkillLevel: 3, modes: [W, PU], durationMin: 240, warrantyDays: 90 },
   { code: 'fw_shock_absorber_replacement', name: 'Shock Absorber Replacement', pricingMode: 'fixed', minSkillLevel: 3, modes: [W, PU], durationMin: 180, warrantyDays: 180, component: 'fw_shock_absorber' },
@@ -528,7 +528,7 @@ const REPAIRS = [
   { code: 'fw_rim_repair', name: 'Rim Repair', pricingMode: 'diagnosis_required', minSkillLevel: 3, modes: [W, PU], durationMin: 150, warrantyDays: 30 },
   { code: 'fw_tpms_service', name: 'TPMS Service', pricingMode: 'fixed', minSkillLevel: 2, modes: [D, W], durationMin: 45, warrantyDays: 90 },
 
-  /* ── AC & cooling ──────────────────────────────────────────────────── */
+  /* AC & cooling */
   // The inspection that stops "not cooling" becoming an automatic gas refill.
   { code: 'fw_ac_diagnosis', name: 'AC Diagnosis', pricingMode: 'fixed', minSkillLevel: 3, modes: [D, W], durationMin: 60, warrantyDays: 0 },
   { code: 'fw_ac_gas_refill', name: 'AC Gas Refill', pricingMode: 'fixed', minSkillLevel: 2, modes: [D, W], durationMin: 60, warrantyDays: 90, component: 'fw_ac_refrigerant' },
@@ -544,7 +544,7 @@ const REPAIRS = [
   { code: 'fw_water_pump_replacement', name: 'Water Pump Replacement', pricingMode: 'fixed', minSkillLevel: 4, modes: [W, PU], durationMin: 300, warrantyDays: 180, component: 'fw_water_pump' },
   { code: 'fw_thermostat_replacement', name: 'Thermostat Replacement', pricingMode: 'fixed', minSkillLevel: 3, modes: [W, PU], durationMin: 120, warrantyDays: 180, component: 'fw_thermostat' },
 
-  /* ── Exhaust, lights, body, glass, interior ────────────────────────── */
+  /* Exhaust, lights, body, glass, interior */
   { code: 'fw_exhaust_repair', name: 'Exhaust Repair', pricingMode: 'diagnosis_required', minSkillLevel: 3, modes: [W, PU], durationMin: 180, warrantyDays: 90 },
   { code: 'fw_dpf_service', name: 'DPF Service', pricingMode: 'diagnosis_required', minSkillLevel: 4, modes: [W, PU], durationMin: 240, warrantyDays: 90 },
   { code: 'fw_light_repair', name: 'Light Repair', pricingMode: 'fixed', minSkillLevel: 1, modes: [RS, D, W], durationMin: 40, warrantyDays: 90, component: 'fw_bulb' },
@@ -563,7 +563,7 @@ const REPAIRS = [
   { code: 'fw_door_repair', name: 'Door Repair', pricingMode: 'diagnosis_required', minSkillLevel: 3, modes: [W, PU], durationMin: 180, warrantyDays: 90 },
   { code: 'fw_interior_repair', name: 'Interior Repair', pricingMode: 'diagnosis_required', minSkillLevel: 2, modes: [D, W, PU], durationMin: 180, warrantyDays: 90 },
 
-  /* ── Electronics, diagnostics, ADAS ────────────────────────────────── */
+  /* Electronics, diagnostics, ADAS */
   { code: 'fw_obd_scan', name: 'OBD / Computer Scan', pricingMode: 'fixed', minSkillLevel: 3, modes: [RS, D, W], durationMin: 45, warrantyDays: 0 },
   { code: 'fw_ecu_service', name: 'ECU Service', pricingMode: 'diagnosis_required', minSkillLevel: 4, modes: [W, PU], durationMin: 240, warrantyDays: 90 },
   { code: 'fw_infotainment_repair', name: 'Infotainment Repair', pricingMode: 'diagnosis_required', minSkillLevel: 3, modes: [D, W, PU], durationMin: 150, warrantyDays: 90 },
@@ -575,14 +575,14 @@ const REPAIRS = [
   { code: 'fw_airbag_service', name: 'Airbag System Service', pricingMode: 'diagnosis_required', minSkillLevel: 4, modes: [W, PU], durationMin: 240, warrantyDays: 180 },
   { code: 'fw_accident_inspection', name: 'Accident Damage Inspection', pricingMode: 'diagnosis_required', minSkillLevel: 4, modes: [W, PU], durationMin: 120, warrantyDays: 0 },
 
-  /* ── Maintenance ───────────────────────────────────────────────────── */
+  /* Maintenance */
   { code: 'fw_periodic_service', name: 'Periodic Service', pricingMode: 'fixed', minSkillLevel: 2, modes: [D, W, PU], durationMin: 240, warrantyDays: 30 },
   { code: 'fw_oil_change', name: 'Engine Oil Change', pricingMode: 'fixed', minSkillLevel: 1, modes: [D, W], durationMin: 60, warrantyDays: 0, component: 'fw_engine_oil' },
   { code: 'fw_air_filter_replacement', name: 'Air Filter Replacement', pricingMode: 'fixed', minSkillLevel: 1, modes: [D, W], durationMin: 30, warrantyDays: 0, component: 'fw_air_filter' },
   { code: 'fw_multipoint_inspection', name: 'Multi-Point Inspection', pricingMode: 'fixed', minSkillLevel: 2, modes: [D, W], durationMin: 90, warrantyDays: 0 },
   { code: 'fw_car_wash', name: 'Wash & Detailing', pricingMode: 'fixed', minSkillLevel: 1, modes: [D, W], durationMin: 120, warrantyDays: 0 },
 
-  /* ── EV ────────────────────────────────────────────────────────────── *
+  /* EV *
    * High-voltage work is workshop-bound without exception. A traction pack is
    * heavy, live at several hundred volts, and dangerous to open at a kerbside.
    * `fw_ev_safety_inspection` exists so a suspected thermal or crash fault has
@@ -597,7 +597,7 @@ const REPAIRS = [
   { code: 'fw_ev_diagnostic_scan', name: 'EV Diagnostic Scan', pricingMode: 'fixed', minSkillLevel: 3, modes: [D, W], durationMin: 60, warrantyDays: 0 },
 ];
 
-/* ─── Skill levels (§52) ───────────────────────────────────────────────── */
+/* Skill levels (§52) */
 
 const SKILL_LEVELS = [
   { level: 1, name: 'Roadside', description: 'Jump start, puncture, bulbs, fluids, spare wheel', requiresVerification: false },
@@ -618,7 +618,7 @@ const SKILL_LEVELS = [
   },
 ];
 
-/* ─── QA checklists (§68) ──────────────────────────────────────────────── */
+/* QA checklists (§68) */
 
 const QA_CHECKLISTS = [
   {

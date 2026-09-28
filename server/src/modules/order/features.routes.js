@@ -11,7 +11,7 @@ const { authLimiter } = require('../../middlewares/rateLimit');
 
 const router = express.Router({ mergeParams: true });
 
-/* ── Customer SOS ────────────────────────────────────────────────── */
+/* Customer SOS */
 
 /**
  * The customer's panic button, during a job.
@@ -45,7 +45,7 @@ router.post('/:id/sos',
   },
 );
 
-/* ── Feature 1: Live Service Photos ─────────────────────────────── */
+/* Feature 1: Live Service Photos */
 router.post('/:id/service-photos',
   authenticate, requireRole('worker'),
   validate(Joi.object({
@@ -76,7 +76,7 @@ router.get('/:id/service-photos', authenticate, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-/* ── Feature 3: Voice Tip ────────────────────────────────────────── */
+/* Feature 3: Voice Tip */
 router.post('/:id/tip',
   authenticate, requireRole('user'),
   validate(Joi.object({
@@ -107,7 +107,7 @@ router.get('/:id/tip', authenticate, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-/* ── Feature 4: Mid-Service Price Revision ───────────────────────── */
+/* Feature 4: Mid-Service Price Revision */
 router.post('/:id/price-revision',
   authenticate, requireRole('worker'),
   validate(Joi.object({
@@ -158,7 +158,7 @@ router.get('/:id/price-revision', authenticate, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-/* ── Feature 6: Skill Auction ────────────────────────────────────── */
+/* Feature 6: Skill Auction */
 router.get('/:id/auction', authenticate, async (req, res, next) => {
   try {
     const svc     = require('./auction.service');

@@ -18,7 +18,7 @@ async function clean() {
     { $set: { category: 'car' } }
   );
 
-  console.log('✅ Service categories in DB updated!');
+  console.log('Service categories in DB updated!');
   await mongoose.disconnect();
 }
 

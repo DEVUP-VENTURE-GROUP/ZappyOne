@@ -24,7 +24,7 @@
  */
 
 const FLOWS = [
-  /* ─── AC not cooling — the §24 worked example ─────────────────────────── */
+  /* AC not cooling — the §24 worked example */
   {
     code: 'fw_ac_triage',
     category: 'four_wheeler',
@@ -116,7 +116,7 @@ const FLOWS = [
     ],
   },
 
-  /* ─── Car won't start ─────────────────────────────────────────────────── */
+  /* Car won't start */
   {
     code: 'fw_no_start',
     category: 'four_wheeler',
@@ -194,7 +194,7 @@ const FLOWS = [
     ],
   },
 
-  /* ─── Warning lights — a light is a system, not a part ────────────────── */
+  /* Warning lights — a light is a system, not a part */
   {
     code: 'fw_warning_light',
     category: 'four_wheeler',
@@ -253,7 +253,7 @@ const FLOWS = [
     ],
   },
 
-  /* ─── EV / hybrid, WITH the high-voltage safety gate ──────────────────── */
+  /* EV / hybrid, WITH the high-voltage safety gate */
   {
     code: 'fw_ev_triage',
     category: 'four_wheeler',
@@ -327,7 +327,7 @@ const FLOWS = [
     ],
   },
 
-  /* ─── CNG, WITH the gas safety gate ───────────────────────────────────── */
+  /* CNG, WITH the gas safety gate */
   {
     code: 'fw_cng_triage',
     category: 'four_wheeler',
@@ -389,7 +389,7 @@ const FLOWS = [
     ],
   },
 
-  /* ─── Brakes ─────────────────────────────────────────────────────────── */
+  /* Brakes */
   {
     code: 'fw_brake_triage',
     category: 'four_wheeler',
@@ -437,7 +437,7 @@ const FLOWS = [
     ],
   },
 
-  /* ─── Overheating ────────────────────────────────────────────────────── */
+  /* Overheating */
   {
     code: 'fw_overheating_triage',
     category: 'four_wheeler',

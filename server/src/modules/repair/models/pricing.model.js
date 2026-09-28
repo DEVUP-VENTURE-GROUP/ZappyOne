@@ -27,7 +27,7 @@ const mongoose = require('mongoose');
 const APPROVAL_BANDS = ['green', 'yellow', 'red'];
 const APPROVAL_STATUSES = ['draft', 'pending', 'approved', 'rejected', 'auto_approved'];
 
-/* ─── Zappy reference pricing ──────────────────────────────────────────── */
+/* Zappy reference pricing */
 
 const referencePricingSchema = new mongoose.Schema(
   {
@@ -84,7 +84,7 @@ referencePricingSchema.pre('validate', function validateBand(next) {
   next();
 });
 
-/* ─── Provider pricing ─────────────────────────────────────────────────── */
+/* Provider pricing */
 
 const providerPricingSchema = new mongoose.Schema(
   {

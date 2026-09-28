@@ -19,7 +19,7 @@ const mongoose = require('mongoose');
  * records which one the customer owns.
  */
 
-/* ─── Product type — Laptop, Gaming Laptop, MacBook, Chromebook … ───────── */
+/* Product type — Laptop, Gaming Laptop, MacBook, Chromebook … */
 
 const productTypeSchema = new mongoose.Schema(
   {
@@ -41,7 +41,7 @@ const productTypeSchema = new mongoose.Schema(
 // mean different things to laptops and tablets.
 productTypeSchema.index({ vertical: 1, code: 1 }, { unique: true });
 
-/* ─── Product family — Pavilion, ThinkPad, ROG, MacBook Air … ───────────── */
+/* Product family — Pavilion, ThinkPad, ROG, MacBook Air … */
 
 const productFamilySchema = new mongoose.Schema(
   {
@@ -62,7 +62,7 @@ const productFamilySchema = new mongoose.Schema(
 
 productFamilySchema.index({ vertical: 1, brandCode: 1, code: 1 }, { unique: true });
 
-/* ─── Series — Pavilion 15, ThinkPad E Series, ROG Strix … ──────────────── */
+/* Series — Pavilion 15, ThinkPad E Series, ROG Strix … */
 
 const productSeriesSchema = new mongoose.Schema(
   {
@@ -81,7 +81,7 @@ const productSeriesSchema = new mongoose.Schema(
 
 productSeriesSchema.index({ vertical: 1, brandCode: 1, code: 1 }, { unique: true });
 
-/* ─── Configuration — the exact build the customer actually owns ────────── */
+/* Configuration — the exact build the customer actually owns */
 
 /**
  * A configuration pins the variable hardware on one model.
@@ -143,7 +143,7 @@ deviceConfigurationSchema.methods.fitmentKey = function fitmentKey() {
   };
 };
 
-/* ─── Model identification requests (§7) ───────────────────────────────── */
+/* Model identification requests (§7) */
 
 /**
  * "I don't know my model."

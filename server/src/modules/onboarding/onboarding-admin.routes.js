@@ -21,11 +21,11 @@ mountCrud('domains', ctrl.domains);
 mountCrud('lines', ctrl.lines);
 mountCrud('requirements', ctrl.requirements);
 
-/* ─── Verification queue ───────────────────────────────────────────────── */
+/* Verification queue */
 router.get('/onboarding/enrolments', ctrl.enrolments.list);
 router.post('/onboarding/enrolments/:id/decide', ctrl.enrolments.decide);
 
-/* ─── Provider-proposed services ───────────────────────────────────────── */
+/* Provider-proposed services */
 router.get('/onboarding/line-requests', ctrl.lineRequests.list);
 router.post('/onboarding/line-requests/:id/approve', ctrl.lineRequests.approve);
 router.post('/onboarding/line-requests/:id/reject', ctrl.lineRequests.reject);

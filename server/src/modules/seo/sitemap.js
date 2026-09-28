@@ -26,28 +26,28 @@ async function generateSitemap(redis) {
   const today = new Date().toISOString().split('T')[0];
   const urls = [];
 
-  // ── Static / brand pages ─────────────────────────────────────────────────
+  // Static / brand pages
   urls.push(urlEntry(`${BASE_URL}/`,          'daily',  '1.0', today));
   urls.push(urlEntry(`${BASE_URL}/services`,  'weekly', '0.8', today));
   urls.push(urlEntry(`${BASE_URL}/events`,    'weekly', '0.8', today));
   urls.push(urlEntry(`${BASE_URL}/about`,     'monthly','0.5', today));
 
-  // ── City pages (/in/:city) ───────────────────────────────────────────────
+  // City pages (/in/:city)
   for (const city of CITIES) {
     urls.push(urlEntry(`${BASE_URL}/in/${city.slug}`, 'weekly', '0.9', today));
 
-    // ── Category + City pages (/in/:city/:category) ──────────────────────
+    // Category + City pages (/in/:city/:category)
     for (const cat of CATEGORIES) {
       urls.push(urlEntry(`${BASE_URL}/in/${city.slug}/${cat.slug}`, 'weekly', '0.85', today));
 
-      // ── Area + Category + City pages (/in/:city/:area/:category) ─────
+      // Area + Category + City pages (/in/:city/:area/:category)
       for (const area of city.areas) {
         urls.push(urlEntry(`${BASE_URL}/in/${city.slug}/${area.slug}/${cat.slug}`, 'monthly', '0.75', today));
       }
     }
   }
 
-  // ── Dynamic: event themes from MongoDB ──────────────────────────────────
+  // Dynamic: event themes from MongoDB
   try {
     const EventTheme = require('../../modules/events/event-theme.model');
     const themes = await EventTheme.find({ status: { $in: ['approved', 'featured'] } })

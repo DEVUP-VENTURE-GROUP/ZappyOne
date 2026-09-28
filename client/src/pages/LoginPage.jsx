@@ -14,7 +14,7 @@ import { easeSoft, springSnap, fadeInUp, staggerContainer } from '../lib/animati
 
 
 
-/* ─── Animated background orb ─────────────────────────────────────────── */
+/* Animated background orb */
 function Orb({ x, y, size, color, delay = 0 }) {
   return (
     <motion.div
@@ -26,7 +26,7 @@ function Orb({ x, y, size, color, delay = 0 }) {
   );
 }
 
-/* ─── OTP digit box ────────────────────────────────────────────────────── */
+/* OTP digit box */
 function OtpInput({ value, onChange, onKeyDown, inputRef, filled }) {
   return (
     <motion.input

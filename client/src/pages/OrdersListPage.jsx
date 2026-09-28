@@ -72,7 +72,7 @@ function serviceVisual(code = '') {
   return null;
 }
 
-/* ─── Status pill ────────────────────────────────────────────────────────── */
+/* Status pill */
 function StatusPill({ job }) {
   const t = useT();
   const style = STATUS_STYLE[job.outcome];
@@ -91,7 +91,7 @@ function useJobTitle(job) {
   return useT()(job.titleKey, job.title);
 }
 
-/* ─── Compact past row — clean, scannable, one line ───────────────────────── */
+/* Compact past row — clean, scannable, one line */
 function CompactRow({ job, nav }) {
   const t = useT();
   const character = serviceVisual(job.iconCode);
@@ -131,7 +131,7 @@ function CompactRow({ job, nav }) {
   );
 }
 
-/* ─── Hero past card — ONLY for a completed job (no map on cancelled) ─────── */
+/* Hero past card — ONLY for a completed job (no map on cancelled) */
 function PastHero({ job, nav, onInvoice, downloadingId }) {
   const t = useT();
   const { lang } = useI18n();
@@ -238,7 +238,7 @@ function UpcomingCard({ job, nav }) {
   );
 }
 
-/* ─── Empty-upcoming card ─ gradient + quick-book shortcuts ───────────────── */
+/* Empty-upcoming card gradient + quick-book shortcuts */
 function EmptyUpcoming({ nav, suggestions }) {
   const t = useT();
   return (
@@ -283,7 +283,7 @@ function EmptyUpcoming({ nav, suggestions }) {
   );
 }
 
-/* ─── Filter chip row ─────────────────────────────────────────────────────── */
+/* Filter chip row */
 function FilterChips({ filter, setFilter, counts }) {
   const t = useT();
   const opts = [

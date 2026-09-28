@@ -2,7 +2,7 @@ const authService = require('./auth.service');
 const config = require('../../config');
 
 // Refresh token cookie settings.
-// httpOnly   — JS cannot read it (defeats XSS token theft). (#78)
+// httpOnly   — JS cannot read it (defeats XSS token theft).
 // secure     — HTTPS only in production.
 // sameSite   — 'none' required for cross-origin Vercel→EC2 split deployment.
 //              'strict' would block the cookie when frontend (zappyone.com)
@@ -160,7 +160,7 @@ async function loginAdmin(req, res, next) {
   const auditService = require('../admin/audit.service');
   try {
     const result = await authService.loginAdmin({ ...req.body, ip: req.ip });
-    // Audit every successful admin login — required for compliance + intrusion detection. (#79)
+    // Audit every successful admin login — required for compliance + intrusion detection.
     auditService.log('admin.login_success', {
       adminId: result.admin?._id,
       email:   req.body.email,
@@ -170,7 +170,7 @@ async function loginAdmin(req, res, next) {
     setRtCookie(req, res, result.refreshToken, 'admin');
     res.json({ accessToken: result.accessToken, admin: result.admin });
   } catch (err) {
-    // Audit failed attempts too — detects credential stuffing. (#79)
+    // Audit failed attempts too — detects credential stuffing.
     auditService.log('admin.login_failure', {
       email: req.body?.email,
       ip:    req.ip,
@@ -247,7 +247,7 @@ async function verifySensitiveOtp(req, res, next) {
   } catch (err) { next(err); }
 }
 
-// ── Worker credential login (#2) ──────────────────────────────────────────────
+// Worker credential login
 async function setWorkerCredentials(req, res, next) {
   try {
     const result = await authService.setWorkerCredentials({ workerId: req.auth.sub, ...req.body });

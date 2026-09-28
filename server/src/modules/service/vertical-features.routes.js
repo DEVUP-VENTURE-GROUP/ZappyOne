@@ -11,9 +11,9 @@ const { validate } = require('../../middlewares/validate');
 
 const router = express.Router();
 
-/* ══════════════════════════════════════════════════════════════════
+/*
    PHONE FEATURES
-══════════════════════════════════════════════════════════════════ */
+ */
 
 /* Feature 1: Phone model catalog + tiered pricing */
 router.get('/phone/brands', async (req, res, next) => {
@@ -139,9 +139,9 @@ router.post('/phone/health-report',
   }
 );
 
-/* ══════════════════════════════════════════════════════════════════
+/*
    VEHICLE FEATURES
-══════════════════════════════════════════════════════════════════ */
+ */
 
 /* Feature 5: Vehicle profiles */
 router.get('/vehicles', authenticate, requireRole('user'), async (req, res, next) => {
@@ -289,9 +289,9 @@ router.post('/vehicles/health-report',
   }
 );
 
-/* ══════════════════════════════════════════════════════════════════
+/*
    CONSTRUCTION FEATURES
-══════════════════════════════════════════════════════════════════ */
+ */
 
 /* Feature 9: Site visit assessment */
 router.get('/construction/site-visit/:orderId', authenticate, async (req, res, next) => {

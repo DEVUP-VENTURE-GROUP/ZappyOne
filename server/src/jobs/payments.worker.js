@@ -117,7 +117,7 @@ async function handleRefund({ orderId, userId, amountPaise, reason }) {
     });
   } catch { /* notification failure is non-fatal */ }
 
-  logger.info({ orderId, refundPaise, rzpRefundId: rzpRefund.id }, '[PAYMENTS] ✅ Refund complete');
+  logger.info({ orderId, refundPaise, rzpRefundId: rzpRefund.id }, '[PAYMENTS] Refund complete');
   return { ok: true, rzpRefundId: rzpRefund.id, refundPaise };
 }
 

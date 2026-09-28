@@ -13,7 +13,7 @@
 
 const VERTICAL = 'mobile';
 
-/* ─── §4 Default brands ────────────────────────────────────────────────── */
+/* §4 Default brands */
 
 const BRANDS = [
   { code: 'samsung', name: 'Samsung', displayOrder: 1, isPopular: true },
@@ -30,7 +30,7 @@ const BRANDS = [
   { code: 'google', name: 'Google Pixel', displayOrder: 12, isPopular: false },
 ];
 
-/* ─── §6 Problem taxonomy ──────────────────────────────────────────────── */
+/* §6 Problem taxonomy */
 
 const PROBLEM_CATEGORIES = [
   { code: 'display', name: 'Display', displayOrder: 1, icon: 'monitor-smartphone' },
@@ -134,7 +134,7 @@ const PROBLEMS = [
   { code: 'data_recovery_needed', name: 'Data recovery', categoryCode: 'liquid_advanced', severity: 'high', requiresDiagnosis: true, candidateRepairCodes: ['data_recovery'] },
 ];
 
-/* ─── §9 Repair catalog ────────────────────────────────────────────────── */
+/* §9 Repair catalog */
 
 const REPAIRS = [
   { code: 'glass_replacement', name: 'Screen Glass Replacement', componentCode: 'screen_glass', minSkillLevel: 3, pricingMode: 'range', warrantyDays: 90, durationMin: 90, modes: ['workshop', 'pickup_repair'] },
@@ -164,7 +164,7 @@ const REPAIRS = [
   { code: 'data_recovery', name: 'Data Recovery', componentCode: null, minSkillLevel: 4, pricingMode: 'diagnosis_required', warrantyDays: 0, durationMin: 300, modes: ['workshop', 'pickup_repair'] },
 ];
 
-/* ─── §13 Part quality grades ──────────────────────────────────────────── */
+/* §13 Part quality grades */
 
 const PART_QUALITIES = [
   { code: 'oem', name: 'OEM / Genuine', isGenuine: true, rank: 30, defaultWarrantyDays: 180, description: 'Sourced through the manufacturer channel.' },
@@ -172,7 +172,7 @@ const PART_QUALITIES = [
   { code: 'standard', name: 'Standard Compatible', isGenuine: false, rank: 10, defaultWarrantyDays: 30, description: 'Budget aftermarket part. Not manufacturer-supplied.' },
 ];
 
-/* ─── §16 Skill levels ─────────────────────────────────────────────────── */
+/* §16 Skill levels */
 
 const SKILL_LEVELS = [
   { level: 1, name: 'Level 1 — Basic', description: 'Cleaning, SIM tray, accessories, basic software.', requiresVerification: false },
@@ -181,7 +181,7 @@ const SKILL_LEVELS = [
   { level: 4, name: 'Level 4 — Micro-soldering', description: 'Motherboard, IC-level work, liquid damage, data recovery.', requiresVerification: true },
 ];
 
-/* ─── §27 QA checklists ────────────────────────────────────────────────── */
+/* §27 QA checklists */
 
 const QA_CHECKLISTS = [
   {

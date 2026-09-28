@@ -39,23 +39,23 @@ const pricingConfigSchema = new mongoose.Schema(
     // 0.10 = 10%. User must re-confirm if price spiked beyond this threshold.
     surgeTolerancePct: { type: Number, default: 0.10, min: 0.02, max: 0.50 },
 
-    // ── Auto-pricing: Night surcharge ─────────────────────────────────────────
+    // Auto-pricing: Night surcharge
     nightSurchargeEnabled:    { type: Boolean, default: false },
     nightSurchargeMultiplier: { type: Number,  default: 1.3, min: 1.0, max: 3.0 },
     nightStartHour:           { type: Number,  default: 22,  min: 0,   max: 23  },
     nightEndHour:             { type: Number,  default: 6,   min: 0,   max: 23  },
 
-    // ── Auto-pricing: Rain surcharge ─────────────────────────────────────────
+    // Auto-pricing: Rain surcharge
     rainSurchargeEnabled:    { type: Boolean, default: false },
     rainSurchargeMultiplier: { type: Number,  default: 1.2, min: 1.0, max: 3.0 },
     // Epoch ms — rain surcharge active until this timestamp. null = not active.
     rainActiveUntil: { type: Date, default: null },
 
-    // ── Auto-pricing: Weekend surcharge ──────────────────────────────────────
+    // Auto-pricing: Weekend surcharge
     weekendSurchargeEnabled:    { type: Boolean, default: false },
     weekendSurchargeMultiplier: { type: Number,  default: 1.1, min: 1.0, max: 2.0 },
 
-    // ── Auto-pricing: Peak hour surcharge ────────────────────────────────────
+    // Auto-pricing: Peak hour surcharge
     peakHourSurchargeEnabled: { type: Boolean, default: false },
     // [{ label: string, startHour: 0-23, endHour: 0-23, multiplier: number }]
     peakHourRanges: { type: Array, default: [] },
@@ -66,23 +66,23 @@ const pricingConfigSchema = new mongoose.Schema(
     // Platform absorbs the coupon marketing cost; worker keeps more.
     couponCommissionRate: { type: Number, default: 0.15, min: 0, max: 0.5 }, // 15%
 
-    // ── Dispatch kill-switch ─────────────────────────────────────────────────
+    // Dispatch kill-switch
     // When false, the dispatch worker re-queues all jobs with a 60s delay instead
     // of processing them. Admin can re-enable to drain the queue normally.
     dispatchEnabled: { type: Boolean, default: true },
 
-    // ── Dispatch / worker behaviour ──────────────────────────────────────────
+    // Dispatch / worker behaviour
     // Force-assign bonus credited to workers who get auto-assigned (no voluntary accept)
     forceAssignBonusPaise: { type: Number, default: 1500 },        // ₹15
 
-    // ── Acceptance-first dispatch (never force a non-consenting worker) ───────
+    // Acceptance-first dispatch (never force a non-consenting worker)
     // When OFF (default) dispatch never force-assigns: if nobody voluntarily
     // accepts, the order fails gracefully with a full refund instead of shoving
     // the job onto a reluctant worker (who would likely cancel/ghost).
     // Admin can flip this ON to keep force-assign as a last resort.
     forceAssignEnabled:      { type: Boolean, default: false },
 
-    // ── Geo-readiness gate ───────────────────────────────────────────────────
+    // Geo-readiness gate
     // Rejects an order outright when no skilled worker is within radius, instead of
     // letting it sit in 'searching' and fail later. Admin-controlled (not env-only)
     // so it can be killed INSTANTLY if it starts rejecting real bookings — on a thin
@@ -105,7 +105,7 @@ const pricingConfigSchema = new mongoose.Schema(
     bestFirstWindowMs:       { type: Number,  default: 8000 },     // exclusive window per top pro
     bestFirstTopN:           { type: Number,  default: 1 },        // how many top pros get the head-start
 
-    // ── ZeroWait Instant Match ───────────────────────────────────────────────
+    // ZeroWait Instant Match
     // L0 — tier-scaled accept bonus. Express/Priority customers pay more, so the
     // worker's incentive scales too — otherwise a paid tier looks identical to a
     // worker and nothing makes them prefer it.
@@ -147,16 +147,16 @@ const pricingConfigSchema = new mongoose.Schema(
     // Minimum worker rating to appear in dispatch
     minWorkerRating: { type: Number, default: 3.0 },
 
-    // ── Stale order watchdog ─────────────────────────────────────────────────
+    // Stale order watchdog
     staleNudgeMinutes: { type: Number, default: 5 },         // nudge after X min assigned
     staleRedispatchMinutes: { type: Number, default: 10 },   // re-dispatch after X min
     staleOtwAlertMinutes: { type: Number, default: 20 },     // on_the_way alert after X min
 
-    // ── Tip caps ─────────────────────────────────────────────────────────────
+    // Tip caps
     tipMaxPaise: { type: Number, default: 50000 },           // ₹500 max tip
     tipOptions: { type: [Number], default: [20, 50, 100] },  // quick tip buttons (₹)
 
-    // ── Offer Boost (pre-acceptance incentive) ────────────────────────────────
+    // Offer Boost (pre-acceptance incentive)
     // Boost is the optional pre-acceptance incentive shown during searching phase.
     // 100% of boost goes to worker earnings. Admin controls amounts, max, and
     // whether the feature is enabled at all.
@@ -167,27 +167,27 @@ const pricingConfigSchema = new mongoose.Schema(
     // Value of 1.0 = no effect; 2.0 = ₹10 boost counts as 20 in scoring
     boostDispatchWeight:  { type: Number, default: 1.5, min: 1.0, max: 10.0 },
 
-    // ── Referral rewards ─────────────────────────────────────────────────────
+    // Referral rewards
     referralReferrerBonusPaise: { type: Number, default: 15000 },  // ₹150 for referring
     referralRefereeBonusPaise: { type: Number, default: 5000 },    // ₹50 for new user
 
-    // ── Earned wage advance ──────────────────────────────────────────────────
+    // Earned wage advance
     earnedWageAdvanceEnabled: { type: Boolean, default: true },
     earnedWageAdvanceRate: { type: Number, default: 0.80 },    // worker can withdraw 80%
 
-    // ── Emergency fund ───────────────────────────────────────────────────────
+    // Emergency fund
     emergencyFundContributionRate: { type: Number, default: 0.005 }, // 0.5% of commission
 
-    // ── Late arrival penalty ─────────────────────────────────────────────────
+    // Late arrival penalty
     // Deducted from worker earnings per extra minute beyond ETA.
     // Set to 0 to disable. Default: ₹2/min (200 paise).
     lateArrivalPenaltyPaisePerMin: { type: Number, default: 200, min: 0 },
     // Grace period before penalty kicks in (minutes). Default: 5 min buffer.
     lateArrivalGraceMinutes: { type: Number, default: 5, min: 0 },
 
-    // ── Service tiers (booking-time speed/quality premium) ────────────────────
+    // Service tiers (booking-time speed/quality premium)
     // Multipliers applied on top of the base quote price.
-    // Priority: 4.5★+ workers only. Express: nearest worker, instant match.
+    // Priority: 4.5 + workers only. Express: nearest worker, instant match.
     tierMultiplierPriority: { type: Number, default: 1.2, min: 1.0, max: 3.0 },
     tierMultiplierExpress:  { type: Number, default: 1.4, min: 1.0, max: 3.0 },
     // Max search window before force-assign kicks in (milliseconds).

@@ -153,7 +153,7 @@ export default function ServiceDetailPage() {
       .slice(0, 8);
   }, [services, service, category]);
 
-  /* ── Loading / not-found ─────────────────────────────────────────────── */
+  /* Loading / not-found */
 
   if (!service) {
     if (loading || !fallbackDone) {
@@ -190,7 +190,7 @@ export default function ServiceDetailPage() {
     );
   }
 
-  /* ── Derived content ─────────────────────────────────────────────────── */
+  /* Derived content */
 
   const saved = isFavorite(service.code);
   const illustration = illustrationFor(service, category);
@@ -259,7 +259,7 @@ export default function ServiceDetailPage() {
   return (
     <PageTransition>
       <div className="min-h-screen bg-[#F8FAFC] font-sans" style={themeVars(category.theme)}>
-        {/* ── Hero ─────────────────────────────────────────────────────── */}
+        {/* Hero */}
         <div
           className="relative overflow-hidden pb-8"
           style={{ background: 'linear-gradient(160deg, var(--cat-deep) 0%, var(--cat-accent) 145%)' }}
@@ -376,7 +376,7 @@ export default function ServiceDetailPage() {
           </div>
         </div>
 
-        {/* ── Body ─────────────────────────────────────────────────────── */}
+        {/* Body */}
         {/* No negative top margin here: the hero above is `position: relative`,
             so it paints above this (non-positioned) block and would clip the
             first heading rather than letting it overlap. */}
@@ -560,7 +560,7 @@ export default function ServiceDetailPage() {
               <ServiceFaqs faqs={faqs} />
             </div>
 
-            {/* ── Sidebar ────────────────────────────────────────────── */}
+            {/* Sidebar */}
             <aside className="space-y-4 lg:sticky lg:top-6">
               <Card className="shadow-[0_18px_40px_-30px_rgba(15,23,42,0.5)]">
                 <span className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">
@@ -680,7 +680,7 @@ export default function ServiceDetailPage() {
           )}
         </div>
 
-        {/* ── Sticky booking bar ───────────────────────────────────────── */}
+        {/* Sticky booking bar */}
         <div
           className="sticky bottom-0 z-40 border-t border-slate-200/70 bg-white/90 backdrop-blur-xl"
           style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}

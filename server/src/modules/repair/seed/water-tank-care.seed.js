@@ -75,7 +75,7 @@ const VERTICAL = 'water_tank_care';
  */
 const PRODUCT_TYPES = [];
 
-/* ─── Tank types — the "brand" tier (§5) ───────────────────────────────── */
+/* Tank types — the "brand" tier (§5) */
 
 const OVERHEAD = 'overhead', SINTEX = 'sintex_plastic', RCC = 'rcc_concrete',
   SUMP = 'underground_sump', APARTMENT = 'apartment_common', OTHER_TANK = 'other_tank';
@@ -92,7 +92,7 @@ const BRANDS = [
 /** Tanks that require confined-space entry — the safety gate below reads this. */
 const CONFINED_SPACE_TYPES = [SUMP, APARTMENT];
 
-/* ─── Problem taxonomy (§4, §12–15) ────────────────────────────────────── */
+/* Problem taxonomy (§4, §12–15) */
 
 const PROBLEM_CATEGORIES = [
   { code: 'wt_cleaning', name: 'Tank & Sump Deep Cleaning', icon: 'droplets', displayOrder: 1 },
@@ -115,7 +115,7 @@ const P = (code, name, categoryCode, candidates = [], opts = {}) => ({
 });
 
 const PROBLEMS = [
-  /* ── Cleaning: symptom questions from the brief's Step 4 (§7) ────────── */
+  /* Cleaning: symptom questions from the brief's Step 4 (§7) */
   P('wt_never_cleaned', 'Never been cleaned / overdue', 'wt_cleaning',
     ['wt_deep_cleaning'], { isPopular: true }),
   P('wt_visible_algae', 'Visible algae or green growth', 'wt_cleaning',
@@ -128,21 +128,21 @@ const PROBLEMS = [
     ['wt_deep_cleaning', 'wt_water_test'], { isPopular: true }),
   P('wt_routine_cleaning', 'Routine scheduled cleaning', 'wt_cleaning', ['wt_deep_cleaning']),
 
-  /* ── Inspection: the "I don't know" catch-all (§8, §5) ────────────────── */
+  /* Inspection: the "I don't know" catch-all (§8, §5) */
   P('wt_unsure_condition', "Not sure if there's a problem — just check it", 'wt_inspection',
     ['wt_health_inspection'], { isPopular: true }),
   P('wt_before_buying', 'Checking a tank before moving in / buying', 'wt_inspection',
     ['wt_health_inspection']),
   P('wt_periodic_checkup', 'Periodic health check-up', 'wt_inspection', ['wt_health_inspection']),
 
-  /* ── Flushing (§9) ─────────────────────────────────────────────────────── */
+  /* Flushing (§9) */
   P('wt_low_flow', 'Water flow feels weak or inconsistent', 'wt_flushing',
     ['wt_tank_pipe_flushing'], { isPopular: true }),
   P('wt_water_taste_off', 'Water tastes or smells odd after cleaning', 'wt_flushing',
     ['wt_tank_pipe_flushing']),
   P('wt_flushing_routine', 'Routine tank + pipe flushing', 'wt_flushing', ['wt_tank_pipe_flushing']),
 
-  /* ── Repair & protection (§10) ────────────────────────────────────────── */
+  /* Repair & protection (§10) */
   // Confirmed leakage is triaged (small vs structural) rather than assumed —
   // see the diagnostic flow. A crack in an underground sump is also a
   // confined-space job, so it carries the safety severity too.
@@ -165,7 +165,7 @@ const PROBLEMS = [
   P('wt_repair_unsure', "Don't know what's wrong — just repair it", 'wt_repair',
     ['wt_health_inspection'], { requiresDiagnosis: true }),
 
-  /* ── Add-ons (§22) — bookable on their own until the cart exists ──────── */
+  /* Add-ons (§22) — bookable on their own until the cart exists */
   P('wt_addon_disinfection_req', 'Deep disinfection & sanitisation', 'wt_addons', ['wt_disinfection']),
   P('wt_addon_pressure_req', 'High-pressure jet cleaning', 'wt_addons', ['wt_pressure_cleaning']),
   P('wt_addon_sludge_req', 'Sludge / sediment removal', 'wt_addons', ['wt_sludge_removal']),
@@ -173,7 +173,7 @@ const PROBLEMS = [
   P('wt_addon_lid_protection_req', 'Tank lid & insect protection', 'wt_addons', ['wt_insect_protection']),
 ];
 
-/* ─── Repairs — the bookable, priced services (§4, §20) ────────────────── */
+/* Repairs — the bookable, priced services (§4, §20) */
 
 const D = 'doorstep';
 
@@ -189,16 +189,16 @@ const D = 'doorstep';
  * until someone has looked.
  */
 const REPAIRS = [
-  /* ── Cleaning ──────────────────────────────────────────────────────── */
+  /* Cleaning */
   { code: 'wt_deep_cleaning', name: 'Tank & Sump Deep Cleaning', pricingMode: 'fixed', minSkillLevel: 1, modes: [D], durationMin: 90, warrantyDays: 30 },
 
-  /* ── Inspection ────────────────────────────────────────────────────── */
+  /* Inspection */
   { code: 'wt_health_inspection', name: 'Tank Health Inspection', pricingMode: 'fixed', minSkillLevel: 2, modes: [D], durationMin: 45, warrantyDays: 0 },
 
-  /* ── Flushing ──────────────────────────────────────────────────────── */
+  /* Flushing */
   { code: 'wt_tank_pipe_flushing', name: 'Tank + Pipe Flushing', pricingMode: 'fixed', minSkillLevel: 1, modes: [D], durationMin: 60, warrantyDays: 15 },
 
-  /* ── Repair & protection ──────────────────────────────────────────── */
+  /* Repair & protection */
   { code: 'wt_leakage_repair', name: 'Leakage Repair', pricingMode: 'fixed', minSkillLevel: 2, modes: [D], durationMin: 90, warrantyDays: 90 },
   { code: 'wt_fitting_repair', name: 'Fitting Repair', pricingMode: 'fixed', minSkillLevel: 1, modes: [D], durationMin: 45, warrantyDays: 60 },
   { code: 'wt_overflow_fitting_repair', name: 'Overflow Fitting Repair', pricingMode: 'fixed', minSkillLevel: 1, modes: [D], durationMin: 45, warrantyDays: 60 },
@@ -210,14 +210,14 @@ const REPAIRS = [
   { code: 'wt_structural_repair', name: 'Structural Crack / Damage Repair', pricingMode: 'diagnosis_required', minSkillLevel: 3, modes: [D], durationMin: 180, warrantyDays: 180 },
   { code: 'wt_tank_installation', name: 'Tank Installation', pricingMode: 'diagnosis_required', minSkillLevel: 2, modes: [D], durationMin: 240, warrantyDays: 365 },
 
-  /* ── Add-ons ───────────────────────────────────────────────────────── */
+  /* Add-ons */
   { code: 'wt_disinfection', name: 'Deep Disinfection & Sanitisation', pricingMode: 'fixed', minSkillLevel: 1, modes: [D], durationMin: 30, warrantyDays: 15 },
   { code: 'wt_pressure_cleaning', name: 'High-Pressure Jet Cleaning', pricingMode: 'fixed', minSkillLevel: 1, modes: [D], durationMin: 30, warrantyDays: 0 },
   { code: 'wt_sludge_removal', name: 'Sludge / Sediment Removal', pricingMode: 'fixed', minSkillLevel: 1, modes: [D], durationMin: 30, warrantyDays: 0 },
   { code: 'wt_water_test', name: 'Water Quality Test', pricingMode: 'fixed', minSkillLevel: 2, modes: [D], durationMin: 20, warrantyDays: 0 },
 ];
 
-/* ─── Skill levels (§11) ───────────────────────────────────────────────── */
+/* Skill levels (§11) */
 
 const SKILL_LEVELS = [
   { level: 1, name: 'Standard', description: 'Cleaning, flushing, fittings, lid & insect protection', requiresVerification: false },
@@ -233,7 +233,7 @@ const SKILL_LEVELS = [
   },
 ];
 
-/* ─── QA checklists (§16, §43) ─────────────────────────────────────────── */
+/* QA checklists (§16, §43) */
 
 const QA_CHECKLISTS = [
   {

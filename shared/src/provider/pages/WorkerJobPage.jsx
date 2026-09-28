@@ -43,7 +43,7 @@ import ArrivalProximity from '../../components/common/ArrivalProximity';
 import OtpEntry from '../../components/common/OtpEntry';
 import { metresBetween, ARRIVAL_RADIUS_M } from '../../utils/distance';
 
-/* ── WorkerETACard — live countdown with penalty preview ───────────── */
+/* WorkerETACard — live countdown with penalty preview */
 function WorkerETACard({ deadlineAt, etaMins }) {
   const [secsLeft, setSecsLeft] = useState(() => Math.ceil((deadlineAt - Date.now()) / 1000));
 
@@ -205,7 +205,7 @@ const PHONE_SERVICES = new Set(['screen_replacement', 'battery_replacement', 'ch
 const VEHICLE_SERVICES = new Set(['puncture', 'battery_jump_start', 'fuel_delivery', 'bike_wash', 'car_wash', 'minor_roadside_repair']);
 const CONSTRUCTION_SERVICES = new Set(['mason', 'plumbing', 'electrical', 'carpenter', 'painting']);
 
-/* ── Construction Timer Panel ── */
+/* Construction Timer Panel */
 function ConstructionTimerPanel({ orderId }) {
   const { data: timerData, refetch } = useGetConstructionTimerQuery(orderId, { pollingInterval: 15000 });
   const [startTimer,  { isLoading: starting }]  = useStartConstructionTimerMutation();
@@ -307,7 +307,7 @@ function ConstructionTimerPanel({ orderId }) {
   );
 }
 
-/* ── Vehicle Health Panel ── */
+/* Vehicle Health Panel */
 function VehicleHealthPanel({ orderId }) {
   const { data: existingReport } = useGetVehicleHealthReportQuery(orderId);
   const [submitReport, { isLoading }] = useSubmitVehicleHealthReportMutation();
@@ -419,7 +419,7 @@ function VehicleHealthPanel({ orderId }) {
   );
 }
 
-/* ── Phone Health Certificate Panel ── */
+/* Phone Health Certificate Panel */
 function PhoneHealthPanel({ orderId }) {
   const { data: existing } = useGetPhoneHealthReportQuery(orderId);
   const [submit, { isLoading }] = useSubmitPhoneHealthReportMutation();
@@ -552,7 +552,7 @@ export default function WorkerJobPage() {
   const isConstruction = order && CONSTRUCTION_SERVICES.has(order.service);
   const isHourly       = isConstruction && order.pricingModel === 'hourly';
 
-  /* ── Continuous location stream while job is active ── */
+  /* Continuous location stream while job is active */
   useEffect(() => {
     if (!status || !ACTIVE_STATUSES.has(status) || !token) return;
     const socket = getSocket(token);
@@ -595,7 +595,7 @@ export default function WorkerJobPage() {
     return () => { watchCancelRef.current?.(); watchCancelRef.current = null; };
   }, [status, token, id, watch]);
 
-  /* ── Idle alert: count seconds since order was assigned ── */
+  /* Idle alert: count seconds since order was assigned */
   useEffect(() => {
     if (status !== 'assigned' || !order) return;
     const assignedEntry = order.statusHistory?.slice().reverse().find(h => h.status === 'assigned');
@@ -606,14 +606,14 @@ export default function WorkerJobPage() {
     return () => clearInterval(t);
   }, [status, order]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* ── Redirect if job pulled away (reassigned back to searching) ── */
+  /* Redirect if job pulled away (reassigned back to searching) */
   useEffect(() => {
     if (status !== 'searching') return;
     toast.error('Job reassigned — you were inactive too long. Penalty applied.', { duration: 5000 });
     nav('/worker');
   }, [status]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* ── Direct socket event when stale-order watchdog pulls the job ── */
+  /* Direct socket event when stale-order watchdog pulls the job */
   useEffect(() => {
     if (!token || !id) return;
     const socket = getSocket(token);
@@ -626,7 +626,7 @@ export default function WorkerJobPage() {
     return () => socket.off('job.pulled', onJobPulled);
   }, [token, id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* ── Customer cancelled the order — leave the live job cleanly ── */
+  /* Customer cancelled the order — leave the live job cleanly */
   useEffect(() => {
     if (!token || !id) return;
     const socket = getSocket(token);
@@ -639,7 +639,7 @@ export default function WorkerJobPage() {
     return () => socket.off('order.cancelled', onCancelled);
   }, [token, id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* ── Backup: page opened/refreshed when the order is already terminal-cancelled ── */
+  /* Backup: page opened/refreshed when the order is already terminal-cancelled */
   useEffect(() => {
     if (status !== 'cancelled' && status !== 'failed') return;
     toast.error(status === 'cancelled' ? 'This order was cancelled.' : 'This order is no longer active.', { duration: 5000, id: 'job-terminal' });
@@ -647,7 +647,7 @@ export default function WorkerJobPage() {
     return () => clearTimeout(t);
   }, [status]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* ── Safety fallback: if order is now assigned to a different worker, leave ── */
+  /* Safety fallback: if order is now assigned to a different worker, leave */
   useEffect(() => {
     if (!order || !profile?._id) return;
     const orderWorkerId = order.workerId ? String(order.workerId) : null;
@@ -658,7 +658,7 @@ export default function WorkerJobPage() {
     }
   }, [order?.workerId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* ── Loading / error states ── */
+  /* Loading / error states */
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)' }}>
@@ -707,7 +707,7 @@ export default function WorkerJobPage() {
     );
   }
 
-  /* ── Safe coordinate access ── */
+  /* Safe coordinate access */
   const coords = order.pickupLocation?.coordinates;
   const pickup = coords ? { lat: coords[1], lng: coords[0] } : null;
 
@@ -813,7 +813,7 @@ export default function WorkerJobPage() {
         )}
       </AnimatePresence>
 
-      {/* ── Desktop Map Column (Right) / Mobile Map Row (Top) ── */}
+      {/* Desktop Map Column (Right) / Mobile Map Row (Top) */}
       {pickup && (
         <div className="w-full h-[40vh] md:h-full md:flex-1 relative z-0 md:order-2">
           {/* Map header overlay on mobile, or just standard header on desktop */}
@@ -842,7 +842,7 @@ export default function WorkerJobPage() {
         </div>
       )}
 
-      {/* ── Scrollable Panel Column (Left/Bottom) ── */}
+      {/* Scrollable Panel Column (Left/Bottom) */}
       <div className={`w-full md:w-[450px] shrink-0 bg-slate-50 relative z-10 flex flex-col md:order-1 ${pickup ? 'rounded-t-3xl -mt-6 md:mt-0 md:rounded-none shadow-[0_-10px_40px_rgba(0,0,0,0.15)] md:shadow-[10px_0_40px_rgba(0,0,0,0.1)]' : ''} h-[calc(100vh-40vh+24px)] md:h-full overflow-hidden`}>
         
         {/* Scrollable content */}
@@ -1041,7 +1041,7 @@ export default function WorkerJobPage() {
           )}
         </AnimatePresence>
 
-        {/* ── Vertical-specific panels (shown during in_progress) ── */}
+        {/* Vertical-specific panels (shown during in_progress) */}
         {status === 'in_progress' && (
           <>
             {/* Construction: live hourly timer */}
@@ -1167,7 +1167,7 @@ export default function WorkerJobPage() {
             return (
               <div className="space-y-2">
 
-                {/* ── ETA countdown card ─────────────────────────────── */}
+                {/* ETA countdown card */}
                 {deadlineAt && <WorkerETACard deadlineAt={deadlineAt} etaMins={etaMins} />}
                 {/* Proximity indicator — shared with the repair flow. */}
                 <ArrivalProximity metres={distM} />
@@ -1206,7 +1206,7 @@ export default function WorkerJobPage() {
             );
           })()}
 
-          {/* ── No-response panel (#73): shown if worker has been arrived >3 min ── */}
+          {/* No-response panel: shown if worker has been arrived >3 min */}
           {status === 'arrived' && (
             <div className="rounded-2xl bg-amber-950/60 ring-1 ring-amber-800/40 p-4 space-y-3">
               <p className="text-[11px] font-bold text-amber-300 uppercase tracking-widest">Customer not responding?</p>
@@ -1278,7 +1278,7 @@ export default function WorkerJobPage() {
                 {completing ? <><Loader2 size={18} className="animate-spin" /> Completing…</> : <><Zap size={18} strokeWidth={2.5} /> Mark Job Complete</>}
               </motion.button>
 
-              {/* ── Part Unavailable (#71): electronics/repair verticals ── */}
+              {/* Part Unavailable: electronics/repair verticals */}
               {(isPhone || order?.service?.includes('repair') || order?.service?.includes('replacement')) && (
                 <div className="rounded-2xl bg-slate-800/60 ring-1 ring-slate-700/40 p-4 space-y-2">
                   <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Spare part issue?</p>

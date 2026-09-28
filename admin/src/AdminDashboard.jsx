@@ -72,7 +72,7 @@ const Cities = lazy(() => import('./pages/Cities'));
 const Appeals = lazy(() => import('./pages/Appeals'));
 const Training = lazy(() => import('./pages/Training'));
 
-/* ─── Navigation groups ────────────────────────────────────────────────── */
+/* Navigation groups */
 const NAV_GROUPS = [
   {
     label: 'Core',
@@ -199,7 +199,7 @@ const SECTION_MAP = {
   searchintel: SearchIntel,
 };
 
-/* ─── Sidebar nav item ─────────────────────────────────────────────────── */
+/* Sidebar nav item */
 function NavItem({ item, isActive, onClick }) {
   const { icon: Icon, label } = item;
   return (
@@ -236,7 +236,7 @@ function NavItem({ item, isActive, onClick }) {
   );
 }
 
-/* ─── Expandable nav group ─────────────────────────────────────────────────
+/* Expandable nav group
  * "Services" is a container, not a destination — clicking it reveals the
  * verticals underneath rather than navigating anywhere itself. Each vertical
  * (Mobile today, others as they launch) is its own console section.
@@ -303,7 +303,7 @@ function NavTree({ group, active, onClick }) {
   );
 }
 
-/* ─── Main ─────────────────────────────────────────────────────────────── */
+/* Main */
 export default function AdminDashboard() {
   const [searchParams, setSearchParams] = useSearchParams();
   const active = searchParams.get('tab') || 'overview';
@@ -342,7 +342,7 @@ export default function AdminDashboard() {
         )}
       </AnimatePresence>
 
-      {/* ─── Sidebar ───────────────────────────────────────────────── */}
+      {/* Sidebar */}
       <aside className={`
         fixed inset-y-0 left-0 z-30 w-56 flex flex-col
         transform transition-transform duration-200 ease-in-out
@@ -415,7 +415,7 @@ export default function AdminDashboard() {
         </div>
       </aside>
 
-      {/* ─── Main panel ────────────────────────────────────────────── */}
+      {/* Main panel */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-slate-50">
 
         {/* Topbar */}

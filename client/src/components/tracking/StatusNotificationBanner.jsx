@@ -1,11 +1,11 @@
 /**
  * StatusNotificationBanner
- * ─────────────────────────────────────────────────────────────────────────
+ *
  * Full-width animated banner that slides in from the top whenever order
  * status changes (assigned, on_the_way, arrived, in_progress, completed).
  * Includes worker name, rating, message, and a contextual emoji.
  * Auto-dismisses after 5 s; user can also swipe/tap to dismiss.
- * ─────────────────────────────────────────────────────────────────────────
+ *
  */
 
 import { useEffect, useRef, useState } from 'react';

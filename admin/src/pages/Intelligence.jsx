@@ -16,7 +16,7 @@ import BusinessIntelligence from './BusinessIntelligence';
 import Heatmap from './Heatmap';
 import Analytics from './Analytics';
 
-/* ── helpers ──────────────────────────────────────────────────────────────── */
+/* helpers */
 const inr = (n) => `₹${Math.round(Number(n) || 0).toLocaleString('en-IN')}`;
 const num = (n) => (Number(n) || 0).toLocaleString('en-IN');
 function dwell(sec) {
@@ -60,9 +60,9 @@ function DaysSelect({ value, onChange }) {
   );
 }
 
-/* ════════════════════════════════════════════════════════════════════════════
+/*
  * CEO PULSE
- * ══════════════════════════════════════════════════════════════════════════ */
+ * */
 function CeoPulse() {
   const { data, isLoading, isFetching, refetch } = useAdminIntelCeoQuery(undefined, { pollingInterval: 15000 });
   if (isLoading) return <PageLoader />;
@@ -121,7 +121,7 @@ function CeoPulse() {
   );
 }
 
-/* ── Visitor locations history — "where visitors come from" ───────────────── */
+/* Visitor locations history — "where visitors come from" */
 function VisitorLocations() {
   const [days, setDays] = useState(7);
   const { data, isLoading } = useAdminIntelVisitorLocationsQuery(days);
@@ -172,9 +172,9 @@ function VisitorLocations() {
   );
 }
 
-/* ════════════════════════════════════════════════════════════════════════════
+/*
  * LIVE TRAFFIC
- * ══════════════════════════════════════════════════════════════════════════ */
+ * */
 function LiveTraffic() {
   const [poll, setPoll] = useState(5000);
   const { data, isLoading } = useAdminIntelLiveTrafficQuery(undefined, { pollingInterval: poll });
@@ -242,9 +242,9 @@ function LiveTraffic() {
   );
 }
 
-/* ════════════════════════════════════════════════════════════════════════════
+/*
  * DEMAND INTELLIGENCE
- * ══════════════════════════════════════════════════════════════════════════ */
+ * */
 function DemandIntel() {
   const [days, setDays] = useState(30);
   const { data, isLoading } = useAdminIntelDemandQuery(days);
@@ -311,9 +311,9 @@ function DemandIntel() {
   );
 }
 
-/* ════════════════════════════════════════════════════════════════════════════
+/*
  * UNMET DEMAND (No Service Available)
- * ══════════════════════════════════════════════════════════════════════════ */
+ * */
 function UnmetDemand() {
   const [days, setDays] = useState(30);
   const { data, isLoading } = useAdminIntelUnmetDemandQuery(days);
@@ -375,9 +375,9 @@ function UnmetDemand() {
   );
 }
 
-/* ════════════════════════════════════════════════════════════════════════════
+/*
  * EXPANSION ENGINE
- * ══════════════════════════════════════════════════════════════════════════ */
+ * */
 function ScoreBar({ label, value }) {
   return (
     <div className="flex items-center gap-2">
@@ -437,9 +437,9 @@ function ExpansionEngine() {
   );
 }
 
-/* ════════════════════════════════════════════════════════════════════════════
+/*
  * CONVERSION FUNNEL
- * ══════════════════════════════════════════════════════════════════════════ */
+ * */
 function ConversionFunnel() {
   const [days, setDays] = useState(30);
   const { data, isLoading } = useAdminIntelFunnelQuery(days);
@@ -487,9 +487,9 @@ function ConversionFunnel() {
   );
 }
 
-/* ════════════════════════════════════════════════════════════════════════════
+/*
  * BUSINESS REPORT (+ CSV download)
- * ══════════════════════════════════════════════════════════════════════════ */
+ * */
 function downloadReportCsv(r) {
   const rows = [
     ['Zappy Business Report', r.windowLabel || ''],
@@ -580,9 +580,9 @@ function BusinessReport() {
   );
 }
 
-/* ════════════════════════════════════════════════════════════════════════════
+/*
  * PARTNER ANALYTICS (event partners ranked)
- * ══════════════════════════════════════════════════════════════════════════ */
+ * */
 function PartnerPerformance() {
   const [days, setDays] = useState(30);
   const { data, isLoading } = useAdminIntelPartnersQuery(days);
@@ -632,9 +632,9 @@ function PartnerPerformance() {
   );
 }
 
-/* ════════════════════════════════════════════════════════════════════════════
+/*
  * HUB SHELL — title + dropdown
- * ══════════════════════════════════════════════════════════════════════════ */
+ * */
 const VIEWS = [
   { id: 'ceo',       label: 'CEO Pulse',          icon: Crown,     Comp: CeoPulse },
   { id: 'traffic',   label: 'Live Traffic',       icon: Radio,     Comp: LiveTraffic },

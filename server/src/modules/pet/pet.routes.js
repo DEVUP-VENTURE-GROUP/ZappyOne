@@ -26,7 +26,7 @@ const locationSchema = Joi.object({
   address: Joi.string().max(300).allow('', null),
 });
 
-/* ─── Catalog ──────────────────────────────────────────────────────────── */
+/* Catalog */
 
 router.get('/categories', authenticate, ctrl.listCategories);
 router.get('/variants', authenticate, ctrl.listVariants);
@@ -36,7 +36,7 @@ router.get('/packages', authenticate, ctrl.listPackages);
 router.get('/service-areas', authenticate, ctrl.listServiceAreas);
 router.get('/compatibility', authenticate, ctrl.checkCompatibility);
 
-/* ─── Pet profiles (§4) ────────────────────────────────────────────────── */
+/* Pet profiles (§4) */
 
 const petBody = Joi.object({
   name: Joi.string().max(80).required(),
@@ -78,7 +78,7 @@ router.patch('/my-pets/:id', authenticate, requireRole('user'), validate(petBody
 router.delete('/my-pets/:id', authenticate, requireRole('user'), ctrl.archivePet);
 router.get('/my-pets/:id/history', authenticate, requireRole('user'), ctrl.getPetHistory);
 
-/* ─── Quote & matching ─────────────────────────────────────────────────── */
+/* Quote & matching */
 
 const petEntrySchema = Joi.object({
   petId: objectId.required(),
@@ -120,7 +120,7 @@ router.post('/providers/search', authenticate, requireRole('user'),
   })),
   ctrl.findProviders);
 
-/* ─── Bookings ─────────────────────────────────────────────────────────── */
+/* Bookings */
 
 router.post('/bookings', authenticate, requireRole('user'),
   validate(Joi.object({
@@ -160,7 +160,7 @@ router.post('/bookings/:id/rate', authenticate, requireRole('user'),
   validate(Joi.object({ rating: Joi.number().integer().min(1).max(5).required(), comment: Joi.string().max(1000).allow('', null) })),
   ctrl.rateBooking);
 
-/* ─── Worker execution ─────────────────────────────────────────────────── */
+/* Worker execution */
 
 router.post('/bookings/:id/accept', authenticate, ctrl.acceptBooking);
 
@@ -194,7 +194,7 @@ router.patch('/bookings/:id/execution', authenticate,
   })),
   ctrl.updateExecution);
 
-/* ─── Recurring bookings (§32) ─────────────────────────────────────────── */
+/* Recurring bookings (§32) */
 
 router.post('/recurring', authenticate, requireRole('user'),
   validate(Joi.object({
@@ -228,7 +228,7 @@ router.post('/recurring/:id/skip', authenticate, requireRole('user'),
 
 module.exports = router;
 
-/* ─── Admin router, mounted under the admin slug ──────────────────────── */
+/* Admin router, mounted under the admin slug */
 
 const adminRouter = express.Router();
 

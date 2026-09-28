@@ -21,7 +21,7 @@ import { adminApiPath } from '@/config/admin';
 import { API_BASE } from '@shared/services/apiBase';
 import toast from 'react-hot-toast';
 
-/* ─── Image lightbox ────────────────────────────────────────────────────────── */
+/* Image lightbox */
 function Lightbox({ url, label, onClose }) {
   if (!url) return null;
   return (
@@ -45,7 +45,7 @@ function Lightbox({ url, label, onClose }) {
   );
 }
 
-/* ─── Doc image card ────────────────────────────────────────────────────────── */
+/* Doc image card */
 function DocCard({ label, url, icon: Icon, badge, badgeColor, isLoading, onView }) {
   return (
     <div className="flex flex-col gap-1.5">
@@ -137,7 +137,7 @@ function useKycDoc(workerId, docType, token, enabled = true) {
   return { url, loading };
 }
 
-/* ─── Reverse geocode hook ──────────────────────────────────────────────────── */
+/* Reverse geocode hook */
 const _geoCache = {};
 async function reverseGeocode(lat, lng) {
   const k = `${lat?.toFixed(4)},${lng?.toFixed(4)}`;
@@ -165,7 +165,7 @@ function useAddress(lat, lng) {
   return addr;
 }
 
-/* ─── Selfie metadata strip ─────────────────────────────────────────────────── */
+/* Selfie metadata strip */
 function SelfieMetaBadges({ meta }) {
   const addr = useAddress(meta?.lat, meta?.lng);
 
@@ -228,7 +228,7 @@ function SelfieMetaBadges({ meta }) {
   );
 }
 
-/* ─── Worker KYC detail panel ───────────────────────────────────────────────── */
+/* Worker KYC detail panel */
 function KycDetailPanel({ worker, onDone }) {
   const [lightbox, setLightbox]   = useState(null);
   const [showReject, setShowReject] = useState(false);
@@ -519,7 +519,7 @@ function KycDetailPanel({ worker, onDone }) {
   );
 }
 
-/* ─── Change Requests panel ─────────────────────────────────────────────────── */
+/* Change Requests panel */
 function ChangeRequestsPanel() {
   const { data, refetch } = useAdminKycChangeRequestsQuery();
   const [respond, { isLoading: responding }] = useAdminRespondChangeRequestMutation();
@@ -594,7 +594,7 @@ function ChangeRequestsPanel() {
   );
 }
 
-/* ─── Root ──────────────────────────────────────────────────────────────────── */
+/* Root */
 export default function AdminKycReview() {
   const { data, refetch, isLoading } = useAdminKycPendingQuery();
   const { data: crData }             = useAdminKycChangeRequestsQuery();

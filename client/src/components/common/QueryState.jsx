@@ -17,7 +17,7 @@ import { RefreshCw, Inbox, WifiOff } from 'lucide-react';
  *   </QueryState>
  */
 
-/* ── Skeletons ─────────────────────────────────────────────────────────────── */
+/* Skeletons */
 export function SkeletonLine({ className = '' }) {
   return <div className={`skeleton rounded-md ${className}`} style={{ minHeight: 12 }} />;
 }
@@ -45,7 +45,7 @@ export function SkeletonList({ rows = 4, className = '' }) {
   );
 }
 
-/* ── Empty state ───────────────────────────────────────────────────────────── */
+/* Empty state */
 export function EmptyState({ icon: Icon = Inbox, title, subtitle, action, className = '' }) {
   return (
     <motion.div
@@ -65,7 +65,7 @@ export function EmptyState({ icon: Icon = Inbox, title, subtitle, action, classN
   );
 }
 
-/* ── Error state (with retry) ──────────────────────────────────────────────── */
+/* Error state (with retry) */
 export function ErrorState({ onRetry, message, className = '' }) {
   const offline = typeof navigator !== 'undefined' && !navigator.onLine;
   return (
@@ -87,7 +87,7 @@ export function ErrorState({ onRetry, message, className = '' }) {
   );
 }
 
-/* ── The wrapper ───────────────────────────────────────────────────────────── */
+/* The wrapper */
 export default function QueryState({
   isLoading, isError, isEmpty, error, onRetry,
   skeleton, empty, children,

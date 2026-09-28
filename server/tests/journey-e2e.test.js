@@ -50,7 +50,7 @@ beforeAll(async () => {
   await startMongo();
   app = buildApp();
 
-  /* ── The catalog an operator would have seeded before launch ── */
+  /* The catalog an operator would have seeded before launch */
   await RepairConfig.create({
     vertical: 'mobile',
     diagnosisFeePaise: 29900,
@@ -119,7 +119,7 @@ beforeAll(async () => {
     }
   }
 
-  /* ── Real models, the gap that used to dead-end the flow ── */
+  /* Real models, the gap that used to dead-end the flow */
   const apple = await Brand.findOne({ code: 'apple' });
   const samsung = await Brand.findOne({ code: 'samsung' });
   for (const m of MOBILE_MODELS.filter((x) => ['apple', 'samsung'].includes(x.brand))) {
@@ -136,7 +136,7 @@ beforeAll(async () => {
     { code: 'premium', name: 'Premium Compatible', rank: 20, isGenuine: false },
   ]);
 
-  /* ── Zappy's own reference band, without which nothing can be priced ── */
+  /* Zappy's own reference band, without which nothing can be priced */
   await ZappyReferencePricing.create({
     vertical: 'mobile', repairCode: 'display_assembly_replacement',
     minPaise: 800000, recommendedPaise: 1200000, maxPaise: 1800000,
@@ -148,7 +148,7 @@ beforeAll(async () => {
     partCostPaise: 150000, labourPaise: 50000, warrantyDays: 180,
   });
 
-  /* ── The three people ── */
+  /* The three people */
   const customer = await User.create({ phone: '9812300001', name: 'Anitha R' });
   const other = await User.create({ phone: '9812300002', name: 'Someone Else' });
   const shop = await Shop.create({
@@ -175,9 +175,9 @@ beforeAll(async () => {
 
 afterAll(async () => { await stopMongo(); });
 
-/* ═══════════════════════════════════════════════════════════════════════
+/*
    PART 1 — A shop owner signs up, on his phone, in his shop
-   ═══════════════════════════════════════════════════════════════════════ */
+ */
 
 describe('the provider journey', () => {
   it('1. shows him the six kinds of work, in order', async () => {
@@ -274,9 +274,9 @@ describe('the provider journey', () => {
   });
 });
 
-/* ═══════════════════════════════════════════════════════════════════════
+/*
    PART 2 — Admin works the queue
-   ═══════════════════════════════════════════════════════════════════════ */
+ */
 
 describe('the admin queue', () => {
   it('11. shows who is waiting, with the business attached', async () => {
@@ -344,9 +344,9 @@ describe('the admin queue', () => {
   });
 });
 
-/* ═══════════════════════════════════════════════════════════════════════
+/*
    PART 3 — The shop sets itself up
-   ═══════════════════════════════════════════════════════════════════════ */
+ */
 
 describe('provider setup', () => {
   it('18. offers the brands a customer picks from', async () => {
@@ -587,9 +587,9 @@ describe('provider setup', () => {
   });
 });
 
-/* ═══════════════════════════════════════════════════════════════════════
+/*
    PART 4 — A customer with a broken phone
-   ═══════════════════════════════════════════════════════════════════════ */
+ */
 
 describe('the customer journey', () => {
   it('33. shows only services somebody is verified to do', async () => {

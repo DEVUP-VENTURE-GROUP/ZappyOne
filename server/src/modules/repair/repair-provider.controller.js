@@ -37,7 +37,7 @@ function ownerFilter(req) {
   return o.shopId ? { shopId: o.shopId } : { workerId: o.workerId };
 }
 
-/* ─── Capabilities (§15) ───────────────────────────────────────────────── */
+/* Capabilities (§15) */
 
 async function listCapabilities(req, res, next) {
   try {
@@ -149,7 +149,7 @@ async function removeCapability(req, res, next) {
   } catch (err) { next(err); }
 }
 
-/* ─── Service areas (§17) ──────────────────────────────────────────────── */
+/* Service areas (§17) */
 
 async function listServiceAreas(req, res, next) {
   try {
@@ -234,7 +234,7 @@ async function upsertServiceArea(req, res, next) {
   } catch (err) { next(err); }
 }
 
-/* ─── Inventory (§14) ──────────────────────────────────────────────────── */
+/* Inventory (§14) */
 
 async function listInventory(req, res, next) {
   try {
@@ -289,7 +289,7 @@ async function upsertInventory(req, res, next) {
   } catch (err) { next(err); }
 }
 
-/* ─── Pricing (§12, §68) ───────────────────────────────────────────────── */
+/* Pricing (§12, §68) */
 
 async function listPricing(req, res, next) {
   try {
@@ -587,7 +587,7 @@ async function listStockableParts(req, res, next) {
   } catch (err) { next(err); }
 }
 
-/* ─── Jobs ─────────────────────────────────────────────────────────────── */
+/* Jobs */
 
 async function listJobs(req, res, next) {
   try {
@@ -662,7 +662,7 @@ async function onboardingStatus(req, res, next) {
 }
 
 
-/* ─── The work a provider can sign up for ──────────────────────────────── */
+/* The work a provider can sign up for */
 
 /**
  * Everything the "what do you fix?" step needs, in one call.

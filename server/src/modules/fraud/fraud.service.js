@@ -48,7 +48,7 @@ async function resolveActorIdentity(actorKind, actorId) {
   }
 }
 
-/* ── 1. Velocity abuse — >5 orders in last 60 min ───────────────────────── */
+/* 1. Velocity abuse — >5 orders in last 60 min */
 async function detectVelocityAbuse(userId) {
   try {
     if (!userId) return null;
@@ -71,7 +71,7 @@ async function detectVelocityAbuse(userId) {
   }
 }
 
-/* ── 2. Refund abuse — >3 refunds in 30d AND refund rate >40% ───────────── */
+/* 2. Refund abuse — >3 refunds in 30d AND refund rate >40% */
 async function detectRefundAbuse(userId) {
   try {
     if (!userId) return null;
@@ -103,7 +103,7 @@ async function detectRefundAbuse(userId) {
   }
 }
 
-/* ── 3. Duplicate accounts — same phone (>1 user) or shared deviceId ────── */
+/* 3. Duplicate accounts — same phone (>1 user) or shared deviceId */
 async function detectDuplicateAccounts(phone, deviceId) {
   try {
     const flagged = [];
@@ -152,7 +152,7 @@ async function detectDuplicateAccounts(phone, deviceId) {
   }
 }
 
-/* ── 4. Rating manipulation — same user-worker pair 5★ >3 times in 7d ───── */
+/* 4. Rating manipulation — same user-worker pair 5 >3 times in 7d */
 async function detectRatingManipulation(orderId, rating) {
   try {
     if (Number(rating) !== 5 || !orderId) return null;
@@ -184,7 +184,7 @@ async function detectRatingManipulation(orderId, rating) {
   }
 }
 
-/* ── 5. GPS spoof — called by socket spoof detection ────────────────────── */
+/* 5. GPS spoof — called by socket spoof detection */
 async function logGpsSpoofEvent(workerId, details = {}) {
   try {
     if (!workerId) return null;
@@ -206,7 +206,7 @@ async function logGpsSpoofEvent(workerId, details = {}) {
   }
 }
 
-/* ── 6. Summary — counts by type/severity/status for last 30 days ───────── */
+/* 6. Summary — counts by type/severity/status for last 30 days */
 async function getFraudSummary() {
   const since = new Date(Date.now() - 30 * DAY);
   const weekAgo = new Date(Date.now() - 7 * DAY);
@@ -244,7 +244,7 @@ async function getFraudSummary() {
   };
 }
 
-/* ── 7. Paginated list with filters ─────────────────────────────────────── */
+/* 7. Paginated list with filters */
 async function listEvents({ status, severity, type, page = 1, limit = 50 } = {}) {
   const q = {};
   if (status) q.status = status;
@@ -274,7 +274,7 @@ async function listEventsForActor(actorKind, actorId) {
   return { events, total: events.length };
 }
 
-/* ── 8. Resolve an event ────────────────────────────────────────────────── */
+/* 8. Resolve an event */
 async function resolveEvent(id, { status, adminNote, adminId }) {
   const event = await FraudEvent.findById(id);
   if (!event) {

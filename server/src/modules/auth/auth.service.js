@@ -159,7 +159,7 @@ async function comparePassword(pw, hash) {
 
 // ---- OTP (phone-based) ----
 async function requestOtp(phone, role) {
-  // ── Rate limit: max OTP_HOURLY_LIMIT fresh sends per phone per hour ──────
+  // Rate limit: max OTP_HOURLY_LIMIT fresh sends per phone per hour
   const hourlyKey = `otp:hourly:${phone}`;
   const hourlyCount = await redis.incr(hourlyKey);
   if (hourlyCount === 1) await redis.expire(hourlyKey, 3600);
@@ -171,7 +171,7 @@ async function requestOtp(phone, role) {
     });
   }
 
-  // ── 30-second cooldown — prevent accidental double-sends ─────────────────
+  // 30-second cooldown — prevent accidental double-sends
   const existing = await redis.hgetall(`otp:${phone}`);
   if (existing?.createdAt) {
     const elapsed = Date.now() - parseInt(existing.createdAt, 10);
@@ -183,7 +183,7 @@ async function requestOtp(phone, role) {
     }
   }
 
-  // ── Send OTP via 2Factor AUTOGEN (prod) or fallback (dev) ────────────────
+  // Send OTP via 2Factor AUTOGEN (prod) or fallback (dev)
   /**
    * Never send a real message from a test run.
    *
@@ -218,7 +218,7 @@ async function requestOtp(phone, role) {
     }
   }
 
-  // ── Store session in Redis — never store the OTP itself ──────────────────
+  // Store session in Redis — never store the OTP itself
   const now = Date.now().toString();
   const fields = {
     attempts: '0', resendCount: '0', createdAt: now,
@@ -350,7 +350,7 @@ async function verifyOtp(phone, otp) {
   let isValid = false;
 
   if (session.sessionId) {
-    // ── 2Factor AUTOGEN verify — OTP never stored server-side ──────────────
+    // 2Factor AUTOGEN verify — OTP never stored server-side
     try {
       isValid = await verify2FactorOtp(session.sessionId, otp);
     } catch (err) {
@@ -361,7 +361,7 @@ async function verifyOtp(phone, otp) {
       });
     }
   } else {
-    // ── Dev/fallback — compare stored code ─────────────────────────────────
+    // Dev/fallback — compare stored code
     isValid = session.code === otp;
   }
 
@@ -481,7 +481,7 @@ async function loginWorkerWithOtp({ phone, otp, name, skills, deviceId, portal =
     Worker.updateOne({ _id: worker._id }, { $addToSet: { deviceIds: deviceId } }).catch(() => {});
   }
 
-  // ── Trusted-device binding (re-login security) ──────────────────────────────
+  // Trusted-device binding (re-login security)
   // OTP proves possession of the SIM, but a relayed/SIM-swapped OTP could sign in
   // from an attacker's device. We bind the account to its devices: a sign-in from
   // a NEW device on an established account is recorded + alerted, and (optionally,
@@ -725,11 +725,9 @@ async function getOtpStats(days = 7) {
   return result;
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// Worker credential login (#2) — password + Worker ID/username, plus
+// Worker credential login — password + Worker ID/username, plus
 // forgot/reset/change. OTP login still works; this adds a password path so an
 // approved worker doesn't repeat OTP on every sign-in.
-// ═══════════════════════════════════════════════════════════════════════════
 const WORKER_USERNAME_RE = /^[a-z0-9_]{3,30}$/;
 const normId = (v) => String(v == null ? '' : v).trim().toLowerCase();
 

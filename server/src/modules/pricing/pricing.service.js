@@ -25,7 +25,7 @@ const PricingConfig = require('./pricing-config.model');
 const logger = require('../../utils/logger');
 const verticalConfigService = require('../service/vertical-config.service');
 
-// ── Vertical routing — maps service codes to pricing engines ─────────────────
+// Vertical routing — maps service codes to pricing engines
 
 // DISABLED: Generic home/construction services (architecture preserved)
 // const HOME_SERVICES = new Set(['plumbing','electrical','helper','carpenter','ac_repair','cleaning','painting']);
@@ -231,7 +231,7 @@ function envFallback() {
       // { service: 'plumbing', multiplier: 1.2, minFarePaise: 20000 },
       // { service: 'mason', multiplier: 1.3, minFarePaise: 50000 },
 
-      // ── Electronics Rescue — Mobile ─────────────────────────────────────
+      // Electronics Rescue — Mobile
       { service: 'screen_replacement',    multiplier: 1.0, minFarePaise: 150000 },
       { service: 'battery_replacement',   multiplier: 1.0, minFarePaise: 80000  },
       { service: 'charging_issue',        multiplier: 1.0, minFarePaise: 30000  },
@@ -261,7 +261,7 @@ function envFallback() {
       { service: 'cctv_repair',           multiplier: 1.0, minFarePaise: 80000  },
       { service: 'smart_lock_install',    multiplier: 1.1, minFarePaise: 100000 },
       { service: 'home_automation_setup', multiplier: 1.3, minFarePaise: 200000 },
-      // ── Vehicle Care ────────────────────────────────────────────────────
+      // Vehicle Care
       { service: 'puncture',              multiplier: 0.8, minFarePaise: 10000  },
       { service: 'bike_chain_issue',      multiplier: 0.9, minFarePaise: 15000  },
       { service: 'bike_brake_issue',      multiplier: 0.9, minFarePaise: 15000  },
@@ -281,7 +281,7 @@ function envFallback() {
       { service: 'fleet_support',         multiplier: 1.2, minFarePaise: 100000 },
       { service: 'auto_repair',           multiplier: 1.0, minFarePaise: 40000  },
       { service: 'van_repair',            multiplier: 1.1, minFarePaise: 50000  },
-      // ── Family & Elder Assist ────────────────────────────────────────────
+      // Family & Elder Assist
       { service: 'medicine_pickup',       multiplier: 0.6, minFarePaise: 5000   },
       { service: 'hospital_companion',    multiplier: 1.2, minFarePaise: 50000  },
       { service: 'grocery_assistance',    multiplier: 0.5, minFarePaise: 3000   },
@@ -292,7 +292,7 @@ function envFallback() {
       { service: 'elder_companion',       multiplier: 1.1, minFarePaise: 40000  },
       { service: 'elder_home_visit',      multiplier: 1.0, minFarePaise: 35000  },
       { service: 'elder_transport',       multiplier: 1.0, minFarePaise: 45000  },
-      // ── Event Crew ───────────────────────────────────────────────────────
+      // Event Crew
       { service: 'event_decorator',         multiplier: 1.2, minFarePaise: 100000 },
       { service: 'event_setup_crew',        multiplier: 1.1, minFarePaise: 80000  },
       { service: 'event_cleaning_crew',     multiplier: 1.0, minFarePaise: 60000  },
@@ -304,7 +304,7 @@ function envFallback() {
       { service: 'event_wedding_setup',     multiplier: 1.5, minFarePaise: 300000 },
       { service: 'event_photography_assist',multiplier: 1.0, minFarePaise: 80000  },
       { service: 'event_catering_assist',   multiplier: 1.0, minFarePaise: 80000  },
-      // ── Pet Assistance ───────────────────────────────────────────────────
+      // Pet Assistance
       { service: 'pet_grooming',      multiplier: 1.0, minFarePaise: 40000  },
       { service: 'pet_walking',       multiplier: 0.8, minFarePaise: 15000  },
       { service: 'pet_transport',     multiplier: 1.0, minFarePaise: 30000  },
@@ -429,7 +429,7 @@ async function recordDemand(lat, lng, service) {
   const key = `demand:${geoBucket(lat, lng)}`;
   await redis.multi().incr(key).expire(key, 300).exec();
 
-  // Persist demand event to Mongo for heatmap analytics (#54).
+  // Persist demand event to Mongo for heatmap analytics.
   // Redis buckets expire in 5 min; Mongo is the durable store for historical patterns.
   try {
     const DemandEvent = require('../analytics/demand-event.model');
@@ -991,7 +991,7 @@ async function calculatePrice({ origin, dest, service, userId, priority = 'norma
   // } else if (CONSTRUCTION_SERVICES.has(service)) {
   //   result = await calculateConstructionPrice({ service, priority, pricingModel, estimatedHours });
   } else {
-    // ── Generic path ────────────────────────────────────────────────
+    // Generic path
     const cfg = await getActiveConfig();
     const { distanceKm, etaMinutes } = await getDistanceAndEta(origin, dest);
 
@@ -1040,7 +1040,7 @@ async function calculatePrice({ origin, dest, service, userId, priority = 'norma
     };
   }
 
-  // ── Catalog floor/ceiling + global surge — order: FLOOR → SURGE → CEILING ──
+  // Catalog floor/ceiling + global surge — order: FLOOR → SURGE → CEILING
   // Applying surge AFTER the floor means ₹150 floor × 1.3× night = ₹195,
   // not ₹50 base × 1.3 = ₹65 → floored back to ₹150 (surge invisible).
   // Generic path already has surgeMultiplier set so _pendingSurge is 1.0 (no-op).
@@ -1060,7 +1060,7 @@ async function calculatePrice({ origin, dest, service, userId, priority = 'norma
     ).lean();
 
     if (catalogEntry && catalogEntry.servicePricePaise > 0) {
-      // ── ADDITIVE MODEL ────────────────────────────────────────────────────
+      // ADDITIVE MODEL
       // Total = fixed service price (the actual job) + travel + platform, then
       // surge, then ceiling. The service price is the worker's core earning; travel
       // and platform are ADDED on top (never swallowed), so distance genuinely

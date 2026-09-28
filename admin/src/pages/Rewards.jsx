@@ -18,7 +18,7 @@ import toast from 'react-hot-toast';
 
 const DAYS_OPTIONS = [7, 14, 30, 90];
 
-/* ─── Stat summary card ─────────────────────────────────────────────────── */
+/* Stat summary card */
 function MoneyCard({ label, value, sub, icon: Icon, color = 'text-emerald-600', bg = 'bg-emerald-50' }) {
   return (
     <div className="bg-white rounded-2xl border border-slate-100 p-5 flex items-center gap-4 shadow-sm">
@@ -34,7 +34,7 @@ function MoneyCard({ label, value, sub, icon: Icon, color = 'text-emerald-600', 
   );
 }
 
-/* ─── Cashback section ──────────────────────────────────────────────────── */
+/* Cashback section */
 function CashbackConfig() {
   const { data, isLoading, refetch } = useAdminGetCashbackConfigQuery();
   const [save, { isLoading: saving }] = useAdminSetCashbackConfigMutation();
@@ -122,7 +122,7 @@ function CashbackConfig() {
   );
 }
 
-/* ─── Cashback analytics ────────────────────────────────────────────────── */
+/* Cashback analytics */
 function CashbackStats() {
   const [days, setDays] = useState(30);
   const { data, isLoading, refetch } = useAdminGetCashbackStatsQuery(days);
@@ -182,7 +182,7 @@ function CashbackStats() {
   );
 }
 
-/* ─── Referral analytics ────────────────────────────────────────────────── */
+/* Referral analytics */
 function ReferralStats() {
   const [days, setDays] = useState(30);
   const { data: stats, isLoading: loadingStats, refetch } = useAdminGetReferralStatsQuery(days);
@@ -270,7 +270,7 @@ function ReferralStats() {
   );
 }
 
-/* ─── Deferred milestones ───────────────────────────────────────────────── */
+/* Deferred milestones */
 function DeferredMilestones() {
   const { data, isLoading, refetch } = useAdminListDeferredMilestonesQuery();
   const [release, { isLoading: releasing }] = useAdminReleaseDeferredMilestoneMutation();
@@ -335,7 +335,7 @@ function DeferredMilestones() {
   );
 }
 
-/* ─── Main page ─────────────────────────────────────────────────────────── */
+/* Main page */
 export default function Rewards() {
   const [activeTab, setActiveTab] = useState('cashback');
 

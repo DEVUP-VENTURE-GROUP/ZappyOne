@@ -128,7 +128,7 @@ function FuelStep({ model, fuels, onPick }) {
   );
 }
 
-/* ─── Shared chrome ────────────────────────────────────────────────────── */
+/* Shared chrome */
 
 function StepHeader({ steps, step, onBack, title, subtitle }) {
   const index = steps.indexOf(step);
@@ -207,7 +207,7 @@ function MissingItemSheet({ kind, brandCode, onClose }) {
   );
 }
 
-/* ─── Steps ────────────────────────────────────────────────────────────── */
+/* Steps */
 /**
  * "I don't know my model" — §7.
  *
@@ -1471,7 +1471,7 @@ function ConfirmStep({
   );
 }
 
-/* ─── Flow controller ──────────────────────────────────────────────────── */
+/* Flow controller */
 
 export default function RepairFlowPage({ vertical = 'mobile' }) {
   const nav = useNavigate();

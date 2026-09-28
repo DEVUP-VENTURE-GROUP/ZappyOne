@@ -161,7 +161,7 @@ beforeEach(async () => {
   await seedCatalog();
 });
 
-/* ─── Honest reasons when nothing is offered ──────────────────────────── */
+/* Honest reasons when nothing is offered */
 
 describe('findProviders explains an empty result instead of going silent', () => {
   const dogEntry = (pet) => [{ pet, variantCode: 'pw_walk_30' }];
@@ -238,7 +238,7 @@ describe('findProviders explains an empty result instead of going silent', () =>
   });
 });
 
-/* ─── Compatibility ────────────────────────────────────────────────────── */
+/* Compatibility */
 
 describe('compatibility is enforced before anything else', () => {
   it('blocks a cat from outdoor walking, with a real reason', async () => {
@@ -272,7 +272,7 @@ describe('compatibility is enforced before anything else', () => {
   });
 });
 
-/* ─── Pricing ──────────────────────────────────────────────────────────── */
+/* Pricing */
 
 describe('pricing is size- and breed-aware, and configuration-driven', () => {
   it('scales a groom price by pet size', async () => {
@@ -367,7 +367,7 @@ describe('pricing is size- and breed-aware, and configuration-driven', () => {
   });
 });
 
-/* ─── Capacity: a held bed is a real bed ──────────────────────────────── */
+/* Capacity: a held bed is a real bed */
 
 describe('boarding capacity is a hard limit', () => {
   it('books up to capacity and refuses the booking that would exceed it', async () => {
@@ -435,7 +435,7 @@ describe('boarding capacity is a hard limit', () => {
   });
 });
 
-/* ─── Snapshot immutability (§35) ──────────────────────────────────────── */
+/* Snapshot immutability (§35) */
 
 describe('the booking snapshot is immutable', () => {
   it('keeps the original price after the pricing rule changes', async () => {
@@ -473,7 +473,7 @@ describe('the booking snapshot is immutable', () => {
   });
 });
 
-/* ─── Ownership / IDOR ─────────────────────────────────────────────────── */
+/* Ownership / IDOR */
 
 describe('a booking can only be made against a pet you own', () => {
   it('refuses to book someone else\'s pet', async () => {
@@ -497,7 +497,7 @@ describe('a booking can only be made against a pet you own', () => {
   });
 });
 
-/* ─── State machine ────────────────────────────────────────────────────── */
+/* State machine */
 
 describe('the server owns the booking state', () => {
   it('refuses an illegal jump', async () => {
@@ -542,7 +542,7 @@ describe('the server owns the booking state', () => {
   });
 });
 
-/* ─── Cancellation policy ──────────────────────────────────────────────── */
+/* Cancellation policy */
 
 describe('cancellation cost depends on how close to the booking it is', () => {
   async function bookedStay(hoursFromNow) {
@@ -587,7 +587,7 @@ describe('cancellation cost depends on how close to the booking it is', () => {
   });
 });
 
-/* ─── Recurring bookings ───────────────────────────────────────────────── */
+/* Recurring bookings */
 
 describe('recurring generation is idempotent', () => {
   it('creates the due occurrences and never duplicates them on a second run', async () => {

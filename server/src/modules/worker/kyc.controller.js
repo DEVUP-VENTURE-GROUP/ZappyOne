@@ -1,7 +1,7 @@
 const Worker = require('./worker.model');
 const auditService = require('../admin/audit.service');
 
-// Resubmission controls (#86)
+// Resubmission controls
 const RESUBMIT_COOLDOWN_MS  = 24 * 60 * 60 * 1000; // 24h after rejection
 const SUSPENSION_THRESHOLD  = 5;                     // 5 rejections → KYC suspended
 
@@ -38,7 +38,7 @@ async function submitKyc(req, res, next) {
       });
     }
 
-    // Resubmission cooldown: must wait 24h after rejection (#86)
+    // Resubmission cooldown: must wait 24h after rejection
     if (w.kyc?.status === 'rejected' && w.kyc?.lastRejectedAt) {
       const msSinceRejection = Date.now() - new Date(w.kyc.lastRejectedAt).getTime();
       if (msSinceRejection < RESUBMIT_COOLDOWN_MS) {
@@ -77,7 +77,7 @@ async function submitKyc(req, res, next) {
     const now = new Date();
     const rejectionCount = w.kyc?.rejectionCount || 0;
 
-    // Auto-suspend after threshold rejections (#86)
+    // Auto-suspend after threshold rejections
     if (rejectionCount >= SUSPENSION_THRESHOLD) {
       await Worker.updateOne({ _id: req.auth.sub }, { $set: { 'kyc.status': 'suspended' } });
       return res.status(403).json({
@@ -111,7 +111,7 @@ async function submitKyc(req, res, next) {
             },
           }),
         },
-        // Append immutable audit trail entry (#86)
+        // Append immutable audit trail entry
         $push: {
           'kyc.submissionHistory': {
             aadhaarUrl:    req.body.aadhaarUrl,

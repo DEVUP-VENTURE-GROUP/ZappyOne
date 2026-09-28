@@ -12,7 +12,7 @@ import {
 import toast from 'react-hot-toast';
 import { NumInput, FieldRow, InfoBox, rupees, paise } from './_service-shared';
 
-/* ── Shared accordion wrapper ── */
+/* Shared accordion wrapper */
 function Accordion({ title, Icon, accentClass, children }) {
   const [open, setOpen] = useState(false);
   return (
@@ -32,7 +32,7 @@ function Accordion({ title, Icon, accentClass, children }) {
   );
 }
 
-/* ── Home category ── */
+/* Home category */
 export function HomeCategoryPanel() {
   const { data, isLoading } = useGetPricingConfigQuery();
   const [updatePricing,  { isLoading: savingFares }]   = useAdminUpdatePricingMutation();
@@ -99,7 +99,7 @@ export function HomeCategoryPanel() {
   );
 }
 
-/* ── Mobile category (with spare parts table) ── */
+/* Mobile category (with spare parts table) */
 export function MobileCategoryPanel({ config, onSave, saving }) {
   const [form, setForm] = useState({ inspectionFeePaise: config?.inspectionFeePaise ?? 15000, urgentSurchargePaise: config?.urgentSurchargePaise ?? 10000, warrantyDays: config?.warrantyDays ?? 30 });
   const [addPart, setAddPart] = useState(false);
@@ -189,7 +189,7 @@ export function MobileCategoryPanel({ config, onSave, saving }) {
   );
 }
 
-/* ── Construction category ── */
+/* Construction category */
 export function ConstructionCategoryPanel({ config, onSave, saving }) {
   const [form, setForm] = useState({ visitFeePaise: config?.visitFeePaise ?? 10000, perHourFeePaise: config?.perHourFeePaise ?? 40000, materialMarkupPct: config?.materialMarkupPct ?? 15, urgentSurchargePct: config?.urgentSurchargePct ?? 20 });
   useEffect(() => { if (config) setForm({ visitFeePaise: config.visitFeePaise ?? 10000, perHourFeePaise: config.perHourFeePaise ?? 40000, materialMarkupPct: config.materialMarkupPct ?? 15, urgentSurchargePct: config.urgentSurchargePct ?? 20 }); }, [config]);
@@ -209,7 +209,7 @@ export function ConstructionCategoryPanel({ config, onSave, saving }) {
   );
 }
 
-/* ── Car category ── */
+/* Car category */
 export function CarCategoryPanel({ config, onSave, saving }) {
   const [form, setForm] = useState({ baseVisitFeePaise: config?.baseVisitFeePaise ?? 5000, perKmFeePaise: config?.perKmFeePaise ?? 1500, emergencySurchargePaise: config?.emergencySurchargePaise ?? 10000, nightSurchargePaise: config?.nightSurchargePaise ?? 8000, nightStartHour: config?.nightStartHour ?? 22, nightEndHour: config?.nightEndHour ?? 6 });
   useEffect(() => { if (config) setForm({ baseVisitFeePaise: config.baseVisitFeePaise ?? 5000, perKmFeePaise: config.perKmFeePaise ?? 1500, emergencySurchargePaise: config.emergencySurchargePaise ?? 10000, nightSurchargePaise: config.nightSurchargePaise ?? 8000, nightStartHour: config.nightStartHour ?? 22, nightEndHour: config.nightEndHour ?? 6 }); }, [config]);
@@ -231,7 +231,7 @@ export function CarCategoryPanel({ config, onSave, saving }) {
   );
 }
 
-/* ── Bike category ── */
+/* Bike category */
 export function BikeCategoryPanel({ config, onSave, saving }) {
   const [form, setForm] = useState({ inspectionFeePaise: config?.inspectionFeePaise ?? 15000, urgentSurchargePaise: config?.urgentSurchargePaise ?? 10000, warrantyDays: config?.warrantyDays ?? 30 });
   useEffect(() => { if (config) setForm({ inspectionFeePaise: config.inspectionFeePaise ?? 15000, urgentSurchargePaise: config.urgentSurchargePaise ?? 10000, warrantyDays: config.warrantyDays ?? 30 }); }, [config]);
@@ -254,7 +254,7 @@ export function VehicleCategoryPanel(props) {
   return <CarCategoryPanel {...props} />;
 }
 
-/* ── Laptop category panel ── */
+/* Laptop category panel */
 export function LaptopCategoryPanel({ config, onSave, saving }) {
   const [form, setForm] = useState({ inspectionFeePaise: config?.inspectionFeePaise ?? 20000, urgentSurchargePaise: config?.urgentSurchargePaise ?? 15000, warrantyDays: config?.warrantyDays ?? 60 });
   useEffect(() => {

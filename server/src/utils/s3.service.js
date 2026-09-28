@@ -33,7 +33,7 @@ async function getUploadUrl({ folder, contentType, userId }) {
     const url = await getSignedUrl(s3, cmd, { expiresIn: 300 });
     return { uploadUrl: url, key };
   } catch (err) {
-    // S3/network down — surface a clear message instead of a 500 (#93)
+    // S3/network down — surface a clear message instead of a 500
     throw Object.assign(
       new Error('File upload service is temporarily unavailable. Please try again in a moment.'),
       { status: 503, code: 'S3_UNAVAILABLE', cause: err.message }

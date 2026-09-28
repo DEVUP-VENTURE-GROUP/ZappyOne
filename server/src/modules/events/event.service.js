@@ -32,7 +32,7 @@ async function resolveThemeListImages(themes) {
   return Promise.all(themes.map(resolveThemeImages));
 }
 
-// ── Config ────────────────────────────────────────────────────────────────────
+// Config
 
 async function getActiveConfig() {
   const cached = await redis.get(CFG_KEY).catch(() => null);
@@ -57,13 +57,13 @@ function defaultConfig() {
   };
 }
 
-// ── Categories ────────────────────────────────────────────────────────────────
+// Categories
 
 async function listCategories() {
   return EventCategory.find({ isActive: true }).sort({ sortOrder: 1, name: 1 }).lean();
 }
 
-// ── Themes ────────────────────────────────────────────────────────────────────
+// Themes
 
 async function listThemes({ categorySlug, city, budgetMaxPaise, guestCount, page = 1, sort = 'trending', search } = {}) {
   const q = { status: { $in: ['approved', 'featured'] } };
@@ -115,7 +115,7 @@ async function getTheme(themeId, userId = null) {
   return { ...theme, isSaved };
 }
 
-// ── Save / Unsave ─────────────────────────────────────────────────────────────
+// Save / Unsave
 
 async function toggleSave(userId, themeId) {
   const exists = await EventTheme.findById(themeId).select('_id').lean();
@@ -170,7 +170,7 @@ async function getSavedThemes(userId) {
   return themes;
 }
 
-// ── Booking ───────────────────────────────────────────────────────────────────
+// Booking
 
 async function createBooking({ userId, themeId, eventDate, eventTimeSlot, address, guestCount, notes, roomPhotos }) {
   const cfg = await getActiveConfig();
@@ -263,7 +263,7 @@ async function getBooking(bookingId, userId) {
   return booking;
 }
 
-// ── Cancellation ──────────────────────────────────────────────────────────────
+// Cancellation
 
 function getRefundPct(cfg, eventDate) {
   const daysUntil = (new Date(eventDate) - Date.now()) / 86_400_000;
@@ -306,7 +306,7 @@ async function cancelBooking(bookingId, userId, reason) {
   return { refundPaise, refundPct };
 }
 
-// ── Review ────────────────────────────────────────────────────────────────────
+// Review
 
 async function submitReview(bookingId, userId, { rating, review }) {
   if (rating < 1 || rating > 5) throw Object.assign(new Error('Rating must be 1–5'), { status: 400 });
@@ -333,7 +333,7 @@ async function submitReview(bookingId, userId, { rating, review }) {
   return { ok: true };
 }
 
-// ── Admin ─────────────────────────────────────────────────────────────────────
+// Admin
 
 async function adminListThemes({ status, page = 1, search } = {}) {
   const q = {};

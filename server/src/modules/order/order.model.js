@@ -305,7 +305,7 @@ orderSchema.index({ userId: 1, status: 1 });
 orderSchema.index({ workerId: 1, status: 1 });
 orderSchema.index({ 'dispatch.currentOfferWorkerId': 1 }, { sparse: true });
 
-// ── Scaling indexes added for 1K–10K concurrent order handling ────────────
+// Scaling indexes added for 1K–10K concurrent order handling
 // Admin analytics: service breakdown queries (scenario #62)
 orderSchema.index({ service: 1, status: 1 });
 // Revenue aggregation on completedAt (used in getMetrics / getRevenue)

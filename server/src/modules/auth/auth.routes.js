@@ -48,7 +48,7 @@ router.post(
   ctrl.loginWorker
 );
 
-// ── Worker credential login (#2): password + Worker ID, forgot/reset/change ──
+// Worker credential login: password + Worker ID, forgot/reset/change
 // Set (or update) a Worker ID + password — authenticated worker, after approval.
 router.post(
   '/worker/set-credentials',
@@ -130,7 +130,7 @@ router.post(
   ctrl.googlePartnerLogin
 );
 
-// ── Shop owner (phone repair shops, laptop repair shops, decoration studios, …)
+// Shop owner (phone repair shops, laptop repair shops, decoration studios, …)
 // Same OTP-login-with-first-time-onboarding shape as /partner/login, for a
 // general-purpose local business rather than an events-only one.
 router.post(

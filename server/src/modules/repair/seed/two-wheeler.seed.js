@@ -32,7 +32,7 @@
 
 const VERTICAL = 'two_wheeler';
 
-/* ─── Vehicle types (§4) ───────────────────────────────────────────────── */
+/* Vehicle types (§4) */
 
 /**
  * Shorthands used by `appliesToProductTypeCodes` below. A problem with no list applies to
@@ -58,7 +58,7 @@ const PRODUCT_TYPES = [
   { code: MO, name: 'Moped', displayOrder: 5 },
 ];
 
-/* ─── Brands (§4) ──────────────────────────────────────────────────────── */
+/* Brands (§4) */
 
 const BRANDS = [
   // Petrol — ordered by Indian market share, because that is the order a
@@ -100,7 +100,7 @@ const BRANDS = [
   { code: 'river', name: 'River', sortOrder: 34 },
 ];
 
-/* ─── Problem taxonomy (§8) ────────────────────────────────────────────── */
+/* Problem taxonomy (§8) */
 
 const PROBLEM_CATEGORIES = [
   { code: 'tw_roadside', name: 'Roadside Emergency', icon: 'alert-triangle', displayOrder: 1 },
@@ -118,7 +118,7 @@ const PROBLEM_CATEGORIES = [
   { code: 'tw_cooling', name: 'Cooling', icon: 'thermometer', displayOrder: 13 },
   { code: 'tw_body', name: 'Body & Exterior', icon: 'shield', displayOrder: 14, isActive: false },
   { code: 'tw_maintenance', name: 'Service & Maintenance', icon: 'tool', displayOrder: 15 },
-  // ── Electric-only ──
+  // Electric-only
   { code: 'tw_ev_battery', name: 'EV Battery', icon: 'battery-charging', displayOrder: 16 },
   { code: 'tw_ev_charging', name: 'EV Charging', icon: 'plug', displayOrder: 17 },
   { code: 'tw_ev_motor', name: 'EV Motor', icon: 'zap', displayOrder: 18 },
@@ -144,7 +144,7 @@ const P = (code, name, categoryCode, candidates = [], opts = {}) => ({
 });
 
 const PROBLEMS = [
-  /* ── Roadside emergency — someone is stranded right now ──────────────── */
+  /* Roadside emergency — someone is stranded right now */
   P('tw_wont_start_roadside', 'Vehicle won\'t start', 'tw_roadside',
     ['tw_jump_start', 'tw_battery_replacement', 'tw_starter_repair', 'tw_spark_plug_replacement', 'tw_roadside_minor_repair'],
     { isPopular: true, severity: 'high' }),
@@ -163,7 +163,7 @@ const PROBLEMS = [
   P('tw_ev_out_of_charge', 'Out of charge', 'tw_roadside', ['tw_towing', 'tw_ev_charge_assist'],
     { severity: 'high', appliesToProductTypeCodes: ELECTRIC }),
 
-  /* ── Starting & ignition ─────────────────────────────────────────────── */
+  /* Starting & ignition */
   P('tw_self_start_not_working', 'Self-start not working', 'tw_starting',
     ['tw_starter_repair', 'tw_battery_replacement', 'tw_starter_relay_replacement'], { isPopular: true }),
   P('tw_kick_start_not_working', 'Kick-start not working', 'tw_starting',
@@ -180,7 +180,7 @@ const PROBLEMS = [
   P('tw_engine_cutoff_switch', 'Engine cut-off switch issue', 'tw_starting',
     ['tw_switch_repair'], { appliesToProductTypeCodes: PETROL }),
 
-  /* ── Engine & performance — petrol only ──────────────────────────────── */
+  /* Engine & performance — petrol only */
   P('tw_engine_not_starting', 'Engine not starting', 'tw_engine',
     ['tw_spark_plug_replacement', 'tw_carburetor_service', 'tw_fuel_injector_service', 'tw_engine_repair'],
     { appliesToProductTypeCodes: PETROL, severity: 'high', isPopular: true }),
@@ -212,7 +212,7 @@ const PROBLEMS = [
   P('tw_engine_warning_light', 'Engine warning light', 'tw_engine',
     ['tw_diagnostic_scan'], { appliesToProductTypeCodes: PETROL, requiresDiagnosis: true }),
 
-  /* ── Battery & electrical ────────────────────────────────────────────── */
+  /* Battery & electrical */
   P('tw_battery_draining', 'Battery draining', 'tw_battery_electrical',
     ['tw_battery_replacement', 'tw_wiring_repair', 'tw_stator_repair'], { isPopular: true }),
   P('tw_battery_weak', 'Battery weak', 'tw_battery_electrical', ['tw_battery_replacement']),
@@ -227,7 +227,7 @@ const PROBLEMS = [
   P('tw_electrical_short', 'Electrical short', 'tw_battery_electrical',
     ['tw_wiring_repair'], { severity: 'high', requiresDiagnosis: true }),
 
-  /* ── Lights & controls ───────────────────────────────────────────────── */
+  /* Lights & controls */
   P('tw_headlight_not_working', 'Headlight not working', 'tw_lights_controls',
     ['tw_headlight_repair', 'tw_bulb_replacement'], { isPopular: true }),
   P('tw_headlight_dim', 'Headlight dim', 'tw_lights_controls', ['tw_headlight_repair', 'tw_stator_repair']),
@@ -239,7 +239,7 @@ const PROBLEMS = [
   P('tw_switch_issue', 'Switch issue', 'tw_lights_controls', ['tw_switch_repair']),
   P('tw_speedometer_issue', 'Speedometer / cluster issue', 'tw_lights_controls', ['tw_cluster_repair']),
 
-  /* ── Brakes ──────────────────────────────────────────────────────────── */
+  /* Brakes */
   P('tw_front_brake_problem', 'Front brake problem', 'tw_brakes',
     ['tw_brake_pad_replacement', 'tw_brake_service'], { severity: 'high', isPopular: true }),
   P('tw_rear_brake_problem', 'Rear brake problem', 'tw_brakes',
@@ -254,7 +254,7 @@ const PROBLEMS = [
   P('tw_brake_disc_issue', 'Brake disc issue', 'tw_brakes', ['tw_brake_disc_replacement']),
   P('tw_brake_drum_issue', 'Brake drum issue', 'tw_brakes', ['tw_brake_shoe_replacement']),
 
-  /* ── Tyres & wheels ──────────────────────────────────────────────────── */
+  /* Tyres & wheels */
   P('tw_slow_puncture', 'Slow puncture', 'tw_tyres_wheels', ['tw_puncture_tubeless', 'tw_puncture_tube']),
   P('tw_tyre_replacement_req', 'Tyre replacement', 'tw_tyres_wheels', ['tw_tyre_replacement'], { isPopular: true }),
   P('tw_tyre_wear', 'Tyre worn out', 'tw_tyres_wheels', ['tw_tyre_replacement'], { severity: 'high' }),
@@ -264,7 +264,7 @@ const PROBLEMS = [
   P('tw_valve_issue', 'Valve issue', 'tw_tyres_wheels', ['tw_valve_replacement']),
   P('tw_wheel_bearing_issue', 'Wheel bearing issue', 'tw_tyres_wheels', ['tw_wheel_bearing_replacement']),
 
-  /* ── Chain & drive — geared bikes only ───────────────────────────────── */
+  /* Chain & drive — geared bikes only */
   P('tw_chain_loose', 'Chain loose', 'tw_chain_drive', ['tw_chain_adjustment'], { appliesToProductTypeCodes: GEARED, isPopular: true }),
   P('tw_chain_noise', 'Chain noise', 'tw_chain_drive', ['tw_chain_service', 'tw_chain_replacement'], { appliesToProductTypeCodes: GEARED }),
   P('tw_chain_dry', 'Chain dry / needs lubrication', 'tw_chain_drive', ['tw_chain_service'], { appliesToProductTypeCodes: GEARED }),
@@ -272,7 +272,7 @@ const PROBLEMS = [
   P('tw_sprocket_worn', 'Sprocket worn', 'tw_chain_drive', ['tw_chain_sprocket_replacement'], { appliesToProductTypeCodes: GEARED }),
   P('tw_drive_noise', 'Drive noise', 'tw_chain_drive', ['tw_chain_service'], { appliesToProductTypeCodes: GEARED, requiresDiagnosis: true }),
 
-  /* ── Clutch & gears — geared bikes only ──────────────────────────────── */
+  /* Clutch & gears — geared bikes only */
   P('tw_clutch_slipping', 'Clutch slipping', 'tw_clutch_gear', ['tw_clutch_plate_replacement'], { appliesToProductTypeCodes: GEARED }),
   P('tw_clutch_hard', 'Clutch hard', 'tw_clutch_gear', ['tw_clutch_adjustment', 'tw_clutch_cable_replacement'], { appliesToProductTypeCodes: GEARED }),
   P('tw_clutch_cable_issue', 'Clutch cable issue', 'tw_clutch_gear', ['tw_clutch_cable_replacement'], { appliesToProductTypeCodes: GEARED }),
@@ -280,7 +280,7 @@ const PROBLEMS = [
   P('tw_gear_not_shifting', 'Gear not shifting', 'tw_clutch_gear', ['tw_gearbox_repair'], { appliesToProductTypeCodes: GEARED, severity: 'high' }),
   P('tw_gearbox_noise', 'Gearbox noise', 'tw_clutch_gear', ['tw_gearbox_repair'], { appliesToProductTypeCodes: GEARED, requiresDiagnosis: true }),
 
-  /* ── CVT — scooters only ─────────────────────────────────────────────── */
+  /* CVT — scooters only */
   P('tw_cvt_noise', 'CVT noise', 'tw_cvt', ['tw_cvt_service', 'tw_cvt_belt_replacement'], { appliesToProductTypeCodes: CVT }),
   P('tw_cvt_vibration', 'CVT vibration', 'tw_cvt', ['tw_cvt_service', 'tw_clutch_shoe_replacement'], { appliesToProductTypeCodes: CVT }),
   P('tw_cvt_belt_issue', 'CVT belt issue', 'tw_cvt', ['tw_cvt_belt_replacement'], { appliesToProductTypeCodes: CVT, isPopular: true }),
@@ -289,7 +289,7 @@ const PROBLEMS = [
   P('tw_transmission_slipping', 'Transmission slipping', 'tw_cvt', ['tw_cvt_belt_replacement', 'tw_clutch_shoe_replacement'], { appliesToProductTypeCodes: CVT }),
   P('tw_cvt_service_req', 'CVT servicing', 'tw_cvt', ['tw_cvt_service'], { appliesToProductTypeCodes: CVT }),
 
-  /* ── Suspension & steering ───────────────────────────────────────────── */
+  /* Suspension & steering */
   P('tw_front_suspension_issue', 'Front suspension issue', 'tw_suspension_steering', ['tw_fork_service', 'tw_fork_seal_replacement']),
   P('tw_rear_suspension_issue', 'Rear suspension issue', 'tw_suspension_steering', ['tw_shock_absorber_replacement']),
   P('tw_fork_leak', 'Fork oil leak', 'tw_suspension_steering', ['tw_fork_seal_replacement'], { isPopular: true }),
@@ -298,7 +298,7 @@ const PROBLEMS = [
   P('tw_hard_steering', 'Hard steering', 'tw_suspension_steering', ['tw_steering_bearing_replacement']),
   P('tw_steering_vibration', 'Steering vibration', 'tw_suspension_steering', ['tw_wheel_balancing', 'tw_steering_bearing_replacement']),
 
-  /* ── Fuel system — petrol only ───────────────────────────────────────── */
+  /* Fuel system — petrol only */
   // Petrol on the ground is an ignition risk, not a booking. Critical severity
   // with `requiresDiagnosis` so it can never be auto-priced and auto-dispatched
   // — the same rule the EV thermal faults carry, for the same reason.
@@ -309,14 +309,14 @@ const PROBLEMS = [
   P('tw_carburetor_issue', 'Carburettor issue', 'tw_fuel', ['tw_carburetor_service'], { appliesToProductTypeCodes: PETROL }),
   P('tw_fuel_filter_issue', 'Fuel filter issue', 'tw_fuel', ['tw_fuel_filter_replacement'], { appliesToProductTypeCodes: PETROL }),
 
-  /* ── Cooling ─────────────────────────────────────────────────────────── */
+  /* Cooling */
   P('tw_coolant_leak', 'Coolant leak', 'tw_cooling', ['tw_coolant_service', 'tw_radiator_repair'],
     { appliesToProductTypeCodes: PETROL, severity: 'high' }),
   P('tw_radiator_issue', 'Radiator issue', 'tw_cooling', ['tw_radiator_repair'], { appliesToProductTypeCodes: PETROL }),
   P('tw_radiator_fan_issue', 'Radiator fan issue', 'tw_cooling', ['tw_radiator_fan_replacement'], { appliesToProductTypeCodes: PETROL }),
   P('tw_coolant_replacement_req', 'Coolant replacement', 'tw_cooling', ['tw_coolant_service'], { appliesToProductTypeCodes: PETROL }),
 
-  /* ── Body & exterior ─────────────────────────────────────────────────── */
+  /* Body & exterior */
   P('tw_panel_damage', 'Panel / body damage', 'tw_body', ['tw_panel_replacement']),
   P('tw_mudguard_damage', 'Mudguard damage', 'tw_body', ['tw_panel_replacement']),
   P('tw_mirror_damage', 'Mirror damage', 'tw_body', ['tw_mirror_replacement']),
@@ -325,7 +325,7 @@ const PROBLEMS = [
   P('tw_footrest_damage', 'Footrest damage', 'tw_body', ['tw_panel_replacement']),
   P('tw_crash_guard_damage', 'Crash guard damage', 'tw_body', ['tw_panel_replacement']),
 
-  /* ── Maintenance ─────────────────────────────────────────────────────── */
+  /* Maintenance */
   P('tw_general_service_req', 'General service', 'tw_maintenance', ['tw_general_service'], { isPopular: true }),
   P('tw_engine_oil_req', 'Engine oil change', 'tw_maintenance', ['tw_engine_oil_change'],
     { appliesToProductTypeCodes: PETROL, isPopular: true }),
@@ -335,7 +335,7 @@ const PROBLEMS = [
   P('tw_periodic_service_req', 'Periodic / preventive maintenance', 'tw_maintenance', ['tw_general_service']),
   P('tw_washing_req', 'Washing & detailing', 'tw_maintenance', ['tw_washing']),
 
-  /* ── EV battery ──────────────────────────────────────────────────────── *
+  /* EV battery *
    * The first four are ordinary faults. The five marked `critical` are NOT:
    * a swollen or smoking lithium pack is a fire risk, and the correct response
    * is safety instructions and an escalation, never "a technician will be with
@@ -365,7 +365,7 @@ const PROBLEMS = [
   P('tw_ev_battery_damage', 'Visible battery damage after a crash', 'tw_ev_battery', ['tw_ev_safety_inspection'],
     { appliesToProductTypeCodes: ELECTRIC, severity: 'critical', requiresDiagnosis: true }),
 
-  /* ── EV charging ─────────────────────────────────────────────────────── */
+  /* EV charging */
   P('tw_ev_charger_not_working', 'Charger not working', 'tw_ev_charging',
     ['tw_ev_charger_repair'], { appliesToProductTypeCodes: ELECTRIC, isPopular: true }),
   P('tw_ev_charging_port_issue', 'Charging port issue', 'tw_ev_charging',
@@ -379,7 +379,7 @@ const PROBLEMS = [
   P('tw_ev_cable_issue', 'Charging cable issue', 'tw_ev_charging',
     ['tw_ev_charger_repair'], { appliesToProductTypeCodes: ELECTRIC }),
 
-  /* ── EV motor ────────────────────────────────────────────────────────── */
+  /* EV motor */
   P('tw_ev_motor_not_running', 'Motor not running', 'tw_ev_motor',
     ['tw_ev_motor_diagnostic', 'tw_ev_controller_repair'], { appliesToProductTypeCodes: ELECTRIC, severity: 'high' }),
   P('tw_ev_low_motor_power', 'Low motor power', 'tw_ev_motor',
@@ -389,7 +389,7 @@ const PROBLEMS = [
     ['tw_ev_motor_diagnostic'], { appliesToProductTypeCodes: ELECTRIC, severity: 'high' }),
   P('tw_ev_motor_vibration', 'Motor vibration', 'tw_ev_motor', ['tw_ev_motor_diagnostic'], { appliesToProductTypeCodes: ELECTRIC }),
 
-  /* ── EV controller & electrical ──────────────────────────────────────── */
+  /* EV controller & electrical */
   P('tw_ev_controller_failure', 'Controller failure', 'tw_ev_controller',
     ['tw_ev_controller_repair'], { appliesToProductTypeCodes: ELECTRIC, severity: 'high' }),
   P('tw_ev_power_cutoff', 'Power cuts out while riding', 'tw_ev_controller',
@@ -403,7 +403,7 @@ const PROBLEMS = [
   P('tw_ev_12v_battery_issue', '12V battery issue', 'tw_ev_controller',
     ['tw_battery_replacement'], { appliesToProductTypeCodes: ELECTRIC }),
 
-  /* ── EV dashboard & connectivity ─────────────────────────────────────── */
+  /* EV dashboard & connectivity */
   P('tw_ev_dashboard_not_working', 'Dashboard not working', 'tw_ev_dashboard',
     ['tw_cluster_repair'], { appliesToProductTypeCodes: ELECTRIC }),
   P('tw_ev_display_issue', 'Speed or battery display wrong', 'tw_ev_dashboard',
@@ -421,7 +421,7 @@ const PROBLEMS = [
     ['tw_ev_firmware_update'], { appliesToProductTypeCodes: ELECTRIC }),
 ];
 
-/* ─── Repairs (§13) ────────────────────────────────────────────────────── */
+/* Repairs (§13) */
 
 const D = 'doorstep', W = 'workshop', PU = 'pickup_repair', R = 'remote_support', RS = 'roadside';
 
@@ -437,7 +437,7 @@ const D = 'doorstep', W = 'workshop', PU = 'pickup_repair', R = 'remote_support'
  * "one firm number per quality grade", not "Zappy has decided the number".
  */
 const REPAIRS = [
-  /* ── Roadside ──────────────────────────────────────────────────────── */
+  /* Roadside */
   { code: 'tw_puncture_tubeless', name: 'Tubeless Puncture Repair', pricingMode: 'fixed', minSkillLevel: 1, modes: [RS, D, W], durationMin: 25, warrantyDays: 30 },
   { code: 'tw_puncture_tube', name: 'Tube Puncture Repair', pricingMode: 'fixed', minSkillLevel: 1, modes: [RS, D, W], durationMin: 40, warrantyDays: 30 },
   { code: 'tw_jump_start', name: 'Jump Start', pricingMode: 'fixed', minSkillLevel: 1, modes: [RS, D], durationMin: 15, warrantyDays: 0 },
@@ -447,7 +447,7 @@ const REPAIRS = [
   { code: 'tw_ev_charge_assist', name: 'EV Charging Assistance', pricingMode: 'fixed', minSkillLevel: 2, modes: [RS], durationMin: 45, warrantyDays: 0 },
   { code: 'tw_lock_service', name: 'Lock & Key Service', pricingMode: 'diagnosis_required', minSkillLevel: 2, modes: [RS, D, W], durationMin: 45, warrantyDays: 30 },
 
-  /* ── Starting & ignition ───────────────────────────────────────────── */
+  /* Starting & ignition */
   { code: 'tw_battery_replacement', name: 'Battery Replacement', pricingMode: 'fixed', minSkillLevel: 1, modes: [RS, D, W], durationMin: 25, warrantyDays: 365, component: 'tw_battery' },
   { code: 'tw_starter_repair', name: 'Starter Motor Repair', pricingMode: 'fixed', minSkillLevel: 3, modes: [D, W, PU], durationMin: 90, warrantyDays: 90, component: 'tw_starter_motor' },
   { code: 'tw_starter_relay_replacement', name: 'Starter Relay Replacement', pricingMode: 'fixed', minSkillLevel: 2, modes: [RS, D, W], durationMin: 30, warrantyDays: 90, component: 'tw_starter_relay' },
@@ -457,7 +457,7 @@ const REPAIRS = [
   { code: 'tw_ignition_repair', name: 'Ignition System Repair', pricingMode: 'diagnosis_required', minSkillLevel: 3, modes: [W, PU], durationMin: 90, warrantyDays: 90 },
   { code: 'tw_ignition_switch_replacement', name: 'Ignition Switch Replacement', pricingMode: 'fixed', minSkillLevel: 2, modes: [D, W], durationMin: 60, warrantyDays: 180, component: 'tw_ignition_switch' },
 
-  /* ── Engine ────────────────────────────────────────────────────────── */
+  /* Engine */
   { code: 'tw_engine_repair', name: 'Engine Repair', pricingMode: 'diagnosis_required', minSkillLevel: 4, modes: [W, PU], durationMin: 480, warrantyDays: 90 },
   { code: 'tw_engine_tuning', name: 'Engine Tuning', pricingMode: 'fixed', minSkillLevel: 3, modes: [D, W], durationMin: 60, warrantyDays: 30 },
   { code: 'tw_engine_oil_change', name: 'Engine Oil Change', pricingMode: 'fixed', minSkillLevel: 1, modes: [D, W], durationMin: 30, warrantyDays: 0, component: 'tw_engine_oil' },
@@ -465,7 +465,7 @@ const REPAIRS = [
   { code: 'tw_air_filter_replacement', name: 'Air Filter Replacement', pricingMode: 'fixed', minSkillLevel: 1, modes: [D, W], durationMin: 20, warrantyDays: 0, component: 'tw_air_filter' },
   { code: 'tw_diagnostic_scan', name: 'Electronic Diagnostic Scan', pricingMode: 'fixed', minSkillLevel: 3, modes: [D, W], durationMin: 40, warrantyDays: 0 },
 
-  /* ── Electrical ────────────────────────────────────────────────────── */
+  /* Electrical */
   { code: 'tw_stator_repair', name: 'Stator / Alternator Repair', pricingMode: 'diagnosis_required', minSkillLevel: 3, modes: [W, PU], durationMin: 150, warrantyDays: 90 },
   { code: 'tw_rectifier_replacement', name: 'Rectifier Replacement', pricingMode: 'fixed', minSkillLevel: 3, modes: [D, W], durationMin: 60, warrantyDays: 180, component: 'tw_rectifier' },
   { code: 'tw_wiring_repair', name: 'Wiring Repair', pricingMode: 'diagnosis_required', minSkillLevel: 3, modes: [W, PU], durationMin: 120, warrantyDays: 90 },
@@ -478,7 +478,7 @@ const REPAIRS = [
   { code: 'tw_brake_switch_replacement', name: 'Brake Light Switch Replacement', pricingMode: 'fixed', minSkillLevel: 2, modes: [D, W], durationMin: 30, warrantyDays: 90, component: 'tw_brake_switch' },
   { code: 'tw_cluster_repair', name: 'Instrument Cluster Repair', pricingMode: 'diagnosis_required', minSkillLevel: 3, modes: [W, PU], durationMin: 120, warrantyDays: 90 },
 
-  /* ── Brakes ────────────────────────────────────────────────────────── */
+  /* Brakes */
   { code: 'tw_brake_pad_replacement', name: 'Brake Pad Replacement', pricingMode: 'fixed', minSkillLevel: 2, modes: [RS, D, W], durationMin: 45, warrantyDays: 180, component: 'tw_brake_pad' },
   { code: 'tw_brake_shoe_replacement', name: 'Brake Shoe Replacement', pricingMode: 'fixed', minSkillLevel: 2, modes: [D, W], durationMin: 60, warrantyDays: 180, component: 'tw_brake_shoe' },
   { code: 'tw_brake_disc_replacement', name: 'Brake Disc Replacement', pricingMode: 'fixed', minSkillLevel: 3, modes: [W, PU], durationMin: 90, warrantyDays: 180, component: 'tw_brake_disc' },
@@ -487,7 +487,7 @@ const REPAIRS = [
   { code: 'tw_brake_bleeding', name: 'Brake Bleeding', pricingMode: 'fixed', minSkillLevel: 2, modes: [D, W], durationMin: 40, warrantyDays: 30 },
   { code: 'tw_brake_service', name: 'Brake Service', pricingMode: 'fixed', minSkillLevel: 2, modes: [D, W], durationMin: 60, warrantyDays: 90 },
 
-  /* ── Tyres & wheels ────────────────────────────────────────────────── */
+  /* Tyres & wheels */
   { code: 'tw_tyre_replacement', name: 'Tyre Replacement', pricingMode: 'fixed', minSkillLevel: 2, modes: [RS, D, W], durationMin: 45, warrantyDays: 0, component: 'tw_tyre' },
   { code: 'tw_wheel_alignment', name: 'Wheel Alignment', pricingMode: 'fixed', minSkillLevel: 2, modes: [W], durationMin: 45, warrantyDays: 30 },
   { code: 'tw_wheel_balancing', name: 'Wheel Balancing', pricingMode: 'fixed', minSkillLevel: 2, modes: [W], durationMin: 45, warrantyDays: 30 },
@@ -496,7 +496,7 @@ const REPAIRS = [
   { code: 'tw_valve_replacement', name: 'Valve Replacement', pricingMode: 'fixed', minSkillLevel: 1, modes: [RS, D, W], durationMin: 25, warrantyDays: 90, component: 'tw_valve' },
   { code: 'tw_wheel_bearing_replacement', name: 'Wheel Bearing Replacement', pricingMode: 'fixed', minSkillLevel: 3, modes: [W, PU], durationMin: 90, warrantyDays: 180, component: 'tw_wheel_bearing' },
 
-  /* ── Chain, clutch & gears ─────────────────────────────────────────── */
+  /* Chain, clutch & gears */
   { code: 'tw_chain_adjustment', name: 'Chain Adjustment', pricingMode: 'fixed', minSkillLevel: 1, modes: [RS, D, W], durationMin: 20, warrantyDays: 30 },
   { code: 'tw_chain_service', name: 'Chain Cleaning & Lubrication', pricingMode: 'fixed', minSkillLevel: 1, modes: [D, W], durationMin: 30, warrantyDays: 0 },
   { code: 'tw_chain_replacement', name: 'Chain Replacement', pricingMode: 'fixed', minSkillLevel: 2, modes: [D, W], durationMin: 60, warrantyDays: 180, component: 'tw_chain' },
@@ -506,20 +506,20 @@ const REPAIRS = [
   { code: 'tw_clutch_adjustment', name: 'Clutch Adjustment', pricingMode: 'fixed', minSkillLevel: 1, modes: [RS, D, W], durationMin: 20, warrantyDays: 30 },
   { code: 'tw_gearbox_repair', name: 'Gearbox Repair', pricingMode: 'diagnosis_required', minSkillLevel: 4, modes: [W, PU], durationMin: 480, warrantyDays: 90 },
 
-  /* ── CVT ───────────────────────────────────────────────────────────── */
+  /* CVT */
   { code: 'tw_cvt_service', name: 'CVT Service', pricingMode: 'fixed', minSkillLevel: 2, modes: [D, W], durationMin: 90, warrantyDays: 90 },
   { code: 'tw_cvt_belt_replacement', name: 'CVT Belt Replacement', pricingMode: 'fixed', minSkillLevel: 3, modes: [D, W, PU], durationMin: 90, warrantyDays: 180, component: 'tw_cvt_belt' },
   { code: 'tw_cvt_roller_replacement', name: 'Roller Weight Replacement', pricingMode: 'fixed', minSkillLevel: 3, modes: [D, W, PU], durationMin: 90, warrantyDays: 180, component: 'tw_cvt_roller' },
   { code: 'tw_clutch_shoe_replacement', name: 'Clutch Shoe Replacement', pricingMode: 'fixed', minSkillLevel: 3, modes: [W, PU], durationMin: 120, warrantyDays: 180, component: 'tw_clutch_shoe' },
 
-  /* ── Suspension & steering ─────────────────────────────────────────── */
+  /* Suspension & steering */
   { code: 'tw_fork_service', name: 'Front Fork Service', pricingMode: 'fixed', minSkillLevel: 3, modes: [W, PU], durationMin: 120, warrantyDays: 90 },
   { code: 'tw_fork_seal_replacement', name: 'Fork Seal Replacement', pricingMode: 'fixed', minSkillLevel: 3, modes: [W, PU], durationMin: 120, warrantyDays: 180, component: 'tw_fork_seal' },
   { code: 'tw_shock_absorber_replacement', name: 'Shock Absorber Replacement', pricingMode: 'fixed', minSkillLevel: 2, modes: [D, W, PU], durationMin: 90, warrantyDays: 180, component: 'tw_shock_absorber' },
   { code: 'tw_handlebar_alignment', name: 'Handlebar Alignment', pricingMode: 'fixed', minSkillLevel: 2, modes: [D, W], durationMin: 45, warrantyDays: 30 },
   { code: 'tw_steering_bearing_replacement', name: 'Steering Bearing Replacement', pricingMode: 'fixed', minSkillLevel: 3, modes: [W, PU], durationMin: 150, warrantyDays: 180, component: 'tw_steering_bearing' },
 
-  /* ── Fuel & cooling ────────────────────────────────────────────────── */
+  /* Fuel & cooling */
   { code: 'tw_carburetor_service', name: 'Carburettor Service', pricingMode: 'fixed', minSkillLevel: 3, modes: [D, W, PU], durationMin: 90, warrantyDays: 90 },
   { code: 'tw_fuel_injector_service', name: 'Fuel Injector Service', pricingMode: 'fixed', minSkillLevel: 3, modes: [W, PU], durationMin: 90, warrantyDays: 90 },
   { code: 'tw_fuel_pump_replacement', name: 'Fuel Pump Replacement', pricingMode: 'fixed', minSkillLevel: 3, modes: [W, PU], durationMin: 120, warrantyDays: 180, component: 'tw_fuel_pump' },
@@ -530,7 +530,7 @@ const REPAIRS = [
   { code: 'tw_radiator_repair', name: 'Radiator Repair', pricingMode: 'diagnosis_required', minSkillLevel: 3, modes: [W, PU], durationMin: 150, warrantyDays: 90 },
   { code: 'tw_radiator_fan_replacement', name: 'Radiator Fan Replacement', pricingMode: 'fixed', minSkillLevel: 3, modes: [W, PU], durationMin: 90, warrantyDays: 180, component: 'tw_radiator_fan' },
 
-  /* ── Body & maintenance ────────────────────────────────────────────── */
+  /* Body & maintenance */
   { code: 'tw_panel_replacement', name: 'Panel / Body Part Replacement', pricingMode: 'fixed', minSkillLevel: 2, modes: [D, W, PU], durationMin: 60, warrantyDays: 90, component: 'tw_body_panel' },
   { code: 'tw_mirror_replacement', name: 'Mirror Replacement', pricingMode: 'fixed', minSkillLevel: 1, modes: [RS, D, W], durationMin: 20, warrantyDays: 90, component: 'tw_mirror' },
   { code: 'tw_seat_repair', name: 'Seat Repair / Recover', pricingMode: 'fixed', minSkillLevel: 2, modes: [W, PU], durationMin: 120, warrantyDays: 90 },
@@ -538,7 +538,7 @@ const REPAIRS = [
   { code: 'tw_full_inspection', name: 'Full Inspection', pricingMode: 'fixed', minSkillLevel: 2, modes: [D, W], durationMin: 60, warrantyDays: 0 },
   { code: 'tw_washing', name: 'Washing & Detailing', pricingMode: 'fixed', minSkillLevel: 1, modes: [D, W], durationMin: 60, warrantyDays: 0 },
 
-  /* ── EV ────────────────────────────────────────────────────────────── *
+  /* EV *
    * All high-voltage work is workshop-bound. A pack is heavy, live, and
    * dangerous to open at a kerbside, and `tw_ev_safety_inspection` exists so a
    * suspected thermal fault has somewhere to go that is NOT a normal repair
@@ -557,7 +557,7 @@ const REPAIRS = [
   { code: 'tw_ev_firmware_update', name: 'Firmware / Software Service', pricingMode: 'fixed', minSkillLevel: 2, modes: [D, W, R], durationMin: 45, warrantyDays: 30 },
 ];
 
-/* ─── Skill levels (§23) ───────────────────────────────────────────────── */
+/* Skill levels (§23) */
 
 const SKILL_LEVELS = [
   { level: 1, name: 'Roadside', description: 'Puncture, jump start, bulbs, cables, fluids', requiresVerification: false },
@@ -573,7 +573,7 @@ const SKILL_LEVELS = [
   },
 ];
 
-/* ─── QA checklists (§53) ──────────────────────────────────────────────── */
+/* QA checklists (§53) */
 
 const QA_CHECKLISTS = [
   {

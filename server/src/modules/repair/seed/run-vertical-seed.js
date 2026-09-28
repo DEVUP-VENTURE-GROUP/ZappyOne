@@ -71,7 +71,7 @@ function loadSeed(vertical) {
   return { data, FLOWS, models };
 }
 
-/* ─── Steps ────────────────────────────────────────────────────────────── */
+/* Steps */
 
 async function seedBrands(V, seed) {
   let created = 0;
@@ -335,7 +335,7 @@ async function report(V) {
   };
 }
 
-/* ─── Runner ───────────────────────────────────────────────────────────── */
+/* Runner */
 
 async function run(vertical, { reportOnly = false, allowProduction = false } = {}) {
   if (!VERTICALS.includes(vertical)) {

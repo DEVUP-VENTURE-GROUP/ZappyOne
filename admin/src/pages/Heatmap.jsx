@@ -30,7 +30,7 @@ const VIEWS = [
   { id: 'workers', label: 'Live Workers',     Icon: Users,       color: '#10b981', desc: 'Live worker positions from GPS' },
 ];
 
-/* ── MapView ── */
+/* MapView */
 function MapView({ cells, workerLocations, noServicePoints, view, isLoading }) {
   const containerRef = useRef(null);
   const mapRef       = useRef(null);
@@ -56,7 +56,7 @@ function MapView({ cells, workerLocations, noServicePoints, view, isLoading }) {
   );
 }
 
-/* ── Main ── */
+/* Main */
 export default function Heatmap() {
   const [view, setView]       = useState('demand');
   const [days, setDays]       = useState(30);

@@ -1,6 +1,6 @@
 /**
  * LiveSelfieCapture
- * ─────────────────────────────────────────────────────────────────────────────
+ *
  * Opens the FRONT camera via getUserMedia. No gallery uploads allowed.
  * Shows a liveness challenge (blink instruction + countdown) before capture.
  * Collects geo-coordinates and exact timestamp at moment of capture.
@@ -172,7 +172,7 @@ export default function LiveSelfieCapture({
     if (previewUrl) URL.revokeObjectURL(previewUrl);
   }
 
-  /* ── Render ─────────────────────────────────────────────────────────────── */
+  /* Render */
 
   return (
     <div className="fixed inset-0 z-50 bg-black/90 flex flex-col items-center justify-center p-4">

@@ -1,7 +1,7 @@
 /**
  * Sanitize request inputs against:
  *   1. NoSQL operator injection — strip keys starting with '$' or containing '.'
- *   2. Prototype pollution — strip __proto__, constructor, prototype keys (#76)
+ *   2. Prototype pollution — strip __proto__, constructor, prototype keys
  *   3. HTML/script injection — strip HTML tags from user-facing text fields
  *   4. Excessive nesting — cap recursion depth to prevent DoS via deeply nested JSON
  */
@@ -29,7 +29,7 @@ function stripHtml(str) {
 
 function sanitize(obj, depth = 0) {
   if (!obj || typeof obj !== 'object') return obj;
-  // Depth cap — reject bomb payloads silently (#76)
+  // Depth cap — reject bomb payloads silently
   if (depth > MAX_DEPTH) return {};
   if (Array.isArray(obj)) return obj.map((v) => sanitize(v, depth + 1));
 
@@ -37,7 +37,7 @@ function sanitize(obj, depth = 0) {
   for (const [k, v] of Object.entries(obj)) {
     // Block NoSQL operators
     if (FORBIDDEN_KEY.test(k)) continue;
-    // Block prototype pollution (#76)
+    // Block prototype pollution
     if (PROTOTYPE_KEYS.has(k)) continue;
     if (typeof v === 'string' && HTML_STRIP_FIELDS.has(k)) {
       out[k] = stripHtml(v);

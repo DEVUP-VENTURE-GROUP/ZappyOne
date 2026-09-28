@@ -84,7 +84,7 @@ export function applyFacet(services, facets, activeKey) {
   return facet ? services.filter(facet.match) : services;
 }
 
-/* ── Formatting ───────────────────────────────────────────────────────────── */
+/* Formatting */
 
 export const paiseToRupees = (paise) => Math.round(Number(paise || 0) / 100);
 

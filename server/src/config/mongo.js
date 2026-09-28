@@ -17,7 +17,7 @@ const MONGO_OPTS = {
 /**
  * Connect to MongoDB with automatic reconnect-on-disconnect.
  * Uses exponential back-off (max 30s) so a transient outage doesn't spin
- * the process at 100% CPU. (#91)
+ * the process at 100% CPU.
  */
 async function connectMongo() {
   mongoose.set('strictQuery', true);
@@ -73,7 +73,7 @@ function isMongoConnected() { return _isConnected; }
 
 /**
  * Express middleware: returns 503 immediately if Mongo is down.
- * Prevents requests from hanging indefinitely. (#91)
+ * Prevents requests from hanging indefinitely.
  */
 function requireMongo(req, res, next) {
   // Gate on the actual driver state as well as our flag. `_isConnected` is only

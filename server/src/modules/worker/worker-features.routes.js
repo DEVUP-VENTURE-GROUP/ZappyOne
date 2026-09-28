@@ -11,7 +11,7 @@ const { authLimiter } = require('../../middlewares/rateLimit');
 
 const router = express.Router();
 
-/* ── Feature 2: Worker SOS ───────────────────────────────────────── */
+/* Feature 2: Worker SOS */
 router.post('/sos',
   authenticate, requireRole('worker'), authLimiter,
   validate(Joi.object({
@@ -50,7 +50,7 @@ router.post('/emergency-contact',
   }
 );
 
-/* ── Feature 5: Earned Wage Access ──────────────────────────────── */
+/* Feature 5: Earned Wage Access */
 router.get('/earned-wage', authenticate, requireRole('worker'), async (req, res, next) => {
   try {
     const ewSvc = require('./earned-wage.service');
@@ -70,7 +70,7 @@ router.post('/earned-wage/advance',
   }
 );
 
-/* ── Feature 9: Worker Emergency Fund ───────────────────────────── */
+/* Feature 9: Worker Emergency Fund */
 router.get('/emergency-fund/claims', authenticate, requireRole('worker'), async (req, res, next) => {
   try {
     const efSvc  = require('./emergency-fund.service');
@@ -96,7 +96,7 @@ router.post('/emergency-fund/claim',
   }
 );
 
-/* ── Feature 10: Area Safety Notes ──────────────────────────────── */
+/* Feature 10: Area Safety Notes */
 router.post('/area-notes',
   authenticate, requireRole('worker'),
   validate(Joi.object({

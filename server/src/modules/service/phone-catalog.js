@@ -10,7 +10,7 @@
  * ---------------------------------------------------------------------------
  */
 
-/* ─── Brand hierarchy ─────────────────────────────────────────────── */
+/* Brand hierarchy */
 const PHONE_BRANDS = ['Apple', 'Samsung', 'OnePlus', 'Xiaomi', 'Vivo', 'Oppo', 'Realme', 'Motorola', 'Nokia', 'Others'];
 
 const PHONE_CATALOG = {
@@ -294,7 +294,7 @@ const PHONE_CATALOG = {
   },
 };
 
-/* ─── Quality tier definitions ───────────────────────────────────── */
+/* Quality tier definitions */
 const QUALITY_TIERS = {
   OEM: {
     label: 'Original (OEM)',

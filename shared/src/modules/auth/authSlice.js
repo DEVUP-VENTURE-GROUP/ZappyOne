@@ -1,7 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit';
 
 /**
- * Auth state — tokens live in MEMORY only. (#78)
+ * Auth state — tokens live in MEMORY only.
  *
  * Why not localStorage?
  *   Any XSS payload can call `localStorage.getItem('qfx_auth_v2')` and exfiltrate

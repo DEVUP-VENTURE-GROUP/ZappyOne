@@ -287,7 +287,7 @@ const TABS = [
   { id: 'config', label: 'Configuration', icon: Settings },
 ];
 
-/* ─── Overview ─────────────────────────────────────────────────────────── */
+/* Overview */
 
 function Overview({ vertical }) {
   const { data, isLoading } = useAdminRepairDashboardQuery(vertical);
@@ -343,7 +343,7 @@ function Overview({ vertical }) {
   );
 }
 
-/* ─── Provider price approvals (§12/§68) ───────────────────────────────── */
+/* Provider price approvals (§12/§68) */
 
 function PriceApprovals({ vertical }) {
   const { data, isLoading, refetch } = useAdminRepairPendingPricesQuery();
@@ -417,7 +417,7 @@ function PriceApprovals({ vertical }) {
   );
 }
 
-/* ─── Customer catalog requests (§67) ──────────────────────────────────── */
+/* Customer catalog requests (§67) */
 
 function CatalogRequests({ vertical }) {
   const { data, isLoading, refetch } = useAdminRepairCatalogRequestsQuery({ vertical, status: 'pending' });
@@ -500,7 +500,7 @@ function CatalogRequests({ vertical }) {
 }
 
 
-/* ─── Model identification queue ───────────────────────────────────────── */
+/* Model identification queue */
 
 /**
  * Customers who could not name their machine (§7).
@@ -615,7 +615,7 @@ function IdentificationQueue({ vertical }) {
   );
 }
 
-/* ─── Bookings ─────────────────────────────────────────────────────────── */
+/* Bookings */
 
 function Bookings({ vertical }) {
   const { data, isLoading } = useAdminRepairBookingsQuery({ limit: 50, vertical });
@@ -654,7 +654,7 @@ function Bookings({ vertical }) {
   );
 }
 
-/* ─── Configuration (§42) ──────────────────────────────────────────────── */
+/* Configuration (§42) */
 
 const CONFIG_FIELDS = [
   { group: 'Price approval bands', keys: [
@@ -768,7 +768,7 @@ function Configuration({ vertical }) {
   );
 }
 
-/* ─── Shell ────────────────────────────────────────────────────────────── */
+/* Shell */
 
 /**
  * `deepCatalog` says this vertical identifies devices below model level.

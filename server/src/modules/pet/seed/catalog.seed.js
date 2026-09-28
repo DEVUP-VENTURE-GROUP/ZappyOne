@@ -39,7 +39,7 @@ function V(code, name, categoryCode, species, allowedModes, pricingUnit, opts = 
 }
 
 const VARIANTS = [
-  /* ── 1. Grooming & Hygiene (§9) ──────────────────────────────────────── */
+  /* 1. Grooming & Hygiene (§9) */
   V('pg_basic_bath', 'Basic Bath', 'pet_grooming', BOTH, [...DOORSTEP, ...PROVIDER], 'flat', { estimatedMinutes: 45, isPopular: true, displayOrder: 1 }),
   V('pg_bath_dry', 'Bath + Dry', 'pet_grooming', BOTH, [...DOORSTEP, ...PROVIDER], 'flat', { estimatedMinutes: 60, displayOrder: 2 }),
   V('pg_full_grooming', 'Full Grooming', 'pet_grooming', BOTH, [...DOORSTEP, ...PROVIDER], 'flat', { estimatedMinutes: 90, isPopular: true, displayOrder: 3 }),
@@ -59,7 +59,7 @@ const VARIANTS = [
   V('pg_mat_removal', 'Mat Removal', 'pet_grooming', C, [...DOORSTEP, ...PROVIDER], 'flat', { estimatedMinutes: 30, displayOrder: 17 }),
   V('pg_longhair_grooming', 'Long-Hair Grooming', 'pet_grooming', C, PROVIDER, 'flat', { estimatedMinutes: 75, displayOrder: 18 }),
 
-  /* ── 2. Pet Stay & Daycare (§11) ─────────────────────────────────────── */
+  /* 2. Pet Stay & Daycare (§11) */
   V('pb_overnight_boarding', 'Overnight Boarding', 'pet_boarding', BOTH, ['boarding'], 'per_night', { isPopular: true, displayOrder: 1, requiredProofKinds: ['handover_in', 'handover_out'] }),
   V('pb_home_boarding', 'Home Boarding', 'pet_boarding', BOTH, ['boarding'], 'per_night', { displayOrder: 2, requiredProofKinds: ['handover_in', 'handover_out'] }),
   V('pb_facility_boarding', 'Facility Boarding', 'pet_boarding', BOTH, ['boarding'], 'per_night', { isPopular: true, displayOrder: 3, requiredProofKinds: ['handover_in', 'handover_out'] }),
@@ -69,7 +69,7 @@ const VARIANTS = [
   V('pb_trial_stay', 'Trial Stay', 'pet_boarding', BOTH, ['boarding'], 'per_night', { displayOrder: 7, requiredProofKinds: ['handover_in', 'handover_out'] }),
   V('pb_extended_stay', 'Extended Stay', 'pet_boarding', BOTH, ['boarding'], 'per_night', { displayOrder: 8, requiredProofKinds: ['handover_in', 'handover_out'] }),
 
-  /* ── 3. Walk & Activity (§14) ────────────────────────────────────────── */
+  /* 3. Walk & Activity (§14) */
   V('pw_walk_20', '20-Minute Walk', 'pet_walk', D, [...DOORSTEP, ...HOME], 'per_minute', { durationMinutes: 20, estimatedMinutes: 30, isPopular: true, displayOrder: 1, requiredProofKinds: ['handover_out', 'handover_in'] }),
   V('pw_walk_30', '30-Minute Walk', 'pet_walk', D, [...DOORSTEP, ...HOME], 'per_minute', { durationMinutes: 30, estimatedMinutes: 40, isPopular: true, displayOrder: 2, requiredProofKinds: ['handover_out', 'handover_in'] }),
   V('pw_walk_45', '45-Minute Walk', 'pet_walk', D, [...DOORSTEP, ...HOME], 'per_minute', { durationMinutes: 45, estimatedMinutes: 55, displayOrder: 3, requiredProofKinds: ['handover_out', 'handover_in'] }),
@@ -82,7 +82,7 @@ const VARIANTS = [
   // Cats: activity visits only. Outdoor walking is gated off in compatibility below.
   V('pw_activity_visit', 'Activity Visit', 'pet_walk', C, HOME, 'per_minute', { durationMinutes: 30, estimatedMinutes: 40, displayOrder: 10 }),
 
-  /* ── 4. Pet Home Care (§16) ──────────────────────────────────────────── */
+  /* 4. Pet Home Care (§16) */
   V('ph_feeding_visit', 'Feeding Visit', 'pet_home_care', BOTH, HOME, 'per_visit', { estimatedMinutes: 20, isPopular: true, displayOrder: 1 }),
   V('ph_water_refill', 'Water Refill', 'pet_home_care', BOTH, HOME, 'per_visit', { estimatedMinutes: 10, displayOrder: 2 }),
   V('ph_litter_care', 'Litter Box Care', 'pet_home_care', C, HOME, 'per_visit', { estimatedMinutes: 15, isPopular: true, displayOrder: 3 }),
@@ -96,7 +96,7 @@ const VARIANTS = [
   V('ph_pet_sitting', 'Home Pet Sitting', 'pet_home_care', BOTH, HOME, 'per_visit', { estimatedMinutes: 120, displayOrder: 11 }),
   V('ph_overnight_sitting', 'Overnight Home Sitting', 'pet_home_care', BOTH, HOME, 'per_night', { displayOrder: 12, requiredProofKinds: ['handover_in', 'handover_out'] }),
 
-  /* ── 5. Pet Pickup & Assistance (§18) ────────────────────────────────── */
+  /* 5. Pet Pickup & Assistance (§18) */
   V('pt_vet_pickup_drop', 'Vet Pickup & Drop', 'pet_transport', BOTH, ['pickup_and_return', 'transport'], 'per_km', { estimatedMinutes: 60, isPopular: true, displayOrder: 1 }),
   V('pt_grooming_pickup_drop', 'Grooming Pickup & Drop', 'pet_transport', BOTH, ['pickup_and_return'], 'per_km', { estimatedMinutes: 45, displayOrder: 2 }),
   V('pt_boarding_pickup_drop', 'Boarding Pickup & Drop', 'pet_transport', BOTH, ['pickup_and_return'], 'per_km', { estimatedMinutes: 45, displayOrder: 3 }),
@@ -107,7 +107,7 @@ const VARIANTS = [
   V('pt_wait_return', 'Wait + Return', 'pet_transport', BOTH, ['transport'], 'per_km', { estimatedMinutes: 90, displayOrder: 8 }),
   V('pt_pickup_service_return', 'Pickup + Service + Return', 'pet_transport', BOTH, ['pickup_and_return'], 'per_km', { estimatedMinutes: 120, displayOrder: 9 }),
 
-  /* ── 6. Vet & Appointment Assistance (§20) ───────────────────────────── */
+  /* 6. Vet & Appointment Assistance (§20) */
   V('pv_appointment_pickup_drop', 'Vet Appointment Pickup & Drop', 'pet_vet_assist', BOTH, ['pickup_and_return'], 'per_km', { estimatedMinutes: 60, isPopular: true, displayOrder: 1 }),
   V('pv_visit_companion', 'Vet Visit Companion', 'pet_vet_assist', BOTH, ['transport'], 'per_visit', { estimatedMinutes: 90, displayOrder: 2 }),
   V('pv_waiting_assistant', 'Appointment Waiting Assistant', 'pet_vet_assist', BOTH, ['provider_location'], 'per_visit', { estimatedMinutes: 60, displayOrder: 3 }),
@@ -117,7 +117,7 @@ const VARIANTS = [
   V('pv_clinic_coordination', 'Clinic Appointment Coordination', 'pet_vet_assist', BOTH, ['provider_location'], 'per_visit', { estimatedMinutes: 30, requiredProofKinds: ['after'], displayOrder: 7 }),
   V('pv_pickup_wait_return', 'Pickup + Wait + Return', 'pet_vet_assist', BOTH, ['pickup_and_return'], 'per_km', { estimatedMinutes: 120, displayOrder: 8 }),
 
-  /* ── 7. Pet Check & Home Visit (§21) ─────────────────────────────────── */
+  /* 7. Pet Check & Home Visit (§21) */
   V('pc_check_15', '15-Minute Pet Check', 'pet_check', BOTH, HOME, 'per_visit', { estimatedMinutes: 15, isPopular: true, displayOrder: 1, requiredProofKinds: ['after'] }),
   V('pc_check_30', '30-Minute Pet Check', 'pet_check', BOTH, HOME, 'per_visit', { estimatedMinutes: 30, isPopular: true, displayOrder: 2, requiredProofKinds: ['after'] }),
   V('pc_check_45', '45-Minute Pet Check', 'pet_check', BOTH, HOME, 'per_visit', { estimatedMinutes: 45, displayOrder: 3, requiredProofKinds: ['after'] }),
@@ -128,7 +128,7 @@ const VARIANTS = [
   V('pc_multi_pet_check', 'Multi-Pet Check', 'pet_check', BOTH, HOME, 'per_visit', { estimatedMinutes: 45, displayOrder: 8, requiredProofKinds: ['after'] }),
 ];
 
-/* ─── Compatibility (§51) ───────────────────────────────────────────── */
+/* Compatibility (§51) */
 
 const COMPATIBILITY = [
   // The rule this section exists for: outdoor walking is off for cats by

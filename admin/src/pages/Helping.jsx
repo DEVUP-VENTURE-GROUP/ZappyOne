@@ -56,7 +56,7 @@ export default function Helping() {
   );
 }
 
-/* ─── Live tasks & exceptions (§37) ───────────────────────────────────── */
+/* Live tasks & exceptions (§37) */
 
 function TasksTab({ exceptionsOnly }) {
   const { data, isLoading, refetch } = useAdminHelpingTasksQuery(
@@ -158,7 +158,7 @@ function TasksTab({ exceptionsOnly }) {
   );
 }
 
-/* ─── Pricing & limits (§51) ──────────────────────────────────────────── */
+/* Pricing & limits (§51) */
 
 function ConfigTab() {
   const { data, isLoading } = useAdminHelpingConfigQuery();

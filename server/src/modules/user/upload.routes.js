@@ -6,7 +6,7 @@ const { validate } = require('../../middlewares/validate');
 
 const router = express.Router();
 
-// Content-type → allowed file extensions whitelist. (#80)
+// Content-type → allowed file extensions whitelist.
 // An attacker can't presign a PHP shell as image/jpeg if the filename
 // extension is also validated. Both must match.
 const CONTENT_TYPE_EXTS = {

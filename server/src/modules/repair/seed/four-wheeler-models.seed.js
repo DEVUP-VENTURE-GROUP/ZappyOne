@@ -34,7 +34,7 @@ const M = (brandCode, name, productTypeCode, fuelTypes) => ({
 });
 
 const MODELS = [
-  /* ── Maruti Suzuki ─────────────────────────────────────────────────── */
+  /* Maruti Suzuki */
   M('maruti-suzuki', 'Alto K10', HATCH, [P, C]),
   M('maruti-suzuki', 'S-Presso', HATCH, [P, C]),
   M('maruti-suzuki', 'Celerio', HATCH, [P, C]),
@@ -53,7 +53,7 @@ const MODELS = [
   M('maruti-suzuki', 'Invicto', MUV, [H]),
   M('maruti-suzuki', 'Eeco', MUV, [P, C]),
 
-  /* ── Hyundai ───────────────────────────────────────────────────────── */
+  /* Hyundai */
   M('hyundai', 'Grand i10 Nios', HATCH, [P, C]),
   M('hyundai', 'i20', HATCH, [P]),
   M('hyundai', 'Exter', SUV, [P, C]),
@@ -66,7 +66,7 @@ const MODELS = [
   M('hyundai', 'Verna', SEDAN, [P]),
   M('hyundai', 'Ioniq 5', SUV, [E]),
 
-  /* ── Tata Motors ───────────────────────────────────────────────────── */
+  /* Tata Motors */
   M('tata-motors', 'Tiago', HATCH, [P, C]),
   M('tata-motors', 'Tiago EV', HATCH, [E]),
   M('tata-motors', 'Altroz', HATCH, [P, D, C]),
@@ -81,7 +81,7 @@ const MODELS = [
   M('tata-motors', 'Harrier', SUV, [D]),
   M('tata-motors', 'Safari', SUV, [D]),
 
-  /* ── Mahindra ──────────────────────────────────────────────────────── */
+  /* Mahindra */
   M('mahindra', 'XUV 3XO', SUV, [P, D]),
   M('mahindra', 'Bolero', SUV, [D]),
   M('mahindra', 'Bolero Neo', SUV, [D]),
@@ -94,7 +94,7 @@ const MODELS = [
   M('mahindra', 'BE 6', SUV, [E]),
   M('mahindra', 'Marazzo', MUV, [D]),
 
-  /* ── Toyota ────────────────────────────────────────────────────────── */
+  /* Toyota */
   M('toyota', 'Glanza', HATCH, [P, C]),
   M('toyota', 'Taisor', SUV, [P, C]),
   M('toyota', 'Urban Cruiser Hyryder', SUV, [P, C, H]),
@@ -104,7 +104,7 @@ const MODELS = [
   M('toyota', 'Rumion', MUV, [P, C]),
   M('toyota', 'Camry', SEDAN, [H]),
 
-  /* ── Kia ───────────────────────────────────────────────────────────── */
+  /* Kia */
   M('kia', 'Sonet', SUV, [P, D]),
   M('kia', 'Syros', SUV, [P, D]),
   M('kia', 'Seltos', SUV, [P, D]),
@@ -112,12 +112,12 @@ const MODELS = [
   M('kia', 'Carnival', MUV, [D]),
   M('kia', 'EV6', SUV, [E]),
 
-  /* ── Honda ─────────────────────────────────────────────────────────── */
+  /* Honda */
   M('honda-car', 'Amaze', SEDAN, [P]),
   M('honda-car', 'City', SEDAN, [P, H]),
   M('honda-car', 'Elevate', SUV, [P]),
 
-  /* ── MG, Renault, Nissan ───────────────────────────────────────────── */
+  /* MG, Renault, Nissan */
   M('mg-motor', 'Comet EV', HATCH, [E]),
   M('mg-motor', 'Astor', SUV, [P]),
   M('mg-motor', 'Hector', SUV, [P, D]),
@@ -128,7 +128,7 @@ const MODELS = [
   M('renault', 'Kiger', SUV, [P]),
   M('nissan', 'Magnite', SUV, [P]),
 
-  /* ── Volkswagen, Škoda, Jeep, Citroën ──────────────────────────────── */
+  /* Volkswagen, Škoda, Jeep, Citroën */
   M('volkswagen', 'Virtus', SEDAN, [P]),
   M('volkswagen', 'Taigun', SUV, [P]),
   M('volkswagen', 'Tiguan', SUV, [P]),
@@ -140,7 +140,7 @@ const MODELS = [
   M('citroen', 'C3', HATCH, [P]),
   M('citroen', 'Basalt', SUV, [P]),
 
-  /* ── Premium / luxury ──────────────────────────────────────────────── */
+  /* Premium / luxury */
   M('mercedes-benz', 'A-Class', SEDAN, [P, D]),
   M('mercedes-benz', 'C-Class', SEDAN, [P, D]),
   M('mercedes-benz', 'E-Class', SEDAN, [P, D]),
@@ -167,7 +167,7 @@ const MODELS = [
   M('lexus', 'NX', LUX, [H]),
   M('lexus', 'ES', SEDAN, [H]),
 
-  /* ── EV specialists ────────────────────────────────────────────────── */
+  /* EV specialists */
   M('byd', 'Atto 3', SUV, [E]),
   M('byd', 'Seal', SEDAN, [E]),
   M('byd', 'eMAX 7', MUV, [E]),
