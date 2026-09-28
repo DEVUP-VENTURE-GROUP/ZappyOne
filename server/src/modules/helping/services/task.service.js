@@ -24,6 +24,8 @@
 const crypto = require('crypto');
 const { HelpingTask } = require('../models/task.model');
 const pricingService = require('./pricing.service');
+const money = require('./money.service');
+const { OFFERED_PAYMENT_MODELS, normalisePaymentModel } = require('../models/config.model');
 const walletService = require('../../wallet/wallet.service');
 const Transaction = require('../../payment/transaction.model');
 const notificationService = require('../../notification/notification.service');
@@ -70,7 +72,7 @@ async function createTask({
   returnDetail = null,
   scheduledAt = null,
   paymentMethod = 'cash',
-  paymentModel = 'customer_preauth',
+  paymentModel = 'worker_advance',
   specialHandling = false,
   idempotencyKey = null,
 }) {
@@ -83,8 +85,10 @@ async function createTask({
 
   const cfg = await pricingService.getConfig(serviceType);
 
-  if (!cfg.allowedPaymentModels.includes(paymentModel)) {
-    throw httpError('That payment model is not available for this service', 400, 'PAYMENT_MODEL_NOT_ALLOWED');
+  const model = normalisePaymentModel(paymentModel);
+  const offered = new Set((cfg.allowedPaymentModels || []).map(normalisePaymentModel));
+  if (!OFFERED_PAYMENT_MODELS.includes(model) || !offered.has(model)) {
+    throw httpError('That way of paying for items is not available for this service', 400, 'PAYMENT_MODEL_NOT_ALLOWED');
   }
   if (items.length > cfg.maxItems) {
     throw httpError(`At most ${cfg.maxItems} items can go on one task`, 400, 'TOO_MANY_ITEMS');
@@ -113,6 +117,14 @@ async function createTask({
     }
   }
 
+  // A helper fronting the shopping is capped; above that the customer prepays.
+  if (model === 'worker_advance' && itemBudgetPaise > cfg.maxWorkerAdvancePaise) {
+    throw httpError(
+      'That is more than a helper can pay upfront — prepay the budget from your wallet, or reduce it',
+      409, 'ADVANCE_LIMIT_EXCEEDED', { limitPaise: cfg.maxWorkerAdvancePaise },
+    );
+  }
+
   const charge = await pricingService.quote({
     serviceType, pickupLocation, destination, stops, specialHandling, itemBudgetPaise,
   });
@@ -124,7 +136,7 @@ async function createTask({
     );
   }
 
-  const task = await HelpingTask.create({
+  const task = new HelpingTask({
     reference: reference(),
     userId,
     serviceType,
@@ -139,7 +151,7 @@ async function createTask({
     paymentMethod,
     estimatedDurationMinutes: cfg.defaultDurationMinutes,
     charge,
-    itemMoney: { budgetPaise: itemBudgetPaise, paymentModel },
+    itemMoney: { budgetPaise: itemBudgetPaise, paymentModel: model },
     status: 'DRAFT',
     statusHistory: [{ status: 'DRAFT', at: new Date(), by: userId, byRole: 'user' }],
     idempotencyKey,
@@ -147,7 +159,15 @@ async function createTask({
   });
 
   task.transitionTo('REQUESTED', { by: userId, byRole: 'user' });
-  await task.save();
+
+  // Prepaid: the budget leaves the wallet before anyone is sent to buy anything.
+  await money.holdBudget(task);
+  try {
+    await task.save();
+  } catch (err) {
+    await money.releaseHold(task, { amountPaise: task.itemMoney.heldPaise, why: 'Booking failed, budget returned' }).catch(() => {});
+    throw err;
+  }
 
   return { task: task.toObject(), replayed: false };
 }
@@ -194,6 +214,20 @@ async function updateItem({ taskId, workerId, itemId, status, actualPricePaise =
       );
     }
 
+    // The helper pays at the till with their own money; on worker_advance that
+    // is capped, so a helper never ends up financing the customer's shopping.
+    if (task.itemMoney.paymentModel !== 'prepaid_wallet') {
+      const previous = item.status === 'purchased' ? (item.actualPricePaise || 0) : 0;
+      const spendAfter = task.computeItemSpend() - previous + actualPricePaise;
+      const check = await pricingService.advanceCheck(task.serviceType, spendAfter);
+      if (!check.allowed) {
+        throw httpError(
+          'That takes the shopping past what a helper may pay upfront — ask the customer first',
+          409, 'ADVANCE_LIMIT_EXCEEDED', { limitPaise: check.limitPaise, attemptedPaise: spendAfter },
+        );
+      }
+    }
+
     item.actualPricePaise = actualPricePaise;
     item.receiptKey = receiptKey || item.receiptKey;
   }
@@ -205,6 +239,8 @@ async function updateItem({ taskId, workerId, itemId, status, actualPricePaise =
   // Spend is always recomputed from purchased rows — never incremented, so it
   // cannot drift if a status is corrected.
   task.itemMoney.actualPaise = task.computeItemSpend();
+  // Every purchase is paid by the helper at the shop.
+  task.itemMoney.workerAdvancePaise = task.itemMoney.actualPaise;
   await task.save();
 
   return task.toObject();
@@ -363,8 +399,8 @@ async function settleTask({ taskId, actorId = null }) {
   task.itemMoney.actualPaise = spend;
 
   if (task.workerId) {
-    // 1. Give the helper their own money back, if they fronted any.
-    const owed = Math.min(task.itemMoney.workerAdvancePaise || 0, spend);
+    // 1. Give the helper back what they paid at the shop, less any cash the customer handed them for it.
+    const owed = money.reimbursementPaise(task);
     if (owed > 0 && task.itemMoney.workerReimbursedPaise < owed) {
       await walletService.apply({
         kind: 'worker',
@@ -392,21 +428,8 @@ async function settleTask({ taskId, actorId = null }) {
     });
   }
 
-  // 3. Return whatever the customer authorised but nobody spent.
-  const unspent = Math.max(0, (task.itemMoney.budgetPaise || 0) - spend);
-  if (unspent > 0 && task.itemMoney.paymentModel === 'prepaid_wallet') {
-    await walletService.apply({
-      kind: 'user',
-      id: task.userId,
-      type: 'credit',
-      amountPaise: unspent,
-      reason: Transaction.REASONS.PRODUCT_REFUND,
-      idempotencyKey: `helping-unspent-${task._id}`,
-      refs: { helpingTaskId: task._id },
-      description: `Unspent shopping budget from ${task.reference}`,
-    });
-    task.itemMoney.refundedPaise = unspent;
-  }
+  // 3. Return whatever was held from the customer's wallet but not spent.
+  await money.releaseHold(task, { amountPaise: money.unspentHoldPaise(task), why: 'Unspent shopping budget' });
 
   task.transitionTo('SETTLED', { by: actorId, byRole: 'system' });
   await task.save();
@@ -414,41 +437,31 @@ async function settleTask({ taskId, actorId = null }) {
   return task.toObject();
 }
 
-/**
- * Whether the service fee is settled enough to finish the task: paid online,
- * or taken in cash and recorded by the helper.
- */
-function paymentBlocker(task) {
-  if (task.paymentStatus === 'paid' || (task.charge?.serviceChargePaise || 0) <= 0) return null;
-  return task.paymentMethod === 'cash'
-    ? { code: 'CASH_NOT_COLLECTED', message: 'Collect the service fee in cash and record it before completing' }
-    : { code: 'PAYMENT_PENDING', message: 'The customer has not paid online yet. Ask them to pay in the app, or collect cash before completing' };
-}
+/** Why the helper may not finish yet (shopping unfinished, or money still due), or null. */
+const paymentBlocker = (task) => money.completionBlocker(task);
 
 /**
- * The helper has the service fee in cash. Allowed on an online task the
- * customer could not pay online, unless a payment is already in the gateway.
+ * The helper took what is due — the fee, and the receipt total on a
+ * worker_advance task — in cash. Only once the shopping is final, so the
+ * amount is the real bill and not a guess.
  */
 async function recordCash({ taskId, workerId }) {
   const task = await HelpingTask.findById(taskId);
   if (!task) throw httpError('Task not found', 404, 'NOT_FOUND');
   if (String(task.workerId || '') !== String(workerId)) throw httpError('This is not your task', 403, 'FORBIDDEN');
-  if (task.paymentStatus === 'paid') return { task: task.toObject(), alreadyPaid: true };
   if (['CANCELLED', 'FAILED', 'SETTLED', 'DRAFT', 'REQUESTED', 'PAYMENT_PENDING'].includes(task.status)) {
-    throw httpError('There is no fee to collect on this task right now', 409, 'NOTHING_DUE');
+    throw httpError('There is nothing to collect on this task right now', 409, 'NOTHING_DUE');
   }
-  if (task.paymentMethod !== 'cash') {
-    const PaymentIntent = require('../../payment/payment-intent.model');
-    const inGateway = await PaymentIntent.exists({
-      bookingSource: 'helping', bookingId: task._id, status: { $in: ['authorized', 'captured'] },
-    });
-    if (inGateway) throw httpError('The customer has already paid online; it is being confirmed', 409, 'ONLINE_PAYMENT_IN_PROGRESS');
-    task.paymentMethod = 'cash';
+  if (!money.shoppingDone(task)) {
+    throw httpError('Finish the shopping first, so the customer pays the real bill', 409, 'ITEMS_NOT_FINAL');
   }
-  task.paymentStatus = 'paid';
-  task.cashCollectedAt = new Date();
+  const due = money.amountDue(task);
+  if (due.totalPaise <= 0) return { task: task.toObject(), alreadyPaid: true, collectedPaise: 0 };
+
+  await money.recordCash(task);
   await task.save();
-  return { task: task.toObject(), alreadyPaid: false };
+  logger.info({ taskId: String(taskId), workerId: String(workerId), ...due }, '[Helping] cash collected');
+  return { task: task.toObject(), alreadyPaid: false, collectedPaise: due.totalPaise, breakdown: due };
 }
 
 /* Return & exchange (§28, §29, §30) */

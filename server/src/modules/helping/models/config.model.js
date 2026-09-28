@@ -25,6 +25,16 @@ const SERVICE_TYPES = ['shopping', 'pickup', 'return', 'exchange'];
  */
 const PAYMENT_MODELS = ['customer_preauth', 'worker_advance', 'prepaid_wallet'];
 
+/**
+ * What a customer can actually book with today:
+ *   worker_advance  the helper pays at the shop; the customer repays the receipt at delivery
+ *   prepaid_wallet  the budget is debited from the customer's wallet at booking
+ * `customer_preauth` needs card pre-authorisation, which the gateway does not
+ * offer; it is kept only so older records still load, and is read as worker_advance.
+ */
+const OFFERED_PAYMENT_MODELS = ['worker_advance', 'prepaid_wallet'];
+const normalisePaymentModel = (m) => (m === 'customer_preauth' ? 'worker_advance' : m);
+
 const distanceSlabSchema = new mongoose.Schema(
   {
     /** Inclusive lower bound, exclusive upper. `toKm: null` means "and beyond". */
@@ -79,7 +89,7 @@ const helpingConfigSchema = new mongoose.Schema(
     /* Item money controls (§35). */
 
     allowedPaymentModels: {
-      type: [String], enum: PAYMENT_MODELS, default: ['customer_preauth'],
+      type: [String], enum: PAYMENT_MODELS, default: ['worker_advance'],
     },
     /**
      * The cap that stops this category quietly turning helpers into lenders.
@@ -139,4 +149,4 @@ helpingConfigSchema.methods.distanceFeeFor = function distanceFeeFor(km) {
 
 const HelpingConfig = mongoose.model('HelpingConfig', helpingConfigSchema);
 
-module.exports = { HelpingConfig, SERVICE_TYPES, PAYMENT_MODELS };
+module.exports = { HelpingConfig, SERVICE_TYPES, PAYMENT_MODELS, OFFERED_PAYMENT_MODELS, normalisePaymentModel };

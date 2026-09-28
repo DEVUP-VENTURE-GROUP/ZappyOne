@@ -3,7 +3,7 @@ const Joi = require('joi');
 const ctrl = require('./helping.controller');
 const { authenticate, requireRole } = require('../../middlewares/auth');
 const { validate } = require('../../middlewares/validate');
-const { SERVICE_TYPES, PAYMENT_MODELS } = require('./models/config.model');
+const { SERVICE_TYPES, OFFERED_PAYMENT_MODELS } = require('./models/config.model');
 const { PROOF_KINDS, ITEM_STATUSES, RETURN_METHODS } = require('./models/task.model');
 
 /**
@@ -100,7 +100,7 @@ router.post('/tasks',
     returnDetail: returnDetailSchema.allow(null),
     scheduledAt: Joi.date().allow(null),
     paymentMethod: Joi.string().valid('cash', 'online').default('cash'),
-    paymentModel: Joi.string().valid(...PAYMENT_MODELS).default('customer_preauth'),
+    paymentModel: Joi.string().valid(...OFFERED_PAYMENT_MODELS).default('worker_advance'),
     specialHandling: Joi.boolean().default(false),
     idempotencyKey: Joi.string().max(120).allow(null),
   })),
@@ -223,7 +223,7 @@ adminRouter.put('/config/:serviceType',
     commissionPct: Joi.number().min(0).max(100),
     platformFeePaise: Joi.number().integer().min(0),
     taxPct: Joi.number().min(0).max(100),
-    allowedPaymentModels: Joi.array().items(Joi.string().valid(...PAYMENT_MODELS)),
+    allowedPaymentModels: Joi.array().items(Joi.string().valid(...OFFERED_PAYMENT_MODELS)),
     maxWorkerAdvancePaise: Joi.number().integer().min(0),
     maxItemBudgetPaise: Joi.number().integer().min(0),
     priceTolerancePct: Joi.number().min(0).max(100),

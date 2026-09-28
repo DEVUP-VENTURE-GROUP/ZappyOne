@@ -88,8 +88,9 @@ export default function WorkerHelpingJobPage() {
   }
 
   const nextMoves = NEXT_STATUS[task.status] || [];
-  const feePaise = task.charge?.serviceChargePaise || 0;
-  const feeSettled = task.paymentStatus === 'paid' || feePaise <= 0;
+  // The server works out what is owed: the fee, plus the receipt total once the shopping is final.
+  const due = data.due || { totalPaise: 0, itemsPending: false };
+  const settledUp = due.totalPaise <= 0 && !due.itemsPending;
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -152,18 +153,24 @@ export default function WorkerHelpingJobPage() {
           </div>
         )}
 
-        {['IN_PROGRESS', 'AT_DROPOFF', 'HANDED_OVER'].includes(task.status) && !pendingApproval && (
+        {['IN_PROGRESS', 'AT_DROPOFF', 'HANDED_OVER'].includes(task.status) && !pendingApproval && due.itemsPending && (
+          <p className="rounded-2xl border-2 border-slate-200 bg-white p-3.5 text-xs text-slate-600">
+            Mark every item as bought or unavailable. The customer's bill is worked out from your receipts.
+          </p>
+        )}
+
+        {['IN_PROGRESS', 'AT_DROPOFF', 'HANDED_OVER'].includes(task.status) && !pendingApproval && !due.itemsPending && due.totalPaise > 0 && (
           <CollectPaymentCard
-            amountPaise={feePaise}
-            paymentMethod={task.paymentMethod}
-            paid={task.paymentStatus === 'paid'}
+            amountPaise={due.totalPaise}
+            paymentMethod={due.feePaise > 0 ? task.paymentMethod : 'cash'}
+            paid={false}
             collecting={collecting}
             onCollect={recordCash}
-            what="service fee"
+            what={due.itemsPaise > 0 ? 'items and service fee' : 'service fee'}
           />
         )}
 
-        {['IN_PROGRESS', 'AT_DROPOFF', 'HANDED_OVER'].includes(task.status) && !pendingApproval && feeSettled && (
+        {['IN_PROGRESS', 'AT_DROPOFF', 'HANDED_OVER'].includes(task.status) && !pendingApproval && settledUp && (
           <button type="button" onClick={finish} disabled={completing}
             className="w-full rounded-2xl bg-emerald-600 text-white font-bold py-3.5 disabled:opacity-50">
             {completing ? 'Completing…' : 'Complete task'}

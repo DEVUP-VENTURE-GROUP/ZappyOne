@@ -7,7 +7,7 @@ const config = require('../../config');
  *
  *   load(id)          the booking document (not lean — markPaid saves it)
  *   payable(b)        { amountPaise } or throws with the reason it can't be paid yet
- *   markPaid(b, ref)  record the capture on the booking
+ *   markPaid(b, intent)  record the capture on the booking
  *   commission(b)     the platform's own cut (booked at settlement, not at capture)
  *   afterPaid(b)      optional: what the engine does once the money has arrived
  *   isPaid(b)         already paid?
@@ -26,7 +26,7 @@ const PAYABLES = {
       }
       return { amountPaise: b.priceSnapshot?.totalPaise || 0 };
     },
-    markPaid(b, intentId) { b.paymentStatus = 'paid'; b.paymentId = intentId; },
+    markPaid(b, intent) { b.paymentStatus = 'paid'; b.paymentId = intent._id; },
     commission: (b) => b.priceSnapshot?.commissionPaise || 0,
   },
   pet: {
@@ -38,17 +38,17 @@ const PAYABLES = {
       }
       return { amountPaise: b.pricing?.totalPaise || 0 };
     },
-    markPaid(b, intentId) { b.paymentStatus = 'paid'; b.paymentId = String(intentId); },
+    markPaid(b, intent) { b.paymentStatus = 'paid'; b.paymentId = String(intent._id); },
     commission: (b) => b.pricing?.commissionPaise || 0,
     // Paid after the service: close the booking and settle it.
     afterPaid: (b) => require('../pet/services/payment.service').afterOnlinePayment(b),
   },
   helping: {
     load: (id) => require('../helping/models/task.model').HelpingTask.findById(id),
-    isPaid: (b) => b.paymentStatus === 'paid',
-    // The service charge only: item money is the customer's own and moves separately.
-    payable: (b) => ({ amountPaise: b.charge?.serviceChargePaise || 0 }),
-    markPaid(b, intentId) { b.paymentStatus = 'paid'; b.paymentId = String(intentId); },
+    // Fee and item money are due at different times; the money service knows which is owed now.
+    isPaid: (b) => require('../helping/services/money.service').payable.isPaid(b),
+    payable: (b) => require('../helping/services/money.service').payable.payable(b),
+    markPaid: (b, intent) => require('../helping/services/money.service').payable.markPaid(b, intent),
     commission: (b) => b.charge?.commissionPaise || 0,
   },
 };
@@ -64,9 +64,9 @@ async function resolvePayable({ source, bookingId, userId }) {
   if (String(booking.userId) !== String(userId)) throw fail('Not your booking', 403, 'FORBIDDEN');
   if (p.isPaid(booking)) throw fail('This booking is already paid', 409, 'ALREADY_PAID');
   if (CANCELLED.has(booking.status)) throw fail('This booking was cancelled', 409, 'BOOKING_CLOSED');
-  const { amountPaise } = p.payable(booking);
+  const { amountPaise, breakdown = null } = p.payable(booking);
   if (!amountPaise || amountPaise <= 0) throw fail('This booking has no payable amount yet', 409, 'NO_AMOUNT');
-  return { booking, amountPaise };
+  return { booking, amountPaise, breakdown };
 }
 
 /** Online payment needs live Cashfree credentials; everything else settles in cash. */

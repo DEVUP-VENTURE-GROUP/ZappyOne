@@ -56,6 +56,8 @@ export default function HelpingTaskDetailPage() {
   if (!data?.task) return <div className="text-center py-24 text-slate-400">Task not found</div>;
 
   const { task, authorisation, canCancel } = data;
+  const due = data.due || { totalPaise: 0, feePaise: 0, itemsPaise: 0, itemsPending: false };
+  const closed = ['CANCELLED', 'FAILED', 'SETTLED'].includes(task.status);
   const pendingApprovals = (task.approvals || []).filter((a) => a.status === 'pending');
   const stepIdx = TRACK_STEPS.indexOf(task.status);
 
@@ -162,18 +164,24 @@ export default function HelpingTaskDetailPage() {
             <div className="flex justify-between text-slate-500"><span>Item budget</span><span>up to {formatPaise(authorisation.itemBudgetPaise)}</span></div>
           )}
           <p className="text-[11px] text-slate-400 pt-1">{authorisation.note}</p>
-          <p className="text-xs text-slate-500">
-            {task.paymentStatus === 'paid'
-              ? 'Service fee paid'
-              : task.paymentMethod === 'online' ? 'Service fee: online payment pending' : 'Pay the service fee in cash when the task is done'}
-          </p>
-          {task.paymentMethod === 'online' && task.paymentStatus !== 'paid'
-            && !['CANCELLED', 'REFUNDED', 'FAILED', 'EXPIRED', 'REJECTED'].includes(task.status) && (
+          <div className="pt-1 space-y-0.5 text-xs text-slate-500">
+            <p>{task.paymentStatus === 'paid' ? 'Service fee paid' : task.paymentMethod === 'online' ? 'Service fee: pay online' : 'Service fee: pay in cash when the task is done'}</p>
+            {task.itemMoney?.paymentModel === 'prepaid_wallet' && task.itemMoney.heldPaise > 0 && (
+              <p>{formatPaise(task.itemMoney.heldPaise)} held from your wallet for items; anything unspent comes back.</p>
+            )}
+            {task.itemMoney?.paymentModel !== 'prepaid_wallet' && (task.items || []).length > 0 && (
+              <p>{due.itemsPending ? 'Items: you repay what the helper spends, against the receipt, at delivery' : 'Items bill is final'}</p>
+            )}
+          </div>
+          {!closed && due.totalPaise > 0 && (
+            <div className="mt-2 flex justify-between font-black text-[#0F172A]"><span>Due now</span><span>{formatPaise(due.totalPaise)}</span></div>
+          )}
+          {!closed && due.totalPaise > 0 && (task.paymentMethod === 'online' || due.itemsPaise > 0) && (
             <PayNowButton
               bookingSource="helping"
               bookingId={task._id}
-              amountLabel={formatPaise(authorisation.serviceChargePaise)}
-              label="Helper service charge"
+              amountLabel={formatPaise(due.totalPaise)}
+              label={due.itemsPaise > 0 ? 'Helper: items and service fee' : 'Helper service charge'}
               className="mt-2"
             />
           )}

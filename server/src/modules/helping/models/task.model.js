@@ -311,12 +311,18 @@ const itemMoneySchema = new mongoose.Schema(
     budgetPaise: { type: Number, default: 0, min: 0 },
     /** What was actually spent, summed from purchased items only. */
     actualPaise: { type: Number, default: 0, min: 0 },
-    paymentModel: { type: String, enum: PAYMENT_MODELS, default: 'customer_preauth' },
+    paymentModel: { type: String, enum: PAYMENT_MODELS, default: 'worker_advance' },
+
+    /** Taken from the customer's wallet at booking (prepaid_wallet only). */
+    heldPaise: { type: Number, default: 0, min: 0 },
+    /** Repaid by the customer for purchases, beyond anything held, and how. */
+    customerPaidPaise: { type: Number, default: 0, min: 0 },
+    collectedVia: { type: String, enum: ['cash', 'online', null], default: null },
 
     /** Cash the helper fronted, and whether it has been paid back (§35). */
     workerAdvancePaise: { type: Number, default: 0, min: 0 },
     workerReimbursedPaise: { type: Number, default: 0, min: 0 },
-    /** Unspent budget released back to the customer. */
+    /** Held money given back to the customer: unspent budget, or all of it on cancellation. */
     refundedPaise: { type: Number, default: 0, min: 0 },
   },
   { _id: false },

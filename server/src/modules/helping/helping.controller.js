@@ -129,6 +129,8 @@ async function getTask(req, res, next) {
       canCancel: CANCELLABLE_FROM.includes(task.status),
       // Shown as two figures, always.
       authorisation: pricingService.authorisationTotal(task.charge, task.itemMoney?.budgetPaise || 0),
+      // What is owed right now: fee and item money, and whether the shopping is final.
+      due: require('./services/money.service').amountDue(HelpingTask.hydrate(task)),
     });
   } catch (err) { next(err); }
 }
@@ -191,6 +193,10 @@ async function cancelTaskAs(req, res, next, { byRole, ownerOnly }) {
 
     task.cancellationReason = req.body.reason || '';
     task.transitionTo('CANCELLED', { by: req.auth.sub, byRole });
+    // Nothing is bought before work starts, so a prepaid budget goes back whole.
+    await require('./services/money.service').releaseHold(task, {
+      amountPaise: require('./services/money.service').unspentHoldPaise(task), why: 'Task cancelled, budget returned',
+    });
     await task.save();
     // Cancellable states are all before work starts, so a paid service charge goes back in full.
     if (task.paymentStatus === 'paid') {

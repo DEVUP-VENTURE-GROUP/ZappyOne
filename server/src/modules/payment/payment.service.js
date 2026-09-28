@@ -58,6 +58,7 @@ async function createOrderForPurpose({ owner, purpose, planCode, amountPaise, or
   // Older repair clients sent the booking id as orderId.
   if (purpose === 'repair_payment' && !bookingId) bookingId = orderId;
   let resolvedAmount = amountPaise;
+  let breakdown = null;
   let planId = null;
   let subscriptionId = null;
   let cfOrderIdPrefix = '';
@@ -86,7 +87,7 @@ async function createOrderForPurpose({ owner, purpose, planCode, amountPaise, or
     // repair_payment is the older name for a repair booking_payment.
     bookingSource = purpose === 'repair_payment' ? 'repair' : bookingSource;
     if (!bookingId) throw Object.assign(new Error('bookingId required'), { status: 400, code: 'BOOKING_ID_REQUIRED' });
-    ({ amountPaise: resolvedAmount } = await payables.resolvePayable({ source: bookingSource, bookingId, userId: owner.id }));
+    ({ amountPaise: resolvedAmount, breakdown } = await payables.resolvePayable({ source: bookingSource, bookingId, userId: owner.id }));
     cfOrderIdPrefix = { repair: 'rpr', pet: 'pet', helping: 'hlp' }[bookingSource];
   } else {
     throw Object.assign(new Error('Unknown purpose'), { status: 400, code: 'BAD_PURPOSE' });
@@ -123,6 +124,8 @@ async function createOrderForPurpose({ owner, purpose, planCode, amountPaise, or
     bookingSource: isBooking ? bookingSource : null,
     bookingId: isBooking ? bookingId : null,
     amountPaise: resolvedAmount,
+    // What each part of this charge pays for, so capture applies it exactly as charged.
+    breakdown,
     currency: 'INR',
     status: 'created',
   });
@@ -268,7 +271,7 @@ async function capturePayment({ cfOrderId, cfPaymentId, amountPaise, eventName, 
       const payable = payables.PAYABLES[source];
       const booking = await payable.load(intent.bookingId || intent.orderId);
       if (booking) {
-        payable.markPaid(booking, intent._id);
+        payable.markPaid(booking, intent);
         await booking.save();
         // Commission and the provider's share are booked at settlement, once the
         // work is done — booking revenue here would count it twice, and would

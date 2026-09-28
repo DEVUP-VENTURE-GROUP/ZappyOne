@@ -55,6 +55,8 @@ const paymentIntentSchema = new mongoose.Schema(
     eventBookingId: { type: mongoose.Schema.Types.ObjectId, ref: 'EventBooking' },
 
     amountPaise: { type: Number, required: true },
+    /** Split of a booking charge, e.g. { feePaise, itemsPaise } for a helping task. */
+    breakdown: { type: mongoose.Schema.Types.Mixed, default: null },
     currency: { type: String, default: 'INR' },
 
     status: {

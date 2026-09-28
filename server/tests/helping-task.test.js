@@ -40,6 +40,15 @@ const workerId = new mongoose.Types.ObjectId();
 const HERE = { type: 'Point', coordinates: [78.4867, 17.3850], address: 'Start' };
 const THERE = { type: 'Point', coordinates: [78.5100, 17.3900], address: 'End' };
 
+/** Put real money in the customer's wallet, the way a Cashfree top-up would. */
+async function topUp(amountPaise) {
+  await require('../src/modules/wallet/wallet.service').apply({
+    kind: 'user', id: userId, type: 'credit', amountPaise,
+    reason: Transaction.REASONS.WALLET_TOPUP, idempotencyKey: `test-topup-${Date.now()}-${Math.random()}`,
+    description: 'Test top-up',
+  });
+}
+
 async function seedConfig(overrides = {}) {
   await HelpingConfig.deleteMany({});
   pricingService.invalidateConfigCache();
@@ -225,6 +234,7 @@ describe('item money and service money never mix', () => {
     doc.status = 'ARRIVED';
     doc.items[0].status = 'purchased';
     doc.items[0].actualPricePaise = inr(240);
+    doc.items[1].status = 'not_found';
     await doc.save();
 
     // The helper cannot finish before the fee is recorded.
@@ -245,7 +255,10 @@ describe('item money and service money never mix', () => {
   });
 
   it('returns unspent budget rather than keeping it', async () => {
+    await topUp(inr(1000));
     const { task } = await taskService.createTask(baseTask({ paymentModel: 'prepaid_wallet' }));
+    // The budget really left the wallet at booking.
+    expect(task.itemMoney.heldPaise).toBe(inr(350));
     const doc = await HelpingTask.findById(task._id);
     doc.workerId = workerId;
     doc.status = 'COMPLETED';
@@ -258,6 +271,64 @@ describe('item money and service money never mix', () => {
     // ₹350 authorised, ₹200 spent — the other ₹150 goes back.
     expect(settled.itemMoney.actualPaise).toBe(inr(200));
     expect(settled.itemMoney.refundedPaise).toBe(inr(150));
+  });
+
+  it('refuses a prepaid budget the wallet cannot cover', async () => {
+    await Wallet.deleteMany({ 'owner.id': userId });
+    await expect(taskService.createTask(baseTask({ paymentModel: 'prepaid_wallet' })))
+      .rejects.toMatchObject({ code: 'WALLET_INSUFFICIENT' });
+    expect(await HelpingTask.countDocuments({ userId, 'itemMoney.paymentModel': 'prepaid_wallet', 'itemMoney.heldPaise': 0 })).toBe(0);
+  });
+
+  it('worker_advance: the customer repays the receipt; paid in cash, the helper is not reimbursed again', async () => {
+    const { task } = await taskService.createTask(baseTask());
+    const doc = await HelpingTask.findById(task._id);
+    doc.workerId = workerId;
+    doc.status = 'IN_PROGRESS';
+    doc.items[0].status = 'purchased';
+    doc.items[0].actualPricePaise = inr(200);
+    await doc.save();
+
+    // Shopping unfinished: no bill yet, and the helper cannot close.
+    await expect(taskService.recordCash({ taskId: task._id, workerId })).rejects.toMatchObject({ code: 'ITEMS_NOT_FINAL' });
+    expect(taskService.paymentBlocker(doc)).toMatchObject({ code: 'ITEMS_NOT_FINAL' });
+
+    doc.items[1].status = 'out_of_stock';
+    await doc.save();
+    const out = await taskService.recordCash({ taskId: task._id, workerId });
+    expect(out.breakdown).toMatchObject({ itemsPaise: inr(200), feePaise: doc.charge.serviceChargePaise });
+    expect(taskService.paymentBlocker(await HelpingTask.findById(task._id))).toBeNull();
+
+    await HelpingTask.updateOne({ _id: task._id }, { $set: { status: 'COMPLETED' } });
+    await taskService.settleTask({ taskId: task._id });
+    const reimbursed = await Transaction.findOne({ idempotencyKey: `helping-reimburse-${task._id}` });
+    expect(reimbursed).toBeNull();
+  });
+
+  it('worker_advance paid online: the platform holds the item money and reimburses the helper', async () => {
+    const money = require('../src/modules/helping/services/money.service');
+    const { task } = await taskService.createTask(baseTask());
+    const doc = await HelpingTask.findById(task._id);
+    doc.workerId = workerId;
+    doc.items[0].status = 'purchased';
+    doc.items[0].actualPricePaise = inr(200);
+    doc.items[1].status = 'skipped';
+    const { amountPaise, breakdown } = money.payable.payable(doc);
+    expect(breakdown.itemsPaise).toBe(inr(200));
+    money.payable.markPaid(doc, { _id: new mongoose.Types.ObjectId(), amountPaise, breakdown });
+    expect(money.payable.isPaid(doc)).toBe(true);
+    doc.status = 'COMPLETED';
+    await doc.save();
+
+    await taskService.settleTask({ taskId: task._id });
+    const reimbursed = await Transaction.findOne({ idempotencyKey: `helping-reimburse-${task._id}` });
+    expect(reimbursed.amountPaise).toBe(inr(200));
+  });
+
+  it('a helper cannot be made to front more than the cap', async () => {
+    await seedConfig({ maxWorkerAdvancePaise: inr(100) });
+    await expect(taskService.createTask(baseTask())).rejects.toMatchObject({ code: 'ADVANCE_LIMIT_EXCEEDED' });
+    await seedConfig();
   });
 
   it('counts only genuinely purchased items as spend', async () => {
@@ -518,7 +589,7 @@ describe('restricted items', () => {
   });
 
   it('is admin-configurable, not baked in', async () => {
-    await seedConfig({ restrictedItemCategories: [] });
+    await seedConfig({ restrictedItemCategories: [], maxWorkerAdvancePaise: inr(5000) });
     const { task } = await taskService.createTask(baseTask({
       items: [{ name: 'Whisky bottle (alcohol)', quantity: 1, maxApprovedPricePaise: inr(2000) }],
     }));
