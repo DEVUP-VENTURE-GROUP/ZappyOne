@@ -17,7 +17,9 @@ import { selectAuth, selectIsAuthed } from '@shared/modules/auth/authSlice';
 import toast from 'react-hot-toast';
 import { useT } from '@shared/i18n/I18nProvider';
 import { serviceNameKey } from '@shared/i18n/translations';
-import { useGetGamificationQuery, useGetRecommendationsQuery, useListServicesQuery, useRebookOrderMutation, useListNotificationsQuery } from '@shared/services/api';
+import { useGetGamificationQuery, useGetRecommendationsQuery, useListServicesQuery, useRebookOrderMutation, useListNotificationsQuery, useGetServiceabilityQuery, useGetEventCategoriesQuery } from '@shared/services/api';
+import NotInYourArea from '../components/serviceability/NotInYourArea';
+import ClosedNowBanner from '../components/serviceability/ClosedNowBanner';
 import { useMyJobs } from '../hooks/useMyJobs';
 import { useGeolocation, loadGeoLocation } from '@shared/hooks/useGeolocation';
 import { saveGeoLocation } from '@shared/utils/geoCache';
@@ -135,13 +137,6 @@ function timeAgo(date) {
 // Tank & Water Cleaning
 
 // Event Commerce tiles — navigate to event commerce module
-const EVENT_TILES = [
-  { key: 'birthday',      name: 'Birthday',    img: '/images/event_birthday.webp',  category: 'birthday'      },
-  { key: 'anniversary',   name: 'Anniversary', img: '/images/event_anniversary.webp', category: 'anniversary'   },
-  { key: 'baby-shower',   name: 'Baby Shower', img: 'https://images.unsplash.com/photo-1519689680058-324335c77eba?auto=format&fit=crop&w=400&h=400&q=80',   category: 'baby-shower'   },
-  { key: 'romantic',      name: 'Romantic',    img: 'https://images.unsplash.com/photo-1494972308805-463bc619d34e?auto=format&fit=crop&w=400&h=400&q=80',      category: 'romantic'      },
-  { key: 'housewarming',  name: 'Housewarming',img: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=400&h=400&q=80',  category: 'housewarming'  },
-];
 
 // Pet Assistance
 
@@ -550,6 +545,11 @@ export default function HomePage() {
   });
 
   const [locSheet, setLocSheet] = useState(false);
+
+  // Nothing bookable renders until the server confirms we serve this point.
+  const { data: svc } = useGetServiceabilityQuery({ lat: loc.lat, lng: loc.lng }, { skip: loc.lat == null });
+  const { data: eventCatData } = useGetEventCategoriesQuery();
+  const eventCategories = eventCatData?.categories || [];
   const [locSearch, setLocSearch] = useState('');
   const [locResults, setLocResults] = useState([]);
   const [locSearching, setLocSearching] = useState(false);
@@ -646,7 +646,7 @@ export default function HomePage() {
       <SpotlightSearch open={spotOpen} onClose={() => setSpotOpen(false)} />
       <SEO
         title="Zappy — Book Verified Professionals Instantly | Home Services India"
-        description="India's fastest on-demand home services app. Puncture repair, phone repair, laptop repair, electrician, plumber, bike mechanic, car wash, pet grooming — verified pros arrive in 30 minutes. Book in 60 seconds."
+        description="Book verified professionals near you on ZappyOne — phone and laptop repair, bike and car help, pet care and more, with live tracking and secure payment."
         canonical={BASE_URL}
         keywords="home services near me, on-demand services India, puncture repair, phone repair near me, laptop repair at home, electrician near me, plumber near me, bike mechanic near me, car wash at home, Zappy, instant services"
         jsonLd={HOME_SCHEMA}
@@ -744,12 +744,11 @@ export default function HomePage() {
                   <Search size={18} strokeWidth={2} className="text-slate-400 shrink-0" />
                   <AnimatedSearchPlaceholder />
                 </button>
-                <motion.span
-                  className="text-xs font-black bg-indigo-50 text-indigo-600 px-3 py-1 rounded-full shrink-0"
-                  animate={{ opacity: [0.7, 1, 0.7] }} transition={{ duration: 2.5, repeat: Infinity }}
-                >
-                  50+ services
-                </motion.span>
+                {svc?.lines?.length > 0 && (
+                  <span className="text-xs font-black bg-indigo-50 text-indigo-600 px-3 py-1 rounded-full shrink-0">
+                    {svc.lines.length} {svc.lines.length === 1 ? 'service' : 'services'} near you
+                  </span>
+                )}
                 <VoiceSearchButton onResult={(text) => nav(`/services?q=${encodeURIComponent(text)}`)} />
                 <LensButton onClick={() => setLensOpen(true)} />
               </div>
@@ -783,12 +782,6 @@ export default function HomePage() {
               <Search size={18} strokeWidth={2.5} className="text-slate-400 shrink-0" />
               <AnimatedSearchPlaceholder />
             </button>
-            <motion.span
-              className="text-[10px] font-black bg-indigo-50 text-indigo-600 px-2.5 py-1 rounded-full shrink-0 leading-none"
-              animate={{ opacity: [0.7, 1, 0.7] }} transition={{ duration: 2.5, repeat: Infinity }}
-            >
-              50+
-            </motion.span>
             <VoiceSearchButton onResult={(text) => nav(`/services?q=${encodeURIComponent(text)}`)} />
             <LensButton onClick={() => setLensOpen(true)} />
           </div>
@@ -800,6 +793,18 @@ export default function HomePage() {
             <ActiveJobCard job={activeJob} onOpen={() => nav(activeJob.href)} />
           </div>
         )}
+
+        {svc?.status === 'not_here' ? (
+          <NotInYourArea
+            place={loc.primary}
+            lat={loc.lat}
+            lng={loc.lng}
+            address={[loc.primary, loc.secondary].filter(Boolean).join(', ')}
+            areas={svc.areas}
+            onChangeLocation={() => setLocSheet(true)}
+          />
+        ) : (<>
+        {svc?.status === 'closed_now' && <ClosedNowBanner nextOpening={svc.nextOpening} />}
 
         {isMobile ? (
           /* Mobile hero — banner + live trust bar + card grid + promo + offers */
@@ -943,19 +948,20 @@ export default function HomePage() {
             providers are verified for it — never before, because a tile that
             leads to a flow we cannot fulfil is worse than no tile.
           ─────────────────────────────────────────────────────────────── */}
-          <LiveServices />
+          <LiveServices availableCodes={svc ? svc.lines.map((l) => l.code) : null} />
 
           <PromoBannerEvents />
 
-          {/* Event Decorations */}
+          {/* Event Decorations — admin-managed categories */}
+          {eventCategories.length > 0 && (
           <div className="mt-7">
             <div>
               <SectionHeader title={tHome('home.sec.events','Event Decorations')} badge={tHome('home.sec.events.badge','🎉 Book a Theme')} badgeColor="bg-slate-100 text-slate-800" onSeeAll={() => nav('/events')} />
             </div>
             <div className="flex gap-3 md:gap-4 overflow-x-auto no-scrollbar pb-2 -mx-4 md:-mx-6 snap-x snap-mandatory">
               <div className="shrink-0 w-1 md:w-2" />
-              {EVENT_TILES.map((item, i) => (
-                <ServiceImageCard key={i} item={{...item, key: `../events/browse?category=${item.category}`}} nav={nav} />
+              {eventCategories.map((c) => (
+                <ServiceImageCard key={c.slug} item={{ key: `../events/browse?category=${c.slug}`, name: c.name, img: c.coverImage }} nav={nav} />
               ))}
               <div className="shrink-0 w-12 flex items-center justify-center">
                 <button onClick={() => nav('/events')} className="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center shadow-sm hover:scale-105"><ChevronRight size={18} strokeWidth={2.5} className="text-slate-600" /></button>
@@ -963,6 +969,8 @@ export default function HomePage() {
             </div>
           </div>
 
+
+          )}
 
           {/* Nearby Shops verified local businesses, browse + Pick & Go */}
           <div className="px-4 mt-7">
@@ -987,10 +995,9 @@ export default function HomePage() {
             <div className="rounded-2xl p-4 ring-1 ring-slate-200/60" style={{ background: 'linear-gradient(135deg,#f8fafc,#f1f5f9)' }}>
               <div className="flex items-center justify-around">
                 {[
-                  { Icon: ShieldCheck, label: 'Insured Work',  color: 'text-indigo-500', bg: 'bg-indigo-50' },
                   { Icon: CheckCircle, label: 'Verified Pros', color: 'text-green-600',  bg: 'bg-green-50'  },
                   { Icon: Lock,        label: 'Secure Pay',    color: 'text-blue-600',   bg: 'bg-blue-50'   },
-                  { Icon: TrendingUp,  label: '4.8 Rated',     color: 'text-amber-600',  bg: 'bg-amber-50'  },
+                  { Icon: MapPin,      label: 'Live Tracking', color: 'text-rose-500',   bg: 'bg-rose-50'   },
                 ].map(({ Icon, label, color, bg }) => (
                   <div key={label} className="flex flex-col items-center gap-1.5">
                     <div className={`w-9 h-9 rounded-xl ${bg} flex items-center justify-center`}>
@@ -1004,6 +1011,7 @@ export default function HomePage() {
           </div>
 
         </div>
+        </>)}
         <Footer />
         <LensModal open={lensOpen} onClose={() => setLensOpen(false)} />
       </div>

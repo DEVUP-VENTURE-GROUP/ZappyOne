@@ -1776,6 +1776,14 @@ export const api = createApi({
       query: () => '/provider/onboarding/catalog',
       providesTags: ['Onboarding'],
     }),
+    /** Can we serve this point, with which live services — see coverage.service. */
+    getServiceability: b.query({
+      query: ({ lat, lng }) => ({ url: '/serviceability', params: { lat, lng } }),
+      keepUnusedDataFor: 60,
+    }),
+    notifyLaunch: b.mutation({
+      query: (body) => ({ url: '/serviceability/notify', method: 'POST', body }),
+    }),
     providerOnboardingStatus: b.query({
       query: () => '/provider/onboarding/status',
       providesTags: ['Onboarding'],
@@ -2887,6 +2895,8 @@ export const {
   useAdminRepairBookingsQuery,
   // Repair vertical (customer + worker)
   useLiveCatalogQuery,
+  useGetServiceabilityQuery,
+  useNotifyLaunchMutation,
   useProviderOnboardingStatusQuery,
   useProviderDomainsQuery,
   useProviderServiceLinesQuery,

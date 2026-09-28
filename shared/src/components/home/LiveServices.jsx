@@ -159,7 +159,8 @@ function ServiceCard({ service, onOpenService, onOpenCategory }) {
   );
 }
 
-export default function LiveServices() {
+/** availableCodes: when given, only services covered at the customer's location are shown. */
+export default function LiveServices({ availableCodes = null }) {
   const nav = useNavigate();
   const { data, isLoading } = useLiveCatalogQuery();
 
@@ -171,7 +172,10 @@ export default function LiveServices() {
     );
   }
 
-  const domains = data?.domains || [];
+  const allowed = availableCodes && new Set(availableCodes);
+  const domains = (data?.domains || [])
+    .map((d) => (allowed ? { ...d, services: d.services.filter((s) => allowed.has(s.code)) } : d))
+    .filter((d) => d.services.length);
   if (!domains.length) return null;
 
   return (

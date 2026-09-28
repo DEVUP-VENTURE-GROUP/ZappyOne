@@ -82,7 +82,7 @@ async function signMediaList(refs = []) {
  * "disappear". It had never gone anywhere; it was never signed.
  */
 const MEDIA_FIELDS = [
-  'logoUrl', 'imageUrl', 'iconUrl', 'videoUrl', 'coverImageUrl',
+  'logoUrl', 'imageUrl', 'iconUrl', 'videoUrl', 'coverImageUrl', 'coverImage',
   'photoUrl', 'thumbUrl', 'avatar', 'profilePhotoKey',
 ];
 

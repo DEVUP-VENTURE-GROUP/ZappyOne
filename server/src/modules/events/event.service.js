@@ -60,7 +60,8 @@ function defaultConfig() {
 // Categories
 
 async function listCategories() {
-  return EventCategory.find({ isActive: true }).sort({ sortOrder: 1, name: 1 }).lean();
+  const rows = await EventCategory.find({ isActive: true }).sort({ sortOrder: 1, name: 1 }).lean();
+  return s3Service.signDocsMedia(rows);
 }
 
 // Themes
