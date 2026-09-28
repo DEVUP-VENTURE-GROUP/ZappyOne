@@ -73,12 +73,37 @@ function normalise(value, min, max) {
  * pincode has made a stronger commitment than one who merely falls inside a
  * radius, and radius circles routinely spill across areas they do not serve.
  */
-async function findServiceableProviders({ lat, lng, pincode = null, cityCode = null, serviceMode }) {
-  const areas = await ProviderServiceArea.find({
+let radiusCache = { km: 0, at: 0 };
+
+/** Largest radius any active area covers, cached for a minute: it bounds the geo query. */
+async function maxAreaRadiusKm() {
+  if (Date.now() - radiusCache.at < 60000) return radiusCache.km;
+  const [row] = await ProviderServiceArea.aggregate([
+    { $match: { isActive: true } },
+    { $group: { _id: null, km: { $max: '$radiusKm' } } },
+  ]);
+  radiusCache = { km: row?.km || 0, at: Date.now() };
+  return radiusCache.km;
+}
+
+/** Service areas that could cover a point: within the widest radius, or listing its pincode. */
+async function candidateAreas({ lat, lng, pincode = null, extra = {} }) {
+  const maxKm = await maxAreaRadiusKm();
+  return ProviderServiceArea.find({
     isActive: true,
-    serviceModes: serviceMode,
-    ...(cityCode ? { cityCode } : {}),
+    ...extra,
+    $or: [
+      ...(pincode ? [{ pincodes: pincode }] : []),
+      { center: { $geoWithin: { $centerSphere: [[Number(lng), Number(lat)], maxKm / EARTH_RADIUS_KM] } } },
+    ],
   }).lean();
+}
+
+async function findServiceableProviders({ lat, lng, pincode = null, cityCode = null, serviceMode }) {
+  const areas = await candidateAreas({
+    lat, lng, pincode,
+    extra: { serviceModes: serviceMode, ...(cityCode ? { cityCode } : {}) },
+  });
 
   const out = [];
   for (const area of areas) {
@@ -443,6 +468,7 @@ function toPublic(provider) {
 }
 
 module.exports = {
+  candidateAreas,
   findProviders,
   findServiceableProviders,
   checkInventory,

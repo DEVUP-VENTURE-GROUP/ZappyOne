@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { istParts } = require('../../utils/ist');
 const { pointField, stripEmptyPoints } = require('../../utils/geo-point');
 
 /**
@@ -122,17 +123,36 @@ shopSchema.index({ services: 1, isActive: 1, isBlocked: 1, 'kyc.status': 1 });
  * listed" instead of asserting closed — an unstated schedule is missing
  * information, not a fact about the business.
  */
+const toMinutes = (hhmm) => {
+  const [h, m] = String(hhmm).split(':').map(Number);
+  return Number.isFinite(h) && Number.isFinite(m) ? h * 60 + m : null;
+};
+
+/**
+ * The next opening within a week, as { day, opensAt } in IST, or null if no
+ * hours are set. "Today" counts only if opening is still ahead.
+ */
+shopSchema.methods.nextOpening = function nextOpening(when = new Date()) {
+  if (!this.hours?.length) return null;
+  const { day, minutesOfDay } = istParts(when);
+  for (let ahead = 0; ahead < 7; ahead++) {
+    const d = (day + ahead) % 7;
+    const row = this.hours.find((h) => h.day === d);
+    const open = row && !row.isClosed ? toMinutes(row.opensAt) : null;
+    if (open == null || (ahead === 0 && open <= minutesOfDay)) continue;
+    return { day: d, opensAt: row.opensAt, daysAhead: ahead };
+  }
+  return null;
+};
+
 shopSchema.methods.isOpenAt = function isOpenAt(when = new Date()) {
   if (!this.hours?.length) return null;
 
-  const row = this.hours.find((h) => h.day === when.getDay());
+  // Hours are Indian local time; the server clock is not.
+  const { day, minutesOfDay: minutes } = istParts(when);
+  const row = this.hours.find((h) => h.day === day);
   if (!row || row.isClosed || !row.opensAt || !row.closesAt) return false;
 
-  const minutes = when.getHours() * 60 + when.getMinutes();
-  const toMinutes = (hhmm) => {
-    const [h, m] = String(hhmm).split(':').map(Number);
-    return Number.isFinite(h) && Number.isFinite(m) ? h * 60 + m : null;
-  };
   const open = toMinutes(row.opensAt);
   const close = toMinutes(row.closesAt);
   if (open == null || close == null) return false;

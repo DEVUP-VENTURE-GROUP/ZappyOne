@@ -207,14 +207,17 @@ async function cancelTask(req, res, next) {
  */
 async function listAvailable(req, res, next) {
   try {
-    const worker = await Worker.findById(req.auth.sub).select('location').lean();
-    const coords = worker?.location?.coordinates;
+    const [worker, radiusKm] = await Promise.all([
+      Worker.findById(req.auth.sub).select('currentLocation').lean(),
+      pricingService.maxMatchRadiusKm(),
+    ]);
+    const coords = worker?.currentLocation?.coordinates;
 
     const filter = { status: { $in: ['CONFIRMED', 'WORKER_SEARCHING'] }, workerId: null };
     const query = coords?.length === 2
       ? HelpingTask.find({
         ...filter,
-        pickupLocation: { $near: { $geometry: { type: 'Point', coordinates: coords }, $maxDistance: 15000 } },
+        pickupLocation: { $near: { $geometry: { type: 'Point', coordinates: coords }, $maxDistance: radiusKm * 1000 } },
       })
       : HelpingTask.find(filter).sort({ createdAt: -1 });
 

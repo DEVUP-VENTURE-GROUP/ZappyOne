@@ -4,6 +4,7 @@ const { validate } = require('../../middlewares/validate');
 const zoneService = require('./zone.service');
 const auditService = require('../admin/audit.service');
 const Zone = require('./zone.model');
+const LaunchInterest = require('./launch-interest.model');
 
 const router = express.Router();
 
@@ -98,6 +99,30 @@ router.delete('/zones/:id', async (req, res, next) => {
     await zoneService.deleteZone(id);
     await auditService.fromRequest(req, 'admin.zone_delete', { kind: 'zone', id }, null, null);
     res.json({ ok: true });
+  } catch (err) { next(err); }
+});
+
+// GET /launch-interest — where customers asked us to launch, busiest ~1 km cells first
+router.get('/launch-interest', async (req, res, next) => {
+  try {
+    const since = new Date(Date.now() - Math.min(Number(req.query.days) || 90, 365) * 86_400_000);
+    const [cells, total] = await Promise.all([
+      LaunchInterest.aggregate([
+        { $match: { createdAt: { $gte: since } } },
+        { $group: {
+          _id: '$cell',
+          requests: { $sum: 1 },
+          lng: { $avg: { $arrayElemAt: ['$location.coordinates', 0] } },
+          lat: { $avg: { $arrayElemAt: ['$location.coordinates', 1] } },
+          sampleAddress: { $last: '$address' },
+          lastAt: { $max: '$createdAt' },
+        } },
+        { $sort: { requests: -1, lastAt: -1 } },
+        { $limit: 200 },
+      ]),
+      LaunchInterest.countDocuments({ createdAt: { $gte: since } }),
+    ]);
+    res.json({ total, cells: cells.map(({ _id, ...c }) => ({ cell: _id, ...c })) });
   } catch (err) { next(err); }
 });
 

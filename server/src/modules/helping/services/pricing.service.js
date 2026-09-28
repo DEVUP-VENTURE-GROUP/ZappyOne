@@ -37,8 +37,21 @@ async function getConfig(serviceType) {
   return doc;
 }
 
+/** Widest match radius across active helping services (km). */
+async function maxMatchRadiusKm() {
+  const hit = configCache.get('*radius');
+  if (hit && Date.now() - hit.at < CACHE_MS) return hit.doc;
+  const [row] = await HelpingConfig.aggregate([
+    { $match: { isActive: true } },
+    { $group: { _id: null, km: { $max: '$matchRadiusKm' } } },
+  ]);
+  const km = row?.km || HelpingConfig.schema.path('matchRadiusKm').defaultValue;
+  configCache.set('*radius', { doc: km, at: Date.now() });
+  return km;
+}
+
 function invalidateConfigCache(serviceType = null) {
-  if (serviceType) configCache.delete(serviceType);
+  if (serviceType) { configCache.delete(serviceType); configCache.delete('*radius'); }
   else configCache.clear();
 }
 
@@ -202,6 +215,7 @@ async function withinTolerance(serviceType, approvedPaise, actualPaise) {
 }
 
 module.exports = {
+  maxMatchRadiusKm,
   getConfig,
   invalidateConfigCache,
   quote,

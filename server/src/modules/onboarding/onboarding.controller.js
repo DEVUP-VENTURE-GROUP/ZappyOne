@@ -1,5 +1,6 @@
 const service = require('./onboarding.service');
-const { ProviderEnrolment, ServiceLine, ServiceDomain } = require('./onboarding.model');
+const coverage = require('./coverage.service');
+const { ProviderEnrolment } = require('./onboarding.model');
 const Shop = require('../shop/shop.model');
 const { ProviderPricing } = require('../repair/models/pricing.model');
 const Worker = require('../worker/worker.model');
@@ -262,27 +263,8 @@ function nextStepFor({ profile, enrolments, kind }) {
  */
 async function liveCatalog(req, res, next) {
   try {
-    const [domains, candidateLines] = await Promise.all([
-      ServiceDomain.find({ isActive: true, isArchived: false }).sort({ displayOrder: 1, name: 1 }).lean(),
-      ServiceLine.find({
-        status: 'live', isActive: true, isArchived: false, customerPath: { $ne: '' },
-      }).sort({ displayOrder: 1, name: 1 }).lean(),
-    ]);
-
-    /**
-     * `status: 'live'` is an admin OPINION that a line is ready; it is not
-     * proof anyone can actually do the work. A line was flipped live here
-     * for two verticals before a single provider had been onboarded, and
-     * nothing stopped it — the query above would have listed it to every
-     * customer, who would browse in, pick a symptom, and find no provider
-     * at the end. `verified` below is what turns the docstring's promise
-     * into something the code actually checks: an APPROVED enrolment
-     * naming this exact line code.
-     */
-    const approvedLineCodes = new Set(
-      (await ProviderEnrolment.find({ status: 'approved' }).distinct('lineCode')),
-    );
-    const lines = candidateLines.filter((l) => approvedLineCodes.has(l.code));
+    // Live = admin marked it live AND a provider is approved for it (see coverage.service).
+    const { domains, lines } = await coverage.loadLiveLines();
 
 
     /**

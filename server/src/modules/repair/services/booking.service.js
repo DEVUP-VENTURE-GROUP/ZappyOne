@@ -10,6 +10,7 @@ const { QAInspection } = require('../models/custody.model');
 const { QAChecklist } = require('../models/config.model');
 const { DeviceConfiguration } = require('../models/catalog.model');
 const pricingService = require('./pricing.service');
+const zoneService = require('../../zone/zone.service');
 const matchingService = require('./matching.service');
 const eventsService = require('./events.service');
 const slaService = require('./sla.service');
@@ -152,6 +153,7 @@ async function createBooking({
     const existing = await RepairBooking.findOne({ idempotencyKey }).lean();
     if (existing) return { booking: existing, replayed: true };
   }
+  await zoneService.assertBookableLocation(location);
 
   const repair = repairCode
     ? await Repair.findOne({ code: repairCode, vertical, isActive: true }).lean()

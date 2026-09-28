@@ -17,6 +17,7 @@ const pricingService = require('./pricing.service');
 const matchingService = require('./matching.service');
 const notificationService = require('../../notification/notification.service');
 const logger = require('../../../utils/logger');
+const zoneService = require('../../zone/zone.service');
 
 function httpError(message, status, code, extra = {}) {
   return Object.assign(new Error(message), { status, code, ...extra });
@@ -89,6 +90,7 @@ async function createBooking({
     const existing = await PetBooking.findOne({ idempotencyKey }).lean();
     if (existing) return { booking: existing, replayed: true };
   }
+  await zoneService.assertBookableLocation(serviceLocation);
   if (!petEntries.length) throw httpError('Choose at least one pet', 400, 'NO_PETS');
 
   const withPets = await loadOwnedPets(userId, petEntries);

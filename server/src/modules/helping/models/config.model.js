@@ -51,6 +51,9 @@ const helpingConfigSchema = new mongoose.Schema(
     baseFeePaise: { type: Number, default: 0, min: 0 },
     distanceSlabs: { type: [distanceSlabSchema], default: [] },
 
+    /** How far from a helper a task may be offered to them, and so how far a customer is covered. */
+    matchRadiusKm: { type: Number, default: 15, min: 1, max: 50 },
+
     /** Waiting is free for a while, then metered — §21. */
     freeWaitingMinutes: { type: Number, default: 10, min: 0 },
     waitingPerMinutePaise: { type: Number, default: 0, min: 0 },

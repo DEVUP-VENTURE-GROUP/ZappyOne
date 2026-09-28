@@ -16,6 +16,7 @@ const Order = require('../order/order.model');
 const Worker = require('../worker/worker.model');
 const { redis } = require('../../config/redis');
 const logger = require('../../utils/logger');
+const { toLatLng } = require('../../utils/distance');
 
 const CACHE_KEY = 'zones:all';
 const CACHE_TTL = 300;
@@ -77,6 +78,36 @@ async function getZoneForPoint(lng, lat) {
   return zone || null;
 }
 
+/** The active zone containing this point, or null. */
+async function getActiveZoneForPoint(lng, lat) {
+  if (lng == null || lat == null) return null;
+  return Zone.findOne({
+    status: 'active',
+    polygon: { $geoIntersects: { $geometry: { type: 'Point', coordinates: [Number(lng), Number(lat)] } } },
+  }).lean();
+}
+
+/**
+ * Whether bookings are limited to drawn zones. Until an admin draws at least one
+ * active zone, coverage is decided by provider service areas alone.
+ */
+async function zonesEnforced() {
+  return (await getAllZones()).some((z) => z.status === 'active');
+}
+
+/**
+ * Refuse a booking location outside every active zone. Accepts GeoJSON, a
+ * [lng, lat] pair or { lat, lng }; a missing location is left to the caller.
+ */
+async function assertBookableLocation(location) {
+  const p = toLatLng(location?.coordinates ?? location);
+  if (!p) return;
+  const { lng, lat } = p;
+  if (!(await zonesEnforced())) return;
+  if (await getActiveZoneForPoint(lng, lat)) return;
+  throw Object.assign(new Error("ZappyOne doesn't serve this location yet"), { status: 400, code: 'OUTSIDE_SERVICE_AREA' });
+}
+
 /**
  * Apply a zone's pricingMultiplier to a base price (in paise).
  * Returns { adjustedPaise, zoneId, zoneName, multiplier }.
@@ -125,6 +156,9 @@ module.exports = {
   deleteZone,
   getAllZones,
   getZoneForPoint,
+  getActiveZoneForPoint,
+  zonesEnforced,
+  assertBookableLocation,
   applyZonePricing,
   getZoneStats,
 };

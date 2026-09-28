@@ -11,6 +11,7 @@ const { dispatchQueue, emergencyDispatchQueue } = require('../../jobs');
 const { redis } = require('../../config/redis');
 const appConfig = require('../../config');
 const logger = require('../../utils/logger');
+const zoneService = require('../zone/zone.service');
 
 /**
  * Create a new service request.
@@ -27,6 +28,8 @@ async function createOrder({ userId, service, subCategory, pickupLocation, dropL
   teamSize, diagnosisAnswers, diagnosisUrgency, quotedTotalRupees, tier, tipAmount,
   preferredWorkerId, preferredShopId, fulfillmentMode,
 }) {
+  await zoneService.assertBookableLocation(pickupLocation);
+
   // Shop-routed booking ("Nearby Shops" path) — validate the shop is real,
   // discoverable and actually offers this service before we spend a dispatch
   // cycle on it.

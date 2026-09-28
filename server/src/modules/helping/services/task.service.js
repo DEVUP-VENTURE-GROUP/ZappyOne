@@ -28,6 +28,7 @@ const walletService = require('../../wallet/wallet.service');
 const Transaction = require('../../payment/transaction.model');
 const notificationService = require('../../notification/notification.service');
 const logger = require('../../../utils/logger');
+const zoneService = require('../../zone/zone.service');
 
 function httpError(message, status, code, extra = {}) {
   return Object.assign(new Error(message), { status, code, ...extra });
@@ -79,6 +80,7 @@ async function createTask({
     const existing = await HelpingTask.findOne({ idempotencyKey }).lean();
     if (existing) return { task: existing, replayed: true };
   }
+  await zoneService.assertBookableLocation(pickupLocation);
 
   const cfg = await pricingService.getConfig(serviceType);
 
