@@ -7,7 +7,7 @@
  *   3. Notification to customer: "Worker has raised a safety flag" + 112 CTA
  *   4. Redis incident record with acknowledgment tracking (24h TTL)
  *   5. Auto-support ticket marked URGENT
- *   6. Re-escalation if admin doesn't acknowledge within 5 minutes (#90)
+ *   6. Re-escalation if admin doesn't acknowledge within 5 minutes
  * ---------------------------------------------------------------------------
  */
 
@@ -16,7 +16,7 @@ const Order   = require('../order/order.model');
 const { redis } = require('../../config/redis');
 const logger  = require('../../utils/logger');
 
-// ── SOS acknowledgment keys ───────────────────────────────────────────────
+// SOS acknowledgment keys
 const ACK_KEY = (incidentKey) => `sos:ack:${incidentKey}`;
 const ESCALATION_DELAY_MS = 5 * 60 * 1000; // 5 min before re-alert
 
@@ -91,7 +91,7 @@ async function triggerSOS({ workerId, lat, lng, orderId, message, type = 'worker
     }).catch(() => {});
   }
 
-  /* 5. Auto-create URGENT support ticket (#90) */
+  /* 5. Auto-create URGENT support ticket */
   try {
     const SupportTicket = require('../support/support-ticket.model');
     await SupportTicket.create({
@@ -113,7 +113,7 @@ async function triggerSOS({ workerId, lat, lng, orderId, message, type = 'worker
     logger.error({ err: err.message }, '[SOS] Failed to create support ticket');
   }
 
-  /* 6. Schedule re-escalation if admin doesn't acknowledge in 5 min (#90) */
+  /* 6. Schedule re-escalation if admin doesn't acknowledge in 5 min */
   setTimeout(async () => {
     try {
       const raw = await redis.get(incidentKey);
@@ -223,8 +223,7 @@ async function triggerCustomerSOS({ userId, orderId, lat, lng, message }) {
         order ? `Order: ${orderId} · Service: ${order.service} · ${incident.address}` : 'No active order.',
         worker ? `Worker on site: ${worker.name} (${worker.phone})` : 'No worker assigned.',
         `Incident key: ${incidentKey}`,
-      ].filter(Boolean).join('
-'),
+      ].filter(Boolean).join('\n'),
       source: 'sos',
       priority: 'urgent',
       status: 'open',
@@ -268,7 +267,7 @@ async function updateEmergencyContact({ workerId, name, phone }) {
 }
 
 /**
- * Admin acknowledges an SOS — marks it handled, stops re-escalation. (#90)
+ * Admin acknowledges an SOS — marks it handled, stops re-escalation.
  */
 async function acknowledgeSOS({ incidentKey, adminId }) {
   const raw = await redis.get(incidentKey);
