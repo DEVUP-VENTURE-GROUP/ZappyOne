@@ -6,7 +6,7 @@
 import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mic, MicOff, Send, Gift, Loader2, CheckCircle2 } from 'lucide-react';
-import { useSendTipMutation, usePresignUploadMutation } from '../../services/api';
+import { useSendTipMutation, usePresignUploadMutation } from '@shared/services/api';
 import toast from 'react-hot-toast';
 
 const DEFAULT_TIP_OPTIONS_RS = [20, 50, 100, 200];

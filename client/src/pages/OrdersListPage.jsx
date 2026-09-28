@@ -7,15 +7,15 @@ import { Star, Repeat2, Calendar, FileDown, Loader2, MapPin, ArrowRight,
 import { useMyJobs } from '../hooks/useMyJobs';
 import { ErrorState } from '../components/common/QueryState';
 import PullToRefresh from '../components/common/PullToRefresh';
-import { API_BASE } from '../services/apiBase';
-import { selectAuth } from '../modules/auth/authSlice';
+import { API_BASE } from '@shared/services/apiBase';
+import { selectAuth } from '@shared/modules/auth/authSlice';
 import PageTransition from '../components/common/PageTransition';
 import { categoryMap } from '../constants/categoryMap';
 import { SkeletonList, SkeletonOrderCard } from '../components/common/Skeleton';
 import { staggerContainer, fadeInUp } from '../lib/animations';
-import { useT, useI18n } from '../i18n/I18nProvider';
-import { serviceNameKey } from '../i18n/translations';
-import { formatPaise } from '../utils/money';
+import { useT, useI18n } from '@shared/i18n/I18nProvider';
+import { serviceNameKey } from '@shared/i18n/translations';
+import { formatPaise } from '@shared/utils/money';
 import toast from 'react-hot-toast';
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;

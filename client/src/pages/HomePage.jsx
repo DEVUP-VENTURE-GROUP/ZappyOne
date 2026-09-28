@@ -13,18 +13,18 @@ import {
   ShieldAlert, Cpu, MonitorSmartphone, Repeat2,
   Tag, Headphones, ArrowRight, ThumbsUp, X, Store,
 } from 'lucide-react';
-import { selectAuth, selectIsAuthed } from '../modules/auth/authSlice';
+import { selectAuth, selectIsAuthed } from '@shared/modules/auth/authSlice';
 import toast from 'react-hot-toast';
-import { useT } from '../i18n/I18nProvider';
-import { serviceNameKey } from '../i18n/translations';
-import { useGetGamificationQuery, useGetRecommendationsQuery, useListServicesQuery, useRebookOrderMutation, useListNotificationsQuery } from '../services/api';
+import { useT } from '@shared/i18n/I18nProvider';
+import { serviceNameKey } from '@shared/i18n/translations';
+import { useGetGamificationQuery, useGetRecommendationsQuery, useListServicesQuery, useRebookOrderMutation, useListNotificationsQuery } from '@shared/services/api';
 import { useMyJobs } from '../hooks/useMyJobs';
-import { useGeolocation, loadGeoLocation } from '../hooks/useGeolocation';
-import { saveGeoLocation } from '../utils/geoCache';
-import { reverseGeocode } from '../utils/reverseGeocode';
-import { serviceLabel } from '../constants/services';
-import LiveServices from '../components/home/LiveServices';
-import { ZappyLogo } from '../components/common/ZappyLogo';
+import { useGeolocation, loadGeoLocation } from '@shared/hooks/useGeolocation';
+import { saveGeoLocation } from '@shared/utils/geoCache';
+import { reverseGeocode } from '@shared/utils/reverseGeocode';
+import { serviceLabel } from '@shared/constants/services';
+import LiveServices from '@shared/components/home/LiveServices';
+import { ZappyLogo } from '@shared/components/common/ZappyLogo';
 import Footer from '../components/layout/Footer';
 import VoiceSearchButton from '../components/common/VoiceSearchButton';
 import SpotlightSearch from '../components/search/SpotlightSearch';
@@ -49,7 +49,7 @@ import OffersSection from '../components/home/OffersSection';
 import { 
   PromoBannerEvents,
 } from '../components/home/PromoBanners';
-import SEO, { HOME_SCHEMA, BASE_URL } from '../components/SEO';
+import SEO, { HOME_SCHEMA, BASE_URL } from '@shared/components/SEO';
 import { useIsMobile } from '../hooks/useIsMobile';
 
 // Service terms cycled through the search placeholder. Localized at render via

@@ -6,7 +6,7 @@ import {
   useLazySmartSearchQuery,
   useLazySearchSuggestQuery,
   useSearchTrendingQuery,
-} from '../../services/api';
+} from '@shared/services/api';
 import { getRecent, addRecent, clearRecent } from '../../lib/recentSearches';
 
 const CATEGORY_CHIPS = [

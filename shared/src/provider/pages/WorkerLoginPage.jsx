@@ -9,12 +9,12 @@ import {
 import {
   useRequestOtpMutation, useLoginWorkerMutation,
   useLoginWorkerPasswordMutation, useForgotWorkerPasswordMutation,
-} from '../services/api';
-import ResendOtp from '../components/auth/ResendOtp';
-import { setAuth } from '../modules/auth/authSlice';
-import { ZappyLogo } from '../components/common/ZappyLogo';
+} from '../../services/api';
+import ResendOtp from '../../components/auth/ResendOtp';
+import { setAuth } from '../../modules/auth/authSlice';
+import { ZappyLogo } from '../../components/common/ZappyLogo';
 import toast from 'react-hot-toast';
-import SEO, { LOGIN_SCHEMA, BASE_URL } from '../components/SEO';
+import SEO, { LOGIN_SCHEMA, BASE_URL } from '../../components/SEO';
 
 /*
  * Signing up collects a name and nothing else.

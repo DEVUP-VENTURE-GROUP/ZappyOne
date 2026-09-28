@@ -9,8 +9,8 @@ import {
   useGetEventBookingQuery, useCancelEventBookingMutation,
   useSubmitEventReviewMutation, useCreateEventRemainingOrderMutation,
   useVerifyEventRemainingPaymentMutation,
-} from '../../services/api';
-import { openCheckout } from '../../services/cashfree';
+} from '@shared/services/api';
+import { openCheckout } from '@shared/services/cashfree';
 import toast from 'react-hot-toast';
 
 const STEP_MAP = {

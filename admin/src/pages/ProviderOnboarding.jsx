@@ -14,7 +14,7 @@ import {
   useAdminApproveLineRequestMutation,
   useAdminRejectLineRequestMutation,
   usePresignUploadMutation,
-} from '@client/services/api';
+} from '@shared/services/api';
 import {
   SectionHeader, Card, Th, Td, EmptyState, PageLoader, StatusBadge, fmtDate,
 } from './_shared';

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Star, CheckCircle2, Sparkles, Users, Info, MapPin, Clock, Award } from 'lucide-react';
-import { useGetNearbyProsQuery } from '../../services/api';
+import { useGetNearbyProsQuery } from '@shared/services/api';
 import WorkerProfileSheet from '../worker/WorkerProfileSheet';
 
 /**

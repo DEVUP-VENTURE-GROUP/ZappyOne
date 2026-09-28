@@ -2,8 +2,8 @@ import { lazy, Suspense, useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { useSelector } from 'react-redux';
-import { selectAuth } from './modules/auth/authSlice';
-import { useDisconnectOnLogout } from './hooks/useSocket';
+import { selectAuth } from '@shared/modules/auth/authSlice';
+import { useDisconnectOnLogout } from '@shared/hooks/useSocket';
 import { useFCM } from './hooks/useFCM.jsx';
 import useTelemetry from './hooks/useTelemetry';
 import { prefetchMainTabs, onIdle } from './lib/routePrefetch';
@@ -15,7 +15,7 @@ import NotificationBanner from './components/common/NotificationBanner';
 import ConnectionBanner from './components/common/ConnectionBanner';
 import RouteProgress from './components/common/RouteProgress';
 import MainLayout from './components/layout/MainLayout';
-import ErrorBoundary from './components/common/ErrorBoundary';
+import ErrorBoundary from '@shared/components/common/ErrorBoundary';
 
 // ── Route-level code splitting ─────────────────────────────────────────────
 // Each page is a separate chunk. Browsers only download the chunk for the
@@ -24,7 +24,7 @@ import ErrorBoundary from './components/common/ErrorBoundary';
 // LoginPage is NOT lazy — it's the first screen most users see and needs to
 // render immediately with no loading flash.
 import LoginPage from './pages/LoginPage';
-import WorkerLoginPage from './pages/WorkerLoginPage';
+import WorkerLoginPage from '@shared/provider/pages/WorkerLoginPage';
 
 const HomePage            = lazy(() => import('./pages/HomePage'));
 const BookingPage         = lazy(() => import('./pages/BookingPage'));
@@ -38,18 +38,18 @@ const ChatPage            = lazy(() => import('./pages/ChatPage'));
 const AllServicesPage     = lazy(() => import('./pages/AllServicesPage'));
 const ServiceDetailPage   = lazy(() => import('./pages/ServiceDetailPage'));
 const BrandSelectPage     = lazy(() => import('./pages/BrandSelectPage'));
-const WorkerDashboard     = lazy(() => import('./pages/WorkerDashboard'));
-const WorkerJobPage       = lazy(() => import('./pages/WorkerJobPage'));
-const WorkerKycPage       = lazy(() => import('./pages/WorkerKycPage'));
+const WorkerDashboard     = lazy(() => import('@shared/provider/pages/WorkerDashboard'));
+const WorkerJobPage       = lazy(() => import('@shared/provider/pages/WorkerJobPage'));
+const WorkerKycPage       = lazy(() => import('@shared/provider/pages/WorkerKycPage'));
 const PlansPage           = lazy(() => import('./pages/PlansPage'));
 const WalletPage          = lazy(() => import('./pages/WalletPage'));
 const ReferralPage        = lazy(() => import('./pages/ReferralPage'));
 const DisputesPage        = lazy(() => import('./pages/DisputesPage'));
 const SupportPage         = lazy(() => import('./pages/SupportPage'));
 const PaymentMethodsPage  = lazy(() => import('./pages/PaymentMethodsPage'));
-const WorkerProfilePage     = lazy(() => import('./pages/WorkerProfilePage'));
-const WorkerEditProfilePage        = lazy(() => import('./pages/WorkerEditProfilePage'));
-const WorkerNotificationsPage      = lazy(() => import('./pages/WorkerNotificationsPage'));
+const WorkerProfilePage     = lazy(() => import('@shared/provider/pages/WorkerProfilePage'));
+const WorkerEditProfilePage        = lazy(() => import('@shared/provider/pages/WorkerEditProfilePage'));
+const WorkerNotificationsPage      = lazy(() => import('@shared/provider/pages/WorkerNotificationsPage'));
 const EventsHomePage               = lazy(() => import('./pages/events/EventsHomePage'));
 const EventCategoryPage            = lazy(() => import('./pages/events/EventCategoryPage'));
 const EventThemePage               = lazy(() => import('./pages/events/EventThemePage'));
@@ -59,7 +59,7 @@ const EventBookingDetailPage       = lazy(() => import('./pages/events/EventBook
 const EventSavedThemesPage         = lazy(() => import('./pages/events/EventSavedThemesPage'));
 const PartnerLoginPage             = lazy(() => import('./pages/events/PartnerLoginPage'));
 const PartnerDashboard             = lazy(() => import('./pages/events/PartnerDashboard'));
-const ProviderOnboardingPage       = lazy(() => import('./pages/provider/ProviderOnboardingPage'));
+const ProviderOnboardingPage       = lazy(() => import('@shared/provider/pages/ProviderOnboardingPage'));
 const ShopLoginPage                = lazy(() => import('./pages/shop/ShopLoginPage'));
 const ShopDashboard                = lazy(() => import('./pages/shop/ShopDashboard'));
 const ShopProfilePage              = lazy(() => import('./pages/shop/ShopProfilePage'));
@@ -75,8 +75,8 @@ const HelpingServicesPage           = lazy(() => import('./pages/helping/Helping
 const ShoppingTaskPage              = lazy(() => import('./pages/helping/ShoppingTaskPage'));
 const ReturnTaskPage                = lazy(() => import('./pages/helping/ReturnTaskPage'));
 const HelpingTaskDetailPage         = lazy(() => import('./pages/helping/HelpingTaskDetailPage'));
-const WorkerHelpingTasksPage        = lazy(() => import('./pages/helping/WorkerHelpingTasksPage'));
-const WorkerHelpingJobPage          = lazy(() => import('./pages/helping/WorkerHelpingJobPage'));
+const WorkerHelpingTasksPage        = lazy(() => import('@shared/provider/pages/WorkerHelpingTasksPage'));
+const WorkerHelpingJobPage          = lazy(() => import('@shared/provider/pages/WorkerHelpingJobPage'));
 const PetServicesPage               = lazy(() => import('./pages/pet/PetServicesPage'));
 const MyPetsPage                    = lazy(() => import('./pages/pet/MyPetsPage'));
 const PetDetailPage                 = lazy(() => import('./pages/pet/PetDetailPage'));
@@ -84,10 +84,10 @@ const PetBookingFlowPage            = lazy(() => import('./pages/pet/PetBookingF
 const PetBookingDetailPage          = lazy(() => import('./pages/pet/PetBookingDetailPage'));
 const PetBookingsListPage           = lazy(() => import('./pages/pet/PetBookingsListPage'));
 const PetRecurringPage              = lazy(() => import('./pages/pet/PetRecurringPage'));
-const WorkerPetJobsPage             = lazy(() => import('./pages/pet/WorkerPetJobsPage'));
-const WorkerPetJobPage              = lazy(() => import('./pages/pet/WorkerPetJobPage'));
-const WorkerRepairJobPage          = lazy(() => import('./pages/repair/WorkerRepairJobPage'));
-const ProviderRepairSetupPage      = lazy(() => import('./pages/repair/ProviderRepairSetupPage'));
+const WorkerPetJobsPage             = lazy(() => import('@shared/provider/pages/WorkerPetJobsPage'));
+const WorkerPetJobPage              = lazy(() => import('@shared/provider/pages/WorkerPetJobPage'));
+const WorkerRepairJobPage          = lazy(() => import('@shared/provider/pages/WorkerRepairJobPage'));
+const ProviderRepairSetupPage      = lazy(() => import('@shared/provider/pages/ProviderRepairSetupPage'));
 const ShopPublicProfilePage        = lazy(() => import('./pages/ShopPublicProfilePage'));
 const AdvertiserDashboard          = lazy(() => import('./pages/AdvertiserDashboard'));
 const SpendingPage                 = lazy(() => import('./pages/SpendingPage'));
@@ -95,12 +95,12 @@ const NotificationPrefsPage        = lazy(() => import('./pages/NotificationPref
 const PromosHubPage                = lazy(() => import('./pages/PromosHubPage'));
 const ScheduledBookingsPage        = lazy(() => import('./pages/ScheduledBookingsPage'));
 const AccountSecurityPage          = lazy(() => import('./pages/AccountSecurityPage'));
-const WorkerBankPage               = lazy(() => import('./pages/WorkerBankPage'));
-const WorkerWithdrawPage           = lazy(() => import('./pages/WorkerWithdrawPage'));
-const WorkerAppealsPage            = lazy(() => import('./pages/WorkerAppealsPage'));
-const WorkerEarningsPage           = lazy(() => import('./pages/WorkerEarningsPage'));
-const WorkerTrainingPage           = lazy(() => import('./pages/WorkerTrainingPage'));
-const WorkerGoalsPage              = lazy(() => import('./pages/WorkerGoalsPage'));
+const WorkerBankPage               = lazy(() => import('@shared/provider/pages/WorkerBankPage'));
+const WorkerWithdrawPage           = lazy(() => import('@shared/provider/pages/WorkerWithdrawPage'));
+const WorkerAppealsPage            = lazy(() => import('@shared/provider/pages/WorkerAppealsPage'));
+const WorkerEarningsPage           = lazy(() => import('@shared/provider/pages/WorkerEarningsPage'));
+const WorkerTrainingPage           = lazy(() => import('@shared/provider/pages/WorkerTrainingPage'));
+const WorkerGoalsPage              = lazy(() => import('@shared/provider/pages/WorkerGoalsPage'));
 const FaqPage                      = lazy(() => import('./pages/FaqPage'));
 const PolicyPage                   = lazy(() => import('./pages/PolicyPage'));
 const RewardsPage                  = lazy(() => import('./pages/RewardsPage'));

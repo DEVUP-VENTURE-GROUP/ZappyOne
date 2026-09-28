@@ -9,7 +9,7 @@ import {
   useAdminShieldTriggerPayoutMutation,
   useAdminShieldWriteOffFeeMutation,
   useAdminShieldUpdateFeeScheduleMutation,
-} from '@client/services/api';
+} from '@shared/services/api';
 import {
   SectionHeader, StatCard, Card, Th, Td, StatusBadge,
   Pagination, EmptyState, PageLoader, fmt, fmtDate, SaveBtn,

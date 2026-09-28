@@ -4,8 +4,8 @@ import { ArrowLeft, Plus, Trash2, X, PawPrint, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import {
   useMyPetsQuery, useCreateMyPetMutation, useDeleteMyPetMutation, usePetBreedsQuery,
-} from '../../services/api';
-import ImageUploadField from '../../components/common/ImageUploadField';
+} from '@shared/services/api';
+import ImageUploadField from '@shared/components/common/ImageUploadField';
 
 /**
  * Pet profiles (§4). Launch is dog and cat only (§1).

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useMemo } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { useAdminGeoAnalyticsQuery, useAdminDemandPatternsQuery, useAdminLiveOpsQuery, useAdminIntelUnmetDemandQuery } from '@client/services/api';
+import { useAdminGeoAnalyticsQuery, useAdminDemandPatternsQuery, useAdminLiveOpsQuery, useAdminIntelUnmetDemandQuery } from '@shared/services/api';
 import { SectionHeader, Card, PageLoader } from './_shared';
 import {
   Flame, IndianRupee, XCircle, Users, TrendingUp, Clock,
@@ -11,7 +11,7 @@ import useZoneNames    from './hooks/useZoneNames';
 import useMapLayers    from './hooks/useMapLayers';
 import ZoneList        from './components/heatmap/ZoneLeaderboard';
 import { HourlyChart, DowChart, ServiceBreakdown } from './components/heatmap/DemandPatterns';
-import { SERVICE_FILTER_OPTIONS, SERVICE_COLORS } from '@client/constants/services';
+import { SERVICE_FILTER_OPTIONS, SERVICE_COLORS } from '@shared/constants/services';
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || '';
 mapboxgl.accessToken = MAPBOX_TOKEN;

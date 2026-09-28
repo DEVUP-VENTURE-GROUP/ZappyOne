@@ -15,7 +15,7 @@ import {
   useAdminRepairConfigQuery,
   useAdminUpdateRepairConfigMutation,
   useAdminRepairBookingsQuery,
-} from '@client/services/api';
+} from '@shared/services/api';
 import { SectionHeader, Card, StatCard, Th, Td, EmptyState, PageLoader, StatusBadge, fmt, fmtDate } from '../_shared';
 import CatalogTable from './CatalogTable';
 import toast from 'react-hot-toast';

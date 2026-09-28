@@ -10,7 +10,7 @@ import {
   useGetCatalogVariantsQuery,
   useGetDiagnosticFlowQuery,
   useRecordDemandEventMutation,
-} from '../../services/api';
+} from '@shared/services/api';
 
 export default function PhoneDiagnosticWizard({ onSelectServiceQuote }) {
   const [step, setStep] = useState(1); // 1: Brand/Model -> 2: Problem/Diagnostic -> 3: Variant & Quote

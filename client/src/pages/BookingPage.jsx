@@ -11,7 +11,7 @@ import {
   Camera, Tv, Wifi, Heart, Dog, ShieldAlert, Cpu, MonitorSmartphone,
   Laptop, Wind, Store,
 } from 'lucide-react';
-import LocationPicker from '../modules/booking/LocationPicker';
+import LocationPicker from '@shared/modules/booking/LocationPicker';
 import PhoneDiagnosticWizard from '../modules/booking/PhoneDiagnosticWizard';
 import SmartPricingPanel from '../components/booking/SmartPricingPanel';
 import BookingMapView from '../components/booking/BookingMapView';
@@ -25,12 +25,12 @@ import {
   useValidatePromoMutation, useLazyGetSurgeInfoQuery,
   useGetPricingConfigQuery, useLazyGetLensScanQuery,
   useGetShopProfileQuery,
-} from '../services/api';
+} from '@shared/services/api';
 import PageTransition from '../components/common/PageTransition';
 import { staggerContainer, fadeInUp } from '../lib/animations';
 import { trackSearch } from '../hooks/useTelemetry';
 import toast from 'react-hot-toast';
-import SEO, { SERVICE_META as SEO_SERVICE_META, buildServiceJsonLd, BASE_URL } from '../components/SEO';
+import SEO, { SERVICE_META as SEO_SERVICE_META, buildServiceJsonLd, BASE_URL } from '@shared/components/SEO';
 
 // ─── Vertical classification (mirrors server pricing.service.js) ─────────────
 const MOBILE_SERVICES = new Set([

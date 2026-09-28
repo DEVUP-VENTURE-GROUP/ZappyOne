@@ -1,7 +1,7 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Loader2, Calendar } from 'lucide-react';
-import { useMyPetBookingsQuery } from '../../services/api';
-import { formatPaise } from '../../utils/money';
+import { useMyPetBookingsQuery } from '@shared/services/api';
+import { formatPaise } from '@shared/utils/money';
 
 const OPEN_STATUSES = ['REQUESTED', 'BOOKED', 'PROVIDER_SEARCHING', 'PROVIDER_ASSIGNED', 'PROVIDER_ACCEPTED', 'PROVIDER_EN_ROUTE', 'PROVIDER_ARRIVED', 'PET_HANDOVER', 'SERVICE_STARTED'];
 

@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Loader2, PawPrint, Calendar, IndianRupee } from 'lucide-react';
-import { useMyPetHistoryQuery } from '../../services/api';
-import { formatPaise } from '../../utils/money';
+import { useMyPetHistoryQuery } from '@shared/services/api';
+import { formatPaise } from '@shared/utils/money';
 
 /**
  * A pet's permanent record (§40) — one place a pet's whole service life is

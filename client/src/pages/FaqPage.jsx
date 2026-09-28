@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronDown, HelpCircle, Search, Loader2, MessageCircle } from 'lucide-react';
-import { useGetFaqsQuery } from '../services/api';
+import { useGetFaqsQuery } from '@shared/services/api';
 
 function FaqItem({ q, a, open, onToggle }) {
   return (

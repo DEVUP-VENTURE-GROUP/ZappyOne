@@ -8,15 +8,15 @@ import {
   Trash2, X, Loader2, Scale, HeadphonesIcon, CreditCard,
   Pencil, Check, TrendingUp, Tag, Calendar, Shield, Gift,
 } from 'lucide-react';
-import { reverseGeocode } from '../utils/reverseGeocode';
+import { reverseGeocode } from '@shared/utils/reverseGeocode';
 import AddressAutocomplete from '../components/common/AddressAutocomplete';
-import { useT } from '../i18n/I18nProvider';
+import { useT } from '@shared/i18n/I18nProvider';
 import LanguageSwitcher from '../i18n/LanguageSwitcher';
-import { selectAuth, logout } from '../modules/auth/authSlice';
+import { selectAuth, logout } from '@shared/modules/auth/authSlice';
 import {
   useGetMeQuery, useGetAddressesQuery, useAddAddressMutation,
   useDeleteAddressMutation, useEditAddressMutation, useSetDefaultAddressMutation,
-} from '../services/api';
+} from '@shared/services/api';
 import PageTransition from '../components/common/PageTransition';
 import { SkeletonProfileHeader, SkeletonList, SkeletonCard } from '../components/common/Skeleton';
 import { staggerContainer, fadeInUp } from '../lib/animations';

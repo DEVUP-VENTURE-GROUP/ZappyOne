@@ -1,4 +1,4 @@
-import { useAdminMetricsQuery, useAdminRevenueQuery } from '@client/services/api';
+import { useAdminMetricsQuery, useAdminRevenueQuery } from '@shared/services/api';
 import {
   ClipboardList, Activity, CheckCircle2, IndianRupee,
   TrendingUp, Users, UserCheck,

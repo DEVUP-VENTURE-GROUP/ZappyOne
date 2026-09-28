@@ -1,8 +1,8 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, ChevronRight, AlertTriangle, Loader2, Wrench } from 'lucide-react';
-import { useLiveCatalogQuery } from '../../services/api';
-import { CATEGORY_ICONS } from '../../components/home/LiveServices';
-import SEO from '../../components/SEO';
+import { useLiveCatalogQuery } from '@shared/services/api';
+import { CATEGORY_ICONS } from '@shared/components/home/LiveServices';
+import SEO from '@shared/components/SEO';
 
 /**
  * Everything under one heading — Display, Storage, Connectivity.

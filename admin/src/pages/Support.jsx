@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAdminSupportTicketsQuery, useAdminReplyTicketMutation } from '@client/services/api';
+import { useAdminSupportTicketsQuery, useAdminReplyTicketMutation } from '@shared/services/api';
 import { SectionHeader, Card, PageLoader, Pagination, StatusBadge, Th, Td } from './_shared';
 import { MessageSquare, Send, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 

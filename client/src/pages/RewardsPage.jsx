@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { ChevronLeft, Gift, Sparkles, Coins, Loader2, Wallet, Clock } from 'lucide-react';
-import { useGetRewardsQuery, useRedeemRewardPointsMutation, useScratchRewardCardMutation } from '../services/api';
-import { useT } from '../i18n/I18nProvider';
+import { useGetRewardsQuery, useRedeemRewardPointsMutation, useScratchRewardCardMutation } from '@shared/services/api';
+import { useT } from '@shared/i18n/I18nProvider';
 
 function ScratchCard({ card, onScratch, revealing }) {
   const t = useT();

@@ -11,9 +11,9 @@ import {
   useMyAdCampaignsQuery, useCreateMyCampaignMutation, useUpdateMyCampaignMutation,
   useMyAdWalletQuery, useCreateAdTopUpOrderMutation, useVerifyAdTopUpMutation,
   useGetEventCategoriesQuery, useLogoutMutation, usePresignUploadMutation,
-} from '../services/api';
-import { openCheckout } from '../services/cashfree';
-import { logout, selectAuth } from '../modules/auth/authSlice';
+} from '@shared/services/api';
+import { openCheckout } from '@shared/services/cashfree';
+import { logout, selectAuth } from '@shared/modules/auth/authSlice';
 import toast from 'react-hot-toast';
 
 /* ─── Helpers ────────────────────────────────────────────────────────────────── */

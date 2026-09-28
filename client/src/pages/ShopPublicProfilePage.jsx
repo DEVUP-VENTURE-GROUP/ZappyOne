@@ -1,6 +1,6 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Store, Star, ShieldCheck, MapPin, Calendar, Loader2, ChevronRight } from 'lucide-react';
-import { useGetShopProfileQuery } from '../services/api';
+import { useGetShopProfileQuery } from '@shared/services/api';
 
 const SERVICE_LABELS = {
   screen_replacement: 'Phone Screen Replacement', battery_replacement: 'Phone Battery Replacement',

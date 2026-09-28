@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, TrendingUp, Package, Tag, ShoppingBag } from 'lucide-react';
-import { useGetSpendingQuery } from '../services/api';
-import { serviceLabel } from '../constants/services';
+import { useGetSpendingQuery } from '@shared/services/api';
+import { serviceLabel } from '@shared/constants/services';
 
 function Bar({ value, max, color = 'bg-indigo-500' }) {
   const pct = max > 0 ? Math.round((value / max) * 100) : 0;

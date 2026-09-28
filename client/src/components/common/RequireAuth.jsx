@@ -1,6 +1,6 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { selectAuth } from '../../modules/auth/authSlice';
+import { selectAuth } from '@shared/modules/auth/authSlice';
 
 /**
  * `role` accepts a string or an array. Some screens legitimately serve more

@@ -3,7 +3,7 @@ import {
   ArrowLeft, Scissors, Home, Footprints, HeartHandshake, Car, Stethoscope,
   ClipboardCheck, PawPrint, Calendar, Repeat, History, ChevronRight,
 } from 'lucide-react';
-import { usePetCategoriesQuery } from '../../services/api';
+import { usePetCategoriesQuery } from '@shared/services/api';
 
 /**
  * Pet Services entry (§3, §53).

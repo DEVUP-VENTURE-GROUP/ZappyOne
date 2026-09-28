@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Plus, ChevronRight, AlertCircle, Clock, CheckCircle, XCircle, Loader2, X, Scale, FileText, MessagesSquare, CheckCircle2, Flag } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { useGetWorkerAppealsQuery, useCreateWorkerAppealMutation } from '../services/api';
+import { useGetWorkerAppealsQuery, useCreateWorkerAppealMutation } from '../../services/api';
 
 const STATUS_CONFIG = {
   pending:      { label: 'Pending Review', color: 'amber',   Icon: Clock },

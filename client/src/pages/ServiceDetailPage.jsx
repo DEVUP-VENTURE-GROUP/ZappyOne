@@ -13,8 +13,8 @@ import ServiceFaqs from '../components/catalog/ServiceFaqs';
 import { RippleLayer, useRipple } from '../components/catalog/Ripple';
 import useServiceCatalog from '../hooks/useServiceCatalog';
 import useFavorites from '../hooks/useFavorites';
-import { useGetAvailablePromosQuery } from '../services/api';
-import { selectAuth } from '../modules/auth/authSlice';
+import { useGetAvailablePromosQuery } from '@shared/services/api';
+import { selectAuth } from '@shared/modules/auth/authSlice';
 import { readSelection, selectionToQuery } from '../lib/brandSelection';
 import {
   brandCategoryFor,

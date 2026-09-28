@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Star, BadgeCheck, Briefcase, CalendarDays, ThumbsUp, Loader2, Quote } from 'lucide-react';
-import { useGetWorkerPublicProfileQuery } from '../../services/api';
-import { serviceLabel } from '../../constants/services';
+import { useGetWorkerPublicProfileQuery } from '@shared/services/api';
+import { serviceLabel } from '@shared/constants/services';
 
 function timeAgo(d) {
   if (!d) return '';

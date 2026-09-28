@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Heart, Star, Loader2 } from 'lucide-react';
-import { useGetSavedEventThemesQuery, useToggleSaveEventThemeMutation } from '../../services/api';
+import { useGetSavedEventThemesQuery, useToggleSaveEventThemeMutation } from '@shared/services/api';
 import toast from 'react-hot-toast';
 
 export default function EventSavedThemesPage() {

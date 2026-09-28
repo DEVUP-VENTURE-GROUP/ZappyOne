@@ -11,7 +11,7 @@ import toast from 'react-hot-toast';
 import {
   useAdminZonesQuery, useAdminCreateZoneMutation, useAdminUpdateZoneMutation,
   useAdminDeleteZoneMutation, useAdminZoneStatsQuery,
-} from '@client/services/api';
+} from '@shared/services/api';
 import { SectionHeader, Card, PageLoader, FormRow, Input, Select } from './_shared';
 
 // Fix Leaflet default icon path issue with Vite

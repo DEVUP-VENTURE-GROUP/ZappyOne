@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAdminDisputesQuery, useAdminResolveDisputeMutation } from '@client/services/api';
+import { useAdminDisputesQuery, useAdminResolveDisputeMutation } from '@shared/services/api';
 import { Scale, X } from 'lucide-react';
 import { SectionHeader, Pagination, StatusBadge, Card, Th, Td, EmptyState, PageLoader, fmtDate, fmt } from './_shared';
 import toast from 'react-hot-toast';

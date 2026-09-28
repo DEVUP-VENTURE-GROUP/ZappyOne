@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, CheckCircle, XCircle, Star, Eye, EyeOff, Zap, Users, Package, Settings2, BarChart2, TrendingUp, ChevronRight, Plus, X, ShieldCheck, ShieldOff, FileText, Phone, MapPin, ZoomIn, AlertTriangle, Building2 } from 'lucide-react';
-import { useAdminEventThemesQuery, useAdminUpdateThemeStatusMutation, useAdminEventBookingsQuery, useAdminEventPartnersQuery, useAdminEventAnalyticsQuery, useAdminEventConfigQuery, useAdminUpdateEventConfigMutation, useAdminEventCategoriesQuery, useAdminUpsertEventCategoryMutation, useAdminCreateEventPartnerMutation, useAdminGetEventPartnerQuery, useAdminApproveEventPartnerKycMutation, useAdminRejectEventPartnerKycMutation, useAdminBlockEventPartnerMutation, useAdminCancelEventBookingMutation } from '@client/services/api';
+import { useAdminEventThemesQuery, useAdminUpdateThemeStatusMutation, useAdminEventBookingsQuery, useAdminEventPartnersQuery, useAdminEventAnalyticsQuery, useAdminEventConfigQuery, useAdminUpdateEventConfigMutation, useAdminEventCategoriesQuery, useAdminUpsertEventCategoryMutation, useAdminCreateEventPartnerMutation, useAdminGetEventPartnerQuery, useAdminApproveEventPartnerKycMutation, useAdminRejectEventPartnerKycMutation, useAdminBlockEventPartnerMutation, useAdminCancelEventBookingMutation } from '@shared/services/api';
 import { useSelector } from 'react-redux';
-import { selectAuth } from '@client/modules/auth/authSlice';
-import { API_BASE } from '@client/services/apiBase';
+import { selectAuth } from '@shared/modules/auth/authSlice';
+import { API_BASE } from '@shared/services/apiBase';
 import { adminApiPath } from '@/config/admin';
 import toast from 'react-hot-toast';
 

@@ -4,10 +4,10 @@ import {
   ArrowLeft, Plus, Trash2, MapPin, Loader2, ShoppingBasket, PackageSearch, Info,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import LocationPicker from '../../modules/booking/LocationPicker';
-import ImageUploadField from '../../components/common/ImageUploadField';
-import { useHelpingQuoteMutation, useCreateHelpingTaskMutation } from '../../services/api';
-import { formatPaise } from '../../utils/money';
+import LocationPicker from '@shared/modules/booking/LocationPicker';
+import ImageUploadField from '@shared/components/common/ImageUploadField';
+import { useHelpingQuoteMutation, useCreateHelpingTaskMutation } from '@shared/services/api';
+import { formatPaise } from '@shared/utils/money';
 
 /**
  * "Shop for Me" / "Pick Up for Me" — §4 to §11.

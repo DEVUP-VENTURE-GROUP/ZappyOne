@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { CheckCircle, XCircle, Clock, AlertCircle, ChevronDown, ChevronUp, Loader2, Search } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { useAdminGetAppealsQuery, useAdminResolveAppealMutation } from '@client/services/api';
+import { useAdminGetAppealsQuery, useAdminResolveAppealMutation } from '@shared/services/api';
 
 const STATUS_TABS = ['all', 'pending', 'under_review', 'upheld', 'dismissed'];
 const STATUS_LABEL = { pending: 'Pending', under_review: 'Under Review', upheld: 'Upheld', dismissed: 'Dismissed' };

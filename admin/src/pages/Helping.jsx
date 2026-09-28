@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 import {
   useAdminHelpingConfigQuery, useAdminUpdateHelpingConfigMutation,
   useAdminHelpingTasksQuery, useAdminHelpingRefundOutcomeMutation,
-} from '@client/services/api';
+} from '@shared/services/api';
 import {
   PageLoader, EmptyState, SectionHeader, Card, StatusBadge, Th, Td,
   FormRow, Input, Select, Spinner,

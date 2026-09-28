@@ -1,8 +1,8 @@
 import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { selectAuth } from '../modules/auth/authSlice';
-import { API_BASE } from '../services/apiBase';
+import { selectAuth } from '@shared/modules/auth/authSlice';
+import { API_BASE } from '@shared/services/apiBase';
 
 /**
  * useTelemetry — fires lightweight, fire-and-forget analytics beacons that power

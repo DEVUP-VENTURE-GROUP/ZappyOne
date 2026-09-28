@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAdminRetentionQuery } from '@client/services/api';
+import { useAdminRetentionQuery } from '@shared/services/api';
 import { SectionHeader, Card, PageLoader, LineSparkline, BarChart } from './_shared';
 import { Users, Repeat, TrendingUp, Briefcase } from 'lucide-react';
 

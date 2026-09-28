@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { LayoutGrid } from 'lucide-react';
 import { getCharacterByCatalogKey } from '../../constants/categoryMap';
 import { useIsMobile } from '../../hooks/useIsMobile';
-import { useT } from '../../i18n/I18nProvider';
-import { useLiveCatalogQuery } from '../../services/api';
+import { useT } from '@shared/i18n/I18nProvider';
+import { useLiveCatalogQuery } from '@shared/services/api';
 
 /**
  * The hero service grid. Two presentations, one data source:

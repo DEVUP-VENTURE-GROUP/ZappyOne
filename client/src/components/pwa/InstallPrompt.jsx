@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { X, BadgeCheck, Zap, MapPin, Bell, ShieldCheck } from 'lucide-react';
 import { usePWAInstall } from '../../hooks/usePWAInstall';
-import { ZappyAppIcon } from '../common/ZappyLogo';
+import { ZappyAppIcon } from '@shared/components/common/ZappyLogo';
 import InstallButton from './InstallButton';
 import IOSInstallModal from './IOSInstallModal';
 

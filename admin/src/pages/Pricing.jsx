@@ -4,7 +4,7 @@ import {
   useAdminUpdatePricingMutation,
   useAdminTogglesMutation,
   useAdminToggleDispatchMutation,
-} from '@client/services/api';
+} from '@shared/services/api';
 import { SectionHeader, Card, FormRow, Input, SaveBtn, PageLoader } from './_shared';
 import toast from 'react-hot-toast';
 

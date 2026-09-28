@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
-import { formatPaise } from '@client/utils/money';
+import { formatPaise } from '@shared/utils/money';
 
 export function Spinner({ size = 20 }) {
   return <Loader2 size={size} className="animate-spin text-blue-600" />;

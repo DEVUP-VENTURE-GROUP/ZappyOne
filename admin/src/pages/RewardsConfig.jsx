@@ -5,7 +5,7 @@ import {
   useAdminGetRewardsConfigQuery,
   useAdminUpdateRewardsConfigMutation,
   useAdminGrantRewardPointsMutation,
-} from '@client/services/api';
+} from '@shared/services/api';
 
 const NUM_FIELDS = [
   ['pointsPerOrder', 'Points per completed order'],

@@ -4,7 +4,7 @@ import {
   useAdminUpdateAdMutation, useAdminDeleteAdMutation,
   useAdminApproveAdMutation, useAdminRejectAdMutation,
   useAdminAdWalletsQuery,
-} from '@client/services/api';
+} from '@shared/services/api';
 import {
   SectionHeader, Card, FormRow, Input, Select, SaveBtn, PageLoader, EmptyState,
   StatCard, Pagination,

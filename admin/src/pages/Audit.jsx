@@ -1,5 +1,5 @@
 import { useState, Fragment } from 'react';
-import { useAdminAuditLogsQuery } from '@client/services/api';
+import { useAdminAuditLogsQuery } from '@shared/services/api';
 import { Shield } from 'lucide-react';
 import { SectionHeader, Pagination, Card, Th, Td, EmptyState, PageLoader, fmtDate } from './_shared';
 

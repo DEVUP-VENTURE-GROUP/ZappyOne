@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
-import LiveServices from '../components/home/LiveServices';
-import SEO from '../components/SEO';
+import LiveServices from '@shared/components/home/LiveServices';
+import SEO from '@shared/components/SEO';
 
 /**
  * Everything a customer can book, in one place.

@@ -1,10 +1,10 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useSelector } from 'react-redux';
-import { selectAuth } from '../modules/auth/authSlice';
+import { selectAuth } from '@shared/modules/auth/authSlice';
 import {
   useRegisterDeviceTokenMutation,
   useRegisterWorkerDeviceTokenMutation,
-} from '../services/api';
+} from '@shared/services/api';
 
 const {
   VITE_FIREBASE_API_KEY,

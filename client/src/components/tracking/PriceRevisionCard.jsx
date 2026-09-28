@@ -6,7 +6,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DollarSign, Clock, CheckCircle2, XCircle, Image as ImageIcon } from 'lucide-react';
-import { useRespondPriceRevisionMutation } from '../../services/api';
+import { useRespondPriceRevisionMutation } from '@shared/services/api';
 import toast from 'react-hot-toast';
 
 export default function PriceRevisionCard({ revision, onResolved }) {

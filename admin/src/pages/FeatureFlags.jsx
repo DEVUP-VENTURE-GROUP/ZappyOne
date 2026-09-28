@@ -1,4 +1,4 @@
-import { useAdminFeatureFlagsQuery, useAdminSetFeatureFlagMutation } from '@client/services/api';
+import { useAdminFeatureFlagsQuery, useAdminSetFeatureFlagMutation } from '@shared/services/api';
 import { SectionHeader, Card, PageLoader } from './_shared';
 import { ToggleLeft, ToggleRight, Loader2 } from 'lucide-react';
 

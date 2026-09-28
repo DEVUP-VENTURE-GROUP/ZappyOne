@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { Mail, Lock, ArrowRight, Loader2, ShieldCheck } from 'lucide-react';
-import { useLoginAdminMutation } from '@client/services/api';
-import { setAuth } from '@client/modules/auth/authSlice';
+import { useLoginAdminMutation } from '@shared/services/api';
+import { setAuth } from '@shared/modules/auth/authSlice';
 import { adminPath } from '@/config/admin';
 import toast from 'react-hot-toast';
 

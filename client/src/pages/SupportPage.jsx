@@ -9,7 +9,7 @@ import toast from 'react-hot-toast';
 import {
   useGetMyTicketsQuery, useGetTicketQuery,
   useCreateTicketMutation, useAddTicketMessageMutation,
-} from '../services/api';
+} from '@shared/services/api';
 import PageTransition from '../components/common/PageTransition';
 
 const CATEGORIES = [

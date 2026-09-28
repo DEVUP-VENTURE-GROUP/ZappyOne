@@ -11,10 +11,10 @@ import {
   useListNotificationsQuery,
   useMarkNotificationReadMutation,
   useMarkAllNotificationsReadMutation,
-} from '../services/api';
+} from '../../services/api';
 import { useSelector } from 'react-redux';
-import { selectAuth } from '../modules/auth/authSlice';
-import { getSocket } from '../services/socket';
+import { selectAuth } from '../../modules/auth/authSlice';
+import { getSocket } from '../../services/socket';
 import toast from 'react-hot-toast';
 
 /* ─── Worker-specific type → visual config ──────────────────────────────── */

@@ -8,7 +8,7 @@
 // opt into reduced motion via OS settings. We respect it platform-wide.
 //
 // Usage in components:
-//   import { reducedMotion } from '../lib/animations';
+//   import { reducedMotion } from './animations';
 //   <motion.div animate={reducedMotion ? {} : { y: [-6,6,-6] }} />
 //
 // For framer-motion variants, use the `reduceVariant` helper below which

@@ -16,8 +16,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   User, Phone, Heart, ChevronRight, CheckCircle2, Loader2, ArrowLeft, ShieldCheck,
 } from 'lucide-react';
-import { useWorkerCompleteOnboardingMutation, useGetWorkerMeQuery } from '../services/api';
-import { ZappyLogo } from '../components/common/ZappyLogo';
+import { useWorkerCompleteOnboardingMutation, useGetWorkerMeQuery } from '../../services/api';
+import { ZappyLogo } from '../../components/common/ZappyLogo';
 import toast from 'react-hot-toast';
 
 const STEPS = ['name', 'emergency'];

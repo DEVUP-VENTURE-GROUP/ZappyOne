@@ -8,7 +8,7 @@ import { ChevronDown, Save, Loader2, Plus, X, Edit2, CheckCircle, Battery, Dolla
 import {
   useGetPricingConfigQuery, useAdminUpdatePricingMutation, useAdminTogglesMutation,
   useAdminAddSparePartMutation, useAdminUpdateSparePartMutation, useAdminRemoveSparePartMutation,
-} from '@client/services/api';
+} from '@shared/services/api';
 import toast from 'react-hot-toast';
 import { NumInput, FieldRow, InfoBox, rupees, paise } from './_service-shared';
 

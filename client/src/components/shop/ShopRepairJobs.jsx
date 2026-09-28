@@ -7,9 +7,9 @@ import {
   useRepairProviderJobsQuery,
   useShopWorkersQuery,
   useAssignRepairWorkerMutation,
-} from '../../services/api';
+} from '@shared/services/api';
 import toast from 'react-hot-toast';
-import { formatPaise } from '../../utils/money';
+import { formatPaise } from '@shared/utils/money';
 
 /**
  * The shop's repair work, and who is doing it.

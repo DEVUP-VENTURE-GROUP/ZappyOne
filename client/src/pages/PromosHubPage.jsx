@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Tag, Copy, CheckCheck, Clock, AlertCircle } from 'lucide-react';
-import { useGetAvailablePromosQuery } from '../services/api';
-import { serviceLabel } from '../constants/services';
+import { useGetAvailablePromosQuery } from '@shared/services/api';
+import { serviceLabel } from '@shared/constants/services';
 
 function PromoCard({ promo }) {
   const [copied, setCopied] = useState(false);

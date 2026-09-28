@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Loader2, Search, TrendingUp, AlertTriangle, MapPin, BarChart2 } from 'lucide-react';
-import { useAdminSearchAnalyticsQuery } from '@client/services/api';
+import { useAdminSearchAnalyticsQuery } from '@shared/services/api';
 
 function Stat({ icon: Icon, label, value, tone = 'slate', suffix = '' }) {
   const tones = { slate: 'text-slate-900', rose: 'text-rose-600', amber: 'text-amber-600', indigo: 'text-indigo-600' };

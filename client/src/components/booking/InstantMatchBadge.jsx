@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { Zap, Users } from 'lucide-react';
-import { useGetWarmDispatchQuery } from '../../services/api';
+import { useGetWarmDispatchQuery } from '@shared/services/api';
 
 /**
  * ZeroWait L2 — Warm Dispatch signal.

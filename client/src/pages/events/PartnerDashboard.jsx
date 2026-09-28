@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { selectAuth } from '../../modules/auth/authSlice';
-import { API_BASE } from '../../services/apiBase';
+import { selectAuth } from '@shared/modules/auth/authSlice';
+import { API_BASE } from '@shared/services/apiBase';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, Star, Package, Calendar, Wallet, User, LogOut,
@@ -19,9 +19,9 @@ import {
   usePartnerEarningsQuery, useGetEventCategoriesQuery, usePresignUploadMutation,
   usePartnerNotificationsQuery, useMarkPartnerNotificationReadMutation, useMarkAllPartnerNotificationsReadMutation,
   useLogoutMutation,
-} from '../../services/api';
-import { logout } from '../../modules/auth/authSlice';
-import LiveSelfieCapture from '../../components/kyc/LiveSelfieCapture';
+} from '@shared/services/api';
+import { logout } from '@shared/modules/auth/authSlice';
+import LiveSelfieCapture from '@shared/components/kyc/LiveSelfieCapture';
 import toast from 'react-hot-toast';
 
 /* ─── Status pill ───────────────────────────────────────────────────────────── */

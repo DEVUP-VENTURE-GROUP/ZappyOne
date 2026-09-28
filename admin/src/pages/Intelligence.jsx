@@ -10,7 +10,7 @@ import {
   useAdminIntelLiveTrafficQuery, useAdminIntelVisitorLocationsQuery, useAdminIntelDemandQuery,
   useAdminIntelUnmetDemandQuery, useAdminIntelExpansionQuery, useAdminIntelCeoQuery,
   useAdminIntelFunnelQuery, useAdminIntelReportQuery, useAdminIntelPartnersQuery,
-} from '@client/services/api';
+} from '@shared/services/api';
 import { SectionHeader, Card, PageLoader, EmptyState, StatCard, BarChart, Th, Td } from './_shared';
 import BusinessIntelligence from './BusinessIntelligence';
 import Heatmap from './Heatmap';

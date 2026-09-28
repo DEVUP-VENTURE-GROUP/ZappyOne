@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Store, ArrowRight, ChevronLeft, Loader2, Sparkles, Wrench, ShieldCheck, Users } from 'lucide-react';
-import { useRequestOtpMutation, useLoginShopMutation } from '../../services/api';
-import ResendOtp from '../../components/auth/ResendOtp';
-import { setAuth } from '../../modules/auth/authSlice';
+import { useRequestOtpMutation, useLoginShopMutation } from '@shared/services/api';
+import ResendOtp from '@shared/components/auth/ResendOtp';
+import { setAuth } from '@shared/modules/auth/authSlice';
 import toast from 'react-hot-toast';
 
 function OtpBox({ value, onChange, onKeyDown, inputRef, filled }) {

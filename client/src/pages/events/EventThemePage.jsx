@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Heart, Star, Clock, Users, CheckCircle, XCircle, Play, Calendar, Sparkles, Zap, MapPin, ChevronRight, Check } from 'lucide-react';
-import { useGetEventThemeQuery, useToggleSaveEventThemeMutation } from '../../services/api';
+import { useGetEventThemeQuery, useToggleSaveEventThemeMutation } from '@shared/services/api';
 import toast from 'react-hot-toast';
 
 export default function EventThemePage() {

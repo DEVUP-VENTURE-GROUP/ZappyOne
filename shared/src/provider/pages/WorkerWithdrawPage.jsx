@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Wallet, Zap, Clock, ChevronRight, Loader2, Building2, Smartphone, AlertCircle, Info, Banknote, ShieldCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { useGetWorkerBankAccountsQuery, useGetWalletQuery, useRequestPayoutMutation } from '../services/api';
+import { useGetWorkerBankAccountsQuery, useGetWalletQuery, useRequestPayoutMutation } from '../../services/api';
 
 const MIN_PAISE = 5000;   // ₹50 — must match server payout.service.js
 const MAX_PAISE = 2500000; // ₹25,000

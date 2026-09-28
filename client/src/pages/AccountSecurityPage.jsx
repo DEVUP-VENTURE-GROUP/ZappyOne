@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Shield, Smartphone, Clock, AlertTriangle, X } from 'lucide-react';
-import { useGetMeQuery, useDeleteAccountMutation } from '../services/api';
+import { useGetMeQuery, useDeleteAccountMutation } from '@shared/services/api';
 import { useDispatch } from 'react-redux';
-import { logout } from '../modules/auth/authSlice';
+import { logout } from '@shared/modules/auth/authSlice';
 
 function DeleteConfirmSheet({ onClose, onConfirm, isLoading }) {
   const [confirm, setConfirm] = useState('');

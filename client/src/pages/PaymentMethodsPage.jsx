@@ -11,7 +11,7 @@ import {
   useAddPaymentMethodMutation,
   useDeletePaymentMethodMutation,
   useSetDefaultPaymentMethodMutation,
-} from '../services/api';
+} from '@shared/services/api';
 import PageTransition from '../components/common/PageTransition';
 
 const NETWORK_COLORS = {

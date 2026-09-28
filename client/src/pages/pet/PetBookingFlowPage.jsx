@@ -4,12 +4,12 @@ import {
   ArrowLeft, Loader2, MapPin, Check, PawPrint, Star, Plus,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import LocationPicker from '../../modules/booking/LocationPicker';
+import LocationPicker from '@shared/modules/booking/LocationPicker';
 import {
   useMyPetsQuery, usePetVariantsQuery, usePetAddonsQuery, useLazyPetCompatibilityQuery,
   usePetQuoteMutation, usePetProviderSearchMutation, useCreatePetBookingMutation,
-} from '../../services/api';
-import { formatPaise } from '../../utils/money';
+} from '@shared/services/api';
+import { formatPaise } from '@shared/utils/money';
 
 /**
  * One adaptive booking flow for all seven categories (§3, §54).

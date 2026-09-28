@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 import {
   useMyPetRecurringQuery, usePausePetRecurringMutation, useResumePetRecurringMutation,
   useCancelPetRecurringMutation,
-} from '../../services/api';
+} from '@shared/services/api';
 
 /** Recurring care (§32) — pause, resume, cancel a standing schedule. */
 export default function PetRecurringPage() {

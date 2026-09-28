@@ -10,12 +10,12 @@ import {
   useShopMeQuery, useShopKycStatusQuery, useShopEarningsQuery, useLogoutMutation,
   useShopWorkersQuery, useRepairProviderJobsQuery, useRepairOnboardingStatusQuery,
   useProviderOnboardingStatusQuery,
-} from '../../services/api';
-import ProviderServicesCard from '../../components/provider/ProviderServicesCard';
-import RepairOfferHost from '../../components/repair/RepairOfferHost';
+} from '@shared/services/api';
+import ProviderServicesCard from '@shared/components/provider/ProviderServicesCard';
+import RepairOfferHost from '@shared/components/repair/RepairOfferHost';
 import ShopRepairJobs from '../../components/shop/ShopRepairJobs';
-import { StatCard, Panel, inr, EarningsOverview, PerformanceGrid } from '../../components/worker/DashboardUI';
-import { logout } from '../../modules/auth/authSlice';
+import { StatCard, Panel, inr, EarningsOverview, PerformanceGrid } from '@shared/components/worker/DashboardUI';
+import { logout } from '@shared/modules/auth/authSlice';
 
 /**
  * The shop owner's dashboard.

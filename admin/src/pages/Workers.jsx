@@ -1,15 +1,15 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSelector } from 'react-redux';
-import { selectAuth } from '@client/modules/auth/authSlice';
+import { selectAuth } from '@shared/modules/auth/authSlice';
 import { adminApiPath } from '@/config/admin';
-import { API_BASE } from '@client/services/apiBase';
+import { API_BASE } from '@shared/services/apiBase';
 import {
   useAdminWorkersQuery, useAdminBlockWorkerMutation,
   useAdminWorkerPenaltiesQuery, useAdminKycDocUrlsQuery,
   useAdminDeleteWorkerMutation,
   useAdminWorkerEarningsQuery, useAdminWorkerTimelineQuery,
   useAdminWorkerDeductionsQuery, useAdminWorkerIncentivesQuery,
-} from '@client/services/api';
+} from '@shared/services/api';
 
 /* ─── Permanent doc hook — server-proxied, no URL expiry ─────────────────── */
 function useKycDoc(workerId, docType, token, enabled = true) {

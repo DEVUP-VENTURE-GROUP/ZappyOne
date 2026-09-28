@@ -8,10 +8,10 @@ import {
 import {
   useGetKycStatusQuery, useSubmitKycMutation, usePresignUploadMutation,
   useWorkerRequestDocumentChangeMutation,
-} from '../services/api';
+} from '../../services/api';
 import { useSelector } from 'react-redux';
-import { selectAuth } from '../modules/auth/authSlice';
-import LiveSelfieCapture from '../components/kyc/LiveSelfieCapture';
+import { selectAuth } from '../../modules/auth/authSlice';
+import LiveSelfieCapture from '../../components/kyc/LiveSelfieCapture';
 import toast from 'react-hot-toast';
 
 /* ─── Hook: load worker's own doc as blob (no URL expiry) ─────────────────── */

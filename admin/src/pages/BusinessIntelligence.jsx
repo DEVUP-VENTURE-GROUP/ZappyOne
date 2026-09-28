@@ -6,7 +6,7 @@ import {
   useAdminDeadCategoriesQuery,
   useAdminQuoteAbandonmentQuery,
   useAdminGeoReadinessQuery,
-} from '@client/services/api';
+} from '@shared/services/api';
 
 function Card({ children, className = '' }) {
   return <div className={`bg-white rounded-2xl ring-1 ring-slate-100 shadow-sm ${className}`}>{children}</div>;

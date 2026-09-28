@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Share, Plus, Check, X } from 'lucide-react';
-import { ZappyAppIcon } from '../common/ZappyLogo';
+import { ZappyAppIcon } from '@shared/components/common/ZappyLogo';
 
 /**
  * IOSInstallModal — the manual "Add to Home Screen" walkthrough shown when the

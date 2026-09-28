@@ -6,7 +6,7 @@ import {
   useAdminCreateCategoryMutation,
   useAdminUpdateCategoryMutation,
   useAdminDeleteCategoryMutation,
-} from '@client/services/api';
+} from '@shared/services/api';
 import toast from 'react-hot-toast';
 
 // The 8 brand themes (same palette the catalog uses). Admin picks one; the full

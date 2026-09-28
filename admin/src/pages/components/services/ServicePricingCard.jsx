@@ -9,7 +9,7 @@ import {
   useAdminGetVariantsQuery,
   useAdminCreateVariantMutation,
   usePresignUploadMutation,
-} from '@client/services/api';
+} from '@shared/services/api';
 import toast from 'react-hot-toast';
 import { SvcIcon, NumInput, FieldRow, rupees, paise } from './_service-shared';
 

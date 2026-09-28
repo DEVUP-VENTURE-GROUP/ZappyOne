@@ -1,11 +1,6 @@
-import base from '../client/tailwind.config.js';
+import preset from '../shared/tailwind.preset.js';
 
-// Same brand system as the customer app; only the scanned files differ.
 export default {
-  ...base,
-  content: [
-    './index.html',
-    './src/**/*.{js,jsx}',
-    '../client/src/components/common/**/*.{js,jsx}',
-  ],
+  presets: [preset],
+  content: ['./index.html', './src/**/*.{js,jsx}', '../shared/src/**/*.{js,jsx}'],
 };

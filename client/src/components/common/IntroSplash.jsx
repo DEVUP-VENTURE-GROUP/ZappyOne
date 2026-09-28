@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ZappyLogo } from './ZappyLogo';
+import { ZappyLogo } from '@shared/components/common/ZappyLogo';
 
 const IMAGES = [
   'https://images.unsplash.com/photo-1601784551446-20c9e07cdbdb?auto=format&fit=crop&w=400&h=300&q=80', // Phone screen

@@ -8,8 +8,8 @@ import {
   UserCheck, Sparkles, CircleDot, Trophy, Flame, Wallet
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { selectAuth } from '../modules/auth/authSlice';
-import { useGetReferralCodeQuery, useGetReferralHistoryQuery } from '../services/api';
+import { selectAuth } from '@shared/modules/auth/authSlice';
+import { useGetReferralCodeQuery, useGetReferralHistoryQuery } from '@shared/services/api';
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 

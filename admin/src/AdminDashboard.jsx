@@ -11,8 +11,8 @@ import {
   Shield, PartyPopper, ShieldAlert, Map as MapIcon,
   AlertCircle, GraduationCap, Search, Store, ChevronDown, Smartphone, Laptop, Bike, Car, Droplets, PawPrint,
 } from 'lucide-react';
-import { logout } from '@client/modules/auth/authSlice';
-import { useLogoutMutation } from '@client/services/api';
+import { logout } from '@shared/modules/auth/authSlice';
+import { useLogoutMutation } from '@shared/services/api';
 import { adminPath } from '@/config/admin';
 
 const Overview = lazy(() => import('./pages/Overview'));

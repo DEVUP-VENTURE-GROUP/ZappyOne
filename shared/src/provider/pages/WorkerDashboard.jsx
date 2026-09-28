@@ -21,27 +21,27 @@ import {
   useGetKycStatusQuery, useGetWorkerOrdersQuery, useGetDemandZonesQuery,
   useGetWorkerLeaderboardQuery, useListNotificationsQuery, useLogoutMutation, useRevokeAllSessionsMutation,
   useGetWorkerGoalsQuery, useGetZoneBenchmarkQuery,
-} from '../services/api';
-import { useWorkerOfferSocket } from '../hooks/useSocket';
-import { setOffer, clearOffer, setOnline, selectWorker } from '../modules/worker/workerSlice';
-import { selectAuth, logout } from '../modules/auth/authSlice';
-import { useGeolocation } from '../hooks/useGeolocation';
-import { reverseGeocode } from '../utils/reverseGeocode';
-import { getSocket } from '../services/socket';
-import { metresBetween } from '../utils/distance';
-import { ZappyLogo } from '../components/common/ZappyLogo';
+} from '../../services/api';
+import { useWorkerOfferSocket } from '../../hooks/useSocket';
+import { setOffer, clearOffer, setOnline, selectWorker } from '../../modules/worker/workerSlice';
+import { selectAuth, logout } from '../../modules/auth/authSlice';
+import { useGeolocation } from '../../hooks/useGeolocation';
+import { reverseGeocode } from '../../utils/reverseGeocode';
+import { getSocket } from '../../services/socket';
+import { metresBetween } from '../../utils/distance';
+import { ZappyLogo } from '../../components/common/ZappyLogo';
 import WorkerOnboarding from './WorkerOnboarding';
-import ProviderServicesCard from '../components/provider/ProviderServicesCard';
-import { playOfferAlert } from '../utils/alertSound';
-import { useProviderOnboardingStatusQuery } from '../services/api';
-import RepairOfferHost from '../components/repair/RepairOfferHost';
-import ReadyModeCard from '../components/worker/ReadyModeCard';
-import RepairJobsPanel from '../components/worker/RepairJobsPanel';
+import ProviderServicesCard from '../../components/provider/ProviderServicesCard';
+import { playOfferAlert } from '../../utils/alertSound';
+import { useProviderOnboardingStatusQuery } from '../../services/api';
+import RepairOfferHost from '../../components/repair/RepairOfferHost';
+import ReadyModeCard from '../../components/worker/ReadyModeCard';
+import RepairJobsPanel from '../../components/worker/RepairJobsPanel';
 import {
   Avatar, GreetingCard, StatCard, Panel, EarningsOverview, PerformanceGrid,
   QuickAccess, JobRequests, TodaySchedule, RecentlyCompleted,
   WorkerSidebar, WorkerBottomNav, OnlineControl, NAV_ITEMS, inr,
-} from '../components/worker/DashboardUI';
+} from '../../components/worker/DashboardUI';
 import toast from 'react-hot-toast';
 
 /* ─── Constants (mirror backend incentive.service.js) ─────────── */

@@ -10,7 +10,7 @@ import {
   useListNotificationsQuery,
   useMarkNotificationReadMutation,
   useMarkAllNotificationsReadMutation,
-} from '../services/api';
+} from '@shared/services/api';
 import { ErrorState } from '../components/common/QueryState';
 import PageTransition from '../components/common/PageTransition';
 import toast from 'react-hot-toast';

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAdminOrdersQuery, useAdminRefundOrderMutation } from '@client/services/api';
+import { useAdminOrdersQuery, useAdminRefundOrderMutation } from '@shared/services/api';
 import { Search, RotateCcw, Loader2, AlertTriangle } from 'lucide-react';
 import { SectionHeader, Pagination, StatusBadge, Card, Th, Td, PageLoader, EmptyState, fmtDate } from './_shared';
 import { ClipboardList } from 'lucide-react';

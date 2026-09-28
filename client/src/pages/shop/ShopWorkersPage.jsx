@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Plus, Trash2, Loader2, X, Star, Briefcase, ShieldCheck, Clock, XCircle, Circle,
 } from 'lucide-react';
-import { useShopWorkersQuery, useAddShopWorkerMutation, useRemoveShopWorkerMutation } from '../../services/api';
+import { useShopWorkersQuery, useAddShopWorkerMutation, useRemoveShopWorkerMutation } from '@shared/services/api';
 import toast from 'react-hot-toast';
 
 const KYC_PILL = {

@@ -1,12 +1,12 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Home, ClipboardList, MapPin, User } from 'lucide-react';
 import ZappyMark from '../common/ZappyMark';
-import { api, useListNotificationsQuery } from '../../services/api';
+import { api, useListNotificationsQuery } from '@shared/services/api';
 import { useSelector } from 'react-redux';
-import { selectIsAuthed } from '../../modules/auth/authSlice';
+import { selectIsAuthed } from '@shared/modules/auth/authSlice';
 import { motion } from 'framer-motion';
 import { prefetchRoute } from '../../lib/routePrefetch';
-import { useT } from '../../i18n/I18nProvider';
+import { useT } from '@shared/i18n/I18nProvider';
 
 // 2 tabs each side + a big raised "Book Now" button in the middle.
 // Wallet lives under Profile/Account.

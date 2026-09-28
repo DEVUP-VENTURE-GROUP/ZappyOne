@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { formatPaise } from '../../utils/money';
+import { formatPaise } from '@shared/utils/money';
 import { useSelector, useDispatch } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -15,9 +15,9 @@ import {
   useSubmitRepairDiagnosticMutation, useRepairProvidersQuery, useRepairPricePreviewQuery,
   useCreateRepairBookingMutation, useSubmitRepairCatalogRequestMutation,
   useRepairAddOnsQuery,
-} from '../../services/api';
-import { selectLocation, selectHasLocation, setLocation } from '../../store/locationSlice';
-import LocationPicker from '../../modules/booking/LocationPicker';
+} from '@shared/services/api';
+import { selectLocation, selectHasLocation, setLocation } from '@shared/store/locationSlice';
+import LocationPicker from '@shared/modules/booking/LocationPicker';
 import toast from 'react-hot-toast';
 
 /**

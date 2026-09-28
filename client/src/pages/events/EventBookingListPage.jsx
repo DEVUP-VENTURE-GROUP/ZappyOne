@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Package, Star, ChevronRight, Clock, Calendar } from 'lucide-react';
-import { useGetEventBookingsQuery } from '../../services/api';
+import { useGetEventBookingsQuery } from '@shared/services/api';
 
 const STATUS_COLORS = {
   pending_payment:  'bg-slate-100 text-slate-500',

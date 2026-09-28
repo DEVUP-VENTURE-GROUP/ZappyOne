@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 import {
   useGetWorkerBankAccountsQuery, useAddWorkerBankAccountMutation,
   useDeleteWorkerBankAccountMutation, useSetDefaultWorkerBankAccountMutation,
-} from '../services/api';
+} from '../../services/api';
 
 function AddSheet({ onClose }) {
   const [tab, setTab] = useState('bank');

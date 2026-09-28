@@ -4,7 +4,7 @@ import {
   ArrowLeft, Upload, CheckCircle2, Clock, XCircle, ShieldCheck,
   IdCard, Store, Camera, FileText, Loader2,
 } from 'lucide-react';
-import { useShopKycStatusQuery, useSubmitShopKycMutation, usePresignUploadMutation } from '../../services/api';
+import { useShopKycStatusQuery, useSubmitShopKycMutation, usePresignUploadMutation } from '@shared/services/api';
 import toast from 'react-hot-toast';
 
 const DOCS = [

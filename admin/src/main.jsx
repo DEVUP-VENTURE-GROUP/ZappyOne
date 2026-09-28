@@ -4,11 +4,11 @@ import { Provider } from 'react-redux';
 import { BrowserRouter } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { store } from './store';
-import { setAuth } from '@client/modules/auth/authSlice';
-import { API_BASE } from '@client/services/apiBase';
-import ErrorBoundary from '@client/components/common/ErrorBoundary';
+import { setAuth } from '@shared/modules/auth/authSlice';
+import { API_BASE } from '@shared/services/apiBase';
+import ErrorBoundary from '@shared/components/common/ErrorBoundary';
 import App from './App';
-import '@client/styles/index.css';
+import '@shared/styles/index.css';
 
 function jwtRole(token) {
   try {

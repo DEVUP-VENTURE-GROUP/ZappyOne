@@ -1,4 +1,4 @@
-import { useI18n } from './I18nProvider';
+import { useI18n } from '@shared/i18n/I18nProvider';
 
 /**
  * Segmented language switcher. `variant="pills"` (default) renders inline pills;

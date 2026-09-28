@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
-import { useListOrdersQuery, useMyRepairBookingsQuery } from '../services/api';
-import { serviceNameKey } from '../i18n/translations';
+import { useListOrdersQuery, useMyRepairBookingsQuery } from '@shared/services/api';
+import { serviceNameKey } from '@shared/i18n/translations';
 
 /**
  * Everything the customer has booked — orders AND repairs — as one list.

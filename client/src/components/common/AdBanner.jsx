@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
 import { ExternalLink } from 'lucide-react';
-import { useGetActiveAdsQuery, useTrackAdImpressionMutation, useTrackAdClickMutation } from '../../services/api';
-import { selectIsAuthed } from '../../modules/auth/authSlice';
+import { useGetActiveAdsQuery, useTrackAdImpressionMutation, useTrackAdClickMutation } from '@shared/services/api';
+import { selectIsAuthed } from '@shared/modules/auth/authSlice';
 
 /**
  * AdBanner — horizontally scrollable ad strip for the home screen.

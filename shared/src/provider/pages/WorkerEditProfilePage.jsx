@@ -10,7 +10,7 @@ import {
 import {
   useGetWorkerMeQuery, useUpdateWorkerProfileMutation, useSetWorkerCredentialsMutation,
   useProviderOnboardingStatusQuery,
-} from '../services/api';
+} from '../../services/api';
 import toast from 'react-hot-toast';
 
 // Skills come from the LIVE admin catalog (/api/catalog/services), never a hardcoded

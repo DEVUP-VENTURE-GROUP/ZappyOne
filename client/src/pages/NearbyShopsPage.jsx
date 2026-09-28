@@ -2,8 +2,8 @@ import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { ArrowLeft, Store, Star, MapPin, Loader2, ShieldCheck, ChevronRight, SearchX } from 'lucide-react';
-import { useNearbyShopsQuery } from '../services/api';
-import { selectLocation, selectHasLocation } from '../store/locationSlice';
+import { useNearbyShopsQuery } from '@shared/services/api';
+import { selectLocation, selectHasLocation } from '@shared/store/locationSlice';
 
 const CATEGORY_FILTERS = [
   { key: '', label: 'All' },

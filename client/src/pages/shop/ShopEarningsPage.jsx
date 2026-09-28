@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, IndianRupee, Briefcase, Users, Loader2 } from 'lucide-react';
-import { useShopEarningsQuery } from '../../services/api';
+import { useShopEarningsQuery } from '@shared/services/api';
 
 const RANGES = [
   { key: 'today', label: 'Today' },

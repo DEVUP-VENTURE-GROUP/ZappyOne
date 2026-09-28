@@ -6,17 +6,17 @@ import {
 } from 'lucide-react';
 import {
   useGetRepairBookingQuery, useRespondRepairQuoteMutation, useCancelRepairBookingMutation,
-} from '../../services/api';
+} from '@shared/services/api';
 import toast from 'react-hot-toast';
-import LiveTrackingMap from '../../modules/tracking/LiveTrackingMap';
-import { useRepairTrackingFeed, MOVING_STATUSES } from '../../hooks/useRepairTracking';
-import { useRepairCancellationQuoteQuery, useRepairHandoverCodeQuery } from '../../services/api';
+import LiveTrackingMap from '@shared/modules/tracking/LiveTrackingMap';
+import { useRepairTrackingFeed, MOVING_STATUSES } from '@shared/hooks/useRepairTracking';
+import { useRepairCancellationQuoteQuery, useRepairHandoverCodeQuery } from '@shared/services/api';
 import HandoverCodeCard from '../../components/common/HandoverCodeCard';
-import { useRateRepairBookingMutation } from '../../services/api';
-import { formatPaise } from '../../utils/money';
-import { API_BASE } from '../../services/apiBase';
+import { useRateRepairBookingMutation } from '@shared/services/api';
+import { formatPaise } from '@shared/utils/money';
+import { API_BASE } from '@shared/services/apiBase';
 import { useSelector } from 'react-redux';
-import { selectAuth } from '../../modules/auth/authSlice';
+import { selectAuth } from '@shared/modules/auth/authSlice';
 
 /**
  * Customer view of a repair booking.

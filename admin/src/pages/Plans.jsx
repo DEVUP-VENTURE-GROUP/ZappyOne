@@ -8,7 +8,7 @@ import {
   useAdminCreatePlanMutation,
   useAdminUpdatePlanMutation,
   useAdminDeletePlanMutation,
-} from '@client/services/api';
+} from '@shared/services/api';
 import toast from 'react-hot-toast';
 
 const EFFECT_KEYS_USER   = ['surgeCap', 'waivePlatformFee', 'priorityAssignment'];

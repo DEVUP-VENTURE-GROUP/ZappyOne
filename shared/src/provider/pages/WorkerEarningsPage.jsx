@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, TrendingUp, Download, Zap, ChevronDown, ChevronUp, Loader2, Info, BarChart2 } from 'lucide-react';
-import { useGetJobEarningsQuery } from '../services/api';
+import { useGetJobEarningsQuery } from '../../services/api';
 
 const fmt = v => `₹${(v / 100).toFixed(2)}`;
 

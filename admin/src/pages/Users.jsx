@@ -3,7 +3,7 @@ import {
   useAdminListUsersQuery,
   useAdminGetUserQuery,
   useAdminBlockUserMutation,
-} from '@client/services/api';
+} from '@shared/services/api';
 import {
   Search, ShieldOff, ShieldCheck, Users as UsersIcon,
   X, Phone, Mail, Star, Calendar, Package, AlertTriangle,

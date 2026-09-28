@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAdminSystemHealthQuery } from '@client/services/api';
+import { useAdminSystemHealthQuery } from '@shared/services/api';
 import { SectionHeader, Card, PageLoader } from './_shared';
 import { Server, Database, Zap, HardDrive, Clock, CheckCircle2, XCircle, RefreshCw } from 'lucide-react';
 

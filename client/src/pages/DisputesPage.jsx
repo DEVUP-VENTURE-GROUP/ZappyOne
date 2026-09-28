@@ -9,7 +9,7 @@ import toast from 'react-hot-toast';
 import {
   useGetMyDisputesQuery, useGetDisputeQuery,
   useOpenDisputeMutation, useAddDisputeMessageMutation,
-} from '../services/api';
+} from '@shared/services/api';
 import PageTransition from '../components/common/PageTransition';
 
 const CATEGORIES = [

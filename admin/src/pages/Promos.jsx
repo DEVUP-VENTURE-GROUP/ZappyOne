@@ -2,13 +2,13 @@ import { useState } from 'react';
 import {
   useAdminListPromosQuery, useAdminCreatePromoMutation,
   useAdminUpdatePromoMutation, useAdminDeletePromoMutation,
-} from '@client/services/api';
+} from '@shared/services/api';
 import {
   SectionHeader, Card, FormRow, Input, Select, SaveBtn, PageLoader, EmptyState, Pagination,
 } from './_shared';
 import { Tag, Plus, Pencil, Trash2, Copy, CheckCircle2, ToggleLeft, ToggleRight } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { SERVICE_FILTER_OPTIONS, serviceLabel } from '@client/constants/services';
+import { SERVICE_FILTER_OPTIONS, serviceLabel } from '@shared/constants/services';
 
 const TYPE_OPTIONS = [
   { value: 'flat',        label: 'Flat Discount (₹)' },

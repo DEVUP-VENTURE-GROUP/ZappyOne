@@ -2,10 +2,10 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { ArrowLeft, Phone, Send, CheckCheck } from 'lucide-react';
-import { selectAuth } from '../modules/auth/authSlice';
-import { useOrderSocket } from '../hooks/useSocket';
-import { useGetOrderQuery, useGetChatMessagesQuery, useSendChatMessageMutation } from '../services/api';
-import { API_BASE } from '../services/apiBase';
+import { selectAuth } from '@shared/modules/auth/authSlice';
+import { useOrderSocket } from '@shared/hooks/useSocket';
+import { useGetOrderQuery, useGetChatMessagesQuery, useSendChatMessageMutation } from '@shared/services/api';
+import { API_BASE } from '@shared/services/apiBase';
 import toast from 'react-hot-toast';
 
 const CANNED = [

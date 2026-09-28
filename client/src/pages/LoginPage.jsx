@@ -3,14 +3,14 @@ import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import { Phone, ArrowRight, ChevronLeft, CheckCircle2, Loader2, Zap, Shield, Star, Smartphone, Laptop, Car, Bike, PawPrint, HeartHandshake } from 'lucide-react';
-import { useRequestOtpMutation, useLoginUserMutation, useUpdateMeMutation } from '../services/api';
+import { useRequestOtpMutation, useLoginUserMutation, useUpdateMeMutation } from '@shared/services/api';
 import { CONSUMER_URL } from '../config/hosts';
-import ResendOtp from '../components/auth/ResendOtp';
+import ResendOtp from '@shared/components/auth/ResendOtp';
 import OtpOrbit from '../components/auth/OtpOrbit';
-import { setAuth, updateProfile } from '../modules/auth/authSlice';
-import { ZappyLogo } from '../components/common/ZappyLogo';
+import { setAuth, updateProfile } from '@shared/modules/auth/authSlice';
+import { ZappyLogo } from '@shared/components/common/ZappyLogo';
 import toast from 'react-hot-toast';
-import SEO, { LOGIN_SCHEMA, BASE_URL } from '../components/SEO';
+import SEO, { LOGIN_SCHEMA, BASE_URL } from '@shared/components/SEO';
 import { easeSoft, springSnap, fadeInUp, staggerContainer } from '../lib/animations';
 
 

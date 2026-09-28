@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAdminPayoutsQuery, useAdminApprovePayoutMutation, useAdminRejectPayoutMutation, useAdminProcessPayoutMutation } from '@client/services/api';
+import { useAdminPayoutsQuery, useAdminApprovePayoutMutation, useAdminRejectPayoutMutation, useAdminProcessPayoutMutation } from '@shared/services/api';
 import { CreditCard, X, CheckCircle2, XCircle } from 'lucide-react';
 import { SectionHeader, Pagination, StatusBadge, Card, Th, Td, EmptyState, fmtDate, fmt } from './_shared';
 import toast from 'react-hot-toast';

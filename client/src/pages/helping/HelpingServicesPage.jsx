@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, ShoppingBasket, PackageCheck, ChevronRight } from 'lucide-react';
-import { useHelpingServicesQuery } from '../../services/api';
+import { useHelpingServicesQuery } from '@shared/services/api';
 
 /**
  * Helping Services entry — §53's two cards.

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAdminLiveOpsQuery } from '@client/services/api';
+import { useAdminLiveOpsQuery } from '@shared/services/api';
 import { SectionHeader, Card, PageLoader, StatusBadge } from './_shared';
 import { MapPin, Users, ShoppingBag, Clock, RefreshCw, Search, Wrench, Navigation } from 'lucide-react';
 

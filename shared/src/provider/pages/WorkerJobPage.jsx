@@ -26,22 +26,22 @@ import {
   useWorkerReportPartUnavailableMutation,
   useBlockCustomerByWorkerMutation,
   useRequestShopHandoffMutation,
-} from '../services/api';
-import { useOrderSocket, useSocketStatus } from '../hooks/useSocket';
-import { useGeolocation } from '../hooks/useGeolocation';
-import { selectOrder } from '../modules/order/orderSlice';
-import { selectAuth } from '../modules/auth/authSlice';
-import { getSocket } from '../services/socket';
-import { API_BASE } from '../services/apiBase';
-import LiveTrackingMap from '../modules/tracking/LiveTrackingMap';
-import SOSButton from '../components/worker/SOSButton';
-import WorkerCancelSheet from '../components/worker/WorkerCancelSheet';
-import ServiceChecklistPanel from '../components/worker/ServiceChecklistPanel';
+} from '../../services/api';
+import { useOrderSocket, useSocketStatus } from '../../hooks/useSocket';
+import { useGeolocation } from '../../hooks/useGeolocation';
+import { selectOrder } from '../../modules/order/orderSlice';
+import { selectAuth } from '../../modules/auth/authSlice';
+import { getSocket } from '../../services/socket';
+import { API_BASE } from '../../services/apiBase';
+import LiveTrackingMap from '../../modules/tracking/LiveTrackingMap';
+import SOSButton from '../../components/worker/SOSButton';
+import WorkerCancelSheet from '../../components/worker/WorkerCancelSheet';
+import ServiceChecklistPanel from '../../components/worker/ServiceChecklistPanel';
 import toast from 'react-hot-toast';
-import ProofPhotos, { readyKeys } from '../components/common/ProofPhotos';
-import ArrivalProximity from '../components/common/ArrivalProximity';
-import OtpEntry from '../components/common/OtpEntry';
-import { metresBetween, ARRIVAL_RADIUS_M } from '../utils/distance';
+import ProofPhotos, { readyKeys } from '../../components/common/ProofPhotos';
+import ArrivalProximity from '../../components/common/ArrivalProximity';
+import OtpEntry from '../../components/common/OtpEntry';
+import { metresBetween, ARRIVAL_RADIUS_M } from '../../utils/distance';
 
 /* ── WorkerETACard — live countdown with penalty preview ───────────── */
 function WorkerETACard({ deadlineAt, etaMins }) {

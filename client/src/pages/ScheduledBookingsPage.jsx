@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Calendar, Clock, ChevronRight, X } from 'lucide-react';
-import { useListOrdersQuery, useRescheduleOrderMutation } from '../services/api';
-import { serviceLabel } from '../constants/services';
+import { useListOrdersQuery, useRescheduleOrderMutation } from '@shared/services/api';
+import { serviceLabel } from '@shared/constants/services';
 
 function RescheduleSheet({ order, onClose }) {
   const [dateTime, setDateTime] = useState('');

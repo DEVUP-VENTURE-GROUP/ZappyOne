@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { Send, Heart, ShieldCheck, MapPin, Star, Phone, Zap } from 'lucide-react';
-import { ZappyLogo } from '../common/ZappyLogo';
+import { ZappyLogo } from '@shared/components/common/ZappyLogo';
 import { WORKER_URL, EVENTS_URL } from '../../config/hosts';
 
 const SERVICES = [

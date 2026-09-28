@@ -12,7 +12,7 @@ import {
   useAdminSendNotificationMutation,
   useAdminBroadcastNotificationMutation,
   useAdminMetricsQuery,
-} from '@client/services/api';
+} from '@shared/services/api';
 
 const NOTIFICATION_TYPES = [
   'order_placed', 'worker_assigned', 'worker_on_the_way', 'worker_arriving_soon',

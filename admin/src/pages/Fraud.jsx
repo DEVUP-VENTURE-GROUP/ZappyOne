@@ -8,7 +8,7 @@ import toast from 'react-hot-toast';
 import {
   useAdminFraudSummaryQuery, useAdminFraudEventsQuery,
   useAdminFraudActorEventsQuery, useAdminResolveFraudEventMutation,
-} from '@client/services/api';
+} from '@shared/services/api';
 import { SectionHeader, Card, PageLoader, EmptyState } from './_shared';
 
 const TYPE_META = {

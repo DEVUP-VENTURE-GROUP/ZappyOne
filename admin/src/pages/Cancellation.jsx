@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useAdminGetCancellationConfigQuery, useAdminUpdateCancellationConfigMutation } from '@client/services/api';
+import { useAdminGetCancellationConfigQuery, useAdminUpdateCancellationConfigMutation } from '@shared/services/api';
 import { SectionHeader, Card, FormRow, Input, SaveBtn, PageLoader } from './_shared';
 import toast from 'react-hot-toast';
 

@@ -15,14 +15,14 @@ import {
   useCancelOrderMutation, useRateOrderMutation, useGetPriceRevisionQuery,
   useGetPricingConfigQuery, useSendTipMutation, useGetWalletQuery,
   useRespondShopHandoffMutation, useGetShopProfileQuery,
-} from '../services/api';
-import { API_BASE } from '../services/apiBase';
-import { useOrderSocket, useSocketStatus } from '../hooks/useSocket';
-import { selectOrder, setActiveOrder, setWorkerLocation } from '../modules/order/orderSlice';
-import { selectAuth } from '../modules/auth/authSlice';
+} from '@shared/services/api';
+import { API_BASE } from '@shared/services/apiBase';
+import { useOrderSocket, useSocketStatus } from '@shared/hooks/useSocket';
+import { selectOrder, setActiveOrder, setWorkerLocation } from '@shared/modules/order/orderSlice';
+import { selectAuth } from '@shared/modules/auth/authSlice';
 
 // ── Existing tracking modules (preserved intact) ─────────────────────────
-import LiveTrackingMap from '../modules/tracking/LiveTrackingMap';
+import LiveTrackingMap from '@shared/modules/tracking/LiveTrackingMap';
 import PageTransition from '../components/common/PageTransition';
 import BoostOfferCard from '../components/tracking/BoostOfferCard';
 import WorkerProfileSheet from '../components/worker/WorkerProfileSheet';

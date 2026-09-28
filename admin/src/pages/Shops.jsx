@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSelector } from 'react-redux';
-import { selectAuth } from '@client/modules/auth/authSlice';
+import { selectAuth } from '@shared/modules/auth/authSlice';
 import { adminApiPath } from '@/config/admin';
-import { API_BASE } from '@client/services/apiBase';
+import { API_BASE } from '@shared/services/apiBase';
 import {
   Search, Store, ShieldOff, ShieldCheck, X, Eye, FileText, Camera,
   Phone, Star, Loader2, ChevronRight, User, MapPin, Users,
@@ -10,7 +10,7 @@ import {
 import {
   useAdminShopsQuery, useAdminApproveShopKycMutation, useAdminRejectShopKycMutation,
   useAdminBlockShopMutation, useAdminShopKycDocUrlsQuery,
-} from '@client/services/api';
+} from '@shared/services/api';
 import {
   SectionHeader, Pagination, StatusBadge, Card, Th, Td,
   EmptyState, PageLoader, fmtDate,

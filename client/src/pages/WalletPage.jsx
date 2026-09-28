@@ -11,12 +11,12 @@ import {
 import {
   useGetWalletQuery, useWalletTransactionsQuery,
   useWalletTopupMutation, useVerifyPaymentMutation,
-} from '../services/api';
-import { selectAuth } from '../modules/auth/authSlice';
-import { openCheckout } from '../services/cashfree';
+} from '@shared/services/api';
+import { selectAuth } from '@shared/modules/auth/authSlice';
+import { openCheckout } from '@shared/services/cashfree';
 import PageTransition from '../components/common/PageTransition';
 import { staggerContainer, fadeInUp, scaleIn } from '../lib/animations';
-import { useT } from '../i18n/I18nProvider';
+import { useT } from '@shared/i18n/I18nProvider';
 import toast from 'react-hot-toast';
 
 const QUICK_AMOUNTS = [100, 500, 1000, 5000];

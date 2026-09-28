@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAdminAlertsQuery } from '@client/services/api';
+import { useAdminAlertsQuery } from '@shared/services/api';
 import { SectionHeader, Card, PageLoader } from './_shared';
 import { AlertTriangle, CheckCircle2, XCircle, RefreshCw, Users, ShoppingBag, Clock } from 'lucide-react';
 

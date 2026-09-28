@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Target, Zap, TrendingUp, Plus, Edit2, Check, Loader2, X, ChevronRight, Trophy } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { useGetWorkerGoalsQuery, useSetWorkerGoalMutation, useGetZoneBenchmarkQuery } from '../services/api';
+import { useGetWorkerGoalsQuery, useSetWorkerGoalMutation, useGetZoneBenchmarkQuery } from '../../services/api';
 
 function ProgressRing({ pct, size = 96, stroke = 8, color = '#6366f1' }) {
   const r = (size - stroke) / 2;

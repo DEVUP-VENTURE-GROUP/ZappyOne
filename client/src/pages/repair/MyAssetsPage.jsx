@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 import {
   useMyAssetsQuery, useCreateAssetMutation, useDeleteAssetMutation,
   useRepairBrandsQuery, useRepairModelsQuery,
-} from '../../services/api';
+} from '@shared/services/api';
 
 /**
  * "My Water Assets" from the brief (§27/§34) — built vertical-agnostic.

@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Zap, X, ExternalLink } from 'lucide-react';
-import { useGetAdsByPlacementQuery, useTrackAdImpressionMutation, useTrackAdClickMutation } from '../../services/api';
+import { useGetAdsByPlacementQuery, useTrackAdImpressionMutation, useTrackAdClickMutation } from '@shared/services/api';
 
 /**
  * CrossSellBanner — shows contextual sponsored add-ons.

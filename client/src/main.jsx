@@ -4,11 +4,11 @@ import { Provider } from 'react-redux';
 import { BrowserRouter } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { store } from './store';
-import { setAuth } from './modules/auth/authSlice';
+import { setAuth } from '@shared/modules/auth/authSlice';
 import App from './App';
-import { I18nProvider } from './i18n/I18nProvider';
-import ErrorBoundary from './components/common/ErrorBoundary';
-import './styles/index.css';
+import { I18nProvider } from '@shared/i18n/I18nProvider';
+import ErrorBoundary from '@shared/components/common/ErrorBoundary';
+import '@shared/styles/index.css';
 
 /**
  * Decode a JWT payload without verifying the signature.

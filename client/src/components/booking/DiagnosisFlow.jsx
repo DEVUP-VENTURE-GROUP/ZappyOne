@@ -7,7 +7,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, ChevronLeft, Stethoscope, CheckCircle2 } from 'lucide-react';
-import { useGetDiagnosisFlowQuery, useAnalyseDiagnosisMutation } from '../../services/api';
+import { useGetDiagnosisFlowQuery, useAnalyseDiagnosisMutation } from '@shared/services/api';
 
 export default function DiagnosisFlow({ service, onComplete, onSkip }) {
   const [answers,   setAnswers]   = useState({});

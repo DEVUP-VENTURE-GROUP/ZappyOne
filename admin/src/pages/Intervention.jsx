@@ -9,7 +9,7 @@ import {
   useAdminOrdersQuery, useAdminOrderNearbyWorkersQuery,
   useAdminReassignOrderMutation, useAdminForceOrderStatusMutation,
   useAdminForceCancelOrderMutation, useAdminAddOrderNoteMutation,
-} from '@client/services/api';
+} from '@shared/services/api';
 import { SectionHeader, Card, PageLoader, EmptyState, StatusBadge } from './_shared';
 
 const ACTIVE_STATUSES = ['searching', 'assigned', 'on_the_way', 'arrived', 'in_progress'];

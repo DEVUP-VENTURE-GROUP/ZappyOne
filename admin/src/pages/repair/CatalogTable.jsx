@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import ImageUploadField from '@client/components/common/ImageUploadField';
+import ImageUploadField from '@shared/components/common/ImageUploadField';
 import { Plus, Pencil, Archive, Loader2, X, Check, Search } from 'lucide-react';
 import {
   useAdminRepairListQuery,
   useAdminRepairCreateMutation,
   useAdminRepairUpdateMutation,
   useAdminRepairArchiveMutation,
-} from '@client/services/api';
+} from '@shared/services/api';
 import { Card, Th, Td, EmptyState, Pagination, StatusBadge } from '../_shared';
 import toast from 'react-hot-toast';
 

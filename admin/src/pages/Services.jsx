@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, X, Plus } from 'lucide-react';
-import { useAdminGetCatalogServicesQuery, useAdminGetVerticalsQuery, useAdminUpdateVerticalMutation, useAdminCreateCatalogServiceMutation } from '@client/services/api';
+import { useAdminGetCatalogServicesQuery, useAdminGetVerticalsQuery, useAdminUpdateVerticalMutation, useAdminCreateCatalogServiceMutation } from '@shared/services/api';
 import toast from 'react-hot-toast';
 
 const NEW_SVC_CATEGORIES = ['mobile', 'laptop', 'car', 'bike', 'home', 'helper', 'pet', 'event', 'beauty', 'ac', 'construction', 'other'];

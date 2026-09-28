@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useAdminGetIncentivesQuery, useAdminSetMilestonesMutation, useAdminRatingSweepMutation } from '@client/services/api';
+import { useAdminGetIncentivesQuery, useAdminSetMilestonesMutation, useAdminRatingSweepMutation } from '@shared/services/api';
 import { SectionHeader, Card, FormRow, Input, SaveBtn, PageLoader } from './_shared';
 import { Plus, Trash2, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';

@@ -4,8 +4,8 @@ import { ArrowLeft, Loader2, MapPin, Star, Image as ImageIcon } from 'lucide-rea
 import toast from 'react-hot-toast';
 import {
   useGetPetBookingQuery, useCancelPetBookingMutation, useRatePetBookingMutation,
-} from '../../services/api';
-import { formatPaise } from '../../utils/money';
+} from '@shared/services/api';
+import { formatPaise } from '@shared/utils/money';
 
 const STATUS_LABEL = {
   REQUESTED: 'Requested', BOOKED: 'Booked', PROVIDER_SEARCHING: 'Finding a provider',

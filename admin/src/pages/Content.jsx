@@ -7,7 +7,7 @@ import {
   useAdminUpdateContentMutation,
   useAdminToggleContentMutation,
   useAdminDeleteContentMutation,
-} from '@client/services/api';
+} from '@shared/services/api';
 
 const AUDIENCES = ['all', 'user', 'worker'];
 

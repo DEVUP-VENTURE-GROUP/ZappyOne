@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Play, CheckCircle, Lock, Award, ChevronRight, Loader2, X, AlertCircle, PlayCircle, Clock, BookOpen } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { useGetTrainingModulesQuery, useGetTrainingModuleQuery, useSubmitTrainingQuizMutation } from '../services/api';
+import { useGetTrainingModulesQuery, useGetTrainingModuleQuery, useSubmitTrainingQuizMutation } from '../../services/api';
 
 const DIFF_COLOR = { beginner: 'emerald', intermediate: 'amber', advanced: 'rose' };
 const DIFF_LABEL = { beginner: 'Beginner', intermediate: 'Intermediate', advanced: 'Advanced' };

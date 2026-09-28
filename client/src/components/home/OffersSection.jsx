@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useIsMobile } from '../../hooks/useIsMobile';
-import { useT } from '../../i18n/I18nProvider';
+import { useT } from '@shared/i18n/I18nProvider';
 
 const OFFERS = [
   {

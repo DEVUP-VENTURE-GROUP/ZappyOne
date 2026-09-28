@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAdminWalletAdjustMutation, useAdminWalletReconcileMutation } from '@client/services/api';
+import { useAdminWalletAdjustMutation, useAdminWalletReconcileMutation } from '@shared/services/api';
 import { SectionHeader, Card, FormRow, Input, Select, SaveBtn } from './_shared';
 import toast from 'react-hot-toast';
 

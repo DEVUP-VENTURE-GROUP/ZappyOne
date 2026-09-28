@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Plus, Edit2, Eye, EyeOff, Loader2, GraduationCap, X, Check } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { useAdminGetTrainingModulesQuery, useAdminCreateTrainingModuleMutation, useAdminUpdateTrainingModuleMutation } from '@client/services/api';
+import { useAdminGetTrainingModulesQuery, useAdminCreateTrainingModuleMutation, useAdminUpdateTrainingModuleMutation } from '@shared/services/api';
 
 const DIFF_OPTS = ['beginner', 'intermediate', 'advanced'];
 const DIFF_COLOR = { beginner: 'bg-emerald-100 text-emerald-700', intermediate: 'bg-amber-100 text-amber-700', advanced: 'bg-red-100 text-red-700' };

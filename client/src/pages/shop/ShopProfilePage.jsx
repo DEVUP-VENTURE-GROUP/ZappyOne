@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, MapPin, Loader2, Check, Image as ImageIcon } from 'lucide-react';
-import { useShopMeQuery, useUpdateShopMeMutation, usePresignUploadMutation } from '../../services/api';
-import LocationPicker from '../../modules/booking/LocationPicker';
+import { useShopMeQuery, useUpdateShopMeMutation, usePresignUploadMutation } from '@shared/services/api';
+import LocationPicker from '@shared/modules/booking/LocationPicker';
 import toast from 'react-hot-toast';
 
 /*

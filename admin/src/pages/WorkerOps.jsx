@@ -4,7 +4,7 @@ import { Loader2, Save, ShieldCheck, Users, UserCheck, Ban, AlertTriangle, Smart
 import {
   useAdminWorkerOpsQuery,
   useAdminUpdateCancellationConfigMutation,
-} from '@client/services/api';
+} from '@shared/services/api';
 
 const inp = 'w-full text-sm border border-slate-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-400';
 

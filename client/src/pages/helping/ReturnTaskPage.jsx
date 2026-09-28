@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, MapPin, AlertTriangle, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import LocationPicker from '../../modules/booking/LocationPicker';
-import ImageUploadField from '../../components/common/ImageUploadField';
-import { useHelpingQuoteMutation, useCreateHelpingTaskMutation } from '../../services/api';
-import { formatPaise } from '../../utils/money';
+import LocationPicker from '@shared/modules/booking/LocationPicker';
+import ImageUploadField from '@shared/components/common/ImageUploadField';
+import { useHelpingQuoteMutation, useCreateHelpingTaskMutation } from '@shared/services/api';
+import { formatPaise } from '@shared/utils/money';
 
 /**
  * Return / Exchange — §22 to §31.

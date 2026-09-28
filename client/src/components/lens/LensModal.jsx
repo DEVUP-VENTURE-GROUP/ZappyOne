@@ -6,9 +6,9 @@ import {
   Smartphone, Laptop, Car, Bike, Wrench, Tv, Heart, PartyPopper, Search,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { useLensUploadUrlMutation, useAnalyzeLensMutation } from '../../services/api';
+import { useLensUploadUrlMutation, useAnalyzeLensMutation } from '@shared/services/api';
 import { downscaleImage } from '../../utils/downscaleImage';
-import { formatPaise, formatPaiseRange } from '../../utils/money';
+import { formatPaise, formatPaiseRange } from '@shared/utils/money';
 
 const CATEGORY_ICON = {
   mobile: Smartphone, vehicle: Car, home: Wrench, helper: Heart,

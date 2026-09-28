@@ -8,7 +8,7 @@ import toast from 'react-hot-toast';
 import {
   useAdminCitiesQuery, useAdminCreateCityMutation, useAdminUpdateCityMutation,
   useAdminDeleteCityMutation, useAdminToggleCityActiveMutation,
-} from '@client/services/api';
+} from '@shared/services/api';
 import { SectionHeader, Card, FormRow, Input, SaveBtn, PageLoader, EmptyState } from './_shared';
 
 const EMPTY_CITY = {

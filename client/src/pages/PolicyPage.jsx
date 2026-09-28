@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Loader2, FileText } from 'lucide-react';
-import { useGetPolicyQuery } from '../services/api';
+import { useGetPolicyQuery } from '@shared/services/api';
 
 /**
  * Renders any admin-managed policy page by slug (refund-policy, privacy-policy,

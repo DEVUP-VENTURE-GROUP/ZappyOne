@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import SEO, { PLANS_SCHEMA, BASE_URL } from '../components/SEO';
+import SEO, { PLANS_SCHEMA, BASE_URL } from '@shared/components/SEO';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -10,9 +10,9 @@ import {
 import {
   useListPlansQuery, useMySubscriptionQuery,
   useSubscribeMutation, useCancelSubscriptionMutation, useVerifyPaymentMutation,
-} from '../services/api';
-import { selectAuth } from '../modules/auth/authSlice';
-import { openCheckout } from '../services/cashfree';
+} from '@shared/services/api';
+import { selectAuth } from '@shared/modules/auth/authSlice';
+import { openCheckout } from '@shared/services/cashfree';
 import toast from 'react-hot-toast';
 
 export default function PlansPage() {
