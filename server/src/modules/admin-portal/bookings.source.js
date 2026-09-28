@@ -202,26 +202,39 @@ function applyCommonFilters(query, { from, to, statusBucket } = {}, dateField = 
  * collection would give, at a fraction of the cost of a live `$unionWith`
  * aggregation across four differently-indexed collections.
  */
+/** Raw statuses belonging to a bucket — so the bucket filter runs in the database, before any cap. */
+const statusesIn = (bucket) => Object.keys(STATUS_BUCKET).filter((s) => STATUS_BUCKET[s] === bucket);
+const escapeRe = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 async function listBookings({
-  sources = SOURCES, from, to, statusBucket, userId, workerId, shopId,
+  sources = SOURCES, from, to, statusBucket, userId, userIds, workerId, shopId, reference,
   page = 1, limit = 25, perSourceLimit = 500,
 } = {}) {
   const wanted = sources.filter((s) => SOURCES.includes(s));
 
   const results = await Promise.all(wanted.map(async (source) => {
     const Model = MODELS[source];
-    const dateField = source === 'order' ? 'createdAt' : 'createdAt';
-    const filter = applyCommonFilters({}, { from, to }, dateField);
+    const filter = applyCommonFilters({}, { from, to }, 'createdAt');
+    if (statusBucket) filter.status = { $in: statusesIn(statusBucket) };
     if (userId) filter.userId = new mongoose.Types.ObjectId(userId);
+    if (userIds) filter.userId = { $in: userIds.map((id) => new mongoose.Types.ObjectId(id)) };
     if (workerId) filter.workerId = new mongoose.Types.ObjectId(workerId);
     if (shopId && source !== 'order' && source !== 'helping') filter.shopId = new mongoose.Types.ObjectId(shopId);
+    if (reference) {
+      // Orders have no reference field; their shown reference is the id's tail.
+      if (source === 'order') {
+        if (!/^[0-9a-f]{24}$/i.test(reference)) return [];
+        filter._id = new mongoose.Types.ObjectId(reference);
+      } else {
+        filter.reference = new RegExp(`^${escapeRe(reference)}`, 'i');
+      }
+    }
 
     const rows = await Model.find(filter).sort({ createdAt: -1 }).limit(perSourceLimit).lean();
     return rows.map(NORMALISERS[source]);
   }));
 
-  let merged = results.flat();
-  if (statusBucket) merged = merged.filter((r) => r.statusBucket === statusBucket);
+  const merged = results.flat();
   merged.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
   const total = merged.length;
@@ -276,6 +289,6 @@ async function aggregateTotals({ from, to } = {}) {
 }
 
 module.exports = {
-  SOURCES, VERTICAL_LABEL, HELPING_LABEL, PET_LABEL,
+  SOURCES, VERTICAL_LABEL, HELPING_LABEL, PET_LABEL, NORMALISERS,
   bucketFor, listBookings, findBookingBySource, aggregateTotals,
 };

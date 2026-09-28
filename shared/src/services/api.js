@@ -122,7 +122,7 @@ export const api = createApi({
     'RepairCatalog', 'RepairConfig', 'RepairPricing', 'RepairRequests', 'RepairBookings', 'RepairProvider', 'MyAssets',
     'HelpingConfig', 'HelpingTasks', 'HelpingAvailable', 'AdminHelpingTasks',
     'PetCatalog', 'MyPets', 'PetBookings', 'PetAvailable', 'PetRecurring', 'AdminPetBookings', 'AdminPetPricing', 'AdminPetCapabilities',
-    'RepairIdentification', 'Onboarding'],
+    'RepairIdentification', 'Onboarding', 'AdminBookings'],
   endpoints: (b) => ({
     // --- Auth ---
     requestOtp: b.mutation({
@@ -1830,6 +1830,11 @@ export const api = createApi({
       }),
       providesTags: (r, e, a) => [{ type: 'Onboarding', id: a.resource }],
     }),
+    /** Services hub: domains → services, with approved / waiting provider counts. */
+    adminServicesOverview: b.query({
+      query: () => adminApiPath('/onboarding/overview'),
+      providesTags: [{ type: 'Onboarding', id: 'domains' }, { type: 'Onboarding', id: 'lines' }, 'Onboarding'],
+    }),
     adminOnboardingCreate: b.mutation({
       query: ({ resource, ...body }) => ({
         url: adminApiPath(`/onboarding/${resource}`), method: 'POST', body,
@@ -2422,6 +2427,23 @@ export const api = createApi({
       query: ({ id, status, reason }) => ({ url: adminApiPath(`/orders/${id}/force-status`), method: 'POST', body: { status, reason } }),
       invalidatesTags: ['Order'],
     }),
+    /* Unified bookings (orders + repair + helping + pet) */
+    adminBookings: b.query({
+      query: (params = {}) => ({ url: adminApiPath('/bookings'), params }),
+      providesTags: ['AdminBookings'],
+    }),
+    adminBookingDetail: b.query({
+      query: ({ source, id }) => adminApiPath(`/bookings/${source}/${id}`),
+      providesTags: (r, e, a) => [{ type: 'AdminBookings', id: `${a.source}:${a.id}` }],
+    }),
+    adminCancelPetBooking: b.mutation({
+      query: ({ id, reason }) => ({ url: adminApiPath(`/pet/bookings/${id}/cancel`), method: 'POST', body: { reason } }),
+      invalidatesTags: ['AdminBookings', 'AdminPetBookings'],
+    }),
+    adminCancelHelpingTask: b.mutation({
+      query: ({ id, reason }) => ({ url: adminApiPath(`/helping/tasks/${id}/cancel`), method: 'POST', body: { reason } }),
+      invalidatesTags: ['AdminBookings', 'AdminHelpingTasks'],
+    }),
     adminForceCancelOrder: b.mutation({
       query: ({ id, reason, refundFull }) => ({ url: adminApiPath(`/orders/${id}/force-cancel`), method: 'POST', body: { reason, refundFull } }),
       invalidatesTags: ['Order'],
@@ -2910,6 +2932,7 @@ export const {
   useProviderSubmitEnrolmentMutation,
   useProviderRequestServiceLineMutation,
   useAdminOnboardingListQuery,
+  useAdminServicesOverviewQuery,
   useAdminOnboardingCreateMutation,
   useAdminOnboardingUpdateMutation,
   useAdminOnboardingArchiveMutation,
@@ -3014,6 +3037,10 @@ export const {
   useAdminReassignOrderMutation,
   useAdminForceOrderStatusMutation,
   useAdminForceCancelOrderMutation,
+  useAdminBookingsQuery,
+  useAdminBookingDetailQuery,
+  useAdminCancelPetBookingMutation,
+  useAdminCancelHelpingTaskMutation,
   useAdminAddOrderNoteMutation,
   // Worker Earnings
   useAdminWorkerEarningsQuery,

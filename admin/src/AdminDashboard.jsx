@@ -3,39 +3,27 @@ import { useDispatch } from 'react-redux';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  LayoutDashboard, ShoppingBag, Users, Briefcase, Tag,
+  LayoutDashboard, ShoppingBag, Users, Briefcase,
   Wallet, Scale, CreditCard, BarChart2, Gift, XCircle,
   FileText, LogOut, Menu, X, ChevronRight, FileCheck, Crown,
   Megaphone, Ticket, Server, ToggleRight, Bell, Repeat2,
   HeadphonesIcon, Radio, Globe, Layers, Zap, Sparkles, TrendingUp,
   Shield, PartyPopper, ShieldAlert, Map as MapIcon,
-  AlertCircle, GraduationCap, Search, Store, ChevronDown, Smartphone, Laptop, Bike, Car, Droplets, PawPrint,
+  AlertCircle, GraduationCap, Search, Store,
 } from 'lucide-react';
 import { logout } from '@shared/modules/auth/authSlice';
 import { useLogoutMutation } from '@shared/services/api';
 import { adminPath } from '@/config/admin';
 
 const Overview = lazy(() => import('./pages/Overview'));
-const Helping = lazy(() => import('./pages/Helping'));
-const Pet = lazy(() => import('./pages/Pet'));
-const Orders = lazy(() => import('./pages/Orders'));
+const Bookings = lazy(() => import('./pages/Bookings'));
 const AdminUsers = lazy(() => import('./pages/Users'));
 const Workers = lazy(() => import('./pages/Workers'));
 const Shops = lazy(() => import('./pages/Shops'));
 // What providers may sign up to do, and the verification each service demands.
 const ProviderOnboarding = lazy(() => import('./pages/ProviderOnboarding'));
-// One generic console, rendered per vertical — see RepairVertical.jsx.
-const RepairVertical = lazy(() => import('./pages/repair/RepairVertical'));
-const RepairMobile = () => <RepairVertical vertical="mobile" label="Mobile Repair" />;
-// Laptops are identified below model level, so the deep-catalog tabs apply.
-const RepairLaptop = () => <RepairVertical vertical="laptop" label="Laptop Services" deepCatalog />;
-// Two-wheelers identify at vehicle type -> brand -> model, so deep catalog applies.
-const RepairTwoWheeler = () => <RepairVertical vertical="two_wheeler" label="Two-Wheeler Services" deepCatalog />;
-const RepairFourWheeler = () => <RepairVertical vertical="four_wheeler" label="Four-Wheeler Services" deepCatalog />;
-// Shallow catalog — tank type sits in the brand slot, capacity in the model
-// slot, so there is no product-type tier to show.
-const RepairWaterTankCare = () => <RepairVertical vertical="water_tank_care" label="Water & Tank Care" />;
-const Pricing = lazy(() => import('./pages/Pricing'));
+// Domains → services → each service's own console (repair, pet, helping), all data-driven.
+const ServicesHub = lazy(() => import('./pages/services/ServicesHub'));
 const AdminWallet = lazy(() => import('./pages/Wallet'));
 const Disputes = lazy(() => import('./pages/Disputes'));
 const Payouts = lazy(() => import('./pages/Payouts'));
@@ -43,7 +31,6 @@ const Analytics = lazy(() => import('./pages/Analytics'));
 const Incentives = lazy(() => import('./pages/Incentives'));
 const Cancellation = lazy(() => import('./pages/Cancellation'));
 const Audit = lazy(() => import('./pages/Audit'));
-const AdminKycReview = lazy(() => import('./pages/KycReview'));
 const AdminPlans = lazy(() => import('./pages/Plans'));
 const Ads = lazy(() => import('./pages/Ads'));
 const Promos = lazy(() => import('./pages/Promos'));
@@ -54,7 +41,6 @@ const Alerts = lazy(() => import('./pages/Alerts'));
 const Retention = lazy(() => import('./pages/Retention'));
 const Support = lazy(() => import('./pages/Support'));
 const LiveOps = lazy(() => import('./pages/LiveOps'));
-const Services = lazy(() => import('./pages/Services'));
 const Rewards = lazy(() => import('./pages/Rewards'));
 const BusinessIntelligence = lazy(() => import('./pages/BusinessIntelligence'));
 const Intelligence = lazy(() => import('./pages/Intelligence'));
@@ -72,120 +58,109 @@ const Cities = lazy(() => import('./pages/Cities'));
 const Appeals = lazy(() => import('./pages/Appeals'));
 const Training = lazy(() => import('./pages/Training'));
 
-/* Navigation groups */
+/**
+ * Navigation, organised around who the platform serves: customers, ServicePro
+ * shops, Rakshak workers and event partners — plus the catalog, money and ops
+ * that sit across all four.
+ */
 const NAV_GROUPS = [
   {
-    label: 'Core',
+    label: 'Insights',
     items: [
-      { id: 'overview',  label: 'Overview',    icon: LayoutDashboard },
-      { id: 'orders',    label: 'Orders',       icon: ShoppingBag },
-      { id: 'users',     label: 'Users',        icon: Users },
-      { id: 'workers',   label: 'Workers',      icon: Briefcase },
-      { id: 'shops',     label: 'Shops',        icon: Store },
-      { id: 'onboarding', label: 'Provider Onboarding', icon: FileCheck },
-      { id: 'workerops', label: 'Worker Ops',   icon: Briefcase },
-      { id: 'kyc',       label: 'KYC Review',   icon: FileCheck },
+      { id: 'overview',      label: 'Overview',                 icon: LayoutDashboard },
+      { id: 'intelligence',  label: 'Intelligence & Expansion', icon: Sparkles },
+      { id: 'searchintel',   label: 'Search Intel',             icon: Search },
+      { id: 'retention',     label: 'Retention',                icon: Repeat2 },
     ],
   },
   {
-    label: 'Revenue',
+    label: 'Catalog',
     items: [
-      { id: 'pricing',   label: 'Pricing',            icon: Tag },
-      { id: 'services',  label: 'Service Catalog',     icon: Layers },
-      { id: 'plans',     label: 'Plans',               icon: Crown },
-      { id: 'rewards',   label: 'Rewards',             icon: Sparkles },
-      { id: 'rewardpoints', label: 'Points & Cards',  icon: Gift },
-      { id: 'wallet',      label: 'Wallet',              icon: Wallet },
-      { id: 'payouts',     label: 'Payouts',             icon: CreditCard },
-      { id: 'shield',      label: 'Shield Fund',         icon: Shield },
-      { id: 'promos',      label: 'Promo Codes',         icon: Ticket },
-      { id: 'ads',         label: 'Ad Campaigns',        icon: Megaphone },
+      { id: 'services', label: 'Services', icon: Layers },
     ],
   },
   {
-    label: 'Operations',
+    label: 'Customers',
     items: [
-      { id: 'liveops',      label: 'Live Ops',         icon: Radio },
-      { id: 'intervention', label: 'Intervention',     icon: Zap },
-      { id: 'fraud',        label: 'Fraud Detection',  icon: ShieldAlert },
-      { id: 'zones',        label: 'Zones',            icon: MapIcon },
-      { id: 'cities',       label: 'Cities & Areas',   icon: Globe },
-      { id: 'disputes',     label: 'Disputes',         icon: Scale },
-      { id: 'appeals',      label: 'Worker Appeals',   icon: AlertCircle },
-      { id: 'training',     label: 'Training',         icon: GraduationCap },
-      { id: 'cancellation', label: 'Cancellation',     icon: XCircle },
-      { id: 'incentives',   label: 'Incentives',       icon: Gift },
-      { id: 'retention',    label: 'Retention',        icon: Repeat2 },
-      { id: 'support',      label: 'Support',          icon: HeadphonesIcon },
-      { id: 'content',      label: 'Content & Help',   icon: FileText },
+      { id: 'users',        label: 'Customers',      icon: Users },
+      { id: 'bookings',     label: 'Bookings',       icon: ShoppingBag },
+      { id: 'support',      label: 'Support',        icon: HeadphonesIcon },
+      { id: 'disputes',     label: 'Disputes',       icon: Scale },
+      { id: 'promos',       label: 'Promo Codes',    icon: Ticket },
+      { id: 'rewards',      label: 'Rewards',        icon: Sparkles },
+      { id: 'rewardpoints', label: 'Points & Cards', icon: Gift },
+      { id: 'plans',        label: 'Plans',          icon: Crown },
     ],
   },
   {
-    label: 'Intelligence',
+    label: 'Providers',
     items: [
-      { id: 'intelligence',   label: 'Intelligence & Expansion', icon: Sparkles },
-      { id: 'searchintel',    label: 'Search Intel',       icon: Search },
-      { id: 'notifications',  label: 'Notifications',      icon: Bell },
-      { id: 'alerts',         label: 'Alerts',             icon: Bell },
-      { id: 'audit',          label: 'Audit Logs',         icon: FileText },
+      { id: 'verification', label: 'Verification', icon: FileCheck },
+    ],
+  },
+  {
+    label: 'ServicePro',
+    items: [
+      { id: 'shops', label: 'Shops', icon: Store },
+    ],
+  },
+  {
+    label: 'Rakshak',
+    items: [
+      { id: 'workers',    label: 'Workers',    icon: Briefcase },
+      { id: 'workerops',  label: 'Worker Ops', icon: Briefcase },
+      { id: 'appeals',    label: 'Appeals',    icon: AlertCircle },
+      { id: 'training',   label: 'Training',   icon: GraduationCap },
+      { id: 'incentives', label: 'Incentives', icon: Gift },
     ],
   },
   {
     label: 'Events',
     items: [
       { id: 'events', label: 'Event Commerce', icon: PartyPopper },
+      { id: 'ads',    label: 'Ad Campaigns',   icon: Megaphone },
+    ],
+  },
+  {
+    label: 'Money',
+    items: [
+      { id: 'payouts', label: 'Payouts',     icon: CreditCard },
+      { id: 'wallet',  label: 'Wallet',      icon: Wallet },
+      { id: 'shield',  label: 'Shield Fund', icon: Shield },
+    ],
+  },
+  {
+    label: 'Operations',
+    items: [
+      { id: 'liveops',       label: 'Live Ops',        icon: Radio },
+      { id: 'intervention',  label: 'Intervention',    icon: Zap },
+      { id: 'zones',         label: 'Zones',           icon: MapIcon },
+      { id: 'cities',        label: 'Cities & Areas',  icon: Globe },
+      { id: 'fraud',         label: 'Fraud Detection', icon: ShieldAlert },
+      { id: 'cancellation',  label: 'Cancellation',    icon: XCircle },
+      { id: 'notifications', label: 'Notifications',   icon: Bell },
+      { id: 'content',       label: 'Content & Help',  icon: FileText },
     ],
   },
   {
     label: 'System',
     items: [
-      { id: 'flags',        label: 'Feature Flags',    icon: ToggleRight },
-      { id: 'health',       label: 'System Health',    icon: Server },
+      { id: 'flags',  label: 'Feature Flags', icon: ToggleRight },
+      { id: 'health', label: 'System Health', icon: Server },
+      { id: 'alerts', label: 'Alerts',        icon: Bell },
+      { id: 'audit',  label: 'Audit Logs',    icon: FileText },
     ],
   },
 ];
 
-/**
- * Expandable trees rendered above the flat groups.
- *
- * Each vertical gets its own console rather than being crammed into the shared
- * "Service Catalog" screen, because a vertical owns its own taxonomy, pricing
- * model and diagnostics — mobile repair has brands/models/problems that mean
- * nothing to plumbing. New verticals are added as children here.
- */
-const NAV_TREES = [
-  {
-    id: 'services',
-    label: 'Services',
-    icon: Layers,
-    children: [
-      { id: 'repair-mobile', label: 'Mobile', icon: Smartphone },
-      { id: 'repair-laptop', label: 'Laptop', icon: Laptop },
-      { id: 'repair-two-wheeler', label: 'Two-Wheeler', icon: Bike },
-      { id: 'repair-four-wheeler', label: 'Four-Wheeler', icon: Car },
-      { id: 'repair-water-tank-care', label: 'Water & Tank Care', icon: Droplets },
-      { id: 'helping', label: 'Helping Services', icon: ShoppingBag },
-      { id: 'pet', label: 'Pet Services', icon: PawPrint },
-    ],
-  },
-];
-
-const ALL_NAV = [
-  ...NAV_GROUPS.flatMap(g => g.items),
-  ...NAV_TREES.flatMap(t => t.children),
-];
+const ALL_NAV = NAV_GROUPS.flatMap(g => g.items);
 
 const SECTION_MAP = {
-  overview: Overview, orders: Orders, users: AdminUsers, workers: Workers, shops: Shops,
-  onboarding: ProviderOnboarding,
-  'repair-mobile': RepairMobile,
-  'repair-laptop': RepairLaptop,
-  'repair-two-wheeler': RepairTwoWheeler,
-  'repair-four-wheeler': RepairFourWheeler,
-  'repair-water-tank-care': RepairWaterTankCare,
-  helping: Helping,
-  pet: Pet,
-  kyc: AdminKycReview, pricing: Pricing, services: Services, wallet: AdminWallet,
+  overview: Overview, bookings: Bookings, orders: Bookings, users: AdminUsers, workers: Workers, shops: Shops,
+  verification: ProviderOnboarding,
+  // Old links (?tab=onboarding / ?tab=kyc) still land on the one Verification page.
+  onboarding: ProviderOnboarding, kyc: ProviderOnboarding,
+  services: ServicesHub, wallet: AdminWallet,
   disputes: Disputes, payouts: Payouts, intelligence: Intelligence,
   analytics: Analytics, business: BusinessIntelligence, notifications: NotificationsAdmin, heatmap: Heatmap,
   incentives: Incentives, cancellation: Cancellation, ads: Ads, promos: Promos,
@@ -233,73 +208,6 @@ function NavItem({ item, isActive, onClick }) {
         />
       )}
     </motion.button>
-  );
-}
-
-/* Expandable nav group
- * "Services" is a container, not a destination — clicking it reveals the
- * verticals underneath rather than navigating anywhere itself. Each vertical
- * (Mobile today, others as they launch) is its own console section.
- * Expansion is derived from whether a child is active, so deep-linking to
- * ?tab=repair-mobile opens the tree already unfolded rather than looking
- * like the item was reached from nowhere.
- */
-function NavTree({ group, active, onClick }) {
-  const containsActive = group.children.some((c) => c.id === active);
-  const [open, setOpen] = useState(containsActive);
-
-  useEffect(() => { if (containsActive) setOpen(true); }, [containsActive]);
-
-  const { icon: Icon } = group;
-  return (
-    <div>
-      <motion.button
-        onClick={() => setOpen((o) => !o)}
-        className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium transition-all text-left ${
-          containsActive ? 'text-white bg-white/10' : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
-        }`}
-        whileTap={{ scale: 0.98 }}
-        aria-expanded={open}
-      >
-        <Icon size={14} strokeWidth={containsActive ? 2.5 : 1.75} className={containsActive ? 'text-indigo-300' : 'text-slate-500'} />
-        <span className="flex-1 truncate">{group.label}</span>
-        <ChevronDown
-          size={13}
-          className={`text-slate-500 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
-        />
-      </motion.button>
-
-      <AnimatePresence initial={false}>
-        {open && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.18 }}
-            className="overflow-hidden"
-          >
-            <div className="ml-4 pl-2 mt-0.5 space-y-0.5" style={{ borderLeft: '1px solid rgba(255,255,255,0.08)' }}>
-              {group.children.map((child) => {
-                const ChildIcon = child.icon;
-                const isActive = active === child.id;
-                return (
-                  <button
-                    key={child.id}
-                    onClick={() => onClick(child.id)}
-                    className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[12.5px] font-medium transition-all text-left ${
-                      isActive ? 'text-white bg-indigo-500/20' : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
-                    }`}
-                  >
-                    <ChildIcon size={13} strokeWidth={isActive ? 2.5 : 1.75} className={isActive ? 'text-indigo-300' : 'text-slate-500'} />
-                    <span className="flex-1 truncate">{child.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
   );
 }
 
@@ -380,16 +288,8 @@ export default function AdminDashboard() {
 
         {/* Nav groups */}
         <nav className="flex-1 overflow-y-auto py-2 px-2" style={{ scrollbarWidth: 'none' }}>
-          {/* Verticals — expandable, sits above the flat groups */}
-          <div>
-            <p className="text-[9px] font-black text-slate-600 uppercase tracking-[0.12em] px-3 mb-1">Verticals</p>
-            {NAV_TREES.map((tree) => (
-              <NavTree key={tree.id} group={tree} active={active} onClick={handleNav} />
-            ))}
-          </div>
-
           {NAV_GROUPS.map((group, gi) => (
-            <div key={group.label} className="mt-4">
+            <div key={group.label} className={gi ? 'mt-4' : ''}>
               <p className="text-[9px] font-black text-slate-600 uppercase tracking-[0.12em] px-3 mb-1">{group.label}</p>
               {group.items.map(item => (
                 <NavItem

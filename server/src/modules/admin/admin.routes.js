@@ -6,6 +6,7 @@ router.use(authenticate, requireRole('admin'));
 
 router.use('/', require('./routes/metrics.routes'));
 router.use('/', require('./routes/orders.routes'));
+router.use('/', require('../admin-portal/admin-portal.routes'));
 router.use('/', require('./routes/workers.routes'));
 router.use('/', require('./routes/shops.routes'));
 router.use('/', require('../repair/repair-admin.routes'));

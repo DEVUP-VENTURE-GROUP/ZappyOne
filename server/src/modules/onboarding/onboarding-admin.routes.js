@@ -17,6 +17,7 @@ function mountCrud(path, handlers) {
   router.delete(`/onboarding/${path}/:id`, handlers.archive);
 }
 
+router.get('/onboarding/overview', ctrl.overview);
 mountCrud('domains', ctrl.domains);
 mountCrud('lines', ctrl.lines);
 mountCrud('requirements', ctrl.requirements);

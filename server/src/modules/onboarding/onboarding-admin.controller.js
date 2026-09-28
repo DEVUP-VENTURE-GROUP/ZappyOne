@@ -410,4 +410,65 @@ const lineRequests = {
   },
 };
 
-module.exports = { domains, lines, requirements, enrolments, lineRequests };
+/**
+ * The admin Services hub: every domain with its services and how many
+ * providers are approved or waiting for each. One aggregation, not a count
+ * per service; images signed so private uploads actually display.
+ */
+async function overview(req, res, next) {
+  try {
+    const { signDocsMedia } = require('../../utils/s3.service');
+    const { ProductType } = require('../repair/models/catalog.model');
+    const [domainRows, lineRows, counts, typedVerticals] = await Promise.all([
+      ServiceDomain.find({ isArchived: { $ne: true } }).sort({ displayOrder: 1, name: 1 }).lean(),
+      ServiceLine.find({ isArchived: { $ne: true } }).sort({ displayOrder: 1, name: 1 }).lean(),
+      ProviderEnrolment.aggregate([
+        { $match: { status: { $in: ['approved', 'pending_review'] } } },
+        { $group: { _id: { line: '$lineCode', status: '$status' }, n: { $sum: 1 } } },
+      ]),
+      ProductType.distinct('vertical'),
+    ]);
+    // Verticals identified below model level (laptop type, bike type…) get the deep catalog tabs.
+    const deep = new Set(typedVerticals);
+    const consoleFor = (l) => (l.repairVertical ? { kind: 'repair', vertical: l.repairVertical, deepCatalog: deep.has(l.repairVertical) }
+      : l.customerPath?.startsWith('/pet') ? { kind: 'pet' }
+        : l.customerPath?.startsWith('/helping') ? { kind: 'helping' }
+          : null);
+    const tally = {};
+    for (const c of counts) (tally[c._id.line] ||= {})[c._id.status] = c.n;
+
+    // imageKey is what forms edit; imageUrl is signed for display and expires.
+    const withKey = (rows) => rows.map((r) => ({ ...r, imageKey: r.imageUrl || '' }));
+    const [domainsSigned, linesSigned] = await Promise.all([
+      signDocsMedia(withKey(domainRows)), signDocsMedia(withKey(lineRows)),
+    ]);
+    const lineView = linesSigned.map((l) => {
+      const approved = tally[l.code]?.approved || 0;
+      return {
+        ...l,
+        approved,
+        pending: tally[l.code]?.pending_review || 0,
+        console: consoleFor(l),
+        // Same rule the customer catalog applies (coverage.service.loadLiveLines).
+        liveForCustomers: l.status === 'live' && l.isActive !== false && !!l.customerPath && approved > 0,
+      };
+    });
+    const domainsOut = domainsSigned.map((d) => {
+      const own = lineView.filter((l) => l.domainCode === d.code);
+      return {
+        ...d,
+        lines: own,
+        stats: {
+          services: own.length,
+          liveForCustomers: own.filter((l) => l.liveForCustomers).length,
+          approved: own.reduce((s, l) => s + l.approved, 0),
+          pending: own.reduce((s, l) => s + l.pending, 0),
+        },
+      };
+    });
+    const known = new Set(domainRows.map((d) => d.code));
+    res.json({ domains: domainsOut, orphanLines: lineView.filter((l) => !known.has(l.domainCode)) });
+  } catch (err) { next(err); }
+}
+
+module.exports = { domains, lines, requirements, enrolments, lineRequests, overview };

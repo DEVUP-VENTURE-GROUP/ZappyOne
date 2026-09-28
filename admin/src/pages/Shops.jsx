@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSelector } from 'react-redux';
+import { useSearchParams } from 'react-router-dom';
 import { selectAuth } from '@shared/modules/auth/authSlice';
 import { adminApiPath } from '@/config/admin';
 import { API_BASE } from '@shared/services/apiBase';
@@ -149,7 +150,8 @@ function KycDocViewer({ shopId, onClose }) {
   );
 }
 
-function ShopDetailPanel({ shop, onClose, onRefetch }) {
+function ShopDetailPanel({ shop, onClose, onRefetch, reviewMode }) {
+  const [, setParams] = useSearchParams();
   const [showDocs, setShowDocs] = useState(false);
   const [showReject, setShowReject] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
@@ -273,7 +275,14 @@ function ShopDetailPanel({ shop, onClose, onRefetch }) {
             </div>
 
             <div className="space-y-3 pt-1">
-              {kycStatus === 'pending_review' && (
+              {/* Approving happens only in Verification, so there is one place to decide. */}
+              {kycStatus === 'pending_review' && !reviewMode && (
+                <button onClick={() => setParams({ tab: 'verification', v: 'shops' })}
+                  className="w-full flex items-center justify-center gap-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-sm py-2.5 rounded-xl transition">
+                  <ShieldCheck size={14} /> Review in Verification
+                </button>
+              )}
+              {kycStatus === 'pending_review' && reviewMode && (
                 <div className="grid grid-cols-2 gap-2">
                   <button onClick={handleApprove} disabled={approving}
                     className="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold text-sm py-2.5 rounded-xl transition">
@@ -316,9 +325,10 @@ function ShopDetailPanel({ shop, onClose, onRefetch }) {
   );
 }
 
-export default function Shops() {
+/** reviewMode: rendered inside Verification — opens on pending shops and allows the decision. */
+export default function Shops({ reviewMode = false }) {
   const [q, setQ] = useState('');
-  const [kycStatus, setKycStatus] = useState('');
+  const [kycStatus, setKycStatus] = useState(reviewMode ? 'pending_review' : '');
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState(null);
 
@@ -326,7 +336,7 @@ export default function Shops() {
 
   return (
     <div className="space-y-4">
-      <SectionHeader title="Shops" subtitle={data?.total != null ? `${data.total} registered` : ''} />
+      {!reviewMode && <SectionHeader title="Shops" subtitle={data?.total != null ? `${data.total} registered` : ''} />}
 
       <div className="flex gap-3 flex-wrap">
         <div className="relative flex-1 min-w-[220px]">
@@ -399,7 +409,7 @@ export default function Shops() {
         </div>
       </Card>
 
-      {selected && <ShopDetailPanel shop={selected} onClose={() => setSelected(null)} onRefetch={refetch} />}
+      {selected && <ShopDetailPanel shop={selected} reviewMode={reviewMode} onClose={() => setSelected(null)} onRefetch={refetch} />}
     </div>
   );
 }

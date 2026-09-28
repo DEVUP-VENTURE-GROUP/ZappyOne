@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
-  Inbox, Layers, Wrench, ShieldCheck, Plus, Loader2, Check, X, Store, User,
+  Inbox, ShieldCheck, Plus, Loader2, Check, X, Store, User,
   Archive, Pencil, MessageSquarePlus, Camera, Upload, MapPin, FileWarning,
 } from 'lucide-react';
 import {
@@ -33,13 +34,22 @@ import toast from 'react-hot-toast';
  * leaves the phone work they are doing well alone.
  */
 
+/**
+ * Every approval in the platform, in one place:
+ *   queue    — a shop or independent worker applying for a service (approves identity too)
+ *   workers  — identity-only checks: shop technicians, who never apply for a service
+ *   shops    — shops that submitted the standalone shop verification
+ */
 const TABS = [
-  { id: 'queue', label: 'Verification queue', icon: Inbox },
+  { id: 'queue', label: 'Service applications', icon: Inbox },
+  { id: 'workers', label: 'Worker identity', icon: User },
+  { id: 'shops', label: 'Shop identity', icon: Store },
   { id: 'requests', label: 'Service requests', icon: MessageSquarePlus },
-  { id: 'domains', label: 'Domains', icon: Layers },
-  { id: 'lines', label: 'Services', icon: Wrench },
   { id: 'requirements', label: 'Requirements', icon: ShieldCheck },
 ];
+
+const WorkerIdentity = lazy(() => import('./KycReview'));
+const ShopIdentity = lazy(() => import('./Shops'));
 
 /* Verification queue */
 
@@ -270,36 +280,8 @@ function Requests() {
 
 /* Generic catalog table */
 
+// Domains and services are edited in Services (pages/services/ServicesHub).
 const SPECS = {
-  domains: {
-    title: 'Domains',
-    hint: 'The top-level buckets a provider signs up under.',
-    fields: [
-      { key: 'code', label: 'Code' },
-      { key: 'name', label: 'Name' },
-      { key: 'description', label: 'Description' },
-      { key: 'imageUrl', label: 'Photo URL' },
-      { key: 'icon', label: 'Icon' },
-      { key: 'displayOrder', label: 'Order', type: 'number' },
-      { key: 'isActive', label: 'Active', type: 'boolean' },
-    ],
-  },
-  lines: {
-    title: 'Services',
-    hint: 'Set a service to "live" only when the customer flow behind it exists — providers cannot enrol in anything else.',
-    fields: [
-      { key: 'domainCode', label: 'Domain' },
-      { key: 'code', label: 'Code' },
-      { key: 'name', label: 'Name' },
-      { key: 'repairVertical', label: 'Repair vertical' },
-      { key: 'customerPath', label: 'Customer link' },
-      { key: 'imageUrl', label: 'Photo URL' },
-      { key: 'tagline', label: 'Tagline' },
-      { key: 'status', label: 'Status', type: 'select', options: ['live', 'coming_soon'] },
-      { key: 'displayOrder', label: 'Order', type: 'number' },
-      { key: 'isActive', label: 'Active', type: 'boolean' },
-    ],
-  },
   requirements: {
     title: 'Verification requirements',
     hint: 'What a provider must show for a service. Leave the service blank to cover the whole domain; a set naming a service overrides it.',
@@ -656,13 +638,15 @@ function DocumentCard({ doc }) {
 }
 
 export default function ProviderOnboarding() {
-  const [tab, setTab] = useState('queue');
+  const [params, setParams] = useSearchParams();
+  const tab = TABS.some((t) => t.id === params.get('v')) ? params.get('v') : 'queue';
+  const setTab = (v) => setParams({ tab: params.get('tab') || 'verification', v });
 
   return (
     <div className="space-y-4">
       <SectionHeader
-        title="Provider onboarding"
-        subtitle="What providers can sign up to do, and what they must prove before they do it."
+        title="Verification"
+        subtitle="Every provider check — service applications, identity, and what each service requires."
       />
 
       <div className="flex gap-1.5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'thin' }}>
@@ -681,8 +665,12 @@ export default function ProviderOnboarding() {
       </div>
 
       {tab === 'queue' && <Queue />}
+      <Suspense fallback={<PageLoader />}>
+        {tab === 'workers' && <WorkerIdentity />}
+        {tab === 'shops' && <ShopIdentity reviewMode />}
+      </Suspense>
       {tab === 'requests' && <Requests />}
-      {['domains', 'lines', 'requirements'].includes(tab) && <CatalogTable key={tab} resource={tab} />}
+      {tab === 'requirements' && <CatalogTable resource="requirements" />}
     </div>
   );
 }
