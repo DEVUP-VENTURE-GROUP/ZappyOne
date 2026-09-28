@@ -34,7 +34,7 @@ const Order                   = require('./order.model');
 const CancellationFeeRecord   = require('./cancellation-shield.model');
 const { ShieldFundWeek, ShieldWorkerPayout } = require('./shield-fund.model');
 const ShieldConfig            = require('./shield-config.model');
-const logger                  = require('../../utils/logger');
+const logger                  = require('../../core/logger');
 const { redis }               = require('../../config/redis');
 
 // Default constants (used as fallback if DB/Redis unavailable)

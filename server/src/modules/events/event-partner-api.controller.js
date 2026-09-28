@@ -3,7 +3,7 @@ const EventTheme   = require('./event-theme.model');
 const EventPartner = require('./event-partner.model');
 const EventBooking = require('./event-booking.model');
 const EventCategory = require('./event-category.model');
-const logger = require('../../utils/logger');
+const logger = require('../../core/logger');
 
 /* Profile */
 
@@ -58,7 +58,7 @@ async function updateMe(req, res, next) {
 
 async function getMyThemes(req, res, next) {
   try {
-    const s3Service = require('../../utils/s3.service');
+    const s3Service = require('../../core/storage/s3');
     const themes = await EventTheme.find({ partnerId: req.auth.sub })
       .sort({ createdAt: -1 })
       .populate('categoryId', 'name slug emoji')
@@ -328,7 +328,7 @@ async function streamMyKycDoc(req, res, next) {
     if (!partner) return res.status(404).json({ error: 'Partner not found' });
     const key = partner.kyc?.documents?.[Number(req.params.idx)];
     if (!key) return res.status(404).json({ error: 'Document not found' });
-    const s3Service = require('../../utils/s3.service');
+    const s3Service = require('../../core/storage/s3');
     await s3Service.streamToResponse(key, res);
   } catch (e) {
     if (e?.name === 'NoSuchKey') return res.status(404).json({ error: 'File not found in storage' });
@@ -345,7 +345,7 @@ async function streamMyKycField(req, res, next) {
     if (!partner) return res.status(404).json({ error: 'Not found' });
     const key = partner.kyc?.[fieldName];
     if (!key) return res.status(404).json({ error: 'Document not uploaded' });
-    const s3Service = require('../../utils/s3.service');
+    const s3Service = require('../../core/storage/s3');
     await s3Service.streamToResponse(key, res);
   } catch (e) {
     if (e?.name === 'NoSuchKey') return res.status(404).json({ error: 'File not found in storage' });

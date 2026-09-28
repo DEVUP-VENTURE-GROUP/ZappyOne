@@ -118,8 +118,8 @@ async function createTopUpOrder(req, res, next) {
     // Resolve advertiser contact for Cashfree's required customer_phone
     let customer = { id: String(req.auth.sub), phone: '9999999999', email: 'noreply@zappy.in' };
     try {
-      const Advertiser = req.auth.role === 'partner'
-        ? require('../partner/partner.model')
+      const Advertiser = req.auth.role === 'event_partner'
+        ? require('../events/event-partner.model')
         : require('../user/user.model');
       const doc = await Advertiser.findById(req.auth.sub).select('name phone email businessName').lean();
       customer = {
@@ -208,7 +208,7 @@ async function verifyTopUp(req, res, next) {
     // Clean up the pending session key
     redis.del(`adtopup:${cfOrderId}`).catch(() => {});
 
-    const logger = require('../../utils/logger');
+    const logger = require('../../core/logger');
     logger.info({ advertiserId, amountPaise, cfPaymentId }, '[AdWallet] Top-up applied');
 
     res.json({ ok: true, amountPaise, amountRupees: Math.round(amountPaise / 100) });

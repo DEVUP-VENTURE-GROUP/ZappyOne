@@ -16,7 +16,7 @@ const Transaction = require('../payment/transaction.model');
 const walletService = require('./wallet.service');
 const subscriptionService = require('../subscription/subscription.service');
 const notificationService = require('../notification/notification.service');
-const logger = require('../../utils/logger');
+const logger = require('../../core/logger');
 
 const DEFAULT_RATE = 0.05;
 const FIRST_ORDERS_BONUS_RATE = 0.10;

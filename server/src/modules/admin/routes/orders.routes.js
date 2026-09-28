@@ -65,13 +65,12 @@ router.get('/payments/reconciliation-queue', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.post('/payments/:razorpayOrderId/reconcile',
+router.post('/payments/:cfOrderId/reconcile',
   validate(Joi.object({ notes: Joi.string().max(500).optional() })),
   async (req, res, next) => {
   try {
     // Validate Cashfree order ID format (our own prefix: zpy_*) — prevent injection
-    const { razorpayOrderId } = req.params; // param name kept for URL compat
-    const cfOrderId = razorpayOrderId;
+    const { cfOrderId } = req.params;
     if (!/^zpy_[a-z0-9_]{4,60}$/.test(cfOrderId)) {
       return res.status(400).json({ error: 'Invalid payment order ID format' });
     }

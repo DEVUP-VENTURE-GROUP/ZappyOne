@@ -16,7 +16,7 @@
 
 const {
   keyFromMedia, normalizeDocMedia, signMedia, MEDIA_FIELDS,
-} = require('../src/utils/s3.service');
+} = require('../src/core/storage/s3');
 
 const BUCKET_URL = 'https://hyperlocal-uploads-workers.s3.ap-south-1.amazonaws.com';
 

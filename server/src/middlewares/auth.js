@@ -1,6 +1,6 @@
 const { verifyToken } = require('../modules/auth/auth.service');
 const { redis }       = require('../config/redis');
-const logger          = require('../utils/logger');
+const logger          = require('../core/logger');
 
 // Redis cache TTL for ban status — 60s means a ban takes effect within 1 minute
 // across all active sessions without a DB hit on every request.

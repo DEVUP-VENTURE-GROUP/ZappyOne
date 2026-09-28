@@ -21,7 +21,7 @@ const onboardingService = require('../src/modules/onboarding/onboarding.service'
 const { provisionCoverage } = require('../src/modules/onboarding/auto-provision.service');
 const { ProviderServiceArea } = require('../src/modules/repair/models/config.model');
 const { PetProviderCapability } = require('../src/modules/pet/models/config.model');
-const { metresBetween } = require('../src/utils/distance');
+const { metresBetween } = require('../src/core/geo/distance');
 
 jest.setTimeout(60000);
 

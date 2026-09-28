@@ -242,7 +242,7 @@ orderRouter.post('/:id/materials',
       if (String(order.workerId) !== String(req.auth.sub)) return res.status(403).json({ error: 'Not your order' });
       if (!['in_progress', 'arrived'].includes(order.status)) return res.status(409).json({ error: 'Can only add materials during active service' });
 
-      const cfg = await require('../service/vertical-config.service').getConfig('construction');
+      const cfg = await require('./vertical-config.service').getConfig('construction');
       const markupPct = cfg.materialMarkupPct || 15;
       const chargedPaise = Math.round(req.body.costPaise * (1 + markupPct / 100));
 
@@ -285,7 +285,7 @@ orderRouter.post('/:id/checklist',
   async (req, res, next) => {
     try {
       const Order = require('../order/order.model');
-      const { validateCompletion } = require('../service/checklist.config');
+      const { validateCompletion } = require('./checklist.config');
       const { redis } = require('../../config/redis');
 
       const order = await Order.findById(req.params.id).select('workerId service status').lean();

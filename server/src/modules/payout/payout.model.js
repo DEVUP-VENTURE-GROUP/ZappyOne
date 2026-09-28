@@ -6,15 +6,15 @@ const mongoose = require('mongoose');
  * Lifecycle:
  *   requested → approved → processing → paid        (success path)
  *                       → rejected                  (admin denied)
- *   processing → failed                             (Razorpay Payouts error)
+ *   processing → failed                             (payout gateway error)
  *
  * Money flow semantics:
  *   - When a Payout enters `approved`/`processing`, the worker's wallet is
  *     DEBITED immediately (reservation). This prevents the worker from
  *     simultaneously requesting multiple payouts that together exceed balance.
- *   - If Razorpay Payouts fails, we re-CREDIT the wallet (reversal row) and
+ *   - If a payout fails, we re-CREDIT the wallet (reversal row) and
  *     mark the payout `failed`.
- *   - `paid` is final — Razorpay confirms the transfer succeeded.
+ *   - `paid` is final — set only with the transfer reference.
  *
  * The debit + credit use idempotency keys derived from the payout ID, so
  * retrying a webhook or admin action never double-charges.
@@ -42,9 +42,12 @@ const payoutSchema = new mongoose.Schema(
       accountName: String,
     },
 
-    // Razorpay Payouts fields (when using their Payouts API)
-    razorpayPayoutId: { type: String, sparse: true, unique: true },
-    razorpayFundAccountId: String,
+    // Set by the payout gateway once connected; `manual:<UTR>` for hand transfers.
+    gatewayPayoutId: { type: String, sparse: true, unique: true },
+    /** No payout gateway: an admin transfers by hand and records the bank/UPI reference (UTR). */
+    manualTransferRequired: { type: Boolean, default: false, index: true },
+    transferReference: { type: String, default: null },
+    paidBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', default: null },
 
     // Admin actions
     approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin' },

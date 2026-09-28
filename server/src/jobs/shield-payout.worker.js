@@ -10,7 +10,7 @@
 const { Worker } = require('bullmq');
 const { createBullConnection } = require('../config/redis');
 const shieldService = require('../modules/order/shield.service');
-const logger        = require('../utils/logger');
+const logger        = require('../core/logger');
 
 const shieldWorker = new Worker(
   'shield',

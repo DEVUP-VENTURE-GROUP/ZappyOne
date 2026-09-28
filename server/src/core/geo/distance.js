@@ -49,4 +49,16 @@ function kmBetween(a, b) {
   return m == null ? 0 : Math.round(m / 100) / 10;
 }
 
-module.exports = { metresBetween, kmBetween, toLatLng, EARTH_RADIUS_M };
+/** Great-circle km between two lat/lng pairs, unrounded (ranking and radius checks). */
+function haversineKm(lat1, lng1, lat2, lng2) {
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a = Math.sin(dLat / 2) ** 2
+    + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return (2 * EARTH_RADIUS_M * Math.asin(Math.sqrt(a))) / 1000;
+}
+
+/** The same, for two { lat, lng } points. */
+const haversineKmPoints = (a, b) => haversineKm(a.lat, a.lng, b.lat, b.lng);
+
+module.exports = { metresBetween, kmBetween, toLatLng, haversineKm, haversineKmPoints, EARTH_RADIUS_M };

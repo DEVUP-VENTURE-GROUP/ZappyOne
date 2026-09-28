@@ -11,7 +11,7 @@
 
 const VerticalConfig = require('./vertical-config.model');
 const { redis } = require('../../config/redis');
-const logger = require('../../utils/logger');
+const logger = require('../../core/logger');
 
 const CACHE_TTL = 60;
 const CACHE_KEY = (v) => `config:vertical:${v}`;

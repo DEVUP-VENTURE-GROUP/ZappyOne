@@ -74,7 +74,7 @@ async function blockWorker(req, res, next) {
           })
           .catch((err) => {
             // Best-effort — log but don't fail the block action.
-            const logger = require('../../../utils/logger');
+            const logger = require('../../../core/logger');
             logger.error(
               { err: err.message, orderId: activeOrder._id },
               'Failed to re-dispatch on worker block',
@@ -383,7 +383,7 @@ async function kycStreamDoc(req, res, next) {
     const key = keyMap[docType];
     if (!key) return res.status(404).json({ error: `No ${docType} document on file` });
 
-    const s3Service = require('../../../utils/s3.service');
+    const s3Service = require('../../../core/storage/s3');
     await s3Service.streamToResponse(key, res);
   } catch (err) {
     if (err?.name === 'NoSuchKey') return res.status(404).json({ error: 'Document not found in storage' });

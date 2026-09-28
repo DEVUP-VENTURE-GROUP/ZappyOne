@@ -1,7 +1,7 @@
 const { redis } = require('../../config/redis');
 const Worker = require('./worker.model');
 const config = require('../../config');
-const logger = require('../../utils/logger');
+const logger = require('../../core/logger');
 
 const ONLINE_GEO_KEY    = 'workers:online';    // Redis GEO set
 const AVAIL_HASH_KEY    = 'workers:available'; // hash: workerId -> 1|0

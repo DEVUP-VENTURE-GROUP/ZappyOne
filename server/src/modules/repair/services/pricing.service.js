@@ -1,10 +1,8 @@
 const { ZappyReferencePricing, ProviderPricing } = require('../models/pricing.model');
 const { RepairConfig } = require('../models/config.model');
 const { Repair } = require('../models/repair.model');
+const { httpError } = require('../../../core/errors');
 
-function httpError(message, status, code, extra = {}) {
-  return Object.assign(new Error(message), { status, code, ...extra });
-}
 
 /**
  * Pricing resolution, deviation banding and snapshot construction.

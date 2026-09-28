@@ -16,6 +16,7 @@ const eventsService = require('./events.service');
 const slaService = require('./sla.service');
 const handoverService = require('./handover.service');
 const settlementService = require('./settlement.service');
+const { httpError } = require('../../../core/errors');
 
 /**
  * Booking lifecycle: creation, transitions, quoting, completion.
@@ -62,9 +63,6 @@ function newReference() {
   return `ZR${out}`;
 }
 
-function httpError(message, status, code, extra = {}) {
-  return Object.assign(new Error(message), { status, code, ...extra });
-}
 
 /**
  * Reserve one unit atomically. The filter itself asserts availability, so the
@@ -476,7 +474,7 @@ async function transition(bookingId, next, { actorRole, actorId, reason = '', me
    * the code can be re-issued, a half-applied status change cannot.
    */
   handoverService.issueForUpcoming(booking).catch((err) => {
-    require('../../../utils/logger').warn(
+    require('../../../core/logger').warn(
       { bookingId: String(booking._id), err: err.message },
       '[repair] could not pre-issue handover code',
     );
@@ -522,7 +520,7 @@ async function issueWarranty(booking) {
     await RepairBooking.updateOne({ _id: booking._id }, { $set: { warrantyId: warranty._id } });
     return warranty;
   } catch (err) {
-    require('../../../utils/logger').warn(
+    require('../../../core/logger').warn(
       { err: err.message, bookingId: String(booking._id) },
       '[repair] warranty issuance failed',
     );
@@ -802,7 +800,7 @@ async function releaseToPool({ bookingId, actorRole, actorId, reason = '' }) {
   // Hand it straight to the next provider. A failure here must not undo the
   // release — an unassigned booking is recoverable, a stuck one is not.
   const handed = await redispatch(booking._id).catch((err) => {
-    require('../../../utils/logger').error(
+    require('../../../core/logger').error(
       { bookingId: String(booking._id), err: err.message },
       '[repair] could not re-dispatch after provider cancelled',
     );
@@ -894,7 +892,7 @@ async function declineBooking({ bookingId, actorRole, actorId, reason = '' }) {
   // decline itself — the provider has passed either way, and an unassigned
   // booking is recoverable where a stuck one is not.
   const handed = await redispatch(booking._id).catch((err) => {
-    require('../../../utils/logger').error(
+    require('../../../core/logger').error(
       { bookingId: String(booking._id), err: err.message },
       '[repair] re-dispatch after decline failed',
     );

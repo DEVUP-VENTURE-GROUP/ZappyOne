@@ -15,7 +15,7 @@ require('dotenv').config();
 const { redis } = require('../config/redis');
 const { connectMongo } = require('../config/mongo');
 const Order = require('../modules/order/order.model');
-const logger = require('../utils/logger');
+const logger = require('../core/logger');
 const notificationService = require('../modules/notification/notification.service');
 
 // service → { days: cadence, label } — the natural rebook interval.

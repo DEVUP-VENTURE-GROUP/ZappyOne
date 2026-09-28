@@ -13,7 +13,7 @@
 
 const https   = require('https');
 const { redis } = require('../../config/redis');
-const logger  = require('../../utils/logger');
+const logger  = require('../../core/logger');
 
 const KEY  = process.env.GOOGLE_MAPS_KEY;
 const BASE = 'https://maps.googleapis.com/maps/api';

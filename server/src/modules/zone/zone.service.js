@@ -15,8 +15,8 @@ const Zone = require('./zone.model');
 const Order = require('../order/order.model');
 const Worker = require('../worker/worker.model');
 const { redis } = require('../../config/redis');
-const logger = require('../../utils/logger');
-const { toLatLng } = require('../../utils/distance');
+const logger = require('../../core/logger');
+const { toLatLng } = require('../../core/geo/distance');
 
 const CACHE_KEY = 'zones:all';
 const CACHE_TTL = 300;

@@ -15,7 +15,7 @@ const planSchema = new mongoose.Schema(
     description: String,
     audience: { type: String, enum: ['user', 'worker'], required: true, index: true },
 
-    priceInPaise: { type: Number, required: true }, // Razorpay works in paise
+    priceInPaise: { type: Number, required: true }, // paise, like every amount
     currency: { type: String, default: 'INR' },
     durationDays: { type: Number, required: true, default: 30 },
 

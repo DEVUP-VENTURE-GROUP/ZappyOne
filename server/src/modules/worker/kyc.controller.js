@@ -62,7 +62,7 @@ async function submitKyc(req, res, next) {
     }
     // Reject mock-provider fixes and coordinates outside the service area
     // (VPN / IP-geolocation place spoofed selfies in e.g. Peru / Costa Rica).
-    const { validateLocation } = require('../../utils/geo-validate');
+    const { validateLocation } = require('../../core/geo/validate');
     const locCheck = validateLocation({ lat: meta.lat, lng: meta.lng, accuracy: meta.accuracy, mock: meta.mock, maxAccuracy: 500 });
     if (!locCheck.ok) {
       return res.status(422).json({
@@ -153,7 +153,7 @@ async function streamMyDoc(req, res, next) {
     const key = keyMap[req.params.docType];
     if (!key) return res.status(404).json({ error: 'Document not found' });
 
-    const s3Service = require('../../utils/s3.service');
+    const s3Service = require('../../core/storage/s3');
     await s3Service.streamToResponse(key, res);
   } catch (err) {
     if (err?.name === 'NoSuchKey') return res.status(404).json({ error: 'Document not found in storage' });

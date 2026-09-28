@@ -3,7 +3,7 @@ const Ad       = require('./ad.model');
 const AdEvent  = require('./ad-event.model');
 const AdWallet = require('./ad-wallet.model');
 const { redis }  = require('../../config/redis');
-const logger   = require('../../utils/logger');
+const logger   = require('../../core/logger');
 
 // Placement-aware ad serving
 

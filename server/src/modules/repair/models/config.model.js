@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const { SERVICE_MODES } = require('../service-modes');
-const { stripEmptyPoints } = require('../../../utils/geo-point');
+const { stripEmptyPoints } = require('../../../core/geo/point');
 
 /**
  * Centralised, admin-editable configuration for the repair vertical (§42) plus

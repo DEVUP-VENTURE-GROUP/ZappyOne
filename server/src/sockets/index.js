@@ -23,8 +23,8 @@ const etaService = require('../modules/worker/eta.service');
 const geoService = require('../modules/worker/geo.service');
 const Order = require('../modules/order/order.model');
 const LocationPing = require('../modules/worker/location-ping.model');
-const { isInIndia } = require('../utils/geo-validate');
-const logger = require('../utils/logger');
+const { isInIndia } = require('../core/geo/validate');
+const logger = require('../core/logger');
 
 let io = null;
 

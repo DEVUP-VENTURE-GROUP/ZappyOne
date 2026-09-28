@@ -15,8 +15,9 @@
  */
 
 const { redis } = require('../../config/redis');
-const logger = require('../../utils/logger');
+const logger = require('../../core/logger');
 const gmaps  = require('../maps/google-maps.service');
+const { haversineKm } = require('../../core/geo/distance');
 
 const PICKUP_KEY        = (orderId) => `order:pickup:${orderId}`;
 const ARRIVING_SOON_KEY = (orderId) => `order:arriving_soon_sent:${orderId}`;
@@ -35,16 +36,6 @@ const SPEED_CEIL_MPS  = 16.0;
 const DEFAULT_SPEED_MPS = 25 / 3.6; // 25 km/h urban default
 const EWMA_ALPHA = 0.4;
 
-function haversineKm(lat1, lng1, lat2, lng2) {
-  const R = 6371;
-  const toRad = (d) => (d * Math.PI) / 180;
-  const dLat = toRad(lat2 - lat1);
-  const dLng = toRad(lng2 - lng1);
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
 
 async function cacheOrderPickup(orderId, lat, lng) {
   await redis.set(PICKUP_KEY(orderId), JSON.stringify({ lat, lng }), 'EX', 86400);

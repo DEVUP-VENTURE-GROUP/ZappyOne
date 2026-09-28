@@ -16,7 +16,7 @@
 const mongoose = require('mongoose');
 const { SPECIES, PET_SIZES } = require('../../service/pet-passport.model');
 const { SERVICE_MODES } = require('./catalog.model');
-const { pointField, stripEmptyPoints } = require('../../../utils/geo-point');
+const { pointField, stripEmptyPoints } = require('../../../core/geo/point');
 
 /* Pricing rules (§28, §47) */
 

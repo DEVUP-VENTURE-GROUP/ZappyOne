@@ -6,8 +6,9 @@ const { Part, PartQuality } = require('../models/part.model');
 const { Repair } = require('../models/repair.model');
 const Worker = require('../../worker/worker.model');
 const Shop = require('../../shop/shop.model');
-const s3Service = require('../../../utils/s3.service');
+const s3Service = require('../../../core/storage/s3');
 const pricingService = require('./pricing.service');
+const { haversineKm } = require('../../../core/geo/distance');
 
 /**
  * The point at which a provider stops being offered cash work.
@@ -41,14 +42,6 @@ const DUES_BLOCK_PAISE = -20000;   // -₹200
 
 const EARTH_RADIUS_KM = 6371;
 
-function haversineKm(lat1, lng1, lat2, lng2) {
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLng = ((lng2 - lng1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
-  return 2 * EARTH_RADIUS_KM * Math.asin(Math.sqrt(a));
-}
 
 /** Normalise so that LOWER raw values score HIGHER (price, distance, ETA). */
 function invNormalise(value, min, max) {

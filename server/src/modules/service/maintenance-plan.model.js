@@ -5,7 +5,7 @@
  * No competitor has smart auto-recurring home service plans in India.
  */
 const mongoose = require('mongoose');
-const { pointField, stripEmptyPoints } = require('../../utils/geo-point');
+const { pointField, stripEmptyPoints } = require('../../core/geo/point');
 
 const maintenancePlanSchema = new mongoose.Schema({
   userId:        { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },

@@ -1,6 +1,6 @@
 const walletService = require('../../wallet/wallet.service');
 const Transaction = require('../../payment/transaction.model');
-const logger = require('../../../utils/logger');
+const logger = require('../../../core/logger');
 
 /**
  * Repair settlement — paying the provider for completed work.

@@ -16,12 +16,10 @@ const PetPassport = require('../../service/pet-passport.model');
 const pricingService = require('./pricing.service');
 const matchingService = require('./matching.service');
 const notificationService = require('../../notification/notification.service');
-const logger = require('../../../utils/logger');
+const logger = require('../../../core/logger');
 const zoneService = require('../../zone/zone.service');
+const { httpError } = require('../../../core/errors');
 
-function httpError(message, status, code, extra = {}) {
-  return Object.assign(new Error(message), { status, code, ...extra });
-}
 
 function reference() {
   const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';

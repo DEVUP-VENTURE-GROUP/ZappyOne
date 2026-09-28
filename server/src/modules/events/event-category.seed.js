@@ -1,5 +1,5 @@
 const EventCategory = require('./event-category.model');
-const logger = require('../../utils/logger');
+const logger = require('../../core/logger');
 
 const DEFAULT_CATEGORIES = [
   { slug: 'birthday',      name: 'Birthday',           emoji: '🎂', sortOrder: 1, description: 'Make their special day unforgettable with stunning birthday setups' },

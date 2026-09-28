@@ -13,7 +13,7 @@
  */
 
 const { redis } = require('../../config/redis');
-const logger = require('../../utils/logger');
+const logger = require('../../core/logger');
 
 const BOOKING_WINDOW_SEC = 600; // 10 min
 const BOOKING_MAX = 5;

@@ -103,7 +103,7 @@ async function getOne(req, res, next) {
 
     // Resolve photo keys to fresh presigned S3 GET URLs (valid 2h).
     // Applies to completionPhotos AND booking images (order-images/ keys).
-    const s3Service = require('../../utils/s3.service');
+    const s3Service = require('../../core/storage/s3');
 
     async function resolveUrls(arr) {
       if (!arr?.length) return arr;
@@ -554,7 +554,7 @@ async function reportWorker(req, res, next) {
     }
 
     // Create support ticket — URGENT for safety categories
-    const SupportTicket = require('../support/support-ticket.model');
+    const SupportTicket = require('../engagement/support-ticket.model');
     await SupportTicket.create({
       orderId: order._id,
       userId,

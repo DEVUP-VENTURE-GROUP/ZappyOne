@@ -14,7 +14,7 @@
 const Worker  = require('./worker.model');
 const Order   = require('../order/order.model');
 const { redis } = require('../../config/redis');
-const logger  = require('../../utils/logger');
+const logger  = require('../../core/logger');
 
 // SOS acknowledgment keys
 const ACK_KEY = (incidentKey) => `sos:ack:${incidentKey}`;
@@ -93,7 +93,7 @@ async function triggerSOS({ workerId, lat, lng, orderId, message, type = 'worker
 
   /* 5. Auto-create URGENT support ticket */
   try {
-    const SupportTicket = require('../support/support-ticket.model');
+    const SupportTicket = require('../engagement/support-ticket.model');
     await SupportTicket.create({
       orderId:  order ? order._id : undefined,
       workerId: worker._id,
@@ -211,7 +211,7 @@ async function triggerCustomerSOS({ userId, orderId, lat, lng, message }) {
 
   /* 3. Urgent ticket, so it survives a dropped socket. */
   try {
-    const SupportTicket = require('../support/support-ticket.model');
+    const SupportTicket = require('../engagement/support-ticket.model');
     await SupportTicket.create({
       orderId: order ? order._id : undefined,
       userId: user._id,

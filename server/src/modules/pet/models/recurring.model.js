@@ -19,7 +19,7 @@
  */
 
 const mongoose = require('mongoose');
-const { pointField, stripEmptyPoints } = require('../../../utils/geo-point');
+const { pointField, stripEmptyPoints } = require('../../../core/geo/point');
 
 const FREQUENCIES = ['daily', 'alternate_days', 'weekly', 'custom'];
 

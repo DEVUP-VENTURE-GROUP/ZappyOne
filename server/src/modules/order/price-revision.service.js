@@ -18,7 +18,7 @@
 const PriceRevision = require('./price-revision.model');
 const Order         = require('./order.model');
 const { redis }     = require('../../config/redis');
-const logger        = require('../../utils/logger');
+const logger        = require('../../core/logger');
 
 const REVISION_TTL_MS    = 5 * 60 * 1000;  // 5 minutes
 const AUTO_APPROVE_MS    = 5 * 60 * 1000;  // auto-approve if no response

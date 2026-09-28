@@ -10,7 +10,7 @@
 const Tip     = require('./tip.model');
 const Order   = require('./order.model');
 const { redis } = require('../../config/redis');
-const logger  = require('../../utils/logger');
+const logger  = require('../../core/logger');
 
 const TIP_PRESETS_PAISE = [2000, 5000, 10000, 20000]; // ₹20, ₹50, ₹100, ₹200
 

@@ -32,7 +32,7 @@ const auditService = require('../admin/audit.service');
  */
 
 const { verticalOf, verticalFilter } = require('./vertical');
-const s3Service = require('../../utils/s3.service');
+const s3Service = require('../../core/storage/s3');
 
 /** Generic list helper — pagination and search are identical across catalog types. */
 function listHandler(Model, { searchFields = [], defaultSort = { createdAt: -1 }, baseFilter = {} } = {}) {

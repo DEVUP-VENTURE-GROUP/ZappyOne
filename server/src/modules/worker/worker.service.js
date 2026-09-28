@@ -4,25 +4,18 @@ const geoService = require('./geo.service');
 const pricingService = require('../pricing/pricing.service');
 const { redis } = require('../../config/redis');
 const config = require('../../config');
-const logger = require('../../utils/logger');
+const logger = require('../../core/logger');
+const { haversineKm } = require('../../core/geo/distance');
 
 // Max credible worker speed — anything beyond this is a GPS spoof or teleport.
 // 150 km/h covers highway driving, ambulances, trains (but not planes).
 const GPS_MAX_SPEED_KMH = 150;
 
-function haversineKm(lat1, lng1, lat2, lng2) {
-  const R = 6371;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLng = (lng2 - lng1) * Math.PI / 180;
-  const a = Math.sin(dLat / 2) ** 2
-    + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
 
 async function goOnline({ workerId, lng, lat }) {
   // Reject foreign / impossible coordinates (VPN, IP-geolocation, spoofing).
   // Server is authoritative — a worker physically in India must report India.
-  const { isInIndia } = require('../../utils/geo-validate');
+  const { isInIndia } = require('../../core/geo/validate');
   if (!isInIndia(lat, lng)) {
     throw Object.assign(
       new Error('Could not verify your location is within the service area. Turn off any VPN and enable precise GPS.'),

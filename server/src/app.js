@@ -68,7 +68,7 @@ function buildApp() {
   app.use(cors({ origin: corsOrigin(), credentials: true }));
 
   // CRITICAL ORDERING:
-  // The Razorpay webhook needs the raw request body for HMAC verification.
+  // The Cashfree webhook needs the raw request body for HMAC verification.
   // Mount it BEFORE express.json() so the body isn't parsed.
   app.use("/api/payments/webhook", paymentRoutes.webhookRouter);
 

@@ -16,7 +16,7 @@ const Order      = require('./order.model');
 const Worker     = require('../worker/worker.model');
 const geoService = require('../worker/geo.service');
 const { redis }  = require('../../config/redis');
-const logger     = require('../../utils/logger');
+const logger     = require('../../core/logger');
 
 const AUCTION_THRESHOLD = 1500;  // orders > ₹1500 qualify
 const AUCTION_TTL_MS    = 15 * 60 * 1000;  // 15 min window for bids

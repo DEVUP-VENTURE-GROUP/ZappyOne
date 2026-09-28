@@ -1,4 +1,4 @@
-const s3Service = require('../../utils/s3.service');
+const s3Service = require('../../core/storage/s3');
 
 async function presign(req, res, next) {
   try {

@@ -16,7 +16,7 @@ const { ReferralCode, ReferralUse } = require('./referral.model');
 const walletService = require('../wallet/wallet.service');
 const Transaction = require('../payment/transaction.model');
 const notificationService = require('../notification/notification.service');
-const logger = require('../../utils/logger');
+const logger = require('../../core/logger');
 
 const REFEREE_BONUS_PAISE = 5000;    // ₹50 — instant on signup
 const REFERRER_REWARD_PAISE = 10000; // ₹100 — on referee's first completed order

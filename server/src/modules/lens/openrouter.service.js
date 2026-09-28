@@ -1,5 +1,5 @@
 const config = require('../../config');
-const logger = require('../../utils/logger');
+const logger = require('../../core/logger');
 
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 

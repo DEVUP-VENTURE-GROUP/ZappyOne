@@ -24,7 +24,7 @@ const cashfree = require('./cashfree.client');
 const walletService = require('../wallet/wallet.service');
 const subscriptionService = require('../subscription/subscription.service');
 const payables = require('./payables');
-const logger = require('../../utils/logger');
+const logger = require('../../core/logger');
 
 /** Resolve customer details for Cashfree — phone is required by their API. */
 async function resolveCustomer(owner) {
@@ -174,6 +174,9 @@ async function handleWebhook(payload) {
           { $set: { status: 'refunded', 'refund.status': 'processed' }, $push: { events: { event: eventType, payload } } },
           { new: true },
         );
+        if (intent?.purpose === 'order_payment' && intent.orderId) {
+          await Order.updateOne({ _id: intent.orderId }, { $set: { 'payment.status': 'refunded' } });
+        }
         // Reflect it on the booking so the customer sees "refunded", not "cancelled".
         if (intent?.bookingSource && intent.bookingId) {
           const booking = await payables.PAYABLES[intent.bookingSource].load(intent.bookingId);
@@ -391,6 +394,17 @@ async function reconcilePendingIntents({ now = Date.now(), limit = 50 } = {}) {
  */
 async function refundBookingPayment({ source, bookingId, amountPaise, reason = 'Booking cancelled' }) {
   const intent = await PaymentIntent.findOne({ bookingSource: source, bookingId, status: 'captured' });
+  return refundIntent(intent, { amountPaise, reason, label: source, ref: bookingId });
+}
+
+/** The same for a legacy Order (dispatch failure, admin refund). */
+async function refundOrderPayment({ orderId, amountPaise, reason = 'Order failed' }) {
+  const intent = await PaymentIntent.findOne({ orderId, status: 'captured' });
+  return refundIntent(intent, { amountPaise, reason, label: 'order', ref: orderId });
+}
+
+/** Refund a captured Cashfree payment to where it came from — once. */
+async function refundIntent(intent, { amountPaise, reason, label, ref }) {
   if (!intent) return { refunded: false, reason: 'not_paid_online' };
   const amount = Math.min(amountPaise ?? intent.amountPaise, intent.amountPaise);
   if (amount <= 0) return { refunded: false, reason: 'nothing_to_refund' };
@@ -414,8 +428,8 @@ async function refundBookingPayment({ source, bookingId, amountPaise, reason = '
     r.publish('notification:admin:ops', JSON.stringify({
       type: 'refund_manual_required',
       title: 'Refund needs manual action',
-      body: `${source} · ₹${(amount / 100).toFixed(0)} · ${intent.cfOrderId}`,
-      data: { cfOrderId: intent.cfOrderId, source, bookingId: String(bookingId) },
+      body: `${label} · ₹${(amount / 100).toFixed(0)} · ${intent.cfOrderId}`,
+      data: { cfOrderId: intent.cfOrderId, source: label, ref: String(ref) },
       urgent: true,
     })).catch(() => {});
     return { refunded: false, reason: 'manual_required' };
@@ -428,4 +442,5 @@ module.exports = {
   handleCheckoutVerification,
   reconcilePendingIntents,
   refundBookingPayment,
+  refundOrderPayment,
 };

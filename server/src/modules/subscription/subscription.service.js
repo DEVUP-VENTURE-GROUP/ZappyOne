@@ -20,7 +20,7 @@
 const Plan = require('./plan.model');
 const Subscription = require('./subscription.model');
 const { redis } = require('../../config/redis');
-const logger = require('../../utils/logger');
+const logger = require('../../core/logger');
 
 const CACHE_TTL = 60; // seconds
 const NONE_MARKER = 'none';
@@ -74,7 +74,7 @@ async function listPlans({ audience } = {}) {
  * in `activateFromPayment` once the webhook fires.
  *
  * Returns the subscription doc + the plan, ready for the caller to spin
- * up a Razorpay order.
+ * up a Cashfree order.
  */
 async function startPurchase({ owner, planCode }) {
   const plan = await Plan.findOne({ code: planCode, isActive: true });
@@ -98,7 +98,7 @@ async function startPurchase({ owner, planCode }) {
         status: 409, code: 'SUBSCRIPTION_ACTIVE_EXISTS', subscriptionId: existing._id,
       });
     }
-    // Pending → reuse it (user may have abandoned a previous Razorpay attempt).
+    // Pending → reuse it (user may have abandoned a previous payment attempt).
     return { subscription: existing, plan, reused: true };
   }
 
@@ -115,8 +115,8 @@ async function startPurchase({ owner, planCode }) {
  * Called by the webhook handler on `payment.captured`.
  * Idempotent: re-running this for the same payment is a no-op.
  */
-async function activateFromPayment({ subscriptionId, paymentIntentId, cfPaymentId, razorpayPaymentId }) {
-  const resolvedPaymentId = cfPaymentId || razorpayPaymentId; // backwards compat
+async function activateFromPayment({ subscriptionId, paymentIntentId, cfPaymentId }) {
+  const resolvedPaymentId = cfPaymentId;
   const sub = await Subscription.findById(subscriptionId);
   if (!sub) throw Object.assign(new Error('Subscription not found'), { status: 404 });
   if (sub.status === 'active') {
@@ -134,7 +134,7 @@ async function activateFromPayment({ subscriptionId, paymentIntentId, cfPaymentI
   sub.startAt = startAt;
   sub.endAt = endAt;
   sub.paymentIntentId = paymentIntentId;
-  sub.razorpayPaymentId = resolvedPaymentId;
+  sub.paymentId = resolvedPaymentId;
   // Snapshot the effects so future plan edits don't retroactively change perks
   sub.effectsSnapshot = plan.effects || {};
   await sub.save();

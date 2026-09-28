@@ -25,7 +25,7 @@
 
 const Wallet = require('./wallet.model');
 const Transaction = require('../payment/transaction.model');
-const logger = require('../../utils/logger');
+const logger = require('../../core/logger');
 
 async function getOrCreate({ kind, id }) {
   let w = await Wallet.findOne({ 'owner.kind': kind, 'owner.id': id });

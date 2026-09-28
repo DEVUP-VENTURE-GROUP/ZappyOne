@@ -6,12 +6,12 @@ const { activeNowCount } = require('../../telemetry/telemetry.controller');
 const cachedAnalytics = require('../lib/cached-analytics');
 const { redis } = require('../../../config/redis');
 const { getZoneLabel } = require('../../worker/maps.service');
-const logger = require('../../../utils/logger');
+const logger = require('../../../core/logger');
 
 /* IST calendar boundaries */
 // Moved to utils/ist so the shop's opening hours and this dashboard cannot
 // disagree about when "today" started.
-const { istDayStart, istWeekStart, istMonthStart } = require('../../../utils/ist');
+const { istDayStart, istWeekStart, istMonthStart } = require('../../../core/time/ist');
 
 const ACTIVE_STATUSES = ['searching', 'assigned', 'on_the_way', 'arrived', 'in_progress'];
 

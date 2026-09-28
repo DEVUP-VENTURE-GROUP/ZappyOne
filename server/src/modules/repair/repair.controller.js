@@ -8,7 +8,7 @@ const {
   ProductType, ProductFamily, ProductSeries, DeviceConfiguration, ModelIdentificationRequest,
 } = require('./models/catalog.model');
 const { RepairBooking, CANCELLABLE_FROM } = require('./models/booking.model');
-const s3Service = require('../../utils/s3.service');
+const s3Service = require('../../core/storage/s3');
 const { RepairQuote } = require('./models/quote.model');
 const { DeviceInspection, QAInspection } = require('./models/custody.model');
 const Worker = require('../worker/worker.model');

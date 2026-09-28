@@ -13,7 +13,7 @@
  */
 
 const ServiceMemory = require('./service-memory.model');
-const logger = require('../../utils/logger');
+const logger = require('../../core/logger');
 
 const SERVICE_INTERVALS = {
   ac_repair:   180,

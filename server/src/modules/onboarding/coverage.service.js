@@ -6,7 +6,7 @@ const { PetProviderCapability } = require('../pet/models/config.model');
 const helpingPricing = require('../helping/services/pricing.service');
 const zoneService = require('../zone/zone.service');
 const Zone = require('../zone/zone.model');
-const { metresBetween } = require('../../utils/distance');
+const { metresBetween } = require('../../core/geo/distance');
 const { redis } = require('../../config/redis');
 
 const EARTH_RADIUS_KM = 6378.1;

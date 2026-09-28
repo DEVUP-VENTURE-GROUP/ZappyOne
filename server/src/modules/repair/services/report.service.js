@@ -25,7 +25,7 @@ const Brand = require('../../service/brand.model');
 const DeviceModel = require('../../service/device-model.model');
 const Worker = require('../../worker/worker.model');
 const Shop = require('../../shop/shop.model');
-const s3Service = require('../../../utils/s3.service');
+const s3Service = require('../../../core/storage/s3');
 
 const rupees = (paise) => `₹${((paise || 0) / 100).toLocaleString('en-IN')}`;
 

@@ -1,7 +1,7 @@
 const config = require('../../config');
-const logger = require('../../utils/logger');
+const logger = require('../../core/logger');
 const { redis } = require('../../config/redis');
-const s3 = require('../../utils/s3.service');
+const s3 = require('../../core/storage/s3');
 const ServiceCatalog = require('../service/service-catalog.model');
 const pricingService = require('../pricing/pricing.service');
 const LensScan = require('./lens-scan.model');

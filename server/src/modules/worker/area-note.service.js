@@ -4,7 +4,7 @@
  * Shown on booking page and demand zones — community-sourced safety intel.
  */
 const AreaNote = require('./area-note.model');
-const logger   = require('../../utils/logger');
+const logger   = require('../../core/logger');
 
 function geohash(lat, lng) {
   return `${(Math.round(lat * 100) / 100).toFixed(2)}:${(Math.round(lng * 100) / 100).toFixed(2)}`;

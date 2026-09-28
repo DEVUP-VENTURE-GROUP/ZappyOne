@@ -15,7 +15,7 @@
 const EmergencyFundClaim = require('./emergency-fund.model');
 const Worker = require('./worker.model');
 const { redis } = require('../../config/redis');
-const logger  = require('../../utils/logger');
+const logger  = require('../../core/logger');
 
 const FUND_KEY        = 'emergency_fund:balance_paise';
 const MAX_CLAIM_PAISE = 500000;   // ₹5000

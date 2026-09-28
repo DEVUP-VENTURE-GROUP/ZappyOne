@@ -23,7 +23,7 @@ const { redis } = require('../../config/redis');
 const walletService = require('../wallet/wallet.service');
 const Transaction = require('../payment/transaction.model');
 const notificationService = require('../notification/notification.service');
-const logger = require('../../utils/logger');
+const logger = require('../../core/logger');
 
 const MILESTONE_KEY = 'config:incentives:milestones';
 const RATING_BONUS_KEY = 'config:incentives:rating';

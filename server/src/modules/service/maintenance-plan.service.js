@@ -4,7 +4,7 @@
  * A cron job calls triggerDuePlans() daily to auto-create orders.
  */
 const MaintenancePlan = require('./maintenance-plan.model');
-const logger = require('../../utils/logger');
+const logger = require('../../core/logger');
 
 /* Discount for subscribers */
 const SUBSCRIBER_DISCOUNT_PCT = 10;
@@ -105,7 +105,7 @@ async function cancelPlan(planId, userId) {
 async function triggerRepairPlan(plan, now) {
   const bookingService = require('../repair/services/booking.service');
   const MaintenancePlanModel = require('./maintenance-plan.model');
-  const logger2 = require('../../utils/logger');
+  const logger2 = require('../../core/logger');
 
   const { booking } = await bookingService.createBooking({
     userId: plan.userId,

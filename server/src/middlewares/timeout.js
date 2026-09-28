@@ -6,7 +6,7 @@
  *
  * Exceptions:
  *  - WebSocket upgrade requests (socket.io)
- *  - Razorpay webhook route (needs raw body, no timeout interference)
+ *  - Cashfree webhook route (needs raw body, no timeout interference)
  *  - Health check (always fast)
  */
 

@@ -14,7 +14,7 @@
  * on a machine set to IST the old code passed.
  */
 
-const { istParts, istDayStart, istWeekStart } = require('../src/utils/ist');
+const { istParts, istDayStart, istWeekStart } = require('../src/core/time/ist');
 
 // `withOpenState` is not exported, so it is exercised through the public
 // profile path in the service — the same way a customer reaches it.

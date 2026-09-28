@@ -24,7 +24,7 @@
 const Order = require('../order/order.model');
 const Worker = require('./worker.model');
 const { redis } = require('../../config/redis');
-const logger = require('../../utils/logger');
+const logger = require('../../core/logger');
 
 const WELLNESS_CACHE_TTL = 3600; // 1 hour
 

@@ -23,7 +23,7 @@
  */
 
 const mongoose = require('mongoose');
-const { pointField, stripEmptyPoints } = require('../../../utils/geo-point');
+const { pointField, stripEmptyPoints } = require('../../../core/geo/point');
 const { SERVICE_TYPES, PAYMENT_MODELS } = require('./config.model');
 
 /* State machine (§64) */

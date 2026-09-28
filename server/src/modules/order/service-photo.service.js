@@ -12,7 +12,7 @@
 
 const Order   = require('./order.model');
 const { redis } = require('../../config/redis');
-const logger  = require('../../utils/logger');
+const logger  = require('../../core/logger');
 
 const PHASE_LABELS = {
   before:   'Before service',

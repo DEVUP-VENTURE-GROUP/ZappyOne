@@ -1,5 +1,5 @@
 const crypto = require('crypto');
-const logger = require('../../utils/logger');
+const logger = require('../../core/logger');
 const walletService = require('../wallet/wallet.service');
 const { RewardsConfig, RewardAccount, PointsLedger, ScratchCard } = require('./rewards.models');
 

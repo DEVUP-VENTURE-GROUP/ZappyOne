@@ -20,7 +20,7 @@
  * replacement for them.
  */
 
-const logger = require('../../utils/logger');
+const logger = require('../../core/logger');
 const Worker = require('../worker/worker.model');
 
 /** Matches the modes actually seeded for each category's variants. */

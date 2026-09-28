@@ -6,7 +6,7 @@
  */
 const Order  = require('../order/order.model');
 const { redis } = require('../../config/redis');
-const logger = require('../../utils/logger');
+const logger = require('../../core/logger');
 
 const CACHE_TTL = 3600; // 1h
 

@@ -10,7 +10,7 @@ const User = require('../user/user.model');
 const { dispatchQueue, emergencyDispatchQueue } = require('../../jobs');
 const { redis } = require('../../config/redis');
 const appConfig = require('../../config');
-const logger = require('../../utils/logger');
+const logger = require('../../core/logger');
 const zoneService = require('../zone/zone.service');
 
 /**
@@ -1504,7 +1504,7 @@ async function workerNoResponseCancel({ orderId, workerId }) {
 
   // Auto-create support ticket for admin review
   try {
-    const SupportTicket = require('../support/support-ticket.model');
+    const SupportTicket = require('../engagement/support-ticket.model');
     await SupportTicket.create({
       orderId: order._id,
       userId: order.userId,
@@ -1573,7 +1573,7 @@ async function workerPartUnavailableCancel({ orderId, workerId, partName, notes 
 
   // Log unfulfilable part for admin sourcing
   try {
-    const SupportTicket = require('../support/support-ticket.model');
+    const SupportTicket = require('../engagement/support-ticket.model');
     await SupportTicket.create({
       orderId: order._id,
       userId: order.userId,

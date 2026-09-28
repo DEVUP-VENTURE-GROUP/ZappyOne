@@ -1,7 +1,7 @@
 const crypto = require('crypto');
 const { RepairBooking } = require('../models/booking.model');
 const eventsService = require('./events.service');
-const logger = require('../../../utils/logger');
+const logger = require('../../../core/logger');
 
 /**
  * Proving a device changed hands.

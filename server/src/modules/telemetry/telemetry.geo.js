@@ -1,6 +1,6 @@
 const config = require('../../config');
 const { redis } = require('../../config/redis');
-const logger = require('../../utils/logger');
+const logger = require('../../core/logger');
 
 const GEOCODE_URL = 'https://maps.googleapis.com/maps/api/geocode/json';
 

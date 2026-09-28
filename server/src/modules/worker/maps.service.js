@@ -1,6 +1,7 @@
 const config = require('../../config');
 const { redis } = require('../../config/redis');
-const logger = require('../../utils/logger');
+const logger = require('../../core/logger');
+const { haversineKmPoints: haversineKm } = require('../../core/geo/distance');
 
 const DISTANCE_MATRIX_URL = 'https://maps.googleapis.com/maps/api/distancematrix/json';
 const GEOCODE_URL = 'https://maps.googleapis.com/maps/api/geocode/json';
@@ -16,16 +17,6 @@ function cacheKey(origin, dest) {
   return `dm:${round(origin.lat)},${round(origin.lng)}:${round(dest.lat)},${round(dest.lng)}`;
 }
 
-function haversineKm(a, b) {
-  const R = 6371;
-  const toRad = (d) => (d * Math.PI) / 180;
-  const dLat = toRad(b.lat - a.lat);
-  const dLng = toRad(b.lng - a.lng);
-  const s =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(dLng / 2) ** 2;
-  return 2 * R * Math.asin(Math.sqrt(s));
-}
 
 /**
  * Returns { distanceKm, etaMinutes, source }.

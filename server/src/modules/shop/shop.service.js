@@ -6,8 +6,8 @@ const { RepairBooking } = require('../repair/models/booking.model');
 // The same split the settlement run uses, so what a shop is shown and what
 // it is paid can never drift apart.
 const { splitFor } = require('../repair/services/settlement.service');
-const s3Service = require('../../utils/s3.service');
-const { istParts } = require('../../utils/ist');
+const s3Service = require('../../core/storage/s3');
+const { istParts } = require('../../core/time/ist');
 
 /**
  * The S3 bucket is fully private — a raw stored key is never viewable
@@ -238,7 +238,7 @@ async function shopWorkerSummary(workerId) {
   if (!worker?.shopId) throw Object.assign(new Error('You are not on a shop team'), { status: 404, code: 'NOT_A_SHOP_WORKER' });
 
   const { listBookings } = require('../admin-portal/bookings.source');
-  const { istDayStart, istWeekStart } = require('../../utils/ist');
+  const { istDayStart, istWeekStart } = require('../../core/time/ist');
   const dayStart = istDayStart();
   const weekStart = istWeekStart();
   const [shop, { rows }] = await Promise.all([

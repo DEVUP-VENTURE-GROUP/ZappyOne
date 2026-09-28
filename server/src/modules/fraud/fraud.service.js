@@ -14,7 +14,7 @@ const FraudEvent = require('./fraud.model');
 const Order = require('../order/order.model');
 const User = require('../user/user.model');
 const Worker = require('../worker/worker.model');
-const logger = require('../../utils/logger');
+const logger = require('../../core/logger');
 
 const MIN = 60 * 1000;
 const DAY = 24 * 60 * 60 * 1000;

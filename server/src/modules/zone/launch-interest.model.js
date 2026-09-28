@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const { pointField } = require('../../utils/geo-point');
+const { pointField } = require('../../core/geo/point');
 
 /**
  * A customer asked to be told when ZappyOne reaches their location.

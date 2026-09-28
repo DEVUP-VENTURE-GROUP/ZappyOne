@@ -23,7 +23,7 @@ const { connectMongo } = require('../config/mongo');
 const Order  = require('../modules/order/order.model');
 const Worker = require('../modules/worker/worker.model');
 const geoService = require('../modules/worker/geo.service');
-const logger = require('../utils/logger');
+const logger = require('../core/logger');
 const { dispatchQueue } = require('./index');
 
 // Defaults — overridden by admin pricing config at runtime

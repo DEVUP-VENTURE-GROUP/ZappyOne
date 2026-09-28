@@ -10,7 +10,7 @@ const { HelpingTask, CANCELLABLE_FROM } = require('./models/task.model');
 const { HelpingConfig, SERVICE_TYPES } = require('./models/config.model');
 const taskService = require('./services/task.service');
 const pricingService = require('./services/pricing.service');
-const s3Service = require('../../utils/s3.service');
+const s3Service = require('../../core/storage/s3');
 const Worker = require('../worker/worker.model');
 
 /** Object-level authorisation — the customer, the assigned helper, or admin. */

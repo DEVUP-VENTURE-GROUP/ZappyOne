@@ -7,7 +7,7 @@ const Admin = require('../admin/admin.model');
 const EventPartner = require('../events/event-partner.model');
 const Shop = require('../shop/shop.model');
 const tokenService = require('./token.service');
-const logger = require('../../utils/logger');
+const logger = require('../../core/logger');
 
 // Reuse the existing Firebase Admin app (zappio-c80e2) for token verification
 function getClientAuth() {

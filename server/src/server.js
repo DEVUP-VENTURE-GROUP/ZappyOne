@@ -1,7 +1,7 @@
 const http = require("http");
 const buildApp = require("./app");
 const config = require("./config");
-const logger = require("./utils/logger");
+const logger = require("./core/logger");
 const { connectMongo } = require("./config/mongo");
 const { initSockets } = require("./sockets");
 const { ensureAdminSeeded } = require("./modules/admin/admin.seed");

@@ -1,5 +1,5 @@
 const Content = require('./content.model');
-const logger = require('../../utils/logger');
+const logger = require('../../core/logger');
 
 /**
  * Default content seeded ONCE if the collection is empty. This only populates

@@ -1,6 +1,6 @@
 const CancellationFeeRecord = require('../../order/cancellation-shield.model');
 const shieldService = require('../../order/shield.service');
-const logger = require('../../../utils/logger');
+const logger = require('../../../core/logger');
 
 /**
  * What it costs to cancel a repair.

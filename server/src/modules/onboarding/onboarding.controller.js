@@ -363,7 +363,7 @@ async function liveCatalog(req, res, next) {
      * This is the same failure that made brand logos vanish on refresh, and it
      * was latent here only because no catalog art had been uploaded yet.
      */
-    const s3Service = require('../../utils/s3.service');
+    const s3Service = require('../../core/storage/s3');
     for (const services of byDomain.values()) {
       for (const svc of services) {
         svc.imageUrl = (await s3Service.signMedia(svc.imageUrl)) || '';

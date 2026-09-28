@@ -20,7 +20,7 @@ const { connectMongo } = require('../config/mongo');
 const { RepairBooking } = require('../modules/repair/models/booking.model');
 const eventsService = require('../modules/repair/services/events.service');
 const slaService = require('../modules/repair/services/sla.service');
-const logger = require('../utils/logger');
+const logger = require('../core/logger');
 
 /** How far past due before operations is told about a stage that is not acceptance. */
 const ESCALATE_AFTER_MIN = 10;

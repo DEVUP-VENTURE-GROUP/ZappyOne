@@ -4,10 +4,10 @@
  */
 require('dotenv').config();
 const { connectMongo } = require('../src/config/mongo');
-const Worker = require('../src/models/Worker');
-const Order = require('../src/models/Order');
-const User = require('../src/models/User');
-const logger = require('../src/utils/logger');
+const Worker = require('../src/modules/worker/worker.model');
+const Order = require('../src/modules/order/order.model');
+const User = require('../src/modules/user/user.model');
+const logger = require('../src/core/logger');
 
 (async () => {
   await connectMongo();

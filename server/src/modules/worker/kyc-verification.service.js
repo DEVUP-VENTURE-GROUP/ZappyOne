@@ -1,5 +1,5 @@
 const config = require('../../config');
-const logger = require('../../utils/logger');
+const logger = require('../../core/logger');
 
 /**
  * 3rd-party KYC verification (Surepass-style REST provider).

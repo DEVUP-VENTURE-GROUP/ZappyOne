@@ -15,7 +15,7 @@
 
 const CallSession = require('./call-session.model');
 const Order = require('../order/order.model');
-const logger = require('../../utils/logger');
+const logger = require('../../core/logger');
 
 const POOL = (process.env.CALL_POOL_NUMBERS || '+911800123001,+911800123002,+911800123003,+911800123004')
   .split(',').map((s) => s.trim()).filter(Boolean);

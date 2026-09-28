@@ -1,7 +1,7 @@
 const Order = require('../../order/order.model');
 const Worker = require('../../worker/worker.model');
 const auditService = require('../audit.service');
-const logger = require('../../../utils/logger');
+const logger = require('../../../core/logger');
 
 // Allowed admin-forced status transitions. `any` means from ANY current status.
 const FORCE_TRANSITIONS = {
@@ -288,7 +288,7 @@ async function reassignOrder(req, res, next) {
     }
 
     // Push notification to new worker — socket alone is silently dropped when app is backgrounded
-    const notificationService = require('../../../modules/notification/notification.service');
+    const notificationService = require('../../notification/notification.service');
     const svcLabel = order.service.replace(/_/g, ' ');
     const totalRs  = order.pricing?.total != null ? `₹${Math.round(order.pricing.total / 100)}` : '';
     notificationService.notify({

@@ -8,7 +8,7 @@
  */
 require('dotenv').config();
 const { connectMongo } = require('../src/config/mongo');
-const Admin = require('../src/models/Admin');
+const Admin = require('../src/modules/admin/admin.model');
 const { hashPassword } = require('../src/modules/auth/auth.service');
 
 (async () => {

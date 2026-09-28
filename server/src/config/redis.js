@@ -1,6 +1,6 @@
 const IORedis = require('ioredis');
 const config = require('./index');
-const logger = require('../utils/logger');
+const logger = require('../core/logger');
 
 // Main client for app operations (caching, GEO, pub/sub).
 const redis = new IORedis(config.redis.url, {

@@ -9,7 +9,7 @@ const EventBooking  = require('./event-booking.model');
 const EventPartner  = require('./event-partner.model');
 const PaymentIntent = require('../payment/payment-intent.model');
 const cashfree      = require('../payment/cashfree.client');
-const logger        = require('../../utils/logger');
+const logger        = require('../../core/logger');
 
 async function resolveUserContact(userId) {
   try {

@@ -4,7 +4,7 @@
 const Warranty = require('./warranty.model');
 const Order    = require('../order/order.model');
 const { redis } = require('../../config/redis');
-const logger   = require('../../utils/logger');
+const logger   = require('../../core/logger');
 
 async function issueWarranty({ order, warrantyDays }) {
   if (!warrantyDays || warrantyDays <= 0) return null;

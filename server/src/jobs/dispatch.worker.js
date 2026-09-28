@@ -31,7 +31,7 @@ const Order = require('../modules/order/order.model');
 const WorkerModel = require('../modules/worker/worker.model');
 const geoService = require('../modules/worker/geo.service');
 const config = require('../config');
-const logger = require('../utils/logger');
+const logger = require('../core/logger');
 const { QUEUES, notificationsQueue, dispatchQueue, emergencyDispatchQueue } = require('./index');
 const pricingService = require('../modules/pricing/pricing.service');
 
@@ -1281,21 +1281,9 @@ async function markOrderFailed(order, reason) {
   // Cash orders need no refund (money never reached platform).
   if (order.payment?.status === 'paid' && order.payment?.method !== 'cash') {
     try {
-      const razorpay = require('../modules/payment/razorpay.client');
-      const PaymentIntent = require('../modules/payment/payment-intent.model');
-      const intent = await PaymentIntent.findOne({
-        orderId: order._id,
-        status: 'captured',
-      }).lean();
-      if (intent?.razorpayPaymentId) {
-        const refund = await razorpay.refundPayment(intent.razorpayPaymentId, intent.amountPaise);
-        // Mark intent refunded
-        await PaymentIntent.updateOne(
-          { _id: intent._id },
-          { $set: { status: 'refunded', refundId: refund.id, refundedAt: new Date() } }
-        );
-        logger.info({ orderId: order._id, refundId: refund.id }, '[DISPATCH] Auto-refund issued on order failure');
-      }
+      const result = await require('../modules/payment/payment.service')
+        .refundOrderPayment({ orderId: order._id, reason: `Order failed: ${reason}` });
+      logger.info({ orderId: order._id, result }, '[DISPATCH] Auto-refund on order failure');
     } catch (refundErr) {
       // Non-blocking — admin can manually refund if this fails.
       logger.error({ err: refundErr.message, orderId: order._id }, '[DISPATCH] Auto-refund failed — manual action required');

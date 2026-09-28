@@ -7,7 +7,7 @@
  */
 
 const Transaction = require('../payment/transaction.model');
-const logger = require('../../utils/logger');
+const logger = require('../../core/logger');
 
 /**
  * Write a refund row when an order is cancelled after payment was captured.

@@ -6,8 +6,8 @@
  */
 require('dotenv').config();
 const { connectMongo } = require('../src/config/mongo');
-const Plan = require('../src/models/Plan');
-const PricingConfig = require('../src/models/PricingConfig');
+const Plan = require('../src/modules/subscription/plan.model');
+const PricingConfig = require('../src/modules/pricing/pricing-config.model');
 
 const PLANS = [
   {

@@ -4,23 +4,22 @@
  * Worker withdrawal lifecycle with proper money-reservation semantics.
  *
  * State machine:
- *   requested → (admin approve)  → approved → processing → paid   [success]
- *                                                       → failed  [retry possible]
+ *   requested → (admin approve)  → approved → (admin transfers, records UTR) → paid
  *             → (admin reject)   → rejected
  *
  * Wallet interaction:
  *   1. On APPROVE we DEBIT the wallet immediately (reserves the money).
  *      Idempotency key: `payout:debit:<payoutId>`.
- *   2. If Razorpay Payouts API succeeds, status → paid. Wallet stays debited.
- *   3. If Razorpay fails, we CREDIT the wallet back (reversal row) and mark
- *      the payout failed. Idempotency key: `payout:reversal:<payoutId>`.
+ *   2. Marked paid only with the transfer reference. Wallet stays debited.
+ *   3. A payout that cannot be completed is reversed: the wallet is credited
+ *      back. Idempotency key: `payout:reversal:<payoutId>`.
  *
  * Why debit on approve (not on request)? Two reasons:
  *   - A worker shouldn't be able to request 3 payouts of their full balance
  *     and have all 3 processed.
  *   - Reservation semantics match how banks and wallets work in the real world.
  *
- * Minimum payout: ₹50 (to keep Razorpay fees sane)
+ * Minimum payout: ₹50 (keeps transfer fees sane)
  * Maximum single payout: ₹25,000 (anti-fraud; larger amounts need multiple requests)
  * ----------------------------------------------------------------------------
  */
@@ -29,9 +28,7 @@ const Payout = require('./payout.model');
 const Transaction = require('../payment/transaction.model');
 const walletService = require('../wallet/wallet.service');
 const notificationService = require('../notification/notification.service');
-const razorpay = require('../payment/razorpay.client');
-const logger = require('../../utils/logger');
-const config = require('../../config');
+const logger = require('../../core/logger');
 
 const MIN_PAYOUT_PAISE = 5000;     // ₹50
 const MAX_PAYOUT_PAISE = 2500000;  // ₹25,000
@@ -113,8 +110,8 @@ async function requestPayout({ workerId, amountPaise, destination }) {
 }
 
 /**
- * Admin approves the payout. DEBITS the wallet (reserves) and kicks off
- * Razorpay Payouts. On success → paid. On failure → reverses the debit.
+ * Admin approves the payout: DEBITS the wallet (reserves the money) and
+ * queues it for transfer.
  */
 async function approvePayout({ payoutId, adminId, autoProcess = true }) {
   const payout = await Payout.findById(payoutId);
@@ -149,11 +146,9 @@ async function approvePayout({ payoutId, adminId, autoProcess = true }) {
 }
 
 /**
- * Razorpay Payouts execution. Called by approve() when autoProcess=true,
- * or by the admin manually.
- *
- * If config.razorpay.keyId isn't set (dev), we mock the success path so the
- * rest of the system can be tested. In production this calls the real API.
+ * Move an approved payout on. Payouts are transferred by hand until Cashfree
+ * Payouts is connected: nothing is sent or claimed here, the payout waits for
+ * an admin to transfer it and record the reference (markPaidManually).
  */
 async function processPayout({ payoutId }) {
   const payout = await Payout.findById(payoutId);
@@ -161,45 +156,12 @@ async function processPayout({ payoutId }) {
   if (payout.status !== 'approved') {
     throw Object.assign(new Error(`Cannot process from ${payout.status}`), { status: 409 });
   }
-
-  payout.status = 'processing';
-  payout.events.push({ event: 'processing_started', at: new Date() });
-  await payout.save();
-
-  try {
-    let rzpPayoutId;
-    if (config.razorpay.keyId && payout.method !== 'manual' && razorpay.createPayout) {
-      const resp = await razorpay.createPayout({
-        amountPaise: payout.amountPaise,
-        destination: payout.destination,
-        referenceId: `payout_${payout._id}`,
-      });
-      rzpPayoutId = resp.id;
-    } else {
-      // Manual / dev mock
-      rzpPayoutId = `manual_${Date.now()}`;
-    }
-
-    payout.razorpayPayoutId = rzpPayoutId;
-    payout.status = 'paid';
-    payout.processedAt = new Date();
-    payout.events.push({ event: 'paid', at: new Date(), meta: { rzpPayoutId } });
+  if (!payout.manualTransferRequired) {
+    payout.manualTransferRequired = true;
+    payout.events.push({ event: 'awaiting_manual_transfer', at: new Date() });
     await payout.save();
-
-    await notificationService.notify({
-      recipient: { kind: 'worker', id: payout.workerId },
-      type: 'wallet_credited',
-      title: '✅ Payout sent',
-      body: `₹${payout.amountPaise / 100} has been transferred to your ${payout.method.toUpperCase()}`,
-      deepLink: '/wallet',
-    }).catch(() => {});
-
-    return payout;
-  } catch (err) {
-    logger.error({ err: err.message, payoutId: String(payout._id) }, 'Payout processing failed');
-    await reversePayout({ payout, reason: err.message || 'processing_failed' });
-    throw err;
   }
+  return payout;
 }
 
 /**
@@ -258,6 +220,33 @@ async function rejectPayout({ payoutId, adminId, reason }) {
   return payout;
 }
 
+/** An admin transferred the money by hand; the reference is the proof the worker can quote. */
+async function markPaidManually({ payoutId, adminId, reference }) {
+  const ref = String(reference || '').trim();
+  if (ref.length < 6) throw Object.assign(new Error('Enter the bank/UPI transfer reference (UTR)'), { status: 400, code: 'REFERENCE_REQUIRED' });
+  const payout = await Payout.findOneAndUpdate(
+    { _id: payoutId, status: 'approved', manualTransferRequired: true },
+    {
+      $set: {
+        status: 'paid', transferReference: ref, gatewayPayoutId: `manual:${ref}`,
+        paidBy: adminId, processedAt: new Date(), manualTransferRequired: false,
+      },
+      $push: { events: { event: 'paid_manually', at: new Date(), meta: { adminId, reference: ref } } },
+    },
+    { new: true },
+  );
+  if (!payout) throw Object.assign(new Error('This payout is not waiting for a manual transfer'), { status: 409, code: 'NOT_AWAITING_TRANSFER' });
+
+  await notificationService.notify({
+    recipient: { kind: 'worker', id: payout.workerId },
+    type: 'wallet_credited',
+    title: 'Payout sent',
+    body: `₹${payout.amountPaise / 100} was transferred to your ${payout.method.toUpperCase()}. Reference: ${ref}`,
+    deepLink: '/wallet',
+  }).catch(() => {});
+  return payout;
+}
+
 async function listForWorker(workerId, { page = 1, limit = 20 } = {}) {
   const [items, total] = await Promise.all([
     Payout.find({ workerId }).sort({ createdAt: -1 })
@@ -273,6 +262,7 @@ module.exports = {
   processPayout,
   rejectPayout,
   reversePayout,
+  markPaidManually,
   listForWorker,
   MIN_PAYOUT_PAISE,
   MAX_PAYOUT_PAISE,

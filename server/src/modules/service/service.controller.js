@@ -8,7 +8,8 @@ const DemandEvent    = require('./demand-event.model');
 const Order          = require('../order/order.model');
 const { redis }      = require('../../config/redis');
 const invoiceService = require('./invoice.service');
-const { escapeRegex } = require('../../utils/text');
+const { escapeRegex } = require('../../core/text');
+const { haversineKmPoints: haversineKm } = require('../../core/geo/distance');
 
 // Public list endpoints are unauthenticated — cap them so one call can't pull the
 // entire (post-seed, thousands-of-rows) model/variant tables.
@@ -158,14 +159,6 @@ async function scanDemandCells(lat, lng, radiusKm) {
   return cells;
 }
 
-function haversineKm(a, b) {
-  const R = 6371;
-  const toRad = (d) => (d * Math.PI) / 180;
-  const dLat = toRad(b.lat - a.lat);
-  const dLng = toRad(b.lng - a.lng);
-  const s = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(dLng / 2) ** 2;
-  return 2 * R * Math.asin(Math.sqrt(s));
-}
 
 /* Admin Controllers */
 

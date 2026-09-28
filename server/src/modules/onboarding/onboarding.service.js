@@ -1,3 +1,4 @@
+const { httpError } = require('../../core/errors');
 const {
   ServiceDomain, ServiceLine, KycRequirementSet, ProviderEnrolment, ServiceLineRequest,
 } = require('./onboarding.model');
@@ -19,9 +20,6 @@ const {
  *   reviewer's queue.
  */
 
-function httpError(message, status, code, extra = {}) {
-  return Object.assign(new Error(message), { status, code, ...extra });
-}
 
 /* Catalog reads */
 
@@ -274,7 +272,7 @@ async function decide({ enrolmentId, decision, note = '', adminId }) {
     if (coordinates?.length === 2) {
       const { provisionCoverage } = require('./auto-provision.service');
       await provisionCoverage({ shopId: enrolment.shopId, coordinates }).catch((err) => {
-        require('../../utils/logger').warn({ err: err.message }, '[onboarding] auto-provision on approval failed');
+        require('../../core/logger').warn({ err: err.message }, '[onboarding] auto-provision on approval failed');
       });
     }
   }

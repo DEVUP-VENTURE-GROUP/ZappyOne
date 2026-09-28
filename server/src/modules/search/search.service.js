@@ -13,7 +13,7 @@ const { SearchEvent } = require('../telemetry/telemetry.model');
 const geoService = require('../worker/geo.service');
 const Worker = require('../worker/worker.model');
 const Order = require('../order/order.model');
-const logger = require('../../utils/logger');
+const logger = require('../../core/logger');
 
 // Popularity (search demand, last 7d) — cached in Redis, category → 0..1
 const POP_KEY = 'search:popularity';

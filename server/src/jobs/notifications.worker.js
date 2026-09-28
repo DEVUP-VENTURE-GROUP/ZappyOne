@@ -25,7 +25,7 @@ const UserModel = require('../modules/user/user.model');
 const Notification = require('../modules/notification/notification.model');
 const Order = require('../modules/order/order.model');
 const config = require('../config');
-const logger = require('../utils/logger');
+const logger = require('../core/logger');
 const { QUEUES } = require('./index');
 
 const SMS_URL = 'https://2factor.in/API/V1';

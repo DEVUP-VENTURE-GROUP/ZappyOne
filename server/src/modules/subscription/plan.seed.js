@@ -4,7 +4,7 @@
  */
 
 const Plan = require('./plan.model');
-const logger = require('../../utils/logger');
+const logger = require('../../core/logger');
 
 const DEFAULT_PLANS = [
   // User plans

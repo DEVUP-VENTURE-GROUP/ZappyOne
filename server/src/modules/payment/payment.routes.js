@@ -6,7 +6,7 @@ const cashfree = require('./cashfree.client');
 const { authenticate } = require('../../middlewares/auth');
 const { validate } = require('../../middlewares/validate');
 const { authLimiter } = require('../../middlewares/rateLimit');
-const logger = require('../../utils/logger');
+const logger = require('../../core/logger');
 
 const payables = require('./payables');
 

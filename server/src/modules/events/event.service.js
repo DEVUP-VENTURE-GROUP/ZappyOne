@@ -5,9 +5,9 @@ const EventPartner = require('./event-partner.model');
 const EventBooking = require('./event-booking.model');
 const EventSaved   = require('./event-saved.model');
 const { redis }    = require('../../config/redis');
-const logger       = require('../../utils/logger');
+const logger       = require('../../core/logger');
 
-const s3Service = require('../../utils/s3.service');
+const s3Service = require('../../core/storage/s3');
 
 const CFG_KEY = 'events:config';
 const CFG_TTL = 60;

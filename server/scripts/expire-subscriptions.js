@@ -10,8 +10,8 @@
  */
 require('dotenv').config();
 const { connectMongo } = require('../src/config/mongo');
-const subscriptionService = require('../src/services/subscription.service');
-const logger = require('../src/utils/logger');
+const subscriptionService = require('../src/modules/subscription/subscription.service');
+const logger = require('../src/core/logger');
 
 async function once() {
   const n = await subscriptionService.expireOverdue();

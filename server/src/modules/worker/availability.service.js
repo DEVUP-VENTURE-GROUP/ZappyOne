@@ -15,7 +15,7 @@
 
 const Availability = require('./availability.model');
 const { redis } = require('../../config/redis');
-const logger = require('../../utils/logger');
+const logger = require('../../core/logger');
 
 /* Peak hours (IST) — drives bonus multiplier */
 const PEAK_HOURS = new Set([7, 8, 9, 17, 18, 19, 20, 21]);

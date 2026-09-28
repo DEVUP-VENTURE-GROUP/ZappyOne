@@ -16,7 +16,7 @@ const { PetPricingRule, PetProviderCapability } = require('./models/config.model
 const pricingService = require('./services/pricing.service');
 const matchingService = require('./services/matching.service');
 const bookingService = require('./services/booking.service');
-const s3Service = require('../../utils/s3.service');
+const s3Service = require('../../core/storage/s3');
 
 function mayView(booking, auth) {
   const id = String(auth.sub);

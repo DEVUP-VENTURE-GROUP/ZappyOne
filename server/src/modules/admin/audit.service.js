@@ -1,5 +1,5 @@
 const AuditLog = require('./audit-log.model');
-const logger = require('../../utils/logger');
+const logger = require('../../core/logger');
 
 async function log({ actor, action, target, before, after, ip, userAgent }) {
   try {

@@ -1,7 +1,7 @@
 require('dotenv').config({ path: require('path').resolve(__dirname, '../../../.env') });
 const Admin = require('./admin.model');
 const { hashPassword } = require('../auth/auth.service');
-const logger = require('../../utils/logger');
+const logger = require('../../core/logger');
 
 /**
  * Idempotent — runs on every startup, creates the default admin only if no

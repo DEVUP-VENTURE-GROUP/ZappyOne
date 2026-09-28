@@ -20,7 +20,7 @@
 const Notification = require('./notification.model');
 const { redis } = require('../../config/redis');
 const { notificationsQueue } = require('../../jobs');
-const logger = require('../../utils/logger');
+const logger = require('../../core/logger');
 
 // Types that warrant SMS (cost money, only critical ones)
 const SMS_TYPES = new Set([

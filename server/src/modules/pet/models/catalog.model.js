@@ -20,7 +20,7 @@
 
 const mongoose = require('mongoose');
 const { SPECIES, PET_SIZES } = require('../../service/pet-passport.model');
-const { pointField, stripEmptyPoints } = require('../../../utils/geo-point');
+const { pointField, stripEmptyPoints } = require('../../../core/geo/point');
 
 /** The seven customer-facing categories (§2). Fixed at launch by product. */
 const CATEGORY_CODES = [

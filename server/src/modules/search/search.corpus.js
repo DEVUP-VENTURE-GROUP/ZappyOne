@@ -9,7 +9,7 @@
  */
 const ServiceCatalog = require('../service/service-catalog.model');
 const { SYNONYMS, INTENTS } = require('./search.engine');
-const logger = require('../../utils/logger');
+const logger = require('../../core/logger');
 
 const REFRESH_MS = 60_000;
 

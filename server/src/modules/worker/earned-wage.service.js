@@ -14,7 +14,7 @@
 
 const Order       = require('../order/order.model');
 const { redis }   = require('../../config/redis');
-const logger      = require('../../utils/logger');
+const logger      = require('../../core/logger');
 
 const ADVANCE_RATE   = 0.80;   // 80% of today's earnings available
 const FEE_RATE       = 0.02;   // 2% advance fee

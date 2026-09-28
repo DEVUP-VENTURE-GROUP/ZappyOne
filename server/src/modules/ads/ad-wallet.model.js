@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-// Advertiser credit wallet — topped up via Razorpay, spent per ad event.
+// Advertiser credit wallet — topped up via Cashfree, spent per ad event.
 const adWalletSchema = new mongoose.Schema({
   advertiserId:   { type: mongoose.Schema.Types.ObjectId, required: true, unique: true },
   advertiserKind: { type: String, enum: ['event_partner', 'admin', 'external'], default: 'event_partner' },
@@ -17,7 +17,7 @@ const adWalletSchema = new mongoose.Schema({
     amountPaise: Number,
     balancePaise:Number,
     adId:        { type: mongoose.Schema.Types.ObjectId },
-    ref:         String, // Razorpay order ID for topups
+    ref:         String, // Cashfree order ID for topups
     note:        String,
     at:          { type: Date, default: Date.now },
   }],

@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const config   = require('./index');
-const logger   = require('../utils/logger');
+const logger   = require('../core/logger');
 
 // Track connection state so health checks and request handlers can bail fast.
 let _isConnected = false;

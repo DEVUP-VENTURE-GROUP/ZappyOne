@@ -1,6 +1,7 @@
 const Worker = require('./worker.model');
 const workerService = require('./worker.service');
 const orderService = require('../order/order.service');
+const { haversineKm } = require('../../core/geo/distance');
 
 async function getMe(req, res, next) {
   try {
@@ -38,7 +39,7 @@ async function updateLocation(req, res, next) {
     // Location update is best-effort — Redis outages should not block the worker app.
     // Return 200 so the client doesn't retry-spam; log the failure server-side.
     if (err?.name === 'ReplyError' || err?.code === 'ECONNREFUSED' || err?.code === 'ENOTFOUND') {
-      const logger = require('../../utils/logger');
+      const logger = require('../../core/logger');
       logger.warn({ workerId: req.auth.sub, err: err.message }, '[LOCATION] Redis unavailable — location update skipped');
       return res.json({ ok: true, degraded: true });
     }
@@ -73,14 +74,6 @@ async function getNearbyWorkers(req, res, next) {
   } catch (err) { next(err); }
 }
 
-function haversineKm(lat1, lng1, lat2, lng2) {
-  const R = 6371;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLng = (lng2 - lng1) * Math.PI / 180;
-  const a = Math.sin(dLat / 2) ** 2
-    + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
 
 /* Known zones — used as demand-hotspot seeds.
    In production, replace with a database of service areas. */
@@ -104,7 +97,7 @@ async function getDemandZones(req, res, next) {
     }
 
     const { redis } = require('../../config/redis');
-    const logger = require('../../utils/logger');
+    const logger = require('../../core/logger');
 
     // Positioning-bonus config (read once, not per zone).
     const _zoneCfg = await require('../pricing/pricing.service')
@@ -524,7 +517,7 @@ async function streamAvatar(req, res, next) {
     const worker = await Worker.findById(req.auth.sub).select('profilePhotoKey kyc').lean();
     const key = worker?.profilePhotoKey ?? worker?.kyc?.selfieUrl;
     if (!key) return res.status(404).json({ error: 'No profile photo set' });
-    const s3Service = require('../../utils/s3.service');
+    const s3Service = require('../../core/storage/s3');
     await s3Service.streamToResponse(key, res);
   } catch (err) {
     if (err?.name === 'NoSuchKey') return res.status(404).json({ error: 'Photo not found' });
@@ -615,7 +608,7 @@ async function blockCustomer(req, res, next) {
     const uid = new mongoose.Types.ObjectId(userId);
     await Worker.updateOne({ _id: req.auth.sub }, { $addToSet: { 'trust.blockedFromUserIds': uid } });
     // Log the block with context for admin review
-    const logger = require('../../utils/logger');
+    const logger = require('../../core/logger');
     logger.info({ workerId: req.auth.sub, userId, orderId, reason }, '[WORKER] Customer blocked by worker — pending admin review');
     res.json({ ok: true });
   } catch (err) { next(err); }

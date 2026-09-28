@@ -153,6 +153,8 @@ describe('vertical isolation', () => {
   });
 
   it('still refuses a duplicate code WITHIN one vertical', async () => {
+    // The unique index builds in the background; under a busy parallel run it may not exist yet.
+    await ProblemCategory.syncIndexes();
     await expect(
       ProblemCategory.create({ code: 'display', name: 'Duplicate', vertical: 'laptop' }),
     ).rejects.toThrow(/duplicate key/i);

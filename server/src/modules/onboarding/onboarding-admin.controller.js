@@ -1,7 +1,7 @@
 const {
   ServiceDomain, ServiceLine, KycRequirementSet, ProviderEnrolment, ServiceLineRequest,
 } = require('./onboarding.model');
-const { getViewUrl } = require('../../utils/s3.service');
+const { getViewUrl } = require('../../core/storage/s3');
 const service = require('./onboarding.service');
 const Shop = require('../shop/shop.model');
 const Worker = require('../worker/worker.model');
@@ -417,7 +417,7 @@ const lineRequests = {
  */
 async function overview(req, res, next) {
   try {
-    const { signDocsMedia } = require('../../utils/s3.service');
+    const { signDocsMedia } = require('../../core/storage/s3');
     const { ProductType } = require('../repair/models/catalog.model');
     const [domainRows, lineRows, counts, typedVerticals] = await Promise.all([
       ServiceDomain.find({ isArchived: { $ne: true } }).sort({ displayOrder: 1, name: 1 }).lean(),

@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const Order = require('../../order/order.model');
 const Transaction = require('../../payment/transaction.model');
-const logger = require('../../../utils/logger');
+const logger = require('../../../core/logger');
 
 const DAY = 24 * 60 * 60 * 1000;
 

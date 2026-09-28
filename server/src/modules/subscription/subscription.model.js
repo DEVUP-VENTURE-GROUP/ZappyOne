@@ -25,7 +25,7 @@ const subscriptionSchema = new mongoose.Schema(
 
     // Last successful payment that activated/renewed this subscription
     paymentIntentId: { type: mongoose.Schema.Types.ObjectId, ref: 'PaymentIntent' },
-    razorpayPaymentId: String,
+    paymentId: String,
 
     // Cached effects snapshot (locked at activation so plan changes don't
     // retroactively alter what an existing subscriber gets)

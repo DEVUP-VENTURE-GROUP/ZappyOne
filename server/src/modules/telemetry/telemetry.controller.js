@@ -1,7 +1,7 @@
 const { VisitorSession, SearchEvent } = require('./telemetry.model');
 const { resolveGeo, resolveGeoFromIp, parseUA, normaliseReferrer } = require('./telemetry.geo');
 const { redis } = require('../../config/redis');
-const logger = require('../../utils/logger');
+const logger = require('../../core/logger');
 
 const ONLINE_KEY = 'viz:online';          // ZSET member=sessionId score=lastSeenMs
 const ONLINE_WINDOW_MS = 60_000;          // "active right now" = seen in last 60s

@@ -1,5 +1,5 @@
 const { redis } = require('../../../config/redis');
-const logger = require('../../../utils/logger');
+const logger = require('../../../core/logger');
 
 /**
  * Booking events: notifications + real-time fan-out (§24, §43).

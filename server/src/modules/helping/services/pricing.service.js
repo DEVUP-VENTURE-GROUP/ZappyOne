@@ -16,11 +16,9 @@
  */
 
 const { HelpingConfig } = require('../models/config.model');
-const { kmBetween } = require('../../../utils/distance');
+const { kmBetween } = require('../../../core/geo/distance');
+const { httpError } = require('../../../core/errors');
 
-function httpError(message, status, code, extra = {}) {
-  return Object.assign(new Error(message), { status, code, ...extra });
-}
 
 const configCache = new Map();
 const CACHE_MS = 30000;

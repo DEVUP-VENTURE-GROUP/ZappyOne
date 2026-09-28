@@ -15,7 +15,7 @@ const { Worker: BullWorker } = require('bullmq');
 const { createBullConnection } = require('../config/redis');
 const { connectMongo } = require('../config/mongo');
 const Order = require('../modules/order/order.model');
-const logger = require('../utils/logger');
+const logger = require('../core/logger');
 
 async function processDlqJob(job) {
   const { orderId, failedReason } = job.data;

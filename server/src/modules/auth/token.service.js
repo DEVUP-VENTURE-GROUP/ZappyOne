@@ -21,7 +21,7 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const config = require('../../config');
 const { redis } = require('../../config/redis');
-const logger = require('../../utils/logger');
+const logger = require('../../core/logger');
 
 const AT_EXPIRES = '15m';
 const RT_EXPIRES_SEC = 60 * 60 * 24 * 30; // 30 days

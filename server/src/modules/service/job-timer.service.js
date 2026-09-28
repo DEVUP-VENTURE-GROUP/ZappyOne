@@ -8,7 +8,7 @@
  * Urban Company hourly pricing is fixed upfront, not tracked live.
  */
 const { redis } = require('../../config/redis');
-const logger    = require('../../utils/logger');
+const logger    = require('../../core/logger');
 
 const TIMER_KEY    = (orderId) => `job_timer:${orderId}`;
 const TIMER_TTL    = 86400 * 2; // 2 days

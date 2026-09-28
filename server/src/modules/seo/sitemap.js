@@ -49,7 +49,7 @@ async function generateSitemap(redis) {
 
   // Dynamic: event themes from MongoDB
   try {
-    const EventTheme = require('../../modules/events/event-theme.model');
+    const EventTheme = require('../events/event-theme.model');
     const themes = await EventTheme.find({ status: { $in: ['approved', 'featured'] } })
       .select('_id updatedAt').lean();
     for (const t of themes) {

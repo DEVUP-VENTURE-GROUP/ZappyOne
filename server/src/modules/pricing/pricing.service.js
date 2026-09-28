@@ -22,7 +22,7 @@ const { redis } = require('../../config/redis');
 const { getDistanceAndEta } = require('../worker/maps.service');
 const subscriptionService = require('../subscription/subscription.service');
 const PricingConfig = require('./pricing-config.model');
-const logger = require('../../utils/logger');
+const logger = require('../../core/logger');
 const verticalConfigService = require('../service/vertical-config.service');
 
 // Vertical routing — maps service codes to pricing engines
@@ -527,7 +527,7 @@ async function calculateMobilePrice({ service, priority, deviceBrand, deviceMode
     //    first, then a hyphen-token-anchored match built from an ESCAPED string.
     let dbVariant = null;
     if (cleanModel) {
-      const { escapeRegex, slug } = require('../../utils/text');
+      const { escapeRegex, slug } = require('../../core/text');
       const modelSlug = slug(cleanModel);
       if (modelSlug) {
         dbVariant = await ServiceVariant.findOne({

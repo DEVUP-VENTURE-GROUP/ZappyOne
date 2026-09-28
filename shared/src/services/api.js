@@ -679,7 +679,7 @@ export const api = createApi({
       query: () => adminApiPath('/payments/reconciliation-queue'),
     }),
     adminReconcilePayment: b.mutation({
-      query: (razorpayOrderId) => ({ url: adminApiPath(`/payments/${razorpayOrderId}/reconcile`), method: 'POST' }),
+      query: (cfOrderId) => ({ url: adminApiPath(`/payments/${cfOrderId}/reconcile`), method: 'POST' }),
     }),
     // Business Intelligence (scenarios 81-85)
     adminServicePnL: b.query({
@@ -793,6 +793,10 @@ export const api = createApi({
     }),
     adminProcessPayout: b.mutation({
       query: (id) => ({ url: adminApiPath(`/payouts/${id}/process`), method: 'POST' }),
+      invalidatesTags: ['Payouts'],
+    }),
+    adminMarkPayoutPaid: b.mutation({
+      query: ({ id, reference }) => ({ url: adminApiPath(`/payouts/${id}/mark-paid`), method: 'POST', body: { reference } }),
       invalidatesTags: ['Payouts'],
     }),
     adminGetIncentives: b.query({
@@ -2658,6 +2662,7 @@ export const {
   useAdminApprovePayoutMutation,
   useAdminRejectPayoutMutation,
   useAdminProcessPayoutMutation,
+  useAdminMarkPayoutPaidMutation,
   useAdminGetIncentivesQuery,
   useAdminSetMilestonesMutation,
   useAdminRatingSweepMutation,

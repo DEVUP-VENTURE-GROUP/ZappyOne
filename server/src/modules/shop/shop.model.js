@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
-const { istParts } = require('../../utils/ist');
-const { pointField, stripEmptyPoints } = require('../../utils/geo-point');
+const { istParts } = require('../../core/time/ist');
+const { pointField, stripEmptyPoints } = require('../../core/geo/point');
 
 /**
  * A physical, verified local business (phone repair shop, laptop repair shop,

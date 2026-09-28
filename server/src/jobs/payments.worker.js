@@ -3,11 +3,10 @@
  * -------------------------------------------------------------------------
  * Handles:
  *   'refund'   — Auto-refund when dispatch fails (from DLQ worker) or admin
- *                initiates a programmatic refund. Calls Razorpay refund API
- *                and credits user wallet.
- *   'settle'   — Future: deferred settlement for marketplace payouts.
+ *                initiates a programmatic refund, through Cashfree to the
+ *                customer's original payment method.
  *
- * Idempotent: safe to retry on failure; Razorpay refund uses idempotency key.
+ * Idempotent: the refund id is derived from the payment, so a retry never refunds twice.
  * -------------------------------------------------------------------------
  */
 
@@ -16,7 +15,7 @@ const { Worker: BullWorker } = require('bullmq');
 const { createBullConnection }  = require('../config/redis');
 const { connectMongo }          = require('../config/mongo');
 const Order                     = require('../modules/order/order.model');
-const logger                    = require('../utils/logger');
+const logger                    = require('../core/logger');
 
 async function processPaymentsJob(job) {
   const { name, data } = job;
@@ -48,60 +47,16 @@ async function handleRefund({ orderId, userId, amountPaise, reason }) {
     return { ok: true, method: 'cash_no_gateway' };
   }
 
-  // Online payment: call Razorpay
-  const PaymentIntent = require('../modules/payment/payment-intent.model');
-  const walletService = require('../modules/wallet/wallet.service');
-  const Transaction   = require('../modules/payment/transaction.model');
-
-  const intent = await PaymentIntent.findOne({ orderId: order._id, status: 'captured' }).lean();
-  if (!intent) {
-    logger.warn({ orderId }, '[PAYMENTS] No captured intent found — cannot refund');
-    // Mark for manual reconciliation
+  // Online payment: Cashfree returns it to the original card/UPI. It used to be
+  // refunded to the source AND credited to the wallet — the customer got it twice.
+  const paymentService = require('../modules/payment/payment.service');
+  const result = await paymentService.refundOrderPayment({ orderId: order._id, amountPaise, reason: reason || 'order_failed' });
+  if (!result.refunded) {
+    logger.error({ orderId, reason: result.reason }, '[PAYMENTS] Refund not sent — flagged for ops');
     await Order.findByIdAndUpdate(orderId, { $set: { 'payment.reconciliationRequired': true } });
-    return { ok: false, reason: 'no_captured_intent' };
+    return { ok: false, reason: result.reason };
   }
-
-  const refundPaise = amountPaise
-    ? Math.min(Number(amountPaise), intent.amountPaise)
-    : intent.amountPaise;
-
-  const idempotencyKey = `auto_refund:${orderId}`;
-
-  let rzpRefund;
-  try {
-    const razorpay = require('../modules/payment/razorpay.client');
-    rzpRefund = await razorpay.refundPayment(intent.razorpayPaymentId, refundPaise);
-  } catch (err) {
-    logger.error({ orderId, err: err.message }, '[PAYMENTS] Razorpay refund API failed');
-    throw err; // Let BullMQ retry (exponential backoff configured on paymentsQueue)
-  }
-
-  // Credit user wallet
-  try {
-    await walletService.apply({
-      kind:           'user',
-      id:             userId || order.userId,
-      type:           'credit',
-      amountPaise:    refundPaise,
-      reason:         Transaction.REASONS.ADMIN_ADJUSTMENT_CREDIT,
-      idempotencyKey: `wallet:${idempotencyKey}`,
-      refs:           { orderId: order._id },
-      description:    `Auto-refund: ${reason || 'order_failed'}`,
-      metadata:       { rzpRefundId: rzpRefund.id, reason },
-    });
-  } catch (err) {
-    // Wallet credit failed after successful gateway refund — flag for reconciliation
-    logger.error({ orderId, rzpRefundId: rzpRefund.id, err: err.message }, '[PAYMENTS] Wallet credit failed after Razorpay refund — manual reconciliation required');
-    await Order.findByIdAndUpdate(orderId, { $set: { 'payment.reconciliationRequired': true } });
-    return { ok: false, reason: 'wallet_credit_failed', rzpRefundId: rzpRefund.id };
-  }
-
-  // Mark intent and order as refunded
-  await PaymentIntent.findByIdAndUpdate(intent._id, {
-    $set: { status: 'refunded' },
-    $push: { events: { event: 'auto_refund', payload: { refundId: rzpRefund.id, amountPaise: refundPaise, reason } } },
-  });
-  await Order.findByIdAndUpdate(orderId, { $set: { 'payment.status': 'refunded' } });
+  const refundPaise = result.amountPaise || amountPaise;
 
   // Notify user
   try {
@@ -111,14 +66,14 @@ async function handleRefund({ orderId, userId, amountPaise, reason }) {
       recipient: { kind: 'user', id: order.userId },
       type: 'refund_processed',
       title: '₹' + rupees + ' refunded',
-      body: 'Your refund has been processed and credited to your Zappy wallet.',
-      deepLink: '/wallet',
+      body: 'Your refund is on its way to the card or UPI you paid with. Banks usually take 5–7 working days.',
+      deepLink: `/orders/${orderId}`,
       data: { orderId: String(orderId), amountRupees: rupees },
     });
   } catch { /* notification failure is non-fatal */ }
 
-  logger.info({ orderId, refundPaise, rzpRefundId: rzpRefund.id }, '[PAYMENTS] Refund complete');
-  return { ok: true, rzpRefundId: rzpRefund.id, refundPaise };
+  logger.info({ orderId, refundPaise }, '[PAYMENTS] Refund requested');
+  return { ok: true, refundPaise };
 }
 
 async function start() {
