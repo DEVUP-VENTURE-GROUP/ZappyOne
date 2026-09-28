@@ -13,7 +13,8 @@
 const PRODUCTION_ORIGINS = [
   'https://zappyone.com',           // consumer (apex)
   'https://www.zappyone.com',       // consumer (www)
-  'https://rakshak.zappyone.com',   // worker app
+  'https://rakshak.zappyone.com',   // independent workers (rakshak/ app)
+  'https://servicepro.zappyone.com', // shop owners + shop workers (servicepro/ app)
   'https://events.zappyone.com',    // event partner portal
   'https://admin.zappyone.com',     // admin portal (admin/ app)
 ];

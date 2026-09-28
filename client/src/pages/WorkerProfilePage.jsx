@@ -6,7 +6,7 @@ import {
   Users, Car, Sparkles, Paintbrush2, Smartphone, Battery,
   Layers, Home, Bike, Fuel, AlertTriangle, Bolt,
 } from 'lucide-react';
-import { useGetOrderQuery, useGetWorkerPublicProfileQuery } from '../../services/api';
+import { useGetOrderQuery, useGetWorkerPublicProfileQuery } from '@shared/services/api';
 
 /* ─── Service icon map (mirrors WorkerDashboard) ─────────────── */
 const SERVICE_ICON_MAP = {

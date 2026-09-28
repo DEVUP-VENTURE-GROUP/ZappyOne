@@ -173,6 +173,14 @@ async function addWorkerToShop(shopId, { phone, name, skills }) {
         { status: 409, code: 'WORKER_ALREADY_AT_ANOTHER_SHOP' },
       );
     }
+    // Adding a number must not take over someone's independent account (and lock
+    // them out of Rakshak); moving an independent worker into a shop goes via support.
+    if (!worker.shopId) {
+      throw Object.assign(
+        new Error('This number already has its own ZappyOne worker account. Ask them to contact support to join your shop.'),
+        { status: 409, code: 'WORKER_IS_INDEPENDENT' },
+      );
+    }
     worker.shopId = shopId;
     if (Array.isArray(skills) && skills.length) worker.skills = [...new Set([...worker.skills, ...skills])];
     await worker.save();

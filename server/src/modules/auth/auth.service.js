@@ -403,12 +403,31 @@ async function loginUserWithOtp({ phone, otp, name }) {
 // Max distinct worker accounts allowed per device fingerprint in a 30-day window.
 const MAX_WORKERS_PER_DEVICE = 2; // Allow 2 (lost phone re-registration edge case)
 
-async function loginWorkerWithOtp({ phone, otp, name, skills, deviceId }) {
+/**
+ * A shop's workers sign in on servicepro and nowhere else; independents on Rakshak.
+ * Checked only after the OTP/password is proven, so it never reveals whether a
+ * number belongs to a shop. Other clients (mobile, legacy web) pass no portal.
+ */
+function assertWorkerPortal(worker, portal) {
+  if (portal === 'servicepro' && !worker?.shopId) {
+    throw Object.assign(new Error('This number has not been added by a shop yet. Ask your shop owner to add you.'), {
+      status: 403, code: 'NOT_A_SHOP_WORKER',
+    });
+  }
+  if (portal === 'rakshak' && worker?.shopId) {
+    throw Object.assign(new Error('You work with a shop on ZappyOne. Sign in at servicepro.zappyone.com.'), {
+      status: 403, code: 'SHOP_WORKER',
+    });
+  }
+}
+
+async function loginWorkerWithOtp({ phone, otp, name, skills, deviceId, portal = null }) {
   const ok = await verifyOtp(phone, otp);
   if (!ok) throw Object.assign(new Error('Invalid OTP'), { status: 401, code: 'OTP_INVALID' });
 
   let worker = await Worker.findOne({ phone });
   const isNewWorker = !worker;
+  assertWorkerPortal(worker, portal);
 
   if (isNewWorker) {
     /**
@@ -735,7 +754,7 @@ async function setWorkerCredentials({ workerId, username, password }) {
   return { ok: true, username: worker.username || null };
 }
 
-async function loginWorkerWithPassword({ identifier, password }) {
+async function loginWorkerWithPassword({ identifier, password, portal = null }) {
   const id = normId(identifier);
   if (!id || !password) {
     throw Object.assign(new Error('Enter your Worker ID / email / phone and password'), { status: 400, code: 'MISSING_CREDENTIALS' });
@@ -754,6 +773,7 @@ async function loginWorkerWithPassword({ identifier, password }) {
   const okPw = await comparePassword(password, worker.passwordHash);
   if (!okPw) { await bump(); throw Object.assign(new Error('Invalid credentials'), { status: 401, code: 'AUTH_INVALID' }); }
   if (worker.isBlocked) { throw Object.assign(new Error('Account is blocked'), { status: 403, code: 'ACCOUNT_BLOCKED' }); }
+  assertWorkerPortal(worker, portal);
 
   await redis.del(failKey);
   const tokens = await tokenService.issueTokenPair({ sub: worker._id.toString(), role: 'worker', phone: worker.phone });

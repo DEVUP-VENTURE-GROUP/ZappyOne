@@ -160,7 +160,11 @@ function HeroScene() {
   );
 }
 
-export default function WorkerLoginPage() {
+/**
+ * Shared by Rakshak (independent workers, may self sign-up) and servicepro
+ * (shop workers — only numbers a shop added; the server refuses the rest).
+ */
+export default function WorkerLoginPage({ allowSignup = true, portalLabel = 'Worker Portal', heading = 'Worker Login' }) {
   const OTP_LEN = 6;
   const [phone, setPhone] = useState(() => {
     try { return localStorage.getItem(PHONE_KEY) || ''; } catch { return ''; }
@@ -189,6 +193,7 @@ export default function WorkerLoginPage() {
   const otpRefs = useRef([]);
 
   const otp = otpDigits.join('');
+  const askName = allowSignup && isNewUser;
 
   // Auto-fill OTP from API (dev mode)
   useEffect(() => {
@@ -202,7 +207,7 @@ export default function WorkerLoginPage() {
 
   // Auto-submit for returning users
   useEffect(() => {
-    if (step === 'otp' && otp.length === OTP_LEN && !isNewUser) verify();
+    if (step === 'otp' && otp.length === OTP_LEN && !askName) verify();
   }, [otp]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleOtpChange(i, char) {
@@ -277,7 +282,7 @@ export default function WorkerLoginPage() {
 
       // A brand-new worker has nothing they are allowed to do yet, so send them
       // straight to picking a service rather than to an empty dashboard.
-      const next = loc.state?.from || (isNewUser ? '/provider/onboarding' : '/worker');
+      const next = loc.state?.from || (askName ? '/provider/onboarding' : '/worker');
       nav(next, { replace: true });
     } catch (err) {
       const detail = typeof err.data?.details?.[0] === 'string' ? err.data.details[0] : err.data?.error || 'Verification failed';
@@ -335,7 +340,7 @@ export default function WorkerLoginPage() {
                   <span className="text-lg lg:text-xl font-black text-slate-900 leading-none">Zappy</span>
                   <span className="text-[10px] font-black text-white bg-blue-600 px-2 py-[3px] rounded-md tracking-wide leading-none">WORKER</span>
                 </div>
-                <p className="text-[10px] lg:text-[10.5px] font-bold text-slate-400 uppercase tracking-[0.18em] mt-1">Worker Portal</p>
+                <p className="text-[10px] lg:text-[10.5px] font-bold text-slate-400 uppercase tracking-[0.18em] mt-1">{portalLabel}</p>
               </div>
             </div>
 
@@ -363,7 +368,7 @@ export default function WorkerLoginPage() {
         <section className="relative z-20 shrink-0 lg:flex-1 lg:w-[46%] flex items-stretch lg:items-center justify-center lg:px-10">
           <div className="w-full lg:max-w-md bg-white rounded-t-[34px] lg:rounded-[28px] shadow-[0_-10px_44px_rgba(15,23,42,0.10)] lg:shadow-[0_24px_70px_-24px_rgba(30,64,175,0.30)] lg:ring-1 lg:ring-slate-100 px-6 pt-6 pb-7 lg:p-9 -mt-8 lg:mt-0 max-h-[60vh] lg:max-h-none overflow-y-auto lg:overflow-visible">
 
-            <h2 className="text-[24px] lg:text-[26px] font-black tracking-tight text-slate-900">Worker Login</h2>
+            <h2 className="text-[24px] lg:text-[26px] font-black tracking-tight text-slate-900">{heading}</h2>
             <p className="text-[13.5px] lg:text-[14px] font-medium text-slate-400 mt-1 mb-4 lg:mb-5">Sign in to your worker dashboard</p>
 
             {/* OTP / Password method toggle — only on the entry step */}
@@ -587,7 +592,7 @@ export default function WorkerLoginPage() {
                     </button>
                   </div>
 
-                  {isNewUser && (
+                  {askName && (
                     <div className="space-y-5 mb-6 text-left">
                       <div>
                         <label className="block text-[11px] font-black uppercase tracking-[0.1em] text-slate-500 mb-2">

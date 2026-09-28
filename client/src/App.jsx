@@ -9,11 +9,11 @@ import useTelemetry from './hooks/useTelemetry';
 import { prefetchMainTabs, onIdle } from './lib/routePrefetch';
 import { prefetchServiceCatalog } from './hooks/useServiceCatalog';
 import { loadCategories } from './hooks/useCategories';
-import { getSubdomainRedirect, isExternalRedirect } from './config/hosts';
-import { RequireAuth } from './components/common/RequireAuth';
+import { getSubdomainRedirect, isExternalRedirect, SERVICEPRO_URL } from './config/hosts';
+import { RequireAuth } from '@shared/components/common/RequireAuth';
 import NotificationBanner from './components/common/NotificationBanner';
-import ConnectionBanner from './components/common/ConnectionBanner';
-import RouteProgress from './components/common/RouteProgress';
+import ConnectionBanner from '@shared/components/common/ConnectionBanner';
+import RouteProgress from '@shared/components/common/RouteProgress';
 import MainLayout from './components/layout/MainLayout';
 import ErrorBoundary from '@shared/components/common/ErrorBoundary';
 
@@ -47,7 +47,7 @@ const ReferralPage        = lazy(() => import('./pages/ReferralPage'));
 const DisputesPage        = lazy(() => import('./pages/DisputesPage'));
 const SupportPage         = lazy(() => import('./pages/SupportPage'));
 const PaymentMethodsPage  = lazy(() => import('./pages/PaymentMethodsPage'));
-const WorkerProfilePage     = lazy(() => import('@shared/provider/pages/WorkerProfilePage'));
+const WorkerProfilePage     = lazy(() => import('./pages/WorkerProfilePage'));
 const WorkerEditProfilePage        = lazy(() => import('@shared/provider/pages/WorkerEditProfilePage'));
 const WorkerNotificationsPage      = lazy(() => import('@shared/provider/pages/WorkerNotificationsPage'));
 const EventsHomePage               = lazy(() => import('./pages/events/EventsHomePage'));
@@ -60,12 +60,6 @@ const EventSavedThemesPage         = lazy(() => import('./pages/events/EventSave
 const PartnerLoginPage             = lazy(() => import('./pages/events/PartnerLoginPage'));
 const PartnerDashboard             = lazy(() => import('./pages/events/PartnerDashboard'));
 const ProviderOnboardingPage       = lazy(() => import('@shared/provider/pages/ProviderOnboardingPage'));
-const ShopLoginPage                = lazy(() => import('./pages/shop/ShopLoginPage'));
-const ShopDashboard                = lazy(() => import('./pages/shop/ShopDashboard'));
-const ShopProfilePage              = lazy(() => import('./pages/shop/ShopProfilePage'));
-const ShopKycPage                  = lazy(() => import('./pages/shop/ShopKycPage'));
-const ShopWorkersPage              = lazy(() => import('./pages/shop/ShopWorkersPage'));
-const ShopEarningsPage             = lazy(() => import('./pages/shop/ShopEarningsPage'));
 const NearbyShopsPage              = lazy(() => import('./pages/NearbyShopsPage'));
 const RepairFlowPage               = lazy(() => import('./pages/repair/RepairFlowPage'));
 const CategoryProblemsPage         = lazy(() => import('./pages/repair/CategoryProblemsPage'));
@@ -248,13 +242,8 @@ export default function App() {
         <Route path="/partner" element={<RequireAuth role="event_partner"><PartnerDashboard /></RequireAuth>} />
         <Route path="/partner/advertise" element={<RequireAuth role="event_partner"><AdvertiserDashboard /></RequireAuth>} />
 
-        {/* Shop Partner — owner panel */}
-        <Route path="/shop/login" element={token ? <RedirectByRole role={role} /> : <ShopLoginPage />} />
-        <Route path="/shop" element={<RequireAuth role="shop"><ShopDashboard /></RequireAuth>} />
-        <Route path="/shop/profile" element={<RequireAuth role="shop"><ShopProfilePage /></RequireAuth>} />
-        <Route path="/shop/kyc" element={<RequireAuth role="shop"><ShopKycPage /></RequireAuth>} />
-        <Route path="/shop/workers" element={<RequireAuth role="shop"><ShopWorkersPage /></RequireAuth>} />
-        <Route path="/shop/earnings" element={<RequireAuth role="shop"><ShopEarningsPage /></RequireAuth>} />
+        {/* Shops moved to their own app; keep old bookmarks working. */}
+        <Route path="/shop/*" element={<ExternalRedirect base={SERVICEPRO_URL} />} />
 
         {/* Provider onboarding — one path for shops and independent technicians */}
         <Route
@@ -323,10 +312,14 @@ export default function App() {
   );
 }
 
+function ExternalRedirect({ base }) {
+  useEffect(() => { window.location.replace(base + window.location.pathname + window.location.search); }, [base]);
+  return <PageLoader />;
+}
+
 function RedirectByRole({ role }) {
   const dest = role === 'worker' ? '/worker'
     : role === 'event_partner' ? '/partner'
-    : role === 'shop' ? '/shop'
     : '/';
   return <Navigate to={dest} replace />;
 }

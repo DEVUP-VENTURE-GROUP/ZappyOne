@@ -1,6 +1,6 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { selectAuth } from '@shared/modules/auth/authSlice';
+import { selectAuth } from '../../modules/auth/authSlice';
 
 /**
  * `role` accepts a string or an array. Some screens legitimately serve more
@@ -8,7 +8,7 @@ import { selectAuth } from '@shared/modules/auth/authSlice';
  * independent technician alike — and duplicating the page per role is how the
  * two copies drift apart.
  */
-export function RequireAuth({ role, children }) {
+export function RequireAuth({ role, children, loginPath: loginOverride }) {
   const { accessToken, role: currentRole } = useSelector(selectAuth);
   const loc = useLocation();
 
@@ -17,10 +17,10 @@ export function RequireAuth({ role, children }) {
   const primary = allowed?.[0];
 
   if (!accessToken) {
-    const loginPath = primary === 'worker' ? '/worker/login'
+    const loginPath = loginOverride || (primary === 'worker' ? '/worker/login'
       : primary === 'event_partner' ? '/partner/login'
       : primary === 'shop' ? '/shop/login'
-      : '/login';
+      : '/login');
     return <Navigate to={loginPath} state={{ from: loc.pathname }} replace />;
   }
   if (allowed && !allowed.includes(currentRole)) {

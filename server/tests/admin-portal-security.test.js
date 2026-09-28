@@ -12,6 +12,7 @@
 jest.mock('../src/modules/auth/auth.service', () => ({
   refresh: jest.fn(),
   revoke: jest.fn().mockResolvedValue(true),
+  loginShopWithOtp: jest.fn(),
 }));
 
 const express = require('express');
@@ -101,5 +102,35 @@ describe('admin refresh cookie', () => {
     const cookies = res.headers['set-cookie'].join(';');
     expect(cookies).toMatch(/zappy_admin_rt=;/);
     expect(cookies).not.toMatch(/zappy_rt=;/);
+  });
+});
+
+describe('provider portal sessions', () => {
+  const app = express();
+  app.use(express.json());
+  app.use(cookieParser());
+  app.post('/api/auth/refresh', ctrl.refresh);
+  app.post('/api/auth/shop/login', ctrl.loginShop);
+  app.use((err, req, res, next) => res.status(err.status || 500).json({ code: err.code }));
+
+  beforeEach(() => jest.clearAllMocks());
+
+  test('servicepro keeps its session in zappy_sp_rt, apart from the customer cookie', async () => {
+    authService.refresh.mockResolvedValue({ accessToken: 'at', refreshToken: 'sp2', role: 'worker' });
+    const res = await request(app).post('/api/auth/refresh')
+      .set('X-Client-Type', 'servicepro')
+      .set('Cookie', 'zappy_sp_rt=sp1; zappy_rt=c1')
+      .send({});
+    expect(res.status).toBe(200);
+    expect(authService.refresh).toHaveBeenCalledWith('sp1');
+    expect(res.headers['set-cookie'].join(';')).toMatch(/zappy_sp_rt=sp2/);
+  });
+
+  test('a shop owner cannot sign in through the Rakshak app', async () => {
+    const res = await request(app).post('/api/auth/shop/login')
+      .set('X-Client-Type', 'rakshak').send({ phone: '9000000001', otp: '1234' });
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe('WRONG_PORTAL');
+    expect(authService.loginShopWithOtp).not.toHaveBeenCalled();
   });
 });

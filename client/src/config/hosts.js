@@ -21,6 +21,8 @@ export const EVENTS_HOST = `events.${APEX}`;
 export const WORKER_URL = `https://${WORKER_HOST}`;
 export const EVENTS_URL = `https://${EVENTS_HOST}`;
 export const CONSUMER_URL = `https://www.${APEX}`;
+export const SERVICEPRO_URL = import.meta.env.VITE_SERVICEPRO_URL
+  || (import.meta.env.PROD ? `https://servicepro.${APEX}` : 'http://localhost:5175');
 
 /** 'worker' | 'events' | 'consumer' — which app this hostname serves. */
 export function getTenant(hostname) {
