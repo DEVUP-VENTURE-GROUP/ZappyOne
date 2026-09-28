@@ -27,6 +27,9 @@ const shiftSchema = Joi.object({
 
 /* Core worker routes */
 router.get('/me', authenticate, requireRole('worker'), ctrl.getMe);
+router.get('/me/shop', authenticate, requireRole('worker'), async (req, res, next) => {
+  try { res.json(await require('../shop/shop.service').shopWorkerSummary(req.auth.sub)); } catch (err) { next(err); }
+});
 router.post('/online', authenticate, requireRole('worker'), workerOnlineLimiter,
   validate(Joi.object({ lat: Joi.number().required(), lng: Joi.number().required() })), ctrl.goOnline);
 router.post('/offline', authenticate, requireRole('worker'), ctrl.goOffline);

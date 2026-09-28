@@ -228,6 +228,37 @@ async function listShopWorkers(shopId) {
     .lean();
 }
 
+/**
+ * What a shop's technician sees at the top of their panel: who they work for,
+ * and the jobs they finished. Values are what the customer paid the shop — the
+ * shop pays its own staff, so ZappyOne never states anyone's personal pay.
+ */
+async function shopWorkerSummary(workerId) {
+  const worker = await Worker.findById(workerId).select('shopId').lean();
+  if (!worker?.shopId) throw Object.assign(new Error('You are not on a shop team'), { status: 404, code: 'NOT_A_SHOP_WORKER' });
+
+  const { listBookings } = require('../admin-portal/bookings.source');
+  const { istDayStart, istWeekStart } = require('../../utils/ist');
+  const dayStart = istDayStart();
+  const weekStart = istWeekStart();
+  const [shop, { rows }] = await Promise.all([
+    Shop.findById(worker.shopId).select('businessName ownerName phone').lean(),
+    // Jobs created up to two weeks earlier can still complete this week.
+    listBookings({ workerId, from: new Date(weekStart.getTime() - 14 * 86_400_000), limit: 5000, perSourceLimit: 2000 }),
+  ]);
+
+  const done = rows.filter((r) => r.statusBucket === 'completed' && r.completedAt);
+  const tally = (since) => {
+    const own = done.filter((r) => new Date(r.completedAt) >= since);
+    return { jobs: own.length, valuePaise: own.reduce((sum, r) => sum + (r.totalPaise || 0), 0) };
+  };
+  return {
+    shop: shop && { name: shop.businessName, ownerName: shop.ownerName, phone: shop.phone },
+    today: tally(dayStart),
+    week: tally(weekStart),
+  };
+}
+
 async function removeWorkerFromShop(shopId, workerId) {
   const worker = await Worker.findOne({ _id: workerId, shopId });
   if (!worker) throw Object.assign(new Error('Worker not found on this shop'), { status: 404 });
@@ -355,6 +386,7 @@ module.exports = {
   updateProfile,
   addWorkerToShop,
   listShopWorkers,
+  shopWorkerSummary,
   removeWorkerFromShop,
   getShopEarnings,
   resolveShopImages,

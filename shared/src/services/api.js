@@ -362,6 +362,8 @@ export const api = createApi({
 
     // --- Worker ---
     getWorkerMe: b.query({ query: () => '/workers/me', providesTags: ['Me', 'Worker'] }),
+    /** Shop technicians only: who they work for, and the value of jobs they finished. */
+    getMyShop: b.query({ query: () => '/workers/me/shop', providesTags: ['Worker'] }),
     updateWorkerProfile: b.mutation({
       query: (body) => ({ url: '/workers/profile', method: 'PATCH', body }),
       invalidatesTags: ['Me'],
@@ -2540,6 +2542,7 @@ export const {
   useWorkerReportPartUnavailableMutation,
   useRateOrderMutation,
   useGetWorkerMeQuery,
+  useGetMyShopQuery,
   useUpdateWorkerProfileMutation,
   useGoOnlineMutation,
   useGoOfflineMutation,

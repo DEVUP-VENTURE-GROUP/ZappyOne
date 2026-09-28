@@ -8,7 +8,11 @@ import {
 import {
   useTransitionRepairBookingMutation,
   useDeclineRepairBookingMutation,
+  useGetWorkerMeQuery,
 } from '../../services/api';
+import PassReasonPicker from '../worker/PassReasonPicker';
+import { useSelector } from 'react-redux';
+import { selectRole } from '../../modules/auth/authSlice';
 import { startRinging } from '../../utils/alertSound';
 import toast from 'react-hot-toast';
 import { formatPaise } from '../../utils/money';
@@ -49,6 +53,11 @@ export default function RepairOfferAlert({ offer, myLocation, onClose }) {
   const nav = useNavigate();
   const [accept, { isLoading: accepting }] = useTransitionRepairBookingMutation();
   const [decline, { isLoading: declining }] = useDeclineRepairBookingMutation();
+  // The shop owner's dashboard mounts this too; only a worker has a worker profile.
+  const role = useSelector(selectRole);
+  const { data: meData } = useGetWorkerMeQuery(undefined, { skip: role !== 'worker' });
+  const isShopTechnician = !!meData?.worker?.shopId;
+  const [askingReason, setAskingReason] = useState(false);
 
   /**
    * The window is TEN MINUTES, not ninety seconds.
@@ -115,15 +124,15 @@ export default function RepairOfferAlert({ offer, myLocation, onClose }) {
     }
   }
 
-  async function pass() {
+  async function pass(reason) {
     try {
-      await decline({ id: offer.bookingId, reason: 'declined_by_provider' }).unwrap();
-      toast('Passed on — we\'ll find someone else', { icon: '👍' });
-    } catch {
-      // Declining is courtesy; never block the provider on it failing.
-    } finally {
-      onClose?.('declined');
+      await decline({ id: offer.bookingId, reason }).unwrap();
+      toast(isShopTechnician ? 'Sent back to your shop owner' : "Passed on — we'll find someone else");
+    } catch (err) {
+      // A shop technician's pass must reach the owner; anyone else's is courtesy.
+      if (isShopTechnician) { toast.error(err?.data?.error || 'Could not pass the job back'); return; }
     }
+    onClose?.('declined');
   }
 
   return (
@@ -214,9 +223,19 @@ export default function RepairOfferAlert({ offer, myLocation, onClose }) {
               </p>
             )}
 
+            {askingReason ? (
+              <div className="mt-4">
+                <PassReasonPicker
+                  title={isShopTechnician ? 'Why are you passing this back to your shop?' : undefined}
+                  busy={declining}
+                  onPick={pass}
+                  onCancel={() => setAskingReason(false)}
+                />
+              </div>
+            ) : (
             <div className="mt-4 flex items-center gap-2">
               <button
-                onClick={pass}
+                onClick={() => setAskingReason(true)}
                 disabled={declining || accepting}
                 className="rounded-2xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-500 disabled:opacity-50"
               >
@@ -230,6 +249,7 @@ export default function RepairOfferAlert({ offer, myLocation, onClose }) {
                 {accepting ? <Loader2 size={16} className="animate-spin" /> : 'Accept job'}
               </button>
             </div>
+            )}
           </div>
 
           <button

@@ -27,22 +27,29 @@ const ProviderRepairSetupPage = lazy(() => import('./pages/ProviderRepairSetupPa
  *   loginPath    — where a signed-out worker is sent on this app
  *   helping      — errand/helping jobs are Rakshak-only
  *   onboardRoles — who may enrol in services on this app
+ *   shopTeam     — a shop's technicians: the shop assigns work and pays them, so
+ *                  wallet, payouts, goals, appeals and service sign-up are not theirs
+ *   home         — the /worker screen for this app (defaults to the independent dashboard)
+ *   onboardLoginPath — where a signed-out visitor to service sign-up is sent
  */
-export function providerRoutes({ loginPath, helping = false, onboardRoles = ['worker'] }) {
+export function providerRoutes({ loginPath, helping = false, onboardRoles = ['worker'], shopTeam = false, home = null, onboardLoginPath = loginPath }) {
   const w = (el) => <RequireAuth role="worker" loginPath={loginPath}>{el}</RequireAuth>;
-  const onboard = (el) => <RequireAuth role={onboardRoles} loginPath={loginPath}>{el}</RequireAuth>;
-  return [
-    <Route key="w" path="/worker" element={w(<WorkerDashboard />)} />,
-    <Route key="w-job" path="/worker/jobs/:id" element={w(<WorkerJobPage />)} />,
-    <Route key="w-kyc" path="/worker/kyc" element={w(<WorkerKycPage />)} />,
-    <Route key="w-profile" path="/worker/profile" element={w(<WorkerEditProfilePage />)} />,
-    <Route key="w-notif" path="/worker/notifications" element={w(<WorkerNotificationsPage />)} />,
+  const onboard = (el) => <RequireAuth role={onboardRoles} loginPath={onboardLoginPath}>{el}</RequireAuth>;
+  const independentOnly = shopTeam ? [] : [
     <Route key="w-bank" path="/worker/bank" element={w(<WorkerBankPage />)} />,
     <Route key="w-withdraw" path="/worker/withdraw" element={w(<WorkerWithdrawPage />)} />,
     <Route key="w-appeals" path="/worker/appeals" element={w(<WorkerAppealsPage />)} />,
     <Route key="w-earnings" path="/worker/earnings" element={w(<WorkerEarningsPage />)} />,
     <Route key="w-training" path="/worker/training" element={w(<WorkerTrainingPage />)} />,
     <Route key="w-goals" path="/worker/goals" element={w(<WorkerGoalsPage />)} />,
+  ];
+  return [
+    <Route key="w" path="/worker" element={w(home || <WorkerDashboard />)} />,
+    <Route key="w-job" path="/worker/jobs/:id" element={w(<WorkerJobPage />)} />,
+    <Route key="w-kyc" path="/worker/kyc" element={w(<WorkerKycPage />)} />,
+    <Route key="w-profile" path="/worker/profile" element={w(<WorkerEditProfilePage />)} />,
+    <Route key="w-notif" path="/worker/notifications" element={w(<WorkerNotificationsPage />)} />,
+    ...independentOnly,
     <Route key="w-repair" path="/worker/repair/:id" element={w(<WorkerRepairJobPage />)} />,
     <Route key="w-pet" path="/worker/pet" element={w(<WorkerPetJobsPage />)} />,
     <Route key="w-pet-job" path="/worker/pet/:id" element={w(<WorkerPetJobPage />)} />,

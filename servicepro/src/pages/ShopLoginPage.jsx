@@ -7,6 +7,7 @@ import { useRequestOtpMutation, useLoginShopMutation } from '@shared/services/ap
 import ResendOtp from '@shared/components/auth/ResendOtp';
 import { setAuth } from '@shared/modules/auth/authSlice';
 import toast from 'react-hot-toast';
+import LoginRoleSwitch from '../components/LoginRoleSwitch';
 
 function OtpBox({ value, onChange, onKeyDown, inputRef, filled }) {
   return (
@@ -234,6 +235,10 @@ export default function ShopLoginPage() {
               <span className="text-[10px] font-bold text-slate-500 text-center">{label}</span>
             </div>
           ))}
+        </div>
+
+        <div className="mt-8">
+          <LoginRoleSwitch active="owner" />
         </div>
       </div>
     </div>

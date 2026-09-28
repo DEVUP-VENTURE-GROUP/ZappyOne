@@ -11,7 +11,8 @@ import {
 import toast from 'react-hot-toast';
 import { formatPaise } from '../../utils/money';
 import { usePublishRepairLocation, MOVING_STATUSES } from '../../hooks/useRepairTracking';
-import { useVerifyRepairHandoverCodeMutation } from '../../services/api';
+import { useVerifyRepairHandoverCodeMutation, useDeclineRepairBookingMutation } from '../../services/api';
+import PassReasonPicker from '../../components/worker/PassReasonPicker';
 import OtpEntry from '../../components/common/OtpEntry';
 import ArrivalProximity, { useArrivalProximity } from '../../components/common/ArrivalProximity';
 import ProofPhotos, { readyKeys, photosSettled } from '../../components/common/ProofPhotos';
@@ -348,6 +349,8 @@ export default function WorkerRepairJobPage() {
   const [photos, setPhotos] = useState([]);
   const [attachPhotos] = useAttachRepairCompletionPhotosMutation();
   const [verifyCode, { isLoading: verifying }] = useVerifyRepairHandoverCodeMutation();
+  const [declineJob, { isLoading: passing }] = useDeclineRepairBookingMutation();
+  const [askingPassReason, setAskingPassReason] = useState(false);
 
   /**
    * Share position for exactly as long as the trip lasts.
@@ -443,6 +446,19 @@ export default function WorkerRepairJobPage() {
       refetch();
     } catch (err) {
       toast.error(err?.data?.error || 'Could not record the payment');
+    }
+  }
+
+  // A shop's job can go back to the owner until the technician sets out.
+  const canPassBack = !!booking.shopId && ['CONFIRMED', 'PROVIDER_ASSIGNED', 'WORKER_ACCEPTED'].includes(booking.status);
+
+  async function passBack(reason) {
+    try {
+      await declineJob({ id, reason }).unwrap();
+      toast.success('Sent back to your shop owner');
+      nav('/worker');
+    } catch (err) {
+      toast.error(err?.data?.error || 'Could not pass the job back');
     }
   }
 
@@ -644,6 +660,23 @@ export default function WorkerRepairJobPage() {
                 Do not start work until they approve the quote.
               </p>
             </div>
+          </div>
+        )}
+
+        {canPassBack && (
+          <div className="card">
+            {askingPassReason ? (
+              <PassReasonPicker
+                title="Why are you passing this back to your shop?"
+                busy={passing}
+                onPick={passBack}
+                onCancel={() => setAskingPassReason(false)}
+              />
+            ) : (
+              <button onClick={() => setAskingPassReason(true)} className="w-full text-sm font-semibold text-slate-500 hover:text-slate-700">
+                Can't do this job? Pass it back to your shop
+              </button>
+            )}
           </div>
         )}
 

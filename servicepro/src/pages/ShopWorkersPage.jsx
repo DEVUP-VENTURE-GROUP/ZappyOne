@@ -95,7 +95,7 @@ export default function ShopWorkersPage() {
                       </span>
                     )}
                     <span className={`w-1.5 h-1.5 rounded-full ${w.isOnline ? 'bg-emerald-500' : 'bg-slate-300'}`} />
-                    <span className="text-[10px] font-semibold text-slate-400">{w.isOnline ? 'Online' : 'Offline'}</span>
+                    <span className="text-[10px] font-semibold text-slate-400">{w.isOnline ? 'On duty' : 'Off duty'}</span>
                   </div>
                 </div>
                 <button onClick={() => handleRemove(w._id)} disabled={removingId === w._id}

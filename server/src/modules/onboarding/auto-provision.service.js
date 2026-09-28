@@ -21,6 +21,7 @@
  */
 
 const logger = require('../../utils/logger');
+const Worker = require('../worker/worker.model');
 
 /** Matches the modes actually seeded for each category's variants. */
 const PET_DEFAULT_MODES = {
@@ -124,6 +125,8 @@ async function provisionCoverage({ shopId = null, workerId = null, coordinates }
   if (!Array.isArray(coordinates) || coordinates.length !== 2) return;
   const key = shopId ? { shopId } : { workerId };
   if (!key.shopId && !key.workerId) return;
+  // A shop's technician works under the shop's coverage, never their own.
+  if (workerId && await Worker.exists({ _id: workerId, shopId: { $ne: null } })) return;
 
   const { ProviderEnrolment, ServiceLine } = require('./onboarding.model');
   const enrolments = await ProviderEnrolment.find({ ...key, status: 'approved' }).lean();

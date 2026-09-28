@@ -813,11 +813,48 @@ async function releaseToPool({ bookingId, actorRole, actorId, reason = '' }) {
   return { released: true, reoffered: !!handed, booking: fresh };
 }
 
+/** A shop technician returns an assigned job to their shop before leaving for it. */
+async function passBackToShop(booking, workerId, reason) {
+  if (String(booking.workerId || '') !== String(workerId)) {
+    throw httpError('This job is not assigned to you', 403, 'FORBIDDEN');
+  }
+  if (!['CONFIRMED', 'PROVIDER_ASSIGNED', 'WORKER_ACCEPTED'].includes(booking.status)) {
+    throw httpError('You have already set out for this job — call your shop owner', 409, 'TOO_LATE_TO_DECLINE', { status: booking.status });
+  }
+  if (!reason.trim()) throw httpError('Tell your shop why you are passing this job', 400, 'REASON_REQUIRED');
+
+  booking.declines = booking.declines || [];
+  booking.declines.push({ providerKind: 'worker', providerId: workerId, reason, at: new Date() });
+  booking.workerId = null;
+  if (booking.status === 'WORKER_ACCEPTED') booking.status = 'PROVIDER_ASSIGNED';
+  booking.statusHistory.push({
+    status: booking.status, at: new Date(), actorRole: 'worker', actorId: workerId, reason: `passed back to shop: ${reason}`,
+  });
+  await booking.save();
+
+  // Close the offer on the technician's screen only; the shop still owns the job.
+  eventsService.announceOfferClosed({ _id: booking._id, workerId }, 'passed_back');
+  eventsService.notify({
+    kind: 'shop',
+    id: booking.shopId,
+    type: 'repair_passed_back',
+    title: 'A technician passed on a job',
+    body: `Reason: ${reason}. Assign it to someone else so the customer isn't kept waiting.`,
+    deepLink: '/shop',
+    data: { bookingId: String(booking._id) },
+  });
+  return booking;
+}
+
 async function declineBooking({ bookingId, actorRole, actorId, reason = '' }) {
   const booking = await RepairBooking.findById(bookingId);
   if (!booking) throw httpError('Booking not found', 404, 'NOT_FOUND');
 
   assertActorMayAct(booking, actorRole, actorId);
+
+  // A shop's own technician passing a job hands it back to the shop, not to the
+  // market: the shop keeps its customer and the owner reassigns.
+  if (actorRole === 'worker' && booking.shopId) return passBackToShop(booking, actorId, reason);
 
   if (!['PROVIDER_ASSIGNED', 'CONFIRMED'].includes(booking.status)) {
     throw httpError(

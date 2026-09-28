@@ -8,6 +8,7 @@ import ConnectionBanner from '@shared/components/common/ConnectionBanner';
 import RouteProgress from '@shared/components/common/RouteProgress';
 import ErrorBoundary from '@shared/components/common/ErrorBoundary';
 import { providerRoutes } from '@shared/provider/providerRoutes';
+import LoginRoleSwitch from './components/LoginRoleSwitch';
 
 const ShopLoginPage = lazy(() => import('./pages/ShopLoginPage'));
 const ShopDashboard = lazy(() => import('./pages/ShopDashboard'));
@@ -16,6 +17,7 @@ const ShopKycPage = lazy(() => import('./pages/ShopKycPage'));
 const ShopWorkersPage = lazy(() => import('./pages/ShopWorkersPage'));
 const ShopEarningsPage = lazy(() => import('./pages/ShopEarningsPage'));
 const WorkerLoginPage = lazy(() => import('@shared/provider/pages/WorkerLoginPage'));
+const ShopWorkerHome = lazy(() => import('./pages/ShopWorkerHome'));
 
 const SHOP_LOGIN = '/shop/login';
 const WORKER_LOGIN = '/shop/worker/login';
@@ -45,7 +47,7 @@ export default function App() {
             <Route
               path={WORKER_LOGIN}
               element={accessToken ? <Navigate to={homeFor(role)} replace />
-                : <WorkerLoginPage allowSignup={false} portalLabel="ServicePro · Shop team" heading="Shop worker login" />}
+                : <WorkerLoginPage allowSignup={false} portalLabel="ServicePro · Shop team" heading="Shop worker login" footer={<LoginRoleSwitch active="worker" />} />}
             />
             <Route path="/worker/login" element={<Navigate to={WORKER_LOGIN} replace />} />
             <Route path="/shop" element={shop(<ShopDashboard />)} />
@@ -53,7 +55,14 @@ export default function App() {
             <Route path="/shop/kyc" element={shop(<ShopKycPage />)} />
             <Route path="/shop/workers" element={shop(<ShopWorkersPage />)} />
             <Route path="/shop/earnings" element={shop(<ShopEarningsPage />)} />
-            {providerRoutes({ loginPath: WORKER_LOGIN, onboardRoles: ['shop', 'worker'] })}
+            {providerRoutes({
+              loginPath: WORKER_LOGIN,
+              shopTeam: true,
+              home: <ShopWorkerHome />,
+              // Only the owner decides which services the shop offers.
+              onboardRoles: ['shop'],
+              onboardLoginPath: SHOP_LOGIN,
+            })}
             <Route path="*" element={<Navigate to={accessToken ? homeFor(role) : SHOP_LOGIN} replace />} />
           </Routes>
         </Suspense>

@@ -164,7 +164,7 @@ function HeroScene() {
  * Shared by Rakshak (independent workers, may self sign-up) and servicepro
  * (shop workers — only numbers a shop added; the server refuses the rest).
  */
-export default function WorkerLoginPage({ allowSignup = true, portalLabel = 'Worker Portal', heading = 'Worker Login' }) {
+export default function WorkerLoginPage({ allowSignup = true, portalLabel = 'Worker Portal', heading = 'Worker Login', footer = null }) {
   const OTP_LEN = 6;
   const [phone, setPhone] = useState(() => {
     try { return localStorage.getItem(PHONE_KEY) || ''; } catch { return ''; }
@@ -632,6 +632,7 @@ export default function WorkerLoginPage({ allowSignup = true, portalLabel = 'Wor
                 </motion.div>
               )}
             </AnimatePresence>
+            {footer && <div className="mt-8">{footer}</div>}
           </div>
         </section>
       </div>
