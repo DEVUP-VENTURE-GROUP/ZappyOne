@@ -3,5 +3,4 @@ import { store } from '@shared/store';
 import App from './App';
 import '@shared/styles/index.css';
 
-// Every other role has its own app; only customer sessions are restored here.
-mountApp({ App, store, roles: ['user'] });
+mountApp({ App, store, roles: ['event_partner'] });

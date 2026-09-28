@@ -6,7 +6,7 @@ import { Phone, ArrowRight, ChevronLeft, Loader2, Sparkles, EyeOff, CalendarDays
 import { useRequestOtpMutation, useLoginEventPartnerMutation, useGooglePartnerLoginMutation } from '@shared/services/api';
 import ResendOtp from '@shared/components/auth/ResendOtp';
 import { setAuth } from '@shared/modules/auth/authSlice';
-import { signInWithGoogle } from '../../lib/firebase';
+import { signInWithGoogle } from '../lib/firebase';
 import toast from 'react-hot-toast';
 
 function OtpBox({ value, onChange, onKeyDown, inputRef, filled }) {

@@ -4,7 +4,6 @@ import { useDispatch } from 'react-redux';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import { Phone, ArrowRight, ChevronLeft, CheckCircle2, Loader2, Zap, Shield, Star, Smartphone, Laptop, Car, Bike, PawPrint, HeartHandshake } from 'lucide-react';
 import { useRequestOtpMutation, useLoginUserMutation, useUpdateMeMutation } from '@shared/services/api';
-import { CONSUMER_URL } from '../config/hosts';
 import ResendOtp from '@shared/components/auth/ResendOtp';
 import OtpOrbit from '../components/auth/OtpOrbit';
 import { setAuth, updateProfile } from '@shared/modules/auth/authSlice';

@@ -9,7 +9,6 @@ import useTelemetry from './hooks/useTelemetry';
 import { prefetchMainTabs, onIdle } from './lib/routePrefetch';
 import { prefetchServiceCatalog } from './hooks/useServiceCatalog';
 import { loadCategories } from './hooks/useCategories';
-import { getSubdomainRedirect, isExternalRedirect } from './config/hosts';
 import { PORTAL_URLS } from '@shared/config/portals';
 import { RequireAuth } from '@shared/components/common/RequireAuth';
 import NotificationBanner from './components/common/NotificationBanner';
@@ -52,8 +51,6 @@ const EventBookingPage             = lazy(() => import('./pages/events/EventBook
 const EventBookingListPage         = lazy(() => import('./pages/events/EventBookingListPage'));
 const EventBookingDetailPage       = lazy(() => import('./pages/events/EventBookingDetailPage'));
 const EventSavedThemesPage         = lazy(() => import('./pages/events/EventSavedThemesPage'));
-const PartnerLoginPage             = lazy(() => import('./pages/events/PartnerLoginPage'));
-const PartnerDashboard             = lazy(() => import('./pages/events/PartnerDashboard'));
 const NearbyShopsPage              = lazy(() => import('./pages/NearbyShopsPage'));
 const RepairFlowPage               = lazy(() => import('./pages/repair/RepairFlowPage'));
 const CategoryProblemsPage         = lazy(() => import('./pages/repair/CategoryProblemsPage'));
@@ -71,7 +68,6 @@ const PetBookingDetailPage          = lazy(() => import('./pages/pet/PetBookingD
 const PetBookingsListPage           = lazy(() => import('./pages/pet/PetBookingsListPage'));
 const PetRecurringPage              = lazy(() => import('./pages/pet/PetRecurringPage'));
 const ShopPublicProfilePage        = lazy(() => import('./pages/ShopPublicProfilePage'));
-const AdvertiserDashboard          = lazy(() => import('./pages/AdvertiserDashboard'));
 const SpendingPage                 = lazy(() => import('./pages/SpendingPage'));
 const NotificationPrefsPage        = lazy(() => import('./pages/NotificationPrefsPage'));
 const PromosHubPage                = lazy(() => import('./pages/PromosHubPage'));
@@ -97,20 +93,6 @@ export default function App() {
   useTelemetry();
   const { accessToken: token, role } = useSelector(selectAuth);
   const location = useLocation();
-  const subdomainRedirect = getSubdomainRedirect(
-    typeof window !== 'undefined' ? window.location.hostname : '',
-    location.pathname,
-    token,
-    role,
-  );
-
-  // A cross-host move (e.g. a worker landing on events.zappyone.com) can't be done
-  // by the router — it needs a real navigation.
-  useEffect(() => {
-    if (subdomainRedirect && isExternalRedirect(subdomainRedirect)) {
-      window.location.replace(subdomainRedirect);
-    }
-  }, [subdomainRedirect]);
 
   // Load the admin-managed category taxonomy once at startup so the customer
   // catalog, worker skill pickers and booking all reflect admin categories.
@@ -135,16 +117,6 @@ export default function App() {
       <RouteProgress />
       <ConnectionBanner />
       <Suspense fallback={<PageLoader />}>
-      {/* Wrong host for this visitor → redirect INSTEAD of rendering. Rendering
-          <Navigate> next to <Routes> mounted the wrong page for a frame first,
-          firing its data fetches (and its RequireAuth bounce) before moving on.
-          An external target shows the loader while the full page load runs. */}
-      {subdomainRedirect ? (
-        isExternalRedirect(subdomainRedirect)
-          ? <PageLoader />
-          : <Navigate to={subdomainRedirect} replace />
-      ) : (
-      <>
       {/* Show notification permission banner for logged-in users with non-admin roles */}
       {token && <NotificationBanner />}
       {/* Route-level boundary — a crash in one page shows the recovery screen but
@@ -156,12 +128,12 @@ export default function App() {
         <Route path="/faq" element={<FaqPage />} />
         <Route path="/policy/:slug" element={<PolicyPage />} />
 
-        <Route path="/login" element={token ? <RedirectByRole role={role} /> : <LoginPage />} />
+        <Route path="/login" element={token ? <Navigate to="/" replace /> : <LoginPage />} />
 
         {/* User app */}
         <Route element={<MainLayout />}>
-          <Route path="/"       element={<HomeOrRedirect role={role} token={token} />} />
-          <Route path="/home"   element={<HomeOrRedirect role={role} token={token} />} />
+          <Route path="/"       element={<HomePage />} />
+          <Route path="/home"   element={<HomePage />} />
           <Route path="/services" element={<RequireAuth role="user"><AllServicesPage /></RequireAuth>} />
           {/*
             Per-vertical catalog pages are retired: a customer reaching one now
@@ -203,15 +175,12 @@ export default function App() {
 
         {/* Worker app */}
 
-        {/* Event Partner */}
-        <Route path="/partner/login" element={token ? <RedirectByRole role={role} /> : <PartnerLoginPage />} />
-        <Route path="/partner" element={<RequireAuth role="event_partner"><PartnerDashboard /></RequireAuth>} />
-        <Route path="/partner/advertise" element={<RequireAuth role="event_partner"><AdvertiserDashboard /></RequireAuth>} />
 
         {/* Providers moved to their own apps; keep old bookmarks working. */}
         <Route path="/shop/*" element={<ExternalRedirect base={PORTAL_URLS.servicepro} />} />
         <Route path="/worker/*" element={<ExternalRedirect base={PORTAL_URLS.rakshak} />} />
         <Route path="/provider/*" element={<ExternalRedirect base={PORTAL_URLS.rakshak} />} />
+        <Route path="/partner/*" element={<ExternalRedirect base={PORTAL_URLS.events} />} />
 
         {/* Provider onboarding — one path for shops and independent technicians */}
 
@@ -259,8 +228,6 @@ export default function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       </ErrorBoundary>
-      </>
-      )}
     </Suspense>
     </>
   );
@@ -271,14 +238,3 @@ function ExternalRedirect({ base }) {
   return <PageLoader />;
 }
 
-function RedirectByRole({ role }) {
-  const dest = role === 'event_partner' ? '/partner'
-    : '/';
-  return <Navigate to={dest} replace />;
-}
-
-// Home is public — but logged-in workers/admins/partners still get redirected to their dashboard.
-function HomeOrRedirect({ role, token }) {
-  if (token && role && role !== 'user') return <RedirectByRole role={role} />;
-  return <HomePage />;
-}

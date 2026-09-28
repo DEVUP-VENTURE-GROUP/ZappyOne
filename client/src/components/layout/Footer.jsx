@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { Send, Heart, ShieldCheck, MapPin, Star, Phone, Zap } from 'lucide-react';
 import { ZappyLogo } from '@shared/components/common/ZappyLogo';
-import { WORKER_URL, EVENTS_URL } from '../../config/hosts';
+import { PORTAL_URLS } from '@shared/config/portals';
 
 const SERVICES = [
   { label: 'Puncture Repair Near Me',       href: '/book/puncture' },
@@ -52,17 +52,11 @@ const COMPANY = [
   { label: 'Warranty',        href: '/policy/warranty-guidelines' },
 ];
 
-// The consumer site never exposes a worker/partner LOGIN — each audience has its
-// own front door (rakshak. / events.), the way Zomato and Zepto keep the eater app
-// free of rider/restaurant sign-in. These are marketing links to those apps, not
-// login routes: `/worker/login` on zappyone.com would authenticate a worker on the
-// consumer origin, which the host router then bounces back out of anyway.
+// Each audience signs in on its own app; the customer site only links to them.
 const PARTNERS = [
-  { label: 'Join as a Worker',     href: WORKER_URL,  external: true },
-  { label: 'Earn ₹500–₹2000/day', href: WORKER_URL,  external: true },
-  { label: 'Event Partner Portal', href: EVENTS_URL,  external: true },
-  { label: 'Advertise with Zappy', href: '#' },
-  { label: 'Partner Guidelines',   href: '#' },
+  { label: 'Work with ZappyOne',   href: PORTAL_URLS.rakshak,    external: true },
+  { label: 'List your shop',       href: `${PORTAL_URLS.servicepro}/shop/login`, external: true },
+  { label: 'Event Partner Portal', href: PORTAL_URLS.events,     external: true },
 ];
 
 export default function Footer() {
