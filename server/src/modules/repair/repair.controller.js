@@ -947,9 +947,18 @@ async function cancelBooking(req, res, next) {
      * recorded against them — that would charge someone for a cancellation they
      * did not ask for. Only a customer-initiated cancellation is assessed.
      */
+    // Not the customer's doing → whatever they paid online comes back in full.
+    const paidOnline = before.paymentStatus === 'paid' ? (before.priceSnapshot?.totalPaise || 0) : 0;
     const settlement = req.auth.role === 'user'
       ? await cancellationService.assess(before, { userId: before.userId, quote })
-      : { feePaise: 0, earnedPaise: 0, refundPaise: 0, isGrace: false, message: 'Cancelled.' };
+      : { feePaise: 0, earnedPaise: 0, refundPaise: paidOnline, isGrace: false, message: 'Cancelled.' };
+
+    if (paidOnline > 0 && settlement.refundPaise > 0) {
+      await require('../payment/payment.service').refundBookingPayment({
+        source: 'repair', bookingId: before._id, amountPaise: settlement.refundPaise,
+        reason: `Cancelled: ${req.body.reason || req.auth.role}`,
+      });
+    }
 
     res.json({
       booking,

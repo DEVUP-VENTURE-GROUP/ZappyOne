@@ -233,6 +233,15 @@ module.exports = router;
 const adminRouter = express.Router();
 
 adminRouter.get('/bookings', authenticate, requireRole('admin'), ctrl.adminListBookings);
+// A platform cancellation: the customer is never charged for it.
+adminRouter.post('/bookings/:id/cancel', authenticate, requireRole('admin'),
+  validate(Joi.object({ reason: Joi.string().trim().min(5).max(300).required() })),
+  async (req, res, next) => {
+    try {
+      const bookingService = require('./services/booking.service');
+      res.json(await bookingService.cancelBooking({ bookingId: req.params.id, actorId: req.auth.sub, by: 'admin', reason: req.body.reason }));
+    } catch (err) { next(err); }
+  });
 adminRouter.get('/pricing', authenticate, requireRole('admin'), ctrl.adminGetPricing);
 adminRouter.put('/pricing/:id', authenticate, requireRole('admin'),
   validate(Joi.object({

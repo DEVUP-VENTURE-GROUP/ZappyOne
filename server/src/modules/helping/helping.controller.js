@@ -175,11 +175,12 @@ async function rateTask(req, res, next) {
   } catch (err) { next(err); }
 }
 
-async function cancelTask(req, res, next) {
+/** Shared by the customer and admin cancel: same states, same record, one rule. */
+async function cancelTaskAs(req, res, next, { byRole, ownerOnly }) {
   try {
     const task = await HelpingTask.findById(req.params.id);
     if (!task) return res.status(404).json({ error: 'Task not found' });
-    if (String(task.userId) !== String(req.auth.sub)) {
+    if (ownerOnly && String(task.userId) !== String(req.auth.sub)) {
       return res.status(403).json({ error: 'Not your task' });
     }
     if (!CANCELLABLE_FROM.includes(task.status)) {
@@ -189,11 +190,29 @@ async function cancelTask(req, res, next) {
     }
 
     task.cancellationReason = req.body.reason || '';
-    task.transitionTo('CANCELLED', { by: req.auth.sub, byRole: 'user' });
+    task.transitionTo('CANCELLED', { by: req.auth.sub, byRole });
     await task.save();
+    // Cancellable states are all before work starts, so a paid service charge goes back in full.
+    if (task.paymentStatus === 'paid') {
+      await require('../payment/payment.service').refundBookingPayment({
+        source: 'helping', bookingId: task._id, reason: `Cancelled: ${task.cancellationReason || byRole}`,
+      });
+    }
+    if (byRole === 'admin') {
+      require('../notification/notification.service').notify({
+        recipient: { kind: 'user', id: task.userId },
+        type: 'helping_cancelled',
+        title: 'Your request was cancelled',
+        body: `ZappyOne cancelled this request: ${task.cancellationReason}. You will not be charged.`,
+        deepLink: `/helping/tasks/${task._id}`,
+      }).catch(() => {});
+    }
     res.json({ task: task.toObject() });
   } catch (err) { next(err); }
 }
+
+const cancelTask = (req, res, next) => cancelTaskAs(req, res, next, { byRole: 'user', ownerOnly: true });
+const adminCancelTask = (req, res, next) => cancelTaskAs(req, res, next, { byRole: 'admin', ownerOnly: false });
 
 /* Worker */
 
@@ -445,5 +464,5 @@ module.exports = {
   createTask, listMyTasks, getTask, respondToApproval, cancelTask, rateTask,
   listAvailable, acceptTask, advanceStatus, updateItem, proposeAlternative,
   recordAdvance, addProof, recordHandover, completeTask,
-  adminListTasks, adminGetConfig, adminUpdateConfig, adminRefundOutcome,
+  adminListTasks, adminGetConfig, adminUpdateConfig, adminRefundOutcome, adminCancelTask,
 };

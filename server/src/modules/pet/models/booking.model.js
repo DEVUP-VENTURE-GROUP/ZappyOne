@@ -302,7 +302,8 @@ const petBookingSchema = new mongoose.Schema(
     handoverOtp: { type: String, default: '' },
     handoverVerifiedAt: { type: Date, default: null },
 
-    paymentMethod: { type: String, enum: ['cash', 'online', 'wallet'], default: 'online' },
+    // Cash by default: online is chosen explicitly, and only while the gateway is live.
+    paymentMethod: { type: String, enum: ['cash', 'online', 'wallet'], default: 'cash' },
     paymentStatus: {
       type: String,
       enum: ['pending', 'paid', 'failed', 'refunded', 'partially_refunded'],

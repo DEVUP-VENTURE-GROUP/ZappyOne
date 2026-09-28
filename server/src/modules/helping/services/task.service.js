@@ -71,7 +71,7 @@ async function createTask({
   items = [],
   returnDetail = null,
   scheduledAt = null,
-  paymentMethod = 'online',
+  paymentMethod = 'cash',
   paymentModel = 'customer_preauth',
   specialHandling = false,
   idempotencyKey = null,
@@ -81,6 +81,7 @@ async function createTask({
     if (existing) return { task: existing, replayed: true };
   }
   await zoneService.assertBookableLocation(pickupLocation);
+  require('../../payment/payables').assertOnlineAvailable(paymentMethod);
 
   const cfg = await pricingService.getConfig(serviceType);
 

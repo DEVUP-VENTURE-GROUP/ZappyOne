@@ -217,6 +217,7 @@ adminRouter.put('/config/:serviceType',
     timeExtensionBlockMinutes: Joi.number().integer().min(1),
     timeExtensionFeePaise: Joi.number().integer().min(0),
     specialHandlingFeePaise: Joi.number().integer().min(0),
+    matchRadiusKm: Joi.number().min(1).max(50),
     commissionPct: Joi.number().min(0).max(100),
     platformFeePaise: Joi.number().integer().min(0),
     taxPct: Joi.number().min(0).max(100),
@@ -231,6 +232,12 @@ adminRouter.put('/config/:serviceType',
     isActive: Joi.boolean(),
   })),
   ctrl.adminUpdateConfig);
+
+// Platform cancellation, before any work or item money is involved.
+adminRouter.post('/tasks/:id/cancel',
+  authenticate, requireRole('admin'),
+  validate(Joi.object({ reason: Joi.string().trim().min(5).max(300).required() })),
+  ctrl.adminCancelTask);
 
 // The ONLY path that may say a refund happened, and only with a reference.
 adminRouter.post('/tasks/:id/refund-outcome',

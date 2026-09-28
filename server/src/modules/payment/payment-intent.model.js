@@ -27,9 +27,25 @@ const paymentIntentSchema = new mongoose.Schema(
 
     purpose: {
       type: String,
-      enum: ['subscription', 'wallet_topup', 'order_payment', 'event_advance_payment', 'event_remaining_payment'],
+      // repair_payment was accepted by the service but missing here, so every
+      // repair checkout failed at save. booking_payment covers every engine.
+      enum: ['subscription', 'wallet_topup', 'order_payment', 'repair_payment', 'booking_payment',
+        'event_advance_payment', 'event_remaining_payment'],
       required: true,
       index: true,
+    },
+
+    /** booking_payment: which engine's booking this pays for. */
+    bookingSource: { type: String, enum: ['repair', 'pet', 'helping', null], default: null },
+    bookingId: { type: mongoose.Schema.Types.ObjectId, default: null, index: true },
+
+    /** Refund lifecycle, set when a cancelled booking's online payment is returned. */
+    refund: {
+      status: { type: String, enum: ['none', 'requested', 'processed', 'manual_required'], default: 'none' },
+      amountPaise: { type: Number, default: 0 },
+      cfRefundId: { type: String, default: null },
+      reason: { type: String, default: '' },
+      at: { type: Date, default: null },
     },
 
     // Refs depending on purpose — exactly one will be populated

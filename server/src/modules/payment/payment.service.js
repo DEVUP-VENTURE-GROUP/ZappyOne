@@ -23,6 +23,7 @@ const Transaction = require('./transaction.model');
 const cashfree = require('./cashfree.client');
 const walletService = require('../wallet/wallet.service');
 const subscriptionService = require('../subscription/subscription.service');
+const payables = require('./payables');
 const logger = require('../../utils/logger');
 
 /** Resolve customer details for Cashfree — phone is required by their API. */
@@ -47,7 +48,15 @@ async function resolveCustomer(owner) {
  * Create a Cashfree order for one of three purposes.
  * Returns { paymentIntent, cfOrder } — frontend uses cfOrder.payment_session_id.
  */
-async function createOrderForPurpose({ owner, purpose, planCode, amountPaise, orderId, returnUrl }) {
+async function createOrderForPurpose({ owner, purpose, planCode, amountPaise, orderId, returnUrl, bookingSource = null, bookingId = null }) {
+  // Backup path: with no live gateway, say so plainly; the customer pays in cash instead.
+  if (!payables.gatewayReady()) {
+    throw Object.assign(new Error('Online payment is not available right now — please pay in cash after the service.'), {
+      status: 503, code: 'GATEWAY_UNAVAILABLE',
+    });
+  }
+  // Older repair clients sent the booking id as orderId.
+  if (purpose === 'repair_payment' && !bookingId) bookingId = orderId;
   let resolvedAmount = amountPaise;
   let planId = null;
   let subscriptionId = null;
@@ -73,36 +82,12 @@ async function createOrderForPurpose({ owner, purpose, planCode, amountPaise, or
     if (order.payment?.status === 'paid') throw Object.assign(new Error('Order already paid'), { status: 409, code: 'ORDER_ALREADY_PAID' });
     resolvedAmount = order.pricing.total * 100;
     cfOrderIdPrefix = 'ord';
-  } else if (purpose === 'repair_payment') {
-    /**
-     * Repair bookings are a separate collection from Order, with their own
-     * immutable price snapshot. The amount is taken from that snapshot rather
-     * than from anything the client sends, so a tampered request cannot
-     * under-pay a booking.
-     */
-    if (!orderId) throw Object.assign(new Error('bookingId required'), { status: 400, code: 'BOOKING_ID_REQUIRED' });
-    const { RepairBooking } = require('../repair/models/booking.model');
-    const booking = await RepairBooking.findById(orderId).lean();
-    if (!booking) throw Object.assign(new Error('Repair booking not found'), { status: 404 });
-    if (String(booking.userId) !== String(owner.id)) throw Object.assign(new Error('Not your booking'), { status: 403 });
-    if (booking.paymentStatus === 'paid') {
-      throw Object.assign(new Error('This repair is already paid'), { status: 409, code: 'ALREADY_PAID' });
-    }
-
-    // A diagnosis-first repair must not be charged its estimate before the
-    // customer has approved a real quote — that is the §53 promise.
-    if (booking.priceSnapshot?.isEstimate && booking.status !== 'APPROVED') {
-      throw Object.assign(
-        new Error('This repair is priced after diagnosis — approve the quote before paying.'),
-        { status: 409, code: 'QUOTE_APPROVAL_REQUIRED' },
-      );
-    }
-
-    resolvedAmount = booking.priceSnapshot?.totalPaise;
-    if (!resolvedAmount || resolvedAmount <= 0) {
-      throw Object.assign(new Error('This booking has no payable amount yet'), { status: 409, code: 'NO_AMOUNT' });
-    }
-    cfOrderIdPrefix = 'rpr';
+  } else if (purpose === 'repair_payment' || purpose === 'booking_payment') {
+    // repair_payment is the older name for a repair booking_payment.
+    bookingSource = purpose === 'repair_payment' ? 'repair' : bookingSource;
+    if (!bookingId) throw Object.assign(new Error('bookingId required'), { status: 400, code: 'BOOKING_ID_REQUIRED' });
+    ({ amountPaise: resolvedAmount } = await payables.resolvePayable({ source: bookingSource, bookingId, userId: owner.id }));
+    cfOrderIdPrefix = { repair: 'rpr', pet: 'pet', helping: 'hlp' }[bookingSource];
   } else {
     throw Object.assign(new Error('Unknown purpose'), { status: 400, code: 'BAD_PURPOSE' });
   }
@@ -123,16 +108,20 @@ async function createOrderForPurpose({ owner, purpose, planCode, amountPaise, or
       ownerId: String(owner.id),
       ...(planCode ? { planCode } : {}),
       ...(orderId  ? { orderId: String(orderId) } : {}),
+      ...(bookingId ? { bookingSource, bookingId: String(bookingId) } : {}),
     },
   });
 
+  const isBooking = purpose === 'repair_payment' || purpose === 'booking_payment';
   const intent = await PaymentIntent.create({
     cfOrderId,
     owner,
-    purpose,
+    purpose: isBooking ? 'booking_payment' : purpose,
     planId,
     subscriptionId,
-    orderId,
+    orderId: isBooking ? null : orderId,
+    bookingSource: isBooking ? bookingSource : null,
+    bookingId: isBooking ? bookingId : null,
     amountPaise: resolvedAmount,
     currency: 'INR',
     status: 'created',
@@ -179,13 +168,24 @@ async function handleWebhook(payload) {
     }
     case 'REFUND_STATUS_WEBHOOK': {
       const refund = payload.data?.refund;
-      if (refund?.cf_payment_id) {
-        await PaymentIntent.updateOne(
+      if (refund?.cf_payment_id && refund.refund_status === 'SUCCESS') {
+        const intent = await PaymentIntent.findOneAndUpdate(
           { cfPaymentId: String(refund.cf_payment_id) },
-          { $set: { status: 'refunded' }, $push: { events: { event: eventType, payload } } }
+          { $set: { status: 'refunded', 'refund.status': 'processed' }, $push: { events: { event: eventType, payload } } },
+          { new: true },
         );
+        // Reflect it on the booking so the customer sees "refunded", not "cancelled".
+        if (intent?.bookingSource && intent.bookingId) {
+          const booking = await payables.PAYABLES[intent.bookingSource].load(intent.bookingId);
+          if (booking) {
+            booking.paymentStatus = intent.refund.amountPaise < intent.amountPaise
+              ? (intent.bookingSource === 'repair' ? 'partial_refund' : 'partially_refunded')
+              : 'refunded';
+            await booking.save();
+          }
+        }
       }
-      return { ok: true, action: 'marked_refunded' };
+      return { ok: true, action: 'refund_status_recorded' };
     }
     default:
       logger.info({ eventType }, 'Cashfree webhook event ignored');
@@ -258,20 +258,19 @@ async function capturePayment({ cfOrderId, cfPaymentId, amountPaise, eventName, 
         await order.save();
       }
 
-    } else if (intent.purpose === 'repair_payment') {
-      // The webhook is the source of truth for payment, never the client's
-      // "success" callback — this is the only place a repair is marked paid.
-      const { RepairBooking } = require('../repair/models/booking.model');
-      const booking = await RepairBooking.findById(intent.orderId);
+    } else if (intent.purpose === 'booking_payment' || intent.purpose === 'repair_payment') {
+      // The webhook (or the reconcile sweep) is the only place a booking is marked paid —
+      // never the client's "success" callback.
+      const source = intent.bookingSource || 'repair';
+      const payable = payables.PAYABLES[source];
+      const booking = await payable.load(intent.bookingId || intent.orderId);
       if (booking) {
-        booking.paymentStatus = 'paid';
-        booking.paymentId = intent._id;
+        payable.markPaid(booking, intent._id);
         await booking.save();
 
-        // Book only the platform's own cut here. The provider's share is paid
-        // at settlement, so crediting the gross to the platform would overstate
-        // revenue and double-count once the payout runs.
-        const commissionPaise = booking.priceSnapshot?.commissionPaise || 0;
+        // Only the platform's own cut is revenue now; the provider's share is paid at
+        // settlement, so crediting the gross would double-count once the payout runs.
+        const commissionPaise = payable.commission(booking);
         if (commissionPaise > 0) {
           await Transaction.create({
             type: 'credit',
@@ -279,8 +278,8 @@ async function capturePayment({ cfOrderId, cfPaymentId, amountPaise, eventName, 
             amountPaise: commissionPaise,
             reason: Transaction.REASONS.PLATFORM_COMMISSION,
             refPaymentIntentId: intent._id,
-            idempotencyKey: `platform:repair:${cfPaymentId}`,
-            description: `Repair commission — ${booking.reference}`,
+            idempotencyKey: `platform:${source}:${cfPaymentId}`,
+            description: `${source} commission — ${booking.reference}`,
           }).catch((e) => { if (e.code !== 11000) throw e; });
         }
       }
@@ -346,8 +345,87 @@ async function handleCheckoutVerification({ cfOrderId, cfPaymentId }) {
   });
 }
 
+/**
+ * Backup for a missed webhook (outage, network, misconfigured URL): ask
+ * Cashfree directly about payments still pending here. A success is captured
+ * through the same exactly-once path; one abandoned past the window expires.
+ */
+const RECONCILE_AFTER_MS = 2 * 60 * 1000;
+const EXPIRE_AFTER_MS = 60 * 60 * 1000;
+
+async function reconcilePendingIntents({ now = Date.now(), limit = 50 } = {}) {
+  if (!payables.gatewayReady()) return { checked: 0 };
+  const pending = await PaymentIntent.find({
+    status: 'created',
+    createdAt: { $lte: new Date(now - RECONCILE_AFTER_MS), $gte: new Date(now - 24 * 60 * 60 * 1000) },
+  }).sort({ createdAt: 1 }).limit(limit).lean();
+
+  let captured = 0, expired = 0;
+  for (const intent of pending) {
+    try {
+      const payments = await cashfree.getOrderPayments(intent.cfOrderId);
+      const ok = Array.isArray(payments) && payments.find((p) => p.payment_status === 'SUCCESS');
+      if (ok) {
+        await capturePayment({
+          cfOrderId: intent.cfOrderId,
+          cfPaymentId: String(ok.cf_payment_id),
+          amountPaise: Math.round(ok.payment_amount * 100),
+          eventName: 'reconcile.sweep',
+          rawPayload: { source: 'reconcile', payment: ok },
+        });
+        captured++;
+      } else if (now - new Date(intent.createdAt).getTime() > EXPIRE_AFTER_MS) {
+        await PaymentIntent.updateOne({ _id: intent._id, status: 'created' }, { $set: { status: 'expired' } });
+        expired++;
+      }
+    } catch (err) {
+      logger.warn({ err: err.message, cfOrderId: intent.cfOrderId }, '[PAYMENT] reconcile check failed — will retry');
+    }
+  }
+  return { checked: pending.length, captured, expired };
+}
+
+/**
+ * Return a cancelled booking's online payment. Never blocks the cancellation:
+ * if the gateway call fails the refund is flagged for ops instead of lost.
+ */
+async function refundBookingPayment({ source, bookingId, amountPaise, reason = 'Booking cancelled' }) {
+  const intent = await PaymentIntent.findOne({ bookingSource: source, bookingId, status: 'captured' });
+  if (!intent) return { refunded: false, reason: 'not_paid_online' };
+  const amount = Math.min(amountPaise ?? intent.amountPaise, intent.amountPaise);
+  if (amount <= 0) return { refunded: false, reason: 'nothing_to_refund' };
+  if (intent.refund?.status === 'requested' || intent.refund?.status === 'processed') return { refunded: true, duplicate: true };
+
+  const refundId = `rf_${intent._id}`;
+  try {
+    const res = await cashfree.createRefund({ orderId: intent.cfOrderId, amountPaise: amount, refundId, note: reason.slice(0, 100) });
+    await PaymentIntent.updateOne({ _id: intent._id }, {
+      $set: { refund: { status: 'requested', amountPaise: amount, cfRefundId: res?.cf_refund_id || refundId, reason, at: new Date() } },
+    });
+    return { refunded: true, amountPaise: amount };
+  } catch (err) {
+    await PaymentIntent.updateOne({ _id: intent._id }, {
+      $set: {
+        refund: { status: 'manual_required', amountPaise: amount, reason, at: new Date() },
+        reconciliationRequired: true, reconciliationReason: `refund failed: ${err.message}`, reconciliationAt: new Date(),
+      },
+    });
+    const { redis: r } = require('../../config/redis');
+    r.publish('notification:admin:ops', JSON.stringify({
+      type: 'refund_manual_required',
+      title: 'Refund needs manual action',
+      body: `${source} · ₹${(amount / 100).toFixed(0)} · ${intent.cfOrderId}`,
+      data: { cfOrderId: intent.cfOrderId, source, bookingId: String(bookingId) },
+      urgent: true,
+    })).catch(() => {});
+    return { refunded: false, reason: 'manual_required' };
+  }
+}
+
 module.exports = {
   createOrderForPurpose,
   handleWebhook,
   handleCheckoutVerification,
+  reconcilePendingIntents,
+  refundBookingPayment,
 };

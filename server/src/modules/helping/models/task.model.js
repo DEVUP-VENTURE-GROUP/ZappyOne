@@ -375,7 +375,12 @@ const helpingTaskSchema = new mongoose.Schema(
     handoverOtp: { type: String, default: '' },
     handoverVerifiedAt: { type: Date, default: null },
 
-    paymentMethod: { type: String, enum: ['cash', 'online', 'wallet'], default: 'online' },
+    paymentMethod: { type: String, enum: ['cash', 'online', 'wallet'], default: 'cash' },
+    /** The service charge only — item money is the customer's own and settled separately. */
+    paymentStatus: {
+      type: String, enum: ['pending', 'paid', 'failed', 'refunded', 'partially_refunded'], default: 'pending', index: true,
+    },
+    paymentId: { type: String, default: null },
     idempotencyKey: { type: String, default: null, index: true, sparse: true },
 
     cancellationReason: { type: String, default: '' },

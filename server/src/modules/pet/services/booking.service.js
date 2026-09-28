@@ -76,7 +76,7 @@ async function createBooking({
   workerId = null,
   shopId = null,
   customerInstructions = '',
-  paymentMethod = 'online',
+  paymentMethod = 'cash',
   packageCode = null,
   needsPickup = false,
   needsReturn = false,
@@ -91,6 +91,7 @@ async function createBooking({
     if (existing) return { booking: existing, replayed: true };
   }
   await zoneService.assertBookableLocation(serviceLocation);
+  require('../../payment/payables').assertOnlineAvailable(paymentMethod);
   if (!petEntries.length) throw httpError('Choose at least one pet', 400, 'NO_PETS');
 
   const withPets = await loadOwnedPets(userId, petEntries);
@@ -249,15 +250,15 @@ async function quoteCancellation({ booking, by = 'customer' }) {
 
   const total = booking.pricing?.totalPaise || 0;
 
-  // A provider cancelling never costs the customer money.
-  if (by === 'provider') {
-    const pct = policy?.providerCancelRefundPct ?? 100;
+  // A provider or the platform cancelling never costs the customer money.
+  if (by === 'provider' || by === 'admin') {
+    const pct = by === 'admin' ? 100 : (policy?.providerCancelRefundPct ?? 100);
     return {
       allowed: true,
       refundPaise: Math.round(total * (pct / 100)),
       penaltyPaise: 0,
       providerCompensationPaise: 0,
-      tier: 'provider_cancelled',
+      tier: by === 'admin' ? 'platform_cancelled' : 'provider_cancelled',
     };
   }
 
@@ -305,11 +306,20 @@ async function cancelBooking({ bookingId, actorId, by = 'customer', reason = '' 
   booking.transitionTo('CANCELLED', { by: actorId, byRole: by, note: reason });
   await booking.save();
 
-  if (by === 'provider') {
+  // Paid online? Send the refund due now; a gateway failure is flagged for ops, never lost.
+  if (booking.paymentStatus === 'paid' && quote.refundPaise > 0) {
+    await require('../../payment/payment.service').refundBookingPayment({
+      source: 'pet', bookingId: booking._id, amountPaise: quote.refundPaise, reason: `Cancelled: ${reason || by}`,
+    });
+  }
+
+  if (by === 'provider' || by === 'admin') {
     await notify(
       booking.userId,
       'Your booking was cancelled',
-      'The provider cancelled. You have been refunded in full and we can find you someone else.',
+      by === 'admin'
+        ? `ZappyOne cancelled this booking${reason ? `: ${reason}` : ''}. You will not be charged.`
+        : 'The provider cancelled. You have been refunded in full and we can find you someone else.',
       booking,
     );
   }

@@ -126,7 +126,12 @@ async function start() {
     startStaleOrderWorker();
     startRepairSlaWorker();
     startShieldPayoutWorker();
-    logger.info('[BOOT] Inline workers started (dispatch, notifications, stale, shield). Set RUN_INLINE_WORKERS=false when using dedicated worker processes.');
+    // Backup for missed Cashfree webhooks; capture is exactly-once, so overlap is harmless.
+    setInterval(() => {
+      require('./modules/payment/payment.service').reconcilePendingIntents()
+        .catch((err) => logger.warn({ err: err.message }, '[PAYMENT] reconcile sweep failed'));
+    }, 3 * 60 * 1000);
+    logger.info('[BOOT] Inline workers started (dispatch, notifications, stale, shield, payment reconcile). Set RUN_INLINE_WORKERS=false when using dedicated worker processes.');
   } else {
     logger.info('[BOOT] RUN_INLINE_WORKERS=false — API only. Dispatch/notifications/stale/shield must run as dedicated processes.');
   }
