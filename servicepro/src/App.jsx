@@ -47,6 +47,7 @@ export default function App() {
               element={accessToken ? <Navigate to={homeFor(role)} replace />
                 : <WorkerLoginPage allowSignup={false} portalLabel="ServicePro · Shop team" heading="Shop worker login" />}
             />
+            <Route path="/worker/login" element={<Navigate to={WORKER_LOGIN} replace />} />
             <Route path="/shop" element={shop(<ShopDashboard />)} />
             <Route path="/shop/profile" element={shop(<ShopProfilePage />)} />
             <Route path="/shop/kyc" element={shop(<ShopKycPage />)} />

@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Smartphone, ChevronRight, AlertTriangle, Settings, Loader2, Store } from 'lucide-react';
 import { useRepairOnboardingStatusQuery, useRepairProviderJobsQuery } from '../../services/api';
+import { PORTAL_URLS } from '../../config/portals';
 
 /**
  * Phone-repair jobs + setup entry point on the worker dashboard.
@@ -130,7 +131,7 @@ export default function RepairJobsPanel() {
         * features were missing.
         */}
       <button
-        onClick={() => nav('/shop/login')}
+        onClick={() => window.location.assign(`${PORTAL_URLS.servicepro}/shop/login`)}
         className="mt-3 flex w-full items-start gap-2.5 rounded-xl border border-dashed border-slate-200 p-3 text-left transition hover:border-indigo-300 hover:bg-indigo-50/40"
       >
         <Store size={15} className="mt-0.5 shrink-0 text-indigo-500" />

@@ -3,5 +3,4 @@ import { store } from '@shared/store';
 import App from './App';
 import '@shared/styles/index.css';
 
-// Admin sessions belong to the admin app, never this one.
-mountApp({ App, store, roles: ['user', 'event_partner'] });
+mountApp({ App, store, roles: ['worker'] });

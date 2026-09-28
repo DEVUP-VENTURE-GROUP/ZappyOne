@@ -9,7 +9,8 @@ import useTelemetry from './hooks/useTelemetry';
 import { prefetchMainTabs, onIdle } from './lib/routePrefetch';
 import { prefetchServiceCatalog } from './hooks/useServiceCatalog';
 import { loadCategories } from './hooks/useCategories';
-import { getSubdomainRedirect, isExternalRedirect, SERVICEPRO_URL } from './config/hosts';
+import { getSubdomainRedirect, isExternalRedirect } from './config/hosts';
+import { PORTAL_URLS } from '@shared/config/portals';
 import { RequireAuth } from '@shared/components/common/RequireAuth';
 import NotificationBanner from './components/common/NotificationBanner';
 import ConnectionBanner from '@shared/components/common/ConnectionBanner';
@@ -24,7 +25,6 @@ import ErrorBoundary from '@shared/components/common/ErrorBoundary';
 // LoginPage is NOT lazy — it's the first screen most users see and needs to
 // render immediately with no loading flash.
 import LoginPage from './pages/LoginPage';
-import WorkerLoginPage from '@shared/provider/pages/WorkerLoginPage';
 
 const HomePage            = lazy(() => import('./pages/HomePage'));
 const BookingPage         = lazy(() => import('./pages/BookingPage'));
@@ -38,9 +38,6 @@ const ChatPage            = lazy(() => import('./pages/ChatPage'));
 const AllServicesPage     = lazy(() => import('./pages/AllServicesPage'));
 const ServiceDetailPage   = lazy(() => import('./pages/ServiceDetailPage'));
 const BrandSelectPage     = lazy(() => import('./pages/BrandSelectPage'));
-const WorkerDashboard     = lazy(() => import('@shared/provider/pages/WorkerDashboard'));
-const WorkerJobPage       = lazy(() => import('@shared/provider/pages/WorkerJobPage'));
-const WorkerKycPage       = lazy(() => import('@shared/provider/pages/WorkerKycPage'));
 const PlansPage           = lazy(() => import('./pages/PlansPage'));
 const WalletPage          = lazy(() => import('./pages/WalletPage'));
 const ReferralPage        = lazy(() => import('./pages/ReferralPage'));
@@ -48,8 +45,6 @@ const DisputesPage        = lazy(() => import('./pages/DisputesPage'));
 const SupportPage         = lazy(() => import('./pages/SupportPage'));
 const PaymentMethodsPage  = lazy(() => import('./pages/PaymentMethodsPage'));
 const WorkerProfilePage     = lazy(() => import('./pages/WorkerProfilePage'));
-const WorkerEditProfilePage        = lazy(() => import('@shared/provider/pages/WorkerEditProfilePage'));
-const WorkerNotificationsPage      = lazy(() => import('@shared/provider/pages/WorkerNotificationsPage'));
 const EventsHomePage               = lazy(() => import('./pages/events/EventsHomePage'));
 const EventCategoryPage            = lazy(() => import('./pages/events/EventCategoryPage'));
 const EventThemePage               = lazy(() => import('./pages/events/EventThemePage'));
@@ -59,7 +54,6 @@ const EventBookingDetailPage       = lazy(() => import('./pages/events/EventBook
 const EventSavedThemesPage         = lazy(() => import('./pages/events/EventSavedThemesPage'));
 const PartnerLoginPage             = lazy(() => import('./pages/events/PartnerLoginPage'));
 const PartnerDashboard             = lazy(() => import('./pages/events/PartnerDashboard'));
-const ProviderOnboardingPage       = lazy(() => import('@shared/provider/pages/ProviderOnboardingPage'));
 const NearbyShopsPage              = lazy(() => import('./pages/NearbyShopsPage'));
 const RepairFlowPage               = lazy(() => import('./pages/repair/RepairFlowPage'));
 const CategoryProblemsPage         = lazy(() => import('./pages/repair/CategoryProblemsPage'));
@@ -69,8 +63,6 @@ const HelpingServicesPage           = lazy(() => import('./pages/helping/Helping
 const ShoppingTaskPage              = lazy(() => import('./pages/helping/ShoppingTaskPage'));
 const ReturnTaskPage                = lazy(() => import('./pages/helping/ReturnTaskPage'));
 const HelpingTaskDetailPage         = lazy(() => import('./pages/helping/HelpingTaskDetailPage'));
-const WorkerHelpingTasksPage        = lazy(() => import('@shared/provider/pages/WorkerHelpingTasksPage'));
-const WorkerHelpingJobPage          = lazy(() => import('@shared/provider/pages/WorkerHelpingJobPage'));
 const PetServicesPage               = lazy(() => import('./pages/pet/PetServicesPage'));
 const MyPetsPage                    = lazy(() => import('./pages/pet/MyPetsPage'));
 const PetDetailPage                 = lazy(() => import('./pages/pet/PetDetailPage'));
@@ -78,10 +70,6 @@ const PetBookingFlowPage            = lazy(() => import('./pages/pet/PetBookingF
 const PetBookingDetailPage          = lazy(() => import('./pages/pet/PetBookingDetailPage'));
 const PetBookingsListPage           = lazy(() => import('./pages/pet/PetBookingsListPage'));
 const PetRecurringPage              = lazy(() => import('./pages/pet/PetRecurringPage'));
-const WorkerPetJobsPage             = lazy(() => import('@shared/provider/pages/WorkerPetJobsPage'));
-const WorkerPetJobPage              = lazy(() => import('@shared/provider/pages/WorkerPetJobPage'));
-const WorkerRepairJobPage          = lazy(() => import('@shared/provider/pages/WorkerRepairJobPage'));
-const ProviderRepairSetupPage      = lazy(() => import('@shared/provider/pages/ProviderRepairSetupPage'));
 const ShopPublicProfilePage        = lazy(() => import('./pages/ShopPublicProfilePage'));
 const AdvertiserDashboard          = lazy(() => import('./pages/AdvertiserDashboard'));
 const SpendingPage                 = lazy(() => import('./pages/SpendingPage'));
@@ -89,12 +77,6 @@ const NotificationPrefsPage        = lazy(() => import('./pages/NotificationPref
 const PromosHubPage                = lazy(() => import('./pages/PromosHubPage'));
 const ScheduledBookingsPage        = lazy(() => import('./pages/ScheduledBookingsPage'));
 const AccountSecurityPage          = lazy(() => import('./pages/AccountSecurityPage'));
-const WorkerBankPage               = lazy(() => import('@shared/provider/pages/WorkerBankPage'));
-const WorkerWithdrawPage           = lazy(() => import('@shared/provider/pages/WorkerWithdrawPage'));
-const WorkerAppealsPage            = lazy(() => import('@shared/provider/pages/WorkerAppealsPage'));
-const WorkerEarningsPage           = lazy(() => import('@shared/provider/pages/WorkerEarningsPage'));
-const WorkerTrainingPage           = lazy(() => import('@shared/provider/pages/WorkerTrainingPage'));
-const WorkerGoalsPage              = lazy(() => import('@shared/provider/pages/WorkerGoalsPage'));
 const FaqPage                      = lazy(() => import('./pages/FaqPage'));
 const PolicyPage                   = lazy(() => import('./pages/PolicyPage'));
 const RewardsPage                  = lazy(() => import('./pages/RewardsPage'));
@@ -175,10 +157,6 @@ export default function App() {
         <Route path="/policy/:slug" element={<PolicyPage />} />
 
         <Route path="/login" element={token ? <RedirectByRole role={role} /> : <LoginPage />} />
-        <Route
-          path="/worker/login"
-          element={token ? <RedirectByRole role={role} /> : <WorkerLoginPage />}
-        />
 
         {/* User app */}
         <Route element={<MainLayout />}>
@@ -224,32 +202,18 @@ export default function App() {
         <Route path="/plans"  element={<RequireAuth><PlansPage /></RequireAuth>} />
 
         {/* Worker app */}
-        <Route path="/worker" element={<RequireAuth role="worker"><WorkerDashboard /></RequireAuth>} />
-        <Route path="/worker/jobs/:id" element={<RequireAuth role="worker"><WorkerJobPage /></RequireAuth>} />
-        <Route path="/worker/kyc" element={<RequireAuth role="worker"><WorkerKycPage /></RequireAuth>} />
-        <Route path="/worker/profile" element={<RequireAuth role="worker"><WorkerEditProfilePage /></RequireAuth>} />
-        <Route path="/worker/notifications" element={<RequireAuth role="worker"><WorkerNotificationsPage /></RequireAuth>} />
-        <Route path="/worker/bank" element={<RequireAuth role="worker"><WorkerBankPage /></RequireAuth>} />
-        <Route path="/worker/withdraw" element={<RequireAuth role="worker"><WorkerWithdrawPage /></RequireAuth>} />
-        <Route path="/worker/appeals" element={<RequireAuth role="worker"><WorkerAppealsPage /></RequireAuth>} />
-        <Route path="/worker/earnings" element={<RequireAuth role="worker"><WorkerEarningsPage /></RequireAuth>} />
-        <Route path="/worker/skills" element={<Navigate to="/provider/onboarding" replace />} />
-        <Route path="/worker/training" element={<RequireAuth role="worker"><WorkerTrainingPage /></RequireAuth>} />
-        <Route path="/worker/goals" element={<RequireAuth role="worker"><WorkerGoalsPage /></RequireAuth>} />
 
         {/* Event Partner */}
         <Route path="/partner/login" element={token ? <RedirectByRole role={role} /> : <PartnerLoginPage />} />
         <Route path="/partner" element={<RequireAuth role="event_partner"><PartnerDashboard /></RequireAuth>} />
         <Route path="/partner/advertise" element={<RequireAuth role="event_partner"><AdvertiserDashboard /></RequireAuth>} />
 
-        {/* Shops moved to their own app; keep old bookmarks working. */}
-        <Route path="/shop/*" element={<ExternalRedirect base={SERVICEPRO_URL} />} />
+        {/* Providers moved to their own apps; keep old bookmarks working. */}
+        <Route path="/shop/*" element={<ExternalRedirect base={PORTAL_URLS.servicepro} />} />
+        <Route path="/worker/*" element={<ExternalRedirect base={PORTAL_URLS.rakshak} />} />
+        <Route path="/provider/*" element={<ExternalRedirect base={PORTAL_URLS.rakshak} />} />
 
         {/* Provider onboarding — one path for shops and independent technicians */}
-        <Route
-          path="/provider/onboarding"
-          element={<RequireAuth role={['shop', 'worker']}><ProviderOnboardingPage /></RequireAuth>}
-        />
 
         {/* Repair verticals — one flow component, the vertical is data */}
         <Route path="/repair" element={<RequireAuth role="user"><RepairFlowPage vertical="mobile" /></RequireAuth>} />
@@ -264,8 +228,6 @@ export default function App() {
         <Route path="/helping/shopping" element={<RequireAuth role="user"><ShoppingTaskPage /></RequireAuth>} />
         <Route path="/helping/returns" element={<RequireAuth role="user"><ReturnTaskPage /></RequireAuth>} />
         <Route path="/helping/tasks/:id" element={<RequireAuth role="user"><HelpingTaskDetailPage /></RequireAuth>} />
-        <Route path="/worker/helping" element={<RequireAuth role="worker"><WorkerHelpingTasksPage /></RequireAuth>} />
-        <Route path="/worker/helping/:id" element={<RequireAuth role="worker"><WorkerHelpingJobPage /></RequireAuth>} />
         <Route path="/pet" element={<RequireAuth role="user"><PetServicesPage /></RequireAuth>} />
         <Route path="/pet/my-pets" element={<RequireAuth role="user"><MyPetsPage /></RequireAuth>} />
         <Route path="/pet/my-pets/:id" element={<RequireAuth role="user"><PetDetailPage /></RequireAuth>} />
@@ -273,21 +235,13 @@ export default function App() {
         <Route path="/pet/bookings" element={<RequireAuth role="user"><PetBookingsListPage /></RequireAuth>} />
         <Route path="/pet/bookings/:id" element={<RequireAuth role="user"><PetBookingDetailPage /></RequireAuth>} />
         <Route path="/pet/recurring" element={<RequireAuth role="user"><PetRecurringPage /></RequireAuth>} />
-        <Route path="/worker/pet" element={<RequireAuth role="worker"><WorkerPetJobsPage /></RequireAuth>} />
-        <Route path="/worker/pet/:id" element={<RequireAuth role="worker"><WorkerPetJobPage /></RequireAuth>} />
         {/* One heading — Display, Storage, Connectivity — and everything under it. */}
         <Route
           path="/repair/category/:vertical/:categoryCode"
           element={<RequireAuth role="user"><CategoryProblemsPage /></RequireAuth>}
         />
         <Route path="/repair/bookings/:id" element={<RequireAuth role="user"><RepairBookingPage /></RequireAuth>} />
-        <Route
-          path="/provider/services"
-          element={<RequireAuth role={['shop', 'worker']}><ProviderRepairSetupPage /></RequireAuth>}
-        />
         {/* Kept so existing worker links and notifications still resolve. */}
-        <Route path="/worker/repair/setup" element={<Navigate to="/provider/services" replace />} />
-        <Route path="/worker/repair/:id" element={<RequireAuth role="worker"><WorkerRepairJobPage /></RequireAuth>} />
 
         {/* Nearby Shops — customer-facing discovery */}
         <Route path="/nearby-shops" element={<RequireAuth role="user"><NearbyShopsPage /></RequireAuth>} />
@@ -318,8 +272,7 @@ function ExternalRedirect({ base }) {
 }
 
 function RedirectByRole({ role }) {
-  const dest = role === 'worker' ? '/worker'
-    : role === 'event_partner' ? '/partner'
+  const dest = role === 'event_partner' ? '/partner'
     : '/';
   return <Navigate to={dest} replace />;
 }
