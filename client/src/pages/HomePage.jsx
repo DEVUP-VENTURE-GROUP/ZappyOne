@@ -44,7 +44,6 @@ import { springSnap, fadeInUp, staggerContainer } from '../lib/animations';
 import IntroSplash from '../components/common/IntroSplash';
 import HeroCarousel from '../components/home/HeroCarousel';
 import CharacterServiceGrid from '../components/home/CharacterServiceGrid';
-import { SERVICE_PRICE_FALLBACK } from '../constants/servicePriceFallback';
 import OffersSection from '../components/home/OffersSection';
 import { 
   PromoBannerEvents,
@@ -281,16 +280,13 @@ function TrustOfferCards() {
 /* UC-style image service card */
 function ServiceImageCard({ item, nav }) {
   const t = useT();
-  // Live price from the admin Service Catalog — single source of truth. When the
-  // catalog hasn't loaded yet (or a request failed), fall back to a snapshot of
-  // catalog minimums so the card shows a real "From ₹X" instead of "Get Quote".
+  // Only a price the admin catalog actually holds is shown; never a stale snapshot.
   const { data: catalog } = useListServicesQuery();
   const svc   = catalog?.byCode?.[item.key];
   const livePrice = svc?.priceRangeMinPaise != null ? Math.round(svc.priceRangeMinPaise / 100) : null;
-  const price = livePrice ?? SERVICE_PRICE_FALLBACK[item.key] ?? null;
+  const price = livePrice;
   const isServiceCode = /^[a-z][a-z0-9_]+$/.test(item.key || '');
-  const rawBadge = item.badge || 'Popular';
-  const badge = t(`home.badge.${rawBadge.toLowerCase()}`, rawBadge);
+  const badge = item.badge ? t(`home.badge.${item.badge.toLowerCase()}`, item.badge) : null;
 
   return (
     <div
@@ -305,9 +301,11 @@ function ServiceImageCard({ item, nav }) {
           loading="lazy"
           onError={e => { e.target.style.display = 'none'; }}
         />
-        <span className="absolute top-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/90 text-slate-700 shadow-sm backdrop-blur-sm">
-          {badge}
-        </span>
+        {badge && (
+          <span className="absolute top-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/90 text-slate-700 shadow-sm backdrop-blur-sm">
+            {badge}
+          </span>
+        )}
       </div>
       <p className="text-[13px] md:text-[15px] font-bold text-[#0f172a] leading-snug mb-0.5 truncate">{t(serviceNameKey(item.name), item.name)}</p>
       <div className="flex items-center gap-1.5">

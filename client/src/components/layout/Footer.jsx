@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Send, Heart, ShieldCheck, MapPin, Star, Phone, Zap } from 'lucide-react';
+import { Send, Heart, ShieldCheck, MapPin, Phone } from 'lucide-react';
 import { ZappyLogo } from '@shared/components/common/ZappyLogo';
 import { PORTAL_URLS } from '@shared/config/portals';
 
@@ -87,9 +87,7 @@ export default function Footer() {
             </div>
 
             <div className="flex flex-col gap-2 text-xs text-slate-500">
-              <div className="flex items-center gap-2"><Star size={11} className="text-amber-400 fill-amber-400" /><span>4.8 ★ rated by 5,000+ customers</span></div>
               <div className="flex items-center gap-2"><ShieldCheck size={11} className="text-emerald-400" /><span>Background-verified professionals</span></div>
-              <div className="flex items-center gap-2"><Zap size={11} className="text-indigo-400" /><span>Arrives in 15–30 minutes</span></div>
               <div className="flex items-center gap-2"><MapPin size={11} className="text-rose-400" /><span>Live GPS tracking</span></div>
             </div>
           </div>
