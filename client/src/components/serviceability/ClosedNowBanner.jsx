@@ -18,13 +18,11 @@ export function nextOpeningLabel(next) {
 
 export default function ClosedNowBanner({ nextOpening }) {
   return (
-    <div className="mx-auto mt-4 w-full max-w-7xl px-4">
-      <div className="flex items-start gap-3 rounded-2xl bg-amber-50 px-4 py-3 ring-1 ring-amber-200/70">
-        <Moon size={18} className="mt-0.5 shrink-0 text-amber-600" />
-        <div>
-          <p className="text-sm font-bold text-amber-900">{nextOpeningLabel(nextOpening)}</p>
-          <p className="text-xs text-amber-800/80">Everyone who covers your area is offline right now. You can still browse and schedule.</p>
-        </div>
+    <div className="flex items-start gap-3 rounded-xl border-l-4 border-amber-500 bg-amber-50 px-4 py-3" role="status">
+      <Moon size={18} className="mt-0.5 shrink-0 text-amber-700" />
+      <div>
+        <p className="text-[14px] font-semibold text-amber-900">{nextOpeningLabel(nextOpening)}</p>
+        <p className="text-[13px] text-amber-900/75">The pros who cover your area are offline right now. You can still browse and schedule.</p>
       </div>
     </div>
   );
