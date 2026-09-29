@@ -5,7 +5,7 @@ import {
   Radio, Globe, Layers, Zap, Sparkles, Shield, PartyPopper, ShieldAlert, Map as MapIcon,
   AlertCircle, GraduationCap, Store, IndianRupee, BellRing, Activity, Coins,
 } from 'lucide-react';
-import Hub from '../pages/Hub';
+import Hub from '../ui/Hub';
 
 /**
  * The admin console, declared once: sidebar groups, the page behind each
@@ -15,44 +15,44 @@ import Hub from '../pages/Hub';
 const page = (load) => lazy(load);
 
 const P = {
-  Overview: page(() => import('../pages/Overview')),
-  Insights: page(() => import('../pages/Intelligence')),
-  Services: page(() => import('../pages/services/ServicesHub')),
-  Users: page(() => import('../pages/Users')),
-  Bookings: page(() => import('../pages/Bookings')),
-  Support: page(() => import('../pages/Support')),
-  Disputes: page(() => import('../pages/Disputes')),
-  Promos: page(() => import('../pages/Promos')),
-  Cashback: page(() => import('../pages/Rewards')),
-  Points: page(() => import('../pages/RewardsConfig')),
-  Plans: page(() => import('../pages/Plans')),
-  Verification: page(() => import('../pages/ProviderOnboarding')),
-  Shops: page(() => import('../pages/Shops')),
-  Workers: page(() => import('../pages/Workers')),
-  WorkerOps: page(() => import('../pages/WorkerOps')),
-  Appeals: page(() => import('../pages/Appeals')),
-  Training: page(() => import('../pages/Training')),
-  Incentives: page(() => import('../pages/Incentives')),
-  Events: page(() => import('../pages/Events')),
-  Ads: page(() => import('../pages/Ads')),
-  Payments: page(() => import('../pages/money/Payments')),
-  Payouts: page(() => import('../pages/Payouts')),
-  Wallets: page(() => import('../pages/Wallet')),
-  Shield: page(() => import('../pages/ShieldFund')),
-  LiveOps: page(() => import('../pages/LiveOps')),
-  Intervention: page(() => import('../pages/Intervention')),
-  Zones: page(() => import('../pages/Zones')),
-  LaunchDemand: page(() => import('../pages/areas/LaunchDemand')),
-  Fraud: page(() => import('../pages/Fraud')),
-  Cancellation: page(() => import('../pages/Cancellation')),
-  Notifications: page(() => import('../pages/Notifications')),
-  Content: page(() => import('../pages/Content')),
-  Cities: page(() => import('../pages/Cities')),
-  Alerts: page(() => import('../pages/Alerts')),
-  Health: page(() => import('../pages/SystemHealth')),
-  Flags: page(() => import('../pages/FeatureFlags')),
-  Audit: page(() => import('../pages/Audit')),
-  Team: page(() => import('../pages/Team')),
+  Overview: page(() => import('../features/overview/Overview')),
+  Insights: page(() => import('../features/insights/Insights')),
+  Services: page(() => import('../features/catalog/ServicesHub')),
+  Customers: page(() => import('../features/customers/Customers')),
+  Bookings: page(() => import('../features/bookings/Bookings')),
+  Tickets: page(() => import('../features/support/Tickets')),
+  Disputes: page(() => import('../features/support/Disputes')),
+  Promos: page(() => import('../features/marketing/Promos')),
+  Cashback: page(() => import('../features/marketing/rewards/Cashback')),
+  Points: page(() => import('../features/marketing/rewards/Points')),
+  Plans: page(() => import('../features/marketing/Plans')),
+  Verification: page(() => import('../features/providers/Verification')),
+  Shops: page(() => import('../features/providers/Shops')),
+  Workers: page(() => import('../features/providers/Workers')),
+  WorkerOps: page(() => import('../features/providers/WorkerOps')),
+  Appeals: page(() => import('../features/providers/Appeals')),
+  Training: page(() => import('../features/providers/Training')),
+  Incentives: page(() => import('../features/providers/Incentives')),
+  Events: page(() => import('../features/events/Events')),
+  Ads: page(() => import('../features/marketing/Ads')),
+  Payments: page(() => import('../features/money/Payments')),
+  Payouts: page(() => import('../features/money/Payouts')),
+  Wallets: page(() => import('../features/money/Wallets')),
+  ShieldFund: page(() => import('../features/money/ShieldFund')),
+  LiveBoard: page(() => import('../features/operations/live/LiveBoard')),
+  StuckJobs: page(() => import('../features/operations/live/StuckJobs')),
+  Zones: page(() => import('../features/operations/areas/Zones')),
+  LaunchDemand: page(() => import('../features/operations/areas/LaunchDemand')),
+  Fraud: page(() => import('../features/operations/Fraud')),
+  CancellationPolicy: page(() => import('../features/operations/CancellationPolicy')),
+  Notifications: page(() => import('../features/marketing/Notifications')),
+  HelpContent: page(() => import('../features/marketing/content/HelpContent')),
+  CityPages: page(() => import('../features/marketing/content/CityPages')),
+  Alerts: page(() => import('../features/system/Alerts')),
+  Infrastructure: page(() => import('../features/system/Infrastructure')),
+  FeatureFlags: page(() => import('../features/system/FeatureFlags')),
+  AuditLog: page(() => import('../features/system/AuditLog')),
+  Team: page(() => import('../features/system/Team')),
 };
 
 /** A sidebar entry that is several related screens as tabs. */
@@ -64,7 +64,7 @@ const hub = (title, subtitle, views) => {
 
 const HUBS = {
   helpdesk: hub('Help desk', 'Customer tickets and disputes', [
-    { id: 'tickets', label: 'Tickets', icon: HeadphonesIcon, Comp: P.Support },
+    { id: 'tickets', label: 'Tickets', icon: HeadphonesIcon, Comp: P.Tickets },
     { id: 'disputes', label: 'Disputes', icon: Scale, Comp: P.Disputes },
   ]),
   rewards: hub('Rewards', 'Cashback, referrals and loyalty points', [
@@ -75,23 +75,23 @@ const HUBS = {
     { id: 'payments', label: 'Payments', icon: IndianRupee, Comp: P.Payments },
     { id: 'payouts', label: 'Payouts', icon: CreditCard, Comp: P.Payouts },
     { id: 'wallets', label: 'Wallets', icon: Wallet, Comp: P.Wallets },
-    { id: 'shield', label: 'Shield fund', icon: Shield, Comp: P.Shield },
+    { id: 'shield', label: 'Shield fund', icon: Shield, Comp: P.ShieldFund },
   ]),
   liveops: hub('Live operations', 'Jobs in progress right now, and the ones that need a hand', [
-    { id: 'board', label: 'Live board', icon: Radio, Comp: P.LiveOps },
-    { id: 'stuck', label: 'Stuck jobs', icon: Zap, Comp: P.Intervention },
+    { id: 'board', label: 'Live board', icon: Radio, Comp: P.LiveBoard },
+    { id: 'stuck', label: 'Stuck jobs', icon: Zap, Comp: P.StuckJobs },
   ]),
   areas: hub('Service areas', 'Where ZappyOne serves, and where customers are asking for it', [
     { id: 'zones', label: 'Zones', icon: MapIcon, Comp: P.Zones },
     { id: 'demand', label: 'Launch demand', icon: BellRing, Comp: P.LaunchDemand },
   ]),
   content: hub('Content & SEO', 'Help articles and the public city pages', [
-    { id: 'help', label: 'Help content', icon: FileText, Comp: P.Content },
-    { id: 'cities', label: 'SEO city pages', icon: Globe, Comp: P.Cities },
+    { id: 'help', label: 'Help content', icon: FileText, Comp: P.HelpContent },
+    { id: 'cities', label: 'SEO city pages', icon: Globe, Comp: P.CityPages },
   ]),
   status: hub('System status', 'What needs attention now, and the health of the platform underneath', [
     { id: 'alerts', label: 'Alerts', icon: AlertCircle, Comp: P.Alerts },
-    { id: 'infra', label: 'Infrastructure', icon: Server, Comp: P.Health },
+    { id: 'infra', label: 'Infrastructure', icon: Server, Comp: P.Infrastructure },
   ]),
 };
 
@@ -104,7 +104,7 @@ export const NAV_GROUPS = [
     { id: 'services', area: 'catalog', label: 'Services', icon: Layers, Comp: P.Services },
   ] },
   { label: 'Customers', items: [
-    { id: 'users', area: 'customers', label: 'Customers', icon: Users, Comp: P.Users },
+    { id: 'users', area: 'customers', label: 'Customers', icon: Users, Comp: P.Customers },
     { id: 'bookings', area: 'bookings', label: 'Bookings', icon: ShoppingBag, Comp: P.Bookings },
     { id: 'helpdesk', area: 'support', label: 'Help desk', icon: HeadphonesIcon, Comp: HUBS.helpdesk },
     { id: 'promos', area: 'marketing', label: 'Promo codes', icon: Ticket, Comp: P.Promos },
@@ -135,14 +135,14 @@ export const NAV_GROUPS = [
     { id: 'liveops', area: 'operations', label: 'Live operations', icon: Radio, Comp: HUBS.liveops },
     { id: 'areas', area: 'operations', label: 'Service areas', icon: MapIcon, Comp: HUBS.areas },
     { id: 'fraud', area: 'operations', label: 'Fraud detection', icon: ShieldAlert, Comp: P.Fraud },
-    { id: 'cancellation', area: 'operations', label: 'Cancellation policy', icon: XCircle, Comp: P.Cancellation },
+    { id: 'cancellation', area: 'operations', label: 'Cancellation policy', icon: XCircle, Comp: P.CancellationPolicy },
     { id: 'notifications', area: 'marketing', label: 'Notifications', icon: Bell, Comp: P.Notifications },
     { id: 'content', area: 'marketing', label: 'Content & SEO', icon: FileText, Comp: HUBS.content },
   ] },
   { label: 'System', items: [
     { id: 'status', area: 'system', label: 'System status', icon: Server, Comp: HUBS.status },
-    { id: 'flags', area: 'system', label: 'Feature flags', icon: ToggleRight, Comp: P.Flags },
-    { id: 'audit', area: 'system', label: 'Audit logs', icon: FileText, Comp: P.Audit },
+    { id: 'flags', area: 'system', label: 'Feature flags', icon: ToggleRight, Comp: P.FeatureFlags },
+    { id: 'audit', area: 'system', label: 'Audit logs', icon: FileText, Comp: P.AuditLog },
     { id: 'team', area: 'admins', label: 'Admin team', icon: Users, Comp: P.Team },
   ] },
 ];
