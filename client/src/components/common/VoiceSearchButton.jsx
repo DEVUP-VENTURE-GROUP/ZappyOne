@@ -49,14 +49,14 @@ export default function VoiceSearchButton({ onResult, size = 18, className = '' 
     >
       {listening && (
         <motion.span
-          className="absolute inset-0 rounded-full bg-indigo-500/40"
+          className="absolute inset-0 rounded-lg bg-zappy-500/40"
           animate={{ scale: [1, 1.9], opacity: [0.6, 0] }}
           transition={{ duration: 1.1, repeat: Infinity, ease: 'easeOut' }}
         />
       )}
       <span
-        className={`relative flex items-center justify-center rounded-full w-9 h-9 transition-colors ${
-          listening ? 'bg-indigo-600 text-white' : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100'
+        className={`relative flex items-center justify-center rounded-lg w-9 h-9 transition-colors ${
+          listening ? 'bg-zappy-600 text-white' : 'text-slate-600 hover:bg-slate-100 hover:text-navy'
         }`}
       >
         <Mic size={size} strokeWidth={2.2} />

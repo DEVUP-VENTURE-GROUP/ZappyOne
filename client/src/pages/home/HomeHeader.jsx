@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Bell, ChevronDown, Loader2, MapPin, ScanLine, Search } from 'lucide-react';
+import { Bell, ChevronDown, Loader2, MapPin, ScanLine, Search, UserRound } from 'lucide-react';
 import { useListNotificationsQuery } from '@shared/services/api';
 import VoiceSearchButton from '../../components/common/VoiceSearchButton';
 
@@ -132,7 +132,7 @@ export default function HomeHeader({ loc, svc, isAuthed, avatar, onPickLocation 
         >
           {avatar
             ? <img src={avatar} alt="" className="h-full w-full object-cover" />
-            : <span className="flex h-full w-full items-center justify-center text-[13px] font-bold">{isAuthed ? 'Me' : 'In'}</span>}
+            : <span className="flex h-full w-full items-center justify-center"><UserRound size={19} strokeWidth={2} /></span>}
         </button>
       </div>
     </div>

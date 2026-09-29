@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Wrench } from 'lucide-react';
 import { SERVICE_ICONS } from '@shared/components/home/LiveServices';
@@ -9,27 +10,84 @@ import { SERVICE_ICONS } from '@shared/components/home/LiveServices';
  *
  * Columns follow the width: 4 on a phone, up to 8 on a desktop.
  */
-function Tile({ service, onOpen }) {
+/**
+ * Muted tints so each group reads as its own shelf. Picked by the domain's
+ * position in the admin-ordered catalog, so a new domain needs no code.
+ */
+const SHELVES = [
+  { bg: 'bg-[#E8F0FC]', fg: 'text-[#1D4ED8]' }, // blue
+  { bg: 'bg-[#E4F3EE]', fg: 'text-[#0F766E]' }, // teal
+  { bg: 'bg-[#FBEEE0]', fg: 'text-[#B45309]' }, // amber
+  { bg: 'bg-[#FBE8EC]', fg: 'text-[#BE123C]' }, // rose
+  { bg: 'bg-[#ECEEF2]', fg: 'text-[#334155]' }, // slate
+];
+
+function Tile({ service, shelf, onOpen }) {
   const Icon = SERVICE_ICONS[service.icon] || Wrench;
   return (
     <button type="button" onClick={onOpen} className="group flex flex-col items-center gap-2 text-center focus-visible:outline-none">
-      <span className="flex aspect-square w-full items-center justify-center overflow-hidden rounded-2xl bg-[#E9F0FB] group-focus-visible:outline group-focus-visible:outline-2 group-focus-visible:outline-zappy-500">
+      <span className={`flex aspect-square w-full items-center justify-center overflow-hidden rounded-2xl ${shelf.bg} group-focus-visible:outline group-focus-visible:outline-2 group-focus-visible:outline-zappy-500`}>
         {service.imageUrl
           ? <img src={service.imageUrl} alt="" loading="lazy" className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
-          : <Icon size={30} strokeWidth={1.5} className="text-zappy-700" />}
+          : <Icon strokeWidth={1.5} className={`h-[38%] w-[38%] ${shelf.fg} transition-transform duration-200 group-hover:scale-105`} />}
       </span>
       <span className="line-clamp-2 text-[12px] font-medium leading-[1.3] text-navy sm:text-[13px]">{service.name}</span>
     </button>
   );
 }
 
-export function ServiceGrid({ services, onOpen }) {
-  if (!services.length) return null;
+/** Columns in the tile grid at the current width: 4 phone → 5 → 6 → 8 desktop. */
+const BREAKPOINTS = [['(min-width: 1024px)', 8], ['(min-width: 768px)', 6], ['(min-width: 640px)', 5]];
+function useColumns() {
+  const read = () => (typeof window === 'undefined' ? 4
+    : (BREAKPOINTS.find(([q]) => window.matchMedia(q).matches)?.[1] ?? 4));
+  const [cols, setCols] = useState(read);
+  useEffect(() => {
+    const lists = BREAKPOINTS.map(([q]) => window.matchMedia(q));
+    const onChange = () => setCols(read());
+    lists.forEach((m) => m.addEventListener('change', onChange));
+    return () => lists.forEach((m) => m.removeEventListener('change', onChange));
+  }, []);
+  return cols;
+}
+
+/**
+ * domains: [{ code, name, services }] already filtered to what's live here.
+ *
+ * One shared column grid. Each group spans as many columns as it has services
+ * (up to a full row) and small groups pack side by side, so two groups of two
+ * share a phone row instead of each wasting half of one. Tiles in every group
+ * sit on the same columns.
+ */
+export function ServiceGrid({ domains, onOpen }) {
+  const cols = useColumns();
+  const shown = domains.filter((d) => d.services.length);
+  if (!shown.length) return null;
+  const single = shown.length === 1;
   return (
     <section aria-labelledby="home-services">
       <h2 id="home-services" className="text-[17px] font-bold text-navy sm:text-[20px]">What do you need help with?</h2>
-      <div className="mt-3 grid grid-cols-4 gap-x-3 gap-y-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8">
-        {services.map((s) => <Tile key={s.code} service={s} onOpen={() => onOpen(s)} />)}
+      <div
+        className="mt-3 grid gap-x-3 gap-y-6"
+        style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, gridAutoFlow: 'row dense' }}
+      >
+        {shown.map((d, i) => {
+          const shelf = SHELVES[i % SHELVES.length];
+          const span = Math.min(d.services.length, cols);
+          return (
+            <div key={d.code} style={{ gridColumn: `span ${span} / span ${span}` }}>
+              {!single && (
+                // A one-tile group is too narrow for most names: let it take two lines instead of an ellipsis.
+                <h3 className={`mb-2 text-[12px] font-semibold uppercase leading-[1.3] tracking-[0.08em] text-slate-500 ${span === 1 ? 'line-clamp-2' : 'truncate'}`}>
+                  {d.name}
+                </h3>
+              )}
+              <div className="grid gap-x-3 gap-y-4" style={{ gridTemplateColumns: `repeat(${span}, minmax(0, 1fr))` }}>
+                {d.services.map((s) => <Tile key={s.code} service={s} shelf={shelf} onOpen={() => onOpen(s)} />)}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </section>
   );

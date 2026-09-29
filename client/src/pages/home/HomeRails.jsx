@@ -113,13 +113,23 @@ export function EventsRail() {
     <section aria-labelledby="home-events">
       <SectionTitle id="home-events" title="Celebrations & décor" action="See all" onAction={() => nav('/events')} />
       <Row cols="sm:grid-cols-4 lg:grid-cols-6">
-        {cats.map((c) => (
+        {/* A taste on Home; "See all" has the rest. */}
+        {cats.slice(0, 6).map((c) => (
           <button key={c.slug} type="button" onClick={() => nav(`/events/browse?category=${c.slug}`)}
             className="group w-[128px] shrink-0 snap-start text-left sm:w-auto">
-            <span className="block aspect-[4/5] overflow-hidden rounded-xl bg-slate-200">
-              {c.coverImage && <img src={c.coverImage} alt="" loading="lazy" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />}
-            </span>
-            <span className="mt-1.5 block truncate text-[13px] font-medium text-navy">{c.name}</span>
+            {c.coverImage ? (
+              <>
+                <span className="block aspect-[4/5] overflow-hidden rounded-xl bg-slate-200">
+                  <img src={c.coverImage} alt="" loading="lazy" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                </span>
+                <span className="mt-1.5 block truncate text-[13px] font-medium text-navy">{c.name}</span>
+              </>
+            ) : (
+              // No photo uploaded yet: the name carries the tile rather than an empty box.
+              <span className="flex aspect-[4/3] items-end rounded-xl bg-[#FCEFE3] p-3">
+                <span className="text-[15px] font-semibold leading-tight text-[#7A3E12]">{c.name}</span>
+              </span>
+            )}
           </button>
         ))}
       </Row>

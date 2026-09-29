@@ -9,7 +9,6 @@ import { useGeolocation, loadGeoLocation } from '@shared/hooks/useGeolocation';
 import { saveGeoLocation } from '@shared/utils/geoCache';
 import { reverseGeocode } from '@shared/utils/reverseGeocode';
 import { serviceLabel } from '@shared/constants/services';
-import LiveServices from '@shared/components/home/LiveServices';
 import SEO, { HOME_SCHEMA, BASE_URL } from '@shared/components/SEO';
 import NotInYourArea from '../components/serviceability/NotInYourArea';
 import ClosedNowBanner from '../components/serviceability/ClosedNowBanner';
@@ -28,8 +27,10 @@ import { OffersRail, BookAgainRail, EventsRail, NearbyShopsLink } from './home/H
  * Home — what a customer can get done, right where they are.
  *
  *   location + live status → search → anything in progress
- *   → every live service → common problems → offers → book again
- *   → what each service covers → shops, events
+ *   → every live service → common problems → offers → book again → shops, events
+ *
+ * What each service covers in detail lives one tap in (the service and All
+ * Services pages) — repeating it here made Home five screens of the same list.
  *
  * One layout from a small phone to a wide desktop; nothing here is a claim
  * the data doesn't back (services, offers, events and counts are all live).
@@ -137,9 +138,10 @@ export default function HomePage() {
   const { data: svc } = useGetServiceabilityQuery({ lat: loc.lat, lng: loc.lng }, { skip: loc.lat == null });
   const { data: catalog, isLoading: loadingCatalog } = useLiveCatalogQuery();
   const liveCodes = useMemo(() => (svc ? new Set(svc.lines.map((l) => l.code)) : null), [svc]);
-  const services = useMemo(() => (catalog?.domains || [])
-    .flatMap((d) => d.services)
-    .filter((s) => !liveCodes || liveCodes.has(s.code)), [catalog, liveCodes]);
+  const domains = useMemo(() => (catalog?.domains || [])
+    .map((d) => ({ ...d, services: d.services.filter((s) => !liveCodes || liveCodes.has(s.code)) }))
+    .filter((d) => d.services.length), [catalog, liveCodes]);
+  const services = useMemo(() => domains.flatMap((d) => d.services), [domains]);
   const searchTerms = useMemo(() => {
     const problems = services.flatMap((s) => (s.highlights || []).map((h) => h.name));
     return [...new Set(problems.length ? problems : services.map((s) => s.name))].slice(0, 8);
@@ -240,19 +242,12 @@ export default function HomePage() {
 
               {loadingCatalog || (loc.lat != null && !svc)
                 ? <SkeletonGrid />
-                : <ServiceGrid services={services} onOpen={openService} />}
+                : <ServiceGrid domains={domains} onOpen={openService} />}
 
               <ProblemChips services={services} />
               <OffersRail isAuthed={isAuthed} />
               <BookAgainRail items={quickRebooks} busy={rebooking} onRebook={handleRebook} label={serviceLabel} />
               <AdBanner />
-
-              {/* Each service, opened up by the kind of problem it fixes. */}
-              <LiveServices
-                availableCodes={liveCodes ? [...liveCodes] : null}
-                onOpenService={(code) => trackSearch({ category: code, lat: loc.lat, lng: loc.lng, result: 'served', userType: 'user' })}
-              />
-
               <NearbyShopsLink />
               <EventsRail />
             </>
