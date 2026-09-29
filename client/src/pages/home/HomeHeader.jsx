@@ -123,12 +123,13 @@ export default function HomeHeader({ loc, svc, isAuthed, avatar, onPickLocation 
           )}
         </button>
 
-        <NotifBell isAuthed={isAuthed} />
+        {/* From tablet up these live in the top bar. */}
+        <span className="contents md:hidden"><NotifBell isAuthed={isAuthed} /></span>
         <button
           type="button"
           onClick={() => nav(isAuthed ? '/profile' : '/login')}
           aria-label={isAuthed ? 'Your profile' : 'Sign in'}
-          className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-white/15 ring-2 ring-white/30 transition hover:ring-white/60"
+          className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-white/15 ring-2 ring-white/30 transition hover:ring-white/60 md:hidden"
         >
           {avatar
             ? <img src={avatar} alt="" className="h-full w-full object-cover" />
