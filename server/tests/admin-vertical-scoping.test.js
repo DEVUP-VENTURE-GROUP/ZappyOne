@@ -61,7 +61,7 @@ beforeAll(async () => {
     { vertical: 'mobile' }, { vertical: 'laptop' }, { vertical: 'two_wheeler' },
   ]);
 
-  ctx.token = signAccessToken({ sub: new mongoose.Types.ObjectId().toString(), role: 'admin' });
+  ctx.token = await require('./helpers').adminToken();
 
   await completed('mobile', 100000);
   await completed('mobile', 50000);

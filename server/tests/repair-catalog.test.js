@@ -136,7 +136,7 @@ beforeAll(async () => {
   ctx.customerId = customer._id;
   ctx.customerToken = signAccessToken({ sub: customer._id.toString(), role: 'user', phone: customer.phone });
   ctx.otherToken = signAccessToken({ sub: other._id.toString(), role: 'user', phone: other.phone });
-  ctx.adminToken = signAccessToken({ sub: new mongoose.Types.ObjectId().toString(), role: 'admin' });
+  ctx.adminToken = await require('./helpers').adminToken();
 });
 
 afterAll(async () => { await stopMongo(); });

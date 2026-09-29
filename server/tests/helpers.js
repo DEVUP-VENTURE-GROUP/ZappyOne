@@ -109,4 +109,17 @@ async function passHandoverGates(bookingId) {
   );
 }
 
-module.exports = { startMongo, stopMongo, resetDb, passHandoverGates };
+/**
+ * A signed-in admin that really exists — admin routes check the account, not just the token.
+ * Defaults to super_admin; pass a role to test what that role may do.
+ */
+async function adminToken(role = 'super_admin') {
+  const Admin = require('../src/modules/admin/admin.model');
+  const { signAccessToken } = require('../src/modules/auth/token.service');
+  const admin = await Admin.create({
+    email: `${role}-${new mongoose.Types.ObjectId()}@test.local`, name: `Test ${role}`, passwordHash: 'x', role,
+  });
+  return signAccessToken({ sub: String(admin._id), role: 'admin', email: admin.email });
+}
+
+module.exports = { startMongo, stopMongo, resetDb, passHandoverGates, adminToken };

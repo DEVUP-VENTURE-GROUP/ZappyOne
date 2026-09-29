@@ -4,7 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LogOut, Menu, X, ChevronRight, Zap } from 'lucide-react';
 import { logout } from '@shared/modules/auth/authSlice';
-import { useLogoutMutation, useAdminAlertsQuery } from '@shared/services/api';
+import { useLogoutMutation, useAdminAlertsQuery, useAdminMeQuery } from '@shared/services/api';
 import { adminPath } from '@/config/admin';
 import { NAV_GROUPS, SECTIONS, REDIRECTS } from '@/config/sections';
 
@@ -64,10 +64,28 @@ function NavItem({ item, isActive, onClick }) {
   );
 }
 
+/** Shown instead of a section the admin's role does not open. */
+function NotAllowed() {
+  return (
+    <div className="py-24 text-center">
+      <p className="text-sm font-semibold text-slate-700">Your role doesn't include this section.</p>
+      <p className="text-xs text-slate-400 mt-1">Ask a super admin if you need access.</p>
+    </div>
+  );
+}
+
 /* Main */
 export default function AdminDashboard() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const requested = searchParams.get('tab') || 'overview';
+  const { data: me, isLoading: loadingMe } = useAdminMeQuery();
+  // Only what this admin's role opens; the server enforces the same rule on every call.
+  const allowed = new Set(me?.areas || []);
+  const groups = NAV_GROUPS
+    .map((g) => ({ ...g, items: g.items.filter((i) => allowed.has(i.area)) }))
+    .filter((g) => g.items.length);
+  const firstAllowed = groups[0]?.items[0]?.id;
+
+  const requested = searchParams.get('tab') || firstAllowed || 'overview';
   const redirect = REDIRECTS[requested];
   const active = redirect ? redirect[0] : (SECTIONS[requested] ? requested : 'overview');
   const status = useSystemStatus();
@@ -86,7 +104,8 @@ export default function AdminDashboard() {
   const navigate  = useNavigate();
   const [callLogout] = useLogoutMutation();
 
-  const Section = SECTIONS[active].Comp;
+  const permitted = allowed.has(SECTIONS[active].area);
+  const Section = permitted ? SECTIONS[active].Comp : NotAllowed;
   const activeLabel = SECTIONS[active].label;
 
   const handleNav = useCallback((id) => {
@@ -98,6 +117,10 @@ export default function AdminDashboard() {
     try { await callLogout().unwrap(); } catch {}
     dispatch(logout());
     navigate(adminPath('/login'), { replace: true });
+  }
+
+  if (loadingMe) {
+    return <div className="flex h-screen items-center justify-center text-sm text-slate-400" style={{ background: '#0f1117' }}>Loading…</div>;
   }
 
   return (
@@ -156,7 +179,7 @@ export default function AdminDashboard() {
 
         {/* Nav groups */}
         <nav className="flex-1 overflow-y-auto py-2 px-2" style={{ scrollbarWidth: 'none' }}>
-          {NAV_GROUPS.map((group, gi) => (
+          {groups.map((group, gi) => (
             <div key={group.label} className={gi ? 'mt-4' : ''}>
               <p className="text-[9px] font-black text-slate-600 uppercase tracking-[0.12em] px-3 mb-1">{group.label}</p>
               {group.items.map(item => (

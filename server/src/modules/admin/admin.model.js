@@ -8,10 +8,17 @@ const adminSchema = new mongoose.Schema(
 
     role: {
       type: String,
-      enum: ['super_admin', 'ops', 'finance', 'support'],
+      enum: Object.keys(require('./access/permissions').ROLES),
       default: 'ops',
     },
-    permissions: [String], // fine-grained flags for future
+    // Granted on top of the role, e.g. 'money:read' for one ops person.
+    permissions: [String],
+    // Where this admin works. Empty = everywhere. A city manager is scoped to theirs.
+    scope: {
+      markets: { type: [String], default: [] },
+      cities: { type: [String], default: [] },
+    },
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', default: null },
 
     twoFactor: {
       enabled: { type: Boolean, default: false },

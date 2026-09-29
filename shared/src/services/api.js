@@ -118,7 +118,7 @@ export const api = createApi({
   // Keep fetched data cached for 5 min after a component unmounts, so jumping
   // back to a tab shows data instantly (no skeleton) instead of refetching.
   keepUnusedDataFor: 300,
-  tagTypes: ['Payments', 'Me', 'Order', 'Worker', 'Earnings', 'AdminMetrics', 'Kyc', 'Plan', 'Subscription', 'Wallet', 'Notification', 'AdminUsers', 'Disputes', 'Payouts', 'Incentives', 'CancellationConfig', 'PricingCfg', 'AuditLogs', 'Addresses', 'Ad', 'Promo', 'Gamification', 'Recommendations', 'FeatureFlags', 'SupportTickets', 'Referral', 'ShieldFund', 'EventTheme', 'EventBooking', 'EventPartner', 'EventConfig', 'EventCategory', 'PartnerNotification', 'Fraud', 'Zone', 'City', 'PaymentMethods', 'UserDisputes', 'UserTickets', 'AdminAppeals', 'AdminTraining', 'WorkerGoals', 'Plans', 'Content', 'Rewards', 'WorkerOps', 'ReadyMode', 'Shop', 'ShopWorkers', 'ShopKyc',
+  tagTypes: ['AdminTeam', 'Payments', 'Me', 'Order', 'Worker', 'Earnings', 'AdminMetrics', 'Kyc', 'Plan', 'Subscription', 'Wallet', 'Notification', 'AdminUsers', 'Disputes', 'Payouts', 'Incentives', 'CancellationConfig', 'PricingCfg', 'AuditLogs', 'Addresses', 'Ad', 'Promo', 'Gamification', 'Recommendations', 'FeatureFlags', 'SupportTickets', 'Referral', 'ShieldFund', 'EventTheme', 'EventBooking', 'EventPartner', 'EventConfig', 'EventCategory', 'PartnerNotification', 'Fraud', 'Zone', 'City', 'PaymentMethods', 'UserDisputes', 'UserTickets', 'AdminAppeals', 'AdminTraining', 'WorkerGoals', 'Plans', 'Content', 'Rewards', 'WorkerOps', 'ReadyMode', 'Shop', 'ShopWorkers', 'ShopKyc',
     'RepairCatalog', 'RepairConfig', 'RepairPricing', 'RepairRequests', 'RepairBookings', 'RepairProvider', 'MyAssets',
     'HelpingConfig', 'HelpingTasks', 'HelpingAvailable', 'AdminHelpingTasks',
     'PetCatalog', 'MyPets', 'PetBookings', 'PetAvailable', 'PetRecurring', 'AdminPetBookings', 'AdminPetPricing', 'AdminPetCapabilities',
@@ -686,6 +686,27 @@ export const api = createApi({
     }),
     adminWorkerTrustAudit: b.query({
       query: () => adminApiPath('/audit/worker-trust'),
+    }),
+    // The signed-in admin: role, scope and the areas they may open.
+    adminMe: b.query({
+      query: () => adminApiPath('/me'),
+      providesTags: ['AdminTeam'],
+    }),
+    // System → Team (super admins).
+    adminTeam: b.query({
+      query: () => adminApiPath('/admins'),
+      providesTags: ['AdminTeam'],
+    }),
+    adminRoles: b.query({
+      query: () => adminApiPath('/admins/roles'),
+    }),
+    adminCreateAdmin: b.mutation({
+      query: (body) => ({ url: adminApiPath('/admins'), method: 'POST', body }),
+      invalidatesTags: ['AdminTeam'],
+    }),
+    adminUpdateAdmin: b.mutation({
+      query: ({ id, ...body }) => ({ url: adminApiPath(`/admins/${id}`), method: 'PATCH', body }),
+      invalidatesTags: ['AdminTeam'],
     }),
     // Service areas → where customers asked us to launch ("notify me").
     adminLaunchInterest: b.query({
@@ -2681,6 +2702,11 @@ export const {
   useAdminWorkerTrustAuditQuery,
   useAdminPaymentsQuery,
   useAdminLaunchInterestQuery,
+  useAdminMeQuery,
+  useAdminTeamQuery,
+  useAdminRolesQuery,
+  useAdminCreateAdminMutation,
+  useAdminUpdateAdminMutation,
   useAdminPaymentsSummaryQuery,
   useAdminRetryRefundMutation,
   useAdminMarkRefundedMutation,

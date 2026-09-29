@@ -169,7 +169,7 @@ beforeAll(async () => {
     otherToken: signAccessToken({ sub: other._id.toString(), role: 'user', phone: other.phone }),
     shopToken: signAccessToken({ sub: shop._id.toString(), role: 'shop', phone: shop.phone }),
     techToken: signAccessToken({ sub: tech._id.toString(), role: 'worker', phone: tech.phone }),
-    adminToken: signAccessToken({ sub: new mongoose.Types.ObjectId().toString(), role: 'admin' }),
+    adminToken: await require('./helpers').adminToken(),
   });
 });
 

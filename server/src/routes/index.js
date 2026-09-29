@@ -40,6 +40,8 @@ const contentRoutes = require('../modules/content/content.routes');
 const rewardsRoutes = require('../modules/rewards/rewards.routes');
 
 const { requireAdminOrigin } = require('../middlewares/adminOrigin');
+const { authenticate, requireRole } = require('../middlewares/auth');
+const { adminAccess } = require('../modules/admin/access/guard');
 
 function mountRoutes(app) {
   const slug = process.env.ADMIN_LOGIN_SLUG;
@@ -49,7 +51,8 @@ function mountRoutes(app) {
   app.use('/', seoRoutes);
 
   // Admin surfaces answer only the admin portal's origin (see adminOrigin.js).
-  app.use(`/api/${slug}`, requireAdminOrigin);
+  // Every admin route: right origin, signed-in admin, and a role allowed into that area.
+  app.use(`/api/${slug}`, requireAdminOrigin, authenticate, requireRole('admin'), adminAccess());
   app.use('/api/auth/admin', requireAdminOrigin);
 
   app.use('/api/auth', authRoutes);

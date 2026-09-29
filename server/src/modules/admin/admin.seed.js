@@ -21,7 +21,15 @@ async function ensureAdminSeeded() {
   }
 
   const existing = await Admin.findOne({ email: email.toLowerCase() });
-  if (existing) return; // already seeded
+  if (existing) {
+    // Roles are enforced: never leave the platform with nobody able to manage it.
+    const anySuper = await Admin.exists({ role: 'super_admin', isActive: true });
+    if (!anySuper) {
+      await Admin.updateOne({ _id: existing._id }, { $set: { role: 'super_admin', isActive: true } });
+      logger.warn({ email }, 'No active super admin — the env admin was promoted');
+    }
+    return;
+  }
 
   await Admin.create({
     email: email.toLowerCase(),

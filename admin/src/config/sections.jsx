@@ -52,6 +52,7 @@ const P = {
   Health: page(() => import('../pages/SystemHealth')),
   Flags: page(() => import('../pages/FeatureFlags')),
   Audit: page(() => import('../pages/Audit')),
+  Team: page(() => import('../pages/Team')),
 };
 
 /** A sidebar entry that is several related screens as tabs. */
@@ -96,52 +97,53 @@ const HUBS = {
 
 export const NAV_GROUPS = [
   { label: 'Insights', items: [
-    { id: 'overview', label: 'Overview', icon: LayoutDashboard, Comp: P.Overview },
-    { id: 'insights', label: 'Insights', icon: Sparkles, Comp: P.Insights },
+    { id: 'overview', area: 'overview', label: 'Overview', icon: LayoutDashboard, Comp: P.Overview },
+    { id: 'insights', area: 'insights', label: 'Insights', icon: Sparkles, Comp: P.Insights },
   ] },
   { label: 'Catalog', items: [
-    { id: 'services', label: 'Services', icon: Layers, Comp: P.Services },
+    { id: 'services', area: 'catalog', label: 'Services', icon: Layers, Comp: P.Services },
   ] },
   { label: 'Customers', items: [
-    { id: 'users', label: 'Customers', icon: Users, Comp: P.Users },
-    { id: 'bookings', label: 'Bookings', icon: ShoppingBag, Comp: P.Bookings },
-    { id: 'helpdesk', label: 'Help desk', icon: HeadphonesIcon, Comp: HUBS.helpdesk },
-    { id: 'promos', label: 'Promo codes', icon: Ticket, Comp: P.Promos },
-    { id: 'rewards', label: 'Rewards', icon: Gift, Comp: HUBS.rewards },
-    { id: 'plans', label: 'Plans', icon: Crown, Comp: P.Plans },
+    { id: 'users', area: 'customers', label: 'Customers', icon: Users, Comp: P.Users },
+    { id: 'bookings', area: 'bookings', label: 'Bookings', icon: ShoppingBag, Comp: P.Bookings },
+    { id: 'helpdesk', area: 'support', label: 'Help desk', icon: HeadphonesIcon, Comp: HUBS.helpdesk },
+    { id: 'promos', area: 'marketing', label: 'Promo codes', icon: Ticket, Comp: P.Promos },
+    { id: 'rewards', area: 'marketing', label: 'Rewards', icon: Gift, Comp: HUBS.rewards },
+    { id: 'plans', area: 'marketing', label: 'Plans', icon: Crown, Comp: P.Plans },
   ] },
   { label: 'Providers', items: [
-    { id: 'verification', label: 'Verification', icon: FileCheck, Comp: P.Verification },
+    { id: 'verification', area: 'providers', label: 'Verification', icon: FileCheck, Comp: P.Verification },
   ] },
   { label: 'ServicePro', items: [
-    { id: 'shops', label: 'Shops', icon: Store, Comp: P.Shops },
+    { id: 'shops', area: 'providers', label: 'Shops', icon: Store, Comp: P.Shops },
   ] },
   { label: 'Rakshak', items: [
-    { id: 'workers', label: 'Workers', icon: Briefcase, Comp: P.Workers },
-    { id: 'workerops', label: 'Worker ops', icon: Activity, Comp: P.WorkerOps },
-    { id: 'appeals', label: 'Appeals', icon: AlertCircle, Comp: P.Appeals },
-    { id: 'training', label: 'Training', icon: GraduationCap, Comp: P.Training },
-    { id: 'incentives', label: 'Incentives', icon: Gift, Comp: P.Incentives },
+    { id: 'workers', area: 'providers', label: 'Workers', icon: Briefcase, Comp: P.Workers },
+    { id: 'workerops', area: 'providers', label: 'Worker ops', icon: Activity, Comp: P.WorkerOps },
+    { id: 'appeals', area: 'providers', label: 'Appeals', icon: AlertCircle, Comp: P.Appeals },
+    { id: 'training', area: 'providers', label: 'Training', icon: GraduationCap, Comp: P.Training },
+    { id: 'incentives', area: 'providers', label: 'Incentives', icon: Gift, Comp: P.Incentives },
   ] },
   { label: 'Events', items: [
-    { id: 'events', label: 'Event commerce', icon: PartyPopper, Comp: P.Events },
-    { id: 'ads', label: 'Ad campaigns', icon: Campaign, Comp: P.Ads },
+    { id: 'events', area: 'events', label: 'Event commerce', icon: PartyPopper, Comp: P.Events },
+    { id: 'ads', area: 'marketing', label: 'Ad campaigns', icon: Campaign, Comp: P.Ads },
   ] },
   { label: 'Money', items: [
-    { id: 'money', label: 'Money', icon: IndianRupee, Comp: HUBS.money },
+    { id: 'money', area: 'money', label: 'Money', icon: IndianRupee, Comp: HUBS.money },
   ] },
   { label: 'Operations', items: [
-    { id: 'liveops', label: 'Live operations', icon: Radio, Comp: HUBS.liveops },
-    { id: 'areas', label: 'Service areas', icon: MapIcon, Comp: HUBS.areas },
-    { id: 'fraud', label: 'Fraud detection', icon: ShieldAlert, Comp: P.Fraud },
-    { id: 'cancellation', label: 'Cancellation policy', icon: XCircle, Comp: P.Cancellation },
-    { id: 'notifications', label: 'Notifications', icon: Bell, Comp: P.Notifications },
-    { id: 'content', label: 'Content & SEO', icon: FileText, Comp: HUBS.content },
+    { id: 'liveops', area: 'operations', label: 'Live operations', icon: Radio, Comp: HUBS.liveops },
+    { id: 'areas', area: 'operations', label: 'Service areas', icon: MapIcon, Comp: HUBS.areas },
+    { id: 'fraud', area: 'operations', label: 'Fraud detection', icon: ShieldAlert, Comp: P.Fraud },
+    { id: 'cancellation', area: 'operations', label: 'Cancellation policy', icon: XCircle, Comp: P.Cancellation },
+    { id: 'notifications', area: 'marketing', label: 'Notifications', icon: Bell, Comp: P.Notifications },
+    { id: 'content', area: 'marketing', label: 'Content & SEO', icon: FileText, Comp: HUBS.content },
   ] },
   { label: 'System', items: [
-    { id: 'status', label: 'System status', icon: Server, Comp: HUBS.status },
-    { id: 'flags', label: 'Feature flags', icon: ToggleRight, Comp: P.Flags },
-    { id: 'audit', label: 'Audit logs', icon: FileText, Comp: P.Audit },
+    { id: 'status', area: 'system', label: 'System status', icon: Server, Comp: HUBS.status },
+    { id: 'flags', area: 'system', label: 'Feature flags', icon: ToggleRight, Comp: P.Flags },
+    { id: 'audit', area: 'system', label: 'Audit logs', icon: FileText, Comp: P.Audit },
+    { id: 'team', area: 'admins', label: 'Admin team', icon: Users, Comp: P.Team },
   ] },
 ];
 

@@ -4,6 +4,7 @@ const { authenticate, requireRole } = require('../../middlewares/auth');
 const router = express.Router();
 router.use(authenticate, requireRole('admin'));
 
+router.use('/', require('./routes/team.routes'));
 router.use('/', require('./routes/metrics.routes'));
 router.use('/', require('./routes/orders.routes'));
 router.use('/', require('../admin-portal/admin-portal.routes'));
