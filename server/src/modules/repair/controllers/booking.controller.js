@@ -3,8 +3,7 @@ const { RepairBooking, CANCELLABLE_FROM } = require('../models/booking.model');
 const s3Service = require('../../../core/storage/s3');
 const { RepairQuote } = require('../models/quote.model');
 const { DeviceInspection, QAInspection } = require('../models/custody.model');
-const Worker = require('../../worker/worker.model');
-const Shop = require('../../shop/shop.model');
+const { providerCard } = require('../../worker/provider-card');
 const { QAChecklist } = require('../models/config.model');
 const bookingService = require('../services/booking.service');
 const cancellationService = require('../services/cancellation.service');
@@ -122,24 +121,8 @@ async function getBooking(req, res, next) {
      * Withheld until the job is accepted: before that the assignment can still
      * move, and naming someone who never turns up is worse than naming nobody.
      */
-    let provider = null;
     const introduced = !['PENDING', 'CONFIRMED', 'PROVIDER_ASSIGNED'].includes(booking.status);
-    if (introduced && (booking.workerId || booking.shopId)) {
-      provider = booking.workerId
-        ? await Worker.findById(booking.workerId).select('name phone rating completedJobs avatar').lean()
-        : await Shop.findById(booking.shopId).select('businessName phone rating completedJobs').lean();
-
-      if (provider) {
-        provider = {
-          name: provider.name || provider.businessName || 'Your technician',
-          phone: provider.phone || null,
-          rating: provider.rating ?? null,
-          completedJobs: provider.completedJobs || 0,
-          avatar: provider.avatar || null,
-          kind: booking.workerId ? 'technician' : 'shop',
-        };
-      }
-    }
+    const provider = introduced ? await providerCard(booking, { fallbackName: 'Your technician' }) : null;
 
     /**
      * Whether this booking can still be cancelled — decided HERE.

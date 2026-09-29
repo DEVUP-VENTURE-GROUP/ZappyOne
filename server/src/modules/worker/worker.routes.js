@@ -14,6 +14,8 @@ const locationSchema = Joi.object({
   // A repair trip, rather than an order delivery. Same pipeline — spoof guard,
   // Redis geo, throttled writes — fanned out to the repair booking's room.
   repairBookingId: Joi.string().hex().length(24).optional().allow(null, ''),
+  // Any non-order job (repair, pet, helping). A hint only: the server checks it is theirs.
+  jobId: Joi.string().hex().length(24).optional().allow(null, ''),
 });
 
 const shiftSchema = Joi.object({

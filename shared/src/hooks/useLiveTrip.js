@@ -5,24 +5,56 @@ import { API_BASE } from '../services/apiBase';
 import { useGeolocation } from './useGeolocation';
 
 /**
- * Live tracking for a repair booking — both ends of the same wire.
+ * Live tracking for a job someone travels to: a repair, a pet booking or a
+ * helping task — both ends of the same wire.
  *
- * `useRepairTrackingFeed` is the customer watching a technician approach.
- * `usePublishRepairLocation` is the technician's phone doing the reporting.
+ * `useTrackingFeed` is the customer watching their pro approach.
+ * `usePublishTripLocation` is the pro's phone doing the reporting.
  *
  * They are separate hooks because they run on separate devices and have
  * opposite failure modes: the customer's side must degrade to "no map yet"
- * silently, while the technician's side must stop the moment the trip ends —
- * a location feed that outlives its job is how an app ends up tracking a person
+ * silently, while the pro's side must stop the moment the trip ends — a
+ * location feed that outlives its job is how an app ends up tracking a person
  * rather than a delivery.
  *
- * Repair events travel on the same room as orders (keyed by the booking id), so
- * this deliberately does NOT reuse useOrderSocket: that hook dispatches into the
- * order slice and raises order-shaped toasts ("Order cancelled"), which would be
- * wrong and confusing on a repair screen.
+ * These jobs' events travel on the same room as orders (keyed by the job id),
+ * so this deliberately does NOT reuse useOrderSocket: that hook dispatches into
+ * the order slice and raises order-shaped toasts, which would be wrong here.
  */
 
-/** Statuses in which a technician is genuinely travelling. */
+/**
+ * When the pro is travelling, and to where — the same rules the server applies
+ * in worker/active-trip.js. `toCustomer` decides whether the screen says
+ * "coming to you" or just shows the trip.
+ */
+const point = (p) => (p?.coordinates?.length === 2 ? { lng: p.coordinates[0], lat: p.coordinates[1], address: p.address || '' } : null);
+
+export const TRIPS = {
+  repair: (b) => {
+    if (['ON_THE_WAY', 'PICKUP_SCHEDULED'].includes(b.status)) return { to: point(b.location), toCustomer: true };
+    if (b.status === 'OUT_FOR_RETURN') return { to: point(b.location), toCustomer: true, returning: true };
+    if (b.status === 'DEVICE_PICKED_UP') return { to: null, toCustomer: false };
+    return null;
+  },
+  pet: (b) => {
+    if (b.status === 'PROVIDER_EN_ROUTE') return { to: point(b.serviceLocation), toCustomer: true };
+    if (b.status === 'SERVICE_STARTED' && b.serviceMode === 'transport') return { to: point(b.destination), toCustomer: false };
+    return null;
+  },
+  helping: (t) => {
+    const startsAtCustomer = ['return', 'exchange'].includes(t.serviceType);
+    if (t.status === 'EN_ROUTE') return { to: point(t.pickupLocation), toCustomer: startsAtCustomer };
+    if (t.status === 'RETURNING') return { to: point(t.destination) || point(t.pickupLocation), toCustomer: !startsAtCustomer };
+    return null;
+  },
+};
+
+/** The trip a job is on right now, or null. */
+export function tripOf(kind, job) {
+  return job ? TRIPS[kind]?.(job) || null : null;
+}
+
+/** Statuses in which a repair technician is genuinely travelling. */
 export const MOVING_STATUSES = ['ON_THE_WAY', 'OUT_FOR_RETURN', 'PICKUP_SCHEDULED', 'DEVICE_PICKED_UP'];
 
 /**
@@ -32,7 +64,7 @@ export const MOVING_STATUSES = ['ON_THE_WAY', 'OUT_FOR_RETURN', 'PICKUP_SCHEDULE
  * map at all, beats a marker parked at a stale position the customer believes
  * is live.
  */
-export function useRepairTrackingFeed(bookingId, { enabled = true } = {}) {
+export function useTrackingFeed(bookingId, { enabled = true } = {}) {
   const token = useSelector((s) => s.auth?.token);
   const [workerLocation, setWorkerLocation] = useState(null);
   const [etaMinutes, setEtaMinutes] = useState(null);
@@ -79,14 +111,14 @@ export function useRepairTrackingFeed(bookingId, { enabled = true } = {}) {
 }
 
 /**
- * The technician's side: report position while, and only while, on the trip.
+ * The pro's side: report position while, and only while, on the trip.
  *
- * Every ping carries the booking id so the server can check the job is theirs
+ * Every ping carries the job id so the server can check the job is theirs
  * and still moving before it shares anything. `navigator.geolocation.watchPosition`
  * fires far more often than anyone needs, so posts are throttled — battery on a
  * working technician's phone is a real constraint, not a detail.
  */
-export function usePublishRepairLocation(bookingId, active, { minIntervalMs = 10000 } = {}) {
+export function usePublishTripLocation(bookingId, active, { minIntervalMs = 10000 } = {}) {
   const token = useSelector((s) => s.auth?.token);
   const lastSent = useRef(0);
   /**
@@ -125,7 +157,7 @@ export function usePublishRepairLocation(bookingId, active, { minIntervalMs = 10
           body: JSON.stringify({
             lat: loc.lat,
             lng: loc.lng,
-            repairBookingId: bookingId,
+            jobId: bookingId,
           }),
           keepalive: true,
         }).catch(() => {

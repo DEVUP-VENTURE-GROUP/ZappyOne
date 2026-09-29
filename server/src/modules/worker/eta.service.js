@@ -69,7 +69,15 @@ async function updateSpeedEwma(workerId, observedMps) {
  * @param {string} p.orderUserId
  * @param {number} [p.observedSpeedMps]  server-computed instantaneous speed
  */
-async function computeAndBroadcast({ orderId, workerId, workerLat, workerLng, orderUserId, observedSpeedMps }) {
+/**
+ * `deepLink` opens the right screen for the job (an order by default), and
+ * `notifyArrival` is false when the destination isn't the customer — a
+ * helper reaching a shop is not "almost there" to anyone.
+ */
+async function computeAndBroadcast({
+  orderId, workerId, workerLat, workerLng, orderUserId, observedSpeedMps,
+  deepLink = `/orders/${orderId}`, notifyArrival = true,
+}) {
   // Compute at most every 5s/order.
   const throttled = await redis.set(ETA_THROTTLE_KEY(orderId), '1', 'EX', ETA_THROTTLE_SEC, 'NX');
   if (throttled !== 'OK') return;
@@ -136,16 +144,16 @@ async function computeAndBroadcast({ orderId, workerId, workerLat, workerLng, or
   }
 
   // One-time "arriving soon" push.
-  if (isArrivingSoon && orderUserId) {
+  if (isArrivingSoon && orderUserId && notifyArrival) {
     const already = await redis.set(ARRIVING_SOON_KEY(orderId), '1', 'EX', 3600, 'NX');
     if (already === 'OK') {
       const notificationService = require('../notification/notification.service');
       notificationService.notify({
         recipient: { kind: 'user', id: orderUserId },
         type: 'worker_arriving_soon',
-        title: '📍 Worker is almost there',
-        body: 'Your worker is less than 500m away — get ready!',
-        deepLink: `/orders/${orderId}`,
+        title: 'Almost there',
+        body: 'Your pro is less than 500 m away.',
+        deepLink,
         data: { orderId: String(orderId), distKm, etaMinutes },
         sms: false,
       }).catch(() => {});

@@ -12,6 +12,7 @@ const taskService = require('./services/task.service');
 const pricingService = require('./services/pricing.service');
 const s3Service = require('../../core/storage/s3');
 const Worker = require('../worker/worker.model');
+const { providerCard } = require('../worker/provider-card');
 
 /** Object-level authorisation — the customer, the assigned helper, or admin. */
 function mayView(task, auth) {
@@ -115,6 +116,11 @@ async function listMyTasks(req, res, next) {
   } catch (err) { next(err); }
 }
 
+/** Named once they've accepted; before that the assignment can still move. */
+const NOT_YET_INTRODUCED = [
+  'DRAFT', 'REQUESTED', 'PAYMENT_PENDING', 'CONFIRMED', 'WORKER_SEARCHING', 'WORKER_ASSIGNED', 'WORKER_DECLINED',
+];
+
 async function getTask(req, res, next) {
   try {
     const task = await HelpingTask.findById(req.params.id).lean();
@@ -124,8 +130,10 @@ async function getTask(req, res, next) {
     }
 
     const signed = await signTask(task);
+    const introduced = !NOT_YET_INTRODUCED.includes(task.status);
     res.json({
       task: signed,
+      provider: introduced ? await providerCard(task, { fallbackName: 'Your helper' }) : null,
       canCancel: CANCELLABLE_FROM.includes(task.status),
       // Shown as two figures, always.
       authorisation: pricingService.authorisationTotal(task.charge, task.itemMoney?.budgetPaise || 0),

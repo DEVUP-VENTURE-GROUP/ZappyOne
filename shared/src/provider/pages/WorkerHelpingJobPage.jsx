@@ -7,6 +7,8 @@ import toast from 'react-hot-toast';
 import ProofPhotos, { readyKeys } from '../../components/common/ProofPhotos';
 import ImageUploadField from '../../components/common/ImageUploadField';
 import CollectPaymentCard from '../../components/common/CollectPaymentCard';
+import TripSharingBanner from '../../components/worker/TripSharingBanner';
+import { usePublishTripLocation, tripOf } from '../../hooks/useLiveTrip';
 import {
   useGetHelpingTaskQuery, useAdvanceHelpingStatusMutation, useUpdateHelpingItemMutation,
   useProposeHelpingAlternativeMutation, useRecordHelpingAdvanceMutation,
@@ -42,6 +44,9 @@ export default function WorkerHelpingJobPage() {
   const [complete, { isLoading: completing }] = useCompleteHelpingTaskMutation();
   const [collectCash, { isLoading: collecting }] = useCollectHelpingCashMutation();
   const [arrivalPhotos, setArrivalPhotos] = useState([]);
+  // Shared on the way out and on the way back; off while at the shop or the door.
+  const trip = tripOf('helping', data?.task);
+  const sharing = usePublishTripLocation(id, Boolean(trip));
 
   if (isLoading) return <div className="flex justify-center py-24"><Loader2 size={24} className="animate-spin text-zappy-400" /></div>;
   if (!data?.task) return <div className="text-center py-24 text-slate-400">Task not found</div>;
@@ -103,6 +108,7 @@ export default function WorkerHelpingJobPage() {
       </div>
 
       <Shell>
+        {trip && <TripSharingBanner sharing={sharing} {...trip} />}
         {task.pickupLocation?.address && (
           <a
             href={`https://maps.google.com/?q=${task.pickupLocation.coordinates?.[1]},${task.pickupLocation.coordinates?.[0]}`}

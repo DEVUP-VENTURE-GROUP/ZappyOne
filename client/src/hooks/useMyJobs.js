@@ -1,9 +1,12 @@
 import { useMemo } from 'react';
-import { useListOrdersQuery, useMyRepairBookingsQuery } from '@shared/services/api';
+import {
+  useListOrdersQuery, useMyRepairBookingsQuery, useMyPetBookingsQuery, useMyHelpingTasksQuery,
+} from '@shared/services/api';
 import { serviceNameKey } from '@shared/i18n/translations';
 
 /**
- * Everything the customer has booked — orders AND repairs — as one list.
+ * Everything the customer has booked — orders, repairs, pet bookings and
+ * helping tasks — as one list.
  *
  * Orders and repair bookings live in separate collections with separate status
  * vocabularies, and every screen that wanted "what has this customer got on"
@@ -168,18 +171,110 @@ function fromRepair(b) {
   };
 }
 
+/* Pet care: the owner is done once the service is; payment has its own card. */
+const PET_OUTCOME = {
+  SERVICE_COMPLETED: 'completed', CUSTOMER_CONFIRMATION: 'completed', PAYMENT_PENDING: 'completed',
+  PAYMENT_COMPLETED: 'completed', CLOSED: 'completed', CANCELLED: 'cancelled', REFUNDED: 'cancelled',
+};
+const PET_STAGE = {
+  REQUESTED: 'Requested', PRICE_PENDING: 'Getting your price', AWAITING_CUSTOMER_APPROVAL: 'Your approval needed',
+  BOOKED: 'Booked', PROVIDER_SEARCHING: 'Finding a pet pro', PROVIDER_ASSIGNED: 'Pet pro assigned',
+  PROVIDER_ACCEPTED: 'Pet pro confirmed', PROVIDER_EN_ROUTE: 'On the way', PROVIDER_ARRIVED: 'Arrived',
+  PET_HANDOVER: 'Handing over', SERVICE_STARTED: 'In progress', SERVICE_PAUSED: 'Paused',
+  SERVICE_COMPLETED: 'Completed', CUSTOMER_CONFIRMATION: 'Completed', PAYMENT_PENDING: 'Completed · payment due',
+  PAYMENT_COMPLETED: 'Completed', CLOSED: 'Completed', CANCELLED: 'Cancelled', REFUNDED: 'Refunded', DISPUTED: 'Under review',
+};
+
+function fromPet(b) {
+  const title = (b.categoryCode || 'pet care').replace(/_/g, ' ');
+  return {
+    kind: 'pet',
+    id: b._id,
+    reference: b.reference,
+    title,
+    stage: PET_STAGE[b.status] || b.status,
+    statusKey: `petStatus.${b.status}`,
+    titleKey: serviceNameKey(title),
+    status: b.status,
+    active: !PET_OUTCOME[b.status],
+    needsYou: b.status === 'AWAITING_CUSTOMER_APPROVAL',
+    outcome: PET_OUTCOME[b.status] || null,
+    totalPaise: b.pricing?.totalPaise ?? null,
+    rating: b.rating ?? null,
+    address: b.serviceLocation?.address || '',
+    coordinates: b.serviceLocation?.coordinates || null,
+    iconCode: `pet ${b.categoryCode || ''}`,
+    rebookHref: b.categoryCode ? `/pet/book/${b.categoryCode}` : '/pet',
+    canInvoice: false,
+    createdAt: b.createdAt,
+    href: `/pet/bookings/${b._id}`,
+    raw: b,
+  };
+}
+
+/* Helping: DISPUTED stays open until it's resolved. */
+const HELPING_OUTCOME = {
+  COMPLETED: 'completed', CUSTOMER_CONFIRMED: 'completed', SETTLED: 'completed',
+  CANCELLED: 'cancelled', FAILED: 'failed',
+};
+const HELPING_STAGE = {
+  REQUESTED: 'Requested', PAYMENT_PENDING: 'Payment pending', CONFIRMED: 'Confirmed',
+  WORKER_SEARCHING: 'Finding a helper', WORKER_ASSIGNED: 'Helper assigned', WORKER_DECLINED: 'Finding another helper',
+  WORKER_ACCEPTED: 'Helper confirmed', EN_ROUTE: 'Helper on the way', ARRIVED: 'Helper arrived',
+  TASK_STARTED: 'Started', IN_PROGRESS: 'In progress', APPROVAL_REQUIRED: 'Your approval needed',
+  ITEM_UNAVAILABLE: 'Item unavailable', RETURNING: 'On the way back', AT_DROPOFF: 'At the drop-off',
+  HANDED_OVER: 'Handed over', MERCHANT_REJECTED: 'Merchant did not accept it',
+  EXCHANGE_UNAVAILABLE: 'Replacement unavailable', COMPLETED: 'Completed', CUSTOMER_CONFIRMED: 'Completed',
+  SETTLED: 'Completed', CANCELLED: 'Cancelled', FAILED: 'Could not be completed', DISPUTED: 'Under review',
+};
+const HELPING_TITLE = { shopping: 'Shopping run', pickup: 'Pickup', return: 'Return', exchange: 'Exchange' };
+
+function fromHelping(t) {
+  const title = t.title || HELPING_TITLE[t.serviceType] || 'Helping task';
+  const where = t.destination?.address ? t.destination : t.pickupLocation;
+  return {
+    kind: 'helping',
+    id: t._id,
+    reference: t.reference,
+    title,
+    stage: HELPING_STAGE[t.status] || t.status,
+    statusKey: `helpingStatus.${t.status}`,
+    titleKey: serviceNameKey(title),
+    status: t.status,
+    active: !HELPING_OUTCOME[t.status],
+    needsYou: t.status === 'APPROVAL_REQUIRED',
+    outcome: HELPING_OUTCOME[t.status] || null,
+    totalPaise: t.charge?.serviceChargePaise ?? null, // the service fee; item money is its own figure
+    rating: t.rating ?? null,
+    address: where?.address || '',
+    coordinates: where?.coordinates || null,
+    iconCode: `helping ${t.serviceType || ''}`,
+    rebookHref: ['return', 'exchange'].includes(t.serviceType) ? '/helping/returns' : '/helping/shopping',
+    canInvoice: false,
+    createdAt: t.createdAt,
+    href: `/helping/tasks/${t._id}`,
+    raw: t,
+  };
+}
+
 export function useMyJobs({ page = 1, skip = false } = {}) {
   const orders = useListOrdersQuery(page, { skip });
   const repairs = useMyRepairBookingsQuery(page, { skip });
+  const pets = useMyPetBookingsQuery({ page }, { skip });
+  const helping = useMyHelpingTasksQuery({ page }, { skip });
+  const sources = [orders, repairs, pets, helping];
 
   const jobs = useMemo(() => {
     const merged = [
       ...(orders.data?.orders || []).map(fromOrder),
       ...(repairs.data?.bookings || []).map(fromRepair),
+      ...(pets.data?.bookings || []).map(fromPet),
+      // A draft was never placed; it isn't a booking yet.
+      ...(helping.data?.tasks || []).filter((t) => t.status !== 'DRAFT').map(fromHelping),
     ];
     // Newest first, whichever collection it came from.
     return merged.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  }, [orders.data, repairs.data]);
+  }, [orders.data, repairs.data, pets.data, helping.data]);
 
   const active = useMemo(() => jobs.filter((j) => j.active), [jobs]);
 
@@ -189,11 +284,11 @@ export function useMyJobs({ page = 1, skip = false } = {}) {
     past: useMemo(() => jobs.filter((j) => !j.active), [jobs]),
     /** The one to surface when there is room for exactly one. */
     current: active.find((j) => j.needsYou) || active[0] || null,
-    isLoading: orders.isLoading || repairs.isLoading,
-    isFetching: orders.isFetching || repairs.isFetching,
-    isError: orders.isError && repairs.isError,
-    // Awaited by pull-to-refresh, so hand back both.
-    refetch: () => Promise.all([orders.refetch(), repairs.refetch()]),
+    isLoading: sources.some((q) => q.isLoading),
+    isFetching: sources.some((q) => q.isFetching),
+    isError: sources.every((q) => q.isError),
+    // Awaited by pull-to-refresh, so hand back every source.
+    refetch: () => Promise.all(sources.map((q) => q.refetch())),
     /** Kept so callers can still page the order list. */
     orderPages: orders.data?.pages ?? 1,
   };

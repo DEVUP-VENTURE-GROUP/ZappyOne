@@ -1,18 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft, Loader2, Check, X, ShieldCheck, Clock, AlertTriangle,
-  FileText, MessageSquare, Wrench, MapPin, Star, Phone, Download,
+  FileText, MessageSquare, Wrench, Star, Download,
 } from 'lucide-react';
 import {
   useGetRepairBookingQuery, useRespondRepairQuoteMutation, useCancelRepairBookingMutation,
 } from '@shared/services/api';
 import toast from 'react-hot-toast';
-import LiveTrackingMap from '@shared/modules/tracking/LiveTrackingMap';
-import { useRepairTrackingFeed, MOVING_STATUSES } from '@shared/hooks/useRepairTracking';
 import { useRepairCancellationQuoteQuery, useRepairHandoverCodeQuery } from '@shared/services/api';
 import HandoverCodeCard from '../../components/common/HandoverCodeCard';
 import { useRateRepairBookingMutation } from '@shared/services/api';
+import LiveJobCard from '../../components/tracking/LiveJobCard';
 import { formatPaise } from '@shared/utils/money';
 import { PayNowButton } from '@shared/components/common/PayMethodPicker';
 import { API_BASE } from '@shared/services/apiBase';
@@ -64,193 +63,30 @@ const TONES = {
 
 const rupees = formatPaise;
 
-/**
- * Where the job is, right now, in minutes.
- *
- * A customer's real question is never "what is the status enum" — it is "is
- * someone coming, and when". So this shows elapsed time and the stage in plain
- * words, and offers the map the moment a technician is actually moving.
- *
- * It deliberately does NOT show a countdown to a promised finish. Internally
- * the stages are timed; putting that clock in front of a customer turns one
- * difficult repair into a broken guarantee.
- */
+const WITH_TECHNICIAN = ['PROVIDER_ASSIGNED', 'WORKER_ACCEPTED', 'ON_THE_WAY', 'ARRIVED', 'DIAGNOSING', 'QUOTE_PENDING',
+  'CUSTOMER_APPROVAL_PENDING', 'APPROVED', 'REPAIR_IN_PROGRESS', 'AT_WORKSHOP', 'QA_PENDING',
+  'READY_FOR_RETURN', 'OUT_FOR_RETURN', 'COMPLETED'];
+const WORKING = ['REPAIR_IN_PROGRESS', 'AT_WORKSHOP', 'QA_PENDING', 'READY_FOR_RETURN', 'OUT_FOR_RETURN', 'COMPLETED'];
+
+/** Where the repair is right now: the shared live card, in repair words. */
 function LiveStatusCard({ booking, provider }) {
-  const [now, setNow] = useState(Date.now());
-
-  const moving = ['ON_THE_WAY', 'OUT_FOR_RETURN'].includes(booking.status);
-  const trackable = MOVING_STATUSES.includes(booking.status);
-  const { workerLocation, etaMinutes } = useRepairTrackingFeed(booking._id, { enabled: trackable });
-  const active = !['COMPLETED', 'CANCELLED', 'REJECTED', 'EXPIRED', 'FAILED'].includes(booking.status);
-
-  useEffect(() => {
-    if (!active) return undefined;
-    const t = setInterval(() => setNow(Date.now()), 30000);
-    return () => clearInterval(t);
-  }, [active]);
-
-  if (!active) return null;
-
-  const placedMin = Math.max(0, Math.round((now - new Date(booking.createdAt).getTime()) / 60000));
-  const stageAt = booking.statusHistory?.length
-    ? new Date(booking.statusHistory[booking.statusHistory.length - 1].at).getTime()
-    : new Date(booking.createdAt).getTime();
-  const stageMin = Math.max(0, Math.round((now - stageAt) / 60000));
-
-  function openMap() {
-    const [lng, lat] = booking.location?.coordinates || [];
-    const url = lat && lng
-      ? `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`
-      : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(booking.location?.address || '')}`;
-    window.open(url, '_blank', 'noopener');
-  }
-
+  const s = booking.status;
   return (
-    <div className="overflow-hidden rounded-2xl bg-white ring-1 ring-slate-200/80">
-      {/*
-        * The status band.
-        *
-        * Reads as one sentence at a glance — what is happening, and how long it
-        * has been happening — instead of three stacked lines competing for the
-        * same attention. The live dot carries the "this is now" signal that a
-        * paragraph of text was doing badly.
-        */}
-      <div className="flex items-center gap-3 px-4 pt-4">
-        <span className="relative mt-0.5 flex h-2.5 w-2.5 shrink-0">
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-zappy-400 opacity-75" />
-          <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-zappy-600" />
-        </span>
-
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-[16px] font-black leading-tight tracking-tight text-[#0F172A]">
-            {STATUS_COPY[booking.status]?.label || booking.status}
-          </p>
-          <p className="mt-0.5 text-[12px] font-medium text-slate-500">
-            {etaMinutes != null && trackable
-              ? `About ${etaMinutes} min away`
-              : stageMin < 1 ? 'Just updated' : `${stageMin} min at this step`}
-            <span className="text-slate-300"> · </span>
-            {placedMin < 1 ? 'just placed' : `placed ${placedMin} min ago`}
-          </p>
-        </div>
-
-        {moving && (
-          <button
-            onClick={openMap}
-            title="Open in Maps"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-zappy-50 text-zappy-600 transition hover:bg-zappy-100"
-          >
-            <MapPin size={15} strokeWidth={2.4} />
-          </button>
-        )}
-      </div>
-
-      {/* What this step means — one quiet line, directly under the headline. */}
-      {STATUS_COPY[booking.status]?.hint && (
-        <p className="px-4 pt-1.5 text-[12.5px] leading-relaxed text-slate-500">
-          {STATUS_COPY[booking.status].hint}
-        </p>
-      )}
-
-      {/*
-        * Who is coming.
-        *
-        * A customer's first question, and the screen had no answer to it — which
-        * is also why it looked so empty. A name, what they have done, and a
-        * button to ring them is worth more than any amount of status copy.
-        */}
-      {provider && (
-        <div className="mx-4 mt-3 flex items-center gap-3 rounded-xl bg-slate-50 p-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-zappy-600 text-[15px] font-black text-white">
-            {provider.avatar
-              ? <img src={provider.avatar} alt="" className="h-full w-full object-cover" />
-              : (provider.name || '?').charAt(0).toUpperCase()}
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block truncate text-[13.5px] font-bold text-[#0F172A]">{provider.name}</span>
-            <span className="mt-0.5 flex items-center gap-2 text-[11.5px] text-slate-500">
-              {provider.rating != null && (
-                <span className="flex items-center gap-0.5 font-bold text-slate-600">
-                  <Star size={10} className="fill-amber-400 text-amber-400" />
-                  {Number(provider.rating).toFixed(1)}
-                </span>
-              )}
-              {provider.completedJobs > 0 && <span>{provider.completedJobs} repairs done</span>}
-            </span>
-          </span>
-          {provider.phone && (
-            <a
-              href={`tel:${provider.phone}`}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white transition hover:bg-emerald-700"
-              title={`Call ${provider.name}`}
-            >
-              <Phone size={15} strokeWidth={2.4} />
-            </a>
-          )}
-        </div>
-      )}
-
-      {/*
-        * One card, not three.
-        *
-        * The live map went in as its own card above this one, and the status
-        * pill had a third card below it — so a customer whose technician was on
-        * the way read "Your technician is on the way", then "On the way", then
-        * "Your technician is travelling to you", stacked. Same fact, three
-        * times. Everything that was on those cards is here; nothing was
-        * dropped, it was merged.
-        */}
-      {/*
-        * The map, or one honest line where it will be.
-        *
-        * The waiting state used to be a 150px empty box with a spinner in the
-        * middle of it — a large hole in the page that said very little. It is a
-        * single slim row now: the same information, none of the emptiness. The
-        * map only takes real space once there is a map to show.
-        */}
-      {trackable && (
-        workerLocation ? (
-          <div className="mt-3 overflow-hidden border-y border-slate-100">
-            <LiveTrackingMap
-              pickup={booking.location?.coordinates?.length === 2
-                ? { lat: booking.location.coordinates[1], lng: booking.location.coordinates[0] }
-                : null}
-              workerLocation={workerLocation}
-              status="on_the_way"
-              height="28vh"
-              pickupLabel={booking.status === 'OUT_FOR_RETURN' ? '📍 Drop here' : "📍 You're here"}
-            />
-          </div>
-        ) : (
-          <p className="mx-4 mt-3 flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2.5 text-[11.5px] font-medium text-slate-500">
-            <Loader2 size={13} className="shrink-0 animate-spin text-slate-400" />
-            Live map starts as soon as their phone reports in
-          </p>
-        )
-      )}
-
-      {/* The stages a customer actually recognises, in order. */}
-      <div className="flex items-center gap-1.5 px-4 pb-4 pt-3.5">
-        {['Placed', 'Technician', 'Working', 'Done'].map((label, i) => {
-          const reached = [
-            true,
-            ['PROVIDER_ASSIGNED', 'WORKER_ACCEPTED', 'ON_THE_WAY', 'ARRIVED', 'DIAGNOSING', 'QUOTE_PENDING',
-              'CUSTOMER_APPROVAL_PENDING', 'APPROVED', 'REPAIR_IN_PROGRESS', 'AT_WORKSHOP', 'QA_PENDING',
-              'READY_FOR_RETURN', 'OUT_FOR_RETURN', 'COMPLETED'].includes(booking.status),
-            ['REPAIR_IN_PROGRESS', 'AT_WORKSHOP', 'QA_PENDING', 'READY_FOR_RETURN', 'OUT_FOR_RETURN', 'COMPLETED'].includes(booking.status),
-            booking.status === 'COMPLETED',
-          ][i];
-          return (
-            <div key={label} className="flex-1">
-              <div className={`h-1.5 rounded-full transition-colors ${reached ? 'bg-zappy-500' : 'bg-slate-150 bg-slate-200'}`} />
-              <p className={`mt-1.5 text-[10.5px] font-bold ${reached ? 'text-zappy-600' : 'text-slate-400'}`}>
-                {label}
-              </p>
-            </div>
-          );
-        })}
-      </div>
-    </div>
+    <LiveJobCard
+      kind="repair"
+      job={booking}
+      provider={provider}
+      jobsNoun="repairs"
+      label={STATUS_COPY[s]?.label || s}
+      hint={STATUS_COPY[s]?.hint}
+      active={!['COMPLETED', 'CANCELLED', 'REJECTED', 'EXPIRED', 'FAILED'].includes(s)}
+      steps={[
+        { label: 'Placed', reached: true },
+        { label: 'Technician', reached: WITH_TECHNICIAN.includes(s) },
+        { label: 'Working', reached: WORKING.includes(s) },
+        { label: 'Done', reached: s === 'COMPLETED' },
+      ]}
+    />
   );
 }
 

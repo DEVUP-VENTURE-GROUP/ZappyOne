@@ -6,6 +6,7 @@ const { redis } = require('../../config/redis');
 const config = require('../../config');
 const logger = require('../../core/logger');
 const { haversineKm } = require('../../core/geo/distance');
+const { activeTrip } = require('./active-trip');
 
 // Max credible worker speed — anything beyond this is a GPS spoof or teleport.
 // 150 km/h covers highway driving, ambulances, trains (but not planes).
@@ -101,16 +102,29 @@ async function goOffline({ workerId }) {
  * Mongo gets a throttled write every 30s via lastSeenAt.
  */
 /**
- * Statuses during which a technician's position may be shared.
+ * Send one position to the customer watching a trip, with a fresh ETA.
  *
- * Deliberately a short list. A technician carries this app all day; broadcasting
- * their position outside an active trip would track a person, not a job. Outside
- * these statuses the ping still updates dispatch geo — it is simply never fanned
- * out to a customer.
+ * The ETA engine is the one orders use: keyed by an id, publishing to the same
+ * room, so a repair, pet or helping trip only needs its destination cached.
  */
-const REPAIR_MOVING_STATUSES = ['ON_THE_WAY', 'OUT_FOR_RETURN', 'PICKUP_SCHEDULED', 'DEVICE_PICKED_UP'];
+async function broadcastTrip(trip, { workerId, lat, lng }) {
+  await redis.publish('order:event', JSON.stringify({
+    orderId: trip.id,
+    event: 'worker.location',
+    payload: { lng, lat, at: Date.now() },
+  })).catch(() => {});
 
-async function updateLocation({ workerId, lng, lat, orderId, repairBookingId }) {
+  if (!trip.dest) return;
+  const etaService = require('./eta.service');
+  etaService.cacheOrderPickup(trip.id, trip.dest.lat, trip.dest.lng)
+    .then(() => etaService.computeAndBroadcast({
+      orderId: trip.id, workerId, workerLat: lat, workerLng: lng, orderUserId: trip.userId,
+      deepLink: trip.link, notifyArrival: trip.toCustomer,
+    }))
+    .catch(() => { /* an ETA is a nicety; never fail a location ping for it */ });
+}
+
+async function updateLocation({ workerId, lng, lat, orderId, repairBookingId, jobId }) {
   // GPS spoof guard: reject location updates that imply impossible speed.
   // Stealth rejection — return ok:true so fraudsters don't know they're flagged.
   const lastLocKey = `worker:lastloc:${workerId}`;
@@ -150,80 +164,15 @@ async function updateLocation({ workerId, lng, lat, orderId, repairBookingId }) 
   }
 
   /**
-   * A repair trip broadcasts to the booking's room.
+   * A repair, pet or helping trip broadcasts to that job's room.
    *
-   * Repair events already travel on `order:event` keyed by the booking id, so
-   * the customer's tracking screen subscribes the same way it does for an
-   * order. Two guards before anything is published: the booking must belong to
-   * THIS technician, and it must be in a status where they are genuinely
-   * travelling. Neither is negotiable — the first stops one worker watching
-   * another's job, the second stops a repair job becoming a tracking device.
+   * The server finds the trip itself (see active-trip.js): whichever screen
+   * the provider has open, the ping reaches the right customer, and only for a
+   * job that is theirs and genuinely travelling.
    */
-  {
-    const { RepairBooking } = require('../repair/models/booking.model');
-
-    /**
-     * Find the repair this ping belongs to, even when the caller did not say.
-     *
-     * Only the repair job page ever sent `repairBookingId`, so live tracking
-     * existed exclusively while a technician happened to be looking at that one
-     * screen. Everywhere else they publish position — the dashboard's
-     * continuous feed while online, the socket ping, the order job page — the
-     * ping carried an `orderId` or nothing at all, and the customer watching a
-     * repair saw "Live map starts as soon as their phone reports in" forever.
-     *
-     * The worker's active repair is a fact the SERVER can look up, so it does.
-     * Every publisher that already exists now feeds repairs too, with no client
-     * change and nothing new to keep in sync — the alternative was a
-     * `currentRepairBookingId` column that four call sites would have to
-     * remember to set and clear.
-     *
-     * Still scoped to this technician and still limited to statuses where they
-     * are genuinely travelling: a repair job must never become a tracking
-     * device.
-     */
-    const booking = repairBookingId
-      ? await RepairBooking.findOne({ _id: repairBookingId, workerId })
-        .select('status userId location').lean()
-      : await RepairBooking.findOne({ workerId, status: { $in: REPAIR_MOVING_STATUSES } })
-        .sort({ updatedAt: -1 })
-        .select('status userId location').lean();
-
-    const repairBookingIdResolved = booking?._id;
-
-    if (booking && REPAIR_MOVING_STATUSES.includes(booking.status)) {
-      await redis.publish(
-        'order:event',
-        JSON.stringify({
-          orderId: String(repairBookingIdResolved),
-          event: 'worker.location',
-          payload: { lng, lat, at: Date.now() },
-        }),
-      ).catch(() => {});
-
-      /**
-       * The same ETA engine orders use.
-       *
-       * It is keyed by an id and publishes to this same room, so a repair needs
-       * nothing of its own — only the destination cached once and a position to
-       * measure from. Personalised smoothed speed far out, traffic-aware near,
-       * throttled and delta-suppressed: all of that is already built and was
-       * simply never pointed at repairs.
-       */
-      const etaService = require('./eta.service');
-      const dest = booking.location?.coordinates;
-      if (Array.isArray(dest) && dest.length === 2) {
-        etaService.cacheOrderPickup(repairBookingIdResolved, dest[1], dest[0])
-          .then(() => etaService.computeAndBroadcast({
-            orderId: String(repairBookingIdResolved),
-            workerId,
-            workerLat: lat,
-            workerLng: lng,
-            orderUserId: booking.userId,
-          }))
-          .catch(() => { /* an ETA is a nicety; never fail a location ping for it */ });
-      }
-    }
+  if (!orderId) {
+    const trip = await activeTrip(workerId, { hintId: repairBookingId || jobId || null });
+    if (trip) await broadcastTrip(trip, { workerId, lat, lng });
   }
 
   // If worker is on a trip, broadcast location + ETA to the order room.

@@ -21,6 +21,7 @@ const paymentService = require('./services/payment.service');
 /** What a provider may move a booking to by hand; completion and payment have their own paths. */
 const PROVIDER_SETTABLE = ['PROVIDER_EN_ROUTE', 'PROVIDER_ARRIVED', 'PET_HANDOVER', 'SERVICE_STARTED', 'SERVICE_PAUSED'];
 const s3Service = require('../../core/storage/s3');
+const { providerCard } = require('../worker/provider-card');
 
 function mayView(booking, auth) {
   const id = String(auth.sub);
@@ -217,14 +218,21 @@ async function listMyBookings(req, res, next) {
   } catch (err) { next(err); }
 }
 
+const NOT_YET_INTRODUCED = [
+  'REQUESTED', 'PRICE_PENDING', 'AWAITING_CUSTOMER_APPROVAL', 'BOOKED', 'PROVIDER_SEARCHING', 'PROVIDER_ASSIGNED',
+];
+
 async function getBooking(req, res, next) {
   try {
     const booking = await PetBooking.findById(req.params.id).lean();
     if (!booking) return res.status(404).json({ error: 'Booking not found' });
     if (!mayView(booking, req.auth)) return res.status(403).json({ error: 'You do not have access to this booking' });
 
+    // Named once they've accepted; before that the assignment can still move.
+    const introduced = !NOT_YET_INTRODUCED.includes(booking.status);
     res.json({
       booking: await signBooking(booking),
+      provider: introduced ? await providerCard(booking, { fallbackName: 'Your pet pro' }) : null,
       canCancel: CANCELLABLE_FROM.includes(booking.status),
     });
   } catch (err) { next(err); }

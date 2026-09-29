@@ -24,6 +24,7 @@ const geoService = require('../modules/worker/geo.service');
 const Order = require('../modules/order/order.model');
 const LocationPing = require('../modules/worker/location-ping.model');
 const { isInIndia } = require('../core/geo/validate');
+const { activeTrip, canWatchJob } = require('../modules/worker/active-trip');
 const logger = require('../core/logger');
 
 let io = null;
@@ -102,36 +103,49 @@ function initSockets(httpServer) {
     // Restore order room membership after server restart / reconnect.
     // Workers on an active job and users with an active order need to be
     // back in `order:<id>` without waiting for the client to call order:subscribe.
-    try {
-      if (role === 'worker') {
-        const activeOrder = await Order.findOne({
-          workerId: id,
-          status: { $in: ['assigned', 'on_the_way', 'arrived', 'in_progress'] },
-        }).select('_id').lean();
-        if (activeOrder) {
-          socket.join(`order:${activeOrder._id}`);
-          logger.info({ workerId: id, orderId: activeOrder._id }, '[SOCKET] Worker auto-rejoined order room on connect');
+    // Not awaited: every handler below must be registered before the first
+    // event arrives, or a subscribe sent right on connect is silently lost.
+    (async () => {
+      try {
+        if (role === 'worker') {
+          const activeOrder = await Order.findOne({
+            workerId: id,
+            status: { $in: ['assigned', 'on_the_way', 'arrived', 'in_progress'] },
+          }).select('_id').lean();
+          if (activeOrder) {
+            socket.join(`order:${activeOrder._id}`);
+            logger.info({ workerId: id, orderId: activeOrder._id }, '[SOCKET] Worker auto-rejoined order room on connect');
+          }
+        } else if (role === 'user') {
+          const activeOrder = await Order.findOne({
+            userId: id,
+            status: { $in: ['created', 'searching', 'assigned', 'on_the_way', 'arrived', 'in_progress'] },
+          }).select('_id').lean();
+          if (activeOrder) {
+            socket.join(`order:${activeOrder._id}`);
+            logger.info({ userId: id, orderId: activeOrder._id }, '[SOCKET] User auto-rejoined order room on connect');
+          }
         }
-      } else if (role === 'user') {
-        const activeOrder = await Order.findOne({
-          userId: id,
-          status: { $in: ['created', 'searching', 'assigned', 'on_the_way', 'arrived', 'in_progress'] },
-        }).select('_id').lean();
-        if (activeOrder) {
-          socket.join(`order:${activeOrder._id}`);
-          logger.info({ userId: id, orderId: activeOrder._id }, '[SOCKET] User auto-rejoined order room on connect');
-        }
+      } catch (err) {
+        logger.warn({ err: err.message, id, role }, '[SOCKET] Failed to auto-restore order room');
       }
-    } catch (err) {
-      logger.warn({ err: err.message, id, role }, '[SOCKET] Failed to auto-restore order room');
-    }
+    })();
 
     // --- Client-driven room joins (authorization-gated) ---
     socket.on('order:subscribe', async ({ orderId }) => {
       if (!orderId) return;
       try {
         const order = await Order.findById(orderId).select('userId workerId dispatch').lean();
-        if (!order) return;
+        if (!order) {
+          // Repairs, pet bookings and helping tasks share this room for live tracking.
+          if (await canWatchJob(orderId, { id, role })) {
+            socket.join(`order:${orderId}`);
+            socket.emit('order:subscribed', { orderId });
+          } else {
+            socket.emit('order:subscribe_denied', { orderId, reason: 'not_authorized' });
+          }
+          return;
+        }
 
         const isUser   = String(order.userId) === String(id);
         const isWorker = String(order.workerId || '') === String(id);
@@ -215,6 +229,26 @@ function initSockets(httpServer) {
 
       // Update geo + alive heartbeat (buffered — see geo.service).
       await geoService.updateLocation(id, lng, lat);
+
+      // Not an order: a repair, pet or helping trip, if the worker is on one.
+      if (!orderId && movedEnough) {
+        const trip = await activeTrip(id).catch(() => null);
+        if (trip) {
+          io.to(`order:${trip.id}`).emit('worker.location', {
+            lat, lng, at: Date.now(),
+            hdg: (typeof hdg === 'number' && hdg >= 0 && hdg <= 360) ? hdg : null,
+            spd: (typeof spd === 'number' && spd >= 0 && spd < 60) ? spd : null,
+          });
+          if (trip.dest) {
+            etaService.cacheOrderPickup(trip.id, trip.dest.lat, trip.dest.lng)
+              .then(() => etaService.computeAndBroadcast({
+                orderId: trip.id, workerId: String(id), workerLat: lat, workerLng: lng,
+                orderUserId: trip.userId, observedSpeedMps, deepLink: trip.link, notifyArrival: trip.toCustomer,
+              }))
+              .catch(() => {});
+          }
+        }
+      }
 
       if (orderId && movedEnough) {
         io.to(`order:${orderId}`).emit('worker.location', {

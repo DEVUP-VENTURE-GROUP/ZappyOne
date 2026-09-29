@@ -7,6 +7,7 @@ import {
 } from '@shared/services/api';
 import { formatPaise } from '@shared/utils/money';
 import { PayNowButton } from '@shared/components/common/PayMethodPicker';
+import LiveJobCard from '../../components/tracking/LiveJobCard';
 
 // Statuses in which there is nothing left to pay online.
 const NOTHING_TO_PAY = ['CANCELLED', 'REFUNDED', 'FAILED', 'EXPIRED', 'REJECTED', 'PRICE_PENDING', 'AWAITING_CUSTOMER_APPROVAL'];
@@ -19,7 +20,26 @@ const STATUS_LABEL = {
   PAYMENT_PENDING: 'Completed · payment due', PAYMENT_COMPLETED: 'Completed', CANCELLED: 'Cancelled', DISPUTED: 'Under review', CLOSED: 'Closed',
 };
 
-function Shell({ children }) { return <div className="max-w-lg mx-auto px-4 py-4 space-y-3 pb-10">{children}</div>; }
+/** What each live stage means, for the owner. */
+function hintFor(b) {
+  switch (b.status) {
+    case 'PROVIDER_SEARCHING': return 'Matching you with a verified pet pro nearby.';
+    case 'PROVIDER_ASSIGNED': return 'Waiting for them to accept.';
+    case 'PROVIDER_ACCEPTED': return 'They will set off in time for your slot.';
+    case 'PROVIDER_EN_ROUTE': return 'Follow them on the map as they come to you.';
+    case 'PROVIDER_ARRIVED': return 'They are at your door.';
+    case 'PET_HANDOVER': return 'Hand over your pet and anything they need.';
+    case 'SERVICE_STARTED': return b.serviceMode === 'transport' ? 'Your pet is on the way. Follow the ride on the map.' : 'Your pet is in good hands.';
+    case 'SERVICE_PAUSED': return 'A short pause. They will pick up again shortly.';
+    default: return null;
+  }
+}
+
+const WITH_PRO = ['PROVIDER_ACCEPTED', 'PROVIDER_EN_ROUTE', 'PROVIDER_ARRIVED', 'PET_HANDOVER', 'SERVICE_STARTED', 'SERVICE_PAUSED'];
+const IN_CARE = ['SERVICE_STARTED', 'SERVICE_PAUSED'];
+const OVER = ['SERVICE_COMPLETED', 'CUSTOMER_CONFIRMATION', 'PAYMENT_PENDING', 'PAYMENT_COMPLETED', 'CANCELLED', 'DISPUTED', 'REFUNDED', 'CLOSED'];
+
+function Shell({ children }) { return <div className="mx-auto max-w-lg space-y-3 px-4 py-4 pb-10 md:max-w-2xl">{children}</div>; }
 
 export default function PetBookingDetailPage() {
   const { id } = useParams();
@@ -30,7 +50,8 @@ export default function PetBookingDetailPage() {
   if (isLoading) return <div className="flex justify-center py-24"><Loader2 size={24} className="animate-spin text-zappy-400" /></div>;
   if (!data?.booking) return <div className="text-center py-24 text-slate-400">Booking not found</div>;
 
-  const { booking, canCancel } = data;
+  const { booking, canCancel, provider } = data;
+  const live = !OVER.includes(booking.status);
 
   async function doCancel() {
     try {
@@ -53,10 +74,28 @@ export default function PetBookingDetailPage() {
       </div>
 
       <Shell>
-        <div className="rounded-2xl border-2 border-zappy-200 bg-zappy-50/60 p-4">
-          <p className="text-xs font-bold uppercase tracking-wide text-zappy-500">Status</p>
-          <p className="text-lg font-black text-[#0F172A] mt-0.5">{STATUS_LABEL[booking.status] || booking.status}</p>
-        </div>
+        {live ? (
+          <LiveJobCard
+            kind="pet"
+            job={booking}
+            provider={provider}
+            jobsNoun="bookings"
+            label={STATUS_LABEL[booking.status] || booking.status}
+            hint={hintFor(booking)}
+            steps={[
+              { label: 'Booked', reached: true },
+              { label: 'Pro', reached: WITH_PRO.includes(booking.status) },
+              { label: 'In care', reached: IN_CARE.includes(booking.status) },
+              { label: 'Done', reached: false },
+            ]}
+          />
+        ) : (
+          <div className="rounded-2xl bg-white p-4 ring-1 ring-slate-200/80">
+            <p className="text-[12px] font-semibold text-slate-500">Status</p>
+            <p className="mt-0.5 text-[17px] font-bold text-navy">{STATUS_LABEL[booking.status] || booking.status}</p>
+            {provider && <p className="mt-1 text-[13px] text-slate-500">with {provider.name}</p>}
+          </div>
+        )}
 
         <div className="rounded-2xl border-2 border-slate-200 bg-white p-4 space-y-2">
           <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Pets</p>

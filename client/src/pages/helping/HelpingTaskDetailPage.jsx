@@ -10,6 +10,7 @@ import {
 } from '@shared/services/api';
 import { formatPaise } from '@shared/utils/money';
 import { PayNowButton } from '@shared/components/common/PayMethodPicker';
+import LiveJobCard from '../../components/tracking/LiveJobCard';
 
 /**
  * Customer tracking (§42) and the approval engine's customer half (§36, §6).
@@ -18,10 +19,27 @@ import { PayNowButton } from '@shared/components/common/PayMethodPicker';
  * `authorisation` from the server is what this screen renders, not a total it
  * computes itself.
  */
-const TRACK_STEPS = [
-  'CONFIRMED', 'WORKER_ASSIGNED', 'WORKER_ACCEPTED', 'EN_ROUTE', 'ARRIVED',
-  'TASK_STARTED', 'IN_PROGRESS', 'HANDED_OVER', 'COMPLETED',
-];
+const WITH_HELPER = ['WORKER_ACCEPTED', 'EN_ROUTE', 'ARRIVED', 'TASK_STARTED', 'IN_PROGRESS', 'APPROVAL_REQUIRED',
+  'ITEM_UNAVAILABLE', 'RETURNING', 'AT_DROPOFF', 'HANDED_OVER', 'MERCHANT_REJECTED', 'EXCHANGE_UNAVAILABLE'];
+const DOING_IT = WITH_HELPER.slice(3);
+const OVER = ['COMPLETED', 'CUSTOMER_CONFIRMED', 'SETTLED', 'CANCELLED', 'FAILED', 'DISPUTED'];
+const NOT_STARTED = ['DRAFT', 'REQUESTED', 'PAYMENT_PENDING'];
+
+/** What each live stage means, in the direction this task actually travels. */
+function hintFor(t) {
+  const startsAtCustomer = ['return', 'exchange'].includes(t.serviceType);
+  switch (t.status) {
+    case 'WORKER_SEARCHING': return 'Matching you with a verified helper nearby.';
+    case 'WORKER_ASSIGNED': return 'Waiting for them to accept.';
+    case 'EN_ROUTE': return startsAtCustomer ? 'Coming to you to collect the item.' : 'Heading to the shop. Follow them on the map.';
+    case 'ARRIVED': return startsAtCustomer ? 'They are at your door.' : 'They are at the shop.';
+    case 'IN_PROGRESS': return startsAtCustomer ? 'Working on your return.' : 'Picking up your items.';
+    case 'APPROVAL_REQUIRED': return 'They need your answer before carrying on.';
+    case 'RETURNING': return startsAtCustomer ? 'Taking your item to the store.' : 'Bringing your items to you.';
+    case 'AT_DROPOFF': return 'At the drop-off now.';
+    default: return null;
+  }
+}
 
 const STATUS_LABEL = {
   DRAFT: 'Draft', REQUESTED: 'Requested', PAYMENT_PENDING: 'Payment pending',
@@ -42,7 +60,7 @@ const ITEM_LABEL = {
 };
 
 function Shell({ children }) {
-  return <div className="max-w-lg mx-auto px-4 py-4 space-y-3 pb-10">{children}</div>;
+  return <div className="mx-auto max-w-lg space-y-3 px-4 py-4 pb-10 md:max-w-2xl">{children}</div>;
 }
 
 export default function HelpingTaskDetailPage() {
@@ -55,11 +73,10 @@ export default function HelpingTaskDetailPage() {
   if (isLoading) return <div className="flex justify-center py-24"><Loader2 size={24} className="animate-spin text-zappy-400" /></div>;
   if (!data?.task) return <div className="text-center py-24 text-slate-400">Task not found</div>;
 
-  const { task, authorisation, canCancel } = data;
+  const { task, authorisation, canCancel, provider } = data;
   const due = data.due || { totalPaise: 0, feePaise: 0, itemsPaise: 0, itemsPending: false };
   const closed = ['CANCELLED', 'FAILED', 'SETTLED'].includes(task.status);
   const pendingApprovals = (task.approvals || []).filter((a) => a.status === 'pending');
-  const stepIdx = TRACK_STEPS.indexOf(task.status);
 
   async function answer(approvalId, approved) {
     try {
@@ -92,17 +109,28 @@ export default function HelpingTaskDetailPage() {
       </div>
 
       <Shell>
-        <div className="rounded-2xl border-2 border-zappy-200 bg-zappy-50/60 p-4">
-          <p className="text-xs font-bold uppercase tracking-wide text-zappy-500">Status</p>
-          <p className="text-lg font-black text-[#0F172A] mt-0.5">{STATUS_LABEL[task.status] || task.status}</p>
-          {stepIdx >= 0 && (
-            <div className="mt-3 flex gap-1">
-              {TRACK_STEPS.map((s, i) => (
-                <div key={s} className={`h-1.5 flex-1 rounded-full ${i <= stepIdx ? 'bg-zappy-500' : 'bg-zappy-100'}`} />
-              ))}
-            </div>
-          )}
-        </div>
+        {!OVER.includes(task.status) && !NOT_STARTED.includes(task.status) ? (
+          <LiveJobCard
+            kind="helping"
+            job={task}
+            provider={provider}
+            jobsNoun="tasks"
+            label={STATUS_LABEL[task.status] || task.status}
+            hint={hintFor(task)}
+            steps={[
+              { label: 'Confirmed', reached: true },
+              { label: 'Helper', reached: WITH_HELPER.includes(task.status) },
+              { label: 'Doing it', reached: DOING_IT.includes(task.status) },
+              { label: 'Done', reached: false },
+            ]}
+          />
+        ) : (
+          <div className="rounded-2xl bg-white p-4 ring-1 ring-slate-200/80">
+            <p className="text-[12px] font-semibold text-slate-500">Status</p>
+            <p className="mt-0.5 text-[17px] font-bold text-navy">{STATUS_LABEL[task.status] || task.status}</p>
+            {provider && <p className="mt-1 text-[13px] text-slate-500">with {provider.name}</p>}
+          </div>
+        )}
 
         {/* §36 — the customer's half of the approval engine. */}
         {pendingApprovals.map((a) => (

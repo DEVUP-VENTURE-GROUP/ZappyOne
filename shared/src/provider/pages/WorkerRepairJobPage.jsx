@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft, Loader2, Plus, Trash2, Check, X, ClipboardCheck,
-  AlertTriangle, FileText, Wrench, ShieldCheck, Navigation,
+  AlertTriangle, FileText, Wrench, ShieldCheck,
 } from 'lucide-react';
 import {
   useGetRepairBookingQuery, useTransitionRepairBookingMutation, useCollectRepairCashMutation,
@@ -10,7 +10,8 @@ import {
 } from '../../services/api';
 import toast from 'react-hot-toast';
 import { formatPaise } from '../../utils/money';
-import { usePublishRepairLocation, MOVING_STATUSES } from '../../hooks/useRepairTracking';
+import { usePublishTripLocation, MOVING_STATUSES, tripOf } from '../../hooks/useLiveTrip';
+import TripSharingBanner from '../../components/worker/TripSharingBanner';
 import { useVerifyRepairHandoverCodeMutation, useDeclineRepairBookingMutation } from '../../services/api';
 import PassReasonPicker from '../../components/worker/PassReasonPicker';
 import OtpEntry from '../../components/common/OtpEntry';
@@ -362,7 +363,7 @@ export default function WorkerRepairJobPage() {
    */
   const status = data?.booking?.status;
   const onTrip = MOVING_STATUSES.includes(status);
-  const sharingLocation = usePublishRepairLocation(id, onTrip);
+  const sharingLocation = usePublishTripLocation(id, onTrip);
 
   /**
    * Proximity, computed up here for the SAME reason — a hook must run on every
@@ -487,43 +488,7 @@ export default function WorkerRepairJobPage() {
       </div></header>
 
       <div className="max-w-lg lg:max-w-2xl mx-auto px-4 pt-4 space-y-3">
-        {onTrip && (
-          <div className="flex items-start gap-2.5 rounded-2xl border border-blue-100 bg-blue-50 p-3">
-            <span className="relative mt-0.5 flex h-2.5 w-2.5 shrink-0">
-              {sharingLocation && (
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-75" />
-              )}
-              <span className={`relative inline-flex h-2.5 w-2.5 rounded-full ${
-                sharingLocation ? 'bg-blue-600' : 'bg-slate-300'
-              }`} />
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="text-[12.5px] font-bold text-blue-900">
-                {sharingLocation === 'sharing' ? 'Customer can see you on the map'
-                  : sharingLocation === 'denied' ? 'Location access is blocked'
-                    : 'Getting your location…'}
-              </p>
-              <p className="mt-0.5 text-[11px] leading-relaxed text-blue-700">
-                {sharingLocation === 'sharing'
-                  ? 'It stops by itself the moment you mark this job as arrived.'
-                  : sharingLocation === 'denied'
-                    ? 'Allow location for this site in your browser so the customer can follow your trip.'
-                    : 'Waiting for the first GPS fix — this can take a few seconds.'}
-              </p>
-            </div>
-            {customerCoords?.length === 2 && (
-              <button
-                onClick={() => window.open(
-                  `https://www.google.com/maps/dir/?api=1&destination=${customerCoords[1]},${customerCoords[0]}`,
-                  '_blank', 'noopener',
-                )}
-                className="flex shrink-0 items-center gap-1 rounded-xl bg-blue-600 px-2.5 py-1.5 text-[11px] font-bold text-white"
-              >
-                <Navigation size={11} /> Directions
-              </button>
-            )}
-          </div>
-        )}
+        {onTrip && <TripSharingBanner sharing={sharingLocation} {...tripOf('repair', booking)} />}
         <div className="card">
           <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Status</p>
           <p className="font-bold text-[#0F172A] mt-1 capitalize">{booking.status.replace(/_/g, ' ').toLowerCase()}</p>
