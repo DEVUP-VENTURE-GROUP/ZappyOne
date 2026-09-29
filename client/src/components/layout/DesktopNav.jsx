@@ -4,7 +4,7 @@ import { Bell, UserRound } from 'lucide-react';
 import { selectAuth, selectIsAuthed } from '@shared/modules/auth/authSlice';
 import { useListNotificationsQuery } from '@shared/services/api';
 import { useT } from '@shared/i18n/I18nProvider';
-import ZappyMark from '../common/ZappyMark';
+import { ZappyLogo, ZappyAppIcon } from '@shared/components/common/ZappyLogo';
 import { prefetchRoute } from '../../lib/routePrefetch';
 
 /**
@@ -39,7 +39,8 @@ export default function DesktopNav() {
     <header className={`hidden md:block ${bar}`}>
       <div className="mx-auto flex h-14 w-full max-w-6xl items-center gap-6 px-6">
         <NavLink to="/" className="flex items-center gap-2" aria-label="ZappyOne home">
-          <ZappyMark size={26} />
+          {/* The official mark; on the blue bar it sits on its white tile. */}
+          {onBrand ? <ZappyAppIcon size={32} variant="light" /> : <ZappyLogo size={30} />}
           <span className="text-[17px] font-bold">ZappyOne</span>
         </NavLink>
 

@@ -1,6 +1,6 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Home, ClipboardList, MapPin, User } from 'lucide-react';
-import ZappyMark from '../common/ZappyMark';
+import { ZappyLogo } from '@shared/components/common/ZappyLogo';
 import { api, useListNotificationsQuery } from '@shared/services/api';
 import { useSelector } from 'react-redux';
 import { selectIsAuthed } from '@shared/modules/auth/authSlice';
@@ -107,10 +107,10 @@ export default function BottomNav({ active }) {
           className="absolute left-1/2 -translate-x-1/2 -top-6 flex flex-col items-center pointer-events-auto outline-none"
         >
           <motion.div
-            whileTap={{ scale: 0.92 }}
-            className="w-16 h-16 rounded-full flex items-center justify-center border-4 border-white shadow-[0_8px_24px_-4px_rgba(37,99,235,0.35)] bg-zappy-gradient"
+            whileTap={{ scale: 0.94 }}
+            className="w-16 h-16 rounded-full flex items-center justify-center bg-white ring-2 ring-zappy-600 shadow-[0_6px_18px_-6px_rgba(37,99,235,0.45)]"
           >
-            <ZappyMark size={34} />
+            <ZappyLogo size={40} />
           </motion.div>
           <span className={`text-[10px] font-bold mt-1 ${isBook ? 'text-zappy-700' : 'text-zappy-600'}`}>{tr('nav.book', 'Book Now')}</span>
         </button>

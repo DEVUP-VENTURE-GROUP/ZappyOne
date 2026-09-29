@@ -10,7 +10,7 @@ import PullToRefresh from '../components/common/PullToRefresh';
 import { API_BASE } from '@shared/services/apiBase';
 import { selectAuth } from '@shared/modules/auth/authSlice';
 import PageTransition from '../components/common/PageTransition';
-import { categoryMap } from '../constants/categoryMap';
+import { Smartphone, Laptop, Bike, Car, Droplets, PawPrint, ShoppingBag, PartyPopper, Tv } from 'lucide-react';
 import { SkeletonList, SkeletonOrderCard } from '../components/common/Skeleton';
 import { staggerContainer, fadeInUp } from '../lib/animations';
 import { useT, useI18n } from '@shared/i18n/I18nProvider';
@@ -57,19 +57,24 @@ function dateBucket(d, t = (k, f) => f, lang = 'en') {
   return date.toLocaleString(loc, { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
-// Service-type character for the compact rows (like Uber's auto/bike thumbnails).
-// Reuses the shared categoryMap so order history matches the catalog/Home characters.
+/**
+ * A plain icon for the kind of job, read from its vertical or service code.
+ * Order matters: "four_wheeler" is checked before the generic vehicle words.
+ */
+const JOB_ICONS = [
+  [/four_wheeler|\bcar\b|car_|wash|detail|fuel|breakdown|van|fleet/, Car],
+  [/two_wheeler|bike|puncture|chain|brake|scooter/, Bike],
+  [/laptop/, Laptop],
+  [/mobile|phone|screen|battery|charging|mic|speaker|camera|software|data_recovery/, Smartphone],
+  [/water_tank|tank|sump/, Droplets],
+  [/cctv|\btv\b|router|smart|home_automation|lock/, Tv],
+  [/pet/, PawPrint],
+  [/event|decor/, PartyPopper],
+  [/helping|shopping|pickup|return|grocery|medicine/, ShoppingBag],
+];
 function serviceVisual(code = '') {
   const s = code.toLowerCase();
-  const byId = (id) => categoryMap.find((c) => c.id === id);
-  if (/bike|puncture|chain|brake|scooter|car|wash|detail|fuel|jump|breakdown|auto|van|fleet|vehicle/.test(s)) return byId('cars');
-  if (/screen|battery|charging|phone|mobile|mic|speaker|camera|water|software|device|data_recovery/.test(s))          return byId('phones');
-  if (/laptop/.test(s))                                                                                        return byId('laptops');
-  if (/cctv|tv|router|smart|home_automation|lock/.test(s))                                                     return byId('home');
-  if (/elder|medicine|grocery|hospital|companion|doctor|bill|document/.test(s))                                return byId('elders');
-  if (/event/.test(s))                                                                                         return byId('events');
-  if (/pet/.test(s))                                                                                           return byId('pets');
-  return null;
+  return JOB_ICONS.find(([re]) => re.test(s))?.[1] || null;
 }
 
 /* Status pill */
@@ -94,20 +99,16 @@ function useJobTitle(job) {
 /* Compact past row — clean, scannable, one line */
 function CompactRow({ job, nav }) {
   const t = useT();
-  const character = serviceVisual(job.iconCode);
+  const Icon = serviceVisual(job.iconCode) || Wrench;
   const title = useJobTitle(job);
   return (
     <div className="flex items-center gap-3 py-3.5 border-b border-slate-100 last:border-0">
       <button
         onClick={() => nav(job.href)}
-        className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
-        style={{ backgroundColor: character?.tint || 'rgba(100, 116, 139, 0.08)' }}
+        className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 bg-slate-100 text-slate-600"
+        aria-label="Open booking"
       >
-        {character ? (
-          <img src={character.thumb} alt="" width={36} height={36} loading="lazy" className="w-9 h-9 object-contain" />
-        ) : (
-          <Wrench size={22} className="text-slate-500" />
-        )}
+        <Icon size={20} strokeWidth={1.7} />
       </button>
       <button onClick={() => nav(job.href)} className="flex-1 min-w-0 text-left">
         <div className="flex items-center gap-2">
@@ -267,11 +268,8 @@ function EmptyUpcoming({ nav, suggestions }) {
             {suggestions.map((s) => (
               <button key={s.href} onClick={() => nav(s.href)}
                 className="shrink-0 flex items-center gap-2 pl-1.5 pr-3.5 py-1.5 rounded-full bg-white ring-1 ring-slate-200 active:bg-slate-50">
-                <span className="w-8 h-8 rounded-full flex items-center justify-center"
-                  style={{ backgroundColor: s.character?.tint || 'rgba(100, 116, 139, 0.08)' }}>
-                  {s.character
-                    ? <img src={s.character.thumb} alt="" width={22} height={22} className="w-5.5 h-5.5 object-contain" />
-                    : <Wrench size={14} className="text-slate-500" />}
+                <span className="w-7 h-7 rounded-full flex items-center justify-center bg-slate-100 text-slate-600">
+                  <s.Icon size={14} strokeWidth={1.8} />
                 </span>
                 <span className="text-xs font-bold text-[#0F172A] capitalize">{t(s.labelKey, s.label)}</span>
               </button>
@@ -390,7 +388,7 @@ export default function OrdersListPage() {
     for (const j of past) {
       if (!j.rebookHref || seen.has(j.rebookHref)) continue;
       seen.add(j.rebookHref);
-      out.push({ href: j.rebookHref, label: j.title, labelKey: j.titleKey, character: serviceVisual(j.iconCode) });
+      out.push({ href: j.rebookHref, label: j.title, labelKey: j.titleKey, Icon: serviceVisual(j.iconCode) || Wrench });
       if (out.length >= 3) break;
     }
     return out;

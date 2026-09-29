@@ -98,12 +98,6 @@ function MobileOverviewTab({ onNavigate }) {
     <div className="w-full flex flex-col -mt-[64px] pb-6 font-sans">
       {/* HERO SECTION */}
       <div className="relative pt-[85px] px-5 pb-[70px] bg-[#0f1123] rounded-b-[40px] overflow-hidden shadow-sm">
-        {/* Background Image with Gradient Overlay */}
-        <div className="absolute inset-0 z-0">
-          <img src="/images/event_stage_hero.png" alt="Background" className="w-full h-full object-cover opacity-60 mix-blend-overlay" />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#0f1123]/95 via-[#0f1123]/60 to-[#0f1123]"></div>
-        </div>
-
         <div className="relative z-10 flex flex-col">
           <p className="text-[13px] text-white/80 font-medium mb-1">Welcome to Zappyone,</p>
           <h1 className="text-[26px] font-extrabold text-white leading-none tracking-tight mb-2.5">
