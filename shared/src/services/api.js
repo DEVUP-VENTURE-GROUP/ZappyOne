@@ -281,7 +281,8 @@ export const api = createApi({
     // --- Unified Search (Zepto-level: fuzzy + intent + rank + never-empty) ---
     smartSearch: b.query({ query: (params) => ({ url: '/search', params }) }),
     searchSuggest: b.query({ query: (params) => ({ url: '/search/suggest', params }) }),
-    searchTrending: b.query({ query: () => '/search/trending' }),
+    // What's opened most among services live at this location.
+    searchTrending: b.query({ query: (params = {}) => ({ url: '/search/trending', params }) }),
 
     // --- Orders ---
     createOrder: b.mutation({

@@ -1,36 +1,23 @@
 const config = require('../../config');
 const logger = require('../../core/logger');
-const { redis } = require('../../config/redis');
 const s3 = require('../../core/storage/s3');
-const ServiceCatalog = require('../service/service-catalog.model');
-const pricingService = require('../pricing/pricing.service');
+const { getCorpus } = require('../search/search.corpus');
+const { liveLinesAt } = require('../search/search.service');
 const LensScan = require('./lens-scan.model');
 
-const CATALOG_CACHE_KEY = 'lens:catalog:v1';
-const CATALOG_TTL = 600; // 10 min
-
-/** Active catalog, Redis-cached. Shape kept compact for the model prompt. */
-async function getCatalog() {
-  try {
-    const cached = await redis.get(CATALOG_CACHE_KEY);
-    if (cached) return JSON.parse(cached);
-  } catch { /* cache miss is fine */ }
-
-  const docs = await ServiceCatalog.find({ isActive: true })
-    .select('code name category description priceRangeMinPaise priceRangeMaxPaise')
-    .lean();
-  const catalog = docs.map((d) => ({
-    code: d.code,
-    name: d.name,
-    category: d.category,
-    description: d.description || '',
-    // Paise, unconverted — the display layer turns it into rupees, and a
-    // number converted this early gets stored in the wrong unit.
-    priceMin: d.priceRangeMinPaise ?? null,
-    priceMax: d.priceRangeMaxPaise ?? null,
-  }));
-  try { await redis.setex(CATALOG_CACHE_KEY, CATALOG_TTL, JSON.stringify(catalog)); } catch { /* noop */ }
-  return catalog;
+/**
+ * What the model may choose from: live services and their specific problems,
+ * limited to what's served at the customer's location. Codes are the search
+ * index ids, and each carries the path that opens the right booking flow.
+ */
+async function getCatalog(location) {
+  const [corpus, here] = await Promise.all([getCorpus(), liveLinesAt(location?.lat, location?.lng)]);
+  return corpus
+    .filter((e) => (e.type === 'service' || e.type === 'problem') && (!here || here.codes.has(e.lineCode)))
+    .map((e) => ({
+      code: e.code, name: e.title, category: e.subtitle, description: '',
+      path: e.path, lineCode: e.lineCode, type: e.type, isPopular: e.isPopular,
+    }));
 }
 
 /** Client requests a presigned PUT; uploads the photo straight to S3. */
@@ -42,56 +29,30 @@ async function getUploadTarget({ userId, contentType }) {
   return s3.getUploadUrl({ folder: 'lens', contentType, userId });
 }
 
-/** Keep only matches whose code exists in the catalog; enrich + clamp. */
+/** Keep only matches whose code exists in the catalog; clamp the rest. */
 function validateMatches(rawMatches, catalogByCode) {
   if (!Array.isArray(rawMatches)) return [];
   const seen = new Set();
   const out = [];
   for (const m of rawMatches) {
-    const code = String(m?.service_code || '').toLowerCase().trim();
+    const code = String(m?.service_code || '').trim();
     const cat = catalogByCode.get(code);
     if (!cat || seen.has(code)) continue;
     seen.add(code);
     out.push({
       serviceCode: code,
+      lineCode: cat.lineCode,
       name: cat.name,
       category: cat.category,
+      path: cat.path,
       confidence: Math.max(0, Math.min(1, Number(m.confidence) || 0)),
       severity: ['low', 'moderate', 'high'].includes(m.severity) ? m.severity : 'unknown',
       issueSummary: String(m.issue_summary || '').slice(0, 240),
       notesForWorker: String(m.notes_for_worker || '').slice(0, 500),
-      priceHintMin: cat.priceMin,
-      priceHintMax: cat.priceMax,
-      quote: { total: null, currency: 'INR', etaMinutes: null, surge: null },
     });
   }
   out.sort((a, b) => b.confidence - a.confidence);
   return out.slice(0, 3);
-}
-
-/** Real quote from the pricing engine for the top match (best-effort). */
-async function attachQuote(match, location, userId) {
-  if (!match || !location || location.lat == null || location.lng == null) return;
-  try {
-    const q = await pricingService.quote({
-      origin: { lat: location.lat, lng: location.lng },
-      dest: { lat: location.lat + 0.00045, lng: location.lng }, // ~50m nominal, same as booking
-      service: match.serviceCode,
-      userId,
-      priority: 'normal',
-    });
-    if (q) {
-      match.quote = {
-        // The quote carries both; take the paise one.
-        total: q.paise?.total ?? null,
-        currency: q.currency || 'INR',
-        etaMinutes: q.etaMinutes ?? null,
-        surge: q.surgeMultiplier ?? null,
-      };
-    }
-  } catch (err) {
-    logger.warn({ err: err.message, service: match.serviceCode }, 'ZappyLens quote failed — using price hint');
-  }
 }
 
 /** Fire-and-forget geo + demand telemetry. Never throws into the request path. */
@@ -135,9 +96,9 @@ async function analyze({ userId, imageKeys, location }) {
   const started = Date.now();
   const { analyzeImage } = require('./openrouter.service');
 
-  const catalog = await getCatalog();
+  const catalog = await getCatalog(location);
   if (!catalog.length) {
-    throw Object.assign(new Error('Service catalog is empty.'), { status: 503, code: 'CATALOG_EMPTY' });
+    throw Object.assign(new Error('Nothing is bookable at this location yet.'), { status: 409, code: 'NOTHING_LIVE_HERE' });
   }
   const catalogByCode = new Map(catalog.map((c) => [c.code, c]));
 
@@ -173,14 +134,12 @@ async function analyze({ userId, imageKeys, location }) {
 
   const isServiceable = matches.length > 0;
   const result = isServiceable ? 'served' : 'no_service';
-  const topServiceCode = matches[0]?.serviceCode || null;
+  // Demand is counted per service line, the same unit Home and search record.
+  const topServiceCode = matches[0]?.lineCode || null;
   const imageQuality = modelFailed ? 'unclear' : (parsed?.image_quality || 'good');
 
-  // Real quote for the top match.
-  if (isServiceable) await attachQuote(matches[0], location, userId);
-
   // Always-present popular services — shown when we have no/low-confidence match.
-  const fallbacks = buildFallbacks(catalog, catalogByCode);
+  const fallbacks = buildFallbacks(catalog);
   const hint = computeHint({ isServiceable, imageQuality, modelFailed });
 
   const scan = await LensScan.create({
@@ -215,31 +174,16 @@ async function analyze({ userId, imageKeys, location }) {
   };
 }
 
-// Popular, high-demand services to surface when the scan is unclear/unmatched.
-const PRIORITY_FALLBACK_CODES = [
-  'screen_replacement', 'puncture', 'car_wash', 'laptop_slow',
-  'bike_service', 'battery_replacement', 'cctv_install', 'car_detailing',
-];
-function toCard(c) {
-  return {
-    serviceCode: c.code, name: c.name, category: c.category,
-    confidence: null, severity: 'unknown', issueSummary: '', notesForWorker: '',
-    priceHintMin: c.priceMin, priceHintMax: c.priceMax,
-    quote: { total: null, currency: 'INR', etaMinutes: null, surge: null },
-    fromFallback: true,
-  };
-}
-function buildFallbacks(catalog, catalogByCode, n = 4) {
-  const chosen = [];
-  const usedCat = new Set();
-  const add = (c) => {
-    if (!c || chosen.length >= n || chosen.find((x) => x.code === c.code)) return;
-    chosen.push(c); usedCat.add(c.category);
-  };
-  for (const code of PRIORITY_FALLBACK_CODES) { if (chosen.length >= n) break; add(catalogByCode.get(code)); }
-  for (const c of catalog) { if (chosen.length >= n) break; if (!usedCat.has(c.category)) add(c); } // variety
-  for (const c of catalog) { if (chosen.length >= n) break; add(c); }                               // pad
-  return chosen.map(toCard);
+/** When the photo can't be matched: services live here, the popular ones first. */
+function buildFallbacks(catalog, n = 4) {
+  return catalog
+    .filter((c) => c.type === 'service')
+    .sort((a, b) => Number(b.isPopular) - Number(a.isPopular))
+    .slice(0, n)
+    .map((c) => ({
+      serviceCode: c.code, lineCode: c.lineCode, name: c.name, category: c.category, path: c.path,
+      confidence: null, severity: 'unknown', issueSummary: '', notesForWorker: '', fromFallback: true,
+    }));
 }
 function computeHint({ isServiceable, imageQuality, modelFailed }) {
   if (modelFailed) return "We couldn't analyze that photo just now — here are popular services you can book.";

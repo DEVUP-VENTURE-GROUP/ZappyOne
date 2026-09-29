@@ -22,16 +22,19 @@ async function search(req, res, next) {
 
 async function suggest(req, res, next) {
   try {
-    const out = await searchService.suggest({ q: (req.query.q || '').slice(0, 100), limit: 6 });
-    res.set('Cache-Control', 'public, max-age=30');
+    const out = await searchService.suggest({
+      q: (req.query.q || '').slice(0, 100), lat: coord(req.query.lat), lng: coord(req.query.lng), limit: 6,
+    });
+    // Results depend on what's live at the caller's location.
+    res.set('Cache-Control', 'private, max-age=30');
     res.json({ suggestions: out });
   } catch (err) { next(err); }
 }
 
 async function trending(req, res, next) {
   try {
-    res.set('Cache-Control', 'public, max-age=60');
-    res.json({ trending: await searchService.trending() });
+    res.set('Cache-Control', 'private, max-age=60');
+    res.json({ trending: await searchService.trending({ lat: coord(req.query.lat), lng: coord(req.query.lng) }) });
   } catch (err) { next(err); }
 }
 

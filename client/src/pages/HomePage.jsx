@@ -78,6 +78,7 @@ export default function HomePage() {
   const { profile } = useSelector(selectAuth);
   const isAuthed = useSelector(selectIsAuthed);
   const [spotOpen, setSpotOpen] = useState(false);
+  const [spotQuery, setSpotQuery] = useState('');
   const [lensOpen, setLensOpen] = useState(false);
   const [locSheet, setLocSheet] = useState(false);
   const [locDetecting, setLocDetecting] = useState(false);
@@ -201,7 +202,13 @@ export default function HomePage() {
         canonical={BASE_URL}
         jsonLd={HOME_SCHEMA}
       />
-      <SpotlightSearch open={spotOpen} onClose={() => setSpotOpen(false)} />
+      <SpotlightSearch
+        open={spotOpen}
+        onClose={() => { setSpotOpen(false); setSpotQuery(''); }}
+        lat={loc.lat}
+        lng={loc.lng}
+        initialQuery={spotQuery}
+      />
 
       <div className="min-h-screen w-full overflow-x-hidden bg-[#F4F7FB]">
         <HomeHeader
@@ -218,7 +225,7 @@ export default function HomePage() {
             <SearchBar
               terms={searchTerms}
               onOpen={() => setSpotOpen(true)}
-              onVoice={(text) => nav(`/services?q=${encodeURIComponent(text)}`)}
+              onVoice={(text) => { setSpotQuery(text); setSpotOpen(true); }}
               onLens={() => setLensOpen(true)}
             />
           </div>
@@ -257,7 +264,7 @@ export default function HomePage() {
         <Footer services={services} areas={svc?.areas || []} />
       </div>
 
-      <LensModal open={lensOpen} onClose={() => setLensOpen(false)} />
+      <LensModal open={lensOpen} onClose={() => setLensOpen(false)} lat={loc.lat} lng={loc.lng} />
       <LocationSheet
         open={locSheet}
         onClose={() => setLocSheet(false)}

@@ -1,28 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  X, Camera, ImageIcon, ScanLine, Loader2, ChevronRight, Sparkles,
-  Smartphone, Laptop, Car, Bike, Wrench, Tv, Heart, PartyPopper, Search,
-} from 'lucide-react';
-import toast from 'react-hot-toast';
+import { X, Camera, ImageIcon, ScanLine, Loader2, ChevronRight, Info } from 'lucide-react';
 import { useLensUploadUrlMutation, useAnalyzeLensMutation } from '@shared/services/api';
 import { downscaleImage } from '../../utils/downscaleImage';
-import { formatPaise, formatPaiseRange } from '@shared/utils/money';
-
-const CATEGORY_ICON = {
-  mobile: Smartphone, vehicle: Car, home: Wrench, helper: Heart,
-  beauty: Heart, construction: Wrench, other: Sparkles,
-};
-function matchIcon(m) {
-  const c = (m.serviceCode || '') + ' ' + (m.category || '');
-  if (/laptop/.test(c)) return Laptop;
-  if (/bike/.test(c)) return Bike;
-  if (/tv|cctv|router/.test(c)) return Tv;
-  if (/event|party|decor/.test(c)) return PartyPopper;
-  if (/screen|phone|battery|charging|camera|mobile/.test(c)) return Smartphone;
-  return CATEGORY_ICON[m.category] || Wrench;
-}
 
 const SEVERITY = {
   high:     { label: 'High',     cls: 'bg-rose-50 text-rose-600' },
@@ -31,7 +12,12 @@ const SEVERITY = {
   unknown:  { label: '',         cls: '' },
 };
 
-export default function LensModal({ open, onClose }) {
+/**
+ * Photo → the right service. The match comes from what's live where the
+ * customer is, and opens its booking flow with the problem already chosen.
+ * No price here: the flow quotes the exact job.
+ */
+export default function LensModal({ open, onClose, lat, lng }) {
   const nav = useNavigate();
   const [stage, setStage] = useState('capture'); // capture | analyzing | result | error
   const [preview, setPreview] = useState(null);
@@ -43,15 +29,16 @@ export default function LensModal({ open, onClose }) {
   const [lensUploadUrl] = useLensUploadUrlMutation();
   const [analyzeLens]   = useAnalyzeLensMutation();
 
-  // Grab a coarse location once (best-effort) so the quote is real, not a hint.
+  // Match against what's live at the customer's chosen location; GPS only if none was given.
   useEffect(() => {
-    if (!open || !navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition(
+    if (!open) return;
+    if (lat != null && lng != null) { coordsRef.current = { lat, lng }; return; }
+    navigator.geolocation?.getCurrentPosition(
       (pos) => { coordsRef.current = { lat: pos.coords.latitude, lng: pos.coords.longitude }; },
-      () => { /* denied — fall back to price hints */ },
-      { enableHighAccuracy: false, timeout: 4000, maximumAge: 300000 }
+      () => { /* denied: the server matches against everything live */ },
+      { enableHighAccuracy: false, timeout: 4000, maximumAge: 300000 },
     );
-  }, [open]);
+  }, [open, lat, lng]);
 
   // Reset when closed.
   useEffect(() => {
@@ -86,7 +73,7 @@ export default function LensModal({ open, onClose }) {
 
   const book = (m) => {
     onClose?.();
-    nav(`/book/${m.serviceCode}?lens=${result.scanId}`);
+    nav(m.path);
   };
 
   if (!open) return null;
@@ -111,8 +98,8 @@ export default function LensModal({ open, onClose }) {
                 <ScanLine size={18} className="text-white" />
               </div>
               <div>
-                <h2 className="font-black text-slate-900 leading-none">ZappyLens</h2>
-                <p className="text-[11px] text-slate-400 mt-0.5">Point. Scan. Book.</p>
+                <h2 className="font-bold text-navy leading-none">Find it with a photo</h2>
+                <p className="text-[12px] text-slate-500 mt-1">ZappyLens</p>
               </div>
             </div>
             <button onClick={onClose} className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center">
@@ -124,7 +111,7 @@ export default function LensModal({ open, onClose }) {
             {/* CAPTURE */}
             {stage === 'capture' && (
               <div className="space-y-3">
-                <p className="text-sm text-slate-500 mb-1">Take a photo of the problem — a cracked screen, flat tyre, leaking pipe — and we'll find the right service instantly.</p>
+                <p className="text-sm text-slate-600 mb-1">Take a photo of what's wrong, like a cracked screen or a damaged part, and we'll find the service for it.</p>
                 <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden"
                   onChange={(e) => handleFile(e.target.files?.[0])} />
                 <button onClick={() => fileRef.current?.click()}
@@ -170,42 +157,29 @@ export default function LensModal({ open, onClose }) {
                   {/* Friendly guidance for blurry/dark/unmatched/failed scans */}
                   {result.hint && (
                     <div className="flex items-start gap-2 rounded-xl bg-amber-50 border border-amber-100 px-3 py-2">
-                      <Sparkles size={15} className="text-amber-500 shrink-0 mt-0.5" />
+                      <Info size={15} className="text-amber-600 shrink-0 mt-0.5" />
                       <p className="text-xs font-medium text-amber-900">{result.hint}</p>
                     </div>
                   )}
 
                   {!result.isServiceable && (
-                    <p className="text-xs font-black uppercase tracking-widest text-slate-400 pt-1">Popular services</p>
+                    <p className="text-[13px] font-semibold text-slate-600 pt-1">Services available near you</p>
                   )}
 
                   {list.map((m, i) => {
-                    const Icon = matchIcon(m);
                     const sev = SEVERITY[m.severity] || SEVERITY.unknown;
-                    // Everything arrives in paise; rupees exist only here, on screen.
-                    const price = m.quote?.total != null
-                      ? formatPaise(m.quote.total)
-                      : formatPaiseRange(m.priceHintMin, m.priceHintMax);
                     const best = showBest && i === 0;
                     return (
                       <button key={m.serviceCode} onClick={() => book(m)}
-                        className={`w-full text-left rounded-2xl border p-4 flex items-start gap-3 active:scale-[0.99] transition-transform ${best ? 'border-zappy-300 bg-zappy-50/40 ring-1 ring-zappy-100' : 'border-slate-200'}`}>
-                        <div className="w-11 h-11 rounded-xl bg-white border border-slate-200 flex items-center justify-center shrink-0">
-                          <Icon size={20} className="text-zappy-600" />
-                        </div>
+                        className={`w-full text-left rounded-xl border p-4 flex items-start gap-3 transition-colors hover:bg-slate-50 ${best ? 'border-zappy-400' : 'border-slate-200'}`}>
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="font-bold text-slate-900 capitalize">{m.name || m.serviceCode.replace(/_/g, ' ')}</span>
-                            {best && <span className="text-[10px] font-black text-zappy-600 bg-zappy-100 px-1.5 py-0.5 rounded">BEST MATCH</span>}
-                          </div>
-                          {m.issueSummary && <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">{m.issueSummary}</p>}
-                          <div className="flex items-center gap-2 mt-2">
-                            {sev.label && <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${sev.cls}`}>{sev.label}</span>}
-                            {price && <span className="text-sm font-black text-slate-900">{price}</span>}
-                            {m.quote?.etaMinutes != null && <span className="text-[11px] text-slate-400">· ~{m.quote.etaMinutes} min</span>}
-                          </div>
+                          {best && <span className="mb-1 block text-[12px] font-semibold text-zappy-700">Best match</span>}
+                          <span className="block font-semibold text-navy">{m.name}</span>
+                          {m.category && <span className="block text-[13px] text-slate-500">{m.category}</span>}
+                          {m.issueSummary && <p className="mt-1.5 text-[13px] leading-snug text-slate-600 line-clamp-2">{m.issueSummary}</p>}
+                          {sev.label && <span className={`mt-2 inline-block text-[11px] font-semibold px-2 py-0.5 rounded-md ${sev.cls}`}>{sev.label} severity</span>}
                         </div>
-                        <ChevronRight size={18} className="text-slate-300 mt-3 shrink-0" />
+                        <ChevronRight size={18} className="text-slate-400 mt-1 shrink-0" />
                       </button>
                     );
                   })}
@@ -214,8 +188,8 @@ export default function LensModal({ open, onClose }) {
                     <button onClick={() => { setStage('capture'); setPreview(null); setResult(null); }}
                       className="flex-1 text-sm font-semibold text-slate-600 bg-slate-100 py-2.5 rounded-xl">Scan again</button>
                     <button onClick={() => { onClose?.(); nav('/services'); }}
-                      className="flex-1 inline-flex items-center justify-center gap-1.5 text-sm font-bold text-zappy-600 bg-zappy-50 py-2.5 rounded-xl">
-                      <Search size={15} /> Browse all
+                      className="flex-1 text-sm font-semibold text-zappy-700 bg-zappy-50 py-2.5 rounded-xl">
+                      All services
                     </button>
                   </div>
                 </div>
