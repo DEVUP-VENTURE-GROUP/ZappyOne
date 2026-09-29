@@ -159,8 +159,11 @@ function ServiceCard({ service, onOpenService, onOpenCategory }) {
   );
 }
 
-/** availableCodes: when given, only services covered at the customer's location are shown. */
-export default function LiveServices({ availableCodes = null }) {
+/**
+ * availableCodes: when given, only services covered at the customer's location are shown.
+ * onOpenService: told which service was opened (the app records it as demand).
+ */
+export default function LiveServices({ availableCodes = null, onOpenService = null }) {
   const nav = useNavigate();
   const { data, isLoading } = useLiveCatalogQuery();
 
@@ -201,7 +204,7 @@ export default function LiveServices({ availableCodes = null }) {
                 <ServiceCard
                   key={s.code}
                   service={s}
-                  onOpenService={() => nav(s.path)}
+                  onOpenService={() => { onOpenService?.(s.code); nav(s.path); }}
                   onOpenCategory={(group) => nav(`/repair/category/${s.artKey || s.code}/${group.code}`)}
                 />
               ))}

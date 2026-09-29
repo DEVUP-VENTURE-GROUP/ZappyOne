@@ -24,5 +24,13 @@ server/   modules/zi — services, models, routes, own auth (ZIUser, x-zi-token,
    show "not tracked" instead.
 5. **Remove overlaps** with what the admin already has (Insights: expansion, partners, geo/heatmap;
    Fraud detection; Ad campaigns) — keep one of each.
-6. Server paths inside this copy (`../../../utils/logger`) point at the old layout; the current
+6. **AI / RAG / ML is the next version's core.** The data it learns from is already being collected
+   by the live platform — keep these as the single sources, don't add parallel logs:
+   - demand: `SearchEvent` (`server/src/modules/telemetry`) — every service opened and every
+     "we don't serve here yet" (`category: 'all_services'`, `result: 'no_service'`) from the v1 home
+   - visits: `VisitorSession`; launch requests: `LaunchInterest` (zone module)
+   - bookings, prices, cancellations, ratings: the engine models (order, repair, pet, helping)
+   - money: `PaymentIntent` + `Transaction` ledger
+   `SearchEvent`/`VisitorSession` have a 90-day TTL — raise it or archive before training on history.
+7. Server paths inside this copy (`../../../utils/logger`) point at the old layout; the current
    equivalents are in `server/src/core/`.

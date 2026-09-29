@@ -26,6 +26,7 @@ import { saveGeoLocation } from '@shared/utils/geoCache';
 import { reverseGeocode } from '@shared/utils/reverseGeocode';
 import { serviceLabel } from '@shared/constants/services';
 import LiveServices from '@shared/components/home/LiveServices';
+import { trackSearch } from '../hooks/useTelemetry';
 import { ZappyLogo } from '@shared/components/common/ZappyLogo';
 import Footer from '../components/layout/Footer';
 import VoiceSearchButton from '../components/common/VoiceSearchButton';
@@ -548,6 +549,18 @@ export default function HomePage() {
 
   // Nothing bookable renders until the server confirms we serve this point.
   const { data: svc } = useGetServiceabilityQuery({ lat: loc.lat, lng: loc.lng }, { skip: loc.lat == null });
+
+  // Demand signal for Insights (unmet demand, expansion): once per session per ~1 km area,
+  // whether we serve it. "all_services" = the customer opened the app here, not a single service.
+  useEffect(() => {
+    if (!svc?.status || loc.lat == null) return;
+    const key = `zappy_area_seen:${loc.lat.toFixed(2)}:${loc.lng.toFixed(2)}`;
+    try { if (sessionStorage.getItem(key)) return; sessionStorage.setItem(key, '1'); } catch { /* private mode: record anyway */ }
+    trackSearch({
+      category: 'all_services', lat: loc.lat, lng: loc.lng,
+      result: svc.status === 'not_here' ? 'no_service' : 'served', userType: 'user',
+    });
+  }, [svc?.status, loc.lat, loc.lng]);
   const { data: eventCatData } = useGetEventCategoriesQuery();
   const eventCategories = eventCatData?.categories || [];
   const [locSearch, setLocSearch] = useState('');
@@ -948,7 +961,10 @@ export default function HomePage() {
             providers are verified for it — never before, because a tile that
             leads to a flow we cannot fulfil is worse than no tile.
           ─────────────────────────────────────────────────────────────── */}
-          <LiveServices availableCodes={svc ? svc.lines.map((l) => l.code) : null} />
+          <LiveServices
+            availableCodes={svc ? svc.lines.map((l) => l.code) : null}
+            onOpenService={(code) => trackSearch({ category: code, lat: loc.lat, lng: loc.lng, result: 'served', userType: 'user' })}
+          />
 
           <PromoBannerEvents />
 
