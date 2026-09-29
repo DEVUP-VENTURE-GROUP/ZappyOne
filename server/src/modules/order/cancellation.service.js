@@ -35,8 +35,9 @@ const DEFAULTS = {
   workerNoShowPenaltyPaise:   5000,
   lateWorkerCancelMultiplier: 2,
   workerRejectLimit:          5,
-  workerCancelLimit:          3,   // legacy alias
-  maxDailyWorkerCancels:      3,   // admin-editable escalation threshold (Cancellation page)
+  workerCancelLimit:          3,   // penalised cancels in the window before auto-offline
+  workerShareOnWayPct:        50,
+  workerShareArrivedPct:      70,
   workerCancelWindowSec:      86400, // 24h = "per day"
   rejectRatePenaltyWeight:    3.0,
   cancelRatePenaltyWeight:    5.0,
@@ -63,9 +64,11 @@ async function updateConfig(patch, adminId) {
     current.isActive = false;
     await current.save();
   }
+  // A new version row: copy the settings, never the old row's identity.
+  const { _id, __v, createdAt, updatedAt, version, isActive, updatedBy, ...settings } = current ? current.toObject() : {};
   const next = await CancellationConfig.create({
     ...DEFAULTS,
-    ...(current ? current.toObject() : {}),
+    ...settings,
     ...patch,
     version: (current?.version || 0) + 1,
     isActive: true,
@@ -124,10 +127,10 @@ async function calculateUserCancelFee(order) {
 
   if (order.status === 'arrived') {
     feePaise = cfg.userCancelFeeArrivedPaise ?? 5000;
-    workerCompensationPaise = Math.round(feePaise * 0.7); // 70% to worker
+    workerCompensationPaise = Math.round(feePaise * (cfg.workerShareArrivedPct ?? 70) / 100);
   } else if (order.status === 'on_the_way') {
     feePaise = cfg.userCancelFeeOnWayPaise ?? 3000;
-    workerCompensationPaise = Math.round(feePaise * 0.5); // 50% to worker
+    workerCompensationPaise = Math.round(feePaise * (cfg.workerShareOnWayPct ?? 50) / 100);
   } else {
     feePaise = cfg.userCancelFeeAssignedPaise ?? 2000;
     workerCompensationPaise = 0; // worker hadn't moved yet

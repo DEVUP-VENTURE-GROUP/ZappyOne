@@ -1,177 +1,30 @@
-import { useState, useCallback, useEffect, lazy, Suspense } from 'react';
+import { useCallback, useEffect, useState, Suspense } from 'react';
 import { useDispatch } from 'react-redux';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  LayoutDashboard, ShoppingBag, Users, Briefcase,
-  Wallet, Scale, CreditCard, BarChart2, Gift, XCircle,
-  FileText, LogOut, Menu, X, ChevronRight, FileCheck, Crown,
-  Megaphone, Ticket, Server, ToggleRight, Bell, Repeat2,
-  HeadphonesIcon, Radio, Globe, Layers, Zap, Sparkles, TrendingUp,
-  Shield, PartyPopper, ShieldAlert, Map as MapIcon,
-  AlertCircle, GraduationCap, Search, Store,
-} from 'lucide-react';
+import { LogOut, Menu, X, ChevronRight, Zap } from 'lucide-react';
 import { logout } from '@shared/modules/auth/authSlice';
-import { useLogoutMutation } from '@shared/services/api';
+import { useLogoutMutation, useAdminAlertsQuery } from '@shared/services/api';
 import { adminPath } from '@/config/admin';
+import { NAV_GROUPS, SECTIONS, REDIRECTS } from '@/config/sections';
 
-const Overview = lazy(() => import('./pages/Overview'));
-const Bookings = lazy(() => import('./pages/Bookings'));
-const AdminUsers = lazy(() => import('./pages/Users'));
-const Workers = lazy(() => import('./pages/Workers'));
-const Shops = lazy(() => import('./pages/Shops'));
-// What providers may sign up to do, and the verification each service demands.
-const ProviderOnboarding = lazy(() => import('./pages/ProviderOnboarding'));
-// Domains → services → each service's own console (repair, pet, helping), all data-driven.
-const ServicesHub = lazy(() => import('./pages/services/ServicesHub'));
-const AdminWallet = lazy(() => import('./pages/Wallet'));
-const Disputes = lazy(() => import('./pages/Disputes'));
-const Payouts = lazy(() => import('./pages/Payouts'));
-const Analytics = lazy(() => import('./pages/Analytics'));
-const Incentives = lazy(() => import('./pages/Incentives'));
-const Cancellation = lazy(() => import('./pages/Cancellation'));
-const Audit = lazy(() => import('./pages/Audit'));
-const AdminPlans = lazy(() => import('./pages/Plans'));
-const Ads = lazy(() => import('./pages/Ads'));
-const Promos = lazy(() => import('./pages/Promos'));
-const SystemHealth = lazy(() => import('./pages/SystemHealth'));
-const Heatmap = lazy(() => import('./pages/Heatmap'));
-const FeatureFlags = lazy(() => import('./pages/FeatureFlags'));
-const Alerts = lazy(() => import('./pages/Alerts'));
-const Retention = lazy(() => import('./pages/Retention'));
-const Support = lazy(() => import('./pages/Support'));
-const LiveOps = lazy(() => import('./pages/LiveOps'));
-const Rewards = lazy(() => import('./pages/Rewards'));
-const BusinessIntelligence = lazy(() => import('./pages/BusinessIntelligence'));
-const Intelligence = lazy(() => import('./pages/Intelligence'));
-const NotificationsAdmin = lazy(() => import('./pages/Notifications'));
-const ShieldFund = lazy(() => import('./pages/ShieldFund'));
-const Events = lazy(() => import('./pages/Events'));
-const Fraud = lazy(() => import('./pages/Fraud'));
-const Zones = lazy(() => import('./pages/Zones'));
-const Content = lazy(() => import('./pages/Content'));
-const RewardsConfig = lazy(() => import('./pages/RewardsConfig'));
-const WorkerOps = lazy(() => import('./pages/WorkerOps'));
-const SearchIntel = lazy(() => import('./pages/SearchIntel'));
-const Intervention = lazy(() => import('./pages/Intervention'));
-const Cities = lazy(() => import('./pages/Cities'));
-const Appeals = lazy(() => import('./pages/Appeals'));
-const Training = lazy(() => import('./pages/Training'));
+/** The sidebar status, from the live alert checks — never a hardcoded "all good". */
+function useSystemStatus() {
+  const { data, isError } = useAdminAlertsQuery(undefined, { pollingInterval: 60000 });
+  if (isError) return { tone: 'rose', text: 'Status unavailable' };
+  if (!data) return { tone: 'slate', text: 'Checking…' };
+  const critical = data.alerts.filter((a) => a.severity === 'critical').length;
+  const warning = data.alerts.filter((a) => a.severity === 'warning').length;
+  if (critical) return { tone: 'rose', text: `${critical} critical alert${critical > 1 ? 's' : ''}` };
+  if (warning) return { tone: 'amber', text: `${warning} warning${warning > 1 ? 's' : ''}` };
+  return { tone: 'green', text: 'All systems normal' };
+}
 
-/**
- * Navigation, organised around who the platform serves: customers, ServicePro
- * shops, Rakshak workers and event partners — plus the catalog, money and ops
- * that sit across all four.
- */
-const NAV_GROUPS = [
-  {
-    label: 'Insights',
-    items: [
-      { id: 'overview',      label: 'Overview',                 icon: LayoutDashboard },
-      { id: 'intelligence',  label: 'Intelligence & Expansion', icon: Sparkles },
-      { id: 'searchintel',   label: 'Search Intel',             icon: Search },
-      { id: 'retention',     label: 'Retention',                icon: Repeat2 },
-    ],
-  },
-  {
-    label: 'Catalog',
-    items: [
-      { id: 'services', label: 'Services', icon: Layers },
-    ],
-  },
-  {
-    label: 'Customers',
-    items: [
-      { id: 'users',        label: 'Customers',      icon: Users },
-      { id: 'bookings',     label: 'Bookings',       icon: ShoppingBag },
-      { id: 'support',      label: 'Support',        icon: HeadphonesIcon },
-      { id: 'disputes',     label: 'Disputes',       icon: Scale },
-      { id: 'promos',       label: 'Promo Codes',    icon: Ticket },
-      { id: 'rewards',      label: 'Rewards',        icon: Sparkles },
-      { id: 'rewardpoints', label: 'Points & Cards', icon: Gift },
-      { id: 'plans',        label: 'Plans',          icon: Crown },
-    ],
-  },
-  {
-    label: 'Providers',
-    items: [
-      { id: 'verification', label: 'Verification', icon: FileCheck },
-    ],
-  },
-  {
-    label: 'ServicePro',
-    items: [
-      { id: 'shops', label: 'Shops', icon: Store },
-    ],
-  },
-  {
-    label: 'Rakshak',
-    items: [
-      { id: 'workers',    label: 'Workers',    icon: Briefcase },
-      { id: 'workerops',  label: 'Worker Ops', icon: Briefcase },
-      { id: 'appeals',    label: 'Appeals',    icon: AlertCircle },
-      { id: 'training',   label: 'Training',   icon: GraduationCap },
-      { id: 'incentives', label: 'Incentives', icon: Gift },
-    ],
-  },
-  {
-    label: 'Events',
-    items: [
-      { id: 'events', label: 'Event Commerce', icon: PartyPopper },
-      { id: 'ads',    label: 'Ad Campaigns',   icon: Megaphone },
-    ],
-  },
-  {
-    label: 'Money',
-    items: [
-      { id: 'payouts', label: 'Payouts',     icon: CreditCard },
-      { id: 'wallet',  label: 'Wallet',      icon: Wallet },
-      { id: 'shield',  label: 'Shield Fund', icon: Shield },
-    ],
-  },
-  {
-    label: 'Operations',
-    items: [
-      { id: 'liveops',       label: 'Live Ops',        icon: Radio },
-      { id: 'intervention',  label: 'Intervention',    icon: Zap },
-      { id: 'zones',         label: 'Zones',           icon: MapIcon },
-      { id: 'cities',        label: 'Cities & Areas',  icon: Globe },
-      { id: 'fraud',         label: 'Fraud Detection', icon: ShieldAlert },
-      { id: 'cancellation',  label: 'Cancellation',    icon: XCircle },
-      { id: 'notifications', label: 'Notifications',   icon: Bell },
-      { id: 'content',       label: 'Content & Help',  icon: FileText },
-    ],
-  },
-  {
-    label: 'System',
-    items: [
-      { id: 'flags',  label: 'Feature Flags', icon: ToggleRight },
-      { id: 'health', label: 'System Health', icon: Server },
-      { id: 'alerts', label: 'Alerts',        icon: Bell },
-      { id: 'audit',  label: 'Audit Logs',    icon: FileText },
-    ],
-  },
-];
-
-const ALL_NAV = NAV_GROUPS.flatMap(g => g.items);
-
-const SECTION_MAP = {
-  overview: Overview, bookings: Bookings, orders: Bookings, users: AdminUsers, workers: Workers, shops: Shops,
-  verification: ProviderOnboarding,
-  // Old links (?tab=onboarding / ?tab=kyc) still land on the one Verification page.
-  onboarding: ProviderOnboarding, kyc: ProviderOnboarding,
-  services: ServicesHub, wallet: AdminWallet,
-  disputes: Disputes, payouts: Payouts, intelligence: Intelligence,
-  analytics: Analytics, business: BusinessIntelligence, notifications: NotificationsAdmin, heatmap: Heatmap,
-  incentives: Incentives, cancellation: Cancellation, ads: Ads, promos: Promos,
-  rewards: Rewards, shield: ShieldFund,
-  audit: Audit, plans: AdminPlans, liveops: LiveOps, alerts: Alerts,
-  retention: Retention, support: Support, flags: FeatureFlags, health: SystemHealth,
-  events: Events,
-  fraud: Fraud, zones: Zones, intervention: Intervention, cities: Cities,
-  appeals: Appeals, training: Training, content: Content, rewardpoints: RewardsConfig,
-  workerops: WorkerOps,
-  searchintel: SearchIntel,
+const TONES = {
+  green: { dot: 'bg-green-400', text: 'text-green-400', bg: 'rgba(34,197,94,0.08)', border: 'rgba(34,197,94,0.15)' },
+  amber: { dot: 'bg-amber-400', text: 'text-amber-400', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.2)' },
+  rose: { dot: 'bg-rose-400', text: 'text-rose-400', bg: 'rgba(244,63,94,0.08)', border: 'rgba(244,63,94,0.2)' },
+  slate: { dot: 'bg-slate-400', text: 'text-slate-400', bg: 'rgba(148,163,184,0.08)', border: 'rgba(148,163,184,0.15)' },
 };
 
 /* Sidebar nav item */
@@ -214,14 +67,27 @@ function NavItem({ item, isActive, onClick }) {
 /* Main */
 export default function AdminDashboard() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const active = searchParams.get('tab') || 'overview';
+  const requested = searchParams.get('tab') || 'overview';
+  const redirect = REDIRECTS[requested];
+  const active = redirect ? redirect[0] : (SECTIONS[requested] ? requested : 'overview');
+  const status = useSystemStatus();
+  const tone = TONES[status.tone];
+
+  // An old link lands where that screen lives now, and the URL says so.
+  useEffect(() => {
+    if (!redirect) return;
+    const next = new URLSearchParams(searchParams);
+    next.set('tab', redirect[0]);
+    if (redirect[1]) next.set('sub', redirect[1]);
+    setSearchParams(next, { replace: true });
+  }, [redirect, searchParams, setSearchParams]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const dispatch  = useDispatch();
   const navigate  = useNavigate();
   const [callLogout] = useLogoutMutation();
 
-  const Section = SECTION_MAP[active] || Overview;
-  const activeLabel = ALL_NAV.find(n => n.id === active)?.label || 'Dashboard';
+  const Section = SECTIONS[active].Comp;
+  const activeLabel = SECTIONS[active].label;
 
   const handleNav = useCallback((id) => {
     setSearchParams({ tab: id }, { replace: true });
@@ -276,14 +142,16 @@ export default function AdminDashboard() {
 
         {/* Live status */}
         <div className="px-4 py-2.5" style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-          <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg" style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.15)' }}>
+          <button type="button" onClick={() => handleNav('status')}
+            className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left"
+            style={{ background: tone.bg, border: `1px solid ${tone.border}` }}>
             <motion.div
-              className="w-1.5 h-1.5 rounded-full bg-green-400"
+              className={`w-1.5 h-1.5 rounded-full ${tone.dot}`}
               animate={{ opacity: [1, 0.3, 1], scale: [1, 0.8, 1] }}
               transition={{ duration: 1.8, repeat: Infinity }}
             />
-            <span className="text-[10px] font-bold text-green-400">All systems operational</span>
-          </div>
+            <span className={`text-[10px] font-bold ${tone.text}`}>{status.text}</span>
+          </button>
         </div>
 
         {/* Nav groups */}
@@ -356,9 +224,11 @@ export default function AdminDashboard() {
               transition={{ duration: 0.18 }}
               className="h-full"
             >
-              <Suspense fallback={<div className="flex items-center justify-center py-24 text-slate-400 text-sm">Loading…</div>}>
-                <Section />
-              </Suspense>
+              <div className="p-4 lg:p-6">
+                <Suspense fallback={<div className="flex items-center justify-center py-24 text-slate-400 text-sm">Loading…</div>}>
+                  <Section />
+                </Suspense>
+              </div>
             </motion.div>
           </AnimatePresence>
         </main>

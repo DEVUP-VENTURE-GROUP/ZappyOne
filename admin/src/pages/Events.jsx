@@ -781,7 +781,7 @@ export default function Events() {
   const [activeTab, setActiveTab] = useState('themes');
 
   return (
-    <div className="p-6 space-y-5 max-w-5xl">
+    <div className="space-y-5 max-w-5xl">
       <div>
         <h2 className="text-lg font-bold text-slate-900">Event Commerce</h2>
         <p className="text-sm text-slate-500 mt-0.5">Manage themes, partners, bookings and configuration</p>

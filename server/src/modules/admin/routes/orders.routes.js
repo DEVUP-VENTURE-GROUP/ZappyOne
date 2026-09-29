@@ -53,39 +53,6 @@ router.post(
   ctrl.refundOrder,
 );
 
-// Payment reconciliation — failed side-effects after capture (#95/#96)
-router.get('/payments/reconciliation-queue', async (req, res, next) => {
-  try {
-    const PaymentIntent = require('../../payment/payment-intent.model');
-    const items = await PaymentIntent.find(
-      { reconciliationRequired: true, reconciledAt: { $exists: false } },
-      { cfOrderId: 1, cfPaymentId: 1, purpose: 1, amountPaise: 1, reconciliationReason: 1, reconciliationAt: 1 },
-    ).sort({ reconciliationAt: -1 }).limit(50).lean();
-    res.json({ count: items.length, items: items.map((i) => ({ ...i, amountRupees: Math.round(i.amountPaise / 100) })) });
-  } catch (err) { next(err); }
-});
-
-router.post('/payments/:cfOrderId/reconcile',
-  validate(Joi.object({ notes: Joi.string().max(500).optional() })),
-  async (req, res, next) => {
-  try {
-    // Validate Cashfree order ID format (our own prefix: zpy_*) — prevent injection
-    const { cfOrderId } = req.params;
-    if (!/^zpy_[a-z0-9_]{4,60}$/.test(cfOrderId)) {
-      return res.status(400).json({ error: 'Invalid payment order ID format' });
-    }
-    const PaymentIntent = require('../../payment/payment-intent.model');
-    const intent = await PaymentIntent.findOneAndUpdate(
-      { cfOrderId, reconciliationRequired: true },
-      { $set: { reconciledAt: new Date(), reconciledBy: req.auth.sub } },
-      { new: true },
-    );
-    if (!intent) return res.status(404).json({ error: 'Intent not found or already reconciled' });
-    await auditService.fromRequest(req, 'admin.payment_reconciled', { kind: 'user', id: intent.owner.id }, null, { cfOrderId });
-    res.json({ ok: true, intent });
-  } catch (err) { next(err); }
-});
-
 // #96: Full financial trace for any single order
 router.get('/audit/order/:orderId', async (req, res, next) => {
   try {

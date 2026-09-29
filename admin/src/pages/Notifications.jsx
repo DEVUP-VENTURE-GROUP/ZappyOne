@@ -489,7 +489,7 @@ export default function NotificationsAdmin() {
   ];
 
   return (
-    <div className="p-6 space-y-6 max-w-5xl">
+    <div className="space-y-6 max-w-5xl">
       <SectionHeader
         title="Push Notifications"
         subtitle="Monitor delivery, send manual pushes, broadcast platform-wide announcements, and verify Firebase config."

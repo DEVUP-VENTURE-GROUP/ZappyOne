@@ -109,6 +109,14 @@ export function StatusBadge({ status }) {
     blocked: 'bg-red-100 text-red-700',
     not_submitted: 'bg-slate-100 text-slate-500',
     pending_review: 'bg-yellow-100 text-yellow-700',
+    // Payments, refunds, payouts
+    created: 'bg-slate-100 text-slate-600',
+    captured: 'bg-green-100 text-green-700',
+    paid: 'bg-green-100 text-green-700',
+    refunded: 'bg-violet-100 text-violet-700',
+    expired: 'bg-slate-100 text-slate-500',
+    requested: 'bg-yellow-100 text-yellow-700',
+    manual_required: 'bg-red-100 text-red-700',
   };
   const cls = map[status] || 'bg-slate-100 text-slate-600';
   return (
@@ -193,10 +201,10 @@ export function FormRow({ label, children, hint }) {
   );
 }
 
-export function Input({ ...props }) {
+export function Input({ className = '', ...props }) {
   return (
     <input
-      className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+      className={`w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition ${className}`}
       {...props}
     />
   );

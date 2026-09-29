@@ -118,7 +118,7 @@ export const api = createApi({
   // Keep fetched data cached for 5 min after a component unmounts, so jumping
   // back to a tab shows data instantly (no skeleton) instead of refetching.
   keepUnusedDataFor: 300,
-  tagTypes: ['Me', 'Order', 'Worker', 'Earnings', 'AdminMetrics', 'Kyc', 'Plan', 'Subscription', 'Wallet', 'Notification', 'AdminUsers', 'Disputes', 'Payouts', 'Incentives', 'CancellationConfig', 'PricingCfg', 'AuditLogs', 'Addresses', 'Ad', 'Promo', 'Gamification', 'Recommendations', 'FeatureFlags', 'SupportTickets', 'Referral', 'ShieldFund', 'EventTheme', 'EventBooking', 'EventPartner', 'EventConfig', 'EventCategory', 'PartnerNotification', 'Fraud', 'Zone', 'City', 'PaymentMethods', 'UserDisputes', 'UserTickets', 'AdminAppeals', 'AdminTraining', 'WorkerGoals', 'Plans', 'Content', 'Rewards', 'WorkerOps', 'ReadyMode', 'Shop', 'ShopWorkers', 'ShopKyc',
+  tagTypes: ['Payments', 'Me', 'Order', 'Worker', 'Earnings', 'AdminMetrics', 'Kyc', 'Plan', 'Subscription', 'Wallet', 'Notification', 'AdminUsers', 'Disputes', 'Payouts', 'Incentives', 'CancellationConfig', 'PricingCfg', 'AuditLogs', 'Addresses', 'Ad', 'Promo', 'Gamification', 'Recommendations', 'FeatureFlags', 'SupportTickets', 'Referral', 'ShieldFund', 'EventTheme', 'EventBooking', 'EventPartner', 'EventConfig', 'EventCategory', 'PartnerNotification', 'Fraud', 'Zone', 'City', 'PaymentMethods', 'UserDisputes', 'UserTickets', 'AdminAppeals', 'AdminTraining', 'WorkerGoals', 'Plans', 'Content', 'Rewards', 'WorkerOps', 'ReadyMode', 'Shop', 'ShopWorkers', 'ShopKyc',
     'RepairCatalog', 'RepairConfig', 'RepairPricing', 'RepairRequests', 'RepairBookings', 'RepairProvider', 'MyAssets',
     'HelpingConfig', 'HelpingTasks', 'HelpingAvailable', 'AdminHelpingTasks',
     'PetCatalog', 'MyPets', 'PetBookings', 'PetAvailable', 'PetRecurring', 'AdminPetBookings', 'AdminPetPricing', 'AdminPetCapabilities',
@@ -687,11 +687,31 @@ export const api = createApi({
     adminWorkerTrustAudit: b.query({
       query: () => adminApiPath('/audit/worker-trust'),
     }),
-    adminReconciliationQueue: b.query({
-      query: () => adminApiPath('/payments/reconciliation-queue'),
+    // Service areas → where customers asked us to launch ("notify me").
+    adminLaunchInterest: b.query({
+      query: (days = 90) => ({ url: adminApiPath('/launch-interest'), params: { days } }),
+      providesTags: ['Zone'],
+    }),
+    // Money → Payments: every online payment, and the ones that need a person.
+    adminPayments: b.query({
+      query: (params = {}) => ({ url: adminApiPath('/payments'), params }),
+      providesTags: ['Payments'],
+    }),
+    adminPaymentsSummary: b.query({
+      query: (days = 7) => ({ url: adminApiPath('/payments/summary'), params: { days } }),
+      providesTags: ['Payments'],
     }),
     adminReconcilePayment: b.mutation({
-      query: (cfOrderId) => ({ url: adminApiPath(`/payments/${cfOrderId}/reconcile`), method: 'POST' }),
+      query: ({ cfOrderId, notes }) => ({ url: adminApiPath(`/payments/${cfOrderId}/reconcile`), method: 'POST', body: { notes } }),
+      invalidatesTags: ['Payments'],
+    }),
+    adminRetryRefund: b.mutation({
+      query: (cfOrderId) => ({ url: adminApiPath(`/payments/${cfOrderId}/retry-refund`), method: 'POST' }),
+      invalidatesTags: ['Payments'],
+    }),
+    adminMarkRefunded: b.mutation({
+      query: ({ cfOrderId, reference }) => ({ url: adminApiPath(`/payments/${cfOrderId}/mark-refunded`), method: 'POST', body: { reference } }),
+      invalidatesTags: ['Payments'],
     }),
     // Business Intelligence (scenarios 81-85)
     adminServicePnL: b.query({
@@ -716,9 +736,6 @@ export const api = createApi({
     }),
     adminIntelVisitorLocations: b.query({
       query: (days = 30) => adminApiPath(`/intelligence/visitor-locations?days=${days}`),
-    }),
-    adminIntelDemand: b.query({
-      query: (days = 30) => adminApiPath(`/intelligence/demand?days=${days}`),
     }),
     adminIntelUnmetDemand: b.query({
       query: (days = 30) => adminApiPath(`/intelligence/unmet-demand?days=${days}`),
@@ -2662,7 +2679,11 @@ export const {
   useAdminOrderAuditQuery,
   useAdminCommissionAuditQuery,
   useAdminWorkerTrustAuditQuery,
-  useAdminReconciliationQueueQuery,
+  useAdminPaymentsQuery,
+  useAdminLaunchInterestQuery,
+  useAdminPaymentsSummaryQuery,
+  useAdminRetryRefundMutation,
+  useAdminMarkRefundedMutation,
   useAdminReconcilePaymentMutation,
   useAdminServicePnLQuery,
   useAdminChurnRiskQuery,
@@ -2671,7 +2692,6 @@ export const {
   useAdminQuoteAbandonmentQuery,
   useAdminIntelLiveTrafficQuery,
   useAdminIntelVisitorLocationsQuery,
-  useAdminIntelDemandQuery,
   useAdminIntelUnmetDemandQuery,
   useAdminIntelExpansionQuery,
   useAdminIntelCeoQuery,

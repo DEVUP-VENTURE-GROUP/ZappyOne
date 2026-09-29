@@ -109,66 +109,6 @@ async function visitorLocations(req, res, next) {
   } catch (err) { next(err); }
 }
 
-/*
- * 2. DEMAND INTELLIGENCE
- * */
-async function demandIntel(req, res, next) {
-  try {
-    const days = Math.min(Number(req.query.days) || 30, 180);
-    const data = await cachedAnalytics(`intel:demand:${days}`, 60, async () => {
-      const since = new Date(Date.now() - days * 86_400_000);
-      const mid = new Date(Date.now() - (days / 2) * 86_400_000);
-
-      const [byCategory, recentHalf, priorHalf, byCity, splitTotals] = await Promise.all([
-        SearchEvent.aggregate([
-          { $match: { createdAt: { $gte: since } } },
-          { $group: { _id: '$category', searches: { $sum: 1 },
-            noService: { $sum: { $cond: [{ $eq: ['$result', 'no_service'] }, 1, 0] } } } },
-          { $sort: { searches: -1 } }, { $limit: 25 },
-        ]),
-        SearchEvent.aggregate([{ $match: { createdAt: { $gte: mid } } }, { $group: { _id: '$category', n: { $sum: 1 } } }]),
-        SearchEvent.aggregate([{ $match: { createdAt: { $gte: since, $lt: mid } } }, { $group: { _id: '$category', n: { $sum: 1 } } }]),
-        SearchEvent.aggregate([
-          { $match: { createdAt: { $gte: since }, city: { $ne: null } } },
-          { $group: { _id: '$city', searches: { $sum: 1 },
-            noService: { $sum: { $cond: [{ $eq: ['$result', 'no_service'] }, 1, 0] } } } },
-          { $sort: { searches: -1 } }, { $limit: 15 },
-        ]),
-        SearchEvent.aggregate([
-          { $match: { createdAt: { $gte: since } } },
-          { $group: { _id: '$result', n: { $sum: 1 } } },
-        ]),
-      ]);
-
-      const recentMap = Object.fromEntries(recentHalf.map((r) => [r._id, r.n]));
-      const priorMap = Object.fromEntries(priorHalf.map((r) => [r._id, r.n]));
-      const trending = Object.keys(recentMap)
-        .map((cat) => {
-          const recent = recentMap[cat] || 0;
-          const prior = priorMap[cat] || 0;
-          const growthPct = prior === 0 ? (recent > 0 ? 100 : 0) : Math.round(((recent - prior) / prior) * 100);
-          return { category: cat, recent, prior, growthPct };
-        })
-        .filter((t) => t.recent >= 3)
-        .sort((a, b) => b.growthPct - a.growthPct)
-        .slice(0, 12);
-
-      const splitMap = Object.fromEntries(splitTotals.map((r) => [r._id, r.n]));
-      return {
-        windowDays: days,
-        mostSearched: byCategory.map((c) => ({
-          category: c._id, searches: c.searches, noService: c.noService,
-          fulfilmentPct: c.searches > 0 ? Math.round(((c.searches - c.noService) / c.searches) * 100) : 0,
-        })),
-        trending,
-        byCity: byCity.map((c) => ({ city: c._id, searches: c.searches, noService: c.noService })),
-        split: { served: splitMap.served || 0, noService: splitMap.no_service || 0 },
-      };
-    });
-    res.json(data);
-  } catch (err) { next(err); }
-}
-
 /* avg completed fare per service + global, used for lost-revenue math */
 async function fareMaps(since) {
   const rows = await Order.aggregate([
@@ -609,4 +549,4 @@ async function partnerAnalytics(req, res, next) {
   } catch (err) { next(err); }
 }
 
-module.exports = { liveTraffic, visitorLocations, demandIntel, unmetDemand, expansionEngine, ceoPulse, funnel, report, partnerAnalytics };
+module.exports = { liveTraffic, visitorLocations, unmetDemand, expansionEngine, ceoPulse, funnel, report, partnerAnalytics };

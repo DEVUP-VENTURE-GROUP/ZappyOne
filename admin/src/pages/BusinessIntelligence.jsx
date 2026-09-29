@@ -231,7 +231,7 @@ export default function BusinessIntelligence() {
   const [days, setDays] = useState(30);
 
   return (
-    <div className="p-6 space-y-6 max-w-5xl">
+    <div className="space-y-6 max-w-5xl">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-bold text-slate-900">Business Intelligence</h2>

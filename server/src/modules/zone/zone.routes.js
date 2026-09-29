@@ -116,13 +116,19 @@ router.get('/launch-interest', async (req, res, next) => {
           lat: { $avg: { $arrayElemAt: ['$location.coordinates', 1] } },
           sampleAddress: { $last: '$address' },
           lastAt: { $max: '$createdAt' },
+          notified: { $sum: { $cond: [{ $ne: ['$notifiedAt', null] }, 1, 0] } },
         } },
         { $sort: { requests: -1, lastAt: -1 } },
         { $limit: 200 },
       ]),
       LaunchInterest.countDocuments({ createdAt: { $gte: since } }),
     ]);
-    res.json({ total, cells: cells.map(({ _id, ...c }) => ({ cell: _id, ...c })) });
+    // Whether each area is already served, so ops see unmet demand, not demand already met.
+    const zones = await Promise.all(cells.map((c) => zoneService.getActiveZoneForPoint(c.lng, c.lat).catch(() => null)));
+    res.json({
+      total,
+      cells: cells.map(({ _id, ...c }, i) => ({ cell: _id, ...c, servedBy: zones[i] ? { id: String(zones[i]._id), name: zones[i].name } : null })),
+    });
   } catch (err) { next(err); }
 });
 

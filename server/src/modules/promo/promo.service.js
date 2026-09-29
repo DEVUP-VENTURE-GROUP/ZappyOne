@@ -8,6 +8,7 @@ const { redis } = require('../../config/redis');
  * Throws an error with { status, code } on failure.
  */
 async function applyPromo({ code, userId, orderTotalPaise, service }) {
+  await require('../feature-flags/feature-flag.service').assertEnabled('promo_codes');
   const promo = await Promo.findOne({ code: code.toUpperCase(), isActive: true }).lean();
   if (!promo) throw Object.assign(new Error('Invalid or expired promo code'), { status: 400, code: 'PROMO_INVALID' });
 

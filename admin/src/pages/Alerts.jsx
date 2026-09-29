@@ -1,7 +1,8 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useAdminAlertsQuery } from '@shared/services/api';
 import { SectionHeader, Card, PageLoader } from './_shared';
-import { AlertTriangle, CheckCircle2, XCircle, RefreshCw, Users, ShoppingBag, Clock } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, XCircle, RefreshCw, Users, ShoppingBag, Clock, Hourglass, IndianRupee, ArrowRight } from 'lucide-react';
 
 const SEVERITY_STYLE = {
   critical: { border: 'border-red-300',    bg: 'bg-red-50',     text: 'text-red-800',     badge: 'bg-red-100 text-red-700',     icon: XCircle },
@@ -11,6 +12,7 @@ const SEVERITY_STYLE = {
 
 export default function Alerts() {
   const [pollInterval] = useState(15000);
+  const [, setParams] = useSearchParams();
   const { data, isLoading, isFetching, refetch } = useAdminAlertsQuery(undefined, {
     pollingInterval: pollInterval,
   });
@@ -50,7 +52,7 @@ export default function Alerts() {
       </div>
 
       {/* Snapshot metrics */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3">
         {[
           { label: 'Online Workers',   value: snap.onlineWorkers ?? '—', Icon: Users,       color: 'text-blue-600',   bg: 'bg-blue-50' },
           { label: 'Active Orders',    value: snap.activeOrders ?? '—',  Icon: ShoppingBag, color: 'text-emerald-600', bg: 'bg-emerald-50' },
@@ -58,6 +60,8 @@ export default function Alerts() {
           { label: 'Completed (1h)',   value: snap.recentCompleted ?? '—', Icon: CheckCircle2, color: 'text-green-600', bg: 'bg-green-50' },
           { label: 'Failed Dispatch',  value: snap.failedOrders ?? '—',  Icon: AlertTriangle, color: 'text-amber-600', bg: 'bg-amber-50' },
           { label: 'Stuck Searching',  value: snap.longSearching ?? '—', Icon: Clock,       color: 'text-purple-600', bg: 'bg-purple-50' },
+          { label: 'Bookings Unassigned', value: snap.bookingsWaiting ?? '—', Icon: Hourglass, color: 'text-orange-600', bg: 'bg-orange-50' },
+          { label: 'Payments To Fix', value: snap.paymentsNeedingAction ?? '—', Icon: IndianRupee, color: 'text-rose-600', bg: 'bg-rose-50' },
         ].map(({ label, value, Icon, color, bg }) => (
           <Card key={label} className="p-3 flex flex-col items-center text-center">
             <div className={`w-8 h-8 rounded-lg ${bg} flex items-center justify-center mb-2`}>
@@ -86,6 +90,12 @@ export default function Alerts() {
                     </span>
                   </div>
                   <p className={`text-xs mt-1 ${style.text} opacity-80`}>{alert.message}</p>
+                  {alert.link && (
+                    <button type="button" onClick={() => setParams(alert.link, { replace: true })}
+                      className={`mt-2 text-xs font-bold flex items-center gap-1 ${style.text}`}>
+                      Open <ArrowRight size={12} />
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

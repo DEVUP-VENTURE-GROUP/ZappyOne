@@ -3,8 +3,12 @@ const AdWallet  = require('./ad-wallet.model');
 
 // Public / user-facing
 
+/** Ads switched off platform-wide: serve nothing, record nothing. */
+const adsOff = async () => !(await require('../feature-flags/feature-flag.service').isEnabled('ads'));
+
 async function getActive(req, res, next) {
   try {
+    if (await adsOff()) return res.json({ ads: [] });
     const audience = req.auth?.role === 'worker' ? 'workers' : 'users';
     const ads = await adService.getActiveAds({ audience, limit: 8 });
     res.json({ ads });
@@ -14,6 +18,7 @@ async function getActive(req, res, next) {
 /** GET /api/ads/placement/:placement?city=&category=&q= */
 async function getByPlacement(req, res, next) {
   try {
+    if (await adsOff()) return res.json({ ads: [] });
     const { placement } = req.params;
     const { city, category, q, limit = 3 } = req.query;
     const ads = await adService.getAdsByPlacement({

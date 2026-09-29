@@ -230,8 +230,7 @@ async function workerCancel({ orderId, workerId, reason }) {
   if (counts) {
     try {
       const cfg = await cancellationService.getConfig();
-      // Admin-editable threshold (the Cancellation page saves `maxDailyWorkerCancels`).
-      const limit = cfg.maxDailyWorkerCancels ?? cfg.workerCancelLimit ?? 3;
+      const limit = cfg.workerCancelLimit ?? 3;
       const key = `worker:cancelwin:${workerId}`;
       const count = await redis.incr(key);
       if (count === 1) await redis.expire(key, cfg.workerCancelWindowSec || 86400);
@@ -300,7 +299,7 @@ async function workerCancelPreview({ orderId, workerId, reason }) {
   const cancellationService = require('../cancellation.service');
   const { penaltyPaise, isLate, isGenuine, counts } = await cancellationService.calculateWorkerCancelPenalty(order, reason);
   const cfg = await cancellationService.getConfig();
-  const limit = cfg.maxDailyWorkerCancels ?? cfg.workerCancelLimit ?? 3;
+  const limit = cfg.workerCancelLimit ?? 3;
   const cancelsInWindow = Number(await redis.get(`worker:cancelwin:${workerId}`)) || 0;
 
   return {

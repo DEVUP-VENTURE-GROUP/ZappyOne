@@ -7,7 +7,7 @@ import {
   Filter, FileText, Download, Star,
 } from 'lucide-react';
 import {
-  useAdminIntelLiveTrafficQuery, useAdminIntelVisitorLocationsQuery, useAdminIntelDemandQuery,
+  useAdminIntelLiveTrafficQuery, useAdminIntelVisitorLocationsQuery,
   useAdminIntelUnmetDemandQuery, useAdminIntelExpansionQuery, useAdminIntelCeoQuery,
   useAdminIntelFunnelQuery, useAdminIntelReportQuery, useAdminIntelPartnersQuery,
 } from '@shared/services/api';
@@ -15,6 +15,8 @@ import { SectionHeader, Card, PageLoader, EmptyState, StatCard, BarChart, Th, Td
 import BusinessIntelligence from './BusinessIntelligence';
 import Heatmap from './Heatmap';
 import Analytics from './Analytics';
+import SearchIntel from './SearchIntel';
+import Retention from './Retention';
 
 /* helpers */
 const inr = (n) => `₹${Math.round(Number(n) || 0).toLocaleString('en-IN')}`;
@@ -238,75 +240,6 @@ function LiveTraffic() {
 
       {/* Location history — which areas visitors come from most */}
       <VisitorLocations />
-    </div>
-  );
-}
-
-/*
- * DEMAND INTELLIGENCE
- * */
-function DemandIntel() {
-  const [days, setDays] = useState(30);
-  const { data, isLoading } = useAdminIntelDemandQuery(days);
-  if (isLoading) return <PageLoader />;
-  const d = data || {};
-  const split = d.split || { served: 0, noService: 0 };
-  const total = split.served + split.noService;
-  const fulfil = total ? Math.round((split.served / total) * 100) : 0;
-  return (
-    <div className="space-y-6">
-      <SectionHeader title="Demand Intelligence" subtitle="Every service search — what people want, where, and what's trending.">
-        <DaysSelect value={days} onChange={setDays} />
-      </SectionHeader>
-
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard label="Total Searches" value={num(total)} Icon={Search} color="text-indigo-600" bg="bg-indigo-50" />
-        <StatCard label="Served" value={num(split.served)} Icon={Activity} color="text-emerald-600" bg="bg-emerald-50" />
-        <StatCard label="No Service" value={num(split.noService)} Icon={MapPinOff} color="text-red-600" bg="bg-red-50" />
-        <StatCard label="Fulfilment" value={`${fulfil}%`} Icon={TrendingUp} color="text-blue-600" bg="bg-blue-50" />
-      </div>
-
-      <div className="grid lg:grid-cols-2 gap-4">
-        <Card className="p-5">
-          <p className="text-sm font-bold text-slate-700 mb-3">Most Searched Services</p>
-          {(d.mostSearched || []).length === 0 ? <p className="text-xs text-slate-400">No searches in this window yet.</p> : (
-            <div className="space-y-2">
-              {d.mostSearched.slice(0, 12).map((c) => (
-                <div key={c.category} className="flex items-center gap-2">
-                  <span className="text-xs text-slate-600 w-32 truncate capitalize">{c.category?.replace(/_/g, ' ')}</span>
-                  <div className="flex-1 h-2.5 rounded-full bg-slate-100 overflow-hidden">
-                    <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${(c.searches / (d.mostSearched[0]?.searches || 1)) * 100}%` }} />
-                  </div>
-                  <span className="text-xs font-bold text-slate-700 w-10 text-right tabular-nums">{num(c.searches)}</span>
-                  <span className={`text-[10px] font-bold w-10 text-right ${c.fulfilmentPct >= 80 ? 'text-emerald-600' : c.fulfilmentPct >= 50 ? 'text-amber-600' : 'text-red-500'}`}>{c.fulfilmentPct}%</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </Card>
-
-        <Card className="p-5">
-          <p className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2"><Flame size={15} className="text-orange-500" /> Trending (vs prior period)</p>
-          {(d.trending || []).length === 0 ? <p className="text-xs text-slate-400">Not enough data to compute trends yet.</p> : (
-            <div className="space-y-2">
-              {d.trending.map((t) => (
-                <div key={t.category} className="flex items-center justify-between p-2 rounded-lg bg-slate-50">
-                  <span className="text-xs font-semibold text-slate-700 capitalize">{t.category?.replace(/_/g, ' ')}</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[11px] text-slate-400">{t.prior}→{t.recent}</span>
-                    <Delta pct={t.growthPct} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </Card>
-      </div>
-
-      <Card className="p-5">
-        <p className="text-sm font-bold text-slate-700 mb-3">Demand by City</p>
-        <MiniBars rows={(d.byCity || []).map((c) => ({ label: c.city, n: c.searches }))} color="#2563eb" max={12} />
-      </Card>
     </div>
   );
 }
@@ -638,7 +571,7 @@ function PartnerPerformance() {
 const VIEWS = [
   { id: 'ceo',       label: 'CEO Pulse',          icon: Crown,     Comp: CeoPulse },
   { id: 'traffic',   label: 'Live Traffic',       icon: Radio,     Comp: LiveTraffic },
-  { id: 'demand',    label: 'Demand Intel',       icon: Search,    Comp: DemandIntel },
+  { id: 'search',    label: 'Search Demand',      icon: Search,    Comp: SearchIntel },
   { id: 'unmet',     label: 'Unmet Demand',       icon: MapPinOff, Comp: UnmetDemand },
   { id: 'expansion', label: 'Expansion Engine',   icon: Rocket,    Comp: ExpansionEngine },
   { id: 'funnel',    label: 'Conversion Funnel',  icon: Filter,    Comp: ConversionFunnel },
@@ -647,6 +580,7 @@ const VIEWS = [
   { id: 'geo',       label: 'Geo / Heatmap',      icon: Globe,     Comp: Heatmap },
   { id: 'business',  label: 'Business Intel',     icon: TrendingUp, Comp: BusinessIntelligence },
   { id: 'analytics', label: 'Deep Analytics',     icon: BarChart2, Comp: Analytics },
+  { id: 'retention', label: 'Retention & Cohorts', icon: Users,     Comp: Retention },
 ];
 
 export default function Intelligence() {
@@ -659,14 +593,14 @@ export default function Intelligence() {
 
   function pick(id) {
     const next = new URLSearchParams(params);
-    next.set('tab', 'intelligence');
+    next.set('tab', 'insights');
     next.set('sub', id);
     setParams(next, { replace: true });
     setOpen(false);
   }
 
   return (
-    <div className="p-4 lg:p-6 max-w-7xl mx-auto">
+    <div className="max-w-7xl mx-auto">
       {/* Title + dropdown */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
@@ -674,7 +608,7 @@ export default function Intelligence() {
             <Activity size={20} className="text-white" />
           </div>
           <div>
-            <h1 className="text-xl font-black text-slate-900 leading-none">Intelligence &amp; Expansion</h1>
+            <h1 className="text-xl font-black text-slate-900 leading-none">Insights</h1>
             <p className="text-xs text-slate-400 mt-1">Live demand → data-driven hiring, marketing &amp; city launches</p>
           </div>
         </div>

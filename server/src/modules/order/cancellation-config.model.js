@@ -10,9 +10,15 @@ const cancellationConfigSchema = new mongoose.Schema(
   {
     version: { type: Number, required: true },
 
-    // User-side
-    freeCancelWindowSec: { type: Number, default: 60 },      // grace period
-    userCancelFeePaise:  { type: Number, default: 1000 },    // ₹10 flat fee
+    // User-side: free for a grace period after assignment, then priced by how far the worker got.
+    freeCancelWindowSec:        { type: Number, default: 120 },
+    userCancelFeeAssignedPaise: { type: Number, default: 2000 },
+    userCancelFeeOnWayPaise:    { type: Number, default: 3000 },
+    userCancelFeeArrivedPaise:  { type: Number, default: 5000 },
+    // Share of that fee paid to the worker for the trip they wasted.
+    workerShareOnWayPct:        { type: Number, default: 50, min: 0, max: 100 },
+    workerShareArrivedPct:      { type: Number, default: 70, min: 0, max: 100 },
+    userCancelFeePaise:  { type: Number, default: 2000 },    // legacy single fee, unused
 
     // Worker-side penalties (debited from wallet)
     workerCancelPenaltyPaise:   { type: Number, default: 2000 },  // ₹20 base

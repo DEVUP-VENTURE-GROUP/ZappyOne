@@ -14,6 +14,7 @@ router.use('/', require('../onboarding/onboarding-admin.routes'));
 router.use('/', require('./routes/users.routes'));
 router.use('/', require('./routes/pricing.routes'));
 router.use('/', require('./routes/financial.routes'));
+router.use('/', require('./routes/payments.routes'));
 router.use('/', require('./routes/incentives.routes'));
 router.use('/', require('./routes/plans.routes'));
 router.use('/', require('./routes/geo.routes'));

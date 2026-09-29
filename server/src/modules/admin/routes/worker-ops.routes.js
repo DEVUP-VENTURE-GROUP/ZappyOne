@@ -13,7 +13,7 @@ const router = express.Router();
 router.get('/worker-ops', async (req, res, next) => {
   try {
     const cfg = await cancellationService.getConfig();
-    const limit = cfg.maxDailyWorkerCancels ?? cfg.workerCancelLimit ?? 3;
+    const limit = cfg.workerCancelLimit ?? 3;
 
     // Live cancel-window counters (Redis: worker:cancelwin:<id>, 24h TTL).
     const keys = [];
@@ -65,7 +65,7 @@ router.get('/worker-ops', async (req, res, next) => {
     res.json({
       singleDevice: { enforced: true, hardBlockNewDevice: process.env.WORKER_NEW_DEVICE_BLOCK === 'true' },
       policy: {
-        maxDailyWorkerCancels: limit,
+        workerCancelLimit: limit,
         workerCancelWindowHours: Math.round((cfg.workerCancelWindowSec ?? 86400) / 3600),
         workerCancelPenaltyRupees: Math.round((cfg.workerCancelPenaltyPaise ?? 2000) / 100),
         lateWorkerCancelMultiplier: cfg.lateWorkerCancelMultiplier ?? 2,

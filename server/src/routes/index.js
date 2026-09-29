@@ -54,6 +54,7 @@ function mountRoutes(app) {
 
   app.use('/api/auth', authRoutes);
   app.use('/api/serviceability', require('../modules/zone/serviceability.routes'));
+  app.use('/api/features', require('../modules/feature-flags/feature-flag.routes'));
   app.use('/api/users', userRoutes);
   app.use('/api/uploads', uploadRoutes);
   app.use('/api/workers', workerRoutes);

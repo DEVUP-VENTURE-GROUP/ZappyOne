@@ -435,4 +435,6 @@ module.exports = {
   reconcilePendingIntents,
   refundBookingPayment,
   refundOrderPayment,
+  // For admin tooling (retrying a refund that failed at the gateway) — the one refund path.
+  refundIntent,
 };

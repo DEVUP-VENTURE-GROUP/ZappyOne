@@ -1,75 +1,61 @@
-import { useAdminFeatureFlagsQuery, useAdminSetFeatureFlagMutation } from '@shared/services/api';
-import { SectionHeader, Card, PageLoader } from './_shared';
+import toast from 'react-hot-toast';
 import { ToggleLeft, ToggleRight, Loader2 } from 'lucide-react';
+import { useAdminFeatureFlagsQuery, useAdminSetFeatureFlagMutation } from '@shared/services/api';
+import { SectionHeader, Card, PageLoader, fmtDate } from './_shared';
 
-const FLAG_META = {
-  surge_pricing:   { label: 'Surge Pricing',     desc: 'Dynamic price multipliers during high demand periods' },
-  promo_codes:     { label: 'Promo Codes',        desc: 'Allow users to apply discount promo codes at checkout' },
-  gamification:    { label: 'Gamification',       desc: 'XP points, levels, badges, and streaks for users' },
-  ads:             { label: 'Ad Campaigns',        desc: 'Display banner ads to users in the app' },
-  chat:            { label: 'In-App Chat',         desc: 'Real-time chat between user and assigned worker' },
-  live_tracking:   { label: 'Live Tracking',       desc: 'Worker GPS tracking and ETA shown to user' },
-  worker_ratings:  { label: 'Worker Ratings',      desc: 'Post-order rating and review system' },
-  cashback:        { label: 'Cashback',            desc: 'Wallet cashback rewards on completed orders' },
-  referrals:       { label: 'Referrals',           desc: 'Refer a friend program with bonus credits' },
-  notifications:   { label: 'Push Notifications', desc: 'FCM push notifications to user and worker devices' },
-};
-
+/**
+ * Platform kill switches. The list comes from the server — every flag shown
+ * here is one the server actually enforces. Surge and cashback have their own
+ * settings pages and are switched there.
+ */
 export default function FeatureFlags() {
-  const { data, isLoading } = useAdminFeatureFlagsQuery();
-  const [setFlag, { isLoading: saving }] = useAdminSetFeatureFlagMutation();
+  const { data, isLoading, isError } = useAdminFeatureFlagsQuery();
+  const [setFlag, { isLoading: saving, originalArgs }] = useAdminSetFeatureFlagMutation();
 
   if (isLoading) return <PageLoader />;
+  if (isError) return <p className="text-sm text-rose-600">Could not load feature flags.</p>;
 
-  const flags = data?.flags || {};
+  const flags = data?.flags || [];
 
-  async function toggle(flag, current) {
-    await setFlag({ flag, enabled: !current });
+  async function toggle(flag) {
+    const next = !flag.enabled;
+    if (!next && !window.confirm(`Switch off ${flag.label}? ${flag.description} This stops immediately for everyone.`)) return;
+    try {
+      await setFlag({ flag: flag.key, enabled: next }).unwrap();
+      toast.success(`${flag.label} ${next ? 'on' : 'off'}`);
+    } catch (err) { toast.error(err?.data?.error || 'Could not change the flag'); }
   }
-
-  const enabled  = Object.entries(flags).filter(([, v]) => v).length;
-  const total    = Object.keys(flags).length;
 
   return (
     <div className="space-y-6">
       <SectionHeader
-        title="Feature Flags"
-        subtitle={`${enabled} of ${total} features enabled — changes apply immediately`}
+        title="Feature flags"
+        subtitle={`${flags.filter((f) => f.enabled).length} of ${flags.length} on · changes reach every server within 15 seconds`}
       />
-
       <Card className="divide-y divide-slate-50">
-        {Object.entries(FLAG_META).map(([key, { label, desc }]) => {
-          const on = flags[key] ?? true;
+        {flags.map((f) => {
+          const busy = saving && originalArgs?.flag === f.key;
           return (
-            <div key={key} className="flex items-center justify-between px-5 py-4 hover:bg-slate-50 transition group">
+            <div key={f.key} className="flex items-center justify-between px-5 py-4">
               <div className="flex-1 min-w-0 pr-4">
-                <p className="text-sm font-semibold text-slate-800">{label}</p>
-                <p className="text-xs text-slate-400 mt-0.5">{desc}</p>
+                <p className="text-sm font-semibold text-slate-800">{f.label}</p>
+                <p className="text-xs text-slate-400 mt-0.5">{f.description}</p>
+                {f.updatedAt && <p className="text-[11px] text-slate-300 mt-0.5">Changed {fmtDate(f.updatedAt)}</p>}
               </div>
-              <button
-                onClick={() => toggle(key, on)}
-                disabled={saving}
-                className="flex items-center gap-2 shrink-0 transition"
-              >
-                {saving
+              <button type="button" onClick={() => toggle(f)} disabled={saving}
+                aria-pressed={f.enabled} aria-label={`${f.label}: ${f.enabled ? 'on' : 'off'}`}
+                className="flex items-center gap-2 shrink-0">
+                {busy
                   ? <Loader2 size={20} className="animate-spin text-slate-400" />
-                  : on
-                    ? <ToggleRight size={28} className="text-blue-600 hover:text-blue-700 transition" />
-                    : <ToggleLeft  size={28} className="text-slate-300 hover:text-slate-400 transition" />
-                }
-                <span className={`text-xs font-bold w-12 text-right ${on ? 'text-blue-600' : 'text-slate-400'}`}>
-                  {on ? 'ON' : 'OFF'}
-                </span>
+                  : f.enabled
+                    ? <ToggleRight size={28} className="text-blue-600" />
+                    : <ToggleLeft size={28} className="text-slate-300" />}
+                <span className={`text-xs font-bold w-8 text-right ${f.enabled ? 'text-blue-600' : 'text-slate-400'}`}>{f.enabled ? 'ON' : 'OFF'}</span>
               </button>
             </div>
           );
         })}
       </Card>
-
-      <p className="text-xs text-slate-400 text-center">
-        Feature flag changes are stored in Redis and take effect immediately for new requests.
-        No deployment required.
-      </p>
     </div>
   );
 }

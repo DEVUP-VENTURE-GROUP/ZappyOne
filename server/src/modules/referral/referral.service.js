@@ -59,6 +59,7 @@ async function getOrCreateCode({ kind, id }) {
  * @param {string} [p.refereeDeviceId]
  */
 async function applyAtSignup({ code, referee, refereeIp, refereeDeviceId }) {
+  await require('../feature-flags/feature-flag.service').assertEnabled('referrals');
   const codeDoc = await ReferralCode.findOne({ code: code.toUpperCase(), isActive: true });
   if (!codeDoc) {
     throw Object.assign(new Error('Invalid referral code'), { status: 400, code: 'REFERRAL_INVALID' });
@@ -151,6 +152,8 @@ async function applyAtSignup({ code, referee, refereeIp, refereeDeviceId }) {
  * Idempotent — if already rewarded, returns silently.
  */
 async function onRefereeFirstOrder({ refereeKind, refereeId, orderId }) {
+  // Switched off: rewards wait (the use stays at 'signup') and are granted on a later order once back on.
+  if (!(await require('../feature-flags/feature-flag.service').isEnabled('referrals'))) return null;
   const use = await ReferralUse.findOne({
     'referee.kind': refereeKind,
     'referee.id': refereeId,

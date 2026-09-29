@@ -1,6 +1,6 @@
 const Worker = require('../../worker/worker.model');
 const Order = require('../../order/order.model');
-const { redis } = require('../../../config/redis');
+
 const auditService = require('../audit.service');
 
 async function getSystemHealth(req, res, next) {
@@ -54,25 +54,11 @@ async function getSystemHealth(req, res, next) {
   }
 }
 
-const FLAG_KEY = 'admin:feature-flags';
-const DEFAULT_FLAGS = {
-  surge_pricing: true,
-  promo_codes: true,
-  gamification: true,
-  ads: true,
-  chat: true,
-  live_tracking: true,
-  worker_ratings: true,
-  cashback: true,
-  referrals: true,
-  notifications: true,
-};
+const featureFlags = require('../../feature-flags/feature-flag.service');
 
 async function getFeatureFlags(req, res, next) {
   try {
-    const raw = await redis.get(FLAG_KEY);
-    const saved = raw ? JSON.parse(raw) : {};
-    res.json({ flags: { ...DEFAULT_FLAGS, ...saved } });
+    res.json({ flags: await featureFlags.list() });
   } catch (err) {
     next(err);
   }
@@ -81,18 +67,14 @@ async function getFeatureFlags(req, res, next) {
 async function setFeatureFlag(req, res, next) {
   try {
     const { flag, enabled } = req.body;
-    if (!(flag in DEFAULT_FLAGS))
-      return res.status(400).json({ error: 'Unknown flag' });
-    const raw = await redis.get(FLAG_KEY);
-    const flags = { ...DEFAULT_FLAGS, ...(raw ? JSON.parse(raw) : {}) };
-    flags[flag] = Boolean(enabled);
-    await redis.set(FLAG_KEY, JSON.stringify(flags), 'EX', 86400);
+    const before = (await featureFlags.list()).find((f) => f.key === flag);
+    const flags = await featureFlags.set(flag, enabled, req.auth.sub);
     await auditService.fromRequest(
       req,
       'admin.feature_flag_update',
       { kind: 'system', id: null },
-      null,
-      { flag, enabled },
+      before ? { flag, enabled: before.enabled } : null,
+      { flag, enabled: Boolean(enabled) },
     );
     res.json({ flags });
   } catch (err) {
@@ -186,6 +168,45 @@ async function getAlerts(req, res, next) {
       });
     }
 
+    // Repair, pet and helping jobs nobody has picked up, and money waiting on a person.
+    const waitingSince = new Date(now - 600_000);
+    const [repairWaiting, petWaiting, helpingWaiting, paymentsNeedingAction] = await Promise.all([
+      require('../../repair/models/booking.model').RepairBooking.countDocuments({
+        status: 'CONFIRMED', workerId: null, shopId: null, updatedAt: { $lt: waitingSince },
+      }),
+      require('../../pet/models/booking.model').PetBooking.countDocuments({
+        status: { $in: ['BOOKED', 'PROVIDER_SEARCHING'] }, updatedAt: { $lt: waitingSince },
+      }),
+      require('../../helping/models/task.model').HelpingTask.countDocuments({
+        status: { $in: ['REQUESTED', 'CONFIRMED', 'WORKER_SEARCHING'] }, workerId: null, updatedAt: { $lt: waitingSince },
+      }),
+      require('../../payment/payment-intent.model').countDocuments({
+        $or: [
+          { reconciliationRequired: true, reconciledAt: { $exists: false } },
+          { 'refund.status': 'manual_required' },
+        ],
+      }),
+    ]);
+    const bookingsWaiting = repairWaiting + petWaiting + helpingWaiting;
+    if (bookingsWaiting > 0) {
+      alerts.push({
+        id: 'bookings_unassigned',
+        severity: bookingsWaiting >= 5 ? 'critical' : 'warning',
+        title: 'Bookings waiting for a provider',
+        message: `${bookingsWaiting} booking(s) unassigned for over 10 minutes (repair ${repairWaiting}, pet ${petWaiting}, helping ${helpingWaiting})`,
+        link: { tab: 'bookings' },
+      });
+    }
+    if (paymentsNeedingAction > 0) {
+      alerts.push({
+        id: 'payments_action',
+        severity: 'critical',
+        title: 'Payments need action',
+        message: `${paymentsNeedingAction} refund(s) or payment(s) are waiting for a person`,
+        link: { tab: 'money', sub: 'payments' },
+      });
+    }
+
     if (alerts.length === 0) {
       alerts.push({
         id: 'all_clear',
@@ -204,6 +225,8 @@ async function getAlerts(req, res, next) {
         recentCompleted,
         failedOrders,
         longSearching,
+        bookingsWaiting,
+        paymentsNeedingAction,
       },
       checkedAt: now.toISOString(),
     });

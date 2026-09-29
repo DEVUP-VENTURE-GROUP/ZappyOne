@@ -91,6 +91,7 @@ const TYPES = [
   // Platform-wide
   'promotional',
   'service_due',   // retention: recurring service is due for a rebook
+  'service_live_in_area', // "notify me": ZappyOne now serves where the customer asked
   'system_alert',
 ];
 

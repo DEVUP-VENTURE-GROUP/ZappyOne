@@ -32,14 +32,58 @@ async function bustCache() {
 async function createZone(data) {
   const zone = await Zone.create(data);
   await bustCache();
+  if (zone.status === 'active') announceLaunch(zone);
   return zone.toObject();
 }
 
 async function updateZone(id, patch) {
+  const before = await Zone.findById(id).select('status').lean();
   const zone = await Zone.findByIdAndUpdate(id, { $set: patch }, { new: true, runValidators: true });
   if (!zone) throw Object.assign(new Error('Zone not found'), { status: 404 });
   await bustCache();
+  // Going live, or redrawn while live: tell whoever asked from inside it.
+  if (zone.status === 'active' && (before?.status !== 'active' || patch.polygon)) announceLaunch(zone);
   return zone.toObject();
+}
+
+/**
+ * "Notify me" kept: everyone who asked for ZappyOne inside this zone hears
+ * that it is live, once. Each row is claimed before sending, so a zone saved
+ * twice, or two admins at once, never notifies the same person twice.
+ */
+async function notifyLaunchInterest(zone) {
+  const LaunchInterest = require('./launch-interest.model');
+  const notificationService = require('../notification/notification.service');
+  const cursor = LaunchInterest.find({
+    notifiedAt: null,
+    location: { $geoWithin: { $geometry: zone.polygon } },
+  }).select('_id userId').lean().cursor();
+
+  let sent = 0;
+  const told = new Set();
+  for await (const row of cursor) {
+    const claimed = await LaunchInterest.updateOne({ _id: row._id, notifiedAt: null }, { $set: { notifiedAt: new Date() } });
+    if (!claimed.modifiedCount) continue;
+    if (told.has(String(row.userId))) continue; // several cells, one message
+    told.add(String(row.userId));
+    await notificationService.notify({
+      recipient: { kind: 'user', id: row.userId },
+      type: 'service_live_in_area',
+      title: `ZappyOne is now live in ${zone.name}`,
+      body: 'You asked us to tell you. Book a service near you now.',
+      deepLink: '/',
+      data: { zoneId: String(zone._id) },
+    }).catch((err) => logger.warn({ err: err.message, userId: String(row.userId) }, '[ZONE] launch notification failed'));
+    sent += 1;
+  }
+  return { sent };
+}
+
+/** Runs after the admin's save returns; a slow notification run must not hold the request. */
+function announceLaunch(zone) {
+  notifyLaunchInterest(zone)
+    .then(({ sent }) => { if (sent) logger.info({ zoneId: String(zone._id), sent }, '[ZONE] launch interest notified'); })
+    .catch((err) => logger.error({ err: err.message, zoneId: String(zone._id) }, '[ZONE] launch notification run failed'));
 }
 
 async function deleteZone(id) {
@@ -161,4 +205,5 @@ module.exports = {
   assertBookableLocation,
   applyZonePricing,
   getZoneStats,
+  notifyLaunchInterest,
 };

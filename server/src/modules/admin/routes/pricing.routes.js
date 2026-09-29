@@ -109,7 +109,11 @@ router.patch(
   '/cancellation-config',
   validate(Joi.object({
     freeCancelWindowSec:        Joi.number().integer().min(0).max(3600),
-    userCancelFeePaise:          Joi.number().integer().min(0),
+    userCancelFeeAssignedPaise:  Joi.number().integer().min(0).max(100000),
+    userCancelFeeOnWayPaise:     Joi.number().integer().min(0).max(100000),
+    userCancelFeeArrivedPaise:   Joi.number().integer().min(0).max(100000),
+    workerShareOnWayPct:         Joi.number().min(0).max(100),
+    workerShareArrivedPct:       Joi.number().min(0).max(100),
     workerCancelPenaltyPaise:    Joi.number().integer().min(0),
     workerNoShowPenaltyPaise:    Joi.number().integer().min(0),
     lateWorkerCancelMultiplier:  Joi.number().min(1).max(10),

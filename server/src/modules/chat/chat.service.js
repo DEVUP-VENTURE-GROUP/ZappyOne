@@ -34,6 +34,7 @@ async function canChat(order, participantKind, participantId) {
 }
 
 async function sendMessage({ orderId, fromKind, fromId, text, cannedCode }) {
+  await require('../feature-flags/feature-flag.service').assertEnabled('chat');
   const order = await Order.findById(orderId).lean();
   const allowed = await canChat(order, fromKind, fromId);
   if (!allowed) {
