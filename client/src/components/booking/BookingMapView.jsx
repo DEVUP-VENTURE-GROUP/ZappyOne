@@ -60,7 +60,7 @@ const SVC_COLORS = {
   battery_replacement:'#eccc68', software_issue:'#70a1ff',
   water_damage:'#1e90ff', laptop_slow:'#778ca3',
 };
-const DEFAULT_COLOR = '#4f46e5';
+const DEFAULT_COLOR = '#2563EB';
 function svcColor(service) { return SVC_COLORS[service] || DEFAULT_COLOR; }
 
 /* Inject CSS once */
@@ -96,7 +96,7 @@ function ensureStyles() {
     .bmap-radar-ring {
       position: absolute; width: 36px; height: 36px; top: 50%; left: 50%;
       margin: -18px 0 0 -18px; border-radius: 50%;
-      border: 2px solid var(--rc, #4f46e5);
+      border: 2px solid var(--rc, #2563EB);
       animation: bmap-radar 2.4s ease-out infinite;
       pointer-events: none;
     }
@@ -121,8 +121,8 @@ function ensureStyles() {
     .bmap-vehicle.f5 { animation: bmap-float2 3.4s ease-in-out infinite; animation-delay: 0.2s; }
     .bmap-pin-dot {
       width: 16px; height: 16px; border-radius: 50%;
-      background: var(--pc, #4f46e5);
-      box-shadow: 0 0 0 4px rgba(99,102,241,0.25);
+      background: var(--pc, #2563EB);
+      box-shadow: 0 0 0 4px rgba(59,130,246,0.25);
       animation: bmap-pin-pulse 2s ease-in-out infinite;
     }
   `;

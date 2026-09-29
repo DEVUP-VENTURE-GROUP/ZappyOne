@@ -209,21 +209,15 @@ export default function ProfilePage() {
               className="py-8 relative"
               variants={fadeInUp}
             >
-              {/* Decorative glow behind avatar */}
-              <div className="absolute top-8 left-1/2 -translate-x-1/2 w-32 h-32 bg-zappy-500/30 rounded-full blur-3xl pointer-events-none" />
-              
               <div className="flex flex-col items-center text-center gap-3 relative z-10">
-                <motion.div
-                  className="w-24 h-24 rounded-[32px] flex items-center justify-center shrink-0 shadow-xl border-4 border-white overflow-hidden bg-slate-50 relative z-10"
-                  whileHover={{ scale: 1.05, rotate: -2 }}
-                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                >
-                  <img 
-                    src={user?.avatar || '/images/zappy_tower_avatar.webp'} 
-                    alt={user?.name || 'User'} 
-                    className="w-full h-full object-cover"
-                  />
-                </motion.div>
+                {/* Their photo, or their initials — never a stock face that reads as someone else's account. */}
+                <div className="w-20 h-20 rounded-full flex items-center justify-center shrink-0 overflow-hidden bg-zappy-100 text-zappy-700">
+                  {user?.avatar
+                    ? <img src={user.avatar} alt={user?.name || 'Your photo'} className="w-full h-full object-cover" />
+                    : <span className="text-[26px] font-semibold" aria-hidden="true">
+                        {(user?.name || '').trim().split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join('') || '?'}
+                      </span>}
+                </div>
                 <div className="flex-1 min-w-0">
                   <h2 className="font-black text-2xl tracking-tight text-[#0F172A]">{user?.name || 'User'}</h2>
                   <p className="text-sm font-semibold text-slate-500 mt-1">{user?.phone || user?.email || '—'}</p>

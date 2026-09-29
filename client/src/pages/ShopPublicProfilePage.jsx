@@ -24,7 +24,7 @@ export default function ShopPublicProfilePage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center">
-        <Loader2 size={28} className="text-indigo-500 animate-spin" />
+        <Loader2 size={28} className="text-zappy-500 animate-spin" />
       </div>
     );
   }
@@ -45,8 +45,8 @@ export default function ShopPublicProfilePage() {
         {shop.coverImageUrl ? (
           <img src={shop.coverImageUrl} alt={shop.businessName} className="w-full h-full object-cover" />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-indigo-100 to-indigo-50">
-            <Store size={40} className="text-indigo-300" />
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-zappy-100 to-zappy-50">
+            <Store size={40} className="text-zappy-300" />
           </div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/20" />
@@ -86,7 +86,7 @@ export default function ShopPublicProfilePage() {
 
         {shop.address?.text && (
           <div className="card mt-3 flex items-start gap-2.5">
-            <MapPin size={15} className="text-indigo-500 shrink-0 mt-0.5" />
+            <MapPin size={15} className="text-zappy-500 shrink-0 mt-0.5" />
             <div>
               <p className="text-sm font-semibold text-[#0F172A]">{shop.address.text}</p>
               {shop.address.landmark && <p className="text-xs text-slate-400 mt-0.5">Near {shop.address.landmark}</p>}
@@ -99,7 +99,7 @@ export default function ShopPublicProfilePage() {
           <div className="space-y-2">
             {(shop.services || []).map((s) => (
               <button key={s} onClick={() => nav(`/book/${s}?shopId=${shop._id}`)}
-                className="card w-full flex items-center justify-between text-left hover:ring-2 hover:ring-indigo-100 transition">
+                className="card w-full flex items-center justify-between text-left hover:ring-2 hover:ring-zappy-100 transition">
                 <span className="text-sm font-semibold text-[#0F172A]">{SERVICE_LABELS[s] || s.replace(/_/g, ' ')}</span>
                 <ChevronRight size={16} className="text-slate-300 shrink-0" />
               </button>

@@ -37,7 +37,7 @@ export default function EventSavedThemesPage() {
             <Heart size={48} className="text-slate-200 mx-auto mb-3" />
             <p className="font-semibold text-slate-600">No saved themes yet</p>
             <p className="text-sm text-slate-400 mt-1">Tap the heart icon on any theme to save it</p>
-            <button onClick={() => navigate('/events')} className="mt-4 px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl text-sm font-semibold">Browse Events</button>
+            <button onClick={() => navigate('/events')} className="mt-4 px-5 py-2.5 bg-gradient-to-r from-zappy-600 to-purple-600 text-white rounded-xl text-sm font-semibold">Browse Events</button>
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3">
@@ -56,7 +56,7 @@ export default function EventSavedThemesPage() {
                   <p className="font-semibold text-sm text-slate-900 leading-tight truncate">{theme.title}</p>
                   <p className="text-xs text-slate-400 mt-0.5">{theme.categoryId?.emoji} {theme.categoryId?.name}</p>
                   <div className="flex items-center justify-between mt-2">
-                    <span className="text-sm font-bold text-indigo-600">₹{Math.round((theme.startingPricePaise || 0) / 100).toLocaleString('en-IN')}</span>
+                    <span className="text-sm font-bold text-zappy-600">₹{Math.round((theme.startingPricePaise || 0) / 100).toLocaleString('en-IN')}</span>
                     <div className="flex items-center gap-0.5">
                       <Star size={10} className="text-amber-400 fill-amber-400" />
                       <span className="text-xs text-slate-500">{theme.rating?.toFixed(1) || '–'}</span>

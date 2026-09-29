@@ -237,7 +237,7 @@ export default function ShoppingTaskPage() {
             onClick={() => setPickerFor('pickup')}
             className="w-full flex items-center gap-3 rounded-2xl border-2 border-slate-200 bg-white p-4 text-left"
           >
-            <MapPin size={18} className="text-indigo-500 shrink-0" />
+            <MapPin size={18} className="text-zappy-500 shrink-0" />
             <span className="min-w-0">
               <span className="block text-xs text-slate-400">{mode === 'shop' ? 'Shop / market' : 'Pickup location'}</span>
               <span className="block font-bold text-[#0F172A] truncate">{pickupLoc?.address || 'Choose a location'}</span>
@@ -266,8 +266,8 @@ export default function ShoppingTaskPage() {
         </button>
 
         {charge && (
-          <div className="rounded-2xl border-2 border-indigo-100 bg-indigo-50/50 p-4 space-y-2">
-            <div className="flex items-start gap-2 text-xs text-indigo-700">
+          <div className="rounded-2xl border-2 border-zappy-100 bg-zappy-50/50 p-4 space-y-2">
+            <div className="flex items-start gap-2 text-xs text-zappy-700">
               <Info size={14} className="mt-0.5 shrink-0" />
               <span>{quoteData.authorisation.note}</span>
             </div>
@@ -276,7 +276,7 @@ export default function ShoppingTaskPage() {
               {charge.distanceFeePaise > 0 && <Row label="Distance" value={charge.distanceFeePaise} />}
               {charge.platformFeePaise > 0 && <Row label="Platform fee" value={charge.platformFeePaise} />}
               {charge.taxPaise > 0 && <Row label="Tax" value={charge.taxPaise} />}
-              <div className="flex justify-between font-bold pt-1 border-t border-indigo-100">
+              <div className="flex justify-between font-bold pt-1 border-t border-zappy-100">
                 <span>ZappyOne service fee</span>
                 <span>{formatPaise(charge.serviceChargePaise)}</span>
               </div>

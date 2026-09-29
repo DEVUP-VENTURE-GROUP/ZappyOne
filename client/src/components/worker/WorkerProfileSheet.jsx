@@ -46,13 +46,13 @@ export default function WorkerProfileSheet({ workerId, open, onClose }) {
           </button>
 
           {isFetching && !w ? (
-            <div className="flex justify-center py-20"><Loader2 className="animate-spin text-indigo-500" /></div>
+            <div className="flex justify-center py-20"><Loader2 className="animate-spin text-zappy-500" /></div>
           ) : !w ? (
             <div className="py-20 text-center text-slate-400 text-sm">Profile unavailable</div>
           ) : (
             <div className="overflow-y-auto">
               {/* Header */}
-              <div className="px-5 pt-6 pb-5 bg-gradient-to-br from-slate-900 to-indigo-900 text-white">
+              <div className="px-5 pt-6 pb-5 bg-gradient-to-br from-slate-900 to-zappy-900 text-white">
                 <div className="flex items-center gap-3.5">
                   <div className="w-16 h-16 rounded-2xl bg-white/15 backdrop-blur flex items-center justify-center text-2xl font-black shrink-0">
                     {(w.name || 'P').trim().charAt(0).toUpperCase()}
@@ -95,7 +95,7 @@ export default function WorkerProfileSheet({ workerId, open, onClose }) {
                     <p className="text-[11px] font-black uppercase tracking-wide text-slate-400 mb-2">Specialises in</p>
                     <div className="flex flex-wrap gap-1.5">
                       {w.topServices.map((s) => (
-                        <span key={s} className="px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-600 text-[12px] font-semibold">{serviceLabel(s)}</span>
+                        <span key={s} className="px-2.5 py-1 rounded-full bg-zappy-50 text-zappy-600 text-[12px] font-semibold">{serviceLabel(s)}</span>
                       ))}
                     </div>
                   </div>

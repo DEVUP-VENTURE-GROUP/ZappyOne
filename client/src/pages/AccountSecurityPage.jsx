@@ -71,7 +71,7 @@ export default function AccountSecurityPage() {
         {/* Login history */}
         <div className="bg-white rounded-xl shadow-sm">
           <div className="px-4 pt-4 pb-2 flex items-center gap-2">
-            <Shield className="w-4 h-4 text-indigo-500" />
+            <Shield className="w-4 h-4 text-zappy-500" />
             <h2 className="font-semibold text-slate-700 text-sm">Recent Login Activity</h2>
           </div>
           {loginHistory.length === 0 ? (

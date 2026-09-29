@@ -49,25 +49,25 @@ function ShopHandoffBanner({ shopId, reason, onRespond, loading }) {
   const { data } = useGetShopProfileQuery(shopId, { skip: !shopId });
   const shopName = data?.shop?.businessName || 'the shop';
   return (
-    <motion.div variants={fadeInUp} className="rounded-2xl p-4 ring-1 ring-indigo-200 bg-indigo-50 lg:[column-span:all]">
+    <motion.div variants={fadeInUp} className="rounded-2xl p-4 ring-1 ring-zappy-200 bg-zappy-50 lg:[column-span:all]">
       <div className="flex items-start gap-3">
         <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shrink-0 shadow-sm">
-          <Store size={18} className="text-indigo-600" />
+          <Store size={18} className="text-zappy-600" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-bold text-sm text-indigo-900">This repair needs shop tools</p>
-          <p className="text-xs text-indigo-700 mt-0.5 leading-relaxed">
+          <p className="font-bold text-sm text-zappy-900">This repair needs shop tools</p>
+          <p className="text-xs text-zappy-700 mt-0.5 leading-relaxed">
             {reason ? `${reason} — ` : ''}Your worker suggests sending it to <span className="font-semibold">{shopName}</span>. Bring it there to continue.
           </p>
         </div>
       </div>
       <div className="grid grid-cols-2 gap-2 mt-3">
         <button onClick={() => onRespond(true)} disabled={loading}
-          className="flex items-center justify-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold text-sm py-2.5 rounded-xl transition">
+          className="flex items-center justify-center gap-1.5 bg-zappy-600 hover:bg-zappy-700 disabled:opacity-50 text-white font-bold text-sm py-2.5 rounded-xl transition">
           {loading ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />} Confirm
         </button>
         <button onClick={() => onRespond(false)} disabled={loading}
-          className="flex items-center justify-center gap-1.5 bg-white text-indigo-700 ring-1 ring-indigo-200 font-bold text-sm py-2.5 rounded-xl transition">
+          className="flex items-center justify-center gap-1.5 bg-white text-zappy-700 ring-1 ring-zappy-200 font-bold text-sm py-2.5 rounded-xl transition">
           Decline
         </button>
       </div>
@@ -432,18 +432,18 @@ export default function OrderTrackingPage() {
           {status === 'failed' && (
             <motion.div variants={fadeInUp} className="rounded-[24px] overflow-hidden lg:[column-span:all]"
               style={{ background: 'linear-gradient(135deg, #0F172A 0%, #1a1060 60%, #0f2a5e 100%)', boxShadow: '0 12px 40px rgba(15,23,42,0.45)' }}>
-              <div className="h-1 w-full" style={{ background: 'linear-gradient(90deg,#6366f1,#8b5cf6,#ec4899,#f59e0b)' }} />
+              <div className="h-1 w-full" style={{ background: 'linear-gradient(90deg,#3B82F6,#8b5cf6,#ec4899,#f59e0b)' }} />
               <div className="px-5 pt-5 pb-6">
                 <motion.div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4 mx-auto"
-                  style={{ background: 'rgba(99,102,241,0.18)', border: '1.5px solid rgba(99,102,241,0.35)' }}
+                  style={{ background: 'rgba(59,130,246,0.18)', border: '1.5px solid rgba(59,130,246,0.35)' }}
                   animate={{ y: [0, -5, 0] }} transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}>
                   <span className="text-3xl">🚀</span>
                 </motion.div>
                 <p className="text-center font-black text-white text-lg leading-snug mb-1">We're launching in your area soon!</p>
-                <p className="text-center text-xs font-semibold text-indigo-300 mb-4">
+                <p className="text-center text-xs font-semibold text-zappy-300 mb-4">
                   You're one of our <span className="text-amber-400">early pioneers</span> in this location
                 </p>
-                <div className="rounded-xl px-4 py-3 mb-5 text-xs text-indigo-200 text-center leading-relaxed" style={{ background: 'rgba(99,102,241,0.12)', border: '1px solid rgba(99,102,241,0.2)' }}>
+                <div className="rounded-xl px-4 py-3 mb-5 text-xs text-zappy-200 text-center leading-relaxed" style={{ background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.2)' }}>
                   No Zappy workers are in your zone <strong className="text-white">yet</strong> — but we're expanding fast.
                   <br /><span className="text-amber-300 font-semibold">Sit tight — it won't be long.</span>
                 </div>
@@ -451,7 +451,7 @@ export default function OrderTrackingPage() {
                   <motion.button whileTap={{ scale: 0.97 }}
                     onClick={() => toast("We'll notify you the moment workers go live in your area!", { icon: '🔔', duration: 4000, style: { fontWeight: 600 } })}
                     className="w-full h-12 rounded-2xl font-extrabold text-sm flex items-center justify-center gap-2 text-white"
-                    style={{ background: 'linear-gradient(135deg,#6366f1 0%,#8b5cf6 100%)', boxShadow: '0 6px 20px rgba(99,102,241,0.45)' }}>
+                    style={{ background: 'linear-gradient(135deg,#3B82F6 0%,#8b5cf6 100%)', boxShadow: '0 6px 20px rgba(59,130,246,0.45)' }}>
                     <span>🔔</span> Notify me when live here
                   </motion.button>
                   <button onClick={() => nav(`/book/${order.service}`)}
@@ -561,7 +561,7 @@ export default function OrderTrackingPage() {
               ) : status === 'arrived' && workerConfirmed ? (
                 <motion.div key="otp-card" initial={{ opacity: 0, scale: 0.95, y: 8 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }}
                   transition={{ type: 'spring', damping: 20, stiffness: 260 }} className="rounded-[24px] overflow-hidden border border-white/10"
-                  style={{ background: 'linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)', boxShadow: '0 12px 32px -4px rgba(124,58,237,0.4)' }}>
+                  style={{ background: 'linear-gradient(135deg, #7c3aed 0%, #2563EB 100%)', boxShadow: '0 12px 32px -4px rgba(124,58,237,0.4)' }}>
                   <div className="px-4 pt-4 pb-2 flex items-center gap-2">
                     <ShieldCheck size={15} strokeWidth={2} className="text-white/80" />
                     <p className="text-xs font-extrabold text-white/80 uppercase tracking-widest">Worker is here — share your OTP</p>
@@ -638,7 +638,7 @@ export default function OrderTrackingPage() {
             <motion.div variants={fadeInUp}>
               <motion.button onClick={() => nav(`/book/${order.service}?preferredWorker=${order.workerId}`)} whileTap={{ scale: 0.97 }}
                 className="w-full h-14 rounded-2xl text-white font-extrabold text-sm flex items-center justify-center gap-2.5 shadow-lg"
-                style={{ background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)', boxShadow: '0 8px 24px rgba(99,102,241,0.3)' }}>
+                style={{ background: 'linear-gradient(135deg, #2563EB 0%, #3B82F6 100%)', boxShadow: '0 8px 24px rgba(59,130,246,0.3)' }}>
                 <Repeat2 size={18} strokeWidth={2.5} />
                 Book {order.workerName ? firstNameOf(order.workerName) : 'Same Worker'} Again
               </motion.button>
@@ -866,7 +866,7 @@ export default function OrderTrackingPage() {
                 initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', damping: 28, stiffness: 300 }}>
                 <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mt-3 mb-5" />
                 <div className="flex flex-col items-center px-6 pb-2">
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-white font-black text-xl mb-3 shadow-lg"
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500 to-zappy-600 flex items-center justify-center text-white font-black text-xl mb-3 shadow-lg"
                     style={{ boxShadow: '0 8px 24px rgba(124,58,237,0.4)' }}>
                     {(order.workerName || 'W').slice(0, 2).toUpperCase()}
                   </div>
@@ -892,7 +892,7 @@ export default function OrderTrackingPage() {
                     <>
                       <motion.button onClick={confirmWorkerArrived} whileTap={{ scale: 0.97 }}
                         className="w-full h-14 rounded-2xl text-white font-extrabold text-base flex items-center justify-center gap-2.5"
-                        style={{ background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', boxShadow: '0 8px 24px rgba(124,58,237,0.4)' }}>
+                        style={{ background: 'linear-gradient(135deg,#7c3aed,#2563EB)', boxShadow: '0 8px 24px rgba(124,58,237,0.4)' }}>
                         <CheckCircle2 size={20} strokeWidth={2.5} /> Yes, they're here — show OTP
                       </motion.button>
                       <button onClick={() => { clearInterval(countdownRef.current); setWorkerNotHereMode(true); }}

@@ -33,7 +33,7 @@ export default function WorkerPetJobPage() {
   const [afterPhotos, setAfterPhotos] = useState([]);
   const [completing, setCompleting] = useState(false);
 
-  if (isLoading) return <div className="flex justify-center py-24"><Loader2 size={24} className="animate-spin text-indigo-400" /></div>;
+  if (isLoading) return <div className="flex justify-center py-24"><Loader2 size={24} className="animate-spin text-zappy-400" /></div>;
   if (!data?.booking) return <div className="text-center py-24 text-slate-400">Booking not found</div>;
 
   const { booking } = data;
@@ -107,7 +107,7 @@ export default function WorkerPetJobPage() {
           <a href={`https://maps.google.com/?q=${booking.serviceLocation.coordinates?.[1]},${booking.serviceLocation.coordinates?.[0]}`}
             target="_blank" rel="noreferrer"
             className="flex items-center gap-2.5 rounded-2xl border-2 border-slate-200 bg-white p-4 text-sm">
-            <Navigation size={16} className="text-indigo-500 shrink-0" />
+            <Navigation size={16} className="text-zappy-500 shrink-0" />
             <span className="truncate">{booking.serviceLocation.address}</span>
           </a>
         )}

@@ -13,7 +13,7 @@ export default function PetDetailPage() {
   const nav = useNavigate();
   const { data, isLoading } = useMyPetHistoryQuery(id);
 
-  if (isLoading) return <div className="flex justify-center py-24"><Loader2 size={24} className="animate-spin text-indigo-400" /></div>;
+  if (isLoading) return <div className="flex justify-center py-24"><Loader2 size={24} className="animate-spin text-zappy-400" /></div>;
   if (!data?.pet) return <div className="text-center py-24 text-slate-400">Pet not found</div>;
 
   const { pet, history } = data;
@@ -27,8 +27,8 @@ export default function PetDetailPage() {
 
       <div className="max-w-lg mx-auto px-4 py-4 space-y-3">
         <div className="rounded-2xl border-2 border-slate-200 bg-white p-4 flex items-center gap-4">
-          <span className="shrink-0 w-16 h-16 rounded-2xl bg-indigo-50 overflow-hidden grid place-items-center">
-            {pet.photoKey ? <img src={pet.photoKey} alt="" className="w-full h-full object-cover" /> : <PawPrint size={26} className="text-indigo-400" />}
+          <span className="shrink-0 w-16 h-16 rounded-2xl bg-zappy-50 overflow-hidden grid place-items-center">
+            {pet.photoKey ? <img src={pet.photoKey} alt="" className="w-full h-full object-cover" /> : <PawPrint size={26} className="text-zappy-400" />}
           </span>
           <div>
             <p className="font-black text-[#0F172A] text-lg">{pet.name}</p>

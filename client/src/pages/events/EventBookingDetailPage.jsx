@@ -16,7 +16,7 @@ import toast from 'react-hot-toast';
 const STEP_MAP = {
   pending_payment:  { label: 'Awaiting Payment',  step: 0, color: 'text-slate-400' },
   confirmed:        { label: 'Booking Confirmed', step: 1, color: 'text-blue-600'  },
-  partner_assigned: { label: 'Partner on Way',    step: 2, color: 'text-indigo-600'},
+  partner_assigned: { label: 'Partner on Way',    step: 2, color: 'text-zappy-600'},
   in_progress:      { label: 'Event in Progress', step: 3, color: 'text-orange-600'},
   completed:        { label: 'Event Completed',   step: 4, color: 'text-green-600' },
   cancelled:        { label: 'Cancelled',         step: -1, color: 'text-red-500'  },
@@ -167,7 +167,7 @@ export default function EventBookingDetailPage() {
               <div className="flex items-center gap-1.5"><MapPin size={12} className="text-violet-500" />{booking.address?.line1}, {booking.address?.city}</div>
               <div className="flex items-center gap-1.5"><Users size={12} className="text-violet-500" />{booking.guestCount} guests</div>
             </div>
-            {booking.notes && <p className="text-xs text-indigo-600 bg-indigo-50 rounded-lg px-3 py-2 mt-1">📝 {booking.notes}</p>}
+            {booking.notes && <p className="text-xs text-zappy-600 bg-zappy-50 rounded-lg px-3 py-2 mt-1">📝 {booking.notes}</p>}
           </div>
         </div>
 

@@ -178,7 +178,7 @@ export default function ReturnTaskPage() {
           <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Where</p>
           <button type="button" onClick={() => setPickerFor('pickup')}
             className="w-full flex items-center gap-3 rounded-2xl border-2 border-slate-200 bg-white p-4 text-left">
-            <MapPin size={18} className="text-indigo-500 shrink-0" />
+            <MapPin size={18} className="text-zappy-500 shrink-0" />
             <span className="min-w-0">
               <span className="block text-xs text-slate-400">Collect the item from</span>
               <span className="block font-bold text-[#0F172A] truncate">{pickupLoc?.address || 'Choose a location'}</span>
@@ -200,7 +200,7 @@ export default function ReturnTaskPage() {
         </button>
 
         {charge && (
-          <div className="rounded-2xl border-2 border-indigo-100 bg-indigo-50/50 p-4 flex justify-between font-bold">
+          <div className="rounded-2xl border-2 border-zappy-100 bg-zappy-50/50 p-4 flex justify-between font-bold">
             <span>ZappyOne service fee</span>
             <span>{formatPaise(charge.serviceChargePaise)}</span>
           </div>

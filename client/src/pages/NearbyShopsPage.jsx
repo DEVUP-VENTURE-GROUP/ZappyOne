@@ -39,8 +39,8 @@ export default function NearbyShopsPage() {
 
       <div className="max-w-lg lg:max-w-2xl mx-auto px-4 pt-4 space-y-3">
 
-        <div className="card bg-indigo-50 ring-indigo-100">
-          <p className="text-xs font-medium text-indigo-700 leading-relaxed">
+        <div className="card bg-zappy-50 ring-zappy-100">
+          <p className="text-xs font-medium text-zappy-700 leading-relaxed">
             Verified local shops for repairs & services. Browse, check ratings, and either have their worker visit you, or walk in yourself with <span className="font-bold">Pick & Go</span>.
           </p>
         </div>
@@ -49,7 +49,7 @@ export default function NearbyShopsPage() {
         <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
           {CATEGORY_FILTERS.map(({ key, label }) => (
             <button key={key} onClick={() => setService(key)}
-              className={`shrink-0 px-3.5 py-2 rounded-full text-xs font-bold whitespace-nowrap transition ${service === key ? 'bg-indigo-600 text-white' : 'bg-white border border-slate-200 text-slate-600'}`}>
+              className={`shrink-0 px-3.5 py-2 rounded-full text-xs font-bold whitespace-nowrap transition ${service === key ? 'bg-zappy-600 text-white' : 'bg-white border border-slate-200 text-slate-600'}`}>
               {label}
             </button>
           ))}
@@ -64,7 +64,7 @@ export default function NearbyShopsPage() {
             <p className="text-xs text-slate-400 mt-1">We need your location to find shops near you.</p>
           </div>
         ) : isLoading ? (
-          <div className="flex justify-center py-16"><Loader2 size={24} className="animate-spin text-indigo-400" /></div>
+          <div className="flex justify-center py-16"><Loader2 size={24} className="animate-spin text-zappy-400" /></div>
         ) : shops.length === 0 ? (
           <div className="text-center py-14">
             <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
@@ -77,7 +77,7 @@ export default function NearbyShopsPage() {
           <div className={`space-y-3 ${isFetching ? 'opacity-60' : ''}`}>
             {shops.map((s) => (
               <button key={s._id} onClick={() => nav(`/shops/${s._id}`)}
-                className="card w-full text-left flex gap-3 items-center hover:ring-2 hover:ring-indigo-100 transition">
+                className="card w-full text-left flex gap-3 items-center hover:ring-2 hover:ring-zappy-100 transition">
                 <div className="w-16 h-16 rounded-xl overflow-hidden bg-slate-100 shrink-0">
                   {s.coverImageUrl ? (
                     <img src={s.coverImageUrl} alt={s.businessName} className="w-full h-full object-cover" />

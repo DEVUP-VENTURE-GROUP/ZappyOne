@@ -7,7 +7,7 @@ import { useGetEventBookingsQuery } from '@shared/services/api';
 const STATUS_COLORS = {
   pending_payment:  'bg-slate-100 text-slate-500',
   confirmed:        'bg-blue-50 text-blue-700',
-  partner_assigned: 'bg-indigo-50 text-indigo-700',
+  partner_assigned: 'bg-zappy-50 text-zappy-700',
   in_progress:      'bg-orange-50 text-orange-700',
   completed:        'bg-green-50 text-green-700',
   cancelled:        'bg-red-50 text-red-600',
@@ -53,7 +53,7 @@ export default function EventBookingListPage() {
             <p className="font-semibold text-slate-600">No event bookings yet</p>
             <p className="text-sm text-slate-400 mt-1">Browse beautiful themes and book your first event</p>
             <button onClick={() => navigate('/events')}
-              className="mt-4 px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl text-sm font-semibold">
+              className="mt-4 px-5 py-2.5 bg-gradient-to-r from-zappy-600 to-purple-600 text-white rounded-xl text-sm font-semibold">
               Explore Events
             </button>
           </div>
@@ -85,7 +85,7 @@ export default function EventBookingListPage() {
                     )}
                   </div>
                   <div className="flex items-center justify-between mt-1.5">
-                    <span className="text-sm font-bold text-indigo-600">₹{Math.round((b.pricing?.totalPaise || 0) / 100).toLocaleString('en-IN')}</span>
+                    <span className="text-sm font-bold text-zappy-600">₹{Math.round((b.pricing?.totalPaise || 0) / 100).toLocaleString('en-IN')}</span>
                     <span className="text-xs text-slate-400">{b.eventTimeSlot}</span>
                   </div>
                 </div>
@@ -99,7 +99,7 @@ export default function EventBookingListPage() {
           <div className="flex gap-2 justify-center pt-2">
             {Array.from({ length: data.pages }, (_, i) => i + 1).map(p => (
               <button key={p} onClick={() => setPage(p)}
-                className={`w-9 h-9 rounded-xl text-sm font-semibold ${p === page ? 'bg-indigo-600 text-white' : 'bg-white border border-slate-200 text-slate-600'}`}>{p}</button>
+                className={`w-9 h-9 rounded-xl text-sm font-semibold ${p === page ? 'bg-zappy-600 text-white' : 'bg-white border border-slate-200 text-slate-600'}`}>{p}</button>
             ))}
           </div>
         )}

@@ -3,7 +3,7 @@ import { ArrowLeft, TrendingUp, Package, Tag, ShoppingBag } from 'lucide-react';
 import { useGetSpendingQuery } from '@shared/services/api';
 import { serviceLabel } from '@shared/constants/services';
 
-function Bar({ value, max, color = 'bg-indigo-500' }) {
+function Bar({ value, max, color = 'bg-zappy-500' }) {
   const pct = max > 0 ? Math.round((value / max) * 100) : 0;
   return (
     <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
@@ -32,14 +32,14 @@ export default function SpendingPage() {
 
       {isLoading ? (
         <div className="flex items-center justify-center h-60">
-          <div className="w-7 h-7 rounded-full border-2 border-indigo-200 border-t-indigo-600 animate-spin" />
+          <div className="w-7 h-7 rounded-full border-2 border-zappy-200 border-t-zappy-600 animate-spin" />
         </div>
       ) : (
         <div className="p-4 space-y-4">
           {/* Summary cards */}
           <div className="grid grid-cols-3 gap-3">
             <div className="bg-white rounded-xl p-3 shadow-sm text-center">
-              <ShoppingBag className="w-5 h-5 text-indigo-500 mx-auto mb-1" />
+              <ShoppingBag className="w-5 h-5 text-zappy-500 mx-auto mb-1" />
               <p className="text-lg font-bold text-slate-800">₹{(data?.totalSpentRupees ?? 0).toLocaleString('en-IN')}</p>
               <p className="text-xs text-slate-500">Total spent</p>
             </div>
@@ -59,7 +59,7 @@ export default function SpendingPage() {
           {months.length > 0 && (
             <div className="bg-white rounded-xl p-4 shadow-sm">
               <div className="flex items-center gap-2 mb-3">
-                <TrendingUp className="w-4 h-4 text-indigo-500" />
+                <TrendingUp className="w-4 h-4 text-zappy-500" />
                 <h2 className="font-semibold text-slate-700 text-sm">Monthly Spending (last 6 months)</h2>
               </div>
               <div className="space-y-3">
@@ -69,7 +69,7 @@ export default function SpendingPage() {
                       <span>{new Date(`${m.month}-01`).toLocaleDateString('en-IN', { month: 'short', year: '2-digit' })}</span>
                       <span className="font-medium text-slate-700">₹{m.totalRupees.toLocaleString('en-IN')}</span>
                     </div>
-                    <Bar value={m.totalRupees} max={maxMonthly} color="bg-indigo-500" />
+                    <Bar value={m.totalRupees} max={maxMonthly} color="bg-zappy-500" />
                   </div>
                 ))}
               </div>

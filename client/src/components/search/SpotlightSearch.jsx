@@ -141,7 +141,7 @@ export default function SpotlightSearch({ open, onClose, lat, lng, initialQuery 
                 <X size={13} className="text-slate-500" />
               </button>
             ) : (
-              <button onClick={startVoice} className="shrink-0 text-indigo-500"><Mic size={18} /></button>
+              <button onClick={startVoice} className="shrink-0 text-zappy-500"><Mic size={18} /></button>
             )}
           </div>
         </div>
@@ -184,8 +184,8 @@ export default function SpotlightSearch({ open, onClose, lat, lng, initialQuery 
                   <div className="flex flex-wrap gap-2">
                     {trending.map((t) => (
                       <button key={t.code} onClick={() => (t.type === 'service' ? go(t.code, t.title) : submitText(t.title))}
-                        className="px-3 py-1.5 rounded-full bg-indigo-50 text-[13px] font-semibold text-indigo-600 hover:bg-indigo-100 flex items-center gap-1.5">
-                        <Zap size={12} className="fill-indigo-400 text-indigo-400" />{t.title}
+                        className="px-3 py-1.5 rounded-full bg-zappy-50 text-[13px] font-semibold text-zappy-600 hover:bg-zappy-100 flex items-center gap-1.5">
+                        <Zap size={12} className="fill-zappy-400 text-zappy-400" />{t.title}
                       </button>
                     ))}
                   </div>
@@ -219,12 +219,12 @@ export default function SpotlightSearch({ open, onClose, lat, lng, initialQuery 
           {hasQuery && !loading && !data && (
             <div className="p-4">
               <p className="text-[13px] font-semibold text-slate-500 flex items-center gap-1.5 mb-3">
-                <TrendingUp size={13} className="text-indigo-500" /> Trending services
+                <TrendingUp size={13} className="text-zappy-500" /> Trending services
               </p>
               <div className="flex flex-wrap gap-2">
                 {(trending.length ? trending : CATEGORY_CHIPS.map((c) => ({ code: c.code, title: c.label, type: 'category' }))).map((t) => (
                   <button key={t.code} onClick={() => (t.type === 'service' ? go(t.code, t.title) : submitText(t.title))}
-                    className="px-3 py-1.5 rounded-full bg-indigo-50 text-[13px] font-semibold text-indigo-600 hover:bg-indigo-100">{t.title}</button>
+                    className="px-3 py-1.5 rounded-full bg-zappy-50 text-[13px] font-semibold text-zappy-600 hover:bg-zappy-100">{t.title}</button>
                 ))}
               </div>
             </div>
@@ -235,7 +235,7 @@ export default function SpotlightSearch({ open, onClose, lat, lng, initialQuery 
             <div className="pb-8">
               {data.empty && (
                 <p className="px-4 pt-3 text-[13px] font-semibold text-slate-500 flex items-center gap-1.5">
-                  <Sparkles size={13} className="text-indigo-500" /> Popular services you can book now
+                  <Sparkles size={13} className="text-zappy-500" /> Popular services you can book now
                 </p>
               )}
 
@@ -244,15 +244,15 @@ export default function SpotlightSearch({ open, onClose, lat, lng, initialQuery 
                 <div 
                   key={it.code} 
                   onClick={() => submitText(it.title)}
-                  className="mx-4 mt-3 p-3.5 rounded-xl bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100 flex items-center justify-between cursor-pointer hover:shadow-md transition-all"
+                  className="mx-4 mt-3 p-3.5 rounded-xl bg-gradient-to-r from-zappy-50 to-purple-50 border border-zappy-100 flex items-center justify-between cursor-pointer hover:shadow-md transition-all"
                 >
                   <div>
-                    <p className="text-[13px] font-bold text-indigo-900 flex items-center gap-1.5">
-                      <Sparkles size={14} className="text-indigo-500 fill-indigo-200" /> {it.title}
+                    <p className="text-[13px] font-bold text-zappy-900 flex items-center gap-1.5">
+                      <Sparkles size={14} className="text-zappy-500 fill-zappy-200" /> {it.title}
                     </p>
-                    {it.keywords && <p className="text-[11px] text-indigo-600/80 mt-1 pl-5">AI Suggestion: {it.keywords.join(', ')}</p>}
+                    {it.keywords && <p className="text-[11px] text-zappy-600/80 mt-1 pl-5">AI Suggestion: {it.keywords.join(', ')}</p>}
                   </div>
-                  <ChevronRight size={14} className="text-indigo-300" />
+                  <ChevronRight size={14} className="text-zappy-300" />
                 </div>
               ))}
 

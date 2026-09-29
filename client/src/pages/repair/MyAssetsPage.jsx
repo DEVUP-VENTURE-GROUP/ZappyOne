@@ -56,7 +56,7 @@ export default function MyAssetsPage() {
 
         {isLoading && (
           <div className="flex justify-center py-16">
-            <Loader2 size={24} className="animate-spin text-indigo-400" />
+            <Loader2 size={24} className="animate-spin text-zappy-400" />
           </div>
         )}
 
@@ -71,7 +71,7 @@ export default function MyAssetsPage() {
             <div key={a._id} className="rounded-2xl border-2 border-slate-200 bg-white p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-[11px] font-bold uppercase tracking-wide text-indigo-500">
+                  <p className="text-[11px] font-bold uppercase tracking-wide text-zappy-500">
                     {VERTICAL_LABEL[a.vertical] || a.vertical}
                   </p>
                   <p className="font-bold text-[#0F172A] mt-0.5">

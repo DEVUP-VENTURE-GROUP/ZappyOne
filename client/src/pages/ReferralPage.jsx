@@ -42,7 +42,7 @@ function Confetti({ active }) {
           key={i}
           className="absolute w-3 h-3 rounded-sm"
           style={{
-            backgroundColor: ['#6366f1', '#a855f7', '#ec4899', '#eab308'][Math.floor(Math.random() * 4)],
+            backgroundColor: ['#3B82F6', '#a855f7', '#ec4899', '#eab308'][Math.floor(Math.random() * 4)],
           }}
           initial={{ x: 0, y: 0, scale: 0 }}
           animate={{
@@ -88,7 +88,7 @@ function TiltCard({ code, isLoading, copied, handleCopyCode }) {
       whileTap={{ scale: 0.98 }}
     >
       {/* Animated gradient border */}
-      <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 via-fuchsia-500 to-amber-500 rounded-[2rem] opacity-70 group-hover:opacity-100 transition-opacity" />
+      <div className="absolute inset-0 bg-gradient-to-br from-zappy-500 via-fuchsia-500 to-amber-500 rounded-[2rem] opacity-70 group-hover:opacity-100 transition-opacity" />
       
       {/* Inner card */}
       <div className="absolute inset-[2px] bg-slate-950 rounded-[calc(2rem-2px)] overflow-hidden shadow-2xl">
@@ -97,7 +97,7 @@ function TiltCard({ code, isLoading, copied, handleCopyCode }) {
          
          <div className="relative h-full flex flex-col items-center justify-center p-6 text-center z-10">
             <Sparkles className="text-amber-400 mb-2" size={24} />
-            <p className="text-[10px] text-indigo-300 font-bold uppercase tracking-[0.3em] mb-4">Your VIP Code</p>
+            <p className="text-[10px] text-zappy-300 font-bold uppercase tracking-[0.3em] mb-4">Your VIP Code</p>
             
             {isLoading ? (
                <div className="h-10 w-32 bg-slate-800/50 rounded-lg animate-pulse" />
@@ -111,7 +111,7 @@ function TiltCard({ code, isLoading, copied, handleCopyCode }) {
                       </motion.div>
                     ) : (
                       <motion.div key="code" initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -20, opacity: 0 }}>
-                         <span className="text-3xl sm:text-5xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-br from-white to-indigo-200 drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
+                         <span className="text-3xl sm:text-5xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-br from-white to-zappy-200 drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
                            {code}
                          </span>
                       </motion.div>
@@ -127,7 +127,7 @@ function TiltCard({ code, isLoading, copied, handleCopyCode }) {
          
          {/* Decorative background blur inside card */}
          <div className="absolute -bottom-20 -right-20 w-40 h-40 bg-fuchsia-500/30 rounded-full blur-3xl pointer-events-none" />
-         <div className="absolute -top-20 -left-20 w-40 h-40 bg-indigo-500/30 rounded-full blur-3xl pointer-events-none" />
+         <div className="absolute -top-20 -left-20 w-40 h-40 bg-zappy-500/30 rounded-full blur-3xl pointer-events-none" />
       </div>
     </motion.div>
   )
@@ -202,12 +202,12 @@ export default function ReferralPage() {
   const earned = rupees(stats.earnedPaise);
 
   return (
-    <div className="min-h-screen bg-[#030712] text-white pb-32 font-sans overflow-x-hidden selection:bg-indigo-500/30">
+    <div className="min-h-screen bg-[#030712] text-white pb-32 font-sans overflow-x-hidden selection:bg-zappy-500/30">
       <Confetti active={showConfetti} />
       
       {/* Immersive Hero Background */}
       <div className="fixed inset-0 pointer-events-none z-0">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] md:w-[800px] h-[600px] bg-indigo-900/20 rounded-full blur-[120px]" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] md:w-[800px] h-[600px] bg-zappy-900/20 rounded-full blur-[120px]" />
         <div className="absolute bottom-0 right-0 w-[400px] md:w-[600px] h-[600px] bg-fuchsia-900/10 rounded-full blur-[100px]" />
         <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E")' }} />
       </div>
@@ -222,9 +222,9 @@ export default function ReferralPage() {
           >
             <ArrowLeft size={20} />
           </motion.button>
-          <div className="px-3 py-1.5 bg-indigo-500/10 border border-indigo-500/20 rounded-full flex items-center gap-1.5 backdrop-blur-md shadow-[0_0_15px_rgba(99,102,241,0.2)]">
+          <div className="px-3 py-1.5 bg-zappy-500/10 border border-zappy-500/20 rounded-full flex items-center gap-1.5 backdrop-blur-md shadow-[0_0_15px_rgba(59,130,246,0.2)]">
             <Flame size={14} className="text-amber-500 fill-amber-500" />
-            <span className="text-[10px] font-black uppercase tracking-widest text-indigo-200">Rewards Program</span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-zappy-200">Rewards Program</span>
           </div>
           <div className="w-10" />
         </div>
@@ -234,7 +234,7 @@ export default function ReferralPage() {
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-10">
             <h1 className="text-4xl md:text-5xl font-black text-white mb-4 tracking-tight leading-[1.1]">
               Give ₹50.<br/>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-fuchsia-400 to-amber-400">Get ₹100.</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-zappy-400 via-fuchsia-400 to-amber-400">Get ₹100.</span>
             </h1>
             <p className="text-slate-400 text-sm leading-relaxed max-w-[280px] mx-auto font-medium">
               Invite friends to Zappy. They get a discount, and you earn real wallet cash when they book.
@@ -249,8 +249,8 @@ export default function ReferralPage() {
           {/* Bento Stats Grid */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="grid grid-cols-3 gap-3 mt-8">
             <div className="bg-white/5 border border-white/10 rounded-2xl p-4 backdrop-blur-md flex flex-col items-center justify-center text-center relative overflow-hidden group hover:bg-white/10 transition-colors">
-              <div className="absolute top-0 right-0 w-16 h-16 bg-indigo-500/20 rounded-full blur-xl transition-all group-hover:scale-150" />
-              <Users size={20} className="text-indigo-400 mb-2 relative z-10" />
+              <div className="absolute top-0 right-0 w-16 h-16 bg-zappy-500/20 rounded-full blur-xl transition-all group-hover:scale-150" />
+              <Users size={20} className="text-zappy-400 mb-2 relative z-10" />
               <span className="font-black text-2xl text-white relative z-10">{stats.totalReferrals}</span>
               <span className="text-[9px] uppercase tracking-widest font-bold text-slate-500 relative z-10 mt-1">Invited</span>
             </div>
@@ -288,7 +288,7 @@ export default function ReferralPage() {
                   <MessageCircle size={24} />
                   <span className="text-[11px] font-black uppercase tracking-wider">WhatsApp</span>
                </motion.button>
-               <motion.button onClick={handleWebShare} whileTap={{ scale: 0.95 }} className="bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 text-indigo-300 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 backdrop-blur-md transition-colors shadow-lg">
+               <motion.button onClick={handleWebShare} whileTap={{ scale: 0.95 }} className="bg-zappy-500/10 hover:bg-zappy-500/20 border border-zappy-500/20 text-zappy-300 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 backdrop-blur-md transition-colors shadow-lg">
                   <Share2 size={24} />
                   <span className="text-[11px] font-black uppercase tracking-wider">Share App</span>
                </motion.button>
@@ -317,7 +317,7 @@ export default function ReferralPage() {
                <div className="space-y-3">
                  {history.map((item, i) => (
                    <div key={item._id ?? i} className="bg-white/5 border border-white/10 rounded-2xl p-4 backdrop-blur-md flex items-center gap-4 hover:bg-white/10 transition-colors">
-                     <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-500 to-fuchsia-500 p-[1px] shadow-sm">
+                     <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-zappy-500 to-fuchsia-500 p-[1px] shadow-sm">
                        <div className="w-full h-full bg-slate-950 rounded-[11px] flex items-center justify-center">
                          <span className="text-sm font-black text-white">{maskName(item.name)[0].toUpperCase()}</span>
                        </div>

@@ -120,7 +120,7 @@ function FuelStep({ model, fuels, onPick }) {
           <button
             key={f.code}
             onClick={() => onPick(f)}
-            className="rounded-2xl bg-white p-4 text-left ring-1 ring-slate-200 transition hover:ring-indigo-300"
+            className="rounded-2xl bg-white p-4 text-left ring-1 ring-slate-200 transition hover:ring-zappy-300"
           >
             <span className="block text-[14px] font-bold text-[#0F172A]">{f.name}</span>
           </button>
@@ -141,7 +141,7 @@ function StepHeader({ steps, step, onBack, title, subtitle }) {
           <ArrowLeft size={17} strokeWidth={2.5} />
         </button>
         <div className="flex-1 min-w-0">
-          <p className="text-[11px] font-bold text-indigo-600 uppercase tracking-wide">
+          <p className="text-[11px] font-bold text-zappy-600 uppercase tracking-wide">
             Step {index + 1} of {steps.length}
           </p>
           <p className="font-bold text-[#0F172A] truncate">{title}</p>
@@ -150,7 +150,7 @@ function StepHeader({ steps, step, onBack, title, subtitle }) {
       </div>
       <div className="h-0.5 bg-slate-100">
         <motion.div
-          className="h-full bg-indigo-600"
+          className="h-full bg-zappy-600"
           animate={{ width: `${((index + 1) / steps.length) * 100}%` }}
           transition={{ duration: 0.25 }}
         />
@@ -164,7 +164,7 @@ function Shell({ children }) {
 }
 
 function Spinner() {
-  return <div className="flex justify-center py-16"><Loader2 size={24} className="animate-spin text-indigo-400" /></div>;
+  return <div className="flex justify-center py-16"><Loader2 size={24} className="animate-spin text-zappy-400" /></div>;
 }
 
 /** "Can't find it?" escape hatch — §67. */
@@ -198,7 +198,7 @@ function MissingItemSheet({ kind, brandCode, onClose }) {
         )}
         <input className="input text-sm w-full" placeholder="Model name (e.g. Galaxy A55 5G)"
           value={form.modelName} onChange={(e) => setForm((f) => ({ ...f, modelName: e.target.value }))} />
-        <textarea rows={2} className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-100 resize-none"
+        <textarea rows={2} className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-zappy-100 resize-none"
           placeholder="Anything else that helps us identify it"
           value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} />
         <button onClick={send} disabled={isLoading || (!form.modelName && !form.brandName)} className="btn-primary w-full">
@@ -256,7 +256,7 @@ function IdentifySheet({ vertical, brand, onClose }) {
         <input className="input text-sm w-full" placeholder="Serial number (optional)"
           value={form.serialNumber} onChange={(e) => setForm((f) => ({ ...f, serialNumber: e.target.value }))} />
         <textarea rows={2}
-          className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-100 resize-none"
+          className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-zappy-100 resize-none"
           placeholder="Anything else — screen size, year bought, where it was bought"
           value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} />
         <button onClick={send} disabled={isLoading || !hasSomething} className="btn-primary w-full">
@@ -282,10 +282,10 @@ function BrandStep({ vertical, onPick }) {
 
   const Tile = ({ b }) => (
     <button onClick={() => onPick(b)}
-      className="card flex flex-col items-center justify-center gap-2 py-5 hover:ring-2 hover:ring-indigo-100 transition">
+      className="card flex flex-col items-center justify-center gap-2 py-5 hover:ring-2 hover:ring-zappy-100 transition">
       {b.logoUrl
         ? <img src={b.logoUrl} alt={b.name} className="h-8 object-contain" />
-        : <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center font-black text-indigo-600">{b.name[0]}</div>}
+        : <div className="w-10 h-10 rounded-xl bg-zappy-50 flex items-center justify-center font-black text-zappy-600">{b.name[0]}</div>}
       <span className="text-xs font-bold text-[#0F172A] text-center leading-tight">{b.name}</span>
     </button>
   );
@@ -306,7 +306,7 @@ function BrandStep({ vertical, onPick }) {
         </>
       )}
       <button onClick={() => setShowMissing(true)}
-        className="w-full flex items-center justify-center gap-2 text-sm font-semibold text-indigo-600 py-3">
+        className="w-full flex items-center justify-center gap-2 text-sm font-semibold text-zappy-600 py-3">
         <HelpCircle size={15} /> Can't find your brand?
       </button>
     </Shell>
@@ -331,9 +331,9 @@ function DeviceTypeStep({ vertical, onPick }) {
       <div className="grid grid-cols-2 gap-2.5">
         {types.map((t) => (
           <button key={t.code} onClick={() => onPick(t)}
-            className="card flex flex-col items-start gap-1.5 py-4 hover:ring-2 hover:ring-indigo-100 transition text-left">
-            <div className="w-9 h-9 rounded-xl bg-indigo-50 flex items-center justify-center">
-              <Laptop size={17} className="text-indigo-600" strokeWidth={1.75} />
+            className="card flex flex-col items-start gap-1.5 py-4 hover:ring-2 hover:ring-zappy-100 transition text-left">
+            <div className="w-9 h-9 rounded-xl bg-zappy-50 flex items-center justify-center">
+              <Laptop size={17} className="text-zappy-600" strokeWidth={1.75} />
             </div>
             <span className="text-sm font-bold text-[#0F172A] leading-tight">{t.name}</span>
             {t.description && <span className="text-[11px] text-slate-400 leading-snug">{t.description}</span>}
@@ -368,7 +368,7 @@ function FamilyStep({ vertical, brand, productType, onPick, onSkip }) {
       <div className="space-y-2">
         {families.map((f) => (
           <button key={f.code} onClick={() => onPick(f)}
-            className="card w-full flex items-center gap-3 text-left hover:ring-2 hover:ring-indigo-100 transition">
+            className="card w-full flex items-center gap-3 text-left hover:ring-2 hover:ring-zappy-100 transition">
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-sm text-[#0F172A]">{f.name}</p>
               {f.description && <p className="text-xs text-slate-400 mt-0.5">{f.description}</p>}
@@ -378,7 +378,7 @@ function FamilyStep({ vertical, brand, productType, onPick, onSkip }) {
         ))}
       </div>
       <button onClick={onSkip}
-        className="w-full flex items-center justify-center gap-2 text-sm font-semibold text-indigo-600 py-3">
+        className="w-full flex items-center justify-center gap-2 text-sm font-semibold text-zappy-600 py-3">
         <HelpCircle size={15} /> Not sure which line it is
       </button>
     </Shell>
@@ -410,7 +410,7 @@ function ConfigurationStep({ vertical, model, onPick, onSkip }) {
       </p>
       {configs.map((c) => (
         <button key={c.code} onClick={() => onPick(c)}
-          className="card w-full text-left hover:ring-2 hover:ring-indigo-100 transition">
+          className="card w-full text-left hover:ring-2 hover:ring-zappy-100 transition">
           <p className="font-semibold text-sm text-[#0F172A]">{c.name}</p>
           <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1.5">
             {c.displaySize && (
@@ -424,7 +424,7 @@ function ConfigurationStep({ vertical, model, onPick, onSkip }) {
         </button>
       ))}
       <button onClick={onSkip}
-        className="w-full flex items-center justify-center gap-2 text-sm font-semibold text-indigo-600 py-3">
+        className="w-full flex items-center justify-center gap-2 text-sm font-semibold text-zappy-600 py-3">
         <HelpCircle size={15} /> I'm not sure which one I have
       </button>
     </Shell>
@@ -493,7 +493,7 @@ function ModelStep({ vertical, deep, brand, productType, family, onPick }) {
               )}
               {group.items.map((m) => (
                 <button key={m.code} onClick={() => onPick(m)}
-                  className="card w-full flex items-center gap-3 text-left hover:ring-2 hover:ring-indigo-100 transition">
+                  className="card w-full flex items-center gap-3 text-left hover:ring-2 hover:ring-zappy-100 transition">
                   <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center shrink-0">
                     {m.imageUrl ? <img src={m.imageUrl} alt="" className="w-full h-full object-cover rounded-xl" />
                       : deep ? <Laptop size={18} className="text-slate-400" />
@@ -537,7 +537,7 @@ function ModelStep({ vertical, deep, brand, productType, family, onPick }) {
 
       {models.length > 0 && (
         <button onClick={() => setShowMissing(true)}
-          className="w-full flex items-center justify-center gap-2 text-sm font-semibold text-indigo-600 py-3">
+          className="w-full flex items-center justify-center gap-2 text-sm font-semibold text-zappy-600 py-3">
           <HelpCircle size={15} /> {deep ? "I don't know my model" : "Can't find your model?"}
         </button>
       )}
@@ -591,7 +591,7 @@ function ProblemStep({ vertical, model, productType, fuelType, presetCode, onPic
           <p className="text-xs font-bold text-slate-500 uppercase tracking-wide px-1 pt-2">{cat.name}</p>
           {cat.problems.map((p) => (
             <button key={p.code} onClick={() => onPick(p)}
-              className="card w-full flex items-center gap-3 text-left hover:ring-2 hover:ring-indigo-100 transition">
+              className="card w-full flex items-center gap-3 text-left hover:ring-2 hover:ring-zappy-100 transition">
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-sm text-[#0F172A]">{p.name}</p>
                 {p.requiresDiagnosis && (
@@ -661,7 +661,7 @@ function DiagnoseStep({ vertical, problem, onResolved }) {
     return (
       <Shell>
         <div className="card text-center py-10">
-          <Loader2 size={22} className="animate-spin text-indigo-400 mx-auto" />
+          <Loader2 size={22} className="animate-spin text-zappy-400 mx-auto" />
           <p className="text-sm text-slate-500 mt-3">Working out the likely repair…</p>
         </div>
       </Shell>
@@ -679,7 +679,7 @@ function DiagnoseStep({ vertical, problem, onResolved }) {
           <div className="space-y-2 mt-3">
             {(q.options || []).map((opt) => (
               <button key={opt.id} onClick={() => answer(q.id, opt.id, q.type === 'multi')} disabled={isLoading}
-                className="card w-full text-left hover:ring-2 hover:ring-indigo-100 transition disabled:opacity-60">
+                className="card w-full text-left hover:ring-2 hover:ring-zappy-100 transition disabled:opacity-60">
                 <p className="font-semibold text-sm text-[#0F172A]">{opt.label}</p>
                 {opt.description && <p className="text-xs text-slate-400 mt-0.5">{opt.description}</p>}
                 {opt.priceHint && <p className="text-[11px] text-emerald-600 font-semibold mt-1">{opt.priceHint}</p>}
@@ -750,8 +750,8 @@ function ModeStep({ diagnosis, inspectionFeePaise, onPick }) {
 
   return (
     <Shell>
-      <div className="card bg-indigo-50 ring-indigo-100">
-        <p className="text-xs font-medium text-indigo-700 leading-relaxed">{diagnosis?.summary}</p>
+      <div className="card bg-zappy-50 ring-zappy-100">
+        <p className="text-xs font-medium text-zappy-700 leading-relaxed">{diagnosis?.summary}</p>
       </div>
 
       {options.map((o) => {
@@ -762,14 +762,14 @@ function ModeStep({ diagnosis, inspectionFeePaise, onPick }) {
             onClick={() => o.available && onPick(o.key)}
             disabled={!o.available}
             className={o.available
-              ? 'card w-full text-left hover:ring-2 hover:ring-indigo-100 transition'
+              ? 'card w-full text-left hover:ring-2 hover:ring-zappy-100 transition'
               : 'card w-full text-left opacity-60 cursor-not-allowed'}
           >
             <div className="flex items-start gap-3">
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                o.available ? 'bg-indigo-50' : 'bg-slate-100'
+                o.available ? 'bg-zappy-50' : 'bg-slate-100'
               }`}>
-                <Icon size={18} className={o.available ? 'text-indigo-600' : 'text-slate-400'} strokeWidth={1.75} />
+                <Icon size={18} className={o.available ? 'text-zappy-600' : 'text-slate-400'} strokeWidth={1.75} />
               </div>
               <div className="flex-1 min-w-0">
                 <p className={`font-bold text-sm ${o.available ? 'text-[#0F172A]' : 'text-slate-500'}`}>
@@ -869,7 +869,7 @@ function ProviderStep({
         />
         <div className="card">
           <div className="flex items-start gap-3">
-            <HelpCircle size={18} className="text-indigo-600 shrink-0 mt-0.5" />
+            <HelpCircle size={18} className="text-zappy-600 shrink-0 mt-0.5" />
             <div>
               <p className="font-bold text-sm text-[#0F172A]">Inspection booking</p>
               <p className="text-xs text-slate-500 mt-1 leading-relaxed">
@@ -946,8 +946,8 @@ function ProviderStep({
       />
 
       {needsDiagnosis && (
-        <div className="card bg-indigo-50 ring-indigo-100">
-          <p className="text-[11px] text-indigo-700 font-semibold leading-relaxed">
+        <div className="card bg-zappy-50 ring-zappy-100">
+          <p className="text-[11px] text-zappy-700 font-semibold leading-relaxed">
             Prices below are estimates. The final figure is confirmed after the technician inspects your device.
           </p>
         </div>
@@ -1101,11 +1101,11 @@ function ChosenSummary({
         onClick={onChangeLocation}
         className="mt-2.5 flex w-full items-start gap-1.5 rounded-xl bg-slate-50 p-2.5 text-left"
       >
-        <MapPin size={12} className="mt-0.5 shrink-0 text-indigo-500" />
+        <MapPin size={12} className="mt-0.5 shrink-0 text-zappy-500" />
         <span className="min-w-0 flex-1 text-[12px] leading-snug text-slate-600">
           {location.address || 'Pin dropped on the map'}
         </span>
-        <span className="shrink-0 text-[11px] font-bold text-indigo-600">Change</span>
+        <span className="shrink-0 text-[11px] font-bold text-zappy-600">Change</span>
       </button>
     </div>
   );
@@ -1125,7 +1125,7 @@ function ProviderCard({ p, recommended, onPick }) {
   const options = p.priceOptions?.length ? p.priceOptions : null;
 
   return (
-    <div className={`card ${recommended ? 'ring-2 ring-indigo-200' : ''}`}>
+    <div className={`card ${recommended ? 'ring-2 ring-zappy-200' : ''}`}>
       <div className="flex items-start justify-between gap-3">
         {/* The shop's own photo, where they have uploaded one. A provider the
             customer recognises from the high street is the difference between
@@ -1139,7 +1139,7 @@ function ProviderCard({ p, recommended, onPick }) {
           <div className="flex items-center gap-1.5">
             <p className="truncate text-sm font-bold text-[#0F172A]">{p.name}</p>
             {recommended && (
-              <span className="shrink-0 rounded-full bg-indigo-100 px-1.5 py-0.5 text-[10px] font-black uppercase text-indigo-700">
+              <span className="shrink-0 rounded-full bg-zappy-100 px-1.5 py-0.5 text-[10px] font-black uppercase text-zappy-700">
                 Instant
               </span>
             )}
@@ -1181,7 +1181,7 @@ function ProviderCard({ p, recommended, onPick }) {
             <button
               key={o.qualityCode || 'any'}
               onClick={() => onPick(o.qualityCode)}
-              className="flex w-full items-center gap-2.5 rounded-xl border border-slate-200 p-2.5 text-left transition hover:border-indigo-300 hover:bg-indigo-50/40"
+              className="flex w-full items-center gap-2.5 rounded-xl border border-slate-200 p-2.5 text-left transition hover:border-zappy-300 hover:bg-zappy-50/40"
             >
               <span className="min-w-0 flex-1">
                 <span className="flex items-center gap-1.5">
@@ -1206,7 +1206,7 @@ function ProviderCard({ p, recommended, onPick }) {
       ) : (
         <button
           onClick={() => onPick(null)}
-          className="mt-2.5 flex w-full items-center justify-between gap-2 rounded-xl border border-slate-200 p-2.5 text-left transition hover:border-indigo-300"
+          className="mt-2.5 flex w-full items-center justify-between gap-2 rounded-xl border border-slate-200 p-2.5 text-left transition hover:border-zappy-300"
         >
           <span className="text-[12.5px] font-bold text-slate-700">
             {p.warrantyDays > 0 ? `${p.warrantyDays}-day warranty` : 'Select this technician'}
@@ -1274,11 +1274,11 @@ function AddOnsStep({
               type="button"
               onClick={() => onToggle(a.repairCode)}
               className={`w-full flex items-center gap-3 rounded-2xl border-2 p-4 text-left transition ${
-                on ? 'border-indigo-500 bg-indigo-50/60' : 'border-slate-200 bg-white hover:border-slate-300'
+                on ? 'border-zappy-500 bg-zappy-50/60' : 'border-slate-200 bg-white hover:border-slate-300'
               }`}
             >
               <span className={`shrink-0 w-6 h-6 rounded-lg border-2 grid place-items-center ${
-                on ? 'border-indigo-500 bg-indigo-500 text-white' : 'border-slate-300 text-transparent'
+                on ? 'border-zappy-500 bg-zappy-500 text-white' : 'border-slate-300 text-transparent'
               }`}>
                 <Check size={14} strokeWidth={3} />
               </span>

@@ -13,7 +13,7 @@ const CATEGORY_MAP = {
   'anniversary': { img: '/images/events/event_anniversary.webp', color: 'from-purple-500/80 to-transparent' },
   'housewarming': { img: '/images/events/event_housewarming.webp', color: 'from-amber-500/80 to-transparent' },
   'romantic': { img: '/images/events/event_romantic.webp', color: 'from-rose-500/80 to-transparent' },
-  'default': { img: '/images/events/event_birthday.webp', color: 'from-indigo-500/80 to-transparent' }
+  'default': { img: '/images/events/event_birthday.webp', color: 'from-zappy-500/80 to-transparent' }
 };
 
 function getCatStyles(name) {
@@ -223,12 +223,12 @@ export default function EventsHomePage() {
           <section>
             <div className="flex items-end justify-between mb-6">
               <h2 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-3">
-                <span className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                <span className="w-8 h-8 bg-gradient-to-br from-zappy-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-zappy-500/30">
                   <Play size={14} className="text-white ml-0.5" />
                 </span>
                 See it Live
               </h2>
-              <button onClick={() => setShowReels(v => !v)} className="text-sm font-bold text-indigo-600 hover:text-indigo-700 transition-colors">
+              <button onClick={() => setShowReels(v => !v)} className="text-sm font-bold text-zappy-600 hover:text-zappy-700 transition-colors">
                 {showReels ? 'Hide reels' : 'Play reels'}
               </button>
             </div>
@@ -264,7 +264,7 @@ export default function EventsHomePage() {
           </div>
           {!trending.length && (
             <div className="text-center py-20 bg-white rounded-[2rem] border border-slate-100 shadow-sm mt-4">
-              <PartyPopper size={56} className="mx-auto text-indigo-200 mb-5" strokeWidth={1.5} />
+              <PartyPopper size={56} className="mx-auto text-zappy-200 mb-5" strokeWidth={1.5} />
               <p className="text-slate-500 font-bold text-lg">No themes yet — check back soon!</p>
             </div>
           )}

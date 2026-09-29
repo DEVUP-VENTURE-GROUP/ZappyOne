@@ -50,7 +50,7 @@ export default function EventThemePage() {
   const hasMedia = allMedia.length > 0;
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-36 font-sans selection:bg-indigo-100 selection:text-indigo-900">
+    <div className="min-h-screen bg-slate-50 pb-36 font-sans selection:bg-zappy-100 selection:text-zappy-900">
       
       {/* Top Floating Header */}
       <div className="fixed top-0 left-0 right-0 z-50 p-4 flex justify-between items-center pointer-events-none">
@@ -73,10 +73,10 @@ export default function EventThemePage() {
 
       {/* Hero Image (Contained & Rounded) */}
       <div className="px-4 pt-16">
-        <div className="relative w-full h-[40vh] md:h-[50vh] bg-gradient-to-br from-indigo-50 to-purple-50 rounded-[2rem] overflow-hidden shadow-sm border border-slate-200/50 flex items-center justify-center">
+        <div className="relative w-full h-[40vh] md:h-[50vh] bg-gradient-to-br from-zappy-50 to-purple-50 rounded-[2rem] overflow-hidden shadow-sm border border-slate-200/50 flex items-center justify-center">
           
           {/* Fallback Icon behind image */}
-          <Sparkles className="text-indigo-200 absolute" size={64} />
+          <Sparkles className="text-zappy-200 absolute" size={64} />
           
           {hasMedia && (
             <AnimatePresence mode="wait">
@@ -108,7 +108,7 @@ export default function EventThemePage() {
                 onClick={() => setShowVideo(v => !v)}
                 className="absolute bottom-4 left-4 z-20 bg-white/90 backdrop-blur-sm rounded-full px-4 py-2 flex items-center gap-2 text-xs font-bold text-slate-800 shadow-sm"
              >
-                <Play size={14} className="text-indigo-600 fill-indigo-600" />
+                <Play size={14} className="text-zappy-600 fill-zappy-600" />
                 {showVideo ? 'View Photos' : 'Play Video'}
              </button>
           )}
@@ -123,7 +123,7 @@ export default function EventThemePage() {
               <button 
                 key={i} 
                 onClick={() => setGalleryIdx(i)} 
-                className={`relative shrink-0 w-16 h-16 rounded-2xl overflow-hidden transition-all duration-300 ${i === galleryIdx ? 'ring-2 ring-indigo-500 ring-offset-2 scale-100' : 'opacity-50 scale-95 hover:opacity-100'}`}
+                className={`relative shrink-0 w-16 h-16 rounded-2xl overflow-hidden transition-all duration-300 ${i === galleryIdx ? 'ring-2 ring-zappy-500 ring-offset-2 scale-100' : 'opacity-50 scale-95 hover:opacity-100'}`}
               >
                 <img src={url} alt="" className="w-full h-full object-cover" onError={(e) => { e.target.style.display = 'none'; }} />
               </button>
@@ -137,7 +137,7 @@ export default function EventThemePage() {
         
         <div className="mb-6">
           <div className="flex flex-wrap gap-2 mb-3">
-            <span className="px-3 py-1 bg-indigo-50 text-indigo-600 rounded-lg text-[10px] font-black tracking-widest uppercase border border-indigo-100">
+            <span className="px-3 py-1 bg-zappy-50 text-zappy-600 rounded-lg text-[10px] font-black tracking-widest uppercase border border-zappy-100">
               {theme.categoryId?.name || 'Exclusive'}
             </span>
             <span className="px-3 py-1 bg-white text-slate-600 rounded-lg text-[10px] font-black tracking-widest uppercase border border-slate-200 shadow-sm">
@@ -161,7 +161,7 @@ export default function EventThemePage() {
           {/* Main Price Bento */}
           <div className="col-span-2 md:col-span-4 relative overflow-hidden bg-white rounded-[2rem] p-6 shadow-sm border border-slate-200/60">
             {/* Background decorative blob */}
-            <div className="absolute -right-10 -top-10 w-40 h-40 bg-gradient-to-br from-indigo-100 to-purple-50 rounded-full blur-3xl" />
+            <div className="absolute -right-10 -top-10 w-40 h-40 bg-gradient-to-br from-zappy-100 to-purple-50 rounded-full blur-3xl" />
             
             <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
               <div>
@@ -176,7 +176,7 @@ export default function EventThemePage() {
               </div>
               <div className="flex -space-x-3">
                 <div className="w-10 h-10 rounded-full bg-slate-100 border-2 border-white flex items-center justify-center text-xs font-bold text-slate-500 z-30">+3</div>
-                <div className="w-10 h-10 rounded-full bg-indigo-100 border-2 border-white flex items-center justify-center text-indigo-500 z-20">👍</div>
+                <div className="w-10 h-10 rounded-full bg-zappy-100 border-2 border-white flex items-center justify-center text-zappy-500 z-20">👍</div>
                 <div className="w-10 h-10 rounded-full bg-rose-100 border-2 border-white flex items-center justify-center text-rose-500 z-10">❤️</div>
                 <div className="pl-6 text-xs font-bold text-slate-500 self-center uppercase tracking-widest">{theme.bookingCount || 'Many'} Booked</div>
               </div>
@@ -185,9 +185,9 @@ export default function EventThemePage() {
 
           {/* Setup Time Bento */}
           {theme.setupDurationMinutes && (
-            <div className="col-span-1 bg-white rounded-[2rem] p-5 shadow-sm border border-slate-200/60 flex flex-col justify-between min-h-[140px] group hover:border-indigo-200 transition-colors">
-              <div className="w-10 h-10 rounded-2xl bg-indigo-50 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                <Clock className="text-indigo-600" size={20} />
+            <div className="col-span-1 bg-white rounded-[2rem] p-5 shadow-sm border border-slate-200/60 flex flex-col justify-between min-h-[140px] group hover:border-zappy-200 transition-colors">
+              <div className="w-10 h-10 rounded-2xl bg-zappy-50 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <Clock className="text-zappy-600" size={20} />
               </div>
               <div>
                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Setup Time</p>
@@ -279,7 +279,7 @@ export default function EventThemePage() {
           {/* Partner Bento */}
           {theme.partnerId && (
             <div className="col-span-2 md:col-span-4 bg-slate-900 rounded-[2rem] p-6 flex flex-col sm:flex-row items-center gap-5 relative overflow-hidden mt-2">
-              <div className="absolute right-0 top-0 w-64 h-64 bg-gradient-to-br from-indigo-500/20 to-fuchsia-500/20 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute right-0 top-0 w-64 h-64 bg-gradient-to-br from-zappy-500/20 to-fuchsia-500/20 rounded-full blur-3xl pointer-events-none" />
               
               <div className="w-20 h-20 bg-white rounded-[1.5rem] flex items-center justify-center text-slate-900 font-black text-3xl shrink-0 shadow-lg transform -rotate-3 z-10">
                 {theme.partnerId.businessName?.[0]?.toUpperCase()}

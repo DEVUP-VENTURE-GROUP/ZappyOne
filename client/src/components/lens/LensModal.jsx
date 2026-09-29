@@ -107,7 +107,7 @@ export default function LensModal({ open, onClose }) {
           {/* Header */}
           <div className="flex items-center justify-between px-5 pt-5 pb-3">
             <div className="flex items-center gap-2">
-              <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center">
+              <div className="w-9 h-9 rounded-xl bg-zappy-600 flex items-center justify-center">
                 <ScanLine size={18} className="text-white" />
               </div>
               <div>
@@ -128,7 +128,7 @@ export default function LensModal({ open, onClose }) {
                 <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden"
                   onChange={(e) => handleFile(e.target.files?.[0])} />
                 <button onClick={() => fileRef.current?.click()}
-                  className="w-full flex items-center justify-center gap-2 bg-indigo-600 text-white font-bold py-4 rounded-2xl active:scale-[0.98] transition-transform">
+                  className="w-full flex items-center justify-center gap-2 bg-zappy-600 text-white font-bold py-4 rounded-2xl active:scale-[0.98] transition-transform">
                   <Camera size={20} /> Open camera
                 </button>
                 <button onClick={() => { fileRef.current?.removeAttribute('capture'); fileRef.current?.click(); setTimeout(() => fileRef.current?.setAttribute('capture','environment'),300); }}
@@ -144,12 +144,12 @@ export default function LensModal({ open, onClose }) {
                 {preview && (
                   <div className="relative w-40 h-40 rounded-2xl overflow-hidden mb-5">
                     <img src={preview} alt="scan" className="w-full h-full object-cover" />
-                    <motion.div className="absolute left-0 right-0 h-0.5 bg-indigo-400 shadow-[0_0_12px_2px_rgba(99,102,241,0.8)]"
+                    <motion.div className="absolute left-0 right-0 h-0.5 bg-zappy-400 shadow-[0_0_12px_2px_rgba(59,130,246,0.8)]"
                       animate={{ top: ['0%', '100%', '0%'] }} transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }} />
                   </div>
                 )}
                 <div className="flex items-center gap-2 text-slate-600 font-semibold">
-                  <Loader2 size={18} className="animate-spin text-indigo-600" /> Analyzing…
+                  <Loader2 size={18} className="animate-spin text-zappy-600" /> Analyzing…
                 </div>
                 <p className="text-xs text-slate-400 mt-1">Identifying the service you need</p>
               </div>
@@ -189,14 +189,14 @@ export default function LensModal({ open, onClose }) {
                     const best = showBest && i === 0;
                     return (
                       <button key={m.serviceCode} onClick={() => book(m)}
-                        className={`w-full text-left rounded-2xl border p-4 flex items-start gap-3 active:scale-[0.99] transition-transform ${best ? 'border-indigo-300 bg-indigo-50/40 ring-1 ring-indigo-100' : 'border-slate-200'}`}>
+                        className={`w-full text-left rounded-2xl border p-4 flex items-start gap-3 active:scale-[0.99] transition-transform ${best ? 'border-zappy-300 bg-zappy-50/40 ring-1 ring-zappy-100' : 'border-slate-200'}`}>
                         <div className="w-11 h-11 rounded-xl bg-white border border-slate-200 flex items-center justify-center shrink-0">
-                          <Icon size={20} className="text-indigo-600" />
+                          <Icon size={20} className="text-zappy-600" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             <span className="font-bold text-slate-900 capitalize">{m.name || m.serviceCode.replace(/_/g, ' ')}</span>
-                            {best && <span className="text-[10px] font-black text-indigo-600 bg-indigo-100 px-1.5 py-0.5 rounded">BEST MATCH</span>}
+                            {best && <span className="text-[10px] font-black text-zappy-600 bg-zappy-100 px-1.5 py-0.5 rounded">BEST MATCH</span>}
                           </div>
                           {m.issueSummary && <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">{m.issueSummary}</p>}
                           <div className="flex items-center gap-2 mt-2">
@@ -214,7 +214,7 @@ export default function LensModal({ open, onClose }) {
                     <button onClick={() => { setStage('capture'); setPreview(null); setResult(null); }}
                       className="flex-1 text-sm font-semibold text-slate-600 bg-slate-100 py-2.5 rounded-xl">Scan again</button>
                     <button onClick={() => { onClose?.(); nav('/services'); }}
-                      className="flex-1 inline-flex items-center justify-center gap-1.5 text-sm font-bold text-indigo-600 bg-indigo-50 py-2.5 rounded-xl">
+                      className="flex-1 inline-flex items-center justify-center gap-1.5 text-sm font-bold text-zappy-600 bg-zappy-50 py-2.5 rounded-xl">
                       <Search size={15} /> Browse all
                     </button>
                   </div>
@@ -228,7 +228,7 @@ export default function LensModal({ open, onClose }) {
                 <p className="font-bold text-slate-900">Scan failed</p>
                 <p className="text-sm text-slate-500 mt-1">{errMsg}</p>
                 <button onClick={() => { setStage('capture'); setErrMsg(''); }}
-                  className="mt-4 bg-indigo-600 text-white font-bold px-6 py-2.5 rounded-xl">Try again</button>
+                  className="mt-4 bg-zappy-600 text-white font-bold px-6 py-2.5 rounded-xl">Try again</button>
               </div>
             )}
           </div>

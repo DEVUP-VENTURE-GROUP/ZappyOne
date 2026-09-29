@@ -63,7 +63,7 @@ export default function ProviderServicesCard({ className = '' }) {
   return (
     <button
       onClick={() => nav('/provider/onboarding')}
-      className={`flex w-full items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3.5 text-left transition hover:border-indigo-200 ${className}`}
+      className={`flex w-full items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3.5 text-left transition hover:border-zappy-200 ${className}`}
     >
       <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${TONE[headline.tone]}`}>
         <Wrench size={17} strokeWidth={2} />

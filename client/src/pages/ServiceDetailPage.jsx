@@ -385,7 +385,7 @@ export default function ServiceDetailPage() {
             <div className="min-w-0 space-y-7">
               {gallery.length > 0 && (
                 <section aria-label="Service gallery">
-                  <div className="no-scrollbar -mx-4 flex snap-x gap-3 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+                  <div className="no-scrollbar -mx-4 flex snap-x scroll-px-4 gap-3 overflow-x-auto px-4 sm:mx-0 sm:px-0 sm:scroll-px-0">
                     {gallery.map((src, i) => (
                       <img
                         key={src}
@@ -671,7 +671,7 @@ export default function ServiceDetailPage() {
                   See all
                 </Link>
               </div>
-              <div className="no-scrollbar -mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">
+              <div className="no-scrollbar -mx-4 flex snap-x scroll-px-4 gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0 sm:scroll-px-0">
                 {related.map((s) => (
                   <RelatedCard key={s.code} service={s} category={category} />
                 ))}

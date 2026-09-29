@@ -16,7 +16,7 @@ function EarningRow({ job, expanded, onToggle, index }) {
       className="bg-white rounded-[1.25rem] border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] overflow-hidden mb-3"
     >
       <button className="w-full flex items-center gap-4 p-4 text-left active:bg-slate-50 transition" onClick={onToggle}>
-        <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 shadow-sm ${hasSurge ? 'bg-gradient-to-br from-amber-400 to-orange-500' : 'bg-gradient-to-br from-indigo-500 to-violet-600'}`}>
+        <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 shadow-sm ${hasSurge ? 'bg-gradient-to-br from-amber-400 to-orange-500' : 'bg-gradient-to-br from-zappy-500 to-violet-600'}`}>
           {hasSurge ? <Zap size={18} className="text-white fill-white" /> : <TrendingUp size={18} className="text-white" />}
         </div>
         <div className="flex-1 min-w-0">
@@ -27,7 +27,7 @@ function EarningRow({ job, expanded, onToggle, index }) {
           <p className="font-black text-lg text-slate-800">{fmt(job.net)}</p>
           {hasSurge && <span className="inline-block mt-0.5 text-[10px] font-extrabold tracking-wide bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full shadow-sm">{job.surgeMultiplier}×</span>}
         </div>
-        {expanded ? <ChevronUp size={16} className="text-indigo-400" /> : <ChevronDown size={16} className="text-slate-300" />}
+        {expanded ? <ChevronUp size={16} className="text-zappy-400" /> : <ChevronDown size={16} className="text-slate-300" />}
       </button>
 
       <AnimatePresence>
@@ -49,7 +49,7 @@ function EarningRow({ job, expanded, onToggle, index }) {
                 </div>
               )}
               <div className="border-t border-slate-200/60 pt-3 mt-1 flex justify-between items-center">
-                <span className="text-slate-800 font-black">Net payout</span><span className="text-indigo-600 font-black text-lg">{fmt(job.net)}</span>
+                <span className="text-slate-800 font-black">Net payout</span><span className="text-zappy-600 font-black text-lg">{fmt(job.net)}</span>
               </div>
               {job.orderId && <p className="text-[10px] text-slate-400 font-semibold pt-1">Order ID: {job.orderId}</p>}
             </div>
@@ -100,12 +100,12 @@ export default function WorkerEarningsPage() {
   function toggle(id) { setExpanded(p => p === id ? null : id); }
 
   return (
-    <div className="min-h-screen bg-slate-50 md:flex md:justify-center md:bg-gradient-to-br md:from-slate-100 md:to-indigo-50/40">
+    <div className="min-h-screen bg-slate-50 md:flex md:justify-center md:bg-gradient-to-br md:from-slate-100 md:to-zappy-50/40">
       <div className="w-full max-w-lg lg:max-w-2xl bg-slate-50 min-h-screen relative shadow-[0_0_40px_rgba(0,0,0,0.05)] lg:shadow-[0_0_60px_rgba(0,0,0,0.08)] md:border-x border-slate-200/60">
         
         {/* Cinematic Header */}
         <header className="relative pt-6 pb-24 overflow-hidden rounded-b-[2.5rem] shadow-sm z-10" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #1e3a5f 100%)' }}>
-          <motion.div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.8, 0.5] }} transition={{ duration: 4, repeat: Infinity }} />
+          <motion.div className="absolute top-0 right-0 w-64 h-64 bg-zappy-500/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.8, 0.5] }} transition={{ duration: 4, repeat: Infinity }} />
           <motion.div className="absolute bottom-0 left-0 w-48 h-48 bg-emerald-500/20 rounded-full blur-3xl translate-y-1/3 -translate-x-1/4" animate={{ scale: [1, 1.3, 1], opacity: [0.3, 0.6, 0.3] }} transition={{ duration: 5, repeat: Infinity, delay: 1 }} />
           
           <div className="relative z-10 px-5">
@@ -133,7 +133,7 @@ export default function WorkerEarningsPage() {
           <div className="bg-white/80 backdrop-blur-xl p-1.5 rounded-2xl shadow-lg ring-1 ring-black/5 flex gap-1 mb-6 max-w-sm mx-auto">
             {PERIODS.map(p => (
               <button key={p.id} onClick={() => setPeriod(p.id)}
-                className={`flex-1 text-[13px] font-bold py-2.5 rounded-xl transition-all duration-300 ${period === p.id ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'}`}>
+                className={`flex-1 text-[13px] font-bold py-2.5 rounded-xl transition-all duration-300 ${period === p.id ? 'bg-zappy-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'}`}>
                 {p.label}
               </button>
             ))}
@@ -156,8 +156,8 @@ export default function WorkerEarningsPage() {
           </motion.div>
 
           {/* Platform fee info */}
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="bg-indigo-50/50 border border-indigo-100/50 rounded-2xl p-4 flex gap-3 text-[13px] text-indigo-800/80 mb-8 font-medium">
-            <Info size={16} className="shrink-0 mt-0.5 text-indigo-500" />
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="bg-zappy-50/50 border border-zappy-100/50 rounded-2xl p-4 flex gap-3 text-[13px] text-zappy-800/80 mb-8 font-medium">
+            <Info size={16} className="shrink-0 mt-0.5 text-zappy-500" />
             <p>Platform fee is deducted per job. You can reduce it by upgrading your subscription plan to <b>Go Pro</b>.</p>
           </motion.div>
 
@@ -166,7 +166,7 @@ export default function WorkerEarningsPage() {
             <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3 px-1">Job Breakdown</p>
             {isLoading ? (
               <div className="flex flex-col items-center justify-center py-12">
-                <Loader2 size={24} className="animate-spin text-indigo-400 mb-3" />
+                <Loader2 size={24} className="animate-spin text-zappy-400 mb-3" />
                 <p className="text-sm font-semibold text-slate-400">Loading earnings...</p>
               </div>
             ) : jobs.length === 0 ? (

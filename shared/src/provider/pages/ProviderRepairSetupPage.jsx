@@ -67,7 +67,7 @@ const SERVICE_MODES = [
 /* Chrome */
 
 function Spinner({ pad = 'py-16' }) {
-  return <div className={`flex justify-center ${pad}`}><Loader2 size={22} className="animate-spin text-indigo-400" /></div>;
+  return <div className={`flex justify-center ${pad}`}><Loader2 size={22} className="animate-spin text-zappy-400" /></div>;
 }
 
 /** Progress rail. Compact on a phone, labelled on a laptop. */
@@ -82,7 +82,7 @@ function StepRail({ steps, current, onJump, done }) {
             key={s.key}
             onClick={() => onJump(s.key)}
             className={`flex shrink-0 items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs font-bold transition ${
-              isCurrent ? 'bg-indigo-600 text-white'
+              isCurrent ? 'bg-zappy-600 text-white'
                 : isDone ? 'bg-emerald-50 text-emerald-700'
                   : 'bg-white text-slate-500 ring-1 ring-slate-200'
             }`}
@@ -121,7 +121,7 @@ function StepShell({ title, hint, children, onBack, onNext, nextLabel = 'Continu
           <button
             onClick={onNext}
             disabled={busy || !canNext}
-            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-indigo-600 py-2.5 text-sm font-bold text-white transition hover:bg-indigo-700 disabled:opacity-40"
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-zappy-600 py-2.5 text-sm font-bold text-white transition hover:bg-zappy-700 disabled:opacity-40"
           >
             {busy ? <Loader2 size={15} className="animate-spin" /> : <>{nextLabel} <ArrowRight size={15} /></>}
           </button>
@@ -157,7 +157,7 @@ function BrandsStep({ vertical, selected, onChange, onNext }) {
     >
       <button
         onClick={() => onChange(all ? [] : brands.map((b) => b.code))}
-        className="text-xs font-bold text-indigo-600"
+        className="text-xs font-bold text-zappy-600"
       >
         {all ? 'Clear all' : 'Select all brands'}
       </button>
@@ -170,19 +170,19 @@ function BrandsStep({ vertical, selected, onChange, onNext }) {
               key={b.code}
               onClick={() => onChange(on ? selected.filter((c) => c !== b.code) : [...selected, b.code])}
               className={`flex flex-col items-center gap-1.5 rounded-2xl border p-3 transition ${
-                on ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200 bg-white hover:border-slate-300'
+                on ? 'border-zappy-500 bg-zappy-50' : 'border-slate-200 bg-white hover:border-slate-300'
               }`}
             >
               {b.logoUrl
                 ? <img src={b.logoUrl} alt="" className="h-7 object-contain" />
                 : (
                   <span className={`flex h-9 w-9 items-center justify-center rounded-xl text-sm font-black ${
-                    on ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-500'
+                    on ? 'bg-zappy-600 text-white' : 'bg-slate-100 text-slate-500'
                   }`}>
                     {b.name[0]}
                   </span>
                 )}
-              <span className={`text-center text-[11px] font-bold leading-tight ${on ? 'text-indigo-700' : 'text-slate-600'}`}>
+              <span className={`text-center text-[11px] font-bold leading-tight ${on ? 'text-zappy-700' : 'text-slate-600'}`}>
                 {b.name}
               </span>
             </button>
@@ -235,7 +235,7 @@ function MissingWorkSheet({ vertical, group, cityCode, onClose }) {
         />
         <textarea
           rows={3}
-          className="w-full resize-none rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-100"
+          className="w-full resize-none rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-zappy-100"
           placeholder="What does it involve, and roughly how long does it take?"
           value={form.description}
           onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
@@ -367,11 +367,11 @@ function WorkStep({ vertical, cityCode, brandCodes, onBack, onNext }) {
                   key={r.code}
                   onClick={() => toggle(r.code, r.minSkillLevel)}
                   className={`flex w-full items-start gap-3 rounded-2xl border p-3 text-left transition ${
-                    on ? 'border-indigo-500 bg-indigo-50/60' : 'border-slate-200 bg-white hover:border-slate-300'
+                    on ? 'border-zappy-500 bg-zappy-50/60' : 'border-slate-200 bg-white hover:border-slate-300'
                   }`}
                 >
                   <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border ${
-                    on ? 'border-indigo-600 bg-indigo-600' : 'border-slate-300 bg-white'
+                    on ? 'border-zappy-600 bg-zappy-600' : 'border-slate-300 bg-white'
                   }`}>
                     {on && <Check size={12} className="text-white" strokeWidth={3.5} />}
                   </span>
@@ -404,7 +404,7 @@ function WorkStep({ vertical, cityCode, brandCodes, onBack, onNext }) {
 
           <button
             onClick={() => setMissingFor(group.code)}
-            className="flex w-full items-center justify-center gap-1.5 py-3 text-sm font-semibold text-indigo-600"
+            className="flex w-full items-center justify-center gap-1.5 py-3 text-sm font-semibold text-zappy-600"
           >
             <Plus size={15} /> I do something not listed here
           </button>
@@ -437,7 +437,7 @@ function WorkStep({ vertical, cityCode, brandCodes, onBack, onNext }) {
                   ? toast.error(`Level ${requiredLevel} — you have ticked work that needs it. Untick it to come down.`)
                   : setSkillLevel(l.level))}
                 className={`rounded-xl py-2 text-xs font-bold transition ${
-                  skillLevel === l.level ? 'bg-indigo-600 text-white'
+                  skillLevel === l.level ? 'bg-zappy-600 text-white'
                     : below ? 'bg-slate-50 text-slate-300' : 'bg-slate-100 text-slate-600'
                 }`}
               >
@@ -467,16 +467,16 @@ function WorkStep({ vertical, cityCode, brandCodes, onBack, onNext }) {
               key={g.code}
               onClick={() => setOpenGroup(g.code)}
               className={`flex flex-col items-start gap-2 rounded-2xl border p-3 text-left transition ${
-                count ? 'border-indigo-500 bg-indigo-50/50' : 'border-slate-200 bg-white hover:border-slate-300'
+                count ? 'border-zappy-500 bg-zappy-50/50' : 'border-slate-200 bg-white hover:border-slate-300'
               }`}
             >
-              <span className={`flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl ${count ? 'bg-indigo-600' : 'bg-slate-100'}`}>
+              <span className={`flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl ${count ? 'bg-zappy-600' : 'bg-slate-100'}`}>
                 {g.imageUrl
                   ? <img src={g.imageUrl} alt="" className="h-full w-full object-cover" />
                   : <Icon size={17} className={count ? 'text-white' : 'text-slate-500'} strokeWidth={1.9} />}
               </span>
               <span className="block text-[12.5px] font-bold leading-tight text-[#0F172A]">{g.name}</span>
-              <span className={`text-[11px] font-semibold ${count ? 'text-indigo-600' : 'text-slate-400'}`}>
+              <span className={`text-[11px] font-semibold ${count ? 'text-zappy-600' : 'text-slate-400'}`}>
                 {count ? `${count} of ${g.repairs.length} selected` : `${g.repairs.length} jobs`}
               </span>
               {/*
@@ -603,11 +603,11 @@ function AreaStep({ vertical, onBack, onNext, onCity }) {
       <button
         onClick={() => setPicking(true)}
         className={`flex w-full items-start gap-3 rounded-2xl border p-4 text-left transition ${
-          form.center ? 'border-slate-200 bg-white' : 'border-indigo-300 bg-indigo-50/60'
+          form.center ? 'border-slate-200 bg-white' : 'border-zappy-300 bg-zappy-50/60'
         }`}
       >
         <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
-          form.center ? 'bg-emerald-50' : 'bg-indigo-600'
+          form.center ? 'bg-emerald-50' : 'bg-zappy-600'
         }`}>
           <MapPin size={17} className={form.center ? 'text-emerald-600' : 'text-white'} strokeWidth={2} />
         </span>
@@ -621,7 +621,7 @@ function AreaStep({ vertical, onBack, onNext, onCity }) {
               : 'Drop a pin where your shop actually is. Everything below is measured from it.'}
           </span>
         </span>
-        <span className="shrink-0 text-[11px] font-bold text-indigo-600">
+        <span className="shrink-0 text-[11px] font-bold text-zappy-600">
           {form.center ? 'Change' : 'Set'}
         </span>
       </button>
@@ -645,7 +645,7 @@ function AreaStep({ vertical, onBack, onNext, onCity }) {
         <div>
           <div className="flex items-baseline justify-between">
             <label className="text-xs font-bold uppercase tracking-wide text-slate-500">How far from the shop</label>
-            <span className="text-sm font-black text-indigo-600">{form.radiusKm} km</span>
+            <span className="text-sm font-black text-zappy-600">{form.radiusKm} km</span>
           </div>
           <input
             type="range"
@@ -654,7 +654,7 @@ function AreaStep({ vertical, onBack, onNext, onCity }) {
             step={1}
             value={form.radiusKm}
             onChange={(e) => setForm((f) => ({ ...f, radiusKm: e.target.value }))}
-            className="mt-2 w-full accent-indigo-600"
+            className="mt-2 w-full accent-zappy-600"
           />
           {/* 20km is the cap: past that the travel eats the job. */}
           <p className="mt-1 text-[11px] text-slate-400">
@@ -683,11 +683,11 @@ function AreaStep({ vertical, onBack, onNext, onCity }) {
                 key={m.key}
                 onClick={() => toggleMode(m.key)}
                 className={`flex w-full items-center gap-3 rounded-xl border p-3 text-left transition ${
-                  on ? 'border-indigo-500 bg-indigo-50/60' : 'border-slate-200 bg-white'
+                  on ? 'border-zappy-500 bg-zappy-50/60' : 'border-slate-200 bg-white'
                 }`}
               >
                 <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border ${
-                  on ? 'border-indigo-600 bg-indigo-600' : 'border-slate-300'
+                  on ? 'border-zappy-600 bg-zappy-600' : 'border-slate-300'
                 }`}>
                   {on && <Check size={12} className="text-white" strokeWidth={3.5} />}
                 </span>
@@ -781,7 +781,7 @@ function HoursStep({ profile, onBack, onNext }) {
       onNext={save}
       busy={isLoading}
     >
-      <button onClick={applyWeekdays} className="text-xs font-bold text-indigo-600">
+      <button onClick={applyWeekdays} className="text-xs font-bold text-zappy-600">
         Apply one day to Mon–Sat
       </button>
 
@@ -890,7 +890,7 @@ function PriceRow({
               ))}
             </span>
           ) : typed.length ? (
-            <span className="mt-0.5 block text-[11px] font-semibold text-indigo-600">
+            <span className="mt-0.5 block text-[11px] font-semibold text-zappy-600">
               {typed.length} price{typed.length === 1 ? '' : 's'} typed — not saved yet
             </span>
           ) : (
@@ -1141,19 +1141,19 @@ function PricingStep({ vertical, onBack, onNext }) {
           {/* The brand-wide baseline, before the individual handsets. */}
           <button
             onClick={() => openSheet(null)}
-            className="mt-3 flex w-full items-center gap-3 rounded-2xl border border-indigo-200 bg-indigo-50/60 p-3.5 text-left"
+            className="mt-3 flex w-full items-center gap-3 rounded-2xl border border-zappy-200 bg-zappy-50/60 p-3.5 text-left"
           >
             <span className="min-w-0 flex-1">
-              <span className="block text-sm font-bold text-indigo-900">
+              <span className="block text-sm font-bold text-zappy-900">
                 Every {brandName(activeBrand)} model
               </span>
-              <span className="mt-0.5 block text-[11px] text-indigo-700">
+              <span className="mt-0.5 block text-[11px] text-zappy-700">
                 {pricedCountFor.get('__brand__')
                   ? `${pricedCountFor.get('__brand__')} price${pricedCountFor.get('__brand__') === 1 ? '' : 's'} set — used where a model has none of its own`
                   : 'Set one price sheet that covers the whole brand'}
               </span>
             </span>
-            <ChevronRight size={16} className="shrink-0 text-indigo-400" />
+            <ChevronRight size={16} className="shrink-0 text-zappy-400" />
           </button>
 
           <div className="relative mt-3">
@@ -1174,7 +1174,7 @@ function PricingStep({ vertical, onBack, onNext }) {
                   <button
                     key={m.code}
                     onClick={() => openSheet(m.code, m.name)}
-                    className="flex w-full items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3 text-left transition hover:border-indigo-200"
+                    className="flex w-full items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3 text-left transition hover:border-zappy-200"
                   >
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-semibold text-[#0F172A]">{m.name}</span>

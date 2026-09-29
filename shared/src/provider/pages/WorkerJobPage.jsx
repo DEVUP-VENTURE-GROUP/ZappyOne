@@ -79,7 +79,7 @@ function WorkerETACard({ deadlineAt, etaMins }) {
           ? { background: 'linear-gradient(135deg,#1c1200,#78350f)', border: '1.5px solid rgba(245,158,11,0.5)', boxShadow: '0 6px 24px rgba(245,158,11,0.25)' }
           : secsLeft < 120
             ? { background: 'linear-gradient(135deg,#1c0f00,#7c2d12)', border: '1.5px solid rgba(249,115,22,0.4)', boxShadow: '0 6px 24px rgba(249,115,22,0.25)' }
-            : { background: 'linear-gradient(135deg,#0f172a,#1e293b)', border: '1px solid rgba(99,102,241,0.25)', boxShadow: '0 4px 16px rgba(0,0,0,0.2)' }
+            : { background: 'linear-gradient(135deg,#0f172a,#1e293b)', border: '1px solid rgba(59,130,246,0.25)', boxShadow: '0 4px 16px rgba(0,0,0,0.2)' }
       }
       animate={isLate ? { borderColor: ['rgba(239,68,68,0.4)', 'rgba(239,68,68,0.9)', 'rgba(239,68,68,0.4)'] } : {}}
       transition={{ duration: 1, repeat: Infinity }}
@@ -95,7 +95,7 @@ function WorkerETACard({ deadlineAt, etaMins }) {
             {isLate ? '⚠️' : isInGrace ? '⏳' : secsLeft < 120 ? '🔥' : '🛵'}
           </motion.span>
           <div>
-            <p className={`text-[12px] font-black ${isLate ? 'text-red-300' : isInGrace ? 'text-amber-300' : secsLeft < 120 ? 'text-orange-300' : 'text-indigo-200'}`}>
+            <p className={`text-[12px] font-black ${isLate ? 'text-red-300' : isInGrace ? 'text-amber-300' : secsLeft < 120 ? 'text-orange-300' : 'text-zappy-200'}`}>
               {isLate
                 ? `Late by ${lateMinutes} min — penalty active`
                 : isInGrace
@@ -153,7 +153,7 @@ function WorkerETACard({ deadlineAt, etaMins }) {
           </div>
         ) : (
           <div className="flex-1">
-            <p className={`text-xs font-bold mb-1 ${secsLeft < 120 ? 'text-orange-400' : 'text-indigo-400'}`}>Time remaining</p>
+            <p className={`text-xs font-bold mb-1 ${secsLeft < 120 ? 'text-orange-400' : 'text-zappy-400'}`}>Time remaining</p>
             <p className={`text-3xl font-black tabular-nums ${secsLeft < 120 ? 'text-orange-200' : 'text-white'}`}>
               {String(minsLeft).padStart(2, '0')}:{String(sLeft).padStart(2, '0')}
             </p>
@@ -177,7 +177,7 @@ function WorkerETACard({ deadlineAt, etaMins }) {
                 ? 'linear-gradient(90deg,#f59e0b,#fbbf24)'
                 : secsLeft < 120
                   ? 'linear-gradient(90deg,#ef4444,#f97316)'
-                  : 'linear-gradient(90deg,#4f46e5,#818cf8)',
+                  : 'linear-gradient(90deg,#2563EB,#60A5FA)',
               width: isInGrace
                 ? `${(graceSecsLeft / GRACE_SECS) * 100}%`
                 : `${Math.max(0, (secsLeft / (etaMins * 60)) * 100)}%`,
@@ -192,7 +192,7 @@ function WorkerETACard({ deadlineAt, etaMins }) {
 
 const STATUS_CONFIG = {
   assigned:    { label: 'Assigned',    color: 'bg-blue-500/15 text-blue-300 ring-blue-500/30',    dot: 'bg-blue-400'    },
-  on_the_way:  { label: 'On the Way', color: 'bg-indigo-500/15 text-indigo-300 ring-indigo-500/30', dot: 'bg-indigo-400' },
+  on_the_way:  { label: 'On the Way', color: 'bg-zappy-500/15 text-zappy-300 ring-zappy-500/30', dot: 'bg-zappy-400' },
   arrived:     { label: 'Arrived',    color: 'bg-amber-500/15 text-amber-300 ring-amber-500/30',   dot: 'bg-amber-400'  },
   in_progress: { label: 'In Progress',color: 'bg-green-500/15 text-green-300 ring-green-500/30',   dot: 'bg-green-400'  },
   completed:   { label: 'Completed',  color: 'bg-green-500/15 text-green-300 ring-green-500/30',   dot: 'bg-green-400'  },
@@ -663,7 +663,7 @@ export default function WorkerJobPage() {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)' }}>
         <div className="flex flex-col items-center gap-3">
-          <Loader2 size={28} className="text-indigo-400 animate-spin" />
+          <Loader2 size={28} className="text-zappy-400 animate-spin" />
           <p className="text-white/40 text-sm font-medium">Loading job…</p>
         </div>
       </div>
@@ -701,7 +701,7 @@ export default function WorkerJobPage() {
       <div className="min-h-screen flex flex-col items-center justify-center gap-4 px-6" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)' }}>
         <AlertCircle size={36} className="text-red-400" />
         <p className="text-white font-bold text-center">Could not load job details</p>
-        <button onClick={() => refetch()} className="px-6 py-2.5 rounded-xl bg-indigo-500 text-white font-bold text-sm">Retry</button>
+        <button onClick={() => refetch()} className="px-6 py-2.5 rounded-xl bg-zappy-500 text-white font-bold text-sm">Retry</button>
         <button onClick={() => nav('/worker')} className="text-white/40 text-sm">Back to Dashboard</button>
       </div>
     );
@@ -1136,7 +1136,7 @@ export default function WorkerJobPage() {
                     className="flex-1 relative overflow-hidden rounded-2xl py-4 flex items-center justify-center gap-2 text-white font-black text-sm disabled:opacity-60"
                     style={isCritical
                       ? { background: 'linear-gradient(135deg,#dc2626,#b91c1c)', boxShadow: '0 8px 24px rgba(220,38,38,0.5)' }
-                      : { background: 'linear-gradient(135deg,#1d4ed8,#4f46e5)', boxShadow: '0 8px 24px rgba(79,70,229,0.4)' }}
+                      : { background: 'linear-gradient(135deg,#1d4ed8,#2563EB)', boxShadow: '0 8px 24px rgba(37,99,235,0.4)' }}
                     whileTap={{ scale: 0.98 }}>
                     {starting ? <><Loader2 size={17} className="animate-spin" /> Starting…</> : <><Navigation size={17} strokeWidth={2.5} /> Start Trip</>}
                   </motion.button>
@@ -1358,7 +1358,7 @@ export default function WorkerJobPage() {
                           } catch (err) { toast.error(err?.data?.error || 'Failed to send request'); }
                         }}
                         disabled={requestingHandoff}
-                        className="flex-1 py-2.5 rounded-xl bg-indigo-700 text-white text-sm font-bold disabled:opacity-50"
+                        className="flex-1 py-2.5 rounded-xl bg-zappy-700 text-white text-sm font-bold disabled:opacity-50"
                       >
                         {requestingHandoff ? 'Sending…' : 'Send Request'}
                       </button>

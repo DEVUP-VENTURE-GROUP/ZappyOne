@@ -52,7 +52,7 @@ export default function HelpingTaskDetailPage() {
   const [respond] = useRespondHelpingApprovalMutation();
   const [cancel] = useCancelHelpingTaskMutation();
 
-  if (isLoading) return <div className="flex justify-center py-24"><Loader2 size={24} className="animate-spin text-indigo-400" /></div>;
+  if (isLoading) return <div className="flex justify-center py-24"><Loader2 size={24} className="animate-spin text-zappy-400" /></div>;
   if (!data?.task) return <div className="text-center py-24 text-slate-400">Task not found</div>;
 
   const { task, authorisation, canCancel } = data;
@@ -92,13 +92,13 @@ export default function HelpingTaskDetailPage() {
       </div>
 
       <Shell>
-        <div className="rounded-2xl border-2 border-indigo-200 bg-indigo-50/60 p-4">
-          <p className="text-xs font-bold uppercase tracking-wide text-indigo-500">Status</p>
+        <div className="rounded-2xl border-2 border-zappy-200 bg-zappy-50/60 p-4">
+          <p className="text-xs font-bold uppercase tracking-wide text-zappy-500">Status</p>
           <p className="text-lg font-black text-[#0F172A] mt-0.5">{STATUS_LABEL[task.status] || task.status}</p>
           {stepIdx >= 0 && (
             <div className="mt-3 flex gap-1">
               {TRACK_STEPS.map((s, i) => (
-                <div key={s} className={`h-1.5 flex-1 rounded-full ${i <= stepIdx ? 'bg-indigo-500' : 'bg-indigo-100'}`} />
+                <div key={s} className={`h-1.5 flex-1 rounded-full ${i <= stepIdx ? 'bg-zappy-500' : 'bg-zappy-100'}`} />
               ))}
             </div>
           )}
@@ -189,7 +189,7 @@ export default function HelpingTaskDetailPage() {
 
         {task.pickupLocation?.address && (
           <div className="rounded-2xl border-2 border-slate-200 bg-white p-4 flex items-start gap-2.5 text-sm">
-            <MapPin size={15} className="text-indigo-500 mt-0.5 shrink-0" />
+            <MapPin size={15} className="text-zappy-500 mt-0.5 shrink-0" />
             <span>{task.pickupLocation.address}</span>
           </div>
         )}

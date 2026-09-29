@@ -72,7 +72,7 @@ function Shell({ children }) {
 }
 
 function Spinner() {
-  return <div className="flex justify-center py-16"><Loader2 size={24} className="animate-spin text-indigo-400" /></div>;
+  return <div className="flex justify-center py-16"><Loader2 size={24} className="animate-spin text-zappy-400" /></div>;
 }
 
 function Header({ title, subtitle, onBack }) {
@@ -102,10 +102,10 @@ function Summary({ status, onAddService, onOpenEnrolment }) {
     <Shell>
       <div className="card">
         <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-2xl bg-indigo-50 flex items-center justify-center shrink-0">
+          <div className="w-11 h-11 rounded-2xl bg-zappy-50 flex items-center justify-center shrink-0">
             {status.providerKind === 'shop'
-              ? <Store size={20} className="text-indigo-600" strokeWidth={1.75} />
-              : <User size={20} className="text-indigo-600" strokeWidth={1.75} />}
+              ? <Store size={20} className="text-zappy-600" strokeWidth={1.75} />
+              : <User size={20} className="text-zappy-600" strokeWidth={1.75} />}
           </div>
           <div className="min-w-0">
             <p className="font-bold text-[#0F172A] truncate">{name}</p>
@@ -127,12 +127,12 @@ function Summary({ status, onAddService, onOpenEnrolment }) {
           </p>
         </div>
       ) : (
-        <div className="card bg-indigo-50 ring-indigo-100">
-          <p className="text-[11px] font-black uppercase tracking-wide text-indigo-700">
+        <div className="card bg-zappy-50 ring-zappy-100">
+          <p className="text-[11px] font-black uppercase tracking-wide text-zappy-700">
             Not visible to customers yet
           </p>
           {status.nextStep && (
-            <p className="text-sm font-semibold text-indigo-900 mt-0.5">{status.nextStep.label}</p>
+            <p className="text-sm font-semibold text-zappy-900 mt-0.5">{status.nextStep.label}</p>
           )}
 
           {(status.storefront || []).some((s) => !s.done) && (
@@ -141,12 +141,12 @@ function Summary({ status, onAddService, onOpenEnrolment }) {
                 <li key={s.key} className="flex items-center gap-2">
                   <span
                     className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full ${
-                      s.done ? 'bg-emerald-500' : 'bg-white ring-1 ring-indigo-200'
+                      s.done ? 'bg-emerald-500' : 'bg-white ring-1 ring-zappy-200'
                     }`}
                   >
                     {s.done && <Check size={10} className="text-white" strokeWidth={3} />}
                   </span>
-                  <span className={`text-xs ${s.done ? 'text-slate-400 line-through' : 'font-semibold text-indigo-900'}`}>
+                  <span className={`text-xs ${s.done ? 'text-slate-400 line-through' : 'font-semibold text-zappy-900'}`}>
                     {s.label}
                   </span>
                 </li>
@@ -167,7 +167,7 @@ function Summary({ status, onAddService, onOpenEnrolment }) {
 
       {status.enrolments.map((e) => (
         <button key={e._id} onClick={() => onOpenEnrolment(e)}
-          className="card w-full text-left hover:ring-2 hover:ring-indigo-100 transition">
+          className="card w-full text-left hover:ring-2 hover:ring-zappy-100 transition">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
               <p className="font-bold text-sm text-[#0F172A]">{e.line?.name || e.lineCode}</p>
@@ -182,7 +182,7 @@ function Summary({ status, onAddService, onOpenEnrolment }) {
       ))}
 
       <button onClick={onAddService}
-        className="w-full flex items-center justify-center gap-2 text-sm font-semibold text-indigo-600 py-3">
+        className="w-full flex items-center justify-center gap-2 text-sm font-semibold text-zappy-600 py-3">
         <Plus size={15} /> Add a service
       </button>
 
@@ -208,7 +208,7 @@ function DomainStep({ onPick }) {
       </p>
       {(data?.domains || []).map((d) => (
         <button key={d.code} onClick={() => onPick(d)}
-          className="card w-full flex items-center gap-3 text-left hover:ring-2 hover:ring-indigo-100 transition">
+          className="card w-full flex items-center gap-3 text-left hover:ring-2 hover:ring-zappy-100 transition">
           <div className="flex-1 min-w-0">
             <p className="font-bold text-sm text-[#0F172A]">{d.name}</p>
             {d.description && <p className="text-xs text-slate-500 mt-0.5">{d.description}</p>}
@@ -245,7 +245,7 @@ function LineStep({ domain, onPick, onRequest }) {
         const live = l.status === 'live';
         return (
           <button key={l.code} onClick={() => (live ? choose(l) : null)} disabled={!live || enrolling}
-            className={`card w-full text-left transition ${live ? 'hover:ring-2 hover:ring-indigo-100' : 'opacity-70 cursor-default'}`}>
+            className={`card w-full text-left transition ${live ? 'hover:ring-2 hover:ring-zappy-100' : 'opacity-70 cursor-default'}`}>
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <p className="font-bold text-sm text-[#0F172A]">{l.name}</p>
@@ -267,7 +267,7 @@ function LineStep({ domain, onPick, onRequest }) {
       })}
 
       <button onClick={onRequest}
-        className="w-full flex items-center justify-center gap-2 text-sm font-semibold text-indigo-600 py-3">
+        className="w-full flex items-center justify-center gap-2 text-sm font-semibold text-zappy-600 py-3">
         <Plus size={15} /> My service isn't listed
       </button>
     </Shell>
@@ -303,7 +303,7 @@ function RequestSheet({ domain, onClose }) {
         <input className="input text-sm w-full" placeholder="Service name (e.g. Smart Watch Repair)"
           value={form.proposedName} onChange={(e) => setForm((f) => ({ ...f, proposedName: e.target.value }))} />
         <textarea rows={3}
-          className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-100 resize-none"
+          className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-zappy-100 resize-none"
           placeholder="What exactly do you do, and how long have you done it?"
           value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
         <button onClick={send} disabled={isLoading || !form.proposedName.trim()} className="btn-primary w-full">
@@ -549,7 +549,7 @@ function VerifyStep({ lineCode, onDone }) {
           <ul className="mt-2 space-y-2">
             {reqs.declarations.map((text) => (
               <li key={text} className="flex items-start gap-2">
-                <ShieldCheck size={14} className="text-indigo-500 shrink-0 mt-0.5" />
+                <ShieldCheck size={14} className="text-zappy-500 shrink-0 mt-0.5" />
                 <span className="text-xs text-slate-600 leading-relaxed">{text}</span>
               </li>
             ))}

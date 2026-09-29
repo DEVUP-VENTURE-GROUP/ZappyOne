@@ -56,7 +56,7 @@ const STATUS_COPY = {
 const TONES = {
   slate: 'bg-slate-100 text-slate-700',
   blue: 'bg-blue-50 text-blue-700',
-  indigo: 'bg-indigo-50 text-indigo-700',
+  indigo: 'bg-zappy-50 text-zappy-700',
   amber: 'bg-amber-50 text-amber-700',
   emerald: 'bg-emerald-50 text-emerald-700',
   red: 'bg-red-50 text-red-700',
@@ -117,8 +117,8 @@ function LiveStatusCard({ booking, provider }) {
         */}
       <div className="flex items-center gap-3 px-4 pt-4">
         <span className="relative mt-0.5 flex h-2.5 w-2.5 shrink-0">
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-indigo-400 opacity-75" />
-          <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-indigo-600" />
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-zappy-400 opacity-75" />
+          <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-zappy-600" />
         </span>
 
         <div className="min-w-0 flex-1">
@@ -138,7 +138,7 @@ function LiveStatusCard({ booking, provider }) {
           <button
             onClick={openMap}
             title="Open in Maps"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 transition hover:bg-indigo-100"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-zappy-50 text-zappy-600 transition hover:bg-zappy-100"
           >
             <MapPin size={15} strokeWidth={2.4} />
           </button>
@@ -161,7 +161,7 @@ function LiveStatusCard({ booking, provider }) {
         */}
       {provider && (
         <div className="mx-4 mt-3 flex items-center gap-3 rounded-xl bg-slate-50 p-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-indigo-600 text-[15px] font-black text-white">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-zappy-600 text-[15px] font-black text-white">
             {provider.avatar
               ? <img src={provider.avatar} alt="" className="h-full w-full object-cover" />
               : (provider.name || '?').charAt(0).toUpperCase()}
@@ -242,8 +242,8 @@ function LiveStatusCard({ booking, provider }) {
           ][i];
           return (
             <div key={label} className="flex-1">
-              <div className={`h-1.5 rounded-full transition-colors ${reached ? 'bg-indigo-500' : 'bg-slate-150 bg-slate-200'}`} />
-              <p className={`mt-1.5 text-[10.5px] font-bold ${reached ? 'text-indigo-600' : 'text-slate-400'}`}>
+              <div className={`h-1.5 rounded-full transition-colors ${reached ? 'bg-zappy-500' : 'bg-slate-150 bg-slate-200'}`} />
+              <p className={`mt-1.5 text-[10.5px] font-bold ${reached ? 'text-zappy-600' : 'text-slate-400'}`}>
                 {label}
               </p>
             </div>
@@ -323,7 +323,7 @@ function QuoteCard({ quote, onDecided }) {
         <div className="mt-3 space-y-2">
           <textarea rows={2} value={note} onChange={(e) => setNote(e.target.value)}
             placeholder="What would you like to ask?"
-            className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-100 resize-none" />
+            className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-zappy-100 resize-none" />
           <div className="flex gap-2">
             <button onClick={() => decide('clarify')} disabled={isLoading || !note.trim()}
               className="flex-1 btn-primary">Send question</button>
@@ -343,7 +343,7 @@ function QuoteCard({ quote, onDecided }) {
             <X size={15} /> Decline
           </button>
           <button onClick={() => setAsking(true)}
-            className="col-span-2 flex items-center justify-center gap-1.5 text-indigo-600 font-semibold text-sm py-2">
+            className="col-span-2 flex items-center justify-center gap-1.5 text-zappy-600 font-semibold text-sm py-2">
             <MessageSquare size={14} /> Ask a question first
           </button>
         </div>
@@ -632,7 +632,7 @@ export default function RepairBookingPage() {
 
   if (isLoading) {
     return <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center">
-      <Loader2 size={26} className="animate-spin text-indigo-500" />
+      <Loader2 size={26} className="animate-spin text-zappy-500" />
     </div>;
   }
 

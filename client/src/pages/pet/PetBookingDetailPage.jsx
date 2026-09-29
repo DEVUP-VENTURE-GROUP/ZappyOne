@@ -27,7 +27,7 @@ export default function PetBookingDetailPage() {
   const { data, isLoading, refetch } = useGetPetBookingQuery(id, { pollingInterval: 15000 });
   const [cancel] = useCancelPetBookingMutation();
 
-  if (isLoading) return <div className="flex justify-center py-24"><Loader2 size={24} className="animate-spin text-indigo-400" /></div>;
+  if (isLoading) return <div className="flex justify-center py-24"><Loader2 size={24} className="animate-spin text-zappy-400" /></div>;
   if (!data?.booking) return <div className="text-center py-24 text-slate-400">Booking not found</div>;
 
   const { booking, canCancel } = data;
@@ -53,8 +53,8 @@ export default function PetBookingDetailPage() {
       </div>
 
       <Shell>
-        <div className="rounded-2xl border-2 border-indigo-200 bg-indigo-50/60 p-4">
-          <p className="text-xs font-bold uppercase tracking-wide text-indigo-500">Status</p>
+        <div className="rounded-2xl border-2 border-zappy-200 bg-zappy-50/60 p-4">
+          <p className="text-xs font-bold uppercase tracking-wide text-zappy-500">Status</p>
           <p className="text-lg font-black text-[#0F172A] mt-0.5">{STATUS_LABEL[booking.status] || booking.status}</p>
         </div>
 
@@ -70,7 +70,7 @@ export default function PetBookingDetailPage() {
 
         {booking.serviceLocation?.address && (
           <div className="rounded-2xl border-2 border-slate-200 bg-white p-4 flex items-start gap-2.5 text-sm">
-            <MapPin size={15} className="text-indigo-500 mt-0.5 shrink-0" />
+            <MapPin size={15} className="text-zappy-500 mt-0.5 shrink-0" />
             <span>{booking.serviceLocation.address}</span>
           </div>
         )}

@@ -18,7 +18,7 @@ const STATUS_CONFIG = {
     title: 'Finding your worker…',
     body: (w) => 'Scanning nearby workers — sit tight',
     bg: 'linear-gradient(135deg,#1e293b 0%,#0f172a 100%)',
-    glow: 'rgba(99,102,241,0.4)',
+    glow: 'rgba(59,130,246,0.4)',
     badge: null,
   },
   assigned: {

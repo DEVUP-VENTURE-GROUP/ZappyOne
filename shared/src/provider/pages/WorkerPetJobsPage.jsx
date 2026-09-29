@@ -46,14 +46,14 @@ export default function WorkerPetJobsPage() {
 
       <div className="max-w-lg mx-auto px-4 py-4 space-y-2.5">
         <ActiveJobs items={myJobs} />
-        {isLoading && <div className="flex justify-center py-16"><Loader2 size={24} className="animate-spin text-indigo-400" /></div>}
+        {isLoading && <div className="flex justify-center py-16"><Loader2 size={24} className="animate-spin text-zappy-400" /></div>}
         {!isLoading && !(data?.bookings || []).length && <p className="text-center text-sm text-slate-400 py-16">Nothing available right now.</p>}
 
         {(data?.bookings || []).map((b) => (
           <div key={b._id} className="rounded-2xl border-2 border-slate-200 bg-white p-4 space-y-2.5">
             <div className="flex items-start justify-between">
               <div className="min-w-0">
-                <p className="text-[11px] font-bold uppercase tracking-wide text-indigo-500 capitalize">{b.categoryCode.replace(/_/g, ' ')}</p>
+                <p className="text-[11px] font-bold uppercase tracking-wide text-zappy-500 capitalize">{b.categoryCode.replace(/_/g, ' ')}</p>
                 <p className="font-bold text-[#0F172A] mt-0.5 flex items-center gap-1.5"><PawPrint size={13} /> {b.pets.map((p) => p.snapshot?.name).join(', ')}</p>
                 {b.serviceLocation?.address && (
                   <p className="text-xs text-slate-400 flex items-center gap-1 mt-0.5"><MapPin size={11} /> {b.serviceLocation.address}</p>

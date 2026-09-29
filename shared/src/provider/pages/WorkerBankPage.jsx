@@ -42,7 +42,7 @@ function AddSheet({ onClose }) {
         <div className="flex gap-2 bg-slate-100/80 p-1.5 rounded-2xl mb-6 shadow-inner">
           {['bank', 'upi'].map(t => (
             <button key={t} onClick={() => setTab(t)}
-              className={`flex-1 py-3 rounded-xl text-[13px] font-bold transition-all duration-200 flex justify-center items-center gap-2 ${tab === t ? 'bg-white text-indigo-600 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:text-slate-700'}`}>
+              className={`flex-1 py-3 rounded-xl text-[13px] font-bold transition-all duration-200 flex justify-center items-center gap-2 ${tab === t ? 'bg-white text-zappy-600 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:text-slate-700'}`}>
               {t === 'bank' ? <Building2 size={16} strokeWidth={2.5} /> : <Smartphone size={16} strokeWidth={2.5} />}
               {t === 'bank' ? 'Bank Transfer' : 'UPI ID'}
             </button>
@@ -92,7 +92,7 @@ function AddSheet({ onClose }) {
 
           <div className="pt-4">
             <button type="submit" disabled={isLoading}
-              className="w-full py-4 rounded-[1.25rem] bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[15px] flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg shadow-indigo-600/20 transition-all active:scale-[0.98]">
+              className="w-full py-4 rounded-[1.25rem] bg-zappy-600 hover:bg-zappy-700 text-white font-black text-[15px] flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg shadow-zappy-600/20 transition-all active:scale-[0.98]">
               {isLoading ? <Loader2 size={18} className="animate-spin" /> : <Check size={18} strokeWidth={2.5} />}
               Save Securely
             </button>
@@ -128,12 +128,12 @@ export default function WorkerBankPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 md:flex md:justify-center md:bg-gradient-to-br md:from-slate-100 md:to-indigo-50/40">
+    <div className="min-h-screen bg-slate-50 md:flex md:justify-center md:bg-gradient-to-br md:from-slate-100 md:to-zappy-50/40">
       <div className="w-full max-w-lg lg:max-w-2xl bg-slate-50 min-h-screen relative shadow-[0_0_40px_rgba(0,0,0,0.05)] lg:shadow-[0_0_60px_rgba(0,0,0,0.08)] md:border-x border-slate-200/60">
         
         {/* Cinematic Header */}
         <header className="relative pt-6 pb-24 overflow-hidden rounded-b-[2.5rem] shadow-sm z-10" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #1e3a5f 100%)' }}>
-          <motion.div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.8, 0.5] }} transition={{ duration: 4, repeat: Infinity }} />
+          <motion.div className="absolute top-0 right-0 w-64 h-64 bg-zappy-500/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.8, 0.5] }} transition={{ duration: 4, repeat: Infinity }} />
           <motion.div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-500/20 rounded-full blur-3xl translate-y-1/3 -translate-x-1/4" animate={{ scale: [1, 1.3, 1], opacity: [0.3, 0.6, 0.3] }} transition={{ duration: 5, repeat: Infinity, delay: 1 }} />
           
           <div className="relative z-10 px-5">
@@ -142,7 +142,7 @@ export default function WorkerBankPage() {
                 <ArrowLeft size={20} strokeWidth={2.5} />
               </motion.button>
               <h1 className="text-white font-black tracking-wide text-lg">Bank & UPI</h1>
-              <motion.button onClick={() => setShowAdd(true)} whileTap={{ scale: 0.9 }} className="h-10 px-4 rounded-full bg-white text-indigo-600 font-bold text-sm flex items-center justify-center gap-1.5 shadow-md">
+              <motion.button onClick={() => setShowAdd(true)} whileTap={{ scale: 0.9 }} className="h-10 px-4 rounded-full bg-white text-zappy-600 font-bold text-sm flex items-center justify-center gap-1.5 shadow-md">
                 <Plus size={16} strokeWidth={2.5} /> Add
               </motion.button>
             </div>
@@ -162,19 +162,19 @@ export default function WorkerBankPage() {
           
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-12 bg-white rounded-[1.5rem] shadow-sm">
-              <Loader2 size={24} className="animate-spin text-indigo-400 mb-3" />
+              <Loader2 size={24} className="animate-spin text-zappy-400 mb-3" />
               <p className="text-sm font-semibold text-slate-400">Loading accounts...</p>
             </div>
           ) : (
             <>
               {banks.length === 0 && upiIds.length === 0 && (
                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-[1.5rem] border border-dashed border-slate-200 p-10 text-center shadow-sm">
-                  <div className="w-16 h-16 rounded-full bg-indigo-50 flex items-center justify-center mx-auto mb-4">
-                    <ShieldCheck size={28} className="text-indigo-400" />
+                  <div className="w-16 h-16 rounded-full bg-zappy-50 flex items-center justify-center mx-auto mb-4">
+                    <ShieldCheck size={28} className="text-zappy-400" />
                   </div>
                   <p className="font-bold text-slate-700 text-[15px]">No Payment Methods</p>
                   <p className="text-[13px] text-slate-500 mt-1.5 mb-6">Add a bank account or UPI ID to withdraw your earnings securely.</p>
-                  <button onClick={() => setShowAdd(true)} className="px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold text-sm shadow-md hover:bg-indigo-700 transition-colors">
+                  <button onClick={() => setShowAdd(true)} className="px-6 py-3 bg-zappy-600 text-white rounded-xl font-bold text-sm shadow-md hover:bg-zappy-700 transition-colors">
                     Add Method Now
                   </button>
                 </motion.div>
@@ -187,14 +187,14 @@ export default function WorkerBankPage() {
                   <div className="space-y-3">
                     {banks.map((b, i) => (
                       <motion.div key={b._id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}
-                        className={`bg-white rounded-[1.25rem] p-5 shadow-sm relative overflow-hidden transition-all ${b.isDefault ? 'border-2 border-indigo-500 ring-4 ring-indigo-50' : 'border border-slate-200 hover:border-indigo-200'}`}>
+                        className={`bg-white rounded-[1.25rem] p-5 shadow-sm relative overflow-hidden transition-all ${b.isDefault ? 'border-2 border-zappy-500 ring-4 ring-zappy-50' : 'border border-slate-200 hover:border-zappy-200'}`}>
                         
                         {/* Decorative card background */}
                         <div className="absolute -right-6 -bottom-6 w-32 h-32 bg-slate-50 rounded-full opacity-50" />
                         <Building2 size={80} className="absolute -right-4 -bottom-4 text-slate-100 opacity-50" />
 
                         {b.isDefault && (
-                          <div className="absolute top-0 right-0 bg-indigo-500 text-white text-[9px] font-black px-3 py-1 rounded-bl-xl tracking-widest uppercase flex items-center gap-1">
+                          <div className="absolute top-0 right-0 bg-zappy-500 text-white text-[9px] font-black px-3 py-1 rounded-bl-xl tracking-widest uppercase flex items-center gap-1">
                             <CheckCircle2 size={10} /> Default
                           </div>
                         )}
@@ -221,7 +221,7 @@ export default function WorkerBankPage() {
                           <span className="text-[11px] font-bold text-slate-400 bg-slate-100 px-2.5 py-1 rounded-md">{b.label || 'Saved'}</span>
                           <div className="flex gap-2">
                             {!b.isDefault && (
-                              <button onClick={() => handleDefault(b._id, 'bank')} className="px-3 py-1.5 rounded-lg text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition-colors">
+                              <button onClick={() => handleDefault(b._id, 'bank')} className="px-3 py-1.5 rounded-lg text-xs font-bold text-zappy-600 bg-zappy-50 hover:bg-zappy-100 transition-colors">
                                 Make Default
                               </button>
                             )}
@@ -243,25 +243,25 @@ export default function WorkerBankPage() {
                   <div className="space-y-3">
                     {upiIds.map((u, i) => (
                       <motion.div key={u._id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: (banks.length + i) * 0.1 }}
-                        className={`bg-white rounded-[1.25rem] p-5 shadow-sm relative overflow-hidden transition-all flex items-center justify-between ${u.isDefault ? 'border-2 border-indigo-500 ring-4 ring-indigo-50' : 'border border-slate-200 hover:border-indigo-200'}`}>
+                        className={`bg-white rounded-[1.25rem] p-5 shadow-sm relative overflow-hidden transition-all flex items-center justify-between ${u.isDefault ? 'border-2 border-zappy-500 ring-4 ring-zappy-50' : 'border border-slate-200 hover:border-zappy-200'}`}>
                         
                         <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center shrink-0">
-                            <Smartphone size={20} className="text-indigo-500" />
+                          <div className="w-12 h-12 rounded-2xl bg-zappy-50 flex items-center justify-center shrink-0">
+                            <Smartphone size={20} className="text-zappy-500" />
                           </div>
                           <div>
                             <p className="font-black text-slate-800 text-[15px]">{u.upiId}</p>
                             <div className="flex items-center gap-2 mt-1">
                               <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded uppercase tracking-wider">{u.label || 'Saved'}</span>
-                              {u.isDefault && <span className="text-[10px] font-bold text-indigo-600 flex items-center gap-0.5"><CheckCircle2 size={10} /> Default</span>}
+                              {u.isDefault && <span className="text-[10px] font-bold text-zappy-600 flex items-center gap-0.5"><CheckCircle2 size={10} /> Default</span>}
                             </div>
                           </div>
                         </div>
 
                         <div className="flex flex-col gap-2">
                           {!u.isDefault && (
-                            <button onClick={() => handleDefault(u._id, 'upi')} className="p-2 rounded-lg text-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition-colors" title="Make Default">
-                              <Star size={14} className="fill-indigo-600" />
+                            <button onClick={() => handleDefault(u._id, 'upi')} className="p-2 rounded-lg text-zappy-600 bg-zappy-50 hover:bg-zappy-100 transition-colors" title="Make Default">
+                              <Star size={14} className="fill-zappy-600" />
                             </button>
                           )}
                           <button onClick={() => handleDelete(u._id, 'upi')} className="p-2 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 transition-colors">
@@ -308,8 +308,8 @@ export default function WorkerBankPage() {
         }
         .input-field:focus { 
           background-color: #ffffff;
-          border-color: #6366f1; 
-          box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);
+          border-color: #3B82F6; 
+          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
         }
       `}</style>
     </div>

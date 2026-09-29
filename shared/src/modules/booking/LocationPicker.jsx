@@ -90,8 +90,8 @@ function ensureLocPickStyles() {
       100% { transform:translateY(0)   scale(1);    opacity:1;  }
     }
     @keyframes zlp-pin-pulse {
-      0%,100% { filter:drop-shadow(0 6px 14px rgba(79,70,229,.65)) drop-shadow(0 2px 4px rgba(0,0,0,.5)); }
-      50%      { filter:drop-shadow(0 6px 22px rgba(79,70,229,.95)) drop-shadow(0 2px 4px rgba(0,0,0,.5)); }
+      0%,100% { filter:drop-shadow(0 6px 14px rgba(37,99,235,.65)) drop-shadow(0 2px 4px rgba(0,0,0,.5)); }
+      50%      { filter:drop-shadow(0 6px 22px rgba(37,99,235,.95)) drop-shadow(0 2px 4px rgba(0,0,0,.5)); }
     }
     @keyframes zlp-wheel-spin {
       from { transform:rotate(0deg); }

@@ -12,7 +12,7 @@ const CATEGORY_MAP = {
   'anniversary': { img: '/images/events/event_anniversary.webp', gradient: 'from-purple-600/90 via-purple-500/50 to-transparent' },
   'housewarming': { img: '/images/events/event_housewarming.webp', gradient: 'from-amber-600/90 via-amber-500/50 to-transparent' },
   'romantic': { img: '/images/events/event_romantic.webp', gradient: 'from-rose-600/90 via-rose-500/50 to-transparent' },
-  'default': { img: '/images/events/event_birthday.webp', gradient: 'from-indigo-600/90 via-indigo-500/50 to-transparent' }
+  'default': { img: '/images/events/event_birthday.webp', gradient: 'from-zappy-600/90 via-zappy-500/50 to-transparent' }
 };
 
 function getCatStyles(name) {

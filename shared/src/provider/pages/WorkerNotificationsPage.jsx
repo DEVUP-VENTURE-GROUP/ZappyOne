@@ -26,11 +26,11 @@ const TYPE_CFG = {
 
   // Jobs
   order_cancelled:      { emoji: '❌', label: 'Job Cancelled',     bg: 'bg-red-50',    ring: 'ring-red-200',    color: 'text-red-700',    Icon: Briefcase          },
-  job_assigned:         { emoji: '⚡', label: 'Job Assigned',      bg: 'bg-indigo-50', ring: 'ring-indigo-200', color: 'text-indigo-700', Icon: Briefcase          },
+  job_assigned:         { emoji: '⚡', label: 'Job Assigned',      bg: 'bg-zappy-50', ring: 'ring-zappy-200', color: 'text-zappy-700', Icon: Briefcase          },
   order_completed:      { emoji: '🏆', label: 'Job Completed',     bg: 'bg-amber-50',  ring: 'ring-amber-200',  color: 'text-amber-700',  Icon: Trophy             },
 
   // Earnings & wallet
-  shield_payout:        { emoji: '💪', label: 'Shield Payout',     bg: 'bg-indigo-50', ring: 'ring-indigo-200', color: 'text-indigo-700', Icon: Shield             },
+  shield_payout:        { emoji: '💪', label: 'Shield Payout',     bg: 'bg-zappy-50', ring: 'ring-zappy-200', color: 'text-zappy-700', Icon: Shield             },
   worker_earning:       { emoji: '💰', label: 'Earnings',          bg: 'bg-green-50',  ring: 'ring-green-200',  color: 'text-green-700',  Icon: BadgeIndianRupee   },
   wallet_credited:      { emoji: '💰', label: 'Money In',          bg: 'bg-green-50',  ring: 'ring-green-200',  color: 'text-green-700',  Icon: Wallet             },
   penalty_applied:      { emoji: '⚠️', label: 'Penalty',           bg: 'bg-red-50',    ring: 'ring-red-200',    color: 'text-red-700',    Icon: TriangleAlert      },
@@ -127,7 +127,7 @@ function NotifCard({ n, onRead, nav }) {
         <div className="flex items-start justify-between gap-2">
           <p className={`text-sm font-bold leading-tight ${unread ? 'text-slate-900' : 'text-slate-600'}`}>{n.title}</p>
           <div className="flex items-center gap-1.5 shrink-0">
-            {unread && <span className="w-2 h-2 rounded-full bg-indigo-500 shrink-0" />}
+            {unread && <span className="w-2 h-2 rounded-full bg-zappy-500 shrink-0" />}
             <span className="text-[10px] text-slate-400 font-medium whitespace-nowrap">{timeAgo(n.createdAt)}</span>
           </div>
         </div>
@@ -262,7 +262,7 @@ export default function WorkerNotificationsPage() {
             <div>
               <h1 className="font-bold text-slate-900 leading-tight">Notifications</h1>
               {unread > 0 && (
-                <p className="text-[11px] text-indigo-600 font-semibold">{unread} unread</p>
+                <p className="text-[11px] text-zappy-600 font-semibold">{unread} unread</p>
               )}
             </div>
           </div>
@@ -270,7 +270,7 @@ export default function WorkerNotificationsPage() {
             <button
               onClick={handleMarkAll}
               disabled={markingAll}
-              className="flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition px-3 py-1.5 rounded-xl hover:bg-indigo-50"
+              className="flex items-center gap-1.5 text-xs font-semibold text-zappy-600 hover:text-zappy-800 transition px-3 py-1.5 rounded-xl hover:bg-zappy-50"
             >
               <CheckCheck size={13} />
               Mark all read
@@ -290,13 +290,13 @@ export default function WorkerNotificationsPage() {
                 onClick={() => setTab(t.id)}
                 className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
                   tab === t.id
-                    ? 'bg-indigo-600 text-white'
+                    ? 'bg-zappy-600 text-white'
                     : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
                 }`}
               >
                 {t.label}
                 {tabUnread > 0 && (
-                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${tab === t.id ? 'bg-white text-indigo-600' : 'bg-red-500 text-white'}`}>
+                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${tab === t.id ? 'bg-white text-zappy-600' : 'bg-red-500 text-white'}`}>
                     {tabUnread}
                   </span>
                 )}

@@ -245,7 +245,7 @@ function EmptyUpcoming({ nav, suggestions }) {
     <div className="space-y-3">
       <button onClick={() => nav('/services')}
         className="relative w-full text-left rounded-2xl p-5 md:p-6 overflow-hidden ring-1 ring-slate-200/80 active:scale-[0.995] transition-transform"
-        style={{ background: 'linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%)' }}>
+        style={{ background: 'linear-gradient(135deg, #f8fafc 0%, #EFF6FF 100%)' }}>
         <div className="flex items-center justify-between gap-4">
           <div className="min-w-0">
             <p className="font-bold text-[#0F172A] text-base">{t('activity.noUpcoming', 'No upcoming bookings')}</p>

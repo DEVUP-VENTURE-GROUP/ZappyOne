@@ -70,7 +70,7 @@ const PET_SERVICES = new Set([
 
 const SERVICE_META = {
   // Electronics — Mobile
-  screen_replacement:    { label: 'Screen Replacement',   icon: Smartphone,    gradient: 'from-indigo-500 to-violet-600',  accent: '#6366f1', vertical: 'mobile'       },
+  screen_replacement:    { label: 'Screen Replacement',   icon: Smartphone,    gradient: 'from-zappy-500 to-violet-600',  accent: '#3B82F6', vertical: 'mobile'       },
   battery_replacement:   { label: 'Battery Replacement',  icon: Battery,       gradient: 'from-emerald-500 to-green-600',  accent: '#10b981', vertical: 'mobile'       },
   charging_issue:        { label: 'Charging Issue',       icon: Bolt,          gradient: 'from-yellow-400 to-orange-500',  accent: '#f59e0b', vertical: 'mobile'       },
   speaker_mic_issue:     { label: 'Speaker / Mic',        icon: Layers,        gradient: 'from-purple-500 to-violet-600',  accent: '#8b5cf6', vertical: 'mobile'       },
@@ -82,8 +82,8 @@ const SERVICE_META = {
   device_not_turning_on: { label: 'Device Not Turning On',icon: Smartphone,    gradient: 'from-slate-600 to-slate-800',    accent: '#475569', vertical: 'mobile'       },
   // Electronics — Laptop
   laptop_slow:             { label: 'Slow Laptop Fix',    icon: Laptop,        gradient: 'from-slate-600 to-slate-800',    accent: '#475569', vertical: 'laptop'       },
-  laptop_ssd_upgrade:      { label: 'SSD Upgrade',        icon: Cpu,           gradient: 'from-blue-600 to-indigo-700',    accent: '#2563eb', vertical: 'laptop'       },
-  laptop_ram_upgrade:      { label: 'RAM Upgrade',        icon: Cpu,           gradient: 'from-indigo-500 to-blue-600',    accent: '#4f46e5', vertical: 'laptop'       },
+  laptop_ssd_upgrade:      { label: 'SSD Upgrade',        icon: Cpu,           gradient: 'from-blue-600 to-zappy-700',    accent: '#2563eb', vertical: 'laptop'       },
+  laptop_ram_upgrade:      { label: 'RAM Upgrade',        icon: Cpu,           gradient: 'from-zappy-500 to-blue-600',    accent: '#2563EB', vertical: 'laptop'       },
   laptop_keyboard_issue:   { label: 'Keyboard Repair',    icon: Laptop,        gradient: 'from-amber-500 to-orange-600',   accent: '#f59e0b', vertical: 'laptop'       },
   laptop_motherboard_issue:{ label: 'Motherboard Repair', icon: Cpu,           gradient: 'from-red-600 to-rose-700',       accent: '#dc2626', vertical: 'laptop'       },
   laptop_charging_issue:   { label: 'Laptop Charging',    icon: Bolt,          gradient: 'from-amber-400 to-orange-500',   accent: '#f59e0b', vertical: 'laptop'       },
@@ -97,14 +97,14 @@ const SERVICE_META = {
   router_troubleshoot:   { label: 'WiFi Fix',             icon: Wifi,          gradient: 'from-sky-500 to-blue-600',       accent: '#0284c7', vertical: 'smart_device' },
   cctv_install:          { label: 'CCTV Install',         icon: Camera,        gradient: 'from-stone-600 to-stone-800',    accent: '#78716c', vertical: 'smart_device' },
   cctv_repair:           { label: 'CCTV Repair',          icon: Camera,        gradient: 'from-amber-600 to-orange-700',   accent: '#d97706', vertical: 'smart_device' },
-  smart_lock_install:    { label: 'Smart Lock Install',   icon: Lock,          gradient: 'from-indigo-600 to-violet-700',  accent: '#4f46e5', vertical: 'smart_device' },
+  smart_lock_install:    { label: 'Smart Lock Install',   icon: Lock,          gradient: 'from-zappy-600 to-violet-700',  accent: '#2563EB', vertical: 'smart_device' },
   home_automation_setup: { label: 'Home Automation',      icon: Zap,           gradient: 'from-amber-500 to-orange-600',   accent: '#f59e0b', vertical: 'smart_device' },
   // Vehicle Care
   // Vehicle Care (Car & Bike)
   car_puncture:          { label: 'Car Tyre Puncture',     icon: Car,          gradient: 'from-slate-600 to-slate-800',    accent: '#475569', vertical: 'vehicle'      },
   bike_puncture:         { label: 'Bike Tyre Puncture',    icon: Bike,         gradient: 'from-emerald-500 to-teal-600',   accent: '#059669', vertical: 'vehicle'      },
-  periodic_car_service:  { label: 'Periodic Car Service',  icon: Wrench,       gradient: 'from-blue-600 to-indigo-700',    accent: '#2563eb', vertical: 'vehicle'      },
-  car_foam_wash_detailing:{ label: 'Car Wash & Detailing', icon: Sparkles,     gradient: 'from-indigo-500 to-violet-600',  accent: '#6366f1', vertical: 'vehicle'      },
+  periodic_car_service:  { label: 'Periodic Car Service',  icon: Wrench,       gradient: 'from-blue-600 to-zappy-700',    accent: '#2563eb', vertical: 'vehicle'      },
+  car_foam_wash_detailing:{ label: 'Car Wash & Detailing', icon: Sparkles,     gradient: 'from-zappy-500 to-violet-600',  accent: '#3B82F6', vertical: 'vehicle'      },
   car_ac_gas_refill:     { label: 'Car AC Gas Refill',     icon: Wind,         gradient: 'from-sky-500 to-blue-600',       accent: '#0ea5e9', vertical: 'vehicle'      },
   car_battery_replacement:{ label: 'Car Battery Fitting',  icon: Battery,      gradient: 'from-amber-500 to-orange-600',   accent: '#f59e0b', vertical: 'vehicle'      },
   bike_periodic_service: { label: 'Bike Full Engine Service',icon: Bike,       gradient: 'from-emerald-600 to-teal-700',   accent: '#059669', vertical: 'vehicle'      },
@@ -116,43 +116,43 @@ const SERVICE_META = {
   bike_breakdown:        { label: 'Bike Breakdown',        icon: AlertTriangle, gradient: 'from-orange-500 to-red-500',    accent: '#f97316', vertical: 'vehicle'      },
   bike_service:          { label: 'Bike Full Service',     icon: Wrench,       gradient: 'from-violet-500 to-purple-600',  accent: '#8b5cf6', vertical: 'vehicle'      },
   car_wash:              { label: 'Car Wash',              icon: Car,          gradient: 'from-sky-500 to-blue-600',       accent: '#3b82f6', vertical: 'vehicle'      },
-  car_detailing:         { label: 'Car Detailing',         icon: Sparkles,     gradient: 'from-indigo-500 to-violet-600',  accent: '#6366f1', vertical: 'vehicle'      },
+  car_detailing:         { label: 'Car Detailing',         icon: Sparkles,     gradient: 'from-zappy-500 to-violet-600',  accent: '#3B82F6', vertical: 'vehicle'      },
   battery_jump_start:    { label: 'Battery Jump Start',    icon: Zap,          gradient: 'from-yellow-500 to-amber-600',   accent: '#f59e0b', vertical: 'vehicle'      },
   car_breakdown:         { label: 'Car Breakdown',         icon: AlertTriangle, gradient: 'from-red-500 to-rose-600',      accent: '#ef4444', vertical: 'vehicle'      },
   fuel_delivery:         { label: 'Fuel Delivery',         icon: Fuel,         gradient: 'from-orange-500 to-red-500',     accent: '#f97316', vertical: 'vehicle'      },
-  car_service:           { label: 'Car Full Service',      icon: Wrench,       gradient: 'from-blue-600 to-indigo-700',    accent: '#2563eb', vertical: 'vehicle'      },
+  car_service:           { label: 'Car Full Service',      icon: Wrench,       gradient: 'from-blue-600 to-zappy-700',    accent: '#2563eb', vertical: 'vehicle'      },
   car_towing:            { label: 'Car Towing',            icon: Car,          gradient: 'from-slate-700 to-slate-900',    accent: '#334155', vertical: 'towing'       },
   bike_towing:           { label: 'Bike Towing',           icon: Bike,         gradient: 'from-slate-600 to-slate-800',    accent: '#475569', vertical: 'towing'       },
   // Laptop Repair
   laptop_screen_replacement: { label: 'Laptop Display Panel', icon: Laptop,    gradient: 'from-cyan-500 to-blue-600',      accent: '#0891b2', vertical: 'laptop'       },
-  laptop_battery_replacement:{ label: 'Laptop Battery Replacement', icon: Battery, gradient: 'from-indigo-500 to-purple-600', accent: '#6366f1', vertical: 'laptop' },
+  laptop_battery_replacement:{ label: 'Laptop Battery Replacement', icon: Battery, gradient: 'from-zappy-500 to-purple-600', accent: '#3B82F6', vertical: 'laptop' },
   laptop_keyboard_repair:    { label: 'Laptop Keyboard Repair', icon: Laptop,  gradient: 'from-slate-600 to-slate-800',    accent: '#475569', vertical: 'laptop'       },
   laptop_thermal_service:    { label: 'Laptop Thermal Cleaning', icon: Wind,   gradient: 'from-teal-500 to-emerald-600',   accent: '#14b8a6', vertical: 'laptop'       },
   laptop_ssd_ram_upgrade:    { label: 'SSD & RAM Upgrade',     icon: Zap,          gradient: 'from-amber-500 to-orange-600',   accent: '#f59e0b', vertical: 'laptop'       },
   // Tank & Water Cleaning
   water_tank_cleaning:       { label: 'Water Tank Cleaning',       icon: Droplets, gradient: 'from-sky-500 to-blue-600',    accent: '#0ea5e9', vertical: 'tank_cleaning' },
   overhead_tank_cleaning:    { label: 'Overhead Tank Cleaning',    icon: Droplets, gradient: 'from-cyan-500 to-sky-600',    accent: '#06b6d4', vertical: 'tank_cleaning' },
-  underground_sump_cleaning: { label: 'Underground Sump Cleaning', icon: Droplets, gradient: 'from-blue-600 to-indigo-700', accent: '#2563eb', vertical: 'tank_cleaning' },
+  underground_sump_cleaning: { label: 'Underground Sump Cleaning', icon: Droplets, gradient: 'from-blue-600 to-zappy-700', accent: '#2563eb', vertical: 'tank_cleaning' },
   sintex_tank_cleaning:      { label: 'Sintex Tank Cleaning',      icon: Droplets, gradient: 'from-teal-500 to-cyan-600',   accent: '#14b8a6', vertical: 'tank_cleaning' },
   commercial_emergency:  { label: 'Commercial Emergency',  icon: AlertTriangle, gradient: 'from-red-600 to-rose-700',      accent: '#dc2626', vertical: 'vehicle'      },
   commercial_scheduled_maintenance: { label: 'Fleet Maintenance', icon: Wrench, gradient: 'from-slate-600 to-slate-800',  accent: '#475569', vertical: 'vehicle'      },
-  fleet_support:         { label: 'Fleet Support',         icon: Car,          gradient: 'from-indigo-600 to-blue-700',    accent: '#4f46e5', vertical: 'vehicle'      },
+  fleet_support:         { label: 'Fleet Support',         icon: Car,          gradient: 'from-zappy-600 to-blue-700',    accent: '#2563EB', vertical: 'vehicle'      },
   auto_repair:           { label: 'Auto Repair',           icon: Wrench,       gradient: 'from-amber-500 to-orange-600',   accent: '#f59e0b', vertical: 'vehicle'      },
   van_repair:            { label: 'Van Repair',            icon: Car,          gradient: 'from-stone-600 to-stone-800',    accent: '#78716c', vertical: 'vehicle'      },
   // Family Assist
   medicine_pickup:       { label: 'Medicine Pickup',       icon: Heart,        gradient: 'from-rose-500 to-pink-600',      accent: '#f43f5e', vertical: 'family'       },
-  hospital_companion:    { label: 'Hospital Companion',    icon: ShieldCheck,  gradient: 'from-blue-500 to-indigo-600',    accent: '#3b82f6', vertical: 'family'       },
+  hospital_companion:    { label: 'Hospital Companion',    icon: ShieldCheck,  gradient: 'from-blue-500 to-zappy-600',    accent: '#3b82f6', vertical: 'family'       },
   grocery_assistance:    { label: 'Grocery Shopping',      icon: Users,        gradient: 'from-green-500 to-emerald-600',  accent: '#10b981', vertical: 'family'       },
   bill_payment_assist:   { label: 'Bill Payment Assist',   icon: CheckCircle,  gradient: 'from-teal-500 to-cyan-600',      accent: '#14b8a6', vertical: 'family'       },
   document_submission:   { label: 'Document Submission',   icon: CheckCircle,  gradient: 'from-violet-500 to-purple-600',  accent: '#8b5cf6', vertical: 'family'       },
-  home_visit_check:      { label: 'Home Visit Check',      icon: ShieldCheck,  gradient: 'from-indigo-500 to-blue-600',    accent: '#6366f1', vertical: 'family'       },
+  home_visit_check:      { label: 'Home Visit Check',      icon: ShieldCheck,  gradient: 'from-zappy-500 to-blue-600',    accent: '#3B82F6', vertical: 'family'       },
   elder_doctor_visit:    { label: 'Elder Doctor Visit',    icon: Heart,        gradient: 'from-red-500 to-rose-600',       accent: '#ef4444', vertical: 'family'       },
   elder_companion:       { label: 'Elder Companion',       icon: Users,        gradient: 'from-purple-500 to-violet-600',  accent: '#8b5cf6', vertical: 'family'       },
   elder_home_visit:      { label: 'Elder Home Visit',      icon: ShieldCheck,  gradient: 'from-teal-500 to-emerald-600',   accent: '#14b8a6', vertical: 'family'       },
-  elder_transport:       { label: 'Elder Transport',       icon: Car,          gradient: 'from-blue-500 to-indigo-600',    accent: '#3b82f6', vertical: 'family'       },
+  elder_transport:       { label: 'Elder Transport',       icon: Car,          gradient: 'from-blue-500 to-zappy-600',    accent: '#3b82f6', vertical: 'family'       },
   // Event Crew
   event_decorator:           { label: 'Event Decorator',      icon: Sparkles,  gradient: 'from-violet-500 to-purple-600',  accent: '#8b5cf6', vertical: 'event'        },
-  event_setup_crew:          { label: 'Event Setup Crew',     icon: Users,     gradient: 'from-blue-500 to-indigo-600',    accent: '#3b82f6', vertical: 'event'        },
+  event_setup_crew:          { label: 'Event Setup Crew',     icon: Users,     gradient: 'from-blue-500 to-zappy-600',    accent: '#3b82f6', vertical: 'event'        },
   event_cleaning_crew:       { label: 'Event Cleaning',       icon: Sparkles,  gradient: 'from-teal-500 to-cyan-600',      accent: '#14b8a6', vertical: 'event'        },
   event_helper:              { label: 'Event Helper',         icon: Users,     gradient: 'from-green-500 to-emerald-600',  accent: '#10b981', vertical: 'event'        },
   event_sound_crew:          { label: 'Sound Crew',           icon: Layers,    gradient: 'from-slate-700 to-slate-900',    accent: '#334155', vertical: 'event'        },
@@ -160,14 +160,14 @@ const SERVICE_META = {
   event_security_crew:       { label: 'Event Security',       icon: ShieldCheck, gradient: 'from-red-500 to-rose-600',     accent: '#ef4444', vertical: 'event'        },
   event_birthday_setup:      { label: 'Birthday Setup',       icon: Star,      gradient: 'from-pink-500 to-fuchsia-600',   accent: '#ec4899', vertical: 'event'        },
   event_wedding_setup:       { label: 'Wedding Setup',        icon: Star,      gradient: 'from-amber-400 to-orange-500',   accent: '#f59e0b', vertical: 'event'        },
-  event_photography_assist:  { label: 'Photography Assist',   icon: Camera,    gradient: 'from-indigo-500 to-violet-600',  accent: '#6366f1', vertical: 'event'        },
+  event_photography_assist:  { label: 'Photography Assist',   icon: Camera,    gradient: 'from-zappy-500 to-violet-600',  accent: '#3B82F6', vertical: 'event'        },
   event_catering_assist:     { label: 'Catering Assist',      icon: Users,     gradient: 'from-orange-400 to-red-500',     accent: '#f97316', vertical: 'event'        },
   // Pet Assistance
   pet_grooming:          { label: 'Pet Grooming',          icon: Dog,          gradient: 'from-amber-400 to-orange-500',   accent: '#f59e0b', vertical: 'pet'          },
   pet_walking:           { label: 'Pet Walking',           icon: Bike,         gradient: 'from-green-500 to-emerald-600',  accent: '#10b981', vertical: 'pet'          },
   pet_transport:         { label: 'Pet Transport',         icon: Car,          gradient: 'from-violet-500 to-purple-600',  accent: '#8b5cf6', vertical: 'pet'          },
   pet_sitting:           { label: 'Pet Sitting',           icon: Heart,        gradient: 'from-rose-500 to-pink-600',      accent: '#f43f5e', vertical: 'pet'          },
-  pet_vet_assist:        { label: 'Vet Visit Assist',      icon: ShieldCheck,  gradient: 'from-blue-500 to-indigo-600',    accent: '#3b82f6', vertical: 'pet'          },
+  pet_vet_assist:        { label: 'Vet Visit Assist',      icon: ShieldCheck,  gradient: 'from-blue-500 to-zappy-600',    accent: '#3b82f6', vertical: 'pet'          },
   pet_training_assist:   { label: 'Pet Training',          icon: Star,         gradient: 'from-amber-500 to-orange-600',   accent: '#f59e0b', vertical: 'pet'          },
 };
 
@@ -999,12 +999,12 @@ export default function BookingPage() {
               <p className="font-bold text-[#0F172A] text-sm">Tow to</p>
             </div>
             <button onClick={() => setShowDestPicker(true)}
-              className={`w-full text-left rounded-xl border-2 px-3.5 py-3 flex items-center justify-between gap-3 transition ${towDest ? 'border-slate-200 bg-white' : 'border-dashed border-indigo-300 bg-indigo-50/40'}`}>
+              className={`w-full text-left rounded-xl border-2 px-3.5 py-3 flex items-center justify-between gap-3 transition ${towDest ? 'border-slate-200 bg-white' : 'border-dashed border-zappy-300 bg-zappy-50/40'}`}>
               <div className="min-w-0">
                 {towDest ? (
                   <p className="text-sm font-semibold text-[#0F172A] truncate">{towDest.address}</p>
                 ) : (
-                  <p className="text-sm font-semibold text-indigo-600">Select destination</p>
+                  <p className="text-sm font-semibold text-zappy-600">Select destination</p>
                 )}
                 <p className="text-[11px] text-slate-400 mt-0.5">
                   {q?.vertical === 'towing' && q.distanceKm != null
@@ -1295,13 +1295,13 @@ export default function BookingPage() {
         {/* Shop routing — only shown when arrived via "Nearby Shops" */}
         {preferredShopId && bookingShop && (
           <motion.div
-            className="rounded-2xl bg-white ring-1 ring-indigo-100 p-4"
+            className="rounded-2xl bg-white ring-1 ring-zappy-100 p-4"
             style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }}
             variants={fadeInUp}
           >
             <div className="flex items-center gap-2.5 mb-3">
-              <div className="w-8 h-8 rounded-xl bg-indigo-50 flex items-center justify-center">
-                <Store size={15} strokeWidth={2} className="text-indigo-600" />
+              <div className="w-8 h-8 rounded-xl bg-zappy-50 flex items-center justify-center">
+                <Store size={15} strokeWidth={2} className="text-zappy-600" />
               </div>
               <div>
                 <p className="font-bold text-[#0F172A] text-sm">Booking via {bookingShop.businessName}</p>
@@ -1319,7 +1319,7 @@ export default function BookingPage() {
                   className={`flex flex-col items-start p-3.5 rounded-xl border-2 transition-all text-left ${
                     fulfillmentMode === key ? 'border-transparent text-white' : 'border-slate-100 bg-slate-50 text-slate-600 hover:border-slate-200'
                   }`}
-                  style={fulfillmentMode === key ? { background: 'linear-gradient(135deg, #4f46e5 0%, #4338ca 100%)', borderColor: 'transparent' } : {}}
+                  style={fulfillmentMode === key ? { background: 'linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)', borderColor: 'transparent' } : {}}
                   whileTap={{ scale: 0.97 }}
                 >
                   <Icon size={16} strokeWidth={2.5} className={fulfillmentMode === key ? 'text-white mb-2' : 'text-slate-500 mb-2'} />
@@ -1600,7 +1600,7 @@ export default function BookingPage() {
               {/* Cashback teaser — shows estimated cashback before user books */}
               {canBook && finalDisplayPrice > 0 && Math.round(finalDisplayPrice * 0.05) >= 1 && (
                 <div className="flex items-center justify-center gap-1.5 py-2 px-4 rounded-xl mb-2"
-                  style={{ background: 'linear-gradient(90deg, rgba(99,102,241,0.08), rgba(139,92,246,0.08))' }}>
+                  style={{ background: 'linear-gradient(90deg, rgba(59,130,246,0.08), rgba(139,92,246,0.08))' }}>
                   <span className="text-base">✨</span>
                   <p className="text-xs font-bold text-violet-700">
                     You'll earn <span className="text-violet-900">₹{Math.round(finalDisplayPrice * 0.05)}</span> cashback after this order
@@ -1687,7 +1687,7 @@ export default function BookingPage() {
                 className="absolute rounded-full border"
                 style={{
                   width: r, height: r,
-                  borderColor: matchFound ? 'rgba(34,197,94,0.35)' : 'rgba(99,102,241,0.25)',
+                  borderColor: matchFound ? 'rgba(34,197,94,0.35)' : 'rgba(59,130,246,0.25)',
                 }}
                 animate={matchFound
                   ? { scale: [1, 3.5], opacity: [0.7, 0], transition: { duration: 0.7, delay: i * 0.08 } }
@@ -1720,7 +1720,7 @@ export default function BookingPage() {
                         <motion.div
                           animate={{ rotate: -360 }}
                           transition={{ duration: 5, repeat: Infinity, ease: 'linear' }}
-                          className="text-2xl drop-shadow-[0_0_8px_rgba(99,102,241,0.8)]"
+                          className="text-2xl drop-shadow-[0_0_8px_rgba(59,130,246,0.8)]"
                         >
                           {i % 2 === 0 ? '🛵' : '🏍️'}
                         </motion.div>
@@ -1730,7 +1730,7 @@ export default function BookingPage() {
 
                   {/* Trailing glow dots on orbit path */}
                   <motion.div
-                    className="absolute rounded-full border border-indigo-400/20"
+                    className="absolute rounded-full border border-zappy-400/20"
                     style={{ width: 250, height: 250 }}
                   />
                 </motion.div>
@@ -1799,7 +1799,7 @@ export default function BookingPage() {
                   {[0, 1, 2].map(i => (
                     <motion.div
                       key={i}
-                      className="w-2.5 h-2.5 rounded-full bg-indigo-400"
+                      className="w-2.5 h-2.5 rounded-full bg-zappy-400"
                       animate={{ opacity: [0.25, 1, 0.25], scale: [0.75, 1.3, 0.75] }}
                       transition={{ duration: 1.1, repeat: Infinity, delay: i * 0.32 }}
                     />

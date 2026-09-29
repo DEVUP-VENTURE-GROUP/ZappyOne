@@ -37,10 +37,10 @@ function OtpInput({ value, onChange, onKeyDown, inputRef, filled }) {
       value={value}
       onChange={onChange}
       onKeyDown={onKeyDown}
-      animate={filled ? { scale: [1, 1.1, 1], borderColor: '#6366f1' } : { borderColor: '#e2e8f0' }}
+      animate={filled ? { scale: [1, 1.1, 1], borderColor: '#3B82F6' } : { borderColor: '#e2e8f0' }}
       transition={{ duration: 0.18 }}
       className="w-12 h-14 text-center text-xl font-black rounded-2xl border-2 outline-none bg-white/80 backdrop-blur-sm text-slate-900 transition-all"
-      style={{ borderColor: filled ? '#6366f1' : '#e2e8f0', boxShadow: filled ? '0 0 0 4px rgba(99,102,241,0.12)' : 'none' }}
+      style={{ borderColor: filled ? '#3B82F6' : '#e2e8f0', boxShadow: filled ? '0 0 0 4px rgba(59,130,246,0.12)' : 'none' }}
     />
   );
 }

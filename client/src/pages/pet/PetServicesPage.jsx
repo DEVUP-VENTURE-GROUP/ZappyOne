@@ -51,7 +51,7 @@ export default function PetServicesPage() {
                 onClick={() => nav(q.path)}
                 className="flex flex-col items-center gap-1.5 rounded-2xl border-2 border-slate-200 bg-white p-3 text-center"
               >
-                <Icon size={18} className="text-indigo-600" />
+                <Icon size={18} className="text-zappy-600" />
                 <span className="text-[10.5px] font-bold text-slate-600 leading-tight">{q.label}</span>
               </button>
             );
@@ -67,10 +67,10 @@ export default function PetServicesPage() {
                 key={c.code}
                 type="button"
                 onClick={() => nav(`/pet/book/${c.code}`)}
-                className="w-full flex items-center gap-4 rounded-2xl border-2 border-slate-200 bg-white p-4 text-left hover:border-indigo-300 transition"
+                className="w-full flex items-center gap-4 rounded-2xl border-2 border-slate-200 bg-white p-4 text-left hover:border-zappy-300 transition"
               >
-                <span className="shrink-0 w-12 h-12 rounded-2xl bg-indigo-50 grid place-items-center">
-                  <Icon size={20} className="text-indigo-600" />
+                <span className="shrink-0 w-12 h-12 rounded-2xl bg-zappy-50 grid place-items-center">
+                  <Icon size={20} className="text-zappy-600" />
                 </span>
                 <span className="flex-1 min-w-0">
                   <span className="block font-black text-[#0F172A]">{c.name}</span>

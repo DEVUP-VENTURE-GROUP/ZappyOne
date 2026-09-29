@@ -18,7 +18,7 @@ const SERVICE_ICON_MAP = {
   puncture:              { Icon: Car,            bg: 'bg-slate-100',   color: 'text-slate-500'   },
   cleaning:              { Icon: Sparkles,       bg: 'bg-purple-100',  color: 'text-purple-600'  },
   painting:              { Icon: Paintbrush2,    bg: 'bg-pink-100',    color: 'text-pink-600'    },
-  screen_replacement:    { Icon: Smartphone,     bg: 'bg-indigo-100',  color: 'text-indigo-600'  },
+  screen_replacement:    { Icon: Smartphone,     bg: 'bg-zappy-100',  color: 'text-zappy-600'  },
   battery_replacement:   { Icon: Battery,        bg: 'bg-emerald-100', color: 'text-emerald-600' },
   charging_issue:        { Icon: Bolt,           bg: 'bg-yellow-100',  color: 'text-yellow-600'  },
   speaker_mic_issue:     { Icon: Layers,         bg: 'bg-violet-100',  color: 'text-violet-600'  },
@@ -110,7 +110,7 @@ export default function WorkerProfilePage() {
         {/* Animated orb */}
         <motion.div
           className="absolute top-0 left-1/2 -translate-x-1/2 w-72 h-72 rounded-full blur-3xl pointer-events-none"
-          style={{ background: 'radial-gradient(circle, rgba(99,102,241,0.35), transparent)' }}
+          style={{ background: 'radial-gradient(circle, rgba(59,130,246,0.35), transparent)' }}
           animate={{ scale: [1, 1.2, 1], opacity: [0.4, 0.65, 0.4] }}
           transition={{ duration: 6, repeat: Infinity }}
         />
@@ -118,7 +118,7 @@ export default function WorkerProfilePage() {
         {/* Avatar */}
         <motion.div
           className="relative z-10 w-24 h-24 rounded-full flex items-center justify-center text-white font-black text-3xl ring-4 ring-white/20 shadow-2xl"
-          style={{ background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)' }}
+          style={{ background: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)' }}
           initial={{ scale: 0.7, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: 'spring', stiffness: 260, damping: 22, delay: 0.1 }}
@@ -167,7 +167,7 @@ export default function WorkerProfilePage() {
         >
           {[
             { label: 'KYC Verified',          bg: 'bg-green-100',  text: 'text-green-700',  Icon: ShieldCheck },
-            { label: `${completedJobs} Jobs`,  bg: 'bg-indigo-100', text: 'text-indigo-700', Icon: Briefcase   },
+            { label: `${completedJobs} Jobs`,  bg: 'bg-zappy-100', text: 'text-zappy-700', Icon: Briefcase   },
             { label: `${typeof rating === 'number' ? rating.toFixed(1) : '4.8'} Rating`, bg: 'bg-amber-100', text: 'text-amber-700', Icon: Star },
           ].map(({ label, bg, text, Icon }) => (
             <span
@@ -218,8 +218,8 @@ export default function WorkerProfilePage() {
           transition={{ delay: 0.31 }}
         >
           <div className="flex items-center gap-2 mb-3">
-            <div className="w-7 h-7 rounded-lg bg-indigo-50 flex items-center justify-center">
-              <Target size={13} strokeWidth={2.5} className="text-indigo-600" />
+            <div className="w-7 h-7 rounded-lg bg-zappy-50 flex items-center justify-center">
+              <Target size={13} strokeWidth={2.5} className="text-zappy-600" />
             </div>
             <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Why Choose Me</p>
           </div>
@@ -228,11 +228,11 @@ export default function WorkerProfilePage() {
               <div key={label}>
                 <div className="flex items-center justify-between mb-1">
                   <p className="text-xs font-semibold text-slate-600">{label}</p>
-                  <p className="text-xs font-extrabold text-indigo-600">{value}</p>
+                  <p className="text-xs font-extrabold text-zappy-600">{value}</p>
                 </div>
                 <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
                   <motion.div
-                    className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-blue-500"
+                    className="h-full rounded-full bg-gradient-to-r from-zappy-500 to-blue-500"
                     initial={{ width: 0 }}
                     animate={{ width: `${pct}%` }}
                     transition={{ duration: 0.9, ease: 'easeOut', delay: 0.35 + i * 0.1 }}
@@ -301,7 +301,7 @@ export default function WorkerProfilePage() {
             onClick={handleRebook}
             whileTap={{ scale: 0.97 }}
             className="w-full h-14 rounded-2xl text-white font-extrabold text-base flex items-center justify-center gap-2.5 shadow-lg"
-            style={{ background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)', boxShadow: '0 8px 24px rgba(99,102,241,0.35)' }}
+            style={{ background: 'linear-gradient(135deg, #2563EB 0%, #3B82F6 100%)', boxShadow: '0 8px 24px rgba(59,130,246,0.35)' }}
           >
             <Repeat2 size={20} strokeWidth={2.5} />
             Book {name.split(' ')[0]} Again

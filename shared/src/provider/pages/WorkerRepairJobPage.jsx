@@ -193,7 +193,7 @@ function QuoteBuilder({ bookingId, repairCode, additional = false, onSent, onCan
         <label className="text-[12px] font-bold text-slate-700 block mb-1.5">What did you find?</label>
         <textarea rows={3} value={summary} onChange={(e) => setSummary(e.target.value)}
           placeholder="e.g. Panel and digitizer both failed; frame is intact."
-          className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-100 resize-none" />
+          className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-zappy-100 resize-none" />
         <p className="text-[11px] text-slate-400 mt-1">The customer sees this word for word.</p>
       </div>
 
@@ -219,7 +219,7 @@ function QuoteBuilder({ bookingId, repairCode, additional = false, onSent, onCan
           </div>
         ))}
         <button onClick={() => setItems((l) => [...l, { kind: 'part', label: '', unitPricePaise: '', quantity: 1 }])}
-          className="flex items-center gap-1.5 text-xs font-semibold text-indigo-600">
+          className="flex items-center gap-1.5 text-xs font-semibold text-zappy-600">
           <Plus size={13} /> Add line
         </button>
       </div>
@@ -249,7 +249,7 @@ function QAPanel({ bookingId, onDone }) {
   const [submit, { isLoading: submitting }] = useSubmitRepairQaMutation();
   const [results, setResults] = useState({});
 
-  if (isLoading) return <div className="card"><Loader2 size={18} className="animate-spin text-indigo-400 mx-auto" /></div>;
+  if (isLoading) return <div className="card"><Loader2 size={18} className="animate-spin text-zappy-400 mx-auto" /></div>;
 
   const checklist = data?.checklist;
   if (!checklist) return null;
@@ -284,7 +284,7 @@ function QAPanel({ bookingId, onDone }) {
   return (
     <div className="card space-y-3">
       <div className="flex items-center gap-2">
-        <ClipboardCheck size={16} className="text-indigo-600" />
+        <ClipboardCheck size={16} className="text-zappy-600" />
         <p className="font-bold text-sm text-[#0F172A]">{checklist.name}</p>
       </div>
       <p className="text-[11px] text-slate-400 -mt-1">
@@ -379,7 +379,7 @@ export default function WorkerRepairJobPage() {
 
   if (isLoading) {
     return <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center">
-      <Loader2 size={26} className="animate-spin text-indigo-500" />
+      <Loader2 size={26} className="animate-spin text-zappy-500" />
     </div>;
   }
 
@@ -725,7 +725,7 @@ export default function WorkerRepairJobPage() {
             </button>
           ) : (
             <button onClick={() => setShowQuote(true)}
-              className="w-full flex items-center justify-center gap-2 bg-white ring-1 ring-indigo-200 text-indigo-700 font-bold text-sm py-3 rounded-xl">
+              className="w-full flex items-center justify-center gap-2 bg-white ring-1 ring-zappy-200 text-zappy-700 font-bold text-sm py-3 rounded-xl">
               <FileText size={15} /> Raise a quote
             </button>
           )

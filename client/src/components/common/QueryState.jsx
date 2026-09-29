@@ -54,9 +54,9 @@ export function EmptyState({ icon: Icon = Inbox, title, subtitle, action, classN
     >
       <motion.div
         initial={{ scale: 0.85 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 260, damping: 18 }}
-        className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-50 to-violet-50 flex items-center justify-center mb-4"
+        className="w-16 h-16 rounded-2xl bg-gradient-to-br from-zappy-50 to-violet-50 flex items-center justify-center mb-4"
       >
-        <Icon size={28} className="text-indigo-500" strokeWidth={1.75} />
+        <Icon size={28} className="text-zappy-500" strokeWidth={1.75} />
       </motion.div>
       <h3 className="text-base font-extrabold text-slate-900">{title}</h3>
       {subtitle && <p className="text-sm text-slate-500 mt-1 max-w-[15rem]">{subtitle}</p>}

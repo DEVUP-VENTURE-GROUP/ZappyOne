@@ -43,7 +43,7 @@ export default function WorkerHelpingJobPage() {
   const [collectCash, { isLoading: collecting }] = useCollectHelpingCashMutation();
   const [arrivalPhotos, setArrivalPhotos] = useState([]);
 
-  if (isLoading) return <div className="flex justify-center py-24"><Loader2 size={24} className="animate-spin text-indigo-400" /></div>;
+  if (isLoading) return <div className="flex justify-center py-24"><Loader2 size={24} className="animate-spin text-zappy-400" /></div>;
   if (!data?.task) return <div className="text-center py-24 text-slate-400">Task not found</div>;
 
   const { task } = data;
@@ -109,7 +109,7 @@ export default function WorkerHelpingJobPage() {
             target="_blank" rel="noreferrer"
             className="flex items-center gap-2.5 rounded-2xl border-2 border-slate-200 bg-white p-4 text-sm"
           >
-            <Navigation size={16} className="text-indigo-500 shrink-0" />
+            <Navigation size={16} className="text-zappy-500 shrink-0" />
             <span className="min-w-0 truncate">{task.pickupLocation.address}</span>
           </a>
         )}
@@ -275,7 +275,7 @@ function ItemRow({ item, disabled, onPurchase, onUnavailable, onAlternative }) {
           )}
           <p className="text-xs text-slate-500 mt-0.5">Max: {formatPaise(item.maxApprovedPricePaise)}</p>
         </div>
-        <span className="text-[10px] font-bold uppercase text-indigo-500 shrink-0">{item.status.replace(/_/g, ' ')}</span>
+        <span className="text-[10px] font-bold uppercase text-zappy-500 shrink-0">{item.status.replace(/_/g, ' ')}</span>
       </div>
 
       {!done && !disabled && (

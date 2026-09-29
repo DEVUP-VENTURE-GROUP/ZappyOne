@@ -290,14 +290,14 @@ export default function WorkerKycPage() {
               <p className="text-sm font-bold text-slate-800">Why do you need to change documents?</p>
               <p className="text-xs text-slate-400">Admin will review and approve before you can upload new documents.</p>
               <textarea rows={3} autoFocus
-                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-zappy-500 resize-none"
                 placeholder="e.g. My Aadhaar has been renewed with a new address…"
                 value={changeMsg} onChange={e => setChangeMsg(e.target.value)} />
               <div className="flex gap-2">
                 <button onClick={() => { setShowChangeRequest(false); setChangeMsg(''); }}
                   className="flex-1 border border-slate-200 text-slate-600 font-semibold text-sm py-2.5 rounded-xl hover:bg-slate-50 transition">Cancel</button>
                 <button onClick={handleRequestChange} disabled={requesting || changeMsg.trim().length < 10}
-                  className="flex-1 flex items-center justify-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold text-sm py-2.5 rounded-xl transition">
+                  className="flex-1 flex items-center justify-center gap-1.5 bg-zappy-600 hover:bg-zappy-700 disabled:opacity-50 text-white font-bold text-sm py-2.5 rounded-xl transition">
                   {requesting ? <Loader2 size={13} className="animate-spin" /> : <MessageSquare size={13} />}
                   Send Request
                 </button>
@@ -418,19 +418,19 @@ export default function WorkerKycPage() {
           })}
 
           {/* Live Selfie Card */}
-          <div className={`card ${selfieUploaded ? 'ring-success-200 bg-success-50/30' : 'ring-indigo-100 bg-indigo-50/30'}`}>
+          <div className={`card ${selfieUploaded ? 'ring-success-200 bg-success-50/30' : 'ring-zappy-100 bg-zappy-50/30'}`}>
             <div className="flex items-start gap-3">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${selfieUploaded ? 'bg-success-100' : 'bg-indigo-100'}`}>
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${selfieUploaded ? 'bg-success-100' : 'bg-zappy-100'}`}>
                 {selfieUploading
-                  ? <Loader2 size={18} className="animate-spin text-indigo-500" />
-                  : <Camera size={18} strokeWidth={1.75} className={selfieUploaded ? 'text-success-600' : 'text-indigo-500'} />
+                  ? <Loader2 size={18} className="animate-spin text-zappy-500" />
+                  : <Camera size={18} strokeWidth={1.75} className={selfieUploaded ? 'text-success-600' : 'text-zappy-500'} />
                 }
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
                   <p className="font-semibold text-sm text-[#0F172A]">Live Selfie</p>
                   <span className="text-red-500 text-xs font-bold">*</span>
-                  <span className="text-[10px] font-bold bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded-full">LIVE ONLY</span>
+                  <span className="text-[10px] font-bold bg-zappy-100 text-zappy-700 px-1.5 py-0.5 rounded-full">LIVE ONLY</span>
                 </div>
                 <p className="text-xs text-slate-400 mt-0.5">Photo taken live from your front camera — gallery not allowed</p>
 
@@ -448,7 +448,7 @@ export default function WorkerKycPage() {
                         </div>
                       )}
                       <div className="flex items-center gap-1">
-                        <Smartphone size={10} className="text-indigo-400" />
+                        <Smartphone size={10} className="text-zappy-400" />
                         <span className="text-[10px] text-slate-500 font-medium">
                           {new Date(selfieMetadata.capturedAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
                         </span>
@@ -461,7 +461,7 @@ export default function WorkerKycPage() {
               {!selfieUploading && (
                 <button
                   onClick={() => setShowCamera(true)}
-                  className={`btn-secondary text-xs py-2 px-3 ${selfieUploaded ? 'border-success-200 text-success-700' : 'border-indigo-200 text-indigo-700'}`}
+                  className={`btn-secondary text-xs py-2 px-3 ${selfieUploaded ? 'border-success-200 text-success-700' : 'border-zappy-200 text-zappy-700'}`}
                 >
                   <span className="flex items-center gap-1.5">
                     <Camera size={11} strokeWidth={2.5} />
@@ -473,16 +473,16 @@ export default function WorkerKycPage() {
 
             {/* Liveness info strip */}
             {!selfieUploaded && (
-              <div className="mt-3 pt-3 border-t border-indigo-100">
-                <p className="text-[10px] font-bold text-indigo-600 uppercase tracking-wide mb-2">What we check</p>
+              <div className="mt-3 pt-3 border-t border-zappy-100">
+                <p className="text-[10px] font-bold text-zappy-600 uppercase tracking-wide mb-2">What we check</p>
                 <div className="grid grid-cols-3 gap-1.5">
                   {[
                     { icon: Camera,   label: 'Live camera only'    },
                     { icon: MapPin,   label: 'GPS at capture time' },
                     { icon: CheckCircle2, label: 'Liveness prompt' },
                   ].map(({ icon: Icon, label }) => (
-                    <div key={label} className="flex items-center gap-1.5 bg-white rounded-lg px-2 py-1.5 ring-1 ring-indigo-100">
-                      <Icon size={10} className="text-indigo-500 shrink-0" />
+                    <div key={label} className="flex items-center gap-1.5 bg-white rounded-lg px-2 py-1.5 ring-1 ring-zappy-100">
+                      <Icon size={10} className="text-zappy-500 shrink-0" />
                       <span className="text-[10px] font-semibold text-slate-600 leading-tight">{label}</span>
                     </div>
                   ))}

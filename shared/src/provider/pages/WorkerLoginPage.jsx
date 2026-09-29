@@ -147,7 +147,7 @@ function HeroScene() {
         </div>
         <div className="h-px bg-slate-100" />
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-indigo-950 flex items-center justify-center shrink-0">
+          <div className="w-9 h-9 rounded-xl bg-zappy-900 flex items-center justify-center shrink-0">
             <CheckCircle2 size={17} className="text-white" strokeWidth={2.2} />
           </div>
           <div className="min-w-0">
@@ -329,7 +329,7 @@ export default function WorkerLoginPage({ allowSignup = true, portalLabel = 'Wor
         <section className="relative flex-1 min-h-0 lg:flex-none lg:w-[54%] lg:min-h-[100dvh] flex flex-col justify-between lg:justify-center px-6 pt-7 pb-0 lg:px-16 lg:py-14 overflow-hidden">
           {/* soft ambient blobs */}
           <div className="pointer-events-none absolute -top-24 -left-24 w-72 h-72 rounded-full bg-blue-200/40 blur-3xl" />
-          <div className="pointer-events-none absolute top-1/3 right-0 w-72 h-72 rounded-full bg-indigo-200/30 blur-3xl" />
+          <div className="pointer-events-none absolute top-1/3 right-0 w-72 h-72 rounded-full bg-zappy-200/30 blur-3xl" />
 
           <div>
             {/* Brand */}

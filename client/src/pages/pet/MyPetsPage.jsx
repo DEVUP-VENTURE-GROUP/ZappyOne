@@ -44,7 +44,7 @@ export default function MyPetsPage() {
       </div>
 
       <div className="max-w-lg mx-auto px-4 py-4 space-y-2.5 pb-24">
-        {isLoading && <div className="flex justify-center py-16"><Loader2 size={24} className="animate-spin text-indigo-400" /></div>}
+        {isLoading && <div className="flex justify-center py-16"><Loader2 size={24} className="animate-spin text-zappy-400" /></div>}
         {!isLoading && !pets.length && (
           <div className="text-center py-12 text-slate-400">
             <PawPrint size={32} className="mx-auto mb-2 text-slate-300" />
@@ -59,10 +59,10 @@ export default function MyPetsPage() {
             onClick={() => nav(`/pet/my-pets/${p._id}`)}
             className="w-full flex items-center gap-3 rounded-2xl border-2 border-slate-200 bg-white p-4 text-left"
           >
-            <span className="shrink-0 w-12 h-12 rounded-2xl bg-indigo-50 overflow-hidden grid place-items-center">
+            <span className="shrink-0 w-12 h-12 rounded-2xl bg-zappy-50 overflow-hidden grid place-items-center">
               {p.photoKey
                 ? <img src={p.photoKey} alt="" className="w-full h-full object-cover" />
-                : <PawPrint size={20} className="text-indigo-400" />}
+                : <PawPrint size={20} className="text-zappy-400" />}
             </span>
             <span className="flex-1 min-w-0">
               <span className="block font-black text-[#0F172A]">{p.name}</span>

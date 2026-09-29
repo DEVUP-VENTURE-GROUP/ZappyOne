@@ -23,17 +23,17 @@ function PremiumStepIndicator({ currentStep }) {
     <div className="relative pt-6 pb-2">
       <div className="flex items-center justify-between relative z-10 px-2">
         <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-slate-100 rounded-full z-0" />
-        <div className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-gradient-to-r from-indigo-500 to-fuchsia-500 rounded-full z-0 transition-all duration-700 ease-out" style={{ width: `${(currentStep / 3) * 100}%` }} />
+        <div className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-gradient-to-r from-zappy-500 to-fuchsia-500 rounded-full z-0 transition-all duration-700 ease-out" style={{ width: `${(currentStep / 3) * 100}%` }} />
         
         {[0, 1, 2, 3].map(idx => {
           const isCompleted = idx < currentStep;
           const isActive = idx === currentStep;
           return (
             <div key={idx} className="relative flex flex-col items-center">
-              <div className={`relative z-10 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-500 ${isCompleted ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30' : isActive ? 'bg-white border-2 border-fuchsia-500 text-fuchsia-600 shadow-xl shadow-fuchsia-500/20 scale-110' : 'bg-white border-2 border-slate-200 text-slate-400'}`}>
+              <div className={`relative z-10 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-500 ${isCompleted ? 'bg-zappy-600 text-white shadow-lg shadow-zappy-500/30' : isActive ? 'bg-white border-2 border-fuchsia-500 text-fuchsia-600 shadow-xl shadow-fuchsia-500/20 scale-110' : 'bg-white border-2 border-slate-200 text-slate-400'}`}>
                 {isCompleted ? <Check size={14} strokeWidth={3} /> : <span className="text-xs font-black">{idx + 1}</span>}
               </div>
-              <span className={`absolute -bottom-6 w-20 text-center text-[9px] font-bold uppercase tracking-widest transition-colors ${isActive ? 'text-fuchsia-600' : isCompleted ? 'text-indigo-600' : 'text-slate-400'}`}>
+              <span className={`absolute -bottom-6 w-20 text-center text-[9px] font-bold uppercase tracking-widest transition-colors ${isActive ? 'text-fuchsia-600' : isCompleted ? 'text-zappy-600' : 'text-slate-400'}`}>
                 {STEPS[idx]}
               </span>
             </div>
@@ -209,7 +209,7 @@ export default function EventBookingPage() {
               
               <div className="bg-white rounded-[2rem] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-500 flex items-center justify-center"><CalendarIcon size={20} /></div>
+                  <div className="w-10 h-10 rounded-xl bg-zappy-50 text-zappy-500 flex items-center justify-center"><CalendarIcon size={20} /></div>
                   <h3 className="font-black text-lg text-slate-900">Select Date</h3>
                 </div>
                 <input 
@@ -217,7 +217,7 @@ export default function EventBookingPage() {
                   value={form.eventDate} 
                   onChange={e => set('eventDate', e.target.value)}
                   min={new Date(Date.now() + 86_400_000).toISOString().split('T')[0]}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-slate-800 font-bold focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all cursor-pointer" 
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-slate-800 font-bold focus:bg-white focus:border-zappy-500 focus:ring-4 focus:ring-zappy-500/10 outline-none transition-all cursor-pointer" 
                 />
               </div>
 
@@ -284,10 +284,10 @@ export default function EventBookingPage() {
                         id={key}
                         value={form.address[key]}
                         onChange={e => setAddr(key, e.target.value)}
-                        className="peer w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 pt-7 pb-3 text-slate-900 font-bold focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all placeholder-transparent"
+                        className="peer w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 pt-7 pb-3 text-slate-900 font-bold focus:bg-white focus:border-zappy-500 focus:ring-4 focus:ring-zappy-500/10 outline-none transition-all placeholder-transparent"
                         placeholder={label}
                       />
-                      <label htmlFor={key} className="absolute left-5 top-2 text-[10px] uppercase tracking-widest font-bold text-slate-400 peer-placeholder-shown:top-5 peer-placeholder-shown:text-sm peer-placeholder-shown:normal-case peer-placeholder-shown:font-semibold peer-focus:top-2 peer-focus:text-[10px] peer-focus:uppercase peer-focus:font-bold peer-focus:text-indigo-600 transition-all pointer-events-none">
+                      <label htmlFor={key} className="absolute left-5 top-2 text-[10px] uppercase tracking-widest font-bold text-slate-400 peer-placeholder-shown:top-5 peer-placeholder-shown:text-sm peer-placeholder-shown:normal-case peer-placeholder-shown:font-semibold peer-focus:top-2 peer-focus:text-[10px] peer-focus:uppercase peer-focus:font-bold peer-focus:text-zappy-600 transition-all pointer-events-none">
                         {label} {required && <span className="text-rose-400">*</span>}
                       </label>
                     </div>
@@ -301,9 +301,9 @@ export default function EventBookingPage() {
                       value={form.address.landmark}
                       onChange={e => setAddr('landmark', e.target.value)}
                       placeholder="Landmark / note"
-                      className="peer w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 pt-7 pb-3 text-slate-900 font-bold focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all resize-none placeholder-transparent"
+                      className="peer w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 pt-7 pb-3 text-slate-900 font-bold focus:bg-white focus:border-zappy-500 focus:ring-4 focus:ring-zappy-500/10 outline-none transition-all resize-none placeholder-transparent"
                     />
-                    <label htmlFor="landmark" className="absolute left-5 top-2 text-[10px] uppercase tracking-widest font-bold text-slate-400 peer-placeholder-shown:top-5 peer-placeholder-shown:text-sm peer-placeholder-shown:normal-case peer-placeholder-shown:font-semibold peer-focus:top-2 peer-focus:text-[10px] peer-focus:uppercase peer-focus:font-bold peer-focus:text-indigo-600 transition-all pointer-events-none flex items-center gap-1">
+                    <label htmlFor="landmark" className="absolute left-5 top-2 text-[10px] uppercase tracking-widest font-bold text-slate-400 peer-placeholder-shown:top-5 peer-placeholder-shown:text-sm peer-placeholder-shown:normal-case peer-placeholder-shown:font-semibold peer-focus:top-2 peer-focus:text-[10px] peer-focus:uppercase peer-focus:font-bold peer-focus:text-zappy-600 transition-all pointer-events-none flex items-center gap-1">
                       <Navigation size={9} /> Landmark / Note for decorator
                     </label>
                   </div>
@@ -356,7 +356,7 @@ export default function EventBookingPage() {
                   value={form.notes} 
                   onChange={e => set('notes', e.target.value)} 
                   placeholder="Any color themes, allergies, or surprises planned? Let the creator know!"
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-slate-800 font-medium focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all resize-none placeholder:text-slate-400" 
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-slate-800 font-medium focus:bg-white focus:border-zappy-500 focus:ring-4 focus:ring-zappy-500/10 outline-none transition-all resize-none placeholder:text-slate-400" 
                   rows={3} 
                 />
               </div>
@@ -371,11 +371,11 @@ export default function EventBookingPage() {
                   </div>
                 </div>
                 
-                <label className="flex flex-col items-center justify-center w-full bg-slate-50 border-2 border-dashed border-slate-300 rounded-[1.5rem] p-6 cursor-pointer hover:bg-slate-100 hover:border-indigo-300 transition-all group">
+                <label className="flex flex-col items-center justify-center w-full bg-slate-50 border-2 border-dashed border-slate-300 rounded-[1.5rem] p-6 cursor-pointer hover:bg-slate-100 hover:border-zappy-300 transition-all group">
                   {uploading ? (
-                    <Loader2 size={28} className="animate-spin text-indigo-500 mb-2" />
+                    <Loader2 size={28} className="animate-spin text-zappy-500 mb-2" />
                   ) : (
-                    <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow-sm text-slate-400 group-hover:text-indigo-500 group-hover:scale-110 transition-all mb-3">
+                    <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow-sm text-slate-400 group-hover:text-zappy-500 group-hover:scale-110 transition-all mb-3">
                       <Camera size={24} />
                     </div>
                   )}
@@ -402,7 +402,7 @@ export default function EventBookingPage() {
               
               <div className="bg-white rounded-[2rem] shadow-[0_20px_40px_-12px_rgba(0,0,0,0.1)] border border-slate-100 overflow-hidden relative">
                 {/* Decorative top gradient */}
-                <div className="h-2 w-full bg-gradient-to-r from-indigo-500 via-purple-500 to-fuchsia-500" />
+                <div className="h-2 w-full bg-gradient-to-r from-zappy-500 via-purple-500 to-fuchsia-500" />
                 
                 {/* Ticket Content */}
                 <div className="p-6 md:p-8">
@@ -460,7 +460,7 @@ export default function EventBookingPage() {
                         <span className="font-black text-slate-900 block">Advance Required ({Math.round(advancePct * 100)}%)</span>
                         <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Pay now to lock slot</span>
                       </div>
-                      <span className="font-black text-3xl text-indigo-600 tracking-tighter">₹{Math.round(advancePaise / 100).toLocaleString('en-IN')}</span>
+                      <span className="font-black text-3xl text-zappy-600 tracking-tighter">₹{Math.round(advancePaise / 100).toLocaleString('en-IN')}</span>
                     </div>
                     <p className="text-xs text-slate-500 text-center font-medium mt-2">
                       Remaining ₹{Math.round((totalPaise - advancePaise) / 100).toLocaleString('en-IN')} to be paid on event day
@@ -496,7 +496,7 @@ export default function EventBookingPage() {
             </button>
           ) : (
             <div className="relative group">
-              <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-fuchsia-500 rounded-[1.5rem] blur opacity-40 group-hover:opacity-70 transition duration-500 animate-pulse" />
+              <div className="absolute -inset-1 bg-gradient-to-r from-zappy-500 via-purple-500 to-fuchsia-500 rounded-[1.5rem] blur opacity-40 group-hover:opacity-70 transition duration-500 animate-pulse" />
               <button 
                 onClick={handleSubmit} 
                 disabled={submitting}

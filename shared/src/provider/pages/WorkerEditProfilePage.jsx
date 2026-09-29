@@ -48,7 +48,7 @@ const NAV_SECTIONS = [
 ];
 
 const COLOR_MAP = {
-  indigo:  { bg: 'bg-indigo-50',  icon: 'text-indigo-600' },
+  indigo:  { bg: 'bg-zappy-50',  icon: 'text-zappy-600' },
   purple:  { bg: 'bg-purple-50',  icon: 'text-purple-600' },
   blue:    { bg: 'bg-blue-50',    icon: 'text-blue-600' },
   emerald: { bg: 'bg-emerald-50', icon: 'text-emerald-600' },
@@ -124,7 +124,7 @@ export default function WorkerEditProfilePage() {
   if (isLoading || !loaded) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <Loader2 size={24} className="animate-spin text-indigo-300" />
+        <Loader2 size={24} className="animate-spin text-zappy-300" />
       </div>
     );
   }
@@ -137,7 +137,7 @@ export default function WorkerEditProfilePage() {
         </button>
         <h1 className="font-semibold text-slate-800">Profile & Settings</h1>
         <button onClick={handleSave} disabled={isSaving}
-          className="ml-auto flex items-center gap-1.5 bg-indigo-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg disabled:opacity-50">
+          className="ml-auto flex items-center gap-1.5 bg-zappy-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg disabled:opacity-50">
           {isSaving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
           {isSaving ? 'Saving…' : 'Save'}
         </button>
@@ -147,7 +147,7 @@ export default function WorkerEditProfilePage() {
 
         {/* Avatar placeholder + stats */}
         <div className="bg-white rounded-2xl p-4 flex items-center gap-4 shadow-sm">
-          <div className="w-14 h-14 rounded-full bg-indigo-100 flex items-center justify-center text-2xl font-bold text-indigo-600 shrink-0">
+          <div className="w-14 h-14 rounded-full bg-zappy-100 flex items-center justify-center text-2xl font-bold text-zappy-600 shrink-0">
             {(me?.name || 'W')[0].toUpperCase()}
           </div>
           <div className="flex-1 min-w-0">
@@ -166,23 +166,23 @@ export default function WorkerEditProfilePage() {
         {/* Name */}
         <div className="bg-white rounded-2xl p-5 shadow-sm">
           <div className="flex items-center gap-2 mb-3">
-            <User size={15} className="text-indigo-500" />
+            <User size={15} className="text-zappy-500" />
             <span className="text-sm font-semibold text-slate-700">Display Name</span>
           </div>
           <input value={name} onChange={e => setName(e.target.value)} maxLength={100} placeholder="Your full name"
-            className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-300 transition" />
+            className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-zappy-300 transition" />
         </div>
 
         {/* Bio */}
         <div className="bg-white rounded-2xl p-5 shadow-sm">
           <div className="flex items-center gap-2 mb-3">
-            <FileText size={15} className="text-indigo-500" />
+            <FileText size={15} className="text-zappy-500" />
             <span className="text-sm font-semibold text-slate-700">Bio</span>
             <span className="ml-auto text-xs text-slate-400">{bio.length}/300</span>
           </div>
           <textarea value={bio} onChange={e => setBio(e.target.value)} maxLength={300} rows={3}
             placeholder="Describe your experience — shown to customers when they view your profile…"
-            className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-800 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-300 transition" />
+            className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-800 resize-none focus:outline-none focus:ring-2 focus:ring-zappy-300 transition" />
         </div>
 
         {/*
@@ -218,7 +218,7 @@ export default function WorkerEditProfilePage() {
 
           <button
             onClick={() => nav('/provider/onboarding')}
-            className="mt-3 flex items-center gap-0.5 text-xs text-indigo-600 hover:underline"
+            className="mt-3 flex items-center gap-0.5 text-xs text-zappy-600 hover:underline"
           >
             Manage services &amp; verification <ChevronRight size={11} />
           </button>
@@ -227,7 +227,7 @@ export default function WorkerEditProfilePage() {
         {/* Login Credentials — set a Worker ID + password to sign in without OTP */}
         <div className="bg-white rounded-2xl p-5 shadow-sm">
           <div className="flex items-center gap-2 mb-1">
-            <KeyRound size={15} className="text-indigo-500" />
+            <KeyRound size={15} className="text-zappy-500" />
             <span className="text-sm font-semibold text-slate-700">Login Credentials</span>
           </div>
           <p className="text-xs text-slate-400 mb-3">Set a Worker ID and password so you can sign in without an OTP each time.</p>
@@ -236,22 +236,22 @@ export default function WorkerEditProfilePage() {
               <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Worker ID {me?.username ? `(current: ${me.username})` : '(optional)'}</label>
               <input value={username} onChange={e => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))} maxLength={30}
                 placeholder={me?.username || 'e.g. ravi_kumar'}
-                className="mt-1 w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-300 transition" />
+                className="mt-1 w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-zappy-300 transition" />
             </div>
             <div>
               <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">New Password</label>
               <input type="password" value={newPw} onChange={e => setNewPw(e.target.value)}
                 placeholder="At least 8 characters"
-                className="mt-1 w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-300 transition" />
+                className="mt-1 w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-zappy-300 transition" />
             </div>
             <div>
               <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Confirm Password</label>
               <input type="password" value={confirmPw} onChange={e => setConfirmPw(e.target.value)}
                 placeholder="Re-enter password"
-                className="mt-1 w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-300 transition" />
+                className="mt-1 w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-zappy-300 transition" />
             </div>
             <button onClick={saveCredentials} disabled={savingCreds || newPw.length < 8}
-              className="w-full flex items-center justify-center gap-1.5 bg-indigo-600 text-white text-sm font-bold rounded-xl py-2.5 disabled:opacity-50 hover:bg-indigo-700 transition">
+              className="w-full flex items-center justify-center gap-1.5 bg-zappy-600 text-white text-sm font-bold rounded-xl py-2.5 disabled:opacity-50 hover:bg-zappy-700 transition">
               {savingCreds ? <Loader2 size={13} className="animate-spin" /> : <KeyRound size={13} />} Save Login Credentials
             </button>
           </div>

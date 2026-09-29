@@ -161,7 +161,7 @@ export default function RepairOfferAlert({ offer, myLocation, onClose }) {
           <div className="p-5">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-[11px] font-black uppercase tracking-[0.1em] text-indigo-600">
+                <p className="text-[11px] font-black uppercase tracking-[0.1em] text-zappy-600">
                   New repair job · {Math.round(windowSec / 60)} min to accept
                 </p>
                 <p className="mt-0.5 truncate text-lg font-black text-[#0F172A]">
@@ -203,9 +203,9 @@ export default function RepairOfferAlert({ offer, myLocation, onClose }) {
 
             <button
               onClick={openDirections}
-              className="mt-2 flex w-full items-start gap-2 rounded-2xl border border-slate-200 p-3 text-left transition hover:border-indigo-200"
+              className="mt-2 flex w-full items-start gap-2 rounded-2xl border border-slate-200 p-3 text-left transition hover:border-zappy-200"
             >
-              <MapPin size={15} className="mt-0.5 shrink-0 text-indigo-500" />
+              <MapPin size={15} className="mt-0.5 shrink-0 text-zappy-500" />
               <span className="min-w-0 flex-1">
                 <span className="block text-[12.5px] font-semibold leading-snug text-[#0F172A]">
                   {offer.address || 'Address shared after accepting'}
@@ -214,7 +214,7 @@ export default function RepairOfferAlert({ offer, myLocation, onClose }) {
                   <span className="block text-[11px] text-slate-500">{offer.landmark}</span>
                 )}
               </span>
-              <Navigation size={15} className="mt-0.5 shrink-0 text-indigo-500" />
+              <Navigation size={15} className="mt-0.5 shrink-0 text-zappy-500" />
             </button>
 
             {offer.slotLabel && (

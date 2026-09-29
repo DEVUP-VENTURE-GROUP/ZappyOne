@@ -24,7 +24,7 @@ export default function CategoryProblemsPage() {
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#F9FAFB]">
-        <Loader2 size={24} className="animate-spin text-indigo-400" />
+        <Loader2 size={24} className="animate-spin text-zappy-400" />
       </div>
     );
   }
@@ -66,10 +66,10 @@ export default function CategoryProblemsPage() {
 
       <div className="mx-auto max-w-2xl px-4">
         <div className="mt-4 flex items-center gap-3 overflow-hidden rounded-2xl bg-white p-4 ring-1 ring-slate-200/70">
-          <span className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-indigo-50">
+          <span className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-zappy-50">
             {category.imageUrl
               ? <img src={category.imageUrl} alt="" className="h-full w-full object-cover" />
-              : <Icon size={24} className="text-indigo-500" strokeWidth={1.6} />}
+              : <Icon size={24} className="text-zappy-500" strokeWidth={1.6} />}
           </span>
           <div className="min-w-0">
             <p className="text-sm font-black text-[#0F172A]">{category.name}</p>
@@ -85,7 +85,7 @@ export default function CategoryProblemsPage() {
             <button
               key={p.code}
               onClick={() => nav(`${service.path}?problem=${encodeURIComponent(p.code)}`)}
-              className="group flex w-full items-center gap-3 rounded-2xl bg-white p-3.5 text-left ring-1 ring-slate-200/70 transition hover:ring-indigo-200"
+              className="group flex w-full items-center gap-3 rounded-2xl bg-white p-3.5 text-left ring-1 ring-slate-200/70 transition hover:ring-zappy-200"
             >
               <span className="min-w-0 flex-1">
                 <span className="block text-sm font-semibold text-[#0F172A]">{p.name}</span>
@@ -98,7 +98,7 @@ export default function CategoryProblemsPage() {
               {p.severity === 'critical' && (
                 <AlertTriangle size={15} className="shrink-0 text-red-500" />
               )}
-              <ChevronRight size={16} className="shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-indigo-400" />
+              <ChevronRight size={16} className="shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-zappy-400" />
             </button>
           ))}
         </div>

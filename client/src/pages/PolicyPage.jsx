@@ -21,7 +21,7 @@ export default function PolicyPage() {
             <ChevronLeft size={18} className="text-slate-600" />
           </button>
           <div className="flex items-center gap-2 min-w-0">
-            <div className="w-8 h-8 rounded-xl bg-indigo-600 flex items-center justify-center shrink-0"><FileText size={16} className="text-white" /></div>
+            <div className="w-8 h-8 rounded-xl bg-zappy-600 flex items-center justify-center shrink-0"><FileText size={16} className="text-white" /></div>
             <h1 className="font-extrabold text-lg text-[#0F172A] truncate">{policy?.title || 'Policy'}</h1>
           </div>
         </div>
@@ -29,7 +29,7 @@ export default function PolicyPage() {
 
       <div className="max-w-2xl mx-auto px-4 py-5">
         {isLoading ? (
-          <div className="flex justify-center py-16"><Loader2 size={24} className="animate-spin text-indigo-500" /></div>
+          <div className="flex justify-center py-16"><Loader2 size={24} className="animate-spin text-zappy-500" /></div>
         ) : isError || !policy ? (
           <div className="text-center py-16 text-slate-400">
             <FileText size={40} className="mx-auto mb-3 opacity-40" />

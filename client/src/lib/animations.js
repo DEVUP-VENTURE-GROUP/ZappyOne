@@ -130,9 +130,9 @@ export const iconPop = {
 export const pulseGlow = {
   animate: {
     boxShadow: [
-      '0 0 0 0px rgba(99,102,241,0.4)',
-      '0 0 0 10px rgba(99,102,241,0)',
-      '0 0 0 0px rgba(99,102,241,0)',
+      '0 0 0 0px rgba(59,130,246,0.4)',
+      '0 0 0 10px rgba(59,130,246,0)',
+      '0 0 0 0px rgba(59,130,246,0)',
     ],
     transition: reducedMotion
       ? { duration: 0 }

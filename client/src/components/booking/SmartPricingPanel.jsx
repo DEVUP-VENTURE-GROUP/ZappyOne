@@ -23,8 +23,8 @@ function buildTiers(priorityMult, expressMult) {
     {
       key: 'express', label: 'Express', desc: 'Nearest worker, instant match',
       icon: '⚡', etaOffset: -6, multiplier: expressMult,
-      badge: 'Quickest', badgeCls: 'bg-indigo-100 text-indigo-700', ring: 'ring-indigo-200',
-      activeBg: 'linear-gradient(135deg, #3730a3 0%, #4f46e5 100%)', activeTxt: 'text-white',
+      badge: 'Quickest', badgeCls: 'bg-zappy-100 text-zappy-700', ring: 'ring-zappy-200',
+      activeBg: 'linear-gradient(135deg, #1E40AF 0%, #2563EB 100%)', activeTxt: 'text-white',
     },
   ];
 }
@@ -353,7 +353,7 @@ export default function SmartPricingPanel({
                       <BRow label="Base visit fee" value={`₹${quote.baseVisitFee}`} />
                       {quote.distanceFee > 0 && <BRow label={`Distance · ${quote.distanceKm} km`} value={`₹${quote.distanceFee}`} />}
                       {quote.emergencySurcharge > 0 && <BRow label="Emergency" value={`+₹${quote.emergencySurcharge}`} cls="text-red-600 font-bold" />}
-                      {quote.nightSurcharge > 0 && <BRow label="Night" value={`+₹${quote.nightSurcharge}`} cls="text-indigo-600 font-bold" />}
+                      {quote.nightSurcharge > 0 && <BRow label="Night" value={`+₹${quote.nightSurcharge}`} cls="text-zappy-600 font-bold" />}
                     </>
                   )}
                   {/* Tier markup */}

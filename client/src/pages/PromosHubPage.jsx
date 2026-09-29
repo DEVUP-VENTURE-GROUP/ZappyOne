@@ -31,7 +31,7 @@ function PromoCard({ promo }) {
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-mono font-bold text-indigo-600 text-base tracking-wider">{promo.code}</span>
+              <span className="font-mono font-bold text-zappy-600 text-base tracking-wider">{promo.code}</span>
               {promo.alreadyUsed && (
                 <span className="text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">Used</span>
               )}
@@ -52,7 +52,7 @@ function PromoCard({ promo }) {
         {promo.services?.length > 0 && (
           <div className="mt-2 flex gap-1 flex-wrap">
             {promo.services.map(s => (
-              <span key={s} className="text-xs bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full">{serviceLabel(s)}</span>
+              <span key={s} className="text-xs bg-zappy-50 text-zappy-600 px-2 py-0.5 rounded-full">{serviceLabel(s)}</span>
             ))}
           </div>
         )}
@@ -69,7 +69,7 @@ function PromoCard({ promo }) {
           {!promo.alreadyUsed && (
             <button
               onClick={copy}
-              className="flex items-center gap-1.5 text-xs font-medium bg-indigo-50 text-indigo-600 px-3 py-1.5 rounded-lg active:bg-indigo-100"
+              className="flex items-center gap-1.5 text-xs font-medium bg-zappy-50 text-zappy-600 px-3 py-1.5 rounded-lg active:bg-zappy-100"
             >
               {copied ? <CheckCheck className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
               {copied ? 'Copied!' : 'Copy code'}
@@ -96,7 +96,7 @@ export default function PromosHubPage() {
         </button>
         <h1 className="font-semibold text-slate-800">Promo Codes</h1>
         {available.length > 0 && (
-          <span className="ml-auto text-xs bg-indigo-600 text-white px-2 py-0.5 rounded-full font-medium">
+          <span className="ml-auto text-xs bg-zappy-600 text-white px-2 py-0.5 rounded-full font-medium">
             {available.length} available
           </span>
         )}
@@ -104,7 +104,7 @@ export default function PromosHubPage() {
 
       {isLoading ? (
         <div className="flex items-center justify-center h-60">
-          <div className="w-7 h-7 rounded-full border-2 border-indigo-200 border-t-indigo-600 animate-spin" />
+          <div className="w-7 h-7 rounded-full border-2 border-zappy-200 border-t-zappy-600 animate-spin" />
         </div>
       ) : promos.length === 0 ? (
         <div className="text-center py-16 text-slate-400 px-6">

@@ -168,7 +168,7 @@ export default function PetBookingFlowPage() {
             <div className="text-center py-10 text-slate-400">
               <PawPrint size={28} className="mx-auto mb-2 text-slate-300" />
               <p className="text-sm">Add a pet first.</p>
-              <button type="button" onClick={() => nav('/pet/my-pets')} className="mt-3 text-indigo-600 font-bold text-sm">Add a pet</button>
+              <button type="button" onClick={() => nav('/pet/my-pets')} className="mt-3 text-zappy-600 font-bold text-sm">Add a pet</button>
             </div>
           )}
           <div className="space-y-2">
@@ -176,11 +176,11 @@ export default function PetBookingFlowPage() {
               <button
                 key={p._id} type="button" onClick={() => togglePet(p._id)}
                 className={`w-full flex items-center gap-3 rounded-2xl border-2 p-4 text-left ${
-                  selectedPetIds.includes(p._id) ? 'border-indigo-500 bg-indigo-50/60' : 'border-slate-200 bg-white'
+                  selectedPetIds.includes(p._id) ? 'border-zappy-500 bg-zappy-50/60' : 'border-slate-200 bg-white'
                 }`}
               >
                 <span className={`shrink-0 w-6 h-6 rounded-lg border-2 grid place-items-center ${
-                  selectedPetIds.includes(p._id) ? 'border-indigo-500 bg-indigo-500 text-white' : 'border-slate-300'
+                  selectedPetIds.includes(p._id) ? 'border-zappy-500 bg-zappy-500 text-white' : 'border-slate-300'
                 }`}><Check size={14} strokeWidth={3} /></span>
                 <span className="font-bold text-[#0F172A]">{p.name}</span>
                 <span className="text-xs text-slate-400 capitalize ml-auto">{p.species} · {p.size?.replace('_', ' ')}</span>
@@ -201,7 +201,7 @@ export default function PetBookingFlowPage() {
                 key={v.code} type="button"
                 onClick={() => pickVariant(v)}
                 className={`w-full flex items-center justify-between rounded-2xl border-2 p-4 text-left ${
-                  selectedPetIds.every((id) => variantByPet[id] === v.code) ? 'border-indigo-500 bg-indigo-50/60' : 'border-slate-200 bg-white'
+                  selectedPetIds.every((id) => variantByPet[id] === v.code) ? 'border-zappy-500 bg-zappy-50/60' : 'border-slate-200 bg-white'
                 }`}
               >
                 <span>
@@ -248,7 +248,7 @@ export default function PetBookingFlowPage() {
           )}
           <button type="button" onClick={() => setPickerFor('loc')}
             className="w-full flex items-center gap-3 rounded-2xl border-2 border-slate-200 bg-white p-4 text-left">
-            <MapPin size={18} className="text-indigo-500 shrink-0" />
+            <MapPin size={18} className="text-zappy-500 shrink-0" />
             <span className="min-w-0">
               <span className="block text-xs text-slate-400">Where</span>
               <span className="block font-bold text-[#0F172A] truncate">{loc?.address || 'Choose a location'}</span>
@@ -269,12 +269,12 @@ export default function PetBookingFlowPage() {
             {quoting ? <Loader2 size={16} className="animate-spin mx-auto" /> : 'See the price'}
           </button>
           {quote && (
-            <div className="rounded-2xl border-2 border-indigo-100 bg-indigo-50/50 p-4 space-y-1 text-sm">
+            <div className="rounded-2xl border-2 border-zappy-100 bg-zappy-50/50 p-4 space-y-1 text-sm">
               {quote.lines.map((l, i) => (
                 <div key={i} className="flex justify-between"><span>{selectedPets[i]?.name}</span><span>{formatPaise(l.linePaise)}</span></div>
               ))}
               {quote.travelPaise > 0 && <div className="flex justify-between text-slate-500"><span>Travel</span><span>{formatPaise(quote.travelPaise)}</span></div>}
-              <div className="flex justify-between font-black pt-1 border-t border-indigo-100"><span>Total</span><span>{formatPaise(quote.totalPaise)}</span></div>
+              <div className="flex justify-between font-black pt-1 border-t border-zappy-100"><span>Total</span><span>{formatPaise(quote.totalPaise)}</span></div>
             </div>
           )}
           <button type="button" onClick={findProviders} disabled={!loc || searching}
@@ -330,7 +330,7 @@ export default function PetBookingFlowPage() {
             <p className="text-slate-500">{primaryVariant?.name} · {selectedPets.map((p) => p.name).join(', ')}</p>
           </div>
           {quote && (
-            <div className="rounded-2xl border-2 border-indigo-100 bg-indigo-50/50 p-4 flex justify-between font-black">
+            <div className="rounded-2xl border-2 border-zappy-100 bg-zappy-50/50 p-4 flex justify-between font-black">
               <span>Total</span><span>{formatPaise(quote.totalPaise)}</span>
             </div>
           )}
@@ -379,7 +379,7 @@ function AddonsStep({ categoryCode, selectedPets, variantByPet, addonsByPet, set
             <button
               key={a.code} type="button" onClick={() => toggle(p._id, a.code)}
               className={`w-full flex items-center justify-between rounded-xl border-2 p-3 text-left text-sm ${
-                (addonsByPet[p._id] || []).includes(a.code) ? 'border-indigo-500 bg-indigo-50/60' : 'border-slate-200 bg-white'
+                (addonsByPet[p._id] || []).includes(a.code) ? 'border-zappy-500 bg-zappy-50/60' : 'border-slate-200 bg-white'
               }`}
             >
               <span>{a.name}</span>

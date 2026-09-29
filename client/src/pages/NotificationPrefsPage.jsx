@@ -16,7 +16,7 @@ function Toggle({ checked, onChange }) {
   return (
     <button
       onClick={onChange}
-      className={`w-11 h-6 rounded-full transition-colors relative flex-shrink-0 ${checked ? 'bg-indigo-600' : 'bg-slate-200'}`}
+      className={`w-11 h-6 rounded-full transition-colors relative flex-shrink-0 ${checked ? 'bg-zappy-600' : 'bg-slate-200'}`}
     >
       <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${checked ? 'translate-x-5' : 'translate-x-0.5'}`} />
     </button>
@@ -65,7 +65,7 @@ export default function NotificationPrefsPage() {
 
       {isLoading || !prefs ? (
         <div className="flex items-center justify-center h-60">
-          <div className="w-7 h-7 rounded-full border-2 border-indigo-200 border-t-indigo-600 animate-spin" />
+          <div className="w-7 h-7 rounded-full border-2 border-zappy-200 border-t-zappy-600 animate-spin" />
         </div>
       ) : (
         <div className="p-4">

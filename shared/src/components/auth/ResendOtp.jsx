@@ -35,7 +35,7 @@ export default function ResendOtp({
 }) {
   const dark = tone === 'dark';
   const T = {
-    action:   dark ? 'text-violet-300 hover:text-violet-200' : 'text-indigo-600 hover:text-indigo-700',
+    action:   dark ? 'text-violet-300 hover:text-violet-200' : 'text-zappy-600 hover:text-zappy-700',
     disabled: dark ? 'text-white/35 cursor-not-allowed'      : 'text-slate-400 cursor-not-allowed',
     muted:    dark ? 'text-white/40'                          : 'text-slate-400',
     warn:     dark ? 'text-amber-300'                         : 'text-amber-600',

@@ -23,7 +23,7 @@ export default function PetBookingsListPage() {
       </div>
 
       <div className="max-w-lg mx-auto px-4 py-4 space-y-2.5">
-        {isLoading && <div className="flex justify-center py-16"><Loader2 size={24} className="animate-spin text-indigo-400" /></div>}
+        {isLoading && <div className="flex justify-center py-16"><Loader2 size={24} className="animate-spin text-zappy-400" /></div>}
         {!isLoading && !bookings.length && (
           <div className="text-center py-12 text-slate-400">
             <Calendar size={28} className="mx-auto mb-2 text-slate-300" />

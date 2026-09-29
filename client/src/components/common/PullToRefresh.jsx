@@ -70,7 +70,7 @@ export default function PullToRefresh({ onRefresh, children, className = '' }) {
               animate={refreshing ? { rotate: 360 } : { rotate: progress * 270, scale: 0.7 + progress * 0.3 }}
               transition={refreshing ? { repeat: Infinity, duration: 0.7, ease: 'linear' } : { duration: 0 }}
             >
-              <Zap size={18} className={progress >= 1 || refreshing ? 'text-indigo-600 fill-indigo-600' : 'text-slate-400'} strokeWidth={2.5} />
+              <Zap size={18} className={progress >= 1 || refreshing ? 'text-zappy-600 fill-zappy-600' : 'text-slate-400'} strokeWidth={2.5} />
             </motion.div>
           </div>
         </motion.div>

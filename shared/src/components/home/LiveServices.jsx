@@ -134,7 +134,7 @@ function ServiceCard({ service, onOpenService, onOpenCategory }) {
       {/* Horizontal scrollable carousel — Swiggy/Zomato style */}
       {coverage.length > 0 && (
         <div className="relative border-t border-slate-100">
-          <div className="flex gap-2.5 overflow-x-auto no-scrollbar px-4 py-3.5 snap-x scroll-smooth">
+          <div className="flex gap-2.5 overflow-x-auto no-scrollbar px-4 py-3.5 snap-x scroll-px-4 scroll-smooth">
             {coverage.map((group) => (
               <CategoryTile
                 key={group.code}

@@ -39,14 +39,14 @@ function RescheduleSheet({ order, onClose }) {
               min={minDateTime}
               onChange={e => setDateTime(e.target.value)}
               required
-              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zappy-400"
             />
           </div>
           {error && <p className="text-xs text-rose-500">{error}</p>}
           <button
             type="submit"
             disabled={!dateTime || isLoading}
-            className="w-full py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-medium disabled:opacity-50"
+            className="w-full py-2.5 rounded-xl bg-zappy-600 text-white text-sm font-medium disabled:opacity-50"
           >
             {isLoading ? 'Saving…' : 'Confirm Reschedule'}
           </button>
@@ -76,7 +76,7 @@ export default function ScheduledBookingsPage() {
 
       {isLoading ? (
         <div className="flex items-center justify-center h-60">
-          <div className="w-7 h-7 rounded-full border-2 border-indigo-200 border-t-indigo-600 animate-spin" />
+          <div className="w-7 h-7 rounded-full border-2 border-zappy-200 border-t-zappy-600 animate-spin" />
         </div>
       ) : scheduled.length === 0 ? (
         <div className="text-center py-16 text-slate-400 px-6">
@@ -90,9 +90,9 @@ export default function ScheduledBookingsPage() {
             const dt = new Date(o.scheduledAt);
             return (
               <div key={o._id} className="bg-white rounded-xl shadow-sm p-4 flex items-center gap-3">
-                <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-indigo-50 flex flex-col items-center justify-center">
-                  <span className="text-lg font-bold text-indigo-600 leading-none">{dt.getDate()}</span>
-                  <span className="text-xs text-indigo-400">{dt.toLocaleDateString('en-IN', { month: 'short' })}</span>
+                <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-zappy-50 flex flex-col items-center justify-center">
+                  <span className="text-lg font-bold text-zappy-600 leading-none">{dt.getDate()}</span>
+                  <span className="text-xs text-zappy-400">{dt.toLocaleDateString('en-IN', { month: 'short' })}</span>
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-slate-800">{serviceLabel(o.service)}</p>
@@ -103,7 +103,7 @@ export default function ScheduledBookingsPage() {
                 </div>
                 <button
                   onClick={() => setRescheduling(o)}
-                  className="flex items-center gap-1 text-xs text-indigo-600 font-medium px-2 py-1 rounded-lg hover:bg-indigo-50"
+                  className="flex items-center gap-1 text-xs text-zappy-600 font-medium px-2 py-1 rounded-lg hover:bg-zappy-50"
                 >
                   Reschedule <ChevronRight className="w-3.5 h-3.5" />
                 </button>

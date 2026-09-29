@@ -57,7 +57,7 @@ export default function WorkerHelpingTasksPage() {
 
       <div className="max-w-lg mx-auto px-4 py-4 space-y-2.5">
         <ActiveJobs items={myJobs} />
-        {isLoading && <div className="flex justify-center py-16"><Loader2 size={24} className="animate-spin text-indigo-400" /></div>}
+        {isLoading && <div className="flex justify-center py-16"><Loader2 size={24} className="animate-spin text-zappy-400" /></div>}
 
         {!isLoading && !(data?.tasks || []).length && (
           <p className="text-center text-sm text-slate-400 py-16">Nothing nearby right now.</p>
@@ -67,7 +67,7 @@ export default function WorkerHelpingTasksPage() {
           <div key={t._id} className="rounded-2xl border-2 border-slate-200 bg-white p-4 space-y-2.5">
             <div className="flex items-start justify-between">
               <div className="min-w-0">
-                <p className="text-[11px] font-bold uppercase tracking-wide text-indigo-500">
+                <p className="text-[11px] font-bold uppercase tracking-wide text-zappy-500">
                   {t.serviceType} {t.itemCount ? `· ${t.itemCount} item${t.itemCount > 1 ? 's' : ''}` : ''}
                 </p>
                 <p className="font-bold text-[#0F172A] mt-0.5 truncate">{t.pickupAddress}</p>

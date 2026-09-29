@@ -5,7 +5,7 @@ import { ArrowLeft, Target, Zap, TrendingUp, Plus, Edit2, Check, Loader2, X, Che
 import toast from 'react-hot-toast';
 import { useGetWorkerGoalsQuery, useSetWorkerGoalMutation, useGetZoneBenchmarkQuery } from '../../services/api';
 
-function ProgressRing({ pct, size = 96, stroke = 8, color = '#6366f1' }) {
+function ProgressRing({ pct, size = 96, stroke = 8, color = '#3B82F6' }) {
   const r = (size - stroke) / 2;
   const circ = 2 * Math.PI * r;
   const dash = (Math.min(pct, 100) / 100) * circ;
@@ -39,10 +39,10 @@ function GoalCard({ goal, onEdit, index }) {
   const bgGrad = pct >= 100 
     ? 'from-emerald-500 to-teal-600' 
     : pct >= 60 
-    ? 'from-indigo-500 to-violet-600' 
+    ? 'from-zappy-500 to-violet-600' 
     : 'from-amber-400 to-orange-500';
 
-  const ringColor = pct >= 100 ? '#10b981' : pct >= 60 ? '#6366f1' : '#f59e0b';
+  const ringColor = pct >= 100 ? '#10b981' : pct >= 60 ? '#3B82F6' : '#f59e0b';
 
   return (
     <motion.div
@@ -69,7 +69,7 @@ function GoalCard({ goal, onEdit, index }) {
                 </motion.span>
               )}
             </div>
-            <button onClick={onEdit} className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-indigo-600 transition-colors shadow-sm border border-slate-100">
+            <button onClick={onEdit} className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-zappy-600 transition-colors shadow-sm border border-slate-100">
               <Edit2 size={13} strokeWidth={2.5} />
             </button>
           </div>
@@ -141,11 +141,11 @@ function SetGoalSheet({ period, currentTarget, onClose }) {
         <form onSubmit={submit} className="space-y-6">
           <div className="relative group">
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <span className="text-2xl font-black text-slate-300 group-focus-within:text-indigo-400 transition-colors">₹</span>
+              <span className="text-2xl font-black text-slate-300 group-focus-within:text-zappy-400 transition-colors">₹</span>
             </div>
             <input type="number" min={1} step={1} value={val} onChange={e => setVal(e.target.value)}
               placeholder="0" 
-              className="w-full text-4xl font-black text-slate-800 outline-none bg-slate-50 rounded-2xl py-6 pl-10 pr-4 border-2 border-transparent focus:border-indigo-500 focus:bg-white transition-all shadow-inner" 
+              className="w-full text-4xl font-black text-slate-800 outline-none bg-slate-50 rounded-2xl py-6 pl-10 pr-4 border-2 border-transparent focus:border-zappy-500 focus:bg-white transition-all shadow-inner" 
             />
           </div>
           
@@ -154,7 +154,7 @@ function SetGoalSheet({ period, currentTarget, onClose }) {
             <div className="grid grid-cols-4 gap-2">
               {PRESETS.map(p => (
                 <button key={p} type="button" onClick={() => setVal(String(p))}
-                  className="py-2.5 rounded-xl border border-slate-200 bg-white text-slate-600 font-bold text-sm hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-700 transition-colors shadow-sm active:scale-95">
+                  className="py-2.5 rounded-xl border border-slate-200 bg-white text-slate-600 font-bold text-sm hover:bg-zappy-50 hover:border-zappy-200 hover:text-zappy-700 transition-colors shadow-sm active:scale-95">
                   ₹{p >= 1000 ? `${p / 1000}K` : p}
                 </button>
               ))}
@@ -162,7 +162,7 @@ function SetGoalSheet({ period, currentTarget, onClose }) {
           </div>
           
           <button type="submit" disabled={isLoading}
-            className="w-full py-4 rounded-[1.25rem] bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[15px] flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg shadow-indigo-600/20 transition-all active:scale-[0.98]">
+            className="w-full py-4 rounded-[1.25rem] bg-zappy-600 hover:bg-zappy-700 text-white font-black text-[15px] flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg shadow-zappy-600/20 transition-all active:scale-[0.98]">
             {isLoading ? <Loader2 size={18} className="animate-spin" /> : <Check size={18} strokeWidth={2.5} />}
             Save Target
           </button>
@@ -183,13 +183,13 @@ export default function WorkerGoalsPage() {
   const weeklyGoal = goals.find(g => g.period === 'weekly');
 
   return (
-    <div className="min-h-screen bg-slate-50 md:flex md:justify-center md:bg-gradient-to-br md:from-slate-100 md:to-indigo-50/40">
+    <div className="min-h-screen bg-slate-50 md:flex md:justify-center md:bg-gradient-to-br md:from-slate-100 md:to-zappy-50/40">
       <div className="w-full max-w-lg lg:max-w-2xl bg-slate-50 min-h-screen relative shadow-[0_0_40px_rgba(0,0,0,0.05)] lg:shadow-[0_0_60px_rgba(0,0,0,0.08)] md:border-x border-slate-200/60">
         
         {/* Cinematic Header */}
         <header className="relative pt-6 pb-20 overflow-hidden rounded-b-[2.5rem] shadow-sm z-10" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #1e3a5f 100%)' }}>
           <motion.div className="absolute -top-10 -right-10 w-64 h-64 bg-fuchsia-500/20 rounded-full blur-3xl" animate={{ scale: [1, 1.2, 1], opacity: [0.4, 0.7, 0.4] }} transition={{ duration: 5, repeat: Infinity }} />
-          <motion.div className="absolute -bottom-20 -left-10 w-56 h-56 bg-indigo-500/20 rounded-full blur-3xl" animate={{ scale: [1, 1.3, 1], opacity: [0.3, 0.6, 0.3] }} transition={{ duration: 6, repeat: Infinity, delay: 1 }} />
+          <motion.div className="absolute -bottom-20 -left-10 w-56 h-56 bg-zappy-500/20 rounded-full blur-3xl" animate={{ scale: [1, 1.3, 1], opacity: [0.3, 0.6, 0.3] }} transition={{ duration: 6, repeat: Infinity, delay: 1 }} />
           
           <div className="relative z-10 px-5">
             <div className="flex items-center justify-between mb-6">
@@ -213,20 +213,20 @@ export default function WorkerGoalsPage() {
           {/* Benchmark card */}
           <AnimatePresence>
             {benchmark && (
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-gradient-to-br from-indigo-600 to-indigo-800 rounded-[1.5rem] p-5 text-white shadow-lg shadow-indigo-900/20 border border-indigo-500/30 relative overflow-hidden">
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-gradient-to-br from-zappy-600 to-zappy-800 rounded-[1.5rem] p-5 text-white shadow-lg shadow-zappy-900/20 border border-zappy-500/30 relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-4 opacity-10"><TrendingUp size={80} /></div>
                 <div className="relative z-10">
                   <div className="flex items-center gap-2 mb-2">
                     <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center"><TrendingUp size={12} className="text-white" /></div>
-                    <p className="text-[10px] text-indigo-200 font-bold uppercase tracking-widest">Zone Benchmark</p>
+                    <p className="text-[10px] text-zappy-200 font-bold uppercase tracking-widest">Zone Benchmark</p>
                   </div>
                   <div className="flex items-baseline gap-2">
                     <p className="text-3xl font-black">Top {Math.round(100 - benchmark.percentile)}%</p>
-                    <span className="text-indigo-300 text-xs font-bold">in your zone</span>
+                    <span className="text-zappy-300 text-xs font-bold">in your zone</span>
                   </div>
-                  <p className="text-xs text-indigo-200 mt-1 font-medium bg-white/10 inline-block px-2.5 py-1 rounded-full border border-white/10">Avg earning: ₹{(benchmark.zoneAvgPaise / 100).toFixed(0)} / week</p>
+                  <p className="text-xs text-zappy-200 mt-1 font-medium bg-white/10 inline-block px-2.5 py-1 rounded-full border border-white/10">Avg earning: ₹{(benchmark.zoneAvgPaise / 100).toFixed(0)} / week</p>
                   
-                  <div className="mt-4 h-2 bg-indigo-900/50 rounded-full overflow-hidden shadow-inner">
+                  <div className="mt-4 h-2 bg-zappy-900/50 rounded-full overflow-hidden shadow-inner">
                     <motion.div initial={{ width: 0 }} animate={{ width: `${benchmark.percentile}%` }} transition={{ duration: 1, delay: 0.5 }} className="h-full bg-gradient-to-r from-teal-300 to-emerald-400 rounded-full" />
                   </div>
                 </div>
@@ -236,7 +236,7 @@ export default function WorkerGoalsPage() {
 
           {isLoading ? (
             <div className="flex flex-col justify-center items-center py-12">
-              <Loader2 size={24} className="animate-spin text-indigo-400 mb-3" />
+              <Loader2 size={24} className="animate-spin text-zappy-400 mb-3" />
               <p className="text-sm font-semibold text-slate-400">Loading goals...</p>
             </div>
           ) : (
@@ -246,7 +246,7 @@ export default function WorkerGoalsPage() {
                 <div className="flex items-center justify-between mb-3 px-2">
                   <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Daily Goal</p>
                   {!dailyGoal && (
-                    <button onClick={() => setEditPeriod('daily')} className="text-[11px] font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full flex items-center gap-1 hover:bg-indigo-100 transition-colors">
+                    <button onClick={() => setEditPeriod('daily')} className="text-[11px] font-bold text-zappy-600 bg-zappy-50 px-2.5 py-1 rounded-full flex items-center gap-1 hover:bg-zappy-100 transition-colors">
                       <Plus size={12} strokeWidth={2.5} /> Set Target
                     </button>
                   )}
@@ -255,12 +255,12 @@ export default function WorkerGoalsPage() {
                   <GoalCard goal={dailyGoal} onEdit={() => setEditPeriod('daily')} index={1} />
                 ) : (
                   <button onClick={() => setEditPeriod('daily')}
-                    className="w-full bg-white rounded-[1.5rem] border-2 border-dashed border-slate-200 p-8 flex flex-col items-center text-slate-400 gap-3 hover:bg-slate-50 hover:border-indigo-300 hover:text-indigo-500 transition-all group shadow-sm">
-                    <div className="w-14 h-14 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-indigo-50 transition-colors">
+                    className="w-full bg-white rounded-[1.5rem] border-2 border-dashed border-slate-200 p-8 flex flex-col items-center text-slate-400 gap-3 hover:bg-slate-50 hover:border-zappy-300 hover:text-zappy-500 transition-all group shadow-sm">
+                    <div className="w-14 h-14 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-zappy-50 transition-colors">
                       <Target size={24} strokeWidth={2} className="opacity-40 group-hover:opacity-100" />
                     </div>
                     <div>
-                      <p className="text-[15px] font-bold text-slate-600 group-hover:text-indigo-600">Set Daily Target</p>
+                      <p className="text-[15px] font-bold text-slate-600 group-hover:text-zappy-600">Set Daily Target</p>
                       <p className="text-xs mt-1 opacity-70">Boost your daily motivation</p>
                     </div>
                   </button>
@@ -272,7 +272,7 @@ export default function WorkerGoalsPage() {
                 <div className="flex items-center justify-between mb-3 px-2 mt-2">
                   <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Weekly Goal</p>
                   {!weeklyGoal && (
-                    <button onClick={() => setEditPeriod('weekly')} className="text-[11px] font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full flex items-center gap-1 hover:bg-indigo-100 transition-colors">
+                    <button onClick={() => setEditPeriod('weekly')} className="text-[11px] font-bold text-zappy-600 bg-zappy-50 px-2.5 py-1 rounded-full flex items-center gap-1 hover:bg-zappy-100 transition-colors">
                       <Plus size={12} strokeWidth={2.5} /> Set Target
                     </button>
                   )}
@@ -281,12 +281,12 @@ export default function WorkerGoalsPage() {
                   <GoalCard goal={weeklyGoal} onEdit={() => setEditPeriod('weekly')} index={2} />
                 ) : (
                   <button onClick={() => setEditPeriod('weekly')}
-                    className="w-full bg-white rounded-[1.5rem] border-2 border-dashed border-slate-200 p-8 flex flex-col items-center text-slate-400 gap-3 hover:bg-slate-50 hover:border-indigo-300 hover:text-indigo-500 transition-all group shadow-sm">
-                    <div className="w-14 h-14 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-indigo-50 transition-colors">
+                    className="w-full bg-white rounded-[1.5rem] border-2 border-dashed border-slate-200 p-8 flex flex-col items-center text-slate-400 gap-3 hover:bg-slate-50 hover:border-zappy-300 hover:text-zappy-500 transition-all group shadow-sm">
+                    <div className="w-14 h-14 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-zappy-50 transition-colors">
                       <Target size={24} strokeWidth={2} className="opacity-40 group-hover:opacity-100" />
                     </div>
                     <div>
-                      <p className="text-[15px] font-bold text-slate-600 group-hover:text-indigo-600">Set Weekly Target</p>
+                      <p className="text-[15px] font-bold text-slate-600 group-hover:text-zappy-600">Set Weekly Target</p>
                       <p className="text-xs mt-1 opacity-70">Plan your weekly income</p>
                     </div>
                   </button>

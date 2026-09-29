@@ -25,7 +25,7 @@ export function SectionTitle({ id, title, action, onAction }) {
 /** Scrolls sideways on a phone, lays out as a grid when there's room. */
 function Row({ children, cols = 'sm:grid-cols-2 lg:grid-cols-3' }) {
   return (
-    <div className={`-mx-4 mt-3 flex snap-x gap-3 overflow-x-auto px-4 pb-1 no-scrollbar sm:mx-0 sm:grid sm:overflow-visible sm:px-0 ${cols}`}>
+    <div className={`-mx-4 mt-3 flex snap-x scroll-px-4 gap-3 overflow-x-auto px-4 pb-1 no-scrollbar sm:mx-0 sm:grid sm:overflow-visible sm:px-0 sm:scroll-px-0 ${cols}`}>
       {children}
     </div>
   );

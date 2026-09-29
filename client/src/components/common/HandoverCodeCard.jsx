@@ -77,7 +77,7 @@ export default function HandoverCodeCard({
       transition={{ type: 'spring', damping: 20, stiffness: 260 }}
       className="overflow-hidden rounded-[24px] border border-white/10"
       style={{
-        background: 'linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)',
+        background: 'linear-gradient(135deg, #7c3aed 0%, #2563EB 100%)',
         boxShadow: '0 12px 32px -4px rgba(124,58,237,0.4)',
       }}
     >

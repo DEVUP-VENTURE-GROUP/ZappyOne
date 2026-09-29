@@ -66,12 +66,12 @@ export default function ReadyModeCard() {
           ? 'border-emerald-300 bg-gradient-to-br from-emerald-50 to-teal-50'
           : blocked
             ? 'border-slate-200 bg-slate-50'
-            : 'border-indigo-200 bg-gradient-to-br from-indigo-50 to-violet-50'
+            : 'border-zappy-200 bg-gradient-to-br from-zappy-50 to-violet-50'
       }`}
     >
       <div className="flex items-start gap-3">
         <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-          ready ? 'bg-emerald-500' : blocked ? 'bg-slate-300' : 'bg-indigo-500'
+          ready ? 'bg-emerald-500' : blocked ? 'bg-slate-300' : 'bg-zappy-500'
         }`}>
           {blocked ? <Lock size={17} className="text-white" /> : <Zap size={18} className="text-white fill-white" />}
         </div>
@@ -115,7 +115,7 @@ export default function ReadyModeCard() {
           className={`mt-3 w-full h-10 rounded-xl font-black text-[13px] flex items-center justify-center gap-2 transition-colors disabled:opacity-60 ${
             ready
               ? 'bg-white text-emerald-700 border border-emerald-300'
-              : 'bg-indigo-600 text-white'
+              : 'bg-zappy-600 text-white'
           }`}
         >
           {saving

@@ -87,7 +87,7 @@ export default function PlansPage() {
         
         {/* Dark Cinematic Background */}
         <div className="absolute top-0 left-0 w-full h-96 overflow-hidden pointer-events-none">
-          <div className="absolute -top-32 -left-32 w-96 h-96 bg-indigo-500/20 rounded-full blur-[100px]" />
+          <div className="absolute -top-32 -left-32 w-96 h-96 bg-zappy-500/20 rounded-full blur-[100px]" />
           <div className="absolute -top-32 -right-32 w-96 h-96 bg-amber-500/20 rounded-full blur-[100px]" />
           <div className="absolute top-32 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-gradient-to-b from-slate-900/0 via-slate-900/80 to-slate-900" />
         </div>
@@ -218,7 +218,7 @@ export default function PlansPage() {
                           <h3 className={`font-black text-2xl tracking-tight ${isPremium ? 'bg-clip-text text-transparent bg-gradient-to-r from-amber-200 to-amber-500' : 'text-white'}`}>{plan.name}</h3>
                           {plan.description && <p className="text-[13px] text-slate-400 mt-1.5 max-w-[200px] leading-relaxed">{plan.description}</p>}
                           {plan.trialDays > 0 && (
-                            <span className={`inline-flex items-center gap-1.5 mt-3 text-[10px] font-black px-2.5 py-1 rounded border uppercase tracking-widest ${isPremium ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20'}`}>
+                            <span className={`inline-flex items-center gap-1.5 mt-3 text-[10px] font-black px-2.5 py-1 rounded border uppercase tracking-widest ${isPremium ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-zappy-500/10 text-zappy-400 border-zappy-500/20'}`}>
                               <Zap size={10} strokeWidth={2.5} />
                               {plan.trialDays} Day Free Trial
                             </span>
@@ -314,8 +314,8 @@ function CommissionCalculator({ plans, activePlanCode }) {
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-slate-800/80 backdrop-blur-xl border border-slate-700 rounded-[1.5rem] p-5 shadow-lg">
       <div className="flex items-center gap-3 mb-5">
-        <div className="w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center shadow-inner">
-          <TrendingUp size={18} strokeWidth={2.5} className="text-indigo-400" />
+        <div className="w-10 h-10 rounded-xl bg-zappy-500/20 border border-zappy-500/30 flex items-center justify-center shadow-inner">
+          <TrendingUp size={18} strokeWidth={2.5} className="text-zappy-400" />
         </div>
         <div>
           <p className="font-black text-white text-[15px] tracking-wide">ROI Calculator</p>

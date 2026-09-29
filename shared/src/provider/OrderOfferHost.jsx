@@ -24,7 +24,7 @@ const SERVICE_ICON_MAP = {
   cleaning:              { Icon: Sparkles,       bg: 'bg-purple-100',  color: 'text-purple-600' },
   painting:              { Icon: Paintbrush2,    bg: 'bg-pink-100',    color: 'text-pink-600'   },
   // Mobile phone
-  screen_replacement:    { Icon: Smartphone,     bg: 'bg-indigo-100',  color: 'text-indigo-600' },
+  screen_replacement:    { Icon: Smartphone,     bg: 'bg-zappy-100',  color: 'text-zappy-600' },
   battery_replacement:   { Icon: Battery,        bg: 'bg-emerald-100', color: 'text-emerald-600'},
   charging_issue:        { Icon: Bolt,           bg: 'bg-yellow-100',  color: 'text-yellow-600' },
   speaker_mic_issue:     { Icon: Layers,         bg: 'bg-violet-100',  color: 'text-violet-600' },
@@ -209,7 +209,7 @@ function OfferModal({ offer, onAccept, onReject, accepting }) {
           className="absolute inset-0 z-0"
           style={{
             background: isExpress
-              ? 'linear-gradient(135deg, #1e1b4b, #312e81)'
+              ? 'linear-gradient(135deg, #1e1b4b, #1E3A8A)'
               : isPriority
                 ? 'linear-gradient(135deg, #1c1007, #78350f)'
                 : 'linear-gradient(135deg, #0f172a, #1e293b)',
@@ -238,15 +238,15 @@ function OfferModal({ offer, onAccept, onReject, accepting }) {
                 className="w-32 h-32 rounded-full"
                 style={{
                   background: isExpress
-                    ? 'radial-gradient(circle, rgba(99,102,241,0.5), transparent)'
+                    ? 'radial-gradient(circle, rgba(59,130,246,0.5), transparent)'
                     : isPriority
                       ? 'radial-gradient(circle, rgba(251,191,36,0.4), transparent)'
-                      : 'radial-gradient(circle, rgba(99,102,241,0.3), transparent)',
+                      : 'radial-gradient(circle, rgba(59,130,246,0.3), transparent)',
                 }}
                 animate={{ scale: [1, 1.5, 1], opacity: [0.5, 1, 0.5] }}
                 transition={{ duration: 2, repeat: Infinity }}
               />
-              <MapPin size={36} strokeWidth={1.5} className={isExpress ? 'text-indigo-300 absolute' : isPriority ? 'text-amber-300 absolute' : 'text-indigo-400 absolute'} />
+              <MapPin size={36} strokeWidth={1.5} className={isExpress ? 'text-zappy-300 absolute' : isPriority ? 'text-amber-300 absolute' : 'text-zappy-400 absolute'} />
             </div>
           )}
           {/* Subtle vignette — keep the map (and pin) readable up top, darken toward the card */}
@@ -266,17 +266,17 @@ function OfferModal({ offer, onAccept, onReject, accepting }) {
             className="absolute top-4 left-4 px-3.5 py-2 rounded-2xl backdrop-blur-md"
             style={
               isExpress
-                ? { background: 'rgba(79,70,229,0.9)', border: '1px solid rgba(99,102,241,0.6)' }
+                ? { background: 'rgba(37,99,235,0.9)', border: '1px solid rgba(59,130,246,0.6)' }
                 : isPriority
                   ? { background: 'rgba(180,83,9,0.9)', border: '1px solid rgba(251,191,36,0.5)' }
-                  : { background: 'rgba(99,102,241,0.8)', border: '1px solid rgba(99,102,241,0.4)' }
+                  : { background: 'rgba(59,130,246,0.8)', border: '1px solid rgba(59,130,246,0.4)' }
             }
             animate={{
               boxShadow: isExpress
-                ? ['0 0 0 0px rgba(99,102,241,0.6)', '0 0 0 16px rgba(99,102,241,0)', '0 0 0 0px rgba(99,102,241,0)']
+                ? ['0 0 0 0px rgba(59,130,246,0.6)', '0 0 0 16px rgba(59,130,246,0)', '0 0 0 0px rgba(59,130,246,0)']
                 : isPriority
                   ? ['0 0 0 0px rgba(251,191,36,0.5)', '0 0 0 14px rgba(251,191,36,0)', '0 0 0 0px rgba(251,191,36,0)']
-                  : ['0 0 0 0px rgba(99,102,241,0.4)', '0 0 0 12px rgba(99,102,241,0)', '0 0 0 0px rgba(99,102,241,0)'],
+                  : ['0 0 0 0px rgba(59,130,246,0.4)', '0 0 0 12px rgba(59,130,246,0)', '0 0 0 0px rgba(59,130,246,0)'],
             }}
             transition={{ duration: isExpress ? 1.0 : 1.5, repeat: Infinity }}
           >
@@ -298,7 +298,7 @@ function OfferModal({ offer, onAccept, onReject, accepting }) {
         className="relative z-10 rounded-t-[32px] mt-auto"
         style={
           isExpress
-            ? { background: 'linear-gradient(160deg,#1e1b4b 0%,#312e81 60%,#1e1b4b 100%)', boxShadow: '0 -20px 80px rgba(79,70,229,0.5)' }
+            ? { background: 'linear-gradient(160deg,#1e1b4b 0%,#1E3A8A 60%,#1e1b4b 100%)', boxShadow: '0 -20px 80px rgba(37,99,235,0.5)' }
             : isPriority
               ? { background: 'linear-gradient(160deg,#1c1007 0%,#3b1f02 60%,#1c1007 100%)', boxShadow: '0 -20px 80px rgba(180,83,9,0.45)' }
               : { background: 'white', boxShadow: '0 -16px 60px rgba(0,0,0,0.25)' }
@@ -312,10 +312,10 @@ function OfferModal({ offer, onAccept, onReject, accepting }) {
               background: urgent
                 ? 'linear-gradient(90deg, #ef4444, #f97316)'
                 : isExpress
-                  ? 'linear-gradient(90deg, #a5b4fc, #818cf8, #c7d2fe)'
+                  ? 'linear-gradient(90deg, #93C5FD, #60A5FA, #BFDBFE)'
                   : isPriority
                     ? 'linear-gradient(90deg, #fbbf24, #f59e0b, #fcd34d)'
-                    : 'linear-gradient(90deg, #6366f1, #0ea5e9)',
+                    : 'linear-gradient(90deg, #3B82F6, #0ea5e9)',
             }}
             animate={{ width: `${Math.max(0, progress * 100)}%` }}
             transition={{ duration: 0.25, ease: 'linear' }}
@@ -341,15 +341,15 @@ function OfferModal({ offer, onAccept, onReject, accepting }) {
               <div className="flex items-center gap-2">
                 <span className="text-xl">{isExpress ? '⚡' : '⭐'}</span>
                 <div>
-                  <p className={`text-[13px] font-black ${isExpress ? 'text-indigo-200' : 'text-amber-300'}`}>
+                  <p className={`text-[13px] font-black ${isExpress ? 'text-zappy-200' : 'text-amber-300'}`}>
                     {isExpress ? 'Express Booking' : 'Priority Booking'}
                   </p>
-                  <p className={`text-[10px] ${isExpress ? 'text-indigo-400' : 'text-amber-500'}`}>
+                  <p className={`text-[10px] ${isExpress ? 'text-zappy-400' : 'text-amber-500'}`}>
                     {isExpress ? 'Nearest worker · Instant match · Higher pay' : '4.5★+ workers only · Premium rate'}
                   </p>
                 </div>
               </div>
-              <div className={`text-[11px] font-black px-2 py-1 rounded-full ${isExpress ? 'bg-indigo-500/30 text-indigo-200' : 'bg-amber-500/30 text-amber-200'}`}>
+              <div className={`text-[11px] font-black px-2 py-1 rounded-full ${isExpress ? 'bg-zappy-500/30 text-zappy-200' : 'bg-amber-500/30 text-amber-200'}`}>
                 {offer.tierMultiplier > 1 ? `${offer.tierMultiplier}× rate` : ''}
               </div>
             </motion.div>
@@ -374,7 +374,7 @@ function OfferModal({ offer, onAccept, onReject, accepting }) {
                     <motion.span
                       initial={{ scale: 0.8, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
-                      className="flex items-center gap-1 text-[10px] font-black text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-full ring-1 ring-indigo-300"
+                      className="flex items-center gap-1 text-[10px] font-black text-zappy-700 bg-zappy-100 px-2 py-0.5 rounded-full ring-1 ring-zappy-300"
                     >
                       <Zap size={9} strokeWidth={2.5} />
                       Express — Fast Accept
@@ -411,7 +411,7 @@ function OfferModal({ offer, onAccept, onReject, accepting }) {
                       Customer boosted!
                     </motion.span>
                   ) : !isExpress && !isPriority ? (
-                    <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full ring-1 ring-indigo-100">
+                    <span className="text-[10px] font-bold text-zappy-600 bg-zappy-50 px-2 py-0.5 rounded-full ring-1 ring-zappy-100">
                       Exclusive to you
                     </span>
                   ) : null}
@@ -434,7 +434,7 @@ function OfferModal({ offer, onAccept, onReject, accepting }) {
               className={`font-black leading-none tabular-nums ${
                 urgent ? 'text-red-400'
                 : offer.boostedBy ? 'text-orange-400'
-                : isExpress ? 'text-indigo-100'
+                : isExpress ? 'text-zappy-100'
                 : isPriority ? 'text-amber-200'
                 : 'text-slate-900'
               }`}
@@ -463,7 +463,7 @@ function OfferModal({ offer, onAccept, onReject, accepting }) {
                 <span className={`text-[9px] font-bold mt-0.5 ${isExpress || isPriority ? 'text-orange-400' : 'text-orange-500'}`}>Customer boosted offer!</span>
               </motion.div>
             ) : (
-              <Zap size={24} strokeWidth={2.5} className={urgent ? 'text-red-400' : isExpress ? 'text-indigo-300' : isPriority ? 'text-amber-300' : 'text-blue-600'} />
+              <Zap size={24} strokeWidth={2.5} className={urgent ? 'text-red-400' : isExpress ? 'text-zappy-300' : isPriority ? 'text-amber-300' : 'text-blue-600'} />
             )}
           </div>
 
@@ -481,7 +481,7 @@ function OfferModal({ offer, onAccept, onReject, accepting }) {
 
           {/* Rating + Verified */}
           <div className="flex items-center gap-3 mb-5">
-            <span className={`flex items-center gap-1 text-sm font-bold ${isExpress ? 'text-indigo-300' : isPriority ? 'text-amber-300' : 'text-blue-600'}`}>
+            <span className={`flex items-center gap-1 text-sm font-bold ${isExpress ? 'text-zappy-300' : isPriority ? 'text-amber-300' : 'text-blue-600'}`}>
               <BadgeCheck size={15} strokeWidth={2.5} />
               Verified
             </span>
@@ -609,7 +609,7 @@ function OfferModal({ offer, onAccept, onReject, accepting }) {
             className="w-full h-[60px] text-white font-black text-lg rounded-2xl flex items-center justify-center gap-2 active:scale-[0.98] disabled:opacity-60 transition-transform"
             style={
               isExpress
-                ? { background: 'linear-gradient(135deg,#4338ca,#6366f1,#818cf8)', boxShadow: '0 8px 32px rgba(99,102,241,0.55)' }
+                ? { background: 'linear-gradient(135deg,#1D4ED8,#3B82F6,#60A5FA)', boxShadow: '0 8px 32px rgba(59,130,246,0.55)' }
                 : isPriority
                   ? { background: 'linear-gradient(135deg,#92400e,#b45309,#d97706)', boxShadow: '0 8px 32px rgba(180,83,9,0.5)' }
                   : { background: 'linear-gradient(135deg,#1d4ed8,#2563eb)', boxShadow: '0 6px 20px rgba(37,99,235,0.4)' }
@@ -617,7 +617,7 @@ function OfferModal({ offer, onAccept, onReject, accepting }) {
             whileTap={{ scale: 0.97 }}
             animate={
               isExpress
-                ? { boxShadow: ['0 8px 32px rgba(99,102,241,0.55)', '0 8px 48px rgba(99,102,241,0.8)', '0 8px 32px rgba(99,102,241,0.55)'] }
+                ? { boxShadow: ['0 8px 32px rgba(59,130,246,0.55)', '0 8px 48px rgba(59,130,246,0.8)', '0 8px 32px rgba(59,130,246,0.55)'] }
                 : isPriority
                   ? { boxShadow: ['0 8px 32px rgba(180,83,9,0.5)', '0 8px 48px rgba(217,119,6,0.75)', '0 8px 32px rgba(180,83,9,0.5)'] }
                   : {}

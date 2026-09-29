@@ -63,7 +63,7 @@ export default function BoostOfferCard({ orderId, baseTotal, sendTip, boostOptio
           : `₹${amt} added to worker offer — acceptance likely faster`,
         {
           duration: 3000,
-          style: { background: '#0f172a', color: '#f8fafc', fontWeight: 700, border: '1px solid rgba(99,102,241,0.4)' },
+          style: { background: '#0f172a', color: '#f8fafc', fontWeight: 700, border: '1px solid rgba(59,130,246,0.4)' },
           icon: amt >= 50 ? '🚀' : '⚡',
         }
       );
@@ -111,11 +111,11 @@ export default function BoostOfferCard({ orderId, baseTotal, sendTip, boostOptio
             <div className="flex items-center gap-2.5">
               <div
                 className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-                style={{ background: appliedBoost > 0 ? 'rgba(249,115,22,0.15)' : 'rgba(99,102,241,0.12)', border: '1px solid rgba(255,255,255,0.08)' }}
+                style={{ background: appliedBoost > 0 ? 'rgba(249,115,22,0.15)' : 'rgba(59,130,246,0.12)', border: '1px solid rgba(255,255,255,0.08)' }}
               >
                 {appliedBoost > 0
                   ? <Flame size={16} strokeWidth={2} className="text-orange-400" />
-                  : <TrendingUp size={16} strokeWidth={2} className="text-indigo-400" />
+                  : <TrendingUp size={16} strokeWidth={2} className="text-zappy-400" />
                 }
               </div>
               <div>

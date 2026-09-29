@@ -181,7 +181,7 @@ export default function LiveSelfieCapture({
         {/* header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
           <div className="flex items-center gap-2">
-            <Camera size={17} className="text-indigo-600" />
+            <Camera size={17} className="text-zappy-600" />
             <span className="font-bold text-slate-800 text-sm">{title}</span>
           </div>
           <button onClick={() => { stopCamera(); onCancel(); }} className="text-slate-400 hover:text-slate-700 transition">
@@ -275,8 +275,8 @@ export default function LiveSelfieCapture({
             {/* ready state */}
             {step === 'ready' && (
               <div className="w-full h-full flex flex-col items-center justify-center gap-3 bg-slate-900">
-                <div className="w-16 h-16 rounded-2xl bg-indigo-900/50 flex items-center justify-center">
-                  <Camera size={28} className="text-indigo-400" />
+                <div className="w-16 h-16 rounded-2xl bg-zappy-900/50 flex items-center justify-center">
+                  <Camera size={28} className="text-zappy-400" />
                 </div>
                 <p className="text-slate-400 text-xs font-medium text-center px-4">
                   Your front camera will open for a live photo.
@@ -316,7 +316,7 @@ export default function LiveSelfieCapture({
           {/* actions */}
           <div className="space-y-2">
             {step === 'ready' && (
-              <button onClick={startCamera} className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm py-3 rounded-2xl transition">
+              <button onClick={startCamera} className="w-full flex items-center justify-center gap-2 bg-zappy-600 hover:bg-zappy-700 text-white font-bold text-sm py-3 rounded-2xl transition">
                 <Camera size={16} /> Open Camera
               </button>
             )}
@@ -359,7 +359,7 @@ export default function LiveSelfieCapture({
             )}
 
             {step === 'error' && (
-              <button onClick={() => { setStep('ready'); setErrorMsg(''); }} className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm py-3 rounded-2xl transition">
+              <button onClick={() => { setStep('ready'); setErrorMsg(''); }} className="w-full flex items-center justify-center gap-2 bg-zappy-600 hover:bg-zappy-700 text-white font-bold text-sm py-3 rounded-2xl transition">
                 <RefreshCw size={14} /> Try Again
               </button>
             )}

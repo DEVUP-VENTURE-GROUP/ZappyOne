@@ -65,8 +65,8 @@ export default function WorkerOnboarding({ onComplete }) {
     /* Step 0 — Name */
     <div key="name" className="space-y-6">
       <div className="text-center space-y-2">
-        <div className="w-16 h-16 rounded-2xl bg-indigo-100 flex items-center justify-center mx-auto">
-          <User size={28} className="text-indigo-600" />
+        <div className="w-16 h-16 rounded-2xl bg-zappy-100 flex items-center justify-center mx-auto">
+          <User size={28} className="text-zappy-600" />
         </div>
         <h2 className="text-xl font-black text-slate-900">What's your name?</h2>
         <p className="text-sm text-slate-400">This is shown to customers when you're assigned a job.</p>
@@ -77,7 +77,7 @@ export default function WorkerOnboarding({ onComplete }) {
           <label className="text-xs font-bold text-slate-500 uppercase tracking-wide block mb-1.5">Full Name</label>
           <input
             autoFocus
-            className="w-full border-2 border-slate-200 focus:border-indigo-500 rounded-2xl px-4 py-3.5 text-lg font-semibold text-slate-900 outline-none transition"
+            className="w-full border-2 border-slate-200 focus:border-zappy-500 rounded-2xl px-4 py-3.5 text-lg font-semibold text-slate-900 outline-none transition"
             placeholder="e.g. Ravi Kumar"
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -94,9 +94,9 @@ export default function WorkerOnboarding({ onComplete }) {
       </div>
 
       {/* Said up front, so the verification step is expected rather than a wall. */}
-      <div className="flex items-start gap-2.5 rounded-2xl bg-indigo-50 p-3.5">
-        <ShieldCheck size={17} className="text-indigo-600 shrink-0 mt-0.5" />
-        <p className="text-[12.5px] leading-relaxed text-indigo-900">
+      <div className="flex items-start gap-2.5 rounded-2xl bg-zappy-50 p-3.5">
+        <ShieldCheck size={17} className="text-zappy-600 shrink-0 mt-0.5" />
+        <p className="text-[12.5px] leading-relaxed text-zappy-900">
           Next you'll choose what you work on — phones, laptops and more. Each one is verified
           separately, so customers know exactly what you're qualified for.
         </p>
@@ -105,7 +105,7 @@ export default function WorkerOnboarding({ onComplete }) {
       <button
         disabled={name.trim().length < 2}
         onClick={() => setStep(1)}
-        className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white font-bold text-base py-4 rounded-2xl transition"
+        className="w-full flex items-center justify-center gap-2 bg-zappy-600 hover:bg-zappy-700 disabled:opacity-40 text-white font-bold text-base py-4 rounded-2xl transition"
       >
         Continue <ChevronRight size={18} />
       </button>
@@ -189,7 +189,7 @@ export default function WorkerOnboarding({ onComplete }) {
 
         <div className="flex gap-1.5 px-5 pb-6">
           {STEPS.map((_, i) => (
-            <div key={i} className={`h-1 rounded-full flex-1 transition-all ${i <= step ? 'bg-indigo-500' : 'bg-white/10'}`} />
+            <div key={i} className={`h-1 rounded-full flex-1 transition-all ${i <= step ? 'bg-zappy-500' : 'bg-white/10'}`} />
           ))}
         </div>
 

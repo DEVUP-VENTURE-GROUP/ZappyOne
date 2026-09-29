@@ -79,7 +79,7 @@ export default function WorkerWithdrawPage() {
   const isLoading = walletLoading || bankLoading;
 
   return (
-    <div className="min-h-screen bg-slate-50 md:flex md:justify-center md:bg-gradient-to-br md:from-slate-100 md:to-indigo-50/40">
+    <div className="min-h-screen bg-slate-50 md:flex md:justify-center md:bg-gradient-to-br md:from-slate-100 md:to-zappy-50/40">
       <div className="w-full max-w-lg lg:max-w-2xl bg-slate-50 min-h-screen relative shadow-[0_0_40px_rgba(0,0,0,0.05)] lg:shadow-[0_0_60px_rgba(0,0,0,0.08)] md:border-x border-slate-200/60 pb-8">
         
         {/* Cinematic Header */}
@@ -112,7 +112,7 @@ export default function WorkerWithdrawPage() {
 
         {isLoading ? (
           <div className="flex flex-col items-center justify-center h-64 relative z-20">
-            <Loader2 size={28} className="animate-spin text-indigo-400 mb-3" />
+            <Loader2 size={28} className="animate-spin text-zappy-400 mb-3" />
             <p className="text-sm font-semibold text-slate-400">Loading wallet...</p>
           </div>
         ) : (
@@ -123,13 +123,13 @@ export default function WorkerWithdrawPage() {
               <div className="flex items-center justify-between mb-3">
                 <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Amount to Withdraw</p>
                 <button onClick={() => setAmountRs(String(Math.min(Math.floor(balancePaise / 100), MAX_PAISE / 100)))} 
-                  className="text-[11px] font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1 rounded-md transition-colors uppercase tracking-wider">
+                  className="text-[11px] font-bold text-zappy-600 bg-zappy-50 hover:bg-zappy-100 px-2.5 py-1 rounded-md transition-colors uppercase tracking-wider">
                   Use Max
                 </button>
               </div>
               
-              <div className={`flex items-center gap-2 border-2 rounded-2xl px-4 py-3 transition-all duration-300 ${validationError && amtRs > 0 ? 'border-red-300 bg-red-50/50' : 'border-slate-100 focus-within:border-indigo-500 focus-within:shadow-[0_0_0_4px_rgba(99,102,241,0.1)]'}`}>
-                <span className={`text-2xl font-black ${amtRs ? 'text-indigo-600' : 'text-slate-300'}`}>₹</span>
+              <div className={`flex items-center gap-2 border-2 rounded-2xl px-4 py-3 transition-all duration-300 ${validationError && amtRs > 0 ? 'border-red-300 bg-red-50/50' : 'border-slate-100 focus-within:border-zappy-500 focus-within:shadow-[0_0_0_4px_rgba(59,130,246,0.1)]'}`}>
+                <span className={`text-2xl font-black ${amtRs ? 'text-zappy-600' : 'text-slate-300'}`}>₹</span>
                 <input
                   type="number" min={MIN_PAISE / 100} max={MAX_PAISE / 100} step={1}
                   value={amountRs} onChange={e => setAmountRs(e.target.value)}
@@ -148,7 +148,7 @@ export default function WorkerWithdrawPage() {
               <div className="flex gap-2 mt-4">
                 {[500, 1000, 2000, 5000].map(v => (
                   <button key={v} onClick={() => setAmountRs(String(v))}
-                    className="flex-1 text-[13px] py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 font-bold hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-700 transition-colors shadow-sm active:scale-95">
+                    className="flex-1 text-[13px] py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 font-bold hover:bg-zappy-50 hover:border-zappy-200 hover:text-zappy-700 transition-colors shadow-sm active:scale-95">
                     +₹{v}
                   </button>
                 ))}
@@ -159,19 +159,19 @@ export default function WorkerWithdrawPage() {
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-white rounded-[1.5rem] border border-slate-100 shadow-[0_8px_30px_rgba(0,0,0,0.04)] p-5">
               <div className="flex items-center justify-between mb-4">
                 <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Send To</p>
-                <button onClick={() => nav('/worker/bank')} className="text-[11px] font-bold text-indigo-600 hover:text-indigo-700 uppercase tracking-wider bg-slate-50 px-2 py-1 rounded-md">
+                <button onClick={() => nav('/worker/bank')} className="text-[11px] font-bold text-zappy-600 hover:text-zappy-700 uppercase tracking-wider bg-slate-50 px-2 py-1 rounded-md">
                   + Add New
                 </button>
               </div>
               
               {allMethods.length === 0 ? (
                 <button onClick={() => nav('/worker/bank')}
-                  className="w-full py-6 flex flex-col items-center justify-center text-indigo-600 bg-indigo-50/50 border-2 border-dashed border-indigo-200 rounded-2xl hover:bg-indigo-50 transition-colors group">
+                  className="w-full py-6 flex flex-col items-center justify-center text-zappy-600 bg-zappy-50/50 border-2 border-dashed border-zappy-200 rounded-2xl hover:bg-zappy-50 transition-colors group">
                   <div className="w-12 h-12 bg-white rounded-full shadow-sm flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
-                    <Banknote size={20} className="text-indigo-500" strokeWidth={2} />
+                    <Banknote size={20} className="text-zappy-500" strokeWidth={2} />
                   </div>
                   <span className="font-bold text-sm">Add Bank Account or UPI</span>
-                  <span className="text-xs text-indigo-400 font-medium mt-0.5">Required to withdraw</span>
+                  <span className="text-xs text-zappy-400 font-medium mt-0.5">Required to withdraw</span>
                 </button>
               ) : (
                 <div className="space-y-2.5">
@@ -179,22 +179,22 @@ export default function WorkerWithdrawPage() {
                     const isSelected = selected?.id === m.id;
                     return (
                       <button key={m.id} onClick={() => setSelectedId(m.id)}
-                        className={`w-full flex items-center gap-4 p-3.5 rounded-2xl border-2 transition-all duration-200 relative overflow-hidden ${isSelected ? 'border-indigo-500 bg-indigo-50/50 shadow-[0_4px_12px_rgba(99,102,241,0.08)]' : 'border-slate-100 bg-white hover:border-indigo-200 hover:bg-slate-50'}`}>
+                        className={`w-full flex items-center gap-4 p-3.5 rounded-2xl border-2 transition-all duration-200 relative overflow-hidden ${isSelected ? 'border-zappy-500 bg-zappy-50/50 shadow-[0_4px_12px_rgba(59,130,246,0.08)]' : 'border-slate-100 bg-white hover:border-zappy-200 hover:bg-slate-50'}`}>
                         
-                        {isSelected && <div className="absolute inset-y-0 left-0 w-1 bg-indigo-500" />}
+                        {isSelected && <div className="absolute inset-y-0 left-0 w-1 bg-zappy-500" />}
                         
-                        <div className={`w-10 h-10 rounded-[10px] flex items-center justify-center shrink-0 transition-colors ${isSelected ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20' : 'bg-slate-100 text-slate-500'}`}>
+                        <div className={`w-10 h-10 rounded-[10px] flex items-center justify-center shrink-0 transition-colors ${isSelected ? 'bg-zappy-600 text-white shadow-md shadow-zappy-600/20' : 'bg-slate-100 text-slate-500'}`}>
                           {m.type === 'upi' ? <Smartphone size={18} strokeWidth={2} /> : <Building2 size={18} strokeWidth={2} />}
                         </div>
                         
                         <div className="flex-1 text-left min-w-0">
-                          <p className={`text-[15px] font-black truncate leading-tight ${isSelected ? 'text-indigo-900' : 'text-slate-700'}`}>{m.label}</p>
-                          <p className={`text-xs font-semibold truncate mt-0.5 ${isSelected ? 'text-indigo-600/70' : 'text-slate-400'}`}>{m.sub}</p>
+                          <p className={`text-[15px] font-black truncate leading-tight ${isSelected ? 'text-zappy-900' : 'text-slate-700'}`}>{m.label}</p>
+                          <p className={`text-xs font-semibold truncate mt-0.5 ${isSelected ? 'text-zappy-600/70' : 'text-slate-400'}`}>{m.sub}</p>
                         </div>
                         
                         {m.isDefault && !isSelected && <span className="text-[9px] bg-slate-100 text-slate-500 font-bold uppercase tracking-wider px-2 py-1 rounded-md shrink-0">Default</span>}
                         
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${isSelected ? 'border-indigo-600 bg-indigo-600' : 'border-slate-300'}`}>
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${isSelected ? 'border-zappy-600 bg-zappy-600' : 'border-slate-300'}`}>
                           {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
                         </div>
                       </button>
@@ -227,7 +227,7 @@ export default function WorkerWithdrawPage() {
                     </div>
                     
                     <div className="text-right shrink-0 mr-3">
-                      <span className={`text-[11px] font-black uppercase tracking-wider px-2 py-1 rounded-md ${opt.feeRs > 0 ? (active ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500') : (active ? 'bg-indigo-100 text-indigo-700' : 'bg-emerald-50 text-emerald-600')}`}>
+                      <span className={`text-[11px] font-black uppercase tracking-wider px-2 py-1 rounded-md ${opt.feeRs > 0 ? (active ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500') : (active ? 'bg-zappy-100 text-zappy-700' : 'bg-emerald-50 text-emerald-600')}`}>
                         {opt.feeRs > 0 ? `₹${opt.feeRs} Fee` : 'Free'}
                       </span>
                     </div>
@@ -266,7 +266,7 @@ export default function WorkerWithdrawPage() {
               <button
                 onClick={submit}
                 disabled={submitting || !!validationError || !amtRs || allMethods.length === 0 || balancePaise < MIN_PAISE}
-                className="w-full py-4 rounded-[1.25rem] bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[15px] flex items-center justify-center gap-2 disabled:opacity-40 disabled:hover:bg-indigo-600 shadow-xl shadow-indigo-600/20 transition-all active:scale-[0.98]">
+                className="w-full py-4 rounded-[1.25rem] bg-zappy-600 hover:bg-zappy-700 text-white font-black text-[15px] flex items-center justify-center gap-2 disabled:opacity-40 disabled:hover:bg-zappy-600 shadow-xl shadow-zappy-600/20 transition-all active:scale-[0.98]">
                 {submitting ? <Loader2 size={20} className="animate-spin" /> : <Wallet size={20} strokeWidth={2.5} />}
                 {submitting ? 'Processing Request…' : `Withdraw ₹${netRs > 0 ? netRs.toFixed(2) : '0.00'}`}
               </button>

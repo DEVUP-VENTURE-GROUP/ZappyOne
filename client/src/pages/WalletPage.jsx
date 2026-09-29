@@ -86,7 +86,7 @@ export default function WalletPage() {
 
           {/* Dark Premium Wallet Header */}
           <header className="relative pt-6 pb-28 overflow-hidden rounded-b-[2.5rem] shadow-sm z-10" style={{ background: 'linear-gradient(135deg, #020617 0%, #0f172a 50%, #1e1b4b 100%)' }}>
-            <motion.div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/20 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/3" animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.8, 0.5] }} transition={{ duration: 4, repeat: Infinity }} />
+            <motion.div className="absolute top-0 right-0 w-64 h-64 bg-zappy-500/20 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/3" animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.8, 0.5] }} transition={{ duration: 4, repeat: Infinity }} />
             <motion.div className="absolute bottom-0 left-0 w-48 h-48 bg-emerald-500/20 rounded-full blur-[60px] translate-y-1/3 -translate-x-1/4" animate={{ scale: [1, 1.3, 1], opacity: [0.3, 0.6, 0.3] }} transition={{ duration: 5, repeat: Infinity, delay: 1 }} />
             
             <div className="relative z-10 px-5">
@@ -142,7 +142,7 @@ export default function WalletPage() {
                   <div className="grid grid-cols-4 gap-2 mb-4">
                     {QUICK_AMOUNTS.map((amt) => (
                       <button key={amt} onClick={() => handleTopup(amt)} disabled={busy || starting}
-                        className="py-3 rounded-xl border-2 border-slate-100 bg-slate-50 text-slate-700 font-black text-sm hover:border-indigo-500 hover:text-indigo-600 transition-all active:scale-95 disabled:opacity-50">
+                        className="py-3 rounded-xl border-2 border-slate-100 bg-slate-50 text-slate-700 font-black text-sm hover:border-zappy-500 hover:text-zappy-600 transition-all active:scale-95 disabled:opacity-50">
                         +₹{amt}
                       </button>
                     ))}
@@ -152,9 +152,9 @@ export default function WalletPage() {
                     <div className="relative flex-1">
                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[15px] font-black text-slate-400">₹</span>
                       <input type="number" min="10" placeholder={tr('wallet.customAmount', 'Custom amount')} value={customAmount} onChange={(e) => setCustomAmount(e.target.value)}
-                        className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500 focus:bg-white rounded-[1.25rem] py-3.5 pl-9 pr-4 text-[15px] font-black text-slate-800 outline-none transition-all placeholder:text-slate-400 placeholder:font-medium" />
+                        className="w-full bg-slate-50 border-2 border-transparent focus:border-zappy-500 focus:bg-white rounded-[1.25rem] py-3.5 pl-9 pr-4 text-[15px] font-black text-slate-800 outline-none transition-all placeholder:text-slate-400 placeholder:font-medium" />
                     </div>
-                    <button type="submit" disabled={busy || !customAmount} className="bg-indigo-600 text-white px-5 rounded-[1.25rem] font-black text-sm flex items-center justify-center shadow-lg shadow-indigo-600/20 active:scale-95 transition-all disabled:opacity-50">
+                    <button type="submit" disabled={busy || !customAmount} className="bg-zappy-600 text-white px-5 rounded-[1.25rem] font-black text-sm flex items-center justify-center shadow-lg shadow-zappy-600/20 active:scale-95 transition-all disabled:opacity-50">
                       {busy ? <Loader2 size={18} className="animate-spin" /> : tr('wallet.add', 'Add')}
                     </button>
                   </form>
@@ -165,7 +165,7 @@ export default function WalletPage() {
             {/* Rewards Banner */}
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
               onClick={() => nav('/referral')}
-              className="relative bg-gradient-to-br from-indigo-900 to-slate-900 rounded-[1.5rem] p-5 overflow-hidden cursor-pointer shadow-[0_8px_30px_rgba(49,46,129,0.3)] group border border-indigo-500/20">
+              className="relative bg-gradient-to-br from-zappy-900 to-slate-900 rounded-[1.5rem] p-5 overflow-hidden cursor-pointer shadow-[0_8px_30px_rgba(49,46,129,0.3)] group border border-zappy-500/20">
               
               {/* Animated Background */}
               <div className="absolute inset-0 opacity-20 group-hover:opacity-30 transition-opacity">
@@ -213,7 +213,7 @@ export default function WalletPage() {
                       admin_adjustment_credit: { Icon: Crown,    bg: 'bg-amber-50 border-amber-100 text-amber-600',  label: tr('wallet.txn.bonusCredit', 'Bonus Credit') },
                       admin_adjustment_debit:  { Icon: Receipt,  bg: 'bg-slate-50 border-slate-200 text-slate-600',    label: tr('wallet.txn.adjustmentDebit', 'Adjustment Debit') },
                       wallet_topup:            { Icon: ArrowDownToLine, bg: 'bg-emerald-50 border-emerald-100 text-emerald-600', label: tr('wallet.txn.topup', 'Top-up Added') },
-                      withdrawal:              { Icon: ArrowUpFromLine, bg: 'bg-indigo-50 border-indigo-100 text-indigo-600',  label: tr('wallet.txn.withdrawal', 'Withdrawal') },
+                      withdrawal:              { Icon: ArrowUpFromLine, bg: 'bg-zappy-50 border-zappy-100 text-zappy-600',  label: tr('wallet.txn.withdrawal', 'Withdrawal') },
                       refund:                  { Icon: RefreshCw, bg: 'bg-sky-50 border-sky-100 text-sky-600',    label: tr('wallet.txn.refund', 'Refund') },
                       worker_earning:          { Icon: TrendingUp, bg: 'bg-emerald-50 border-emerald-100 text-emerald-600', label: tr('wallet.txn.earnings', 'Job Earnings') },
                       platform_commission:     { Icon: Percent,  bg: 'bg-slate-50 border-slate-200 text-slate-500',  label: tr('wallet.txn.platformFee', 'Platform Fee') },

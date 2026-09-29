@@ -18,17 +18,17 @@ import { PORTAL_URLS } from '../../config/portals';
 const STATUS_LABEL = {
   PROVIDER_ASSIGNED: { text: 'New — accept it', tone: 'bg-amber-100 text-amber-700' },
   WORKER_ACCEPTED: { text: 'Accepted', tone: 'bg-blue-100 text-blue-700' },
-  ON_THE_WAY: { text: 'On the way', tone: 'bg-indigo-100 text-indigo-700' },
-  ARRIVED: { text: 'Arrived', tone: 'bg-indigo-100 text-indigo-700' },
+  ON_THE_WAY: { text: 'On the way', tone: 'bg-zappy-100 text-zappy-700' },
+  ARRIVED: { text: 'Arrived', tone: 'bg-zappy-100 text-zappy-700' },
   DIAGNOSING: { text: 'Diagnosing', tone: 'bg-amber-100 text-amber-700' },
   CUSTOMER_APPROVAL_PENDING: { text: 'Awaiting customer', tone: 'bg-amber-100 text-amber-700' },
   APPROVED: { text: 'Approved — start work', tone: 'bg-emerald-100 text-emerald-700' },
-  REPAIR_IN_PROGRESS: { text: 'In progress', tone: 'bg-indigo-100 text-indigo-700' },
+  REPAIR_IN_PROGRESS: { text: 'In progress', tone: 'bg-zappy-100 text-zappy-700' },
   QA_PENDING: { text: 'QA checks', tone: 'bg-amber-100 text-amber-700' },
-  PICKUP_SCHEDULED: { text: 'Pickup due', tone: 'bg-indigo-100 text-indigo-700' },
-  AT_WORKSHOP: { text: 'At workshop', tone: 'bg-indigo-100 text-indigo-700' },
+  PICKUP_SCHEDULED: { text: 'Pickup due', tone: 'bg-zappy-100 text-zappy-700' },
+  AT_WORKSHOP: { text: 'At workshop', tone: 'bg-zappy-100 text-zappy-700' },
   READY_FOR_RETURN: { text: 'Ready to return', tone: 'bg-emerald-100 text-emerald-700' },
-  OUT_FOR_RETURN: { text: 'Out for return', tone: 'bg-indigo-100 text-indigo-700' },
+  OUT_FOR_RETURN: { text: 'Out for return', tone: 'bg-zappy-100 text-zappy-700' },
 };
 
 export default function RepairJobsPanel() {
@@ -48,21 +48,21 @@ export default function RepairJobsPanel() {
   return (
     <div className="rounded-2xl bg-white ring-1 ring-slate-100 p-4" style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.04)' }}>
       <div className="flex items-center gap-2.5 mb-3">
-        <div className="w-8 h-8 rounded-xl bg-indigo-50 flex items-center justify-center">
-          <Smartphone size={15} className="text-indigo-600" strokeWidth={2} />
+        <div className="w-8 h-8 rounded-xl bg-zappy-50 flex items-center justify-center">
+          <Smartphone size={15} className="text-zappy-600" strokeWidth={2} />
         </div>
         <p className="font-bold text-[#0F172A] text-sm flex-1">Phone Repair</p>
         <button onClick={() => nav('/worker/repair/setup')}
-          className="flex items-center gap-1 text-[12px] font-bold text-indigo-600 hover:underline">
+          className="flex items-center gap-1 text-[12px] font-bold text-zappy-600 hover:underline">
           <Settings size={12} /> Setup
         </button>
       </div>
 
       {loadingSetup ? (
-        <div className="py-6 flex justify-center"><Loader2 size={18} className="animate-spin text-indigo-400" /></div>
+        <div className="py-6 flex justify-center"><Loader2 size={18} className="animate-spin text-zappy-400" /></div>
       ) : neverStarted ? (
         <button onClick={() => nav('/worker/repair/setup')}
-          className="w-full text-left rounded-xl p-3" style={{ background: 'linear-gradient(135deg,#eef2ff,#e0e7ff)' }}>
+          className="w-full text-left rounded-xl p-3" style={{ background: 'linear-gradient(135deg,#EFF6FF,#DBEAFE)' }}>
           <p className="text-sm font-bold text-[#0F172A]">Start taking phone repair jobs</p>
           <p className="text-xs text-slate-600 mt-0.5">
             Add the repairs you can do, your area and your prices — takes a few minutes.
@@ -100,7 +100,7 @@ export default function RepairJobsPanel() {
             const meta = STATUS_LABEL[b.status] || { text: b.status.replace(/_/g, ' ').toLowerCase(), tone: 'bg-slate-100 text-slate-600' };
             return (
               <button key={b._id} onClick={() => nav(`/worker/repair/${b._id}`)}
-                className="w-full flex items-center gap-3 rounded-xl ring-1 ring-slate-100 p-2.5 text-left hover:ring-indigo-200 transition">
+                className="w-full flex items-center gap-3 rounded-xl ring-1 ring-slate-100 p-2.5 text-left hover:ring-zappy-200 transition">
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-[#0F172A] truncate">
                     {b.brandCode} {b.modelCode}
@@ -132,9 +132,9 @@ export default function RepairJobsPanel() {
         */}
       <button
         onClick={() => window.location.assign(`${PORTAL_URLS.servicepro}/shop/login`)}
-        className="mt-3 flex w-full items-start gap-2.5 rounded-xl border border-dashed border-slate-200 p-3 text-left transition hover:border-indigo-300 hover:bg-indigo-50/40"
+        className="mt-3 flex w-full items-start gap-2.5 rounded-xl border border-dashed border-slate-200 p-3 text-left transition hover:border-zappy-300 hover:bg-zappy-50/40"
       >
-        <Store size={15} className="mt-0.5 shrink-0 text-indigo-500" />
+        <Store size={15} className="mt-0.5 shrink-0 text-zappy-500" />
         <span className="min-w-0 flex-1">
           <span className="block text-[12.5px] font-bold text-[#0F172A]">Run a shop with technicians?</span>
           <span className="mt-0.5 block text-[11px] leading-relaxed text-slate-500">

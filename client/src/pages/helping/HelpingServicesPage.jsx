@@ -56,10 +56,10 @@ export default function HelpingServicesPage() {
               key={c.key}
               type="button"
               onClick={() => nav(c.path)}
-              className="w-full flex items-center gap-4 rounded-2xl border-2 border-slate-200 bg-white p-5 text-left hover:border-indigo-300 transition"
+              className="w-full flex items-center gap-4 rounded-2xl border-2 border-slate-200 bg-white p-5 text-left hover:border-zappy-300 transition"
             >
-              <span className="shrink-0 w-12 h-12 rounded-2xl bg-indigo-50 grid place-items-center">
-                <Icon size={22} className="text-indigo-600" />
+              <span className="shrink-0 w-12 h-12 rounded-2xl bg-zappy-50 grid place-items-center">
+                <Icon size={22} className="text-zappy-600" />
               </span>
               <span className="flex-1 min-w-0">
                 <span className="block font-black text-[#0F172A]">{c.title}</span>

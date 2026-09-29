@@ -26,7 +26,7 @@ export default function ProPicker({ service, lat, lng, value, onChange }) {
   return (
     <div className="bg-white border border-slate-200 rounded-2xl p-4">
       <div className="flex items-center gap-2 mb-1">
-        <Users size={16} className="text-indigo-600" />
+        <Users size={16} className="text-zappy-600" />
         <p className="text-sm font-bold text-slate-900">Choose your pro</p>
         <span className="text-[11px] font-semibold text-slate-400">optional</span>
       </div>
@@ -40,15 +40,15 @@ export default function ProPicker({ service, lat, lng, value, onChange }) {
           type="button"
           onClick={() => onChange(null)}
           className={`shrink-0 w-44 rounded-xl border p-3 text-left transition-colors ${
-            !value ? 'border-indigo-500 bg-indigo-50/60 ring-1 ring-indigo-400' : 'border-slate-200 bg-white'
+            !value ? 'border-zappy-500 bg-zappy-50/60 ring-1 ring-zappy-400' : 'border-slate-200 bg-white'
           }`}
         >
-          <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center mb-2">
-            <Sparkles size={16} className="text-indigo-600" />
+          <div className="w-9 h-9 rounded-full bg-zappy-100 flex items-center justify-center mb-2">
+            <Sparkles size={16} className="text-zappy-600" />
           </div>
           <p className="text-[13px] font-bold text-slate-900 leading-tight">Auto-match</p>
           <p className="text-[11px] text-slate-500 mt-0.5">Best available pro</p>
-          {!value && <CheckCircle2 size={15} className="text-indigo-600 mt-2" />}
+          {!value && <CheckCircle2 size={15} className="text-zappy-600 mt-2" />}
         </button>
 
         {isLoading && (
@@ -69,12 +69,12 @@ export default function ProPicker({ service, lat, lng, value, onChange }) {
               tabIndex={0}
               onClick={() => onChange(active ? null : p.workerId)}
               className={`relative shrink-0 w-44 rounded-xl border p-3 text-left transition-colors cursor-pointer ${
-                active ? 'border-indigo-500 bg-indigo-50/60 ring-1 ring-indigo-400' : 'border-slate-200 bg-white'
+                active ? 'border-zappy-500 bg-zappy-50/60 ring-1 ring-zappy-400' : 'border-slate-200 bg-white'
               }`}
             >
               {/* Tap ⓘ to view the pro's trust profile + reviews */}
               <button type="button" onClick={(e) => { e.stopPropagation(); setProfileId(p.workerId); }}
-                className="absolute top-1.5 right-1.5 text-slate-300 hover:text-indigo-500" aria-label="View profile">
+                className="absolute top-1.5 right-1.5 text-slate-300 hover:text-zappy-500" aria-label="View profile">
                 <Info size={14} />
               </button>
               <div className="flex items-center gap-1.5 mb-2">
@@ -99,7 +99,7 @@ export default function ProPicker({ service, lat, lng, value, onChange }) {
               <div className="mt-1.5 space-y-1">
                 {p.yearsExperience > 0 && (
                   <div className="flex items-center gap-1 text-[11px] text-slate-500">
-                    <Award size={11} className="text-indigo-400 shrink-0" />
+                    <Award size={11} className="text-zappy-400 shrink-0" />
                     <span>{p.yearsExperience}+ yr{p.yearsExperience > 1 ? 's' : ''} experience</span>
                   </div>
                 )}
@@ -117,7 +117,7 @@ export default function ProPicker({ service, lat, lng, value, onChange }) {
                   </div>
                 )}
               </div>
-              {active && <CheckCircle2 size={15} className="text-indigo-600 mt-2" />}
+              {active && <CheckCircle2 size={15} className="text-zappy-600 mt-2" />}
             </div>
           );
         })}
