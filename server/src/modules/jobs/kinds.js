@@ -13,6 +13,9 @@
  * Live tracking (worker/active-trip), room access (sockets), verification
  * (onboarding/eligibility) and lifecycle events (jobs/job-events) all read
  * this table instead of branching on kind. A new vertical is a new entry here.
+ *
+ * `provider(doc)` names who holds the job; it defaults to the worker or shop.
+ * Events are held by an event partner, their own supply side.
  */
 
 const pointOf = (p) => (Array.isArray(p?.coordinates) && p.coordinates.length === 2 ? p.coordinates : null);
@@ -127,6 +130,37 @@ const KINDS = {
   },
 };
 
+KINDS.event = {
+  label: 'event',
+  model: () => require('../events/event-booking.model'),
+  link: (id) => `/events/bookings/${id}`,
+  providerLink: () => '/partner',
+  provider: (b) => (b.partnerId ? { kind: 'event_partner', id: b.partnerId } : null),
+  // Event partners are verified through their own KYC, not service-line enrolment.
+  line: async () => null,
+  // The decorator's team comes on the day; there is no trip to follow live.
+  trip: null,
+  open: null,
+  copy: {
+    customer: {
+      partner_assigned: ['Your team is set', 'Your decorator has assigned the team for your event.'],
+      in_progress: ['Decoration has started', 'The team is setting up your event now.'],
+    },
+    provider: {
+      cancelled: ['Booking cancelled', 'The customer cancelled this event booking.'],
+    },
+  },
+};
+
+/** Who holds a job: the kind's own rule, else its worker or shop. */
+function providerOf(kind, doc) {
+  const k = KINDS[kind];
+  if (k?.provider) return k.provider(doc);
+  if (doc.shopId) return { kind: 'shop', id: doc.shopId };
+  if (doc.workerId) return { kind: 'worker', id: doc.workerId };
+  return null;
+}
+
 /** Entries as a list, for lookups that don't know the kind yet. */
 const ALL = Object.entries(KINDS).map(([kind, k]) => ({ kind, ...k }));
 
@@ -136,7 +170,7 @@ async function lineOf(kind, job) {
 }
 
 /** The job with this id, whichever kind it is. */
-async function findJob(id, select = 'userId workerId shopId') {
+async function findJob(id, select = 'userId workerId shopId partnerId') {
   for (const k of ALL) {
     const doc = await k.model().findById(id).select(select).lean().catch(() => null);
     if (doc) return { kind: k.kind, doc };
@@ -144,4 +178,4 @@ async function findJob(id, select = 'userId workerId shopId') {
   return null;
 }
 
-module.exports = { KINDS, ALL, lineOf, findJob, HELPING_LINE, pointOf };
+module.exports = { KINDS, ALL, lineOf, findJob, providerOf, HELPING_LINE, pointOf };

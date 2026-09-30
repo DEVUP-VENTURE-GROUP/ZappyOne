@@ -389,6 +389,24 @@ async function refundBookingPayment({ source, bookingId, amountPaise, reason = '
   return refundIntent(intent, { amountPaise, reason, label: source, ref: bookingId });
 }
 
+/**
+ * An event booking's refund, across its advance and remaining payments —
+ * latest first, up to `amountPaise` (everything paid when omitted).
+ */
+async function refundEventPayments({ bookingId, amountPaise = null, reason = 'Event cancelled' }) {
+  const intents = await PaymentIntent.find({ eventBookingId: bookingId, status: 'captured' }).sort({ createdAt: -1 });
+  let left = amountPaise ?? intents.reduce((sum, i) => sum + (i.amountPaise || 0), 0);
+  let refunded = 0;
+  for (const intent of intents) {
+    if (left <= 0) break;
+    const r = await refundIntent(intent, { amountPaise: left, reason, label: 'event', ref: bookingId });
+    const done = r.duplicate ? Math.min(left, intent.amountPaise) : (r.amountPaise || 0);
+    refunded += done;
+    left -= done;
+  }
+  return { refundedPaise: refunded };
+}
+
 /** The same for a legacy Order (dispatch failure, admin refund). */
 async function refundOrderPayment({ orderId, amountPaise, reason = 'Order failed' }) {
   const intent = await PaymentIntent.findOne({ orderId, status: 'captured' });
@@ -434,6 +452,7 @@ module.exports = {
   handleCheckoutVerification,
   reconcilePendingIntents,
   refundBookingPayment,
+  refundEventPayments,
   refundOrderPayment,
   // For admin tooling (retrying a refund that failed at the gateway) — the one refund path.
   refundIntent,

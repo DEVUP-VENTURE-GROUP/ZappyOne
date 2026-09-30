@@ -275,22 +275,35 @@ function getRefundPct(cfg, eventDate) {
   return 0;
 }
 
+/** Everything the customer has paid online for this booking. */
+function paidPaiseOf(b) {
+  return (b.advancePayment?.status === 'paid' ? b.pricing?.advancePaise || 0 : 0)
+    + (b.remainingPayment?.status === 'paid' ? b.pricing?.remainingPaise || b.remainingPayment?.amountPaise || 0 : 0);
+}
+
 async function cancelBooking(bookingId, userId, reason) {
   const booking = await EventBooking.findOne({ _id: bookingId, userId }).lean();
   if (!booking) throw Object.assign(new Error('Booking not found'), { status: 404 });
-  if (['completed', 'cancelled'].includes(booking.status)) {
-    throw Object.assign(new Error('Cannot cancel this booking'), { status: 409 });
+  // Once the team is decorating, it's a dispute for support, not a self-serve cancel.
+  if (['completed', 'cancelled', 'in_progress'].includes(booking.status)) {
+    throw Object.assign(new Error('This booking can no longer be cancelled here. Contact support.'), { status: 409 });
   }
 
   const cfg = await getActiveConfig();
   const refundPct   = getRefundPct(cfg, booking.eventDate);
-  const paidPaise   = booking.advancePayment.status === 'paid' ? booking.pricing.advancePaise : 0;
-  const refundPaise = Math.round(paidPaise * refundPct / 100);
+  const refundPaise = Math.round(paidPaiseOf(booking) * refundPct / 100);
 
-  await EventBooking.updateOne({ _id: bookingId }, {
+  const updated = await EventBooking.findOneAndUpdate({ _id: bookingId, status: booking.status }, {
     $set: { status: 'cancelled', cancellationReason: reason, cancelledBy: 'user', refundPaise, refundStatus: refundPaise > 0 ? 'pending' : 'none' },
     $push: { statusHistory: { status: 'cancelled', meta: { reason, refundPaise } } },
-  });
+  }, { new: true }).lean();
+  if (!updated) throw Object.assign(new Error('This booking just changed. Refresh and try again.'), { status: 409 });
+
+  // The refund leaves now; a gateway failure is flagged for ops, never lost.
+  if (refundPaise > 0) {
+    await require('../payment/payment.service').refundEventPayments({ bookingId, amountPaise: refundPaise, reason: `Cancelled: ${reason || 'by customer'}` });
+  }
+  require('../jobs/job-events').announce('event', updated, 'cancelled').catch(() => {});
 
   try {
     const ns = require('../notification/notification.service');
@@ -506,6 +519,7 @@ async function adminUpsertCategory(data) {
 }
 
 module.exports = {
+  paidPaiseOf,
   getActiveConfig, listCategories, listThemes, getTheme, toggleSave, getSavedThemes,
   createBooking, getUserBookings, getBooking, cancelBooking, submitReview,
   adminListThemes, adminUpdateThemeStatus, adminListBookings,

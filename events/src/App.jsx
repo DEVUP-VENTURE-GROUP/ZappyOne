@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { selectAuth } from '@shared/modules/auth/authSlice';
+import { useDisconnectOnLogout, useJobRealtime } from '@shared/hooks/useSocket';
 import { RequireAuth } from '@shared/components/common/RequireAuth';
 import ConnectionBanner from '@shared/components/common/ConnectionBanner';
 import RouteProgress from '@shared/components/common/RouteProgress';
@@ -21,6 +22,9 @@ const PageLoader = () => (
 
 export default function App() {
   const { accessToken } = useSelector(selectAuth);
+  useDisconnectOnLogout();
+  // Booking changes land on the dashboard at once.
+  useJobRealtime();
   const partner = (el) => <RequireAuth role="event_partner" loginPath={LOGIN}>{el}</RequireAuth>;
 
   return (

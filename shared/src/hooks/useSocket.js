@@ -248,7 +248,7 @@ export function useDisconnectOnLogout() {
  *
  * `alerts` shows a toast for new work nearby — for provider apps, not customers.
  */
-const JOB_TAGS = { pet: 'PetBookings', helping: 'HelpingTasks', repair: 'RepairBookings' };
+const JOB_TAGS = { pet: 'PetBookings', helping: 'HelpingTasks', repair: 'RepairBookings', event: 'EventBooking' };
 const OPEN_TAGS = { pet: 'PetAvailable', helping: 'HelpingAvailable' };
 
 export function useJobRealtime({ alerts = false } = {}) {

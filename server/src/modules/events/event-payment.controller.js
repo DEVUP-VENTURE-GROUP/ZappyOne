@@ -119,6 +119,7 @@ async function verifyAdvancePayment(req, res, next) {
     ]);
 
     logger.info({ bookingId: booking._id, cfPaymentId }, '[EVENT_PAYMENT] Advance paid — booking confirmed');
+    require('../jobs/job-events').announce('event', { ...booking, status: 'confirmed' }, 'confirmed').catch(() => {});
 
     // Schedule 24h reminder notification
     try {

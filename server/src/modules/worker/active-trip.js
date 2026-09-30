@@ -53,7 +53,7 @@ async function activeTrip(workerId, { hintId = null, fresh = false } = {}) {
   }
 
   let trip = null;
-  for (const k of ALL) {
+  for (const k of ALL.filter((x) => x.trip)) {
     const Model = k.model();
     const doc = hintId
       ? await Model.findOne({ _id: hintId, workerId }).select(k.trip.fields).lean().catch(() => null)
@@ -85,6 +85,7 @@ async function canWatchJob(jobId, { id, role }) {
   if (role === 'user') return String(doc.userId) === String(id);
   if (role === 'worker') return String(doc.workerId || '') === String(id);
   if (role === 'shop') return String(doc.shopId || '') === String(id);
+  if (role === 'event_partner') return String(doc.partnerId || '') === String(id);
   return false;
 }
 

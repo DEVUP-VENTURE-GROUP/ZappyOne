@@ -143,11 +143,19 @@ async function declineBooking(req, res, next) {
     const booking = await EventBooking.findOne({ _id: req.params.id, partnerId: req.auth.sub, status: 'confirmed' });
     if (!booking) return res.status(404).json({ error: 'Booking not found or cannot be declined at this stage' });
 
+    const { paidPaiseOf } = require('./event.service');
+    const refundPaise = paidPaiseOf(booking);
     booking.status = 'cancelled';
     booking.cancellationReason = reason || 'Partner unavailable';
     booking.cancelledBy = 'partner';
-    booking.statusHistory.push({ status: 'cancelled', meta: { reason, cancelledBy: 'partner' } });
+    booking.refundPaise = refundPaise;
+    booking.refundStatus = refundPaise > 0 ? 'pending' : 'none';
+    booking.statusHistory.push({ status: 'cancelled', meta: { reason, cancelledBy: 'partner', refundPaise } });
     await booking.save();
+    if (refundPaise > 0) {
+      await require('../payment/payment.service').refundEventPayments({ bookingId: booking._id, reason: 'Partner cancelled' });
+    }
+    require('../jobs/job-events').announce('event', booking, 'cancelled').catch(() => {});
 
     // Notify user — full refund on partner cancellation
     try {
@@ -186,9 +194,12 @@ async function updateBookingStatus(req, res, next) {
     booking.status = status;
     booking.statusHistory.push({ status, meta: { updatedBy: 'partner' } });
     await booking.save();
+    require('../jobs/job-events').announce('event', booking, status).catch(() => {});
 
     if (status === 'completed') {
-      const netPaise = Math.round((booking.pricing.totalPaise || 0) * 0.85); // 85% after 15% platform cut
+      // The commission agreed when this booking was made, not a number fixed in code.
+      const commissionPct = booking.pricing.platformCommissionPct ?? 15;
+      const netPaise = Math.round((booking.pricing.totalPaise || 0) * (100 - commissionPct) / 100);
       await EventPartner.updateOne({ _id: req.auth.sub }, {
         $inc: { completedEvents: 1, totalEarningsPaise: netPaise },
       });

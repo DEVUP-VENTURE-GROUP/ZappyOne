@@ -14,16 +14,17 @@
 const { redis } = require('../../config/redis');
 const logger = require('../../core/logger');
 const { haversineKm } = require('../../core/geo/distance');
-const { KINDS, lineOf } = require('./kinds');
+const { KINDS, lineOf, providerOf } = require('./kinds');
 
 /** Who cancelled decides who hears about it: the provider only when it wasn't them. */
-const lastActor = (doc) => (doc.statusHistory || []).at(-1)?.byRole || '';
+const lastActor = (doc) => (doc.statusHistory || []).at(-1)?.byRole || (doc.cancelledBy === 'user' ? 'user' : '');
 
 function toRoom(id, event, payload) {
   redis.publish('order:event', JSON.stringify({ orderId: String(id), event, payload }))
     .catch((err) => logger.warn({ err: err.message, id, event }, '[jobs] room publish failed'));
 }
 
+/** One person's own room: user:<id>, worker:<id>, shop:<id> or event_partner:<id>. */
 function toProvider(kind, id, event, payload) {
   if (!id) return;
   redis.publish('provider:repair', JSON.stringify({ kind, id: String(id), event, payload }))
@@ -50,10 +51,12 @@ async function announce(kind, doc, status) {
   if (!k) return;
   const copy = k.copy || { customer: {}, provider: {} };
   const id = String(doc._id);
-  const provider = doc.shopId ? { kind: 'shop', id: doc.shopId } : doc.workerId ? { kind: 'worker', id: doc.workerId } : null;
+  const provider = providerOf(kind, doc);
   const payload = { kind, id, status, reference: doc.reference, at: new Date().toISOString() };
 
   toRoom(id, 'job.status', payload);
+  // Personal channels too, so lists and home cards update without the job open.
+  toProvider('user', doc.userId, 'job.update', payload);
   if (provider) toProvider(provider.kind, provider.id, 'job.update', payload);
 
   const forCustomer = copy.customer[status];

@@ -152,11 +152,19 @@ async function cancelBooking(req, res, next) {
     if (['completed', 'cancelled'].includes(booking.status)) {
       return res.status(409).json({ error: 'Cannot cancel a completed or already-cancelled booking' });
     }
+    const { paidPaiseOf } = require('./event.service');
+    const refundPaise = paidPaiseOf(booking);
     booking.status = 'cancelled';
     booking.cancellationReason = reason || 'Cancelled by admin';
     booking.cancelledBy = 'admin';
-    booking.statusHistory.push({ status: 'cancelled', meta: { reason, cancelledBy: 'admin' } });
+    booking.refundPaise = refundPaise;
+    booking.refundStatus = refundPaise > 0 ? 'pending' : 'none';
+    booking.statusHistory.push({ status: 'cancelled', meta: { reason, cancelledBy: 'admin', refundPaise } });
     await booking.save();
+    if (refundPaise > 0) {
+      await require('../payment/payment.service').refundEventPayments({ bookingId: booking._id, reason: `Cancelled by ZappyOne: ${reason || ''}`.trim() });
+    }
+    require('../jobs/job-events').announce('event', booking, 'cancelled').catch(() => {});
 
     try {
       const ns = require('../notification/notification.service');
@@ -164,7 +172,7 @@ async function cancelBooking(req, res, next) {
         recipient: { kind: 'user', id: String(booking.userId) },
         type: 'event_booking_cancelled',
         title: 'Booking Cancelled',
-        body: reason || 'Your event booking has been cancelled by admin.',
+        body: `ZappyOne cancelled this booking${reason ? `: ${reason}` : ''}.${refundPaise > 0 ? ' Everything you paid is being refunded.' : ''}`,
         data: { bookingId: String(booking._id) },
       }).catch(() => {});
     } catch {}
