@@ -148,7 +148,7 @@ router.post('/bookings', authenticate, requireRole('user'),
 
 router.get('/bookings', authenticate, requireRole('user'), ctrl.listMyBookings);
 
-router.get('/bookings/available', authenticate, ctrl.listAvailableBookings);
+router.get('/bookings/available', authenticate, requireRole('worker', 'shop'), ctrl.listAvailableBookings);
 router.get('/bookings/assigned', authenticate, requireRole('worker', 'shop'), ctrl.listAssignedBookings);
 
 router.get('/bookings/:id', authenticate, ctrl.getBooking);
@@ -163,13 +163,15 @@ router.post('/bookings/:id/rate', authenticate, requireRole('user'),
 
 /* Worker execution */
 
-router.post('/bookings/:id/accept', authenticate, ctrl.acceptBooking);
+router.post('/bookings/:id/accept', authenticate, requireRole('worker', 'shop'), ctrl.acceptBooking);
+router.post('/bookings/:id/decline', authenticate, requireRole('worker', 'shop'),
+  validate(Joi.object({ reason: Joi.string().max(300).allow('', null) })), ctrl.declineBooking);
 
-router.post('/bookings/:id/status', authenticate,
+router.post('/bookings/:id/status', authenticate, requireRole('worker', 'shop'),
   validate(Joi.object({ status: Joi.string().required(), note: Joi.string().max(500).allow('', null) })),
   ctrl.advanceStatus);
 
-router.post('/bookings/:id/collect-cash', authenticate, ctrl.collectCash);
+router.post('/bookings/:id/collect-cash', authenticate, requireRole('worker', 'shop'), ctrl.collectCash);
 
 router.post('/bookings/:id/proof', authenticate,
   validate(Joi.object({

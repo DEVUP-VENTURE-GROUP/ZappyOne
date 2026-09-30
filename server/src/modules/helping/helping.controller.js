@@ -13,6 +13,8 @@ const pricingService = require('./services/pricing.service');
 const s3Service = require('../../core/storage/s3');
 const Worker = require('../worker/worker.model');
 const { providerCard } = require('../worker/provider-card');
+const { approvedLines, assertApproved, lineOf, HELPING_LINE } = require('../onboarding/eligibility');
+const { announce } = require('../jobs/job-events');
 
 /** Object-level authorisation — the customer, the assigned helper, or admin. */
 function mayView(task, auth) {
@@ -248,15 +250,24 @@ async function listAssigned(req, res, next) {
   } catch (err) { next(err); }
 }
 
+/**
+ * Open tasks near this helper, for the services they're approved for. A
+ * helper not yet approved for either service sees none: the addresses and
+ * shopping lists here belong to people who trusted a verified helper.
+ */
 async function listAvailable(req, res, next) {
   try {
+    const lines = await approvedLines({ role: 'worker', id: req.auth.sub });
+    const types = Object.entries(HELPING_LINE).filter(([, line]) => lines.has(line)).map(([type]) => type);
+    if (!types.length) return res.json({ tasks: [], notApproved: true });
+
     const [worker, radiusKm] = await Promise.all([
       Worker.findById(req.auth.sub).select('currentLocation').lean(),
       pricingService.maxMatchRadiusKm(),
     ]);
     const coords = worker?.currentLocation?.coordinates;
 
-    const filter = { status: { $in: ['CONFIRMED', 'WORKER_SEARCHING'] }, workerId: null };
+    const filter = { status: { $in: ['CONFIRMED', 'WORKER_SEARCHING'] }, workerId: null, serviceType: { $in: types } };
     const query = coords?.length === 2
       ? HelpingTask.find({
         ...filter,
@@ -290,6 +301,10 @@ async function listAvailable(req, res, next) {
 
 async function acceptTask(req, res, next) {
   try {
+    const open = await HelpingTask.findById(req.params.id).select('serviceType').lean();
+    if (!open) return res.status(404).json({ error: 'Task not found' });
+    await assertApproved({ role: 'worker', id: req.auth.sub }, await lineOf('helping', open));
+
     /*
      * Claimed atomically. Two helpers tapping accept at the same instant must
      * not both get the task (§47/§59) — the filter asserts it is still free,
@@ -313,6 +328,7 @@ async function acceptTask(req, res, next) {
         error: 'Another helper has already taken this task', code: 'ALREADY_CLAIMED',
       });
     }
+    announce('helping', task, 'WORKER_ACCEPTED');
     res.json({ task });
   } catch (err) { next(err); }
 }

@@ -236,3 +236,55 @@ export function useDisconnectOnLogout() {
     if (!token) disconnectSocket();
   }, [token]);
 }
+
+/**
+ * Keep every open screen in step with the jobs it shows — mounted once per app.
+ *
+ * Every job kind announces each change as `job.status` (to the job's room) and
+ * `job.update` (to its provider), and new open work as `job.available`; this
+ * turns those into cache refreshes, so a status, a new offer or a claimed
+ * job appears the moment it happens rather than on the next poll. Polling stays
+ * on the screens as the fallback for a dropped connection.
+ *
+ * `alerts` shows a toast for new work nearby — for provider apps, not customers.
+ */
+const JOB_TAGS = { pet: 'PetBookings', helping: 'HelpingTasks', repair: 'RepairBookings' };
+const OPEN_TAGS = { pet: 'PetAvailable', helping: 'HelpingAvailable' };
+
+export function useJobRealtime({ alerts = false } = {}) {
+  const { accessToken: token } = useSelector(selectAuth);
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    if (!token) return undefined;
+    const socket = getSocket(token);
+    // Lazy: the API module is large and this hook lives next to lighter ones.
+    const refresh = (tags) => import('../services/api').then(({ api }) => dispatch(api.util.invalidateTags(tags)));
+
+    const onJob = (p) => {
+      const type = JOB_TAGS[p?.kind];
+      if (type) refresh([type, { type, id: p.id }, ...(OPEN_TAGS[p.kind] ? [OPEN_TAGS[p.kind]] : [])]);
+    };
+    // Quote events are repair-only and carry no id; the repair lists are small.
+    const onQuote = () => refresh(['RepairBookings']);
+    const onAvailable = (p) => {
+      if (OPEN_TAGS[p?.kind]) refresh([OPEN_TAGS[p.kind]]);
+      if (alerts) {
+        toast(`New job near you${p.area ? ` · ${p.area}` : ''}`, { icon: '🔔', duration: 6000 });
+      }
+    };
+
+    socket.on('job.status', onJob);
+    socket.on('job.update', onJob);
+    socket.on('job.available', onAvailable);
+    socket.on('repair.quote', onQuote);
+    socket.on('repair.quote_decision', onQuote);
+    return () => {
+      socket.off('job.status', onJob);
+      socket.off('job.update', onJob);
+      socket.off('job.available', onAvailable);
+      socket.off('repair.quote', onQuote);
+      socket.off('repair.quote_decision', onQuote);
+    };
+  }, [token, alerts, dispatch]);
+}

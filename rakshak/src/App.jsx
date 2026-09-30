@@ -2,7 +2,7 @@ import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { selectAuth } from '@shared/modules/auth/authSlice';
-import { useDisconnectOnLogout } from '@shared/hooks/useSocket';
+import { useDisconnectOnLogout, useJobRealtime } from '@shared/hooks/useSocket';
 import ConnectionBanner from '@shared/components/common/ConnectionBanner';
 import RouteProgress from '@shared/components/common/RouteProgress';
 import ErrorBoundary from '@shared/components/common/ErrorBoundary';
@@ -21,6 +21,8 @@ const PageLoader = () => (
 export default function App() {
   const { accessToken } = useSelector(selectAuth);
   useDisconnectOnLogout();
+  // Job changes land on every open screen at once; new work nearby raises an alert.
+  useJobRealtime({ alerts: true });
 
   return (
     <>

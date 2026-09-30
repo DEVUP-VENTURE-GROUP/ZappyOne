@@ -2,7 +2,7 @@ import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { selectAuth } from '@shared/modules/auth/authSlice';
-import { useDisconnectOnLogout } from '@shared/hooks/useSocket';
+import { useDisconnectOnLogout, useJobRealtime } from '@shared/hooks/useSocket';
 import { RequireAuth } from '@shared/components/common/RequireAuth';
 import ConnectionBanner from '@shared/components/common/ConnectionBanner';
 import RouteProgress from '@shared/components/common/RouteProgress';
@@ -33,6 +33,8 @@ const homeFor = (role) => (role === 'worker' ? '/worker' : role === 'shop' ? '/s
 export default function App() {
   const { accessToken, role } = useSelector(selectAuth);
   useDisconnectOnLogout();
+  // Job changes land on every open screen at once; new work nearby raises an alert.
+  useJobRealtime({ alerts: true });
   const shop = (el) => <RequireAuth role="shop" loginPath={SHOP_LOGIN}>{el}</RequireAuth>;
 
   return (

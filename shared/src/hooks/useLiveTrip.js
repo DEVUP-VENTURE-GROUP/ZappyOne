@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
+import { selectAuth } from '../modules/auth/authSlice';
 import { getSocket } from '../services/socket';
 import { API_BASE } from '../services/apiBase';
 import { useGeolocation } from './useGeolocation';
@@ -64,13 +65,15 @@ export const MOVING_STATUSES = ['ON_THE_WAY', 'OUT_FOR_RETURN', 'PICKUP_SCHEDULE
  * map at all, beats a marker parked at a stale position the customer believes
  * is live.
  */
-export function useTrackingFeed(bookingId, { enabled = true } = {}) {
-  const token = useSelector((s) => s.auth?.token);
+export function useTrackingFeed(bookingId, { enabled = true, live = enabled } = {}) {
+  const { accessToken: token } = useSelector(selectAuth);
   const [workerLocation, setWorkerLocation] = useState(null);
   const [etaMinutes, setEtaMinutes] = useState(null);
 
   useEffect(() => {
-    if (!bookingId || !token || !enabled) return undefined;
+    // In the room for the whole job (`live`), so status changes arrive too;
+    // positions are only kept while the pro is travelling (`enabled`).
+    if (!bookingId || !token || !live) return undefined;
 
     const socket = getSocket(token);
     const subscribe = () => socket.emit('order:subscribe', { orderId: bookingId });
@@ -97,7 +100,7 @@ export function useTrackingFeed(bookingId, { enabled = true } = {}) {
       socket.off('worker.location', onLocation);
       socket.off('eta.update', onEta);
     };
-  }, [bookingId, token, enabled]);
+  }, [bookingId, token, live]);
 
   // Leaving a moving status must clear the marker, not freeze it on screen.
   useEffect(() => {
@@ -119,7 +122,7 @@ export function useTrackingFeed(bookingId, { enabled = true } = {}) {
  * working technician's phone is a real constraint, not a detail.
  */
 export function usePublishTripLocation(bookingId, active, { minIntervalMs = 10000 } = {}) {
-  const token = useSelector((s) => s.auth?.token);
+  const { accessToken: token } = useSelector(selectAuth);
   const lastSent = useRef(0);
   /**
    * Three states, not a boolean.

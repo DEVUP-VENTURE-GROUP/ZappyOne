@@ -4,10 +4,12 @@ import { ArrowLeft, Loader2, Navigation, PawPrint, AlertTriangle } from 'lucide-
 import toast from 'react-hot-toast';
 import ProofPhotos, { readyKeys } from '../../components/common/ProofPhotos';
 import CollectPaymentCard from '../../components/common/CollectPaymentCard';
+import { formatPaise } from '../../utils/money';
 import TripSharingBanner from '../../components/worker/TripSharingBanner';
 import { usePublishTripLocation, tripOf } from '../../hooks/useLiveTrip';
 import {
   useGetPetBookingQuery, useAdvancePetBookingStatusMutation, useAddPetBookingProofMutation, useCollectPetCashMutation,
+  useAcceptPetBookingMutation, useDeclinePetBookingMutation,
 } from '../../services/api';
 
 /**
@@ -31,6 +33,8 @@ export default function WorkerPetJobPage() {
   const [advance] = useAdvancePetBookingStatusMutation();
   const [addProof] = useAddPetBookingProofMutation();
   const [collectCash, { isLoading: collecting }] = useCollectPetCashMutation();
+  const [acceptOffer, { isLoading: accepting }] = useAcceptPetBookingMutation();
+  const [declineOffer, { isLoading: declining }] = useDeclinePetBookingMutation();
   const [beforePhotos, setBeforePhotos] = useState([]);
   const [afterPhotos, setAfterPhotos] = useState([]);
   const [completing, setCompleting] = useState(false);
@@ -66,7 +70,7 @@ export default function WorkerPetJobPage() {
         refetch();
       } else {
         toast.success('Completed and settled');
-        nav('/worker/pet');
+        nav('/worker/work');
       }
     } catch (err) {
       if (err?.data?.code === 'PROOF_REQUIRED') toast.error(`A ${err.data.kind?.replace('_', ' ')} photo is required first`);
@@ -77,12 +81,24 @@ export default function WorkerPetJobPage() {
   }
 
   const nextMoves = NEXT[booking.status] || [];
+  // The customer chose this provider; it waits for their answer before anyone else sees it.
+  const offered = booking.status === 'PROVIDER_ASSIGNED';
+
+  async function answerOffer(yes) {
+    try {
+      if (yes) { await acceptOffer(booking._id).unwrap(); toast.success('Accepted. The customer has been told.'); refetch(); }
+      else { await declineOffer({ id: booking._id, reason: 'Declined by provider' }).unwrap(); toast('Declined. We will find someone else.'); nav('/worker/work'); }
+    } catch (err) {
+      toast.error(err?.data?.error || 'Could not send your answer');
+      refetch();
+    }
+  }
 
   async function recordCash() {
     try {
       await collectCash(booking._id).unwrap();
       toast.success('Payment recorded');
-      nav('/worker/pet');
+      nav('/worker/work');
     } catch (err) {
       toast.error(err?.data?.error || 'Could not record the payment');
     }
@@ -116,6 +132,21 @@ export default function WorkerPetJobPage() {
             <Navigation size={16} className="text-zappy-500 shrink-0" />
             <span className="truncate">{booking.serviceLocation.address}</span>
           </a>
+        )}
+
+        {offered && (
+          <div className="space-y-3 rounded-2xl bg-white p-4 ring-1 ring-amber-200">
+            <p className="text-[14px] font-semibold text-navy">A customer chose you for this booking</p>
+            <p className="text-[13px] text-slate-600">
+              You earn {formatPaise(booking.pricing?.providerAmountPaise || 0)}. If you can’t do it, decline so we can find someone else in time.
+            </p>
+            <div className="flex gap-2">
+              <button type="button" onClick={() => answerOffer(false)} disabled={declining || accepting}
+                className="flex-1 rounded-xl py-3 font-semibold text-slate-700 ring-1 ring-slate-300 disabled:opacity-50">Decline</button>
+              <button type="button" onClick={() => answerOffer(true)} disabled={declining || accepting}
+                className="flex-1 rounded-xl bg-zappy-600 py-3 font-semibold text-white disabled:opacity-50">Accept</button>
+            </div>
+          </div>
         )}
 
         {nextMoves.map(([status, label]) => (

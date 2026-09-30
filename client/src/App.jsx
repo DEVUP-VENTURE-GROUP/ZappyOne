@@ -3,7 +3,7 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { useSelector } from 'react-redux';
 import { selectAuth } from '@shared/modules/auth/authSlice';
-import { useDisconnectOnLogout } from '@shared/hooks/useSocket';
+import { useDisconnectOnLogout, useJobRealtime } from '@shared/hooks/useSocket';
 import { useFCM } from './hooks/useFCM.jsx';
 import useTelemetry from './hooks/useTelemetry';
 import { prefetchMainTabs, onIdle } from './lib/routePrefetch';
@@ -89,6 +89,8 @@ function PageLoader() {
 
 export default function App() {
   useDisconnectOnLogout();
+  // Job changes land on every open screen at once.
+  useJobRealtime();
   useFCM();
   useTelemetry();
   const { accessToken: token, role } = useSelector(selectAuth);

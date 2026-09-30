@@ -159,6 +159,9 @@ async function createTask({
   });
 
   task.transitionTo('REQUESTED', { by: userId, byRole: 'user' });
+  // The service fee is settled after the task (cash, or online when it's done),
+  // so a placed task is confirmed at once and goes straight to helpers.
+  task.transitionTo('CONFIRMED', { by: userId, byRole: 'user' });
 
   // Prepaid: the budget leaves the wallet before anyone is sent to buy anything.
   await money.holdBudget(task);

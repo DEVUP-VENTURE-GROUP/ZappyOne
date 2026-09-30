@@ -258,6 +258,10 @@ const petBookingSchema = new mongoose.Schema(
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
 
     workerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Worker', default: null, index: true },
+    /** When it was offered to the chosen provider; unanswered offers are released after a window. */
+    assignedAt: { type: Date, default: null },
+    /** Providers who passed on it, so it isn't offered back to them. */
+    declinedBy: { type: [mongoose.Schema.Types.ObjectId], default: [] },
     shopId: { type: mongoose.Schema.Types.ObjectId, ref: 'Shop', default: null, index: true },
     /** Frozen provider identity, so a renamed shop does not rewrite history. */
     providerSnapshot: {
@@ -354,6 +358,8 @@ petBookingSchema.methods.transitionTo = function transitionTo(next, meta = {}) {
   if (next === 'SERVICE_STARTED' && !this.execution.startedAt) this.execution.startedAt = new Date();
   if (next === 'SERVICE_COMPLETED' && !this.execution.completedAt) this.execution.completedAt = new Date();
   if (next === 'CANCELLED' && !this.cancelledAt) this.cancelledAt = new Date();
+  // Announced by the save that persists it (jobs/job-events).
+  (this.$locals.moves ||= []).push(next);
   return this;
 };
 
@@ -361,6 +367,8 @@ petBookingSchema.methods.transitionTo = function transitionTo(next, meta = {}) {
 petBookingSchema.methods.bedCount = function bedCount() {
   return (this.pets || []).filter((p) => p.status !== 'cancelled').length;
 };
+
+require('../../jobs/job-events').announceOnSave(petBookingSchema, 'pet');
 
 const PetBooking = mongoose.model('PetBooking', petBookingSchema);
 

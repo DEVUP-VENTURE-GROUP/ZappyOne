@@ -22,6 +22,9 @@ const paymentService = require('./services/payment.service');
 const PROVIDER_SETTABLE = ['PROVIDER_EN_ROUTE', 'PROVIDER_ARRIVED', 'PET_HANDOVER', 'SERVICE_STARTED', 'SERVICE_PAUSED'];
 const s3Service = require('../../core/storage/s3');
 const { providerCard } = require('../worker/provider-card');
+const { approvedLines, assertApproved, lineOf } = require('../onboarding/eligibility');
+const { announce } = require('../jobs/job-events');
+const { haversineKm } = require('../../core/geo/distance');
 
 function mayView(booking, auth) {
   const id = String(auth.sub);
@@ -230,6 +233,8 @@ async function getBooking(req, res, next) {
 
     // Named once they've accepted; before that the assignment can still move.
     const introduced = !NOT_YET_INTRODUCED.includes(booking.status);
+    // The handover code proves the right person turned up; only the customer holds it.
+    if (req.auth.role !== 'user') delete booking.handoverOtp;
     res.json({
       booking: await signBooking(booking),
       provider: introduced ? await providerCard(booking, { fallbackName: 'Your pet pro' }) : null,
@@ -273,12 +278,57 @@ async function rateBooking(req, res, next) {
 
 /* Worker execution */
 
+/** Bookings nobody holds yet. */
+const OPEN = ['BOOKED', 'PROVIDER_SEARCHING'];
+const OPEN_RADIUS_KM = 15;
+
+/** Where this provider works from: their last position, or their shop. */
+async function providerPoint(auth) {
+  if (auth.role === 'shop') {
+    const shop = await require('../shop/shop.model').findById(auth.sub).select('address.location').lean();
+    return shop?.address?.location?.coordinates;
+  }
+  const worker = await require('../worker/worker.model').findById(auth.sub).select('currentLocation').lean();
+  return worker?.currentLocation?.coordinates;
+}
+
+/**
+ * Open bookings a provider could take: only services they're approved for,
+ * only near them, and only what they need to decide — never the customer's id,
+ * the pets' medical notes or the handover code.
+ */
 async function listAvailableBookings(req, res, next) {
   try {
-    const filter = { workerId: null, shopId: null, status: { $in: ['BOOKED', 'PROVIDER_SEARCHING'] } };
-    if (req.query.categoryCode) filter.categoryCode = req.query.categoryCode;
-    const bookings = await PetBooking.find(filter).sort({ scheduledAt: 1, checkInAt: 1 }).limit(30).lean();
-    res.json({ bookings });
+    const lines = await approvedLines({ role: req.auth.role, id: req.auth.sub });
+    if (!lines.size) return res.json({ bookings: [], notApproved: true });
+
+    const filter = {
+      workerId: null, shopId: null, status: { $in: OPEN }, categoryCode: { $in: [...lines] },
+      declinedBy: { $ne: req.auth.sub }, // not offered back to someone who passed
+    };
+    if (req.query.categoryCode) filter.categoryCode = lines.has(req.query.categoryCode) ? req.query.categoryCode : '__none__';
+    const at = await providerPoint(req.auth);
+    const query = at?.length === 2
+      ? PetBooking.find({ ...filter, serviceLocation: { $near: { $geometry: { type: 'Point', coordinates: at }, $maxDistance: OPEN_RADIUS_KM * 1000 } } })
+      : PetBooking.find(filter).sort({ scheduledAt: 1, checkInAt: 1 });
+    const bookings = await query.limit(30).lean();
+
+    res.json({
+      bookings: bookings.map((b) => ({
+        _id: b._id,
+        reference: b.reference,
+        categoryCode: b.categoryCode,
+        serviceMode: b.serviceMode,
+        pets: (b.pets || []).map((pet) => ({ snapshot: { name: pet.snapshot?.name, species: pet.snapshot?.species, size: pet.snapshot?.size } })),
+        serviceLocation: { address: b.serviceLocation?.address || '' },
+        km: at?.length === 2 && b.serviceLocation?.coordinates?.length === 2
+          ? Number(haversineKm(at[1], at[0], b.serviceLocation.coordinates[1], b.serviceLocation.coordinates[0]).toFixed(1)) : null,
+        scheduledAt: b.scheduledAt,
+        checkInAt: b.checkInAt,
+        checkOutAt: b.checkOutAt,
+        pricing: { providerAmountPaise: b.pricing?.providerAmountPaise || 0 },
+      })),
+    });
   } catch (err) { next(err); }
 }
 
@@ -296,22 +346,58 @@ async function listAssignedBookings(req, res, next) {
   } catch (err) { next(err); }
 }
 
+/**
+ * Take a booking. Two ways in:
+ *   - it was offered to this provider (the customer chose them), or
+ *   - it is open, and this provider is approved for the service.
+ * Claimed atomically: two providers tapping at once can't both get it.
+ */
 async function acceptBooking(req, res, next) {
   try {
-    const ownerId = req.auth.role === 'shop' ? { shopId: req.auth.sub } : { workerId: req.auth.sub };
+    const auth = { role: req.auth.role, id: req.auth.sub };
+    const owner = auth.role === 'shop' ? { shopId: auth.id } : { workerId: auth.id };
+    const current = await PetBooking.findById(req.params.id).select('status categoryCode serviceMode checkInAt checkOutAt pets workerId shopId').lean();
+    if (!current) return res.status(404).json({ error: 'Booking not found' });
+
+    const offeredToMe = current.status === 'PROVIDER_ASSIGNED'
+      && (String(current.workerId || '') === String(auth.id) || String(current.shopId || '') === String(auth.id));
+    if (!offeredToMe) {
+      await assertApproved(auth, await lineOf('pet', current));
+      // A stay needs a free bed with THIS provider before they can take it.
+      if (['boarding', 'daycare'].includes(current.serviceMode) && current.checkInAt) {
+        const capability = await PetProviderCapability.findOne({ ...owner, isActive: true, verificationStatus: 'verified' }).lean();
+        if (!capability) return res.status(409).json({ error: 'Set up your pet care details first', code: 'NO_CAPABILITY' });
+        await matchingService.claimCapacity({
+          capability, checkInAt: current.checkInAt, checkOutAt: current.checkOutAt,
+          bedsNeeded: (current.pets || []).length || 1, isDaycare: current.serviceMode === 'daycare',
+        });
+      }
+    }
+
     const booking = await PetBooking.findOneAndUpdate(
+      offeredToMe
+        ? { _id: req.params.id, status: 'PROVIDER_ASSIGNED', ...owner }
+        : { _id: req.params.id, workerId: null, shopId: null, status: { $in: OPEN } },
       {
-        _id: req.params.id, workerId: null, shopId: null,
-        status: { $in: ['BOOKED', 'PROVIDER_SEARCHING', 'PROVIDER_ASSIGNED'] },
-      },
-      {
-        $set: { ...ownerId, status: 'PROVIDER_ACCEPTED' },
-        $push: { statusHistory: { status: 'PROVIDER_ACCEPTED', at: new Date(), by: req.auth.sub, byRole: req.auth.role } },
+        $set: { ...owner, status: 'PROVIDER_ACCEPTED' },
+        $push: { statusHistory: { status: 'PROVIDER_ACCEPTED', at: new Date(), by: auth.id, byRole: auth.role } },
       },
       { new: true },
     ).lean();
 
     if (!booking) return res.status(409).json({ error: 'Another provider has already taken this', code: 'ALREADY_CLAIMED' });
+    announce('pet', booking, 'PROVIDER_ACCEPTED');
+    res.json({ booking });
+  } catch (err) { next(err); }
+}
+
+/** The chosen provider can't do it: the booking opens to everyone approved nearby. */
+async function declineBooking(req, res, next) {
+  try {
+    const booking = await bookingService.releaseAssignment({
+      bookingId: req.params.id, auth: { role: req.auth.role, id: req.auth.sub }, reason: req.body?.reason || 'Declined',
+    });
+    if (!booking) return res.status(409).json({ error: 'This booking is no longer waiting for you', code: 'NOT_OFFERED' });
     res.json({ booking });
   } catch (err) { next(err); }
 }
@@ -503,7 +589,7 @@ module.exports = {
   listMyPets, createPet, updatePet, archivePet, getPetHistory,
   quote, findProviders,
   createBooking, listMyBookings, getBooking, cancelBooking, rateBooking,
-  listAvailableBookings, listAssignedBookings, acceptBooking, advanceStatus, collectCash, addProof, updateExecution,
+  listAvailableBookings, listAssignedBookings, acceptBooking, declineBooking, advanceStatus, collectCash, addProof, updateExecution,
   createRecurring, listMyRecurring, pauseRecurring, resumeRecurring, cancelRecurring, skipRecurringDate,
   adminListBookings, adminGetPricing, adminUpdatePricing, adminListCapabilities, adminUpdateCapability,
 };

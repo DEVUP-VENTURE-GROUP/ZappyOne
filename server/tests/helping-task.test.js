@@ -565,7 +565,7 @@ describe('the server owns the task state', () => {
   it('refuses an illegal jump', async () => {
     const { task } = await taskService.createTask(baseTask());
     const doc = await HelpingTask.findById(task._id);
-    // REQUESTED cannot leap to COMPLETED, however the request is shaped.
+    // A placed task cannot leap to COMPLETED, however the request is shaped.
     expect(doc.canTransition('COMPLETED')).toBe(false);
     expect(() => doc.transitionTo('COMPLETED')).toThrow(/Cannot move a task/);
   });
@@ -573,7 +573,7 @@ describe('the server owns the task state', () => {
   it('records every move with who made it', async () => {
     const { task } = await taskService.createTask(baseTask());
     const doc = await HelpingTask.findById(task._id).lean();
-    expect(doc.statusHistory.map((h) => h.status)).toEqual(['DRAFT', 'REQUESTED']);
+    expect(doc.statusHistory.map((h) => h.status)).toEqual(['DRAFT', 'REQUESTED', 'CONFIRMED']);
     expect(String(doc.statusHistory[1].by)).toBe(String(userId));
   });
 });

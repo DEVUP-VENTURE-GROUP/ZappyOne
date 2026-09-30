@@ -76,7 +76,7 @@ export default function WorkerHelpingJobPage() {
     try {
       await complete(task._id).unwrap();
       toast.success('Task completed and settled');
-      nav('/worker/helping');
+      nav('/worker/work');
     } catch (err) {
       toast.error(err?.data?.error || 'Could not complete the task');
     }

@@ -2174,6 +2174,10 @@ export const api = createApi({
       query: (id) => ({ url: `/pet/bookings/${id}/accept`, method: 'POST' }),
       invalidatesTags: (r, e, id) => [{ type: 'PetBookings', id }, 'PetAvailable'],
     }),
+    declinePetBooking: b.mutation({
+      query: ({ id, reason }) => ({ url: `/pet/bookings/${id}/decline`, method: 'POST', body: { reason } }),
+      invalidatesTags: (r, e, a) => [{ type: 'PetBookings', id: a.id }, 'PetBookings'],
+    }),
     advancePetBookingStatus: b.mutation({
       query: ({ id, ...body }) => ({ url: `/pet/bookings/${id}/status`, method: 'POST', body }),
       invalidatesTags: (r, e, a) => [{ type: 'PetBookings', id: a.id }],
@@ -3063,7 +3067,7 @@ export const {
   usePetQuoteMutation, usePetProviderSearchMutation,
   useCreatePetBookingMutation, useMyPetBookingsQuery, useGetPetBookingQuery,
   useCancelPetBookingMutation, useRatePetBookingMutation,
-  useAvailablePetBookingsQuery, useAcceptPetBookingMutation, useAdvancePetBookingStatusMutation, useCollectPetCashMutation, useAssignedPetBookingsQuery,
+  useAvailablePetBookingsQuery, useAcceptPetBookingMutation, useDeclinePetBookingMutation, useAdvancePetBookingStatusMutation, useCollectPetCashMutation, useAssignedPetBookingsQuery,
   useAddPetBookingProofMutation, useUpdatePetBookingExecutionMutation,
   useCreatePetRecurringMutation, useMyPetRecurringQuery, usePausePetRecurringMutation,
   useResumePetRecurringMutation, useCancelPetRecurringMutation, useSkipPetRecurringDateMutation,

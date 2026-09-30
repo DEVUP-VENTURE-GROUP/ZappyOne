@@ -384,7 +384,7 @@ describe('boarding capacity is a hard limit', () => {
       checkInAt: checkIn, checkOutAt: checkOut, shopId: shop._id,
       serviceLocation: { type: 'Point', coordinates: [78.4, 17.4], address: 'Home' },
     });
-    expect(booking.status).toBe('BOOKED');
+    expect(booking.status).toBe('PROVIDER_ASSIGNED') // offered to the chosen provider, bed held;
 
     // The bed is taken — an overlapping second booking must be refused.
     await expect(bookingService.createBooking({
@@ -418,7 +418,7 @@ describe('boarding capacity is a hard limit', () => {
       checkInAt: secondIn, checkOutAt: secondOut, shopId: shop._id,
       serviceLocation: { type: 'Point', coordinates: [78.4, 17.4], address: 'Home' },
     });
-    expect(booking.status).toBe('BOOKED');
+    expect(booking.status).toBe('PROVIDER_ASSIGNED') // offered to the chosen provider, bed held;
   });
 
   it('never assigns a provider with no capacity configured at all', async () => {

@@ -425,6 +425,8 @@ helpingTaskSchema.methods.transitionTo = function transitionTo(next, meta = {}) 
   });
   if (next === 'TASK_STARTED' && !this.startedAt) this.startedAt = new Date();
   if (next === 'COMPLETED' && !this.completedAt) this.completedAt = new Date();
+  // Announced by the save that persists it (jobs/job-events).
+  (this.$locals.moves ||= []).push(next);
   return this;
 };
 
@@ -442,6 +444,8 @@ helpingTaskSchema.methods.computeItemSpend = function computeItemSpend() {
     .filter((i) => i.status === 'purchased' && i.actualPricePaise != null)
     .reduce((sum, i) => sum + i.actualPricePaise, 0);
 };
+
+require('../../jobs/job-events').announceOnSave(helpingTaskSchema, 'helping');
 
 const HelpingTask = mongoose.model('HelpingTask', helpingTaskSchema);
 

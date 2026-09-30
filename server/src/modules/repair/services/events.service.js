@@ -194,6 +194,8 @@ async function announceTransition(booking, status) {
     announceOfferClosed(booking, status.toLowerCase());
   }
 
+  // The same event every job kind sends, so screens listen once for all of them.
+  require('../../jobs/job-events').announce('repair', booking, status).catch(() => {});
   emitToRoom(booking._id, 'repair.status', {
     status,
     reference: booking.reference,

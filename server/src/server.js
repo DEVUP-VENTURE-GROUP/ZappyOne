@@ -125,6 +125,7 @@ async function start() {
     startNotificationsWorker();
     startStaleOrderWorker();
     startRepairSlaWorker();
+    startPetScheduler();
     startShieldPayoutWorker();
     // Backup for missed Cashfree webhooks; capture is exactly-once, so overlap is harmless.
     setInterval(() => {
@@ -254,6 +255,28 @@ function startNotificationsWorker() {
       { err: err.message },
       "[NOTIFICATIONS] Failed to start worker",
     );
+  }
+}
+
+/**
+ * Pet care on a timer: offers a chosen provider never answered go back to the
+ * pool (every minute), and recurring schedules create their next bookings
+ * (hourly; idempotent per occurrence, so an overlap never double-books).
+ */
+function startPetScheduler() {
+  try {
+    const pet = require("./modules/pet/services/booking.service");
+    const release = () => pet.releaseStaleAssignments()
+      .catch((err) => logger.error({ err: err.message }, "[pet] Releasing unanswered offers failed"));
+    const recur = () => pet.generateAllDue()
+      .catch((err) => logger.error({ err: err.message }, "[pet] Recurring generation failed"));
+    release();
+    recur();
+    setInterval(release, 60 * 1000);
+    setInterval(recur, 60 * 60 * 1000);
+    logger.info("[pet] Scheduler running in-process");
+  } catch (err) {
+    logger.error({ err: err.message }, "[pet] Failed to start scheduler");
   }
 }
 

@@ -223,9 +223,49 @@ async function createBooking({
   });
 
   booking.transitionTo('BOOKED', { by: userId, byRole: 'user' });
+  // The customer chose someone: it's theirs to accept or decline, nobody else's yet.
+  if (workerId || shopId) {
+    booking.transitionTo('PROVIDER_ASSIGNED', { by: userId, byRole: 'user' });
+    booking.assignedAt = new Date();
+  }
   await booking.save();
 
   return { booking: booking.toObject(), replayed: false };
+}
+
+/* Assignment */
+
+/** How long a chosen provider has to answer before the booking opens to others. */
+const ASSIGNMENT_WINDOW_MIN = 15;
+
+/**
+ * Take a booking back from the provider it was offered to and open it to
+ * everyone approved nearby. Used when they decline, and when they never answer.
+ * Clearing the provider also frees any beds the offer was holding.
+ */
+async function releaseAssignment({ bookingId, auth = null, reason = '' }) {
+  const owner = auth ? (auth.role === 'shop' ? { shopId: auth.id } : { workerId: auth.id }) : {};
+  const booking = await PetBooking.findOne({ _id: bookingId, status: 'PROVIDER_ASSIGNED', ...owner });
+  if (!booking) return null;
+  const declinedBy = booking.shopId || booking.workerId;
+  booking.workerId = null;
+  booking.shopId = null;
+  booking.assignedAt = null;
+  booking.declinedBy = [...(booking.declinedBy || []), declinedBy].filter(Boolean);
+  booking.transitionTo('PROVIDER_SEARCHING', { by: auth?.id || null, byRole: auth?.role || 'system', note: reason });
+  await booking.save();
+  return booking.toObject();
+}
+
+/** Offers nobody answered in time go back to the pool. Run on a schedule. */
+async function releaseStaleAssignments({ now = new Date() } = {}) {
+  const cutoff = new Date(now.getTime() - ASSIGNMENT_WINDOW_MIN * 60000);
+  const stale = await PetBooking.find({ status: 'PROVIDER_ASSIGNED', assignedAt: { $lte: cutoff } }).select('_id').lean();
+  let released = 0;
+  for (const b of stale) {
+    if (await releaseAssignment({ bookingId: b._id, reason: 'No answer in time' })) released += 1;
+  }
+  return released;
 }
 
 /* Cancellation (§37) */
@@ -479,4 +519,7 @@ module.exports = {
   generateOccurrences,
   generateAllDue,
   loadOwnedPets,
+  releaseAssignment,
+  releaseStaleAssignments,
+  ASSIGNMENT_WINDOW_MIN,
 };

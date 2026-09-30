@@ -75,7 +75,7 @@ function ProviderRow({ provider, jobsNoun }) {
 export default function LiveJobCard({ kind, job, provider, label, hint, steps = [], active = true, jobsNoun = 'jobs' }) {
   const [now, setNow] = useState(Date.now());
   const trip = active ? tripOf(kind, job) : null;
-  const { workerLocation, etaMinutes } = useTrackingFeed(job?._id, { enabled: Boolean(trip) });
+  const { workerLocation, etaMinutes } = useTrackingFeed(job?._id, { enabled: Boolean(trip), live: active });
 
   useEffect(() => {
     if (!active) return undefined;
