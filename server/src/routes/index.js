@@ -13,9 +13,7 @@ const kycRoutes = require('../modules/worker/kyc.routes');
 const orderRoutes = require('../modules/order/order.routes');
 const featuresRoutes = require('../modules/order/features.routes');
 const workerFeaturesRoutes = require('../modules/worker/worker-features.routes');
-const serviceMemoryRoutes = require('../modules/service/service-memory.routes');
 const { router: serviceFeaturesRouter, orderRouter: serviceOrderRouter } = require('../modules/service/service-features.routes');
-const verticalFeaturesRouter = require('../modules/service/vertical-features.routes');
 const adminRoutes = require('../modules/admin/admin.routes');
 const pricingRoutes = require('../modules/pricing/pricing.routes');
 const subscriptionRoutes = require('../modules/subscription/subscription.routes');
@@ -85,9 +83,7 @@ function mountRoutes(app) {
   app.use('/api/worker/training', trainingRoutes);
   app.use(`/api/${slug}/worker/appeals`, appealRoutes.adminRouter);
   app.use(`/api/${slug}/worker/training`, trainingRoutes.adminRouter);
-  app.use('/api/service-memory', serviceMemoryRoutes); // Appliance passport
   app.use('/api/service-features', serviceFeaturesRouter); // Diagnosis, warranty, maintenance plans, portfolio, time-estimate
-  app.use('/api/vertical-features', verticalFeaturesRouter); // Phone catalog/health, vehicle profiles/health, construction timer/site-visit
   app.use(`/api/${slug}`, adminRoutes);
   app.use(`/api/${slug}/pricing`, pricingRoutes.adminRouter);
   app.use(`/api/${slug}/disputes`, disputeRoutes.adminRouter);

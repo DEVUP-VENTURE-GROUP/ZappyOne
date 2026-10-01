@@ -147,12 +147,6 @@ export const api = createApi({
     forgotWorkerPassword: b.mutation({
       query: (body) => ({ url: '/auth/worker/forgot-password', method: 'POST', body }),
     }),
-    resetWorkerPassword: b.mutation({
-      query: (body) => ({ url: '/auth/worker/reset-password', method: 'POST', body }),
-    }),
-    changeWorkerPassword: b.mutation({
-      query: (body) => ({ url: '/auth/worker/change-password', method: 'POST', body }),
-    }),
     loginAdmin: b.mutation({
       query: (body) => ({ url: '/auth/admin/login', method: 'POST', body }),
     }),
@@ -167,12 +161,6 @@ export const api = createApi({
     }),
     logout: b.mutation({
       query: (refreshToken) => ({ url: '/auth/logout', method: 'POST', body: { refreshToken } }),
-    }),
-    revokeAllSessions: b.mutation({
-      query: () => ({ url: '/auth/revoke-all', method: 'POST' }),
-    }),
-    verifySensitiveOtp: b.mutation({
-      query: (otp) => ({ url: '/auth/otp/verify-action', method: 'POST', body: { otp } }),
     }),
 
     // --- User ---
@@ -262,33 +250,9 @@ export const api = createApi({
       query: (body) => ({ url: '/workers/device-token', method: 'POST', body }),
     }),
 
-    // --- Pricing quote ---
-    getQuote: b.query({ query: (params) => ({ url: '/orders/quote', params }) }),
-
-    // Worker-choice: top-ranked available pros near pickup (optional picker at checkout).
-    getNearbyPros: b.query({ query: (params) => ({ url: '/orders/nearby-pros', params }) }),
-
-    // --- ZeroWait Instant Match ---
-    // Warm dispatch: is a pre-accepted pro standing by? (checkout, before payment)
-    getWarmDispatch: b.query({ query: (params) => ({ url: '/orders/warm', params }) }),
-    // Worker Ready Mode (pre-accept next matching job)
-    getReadyMode: b.query({ query: () => '/workers/ready', providesTags: ['ReadyMode'] }),
-    setReadyMode: b.mutation({
-      query: (body) => ({ url: '/workers/ready', method: 'POST', body }),
-      invalidatesTags: ['ReadyMode'],
-    }),
 
     // --- Unified Search (Zepto-level: fuzzy + intent + rank + never-empty) ---
     smartSearch: b.query({ query: (params) => ({ url: '/search', params }) }),
-    searchSuggest: b.query({ query: (params) => ({ url: '/search/suggest', params }) }),
-    // What's opened most among services live at this location.
-    searchTrending: b.query({ query: (params = {}) => ({ url: '/search/trending', params }) }),
-
-    // --- Orders ---
-    createOrder: b.mutation({
-      query: (body) => ({ url: '/orders', method: 'POST', body }),
-      invalidatesTags: ['Order'],
-    }),
     getOrder: b.query({
       query: (id) => `/orders/${id}`,
       providesTags: (r, e, id) => [{ type: 'Order', id }],
@@ -306,10 +270,6 @@ export const api = createApi({
     getCancelPreview: b.query({
       query: (id) => `/orders/${id}/cancel-preview`,
     }),
-    rebookOrder: b.mutation({
-      query: (id) => ({ url: `/orders/${id}/rebook`, method: 'POST' }),
-      invalidatesTags: ['Order'],
-    }),
     cancelOrder: b.mutation({
       query: ({ id, reason }) => ({ url: `/orders/${id}/cancel`, method: 'POST', body: { reason } }),
       // Optimistic: flip status to cancelled immediately, roll back on failure.
@@ -320,14 +280,6 @@ export const api = createApi({
         try { await queryFulfilled; } catch { patch.undo(); }
       },
       invalidatesTags: (r, e, a) => ['Order', { type: 'Order', id: a.id }],
-    }),
-    workerReportNoResponse: b.mutation({
-      query: (id) => ({ url: `/orders/${id}/no-response`, method: 'POST' }),
-      invalidatesTags: (r, e, id) => [{ type: 'Order', id }],
-    }),
-    workerReportPartUnavailable: b.mutation({
-      query: ({ id, partName, notes }) => ({ url: `/orders/${id}/part-unavailable`, method: 'POST', body: { partName, notes } }),
-      invalidatesTags: (r, e, a) => [{ type: 'Order', id: a.id }],
     }),
     rateOrder: b.mutation({
       query: ({ id, rating, review }) => ({
@@ -343,9 +295,6 @@ export const api = createApi({
         try { await queryFulfilled; } catch { patch.undo(); }
       },
       invalidatesTags: (r, e, a) => [{ type: 'Order', id: a.id }],
-    }),
-    getOrderInvoiceUrl: b.query({
-      query: (id) => `/orders/${id}/invoice`,
     }),
 
     // --- Chat ---
@@ -381,69 +330,12 @@ export const api = createApi({
       query: (range = 'today') => `/workers/earnings?range=${range}`,
       providesTags: ['Earnings'],
     }),
-    workerAccept: b.mutation({
-      query: (id) => ({ url: `/orders/${id}/accept`, method: 'POST' }),
-    }),
-    workerReject: b.mutation({
-      query: (id) => ({ url: `/orders/${id}/reject`, method: 'POST' }),
-    }),
-    workerStartTrip: b.mutation({
-      query: ({ id, lat, lng } = {}) => ({
-        url: `/orders/${id}/start-trip`,
-        method: 'POST',
-        body: lat != null && lng != null ? { lat, lng } : {},
-      }),
-      invalidatesTags: (r, e, a) => [{ type: 'Order', id: a?.id ?? a }],
-    }),
-    workerArrive: b.mutation({
-      // Body is optional — server falls back to last known Redis GPS ping when
-      // client can't get a fresh fix, but sending fresh coords is preferred.
-      query: ({ id, lat, lng } = {}) => ({
-        url: `/orders/${id}/arrived`,
-        method: 'POST',
-        body: (lat != null && lng != null) ? { lat, lng } : undefined,
-      }),
-      invalidatesTags: (r, e, arg) => [{ type: 'Order', id: arg?.id ?? arg }],
-    }),
-    workerStartService: b.mutation({
-      query: ({ id, otp }) => ({ url: `/orders/${id}/start-service`, method: 'POST', body: { otp } }),
-      invalidatesTags: (r, e, a) => [{ type: 'Order', id: a.id }],
-    }),
-    // Pick & Go mid-job escalation — worker asks to send the job to their shop.
-    requestShopHandoff: b.mutation({
-      query: ({ id, shopId, reason }) => ({ url: `/orders/${id}/shop-handoff/request`, method: 'POST', body: { shopId, reason } }),
-      invalidatesTags: (r, e, a) => [{ type: 'Order', id: a.id }],
-    }),
     respondShopHandoff: b.mutation({
       query: ({ id, accept }) => ({ url: `/orders/${id}/shop-handoff/respond`, method: 'POST', body: { accept } }),
       invalidatesTags: (r, e, a) => ['Order', { type: 'Order', id: a.id }],
     }),
-    workerComplete: b.mutation({
-      query: ({ id, completionPhotos = [] }) => ({
-        url: `/orders/${id}/complete`,
-        method: 'POST',
-        body: { completionPhotos },
-      }),
-      invalidatesTags: (r, e, a) => ['Order', 'Earnings', { type: 'Order', id: a.id }],
-    }),
-    getWorkerOrders: b.query({
-      query: (page = 1) => `/workers/orders?page=${page}`,
-      providesTags: ['Order'],
-    }),
-    // Worker cancels an accepted job (before service starts). Preview shows the
-    // penalty/consequences for the chosen reason before they confirm.
-    getWorkerCancelPreview: b.query({
-      query: ({ id, reason }) => ({ url: `/orders/${id}/worker-cancel-preview`, params: reason ? { reason } : {} }),
-    }),
-    workerCancel: b.mutation({
-      query: ({ id, reason }) => ({ url: `/orders/${id}/worker-cancel`, method: 'POST', body: { reason } }),
-      invalidatesTags: (r, e, a) => ['Order', 'Me', { type: 'Order', id: a.id }],
-    }),
     getNearbyWorkers: b.query({
       query: ({ lat, lng }) => `/workers/nearby?lat=${lat}&lng=${lng}`,
-    }),
-    getDemandZones: b.query({
-      query: ({ lat, lng }) => `/workers/demand-zones?lat=${lat}&lng=${lng}`,
     }),
 
     // --- KYC ---
@@ -463,9 +355,6 @@ export const api = createApi({
     analyzeLens: b.mutation({
       query: (body) => ({ url: '/lens/analyze', method: 'POST', body }),    // { imageKeys, lat?, lng? }
     }),
-    getLensScan: b.query({
-      query: (id) => `/lens/scan/${id}`,
-    }),
 
     // --- Content (admin-managed FAQs + policy pages) ---
     getFaqs: b.query({
@@ -475,10 +364,6 @@ export const api = createApi({
     getPolicy: b.query({
       query: (slug) => `/content/policy/${slug}`,
       providesTags: (r, e, slug) => [{ type: 'Content', id: slug }],
-    }),
-    getPolicies: b.query({
-      query: () => '/content/policies',
-      providesTags: ['Content'],
     }),
     adminListContent: b.query({
       query: (type) => ({ url: adminApiPath('/content'), params: type ? { type } : {} }),
@@ -520,10 +405,6 @@ export const api = createApi({
       query: (body) => ({ url: adminApiPath('/rewards-config/grant'), method: 'POST', body }),
     }),
 
-    // --- Worker KYC: 3rd-party API verification ---
-    adminResetWorkerDevices: b.mutation({
-      query: (id) => ({ url: adminApiPath(`/workers/${id}/reset-devices`), method: 'POST' }),
-    }),
     adminRunKycVerify: b.mutation({
       query: ({ id, pan }) => ({ url: adminApiPath(`/workers/${id}/kyc/verify`), method: 'POST', body: pan ? { pan } : {} }),
       invalidatesTags: ['Kyc'],
@@ -531,12 +412,6 @@ export const api = createApi({
 
     // --- Admin ---
     adminMetrics: b.query({ query: () => adminApiPath('/metrics'), providesTags: ['AdminMetrics'] }),
-    adminOrders: b.query({
-      query: ({ status, page = 1, reconciliationRequired } = {}) => ({
-        url: adminApiPath('/orders'),
-        params: { status, page, ...(reconciliationRequired && { reconciliationRequired: 'true' }) },
-      }),
-    }),
     adminWorkers: b.query({
       query: ({ q, skill, online, page = 1 } = {}) => ({
         url: adminApiPath('/workers'),
@@ -655,18 +530,6 @@ export const api = createApi({
 
     // --- Pricing (public) ---
     getPricingConfig: b.query({ query: () => '/pricing', providesTags: ['PricingCfg'] }),
-    adminUpdatePricing: b.mutation({
-      query: (body) => ({ url: adminApiPath('/pricing'), method: 'PATCH', body }),
-      invalidatesTags: ['PricingCfg'],
-    }),
-    adminToggles: b.mutation({
-      query: (body) => ({ url: adminApiPath('/toggles'), method: 'PATCH', body }),
-      invalidatesTags: ['PricingCfg'],
-    }),
-    adminToggleDispatch: b.mutation({
-      query: (body) => ({ url: adminApiPath('/dispatch/toggle'), method: 'PATCH', body }),
-      invalidatesTags: ['PricingCfg'],
-    }),
     adminRevenue: b.query({
       query: (days = 7) => adminApiPath(`/revenue?days=${days}`),
     }),
@@ -677,16 +540,6 @@ export const api = createApi({
     }),
     adminOtpAnalytics: b.query({
       query: (days = 7) => adminApiPath(`/otp-analytics?days=${days}`),
-    }),
-    // Founder Audit (scenarios 96-98)
-    adminOrderAudit: b.query({
-      query: (orderId) => adminApiPath(`/audit/order/${orderId}`),
-    }),
-    adminCommissionAudit: b.query({
-      query: (days = 7) => adminApiPath(`/audit/commission?days=${days}`),
-    }),
-    adminWorkerTrustAudit: b.query({
-      query: () => adminApiPath('/audit/worker-trust'),
     }),
     // The signed-in admin: role, scope and the areas they may open.
     adminMe: b.query({
@@ -803,14 +656,6 @@ export const api = createApi({
     adminBlockUser: b.mutation({
       query: ({ id, blocked }) => ({ url: adminApiPath(`/users/${id}/block`), method: 'POST', body: { blocked } }),
       invalidatesTags: ['AdminUsers'],
-    }),
-    adminGetPricingConfig: b.query({
-      query: () => adminApiPath('/pricing-config'),
-      providesTags: ['PricingCfg'],
-    }),
-    adminSetPricingConfig: b.mutation({
-      query: (body) => ({ url: adminApiPath('/pricing-config'), method: 'PUT', body }),
-      invalidatesTags: ['PricingCfg'],
     }),
     adminWalletAdjust: b.mutation({
       query: (body) => ({ url: adminApiPath('/wallet/adjust'), method: 'POST', body }),
@@ -1004,9 +849,6 @@ export const api = createApi({
       query: ({ id, ...body }) => ({ url: `/ads/my/${id}`, method: 'PATCH', body }),
       invalidatesTags: ['Ad'],
     }),
-    myCampaignAnalytics: b.query({
-      query: ({ id, days = 7 }) => `/ads/my/${id}/analytics?days=${days}`,
-    }),
     myAdWallet: b.query({
       query: () => '/ads/my/wallet',
       providesTags: ['Ad'],
@@ -1048,18 +890,11 @@ export const api = createApi({
       query: ({ id, note }) => ({ url: adminApiPath(`/ads/${id}/reject`), method: 'POST', body: { note } }),
       invalidatesTags: ['Ad'],
     }),
-    adminAdAnalytics: b.query({
-      query: ({ id, days = 7 }) => adminApiPath(`/ads/${id}/analytics?days=${days}`),
-    }),
     adminAdWallets: b.query({
       query: ({ page = 1 } = {}) => adminApiPath(`/ads/wallets?page=${page}`),
       providesTags: ['Ad'],
     }),
 
-    // --- Promos/Coupons ---
-    validatePromo: b.mutation({
-      query: (body) => ({ url: '/promos/validate', method: 'POST', body }),
-    }),
     // Admin: Promos
     adminListPromos: b.query({
       query: ({ page = 1 } = {}) => adminApiPath(`/promos?page=${page}`),
@@ -1078,17 +913,7 @@ export const api = createApi({
       invalidatesTags: ['Promo'],
     }),
 
-    // --- Gamification ---
-    getGamification: b.query({
-      query: () => '/gamification',
-      providesTags: ['Gamification'],
-    }),
 
-    // --- Recommendations ---
-    getRecommendations: b.query({
-      query: () => '/recommendations',
-      providesTags: ['Recommendations'],
-    }),
 
     // --- Admin: Geo Analytics (Heatmap) ---
     adminGeoAnalytics: b.query({
@@ -1148,90 +973,10 @@ export const api = createApi({
       query: () => adminApiPath('/liveops'),
     }),
 
-    // --- Construction Timer (correct server path: /vertical-features/construction/timer) ---
-    getConstructionTimer: b.query({ query: (orderId) => `/vertical-features/construction/timer/${orderId}` }),
-    startConstructionTimer: b.mutation({ query: ({ orderId }) => ({ url: '/vertical-features/construction/timer/start', method: 'POST', body: { orderId } }) }),
-    pauseConstructionTimer: b.mutation({ query: ({ orderId }) => ({ url: '/vertical-features/construction/timer/pause', method: 'POST', body: { orderId } }) }),
-    resumeConstructionTimer: b.mutation({ query: ({ orderId }) => ({ url: '/vertical-features/construction/timer/resume', method: 'POST', body: { orderId } }) }),
-    stopConstructionTimer: b.mutation({ query: ({ orderId }) => ({ url: '/vertical-features/construction/timer/stop', method: 'POST', body: { orderId } }) }),
 
-    // --- Phone Health (correct server path: /vertical-features/phone/health-report) ---
-    getPhoneHealthReport: b.query({ query: (orderId) => `/vertical-features/phone/health-report/${orderId}` }),
-    submitPhoneHealthReport: b.mutation({
-      query: ({ orderId, components, partsReplaced }) => ({ url: '/vertical-features/phone/health-report', method: 'POST', body: { orderId, components, partsReplaced } }),
-    }),
 
-    // --- Vehicle Health (correct server path: /vertical-features/vehicles/health-report) ---
-    getVehicleHealthReport: b.query({ query: (orderId) => `/vertical-features/vehicles/health-report/${orderId}` }),
-    submitVehicleHealthReport: b.mutation({
-      query: ({ orderId, reportType, preDamageDocs }) => ({ url: '/vertical-features/vehicles/health-report', method: 'POST', body: { orderId, reportType, preDamageDocs } }),
-    }),
 
-    // --- Public Catalog — live service list + prices for home/services pages ---
-    listServices: b.query({
-      query: () => '/catalog/services',
-      transformResponse: (r) => {
-        const list = r?.services || [];
-        return { list, byCode: Object.fromEntries(list.map((s) => [s.code, s])) };
-      },
-    }),
 
-    // --- Admin Catalog (correct server path: /catalog/admin/services) ---
-    adminGetCatalogServices: b.query({ query: () => '/catalog/admin/services' }),
-    adminUpdateCatalogService: b.mutation({
-      query: ({ code, ...body }) => ({ url: `/catalog/admin/services/${code}`, method: 'PUT', body }),
-    }),
-    adminCreateCatalogService: b.mutation({
-      query: (body) => ({ url: '/catalog/admin/services', method: 'POST', body }),
-    }),
-    // Admin category taxonomy
-    adminGetCategories: b.query({ query: () => '/catalog/admin/categories' }),
-    adminCreateCategory: b.mutation({
-      query: (body) => ({ url: '/catalog/admin/categories', method: 'POST', body }),
-    }),
-    adminUpdateCategory: b.mutation({
-      query: ({ key, ...body }) => ({ url: `/catalog/admin/categories/${key}`, method: 'PUT', body }),
-    }),
-    adminDeleteCategory: b.mutation({
-      query: (key) => ({ url: `/catalog/admin/categories/${key}`, method: 'DELETE' }),
-    }),
-    adminDeleteCatalogService: b.mutation({
-      query: (code) => ({ url: `/catalog/admin/services/${code}`, method: 'DELETE' }),
-    }),
-    adminServiceActiveOrderCount: b.query({
-      query: (code) => `/catalog/admin/services/${code}/active-orders`,
-    }),
-
-    // --- Dynamic Catalog & Models APIs ---
-    getCatalogBrands: b.query({ query: (category = 'mobile') => `/catalog/services/brands?category=${category}` }),
-    getCatalogModels: b.query({ query: ({ brandCode, search } = {}) => `/catalog/services/models?brandCode=${brandCode || ''}&search=${search || ''}` }),
-    getCatalogVariants: b.query({ query: ({ serviceCode, modelCode } = {}) => `/catalog/services/variants?serviceCode=${serviceCode || ''}&modelCode=${modelCode || ''}` }),
-    getDiagnosticFlow: b.query({ query: (code = 'mobile_diagnostic') => `/catalog/services/diagnostics/${code}` }),
-    recordDemandEvent: b.mutation({ query: (body) => ({ url: '/catalog/services/demand-event', method: 'POST', body }) }),
-
-    // --- Admin Brand, Model & Import APIs ---
-    adminGetBrands: b.query({ query: () => '/catalog/admin/brands' }),
-    adminCreateBrand: b.mutation({ query: (body) => ({ url: '/catalog/admin/brands', method: 'POST', body }) }),
-    adminGetModels: b.query({ query: (brandCode = '') => `/catalog/admin/models?brandCode=${brandCode}` }),
-    adminCreateModel: b.mutation({ query: (body) => ({ url: '/catalog/admin/models', method: 'POST', body }) }),
-    adminImportModelsBulk: b.mutation({ query: (rows) => ({ url: '/catalog/admin/models/import', method: 'POST', body: { rows } }) }),
-    adminGetVariants: b.query({ query: ({ modelCode = '', serviceCode = '' } = {}) => `/catalog/admin/variants?modelCode=${modelCode}&serviceCode=${serviceCode}` }),
-    adminCreateVariant: b.mutation({ query: (body) => ({ url: '/catalog/admin/variants', method: 'POST', body }) }),
-    adminGetDemandEvents: b.query({ query: (cityCode = '') => `/catalog/admin/demand-events?cityCode=${cityCode}` }),
-    // --- Admin Verticals (correct server path: /${slug}/verticals mounted in routes) ---
-    adminGetVerticals: b.query({ query: () => `${adminApiPath('/verticals')}` }),
-    adminUpdateVertical: b.mutation({
-      query: ({ vertical, ...body }) => ({ url: adminApiPath(`/verticals/${vertical}`), method: 'PUT', body }),
-    }),
-    adminAddSparePart: b.mutation({
-      query: ({ vertical, ...body }) => ({ url: adminApiPath(`/verticals/mobile/spare-parts`), method: 'POST', body }),
-    }),
-    adminUpdateSparePart: b.mutation({
-      query: ({ partId, ...body }) => ({ url: adminApiPath(`/verticals/mobile/spare-parts/${partId}`), method: 'PATCH', body }),
-    }),
-    adminRemoveSparePart: b.mutation({
-      query: ({ partId }) => ({ url: adminApiPath(`/verticals/mobile/spare-parts/${partId}`), method: 'DELETE' }),
-    }),
     adminRefundOrder: b.mutation({
       query: ({ orderId, reason }) => ({ url: adminApiPath(`/orders/${orderId}/refund`), method: 'POST', body: { reason } }),
     }),
@@ -1241,46 +986,14 @@ export const api = createApi({
       query: (orderId) => `/service-features/warranties/order/${orderId}`,
     }),
 
-    // --- Service Checklist (correct server path: /service-features/checklist/:service) ---
-    getServiceChecklist: b.query({
-      query: (service) => `/service-features/checklist/${service}`,
-    }),
-    submitChecklist: b.mutation({
-      query: ({ orderId, completedItems }) => ({ url: `/orders/${orderId}/checklist`, method: 'POST', body: { completedIds: completedItems } }),
-    }),
 
-    // --- Shifts (correct server paths) ---
-    getShifts: b.query({
-      query: ({ lat, lng } = {}) => `/workers/shifts${lat ? `?lat=${lat}&lng=${lng}` : ''}`,
-    }),
-    previewShift: b.query({
-      query: ({ lat, lng }) => `/workers/shifts/preview?lat=${lat}&lng=${lng}`,
-    }),
-    commitShift: b.mutation({
-      query: (body) => ({ url: '/workers/shifts', method: 'POST', body }),
-    }),
-    cancelShiftSlot: b.mutation({
-      query: ({ slotId }) => ({ url: '/workers/shifts/cancel', method: 'DELETE', body: { slotId } }),
-    }),
 
-    // --- Wellness ---
-    getWellness: b.query({ query: () => '/workers/wellness' }),
-
-    // --- Earned Wage ---
-    getEarnedWage: b.query({ query: () => '/workers/earned-wage' }),
-    requestWageAdvance: b.mutation({
-      query: ({ amountPaise }) => ({ url: '/workers/earned-wage/advance', method: 'POST', body: { amountPaise } }),
-    }),
 
     // --- SOS ---
     triggerSOS: b.mutation({
       query: ({ orderId, jobId, lat, lng, type }) => ({ url: `/workers/sos`, method: 'POST', body: { orderId, jobId, lat, lng, type } }),
     }),
 
-    // --- Break Bonus (server: POST /workers/wellness/break-bonus) ---
-    claimBreakBonus: b.mutation({
-      query: () => ({ url: '/workers/wellness/break-bonus', method: 'POST' }),
-    }),
 
     // --- Price Revision ---
     getPriceRevision: b.query({
@@ -1302,31 +1015,12 @@ export const api = createApi({
       invalidatesTags: (r, e, a) => [{ type: 'Order', id: a.orderId }],
     }),
 
-    // --- Surge Info ---
-    getSurgeInfo: b.query({
-      query: ({ lat, lng }) => `/pricing/surge-info?lat=${lat}&lng=${lng}`,
-    }),
 
-    // --- Diagnosis Flow ---
-    getDiagnosisFlow: b.query({
-      query: (service) => `/service-features/diagnosis/${service}`,
-    }),
-    analyseDiagnosis: b.mutation({
-      query: ({ service, answers }) => ({
-        url: `/service-features/diagnosis/${service}/analyse`,
-        method: 'POST',
-        body: { answers },
-      }),
-    }),
 
     // --- Worker: Public Profile + Leaderboard ---
     getWorkerPublicProfile: b.query({
       query: (workerId) => `/workers/${workerId}/public`,
       providesTags: (r, e, id) => [{ type: 'Worker', id }],
-    }),
-    getWorkerLeaderboard: b.query({
-      query: () => '/workers/leaderboard',
-      providesTags: ['Worker'],
     }),
 
     // --- Worker: Bank Accounts ---
@@ -1356,9 +1050,6 @@ export const api = createApi({
       query: (body) => ({ url: '/worker/appeals', method: 'POST', body }),
       invalidatesTags: ['Worker'],
     }),
-    getWorkerAppeal: b.query({
-      query: (id) => `/worker/appeals/${id}`,
-    }),
 
     // --- Worker: Training ---
     getTrainingModules: b.query({
@@ -1383,20 +1074,7 @@ export const api = createApi({
       providesTags: ['Worker'],
     }),
 
-    // --- Worker: Block Customer ---
-    blockCustomerByWorker: b.mutation({
-      query: (body) => ({ url: '/workers/block-customer', method: 'POST', body }),
-    }),
 
-    // --- Worker: Profile & Skills ---
-    getWorkerProfile: b.query({
-      query: () => '/workers/me',
-      providesTags: ['Worker'],
-    }),
-    updateWorkerSkills: b.mutation({
-      query: (body) => ({ url: '/workers/skills', method: 'PATCH', body }),
-      invalidatesTags: ['Worker'],
-    }),
 
     // --- Worker: Goals ---
     getWorkerGoals: b.query({
@@ -1414,21 +1092,12 @@ export const api = createApi({
       invalidatesTags: ['Wallet'],
     }),
 
-    // --- Plans ---
-    getPlans: b.query({
-      query: () => '/subscriptions/plans',
-      providesTags: ['Plans'],
-    }),
 
     // --- Referrals ---
     getReferralCode: b.query({
       // Server route is /referrals/me (getMyCode); /my-code 404s.
       query: () => '/referrals/me',
       providesTags: ['Referral'],
-    }),
-    applyReferralCode: b.mutation({
-      query: (code) => ({ url: '/referrals/apply', method: 'POST', body: { code } }),
-      invalidatesTags: ['Referral'],
     }),
     getReferralHistory: b.query({
       query: () => '/referrals/history',
@@ -1631,10 +1300,6 @@ export const api = createApi({
       query: (body) => ({ url: adminApiPath('/events/partners'), method: 'POST', body }),
       invalidatesTags: ['EventPartner'],
     }),
-    adminUpdateEventPartner: b.mutation({
-      query: ({ id, ...body }) => ({ url: adminApiPath(`/events/partners/${id}`), method: 'PATCH', body }),
-      invalidatesTags: ['EventPartner'],
-    }),
     adminEventConfig: b.query({ query: () => adminApiPath('/events/config'), providesTags: ['EventConfig'] }),
     adminUpdateEventConfig: b.mutation({
       query: (body) => ({ url: adminApiPath('/events/config'), method: 'PUT', body }),
@@ -1710,14 +1375,6 @@ export const api = createApi({
     adminShops: b.query({
       query: (params = {}) => ({ url: adminApiPath('/shops'), params }),
       providesTags: ['Shop'],
-    }),
-    adminShopKycPending: b.query({
-      query: () => adminApiPath('/shops/kyc/pending'),
-      providesTags: ['ShopKyc'],
-    }),
-    adminGetShop: b.query({
-      query: (id) => adminApiPath(`/shops/${id}`),
-      providesTags: (r, e, id) => [{ type: 'Shop', id }],
     }),
     adminApproveShopKyc: b.mutation({
       query: (id) => ({ url: adminApiPath(`/shops/${id}/kyc/approve`), method: 'POST' }),
@@ -1807,18 +1464,6 @@ export const api = createApi({
       query: ({ id, note }) => ({ url: adminApiPath(`/repair/catalog-requests/${id}/reject`), method: 'POST', body: { note } }),
       invalidatesTags: ['RepairRequests'],
     }),
-    adminRepairReferencePricing: b.query({
-      query: (params = {}) => ({ url: adminApiPath('/repair/reference-pricing'), params }),
-      providesTags: ['RepairPricing'],
-    }),
-    adminCreateReferencePrice: b.mutation({
-      query: (body) => ({ url: adminApiPath('/repair/reference-pricing'), method: 'POST', body }),
-      invalidatesTags: ['RepairPricing'],
-    }),
-    adminUpdateReferencePrice: b.mutation({
-      query: ({ id, ...body }) => ({ url: adminApiPath(`/repair/reference-pricing/${id}`), method: 'PATCH', body }),
-      invalidatesTags: ['RepairPricing'],
-    }),
     adminRepairBookings: b.query({
       query: (params = {}) => ({ url: adminApiPath('/repair/bookings'), params }),
       providesTags: ['RepairBookings'],
@@ -1852,10 +1497,6 @@ export const api = createApi({
     }),
     providerServiceLines: b.query({
       query: (domainCode) => ({ url: '/provider/onboarding/lines', params: { domainCode } }),
-      providesTags: ['Onboarding'],
-    }),
-    providerEnrolments: b.query({
-      query: () => '/provider/onboarding/enrolments',
       providesTags: ['Onboarding'],
     }),
     providerLineRequirements: b.query({
@@ -1955,12 +1596,6 @@ export const api = createApi({
       }),
       providesTags: ['RepairCatalog'],
     }),
-    repairSeries: b.query({
-      query: ({ brandCode, familyCode, vertical = 'mobile' }) => ({
-        url: `/repair/brands/${brandCode}/series`, params: { familyCode, vertical },
-      }),
-      providesTags: ['RepairCatalog'],
-    }),
     repairModels: b.query({
       query: ({ brandCode, q, page = 1, productTypeCode, familyCode, seriesCode, vertical = 'mobile' }) => ({
         url: `/repair/brands/${brandCode}/models`,
@@ -1977,9 +1612,6 @@ export const api = createApi({
     repairProblems: b.query({
       query: ({ vertical = 'mobile', ...params } = {}) => ({ url: '/repair/problems', params: { ...params, vertical } }),
       providesTags: (r, e, a = {}) => [{ type: 'RepairCatalog', id: `${a.vertical || 'mobile'}:problems` }],
-    }),
-    repairDiagnosticFlow: b.query({
-      query: ({ problemCode, vertical = 'mobile' }) => ({ url: `/repair/diagnostics/${problemCode}`, params: { vertical } }),
     }),
     submitRepairDiagnostic: b.mutation({
       query: ({ problemCode, answers, vertical = 'mobile' }) => ({
@@ -2004,16 +1636,8 @@ export const api = createApi({
       query: (params) => ({ url: '/repair/assets', params }),
       providesTags: ['MyAssets'],
     }),
-    assetHistory: b.query({
-      query: (id) => `/repair/assets/${id}/history`,
-      providesTags: (r, e, id) => [{ type: 'MyAssets', id }],
-    }),
     createAsset: b.mutation({
       query: (body) => ({ url: '/repair/assets', method: 'POST', body }),
-      invalidatesTags: ['MyAssets'],
-    }),
-    updateAsset: b.mutation({
-      query: ({ id, ...body }) => ({ url: `/repair/assets/${id}`, method: 'PATCH', body }),
       invalidatesTags: ['MyAssets'],
     }),
     deleteAsset: b.mutation({
@@ -2131,19 +1755,6 @@ export const api = createApi({
     petVariants: b.query({ query: (params) => ({ url: '/pet/variants', params }), providesTags: ['PetCatalog'] }),
     petBreeds: b.query({ query: (params) => ({ url: '/pet/breeds', params }), providesTags: ['PetCatalog'] }),
     petAddons: b.query({ query: (params) => ({ url: '/pet/addons', params }), providesTags: ['PetCatalog'] }),
-    petPackages: b.query({ query: (params) => ({ url: '/pet/packages', params }), providesTags: ['PetCatalog'] }),
-    petServiceAreas: b.query({ query: () => '/pet/service-areas', providesTags: ['PetCatalog'] }),
-    petCompatibility: b.query({ query: (params) => ({ url: '/pet/compatibility', params }) }),
-
-    myPets: b.query({ query: () => '/pet/my-pets', providesTags: ['MyPets'] }),
-    createMyPet: b.mutation({
-      query: (body) => ({ url: '/pet/my-pets', method: 'POST', body }),
-      invalidatesTags: ['MyPets'],
-    }),
-    updateMyPet: b.mutation({
-      query: ({ id, ...body }) => ({ url: `/pet/my-pets/${id}`, method: 'PATCH', body }),
-      invalidatesTags: ['MyPets'],
-    }),
     deleteMyPet: b.mutation({
       query: (id) => ({ url: `/pet/my-pets/${id}`, method: 'DELETE' }),
       invalidatesTags: ['MyPets'],
@@ -2201,15 +1812,7 @@ export const api = createApi({
       query: ({ id, ...body }) => ({ url: `/pet/bookings/${id}/proof`, method: 'POST', body }),
       invalidatesTags: (r, e, a) => [{ type: 'PetBookings', id: a.id }],
     }),
-    updatePetBookingExecution: b.mutation({
-      query: ({ id, ...body }) => ({ url: `/pet/bookings/${id}/execution`, method: 'PATCH', body }),
-      invalidatesTags: (r, e, a) => [{ type: 'PetBookings', id: a.id }],
-    }),
 
-    createPetRecurring: b.mutation({
-      query: (body) => ({ url: '/pet/recurring', method: 'POST', body }),
-      invalidatesTags: ['PetRecurring', 'PetBookings'],
-    }),
     myPetRecurring: b.query({ query: () => '/pet/recurring', providesTags: ['PetRecurring'] }),
     pausePetRecurring: b.mutation({
       query: (id) => ({ url: `/pet/recurring/${id}/pause`, method: 'POST' }),
@@ -2221,10 +1824,6 @@ export const api = createApi({
     }),
     cancelPetRecurring: b.mutation({
       query: (id) => ({ url: `/pet/recurring/${id}/cancel`, method: 'POST' }),
-      invalidatesTags: ['PetRecurring'],
-    }),
-    skipPetRecurringDate: b.mutation({
-      query: ({ id, date }) => ({ url: `/pet/recurring/${id}/skip`, method: 'POST', body: { date } }),
       invalidatesTags: ['PetRecurring'],
     }),
 
@@ -2298,9 +1897,6 @@ export const api = createApi({
       query: ({ id, ...body }) => ({ url: `/repair/bookings/${id}/qa`, method: 'POST', body }),
       invalidatesTags: (r, e, a) => [{ type: 'RepairBookings', id: a.id }],
     }),
-    submitRepairInspection: b.mutation({
-      query: ({ id, ...body }) => ({ url: `/repair/bookings/${id}/inspections`, method: 'POST', body }),
-    }),
     submitRepairCatalogRequest: b.mutation({
       query: (body) => ({ url: '/repair/catalog-requests', method: 'POST', body }),
     }),
@@ -2314,32 +1910,12 @@ export const api = createApi({
       query: (params = {}) => ({ url: '/repair/provider/jobs', params }),
       providesTags: ['RepairBookings'],
     }),
-    repairCapabilities: b.query({
-      query: (vertical = 'mobile') => ({ url: '/repair/provider/capabilities', params: { vertical } }),
-      providesTags: ['RepairProvider'],
-    }),
-    upsertRepairCapability: b.mutation({
-      query: (body) => ({ url: '/repair/provider/capabilities', method: 'PUT', body }),
-      invalidatesTags: ['RepairProvider'],
-    }),
-    removeRepairCapability: b.mutation({
-      query: (id) => ({ url: `/repair/provider/capabilities/${id}`, method: 'DELETE' }),
-      invalidatesTags: ['RepairProvider'],
-    }),
     repairServiceAreas: b.query({
       query: (vertical = 'mobile') => ({ url: '/repair/provider/service-areas', params: { vertical } }),
       providesTags: ['RepairProvider'],
     }),
     upsertRepairServiceArea: b.mutation({
       query: (body) => ({ url: '/repair/provider/service-areas', method: 'PUT', body }),
-      invalidatesTags: ['RepairProvider'],
-    }),
-    repairInventory: b.query({
-      query: (vertical = 'mobile') => ({ url: '/repair/provider/inventory', params: { vertical } }),
-      providesTags: ['RepairProvider'],
-    }),
-    upsertRepairInventory: b.mutation({
-      query: (body) => ({ url: '/repair/provider/inventory', method: 'PUT', body }),
       invalidatesTags: ['RepairProvider'],
     }),
     repairProviderPricing: b.query({
@@ -2358,52 +1934,12 @@ export const api = createApi({
       query: (body) => ({ url: '/repair/provider/capabilities/bulk', method: 'PUT', body }),
       invalidatesTags: ['RepairProvider'],
     }),
-    repairProviderCatalogRequests: b.query({
-      query: (vertical = 'mobile') => ({ url: '/repair/provider/catalog-requests', params: { vertical } }),
-      providesTags: ['RepairProvider'],
-    }),
     requestRepairCatalogAddition: b.mutation({
       query: (body) => ({ url: '/repair/provider/catalog-requests', method: 'POST', body }),
       invalidatesTags: ['RepairProvider'],
     }),
 
-    // --- Admin: provider-proposed repairs ---
-    adminProviderRequests: b.query({
-      query: ({ vertical = 'mobile', ...params } = {}) => ({
-        url: adminApiPath('/repair/provider-requests'), params: { ...params, vertical },
-      }),
-      providesTags: ['RepairRequests'],
-    }),
-    adminApproveProviderRequest: b.mutation({
-      query: ({ id, ...body }) => ({
-        url: adminApiPath(`/repair/provider-requests/${id}/approve`), method: 'POST', body,
-      }),
-      invalidatesTags: ['RepairRequests', 'RepairCatalog'],
-    }),
-    adminRejectProviderRequest: b.mutation({
-      query: ({ id, note }) => ({
-        url: adminApiPath(`/repair/provider-requests/${id}/reject`), method: 'POST', body: { note },
-      }),
-      invalidatesTags: ['RepairRequests'],
-    }),
 
-    // Provider-scoped catalog reads — these must NOT use the admin endpoints,
-    // which are gated behind requireRole('admin') and would 403 for a worker.
-    repairRepairsList: b.query({
-      query: (params = {}) => ({ url: '/repair/repairs', params }),
-      providesTags: ['RepairCatalog'],
-    }),
-    repairStockableParts: b.query({
-      query: (params = {}) => ({ url: '/repair/provider/parts', params }),
-      providesTags: ['RepairCatalog'],
-    }),
-    repairReferenceBand: b.query({
-      query: (params) => ({ url: '/repair/provider/pricing/reference', params }),
-    }),
-    submitRepairProviderPricing: b.mutation({
-      query: (body) => ({ url: '/repair/provider/pricing', method: 'POST', body }),
-      invalidatesTags: ['RepairProvider'],
-    }),
     /**
      * A model's whole price sheet in one request.
      *
@@ -2506,18 +2042,6 @@ export const api = createApi({
       query: (id) => adminApiPath(`/zones/${id}/stats`),
     }),
 
-    // --- Admin: Order Intervention ---
-    adminOrderNearbyWorkers: b.query({
-      query: (id) => adminApiPath(`/orders/${id}/nearby-workers`),
-    }),
-    adminReassignOrder: b.mutation({
-      query: ({ id, workerId }) => ({ url: adminApiPath(`/orders/${id}/reassign`), method: 'POST', body: { workerId } }),
-      invalidatesTags: ['Order'],
-    }),
-    adminForceOrderStatus: b.mutation({
-      query: ({ id, status, reason }) => ({ url: adminApiPath(`/orders/${id}/force-status`), method: 'POST', body: { status, reason } }),
-      invalidatesTags: ['Order'],
-    }),
     /* Unified bookings (orders + repair + helping + pet) */
     adminBookings: b.query({
       query: (params = {}) => ({ url: adminApiPath('/bookings'), params }),
@@ -2537,10 +2061,6 @@ export const api = createApi({
     }),
     adminForceCancelOrder: b.mutation({
       query: ({ id, reason, refundFull }) => ({ url: adminApiPath(`/orders/${id}/force-cancel`), method: 'POST', body: { reason, refundFull } }),
-      invalidatesTags: ['Order'],
-    }),
-    adminAddOrderNote: b.mutation({
-      query: ({ id, note }) => ({ url: adminApiPath(`/orders/${id}/note`), method: 'POST', body: { note } }),
       invalidatesTags: ['Order'],
     }),
 
@@ -2624,35 +2144,17 @@ export const {
   useLoginWorkerPasswordMutation,
   useSetWorkerCredentialsMutation,
   useForgotWorkerPasswordMutation,
-  useResetWorkerPasswordMutation,
-  useChangeWorkerPasswordMutation,
   useLoginAdminMutation,
   useLogoutMutation,
-  useRevokeAllSessionsMutation,
-  useVerifySensitiveOtpMutation,
   useGetMeQuery,
   useUpdateMeMutation,
-  useGetQuoteQuery,
-  useLazyGetQuoteQuery,
-  useGetNearbyProsQuery,
-  useLazyGetNearbyProsQuery,
-  useGetWarmDispatchQuery,
-  useLazyGetWarmDispatchQuery,
-  useGetReadyModeQuery,
-  useSetReadyModeMutation,
   useLazySmartSearchQuery,
-  useSmartSearchQuery,
-  useLazySearchSuggestQuery,
   useSearchTrendingQuery,
-  useCreateOrderMutation,
   useGetOrderQuery,
   useGetOrderTimelineQuery,
   useListOrdersQuery,
   useGetCancelPreviewQuery,
   useCancelOrderMutation,
-  useRebookOrderMutation,
-  useWorkerReportNoResponseMutation,
-  useWorkerReportPartUnavailableMutation,
   useRateOrderMutation,
   useGetWorkerMeQuery,
   useGetMyShopQuery,
@@ -2660,24 +2162,13 @@ export const {
   useGoOnlineMutation,
   useGoOfflineMutation,
   useGetEarningsQuery,
-  useWorkerAcceptMutation,
-  useWorkerRejectMutation,
-  useWorkerStartTripMutation,
-  useWorkerArriveMutation,
-  useWorkerStartServiceMutation,
-  useWorkerCompleteMutation,
-  useLazyGetWorkerCancelPreviewQuery,
-  useWorkerCancelMutation,
   useGetKycStatusQuery,
   useSubmitKycMutation,
   usePresignUploadMutation,
   useLensUploadUrlMutation,
   useAnalyzeLensMutation,
-  useLazyGetLensScanQuery,
-  useGetLensScanQuery,
   useGetFaqsQuery,
   useGetPolicyQuery,
-  useGetPoliciesQuery,
   useAdminListContentQuery,
   useAdminCreateContentMutation,
   useAdminUpdateContentMutation,
@@ -2689,10 +2180,8 @@ export const {
   useAdminGetRewardsConfigQuery,
   useAdminUpdateRewardsConfigMutation,
   useAdminGrantRewardPointsMutation,
-  useAdminResetWorkerDevicesMutation,
   useAdminRunKycVerifyMutation,
   useAdminMetricsQuery,
-  useAdminOrdersQuery,
   useAdminWorkersQuery,
   useAdminBlockWorkerMutation,
   useAdminKycPendingQuery,
@@ -2709,14 +2198,8 @@ export const {
   useGetPaymentAvailabilityQuery,
   useCreateBookingPaymentMutation,
   useGetPricingConfigQuery,
-  useAdminUpdatePricingMutation,
-  useAdminTogglesMutation,
-  useAdminToggleDispatchMutation,
   useAdminRevenueQuery,
   useAdminAnalyticsQuery,
-  useAdminOrderAuditQuery,
-  useAdminCommissionAuditQuery,
-  useAdminWorkerTrustAuditQuery,
   useAdminPaymentsQuery,
   useAdminLaunchInterestQuery,
   useAdminMeQuery,
@@ -2748,8 +2231,6 @@ export const {
   useAdminListUsersQuery,
   useAdminGetUserQuery,
   useAdminBlockUserMutation,
-  useAdminGetPricingConfigQuery,
-  useAdminSetPricingConfigMutation,
   useAdminWalletAdjustMutation,
   useAdminWalletReconcileMutation,
   useAdminAuditLogsQuery,
@@ -2805,12 +2286,8 @@ export const {
   useSaveRecentLocationMutation,
   useRegisterDeviceTokenMutation,
   useRegisterWorkerDeviceTokenMutation,
-  useGetOrderInvoiceUrlQuery,
   useGetChatMessagesQuery,
   useSendChatMessageMutation,
-  useGetWorkerOrdersQuery,
-  useGetNearbyWorkersQuery,
-  useGetDemandZonesQuery,
   useLazyGetNearbyWorkersQuery,
   useAdminListPlansQuery,
   useAdminCreatePlanMutation,
@@ -2825,7 +2302,6 @@ export const {
   useMyAdCampaignsQuery,
   useCreateMyCampaignMutation,
   useUpdateMyCampaignMutation,
-  useMyCampaignAnalyticsQuery,
   useMyAdWalletQuery,
   useCreateAdTopUpOrderMutation,
   useVerifyAdTopUpMutation,
@@ -2836,17 +2312,13 @@ export const {
   useAdminDeleteAdMutation,
   useAdminApproveAdMutation,
   useAdminRejectAdMutation,
-  useAdminAdAnalyticsQuery,
   useAdminAdWalletsQuery,
   // Promos
-  useValidatePromoMutation,
   useAdminListPromosQuery,
   useAdminCreatePromoMutation,
   useAdminUpdatePromoMutation,
   useAdminDeletePromoMutation,
   // Gamification + Recommendations
-  useGetGamificationQuery,
-  useGetRecommendationsQuery,
   // Enterprise admin
   useAdminGeoAnalyticsQuery,
   useAdminDemandPatternsQuery,
@@ -2860,16 +2332,11 @@ export const {
   useAdminLiveOpsQuery, useAdminStuckJobsQuery,
   // Referrals
   useGetReferralCodeQuery,
-  useApplyReferralCodeMutation,
   useGetReferralHistoryQuery,
   // Worker public profile + leaderboard
   useGetWorkerPublicProfileQuery,
-  useGetWorkerLeaderboardQuery,
   // Diagnosis flow
-  useGetDiagnosisFlowQuery,
-  useAnalyseDiagnosisMutation,
   // Surge info
-  useLazyGetSurgeInfoQuery,
   // Tip
   useSendTipMutation,
   // Price revision
@@ -2877,47 +2344,13 @@ export const {
   useRespondPriceRevisionMutation,
   // Warranty + checklist
   useGetOrderWarrantyQuery,
-  useGetServiceChecklistQuery,
-  useSubmitChecklistMutation,
   // Shifts
-  useGetShiftsQuery,
-  useLazyPreviewShiftQuery,
-  useCommitShiftMutation,
-  useCancelShiftSlotMutation,
   // Wellness + earned wage
-  useGetWellnessQuery,
-  useGetEarnedWageQuery,
-  useRequestWageAdvanceMutation,
   // SOS + bonus
   useTriggerSOSMutation,
-  useClaimBreakBonusMutation,
   // Construction timer
-  useGetConstructionTimerQuery,
-  useStartConstructionTimerMutation,
-  usePauseConstructionTimerMutation,
-  useResumeConstructionTimerMutation,
-  useStopConstructionTimerMutation,
   // Phone + vehicle health
-  useGetPhoneHealthReportQuery,
-  useSubmitPhoneHealthReportMutation,
-  useGetVehicleHealthReportQuery,
-  useSubmitVehicleHealthReportMutation,
   // Admin catalog + verticals
-  useListServicesQuery,
-  useAdminGetCatalogServicesQuery,
-  useAdminUpdateCatalogServiceMutation,
-  useAdminCreateCatalogServiceMutation,
-  useAdminDeleteCatalogServiceMutation,
-  useAdminGetCategoriesQuery,
-  useAdminCreateCategoryMutation,
-  useAdminUpdateCategoryMutation,
-  useAdminDeleteCategoryMutation,
-  useAdminServiceActiveOrderCountQuery,
-  useAdminGetVerticalsQuery,
-  useAdminUpdateVerticalMutation,
-  useAdminAddSparePartMutation,
-  useAdminUpdateSparePartMutation,
-  useAdminRemoveSparePartMutation,
   useAdminRefundOrderMutation,
   // Shield Fund
   useAdminShieldSummaryQuery,
@@ -2970,7 +2403,6 @@ export const {
   useAdminEventBookingsQuery,
   useAdminEventPartnersQuery,
   useAdminCreateEventPartnerMutation,
-  useAdminUpdateEventPartnerMutation,
   useAdminEventConfigQuery,
   useAdminUpdateEventConfigMutation,
   useAdminEventAnalyticsQuery,
@@ -2995,8 +2427,6 @@ export const {
   useNearbyShopsQuery,
   useGetShopProfileQuery,
   useAdminShopsQuery,
-  useAdminShopKycPendingQuery,
-  useAdminGetShopQuery,
   useAdminApproveShopKycMutation,
   useAdminRejectShopKycMutation,
   useAdminBlockShopMutation,
@@ -3016,9 +2446,6 @@ export const {
   useAdminResolveRepairIdentificationMutation,
   useAdminApproveCatalogRequestMutation,
   useAdminRejectCatalogRequestMutation,
-  useAdminRepairReferencePricingQuery,
-  useAdminCreateReferencePriceMutation,
-  useAdminUpdateReferencePriceMutation,
   useAdminRepairBookingsQuery,
   // Repair vertical (customer + worker)
   useLiveCatalogQuery,
@@ -3027,7 +2454,6 @@ export const {
   useProviderOnboardingStatusQuery,
   useProviderDomainsQuery,
   useProviderServiceLinesQuery,
-  useProviderEnrolmentsQuery,
   useProviderLineRequirementsQuery,
   useProviderEnrolMutation,
   useProviderSaveEnrolmentMutation,
@@ -3045,26 +2471,19 @@ export const {
   useAdminRejectLineRequestMutation,
   useRepairWorkCatalogQuery,
   useSaveRepairCapabilitiesMutation,
-  useRepairProviderCatalogRequestsQuery,
   useRequestRepairCatalogAdditionMutation,
-  useAdminProviderRequestsQuery,
-  useAdminApproveProviderRequestMutation,
-  useAdminRejectProviderRequestMutation,
   useRepairBrandsQuery,
   useRepairProductTypesQuery,
   useRepairFamiliesQuery,
-  useRepairSeriesQuery,
   useRepairModelsQuery,
   useRepairConfigurationsQuery,
   useRepairProblemsQuery,
   useSubmitModelIdentificationMutation,
   useMyModelIdentificationsQuery,
-  useRepairDiagnosticFlowQuery,
   useSubmitRepairDiagnosticMutation,
   useRepairPricePreviewQuery,
   useRepairAddOnsQuery,
-  useMyAssetsQuery, useAssetHistoryQuery,
-  useCreateAssetMutation, useUpdateAssetMutation, useDeleteAssetMutation,
+  useMyAssetsQuery, useCreateAssetMutation, useDeleteAssetMutation,
   useHelpingServicesQuery, useHelpingQuoteMutation,
   useCreateHelpingTaskMutation, useMyHelpingTasksQuery, useGetHelpingTaskQuery,
   useRespondHelpingApprovalMutation, useCancelHelpingTaskMutation, useRateHelpingTaskMutation,
@@ -3074,16 +2493,14 @@ export const {
   useAdminHelpingTasksQuery, useAdminHelpingConfigQuery,
   useAdminUpdateHelpingConfigMutation, useAdminHelpingRefundOutcomeMutation,
   usePetCategoriesQuery, usePetVariantsQuery, usePetBreedsQuery, usePetAddonsQuery,
-  usePetPackagesQuery, usePetServiceAreasQuery, usePetCompatibilityQuery, useLazyPetCompatibilityQuery,
-  useMyPetsQuery, useCreateMyPetMutation, useUpdateMyPetMutation, useDeleteMyPetMutation, useMyPetHistoryQuery,
+  useLazyPetCompatibilityQuery,
+  useMyPetsQuery, useCreateMyPetMutation, useDeleteMyPetMutation, useMyPetHistoryQuery,
   usePetQuoteMutation, usePetProviderSearchMutation,
   useCreatePetBookingMutation, useMyPetBookingsQuery, useGetPetBookingQuery,
   useCancelPetBookingMutation, useRatePetBookingMutation,
   useAvailablePetBookingsQuery, useAcceptPetBookingMutation, useDeclinePetBookingMutation, useAdvancePetBookingStatusMutation, useCollectPetCashMutation, useAssignedPetBookingsQuery,
-  useAddPetBookingProofMutation, useUpdatePetBookingExecutionMutation,
-  useCreatePetRecurringMutation, useMyPetRecurringQuery, usePausePetRecurringMutation,
-  useResumePetRecurringMutation, useCancelPetRecurringMutation, useSkipPetRecurringDateMutation,
-  useAdminPetBookingsQuery, useAdminPetPricingQuery, useAdminUpdatePetPricingMutation,
+  useAddPetBookingProofMutation, useMyPetRecurringQuery, usePausePetRecurringMutation,
+  useResumePetRecurringMutation, useCancelPetRecurringMutation, useAdminPetBookingsQuery, useAdminPetPricingQuery, useAdminUpdatePetPricingMutation,
   useAdminPetCapabilitiesQuery, useAdminUpdatePetCapabilityMutation,
   useRepairProvidersQuery,
   useCreateRepairBookingMutation,
@@ -3098,21 +2515,13 @@ export const {
   useRespondRepairQuoteMutation,
   useRepairQaChecklistQuery,
   useSubmitRepairQaMutation,
-  useSubmitRepairInspectionMutation,
   useSubmitRepairCatalogRequestMutation,
   // Repair provider self-service
   useRepairOnboardingStatusQuery,
   useRepairProviderJobsQuery,
-  useRepairCapabilitiesQuery,
-  useUpsertRepairCapabilityMutation,
-  useRemoveRepairCapabilityMutation,
   useRepairServiceAreasQuery,
   useUpsertRepairServiceAreaMutation,
-  useRepairInventoryQuery,
-  useUpsertRepairInventoryMutation,
   useRepairProviderPricingQuery,
-  useLazyRepairReferenceBandQuery,
-  useSubmitRepairProviderPricingMutation,
   useBulkRepairProviderPricingMutation,
   useLazyRepairProviderSuggestedPricingQuery,
   useRepairCancellationQuoteQuery,
@@ -3120,9 +2529,6 @@ export const {
   useAttachRepairCompletionPhotosMutation,
   useRateRepairBookingMutation,
   useVerifyRepairHandoverCodeMutation,
-  useRepairRepairsListQuery,
-  useRepairStockablePartsQuery,
-  useRequestShopHandoffMutation,
   useRespondShopHandoffMutation,
   // Fraud Detection
   useAdminFraudSummaryQuery,
@@ -3136,15 +2542,11 @@ export const {
   useAdminDeleteZoneMutation,
   useAdminZoneStatsQuery,
   // Order Intervention
-  useAdminOrderNearbyWorkersQuery,
-  useAdminReassignOrderMutation,
-  useAdminForceOrderStatusMutation,
   useAdminForceCancelOrderMutation,
   useAdminBookingsQuery,
   useAdminBookingDetailQuery,
   useAdminCancelPetBookingMutation,
   useAdminCancelHelpingTaskMutation,
-  useAdminAddOrderNoteMutation,
   // Worker Earnings
   useAdminWorkerEarningsQuery,
   useAdminWorkerTimelineQuery,
@@ -3163,34 +2565,15 @@ export const {
   useSetDefaultWorkerBankAccountMutation,
   useGetWorkerAppealsQuery,
   useCreateWorkerAppealMutation,
-  useGetWorkerAppealQuery,
   useGetTrainingModulesQuery,
   useGetTrainingModuleQuery,
   useSubmitTrainingQuizMutation,
   useGetJobEarningsQuery,
   useGetZoneBenchmarkQuery,
-  useBlockCustomerByWorkerMutation,
-  useGetWorkerProfileQuery,
-  useUpdateWorkerSkillsMutation,
   useGetWorkerGoalsQuery,
   useSetWorkerGoalMutation,
   useRequestPayoutMutation,
-  useGetPlansQuery,
-
   // Catalog & Models Dynamic Engine
-  useGetCatalogBrandsQuery,
-  useGetCatalogModelsQuery,
-  useGetCatalogVariantsQuery,
-  useGetDiagnosticFlowQuery,
-  useRecordDemandEventMutation,
-  useAdminGetBrandsQuery,
-  useAdminCreateBrandMutation,
-  useAdminGetModelsQuery,
-  useAdminCreateModelMutation,
-  useAdminImportModelsBulkMutation,
-  useAdminGetVariantsQuery,
-  useAdminCreateVariantMutation,
-  useAdminGetDemandEventsQuery,
   // Batch 2 user features
   useGetNotificationPrefsQuery,
   useUpdateNotificationPrefsMutation,
