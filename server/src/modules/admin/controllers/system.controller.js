@@ -168,18 +168,9 @@ async function getAlerts(req, res, next) {
       });
     }
 
-    // Repair, pet and helping jobs nobody has picked up, and money waiting on a person.
-    const waitingSince = new Date(now - 600_000);
-    const [repairWaiting, petWaiting, helpingWaiting, paymentsNeedingAction] = await Promise.all([
-      require('../../repair/models/booking.model').RepairBooking.countDocuments({
-        status: 'CONFIRMED', workerId: null, shopId: null, updatedAt: { $lt: waitingSince },
-      }),
-      require('../../pet/models/booking.model').PetBooking.countDocuments({
-        status: { $in: ['BOOKED', 'PROVIDER_SEARCHING'] }, updatedAt: { $lt: waitingSince },
-      }),
-      require('../../helping/models/task.model').HelpingTask.countDocuments({
-        status: { $in: ['REQUESTED', 'CONFIRMED', 'WORKER_SEARCHING'] }, workerId: null, updatedAt: { $lt: waitingSince },
-      }),
+    // Jobs of any kind past their time limit (rules per kind in jobs/kinds.js), and money waiting on a person.
+    const [stuck, paymentsNeedingAction] = await Promise.all([
+      require('../../jobs/ops.service').stuckJobs({ now: new Date(now) }),
       require('../../payment/payment-intent.model').countDocuments({
         $or: [
           { reconciliationRequired: true, reconciledAt: { $exists: false } },
@@ -187,14 +178,15 @@ async function getAlerts(req, res, next) {
         ],
       }),
     ]);
-    const bookingsWaiting = repairWaiting + petWaiting + helpingWaiting;
-    if (bookingsWaiting > 0) {
+    if (stuck.length > 0) {
+      const byKind = Object.entries(stuck.reduce((m, j) => ({ ...m, [j.kind]: (m[j.kind] || 0) + 1 }), {}))
+        .map(([kind, n]) => `${kind} ${n}`).join(', ');
       alerts.push({
-        id: 'bookings_unassigned',
-        severity: bookingsWaiting >= 5 ? 'critical' : 'warning',
-        title: 'Bookings waiting for a provider',
-        message: `${bookingsWaiting} booking(s) unassigned for over 10 minutes (repair ${repairWaiting}, pet ${petWaiting}, helping ${helpingWaiting})`,
-        link: { tab: 'bookings' },
+        id: 'jobs_stuck',
+        severity: stuck.length >= 5 ? 'critical' : 'warning',
+        title: 'Jobs stuck',
+        message: `${stuck.length} job(s) past their time limit (${byKind})`,
+        link: { tab: 'stuck' },
       });
     }
     if (paymentsNeedingAction > 0) {
@@ -225,7 +217,7 @@ async function getAlerts(req, res, next) {
         recentCompleted,
         failedOrders,
         longSearching,
-        bookingsWaiting,
+        jobsStuck: stuck.length,
         paymentsNeedingAction,
       },
       checkedAt: now.toISOString(),

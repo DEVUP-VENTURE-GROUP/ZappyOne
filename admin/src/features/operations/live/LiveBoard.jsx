@@ -1,172 +1,164 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useAdminLiveOpsQuery } from '@shared/services/api';
-import { SectionHeader, Card, PageLoader, StatusBadge } from '../../../ui/kit';
-import { MapPin, Users, ShoppingBag, Clock, RefreshCw, Search, Wrench, Navigation } from 'lucide-react';
+import { SectionHeader, Card, PageLoader } from '../../../ui/kit';
+import { MapPin, Users, RefreshCw, AlertTriangle, Clock } from 'lucide-react';
+import { BookingDrawer } from '../../bookings/Bookings';
 
-const STATUS_ICON = {
-  searching:   { Icon: Search,    color: 'text-amber-500',  bg: 'bg-amber-50' },
-  assigned:    { Icon: Users,     color: 'text-blue-500',   bg: 'bg-blue-50' },
-  on_the_way:  { Icon: Navigation,color: 'text-violet-500', bg: 'bg-violet-50' },
-  arrived:     { Icon: MapPin,    color: 'text-indigo-500', bg: 'bg-indigo-50' },
-  in_progress: { Icon: Wrench,    color: 'text-emerald-500',bg: 'bg-emerald-50' },
+/**
+ * Every job happening right now, of every kind, and who is online.
+ *
+ * Stuck jobs come first, then ones still waiting for a provider, then the
+ * rest — the order an ops person works them in. "Stuck" is each kind's own
+ * clock (server: jobs/kinds.js), so a repair at the workshop for a day is
+ * normal while a helper en route for ninety minutes is not.
+ */
+
+const KIND_LABEL = { repair: 'Repair', pet: 'Pet care', helping: 'Helping', event: 'Event' };
+const KIND_TONE = {
+  repair: 'bg-blue-50 text-blue-700', pet: 'bg-amber-50 text-amber-700',
+  helping: 'bg-emerald-50 text-emerald-700', event: 'bg-violet-50 text-violet-700',
 };
+const label = (s = '') => s.replace(/_/g, ' ').toLowerCase();
 
-function msAgo(date) {
-  const diff = Date.now() - new Date(date).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'just now';
-  if (mins < 60) return `${mins}m ago`;
-  return `${Math.floor(mins / 60)}h ${mins % 60}m ago`;
+function minutes(m) {
+  if (m < 1) return 'just now';
+  if (m < 60) return `${m} min`;
+  if (m < 48 * 60) return `${Math.floor(m / 60)} h ${m % 60} min`;
+  return `${Math.floor(m / 1440)} days`;
 }
 
-function StatPill({ label, value, color = 'text-slate-900', bg = 'bg-slate-50 border-slate-100' }) {
+function Stat({ label: text, value, tone = 'text-slate-900' }) {
   return (
-    <div className={`rounded-xl border p-4 text-center ${bg}`}>
-      <p className={`text-2xl font-extrabold tabular-nums ${color}`}>{value}</p>
-      <p className="text-xs text-slate-400 font-semibold mt-0.5">{label}</p>
+    <div className="rounded-xl border border-slate-100 bg-white p-4">
+      <p className={`text-2xl font-bold tabular-nums ${tone}`}>{value}</p>
+      <p className="mt-0.5 text-xs font-medium text-slate-500">{text}</p>
     </div>
   );
 }
 
-export default function LiveOps() {
-  const [pollInterval, setPollInterval] = useState(10000);
-  const { data, isLoading, isFetching, refetch } = useAdminLiveOpsQuery(undefined, {
-    pollingInterval: pollInterval,
-  });
+export default function LiveBoard() {
+  const [poll, setPoll] = useState(10000);
+  const [kind, setKind] = useState('');
+  const [open, setOpen] = useState(null);
+  const { data, isLoading, isFetching, refetch } = useAdminLiveOpsQuery(undefined, { pollingInterval: poll });
+
+  const jobs = useMemo(() => (data?.jobs || [])
+    .filter((j) => !kind || j.kind === kind)
+    .sort((a, b) => Number(!!b.stuck) - Number(!!a.stuck) || Number(b.waiting) - Number(a.waiting) || b.minutesInStatus - a.minutesInStatus),
+  [data, kind]);
 
   if (isLoading) return <PageLoader />;
-
-  const orders  = data?.activeOrders || [];
+  const counts = data?.jobCounts || { live: 0, waiting: 0, stuck: 0, byKind: {} };
   const workers = data?.workerLocations || [];
-  const counts  = data?.counts || {};
-  const byStatus = counts.byStatus || {};
 
   return (
     <div className="space-y-6">
       <SectionHeader
-        title="Live Operations"
-        subtitle={data?.checkedAt ? `Last refresh: ${new Date(data.checkedAt).toLocaleTimeString('en-IN')}` : undefined}
+        title="Live operations"
+        subtitle={data?.checkedAt ? `Updated ${new Date(data.checkedAt).toLocaleTimeString('en-IN')}` : undefined}
       >
         <div className="flex items-center gap-2">
           <select
-            value={pollInterval}
-            onChange={e => setPollInterval(Number(e.target.value))}
-            className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white text-slate-700 outline-none"
+            value={poll}
+            onChange={(e) => setPoll(Number(e.target.value))}
+            aria-label="Refresh every"
+            className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-700 outline-none"
           >
             <option value={5000}>5s</option>
             <option value={10000}>10s</option>
             <option value={30000}>30s</option>
             <option value={0}>Manual</option>
           </select>
-          <button onClick={refetch} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-semibold hover:bg-slate-700 transition">
-            <RefreshCw size={12} className={isFetching ? 'animate-spin' : ''} />
-            Refresh
+          <button type="button" onClick={refetch} className="flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-700">
+            <RefreshCw size={12} className={isFetching ? 'animate-spin' : ''} /> Refresh
           </button>
         </div>
       </SectionHeader>
 
-      {/* Key metrics */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3">
-        <StatPill label="Active Orders"    value={counts.total || 0}         bg="bg-blue-50 border-blue-100" color="text-blue-700" />
-        <StatPill label="Online Workers"   value={counts.onlineWorkers || 0} bg="bg-emerald-50 border-emerald-100" color="text-emerald-700" />
-        <StatPill label="Searching"        value={byStatus.searching || 0}   bg="bg-amber-50 border-amber-100"   color="text-amber-700" />
-        <StatPill label="Assigned"         value={byStatus.assigned || 0}    bg="bg-violet-50 border-violet-100" color="text-violet-700" />
-        <StatPill label="On the Way"       value={byStatus.on_the_way || 0}  bg="bg-indigo-50 border-indigo-100" color="text-indigo-700" />
-        <StatPill label="In Progress"      value={byStatus.in_progress || 0} bg="bg-green-50 border-green-100"  color="text-green-700" />
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <Stat label="Live jobs" value={counts.live} />
+        <Stat label="Waiting for a provider" value={counts.waiting} tone="text-amber-700" />
+        <Stat label="Stuck" value={counts.stuck} tone={counts.stuck ? 'text-red-600' : 'text-slate-900'} />
+        <Stat label="Workers online" value={data?.counts?.onlineWorkers ?? workers.length} tone="text-emerald-700" />
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-4">
-        {/* Active Orders List */}
-        <Card className="overflow-hidden">
-          <div className="px-5 py-3 border-b border-slate-100 flex items-center gap-2">
-            <ShoppingBag size={15} className="text-slate-500" />
-            <p className="text-sm font-bold text-slate-700">Active Orders ({orders.length})</p>
-          </div>
-          {orders.length === 0 ? (
-            <div className="p-8 text-center">
-              <ShoppingBag size={24} className="text-slate-200 mx-auto mb-2" />
-              <p className="text-sm text-slate-400">No active orders right now</p>
-            </div>
+      <div className="flex flex-wrap gap-2">
+        {[['', 'All'], ...Object.keys(KIND_LABEL).map((k) => [k, KIND_LABEL[k]])].map(([k, text]) => {
+          const n = k ? counts.byKind?.[k]?.live || 0 : counts.live;
+          return (
+            <button
+              key={k || 'all'}
+              type="button"
+              onClick={() => setKind(k)}
+              className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${kind === k ? 'bg-slate-900 text-white' : 'bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50'}`}
+            >
+              {text} · {n}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-3">
+        <Card className="overflow-hidden lg:col-span-2">
+          {jobs.length === 0 ? (
+            <p className="p-8 text-center text-sm text-slate-500">Nothing live right now.</p>
           ) : (
-            <div className="divide-y divide-slate-50 max-h-96 overflow-y-auto">
-              {orders.map(o => {
-                const meta = STATUS_ICON[o.status] || STATUS_ICON.searching;
-                const Icon = meta.Icon;
-                return (
-                  <div key={o._id} className="flex items-center gap-3 px-5 py-3">
-                    <div className={`w-8 h-8 rounded-lg ${meta.bg} flex items-center justify-center shrink-0`}>
-                      <Icon size={14} className={meta.color} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <p className="text-sm font-semibold text-slate-800 capitalize">{o.service?.replace(/_/g, ' ')}</p>
-                        <StatusBadge status={o.status} />
-                      </div>
-                      <p className="text-xs text-slate-400 mt-0.5 flex items-center gap-1">
-                        <Clock size={10} /> {msAgo(o.createdAt)}
-                        {!o.hasWorker && o.status !== 'searching' && (
-                          <span className="text-amber-600 font-semibold ml-1">· no worker</span>
-                        )}
-                      </p>
-                    </div>
-                    <span className="text-[10px] font-mono text-slate-400">{String(o._id).slice(-6)}</span>
-                  </div>
-                );
-              })}
-            </div>
+            <ul className="max-h-[32rem] divide-y divide-slate-100 overflow-y-auto">
+              {jobs.map((j) => (
+                <li key={`${j.kind}-${j.id}`}>
+                  <button type="button" onClick={() => setOpen({ source: j.kind, id: j.id })} className="flex w-full items-start gap-3 px-5 py-3 text-left hover:bg-slate-50">
+                    <span className={`mt-0.5 shrink-0 rounded-md px-2 py-0.5 text-[11px] font-semibold ${KIND_TONE[j.kind] || 'bg-slate-100 text-slate-600'}`}>
+                      {KIND_LABEL[j.kind] || j.kind}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-semibold capitalize text-slate-800">{j.title}</span>
+                      <span className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-slate-500">
+                        <span className="capitalize">{label(j.status)}</span>
+                        <span className="flex items-center gap-1"><Clock size={11} /> {minutes(j.minutesInStatus)}</span>
+                        {j.address && <span className="flex min-w-0 items-center gap-1 truncate"><MapPin size={11} /> {j.address}</span>}
+                      </span>
+                      {j.stuck && (
+                        <span className="mt-1 flex items-center gap-1 text-xs font-semibold text-red-600">
+                          <AlertTriangle size={12} /> Stuck: {j.stuck}
+                        </span>
+                      )}
+                    </span>
+                    {j.waiting && !j.stuck && <span className="shrink-0 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700">Waiting</span>}
+                  </button>
+                </li>
+              ))}
+            </ul>
           )}
         </Card>
 
-        {/* Online Workers */}
         <Card className="overflow-hidden">
-          <div className="px-5 py-3 border-b border-slate-100 flex items-center gap-2">
+          <div className="flex items-center gap-2 border-b border-slate-100 px-5 py-3">
             <Users size={15} className="text-slate-500" />
-            <p className="text-sm font-bold text-slate-700">Online Workers ({workers.length})</p>
+            <p className="text-sm font-semibold text-slate-700">Workers online ({workers.length})</p>
           </div>
           {workers.length === 0 ? (
-            <div className="p-8 text-center">
-              <Users size={24} className="text-slate-200 mx-auto mb-2" />
-              <p className="text-sm text-slate-400">No workers online</p>
-            </div>
+            <p className="p-8 text-center text-sm text-slate-500">No workers online.</p>
           ) : (
-            <div className="divide-y divide-slate-50 max-h-96 overflow-y-auto">
-              {workers.map(w => (
-                <div key={w.id} className="flex items-center gap-3 px-5 py-3">
-                  <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center shrink-0">
-                    <MapPin size={14} className="text-emerald-500" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-mono text-slate-500">{String(w.id).slice(-8)}</p>
-                    <p className="text-[11px] text-slate-400 mt-0.5">
-                      {w.lat?.toFixed(4)}, {w.lng?.toFixed(4)}
-                    </p>
-                  </div>
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                </div>
+            <ul className="max-h-[32rem] divide-y divide-slate-50 overflow-y-auto">
+              {workers.map((w) => (
+                <li key={w.id} className="flex items-center gap-3 px-5 py-2.5">
+                  <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500" />
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${w.lat},${w.lng}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="min-w-0 flex-1 truncate font-mono text-xs text-slate-600 hover:text-slate-900"
+                  >
+                    {String(w.id).slice(-8)} · {w.lat?.toFixed(4)}, {w.lng?.toFixed(4)}
+                  </a>
+                </li>
               ))}
-            </div>
-          )}
-
-          {/* Simple dot-grid visualization */}
-          {workers.length > 0 && (
-            <div className="px-5 py-4 border-t border-slate-50">
-              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-2">Worker Distribution</p>
-              <div className="flex flex-wrap gap-1.5">
-                {workers.slice(0, 60).map(w => (
-                  <div
-                    key={w.id}
-                    className="w-2.5 h-2.5 rounded-full bg-emerald-400 opacity-80"
-                    title={`${w.lat?.toFixed(3)}, ${w.lng?.toFixed(3)}`}
-                  />
-                ))}
-                {workers.length > 60 && (
-                  <span className="text-[10px] text-slate-400 self-center">+{workers.length - 60} more</span>
-                )}
-              </div>
-            </div>
+            </ul>
           )}
         </Card>
       </div>
+
+      {open && <BookingDrawer {...open} onClose={() => { setOpen(null); refetch(); }} />}
     </div>
   );
 }

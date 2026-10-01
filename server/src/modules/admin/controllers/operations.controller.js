@@ -249,6 +249,10 @@ async function getLiveOps(req, res, next) {
       for (const o of activeOrders)
         byStatus[o.status] = (byStatus[o.status] || 0) + 1;
 
+      // Every v1 job kind, from the job registry.
+      const ops = require('../../jobs/ops.service');
+      const jobs = await ops.liveJobs();
+
       return {
         activeOrders: activeOrders.map((o) => ({
           _id: o._id,
@@ -260,6 +264,8 @@ async function getLiveOps(req, res, next) {
           hasWorker: !!o.workerId,
         })),
         workerLocations,
+        jobs,
+        jobCounts: ops.summarise(jobs),
         counts: {
           total: activeOrders.length,
           byStatus,

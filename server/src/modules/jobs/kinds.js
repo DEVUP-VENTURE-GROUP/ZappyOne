@@ -35,6 +35,15 @@ async function repairLine(vertical) {
   return repairLines.get(vertical);
 }
 
+/**
+ * Ops view of a job: is it live, where is it, and is it stuck?
+ * `stuck(doc, minutesInStatus, now)` returns a short reason, or null.
+ */
+const after = (limits, fallback) => (doc, mins) => {
+  const limit = limits[doc.status] ?? fallback;
+  return limit != null && mins > limit ? `${doc.status.replace(/_/g, ' ').toLowerCase()} for ${Math.round(mins)} min` : null;
+};
+
 const HELPING_LINE = { shopping: 'shopping_pickup', pickup: 'shopping_pickup', return: 'returns_exchange', exchange: 'returns_exchange' };
 
 const KINDS = {
@@ -63,6 +72,15 @@ const KINDS = {
     },
     // Repair copy lives with its richer event service (quotes, SLA); see repair/services/events.service.
     copy: null,
+    ops: {
+      terminal: ['COMPLETED', 'CANCELLED', 'REJECTED', 'EXPIRED', 'FAILED', 'REFUNDED'],
+      fields: 'status userId workerId shopId reference vertical serviceMode location createdAt updatedAt statusHistory',
+      where: (b) => place(b.location),
+      title: (b) => [b.vertical, b.serviceMode].filter(Boolean).join(' · ').replace(/_/g, ' '),
+      waiting: ['PENDING', 'CONFIRMED', 'PROVIDER_ASSIGNED'],
+      // Workshop repairs legitimately take days; the doorstep moments are minutes.
+      stuck: after({ PENDING: 15, CONFIRMED: 10, PROVIDER_ASSIGNED: 15, WORKER_ACCEPTED: 60, ON_THE_WAY: 60, ARRIVED: 90, CUSTOMER_APPROVAL_PENDING: 120 }, 3 * 24 * 60),
+    },
   },
 
   pet: {
@@ -112,6 +130,20 @@ const KINDS = {
       provider: {
         PROVIDER_ASSIGNED: ['New booking for you', 'A customer chose you. Accept or decline in the app.', 'always'],
         CANCELLED: ['Booking cancelled', 'The customer cancelled this booking.'],
+      },
+    },
+    ops: {
+      terminal: ['PAYMENT_COMPLETED', 'CLOSED', 'CANCELLED', 'REFUNDED'],
+      fields: 'status userId workerId shopId reference categoryCode serviceMode serviceLocation scheduledAt checkOutAt createdAt updatedAt statusHistory',
+      where: (b) => place(b.serviceLocation),
+      title: (b) => (b.categoryCode || 'pet care').replace(/_/g, ' '),
+      waiting: ['REQUESTED', 'PRICE_PENDING', 'BOOKED', 'PROVIDER_SEARCHING', 'PROVIDER_ASSIGNED'],
+      stuck: (b, mins, now) => {
+        // A stay runs until checkout; only past checkout is it overdue.
+        if (['SERVICE_STARTED', 'SERVICE_PAUSED'].includes(b.status) && b.checkOutAt) {
+          return now > new Date(b.checkOutAt).getTime() + 3600000 ? 'still in care after checkout' : null;
+        }
+        return after({ BOOKED: 30, PROVIDER_SEARCHING: 30, PROVIDER_ASSIGNED: 20, PROVIDER_ACCEPTED: 24 * 60, PROVIDER_EN_ROUTE: 60, PROVIDER_ARRIVED: 45, SERVICE_STARTED: 8 * 60, PAYMENT_PENDING: 24 * 60 }, 24 * 60)(b, mins);
       },
     },
   },
@@ -164,6 +196,14 @@ const KINDS = {
         CANCELLED: ['Task cancelled', 'The customer cancelled this task.'],
       },
     },
+    ops: {
+      terminal: ['COMPLETED', 'CUSTOMER_CONFIRMED', 'SETTLED', 'CANCELLED', 'FAILED', 'DRAFT'],
+      fields: 'status userId workerId reference serviceType title pickupLocation createdAt updatedAt statusHistory',
+      where: (t) => place(t.pickupLocation),
+      title: (t) => t.title || t.serviceType,
+      waiting: ['REQUESTED', 'CONFIRMED', 'WORKER_SEARCHING', 'WORKER_ASSIGNED', 'WORKER_DECLINED'],
+      stuck: after({ REQUESTED: 10, CONFIRMED: 10, WORKER_SEARCHING: 10, WORKER_ACCEPTED: 30, EN_ROUTE: 60, ARRIVED: 60, APPROVAL_REQUIRED: 30, RETURNING: 90 }, 6 * 60),
+    },
   },
 };
 
@@ -185,6 +225,18 @@ KINDS.event = {
     },
     provider: {
       cancelled: ['Booking cancelled', 'The customer cancelled this event booking.'],
+    },
+  },
+  ops: {
+    terminal: ['completed', 'cancelled'],
+    fields: 'status userId partnerId eventDate address createdAt updatedAt statusHistory',
+    where: () => null,
+    title: (b) => `Event on ${b.eventDate ? new Date(b.eventDate).toLocaleDateString('en-IN') : '—'}`,
+    waiting: ['pending_payment'],
+    // Booked days ahead, so time in a status means little; a date that has passed does.
+    stuck: (b, mins, now) => {
+      if (b.status === 'pending_payment') return mins > 24 * 60 ? 'unpaid for over a day' : null;
+      return b.eventDate && now > new Date(b.eventDate).getTime() + 12 * 3600000 ? 'event date passed, not completed' : null;
     },
   },
 };

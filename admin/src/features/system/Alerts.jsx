@@ -60,7 +60,7 @@ export default function Alerts() {
           { label: 'Completed (1h)',   value: snap.recentCompleted ?? '—', Icon: CheckCircle2, color: 'text-green-600', bg: 'bg-green-50' },
           { label: 'Failed Dispatch',  value: snap.failedOrders ?? '—',  Icon: AlertTriangle, color: 'text-amber-600', bg: 'bg-amber-50' },
           { label: 'Stuck Searching',  value: snap.longSearching ?? '—', Icon: Clock,       color: 'text-purple-600', bg: 'bg-purple-50' },
-          { label: 'Bookings Unassigned', value: snap.bookingsWaiting ?? '—', Icon: Hourglass, color: 'text-orange-600', bg: 'bg-orange-50' },
+          { label: 'Jobs stuck', value: snap.jobsStuck ?? '—', Icon: Hourglass, color: 'text-orange-600', bg: 'bg-orange-50' },
           { label: 'Payments To Fix', value: snap.paymentsNeedingAction ?? '—', Icon: IndianRupee, color: 'text-rose-600', bg: 'bg-rose-50' },
         ].map(({ label, value, Icon, color, bg }) => (
           <Card key={label} className="p-3 flex flex-col items-center text-center">

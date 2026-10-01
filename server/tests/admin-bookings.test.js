@@ -77,3 +77,25 @@ test('an admin cancelling a pet booking never costs the customer', async () => {
   expect(out).toMatchObject({ refundPaise: 90000, penaltyPaise: 0, tier: 'platform_cancelled' });
   expect(out.booking.cancelledBy).toBe('admin');
 });
+
+test('event bookings sit in the same list, with their partner and agreed commission', async () => {
+  const EventBooking = require('../src/modules/events/event-booking.model');
+  const EventPartner = require('../src/modules/events/event-partner.model');
+  const partnerId = new mongoose.Types.ObjectId();
+  await EventPartner.collection.insertOne({ _id: partnerId, businessName: 'Decor Co', phone: '9000000601' });
+  const { insertedId } = await EventBooking.collection.insertOne({
+    userId: customer._id, partnerId, themeId: new mongoose.Types.ObjectId(), status: 'partner_assigned',
+    eventDate: new Date(Date.now() + 5 * 86400000), address: { line1: '12 Main Rd', city: 'Hyderabad' },
+    pricing: { totalPaise: 100000, platformCommissionPct: 12 }, advancePayment: { status: 'paid' }, statusHistory: [],
+    createdAt: new Date(),
+  });
+
+  const list = await request(app).get('/admin/bookings').query({ source: 'event' });
+  expect(list.body.rows[0]).toMatchObject({
+    source: 'event', statusBucket: 'active', commissionPaise: 12000, providerEarningPaise: 88000,
+    provider: { kind: 'event_partner', name: 'Decor Co' }, customer: { name: 'Priya' },
+  });
+
+  const detail = await request(app).get(`/admin/bookings/event/${insertedId}`);
+  expect(detail.body).toMatchObject({ address: '12 Main Rd, Hyderabad', actions: { cancel: true } });
+});

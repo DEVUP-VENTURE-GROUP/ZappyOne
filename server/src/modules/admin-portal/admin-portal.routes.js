@@ -19,14 +19,16 @@ const idList = (rows, key) => [...new Set(rows.map((r) => r[key]).filter(Boolean
 
 /** Names customers and ops recognise, resolved in three batched queries — never one per row. */
 async function enrich(rows) {
-  const [users, workers, shops, lines] = await Promise.all([
+  const EventPartner = require('../events/event-partner.model');
+  const [users, workers, shops, lines, partners] = await Promise.all([
     User.find({ _id: { $in: idList(rows, 'userId') } }).select('name phone').lean(),
     Worker.find({ _id: { $in: idList(rows, 'workerId') } }).select('name phone').lean(),
     Shop.find({ _id: { $in: idList(rows, 'shopId') } }).select('businessName phone').lean(),
     ServiceLine.find({}).select('code name repairVertical').lean(),
+    EventPartner.find({ _id: { $in: idList(rows, 'partnerId') } }).select('businessName phone').lean(),
   ]);
   const byId = (list) => new Map(list.map((d) => [String(d._id), d]));
-  const u = byId(users), w = byId(workers), s = byId(shops);
+  const u = byId(users), w = byId(workers), s = byId(shops), ep = byId(partners);
   // Service names come from the admin catalog so a renamed service reads right everywhere.
   const lineByVertical = new Map(lines.filter((l) => l.repairVertical).map((l) => [l.repairVertical, l.name]));
   const lineByCode = new Map(lines.map((l) => [l.code, l.name]));
@@ -42,7 +44,9 @@ async function enrich(rows) {
       ? { kind: 'shop', name: s.get(String(r.shopId)).businessName, phone: s.get(String(r.shopId)).phone }
       : r.workerId && w.get(String(r.workerId))
         ? { kind: 'worker', name: w.get(String(r.workerId)).name, phone: w.get(String(r.workerId)).phone }
-        : null,
+        : r.partnerId && ep.get(String(r.partnerId))
+          ? { kind: 'event_partner', name: ep.get(String(r.partnerId)).businessName, phone: ep.get(String(r.partnerId)).phone }
+          : null,
   }));
 }
 
@@ -102,7 +106,9 @@ router.get('/bookings/:source/:id', async (req, res, next) => {
     const history = (raw.statusHistory || raw.timeline || []).map((h) => ({
       status: h.status, at: h.at || h.timestamp, by: h.byRole || h.actorRole || h.by || '', note: h.note || h.reason || '',
     }));
-    res.json({ booking: row, history, address: raw.location?.address || raw.pickupLocation?.address || raw.serviceLocation?.address || '', actions: actionsFor(source, raw) });
+    const address = raw.location?.address || raw.pickupLocation?.address || raw.serviceLocation?.address
+      || [raw.address?.line1, raw.address?.city].filter(Boolean).join(', ') || '';
+    res.json({ booking: row, history, address, actions: actionsFor(source, raw) });
   } catch (err) { next(err); }
 });
 

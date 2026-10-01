@@ -5,7 +5,7 @@ import { Search, X, Loader2, RotateCcw, Ban, Store, User, MapPin, ArrowRight } f
 import {
   useAdminBookingsQuery, useAdminBookingDetailQuery, useAdminForceCancelOrderMutation,
   useCancelRepairBookingMutation, useAdminCancelPetBookingMutation, useAdminCancelHelpingTaskMutation,
-  useAdminRefundOrderMutation,
+  useAdminRefundOrderMutation, useAdminCancelEventBookingMutation,
 } from '@shared/services/api';
 import { SectionHeader, Card, Th, Td, EmptyState, Pagination, fmt, fmtDate } from '../../ui/kit';
 
@@ -14,6 +14,7 @@ const SOURCES = [
   { id: 'repair', label: 'Repair' },
   { id: 'pet', label: 'Pet' },
   { id: 'helping', label: 'Helping' },
+  { id: 'event', label: 'Events' },
   { id: 'order', label: 'Orders (legacy)' },
 ];
 const BUCKETS = [
@@ -100,7 +101,8 @@ export default function Bookings() {
   );
 }
 
-function BookingDrawer({ source, id, onClose }) {
+/** One booking's detail and actions; reused by the live board and stuck jobs. */
+export function BookingDrawer({ source, id, onClose }) {
   const [, setParams] = useSearchParams();
   const { data, isLoading, refetch } = useAdminBookingDetailQuery({ source, id });
   const [cancelOrder, o] = useAdminForceCancelOrderMutation();
@@ -108,9 +110,10 @@ function BookingDrawer({ source, id, onClose }) {
   const [cancelPet, p] = useAdminCancelPetBookingMutation();
   const [cancelHelping, h] = useAdminCancelHelpingTaskMutation();
   const [refundOrder, rf] = useAdminRefundOrderMutation();
+  const [cancelEvent, ev] = useAdminCancelEventBookingMutation();
   const [reason, setReason] = useState('');
   const [confirming, setConfirming] = useState(null);
-  const busy = o.isLoading || r.isLoading || p.isLoading || h.isLoading || rf.isLoading;
+  const busy = o.isLoading || r.isLoading || p.isLoading || h.isLoading || rf.isLoading || ev.isLoading;
 
   async function run() {
     try {
@@ -119,7 +122,7 @@ function BookingDrawer({ source, id, onClose }) {
         toast.success('Refund started');
       } else {
         const cancel = { order: () => cancelOrder({ id, reason, refundFull: true }), repair: () => cancelRepair({ id, reason }),
-          pet: () => cancelPet({ id, reason }), helping: () => cancelHelping({ id, reason }) }[source];
+          pet: () => cancelPet({ id, reason }), helping: () => cancelHelping({ id, reason }), event: () => cancelEvent({ id, reason }) }[source];
         await cancel().unwrap();
         toast.success('Booking cancelled — the customer has been told');
       }

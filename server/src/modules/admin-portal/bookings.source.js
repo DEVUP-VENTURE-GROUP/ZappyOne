@@ -52,8 +52,9 @@ const Order = require('../order/order.model');
 const { RepairBooking } = require('../repair/models/booking.model');
 const { HelpingTask } = require('../helping/models/task.model');
 const { PetBooking } = require('../pet/models/booking.model');
+const EventBooking = require('../events/event-booking.model');
 
-const SOURCES = ['order', 'repair', 'helping', 'pet'];
+const SOURCES = ['order', 'repair', 'helping', 'pet', 'event'];
 
 /** Every raw status string across four state machines, bucketed once. */
 const STATUS_BUCKET = {
@@ -87,6 +88,9 @@ const STATUS_BUCKET = {
   PROVIDER_ACCEPTED: 'active', PROVIDER_EN_ROUTE: 'active', PROVIDER_ARRIVED: 'active',
   PET_HANDOVER: 'active', SERVICE_STARTED: 'active', SERVICE_PAUSED: 'active',
   SERVICE_COMPLETED: 'completed', CUSTOMER_CONFIRMATION: 'active',
+
+  // EventBooking (completed / cancelled shared with Order above)
+  pending_payment: 'active', confirmed: 'active', partner_assigned: 'active', disputed: 'disputed',
 };
 
 function bucketFor(status) {
@@ -175,8 +179,28 @@ function normalisePet(b) {
   };
 }
 
-const NORMALISERS = { order: normaliseOrder, repair: normaliseRepair, helping: normaliseHelping, pet: normalisePet };
-const MODELS = { order: Order, repair: RepairBooking, helping: HelpingTask, pet: PetBooking };
+/** An event booking: held by an event partner; the platform keeps the commission agreed on the booking. */
+function normaliseEvent(b) {
+  const total = b.pricing?.totalPaise || 0;
+  const commission = Math.round(total * (b.pricing?.platformCommissionPct ?? 0) / 100);
+  return {
+    _id: b._id, source: 'event', reference: `EVT-${String(b._id).slice(-6).toUpperCase()}`,
+    userId: b.userId, workerId: null, shopId: null, partnerId: b.partnerId || null,
+    vertical: 'event', serviceName: 'Event décor',
+    status: b.status, statusBucket: bucketFor(b.status),
+    totalPaise: total,
+    subtotalPaise: total,
+    commissionPaise: commission,
+    providerEarningPaise: total - commission,
+    itemMoneyPaise: 0,
+    paymentMethod: 'online',
+    paymentStatus: b.remainingPayment?.status === 'paid' ? 'paid' : b.advancePayment?.status === 'paid' ? 'advance_paid' : 'pending',
+    createdAt: b.createdAt, completedAt: null, scheduledAt: b.eventDate || null,
+  };
+}
+
+const NORMALISERS = { order: normaliseOrder, repair: normaliseRepair, helping: normaliseHelping, pet: normalisePet, event: normaliseEvent };
+const MODELS = { order: Order, repair: RepairBooking, helping: HelpingTask, pet: PetBooking, event: EventBooking };
 
 /**
  * Every date/status/vertical filter a caller might reasonably want, kept in
@@ -219,10 +243,11 @@ async function listBookings({
     if (userId) filter.userId = new mongoose.Types.ObjectId(userId);
     if (userIds) filter.userId = { $in: userIds.map((id) => new mongoose.Types.ObjectId(id)) };
     if (workerId) filter.workerId = new mongoose.Types.ObjectId(workerId);
-    if (shopId && source !== 'order' && source !== 'helping') filter.shopId = new mongoose.Types.ObjectId(shopId);
+    if (workerId && source === 'event') return []; // events are held by partners, not workers
+    if (shopId && !['order', 'helping', 'event'].includes(source)) filter.shopId = new mongoose.Types.ObjectId(shopId);
     if (reference) {
-      // Orders have no reference field; their shown reference is the id's tail.
-      if (source === 'order') {
+      // Orders and events have no reference field; their shown reference is the id's tail.
+      if (source === 'order' || source === 'event') {
         if (!/^[0-9a-f]{24}$/i.test(reference)) return [];
         filter._id = new mongoose.Types.ObjectId(reference);
       } else {

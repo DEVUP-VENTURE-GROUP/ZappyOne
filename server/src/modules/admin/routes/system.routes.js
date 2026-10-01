@@ -201,6 +201,14 @@ router.post(
 
 router.get('/liveops', opCtrl.getLiveOps);
 
+// Live jobs past their kind's time limit, every kind (rules in jobs/kinds.js).
+router.get('/stuck-jobs', async (req, res, next) => {
+  try {
+    const ops = require('../../jobs/ops.service');
+    res.json({ jobs: await ops.stuckJobs() });
+  } catch (err) { next(err); }
+});
+
 // SOS active incidents
 router.get('/sos/active', async (req, res, next) => {
   try {

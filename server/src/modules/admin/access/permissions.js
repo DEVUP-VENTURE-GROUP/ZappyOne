@@ -79,7 +79,7 @@ const AREA_RULES = [
   [/^\/events(\/|$)/, 'events'],
   [/^\/(promos|cashback|referrals|rewards-config|plans|notifications|ads|content|cities)(\/|$)/, 'marketing'],
   [/^\/(payments|payouts|wallet|shield|emergency-fund|audit)(\/|$)/, 'money'],
-  [/^\/(zones|launch-interest|fraud|cancellation-config|liveops)(\/|$)/, 'operations'],
+  [/^\/(zones|launch-interest|fraud|cancellation-config|liveops|stuck-jobs)(\/|$)/, 'operations'],
   [/^\/(feature-flags|system|audit-logs)(\/|$)/, 'system'],
 ];
 

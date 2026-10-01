@@ -1143,6 +1143,7 @@ export const api = createApi({
     }),
 
     // --- Admin: Live Operations ---
+    adminStuckJobs: b.query({ query: () => adminApiPath('/stuck-jobs') }),
     adminLiveOps: b.query({
       query: () => adminApiPath('/liveops'),
     }),
@@ -2845,7 +2846,7 @@ export const {
   useAdminRetentionQuery,
   useAdminSupportTicketsQuery,
   useAdminReplyTicketMutation,
-  useAdminLiveOpsQuery,
+  useAdminLiveOpsQuery, useAdminStuckJobsQuery,
   // Referrals
   useGetReferralCodeQuery,
   useApplyReferralCodeMutation,
