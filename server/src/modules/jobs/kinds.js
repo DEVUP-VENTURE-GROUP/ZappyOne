@@ -101,6 +101,14 @@ const KINDS = {
     // A booking the customer gave to one provider: it rings for them, and goes
     // back to the pool if they don't answer in the window.
     offer: { status: 'PROVIDER_ASSIGNED', windowMin: 15, since: (b) => b.assignedAt },
+    // The owner reads out a code before the pro takes or starts with the pet —
+    // only when the owner is there (not when they bring the pet to the provider).
+    startCode: {
+      field: 'handoverOtp',
+      required: (b, next) => ['PET_HANDOVER', 'SERVICE_STARTED'].includes(next)
+        && ['PROVIDER_ARRIVED', 'PROVIDER_ACCEPTED'].includes(b.status)
+        && b.serviceMode !== 'provider_location',
+    },
     open: {
       statuses: ['BOOKED', 'PROVIDER_SEARCHING'],
       start: (b) => place(b.serviceLocation),
@@ -166,6 +174,14 @@ const KINDS = {
           : to(t.destination, !startsAtCustomer) || to(t.pickupLocation, !startsAtCustomer);
       },
     },
+    // The customer's code at the moment the helper is with them: collecting a
+    // return, or handing over the shopping.
+    startCode: {
+      field: 'handoverOtp',
+      required: (t, next) => (['return', 'exchange'].includes(t.serviceType)
+        ? next === 'TASK_STARTED'
+        : next === 'COMPLETED'),
+    },
     open: {
       statuses: ['CONFIRMED', 'WORKER_SEARCHING'],
       start: (t) => place(t.pickupLocation),
@@ -217,6 +233,8 @@ KINDS.event = {
   line: async () => null,
   // The decorator's team comes on the day; there is no trip to follow live.
   trip: null,
+  // The host reads out a code before the team starts at the venue.
+  startCode: { field: 'startCode', required: (b, next) => next === 'in_progress' },
   open: null,
   copy: {
     customer: {

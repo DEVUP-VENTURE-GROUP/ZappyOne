@@ -123,18 +123,19 @@ async function triggerSOS({ workerId, lat: givenLat, lng: givenLng, orderId, job
   /* 5. Auto-create URGENT support ticket */
   try {
     const SupportTicket = require('../engagement/support-ticket.model');
+    // Fields the ticket schema requires (raisedBy, category, description); the old
+    // call passed others and failed validation, so no SOS ticket was ever filed.
     await SupportTicket.create({
-      orderId:  orderId ? order?._id : undefined, // only a real Order; other kinds are named in the body
-      workerId: worker._id,
-      userId:   order?.userId,
+      raisedBy: { kind: 'worker', id: worker._id },
+      category: 'other',
+      orderId:  orderId ? order?._id : undefined, // only a real Order; other kinds are named below
       subject:  `🆘 URGENT SOS — ${worker.name}`,
-      body: [
+      description: [
         `Worker ${worker.name} (${worker.phone}) triggered SOS at ${new Date(now).toISOString()}.`,
         lat && lng ? `Location: https://maps.google.com/?q=${lat},${lng}` : '',
         order ? `Job: ${order._id} · Service: ${order.service} · ${incident.address}` : 'No active job.',
         `Incident key: ${incidentKey}`,
       ].filter(Boolean).join('\n'),
-      source:   'sos',
       priority: 'urgent',
       status:   'open',
     });
@@ -181,12 +182,23 @@ async function triggerSOS({ workerId, lat: givenLat, lng: givenLng, orderId, job
  * no second dashboard to watch. The `type` distinguishes who is in danger,
  * which is the one thing that genuinely differs.
  */
-async function triggerCustomerSOS({ userId, orderId, lat, lng, message }) {
+async function triggerCustomerSOS({ userId, orderId, jobId, lat, lng, message }) {
   const User = require('../user/user.model');
 
+  // An order, or any job kind in the registry, in one shape.
+  const jobAsOrder = async () => {
+    if (orderId) return Order.findById(orderId).select('userId workerId service pickupLocation').lean();
+    if (!jobId) return null;
+    const { findJob, KINDS } = require('../jobs/kinds');
+    const found = await findJob(jobId, 'userId workerId categoryCode serviceType vertical location serviceLocation pickupLocation');
+    if (!found) return null;
+    const d = found.doc;
+    const where = d.location || d.serviceLocation || d.pickupLocation;
+    return { _id: d._id, userId: d.userId, workerId: d.workerId, service: d.categoryCode || d.serviceType || d.vertical || KINDS[found.kind].label, pickupLocation: { address: where?.address || '' } };
+  };
   const [user, order] = await Promise.all([
     User.findById(userId).select('name phone').lean(),
-    orderId ? Order.findById(orderId).select('userId workerId service pickupLocation').lean() : null,
+    jobAsOrder(),
   ]);
 
   if (!user) throw Object.assign(new Error('User not found'), { status: 404 });
@@ -214,7 +226,7 @@ async function triggerCustomerSOS({ userId, orderId, lat, lng, message }) {
     workerPhone: worker?.phone || null,
     lat,
     lng,
-    orderId: orderId ? String(orderId) : null,
+    orderId: order ? String(order._id) : null,
     service: order?.service || null,
     address: order?.pickupLocation?.address || null,
     message: message || 'SOS triggered — customer needs assistance',
@@ -242,18 +254,17 @@ async function triggerCustomerSOS({ userId, orderId, lat, lng, message }) {
   try {
     const SupportTicket = require('../engagement/support-ticket.model');
     await SupportTicket.create({
-      orderId: order ? order._id : undefined,
-      userId: user._id,
-      workerId: order?.workerId || undefined,
+      raisedBy: { kind: 'user', id: user._id },
+      category: 'other',
+      orderId: orderId ? order?._id : undefined,
       subject: `🆘 URGENT CUSTOMER SOS — ${user.name}`,
-      body: [
+      description: [
         `Customer ${user.name} (${user.phone}) triggered SOS at ${new Date(now).toISOString()}.`,
         lat && lng ? `Location: https://maps.google.com/?q=${lat},${lng}` : '',
-        order ? `Order: ${orderId} · Service: ${order.service} · ${incident.address}` : 'No active order.',
+        order ? `Job: ${order._id} · Service: ${order.service} · ${incident.address}` : 'No active job.',
         worker ? `Worker on site: ${worker.name} (${worker.phone})` : 'No worker assigned.',
         `Incident key: ${incidentKey}`,
       ].filter(Boolean).join('\n'),
-      source: 'sos',
       priority: 'urgent',
       status: 'open',
     });

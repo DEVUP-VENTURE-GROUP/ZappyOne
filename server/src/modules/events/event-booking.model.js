@@ -58,6 +58,8 @@ const eventBookingSchema = new mongoose.Schema({
     default: 'pending_payment',
   },
   statusHistory: { type: [statusHistorySchema], default: [] },
+  /** The host reads this out before the team starts at the venue (jobs/start-code). */
+  startCode:     { type: String, default: () => String(require('crypto').randomInt(1000, 10000)) },
 
   // Cancellation
   cancellationReason: String,

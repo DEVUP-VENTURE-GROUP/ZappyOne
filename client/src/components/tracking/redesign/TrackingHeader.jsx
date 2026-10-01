@@ -3,19 +3,19 @@ import { ArrowLeft, Zap, Share2, ShieldAlert, HeadphonesIcon, Clock } from 'luci
 import { STATUS_PILL, shortId } from './_shared';
 
 /**
- * Sticky dark navigation header.
- * Shows: ← back · service icon · service name · order id · device
+ * Sticky dark navigation header, for every job kind.
+ * Shows: ← back · service · reference · what it is for (device, pets, items)
  *        share · SOS · support
  *        live-status / ETA / distance pills
  *
- * Pricing is intentionally omitted here — it lives in <BookingSummary/>.
+ * `job` is the common tracked-job shape (tracking/kinds.js). Pricing lives in
+ * <BookingSummary/>.
  */
 export default function TrackingHeader({
-  order, status, eta, distanceKm, terminal,
+  job, status, eta, distanceKm, terminal,
   onBack, onShare, onSOS, onSupport,
 }) {
   const pill = STATUS_PILL[status] || STATUS_PILL.searching;
-  const deviceLabel = [order.deviceBrand, order.deviceModel].filter(Boolean).join(' ');
 
   return (
     <header className="sticky top-0 z-30" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
@@ -26,7 +26,6 @@ export default function TrackingHeader({
         boxShadow: '0 10px 30px -18px rgba(0,0,0,.6)',
       }}>
         <div className="w-full max-w-2xl lg:max-w-4xl mx-auto px-4 sm:px-6 pt-3 pb-3">
-          {/* Row 1 — back + title + right actions */}
           <div className="flex items-center gap-2.5">
             <motion.button
               onClick={onBack}
@@ -39,28 +38,25 @@ export default function TrackingHeader({
             </motion.button>
 
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-bold uppercase tracking-[0.13em] text-white/50">Order tracking</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.13em] text-white/50">Live tracking</p>
               <div className="flex items-center gap-2 mt-0.5">
                 <span
                   className="w-[26px] h-[26px] rounded-[9px] flex items-center justify-center shrink-0"
-                  style={{
-                    background: 'linear-gradient(135deg,#3B82F6,#2563FF)',
-                    boxShadow: '0 4px 12px -2px rgba(37,99,235,.7)',
-                  }}
+                  style={{ background: 'linear-gradient(135deg,#3B82F6,#2563FF)', boxShadow: '0 4px 12px -2px rgba(37,99,235,.7)' }}
                 >
                   <Zap size={14} className="text-white" fill="currentColor" />
                 </span>
                 <b className="text-[17px] font-extrabold text-white tracking-[-.02em] leading-none truncate capitalize">
-                  {order.service.replace(/_/g, ' ')}
+                  {job.service}
                 </b>
               </div>
               <p className="text-[11px] text-white/45 mt-[3px] tabular-nums truncate">
-                Order #{shortId(order._id)}{deviceLabel ? ` · ${deviceLabel}` : ''}
+                {job.reference || `#${shortId(job.id)}`}{job.subtitle ? ` · ${job.subtitle}` : ''}
               </p>
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
-              {!terminal && (
+              {!terminal && onShare && (
                 <motion.button
                   onClick={onShare}
                   whileTap={{ scale: 0.9 }}
@@ -71,7 +67,7 @@ export default function TrackingHeader({
                   <Share2 size={16} strokeWidth={2} className="text-white/85" />
                 </motion.button>
               )}
-              {!terminal && order.workerId && (
+              {!terminal && job.provider && onSOS && (
                 <motion.button
                   onClick={onSOS}
                   whileTap={{ scale: 0.9 }}
@@ -82,19 +78,20 @@ export default function TrackingHeader({
                   <ShieldAlert size={16} strokeWidth={2.5} className="text-red-300" />
                 </motion.button>
               )}
-              <motion.button
-                onClick={onSupport}
-                whileTap={{ scale: 0.9 }}
-                aria-label="Support"
-                className="w-10 h-10 rounded-[14px] flex items-center justify-center"
-                style={{ background: 'rgba(255,255,255,.10)' }}
-              >
-                <HeadphonesIcon size={16} strokeWidth={2} className="text-white/85" />
-              </motion.button>
+              {onSupport && (
+                <motion.button
+                  onClick={onSupport}
+                  whileTap={{ scale: 0.9 }}
+                  aria-label="Support"
+                  className="w-10 h-10 rounded-[14px] flex items-center justify-center"
+                  style={{ background: 'rgba(255,255,255,.10)' }}
+                >
+                  <HeadphonesIcon size={16} strokeWidth={2} className="text-white/85" />
+                </motion.button>
+              )}
             </div>
           </div>
 
-          {/* Row 2 — status pills */}
           <div className="flex items-center gap-1.5 mt-3 flex-wrap">
             <span
               className="inline-flex items-center gap-1.5 h-[29px] px-2.5 rounded-[11px] text-xs font-bold"
@@ -104,12 +101,9 @@ export default function TrackingHeader({
               }}
             >
               {pill.live && (
-                <span
-                  className="w-[7px] h-[7px] rounded-full"
-                  style={{ background: '#34D27B', animation: 'zpt-beat 1.8s infinite' }}
-                />
+                <span className="w-[7px] h-[7px] rounded-full" style={{ background: '#34D27B', animation: 'zpt-beat 1.8s infinite' }} />
               )}
-              {pill.label}
+              {job.statusLabel || pill.label}
             </span>
 
             {!terminal && eta != null && ['assigned', 'on_the_way'].includes(status) && (
@@ -121,7 +115,6 @@ export default function TrackingHeader({
               </span>
             )}
 
-            {/* Distance pill: only meaningful while a worker is en route */}
             {['assigned', 'on_the_way'].includes(status) && distanceKm != null && (
               <span
                 className="inline-flex items-center h-[29px] px-2.5 rounded-[11px] text-xs font-bold tabular-nums"

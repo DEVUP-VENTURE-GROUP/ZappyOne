@@ -1531,7 +1531,7 @@ export const api = createApi({
       providesTags: ['EventBooking'],
     }),
     updatePartnerBookingStatus: b.mutation({
-      query: ({ id, status }) => ({ url: `/events/partner/bookings/${id}/status`, method: 'PATCH', body: { status } }),
+      query: ({ id, status, code }) => ({ url: `/events/partner/bookings/${id}/status`, method: 'PATCH', body: { status, ...(code ? { code } : {}) } }),
       invalidatesTags: ['EventBooking'],
     }),
     partnerCalendar: b.query({ query: () => '/events/partner/calendar', providesTags: ['EventPartner'] }),
@@ -2088,8 +2088,12 @@ export const api = createApi({
       invalidatesTags: (r, e, a) => [{ type: 'HelpingTasks', id: a.id }],
     }),
     completeHelpingTask: b.mutation({
-      query: (id) => ({ url: `/helping/tasks/${id}/complete`, method: 'POST' }),
-      invalidatesTags: (r, e, id) => [{ type: 'HelpingTasks', id }],
+      // Accepts an id, or { id, code } when the customer's code is needed on delivery.
+      query: (arg) => {
+        const { id, code } = typeof arg === 'object' ? arg : { id: arg };
+        return { url: `/helping/tasks/${id}/complete`, method: 'POST', body: code ? { code } : {} };
+      },
+      invalidatesTags: (r, e, arg) => [{ type: 'HelpingTasks', id: typeof arg === 'object' ? arg.id : arg }],
     }),
     // The helper's own tasks still in hand.
     assignedHelpingTasks: b.query({

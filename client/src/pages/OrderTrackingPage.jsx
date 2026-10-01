@@ -3,9 +3,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Phone, CheckCircle, MapPin, AlertCircle, Loader2, ShieldCheck, RefreshCw,
-  X, Wallet, HeadphonesIcon, FileText,
-  Repeat2, CheckCircle2, HelpCircle, Share2, ShieldAlert, Copy, Store,
+  Phone, CheckCircle, AlertCircle, Loader2, ShieldCheck, RefreshCw, X, Wallet,
+  HeadphonesIcon, FileText, Repeat2, CheckCircle2, HelpCircle, Share2, ShieldAlert, Copy,
+  Store,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -23,6 +23,7 @@ import { selectAuth } from '@shared/modules/auth/authSlice';
 
 // Existing tracking modules (preserved intact)
 import LiveTrackingMap from '@shared/modules/tracking/LiveTrackingMap';
+import { KINDS } from '../tracking/kinds';
 import PageTransition from '../components/common/PageTransition';
 import BoostOfferCard from '../components/tracking/BoostOfferCard';
 import WorkerProfileSheet from '../components/worker/WorkerProfileSheet';
@@ -259,7 +260,8 @@ export default function OrderTrackingPage() {
   const canCancel = !terminal && !['arrived', 'in_progress'].includes(status);
   const eta         = liveOrder.etaMinutes;
   const distanceKm  = order.pricing?.distanceKm;
-  const deviceLabel = [order.deviceBrand, order.deviceModel].filter(Boolean).join(' ');
+  // The shared tracking pieces read one shape for every kind (tracking/kinds.js).
+  const job = KINDS.order.toJob(data);
   const workerVisible = order.workerId && !terminal && status !== 'searching' && status !== 'created';
 
   // Actions
@@ -402,7 +404,7 @@ export default function OrderTrackingPage() {
 
         {/* HEADER */}
         <TrackingHeader
-          order={order} status={status} eta={eta} distanceKm={distanceKm} terminal={terminal}
+          job={job} status={status} eta={eta} distanceKm={distanceKm} terminal={terminal}
           onBack={() => nav('/')} onShare={() => setShowShareTrip(true)}
           onSOS={() => setShowSOSConfirm(true)} onSupport={() => nav('/support')}
         />
@@ -504,7 +506,7 @@ export default function OrderTrackingPage() {
           {workerVisible && (
             <div className="lg:[column-span:all]">
               <WorkerRichCard
-                order={order} eta={eta} status={status}
+                job={job} eta={eta} status={status}
                 onCall={callWorker} onChat={() => nav(`/orders/${id}/chat`)}
                 onLive={focusMap} onProfile={() => setShowProfile(true)}
               />
@@ -600,7 +602,7 @@ export default function OrderTrackingPage() {
 
           {/* BOOKING SUMMARY */}
           {status !== 'failed' && (
-            <BookingSummary order={order} deviceLabel={deviceLabel} onReceipt={openInvoice} />
+            <BookingSummary job={job} onReceipt={openInvoice} />
           )}
 
           {/* Completion proof photos */}

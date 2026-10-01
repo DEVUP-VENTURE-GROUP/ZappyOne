@@ -129,7 +129,7 @@ async function getMyBookings(req, res, next) {
     if (status) q.status = status;
     const limit = 15;
     const [bookings, total] = await Promise.all([
-      EventBooking.find(q).sort({ eventDate: 1 }).skip((page - 1) * limit).limit(limit)
+      EventBooking.find(q).select('-startCode').sort({ eventDate: 1 }).skip((page - 1) * limit).limit(limit)
         .populate('userId', 'name phone').populate('themeId', 'title coverImage').lean(),
       EventBooking.countDocuments(q),
     ]);
@@ -190,6 +190,7 @@ async function updateBookingStatus(req, res, next) {
     if (!allowed.includes(status)) {
       return res.status(409).json({ error: `Cannot transition from ${booking.status} to ${status}` });
     }
+    await require('../jobs/start-code').assertStartCode('event', booking, status, req.body.code);
 
     booking.status = status;
     booking.statusHistory.push({ status, meta: { updatedBy: 'partner' } });

@@ -43,7 +43,10 @@ partnerRouter.post('/themes',                 p.createTheme);
 partnerRouter.patch('/themes/:id',            p.updateTheme);
 partnerRouter.delete('/themes/:id',           p.deleteTheme);
 partnerRouter.get('/bookings',                p.getMyBookings);
-partnerRouter.patch('/bookings/:id/status',   p.updateBookingStatus);
+partnerRouter.patch('/bookings/:id/status',
+  require('../../middlewares/rateLimit').makeLimiter({ windowMs: 5 * 60_000, max: 10, prefix: 'evtcode' }),
+  validate(Joi.object({ status: Joi.string().required(), code: Joi.string().pattern(/^[0-9]{4,6}$/).allow('', null), })),
+  p.updateBookingStatus);
 partnerRouter.post('/bookings/:id/decline',   p.declineBooking);
 partnerRouter.get('/calendar',                p.getCalendar);
 partnerRouter.post('/calendar/block',         p.blockDate);

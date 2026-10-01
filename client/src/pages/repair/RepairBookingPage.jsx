@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
-  ArrowLeft, Loader2, Check, X, ShieldCheck, Clock, AlertTriangle,
-  FileText, MessageSquare, Wrench, Star, Download,
+  Loader2, Check, X, ShieldCheck, FileText, MessageSquare, Star, Download,
 } from 'lucide-react';
 import {
   useGetRepairBookingQuery, useRespondRepairQuoteMutation, useCancelRepairBookingMutation,
@@ -11,7 +10,9 @@ import toast from 'react-hot-toast';
 import { useRepairCancellationQuoteQuery, useRepairHandoverCodeQuery } from '@shared/services/api';
 import HandoverCodeCard from '../../components/common/HandoverCodeCard';
 import { useRateRepairBookingMutation } from '@shared/services/api';
-import LiveJobCard from '../../components/tracking/LiveJobCard';
+import JobTrackingPage from '../../tracking/JobTrackingPage';
+import { KINDS } from '../../tracking/kinds';
+import { useJobSOS } from '../../tracking/useJobSOS';
 import { formatPaise } from '@shared/utils/money';
 import { PayNowButton } from '@shared/components/common/PayMethodPicker';
 import { API_BASE } from '@shared/services/apiBase';
@@ -52,43 +53,7 @@ const STATUS_COPY = {
   FAILED: { label: 'Could not complete', tone: 'red', hint: '' },
 };
 
-const TONES = {
-  slate: 'bg-slate-100 text-slate-700',
-  blue: 'bg-blue-50 text-blue-700',
-  indigo: 'bg-zappy-50 text-zappy-700',
-  amber: 'bg-amber-50 text-amber-700',
-  emerald: 'bg-emerald-50 text-emerald-700',
-  red: 'bg-red-50 text-red-700',
-};
-
 const rupees = formatPaise;
-
-const WITH_TECHNICIAN = ['PROVIDER_ASSIGNED', 'WORKER_ACCEPTED', 'ON_THE_WAY', 'ARRIVED', 'DIAGNOSING', 'QUOTE_PENDING',
-  'CUSTOMER_APPROVAL_PENDING', 'APPROVED', 'REPAIR_IN_PROGRESS', 'AT_WORKSHOP', 'QA_PENDING',
-  'READY_FOR_RETURN', 'OUT_FOR_RETURN', 'COMPLETED'];
-const WORKING = ['REPAIR_IN_PROGRESS', 'AT_WORKSHOP', 'QA_PENDING', 'READY_FOR_RETURN', 'OUT_FOR_RETURN', 'COMPLETED'];
-
-/** Where the repair is right now: the shared live card, in repair words. */
-function LiveStatusCard({ booking, provider }) {
-  const s = booking.status;
-  return (
-    <LiveJobCard
-      kind="repair"
-      job={booking}
-      provider={provider}
-      jobsNoun="repairs"
-      label={STATUS_COPY[s]?.label || s}
-      hint={STATUS_COPY[s]?.hint}
-      active={!['COMPLETED', 'CANCELLED', 'REJECTED', 'EXPIRED', 'FAILED'].includes(s)}
-      steps={[
-        { label: 'Placed', reached: true },
-        { label: 'Technician', reached: WITH_TECHNICIAN.includes(s) },
-        { label: 'Working', reached: WORKING.includes(s) },
-        { label: 'Done', reached: s === 'COMPLETED' },
-      ]}
-    />
-  );
-}
 
 /** Quote review — itemised, with approve / reject / ask. */
 function QuoteCard({ quote, onDecided }) {
@@ -451,62 +416,69 @@ function RateRepair({ booking }) {
   );
 }
 
-/** Bookings still in flight get the live card; closed ones get a plain result. */
-const ACTIVE_FOR_CUSTOMER = [
-  'PENDING', 'CONFIRMED', 'PROVIDER_ASSIGNED', 'WORKER_ACCEPTED', 'ON_THE_WAY', 'ARRIVED',
-  'DIAGNOSING', 'QUOTE_PENDING', 'CUSTOMER_APPROVAL_PENDING', 'APPROVED', 'PICKUP_SCHEDULED',
-  'DEVICE_PICKED_UP', 'AT_WORKSHOP', 'REPAIR_IN_PROGRESS', 'QA_PENDING', 'READY_FOR_RETURN',
-  'OUT_FOR_RETURN',
-];
+/** How the money works for this booking, said plainly. */
+function PaymentNote({ booking }) {
+  const snap = booking.priceSnapshot || {};
+  return (
+    <div className="rounded-[24px] bg-white p-[18px] ring-1 ring-slate-100">
+      {booking.paymentStatus === 'paid' ? (
+        <p className="flex items-center gap-1.5 text-[13px] font-bold text-emerald-700"><ShieldCheck size={14} /> Paid{booking.cashCollectedAt ? ' in cash' : ''}</p>
+      ) : booking.paymentMethod === 'cash' ? (
+        <>
+          <p className="text-[14px] font-bold text-navy">Pay in cash when the job is done</p>
+          <p className="mt-0.5 text-[12.5px] leading-relaxed text-slate-500">
+            Hand {rupees(snap.totalPaise)} to the technician after they finish. Nothing is charged before that, and they cannot close the job without recording it.
+          </p>
+        </>
+      ) : snap.isEstimate && booking.status !== 'APPROVED' ? (
+        <p className="text-[13px] font-semibold text-slate-600">You pay online once you approve the technician's quote.</p>
+      ) : ['CANCELLED', 'REFUNDED', 'FAILED', 'EXPIRED', 'REJECTED'].includes(booking.status) ? (
+        <p className="text-[13px] font-semibold text-slate-600">Nothing to pay</p>
+      ) : (
+        <>
+          <p className="text-[14px] font-bold text-navy">Online payment pending</p>
+          <p className="mb-2 mt-0.5 text-[12.5px] leading-relaxed text-slate-500">If online payment is down, pay the technician in cash instead. They record it.</p>
+          <PayNowButton bookingSource="repair" bookingId={booking._id} amountLabel={rupees(snap.totalPaise)} label="Repair booking" />
+        </>
+      )}
+    </div>
+  );
+}
 
+/**
+ * A repair, tracked live on the shared page (tracking/JobTrackingPage).
+ * Repair-specific here: the handover codes, a quote to approve, the service
+ * report, the rating with a comment, the quote history and how to pay.
+ */
 export default function RepairBookingPage() {
   const { id } = useParams();
   const nav = useNavigate();
-  const { data, isLoading, refetch } = useGetRepairBookingQuery(id, { pollingInterval: 20000 });
+  const { data, isLoading, refetch } = useGetRepairBookingQuery(id, { pollingInterval: 30000 });
   const [cancel, { isLoading: cancelling }] = useCancelRepairBookingMutation();
   const [confirmingCancel, setConfirmingCancel] = useState(false);
+  const sos = useJobSOS(id);
 
-  if (isLoading) {
-    return <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center">
-      <Loader2 size={26} className="animate-spin text-zappy-500" />
-    </div>;
-  }
-
+  if (isLoading) return <div className="flex min-h-screen items-center justify-center"><Loader2 size={26} className="animate-spin text-zappy-500" /></div>;
   const booking = data?.booking;
   if (!booking) {
-    return <div className="min-h-screen bg-[#F9FAFB] flex flex-col items-center justify-center gap-3">
-      <p className="font-bold text-slate-700">Booking not found</p>
-      <button onClick={() => nav('/repair')} className="btn-primary px-6">Book a repair</button>
-    </div>;
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-3">
+        <p className="font-bold text-slate-700">Booking not found</p>
+        <button type="button" onClick={() => nav('/repair')} className="btn-primary px-6">Book a repair</button>
+      </div>
+    );
   }
 
-  const meta = STATUS_COPY[booking.status] || { label: booking.status, tone: 'slate', hint: '' };
   const quotes = data?.quotes || [];
   const pendingQuote = quotes.find((q) => q.status === 'sent' || q.status === 'clarification_requested');
-  const snap = booking.priceSnapshot || {};
-  /*
-   * The SERVER decides whether this can still be cancelled.
-   *
-   * This used to be a hardcoded list of statuses here, and it had drifted from
-   * the server's: DIAGNOSING, QUOTE_PENDING and PICKUP_SCHEDULED were missing,
-   * so a customer whose pickup was scheduled saw no cancel button while the
-   * API would have accepted the request without complaint. They had no way to
-   * ask for something they were entitled to.
-   *
-   * The fee and the policy are the server's too — CancelSheet fetches the real
-   * quote before anyone confirms.
-   */
-  const canCancel = !!data?.canCancel;
+  const job = KINDS.repair.toJob(data, { statusLabel: STATUS_COPY[booking.status]?.label });
 
   async function doCancel() {
     try {
       const res = await cancel({ id, reason: 'Cancelled by customer' }).unwrap();
       setConfirmingCancel(false);
-      // Say what it actually cost, rather than a bare "cancelled" — the
-      // customer has just agreed to a number and deserves confirmation of it.
-      toast.success(res?.cancellation?.feePaise > 0
-        ? `Cancelled — ${rupees(res.cancellation.feePaise)} fee applied`
-        : 'Booking cancelled');
+      // Say what it actually cost: the customer has just agreed to a number.
+      toast.success(res?.cancellation?.feePaise > 0 ? `Cancelled. ${rupees(res.cancellation.feePaise)} fee applied` : 'Booking cancelled');
       refetch();
     } catch (err) {
       toast.error(err?.data?.error || 'Could not cancel');
@@ -514,168 +486,38 @@ export default function RepairBookingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F9FAFB] pb-10">
-      {confirmingCancel && (
-        <CancelSheet
-          bookingId={id}
-          busy={cancelling}
-          onClose={() => setConfirmingCancel(false)}
-          onConfirm={doCancel}
-        />
-      )}
-
-      <header className="page-header"><div className="page-header-inner">
-        <button onClick={() => nav('/repair/bookings')} className="back-btn"><ArrowLeft size={18} strokeWidth={2.5} /></button>
-        <div>
-          <p className="t-label">Repair</p>
-          <p className="font-semibold text-[#0F172A]">{booking.reference}</p>
-        </div>
-      </div></header>
-
-      <div className="max-w-lg lg:max-w-2xl mx-auto px-4 pt-4 space-y-3">
-        {/* Status, elapsed time, live map and stage copy — all in one card. */}
-        <LiveStatusCard booking={booking} provider={data?.provider} />
-
-        {/* Directly under the status, where the customer is already looking. */}
-        <HandoverCode booking={booking} />
-
-        {/* Proof of the work, before being asked to rate it. */}
-        {booking.completionPhotos?.length > 0 && (
-          <div className="card">
-            <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Photos of the work</p>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {booking.completionPhotos.map((src, i) => (
-                <a key={i} href={src} target="_blank" rel="noreferrer" className="h-20 w-20 overflow-hidden rounded-xl bg-slate-100">
-                  <img src={src} alt="" className="h-full w-full object-cover" />
-                </a>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <ServiceReport booking={booking} />
-        <RateRepair booking={booking} />
-
-        {/*
-          * No tip card here yet, deliberately.
-          *
-          * TipCard posts to `POST /orders/:id/tip`, which has no server handler
-          * — the button is dead on the order flow too. Mounting it on repairs
-          * would move a broken feature rather than add a working one, so it
-          * waits for the endpoint.
-          */}
-
-        {/* Closed bookings get no live card, so the outcome is stated here. */}
-        {!ACTIVE_FOR_CUSTOMER.includes(booking.status) && (
-          <div className="card">
-            <span className={`inline-flex px-2.5 py-1 rounded-full text-[11px] font-bold ${TONES[meta.tone]}`}>
-              {meta.label}
-            </span>
-            {meta.hint && <p className="text-xs text-slate-500 mt-2">{meta.hint}</p>}
-          </div>
-        )}
-
-        {pendingQuote && <QuoteCard quote={pendingQuote} onDecided={refetch} />}
-
-        <div className="card space-y-2.5">
-          <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Details</p>
-          {[
-            ['Device', `${booking.brandCode} ${booking.modelCode}`],
-            ['Repair', booking.repairCode?.replace(/_/g, ' ') || 'Diagnosis first'],
-            ['Service', (booking.serviceMode || '').replace(/_/g, ' ')],
-            ['Address', booking.location?.address],
-          ].map(([k, v]) => (
-            <div key={k} className="flex items-start justify-between gap-3">
-              <span className="text-xs text-slate-500">{k}</span>
-              <span className="text-sm font-semibold text-[#0F172A] text-right capitalize">{v || '—'}</span>
-            </div>
-          ))}
-        </div>
-
-        <div className="card">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-bold text-[#0F172A]">
-              {snap.isEstimate ? 'Estimated total' : 'Total'}
-            </span>
-            <span className="text-2xl font-black text-[#0F172A]">{rupees(snap.totalPaise)}</span>
-          </div>
-          {snap.isEstimate && (
-            <p className="flex items-start gap-1.5 text-[11px] text-amber-700 mt-2">
-              <AlertTriangle size={12} className="shrink-0 mt-0.5" />
-              This is an estimate. The final price is confirmed by a quote you approve.
-            </p>
-          )}
-          {snap.warrantyDays > 0 && (
-            <p className="flex items-center gap-1.5 text-[11px] text-emerald-700 font-semibold mt-2">
-              <ShieldCheck size={12} /> {snap.warrantyDays}-day warranty
-            </p>
-          )}
-
-          {/*
-            How this gets paid.
-            Cash is the norm for repair work here, so the screen says plainly
-            what to hand over and when — a customer who does not know whether
-            to keep notes ready is a customer the technician argues with on the
-            doorstep.
-          */}
-          <div className="mt-3 rounded-xl bg-slate-50 p-3">
-            {booking.paymentStatus === 'paid' ? (
-              <p className="flex items-center gap-1.5 text-[12px] font-bold text-emerald-700">
-                <ShieldCheck size={13} /> Paid
-                {booking.cashCollectedAt ? ' in cash' : ''}
-              </p>
-            ) : booking.paymentMethod === 'cash' ? (
-              <>
-                <p className="text-[12px] font-bold text-[#0F172A]">Pay in cash when the job is done</p>
-                <p className="mt-0.5 text-[11px] leading-relaxed text-slate-500">
-                  Hand {rupees(snap.totalPaise)} to the technician after they finish. Nothing is
-                  charged before that, and they cannot close the job without recording it.
-                </p>
-              </>
-            ) : snap.isEstimate && booking.status !== 'APPROVED' ? (
-              <p className="text-[12px] font-semibold text-slate-600">
-                You pay online once you approve the technician's quote.
-              </p>
-            ) : ['CANCELLED', 'REFUNDED', 'FAILED', 'EXPIRED', 'REJECTED'].includes(booking.status) ? (
-              <p className="text-[12px] font-semibold text-slate-600">Nothing to pay</p>
-            ) : (
-              <>
-                <p className="text-[12px] font-bold text-[#0F172A]">Online payment pending</p>
-                <p className="mt-0.5 mb-2 text-[11px] leading-relaxed text-slate-500">
-                  If online payment is down, pay the technician in cash instead — they record it.
-                </p>
-                <PayNowButton
-                  bookingSource="repair"
-                  bookingId={booking._id}
-                  amountLabel={rupees(snap.totalPaise)}
-                  label="Repair booking"
-                />
-              </>
+    <>
+      {confirmingCancel && <CancelSheet bookingId={id} busy={cancelling} onClose={() => setConfirmingCancel(false)} onConfirm={doCancel} />}
+      <JobTrackingPage
+        job={job}
+        onBack={() => nav('/orders')}
+        onSOS={sos}
+        // The server decides whether it can still be cancelled; the sheet quotes the fee first.
+        cancel={data?.canCancel ? { open: () => setConfirmingCancel(true) } : null}
+        extras={(
+          <>
+            <HandoverCode booking={booking} />
+            {STATUS_COPY[booking.status]?.hint && (
+              <p className="rounded-2xl bg-white px-4 py-3 text-[13px] leading-relaxed text-slate-600 ring-1 ring-slate-100">{STATUS_COPY[booking.status].hint}</p>
             )}
-          </div>
-        </div>
-
-        {quotes.length > 0 && (
-          <div className="card">
-            <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Quote history</p>
-            <div className="space-y-1.5">
-              {quotes.map((q) => (
-                <div key={q._id} className="flex items-center justify-between text-xs">
-                  <span className="text-slate-500">Revision {q.revision} · {q.status.replace(/_/g, ' ')}</span>
-                  <span className="font-semibold text-[#0F172A]">{rupees(q.totalPaise)}</span>
-                </div>
-              ))}
-            </div>
-          </div>
+            {pendingQuote && <QuoteCard quote={pendingQuote} onDecided={refetch} />}
+            <ServiceReport booking={booking} />
+            <RateRepair booking={booking} />
+            <PaymentNote booking={booking} />
+            {quotes.length > 0 && (
+              <div className="rounded-[24px] bg-white p-[18px] ring-1 ring-slate-100">
+                <p className="mb-2 text-[14px] font-bold text-navy">Quote history</p>
+                {quotes.map((q) => (
+                  <div key={q._id} className="flex items-center justify-between py-1 text-[12.5px]">
+                    <span className="text-slate-500">Revision {q.revision} · {q.status.replace(/_/g, ' ')}</span>
+                    <span className="font-semibold tabular-nums text-navy">{rupees(q.totalPaise)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
         )}
-
-        {canCancel && (
-          <button onClick={() => setConfirmingCancel(true)} disabled={cancelling}
-            className="w-full text-sm font-semibold text-red-600 py-3">
-            {cancelling ? 'Cancelling…' : 'Cancel booking'}
-          </button>
-        )}
-      </div>
-    </div>
+      />
+    </>
   );
 }

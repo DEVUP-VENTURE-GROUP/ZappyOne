@@ -23,6 +23,7 @@ import {
 import { logout } from '@shared/modules/auth/authSlice';
 import LiveSelfieCapture from '@shared/components/kyc/LiveSelfieCapture';
 import toast from 'react-hot-toast';
+import { useStartCodeGate } from '@shared/components/worker/StartCodePrompt';
 
 /* Status pill */
 const PILL = {
@@ -832,6 +833,8 @@ function BookingsTab() {
   const { data, isLoading, refetch } = usePartnerBookingsQuery({ status: statusFilter || undefined, page });
   const [updateStatus] = useUpdatePartnerBookingStatusMutation();
   const [declineBooking] = useDeclineEventBookingMutation();
+  // Starting setup at the venue needs the host's code (server: jobs/start-code).
+  const gate = useStartCodeGate();
 
   const NEXT = {
     confirmed: { label: 'On My Way', next: 'partner_assigned', color: 'bg-blue-500' },
@@ -841,7 +844,9 @@ function BookingsTab() {
   const FILTERS = ['', 'confirmed', 'partner_assigned', 'in_progress', 'completed', 'cancelled'];
 
   async function handleStatus(id, next) {
-    try { await updateStatus({ id, status: next }).unwrap(); toast.success('Status updated'); refetch(); }
+    try {
+      await gate.run((code) => updateStatus({ id, status: next, code }).unwrap().then((r) => { toast.success('Status updated'); refetch(); return r; }));
+    }
     catch (e) { toast.error(e?.data?.error || 'Failed'); }
   }
   async function handleDecline(id) {
@@ -853,6 +858,7 @@ function BookingsTab() {
 
   return (
     <div className="space-y-4">
+      {gate.prompt}
       <div className="flex gap-2 overflow-x-auto scrollbar-none -mx-1 px-1 pb-1">
         {FILTERS.map(s => (
           <button key={s} onClick={() => { setStatusFilter(s); setPage(1); }}

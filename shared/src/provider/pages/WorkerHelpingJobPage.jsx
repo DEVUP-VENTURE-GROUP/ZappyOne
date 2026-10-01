@@ -8,6 +8,7 @@ import ProofPhotos, { readyKeys } from '../../components/common/ProofPhotos';
 import ImageUploadField from '../../components/common/ImageUploadField';
 import CollectPaymentCard from '../../components/common/CollectPaymentCard';
 import TripSharingBanner from '../../components/worker/TripSharingBanner';
+import { useStartCodeGate } from '../../components/worker/StartCodePrompt';
 import SOSButton from '../../components/worker/SOSButton';
 import { usePublishTripLocation, tripOf } from '../../hooks/useLiveTrip';
 import {
@@ -45,6 +46,8 @@ export default function WorkerHelpingJobPage() {
   const [complete, { isLoading: completing }] = useCompleteHelpingTaskMutation();
   const [collectCash, { isLoading: collecting }] = useCollectHelpingCashMutation();
   const [arrivalPhotos, setArrivalPhotos] = useState([]);
+  // Collecting a return, or handing over shopping, needs the customer's code (server: jobs/start-code).
+  const gate = useStartCodeGate();
   // Shared on the way out and on the way back; off while at the shop or the door.
   const trip = tripOf('helping', data?.task);
   const sharing = usePublishTripLocation(id, Boolean(trip));
@@ -66,8 +69,7 @@ export default function WorkerHelpingJobPage() {
           readyKeys(arrivalPhotos).map((key) => addProof({ id: task._id, kind: 'arrival', key }).unwrap()),
         );
       }
-      await advance({ id: task._id, status }).unwrap();
-      refetch();
+      await gate.run((code) => advance({ id: task._id, status, code }).unwrap().then((r) => { refetch(); return r; }));
     } catch (err) {
       toast.error(err?.data?.error || 'Could not update the task');
     }
@@ -75,9 +77,11 @@ export default function WorkerHelpingJobPage() {
 
   async function finish() {
     try {
-      await complete(task._id).unwrap();
-      toast.success('Task completed and settled');
-      nav('/worker/work');
+      await gate.run((code) => complete({ id: task._id, code }).unwrap().then((r) => {
+        toast.success('Task completed and settled');
+        nav('/worker/work');
+        return r;
+      }));
     } catch (err) {
       toast.error(err?.data?.error || 'Could not complete the task');
     }
@@ -100,6 +104,7 @@ export default function WorkerHelpingJobPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
+      {gate.prompt}
       <div className="sticky top-0 z-10 bg-white border-b border-slate-100 px-4 py-3 flex items-center gap-3">
         <button type="button" onClick={() => nav(-1)} className="p-1 -ml-1"><ArrowLeft size={20} /></button>
         <div className="min-w-0">

@@ -1,42 +1,50 @@
-/* Shared constants + utils for the redesigned tracking screen */
+/* Shared constants + utils for the tracking screen — every job kind uses these. */
 
-// Service-agnostic lifecycle steps.
-// key must match `order.status` values from the server (see order.model.js).
-export const STEPS = [
-  { key: 'searching',   label: 'Finding your technician', desc: 'Matching you with the best nearby pro' },
-  { key: 'assigned',    label: 'Technician assigned',     desc: 'A pro has accepted your request' },
-  { key: 'on_the_way',  label: 'On the way to you',       desc: 'Your technician is heading over' },
-  { key: 'arrived',     label: 'Arrived at your location',desc: 'Your technician has reached you' },
-  { key: 'in_progress', label: 'Service in progress',     desc: 'Your service is being completed' },
-  { key: 'completed',   label: 'Service completed',       desc: 'All done — thanks for using Zappy' },
-];
+/**
+ * The lifecycle every kind maps onto (see tracking/kinds.js): each kind's own
+ * statuses collapse into these seven stages, so one timeline, one header pill
+ * and one activity feed serve repair, pet care, helping and past orders alike.
+ * `noun` is who does the work ("technician", "pet pro", "helper").
+ */
+export function stepsFor(noun = 'pro') {
+  const Noun = noun[0].toUpperCase() + noun.slice(1);
+  return [
+    { key: 'searching',   label: `Finding your ${noun}`,     desc: `Matching you with a verified ${noun} nearby` },
+    { key: 'assigned',    label: `${Noun} confirmed`,        desc: `A ${noun} has accepted your booking` },
+    { key: 'on_the_way',  label: 'On the way to you',        desc: `Your ${noun} is heading over` },
+    { key: 'arrived',     label: 'Arrived',                  desc: `Your ${noun} has reached you` },
+    { key: 'in_progress', label: 'Work in progress',         desc: 'Your service is being done' },
+    { key: 'completed',   label: 'Completed',                desc: 'All done. Thanks for using ZappyOne' },
+  ];
+}
+
+/** Kept for the order screen's existing imports. */
+export const STEPS = stepsFor('technician');
 
 // Live-status pill copy — { label, live: is-dot-pulsing }
 export const STATUS_PILL = {
-  created:     { label: 'Finding worker', live: true },
-  searching:   { label: 'Finding worker', live: true },
-  assigned:    { label: 'Worker assigned',live: true },
-  on_the_way:  { label: 'On the way',     live: true },
-  arrived:     { label: 'Arrived',        live: true },
-  in_progress: { label: 'In service',     live: true },
-  completed:   { label: 'Completed',      live: false },
-  cancelled:   { label: 'Cancelled',      live: false },
-  failed:      { label: 'No workers',     live: false },
+  searching:   { label: 'Finding a pro', live: true },
+  assigned:    { label: 'Confirmed',     live: true },
+  on_the_way:  { label: 'On the way',    live: true },
+  arrived:     { label: 'Arrived',       live: true },
+  in_progress: { label: 'In progress',   live: true },
+  completed:   { label: 'Completed',     live: false },
+  cancelled:   { label: 'Cancelled',     live: false },
+  failed:      { label: 'Not completed', live: false },
 };
 
-// Grounded, service-agnostic activity-feed copy per status.
-// Returns null if this status shouldn't create a feed entry.
-export function feedCopy(statusKey, firstName) {
-  switch (statusKey) {
-    case 'created':     return 'Order placed — searching for a technician';
-    case 'searching':   return 'Searching nearby technicians…';
-    case 'assigned':    return `${firstName || 'A technician'} accepted your request`;
-    case 'on_the_way':  return `${firstName || 'Your technician'} started heading to you`;
-    case 'arrived':     return `${firstName || 'Your technician'} arrived at your location`;
-    case 'in_progress': return 'Service started';
-    case 'completed':   return 'Service completed';
-    case 'cancelled':   return 'Order cancelled';
-    case 'failed':      return 'No technicians available right now';
+/** Activity-feed copy per stage; null when a stage shouldn't create an entry. */
+export function feedCopy(stage, firstName, noun = 'pro') {
+  const who = firstName || `Your ${noun}`;
+  switch (stage) {
+    case 'searching':   return `Booking placed. Finding a ${noun}`;
+    case 'assigned':    return `${firstName || `A ${noun}`} accepted your booking`;
+    case 'on_the_way':  return `${who} started heading to you`;
+    case 'arrived':     return `${who} arrived`;
+    case 'in_progress': return 'Work started';
+    case 'completed':   return 'Completed';
+    case 'cancelled':   return 'Booking cancelled';
+    case 'failed':      return 'Could not be completed';
     default:            return null;
   }
 }
@@ -49,3 +57,4 @@ export const fmtTime = (d) => {
 export const firstNameOf = (n) => (n ? String(n).trim().split(/\s+/)[0] : '');
 export const shortId = (id) => (id ? String(id).slice(-6).toUpperCase() : '');
 export const money = (v) => `₹${Number(v).toLocaleString('en-IN')}`;
+export const rupeesOf = (paise) => `₹${Math.round((Number(paise) || 0) / 100).toLocaleString('en-IN')}`;

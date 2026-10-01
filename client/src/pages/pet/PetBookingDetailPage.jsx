@@ -1,199 +1,73 @@
-import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Loader2, MapPin, Star, Image as ImageIcon } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import {
-  useGetPetBookingQuery, useCancelPetBookingMutation, useRatePetBookingMutation,
-} from '@shared/services/api';
+import { useGetPetBookingQuery, useCancelPetBookingMutation, useRatePetBookingMutation } from '@shared/services/api';
 import { formatPaise } from '@shared/utils/money';
 import { PayNowButton } from '@shared/components/common/PayMethodPicker';
-import LiveJobCard from '../../components/tracking/LiveJobCard';
+import JobTrackingPage from '../../tracking/JobTrackingPage';
+import { KINDS } from '../../tracking/kinds';
+import { useJobSOS } from '../../tracking/useJobSOS';
 
-// Statuses in which there is nothing left to pay online.
-const NOTHING_TO_PAY = ['CANCELLED', 'REFUNDED', 'FAILED', 'EXPIRED', 'REJECTED', 'PRICE_PENDING', 'AWAITING_CUSTOMER_APPROVAL'];
+/**
+ * A pet booking, tracked live on the shared page (tracking/JobTrackingPage).
+ * Pet-specific here: the words for each stage, the start code at the door,
+ * and paying online.
+ */
 
 const STATUS_LABEL = {
-  REQUESTED: 'Requested', BOOKED: 'Booked', PROVIDER_SEARCHING: 'Finding a provider',
-  PROVIDER_ASSIGNED: 'Provider assigned', PROVIDER_ACCEPTED: 'Provider accepted',
-  PROVIDER_EN_ROUTE: 'On the way', PROVIDER_ARRIVED: 'Arrived', PET_HANDOVER: 'Pet handover',
-  SERVICE_STARTED: 'In progress', SERVICE_COMPLETED: 'Completed', CUSTOMER_CONFIRMATION: 'Completed',
+  REQUESTED: 'Requested', PRICE_PENDING: 'Getting your price', AWAITING_CUSTOMER_APPROVAL: 'Your approval needed',
+  BOOKED: 'Booked', PROVIDER_SEARCHING: 'Finding a pet pro', PROVIDER_ASSIGNED: 'Waiting for your pet pro to accept',
+  PROVIDER_ACCEPTED: 'Pet pro confirmed', PROVIDER_EN_ROUTE: 'On the way', PROVIDER_ARRIVED: 'Arrived', PET_HANDOVER: 'Pet handed over',
+  SERVICE_STARTED: 'In progress', SERVICE_PAUSED: 'Paused', SERVICE_COMPLETED: 'Completed', CUSTOMER_CONFIRMATION: 'Completed',
   PAYMENT_PENDING: 'Completed · payment due', PAYMENT_COMPLETED: 'Completed', CANCELLED: 'Cancelled', DISPUTED: 'Under review', CLOSED: 'Closed',
 };
-
-/** What each live stage means, for the owner. */
-function hintFor(b) {
-  switch (b.status) {
-    case 'PROVIDER_SEARCHING': return 'Matching you with a verified pet pro nearby.';
-    case 'PROVIDER_ASSIGNED': return 'Waiting for them to accept.';
-    case 'PROVIDER_ACCEPTED': return 'They will set off in time for your slot.';
-    case 'PROVIDER_EN_ROUTE': return 'Follow them on the map as they come to you.';
-    case 'PROVIDER_ARRIVED': return 'They are at your door.';
-    case 'PET_HANDOVER': return 'Hand over your pet and anything they need.';
-    case 'SERVICE_STARTED': return b.serviceMode === 'transport' ? 'Your pet is on the way. Follow the ride on the map.' : 'Your pet is in good hands.';
-    case 'SERVICE_PAUSED': return 'A short pause. They will pick up again shortly.';
-    default: return null;
-  }
-}
-
-const WITH_PRO = ['PROVIDER_ACCEPTED', 'PROVIDER_EN_ROUTE', 'PROVIDER_ARRIVED', 'PET_HANDOVER', 'SERVICE_STARTED', 'SERVICE_PAUSED'];
-const IN_CARE = ['SERVICE_STARTED', 'SERVICE_PAUSED'];
-const OVER = ['SERVICE_COMPLETED', 'CUSTOMER_CONFIRMATION', 'PAYMENT_PENDING', 'PAYMENT_COMPLETED', 'CANCELLED', 'DISPUTED', 'REFUNDED', 'CLOSED'];
-
-function Shell({ children }) { return <div className="mx-auto max-w-lg space-y-3 px-4 py-4 pb-10 md:max-w-2xl">{children}</div>; }
+const NOTHING_TO_PAY = ['CANCELLED', 'REFUNDED', 'FAILED', 'EXPIRED', 'REJECTED', 'PRICE_PENDING', 'AWAITING_CUSTOMER_APPROVAL'];
 
 export default function PetBookingDetailPage() {
   const { id } = useParams();
   const nav = useNavigate();
-  const { data, isLoading, refetch } = useGetPetBookingQuery(id, { pollingInterval: 15000 });
+  const { data, isLoading, refetch } = useGetPetBookingQuery(id, { pollingInterval: 30000 });
   const [cancel] = useCancelPetBookingMutation();
+  const [rate] = useRatePetBookingMutation();
+  const sos = useJobSOS(id);
 
-  if (isLoading) return <div className="flex justify-center py-24"><Loader2 size={24} className="animate-spin text-zappy-400" /></div>;
-  if (!data?.booking) return <div className="text-center py-24 text-slate-400">Booking not found</div>;
+  if (isLoading) return <div className="flex justify-center py-24"><Loader2 size={24} className="animate-spin text-zappy-500" /></div>;
+  if (!data?.booking) return <p className="py-24 text-center text-slate-500">Booking not found</p>;
 
-  const { booking, canCancel, provider } = data;
-  const live = !OVER.includes(booking.status);
-
-  async function doCancel() {
-    try {
-      await cancel({ id: booking._id, reason: 'Changed my mind' }).unwrap();
-      toast.success('Cancelled');
-      refetch();
-    } catch (err) {
-      toast.error(err?.data?.error || 'Could not cancel');
-    }
-  }
+  const b = data.booking;
+  const job = KINDS.pet.toJob(data, { statusLabel: STATUS_LABEL[b.status] });
+  const payOnline = b.paymentMethod === 'online' && b.paymentStatus !== 'paid' && !NOTHING_TO_PAY.includes(b.status);
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="sticky top-0 z-10 bg-white border-b border-slate-100 px-4 py-3 flex items-center gap-3">
-        <button type="button" onClick={() => nav(-1)} className="p-1 -ml-1"><ArrowLeft size={20} /></button>
-        <div className="min-w-0">
-          <h1 className="text-lg font-black text-[#0F172A]">{booking.reference}</h1>
-          <p className="text-xs text-slate-400 capitalize">{booking.categoryCode.replace(/_/g, ' ')}</p>
+    <JobTrackingPage
+      job={job}
+      onBack={() => nav('/orders')}
+      // The owner reads this out when the pet pro is at the door (not when they bring the pet in).
+      startCode={b.serviceMode !== 'provider_location' ? b.handoverOtp : null}
+      onSOS={sos}
+      cancel={data.canCancel ? {
+        note: 'Cancelling before your pet pro sets off is free. Later, the cancellation policy for this service applies.',
+        run: async () => {
+          try {
+            await cancel({ id: b._id, reason: 'Changed my mind' }).unwrap();
+            toast.success('Booking cancelled');
+            refetch();
+          } catch (err) {
+            toast.error(err?.data?.error || 'Could not cancel');
+          }
+        },
+      } : null}
+      onRate={!b.ratedAt ? async (rating) => {
+        try { await rate({ id: b._id, rating }).unwrap(); toast.success('Thanks for rating'); refetch(); }
+        catch (err) { toast.error(err?.data?.error || 'Could not save your rating'); }
+      } : undefined}
+      extras={payOnline ? (
+        <div className="rounded-[24px] bg-white p-[18px] ring-1 ring-slate-100">
+          <p className="text-[14px] font-bold text-navy">Pay online</p>
+          <p className="mt-0.5 text-[12.5px] text-slate-500">{formatPaise(b.pricing?.totalPaise)} for this booking</p>
+          <PayNowButton bookingSource="pet" bookingId={b._id} amountLabel={formatPaise(b.pricing?.totalPaise)} label="Pet care booking" className="mt-3" />
         </div>
-      </div>
-
-      <Shell>
-        {live ? (
-          <LiveJobCard
-            kind="pet"
-            job={booking}
-            provider={provider}
-            jobsNoun="bookings"
-            label={STATUS_LABEL[booking.status] || booking.status}
-            hint={hintFor(booking)}
-            steps={[
-              { label: 'Booked', reached: true },
-              { label: 'Pro', reached: WITH_PRO.includes(booking.status) },
-              { label: 'In care', reached: IN_CARE.includes(booking.status) },
-              { label: 'Done', reached: false },
-            ]}
-          />
-        ) : (
-          <div className="rounded-2xl bg-white p-4 ring-1 ring-slate-200/80">
-            <p className="text-[12px] font-semibold text-slate-500">Status</p>
-            <p className="mt-0.5 text-[17px] font-bold text-navy">{STATUS_LABEL[booking.status] || booking.status}</p>
-            {provider && <p className="mt-1 text-[13px] text-slate-500">with {provider.name}</p>}
-          </div>
-        )}
-
-        <div className="rounded-2xl border-2 border-slate-200 bg-white p-4 space-y-2">
-          <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Pets</p>
-          {booking.pets.map((p) => (
-            <div key={p._id} className="flex items-center justify-between text-sm">
-              <span className="font-bold text-[#0F172A]">{p.snapshot?.name}</span>
-              <span className="text-slate-500">{formatPaise(p.linePaise)}</span>
-            </div>
-          ))}
-        </div>
-
-        {booking.serviceLocation?.address && (
-          <div className="rounded-2xl border-2 border-slate-200 bg-white p-4 flex items-start gap-2.5 text-sm">
-            <MapPin size={15} className="text-zappy-500 mt-0.5 shrink-0" />
-            <span>{booking.serviceLocation.address}</span>
-          </div>
-        )}
-
-        <div className="rounded-2xl border-2 border-slate-200 bg-white p-4 space-y-1 text-sm">
-          <p className="text-xs font-bold uppercase tracking-wide text-slate-500 mb-1">Price</p>
-          <div className="flex justify-between"><span>Services</span><span>{formatPaise(booking.pricing.servicesPaise)}</span></div>
-          {booking.pricing.addonsPaise > 0 && <div className="flex justify-between"><span>Add-ons</span><span>{formatPaise(booking.pricing.addonsPaise)}</span></div>}
-          {booking.pricing.travelPaise > 0 && <div className="flex justify-between"><span>Travel</span><span>{formatPaise(booking.pricing.travelPaise)}</span></div>}
-          {booking.pricing.stayDiscountPaise > 0 && <div className="flex justify-between text-emerald-600"><span>Discount</span><span>−{formatPaise(booking.pricing.stayDiscountPaise)}</span></div>}
-          <div className="flex justify-between font-black pt-1 border-t border-slate-100"><span>Total</span><span>{formatPaise(booking.pricing.totalPaise)}</span></div>
-          <p className="pt-1 text-xs text-slate-500">
-            {booking.paymentStatus === 'paid'
-              ? 'Paid'
-              : booking.paymentMethod === 'online' ? 'Online payment pending' : 'Pay the provider in cash after the service'}
-          </p>
-          {booking.paymentMethod === 'online' && booking.paymentStatus !== 'paid' && !NOTHING_TO_PAY.includes(booking.status) && (
-            <PayNowButton
-              bookingSource="pet"
-              bookingId={booking._id}
-              amountLabel={formatPaise(booking.pricing.totalPaise)}
-              label="Pet care booking"
-              className="mt-2"
-            />
-          )}
-        </div>
-
-        {!!(booking.proofs || []).length && (
-          <div className="rounded-2xl border-2 border-slate-200 bg-white p-4 space-y-2">
-            <p className="text-xs font-bold uppercase tracking-wide text-slate-500 flex items-center gap-1.5"><ImageIcon size={13} /> Photos</p>
-            <div className="grid grid-cols-3 gap-2">
-              {booking.proofs.filter((p) => p.url).map((p, i) => (
-                <img key={i} src={p.url} alt={p.kind} className="rounded-lg aspect-square object-cover" />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {['SERVICE_COMPLETED', 'CUSTOMER_CONFIRMATION', 'PAYMENT_PENDING', 'PAYMENT_COMPLETED', 'CLOSED'].includes(booking.status) && !booking.ratedAt && (
-          <RateCard bookingId={booking._id} onDone={refetch} />
-        )}
-        {booking.ratedAt && (
-          <div className="rounded-2xl border-2 border-slate-200 bg-white p-4">
-            <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Your rating</p>
-            <div className="flex gap-1 mt-1">
-              {[1, 2, 3, 4, 5].map((i) => <Star key={i} size={16} className={i <= booking.rating ? 'fill-amber-400 text-amber-400' : 'text-slate-200'} />)}
-            </div>
-          </div>
-        )}
-
-        {canCancel && (
-          <button type="button" onClick={doCancel} className="w-full rounded-2xl border-2 border-red-200 text-red-600 font-bold py-3">Cancel booking</button>
-        )}
-      </Shell>
-    </div>
-  );
-}
-
-function RateCard({ bookingId, onDone }) {
-  const [stars, setStars] = useState(0);
-  const [rate, { isLoading }] = useRatePetBookingMutation();
-
-  async function submit() {
-    if (!stars) { toast.error('Pick a star rating'); return; }
-    try {
-      await rate({ id: bookingId, rating: stars }).unwrap();
-      toast.success('Thanks!');
-      onDone();
-    } catch (err) {
-      toast.error(err?.data?.error || 'Could not submit');
-    }
-  }
-
-  return (
-    <div className="rounded-2xl border-2 border-slate-200 bg-white p-4 space-y-2.5">
-      <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Rate the provider</p>
-      <div className="flex gap-1.5">
-        {[1, 2, 3, 4, 5].map((i) => (
-          <button key={i} type="button" onClick={() => setStars(i)}>
-            <Star size={26} className={i <= stars ? 'fill-amber-400 text-amber-400' : 'text-slate-200'} />
-          </button>
-        ))}
-      </div>
-      <button type="button" onClick={submit} disabled={isLoading} className="w-full rounded-xl bg-[#0F172A] text-white font-bold py-2.5 disabled:opacity-50">Submit</button>
-    </div>
+      ) : null}
+    />
   );
 }

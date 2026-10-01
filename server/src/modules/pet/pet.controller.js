@@ -25,6 +25,7 @@ const { providerCard } = require('../worker/provider-card');
 const { approvedLines, assertApproved, lineOf } = require('../onboarding/eligibility');
 const { announce } = require('../jobs/job-events');
 const { KINDS } = require('../jobs/kinds');
+const { assertStartCode } = require('../jobs/start-code');
 const { haversineKm } = require('../../core/geo/distance');
 
 function mayView(booking, auth) {
@@ -426,6 +427,8 @@ async function advanceStatus(req, res, next) {
       return res.status(409).json({ error: 'That status is set by the system, not the provider', code: 'NOT_PROVIDER_STATUS' });
     }
 
+    // The owner's start code, where this kind asks for one (jobs/kinds.js).
+    await assertStartCode('pet', booking, req.body.status, req.body.code);
     booking.transitionTo(req.body.status, { by: req.auth.sub, byRole: req.auth.role, note: req.body.note || '' });
     await booking.save();
     res.json({ booking: booking.toObject() });

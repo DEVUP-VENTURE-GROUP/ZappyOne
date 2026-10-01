@@ -15,6 +15,7 @@ const Worker = require('../worker/worker.model');
 const { providerCard } = require('../worker/provider-card');
 const { approvedLines, assertApproved, lineOf, HELPING_LINE } = require('../onboarding/eligibility');
 const { announce } = require('../jobs/job-events');
+const { assertStartCode } = require('../jobs/start-code');
 
 /** Object-level authorisation — the customer, the assigned helper, or admin. */
 function mayView(task, auth) {
@@ -131,6 +132,8 @@ async function getTask(req, res, next) {
       return res.status(403).json({ error: 'You do not have access to this task' });
     }
 
+    // The handover code proves the customer was there; only the customer holds it.
+    if (req.auth.role !== 'user') delete task.handoverOtp;
     const signed = await signTask(task);
     const introduced = !NOT_YET_INTRODUCED.includes(task.status);
     res.json({
@@ -342,6 +345,7 @@ async function advanceStatus(req, res, next) {
       return res.status(403).json({ error: 'This is not your task' });
     }
 
+    await assertStartCode('helping', task, req.body.status, req.body.code);
     task.transitionTo(req.body.status, {
       by: req.auth.sub, byRole: 'worker', note: req.body.note || '',
     });
@@ -437,6 +441,8 @@ async function completeTask(req, res, next) {
     const unpaid = taskService.paymentBlocker(task);
     if (unpaid) return res.status(409).json({ error: unpaid.message, code: unpaid.code });
 
+    // Shopping and pickups end at the customer's door: their code confirms they got it.
+    await assertStartCode('helping', task, 'COMPLETED', req.body?.code);
     task.transitionTo('COMPLETED', { by: req.auth.sub, byRole: 'worker' });
     await task.save();
 

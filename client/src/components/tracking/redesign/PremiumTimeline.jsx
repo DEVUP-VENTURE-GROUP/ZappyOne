@@ -9,7 +9,7 @@ import { STEPS, fmtTime } from './_shared';
  * `timesByStatus` is a { [status]: iso-date } map from real statusHistory
  * — passed times render on their step; the current step shows "Now".
  */
-export default function PremiumTimeline({ activeStepIdx, timesByStatus = {} }) {
+export default function PremiumTimeline({ steps = STEPS, activeStepIdx, timesByStatus = {} }) {
   return (
     <motion.div
       variants={fadeInUp}
@@ -30,11 +30,11 @@ export default function PremiumTimeline({ activeStepIdx, timesByStatus = {} }) {
       </div>
 
       <div className="flex flex-col">
-        {STEPS.map((s, i) => {
+        {steps.map((s, i) => {
           const done    = activeStepIdx > i;
           const current = activeStepIdx === i;
           // "searching" and "created" statuses map to the first step
-          const at = timesByStatus[s.key] || (s.key === 'searching' ? timesByStatus.created : null);
+          const at = timesByStatus[s.key];
 
           return (
             <div key={s.key} className="flex gap-3.5">
@@ -65,7 +65,7 @@ export default function PremiumTimeline({ activeStepIdx, timesByStatus = {} }) {
                   )}
                 </div>
 
-                {i < STEPS.length - 1 && (
+                {i < steps.length - 1 && (
                   <div
                     className="w-[2.5px] flex-1 min-h-[22px] my-[3px] rounded-[2px] relative overflow-hidden"
                     style={{ background: done ? 'linear-gradient(#2563FF,#4C86FF)' : '#EAEEF6' }}
@@ -81,7 +81,7 @@ export default function PremiumTimeline({ activeStepIdx, timesByStatus = {} }) {
               </div>
 
               {/* Body */}
-              <div className={`flex-1 min-w-0 ${i < STEPS.length - 1 ? 'pb-5' : ''}`}>
+              <div className={`flex-1 min-w-0 ${i < steps.length - 1 ? 'pb-5' : ''}`}>
                 <div className="flex items-center justify-between gap-2">
                   <span
                     className="text-[14.5px] leading-tight tracking-[-.015em]"

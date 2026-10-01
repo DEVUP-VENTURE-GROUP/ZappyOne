@@ -6,6 +6,7 @@ import ProofPhotos, { readyKeys } from '../../components/common/ProofPhotos';
 import CollectPaymentCard from '../../components/common/CollectPaymentCard';
 import { formatPaise } from '../../utils/money';
 import TripSharingBanner from '../../components/worker/TripSharingBanner';
+import { useStartCodeGate } from '../../components/worker/StartCodePrompt';
 import SOSButton from '../../components/worker/SOSButton';
 import { usePublishTripLocation, tripOf } from '../../hooks/useLiveTrip';
 import {
@@ -39,6 +40,8 @@ export default function WorkerPetJobPage() {
   const [beforePhotos, setBeforePhotos] = useState([]);
   const [afterPhotos, setAfterPhotos] = useState([]);
   const [completing, setCompleting] = useState(false);
+  // Starting with the pet at the owner's place needs their code (server: jobs/start-code).
+  const gate = useStartCodeGate();
   // Shared while travelling to the owner (or driving the pet, for transport); off otherwise.
   const trip = tripOf('pet', data?.booking);
   const sharing = usePublishTripLocation(id, Boolean(trip));
@@ -52,8 +55,7 @@ export default function WorkerPetJobPage() {
 
   async function move(status) {
     try {
-      await advance({ id: booking._id, status }).unwrap();
-      refetch();
+      await gate.run((code) => advance({ id: booking._id, status, code }).unwrap().then((r) => { refetch(); return r; }));
     } catch (err) {
       toast.error(err?.data?.error || 'Could not update');
     }
@@ -107,6 +109,7 @@ export default function WorkerPetJobPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
+      {gate.prompt}
       <div className="sticky top-0 z-10 bg-white border-b border-slate-100 px-4 py-3 flex items-center gap-3">
         <button type="button" onClick={() => nav(-1)} className="p-1 -ml-1"><ArrowLeft size={20} /></button>
         <h1 className="text-lg font-black text-[#0F172A]">{booking.reference}</h1>

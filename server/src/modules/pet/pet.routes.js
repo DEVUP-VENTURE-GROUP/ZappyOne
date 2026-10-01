@@ -3,6 +3,7 @@ const Joi = require('joi');
 const ctrl = require('./pet.controller');
 const { authenticate, requireRole } = require('../../middlewares/auth');
 const { validate } = require('../../middlewares/validate');
+const { makeLimiter } = require('../../middlewares/rateLimit');
 const { SPECIES, PET_SIZES, RISK_LEVELS } = require('../service/pet-passport.model');
 
 /**
@@ -167,8 +168,10 @@ router.post('/bookings/:id/accept', authenticate, requireRole('worker', 'shop'),
 router.post('/bookings/:id/decline', authenticate, requireRole('worker', 'shop'),
   validate(Joi.object({ reason: Joi.string().max(300).allow('', null) })), ctrl.declineBooking);
 
-router.post('/bookings/:id/status', authenticate, requireRole('worker', 'shop'),
-  validate(Joi.object({ status: Joi.string().required(), note: Joi.string().max(500).allow('', null) })),
+// Rate-limited: a 4-digit start code is guessable given enough tries at someone's door.
+const startCodeLimiter = makeLimiter({ windowMs: 5 * 60_000, max: 10, prefix: 'petcode' });
+router.post('/bookings/:id/status', authenticate, requireRole('worker', 'shop'), startCodeLimiter,
+  validate(Joi.object({ status: Joi.string().required(), note: Joi.string().max(500).allow('', null), code: Joi.string().pattern(/^[0-9]{4,6}$/).allow('', null), })),
   ctrl.advanceStatus);
 
 router.post('/bookings/:id/collect-cash', authenticate, requireRole('worker', 'shop'), ctrl.collectCash);

@@ -254,3 +254,70 @@ describe('SOS on any job', () => {
     expect(await Notification.countDocuments({ type: 'worker_wellness' })).toBe(before);
   });
 });
+
+describe('the start code, from the first version, on every new kind', () => {
+  const patch = (path, token, body) => request(app).post(`/api${path}`).set('Authorization', `Bearer ${token}`).send(body);
+
+  test('a pet pro cannot start with the pet until the owner reads out the code', async () => {
+    const { insertedId } = await openPet({ status: 'PROVIDER_ARRIVED', workerId: approved._id, serviceMode: 'doorstep' });
+    const path = `/pet/bookings/${insertedId}/status`;
+    const token = as(approved._id, 'worker');
+    expect((await patch(path, token, { status: 'SERVICE_STARTED' })).body.code).toBe('START_CODE_REQUIRED');
+    expect((await patch(path, token, { status: 'SERVICE_STARTED', code: '0000' })).status).toBe(401);
+    const ok = await patch(path, token, { status: 'SERVICE_STARTED', code: '4321' });
+    expect(ok.status).toBe(200);
+    expect(ok.body.booking.status).toBe('SERVICE_STARTED');
+  });
+
+  test('no code when the owner brings the pet to the provider', async () => {
+    const { insertedId } = await openPet({ status: 'PROVIDER_ARRIVED', workerId: approved._id, serviceMode: 'provider_location' });
+    const res = await patch(`/pet/bookings/${insertedId}/status`, as(approved._id, 'worker'), { status: 'SERVICE_STARTED' });
+    expect(res.status).toBe(200);
+  });
+
+  test('a returns helper needs the customer’s code to collect the item', async () => {
+    const { insertedId } = await HelpingTask.collection.insertOne({
+      reference: 'ZHCODE', userId: customer, serviceType: 'return', status: 'ARRIVED', workerId: approved._id, handoverOtp: '9876',
+      pickupLocation: HOME, items: [], statusHistory: [], createdAt: new Date(), updatedAt: new Date(),
+    });
+    const path = `/helping/tasks/${insertedId}/status`;
+    expect((await patch(path, as(approved._id, 'worker'), { status: 'TASK_STARTED' })).body.code).toBe('START_CODE_REQUIRED');
+    expect((await patch(path, as(approved._id, 'worker'), { status: 'TASK_STARTED', code: '9876' })).status).toBe(200);
+  });
+
+  test('a job from before codes existed gets one, so it can still start', async () => {
+    const { insertedId } = await openPet({ status: 'PROVIDER_ARRIVED', workerId: approved._id, serviceMode: 'doorstep', handoverOtp: '' });
+    const res = await patch(`/pet/bookings/${insertedId}/status`, as(approved._id, 'worker'), { status: 'SERVICE_STARTED' });
+    expect(res.body.code).toBe('START_CODE_REQUIRED');
+    expect((await PetBooking.findById(insertedId).lean()).handoverOtp).toMatch(/^[0-9]{4}$/);
+  });
+});
+
+describe('SOS files a real ticket now', () => {
+  const SupportTicket = require('../src/modules/engagement/support-ticket.model');
+
+  test('a customer SOS on a pet job reaches the ops queue and files an urgent ticket', async () => {
+    const User = require('../src/modules/user/user.model');
+    await User.collection.insertOne({ _id: customer, phone: '9000000700', name: 'Asha' });
+    const { insertedId } = await openPet({ status: 'PROVIDER_EN_ROUTE', workerId: approved._id });
+    const res = await request(app).post(`/api/jobs/${insertedId}/sos`).set('Authorization', `Bearer ${as(customer, 'user')}`).send({ lat: 17.44, lng: 78.39 });
+    expect(res.status).toBe(200);
+    const ticket = await SupportTicket.findOne({ 'raisedBy.id': customer }).lean();
+    expect(ticket).toMatchObject({ priority: 'urgent', raisedBy: { kind: 'user' } });
+    expect(ticket.description).toMatch(/Worker on site/);
+  });
+
+  test("a stranger can't raise SOS on someone else's job", async () => {
+    const { insertedId } = await openPet({ status: 'PROVIDER_EN_ROUTE', workerId: approved._id });
+    const res = await request(app).post(`/api/jobs/${insertedId}/sos`).set('Authorization', `Bearer ${as(oid(), 'user')}`).send({});
+    expect(res.status).toBe(404);
+  });
+
+  test('the worker SOS ticket is filed too', async () => {
+    const { triggerSOS } = require('../src/modules/worker/sos.service');
+    const before = await SupportTicket.countDocuments({ 'raisedBy.id': approved._id, priority: 'urgent' });
+    const { insertedId } = await openPet({ status: 'SERVICE_STARTED', workerId: approved._id });
+    await triggerSOS({ workerId: String(approved._id), jobId: String(insertedId) });
+    expect(await SupportTicket.countDocuments({ 'raisedBy.id': approved._id, priority: 'urgent' })).toBe(before + 1);
+  });
+});

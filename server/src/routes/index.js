@@ -64,6 +64,8 @@ function mountRoutes(app) {
   app.use('/api/shops', shopRoutes);
   // Repair verticals — catalog, diagnostics, providers, bookings, quotes.
   app.use('/api/repair', repairRoutes);
+  // Actions that work the same on every job kind (jobs/kinds.js): customer SOS.
+  app.use('/api/jobs', require('../modules/jobs/jobs.routes'));
   app.use('/api/helping', helpingRoutes);
   app.use(`/api/${slug}/helping`, helpingRoutes.adminRouter);
   app.use('/api/pet', petRoutes);
