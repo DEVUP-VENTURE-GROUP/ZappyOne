@@ -8,6 +8,7 @@ import ConnectionBanner from '@shared/components/common/ConnectionBanner';
 import RouteProgress from '@shared/components/common/RouteProgress';
 import ErrorBoundary from '@shared/components/common/ErrorBoundary';
 import { providerRoutes } from '@shared/provider/providerRoutes';
+import JobOfferHost from '@shared/components/jobs/JobOfferHost';
 import LoginRoleSwitch from './components/LoginRoleSwitch';
 
 const ShopLoginPage = lazy(() => import('./pages/ShopLoginPage'));
@@ -33,14 +34,16 @@ const homeFor = (role) => (role === 'worker' ? '/worker' : role === 'shop' ? '/s
 export default function App() {
   const { accessToken, role } = useSelector(selectAuth);
   useDisconnectOnLogout();
-  // Job changes land on every open screen at once; new work nearby raises an alert.
-  useJobRealtime({ alerts: true });
+  // Job changes land on every open screen at once (new work rings via JobOfferHost).
+  useJobRealtime();
   const shop = (el) => <RequireAuth role="shop" loginPath={SHOP_LOGIN}>{el}</RequireAuth>;
 
   return (
     <>
       <RouteProgress />
       <ConnectionBanner />
+      {/* Rings for new work on any screen, for every kind this app works. */}
+      {accessToken && ['worker', 'shop'].includes(role) && <JobOfferHost kinds={['repair', 'pet']} />}
       <ErrorBoundary>
         <Suspense fallback={<PageLoader />}>
           <Routes>

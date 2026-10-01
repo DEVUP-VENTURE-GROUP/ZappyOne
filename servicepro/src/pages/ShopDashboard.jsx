@@ -12,7 +12,6 @@ import {
   useProviderOnboardingStatusQuery,
 } from '@shared/services/api';
 import ProviderServicesCard from '@shared/components/provider/ProviderServicesCard';
-import RepairOfferHost from '@shared/components/repair/RepairOfferHost';
 import ShopRepairJobs from '../components/ShopRepairJobs';
 import { StatCard, Panel, inr, EarningsOverview, PerformanceGrid } from '@shared/components/worker/DashboardUI';
 import { logout } from '@shared/modules/auth/authSlice';
@@ -250,7 +249,6 @@ export default function ShopDashboard() {
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-12">
       {/* Ring the owner when a job lands, exactly as a technician is rung. */}
-      <RepairOfferHost myLocation={shop?.address?.location?.coordinates} />
 
       {/* Header */}
       <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur">

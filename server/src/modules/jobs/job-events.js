@@ -59,6 +59,17 @@ async function announce(kind, doc, status) {
   toProvider('user', doc.userId, 'job.update', payload);
   if (provider) toProvider(provider.kind, provider.id, 'job.update', payload);
 
+  // Offered to one provider: ring them with everything needed to decide.
+  if (provider && k.offer?.status === status) {
+    const since = new Date(k.offer.since(doc) || Date.now());
+    const start = k.open?.start(doc);
+    toProvider(provider.kind, provider.id, 'job.offer', {
+      ...payload, area: start?.address || '', coordinates: start ? [start.lng, start.lat] : null,
+      ...(k.open?.summary ? k.open.summary(doc) : {}),
+      expiresAt: new Date(since.getTime() + k.offer.windowMin * 60000).toISOString(), windowSec: k.offer.windowMin * 60,
+    });
+  }
+
   const forCustomer = copy.customer[status];
   if (forCustomer) {
     await push({ kind: 'user', id: doc.userId }, {
@@ -121,6 +132,7 @@ async function alertNearbyProviders(kind, doc) {
     await Promise.all(reach.map((p) => {
       toProvider(p.kind, p.id, 'job.available', {
         kind, id: String(doc._id), reference: doc.reference, line, area: start?.address || '', km: p.km,
+        coordinates: start ? [start.lng, start.lat] : null, ...(k.open.summary ? k.open.summary(doc) : {}),
       });
       return push(p, {
         title,

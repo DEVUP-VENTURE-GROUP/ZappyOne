@@ -236,7 +236,7 @@ async function createBooking({
 /* Assignment */
 
 /** How long a chosen provider has to answer before the booking opens to others. */
-const ASSIGNMENT_WINDOW_MIN = 15;
+const ASSIGNMENT_WINDOW_MIN = require('../../jobs/kinds').KINDS.pet.offer.windowMin;
 
 /**
  * Take a booking back from the provider it was offered to and open it to

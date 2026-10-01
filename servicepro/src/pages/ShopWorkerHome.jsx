@@ -12,7 +12,6 @@ import {
 import { selectAuth, logout } from '@shared/modules/auth/authSlice';
 import { useGeolocation } from '@shared/hooks/useGeolocation';
 import { formatPaise } from '@shared/utils/money';
-import RepairOfferHost from '@shared/components/repair/RepairOfferHost';
 import OrderOfferHost from '@shared/provider/OrderOfferHost';
 import { useLocationBroadcast } from '@shared/provider/useLocationBroadcast';
 
@@ -182,7 +181,6 @@ export default function ShopWorkerHome() {
         </button>
       </main>
 
-      <RepairOfferHost myLocation={me?.currentLocation?.coordinates} />
       <OrderOfferHost onJobChanged={refetchMe} />
     </div>
   );

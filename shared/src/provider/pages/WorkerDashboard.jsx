@@ -31,7 +31,6 @@ import { ZappyLogo } from '../../components/common/ZappyLogo';
 import WorkerOnboarding from './WorkerOnboarding';
 import ProviderServicesCard from '../../components/provider/ProviderServicesCard';
 import { useProviderOnboardingStatusQuery } from '../../services/api';
-import RepairOfferHost from '../../components/repair/RepairOfferHost';
 import OrderOfferHost from '../OrderOfferHost';
 import { useLocationBroadcast } from '../useLocationBroadcast';
 import ReadyModeCard from '../../components/worker/ReadyModeCard';
@@ -609,7 +608,6 @@ export default function WorkerDashboard() {
       </main>
 
       {/* Repair work rings through here, wherever the worker is on this screen. */}
-      <RepairOfferHost myLocation={me?.currentLocation?.coordinates} />
 
       <WorkerBottomNav activeKey="dashboard" onNavigate={handleNav} />
 

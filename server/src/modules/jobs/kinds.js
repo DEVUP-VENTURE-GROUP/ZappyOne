@@ -72,10 +72,20 @@ const KINDS = {
         return b.serviceMode === 'transport' ? { point: pointOf(b.destination), toCustomer: false } : null;
       },
     },
+    // A booking the customer gave to one provider: it rings for them, and goes
+    // back to the pool if they don't answer in the window.
+    offer: { status: 'PROVIDER_ASSIGNED', windowMin: 15, since: (b) => b.assignedAt },
     open: {
       statuses: ['BOOKED', 'PROVIDER_SEARCHING'],
       start: (b) => place(b.serviceLocation),
       listPath: '/worker/work',
+      // What the alert card shows, before anyone opens the job.
+      summary: (b) => ({
+        title: (b.pets || []).map((p) => p.snapshot?.name).filter(Boolean).join(', ') || 'Pet care',
+        service: (b.categoryCode || '').replace(/_/g, ' '),
+        earningPaise: b.pricing?.providerAmountPaise || 0,
+        at: b.scheduledAt || b.checkInAt || null,
+      }),
     },
     copy: {
       customer: {
@@ -114,6 +124,13 @@ const KINDS = {
       statuses: ['CONFIRMED', 'WORKER_SEARCHING'],
       start: (t) => place(t.pickupLocation),
       listPath: '/worker/work',
+      summary: (t) => ({
+        title: t.title || ((t.items || []).length ? `${t.items.length} item${t.items.length > 1 ? 's' : ''}` : 'Errand'),
+        service: t.serviceType || 'helping',
+        earningPaise: t.charge?.workerEarningPaise || 0,
+        at: t.scheduledAt || null,
+        frontPaise: t.itemMoney?.paymentModel === 'worker_advance' ? t.itemMoney?.budgetPaise || 0 : 0,
+      }),
     },
     copy: {
       customer: {

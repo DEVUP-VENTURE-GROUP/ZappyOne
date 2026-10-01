@@ -154,3 +154,42 @@ describe('open helping tasks', () => {
     expect((await get('/helping/tasks/available', as(unverified._id, 'worker'))).body).toMatchObject({ tasks: [], notApproved: true });
   });
 });
+
+describe('what rings on the provider’s phone', () => {
+  const { redis } = require('../src/config/redis');
+  const { announce } = require('../src/modules/jobs/job-events');
+
+  async function listen(run) {
+    const heard = [];
+    const sub = redis.duplicate();
+    await sub.subscribe('provider:repair');
+    sub.on('message', (_c, m) => heard.push(JSON.parse(m)));
+    await run();
+    await new Promise((r) => setTimeout(r, 300));
+    await sub.quit();
+    return heard;
+  }
+
+  test('a booking offered to them rings with what it pays and when the offer ends', async () => {
+    const assignedAt = new Date();
+    const heard = await listen(() => announce('pet', {
+      _id: oid(), reference: 'ZPRING', userId: customer, workerId: approved._id, status: 'PROVIDER_ASSIGNED', assignedAt,
+      categoryCode: 'pet_grooming', serviceLocation: HOME, pets: [{ snapshot: { name: 'Bruno' } }],
+      pricing: { providerAmountPaise: 50000 }, statusHistory: [],
+    }, 'PROVIDER_ASSIGNED'));
+    const offer = heard.find((h) => h.event === 'job.offer');
+    expect(offer).toMatchObject({ kind: 'worker', id: String(approved._id) });
+    expect(offer.payload).toMatchObject({ kind: 'pet', title: 'Bruno', earningPaise: 50000, windowSec: 900, area: 'Madhapur' });
+    expect(new Date(offer.payload.expiresAt).getTime() - assignedAt.getTime()).toBe(15 * 60000);
+  });
+
+  test('an open job alerts approved providers nearby, never the unverified', async () => {
+    const heard = await listen(() => announce('helping', {
+      _id: oid(), reference: 'ZHRING', userId: customer, status: 'CONFIRMED', serviceType: 'shopping', title: 'Groceries',
+      pickupLocation: HOME, charge: { workerEarningPaise: 9000 }, items: [], statusHistory: [],
+    }, 'CONFIRMED'));
+    const alerts = heard.filter((h) => h.event === 'job.available');
+    expect(alerts.map((a) => a.id)).toEqual([String(approved._id)]);
+    expect(alerts[0].payload).toMatchObject({ kind: 'helping', title: 'Groceries', earningPaise: 9000 });
+  });
+});

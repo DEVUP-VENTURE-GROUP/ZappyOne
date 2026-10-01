@@ -7,6 +7,7 @@ import ConnectionBanner from '@shared/components/common/ConnectionBanner';
 import RouteProgress from '@shared/components/common/RouteProgress';
 import ErrorBoundary from '@shared/components/common/ErrorBoundary';
 import { providerRoutes } from '@shared/provider/providerRoutes';
+import JobOfferHost from '@shared/components/jobs/JobOfferHost';
 
 const WorkerLoginPage = lazy(() => import('@shared/provider/pages/WorkerLoginPage'));
 
@@ -19,15 +20,17 @@ const PageLoader = () => (
 );
 
 export default function App() {
-  const { accessToken } = useSelector(selectAuth);
+  const { accessToken, role } = useSelector(selectAuth);
   useDisconnectOnLogout();
-  // Job changes land on every open screen at once; new work nearby raises an alert.
-  useJobRealtime({ alerts: true });
+  // Job changes land on every open screen at once (new work rings via JobOfferHost).
+  useJobRealtime();
 
   return (
     <>
       <RouteProgress />
       <ConnectionBanner />
+      {/* Rings for new work on any screen, for every kind this app works. */}
+      {accessToken && role === 'worker' && <JobOfferHost kinds={['repair', 'pet', 'helping']} />}
       <ErrorBoundary>
         <Suspense fallback={<PageLoader />}>
           <Routes>

@@ -24,6 +24,7 @@ const s3Service = require('../../core/storage/s3');
 const { providerCard } = require('../worker/provider-card');
 const { approvedLines, assertApproved, lineOf } = require('../onboarding/eligibility');
 const { announce } = require('../jobs/job-events');
+const { KINDS } = require('../jobs/kinds');
 const { haversineKm } = require('../../core/geo/distance');
 
 function mayView(booking, auth) {
@@ -342,7 +343,14 @@ async function listAssignedBookings(req, res, next) {
     const owner = req.auth.role === 'shop' ? { shopId: req.auth.sub } : { workerId: req.auth.sub };
     const bookings = await PetBooking.find({ ...owner, status: { $in: PROVIDER_ACTIVE } })
       .sort({ scheduledAt: 1, createdAt: 1 }).limit(50).lean();
-    res.json({ bookings });
+    // An offer's deadline, so the app can still ring for one it missed live.
+    const windowMs = KINDS.pet.offer.windowMin * 60000;
+    res.json({
+      bookings: bookings.map(({ handoverOtp, ...b }) => ({
+        ...b,
+        offerExpiresAt: b.status === 'PROVIDER_ASSIGNED' && b.assignedAt ? new Date(new Date(b.assignedAt).getTime() + windowMs) : null,
+      })),
+    });
   } catch (err) { next(err); }
 }
 
