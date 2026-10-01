@@ -253,6 +253,7 @@ export const api = createApi({
 
     // --- Unified Search (Zepto-level: fuzzy + intent + rank + never-empty) ---
     smartSearch: b.query({ query: (params) => ({ url: '/search', params }) }),
+    searchTrending: b.query({ query: (params = {}) => ({ url: '/search/trending', params }) }),
     getOrder: b.query({
       query: (id) => `/orders/${id}`,
       providesTags: (r, e, id) => [{ type: 'Order', id }],
@@ -1755,6 +1756,12 @@ export const api = createApi({
     petVariants: b.query({ query: (params) => ({ url: '/pet/variants', params }), providesTags: ['PetCatalog'] }),
     petBreeds: b.query({ query: (params) => ({ url: '/pet/breeds', params }), providesTags: ['PetCatalog'] }),
     petAddons: b.query({ query: (params) => ({ url: '/pet/addons', params }), providesTags: ['PetCatalog'] }),
+    petCompatibility: b.query({ query: (params) => ({ url: '/pet/compatibility', params }) }),
+    myPets: b.query({ query: () => '/pet/my-pets', providesTags: ['MyPets'] }),
+    createMyPet: b.mutation({
+      query: (body) => ({ url: '/pet/my-pets', method: 'POST', body }),
+      invalidatesTags: ['MyPets'],
+    }),
     deleteMyPet: b.mutation({
       query: (id) => ({ url: `/pet/my-pets/${id}`, method: 'DELETE' }),
       invalidatesTags: ['MyPets'],

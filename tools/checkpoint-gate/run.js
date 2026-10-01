@@ -307,6 +307,17 @@ async function main() {
       });
   }
 
+  // 8b. Screens calling API hooks that do not exist (crash on open, invisible to the build)
+  {
+    const missing = reach.missingApiHooks(ROOT);
+    check('api-wiring', 'Screens wired to real API hooks', missing.length ? 'fail' : 'pass',
+      missing.length ? `${missing.length} imported hook(s) the API client does not define` : 'Every API hook a screen imports exists',
+      {
+        details: missing.map((m) => `\`${m}\``),
+        fix: missing.length ? ['Add the endpoint to shared/src/services/api.js (and export its hook), or remove the import. The build cannot catch this; the screen crashes when opened.'] : [],
+      });
+  }
+
   // 9. AI assistance: what the author declared, and what the commits say
   {
     const AI = /co-authored-by:[^\n]*(claude|anthropic|copilot|cursor|openai|chatgpt|gpt-|gemini|codeium|windsurf|devin|aider|tabnine)|generated with[^\n]*(claude|copilot|cursor|chatgpt|gemini)/i;

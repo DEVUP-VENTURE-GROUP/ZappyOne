@@ -4,6 +4,9 @@
  *   unreachableWeb(root)     front-end files no app entry (main.jsx) imports
  *   unreachableServer(root)  server files nothing runnable requires
  *   unusedApiHooks(root)     RTK Query hooks api.js exports that no screen uses
+ *   missingApiHooks(root)    hooks a screen imports that api.js does not define —
+ *                            a build bundles these as undefined and the screen
+ *                            crashes only when it opens ("useX is not a function")
  *
  * The gate runs these on the PR and on its base and fails on anything NEW,
  * so old debt is reported but never blamed on the PR that didn't add it.
@@ -125,4 +128,28 @@ function unusedApiHooks(root) {
   return [...hooks].filter((h) => !used.has(h)).sort();
 }
 
-module.exports = { unreachableWeb, unreachableServer, unusedApiHooks, WEB_APPS };
+function missingApiHooks(root) {
+  const apiFile = path.join(root, 'shared/src/services/api.js');
+  if (!fs.existsSync(apiFile)) return [];
+  const api = fs.readFileSync(apiFile, 'utf8');
+  const exported = new Set(api.slice(api.indexOf('export const {')).match(/use[A-Z][A-Za-z0-9_]+/g) || []);
+  const endpoints = new Set([...api.matchAll(/^ +([A-Za-z0-9_]+): b[.](query|mutation)[(]/gm)].map((m) => m[1]));
+  const endpointOf = (hook) => {
+    const m = hook.match(/^use(?:Lazy)?(\w+?)(?:Query|Mutation)$/);
+    return m ? m[1][0].toLowerCase() + m[1].slice(1) : null;
+  };
+  const missing = [];
+  const files = [...WEB_APPS.map((a) => path.join(root, a, 'src')), path.join(root, 'shared/src')]
+    .flatMap((d) => listFiles(d)).filter((f) => CODE.test(f) && path.normalize(f) !== path.normalize(apiFile));
+  for (const f of files) {
+    const src = fs.readFileSync(f, 'utf8');
+    for (const m of src.matchAll(/import\s*\{([^}]*)\}\s*from\s*['"][^'"]*services\/api['"]/g)) {
+      for (const name of m[1].split(',').map((x) => x.trim().split(/\s+as\s+/)[0]).filter((x) => x.startsWith('use'))) {
+        if (!exported.has(name) || !endpoints.has(endpointOf(name))) missing.push(`${name} ← ${rel(root, f)}`);
+      }
+    }
+  }
+  return missing.sort();
+}
+
+module.exports = { unreachableWeb, unreachableServer, unusedApiHooks, missingApiHooks, WEB_APPS };
