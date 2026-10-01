@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import { motion } from 'framer-motion';
-import {
+import { LogOut,
   LayoutDashboard, IndianRupee, Wallet as WalletIcon, Bell, Star, User, ChevronRight, Wifi,
   TrendingUp, TrendingDown, Search, Radio, Loader2, Target, Building2, GraduationCap,
   ShieldCheck, ShoppingBag,
@@ -128,7 +128,7 @@ export function OnlineControl({ isOnline, busy, onToggle }) {
 }
 
 /* Web sidebar */
-export const WorkerSidebar = memo(function WorkerSidebar({ activeKey, unread, onNavigate, onGoOnline, isOnline }) {
+export const WorkerSidebar = memo(function WorkerSidebar({ activeKey, unread, onNavigate, onGoOnline, isOnline, onSignOut }) {
   return (
     <aside className="fixed inset-y-0 left-0 hidden w-64 flex-col border-r border-slate-200 bg-white lg:flex">
       <div className="flex items-center gap-2 px-6 py-5">
@@ -176,6 +176,17 @@ export const WorkerSidebar = memo(function WorkerSidebar({ activeKey, unread, on
         </div>
       )}
 
+      {onSignOut && (
+        <div className="border-t border-slate-200 p-3">
+          <button
+            type="button"
+            onClick={onSignOut}
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[14px] font-semibold text-slate-500 transition-colors hover:bg-rose-50 hover:text-rose-600"
+          >
+            <LogOut size={18} strokeWidth={2.2} /> Sign out
+          </button>
+        </div>
+      )}
     </aside>
   );
 });

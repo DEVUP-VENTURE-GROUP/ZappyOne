@@ -218,7 +218,7 @@ export default function WorkerDashboard() {
 
   return (
     <div className="min-h-screen bg-[#F4F7FB] lg:pl-64">
-      <WorkerSidebar activeKey="dashboard" unread={unreadCount} onNavigate={handleNav} onGoOnline={toggleOnline} isOnline={isOnline} />
+      <WorkerSidebar activeKey="dashboard" unread={unreadCount} onNavigate={handleNav} onGoOnline={toggleOnline} isOnline={isOnline} onSignOut={signOut} />
 
       <AnimatePresence>
         {drawerOpen && (
