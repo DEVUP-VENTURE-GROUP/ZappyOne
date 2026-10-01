@@ -1,13 +1,17 @@
 version: 2
-# Automated, reviewable dependency-update PRs. This is how the audit findings
-# (axios ReDoS, form-data CRLF, ws / socket.io / websocket-driver advisories)
-# get remediated on an ongoing basis instead of manual bumps.
+# Routine version bumps are OFF (open-pull-requests-limit: 0): they opened 30+
+# PRs against main that nobody reviewed, majors included (Vite 8, Express 5,
+# Expo 57), any of which can break a launch build. Upgrades are done by the
+# team on purpose, through the checkpoint gate.
+#
+# Security fixes are unaffected: with Dependabot security updates enabled in
+# the repo settings, a vulnerable dependency still gets its own fix PR.
 updates:
   - package-ecosystem: npm
     directory: /client
     schedule:
       interval: weekly
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 0
     groups:
       # Batch low-risk patch/minor bumps into a single PR to cut review noise;
       # majors still come as individual PRs.
@@ -19,7 +23,7 @@ updates:
     directory: /server
     schedule:
       interval: weekly
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 0
     groups:
       minor-and-patch:
         update-types: [minor, patch]
@@ -29,7 +33,7 @@ updates:
     directory: /mobile
     schedule:
       interval: weekly
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 0
     groups:
       minor-and-patch:
         update-types: [minor, patch]
@@ -40,4 +44,5 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    open-pull-requests-limit: 0
     labels: [dependencies, ci]
