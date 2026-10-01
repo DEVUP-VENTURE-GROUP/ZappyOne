@@ -1,0 +1,12 @@
+{
+  "name": "checkpoint-gate",
+  "private": true,
+  "description": "Verify-only quality gate for pull requests into checkpoint-main",
+  "scripts": {
+    "gate": "node run.js"
+  },
+  "devDependencies": {
+    "eslint": "9.39.1",
+    "jscpd": "4.0.5"
+  }
+}

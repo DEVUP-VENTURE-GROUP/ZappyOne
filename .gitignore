@@ -26,3 +26,6 @@ build/
 coverage/
 deploy/certs/
 deploy/certbot-www/
+
+# Checkpoint gate output (tools/checkpoint-gate)
+gate-report/
