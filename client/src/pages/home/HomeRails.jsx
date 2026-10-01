@@ -80,17 +80,18 @@ export function OffersRail({ isAuthed }) {
 }
 
 /** One tap back to something the customer booked before. */
-export function BookAgainRail({ items, busy, onRebook, label }) {
+/** Things they've had done before, one tap from booking again. */
+export function BookAgainRail({ items, onOpen }) {
   if (!items.length) return null;
   return (
     <section aria-labelledby="home-again">
       <SectionTitle id="home-again" title="Book again" />
       <Row cols="sm:grid-cols-3">
-        {items.map(({ id, service, date }) => (
-          <button key={id || service} type="button" disabled={busy} onClick={() => onRebook(id, service)}
-            className="flex w-[200px] shrink-0 snap-start items-center justify-between gap-3 rounded-xl bg-white px-4 py-3 text-left disabled:opacity-60 sm:w-auto">
+        {items.map(({ key, title, href, date }) => (
+          <button key={key} type="button" onClick={() => onOpen(href)}
+            className="flex w-[200px] shrink-0 snap-start items-center justify-between gap-3 rounded-xl bg-white px-4 py-3 text-left sm:w-auto">
             <span className="min-w-0">
-              <span className="block truncate text-[14px] font-semibold text-navy">{label(service)}</span>
+              <span className="block truncate text-[14px] font-semibold capitalize text-navy">{title}</span>
               <span className="block text-[12px] text-slate-500">
                 {date ? new Date(date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : 'Before'}
               </span>

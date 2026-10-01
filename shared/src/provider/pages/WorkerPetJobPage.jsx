@@ -6,6 +6,7 @@ import ProofPhotos, { readyKeys } from '../../components/common/ProofPhotos';
 import CollectPaymentCard from '../../components/common/CollectPaymentCard';
 import { formatPaise } from '../../utils/money';
 import TripSharingBanner from '../../components/worker/TripSharingBanner';
+import SOSButton from '../../components/worker/SOSButton';
 import { usePublishTripLocation, tripOf } from '../../hooks/useLiveTrip';
 import {
   useGetPetBookingQuery, useAdvancePetBookingStatusMutation, useAddPetBookingProofMutation, useCollectPetCashMutation,
@@ -173,6 +174,13 @@ export default function WorkerPetJobPage() {
             collecting={collecting}
             onCollect={recordCash}
           />
+        )}
+        {/* Safety: on every live job, one hold away. */}
+        {['PROVIDER_ACCEPTED', 'PROVIDER_EN_ROUTE', 'PROVIDER_ARRIVED', 'PET_HANDOVER', 'SERVICE_STARTED', 'SERVICE_PAUSED'].includes(booking.status) && (
+          <div className="space-y-1.5 pt-2">
+            <p className="text-[12px] font-semibold text-slate-500">Feeling unsafe or need urgent help?</p>
+            <SOSButton jobId={booking._id} kind="pet" service={booking.categoryCode} />
+          </div>
         )}
       </div>
     </div>

@@ -1,10 +1,9 @@
 import { memo } from 'react';
 import { motion } from 'framer-motion';
 import {
-  LayoutDashboard, ClipboardList, CalendarDays, IndianRupee, Wallet as WalletIcon,
-  Bell, Star, LifeBuoy, User, ChevronRight,
-  Wifi, Clock, CheckCircle2, TrendingUp, TrendingDown, Search, Radio, Loader2,
-  Target, Building2, ArrowRightLeft, GraduationCap, Gem, ShieldCheck, ShoppingBag,
+  LayoutDashboard, IndianRupee, Wallet as WalletIcon, Bell, Star, User, ChevronRight, Wifi,
+  TrendingUp, TrendingDown, Search, Radio, Loader2, Target, Building2, ArrowRightLeft,
+  GraduationCap, ShieldCheck, ShoppingBag,
 } from 'lucide-react';
 import { ZappyLogo } from '../common/ZappyLogo';
 
@@ -46,15 +45,12 @@ export function prettyService(code = '') {
  * where anything lives.
  */
 export const NAV_ITEMS = [
-  { key: 'dashboard', label: 'Dashboard', Icon: LayoutDashboard, to: '/worker', primary: true },
-  { key: 'jobs', label: 'My Jobs', Icon: ClipboardList, scroll: 'job-requests', primary: true },
-  { key: 'bookings', label: 'Bookings', Icon: CalendarDays, scroll: 'schedule' },
+  { key: 'dashboard', label: 'Home', Icon: LayoutDashboard, to: '/worker', primary: true },
   { key: 'work', label: 'Work', Icon: ShoppingBag, to: '/worker/work', primary: true },
   { key: 'earnings', label: 'Earnings', Icon: IndianRupee, to: '/worker/earnings', primary: true },
-  { key: 'wallet', label: 'Wallet', Icon: WalletIcon, to: '/wallet' },
+  { key: 'withdraw', label: 'Withdraw', Icon: WalletIcon, to: '/worker/withdraw' },
   { key: 'notifications', label: 'Notifications', Icon: Bell, to: '/worker/notifications' },
   { key: 'reviews', label: 'Reviews', Icon: Star, to: '/worker/appeals' },
-  { key: 'support', label: 'Support', Icon: LifeBuoy, to: '/faq' },
   { key: 'profile', label: 'Profile', Icon: User, to: '/worker/profile', primary: true },
 ];
 
@@ -172,19 +168,6 @@ export const WorkerSidebar = memo(function WorkerSidebar({ activeKey, unread, on
         </div>
       )}
 
-      <button
-        type="button"
-        onClick={() => onNavigate({ to: '/faq' })}
-        className="m-3 mt-0 flex items-center gap-3 rounded-2xl border border-slate-200 p-3 text-left transition-colors hover:bg-slate-50"
-      >
-        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-zappy-50">
-          <LifeBuoy size={17} className="text-zappy-600" />
-        </span>
-        <span>
-          <span className="block text-[12.5px] font-bold text-navy-900">Need Help?</span>
-          <span className="block text-[11px] font-medium text-slate-500">24x7 Support</span>
-        </span>
-      </button>
     </aside>
   );
 });
@@ -413,7 +396,6 @@ const QUICK_ACCESS_TOOLS = [
   { to: '/worker/bank', Icon: Building2, tone: 'blue', label: 'Bank & UPI', sub: 'Add accounts' },
   { to: '/worker/withdraw', Icon: ArrowRightLeft, tone: 'green', label: 'Withdraw', sub: 'Transfer to bank' },
   { to: '/worker/training', Icon: GraduationCap, tone: 'rose', label: 'Training', sub: 'Get certified' },
-  { to: '/plans', Icon: Gem, tone: 'cyan', label: 'Go Pro', sub: 'Lower commission' },
 ];
 
 export function QuickAccess({ onOpen }) {
@@ -439,180 +421,6 @@ export function QuickAccess({ onOpen }) {
           );
         })}
       </div>
-    </Panel>
-  );
-}
-
-
-/* Job requests (tabbed) */
-export function JobRequests({ tabs, activeTab, onTab, jobs, isOnline, onGoOnline, onOpenJob }) {
-  return (
-    <Panel id="job-requests" title="Job Requests">
-      <div className="no-scrollbar -mt-2 mb-3 flex gap-2 overflow-x-auto">
-        {tabs.map((t) => {
-          const active = t.key === activeTab;
-          return (
-            <button
-              key={t.key}
-              type="button"
-              onClick={() => onTab(t.key)}
-              className={`shrink-0 rounded-full px-3 py-1.5 text-[12.5px] font-bold transition-colors ${
-                active ? 'bg-zappy-50 text-zappy-700' : 'text-slate-500 hover:bg-slate-100'
-              }`}
-            >
-              {t.label} ({t.count})
-            </button>
-          );
-        })}
-      </div>
-
-      {jobs.length === 0 ? (
-        <EmptyState
-          Icon={ClipboardList}
-          title="No new job requests"
-          sub={isOnline ? 'You’re online — new jobs will appear here.' : 'Go online to receive new job requests'}
-          action={
-            !isOnline && (
-              <button
-                type="button"
-                onClick={onGoOnline}
-                className="mt-4 flex items-center gap-2 rounded-xl bg-zappy-600 px-4 py-2.5 text-[13px] font-bold text-white transition-colors hover:bg-zappy-700 active:scale-95"
-              >
-                <Radio size={15} strokeWidth={2.6} /> Go Online
-              </button>
-            )
-          }
-        />
-      ) : (
-        <ul className="space-y-2.5">
-          {jobs.map((job) => (
-            <li key={job._id}>
-              <button
-                type="button"
-                onClick={() => onOpenJob(job)}
-                className="flex w-full items-center gap-3 rounded-xl border border-slate-200 p-3 text-left transition-colors hover:bg-slate-50"
-              >
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-zappy-50">
-                  <ClipboardList size={18} className="text-zappy-600" />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[13.5px] font-bold text-navy-900">
-                    {prettyService(job.service)}
-                  </span>
-                  <span className="block truncate text-[11.5px] font-medium text-slate-500">
-                    {job.pickupLocation?.address || job.address || 'Location shared on accept'}
-                  </span>
-                </span>
-                <span className="shrink-0 text-right">
-                  <span className="block text-[13.5px] font-black text-navy-900">{inr(job.pricing?.total)}</span>
-                  <span className="block text-[11px] font-bold text-zappy-600">View</span>
-                </span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-    </Panel>
-  );
-}
-
-/* Today's schedule */
-export function TodaySchedule({ jobs, onOpenJob, onViewCalendar }) {
-  return (
-    <Panel
-      id="schedule"
-      title="Today's Schedule"
-      action={
-        <button type="button" onClick={onViewCalendar} className="text-[12.5px] font-bold text-zappy-600 hover:underline">
-          View calendar
-        </button>
-      }
-    >
-      {jobs.length === 0 ? (
-        <div className="flex items-center gap-3 rounded-xl bg-slate-50 p-4">
-          <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-zappy-50">
-            <CalendarDays size={20} className="text-zappy-600" />
-          </span>
-          <div>
-            <p className="text-[13.5px] font-bold text-navy-900">No jobs scheduled for today</p>
-            <p className="text-[11.5px] font-medium text-slate-500">Jobs will appear here once scheduled</p>
-          </div>
-        </div>
-      ) : (
-        <ul className="space-y-2.5">
-          {jobs.map((job) => (
-            <li key={job._id}>
-              <button
-                type="button"
-                onClick={() => onOpenJob(job)}
-                className="flex w-full items-center gap-3 rounded-xl border border-slate-200 p-3 text-left transition-colors hover:bg-slate-50"
-              >
-                <span className="flex h-10 w-10 flex-col items-center justify-center rounded-xl bg-zappy-50 text-zappy-700">
-                  <Clock size={16} />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[13.5px] font-bold text-navy-900">
-                    {prettyService(job.service)}
-                  </span>
-                  <span className="block text-[11.5px] font-medium text-slate-500">
-                    {job.scheduledAt
-                      ? new Date(job.scheduledAt).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' })
-                      : 'Now'}
-                  </span>
-                </span>
-                <CheckCircle2 size={16} className="text-slate-300" />
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-    </Panel>
-  );
-}
-
-/* Recently completed (web) */
-export function RecentlyCompleted({ jobs, onOpenJob, onViewAll }) {
-  return (
-    <Panel
-      title="Recently Completed"
-      action={
-        <button type="button" onClick={onViewAll} className="text-[12.5px] font-bold text-zappy-600 hover:underline">
-          View all
-        </button>
-      }
-    >
-      {jobs.length === 0 ? (
-        <EmptyState
-          Icon={CheckCircle2}
-          title="No completed jobs yet"
-          sub="Your completed jobs will appear here"
-        />
-      ) : (
-        <ul className="space-y-2.5">
-          {jobs.map((job) => (
-            <li key={job._id}>
-              <button
-                type="button"
-                onClick={() => onOpenJob(job)}
-                className="flex w-full items-center gap-3 rounded-xl border border-slate-200 p-3 text-left transition-colors hover:bg-slate-50"
-              >
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50">
-                  <CheckCircle2 size={18} className="text-emerald-600" />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[13.5px] font-bold text-navy-900">
-                    {prettyService(job.service)}
-                  </span>
-                  <span className="block text-[11.5px] font-medium text-slate-500">
-                    {job.completedAt ? new Date(job.completedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : ''}
-                  </span>
-                </span>
-                <span className="text-[13.5px] font-black text-navy-900">{inr(job.pricing?.total)}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
     </Panel>
   );
 }

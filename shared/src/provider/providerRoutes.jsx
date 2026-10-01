@@ -3,7 +3,6 @@ import { Route, Navigate } from 'react-router-dom';
 import { RequireAuth } from '../components/common/RequireAuth';
 
 const WorkerDashboard = lazy(() => import('./pages/WorkerDashboard'));
-const WorkerJobPage = lazy(() => import('./pages/WorkerJobPage'));
 const WorkerKycPage = lazy(() => import('./pages/WorkerKycPage'));
 const WorkerEditProfilePage = lazy(() => import('./pages/WorkerEditProfilePage'));
 const WorkerNotificationsPage = lazy(() => import('./pages/WorkerNotificationsPage'));
@@ -46,7 +45,7 @@ export function providerRoutes({ loginPath, helping = false, onboardRoles = ['wo
   ];
   return [
     <Route key="w" path="/worker" element={w(home || <WorkerDashboard />)} />,
-    <Route key="w-job" path="/worker/jobs/:id" element={w(<WorkerJobPage />)} />,
+    <Route key="w-job" path="/worker/jobs/:id" element={<Navigate to="/worker/work" replace />} />,
     <Route key="w-kyc" path="/worker/kyc" element={w(<WorkerKycPage />)} />,
     <Route key="w-profile" path="/worker/profile" element={w(<WorkerEditProfilePage />)} />,
     <Route key="w-notif" path="/worker/notifications" element={w(<WorkerNotificationsPage />)} />,

@@ -87,6 +87,14 @@ async function goOffline({ workerId }) {
       activeOrderId: active._id,
     });
   }
+  // Mid-trip, the customer is watching them come: offline would freeze the map.
+  const trip = await activeTrip(workerId, { fresh: true });
+  if (trip) {
+    throw Object.assign(new Error('You are on the way to a job. Finish the trip before going offline.'), {
+      status: 409, code: 'ON_TRIP',
+      job: { kind: trip.kind, id: trip.id, link: require('../jobs/kinds').KINDS[trip.kind].providerLink(trip.id) },
+    });
+  }
 
   const worker = await Worker.findByIdAndUpdate(
     workerId,
@@ -254,48 +262,47 @@ async function getEarnings({ workerId, range = 'today' }) {
   const summary = agg[0] || { jobs: 0, earningsPaise: 0, commissionPaise: 0, avgFarePaise: 0, cashJobs: 0, onlineJobs: 0 };
 
   /**
-   * Repair work counts too.
+   * Every kind of job counts, not just orders.
    *
-   * This only ever aggregated `Order`, so a technician whose whole day was
-   * phone, laptop or vehicle repairs opened their earnings screen and saw ₹0.
-   * It was not a fetching problem — the repair collection was simply never
-   * asked.
-   *
-   * `splitFor` is the same function the settlement run uses, so the number on
-   * screen and the number actually paid cannot drift apart.
+   * This once aggregated `Order` only, so a technician whose whole day was
+   * repairs, or a helper whose day was errands, saw ₹0. Each kind in the job
+   * registry says when a job is done and what the provider's share was — for a
+   * repair that is the settlement run's own split, so the number on screen and
+   * the number paid cannot drift apart.
    */
-  const { RepairBooking } = require('../repair/models/booking.model');
-  const { splitFor } = require('../repair/services/settlement.service');
-
-  const repairs = await RepairBooking.find({
-    workerId: wid, status: 'COMPLETED', completedAt: { $gte: since },
-  }).select('priceSnapshot paymentMethod completedAt').lean();
-
-  let repairEarnings = 0;
-  let repairCommission = 0;
-  let repairCash = 0;
-  for (const b of repairs) {
-    const split = splitFor(b);
-    repairEarnings += split.providerPaise;
-    repairCommission += split.platformPaise;
-    if (b.paymentMethod === 'cash') repairCash += 1;
+  const { ALL } = require('../jobs/kinds');
+  const dotted = (o, path) => path.split('.').reduce((v, k) => v?.[k], o);
+  const finished = [];
+  for (const k of ALL.filter((x) => x.earning)) {
+    const rows = await k.model().find({
+      workerId: wid, status: { $in: k.earning.done }, [k.earning.at]: { $gte: since },
+    }).select(k.earning.fields).lean();
+    for (const r of rows) {
+      finished.push({
+        kind: k.kind, paise: k.earning.share(r), platformPaise: k.earning.platform ? k.earning.platform(r) : 0,
+        cash: r.paymentMethod === 'cash', at: dotted(r, k.earning.at),
+      });
+    }
   }
 
-  const jobs = summary.jobs + repairs.length;
-  const earningsPaise = Math.round(summary.earningsPaise + repairEarnings);
-  const commissionPaise = Math.round(summary.commissionPaise + repairCommission);
+  const jobs = summary.jobs + finished.length;
+  const earningsPaise = Math.round(summary.earningsPaise + finished.reduce((s, f) => s + f.paise, 0));
+  const finishedCash = finished.filter((f) => f.cash).length;
 
-  // Repair days folded into the same series, so the chart matches the total
-  // above it rather than telling a second, smaller story.
+  // Folded into the same daily series, so the chart matches the total above it.
   const byDay = new Map(daily.map((d) => [d._id, { date: d._id, jobs: d.jobs, earningsPaise: Math.round(d.earningsPaise) }]));
-  for (const b of repairs) {
-    if (!b.completedAt) continue;
-    const key = new Date(b.completedAt).toISOString().slice(0, 10);
+  for (const f of finished) {
+    if (!f.at) continue;
+    const key = new Date(f.at).toISOString().slice(0, 10);
     const row = byDay.get(key) || { date: key, jobs: 0, earningsPaise: 0 };
     row.jobs += 1;
-    row.earningsPaise += splitFor(b).providerPaise;
+    row.earningsPaise += f.paise;
     byDay.set(key, row);
   }
+  const byKind = (kind) => {
+    const of = finished.filter((f) => f.kind === kind);
+    return { jobs: of.length, earningsPaise: Math.round(of.reduce((s, f) => s + f.paise, 0)) };
+  };
 
   return {
     range,
@@ -303,17 +310,19 @@ async function getEarnings({ workerId, range = 'today' }) {
     jobs,
     earningsPaise,
     earningsRupees: Math.round(earningsPaise / 100),
-    commissionPaidPaise: commissionPaise,
+    commissionPaidPaise: Math.round(summary.commissionPaise + finished.reduce((sum, f) => sum + f.platformPaise, 0)),
     avgEarningPerJobRupees: jobs > 0 ? Math.round(earningsPaise / jobs / 100) : 0,
-    cashJobs: summary.cashJobs + repairCash,
-    onlineJobs: summary.onlineJobs + (repairs.length - repairCash),
+    cashJobs: summary.cashJobs + finishedCash,
+    onlineJobs: summary.onlineJobs + (finished.length - finishedCash),
     dailyBreakdown: [...byDay.values()]
       .sort((a, b) => a.date.localeCompare(b.date))
       .map((d) => ({ ...d, earningsPaise: Math.round(d.earningsPaise) })),
     /** Split out so a technician can see where the money came from. */
     breakdown: {
       orders: { jobs: summary.jobs, earningsPaise: Math.round(summary.earningsPaise) },
-      repairs: { jobs: repairs.length, earningsPaise: Math.round(repairEarnings) },
+      repairs: byKind('repair'),
+      pet: byKind('pet'),
+      helping: byKind('helping'),
     },
   };
 }

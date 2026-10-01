@@ -4,11 +4,10 @@ import { useSelector } from 'react-redux';
 import toast from 'react-hot-toast';
 import { ChevronRight } from 'lucide-react';
 import { selectAuth, selectIsAuthed } from '@shared/modules/auth/authSlice';
-import { useGetServiceabilityQuery, useLiveCatalogQuery, useRebookOrderMutation } from '@shared/services/api';
+import { useGetServiceabilityQuery, useLiveCatalogQuery } from '@shared/services/api';
 import { useGeolocation, loadGeoLocation } from '@shared/hooks/useGeolocation';
 import { saveGeoLocation } from '@shared/utils/geoCache';
 import { reverseGeocode } from '@shared/utils/reverseGeocode';
-import { serviceLabel } from '@shared/constants/services';
 import SEO, { HOME_SCHEMA, BASE_URL } from '@shared/components/SEO';
 import NotInYourArea from '../components/serviceability/NotInYourArea';
 import ClosedNowBanner from '../components/serviceability/ClosedNowBanner';
@@ -166,31 +165,18 @@ export default function HomePage() {
 
   /* The customer's own jobs. */
   const { current: activeJob, past: pastJobs } = useMyJobs({ skip: !isAuthed });
-  const [rebook, { isLoading: rebooking }] = useRebookOrderMutation();
+  // Anything they've had done before, of any kind, reopens its booking flow.
   const quickRebooks = useMemo(() => {
     const seen = new Set();
     const out = [];
     for (const j of pastJobs) {
-      // Rebook is an orders endpoint; a repair is rebooked by walking its flow again.
-      if (j.kind !== 'order' || j.outcome !== 'completed' || seen.has(j.raw.service)) continue;
-      seen.add(j.raw.service);
-      out.push({ id: j.id, service: j.raw.service, date: j.raw.completedAt || j.raw.createdAt });
+      if (j.outcome !== 'completed' || !j.rebookHref || seen.has(j.rebookHref)) continue;
+      seen.add(j.rebookHref);
+      out.push({ key: j.rebookHref, title: j.title, href: j.rebookHref, date: j.raw.completedAt || j.createdAt });
       if (out.length === 3) break;
     }
     return out;
   }, [pastJobs]);
-
-  async function handleRebook(id, service) {
-    if (rebooking) return;
-    try {
-      const res = await rebook(id).unwrap();
-      toast.success('Rebooked — finding you a pro');
-      nav(`/orders/${res.order._id}`);
-    } catch (err) {
-      if (err?.data?.activeOrderId) { toast.error(err.data.error || 'You already have a job in progress'); nav(`/orders/${err.data.activeOrderId}`); }
-      else { if (err?.data?.error) toast.error(err.data.error); nav(`/book/${service}`); }
-    }
-  }
 
   const notHere = svc?.status === 'not_here';
 
@@ -253,7 +239,7 @@ export default function HomePage() {
 
               <ProblemChips services={services} />
               <OffersRail isAuthed={isAuthed} />
-              <BookAgainRail items={quickRebooks} busy={rebooking} onRebook={handleRebook} label={serviceLabel} />
+              <BookAgainRail items={quickRebooks} onOpen={nav} />
               <AdBanner />
               <NearbyShopsLink />
               <EventsRail />

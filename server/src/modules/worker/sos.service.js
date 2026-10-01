@@ -20,13 +20,42 @@ const logger  = require('../../core/logger');
 const ACK_KEY = (incidentKey) => `sos:ack:${incidentKey}`;
 const ESCALATION_DELAY_MS = 5 * 60 * 1000; // 5 min before re-alert
 
-async function triggerSOS({ workerId, lat, lng, orderId, message, type = 'worker_sos' }) {
+/**
+ * The job the worker is on, whatever its kind, in the shape the rest of this
+ * flow uses (who the customer is, what the service is, where). Only a job that
+ * is theirs: an SOS never reveals someone else's customer.
+ */
+async function jobFor(workerId, { orderId, jobId }) {
+  if (orderId) return Order.findById(orderId).select('userId service pickupLocation').lean();
+  if (!jobId) return null;
+  const { findJob, KINDS } = require('../jobs/kinds');
+  const found = await findJob(jobId, 'userId workerId categoryCode serviceType vertical location serviceLocation pickupLocation');
+  if (!found || String(found.doc.workerId || '') !== String(workerId)) return null;
+  const k = KINDS[found.kind];
+  const d = found.doc;
+  const where = k.open?.start?.(d) || (d.location?.address ? { address: d.location.address } : null);
+  return {
+    _id: d._id,
+    userId: d.userId,
+    service: d.categoryCode || d.serviceType || d.vertical || k.label,
+    pickupLocation: { address: where?.address || '' },
+    link: k.link(d._id),
+  };
+}
+
+async function triggerSOS({ workerId, lat: givenLat, lng: givenLng, orderId, jobId, message, type = 'worker_sos' }) {
+  let lat = givenLat;
+  let lng = givenLng;
   const [worker, order] = await Promise.all([
     Worker.findById(workerId).select('name phone emergencyContact currentLocation').lean(),
-    orderId ? Order.findById(orderId).select('userId service pickupLocation').lean() : null,
+    jobFor(workerId, { orderId, jobId }),
   ]);
 
   if (!worker) throw Object.assign(new Error('Worker not found'), { status: 404 });
+
+  // No fix from the phone (GPS off, indoors): use the last position we have.
+  const last = worker.currentLocation?.coordinates;
+  if ((lat == null || lng == null) && last?.length === 2) [lng, lat] = last;
 
   const now      = Date.now();
   const incident = {
@@ -34,7 +63,7 @@ async function triggerSOS({ workerId, lat, lng, orderId, message, type = 'worker
     workerName:  worker.name,
     workerPhone: worker.phone,
     lat, lng,
-    orderId:     orderId ? String(orderId) : null,
+    orderId:     order ? String(order._id) : null,
     service:     order?.service || null,
     address:     order?.pickupLocation?.address || null,
     message:     message || 'SOS triggered — worker needs assistance',
@@ -86,7 +115,7 @@ async function triggerSOS({ workerId, lat, lng, orderId, message, type = 'worker
       type:  'worker_wellness',
       title: '🆘 Safety alert — your worker needs help',
       body:  'Your service provider has flagged an emergency. If you can, call 112 and help. Support has been notified.',
-      deepLink: `/orders/${orderId}`,
+      deepLink: order.link || `/orders/${order._id}`,
       data: { callEmergency: true, workerPhone: worker.phone },
     }).catch(() => {});
   }
@@ -95,14 +124,14 @@ async function triggerSOS({ workerId, lat, lng, orderId, message, type = 'worker
   try {
     const SupportTicket = require('../engagement/support-ticket.model');
     await SupportTicket.create({
-      orderId:  order ? order._id : undefined,
+      orderId:  orderId ? order?._id : undefined, // only a real Order; other kinds are named in the body
       workerId: worker._id,
       userId:   order?.userId,
       subject:  `🆘 URGENT SOS — ${worker.name}`,
       body: [
         `Worker ${worker.name} (${worker.phone}) triggered SOS at ${new Date(now).toISOString()}.`,
         lat && lng ? `Location: https://maps.google.com/?q=${lat},${lng}` : '',
-        order ? `Order: ${orderId} · Service: ${order.service} · ${incident.address}` : 'No active order.',
+        order ? `Job: ${order._id} · Service: ${order.service} · ${incident.address}` : 'No active job.',
         `Incident key: ${incidentKey}`,
       ].filter(Boolean).join('\n'),
       source:   'sos',

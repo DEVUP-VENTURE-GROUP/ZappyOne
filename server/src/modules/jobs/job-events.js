@@ -97,9 +97,9 @@ const ALERT_MAX = 40;
  * Tell approved providers near a new job that it's there.
  *
  * Only providers approved for this exact service, and only those whose last
- * known position (or shop address) is within reach. A provider with no known
- * position is still told — they chose to work this service and can judge the
- * distance themselves from the job card.
+ * known position (or shop address) is within reach, and only workers who are
+ * online. A provider with no known position is still told — they chose to work
+ * this service and can judge the distance themselves from the job card.
  */
 async function alertNearbyProviders(kind, doc) {
   try {
@@ -116,7 +116,8 @@ async function alertNearbyProviders(kind, doc) {
     const workerIds = providers.filter((p) => p.kind === 'worker').map((p) => p.id);
     const shopIds = providers.filter((p) => p.kind === 'shop').map((p) => p.id);
     const [workers, shops] = await Promise.all([
-      Worker.find({ _id: { $in: workerIds }, isActive: { $ne: false } }).select('currentLocation').lean(),
+      // Like any partner app: you're rung only while you're online. Shops are reachable in their hours.
+      Worker.find({ _id: { $in: workerIds }, isOnline: true, isActive: { $ne: false } }).select('currentLocation').lean(),
       Shop.find({ _id: { $in: shopIds }, isActive: { $ne: false } }).select('address.location').lean(),
     ]);
     const distance = (coords) => (start && coords?.length === 2 ? haversineKm(start.lat, start.lng, coords[1], coords[0]) : null);

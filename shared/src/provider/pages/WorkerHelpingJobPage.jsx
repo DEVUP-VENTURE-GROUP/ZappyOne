@@ -8,6 +8,7 @@ import ProofPhotos, { readyKeys } from '../../components/common/ProofPhotos';
 import ImageUploadField from '../../components/common/ImageUploadField';
 import CollectPaymentCard from '../../components/common/CollectPaymentCard';
 import TripSharingBanner from '../../components/worker/TripSharingBanner';
+import SOSButton from '../../components/worker/SOSButton';
 import { usePublishTripLocation, tripOf } from '../../hooks/useLiveTrip';
 import {
   useGetHelpingTaskQuery, useAdvanceHelpingStatusMutation, useUpdateHelpingItemMutation,
@@ -181,6 +182,13 @@ export default function WorkerHelpingJobPage() {
             className="w-full rounded-2xl bg-emerald-600 text-white font-bold py-3.5 disabled:opacity-50">
             {completing ? 'Completing…' : 'Complete task'}
           </button>
+        )}
+        {/* Safety: on every live job, one hold away. */}
+        {!['COMPLETED', 'CUSTOMER_CONFIRMED', 'SETTLED', 'CANCELLED', 'FAILED', 'DISPUTED'].includes(task.status) && (
+          <div className="space-y-1.5 pt-2">
+            <p className="text-[12px] font-semibold text-slate-500">Feeling unsafe or need urgent help?</p>
+            <SOSButton jobId={task._id} kind="helping" service={task.serviceType} />
+          </div>
         )}
       </Shell>
     </div>

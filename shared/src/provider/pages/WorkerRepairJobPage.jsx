@@ -12,6 +12,7 @@ import toast from 'react-hot-toast';
 import { formatPaise } from '../../utils/money';
 import { usePublishTripLocation, MOVING_STATUSES, tripOf } from '../../hooks/useLiveTrip';
 import TripSharingBanner from '../../components/worker/TripSharingBanner';
+import SOSButton from '../../components/worker/SOSButton';
 import { useVerifyRepairHandoverCodeMutation, useDeclineRepairBookingMutation } from '../../services/api';
 import PassReasonPicker from '../../components/worker/PassReasonPicker';
 import OtpEntry from '../../components/common/OtpEntry';
@@ -749,6 +750,13 @@ export default function WorkerRepairJobPage() {
           >
             {moving ? <><Loader2 size={15} className="animate-spin" /> Updating…</> : action.label}
           </button>
+        )}
+        {/* Safety: on every live job, one hold away. */}
+        {!['PROVIDER_ASSIGNED', 'COMPLETED', 'CANCELLED', 'REJECTED', 'EXPIRED', 'FAILED'].includes(booking.status) && (
+          <div className="space-y-1.5 pt-2">
+            <p className="text-[12px] font-semibold text-slate-500">Feeling unsafe or need urgent help?</p>
+            <SOSButton jobId={booking._id} kind="repair" service={booking.vertical} />
+          </div>
         )}
       </div>
     </div>

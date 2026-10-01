@@ -15,7 +15,6 @@ const loaders = {
   // Category catalog is the #1 destination from the Home tiles, so it's worth
   // warming alongside the tabs. The service detail chunk is only prefetched on
   // demand (prefetchRoute) — it's one level deeper in the funnel.
-  '/service/:code':      () => import('../pages/ServiceDetailPage'),
 };
 
 // The chunks warmed by prefetchMainTabs — everything a user can reach in one tap.

@@ -3,20 +3,18 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import toast from 'react-hot-toast';
 import {
-  Store, Phone, Power, Loader2, ChevronRight, Wrench, ClipboardList, ShieldCheck, Bell, UserRound, LogOut, Info,
+  Store, Phone, Power, Loader2, ChevronRight, ClipboardList, ShieldCheck, Bell,
+  UserRound, LogOut, Info,
 } from 'lucide-react';
 import {
   useGetWorkerMeQuery, useGetMyShopQuery, useGetKycStatusQuery, useGoOnlineMutation, useGoOfflineMutation,
-  useRepairProviderJobsQuery, useGetWorkerOrdersQuery, useLogoutMutation,
+  useLogoutMutation,
 } from '@shared/services/api';
 import { selectAuth, logout } from '@shared/modules/auth/authSlice';
 import { useGeolocation } from '@shared/hooks/useGeolocation';
 import { formatPaise } from '@shared/utils/money';
-import OrderOfferHost from '@shared/provider/OrderOfferHost';
 import { useLocationBroadcast } from '@shared/provider/useLocationBroadcast';
-
-const ORDER_OPEN = ['assigned', 'on_the_way', 'arrived', 'in_progress'];
-const label = (s = '') => s.replace(/_/g, ' ').toLowerCase();
+import { useProviderJobs } from '@shared/provider/useProviderJobs';
 
 /**
  * A shop technician's home. The shop assigns the work and pays its staff, so
@@ -30,8 +28,8 @@ export default function ShopWorkerHome() {
   const { data: meData, refetch: refetchMe } = useGetWorkerMeQuery(undefined, { pollingInterval: 60000 });
   const { data: shopData } = useGetMyShopQuery(undefined, { pollingInterval: 120000 });
   const { data: kycData } = useGetKycStatusQuery();
-  const { data: repairData, isLoading: loadingRepair } = useRepairProviderJobsQuery({ active: 'true' }, { pollingInterval: 30000 });
-  const { data: ordersData, isLoading: loadingOrders } = useGetWorkerOrdersQuery(1, { pollingInterval: 30000 });
+  // A shop's team works what the shop takes: repairs and pet care.
+  const { mine: jobs, isLoading: loadingJobs } = useProviderJobs({ kinds: ['repair', 'pet'] });
   const [goOnline] = useGoOnlineMutation();
   const [goOffline] = useGoOfflineMutation();
   const [callLogout] = useLogoutMutation();
@@ -43,21 +41,8 @@ export default function ShopWorkerHome() {
   const kycApproved = kycData?.kyc?.status === 'approved';
   useLocationBroadcast({ isOnline: onDuty, token: accessToken, currentOrderId: me?.currentOrderId });
 
-  const jobs = [
-    ...(repairData?.bookings || []).map((b) => ({
-      id: b._id, to: `/worker/repair/${b._id}`, title: `${b.brandCode || ''} ${b.modelCode || ''}`.trim() || 'Repair job',
-      sub: `${b.repairCode ? label(b.repairCode) : 'inspection'} · ${b.reference}`, status: b.status,
-      valuePaise: b.priceSnapshot?.totalPaise,
-    })),
-    ...(ordersData?.orders || []).filter((o) => ORDER_OPEN.includes(o.status)).map((o) => ({
-      id: o._id, to: `/worker/jobs/${o._id}`, title: label(o.service), sub: o.pickupLocation?.address || '',
-      status: o.status, valuePaise: o.pricing?.totalPaise,
-    })),
-  ];
-
   async function toggleDuty() {
     if (!kycApproved) { toast.error('Finish your ID verification first'); nav('/worker/kyc'); return; }
-    if (onDuty && me?.currentOrderId) { toast('Finish your active job first'); return; }
     setToggling(true);
     try {
       if (onDuty) {
@@ -71,6 +56,7 @@ export default function ShopWorkerHome() {
       refetchMe();
     } catch (err) {
       toast.error(err?.data?.error || err?.message || 'Could not change duty');
+      if (err?.data?.code === 'ON_TRIP' && err.data.job?.link) nav(err.data.job.link);
     } finally {
       setToggling(false);
     }
@@ -139,23 +125,21 @@ export default function ShopWorkerHome() {
 
         <section className="rounded-2xl bg-white p-4 ring-1 ring-slate-100">
           <p className="flex items-center gap-2 text-sm font-black text-navy"><ClipboardList size={15} className="text-zappy-600" /> My jobs</p>
-          {loadingRepair || loadingOrders ? (
+          {loadingJobs ? (
             <div className="flex justify-center py-6"><Loader2 size={18} className="animate-spin text-slate-300" /></div>
           ) : jobs.length === 0 ? (
             <p className="py-6 text-center text-sm text-slate-500">No jobs right now. Your shop owner will assign the next one.</p>
           ) : (
             <ul className="mt-3 space-y-2">
               {jobs.map((j) => (
-                <li key={j.id}>
+                <li key={`${j.kind}-${j.id}`}>
                   <button onClick={() => nav(j.to)} className="flex w-full items-center gap-3 rounded-xl p-2.5 text-left ring-1 ring-slate-100 transition hover:ring-zappy-200">
-                    <Wrench size={15} className="shrink-0 text-slate-400" />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-semibold capitalize text-navy">{j.title}</span>
-                      <span className="block truncate text-[11px] text-slate-400">{j.sub}</span>
+                      <span className="block truncate text-[12px] capitalize text-slate-500">{j.subtitle}</span>
                     </span>
-                    <span className="shrink-0 text-right">
-                      {j.valuePaise > 0 && <span className="block text-xs font-bold tabular-nums text-slate-700">{formatPaise(j.valuePaise)}</span>}
-                      <span className="block text-[10px] font-semibold capitalize text-slate-400">{label(j.status)}</span>
+                    <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${j.attention ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600'}`}>
+                      {j.status}
                     </span>
                     <ChevronRight size={14} className="shrink-0 text-slate-300" />
                   </button>
@@ -181,7 +165,6 @@ export default function ShopWorkerHome() {
         </button>
       </main>
 
-      <OrderOfferHost onJobChanged={refetchMe} />
     </div>
   );
 }

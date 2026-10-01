@@ -31,7 +31,7 @@ const get = (path, token) => request(app).get(`/api${path}`).set('Authorization'
 const post = (path, token, body = {}) => request(app).post(`/api${path}`).set('Authorization', `Bearer ${token}`).send(body);
 
 async function worker(phone) {
-  return Worker.create({ name: `W${phone}`, phone, kyc: { status: 'approved' }, currentLocation: { type: 'Point', coordinates: [78.39, 17.45] } });
+  return Worker.create({ name: `W${phone}`, phone, kyc: { status: 'approved' }, isOnline: true, currentLocation: { type: 'Point', coordinates: [78.39, 17.45] } });
 }
 const enrol = (w, lineCode, domainCode) => ProviderEnrolment.create({ providerKind: 'individual', workerId: w._id, domainCode, lineCode, status: 'approved' });
 
@@ -191,5 +191,66 @@ describe('what rings on the provider’s phone', () => {
     const alerts = heard.filter((h) => h.event === 'job.available');
     expect(alerts.map((a) => a.id)).toEqual([String(approved._id)]);
     expect(alerts[0].payload).toMatchObject({ kind: 'helping', title: 'Groceries', earningPaise: 9000 });
+  });
+});
+
+test('a day of pet and helping work shows up in earnings', async () => {
+  const { getEarnings } = require('../src/modules/worker/worker.service');
+  const now = new Date();
+  await openPet({ status: 'PAYMENT_COMPLETED', workerId: other._id, execution: { completedAt: now }, paymentMethod: 'cash' });
+  await HelpingTask.collection.insertOne({
+    reference: 'ZHEARN', userId: customer, serviceType: 'shopping', status: 'SETTLED', workerId: other._id,
+    completedAt: now, charge: { workerEarningPaise: 12000 }, paymentMethod: 'online', items: [], statusHistory: [],
+  });
+  const out = await getEarnings({ workerId: String(other._id), range: 'today' });
+  expect(out.jobs).toBe(2);
+  expect(out.earningsPaise).toBe(62000); // 50,000 pet + 12,000 helping
+  expect(out.breakdown).toMatchObject({ pet: { jobs: 1 }, helping: { jobs: 1, earningsPaise: 12000 } });
+  expect(out.cashJobs).toBe(1);
+});
+
+describe('online is the master switch', () => {
+  test('an offline worker is not rung for open jobs', async () => {
+    const { redis } = require('../src/config/redis');
+    const { announce } = require('../src/modules/jobs/job-events');
+    await Worker.updateOne({ _id: approved._id }, { isOnline: false });
+    const heard = [];
+    const sub = redis.duplicate();
+    await sub.subscribe('provider:repair');
+    sub.on('message', (_c, m) => heard.push(JSON.parse(m)));
+    await announce('helping', {
+      _id: oid(), reference: 'ZHOFF', userId: customer, status: 'CONFIRMED', serviceType: 'shopping',
+      pickupLocation: HOME, charge: {}, items: [], statusHistory: [],
+    }, 'CONFIRMED');
+    await new Promise((r) => setTimeout(r, 300));
+    await sub.quit();
+    await Worker.updateOne({ _id: approved._id }, { isOnline: true });
+    expect(heard.filter((h) => h.event === 'job.available')).toHaveLength(0);
+  });
+
+  test('going offline is refused mid-trip', async () => {
+    const { goOffline } = require('../src/modules/worker/worker.service');
+    await openPet({ status: 'PROVIDER_EN_ROUTE', workerId: approved._id });
+    await expect(goOffline({ workerId: String(approved._id) })).rejects.toMatchObject({ status: 409, code: 'ON_TRIP' });
+  });
+});
+
+describe('SOS on any job', () => {
+  test('a worker on a pet job raises SOS: the customer is warned with the right link, ops get the location', async () => {
+    const { triggerSOS } = require('../src/modules/worker/sos.service');
+    const { insertedId } = await openPet({ status: 'SERVICE_STARTED', workerId: approved._id });
+    await triggerSOS({ workerId: String(approved._id), jobId: String(insertedId), type: 'pet_emergency' });
+    await new Promise((r) => setTimeout(r, 200));
+    const warned = await Notification.findOne({ 'recipient.id': customer, type: 'worker_wellness' }).sort({ createdAt: -1 }).lean();
+    expect(warned?.deepLink).toBe(`/pet/bookings/${insertedId}`);
+  });
+
+  test("SOS never reveals a job that isn't theirs", async () => {
+    const { triggerSOS } = require('../src/modules/worker/sos.service');
+    const before = await Notification.countDocuments({ type: 'worker_wellness' });
+    const { insertedId } = await openPet({ status: 'SERVICE_STARTED', workerId: other._id });
+    await triggerSOS({ workerId: String(approved._id), jobId: String(insertedId) });
+    await new Promise((r) => setTimeout(r, 200));
+    expect(await Notification.countDocuments({ type: 'worker_wellness' })).toBe(before);
   });
 });

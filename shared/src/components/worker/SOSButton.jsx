@@ -23,7 +23,7 @@ const PET_SERVICES = new Set([
   'pet_grooming', 'pet_walking', 'pet_transport', 'pet_sitting', 'pet_vet_assist', 'pet_training_assist',
 ]);
 
-export default function SOSButton({ orderId, lat, lng, service }) {
+export default function SOSButton({ orderId, jobId, kind, lat, lng, service }) {
   const [holding,   setHolding]   = useState(false);
   const [progress,  setProgress]  = useState(0);
   const [triggered, setTriggered] = useState(false);
@@ -31,7 +31,7 @@ export default function SOSButton({ orderId, lat, lng, service }) {
   const timerRef   = useRef(null);
   const intervalRef = useRef(null);
   const HOLD_MS    = 3000;
-  const isPetJob   = PET_SERVICES.has(service);
+  const isPetJob   = kind === 'pet' || PET_SERVICES.has(service);
 
   function startHold() {
     if (triggered) return;
@@ -64,7 +64,7 @@ export default function SOSButton({ orderId, lat, lng, service }) {
       return;
     }
     try {
-      await triggerSOS({ orderId, lat, lng, type: isPetJob ? 'pet_emergency' : 'worker_sos' }).unwrap();
+      await triggerSOS({ orderId, jobId, lat, lng, type: isPetJob ? 'pet_emergency' : 'worker_sos' }).unwrap();
       setTriggered(true);
       const msg = isPetJob
         ? '🐾 SOS sent. Emergency contact + support notified. See vet contacts below.'

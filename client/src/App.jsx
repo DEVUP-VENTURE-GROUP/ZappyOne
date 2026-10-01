@@ -26,7 +26,6 @@ import ErrorBoundary from '@shared/components/common/ErrorBoundary';
 import LoginPage from './pages/LoginPage';
 
 const HomePage            = lazy(() => import('./pages/HomePage'));
-const BookingPage         = lazy(() => import('./pages/BookingPage'));
 const OrderTrackingPage   = lazy(() => import('./pages/OrderTrackingPage'));
 const OrdersListPage      = lazy(() => import('./pages/OrdersListPage'));
 const TrackPage           = lazy(() => import('./pages/TrackPage'));
@@ -35,8 +34,6 @@ const NotificationsPage   = lazy(() => import('./pages/NotificationsPage'));
 const ChatPage            = lazy(() => import('./pages/ChatPage'));
 // The all-services catalog is now the LIVE catalog — see AllServicesPage.
 const AllServicesPage     = lazy(() => import('./pages/AllServicesPage'));
-const ServiceDetailPage   = lazy(() => import('./pages/ServiceDetailPage'));
-const BrandSelectPage     = lazy(() => import('./pages/BrandSelectPage'));
 const PlansPage           = lazy(() => import('./pages/PlansPage'));
 const WalletPage          = lazy(() => import('./pages/WalletPage'));
 const ReferralPage        = lazy(() => import('./pages/ReferralPage'));
@@ -54,6 +51,7 @@ const EventSavedThemesPage         = lazy(() => import('./pages/events/EventSave
 const NearbyShopsPage              = lazy(() => import('./pages/NearbyShopsPage'));
 const RepairFlowPage               = lazy(() => import('./pages/repair/RepairFlowPage'));
 const CategoryProblemsPage         = lazy(() => import('./pages/repair/CategoryProblemsPage'));
+const LegacyServiceRedirect        = lazy(() => import('./pages/LegacyServiceRedirect'));
 const RepairBookingPage            = lazy(() => import('./pages/repair/RepairBookingPage'));
 const MyAssetsPage                  = lazy(() => import('./pages/repair/MyAssetsPage'));
 const HelpingServicesPage           = lazy(() => import('./pages/helping/HelpingServicesPage'));
@@ -155,11 +153,12 @@ export default function App() {
         {/* Routes outside MainLayout (no bottom nav) */}
         {/* Detail sits outside MainLayout: it owns a sticky Book Now bar, so the
             bottom nav would double up on the same screen edge. */}
-        <Route path="/service/:code" element={<RequireAuth role="user"><ServiceDetailPage /></RequireAuth>} />
+        {/* Old booking links open the live flow for that service (see LegacyServiceRedirect). */}
+        <Route path="/service/:code" element={<LegacyServiceRedirect />} />
         {/* Brand/model step for verticals with a Brand catalog (phone, laptop,
             car, bike). Redirects straight to /book when there's nothing to pick. */}
-        <Route path="/service/:code/brand" element={<RequireAuth role="user"><BrandSelectPage /></RequireAuth>} />
-        <Route path="/book/:service" element={<RequireAuth role="user"><BookingPage /></RequireAuth>} />
+        <Route path="/service/:code/brand" element={<LegacyServiceRedirect />} />
+        <Route path="/book/:service" element={<LegacyServiceRedirect />} />
         <Route path="/orders/:id" element={<RequireAuth role="user"><OrderTrackingPage /></RequireAuth>} />
         <Route path="/orders/:id/chat" element={<RequireAuth><ChatPage /></RequireAuth>} />
         <Route path="/notifications" element={<RequireAuth role="user"><NotificationsPage /></RequireAuth>} />

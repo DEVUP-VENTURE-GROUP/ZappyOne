@@ -53,6 +53,14 @@ const KINDS = {
     },
     // Repairs are offered to one provider at a time by the matching engine, never posted open.
     open: null,
+    // What a finished job paid the provider — the settlement run's own split.
+    earning: {
+      done: ['COMPLETED'],
+      at: 'completedAt',
+      fields: 'priceSnapshot paymentMethod completedAt',
+      share: (b) => require('../repair/services/settlement.service').splitFor(b).providerPaise,
+      platform: (b) => require('../repair/services/settlement.service').splitFor(b).platformPaise,
+    },
     // Repair copy lives with its richer event service (quotes, SLA); see repair/services/events.service.
     copy: null,
   },
@@ -86,6 +94,12 @@ const KINDS = {
         earningPaise: b.pricing?.providerAmountPaise || 0,
         at: b.scheduledAt || b.checkInAt || null,
       }),
+    },
+    earning: {
+      done: ['SERVICE_COMPLETED', 'CUSTOMER_CONFIRMATION', 'PAYMENT_PENDING', 'PAYMENT_COMPLETED', 'CLOSED'],
+      at: 'execution.completedAt',
+      fields: 'pricing.providerAmountPaise paymentMethod execution.completedAt',
+      share: (b) => b.pricing?.providerAmountPaise || 0,
     },
     copy: {
       customer: {
@@ -131,6 +145,12 @@ const KINDS = {
         at: t.scheduledAt || null,
         frontPaise: t.itemMoney?.paymentModel === 'worker_advance' ? t.itemMoney?.budgetPaise || 0 : 0,
       }),
+    },
+    earning: {
+      done: ['COMPLETED', 'CUSTOMER_CONFIRMED', 'SETTLED'],
+      at: 'completedAt',
+      fields: 'charge.workerEarningPaise paymentMethod completedAt',
+      share: (t) => t.charge?.workerEarningPaise || 0,
     },
     copy: {
       customer: {

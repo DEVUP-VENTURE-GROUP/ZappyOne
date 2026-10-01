@@ -18,6 +18,10 @@ router.post('/sos',
     lat:     Joi.number().optional(),
     lng:     Joi.number().optional(),
     orderId: Joi.string().hex().length(24).optional().allow(null, ''),
+    // Any other job kind (repair, pet, helping); the server checks it is theirs.
+    jobId:   Joi.string().hex().length(24).optional().allow(null, ''),
+    // Listed so validation keeps it: a pet emergency routes differently.
+    type:    Joi.string().valid('worker_sos', 'pet_emergency').optional(),
     message: Joi.string().max(300).optional(),
   })),
   async (req, res, next) => {
@@ -28,6 +32,8 @@ router.post('/sos',
         lat:      req.body.lat,
         lng:      req.body.lng,
         orderId:  req.body.orderId,
+        jobId:    req.body.jobId,
+        type:     req.body.type,
         message:  req.body.message,
       });
       res.json(result);

@@ -1273,7 +1273,7 @@ export const api = createApi({
 
     // --- SOS ---
     triggerSOS: b.mutation({
-      query: ({ orderId, lat, lng }) => ({ url: `/workers/sos`, method: 'POST', body: { orderId, lat, lng } }),
+      query: ({ orderId, jobId, lat, lng, type }) => ({ url: `/workers/sos`, method: 'POST', body: { orderId, jobId, lat, lng, type } }),
     }),
 
     // --- Break Bonus (server: POST /workers/wellness/break-bonus) ---
