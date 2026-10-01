@@ -4,12 +4,11 @@ import { selectAuth } from '@shared/modules/auth/authSlice';
 import { API_BASE } from '@shared/services/apiBase';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  LayoutDashboard, Star, Package, Calendar, Wallet, User, LogOut,
-  Plus, Loader2, CheckCircle, Clock, ChevronRight, Upload,
-  Trash2, Edit3, AlertCircle, PartyPopper, X, Camera, FileText,
-  TrendingUp, BadgeCheck, IndianRupee, CalendarCheck, Sparkles,
-  ShieldCheck, ArrowRight, Bell, ChevronDown, Menu, Megaphone,
-  LayoutGrid, Palette, Zap, Phone, MapPin, Briefcase, Award, Quote,
+  LayoutDashboard, Star, Package, Calendar, Wallet, User, LogOut, Plus,
+  Loader2, CheckCircle, Clock, ChevronRight, Upload, Trash2, Edit3, AlertCircle,
+  PartyPopper, X, Camera, FileText, BadgeCheck, IndianRupee, CalendarCheck, Sparkles,
+  ShieldCheck, ArrowRight, Bell, Menu, Megaphone, Palette, Zap, Phone,
+  MapPin, Briefcase, Award, Lock,
 } from 'lucide-react';
 import {
   usePartnerOverviewQuery, usePartnerMeQuery, useUpdatePartnerMeMutation,
@@ -23,6 +22,7 @@ import {
 import { logout } from '@shared/modules/auth/authSlice';
 import LiveSelfieCapture from '@shared/components/kyc/LiveSelfieCapture';
 import toast from 'react-hot-toast';
+import { ZappyLogo } from '@shared/components/common/ZappyLogo';
 import { useStartCodeGate } from '@shared/components/worker/StartCodePrompt';
 import decorPhoto from '@assets/images/events/event_romantic.webp';
 
@@ -2018,242 +2018,157 @@ export default function PartnerDashboard() {
     </AnimatePresence>
   );
 
+  // On a phone the bottom bar has the five daily tabs; the menu has only the rest.
+  const MOBILE_TABS = TABS.filter((t) => t.id !== 'profile');
+
+  function NavItem({ id, label, Icon, onPick }) {
+    const active = activeTab === id;
+    const locked = !kycApproved && KYC_GATED.includes(id);
+    const badge = id === 'bookings' && pendingCount > 0;
+    return (
+      <button
+        type="button"
+        onClick={() => { if (!locked) { setActiveTab(id); onPick?.(); } }}
+        disabled={locked}
+        aria-current={active ? 'page' : undefined}
+        className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-[14px] font-medium transition-colors ${
+          locked ? 'cursor-not-allowed text-slate-400'
+            : active ? 'bg-zappy-50 text-zappy-700'
+              : 'text-slate-600 hover:bg-slate-100 hover:text-navy'}`}
+      >
+        <Icon size={18} strokeWidth={2} className="shrink-0" />
+        <span className="flex-1 text-left">{label}</span>
+        {locked && <span className="flex items-center gap-1 text-[11px] text-slate-400"><Lock size={12} /> after verification</span>}
+        {!locked && badge && (
+          <span className="rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-bold text-white">{pendingCount > 9 ? '9+' : pendingCount}</span>
+        )}
+      </button>
+    );
+  }
+
+  const PartnerCard = () => (partner ? (
+    <div className="flex items-center gap-3 rounded-lg border border-slate-200 px-3 py-3">
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-sm font-semibold text-slate-700">
+        {partner.businessName?.[0]?.toUpperCase()}
+      </span>
+      <span className="min-w-0">
+        <span className="block truncate text-[13px] font-semibold text-navy">{partner.businessName}</span>
+        <span className={`block text-[12px] ${kycApproved ? 'text-emerald-700' : 'text-amber-700'}`}>
+          {kycApproved ? 'Verified partner' : 'Verification pending'}
+        </span>
+      </span>
+    </div>
+  ) : null);
+
   return (
     <div className="min-h-screen bg-slate-50">
 
-      {/* DESKTOP layout (lg+): sidebar + content */}
-      <div className="hidden lg:flex min-h-screen">
-
-        {/* Sidebar */}
-        <aside className="w-72 bg-[#100a1f] border-r border-white/5 flex flex-col sticky top-0 h-screen text-slate-300">
-          {/* Logo */}
-          <div className="px-6 py-8 relative overflow-hidden group">
-            <div className="flex items-center gap-4 relative z-10">
-              <div className="relative">
-                <div className="w-11 h-11 bg-gradient-to-br from-[#7462ff] to-[#984dff] rounded-[16px] flex items-center justify-center shadow-lg shadow-violet-500/20">
-                  <PartyPopper size={20} className="text-white drop-shadow-sm" />
-                </div>
-              </div>
-              <div>
-                <h1 className="font-black text-white text-[19px] leading-none tracking-tight">Zappyone Partner</h1>
-                <p className="text-[10px] text-white/50 font-bold uppercase tracking-widest mt-1.5">Event Portal</p>
-              </div>
-            </div>
+      {/* DESKTOP (lg+): sidebar + content */}
+      <div className="hidden min-h-screen lg:flex">
+        <aside className="sticky top-0 flex h-screen w-64 flex-col border-r border-slate-200 bg-white">
+          <div className="flex items-center gap-2.5 px-5 py-5">
+            <ZappyLogo size={28} />
+            <span className="text-[13px] font-medium text-slate-500">Event partner</span>
           </div>
+          <div className="px-4 pb-4"><PartnerCard /></div>
 
-          {/* Partner mini profile */}
-          {partner && (
-            <div className="px-5 pb-5">
-              <div className="flex items-center gap-3 bg-white/5 rounded-[18px] px-3.5 py-3.5 border border-white/10">
-                <div className="w-10 h-10 rounded-[14px] bg-gradient-to-br from-fuchsia-500 to-violet-500 flex items-center justify-center text-white font-black text-sm shrink-0 shadow-md">
-                  {partner.businessName?.[0]?.toUpperCase()}
-                </div>
-                <div className="min-w-0">
-                  <p className="font-bold text-white text-[13px] truncate">{partner.businessName}</p>
-                  <p className="text-[11px] text-white/50 truncate mt-0.5">{partner.phone || partner.email}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 mt-3 px-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]" />
-                <span className="text-[11px] font-semibold text-white/60">Active Partner</span>
-              </div>
-            </div>
-          )}
-
-          {/* Nav items */}
-          <nav className="flex-1 px-4 py-2 space-y-1.5 overflow-y-auto">
-            {TABS.map(({ id, label, Icon }) => {
-              const active = activeTab === id;
-              const badge = id === 'bookings' && pendingCount > 0;
-              const locked = !kycApproved && KYC_GATED.includes(id);
-              return (
-                <motion.button key={id} whileTap={!locked ? { scale: 0.98 } : {}}
-                  onClick={() => !locked && setActiveTab(id)}
-                  title={locked ? 'Complete KYC to unlock' : ''}
-                  className={`w-full flex items-center gap-3.5 px-4 py-3.5 rounded-[16px] text-[13px] font-semibold transition-all relative
-                    ${locked ? 'opacity-40 cursor-not-allowed text-white/40'
-                      : active ? 'bg-gradient-to-r from-[#7462ff] to-[#984dff] text-white shadow-lg shadow-violet-500/20'
-                        : 'text-white/60 hover:bg-white/5 hover:text-white'}`}>
-                  <Icon size={18} strokeWidth={active ? 2.5 : 2} />
-                  <span className={active ? 'font-bold tracking-wide' : 'tracking-wide'}>{label}</span>
-                  {locked && <span className="ml-auto text-xs opacity-50">🔒</span>}
-                  {!locked && badge && (
-                    <span className="ml-auto w-5 h-5 bg-red-500 rounded-full text-[9px] text-white font-black flex items-center justify-center border-2 border-[#100a1f]">
-                      {pendingCount > 9 ? '9+' : pendingCount}
-                    </span>
-                  )}
-                </motion.button>
-              );
-            })}
+          <nav className="flex-1 space-y-0.5 overflow-y-auto px-3" aria-label="Partner">
+            {TABS.map((t) => <NavItem key={t.id} {...t} />)}
+            <a href="/partner/advertise" className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-[14px] font-medium text-slate-600 hover:bg-slate-100 hover:text-navy">
+              <Megaphone size={18} className="shrink-0" /> Advertise
+            </a>
           </nav>
 
-          {/* Advertise CTA */}
-          <div className="px-4 py-4">
-            <a href="/partner/advertise"
-              className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-bold bg-zappy-gradient text-white shadow-sm shadow-zappy-200 hover:opacity-90 transition-opacity">
-              <Sparkles size={15} />Advertise on Zappyone
-            </a>
-          </div>
-
-          {/* Logout */}
-          <div className="px-3 py-3 border-t border-slate-100">
-            <button onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-500 hover:text-red-500 hover:bg-red-50 transition-all">
-              <LogOut size={16} />
-              Logout
+          <div className="border-t border-slate-200 p-3">
+            <button type="button" onClick={handleLogout} className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-[14px] font-medium text-slate-500 hover:bg-red-50 hover:text-red-600">
+              <LogOut size={18} /> Sign out
             </button>
           </div>
         </aside>
 
-        {/* Main content area */}
-        <main className="flex-1 overflow-y-auto bg-slate-50">
-          {/* Desktop top bar (Clean style) */}
-          <div className="px-8 py-6 flex items-center justify-between pointer-events-auto">
-            <div>
-              <p className="text-[14px] text-slate-500 font-bold mb-1">Welcome to Zappyone</p>
-              <h1 className="text-[26px] font-black text-[#0f172a] leading-none tracking-tight capitalize">{partner?.businessName || activeTab}</h1>
-            </div>
-            <div className="flex items-center gap-4">
-              <button onClick={() => setNotifOpen(true)} className="relative w-11 h-11 bg-white hover:bg-slate-50 rounded-2xl flex items-center justify-center border border-slate-200 shadow-sm transition-colors">
-                <Bell size={20} className="text-slate-600" />
-                {unreadNotifs > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 rounded-full text-[10px] text-white font-black flex items-center justify-center border-2 border-white shadow-sm">
-                    {unreadNotifs > 9 ? '9+' : unreadNotifs}
-                  </span>
-                )}
-              </button>
-              <div className="w-11 h-11 bg-white rounded-2xl border border-slate-200 flex items-center justify-center shadow-sm text-violet-600">
-                <PartyPopper size={20} />
-              </div>
-            </div>
-          </div>
-
-          <div className="px-8 pb-8">
-            {content}
-          </div>
+        <main className="flex-1 overflow-y-auto">
+          <header className="flex items-center justify-between border-b border-slate-200 bg-white px-8 py-4">
+            <h1 className="text-[20px] font-semibold capitalize text-navy">{TABS.find((t) => t.id === activeTab)?.label}</h1>
+            <button type="button" onClick={() => setNotifOpen(true)} aria-label={`Notifications${unreadNotifs ? `, ${unreadNotifs} unread` : ''}`}
+              className="relative flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 hover:bg-slate-50">
+              <Bell size={18} className="text-slate-600" />
+              {unreadNotifs > 0 && (
+                <span className="absolute -right-1 -top-1 rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white">{unreadNotifs > 9 ? '9+' : unreadNotifs}</span>
+              )}
+            </button>
+          </header>
+          <div className="px-8 py-6">{content}</div>
         </main>
       </div>
 
-      {/* MOBILE layout (< lg): top bar + content + bottom tabs */}
+      {/* PHONE (< lg): top bar + content + bottom bar */}
       <div className="lg:hidden">
-        {/* Mobile top bar */}
-        <div className={`px-4 py-3 flex items-center justify-between relative z-50 transition-colors ${activeTab === 'overview' ? 'bg-transparent' : 'bg-white/90 backdrop-blur-md border-b border-slate-100'}`}>
-          <div className="flex items-center gap-3">
-            <button onClick={() => setMobileMenuOpen(true)} className={`w-8 h-8 flex items-center justify-center rounded-xl transition-colors ${activeTab === 'overview' ? 'hover:bg-white/10' : 'hover:bg-slate-100'}`}>
-              <Menu size={22} className={activeTab === 'overview' ? 'text-white' : 'text-slate-700'} />
-            </button>
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 bg-gradient-to-br from-violet-500 to-fuchsia-500 rounded-xl flex items-center justify-center shadow-sm shadow-violet-200">
-                <PartyPopper size={15} className="text-white" />
-              </div>
-              <div>
-                <span className={`font-black text-sm block leading-tight capitalize ${activeTab === 'overview' ? 'text-white' : 'text-slate-900'}`}>
-                  {activeTab === 'overview' ? 'Zappyone Partner' : activeTab}
-                </span>
-                <span className={`text-[9px] font-bold tracking-widest uppercase block leading-none mt-0.5 ${activeTab === 'overview' ? 'text-white/70' : 'text-slate-500'}`}>
-                  Event Portal
-                </span>
-              </div>
-            </div>
-          </div>
+        <header className="sticky top-0 z-40 flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3">
           <div className="flex items-center gap-2">
-            <button onClick={() => setNotifOpen(true)} className={`relative w-9 h-9 flex items-center justify-center rounded-xl transition-colors ${activeTab === 'overview' ? 'hover:bg-white/10' : 'hover:bg-slate-100'}`}>
-              <Bell size={19} className={activeTab === 'overview' ? 'text-white' : 'text-slate-600'} />
-              {unreadNotifs > 0 && (
-                <span className={`absolute top-0 right-0 w-4 h-4 bg-red-500 rounded-full text-[9px] text-white font-black flex items-center justify-center border-2 ${activeTab === 'overview' ? 'border-[#0f1123]' : 'border-white'}`}>
-                  {unreadNotifs > 9 ? '9+' : unreadNotifs}
-                </span>
-              )}
+            <button type="button" onClick={() => setMobileMenuOpen(true)} aria-label="Menu" className="-ml-1 flex h-9 w-9 items-center justify-center rounded-lg hover:bg-slate-100">
+              <Menu size={20} className="text-slate-700" />
             </button>
+            <ZappyLogo size={24} />
           </div>
-        </div>
+          <button type="button" onClick={() => setNotifOpen(true)} aria-label="Notifications" className="relative flex h-9 w-9 items-center justify-center rounded-lg hover:bg-slate-100">
+            <Bell size={19} className="text-slate-600" />
+            {unreadNotifs > 0 && (
+              <span className="absolute right-0 top-0 rounded-full bg-red-500 px-1 text-[9px] font-bold text-white">{unreadNotifs > 9 ? '9+' : unreadNotifs}</span>
+            )}
+          </button>
+        </header>
 
-        {/* Mobile content */}
-        <div className={`pb-24 ${activeTab === 'overview' ? 'px-0 pt-0' : 'px-4 pt-5 max-w-lg mx-auto'}`}>
+        <div className="mx-auto max-w-lg px-4 pb-24 pt-5">
           {activeTab === 'overview' ? <MobileOverviewTab onNavigate={setActiveTab} /> : content}
         </div>
 
-        {/* Mobile bottom nav */}
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 flex pb-safe rounded-t-3xl shadow-[0_-4px_20px_rgba(0,0,0,0.02)] z-40">
-          {[
-            { id: 'overview', label: 'Overview', Icon: LayoutGrid },
-            { id: 'themes', label: 'Themes', Icon: Palette },
-            { id: 'bookings', label: 'Bookings', Icon: Package },
-            { id: 'calendar', label: 'Calendar', Icon: Calendar },
-            { id: 'earnings', label: 'Earnings', Icon: Wallet },
-            { id: 'profile', label: 'Profile', Icon: User },
-          ].map(({ id, label, Icon }) => {
+        <nav className="fixed inset-x-0 bottom-0 z-40 flex border-t border-slate-200 bg-white" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }} aria-label="Partner">
+          {MOBILE_TABS.map(({ id, label, Icon }) => {
             const active = activeTab === id;
-            const badge = id === 'bookings' && pendingCount > 0;
             const locked = !kycApproved && KYC_GATED.includes(id);
+            const badge = id === 'bookings' && pendingCount > 0;
             return (
-              <motion.button key={id} onClick={() => !locked && setActiveTab(id)} whileTap={!locked ? { scale: 0.9 } : {}}
-                className={`flex-1 flex flex-col items-center gap-1.5 py-4 relative transition-all duration-300
-                  ${locked ? 'opacity-35 text-slate-400' : active ? 'text-violet-600' : 'text-slate-400 hover:text-slate-600'}`}>
-                <div className="relative">
-                  <Icon size={22} strokeWidth={active ? 2.5 : 2} className={active ? 'text-violet-600' : 'text-slate-400'} />
-                  {locked && <span className="absolute -top-1 -right-1 text-[8px]">🔒</span>}
-                  {!locked && badge && (
-                    <span className="absolute -top-1 -right-1.5 w-4 h-4 bg-red-500 rounded-full text-[9px] text-white font-black flex items-center justify-center border-2 border-white shadow-sm">
-                      {pendingCount > 9 ? '9+' : pendingCount}
-                    </span>
-                  )}
-                </div>
-                <span className={`text-[10px] tracking-wide ${active ? 'font-bold text-violet-600' : 'font-semibold text-slate-500'}`}>{label}</span>
-              </motion.button>
+              <button key={id} type="button" onClick={() => !locked && setActiveTab(id)} disabled={locked}
+                className={`relative flex flex-1 flex-col items-center gap-1 py-2.5 ${locked ? 'text-slate-300' : active ? 'text-zappy-600' : 'text-slate-500'}`}>
+                <span className="relative">
+                  <Icon size={21} strokeWidth={active ? 2.4 : 2} />
+                  {locked && <Lock size={10} className="absolute -right-2 -top-1" />}
+                  {!locked && badge && <span className="absolute -right-2 -top-1 rounded-full bg-red-500 px-1 text-[9px] font-bold text-white">{pendingCount > 9 ? '9+' : pendingCount}</span>}
+                </span>
+                <span className={`text-[11px] ${active ? 'font-semibold' : 'font-medium'}`}>{label}</span>
+              </button>
             );
           })}
-        </div>
+        </nav>
       </div>
 
-      {/* Mobile Menu Sidebar */}
+      {/* Phone menu: only what the bottom bar doesn't show. */}
       <AnimatePresence>
         {mobileMenuOpen && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[60] bg-black/40 backdrop-blur-sm lg:hidden flex"
-            onClick={e => e.target === e.currentTarget && setMobileMenuOpen(false)}>
+            className="fixed inset-0 z-[60] flex bg-black/40 lg:hidden"
+            onClick={(e) => e.target === e.currentTarget && setMobileMenuOpen(false)}>
             <motion.div initial={{ x: '-100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }}
-              transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-              className="bg-white w-64 h-full shadow-2xl flex flex-col"
-              onClick={e => e.stopPropagation()}>
-
-              <div className="px-5 py-5 border-b border-slate-100 flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 bg-gradient-to-br from-violet-500 to-fuchsia-500 rounded-xl flex items-center justify-center shadow-sm shadow-violet-200">
-                    <PartyPopper size={16} className="text-white" />
-                  </div>
-                  <span className="font-black text-slate-900 text-sm">Zappyone Partner</span>
-                </div>
-                <button onClick={() => setMobileMenuOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-slate-200 transition-colors">
-                  <X size={15} className="text-slate-600" />
+              transition={{ type: 'spring', damping: 30, stiffness: 320 }}
+              className="flex h-full w-72 flex-col bg-white" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between px-4 py-4">
+                <ZappyLogo size={24} />
+                <button type="button" onClick={() => setMobileMenuOpen(false)} aria-label="Close menu" className="flex h-9 w-9 items-center justify-center rounded-lg hover:bg-slate-100">
+                  <X size={18} className="text-slate-600" />
                 </button>
               </div>
-
-              {partner && (
-                <div className="px-5 py-4 border-b border-slate-100">
-                  <div className="flex items-center gap-3 bg-violet-50 rounded-2xl px-3 py-3 border border-violet-100">
-                    <div className="w-9 h-9 rounded-xl bg-violet-500 flex items-center justify-center text-white font-black text-sm shrink-0">
-                      {partner.businessName?.[0]?.toUpperCase()}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="font-bold text-slate-900 text-xs truncate">{partner.businessName}</p>
-                      <p className="text-[10px] text-slate-500 truncate">{partner.email || partner.phone}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <div className="flex-1"></div>
-
-              <div className="px-3 pb-3 border-t border-slate-100 pt-3">
-                <a href="/partner/advertise" className="w-full flex items-center gap-2 px-3 py-3 rounded-xl text-sm font-bold bg-violet-100 text-violet-700 hover:bg-violet-200 transition-colors mb-2">
-                  <Sparkles size={15} />Advertise on Zappyone
+              <div className="px-4 pb-3"><PartnerCard /></div>
+              <nav className="flex-1 space-y-0.5 px-3">
+                <NavItem {...TABS.find((t) => t.id === 'profile')} onPick={() => setMobileMenuOpen(false)} />
+                <a href="/partner/advertise" className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-[14px] font-medium text-slate-600 hover:bg-slate-100">
+                  <Megaphone size={18} /> Advertise
                 </a>
-                <button onClick={handleLogout} className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold text-slate-500 hover:text-red-500 hover:bg-red-50 transition-all">
-                  <LogOut size={16} />Logout
+              </nav>
+              <div className="border-t border-slate-200 p-3">
+                <button type="button" onClick={handleLogout} className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-[14px] font-medium text-slate-500 hover:bg-red-50 hover:text-red-600">
+                  <LogOut size={18} /> Sign out
                 </button>
               </div>
-
             </motion.div>
           </motion.div>
         )}
