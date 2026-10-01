@@ -1,3 +1,5 @@
+// Bundled by every app (not each app's public/), so the mark shows in all five.
+import logoUrl from '../../assets/brand/logo.png';
 /**
  * Zappy brand marks.
  *
@@ -17,7 +19,7 @@
 export function ZappyLogo({ size = 48, className = '' }) {
   return (
     <img
-      src="/logo.png"
+      src={logoUrl}
       alt="Zappy Logo"
       height={size}
       className={`object-contain ${className}`}

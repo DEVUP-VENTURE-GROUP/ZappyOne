@@ -13,6 +13,7 @@ import {
   useAdminBroadcastNotificationMutation,
   useAdminMetricsQuery,
 } from '@shared/services/api';
+import logoUrl from '@shared/assets/brand/logo.png';
 
 const NOTIFICATION_TYPES = [
   'order_placed', 'worker_assigned', 'worker_on_the_way', 'worker_arriving_soon',
@@ -200,7 +201,7 @@ function NotificationPreview({ title, body, type }) {
           <div className="absolute inset-0 bg-gradient-to-br from-white/60 to-transparent pointer-events-none" />
           
           <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center shrink-0 shadow-inner relative z-10 border border-slate-200/50 p-1">
-             <img src="/branding/zappylogo.png" className="w-full h-full object-contain drop-shadow-sm" alt="Zappy" />
+             <img src={logoUrl} className="w-full h-full object-contain drop-shadow-sm" alt="Zappy" />
           </div>
           <div className="flex-1 min-w-0 relative z-10">
             <div className="flex items-center justify-between mb-0.5">

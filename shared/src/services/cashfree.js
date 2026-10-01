@@ -1,3 +1,4 @@
+import logoUrl from '../assets/brand/logo.png';
 /**
  * Cashfree JS SDK wrapper.
  *
@@ -59,7 +60,7 @@ function showZappySheet(amountPaise, purpose) {
         font-family:Poppins,system-ui,-apple-system,'Segoe UI',sans-serif;transform:translateY(16px);transition:transform 220ms ease">
         <div style="display:flex;align-items:center;justify-content:space-between">
           <div style="display:flex;align-items:center;gap:10px">
-            <img src="/logo.png" alt="" width="32" height="32" style="width:32px;height:32px;object-fit:contain" />
+            <img src="${logoUrl}" alt="" width="32" height="32" style="width:32px;height:32px;object-fit:contain" />
             <span style="font-size:15px;font-weight:600">ZappyOne</span>
           </div>
           <button id="__zappy_close__" type="button" aria-label="Close" style="border:none;background:transparent;

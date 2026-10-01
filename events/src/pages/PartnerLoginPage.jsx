@@ -8,6 +8,8 @@ import ResendOtp from '@shared/components/auth/ResendOtp';
 import { setAuth } from '@shared/modules/auth/authSlice';
 import { signInWithGoogle } from '../lib/firebase';
 import toast from 'react-hot-toast';
+import logoUrl from '@shared/assets/brand/logo.png';
+import decorPhoto from '@shared/assets/events/event_romantic.webp';
 
 function OtpBox({ value, onChange, onKeyDown, inputRef, filled }) {
   return (
@@ -179,7 +181,7 @@ export default function PartnerLoginPage() {
 
         {/* Background Image & Gradient overlay */}
         <div className="absolute inset-0 z-0">
-          <img src="/images/events/event_romantic.webp" alt="Event Decor" className="w-full h-full object-cover object-top lg:object-center" />
+          <img src={decorPhoto} alt="Event Decor" className="w-full h-full object-cover object-top lg:object-center" />
           <div className="absolute inset-0 bg-gradient-to-b from-white/30 via-white/80 to-[#f8f7fc] lg:bg-gradient-to-r lg:from-[#130927]/90 lg:via-[#130927]/70 lg:to-transparent" />
         </div>
 
@@ -188,7 +190,7 @@ export default function PartnerLoginPage() {
 
           {/* Branding Logo */}
           <div className="flex items-center gap-2.5 mb-10 lg:mb-16">
-            <img src="/logo.png" alt="Zappy" className="h-8 lg:h-9 object-contain drop-shadow-sm" />
+            <img src={logoUrl} alt="Zappy" className="h-8 lg:h-9 object-contain drop-shadow-sm" />
             <div className="flex flex-col">
               <span className="text-[22px] lg:text-2xl font-black leading-none tracking-tight text-slate-900 lg:text-white">
                 Zappy<span className="text-[#f59e0b]">one</span>

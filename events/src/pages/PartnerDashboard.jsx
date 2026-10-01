@@ -24,6 +24,7 @@ import { logout } from '@shared/modules/auth/authSlice';
 import LiveSelfieCapture from '@shared/components/kyc/LiveSelfieCapture';
 import toast from 'react-hot-toast';
 import { useStartCodeGate } from '@shared/components/worker/StartCodePrompt';
+import decorPhoto from '@shared/assets/events/event_romantic.webp';
 
 /* Status pill */
 const PILL = {
@@ -338,7 +339,7 @@ function OverviewTab({ onNavigate }) {
       {/* Hero Banner */}
       <div className="relative rounded-[24px] overflow-hidden bg-gradient-to-r from-[#5940ff] via-[#7d50ff] to-[#a15bff] shadow-lg shadow-violet-500/20">
         <div className="absolute inset-y-0 right-0 w-1/3 opacity-80 mix-blend-overlay">
-          <img src="/images/events/event_romantic.webp" alt="Decor" className="w-full h-full object-cover object-left [mask-image:linear-gradient(to_right,transparent,black)]" onError={e => e.target.style.display = 'none'} />
+          <img src={decorPhoto} alt="Decor" className="w-full h-full object-cover object-left [mask-image:linear-gradient(to_right,transparent,black)]" onError={e => e.target.style.display = 'none'} />
         </div>
         <div className="relative p-8 md:w-3/4 flex flex-col items-start">
           <h2 className="text-[28px] font-black text-white leading-tight mb-1">Let's create something amazing today! 🎉</h2>
