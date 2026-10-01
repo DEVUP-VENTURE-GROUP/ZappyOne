@@ -5,15 +5,20 @@ import { Search, TrendingUp, Play, Heart, Star, ChevronRight, Sparkles, ArrowUpR
 import { useGetEventCategoriesQuery, useGetEventThemesQuery, useToggleSaveEventThemeMutation } from '@shared/services/api';
 import CrossSellBanner from '../../components/ads/CrossSellBanner';
 import toast from 'react-hot-toast';
+import birthdayPhoto from '@assets/images/events/event_birthday.webp';
+import babyShowerPhoto from '@assets/images/events/event_baby.webp';
+import anniversaryPhoto from '@assets/images/events/event_anniversary.webp';
+import housewarmingPhoto from '@assets/images/events/event_housewarming.webp';
+import romanticPhoto from '@assets/images/events/event_romantic.webp';
 
 /* Category Images Map */
 const CATEGORY_MAP = {
-  'birthday': { img: '/images/events/event_birthday.webp', color: 'from-pink-500/80 to-transparent' },
-  'baby-shower': { img: '/images/events/event_baby.webp', color: 'from-blue-500/80 to-transparent' },
-  'anniversary': { img: '/images/events/event_anniversary.webp', color: 'from-purple-500/80 to-transparent' },
-  'housewarming': { img: '/images/events/event_housewarming.webp', color: 'from-amber-500/80 to-transparent' },
-  'romantic': { img: '/images/events/event_romantic.webp', color: 'from-rose-500/80 to-transparent' },
-  'default': { img: '/images/events/event_birthday.webp', color: 'from-zappy-500/80 to-transparent' }
+  'birthday': { img: birthdayPhoto, color: 'from-pink-500/80 to-transparent' },
+  'baby-shower': { img: babyShowerPhoto, color: 'from-blue-500/80 to-transparent' },
+  'anniversary': { img: anniversaryPhoto, color: 'from-purple-500/80 to-transparent' },
+  'housewarming': { img: housewarmingPhoto, color: 'from-amber-500/80 to-transparent' },
+  'romantic': { img: romanticPhoto, color: 'from-rose-500/80 to-transparent' },
+  'default': { img: birthdayPhoto, color: 'from-zappy-500/80 to-transparent' }
 };
 
 function getCatStyles(name) {

@@ -8,8 +8,8 @@ import ResendOtp from '@shared/components/auth/ResendOtp';
 import { setAuth } from '@shared/modules/auth/authSlice';
 import { signInWithGoogle } from '../lib/firebase';
 import toast from 'react-hot-toast';
-import logoUrl from '@shared/assets/brand/logo.png';
-import decorPhoto from '@shared/assets/events/event_romantic.webp';
+import logoUrl from '@assets/web/logo.png';
+import decorPhoto from '@assets/images/events/event_romantic.webp';
 
 function OtpBox({ value, onChange, onKeyDown, inputRef, filled }) {
   return (

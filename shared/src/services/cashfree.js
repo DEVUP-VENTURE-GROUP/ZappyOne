@@ -1,4 +1,4 @@
-import logoUrl from '../assets/brand/logo.png';
+import logoUrl from '@assets/web/logo.png';
 /**
  * Cashfree JS SDK wrapper.
  *

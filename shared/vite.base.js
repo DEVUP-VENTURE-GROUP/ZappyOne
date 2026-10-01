@@ -1,7 +1,47 @@
 import { fileURLToPath } from 'node:url';
+import fs from 'node:fs';
+import path from 'node:path';
 
 const SHARED_SRC = fileURLToPath(new URL('./src', import.meta.url));
 const REPO_ROOT = fileURLToPath(new URL('..', import.meta.url));
+// The one place for images, shared by every app (see assets/README.md).
+const ASSETS = path.join(REPO_ROOT, 'assets');
+const ASSETS_WEB = path.join(ASSETS, 'web');
+
+const TYPES = { '.ico': 'image/x-icon', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.svg': 'image/svg+xml' };
+
+/**
+ * assets/web/ is served at the root of EVERY app: in dev from the folder, in a
+ * build copied into dist/. An app's own public/ keeps only what is its own
+ * (robots.txt, sitemap, manifest, service worker) and wins on a clash.
+ */
+function globalWebAssets() {
+  let outDir = null;
+  return {
+    name: 'zappy-global-web-assets',
+    configResolved(config) { outDir = path.resolve(config.root, config.build.outDir); },
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        const rel = decodeURIComponent((req.url || '').split('?')[0]);
+        const file = path.join(ASSETS_WEB, rel);
+        if (!file.startsWith(ASSETS_WEB) || !fs.existsSync(file) || !fs.statSync(file).isFile()) return next();
+        res.setHeader('Content-Type', TYPES[path.extname(file).toLowerCase()] || 'application/octet-stream');
+        fs.createReadStream(file).pipe(res);
+      });
+    },
+    writeBundle() {
+      const copy = (from, to) => {
+        for (const name of fs.readdirSync(from)) {
+          const src = path.join(from, name);
+          const dest = path.join(to, name);
+          if (fs.statSync(src).isDirectory()) { fs.mkdirSync(dest, { recursive: true }); copy(src, dest); }
+          else if (!fs.existsSync(dest)) fs.copyFileSync(src, dest);
+        }
+      };
+      if (outDir && fs.existsSync(ASSETS_WEB)) copy(ASSETS_WEB, outDir);
+    },
+  };
+}
 
 // Packages imported by shared/src. Deduping resolves them from the importing
 // app's node_modules, so there is one React/Redux instance per bundle.
@@ -19,9 +59,9 @@ const SHARED_DEPS = [
  */
 export function defineZappyApp({ command, port, plugins, surface = '', chunks = {}, optimizeDeps } = {}) {
   return {
-    plugins,
+    plugins: [...(plugins || []), globalWebAssets()],
     resolve: {
-      alias: { '@shared': SHARED_SRC },
+      alias: { '@shared': SHARED_SRC, '@assets': ASSETS },
       dedupe: SHARED_DEPS,
     },
     define: {

@@ -24,7 +24,7 @@ import { logout } from '@shared/modules/auth/authSlice';
 import LiveSelfieCapture from '@shared/components/kyc/LiveSelfieCapture';
 import toast from 'react-hot-toast';
 import { useStartCodeGate } from '@shared/components/worker/StartCodePrompt';
-import decorPhoto from '@shared/assets/events/event_romantic.webp';
+import decorPhoto from '@assets/images/events/event_romantic.webp';
 
 /* Status pill */
 const PILL = {

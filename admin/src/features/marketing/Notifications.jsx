@@ -13,7 +13,7 @@ import {
   useAdminBroadcastNotificationMutation,
   useAdminMetricsQuery,
 } from '@shared/services/api';
-import logoUrl from '@shared/assets/brand/logo.png';
+import logoUrl from '@assets/web/logo.png';
 
 const NOTIFICATION_TYPES = [
   'order_placed', 'worker_assigned', 'worker_on_the_way', 'worker_arriving_soon',

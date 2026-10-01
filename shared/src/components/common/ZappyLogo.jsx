@@ -1,5 +1,5 @@
-// Bundled by every app (not each app's public/), so the mark shows in all five.
-import logoUrl from '../../assets/brand/logo.png';
+// From the global assets/ folder, bundled by every app.
+import logoUrl from '@assets/web/logo.png';
 /**
  * Zappy brand marks.
  *

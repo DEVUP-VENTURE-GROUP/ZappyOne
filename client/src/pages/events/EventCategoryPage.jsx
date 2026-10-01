@@ -4,15 +4,20 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, SlidersHorizontal, Star, Heart, TrendingUp, X, Play, SearchX, PartyPopper } from 'lucide-react';
 import { useGetEventThemesQuery, useGetEventCategoriesQuery, useToggleSaveEventThemeMutation } from '@shared/services/api';
 import toast from 'react-hot-toast';
+import birthdayPhoto from '@assets/images/events/event_birthday.webp';
+import babyShowerPhoto from '@assets/images/events/event_baby.webp';
+import anniversaryPhoto from '@assets/images/events/event_anniversary.webp';
+import housewarmingPhoto from '@assets/images/events/event_housewarming.webp';
+import romanticPhoto from '@assets/images/events/event_romantic.webp';
 
 /* Category Styles Map */
 const CATEGORY_MAP = {
-  'birthday': { img: '/images/events/event_birthday.webp', gradient: 'from-pink-600/90 via-pink-500/50 to-transparent' },
-  'baby-shower': { img: '/images/events/event_baby.webp', gradient: 'from-blue-600/90 via-blue-500/50 to-transparent' },
-  'anniversary': { img: '/images/events/event_anniversary.webp', gradient: 'from-purple-600/90 via-purple-500/50 to-transparent' },
-  'housewarming': { img: '/images/events/event_housewarming.webp', gradient: 'from-amber-600/90 via-amber-500/50 to-transparent' },
-  'romantic': { img: '/images/events/event_romantic.webp', gradient: 'from-rose-600/90 via-rose-500/50 to-transparent' },
-  'default': { img: '/images/events/event_birthday.webp', gradient: 'from-zappy-600/90 via-zappy-500/50 to-transparent' }
+  'birthday': { img: birthdayPhoto, gradient: 'from-pink-600/90 via-pink-500/50 to-transparent' },
+  'baby-shower': { img: babyShowerPhoto, gradient: 'from-blue-600/90 via-blue-500/50 to-transparent' },
+  'anniversary': { img: anniversaryPhoto, gradient: 'from-purple-600/90 via-purple-500/50 to-transparent' },
+  'housewarming': { img: housewarmingPhoto, gradient: 'from-amber-600/90 via-amber-500/50 to-transparent' },
+  'romantic': { img: romanticPhoto, gradient: 'from-rose-600/90 via-rose-500/50 to-transparent' },
+  'default': { img: birthdayPhoto, gradient: 'from-zappy-600/90 via-zappy-500/50 to-transparent' }
 };
 
 function getCatStyles(name) {
