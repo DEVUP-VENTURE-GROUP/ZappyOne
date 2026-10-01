@@ -138,12 +138,14 @@ const providerPricingSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
+// The brand is part of a price's scope: a shop's Samsung baseline and its
+// Apple baseline for the same job are two prices, not one (see migration 002).
 providerPricingSchema.index(
-  { shopId: 1, repairCode: 1, modelCode: 1, qualityCode: 1, serviceMode: 1, cityCode: 1 },
+  { shopId: 1, repairCode: 1, brandCode: 1, modelCode: 1, qualityCode: 1, serviceMode: 1, cityCode: 1 },
   { unique: true, partialFilterExpression: { supersededAt: null, shopId: { $type: 'objectId' } } },
 );
 providerPricingSchema.index(
-  { workerId: 1, repairCode: 1, modelCode: 1, qualityCode: 1, serviceMode: 1, cityCode: 1 },
+  { workerId: 1, repairCode: 1, brandCode: 1, modelCode: 1, qualityCode: 1, serviceMode: 1, cityCode: 1 },
   { unique: true, partialFilterExpression: { supersededAt: null, workerId: { $type: 'objectId' } } },
 );
 providerPricingSchema.index({ repairCode: 1, approvalStatus: 1, supersededAt: 1 });

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft, ArrowRight, Check, ChevronRight, Loader2, MapPin, IndianRupee,
-  Wrench, Search, Plus, X, AlertTriangle, ShieldCheck, Store, Clock,
+  Wrench, Search, Plus, X, AlertTriangle, ShieldCheck, Store, Clock, Sparkles,
 } from 'lucide-react';
 import {
   useProviderOnboardingStatusQuery,
@@ -13,6 +13,7 @@ import {
   useRequestRepairCatalogAdditionMutation,
   useRepairServiceAreasQuery, useUpsertRepairServiceAreaMutation,
   useRepairProviderPricingQuery, useBulkRepairProviderPricingMutation,
+  useLazyRepairProviderSuggestedPricingQuery,
   useRepairModelsQuery,
 } from '../../services/api';
 import { useUpdateShopMeMutation } from '../../services/api';
@@ -278,7 +279,8 @@ function WorkStep({ vertical, cityCode, brandCodes, onBack, onNext }) {
   if (isLoading || !selected) return <Spinner />;
 
   const levels = data.skillLevels || [];
-  const allRepairs = groups.flatMap((g) => g.repairs);
+  // A repair can sit under two headings; count and tick it once.
+  const allRepairs = [...new Map(groups.flatMap((g) => g.repairs).map((r) => [r.code, r])).values()];
   const allCodes = allRepairs.map((r) => r.code);
 
   /**
@@ -315,6 +317,13 @@ function WorkStep({ vertical, cityCode, brandCodes, onBack, onNext }) {
       return next;
     });
     if (minLevel > skillLevel) setSkillLevel(minLevel);
+  }
+
+  // One tap instead of opening every heading: all work at or below their level.
+  const upToLevel = allRepairs.filter((r) => (r.minSkillLevel || 1) <= skillLevel).map((r) => r.code);
+  const allUpToLevelTicked = upToLevel.length > 0 && upToLevel.every((c) => selected.has(c));
+  function tickUpToLevel() {
+    setSelected((prev) => new Set([...prev, ...upToLevel]));
   }
 
   async function persist() {
@@ -417,7 +426,7 @@ function WorkStep({ vertical, cityCode, brandCodes, onBack, onNext }) {
   return (
     <StepShell
       title="What do you fix?"
-      hint="These are the same headings customers pick from. Open one and tick your work."
+      hint="Pick your level and tick everything at once, or open a heading to choose job by job."
       onBack={onBack}
       onNext={async () => { if (await persist()) onNext(); }}
       busy={saving}
@@ -456,6 +465,17 @@ function WorkStep({ vertical, cityCode, brandCodes, onBack, onNext }) {
             This level is verified before those jobs start reaching you.
           </p>
         )}
+        <button
+          type="button"
+          onClick={tickUpToLevel}
+          disabled={allUpToLevelTicked}
+          className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl bg-zappy-600 py-2.5 text-[13px] font-semibold text-white disabled:bg-emerald-50 disabled:text-emerald-700"
+        >
+          {allUpToLevelTicked
+            ? <><Check size={14} /> All {upToLevel.length} jobs up to level {skillLevel} ticked</>
+            : <>Tick all {upToLevel.length} jobs up to level {skillLevel}</>}
+        </button>
+        <p className="mt-1.5 text-center text-[11px] text-slate-500">Then open any heading to untick what you don&apos;t do.</p>
       </div>
 
       <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
@@ -502,7 +522,7 @@ function WorkStep({ vertical, cityCode, brandCodes, onBack, onNext }) {
 
 /* 3. Where you work */
 
-function AreaStep({ vertical, onBack, onNext, onCity }) {
+function AreaStep({ vertical, profile, onBack, onNext, onCity }) {
   const { data, isLoading } = useRepairServiceAreasQuery(vertical);
   const [save, { isLoading: saving }] = useUpsertRepairServiceAreaMutation();
   const existing = data?.areas?.[0];
@@ -510,21 +530,26 @@ function AreaStep({ vertical, onBack, onNext, onCity }) {
   const [form, setForm] = useState(null);
   const [picking, setPicking] = useState(false);
 
+  // A shop already told us where it is: start from its address, not a blank map.
+  const shopPin = profile?.address?.location?.coordinates?.length === 2 ? profile.address.location.coordinates : null;
+  const shopAddress = profile?.address?.text || '';
+
   useEffect(() => {
     if (!data || form) return;
     setForm({
-      cityCode: existing?.cityCode || '',
+      // Launch city by default; editable for anyone outside it.
+      cityCode: existing?.cityCode || 'hyderabad',
       // 20 km by default — the cap, and what most shops actually want. Starting
       // at 10 quietly halved the reach of everyone who never touched the slider.
       radiusKm: existing?.radiusKm || 20,
       pincodes: (existing?.pincodes || []).join(', '),
       serviceModes: existing?.serviceModes || ['doorstep'],
-      workshopAddress: existing?.workshopAddress || '',
+      workshopAddress: existing?.workshopAddress || shopAddress,
       // [lng, lat], the GeoJSON order the server stores.
-      center: existing?.center?.coordinates || null,
-      centerAddress: existing?.workshopAddress || '',
+      center: existing?.center?.coordinates || shopPin,
+      centerAddress: existing?.workshopAddress || shopAddress,
     });
-  }, [data, existing, form]);
+  }, [data, existing, form]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (isLoading || !form) return <Spinner />;
 
@@ -733,7 +758,11 @@ const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
  */
 function HoursStep({ profile, onBack, onNext }) {
   const [update, { isLoading }] = useUpdateShopMeMutation();
-  const [hours, setHours] = useState(() => profile?.hours || []);
+  // Most shops keep Mon–Sat 10 to 9 and close Sunday: start there, edit if not.
+  const [hours, setHours] = useState(() => (profile?.hours?.length ? profile.hours : [
+    ...[1, 2, 3, 4, 5, 6].map((day) => ({ day, opensAt: '10:00', closesAt: '21:00', isClosed: false })),
+    { day: 0, opensAt: '', closesAt: '', isClosed: true },
+  ]));
 
   function setDay(day, patch) {
     setHours((rows) => {
@@ -968,6 +997,7 @@ function PricingStep({ vertical, onBack, onNext }) {
   const { data: catalog } = useRepairWorkCatalogQuery({ vertical });
   const { data: pricing, isLoading, refetch } = useRepairProviderPricingQuery(vertical);
   const [bulkSave, { isLoading: saving }] = useBulkRepairProviderPricingMutation();
+  const [fetchSuggested, { isFetching: suggesting }] = useLazyRepairProviderSuggestedPricingQuery();
 
   const brandCodes = catalog?.brands || [];
   const [brand, setBrand] = useState(null);
@@ -978,6 +1008,7 @@ function PricingStep({ vertical, onBack, onNext }) {
   const [modelLabel, setModelLabel] = useState('');
   const [search, setSearch] = useState('');
   const [values, setValues] = useState({});
+  const [fillingAll, setFillingAll] = useState(false);
 
   const activeBrand = brand || brandCodes[0] || null;
 
@@ -990,10 +1021,14 @@ function PricingStep({ vertical, onBack, onNext }) {
     { skip: !activeBrand },
   );
 
-  const claimed = useMemo(
-    () => (catalog?.groups || []).flatMap((g) => g.repairs).filter((r) => r.selected),
-    [catalog],
-  );
+  // One row per job: a repair listed under two headings is still one price.
+  const claimed = useMemo(() => {
+    const byCode = new Map();
+    for (const r of (catalog?.groups || []).flatMap((g) => g.repairs)) {
+      if (r.selected && !byCode.has(r.code)) byCode.set(r.code, r);
+    }
+    return [...byCode.values()];
+  }, [catalog]);
 
   /** The provider's live rows, indexed by the exact cell they belong to. */
   const existing = useMemo(() => {
@@ -1031,6 +1066,71 @@ function PricingStep({ vertical, onBack, onNext }) {
     setModelLabel(label);
     setValues({});
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  /**
+   * Fill every empty box on this sheet with the ZappyOne market price, so a
+   * shop prices a whole brand in one tap and only edits what it charges
+   * differently. Nothing saves until the owner taps Save.
+   */
+  async function fillMarketPrices() {
+    try {
+      const { suggestions = [] } = await fetchSuggested({
+        vertical, brandCode: activeBrand, modelCode: model ?? undefined,
+      }).unwrap();
+      const fill = {};
+      for (const s of suggestions) {
+        const k = cellKey(s.repairCode, s.qualityCode);
+        if (values[k] || existing.has(k)) continue;
+        fill[k] = String(Math.round(s.totalPaise / 100));
+      }
+      const n = Object.keys(fill).length;
+      if (!n) return toast('No market prices to add here — enter yours below.');
+      setValues((v) => ({ ...v, ...fill }));
+      toast.success(`${n} price${n === 1 ? '' : 's'} filled — change any, then Save prices`);
+    } catch {
+      toast.error('Could not load market prices');
+    }
+  }
+
+  /**
+   * Every brand at once: the market price becomes each brand's baseline
+   * wherever the shop has not set its own. One tap instead of a sheet per
+   * brand; any brand or model can still be edited after.
+   */
+  async function priceAllBrandsAtMarket() {
+    setFillingAll(true);
+    try {
+      // Brands are independent prices, so they are set side by side.
+      const counts = await Promise.all(brandCodes.map(async (code) => {
+        const have = new Set((pricing?.pricing || [])
+          .filter((r) => r.brandCode === code && !r.modelCode)
+          .map((r) => cellKey(r.repairCode, r.qualityCode)));
+        const { suggestions = [] } = await fetchSuggested({ vertical, brandCode: code }).unwrap();
+        const rows = suggestions
+          .filter((x) => !have.has(cellKey(x.repairCode, x.qualityCode)))
+          .map((x) => ({
+            repairCode: x.repairCode,
+            brandCode: code,
+            modelCode: null,
+            qualityCode: x.qualityCode,
+            totalPaise: x.totalPaise,
+            warrantyDays: claimed.find((r) => r.code === x.repairCode)?.warrantyDays || 0,
+          }));
+        if (!rows.length) return 0;
+        const res = await bulkSave({ vertical, rows }).unwrap();
+        return res.savedCount || 0;
+      }));
+      const saved = counts.reduce((a, n) => a + n, 0);
+      toast.success(saved
+        ? `${saved} prices set across ${brandCodes.length} brands — edit any brand or model to change them`
+        : 'Every brand already has its prices');
+      refetch();
+    } catch (err) {
+      toast.error(err?.data?.error || 'Could not set market prices');
+    } finally {
+      setFillingAll(false);
+    }
   }
 
   async function saveSheet() {
@@ -1091,6 +1191,15 @@ function PricingStep({ vertical, onBack, onNext }) {
           </div>
         ) : (
           <div className="space-y-2">
+            <button
+              type="button"
+              onClick={fillMarketPrices}
+              disabled={suggesting}
+              className="flex w-full items-center justify-center gap-2 rounded-2xl border border-zappy-200 bg-zappy-50/60 px-3 py-3 text-sm font-bold text-zappy-800 disabled:opacity-60"
+            >
+              {suggesting ? <Loader2 size={15} className="animate-spin" /> : <Sparkles size={15} />}
+              Fill with ZappyOne market prices
+            </button>
             {claimed.map((r) => (
               <PriceRow
                 key={r.code}
@@ -1110,7 +1219,7 @@ function PricingStep({ vertical, onBack, onNext }) {
   return (
     <StepShell
       title="What do you charge?"
-      hint="Pick a brand, then a model. Prices are checked against the Zappy band before they go live."
+      hint="Fastest: one tap sets ZappyOne market prices for every brand. Then change only what you charge differently — a brand, or a single model."
       onBack={onBack}
       onNext={onNext}
       nextLabel={pricing?.pricing?.length ? 'Continue' : 'Skip for now'}
@@ -1137,6 +1246,16 @@ function PricingStep({ vertical, onBack, onNext }) {
               </button>
             ))}
           </div>
+
+          <button
+            type="button"
+            onClick={priceAllBrandsAtMarket}
+            disabled={fillingAll}
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-zappy-600 px-3 py-3 text-sm font-bold text-white disabled:opacity-60"
+          >
+            {fillingAll ? <Loader2 size={15} className="animate-spin" /> : <Sparkles size={15} />}
+            {fillingAll ? 'Setting prices…' : `Use ZappyOne market prices for all ${brandCodes.length} brands`}
+          </button>
 
           {/* The brand-wide baseline, before the individual handsets. */}
           <button
@@ -1311,6 +1430,7 @@ export default function ProviderRepairSetupPage() {
             {step === 'area' && (
               <AreaStep
                 vertical={active}
+                profile={onboarding?.profile}
                 onBack={() => go('work')}
                 onNext={() => go(isShop ? 'hours' : 'pricing')}
                 onCity={setCityCode}

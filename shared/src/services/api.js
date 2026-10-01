@@ -2444,6 +2444,12 @@ export const api = createApi({
       query: (id) => ({ url: `/repair/bookings/${id}/cancellation-quote` }),
       providesTags: (r, e, id) => [{ type: 'RepairBooking', id }],
     }),
+    /** ZappyOne market prices for this provider's jobs — fills a price sheet. */
+    repairProviderSuggestedPricing: b.query({
+      query: ({ vertical = 'mobile', brandCode, modelCode }) => ({
+        url: '/repair/provider/pricing/suggested', params: { vertical, brandCode, modelCode },
+      }),
+    }),
     bulkRepairProviderPricing: b.mutation({
       query: ({ vertical = 'mobile', rows }) => ({
         url: '/repair/provider/pricing/bulk',
@@ -3107,6 +3113,7 @@ export const {
   useLazyRepairReferenceBandQuery,
   useSubmitRepairProviderPricingMutation,
   useBulkRepairProviderPricingMutation,
+  useLazyRepairProviderSuggestedPricingQuery,
   useRepairCancellationQuoteQuery,
   useRepairHandoverCodeQuery,
   useAttachRepairCompletionPhotosMutation,

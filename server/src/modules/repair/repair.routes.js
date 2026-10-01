@@ -442,6 +442,7 @@ router.put(
 );
 
 router.get('/provider/pricing/reference', ...providerOnly, provider.getReferenceBand);
+router.get('/provider/pricing/suggested', ...providerOnly, provider.suggestedPricing);
 router.get('/provider/pricing', ...providerOnly, provider.listPricing);
 router.post(
   '/provider/pricing',

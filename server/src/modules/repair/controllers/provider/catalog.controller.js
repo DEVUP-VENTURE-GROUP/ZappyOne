@@ -193,7 +193,7 @@ async function workCatalog(req, res, next) {
           // one part grade, so the pricing screen offers OEM / premium / standard
           // for it. A labour-only job (cleaning, software) has exactly one price,
           // and asking for three would be asking a question with no answer.
-          usesPart: !!r.componentCode,
+          usesPart: !!r.componentCode || (r.partRequirements || []).length > 0,
           /** The customer-facing symptoms this one fix answers. */
           answers: problemsOfRepair.get(r.code) || [],
           isLocal: !!r.cityCodes?.length,
@@ -230,7 +230,7 @@ async function workCatalog(req, res, next) {
           pricingMode: r.pricingMode,
           estimatedDurationMin: r.estimatedDurationMin,
           warrantyDays: r.warrantyDays,
-          usesPart: !!r.componentCode,
+          usesPart: !!r.componentCode || (r.partRequirements || []).length > 0,
           selected: mineByCode.has(r.code),
           mySkillLevel: mineByCode.get(r.code)?.skillLevel || null,
         })),

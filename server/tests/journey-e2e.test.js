@@ -510,6 +510,32 @@ describe('provider setup', () => {
     expect(res.body.pricing.band).toBe('yellow');
   });
 
+  it('27b. prices the same job for two brands — one brand never blocks another', async () => {
+    const res = await request(app)
+      .post('/api/repair/provider/pricing/bulk').set(auth(ctx.shopToken))
+      .send({
+        vertical: 'mobile',
+        rows: ['samsung', 'apple'].map((brandCode) => ({
+          repairCode: 'battery_replacement', brandCode, modelCode: null, qualityCode: 'standard', totalPaise: 150000,
+        })),
+      });
+    expect(res.status).toBe(201);
+    expect(res.body.savedCount).toBe(2);
+  });
+
+  it('27c. offers ZappyOne market prices for the jobs the shop does, saving nothing', async () => {
+    const before = await request(app).get('/api/repair/provider/pricing?vertical=mobile').set(auth(ctx.shopToken));
+    const res = await request(app)
+      .get('/api/repair/provider/pricing/suggested?vertical=mobile&brandCode=samsung').set(auth(ctx.shopToken));
+    expect(res.status).toBe(200);
+    const display = res.body.suggestions.filter((s) => s.repairCode === 'display_assembly_replacement');
+    // A reference with no grade of its own fills the standard grade only.
+    expect(display.map((s) => s.qualityCode)).toEqual(['standard']);
+    expect(display[0].totalPaise).toBe(1200000);
+    const after = await request(app).get('/api/repair/provider/pricing?vertical=mobile').set(auth(ctx.shopToken));
+    expect(after.body.pricing.length).toBe(before.body.pricing.length);
+  });
+
   it('28. stocks a part so the job can be finished today', async () => {
     const part = await Part.create({
       sku: 'S23-DISP-OEM', name: 'Galaxy S23 Display Assembly', vertical: 'mobile',

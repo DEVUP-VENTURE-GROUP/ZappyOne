@@ -2,6 +2,7 @@ const { ProviderPricing } = require('../../models/pricing.model');
 const { ApprovalRequest } = require('../../models/governance.model');
 const { Part } = require('../../models/part.model');
 const { Repair } = require('../../models/repair.model');
+const { ProviderCapability } = require('../../models/capability.model');
 const pricingService = require('../../services/pricing.service');
 const { verticalOf } = require('../../vertical');
 const { ownerOf, ownerFilter } = require('./owner');
@@ -237,6 +238,62 @@ async function bulkPricing(req, res, next) {
   } catch (err) { next(err); }
 }
 
+/** Part grades a part-based repair is priced at, best first. */
+const PART_GRADES = ['oem', 'premium', 'standard'];
+
+/** A repair swaps a physical part — so its price must name the grade. */
+function isPartBased(repair) {
+  return !!repair.componentCode || (repair.partRequirements || []).length > 0;
+}
+
+/**
+ * ZappyOne market prices for every job this provider does, ready to fill a
+ * price sheet in one tap.
+ *
+ * Shops told us pricing was the step they gave up on: dozens of jobs, three
+ * grades each, per brand. Most of them charge close to the market anyway, so
+ * the sheet now starts from our reference price and the owner only edits what
+ * differs. Nothing is saved here — the owner still reviews and taps Save, so
+ * the price stays theirs.
+ *
+ * A reference with no grade of its own is offered for the standard grade only:
+ * putting one figure on OEM and standard alike would tell the customer the two
+ * parts cost the same.
+ */
+async function suggestedPricing(req, res, next) {
+  try {
+    const vertical = verticalOf(req);
+    const brandCode = req.query.brandCode || null;
+    const modelCode = req.query.modelCode || null;
+
+    const caps = await ProviderCapability.find({ ...ownerFilter(req), vertical, isActive: true })
+      .select('repairCode').lean();
+    const repairs = await Repair.find({
+      vertical, code: { $in: caps.map((c) => c.repairCode) }, isActive: true,
+    }).select('code componentCode partRequirements warrantyDays').lean();
+
+    const suggestions = [];
+    for (const repair of repairs) {
+      const base = { vertical, repairCode: repair.code, brandCode, modelCode };
+      if (!isPartBased(repair)) {
+        const ref = await pricingService.resolveReferencePrice({ ...base, qualityCode: null });
+        if (ref?.recommendedPaise) suggestions.push({ repairCode: repair.code, qualityCode: null, totalPaise: ref.recommendedPaise });
+        continue;
+      }
+      for (const grade of PART_GRADES) {
+        const ref = await pricingService.resolveReferencePrice({ ...base, qualityCode: grade });
+        if (!ref?.recommendedPaise) continue;
+        const gradeOwn = ref.resolutionPath.includes('qualityCode');
+        if (gradeOwn || grade === 'standard') {
+          suggestions.push({ repairCode: repair.code, qualityCode: grade, totalPaise: ref.recommendedPaise });
+        }
+      }
+    }
+
+    res.json({ suggestions });
+  } catch (err) { next(err); }
+}
+
 /**
  * The reference band for a repair, so a provider can see what they are being
  * measured against BEFORE submitting rather than guessing.
@@ -311,6 +368,7 @@ module.exports = {
   applyPriceSubmission,
   submitPricing,
   bulkPricing,
+  suggestedPricing,
   getReferenceBand,
   listStockableParts,
 };
