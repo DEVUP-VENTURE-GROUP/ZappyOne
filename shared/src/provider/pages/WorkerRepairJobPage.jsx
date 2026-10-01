@@ -9,6 +9,9 @@ import {
   useSubmitRepairQuoteMutation, useRepairQaChecklistQuery, useSubmitRepairQaMutation,
 } from '../../services/api';
 import toast from 'react-hot-toast';
+import { useSelector } from 'react-redux';
+import { selectRole } from '../../modules/auth/authSlice';
+import AssignTechnician from '../components/AssignTechnician';
 import { formatPaise } from '../../utils/money';
 import { usePublishTripLocation, MOVING_STATUSES, tripOf } from '../../hooks/useLiveTrip';
 import TripSharingBanner from '../../components/worker/TripSharingBanner';
@@ -364,7 +367,9 @@ export default function WorkerRepairJobPage() {
    */
   const status = data?.booking?.status;
   const onTrip = MOVING_STATUSES.includes(status);
-  const sharingLocation = usePublishTripLocation(id, onTrip);
+  // The shop owner manages the job; the technician on it is the one travelling.
+  const isOwner = useSelector(selectRole) === 'shop';
+  const sharingLocation = usePublishTripLocation(id, onTrip && !isOwner);
 
   /**
    * Proximity, computed up here for the SAME reason — a hook must run on every
@@ -452,7 +457,10 @@ export default function WorkerRepairJobPage() {
   }
 
   // A shop's job can go back to the owner until the technician sets out.
-  const canPassBack = !!booking.shopId && ['CONFIRMED', 'PROVIDER_ASSIGNED', 'WORKER_ACCEPTED'].includes(booking.status);
+  const canPassBack = !isOwner && !!booking.shopId && ['CONFIRMED', 'PROVIDER_ASSIGNED', 'WORKER_ACCEPTED'].includes(booking.status);
+  // Once a technician is named they do the steps from their own app (and share
+  // their location); the owner follows along. Nobody named: the owner works it.
+  const ownerWatching = isOwner && !!booking.workerId;
 
   async function passBack(reason) {
     try {
@@ -481,7 +489,7 @@ export default function WorkerRepairJobPage() {
   return (
     <div className="min-h-screen bg-[#F9FAFB] pb-10">
       <header className="page-header"><div className="page-header-inner">
-        <button onClick={() => nav('/worker')} className="back-btn"><ArrowLeft size={18} strokeWidth={2.5} /></button>
+        <button onClick={() => nav(isOwner ? '/shop' : '/worker')} className="back-btn"><ArrowLeft size={18} strokeWidth={2.5} /></button>
         <div>
           <p className="t-label">Repair job</p>
           <p className="font-semibold text-[#0F172A]">{booking.reference}</p>
@@ -489,7 +497,16 @@ export default function WorkerRepairJobPage() {
       </div></header>
 
       <div className="max-w-lg lg:max-w-2xl mx-auto px-4 pt-4 space-y-3">
-        {onTrip && <TripSharingBanner sharing={sharingLocation} {...tripOf('repair', booking)} />}
+        {onTrip && !isOwner && <TripSharingBanner sharing={sharingLocation} {...tripOf('repair', booking)} />}
+        {isOwner && (
+          <div className="card">
+            <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Technician</p>
+            {!booking.workerId && (
+              <p className="mt-1 text-[12px] text-amber-700">Nobody is on this job yet. Name who goes — the customer sees them and can follow them live.</p>
+            )}
+            <AssignTechnician jobId={id} workerId={booking.workerId} onDone={refetch} startOpen={!booking.workerId} />
+          </div>
+        )}
         <div className="card">
           <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Status</p>
           <p className="font-bold text-[#0F172A] mt-1 capitalize">{booking.status.replace(/_/g, ' ').toLowerCase()}</p>
@@ -722,7 +739,11 @@ export default function WorkerRepairJobPage() {
         {/* How close they are, while they are on their way. */}
         {headingToCustomer && <ArrivalProximity metres={proximity.metres} />}
 
-        {action && gateKind && !gatePassed && (
+        {ownerWatching && action && (
+          <p className="card text-center text-sm text-slate-500">Your technician takes the next step from their app: {action.label.toLowerCase()}.</p>
+        )}
+
+        {!ownerWatching && action && gateKind && !gatePassed && (
           <div className="card ring-amber-200">
             <OtpEntry
               value={otp}
@@ -742,7 +763,7 @@ export default function WorkerRepairJobPage() {
           </div>
         )}
 
-        {action && (
+        {!ownerWatching && action && (
           <button
             onClick={() => move(action.to)}
             disabled={moving || (gateKind && !gatePassed) || tooFarToArrive || photosBlocked}
@@ -752,7 +773,7 @@ export default function WorkerRepairJobPage() {
           </button>
         )}
         {/* Safety: on every live job, one hold away. */}
-        {!['PROVIDER_ASSIGNED', 'COMPLETED', 'CANCELLED', 'REJECTED', 'EXPIRED', 'FAILED'].includes(booking.status) && (
+        {!ownerWatching && !['PROVIDER_ASSIGNED', 'COMPLETED', 'CANCELLED', 'REJECTED', 'EXPIRED', 'FAILED'].includes(booking.status) && (
           <div className="space-y-1.5 pt-2">
             <p className="text-[12px] font-semibold text-slate-500">Feeling unsafe or need urgent help?</p>
             <SOSButton jobId={booking._id} kind="repair" service={booking.vertical} />

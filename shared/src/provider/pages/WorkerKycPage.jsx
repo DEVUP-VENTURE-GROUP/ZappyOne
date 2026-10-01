@@ -103,7 +103,8 @@ function MyDocuments({ token, kycStatus }) {
 
 const DOCS = [
   { key: 'aadhaarUrl', label: 'Aadhaar Card (Front)', sublabel: 'Government-issued ID — clear photo, all 4 corners visible', Icon: FileText, required: true,  liveCam: false },
-  { key: 'licenseUrl', label: 'Driving License',       sublabel: 'Government-issued license — all details clearly visible', Icon: FileText, required: true,  liveCam: false },
+  // Optional: a shop technician fixing phones at the bench need not drive.
+  { key: 'licenseUrl', label: 'Driving License',       sublabel: 'Optional — add it if you ride to customers', Icon: FileText, required: false, liveCam: false },
 ];
 
 export default function WorkerKycPage() {
@@ -191,8 +192,8 @@ export default function WorkerKycPage() {
 
   /* Submit */
   async function submit() {
-    if (!urls.aadhaarUrl || !urls.licenseUrl || !urls.selfieUrl) {
-      toast.error('Aadhaar, driving license, and live selfie are all required');
+    if (!urls.aadhaarUrl || !urls.selfieUrl) {
+      toast.error('Aadhaar and a live selfie are required');
       return;
     }
     // Location is mandatory — the live selfie must carry GPS coordinates.

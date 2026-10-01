@@ -5,7 +5,7 @@ const { authenticate, requireRole } = require('../../middlewares/auth');
 const { makeLimiter } = require('../../middlewares/rateLimit');
 
 /**
- * Customer actions that work the same on every kind of job (jobs/kinds.js).
+ * Actions that work the same on every kind of job (jobs/kinds.js).
  */
 const router = express.Router();
 
@@ -29,6 +29,22 @@ router.post('/:id/sos',
         userId: req.auth.sub, jobId: req.params.id, lat: req.body?.lat, lng: req.body?.lng,
       });
       res.json({ ok: true, incidentKey: result.incidentKey });
+    } catch (err) { next(err); }
+  });
+
+/**
+ * A shop owner puts one of their own technicians on any job the shop holds —
+ * repair, pet care, whatever the shop was booked for (jobs/assignment.js).
+ */
+router.post('/:id/assign',
+  authenticate, requireRole('shop'),
+  validate(Joi.object({ workerId: Joi.string().hex().length(24).required() })),
+  async (req, res, next) => {
+    try {
+      const { kind, job, worker } = await require('./assignment').assignTechnician({
+        jobId: req.params.id, shopId: req.auth.sub, workerId: req.body.workerId,
+      });
+      res.json({ kind, id: String(job._id), workerId: String(worker._id), workerName: worker.name || '' });
     } catch (err) { next(err); }
   });
 

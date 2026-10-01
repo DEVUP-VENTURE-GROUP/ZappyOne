@@ -38,11 +38,15 @@ export default function ShopWorkerHome() {
 
   const me = meData?.worker;
   const onDuty = !!me?.isOnline;
-  const kycApproved = kycData?.kyc?.status === 'approved';
+  const kycStatus = kycData?.kyc?.status;
+  const kycApproved = kycStatus === 'approved';
+  // Already sent: nothing to do but wait, so don't send them back to the form.
+  const kycWaiting = kycStatus === 'pending_review';
   useLocationBroadcast({ isOnline: onDuty, token: accessToken, currentOrderId: me?.currentOrderId });
 
   async function toggleDuty() {
-    if (!kycApproved) { toast.error('Finish your ID verification first'); nav('/worker/kyc'); return; }
+    if (kycWaiting) { toast('Your ID is being checked — you can go on duty once it is approved'); return; }
+    if (!kycApproved) { toast.error('Verify your ID first — Aadhaar and a selfie, about 2 minutes'); nav('/worker/kyc'); return; }
     setToggling(true);
     try {
       if (onDuty) {
@@ -104,9 +108,14 @@ export default function ShopWorkerHome() {
             </span>
           </span>
         </button>
-        {!kycApproved && (
+        {kycWaiting && (
+          <p className="flex w-full items-center gap-2 rounded-2xl bg-slate-100 p-3 text-xs font-semibold text-slate-600">
+            <ShieldCheck size={15} /> Your ID is being checked. We will notify you when you can go on duty.
+          </p>
+        )}
+        {!kycApproved && !kycWaiting && (
           <button onClick={() => nav('/worker/kyc')} className="flex w-full items-center gap-2 rounded-2xl bg-amber-50 p-3 text-left text-xs font-semibold text-amber-800 ring-1 ring-amber-200">
-            <ShieldCheck size={15} /> Verify your ID before you can go on duty <ChevronRight size={14} className="ml-auto" />
+            <ShieldCheck size={15} /> Verify your ID to go on duty — Aadhaar and a selfie, about 2 minutes <ChevronRight size={14} className="ml-auto" />
           </button>
         )}
 

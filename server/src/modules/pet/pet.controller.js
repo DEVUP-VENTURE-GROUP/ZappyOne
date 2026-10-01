@@ -429,6 +429,7 @@ async function advanceStatus(req, res, next) {
 
     // The owner's start code, where this kind asks for one (jobs/kinds.js).
     await assertStartCode('pet', booking, req.body.status, req.body.code);
+    require('../jobs/assignment').assertSomeoneTravels('pet', booking, req.body.status);
     booking.transitionTo(req.body.status, { by: req.auth.sub, byRole: req.auth.role, note: req.body.note || '' });
     await booking.save();
     res.json({ booking: booking.toObject() });

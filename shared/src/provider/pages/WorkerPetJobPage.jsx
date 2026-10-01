@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Loader2, Navigation, PawPrint, AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useSelector } from 'react-redux';
+import { selectRole } from '../../modules/auth/authSlice';
+import AssignTechnician from '../components/AssignTechnician';
 import ProofPhotos, { readyKeys } from '../../components/common/ProofPhotos';
 import CollectPaymentCard from '../../components/common/CollectPaymentCard';
 import { formatPaise } from '../../utils/money';
@@ -44,7 +47,9 @@ export default function WorkerPetJobPage() {
   const gate = useStartCodeGate();
   // Shared while travelling to the owner (or driving the pet, for transport); off otherwise.
   const trip = tripOf('pet', data?.booking);
-  const sharing = usePublishTripLocation(id, Boolean(trip));
+  // The shop owner manages the job; the technician on it is the one travelling.
+  const isOwner = useSelector(selectRole) === 'shop';
+  const sharing = usePublishTripLocation(id, Boolean(trip) && !isOwner);
 
   if (isLoading) return <div className="flex justify-center py-24"><Loader2 size={24} className="animate-spin text-zappy-400" /></div>;
   if (!data?.booking) return <div className="text-center py-24 text-slate-400">Booking not found</div>;
@@ -86,6 +91,8 @@ export default function WorkerPetJobPage() {
   const nextMoves = NEXT[booking.status] || [];
   // The customer chose this provider; it waits for their answer before anyone else sees it.
   const offered = booking.status === 'PROVIDER_ASSIGNED';
+  // Once a technician is named they work it from their own app; the owner follows along.
+  const ownerWatching = isOwner && !!booking.workerId;
 
   async function answerOffer(yes) {
     try {
@@ -116,7 +123,16 @@ export default function WorkerPetJobPage() {
       </div>
 
       <div className="max-w-lg mx-auto px-4 py-4 space-y-3 pb-10">
-        {trip && <TripSharingBanner sharing={sharing} {...trip} />}
+        {trip && !isOwner && <TripSharingBanner sharing={sharing} {...trip} />}
+        {isOwner && (
+          <div className="rounded-2xl border-2 border-slate-200 bg-white p-4">
+            <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Who goes</p>
+            {!booking.workerId && (
+              <p className="mt-1 text-[12px] text-amber-700">Nobody is on this job yet. Name who goes — the owner sees them and can follow them live.</p>
+            )}
+            <AssignTechnician jobId={id} workerId={booking.workerId} onDone={refetch} startOpen={!booking.workerId} />
+          </div>
+        )}
         <div className="rounded-2xl border-2 border-slate-200 bg-white p-4">
           <p className="font-bold text-[#0F172A] flex items-center gap-1.5"><PawPrint size={14} /> {brief.name} · {brief.species} · {brief.size?.replace('_', ' ')}</p>
           {brief.breed && <p className="text-xs text-slate-500 mt-0.5">{brief.breed}</p>}
@@ -138,7 +154,11 @@ export default function WorkerPetJobPage() {
           </a>
         )}
 
-        {offered && (
+        {ownerWatching && (nextMoves.length > 0 || offered || booking.status === 'SERVICE_STARTED') && (
+          <p className="rounded-2xl bg-white p-4 text-center text-sm text-slate-500 ring-1 ring-slate-200">Your technician takes the next step from their app.</p>
+        )}
+
+        {!ownerWatching && offered && (
           <div className="space-y-3 rounded-2xl bg-white p-4 ring-1 ring-amber-200">
             <p className="text-[14px] font-semibold text-navy">A customer chose you for this booking</p>
             <p className="text-[13px] text-slate-600">
@@ -153,12 +173,12 @@ export default function WorkerPetJobPage() {
           </div>
         )}
 
-        {nextMoves.map(([status, label]) => (
+        {!ownerWatching && nextMoves.map(([status, label]) => (
           <button key={status} type="button" onClick={() => move(status)}
             className="w-full rounded-2xl bg-[#0F172A] text-white font-bold py-3.5">{label}</button>
         ))}
 
-        {booking.status === 'SERVICE_STARTED' && (
+        {!ownerWatching && booking.status === 'SERVICE_STARTED' && (
           <>
             <ProofPhotos photos={beforePhotos} onChange={setBeforePhotos} folder="pet/before" max={2} title="Before photo" />
             <ProofPhotos photos={afterPhotos} onChange={setAfterPhotos} folder="pet/after" max={2} title="After photo" />
@@ -179,7 +199,7 @@ export default function WorkerPetJobPage() {
           />
         )}
         {/* Safety: on every live job, one hold away. */}
-        {['PROVIDER_ACCEPTED', 'PROVIDER_EN_ROUTE', 'PROVIDER_ARRIVED', 'PET_HANDOVER', 'SERVICE_STARTED', 'SERVICE_PAUSED'].includes(booking.status) && (
+        {!ownerWatching && ['PROVIDER_ACCEPTED', 'PROVIDER_EN_ROUTE', 'PROVIDER_ARRIVED', 'PET_HANDOVER', 'SERVICE_STARTED', 'SERVICE_PAUSED'].includes(booking.status) && (
           <div className="space-y-1.5 pt-2">
             <p className="text-[12px] font-semibold text-slate-500">Feeling unsafe or need urgent help?</p>
             <SOSButton jobId={booking._id} kind="pet" service={booking.categoryCode} />

@@ -17,10 +17,13 @@ async function providerCard({ workerId, shopId }, { fallbackName = 'Your pro' } 
     ? await Worker.findById(workerId).select('name phone rating completedJobs avatar').lean()
     : await Shop.findById(shopId).select('businessName phone rating completedJobs').lean();
   if (!p) return null;
+  // A shop's technician is introduced with the shop the customer booked.
+  const shop = workerId && shopId ? await Shop.findById(shopId).select('businessName rating').lean() : null;
   return {
+    from: shop?.businessName || null,
     name: p.name || p.businessName || fallbackName,
     phone: p.phone || null,
-    rating: p.rating ?? null,
+    rating: p.rating || shop?.rating || null,
     completedJobs: p.completedJobs || 0,
     avatar: p.avatar || null,
     kind: workerId ? 'person' : 'shop',

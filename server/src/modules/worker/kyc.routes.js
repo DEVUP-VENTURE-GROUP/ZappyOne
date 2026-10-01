@@ -8,7 +8,8 @@ const router = express.Router();
 
 const kycSubmitSchema = Joi.object({
   aadhaarUrl: Joi.string().required(),
-  licenseUrl: Joi.string().required(),
+  // Optional: a bench technician need not drive. Aadhaar + live selfie prove who they are.
+  licenseUrl: Joi.string().allow('', null),
   selfieUrl:  Joi.string().required(),
   selfieMetadata: Joi.object({
     capturedAt:    Joi.string().isoDate().optional(),

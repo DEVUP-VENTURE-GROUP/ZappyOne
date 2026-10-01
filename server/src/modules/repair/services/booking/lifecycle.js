@@ -23,6 +23,9 @@ async function transition(bookingId, next, { actorRole, actorId, reason = '', me
 
   assertActorMayAct(booking, actorRole, actorId);
 
+  // A shop's job never sets off without a named technician (jobs/assignment).
+  require('../../../jobs/assignment').assertSomeoneTravels('repair', booking, next);
+
   /**
    * Possession is proved, not asserted.
    *

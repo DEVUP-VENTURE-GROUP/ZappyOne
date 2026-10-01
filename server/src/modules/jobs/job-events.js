@@ -162,4 +162,24 @@ function announceOnSave(schema, kind) {
   });
 }
 
-module.exports = { announce, announceOnSave, alertNearbyProviders };
+/**
+ * A shop put one of its technicians on a job. Every open screen refreshes (the
+ * customer now sees who is coming) and the technician is told it is theirs.
+ * No status changed, so the customer is not pushed a second "confirmed".
+ */
+async function announceAssigned(kind, doc) {
+  const k = KINDS[kind];
+  if (!k) return;
+  const id = String(doc._id);
+  const payload = { kind, id, status: doc.status, reference: doc.reference, at: new Date().toISOString() };
+  toRoom(id, 'job.status', payload);
+  toProvider('user', doc.userId, 'job.update', payload);
+  toProvider('shop', doc.shopId, 'job.update', payload);
+  toProvider('worker', doc.workerId, 'job.update', payload);
+  await push({ kind: 'worker', id: doc.workerId }, {
+    title: 'Your shop gave you a job', body: 'Open it to see where to go and what to do.',
+    deepLink: k.providerLink(id), data: { kind, id, status: doc.status },
+  });
+}
+
+module.exports = { announce, announceOnSave, announceAssigned, alertNearbyProviders };

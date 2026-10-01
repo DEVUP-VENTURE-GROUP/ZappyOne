@@ -32,6 +32,8 @@ const ProviderRepairSetupPage = lazy(() => import('./pages/ProviderRepairSetupPa
  */
 export function providerRoutes({ loginPath, helping = false, onboardRoles = ['worker'], shopTeam = false, home = null, onboardLoginPath = loginPath }) {
   const w = (el) => <RequireAuth role="worker" loginPath={loginPath}>{el}</RequireAuth>;
+  // A job screen also serves the shop owner in a shop app: they accept, assign and collect.
+  const job = (el) => <RequireAuth role={shopTeam ? ['worker', 'shop'] : 'worker'} loginPath={loginPath}>{el}</RequireAuth>;
   // One board for every kind of job this app works.
   const kinds = ['repair', 'pet', ...(helping ? ['helping'] : [])];
   const onboard = (el) => <RequireAuth role={onboardRoles} loginPath={onboardLoginPath}>{el}</RequireAuth>;
@@ -51,10 +53,10 @@ export function providerRoutes({ loginPath, helping = false, onboardRoles = ['wo
     <Route key="w-profile" path="/worker/profile" element={w(<WorkerEditProfilePage />)} />,
     <Route key="w-notif" path="/worker/notifications" element={w(<WorkerNotificationsPage />)} />,
     ...independentOnly,
-    <Route key="w-repair" path="/worker/repair/:id" element={w(<WorkerRepairJobPage />)} />,
+    <Route key="w-repair" path="/worker/repair/:id" element={job(<WorkerRepairJobPage />)} />,
     <Route key="w-work" path="/worker/work" element={w(<WorkBoardPage kinds={kinds} />)} />,
     <Route key="w-pet" path="/worker/pet" element={<Navigate to="/worker/work" replace />} />,
-    <Route key="w-pet-job" path="/worker/pet/:id" element={w(<WorkerPetJobPage />)} />,
+    <Route key="w-pet-job" path="/worker/pet/:id" element={job(<WorkerPetJobPage />)} />,
     ...(helping ? [
       <Route key="w-help" path="/worker/helping" element={<Navigate to="/worker/work" replace />} />,
       <Route key="w-help-job" path="/worker/helping/:id" element={w(<WorkerHelpingJobPage />)} />,

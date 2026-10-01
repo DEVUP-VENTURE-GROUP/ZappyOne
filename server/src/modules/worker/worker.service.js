@@ -211,11 +211,8 @@ async function updateLocation({ workerId, lng, lat, orderId, repairBookingId, jo
 }
 
 async function getEarnings({ workerId, range = 'today' }) {
-  const now = new Date();
-  let since;
-  if (range === 'today') since = new Date(now.setHours(0, 0, 0, 0));
-  else if (range === 'week') since = new Date(Date.now() - 7 * 86400 * 1000);
-  else since = new Date(Date.now() - 30 * 86400 * 1000);
+  const { rangeStart, finishedJobs } = require('../jobs/earnings');
+  const since = rangeStart(range);
 
   const mongoose = require('mongoose');
   const wid = mongoose.Types.ObjectId.createFromHexString(String(workerId));
@@ -270,20 +267,7 @@ async function getEarnings({ workerId, range = 'today' }) {
    * repair that is the settlement run's own split, so the number on screen and
    * the number paid cannot drift apart.
    */
-  const { ALL } = require('../jobs/kinds');
-  const dotted = (o, path) => path.split('.').reduce((v, k) => v?.[k], o);
-  const finished = [];
-  for (const k of ALL.filter((x) => x.earning)) {
-    const rows = await k.model().find({
-      workerId: wid, status: { $in: k.earning.done }, [k.earning.at]: { $gte: since },
-    }).select(k.earning.fields).lean();
-    for (const r of rows) {
-      finished.push({
-        kind: k.kind, paise: k.earning.share(r), platformPaise: k.earning.platform ? k.earning.platform(r) : 0,
-        cash: r.paymentMethod === 'cash', at: dotted(r, k.earning.at),
-      });
-    }
-  }
+  const finished = await finishedJobs({ workerId: wid }, since);
 
   const jobs = summary.jobs + finished.length;
   const earningsPaise = Math.round(summary.earningsPaise + finished.reduce((s, f) => s + f.paise, 0));

@@ -31,7 +31,9 @@ export default function ShopWorkersPage() {
     if (phone.length < 10) return toast.error('Enter a valid phone number');
     try {
       const res = await addWorker({ phone, name: name || undefined }).unwrap();
-      toast.success(res.isNew ? 'Worker added — they must complete their own KYC before going online' : 'Worker linked to your shop');
+      toast.success(res.isNew
+        ? 'Added. They sign in at Shop worker login with this number and verify their ID (Aadhaar + selfie) to go on duty.'
+        : 'Linked to your shop', { duration: 6000 });
       setShowAdd(false);
       setPhone(''); setName('');
     } catch (err) {

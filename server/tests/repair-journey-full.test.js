@@ -261,9 +261,17 @@ describe('when it goes wrong', () => {
     expect(quote.feePaise).toBe(0);
   });
 
+  it('a shop job does not set off until a technician is named', async () => {
+    const { booking } = await bookingService.createBooking(baseBooking({ shopId: shop._id }));
+    await bookingService.transition(booking._id, 'WORKER_ACCEPTED', { actorRole: 'shop', actorId: String(shop._id) });
+    await expect(bookingService.transition(booking._id, 'ON_THE_WAY', { actorRole: 'shop', actorId: String(shop._id) }))
+      .rejects.toMatchObject({ code: 'ASSIGN_TECHNICIAN_FIRST' });
+  });
+
   it('cancelling once a technician is travelling is not', async () => {
     const { booking } = await bookingService.createBooking(baseBooking({ shopId: shop._id }));
     await bookingService.transition(booking._id, 'WORKER_ACCEPTED', { actorRole: 'shop', actorId: String(shop._id) });
+    await bookingService.assignWorker({ bookingId: booking._id, shopId: shop._id, workerId: tech._id });
     await bookingService.transition(booking._id, 'ON_THE_WAY', { actorRole: 'shop', actorId: String(shop._id) });
 
     const quote = await cancellationService.quoteCancellation(

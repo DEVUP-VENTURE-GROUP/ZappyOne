@@ -81,6 +81,12 @@ const orderStage = (s) => (s === 'created' ? 'searching' : s);
 const TERMINAL = ['completed', 'cancelled', 'failed'];
 const finish = (job) => ({ ...job, terminal: TERMINAL.includes(job.status) });
 
+
+/** Who holds the job, as the server's provider card describes them (worker/provider-card). */
+const cardOf = (p) => (p ? {
+  name: p.name, phone: p.phone, rating: p.rating, jobs: p.completedJobs, from: p.from || null,
+} : null);
+
 export const KINDS = {
   repair: {
     noun: 'technician',
@@ -94,7 +100,7 @@ export const KINDS = {
         service: `${human(b.vertical)} repair`,
         subtitle: [b.brandCode, b.modelCode].filter(Boolean).join(' ').replace(/-/g, ' '), subtitleLabel: 'Device',
         status: repairStage(b.status) || 'in_progress', statusLabel, rawStatus: b.status,
-        provider: data.provider ? { name: data.provider.name, phone: data.provider.phone, rating: data.provider.rating, jobs: data.provider.completedJobs } : null,
+        provider: cardOf(data.provider),
         place: pointOf(b.location),
         scheduledAt: b.scheduledAt, createdAt: b.createdAt,
         history: historyOf(b, repairStage),
@@ -126,7 +132,7 @@ export const KINDS = {
         service: human(b.categoryCode || 'pet care'),
         subtitle: (b.pets || []).map((x) => x.snapshot?.name).filter(Boolean).join(', '), subtitleLabel: 'Pets',
         status: petStage(b.status) || 'in_progress', statusLabel, rawStatus: b.status,
-        provider: data.provider ? { name: data.provider.name, phone: data.provider.phone, rating: data.provider.rating, jobs: data.provider.completedJobs } : null,
+        provider: cardOf(data.provider),
         place: pointOf(b.serviceLocation),
         scheduledAt: b.scheduledAt || b.checkInAt, createdAt: b.createdAt,
         history: historyOf(b, petStage),
@@ -154,7 +160,7 @@ export const KINDS = {
         service: t.title || human(t.serviceType || 'helping'),
         subtitle: items ? `${items} item${items > 1 ? 's' : ''}` : human(t.serviceType), subtitleLabel: 'Task',
         status: helpingStage(t.status) || 'in_progress', statusLabel, rawStatus: t.status,
-        provider: data.provider ? { name: data.provider.name, phone: data.provider.phone, rating: data.provider.rating, jobs: data.provider.completedJobs } : null,
+        provider: cardOf(data.provider),
         place: pointOf(t.pickupLocation),
         scheduledAt: t.scheduledAt, createdAt: t.createdAt,
         history: historyOf(t, helpingStage),

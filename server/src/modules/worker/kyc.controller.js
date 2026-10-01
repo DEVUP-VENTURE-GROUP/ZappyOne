@@ -92,7 +92,7 @@ async function submitKyc(req, res, next) {
         $set: {
           'kyc.status':          'pending_review',
           'kyc.aadhaarUrl':      req.body.aadhaarUrl,
-          'kyc.licenseUrl':      req.body.licenseUrl,
+          'kyc.licenseUrl':      req.body.licenseUrl || null,
           'kyc.selfieUrl':       req.body.selfieUrl,
           'kyc.selfieMetadata':  req.body.selfieMetadata ?? null,
           'kyc.submittedAt':     now,
@@ -115,7 +115,7 @@ async function submitKyc(req, res, next) {
         $push: {
           'kyc.submissionHistory': {
             aadhaarUrl:    req.body.aadhaarUrl,
-            licenseUrl:    req.body.licenseUrl,
+            licenseUrl:    req.body.licenseUrl || null,
             selfieUrl:     req.body.selfieUrl,
             submittedAt:   now,
             outcome:       'pending',

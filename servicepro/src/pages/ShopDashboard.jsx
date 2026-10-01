@@ -8,11 +8,12 @@ import {
 } from 'lucide-react';
 import {
   useShopMeQuery, useShopKycStatusQuery, useShopEarningsQuery, useLogoutMutation,
-  useShopWorkersQuery, useRepairProviderJobsQuery, useRepairOnboardingStatusQuery,
+  useShopWorkersQuery, useRepairOnboardingStatusQuery,
   useProviderOnboardingStatusQuery,
 } from '@shared/services/api';
 import ProviderServicesCard from '@shared/components/provider/ProviderServicesCard';
-import ShopRepairJobs from '../components/ShopRepairJobs';
+import ShopJobs from '../components/ShopJobs';
+import { useProviderJobs } from '@shared/provider/useProviderJobs';
 import { StatCard, Panel, inr, EarningsOverview, PerformanceGrid } from '@shared/components/worker/DashboardUI';
 import { logout } from '@shared/modules/auth/authSlice';
 
@@ -45,9 +46,8 @@ const KYC_META = {
   suspended: { label: 'Verification suspended', tone: 'bg-red-50 text-red-700', Icon: XCircle },
 };
 
-/** Statuses where the shop holds the job but nobody is doing it yet. */
-const NEEDS_ATTENTION = ['PROVIDER_ASSIGNED', 'QUOTE_PENDING', 'CUSTOMER_APPROVAL_PENDING', 'READY_FOR_RETURN'];
-const CLOSED = ['COMPLETED', 'CANCELLED', 'REJECTED', 'EXPIRED', 'FAILED', 'REFUNDED'];
+/** Every kind of work a shop can be booked for. */
+const SHOP_KINDS = ['repair', 'pet'];
 
 function NavCard({ icon: Icon, title, sub, onClick, badge }) {
   return (
@@ -76,7 +76,7 @@ function TeamPanel({ workers, jobs, onManage }) {
   const loadByWorker = useMemo(() => {
     const map = new Map();
     for (const job of jobs) {
-      if (CLOSED.includes(job.status) || !job.workerId) continue;
+      if (!job.workerId) continue;
       const key = String(job.workerId);
       map.set(key, (map.get(key) || 0) + 1);
     }
@@ -143,7 +143,8 @@ export default function ShopDashboard() {
   const { data: earnings } = useShopEarningsQuery('today');
   const { data: weekEarnings } = useShopEarningsQuery('week');
   const { data: teamData } = useShopWorkersQuery();
-  const { data: jobsData } = useRepairProviderJobsQuery({});
+  // Open jobs of every kind, in one shape (shared with the technician's board).
+  const { mine: jobs } = useProviderJobs({ kinds: SHOP_KINDS });
   const { data: setup } = useRepairOnboardingStatusQuery('mobile');
   const [callLogout] = useLogoutMutation();
 
@@ -159,7 +160,6 @@ export default function ShopDashboard() {
 
   const shop = data?.shop;
   const workers = teamData?.workers || [];
-  const jobs = jobsData?.bookings || jobsData?.jobs || [];
 
   const kycStatus = kycData?.kyc?.status || shop?.kyc?.status || 'not_submitted';
   const meta = KYC_META[kycStatus] || KYC_META.not_submitted;
@@ -181,8 +181,7 @@ export default function ShopDashboard() {
   const isOpen = shop?.openNow ?? null;
   const liveNow = isDiscoverable && isOpen !== false;
 
-  const openJobs = jobs.filter((j) => !CLOSED.includes(j.status));
-  const needsAction = openJobs.filter((j) => NEEDS_ATTENTION.includes(j.status) || !j.workerId);
+  const needsAction = jobs.filter((j) => j.attention || !j.workerId);
   const pendingApprovals = (setup?.pending?.skillVerifications || 0) + (setup?.pending?.priceApprovals || 0);
 
   async function handleLogout() {
@@ -206,12 +205,14 @@ export default function ShopDashboard() {
    * weekly chart and their completion/acceptance figures. An owner running a
    * business deserves at least what their own technician sees.
    */
+  // The server keys days by India's date; so must the chart, whatever the device clock.
+  const istKey = (d) => new Date(d.getTime() + 330 * 60000).toISOString().slice(0, 10);
   const byDatePaise = Object.fromEntries((weekEarnings?.dailyBreakdown ?? []).map((d) => [d.date, d.earningsPaise]));
   const sumDays = (from, to) => {
     let acc = 0;
     for (let i = from; i < to; i++) {
       const d = new Date(); d.setDate(d.getDate() - i);
-      acc += byDatePaise[d.toISOString().slice(0, 10)] || 0;
+      acc += byDatePaise[istKey(d)] || 0;
     }
     return acc;
   };
@@ -222,7 +223,7 @@ export default function ShopDashboard() {
     : (thisWeekPaise > 0 ? 100 : 0);
   const chartPoints = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(); d.setDate(d.getDate() - (6 - i));
-    const key = d.toISOString().slice(0, 10);
+    const key = istKey(d);
     return {
       label: d.toLocaleDateString('en-IN', { weekday: 'short' }),
       value: Math.round((byDatePaise[key] || 0) / 100),
@@ -334,14 +335,14 @@ export default function ShopDashboard() {
         <div className="mt-5 grid gap-5 lg:grid-cols-3">
           <div className="space-y-5 lg:col-span-2">
             <Panel
-              title="Repair jobs"
+              title="Jobs"
               action={needsAction.length ? (
                 <span className="rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-black text-amber-700">
                   {needsAction.length} need{needsAction.length === 1 ? 's' : ''} you
                 </span>
               ) : null}
             >
-              <ShopRepairJobs />
+              <ShopJobs kinds={SHOP_KINDS} />
             </Panel>
 
             <ProviderServicesCard />

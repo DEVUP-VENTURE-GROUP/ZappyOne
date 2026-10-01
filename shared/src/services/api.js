@@ -2267,9 +2267,10 @@ export const api = createApi({
     }),
     /** The technician records taking the customer's cash. */
     /** A shop owner hands a job to one of their own technicians. */
-    assignRepairWorker: b.mutation({
-      query: ({ id, workerId }) => ({ url: `/repair/bookings/${id}/assign-worker`, method: 'POST', body: { workerId } }),
-      invalidatesTags: ['RepairBookings', 'RepairProvider'],
+    /** A shop owner puts one of their technicians on any job the shop holds. */
+    assignJobTechnician: b.mutation({
+      query: ({ id, workerId }) => ({ url: `/jobs/${id}/assign`, method: 'POST', body: { workerId } }),
+      invalidatesTags: ['RepairBookings', 'RepairProvider', 'PetBookings'],
     }),
     /** Provider passes on a job — it goes back for reassignment. */
     declineRepairBooking: b.mutation({
@@ -3089,7 +3090,7 @@ export const {
   useMyRepairBookingsQuery,
   useGetRepairBookingQuery,
   useTransitionRepairBookingMutation,
-  useAssignRepairWorkerMutation,
+  useAssignJobTechnicianMutation,
   useDeclineRepairBookingMutation,
   useCollectRepairCashMutation,
   useCancelRepairBookingMutation,

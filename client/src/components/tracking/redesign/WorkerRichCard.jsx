@@ -9,7 +9,8 @@ import Avatar from './Avatar';
  * and one tap to call, chat, see them live, or open their profile — only the
  * actions this job actually supports are shown.
  *
- * `job.provider` is { name, rating, jobs } from the kind's adapter.
+ * `job.provider` is { name, rating, jobs, from } from the kind's adapter;
+ * `from` is the shop a shop's technician comes from.
  */
 export default function WorkerRichCard({ job, eta, status, onCall, onChat, onLive, onProfile }) {
   const p = job.provider || {};
@@ -41,7 +42,9 @@ export default function WorkerRichCard({ job, eta, status, onCall, onChat, onLiv
               <ShieldCheck size={11} strokeWidth={2.5} /> Verified
             </span>
           </div>
-          <p className="text-[12.5px] text-[#647084] mt-1 capitalize">Verified ZappyOne {job.noun || 'pro'}</p>
+          <p className="text-[12.5px] text-[#647084] mt-1">
+            {p.from ? `from ${p.from}` : <span className="capitalize">Verified ZappyOne {job.noun || 'pro'}</span>}
+          </p>
         </div>
       </div>
 

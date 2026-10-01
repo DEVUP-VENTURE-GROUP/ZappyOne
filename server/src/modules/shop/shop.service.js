@@ -5,7 +5,6 @@ const Order = require('../order/order.model');
 const { RepairBooking } = require('../repair/models/booking.model');
 // The same split the settlement run uses, so what a shop is shown and what
 // it is paid can never drift apart.
-const { splitFor } = require('../repair/services/settlement.service');
 const s3Service = require('../../core/storage/s3');
 const { istParts } = require('../../core/time/ist');
 
@@ -315,10 +314,8 @@ async function removeWorkerFromShop(shopId, workerId) {
  * drift apart.
  */
 async function getShopEarnings(shopId, range = 'today') {
-  let since;
-  if (range === 'today') since = new Date(new Date().setHours(0, 0, 0, 0));
-  else if (range === 'week') since = new Date(Date.now() - 7 * 86400 * 1000);
-  else since = new Date(Date.now() - 30 * 86400 * 1000);
+  const { rangeStart, finishedJobs } = require('../jobs/earnings');
+  const since = rangeStart(range);
 
   const sid = mongoose.Types.ObjectId.createFromHexString(String(shopId));
   const workerIds = (await Worker.find({ shopId: sid }).select('_id').lean()).map((w) => w._id);
@@ -339,12 +336,8 @@ async function getShopEarnings(shopId, range = 'today') {
     ])
     : [];
 
-  /* Repair flow: the shop's own jobs AND its workers' */
-  const repairs = await RepairBooking.find({
-    $or: [{ shopId: sid }, ...(workerIds.length ? [{ workerId: { $in: workerIds } }] : [])],
-    status: 'COMPLETED',
-    completedAt: { $gte: since },
-  }).select('priceSnapshot completedAt').lean();
+  /* Every kind of job: the shop's own AND its workers' (jobs/earnings) */
+  const mine = { $or: [{ shopId: sid }, ...(workerIds.length ? [{ workerId: { $in: workerIds } }] : [])] };
 
   /**
    * A 7-day earnings series for the dashboard chart.
@@ -353,45 +346,56 @@ async function getShopEarnings(shopId, range = 'today') {
    * stable while the headline number follows the range — the same shape the
    * worker dashboard uses, so both screens read alike.
    */
-  const weekStart = new Date(new Date().setHours(0, 0, 0, 0) - 13 * 86400 * 1000);
+  // Days are India's days, keyed YYYY-MM-DD, whatever clock the server runs on.
+  const { istDayStart, toIst } = require('../../core/time/ist');
+  const dayKey = (when) => toIst(new Date(when)).toISOString().slice(0, 10);
+  const weekStart = new Date(istDayStart().getTime() - 13 * 86400 * 1000);
   const byDay = new Map();
-  for (let i = 0; i < 14; i++) {
-    const d = new Date(weekStart.getTime() + i * 86400 * 1000);
-    byDay.set(d.toISOString().slice(0, 10), 0);
-  }
+  for (let i = 0; i < 14; i++) byDay.set(dayKey(weekStart.getTime() + i * 86400 * 1000), 0);
   const addDay = (when, paise) => {
     if (!when) return;
-    const key = new Date(when).toISOString().slice(0, 10);
+    const key = dayKey(when);
     if (byDay.has(key)) byDay.set(key, byDay.get(key) + paise);
   };
   if (workerIds.length) {
     const dailyOrders = await Order.aggregate([
       { $match: { workerId: { $in: workerIds }, status: 'completed', completedAt: { $gte: weekStart } } },
-      { $group: { _id: { $dateToString: { format: '%Y-%m-%d', date: '$completedAt' } }, paise: { $sum: { $ifNull: ['$earnings.workerPaise', 0] } } } },
+      { $group: { _id: { $dateToString: { format: '%Y-%m-%d', date: '$completedAt', timezone: 'Asia/Kolkata' } }, paise: { $sum: { $ifNull: ['$earnings.workerPaise', 0] } } } },
     ]);
     for (const d of dailyOrders) if (byDay.has(d._id)) byDay.set(d._id, byDay.get(d._id) + d.paise);
   }
-  for (const b of repairs) addDay(b.completedAt, splitFor(b).providerPaise);
+  const weekJobs = await finishedJobs(mine, weekStart);
+  for (const f of weekJobs) addDay(f.at, f.paise);
+  const finished = weekJobs.filter((f) => f.at && new Date(f.at) >= since);
 
   const dailyBreakdown = [...byDay.entries()].map(([date, paise]) => ({
     date,
     earningsPaise: Math.round(paise),
   }));
 
-  const repairPaise = repairs.reduce((sum, b) => sum + splitFor(b).providerPaise, 0);
+  // A month-long range reaches past the chart's two weeks.
+  const inRange = since < weekStart ? await finishedJobs(mine, since) : finished;
+  const byKind = {};
+  for (const f of inRange) {
+    byKind[f.kind] = byKind[f.kind] || { jobs: 0, earningsPaise: 0 };
+    byKind[f.kind].jobs += 1;
+    byKind[f.kind].earningsPaise += Math.round(f.paise);
+  }
+  const jobPaise = inRange.reduce((sum, f) => sum + f.paise, 0);
 
-  const earningsPaise = Math.round((orderAgg?.earningsPaise || 0) + repairPaise);
+  const earningsPaise = Math.round((orderAgg?.earningsPaise || 0) + jobPaise);
 
   return {
     range,
-    jobs: (orderAgg?.jobs || 0) + repairs.length,
+    jobs: (orderAgg?.jobs || 0) + inRange.length,
     earningsPaise,
     earningsRupees: Math.round(earningsPaise / 100),
     workerCount: workerIds.length,
     /** Split out so a shop can see where the money came from. */
     breakdown: {
       orders: { jobs: orderAgg?.jobs || 0, earningsPaise: Math.round(orderAgg?.earningsPaise || 0) },
-      repairs: { jobs: repairs.length, earningsPaise: Math.round(repairPaise) },
+      repairs: byKind.repair || { jobs: 0, earningsPaise: 0 },
+      ...byKind,
     },
     /** Last 7 days, for the dashboard trend chart. */
     dailyBreakdown,

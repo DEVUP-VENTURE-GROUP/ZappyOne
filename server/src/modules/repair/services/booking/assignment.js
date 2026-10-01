@@ -52,9 +52,10 @@ async function assignWorker({ bookingId, shopId, workerId }) {
   });
   await booking.save();
 
-  // Ring the technician the same way any other job would — being handed work by
-  // your own shop should not feel different from being handed it by dispatch.
-  eventsService.announceOffer(booking);
+  // Still waiting on an answer: ring the technician the same way dispatch would.
+  // Already accepted by the shop: nothing to accept, so tell them it is theirs.
+  if (booking.status === 'PROVIDER_ASSIGNED') eventsService.announceOffer(booking);
+  else require('../../../jobs/job-events').announceAssigned('repair', booking).catch(() => {});
 
   return { booking, worker };
 }
