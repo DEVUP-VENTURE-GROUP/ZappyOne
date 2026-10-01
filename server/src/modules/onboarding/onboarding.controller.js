@@ -64,9 +64,10 @@ async function getRequirements(req, res, next) {
       providerKind: owner.providerKind,
     });
 
-    const enrolment = await ProviderEnrolment.findOne({
-      ...service.ownerFilter(owner), lineCode: line.code,
-    }).lean();
+    const doc = await ProviderEnrolment.findOne({ ...service.ownerFilter(owner), lineCode: line.code });
+    // Identity already on file shows as done, not as something to upload again.
+    if (doc) await require('./identity').carryIdentity(doc);
+    const enrolment = doc ? doc.toObject() : null;
 
     res.json({
       line,

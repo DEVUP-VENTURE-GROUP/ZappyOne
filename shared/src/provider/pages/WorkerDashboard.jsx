@@ -23,8 +23,8 @@ import ProviderServicesCard from '../../components/provider/ProviderServicesCard
 import { useLocationBroadcast } from '../useLocationBroadcast';
 import { useProviderJobs } from '../useProviderJobs';
 import {
-  Avatar, GreetingCard, StatCard, Panel, EarningsOverview, QuickAccess,
-  WorkerSidebar, WorkerBottomNav, OnlineControl, NAV_ITEMS, inr,
+  Avatar, GreetingCard, StatCard, Panel, EarningsOverview,
+  WorkerSidebar, WorkerBottomNav, OnlineControl, MENU_ITEMS, inr,
 } from '../../components/worker/DashboardUI';
 import toast from 'react-hot-toast';
 
@@ -155,7 +155,7 @@ export default function WorkerDashboard() {
   if (meData && !me?.onboardingComplete) return <WorkerOnboarding onComplete={refetchMe} />;
 
   async function toggleOnline() {
-    if (!kycApproved) { toast.error('Verification required before going online'); nav('/worker/kyc'); return; }
+    if (!kycApproved) { toast.error('Get verified for a service before going online'); nav('/provider/onboarding'); return; }
     setToggling(true);
     try {
       if (isOnline) {
@@ -236,12 +236,12 @@ export default function WorkerDashboard() {
                 </button>
               </div>
               <nav className="mt-2 space-y-1">
-                {NAV_ITEMS.map((item) => (
+                {MENU_ITEMS.map((item) => (
                   <button
                     key={item.key}
                     type="button"
                     onClick={() => handleNav(item)}
-                    className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[14px] font-semibold ${item.key === 'dashboard' ? 'bg-zappy-600 text-white' : 'text-slate-600 hover:bg-slate-100'}`}
+                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[14px] font-semibold text-slate-600 hover:bg-slate-100"
                   >
                     <item.Icon size={18} strokeWidth={2.2} />
                     <span className="flex-1 text-left">{item.label}</span>
@@ -281,7 +281,7 @@ export default function WorkerDashboard() {
         {token && kycData && !kycApproved && !verificationInFlight && (
           <button
             type="button"
-            onClick={() => nav('/worker/kyc')}
+            onClick={() => nav('/provider/onboarding')}
             className={`flex w-full items-center gap-3 rounded-2xl border p-3.5 text-left ${kycStatus === 'rejected' ? 'border-red-200 bg-red-50' : 'border-amber-200 bg-amber-50'}`}
           >
             <ShieldCheck size={18} className={kycStatus === 'rejected' ? 'text-red-600' : 'text-amber-600'} />
@@ -289,9 +289,9 @@ export default function WorkerDashboard() {
               <span className="block text-[14px] font-semibold text-navy">
                 {kycStatus === 'pending_review' ? 'Your verification is under review'
                   : kycStatus === 'rejected' ? 'Verification rejected. Tap to resubmit'
-                    : 'Get verified to start earning'}
+                    : 'Choose a service and get verified to start earning'}
               </span>
-              <span className="block text-[12px] text-slate-500">You can go online once you are verified.</span>
+              <span className="block text-[12px] text-slate-500">You verify once. Your ID is reused for every service you add.</span>
             </span>
             <ChevronRight size={18} className="shrink-0 text-slate-400" />
           </button>
@@ -382,8 +382,6 @@ export default function WorkerDashboard() {
             />
           </div>
         </div>
-
-        <QuickAccess onOpen={(to) => nav(to)} />
       </main>
 
       <WorkerBottomNav activeKey="dashboard" onNavigate={handleNav} />

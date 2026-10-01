@@ -46,7 +46,8 @@ export function providerRoutes({ loginPath, helping = false, onboardRoles = ['wo
   return [
     <Route key="w" path="/worker" element={w(home || <WorkerDashboard />)} />,
     <Route key="w-job" path="/worker/jobs/:id" element={<Navigate to="/worker/work" replace />} />,
-    <Route key="w-kyc" path="/worker/kyc" element={w(<WorkerKycPage />)} />,
+    // Independents verify once, through their services (onboarding/identity.js); a shop's team keeps the ID check.
+    <Route key="w-kyc" path="/worker/kyc" element={shopTeam ? w(<WorkerKycPage />) : <Navigate to="/provider/onboarding" replace />} />,
     <Route key="w-profile" path="/worker/profile" element={w(<WorkerEditProfilePage />)} />,
     <Route key="w-notif" path="/worker/notifications" element={w(<WorkerNotificationsPage />)} />,
     ...independentOnly,

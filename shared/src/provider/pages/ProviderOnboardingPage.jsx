@@ -345,6 +345,8 @@ function VerifyStep({ lineCode, onDone }) {
     for (const d of enrolment?.documents || []) map[d.code] = d.url;
     return map;
   }, [enrolment]);
+  // Identity given once (another service or the ID check) is carried here, not asked again.
+  const carried = useMemo(() => new Set((enrolment?.documents || []).filter((d) => d.carried).map((d) => d.code)), [enrolment]);
 
   const savedFields = useMemo(() => {
     const map = {};
@@ -491,9 +493,11 @@ function VerifyStep({ lineCode, onDone }) {
                 <p className="font-semibold text-sm text-[#0F172A]">
                   {d.label}{!d.required && <span className="text-slate-400 font-normal"> · optional</span>}
                 </p>
-                {d.hint && <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">{d.hint}</p>}
+                {carried.has(d.code)
+                  ? <p className="text-xs text-emerald-700 mt-0.5 leading-relaxed">Already on file from your verification. Nothing to do.</p>
+                  : d.hint && <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">{d.hint}</p>}
               </div>
-              {!decided && (d.capture ? (
+              {!decided && !carried.has(d.code) && (d.capture ? (
                 /*
                   This one has to be taken now. A file picker would let the
                   gallery answer a question about the present moment, which is

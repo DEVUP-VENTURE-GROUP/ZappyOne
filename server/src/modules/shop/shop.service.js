@@ -264,6 +264,24 @@ async function removeWorkerFromShop(shopId, workerId) {
   if (!worker) throw Object.assign(new Error('Worker not found on this shop'), { status: 404 });
   worker.shopId = null;
   await worker.save();
+
+  /*
+   * Leaving a shop ends what came with it. Their ServicePro sessions close (the
+   * next sign-in is as an independent, on Rakshak), and the shop's jobs still in
+   * their hands go back to the shop to hand to someone else.
+   */
+  await require('../auth/token.service').revokeAllForUser(String(worker._id)).catch(() => {});
+  const DONE = ['COMPLETED', 'CANCELLED', 'REJECTED', 'EXPIRED', 'FAILED', 'REFUNDED'];
+  await RepairBooking.updateMany(
+    { shopId, workerId: worker._id, status: { $nin: DONE } },
+    { $set: { workerId: null } },
+  );
+  const { PetBooking } = require('../pet/models/booking.model');
+  await PetBooking.updateMany(
+    { shopId, workerId: worker._id, status: { $nin: ['PAYMENT_COMPLETED', 'CLOSED', 'CANCELLED', 'REFUNDED'] } },
+    { $set: { workerId: null } },
+  );
+  require('../worker/active-trip').clearActiveTrip(String(worker._id));
   return worker;
 }
 

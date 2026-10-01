@@ -217,6 +217,8 @@ const submittedDocumentSchema = new mongoose.Schema(
     capturedAt: { type: Date, default: null },
     lat: { type: Number, default: null },
     lng: { type: Number, default: null },
+    /** Brought over from the person's identity on file (onboarding/identity.js), not uploaded here. */
+    carried: { type: Boolean, default: false },
   },
   { _id: false },
 );

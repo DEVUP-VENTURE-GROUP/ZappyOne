@@ -2,8 +2,8 @@ import { memo } from 'react';
 import { motion } from 'framer-motion';
 import {
   LayoutDashboard, IndianRupee, Wallet as WalletIcon, Bell, Star, User, ChevronRight, Wifi,
-  TrendingUp, TrendingDown, Search, Radio, Loader2, Target, Building2, ArrowRightLeft,
-  GraduationCap, ShieldCheck, ShoppingBag,
+  TrendingUp, TrendingDown, Search, Radio, Loader2, Target, Building2, GraduationCap,
+  ShieldCheck, ShoppingBag,
 } from 'lucide-react';
 import { ZappyLogo } from '../common/ZappyLogo';
 
@@ -45,16 +45,24 @@ export function prettyService(code = '') {
  * where anything lives.
  */
 export const NAV_ITEMS = [
+  // The bottom bar on a phone: the five places a worker goes every day.
   { key: 'dashboard', label: 'Home', Icon: LayoutDashboard, to: '/worker', primary: true },
   { key: 'work', label: 'Work', Icon: ShoppingBag, to: '/worker/work', primary: true },
   { key: 'earnings', label: 'Earnings', Icon: IndianRupee, to: '/worker/earnings', primary: true },
-  { key: 'withdraw', label: 'Withdraw', Icon: WalletIcon, to: '/worker/withdraw' },
-  { key: 'notifications', label: 'Notifications', Icon: Bell, to: '/worker/notifications' },
-  { key: 'reviews', label: 'Reviews', Icon: Star, to: '/worker/appeals' },
+  { key: 'notifications', label: 'Alerts', Icon: Bell, to: '/worker/notifications', primary: true },
   { key: 'profile', label: 'Profile', Icon: User, to: '/worker/profile', primary: true },
+  // Everything else: the menu on a phone; on a computer the sidebar shows all of it.
+  { key: 'services', label: 'My services', Icon: ShieldCheck, to: '/provider/onboarding' },
+  { key: 'withdraw', label: 'Withdraw', Icon: WalletIcon, to: '/worker/withdraw' },
+  { key: 'bank', label: 'Bank & UPI', Icon: Building2, to: '/worker/bank' },
+  { key: 'reviews', label: 'Reviews', Icon: Star, to: '/worker/appeals' },
+  { key: 'training', label: 'Training', Icon: GraduationCap, to: '/worker/training' },
+  { key: 'goals', label: 'Goals', Icon: Target, to: '/worker/goals' },
 ];
 
-/** The mobile bar is the primary subset — derived, never a second list. */
+/** The phone menu: only what the bottom bar does not already show. */
+export const MENU_ITEMS = NAV_ITEMS.filter((i) => !i.primary);
+
 const BOTTOM_NAV = NAV_ITEMS.filter((i) => i.primary);
 
 
@@ -383,44 +391,3 @@ export function PerformanceGrid({ items }) {
    The full set of worker tools carried over from the original dashboard, each
    routing to a real, existing worker route. Shown on both web and mobile.
  */
-/**
- * Tools that are NOT in the navigation.
- *
- * Earnings, Wallet and Reviews used to sit here as well as in the sidebar; a
- * panel that repeats the menu above it is noise. What is left is the things a
- * worker reaches for occasionally and would otherwise have to hunt for.
- */
-const QUICK_ACCESS_TOOLS = [
-  { to: '/provider/onboarding', Icon: ShieldCheck, tone: 'blue', label: 'Services', sub: 'What you are verified for' },
-  { to: '/worker/goals', Icon: Target, tone: 'violet', label: 'Goals', sub: 'Daily & weekly' },
-  { to: '/worker/bank', Icon: Building2, tone: 'blue', label: 'Bank & UPI', sub: 'Add accounts' },
-  { to: '/worker/withdraw', Icon: ArrowRightLeft, tone: 'green', label: 'Withdraw', sub: 'Transfer to bank' },
-  { to: '/worker/training', Icon: GraduationCap, tone: 'rose', label: 'Training', sub: 'Get certified' },
-];
-
-export function QuickAccess({ onOpen }) {
-  return (
-    <Panel title="More">
-      <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
-        {QUICK_ACCESS_TOOLS.map((t) => {
-          const tone = TONE[t.tone] || TONE.blue;
-          const sub = t.sub;
-          return (
-            <button
-              key={t.label}
-              type="button"
-              onClick={() => onOpen(t.to)}
-              className="flex flex-col rounded-2xl border border-slate-200 bg-white p-3 text-left transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_28px_-20px_rgba(15,23,42,0.4)] active:scale-[0.98]"
-            >
-              <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${tone.bg}`}>
-                <t.Icon size={17} strokeWidth={2.3} className={tone.fg} />
-              </span>
-              <span className="mt-2.5 text-[13px] font-bold leading-tight text-navy-900">{t.label}</span>
-              {sub && <span className="mt-0.5 text-[10.5px] font-medium leading-tight text-slate-500">{sub}</span>}
-            </button>
-          );
-        })}
-      </div>
-    </Panel>
-  );
-}

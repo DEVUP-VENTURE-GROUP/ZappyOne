@@ -1,4 +1,5 @@
 const { httpError } = require('../../core/errors');
+const { carryIdentity } = require('./identity');
 const {
   ServiceDomain, ServiceLine, KycRequirementSet, ProviderEnrolment, ServiceLineRequest,
 } = require('./onboarding.model');
@@ -113,15 +114,21 @@ async function enrol({ owner, providerKind, lineCode }) {
   }
 
   const existing = await ProviderEnrolment.findOne({ ...ownerFilter(owner), lineCode: line.code });
-  if (existing) return existing;
+  if (existing) {
+    await carryIdentity(existing);
+    return existing;
+  }
 
-  return ProviderEnrolment.create({
+  const created = await ProviderEnrolment.create({
     providerKind,
     ...ownerFilter(owner),
     domainCode: line.domainCode,
     lineCode: line.code,
     status: 'draft',
   });
+  // Identity given once (another service, or the ID check) is never asked again.
+  await carryIdentity(created);
+  return created;
 }
 
 /** Save progress. Documents and fields merge by code so partial saves are safe. */
@@ -181,6 +188,7 @@ async function submitForReview({ owner, enrolmentId }) {
     throw httpError('This line is already approved', 409, 'ALREADY_APPROVED');
   }
 
+  await carryIdentity(enrolment);
   const { set } = await resolveRequirements({
     lineCode: enrolment.lineCode,
     providerKind: enrolment.providerKind,
