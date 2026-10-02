@@ -525,7 +525,7 @@ function StatusScreen({ type, onBack }) {
         </div>
       </header>
       <div className="flex-1 flex flex-col items-center justify-center px-8 gap-6 text-center">
-        <div className={`w-20 h-20 rounded-3xl flex items-center justify-center ${isPending ? 'bg-amber-50' : 'bg-success-50'}`}>
+        <div className={`w-20 h-20 rounded-card flex items-center justify-center ${isPending ? 'bg-amber-50' : 'bg-success-50'}`}>
           {isPending
             ? <Clock size={40} strokeWidth={1.5} className="text-amber-500" />
             : <ShieldCheck size={40} strokeWidth={1.5} className="text-success-600" />

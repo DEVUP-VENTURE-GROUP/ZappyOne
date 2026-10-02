@@ -31,7 +31,7 @@ export default function HandoverCodeCard({
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         className="flex items-center gap-3 overflow-hidden rounded-2xl px-4 py-4 ring-1 ring-slate-100"
-        style={{ background: 'linear-gradient(135deg,#f8fafc,#f1f5f9)' }}
+        style={{ background: 'linear-gradient(#f8fafc, #f8fafc)' }}
       >
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-slate-100">
           <Loader2 size={17} className="animate-spin text-slate-400" />
@@ -50,7 +50,7 @@ export default function HandoverCodeCard({
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         className="flex items-center gap-3 overflow-hidden rounded-2xl px-4 py-4 ring-1 ring-slate-100"
-        style={{ background: 'linear-gradient(135deg,#f8fafc,#f1f5f9)' }}
+        style={{ background: 'linear-gradient(#f8fafc, #f8fafc)' }}
       >
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-slate-100">
           <ShieldCheck size={18} strokeWidth={2} className="text-slate-400" />
@@ -75,9 +75,9 @@ export default function HandoverCodeCard({
       initial={{ opacity: 0, scale: 0.95, y: 8 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       transition={{ type: 'spring', damping: 20, stiffness: 260 }}
-      className="overflow-hidden rounded-[24px] border border-white/10"
+      className="overflow-hidden rounded-card border border-white/10"
       style={{
-        background: 'linear-gradient(135deg, #7c3aed 0%, #2563EB 100%)',
+        background: 'linear-gradient(#7c3aed, #7c3aed)',
         boxShadow: '0 12px 32px -4px rgba(124,58,237,0.4)',
       }}
     >

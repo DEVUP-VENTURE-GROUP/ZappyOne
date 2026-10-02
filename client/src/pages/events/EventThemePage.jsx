@@ -57,7 +57,7 @@ export default function EventThemePage() {
         <motion.button 
           whileTap={{ scale: 0.9 }}
           onClick={() => navigate(-1)} 
-          className="w-11 h-11 bg-white/80 backdrop-blur-md border border-slate-200 rounded-full flex items-center justify-center shadow-sm pointer-events-auto"
+          className="w-11 h-11 bg-white border border-slate-200 rounded-full flex items-center justify-center shadow-sm pointer-events-auto"
         >
           <ArrowLeft size={20} className="text-slate-700" />
         </motion.button>
@@ -65,7 +65,7 @@ export default function EventThemePage() {
         <motion.button 
           whileTap={{ scale: 0.9 }}
           onClick={handleSave} 
-          className={`w-11 h-11 backdrop-blur-md rounded-full flex items-center justify-center shadow-sm pointer-events-auto transition-colors border ${theme.isSaved ? 'bg-rose-50 border-rose-200' : 'bg-white/80 border-slate-200'}`}
+          className={`w-11 h-11 rounded-full flex items-center justify-center shadow-sm pointer-events-auto transition-colors border ${theme.isSaved ? 'bg-rose-50 border-rose-200' : 'bg-white/80 border-slate-200'}`}
         >
           <Heart size={20} className={theme.isSaved ? 'text-rose-500 fill-rose-500' : 'text-slate-700'} />
         </motion.button>
@@ -73,7 +73,7 @@ export default function EventThemePage() {
 
       {/* Hero Image (Contained & Rounded) */}
       <div className="px-4 pt-16">
-        <div className="relative w-full h-[40vh] md:h-[50vh] bg-gradient-to-br from-zappy-50 to-purple-50 rounded-[2rem] overflow-hidden shadow-sm border border-slate-200/50 flex items-center justify-center">
+        <div className="relative w-full h-[40vh] md:h-[50vh] bg-zappy-50 rounded-[2rem] overflow-hidden shadow-sm border border-slate-200/50 flex items-center justify-center">
           
           {/* Fallback Icon behind image */}
           
@@ -105,7 +105,7 @@ export default function EventThemePage() {
           {theme.videoUrl && (
              <button 
                 onClick={() => setShowVideo(v => !v)}
-                className="absolute bottom-4 left-4 z-20 bg-white/90 backdrop-blur-sm rounded-full px-4 py-2 flex items-center gap-2 text-xs font-bold text-slate-800 shadow-sm"
+                className="absolute bottom-4 left-4 z-20 bg-white rounded-full px-4 py-2 flex items-center gap-2 text-xs font-bold text-slate-800 shadow-sm"
              >
                 <Play size={14} className="text-zappy-600 fill-zappy-600" />
                 {showVideo ? 'View Photos' : 'Play Video'}
@@ -160,7 +160,7 @@ export default function EventThemePage() {
           {/* Main Price Bento */}
           <div className="col-span-2 md:col-span-4 relative overflow-hidden bg-white rounded-[2rem] p-6 shadow-sm border border-slate-200/60">
             {/* Background decorative blob */}
-            <div className="absolute -right-10 -top-10 w-40 h-40 bg-gradient-to-br from-zappy-100 to-purple-50 rounded-full blur-3xl" />
+            <div className="absolute -right-10 -top-10 w-40 h-40 bg-zappy-100 rounded-full blur-3xl" />
             
             <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
               <div>
@@ -299,7 +299,7 @@ export default function EventThemePage() {
 
       {/* Floating Light CTA Bar */}
       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-md z-50">
-        <div className="bg-white/80 backdrop-blur-2xl border border-slate-200/60 rounded-[2rem] p-2.5 shadow-[0_20px_40px_-12px_rgba(0,0,0,0.15)] flex gap-2">
+        <div className="bg-white border border-slate-200/60 rounded-[2rem] p-2.5 shadow-[0_20px_40px_-12px_rgba(0,0,0,0.15)] flex gap-2">
           <motion.button 
             whileTap={{ scale: 0.98 }}
             onClick={() => navigate(`/events/book/${theme._id}?scheduled=true`)}

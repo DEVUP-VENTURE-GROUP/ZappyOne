@@ -342,7 +342,7 @@ function PartnerDrawer({ partnerId, onClose, onRefresh }) {
             <div className="bg-slate-50 rounded-2xl p-4">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-gradient-to-br from-violet-400 to-fuchsia-400 rounded-xl flex items-center justify-center text-white font-black text-lg">
+                  <div className="w-12 h-12 bg-violet-400 rounded-xl flex items-center justify-center text-white font-black text-lg">
                     {partner.businessName?.[0]?.toUpperCase()}
                   </div>
                   <div>
@@ -524,7 +524,7 @@ function PartnersTab() {
               className="bg-white rounded-xl border border-slate-200 p-4 cursor-pointer hover:border-indigo-200 hover:bg-indigo-50/30 transition-all">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-violet-400 to-fuchsia-400 rounded-xl flex items-center justify-center text-white font-bold text-sm shrink-0">
+                  <div className="w-10 h-10 bg-violet-400 rounded-xl flex items-center justify-center text-white font-bold text-sm shrink-0">
                     {p.businessName?.[0]?.toUpperCase()}
                   </div>
                   <div>

@@ -99,7 +99,7 @@ export default function JobOfferAlert({ offer, myLocation, onAccept, onDecline, 
         aria-label={offer.heading}
       >
         <motion.div
-          className="w-full overflow-hidden rounded-3xl bg-white shadow-2xl sm:max-w-md"
+          className="w-full overflow-hidden rounded-card bg-white shadow-2xl sm:max-w-md"
           initial={{ y: 40, scale: 0.98 }}
           animate={{ y: 0, scale: 1 }}
           transition={{ type: 'spring', stiffness: 320, damping: 26 }}

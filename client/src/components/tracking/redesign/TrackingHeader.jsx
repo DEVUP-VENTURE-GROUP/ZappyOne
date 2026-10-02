@@ -42,7 +42,7 @@ export default function TrackingHeader({
               <div className="flex items-center gap-2 mt-0.5">
                 <span
                   className="w-[26px] h-[26px] rounded-[9px] flex items-center justify-center shrink-0"
-                  style={{ background: 'linear-gradient(135deg,#3B82F6,#2563FF)', boxShadow: '0 4px 12px -2px rgba(37,99,235,.7)' }}
+                  style={{ background: 'linear-gradient(#3B82F6, #3B82F6)', boxShadow: '0 4px 12px -2px rgba(37,99,235,.7)' }}
                 >
                   <Zap size={14} className="text-white" fill="currentColor" />
                 </span>

@@ -87,8 +87,8 @@ export default function ProofPhotos({
       transition={{ delay: 0.15 }}
       style={{
         background: done
-          ? 'linear-gradient(135deg, #f0fdf4, #dcfce7)'
-          : 'linear-gradient(135deg, #faf5ff, #f3e8ff)',
+          ? 'linear-gradient(#f0fdf4, #f0fdf4)'
+          : 'linear-gradient(#faf5ff, #faf5ff)',
         border: done
           ? '1px solid rgba(34,197,94,0.25)'
           : '1px solid rgba(139,92,246,0.2)',
@@ -155,7 +155,7 @@ export default function ProofPhotos({
                       : <CheckCircle size={11} strokeWidth={3} className="text-white" />}
                   </div>
                   <button onClick={() => remove(photo.id)}
-                    className="absolute top-1.5 left-1.5 w-5 h-5 bg-black/60 backdrop-blur-sm rounded-full flex items-center justify-center">
+                    className="absolute top-1.5 left-1.5 w-5 h-5 bg-black/60 rounded-full flex items-center justify-center">
                     <X size={9} strokeWidth={3} className="text-white" />
                   </button>
                 </>

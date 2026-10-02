@@ -605,7 +605,7 @@ export default function LiveTrackingMap({ pickup, workerLocation, service, statu
       {/* Skeleton shimmer while map tiles load */}
       {!mapReady && (
         <div className="lt2-skeleton absolute inset-0 z-10 rounded-2xl flex items-center justify-center"
-          style={{ background: 'linear-gradient(135deg,#0f172a,#1e3a8a)' }}>
+          style={{ background: 'linear-gradient(#0f172a, #0f172a)' }}>
           <div className="flex flex-col items-center gap-3">
             <div className="w-12 h-12 rounded-full flex items-center justify-center ring-2 ring-white/10"
               style={{ background: `${color}25` }}>
@@ -635,7 +635,7 @@ export default function LiveTrackingMap({ pickup, workerLocation, service, statu
             <div
               className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-white text-xs font-extrabold shadow-2xl"
               style={{
-                background: 'linear-gradient(135deg,#059669,#10b981)',
+                background: 'linear-gradient(#059669, #059669)',
                 boxShadow: '0 4px 20px rgba(16,185,129,.55), 0 0 0 1px rgba(255,255,255,.15)',
               }}
             >

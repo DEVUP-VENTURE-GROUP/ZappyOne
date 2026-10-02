@@ -133,7 +133,7 @@ function ZoneDrawer({ initial, coordinates, onClose, onSaved }) {
   }
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-[9999] bg-black/60 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={onClose}>
       <motion.div
         initial={{ y: 60, opacity: 0, scale: 0.97 }}
         animate={{ y: 0, opacity: 1, scale: 1 }}
@@ -239,7 +239,7 @@ function ZoneStats({ zoneId }) {
   );
   if (!data) return null;
   return (
-    <div className="flex items-center gap-5 px-4 py-3 bg-gradient-to-r from-slate-50 to-white border-t border-slate-100">
+    <div className="flex items-center gap-5 px-4 py-3 bg-slate-50 border-t border-slate-100">
       <div className="flex items-center gap-1.5">
         <div className="w-6 h-6 rounded-lg bg-emerald-50 flex items-center justify-center">
           <Users size={12} className="text-emerald-500" />
@@ -677,7 +677,7 @@ export default function Zones() {
                     transition={{ type: 'spring', damping: 22, stiffness: 300 }}
                     className="absolute top-3 inset-x-3 z-[1000] flex justify-center pointer-events-none"
                   >
-                    <div className="pointer-events-auto bg-blue-600/95 backdrop-blur-sm text-white rounded-2xl shadow-xl px-3.5 py-2.5 flex flex-wrap items-center justify-center gap-x-3 gap-y-2 max-w-full">
+                    <div className="pointer-events-auto bg-blue-600/95 text-white rounded-2xl shadow-xl px-3.5 py-2.5 flex flex-wrap items-center justify-center gap-x-3 gap-y-2 max-w-full">
                       <div className="flex items-center gap-2 min-w-0">
                         <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center shrink-0">
                           <MousePointer size={14} />
@@ -714,7 +714,7 @@ export default function Zones() {
               {/* Empty state hint (when no zones and not drawing) */}
               {!drawing && zones.length === 0 && (
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-[500]">
-                  <div className="bg-white/90 backdrop-blur-sm rounded-2xl px-6 py-4 text-center shadow-lg border border-slate-200">
+                  <div className="bg-white rounded-2xl px-6 py-4 text-center shadow-lg border border-slate-200">
                     <Layers size={24} className="text-slate-300 mx-auto mb-2" />
                     <p className="text-sm font-semibold text-slate-500">No geofences drawn</p>
                     <p className="text-xs text-slate-400 mt-0.5">Click "Add Zone" to draw your first boundary</p>

@@ -45,14 +45,14 @@ export default function IOSInstallModal({ open, onClose }) {
         >
           {/* Backdrop */}
           <div
-            className="absolute inset-0 bg-navy-900/50 backdrop-blur-sm"
+            className="absolute inset-0 bg-navy-900/50"
             onClick={onClose}
             aria-hidden
           />
 
           {/* Sheet */}
           <motion.div
-            className="relative w-full max-w-sm rounded-3xl bg-white shadow-soft-lg p-6
+            className="relative w-full max-w-sm rounded-card bg-white shadow-soft-lg p-6
                        pb-[calc(1.5rem+env(safe-area-inset-bottom))]"
             initial={{ y: 40, opacity: 0, scale: 0.98 }}
             animate={{ y: 0, opacity: 1, scale: 1 }}

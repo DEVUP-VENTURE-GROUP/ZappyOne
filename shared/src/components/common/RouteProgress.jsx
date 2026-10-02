@@ -28,7 +28,7 @@ export default function RouteProgress() {
           <motion.div
             className="h-full rounded-r-full"
             style={{
-              background: 'linear-gradient(90deg, #3B82F6 0%, #22D3EE 100%)',
+              background: 'linear-gradient(#3B82F6, #3B82F6)',
               boxShadow: '0 0 10px rgba(34,211,238,0.7)',
             }}
             initial={{ width: '0%' }}

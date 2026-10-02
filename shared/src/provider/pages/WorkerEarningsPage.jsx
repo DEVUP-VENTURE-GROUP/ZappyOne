@@ -104,17 +104,17 @@ export default function WorkerEarningsPage() {
       <div className="w-full max-w-lg lg:max-w-2xl bg-slate-50 min-h-screen relative shadow-[0_0_40px_rgba(0,0,0,0.05)] lg:shadow-[0_0_60px_rgba(0,0,0,0.08)] md:border-x border-slate-200/60">
         
         {/* Cinematic Header */}
-        <header className="relative pt-6 pb-24 overflow-hidden rounded-b-[2.5rem] shadow-sm z-10" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #1e3a5f 100%)' }}>
+        <header className="relative pt-6 pb-24 overflow-hidden rounded-b-[2.5rem] shadow-sm z-10" style={{ background: 'linear-gradient(#0f172a, #0f172a)' }}>
           <motion.div className="absolute top-0 right-0 w-64 h-64 bg-zappy-500/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.8, 0.5] }} transition={{ duration: 4, repeat: Infinity }} />
           <motion.div className="absolute bottom-0 left-0 w-48 h-48 bg-emerald-500/20 rounded-full blur-3xl translate-y-1/3 -translate-x-1/4" animate={{ scale: [1, 1.3, 1], opacity: [0.3, 0.6, 0.3] }} transition={{ duration: 5, repeat: Infinity, delay: 1 }} />
           
           <div className="relative z-10 px-5">
             <div className="flex items-center justify-between mb-8">
-              <motion.button onClick={() => nav(-1)} whileTap={{ scale: 0.9 }} className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md border border-white/10 flex items-center justify-center text-white">
+              <motion.button onClick={() => nav(-1)} whileTap={{ scale: 0.9 }} className="w-10 h-10 rounded-full bg-white/10 border border-white/10 flex items-center justify-center text-white">
                 <ArrowLeft size={20} strokeWidth={2.5} />
               </motion.button>
               <h1 className="text-white font-black tracking-wide text-lg">Earnings</h1>
-              <motion.button onClick={() => generatePayslipCSV(jobs, period)} whileTap={{ scale: 0.9 }} className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md border border-white/10 flex items-center justify-center text-white" title="Download CSV">
+              <motion.button onClick={() => generatePayslipCSV(jobs, period)} whileTap={{ scale: 0.9 }} className="w-10 h-10 rounded-full bg-white/10 border border-white/10 flex items-center justify-center text-white" title="Download CSV">
                 <Download size={18} strokeWidth={2} />
               </motion.button>
             </div>
@@ -130,7 +130,7 @@ export default function WorkerEarningsPage() {
         <div className="relative z-20 px-4 -mt-16 pb-20">
           
           {/* Period Tabs */}
-          <div className="bg-white/80 backdrop-blur-xl p-1.5 rounded-2xl shadow-lg ring-1 ring-black/5 flex gap-1 mb-6 max-w-sm mx-auto">
+          <div className="bg-white p-1.5 rounded-2xl shadow-lg ring-1 ring-black/5 flex gap-1 mb-6 max-w-sm mx-auto">
             {PERIODS.map(p => (
               <button key={p.id} onClick={() => setPeriod(p.id)}
                 className={`flex-1 text-[13px] font-bold py-2.5 rounded-xl transition-all duration-300 ${period === p.id ? 'bg-zappy-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'}`}>
@@ -149,7 +149,7 @@ export default function WorkerEarningsPage() {
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Tips</p>
               <p className="text-xl font-black text-emerald-500">{fmt(summary.totalTips ?? 0)}</p>
             </div>
-            <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-4 shadow-sm border border-amber-100 text-center">
+            <div className=" bg-amber-50 rounded-2xl p-4 shadow-sm border border-amber-100 text-center">
               <p className="text-[10px] font-bold text-amber-600/70 uppercase tracking-wider mb-1">Surge Jobs</p>
               <p className="text-xl font-black text-amber-600">{summary.surgeCount ?? 0}</p>
             </div>

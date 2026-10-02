@@ -33,12 +33,12 @@ export default function ShopPublicProfilePage() {
         {shop.coverImageUrl ? (
           <img src={shop.coverImageUrl} alt={shop.businessName} className="w-full h-full object-cover" />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-zappy-100 to-zappy-50">
+          <div className="w-full h-full flex items-center justify-center bg-zappy-100">
             <Store size={40} className="text-zappy-300" />
           </div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/20" />
-        <button onClick={() => nav(-1)} className="absolute top-4 left-4 w-9 h-9 rounded-full bg-white/90 backdrop-blur flex items-center justify-center shadow">
+        <button onClick={() => nav(-1)} className="absolute top-4 left-4 w-9 h-9 rounded-full bg-white flex items-center justify-center shadow">
           <ArrowLeft size={18} strokeWidth={2.5} />
         </button>
       </div>

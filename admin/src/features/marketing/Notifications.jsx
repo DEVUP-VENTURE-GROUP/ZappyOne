@@ -176,7 +176,7 @@ function NotificationPreview({ title, body, type }) {
   return (
     <div className="sticky top-6">
       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 ml-1">Live Preview</p>
-      <div className="relative rounded-[2rem] p-4 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 shadow-2xl overflow-hidden ring-1 ring-white/10">
+      <div className="relative rounded-[2rem] p-4 bg-slate-900 shadow-2xl overflow-hidden ring-1 ring-white/10">
         {/* Glossy lighting */}
         <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/5 to-white/10 pointer-events-none" />
         <div className="absolute top-0 right-0 -mr-12 -mt-12 w-32 h-32 bg-blue-500/30 rounded-full blur-3xl pointer-events-none" />
@@ -196,7 +196,7 @@ function NotificationPreview({ title, body, type }) {
           initial={{ y: 5, opacity: 0.8, scale: 0.98 }}
           animate={{ y: 0, opacity: 1, scale: 1 }}
           transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-          className="bg-white/95 backdrop-blur-xl rounded-[1.2rem] p-3.5 shadow-[0_8px_30px_rgb(0,0,0,0.15)] flex gap-3 relative border border-white/50 overflow-hidden"
+          className="bg-white rounded-[1.2rem] p-3.5 shadow-[0_8px_30px_rgb(0,0,0,0.15)] flex gap-3 relative border border-white/50 overflow-hidden"
         >
           <div className="absolute inset-0 bg-gradient-to-br from-white/60 to-transparent pointer-events-none" />
           
@@ -394,7 +394,7 @@ function Broadcast() {
       {/* Sending overlay — animated paper plane */}
       {sending && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-          className="absolute inset-0 z-10 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center gap-3">
+          className="absolute inset-0 z-10 bg-white flex flex-col items-center justify-center gap-3">
           <motion.div
             animate={{ x: [-8, 8, -8], y: [4, -4, 4] }}
             transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}

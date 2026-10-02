@@ -30,13 +30,13 @@ function ModuleCard({ mod, onOpen, index }) {
         {mod.thumbnail ? (
           <img src={mod.thumbnail} alt={mod.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-zappy-50 to-purple-50 flex items-center justify-center">
+          <div className="w-full h-full bg-zappy-50 flex items-center justify-center">
             <BookOpen size={40} className="text-zappy-200" />
           </div>
         )}
         
         {/* Play overlay */}
-        <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-[2px]">
+        <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity-[2px]">
           <div className="w-12 h-12 rounded-full bg-white/90 shadow-lg flex items-center justify-center text-zappy-600 pl-1">
             <Play size={20} className="fill-zappy-600" />
           </div>
@@ -47,7 +47,7 @@ function ModuleCard({ mod, onOpen, index }) {
           <span className={`text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-widest shadow-sm bg-${dc}-500 text-white`}>
             {DIFF_LABEL[mod.difficulty]}
           </span>
-          <span className="text-[10px] bg-black/50 backdrop-blur-md text-white font-bold px-2 py-1 rounded-full shadow-sm flex items-center gap-1">
+          <span className="text-[10px] bg-black/50 text-white font-bold px-2 py-1 rounded-full shadow-sm flex items-center gap-1">
             <Clock size={10} /> {mod.durationMin}m
           </span>
         </div>
@@ -100,12 +100,12 @@ function QuizModal({ moduleId, onClose }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-center sm:items-center sm:p-4 bg-black/60 backdrop-blur-md transition-opacity">
+    <div className="fixed inset-0 z-50 flex justify-center sm:items-center sm:p-4 bg-black/60 transition-opacity">
       <motion.div initial={{ opacity: 0, y: '100%' }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: '100%' }} transition={{ type: "spring", damping: 25, stiffness: 300 }}
         className="bg-white rounded-t-[2rem] sm:rounded-[2rem] w-full max-w-2xl max-h-[95vh] sm:h-auto flex flex-col overflow-hidden shadow-2xl absolute bottom-0 sm:relative" 
         onClick={e => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between p-4 px-6 border-b border-slate-100 bg-white/80 backdrop-blur-xl z-10 sticky top-0">
+        <div className="flex items-center justify-between p-4 px-6 border-b border-slate-100 bg-white z-10 sticky top-0">
           <h2 className="font-black text-slate-800 text-[15px] truncate pr-4">{mod?.title ?? 'Training Module'}</h2>
           <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors shrink-0"><X size={16} strokeWidth={2.5} /></button>
         </div>
@@ -227,13 +227,13 @@ export default function WorkerTrainingPage() {
       <div className="w-full max-w-lg lg:max-w-2xl bg-slate-50 min-h-screen relative shadow-[0_0_40px_rgba(0,0,0,0.05)] lg:shadow-[0_0_60px_rgba(0,0,0,0.08)] md:border-x border-slate-200/60 pb-8">
         
         {/* Cinematic Header */}
-        <header className="relative pt-6 pb-28 overflow-hidden rounded-b-[2.5rem] shadow-sm z-10" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #1e3a5f 100%)' }}>
+        <header className="relative pt-6 pb-28 overflow-hidden rounded-b-[2.5rem] shadow-sm z-10" style={{ background: 'linear-gradient(#0f172a, #0f172a)' }}>
           <motion.div className="absolute top-0 right-0 w-64 h-64 bg-zappy-500/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" animate={{ scale: [1, 1.2, 1], opacity: [0.4, 0.7, 0.4] }} transition={{ duration: 5, repeat: Infinity }} />
           <motion.div className="absolute bottom-0 left-0 w-48 h-48 bg-rose-500/20 rounded-full blur-3xl translate-y-1/3 -translate-x-1/4" animate={{ scale: [1, 1.3, 1], opacity: [0.3, 0.6, 0.3] }} transition={{ duration: 6, repeat: Infinity, delay: 1 }} />
           
           <div className="relative z-10 px-5">
             <div className="flex items-center justify-between mb-8">
-              <motion.button onClick={() => nav(-1)} whileTap={{ scale: 0.9 }} className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md border border-white/10 flex items-center justify-center text-white shadow-sm">
+              <motion.button onClick={() => nav(-1)} whileTap={{ scale: 0.9 }} className="w-10 h-10 rounded-full bg-white/10 border border-white/10 flex items-center justify-center text-white shadow-sm">
                 <ArrowLeft size={20} strokeWidth={2.5} />
               </motion.button>
               <h1 className="text-white font-black tracking-wide text-lg">Training Center</h1>
@@ -241,13 +241,13 @@ export default function WorkerTrainingPage() {
             </div>
 
             <div className="text-center">
-              <div className="w-16 h-16 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center mx-auto mb-3 border border-white/20 shadow-inner">
+              <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-3 border border-white/20 shadow-inner">
                 <Award size={32} className="text-zappy-300 fill-zappy-400/20" strokeWidth={1.5} />
               </div>
               <p className="text-white font-bold text-lg tracking-tight mb-1">Level Up Your Skills</p>
               
               {certified > 0 ? (
-                <div className="inline-flex items-center gap-1.5 bg-emerald-500/20 text-emerald-300 px-3 py-1.5 rounded-full border border-emerald-500/30 text-xs font-bold backdrop-blur-sm mt-1">
+                <div className="inline-flex items-center gap-1.5 bg-emerald-500/20 text-emerald-300 px-3 py-1.5 rounded-full border border-emerald-500/30 text-xs font-bold mt-1">
                   <CheckCircle size={12} strokeWidth={3} /> {certified} Certificates Earned
                 </div>
               ) : (

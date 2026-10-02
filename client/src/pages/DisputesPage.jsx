@@ -204,7 +204,7 @@ function NewDisputeForm({ onClose, onCreated }) {
     >
       <motion.div className="absolute inset-0 bg-black/50" onClick={onClose} />
       <motion.div
-        className="relative bg-white rounded-t-[28px] pb-[max(1.5rem,env(safe-area-inset-bottom))]"
+        className="relative bg-white rounded-t-sheet pb-[max(1.5rem,env(safe-area-inset-bottom))]"
         initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 30, stiffness: 320 }}
       >
@@ -299,7 +299,7 @@ export default function DisputesPage() {
   return (
     <PageTransition>
       <div className="min-h-screen bg-[#F9FAFB] pb-40">
-        <header className="sticky top-0 z-20 backdrop-blur-md" style={{ background: 'rgba(15,23,42,0.97)', paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+        <header className="sticky top-0 z-20" style={{ background: 'rgba(15,23,42,0.97)', paddingTop: 'env(safe-area-inset-top, 0px)' }}>
           <div className="w-full max-w-2xl mx-auto px-4 h-14 flex items-center gap-3">
             <button onClick={() => nav('/profile')} className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center">
               <ChevronLeft size={16} className="text-white" />

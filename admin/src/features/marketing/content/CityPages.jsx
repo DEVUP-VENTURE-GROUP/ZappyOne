@@ -97,7 +97,7 @@ function CityFormModal({ initial, onClose, onSave, saving }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-6 px-4 pb-8 bg-black/50 backdrop-blur-sm overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-6 px-4 pb-8 bg-black/50 overflow-y-auto">
       <motion.div
         initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
         className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl"

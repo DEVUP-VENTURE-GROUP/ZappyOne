@@ -137,7 +137,7 @@ function AddPetSheet({ onClose }) {
   return (
     <div className="fixed inset-0 z-50 bg-black/40 flex items-end sm:items-center sm:justify-center" onClick={onClose}>
       <div
-        className="w-full sm:max-w-md bg-white rounded-t-3xl sm:rounded-3xl p-5 space-y-3 max-h-[90vh] overflow-y-auto"
+        className="w-full sm:max-w-md bg-white rounded-t-sheet sm:rounded-card p-5 space-y-3 max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between">

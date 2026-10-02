@@ -113,14 +113,14 @@ export default function WorkerProfilePage() {
   }
 
   return (
-    <div className="min-h-screen pb-40" style={{ background: 'linear-gradient(180deg, #0f172a 0%, #f8fafc 180px)' }}>
+    <div className="min-h-screen pb-40" style={{ background: 'linear-gradient(#0f172a, #0f172a)' }}>
 
       {/* Back button */}
       <div className="sticky top-0 z-20 px-4 pt-4 pb-2 flex items-center" style={{ background: 'transparent' }}>
         <motion.button
           onClick={() => nav(-1)}
           whileTap={{ scale: 0.9 }}
-          className="w-9 h-9 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center"
+          className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center"
         >
           <ArrowLeft size={18} strokeWidth={2.5} className="text-white" />
         </motion.button>
@@ -139,7 +139,7 @@ export default function WorkerProfilePage() {
         {/* Avatar */}
         <motion.div
           className="relative z-10 w-24 h-24 rounded-full flex items-center justify-center text-white font-black text-3xl ring-4 ring-white/20 shadow-2xl"
-          style={{ background: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)' }}
+          style={{ background: 'linear-gradient(#3B82F6, #3B82F6)' }}
           initial={{ scale: 0.7, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: 'spring', stiffness: 260, damping: 22, delay: 0.1 }}
@@ -253,7 +253,7 @@ export default function WorkerProfilePage() {
                 </div>
                 <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
                   <motion.div
-                    className="h-full rounded-full bg-gradient-to-r from-zappy-500 to-blue-500"
+                    className="h-full rounded-full bg-zappy-500"
                     initial={{ width: 0 }}
                     animate={{ width: `${pct}%` }}
                     transition={{ duration: 0.9, ease: 'easeOut', delay: 0.35 + i * 0.1 }}
@@ -289,7 +289,7 @@ export default function WorkerProfilePage() {
               >
                 <div className="flex items-center justify-between mb-1.5">
                   <div className="flex items-center gap-1.5">
-                    <div className="w-7 h-7 rounded-full bg-gradient-to-br from-slate-300 to-slate-400 flex items-center justify-center">
+                    <div className="w-7 h-7 rounded-full bg-slate-300 flex items-center justify-center">
                       <UserCheck size={12} strokeWidth={2} className="text-white" />
                     </div>
                     <p className="text-xs font-bold text-slate-700">{review.name}</p>
@@ -322,7 +322,7 @@ export default function WorkerProfilePage() {
             onClick={handleRebook}
             whileTap={{ scale: 0.97 }}
             className="w-full h-14 rounded-2xl text-white font-extrabold text-base flex items-center justify-center gap-2.5 shadow-lg"
-            style={{ background: 'linear-gradient(135deg, #2563EB 0%, #3B82F6 100%)', boxShadow: '0 8px 24px rgba(59,130,246,0.35)' }}
+            style={{ background: 'linear-gradient(#2563EB, #2563EB)', boxShadow: '0 8px 24px rgba(59,130,246,0.35)' }}
           >
             <Repeat2 size={20} strokeWidth={2.5} />
             Book {name.split(' ')[0]} Again

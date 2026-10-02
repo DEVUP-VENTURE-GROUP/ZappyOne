@@ -50,7 +50,7 @@ export function useStartCodeGate() {
 
   const prompt = open ? (
     <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/50 p-3 sm:items-center" role="dialog" aria-label="Customer's start code">
-      <form onSubmit={submit} className="w-full max-w-sm space-y-4 rounded-3xl bg-white p-5">
+      <form onSubmit={submit} className="w-full max-w-sm space-y-4 rounded-card bg-white p-5">
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="flex items-center gap-2 text-[16px] font-bold text-navy"><KeyRound size={17} className="text-zappy-600" /> Ask for the code</p>

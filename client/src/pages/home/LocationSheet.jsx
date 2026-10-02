@@ -52,7 +52,7 @@ export default function LocationSheet({ open, onClose, onUseCurrent, detecting, 
       {open && (
         <>
           <motion.div
-            className="fixed inset-0 z-[110] bg-slate-900/40 backdrop-blur-[2px]"
+            className="fixed inset-0 z-[110] bg-slate-900/40-[2px]"
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             onClick={onClose}
           />
@@ -60,7 +60,7 @@ export default function LocationSheet({ open, onClose, onUseCurrent, detecting, 
           <div className="pointer-events-none fixed inset-0 z-[111] flex items-end justify-center sm:items-start sm:pt-24">
           <motion.div
             role="dialog" aria-modal="true" aria-labelledby="loc-title"
-            className="pointer-events-auto max-h-[85vh] w-full overflow-y-auto rounded-t-3xl bg-white sm:w-[480px] sm:rounded-3xl"
+            className="pointer-events-auto max-h-[85vh] w-full overflow-y-auto rounded-t-sheet bg-white sm:w-[480px] sm:rounded-card"
             initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 40, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 380, damping: 36 }}
           >

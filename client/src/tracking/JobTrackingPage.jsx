@@ -94,7 +94,7 @@ export default function JobTrackingPage({ job, extras = null, startCode = null, 
       />
 
       <div className="min-h-screen pb-[164px]" style={{
-        background: 'radial-gradient(1200px 600px at 15% -10%, #DDE6FB 0%, transparent 55%), linear-gradient(180deg,#EEF2FB 0%, #F1F3FB 100%)',
+        background: 'radial-gradient(1200px 600px at 15% -10%, #DDE6FB 0%, transparent 55%), linear-gradient(#EEF2FB, #EEF2FB)',
       }}>
         <AnimatePresence>
           {socketStatus !== 'connected' && !job.terminal && (
@@ -190,14 +190,14 @@ export default function JobTrackingPage({ job, extras = null, startCode = null, 
             {job.terminal ? (
               <button type="button" onClick={() => nav('/')}
                 className="flex h-14 w-full items-center justify-center rounded-[18px] text-base font-extrabold text-white"
-                style={{ background: 'linear-gradient(135deg,#2E86FF,#2563FF)' }}>
+                style={{ background: 'linear-gradient(#2E86FF, #2E86FF)' }}>
                 Back to Home
               </button>
             ) : (
               <>
                 <button type="button" onClick={() => nav('/support')}
                   className="flex h-14 w-full items-center justify-center gap-2.5 rounded-[18px] text-base font-extrabold text-white"
-                  style={{ background: 'linear-gradient(135deg,#2E86FF,#2563FF)' }}>
+                  style={{ background: 'linear-gradient(#2E86FF, #2E86FF)' }}>
                   <HeadphonesIcon size={19} /> Need help?
                 </button>
                 {cancel && (

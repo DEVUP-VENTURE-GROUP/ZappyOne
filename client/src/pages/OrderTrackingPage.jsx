@@ -244,9 +244,9 @@ export default function OrderTrackingPage() {
   if (isLoading || !order) {
     return (
       <div className="min-h-screen flex items-center justify-center"
-        style={{ background: 'linear-gradient(135deg, #0F172A 0%, #1e293b 100%)' }}>
+        style={{ background: 'linear-gradient(#0F172A, #0F172A)' }}>
         <div className="flex flex-col items-center gap-3">
-          <div className="w-16 h-16 rounded-2xl bg-white/10 backdrop-blur-sm flex items-center justify-center">
+          <div className="w-16 h-16 rounded-2xl bg-white/10 flex items-center justify-center">
             <Loader2 size={28} className="text-white animate-spin" />
           </div>
           <p className="text-sm text-white/60 font-medium">Loading order…</p>
@@ -381,7 +381,7 @@ export default function OrderTrackingPage() {
         background:
           'radial-gradient(1200px 600px at 15% -10%, #DDE6FB 0%, transparent 55%),' +
           'radial-gradient(1000px 700px at 110% 6%, #EDE7FB 0%, transparent 50%),' +
-          'linear-gradient(180deg,#EEF2FB 0%, #F1F3FB 100%)',
+          'linear-gradient(#EEF2FB, #EEF2FB)',
       }}>
         {/* Socket-degraded banner */}
         <AnimatePresence>
@@ -432,9 +432,9 @@ export default function OrderTrackingPage() {
 
           {/* Failed state — expansion hype card */}
           {status === 'failed' && (
-            <motion.div variants={fadeInUp} className="rounded-[24px] overflow-hidden lg:[column-span:all]"
-              style={{ background: 'linear-gradient(135deg, #0F172A 0%, #1a1060 60%, #0f2a5e 100%)', boxShadow: '0 12px 40px rgba(15,23,42,0.45)' }}>
-              <div className="h-1 w-full" style={{ background: 'linear-gradient(90deg,#3B82F6,#8b5cf6,#ec4899,#f59e0b)' }} />
+            <motion.div variants={fadeInUp} className="rounded-card overflow-hidden lg:[column-span:all]"
+              style={{ background: 'linear-gradient(#0F172A, #0F172A)', boxShadow: '0 12px 40px rgba(15,23,42,0.45)' }}>
+              <div className="h-1 w-full" style={{ background: 'linear-gradient(#3B82F6, #3B82F6)' }} />
               <div className="px-5 pt-5 pb-6">
                 <motion.div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4 mx-auto"
                   style={{ background: 'rgba(59,130,246,0.18)', border: '1.5px solid rgba(59,130,246,0.35)' }}
@@ -453,7 +453,7 @@ export default function OrderTrackingPage() {
                   <motion.button whileTap={{ scale: 0.97 }}
                     onClick={() => toast("We'll notify you the moment workers go live in your area!", { icon: '🔔', duration: 4000, style: { fontWeight: 600 } })}
                     className="w-full h-12 rounded-2xl font-extrabold text-sm flex items-center justify-center gap-2 text-white"
-                    style={{ background: 'linear-gradient(135deg,#3B82F6 0%,#8b5cf6 100%)', boxShadow: '0 6px 20px rgba(59,130,246,0.45)' }}>
+                    style={{ background: 'linear-gradient(#3B82F6, #3B82F6)', boxShadow: '0 6px 20px rgba(59,130,246,0.45)' }}>
                     <span>🔔</span> Notify me when live here
                   </motion.button>
                   <button onClick={() => nav(`/book/${order.service}`)}
@@ -483,7 +483,7 @@ export default function OrderTrackingPage() {
 
           {/* Cancelled terminal card */}
           {status === 'cancelled' && (
-            <motion.div variants={fadeInUp} className="rounded-[24px] bg-white border border-slate-900/5 p-6 text-center lg:[column-span:all]"
+            <motion.div variants={fadeInUp} className="rounded-card bg-white border border-slate-900/5 p-6 text-center lg:[column-span:all]"
               style={{ boxShadow: '0 12px 32px -4px rgba(15,23,42,0.08)' }}>
               <div className="w-16 h-16 rounded-2xl bg-red-50 flex items-center justify-center mx-auto mb-4">
                 <AlertCircle size={30} strokeWidth={2} className="text-red-500" />
@@ -528,7 +528,7 @@ export default function OrderTrackingPage() {
             {order.otp && (
               ['assigned', 'on_the_way'].includes(status) ? (
                 <motion.div key="otp-locked" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                  className="rounded-2xl overflow-hidden ring-1 ring-slate-100" style={{ background: 'linear-gradient(135deg,#f8fafc,#f1f5f9)' }}>
+                  className="rounded-2xl overflow-hidden ring-1 ring-slate-100" style={{ background: 'linear-gradient(#f8fafc, #f8fafc)' }}>
                   <div className="px-4 py-4 flex items-center gap-3">
                     <div className="w-10 h-10 rounded-2xl bg-slate-100 flex items-center justify-center shrink-0">
                       <ShieldCheck size={18} strokeWidth={2} className="text-slate-400" />
@@ -548,7 +548,7 @@ export default function OrderTrackingPage() {
                 </motion.div>
               ) : status === 'arrived' && !workerConfirmed ? (
                 <motion.div key="otp-pending" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                  className="rounded-[24px] overflow-hidden border border-violet-200/50" style={{ background: 'linear-gradient(135deg,#f5f3ff,#ede9fe)', boxShadow: '0 8px 24px -4px rgba(139, 92, 246, 0.15)' }}>
+                  className="rounded-card overflow-hidden border border-violet-200/50" style={{ background: 'linear-gradient(#f5f3ff, #f5f3ff)', boxShadow: '0 8px 24px -4px rgba(139, 92, 246, 0.15)' }}>
                   <div className="px-4 py-4 flex items-center gap-3">
                     <div className="w-10 h-10 rounded-2xl bg-violet-100 flex items-center justify-center shrink-0">
                       <HelpCircle size={18} strokeWidth={2} className="text-violet-600" />
@@ -562,8 +562,8 @@ export default function OrderTrackingPage() {
                 </motion.div>
               ) : status === 'arrived' && workerConfirmed ? (
                 <motion.div key="otp-card" initial={{ opacity: 0, scale: 0.95, y: 8 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ type: 'spring', damping: 20, stiffness: 260 }} className="rounded-[24px] overflow-hidden border border-white/10"
-                  style={{ background: 'linear-gradient(135deg, #7c3aed 0%, #2563EB 100%)', boxShadow: '0 12px 32px -4px rgba(124,58,237,0.4)' }}>
+                  transition={{ type: 'spring', damping: 20, stiffness: 260 }} className="rounded-card overflow-hidden border border-white/10"
+                  style={{ background: 'linear-gradient(#7c3aed, #7c3aed)', boxShadow: '0 12px 32px -4px rgba(124,58,237,0.4)' }}>
                   <div className="px-4 pt-4 pb-2 flex items-center gap-2">
                     <ShieldCheck size={15} strokeWidth={2} className="text-white/80" />
                     <p className="text-xs font-extrabold text-white/80 uppercase tracking-widest">Worker is here — share your OTP</p>
@@ -640,7 +640,7 @@ export default function OrderTrackingPage() {
             <motion.div variants={fadeInUp}>
               <motion.button onClick={() => nav(`/book/${order.service}?preferredWorker=${order.workerId}`)} whileTap={{ scale: 0.97 }}
                 className="w-full h-14 rounded-2xl text-white font-extrabold text-sm flex items-center justify-center gap-2.5 shadow-lg"
-                style={{ background: 'linear-gradient(135deg, #2563EB 0%, #3B82F6 100%)', boxShadow: '0 8px 24px rgba(59,130,246,0.3)' }}>
+                style={{ background: 'linear-gradient(#2563EB, #2563EB)', boxShadow: '0 8px 24px rgba(59,130,246,0.3)' }}>
                 <Repeat2 size={18} strokeWidth={2.5} />
                 Book {order.workerName ? firstNameOf(order.workerName) : 'Same Worker'} Again
               </motion.button>
@@ -698,14 +698,14 @@ export default function OrderTrackingPage() {
             {terminal ? (
               <motion.button whileTap={{ scale: 0.97 }} onClick={() => nav('/')}
                 className="w-full h-14 rounded-[18px] text-white font-extrabold text-base flex items-center justify-center"
-                style={{ background: 'linear-gradient(135deg,#2E86FF,#2563FF)', boxShadow: '0 12px 26px -8px rgba(37,99,235,.6)' }}>
+                style={{ background: 'linear-gradient(#2E86FF, #2E86FF)', boxShadow: '0 12px 26px -8px rgba(37,99,235,.6)' }}>
                 Back to Home
               </motion.button>
             ) : (
               <>
                 <motion.button whileTap={{ scale: 0.97 }} onClick={() => nav('/support')}
                   className="w-full h-14 rounded-[18px] text-white font-extrabold text-base flex items-center justify-center gap-2.5"
-                  style={{ background: 'linear-gradient(135deg,#2E86FF,#2563FF)', boxShadow: '0 12px 26px -8px rgba(37,99,235,.6)' }}>
+                  style={{ background: 'linear-gradient(#2E86FF, #2E86FF)', boxShadow: '0 12px 26px -8px rgba(37,99,235,.6)' }}>
                   <HeadphonesIcon size={19} strokeWidth={2.2} /> Need help?
                 </motion.button>
                 {canCancel && !showCancel && (
@@ -725,8 +725,8 @@ export default function OrderTrackingPage() {
         <AnimatePresence>
           {showCancel && (
             <motion.div className="fixed inset-0 z-50 flex flex-col justify-end" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <motion.div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowCancel(false)} />
-              <motion.div className="relative bg-white rounded-t-[28px] pb-[max(1.5rem,env(safe-area-inset-bottom))]"
+              <motion.div className="absolute inset-0 bg-black/50" onClick={() => setShowCancel(false)} />
+              <motion.div className="relative bg-white rounded-t-sheet pb-[max(1.5rem,env(safe-area-inset-bottom))]"
                 initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', damping: 30, stiffness: 320 }}>
                 <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mt-3 mb-4" />
                 <div className="flex items-center justify-between px-5 mb-4">
@@ -794,8 +794,8 @@ export default function OrderTrackingPage() {
         <AnimatePresence>
           {showSOSConfirm && (
             <motion.div className="fixed inset-0 z-50 flex flex-col justify-end" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <motion.div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowSOSConfirm(false)} />
-              <motion.div className="relative bg-white rounded-t-[28px] pb-[max(2rem,env(safe-area-inset-bottom))]"
+              <motion.div className="absolute inset-0 bg-black/60" onClick={() => setShowSOSConfirm(false)} />
+              <motion.div className="relative bg-white rounded-t-sheet pb-[max(2rem,env(safe-area-inset-bottom))]"
                 initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', damping: 30, stiffness: 320 }}>
                 <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mt-3 mb-5" />
                 <div className="flex flex-col items-center px-6 gap-4">
@@ -827,7 +827,7 @@ export default function OrderTrackingPage() {
           {showShareTrip && (
             <motion.div className="fixed inset-0 z-50 flex flex-col justify-end" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               <motion.div className="absolute inset-0 bg-black/50" onClick={() => setShowShareTrip(false)} />
-              <motion.div className="relative bg-white rounded-t-[28px] pb-[max(2rem,env(safe-area-inset-bottom))]"
+              <motion.div className="relative bg-white rounded-t-sheet pb-[max(2rem,env(safe-area-inset-bottom))]"
                 initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', damping: 30, stiffness: 320 }}>
                 <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mt-3 mb-5" />
                 <div className="flex flex-col items-center px-6 gap-4">
@@ -848,7 +848,7 @@ export default function OrderTrackingPage() {
                   <div className="w-full space-y-2.5">
                     <motion.button onClick={() => { shareTripLink(); setShowShareTrip(false); }} whileTap={{ scale: 0.97 }}
                       className="w-full h-14 rounded-2xl font-extrabold text-white flex items-center justify-center gap-2.5"
-                      style={{ background: 'linear-gradient(135deg,#0F172A,#1e293b)', boxShadow: '0 8px 24px rgba(15,23,42,0.3)' }}>
+                      style={{ background: 'linear-gradient(#0F172A, #0F172A)', boxShadow: '0 8px 24px rgba(15,23,42,0.3)' }}>
                       <Share2 size={18} strokeWidth={2.5} /> Share Now
                     </motion.button>
                     <button onClick={() => setShowShareTrip(false)} className="w-full h-12 rounded-2xl border border-slate-200 text-slate-600 font-semibold text-sm hover:bg-slate-50 transition">Close</button>
@@ -863,12 +863,12 @@ export default function OrderTrackingPage() {
         <AnimatePresence>
           {showArrivedSheet && (
             <motion.div className="fixed inset-0 z-50 flex flex-col justify-end" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <motion.div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-              <motion.div className="relative bg-white rounded-t-[32px] pb-[max(1.75rem,env(safe-area-inset-bottom))]"
+              <motion.div className="absolute inset-0 bg-black/60" />
+              <motion.div className="relative bg-white rounded-t-sheet pb-[max(1.75rem,env(safe-area-inset-bottom))]"
                 initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', damping: 28, stiffness: 300 }}>
                 <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mt-3 mb-5" />
                 <div className="flex flex-col items-center px-6 pb-2">
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500 to-zappy-600 flex items-center justify-center text-white font-black text-xl mb-3 shadow-lg"
+                  <div className="w-16 h-16 rounded-2xl bg-violet-500 flex items-center justify-center text-white font-black text-xl mb-3 shadow-lg"
                     style={{ boxShadow: '0 8px 24px rgba(124,58,237,0.4)' }}>
                     {(order.workerName || 'W').slice(0, 2).toUpperCase()}
                   </div>
@@ -894,7 +894,7 @@ export default function OrderTrackingPage() {
                     <>
                       <motion.button onClick={confirmWorkerArrived} whileTap={{ scale: 0.97 }}
                         className="w-full h-14 rounded-2xl text-white font-extrabold text-base flex items-center justify-center gap-2.5"
-                        style={{ background: 'linear-gradient(135deg,#7c3aed,#2563EB)', boxShadow: '0 8px 24px rgba(124,58,237,0.4)' }}>
+                        style={{ background: 'linear-gradient(#7c3aed, #7c3aed)', boxShadow: '0 8px 24px rgba(124,58,237,0.4)' }}>
                         <CheckCircle2 size={20} strokeWidth={2.5} /> Yes, they're here — show OTP
                       </motion.button>
                       <button onClick={() => { clearInterval(countdownRef.current); setWorkerNotHereMode(true); }}

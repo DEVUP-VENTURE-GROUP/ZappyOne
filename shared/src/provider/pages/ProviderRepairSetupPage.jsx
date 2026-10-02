@@ -126,7 +126,7 @@ function StepShell({ title, hint, children, onBack, onNext, nextLabel = 'Continu
       {children}
 
       {/* Sticky on a phone, where the list is long and the thumb is at the bottom. */}
-      <div className="sticky bottom-[var(--frame-bottom,0px)] -mx-4 border-t border-slate-100 bg-white/95 px-4 py-3 backdrop-blur sm:mx-0 sm:rounded-2xl sm:border sm:border-slate-200">
+      <div className="sticky bottom-[var(--frame-bottom,0px)] -mx-4 border-t border-slate-100 bg-white px-4 py-3 sm:mx-0 sm:rounded-2xl sm:border sm:border-slate-200">
         <div className="flex items-center gap-2">
           {onBack && (
             <button onClick={onBack} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-500">

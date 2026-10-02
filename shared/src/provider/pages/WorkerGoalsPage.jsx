@@ -123,7 +123,7 @@ function SetGoalSheet({ period, currentTarget, onClose }) {
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4">
       <motion.div 
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} 
-        className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" 
+        className="absolute inset-0 bg-slate-900/40" 
         onClick={onClose} 
       />
       <motion.div 
@@ -187,13 +187,13 @@ export default function WorkerGoalsPage() {
       <div className="w-full max-w-lg lg:max-w-2xl bg-slate-50 min-h-screen relative shadow-[0_0_40px_rgba(0,0,0,0.05)] lg:shadow-[0_0_60px_rgba(0,0,0,0.08)] md:border-x border-slate-200/60">
         
         {/* Cinematic Header */}
-        <header className="relative pt-6 pb-20 overflow-hidden rounded-b-[2.5rem] shadow-sm z-10" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #1e3a5f 100%)' }}>
+        <header className="relative pt-6 pb-20 overflow-hidden rounded-b-[2.5rem] shadow-sm z-10" style={{ background: 'linear-gradient(#0f172a, #0f172a)' }}>
           <motion.div className="absolute -top-10 -right-10 w-64 h-64 bg-fuchsia-500/20 rounded-full blur-3xl" animate={{ scale: [1, 1.2, 1], opacity: [0.4, 0.7, 0.4] }} transition={{ duration: 5, repeat: Infinity }} />
           <motion.div className="absolute -bottom-20 -left-10 w-56 h-56 bg-zappy-500/20 rounded-full blur-3xl" animate={{ scale: [1, 1.3, 1], opacity: [0.3, 0.6, 0.3] }} transition={{ duration: 6, repeat: Infinity, delay: 1 }} />
           
           <div className="relative z-10 px-5">
             <div className="flex items-center justify-between mb-6">
-              <motion.button onClick={() => nav(-1)} whileTap={{ scale: 0.9 }} className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md border border-white/10 flex items-center justify-center text-white">
+              <motion.button onClick={() => nav(-1)} whileTap={{ scale: 0.9 }} className="w-10 h-10 rounded-full bg-white/10 border border-white/10 flex items-center justify-center text-white">
                 <ArrowLeft size={20} strokeWidth={2.5} />
               </motion.button>
               <h1 className="text-white font-black tracking-wide text-lg">Earnings Goals</h1>
@@ -213,7 +213,7 @@ export default function WorkerGoalsPage() {
           {/* Benchmark card */}
           <AnimatePresence>
             {benchmark && (
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-gradient-to-br from-zappy-600 to-zappy-800 rounded-[1.5rem] p-5 text-white shadow-lg shadow-zappy-900/20 border border-zappy-500/30 relative overflow-hidden">
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className=" bg-zappy-600 rounded-[1.5rem] p-5 text-white shadow-lg shadow-zappy-900/20 border border-zappy-500/30 relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-4 opacity-10"><TrendingUp size={80} /></div>
                 <div className="relative z-10">
                   <div className="flex items-center gap-2 mb-2">
@@ -227,7 +227,7 @@ export default function WorkerGoalsPage() {
                   <p className="text-xs text-zappy-200 mt-1 font-medium bg-white/10 inline-block px-2.5 py-1 rounded-full border border-white/10">Avg earning: ₹{(benchmark.zoneAvgPaise / 100).toFixed(0)} / week</p>
                   
                   <div className="mt-4 h-2 bg-zappy-900/50 rounded-full overflow-hidden shadow-inner">
-                    <motion.div initial={{ width: 0 }} animate={{ width: `${benchmark.percentile}%` }} transition={{ duration: 1, delay: 0.5 }} className="h-full bg-gradient-to-r from-teal-300 to-emerald-400 rounded-full" />
+                    <motion.div initial={{ width: 0 }} animate={{ width: `${benchmark.percentile}%` }} transition={{ duration: 1, delay: 0.5 }} className="h-full bg-teal-300 rounded-full" />
                   </div>
                 </div>
               </motion.div>
@@ -295,7 +295,7 @@ export default function WorkerGoalsPage() {
 
               {/* Tip */}
               <motion.button initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }} onClick={() => nav('/worker/earnings')} 
-                className="w-full mt-4 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-100/60 rounded-[1.25rem] p-4 flex items-center gap-3 text-amber-800 shadow-sm hover:shadow-md transition-shadow group">
+                className="w-full mt-4 bg-amber-50 border border-amber-100/60 rounded-[1.25rem] p-4 flex items-center gap-3 text-amber-800 shadow-sm hover:shadow-md transition-shadow group">
                 <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
                   <Zap size={18} className="text-amber-600 fill-amber-600/20" />
                 </div>

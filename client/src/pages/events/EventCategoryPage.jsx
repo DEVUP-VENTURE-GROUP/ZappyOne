@@ -40,7 +40,7 @@ function ThemeCard({ theme, onSave }) {
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         
         {theme.videoUrl && (
-          <div className="absolute bottom-4 right-4 w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/40 shadow-lg group-hover:bg-rose-500 group-hover:border-rose-400 transition-colors">
+          <div className="absolute bottom-4 right-4 w-10 h-10 bg-white/20 rounded-full flex items-center justify-center border border-white/40 shadow-lg group-hover:bg-rose-500 group-hover:border-rose-400 transition-colors">
             <Play size={14} className="text-white ml-1" />
           </div>
         )}
@@ -49,7 +49,7 @@ function ThemeCard({ theme, onSave }) {
           <Heart size={16} className={theme.isSaved ? 'text-white fill-white' : 'text-white'} />
         </button>
         {theme.isTrending && (
-          <div className="absolute top-4 left-4 px-3 py-1 bg-gradient-to-r from-orange-500 to-rose-500 rounded-full text-white text-[10px] font-black tracking-widest shadow-lg border border-white/20">
+          <div className="absolute top-4 left-4 px-3 py-1 bg-orange-500 rounded-full text-white text-[10px] font-black tracking-widest shadow-lg border border-white/20">
             FEATURED
           </div>
         )}
@@ -120,10 +120,10 @@ export default function EventCategoryPage() {
 
         {/* Top Nav */}
         <div className="relative z-10 px-5 pt-6 flex items-center justify-between">
-          <button onClick={() => navigate(-1)} className="w-10 h-10 bg-white/20 backdrop-blur-md flex items-center justify-center rounded-full text-white hover:bg-white/30 transition-colors border border-white/20 shadow-lg">
+          <button onClick={() => navigate(-1)} className="w-10 h-10 bg-white/20 flex items-center justify-center rounded-full text-white hover:bg-white/30 transition-colors border border-white/20 shadow-lg">
             <ArrowLeft size={20} />
           </button>
-          <button onClick={() => setShowFilter(v => !v)} className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-bold border backdrop-blur-md transition-all shadow-lg ${showFilter ? 'bg-white text-slate-900 border-white' : 'bg-white/20 text-white border-white/20 hover:bg-white/30'}`}>
+          <button onClick={() => setShowFilter(v => !v)} className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-bold border transition-all shadow-lg ${showFilter ? 'bg-white text-slate-900 border-white' : 'bg-white/20 text-white border-white/20 hover:bg-white/30'}`}>
             <SlidersHorizontal size={16} /> Filters
           </button>
         </div>
@@ -149,7 +149,7 @@ export default function EventCategoryPage() {
       <div className="max-w-5xl mx-auto px-5 -mt-6 relative z-20">
         
         {/* Sort & Filter Bar */}
-        <div className="bg-white/80 backdrop-blur-xl rounded-[2rem] p-2 shadow-lg border border-slate-100 flex flex-col gap-2">
+        <div className="bg-white rounded-[2rem] p-2 shadow-lg border border-slate-100 flex flex-col gap-2">
           
           {/* Filters Drawer */}
           <AnimatePresence>

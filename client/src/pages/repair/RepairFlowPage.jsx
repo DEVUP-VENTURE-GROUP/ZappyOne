@@ -201,7 +201,7 @@ function MissingItemSheet({ kind, brandCode, onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 bg-black/40 flex items-end sm:items-center justify-center" onClick={onClose}>
-      <div className="bg-white rounded-t-3xl sm:rounded-3xl w-full sm:max-w-md p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-white rounded-t-sheet sm:rounded-card w-full sm:max-w-md p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-bold text-slate-900">Tell us what's missing</h3>
           <button onClick={onClose} className="text-slate-400"><X size={20} /></button>

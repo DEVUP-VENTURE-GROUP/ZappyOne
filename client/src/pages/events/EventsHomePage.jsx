@@ -56,7 +56,7 @@ function VideoReelCard({ theme, onSave }) {
 
   const navigate = useNavigate();
   return (
-    <div ref={containerRef} className="relative rounded-3xl overflow-hidden bg-black aspect-[9/16] cursor-pointer group shadow-lg" onClick={() => navigate(`/events/themes/${theme._id}`)}>
+    <div ref={containerRef} className="relative rounded-card overflow-hidden bg-black aspect-[9/16] cursor-pointer group shadow-lg" onClick={() => navigate(`/events/themes/${theme._id}`)}>
       {theme.videoUrl ? (
         <video ref={videoRef} src={theme.videoUrl} loop muted playsInline className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
       ) : (
@@ -78,7 +78,7 @@ function VideoReelCard({ theme, onSave }) {
         <Heart size={16} className={theme.isSaved ? 'text-white fill-white' : 'text-white'} />
       </button>
       {theme.status === 'featured' && (
-        <div className="absolute top-4 left-4 px-3 py-1 bg-gradient-to-r from-fuchsia-500 to-rose-500 rounded-full text-white text-[10px] font-black tracking-widest flex items-center gap-1.5 shadow-lg border border-white/20">
+        <div className="absolute top-4 left-4 px-3 py-1 bg-fuchsia-500 rounded-full text-white text-[10px] font-black tracking-widest flex items-center gap-1.5 shadow-lg border border-white/20">
           <Star size={12} />FEATURED
         </div>
       )}
@@ -97,7 +97,7 @@ function ThemeCard({ theme, onSave }) {
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         
         {theme.videoUrl && (
-          <div className="absolute bottom-4 right-4 w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/40 shadow-lg group-hover:bg-rose-500 group-hover:border-rose-400 transition-colors">
+          <div className="absolute bottom-4 right-4 w-10 h-10 bg-white/20 rounded-full flex items-center justify-center border border-white/40 shadow-lg group-hover:bg-rose-500 group-hover:border-rose-400 transition-colors">
             <Play size={14} className="text-white ml-1" />
           </div>
         )}
@@ -106,7 +106,7 @@ function ThemeCard({ theme, onSave }) {
           <Heart size={16} className={theme.isSaved ? 'text-white fill-white' : 'text-white'} />
         </button>
         {theme.isTrending && (
-          <div className="absolute top-4 left-4 px-3 py-1 bg-gradient-to-r from-orange-500 to-rose-500 rounded-full text-white text-[10px] font-black tracking-widest shadow-lg border border-white/20">
+          <div className="absolute top-4 left-4 px-3 py-1 bg-orange-500 rounded-full text-white text-[10px] font-black tracking-widest shadow-lg border border-white/20">
             🔥 TRENDING
           </div>
         )}
@@ -158,23 +158,16 @@ export default function EventsHomePage() {
   const renderCategories = categories.length ? categories : fallbackCategories;
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] pb-20 sm:pb-8 font-sans">
-      {/* Premium Vibrant Header */}
-      <div className="bg-gradient-to-br from-fuchsia-600 via-pink-500 to-rose-400 relative overflow-hidden sm:rounded-b-[3rem] shadow-xl">
-        {/* Decorative glass orbs */}
-        <div className="absolute -top-32 -right-32 w-96 h-96 bg-white/20 rounded-full mix-blend-overlay filter blur-[100px] animate-pulse" />
-        <div className="absolute -bottom-32 -left-32 w-96 h-96 bg-white/20 rounded-full mix-blend-overlay filter blur-[100px] animate-pulse delay-700" />
-        
-        <div className="relative max-w-5xl mx-auto px-5 pt-16 pb-12 sm:pt-24 sm:pb-20 text-white">
-          <p className="text-sm font-black tracking-[0.2em] text-white/90 uppercase mb-3 drop-shadow-md">Discover & Book</p>
-          <h1 className="text-4xl sm:text-6xl font-black leading-[1.1] tracking-tight drop-shadow-lg">
-            Beautiful Event<br />
-            Decorations
-          </h1>
-          <form onSubmit={handleSearch} className="mt-8 flex items-center gap-3 bg-white/20 backdrop-blur-xl border border-white/30 rounded-2xl px-5 py-4 shadow-[0_8px_32px_rgba(0,0,0,0.1)] max-w-2xl transition-all focus-within:bg-white/30 focus-within:border-white/60 focus-within:shadow-2xl">
-            <Search size={22} className="text-white/90" />
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Birthday, Anniversary, Baby Shower…"
-              className="flex-1 bg-transparent text-white placeholder:text-white/70 text-lg font-semibold outline-none" />
+    <div className="min-h-screen bg-canvas pb-20 sm:pb-8">
+      {/* Header: what this is, and search. No orbs, no gradient. */}
+      <div className="border-b border-line bg-white">
+        <div className="mx-auto max-w-5xl px-5 pb-6 pt-8 sm:pb-8 sm:pt-12">
+          <h1 className="h-display">Events and décor</h1>
+          <p className="mt-1.5 text-[15px] text-ink-500">Decor and planning for birthdays, showers, anniversaries and more.</p>
+          <form onSubmit={handleSearch} className="mt-5 flex max-w-2xl items-center gap-3 rounded-btn border border-line bg-sunken px-3.5 transition-colors focus-within:border-zappy-600 focus-within:bg-white">
+            <Search size={18} className="shrink-0 text-ink-500" />
+            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Birthday, anniversary, baby shower"
+              className="h-12 flex-1 bg-transparent text-[15px] text-ink-900 outline-none placeholder:text-ink-400" />
           </form>
         </div>
       </div>
@@ -196,7 +189,7 @@ export default function EventsHomePage() {
               const style = getCatStyles(cat.name);
               return (
                 <button key={cat._id || idx} onClick={() => navigate(`/events/browse?category=${cat.slug || cat.name?.toLowerCase()}`)}
-                  className={`relative rounded-3xl overflow-hidden group cursor-pointer shadow-sm hover:shadow-xl transition-all duration-500 ${getBentoClass(idx)}`}>
+                  className={`relative rounded-card overflow-hidden group cursor-pointer shadow-sm hover:shadow-xl transition-all duration-500 ${getBentoClass(idx)}`}>
                   
                   {/* Background Image */}
                   <img src={style.img} alt={cat.name} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 group-hover:rotate-1 transition-all duration-700" />
@@ -228,7 +221,7 @@ export default function EventsHomePage() {
           <section>
             <div className="flex items-end justify-between mb-6">
               <h2 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-3">
-                <span className="w-8 h-8 bg-gradient-to-br from-zappy-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-zappy-500/30">
+                <span className="w-8 h-8 bg-zappy-500 rounded-xl flex items-center justify-center shadow-lg shadow-zappy-500/30">
                   <Play size={14} className="text-white ml-0.5" />
                 </span>
                 See it Live
@@ -253,7 +246,7 @@ export default function EventsHomePage() {
         <section>
           <div className="flex items-end justify-between mb-6">
             <h2 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-3">
-              <span className="w-8 h-8 bg-gradient-to-br from-orange-400 to-rose-500 rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/30">
+              <span className="w-8 h-8 bg-orange-400 rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/30">
                 <TrendingUp size={16} className="text-white" strokeWidth={2.5} />
               </span>
               Trending Now

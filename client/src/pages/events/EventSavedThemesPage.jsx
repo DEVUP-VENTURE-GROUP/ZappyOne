@@ -37,7 +37,7 @@ export default function EventSavedThemesPage() {
             <Heart size={48} className="text-slate-200 mx-auto mb-3" />
             <p className="font-semibold text-slate-600">No saved themes yet</p>
             <p className="text-sm text-slate-400 mt-1">Tap the heart icon on any theme to save it</p>
-            <button onClick={() => navigate('/events')} className="mt-4 px-5 py-2.5 bg-gradient-to-r from-zappy-600 to-purple-600 text-white rounded-xl text-sm font-semibold">Browse Events</button>
+            <button onClick={() => navigate('/events')} className="mt-4 px-5 py-2.5 bg-zappy-600 text-white rounded-xl text-sm font-semibold">Browse Events</button>
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3">

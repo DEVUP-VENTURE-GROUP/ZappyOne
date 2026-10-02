@@ -57,8 +57,8 @@ export default function InstallPrompt() {
                        sm:bottom-6"
           >
             <div
-              className="pointer-events-auto relative overflow-hidden rounded-[24px]
-                         border border-white/60 bg-white/95 backdrop-blur-2xl
+              className="pointer-events-auto relative overflow-hidden rounded-card
+                         border border-white/60 bg-white
                          shadow-[0_20px_50px_-12px_rgba(15,23,42,0.28)]
                          p-4 sm:p-5"
             >

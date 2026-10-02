@@ -18,7 +18,7 @@ function ScratchCard({ card, onScratch, revealing }) {
       disabled={scratched || revealing}
       whileTap={{ scale: scratched ? 1 : 0.95 }}
       className="relative aspect-[4/5] rounded-2xl overflow-hidden shadow-md text-center flex flex-col items-center justify-center p-3"
-      style={{ background: scratched ? (win ? 'linear-gradient(160deg,#ecfdf5,#fff)' : '#f8fafc') : 'linear-gradient(145deg,#3B82F6,#7c3aed)' }}
+      style={{ background: scratched ? (win ? 'linear-gradient(#ecfdf5, #ecfdf5)' : '#f8fafc') : 'linear-gradient(#3B82F6, #3B82F6)' }}
     >
       {scratched ? (
         <motion.div initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="flex flex-col items-center gap-1.5">
@@ -92,14 +92,14 @@ export default function RewardsPage() {
       ) : (
         <div className="max-w-2xl mx-auto px-4 py-4 space-y-5">
           {/* Points balance */}
-          <div className="rounded-3xl p-5 text-white shadow-lg" style={{ background: 'linear-gradient(135deg,#2563EB,#7c3aed)' }}>
+          <div className="rounded-card p-5 text-white shadow-lg" style={{ background: 'linear-gradient(#2563EB, #2563EB)' }}>
             <div className="flex items-center gap-1.5 text-white/80 text-xs font-bold uppercase tracking-widest"><Coins size={14} /> {t('rewards.yourPoints', 'Your points')}</div>
             <div className="flex items-end justify-between mt-1">
               <span className="text-4xl font-black">{points.toLocaleString('en-IN')}</span>
               <span className="text-sm text-white/80 mb-1">≈ ₹{d.redeemableRupees || 0}</span>
             </div>
             <button onClick={doRedeem} disabled={!canRedeem || redeeming}
-              className="mt-4 w-full bg-white/15 hover:bg-white/25 backdrop-blur border border-white/20 rounded-xl py-2.5 font-bold flex items-center justify-center gap-2 disabled:opacity-50 transition-colors">
+              className="mt-4 w-full bg-white/15 hover:bg-white/25 border border-white/20 rounded-xl py-2.5 font-bold flex items-center justify-center gap-2 disabled:opacity-50 transition-colors">
               {redeeming ? <Loader2 size={16} className="animate-spin" /> : <Wallet size={16} />}
               {canRedeem ? t('rewards.redeemAll', 'Redeem all → ₹{x}').replace('{x}', d.redeemableRupees) : t('rewards.earnMore', 'Earn {n} more to redeem').replace('{n}', (d.minRedeemPoints || 100) - points)}
             </button>
@@ -156,7 +156,7 @@ export default function RewardsPage() {
           <motion.div className="fixed inset-0 z-[120] bg-black/60 flex items-center justify-center p-6"
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setReveal(null)}>
             <motion.div initial={{ scale: 0.5, y: 40 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.5, opacity: 0 }}
-              className="bg-white rounded-3xl p-7 text-center max-w-xs w-full">
+              className="bg-white rounded-card p-7 text-center max-w-xs w-full">
               <motion.div animate={{ rotate: [0, -10, 10, 0] }} transition={{ repeat: Infinity, duration: 2 }}>
                 <Gift size={48} className="mx-auto text-amber-400" />
               </motion.div>

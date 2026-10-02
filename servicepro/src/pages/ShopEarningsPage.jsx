@@ -36,7 +36,7 @@ export default function ShopEarningsPage() {
           <div className="flex justify-center py-16"><Loader2 size={24} className="animate-spin text-zappy-400" /></div>
         ) : (
           <>
-            <div className="card bg-gradient-to-br from-zappy-600 to-zappy-700 text-white">
+            <div className="card bg-zappy-600 text-white">
               <p className="text-xs font-semibold text-zappy-100 uppercase tracking-wide">Total Earnings</p>
               <p className="text-4xl font-black mt-1 flex items-center gap-0.5">
                 <IndianRupee size={26} strokeWidth={2.5} />{data?.earningsRupees ?? 0}

@@ -92,7 +92,7 @@ export default function PlansPage() {
           <div className="absolute top-32 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-gradient-to-b from-slate-900/0 via-slate-900/80 to-slate-900" />
         </div>
 
-        <header className="relative z-10 px-4 py-4 flex items-center justify-between sticky top-0 bg-slate-900/50 backdrop-blur-xl border-b border-white/5">
+        <header className="relative z-10 px-4 py-4 flex items-center justify-between sticky top-0 bg-slate-900/50 border-b border-white/5">
           <motion.button onClick={() => nav(-1)} whileTap={{ scale: 0.9 }} className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white hover:bg-white/10 transition-colors border border-white/10">
             <ArrowLeft size={20} strokeWidth={2.5} />
           </motion.button>
@@ -107,7 +107,7 @@ export default function PlansPage() {
 
           {/* Hero */}
           <div className="text-center pb-4">
-            <motion.div initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring" }} className="w-20 h-20 bg-gradient-to-br from-amber-300 via-amber-400 to-orange-500 rounded-full mx-auto flex items-center justify-center mb-6 shadow-[0_0_40px_rgba(251,191,36,0.3)] border-4 border-slate-900">
+            <motion.div initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring" }} className="w-20 h-20 bg-amber-300 rounded-full mx-auto flex items-center justify-center mb-6 shadow-[0_0_40px_rgba(251,191,36,0.3)] border-4 border-slate-900">
               <Crown size={36} className="text-slate-900" strokeWidth={2} />
             </motion.div>
             <motion.h2 initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.1 }} className="text-3xl font-black text-white mb-3">
@@ -125,7 +125,7 @@ export default function PlansPage() {
                 <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl" />
                 <div className="flex items-center justify-between relative z-10">
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                    <div className="w-12 h-12 rounded-2xl bg-emerald-400 flex items-center justify-center shadow-lg shadow-emerald-500/20">
                       <CheckCircle2 size={24} className="text-white" strokeWidth={2.5} />
                     </div>
                     <div>
@@ -145,7 +145,7 @@ export default function PlansPage() {
           {/* Cancel confirmation */}
           <AnimatePresence>
             {showCancel && (
-              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-slate-800/80 backdrop-blur-xl border border-slate-700 rounded-[1.5rem] p-5 space-y-4 shadow-xl">
+              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-slate-800/80 border border-slate-700 rounded-[1.5rem] p-5 space-y-4 shadow-xl">
                 <div className="flex items-start gap-3">
                   <div className="w-10 h-10 rounded-full bg-rose-500/20 flex items-center justify-center shrink-0">
                     <AlertCircle size={20} className="text-rose-400" strokeWidth={2} />
@@ -169,7 +169,7 @@ export default function PlansPage() {
           {/* Plans */}
           <div className="space-y-6 pt-4 pb-8">
             {(plansData?.plans?.length === 0) && (
-              <div className="text-center py-12 text-slate-500 border border-dashed border-slate-700 rounded-3xl">
+              <div className="text-center py-12 text-slate-500 border border-dashed border-slate-700 rounded-card">
                 <Crown size={32} className="mx-auto mb-3 opacity-30" />
                 <p className="font-semibold">No plans available right now</p>
               </div>
@@ -190,7 +190,7 @@ export default function PlansPage() {
                   className={`relative rounded-[2rem] overflow-hidden ${isPremium ? 'bg-gradient-to-b from-amber-300 via-amber-400 to-amber-500 p-[2px]' : 'bg-slate-800 p-[1px]'}`}
                 >
                   {/* Metallic Border Effect Container */}
-                  <div className={`h-full w-full rounded-[2rem] overflow-hidden ${isPremium ? 'bg-slate-900' : 'bg-slate-800/80'} backdrop-blur-xl relative`}>
+                  <div className={`h-full w-full rounded-[2rem] overflow-hidden ${isPremium ? 'bg-slate-900' : 'bg-slate-800/80'} relative`}>
                     
                     {/* Glow effect for premium */}
                     {isPremium && (
@@ -198,7 +198,7 @@ export default function PlansPage() {
                     )}
 
                     {isPremium && (
-                      <div className="bg-gradient-to-r from-amber-400 to-orange-500 py-1.5 px-4 flex items-center justify-center gap-2 relative z-10 shadow-md shadow-amber-500/20">
+                      <div className=" bg-amber-400 py-1.5 px-4 flex items-center justify-center gap-2 relative z-10 shadow-md shadow-amber-500/20">
                         <Star size={12} strokeWidth={2.5} className="text-white fill-white drop-shadow-md" />
                         <span className="text-[10px] font-black text-white uppercase tracking-widest drop-shadow-md">Recommended</span>
                         <Star size={12} strokeWidth={2.5} className="text-white fill-white drop-shadow-md" />
@@ -312,7 +312,7 @@ function CommissionCalculator({ plans, activePlanCode }) {
   const weeklyGross = weeklyJobs * avgJobRs;
 
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-slate-800/80 backdrop-blur-xl border border-slate-700 rounded-[1.5rem] p-5 shadow-lg">
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-slate-800/80 border border-slate-700 rounded-[1.5rem] p-5 shadow-lg">
       <div className="flex items-center gap-3 mb-5">
         <div className="w-10 h-10 rounded-xl bg-zappy-500/20 border border-zappy-500/30 flex items-center justify-center shadow-inner">
           <TrendingUp size={18} strokeWidth={2.5} className="text-zappy-400" />

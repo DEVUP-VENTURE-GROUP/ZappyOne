@@ -44,7 +44,7 @@ export default function StartCodeCard({ jobKey, code, stage, noun = 'pro' }) {
     <AnimatePresence mode="wait">
       {stage !== 'arrived' ? (
         <motion.div key="locked" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-          className="rounded-2xl ring-1 ring-slate-100" style={{ background: 'linear-gradient(135deg,#f8fafc,#f1f5f9)' }}>
+          className="rounded-2xl ring-1 ring-slate-100" style={{ background: 'linear-gradient(#f8fafc, #f8fafc)' }}>
           <div className="flex items-center gap-3 px-4 py-4">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-slate-100">
               <ShieldCheck size={18} className="text-slate-400" />
@@ -62,7 +62,7 @@ export default function StartCodeCard({ jobKey, code, stage, noun = 'pro' }) {
         </motion.div>
       ) : !confirmed ? (
         <motion.div key="confirm" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-          className="rounded-[24px] border border-zappy-200/60" style={{ background: 'linear-gradient(135deg,#EFF6FF,#DBEAFE)' }}>
+          className="rounded-card border border-zappy-200/60" style={{ background: 'linear-gradient(#EFF6FF, #EFF6FF)' }}>
           <div className="flex items-center gap-3 px-4 py-4">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-zappy-100">
               <HelpCircle size={18} className="text-zappy-700" />
@@ -77,7 +77,7 @@ export default function StartCodeCard({ jobKey, code, stage, noun = 'pro' }) {
       ) : (
         <motion.div key="code" initial={{ opacity: 0, scale: 0.96, y: 8 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0 }}
           transition={{ type: 'spring', damping: 20, stiffness: 260 }}
-          className="rounded-[24px]" style={{ background: 'linear-gradient(135deg,#1D4ED8 0%,#2563EB 100%)', boxShadow: '0 12px 32px -4px rgba(37,99,235,0.4)' }}>
+          className="rounded-card" style={{ background: 'linear-gradient(#1D4ED8, #1D4ED8)', boxShadow: '0 12px 32px -4px rgba(37,99,235,0.4)' }}>
           <p className="flex items-center gap-2 px-4 pb-2 pt-4 text-xs font-extrabold uppercase tracking-widest text-white/80">
             <ShieldCheck size={15} /> Share this code to start
           </p>

@@ -73,7 +73,7 @@ function SparkleRing({ amount }) {
       <motion.div
         className="relative w-28 h-28 rounded-full flex items-center justify-center shadow-2xl"
         style={{
-          background: 'linear-gradient(135deg, #3B82F6 0%, #8b5cf6 50%, #a855f7 100%)',
+          background: 'linear-gradient(#3B82F6, #3B82F6)',
           boxShadow: '0 0 0 8px rgba(59,130,246,0.15), 0 24px 60px rgba(59,130,246,0.45)',
         }}
         initial={{ scale: 0, rotate: -30 }}
@@ -143,9 +143,9 @@ export default function CashbackCelebration({ amountPaise, totalEarnedPaise, onC
 
         {/* Card */}
         <motion.div
-          className="relative z-10 mx-4 rounded-3xl overflow-hidden text-center"
+          className="relative z-10 mx-4 rounded-card overflow-hidden text-center"
           style={{
-            background: 'linear-gradient(165deg, #1e1b4b 0%, #2e1065 40%, #1e1b4b 100%)',
+            background: 'linear-gradient(#1e1b4b, #1e1b4b)',
             border: '1px solid rgba(139,92,246,0.35)',
             boxShadow: '0 40px 100px rgba(59,130,246,0.4), 0 0 0 1px rgba(255,255,255,0.06)',
             maxWidth: 360,
@@ -241,7 +241,7 @@ export default function CashbackCelebration({ amountPaise, totalEarnedPaise, onC
                 onClick={() => { onClose(); nav('/wallet'); }}
                 className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-extrabold text-white"
                 style={{
-                  background: 'linear-gradient(135deg, #3B82F6, #8b5cf6)',
+                  background: 'linear-gradient(#3B82F6, #3B82F6)',
                   boxShadow: '0 8px 24px rgba(59,130,246,0.4)',
                 }}
               >
@@ -262,7 +262,7 @@ export default function CashbackCelebration({ amountPaise, totalEarnedPaise, onC
           {/* Bottom auto-dismiss bar */}
           <motion.div
             className="h-1 rounded-b-3xl"
-            style={{ background: 'linear-gradient(90deg, #3B82F6, #8b5cf6, #ec4899)' }}
+            style={{ background: 'linear-gradient(#3B82F6, #3B82F6)' }}
             initial={{ width: '100%' }}
             animate={{ width: '0%' }}
             transition={{ duration: 6, ease: 'linear' }}

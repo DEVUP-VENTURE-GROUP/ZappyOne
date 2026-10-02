@@ -176,7 +176,7 @@ export default function LiveSelfieCapture({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/90 flex flex-col items-center justify-center p-4">
-      <div className="w-full max-w-sm bg-white rounded-3xl overflow-hidden shadow-2xl">
+      <div className="w-full max-w-sm bg-white rounded-card overflow-hidden shadow-2xl">
 
         {/* header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">

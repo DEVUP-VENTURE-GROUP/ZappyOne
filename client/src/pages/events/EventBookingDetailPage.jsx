@@ -116,7 +116,7 @@ export default function EventBookingDetailPage() {
     <div className="min-h-screen bg-slate-50 pb-28">
       {/* Confetti banner on new payment */}
       {isPaid && (
-        <motion.div initial={{ y: -60 }} animate={{ y: 0 }} className="bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white px-4 py-3 flex items-center gap-2">
+        <motion.div initial={{ y: -60 }} animate={{ y: 0 }} className=" bg-violet-600 text-white px-4 py-3 flex items-center gap-2">
           <PartyPopper size={18} />
           <p className="text-sm font-bold">Booking confirmed! Your event is all set 🎉</p>
         </motion.div>
@@ -205,7 +205,7 @@ export default function EventBookingDetailPage() {
           <div className="bg-white rounded-2xl border border-slate-100 p-4">
             <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-3">Your Decorator</p>
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 bg-gradient-to-br from-violet-400 to-fuchsia-400 rounded-xl flex items-center justify-center text-white font-black">
+              <div className="w-11 h-11 bg-violet-400 rounded-xl flex items-center justify-center text-white font-black">
                 {booking.partnerId.businessName?.[0]?.toUpperCase()}
               </div>
               <div className="flex-1">
@@ -227,7 +227,7 @@ export default function EventBookingDetailPage() {
         {/* Review */}
         {canReview && !showReview && (
           <button onClick={() => setShowReview(true)}
-            className="w-full py-3.5 bg-gradient-to-r from-amber-400 to-orange-500 text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-2">
+            className="w-full py-3.5 bg-amber-400 text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-2">
             <Star size={15} />Rate Your Experience
           </button>
         )}
@@ -267,7 +267,7 @@ export default function EventBookingDetailPage() {
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 px-4 py-4 space-y-2">
         {canPayRem && (
           <button onClick={handlePayRemaining} disabled={payingRemaining}
-            className="w-full py-3.5 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-60">
+            className="w-full py-3.5 bg-violet-600 text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-60">
             {payingRemaining ? <Loader2 size={15} className="animate-spin" /> : <CreditCard size={15} />}
             Pay Remaining ₹{Math.round((booking?.pricing?.remainingPaise || 0) / 100).toLocaleString('en-IN')}
           </button>

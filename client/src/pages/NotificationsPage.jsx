@@ -84,7 +84,7 @@ function groupByDay(items) {
 function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center pt-24 pb-12 gap-5 text-center px-6">
-      <div className="w-16 h-16 rounded-[20px] bg-slate-50 border border-slate-100 flex items-center justify-center">
+      <div className="w-16 h-16 rounded-card bg-slate-50 border border-slate-100 flex items-center justify-center">
         <Bell size={28} strokeWidth={1.5} className="text-slate-400" />
       </div>
       <div className="max-w-sm">
@@ -108,7 +108,7 @@ function NotifCard({ n, onTap }) {
   return (
     <div
       onClick={() => onTap(n)}
-      className={`group relative flex items-start gap-4 p-5 rounded-[20px] transition-all duration-200 cursor-pointer 
+      className={`group relative flex items-start gap-4 p-5 rounded-card transition-all duration-200 cursor-pointer 
       ${unread 
         ? 'bg-[#0066FF]/5 border border-[#0066FF]/20 shadow-[0_2px_12px_rgba(0,0,0,0.02)]' 
         : 'bg-white border border-slate-100 shadow-[0_2px_8px_rgba(0,0,0,0.01)] hover:bg-slate-50/50'} 
@@ -237,7 +237,7 @@ export default function NotificationsPage() {
           ) : isLoading ? (
             <div className="pt-6 space-y-4">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="flex items-start gap-4 p-5 bg-white border border-slate-100 rounded-[20px]">
+                <div key={i} className="flex items-start gap-4 p-5 bg-white border border-slate-100 rounded-card">
                   <div className="w-5 h-5 rounded-md bg-slate-100 animate-pulse shrink-0" />
                   <div className="flex-1 space-y-3 pt-1">
                     <div className="flex justify-between items-center">

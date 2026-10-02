@@ -62,7 +62,7 @@ export default function PetBookingDetailPage() {
         catch (err) { toast.error(err?.data?.error || 'Could not save your rating'); }
       } : undefined}
       extras={payOnline ? (
-        <div className="rounded-[24px] bg-white p-[18px] ring-1 ring-slate-100">
+        <div className="rounded-card bg-white p-[18px] ring-1 ring-slate-100">
           <p className="text-[14px] font-bold text-navy">Pay online</p>
           <p className="mt-0.5 text-[12.5px] text-slate-500">{formatPaise(b.pricing?.totalPaise)} for this booking</p>
           <PayNowButton bookingSource="pet" bookingId={b._id} amountLabel={formatPaise(b.pricing?.totalPaise)} label="Pet care booking" className="mt-3" />

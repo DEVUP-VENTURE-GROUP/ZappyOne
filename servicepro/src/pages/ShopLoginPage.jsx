@@ -141,7 +141,7 @@ export default function ShopLoginPage() {
           <p className="text-[13px] text-slate-500 font-medium mt-1">Manage your shop, workers & earnings</p>
         </div>
 
-        <div className="bg-white rounded-[28px] shadow-[0_8px_40px_rgba(0,0,0,0.06)] p-8">
+        <div className="bg-white rounded-card shadow-[0_8px_40px_rgba(0,0,0,0.06)] p-8">
           <AnimatePresence mode="wait">
             {step === 'phone' && (
               <motion.form key="phone" onSubmit={handleSendOtp} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex flex-col">

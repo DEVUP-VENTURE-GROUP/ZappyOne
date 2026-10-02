@@ -53,7 +53,7 @@ function UserDrawer({ userId, onClose, onBlock }) {
   return (
     <div className="fixed inset-0 z-50 flex">
       {/* backdrop */}
-      <div className="flex-1 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <div className="flex-1 bg-black/50" onClick={onClose} />
 
       {/* panel */}
       <div className="w-full max-w-md bg-white shadow-2xl flex flex-col overflow-hidden">
@@ -76,7 +76,7 @@ function UserDrawer({ userId, onClose, onBlock }) {
             {/* profile card */}
             <div className="px-5 py-5 border-b border-slate-100">
               <div className="flex items-start gap-4">
-                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xl font-black shrink-0">
+                <div className="w-14 h-14 rounded-full bg-blue-500 flex items-center justify-center text-white text-xl font-black shrink-0">
                   {(u.name || u.phone || '?')[0].toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -184,7 +184,7 @@ function BlockConfirm({ user, onConfirm, onCancel, loading }) {
   const blocking = !user.isBlocked;
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center px-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onCancel} />
+      <div className="absolute inset-0 bg-black/60" onClick={onCancel} />
       <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
         <div className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 ${blocking ? 'bg-red-100' : 'bg-green-100'}`}>
           <AlertTriangle size={22} className={blocking ? 'text-red-500' : 'text-green-600'} />

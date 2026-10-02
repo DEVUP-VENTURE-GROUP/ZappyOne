@@ -11,9 +11,9 @@ export default function SearchingHero({ etaMinutes }) {
   return (
     <motion.div
       variants={fadeInUp}
-      className="relative overflow-hidden rounded-[24px] p-[18px]"
+      className="relative overflow-hidden rounded-card p-[18px]"
       style={{
-        background: 'linear-gradient(135deg,#0A1830 0%,#12274C 100%)',
+        background: 'linear-gradient(#0A1830, #0A1830)',
         boxShadow: '0 12px 34px -12px rgba(15,23,42,.28)',
       }}
     >

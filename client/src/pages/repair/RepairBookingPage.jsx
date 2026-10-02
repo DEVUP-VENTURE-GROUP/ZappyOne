@@ -173,7 +173,7 @@ function CancelSheet({ bookingId, onClose, onConfirm, busy }) {
 
   return (
     <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/50 p-3 sm:items-center">
-      <div className="w-full rounded-3xl bg-white p-5 shadow-2xl sm:max-w-sm">
+      <div className="w-full rounded-card bg-white p-5 shadow-2xl sm:max-w-sm">
         <p className="text-base font-black text-[#0F172A]">
           {blocked ? 'This one needs us' : 'Cancel this repair?'}
         </p>
@@ -420,7 +420,7 @@ function RateRepair({ booking }) {
 function PaymentNote({ booking }) {
   const snap = booking.priceSnapshot || {};
   return (
-    <div className="rounded-[24px] bg-white p-[18px] ring-1 ring-slate-100">
+    <div className="rounded-card bg-white p-[18px] ring-1 ring-slate-100">
       {booking.paymentStatus === 'paid' ? (
         <p className="flex items-center gap-1.5 text-[13px] font-bold text-emerald-700"><ShieldCheck size={14} /> Paid{booking.cashCollectedAt ? ' in cash' : ''}</p>
       ) : booking.paymentMethod === 'cash' ? (
@@ -505,7 +505,7 @@ export default function RepairBookingPage() {
             <RateRepair booking={booking} />
             <PaymentNote booking={booking} />
             {quotes.length > 0 && (
-              <div className="rounded-[24px] bg-white p-[18px] ring-1 ring-slate-100">
+              <div className="rounded-card bg-white p-[18px] ring-1 ring-slate-100">
                 <p className="mb-2 text-[14px] font-bold text-navy">Quote history</p>
                 {quotes.map((q) => (
                   <div key={q._id} className="flex items-center justify-between py-1 text-[12.5px]">

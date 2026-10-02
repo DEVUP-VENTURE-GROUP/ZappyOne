@@ -17,7 +17,7 @@ const STATUS_CONFIG = {
     emoji: '🔍',
     title: 'Finding your worker…',
     body: (w) => 'Scanning nearby workers — sit tight',
-    bg: 'linear-gradient(135deg,#1e293b 0%,#0f172a 100%)',
+    bg: 'linear-gradient(#1e293b, #1e293b)',
     glow: 'rgba(59,130,246,0.4)',
     badge: null,
   },
@@ -25,7 +25,7 @@ const STATUS_CONFIG = {
     emoji: '⚡',
     title: (w) => `${w?.name || 'Worker'} accepted your request`,
     body: (w) => `${w?.rating ? `${w.rating.toFixed(1)}★  ·` : ''} ${w?.jobs ? `${w.jobs}+ jobs completed` : 'Verified worker'}`,
-    bg: 'linear-gradient(135deg,#1d4ed8 0%,#2563eb 100%)',
+    bg: 'linear-gradient(#1d4ed8, #1d4ed8)',
     glow: 'rgba(37,99,235,0.45)',
     badge: '✓ Matched',
   },
@@ -33,7 +33,7 @@ const STATUS_CONFIG = {
     emoji: '🛵',
     title: (w) => `${w?.name || 'Worker'} is on the way!`,
     body: (w) => w?.eta != null ? `ETA: ~${w.eta} min — heading to you now` : 'Heading to your location right now',
-    bg: 'linear-gradient(135deg,#0369a1 0%,#0284c7 100%)',
+    bg: 'linear-gradient(#0369a1, #0369a1)',
     glow: 'rgba(2,132,199,0.45)',
     badge: '📍 En route',
   },
@@ -41,7 +41,7 @@ const STATUS_CONFIG = {
     emoji: '📍',
     title: (w) => `${w?.name || 'Worker'} has arrived!`,
     body: () => 'Worker is at your location — share your OTP to begin',
-    bg: 'linear-gradient(135deg,#15803d 0%,#16a34a 100%)',
+    bg: 'linear-gradient(#15803d, #15803d)',
     glow: 'rgba(21,128,61,0.45)',
     badge: '🎯 Here',
   },
@@ -49,7 +49,7 @@ const STATUS_CONFIG = {
     emoji: '🔧',
     title: () => 'Service in progress',
     body: (w) => `${w?.name || 'Worker'} is working on your request`,
-    bg: 'linear-gradient(135deg,#7c3aed 0%,#6d28d9 100%)',
+    bg: 'linear-gradient(#7c3aed, #7c3aed)',
     glow: 'rgba(124,58,237,0.45)',
     badge: null,
   },
@@ -57,7 +57,7 @@ const STATUS_CONFIG = {
     emoji: '🎉',
     title: () => 'Service completed!',
     body: () => 'Hope everything went smoothly — rate your experience',
-    bg: 'linear-gradient(135deg,#b45309 0%,#d97706 100%)',
+    bg: 'linear-gradient(#b45309, #b45309)',
     glow: 'rgba(180,83,9,0.45)',
     badge: '✅ Done',
   },
@@ -148,7 +148,7 @@ export default function StatusNotificationBanner({ status, workerName, workerRat
                   {cfg.emoji}
                 </motion.div>
                 {cfg.badge && (
-                  <span className="absolute -bottom-1 -right-1 text-[9px] font-black text-white bg-black/30 backdrop-blur-sm px-1.5 py-0.5 rounded-full whitespace-nowrap">
+                  <span className="absolute -bottom-1 -right-1 text-[9px] font-black text-white bg-black/30 px-1.5 py-0.5 rounded-full whitespace-nowrap">
                     {cfg.badge}
                   </span>
                 )}

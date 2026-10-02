@@ -108,7 +108,7 @@ export default function AnimatedETA({ etaMinutes, status }) {
 
   if (isArrived) {
     return (
-      <div className="px-4 py-3 flex items-center justify-between" style={{ background: 'linear-gradient(90deg,#f0fdf4,#dcfce7)' }}>
+      <div className="px-4 py-3 flex items-center justify-between" style={{ background: 'linear-gradient(#f0fdf4, #f0fdf4)' }}>
         <div className="flex items-center gap-2">
           <motion.span
             className="text-xl"
@@ -135,8 +135,8 @@ export default function AnimatedETA({ etaMinutes, status }) {
       className="px-4 py-3 relative overflow-hidden flex items-center justify-between"
       style={{
         background: isUrgent
-          ? 'linear-gradient(90deg,#fff7ed,#ffedd5)'
-          : 'linear-gradient(90deg,#eff6ff,#dbeafe)',
+          ? 'linear-gradient(#fff7ed, #fff7ed)'
+          : 'linear-gradient(#eff6ff, #eff6ff)',
       }}
     >
       {/* Speed lines flash on ETA update */}

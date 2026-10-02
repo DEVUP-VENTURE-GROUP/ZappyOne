@@ -13,7 +13,7 @@ export default function PremiumTimeline({ steps = STEPS, activeStepIdx, timesByS
   return (
     <motion.div
       variants={fadeInUp}
-      className="rounded-[24px] bg-white p-[18px]"
+      className="rounded-card bg-white p-[18px]"
       style={{
         boxShadow: '0 12px 34px -12px rgba(15,23,42,.18)',
         border: '1px solid rgba(255,255,255,.9)',
@@ -44,9 +44,9 @@ export default function PremiumTimeline({ steps = STEPS, activeStepIdx, timesByS
                   className="w-[34px] h-[34px] rounded-full flex items-center justify-center relative z-[2] transition"
                   style={
                     done
-                      ? { background: 'linear-gradient(135deg,#2E86FF,#2563FF)', color: '#fff', boxShadow: '0 6px 14px -4px rgba(37,99,235,.55)' }
+                      ? { background: 'linear-gradient(#2E86FF, #2E86FF)', color: '#fff', boxShadow: '0 6px 14px -4px rgba(37,99,235,.55)' }
                       : current
-                      ? { background: 'linear-gradient(135deg,#3B82F6,#2563FF)', color: '#fff', boxShadow: '0 0 0 5px rgba(37,99,235,.15),0 8px 18px -4px rgba(37,99,235,.6)' }
+                      ? { background: 'linear-gradient(#3B82F6, #3B82F6)', color: '#fff', boxShadow: '0 0 0 5px rgba(37,99,235,.15),0 8px 18px -4px rgba(37,99,235,.6)' }
                       : { background: '#EEF2F9', color: '#B4C0D4', border: '1.5px solid #E3E9F3' }
                   }
                 >
@@ -68,7 +68,7 @@ export default function PremiumTimeline({ steps = STEPS, activeStepIdx, timesByS
                 {i < steps.length - 1 && (
                   <div
                     className="w-[2.5px] flex-1 min-h-[22px] my-[3px] rounded-[2px] relative overflow-hidden"
-                    style={{ background: done ? 'linear-gradient(#2563FF,#4C86FF)' : '#EAEEF6' }}
+                    style={{ background: done ? 'linear-gradient(#2563FF, #2563FF)' : '#EAEEF6' }}
                   >
                     {current && (
                       <span

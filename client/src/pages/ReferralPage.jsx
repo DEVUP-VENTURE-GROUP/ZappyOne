@@ -101,7 +101,7 @@ function TiltCard({ code, isLoading, copied, handleCopyCode }) {
       whileTap={{ scale: 0.98 }}
     >
       {/* Animated gradient border */}
-      <div className="absolute inset-0 bg-gradient-to-br from-zappy-500 via-fuchsia-500 to-amber-500 rounded-[2rem] opacity-70 group-hover:opacity-100 transition-opacity" />
+      <div className="absolute inset-0 bg-zappy-500 rounded-[2rem] opacity-70 group-hover:opacity-100 transition-opacity" />
       
       {/* Inner card */}
       <div className="absolute inset-[2px] bg-slate-950 rounded-[calc(2rem-2px)] overflow-hidden shadow-2xl">
@@ -124,7 +124,7 @@ function TiltCard({ code, isLoading, copied, handleCopyCode }) {
                       </motion.div>
                     ) : (
                       <motion.div key="code" initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -20, opacity: 0 }}>
-                         <span className="text-3xl sm:text-5xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-br from-white to-zappy-200 drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
+                         <span className="text-3xl sm:text-5xl font-black tracking-widest text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
                            {code}
                          </span>
                       </motion.div>
@@ -230,12 +230,12 @@ export default function ReferralPage() {
         <div className="px-4 pt-12 pb-6 flex items-center justify-between">
           <motion.button 
             onClick={() => navigate(-1)} 
-            className="w-10 h-10 bg-white/5 border border-white/10 rounded-full flex items-center justify-center text-slate-300 hover:bg-white/10 backdrop-blur-md transition-colors"
+            className="w-10 h-10 bg-white/5 border border-white/10 rounded-full flex items-center justify-center text-slate-300 hover:bg-white/10 transition-colors"
             whileTap={{ scale: 0.9 }}
           >
             <ArrowLeft size={20} />
           </motion.button>
-          <div className="px-3 py-1.5 bg-zappy-500/10 border border-zappy-500/20 rounded-full flex items-center gap-1.5 backdrop-blur-md shadow-[0_0_15px_rgba(59,130,246,0.2)]">
+          <div className="px-3 py-1.5 bg-zappy-500/10 border border-zappy-500/20 rounded-full flex items-center gap-1.5 shadow-[0_0_15px_rgba(59,130,246,0.2)]">
             <Flame size={14} className="text-amber-500 fill-amber-500" />
             <span className="text-[10px] font-black uppercase tracking-widest text-zappy-200">Rewards Program</span>
           </div>
@@ -247,7 +247,7 @@ export default function ReferralPage() {
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-10">
             <h1 className="text-4xl md:text-5xl font-black text-white mb-4 tracking-tight leading-[1.1]">
               Give ₹50.<br/>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-zappy-400 via-fuchsia-400 to-amber-400">Get ₹100.</span>
+              <span className=" text-zappy-400">Get ₹100.</span>
             </h1>
             <p className="text-slate-400 text-sm leading-relaxed max-w-[280px] mx-auto font-medium">
               Invite friends to Zappy. They get a discount, and you earn real wallet cash when they book.
@@ -261,19 +261,19 @@ export default function ReferralPage() {
 
           {/* Bento Stats Grid */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="grid grid-cols-3 gap-3 mt-8">
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-4 backdrop-blur-md flex flex-col items-center justify-center text-center relative overflow-hidden group hover:bg-white/10 transition-colors">
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex flex-col items-center justify-center text-center relative overflow-hidden group hover:bg-white/10 transition-colors">
               <div className="absolute top-0 right-0 w-16 h-16 bg-zappy-500/20 rounded-full blur-xl transition-all group-hover:scale-150" />
               <Users size={20} className="text-zappy-400 mb-2 relative z-10" />
               <span className="font-black text-2xl text-white relative z-10">{stats.totalReferrals}</span>
               <span className="text-[9px] uppercase tracking-widest font-bold text-slate-500 relative z-10 mt-1">Invited</span>
             </div>
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-4 backdrop-blur-md flex flex-col items-center justify-center text-center relative overflow-hidden group hover:bg-white/10 transition-colors">
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex flex-col items-center justify-center text-center relative overflow-hidden group hover:bg-white/10 transition-colors">
               <div className="absolute top-0 right-0 w-16 h-16 bg-emerald-500/20 rounded-full blur-xl transition-all group-hover:scale-150" />
               <Wallet size={20} className="text-emerald-400 mb-2 relative z-10" />
               <span className="font-black text-2xl text-emerald-400 relative z-10">₹{earned}</span>
               <span className="text-[9px] uppercase tracking-widest font-bold text-slate-500 relative z-10 mt-1">Earned</span>
             </div>
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-4 backdrop-blur-md flex flex-col items-center justify-center text-center relative overflow-hidden group hover:bg-white/10 transition-colors">
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex flex-col items-center justify-center text-center relative overflow-hidden group hover:bg-white/10 transition-colors">
               <div className="absolute top-0 right-0 w-16 h-16 bg-amber-500/20 rounded-full blur-xl transition-all group-hover:scale-150" />
               <Clock size={20} className="text-amber-400 mb-2 relative z-10" />
               <span className="font-black text-2xl text-white relative z-10">{stats.pendingReferrals}</span>
@@ -282,7 +282,7 @@ export default function ReferralPage() {
           </motion.div>
 
           {stats.pendingReferrals > 0 && (
-             <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="mt-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4 backdrop-blur-md flex gap-3 items-start shadow-[0_0_20px_rgba(245,158,11,0.1)]">
+             <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="mt-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4 flex gap-3 items-start shadow-[0_0_20px_rgba(245,158,11,0.1)]">
                 <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center shrink-0">
                    <Clock size={16} className="text-amber-400" />
                 </div>
@@ -297,16 +297,16 @@ export default function ReferralPage() {
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="mt-8">
             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 pl-1">Share the wealth</p>
             <div className="grid grid-cols-2 gap-3">
-               <motion.button onClick={handleWhatsApp} whileTap={{ scale: 0.95 }} className="bg-[#1f4a31]/80 hover:bg-[#1f4a31] border border-green-500/30 text-green-400 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 backdrop-blur-md transition-colors shadow-lg">
+               <motion.button onClick={handleWhatsApp} whileTap={{ scale: 0.95 }} className="bg-[#1f4a31]/80 hover:bg-[#1f4a31] border border-green-500/30 text-green-400 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 transition-colors shadow-lg">
                   <MessageCircle size={24} />
                   <span className="text-[11px] font-black uppercase tracking-wider">WhatsApp</span>
                </motion.button>
-               <motion.button onClick={handleWebShare} whileTap={{ scale: 0.95 }} className="bg-zappy-500/10 hover:bg-zappy-500/20 border border-zappy-500/20 text-zappy-300 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 backdrop-blur-md transition-colors shadow-lg">
+               <motion.button onClick={handleWebShare} whileTap={{ scale: 0.95 }} className="bg-zappy-500/10 hover:bg-zappy-500/20 border border-zappy-500/20 text-zappy-300 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 transition-colors shadow-lg">
                   <Share2 size={24} />
                   <span className="text-[11px] font-black uppercase tracking-wider">Share App</span>
                </motion.button>
             </div>
-            <motion.button onClick={handleCopyLink} whileTap={{ scale: 0.98 }} className="w-full mt-3 bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 rounded-2xl p-4 flex items-center justify-center gap-2 backdrop-blur-md transition-colors">
+            <motion.button onClick={handleCopyLink} whileTap={{ scale: 0.98 }} className="w-full mt-3 bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 rounded-2xl p-4 flex items-center justify-center gap-2 transition-colors">
                <AnimatePresence mode="wait">
                  {linkCopied ? <Check size={18} className="text-emerald-400" key="check" /> : <Link2 size={18} key="link" />}
                </AnimatePresence>
@@ -319,7 +319,7 @@ export default function ReferralPage() {
             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4 pl-1">Activity Log</p>
             
             {history.length === 0 ? (
-               <div className="bg-white/5 border border-white/10 rounded-[2rem] p-8 backdrop-blur-md text-center border-dashed">
+               <div className="bg-white/5 border border-white/10 rounded-[2rem] p-8 text-center border-dashed">
                  <div className="w-14 h-14 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
                    <Trophy size={24} className="text-slate-500" />
                  </div>
@@ -329,8 +329,8 @@ export default function ReferralPage() {
             ) : (
                <div className="space-y-3">
                  {history.map((item, i) => (
-                   <div key={item._id ?? i} className="bg-white/5 border border-white/10 rounded-2xl p-4 backdrop-blur-md flex items-center gap-4 hover:bg-white/10 transition-colors">
-                     <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-zappy-500 to-fuchsia-500 p-[1px] shadow-sm">
+                   <div key={item._id ?? i} className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center gap-4 hover:bg-white/10 transition-colors">
+                     <div className="w-11 h-11 rounded-xl bg-zappy-500 p-[1px] shadow-sm">
                        <div className="w-full h-full bg-slate-950 rounded-[11px] flex items-center justify-center">
                          <span className="text-sm font-black text-white">{maskName(item.name)[0].toUpperCase()}</span>
                        </div>

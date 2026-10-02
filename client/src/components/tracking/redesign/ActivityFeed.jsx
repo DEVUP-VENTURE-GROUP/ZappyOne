@@ -13,7 +13,7 @@ export default function ActivityFeed({ events }) {
   return (
     <motion.div
       variants={fadeInUp}
-      className="rounded-[24px] bg-white p-[18px]"
+      className="rounded-card bg-white p-[18px]"
       style={{
         boxShadow: '0 12px 34px -12px rgba(15,23,42,.18)',
         border: '1px solid rgba(255,255,255,.9)',

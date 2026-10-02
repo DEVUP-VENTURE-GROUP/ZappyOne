@@ -219,7 +219,7 @@ export default function PartnerLoginPage() {
               { icon: ShieldCheck, text: 'On-time\nService' }
             ].map((f, idx) => (
               <div key={idx} className="flex flex-col items-center gap-2 lg:gap-3 flex-1">
-                <div className="w-12 h-12 lg:w-14 lg:h-14 rounded-full bg-white lg:bg-white/10 backdrop-blur-md shadow-sm border border-violet-100 lg:border-white/20 flex items-center justify-center text-violet-600 lg:text-white">
+                <div className="w-12 h-12 lg:w-14 lg:h-14 rounded-full bg-white lg:bg-white/10 shadow-sm border border-violet-100 lg:border-white/20 flex items-center justify-center text-violet-600 lg:text-white">
                   <f.icon size={22} strokeWidth={2} />
                 </div>
                 <span className="text-[10px] sm:text-[11px] lg:text-[13px] font-bold text-center leading-tight whitespace-pre-line text-slate-700 lg:text-white/90">
@@ -246,7 +246,7 @@ export default function PartnerLoginPage() {
         <Flower2 size={280} className="absolute -top-16 -right-16 text-slate-50 pointer-events-none rotate-12 hidden lg:block" strokeWidth={1} />
 
         {/* Inner Wrapper (Card on mobile, flat on desktop) */}
-        <div className="w-full max-w-[440px] bg-white rounded-[32px] lg:rounded-none shadow-[0_8px_40px_rgba(0,0,0,0.06)] lg:shadow-none p-8 sm:p-10 lg:p-0 flex flex-col relative z-20">
+        <div className="w-full max-w-[440px] bg-white rounded-card lg:rounded-none shadow-[0_8px_40px_rgba(0,0,0,0.06)] lg:shadow-none p-8 sm:p-10 lg:p-0 flex flex-col relative z-20">
 
           {/* Header */}
           <div className="text-center mb-8">
@@ -366,7 +366,7 @@ export default function PartnerLoginPage() {
         </div>
 
         {/* Stats Footer Container */}
-        <div className="w-full max-w-[440px] mt-6 lg:mt-8 bg-violet-50/70 border border-violet-100/50 rounded-[20px] py-4 sm:py-5 px-3 sm:px-5 flex justify-between items-center z-10">
+        <div className="w-full max-w-[440px] mt-6 lg:mt-8 bg-violet-50/70 border border-violet-100/50 rounded-card py-4 sm:py-5 px-3 sm:px-5 flex justify-between items-center z-10">
           {[
             { icon: CalendarDays, val: '500+', label: 'Events Decorated' },
             { icon: Smile, val: '100+', label: 'Happy Clients' },

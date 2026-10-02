@@ -114,7 +114,7 @@ export default function ShopWorkersPage() {
       {showAdd && (
         <div className="fixed inset-0 z-50 bg-black/40 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={() => setShowAdd(false)}>
           <form onSubmit={handleAdd} onClick={(e) => e.stopPropagation()}
-            className="bg-white rounded-t-3xl sm:rounded-3xl w-full sm:max-w-md p-6 space-y-4 safe-pb">
+            className="bg-white rounded-t-sheet sm:rounded-card w-full sm:max-w-md p-6 space-y-4 safe-pb">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-bold text-slate-900">Add Worker</h3>
               <button type="button" onClick={() => setShowAdd(false)} className="text-slate-400 hover:text-slate-600"><X size={20} /></button>

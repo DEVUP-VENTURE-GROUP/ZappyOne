@@ -83,7 +83,7 @@ export default function BoostOfferCard({ orderId, baseTotal, sendTip, boostOptio
       <div
         className="rounded-2xl overflow-hidden"
         style={{
-          background: 'linear-gradient(160deg,#0f172a 0%,#1a1035 100%)',
+          background: 'linear-gradient(#0f172a, #0f172a)',
           boxShadow: appliedBoost > 0
             ? '0 8px 32px rgba(249,115,22,0.18)'
             : '0 4px 20px rgba(15,23,42,0.20)',
@@ -100,7 +100,7 @@ export default function BoostOfferCard({ orderId, baseTotal, sendTip, boostOptio
             animate={{ scaleX: 1 }}
             style={{
               transformOrigin: 'left',
-              background: 'linear-gradient(90deg,#f97316,#fb923c,#fbbf24)',
+              background: 'linear-gradient(#f97316, #f97316)',
             }}
           />
         )}
@@ -154,7 +154,7 @@ export default function BoostOfferCard({ orderId, baseTotal, sendTip, boostOptio
                   className="relative h-12 rounded-xl flex flex-col items-center justify-center gap-0.5 overflow-hidden"
                   style={{
                     background: isSelected
-                      ? 'linear-gradient(135deg,#c2410c,#f97316)'
+                      ? 'linear-gradient(#c2410c, #c2410c)'
                       : 'rgba(255,255,255,0.06)',
                     border: isSelected
                       ? 'none'
@@ -226,12 +226,12 @@ export default function BoostOfferCard({ orderId, baseTotal, sendTip, boostOptio
 
             {/* Sheet */}
             <motion.div
-              className="relative w-full sm:max-w-sm rounded-t-3xl sm:rounded-2xl overflow-hidden"
+              className="relative w-full sm:max-w-sm rounded-t-sheet sm:rounded-2xl overflow-hidden"
               initial={{ y: '100%', opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: '100%', opacity: 0 }}
               transition={{ type: 'spring', stiffness: 340, damping: 32 }}
-              style={{ background: 'linear-gradient(160deg,#0f172a 0%,#1a1035 100%)', border: '1px solid rgba(255,255,255,0.08)' }}
+              style={{ background: 'linear-gradient(#0f172a, #0f172a)', border: '1px solid rgba(255,255,255,0.08)' }}
             >
               {/* Drag handle (mobile) */}
               <div className="flex justify-center pt-3 pb-1 sm:hidden">
@@ -295,7 +295,7 @@ export default function BoostOfferCard({ orderId, baseTotal, sendTip, boostOptio
                   onClick={confirmBoost}
                   whileTap={{ scale: 0.96 }}
                   className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl font-black text-white text-[15px] mb-3"
-                  style={{ background: 'linear-gradient(135deg,#ea580c,#f97316)', boxShadow: '0 4px 20px rgba(249,115,22,0.40)' }}
+                  style={{ background: 'linear-gradient(#ea580c, #ea580c)', boxShadow: '0 4px 20px rgba(249,115,22,0.40)' }}
                 >
                   <Zap size={16} strokeWidth={2.5} />
                   Confirm +₹{pendingAmt} boost

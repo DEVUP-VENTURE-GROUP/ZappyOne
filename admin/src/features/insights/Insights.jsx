@@ -404,7 +404,7 @@ function ConversionFunnel() {
               </span>
             </div>
             <div className="h-7 rounded-lg bg-slate-100 overflow-hidden">
-              <div className="h-full rounded-lg flex items-center px-2" style={{ width: `${Math.max(s.pctOfTop, 4)}%`, background: 'linear-gradient(90deg,#6366f1,#8b5cf6)' }}>
+              <div className="h-full rounded-lg flex items-center px-2" style={{ width: `${Math.max(s.pctOfTop, 4)}%`, background: 'linear-gradient(#6366f1, #6366f1)' }}>
                 <span className="text-[10px] font-bold text-white">{s.pctOfTop}%</span>
               </div>
             </div>
@@ -604,7 +604,7 @@ export default function Intelligence() {
       {/* Title + dropdown */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg,#6366f1,#7c3aed)' }}>
+          <div className="w-10 h-10 rounded-2xl flex items-center justify-center" style={{ background: 'linear-gradient(#6366f1, #6366f1)' }}>
             <Activity size={20} className="text-white" />
           </div>
           <div>

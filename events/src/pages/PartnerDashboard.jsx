@@ -152,7 +152,7 @@ function MobileOverviewTab({ onNavigate }) {
 
       {/* OVERLAPPING PROFILE CARD */}
       <div className="px-5 -mt-[45px] relative z-20 mb-6">
-        <div className="bg-gradient-to-br from-[#7e22ce] via-[#a855f7] to-[#ec4899] rounded-[24px] p-5 shadow-[0_12px_30px_rgba(168,85,247,0.3)]">
+        <div className=" bg-[#7e22ce] rounded-card p-5 shadow-[0_12px_30px_rgba(168,85,247,0.3)]">
           <div className="flex justify-between items-start mb-6">
             <div className="flex-1 pr-4">
               <h2 className="text-[15px] font-bold text-white mb-1.5 leading-tight">Let's create something amazing today! 🎉</h2>
@@ -209,7 +209,7 @@ function MobileOverviewTab({ onNavigate }) {
 
       {/* STATS GRID */}
       <div className="px-5 grid grid-cols-2 gap-3 mb-8">
-        <div className="bg-white rounded-[20px] p-4 shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-slate-50 flex flex-col relative overflow-hidden">
+        <div className="bg-white rounded-card p-4 shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-slate-50 flex flex-col relative overflow-hidden">
           <div className="flex items-center gap-2 mb-2">
             <div className="w-7 h-7 rounded-full bg-violet-50 flex items-center justify-center text-violet-500">
               <PartyPopper size={14} />
@@ -226,7 +226,7 @@ function MobileOverviewTab({ onNavigate }) {
           </div>
         </div>
 
-        <div className="bg-white rounded-[20px] p-4 shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-slate-50 flex flex-col relative overflow-hidden">
+        <div className="bg-white rounded-card p-4 shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-slate-50 flex flex-col relative overflow-hidden">
           <div className="flex items-center gap-2 mb-2">
             <div className="w-7 h-7 rounded-full bg-blue-50 flex items-center justify-center text-blue-500">
               <CalendarCheck size={14} />
@@ -242,7 +242,7 @@ function MobileOverviewTab({ onNavigate }) {
           </div>
         </div>
 
-        <div className="bg-white rounded-[20px] p-4 shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-slate-50 flex flex-col relative overflow-hidden">
+        <div className="bg-white rounded-card p-4 shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-slate-50 flex flex-col relative overflow-hidden">
           <div className="flex items-center gap-2 mb-2">
             <div className="w-7 h-7 rounded-full bg-orange-50 flex items-center justify-center text-orange-500">
               <Clock size={14} />
@@ -258,7 +258,7 @@ function MobileOverviewTab({ onNavigate }) {
           </div>
         </div>
 
-        <div className="bg-white rounded-[20px] p-4 shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-slate-50 flex flex-col relative overflow-hidden">
+        <div className="bg-white rounded-card p-4 shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-slate-50 flex flex-col relative overflow-hidden">
           <div className="flex items-center gap-2 mb-2">
             <div className="w-7 h-7 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-500">
               <IndianRupee size={14} />
@@ -339,7 +339,7 @@ function MobileOverviewTab({ onNavigate }) {
 
       {/* PROMOTION BANNER */}
       <div className="px-5 mb-6">
-        <a href="/partner/advertise" className="block relative bg-gradient-to-r from-[#7462ff] to-[#984dff] rounded-[24px] p-5 overflow-hidden shadow-lg shadow-violet-200/50 hover:shadow-xl transition-shadow">
+        <a href="/partner/advertise" className="block relative bg-[#7462ff] rounded-card p-5 overflow-hidden shadow-lg shadow-violet-200/50 hover:shadow-xl transition-shadow">
           <div className="absolute top-0 right-0 bottom-0 w-32 flex items-center justify-end pr-2 opacity-90">
             <Megaphone size={80} className="text-white/20 rotate-[-15deg] translate-x-4" strokeWidth={1} />
           </div>
@@ -367,7 +367,7 @@ function OverviewTab({ onNavigate }) {
   return (
     <div className="space-y-6">
       {/* Hero Banner */}
-      <div className="relative rounded-[24px] overflow-hidden bg-gradient-to-r from-[#5940ff] via-[#7d50ff] to-[#a15bff] shadow-lg shadow-violet-500/20">
+      <div className="relative rounded-card overflow-hidden bg-[#5940ff] shadow-lg shadow-violet-500/20">
         <div className="absolute inset-y-0 right-0 w-1/3 opacity-80 mix-blend-overlay">
           <img src={decorPhoto} alt="Decor" className="w-full h-full object-cover object-left [mask-image:linear-gradient(to_right,transparent,black)]" onError={e => e.target.style.display = 'none'} />
         </div>
@@ -382,21 +382,21 @@ function OverviewTab({ onNavigate }) {
           </p>
 
           <div className="flex items-center gap-4 flex-wrap mb-6">
-            <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-[16px] px-4 py-2.5">
+            <div className="flex items-center gap-3 bg-white/10 border border-white/20 rounded-[16px] px-4 py-2.5">
               <Star size={18} className="text-yellow-400 fill-yellow-400" />
               <div>
                 <span className="block text-white text-[15px] font-bold leading-none">{partner?.rating?.toFixed(1) || '0.0'}</span>
                 <span className="block text-white/60 text-[11px] font-medium mt-0.5">Rating</span>
               </div>
             </div>
-            <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-[16px] px-4 py-2.5">
+            <div className="flex items-center gap-3 bg-white/10 border border-white/20 rounded-[16px] px-4 py-2.5">
               <CalendarCheck size={18} className="text-white/80" />
               <div>
                 <span className="block text-white text-[15px] font-bold leading-none">{partner?.completedEvents || 0}</span>
                 <span className="block text-white/60 text-[11px] font-medium mt-0.5">Total Events</span>
               </div>
             </div>
-            <div className={`flex items-center gap-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-[16px] px-4 py-2.5`}>
+            <div className={`flex items-center gap-3 bg-white/10 border border-white/20 rounded-[16px] px-4 py-2.5`}>
               {kycOk ? (
                 <ShieldCheck size={18} className="text-emerald-300" />
               ) : kycPending ? (
@@ -415,7 +415,7 @@ function OverviewTab({ onNavigate }) {
             </div>
           </div>
 
-          <button onClick={() => onNavigate('profile')} className="px-5 py-2.5 bg-white/10 hover:bg-white/20 border border-white/30 text-white rounded-[14px] text-[13px] font-bold backdrop-blur-md transition-colors flex items-center gap-2">
+          <button onClick={() => onNavigate('profile')} className="px-5 py-2.5 bg-white/10 hover:bg-white/20 border border-white/30 text-white rounded-[14px] text-[13px] font-bold transition-colors flex items-center gap-2">
             View Profile <ArrowRight size={14} />
           </button>
         </div>
@@ -423,7 +423,7 @@ function OverviewTab({ onNavigate }) {
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-4 gap-5">
-        <div className="bg-white rounded-[24px] p-6 shadow-sm border border-slate-100 flex flex-col relative overflow-hidden group hover:shadow-md transition-shadow">
+        <div className="bg-white rounded-card p-6 shadow-sm border border-slate-100 flex flex-col relative overflow-hidden group hover:shadow-md transition-shadow">
           <div className="flex items-start gap-4 mb-3">
             <div className="w-12 h-12 rounded-2xl bg-violet-50 flex items-center justify-center text-violet-600 group-hover:scale-110 transition-transform">
               <Palette size={20} strokeWidth={2} />
@@ -439,7 +439,7 @@ function OverviewTab({ onNavigate }) {
           </div>
         </div>
 
-        <div className="bg-white rounded-[24px] p-6 shadow-sm border border-slate-100 flex flex-col relative overflow-hidden group hover:shadow-md transition-shadow">
+        <div className="bg-white rounded-card p-6 shadow-sm border border-slate-100 flex flex-col relative overflow-hidden group hover:shadow-md transition-shadow">
           <div className="flex items-start gap-4 mb-3">
             <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 group-hover:scale-110 transition-transform">
               <CalendarCheck size={20} strokeWidth={2} />
@@ -455,7 +455,7 @@ function OverviewTab({ onNavigate }) {
           </div>
         </div>
 
-        <div className="bg-white rounded-[24px] p-6 shadow-sm border border-slate-100 flex flex-col relative overflow-hidden group hover:shadow-md transition-shadow">
+        <div className="bg-white rounded-card p-6 shadow-sm border border-slate-100 flex flex-col relative overflow-hidden group hover:shadow-md transition-shadow">
           <div className="flex items-start gap-4 mb-3">
             <div className="w-12 h-12 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-500 group-hover:scale-110 transition-transform">
               <Clock size={20} strokeWidth={2} />
@@ -471,7 +471,7 @@ function OverviewTab({ onNavigate }) {
           </div>
         </div>
 
-        <div className="bg-white rounded-[24px] p-6 shadow-sm border border-slate-100 flex flex-col relative overflow-hidden group hover:shadow-md transition-shadow">
+        <div className="bg-white rounded-card p-6 shadow-sm border border-slate-100 flex flex-col relative overflow-hidden group hover:shadow-md transition-shadow">
           <div className="flex items-start gap-4 mb-3">
             <div className="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform">
               <IndianRupee size={20} strokeWidth={2} />
@@ -493,7 +493,7 @@ function OverviewTab({ onNavigate }) {
 
         {/* Left Column */}
         <div className="col-span-7 space-y-6">
-          <div className="bg-white rounded-[24px] p-6 border border-slate-100 shadow-sm">
+          <div className="bg-white rounded-card p-6 border border-slate-100 shadow-sm">
             <div className="flex items-center gap-2 mb-6">
               <Zap size={18} className="text-violet-600" />
               <h3 className="text-[16px] font-extrabold text-slate-900">Quick Actions</h3>
@@ -550,7 +550,7 @@ function OverviewTab({ onNavigate }) {
             </div>
           </div>
 
-          <div className="bg-white rounded-[24px] border border-slate-100 shadow-sm p-6 relative overflow-hidden flex items-center justify-between">
+          <div className="bg-white rounded-card border border-slate-100 shadow-sm p-6 relative overflow-hidden flex items-center justify-between">
             <div className="absolute right-[-20px] top-1/2 -translate-y-1/2 opacity-20 pointer-events-none">
               <Megaphone size={120} className="text-violet-500 -rotate-12" strokeWidth={1} />
             </div>
@@ -566,7 +566,7 @@ function OverviewTab({ onNavigate }) {
 
         {/* Right Column */}
         <div className="col-span-5 flex flex-col">
-          <div className="bg-white rounded-[24px] border border-slate-100 shadow-sm p-6 flex-1 flex flex-col">
+          <div className="bg-white rounded-card border border-slate-100 shadow-sm p-6 flex-1 flex flex-col">
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center gap-2">
                 <Calendar size={18} className="text-violet-600" />
@@ -578,7 +578,7 @@ function OverviewTab({ onNavigate }) {
             </div>
 
             <div className="flex-1 flex flex-col items-center justify-center text-center pb-4">
-              <div className="w-40 h-32 bg-violet-50 rounded-[20px] flex items-center justify-center mb-6 relative">
+              <div className="w-40 h-32 bg-violet-50 rounded-card flex items-center justify-center mb-6 relative">
                 <Calendar size={48} className="text-violet-300 absolute -translate-x-2 -translate-y-2 -rotate-12" strokeWidth={1.5} />
                 <Calendar size={56} className="text-violet-500 relative z-10" strokeWidth={1.5} />
               </div>
@@ -615,7 +615,7 @@ function ThemesTab() {
       <div className="flex items-center justify-between">
         <p className="text-xs text-slate-500 font-medium">{themes.length} theme{themes.length !== 1 ? 's' : ''}</p>
         <motion.button whileTap={{ scale: 0.95 }} onClick={() => { setEditTheme(null); setShowUpload(true); }}
-          className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-xl text-xs font-bold shadow-sm shadow-violet-200">
+          className="flex items-center gap-1.5 px-4 py-2 bg-violet-600 text-white rounded-xl text-xs font-bold shadow-sm shadow-violet-200">
           <Plus size={13} />Add Theme
         </motion.button>
       </div>
@@ -759,11 +759,11 @@ function ThemeUploadModal({ theme, onClose, onSuccess }) {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center"
+      className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center"
       onClick={e => e.target === e.currentTarget && onClose()}>
       <motion.div initial={{ y: 80 }} animate={{ y: 0 }} exit={{ y: 80 }} transition={{ type: 'spring', damping: 25 }}
-        className="bg-white w-full sm:max-w-lg rounded-t-3xl sm:rounded-3xl max-h-[92vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white/95 backdrop-blur-sm border-b border-slate-100 px-5 py-4 flex items-center justify-between z-10">
+        className="bg-white w-full sm:max-w-lg rounded-t-sheet sm:rounded-card max-h-[92vh] overflow-y-auto">
+        <div className="sticky top-0 bg-white border-b border-slate-100 px-5 py-4 flex items-center justify-between z-10">
           <div>
             <h3 className="font-black text-slate-900">{isEdit ? 'Edit Theme' : 'Upload New Theme'}</h3>
             <p className="text-xs text-slate-400 mt-0.5">Admin reviews within 24 hours</p>
@@ -847,7 +847,7 @@ function ThemeUploadModal({ theme, onClose, onSuccess }) {
           </div>
 
           <motion.button whileTap={{ scale: 0.97 }} onClick={handleSave} disabled={saving || uploading}
-            className="w-full py-4 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg shadow-violet-200">
+            className="w-full py-4 bg-violet-600 text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg shadow-violet-200">
             {saving ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
             {saving ? 'Saving…' : isEdit ? 'Update & Resubmit' : 'Submit for Review'}
           </motion.button>
@@ -972,11 +972,11 @@ function DateActionSheet({ day, isBlocked, booking, onBlock, onUnblock, onClose 
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end justify-center"
+      className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center"
       onClick={e => e.target === e.currentTarget && onClose()}>
       <motion.div initial={{ y: 80 }} animate={{ y: 0 }} exit={{ y: 80 }}
         transition={{ type: 'spring', damping: 26, stiffness: 300 }}
-        className="bg-white w-full max-w-sm rounded-t-3xl px-5 pt-5 pb-8 space-y-3">
+        className="bg-white w-full max-w-sm rounded-t-sheet px-5 pt-5 pb-8 space-y-3">
 
         {/* Handle */}
         <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-4" />
@@ -1013,7 +1013,7 @@ function DateActionSheet({ day, isBlocked, booking, onBlock, onUnblock, onClose 
           {!booking && !isBlocked && (
             <motion.button whileTap={{ scale: 0.97 }} disabled={loading}
               onClick={() => act(onBlock)}
-              className="w-full py-3.5 bg-gradient-to-r from-red-500 to-rose-500 text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-2 shadow-sm disabled:opacity-50">
+              className="w-full py-3.5 bg-red-500 text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-2 shadow-sm disabled:opacity-50">
               {loading ? <Loader2 size={15} className="animate-spin" /> : '🔒'}
               Block this date
             </motion.button>
@@ -1021,7 +1021,7 @@ function DateActionSheet({ day, isBlocked, booking, onBlock, onUnblock, onClose 
           {!booking && isBlocked && (
             <motion.button whileTap={{ scale: 0.97 }} disabled={loading}
               onClick={() => act(onUnblock)}
-              className="w-full py-3.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-2 shadow-sm disabled:opacity-50">
+              className="w-full py-3.5 bg-emerald-500 text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-2 shadow-sm disabled:opacity-50">
               {loading ? <Loader2 size={15} className="animate-spin" /> : '🔓'}
               Unblock this date
             </motion.button>
@@ -1187,7 +1187,7 @@ function EarningsTab() {
   return (
     <div className="space-y-4">
       {/* Hero earnings */}
-      <div className="rounded-3xl p-6 text-white" style={{ background: 'linear-gradient(135deg, #059669 0%, #10b981 60%, #34d399 100%)' }}>
+      <div className="rounded-card p-6 text-white" style={{ background: 'linear-gradient(#059669, #059669)' }}>
         <p className="text-white/70 text-xs font-medium uppercase tracking-wide">Total Net Earnings</p>
         <p className="text-4xl font-black mt-1">₹{Math.round(net / 100).toLocaleString('en-IN')}</p>
         <p className="text-white/60 text-xs mt-2">From {d.totalJobs || 0} completed events</p>
@@ -1228,7 +1228,7 @@ function EarningsTab() {
                   </div>
                   <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
                     <motion.div initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 0.6 }}
-                      className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500 rounded-full" />
+                      className="h-full bg-violet-500 rounded-full" />
                   </div>
                 </div>
               );
@@ -1271,7 +1271,7 @@ function KycDocThumb({ idx, token }) {
   return (
     <>
       {lightbox && url && (
-        <div className="fixed inset-0 z-[200] bg-black/90 backdrop-blur flex items-center justify-center"
+        <div className="fixed inset-0 z-[200] bg-black/90 flex items-center justify-center"
           onClick={() => setLightbox(false)}>
           <img src={url} alt={`Doc ${idx + 1}`} className="max-h-[90vh] max-w-[90vw] rounded-2xl" />
           <button className="absolute top-5 right-5 w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-white">
@@ -1537,7 +1537,7 @@ function KycSection({ partner, token, onRefresh }) {
           <motion.button whileTap={{ scale: 0.97 }}
             onClick={submitKyc}
             disabled={saving || !mandatoryDone || (!hasPending && kycStatus !== 'rejected')}
-            className="w-full py-4 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2 disabled:opacity-40 shadow-md shadow-violet-200">
+            className="w-full py-4 bg-violet-600 text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2 disabled:opacity-40 shadow-md shadow-violet-200">
             {saving ? <Loader2 size={16} className="animate-spin" /> : <ShieldCheck size={16} />}
             {saving ? 'Submitting…' : mandatoryDone ? 'Submit for KYC Review' : `Upload ${totalMandatory - doneMandatory} more required doc${totalMandatory - doneMandatory !== 1 ? 's' : ''}`}
           </motion.button>
@@ -1722,12 +1722,12 @@ function ProfileTab() {
   return (
     <form onSubmit={handleSave} className="space-y-6 pb-6">
       {/* Vibrant Hero Profile Card */}
-      <div className="relative rounded-[36px] overflow-hidden bg-gradient-to-br from-[#6b21a8] via-[#a21caf] to-[#ec4899] p-7 sm:p-10 shadow-2xl shadow-fuchsia-500/20 border border-white/15">
+      <div className="relative rounded-card overflow-hidden bg-[#6b21a8] p-7 sm:p-10 shadow-2xl shadow-fuchsia-500/20 border border-white/15">
         <ConfettiStageBackground />
 
         <div className="relative z-10 flex flex-col items-center text-center mt-2">
           <label className="relative cursor-pointer group mb-4 inline-block">
-            <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-full overflow-hidden bg-gradient-to-tr from-violet-500 to-fuchsia-500 border-[4px] sm:border-[5px] border-white flex items-center justify-center shadow-2xl transition-transform duration-300 group-hover:scale-105">
+            <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-full overflow-hidden from-violet-500 border-[4px] sm:border-[5px] border-white flex items-center justify-center shadow-2xl transition-transform duration-300 group-hover:scale-105">
               {partner.profilePhotoKey ? (
                 <img src={partner.profilePhotoKey} alt="" className="w-full h-full object-cover rounded-full"
                   onError={e => e.target.style.display = 'none'} />
@@ -1744,13 +1744,13 @@ function ProfileTab() {
           <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight drop-shadow-md mt-2">{partner.businessName}</h2>
 
           <div className="mt-3">
-            <div className="inline-flex items-center gap-2.5 px-6 py-2.5 rounded-full bg-white/15 hover:bg-white/20 border border-white/25 backdrop-blur-md text-white font-extrabold text-sm sm:text-[15px] shadow-sm transition-all">
+            <div className="inline-flex items-center gap-2.5 px-6 py-2.5 rounded-full bg-white/15 hover:bg-white/20 border border-white/25 text-white font-extrabold text-sm sm:text-[15px] shadow-sm transition-all">
               <Phone size={15} className="text-white/90 shrink-0" />
               <span>{partner.phone || partner.email || 'No contact'}</span>
             </div>
           </div>
 
-          <div className="mt-6 mb-1 inline-flex items-center gap-8 sm:gap-14 px-8 sm:px-11 py-4 sm:py-5 rounded-full bg-[#2e1065]/60 backdrop-blur-xl border border-white/15 shadow-2xl">
+          <div className="mt-6 mb-1 inline-flex items-center gap-8 sm:gap-14 px-8 sm:px-11 py-4 sm:py-5 rounded-full bg-[#2e1065]/60 border border-white/15 shadow-2xl">
             <div className="flex items-center gap-3">
               <Star className="w-7 h-7 text-yellow-400 fill-yellow-400 shrink-0 drop-shadow-sm" />
               <div className="text-left">
@@ -1771,7 +1771,7 @@ function ProfileTab() {
       </div>
 
       {/* Business Details Card */}
-      <div className="bg-white rounded-[36px] p-6 sm:p-9 shadow-xl shadow-slate-200/50 border border-slate-100/80 space-y-7">
+      <div className="bg-white rounded-card p-6 sm:p-9 shadow-xl shadow-slate-200/50 border border-slate-100/80 space-y-7">
         <div className="flex items-center gap-3.5">
           <div className="w-12 h-12 rounded-[18px] bg-[#f3e8ff] flex items-center justify-center shadow-inner">
             <FileText size={24} className="text-[#9333ea]" />
@@ -1786,7 +1786,7 @@ function ProfileTab() {
           <span className="text-[11px] font-extrabold text-slate-500 tracking-widest uppercase block mb-3 pl-1">
             ABOUT YOUR BUSINESS
           </span>
-          <div className="relative rounded-[28px] border border-violet-200/80 bg-gradient-to-br from-violet-50/70 via-purple-50/40 to-pink-50/50 p-6 sm:p-8 overflow-hidden transition-all group focus-within:border-violet-400 focus-within:ring-4 focus-within:ring-violet-500/15 shadow-sm min-h-[180px] flex flex-col justify-between">
+          <div className="relative rounded-card border border-violet-200/80 bg-gradient-to-br from-violet-50/70 via-purple-50/40 to-pink-50/50 p-6 sm:p-8 overflow-hidden transition-all group focus-within:border-violet-400 focus-within:ring-4 focus-within:ring-violet-500/15 shadow-sm min-h-[180px] flex flex-col justify-between">
             <div className="text-4xl sm:text-5xl font-serif font-black text-[#9333ea]/70 leading-none mb-3 select-none">
               “
             </div>
@@ -1819,7 +1819,7 @@ function ProfileTab() {
                 value={values[k] || ''}
                 onChange={e => setForm(p => ({ ...(p || values), [k]: e.target.value }))}
                 placeholder={placeholder}
-                className="w-full bg-slate-50/80 hover:bg-slate-50 border border-slate-200/80 rounded-[22px] px-5 py-4 text-[15px] font-extrabold text-slate-800 focus:bg-white focus:border-violet-400 focus:ring-4 focus:ring-violet-500/10 outline-none transition-all placeholder:text-slate-400 shadow-sm"
+                className="w-full bg-slate-50/80 hover:bg-slate-50 border border-slate-200/80 rounded-card px-5 py-4 text-[15px] font-extrabold text-slate-800 focus:bg-white focus:border-violet-400 focus:ring-4 focus:ring-violet-500/10 outline-none transition-all placeholder:text-slate-400 shadow-sm"
               />
             </div>
           ))}
@@ -1829,7 +1829,7 @@ function ProfileTab() {
           {form && (
             <motion.div initial={{ opacity: 0, height: 0, marginTop: 0 }} animate={{ opacity: 1, height: 'auto', marginTop: 24 }} exit={{ opacity: 0, height: 0, marginTop: 0 }} className="pt-2">
               <motion.button type="submit" whileTap={{ scale: 0.98 }} disabled={saving}
-                className="w-full py-4 bg-gradient-to-r from-[#7e22ce] via-[#c026d3] to-[#ec4899] text-white rounded-[24px] font-black text-[16px] flex items-center justify-center gap-2.5 shadow-[0_10px_25px_rgba(168,85,247,0.35)] hover:shadow-[0_10px_35px_rgba(168,85,247,0.5)] transition-all disabled:opacity-50 disabled:grayscale-[30%]">
+                className="w-full py-4 bg-[#7e22ce] text-white rounded-card font-black text-[16px] flex items-center justify-center gap-2.5 shadow-[0_10px_25px_rgba(168,85,247,0.35)] hover:shadow-[0_10px_35px_rgba(168,85,247,0.5)] transition-all disabled:opacity-50 disabled:grayscale-[30%]">
                 {saving ? <Loader2 size={20} className="animate-spin" /> : <CheckCircle size={20} />}
                 {saving ? 'Saving Profile…' : 'Save Changes'}
               </motion.button>
@@ -1890,7 +1890,7 @@ function NotificationPanel({ onClose }) {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex justify-end"
+      className="fixed inset-0 z-50 bg-black/40 flex justify-end"
       onClick={e => e.target === e.currentTarget && onClose()}>
       <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
         transition={{ type: 'spring', damping: 28, stiffness: 300 }}

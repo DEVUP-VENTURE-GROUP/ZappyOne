@@ -31,7 +31,7 @@ export default function SmartMatchSheet({ worker, onDismiss }) {
 
       {/* sheet */}
       <motion.div
-        className="relative w-full max-w-lg bg-white rounded-t-3xl overflow-hidden shadow-2xl"
+        className="relative w-full max-w-lg bg-white rounded-t-sheet overflow-hidden shadow-2xl"
         initial={{ y: '100%' }}
         animate={{ y: 0 }}
         exit={{ y: '100%' }}

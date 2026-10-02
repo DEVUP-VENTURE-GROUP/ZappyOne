@@ -53,7 +53,7 @@ export default function EventBookingListPage() {
             <p className="font-semibold text-slate-600">No event bookings yet</p>
             <p className="text-sm text-slate-400 mt-1">Browse beautiful themes and book your first event</p>
             <button onClick={() => navigate('/events')}
-              className="mt-4 px-5 py-2.5 bg-gradient-to-r from-zappy-600 to-purple-600 text-white rounded-xl text-sm font-semibold">
+              className="mt-4 px-5 py-2.5 bg-zappy-600 text-white rounded-xl text-sm font-semibold">
               Explore Events
             </button>
           </div>
@@ -67,7 +67,7 @@ export default function EventBookingListPage() {
                 {b.themeId?.coverImage ? (
                   <img src={b.themeId.coverImage} alt="" className="w-16 h-16 rounded-xl object-cover shrink-0" />
                 ) : (
-                  <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-violet-100 to-fuchsia-100 flex items-center justify-center shrink-0">
+                  <div className="w-16 h-16 rounded-xl bg-violet-100 flex items-center justify-center shrink-0">
                     <span className="text-2xl">🎉</span>
                   </div>
                 )}

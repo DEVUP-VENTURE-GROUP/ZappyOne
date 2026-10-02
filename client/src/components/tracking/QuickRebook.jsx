@@ -16,7 +16,7 @@ export default function QuickRebook({ service, workerName, workerRating, lastTot
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0   }}
       transition={{ delay: 0.4, type: 'spring', stiffness: 300, damping: 28 }}
-      className="card bg-gradient-to-br from-slate-900 to-slate-800 overflow-hidden"
+      className="card bg-slate-900 overflow-hidden"
     >
       {/* subtle glow */}
       <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl pointer-events-none" />

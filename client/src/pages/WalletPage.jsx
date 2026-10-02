@@ -101,52 +101,30 @@ export default function WalletPage() {
             </div>
           )}
 
-          {/* Dark Premium Wallet Header */}
-          <header className="relative pt-6 pb-28 overflow-hidden rounded-b-[2.5rem] shadow-sm z-10" style={{ background: 'linear-gradient(135deg, #020617 0%, #0f172a 50%, #1e1b4b 100%)' }}>
-            <motion.div className="absolute top-0 right-0 w-64 h-64 bg-zappy-500/20 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/3" animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.8, 0.5] }} transition={{ duration: 4, repeat: Infinity }} />
-            <motion.div className="absolute bottom-0 left-0 w-48 h-48 bg-emerald-500/20 rounded-full blur-[60px] translate-y-1/3 -translate-x-1/4" animate={{ scale: [1, 1.3, 1], opacity: [0.3, 0.6, 0.3] }} transition={{ duration: 5, repeat: Infinity, delay: 1 }} />
-            
-            <div className="relative z-10 px-5">
-              <div className="flex items-center justify-between mb-8">
-                <motion.button onClick={() => nav(-1)} whileTap={{ scale: 0.9 }} className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md border border-white/10 flex items-center justify-center text-white shadow-sm">
-                  <ArrowLeft size={20} strokeWidth={2.5} />
-                </motion.button>
-                <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10 shadow-sm">
-                  <Wallet size={14} className="text-emerald-400" />
-                  <span className="text-white font-black text-[11px] uppercase tracking-widest">{tr('wallet.digitalWallet', 'Digital Wallet')}</span>
-                </div>
-                <div className="w-10 h-10" />
-              </div>
-
-              <div className="text-center mt-2 relative">
-                {/* Metallic Wallet Card */}
-                <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="absolute inset-x-0 -bottom-32 h-64 bg-gradient-to-br from-slate-800 to-slate-900 rounded-[2rem] border border-slate-700/50 shadow-2xl overflow-hidden opacity-50 blur-sm transform scale-95" />
-                
-                <p className="text-slate-400 text-[11px] font-black uppercase tracking-widest mb-2 relative z-10">{tr('wallet.availableBalance', 'Available Balance')}</p>
-                <h2 className="text-white font-black text-6xl tracking-tighter drop-shadow-lg flex items-center justify-center gap-1.5 relative z-10">
-                  <span className="text-4xl text-emerald-400 opacity-80 font-normal">₹</span>
-                  {balance.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
-                </h2>
-                
-                {isFrozen ? (
-                  <div className="mt-4 inline-flex items-center gap-1.5 bg-rose-500/20 text-rose-300 px-4 py-2 rounded-full border border-rose-500/30 text-[11px] font-black uppercase tracking-widest backdrop-blur-sm relative z-10">
-                    <AlertCircle size={14} strokeWidth={2.5} /> {tr('wallet.frozen', 'Wallet Frozen')}
-                  </div>
-                ) : (
-                  <div className="mt-6 flex justify-center gap-3 relative z-10">
-                    <button onClick={() => setShowAddMoney(!showAddMoney)} className="bg-white text-slate-900 px-6 py-3 rounded-full font-black text-[13px] flex items-center gap-2 shadow-lg shadow-white/10 hover:scale-105 transition-transform active:scale-95">
-                      <Plus size={16} strokeWidth={3} /> {tr('wallet.addMoney', 'Add Money')}
-                    </button>
-                    <button onClick={() => nav('/worker/withdraw')} className="bg-slate-800/80 text-white border border-slate-700 px-6 py-3 rounded-full font-black text-[13px] flex items-center gap-2 shadow-lg hover:bg-slate-700 transition-colors active:scale-95">
-                      <ArrowUpFromLine size={14} strokeWidth={2.5} /> {tr('wallet.withdraw', 'Withdraw')}
-                    </button>
-                  </div>
-                )}
-              </div>
+          {/* Balance first, then the one thing you do here: add money. */}
+          <header className="page-header">
+            <div className="page-header-inner">
+              <button onClick={() => nav(-1)} className="back-btn" aria-label="Back"><ArrowLeft size={18} /></button>
+              <h1 className="h-card">{tr('wallet.title', 'Wallet')}</h1>
             </div>
           </header>
+          <div className="px-4 pt-4">
+            <section className="card">
+              <p className="t-label">{tr('wallet.availableBalance', 'Available balance')}</p>
+              <p className="mt-1 text-[30px] font-bold leading-tight tracking-[-0.02em] text-ink-900 tabular-nums">
+                ₹{balance.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
+              </p>
+              {isFrozen ? (
+                <p className="chip mt-3 bg-red-50 text-red-700"><AlertCircle size={13} /> {tr('wallet.frozen', 'Wallet frozen. Contact support.')}</p>
+              ) : (
+                <button onClick={() => setShowAddMoney(!showAddMoney)} className="btn-primary mt-4 w-full sm:w-auto">
+                  <Plus size={16} /> {tr('wallet.addMoney', 'Add money')}
+                </button>
+              )}
+            </section>
+          </div>
 
-          <div className="relative z-20 px-4 -mt-12 space-y-5 pb-36">
+          <div className="relative px-4 pt-4 space-y-5 pb-36">
             
             <AnimatePresence>
               {showAddMoney && !isFrozen && (
@@ -179,31 +157,15 @@ export default function WalletPage() {
               )}
             </AnimatePresence>
 
-            {/* Rewards Banner */}
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-              onClick={() => nav('/referral')}
-              className="relative bg-gradient-to-br from-zappy-900 to-slate-900 rounded-[1.5rem] p-5 overflow-hidden cursor-pointer shadow-[0_8px_30px_rgba(49,46,129,0.3)] group border border-zappy-500/20">
-              
-              {/* Animated Background */}
-              <div className="absolute inset-0 opacity-20 group-hover:opacity-30 transition-opacity">
-                <div className="absolute -right-10 -top-10 w-40 h-40 bg-fuchsia-500 rounded-full blur-[40px]" />
-                <div className="absolute -left-10 -bottom-10 w-40 h-40 bg-blue-500 rounded-full blur-[40px]" />
-              </div>
-
-              <div className="relative z-10 flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center shrink-0 border border-white/10 shadow-inner backdrop-blur-md">
-                  <Gift size={24} className="text-fuchsia-400" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[10px] font-black text-fuchsia-400 uppercase tracking-widest mb-0.5">{tr('wallet.referEarn', 'Refer & Earn')}</p>
-                  <p className="text-[15px] font-black text-white leading-tight">{tr('wallet.perFriend', 'Get ₹100 per friend')}</p>
-                  <p className="text-[11px] font-medium text-slate-300 mt-1">{tr('wallet.cashbackLine', 'Plus 5% cashback on your bookings')}</p>
-                </div>
-                <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center shrink-0 group-hover:bg-white/20 transition-colors">
-                  <ChevronRight size={16} className="text-white" />
-                </div>
-              </div>
-            </motion.div>
+            {/* Referral: the real reward (server REFERRER_REWARD_PAISE), stated plainly. */}
+            <button type="button" onClick={() => nav('/referral')} className="card flex w-full items-center gap-3 text-left">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-btn bg-sunken text-ink-700"><Gift size={20} /></span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-[15px] font-semibold text-ink-900">{tr('wallet.referTitle', 'Refer a friend, get ₹100')}</span>
+                <span className="block text-[13px] text-ink-500">{tr('wallet.referLine', 'Paid to your wallet when they complete their first booking.')}</span>
+              </span>
+              <ChevronRight size={18} className="shrink-0 text-ink-400" />
+            </button>
 
             {/* Transactions */}
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-white rounded-[1.5rem] border border-slate-100 shadow-[0_8px_30px_rgba(0,0,0,0.04)] overflow-hidden">
@@ -256,7 +218,7 @@ export default function WalletPage() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-0.5">
                             <p className="text-[14px] font-black text-slate-800 truncate leading-tight">{label}</p>
-                            {isReward && <span className="text-[9px] font-black bg-gradient-to-r from-fuchsia-500 to-rose-500 text-white px-2 py-0.5 rounded shadow-sm uppercase tracking-widest shrink-0">{tr('wallet.reward', 'Reward')}</span>}
+                            {isReward && <span className="text-[9px] font-black bg-fuchsia-500 text-white px-2 py-0.5 rounded shadow-sm uppercase tracking-widest shrink-0">{tr('wallet.reward', 'Reward')}</span>}
                           </div>
                           <p className="text-[11px] font-bold text-slate-400">
                             {new Date(t.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}

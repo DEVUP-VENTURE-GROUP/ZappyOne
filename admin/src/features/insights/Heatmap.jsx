@@ -50,7 +50,7 @@ function MapView({ cells, workerLocations, noServicePoints, view, isLoading }) {
   return (
     <div className="relative rounded-xl overflow-hidden border border-slate-200 shadow-sm" style={{ height: 500 }}>
       <div ref={containerRef} className="w-full h-full" />
-      {isLoading && <div className="absolute inset-0 bg-slate-900/50 flex items-center justify-center backdrop-blur-sm"><div className="bg-slate-900/80 text-white text-sm font-semibold px-4 py-2 rounded-lg animate-pulse">Updating map…</div></div>}
+      {isLoading && <div className="absolute inset-0 bg-slate-900/50 flex items-center justify-center"><div className="bg-slate-900/80 text-white text-sm font-semibold px-4 py-2 rounded-lg animate-pulse">Updating map…</div></div>}
       {!MAPBOX_TOKEN && <div className="absolute inset-0 bg-slate-900 flex items-center justify-center"><p className="text-slate-400 text-sm">Add VITE_MAPBOX_TOKEN to .env.local</p></div>}
     </div>
   );
@@ -143,7 +143,7 @@ export default function Heatmap() {
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">{view === 'cancel' ? 'Cancel rate' : view === 'revenue' ? 'Revenue' : 'Order volume'}:</span>
           <div className="flex items-center gap-1.5">
             <span className="text-[10px] text-slate-400">Low</span>
-            <div className="w-24 h-2.5 rounded-full" style={{ background: view === 'cancel' ? 'linear-gradient(to right,#dcfce7,#fef9c3,#fca5a5,#dc2626)' : view === 'revenue' ? 'linear-gradient(to right,#dbeafe,#93c5fd,#3b82f6,#1e3a8a)' : 'linear-gradient(to right,#fde68a,#f97316,#c2410c,#7c2d12)' }} />
+            <div className="w-24 h-2.5 rounded-full" style={{ background: view === 'cancel' ? 'linear-gradient(#dcfce7, #dcfce7)' : view === 'revenue' ? 'linear-gradient(#dbeafe, #dbeafe)' : 'linear-gradient(#fde68a, #fde68a)' }} />
             <span className="text-[10px] text-slate-400">High</span>
           </div>
         </div>

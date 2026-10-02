@@ -39,7 +39,7 @@ function OtpInput({ value, onChange, onKeyDown, inputRef, filled }) {
       onKeyDown={onKeyDown}
       animate={filled ? { scale: [1, 1.1, 1], borderColor: '#3B82F6' } : { borderColor: '#e2e8f0' }}
       transition={{ duration: 0.18 }}
-      className="w-12 h-14 text-center text-xl font-black rounded-2xl border-2 outline-none bg-white/80 backdrop-blur-sm text-slate-900 transition-all"
+      className="w-12 h-14 text-center text-xl font-black rounded-2xl border-2 outline-none bg-white text-slate-900 transition-all"
       style={{ borderColor: filled ? '#3B82F6' : '#e2e8f0', boxShadow: filled ? '0 0 0 4px rgba(59,130,246,0.12)' : 'none' }}
     />
   );
@@ -266,7 +266,7 @@ export default function LoginPage() {
                     <div className="w-28 h-6 bg-[#0f172a] rounded-b-3xl"></div>
                   </div>
                   {/* Screen Content */}
-                  <div className="flex-1 bg-slate-50 flex flex-col relative z-10 w-full h-full overflow-hidden rounded-[38px]">
+                  <div className="flex-1 bg-slate-50 flex flex-col relative z-10 w-full h-full overflow-hidden rounded-card">
                     {/* Status bar */}
                     <div className="h-12 bg-[#031542] w-full flex justify-between items-end px-6 pb-2 text-[11px] text-white font-medium">
                       <span>9:31</span>
@@ -351,7 +351,7 @@ export default function LoginPage() {
           </div>
 
           {/* Form Card */}
-          <div className="w-full max-w-[440px] bg-white lg:bg-transparent lg:shadow-none rounded-3xl shadow-[0_8px_30px_rgba(0,0,0,0.04)] lg:border-none border border-slate-100 p-8 sm:p-10 relative z-10 flex flex-col">
+          <div className="w-full max-w-[440px] bg-white lg:bg-transparent lg:shadow-none rounded-card shadow-[0_8px_30px_rgba(0,0,0,0.04)] lg:border-none border border-slate-100 p-8 sm:p-10 relative z-10 flex flex-col">
 
             <div className="flex flex-col items-center mb-8">
               {/* Logo inside card (Mobile) */}

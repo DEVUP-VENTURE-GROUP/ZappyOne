@@ -80,7 +80,7 @@ export default function HelpingTaskDetailPage() {
   const extras = (
     <>
       {pending.map((a) => (
-        <div key={a._id} className="space-y-3 rounded-[24px] border-2 border-amber-300 bg-amber-50 p-4">
+        <div key={a._id} className="space-y-3 rounded-card border-2 border-amber-300 bg-amber-50 p-4">
           <p className="flex items-start gap-2 text-sm font-bold text-amber-900"><AlertTriangle size={16} className="mt-0.5 shrink-0 text-amber-600" /> {a.reason || 'Your helper needs a decision'}</p>
           <div className="flex items-center justify-between rounded-xl bg-white p-3 text-sm">
             <span className="text-slate-500">Was</span><span className="font-bold">{formatPaise(a.previousAmountPaise)}</span>

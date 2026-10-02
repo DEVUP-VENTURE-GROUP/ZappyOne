@@ -18,7 +18,7 @@ export default function Avatar({ name, size = 44, radius = 14 }) {
         className="w-full h-full flex items-center justify-center text-white font-black"
         style={{
           borderRadius: radius,
-          background: 'linear-gradient(135deg,#F59E0B,#EA580C)',
+          background: 'linear-gradient(#F59E0B, #F59E0B)',
           fontSize: size * 0.38,
           boxShadow: '0 4px 10px -3px rgba(15,23,42,.3)',
         }}

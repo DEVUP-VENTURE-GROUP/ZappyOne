@@ -47,12 +47,12 @@ function NewAppealSheet({ onClose }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-center sm:items-center sm:p-4 bg-black/60 backdrop-blur-md transition-opacity">
+    <div className="fixed inset-0 z-50 flex justify-center sm:items-center sm:p-4 bg-black/60 transition-opacity">
       <motion.div initial={{ opacity: 0, y: '100%' }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: '100%' }} transition={{ type: "spring", damping: 25, stiffness: 300 }}
         className="bg-white rounded-t-[2rem] sm:rounded-[2rem] w-full max-w-lg max-h-[95vh] flex flex-col overflow-hidden shadow-2xl absolute bottom-0 sm:relative" 
         onClick={e => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between p-4 px-6 border-b border-slate-100 bg-white/80 backdrop-blur-xl z-10 sticky top-0">
+        <div className="flex items-center justify-between p-4 px-6 border-b border-slate-100 bg-white z-10 sticky top-0">
           <h2 className="font-black text-slate-800 text-[16px] tracking-wide">File an Appeal</h2>
           <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors shrink-0"><X size={16} strokeWidth={2.5} /></button>
         </div>
@@ -144,13 +144,13 @@ export default function WorkerAppealsPage() {
       <div className="w-full max-w-lg lg:max-w-2xl bg-slate-50 min-h-screen relative shadow-[0_0_40px_rgba(0,0,0,0.05)] lg:shadow-[0_0_60px_rgba(0,0,0,0.08)] md:border-x border-slate-200/60 pb-8">
         
         {/* Cinematic Header */}
-        <header className="relative pt-6 pb-28 overflow-hidden rounded-b-[2.5rem] shadow-sm z-10" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #1e3a5f 100%)' }}>
+        <header className="relative pt-6 pb-28 overflow-hidden rounded-b-[2.5rem] shadow-sm z-10" style={{ background: 'linear-gradient(#0f172a, #0f172a)' }}>
           <motion.div className="absolute top-0 left-0 w-64 h-64 bg-blue-500/20 rounded-full blur-3xl -translate-y-1/2 -translate-x-1/3" animate={{ scale: [1, 1.2, 1], opacity: [0.4, 0.7, 0.4] }} transition={{ duration: 5, repeat: Infinity }} />
           <motion.div className="absolute bottom-0 right-0 w-48 h-48 bg-zappy-500/20 rounded-full blur-3xl translate-y-1/3 translate-x-1/4" animate={{ scale: [1, 1.3, 1], opacity: [0.3, 0.6, 0.3] }} transition={{ duration: 6, repeat: Infinity, delay: 1 }} />
           
           <div className="relative z-10 px-5">
             <div className="flex items-center justify-between mb-8">
-              <motion.button onClick={() => nav(-1)} whileTap={{ scale: 0.9 }} className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md border border-white/10 flex items-center justify-center text-white shadow-sm">
+              <motion.button onClick={() => nav(-1)} whileTap={{ scale: 0.9 }} className="w-10 h-10 rounded-full bg-white/10 border border-white/10 flex items-center justify-center text-white shadow-sm">
                 <ArrowLeft size={20} strokeWidth={2.5} />
               </motion.button>
               <h1 className="text-white font-black tracking-wide text-lg">Appeals Center</h1>
@@ -160,7 +160,7 @@ export default function WorkerAppealsPage() {
             </div>
 
             <div className="text-center">
-              <div className="w-16 h-16 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center mx-auto mb-3 border border-white/20 shadow-inner">
+              <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-3 border border-white/20 shadow-inner">
                 <Scale size={32} className="text-blue-300 fill-blue-400/20" strokeWidth={1.5} />
               </div>
               <p className="text-white font-bold text-lg tracking-tight mb-1">Fair & Transparent</p>

@@ -323,7 +323,7 @@ export default function WorkerLoginPage({ allowSignup = true, portalLabel = 'Wor
         jsonLd={LOGIN_SCHEMA}
       />
 
-      <div className="h-[100dvh] w-full overflow-hidden bg-gradient-to-b from-[#EAF1FF] via-[#EEF3FF] to-[#F4F7FF] flex flex-col lg:h-auto lg:min-h-[100dvh] lg:overflow-visible lg:flex-row">
+      <div className="h-[100dvh] w-full overflow-hidden bg-[#EAF1FF] flex flex-col lg:h-auto lg:min-h-[100dvh] lg:overflow-visible lg:flex-row">
 
         {/* HERO (mobile: top · desktop: left) */}
         <section className="relative flex-1 min-h-0 lg:flex-none lg:w-[54%] lg:min-h-[100dvh] flex flex-col justify-between lg:justify-center px-6 pt-7 pb-0 lg:px-16 lg:py-14 overflow-hidden">
@@ -366,7 +366,7 @@ export default function WorkerLoginPage({ allowSignup = true, portalLabel = 'Wor
 
         {/* LOGIN CARD (mobile: bottom · desktop: right) */}
         <section className="relative z-20 shrink-0 lg:flex-1 lg:w-[46%] flex items-stretch lg:items-center justify-center lg:px-10">
-          <div className="w-full lg:max-w-md bg-white rounded-t-[34px] lg:rounded-[28px] shadow-[0_-10px_44px_rgba(15,23,42,0.10)] lg:shadow-[0_24px_70px_-24px_rgba(30,64,175,0.30)] lg:ring-1 lg:ring-slate-100 px-6 pt-6 pb-7 lg:p-9 -mt-8 lg:mt-0 max-h-[60vh] lg:max-h-none overflow-y-auto lg:overflow-visible">
+          <div className="w-full lg:max-w-md bg-white rounded-t-sheet lg:rounded-card shadow-[0_-10px_44px_rgba(15,23,42,0.10)] lg:shadow-[0_24px_70px_-24px_rgba(30,64,175,0.30)] lg:ring-1 lg:ring-slate-100 px-6 pt-6 pb-7 lg:p-9 -mt-8 lg:mt-0 max-h-[60vh] lg:max-h-none overflow-y-auto lg:overflow-visible">
 
             <h2 className="text-[24px] lg:text-[26px] font-black tracking-tight text-slate-900">{heading}</h2>
             <p className="text-[13.5px] lg:text-[14px] font-medium text-slate-400 mt-1 mb-4 lg:mb-5">Sign in to your worker dashboard</p>
@@ -432,7 +432,7 @@ export default function WorkerLoginPage({ allowSignup = true, portalLabel = 'Wor
                     type="button"
                     onClick={send}
                     disabled={sending}
-                    className="w-full h-[54px] rounded-2xl font-bold text-[15.5px] text-white flex items-center justify-center gap-2.5 bg-gradient-to-r from-blue-600 to-blue-700 shadow-lg shadow-blue-600/25 hover:shadow-xl hover:shadow-blue-600/35 active:scale-[0.99] transition-all disabled:opacity-60"
+                    className="w-full h-[54px] rounded-2xl font-bold text-[15.5px] text-white flex items-center justify-center gap-2.5 bg-blue-600 shadow-lg shadow-blue-600/25 hover:shadow-xl hover:shadow-blue-600/35 active:scale-[0.99] transition-all disabled:opacity-60"
                   >
                     {sending ? <Loader2 size={19} className="animate-spin" /> : <>Sign in <ArrowRight size={19} strokeWidth={2.6} /></>}
                   </button>
@@ -521,7 +521,7 @@ export default function WorkerLoginPage({ allowSignup = true, portalLabel = 'Wor
                     type="button"
                     onClick={passwordLogin}
                     disabled={pwLoggingIn}
-                    className="w-full h-[54px] rounded-2xl font-bold text-[15.5px] text-white flex items-center justify-center gap-2.5 bg-gradient-to-r from-blue-600 to-blue-700 shadow-lg shadow-blue-600/25 hover:shadow-xl hover:shadow-blue-600/35 active:scale-[0.99] transition-all disabled:opacity-60"
+                    className="w-full h-[54px] rounded-2xl font-bold text-[15.5px] text-white flex items-center justify-center gap-2.5 bg-blue-600 shadow-lg shadow-blue-600/25 hover:shadow-xl hover:shadow-blue-600/35 active:scale-[0.99] transition-all disabled:opacity-60"
                   >
                     {pwLoggingIn ? <Loader2 size={19} className="animate-spin" /> : <>Sign in <ArrowRight size={19} strokeWidth={2.6} /></>}
                   </button>
@@ -620,7 +620,7 @@ export default function WorkerLoginPage({ allowSignup = true, portalLabel = 'Wor
                     type="button"
                     onClick={verify}
                     disabled={loggingIn || otp.length < OTP_LEN}
-                    className="w-full h-[54px] rounded-2xl font-bold text-[15.5px] text-white flex items-center justify-center gap-2.5 bg-gradient-to-r from-blue-600 to-blue-700 shadow-lg shadow-blue-600/25 hover:shadow-xl hover:shadow-blue-600/35 active:scale-[0.99] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full h-[54px] rounded-2xl font-bold text-[15.5px] text-white flex items-center justify-center gap-2.5 bg-blue-600 shadow-lg shadow-blue-600/25 hover:shadow-xl hover:shadow-blue-600/35 active:scale-[0.99] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {loggingIn ? <Loader2 size={19} className="animate-spin" /> : <>Verify &amp; Start Earning <ArrowRight size={19} strokeWidth={2.6} /></>}
                   </button>

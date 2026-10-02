@@ -34,14 +34,14 @@ export default function WorkerProfileSheet({ workerId, open, onClose }) {
     <AnimatePresence>
       <motion.div className="fixed inset-0 z-[130] flex items-end justify-center sm:items-center"
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}>
-        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+        <div className="absolute inset-0 bg-black/50" />
         <motion.div
           onClick={(e) => e.stopPropagation()}
           initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 40, opacity: 0 }}
           transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-          className="relative w-full sm:max-w-md bg-white rounded-t-3xl sm:rounded-3xl max-h-[88vh] overflow-hidden flex flex-col shadow-2xl"
+          className="relative w-full sm:max-w-md bg-white rounded-t-sheet sm:rounded-card max-h-[88vh] overflow-hidden flex flex-col shadow-2xl"
         >
-          <button onClick={onClose} className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-white/80 backdrop-blur flex items-center justify-center shadow">
+          <button onClick={onClose} className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-white flex items-center justify-center shadow">
             <X size={16} className="text-slate-600" />
           </button>
 
@@ -52,9 +52,9 @@ export default function WorkerProfileSheet({ workerId, open, onClose }) {
           ) : (
             <div className="overflow-y-auto">
               {/* Header */}
-              <div className="px-5 pt-6 pb-5 bg-gradient-to-br from-slate-900 to-zappy-900 text-white">
+              <div className="px-5 pt-6 pb-5 bg-slate-900 text-white">
                 <div className="flex items-center gap-3.5">
-                  <div className="w-16 h-16 rounded-2xl bg-white/15 backdrop-blur flex items-center justify-center text-2xl font-black shrink-0">
+                  <div className="w-16 h-16 rounded-2xl bg-white/15 flex items-center justify-center text-2xl font-black shrink-0">
                     {(w.name || 'P').trim().charAt(0).toUpperCase()}
                   </div>
                   <div className="min-w-0">

@@ -186,7 +186,7 @@ export default function ProfilePage() {
         <header className="page-header !bg-transparent border-none">
           <div className="page-header-inner justify-center pt-4">
             <h1 className="text-xl font-black tracking-tight text-[#0F172A]">{t('profile.title', 'Profile')}</h1>
-            <span className="absolute right-4 chip-neutral bg-white/60 backdrop-blur-md capitalize font-bold">{role}</span>
+            <span className="absolute right-4 chip-neutral bg-white capitalize font-bold">{role}</span>
           </div>
         </header>
 
@@ -222,7 +222,7 @@ export default function ProfilePage() {
                   <h2 className="font-black text-2xl tracking-tight text-[#0F172A]">{user?.name || 'User'}</h2>
                   <p className="text-sm font-semibold text-slate-500 mt-1">{user?.phone || user?.email || '—'}</p>
                 </div>
-                <div className="flex items-center gap-1.5 bg-success-50/80 backdrop-blur-md px-3 py-1.5 rounded-full mt-2 shadow-sm border border-success-100">
+                <div className="flex items-center gap-1.5 bg-success-50/80 px-3 py-1.5 rounded-full mt-2 shadow-sm border border-success-100">
                   <ShieldCheck size={14} strokeWidth={3} className="text-success-600" />
                   <span className="text-xs font-black tracking-wide text-success-700">{t('profile.verified', 'Verified')}</span>
                 </div>
@@ -481,7 +481,7 @@ export default function ProfilePage() {
                     <motion.button
                       key="logout-btn"
                       onClick={() => setShowLogout(true)}
-                      className="w-full flex items-center gap-3 px-4 py-4 rounded-[24px] bg-red-50 ring-1 ring-red-100/50 text-red-500 hover:bg-red-100 transition shadow-sm border border-red-100"
+                      className="w-full flex items-center gap-3 px-4 py-4 rounded-card bg-red-50 ring-1 ring-red-100/50 text-red-500 hover:bg-red-100 transition shadow-sm border border-red-100"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
@@ -538,7 +538,7 @@ function MenuItem({ Icon, label, sublabel, onClick }) {
   return (
     <motion.button
       onClick={onClick}
-      className="w-full flex items-center gap-3.5 px-3 py-3 text-left hover:bg-slate-50/80 rounded-[20px] transition"
+      className="w-full flex items-center gap-3.5 px-3 py-3 text-left hover:bg-slate-50/80 rounded-card transition"
       whileHover={{ scale: 0.99, backgroundColor: 'rgba(248,250,252,0.8)' }}
       whileTap={{ scale: 0.97 }}
     >

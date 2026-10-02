@@ -23,7 +23,7 @@ function PremiumStepIndicator({ currentStep }) {
     <div className="relative pt-6 pb-2">
       <div className="flex items-center justify-between relative z-10 px-2">
         <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-slate-100 rounded-full z-0" />
-        <div className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-gradient-to-r from-zappy-500 to-fuchsia-500 rounded-full z-0 transition-all duration-700 ease-out" style={{ width: `${(currentStep / 3) * 100}%` }} />
+        <div className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-zappy-500 rounded-full z-0 transition-all duration-700 ease-out" style={{ width: `${(currentStep / 3) * 100}%` }} />
         
         {[0, 1, 2, 3].map(idx => {
           const isCompleted = idx < currentStep;
@@ -184,7 +184,7 @@ export default function EventBookingPage() {
     <div className="min-h-screen bg-slate-50 pb-32 font-sans selection:bg-fuchsia-100 selection:text-fuchsia-900">
       
       {/* Premium Glassy Header */}
-      <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-2xl border-b border-slate-200/50 pt-10 pb-8 px-4 shadow-[0_4px_30px_rgba(0,0,0,0.03)]">
+      <div className="sticky top-0 z-40 bg-white border-b border-slate-200/50 pt-10 pb-8 px-4 shadow-[0_4px_30px_rgba(0,0,0,0.03)]">
         <div className="max-w-md lg:max-w-2xl mx-auto">
           <div className="flex items-center gap-4 mb-4">
             <button onClick={() => step > 0 ? setStep(s => s - 1) : navigate(-1)} className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-700 hover:bg-slate-200 hover:scale-105 transition-all">
@@ -402,7 +402,7 @@ export default function EventBookingPage() {
               
               <div className="bg-white rounded-[2rem] shadow-[0_20px_40px_-12px_rgba(0,0,0,0.1)] border border-slate-100 overflow-hidden relative">
                 {/* Decorative top gradient */}
-                <div className="h-2 w-full bg-gradient-to-r from-zappy-500 via-purple-500 to-fuchsia-500" />
+                <div className="h-2 w-full bg-zappy-500" />
                 
                 {/* Ticket Content */}
                 <div className="p-6 md:p-8">
@@ -496,7 +496,7 @@ export default function EventBookingPage() {
             </button>
           ) : (
             <div className="relative group">
-              <div className="absolute -inset-1 bg-gradient-to-r from-zappy-500 via-purple-500 to-fuchsia-500 rounded-[1.5rem] blur opacity-40 group-hover:opacity-70 transition duration-500 animate-pulse" />
+              <div className="absolute -inset-1 bg-zappy-500 rounded-[1.5rem] blur opacity-40 group-hover:opacity-70 transition duration-500 animate-pulse" />
               <button 
                 onClick={handleSubmit} 
                 disabled={submitting}

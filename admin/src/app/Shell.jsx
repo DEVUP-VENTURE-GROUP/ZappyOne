@@ -133,7 +133,7 @@ export default function AdminDashboard() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/60 z-20 lg:hidden backdrop-blur-sm"
+            className="fixed inset-0 bg-black/60 z-20 lg:hidden"
             onClick={() => setSidebarOpen(false)}
           />
         )}
@@ -150,7 +150,7 @@ export default function AdminDashboard() {
         {/* Logo + brand */}
         <div className="flex items-center justify-between h-13 px-4 py-3.5" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'linear-gradient(135deg, #6366f1, #4f46e5)' }}>
+            <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'linear-gradient(#6366f1, #6366f1)' }}>
               <Zap size={14} strokeWidth={2.5} className="text-white" />
             </div>
             <div>
@@ -230,7 +230,7 @@ export default function AdminDashboard() {
             <span className="text-[11px] text-slate-400 hidden sm:block font-medium">
               {new Date().toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
             </span>
-            <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-black text-white" style={{ background: 'linear-gradient(135deg, #6366f1, #4f46e5)' }}>
+            <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-black text-white" style={{ background: 'linear-gradient(#6366f1, #6366f1)' }}>
               A
             </div>
           </div>

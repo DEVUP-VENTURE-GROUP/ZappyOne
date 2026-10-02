@@ -81,7 +81,7 @@ function ctr(impressions, clicks) { return impressions > 0 ? ((clicks/impression
 /* Stat box */
 function StatBox({ label, value, sub, icon: Icon, color }) {
   return (
-    <div className="bg-white rounded-3xl border border-slate-100 p-5 shadow-[0_8px_24px_rgba(0,0,0,0.03)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.08)] transition-all duration-300 hover:-translate-y-1 relative overflow-hidden group">
+    <div className="bg-white rounded-card border border-slate-100 p-5 shadow-[0_8px_24px_rgba(0,0,0,0.03)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.08)] transition-all duration-300 hover:-translate-y-1 relative overflow-hidden group">
       <div className={`absolute -right-4 -top-4 w-24 h-24 rounded-full opacity-[0.04] group-hover:opacity-[0.12] transition-opacity blur-xl ${color.split(' ')[0]}`} />
       <div className={`w-12 h-12 rounded-[18px] flex items-center justify-center mb-4 border shadow-sm ${color}`}>
         <Icon size={20} />
@@ -172,10 +172,10 @@ function CampaignModal({ initial, onClose, onSave }) {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start justify-center overflow-y-auto p-4 pt-8"
+      className="fixed inset-0 z-50 bg-black/60 flex items-start justify-center overflow-y-auto p-4 pt-8"
       onClick={e => e.target === e.currentTarget && onClose()}>
       <motion.div initial={{ y: 30, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
-        className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl mb-8">
+        className="bg-white rounded-card shadow-2xl w-full max-w-2xl mb-8">
 
         <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
           <div>
@@ -390,7 +390,7 @@ function CampaignModal({ initial, onClose, onSave }) {
         <div className="px-6 py-4 border-t border-slate-100 flex justify-end gap-3">
           <button onClick={onClose} className="px-5 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">Cancel</button>
           <motion.button whileTap={{ scale: 0.97 }} onClick={handleSave} disabled={saving}
-            className="px-5 py-2.5 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-xl font-bold text-sm flex items-center gap-2 disabled:opacity-50 shadow-sm shadow-violet-200">
+            className="px-5 py-2.5 bg-violet-600 text-white rounded-xl font-bold text-sm flex items-center gap-2 disabled:opacity-50 shadow-sm shadow-violet-200">
             {saving ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />}
             {saving ? 'Submitting…' : 'Submit for Review'}
           </motion.button>
@@ -440,10 +440,10 @@ function TopUpModal({ onClose, onSuccess }) {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4"
       onClick={e => e.target === e.currentTarget && !busy && onClose()}>
       <motion.div initial={{ scale: 0.92, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-        className="bg-white rounded-3xl p-7 w-full max-w-sm shadow-2xl">
+        className="bg-white rounded-card p-7 w-full max-w-sm shadow-2xl">
         <div className="flex items-center justify-between mb-5">
           <div>
             <h3 className="font-black text-slate-900 text-lg">Add Ad Credits</h3>
@@ -602,7 +602,7 @@ export default function AdvertiserDashboard() {
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
       <div className="sticky top-6 z-30 px-8 mb-8 pointer-events-none">
-        <div className="bg-white/80 backdrop-blur-xl border border-white/60 shadow-[0_8px_32px_rgba(0,0,0,0.06),0_0_0_1px_rgba(255,255,255,1)_inset] rounded-3xl px-6 py-4 flex items-center justify-between pointer-events-auto transition-all duration-300 hover:shadow-[0_12px_40px_rgba(0,0,0,0.08)]">
+        <div className="bg-white border border-white/60 shadow-[0_8px_32px_rgba(0,0,0,0.06),0_0_0_1px_rgba(255,255,255,1)_inset] rounded-card px-6 py-4 flex items-center justify-between pointer-events-auto transition-all duration-300 hover:shadow-[0_12px_40px_rgba(0,0,0,0.08)]">
           <div className="flex items-center gap-4">
             <button onClick={() => nav('/partner')} className="w-11 h-11 bg-slate-50 hover:bg-slate-100 flex items-center justify-center rounded-[14px] border border-slate-200 transition-colors mr-1 outline-none">
               <ArrowLeft size={18} className="text-slate-600" />
@@ -614,7 +614,7 @@ export default function AdvertiserDashboard() {
               </div>
             </div>
             <div>
-              <p className="font-black text-transparent bg-clip-text bg-gradient-to-r from-navy-900 to-zappy-700 text-2xl tracking-tight leading-none">Zappy Ads</p>
+              <p className="font-black text-navy-900 text-2xl tracking-tight leading-none">Zappy Ads</p>
               <p className="text-[11px] text-slate-500 font-bold uppercase tracking-widest mt-1">Advertiser Portal</p>
             </div>
           </div>
@@ -647,7 +647,7 @@ export default function AdvertiserDashboard() {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-2 bg-slate-100/80 p-1.5 rounded-[20px] border border-slate-200/50">
+        <div className="flex gap-2 bg-slate-100/80 p-1.5 rounded-card border border-slate-200/50">
           {TABS.map(({ id, label, Icon }) => (
             <button key={id} onClick={() => setActiveTab(id)}
               className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-xs font-bold transition-all relative outline-none ${activeTab === id ? 'text-zappy-700' : 'text-slate-500 hover:text-slate-700 hover:bg-white/40'}`}>
@@ -665,7 +665,7 @@ export default function AdvertiserDashboard() {
             <div className="flex items-center justify-between">
               <p className="text-sm font-bold text-slate-700">{data?.total || 0} campaign{data?.total !== 1 ? 's' : ''}</p>
               <motion.button whileTap={{ scale: 0.95 }} onClick={() => { setEditAd(null); setShowForm(true); }}
-                className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-xl text-xs font-bold shadow-sm shadow-violet-200">
+                className="flex items-center gap-1.5 px-4 py-2 bg-violet-600 text-white rounded-xl text-xs font-bold shadow-sm shadow-violet-200">
                 <Plus size={13} />New Campaign
               </motion.button>
             </div>
@@ -673,10 +673,10 @@ export default function AdvertiserDashboard() {
             {isLoading ? (
               <div className="flex justify-center py-20"><Loader2 size={28} className="animate-spin text-zappy-400" /></div>
             ) : campaigns.length === 0 ? (
-              <div className="text-center py-24 bg-gradient-to-br from-white to-slate-50 rounded-[2rem] border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative overflow-hidden">
+              <div className="text-center py-24 bg-white rounded-[2rem] border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative overflow-hidden">
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-zappy-400/10 blur-[80px] rounded-full pointer-events-none" />
                 <div className="relative">
-                  <div className="w-24 h-24 bg-zappy-gradient rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-zappy-200 rotate-3 transition-transform hover:rotate-6">
+                  <div className="w-24 h-24 bg-zappy-gradient rounded-card flex items-center justify-center mx-auto mb-6 shadow-xl shadow-zappy-200 rotate-3 transition-transform hover:rotate-6">
                     <Megaphone size={40} className="text-white drop-shadow-md -rotate-3" />
                   </div>
                   <h2 className="text-2xl font-black text-slate-900 tracking-tight">Supercharge your growth</h2>
@@ -699,7 +699,7 @@ export default function AdvertiserDashboard() {
         {/* Wallet Tab */}
         {activeTab === 'wallet' && (
           <div className="space-y-4">
-            <div className="bg-gradient-to-r from-violet-600 to-fuchsia-600 rounded-3xl p-6 text-white">
+            <div className=" bg-violet-600 rounded-card p-6 text-white">
               <p className="text-white/70 text-xs font-medium uppercase tracking-wide">Available Balance</p>
               <p className="text-4xl font-black mt-1">{fmtRupees(wallet?.creditsPaise)}</p>
               <div className="flex gap-4 mt-4 text-xs">

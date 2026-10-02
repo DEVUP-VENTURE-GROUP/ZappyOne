@@ -81,12 +81,12 @@ export default function LensModal({ open, onClose, lat, lng }) {
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 z-[200] bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center"
+        className="fixed inset-0 z-[200] bg-slate-900/60 flex items-end sm:items-center justify-center"
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
         onClick={onClose}
       >
         <motion.div
-          className="w-full sm:max-w-md bg-white rounded-t-3xl sm:rounded-3xl overflow-hidden shadow-2xl"
+          className="w-full sm:max-w-md bg-white rounded-t-sheet sm:rounded-card overflow-hidden shadow-2xl"
           initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
           transition={{ type: 'spring', damping: 30, stiffness: 300 }}
           onClick={(e) => e.stopPropagation()}

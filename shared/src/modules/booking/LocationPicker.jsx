@@ -875,7 +875,7 @@ export default function LocationPicker({ onConfirm, onCancel, serviceLabel, serv
   return (
     /* Mobile: full-bleed sheet experience. Desktop (lg+): the same flow framed
        as a centred, contained card so the wide page doesn't stretch it edge-to-edge. */
-    <div className="flex flex-col h-full bg-[#F3F6FB] lg:max-w-2xl lg:mx-auto lg:my-6 lg:h-[calc(100%-3rem)] lg:rounded-[28px] lg:overflow-hidden lg:shadow-[0_24px_70px_-24px_rgba(15,23,42,0.45)] lg:ring-1 lg:ring-slate-200">
+    <div className="flex flex-col h-full bg-[#F3F6FB] lg:max-w-2xl lg:mx-auto lg:my-6 lg:h-[calc(100%-3rem)] lg:rounded-card lg:overflow-hidden lg:shadow-[0_24px_70px_-24px_rgba(15,23,42,0.45)] lg:ring-1 lg:ring-slate-200">
 
       {/* Top controls: step label + search + current location */}
       <div className="shrink-0 w-full max-w-md lg:max-w-none mx-auto px-4 pt-3 pb-2.5 space-y-3">
@@ -1083,12 +1083,12 @@ export default function LocationPicker({ onConfirm, onCancel, serviceLabel, serv
 
         {/* Bottom sheet — overlays the bottom of the map */}
         <div ref={sheetRef} className="absolute bottom-0 left-0 right-0 z-30 max-h-[82vh] max-h-[82dvh] flex flex-col justify-end pointer-events-auto select-none">
-          <div className="bg-white rounded-t-3xl shadow-[0_-8px_30px_rgba(15,23,42,0.12)] border-t border-slate-100/80 flex flex-col max-h-[82vh] max-h-[82dvh] transition-all duration-300">
+          <div className="bg-white rounded-t-sheet shadow-[0_-8px_30px_rgba(15,23,42,0.12)] border-t border-slate-100/80 flex flex-col max-h-[82vh] max-h-[82dvh] transition-all duration-300">
 
             {/* Interactive Drag Handle — Click or swipe to collapse/expand sheet */}
             <div
               onClick={() => setSheetMinimized((m) => !m)}
-              className="w-full py-2.5 flex flex-col items-center justify-center cursor-pointer active:bg-slate-50 rounded-t-3xl shrink-0 touch-none"
+              className="w-full py-2.5 flex flex-col items-center justify-center cursor-pointer active:bg-slate-50 rounded-t-sheet shrink-0 touch-none"
               aria-label={sheetMinimized ? "Expand sheet" : "Collapse sheet"}
             >
               <div className="w-12 h-1.5 rounded-full bg-slate-300/80 hover:bg-slate-400 transition-colors" />

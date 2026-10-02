@@ -41,7 +41,7 @@ export default function TrackPage() {
       </header>
 
       <div className="max-w-lg mx-auto px-4 flex flex-col items-center justify-center h-[62vh] gap-6 text-center">
-        <div className="w-20 h-20 rounded-3xl bg-zappy-50 flex items-center justify-center">
+        <div className="w-20 h-20 rounded-card bg-zappy-50 flex items-center justify-center">
           <MapPin size={36} strokeWidth={1.5} className="text-zappy-600" />
         </div>
         <div>

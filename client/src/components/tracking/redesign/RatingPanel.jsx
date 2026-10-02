@@ -12,7 +12,7 @@ export default function RatingPanel({ onRate }) {
     <div
       className="rounded-2xl overflow-hidden"
       style={{
-        background: 'linear-gradient(135deg, #0F172A 0%, #1e293b 100%)',
+        background: 'linear-gradient(#0F172A, #0F172A)',
         boxShadow: '0 8px 24px rgba(15,23,42,0.2)',
       }}
     >
@@ -39,7 +39,7 @@ export default function RatingPanel({ onRate }) {
           disabled={!value}
           whileTap={{ scale: 0.97 }}
           className="w-full py-3 rounded-xl font-bold text-sm disabled:opacity-40 disabled:pointer-events-none"
-          style={{ background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)' }}
+          style={{ background: 'linear-gradient(#22c55e, #22c55e)' }}
         >
           Submit Rating
         </motion.button>

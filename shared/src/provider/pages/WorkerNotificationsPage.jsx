@@ -253,7 +253,7 @@ export default function WorkerNotificationsPage() {
   return (
     <div className="min-h-screen bg-[#F9FAFB]">
       {/* header */}
-      <header className="sticky top-0 z-20 bg-white/95 backdrop-blur border-b border-slate-100 safe-top">
+      <header className="sticky top-0 z-20 bg-white border-b border-slate-100 safe-top">
         <div className="max-w-lg lg:max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button onClick={() => nav('/worker')} className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center text-slate-700 hover:bg-slate-200 transition">
