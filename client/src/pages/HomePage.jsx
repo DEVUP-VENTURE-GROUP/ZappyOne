@@ -12,6 +12,7 @@ import SEO, { HOME_SCHEMA, BASE_URL } from '@shared/components/SEO';
 import NotInYourArea from '../components/serviceability/NotInYourArea';
 import ClosedNowBanner from '../components/serviceability/ClosedNowBanner';
 import ServiceShowcase from './home/ServiceShowcase';
+import HeroCarousel from './home/HeroCarousel';
 import { foldIntoHub } from '@shared/components/home/serviceArt';
 import AdBanner from '../components/common/AdBanner';
 import Footer from '../components/layout/Footer';
@@ -267,6 +268,8 @@ export default function HomePage() {
           ) : (
             <>
               {svc?.status === 'closed_now' && <ClosedNowBanner nextOpening={svc.nextOpening} />}
+
+              {!loadingCatalog && <HeroCarousel domains={allDomains} onOpen={openService} />}
 
               {/* Intent first: the problem in their words, then the services. */}
               <ProblemChips services={services.filter((x) => x.available !== false)} />
