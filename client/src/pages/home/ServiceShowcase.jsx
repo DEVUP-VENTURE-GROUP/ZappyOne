@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, Wrench } from 'lucide-react';
-import { SERVICE_ICONS } from '@shared/components/home/LiveServices';
+import { SERVICE_ICONS, CategoryTile } from '@shared/components/home/LiveServices';
 import { artFor, PITCH } from '@shared/components/home/serviceArt';
 
 /**
@@ -19,32 +19,65 @@ const BANDS = [
   { band: 'bg-[#EEF0F6]', chip: 'bg-[#E1E5EE] text-[#334155]' },
 ];
 
-/** What a service covers, in a few words: its headings for a repair, else its line. */
-function coversLine(s) {
-  const heads = (s.coverage || []).map((c) => c.name);
-  if (heads.length) return heads.slice(0, 3).join(' · ') + (heads.length > 3 ? ` +${heads.length - 3} more` : '');
-  return s.tagline || s.description || '';
-}
-
+/**
+ * One service and everything inside it, as tiles: a repair's problem areas
+ * (Display, Battery & Power…), a pet service's options (Bath + Dry, Haircut…),
+ * a helping line's jobs (Buy for me, Pick up…). Seeing the contents is what
+ * makes a service feel real; each tile opens the booking already set to it.
+ */
 function ServiceCard({ service, tone, onOpen }) {
   const Icon = SERVICE_ICONS[service.icon] || Wrench;
+  const repairTiles = (service.coverage || []).map((c) => ({
+    tile: c, path: `/repair/category/${service.artKey || service.code}/${c.code}`,
+  }));
+  const optionTiles = (service.options || []).map((o) => ({
+    tile: { code: o.code, name: o.name, icon: o.icon, imageUrl: o.imageUrl || '', subtitle: '' }, path: o.path,
+  }));
+  const tiles = repairTiles.length ? repairTiles : optionTiles;
+  // Options with no picture of their own (pet care, helping) read better as
+  // pills than as a row of identical icon boxes.
+  const asChips = !repairTiles.length && optionTiles.every(({ tile }) => !tile.imageUrl);
+  const count = repairTiles.length
+    ? `${repairTiles.length} problem areas`
+    : optionTiles.length ? `${optionTiles.length} options` : '';
+
   return (
-    <button
-      type="button"
-      onClick={() => onOpen(service)}
-      className="group flex w-[240px] shrink-0 snap-start flex-col rounded-2xl border border-slate-200/80 bg-white p-4 text-left transition hover:-translate-y-0.5 hover:border-zappy-200 hover:shadow-[0_10px_28px_-16px_rgba(15,23,42,0.35)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-zappy-100 sm:w-auto"
-    >
-      <span className={`flex h-10 w-10 items-center justify-center rounded-xl ${tone.chip}`}>
-        <Icon size={20} strokeWidth={1.8} />
-      </span>
-      <span className="mt-3 text-[15px] font-semibold leading-snug text-navy">{service.name}</span>
-      <span className="mt-1 line-clamp-2 text-[13px] leading-relaxed text-slate-500">{coversLine(service)}</span>
-      <span className="mt-auto pt-3">
-        <span className="inline-flex items-center gap-1 text-[13px] font-semibold text-zappy-600">
-          Book <ArrowRight size={14} className="transition group-hover:translate-x-0.5" />
+    <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white">
+      <div className="flex items-center gap-3 px-4 pt-4">
+        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${tone.chip}`}>
+          <Icon size={20} strokeWidth={1.8} />
         </span>
-      </span>
-    </button>
+        <span className="min-w-0 flex-1">
+          <span className="block text-[15px] font-semibold leading-snug text-navy">{service.name}</span>
+          {count && <span className="block text-[12px] text-slate-500">{count}</span>}
+        </span>
+        <button type="button" onClick={() => onOpen(service)}
+          className="inline-flex h-9 shrink-0 items-center gap-1 rounded-full bg-zappy-600 px-3.5 text-[13px] font-semibold text-white transition hover:bg-zappy-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-zappy-200">
+          Book <ArrowRight size={14} />
+        </button>
+      </div>
+      {tiles.length > 0 && asChips ? (
+        <div className="flex flex-wrap gap-2 px-4 pb-4 pt-3">
+          {tiles.map(({ tile, path }) => (
+            <button key={tile.code} type="button" onClick={() => onOpen(service, path)}
+              className={`rounded-full px-3.5 py-2 text-[13px] font-medium transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-zappy-100 ${tone.chip}`}>
+              {tile.name}
+            </button>
+          ))}
+        </div>
+      ) : tiles.length > 0 ? (
+        <div className="relative">
+          <div className="flex snap-x gap-2.5 overflow-x-auto scroll-px-4 px-4 pb-4 pt-3.5 no-scrollbar">
+            {tiles.map(({ tile, path }) => (
+              <CategoryTile key={tile.code} category={tile} onOpen={() => onOpen(service, path)} />
+            ))}
+          </div>
+          <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-white to-transparent" />
+        </div>
+      ) : (
+        <p className="px-4 pb-4 pt-2 text-[13px] leading-relaxed text-slate-500">{service.tagline || service.description}</p>
+      )}
+    </div>
   );
 }
 
@@ -54,7 +87,7 @@ function Band({ domain, tone, onOpen }) {
 
   return (
     <section aria-labelledby={`band-${domain.code}`} className={`overflow-hidden rounded-3xl ${tone.band}`}>
-      <div className="grid gap-5 p-5 sm:p-7 lg:grid-cols-[400px_1fr] lg:items-center lg:gap-8">
+      <div className="grid gap-5 p-4 sm:p-7 lg:grid-cols-[320px_minmax(0,1fr)] lg:items-start lg:gap-8">
         <div className="flex items-center gap-4">
           {art && (
             <img src={art.still} alt={art.alt} loading="lazy"
@@ -69,7 +102,7 @@ function Band({ domain, tone, onOpen }) {
             </p>
           </div>
         </div>
-        <div className="-mx-5 flex snap-x gap-3 overflow-x-auto px-5 pb-1 no-scrollbar sm:mx-0 sm:grid sm:grid-cols-2 sm:content-start sm:items-start sm:overflow-visible sm:px-0 xl:grid-cols-3">
+        <div className="flex min-w-0 flex-col gap-3">
           {domain.services.map((s) => <ServiceCard key={s.code} service={s} tone={tone} onOpen={onOpen} />)}
         </div>
       </div>

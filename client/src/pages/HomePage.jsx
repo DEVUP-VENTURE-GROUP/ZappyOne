@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 import toast from 'react-hot-toast';
 import { ChevronRight } from 'lucide-react';
 import { selectAuth, selectIsAuthed } from '@shared/modules/auth/authSlice';
-import { useGetServiceabilityQuery, useLiveCatalogQuery } from '@shared/services/api';
+import { useGetServiceabilityQuery, useLiveCatalogQuery, useGetEventCategoriesQuery } from '@shared/services/api';
 import { useGeolocation, loadGeoLocation } from '@shared/hooks/useGeolocation';
 import { saveGeoLocation } from '@shared/utils/geoCache';
 import { reverseGeocode } from '@shared/utils/reverseGeocode';
@@ -23,7 +23,8 @@ import { trackSearch } from '../hooks/useTelemetry';
 import HomeHeader, { SearchBar } from './home/HomeHeader';
 import LocationSheet from './home/LocationSheet';
 import { ServiceGrid, ProblemChips } from './home/ServiceGrid';
-import { OffersRail, BookAgainRail, EventsRail, NearbyShopsLink } from './home/HomeRails';
+import { OffersRail, BookAgainRail, NearbyShopsLink } from './home/HomeRails';
+import { eventPhoto } from '../lib/eventPhotos';
 
 /**
  * Home — what a customer can get done, right where they are.
@@ -143,12 +144,34 @@ export default function HomePage() {
   // Every service shows; whether it can be booked HERE is serviceability's answer.
   // Unknown location → treated as bookable (the flow asks for an address).
   const liveCodes = useMemo(() => (svc ? new Set(svc.lines.map((l) => l.code)) : null), [svc]);
-  const allDomains = useMemo(() => (catalog?.domains || [])
-    .map((d) => ({
-      ...d,
-      services: d.services.map((s) => ({ ...s, domainCode: d.code, available: liveCodes ? liveCodes.has(s.code) : undefined })),
-    }))
-    .filter((d) => d.services.length), [catalog, liveCodes]);
+  // Events run on their own module; they join the catalog as a section here,
+  // before pet services, with each celebration as a tile.
+  const { data: eventCats } = useGetEventCategoriesQuery();
+  const allDomains = useMemo(() => {
+    const list = (catalog?.domains || [])
+      .map((d) => ({
+        ...d,
+        services: d.services.map((s) => ({ ...s, domainCode: d.code, available: liveCodes ? liveCodes.has(s.code) : undefined })),
+      }))
+      .filter((d) => d.services.length);
+    const cats = eventCats?.categories || [];
+    if (!cats.length) return list;
+    const events = {
+      code: 'events',
+      name: 'Events',
+      description: 'Decor and event partners for every occasion.',
+      services: [{
+        code: 'events', domainCode: 'events', name: 'Events & décor', icon: 'Sparkles', path: '/events',
+        tagline: 'Birthdays, baby showers, anniversaries and more', highlights: [], coverage: [],
+        options: cats.map((c) => ({
+          code: c.slug, name: c.name, icon: 'Sparkles',
+          imageUrl: c.coverImage || eventPhoto(c.slug), path: `/events/browse?category=${c.slug}`,
+        })),
+      }],
+    };
+    const at = list.findIndex((d) => d.code === 'pet_services');
+    return at < 0 ? [...list, events] : [...list.slice(0, at), events, ...list.slice(at)];
+  }, [catalog, liveCodes, eventCats]);
   // The quick grid folds a section with its own page (pet care) into one tile.
   const domains = useMemo(() => allDomains.map(foldIntoHub), [allDomains]);
   const services = useMemo(() => allDomains.flatMap((d) => d.services), [allDomains]);
@@ -168,13 +191,13 @@ export default function HomePage() {
     });
   }, [svc?.status, loc.lat, loc.lng]);
 
-  function openService(s) {
+  function openService(s, path) {
     // Every tap is demand — served, or wanted where nobody is verified yet.
     // The customer always goes in; whether someone can come is answered at
     // the booking step (the "growing city by city" card), not on the tile.
     const wanted = s.available === false;
     trackSearch({ category: s.code, lat: loc.lat, lng: loc.lng, result: wanted ? 'no_service' : 'served', userType: 'user' });
-    nav(s.path);
+    nav(path || s.path);
   }
 
   /* The customer's own jobs. */
@@ -264,7 +287,6 @@ export default function HomePage() {
               <BookAgainRail items={quickRebooks} onOpen={nav} />
               <AdBanner />
               <NearbyShopsLink />
-              <EventsRail />
             </>
           )}
         </main>

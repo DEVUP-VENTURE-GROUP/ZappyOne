@@ -60,9 +60,13 @@ function useColumns() {
  * service, and whether someone can come is answered at the booking step.
  */
 export function ServiceGrid({ domains, onOpen }) {
-  const cols = useColumns();
+  const base = useColumns();
   const tiles = domains.flatMap((d, i) => d.services.map((s) => ({ s, d, shelf: SHELVES[i % SHELVES.length] })));
   if (!tiles.length) return null;
+  // One column fewer or more if that leaves no tile alone on the last row
+  // (9 tiles: 3 × 3 on a phone, 9 across on a wide screen).
+  const orphans = (c) => (c - (tiles.length % c)) % c;
+  const cols = [base, base - 1, base + 1].filter((c) => c >= 3).sort((a, b) => orphans(a) - orphans(b) || Math.abs(a - base) - Math.abs(b - base))[0];
   const characters = new Map(domains.flatMap((d) => [...distinctArt(d.services, d.code)]));
   return (
     <section aria-labelledby="home-services">

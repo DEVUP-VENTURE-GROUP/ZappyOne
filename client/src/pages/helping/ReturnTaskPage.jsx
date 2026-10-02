@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, MapPin, AlertTriangle, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import GrowingHere from '../../components/serviceability/GrowingHere';
@@ -31,7 +31,9 @@ function Shell({ children }) {
 
 export default function ReturnTaskPage() {
   const nav = useNavigate();
-  const [isExchange, setIsExchange] = useState(false);
+  // A tile on the home showcase can open this straight on "exchange".
+  const [params] = useSearchParams();
+  const [isExchange, setIsExchange] = useState(params.get('mode') === 'exchange');
   const [form, setForm] = useState({
     merchantName: '', orderId: '', returnId: '', productName: '', quantity: 1,
     returnReason: '', returnMethod: 'store_dropoff', merchantInstructions: '',

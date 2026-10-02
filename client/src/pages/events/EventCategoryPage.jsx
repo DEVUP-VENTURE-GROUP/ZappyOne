@@ -4,31 +4,21 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, SlidersHorizontal, Star, Heart, TrendingUp, X, Play, SearchX, PartyPopper } from 'lucide-react';
 import { useGetEventThemesQuery, useGetEventCategoriesQuery, useToggleSaveEventThemeMutation } from '@shared/services/api';
 import toast from 'react-hot-toast';
-import birthdayPhoto from '@assets/images/events/event_birthday.webp';
-import babyShowerPhoto from '@assets/images/events/event_baby.webp';
-import anniversaryPhoto from '@assets/images/events/event_anniversary.webp';
-import housewarmingPhoto from '@assets/images/events/event_housewarming.webp';
-import romanticPhoto from '@assets/images/events/event_romantic.webp';
+import { eventPhoto } from '../../lib/eventPhotos';
 
 /* Category Styles Map */
-const CATEGORY_MAP = {
-  'birthday': { img: birthdayPhoto, gradient: 'from-pink-600/90 via-pink-500/50 to-transparent' },
-  'baby-shower': { img: babyShowerPhoto, gradient: 'from-blue-600/90 via-blue-500/50 to-transparent' },
-  'anniversary': { img: anniversaryPhoto, gradient: 'from-purple-600/90 via-purple-500/50 to-transparent' },
-  'housewarming': { img: housewarmingPhoto, gradient: 'from-amber-600/90 via-amber-500/50 to-transparent' },
-  'romantic': { img: romanticPhoto, gradient: 'from-rose-600/90 via-rose-500/50 to-transparent' },
-  'default': { img: birthdayPhoto, gradient: 'from-zappy-600/90 via-zappy-500/50 to-transparent' }
-};
+const GRADIENTS = [
+  [/birth|kid|party|graduat/, 'from-pink-600/90 via-pink-500/50 to-transparent'],
+  [/baby|gender|shower/, 'from-blue-600/90 via-blue-500/50 to-transparent'],
+  [/anniversar|engage/, 'from-purple-600/90 via-purple-500/50 to-transparent'],
+  [/house|corporate|farewell/, 'from-amber-600/90 via-amber-500/50 to-transparent'],
+  [/romant/, 'from-rose-600/90 via-rose-500/50 to-transparent'],
+];
 
 function getCatStyles(name) {
-  if (!name) return CATEGORY_MAP['default'];
-  const key = name.toLowerCase();
-  if (key.includes('birth')) return CATEGORY_MAP['birthday'];
-  if (key.includes('baby')) return CATEGORY_MAP['baby-shower'];
-  if (key.includes('anniversary')) return CATEGORY_MAP['anniversary'];
-  if (key.includes('house')) return CATEGORY_MAP['housewarming'];
-  if (key.includes('romantic')) return CATEGORY_MAP['romantic'];
-  return CATEGORY_MAP['default'];
+  const key = String(name || '').toLowerCase();
+  const gradient = (GRADIENTS.find(([re]) => re.test(key)) || [null, 'from-zappy-600/90 via-zappy-500/50 to-transparent'])[1];
+  return { img: eventPhoto(key), gradient };
 }
 
 const SORT_OPTIONS = [
@@ -106,7 +96,7 @@ export default function EventCategoryPage() {
   const themes = data?.themes || [];
   const cat = catData?.categories?.find(c => c.slug === category);
   
-  const heroStyle = cat ? getCatStyles(cat.name) : CATEGORY_MAP['default'];
+  const heroStyle = getCatStyles(cat?.name);
   const titleText = cat ? cat.name : searchQ ? `"${searchQ}"` : 'Explore Events';
 
   async function handleSave(id) {

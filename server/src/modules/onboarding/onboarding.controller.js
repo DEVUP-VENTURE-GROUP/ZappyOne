@@ -262,6 +262,44 @@ function nextStepFor({ profile, enrolments, kind }) {
  * Public on purpose — the home page renders before anyone signs in, and a
  * catalog of what we offer is not private.
  */
+/**
+ * What is inside a service that has no repair headings, so every service can
+ * show its contents as tiles (the home showcase):
+ *
+ *   pet care  — its live variants (Bath + Dry, Haircut, Overnight boarding…)
+ *   helping   — the jobs the line covers (buy for me / pick up, return / exchange)
+ *
+ * Each opens the booking already set to it (?variant= / ?mode=).
+ */
+const HELPING_OPTIONS = {
+  shopping_pickup: [
+    { code: 'shopping', name: 'Buy for me', icon: 'ShoppingBasket', mode: 'shop' },
+    { code: 'pickup', name: 'Pick up for me', icon: 'PackageCheck', mode: 'pickup' },
+  ],
+  returns_exchange: [
+    { code: 'return', name: 'Return an item', icon: 'PackageCheck', mode: 'return' },
+    { code: 'exchange', name: 'Exchange an item', icon: 'ShoppingBag', mode: 'exchange' },
+  ],
+};
+
+async function serviceOptions(lines) {
+  const out = new Map();
+  const petLines = lines.filter((l) => l.domainCode === 'pet_services');
+  if (petLines.length) {
+    const { PetServiceVariant } = require('../pet/models/catalog.model');
+    const variants = await PetServiceVariant.find({ categoryCode: { $in: petLines.map((l) => l.code) }, isActive: true })
+      .sort({ displayOrder: 1, name: 1 }).select('code name categoryCode').lean();
+    for (const l of petLines) {
+      out.set(l.code, variants.filter((v) => v.categoryCode === l.code)
+        .map((v) => ({ code: v.code, name: v.name, icon: l.icon || '', path: `${l.customerPath}?variant=${encodeURIComponent(v.code)}` })));
+    }
+  }
+  for (const l of lines.filter((x) => HELPING_OPTIONS[x.code])) {
+    out.set(l.code, HELPING_OPTIONS[l.code].map((o) => ({ code: o.code, name: o.name, icon: o.icon, path: `${l.customerPath}?mode=${o.mode}` })));
+  }
+  return out;
+}
+
 async function liveCatalog(req, res, next) {
   try {
     // Every live service, provider or not: customers in a launch region see the
@@ -339,6 +377,8 @@ async function liveCatalog(req, res, next) {
       highlightsByVertical.set(p.vertical, list);
     }
 
+    const optionsByLine = await serviceOptions(lines);
+
     const byDomain = new Map();
     for (const l of lines) {
       if (!byDomain.has(l.domainCode)) byDomain.set(l.domainCode, []);
@@ -357,6 +397,7 @@ async function liveCatalog(req, res, next) {
         hasProviders: !!l.hasProviders,
         highlights: highlightsByVertical.get(l.repairVertical) || [],
         coverage: coverageByVertical.get(l.repairVertical) || [],
+        options: optionsByLine.get(l.code) || [],
       });
     }
 
