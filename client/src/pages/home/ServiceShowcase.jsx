@@ -31,19 +31,16 @@ function ServiceCard({ service, tone, onOpen }) {
     tile: c, path: `/repair/category/${service.artKey || service.code}/${c.code}`,
   }));
   const optionTiles = (service.options || []).map((o) => ({
-    tile: { code: o.code, name: o.name, icon: o.icon, imageUrl: o.imageUrl || '', subtitle: '' }, path: o.path,
+    tile: { code: o.code, name: o.name, icon: o.icon, imageUrl: o.imageUrl || '', subtitle: '' }, path: o.path, target: o.service,
   }));
   const tiles = repairTiles.length ? repairTiles : optionTiles;
-  // Options with no picture of their own (pet care, helping) read better as
-  // pills than as a row of identical icon boxes.
-  const asChips = !repairTiles.length && optionTiles.every(({ tile }) => !tile.imageUrl);
   const count = repairTiles.length
     ? `${repairTiles.length} problem areas`
-    : optionTiles.length ? `${optionTiles.length} options` : '';
+    : optionTiles.length ? `${optionTiles.length} ${service.countLabel || 'options'}` : '';
 
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white">
-      <div className="flex items-center gap-3 px-4 pt-4">
+      <div className="flex items-center gap-3 px-3 pt-3.5 sm:px-4 sm:pt-4">
         <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${tone.chip}`}>
           <Icon size={20} strokeWidth={1.8} />
         </span>
@@ -52,24 +49,15 @@ function ServiceCard({ service, tone, onOpen }) {
           {count && <span className="block text-[12px] text-slate-500">{count}</span>}
         </span>
         <button type="button" onClick={() => onOpen(service)}
-          className="inline-flex h-9 shrink-0 items-center gap-1 rounded-full bg-zappy-600 px-3.5 text-[13px] font-semibold text-white transition hover:bg-zappy-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-zappy-200">
+          className="inline-flex h-8 shrink-0 items-center gap-1 rounded-full bg-zappy-600 px-3 text-[12.5px] font-semibold text-white sm:h-9 sm:px-3.5 sm:text-[13px] transition hover:bg-zappy-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-zappy-200">
           Book <ArrowRight size={14} />
         </button>
       </div>
-      {tiles.length > 0 && asChips ? (
-        <div className="flex flex-wrap gap-2 px-4 pb-4 pt-3">
-          {tiles.map(({ tile, path }) => (
-            <button key={tile.code} type="button" onClick={() => onOpen(service, path)}
-              className={`rounded-full px-3.5 py-2 text-[13px] font-medium transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-zappy-100 ${tone.chip}`}>
-              {tile.name}
-            </button>
-          ))}
-        </div>
-      ) : tiles.length > 0 ? (
+      {tiles.length > 0 ? (
         <div className="relative">
-          <div className="flex snap-x gap-2.5 overflow-x-auto scroll-px-4 px-4 pb-4 pt-3.5 no-scrollbar">
-            {tiles.map(({ tile, path }) => (
-              <CategoryTile key={tile.code} category={tile} onOpen={() => onOpen(service, path)} />
+          <div className="flex snap-x gap-2.5 overflow-x-auto scroll-px-3 px-3 pb-3.5 pt-3 no-scrollbar sm:scroll-px-4 sm:px-4 sm:pb-4 sm:pt-3.5">
+            {tiles.map(({ tile, path, target }) => (
+              <CategoryTile key={tile.code} category={tile} large onOpen={() => onOpen(target || service, path)} />
             ))}
           </div>
           <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-white to-transparent" />
@@ -81,14 +69,45 @@ function ServiceCard({ service, tone, onOpen }) {
   );
 }
 
+/** Where a section's own page is, for its single card's Book button. */
+const SECTION_HOME = {
+  pet_services: { name: 'Pet care', path: '/pet' },
+  helping_services: { name: 'Helping services', path: '/helping' },
+};
+
+/**
+ * The cards a section shows. Repairs: one card per service, its problem areas
+ * as tiles. A section without headings (pet care, helping) reads the same way:
+ * ONE card, its services as the tiles — or, with only a couple of services,
+ * the jobs inside them (Buy for me, Pick up, Return, Exchange).
+ */
+function cardsFor(domain) {
+  const { services } = domain;
+  if (services.length === 1 || services.some((s) => s.coverage?.length)) return services;
+  const home = SECTION_HOME[domain.code] || { name: domain.name, path: services[0].path };
+  const asTiles = services.length >= 3;
+  return [{
+    code: domain.code,
+    domainCode: domain.code,
+    name: home.name,
+    path: home.path,
+    icon: services[0].icon,
+    coverage: [],
+    countLabel: asTiles ? 'services' : 'options',
+    options: asTiles
+      ? services.map((s) => ({ code: s.code, name: s.name, icon: s.icon, imageUrl: s.imageUrl, path: s.path, service: s }))
+      : services.flatMap((s) => (s.options || []).map((o) => ({ ...o, service: s }))),
+  }];
+}
+
 function Band({ domain, tone, onOpen }) {
   const art = artFor(domain.services[0]?.code, domain.code);
   const [title, line] = PITCH[domain.code] || [domain.name, domain.description];
 
   return (
-    <section aria-labelledby={`band-${domain.code}`} className={`overflow-hidden rounded-3xl ${tone.band}`}>
-      <div className="grid gap-5 p-4 sm:p-7 lg:grid-cols-[320px_minmax(0,1fr)] lg:items-start lg:gap-8">
-        <div className="flex items-center gap-4">
+    <section aria-labelledby={`band-${domain.code}`} className={`-mx-4 overflow-hidden sm:mx-0 sm:rounded-3xl ${tone.band}`}>
+      <div className="grid gap-4 px-2 py-4 sm:gap-5 sm:p-7 lg:grid-cols-[320px_minmax(0,1fr)] lg:items-start lg:gap-8">
+        <div className="flex items-center gap-4 px-2 sm:px-0">
           {art && (
             <img src={art.still} alt={art.alt} loading="lazy"
               className="h-24 w-24 shrink-0 rounded-2xl object-contain mix-blend-multiply lg:h-36 lg:w-36" />
@@ -103,7 +122,7 @@ function Band({ domain, tone, onOpen }) {
           </div>
         </div>
         <div className="flex min-w-0 flex-col gap-3">
-          {domain.services.map((s) => <ServiceCard key={s.code} service={s} tone={tone} onOpen={onOpen} />)}
+          {cardsFor(domain).map((s) => <ServiceCard key={s.code} service={s} tone={tone} onOpen={onOpen} />)}
         </div>
       </div>
     </section>

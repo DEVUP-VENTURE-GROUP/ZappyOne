@@ -76,14 +76,14 @@ export const CATEGORY_ICONS = {
  * Advanced" has to fit whatever we choose, so the layout is built around the
  * longest real name rather than the shortest.
  */
-export function CategoryTile({ category, onOpen }) {
+export function CategoryTile({ category, onOpen, large = false }) {
   const Icon = CATEGORY_ICONS[category.code] || SERVICE_ICONS[category.icon] || Wrench;
   const count = category.problems?.length || 0;
 
   return (
     <button
       onClick={onOpen}
-      className="group flex w-[112px] shrink-0 snap-start flex-col text-left sm:w-[128px]"
+      className={`group flex shrink-0 snap-start flex-col text-left ${large ? 'w-[132px] sm:w-[150px]' : 'w-[112px] sm:w-[128px]'}`}
     >
       <span className="relative flex aspect-[5/4] w-full items-center justify-center overflow-hidden rounded-lg bg-[#E9F0FB]">
         {category.imageUrl ? (
