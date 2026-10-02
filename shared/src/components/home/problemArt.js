@@ -2,7 +2,7 @@
  * Photos of repair problems, by catalog code.
  *
  * Files live in the global assets folder (assets/web/problems/<vertical>,
- * served at /problems/<vertical>), 320px webp, about 12KB each. A picture an
+ * served at /problems/<vertical>), 480px webp, about 20KB each. A picture an
  * admin uploads for a problem or heading always wins; these fill the rest so
  * the catalog looks deliberate without anyone uploading 60 photos.
  */

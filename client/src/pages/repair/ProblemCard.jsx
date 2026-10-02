@@ -13,7 +13,7 @@ export function ProblemCard({ vertical, problem, onPick }) {
       className="group flex flex-col overflow-hidden rounded-card border border-line bg-white text-left transition-colors duration-150 hover:border-line-strong active:bg-canvas">
       <span className="relative block aspect-square w-full overflow-hidden bg-sunken">
         {photo
-          ? <img src={photo} alt="" loading="lazy" decoding="async" width="320" height="320"
+          ? <img src={photo} alt="" loading="lazy" decoding="async" width="480" height="480"
               className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]" />
           : <span className="flex h-full items-center justify-center text-ink-400"><Wrench size={28} strokeWidth={1.5} /></span>}
         {problem.severity === 'critical' && (
