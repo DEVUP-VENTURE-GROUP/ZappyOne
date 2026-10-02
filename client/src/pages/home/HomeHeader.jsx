@@ -27,7 +27,7 @@ function useUnread(isAuthed) {
 function IconButton({ label, onClick, children, badge = 0 }) {
   return (
     <button type="button" onClick={onClick} aria-label={label}
-      className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-btn border border-line bg-white text-ink-900 transition-colors duration-150 hover:bg-canvas">
+      className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-btn border border-zappy-100 bg-white text-zappy-700 transition-colors duration-150 hover:border-zappy-200">
       {children}
       {badge > 0 && (
         <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold leading-none text-white ring-2 ring-white">
@@ -51,7 +51,7 @@ function Avatar({ isAuthed, avatar, compact = false }) {
   }
   return (
     <button type="button" onClick={() => nav('/profile')} aria-label="Your profile"
-      className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-line bg-white transition-colors duration-150 hover:border-line-strong">
+      className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-zappy-100 bg-white transition-colors duration-150 hover:border-zappy-200">
       {avatar
         ? <img src={avatar} alt="" className="h-full w-full object-cover" />
         : <span className="flex h-full w-full items-center justify-center text-navy"><UserRound size={18} /></span>}
@@ -110,7 +110,7 @@ function SearchHint({ terms }) {
 
 export function SearchBar({ terms, onOpen, onVoice, onLens }) {
   return (
-    <div className="flex h-12 w-full items-center gap-2 rounded-btn border border-line bg-sunken pl-3.5 pr-1.5 transition-colors duration-150 focus-within:border-zappy-600 focus-within:bg-white hover:border-line-strong">
+    <div className="flex h-12 w-full items-center gap-2 rounded-btn border border-zappy-100 bg-white pl-3.5 pr-1.5 transition-colors duration-150 hover:border-zappy-200 focus-within:border-zappy-600">
       <button type="button" onClick={onOpen} className="flex h-full min-w-0 flex-1 items-center gap-3 text-left" aria-label="Search services">
         <Search size={18} strokeWidth={2.4} className="shrink-0 text-slate-500" />
         <SearchHint terms={terms} />
@@ -118,7 +118,7 @@ export function SearchBar({ terms, onOpen, onVoice, onLens }) {
       <span className="h-6 w-px bg-slate-200" aria-hidden="true" />
       <VoiceSearchButton onResult={onVoice} />
       <button type="button" onClick={onLens} aria-label="Scan a photo to find the right service"
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-600 transition hover:bg-white hover:text-navy">
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-btn text-ink-500 transition hover:bg-sunken hover:text-ink-900">
         <ScanLine size={17} />
       </button>
     </div>
@@ -189,12 +189,12 @@ export default function HomeHeader({ loc, isAuthed, avatar, onPickLocation, sear
   return (
     <>
       {/* Desktop: one sticky bar. (DesktopNav steps aside on Home.) */}
-      <header className="sticky top-0 z-40 hidden border-b border-line bg-white md:block">
+      <header className="sticky top-0 z-40 hidden border-b border-zappy-100 bg-zappy-50 md:block">
         <div className="mx-auto flex h-[76px] w-full max-w-6xl items-center gap-5 px-6">
           <NavLink to="/" aria-label="ZappyOne home" className="flex shrink-0 items-center">
             <ZappyWordmark size={30} />
           </NavLink>
-          <span className="h-9 w-px bg-slate-200" aria-hidden="true" />
+          <span className="h-9 w-px bg-zappy-100" aria-hidden="true" />
           <div className="w-[210px] shrink-0"><LocationBlock loc={loc} onPickLocation={onPickLocation} compact /></div>
           {/* Inline from laptop width; on a tablet it takes its own row below. */}
           <div className="hidden min-w-0 flex-1 lg:block">{search}</div>
@@ -202,7 +202,7 @@ export default function HomeHeader({ loc, isAuthed, avatar, onPickLocation, sear
           <nav className="flex shrink-0 items-center" aria-label="Main">
             {LINKS.map((l) => (
               <NavLink key={l.to} to={l.to} onMouseEnter={() => prefetchRoute(l.to)}
-                className="rounded-lg px-2.5 py-2 text-[14px] font-medium text-slate-600 transition hover:bg-slate-100 hover:text-navy lg:px-3">
+                className="rounded-btn px-2.5 py-2 text-[14px] font-medium text-zappy-700 transition hover:bg-white lg:px-3">
                 {l.label}
               </NavLink>
             ))}
@@ -216,7 +216,7 @@ export default function HomeHeader({ loc, isAuthed, avatar, onPickLocation, sear
       </header>
 
       {/* Phone: light header, scrolls away; search is pinned by the page below it. */}
-      <div className="bg-white md:hidden" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+      <div className="bg-zappy-50 md:hidden" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
         {/* Brand and place take turns in one slot. Profile lives in the bottom
             bar, so the phone header keeps the bell (signed in) or Sign in. */}
         <div className="flex items-center gap-2.5 px-4 pb-2 pt-3">
