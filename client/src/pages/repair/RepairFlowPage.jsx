@@ -814,10 +814,11 @@ function ModeStep({ diagnosis, inspectionFeePaise, onPick }) {
  */
 function ProviderStep({
   vertical, diagnosis, model, brand, configuration, problem,
-  location, hasLocation, serviceMode, onPick, onInspectInstead,
+  location, hasLocation, serviceMode, onPick, onInspectInstead, pinConfirmed = true, onPinConfirmed,
 }) {
   const dispatch = useDispatch();
-  const [picking, setPicking] = useState(false);
+  // Map first: the customer checks the pin before seeing who can come.
+  const [picking, setPicking] = useState(!pinConfirmed);
   // How the customer wants to compare the shops. 'best' keeps the server's
   // ranking; the others re-sort the SAME list so nobody is hidden.
   const [sortBy, setSortBy] = useState('best');
@@ -843,6 +844,7 @@ function ProviderStep({
 
   function confirmPin({ address, lat, lng }) {
     dispatch(setLocation({ lat, lng, address }));
+    onPinConfirmed?.();
     setPicking(false);
   }
 
@@ -852,7 +854,8 @@ function ProviderStep({
       <div className="fixed inset-0 z-50 bg-white">
         <LocationPicker
           onConfirm={confirmPin}
-          onCancel={() => setPicking(false)}
+          // Cancelling the first look keeps the saved spot; nothing is lost.
+          onCancel={() => { if (hasLocation) onPinConfirmed?.(); setPicking(false); }}
           serviceLabel={`${brand?.name || ''} ${model?.name || 'device'}`.trim()}
           service={vertical}
         />
@@ -1118,7 +1121,7 @@ function ChosenSummary({
       >
         <MapPin size={12} className="mt-0.5 shrink-0 text-zappy-500" />
         <span className="min-w-0 flex-1 text-[12px] leading-snug text-slate-600">
-          {location.address || 'Pin dropped on the map'}
+          {location.address || 'Your pinned location'}
         </span>
         <span className="shrink-0 text-[11px] font-bold text-zappy-600">Change</span>
       </button>
@@ -1487,6 +1490,10 @@ export default function RepairFlowPage({ vertical = 'mobile' }) {
   const nav = useNavigate();
   const loc = useSelector(selectLocation);
   const hasLocation = useSelector(selectHasLocation);
+  // The address is confirmed on the map once per booking, at the step where it
+  // starts to matter (who can come here) — not assumed from wherever the app
+  // last saw the phone.
+  const [pinConfirmed, setPinConfirmed] = useState(false);
 
   /**
    * Does this vertical identify devices deeply?
@@ -1669,6 +1676,7 @@ export default function RepairFlowPage({ vertical = 'mobile' }) {
           vertical={vertical} diagnosis={diagnosis} model={model} brand={brand}
           configuration={configuration} problem={problem}
           location={loc} hasLocation={hasLocation}
+          pinConfirmed={pinConfirmed} onPinConfirmed={() => setPinConfirmed(true)}
           serviceMode={serviceMode}
           onInspectInstead={() => setServiceMode('diagnosis_only')}
           onPick={(p, code, quality) => {
