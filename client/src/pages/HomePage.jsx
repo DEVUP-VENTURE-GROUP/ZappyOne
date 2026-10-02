@@ -194,6 +194,14 @@ export default function HomePage() {
   }, [pastJobs]);
 
   const notHere = svc?.status === 'not_here';
+  const searchBar = (
+    <SearchBar
+      terms={searchTerms}
+      onOpen={() => setSpotOpen(true)}
+      onVoice={(text) => { setSpotQuery(text); setSpotOpen(true); }}
+      onLens={() => setLensOpen(true)}
+    />
+  );
 
   return (
     <>
@@ -211,25 +219,20 @@ export default function HomePage() {
         initialQuery={spotQuery}
       />
 
-      <div className="min-h-screen w-full overflow-x-hidden bg-[#F4F7FB]">
+      {/* overflow-x-clip, not hidden: hidden makes this a scroll box and breaks the sticky header. */}
+      <div className="min-h-screen w-full overflow-x-clip bg-[#F4F7FB]">
         <HomeHeader
           loc={loc}
           svc={svc}
           isAuthed={isAuthed}
           avatar={profile?.avatar}
           onPickLocation={() => setLocSheet(true)}
+          search={searchBar}
         />
 
-        {/* Search stays pinned while the rest scrolls. */}
-        <div className="sticky top-0 z-30 bg-zappy-600 shadow-[0_8px_16px_-14px_rgba(15,23,42,0.6)]">
-          <div className="mx-auto w-full max-w-6xl px-4 pb-3 sm:px-6">
-            <SearchBar
-              terms={searchTerms}
-              onOpen={() => setSpotOpen(true)}
-              onVoice={(text) => { setSpotQuery(text); setSpotOpen(true); }}
-              onLens={() => setLensOpen(true)}
-            />
-          </div>
+        {/* Phone: search stays pinned while the rest scrolls (desktop has it in the bar). */}
+        <div className="sticky top-0 z-30 border-b border-slate-200/70 bg-[#F4F7FB]/95 backdrop-blur md:hidden">
+          <div className="px-4 pb-3 pt-1">{searchBar}</div>
         </div>
 
         <main className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 pb-10 pt-5 sm:gap-10 sm:px-6 sm:pt-7">

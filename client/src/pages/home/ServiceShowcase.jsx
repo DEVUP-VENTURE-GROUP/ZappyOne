@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { ArrowRight, Wrench } from 'lucide-react';
 import { SERVICE_ICONS } from '@shared/components/home/LiveServices';
 import { artFor, PITCH } from '@shared/components/home/serviceArt';
@@ -87,9 +88,14 @@ export default function ServiceShowcase({ domains, onOpen }) {
   if (!domains.length) return null;
   return (
     <section aria-labelledby="showcase-title" className="flex flex-col gap-4">
-      <div>
-        <h2 id="showcase-title" className="text-[20px] font-bold text-navy sm:text-[26px]">Everything we do in Telangana</h2>
-        <p className="mt-1 text-[14px] text-slate-500">Verified pros, fixed prices before work starts, live tracking on every job.</p>
+      <div className="flex items-end justify-between gap-4">
+        <div>
+          <h2 id="showcase-title" className="text-[20px] font-bold text-navy sm:text-[26px]">Everything we do in Telangana</h2>
+          <p className="mt-1 text-[14px] text-slate-500">Verified pros, fixed prices before work starts, live tracking on every job.</p>
+        </div>
+        <Link to="/services" className="flex shrink-0 items-center gap-1 text-[14px] font-semibold text-zappy-600 hover:text-zappy-700">
+          See all <ArrowRight size={15} />
+        </Link>
       </div>
       {domains.map((d, i) => <Band key={d.code} domain={d} tone={BANDS[i % BANDS.length]} onOpen={onOpen} />)}
     </section>

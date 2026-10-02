@@ -4,13 +4,13 @@ import { Bell, UserRound } from 'lucide-react';
 import { selectAuth, selectIsAuthed } from '@shared/modules/auth/authSlice';
 import { useListNotificationsQuery } from '@shared/services/api';
 import { useT } from '@shared/i18n/I18nProvider';
-import { ZappyLogo, ZappyAppIcon } from '@shared/components/common/ZappyLogo';
+import { ZappyLogo } from '@shared/components/common/ZappyLogo';
 import { prefetchRoute } from '../../lib/routePrefetch';
 
 /**
  * Top navigation from tablet width up; phones keep the bottom bar.
- * On Home it takes the brand blue so it and the home header read as one
- * header; everywhere else it is a plain white bar.
+ * Home draws its own bar with location and search in it, so this one steps
+ * aside there; everywhere else it is a plain white bar.
  */
 const LINKS = [
   { to: '/', label: 'Home', tKey: 'nav.home', end: true },
@@ -28,19 +28,17 @@ export default function DesktopNav() {
   const { data } = useListNotificationsQuery({ page: 1, unreadOnly: true }, { skip: !isAuthed, pollingInterval: 60000 });
   const unread = data?.unread ?? data?.notifications?.length ?? 0;
 
-  const onBrand = pathname === '/';
-  const bar = onBrand ? 'bg-zappy-600 text-white' : 'bg-white text-navy border-b border-slate-200';
-  const link = (active) => (onBrand
-    ? `${active ? 'bg-white/15 text-white' : 'text-white/80 hover:text-white'}`
-    : `${active ? 'bg-zappy-50 text-zappy-700' : 'text-slate-600 hover:text-navy'}`);
-  const iconBtn = onBrand ? 'bg-white/15 hover:bg-white/25' : 'bg-slate-100 hover:bg-slate-200';
+  // Home draws its own bar (location + search inside it): see pages/home/HomeHeader.
+  if (pathname === '/' || pathname === '/home') return null;
+  const bar = 'bg-white text-navy border-b border-slate-200';
+  const link = (active) => (active ? 'bg-zappy-50 text-zappy-700' : 'text-slate-600 hover:text-navy');
+  const iconBtn = 'bg-slate-100 hover:bg-slate-200';
 
   return (
     <header className={`hidden md:block ${bar}`}>
       <div className="mx-auto flex h-14 w-full max-w-6xl items-center gap-6 px-6">
         <NavLink to="/" className="flex items-center gap-2" aria-label="ZappyOne home">
-          {/* The official mark; on the blue bar it sits on its white tile. */}
-          {onBrand ? <ZappyAppIcon size={32} variant="light" /> : <ZappyLogo size={30} />}
+          <ZappyLogo size={30} />
           <span className="text-[17px] font-bold">ZappyOne</span>
         </NavLink>
 
@@ -78,7 +76,7 @@ export default function DesktopNav() {
             </button>
           ) : (
             <button type="button" onClick={() => nav('/login')}
-              className={`rounded-lg px-3.5 py-1.5 text-[14px] font-semibold ${onBrand ? 'bg-white text-zappy-700' : 'bg-zappy-600 text-white'}`}>
+              className="rounded-lg bg-zappy-600 px-3.5 py-1.5 text-[14px] font-semibold text-white">
               Sign in
             </button>
           )}
