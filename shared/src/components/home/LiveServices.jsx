@@ -4,7 +4,7 @@ import {
   Zap, Droplet, Droplets, AirVent, Sparkles, Wrench, ChevronRight,
   Monitor, Battery, Plug, Keyboard, Volume2, Camera, HardDrive, Gauge,
   Wifi, Thermometer, CircuitBoard, Database, ArrowUpCircle, Wand2, ShieldAlert,
-  ClipboardCheck, Footprints, PackageCheck, PawPrint, Scissors, ShoppingBag, ShoppingBasket, Stethoscope, PartyPopper,
+  ClipboardCheck, ShieldCheck, Footprints, PackageCheck, PawPrint, Scissors, ShoppingBag, ShoppingBasket, Stethoscope, PartyPopper,
 } from 'lucide-react';
 import { useLiveCatalogQuery } from '../../services/api';
 import { distinctArt } from './serviceArt';
@@ -78,14 +78,19 @@ export const CATEGORY_ICONS = {
  */
 export function CategoryTile({ category, onOpen }) {
   const Icon = CATEGORY_ICONS[category.code] || SERVICE_ICONS[category.icon] || Wrench;
-  const count = category.problems?.length || 0;
+  const problems = category.problems || [];
+  const count = problems.length;
+  // A repair heading previews what it covers, from the catalog's own names.
+  const preview = count
+    ? `${problems.slice(0, 2).map((p) => p.name).join(', ')}${count > 2 ? ' & more' : ''}`
+    : '';
 
   return (
     <button
       onClick={onOpen}
-      className="group flex w-[136px] shrink-0 snap-start flex-col text-left sm:w-[156px]"
+      className="group flex w-[168px] shrink-0 snap-start flex-col overflow-hidden rounded-card border border-line bg-white text-left transition-colors duration-150 hover:border-line-strong active:bg-canvas sm:w-[200px]"
     >
-      <span className="relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-card border border-line bg-sunken">
+      <span className="relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden bg-sunken">
         {category.imageUrl ? (
           <img
             src={category.imageUrl}
@@ -97,20 +102,41 @@ export function CategoryTile({ category, onOpen }) {
               category.imageUrl.startsWith('/characters/') ? 'object-contain mix-blend-multiply pt-1' : 'object-cover'}`}
           />
         ) : (
-          <span className="flex h-12 w-12 items-center justify-center rounded-full border border-line bg-white text-zappy-600">
-            <Icon size={22} strokeWidth={1.8} />
+          <span className="flex h-14 w-14 items-center justify-center rounded-full border border-line bg-white text-zappy-600">
+            <Icon size={24} strokeWidth={1.8} />
+          </span>
+        )}
+        {count > 0 && (
+          <span className="chip absolute bottom-2 left-2 bg-white/95 font-semibold tabular-nums text-ink-900">
+            {count} {count === 1 ? 'problem' : 'problems'}
           </span>
         )}
       </span>
 
-      {/* Fixed height keeps one-line and two-line names on the same baseline. */}
-      <span className="flex h-[56px] flex-col justify-start pt-2">
-        <span className="line-clamp-2 text-[14px] font-semibold leading-[1.25] text-ink-900">
-          {category.name}
-        </span>
-        <span className="mt-auto text-[12px] text-ink-500">
-          {category.subtitle ?? `${count} ${count === 1 ? 'issue' : 'issues'}`}
-        </span>
+      {/* Fixed height keeps every tile in a row the same, whatever the name. */}
+      <span className={`flex flex-col gap-1 p-3 ${count ? 'h-[118px]' : 'h-[96px]'}`}>
+        <span className={`${count ? 'line-clamp-1' : 'line-clamp-2'} text-[15px] font-bold leading-snug text-ink-900`}>{category.name}</span>
+        {count > 0 ? (
+          <>
+            <span className="line-clamp-2 text-[12.5px] leading-snug text-ink-500">{preview}</span>
+            <span className="mt-auto flex items-center justify-between gap-2">
+              {/* True for every repair: the quote comes first, nothing starts until it is approved. */}
+              <span className="flex items-center gap-1 text-[12px] font-semibold text-green-700">
+                <ShieldCheck size={13} /> Quote first
+              </span>
+              <span className="flex items-center text-[12px] font-semibold text-zappy-600">
+                View <ChevronRight size={14} />
+              </span>
+            </span>
+          </>
+        ) : (
+          <>
+            {category.subtitle ? <span className="line-clamp-1 text-[12px] text-ink-500">{category.subtitle}</span> : null}
+            <span className="mt-auto flex items-center justify-end text-[12px] font-semibold text-zappy-600">
+              Book <ChevronRight size={14} />
+            </span>
+          </>
+        )}
       </span>
     </button>
   );
