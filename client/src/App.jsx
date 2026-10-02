@@ -63,7 +63,6 @@ const MyPetsPage                    = lazy(() => import('./pages/pet/MyPetsPage'
 const PetDetailPage                 = lazy(() => import('./pages/pet/PetDetailPage'));
 const PetBookingFlowPage            = lazy(() => import('./pages/pet/PetBookingFlowPage'));
 const PetBookingDetailPage          = lazy(() => import('./pages/pet/PetBookingDetailPage'));
-const PetBookingsListPage           = lazy(() => import('./pages/pet/PetBookingsListPage'));
 const PetRecurringPage              = lazy(() => import('./pages/pet/PetRecurringPage'));
 const ShopPublicProfilePage        = lazy(() => import('./pages/ShopPublicProfilePage'));
 const SpendingPage                 = lazy(() => import('./pages/SpendingPage'));
@@ -202,7 +201,8 @@ export default function App() {
         <Route path="/pet/my-pets" element={<RequireAuth role="user"><MyPetsPage /></RequireAuth>} />
         <Route path="/pet/my-pets/:id" element={<RequireAuth role="user"><PetDetailPage /></RequireAuth>} />
         <Route path="/pet/book/:categoryCode" element={<RequireAuth role="user"><PetBookingFlowPage /></RequireAuth>} />
-        <Route path="/pet/bookings" element={<RequireAuth role="user"><PetBookingsListPage /></RequireAuth>} />
+        {/* Pet bookings live in My bookings with every other kind (useMyJobs). */}
+        <Route path="/pet/bookings" element={<Navigate to="/orders" replace />} />
         <Route path="/pet/bookings/:id" element={<RequireAuth role="user"><PetBookingDetailPage /></RequireAuth>} />
         <Route path="/pet/recurring" element={<RequireAuth role="user"><PetRecurringPage /></RequireAuth>} />
         {/* One heading — Display, Storage, Connectivity — and everything under it. */}

@@ -2,7 +2,12 @@ import { io } from 'socket.io-client';
 
 // In dev Vite proxies /socket.io → backend:4000, but WebSocket upgrades can
 // fail on some systems. Use polling first then upgrade to WS automatically.
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || '/';
+//
+// In production the apps (Vercel) and the API are on different origins, so the
+// socket must go to the API: VITE_SOCKET_URL if set, else VITE_API_URL — never
+// the app's own origin, which has no socket server and would leave every
+// live update silently dead.
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_API_URL || '/';
 
 let socket = null;
 
@@ -24,7 +29,9 @@ export function getSocket(token) {
     auth: { token },
     transports: ['polling', 'websocket'],
     reconnection: true,
-    reconnectionAttempts: 10,
+    // Keep trying: a deploy or server restart can take longer than a minute,
+    // and a socket that gave up stays dead until the customer reloads.
+    reconnectionAttempts: Infinity,
     reconnectionDelay: 1000,
     reconnectionDelayMax: 5000,
     timeout: 10000,
