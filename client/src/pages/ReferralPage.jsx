@@ -3,9 +3,22 @@ import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import {
-  Copy, Check, Share2, MessageCircle, Link2, Gift,
-  Users, Clock, IndianRupee, ChevronRight, ArrowLeft,
-  UserCheck, Sparkles, CircleDot, Trophy, Flame, Wallet
+  Copy,
+  Check,
+  Share2,
+  MessageCircle,
+  Link2,
+  Gift,
+  Users,
+  Clock,
+  IndianRupee,
+  ChevronRight,
+  ArrowLeft,
+  UserCheck,
+  CircleDot,
+  Trophy,
+  Flame,
+  Wallet,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { selectAuth } from '@shared/modules/auth/authSlice';
@@ -96,7 +109,7 @@ function TiltCard({ code, isLoading, copied, handleCopyCode }) {
          <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-50" />
          
          <div className="relative h-full flex flex-col items-center justify-center p-6 text-center z-10">
-            <Sparkles className="text-amber-400 mb-2" size={24} />
+            <Gift className="text-amber-400 mb-2" size={24} />
             <p className="text-[10px] text-zappy-300 font-bold uppercase tracking-[0.3em] mb-4">Your VIP Code</p>
             
             {isLoading ? (

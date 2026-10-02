@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, X, Wallet, ArrowRight } from 'lucide-react';
+import { X, Wallet, ArrowRight, Gift } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 /* Confetti particle (pure CSS animation, no lib) */
@@ -211,7 +211,7 @@ export default function CashbackCelebration({ amountPaise, totalEarnedPaise, onC
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.6 }}
               >
-                <Sparkles size={13} className="text-amber-400" />
+                <Gift size={13} className="text-amber-400" />
                 <p className="text-xs font-bold text-white/60">
                   Total cashback earned:
                   <span className="text-amber-400 ml-1.5">₹{totalEarned}</span>

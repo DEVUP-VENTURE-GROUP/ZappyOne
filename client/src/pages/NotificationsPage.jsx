@@ -1,10 +1,27 @@
 import { useState, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
-  ArrowLeft, Bell, CheckCheck, Package, CreditCard,
-  Zap, MapPin, Star, Gift, ShieldCheck, AlertTriangle,
-  Wallet, Trophy, Clock, ChevronRight, Sparkles,
-  Settings, CheckCircle2, XCircle, AlertCircle, Rocket
+  ArrowLeft,
+  Bell,
+  CheckCheck,
+  Package,
+  CreditCard,
+  Zap,
+  MapPin,
+  Star,
+  Gift,
+  ShieldCheck,
+  AlertTriangle,
+  Wallet,
+  Trophy,
+  Clock,
+  ChevronRight,
+  Settings,
+  CheckCircle2,
+  XCircle,
+  AlertCircle,
+  Rocket,
+  Tag,
 } from 'lucide-react';
 import {
   useListNotificationsQuery,
@@ -34,7 +51,7 @@ const TYPE_CONFIG = {
   late_arrival_penalty: { icon: Clock,        label: 'Penalty',        color: 'text-slate-500' },
   trip_started:         { icon: Rocket,       label: 'Trip Started',   color: 'text-[#0066FF]' },
   refund_processed:     { icon: CreditCard,   label: 'Refund',         color: 'text-[#0066FF]' },
-  promotional:          { icon: Sparkles,     label: 'Offer',          color: 'text-[#0066FF]' },
+  promotional:          { icon: Tag,     label: 'Offer',          color: 'text-[#0066FF]' },
   system_alert:         { icon: Bell,         label: 'Alert',          color: 'text-slate-500' },
 };
 const DEFAULT_CFG = { icon: Bell, label: 'Notification', color: 'text-[#0066FF]' };
@@ -71,10 +88,10 @@ function EmptyState() {
         <Bell size={28} strokeWidth={1.5} className="text-slate-400" />
       </div>
       <div className="max-w-sm">
-        <p className="text-[18px] font-semibold text-slate-900 mb-2 font-['Poppins',sans-serif]">
+        <p className="text-[18px] font-semibold text-slate-900 mb-2">
           You're all caught up.
         </p>
-        <p className="text-[14px] text-slate-500 leading-relaxed font-['Poppins',sans-serif]">
+        <p className="text-[14px] text-slate-500 leading-relaxed">
           New notifications will appear here when there are booking updates, payments, offers, or account activity.
         </p>
       </div>
@@ -105,7 +122,7 @@ function NotifCard({ n, onTap }) {
         <Icon size={20} strokeWidth={unread ? 2.5 : 2} />
       </div>
 
-      <div className="flex-1 min-w-0 font-['Poppins',sans-serif]">
+      <div className="flex-1 min-w-0">
         <div className="flex justify-between items-start gap-3">
           <p className={`text-[15px] leading-snug mb-1 ${unread ? 'font-semibold text-slate-900' : 'font-medium text-slate-700'}`}>
             {n.title}
@@ -134,7 +151,7 @@ function NotifCard({ n, onTap }) {
 /* Section header */
 function SectionLabel({ label }) {
   return (
-    <h3 className="px-1 pt-8 pb-4 text-[13px] font-semibold text-slate-400 uppercase tracking-widest font-['Poppins',sans-serif]">
+    <h3 className="px-1 pt-8 pb-4 text-[13px] font-semibold text-slate-400 uppercase tracking-widest">
       {label}
     </h3>
   );
@@ -166,7 +183,7 @@ export default function NotificationsPage() {
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-white font-['Poppins',sans-serif]">
+      <div className="min-h-screen bg-white">
         
         {/* Header Area */}
         <header className="w-full max-w-[960px] mx-auto px-5 md:px-8 pt-10 pb-6 md:pt-14 md:pb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-6 border-b border-slate-100">

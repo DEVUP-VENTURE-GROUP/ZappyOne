@@ -68,7 +68,7 @@ function TeamPanel({ workers, jobs, onManage }) {
     <Panel
       title="Your team"
       action={(
-        <button onClick={onManage} className="flex items-center gap-1 text-[12px] font-bold text-indigo-600">
+        <button onClick={onManage} className="flex items-center gap-1 text-[12px] font-bold text-zappy-600">
           Manage <ChevronRight size={13} strokeWidth={3} />
         </button>
       )}
@@ -80,7 +80,7 @@ function TeamPanel({ workers, jobs, onManage }) {
           <p className="mt-0.5 text-[11.5px] leading-relaxed text-slate-500">
             Add your technicians so you can hand jobs to them instead of doing every one yourself.
           </p>
-          <button onClick={onManage} className="mt-3 rounded-xl bg-indigo-600 px-4 py-2 text-[12px] font-bold text-white">
+          <button onClick={onManage} className="mt-3 rounded-xl bg-zappy-600 px-4 py-2 text-[12px] font-bold text-white">
             Add a technician
           </button>
         </div>
@@ -90,7 +90,7 @@ function TeamPanel({ workers, jobs, onManage }) {
             const load = loadByWorker.get(String(w._id)) || 0;
             return (
               <div key={w._id} className="flex items-center gap-2.5 rounded-xl bg-slate-50 px-3 py-2.5">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-[12px] font-bold text-white">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-zappy-600 text-[12px] font-bold text-white">
                   {(w.name || '?').charAt(0).toUpperCase()}
                 </span>
                 <span className="min-w-0 flex-1">
@@ -98,7 +98,7 @@ function TeamPanel({ workers, jobs, onManage }) {
                   <span className="text-[11px] text-slate-400">{w.phone}</span>
                 </span>
                 <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10.5px] font-bold ${
-                  load ? 'bg-indigo-50 text-indigo-700' : 'bg-emerald-50 text-emerald-700'
+                  load ? 'bg-zappy-50 text-zappy-700' : 'bg-emerald-50 text-emerald-700'
                 }`}>
                   {load ? `${load} job${load === 1 ? '' : 's'}` : 'Free'}
                 </span>
@@ -106,7 +106,7 @@ function TeamPanel({ workers, jobs, onManage }) {
             );
           })}
           {workers.length > 5 && (
-            <button onClick={onManage} className="w-full pt-1 text-[11.5px] font-bold text-indigo-600">
+            <button onClick={onManage} className="w-full pt-1 text-[11.5px] font-bold text-zappy-600">
               +{workers.length - 5} more
             </button>
           )}
@@ -166,7 +166,7 @@ export default function ShopDashboard() {
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#F8FAFC]">
-        <Loader2 size={28} className="animate-spin text-indigo-500" />
+        <Loader2 size={28} className="animate-spin text-zappy-500" />
       </div>
     );
   }
@@ -214,7 +214,7 @@ export default function ShopDashboard() {
   const statCards = [
     { Icon: IndianRupee, tone: 'green', label: "Today's Earnings", value: inr(earnings?.earningsRupees || 0), sub: 'View details', onClick: () => nav('/shop/earnings') },
     { Icon: Briefcase, tone: 'amber', label: "Today's Jobs", value: earnings?.jobs || 0, sub: 'View all', onClick: () => nav('/shop/earnings') },
-    { Icon: Wrench, tone: 'blue', label: 'Needs action', value: needsAction.length, sub: needsAction.length ? 'Assign now' : null, subTone: 'text-indigo-600' },
+    { Icon: Wrench, tone: 'blue', label: 'Needs action', value: needsAction.length, sub: needsAction.length ? 'Assign now' : null, subTone: 'text-zappy-600' },
     { Icon: Users, tone: 'violet', label: 'Technicians', value: workers.length, sub: 'Manage team', onClick: () => nav('/shop/workers') },
     { Icon: Star, tone: 'cyan', label: 'Rating', value: shop?.rating ? Number(shop.rating).toFixed(1) : '—', sub: `${shop?.reviewCount || 0} reviews` },
     { Icon: ShieldCheck, tone: 'rose', label: 'Awaiting approval', value: pendingApprovals, sub: pendingApprovals ? 'Skills & prices' : null },

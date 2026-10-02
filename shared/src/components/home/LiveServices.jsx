@@ -4,7 +4,7 @@ import {
   Zap, Droplet, Droplets, AirVent, Sparkles, Wrench, ChevronRight,
   Monitor, Battery, Plug, Keyboard, Volume2, Camera, HardDrive, Gauge,
   Wifi, Thermometer, CircuitBoard, Database, ArrowUpCircle, Wand2, ShieldAlert,
-  ClipboardCheck, Footprints, PackageCheck, PawPrint, Scissors, ShoppingBag, ShoppingBasket, Stethoscope,
+  ClipboardCheck, Footprints, PackageCheck, PawPrint, Scissors, ShoppingBag, ShoppingBasket, Stethoscope, PartyPopper,
 } from 'lucide-react';
 import { useLiveCatalogQuery } from '../../services/api';
 import { distinctArt } from './serviceArt';
@@ -30,7 +30,7 @@ import { distinctArt } from './serviceArt';
 export const SERVICE_ICONS = {
   Smartphone, Laptop, Cpu, Bike, Car, Truck, Home, HeartHandshake, Baby, Users,
   Zap, Droplet, Droplets, AirVent, Sparkles, Wrench,
-  ClipboardCheck, Footprints, PackageCheck, PawPrint, Scissors, ShoppingBag, ShoppingBasket, Stethoscope,
+  ClipboardCheck, Footprints, PackageCheck, PawPrint, Scissors, ShoppingBag, ShoppingBasket, Stethoscope, PartyPopper,
 };
 
 /**
@@ -58,7 +58,7 @@ export const CATEGORY_ICONS = {
   physical: ShieldAlert,
   data_recovery: Database,
   upgrade: ArrowUpCircle,
-  maintenance: Sparkles,
+  maintenance: Wrench,
 };
 
 /**
@@ -85,7 +85,7 @@ export function CategoryTile({ category, onOpen, large = false }) {
       onClick={onOpen}
       className={`group flex shrink-0 snap-start flex-col text-left ${large ? 'w-[132px] sm:w-[150px]' : 'w-[112px] sm:w-[128px]'}`}
     >
-      <span className="relative flex aspect-[5/4] w-full items-center justify-center overflow-hidden rounded-lg bg-[#E9F0FB]">
+      <span className="relative flex aspect-[5/4] w-full items-center justify-center overflow-hidden rounded-btn bg-sunken">
         {category.imageUrl ? (
           <img
             src={category.imageUrl}
@@ -96,16 +96,16 @@ export function CategoryTile({ category, onOpen, large = false }) {
               category.imageUrl.startsWith('/characters/') ? 'object-contain mix-blend-multiply pt-1' : 'object-cover'}`}
           />
         ) : (
-          <Icon size={24} className="text-zappy-700" strokeWidth={1.5} />
+          <Icon size={24} className="text-ink-700" strokeWidth={1.6} />
         )}
       </span>
 
       {/* Fixed height keeps one-line and two-line names on the same baseline. */}
       <span className="flex h-[50px] flex-col justify-start pt-1.5">
-        <span className="line-clamp-2 text-[12px] font-medium leading-[1.3] text-navy">
+        <span className="line-clamp-2 text-[13px] font-medium leading-[1.25] text-ink-900">
           {category.name}
         </span>
-        <span className="mt-auto text-[11px] text-slate-500">
+        <span className="mt-auto text-[12px] text-ink-500">
           {category.subtitle ?? `${count} ${count === 1 ? 'issue' : 'issues'}`}
         </span>
       </span>

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -34,12 +34,13 @@
 
 @layer base {
   :root {
-    --zappy-blue:    #2563EB;
-    --zappy-navy:    #0F172A;
-    --zappy-success: #22C55E;
+    --zappy-blue:    #1F4FD8;
+    --zappy-navy:    #101828;
+    --zappy-success: #16A34A;
     --zappy-accent:  #F59E0B;
-    --zappy-bg:      #FAFAFB;
-    --zappy-text:    #111827;
+    --zappy-bg:      #F5F6F8;
+    --zappy-text:    #101828;
+    --zappy-line:    #E3E6EB;
   }
 
   html, body, #root {
@@ -53,7 +54,8 @@
   }
 
   body {
-    @apply font-sans text-[#111827] antialiased;
+    @apply font-sans text-[#101828] antialiased;
+    font-feature-settings: 'tnum' 0;
     background-color: var(--zappy-bg);
     -webkit-tap-highlight-color: transparent;
     -webkit-font-smoothing: antialiased;
@@ -100,8 +102,7 @@
 
   /* ---- Header ---- */
   .page-header {
-    @apply bg-white border-b border-slate-100 sticky top-0 z-20
-           backdrop-blur-sm bg-white/95;
+    @apply bg-white border-b border-line sticky top-0 z-20;
   }
 
   .page-header-inner {
@@ -112,110 +113,86 @@
 
   /* ---- Back button ---- */
   .back-btn {
-    @apply w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center
-           text-slate-600 cursor-pointer
-           transition-all duration-200 ease-out
-           hover:bg-slate-200 hover:text-slate-800
-           active:scale-95 active:bg-slate-300
-           shrink-0;
-    will-change: transform;
+    @apply w-10 h-10 rounded-btn flex items-center justify-center
+           text-ink-700 cursor-pointer shrink-0
+           transition-colors duration-150 ease-out
+           hover:bg-sunken active:bg-line;
   }
 
   /* ---- Buttons ---- */
+  /* Buttons: one solid primary per view; colour changes on hover and a small
+     press on tap — no glow, no lift. 44px minimum height for thumbs. */
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-btn px-5 py-3.5
-           text-[15px] font-bold cursor-pointer tracking-wide
-           transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)]
-           active:scale-[0.96]
+    @apply inline-flex min-h-[44px] items-center justify-center gap-2 rounded-btn px-5 py-3
+           text-[15px] font-semibold cursor-pointer
+           transition-[background-color,border-color,color,transform] duration-150 ease-out
+           active:scale-[0.98]
+           focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-zappy-600/20
            disabled:opacity-50 disabled:pointer-events-none;
-    will-change: transform, box-shadow;
   }
 
   .btn-primary {
-    @apply btn bg-zappy-600 text-white shadow-[0_8px_24px_-4px_rgba(37,99,235,0.35)]
-           hover:bg-zappy-500 hover:shadow-lg hover:-translate-y-0.5
-           active:bg-zappy-700 active:translate-y-0 active:shadow-[0_8px_24px_-4px_rgba(37,99,235,0.35)];
+    @apply btn bg-zappy-600 text-white hover:bg-zappy-700 active:bg-zappy-800;
   }
 
   .btn-success {
-    @apply btn bg-success-500 text-white shadow-[0_8px_24px_-4px_rgba(34,197,94,0.35)]
-           hover:bg-success-600 hover:shadow-lg hover:-translate-y-0.5
-           active:bg-success-700 active:translate-y-0;
+    @apply btn bg-success-600 text-white hover:bg-success-700;
   }
 
   .btn-outline {
-    @apply btn bg-white/80 backdrop-blur-sm text-zappy-700 border-2 border-zappy-100 shadow-sm
-           hover:bg-zappy-50 hover:border-zappy-200 hover:-translate-y-0.5;
+    @apply btn bg-white text-ink-900 border border-line-strong hover:bg-canvas;
   }
 
   .btn-secondary {
-    @apply btn bg-slate-100/80 backdrop-blur-sm text-slate-700 shadow-sm
-           hover:bg-slate-200/80 hover:text-slate-900 hover:-translate-y-0.5
-           active:bg-slate-300;
+    @apply btn bg-sunken text-ink-900 hover:bg-line;
   }
 
   .btn-danger {
-    @apply btn bg-red-500 text-white shadow-[0_8px_24px_-4px_rgba(239,68,68,0.30)]
-           hover:bg-red-400 hover:shadow-lg hover:-translate-y-0.5
-           active:bg-red-600 active:translate-y-0;
+    @apply btn bg-red-600 text-white hover:bg-red-700;
   }
 
   .btn-icon {
-    /* 44×44px minimum touch target (WCAG 2.5.5 / Apple HIG). Was 40×40. (#68) */
-    @apply inline-flex items-center justify-center rounded-xl w-11 h-11 cursor-pointer
-           transition-all duration-200 ease-out
-           active:scale-95 hover:brightness-95;
-    will-change: transform;
+    /* 44×44px minimum touch target (WCAG 2.5.5 / Apple HIG). */
+    @apply inline-flex items-center justify-center rounded-btn w-11 h-11 cursor-pointer
+           transition-colors duration-150 ease-out hover:bg-sunken active:bg-line;
   }
 
   /* ---- Cards ---- */
+  /* Cards: a white surface on the canvas, separated by a hairline — not glass,
+     not shadow. A tappable card answers with a background change. */
   .card {
-    @apply rounded-[24px] bg-white/90 backdrop-blur-xl shadow-soft ring-1 ring-slate-900/5 p-5
-           transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)];
+    @apply rounded-card bg-white border border-line p-5;
   }
 
-  /* Automatically lift clickable cards */
   button.card,
   a.card {
-    @apply cursor-pointer;
-    will-change: transform;
-  }
-  button.card:hover,
-  a.card:hover {
-    @apply -translate-y-0.5 shadow-soft-lg ring-slate-200;
-  }
-  button.card:active,
-  a.card:active {
-    @apply translate-y-0 shadow-card scale-[0.99];
+    @apply cursor-pointer transition-colors duration-150 ease-out hover:border-line-strong active:bg-canvas;
   }
 
   .card-elevated {
-    @apply rounded-[24px] bg-white/95 backdrop-blur-xl shadow-soft-lg ring-1 ring-slate-900/5 p-6;
+    @apply rounded-card bg-white border border-line shadow-soft-lg p-6;
   }
 
   .card-hero {
-    @apply rounded-card text-white p-6 relative overflow-hidden shadow-soft-lg;
-    background: linear-gradient(135deg, #2563EB 0%, #0F172A 100%);
+    @apply rounded-card text-white p-6 relative overflow-hidden bg-zappy-600;
   }
 
   /* ---- Inputs ---- */
   .input {
-    @apply w-full rounded-btn border border-slate-200 bg-white px-4 py-3
-           text-[15px] font-medium text-[#111827]
-           outline-none
-           transition-all duration-200 ease-out
-           focus:ring-2 focus:ring-zappy-600/20 focus:border-zappy-600
-           hover:border-slate-300
-           placeholder:text-slate-400 placeholder:font-normal;
+    @apply w-full min-h-[44px] rounded-btn border border-line-strong bg-white px-3.5 py-2.5
+           text-[15px] text-ink-900 outline-none
+           transition-[border-color,box-shadow] duration-150 ease-out
+           focus:border-zappy-600 focus:ring-4 focus:ring-zappy-600/15
+           placeholder:text-ink-400;
   }
 
   .input-label {
-    @apply block text-xs font-semibold text-slate-500 mb-1.5 tracking-wide uppercase;
+    @apply block text-[13px] font-semibold text-ink-700 mb-1.5;
   }
 
-  /* ---- Chips ---- */
+  /* ---- Chips: status, not decoration. Small radius, never a pill. ---- */
   .chip {
-    @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold;
+    @apply inline-flex items-center gap-1.5 rounded-chip px-2 py-0.5 text-[12px] font-semibold;
   }
 
   .chip-blue    { @apply chip bg-zappy-50 text-zappy-700; }
@@ -225,38 +202,35 @@
   .chip-red     { @apply chip bg-red-50 text-red-600; }
 
   /* ---- Typography ---- */
+  /* Type scale: 12 / 13 / 15 / 17 / 20 / 24 / 30. Weights 400 / 600 / 700. */
   .h-display {
-    @apply text-[32px] sm:text-[40px] leading-tight font-bold tracking-tight text-[#0F172A];
+    @apply text-[24px] sm:text-[30px] leading-tight font-bold tracking-[-0.02em] text-ink-900;
   }
   .h-section {
-    @apply text-xl sm:text-2xl leading-8 font-semibold text-[#0F172A];
+    @apply text-[17px] sm:text-[20px] leading-snug font-bold tracking-[-0.01em] text-ink-900;
   }
   .h-card {
-    @apply text-lg sm:text-xl leading-7 font-semibold text-[#0F172A];
+    @apply text-[17px] leading-snug font-semibold text-ink-900;
   }
-  .t-body   { @apply text-[15px] leading-6 text-[#111827]; }
-  .t-small  { @apply text-[13px] leading-5 text-slate-500; }
-  .t-label  { @apply text-[11px] font-semibold uppercase tracking-wider text-slate-400; }
-  .t-muted  { @apply text-sm text-slate-500; }
+  .t-body   { @apply text-[15px] leading-6 text-ink-900; }
+  .t-small  { @apply text-[13px] leading-5 text-ink-500; }
+  .t-label  { @apply text-[12px] font-semibold text-ink-500; }
+  .t-muted  { @apply text-[13px] text-ink-500; }
 
   .section-title {
-    @apply text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3;
+    @apply text-[13px] font-semibold text-ink-500 mb-3;
   }
 
   /* ---- Bottom nav ---- */
   .bottom-nav {
-    @apply fixed bottom-4 inset-x-4 bg-white/90 backdrop-blur-xl border border-slate-200/50
-           flex justify-around items-center px-2 py-2 rounded-full
-           shadow-[0_8px_32px_-4px_rgba(15,23,42,0.1)]
-           z-30 mx-auto max-w-md;
+    @apply fixed bottom-0 inset-x-0 bg-white border-t border-line
+           flex justify-around items-center px-2 pt-1.5 z-30;
+    padding-bottom: max(0.375rem, env(safe-area-inset-bottom));
   }
 
   .bottom-nav-item {
-    @apply flex flex-col items-center justify-center gap-1 py-1 px-3 min-h-[48px] rounded-full
-           text-[10px] font-semibold text-slate-400 tracking-wide
-           transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)]
-           hover:text-slate-700
-           active:scale-95;
+    @apply flex flex-col items-center justify-center gap-0.5 py-1 px-3 min-h-[48px]
+           text-[11px] font-semibold text-ink-400 transition-colors duration-150;
   }
 
   /* ---- Clean Typography ---- */

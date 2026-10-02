@@ -11,7 +11,6 @@ import { reverseGeocode } from '@shared/utils/reverseGeocode';
 import SEO, { HOME_SCHEMA, BASE_URL } from '@shared/components/SEO';
 import NotInYourArea from '../components/serviceability/NotInYourArea';
 import ClosedNowBanner from '../components/serviceability/ClosedNowBanner';
-import HeroCarousel from './home/HeroCarousel';
 import ServiceShowcase from './home/ServiceShowcase';
 import { foldIntoHub } from '@shared/components/home/serviceArt';
 import AdBanner from '../components/common/AdBanner';
@@ -42,22 +41,19 @@ import { eventPhoto } from '../lib/eventPhotos';
 /** Whatever is happening right now comes first — it is why most people open the app. */
 function ActiveJobCard({ job, onOpen }) {
   const needsYou = job.needsYou;
+  // State is a labelled chip and the action names itself; no coloured stripe.
   return (
-    <button
-      type="button"
-      onClick={onOpen}
-      className={`flex w-full items-center gap-3 rounded-xl border-l-4 bg-white px-4 py-3.5 text-left ${
-        needsYou ? 'border-amber-500' : 'border-zappy-600'}`}
-    >
+    <button type="button" onClick={onOpen}
+      className="flex w-full items-center gap-3 rounded-card border border-line bg-white px-4 py-3.5 text-left transition-colors duration-150 active:bg-canvas">
       <span className="min-w-0 flex-1">
-        <span className={`block text-[12px] font-semibold ${needsYou ? 'text-amber-700' : 'text-zappy-700'}`}>
-          {needsYou ? 'Waiting for your approval' : 'In progress'}
+        <span className={`chip ${needsYou ? 'bg-amber-50 text-amber-800' : 'bg-zappy-50 text-zappy-700'}`}>
+          {needsYou ? 'Needs your approval' : 'In progress'}
         </span>
-        <span className="block truncate text-[15px] font-semibold capitalize text-navy">{job.title}</span>
-        <span className="block truncate text-[13px] text-slate-500">{job.stage}</span>
+        <span className="mt-1.5 block truncate text-[15px] font-semibold capitalize text-ink-900">{job.title}</span>
+        <span className="block truncate text-[13px] text-ink-500">{job.stage}</span>
       </span>
-      <span className="flex shrink-0 items-center text-[13px] font-semibold text-zappy-600">
-        {needsYou ? 'Review' : 'Track'} <ChevronRight size={16} />
+      <span className={needsYou ? 'btn-primary min-h-[40px] shrink-0 px-4 text-[14px]' : 'flex shrink-0 items-center text-[14px] font-semibold text-zappy-600'}>
+        {needsYou ? 'Review' : <>Track <ChevronRight size={16} /></>}
       </span>
     </button>
   );
@@ -65,11 +61,11 @@ function ActiveJobCard({ job, onOpen }) {
 
 function SkeletonGrid() {
   return (
-    <div className="grid grid-cols-4 gap-x-3 gap-y-5 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8" aria-hidden="true">
+    <div className="grid grid-cols-4 gap-x-3 gap-y-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8" aria-hidden="true">
       {Array.from({ length: 8 }).map((_, i) => (
-        <div key={i} className="flex flex-col items-center gap-2">
-          <span className="aspect-square w-full animate-pulse rounded-2xl bg-slate-200/70" />
-          <span className="h-3 w-3/4 animate-pulse rounded bg-slate-200/70" />
+        <div key={i} className="flex flex-col items-center gap-1.5">
+          <span className="aspect-square w-full animate-pulse rounded-card bg-sunken" />
+          <span className="h-3 w-3/4 animate-pulse rounded bg-sunken" />
         </div>
       ))}
     </div>
@@ -126,7 +122,7 @@ export default function HomePage() {
       setLoc({ primary, secondary, loading: false, lat, lng });
       setLocSheet(false);
     } catch {
-      toast.error('Couldn’t get your location — search for it instead');
+      toast.error('Couldn’t get your location. Search for it instead.');
     } finally {
       setLocDetecting(false);
     }
@@ -161,10 +157,10 @@ export default function HomePage() {
       name: 'Events',
       description: 'Decor and event partners for every occasion.',
       services: [{
-        code: 'events', domainCode: 'events', name: 'Events & décor', icon: 'Sparkles', path: '/events',
+        code: 'events', domainCode: 'events', name: 'Events & décor', icon: 'PartyPopper', path: '/events',
         tagline: 'Birthdays, baby showers, anniversaries and more', highlights: [], coverage: [],
         options: cats.map((c) => ({
-          code: c.slug, name: c.name, icon: 'Sparkles',
+          code: c.slug, name: c.name, icon: 'PartyPopper',
           imageUrl: c.coverImage || eventPhoto(c.slug), path: `/events/browse?category=${c.slug}`,
         })),
       }],
@@ -228,8 +224,8 @@ export default function HomePage() {
   return (
     <>
       <SEO
-        title="ZappyOne — Verified pros near you, on demand"
-        description="Book verified professionals near you on ZappyOne — phone and laptop repair and more, with upfront prices and live tracking."
+        title="ZappyOne · Verified pros near you"
+        description="Book verified professionals near you on ZappyOne: phone and laptop repair, vehicles, home, pet care and more, with prices before work starts and live tracking."
         canonical={BASE_URL}
         jsonLd={HOME_SCHEMA}
       />
@@ -242,7 +238,7 @@ export default function HomePage() {
       />
 
       {/* overflow-x-clip, not hidden: hidden makes this a scroll box and breaks the sticky header. */}
-      <div className="min-h-screen w-full overflow-x-clip bg-[#F4F7FB]">
+      <div className="min-h-screen w-full overflow-x-clip bg-canvas">
         <HomeHeader
           loc={loc}
           isAuthed={isAuthed}
@@ -252,7 +248,7 @@ export default function HomePage() {
         />
 
         {/* Phone: search stays pinned while the rest scrolls (desktop has it in the bar). */}
-        <div className="sticky top-0 z-30 border-b border-slate-200/70 bg-[#F4F7FB]/95 backdrop-blur md:hidden">
+        <div className="sticky top-0 z-30 border-b border-line bg-white md:hidden">
           <div className="px-4 pb-3 pt-1">{searchBar}</div>
         </div>
 
@@ -272,19 +268,17 @@ export default function HomePage() {
             <>
               {svc?.status === 'closed_now' && <ClosedNowBanner nextOpening={svc.nextOpening} />}
 
+              {/* Intent first: the problem in their words, then the services. */}
+              <ProblemChips services={services.filter((x) => x.available !== false)} />
               {loadingCatalog || (loc.lat != null && !svc)
                 ? <SkeletonGrid />
-                : (
-                  <>
-                    <HeroCarousel domains={domains} onBook={openService} />
-                    <ServiceGrid domains={domains} onOpen={openService} />
-                  </>
-                )}
+                : <ServiceGrid domains={domains} onOpen={openService} />}
 
-              <ProblemChips services={services.filter((x) => x.available !== false)} />
-              {!loadingCatalog && <ServiceShowcase domains={allDomains} onOpen={openService} />}
-              <OffersRail isAuthed={isAuthed} />
+              {/* Personal and real only: their own past bookings, live offers. */}
               <BookAgainRail items={quickRebooks} onOpen={nav} />
+              <OffersRail isAuthed={isAuthed} />
+
+              {!loadingCatalog && <ServiceShowcase domains={allDomains} onOpen={openService} />}
               <AdBanner />
               <NearbyShopsLink />
             </>

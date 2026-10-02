@@ -3,10 +3,27 @@ import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ArrowLeft, Plus, TrendingUp, TrendingDown, AlertCircle, Loader2,
-  Wallet, Sparkles, Gift, Trophy, Receipt, ArrowDownToLine,
-  ArrowUpFromLine, Percent, Users, Star, RefreshCw, Crown,
-  ShieldCheck, ChevronRight, Zap, CheckCircle2,
+  ArrowLeft,
+  Plus,
+  TrendingUp,
+  TrendingDown,
+  AlertCircle,
+  Loader2,
+  Wallet,
+  Gift,
+  Trophy,
+  Receipt,
+  ArrowDownToLine,
+  ArrowUpFromLine,
+  Percent,
+  Users,
+  Star,
+  RefreshCw,
+  Crown,
+  ShieldCheck,
+  ChevronRight,
+  Zap,
+  CheckCircle2,
 } from 'lucide-react';
 import {
   useGetWalletQuery, useWalletTransactionsQuery,
@@ -208,7 +225,7 @@ export default function WalletPage() {
                   txns.items.map((t, i) => {
                     const positive = t.amountPaise > 0;
                     const TXN_META = {
-                      cashback:                { Icon: Sparkles, bg: 'bg-fuchsia-50 border-fuchsia-100 text-fuchsia-600', label: tr('wallet.txn.cashback', 'Cashback Reward') },
+                      cashback:                { Icon: Gift, bg: 'bg-fuchsia-50 border-fuchsia-100 text-fuchsia-600', label: tr('wallet.txn.cashback', 'Cashback Reward') },
                       referral_reward:         { Icon: Gift,     bg: 'bg-rose-50 border-rose-100 text-rose-600',   label: tr('wallet.txn.referral', 'Referral Bonus') },
                       admin_adjustment_credit: { Icon: Crown,    bg: 'bg-amber-50 border-amber-100 text-amber-600',  label: tr('wallet.txn.bonusCredit', 'Bonus Credit') },
                       admin_adjustment_debit:  { Icon: Receipt,  bg: 'bg-slate-50 border-slate-200 text-slate-600',    label: tr('wallet.txn.adjustmentDebit', 'Adjustment Debit') },

@@ -5,10 +5,27 @@ import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  MapPin, Navigation, Home, Briefcase, Clock, Search,
-  ChevronRight, ChevronDown, Loader2, X, Map, Crosshair,
-  Star, Sparkles, CheckCircle, Pencil, Lock, ArrowRight,
-  DoorOpen, Building2, ArrowDownToLine, Landmark,
+  MapPin,
+  Navigation,
+  Home,
+  Briefcase,
+  Clock,
+  Search,
+  ChevronRight,
+  ChevronDown,
+  Loader2,
+  X,
+  Map,
+  Crosshair,
+  Star,
+  CheckCircle,
+  Pencil,
+  Lock,
+  ArrowRight,
+  DoorOpen,
+  Building2,
+  ArrowDownToLine,
+  Landmark,
 } from 'lucide-react';
 import {
   useGetAddressesQuery,

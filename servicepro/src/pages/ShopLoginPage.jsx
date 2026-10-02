@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Store, ArrowRight, ChevronLeft, Loader2, Sparkles, Wrench, ShieldCheck, Users } from 'lucide-react';
+import { Store, ArrowRight, ChevronLeft, Loader2, Wrench, ShieldCheck, Users } from 'lucide-react';
 import { useRequestOtpMutation, useLoginShopMutation } from '@shared/services/api';
 import ResendOtp from '@shared/components/auth/ResendOtp';
 import { setAuth } from '@shared/modules/auth/authSlice';
@@ -134,7 +134,7 @@ export default function ShopLoginPage() {
 
         {/* Branding */}
         <div className="flex flex-col items-center mb-8">
-          <div className="w-14 h-14 rounded-2xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-200 mb-4">
+          <div className="w-14 h-14 rounded-2xl bg-zappy-600 flex items-center justify-center shadow-lg shadow-zappy-200 mb-4">
             <Store size={26} className="text-white" strokeWidth={2} />
           </div>
           <h1 className="text-[22px] font-black text-slate-900 tracking-tight">Zappy Shop Partner</h1>
@@ -150,7 +150,7 @@ export default function ShopLoginPage() {
                   <p className="text-sm text-slate-500">Enter your shop's mobile number</p>
                 </div>
                 <div className="mb-8">
-                  <div className="flex items-center border border-slate-200 rounded-xl px-3 sm:px-4 py-3 focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 transition-all bg-white overflow-hidden">
+                  <div className="flex items-center border border-slate-200 rounded-xl px-3 sm:px-4 py-3 focus-within:border-zappy-500 focus-within:ring-1 focus-within:ring-zappy-500 transition-all bg-white overflow-hidden">
                     <span className="text-[13px] font-bold text-slate-700 mr-2 flex items-center gap-1 shrink-0">+91 <ChevronLeft size={12} className="-rotate-90 text-slate-400" /></span>
                     <div className="w-px h-5 bg-slate-200 mx-1 sm:mx-2 shrink-0" />
                     <input type="tel" value={phone} onChange={e => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
@@ -159,7 +159,7 @@ export default function ShopLoginPage() {
                   </div>
                 </div>
                 <button type="submit" disabled={sending || phone.length < 10}
-                  className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-[14px] flex items-center justify-center transition-all disabled:opacity-50 relative">
+                  className="w-full py-3.5 bg-zappy-600 hover:bg-zappy-700 text-white rounded-xl font-bold text-[14px] flex items-center justify-center transition-all disabled:opacity-50 relative">
                   {sending ? <Loader2 size={18} className="animate-spin" /> : <span>Get OTP</span>}
                   {!sending && <ArrowRight size={16} className="absolute right-4" />}
                 </button>
@@ -171,7 +171,7 @@ export default function ShopLoginPage() {
 
             {step === 'otp' && (
               <motion.div key="otp" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex flex-col">
-                <button onClick={() => setStep('phone')} className="self-start flex items-center gap-1 text-[13px] font-bold text-indigo-600 mb-6 hover:underline">
+                <button onClick={() => setStep('phone')} className="self-start flex items-center gap-1 text-[13px] font-bold text-zappy-600 mb-6 hover:underline">
                   <ChevronLeft size={16} /> Back
                 </button>
                 <div className="mb-6">
@@ -188,8 +188,8 @@ export default function ShopLoginPage() {
                 </div>
                 <ResendOtp phone={phone} tone="light" cooldownSec={otpMeta.cooldownSec} resendsLeft={otpMeta.resendsLeft} onResent={handleResent} onStartOver={startOver} />
                 <button onClick={handleVerify} disabled={otp.length < 6 || logging}
-                  className="w-full mt-6 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-[15px] flex items-center justify-center transition-all disabled:opacity-50 shadow-md">
-                  {logging ? <Loader2 size={20} className="animate-spin" /> : <><Sparkles size={18} className="mr-2" /><span>{isNew ? 'Continue' : 'Enter Dashboard'}</span></>}
+                  className="w-full mt-6 py-4 bg-zappy-600 hover:bg-zappy-700 text-white rounded-xl font-bold text-[15px] flex items-center justify-center transition-all disabled:opacity-50 shadow-md">
+                  {logging ? <Loader2 size={20} className="animate-spin" /> : <><ArrowRight size={18} className="mr-2" /><span>{isNew ? 'Continue' : 'Enter Dashboard'}</span></>}
                 </button>
               </motion.div>
             )}
@@ -209,12 +209,12 @@ export default function ShopLoginPage() {
                       <label className="text-[12px] font-bold text-slate-700 block mb-1.5">{label} <span className="text-red-500">*</span></label>
                       <input value={regForm[k]} onChange={e => setRegForm(p => ({ ...p, [k]: e.target.value }))}
                         placeholder={placeholder}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 placeholder:text-slate-400 outline-none text-sm focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-100 transition-all" />
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 placeholder:text-slate-400 outline-none text-sm focus:border-zappy-500 focus:bg-white focus:ring-2 focus:ring-zappy-100 transition-all" />
                     </div>
                   ))}
                 </div>
                 <button type="submit" disabled={logging || !regForm.businessName || !regForm.ownerName}
-                  className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-[15px] flex items-center justify-center transition-all disabled:opacity-50 shadow-md">
+                  className="w-full py-4 bg-zappy-600 hover:bg-zappy-700 text-white rounded-xl font-bold text-[15px] flex items-center justify-center transition-all disabled:opacity-50 shadow-md">
                   {logging ? <Loader2 size={20} className="animate-spin" /> : <span>Create Shop Account</span>}
                 </button>
               </motion.form>
@@ -229,7 +229,7 @@ export default function ShopLoginPage() {
             { icon: ShieldCheck, label: 'Get verified' },
           ].map(({ icon: Icon, label }) => (
             <div key={label} className="flex flex-col items-center gap-1.5">
-              <div className="w-9 h-9 rounded-full bg-white shadow-sm border border-indigo-100 flex items-center justify-center text-indigo-600">
+              <div className="w-9 h-9 rounded-full bg-white shadow-sm border border-zappy-100 flex items-center justify-center text-zappy-600">
                 <Icon size={16} />
               </div>
               <span className="text-[10px] font-bold text-slate-500 text-center">{label}</span>

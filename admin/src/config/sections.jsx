@@ -1,9 +1,39 @@
 import { lazy } from 'react';
 import {
-  LayoutDashboard, ShoppingBag, Users, Briefcase, Wallet, Scale, CreditCard, Gift, XCircle,
-  FileText, FileCheck, Crown, Megaphone as Campaign, Ticket, Server, ToggleRight, Bell, HeadphonesIcon,
-  Radio, Globe, Layers, Zap, Sparkles, Shield, PartyPopper, ShieldAlert, Map as MapIcon,
-  AlertCircle, GraduationCap, Store, IndianRupee, BellRing, Activity, Coins,
+  LayoutDashboard,
+  ShoppingBag,
+  Users,
+  Briefcase,
+  Wallet,
+  Scale,
+  CreditCard,
+  Gift,
+  XCircle,
+  FileText,
+  FileCheck,
+  Crown,
+  Megaphone as Campaign,
+  Ticket,
+  Server,
+  ToggleRight,
+  Bell,
+  HeadphonesIcon,
+  Radio,
+  Globe,
+  Layers,
+  Zap,
+  Shield,
+  PartyPopper,
+  ShieldAlert,
+  Map as MapIcon,
+  AlertCircle,
+  GraduationCap,
+  Store,
+  IndianRupee,
+  BellRing,
+  Activity,
+  Coins,
+  LineChart,
 } from 'lucide-react';
 import Hub from '../ui/Hub';
 
@@ -98,7 +128,7 @@ const HUBS = {
 export const NAV_GROUPS = [
   { label: 'Insights', items: [
     { id: 'overview', area: 'overview', label: 'Overview', icon: LayoutDashboard, Comp: P.Overview },
-    { id: 'insights', area: 'insights', label: 'Insights', icon: Sparkles, Comp: P.Insights },
+    { id: 'insights', area: 'insights', label: 'Insights', icon: LineChart, Comp: P.Insights },
   ] },
   { label: 'Catalog', items: [
     { id: 'services', area: 'catalog', label: 'Services', icon: Layers, Comp: P.Services },

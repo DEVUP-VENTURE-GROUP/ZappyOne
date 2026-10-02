@@ -21,7 +21,7 @@ export default function ShopJobs({ kinds = ['repair', 'pet'] }) {
   const { mine: jobs, isLoading, refetch } = useProviderJobs({ kinds });
 
   if (isLoading) {
-    return <div className="flex justify-center py-8"><Loader2 size={20} className="animate-spin text-indigo-400" /></div>;
+    return <div className="flex justify-center py-8"><Loader2 size={20} className="animate-spin text-zappy-400" /></div>;
   }
 
   if (!jobs.length) {

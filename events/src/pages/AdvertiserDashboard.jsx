@@ -3,9 +3,30 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Megaphone, Plus, Wallet, BarChart2, Settings, LogOut, X, Loader2,
-  TrendingUp, Eye, MousePointerClick, IndianRupee, Play, Pause,
-  CheckCircle, Clock, XCircle, ArrowRight, ArrowLeft, Zap, Target, RefreshCw, Sparkles, UploadCloud, Image as ImageIcon
+  Megaphone,
+  Plus,
+  Wallet,
+  BarChart2,
+  Settings,
+  LogOut,
+  X,
+  Loader2,
+  TrendingUp,
+  Eye,
+  MousePointerClick,
+  IndianRupee,
+  Play,
+  Pause,
+  CheckCircle,
+  Clock,
+  XCircle,
+  ArrowRight,
+  ArrowLeft,
+  Zap,
+  Target,
+  RefreshCw,
+  UploadCloud,
+  Image as ImageIcon,
 } from 'lucide-react';
 import {
   useMyAdCampaignsQuery, useCreateMyCampaignMutation, useUpdateMyCampaignMutation,
@@ -661,7 +682,7 @@ export default function AdvertiserDashboard() {
                   <h2 className="text-2xl font-black text-slate-900 tracking-tight">Supercharge your growth</h2>
                   <p className="text-sm text-slate-500 mt-2 mb-8 max-w-sm mx-auto">Create highly targeted ad campaigns to reach thousands of high-intent customers right when they are looking to book.</p>
                   <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.96 }} onClick={() => setShowForm(true)} className="px-8 py-4 bg-zappy-gradient text-white rounded-2xl text-sm font-black shadow-lg shadow-zappy-200 flex items-center justify-center gap-2 mx-auto ring-2 ring-white">
-                    <Sparkles size={16} /> Create First Campaign
+                    <Plus size={16} /> Create First Campaign
                   </motion.button>
                 </div>
               </div>

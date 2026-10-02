@@ -2,8 +2,21 @@ import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ArrowLeft, ArrowRight, Check, ChevronRight, Loader2, MapPin, IndianRupee,
-  Wrench, Search, Plus, X, AlertTriangle, ShieldCheck, Store, Clock, Sparkles,
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  ChevronRight,
+  Loader2,
+  MapPin,
+  IndianRupee,
+  Wrench,
+  Search,
+  Plus,
+  X,
+  AlertTriangle,
+  ShieldCheck,
+  Store,
+  Clock,
 } from 'lucide-react';
 import {
   useProviderOnboardingStatusQuery,
@@ -1135,7 +1148,7 @@ function PricingStep({ vertical, onBack, onNext }) {
               disabled={suggesting}
               className="flex w-full items-center justify-center gap-2 rounded-2xl border border-zappy-200 bg-zappy-50/60 px-3 py-3 text-sm font-bold text-zappy-800 disabled:opacity-60"
             >
-              {suggesting ? <Loader2 size={15} className="animate-spin" /> : <Sparkles size={15} />}
+              {suggesting ? <Loader2 size={15} className="animate-spin" /> : <IndianRupee size={15} />}
               Fill with ZappyOne market prices
             </button>
             {claimed.map((r) => (
@@ -1191,7 +1204,7 @@ function PricingStep({ vertical, onBack, onNext }) {
             disabled={fillingAll}
             className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-zappy-600 px-3 py-3 text-sm font-bold text-white disabled:opacity-60"
           >
-            {fillingAll ? <Loader2 size={15} className="animate-spin" /> : <Sparkles size={15} />}
+            {fillingAll ? <Loader2 size={15} className="animate-spin" /> : <IndianRupee size={15} />}
             {fillingAll ? 'Setting prices…' : `Use ZappyOne market prices for all ${brandCodes.length} brands`}
           </button>
 

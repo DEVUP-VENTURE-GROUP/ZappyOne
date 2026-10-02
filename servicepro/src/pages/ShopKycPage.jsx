@@ -77,7 +77,7 @@ export default function ShopKycPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center">
-        <Loader2 size={28} className="text-indigo-500 animate-spin" />
+        <Loader2 size={28} className="text-zappy-500 animate-spin" />
       </div>
     );
   }
@@ -124,10 +124,10 @@ export default function ShopKycPage() {
           </div>
         )}
 
-        <div className="card bg-indigo-50 ring-indigo-100">
+        <div className="card bg-zappy-50 ring-zappy-100">
           <div className="flex items-start gap-3">
-            <ShieldCheck size={16} className="text-indigo-600 shrink-0 mt-0.5" />
-            <p className="text-xs font-medium text-indigo-700 leading-relaxed">
+            <ShieldCheck size={16} className="text-zappy-600 shrink-0 mt-0.5" />
+            <p className="text-xs font-medium text-zappy-700 leading-relaxed">
               Verifying your shop builds customer trust and unlocks the Nearby Shops listing. Reviewed within 24 hours.
             </p>
           </div>

@@ -57,7 +57,7 @@ function showZappySheet(amountPaise, purpose) {
     overlay.innerHTML = `
       <div id="__zappy_card__" style="width:100%;max-width:420px;background:#fff;color:#0F172A;
         border-radius:${wide ? '20px' : '20px 20px 0 0'};padding:20px 20px ${wide ? '20px' : 'calc(20px + env(safe-area-inset-bottom))'};
-        font-family:Poppins,system-ui,-apple-system,'Segoe UI',sans-serif;transform:translateY(16px);transition:transform 220ms ease">
+        font-family:Figtree,system-ui,-apple-system,'Segoe UI',sans-serif;transform:translateY(16px);transition:transform 220ms ease">
         <div style="display:flex;align-items:center;justify-content:space-between">
           <div style="display:flex;align-items:center;gap:10px">
             <img src="${logoUrl}" alt="" width="32" height="32" style="width:32px;height:32px;object-fit:contain" />
@@ -69,9 +69,9 @@ function showZappySheet(amountPaise, purpose) {
         <p style="margin:18px 0 0;font-size:13px;color:#64748B">${esc(purpose || 'Payment')}</p>
         <p style="margin:2px 0 0;font-size:32px;font-weight:700;letter-spacing:-0.5px">&#8377;${esc(rupees)}</p>
         <button id="__zappy_pay__" type="button" style="margin-top:20px;width:100%;height:50px;border:none;border-radius:12px;
-          background:#2563EB;color:#fff;font:600 16px Poppins,system-ui,sans-serif;cursor:pointer">Pay &#8377;${esc(rupees)}</button>
+          background:#1F4FD8;color:#fff;font:600 16px Figtree,system-ui,sans-serif;cursor:pointer">Pay &#8377;${esc(rupees)}</button>
         <button id="__zappy_cancel__" type="button" style="margin-top:6px;width:100%;height:44px;border:none;background:transparent;
-          color:#475569;font:500 14px Poppins,system-ui,sans-serif;cursor:pointer">Not now</button>
+          color:#475569;font:500 14px Figtree,system-ui,sans-serif;cursor:pointer">Not now</button>
         <p style="margin:8px 0 0;text-align:center;font-size:12px;color:#94A3B8">UPI, cards and net banking &middot; processed securely by Cashfree</p>
       </div>`;
 

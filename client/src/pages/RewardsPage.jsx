@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
-import { ChevronLeft, Gift, Sparkles, Coins, Loader2, Wallet, Clock } from 'lucide-react';
+import { ChevronLeft, Gift, Coins, Loader2, Wallet, Clock } from 'lucide-react';
 import { useGetRewardsQuery, useRedeemRewardPointsMutation, useScratchRewardCardMutation } from '@shared/services/api';
 import { useT } from '@shared/i18n/I18nProvider';
 
@@ -22,7 +22,7 @@ function ScratchCard({ card, onScratch, revealing }) {
     >
       {scratched ? (
         <motion.div initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="flex flex-col items-center gap-1.5">
-          {win ? <Sparkles size={26} className="text-emerald-500" /> : <Gift size={26} className="text-slate-300" />}
+          {win ? <Gift size={26} className="text-emerald-500" /> : <Gift size={26} className="text-slate-300" />}
           <span className={`text-sm font-black leading-tight ${win ? 'text-emerald-700' : 'text-slate-400'}`}>{label}</span>
           {win && <span className="text-[10px] font-bold text-emerald-500">{t('rewards.added', 'Added')} ✓</span>}
         </motion.div>
@@ -108,7 +108,7 @@ export default function RewardsPage() {
           {/* Active scratch cards */}
           {activeCards.length > 0 && (
             <div>
-              <p className="text-xs font-black uppercase tracking-widest text-slate-500 mb-2 flex items-center gap-1.5"><Sparkles size={13} className="text-zappy-500" /> {t('rewards.scratchWin', 'Scratch & win')}</p>
+              <p className="text-xs font-black uppercase tracking-widest text-slate-500 mb-2 flex items-center gap-1.5"><Gift size={13} className="text-zappy-500" /> {t('rewards.scratchWin', 'Scratch & win')}</p>
               <div className="grid grid-cols-3 gap-3">
                 {activeCards.map((c) => <ScratchCard key={c.id} card={c} onScratch={doScratch} revealing={scratching} />)}
               </div>
@@ -158,7 +158,7 @@ export default function RewardsPage() {
             <motion.div initial={{ scale: 0.5, y: 40 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.5, opacity: 0 }}
               className="bg-white rounded-3xl p-7 text-center max-w-xs w-full">
               <motion.div animate={{ rotate: [0, -10, 10, 0] }} transition={{ repeat: Infinity, duration: 2 }}>
-                <Sparkles size={48} className="mx-auto text-amber-400" />
+                <Gift size={48} className="mx-auto text-amber-400" />
               </motion.div>
               <p className="text-2xl font-black text-slate-900 mt-3">{t('rewards.youWon', 'You won!')}</p>
               <p className="text-lg font-bold text-zappy-600 mt-1">{reveal.label}</p>

@@ -115,7 +115,7 @@ export default function ShopProfilePage() {
   if (isLoading || !form) {
     return (
       <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center">
-        <Loader2 size={28} className="text-indigo-500 animate-spin" />
+        <Loader2 size={28} className="text-zappy-500 animate-spin" />
       </div>
     );
   }
@@ -173,7 +173,7 @@ export default function ShopProfilePage() {
           <div>
             <label className="text-[12px] font-bold text-slate-700 block mb-1.5">About your shop</label>
             <textarea rows={3} value={form.bio} onChange={(e) => setForm((p) => ({ ...p, bio: e.target.value }))}
-              className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 resize-none"
+              className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-zappy-100 focus:border-zappy-400 resize-none"
               placeholder="Tell customers what makes your shop trustworthy…" />
           </div>
           <div>
@@ -194,10 +194,10 @@ export default function ShopProfilePage() {
             type="button"
             onClick={() => setPickingAddress(true)}
             className={`flex w-full items-start gap-2.5 rounded-xl border p-3 text-left transition ${
-              form.address ? 'border-slate-200 bg-white hover:border-indigo-200' : 'border-indigo-300 bg-indigo-50/60'
+              form.address ? 'border-slate-200 bg-white hover:border-zappy-200' : 'border-zappy-300 bg-zappy-50/60'
             }`}
           >
-            <MapPin size={15} className={`mt-0.5 shrink-0 ${form.address ? 'text-emerald-600' : 'text-indigo-600'}`} />
+            <MapPin size={15} className={`mt-0.5 shrink-0 ${form.address ? 'text-emerald-600' : 'text-zappy-600'}`} />
             <span className="min-w-0 flex-1">
               <span className="block text-[12.5px] font-semibold leading-snug text-[#0F172A]">
                 {form.address || 'Set your shop address on the map'}
@@ -208,7 +208,7 @@ export default function ShopProfilePage() {
                 </span>
               )}
             </span>
-            <span className="shrink-0 text-[11px] font-bold text-indigo-600">
+            <span className="shrink-0 text-[11px] font-bold text-zappy-600">
               {form.address ? 'Change' : 'Set'}
             </span>
           </button>

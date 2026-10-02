@@ -66,7 +66,7 @@ export default function ShopWorkersPage() {
       <div className="max-w-lg lg:max-w-2xl mx-auto px-4 pt-4 space-y-3">
 
         {isLoading ? (
-          <div className="flex justify-center py-16"><Loader2 size={24} className="animate-spin text-indigo-400" /></div>
+          <div className="flex justify-center py-16"><Loader2 size={24} className="animate-spin text-zappy-400" /></div>
         ) : workers.length === 0 ? (
           <div className="text-center py-14">
             <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
@@ -81,7 +81,7 @@ export default function ShopWorkersPage() {
             const kyc = KYC_PILL[w.kyc?.status || 'not_submitted'];
             return (
               <div key={w._id} className="card flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center shrink-0 font-bold text-indigo-600 text-sm">
+                <div className="w-10 h-10 rounded-full bg-zappy-50 flex items-center justify-center shrink-0 font-bold text-zappy-600 text-sm">
                   {(w.name || w.phone || '?').charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">

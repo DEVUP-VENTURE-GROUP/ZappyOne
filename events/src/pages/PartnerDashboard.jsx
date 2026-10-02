@@ -4,11 +4,41 @@ import { selectAuth } from '@shared/modules/auth/authSlice';
 import { API_BASE } from '@shared/services/apiBase';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  LayoutDashboard, Star, Package, Calendar, Wallet, User, LogOut, Plus,
-  Loader2, CheckCircle, Clock, ChevronRight, Upload, Trash2, Edit3, AlertCircle,
-  PartyPopper, X, Camera, FileText, BadgeCheck, IndianRupee, CalendarCheck, Sparkles,
-  ShieldCheck, ArrowRight, Bell, Menu, Megaphone, Palette, Zap, Phone,
-  MapPin, Briefcase, Award, Lock,
+  LayoutDashboard,
+  Star,
+  Package,
+  Calendar,
+  Wallet,
+  User,
+  LogOut,
+  Plus,
+  Loader2,
+  CheckCircle,
+  Clock,
+  ChevronRight,
+  Upload,
+  Trash2,
+  Edit3,
+  AlertCircle,
+  PartyPopper,
+  X,
+  Camera,
+  FileText,
+  BadgeCheck,
+  IndianRupee,
+  CalendarCheck,
+  ShieldCheck,
+  ArrowRight,
+  Bell,
+  Menu,
+  Megaphone,
+  Palette,
+  Zap,
+  Phone,
+  MapPin,
+  Briefcase,
+  Award,
+  Lock,
 } from 'lucide-react';
 import {
   usePartnerOverviewQuery, usePartnerMeQuery, useUpdatePartnerMeMutation,
@@ -591,7 +621,7 @@ function ThemesTab() {
       </div>
 
       {isLoading ? <Spinner /> : themes.length === 0 ? (
-        <EmptyState icon={Sparkles} text="No themes yet"
+        <EmptyState icon={PartyPopper} text="No themes yet"
           sub="Upload your first decoration theme to start getting bookings"
           action={
             <button onClick={() => setShowUpload(true)}

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Heart, Star, Clock, Users, CheckCircle, XCircle, Play, Calendar, Sparkles, Zap, MapPin, ChevronRight, Check } from 'lucide-react';
+import { ArrowLeft, Heart, Star, Clock, Users, CheckCircle, XCircle, Play, Calendar, Zap, MapPin, ChevronRight, Check, PartyPopper } from 'lucide-react';
 import { useGetEventThemeQuery, useToggleSaveEventThemeMutation } from '@shared/services/api';
 import toast from 'react-hot-toast';
 
@@ -36,7 +36,7 @@ export default function EventThemePage() {
     <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 text-slate-800">
       <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 text-center max-w-sm w-full">
         <div className="w-20 h-20 bg-rose-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-rose-100">
-          <Sparkles className="text-rose-400" size={32} />
+          <PartyPopper className="text-rose-400" size={32} />
         </div>
         <h2 className="text-2xl font-black mb-2">Theme Vanished</h2>
         <p className="text-slate-500 mb-8 text-sm">This experience is no longer available.</p>
@@ -76,7 +76,6 @@ export default function EventThemePage() {
         <div className="relative w-full h-[40vh] md:h-[50vh] bg-gradient-to-br from-zappy-50 to-purple-50 rounded-[2rem] overflow-hidden shadow-sm border border-slate-200/50 flex items-center justify-center">
           
           {/* Fallback Icon behind image */}
-          <Sparkles className="text-zappy-200 absolute" size={64} />
           
           {hasMedia && (
             <AnimatePresence mode="wait">
@@ -212,7 +211,6 @@ export default function EventThemePage() {
           {/* Description Bento */}
           {theme.description && (
             <div className="col-span-2 md:col-span-4 bg-white rounded-[2rem] p-6 md:p-8 shadow-sm border border-slate-200/60 relative overflow-hidden">
-              <Sparkles size={120} className="absolute -right-10 -bottom-10 text-slate-50/50" />
               <h3 className="font-black text-slate-900 mb-3 text-lg relative z-10">The Experience</h3>
               <p className="text-slate-600 text-[15px] leading-relaxed relative z-10 font-medium">
                 {theme.description}

@@ -12,7 +12,7 @@ import { formatPaise } from '@shared/utils/money';
 export function SectionTitle({ id, title, action, onAction }) {
   return (
     <div className="flex items-baseline justify-between gap-3">
-      <h2 id={id} className="text-[17px] font-bold text-navy sm:text-[20px]">{title}</h2>
+      <h2 id={id} className="h-section">{title}</h2>
       {action && (
         <button type="button" onClick={onAction} className="flex shrink-0 items-center text-[13px] font-semibold text-zappy-600 hover:text-zappy-800">
           {action} <ChevronRight size={15} strokeWidth={2.4} />
@@ -59,7 +59,7 @@ export function OffersRail({ isAuthed }) {
       <Row>
         {promos.slice(0, 6).map((p) => (
           <button key={p.code} type="button" onClick={() => copy(p.code)}
-            className="relative flex w-[270px] shrink-0 snap-start overflow-hidden rounded-xl bg-white text-left sm:w-auto"
+            className="relative flex w-[270px] shrink-0 snap-start overflow-hidden rounded-card border border-line bg-white text-left sm:w-auto"
             aria-label={`${offerHeadline(p)}, code ${p.code}. Copy code`}>
             <span className="flex w-[92px] shrink-0 flex-col justify-center bg-accent-500 px-3 py-4 text-white">
               <span className="text-[20px] font-bold leading-none">{offerHeadline(p).split(' ')[0]}</span>
@@ -68,8 +68,8 @@ export function OffersRail({ isAuthed }) {
             {/* perforation */}
             <span className="absolute left-[86px] top-0 h-full border-l-2 border-dotted border-white" aria-hidden="true" />
             <span className="flex min-w-0 flex-1 flex-col justify-center px-4 py-3">
-              <span className="truncate text-[14px] font-semibold text-navy">{p.name}</span>
-              {offerTerms(p) && <span className="text-[12px] text-slate-500">{offerTerms(p)}</span>}
+              <span className="truncate text-[14px] font-semibold text-ink-900">{p.name}</span>
+              {offerTerms(p) && <span className="text-[12px] text-ink-500">{offerTerms(p)}</span>}
               <span className="mt-1.5 text-[12px] font-bold tracking-[0.12em] text-accent-700">{p.code}</span>
             </span>
           </button>
@@ -89,10 +89,10 @@ export function BookAgainRail({ items, onOpen }) {
       <Row cols="sm:grid-cols-3">
         {items.map(({ key, title, href, date }) => (
           <button key={key} type="button" onClick={() => onOpen(href)}
-            className="flex w-[200px] shrink-0 snap-start items-center justify-between gap-3 rounded-xl bg-white px-4 py-3 text-left sm:w-auto">
+            className="flex w-[200px] shrink-0 snap-start items-center justify-between gap-3 rounded-card border border-line bg-white px-4 py-3 text-left sm:w-auto">
             <span className="min-w-0">
-              <span className="block truncate text-[14px] font-semibold capitalize text-navy">{title}</span>
-              <span className="block text-[12px] text-slate-500">
+              <span className="block truncate text-[14px] font-semibold capitalize text-ink-900">{title}</span>
+              <span className="block text-[12px] text-ink-500">
                 {date ? new Date(date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : 'Before'}
               </span>
             </span>
@@ -109,12 +109,12 @@ export function NearbyShopsLink() {
   const nav = useNavigate();
   return (
     <button type="button" onClick={() => nav('/nearby-shops')}
-      className="flex w-full items-center justify-between gap-4 rounded-xl bg-white px-4 py-3.5 text-left">
+      className="flex w-full items-center justify-between gap-4 rounded-card border border-line bg-white px-4 py-3.5 text-left transition-colors duration-150 active:bg-canvas">
       <span>
-        <span className="block text-[15px] font-semibold text-navy">Prefer to walk in?</span>
-        <span className="block text-[13px] text-slate-500">See verified repair shops near you</span>
+        <span className="block text-[15px] font-semibold text-ink-900">Prefer to walk in?</span>
+        <span className="block text-[13px] text-ink-500">See verified repair shops near you</span>
       </span>
-      <ChevronRight size={18} className="shrink-0 text-slate-400" />
+      <ChevronRight size={18} className="shrink-0 text-ink-400" />
     </button>
   );
 }

@@ -90,10 +90,10 @@ export function foldIntoHub(domain) {
 
 /** What each section does, in the customer's words: [headline, one line]. */
 export const PITCH = {
-  electronics: ['Phone or laptop acting up?', 'A verified technician fixes it at your door, at a price fixed before work starts.'],
-  vehicles: ['Bike or car won’t start?', 'A mechanic comes to you — roadside or at home.'],
-  home_services: ['Clean, safe water at home', 'Tank and sump cleaning, photographed before and after.'],
-  pet_services: ['Care your pet will love', 'Grooming, walks and stays by verified pet carers.'],
-  helping_services: ['Shopping, pickups and returns', 'A trusted helper does the trip, with photos at every step.'],
-  events: ['Celebrations, planned for you', 'Decor and event partners for every occasion.'],
+  electronics: ['Phone or laptop repair', 'Fixed at your door. You approve the price before work starts.'],
+  vehicles: ['Bike or car trouble', 'A mechanic comes to you, at home or on the road.'],
+  home_services: ['Water tank care', 'Tank and sump cleaning, photographed before and after.'],
+  pet_services: ['Pet care', 'Grooming, walks and stays with verified pet carers.'],
+  helping_services: ['Shopping, pickups and returns', 'A verified helper makes the trip and sends photos at each step.'],
+  events: ['Events and décor', 'Decor and planning for birthdays, showers and more.'],
 };

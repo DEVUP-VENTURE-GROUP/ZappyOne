@@ -2,8 +2,19 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
-import { Star, Repeat2, Calendar, FileDown, Loader2, MapPin, ArrowRight,
-  ChevronLeft, ChevronRight, Wrench, Sparkles } from 'lucide-react';
+import {
+  Star,
+  Repeat2,
+  Calendar,
+  FileDown,
+  Loader2,
+  MapPin,
+  ArrowRight,
+  ChevronLeft,
+  ChevronRight,
+  Wrench,
+  CheckCircle2,
+} from 'lucide-react';
 import { useMyJobs } from '../hooks/useMyJobs';
 import { ErrorState } from '../components/common/QueryState';
 import PullToRefresh from '../components/common/PullToRefresh';
@@ -149,7 +160,7 @@ function PastHero({ job, nav, onInvoice, downloadingId }) {
           </div>
         )}
         <div className="absolute top-3 left-3 inline-flex items-center gap-1 bg-white/95 backdrop-blur-sm text-[10px] font-bold text-emerald-700 uppercase tracking-wider px-2 py-1 rounded-full ring-1 ring-emerald-100">
-          <Sparkles size={10} strokeWidth={2.5} /> {t('activity.lastCompleted', 'Last completed')}
+          <CheckCircle2 size={10} strokeWidth={2.5} /> {t('activity.lastCompleted', 'Last completed')}
         </div>
       </button>
       <div className="p-4">

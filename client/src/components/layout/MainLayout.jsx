@@ -11,7 +11,7 @@ export default function MainLayout() {
     <div className="app-shell flex min-h-[100dvh] flex-col">
       <DesktopNav />
       {/* Room for the bottom bar only where it is shown. */}
-      <main className="app-content flex-1 pb-[calc(env(safe-area-inset-bottom)+80px)] md:pb-0">
+      <main className="app-content flex-1 pb-[calc(env(safe-area-inset-bottom)+64px)] md:pb-0">
         <AnimatePresence mode="wait" initial={false}>
           <motion.div key={location.pathname} className="h-full">
             <Outlet />

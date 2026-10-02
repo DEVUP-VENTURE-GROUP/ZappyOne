@@ -42,7 +42,7 @@ export default function AssignTechnician({ jobId, workerId, busy = {}, onDone, s
 
   return (
     <div className="mt-2">
-      <button type="button" onClick={() => setOpen((v) => !v)} className="flex items-center gap-1.5 text-[11.5px] font-bold text-indigo-600">
+      <button type="button" onClick={() => setOpen((v) => !v)} className="flex items-center gap-1.5 text-[11.5px] font-bold text-zappy-600">
         <UserPlus size={12} />
         {current ? `On ${current.name} · change` : 'Assign a technician'}
       </button>
@@ -59,7 +59,7 @@ export default function AssignTechnician({ jobId, workerId, busy = {}, onDone, s
                 onClick={() => give(w._id)}
                 disabled={isLoading || isCurrent}
                 className={`flex w-full items-center gap-2 rounded-xl border px-2.5 py-2 text-left text-xs transition ${
-                  isCurrent ? 'border-emerald-200 bg-emerald-50' : 'border-slate-200 hover:border-indigo-200'
+                  isCurrent ? 'border-emerald-200 bg-emerald-50' : 'border-slate-200 hover:border-zappy-200'
                 }`}
               >
                 <span className={`h-2 w-2 shrink-0 rounded-full ${w.isOnline ? 'bg-emerald-500' : 'bg-slate-300'}`} />

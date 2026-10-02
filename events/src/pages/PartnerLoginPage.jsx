@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Phone, ArrowRight, ChevronLeft, Loader2, Sparkles, EyeOff, CalendarDays, Smile, Users, Award, Palette, ShieldCheck, Flower2 } from 'lucide-react';
+import { Phone, ArrowRight, ChevronLeft, Loader2, EyeOff, CalendarDays, Smile, Users, Award, Palette, ShieldCheck, Flower2 } from 'lucide-react';
 import { useRequestOtpMutation, useLoginEventPartnerMutation, useGooglePartnerLoginMutation } from '@shared/services/api';
 import ResendOtp from '@shared/components/auth/ResendOtp';
 import { setAuth } from '@shared/modules/auth/authSlice';
@@ -329,7 +329,7 @@ export default function PartnerLoginPage() {
 
                 <button onClick={handleVerify} disabled={otp.length < 6 || logging}
                   className="w-full mt-6 py-4 bg-[#6d28d9] hover:bg-violet-700 text-white rounded-xl font-bold text-[15px] flex items-center justify-center transition-all disabled:opacity-50 shadow-md">
-                  {logging ? <Loader2 size={20} className="animate-spin" /> : <><Sparkles size={18} className="mr-2" /><span>{isNew ? 'Continue' : 'Enter Dashboard'}</span></>}
+                  {logging ? <Loader2 size={20} className="animate-spin" /> : <><ArrowRight size={18} className="mr-2" /><span>{isNew ? 'Continue' : 'Enter Dashboard'}</span></>}
                 </button>
               </motion.div>
             )}

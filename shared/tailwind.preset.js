@@ -1,32 +1,56 @@
 /** @type {import('tailwindcss').Config}
  *
- * Zappy brand system — the preset every app's tailwind.config.js extends.
- * Colors, fonts, spacing all mirror the style guide exactly.
+ * ZappyOne design system — the preset every app extends.
+ *
+ *   colour     one brand blue (the logo's own, not a framework default), the
+ *              logo's amber for location/live state only, a cool neutral ink
+ *              scale, and surfaces: canvas → surface → sunken, with hairlines
+ *   type       Figtree; scale 12 / 13 / 15 / 17 / 20 / 24 / 30
+ *   radius     6 chips · 10 controls · 14 cards · 20 sheets; full only for
+ *              avatars and toggles
+ *   elevation  borders first; shadow only on what floats (sheets, sticky bars)
+ *
+ * Token NAMES are kept from the old system so every screen picks up the new
+ * values at once; the values are what changed.
  */
 export default {
   theme: {
     extend: {
       colors: {
         // Primary blue ramp — #2563EB is the brand hero
+        // ZappyOne blue, taken from the logo mark. 600 is the brand.
         zappy: {
-          50: '#EFF6FF',
-          100: '#DBEAFE',
-          200: '#BFDBFE',
-          300: '#93C5FD',
-          400: '#60A5FA',
-          500: '#3B82F6',
-          600: '#2563EB', // ← Primary Blue (brand hero)
-          700: '#1D4ED8',
-          800: '#1E40AF',
-          900: '#1E3A8A',
+          50: '#EEF3FD',
+          100: '#DCE6FB',
+          200: '#B9CCF7',
+          300: '#8EAAF0',
+          400: '#5B82E6',
+          500: '#3463DD',
+          600: '#1F4FD8',
+          700: '#1A41B4',
+          800: '#173891',
+          900: '#142F73',
         },
-        // Alias so existing code using `brand-*` still works — points at Zappy blue now
         brand: {
-          50: '#EFF6FF',
-          100: '#DBEAFE',
-          500: '#3B82F6',
-          600: '#2563EB',
-          700: '#1D4ED8',
+          50: '#EEF3FD',
+          100: '#DCE6FB',
+          500: '#3463DD',
+          600: '#1F4FD8',
+          700: '#1A41B4',
+        },
+        // Surfaces and hairlines. canvas = page, surface = cards, sunken = wells/tiles.
+        canvas: '#F5F6F8',
+        surface: '#FFFFFF',
+        sunken: '#EEF0F3',
+        line: { DEFAULT: '#E3E6EB', strong: '#D2D7DE' },
+        // Text on surfaces, darkest to faintest.
+        ink: {
+          DEFAULT: '#101828',
+          900: '#101828',
+          700: '#344054',
+          500: '#5B6474',
+          400: '#8A92A0',
+          300: '#B4BAC4',
         },
         // Deep navy for headings + gradient target
         navy: {
@@ -55,7 +79,7 @@ export default {
         },
       },
       fontFamily: {
-        sans: ['Poppins', 'ui-sans-serif', 'system-ui', '-apple-system', 'sans-serif'],
+        sans: ['Figtree', 'ui-sans-serif', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
       },
       fontSize: {
         // Style guide scale
@@ -70,22 +94,26 @@ export default {
         '18': '4.5rem',   // 72px
       },
       borderRadius: {
-        'card': '16px',
-        'card-lg': '24px',
-        'card-xl': '32px',
-        'btn': '14px',
+        'chip': '6px',
+        'btn': '10px',
+        'card': '14px',
+        'card-lg': '14px',
+        'card-xl': '20px',
+        'sheet': '20px',
       },
       boxShadow: {
-        // Premium soft shadows
-        'soft':    '0 4px 20px -2px rgba(15, 23, 42, 0.05)',
-        'soft-lg': '0 12px 32px -4px rgba(15, 23, 42, 0.08)',
-        'card':    '0 2px 8px -1px rgba(15, 23, 42, 0.04), 0 1px 2px -1px rgba(15, 23, 42, 0.02)',
-        'glow-blue': '0 8px 24px -4px rgba(37, 99, 235, 0.35)',
-        'glow-amber': '0 8px 24px -4px rgba(245, 158, 11, 0.35)',
+        // Elevation is for things that float. Old names kept, values calmed:
+        // nothing glows any more.
+        'soft':    '0 1px 2px rgba(16, 24, 40, 0.05)',
+        'soft-lg': '0 4px 12px -2px rgba(16, 24, 40, 0.08)',
+        'card':    '0 1px 2px rgba(16, 24, 40, 0.04)',
+        'float':   '0 8px 24px -6px rgba(16, 24, 40, 0.16)',
+        'glow-blue': '0 1px 2px rgba(16, 24, 40, 0.05)',
+        'glow-amber': '0 1px 2px rgba(16, 24, 40, 0.05)',
       },
       backgroundImage: {
-        // The signature blue → navy gradient
-        'zappy-gradient': 'linear-gradient(135deg, #2563EB 0%, #0F172A 100%)',
+        // Kept for old call sites: a flat brand fill, no longer a gradient.
+        'zappy-gradient': 'linear-gradient(#1F4FD8, #1F4FD8)',
       },
       animation: {
         'pulse-slow': 'pulse 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',

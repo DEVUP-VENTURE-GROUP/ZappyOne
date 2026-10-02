@@ -1,20 +1,19 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, ClipboardList, MapPin, User } from 'lucide-react';
-import { ZappyLogo } from '@shared/components/common/ZappyLogo';
+import { Home, ClipboardList, MapPin, User, LayoutGrid } from 'lucide-react';
 import { api, useListNotificationsQuery } from '@shared/services/api';
 import { useSelector } from 'react-redux';
 import { selectIsAuthed } from '@shared/modules/auth/authSlice';
-import { motion } from 'framer-motion';
 import { prefetchRoute } from '../../lib/routePrefetch';
 import { useT } from '@shared/i18n/I18nProvider';
 
-// 2 tabs each side + a big raised "Book Now" button in the middle.
-// Wallet lives under Profile/Account.
-const SIDE_TABS = [
-  { key: 'home',     label: 'Home',     tKey: 'nav.home',     path: '/',        Icon: Home,          side: 'left'  },
-  { key: 'bookings', label: 'Bookings', tKey: 'nav.bookings', path: '/orders',  Icon: ClipboardList, side: 'left'  },
-  { key: 'track',    label: 'Track',    tKey: 'nav.track',    path: '/track',   Icon: MapPin,        side: 'right' },
-  { key: 'profile',  label: 'Profile',  tKey: 'nav.profile',  path: '/profile', Icon: User,          side: 'right' },
+// Five even tabs. Booking starts from Services (or search on Home) like any
+// other destination; no raised button competing with the content above it.
+const TABS = [
+  { key: 'home',     label: 'Home',     tKey: 'nav.home',     path: '/',        Icon: Home },
+  { key: 'services', label: 'Services', tKey: 'nav.services', path: '/services', Icon: LayoutGrid },
+  { key: 'bookings', label: 'Bookings', tKey: 'nav.bookings', path: '/orders',  Icon: ClipboardList },
+  { key: 'track',    label: 'Track',    tKey: 'nav.track',    path: '/track',   Icon: MapPin },
+  { key: 'profile',  label: 'Profile',  tKey: 'nav.profile',  path: '/profile', Icon: User },
 ];
 
 function Tab({ t, isActive, onPress, onWarm, badge = 0 }) {
@@ -24,18 +23,19 @@ function Tab({ t, isActive, onPress, onWarm, badge = 0 }) {
       onClick={onPress}
       onPointerDown={onWarm}
       onMouseEnter={onWarm}
-      className="flex-1 flex flex-col items-center justify-center gap-0.5 outline-none active:opacity-70"
+      className="flex min-h-[48px] flex-1 flex-col items-center justify-center gap-0.5 outline-none"
       aria-label={label}
+      aria-current={isActive ? 'page' : undefined}
     >
       <div className="relative">
-        <Icon size={22} strokeWidth={isActive ? 2.5 : 2} className={isActive ? 'text-zappy-600' : 'text-slate-400'} />
+        <Icon size={22} strokeWidth={isActive ? 2.2 : 1.8} className={isActive ? 'text-zappy-600' : 'text-ink-400'} />
         {badge > 0 && (
           <span className="absolute -top-1.5 -right-2 min-w-[16px] h-[16px] bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 leading-none ring-2 ring-white">
             {badge > 9 ? '9+' : badge}
           </span>
         )}
       </div>
-      <span className={`text-[10px] font-semibold ${isActive ? 'text-zappy-600' : 'text-slate-400'}`}>{label}</span>
+      <span className={`text-[11px] ${isActive ? 'font-semibold text-zappy-600' : 'font-medium text-ink-500'}`}>{label}</span>
     </button>
   );
 }
@@ -46,8 +46,8 @@ export default function BottomNav({ active }) {
   const tr         = useT();
   const isAuthed   = useSelector(selectIsAuthed);
   const path       = loc.pathname;
-  const isBook     = path.startsWith('/book') || path.startsWith('/services');
-  const currentKey = active || SIDE_TABS.find((t) => t.path === path)?.key || (isBook ? 'book' : 'home');
+  const currentKey = active || TABS.find((t) => (t.path === '/' ? path === '/' || path === '/home' : path.startsWith(t.path)))?.key
+    || (path.startsWith('/book') ? 'services' : 'home');
 
   const { data: notifData } = useListNotificationsQuery(
     { page: 1, unreadOnly: true },
@@ -68,53 +68,21 @@ export default function BottomNav({ active }) {
     else if (path === '/profile') prefetchMe();
   };
 
-  const left  = SIDE_TABS.filter((t) => t.side === 'left');
-  const right = SIDE_TABS.filter((t) => t.side === 'right');
-
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-[100] pointer-events-none">
-      <nav
-        className="w-full bg-white/95 backdrop-blur-xl border-t border-slate-200 shadow-[0_-2px_12px_rgba(20,21,42,0.06)] h-[calc(64px+env(safe-area-inset-bottom))] pb-[env(safe-area-inset-bottom)] flex items-center pointer-events-auto relative"
-      >
-        <div className="flex flex-1">
-          {left.map((t) => (
-            <Tab key={t.key} t={{ ...t, label: tr(t.tKey, t.label) }} isActive={currentKey === t.key} onPress={() => nav(t.path)} onWarm={warm(t.path)} />
-          ))}
-        </div>
-
-        {/* reserve space for the raised center button */}
-        <div className="w-20 shrink-0" />
-
-        <div className="flex flex-1">
-          {right.map((t) => (
-            <Tab
-              key={t.key}
-              t={{ ...t, label: tr(t.tKey, t.label) }}
-              isActive={currentKey === t.key}
-              onPress={() => nav(t.path)}
-              onWarm={warm(t.path)}
-              badge={t.key === 'profile' ? unreadCount : 0}
-            />
-          ))}
-        </div>
-
-        {/* Big raised center "Book Now" button */}
-        <button
-          onClick={() => nav('/services')}
-          onPointerDown={warm('/services')}
-          onMouseEnter={warm('/services')}
-          aria-label="Book a service"
-          className="absolute left-1/2 -translate-x-1/2 -top-6 flex flex-col items-center pointer-events-auto outline-none"
-        >
-          <motion.div
-            whileTap={{ scale: 0.94 }}
-            className="w-16 h-16 rounded-full flex items-center justify-center bg-white ring-2 ring-zappy-600 shadow-[0_6px_18px_-6px_rgba(37,99,235,0.45)]"
-          >
-            <ZappyLogo size={40} />
-          </motion.div>
-          <span className={`text-[10px] font-bold mt-1 ${isBook ? 'text-zappy-700' : 'text-zappy-600'}`}>{tr('nav.book', 'Book Now')}</span>
-        </button>
-      </nav>
-    </div>
+    <nav
+      aria-label="Main"
+      className="fixed inset-x-0 bottom-0 z-[100] flex border-t border-line bg-white pb-[env(safe-area-inset-bottom)]"
+    >
+      {TABS.map((t) => (
+        <Tab
+          key={t.key}
+          t={{ ...t, label: tr(t.tKey, t.label) }}
+          isActive={currentKey === t.key}
+          onPress={() => nav(t.path)}
+          onWarm={warm(t.path)}
+          badge={t.key === 'profile' ? unreadCount : 0}
+        />
+      ))}
+    </nav>
   );
 }

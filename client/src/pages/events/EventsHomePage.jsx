@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, TrendingUp, Play, Heart, Star, ChevronRight, Sparkles, ArrowUpRight, PartyPopper } from 'lucide-react';
+import { Search, TrendingUp, Play, Heart, Star, ChevronRight, ArrowUpRight, PartyPopper } from 'lucide-react';
 import { useGetEventCategoriesQuery, useGetEventThemesQuery, useToggleSaveEventThemeMutation } from '@shared/services/api';
 import CrossSellBanner from '../../components/ads/CrossSellBanner';
 import toast from 'react-hot-toast';
@@ -79,7 +79,7 @@ function VideoReelCard({ theme, onSave }) {
       </button>
       {theme.status === 'featured' && (
         <div className="absolute top-4 left-4 px-3 py-1 bg-gradient-to-r from-fuchsia-500 to-rose-500 rounded-full text-white text-[10px] font-black tracking-widest flex items-center gap-1.5 shadow-lg border border-white/20">
-          <Sparkles size={12} />FEATURED
+          <Star size={12} />FEATURED
         </div>
       )}
     </div>

@@ -27,7 +27,7 @@ function useUnread(isAuthed) {
 function IconButton({ label, onClick, children, badge = 0 }) {
   return (
     <button type="button" onClick={onClick} aria-label={label}
-      className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-navy transition hover:bg-slate-50 active:scale-95">
+      className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-btn border border-line bg-white text-ink-900 transition-colors duration-150 hover:bg-canvas">
       {children}
       {badge > 0 && (
         <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold leading-none text-white ring-2 ring-white">
@@ -43,14 +43,14 @@ function Avatar({ isAuthed, avatar }) {
   if (!isAuthed) {
     return (
       <button type="button" onClick={() => nav('/login')}
-        className="h-10 shrink-0 rounded-full bg-zappy-600 px-4 text-[14px] font-semibold text-white transition hover:bg-zappy-700">
+        className="h-10 shrink-0 rounded-btn bg-zappy-600 px-4 text-[14px] font-semibold text-white transition-colors duration-150 hover:bg-zappy-700">
         Sign in
       </button>
     );
   }
   return (
     <button type="button" onClick={() => nav('/profile')} aria-label="Your profile"
-      className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-slate-200 bg-white transition hover:border-slate-300">
+      className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-line bg-white transition-colors duration-150 hover:border-line-strong">
       {avatar
         ? <img src={avatar} alt="" className="h-full w-full object-cover" />
         : <span className="flex h-full w-full items-center justify-center text-navy"><UserRound size={18} /></span>}
@@ -66,7 +66,7 @@ function LocationBlock({ loc, onPickLocation, compact = false }) {
       <span className="flex min-w-0 items-center gap-1">
         {loc.loading
           ? <Loader2 size={15} className="shrink-0 animate-spin text-zappy-600" />
-          : <MapPin size={16} strokeWidth={2.4} className="shrink-0 text-zappy-600" />}
+          : <MapPin size={16} strokeWidth={2.4} className="shrink-0 text-amber-500" />}
         <span className={`truncate font-extrabold leading-tight tracking-[-0.01em] text-navy ${compact ? 'text-[15px]' : 'text-[19px]'}`}>
           {loc.loading ? 'Finding you…' : loc.primary}
         </span>
@@ -108,7 +108,7 @@ function SearchHint({ terms }) {
 
 export function SearchBar({ terms, onOpen, onVoice, onLens }) {
   return (
-    <div className="flex h-12 w-full items-center gap-2 rounded-xl border border-slate-200 bg-[#F6F7F9] pl-3.5 pr-1.5 transition focus-within:border-zappy-300 focus-within:bg-white hover:border-slate-300">
+    <div className="flex h-12 w-full items-center gap-2 rounded-btn border border-line bg-sunken pl-3.5 pr-1.5 transition-colors duration-150 focus-within:border-zappy-600 focus-within:bg-white hover:border-line-strong">
       <button type="button" onClick={onOpen} className="flex h-full min-w-0 flex-1 items-center gap-3 text-left" aria-label="Search services">
         <Search size={18} strokeWidth={2.4} className="shrink-0 text-slate-500" />
         <SearchHint terms={terms} />
@@ -135,7 +135,7 @@ export default function HomeHeader({ loc, isAuthed, avatar, onPickLocation, sear
   return (
     <>
       {/* Desktop: one sticky bar. (DesktopNav steps aside on Home.) */}
-      <header className="sticky top-0 z-40 hidden border-b border-slate-200/80 bg-white/95 backdrop-blur md:block">
+      <header className="sticky top-0 z-40 hidden border-b border-line bg-white md:block">
         <div className="mx-auto flex h-[76px] w-full max-w-6xl items-center gap-5 px-6">
           <NavLink to="/" aria-label="ZappyOne home" className="flex shrink-0 items-center gap-2">
             <ZappyLogo size={30} />
@@ -163,7 +163,7 @@ export default function HomeHeader({ loc, isAuthed, avatar, onPickLocation, sear
       </header>
 
       {/* Phone: light header, scrolls away; search is pinned by the page below it. */}
-      <div className="bg-[linear-gradient(180deg,#EAF1FD_0%,#F4F7FB_100%)] md:hidden" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+      <div className="bg-white md:hidden" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
         <div className="flex items-center gap-3 px-4 pb-2 pt-3.5">
           <div className="min-w-0 flex-1"><LocationBlock loc={loc} onPickLocation={onPickLocation} /></div>
           <IconButton label={unread ? `${unread} unread notifications` : 'Notifications'} onClick={() => nav('/notifications')} badge={unread}>

@@ -45,40 +45,39 @@ export default function GrowingHere({ service, lat, lng, address = '', onChangeL
   }
 
   return (
-    <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white" aria-labelledby="growing-title">
-      <div className="flex items-end gap-4 bg-[linear-gradient(135deg,#EAF1FD_0%,#F3EEFD_100%)] px-5 pt-5">
-        <div className="min-w-0 flex-1 pb-5">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-zappy-700">ZappyOne is growing</p>
-          <h2 id="growing-title" className="mt-1 text-[19px] font-bold leading-snug text-navy [text-wrap:balance]">
-            We’re not at this address yet
+    <section className="overflow-hidden rounded-card border border-line bg-white" aria-labelledby="growing-title">
+      <div className="flex items-center gap-4 border-b border-line px-5 py-4">
+        {art && <img src={art.still} alt="" className="h-16 w-16 shrink-0 rounded-full bg-sunken object-contain mix-blend-multiply" />}
+        <div className="min-w-0 flex-1">
+          <p className="text-[13px] font-semibold text-ink-500">Not available here yet</p>
+          <h2 id="growing-title" className="mt-0.5 text-[17px] font-bold leading-snug text-ink-900">
+            No verified {service?.name ? service.name.toLowerCase() : 'pro'} near this address
           </h2>
         </div>
-        {art && <img src={art.still} alt="" className="h-24 w-24 shrink-0 object-contain mix-blend-multiply" />}
       </div>
       <div className="space-y-4 p-5">
-        <p className="text-[14px] leading-relaxed text-slate-600">
-          ZappyOne is growing area by area across Telangana — and yours is next on our list.
-          <span className="font-semibold text-navy"> We’re verifying {service?.name ? `${service.name.toLowerCase()} pros` : 'pros'} near you right now.</span>{' '}
-          Ask us, and we’ll message you the day you can book here.
+        <p className="text-[15px] leading-relaxed text-ink-700">
+          ZappyOne is opening across Telangana area by area, and we are verifying pros near you now.
+          Tap Notify me and we’ll message you the day you can book here. Nothing is charged.
         </p>
         <div className="flex flex-col gap-2.5 sm:flex-row">
           <button
             type="button"
             onClick={notify}
             disabled={notified || isLoading}
-            className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-zappy-600 text-[15px] font-semibold text-white transition hover:bg-zappy-700 disabled:opacity-70 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-zappy-200"
+            className="btn-primary flex-1"
           >
             {isLoading ? <Loader2 size={16} className="animate-spin" /> : notified ? <Check size={16} /> : <BellRing size={16} />}
             {notified ? 'We’ll let you know' : 'Notify me'}
           </button>
           {onChangeLocation && (
             <button type="button" onClick={onChangeLocation}
-              className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 text-[15px] font-semibold text-navy transition hover:bg-slate-50">
+              className="btn-outline flex-1">
               <MapPin size={16} /> Try another address
             </button>
           )}
         </div>
-        <button type="button" onClick={() => nav('/')} className="w-full text-center text-[13px] font-semibold text-slate-500 hover:text-navy">
+        <button type="button" onClick={() => nav('/')} className="w-full text-center text-[14px] font-semibold text-zappy-600">
           See what’s available near you
         </button>
       </div>
