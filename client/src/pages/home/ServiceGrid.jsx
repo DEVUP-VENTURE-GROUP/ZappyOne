@@ -17,22 +17,22 @@ function Tile({ service, character, onOpen }) {
   const art = service.imageUrl || character?.still;
   return (
     <button type="button" onClick={onOpen}
-      className="group flex flex-col items-center gap-1.5 rounded-card text-center focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-zappy-600/20">
+      className="group flex flex-col items-center gap-2 rounded-card text-center focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-zappy-600/20">
       <span className="flex aspect-square w-full items-center justify-center overflow-hidden rounded-card bg-sunken transition-colors duration-150 group-active:bg-line">
         {art
           ? <img src={art} alt="" loading="lazy" className={`h-full w-full ${service.imageUrl ? 'object-cover' : 'object-contain mix-blend-multiply pt-1.5'}`} />
           : <Icon strokeWidth={1.6} className="h-[36%] w-[36%] text-ink-700" />}
       </span>
-      <span className="line-clamp-2 text-[13px] font-medium leading-[1.25] text-ink-900">{service.name}</span>
+      <span className="line-clamp-2 text-[14px] font-semibold leading-[1.25] text-ink-900 sm:text-[15px]">{service.name}</span>
     </button>
   );
 }
 
-/** Columns in the tile grid at the current width: 4 phone → 5 → 6 → 8 desktop. */
-const BREAKPOINTS = [['(min-width: 1024px)', 8], ['(min-width: 768px)', 6], ['(min-width: 640px)', 5]];
+/** Columns in the tile grid at the current width: 3 phone → 4 → 5 → 6 desktop. */
+const BREAKPOINTS = [['(min-width: 1024px)', 6], ['(min-width: 768px)', 5], ['(min-width: 640px)', 4]];
 function useColumns() {
-  const read = () => (typeof window === 'undefined' ? 4
-    : (BREAKPOINTS.find(([q]) => window.matchMedia(q).matches)?.[1] ?? 4));
+  const read = () => (typeof window === 'undefined' ? 3
+    : (BREAKPOINTS.find(([q]) => window.matchMedia(q).matches)?.[1] ?? 3));
   const [cols, setCols] = useState(read);
   useEffect(() => {
     const lists = BREAKPOINTS.map(([q]) => window.matchMedia(q));
@@ -51,14 +51,14 @@ export function ServiceGrid({ domains, onOpen }) {
   const tiles = [...all].sort((a, b) => Number(a.available === false) - Number(b.available === false));
   // One column fewer or more if that leaves no tile alone on the last row.
   const orphans = (c) => (c - (tiles.length % c)) % c;
-  const cols = [base, base - 1, base + 1].filter((c) => c >= 3)
+  const cols = [base, base - 1, base + 1].filter((c) => c >= 3 && c <= 6)
     .sort((a, b) => orphans(a) - orphans(b) || Math.abs(a - base) - Math.abs(b - base))[0];
   const characters = new Map(domains.flatMap((d) => [...distinctArt(d.services, d.code)]));
 
   return (
     <section aria-labelledby="home-services">
       <h2 id="home-services" className="h-section">Services</h2>
-      <div className="mt-3 grid gap-x-3 gap-y-4" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
+      <div className="mt-3 grid gap-x-3 gap-y-5 sm:gap-x-4" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
         {tiles.map((s) => (
           <Tile key={s.code} service={s} character={characters.get(s.code)} onOpen={() => onOpen(s)} />
         ))}

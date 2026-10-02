@@ -83,9 +83,9 @@ export function CategoryTile({ category, onOpen, large = false }) {
   return (
     <button
       onClick={onOpen}
-      className={`group flex shrink-0 snap-start flex-col text-left ${large ? 'w-[132px] sm:w-[150px]' : 'w-[112px] sm:w-[128px]'}`}
+      className={`group flex shrink-0 snap-start flex-col text-left ${large ? 'w-[168px] sm:w-[196px]' : 'w-[148px] sm:w-[168px]'}`}
     >
-      <span className="relative flex aspect-[5/4] w-full items-center justify-center overflow-hidden rounded-btn bg-sunken">
+      <span className="relative flex aspect-[5/4] w-full items-center justify-center overflow-hidden rounded-card border border-line bg-sunken">
         {category.imageUrl ? (
           <img
             src={category.imageUrl}
@@ -96,16 +96,18 @@ export function CategoryTile({ category, onOpen, large = false }) {
               category.imageUrl.startsWith('/characters/') ? 'object-contain mix-blend-multiply pt-1' : 'object-cover'}`}
           />
         ) : (
-          <Icon size={24} className="text-ink-700" strokeWidth={1.6} />
+          <span className="flex h-16 w-16 items-center justify-center rounded-full border border-line bg-white text-zappy-600">
+            <Icon size={28} strokeWidth={1.7} />
+          </span>
         )}
       </span>
 
       {/* Fixed height keeps one-line and two-line names on the same baseline. */}
-      <span className="flex h-[50px] flex-col justify-start pt-1.5">
-        <span className="line-clamp-2 text-[13px] font-medium leading-[1.25] text-ink-900">
+      <span className="flex h-[60px] flex-col justify-start pt-2">
+        <span className="line-clamp-2 text-[15px] font-semibold leading-[1.25] text-ink-900">
           {category.name}
         </span>
-        <span className="mt-auto text-[12px] text-ink-500">
+        <span className="mt-auto text-[13px] text-ink-500">
           {category.subtitle ?? `${count} ${count === 1 ? 'issue' : 'issues'}`}
         </span>
       </span>

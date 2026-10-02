@@ -59,21 +59,21 @@ function ServiceCard({ service, onOpen }) {
   return (
     <div className="overflow-hidden rounded-card border border-line bg-white">
       <button type="button" onClick={() => onOpen(service)}
-        className="flex w-full items-center gap-3 px-3.5 pt-3.5 text-left sm:px-4 sm:pt-4"
+        className="flex w-full items-center gap-3 px-4 pt-4 text-left sm:px-5 sm:pt-5"
         aria-label={`Book ${service.name}`}>
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-btn bg-sunken text-ink-700">
-          <Icon size={20} strokeWidth={1.8} />
+        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-btn bg-sunken text-ink-700">
+          <Icon size={24} strokeWidth={1.8} />
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block text-[15px] font-semibold leading-snug text-ink-900">{service.name}</span>
-          {count && <span className="block text-[13px] text-ink-500">{count}</span>}
+          <span className="block text-[17px] font-bold leading-snug text-ink-900">{service.name}</span>
+          {count && <span className="block text-[14px] text-ink-500">{count}</span>}
         </span>
-        <span className="flex shrink-0 items-center text-[14px] font-semibold text-zappy-600">
+        <span className="flex min-h-[40px] shrink-0 items-center rounded-btn bg-zappy-600 px-3.5 text-[14px] font-semibold text-white">
           Book <ChevronRight size={16} />
         </span>
       </button>
       {tiles.length > 0 ? (
-        <div className="flex snap-x gap-2.5 overflow-x-auto scroll-px-3.5 px-3.5 pb-3.5 pt-3 no-scrollbar sm:scroll-px-4 sm:px-4 sm:pb-4">
+        <div className="flex snap-x gap-3 overflow-x-auto scroll-px-4 px-4 pb-4 pt-3.5 no-scrollbar sm:scroll-px-5 sm:px-5 sm:pb-5">
           {tiles.map(({ tile, path, target }) => (
             <CategoryTile key={tile.code} category={tile} large={!!tile.imageUrl} onOpen={() => onOpen(target || service, path)} />
           ))}
