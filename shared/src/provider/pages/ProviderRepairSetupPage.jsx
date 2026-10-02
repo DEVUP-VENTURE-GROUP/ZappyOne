@@ -35,6 +35,7 @@ import LocationPicker from '../../modules/booking/LocationPicker';
 import toast from 'react-hot-toast';
 import WeeklyHours, { incompleteDay } from '../../components/provider/WeeklyHours';
 import { formatPaise } from '../../utils/money';
+import BrandLogo from '../../components/common/BrandLogo';
 
 /**
  * Provider setup — the mirror image of the customer's booking flow.
@@ -188,15 +189,9 @@ function BrandsStep({ vertical, selected, onChange, onNext }) {
                 on ? 'border-zappy-500 bg-zappy-50' : 'border-slate-200 bg-white hover:border-slate-300'
               }`}
             >
-              {b.logoUrl
-                ? <img src={b.logoUrl} alt="" className="h-7 object-contain" />
-                : (
-                  <span className={`flex h-9 w-9 items-center justify-center rounded-xl text-sm font-black ${
-                    on ? 'bg-zappy-600 text-white' : 'bg-slate-100 text-slate-500'
-                  }`}>
-                    {b.name[0]}
-                  </span>
-                )}
+              <span className="flex h-10 w-full items-center justify-center">
+                <BrandLogo name={b.name} url={b.logoUrl} active={on} className="h-7 max-w-[84%]" />
+              </span>
               <span className={`text-center text-[11px] font-bold leading-tight ${on ? 'text-zappy-700' : 'text-slate-600'}`}>
                 {b.name}
               </span>

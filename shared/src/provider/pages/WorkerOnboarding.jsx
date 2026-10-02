@@ -61,43 +61,48 @@ export default function WorkerOnboarding({ onComplete }) {
     }
   }
 
+  const field = 'input text-[16px] font-semibold';
+  const label = 'mb-1.5 block text-[13px] font-semibold text-ink-700';
+
   const stepContent = [
     /* Step 0 — Name */
-    <div key="name" className="space-y-6">
-      <div className="text-center space-y-2">
-        <div className="w-16 h-16 rounded-2xl bg-zappy-100 flex items-center justify-center mx-auto">
-          <User size={28} className="text-zappy-600" />
-        </div>
-        <h2 className="text-xl font-black text-slate-900">What's your name?</h2>
-        <p className="text-sm text-slate-400">This is shown to customers when you're assigned a job.</p>
+    <div key="name" className="flex flex-1 flex-col gap-6">
+      <div className="space-y-1.5">
+        <span className="flex h-11 w-11 items-center justify-center rounded-btn bg-zappy-50 text-zappy-600">
+          <User size={20} />
+        </span>
+        <h1 className="pt-2 text-[24px] font-bold leading-tight text-ink-900">What's your name?</h1>
+        <p className="text-[15px] text-ink-500">Customers see this when you're assigned to their job.</p>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-4">
         <div>
-          <label className="text-xs font-bold text-slate-500 uppercase tracking-wide block mb-1.5">Full Name</label>
+          <label htmlFor="ob-name" className={label}>Full name</label>
           <input
+            id="ob-name"
             autoFocus
-            className="w-full border-2 border-slate-200 focus:border-zappy-500 rounded-2xl px-4 py-3.5 text-lg font-semibold text-slate-900 outline-none transition"
+            autoComplete="name"
+            className={field}
             placeholder="e.g. Ravi Kumar"
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
         </div>
         <div>
-          <label className="text-xs font-bold text-slate-500 uppercase tracking-wide block mb-1.5">Mobile Number</label>
-          <div className="w-full border-2 border-slate-100 bg-slate-50 rounded-2xl px-4 py-3.5 flex items-center gap-2">
-            <Phone size={16} className="text-slate-400" />
-            <span className="text-lg font-semibold text-slate-500">{phone}</span>
-            <span className="ml-auto text-xs font-bold text-green-600 bg-green-100 px-2 py-0.5 rounded-full">Verified</span>
+          <span className={label}>Mobile number</span>
+          <div className="flex min-h-[44px] items-center gap-2 rounded-btn border border-line bg-sunken px-3.5">
+            <Phone size={16} className="text-ink-400" />
+            <span className="text-[16px] font-semibold tabular-nums text-ink-700">{phone}</span>
+            <span className="chip ml-auto bg-green-50 text-green-700"><CheckCircle2 size={12} /> Verified</span>
           </div>
         </div>
       </div>
 
       {/* Said up front, so the verification step is expected rather than a wall. */}
-      <div className="flex items-start gap-2.5 rounded-2xl bg-zappy-50 p-3.5">
-        <ShieldCheck size={17} className="text-zappy-600 shrink-0 mt-0.5" />
-        <p className="text-[12.5px] leading-relaxed text-zappy-900">
-          Next you'll choose what you work on — phones, laptops and more. Each one is verified
+      <div className="flex items-start gap-2.5 rounded-card border border-line bg-sunken p-3.5">
+        <ShieldCheck size={17} className="mt-0.5 shrink-0 text-zappy-600" />
+        <p className="text-[13px] leading-relaxed text-ink-700">
+          Next you'll choose what you work on: phones, laptops and more. Each one is verified
           separately, so customers know exactly what you're qualified for.
         </p>
       </div>
@@ -105,109 +110,109 @@ export default function WorkerOnboarding({ onComplete }) {
       <button
         disabled={name.trim().length < 2}
         onClick={() => setStep(1)}
-        className="w-full flex items-center justify-center gap-2 bg-zappy-600 hover:bg-zappy-700 disabled:opacity-40 text-white font-bold text-base py-4 rounded-2xl transition"
+        className="btn-primary mt-auto w-full"
       >
         Continue <ChevronRight size={18} />
       </button>
     </div>,
 
     /* Step 1 — Emergency contact */
-    <div key="emergency" className="space-y-6">
-      <div className="text-center space-y-2">
-        <div className="w-16 h-16 rounded-2xl bg-red-100 flex items-center justify-center mx-auto">
-          <Heart size={28} className="text-red-500" />
-        </div>
-        <h2 className="text-xl font-black text-slate-900">Emergency contact</h2>
-        <p className="text-sm text-slate-400">
-          Who should we call if something happens on the job? Optional, but strongly recommended.
+    <div key="emergency" className="flex flex-1 flex-col gap-6">
+      <div className="space-y-1.5">
+        <span className="flex h-11 w-11 items-center justify-center rounded-btn bg-red-50 text-red-600">
+          <Heart size={20} />
+        </span>
+        <h1 className="pt-2 text-[24px] font-bold leading-tight text-ink-900">Emergency contact</h1>
+        <p className="text-[15px] text-ink-500">
+          Who should we call if something happens on a job? Optional, but strongly recommended.
         </p>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-4">
         <div>
-          <label className="text-xs font-bold text-slate-500 uppercase tracking-wide block mb-1.5">Contact Name</label>
+          <label htmlFor="ob-ec-name" className={label}>Contact name</label>
           <input
-            className="w-full border-2 border-slate-200 focus:border-red-400 rounded-2xl px-4 py-3.5 text-base font-semibold text-slate-900 outline-none transition"
+            id="ob-ec-name"
+            className={field}
             placeholder="e.g. Wife, Mother, Friend"
             value={ecName}
             onChange={(e) => setEcName(e.target.value)}
           />
         </div>
         <div>
-          <label className="text-xs font-bold text-slate-500 uppercase tracking-wide block mb-1.5">Contact Phone</label>
+          <label htmlFor="ob-ec-phone" className={label}>Contact phone</label>
           <input
+            id="ob-ec-phone"
             type="tel"
             inputMode="numeric"
-            className={`w-full border-2 rounded-2xl px-4 py-3.5 text-base font-semibold text-slate-900 outline-none transition ${
-              ecPhoneValid ? 'border-slate-200 focus:border-red-400' : 'border-red-300 bg-red-50'
-            }`}
+            className={`${field} ${ecPhoneValid ? '' : 'border-red-300 bg-red-50'}`}
             placeholder="10-digit mobile number"
             value={ecPhone}
             onChange={(e) => setEcPhone(e.target.value)}
           />
           {!ecPhoneValid && (
-            <p className="mt-1.5 text-xs font-semibold text-red-600">
+            <p className="mt-1.5 text-[13px] font-semibold text-red-600">
               That doesn't look like an Indian mobile number.
             </p>
           )}
         </div>
       </div>
 
-      <div className="flex gap-2">
+      <div className="mt-auto space-y-2">
+        <div className="flex gap-2">
+          <button onClick={() => setStep(0)} className="btn-outline px-4">
+            <ArrowLeft size={16} /> Back
+          </button>
+          <button
+            onClick={() => handleFinish({ withContact: true })}
+            disabled={isLoading || !ecPhoneValid}
+            className="btn-primary flex-1"
+          >
+            {isLoading && <Loader2 size={18} className="animate-spin" />}
+            {isLoading ? 'Setting up…' : 'Continue'}
+          </button>
+        </div>
         <button
-          onClick={() => setStep(0)}
-          className="flex items-center gap-1 text-slate-500 font-semibold text-sm px-4 py-3 rounded-2xl border border-slate-200 hover:bg-slate-50 transition"
+          onClick={() => handleFinish({ withContact: false })}
+          disabled={isLoading}
+          className="min-h-[44px] w-full text-[13px] font-semibold text-ink-500 hover:text-ink-700"
         >
-          <ArrowLeft size={14} /> Back
-        </button>
-        <button
-          onClick={() => handleFinish({ withContact: true })}
-          disabled={isLoading || !ecPhoneValid}
-          className="flex-1 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white font-bold text-base py-3 rounded-2xl transition"
-        >
-          {isLoading ? <Loader2 size={18} className="animate-spin" /> : <CheckCircle2 size={18} />}
-          {isLoading ? 'Setting up…' : 'Continue'}
+          Skip for now
         </button>
       </div>
-
-      <button
-        onClick={() => handleFinish({ withContact: false })}
-        disabled={isLoading}
-        className="w-full text-xs text-slate-400 hover:text-slate-600 transition"
-      >
-        Skip emergency contact for now
-      </button>
     </div>,
   ];
 
   return (
-    <div className="min-h-screen bg-[#0F172A] flex flex-col items-center">
-      <div className="w-full max-w-md flex flex-col flex-1 h-full">
-        <div className="px-5 pt-8 pb-4 flex justify-center sm:justify-start">
-          <ZappyLogo size={26} />
+    <div className="flex min-h-screen flex-col bg-canvas">
+      <header className="border-b border-line bg-white" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+        <div className="mx-auto w-full max-w-md px-5 pb-3 pt-4">
+          <div className="flex items-center justify-between">
+            <ZappyLogo size={24} />
+            <span className="text-[13px] font-semibold tabular-nums text-ink-500">Step {step + 1} of {STEPS.length}</span>
+          </div>
+          <div className="mt-3 flex gap-1.5" aria-hidden="true">
+            {STEPS.map((_, i) => (
+              <div key={i} className={`h-1 flex-1 rounded-full transition-colors ${i <= step ? 'bg-zappy-600' : 'bg-line'}`} />
+            ))}
+          </div>
         </div>
+      </header>
 
-        <div className="flex gap-1.5 px-5 pb-6">
-          {STEPS.map((_, i) => (
-            <div key={i} className={`h-1 rounded-full flex-1 transition-all ${i <= step ? 'bg-zappy-500' : 'bg-white/10'}`} />
-          ))}
-        </div>
-
-        <div className="flex-1 bg-white rounded-t-[2rem] sm:rounded-[2rem] sm:mb-8 px-5 sm:px-8 pt-8 pb-6 overflow-y-auto shadow-2xl flex flex-col">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={step}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.2 }}
-              className="flex-1 flex flex-col"
-            >
-              {stepContent[step]}
-            </motion.div>
-          </AnimatePresence>
-        </div>
-      </div>
+      <main className="mx-auto flex w-full max-w-md flex-1 flex-col bg-white px-5 pb-6 pt-6 sm:my-6 sm:flex-none sm:rounded-card sm:border sm:border-line sm:px-8">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={step}
+            initial={{ opacity: 0, x: 12 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.16, ease: 'easeOut' }}
+            className="flex flex-1 flex-col"
+          >
+            {stepContent[step]}
+          </motion.div>
+        </AnimatePresence>
+      </main>
     </div>
   );
 }

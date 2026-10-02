@@ -37,6 +37,7 @@ import LocationPicker from '@shared/modules/booking/LocationPicker';
 import toast from 'react-hot-toast';
 import GrowingHere from '../../components/serviceability/GrowingHere';
 import { PayMethodPicker } from '@shared/components/common/PayMethodPicker';
+import BrandLogo from '@shared/components/common/BrandLogo';
 import { usePayBooking } from '@shared/hooks/usePayBooking';
 
 /**
@@ -299,11 +300,11 @@ function BrandStep({ vertical, onPick }) {
 
   const Tile = ({ b }) => (
     <button onClick={() => onPick(b)}
-      className="card flex flex-col items-center justify-center gap-2 py-5 hover:ring-2 hover:ring-zappy-100 transition">
-      {b.logoUrl
-        ? <img src={b.logoUrl} alt={b.name} className="h-8 object-contain" />
-        : <div className="w-10 h-10 rounded-xl bg-zappy-50 flex items-center justify-center font-black text-zappy-600">{b.name[0]}</div>}
-      <span className="text-xs font-bold text-[#0F172A] text-center leading-tight">{b.name}</span>
+      className="card flex min-h-[96px] flex-col items-center justify-center gap-2 px-2 py-4 transition-colors duration-150 hover:border-line-strong active:bg-sunken">
+      <span className="flex h-10 w-full items-center justify-center">
+        <BrandLogo name={b.name} url={b.logoUrl} className="h-8 max-w-[84%]" />
+      </span>
+      <span className="text-center text-[13px] font-semibold leading-tight text-ink-900">{b.name}</span>
     </button>
   );
 
