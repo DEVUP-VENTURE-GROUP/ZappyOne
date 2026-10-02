@@ -57,14 +57,14 @@ function Slide({ slide, domain, target, active, onOpen }) {
     <div className="relative h-full w-full shrink-0 snap-center overflow-hidden" aria-hidden={!active}>
       <img src={slide.photo} alt="" className="absolute inset-0 h-full w-full object-cover" loading={active ? 'eager' : 'lazy'} />
       {/* Scrim for legible type over any photo. */}
-      <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/40 to-transparent sm:from-black/70 sm:via-black/35" />
-      <div className="relative flex h-full max-w-[85%] flex-col justify-center gap-1.5 px-4 sm:max-w-[560px] sm:gap-3 sm:px-9 sm:pb-12">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-white/80 sm:text-[12px]">{domain.name}</p>
-        <h2 className="text-[21px] font-bold leading-[1.15] text-white [text-wrap:balance] sm:text-[34px]">{title}</h2>
-        {line && <p className="line-clamp-2 max-w-md text-[13px] leading-snug text-white/85 sm:text-[15px] sm:leading-relaxed">{line}</p>}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent sm:bg-gradient-to-r sm:from-black/70 sm:via-black/35" />
+      <div className="relative flex h-full flex-col justify-end gap-1 p-4 sm:max-w-[560px] sm:justify-center sm:gap-3 sm:px-9 sm:pb-12 sm:pt-0">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-white/75 sm:text-[12px]">{domain.name}</p>
+        <h2 className="text-[18px] font-bold leading-tight text-white [text-wrap:balance] sm:text-[34px] sm:leading-[1.15]">{title}</h2>
+        {line && <p className="hidden max-w-md text-[15px] leading-relaxed text-white/85 sm:block">{line}</p>}
         <button type="button" tabIndex={active ? 0 : -1} onClick={() => onOpen(target, slide.path)}
-          className="mt-1.5 inline-flex min-h-[40px] items-center gap-1.5 self-start rounded-btn bg-white px-3.5 text-[14px] font-semibold text-ink-900 transition-colors hover:bg-sunken sm:min-h-[44px] sm:px-4 sm:text-[15px]">
-          Book now <ArrowRight size={16} />
+          className="mt-2 inline-flex min-h-[36px] items-center gap-1 self-start rounded-btn bg-white px-3 text-[13px] font-semibold text-ink-900 transition-colors hover:bg-sunken sm:mt-1 sm:min-h-[44px] sm:gap-1.5 sm:px-4 sm:text-[15px]">
+          Book now <ArrowRight size={15} />
         </button>
       </div>
     </div>
@@ -148,7 +148,7 @@ export default function HeroCarousel({ domains, onOpen }) {
     <div ref={overlay ? undefined : tabs} className={`gap-2 overflow-x-auto no-scrollbar ${className}`} role="tablist">
       {slides.map((s, i) => (
         <button key={s.key} type="button" role="tab" aria-selected={i === index} onClick={() => go(i)}
-          className={`min-h-[34px] shrink-0 rounded-btn px-3 text-[13px] font-semibold transition-colors ${
+          className={`min-h-[30px] shrink-0 rounded-btn px-2.5 text-[12px] font-semibold transition-colors sm:min-h-[34px] sm:px-3 sm:text-[13px] ${
             i === index ? 'bg-zappy-600 text-white'
               : overlay ? 'bg-white/90 text-ink-900 hover:bg-white' : 'border border-line bg-white text-ink-700'}`}>
           {s.tab}
@@ -161,7 +161,7 @@ export default function HeroCarousel({ domains, onOpen }) {
     <section aria-label="What ZappyOne does" className="grid gap-4 lg:h-[340px] lg:grid-cols-[3fr_1fr]">
       <div
         aria-roledescription="carousel"
-        className="relative h-[210px] overflow-hidden rounded-card bg-ink-900 sm:h-[300px] lg:h-full"
+        className="relative h-[190px] overflow-hidden rounded-card bg-ink-900 sm:h-[300px] lg:h-full"
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => setPaused(false)}
         onFocus={() => setPaused(true)}

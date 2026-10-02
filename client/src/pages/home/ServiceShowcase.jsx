@@ -75,7 +75,7 @@ function ServiceCard({ service, onOpen }) {
       {tiles.length > 0 ? (
         <div className="flex snap-x gap-3 overflow-x-auto scroll-px-4 px-4 pb-4 pt-3.5 no-scrollbar sm:scroll-px-5 sm:px-5 sm:pb-5">
           {tiles.map(({ tile, path, target }) => (
-            <CategoryTile key={tile.code} category={tile} large={!!tile.imageUrl} onOpen={() => onOpen(target || service, path)} />
+            <CategoryTile key={tile.code} category={tile} onOpen={() => onOpen(target || service, path)} />
           ))}
         </div>
       ) : (
