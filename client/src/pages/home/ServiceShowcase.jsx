@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { ChevronRight, Wrench } from 'lucide-react';
 import { SERVICE_ICONS, CategoryTile } from '@shared/components/home/LiveServices';
-import { artFor, PITCH } from '@shared/components/home/serviceArt';
+import { artFor, PITCH, servicePhoto } from '@shared/components/home/serviceArt';
 import { categoryPhoto } from '@shared/components/home/problemArt';
 
 /**
@@ -39,7 +39,7 @@ function cardsFor(domain) {
     coverage: [],
     countLabel: asTiles ? 'services' : 'options',
     options: asTiles
-      ? services.map((s) => ({ code: s.code, name: s.name, icon: s.icon, imageUrl: s.imageUrl, path: s.path, service: s }))
+      ? services.map((s) => ({ code: s.code, name: s.name, icon: s.icon, imageUrl: servicePhoto(s), path: s.path, service: s }))
       : services.flatMap((s) => (s.options || []).map((o) => ({ ...o, service: s }))),
   }];
 }

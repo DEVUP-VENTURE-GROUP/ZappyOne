@@ -97,3 +97,16 @@ export const PITCH = {
   helping_services: ['Shopping, pickups and returns', 'A verified helper makes the trip and sends photos at each step.'],
   events: ['Events and décor', 'Decor and planning for birthdays, showers and more.'],
 };
+
+/**
+ * Photos for services shown as tiles on home (assets/web/services/<kind>,
+ * served at /services/...). An admin-uploaded picture always wins.
+ */
+const SERVICE_PHOTOS = new Set([
+  'pet_grooming', 'pet_boarding', 'pet_walk', 'pet_home_care', 'pet_transport', 'pet_vet_assist', 'pet_check',
+]);
+
+export function servicePhoto(service) {
+  if (service?.imageUrl) return service.imageUrl;
+  return SERVICE_PHOTOS.has(service?.code) ? `/services/pet/${service.code}.webp` : null;
+}

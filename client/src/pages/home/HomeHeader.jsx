@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Bell, ChevronDown, Loader2, MapPin, ScanLine, Search, UserRound } from 'lucide-react';
 import { useListNotificationsQuery } from '@shared/services/api';
 import { ZappyWordmark } from '@shared/components/common/ZappyLogo';
@@ -125,6 +125,58 @@ export function SearchBar({ terms, onOpen, onVoice, onLens }) {
   );
 }
 
+/**
+ * Phone: the brand and the place share one slot and take turns, sliding up
+ * every few seconds. Tapping the brand shows the place at once; tapping the
+ * place opens the picker. With reduced motion they simply sit side by side.
+ */
+const FLIP_MS = 5000;
+
+function BrandOrPlace({ loc, onPickLocation }) {
+  const reduce = useReducedMotion();
+  const [face, setFace] = useState('brand');
+  const [tick, setTick] = useState(0);
+
+  useEffect(() => {
+    if (reduce) return undefined;
+    const id = setTimeout(() => setFace((f) => (f === 'brand' ? 'place' : 'brand')), FLIP_MS);
+    return () => clearTimeout(id);
+  }, [face, tick, reduce]);
+
+  if (reduce) {
+    return (
+      <div className="flex min-w-0 flex-1 items-center gap-3">
+        <ZappyWordmark size={26} />
+        <div className="flex min-w-0 flex-1 justify-end"><LocationBlock loc={loc} onPickLocation={onPickLocation} compact align="right" /></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative h-11 min-w-0 flex-1 overflow-hidden">
+      <AnimatePresence initial={false} mode="popLayout">
+        <motion.div
+          key={face}
+          initial={{ y: '100%', opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: '-100%', opacity: 0 }}
+          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+          className="absolute inset-0 flex items-center"
+        >
+          {face === 'brand' ? (
+            <button type="button" onClick={() => { setFace('place'); setTick((t) => t + 1); }}
+              aria-label="ZappyOne. Show your service location" className="flex items-center">
+              <ZappyWordmark size={28} />
+            </button>
+          ) : (
+            <LocationBlock loc={loc} onPickLocation={onPickLocation} />
+          )}
+        </motion.div>
+      </AnimatePresence>
+    </div>
+  );
+}
+
 const LINKS = [
   { to: '/orders', label: 'Bookings' },
   { to: '/track', label: 'Track' },
@@ -165,15 +217,10 @@ export default function HomeHeader({ loc, isAuthed, avatar, onPickLocation, sear
 
       {/* Phone: light header, scrolls away; search is pinned by the page below it. */}
       <div className="bg-white md:hidden" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
-        {/* Brand left, place right. Profile lives in the bottom bar, so the
-            phone header keeps the bell (signed in) or Sign in (signed out). */}
+        {/* Brand and place take turns in one slot. Profile lives in the bottom
+            bar, so the phone header keeps the bell (signed in) or Sign in. */}
         <div className="flex items-center gap-2.5 px-4 pb-2 pt-3">
-          <NavLink to="/" aria-label="ZappyOne home" className="flex shrink-0 items-center">
-            <ZappyWordmark size={26} />
-          </NavLink>
-          <div className="flex min-w-0 flex-1 justify-end">
-            <LocationBlock loc={loc} onPickLocation={onPickLocation} compact align="right" />
-          </div>
+          <BrandOrPlace loc={loc} onPickLocation={onPickLocation} />
           {isAuthed ? (
             <IconButton label={unread ? `${unread} unread notifications` : 'Notifications'} onClick={() => nav('/notifications')} badge={unread}>
               <Bell size={17} />
