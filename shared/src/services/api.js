@@ -362,6 +362,8 @@ export const api = createApi({
       query: (audience) => `/content/faqs${audience ? `?audience=${audience}` : ''}`,
       providesTags: ['Content'],
     }),
+    /** Published policy pages (slug + title) — the footer's legal links. */
+    getPolicies: b.query({ query: () => '/content/policies' }),
     getPolicy: b.query({
       query: (slug) => `/content/policy/${slug}`,
       providesTags: (r, e, slug) => [{ type: 'Content', id: slug }],
@@ -2175,6 +2177,7 @@ export const {
   useLensUploadUrlMutation,
   useAnalyzeLensMutation,
   useGetFaqsQuery,
+  useGetPoliciesQuery,
   useGetPolicyQuery,
   useAdminListContentQuery,
   useAdminCreateContentMutation,

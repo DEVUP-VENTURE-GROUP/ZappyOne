@@ -43,11 +43,11 @@ function FcmHealth() {
     <Card className="p-5 space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Smartphone size={15} strokeWidth={2} className="text-indigo-600" />
+          <Smartphone size={15} strokeWidth={2} className="text-zappy-600" />
           <p className="text-sm font-bold text-slate-700">Firebase / FCM Status</p>
         </div>
         <button onClick={check} disabled={loading}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-indigo-600 bg-indigo-50 rounded-xl disabled:opacity-50">
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-zappy-600 bg-zappy-50 rounded-xl disabled:opacity-50">
           {loading ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
           Check
         </button>
@@ -94,7 +94,7 @@ function DeliveryStats() {
     <Card className="p-5 space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <BarChart2 size={15} strokeWidth={2} className="text-violet-600" />
+          <BarChart2 size={15} strokeWidth={2} className="text-zappy-600" />
           <p className="text-sm font-bold text-slate-700">Delivery Statistics</p>
         </div>
         <div className="flex items-center gap-2">
@@ -105,7 +105,7 @@ function DeliveryStats() {
             <option value={30}>30 days</option>
           </select>
           <button onClick={load} disabled={loading}
-            className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-violet-600 bg-violet-50 rounded-xl disabled:opacity-50">
+            className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-zappy-600 bg-zappy-50 rounded-xl disabled:opacity-50">
             {loading ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
             Load
           </button>
@@ -116,7 +116,7 @@ function DeliveryStats() {
         <>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <StatCard label="Total sent" value={stats.summary.total} />
-            <StatCard label="Push delivered" value={stats.summary.pushSent} color="text-indigo-600"
+            <StatCard label="Push delivered" value={stats.summary.pushSent} color="text-zappy-600"
               sub={`${stats.summary.pushDeliveryRate}% rate`} />
             <StatCard label="SMS sent" value={stats.summary.smsSent} color="text-green-600" />
             <StatCard label="Read" value={stats.summary.read} color="text-amber-600" />
@@ -139,7 +139,7 @@ function DeliveryStats() {
                     <tr key={t._id} className="hover:bg-slate-50">
                       <td className="py-1.5 pr-3 font-medium capitalize">{t._id?.replace(/_/g, ' ')}</td>
                       <td className="py-1.5 pr-3">{t.total}</td>
-                      <td className="py-1.5 pr-3 text-indigo-600">{t.pushSent}</td>
+                      <td className="py-1.5 pr-3 text-zappy-600">{t.pushSent}</td>
                       <td className="py-1.5 pr-3 text-green-600">{t.smsSent}</td>
                       <td className="py-1.5 pr-3 text-amber-600">{t.readCount}</td>
                     </tr>
@@ -502,7 +502,7 @@ export default function NotificationsAdmin() {
           <button key={id} onClick={() => setTab(id)}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all border ${
               tab === id
-                ? 'bg-indigo-50 text-indigo-600 border-indigo-200'
+                ? 'bg-zappy-50 text-zappy-600 border-zappy-200'
                 : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
             }`}>
             <Icon size={14} />

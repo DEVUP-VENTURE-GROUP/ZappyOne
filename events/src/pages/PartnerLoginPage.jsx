@@ -195,7 +195,7 @@ export default function PartnerLoginPage() {
               <span className="text-[22px] lg:text-2xl font-black leading-none tracking-tight text-slate-900 lg:text-white">
                 Zappy<span className="text-[#f59e0b]">one</span>
               </span>
-              <span className="text-[10px] font-bold text-violet-700 lg:text-violet-300 uppercase tracking-widest mt-0.5">
+              <span className="text-[10px] font-bold text-zappy-700 lg:text-zappy-300 uppercase tracking-widest mt-0.5">
                 Event Decoration
               </span>
             </div>
@@ -207,7 +207,7 @@ export default function PartnerLoginPage() {
             You Celebrate <span className="text-[#6d28d9] lg:text-[#a78bfa]">Life.</span>
           </h1>
           <p className="text-[14px] sm:text-[15px] leading-relaxed text-slate-700 lg:text-white/80 font-medium max-w-[320px] lg:max-w-md mb-10 lg:mb-16 drop-shadow-sm">
-            From intimate gatherings to grand celebrations - we make every event <span className="text-violet-700 lg:text-violet-300 font-bold">unforgettable.</span>
+            From intimate gatherings to grand celebrations - we make every event <span className="text-zappy-700 lg:text-zappy-300 font-bold">unforgettable.</span>
           </p>
 
           {/* Features Row */}
@@ -219,7 +219,7 @@ export default function PartnerLoginPage() {
               { icon: ShieldCheck, text: 'On-time\nService' }
             ].map((f, idx) => (
               <div key={idx} className="flex flex-col items-center gap-2 lg:gap-3 flex-1">
-                <div className="w-12 h-12 lg:w-14 lg:h-14 rounded-full bg-white lg:bg-white/10 shadow-sm border border-violet-100 lg:border-white/20 flex items-center justify-center text-violet-600 lg:text-white">
+                <div className="w-12 h-12 lg:w-14 lg:h-14 rounded-full bg-white lg:bg-white/10 shadow-sm border border-zappy-100 lg:border-white/20 flex items-center justify-center text-zappy-600 lg:text-white">
                   <f.icon size={22} strokeWidth={2} />
                 </div>
                 <span className="text-[10px] sm:text-[11px] lg:text-[13px] font-bold text-center leading-tight whitespace-pre-line text-slate-700 lg:text-white/90">
@@ -231,9 +231,9 @@ export default function PartnerLoginPage() {
 
           {/* Subtle separator line on mobile matching reference */}
           <div className="flex items-center gap-1 mt-6 lg:hidden max-w-[340px]">
-            <div className="h-0.5 w-6 rounded-full bg-violet-600" />
-            <div className="h-0.5 w-1 rounded-full bg-violet-600" />
-            <div className="h-px flex-1 bg-violet-100" />
+            <div className="h-0.5 w-6 rounded-full bg-zappy-600" />
+            <div className="h-0.5 w-1 rounded-full bg-zappy-600" />
+            <div className="h-px flex-1 bg-zappy-100" />
           </div>
 
         </div>
@@ -252,9 +252,9 @@ export default function PartnerLoginPage() {
           <div className="text-center mb-8">
             <h2 className="text-[26px] font-extrabold text-[#0f172a] tracking-tight mb-2">Welcome to ZappyOne</h2>
             <div className="flex items-center justify-center gap-2 mb-3">
-              <div className="h-px w-10 bg-violet-200" />
-              <Flower2 size={14} className="text-violet-500" strokeWidth={2.5} />
-              <div className="h-px w-10 bg-violet-200" />
+              <div className="h-px w-10 bg-zappy-200" />
+              <Flower2 size={14} className="text-zappy-500" strokeWidth={2.5} />
+              <div className="h-px w-10 bg-zappy-200" />
             </div>
             <p className="text-[13px] text-slate-500 font-medium">Log in to manage events</p>
           </div>
@@ -278,14 +278,14 @@ export default function PartnerLoginPage() {
 
                 <div className="flex items-center gap-4 mb-6">
                   <div className="flex-1 h-px bg-slate-100" />
-                  <span className="w-7 h-7 rounded-full bg-violet-600 text-white flex items-center justify-center text-[10px] font-bold">or</span>
+                  <span className="w-7 h-7 rounded-full bg-zappy-600 text-white flex items-center justify-center text-[10px] font-bold">or</span>
                   <div className="flex-1 h-px bg-slate-100" />
                 </div>
 
                 {/* Form Inputs */}
                 <div className="mb-8">
                   {/* Phone */}
-                  <div className="flex items-center border border-slate-200 rounded-xl px-3 sm:px-4 py-3 focus-within:border-violet-500 focus-within:ring-1 focus-within:ring-violet-500 transition-all bg-white shadow-[0_1px_2px_rgba(0,0,0,0.01)] overflow-hidden">
+                  <div className="flex items-center border border-slate-200 rounded-xl px-3 sm:px-4 py-3 focus-within:border-zappy-500 focus-within:ring-1 focus-within:ring-zappy-500 transition-all bg-white shadow-[0_1px_2px_rgba(0,0,0,0.01)] overflow-hidden">
                     <span className="text-[13px] font-bold text-slate-700 mr-2 flex items-center gap-1 shrink-0">+91 <ChevronLeft size={12} className="-rotate-90 text-slate-400" /></span>
                     <div className="w-px h-5 bg-slate-200 mx-1 sm:mx-2 shrink-0" />
                     <input type="tel" value={phone} onChange={e => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
@@ -295,7 +295,7 @@ export default function PartnerLoginPage() {
                 </div>
 
                 <button type="submit" disabled={sending || phone.length < 10}
-                  className="w-full py-3.5 bg-[#6d28d9] hover:bg-violet-700 text-white rounded-xl font-medium text-[14px] flex items-center justify-center transition-all disabled:opacity-50 relative">
+                  className="w-full py-3.5 bg-[#6d28d9] hover:bg-zappy-700 text-white rounded-xl font-medium text-[14px] flex items-center justify-center transition-all disabled:opacity-50 relative">
                   {sending ? <Loader2 size={18} className="animate-spin" /> : <span>Get OTP</span>}
                   {!sending && <ArrowRight size={16} className="absolute right-4" />}
                 </button>
@@ -309,7 +309,7 @@ export default function PartnerLoginPage() {
             {/* OTP STEP */}
             {step === 'otp' && (
               <motion.div key="otp" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex flex-col">
-                <button onClick={() => setStep('phone')} className="self-start flex items-center gap-1 text-[13px] font-bold text-violet-600 mb-6 hover:underline">
+                <button onClick={() => setStep('phone')} className="self-start flex items-center gap-1 text-[13px] font-bold text-zappy-600 mb-6 hover:underline">
                   <ChevronLeft size={16} /> Back to login
                 </button>
                 <div className="mb-6">
@@ -328,7 +328,7 @@ export default function PartnerLoginPage() {
                 <ResendOtp phone={phone} tone="light" cooldownSec={otpMeta.cooldownSec} resendsLeft={otpMeta.resendsLeft} onResent={handleResent} onStartOver={startOver} />
 
                 <button onClick={handleVerify} disabled={otp.length < 6 || logging}
-                  className="w-full mt-6 py-4 bg-[#6d28d9] hover:bg-violet-700 text-white rounded-xl font-bold text-[15px] flex items-center justify-center transition-all disabled:opacity-50 shadow-md">
+                  className="w-full mt-6 py-4 bg-[#6d28d9] hover:bg-zappy-700 text-white rounded-xl font-bold text-[15px] flex items-center justify-center transition-all disabled:opacity-50 shadow-md">
                   {logging ? <Loader2 size={20} className="animate-spin" /> : <><ArrowRight size={18} className="mr-2" /><span>{isNew ? 'Continue' : 'Enter Dashboard'}</span></>}
                 </button>
               </motion.div>
@@ -351,12 +351,12 @@ export default function PartnerLoginPage() {
                       <label className="text-[12px] font-bold text-slate-700 block mb-1.5">{label} <span className="text-red-500">*</span></label>
                       <input value={regForm[k]} onChange={e => setRegForm(p => ({ ...p, [k]: e.target.value }))}
                         placeholder={placeholder}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 placeholder:text-slate-400 outline-none text-sm focus:border-violet-500 focus:bg-white focus:ring-2 focus:ring-violet-100 transition-all" />
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 placeholder:text-slate-400 outline-none text-sm focus:border-zappy-500 focus:bg-white focus:ring-2 focus:ring-zappy-100 transition-all" />
                     </div>
                   ))}
                 </div>
                 <button type="submit" disabled={logging || !regForm.businessName || !regForm.ownerName}
-                  className="w-full py-4 bg-[#6d28d9] hover:bg-violet-700 text-white rounded-xl font-bold text-[15px] flex items-center justify-center transition-all disabled:opacity-50 shadow-md">
+                  className="w-full py-4 bg-[#6d28d9] hover:bg-zappy-700 text-white rounded-xl font-bold text-[15px] flex items-center justify-center transition-all disabled:opacity-50 shadow-md">
                   {logging ? <Loader2 size={20} className="animate-spin" /> : <span>Create Account</span>}
                 </button>
               </motion.form>
@@ -366,7 +366,7 @@ export default function PartnerLoginPage() {
         </div>
 
         {/* Stats Footer Container */}
-        <div className="w-full max-w-[440px] mt-6 lg:mt-8 bg-violet-50/70 border border-violet-100/50 rounded-card py-4 sm:py-5 px-3 sm:px-5 flex justify-between items-center z-10">
+        <div className="w-full max-w-[440px] mt-6 lg:mt-8 bg-zappy-50/70 border border-zappy-100/50 rounded-card py-4 sm:py-5 px-3 sm:px-5 flex justify-between items-center z-10">
           {[
             { icon: CalendarDays, val: '500+', label: 'Events Decorated' },
             { icon: Smile, val: '100+', label: 'Happy Clients' },
@@ -374,8 +374,8 @@ export default function PartnerLoginPage() {
             { icon: Award, val: '10+', label: 'Years Experience' }
           ].map((s, i) => (
             <div key={i} className="flex flex-col items-center gap-1.5 w-1/4 relative">
-              {i !== 0 && <div className="absolute -left-1 sm:-left-2.5 top-2 bottom-2 w-px bg-violet-200/50" />}
-              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border border-violet-200 flex items-center justify-center bg-white text-violet-600 mb-0.5">
+              {i !== 0 && <div className="absolute -left-1 sm:-left-2.5 top-2 bottom-2 w-px bg-zappy-200/50" />}
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border border-zappy-200 flex items-center justify-center bg-white text-zappy-600 mb-0.5">
                 <s.icon size={14} strokeWidth={2} />
               </div>
               <span className="text-[12px] sm:text-[13px] font-black text-slate-900 leading-none">{s.val}</span>

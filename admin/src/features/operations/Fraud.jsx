@@ -235,7 +235,7 @@ export default function Fraud() {
                       </td>
                       <td className="px-4 py-3">
                         <button onClick={() => setActor(ev)} className="text-left">
-                          <span className="text-sm font-semibold text-indigo-700 hover:underline">{ev.actorName || 'Unknown'}</span>
+                          <span className="text-sm font-semibold text-zappy-700 hover:underline">{ev.actorName || 'Unknown'}</span>
                           <span className="block text-[11px] text-slate-400">{ev.actorPhone || '—'} · <span className="capitalize">{ev.actorKind}</span></span>
                         </button>
                       </td>

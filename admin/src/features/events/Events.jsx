@@ -28,7 +28,7 @@ const BOOKING_STATUS_COLORS = {
   pending_payment: 'bg-yellow-50 text-yellow-700',
   confirmed:       'bg-green-50  text-green-700',
   partner_assigned:'bg-blue-50   text-blue-700',
-  in_progress:     'bg-indigo-50 text-indigo-700',
+  in_progress:     'bg-zappy-50 text-zappy-700',
   completed:       'bg-emerald-50 text-emerald-700',
   cancelled:       'bg-red-50    text-red-700',
   disputed:        'bg-orange-50 text-orange-700',
@@ -68,7 +68,7 @@ function ThemesTab() {
       <div className="flex gap-2 flex-wrap">
         {['', 'pending', 'approved', 'featured', 'hidden', 'rejected'].map(s => (
           <button key={s} onClick={() => { setStatusFilter(s); setPage(1); }}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${statusFilter === s ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}>
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${statusFilter === s ? 'bg-zappy-600 text-white border-zappy-600' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}>
             {s || 'All'}
           </button>
         ))}
@@ -97,15 +97,15 @@ function ThemesTab() {
                         value={editPriceVal}
                         onChange={e => setEditPriceVal(e.target.value)}
                         onKeyDown={e => { if (e.key === 'Enter') savePrice(theme._id); if (e.key === 'Escape') setEditPriceId(null); }}
-                        className="w-24 border border-indigo-300 rounded px-1.5 py-0.5 text-xs focus:outline-none focus:border-indigo-500"
+                        className="w-24 border border-zappy-300 rounded px-1.5 py-0.5 text-xs focus:outline-none focus:border-zappy-500"
                       />
-                      <button onClick={() => savePrice(theme._id)} className="px-2 py-0.5 text-xs bg-indigo-600 text-white rounded font-medium">Save</button>
+                      <button onClick={() => savePrice(theme._id)} className="px-2 py-0.5 text-xs bg-zappy-600 text-white rounded font-medium">Save</button>
                       <button onClick={() => setEditPriceId(null)} className="px-2 py-0.5 text-xs bg-slate-100 text-slate-600 rounded font-medium">✕</button>
                     </div>
                   ) : (
                     <button
                       onClick={() => { setEditPriceId(theme._id); setEditPriceVal(String(Math.round((theme.startingPricePaise || 0) / 100))); }}
-                      className="text-xs font-semibold text-indigo-600 border border-indigo-200 bg-indigo-50 px-2 py-0.5 rounded hover:bg-indigo-100"
+                      className="text-xs font-semibold text-zappy-600 border border-zappy-200 bg-zappy-50 px-2 py-0.5 rounded hover:bg-zappy-100"
                     >
                       ₹{Math.round((theme.startingPricePaise || 0) / 100)} ✏️
                     </button>
@@ -133,7 +133,7 @@ function ThemesTab() {
         <div className="flex gap-2 justify-center">
           {Array.from({ length: data.pages }, (_, i) => i + 1).map(p => (
             <button key={p} onClick={() => setPage(p)}
-              className={`w-8 h-8 rounded-lg text-sm font-medium ${p === page ? 'bg-indigo-600 text-white' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'}`}>{p}</button>
+              className={`w-8 h-8 rounded-lg text-sm font-medium ${p === page ? 'bg-zappy-600 text-white' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'}`}>{p}</button>
           ))}
         </div>
       )}
@@ -160,7 +160,7 @@ function BookingsTab() {
       <div className="flex gap-2 flex-wrap">
         {['', 'pending_payment', 'confirmed', 'completed', 'cancelled', 'disputed'].map(s => (
           <button key={s} onClick={() => { setStatusFilter(s); setPage(1); }}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${statusFilter === s ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}>
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${statusFilter === s ? 'bg-zappy-600 text-white border-zappy-600' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}>
             {s.replace(/_/g, ' ') || 'All'}
           </button>
         ))}
@@ -342,7 +342,7 @@ function PartnerDrawer({ partnerId, onClose, onRefresh }) {
             <div className="bg-slate-50 rounded-2xl p-4">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-violet-400 rounded-xl flex items-center justify-center text-white font-black text-lg">
+                  <div className="w-12 h-12 bg-zappy-400 rounded-xl flex items-center justify-center text-white font-black text-lg">
                     {partner.businessName?.[0]?.toUpperCase()}
                   </div>
                   <div>
@@ -491,14 +491,14 @@ function PartnersTab() {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <p className="text-sm text-slate-500">{data?.total || 0} partners</p>
-        <button onClick={() => setShowForm(true)} className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700"><Plus size={14} />Add Partner</button>
+        <button onClick={() => setShowForm(true)} className="flex items-center gap-1.5 px-3 py-1.5 bg-zappy-600 text-white rounded-lg text-sm font-medium hover:bg-zappy-700"><Plus size={14} />Add Partner</button>
       </div>
 
       <AnimatePresence>
         {showForm && (
-          <motion.form onSubmit={handleCreate} initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="bg-indigo-50 border border-indigo-200 rounded-xl p-4 space-y-3">
+          <motion.form onSubmit={handleCreate} initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="bg-zappy-50 border border-zappy-200 rounded-xl p-4 space-y-3">
             <div className="flex justify-between items-center">
-              <h3 className="font-semibold text-sm text-indigo-900">New Event Partner</h3>
+              <h3 className="font-semibold text-sm text-zappy-900">New Event Partner</h3>
               <button type="button" onClick={() => setShowForm(false)}><X size={16} className="text-slate-400" /></button>
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -506,11 +506,11 @@ function PartnersTab() {
                 <div key={k}>
                   <label className="text-xs text-slate-600 font-medium block mb-1">{label}</label>
                   <input value={form[k]} onChange={e => setForm(p => ({ ...p, [k]: e.target.value }))} required={k !== 'cities'}
-                    className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:border-indigo-400 outline-none" />
+                    className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:border-zappy-400 outline-none" />
                 </div>
               ))}
             </div>
-            <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700">Create Partner</button>
+            <button type="submit" className="px-4 py-2 bg-zappy-600 text-white rounded-lg text-sm font-medium hover:bg-zappy-700">Create Partner</button>
           </motion.form>
         )}
       </AnimatePresence>
@@ -521,10 +521,10 @@ function PartnersTab() {
         <div className="space-y-2">
           {(data?.partners || []).map(p => (
             <div key={p._id} onClick={() => setSelectedId(p._id)}
-              className="bg-white rounded-xl border border-slate-200 p-4 cursor-pointer hover:border-indigo-200 hover:bg-indigo-50/30 transition-all">
+              className="bg-white rounded-xl border border-slate-200 p-4 cursor-pointer hover:border-zappy-200 hover:bg-zappy-50/30 transition-all">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-violet-400 rounded-xl flex items-center justify-center text-white font-bold text-sm shrink-0">
+                  <div className="w-10 h-10 bg-zappy-400 rounded-xl flex items-center justify-center text-white font-bold text-sm shrink-0">
                     {p.businessName?.[0]?.toUpperCase()}
                   </div>
                   <div>
@@ -574,12 +574,12 @@ function AnalyticsTab() {
       {/* KPI row */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: 'Total Bookings',   value: s.totalBookings || 0,                                                            color: 'text-indigo-600' },
+          { label: 'Total Bookings',   value: s.totalBookings || 0,                                                            color: 'text-zappy-600' },
           { label: 'Confirmed',        value: s.confirmedBookings || 0,                                                        color: 'text-blue-600'  },
           { label: 'Conversion',       value: `${s.conversionRate || 0}%`,                                                     color: 'text-green-600' },
           { label: 'Revenue',          value: `₹${Math.round((s.totalRevenuePaise || 0) / 100).toLocaleString('en-IN')}`,     color: 'text-emerald-600'},
           { label: 'Live Themes',      value: s.totalThemes || 0,                                                              color: 'text-purple-600'},
-          { label: 'Active Partners',  value: s.totalPartners || 0,                                                            color: 'text-violet-600'},
+          { label: 'Active Partners',  value: s.totalPartners || 0,                                                            color: 'text-zappy-600'},
         ].map(({ label, value, color }) => (
           <div key={label} className="bg-white rounded-xl border border-slate-200 p-3">
             <p className="text-xs text-slate-500 font-medium">{label}</p>
@@ -598,7 +598,7 @@ function AnalyticsTab() {
               return s.weeklyTrend.map(d => (
                 <div key={d._id} className="flex-1 flex flex-col items-center gap-1">
                   <span className="text-[9px] text-slate-500 font-bold">{d.count}</span>
-                  <div className="w-full bg-indigo-500 rounded-sm" style={{ height: `${Math.max(4, (d.count / max) * 56)}px` }} />
+                  <div className="w-full bg-zappy-500 rounded-sm" style={{ height: `${Math.max(4, (d.count / max) * 56)}px` }} />
                   <span className="text-[8px] text-slate-400">{d._id?.slice(5)}</span>
                 </div>
               ));
@@ -619,7 +619,7 @@ function AnalyticsTab() {
                   <p className="font-medium text-slate-800 truncate text-xs">{t.title}</p>
                   <p className="text-[10px] text-slate-400">{t.categoryId?.emoji} {t.categoryId?.name}</p>
                 </div>
-                <span className="text-xs font-bold text-indigo-600 shrink-0">{t.bookingCount}</span>
+                <span className="text-xs font-bold text-zappy-600 shrink-0">{t.bookingCount}</span>
               </div>
             ))}
             {!s.topThemes?.length && <p className="text-sm text-slate-400">No data yet</p>}
@@ -710,7 +710,7 @@ function ConfigTab() {
     <div key={key}>
       <label className="block text-xs font-medium text-slate-600 mb-1">{label}</label>
       <input type={type} value={values[key] ?? ''} onChange={e => setForm(p => ({ ...(p || values), [key]: type === 'number' ? Number(e.target.value) : e.target.value }))}
-        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:border-indigo-400 outline-none" />
+        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:border-zappy-400 outline-none" />
     </div>
   );
 
@@ -725,17 +725,17 @@ function ConfigTab() {
           <input type="number" min="0" step="1"
             value={Math.round((values.travelFeePerKmPaise || 0) / 100)}
             onChange={e => setForm(p => ({ ...(p || values), travelFeePerKmPaise: Math.round(Number(e.target.value) * 100) }))}
-            className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:border-indigo-400 outline-none" />
+            className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:border-zappy-400 outline-none" />
         </div>
         <div>
           <label className="block text-xs font-medium text-slate-600 mb-1">Min Advance Booking (hrs)</label>
           <input type="number" min="1" max="72" value={values.minAdvanceBookingHours ?? ''} onChange={e => setForm(p => ({ ...(p || values), minAdvanceBookingHours: Number(e.target.value) }))}
-            className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:border-indigo-400 outline-none" />
+            className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:border-zappy-400 outline-none" />
         </div>
         <div>
           <label className="block text-xs font-medium text-slate-600 mb-1">Max Advance Booking (days)</label>
           <input type="number" min="1" max="730" value={values.maxAdvanceBookingDays ?? ''} onChange={e => setForm(p => ({ ...(p || values), maxAdvanceBookingDays: Number(e.target.value) }))}
-            className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:border-indigo-400 outline-none" />
+            className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:border-zappy-400 outline-none" />
           {(values.maxAdvanceBookingDays === 0 || values.maxAdvanceBookingDays < 1) && (
             <p className="text-xs text-red-500 mt-1">Must be ≥ 1 — setting 0 blocks all bookings</p>
           )}
@@ -754,7 +754,7 @@ function ConfigTab() {
                   updated[i] = { ...updated[i], refundPct: Number(e.target.value) };
                   setForm(p => ({ ...(p || values), cancellationPolicy: updated }));
                 }}
-                className="w-20 border border-slate-200 rounded-lg px-2 py-1 text-xs focus:border-indigo-400 outline-none" />
+                className="w-20 border border-slate-200 rounded-lg px-2 py-1 text-xs focus:border-zappy-400 outline-none" />
               <span className="text-slate-500 text-xs">% refund</span>
             </div>
           ))}
@@ -771,7 +771,7 @@ function ConfigTab() {
         ))}
       </div>
 
-      <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700">Save Configuration</button>
+      <button type="submit" className="px-4 py-2 bg-zappy-600 text-white rounded-lg text-sm font-medium hover:bg-zappy-700">Save Configuration</button>
     </form>
   );
 }
@@ -790,7 +790,7 @@ export default function Events() {
       <div className="flex gap-2 border-b border-slate-100 pb-0.5">
         {TABS.map(({ id, label, Icon }) => (
           <button key={id} onClick={() => setActiveTab(id)}
-            className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-t-lg border-b-2 transition-all ${activeTab === id ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}>
+            className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-t-lg border-b-2 transition-all ${activeTab === id ? 'border-zappy-600 text-zappy-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}>
             <Icon size={14} />{label}
           </button>
         ))}

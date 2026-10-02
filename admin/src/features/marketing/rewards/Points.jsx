@@ -17,7 +17,7 @@ const NUM_FIELDS = [
   ['scratchExpiryDays', 'Scratch card expiry (days)'],
 ];
 
-const inp = 'w-full text-sm border border-slate-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-400';
+const inp = 'w-full text-sm border border-slate-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-zappy-400';
 
 export default function RewardsConfig() {
   const { data, isLoading } = useAdminGetRewardsConfigQuery();
@@ -28,7 +28,7 @@ export default function RewardsConfig() {
 
   useEffect(() => { if (data?.config) setForm(data.config); }, [data]);
 
-  if (isLoading || !form) return <div className="flex justify-center py-16"><Loader2 className="animate-spin text-indigo-500" /></div>;
+  if (isLoading || !form) return <div className="flex justify-center py-16"><Loader2 className="animate-spin text-zappy-500" /></div>;
 
   const setNum = (k) => (e) => setForm((p) => ({ ...p, [k]: Number(e.target.value) }));
   const setTier = (i, k, v) => setForm((p) => ({ ...p, scratchTiers: p.scratchTiers.map((t, j) => j === i ? { ...t, [k]: k === 'label' || k === 'type' ? v : Number(v) } : t) }));
@@ -94,7 +94,7 @@ export default function RewardsConfig() {
       <div className="bg-white border border-slate-200 rounded-2xl p-4">
         <div className="flex items-center justify-between mb-2">
           <p className="text-sm font-bold text-slate-700">Scratch card rewards (weighted odds)</p>
-          <button onClick={addTier} className="inline-flex items-center gap-1 text-xs font-bold text-indigo-600"><Plus size={14} /> Add</button>
+          <button onClick={addTier} className="inline-flex items-center gap-1 text-xs font-bold text-zappy-600"><Plus size={14} /> Add</button>
         </div>
         <div className="space-y-2">
           {(form.scratchTiers || []).map((t, i) => (
@@ -122,7 +122,7 @@ export default function RewardsConfig() {
         <div className="flex items-center gap-2">
           <input className={inp + ' flex-[2]'} placeholder="User ID (24-char)" value={g.userId} onChange={(e) => setG((p) => ({ ...p, userId: e.target.value.trim() }))} />
           <input type="number" className={inp + ' w-28'} placeholder="Points" value={g.points} onChange={(e) => setG((p) => ({ ...p, points: e.target.value }))} />
-          <button onClick={onGrant} disabled={granting} className="bg-indigo-600 text-white font-bold px-4 py-2 rounded-lg disabled:opacity-50">{granting ? '…' : 'Grant'}</button>
+          <button onClick={onGrant} disabled={granting} className="bg-zappy-600 text-white font-bold px-4 py-2 rounded-lg disabled:opacity-50">{granting ? '…' : 'Grant'}</button>
         </div>
       </div>
     </div>

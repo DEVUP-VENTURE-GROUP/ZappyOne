@@ -1,6 +1,7 @@
 import { ShieldCheck } from "lucide-react";
 import { ZappyLogo } from "@shared/components/common/ZappyLogo";
 import { PORTAL_URLS } from "@shared/config/portals";
+import { useGetPoliciesQuery } from "@shared/services/api";
 
 /**
  * Site footer. Services and areas come from the live catalog and the active
@@ -19,11 +20,11 @@ const SOCIALS = [
   },
 ];
 
-const HELP = [
+// Legal pages are whatever is PUBLISHED (admin → Help content → Policy pages):
+// Terms, Privacy, Refund, Warranty… A page appears here the day it is live,
+// and a link never points at a page that does not exist.
+const HELP_FIXED = [
   { label: "Help & FAQs", href: "/faq" },
-  { label: "Privacy policy", href: "/policy/privacy-policy" },
-  { label: "Refund policy", href: "/policy/refund-policy" },
-  { label: "Warranty", href: "/policy/warranty-guidelines" },
   { label: "support@zappyone.com", href: "mailto:support@zappyone.com" },
 ];
 
@@ -61,6 +62,8 @@ function Item({ href, children, external }) {
 }
 
 export default function Footer({ services = [], areas = [] }) {
+  const { data: policyData } = useGetPoliciesQuery();
+  const policies = policyData?.policies || [];
   const cities = [...new Set(areas.map((a) => a.city).filter(Boolean))];
   return (
     <footer className="bg-navy pb-24 pt-12 text-slate-300 sm:pb-12">
@@ -95,7 +98,7 @@ export default function Footer({ services = [], areas = [] }) {
             </Column>
           )}
           <Column title="Help">
-            {HELP.map((h) => (
+            {[HELP_FIXED[0], ...policies.map((p) => ({ label: p.title, href: `/policy/${p.slug}` })), HELP_FIXED[1]].map((h) => (
               <Item key={h.label} href={h.href}>
                 {h.label}
               </Item>

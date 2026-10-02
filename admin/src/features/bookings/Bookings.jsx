@@ -53,23 +53,23 @@ export default function Bookings() {
       <div className="flex flex-wrap items-center gap-2">
         {SOURCES.map((s) => (
           <button key={s.id} onClick={() => reset(setSource)(s.id)}
-            className={`rounded-lg px-3 py-1.5 text-xs font-bold transition ${source === s.id ? 'bg-indigo-600 text-white' : 'bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50'}`}>
+            className={`rounded-lg px-3 py-1.5 text-xs font-bold transition ${source === s.id ? 'bg-zappy-600 text-white' : 'bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50'}`}>
             {s.label}
           </button>
         ))}
         <select value={bucket} onChange={(e) => reset(setBucket)(e.target.value)}
-          className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold outline-none focus:ring-2 focus:ring-indigo-500">
+          className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold outline-none focus:ring-2 focus:ring-zappy-500">
           {BUCKETS.map((b) => <option key={b.id} value={b.id}>{b.label}</option>)}
         </select>
         <div className="relative min-w-[220px] flex-1">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input value={q} onChange={(e) => reset(setQ)(e.target.value)} placeholder="Reference or customer phone"
-            className="w-full rounded-lg border border-slate-200 bg-white py-1.5 pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500" />
+            className="w-full rounded-lg border border-slate-200 bg-white py-1.5 pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-zappy-500" />
         </div>
       </div>
 
       <Card className="overflow-hidden">
-        {isFetching && <div className="h-0.5 animate-pulse bg-indigo-600" />}
+        {isFetching && <div className="h-0.5 animate-pulse bg-zappy-600" />}
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -218,7 +218,7 @@ function Person({ Icon, title, p, empty = '—' }) {
       {p ? (
         <>
           <p className="mt-1 flex items-center gap-1.5 font-semibold text-slate-800"><Icon size={12} />{p.name || '—'}</p>
-          {p.phone && <a href={`tel:${p.phone}`} className="text-xs text-indigo-600">{p.phone}</a>}
+          {p.phone && <a href={`tel:${p.phone}`} className="text-xs text-zappy-600">{p.phone}</a>}
         </>
       ) : <p className="mt-1 text-xs text-amber-600">{empty}</p>}
     </div>

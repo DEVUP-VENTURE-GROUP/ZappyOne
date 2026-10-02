@@ -47,7 +47,7 @@ function OtpAnalyticsCard() {
     <Card className="p-5">
       <div className="flex items-center justify-between mb-1">
         <div className="flex items-center gap-2">
-          <MessageSquare size={15} className="text-indigo-500" />
+          <MessageSquare size={15} className="text-zappy-500" />
           <p className="text-sm font-bold text-slate-800">OTP Analytics</p>
         </div>
         <div className="flex items-center gap-1.5">
@@ -150,7 +150,7 @@ export default function Analytics() {
             { label: 'Active orders',   value: live.active,                                              color: 'text-blue-600' },
             { label: 'Online workers',  value: `${live.onlineWorkers}/${live.totalWorkers}`,             color: 'text-emerald-600' },
             { label: 'Orders today',    value: live.ordersToday,                                         color: 'text-orange-600' },
-            { label: 'Completed today', value: live.completedToday,                                      color: 'text-violet-600' },
+            { label: 'Completed today', value: live.completedToday,                                      color: 'text-zappy-600' },
             { label: 'Revenue today',   value: `₹${(live.revenueToday || 0).toLocaleString('en-IN')}`,   color: 'text-amber-600' },
           ].map(({ label, value, color }) => (
             <div key={label} className="flex flex-col leading-tight">

@@ -30,7 +30,7 @@ export default function Overview() {
         <StatCard label="Avg Fare"       value={`₹${m.avgFare || 0}`}                            Icon={TrendingUp}  color="text-amber-600"  bg="bg-amber-50" />
         <StatCard label="Online Workers" value={`${m.onlineWorkers}/${m.totalWorkers}`}           Icon={UserCheck}   color="text-purple-600" bg="bg-purple-50" />
         <StatCard label="Total Users"    value={(m.totalUsers || 0).toLocaleString('en-IN')}      Icon={Users}       color="text-slate-600"  bg="bg-slate-100" />
-        <StatCard label="Total Workers"  value={(m.totalWorkers || 0).toLocaleString('en-IN')}    Icon={Users}       color="text-indigo-600" bg="bg-indigo-50" />
+        <StatCard label="Total Workers"  value={(m.totalWorkers || 0).toLocaleString('en-IN')}    Icon={Users}       color="text-zappy-600" bg="bg-zappy-50" />
       </div>
 
       {/* Charts row */}

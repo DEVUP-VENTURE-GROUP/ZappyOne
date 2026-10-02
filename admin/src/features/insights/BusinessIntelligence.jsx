@@ -42,7 +42,7 @@ function ServicePnL({ days }) {
 
   return (
     <Card>
-      <SectionTitle icon={BarChart2} title="Service P&L" subtitle={`Margin per service — last ${days} days`} color="text-indigo-600" />
+      <SectionTitle icon={BarChart2} title="Service P&L" subtitle={`Margin per service — last ${days} days`} color="text-zappy-600" />
       {isLoading ? (
         <div className="flex justify-center py-8"><Loader2 size={20} className="animate-spin text-slate-300" /></div>
       ) : services.length === 0 ? (
@@ -240,7 +240,7 @@ export default function BusinessIntelligence() {
         <select
           value={days}
           onChange={(e) => setDays(Number(e.target.value))}
-          className="px-3 py-2 text-sm border border-slate-200 rounded-xl outline-none focus:border-indigo-400"
+          className="px-3 py-2 text-sm border border-slate-200 rounded-xl outline-none focus:border-zappy-400"
         >
           <option value={7}>Last 7 days</option>
           <option value={30}>Last 30 days</option>
@@ -327,7 +327,7 @@ function GeoReadinessTool() {
                 onChange={(e) => setArea(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && findArea()}
                 placeholder="e.g. Vikarabad, Warangal, Karimnagar…"
-                className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-xl outline-none focus:border-indigo-400"
+                className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-xl outline-none focus:border-zappy-400"
               />
             </div>
             <button onClick={findArea} disabled={resolving || !area.trim()}
@@ -350,19 +350,19 @@ function GeoReadinessTool() {
             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Latitude <span className="text-slate-300 normal-case font-medium">(auto)</span></label>
             <input type="number" placeholder="28.6139" value={coords.lat}
               onChange={(e) => setCoords((c) => ({ ...c, lat: e.target.value }))}
-              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl outline-none focus:border-indigo-400" />
+              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl outline-none focus:border-zappy-400" />
           </div>
           <div>
             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Longitude <span className="text-slate-300 normal-case font-medium">(auto)</span></label>
             <input type="number" placeholder="77.2090" value={coords.lng}
               onChange={(e) => setCoords((c) => ({ ...c, lng: e.target.value }))}
-              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl outline-none focus:border-indigo-400" />
+              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl outline-none focus:border-zappy-400" />
           </div>
           <div>
             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Radius (km)</label>
             <input type="number" min="1" max="50" value={coords.radius}
               onChange={(e) => setCoords((c) => ({ ...c, radius: Number(e.target.value) }))}
-              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl outline-none focus:border-indigo-400" />
+              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl outline-none focus:border-zappy-400" />
           </div>
         </div>
         <button onClick={handleCheck} disabled={isLoading || isFetching || !coords.lat || !coords.lng}

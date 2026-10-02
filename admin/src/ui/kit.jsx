@@ -113,7 +113,7 @@ export function StatusBadge({ status }) {
     created: 'bg-slate-100 text-slate-600',
     captured: 'bg-green-100 text-green-700',
     paid: 'bg-green-100 text-green-700',
-    refunded: 'bg-violet-100 text-violet-700',
+    refunded: 'bg-zappy-100 text-zappy-700',
     expired: 'bg-slate-100 text-slate-500',
     requested: 'bg-yellow-100 text-yellow-700',
     manual_required: 'bg-red-100 text-red-700',

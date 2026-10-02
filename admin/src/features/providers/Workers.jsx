@@ -159,7 +159,7 @@ function KycDocViewer({ workerId, onClose }) {
                     </div>
                     {docs[urlKey] && (
                       <button onClick={() => setLightbox({ url: docs[urlKey], label })}
-                        className="text-[11px] text-indigo-600 hover:text-indigo-800 font-semibold w-full text-center">
+                        className="text-[11px] text-zappy-600 hover:text-zappy-800 font-semibold w-full text-center">
                         View full size
                       </button>
                     )}
@@ -260,7 +260,7 @@ function WorkerEarningsTab({ workerId }) {
             onClick={() => setPeriod(id === 'quarterly' ? 'monthly' : id)}
             className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition ${
               (period === id || (id === 'monthly' && period === 'monthly'))
-                ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
+                ? 'bg-zappy-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
             {label}
           </button>
         ))}
@@ -269,7 +269,7 @@ function WorkerEarningsTab({ workerId }) {
       {/* summary cards */}
       <div className="grid grid-cols-3 gap-2">
         <EarningsSummaryCard label="Gross"      value={fmt(e.grossEarningsPaise || 0)} />
-        <EarningsSummaryCard label="Net"        value={fmt(e.netEarningsPaise || 0)} color="text-indigo-700" />
+        <EarningsSummaryCard label="Net"        value={fmt(e.netEarningsPaise || 0)} color="text-zappy-700" />
         <EarningsSummaryCard label="Jobs"       value={e.totalJobsCompleted || 0} />
         <EarningsSummaryCard label="Tips"       value={fmt(e.tipsPaise || 0)} color="text-emerald-600" />
         <EarningsSummaryCard label="Penalties"  value={fmt(e.totalDeductionsPaise || 0)} color="text-red-600" />
@@ -286,7 +286,7 @@ function WorkerEarningsTab({ workerId }) {
                 <div className="absolute -top-1 left-1/2 -translate-x-1/2 hidden group-hover:block bg-slate-800 text-white text-[9px] px-1.5 py-0.5 rounded whitespace-nowrap z-10 -translate-y-full">
                   {d.date.slice(5)}: {fmt(d.earningsPaise)} · {d.ordersCompleted} jobs
                 </div>
-                <div className="w-full rounded-sm bg-indigo-500" style={{ height: `${Math.max((d.earningsPaise / maxEarn) * 100, 2)}%` }} />
+                <div className="w-full rounded-sm bg-zappy-500" style={{ height: `${Math.max((d.earningsPaise / maxEarn) * 100, 2)}%` }} />
               </div>
             ))}
           </div>
@@ -398,7 +398,7 @@ function WorkerDetailPanel({ worker, onClose, onRefetch }) {
           {/* header */}
           <div className="px-5 py-4 border-b border-slate-100 flex items-start justify-between shrink-0">
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-2xl bg-indigo-100 flex items-center justify-center font-bold text-indigo-700 text-lg">
+              <div className="w-11 h-11 rounded-2xl bg-zappy-100 flex items-center justify-center font-bold text-zappy-700 text-lg">
                 {worker.name?.[0]?.toUpperCase() ?? '?'}
               </div>
               <div>
@@ -417,7 +417,7 @@ function WorkerDetailPanel({ worker, onClose, onRefetch }) {
             {['details', 'earnings', 'penalties', 'actions'].map(t => (
               <button key={t}
                 onClick={() => setTab(t)}
-                className={`flex-1 py-2.5 text-xs font-bold capitalize transition ${tab === t ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}>
+                className={`flex-1 py-2.5 text-xs font-bold capitalize transition ${tab === t ? 'border-b-2 border-zappy-600 text-zappy-600' : 'text-slate-400 hover:text-slate-600'}`}>
                 {t}
               </button>
             ))}
@@ -455,7 +455,7 @@ function WorkerDetailPanel({ worker, onClose, onRefetch }) {
                   {worker.kyc?.selfieUrl && (
                     <button
                       onClick={() => setShowDocs(true)}
-                      className="flex items-center gap-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-800 bg-indigo-50 px-3 py-2 rounded-xl transition"
+                      className="flex items-center gap-1.5 text-xs font-bold text-zappy-600 hover:text-zappy-800 bg-zappy-50 px-3 py-2 rounded-xl transition"
                     >
                       <Eye size={13} /> View Docs
                     </button>
@@ -475,7 +475,7 @@ function WorkerDetailPanel({ worker, onClose, onRefetch }) {
                   <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wide mb-2">Skills</p>
                   <div className="flex flex-wrap gap-1.5">
                     {worker.skills?.map(s => (
-                      <span key={s} className="bg-indigo-50 text-indigo-700 text-xs font-semibold px-2.5 py-1 rounded-lg">
+                      <span key={s} className="bg-zappy-50 text-zappy-700 text-xs font-semibold px-2.5 py-1 rounded-lg">
                         {s.replace(/_/g, ' ')}
                       </span>
                     ))}
@@ -558,16 +558,16 @@ function WorkerDetailPanel({ worker, onClose, onRefetch }) {
                 <button
                   onClick={() => setShowDocs(true)}
                   disabled={!worker.kyc?.selfieUrl}
-                  className="w-full flex items-center justify-between bg-indigo-50 hover:bg-indigo-100 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl px-4 py-3.5 transition"
+                  className="w-full flex items-center justify-between bg-zappy-50 hover:bg-zappy-100 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl px-4 py-3.5 transition"
                 >
                   <div className="flex items-center gap-3">
-                    <Eye size={16} className="text-indigo-600" />
+                    <Eye size={16} className="text-zappy-600" />
                     <div className="text-left">
-                      <p className="text-sm font-bold text-indigo-700">View KYC Documents</p>
-                      <p className="text-[11px] text-indigo-500">Aadhaar, license, selfie + metadata</p>
+                      <p className="text-sm font-bold text-zappy-700">View KYC Documents</p>
+                      <p className="text-[11px] text-zappy-500">Aadhaar, license, selfie + metadata</p>
                     </div>
                   </div>
-                  <ChevronRight size={14} className="text-indigo-400" />
+                  <ChevronRight size={14} className="text-zappy-400" />
                 </button>
 
                 {/* Block/Unblock */}
@@ -704,7 +704,7 @@ export default function Workers() {
                 <tr key={w._id} className="hover:bg-slate-50/60 transition-colors">
                   <Td>
                     <button
-                      className="font-semibold text-indigo-700 hover:underline text-left"
+                      className="font-semibold text-zappy-700 hover:underline text-left"
                       onClick={() => setSelected(w)}
                     >
                       {w.name}
@@ -734,7 +734,7 @@ export default function Workers() {
                   <Td>
                     <button
                       onClick={() => setSelected(w)}
-                      className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition"
+                      className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-zappy-50 text-zappy-700 hover:bg-zappy-100 transition"
                     >
                       <User size={12} /> View
                     </button>

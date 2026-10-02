@@ -13,7 +13,7 @@ const AUDIENCES = ['all', 'user', 'worker'];
 
 /* Editor modal (FAQ or policy) */
 /** Shared input styling. Declared above its users so the file reads top-down. */
-const inp = 'w-full text-sm border border-slate-200 rounded-xl px-3 py-2.5 outline-none focus:ring-2 focus:ring-indigo-400';
+const inp = 'w-full text-sm border border-slate-200 rounded-xl px-3 py-2.5 outline-none focus:ring-2 focus:ring-zappy-400';
 
 function Editor({ type, initial, onClose }) {
   const isFaq = type === 'faq';
@@ -131,14 +131,14 @@ export default function Content() {
       <div className="flex gap-2 mb-4">
         {[['faq', 'FAQs', HelpCircle], ['policy', 'Policy Pages', FileText]].map(([id, label, Icon]) => (
           <button key={id} onClick={() => setTab(id)}
-            className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-bold ${tab === id ? 'bg-indigo-600 text-white' : 'bg-white text-slate-600 border border-slate-200'}`}>
+            className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-bold ${tab === id ? 'bg-zappy-600 text-white' : 'bg-white text-slate-600 border border-slate-200'}`}>
             <Icon size={15} /> {label}
           </button>
         ))}
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center py-16"><Loader2 size={24} className="animate-spin text-indigo-500" /></div>
+        <div className="flex justify-center py-16"><Loader2 size={24} className="animate-spin text-zappy-500" /></div>
       ) : items.length === 0 ? (
         <p className="text-center text-slate-400 py-16 text-sm">No {tab === 'faq' ? 'FAQs' : 'pages'} yet — add one.</p>
       ) : (

@@ -36,7 +36,7 @@ export default function Hub({ title, subtitle, views }) {
               aria-selected={on}
               onClick={() => pick(v.id)}
               className={`flex items-center gap-1.5 px-3.5 py-2.5 text-sm font-semibold whitespace-nowrap border-b-2 -mb-px transition ${
-                on ? 'border-indigo-500 text-indigo-700' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
+                on ? 'border-zappy-500 text-zappy-700' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
             >
               {Icon && <Icon size={14} />} {v.label}
             </button>

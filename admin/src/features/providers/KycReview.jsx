@@ -85,7 +85,7 @@ function DocCard({ label, url, icon: Icon, badge, badgeColor, isLoading, onView 
       {url && (
         <button
           onClick={onView}
-          className="flex items-center justify-center gap-1.5 text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 transition"
+          className="flex items-center justify-center gap-1.5 text-[11px] font-semibold text-zappy-600 hover:text-zappy-800 transition"
         >
           <Eye size={11} /> View full size
         </button>
@@ -392,9 +392,9 @@ function KycDetailPanel({ worker, onDone }) {
 
         {/* previously approved notice */}
         {viewingSnap && (
-          <div className="flex items-center gap-2 bg-indigo-50 border border-indigo-100 rounded-xl px-3 py-2">
-            <Lock size={12} className="text-indigo-500 shrink-0" />
-            <p className="text-[11px] text-indigo-700 font-semibold">
+          <div className="flex items-center gap-2 bg-zappy-50 border border-zappy-100 rounded-xl px-3 py-2">
+            <Lock size={12} className="text-zappy-500 shrink-0" />
+            <p className="text-[11px] text-zappy-700 font-semibold">
               These are the previously approved documents. Rejecting the update will revert to these.
             </p>
           </div>
@@ -412,7 +412,7 @@ function KycDetailPanel({ worker, onDone }) {
       {!showReject && !showClarify && (
         <div className="px-5 pb-3">
           <button onClick={onRunVerify} disabled={verifying}
-            className="w-full flex items-center justify-center gap-1.5 bg-indigo-50 border border-indigo-200 text-indigo-700 font-semibold text-xs py-2.5 rounded-xl hover:bg-indigo-100 transition disabled:opacity-50">
+            className="w-full flex items-center justify-center gap-1.5 bg-zappy-50 border border-zappy-200 text-zappy-700 font-semibold text-xs py-2.5 rounded-xl hover:bg-zappy-100 transition disabled:opacity-50">
             {verifying ? <Loader2 size={13} className="animate-spin" /> : <BadgeCheck size={13} />} Run API verification (bank)
           </button>
           {verifyResult && (
@@ -613,7 +613,7 @@ export default function AdminKycReview() {
 
   if (isLoading) return (
     <div className="flex items-center justify-center h-48">
-      <Loader2 size={24} className="text-indigo-600 animate-spin" />
+      <Loader2 size={24} className="text-zappy-600 animate-spin" />
     </div>
   );
 
@@ -628,7 +628,7 @@ export default function AdminKycReview() {
           <button onClick={refetch} className="p-2 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 transition">
             <RefreshCw size={14} />
           </button>
-          <span className="bg-indigo-100 text-indigo-700 font-bold text-xs px-3 py-1.5 rounded-full">
+          <span className="bg-zappy-100 text-zappy-700 font-bold text-xs px-3 py-1.5 rounded-full">
             {data?.total ?? 0} pending
           </span>
         </div>
@@ -670,7 +670,7 @@ export default function AdminKycReview() {
               onClick={() => setSelected(selected?._id === w._id ? null : w)}
               className={`w-full text-left bg-white border rounded-xl px-4 py-3 transition ${
                 selected?._id === w._id
-                  ? 'border-indigo-400 ring-2 ring-indigo-100'
+                  ? 'border-zappy-400 ring-2 ring-zappy-100'
                   : 'border-slate-100 hover:border-slate-200'
               }`}
             >

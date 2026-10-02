@@ -301,7 +301,7 @@ function Overview({ vertical }) {
     <div className="space-y-4">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <StatCard label="Completed repairs" value={data?.completed || 0} Icon={Check} color="text-green-600" bg="bg-green-50" />
-        <StatCard label="Revenue" value={fmt(data?.revenuePaise || 0)} Icon={IndianRupee} color="text-indigo-600" bg="bg-indigo-50" />
+        <StatCard label="Revenue" value={fmt(data?.revenuePaise || 0)} Icon={IndianRupee} color="text-zappy-600" bg="bg-zappy-50" />
         <StatCard label="Commission" value={fmt(data?.commissionPaise || 0)} Icon={TrendingUp} color="text-blue-600" bg="bg-blue-50" />
         <StatCard
           label="Active bookings"
@@ -831,7 +831,7 @@ export default function RepairVertical({ vertical = 'mobile', label = 'Mobile Re
               key={t.id}
               onClick={() => setTab(t.id)}
               className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${
-                isActive ? 'bg-indigo-600 text-white' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                isActive ? 'bg-zappy-600 text-white' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
               }`}
             >
               <Icon size={13} /> {t.label}

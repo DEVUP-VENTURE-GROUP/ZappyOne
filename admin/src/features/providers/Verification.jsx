@@ -656,7 +656,7 @@ export default function ProviderOnboarding() {
           return (
             <button key={t.id} onClick={() => setTab(t.id)}
               className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${
-                active ? 'bg-indigo-600 text-white' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                active ? 'bg-zappy-600 text-white' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
               }`}>
               <Icon size={13} /> {t.label}
             </button>

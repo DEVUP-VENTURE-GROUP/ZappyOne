@@ -63,7 +63,7 @@ function AppealRow({ appeal }) {
             <div className="space-y-2">
               <textarea value={note} onChange={e => setNote(e.target.value)} rows={2}
                 placeholder="Resolution note (optional — shown to worker)…"
-                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none resize-none focus:ring-2 focus:ring-indigo-300" />
+                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none resize-none focus:ring-2 focus:ring-zappy-300" />
               <div className="flex gap-2">
                 <button onClick={() => handleResolve('under_review')} disabled={isLoading}
                   className="flex-1 py-2 rounded-lg bg-blue-50 border border-blue-200 text-blue-700 text-xs font-bold disabled:opacity-50 hover:bg-blue-100">

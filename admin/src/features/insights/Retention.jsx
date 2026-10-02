@@ -49,7 +49,7 @@ export default function Retention() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
           { label: 'Unique Users',    value: u.total?.toLocaleString('en-IN') || '0',            Icon: Users,      color: 'text-blue-600',    bg: 'bg-blue-50' },
-          { label: 'Repeat Bookers',  value: u.repeatBookers?.toLocaleString('en-IN') || '0',    Icon: Repeat,     color: 'text-violet-600',  bg: 'bg-violet-50' },
+          { label: 'Repeat Bookers',  value: u.repeatBookers?.toLocaleString('en-IN') || '0',    Icon: Repeat,     color: 'text-zappy-600',  bg: 'bg-zappy-50' },
           { label: 'Repeat Rate',     value: `${u.repeatRate || 0}%`,                             Icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50' },
           { label: 'Active Workers',  value: w.total?.toLocaleString('en-IN') || '0',             Icon: Briefcase,  color: 'text-amber-600',   bg: 'bg-amber-50' },
         ].map(({ label, value, Icon, color, bg }) => (
@@ -71,7 +71,7 @@ export default function Retention() {
         </p>
         <div className="space-y-4">
           <RetentionGauge label="D1 Retention (returned within 1 day)"  pct={u.d1Retention  || 0} color="bg-blue-500" />
-          <RetentionGauge label="D7 Retention (returned within 7 days)" pct={u.d7Retention  || 0} color="bg-violet-500" />
+          <RetentionGauge label="D7 Retention (returned within 7 days)" pct={u.d7Retention  || 0} color="bg-zappy-500" />
           <RetentionGauge label="D30 Retention (returned within 30d)"   pct={u.d30Retention || 0} color="bg-emerald-500" />
           <RetentionGauge label="Repeat Booking Rate (>1 order)"        pct={u.repeatRate   || 0} color="bg-amber-500" />
         </div>

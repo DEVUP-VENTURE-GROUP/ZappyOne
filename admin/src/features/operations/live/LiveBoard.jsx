@@ -16,7 +16,7 @@ import { BookingDrawer } from '../../bookings/Bookings';
 const KIND_LABEL = { repair: 'Repair', pet: 'Pet care', helping: 'Helping', event: 'Event' };
 const KIND_TONE = {
   repair: 'bg-blue-50 text-blue-700', pet: 'bg-amber-50 text-amber-700',
-  helping: 'bg-emerald-50 text-emerald-700', event: 'bg-violet-50 text-violet-700',
+  helping: 'bg-emerald-50 text-emerald-700', event: 'bg-zappy-50 text-zappy-700',
 };
 const label = (s = '') => s.replace(/_/g, ' ').toLowerCase();
 

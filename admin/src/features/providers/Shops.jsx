@@ -197,7 +197,7 @@ function ShopDetailPanel({ shop, onClose, onRefetch, reviewMode }) {
 
           <div className="px-5 py-4 border-b border-slate-100 flex items-start justify-between shrink-0">
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-2xl bg-indigo-100 flex items-center justify-center font-bold text-indigo-700 text-lg">
+              <div className="w-11 h-11 rounded-2xl bg-zappy-100 flex items-center justify-center font-bold text-zappy-700 text-lg">
                 {shop.businessName?.[0]?.toUpperCase() ?? '?'}
               </div>
               <div>
@@ -233,7 +233,7 @@ function ShopDetailPanel({ shop, onClose, onRefetch, reviewMode }) {
                 <StatusBadge status={kycStatus} />
               </div>
               <button onClick={() => setShowDocs(true)}
-                className="flex items-center gap-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-800 bg-indigo-50 px-3 py-2 rounded-xl transition">
+                className="flex items-center gap-1.5 text-xs font-bold text-zappy-600 hover:text-zappy-800 bg-zappy-50 px-3 py-2 rounded-xl transition">
                 <Eye size={13} /> View Docs
               </button>
             </div>
@@ -257,7 +257,7 @@ function ShopDetailPanel({ shop, onClose, onRefetch, reviewMode }) {
                 <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wide mb-2">Services</p>
                 <div className="flex flex-wrap gap-1.5">
                   {shop.services.map((s) => (
-                    <span key={s} className="bg-indigo-50 text-indigo-700 text-xs font-semibold px-2.5 py-1 rounded-lg">{s.replace(/_/g, ' ')}</span>
+                    <span key={s} className="bg-zappy-50 text-zappy-700 text-xs font-semibold px-2.5 py-1 rounded-lg">{s.replace(/_/g, ' ')}</span>
                   ))}
                 </div>
               </div>
@@ -278,7 +278,7 @@ function ShopDetailPanel({ shop, onClose, onRefetch, reviewMode }) {
               {/* Approving happens only in Verification, so there is one place to decide. */}
               {kycStatus === 'pending_review' && !reviewMode && (
                 <button onClick={() => setParams({ tab: 'verification', v: 'shops' })}
-                  className="w-full flex items-center justify-center gap-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-sm py-2.5 rounded-xl transition">
+                  className="w-full flex items-center justify-center gap-2 bg-zappy-50 hover:bg-zappy-100 text-zappy-700 font-bold text-sm py-2.5 rounded-xl transition">
                   <ShieldCheck size={14} /> Review in Verification
                 </button>
               )}
@@ -372,7 +372,7 @@ export default function Shops({ reviewMode = false }) {
               {data?.shops?.map((s) => (
                 <tr key={s._id} className="hover:bg-slate-50/60 transition-colors">
                   <Td>
-                    <button className="font-semibold text-indigo-700 hover:underline text-left" onClick={() => setSelected(s)}>
+                    <button className="font-semibold text-zappy-700 hover:underline text-left" onClick={() => setSelected(s)}>
                       {s.businessName}
                     </button>
                   </Td>
@@ -394,7 +394,7 @@ export default function Shops({ reviewMode = false }) {
                   </Td>
                   <Td>
                     <button onClick={() => setSelected(s)}
-                      className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition">
+                      className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-zappy-50 text-zappy-700 hover:bg-zappy-100 transition">
                       <Store size={12} /> View
                     </button>
                   </Td>

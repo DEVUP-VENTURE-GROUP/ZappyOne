@@ -147,7 +147,7 @@ export default function Incentives() {
         <button
           onClick={runSweep}
           disabled={sweeping}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold disabled:opacity-50 transition">
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-zappy-600 hover:bg-zappy-700 text-white text-sm font-semibold disabled:opacity-50 transition">
           <RefreshCw size={14} className={sweeping ? 'animate-spin' : ''} />
           {sweeping ? 'Running sweep…' : 'Run Rating Sweep'}
         </button>

@@ -105,7 +105,7 @@ export default function Heatmap() {
         {[
           { label: 'Total Orders',  value: totalOrders.toLocaleString('en-IN'),          Icon: MapPin,      color: 'text-blue-600',    bg: 'bg-blue-50'    },
           { label: 'Total Revenue', value: `₹${totalRevenue.toLocaleString('en-IN')}`,   Icon: IndianRupee, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-          { label: 'Zones Mapped',  value: cells.length,                                  Icon: TrendingUp,  color: 'text-violet-600',  bg: 'bg-violet-50'  },
+          { label: 'Zones Mapped',  value: cells.length,                                  Icon: TrendingUp,  color: 'text-zappy-600',  bg: 'bg-zappy-50'  },
           { label: 'Live Workers',  value: liveData?.counts?.onlineWorkers || 0,          Icon: Users,       color: 'text-orange-600',  bg: 'bg-orange-50'  },
         ].map(({ label, value, Icon, color, bg }) => (
           <Card key={label} className="p-3.5 flex items-center gap-3">
@@ -185,7 +185,7 @@ export default function Heatmap() {
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-5">
                 {[
                   { label: 'Peak Hour (IST)', value: patData.peakHour != null ? `${patData.peakHour}:00` : '—', sub: 'highest demand', Icon: ArrowUp, color: 'text-orange-500' },
-                  { label: 'Busiest Day',     value: DOW_LABELS[patData.peakDow] || '—',                        sub: 'most bookings',  Icon: Calendar, color: 'text-violet-500' },
+                  { label: 'Busiest Day',     value: DOW_LABELS[patData.peakDow] || '—',                        sub: 'most bookings',  Icon: Calendar, color: 'text-zappy-500' },
                   { label: 'Total Orders',    value: (patData.byDay?.reduce((s, d) => s + d.orders, 0) || 0).toLocaleString('en-IN'), sub: `in ${days} days`, Icon: TrendingUp, color: 'text-blue-500' },
                   { label: 'Avg Daily',       value: patData.byDay?.length > 0 ? Math.round(patData.byDay.reduce((s, d) => s + d.orders, 0) / patData.byDay.length) : '—', sub: 'orders/day', Icon: ArrowDown, color: 'text-emerald-500' },
                 ].map(({ label, value, sub, Icon, color }) => (

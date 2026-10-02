@@ -193,12 +193,12 @@ function CampaignModal({ initial, onClose, onSave }) {
           <div className="space-y-3">
             <p className="text-xs font-black text-slate-500 uppercase tracking-wider">Campaign Details</p>
             <input value={form.title} onChange={e => set('title', e.target.value)} placeholder="Campaign name (internal)"
-              className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-violet-400 outline-none font-medium" />
+              className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-zappy-400 outline-none font-medium" />
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-xs font-bold text-slate-600 block mb-1.5">Ad Type</label>
                 <select value={form.type} onChange={e => set('type', e.target.value)}
-                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none bg-white focus:border-violet-400">
+                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none bg-white focus:border-zappy-400">
                   {[['sponsored_listing','Sponsored Listing'],['banner','Banner'],['video','Video'],['featured_theme','Featured Theme'],['cross_sell','Cross-Sell'],['lead_gen','Lead Generation']].map(([v,l]) => (
                     <option key={v} value={v}>{l}</option>
                   ))}
@@ -207,7 +207,7 @@ function CampaignModal({ initial, onClose, onSave }) {
               <div>
                 <label className="text-xs font-bold text-slate-600 block mb-1.5">Audience</label>
                 <select value={form.audience} onChange={e => set('audience', e.target.value)}
-                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none bg-white focus:border-violet-400">
+                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none bg-white focus:border-zappy-400">
                   <option value="users">Users</option>
                   <option value="workers">Workers</option>
                   <option value="both">Everyone</option>
@@ -221,9 +221,9 @@ function CampaignModal({ initial, onClose, onSave }) {
             <p className="text-xs font-black text-slate-500 uppercase tracking-wider">Ad Placements</p>
             <div className="grid grid-cols-1 gap-2">
               {PLACEMENTS.map(p => (
-                <label key={p.id} className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${form.placements.includes(p.id) ? 'border-violet-400 bg-violet-50' : 'border-slate-200 hover:border-slate-300'}`}>
+                <label key={p.id} className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${form.placements.includes(p.id) ? 'border-zappy-400 bg-zappy-50' : 'border-slate-200 hover:border-slate-300'}`}>
                   <input type="checkbox" checked={form.placements.includes(p.id)} onChange={() => togglePlacement(p.id)} className="hidden" />
-                  <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${form.placements.includes(p.id) ? 'border-violet-500 bg-violet-500' : 'border-slate-300'}`}>
+                  <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${form.placements.includes(p.id) ? 'border-zappy-500 bg-zappy-500' : 'border-slate-300'}`}>
                     {form.placements.includes(p.id) && <div className="w-2 h-2 bg-white rounded-full" />}
                   </div>
                   <div className="flex-1">
@@ -248,19 +248,19 @@ function CampaignModal({ initial, onClose, onSave }) {
               <div key={k}>
                 <label className="text-xs font-bold text-slate-600 block mb-1">{label}</label>
                 <input value={k.split('.').reduce((o, p) => o?.[p], form) || ''} onChange={e => set(k, e.target.value)} placeholder={placeholder}
-                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:border-violet-400 outline-none" />
+                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:border-zappy-400 outline-none" />
               </div>
             ))}
 
             <div>
               <label className="text-xs font-bold text-slate-600 block mb-1.5">Ad Image (Optional)</label>
-              <label className={`block border-2 border-dashed rounded-2xl p-4 transition-all ${form.content.imageUrl ? 'border-violet-400 bg-violet-50/50' : 'border-slate-200 hover:border-violet-300 hover:bg-slate-50 cursor-pointer'}`}>
+              <label className={`block border-2 border-dashed rounded-2xl p-4 transition-all ${form.content.imageUrl ? 'border-zappy-400 bg-zappy-50/50' : 'border-slate-200 hover:border-zappy-300 hover:bg-slate-50 cursor-pointer'}`}>
                 <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" disabled={uploadingImage} />
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-violet-100 flex items-center justify-center shrink-0">
-                    {uploadingImage ? <Loader2 size={20} className="text-violet-500 animate-spin" /> : 
-                     form.content.imageUrl ? <ImageIcon size={20} className="text-violet-600" /> :
-                     <UploadCloud size={20} className="text-violet-500" />}
+                  <div className="w-12 h-12 rounded-xl bg-zappy-100 flex items-center justify-center shrink-0">
+                    {uploadingImage ? <Loader2 size={20} className="text-zappy-500 animate-spin" /> : 
+                     form.content.imageUrl ? <ImageIcon size={20} className="text-zappy-600" /> :
+                     <UploadCloud size={20} className="text-zappy-500" />}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-bold text-slate-700 truncate">{form.content.imageUrl ? 'Image Uploaded' : 'Upload Image'}</p>
@@ -311,7 +311,7 @@ function CampaignModal({ initial, onClose, onSave }) {
                   const on = form.targeting.eventCategories.includes(c._id);
                   return (
                     <button key={c._id} type="button" onClick={() => set('targeting.eventCategories', on ? form.targeting.eventCategories.filter(x => x !== c._id) : [...form.targeting.eventCategories, c._id])}
-                      className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-all ${on ? 'bg-violet-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
+                      className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-all ${on ? 'bg-zappy-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
                       {c.emoji} {c.name}
                     </button>
                   );
@@ -323,12 +323,12 @@ function CampaignModal({ initial, onClose, onSave }) {
               <div>
                 <label className="text-xs font-bold text-slate-600 block mb-1">Target Cities (comma separated)</label>
                 <input value={form.targeting.cities} onChange={e => set('targeting.cities', e.target.value)} placeholder="bangalore, mumbai"
-                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:border-violet-400 outline-none" />
+                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:border-zappy-400 outline-none" />
               </div>
               <div>
                 <label className="text-xs font-bold text-slate-600 block mb-1">Search Keywords</label>
                 <input value={form.targeting.keywords} onChange={e => set('targeting.keywords', e.target.value)} placeholder="birthday, wedding"
-                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:border-violet-400 outline-none" />
+                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:border-zappy-400 outline-none" />
               </div>
             </div>
           </div>
@@ -340,12 +340,12 @@ function CampaignModal({ initial, onClose, onSave }) {
               <div>
                 <label className="text-xs font-bold text-slate-600 block mb-1">Start Date</label>
                 <input type="date" value={form.schedule.startAt} onChange={e => set('schedule.startAt', e.target.value)}
-                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:border-violet-400 outline-none" />
+                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:border-zappy-400 outline-none" />
               </div>
               <div>
                 <label className="text-xs font-bold text-slate-600 block mb-1">End Date</label>
                 <input type="date" value={form.schedule.endAt} onChange={e => set('schedule.endAt', e.target.value)}
-                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:border-violet-400 outline-none" />
+                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:border-zappy-400 outline-none" />
               </div>
             </div>
           </div>
@@ -355,9 +355,9 @@ function CampaignModal({ initial, onClose, onSave }) {
             <p className="text-xs font-black text-slate-500 uppercase tracking-wider">Budget & Bidding</p>
             <div className="grid grid-cols-1 gap-2">
               {BILLING_MODELS.map(m => (
-                <label key={m.id} className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${form.billing.model === m.id ? 'border-violet-400 bg-violet-50' : 'border-slate-200'}`}>
+                <label key={m.id} className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${form.billing.model === m.id ? 'border-zappy-400 bg-zappy-50' : 'border-slate-200'}`}>
                   <input type="radio" name="billingModel" value={m.id} checked={form.billing.model === m.id} onChange={() => set('billing.model', m.id)} className="hidden" />
-                  <div className={`w-4 h-4 rounded-full border-2 shrink-0 ${form.billing.model === m.id ? 'border-violet-500 bg-violet-500' : 'border-slate-300'}`} />
+                  <div className={`w-4 h-4 rounded-full border-2 shrink-0 ${form.billing.model === m.id ? 'border-zappy-500 bg-zappy-500' : 'border-slate-300'}`} />
                   <div>
                     <p className="text-sm font-bold text-slate-900">{m.label}</p>
                     <p className="text-[11px] text-slate-400">{m.desc}</p>
@@ -371,17 +371,17 @@ function CampaignModal({ initial, onClose, onSave }) {
                   {form.billing.model === 'cpm' ? 'Bid (₹ per 1K views)' : form.billing.model === 'cpc' ? 'Bid (₹ per click)' : form.billing.model === 'cpl' ? 'Bid (₹ per lead)' : 'Fixed Budget (₹)'}
                 </label>
                 <input type="number" min="0" step="0.5" value={form.billing.rate} onChange={e => set('billing.rate', e.target.value)} placeholder="e.g. 2.50"
-                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:border-violet-400 outline-none" />
+                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:border-zappy-400 outline-none" />
               </div>
               <div>
                 <label className="text-xs font-bold text-slate-600 block mb-1">Total Budget (₹)</label>
                 <input type="number" min="0" value={form.billing.budget} onChange={e => set('billing.budget', e.target.value)} placeholder="e.g. 5000"
-                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:border-violet-400 outline-none" />
+                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:border-zappy-400 outline-none" />
               </div>
               <div>
                 <label className="text-xs font-bold text-slate-600 block mb-1">Daily Cap (₹)</label>
                 <input type="number" min="0" value={form.billing.dailyCapPaise} onChange={e => set('billing.dailyCapPaise', e.target.value)} placeholder="0 = no cap"
-                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:border-violet-400 outline-none" />
+                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:border-zappy-400 outline-none" />
               </div>
             </div>
           </div>
@@ -390,7 +390,7 @@ function CampaignModal({ initial, onClose, onSave }) {
         <div className="px-6 py-4 border-t border-slate-100 flex justify-end gap-3">
           <button onClick={onClose} className="px-5 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">Cancel</button>
           <motion.button whileTap={{ scale: 0.97 }} onClick={handleSave} disabled={saving}
-            className="px-5 py-2.5 bg-violet-600 text-white rounded-xl font-bold text-sm flex items-center gap-2 disabled:opacity-50 shadow-sm shadow-violet-200">
+            className="px-5 py-2.5 bg-zappy-600 text-white rounded-xl font-bold text-sm flex items-center gap-2 disabled:opacity-50 shadow-sm shadow-zappy-200">
             {saving ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />}
             {saving ? 'Submitting…' : 'Submit for Review'}
           </motion.button>
@@ -527,14 +527,14 @@ function CampaignRow({ ad, onEdit }) {
 
       <div className="flex items-center gap-2 text-xs text-slate-400 flex-wrap">
         {(ad.placements || []).slice(0, 3).map(p => (
-          <span key={p} className="px-2 py-0.5 bg-violet-50 text-violet-600 rounded-lg font-semibold">{p.replace('_', ' ')}</span>
+          <span key={p} className="px-2 py-0.5 bg-zappy-50 text-zappy-600 rounded-lg font-semibold">{p.replace('_', ' ')}</span>
         ))}
         {(ad.placements || []).length > 3 && <span className="text-slate-400">+{ad.placements.length - 3}</span>}
       </div>
 
       <div className="flex gap-2">
         {['draft', 'rejected'].includes(ad.status) && (
-          <button onClick={() => onEdit(ad)} className="flex-1 py-2 bg-violet-50 text-violet-700 rounded-xl text-xs font-bold hover:bg-violet-100 transition-colors flex items-center justify-center gap-1">
+          <button onClick={() => onEdit(ad)} className="flex-1 py-2 bg-zappy-50 text-zappy-700 rounded-xl text-xs font-bold hover:bg-zappy-100 transition-colors flex items-center justify-center gap-1">
             <Megaphone size={11} />Edit & Submit
           </button>
         )}
@@ -619,7 +619,7 @@ export default function AdvertiserDashboard() {
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <a href="mailto:vendors@zappyone.com" className="hidden md:flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-indigo-600 bg-slate-50 px-3 py-2 rounded-xl border border-slate-200">
+            <a href="mailto:vendors@zappyone.com" className="hidden md:flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-zappy-600 bg-slate-50 px-3 py-2 rounded-xl border border-slate-200">
               vendors@zappyone.com
             </a>
             <div className="hidden sm:flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-[14px] px-4 py-2.5 shadow-sm shadow-emerald-100">
@@ -665,7 +665,7 @@ export default function AdvertiserDashboard() {
             <div className="flex items-center justify-between">
               <p className="text-sm font-bold text-slate-700">{data?.total || 0} campaign{data?.total !== 1 ? 's' : ''}</p>
               <motion.button whileTap={{ scale: 0.95 }} onClick={() => { setEditAd(null); setShowForm(true); }}
-                className="flex items-center gap-1.5 px-4 py-2 bg-violet-600 text-white rounded-xl text-xs font-bold shadow-sm shadow-violet-200">
+                className="flex items-center gap-1.5 px-4 py-2 bg-zappy-600 text-white rounded-xl text-xs font-bold shadow-sm shadow-zappy-200">
                 <Plus size={13} />New Campaign
               </motion.button>
             </div>
@@ -699,7 +699,7 @@ export default function AdvertiserDashboard() {
         {/* Wallet Tab */}
         {activeTab === 'wallet' && (
           <div className="space-y-4">
-            <div className=" bg-violet-600 rounded-card p-6 text-white">
+            <div className=" bg-zappy-600 rounded-card p-6 text-white">
               <p className="text-white/70 text-xs font-medium uppercase tracking-wide">Available Balance</p>
               <p className="text-4xl font-black mt-1">{fmtRupees(wallet?.creditsPaise)}</p>
               <div className="flex gap-4 mt-4 text-xs">
@@ -745,11 +745,11 @@ export default function AdvertiserDashboard() {
               { step: '5', title: 'Track & Optimise', desc: 'Monitor impressions, clicks, CTR and spend. Pause or adjust anytime.', icon: BarChart2 },
             ].map(({ step, title, desc, icon: Icon }) => (
               <div key={step} className="flex gap-4 bg-white rounded-2xl border border-slate-100 p-4">
-                <div className="w-10 h-10 bg-violet-100 rounded-xl flex items-center justify-center shrink-0">
-                  <Icon size={18} className="text-violet-600" />
+                <div className="w-10 h-10 bg-zappy-100 rounded-xl flex items-center justify-center shrink-0">
+                  <Icon size={18} className="text-zappy-600" />
                 </div>
                 <div>
-                  <p className="text-[10px] text-violet-500 font-black uppercase tracking-wider">Step {step}</p>
+                  <p className="text-[10px] text-zappy-500 font-black uppercase tracking-wider">Step {step}</p>
                   <p className="font-bold text-slate-900 text-sm mt-0.5">{title}</p>
                   <p className="text-xs text-slate-500 mt-0.5">{desc}</p>
                 </div>

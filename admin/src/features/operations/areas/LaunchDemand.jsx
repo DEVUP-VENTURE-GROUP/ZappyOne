@@ -54,7 +54,7 @@ export default function LaunchDemand() {
                       : <span className="inline-flex items-center gap-1 text-amber-700 text-xs font-semibold"><BellRing size={12} /> Not served</span>}
                   </Td>
                   <Td>
-                    <a className="text-xs font-semibold text-indigo-600 hover:underline" target="_blank" rel="noreferrer"
+                    <a className="text-xs font-semibold text-zappy-600 hover:underline" target="_blank" rel="noreferrer"
                       href={`https://www.google.com/maps/search/?api=1&query=${c.lat},${c.lng}`}>Open</a>
                   </Td>
                 </tr>

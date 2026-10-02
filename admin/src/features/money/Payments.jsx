@@ -79,7 +79,7 @@ export default function Payments() {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <StatCard Icon={IndianRupee} label="Collected" value={fmt(summary?.collectedPaise || 0)} sub={`${summary?.collectedCount || 0} payments`} />
-        <StatCard Icon={Undo2} label="Refunded" value={fmt(summary?.refundedPaise || 0)} sub={`${summary?.refundsInFlight || 0} in progress`} color="text-violet-600" bg="bg-violet-50" />
+        <StatCard Icon={Undo2} label="Refunded" value={fmt(summary?.refundedPaise || 0)} sub={`${summary?.refundsInFlight || 0} in progress`} color="text-zappy-600" bg="bg-zappy-50" />
         <StatCard Icon={XCircle} label="Failed payments" value={summary?.failedCount ?? 0} color="text-amber-600" bg="bg-amber-50" />
         <StatCard Icon={AlertTriangle} label="Needs action" value={summary?.needsActionCount ?? 0} color={summary?.needsActionCount ? 'text-rose-600' : 'text-emerald-600'} bg={summary?.needsActionCount ? 'bg-rose-50' : 'bg-emerald-50'} />
       </div>

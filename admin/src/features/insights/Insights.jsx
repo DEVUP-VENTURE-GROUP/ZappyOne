@@ -80,7 +80,7 @@ function CeoPulse() {
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         <StatCard label="Live Users" value={num(d.liveUsers)} Icon={Wifi} color="text-emerald-600" bg="bg-emerald-50" sub="active right now" />
         <StatCard label="Live Orders" value={num(d.liveOrders)} Icon={ShoppingBag} color="text-blue-600" bg="bg-blue-50" sub="in progress" />
-        <StatCard label="Online Workers" value={num(d.onlineWorkers)} Icon={Briefcase} color="text-violet-600" bg="bg-violet-50" />
+        <StatCard label="Online Workers" value={num(d.onlineWorkers)} Icon={Briefcase} color="text-zappy-600" bg="bg-zappy-50" />
         <StatCard label="Revenue Today" value={inr(d.revenueToday)} Icon={IndianRupee} color="text-amber-600" bg="bg-amber-50"
           sub={<Delta pct={d.revenueGrowthPct ?? 0} />} />
         <StatCard label="Unmet Today" value={num(d.unmetToday)} Icon={MapPinOff} color="text-red-600" bg="bg-red-50" sub="no-service requests" />
@@ -88,7 +88,7 @@ function CeoPulse() {
 
       <div className="grid lg:grid-cols-2 gap-4">
         <Card className="p-5">
-          <p className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2"><Search size={15} className="text-indigo-500" /> Top Demand Categories (30d)</p>
+          <p className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2"><Search size={15} className="text-zappy-500" /> Top Demand Categories (30d)</p>
           <MiniBars rows={(d.topCategories || []).map((c) => ({ label: c.category?.replace(/_/g, ' '), n: c.searches }))} />
         </Card>
         <Card className="p-5">
@@ -98,20 +98,20 @@ function CeoPulse() {
       </div>
 
       <Card className="p-5">
-        <p className="text-sm font-bold text-slate-700 mb-4 flex items-center gap-2"><Rocket size={15} className="text-violet-500" /> Where to Launch Next</p>
+        <p className="text-sm font-bold text-slate-700 mb-4 flex items-center gap-2"><Rocket size={15} className="text-zappy-500" /> Where to Launch Next</p>
         {(d.expansionTop || []).length === 0 ? (
           <p className="text-xs text-slate-400">Not enough demand signal yet — data accrues as visitors search.</p>
         ) : (
           <div className="space-y-2">
             {d.expansionTop.map((c, i) => (
               <div key={`${c.city}-${i}`} className="flex items-center gap-3 p-3 rounded-xl bg-slate-50">
-                <div className="w-9 h-9 rounded-xl bg-violet-100 text-violet-700 font-black flex items-center justify-center text-sm">{i + 1}</div>
+                <div className="w-9 h-9 rounded-xl bg-zappy-100 text-zappy-700 font-black flex items-center justify-center text-sm">{i + 1}</div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold text-slate-800">{c.city}{c.state ? `, ${c.state}` : ''}</p>
                   <p className="text-[11px] text-slate-500 truncate">{c.recommendation}</p>
                 </div>
                 <div className="text-right shrink-0">
-                  <p className="text-lg font-black text-violet-600 tabular-nums">{c.score}</p>
+                  <p className="text-lg font-black text-zappy-600 tabular-nums">{c.score}</p>
                   <p className="text-[10px] text-slate-400">score</p>
                 </div>
               </div>
@@ -195,7 +195,7 @@ function LiveTraffic() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <StatCard label="Active Right Now" value={num(d.activeNow)} Icon={Wifi} color="text-emerald-600" bg="bg-emerald-50" sub="last 60s" />
         <StatCard label="Visitors Today" value={num(d.today)} Icon={Activity} color="text-blue-600" bg="bg-blue-50" />
-        <StatCard label="This Week" value={num(d.week)} Icon={TrendingUp} color="text-violet-600" bg="bg-violet-50" />
+        <StatCard label="This Week" value={num(d.week)} Icon={TrendingUp} color="text-zappy-600" bg="bg-zappy-50" />
         <StatCard label="This Month" value={num(d.month)} Icon={BarChart2} color="text-amber-600" bg="bg-amber-50" />
       </div>
 
@@ -261,7 +261,7 @@ function UnmetDemand() {
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
         <StatCard label="Lost Bookings" value={num(d.lostBookings)} Icon={MapPinOff} color="text-red-600" bg="bg-red-50" sub="no-service searches" />
         <StatCard label="Potential Revenue Lost" value={inr(d.potentialRevenueLost)} Icon={IndianRupee} color="text-amber-600" bg="bg-amber-50" sub="if served" />
-        <StatCard label="Hotspot Areas" value={num((d.topAreas || []).length)} Icon={Globe} color="text-violet-600" bg="bg-violet-50" />
+        <StatCard label="Hotspot Areas" value={num((d.topAreas || []).length)} Icon={Globe} color="text-zappy-600" bg="bg-zappy-50" />
       </div>
 
       <Card className="overflow-hidden">
@@ -279,7 +279,7 @@ function UnmetDemand() {
                     <Td><span className="font-bold text-red-600">{num(a.requests)}</span></Td>
                     <Td muted>{a.categories.map((c) => c.replace(/_/g, ' ')).join(', ')}</Td>
                     <Td right>{inr(a.estLostRevenue)}</Td>
-                    <Td><span className="text-[11px] font-bold text-violet-600 bg-violet-50 px-2 py-1 rounded-lg">Launch {a.categories[0]?.replace(/_/g, ' ') || 'service'}</span></Td>
+                    <Td><span className="text-[11px] font-bold text-zappy-600 bg-zappy-50 px-2 py-1 rounded-lg">Launch {a.categories[0]?.replace(/_/g, ' ') || 'service'}</span></Td>
                   </tr>
                 ))}
               </tbody>
@@ -316,7 +316,7 @@ function ScoreBar({ label, value }) {
     <div className="flex items-center gap-2">
       <span className="text-[10px] text-slate-400 w-16 capitalize">{label}</span>
       <div className="flex-1 h-1.5 rounded-full bg-slate-100 overflow-hidden">
-        <div className="h-full rounded-full bg-violet-400" style={{ width: `${value}%` }} />
+        <div className="h-full rounded-full bg-zappy-400" style={{ width: `${value}%` }} />
       </div>
     </div>
   );
@@ -347,7 +347,7 @@ function ExpansionEngine() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-3xl font-black text-violet-600 tabular-nums leading-none">{c.score}</p>
+                  <p className="text-3xl font-black text-zappy-600 tabular-nums leading-none">{c.score}</p>
                   <p className="text-[10px] text-slate-400 mt-0.5">Expansion Score</p>
                 </div>
               </div>
@@ -456,7 +456,7 @@ function downloadReportCsv(r) {
 function ListCard({ title, Icon, rows, empty }) {
   return (
     <Card className="p-5">
-      <p className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2"><Icon size={15} className="text-indigo-500" />{title}</p>
+      <p className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2"><Icon size={15} className="text-zappy-500" />{title}</p>
       {(!rows || rows.length === 0) ? <p className="text-xs text-slate-400">{empty}</p> : (
         <div className="space-y-1.5">
           {rows.map((r, i) => (
@@ -496,7 +496,7 @@ function BusinessReport() {
         <StatCard label="Visitors" value={num(d.visitors)} Icon={Wifi} color="text-emerald-600" bg="bg-emerald-50" />
         <StatCard label="Bookings" value={num(d.bookings)} Icon={ShoppingBag} color="text-blue-600" bg="bg-blue-50" sub={`${d.completed ?? 0} completed`} />
         <StatCard label="Revenue" value={inr(d.revenue)} Icon={IndianRupee} color="text-amber-600" bg="bg-amber-50" sub={<Delta pct={d.revenueGrowthPct ?? 0} />} />
-        <StatCard label="Completion" value={`${d.completionRatePct ?? 0}%`} Icon={TrendingUp} color="text-violet-600" bg="bg-violet-50" />
+        <StatCard label="Completion" value={`${d.completionRatePct ?? 0}%`} Icon={TrendingUp} color="text-zappy-600" bg="bg-zappy-50" />
       </div>
 
       <div className="grid lg:grid-cols-2 gap-4">
@@ -530,7 +530,7 @@ function PartnerPerformance() {
       </SectionHeader>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard label="Active Partners" value={num(d.totalPartners)} Icon={Users} color="text-indigo-600" bg="bg-indigo-50" />
+        <StatCard label="Active Partners" value={num(d.totalPartners)} Icon={Users} color="text-zappy-600" bg="bg-zappy-50" />
         <StatCard label="Bookings" value={num(t.bookings)} Icon={ShoppingBag} color="text-blue-600" bg="bg-blue-50" sub={`${num(t.completed)} completed`} />
         <StatCard label="Partner Revenue" value={inr(t.revenue)} Icon={IndianRupee} color="text-amber-600" bg="bg-amber-50" />
         <StatCard label="Completion" value={`${t.bookings ? Math.round((t.completed / t.bookings) * 100) : 0}%`} Icon={TrendingUp} color="text-emerald-600" bg="bg-emerald-50" />
@@ -616,7 +616,7 @@ export default function Intelligence() {
         <div className="relative">
           <button onClick={() => setOpen((o) => !o)}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-slate-200 shadow-sm text-sm font-bold text-slate-800 hover:border-slate-300">
-            <ActiveIcon size={15} className="text-indigo-500" />
+            <ActiveIcon size={15} className="text-zappy-500" />
             {active.label}
             <ChevronDown size={15} className={`text-slate-400 transition ${open ? 'rotate-180' : ''}`} />
           </button>
@@ -629,8 +629,8 @@ export default function Intelligence() {
                   return (
                     <button key={v.id} onClick={() => pick(v.id)}
                       className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium text-left transition ${
-                        v.id === active.id ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-50'}`}>
-                      <Icon size={15} className={v.id === active.id ? 'text-indigo-500' : 'text-slate-400'} />
+                        v.id === active.id ? 'bg-zappy-50 text-zappy-700' : 'text-slate-600 hover:bg-slate-50'}`}>
+                      <Icon size={15} className={v.id === active.id ? 'text-zappy-500' : 'text-slate-400'} />
                       {v.label}
                     </button>
                   );

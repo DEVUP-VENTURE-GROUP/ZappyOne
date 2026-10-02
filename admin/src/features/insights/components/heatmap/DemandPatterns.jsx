@@ -29,7 +29,7 @@ export function HourlyChart({ data = [] }) {
       <div className="flex justify-between mt-1.5">{['12am','6am','12pm','6pm','11pm'].map(l => <span key={l} className="text-[9px] text-slate-400">{l}</span>)}</div>
       <div className="flex flex-wrap gap-3 mt-2 text-[10px]">
         <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm inline-block bg-orange-500" /> Peak hour</span>
-        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm inline-block bg-indigo-500" /> Morning</span>
+        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm inline-block bg-zappy-500" /> Morning</span>
         <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm inline-block bg-slate-500" /> Night</span>
       </div>
       {peakH && <p className="text-xs text-orange-600 font-bold mt-1.5">Peak: {peakH.hour}:00 ({peakH.value} orders)</p>}

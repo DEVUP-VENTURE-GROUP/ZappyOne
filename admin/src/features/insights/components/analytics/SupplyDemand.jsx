@@ -30,7 +30,7 @@ export default function SupplyDemand({ hourly = [], onlineWorkers = 2 }) {
         {['12am','6am','12pm','6pm','11pm'].map(l => <span key={l}>{l}</span>)}
       </div>
       <div className="flex gap-3 mt-2 flex-wrap">
-        <span className="flex items-center gap-1 text-[10px] text-slate-500"><span className="w-2 h-2 rounded-sm bg-indigo-500 inline-block" />Normal</span>
+        <span className="flex items-center gap-1 text-[10px] text-slate-500"><span className="w-2 h-2 rounded-sm bg-zappy-500 inline-block" />Normal</span>
         <span className="flex items-center gap-1 text-[10px] text-red-500 font-semibold"><span className="w-2 h-2 rounded-sm bg-red-500 inline-block" />Supply gap</span>
       </div>
     </div>

@@ -41,7 +41,7 @@ function StageLabel({ stage }) {
     created:    { label: 'Pre-search',  cls: 'bg-slate-100 text-slate-600' },
     searching:  { label: 'Searching',   cls: 'bg-yellow-100 text-yellow-700' },
     assigned:   { label: 'Assigned',    cls: 'bg-blue-100 text-blue-700' },
-    on_the_way: { label: 'On the way',  cls: 'bg-indigo-100 text-indigo-700' },
+    on_the_way: { label: 'On the way',  cls: 'bg-zappy-100 text-zappy-700' },
     arrived:    { label: 'Arrived',     cls: 'bg-red-100 text-red-700' },
   };
   const { label, cls } = map[stage] ?? { label: stage, cls: 'bg-slate-100 text-slate-500' };
@@ -77,7 +77,7 @@ function OverviewTab() {
           label="This week collected"
           value={fmt(cw.totalCollectedPaise ?? 0)}
           Icon={Shield}
-          color="text-indigo-600" bg="bg-indigo-50"
+          color="text-zappy-600" bg="bg-zappy-50"
           sub={`${cw.status === 'open' ? 'Accumulating — pays out Monday' : cw.status}`}
         />
         <StatCard
@@ -140,7 +140,7 @@ function OverviewTab() {
             { step: '4', title: 'Monday payout', desc: 'Workers receive proportional share based on harm score' },
           ].map(({ step, title, desc }) => (
             <div key={step} className="flex gap-3">
-              <div className="w-7 h-7 rounded-full bg-indigo-100 text-indigo-700 text-xs font-black flex items-center justify-center shrink-0">{step}</div>
+              <div className="w-7 h-7 rounded-full bg-zappy-100 text-zappy-700 text-xs font-black flex items-center justify-center shrink-0">{step}</div>
               <div>
                 <p className="text-sm font-semibold text-slate-800">{title}</p>
                 <p className="text-xs text-slate-500 mt-0.5">{desc}</p>
@@ -178,7 +178,7 @@ function WeeklyFundsTab() {
       </div>
 
       <Card className="overflow-hidden">
-        {isFetching && <div className="h-1 bg-indigo-600 animate-pulse" />}
+        {isFetching && <div className="h-1 bg-zappy-600 animate-pulse" />}
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -204,7 +204,7 @@ function WeeklyFundsTab() {
                       {week.status === 'paid_out' && (
                         <button
                           onClick={() => setExpanded(expanded === week._id ? null : week._id)}
-                          className="text-indigo-600 hover:text-indigo-800 transition"
+                          className="text-zappy-600 hover:text-zappy-800 transition"
                         >
                           {expanded === week._id ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
                         </button>
@@ -215,7 +215,7 @@ function WeeklyFundsTab() {
                   {/* Expandable worker payout breakdown */}
                   {expanded === week._id && (
                     <tr>
-                      <td colSpan={8} className="bg-indigo-50/40 px-6 py-4">
+                      <td colSpan={8} className="bg-zappy-50/40 px-6 py-4">
                         <p className="text-xs font-bold text-slate-600 mb-2">Worker payouts this week</p>
                         {!payoutsData ? (
                           <p className="text-xs text-slate-400">Loading…</p>
@@ -296,7 +296,7 @@ function FeeRecordsTab() {
       </div>
 
       <Card className="overflow-hidden">
-        {isFetching && <div className="h-1 bg-indigo-600 animate-pulse" />}
+        {isFetching && <div className="h-1 bg-zappy-600 animate-pulse" />}
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -497,7 +497,7 @@ function FeeScheduleTab() {
                                 max="1000"
                                 value={Math.round(row[i] / 100)}
                                 onChange={e => setFeeCell(key, i, e.target.value)}
-                                className="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-sm font-bold text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition tabular-nums"
+                                className="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-sm font-bold text-slate-900 outline-none focus:ring-2 focus:ring-zappy-500 focus:border-transparent transition tabular-nums"
                               />
                             </div>
                           )}
@@ -536,7 +536,7 @@ function FeeScheduleTab() {
                       max="100"
                       value={liveHarm[key] ?? 0}
                       onChange={e => setHarmCell(key, e.target.value)}
-                      className="w-16 bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-sm font-bold text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition tabular-nums text-center"
+                      className="w-16 bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-sm font-bold text-slate-900 outline-none focus:ring-2 focus:ring-zappy-500 focus:border-transparent transition tabular-nums text-center"
                     />
                   </td>
                   <Td muted>{HARM_DESCS[key]}</Td>
@@ -568,7 +568,7 @@ function FeeScheduleTab() {
                     setWorkerPct(v);
                     setDirty(true);
                   }}
-                  className="w-20 bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xl font-extrabold text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500 transition tabular-nums text-center"
+                  className="w-20 bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xl font-extrabold text-slate-900 outline-none focus:ring-2 focus:ring-zappy-500 transition tabular-nums text-center"
                 />
                 <span className="text-sm text-slate-500 font-bold">%</span>
               </div>
@@ -617,9 +617,9 @@ export default function ShieldFund() {
         title="Worker Cancellation Shield Fund"
         subtitle="Collects cancellation fees and distributes them to affected workers every Monday"
       >
-        <div className="flex items-center gap-1.5 bg-indigo-50 border border-indigo-100 rounded-lg px-3 py-1.5">
-          <Shield size={13} className="text-indigo-600" />
-          <span className="text-xs font-bold text-indigo-700">Shield Fund</span>
+        <div className="flex items-center gap-1.5 bg-zappy-50 border border-zappy-100 rounded-lg px-3 py-1.5">
+          <Shield size={13} className="text-zappy-600" />
+          <span className="text-xs font-bold text-zappy-700">Shield Fund</span>
         </div>
       </SectionHeader>
 

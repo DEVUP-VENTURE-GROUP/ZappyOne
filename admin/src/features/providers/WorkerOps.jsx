@@ -4,7 +4,7 @@ import { useAdminWorkerOpsQuery } from '@shared/services/api';
 
 function Stat({ icon: Icon, label, value, tone = 'slate' }) {
   const tones = {
-    slate: 'text-slate-900', green: 'text-emerald-600', amber: 'text-amber-600', rose: 'text-rose-600', indigo: 'text-indigo-600',
+    slate: 'text-slate-900', green: 'text-emerald-600', amber: 'text-amber-600', rose: 'text-rose-600', indigo: 'text-zappy-600',
   };
   return (
     <div className="bg-white border border-slate-200 rounded-xl p-3.5 flex flex-col justify-between">
@@ -25,7 +25,7 @@ export default function WorkerOps() {
   const [, setParams] = useSearchParams();
   const { data, isLoading, isError } = useAdminWorkerOpsQuery(undefined, { pollingInterval: 20000 });
 
-  if (isLoading) return <div className="flex justify-center py-16"><Loader2 className="animate-spin text-indigo-500" /></div>;
+  if (isLoading) return <div className="flex justify-center py-16"><Loader2 className="animate-spin text-zappy-500" /></div>;
   if (isError || !data) return <p className="p-6 text-sm text-rose-600">Could not load worker operations.</p>;
 
   const s = data.stats || {};
@@ -54,7 +54,7 @@ export default function WorkerOps() {
 
       {/* Single-device */}
       <div className="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col sm:flex-row items-start gap-3">
-        <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center shrink-0 mb-2 sm:mb-0"><Smartphone size={18} className="text-indigo-600" /></div>
+        <div className="w-10 h-10 rounded-xl bg-zappy-50 flex items-center justify-center shrink-0 mb-2 sm:mb-0"><Smartphone size={18} className="text-zappy-600" /></div>
         <div className="flex-1">
           <p className="text-sm font-bold text-slate-900">Single active device — {data.singleDevice?.enforced ? 'Enforced' : 'Off'}</p>
           <p className="text-xs text-slate-500 mt-1 leading-relaxed">
@@ -69,7 +69,7 @@ export default function WorkerOps() {
         <div className="flex items-center justify-between gap-3">
           <p className="text-sm font-bold text-slate-700">Cancellation & escalation policy</p>
           <button type="button" onClick={() => setParams({ tab: 'cancellation' }, { replace: true })}
-            className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1">
+            className="text-xs font-bold text-zappy-600 hover:text-zappy-800 flex items-center gap-1">
             Edit policy <ArrowRight size={13} />
           </button>
         </div>

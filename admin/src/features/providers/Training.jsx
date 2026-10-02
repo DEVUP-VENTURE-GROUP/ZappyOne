@@ -28,7 +28,7 @@ function ModuleForm({ initial = BLANK, onSave, onCancel, isSaving }) {
       <div className="grid grid-cols-2 gap-3">
         <div className="col-span-2">
           <label className="text-xs font-bold text-slate-500">TITLE *</label>
-          <input value={form.title} onChange={e => set('title', e.target.value)} className="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-300" placeholder="e.g. AC Servicing Fundamentals" />
+          <input value={form.title} onChange={e => set('title', e.target.value)} className="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-zappy-300" placeholder="e.g. AC Servicing Fundamentals" />
         </div>
         <div className="col-span-2">
           <label className="text-xs font-bold text-slate-500">DESCRIPTION</label>
@@ -96,7 +96,7 @@ function ModuleForm({ initial = BLANK, onSave, onCancel, isSaving }) {
             </div>
           ))}
           <p className="text-[10px] text-slate-400">Radio = correct answer</p>
-          <button onClick={addQuestion} className="w-full py-1.5 bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-bold rounded-lg hover:bg-indigo-100">
+          <button onClick={addQuestion} className="w-full py-1.5 bg-zappy-50 border border-zappy-200 text-zappy-700 text-xs font-bold rounded-lg hover:bg-zappy-100">
             + Add Question
           </button>
         </div>
@@ -112,7 +112,7 @@ function ModuleForm({ initial = BLANK, onSave, onCancel, isSaving }) {
       <div className="flex gap-2">
         <button onClick={onCancel} className="flex-1 py-2 rounded-xl border border-slate-200 text-slate-600 text-sm font-medium hover:bg-slate-50">Cancel</button>
         <button onClick={() => onSave(form)} disabled={isSaving || !form.title.trim()}
-          className="flex-1 py-2 rounded-xl bg-indigo-600 text-white text-sm font-bold disabled:opacity-50 flex items-center justify-center gap-1.5">
+          className="flex-1 py-2 rounded-xl bg-zappy-600 text-white text-sm font-bold disabled:opacity-50 flex items-center justify-center gap-1.5">
           {isSaving ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />} Save Module
         </button>
       </div>
@@ -152,7 +152,7 @@ export default function Training() {
           <p className="text-xs text-slate-500 mt-0.5">Manage video courses and quiz modules for workers</p>
         </div>
         <button onClick={() => setShowNew(v => !v)}
-          className="flex items-center gap-1.5 text-xs font-bold bg-indigo-600 text-white px-3 py-2 rounded-lg hover:bg-indigo-700 transition">
+          className="flex items-center gap-1.5 text-xs font-bold bg-zappy-600 text-white px-3 py-2 rounded-lg hover:bg-zappy-700 transition">
           <Plus size={13} /> New Module
         </button>
       </div>
@@ -180,7 +180,7 @@ export default function Training() {
                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full capitalize ${DIFF_COLOR[m.difficulty] ?? 'bg-slate-100 text-slate-600'}`}>{m.difficulty}</span>
                         {m.isActive ? <span className="text-[10px] bg-emerald-100 text-emerald-700 font-bold px-2 py-0.5 rounded-full">Live</span>
                           : <span className="text-[10px] bg-slate-100 text-slate-500 font-bold px-2 py-0.5 rounded-full">Hidden</span>}
-                        {m.bonusRupees > 0 && <span className="text-[10px] bg-indigo-100 text-indigo-700 font-bold px-2 py-0.5 rounded-full">+₹{m.bonusRupees}</span>}
+                        {m.bonusRupees > 0 && <span className="text-[10px] bg-zappy-100 text-zappy-700 font-bold px-2 py-0.5 rounded-full">+₹{m.bonusRupees}</span>}
                       </div>
                       <p className="font-semibold text-slate-800">{m.title}</p>
                       <p className="text-xs text-slate-500 mt-0.5 truncate">{m.description}</p>

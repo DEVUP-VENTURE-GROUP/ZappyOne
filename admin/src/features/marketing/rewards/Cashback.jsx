@@ -151,7 +151,7 @@ function CashbackStats() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <MoneyCard label="Total Cashback Paid" value={`₹${d.totalRupees?.toLocaleString() ?? 0}`} sub={`${d.totalCount ?? 0} orders`} icon={Wallet} />
         <MoneyCard label="Avg per Order" value={`₹${Math.round((d.avgPaise ?? 0) / 100)}`} icon={Percent} color="text-blue-600" bg="bg-blue-50" />
-        <MoneyCard label="Orders with Cashback" value={d.totalCount ?? 0} icon={CheckCircle} color="text-violet-600" bg="bg-violet-50" />
+        <MoneyCard label="Orders with Cashback" value={d.totalCount ?? 0} icon={CheckCircle} color="text-zappy-600" bg="bg-zappy-50" />
         <MoneyCard label="Period" value={`${days} days`} icon={BarChart2} color="text-amber-600" bg="bg-amber-50" />
       </div>
 
@@ -198,7 +198,7 @@ function ReferralStats() {
         <div className="flex gap-1.5">
           {DAYS_OPTIONS.map((opt) => (
             <button key={opt} onClick={() => setDays(opt)}
-              className={`px-3 py-1 text-xs rounded-full font-semibold transition-colors ${days === opt ? 'bg-violet-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
+              className={`px-3 py-1 text-xs rounded-full font-semibold transition-colors ${days === opt ? 'bg-zappy-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
               {opt}d
             </button>
           ))}
@@ -210,7 +210,7 @@ function ReferralStats() {
 
       {loadingStats ? <PageLoader /> : (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <MoneyCard label="Referral Signups" value={s.totalSignups ?? 0} icon={Users} color="text-violet-600" bg="bg-violet-50" />
+          <MoneyCard label="Referral Signups" value={s.totalSignups ?? 0} icon={Users} color="text-zappy-600" bg="bg-zappy-50" />
           <MoneyCard label="Converted (1st Order)" value={s.converted ?? 0} sub={`${s.conversionPct ?? 0}% conversion`} icon={CheckCircle} />
           <MoneyCard label="Total Reward Spend" value={`₹${s.totalSpendRupees?.toLocaleString() ?? 0}`} icon={Gift} color="text-pink-600" bg="bg-pink-50" />
           <MoneyCard label="Avg Cost per Signup" value={s.totalSignups ? `₹${Math.round((s.totalSpendRupees ?? 0) / s.totalSignups)}` : '—'} icon={TrendingUp} color="text-amber-600" bg="bg-amber-50" />

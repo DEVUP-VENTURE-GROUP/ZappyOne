@@ -43,21 +43,21 @@ function NavItem({ item, isActive, onClick }) {
       {isActive && (
         <motion.div
           layoutId="activeIndicator"
-          className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 bg-indigo-400 rounded-full"
+          className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 bg-zappy-400 rounded-full"
           transition={{ type: 'spring', stiffness: 400, damping: 30 }}
         />
       )}
       <Icon
         size={14}
         strokeWidth={isActive ? 2.5 : 1.75}
-        className={isActive ? 'text-indigo-300' : 'text-slate-500'}
+        className={isActive ? 'text-zappy-300' : 'text-slate-500'}
       />
       <span className="flex-1 truncate">{label}</span>
       {isActive && (
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
-          className="w-1.5 h-1.5 rounded-full bg-indigo-400"
+          className="w-1.5 h-1.5 rounded-full bg-zappy-400"
         />
       )}
     </motion.button>

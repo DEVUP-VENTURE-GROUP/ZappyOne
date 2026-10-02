@@ -60,11 +60,11 @@ import decorPhoto from '@assets/images/events/event_romantic.webp';
 const PILL = {
   pending: 'bg-amber-50  text-amber-700  border-amber-200',
   approved: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-  featured: 'bg-purple-50 text-purple-700 border-purple-200',
+  featured: 'bg-zappy-50 text-zappy-700 border-zappy-200',
   rejected: 'bg-red-50    text-red-700    border-red-200',
   hidden: 'bg-slate-100 text-slate-500  border-slate-200',
   confirmed: 'bg-blue-50   text-blue-700   border-blue-200',
-  partner_assigned: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+  partner_assigned: 'bg-zappy-50 text-zappy-700 border-zappy-200',
   in_progress: 'bg-orange-50 text-orange-600 border-orange-200',
   completed: 'bg-emerald-50 text-emerald-700 border-emerald-200',
   cancelled: 'bg-red-50    text-red-500    border-red-200',
@@ -82,8 +82,8 @@ function Pill({ status, className = '' }) {
 function Spinner() {
   return (
     <div className="flex flex-col items-center justify-center py-16 gap-3">
-      <div className="w-10 h-10 rounded-2xl bg-violet-100 flex items-center justify-center">
-        <Loader2 size={20} className="animate-spin text-violet-500" />
+      <div className="w-10 h-10 rounded-2xl bg-zappy-100 flex items-center justify-center">
+        <Loader2 size={20} className="animate-spin text-zappy-500" />
       </div>
     </div>
   );
@@ -152,11 +152,11 @@ function MobileOverviewTab({ onNavigate }) {
 
       {/* OVERLAPPING PROFILE CARD */}
       <div className="px-5 -mt-[45px] relative z-20 mb-6">
-        <div className=" bg-[#7e22ce] rounded-card p-5 shadow-[0_12px_30px_rgba(168,85,247,0.3)]">
+        <div className="rounded-card border border-line bg-white p-5">
           <div className="flex justify-between items-start mb-6">
             <div className="flex-1 pr-4">
-              <h2 className="text-[15px] font-bold text-white mb-1.5 leading-tight">Let's create something amazing today! 🎉</h2>
-              <p className="text-[11px] text-white/80 font-medium leading-relaxed">
+              <h2 className="mb-1 text-[15px] font-semibold leading-tight text-ink-900">Your partner account</h2>
+              <p className="text-[13px] leading-relaxed text-ink-500">
                 {kycOk
                   ? "Complete your profile to get more bookings."
                   : kycPending
@@ -164,42 +164,42 @@ function MobileOverviewTab({ onNavigate }) {
                     : "Complete your profile and upload KYC to unlock all features."}
               </p>
             </div>
-            <button onClick={() => onNavigate('profile')} className="shrink-0 bg-white text-[#7e22ce] text-[11px] font-bold px-3 py-2 rounded-[10px] flex items-center gap-1 shadow-sm hover:scale-105 transition-transform">
+            <button onClick={() => onNavigate('profile')} className="btn-outline min-h-[36px] shrink-0 px-3 text-[13px]">
               View Profile <ArrowRight size={12} strokeWidth={2.5} />
             </button>
           </div>
 
-          <div className="flex items-center justify-between border-t border-white/10 pt-4">
+          <div className="flex items-center justify-between border-t border-line pt-4">
             <div className="flex flex-col items-center flex-1">
               <div className="flex items-center gap-1.5 mb-0.5">
                 <Star size={16} className="text-yellow-400 fill-yellow-400" />
-                <span className="text-[15px] font-extrabold text-white">{partner?.rating?.toFixed(1) || '0.0'}</span>
+                <span className="text-[15px] font-bold text-ink-900">{partner?.rating ? partner.rating.toFixed(1) : 'New'}</span>
               </div>
-              <span className="text-[10px] text-white/70 font-medium">Rating</span>
+              <span className="text-[12px] text-ink-500">Rating</span>
             </div>
-            <div className="w-px h-8 bg-white/10"></div>
+            <div className="h-8 w-px bg-line"></div>
             <div className="flex flex-col items-center flex-1">
               <div className="flex items-center gap-1.5 mb-0.5">
-                <CalendarCheck size={16} className="text-pink-200" />
-                <span className="text-[15px] font-extrabold text-white">{partner?.completedEvents || 0}</span>
+                <CalendarCheck size={16} className="text-ink-500" />
+                <span className="text-[15px] font-bold text-ink-900">{partner?.completedEvents || 0}</span>
               </div>
-              <span className="text-[10px] text-white/70 font-medium">Total Events</span>
+              <span className="text-[12px] text-ink-500">Total Events</span>
             </div>
-            <div className="w-px h-8 bg-white/10"></div>
+            <div className="h-8 w-px bg-line"></div>
             <div className="flex flex-col items-center flex-1">
               <div className="flex items-center gap-1 mb-0.5">
                 {kycOk ? (
-                  <ShieldCheck size={16} className="text-emerald-300" />
+                  <ShieldCheck size={16} className="text-green-600" />
                 ) : kycPending ? (
-                  <Clock size={16} className="text-blue-300" />
+                  <Clock size={16} className="text-zappy-600" />
                 ) : (
-                  <AlertCircle size={16} className="text-amber-300" />
+                  <AlertCircle size={16} className="text-amber-600" />
                 )}
-                <span className="text-[12px] font-extrabold text-white leading-tight">
+                <span className="text-[13px] font-semibold leading-tight text-ink-900">
                   {kycOk ? "KYC Verified" : kycPending ? "KYC Submitted" : "KYC Not Verified"}
                 </span>
               </div>
-              <span className="text-[9px] text-white/70 font-medium whitespace-nowrap">
+              <span className="whitespace-nowrap text-[12px] text-ink-500">
                 {kycOk ? "Verified Partner" : kycPending ? "Pending Confirmation" : "Action Required"}
               </span>
             </div>
@@ -211,19 +211,13 @@ function MobileOverviewTab({ onNavigate }) {
       <div className="px-5 grid grid-cols-2 gap-3 mb-8">
         <div className="bg-white rounded-card p-4 shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-slate-50 flex flex-col relative overflow-hidden">
           <div className="flex items-center gap-2 mb-2">
-            <div className="w-7 h-7 rounded-full bg-violet-50 flex items-center justify-center text-violet-500">
+            <div className="w-7 h-7 rounded-full bg-zappy-50 flex items-center justify-center text-zappy-500">
               <PartyPopper size={14} />
             </div>
-            <span className="text-[10px] font-extrabold text-violet-600 uppercase tracking-wider">My Themes</span>
+            <span className="text-[10px] font-extrabold text-zappy-600 uppercase tracking-wider">My Themes</span>
           </div>
           <span className="text-[24px] font-black text-slate-800 leading-none mb-1">{stats?.themes || 0}</span>
           <span className="text-[10px] text-slate-400 font-medium z-10">Themes Created</span>
-          {/* Sparkline curve via SVG */}
-          <div className="absolute bottom-0 left-0 right-0 h-10 opacity-60">
-            <svg viewBox="0 0 100 30" preserveAspectRatio="none" className="w-full h-full stroke-violet-400 fill-none" strokeWidth="1.5">
-              <path d="M0,25 C10,15 20,25 30,15 C40,5 50,20 60,10 C75,25 85,5 100,20" />
-            </svg>
-          </div>
         </div>
 
         <div className="bg-white rounded-card p-4 shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-slate-50 flex flex-col relative overflow-hidden">
@@ -235,11 +229,6 @@ function MobileOverviewTab({ onNavigate }) {
           </div>
           <span className="text-[24px] font-black text-slate-800 leading-none mb-1">{stats?.upcomingEvents || 0}</span>
           <span className="text-[10px] text-slate-400 font-medium z-10">Events next 7 days</span>
-          <div className="absolute bottom-0 left-0 right-0 h-10 opacity-60">
-            <svg viewBox="0 0 100 30" preserveAspectRatio="none" className="w-full h-full stroke-blue-400 fill-none" strokeWidth="1.5">
-              <path d="M0,20 C15,25 25,10 40,20 C50,25 65,10 75,15 C85,25 95,10 100,15" />
-            </svg>
-          </div>
         </div>
 
         <div className="bg-white rounded-card p-4 shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-slate-50 flex flex-col relative overflow-hidden">
@@ -251,11 +240,6 @@ function MobileOverviewTab({ onNavigate }) {
           </div>
           <span className="text-[24px] font-black text-slate-800 leading-none mb-1">{stats?.pendingConfirmations || 0}</span>
           <span className="text-[10px] text-slate-400 font-medium z-10">Bookings</span>
-          <div className="absolute bottom-0 left-0 right-0 h-10 opacity-60">
-            <svg viewBox="0 0 100 30" preserveAspectRatio="none" className="w-full h-full stroke-orange-400 fill-none" strokeWidth="1.5">
-              <path d="M0,15 C20,15 30,25 50,15 C65,5 75,25 100,10" />
-            </svg>
-          </div>
         </div>
 
         <div className="bg-white rounded-card p-4 shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-slate-50 flex flex-col relative overflow-hidden">
@@ -267,11 +251,6 @@ function MobileOverviewTab({ onNavigate }) {
           </div>
           <span className="text-[24px] font-black text-slate-800 leading-none mb-1">₹{Math.round((stats?.netEarningsPaise || 0) / 100).toLocaleString('en-IN')}</span>
           <span className="text-[10px] text-slate-400 font-medium z-10">Total Earnings</span>
-          <div className="absolute bottom-0 left-0 right-0 h-10 opacity-60">
-            <svg viewBox="0 0 100 30" preserveAspectRatio="none" className="w-full h-full stroke-emerald-400 fill-none" strokeWidth="1.5">
-              <path d="M0,25 C15,10 30,20 45,15 C60,5 80,25 100,15" />
-            </svg>
-          </div>
         </div>
       </div>
 
@@ -279,21 +258,21 @@ function MobileOverviewTab({ onNavigate }) {
       <div className="px-5 mb-8">
         <div className="flex justify-between items-end mb-4">
           <h3 className="text-[16px] font-extrabold text-slate-900">Quick Actions</h3>
-          <span className="text-[12px] font-bold text-violet-600 hover:underline cursor-pointer">View All</span>
+          <span className="text-[12px] font-bold text-zappy-600 hover:underline cursor-pointer">View All</span>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <button onClick={() => onNavigate('themes')} className="bg-white rounded-[16px] border border-slate-100 p-3 flex items-center justify-between group hover:shadow-md transition-shadow">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-[10px] text-violet-500 flex items-center justify-center bg-violet-50 group-hover:bg-violet-100 transition-colors">
+              <div className="w-8 h-8 rounded-[10px] text-zappy-500 flex items-center justify-center bg-zappy-50 group-hover:bg-zappy-100 transition-colors">
                 <Upload size={14} strokeWidth={2.5} />
               </div>
               <div className="flex flex-col items-start">
-                <span className="text-[11px] font-bold text-violet-700 leading-tight mb-0.5">Upload Theme</span>
+                <span className="text-[11px] font-bold text-zappy-700 leading-tight mb-0.5">Upload Theme</span>
                 <span className="text-[9px] text-slate-400 font-medium leading-none">Add new theme</span>
               </div>
             </div>
-            <ArrowRight size={12} className="text-slate-300 group-hover:text-violet-500 transition-colors shrink-0" />
+            <ArrowRight size={12} className="text-slate-300 group-hover:text-zappy-500 transition-colors shrink-0" />
           </button>
 
           <button onClick={() => onNavigate('bookings')} className="bg-white rounded-[16px] border border-slate-100 p-3 flex items-center justify-between group hover:shadow-md transition-shadow">
@@ -339,14 +318,14 @@ function MobileOverviewTab({ onNavigate }) {
 
       {/* PROMOTION BANNER */}
       <div className="px-5 mb-6">
-        <a href="/partner/advertise" className="block relative bg-[#7462ff] rounded-card p-5 overflow-hidden shadow-lg shadow-violet-200/50 hover:shadow-xl transition-shadow">
+        <a href="/partner/advertise" className="block relative bg-[#7462ff] rounded-card p-5 overflow-hidden shadow-lg shadow-zappy-200/50 hover:shadow-xl transition-shadow">
           <div className="absolute top-0 right-0 bottom-0 w-32 flex items-center justify-end pr-2 opacity-90">
             <Megaphone size={80} className="text-white/20 rotate-[-15deg] translate-x-4" strokeWidth={1} />
           </div>
           <div className="relative z-10 w-[65%]">
             <h3 className="text-[15px] font-extrabold text-white mb-1.5 leading-tight">Boost your visibility</h3>
             <p className="text-[11px] text-white/80 font-medium leading-relaxed mb-4">Advertise your services on Zappyone and reach more customers.</p>
-            <div className="inline-flex items-center gap-1.5 bg-white text-violet-600 text-[11px] font-bold px-3 py-2 rounded-xl">
+            <div className="inline-flex items-center gap-1.5 bg-white text-zappy-600 text-[11px] font-bold px-3 py-2 rounded-xl">
               Advertise Now <ArrowRight size={12} />
             </div>
           </div>
@@ -367,12 +346,12 @@ function OverviewTab({ onNavigate }) {
   return (
     <div className="space-y-6">
       {/* Hero Banner */}
-      <div className="relative rounded-card overflow-hidden bg-[#5940ff] shadow-lg shadow-violet-500/20">
+      <div className="relative rounded-card overflow-hidden bg-[#5940ff] shadow-lg shadow-zappy-500/20">
         <div className="absolute inset-y-0 right-0 w-1/3 opacity-80 mix-blend-overlay">
           <img src={decorPhoto} alt="Decor" className="w-full h-full object-cover object-left [mask-image:linear-gradient(to_right,transparent,black)]" onError={e => e.target.style.display = 'none'} />
         </div>
         <div className="relative p-8 md:w-3/4 flex flex-col items-start">
-          <h2 className="text-[28px] font-black text-white leading-tight mb-1">Let's create something amazing today! 🎉</h2>
+          <h2 className="text-[28px] font-black text-white leading-tight mb-1">Your partner account</h2>
           <p className="text-white/80 text-[15px] font-medium mb-6">
             {kycOk
               ? "Complete your profile to get more bookings."
@@ -385,7 +364,7 @@ function OverviewTab({ onNavigate }) {
             <div className="flex items-center gap-3 bg-white/10 border border-white/20 rounded-[16px] px-4 py-2.5">
               <Star size={18} className="text-yellow-400 fill-yellow-400" />
               <div>
-                <span className="block text-white text-[15px] font-bold leading-none">{partner?.rating?.toFixed(1) || '0.0'}</span>
+                <span className="block text-white text-[15px] font-bold leading-none">{partner?.rating ? partner.rating.toFixed(1) : 'New'}</span>
                 <span className="block text-white/60 text-[11px] font-medium mt-0.5">Rating</span>
               </div>
             </div>
@@ -425,17 +404,14 @@ function OverviewTab({ onNavigate }) {
       <div className="grid grid-cols-4 gap-5">
         <div className="bg-white rounded-card p-6 shadow-sm border border-slate-100 flex flex-col relative overflow-hidden group hover:shadow-md transition-shadow">
           <div className="flex items-start gap-4 mb-3">
-            <div className="w-12 h-12 rounded-2xl bg-violet-50 flex items-center justify-center text-violet-600 group-hover:scale-110 transition-transform">
+            <div className="w-12 h-12 rounded-2xl bg-zappy-50 flex items-center justify-center text-zappy-600 group-hover:scale-110 transition-transform">
               <Palette size={20} strokeWidth={2} />
             </div>
             <div className="pt-0.5">
-              <span className="block text-[11px] font-extrabold text-violet-600 uppercase tracking-wider mb-1">My Themes</span>
+              <span className="block text-[11px] font-extrabold text-zappy-600 uppercase tracking-wider mb-1">My Themes</span>
               <span className="block text-[28px] font-black text-[#0f172a] leading-none mb-1">{stats?.themes || 0}</span>
               <span className="block text-[11px] text-slate-400 font-medium z-10">Themes Created</span>
             </div>
-          </div>
-          <div className="absolute bottom-0 left-0 right-0 h-12 opacity-60">
-            <svg viewBox="0 0 100 30" preserveAspectRatio="none" className="w-full h-full stroke-violet-400 fill-none" strokeWidth="1.5"><path d="M0,25 C10,15 20,25 30,15 C40,5 50,20 60,10 C75,25 85,5 100,20" /></svg>
           </div>
         </div>
 
@@ -450,9 +426,6 @@ function OverviewTab({ onNavigate }) {
               <span className="block text-[11px] text-slate-400 font-medium z-10">Events next 7 days</span>
             </div>
           </div>
-          <div className="absolute bottom-0 left-0 right-0 h-12 opacity-60">
-            <svg viewBox="0 0 100 30" preserveAspectRatio="none" className="w-full h-full stroke-blue-400 fill-none" strokeWidth="1.5"><path d="M0,20 C15,25 25,10 40,20 C50,25 65,10 75,15 C85,25 95,10 100,15" /></svg>
-          </div>
         </div>
 
         <div className="bg-white rounded-card p-6 shadow-sm border border-slate-100 flex flex-col relative overflow-hidden group hover:shadow-md transition-shadow">
@@ -465,9 +438,6 @@ function OverviewTab({ onNavigate }) {
               <span className="block text-[28px] font-black text-[#0f172a] leading-none mb-1">{stats?.pendingConfirmations || 0}</span>
               <span className="block text-[11px] text-slate-400 font-medium z-10">Bookings</span>
             </div>
-          </div>
-          <div className="absolute bottom-0 left-0 right-0 h-12 opacity-60">
-            <svg viewBox="0 0 100 30" preserveAspectRatio="none" className="w-full h-full stroke-amber-400 fill-none" strokeWidth="1.5"><path d="M0,15 C20,15 30,25 50,15 C65,5 75,25 100,10" /></svg>
           </div>
         </div>
 
@@ -482,9 +452,6 @@ function OverviewTab({ onNavigate }) {
               <span className="block text-[11px] text-slate-400 font-medium z-10">Total Earnings</span>
             </div>
           </div>
-          <div className="absolute bottom-0 left-0 right-0 h-12 opacity-60">
-            <svg viewBox="0 0 100 30" preserveAspectRatio="none" className="w-full h-full stroke-emerald-400 fill-none" strokeWidth="1.5"><path d="M0,25 C15,10 30,20 45,15 C60,5 80,25 100,15" /></svg>
-          </div>
         </div>
       </div>
 
@@ -495,21 +462,21 @@ function OverviewTab({ onNavigate }) {
         <div className="col-span-7 space-y-6">
           <div className="bg-white rounded-card p-6 border border-slate-100 shadow-sm">
             <div className="flex items-center gap-2 mb-6">
-              <Zap size={18} className="text-violet-600" />
+              <Zap size={18} className="text-zappy-600" />
               <h3 className="text-[16px] font-extrabold text-slate-900">Quick Actions</h3>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <button onClick={() => onNavigate('themes')} className="bg-slate-50/50 rounded-[16px] border border-slate-100 p-4 flex items-center justify-between group hover:shadow-md hover:bg-white transition-all">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-[12px] text-violet-600 flex items-center justify-center bg-violet-100/50 group-hover:bg-violet-100 transition-colors">
+                  <div className="w-10 h-10 rounded-[12px] text-zappy-600 flex items-center justify-center bg-zappy-100/50 group-hover:bg-zappy-100 transition-colors">
                     <Upload size={16} strokeWidth={2} />
                   </div>
                   <div className="flex flex-col items-start">
-                    <span className="text-[13px] font-bold text-violet-700 leading-tight mb-1">Upload Theme</span>
+                    <span className="text-[13px] font-bold text-zappy-700 leading-tight mb-1">Upload Theme</span>
                     <span className="text-[11px] text-slate-400 font-medium leading-none">Add new theme</span>
                   </div>
                 </div>
-                <ArrowRight size={14} className="text-slate-300 group-hover:text-violet-600 transition-colors shrink-0" />
+                <ArrowRight size={14} className="text-slate-300 group-hover:text-zappy-600 transition-colors shrink-0" />
               </button>
               <button onClick={() => onNavigate('bookings')} className="bg-slate-50/50 rounded-[16px] border border-slate-100 p-4 flex items-center justify-between group hover:shadow-md hover:bg-white transition-all">
                 <div className="flex items-center gap-3">
@@ -552,12 +519,12 @@ function OverviewTab({ onNavigate }) {
 
           <div className="bg-white rounded-card border border-slate-100 shadow-sm p-6 relative overflow-hidden flex items-center justify-between">
             <div className="absolute right-[-20px] top-1/2 -translate-y-1/2 opacity-20 pointer-events-none">
-              <Megaphone size={120} className="text-violet-500 -rotate-12" strokeWidth={1} />
+              <Megaphone size={120} className="text-zappy-500 -rotate-12" strokeWidth={1} />
             </div>
             <div className="relative z-10">
-              <h3 className="text-[16px] font-extrabold text-violet-700 mb-1.5">Boost your visibility</h3>
+              <h3 className="text-[16px] font-extrabold text-zappy-700 mb-1.5">Boost your visibility</h3>
               <p className="text-[12px] text-slate-500 font-medium mb-4">Advertise your services on Zappyone and reach more customers.</p>
-              <a href="/partner/advertise" className="inline-flex items-center gap-2 bg-white border border-slate-200 text-violet-600 hover:bg-slate-50 text-[12px] font-bold px-4 py-2.5 rounded-[12px] transition-colors shadow-sm">
+              <a href="/partner/advertise" className="inline-flex items-center gap-2 bg-white border border-slate-200 text-zappy-600 hover:bg-slate-50 text-[12px] font-bold px-4 py-2.5 rounded-[12px] transition-colors shadow-sm">
                 Advertise Now <ArrowRight size={14} />
               </a>
             </div>
@@ -569,22 +536,22 @@ function OverviewTab({ onNavigate }) {
           <div className="bg-white rounded-card border border-slate-100 shadow-sm p-6 flex-1 flex flex-col">
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center gap-2">
-                <Calendar size={18} className="text-violet-600" />
+                <Calendar size={18} className="text-zappy-600" />
                 <h3 className="text-[16px] font-extrabold text-slate-900">Calendar</h3>
               </div>
-              <button onClick={() => onNavigate('calendar')} className="text-[12px] font-bold text-violet-600 hover:underline flex items-center gap-1">
+              <button onClick={() => onNavigate('calendar')} className="text-[12px] font-bold text-zappy-600 hover:underline flex items-center gap-1">
                 View Full Calendar <ArrowRight size={12} />
               </button>
             </div>
 
             <div className="flex-1 flex flex-col items-center justify-center text-center pb-4">
-              <div className="w-40 h-32 bg-violet-50 rounded-card flex items-center justify-center mb-6 relative">
-                <Calendar size={48} className="text-violet-300 absolute -translate-x-2 -translate-y-2 -rotate-12" strokeWidth={1.5} />
-                <Calendar size={56} className="text-violet-500 relative z-10" strokeWidth={1.5} />
+              <div className="w-40 h-32 bg-zappy-50 rounded-card flex items-center justify-center mb-6 relative">
+                <Calendar size={48} className="text-zappy-300 absolute -translate-x-2 -translate-y-2 -rotate-12" strokeWidth={1.5} />
+                <Calendar size={56} className="text-zappy-500 relative z-10" strokeWidth={1.5} />
               </div>
               <h4 className="text-[16px] font-black text-slate-900 mb-1">No events scheduled</h4>
               <p className="text-[12px] text-slate-400 font-medium mb-6">You have no upcoming events in the next 7 days.</p>
-              <button onClick={() => onNavigate('calendar')} className="px-5 py-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-violet-600 rounded-[12px] text-[12px] font-bold shadow-sm transition-colors">
+              <button onClick={() => onNavigate('calendar')} className="px-5 py-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-zappy-600 rounded-[12px] text-[12px] font-bold shadow-sm transition-colors">
                 View Calendar
               </button>
             </div>
@@ -615,7 +582,7 @@ function ThemesTab() {
       <div className="flex items-center justify-between">
         <p className="text-xs text-slate-500 font-medium">{themes.length} theme{themes.length !== 1 ? 's' : ''}</p>
         <motion.button whileTap={{ scale: 0.95 }} onClick={() => { setEditTheme(null); setShowUpload(true); }}
-          className="flex items-center gap-1.5 px-4 py-2 bg-violet-600 text-white rounded-xl text-xs font-bold shadow-sm shadow-violet-200">
+          className="flex items-center gap-1.5 px-4 py-2 bg-zappy-600 text-white rounded-xl text-xs font-bold shadow-sm shadow-zappy-200">
           <Plus size={13} />Add Theme
         </motion.button>
       </div>
@@ -625,7 +592,7 @@ function ThemesTab() {
           sub="Upload your first decoration theme to start getting bookings"
           action={
             <button onClick={() => setShowUpload(true)}
-              className="px-5 py-2.5 bg-violet-600 text-white rounded-xl text-sm font-bold">
+              className="px-5 py-2.5 bg-zappy-600 text-white rounded-xl text-sm font-bold">
               Upload First Theme
             </button>
           }
@@ -652,7 +619,7 @@ function ThemesTab() {
                     <Pill status={theme.status} />
                   </div>
                   <p className="text-xs text-slate-400 mt-1">{theme.categoryId?.emoji} {theme.categoryId?.name}</p>
-                  <p className="text-sm font-black text-violet-600 mt-1">₹{Math.round((theme.startingPricePaise || 0) / 100).toLocaleString('en-IN')}+</p>
+                  <p className="text-sm font-black text-zappy-600 mt-1">₹{Math.round((theme.startingPricePaise || 0) / 100).toLocaleString('en-IN')}+</p>
                   {theme.status === 'rejected' && theme.adminNote && (
                     <p className="text-[10px] text-red-500 mt-1 bg-red-50 rounded-lg px-2 py-1">⚠️ {theme.adminNote}</p>
                   )}
@@ -751,7 +718,7 @@ function ThemeUploadModal({ theme, onClose, onSuccess }) {
       };
       if (isEdit) await updateTheme({ id: theme._id, ...payload }).unwrap();
       else await createTheme(payload).unwrap();
-      toast.success(isEdit ? 'Theme updated — pending review' : 'Theme submitted for review! 🎉');
+      toast.success(isEdit ? 'Theme updated. It goes live after review.' : 'Theme submitted for review.');
       onSuccess();
     } catch (e) { toast.error(e?.data?.error || 'Failed to save'); }
     finally { setSaving(false); }
@@ -777,7 +744,7 @@ function ThemeUploadModal({ theme, onClose, onSuccess }) {
           {/* Cover photo */}
           <div>
             <label className="text-xs font-bold text-slate-700 block mb-2">Cover Photo <span className="text-red-400">*</span></label>
-            <label className="block border-2 border-dashed border-slate-200 rounded-2xl overflow-hidden cursor-pointer hover:border-violet-300 transition-all">
+            <label className="block border-2 border-dashed border-slate-200 rounded-2xl overflow-hidden cursor-pointer hover:border-zappy-300 transition-all">
               {coverPreview ? (
                 <div className="relative h-44">
                   <img src={coverPreview} alt=""
@@ -788,7 +755,7 @@ function ThemeUploadModal({ theme, onClose, onSuccess }) {
                 </div>
               ) : (
                 <div className="h-36 flex flex-col items-center justify-center text-slate-400 gap-2">
-                  {uploading ? <Loader2 size={22} className="animate-spin text-violet-400" /> : (
+                  {uploading ? <Loader2 size={22} className="animate-spin text-zappy-400" /> : (
                     <><Camera size={22} className="text-slate-300" /><span className="text-xs font-medium">Upload cover photo</span></>
                   )}
                 </div>
@@ -810,10 +777,10 @@ function ThemeUploadModal({ theme, onClose, onSuccess }) {
               <label className="text-xs font-bold text-slate-700 block mb-1.5">{label}</label>
               {multi ? (
                 <textarea value={form[k]} onChange={e => set(k, e.target.value)} placeholder={placeholder} rows={2}
-                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:border-violet-400 focus:ring-2 focus:ring-violet-100 outline-none resize-none transition-all" />
+                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:border-zappy-400 focus:ring-2 focus:ring-zappy-100 outline-none resize-none transition-all" />
               ) : (
                 <input value={form[k]} onChange={e => set(k, e.target.value)} placeholder={placeholder}
-                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:border-violet-400 focus:ring-2 focus:ring-violet-100 outline-none transition-all" />
+                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:border-zappy-400 focus:ring-2 focus:ring-zappy-100 outline-none transition-all" />
               )}
             </div>
           ))}
@@ -823,7 +790,7 @@ function ThemeUploadModal({ theme, onClose, onSuccess }) {
             <div>
               <label className="text-xs font-bold text-slate-700 block mb-1.5">Category *</label>
               <select value={form.categoryId} onChange={e => set('categoryId', e.target.value)}
-                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:border-violet-400 outline-none bg-white">
+                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:border-zappy-400 outline-none bg-white">
                 <option value="">Select…</option>
                 {(catData?.categories || []).map(c => <option key={c._id} value={c._id}>{c.emoji} {c.name}</option>)}
               </select>
@@ -832,22 +799,22 @@ function ThemeUploadModal({ theme, onClose, onSuccess }) {
               <label className="text-xs font-bold text-slate-700 block mb-1.5">Starting Price (₹) *</label>
               <input type="number" min={0} value={form.startingPricePaise} onChange={e => set('startingPricePaise', e.target.value)}
                 placeholder="3500"
-                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:border-violet-400 outline-none" />
+                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:border-zappy-400 outline-none" />
             </div>
             <div>
               <label className="text-xs font-bold text-slate-700 block mb-1.5">Setup Duration (min)</label>
               <input type="number" min={30} value={form.setupDurationMinutes} onChange={e => set('setupDurationMinutes', e.target.value)}
-                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:border-violet-400 outline-none" />
+                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:border-zappy-400 outline-none" />
             </div>
             <div>
               <label className="text-xs font-bold text-slate-700 block mb-1.5">Max Guests</label>
               <input type="number" min={1} value={form.guestCapacityMax} onChange={e => set('guestCapacityMax', e.target.value)}
-                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:border-violet-400 outline-none" />
+                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:border-zappy-400 outline-none" />
             </div>
           </div>
 
           <motion.button whileTap={{ scale: 0.97 }} onClick={handleSave} disabled={saving || uploading}
-            className="w-full py-4 bg-violet-600 text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg shadow-violet-200">
+            className="w-full py-4 bg-zappy-600 text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg shadow-zappy-200">
             {saving ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
             {saving ? 'Saving…' : isEdit ? 'Update & Resubmit' : 'Submit for Review'}
           </motion.button>
@@ -893,7 +860,7 @@ function BookingsTab() {
       <div className="flex gap-2 overflow-x-auto scrollbar-none -mx-1 px-1 pb-1">
         {FILTERS.map(s => (
           <button key={s} onClick={() => { setStatusFilter(s); setPage(1); }}
-            className={`shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${statusFilter === s ? 'bg-violet-600 text-white border-violet-600 shadow-sm shadow-violet-200' : 'bg-white text-slate-500 border-slate-200'}`}>
+            className={`shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${statusFilter === s ? 'bg-zappy-600 text-white border-zappy-600 shadow-sm shadow-zappy-200' : 'bg-white text-slate-500 border-slate-200'}`}>
             {s.replace(/_/g, ' ') || 'All'}
           </button>
         ))}
@@ -933,7 +900,7 @@ function BookingsTab() {
               </div>
 
               {b.notes && (
-                <p className="text-xs text-indigo-600 bg-indigo-50 rounded-xl px-3 py-2">📝 {b.notes}</p>
+                <p className="text-xs text-zappy-600 bg-zappy-50 rounded-xl px-3 py-2">📝 {b.notes}</p>
               )}
 
               <div className="flex gap-2">
@@ -984,7 +951,7 @@ function DateActionSheet({ day, isBlocked, booking, onBlock, onUnblock, onClose 
         {/* Date header */}
         <div className="flex items-center gap-3 mb-2">
           <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-xl
-            ${booking ? 'bg-blue-100 text-blue-600' : isBlocked ? 'bg-red-100 text-red-500' : 'bg-violet-100 text-violet-600'}`}>
+            ${booking ? 'bg-blue-100 text-blue-600' : isBlocked ? 'bg-red-100 text-red-500' : 'bg-zappy-100 text-zappy-600'}`}>
             {day.getDate()}
           </div>
           <div>
@@ -1076,9 +1043,9 @@ function CalendarTab() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-3 bg-violet-50 rounded-2xl px-4 py-3">
-        <Calendar size={15} className="text-violet-500 shrink-0" />
-        <p className="text-xs text-violet-700 font-medium">Tap any date to see options — block, unblock, or view booking details.</p>
+      <div className="flex items-center gap-3 bg-zappy-50 rounded-2xl px-4 py-3">
+        <Calendar size={15} className="text-zappy-500 shrink-0" />
+        <p className="text-xs text-zappy-700 font-medium">Tap any date to see options — block, unblock, or view booking details.</p>
       </div>
 
       {isLoading ? <Spinner /> : (
@@ -1106,8 +1073,8 @@ function CalendarTab() {
                     ${isPast ? 'opacity-20 cursor-not-allowed text-slate-400'
                       : isBkd ? 'bg-blue-500 text-white shadow-sm shadow-blue-200'
                         : isBlk ? 'bg-red-500 text-white shadow-sm shadow-red-200'
-                          : isToday ? 'bg-violet-600 text-white shadow-sm shadow-violet-200 ring-2 ring-violet-300'
-                            : 'bg-slate-50 text-slate-700 hover:bg-violet-50 hover:text-violet-700'}`}>
+                          : isToday ? 'bg-zappy-600 text-white shadow-sm shadow-zappy-200 ring-2 ring-zappy-300'
+                            : 'bg-slate-50 text-slate-700 hover:bg-zappy-50 hover:text-zappy-700'}`}>
                   {day.getDate()}
                   {(isBkd || isBlk) && !isPast && (
                     <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-white/60" />
@@ -1122,7 +1089,7 @@ function CalendarTab() {
       {/* Legend */}
       <div className="flex gap-4 flex-wrap text-xs">
         {[
-          ['bg-violet-600', 'Today'],
+          ['bg-zappy-600', 'Today'],
           ['bg-blue-500', 'Booked'],
           ['bg-red-500', 'Blocked'],
           ['bg-slate-100 border border-slate-200', 'Available'],
@@ -1228,7 +1195,7 @@ function EarningsTab() {
                   </div>
                   <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
                     <motion.div initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 0.6 }}
-                      className="h-full bg-violet-500 rounded-full" />
+                      className="h-full bg-zappy-500 rounded-full" />
                   </div>
                 </div>
               );
@@ -1349,7 +1316,7 @@ function KycDocUploadField({ field, currentKey, onUploaded, disabled, token }) {
         />
       )}
 
-      <div className={`rounded-2xl border-2 p-4 transition-all ${uploaded ? 'border-emerald-200 bg-emerald-50/30' : field.mandatory ? 'border-violet-200 bg-violet-50/20' : 'border-slate-200 bg-white'}`}>
+      <div className={`rounded-2xl border-2 p-4 transition-all ${uploaded ? 'border-emerald-200 bg-emerald-50/30' : field.mandatory ? 'border-zappy-200 bg-zappy-50/20' : 'border-slate-200 bg-white'}`}>
         <div className="flex items-center gap-3">
           {/* Preview / icon */}
           <div className={`w-14 h-14 rounded-xl overflow-hidden shrink-0 border-2 flex items-center justify-center relative
@@ -1381,7 +1348,7 @@ function KycDocUploadField({ field, currentKey, onUploaded, disabled, token }) {
             <div className="flex flex-col gap-1.5 shrink-0">
               {field.camera ? (
                 <motion.button whileTap={{ scale: 0.9 }} onClick={() => setCameraOpen(true)}
-                  className="flex items-center gap-1 px-2.5 py-1.5 bg-violet-600 text-white rounded-xl text-xs font-bold">
+                  className="flex items-center gap-1 px-2.5 py-1.5 bg-zappy-600 text-white rounded-xl text-xs font-bold">
                   <Camera size={11} />{uploaded ? 'Retake' : 'Selfie'}
                 </motion.button>
               ) : (
@@ -1422,7 +1389,7 @@ function KycSection({ partner, token, onRefresh }) {
     try {
       await updateMe({ ...pending, gstNumber: kyc.gstNumber, panNumber: kyc.panNumber }).unwrap();
       setPending({});
-      toast.success('KYC documents submitted for review 🎉');
+      toast.success('Documents submitted for review.');
       onRefresh();
     } catch (e) { toast.error(e?.data?.error || 'Submission failed'); }
     finally { setSaving(false); }
@@ -1445,7 +1412,7 @@ function KycSection({ partner, token, onRefresh }) {
       {/* Header */}
       <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <ShieldCheck size={18} className="text-violet-500" />
+          <ShieldCheck size={18} className="text-zappy-500" />
           <p className="font-black text-slate-900">KYC Verification</p>
         </div>
         <span className={`px-3 py-1 rounded-full text-xs font-bold border ${KYC_STYLE[kycStatus]}`}>
@@ -1477,7 +1444,7 @@ function KycSection({ partner, token, onRefresh }) {
         {/* Toggle button for pending state */}
         {kycStatus === 'pending' && !showPendingDocs && (
           <button onClick={() => setShowPendingDocs(true)}
-            className="w-full py-3 bg-violet-50 text-violet-700 font-bold text-[13px] rounded-xl flex items-center justify-center gap-2 hover:bg-violet-100 transition-colors mt-2">
+            className="w-full py-3 bg-zappy-50 text-zappy-700 font-bold text-[13px] rounded-xl flex items-center justify-center gap-2 hover:bg-zappy-100 transition-colors mt-2">
             <FileText size={16} /> View Uploaded Documents
           </button>
         )}
@@ -1487,18 +1454,18 @@ function KycSection({ partner, token, onRefresh }) {
           <div>
             {kycStatus === 'pending' && showPendingDocs && (
               <div className="flex justify-end mb-3">
-                <button onClick={() => setShowPendingDocs(false)} className="text-xs text-violet-600 font-bold hover:underline">
+                <button onClick={() => setShowPendingDocs(false)} className="text-xs text-zappy-600 font-bold hover:underline">
                   Hide Documents
                 </button>
               </div>
             )}
             <div className="flex items-center justify-between mb-1.5">
               <p className="text-xs font-bold text-slate-600">Mandatory documents</p>
-              <p className="text-xs font-black text-violet-600">{doneMandatory}/{totalMandatory}</p>
+              <p className="text-xs font-black text-zappy-600">{doneMandatory}/{totalMandatory}</p>
             </div>
             <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
               <motion.div initial={{ width: 0 }} animate={{ width: `${progressPct}%` }} transition={{ duration: 0.5 }}
-                className={`h-full rounded-full ${progressPct === 100 ? 'bg-emerald-500' : 'bg-violet-500'}`} />
+                className={`h-full rounded-full ${progressPct === 100 ? 'bg-emerald-500' : 'bg-zappy-500'}`} />
             </div>
           </div>
         )}
@@ -1526,7 +1493,7 @@ function KycSection({ partner, token, onRefresh }) {
                 <label className="text-xs font-bold text-slate-600 block mb-1">{label}</label>
                 <input defaultValue={kyc[k] || ''} placeholder={placeholder}
                   onChange={e => setPending(p => ({ ...p, [k]: e.target.value }))}
-                  className="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono focus:border-violet-400 outline-none uppercase" />
+                  className="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono focus:border-zappy-400 outline-none uppercase" />
               </div>
             ))}
           </div>
@@ -1537,7 +1504,7 @@ function KycSection({ partner, token, onRefresh }) {
           <motion.button whileTap={{ scale: 0.97 }}
             onClick={submitKyc}
             disabled={saving || !mandatoryDone || (!hasPending && kycStatus !== 'rejected')}
-            className="w-full py-4 bg-violet-600 text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2 disabled:opacity-40 shadow-md shadow-violet-200">
+            className="w-full py-4 bg-zappy-600 text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2 disabled:opacity-40 shadow-md shadow-zappy-200">
             {saving ? <Loader2 size={16} className="animate-spin" /> : <ShieldCheck size={16} />}
             {saving ? 'Submitting…' : mandatoryDone ? 'Submit for KYC Review' : `Upload ${totalMandatory - doneMandatory} more required doc${totalMandatory - doneMandatory !== 1 ? 's' : ''}`}
           </motion.button>
@@ -1622,10 +1589,10 @@ function ConfettiStageBackground() {
       <div className="absolute top-8 left-32 w-3 h-2 bg-emerald-400 rotate-45 opacity-80 pointer-events-none" />
       <div className="absolute top-20 left-10 w-2.5 h-3.5 bg-blue-400 -rotate-12 opacity-75 pointer-events-none" />
       <div className="absolute top-24 left-28 w-2 h-2 bg-yellow-300 rotate-45 opacity-85 pointer-events-none" />
-      <div className="absolute top-6 right-36 w-3 h-3 bg-fuchsia-300 rounded-sm -rotate-12 opacity-80 pointer-events-none" />
+      <div className="absolute top-6 right-36 w-3 h-3 bg-zappy-300 rounded-sm -rotate-12 opacity-80 pointer-events-none" />
       <div className="absolute top-16 right-48 w-2.5 h-2.5 bg-amber-300 rotate-45 opacity-75 pointer-events-none" />
       <div className="absolute bottom-12 left-14 w-3 h-3 bg-pink-300 rotate-12 opacity-70 pointer-events-none" />
-      <div className="absolute bottom-16 left-36 w-2 h-2 bg-purple-300 rounded-full opacity-80 pointer-events-none" />
+      <div className="absolute bottom-16 left-36 w-2 h-2 bg-zappy-300 rounded-full opacity-80 pointer-events-none" />
 
       {/* Subtle Wedding Event Stage Illustration on Right Side */}
       <div className="absolute right-0 top-0 bottom-0 w-1/2 max-w-[340px] pointer-events-none opacity-25 sm:opacity-30 flex items-center justify-end overflow-hidden">
@@ -1691,7 +1658,7 @@ function ProfileTab() {
       const { data: signed } = await presignUpload({ contentType: file.type || 'image/jpeg', folder: 'kyc-docs' });
       await fetch(signed.uploadUrl, { method: 'PUT', body: file, headers: { 'Content-Type': file.type } });
       await updateMe({ kycDocument: signed.key }).unwrap();
-      toast.success('Document submitted for review 🎉');
+      toast.success('Document submitted for review.');
       refetch();
     } catch { toast.error('Upload failed'); }
     finally { setUploading(false); }
@@ -1722,12 +1689,12 @@ function ProfileTab() {
   return (
     <form onSubmit={handleSave} className="space-y-6 pb-6">
       {/* Vibrant Hero Profile Card */}
-      <div className="relative rounded-card overflow-hidden bg-[#6b21a8] p-7 sm:p-10 shadow-2xl shadow-fuchsia-500/20 border border-white/15">
+      <div className="relative rounded-card overflow-hidden bg-[#6b21a8] p-7 sm:p-10 shadow-2xl shadow-zappy-500/20 border border-white/15">
         <ConfettiStageBackground />
 
         <div className="relative z-10 flex flex-col items-center text-center mt-2">
           <label className="relative cursor-pointer group mb-4 inline-block">
-            <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-full overflow-hidden from-violet-500 border-[4px] sm:border-[5px] border-white flex items-center justify-center shadow-2xl transition-transform duration-300 group-hover:scale-105">
+            <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-full overflow-hidden from-zappy-500 border-[4px] sm:border-[5px] border-white flex items-center justify-center shadow-2xl transition-transform duration-300 group-hover:scale-105">
               {partner.profilePhotoKey ? (
                 <img src={partner.profilePhotoKey} alt="" className="w-full h-full object-cover rounded-full"
                   onError={e => e.target.style.display = 'none'} />
@@ -1735,8 +1702,8 @@ function ProfileTab() {
                 <span className="text-white font-black text-5xl tracking-tighter drop-shadow-md">{partner.businessName?.[0]?.toUpperCase()}</span>
               )}
             </div>
-            <div className="absolute -bottom-1 -right-1 w-10 h-10 rounded-full bg-white text-[#9333ea] shadow-xl flex items-center justify-center border-2 border-slate-50 group-hover:scale-110 group-hover:bg-violet-50 transition-all duration-300 z-20">
-              {uploading ? <Loader2 size={18} className="animate-spin text-fuchsia-600" /> : <Camera size={18} />}
+            <div className="absolute -bottom-1 -right-1 w-10 h-10 rounded-full bg-white text-[#9333ea] shadow-xl flex items-center justify-center border-2 border-slate-50 group-hover:scale-110 group-hover:bg-zappy-50 transition-all duration-300 z-20">
+              {uploading ? <Loader2 size={18} className="animate-spin text-zappy-600" /> : <Camera size={18} />}
             </div>
             <input type="file" accept="image/*" className="hidden" onChange={e => handlePhotoUpload(e.target.files?.[0])} />
           </label>
@@ -1786,7 +1753,7 @@ function ProfileTab() {
           <span className="text-[11px] font-extrabold text-slate-500 tracking-widest uppercase block mb-3 pl-1">
             ABOUT YOUR BUSINESS
           </span>
-          <div className="relative rounded-card border border-violet-200/80 bg-gradient-to-br from-violet-50/70 via-purple-50/40 to-pink-50/50 p-6 sm:p-8 overflow-hidden transition-all group focus-within:border-violet-400 focus-within:ring-4 focus-within:ring-violet-500/15 shadow-sm min-h-[180px] flex flex-col justify-between">
+          <div className="relative rounded-card border border-zappy-200/80 bg-gradient-to-br from-zappy-50/70 via-zappy-50/40 to-pink-50/50 p-6 sm:p-8 overflow-hidden transition-all group focus-within:border-zappy-400 focus-within:ring-4 focus-within:ring-zappy-500/15 shadow-sm min-h-[180px] flex flex-col justify-between">
             <div className="text-4xl sm:text-5xl font-serif font-black text-[#9333ea]/70 leading-none mb-3 select-none">
               “
             </div>
@@ -1805,8 +1772,8 @@ function ProfileTab() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5 pt-1">
           {[
-            { k: 'yearsExperience', label: 'Years of Experience', placeholder: 'e.g. 5', type: 'number', Icon: Award, iconColor: 'text-violet-500' },
-            { k: 'cities', label: 'Cities Served', placeholder: 'e.g. bangalore, mumbai', type: 'text', Icon: MapPin, iconColor: 'text-fuchsia-500' },
+            { k: 'yearsExperience', label: 'Years of Experience', placeholder: 'e.g. 5', type: 'number', Icon: Award, iconColor: 'text-zappy-500' },
+            { k: 'cities', label: 'Cities Served', placeholder: 'e.g. bangalore, mumbai', type: 'text', Icon: MapPin, iconColor: 'text-zappy-500' },
             { k: 'serviceRadiusKm', label: 'Service Radius (km)', placeholder: 'e.g. 30', type: 'number', Icon: Briefcase, iconColor: 'text-pink-500' },
           ].map(({ k, label, placeholder, type, Icon, iconColor }) => (
             <div key={k} className="relative group">
@@ -1819,7 +1786,7 @@ function ProfileTab() {
                 value={values[k] || ''}
                 onChange={e => setForm(p => ({ ...(p || values), [k]: e.target.value }))}
                 placeholder={placeholder}
-                className="w-full bg-slate-50/80 hover:bg-slate-50 border border-slate-200/80 rounded-card px-5 py-4 text-[15px] font-extrabold text-slate-800 focus:bg-white focus:border-violet-400 focus:ring-4 focus:ring-violet-500/10 outline-none transition-all placeholder:text-slate-400 shadow-sm"
+                className="w-full bg-slate-50/80 hover:bg-slate-50 border border-slate-200/80 rounded-card px-5 py-4 text-[15px] font-extrabold text-slate-800 focus:bg-white focus:border-zappy-400 focus:ring-4 focus:ring-zappy-500/10 outline-none transition-all placeholder:text-slate-400 shadow-sm"
               />
             </div>
           ))}
@@ -1846,7 +1813,7 @@ function ProfileTab() {
 
 /* Notification icon config */
 const NOTIF_META = {
-  event_booking_new: { icon: '🎉', color: 'bg-violet-100 text-violet-600' },
+  event_booking_new: { icon: '🎉', color: 'bg-zappy-100 text-zappy-600' },
   event_partner_kyc_approved: { icon: '✅', color: 'bg-emerald-100 text-emerald-600' },
   event_partner_kyc_rejected: { icon: '❌', color: 'bg-red-100 text-red-600' },
   event_booking_cancelled: { icon: '⚠️', color: 'bg-amber-100 text-amber-600' },
@@ -1900,17 +1867,17 @@ function NotificationPanel({ onClose }) {
         {/* Header */}
         <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 bg-violet-100 rounded-xl flex items-center justify-center">
-              <Bell size={16} className="text-violet-600" />
+            <div className="w-8 h-8 bg-zappy-100 rounded-xl flex items-center justify-center">
+              <Bell size={16} className="text-zappy-600" />
             </div>
             <div>
               <p className="font-black text-slate-900 text-sm">Notifications</p>
-              {unreadCount > 0 && <p className="text-[10px] text-violet-500 font-semibold">{unreadCount} unread</p>}
+              {unreadCount > 0 && <p className="text-[10px] text-zappy-500 font-semibold">{unreadCount} unread</p>}
             </div>
           </div>
           <div className="flex items-center gap-2">
             {unreadCount > 0 && (
-              <button onClick={handleMarkAll} className="text-xs text-violet-600 font-bold hover:text-violet-800 px-2 py-1 rounded-lg hover:bg-violet-50">
+              <button onClick={handleMarkAll} className="text-xs text-zappy-600 font-bold hover:text-zappy-800 px-2 py-1 rounded-lg hover:bg-zappy-50">
                 Mark all read
               </button>
             )}
@@ -1924,7 +1891,7 @@ function NotificationPanel({ onClose }) {
         <div className="px-5 py-3 border-b border-slate-50 flex gap-2 shrink-0">
           {[false, true].map(val => (
             <button key={String(val)} onClick={() => { setUnreadOnly(val); setPage(1); }}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${unreadOnly === val ? 'bg-violet-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${unreadOnly === val ? 'bg-zappy-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
               {val ? 'Unread' : 'All'}
             </button>
           ))}
@@ -1933,7 +1900,7 @@ function NotificationPanel({ onClose }) {
         {/* List */}
         <div className="flex-1 overflow-y-auto">
           {isLoading ? (
-            <div className="flex items-center justify-center py-16"><Loader2 size={22} className="animate-spin text-violet-300" /></div>
+            <div className="flex items-center justify-center py-16"><Loader2 size={22} className="animate-spin text-zappy-300" /></div>
           ) : notifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 gap-3 text-center px-6">
               <div className="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center text-2xl">🔔</div>
@@ -1948,7 +1915,7 @@ function NotificationPanel({ onClose }) {
                 return (
                   <motion.div key={n._id} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }}
                     onClick={() => unread && handleRead(n._id)}
-                    className={`flex gap-3 px-5 py-4 cursor-pointer hover:bg-slate-50 transition-colors ${unread ? 'bg-violet-50/40' : ''}`}>
+                    className={`flex gap-3 px-5 py-4 cursor-pointer hover:bg-slate-50 transition-colors ${unread ? 'bg-zappy-50/40' : ''}`}>
                     <div className={`w-10 h-10 rounded-2xl flex items-center justify-center text-lg shrink-0 ${color}`}>
                       {icon}
                     </div>
@@ -1957,7 +1924,7 @@ function NotificationPanel({ onClose }) {
                         <p className={`text-sm leading-snug ${unread ? 'font-bold text-slate-900' : 'font-medium text-slate-700'}`}>
                           {n.title}
                         </p>
-                        {unread && <div className="w-2 h-2 bg-violet-500 rounded-full shrink-0 mt-1" />}
+                        {unread && <div className="w-2 h-2 bg-zappy-500 rounded-full shrink-0 mt-1" />}
                       </div>
                       {n.body && <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">{n.body}</p>}
                       <p className="text-[10px] text-slate-400 mt-1 font-medium">{timeAgo(n.createdAt)}</p>

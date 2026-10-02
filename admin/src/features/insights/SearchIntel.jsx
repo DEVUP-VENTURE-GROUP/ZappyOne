@@ -3,7 +3,7 @@ import { Loader2, Search, TrendingUp, AlertTriangle, MapPin, BarChart2 } from 'l
 import { useAdminSearchAnalyticsQuery } from '@shared/services/api';
 
 function Stat({ icon: Icon, label, value, tone = 'slate', suffix = '' }) {
-  const tones = { slate: 'text-slate-900', rose: 'text-rose-600', amber: 'text-amber-600', indigo: 'text-indigo-600' };
+  const tones = { slate: 'text-slate-900', rose: 'text-rose-600', amber: 'text-amber-600', indigo: 'text-zappy-600' };
   return (
     <div className="bg-white border border-slate-200 rounded-xl p-3.5">
       <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-slate-400"><Icon size={13} /> {label}</div>
@@ -16,7 +16,7 @@ export default function SearchIntel() {
   const [days, setDays] = useState(7);
   const { data, isLoading } = useAdminSearchAnalyticsQuery(days, { pollingInterval: 60000 });
 
-  if (isLoading || !data) return <div className="flex justify-center py-16"><Loader2 className="animate-spin text-indigo-500" /></div>;
+  if (isLoading || !data) return <div className="flex justify-center py-16"><Loader2 className="animate-spin text-zappy-500" /></div>;
 
   const maxDaily = Math.max(1, ...(data.daily || []).map((d) => d.count));
 
@@ -43,7 +43,7 @@ export default function SearchIntel() {
         <p className="text-sm font-bold text-slate-700 mb-3">Search volume</p>
         <div className="flex items-end gap-1 h-24">
           {(data.daily || []).map((d) => (
-            <div key={d.date} className="flex-1 bg-indigo-500/80 rounded-t hover:bg-indigo-600 transition-colors" style={{ height: `${Math.max(4, (d.count / maxDaily) * 100)}%` }} title={`${d.date}: ${d.count}`} />
+            <div key={d.date} className="flex-1 bg-zappy-500/80 rounded-t hover:bg-zappy-600 transition-colors" style={{ height: `${Math.max(4, (d.count / maxDaily) * 100)}%` }} title={`${d.date}: ${d.count}`} />
           ))}
         </div>
       </div>
