@@ -5,15 +5,6 @@ import { ArrowLeft, Store, Star, MapPin, Loader2, ShieldCheck, ChevronRight, Sea
 import { useNearbyShopsQuery } from '@shared/services/api';
 import { selectLocation, selectHasLocation } from '@shared/store/locationSlice';
 
-const CATEGORY_FILTERS = [
-  { key: '', label: 'All' },
-  { key: 'screen_replacement', label: 'Phone Screen' },
-  { key: 'battery_replacement', label: 'Phone Battery' },
-  { key: 'laptop_screen_issue', label: 'Laptop Screen' },
-  { key: 'laptop_motherboard_issue', label: 'Laptop Repair' },
-  { key: 'smart_tv_repair', label: 'Smart TV' },
-  { key: 'cctv_install', label: 'CCTV' },
-];
 
 export default function NearbyShopsPage() {
   const nav = useNavigate();
@@ -26,6 +17,8 @@ export default function NearbyShopsPage() {
     { skip: !hasLocation },
   );
   const shops = useMemo(() => data?.shops || [], [data]);
+  // Chips are the live services some verified shop nearby actually offers.
+  const filters = useMemo(() => [{ code: '', name: 'All' }, ...(data?.services || [])], [data]);
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] pb-10">
@@ -41,16 +34,16 @@ export default function NearbyShopsPage() {
 
         <div className="card bg-zappy-50 ring-zappy-100">
           <p className="text-xs font-medium text-zappy-700 leading-relaxed">
-            Verified local shops for repairs & services. Browse, check ratings, and either have their worker visit you, or walk in yourself with <span className="font-bold">Pick & Go</span>.
+            Shops near you that ZappyOne has verified for each service they offer. Open one to book it.
           </p>
         </div>
 
         {/* Category filter chips */}
         <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-          {CATEGORY_FILTERS.map(({ key, label }) => (
-            <button key={key} onClick={() => setService(key)}
-              className={`shrink-0 px-3.5 py-2 rounded-full text-xs font-bold whitespace-nowrap transition ${service === key ? 'bg-zappy-600 text-white' : 'bg-white border border-slate-200 text-slate-600'}`}>
-              {label}
+          {filters.map(({ code, name }) => (
+            <button key={code || 'all'} onClick={() => setService(code)}
+              className={`shrink-0 px-3.5 py-2 rounded-full text-xs font-bold whitespace-nowrap transition ${service === code ? 'bg-zappy-600 text-white' : 'bg-white border border-slate-200 text-slate-600'}`}>
+              {name}
             </button>
           ))}
         </div>
@@ -71,7 +64,7 @@ export default function NearbyShopsPage() {
               <SearchX size={28} className="text-slate-300" />
             </div>
             <p className="font-bold text-slate-700 text-sm">No shops found nearby</p>
-            <p className="text-xs text-slate-400 mt-1">Try Zappy Express instead, or check back later.</p>
+            <p className="text-xs text-slate-400 mt-1">You can still book any service from the home screen — we find a verified provider for you.</p>
           </div>
         ) : (
           <div className={`space-y-3 ${isFetching ? 'opacity-60' : ''}`}>
@@ -90,7 +83,7 @@ export default function NearbyShopsPage() {
                     <p className="font-bold text-sm text-[#0F172A] truncate">{s.businessName}</p>
                     <ShieldCheck size={13} className="text-emerald-500 shrink-0" />
                   </div>
-                  <p className="text-xs text-slate-400 truncate">{s.category || 'Local Repair Shop'}</p>
+                  <p className="text-xs text-slate-400 truncate">{(s.services || []).map((x) => x.name).join(' · ') || s.category}</p>
                   <div className="flex items-center gap-3 mt-1 flex-wrap">
                     {s.rating > 0 && (
                       <span className="flex items-center gap-0.5 text-[11px] font-bold text-slate-600">

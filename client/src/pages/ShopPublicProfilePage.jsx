@@ -2,18 +2,6 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Store, Star, ShieldCheck, MapPin, Calendar, Loader2, ChevronRight } from 'lucide-react';
 import { useGetShopProfileQuery } from '@shared/services/api';
 
-const SERVICE_LABELS = {
-  screen_replacement: 'Phone Screen Replacement', battery_replacement: 'Phone Battery Replacement',
-  charging_issue: 'Phone Charging Issue', speaker_mic_issue: 'Phone Speaker/Mic Issue',
-  camera_issue: 'Phone Camera Issue', water_damage: 'Phone Water Damage',
-  data_recovery: 'Phone Data Recovery', device_not_turning_on: 'Phone Not Turning On',
-  laptop_screen_issue: 'Laptop Screen Repair', laptop_motherboard_issue: 'Laptop Motherboard Repair',
-  laptop_keyboard_issue: 'Laptop Keyboard Repair', laptop_ssd_upgrade: 'Laptop SSD Upgrade',
-  laptop_ram_upgrade: 'Laptop RAM Upgrade', laptop_charging_issue: 'Laptop Charging Issue',
-  laptop_virus_removal: 'Laptop Virus Removal', laptop_data_recovery: 'Laptop Data Recovery',
-  smart_tv_repair: 'Smart TV Repair', cctv_install: 'CCTV Installation',
-  router_troubleshoot: 'Router Troubleshoot', event_decorator: 'Event Decoration',
-};
 
 export default function ShopPublicProfilePage() {
   const nav = useNavigate();
@@ -95,17 +83,18 @@ export default function ShopPublicProfilePage() {
         )}
 
         <div className="mt-3">
-          <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2 px-1">Book a service at this shop</p>
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2 px-1">Verified for</p>
           <div className="space-y-2">
+            {/* The live services this shop is verified for; each opens that service's booking. */}
             {(shop.services || []).map((s) => (
-              <button key={s} onClick={() => nav(`/book/${s}?shopId=${shop._id}`)}
+              <button key={s.code} onClick={() => nav(s.path)}
                 className="card w-full flex items-center justify-between text-left hover:ring-2 hover:ring-zappy-100 transition">
-                <span className="text-sm font-semibold text-[#0F172A]">{SERVICE_LABELS[s] || s.replace(/_/g, ' ')}</span>
+                <span className="text-sm font-semibold text-[#0F172A]">{s.name}</span>
                 <ChevronRight size={16} className="text-slate-300 shrink-0" />
               </button>
             ))}
             {(!shop.services || shop.services.length === 0) && (
-              <p className="text-xs text-slate-400 px-1">This shop hasn't listed its services yet.</p>
+              <p className="text-xs text-slate-400 px-1">This shop is not verified for any live service yet.</p>
             )}
           </div>
         </div>

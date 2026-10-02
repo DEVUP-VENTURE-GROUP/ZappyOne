@@ -76,8 +76,8 @@ export const CATEGORY_ICONS = {
  * longest real name rather than the shortest.
  */
 export function CategoryTile({ category, onOpen }) {
-  const Icon = CATEGORY_ICONS[category.code] || Wrench;
-  const count = category.problems.length;
+  const Icon = CATEGORY_ICONS[category.code] || SERVICE_ICONS[category.icon] || Wrench;
+  const count = category.problems?.length || 0;
 
   return (
     <button
@@ -103,7 +103,8 @@ export function CategoryTile({ category, onOpen }) {
           {category.name}
         </span>
         <span className="mt-auto text-[11px] text-slate-500">
-          {count} {count === 1 ? 'issue' : 'issues'}
+          {/* A repair heading counts its issues; a pet or helping box says what it is. */}
+          {category.subtitle ?? `${count} ${count === 1 ? 'issue' : 'issues'}`}
         </span>
       </span>
     </button>
@@ -186,7 +187,7 @@ export default function LiveServices({ availableCodes = null, onOpenService = nu
                 key={s.code}
                 service={s}
                 onOpenService={() => { onOpenService?.(s.code); nav(s.path); }}
-                onOpenCategory={(group) => nav(`/repair/category/${s.artKey || s.code}/${group.code}`)}
+                onOpenCategory={(group) => nav(group.path || `/repair/category/${s.artKey || s.code}/${group.code}`)}
               />
             ))}
           </div>

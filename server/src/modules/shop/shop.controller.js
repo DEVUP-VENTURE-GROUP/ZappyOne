@@ -113,11 +113,11 @@ async function listNearby(req, res, next) {
     if (lat == null || lng == null) {
       return res.status(400).json({ error: 'lat and lng are required' });
     }
-    const shops = await shopService.findNearbyShops({
+    const { shops, services } = await shopService.findNearbyShops({
       lat: Number(lat), lng: Number(lng), service,
       radiusKm: radiusKm ? Number(radiusKm) : undefined,
     });
-    res.json({ shops });
+    res.json({ shops, services });
   } catch (err) { next(err); }
 }
 

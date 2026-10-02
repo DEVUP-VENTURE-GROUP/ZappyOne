@@ -83,40 +83,74 @@ async function resolveShopImages(shop) {
 }
 
 /**
- * Nearby, bookable shops for a given service — the "Nearby Shops" browse
- * screen. Only shops that pass `isDiscoverable()` can ever appear here; the
- * query encodes the same gate directly (can't call an instance method inside
- * an aggregation $match) so it stays correct if the two ever drift, but
- * they're written to match on purpose.
+ * What a shop can be booked for: the live services it is verified for, each
+ * with the page that books it. This is the provider-first model — the old
+ * free-text `services` list a shop ticked itself is never shown to customers.
+ */
+async function verifiedServicesByShop(shopIds = null) {
+  const { ProviderEnrolment } = require('../onboarding/onboarding.model');
+  const { loadLiveLines } = require('../onboarding/coverage.service');
+  const { lines } = await loadLiveLines();
+  const live = new Map(lines.map((l) => [l.code, l]));
+  const rows = await ProviderEnrolment.find({
+    status: 'approved', providerKind: 'shop', lineCode: { $in: [...live.keys()] },
+    ...(shopIds ? { shopId: { $in: shopIds } } : {}),
+  }).select('shopId lineCode').lean();
+  const byShop = new Map();
+  for (const r of rows) {
+    const l = live.get(r.lineCode);
+    const list = byShop.get(String(r.shopId)) || [];
+    if (!list.some((x) => x.code === l.code)) list.push({ code: l.code, name: l.name, icon: l.icon || '', path: l.customerPath });
+    byShop.set(String(r.shopId), list);
+  }
+  return { byShop, lines };
+}
+
+/**
+ * Verified shops near the customer, optionally for one service — the "Nearby
+ * shops" screen. A shop appears only when it is verified for a live service,
+ * is active and unblocked, and has pinned its address.
  */
 async function findNearbyShops({ lat, lng, service, radiusKm = 10, limit = 20 }) {
-  const query = {
+  const { byShop, lines } = await verifiedServicesByShop();
+  const ids = [...byShop.entries()]
+    .filter(([, list]) => !service || list.some((x) => x.code === service))
+    .map(([id]) => id);
+
+  const shops = ids.length ? await Shop.find({
+    _id: { $in: ids },
     isActive: true,
     isBlocked: false,
-    'kyc.status': 'approved',
-    services: { $exists: true, $not: { $size: 0 } },
     'address.location.coordinates': { $exists: true },
-  };
-  if (service) query.services = service;
-
-  const shops = await Shop.find(query)
+  })
     .where('address.location').near({
       center: { type: 'Point', coordinates: [lng, lat] },
       maxDistance: radiusKm * 1000, // metres
     })
     .limit(limit)
-    .select('businessName category services address coverImageUrl rating reviewCount completedJobs yearsActive hours')
-    .lean();
+    .select('businessName category address coverImageUrl rating reviewCount completedJobs yearsActive hours')
+    .lean() : [];
 
   const withImages = await Promise.all(shops.map(resolveShopImages));
-  return withImages.map(withOpenState);
+  // The filter chips: only services some verified shop actually offers.
+  const offered = new Set([...byShop.values()].flat().map((x) => x.code));
+  return {
+    shops: withImages.map(withOpenState).map((shop) => ({ ...shop, services: byShop.get(String(shop._id)) || [] })),
+    services: lines.filter((l) => offered.has(l.code)).map((l) => ({ code: l.code, name: l.name })),
+  };
 }
 
-/** Full shop profile for a customer-facing shop page. */
+/** Full shop profile for a customer-facing shop page, with what it can be booked for. */
 async function getShopProfile(shopId) {
-  const shop = await Shop.findOne({ _id: shopId, isBlocked: false }).lean();
-  if (!shop || shop.kyc?.status !== 'approved') return null;
-  return withOpenState(await resolveShopImages(shop));
+  // Public fields only — never KYC documents, owner contact or bank details.
+  const shop = await Shop.findOne({ _id: shopId, isBlocked: false, isActive: true })
+    .select('businessName category bio address.text address.line1 address.landmark address.city coverImageUrl galleryImages rating reviewCount completedJobs yearsActive hours')
+    .lean();
+  if (!shop) return null;
+  const { byShop } = await verifiedServicesByShop([shop._id]);
+  const services = byShop.get(String(shop._id)) || [];
+  if (!services.length) return null;
+  return { ...withOpenState(await resolveShopImages(shop)), services };
 }
 
 /**
