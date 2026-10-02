@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Loader2, MapPin, Check, PawPrint, Star, Plus,
 } from 'lucide-react';
@@ -85,17 +85,6 @@ export default function PetBookingFlowPage() {
     }
     setVariantByPet(Object.fromEntries(selectedPetIds.map((id) => [id, v.code])));
   }
-
-  // Opened from a service box ("?variant=…"): choose it for the selected pets
-  // once they reach that step — with the same compatibility check as a tap.
-  const [params] = useSearchParams();
-  const presetDone = useRef(false);
-  useEffect(() => {
-    const preset = variants.find((v) => v.code === params.get('variant'));
-    if (step !== 'variant' || presetDone.current || !preset || variantByPet[selectedPetIds[0]]) return;
-    presetDone.current = true;
-    pickVariant(preset);
-  }, [step, variants]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function goSchedule() {
     setStep(needsDates || needsTransport ? 'location' : 'schedule');

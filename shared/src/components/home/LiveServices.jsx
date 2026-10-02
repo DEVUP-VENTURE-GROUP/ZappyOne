@@ -103,11 +103,32 @@ export function CategoryTile({ category, onOpen }) {
           {category.name}
         </span>
         <span className="mt-auto text-[11px] text-slate-500">
-          {/* A repair heading counts its issues; a pet or helping box says what it is. */}
           {category.subtitle ?? `${count} ${count === 1 ? 'issue' : 'issues'}`}
         </span>
       </span>
     </button>
+  );
+}
+
+/**
+ * A section whose services have no headings of their own (pet care, helping):
+ * one card, one row — a box per service. Listing each as a full card made the
+ * section as long as the repairs above it for a handful of simple services.
+ */
+function ServiceRow({ services, onOpen }) {
+  return (
+    <div className="relative overflow-hidden rounded-xl bg-white">
+      <div className="flex gap-2.5 overflow-x-auto no-scrollbar px-4 py-3.5 snap-x scroll-px-4 scroll-smooth">
+        {services.map((s) => (
+          <CategoryTile
+            key={s.code}
+            category={{ code: s.code, name: s.name, icon: s.icon, imageUrl: s.imageUrl, subtitle: '' }}
+            onOpen={() => onOpen(s)}
+          />
+        ))}
+      </div>
+      <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-white to-transparent" />
+    </div>
   );
 }
 
@@ -181,16 +202,22 @@ export default function LiveServices({ availableCodes = null, onOpenService = nu
         <section key={d.code} aria-labelledby={`domain-${d.code}`}>
           <h2 id={`domain-${d.code}`} className="text-[17px] font-bold text-navy sm:text-[20px]">{d.name}</h2>
           {d.description && <p className="mt-0.5 text-[13px] text-slate-500">{d.description}</p>}
-          <div className="mt-3 space-y-3">
-            {d.services.map((s) => (
-              <ServiceCard
-                key={s.code}
-                service={s}
-                onOpenService={() => { onOpenService?.(s.code); nav(s.path); }}
-                onOpenCategory={(group) => nav(group.path || `/repair/category/${s.artKey || s.code}/${group.code}`)}
-              />
-            ))}
-          </div>
+          {d.services.some((s) => s.coverage?.length) ? (
+            <div className="mt-3 space-y-3">
+              {d.services.map((s) => (
+                <ServiceCard
+                  key={s.code}
+                  service={s}
+                  onOpenService={() => { onOpenService?.(s.code); nav(s.path); }}
+                  onOpenCategory={(group) => nav(`/repair/category/${s.artKey || s.code}/${group.code}`)}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="mt-3">
+              <ServiceRow services={d.services} onOpen={(s) => { onOpenService?.(s.code); nav(s.path); }} />
+            </div>
+          )}
         </section>
       ))}
 

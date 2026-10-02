@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Plus, Trash2, MapPin, Loader2, ShoppingBasket, PackageSearch, Info,
 } from 'lucide-react';
@@ -34,9 +34,7 @@ function Shell({ children }) {
 
 export default function ShoppingTaskPage() {
   const nav = useNavigate();
-  // A box on the home screen can open this straight on "pick up for me".
-  const [params] = useSearchParams();
-  const [mode, setMode] = useState(params.get('mode') === 'pickup' ? 'pickup' : 'shop'); // 'shop' | 'pickup'
+  const [mode, setMode] = useState('shop'); // 'shop' | 'pickup'
   const [items, setItems] = useState([emptyItem()]);
   const [instructions, setInstructions] = useState('');
   const [pickupLoc, setPickupLoc] = useState(null);

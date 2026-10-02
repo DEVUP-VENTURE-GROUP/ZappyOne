@@ -262,63 +262,6 @@ function nextStepFor({ profile, enrolments, kind }) {
  * Public on purpose — the home page renders before anyone signs in, and a
  * catalog of what we offer is not private.
  */
-/**
- * The boxes under a service that is not a repair, so every service on the home
- * screen reads the same way: a row of the things you can book inside it.
- *
- *   pet care  — each live service variant (Bath & dry, Haircut, Nail trim…)
- *   helping   — the two jobs each line covers (buy for me / pick up, return / exchange)
- *
- * Each box opens the booking already set to that choice. Same shape as a repair
- * heading, plus `subtitle` and `path`, so the client renders one kind of box.
- */
-const HELPING_BOXES = {
-  shopping_pickup: [
-    { type: 'shopping', name: 'Buy for me', icon: 'ShoppingBasket', subtitle: 'Bill and photos sent to you', mode: 'shop' },
-    { type: 'pickup', name: 'Pick up for me', icon: 'PackageCheck', subtitle: 'Collected and brought to you', mode: 'pickup' },
-  ],
-  returns_exchange: [
-    { type: 'return', name: 'Return an item', icon: 'PackageCheck', subtitle: 'Proof of return brought back', mode: 'return' },
-    { type: 'exchange', name: 'Exchange an item', icon: 'ShoppingBag', subtitle: 'New item brought back to you', mode: 'exchange' },
-  ],
-};
-
-function petVariantSubtitle(v) {
-  if (v.pricingUnit === 'per_night') return 'Per night';
-  if (v.pricingUnit === 'per_day') return 'Per day';
-  if (v.pricingUnit === 'per_km') return 'Priced by distance';
-  const mins = v.durationMinutes || v.estimatedMinutes;
-  return mins ? `About ${mins} min` : '';
-}
-
-async function serviceBoxes(lines) {
-  const boxes = new Map();
-  const petLines = lines.filter((l) => l.domainCode === 'pet_services');
-  if (petLines.length) {
-    const { PetServiceVariant } = require('../pet/models/catalog.model');
-    const variants = await PetServiceVariant.find({ categoryCode: { $in: petLines.map((l) => l.code) }, isActive: true })
-      .sort({ displayOrder: 1, name: 1 }).select('code name categoryCode pricingUnit durationMinutes estimatedMinutes').lean();
-    for (const l of petLines) {
-      boxes.set(l.code, variants.filter((v) => v.categoryCode === l.code).map((v) => ({
-        code: v.code, name: v.name, icon: l.icon || 'PawPrint', imageUrl: '', problems: [],
-        subtitle: petVariantSubtitle(v), path: `${l.customerPath}?variant=${encodeURIComponent(v.code)}`,
-      })));
-    }
-  }
-  const helpingLines = lines.filter((l) => HELPING_BOXES[l.code]);
-  if (helpingLines.length) {
-    const { HelpingConfig } = require('../helping/models/config.model');
-    const offered = new Set((await HelpingConfig.find({ isActive: true }).select('serviceType').lean()).map((c) => c.serviceType));
-    for (const l of helpingLines) {
-      boxes.set(l.code, HELPING_BOXES[l.code].filter((b) => offered.has(b.type)).map((b) => ({
-        code: b.type, name: b.name, icon: b.icon, imageUrl: '', problems: [], subtitle: b.subtitle,
-        path: `${l.customerPath}?mode=${b.mode}`,
-      })));
-    }
-  }
-  return boxes;
-}
-
 async function liveCatalog(req, res, next) {
   try {
     // Live = admin marked it live AND a provider is approved for it (see coverage.service).
@@ -394,8 +337,6 @@ async function liveCatalog(req, res, next) {
       highlightsByVertical.set(p.vertical, list);
     }
 
-    const otherBoxes = await serviceBoxes(lines);
-
     const byDomain = new Map();
     for (const l of lines) {
       if (!byDomain.has(l.domainCode)) byDomain.set(l.domainCode, []);
@@ -412,7 +353,7 @@ async function liveCatalog(req, res, next) {
         path: l.customerPath,
         isPopular: !!l.isPopular,
         highlights: highlightsByVertical.get(l.repairVertical) || [],
-        coverage: l.repairVertical ? coverageByVertical.get(l.repairVertical) || [] : otherBoxes.get(l.code) || [],
+        coverage: coverageByVertical.get(l.repairVertical) || [],
       });
     }
 

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, MapPin, AlertTriangle, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import LocationPicker from '@shared/modules/booking/LocationPicker';
@@ -29,9 +29,7 @@ function Shell({ children }) {
 
 export default function ReturnTaskPage() {
   const nav = useNavigate();
-  // A box on the home screen can open this straight on "exchange".
-  const [params] = useSearchParams();
-  const [isExchange, setIsExchange] = useState(params.get('mode') === 'exchange');
+  const [isExchange, setIsExchange] = useState(false);
   const [form, setForm] = useState({
     merchantName: '', orderId: '', returnId: '', productName: '', quantity: 1,
     returnReason: '', returnMethod: 'store_dropoff', merchantInstructions: '',
