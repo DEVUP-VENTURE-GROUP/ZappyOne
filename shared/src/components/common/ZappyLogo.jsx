@@ -1,38 +1,39 @@
-// From the global assets/ folder, bundled by every app.
-import logoUrl from '@assets/web/logo.png';
+// From the global assets/ folder, bundled by every app. The mark is cropped to
+// its edges on a transparent background (9KB), so it sits on any surface.
+import markUrl from '@assets/web/branding/zappy-mark.webp';
+
 /**
  * Zappy brand marks.
  *
- * <ZappyLogo /> — the symbol mark only (the stylized running Z with the
- *                 orange location pin). Sized by the `size` prop.
- *
- * <ZappyWordmark /> — logo + "ZAPPY" text side-by-side (used in the nav bar).
- *
- * <ZappyAppIcon /> — the rounded-square app-icon version with a background
- *                    (light or dark variant).
- *
- * The design: three stylized speed lines on the left trailing a running
- * figure formed by the Z cross-stroke, with a location pin accent in the
- * brand orange. Entirely vector so it's crisp at any size.
+ * <ZappyLogo />     the symbol: the running Z with the orange location pin.
+ *                   `size` is the box it fills, as before; the mark is drawn
+ *                   at about three quarters of it, the way the old padded
+ *                   file used to look, so no layout moves.
+ * <ZappyWordmark /> the symbol with "ZappyOne": "Zappy" in the logo's blue,
+ *                   "One" in its pin orange.
+ * <ZappyAppIcon />  the rounded-square app-icon version with a background.
  */
-
 export function ZappyLogo({ size = 48, className = '' }) {
+  const h = Math.round(size * 0.75);
   return (
     <img
-      src={logoUrl}
-      alt="Zappy Logo"
-      height={size}
+      src={markUrl}
+      alt="ZappyOne"
+      height={h}
       className={`object-contain ${className}`}
-      style={{ height: size, width: 'auto' }}
+      style={{ height: h, width: 'auto' }}
     />
   );
 }
 
-export function ZappyWordmark({ compact = false, className = '' }) {
+export function ZappyWordmark({ size = 28, className = '' }) {
   return (
-    <div className={`inline-flex items-center ${className}`}>
-      <ZappyLogo size={compact ? 32 : 44} />
-    </div>
+    <span className={`inline-flex items-center gap-1.5 ${className}`}>
+      <img src={markUrl} alt="" height={size} style={{ height: size, width: 'auto' }} />
+      <span className="font-extrabold leading-none tracking-[-0.02em]" style={{ fontSize: Math.round(size * 0.68) }}>
+        <span className="text-zappy-600">Zappy</span><span className="text-amber-500">One</span>
+      </span>
+    </span>
   );
 }
 

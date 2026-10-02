@@ -3,7 +3,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Bell, ChevronDown, Loader2, MapPin, ScanLine, Search, UserRound } from 'lucide-react';
 import { useListNotificationsQuery } from '@shared/services/api';
-import { ZappyLogo } from '@shared/components/common/ZappyLogo';
+import { ZappyWordmark } from '@shared/components/common/ZappyLogo';
 import VoiceSearchButton from '../../components/common/VoiceSearchButton';
 import { prefetchRoute } from '../../lib/routePrefetch';
 
@@ -38,12 +38,13 @@ function IconButton({ label, onClick, children, badge = 0 }) {
   );
 }
 
-function Avatar({ isAuthed, avatar }) {
+function Avatar({ isAuthed, avatar, compact = false }) {
   const nav = useNavigate();
   if (!isAuthed) {
     return (
       <button type="button" onClick={() => nav('/login')}
-        className="h-10 shrink-0 rounded-btn bg-zappy-600 px-4 text-[14px] font-semibold text-white transition-colors duration-150 hover:bg-zappy-700">
+        className={`shrink-0 rounded-btn bg-zappy-600 font-semibold text-white transition-colors duration-150 hover:bg-zappy-700 ${
+          compact ? 'h-9 px-3 text-[13px]' : 'h-10 px-4 text-[14px]'}`}>
         Sign in
       </button>
     );
@@ -59,11 +60,12 @@ function Avatar({ isAuthed, avatar }) {
 }
 
 /** Where the pro comes to — the one thing on the header you tap most. */
-function LocationBlock({ loc, onPickLocation, compact = false }) {
+function LocationBlock({ loc, onPickLocation, compact = false, align = 'left' }) {
+  const right = align === 'right';
   return (
-    <button type="button" onClick={onPickLocation} className="group min-w-0 text-left"
+    <button type="button" onClick={onPickLocation} className={`group min-w-0 max-w-full ${right ? 'text-right' : 'text-left'}`}
       aria-label={`Service location: ${loc.primary}. Change location`}>
-      <span className="flex min-w-0 items-center gap-1">
+      <span className={`flex min-w-0 items-center gap-1 ${right ? 'justify-end' : ''}`}>
         {loc.loading
           ? <Loader2 size={15} className="shrink-0 animate-spin text-zappy-600" />
           : <MapPin size={16} strokeWidth={2.4} className="shrink-0 text-amber-500" />}
@@ -73,7 +75,7 @@ function LocationBlock({ loc, onPickLocation, compact = false }) {
         <ChevronDown size={16} strokeWidth={2.6} className="shrink-0 text-navy transition group-hover:translate-y-0.5" />
       </span>
       {!loc.loading && loc.secondary && (
-        <span className={`block truncate text-[12px] text-slate-500 ${compact ? 'max-w-[220px]' : ''}`}>{loc.secondary}</span>
+        <span className={`block truncate text-[12px] text-ink-500 ${compact && !right ? 'max-w-[220px]' : ''}`}>{loc.secondary}</span>
       )}
     </button>
   );
@@ -137,9 +139,8 @@ export default function HomeHeader({ loc, isAuthed, avatar, onPickLocation, sear
       {/* Desktop: one sticky bar. (DesktopNav steps aside on Home.) */}
       <header className="sticky top-0 z-40 hidden border-b border-line bg-white md:block">
         <div className="mx-auto flex h-[76px] w-full max-w-6xl items-center gap-5 px-6">
-          <NavLink to="/" aria-label="ZappyOne home" className="flex shrink-0 items-center gap-2">
-            <ZappyLogo size={30} />
-            <span className="text-[18px] font-extrabold tracking-[-0.02em] text-navy">ZappyOne</span>
+          <NavLink to="/" aria-label="ZappyOne home" className="flex shrink-0 items-center">
+            <ZappyWordmark size={30} />
           </NavLink>
           <span className="h-9 w-px bg-slate-200" aria-hidden="true" />
           <div className="w-[210px] shrink-0"><LocationBlock loc={loc} onPickLocation={onPickLocation} compact /></div>
@@ -164,12 +165,20 @@ export default function HomeHeader({ loc, isAuthed, avatar, onPickLocation, sear
 
       {/* Phone: light header, scrolls away; search is pinned by the page below it. */}
       <div className="bg-white md:hidden" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
-        <div className="flex items-center gap-3 px-4 pb-2 pt-3.5">
-          <div className="min-w-0 flex-1"><LocationBlock loc={loc} onPickLocation={onPickLocation} /></div>
-          <IconButton label={unread ? `${unread} unread notifications` : 'Notifications'} onClick={() => nav('/notifications')} badge={unread}>
-            <Bell size={17} />
-          </IconButton>
-          <Avatar isAuthed={isAuthed} avatar={avatar} />
+        {/* Brand left, place right. Profile lives in the bottom bar, so the
+            phone header keeps the bell (signed in) or Sign in (signed out). */}
+        <div className="flex items-center gap-2.5 px-4 pb-2 pt-3">
+          <NavLink to="/" aria-label="ZappyOne home" className="flex shrink-0 items-center">
+            <ZappyWordmark size={26} />
+          </NavLink>
+          <div className="flex min-w-0 flex-1 justify-end">
+            <LocationBlock loc={loc} onPickLocation={onPickLocation} compact align="right" />
+          </div>
+          {isAuthed ? (
+            <IconButton label={unread ? `${unread} unread notifications` : 'Notifications'} onClick={() => nav('/notifications')} badge={unread}>
+              <Bell size={17} />
+            </IconButton>
+          ) : <Avatar isAuthed={false} avatar={avatar} compact />}
         </div>
       </div>
     </>
