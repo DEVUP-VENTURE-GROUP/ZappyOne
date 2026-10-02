@@ -1,16 +1,14 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import toast from 'react-hot-toast';
 import {
-  Store, Phone, Power, Loader2, ChevronRight, ClipboardList, ShieldCheck, Bell,
-  UserRound, LogOut, Info,
+  Store, Phone, Power, Loader2, ChevronRight, ClipboardList, ShieldCheck, Info,
 } from 'lucide-react';
 import {
   useGetWorkerMeQuery, useGetMyShopQuery, useGetKycStatusQuery, useGoOnlineMutation, useGoOfflineMutation,
-  useLogoutMutation,
 } from '@shared/services/api';
-import { selectAuth, logout } from '@shared/modules/auth/authSlice';
+import { selectAuth } from '@shared/modules/auth/authSlice';
 import { useGeolocation } from '@shared/hooks/useGeolocation';
 import { formatPaise } from '@shared/utils/money';
 import { useLocationBroadcast } from '@shared/provider/useLocationBroadcast';
@@ -23,7 +21,6 @@ import { useProviderJobs } from '@shared/provider/useProviderJobs';
  */
 export default function ShopWorkerHome() {
   const nav = useNavigate();
-  const dispatch = useDispatch();
   const { accessToken } = useSelector(selectAuth);
   const { data: meData, refetch: refetchMe } = useGetWorkerMeQuery(undefined, { pollingInterval: 60000 });
   const { data: shopData } = useGetMyShopQuery(undefined, { pollingInterval: 120000 });
@@ -32,7 +29,6 @@ export default function ShopWorkerHome() {
   const { mine: jobs, isLoading: loadingJobs } = useProviderJobs({ kinds: ['repair', 'pet'] });
   const [goOnline] = useGoOnlineMutation();
   const [goOffline] = useGoOfflineMutation();
-  const [callLogout] = useLogoutMutation();
   const { getCurrent } = useGeolocation();
   const [toggling, setToggling] = useState(false);
 
@@ -66,17 +62,11 @@ export default function ShopWorkerHome() {
     }
   }
 
-  async function signOut() {
-    try { await callLogout().unwrap(); } catch { /* signing out locally regardless */ }
-    dispatch(logout());
-    nav('/shop/worker/login', { replace: true });
-  }
-
   const shop = shopData?.shop;
   return (
-    <div className="min-h-screen bg-slate-50 pb-12">
+    <div className="pb-12">
       <header className="bg-white border-b border-slate-100">
-        <div className="mx-auto flex max-w-lg items-center gap-3 px-4 py-4">
+        <div className="mx-auto flex max-w-lg items-center gap-3 px-4 py-4 lg:max-w-3xl">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-zappy-50">
             <Store size={20} className="text-zappy-600" />
           </div>
@@ -92,7 +82,7 @@ export default function ShopWorkerHome() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-lg space-y-4 px-4 pt-4">
+      <main className="mx-auto max-w-lg space-y-4 px-4 pt-4 lg:max-w-3xl">
         <button
           onClick={toggleDuty}
           disabled={toggling}
@@ -158,20 +148,6 @@ export default function ShopWorkerHome() {
           )}
         </section>
 
-        <nav className="grid grid-cols-3 gap-2">
-          {[
-            { to: '/worker/profile', label: 'Profile', Icon: UserRound },
-            { to: '/worker/kyc', label: 'ID check', Icon: ShieldCheck },
-            { to: '/worker/notifications', label: 'Alerts', Icon: Bell },
-          ].map(({ to, label: text, Icon }) => (
-            <button key={to} onClick={() => nav(to)} className="flex flex-col items-center gap-1 rounded-2xl bg-white py-3 text-xs font-semibold text-slate-600 ring-1 ring-slate-100">
-              <Icon size={16} className="text-slate-500" /> {text}
-            </button>
-          ))}
-        </nav>
-        <button onClick={signOut} className="mx-auto flex items-center gap-1.5 py-2 text-xs font-semibold text-slate-400 hover:text-slate-600">
-          <LogOut size={13} /> Sign out
-        </button>
       </main>
 
     </div>

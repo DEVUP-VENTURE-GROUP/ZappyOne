@@ -4,11 +4,7 @@ import { ArrowLeft, MapPin, Loader2, Check, Image as ImageIcon } from 'lucide-re
 import { useShopMeQuery, useUpdateShopMeMutation, usePresignUploadMutation } from '@shared/services/api';
 import LocationPicker from '@shared/modules/booking/LocationPicker';
 import toast from 'react-hot-toast';
-
-/*
- * Days of the week, indexed to match Date#getDay() and the shop's `hours` rows.
- */
-const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+import WeeklyHours, { incompleteDay } from '@shared/components/provider/WeeklyHours';
 
 /*
  * The old hardcoded service menu lived here — thirty tick-boxes a shop could
@@ -16,114 +12,6 @@ const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
  * A shop's services are now the ones it has been verified for
  * (/provider/onboarding), so this page shows them read-only and links there.
  */
-
-/**
- * A time, in hours, minutes and AM/PM.
- *
- * Replaces `<input type="time">`, whose 12-hour-versus-24-hour rendering is
- * decided by the BROWSER's locale, not by us. On a machine set to a 24-hour
- * locale there is no AM/PM segment at all, so a shop owner who thinks in
- * "9 to 9" had no way to express it and no way to tell 9am from 9pm.
- *
- * Three explicit controls always show the meridiem, on every machine. The value
- * crossing the wire is unchanged — "HH:MM" in 24-hour time, which is what the
- * server's schema validates and what `isOpenAt` compares against — so this is
- * purely how the number is entered, not how it is stored.
- */
-const MINUTE_STEPS = ['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'];
-
-function to12Hour(value) {
-  if (!/^\d{2}:\d{2}$/.test(value || '')) return { hour: '', minute: '', meridiem: 'AM' };
-  const [h, m] = value.split(':').map(Number);
-  const meridiem = h >= 12 ? 'PM' : 'AM';
-  const hour12 = h % 12 === 0 ? 12 : h % 12;
-  return { hour: String(hour12), minute: String(m).padStart(2, '0'), meridiem };
-}
-
-function to24Hour({ hour, minute, meridiem }) {
-  if (!hour) return '';
-  let h = Number(hour) % 12;
-  if (meridiem === 'PM') h += 12;
-  return `${String(h).padStart(2, '0')}:${minute || '00'}`;
-}
-
-/**
- * The day a shop has actually just described, read back to them.
- *
- * A picker shows what you chose; it does not show what you MEANT. "8:00 AM to
- * 12:00 PM · 4 hours" makes a mistyped meridiem obvious at a glance, where two
- * dropdowns reading "12" and "PM" look perfectly reasonable.
- */
-function dayLength(opensAt, closesAt) {
-  const mins = (t) => {
-    if (!/^\d{2}:\d{2}$/.test(t || '')) return null;
-    const [h, m] = t.split(':').map(Number);
-    return h * 60 + m;
-  };
-  const from = mins(opensAt);
-  const to = mins(closesAt);
-  if (from == null || to == null) return null;
-
-  // A closing time at or before the opening time runs past midnight.
-  const span = to > from ? to - from : (24 * 60 - from) + to;
-  const h = Math.floor(span / 60);
-  const m = span % 60;
-  return {
-    label: [h ? `${h} hour${h === 1 ? '' : 's'}` : '', m ? `${m} min` : ''].filter(Boolean).join(' ') || '0 min',
-    overnight: to <= from,
-    // Under three hours is legal but unusual, and is what a meridiem slip
-    // actually looks like — so it is worth a gentle second glance.
-    short: span > 0 && span < 180,
-  };
-}
-
-function TimeField({ value, disabled, onChange, label }) {
-  const parts = to12Hour(value);
-  const cls = 'rounded-lg border border-slate-200 bg-white px-1.5 py-1.5 text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-40';
-
-  // Picking an hour on an empty field should not leave it half-set.
-  const patch = (next) => onChange(to24Hour({ ...parts, ...next, minute: next.minute ?? parts.minute ?? '00' }));
-
-  return (
-    <span className="flex items-center gap-1" aria-label={label}>
-      <select
-        value={parts.hour}
-        disabled={disabled}
-        onChange={(e) => patch({ hour: e.target.value })}
-        className={cls}
-      >
-        <option value="">--</option>
-        {Array.from({ length: 12 }, (_, i) => String(i + 1)).map((h) => (
-          <option key={h} value={h}>{h}</option>
-        ))}
-      </select>
-      <span className="text-xs font-bold text-slate-300">:</span>
-      <select
-        value={parts.minute || '00'}
-        disabled={disabled || !parts.hour}
-        onChange={(e) => patch({ minute: e.target.value })}
-        className={cls}
-      >
-        {MINUTE_STEPS.map((m) => <option key={m} value={m}>{m}</option>)}
-      </select>
-      <select
-        value={parts.meridiem}
-        disabled={disabled || !parts.hour}
-        onChange={(e) => patch({ meridiem: e.target.value })}
-        className={cls}
-      >
-        {/*
-          * Twelve is the one hour where AM/PM genuinely confuses people, and it
-          * confused a real shop owner: they set "8 AM to 12 PM" meaning midnight
-          * and unknowingly published a four-hour day, then could not understand
-          * why customers saw them closed all afternoon.
-          */}
-        <option value="AM">{parts.hour === '12' ? 'AM (midnight)' : 'AM'}</option>
-        <option value="PM">{parts.hour === '12' ? 'PM (noon)' : 'PM'}</option>
-      </select>
-    </span>
-  );
-}
 
 export default function ShopProfilePage() {
   const nav = useNavigate();
@@ -195,37 +83,12 @@ export default function ShopProfilePage() {
     }
   }
 
-  /** Update one weekday, creating its row the first time it is touched. */
-  function setHour(day, patch) {
-    setForm((p) => {
-      const rows = [...p.hours];
-      const at = rows.findIndex((h) => h.day === day);
-      const base = at >= 0 ? rows[at] : { day, opensAt: '', closesAt: '', isClosed: false };
-      const nextRow = { ...base, ...patch };
-      if (at >= 0) rows[at] = nextRow; else rows.push(nextRow);
-      return { ...p, hours: rows };
-    });
-  }
-
-  /** Most shops keep one weekday schedule — set it once rather than six times. */
-  function applyWeekdayHours() {
-    const template = form.hours.find((h) => !h.isClosed && h.opensAt && h.closesAt);
-    if (!template) return toast.error('Set one day first, then apply it to the rest');
-    setForm((p) => ({
-      ...p,
-      hours: [1, 2, 3, 4, 5, 6].map((day) => ({
-        day, opensAt: template.opensAt, closesAt: template.closesAt, isClosed: false,
-      })).concat(p.hours.filter((h) => h.day === 0)),
-    }));
-    toast.success('Applied Monday to Saturday');
-  }
-
   async function handleSave() {
     if (!form.businessName.trim()) return toast.error('Business name is required');
 
     // An open day with no times is a promise nobody can keep.
-    const badDay = form.hours.find((h) => !h.isClosed && (!h.opensAt || !h.closesAt));
-    if (badDay) return toast.error(`Set opening and closing times for ${DAYS[badDay.day]}`);
+    const badDay = incompleteDay(form.hours);
+    if (badDay) return toast.error(`Set opening and closing times for ${badDay}`);
 
     try {
       await updateShop({
@@ -356,72 +219,11 @@ export default function ShopProfilePage() {
 
         {/* Opening hours */}
         <div className="card">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Opening Hours</p>
-              <p className="text-[11px] text-slate-400 mt-0.5">
-                Customers see these before booking. A day left closed takes no bookings.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={applyWeekdayHours}
-              className="shrink-0 text-[11px] font-bold text-indigo-600"
-            >
-              Apply Mon–Sat
-            </button>
-          </div>
-
-          <div className="mt-3 space-y-1.5">
-            {DAYS.map((label, day) => {
-              const row = form.hours.find((h) => h.day === day) || { day, opensAt: '', closesAt: '', isClosed: true };
-              return (
-                /* Day and toggle lead; the times wrap beneath on a narrow screen. */
-                <div key={day} className="flex flex-wrap items-center gap-2">
-                  <span className="w-9 shrink-0 text-xs font-bold text-slate-600">{label}</span>
-                  <button
-                    type="button"
-                    onClick={() => setHour(day, { isClosed: !row.isClosed })}
-                    className={`shrink-0 rounded-lg px-2 py-1 text-[11px] font-bold transition ${
-                      row.isClosed ? 'bg-slate-100 text-slate-500' : 'bg-emerald-50 text-emerald-700'
-                    }`}
-                  >
-                    {row.isClosed ? 'Closed' : 'Open'}
-                  </button>
-
-                  {row.isClosed ? (
-                    <span className="text-[11.5px] text-slate-400">Not open this day</span>
-                  ) : (
-                    <span className="flex flex-wrap items-center gap-1.5">
-                      <TimeField
-                        label={`${label} opens at`}
-                        value={row.opensAt}
-                        onChange={(v) => setHour(day, { opensAt: v })}
-                      />
-                      <span className="px-0.5 text-xs text-slate-400">to</span>
-                      <TimeField
-                        label={`${label} closes at`}
-                        value={row.closesAt}
-                        onChange={(v) => setHour(day, { closesAt: v })}
-                      />
-                      {(() => {
-                        const len = dayLength(row.opensAt, row.closesAt);
-                        if (!len) return null;
-                        return (
-                          <span className={`text-[11px] font-semibold ${
-                            len.short ? 'text-amber-600' : 'text-slate-400'
-                          }`}>
-                            {len.overnight ? 'overnight · ' : ''}{len.label}
-                            {len.short ? ' — is that right?' : ''}
-                          </span>
-                        );
-                      })()}
-                    </span>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Opening Hours</p>
+          <p className="mt-0.5 mb-3 text-[11px] text-slate-400">
+            Customers see these before booking. A day left closed takes no bookings.
+          </p>
+          <WeeklyHours hours={form.hours} onChange={(hours) => setForm((p) => ({ ...p, hours }))} />
         </div>
 
         {/* What you're verified for — read-only on purpose, see the note above. */}
@@ -440,7 +242,7 @@ export default function ShopProfilePage() {
         </div>
       </div>
 
-      <div className="fixed bottom-0 inset-x-0 bg-white border-t border-slate-100 safe-pb">
+      <div className="fixed inset-x-0 z-30 bg-white border-t border-slate-100 safe-pb bottom-[var(--frame-bottom,0px)] left-[var(--frame-left,0px)]">
         <div className="max-w-lg lg:max-w-2xl mx-auto px-4 pt-3 pb-2">
           <button onClick={handleSave} disabled={saving} className="btn-primary w-full">
             {saving ? <><Loader2 size={15} className="animate-spin" /> Saving…</> : 'Save Profile'}

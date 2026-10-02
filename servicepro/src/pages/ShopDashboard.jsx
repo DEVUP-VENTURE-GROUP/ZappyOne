@@ -1,13 +1,11 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
 import {
-  Store, ShieldCheck, Clock, XCircle, ChevronRight, Users, IndianRupee,
-  LogOut, Wrench, MapPin, Loader2, AlertTriangle, Briefcase, Star,
-  UserPlus, CalendarClock, Settings,
+  ShieldCheck, Clock, XCircle, ChevronRight, Users, IndianRupee,
+  Wrench, MapPin, Loader2, AlertTriangle, Briefcase, Star, UserPlus,
 } from 'lucide-react';
 import {
-  useShopMeQuery, useShopKycStatusQuery, useShopEarningsQuery, useLogoutMutation,
+  useShopMeQuery, useShopKycStatusQuery, useShopEarningsQuery,
   useShopWorkersQuery, useRepairOnboardingStatusQuery,
   useProviderOnboardingStatusQuery,
 } from '@shared/services/api';
@@ -15,7 +13,6 @@ import ProviderServicesCard from '@shared/components/provider/ProviderServicesCa
 import ShopJobs from '../components/ShopJobs';
 import { useProviderJobs } from '@shared/provider/useProviderJobs';
 import { StatCard, Panel, inr, EarningsOverview, PerformanceGrid } from '@shared/components/worker/DashboardUI';
-import { logout } from '@shared/modules/auth/authSlice';
 
 /**
  * The shop owner's dashboard.
@@ -48,22 +45,6 @@ const KYC_META = {
 
 /** Every kind of work a shop can be booked for. */
 const SHOP_KINDS = ['repair', 'pet'];
-
-function NavCard({ icon: Icon, title, sub, onClick, badge }) {
-  return (
-    <button onClick={onClick} className="flex w-full items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3.5 text-left transition hover:border-indigo-200 hover:bg-indigo-50/30">
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-50">
-        <Icon size={18} className="text-indigo-600" strokeWidth={1.8} />
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block text-sm font-bold text-[#0F172A]">{title}</span>
-        <span className="mt-0.5 block text-[11.5px] text-slate-400">{sub}</span>
-      </span>
-      {badge}
-      <ChevronRight size={16} className="shrink-0 text-slate-300" />
-    </button>
-  );
-}
 
 /**
  * The team, and what each of them is holding.
@@ -137,7 +118,6 @@ function TeamPanel({ workers, jobs, onManage }) {
 
 export default function ShopDashboard() {
   const nav = useNavigate();
-  const dispatch = useDispatch();
   const { data, isLoading } = useShopMeQuery();
   const { data: kycData } = useShopKycStatusQuery();
   const { data: earnings } = useShopEarningsQuery('today');
@@ -146,7 +126,6 @@ export default function ShopDashboard() {
   // Open jobs of every kind, in one shape (shared with the technician's board).
   const { mine: jobs } = useProviderJobs({ kinds: SHOP_KINDS });
   const { data: setup } = useRepairOnboardingStatusQuery('mobile');
-  const [callLogout] = useLogoutMutation();
 
   /**
    * Service verification already collected the owner ID, storefront photo
@@ -183,12 +162,6 @@ export default function ShopDashboard() {
 
   const needsAction = jobs.filter((j) => j.attention || !j.workerId);
   const pendingApprovals = (setup?.pending?.skillVerifications || 0) + (setup?.pending?.priceApprovals || 0);
-
-  async function handleLogout() {
-    try { await callLogout().unwrap(); } catch { /* ignore */ }
-    dispatch(logout());
-    nav('/shop/login');
-  }
 
   if (isLoading) {
     return (
@@ -248,39 +221,23 @@ export default function ShopDashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] pb-12">
-      {/* Ring the owner when a job lands, exactly as a technician is rung. */}
-
-      {/* Header */}
-      <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-600">
-            <Store size={18} className="text-white" strokeWidth={2} />
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="text-[10.5px] font-black uppercase tracking-[0.12em] text-slate-400">Shop Partner</p>
-            <p className="truncate text-[17px] font-black tracking-tight text-[#0F172A]">{shop?.businessName}</p>
-          </div>
-
-          {/* Whether customers can find you, stated where it cannot be missed. */}
-          <span className={`hidden shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 sm:flex ${
-            liveNow ? 'border-emerald-200 bg-emerald-50' : 'border-slate-200 bg-slate-50'
-          }`}>
-            <span className={`h-2 w-2 rounded-full ${liveNow ? 'bg-emerald-500' : 'bg-slate-300'}`} />
-            <span className={`text-[12px] font-bold ${liveNow ? 'text-emerald-700' : 'text-slate-500'}`}>
-              {liveNow ? 'Live' : isOpen === false ? 'Closed now' : 'Not live'}
-            </span>
-          </span>
-
-          <button
-            onClick={handleLogout}
-            title="Log out"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-500 transition hover:bg-slate-200"
-          >
-            <LogOut size={16} />
-          </button>
+    <div className="pb-12">
+      {/* Navigation and sign-out live in the frame (ServiceProShell); this is the shop's day. */}
+      <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 pt-5">
+        <div className="min-w-0 flex-1">
+          <p className="text-[10.5px] font-black uppercase tracking-[0.12em] text-slate-400">Shop partner</p>
+          <h1 className="truncate text-[20px] font-black tracking-tight text-[#0F172A]">{shop?.businessName}</h1>
         </div>
-      </header>
+        {/* Whether customers can find you, stated where it cannot be missed. */}
+        <span className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 ${
+          liveNow ? 'border-emerald-200 bg-emerald-50' : 'border-slate-200 bg-white'
+        }`}>
+          <span className={`h-2 w-2 rounded-full ${liveNow ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+          <span className={`text-[12px] font-bold ${liveNow ? 'text-emerald-700' : 'text-slate-500'}`}>
+            {liveNow ? 'Live' : isOpen === false ? 'Closed now' : 'Not live'}
+          </span>
+        </span>
+      </div>
 
       <div className="mx-auto max-w-6xl px-4 pt-4">
 
@@ -362,24 +319,6 @@ export default function ShopDashboard() {
           <div className="space-y-5">
             <TeamPanel workers={workers} jobs={jobs} onManage={() => nav('/shop/workers')} />
 
-            <div className="space-y-2">
-              <NavCard
-                icon={Settings}
-                title="Choose what you work on"
-                sub="Brands, jobs, area and your prices"
-                onClick={() => nav('/worker/repair/setup')}
-              />
-              <NavCard
-                icon={CalendarClock}
-                title="Opening hours"
-                sub={shop?.hours?.length ? 'Set — customers see when you are open' : 'Not set yet'}
-                onClick={() => nav('/shop/profile')}
-              />
-              <NavCard icon={Store} title="Shop Profile" sub="Business info, address & category" onClick={() => nav('/shop/profile')} />
-              <NavCard icon={ShieldCheck} title="Verification (KYC)" sub={meta.label} onClick={() => nav('/shop/kyc')} />
-              <NavCard icon={Users} title="Technicians" sub={`${workers.length} on your team`} onClick={() => nav('/shop/workers')} />
-              <NavCard icon={IndianRupee} title="Earnings" sub="Today, this week & this month" onClick={() => nav('/shop/earnings')} />
-            </div>
           </div>
         </div>
       </div>

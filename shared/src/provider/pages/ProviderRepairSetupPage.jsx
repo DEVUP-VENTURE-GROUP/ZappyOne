@@ -20,6 +20,7 @@ import { useUpdateShopMeMutation } from '../../services/api';
 import { CATEGORY_ICONS } from '../../components/home/LiveServices';
 import LocationPicker from '../../modules/booking/LocationPicker';
 import toast from 'react-hot-toast';
+import WeeklyHours, { incompleteDay } from '../../components/provider/WeeklyHours';
 import { formatPaise } from '../../utils/money';
 
 /**
@@ -112,7 +113,7 @@ function StepShell({ title, hint, children, onBack, onNext, nextLabel = 'Continu
       {children}
 
       {/* Sticky on a phone, where the list is long and the thumb is at the bottom. */}
-      <div className="sticky bottom-0 -mx-4 border-t border-slate-100 bg-white/95 px-4 py-3 backdrop-blur sm:mx-0 sm:rounded-2xl sm:border sm:border-slate-200">
+      <div className="sticky bottom-[var(--frame-bottom,0px)] -mx-4 border-t border-slate-100 bg-white/95 px-4 py-3 backdrop-blur sm:mx-0 sm:rounded-2xl sm:border sm:border-slate-200">
         <div className="flex items-center gap-2">
           {onBack && (
             <button onClick={onBack} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-500">
@@ -744,8 +745,6 @@ function AreaStep({ vertical, profile, onBack, onNext, onCity }) {
 
 /* 3b. When you are open */
 
-const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
 /**
  * Shop hours, in the setup flow rather than buried in a profile page.
  *
@@ -764,34 +763,10 @@ function HoursStep({ profile, onBack, onNext }) {
     { day: 0, opensAt: '', closesAt: '', isClosed: true },
   ]));
 
-  function setDay(day, patch) {
-    setHours((rows) => {
-      const next = [...rows];
-      const at = next.findIndex((h) => h.day === day);
-      const base = at >= 0 ? next[at] : { day, opensAt: '', closesAt: '', isClosed: false };
-      const row = { ...base, ...patch };
-      if (at >= 0) next[at] = row; else next.push(row);
-      return next;
-    });
-  }
-
-  /** Most shops keep one weekday schedule — set it once, not six times. */
-  function applyWeekdays() {
-    const template = hours.find((h) => !h.isClosed && h.opensAt && h.closesAt);
-    if (!template) return toast.error('Set one day first, then apply it to the rest');
-    setHours([
-      ...[1, 2, 3, 4, 5, 6].map((day) => ({
-        day, opensAt: template.opensAt, closesAt: template.closesAt, isClosed: false,
-      })),
-      ...hours.filter((h) => h.day === 0),
-    ]);
-    return toast.success('Applied Monday to Saturday');
-  }
-
   async function save() {
     // An open day with no times is a promise nobody can keep.
-    const bad = hours.find((h) => !h.isClosed && (!h.opensAt || !h.closesAt));
-    if (bad) return toast.error(`Set opening and closing times for ${DAYS[bad.day]}`);
+    const bad = incompleteDay(hours);
+    if (bad) return toast.error(`Set opening and closing times for ${bad}`);
 
     try {
       await update({ hours }).unwrap();
@@ -810,44 +785,7 @@ function HoursStep({ profile, onBack, onNext }) {
       onNext={save}
       busy={isLoading}
     >
-      <button onClick={applyWeekdays} className="text-xs font-bold text-zappy-600">
-        Apply one day to Mon–Sat
-      </button>
-
-      <div className="space-y-1.5 rounded-2xl border border-slate-200 bg-white p-3.5">
-        {DAYS.map((label, day) => {
-          const row = hours.find((h) => h.day === day) || { day, opensAt: '', closesAt: '', isClosed: true };
-          return (
-            <div key={day} className="flex items-center gap-2">
-              <span className="w-9 shrink-0 text-xs font-bold text-slate-600">{label}</span>
-              <button
-                type="button"
-                onClick={() => setDay(day, { isClosed: !row.isClosed })}
-                className={`shrink-0 rounded-lg px-2 py-1 text-[11px] font-bold transition ${
-                  row.isClosed ? 'bg-slate-100 text-slate-500' : 'bg-emerald-50 text-emerald-700'
-                }`}
-              >
-                {row.isClosed ? 'Closed' : 'Open'}
-              </button>
-              <input
-                type="time"
-                value={row.opensAt}
-                disabled={row.isClosed}
-                onChange={(e) => setDay(day, { opensAt: e.target.value })}
-                className="input min-w-0 flex-1 text-xs disabled:opacity-40"
-              />
-              <span className="text-xs text-slate-400">to</span>
-              <input
-                type="time"
-                value={row.closesAt}
-                disabled={row.isClosed}
-                onChange={(e) => setDay(day, { closesAt: e.target.value })}
-                className="input min-w-0 flex-1 text-xs disabled:opacity-40"
-              />
-            </div>
-          );
-        })}
-      </div>
+      <WeeklyHours hours={hours} onChange={setHours} />
     </StepShell>
   );
 }

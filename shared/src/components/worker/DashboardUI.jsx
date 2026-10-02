@@ -128,16 +128,21 @@ export function OnlineControl({ isOnline, busy, onToggle }) {
 }
 
 /* Web sidebar */
-export const WorkerSidebar = memo(function WorkerSidebar({ activeKey, unread, onNavigate, onGoOnline, isOnline, onSignOut }) {
+export const WorkerSidebar = memo(function WorkerSidebar({
+  activeKey, unread, onNavigate, onGoOnline, isOnline, onSignOut,
+  // Other portals pass their own pages; Rakshak uses NAV_ITEMS.
+  items = NAV_ITEMS, label = 'Worker', account = null,
+}) {
   return (
     <aside className="fixed inset-y-0 left-0 hidden w-64 flex-col border-r border-slate-200 bg-white lg:flex">
       <div className="flex items-center gap-2 px-6 py-5">
         <ZappyLogo size={24} />
-        <span className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">Worker</span>
+        <span className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">{label}</span>
       </div>
+      {account && <div className="px-3 pb-2">{account}</div>}
 
       <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-2">
-        {NAV_ITEMS.map((item) => {
+        {items.map((item) => {
           const active = item.key === activeKey;
           return (
             <button
@@ -163,7 +168,7 @@ export const WorkerSidebar = memo(function WorkerSidebar({ activeKey, unread, on
         })}
       </nav>
 
-      {!isOnline && (
+      {onGoOnline && !isOnline && (
         <div className="m-3 rounded-2xl bg-zappy-50 p-4">
           <p className="text-[12.5px] font-semibold text-navy-900">Go online to get more jobs</p>
           <button
@@ -192,14 +197,14 @@ export const WorkerSidebar = memo(function WorkerSidebar({ activeKey, unread, on
 });
 
 /* Mobile bottom nav */
-export function WorkerBottomNav({ activeKey, onNavigate }) {
+export function WorkerBottomNav({ activeKey, onNavigate, items = BOTTOM_NAV }) {
   return (
     <nav
       className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 backdrop-blur-xl lg:hidden"
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
       <div className="mx-auto flex max-w-lg items-stretch justify-around px-2">
-        {BOTTOM_NAV.map((item) => {
+        {items.map((item) => {
           const active = item.key === activeKey;
           return (
             <button

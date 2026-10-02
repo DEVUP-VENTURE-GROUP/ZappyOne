@@ -175,7 +175,7 @@ export default function ShopKycPage() {
         </div>
       </div>
 
-      <div className="fixed bottom-0 inset-x-0 bg-white border-t border-slate-100 safe-pb">
+      <div className="fixed inset-x-0 z-30 bg-white border-t border-slate-100 safe-pb bottom-[var(--frame-bottom,0px)] left-[var(--frame-left,0px)]">
         <div className="max-w-lg lg:max-w-2xl mx-auto px-4 pt-3 pb-2">
           <button onClick={submit} disabled={submitting || !urls.ownerIdUrl || !urls.shopPhotoUrl || !urls.selfieUrl} className="btn-primary w-full">
             {submitting ? <><Loader2 size={15} className="animate-spin" /> Submitting…</> : <><ShieldCheck size={15} strokeWidth={2.5} /> Submit for Verification</>}

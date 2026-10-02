@@ -10,6 +10,7 @@ import ErrorBoundary from '@shared/components/common/ErrorBoundary';
 import { providerRoutes } from '@shared/provider/providerRoutes';
 import JobOfferHost from '@shared/components/jobs/JobOfferHost';
 import LoginRoleSwitch from './components/LoginRoleSwitch';
+import ServiceProShell from './components/ServiceProShell';
 
 const ShopLoginPage = lazy(() => import('./pages/ShopLoginPage'));
 const ShopDashboard = lazy(() => import('./pages/ShopDashboard'));
@@ -55,6 +56,8 @@ export default function App() {
                 : <WorkerLoginPage allowSignup={false} portalLabel="ServicePro · Shop team" heading="Shop worker login" footer={<LoginRoleSwitch active="worker" />} />}
             />
             <Route path="/worker/login" element={<Navigate to={WORKER_LOGIN} replace />} />
+            {/* Every signed-in page sits in one frame: sidebar, or bottom bar + menu. */}
+            <Route element={<ServiceProShell />}>
             <Route path="/shop" element={shop(<ShopDashboard />)} />
             <Route path="/shop/profile" element={shop(<ShopProfilePage />)} />
             <Route path="/shop/kyc" element={shop(<ShopKycPage />)} />
@@ -68,6 +71,7 @@ export default function App() {
               onboardRoles: ['shop'],
               onboardLoginPath: SHOP_LOGIN,
             })}
+            </Route>
             <Route path="*" element={<Navigate to={accessToken ? homeFor(role) : SHOP_LOGIN} replace />} />
           </Routes>
         </Suspense>
