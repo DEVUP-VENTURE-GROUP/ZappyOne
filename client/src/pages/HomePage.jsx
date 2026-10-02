@@ -11,7 +11,6 @@ import { reverseGeocode } from '@shared/utils/reverseGeocode';
 import SEO, { HOME_SCHEMA, BASE_URL } from '@shared/components/SEO';
 import NotInYourArea from '../components/serviceability/NotInYourArea';
 import ClosedNowBanner from '../components/serviceability/ClosedNowBanner';
-import ComingSoonSheet from '../components/serviceability/ComingSoonSheet';
 import HeroCarousel from './home/HeroCarousel';
 import ServiceShowcase from './home/ServiceShowcase';
 import { foldIntoHub } from '@shared/components/home/serviceArt';
@@ -152,7 +151,6 @@ export default function HomePage() {
     .filter((d) => d.services.length), [catalog, liveCodes]);
   // The quick grid folds a section with its own page (pet care) into one tile.
   const domains = useMemo(() => allDomains.map(foldIntoHub), [allDomains]);
-  const [soonService, setSoonService] = useState(null);
   const services = useMemo(() => allDomains.flatMap((d) => d.services), [allDomains]);
   const searchTerms = useMemo(() => {
     const problems = services.flatMap((s) => (s.highlights || []).map((h) => h.name));
@@ -172,10 +170,11 @@ export default function HomePage() {
 
   function openService(s) {
     // Every tap is demand — served, or wanted where nobody is verified yet.
+    // The customer always goes in; whether someone can come is answered at
+    // the booking step (the "growing city by city" card), not on the tile.
     const wanted = s.available === false;
     trackSearch({ category: s.code, lat: loc.lat, lng: loc.lng, result: wanted ? 'no_service' : 'served', userType: 'user' });
-    if (wanted) setSoonService(s);
-    else nav(s.path);
+    nav(s.path);
   }
 
   /* The customer's own jobs. */
@@ -223,7 +222,6 @@ export default function HomePage() {
       <div className="min-h-screen w-full overflow-x-clip bg-[#F4F7FB]">
         <HomeHeader
           loc={loc}
-          svc={svc}
           isAuthed={isAuthed}
           avatar={profile?.avatar}
           onPickLocation={() => setLocSheet(true)}
@@ -255,7 +253,7 @@ export default function HomePage() {
                 ? <SkeletonGrid />
                 : (
                   <>
-                    <HeroCarousel domains={domains} onBook={openService} onSoon={openService} />
+                    <HeroCarousel domains={domains} onBook={openService} />
                     <ServiceGrid domains={domains} onOpen={openService} />
                   </>
                 )}
@@ -274,14 +272,6 @@ export default function HomePage() {
         <Footer services={services} areas={svc?.areas || []} />
       </div>
 
-      <ComingSoonSheet
-        service={soonService}
-        place={loc.primary}
-        lat={loc.lat}
-        lng={loc.lng}
-        onClose={() => setSoonService(null)}
-        onChangeLocation={() => { setSoonService(null); setLocSheet(true); }}
-      />
       <LensModal open={lensOpen} onClose={() => setLensOpen(false)} lat={loc.lat} lng={loc.lng} />
       <LocationSheet
         open={locSheet}

@@ -2457,6 +2457,7 @@ export const {
   // Repair vertical (customer + worker)
   useLiveCatalogQuery,
   useGetServiceabilityQuery,
+  useLazyGetServiceabilityQuery,
   useNotifyLaunchMutation,
   useProviderOnboardingStatusQuery,
   useProviderDomainsQuery,

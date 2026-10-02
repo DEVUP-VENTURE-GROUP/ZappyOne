@@ -126,7 +126,7 @@ function ServiceRow({ services, onOpen }) {
         {services.map((s) => (
           <CategoryTile
             key={s.code}
-            category={{ code: s.code, name: s.name, icon: s.icon, imageUrl: s.imageUrl || characters.get(s.code)?.still, subtitle: s.available === false ? 'Coming soon' : '' }}
+            category={{ code: s.code, name: s.name, icon: s.icon, imageUrl: s.imageUrl || characters.get(s.code)?.still, subtitle: '' }}
             onOpen={() => onOpen(s)}
           />
         ))}
@@ -154,13 +154,9 @@ function ServiceCard({ service, character, onOpenService, onOpenCategory }) {
             {service.description || service.tagline}
           </span>
         </span>
-        {service.available === false ? (
-          <span className="shrink-0 rounded-full bg-amber-50 px-2.5 py-1 text-[12px] font-semibold text-amber-700">Coming soon</span>
-        ) : (
-          <span className="flex shrink-0 items-center text-[13px] font-semibold text-zappy-600">
-            Book <ChevronRight size={16} className="transition group-hover:translate-x-0.5" />
-          </span>
-        )}
+        <span className="flex shrink-0 items-center text-[13px] font-semibold text-zappy-600">
+          Book <ChevronRight size={16} className="transition group-hover:translate-x-0.5" />
+        </span>
       </button>
 
       {/* Horizontal scrollable carousel — Swiggy/Zomato style */}
@@ -185,11 +181,11 @@ function ServiceCard({ service, character, onOpenService, onOpenCategory }) {
 }
 
 /**
- * availableCodes: when given, services NOT in it still show, marked coming soon,
- *   and a tap goes to onUnavailable instead of the booking (demand, not a dead end).
- * onOpenService: told which service was opened (the app records it as demand).
+ * availableCodes: when given, which services someone covers at the customer's
+ *   location — reported to onOpenService(code, served) for demand analytics.
+ *   Every service opens; the booking step says if nobody can come yet.
  */
-export default function LiveServices({ availableCodes = null, onOpenService = null, onUnavailable = null }) {
+export default function LiveServices({ availableCodes = null, onOpenService = null }) {
   const nav = useNavigate();
   const { data, isLoading } = useLiveCatalogQuery();
 
@@ -210,8 +206,7 @@ export default function LiveServices({ availableCodes = null, onOpenService = nu
     .filter((d) => d.services.length);
   const open = (s, path) => {
     onOpenService?.(s.code, s.available !== false);
-    if (s.available === false && onUnavailable) onUnavailable(s);
-    else nav(path || s.path);
+    nav(path || s.path);
   };
   if (!domains.length) return null;
 
@@ -242,7 +237,7 @@ export default function LiveServices({ availableCodes = null, onOpenService = nu
       ))}
 
       <p className="text-[13px] text-slate-500">
-        Services marked coming soon open near you as we verify providers there.
+        New areas open every week as we verify providers across Telangana.
       </p>
     </div>
   );

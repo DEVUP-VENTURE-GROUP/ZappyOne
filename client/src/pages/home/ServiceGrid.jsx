@@ -6,8 +6,7 @@ import { distinctArt } from '@shared/components/home/serviceArt';
 
 /**
  * Everything we do in Telangana, as one grid — the Blinkit "shop by category"
- * move. A service nobody near this customer is verified for yet still shows,
- * marked "Soon": the tap opens "notify me" and is recorded as demand.
+ * move. Every tap is recorded (served or wanted) by the page.
  *
  * Columns follow the width: 4 on a phone, up to 8 on a desktop.
  */
@@ -27,16 +26,12 @@ function Tile({ service, character, shelf, onOpen }) {
   const Icon = SERVICE_ICONS[service.icon] || Wrench;
   // An admin-set picture wins; then the service's ZappyOne character; then its icon.
   const art = service.imageUrl || character?.still;
-  const soon = service.available === false;
   return (
     <button type="button" onClick={onOpen} className="group flex flex-col items-center gap-2 text-center focus-visible:outline-none">
       <span className={`relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-2xl ${shelf.bg} group-focus-visible:outline group-focus-visible:outline-2 group-focus-visible:outline-zappy-500`}>
         {art
           ? <img src={art} alt="" loading="lazy" className={`h-full w-full transition-transform duration-300 group-hover:scale-105 ${service.imageUrl ? 'object-cover' : 'object-contain mix-blend-multiply pt-1.5'}`} />
           : <Icon strokeWidth={1.5} className={`h-[38%] w-[38%] ${shelf.fg} transition-transform duration-200 group-hover:scale-105`} />}
-        {soon && (
-          <span className="absolute bottom-1.5 left-1/2 -translate-x-1/2 rounded-full bg-white/95 px-2 py-0.5 text-[9.5px] font-semibold uppercase tracking-wide text-amber-700 shadow-sm">Soon</span>
-        )}
       </span>
       <span className="line-clamp-2 text-[12px] font-medium leading-[1.3] text-navy sm:text-[13px]">{service.name}</span>
     </button>
@@ -59,43 +54,23 @@ function useColumns() {
 }
 
 /**
- * domains: [{ code, name, services }] already filtered to what's live here.
- *
- * One shared column grid. Each group spans as many columns as it has services
- * (up to a full row) and small groups pack side by side, so two groups of two
- * share a phone row instead of each wasting half of one. Tiles in every group
- * sit on the same columns.
+ * One even grid of every service — no section headings, so tiles line up in
+ * clean rows at every width. Each tile keeps its section's tint, which is all
+ * the grouping a glance needs. Nothing is marked "soon": a customer opens any
+ * service, and whether someone can come is answered at the booking step.
  */
 export function ServiceGrid({ domains, onOpen }) {
   const cols = useColumns();
-  const shown = domains.filter((d) => d.services.length);
-  if (!shown.length) return null;
-  const single = shown.length === 1;
+  const tiles = domains.flatMap((d, i) => d.services.map((s) => ({ s, d, shelf: SHELVES[i % SHELVES.length] })));
+  if (!tiles.length) return null;
+  const characters = new Map(domains.flatMap((d) => [...distinctArt(d.services, d.code)]));
   return (
     <section aria-labelledby="home-services">
       <h2 id="home-services" className="text-[17px] font-bold text-navy sm:text-[20px]">What do you need help with?</h2>
-      <div
-        className="mt-3 grid gap-x-3 gap-y-6"
-        style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, gridAutoFlow: 'row dense' }}
-      >
-        {shown.map((d, i) => {
-          const shelf = SHELVES[i % SHELVES.length];
-          const span = Math.min(d.services.length, cols);
-          const characters = distinctArt(d.services, d.code);
-          return (
-            <div key={d.code} style={{ gridColumn: `span ${span} / span ${span}` }}>
-              {!single && (
-                // A one-tile group is too narrow for most names: let it take two lines instead of an ellipsis.
-                <h3 className={`mb-2 text-[12px] font-semibold uppercase leading-[1.3] tracking-[0.08em] text-slate-500 ${span === 1 ? 'line-clamp-2' : 'truncate'}`}>
-                  {d.name}
-                </h3>
-              )}
-              <div className="grid gap-x-3 gap-y-4" style={{ gridTemplateColumns: `repeat(${span}, minmax(0, 1fr))` }}>
-                {d.services.map((s) => <Tile key={s.code} service={s} character={characters.get(s.code)} shelf={shelf} onOpen={() => onOpen(s)} />)}
-              </div>
-            </div>
-          );
-        })}
+      <div className="mt-3 grid gap-x-3 gap-y-5" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
+        {tiles.map(({ s, shelf }) => (
+          <Tile key={s.code} service={s} character={characters.get(s.code)} shelf={shelf} onOpen={() => onOpen(s)} />
+        ))}
       </div>
     </section>
   );

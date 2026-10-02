@@ -1,9 +1,7 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { useGetServiceabilityQuery } from '@shared/services/api';
 import { loadGeoLocation } from '@shared/hooks/useGeolocation';
-import ComingSoonSheet from '../components/serviceability/ComingSoonSheet';
 import { trackSearch } from '../hooks/useTelemetry';
 import LiveServices from '@shared/components/home/LiveServices';
 import SEO from '@shared/components/SEO';
@@ -11,15 +9,14 @@ import SEO from '@shared/components/SEO';
 /**
  * Everything we do, in one place.
  *
- * Every live service shows. Where nobody near the customer is verified for one
- * yet it reads "coming soon", and a tap offers "notify me" and is recorded as
- * demand — never a booking nobody can fulfil.
+ * Every live service shows and opens. Each tap is recorded as demand (served,
+ * or wanted where nobody is verified yet); the booking step says if nobody can
+ * come to the address.
  */
 export default function AllServicesPage() {
   const nav = useNavigate();
   const here = loadGeoLocation();
   const { data: svc } = useGetServiceabilityQuery({ lat: here?.lat, lng: here?.lng }, { skip: here?.lat == null });
-  const [soon, setSoon] = useState(null);
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] pb-16">
@@ -44,9 +41,7 @@ export default function AllServicesPage() {
         <LiveServices
           availableCodes={svc ? svc.lines.map((l) => l.code) : null}
           onOpenService={(code, served) => trackSearch({ category: code, lat: here?.lat, lng: here?.lng, result: served ? 'served' : 'no_service', userType: 'user' })}
-          onUnavailable={setSoon}
         />
-        <ComingSoonSheet service={soon} lat={here?.lat} lng={here?.lng} onClose={() => setSoon(null)} />
       </div>
     </div>
   );

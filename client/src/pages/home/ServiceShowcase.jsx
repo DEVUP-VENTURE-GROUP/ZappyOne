@@ -8,8 +8,8 @@ import { artFor, PITCH } from '@shared/components/home/serviceArt';
  *
  * The grid above is the quick way in; this is where a first-time visitor sees
  * the whole range: each section's character and promise, then every service in
- * it with what it covers and whether it can be booked here today. Services
- * nobody near them is verified for yet read "Coming soon" and a tap is demand.
+ * it with what it covers. Every service opens; whether someone can come to
+ * this address is answered at the booking step.
  */
 const BANDS = [
   { band: 'bg-[#EAF1FD]', chip: 'bg-[#DCE7FB] text-[#1D4ED8]' },
@@ -28,7 +28,6 @@ function coversLine(s) {
 
 function ServiceCard({ service, tone, onOpen }) {
   const Icon = SERVICE_ICONS[service.icon] || Wrench;
-  const soon = service.available === false;
   return (
     <button
       type="button"
@@ -41,13 +40,9 @@ function ServiceCard({ service, tone, onOpen }) {
       <span className="mt-3 text-[15px] font-semibold leading-snug text-navy">{service.name}</span>
       <span className="mt-1 line-clamp-2 text-[13px] leading-relaxed text-slate-500">{coversLine(service)}</span>
       <span className="mt-auto pt-3">
-        {soon ? (
-          <span className="inline-flex rounded-full bg-amber-50 px-2.5 py-1 text-[12px] font-semibold text-amber-700">Coming soon</span>
-        ) : (
-          <span className="inline-flex items-center gap-1 text-[13px] font-semibold text-zappy-600">
-            Book <ArrowRight size={14} className="transition group-hover:translate-x-0.5" />
-          </span>
-        )}
+        <span className="inline-flex items-center gap-1 text-[13px] font-semibold text-zappy-600">
+          Book <ArrowRight size={14} className="transition group-hover:translate-x-0.5" />
+        </span>
       </span>
     </button>
   );
@@ -56,7 +51,6 @@ function ServiceCard({ service, tone, onOpen }) {
 function Band({ domain, tone, onOpen }) {
   const art = artFor(domain.services[0]?.code, domain.code);
   const [title, line] = PITCH[domain.code] || [domain.name, domain.description];
-  const live = domain.services.filter((s) => s.available !== false).length;
 
   return (
     <section aria-labelledby={`band-${domain.code}`} className={`overflow-hidden rounded-3xl ${tone.band}`}>
@@ -72,7 +66,6 @@ function Band({ domain, tone, onOpen }) {
             {line && <p className="mt-1.5 hidden text-[14px] leading-relaxed text-slate-600 sm:block">{line}</p>}
             <p className="mt-2 text-[12px] font-medium text-slate-500">
               {domain.services.length} service{domain.services.length === 1 ? '' : 's'}
-              {live < domain.services.length && ` · ${live ? `${live} bookable here` : 'coming soon here'}`}
             </p>
           </div>
         </div>

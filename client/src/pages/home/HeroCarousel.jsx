@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowRight, BellRing } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { artFor, PITCH } from '@shared/components/home/serviceArt';
 
 /**
@@ -20,10 +20,11 @@ function prefersReducedMotion() {
   return typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 }
 
-function Slide({ domain, tint, active, still, onBook, onSoon }) {
+function Slide({ domain, tint, active, still, onBook }) {
   const art = artFor(domain.services[0]?.code, domain.code);
   const [title, sub] = PITCH[domain.code] || [domain.name, domain.description];
-  const bookable = domain.services.find((s) => s.available !== false);
+  // A bookable service first; any service otherwise — the booking step says if nobody is near yet.
+  const bookable = domain.services.find((s) => s.available !== false) || domain.services[0];
 
   return (
     <div className={`relative flex min-h-[184px] w-full shrink-0 snap-center items-stretch overflow-hidden rounded-3xl ${tint} sm:min-h-[248px]`}>
@@ -32,23 +33,16 @@ function Slide({ domain, tint, active, still, onBook, onSoon }) {
         <h2 className="text-[19px] font-bold leading-tight text-navy [text-wrap:balance] sm:text-[30px]">{title}</h2>
         {sub && <p className="hidden max-w-md text-[14px] leading-relaxed text-slate-600 sm:block">{sub}</p>}
         <div className="mt-1 flex flex-wrap items-center gap-2">
-          {bookable ? (
-            <button type="button" onClick={() => onBook(bookable)} tabIndex={active ? 0 : -1}
-              className="inline-flex h-10 items-center gap-1.5 rounded-full bg-zappy-600 px-4 text-[14px] font-semibold text-white transition hover:bg-zappy-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-zappy-200">
-              Book {domain.services.length > 1 ? 'now' : bookable.name} <ArrowRight size={15} />
-            </button>
-          ) : (
-            <button type="button" onClick={() => onSoon(domain.services[0])} tabIndex={active ? 0 : -1}
-              className="inline-flex h-10 items-center gap-1.5 rounded-full bg-white px-4 text-[14px] font-semibold text-navy ring-1 ring-slate-200 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-zappy-200">
-              <BellRing size={15} /> Coming soon · notify me
-            </button>
-          )}
+          <button type="button" onClick={() => onBook(bookable)} tabIndex={active ? 0 : -1}
+            className="inline-flex h-10 items-center gap-1.5 rounded-full bg-zappy-600 px-4 text-[14px] font-semibold text-white transition hover:bg-zappy-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-zappy-200">
+            Book {domain.services.length > 1 ? 'now' : bookable.name} <ArrowRight size={15} />
+          </button>
         </div>
       </div>
 
       {art && (
         <div className="relative mr-3 mt-3 h-[172px] w-[104px] shrink-0 self-end overflow-hidden rounded-t-2xl bg-[#E9EAEC] sm:mr-8 sm:mt-6 sm:h-[236px] sm:w-[142px]">
-          {active && !still ? (
+          {active && !still && art.loop ? (
             <video src={art.loop} poster={art.still} autoPlay muted loop playsInline preload="metadata"
               aria-label={art.alt} className="h-full w-full object-cover" />
           ) : (
@@ -60,7 +54,7 @@ function Slide({ domain, tint, active, still, onBook, onSoon }) {
   );
 }
 
-export default function HeroCarousel({ domains, onBook, onSoon }) {
+export default function HeroCarousel({ domains, onBook }) {
   const track = useRef(null);
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -100,7 +94,7 @@ export default function HeroCarousel({ domains, onBook, onSoon }) {
     >
       <div ref={track} onScroll={onScroll} className="flex snap-x snap-mandatory overflow-x-auto no-scrollbar">
         {domains.map((d, i) => (
-          <Slide key={d.code} domain={d} tint={TINTS[i % TINTS.length]} active={i === index} still={still} onBook={onBook} onSoon={onSoon} />
+          <Slide key={d.code} domain={d} tint={TINTS[i % TINTS.length]} active={i === index} still={still} onBook={onBook} />
         ))}
       </div>
       {count > 1 && (

@@ -19,6 +19,7 @@ import {
 import { selectLocation, selectHasLocation, setLocation } from '@shared/store/locationSlice';
 import LocationPicker from '@shared/modules/booking/LocationPicker';
 import toast from 'react-hot-toast';
+import GrowingHere from '../../components/serviceability/GrowingHere';
 import { PayMethodPicker } from '@shared/components/common/PayMethodPicker';
 import { usePayBooking } from '@shared/hooks/usePayBooking';
 
@@ -968,6 +969,20 @@ function ProviderStep({
         const locationProblem = data?.reason === 'no_provider_in_area';
         const notListed = nearby > 0 && ['no_capability', 'capability_scope', 'no_approved_price']
           .includes(data?.primaryReason);
+
+        // Nobody verified covers this address at all: say we're growing here,
+        // record it as demand, and offer to notify — no booking is made.
+        if (locationProblem || (nearby === 0 && !data?.reason)) {
+          return (
+            <GrowingHere
+              service={{ code: vertical, name: data?.repairName || 'repair' }}
+              lat={location?.lat}
+              lng={location?.lng}
+              address={location?.address || ''}
+              onChangeLocation={() => setPicking(true)}
+            />
+          );
+        }
 
         let title = 'No technicians available right now';
         let body = 'We could not find anyone able to do this repair today.';

@@ -4,6 +4,7 @@ import {
   ArrowLeft, Loader2, MapPin, Check, PawPrint, Star, Plus,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import GrowingHere from '../../components/serviceability/GrowingHere';
 import LocationPicker from '@shared/modules/booking/LocationPicker';
 import {
   useMyPetsQuery, usePetVariantsQuery, usePetAddonsQuery, useLazyPetCompatibilityQuery,
@@ -290,10 +291,21 @@ export default function PetBookingFlowPage() {
           {!(providersData?.providers || []).length && (() => {
             const nearby = providersData?.nearbyCount || 0;
             const reason = providersData?.primaryReason;
-            let text = 'No provider is free for this yet — try a different time.';
+            // Nobody onboarded near this address: we're growing here — record it,
+            // offer to notify, take no booking.
             if (nearby === 0) {
-              text = 'Nobody is onboarded for this service in your area yet.';
-            } else if (reason === 'outside_radius') {
+              return (
+                <GrowingHere
+                  service={{ code: categoryCode, domainCode: 'pet_services', name: 'pet care' }}
+                  lat={loc?.lat}
+                  lng={loc?.lng}
+                  address={loc?.address || ''}
+                  onChangeLocation={() => setStep('location')}
+                />
+              );
+            }
+            let text = 'No provider is free for this yet — try a different time.';
+            if (reason === 'outside_radius') {
               text = `${nearby} ${nearby === 1 ? 'provider covers' : 'providers cover'} this service nearby, but not this address — try a location closer to town.`;
             } else if (reason === 'no_capacity') {
               text = `${nearby} ${nearby === 1 ? 'provider is' : 'providers are'} fully booked for those dates — try different dates.`;

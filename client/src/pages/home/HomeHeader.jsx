@@ -18,15 +18,6 @@ import { prefetchRoute } from '../../lib/routePrefetch';
  * nothing claims an arrival time the data cannot back.
  */
 
-function statusOf(svc) {
-  if (!svc) return { tone: 'muted', text: 'Checking what’s available…' };
-  if (svc.status === 'not_here') return { tone: 'muted', text: 'Not in this area yet' };
-  if (svc.status === 'coming_soon') return { tone: 'amber', text: 'Coming soon to this area' };
-  if (svc.status === 'closed_now') return { tone: 'amber', text: 'Pros are offline right now' };
-  const n = svc.lines?.length || 0;
-  return { tone: 'live', text: `${n} ${n === 1 ? 'service' : 'services'} live here` };
-}
-const DOT = { live: 'bg-emerald-500', amber: 'bg-amber-400', muted: 'bg-slate-300' };
 
 function useUnread(isAuthed) {
   const { data } = useListNotificationsQuery({ page: 1, unreadOnly: true }, { skip: !isAuthed, pollingInterval: 60000 });
@@ -68,16 +59,11 @@ function Avatar({ isAuthed, avatar }) {
 }
 
 /** Where the pro comes to — the one thing on the header you tap most. */
-function LocationBlock({ loc, svc, onPickLocation, compact = false }) {
-  const status = statusOf(svc);
+function LocationBlock({ loc, onPickLocation, compact = false }) {
   return (
     <button type="button" onClick={onPickLocation} className="group min-w-0 text-left"
       aria-label={`Service location: ${loc.primary}. Change location`}>
-      <span className="flex items-center gap-1.5 text-[11.5px] font-semibold text-slate-500">
-        <span className={`h-1.5 w-1.5 rounded-full ${DOT[status.tone]}`} aria-hidden="true" />
-        {status.text}
-      </span>
-      <span className="mt-0.5 flex min-w-0 items-center gap-1">
+      <span className="flex min-w-0 items-center gap-1">
         {loc.loading
           ? <Loader2 size={15} className="shrink-0 animate-spin text-zappy-600" />
           : <MapPin size={16} strokeWidth={2.4} className="shrink-0 text-zappy-600" />}
@@ -142,7 +128,7 @@ const LINKS = [
   { to: '/track', label: 'Track' },
 ];
 
-export default function HomeHeader({ loc, svc, isAuthed, avatar, onPickLocation, search }) {
+export default function HomeHeader({ loc, isAuthed, avatar, onPickLocation, search }) {
   const nav = useNavigate();
   const unread = useUnread(isAuthed);
 
@@ -156,7 +142,7 @@ export default function HomeHeader({ loc, svc, isAuthed, avatar, onPickLocation,
             <span className="text-[18px] font-extrabold tracking-[-0.02em] text-navy">ZappyOne</span>
           </NavLink>
           <span className="h-9 w-px bg-slate-200" aria-hidden="true" />
-          <div className="w-[210px] shrink-0"><LocationBlock loc={loc} svc={svc} onPickLocation={onPickLocation} compact /></div>
+          <div className="w-[210px] shrink-0"><LocationBlock loc={loc} onPickLocation={onPickLocation} compact /></div>
           {/* Inline from laptop width; on a tablet it takes its own row below. */}
           <div className="hidden min-w-0 flex-1 lg:block">{search}</div>
           <div className="flex-1 lg:hidden" aria-hidden="true" />
@@ -179,7 +165,7 @@ export default function HomeHeader({ loc, svc, isAuthed, avatar, onPickLocation,
       {/* Phone: light header, scrolls away; search is pinned by the page below it. */}
       <div className="bg-[linear-gradient(180deg,#EAF1FD_0%,#F4F7FB_100%)] md:hidden" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
         <div className="flex items-center gap-3 px-4 pb-2 pt-3.5">
-          <div className="min-w-0 flex-1"><LocationBlock loc={loc} svc={svc} onPickLocation={onPickLocation} /></div>
+          <div className="min-w-0 flex-1"><LocationBlock loc={loc} onPickLocation={onPickLocation} /></div>
           <IconButton label={unread ? `${unread} unread notifications` : 'Notifications'} onClick={() => nav('/notifications')} badge={unread}>
             <Bell size={17} />
           </IconButton>

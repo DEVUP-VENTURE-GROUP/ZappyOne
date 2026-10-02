@@ -4,6 +4,8 @@ import {
   ArrowLeft, Plus, Trash2, MapPin, Loader2, ShoppingBasket, PackageSearch, Info,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import GrowingHere from '../../components/serviceability/GrowingHere';
+import { useCoverageCheck } from '../../hooks/useCoverageCheck';
 import LocationPicker from '@shared/modules/booking/LocationPicker';
 import ImageUploadField from '@shared/components/common/ImageUploadField';
 import { useHelpingQuoteMutation, useCreateHelpingTaskMutation } from '@shared/services/api';
@@ -38,6 +40,9 @@ export default function ShoppingTaskPage() {
   const [items, setItems] = useState([emptyItem()]);
   const [instructions, setInstructions] = useState('');
   const [pickupLoc, setPickupLoc] = useState(null);
+  // Nobody verified covers the pickup yet: show GrowingHere instead of booking.
+  const covered = useCoverageCheck();
+  const [notHere, setNotHere] = useState(false);
   const [destLoc, setDestLoc] = useState(null);
   const [pickerFor, setPickerFor] = useState(null); // 'pickup' | 'dest'
 
@@ -84,6 +89,8 @@ export default function ShoppingTaskPage() {
     if (!pickupLoc) { toast.error(mode === 'shop' ? 'Where should the helper shop?' : 'Where is the pickup?'); return; }
     if (mode === 'shop' && !items.some((i) => i.name.trim())) { toast.error('Add at least one item'); return; }
 
+    if (!(await covered('shopping_pickup', pickupLoc))) { setNotHere(true); window.scrollTo({ top: 0 }); return; }
+
     try {
       const res = await create({
         serviceType: mode === 'shop' ? 'shopping' : 'pickup',
@@ -113,6 +120,20 @@ export default function ShoppingTaskPage() {
   const charge = quoteData?.charge;
   const canQuote = !!pickupLoc && (mode === 'pickup' || items.some((i) => i.name.trim()));
 
+
+  if (notHere) {
+    return (
+      <div className="mx-auto max-w-lg px-4 py-6">
+        <GrowingHere
+          service={{ code: 'shopping_pickup', domainCode: 'helping_services', name: 'shopping and pickup' }}
+          lat={pickupLoc?.lat}
+          lng={pickupLoc?.lng}
+          address={pickupLoc?.address || ''}
+          onChangeLocation={() => setNotHere(false)}
+        />
+      </div>
+    );
+  }
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="sticky top-0 z-10 bg-white border-b border-slate-100 px-4 py-3 flex items-center gap-3">

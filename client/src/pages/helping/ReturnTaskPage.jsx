@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, MapPin, AlertTriangle, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import GrowingHere from '../../components/serviceability/GrowingHere';
+import { useCoverageCheck } from '../../hooks/useCoverageCheck';
 import LocationPicker from '@shared/modules/booking/LocationPicker';
 import ImageUploadField from '@shared/components/common/ImageUploadField';
 import { useHelpingQuoteMutation, useCreateHelpingTaskMutation } from '@shared/services/api';
@@ -37,6 +39,9 @@ export default function ReturnTaskPage() {
   });
   const [invoiceKey, setInvoiceKey] = useState('');
   const [pickupLoc, setPickupLoc] = useState(null);
+  // Nobody verified covers the pickup yet: show GrowingHere instead of booking.
+  const covered = useCoverageCheck();
+  const [notHere, setNotHere] = useState(false);
   const [destLoc, setDestLoc] = useState(null);
   const [pickerFor, setPickerFor] = useState(null);
 
@@ -72,6 +77,8 @@ export default function ReturnTaskPage() {
       return;
     }
 
+    if (!(await covered('returns_exchange', pickupLoc))) { setNotHere(true); window.scrollTo({ top: 0 }); return; }
+
     try {
       const res = await create({
         serviceType: isExchange ? 'exchange' : 'return',
@@ -95,6 +102,20 @@ export default function ReturnTaskPage() {
 
   const charge = quoteData?.charge;
 
+
+  if (notHere) {
+    return (
+      <div className="mx-auto max-w-lg px-4 py-6">
+        <GrowingHere
+          service={{ code: 'returns_exchange', domainCode: 'helping_services', name: 'returns' }}
+          lat={pickupLoc?.lat}
+          lng={pickupLoc?.lng}
+          address={pickupLoc?.address || ''}
+          onChangeLocation={() => setNotHere(false)}
+        />
+      </div>
+    );
+  }
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="sticky top-0 z-10 bg-white border-b border-slate-100 px-4 py-3 flex items-center gap-3">

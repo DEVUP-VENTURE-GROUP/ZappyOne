@@ -15,14 +15,24 @@ const CHARACTERS = {
   more: 'Zappy helper',
   events: 'Event planner',
   elders: 'Care companion',
+  car: 'Car',
+  helper: 'Zappy helper',
 };
+
+/** Stills with no loop of their own. */
+const STILL_ONLY = new Set(['car', 'helper']);
 
 const BY_SERVICE = {
   mobile_repair: 'phones',
   laptop_repair: 'laptops',
   two_wheeler: 'cars',
-  four_wheeler: 'cars',
+  four_wheeler: 'car',
   water_tank_care: 'home',
+  shopping_pickup: 'more',
+  returns_exchange: 'helper',
+  // Repair verticals, as the booking flow names them.
+  mobile: 'phones',
+  laptop: 'laptops',
 };
 
 const BY_DOMAIN = {
@@ -39,7 +49,7 @@ const BY_DOMAIN = {
 export function artFor(code, domainCode) {
   const key = BY_SERVICE[code] || BY_DOMAIN[domainCode] || (CHARACTERS[code] ? code : null);
   if (!key) return null;
-  return { still: `/characters/${key}.webp`, loop: `/characters/${key}.mp4`, alt: CHARACTERS[key] };
+  return { still: `/characters/${key}.webp`, loop: STILL_ONLY.has(key) ? null : `/characters/${key}.mp4`, alt: CHARACTERS[key] };
 }
 
 /**
