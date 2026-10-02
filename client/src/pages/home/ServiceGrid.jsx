@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Wrench } from 'lucide-react';
 import { SERVICE_ICONS } from '@shared/components/home/LiveServices';
 import { distinctArt } from '@shared/components/home/serviceArt';
+import { problemPhoto } from '@shared/components/home/problemArt';
 
 /**
  * The services, as one even grid on a single neutral surface.
@@ -137,6 +138,7 @@ export function ProblemChips({ services }) {
         >
           {list.map((c, i) => {
             const Icon = SERVICE_ICONS[c.service.icon] || Wrench;
+            const photo = problemPhoto(c.service.artKey || c.service.code, c);
             const copy = i >= chips.length;
             return (
               <button
@@ -145,11 +147,15 @@ export function ProblemChips({ services }) {
                 onClick={() => nav(c.service.path)}
                 tabIndex={copy ? -1 : 0}
                 aria-hidden={copy || undefined}
-                className="flex min-h-[40px] shrink-0 items-center gap-2 rounded-btn border border-line bg-white pl-2 pr-3 text-[13px] font-medium text-ink-900 transition-colors duration-150 hover:border-line-strong active:bg-canvas"
+                className="flex min-h-[44px] shrink-0 items-center gap-2 rounded-full border border-line bg-white pl-1.5 pr-3.5 text-[13px] font-medium text-ink-900 transition-colors duration-150 hover:border-line-strong active:bg-canvas"
               >
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-zappy-50 text-zappy-600">
-                  <Icon size={13} strokeWidth={2} />
-                </span>
+                {photo
+                  ? <img src={photo} alt="" loading="lazy" decoding="async" className="h-7 w-7 rounded-full object-cover" />
+                  : (
+                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-zappy-50 text-zappy-600">
+                      <Icon size={14} strokeWidth={2} />
+                    </span>
+                  )}
                 {c.name}
               </button>
             );

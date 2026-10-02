@@ -83,7 +83,7 @@ export function CategoryTile({ category, onOpen }) {
   return (
     <button
       onClick={onOpen}
-      className={`group flex shrink-0 snap-start flex-col text-left w-[112px]`}
+      className="group flex w-[136px] shrink-0 snap-start flex-col text-left sm:w-[156px]"
     >
       <span className="relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-card border border-line bg-sunken">
         {category.imageUrl ? (
@@ -91,6 +91,7 @@ export function CategoryTile({ category, onOpen }) {
             src={category.imageUrl}
             alt=""
             loading="lazy"
+            decoding="async"
             // A ZappyOne character is drawn on white: fit it and let the tint show through.
             className={`h-full w-full transition-transform duration-300 group-hover:scale-105 ${
               category.imageUrl.startsWith('/characters/') ? 'object-contain mix-blend-multiply pt-1' : 'object-cover'}`}
@@ -103,8 +104,8 @@ export function CategoryTile({ category, onOpen }) {
       </span>
 
       {/* Fixed height keeps one-line and two-line names on the same baseline. */}
-      <span className="flex h-[52px] flex-col justify-start pt-1.5">
-        <span className="line-clamp-2 text-[13px] font-semibold leading-[1.25] text-ink-900">
+      <span className="flex h-[56px] flex-col justify-start pt-2">
+        <span className="line-clamp-2 text-[14px] font-semibold leading-[1.25] text-ink-900">
           {category.name}
         </span>
         <span className="mt-auto text-[12px] text-ink-500">

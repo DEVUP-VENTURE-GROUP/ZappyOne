@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { ChevronRight, Wrench } from 'lucide-react';
 import { SERVICE_ICONS, CategoryTile } from '@shared/components/home/LiveServices';
 import { artFor, PITCH } from '@shared/components/home/serviceArt';
+import { categoryPhoto } from '@shared/components/home/problemArt';
 
 /**
  * Every service, section by section, with what is inside each one.
@@ -46,7 +47,7 @@ function cardsFor(domain) {
 function ServiceCard({ service, onOpen }) {
   const Icon = SERVICE_ICONS[service.icon] || Wrench;
   const repairTiles = (service.coverage || []).map((c) => ({
-    tile: c, path: `/repair/category/${service.artKey || service.code}/${c.code}`,
+    tile: { ...c, imageUrl: categoryPhoto(service.artKey || service.code, c) || c.imageUrl }, path: `/repair/category/${service.artKey || service.code}/${c.code}`,
   }));
   const optionTiles = (service.options || []).map((o) => ({
     tile: { code: o.code, name: o.name, icon: o.icon, imageUrl: o.imageUrl || '', subtitle: '' }, path: o.path, target: o.service,

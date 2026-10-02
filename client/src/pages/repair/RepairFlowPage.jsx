@@ -38,6 +38,8 @@ import toast from 'react-hot-toast';
 import GrowingHere from '../../components/serviceability/GrowingHere';
 import { PayMethodPicker } from '@shared/components/common/PayMethodPicker';
 import BrandLogo from '@shared/components/common/BrandLogo';
+import { categoryPhoto } from '@shared/components/home/problemArt';
+import { ProblemCard, ProblemGrid } from './ProblemCard';
 import { usePayBooking } from '@shared/hooks/usePayBooking';
 
 /**
@@ -604,24 +606,21 @@ function ProblemStep({ vertical, model, productType, fuelType, presetCode, onPic
       <p className="text-xs text-slate-500 px-1">
         Tell us what you're seeing. We'll work out the repair — we never assume it from the symptom alone.
       </p>
-      {categories.map((cat) => (
-        <div key={cat.code} className="space-y-2">
-          <p className="text-xs font-bold text-slate-500 uppercase tracking-wide px-1 pt-2">{cat.name}</p>
-          {cat.problems.map((p) => (
-            <button key={p.code} onClick={() => onPick(p)}
-              className="card w-full flex items-center gap-3 text-left hover:ring-2 hover:ring-zappy-100 transition">
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-sm text-[#0F172A]">{p.name}</p>
-                {p.requiresDiagnosis && (
-                  <p className="text-[11px] text-amber-600 font-semibold mt-0.5">Needs inspection before pricing</p>
-                )}
-              </div>
-              {p.severity === 'critical' && <AlertTriangle size={15} className="text-red-500 shrink-0" />}
-              <ChevronRight size={16} className="text-slate-300 shrink-0" />
-            </button>
-          ))}
-        </div>
-      ))}
+      {categories.map((cat) => {
+        const cover = categoryPhoto(vertical, cat);
+        return (
+          <section key={cat.code} className="space-y-2.5 pt-2" aria-label={cat.name}>
+            <div className="flex items-center gap-2.5 px-1">
+              {cover && <img src={cover} alt="" loading="lazy" className="h-8 w-8 rounded-btn object-cover" />}
+              <h3 className="text-[15px] font-bold text-ink-900">{cat.name}</h3>
+              <span className="text-[13px] text-ink-500">{cat.problems.length}</span>
+            </div>
+            <ProblemGrid>
+              {cat.problems.map((p) => <ProblemCard key={p.code} vertical={vertical} problem={p} onPick={onPick} />)}
+            </ProblemGrid>
+          </section>
+        );
+      })}
     </Shell>
   );
 }
