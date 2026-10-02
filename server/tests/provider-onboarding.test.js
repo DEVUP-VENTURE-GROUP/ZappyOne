@@ -500,7 +500,7 @@ describe('customer catalog', () => {
     expect(res.status).toBe(200);
   });
 
-  it('lists only services that are live and have somewhere to send the customer', async () => {
+  it('lists live services with somewhere to send the customer, flagging who has providers', async () => {
     const res = await request(app).get(`${BASE}/catalog`);
     const electronics = res.body.domains.find((d) => d.code === 'electronics');
 
@@ -508,9 +508,11 @@ describe('customer catalog', () => {
       .toEqual(['laptop_repair', 'mobile_repair']);
     expect(electronics.services.every((s) => s.path)).toBe(true);
 
-    // Vehicles are seeded but not live, so the domain is absent entirely rather
-    // than shown as an empty category.
-    expect(res.body.domains.map((d) => d.code)).not.toContain('vehicles');
+    // Vehicles are live with nobody verified yet: shown (demand is the signal),
+    // and flagged so the app reads them as coming soon rather than bookable.
+    const vehicles = res.body.domains.find((d) => d.code === 'vehicles');
+    expect(vehicles.services.every((sv) => sv.hasProviders === false)).toBe(true);
+    expect(electronics.services.every((sv) => sv.hasProviders === true)).toBe(true);
   });
 
   it('groups what a service covers under its headings', async () => {

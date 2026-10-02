@@ -264,8 +264,10 @@ function nextStepFor({ profile, enrolments, kind }) {
  */
 async function liveCatalog(req, res, next) {
   try {
-    // Live = admin marked it live AND a provider is approved for it (see coverage.service).
-    const { domains, lines } = await coverage.loadLiveLines();
+    // Every live service, provider or not: customers in a launch region see the
+    // whole catalog, and each service says whether anyone is verified for it
+    // yet. Whether it can be booked HERE is serviceability's answer.
+    const { domains, lines } = await coverage.loadOfferedLines();
 
 
     /**
@@ -352,6 +354,7 @@ async function liveCatalog(req, res, next) {
         artKey: l.artKey || l.repairVertical || '',
         path: l.customerPath,
         isPopular: !!l.isPopular,
+        hasProviders: !!l.hasProviders,
         highlights: highlightsByVertical.get(l.repairVertical) || [],
         coverage: coverageByVertical.get(l.repairVertical) || [],
       });

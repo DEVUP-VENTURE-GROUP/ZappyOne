@@ -8,7 +8,7 @@ const REPO_ROOT = fileURLToPath(new URL('..', import.meta.url));
 const ASSETS = path.join(REPO_ROOT, 'assets');
 const ASSETS_WEB = path.join(ASSETS, 'web');
 
-const TYPES = { '.ico': 'image/x-icon', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.svg': 'image/svg+xml' };
+const TYPES = { '.ico': 'image/x-icon', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.mp4': 'video/mp4', '.webm': 'video/webm' };
 
 /**
  * assets/web/ is served at the root of EVERY app: in dev from the folder, in a

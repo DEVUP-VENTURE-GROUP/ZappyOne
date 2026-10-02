@@ -1,19 +1,25 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
+import { useGetServiceabilityQuery } from '@shared/services/api';
+import { loadGeoLocation } from '@shared/hooks/useGeolocation';
+import ComingSoonSheet from '../components/serviceability/ComingSoonSheet';
+import { trackSearch } from '../hooks/useTelemetry';
 import LiveServices from '@shared/components/home/LiveServices';
 import SEO from '@shared/components/SEO';
 
 /**
- * Everything a customer can book, in one place.
+ * Everything we do, in one place.
  *
- * This replaced the old all-services catalog. The catalog listed every service
- * the platform had ever defined, including ones with no verified providers and
- * no finished flow — a customer could tap through to a dead end. This page
- * shows the live catalog only, which is the same list providers can be verified
- * against, so the two can never disagree.
+ * Every live service shows. Where nobody near the customer is verified for one
+ * yet it reads "coming soon", and a tap offers "notify me" and is recorded as
+ * demand — never a booking nobody can fulfil.
  */
 export default function AllServicesPage() {
   const nav = useNavigate();
+  const here = loadGeoLocation();
+  const { data: svc } = useGetServiceabilityQuery({ lat: here?.lat, lng: here?.lng }, { skip: here?.lat == null });
+  const [soon, setSoon] = useState(null);
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] pb-16">
@@ -35,7 +41,12 @@ export default function AllServicesPage() {
       </header>
 
       <div className="mx-auto max-w-4xl px-4">
-        <LiveServices />
+        <LiveServices
+          availableCodes={svc ? svc.lines.map((l) => l.code) : null}
+          onOpenService={(code, served) => trackSearch({ category: code, lat: here?.lat, lng: here?.lng, result: served ? 'served' : 'no_service', userType: 'user' })}
+          onUnavailable={setSoon}
+        />
+        <ComingSoonSheet service={soon} lat={here?.lat} lng={here?.lng} onClose={() => setSoon(null)} />
       </div>
     </div>
   );

@@ -20,6 +20,8 @@ jest.setTimeout(60000);
 // Madhapur, and a point ~12 km away in Kukatpally.
 const MADHAPUR = { lat: 17.4483, lng: 78.3915 };
 const KUKATPALLY = { lat: 17.4849, lng: 78.4138 + 0.08 };
+// Outside Telangana, the launch region.
+const BENGALURU = { lat: 12.9716, lng: 77.5946 };
 const box = (lat, lng, d = 0.02) => ({
   type: 'Polygon',
   coordinates: [[[lng - d, lat - d], [lng + d, lat - d], [lng + d, lat + d], [lng - d, lat + d], [lng - d, lat - d]]],
@@ -54,10 +56,17 @@ test('a covered point is available, with the live service listed', async () => {
   expect(r.lines).toEqual([{ code: 'mobile_repair', openNow: true }]);
 });
 
-test('a point no provider reaches is not_here, even with no zones drawn', async () => {
+test('in Telangana, a point no provider reaches is coming_soon — services still show', async () => {
   const r = await serviceabilityAt(KUKATPALLY);
-  expect(r.status).toBe('not_here');
+  expect(r.status).toBe('coming_soon');
+  expect(r.region).toEqual({ code: 'telangana', name: 'Telangana' });
   expect(r.lines).toEqual([]);
+});
+
+test('outside the launch region, a point no provider reaches is not_here', async () => {
+  const r = await serviceabilityAt(BENGALURU);
+  expect(r.status).toBe('not_here');
+  expect(r.region).toBeNull();
 });
 
 test('covered but closed: closed_now with the real next opening, in IST', async () => {
@@ -78,7 +87,7 @@ test('covered but closed: closed_now with the real next opening, in IST', async 
 test('a blocked provider covers nothing', async () => {
   await Shop.updateOne({ _id: shop._id }, { $set: { isBlocked: true } });
   try {
-    expect((await serviceabilityAt(MADHAPUR)).status).toBe('not_here');
+    expect((await serviceabilityAt(MADHAPUR)).status).toBe('coming_soon');
   } finally {
     await Shop.updateOne({ _id: shop._id }, { $set: { isBlocked: false } });
   }
@@ -89,9 +98,13 @@ describe('once an admin draws an active zone', () => {
     await Zone.create({ name: 'Madhapur', city: 'Hyderabad', status: 'active', polygon: box(MADHAPUR.lat, MADHAPUR.lng) });
   });
 
-  test('outside every active zone is not_here, and lists the areas we do serve', async () => {
+  test('outside every zone but in Telangana is coming_soon, and lists the areas we do serve', async () => {
     const r = await serviceabilityAt(KUKATPALLY);
-    expect(r).toMatchObject({ status: 'not_here', areas: [{ name: 'Madhapur', city: 'Hyderabad' }] });
+    expect(r).toMatchObject({ status: 'coming_soon', areas: [{ name: 'Madhapur', city: 'Hyderabad' }] });
+  });
+
+  test('outside every zone and outside the launch region is not_here', async () => {
+    expect((await serviceabilityAt(BENGALURU)).status).toBe('not_here');
   });
 
   test('inside the zone and covered is available', async () => {

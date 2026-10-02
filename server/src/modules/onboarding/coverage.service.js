@@ -6,6 +6,7 @@ const { PetProviderCapability } = require('../pet/models/config.model');
 const helpingPricing = require('../helping/services/pricing.service');
 const zoneService = require('../zone/zone.service');
 const Zone = require('../zone/zone.model');
+const { regionAt } = require('../zone/region');
 const { metresBetween } = require('../../core/geo/distance');
 const { redis } = require('../../config/redis');
 
@@ -18,6 +19,22 @@ const PET_MAX_RADIUS_KM = 50;
  * is approved for them. Shared by the catalog and the coverage check so the two
  * can never disagree about what "live" means.
  */
+/**
+ * Every line admin has made live with a customer flow — shown to customers in a
+ * launch region even before a provider is approved, each flagged with whether
+ * anyone is. Bookability is still decided per location (serviceabilityAt).
+ */
+async function loadOfferedLines() {
+  const [domains, lines, approved] = await Promise.all([
+    ServiceDomain.find({ isActive: true, isArchived: false }).sort({ displayOrder: 1, name: 1 }).lean(),
+    ServiceLine.find({ status: 'live', isActive: true, isArchived: false, customerPath: { $ne: '' } })
+      .sort({ displayOrder: 1, name: 1 }).lean(),
+    ProviderEnrolment.distinct('lineCode', { status: 'approved' }),
+  ]);
+  const approvedSet = new Set(approved);
+  return { domains, lines: lines.map((l) => ({ ...l, hasProviders: approvedSet.has(l.code) })) };
+}
+
 async function loadLiveLines() {
   const [domains, candidates, approved] = await Promise.all([
     ServiceDomain.find({ isActive: true, isArchived: false }).sort({ displayOrder: 1, name: 1 }).lean(),
@@ -107,6 +124,7 @@ async function serviceabilityAt({ lat, lng }) {
     if (hit) return JSON.parse(hit);
   } catch { /* cache is best-effort */ }
 
+  const region = regionAt(lat, lng);
   const [enforced, zone, activeZones] = await Promise.all([
     zoneService.zonesEnforced(),
     zoneService.getActiveZoneForPoint(lng, lat),
@@ -115,8 +133,8 @@ async function serviceabilityAt({ lat, lng }) {
   const areas = activeZones.map((z) => ({ name: z.name, city: z.city }));
   let result;
 
-  if (enforced && !zone) {
-    result = { status: 'not_here', zone: null, areas, lines: [] };
+  if (enforced && !zone && !region) {
+    result = { status: 'not_here', zone: null, region: null, areas, lines: [] };
   } else {
     const { lines } = await loadLiveLines();
     const [covering, enrolments] = await Promise.all([
@@ -143,9 +161,13 @@ async function serviceabilityAt({ lat, lng }) {
       .map(([code, owners]) => [code, owners.filter((k) => !blocked.has(k))])
       .filter(([, owners]) => owners.length)
       .map(([code, owners]) => ({ code, openNow: owners.some((k) => open.has(k)) }));
-    const status = !covered.length ? 'not_here' : covered.some((l) => l.openNow) ? 'available' : 'closed_now';
+    // In a launch region nothing is "not here": every service shows, and the
+    // ones nobody covers yet read as coming soon (and record demand).
+    const status = !covered.length ? (region ? 'coming_soon' : 'not_here')
+      : covered.some((l) => l.openNow) ? 'available' : 'closed_now';
     result = {
       status,
+      region,
       zone: zone ? { name: zone.name, city: zone.city } : null,
       areas,
       lines: covered,
@@ -157,4 +179,4 @@ async function serviceabilityAt({ lat, lng }) {
   return result;
 }
 
-module.exports = { loadLiveLines, serviceabilityAt };
+module.exports = { loadLiveLines, loadOfferedLines, serviceabilityAt };

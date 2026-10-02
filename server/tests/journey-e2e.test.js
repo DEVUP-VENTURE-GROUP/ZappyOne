@@ -618,14 +618,15 @@ describe('provider setup', () => {
  */
 
 describe('the customer journey', () => {
-  it('33. shows only services somebody is verified to do', async () => {
+  it('33. shows every live service, and says which ones somebody is verified to do', async () => {
     const res = await request(app).get('/api/provider/onboarding/catalog');
-    const codes = res.body.domains.flatMap((d) => d.services.map((s) => s.code));
-    expect(codes).toContain('mobile_repair');
-    // The catalog lists what somebody is VERIFIED to do, not what is merely
-    // open — nobody in this journey has been verified for two-wheelers.
-    expect(codes).not.toContain('two_wheeler');
-    expect(codes).not.toContain('three_wheeler');
+    const services = res.body.domains.flatMap((d) => d.services);
+    const byCode = Object.fromEntries(services.map((s) => [s.code, s]));
+    // Shown even with nobody verified yet — demand for it is the signal to recruit.
+    expect(byCode.mobile_repair.hasProviders).toBe(true);
+    expect(byCode.two_wheeler.hasProviders).toBe(false);
+    // A line with no customer flow is never shown.
+    expect(byCode.three_wheeler).toBeUndefined();
   });
 
   it('34. shows the headings with real counts behind them', async () => {

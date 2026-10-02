@@ -2,11 +2,12 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Wrench } from 'lucide-react';
 import { SERVICE_ICONS } from '@shared/components/home/LiveServices';
+import { distinctArt } from '@shared/components/home/serviceArt';
 
 /**
- * Everything bookable here, as one grid — the Blinkit "shop by category" move.
- * A tile exists only for a live service a verified provider covers at this
- * location, so every tap leads somewhere that can actually be booked.
+ * Everything we do in Telangana, as one grid — the Blinkit "shop by category"
+ * move. A service nobody near this customer is verified for yet still shows,
+ * marked "Soon": the tap opens "notify me" and is recorded as demand.
  *
  * Columns follow the width: 4 on a phone, up to 8 on a desktop.
  */
@@ -22,14 +23,20 @@ const SHELVES = [
   { bg: 'bg-[#ECEEF2]', fg: 'text-[#334155]' }, // slate
 ];
 
-function Tile({ service, shelf, onOpen }) {
+function Tile({ service, character, shelf, onOpen }) {
   const Icon = SERVICE_ICONS[service.icon] || Wrench;
+  // An admin-set picture wins; then the service's ZappyOne character; then its icon.
+  const art = service.imageUrl || character?.still;
+  const soon = service.available === false;
   return (
     <button type="button" onClick={onOpen} className="group flex flex-col items-center gap-2 text-center focus-visible:outline-none">
-      <span className={`flex aspect-square w-full items-center justify-center overflow-hidden rounded-2xl ${shelf.bg} group-focus-visible:outline group-focus-visible:outline-2 group-focus-visible:outline-zappy-500`}>
-        {service.imageUrl
-          ? <img src={service.imageUrl} alt="" loading="lazy" className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+      <span className={`relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-2xl ${shelf.bg} group-focus-visible:outline group-focus-visible:outline-2 group-focus-visible:outline-zappy-500`}>
+        {art
+          ? <img src={art} alt="" loading="lazy" className={`h-full w-full transition-transform duration-300 group-hover:scale-105 ${service.imageUrl ? 'object-cover' : 'object-contain mix-blend-multiply pt-1.5'}`} />
           : <Icon strokeWidth={1.5} className={`h-[38%] w-[38%] ${shelf.fg} transition-transform duration-200 group-hover:scale-105`} />}
+        {soon && (
+          <span className="absolute bottom-1.5 left-1/2 -translate-x-1/2 rounded-full bg-white/95 px-2 py-0.5 text-[9.5px] font-semibold uppercase tracking-wide text-amber-700 shadow-sm">Soon</span>
+        )}
       </span>
       <span className="line-clamp-2 text-[12px] font-medium leading-[1.3] text-navy sm:text-[13px]">{service.name}</span>
     </button>
@@ -74,6 +81,7 @@ export function ServiceGrid({ domains, onOpen }) {
         {shown.map((d, i) => {
           const shelf = SHELVES[i % SHELVES.length];
           const span = Math.min(d.services.length, cols);
+          const characters = distinctArt(d.services, d.code);
           return (
             <div key={d.code} style={{ gridColumn: `span ${span} / span ${span}` }}>
               {!single && (
@@ -83,7 +91,7 @@ export function ServiceGrid({ domains, onOpen }) {
                 </h3>
               )}
               <div className="grid gap-x-3 gap-y-4" style={{ gridTemplateColumns: `repeat(${span}, minmax(0, 1fr))` }}>
-                {d.services.map((s) => <Tile key={s.code} service={s} shelf={shelf} onOpen={() => onOpen(s)} />)}
+                {d.services.map((s) => <Tile key={s.code} service={s} character={characters.get(s.code)} shelf={shelf} onOpen={() => onOpen(s)} />)}
               </div>
             </div>
           );

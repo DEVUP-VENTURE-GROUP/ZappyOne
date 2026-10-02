@@ -7,6 +7,7 @@ import {
   ClipboardCheck, Footprints, PackageCheck, PawPrint, Scissors, ShoppingBag, ShoppingBasket, Stethoscope,
 } from 'lucide-react';
 import { useLiveCatalogQuery } from '../../services/api';
+import { distinctArt } from './serviceArt';
 
 /**
  * What a customer can book today, and what each service covers.
@@ -90,7 +91,9 @@ export function CategoryTile({ category, onOpen }) {
             src={category.imageUrl}
             alt=""
             loading="lazy"
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+            // A ZappyOne character is drawn on white: fit it and let the tint show through.
+            className={`h-full w-full transition-transform duration-300 group-hover:scale-105 ${
+              category.imageUrl.startsWith('/characters/') ? 'object-contain mix-blend-multiply pt-1' : 'object-cover'}`}
           />
         ) : (
           <Icon size={24} className="text-zappy-700" strokeWidth={1.5} />
@@ -116,13 +119,14 @@ export function CategoryTile({ category, onOpen }) {
  * section as long as the repairs above it for a handful of simple services.
  */
 function ServiceRow({ services, onOpen }) {
+  const characters = distinctArt(services);
   return (
     <div className="relative overflow-hidden rounded-xl bg-white">
       <div className="flex gap-2.5 overflow-x-auto no-scrollbar px-4 py-3.5 snap-x scroll-px-4 scroll-smooth">
         {services.map((s) => (
           <CategoryTile
             key={s.code}
-            category={{ code: s.code, name: s.name, icon: s.icon, imageUrl: s.imageUrl, subtitle: '' }}
+            category={{ code: s.code, name: s.name, icon: s.icon, imageUrl: s.imageUrl || characters.get(s.code)?.still, subtitle: s.available === false ? 'Coming soon' : '' }}
             onOpen={() => onOpen(s)}
           />
         ))}
@@ -132,7 +136,7 @@ function ServiceRow({ services, onOpen }) {
   );
 }
 
-function ServiceCard({ service, onOpenService, onOpenCategory }) {
+function ServiceCard({ service, character, onOpenService, onOpenCategory }) {
   const Icon = SERVICE_ICONS[service.icon] || Wrench;
   const coverage = service.coverage || [];
 
@@ -141,16 +145,22 @@ function ServiceCard({ service, onOpenService, onOpenCategory }) {
       <button onClick={onOpenService} className="group flex w-full items-center gap-3.5 px-4 py-3.5 text-left">
         {service.imageUrl
           ? <img src={service.imageUrl} alt="" className="h-11 w-11 shrink-0 rounded-lg object-cover" />
-          : <Icon size={24} className="shrink-0 text-zappy-700" strokeWidth={1.6} />}
+          : character
+            ? <img src={character.still} alt="" className="h-12 w-12 shrink-0 rounded-xl bg-[#EEF3FB] object-contain mix-blend-multiply" />
+            : <Icon size={24} className="shrink-0 text-zappy-700" strokeWidth={1.6} />}
         <span className="min-w-0 flex-1">
           <span className="block text-[15px] font-semibold text-navy">{service.name}</span>
           <span className="mt-0.5 block text-[13px] leading-snug text-slate-500">
             {service.description || service.tagline}
           </span>
         </span>
-        <span className="flex shrink-0 items-center text-[13px] font-semibold text-zappy-600">
-          Book <ChevronRight size={16} className="transition group-hover:translate-x-0.5" />
-        </span>
+        {service.available === false ? (
+          <span className="shrink-0 rounded-full bg-amber-50 px-2.5 py-1 text-[12px] font-semibold text-amber-700">Coming soon</span>
+        ) : (
+          <span className="flex shrink-0 items-center text-[13px] font-semibold text-zappy-600">
+            Book <ChevronRight size={16} className="transition group-hover:translate-x-0.5" />
+          </span>
+        )}
       </button>
 
       {/* Horizontal scrollable carousel — Swiggy/Zomato style */}
@@ -175,10 +185,11 @@ function ServiceCard({ service, onOpenService, onOpenCategory }) {
 }
 
 /**
- * availableCodes: when given, only services covered at the customer's location are shown.
+ * availableCodes: when given, services NOT in it still show, marked coming soon,
+ *   and a tap goes to onUnavailable instead of the booking (demand, not a dead end).
  * onOpenService: told which service was opened (the app records it as demand).
  */
-export default function LiveServices({ availableCodes = null, onOpenService = null }) {
+export default function LiveServices({ availableCodes = null, onOpenService = null, onUnavailable = null }) {
   const nav = useNavigate();
   const { data, isLoading } = useLiveCatalogQuery();
 
@@ -192,8 +203,16 @@ export default function LiveServices({ availableCodes = null, onOpenService = nu
 
   const allowed = availableCodes && new Set(availableCodes);
   const domains = (data?.domains || [])
-    .map((d) => (allowed ? { ...d, services: d.services.filter((s) => allowed.has(s.code)) } : d))
+    .map((d) => ({
+      ...d,
+      services: d.services.map((s) => ({ ...s, domainCode: d.code, available: allowed ? allowed.has(s.code) : undefined })),
+    }))
     .filter((d) => d.services.length);
+  const open = (s, path) => {
+    onOpenService?.(s.code, s.available !== false);
+    if (s.available === false && onUnavailable) onUnavailable(s);
+    else nav(path || s.path);
+  };
   if (!domains.length) return null;
 
   return (
@@ -208,22 +227,22 @@ export default function LiveServices({ availableCodes = null, onOpenService = nu
                 <ServiceCard
                   key={s.code}
                   service={s}
-                  onOpenService={() => { onOpenService?.(s.code); nav(s.path); }}
-                  onOpenCategory={(group) => nav(`/repair/category/${s.artKey || s.code}/${group.code}`)}
+                  character={distinctArt(d.services, d.code).get(s.code)}
+                  onOpenService={() => open(s)}
+                  onOpenCategory={(group) => open(s, `/repair/category/${s.artKey || s.code}/${group.code}`)}
                 />
               ))}
             </div>
           ) : (
             <div className="mt-3">
-              <ServiceRow services={d.services} onOpen={(s) => { onOpenService?.(s.code); nav(s.path); }} />
+              <ServiceRow services={d.services} onOpen={(s) => open(s)} />
             </div>
           )}
         </section>
       ))}
 
-      {/* Said plainly rather than by showing tiles that cannot be booked. */}
       <p className="text-[13px] text-slate-500">
-        More services open here as providers near you are verified.
+        Services marked coming soon open near you as we verify providers there.
       </p>
     </div>
   );

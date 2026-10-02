@@ -11,6 +11,10 @@ import { reverseGeocode } from '@shared/utils/reverseGeocode';
 import SEO, { HOME_SCHEMA, BASE_URL } from '@shared/components/SEO';
 import NotInYourArea from '../components/serviceability/NotInYourArea';
 import ClosedNowBanner from '../components/serviceability/ClosedNowBanner';
+import ComingSoonSheet from '../components/serviceability/ComingSoonSheet';
+import HeroCarousel from './home/HeroCarousel';
+import ServiceShowcase from './home/ServiceShowcase';
+import { foldIntoHub } from '@shared/components/home/serviceArt';
 import AdBanner from '../components/common/AdBanner';
 import Footer from '../components/layout/Footer';
 import SpotlightSearch from '../components/search/SpotlightSearch';
@@ -137,11 +141,19 @@ export default function HomePage() {
   /* What we serve here. */
   const { data: svc } = useGetServiceabilityQuery({ lat: loc.lat, lng: loc.lng }, { skip: loc.lat == null });
   const { data: catalog, isLoading: loadingCatalog } = useLiveCatalogQuery();
+  // Every service shows; whether it can be booked HERE is serviceability's answer.
+  // Unknown location → treated as bookable (the flow asks for an address).
   const liveCodes = useMemo(() => (svc ? new Set(svc.lines.map((l) => l.code)) : null), [svc]);
-  const domains = useMemo(() => (catalog?.domains || [])
-    .map((d) => ({ ...d, services: d.services.filter((s) => !liveCodes || liveCodes.has(s.code)) }))
+  const allDomains = useMemo(() => (catalog?.domains || [])
+    .map((d) => ({
+      ...d,
+      services: d.services.map((s) => ({ ...s, domainCode: d.code, available: liveCodes ? liveCodes.has(s.code) : undefined })),
+    }))
     .filter((d) => d.services.length), [catalog, liveCodes]);
-  const services = useMemo(() => domains.flatMap((d) => d.services), [domains]);
+  // The quick grid folds a section with its own page (pet care) into one tile.
+  const domains = useMemo(() => allDomains.map(foldIntoHub), [allDomains]);
+  const [soonService, setSoonService] = useState(null);
+  const services = useMemo(() => allDomains.flatMap((d) => d.services), [allDomains]);
   const searchTerms = useMemo(() => {
     const problems = services.flatMap((s) => (s.highlights || []).map((h) => h.name));
     return [...new Set(problems.length ? problems : services.map((s) => s.name))].slice(0, 8);
@@ -159,8 +171,11 @@ export default function HomePage() {
   }, [svc?.status, loc.lat, loc.lng]);
 
   function openService(s) {
-    trackSearch({ category: s.code, lat: loc.lat, lng: loc.lng, result: 'served', userType: 'user' });
-    nav(s.path);
+    // Every tap is demand — served, or wanted where nobody is verified yet.
+    const wanted = s.available === false;
+    trackSearch({ category: s.code, lat: loc.lat, lng: loc.lng, result: wanted ? 'no_service' : 'served', userType: 'user' });
+    if (wanted) setSoonService(s);
+    else nav(s.path);
   }
 
   /* The customer's own jobs. */
@@ -235,9 +250,15 @@ export default function HomePage() {
 
               {loadingCatalog || (loc.lat != null && !svc)
                 ? <SkeletonGrid />
-                : <ServiceGrid domains={domains} onOpen={openService} />}
+                : (
+                  <>
+                    <HeroCarousel domains={domains} onBook={openService} onSoon={openService} />
+                    <ServiceGrid domains={domains} onOpen={openService} />
+                  </>
+                )}
 
-              <ProblemChips services={services} />
+              <ProblemChips services={services.filter((x) => x.available !== false)} />
+              {!loadingCatalog && <ServiceShowcase domains={allDomains} onOpen={openService} />}
               <OffersRail isAuthed={isAuthed} />
               <BookAgainRail items={quickRebooks} onOpen={nav} />
               <AdBanner />
@@ -250,6 +271,14 @@ export default function HomePage() {
         <Footer services={services} areas={svc?.areas || []} />
       </div>
 
+      <ComingSoonSheet
+        service={soonService}
+        place={loc.primary}
+        lat={loc.lat}
+        lng={loc.lng}
+        onClose={() => setSoonService(null)}
+        onChangeLocation={() => { setSoonService(null); setLocSheet(true); }}
+      />
       <LensModal open={lensOpen} onClose={() => setLensOpen(false)} lat={loc.lat} lng={loc.lng} />
       <LocationSheet
         open={locSheet}
