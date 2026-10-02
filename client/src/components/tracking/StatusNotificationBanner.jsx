@@ -1,189 +1,89 @@
-/**
- * StatusNotificationBanner
- *
- * Full-width animated banner that slides in from the top whenever order
- * status changes (assigned, on_the_way, arrived, in_progress, completed).
- * Includes worker name, rating, message, and a contextual emoji.
- * Auto-dismisses after 5 s; user can also swipe/tap to dismiss.
- *
- */
-
 import { useEffect, useRef, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Star, X, Zap } from 'lucide-react';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import {
+  Search, UserCheck, Navigation, MapPin, Wrench, CheckCircle2, FileText, X,
+} from 'lucide-react';
 
-const STATUS_CONFIG = {
-  searching: {
-    emoji: '🔍',
-    title: 'Finding your worker…',
-    body: (w) => 'Scanning nearby workers — sit tight',
-    bg: 'linear-gradient(#1e293b, #1e293b)',
-    glow: 'rgba(59,130,246,0.4)',
-    badge: null,
-  },
-  assigned: {
-    emoji: '⚡',
-    title: (w) => `${w?.name || 'Worker'} accepted your request`,
-    body: (w) => `${w?.rating ? `${w.rating.toFixed(1)}★  ·` : ''} ${w?.jobs ? `${w.jobs}+ jobs completed` : 'Verified worker'}`,
-    bg: 'linear-gradient(#1d4ed8, #1d4ed8)',
-    glow: 'rgba(37,99,235,0.45)',
-    badge: '✓ Matched',
-  },
-  on_the_way: {
-    emoji: '🛵',
-    title: (w) => `${w?.name || 'Worker'} is on the way!`,
-    body: (w) => w?.eta != null ? `ETA: ~${w.eta} min — heading to you now` : 'Heading to your location right now',
-    bg: 'linear-gradient(#0369a1, #0369a1)',
-    glow: 'rgba(2,132,199,0.45)',
-    badge: '📍 En route',
-  },
-  arrived: {
-    emoji: '📍',
-    title: (w) => `${w?.name || 'Worker'} has arrived!`,
-    body: () => 'Worker is at your location — share your OTP to begin',
-    bg: 'linear-gradient(#15803d, #15803d)',
-    glow: 'rgba(21,128,61,0.45)',
-    badge: '🎯 Here',
-  },
-  in_progress: {
-    emoji: '🔧',
-    title: () => 'Service in progress',
-    body: (w) => `${w?.name || 'Worker'} is working on your request`,
-    bg: 'linear-gradient(#7c3aed, #7c3aed)',
-    glow: 'rgba(124,58,237,0.45)',
-    badge: null,
-  },
-  completed: {
-    emoji: '🎉',
-    title: () => 'Service completed!',
-    body: () => 'Hope everything went smoothly — rate your experience',
-    bg: 'linear-gradient(#b45309, #b45309)',
-    glow: 'rgba(180,83,9,0.45)',
-    badge: '✅ Done',
-  },
+/**
+ * A short notice when a job changes state: who, what changed, what (if
+ * anything) the customer should do. White surface, one semantic icon, plain
+ * words; it closes itself after a few seconds and never covers the action.
+ *
+ * `needsYou` overrides the stage when the job is waiting on the customer
+ * (a quote to approve), because that is the one change they must act on.
+ */
+const TONE = {
+  neutral: 'bg-sunken text-ink-700',
+  brand: 'bg-zappy-50 text-zappy-700',
+  success: 'bg-green-50 text-green-700',
+  action: 'bg-amber-50 text-amber-800',
 };
 
-export default function StatusNotificationBanner({ status, workerName, workerRating, workerJobs, etaMinutes }) {
-  const [visible, setVisible]       = useState(false);
-  const [current, setCurrent]       = useState(null);
-  const prevStatusRef               = useRef(null);
-  const timerRef                    = useRef(null);
+const STATES = {
+  searching: { Icon: Search, tone: 'neutral', title: () => 'Finding a verified pro', body: () => 'We will tell you as soon as someone accepts.' },
+  assigned: {
+    Icon: UserCheck, tone: 'brand',
+    title: (w) => `${w.name || 'Your pro'} accepted your booking`,
+    body: (w) => (w.rating ? `Rated ${Number(w.rating).toFixed(1)}${w.jobs ? ` · ${w.jobs} jobs done` : ''}` : 'Verified by ZappyOne'),
+  },
+  on_the_way: {
+    Icon: Navigation, tone: 'brand',
+    title: (w) => `${w.name || 'Your pro'} is on the way`,
+    body: (w) => (w.eta != null ? `Arriving in about ${w.eta} min.` : 'You can follow them on the map.'),
+  },
+  arrived: { Icon: MapPin, tone: 'brand', title: (w) => `${w.name || 'Your pro'} has arrived`, body: () => 'Share your start code when you are ready.' },
+  in_progress: { Icon: Wrench, tone: 'neutral', title: () => 'Work in progress', body: (w) => `${w.name || 'Your pro'} is working on it.` },
+  approval: { Icon: FileText, tone: 'action', title: () => 'Your quote is ready', body: () => 'Review it below. Nothing starts until you approve.' },
+  completed: { Icon: CheckCircle2, tone: 'success', title: () => 'Job completed', body: () => 'Your service report is below. Rate the job when you are ready.' },
+};
+
+export default function StatusNotificationBanner({ status, needsYou = false, workerName, workerRating, workerJobs, etaMinutes }) {
+  const reduce = useReducedMotion();
+  const [current, setCurrent] = useState(null);
+  const prev = useRef(null);
+  const timer = useRef(null);
+  const key = needsYou ? 'approval' : status;
 
   useEffect(() => {
-    if (!status || status === prevStatusRef.current) return;
-    const prev = prevStatusRef.current;
-    prevStatusRef.current = status;
+    if (!key || key === prev.current) return undefined;
+    const first = prev.current === null;
+    prev.current = key;
+    // Nothing to announce on the screen's first paint unless it needs them.
+    if (first && key !== 'approval') return undefined;
+    if (!STATES[key]) return undefined;
+    setCurrent(key);
+    clearTimeout(timer.current);
+    timer.current = setTimeout(() => setCurrent(null), key === 'approval' ? 8000 : 5000);
+    return () => clearTimeout(timer.current);
+  }, [key]);
 
-    // Don't flash on very first mount (searching is the initial state)
-    if (prev === null && status === 'searching') return;
-
-    const cfg = STATUS_CONFIG[status];
-    if (!cfg) return;
-
-    const worker = { name: workerName, rating: workerRating, jobs: workerJobs, eta: etaMinutes };
-    setCurrent({ ...cfg, worker });
-    setVisible(true);
-
-    clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => setVisible(false), 6000);
-  }, [status]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Update ETA in the banner live while it's showing
-  useEffect(() => {
-    if (visible && current && status === 'on_the_way') {
-      setCurrent(prev => prev ? { ...prev, worker: { ...prev.worker, eta: etaMinutes } } : prev);
-    }
-  }, [etaMinutes, visible, status]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  if (!current) return null;
-
-  const cfg = current;
-  const w   = current.worker;
-
-  const title = typeof cfg.title === 'function' ? cfg.title(w) : cfg.title;
-  const body  = typeof cfg.body  === 'function' ? cfg.body(w)  : cfg.body;
+  const cfg = current && STATES[current];
+  const w = { name: workerName, rating: workerRating, jobs: workerJobs, eta: etaMinutes };
 
   return (
     <AnimatePresence>
-      {visible && (
+      {cfg && (
         <motion.div
-          key={`notif-${status}`}
-          initial={{ y: -80, opacity: 0, scale: 0.95 }}
-          animate={{ y: 0,   opacity: 1, scale: 1    }}
-          exit={{    y: -60, opacity: 0, scale: 0.97 }}
-          transition={{ type: 'spring', stiffness: 420, damping: 32 }}
-          className="fixed top-0 inset-x-0 z-[300] px-3 pt-3 pointer-events-none"
+          key={current}
+          role="status"
+          aria-live="polite"
+          initial={reduce ? { opacity: 0 } : { opacity: 0, y: -12 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.18, ease: 'easeOut' }}
+          className="fixed inset-x-3 top-3 z-[90] mx-auto flex max-w-md items-start gap-3 rounded-card border border-line bg-white p-3.5 shadow-float"
         >
-          <motion.div
-            className="max-w-lg mx-auto rounded-2xl overflow-hidden pointer-events-auto"
-            style={{
-              background: cfg.bg,
-              boxShadow: `0 12px 40px ${cfg.glow}, 0 4px 16px rgba(0,0,0,0.25)`,
-            }}
-            animate={{
-              boxShadow: [
-                `0 12px 40px ${cfg.glow}, 0 4px 16px rgba(0,0,0,0.25)`,
-                `0 16px 56px ${cfg.glow}, 0 4px 20px rgba(0,0,0,0.3)`,
-                `0 12px 40px ${cfg.glow}, 0 4px 16px rgba(0,0,0,0.25)`,
-              ],
-            }}
-            transition={{ duration: 2, repeat: Infinity }}
-          >
-            {/* Progress drain bar */}
-            <motion.div
-              className="h-0.5 bg-white/30 origin-left"
-              initial={{ scaleX: 1 }}
-              animate={{ scaleX: 0 }}
-              transition={{ duration: 6, ease: 'linear' }}
-            />
-
-            <div className="px-4 py-3 flex items-center gap-3">
-              {/* Emoji + avatar */}
-              <div className="relative shrink-0">
-                <motion.div
-                  className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center text-2xl"
-                  animate={{ scale: [1, 1.12, 1], rotate: [0, -6, 6, 0] }}
-                  transition={{ duration: 0.6, delay: 0.1 }}
-                >
-                  {cfg.emoji}
-                </motion.div>
-                {cfg.badge && (
-                  <span className="absolute -bottom-1 -right-1 text-[9px] font-black text-white bg-black/30 px-1.5 py-0.5 rounded-full whitespace-nowrap">
-                    {cfg.badge}
-                  </span>
-                )}
-              </div>
-
-              {/* Text */}
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-black text-white leading-tight truncate">{title}</p>
-                <p className="text-[11px] text-white/65 mt-0.5 leading-snug">{body}</p>
-                {/* Worker mini-rating row */}
-                {w?.rating && status !== 'searching' && (
-                  <div className="flex items-center gap-1 mt-1">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        size={9}
-                        strokeWidth={0}
-                        className={i < Math.round(w.rating) ? 'fill-amber-300' : 'fill-white/20'}
-                      />
-                    ))}
-                    <span className="text-[9px] font-bold text-white/50 ml-0.5">{w.rating.toFixed(1)}</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Dismiss */}
-              <motion.button
-                onClick={() => setVisible(false)}
-                className="w-7 h-7 rounded-full bg-white/15 flex items-center justify-center shrink-0"
-                whileTap={{ scale: 0.88 }}
-              >
-                <X size={12} className="text-white/70" />
-              </motion.button>
-            </div>
-          </motion.div>
+          <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-btn ${TONE[cfg.tone]}`}>
+            <cfg.Icon size={18} strokeWidth={2} />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[15px] font-semibold leading-snug text-ink-900">{cfg.title(w)}</span>
+            <span className="block text-[13px] leading-snug text-ink-500">{cfg.body(w)}</span>
+          </span>
+          <button type="button" onClick={() => setCurrent(null)} aria-label="Dismiss"
+            className="-mr-1 -mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-btn text-ink-400 hover:bg-sunken">
+            <X size={16} />
+          </button>
         </motion.div>
       )}
     </AnimatePresence>

@@ -87,15 +87,14 @@ export default function JobTrackingPage({ job, extras = null, startCode = null, 
     <PageTransition>
       <StatusNotificationBanner
         status={status}
+        needsYou={['CUSTOMER_APPROVAL_PENDING', 'AWAITING_CUSTOMER_APPROVAL', 'APPROVAL_REQUIRED'].includes(job.rawStatus)}
         workerName={job.provider?.name}
         workerRating={job.provider?.rating ?? null}
         workerJobs={job.provider?.jobs}
         etaMinutes={eta}
       />
 
-      <div className="min-h-screen pb-[164px]" style={{
-        background: 'radial-gradient(1200px 600px at 15% -10%, #DDE6FB 0%, transparent 55%), linear-gradient(#EEF2FB, #EEF2FB)',
-      }}>
+      <div className="min-h-screen bg-canvas pb-[164px]">
         <AnimatePresence>
           {socketStatus !== 'connected' && !job.terminal && (
             <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
@@ -184,25 +183,21 @@ export default function JobTrackingPage({ job, extras = null, startCode = null, 
         </motion.div>
 
         {/* Bottom bar: rate when done, otherwise help and (when allowed) cancel. */}
-        <div className="fixed inset-x-0 bottom-0 z-30" style={{ background: 'linear-gradient(180deg, rgba(241,243,251,0) 0%, rgba(241,243,251,.92) 26%, #F1F3FB 62%)' }}>
+        <div className="fixed inset-x-0 bottom-0 z-30" style={{ background: 'linear-gradient(180deg, rgba(245,246,248,0) 0%, rgba(245,246,248,.94) 26%, #F5F6F8 62%)' }}>
           <div className="mx-auto w-full max-w-2xl space-y-2.5 px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-4 sm:px-6 lg:max-w-4xl">
             {status === 'completed' && onRate && <RatingPanel onRate={onRate} />}
             {job.terminal ? (
-              <button type="button" onClick={() => nav('/')}
-                className="flex h-14 w-full items-center justify-center rounded-[18px] text-base font-extrabold text-white"
-                style={{ background: 'linear-gradient(#2E86FF, #2E86FF)' }}>
-                Back to Home
+              <button type="button" onClick={() => nav('/')} className="btn-primary w-full">
+                Back to home
               </button>
             ) : (
               <>
-                <button type="button" onClick={() => nav('/support')}
-                  className="flex h-14 w-full items-center justify-center gap-2.5 rounded-[18px] text-base font-extrabold text-white"
-                  style={{ background: 'linear-gradient(#2E86FF, #2E86FF)' }}>
-                  <HeadphonesIcon size={19} /> Need help?
+                <button type="button" onClick={() => nav('/support')} className="btn-outline w-full">
+                  <HeadphonesIcon size={18} /> Get help
                 </button>
                 {cancel && (
                   <button type="button" onClick={() => (cancel.open ? cancel.open() : setCancelOpen(true))}
-                    className="flex h-12 w-full items-center justify-center gap-2 rounded-[16px] bg-white/70 text-sm font-bold text-[#647084] ring-1 ring-[#DBE2EE]">
+                    className="flex h-11 w-full items-center justify-center gap-2 rounded-btn text-[14px] font-semibold text-ink-500 hover:text-red-600">
                     <X size={16} /> Cancel booking
                   </button>
                 )}
