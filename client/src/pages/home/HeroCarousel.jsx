@@ -4,19 +4,26 @@ import { ArrowRight, CheckCircle2, Share2, Smartphone, Zap } from 'lucide-react'
 import { PITCH } from '@shared/components/home/serviceArt';
 
 /**
- * The top of home: a photo carousel of what we do (three quarters) beside one
- * featured service (a quarter). Slides and the card come from the live
- * catalog; a section with no services in it simply has no slide.
+ * The top of home: a photo carousel of everything we do (three quarters)
+ * beside one featured service (a quarter, wide screens only). Every slide is
+ * tied to the live catalog: a slide whose services are not offered is dropped.
  *
  * Photos live in the global assets folder (assets/web/hero, served at /hero).
  */
+/** `services`: catalog codes the slide stands for; it opens the first one offered. */
 const SLIDES = [
-  { domain: 'electronics', tab: 'Phone repair', photo: '/hero/phone-repair.webp', phoneOnly: true },
-  { domain: 'vehicles', tab: 'Bike & car', photo: '/hero/vehicle-care.webp' },
-  { domain: 'events', tab: 'Events', photo: '/hero/events.webp' },
-  { domain: 'pet_services', tab: 'Pet care', photo: '/hero/pet-care.webp' },
+  { key: 'electronics', domain: 'electronics', services: ['mobile_repair', 'mobile', 'laptop_repair', 'laptop'], tab: 'Phone & laptop', photo: '/hero/phone-repair.webp',
+    title: 'Phone or laptop repair', line: 'Fixed at your door. You approve the price before work starts.' },
+  { key: 'two_wheeler', domain: 'vehicles', services: ['two_wheeler'], tab: '2-Wheeler', photo: '/hero/two-wheeler.webp',
+    title: 'Bike trouble, sorted', line: 'A mechanic comes to you, at home or on the road.' },
+  { key: 'four_wheeler', domain: 'vehicles', services: ['four_wheeler'], tab: '4-Wheeler', photo: '/hero/vehicle-care.webp',
+    title: 'Car care at your door', line: 'Checks and repairs where your car is parked.' },
+  { key: 'water_tank_care', domain: 'home_services', services: ['water_tank_care'], tab: 'Water tank', photo: '/hero/water-tank.webp' },
+  { key: 'pet_services', domain: 'pet_services', tab: 'Pet care', photo: '/hero/pet-care.webp', path: '/pet' },
+  { key: 'helping_services', domain: 'helping_services', tab: 'Shopping & returns', photo: '/hero/helping.webp', path: '/helping' },
+  { key: 'events', domain: 'events', tab: 'Events', photo: '/hero/events.webp', path: '/events' },
 ];
-const FEATURED = { domain: 'electronics', service: ['mobile_repair', 'mobile'], photo: '/hero/phone-repair.webp' };
+const FEATURED = { domain: 'electronics', service: ['mobile_repair', 'mobile'], photo: '/hero/phone-bench.webp' };
 const SLIDE_MS = 6000;
 
 function useMedia(query) {
@@ -42,20 +49,21 @@ async function share(service) {
   }
 }
 
-function Slide({ slide, domain, active, onOpen }) {
-  const [title, line] = PITCH[domain.code] || [domain.name, domain.description];
-  const target = domain.services.find((s) => s.available !== false) || domain.services[0];
+function Slide({ slide, domain, target, active, onOpen }) {
+  const [pTitle, pLine] = PITCH[domain.code] || [domain.name, domain.description];
+  const title = slide.title || (slide.services ? target.name : pTitle);
+  const line = slide.line || pLine;
   return (
     <div className="relative h-full w-full shrink-0 snap-center overflow-hidden" aria-hidden={!active}>
       <img src={slide.photo} alt="" className="absolute inset-0 h-full w-full object-cover" loading={active ? 'eager' : 'lazy'} />
       {/* Scrim for legible type over any photo. */}
-      <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/35 to-transparent" />
-      <div className="relative flex h-full max-w-[560px] flex-col justify-center gap-2 px-5 pb-12 sm:gap-3 sm:px-9">
-        <p className="text-[12px] font-semibold uppercase tracking-[0.1em] text-white/80">{domain.name}</p>
-        <h2 className="text-[24px] font-bold leading-[1.15] text-white [text-wrap:balance] sm:text-[36px]">{title}</h2>
-        {line && <p className="hidden max-w-md text-[15px] leading-relaxed text-white/85 sm:block">{line}</p>}
-        <button type="button" tabIndex={active ? 0 : -1} onClick={() => onOpen(target, domain.code === 'events' ? '/events' : undefined)}
-          className="mt-1 inline-flex min-h-[44px] items-center gap-1.5 self-start rounded-btn bg-white px-4 text-[15px] font-semibold text-ink-900 transition-colors hover:bg-sunken">
+      <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/40 to-transparent sm:from-black/70 sm:via-black/35" />
+      <div className="relative flex h-full max-w-[85%] flex-col justify-center gap-1.5 px-4 sm:max-w-[560px] sm:gap-3 sm:px-9 sm:pb-12">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-white/80 sm:text-[12px]">{domain.name}</p>
+        <h2 className="text-[21px] font-bold leading-[1.15] text-white [text-wrap:balance] sm:text-[34px]">{title}</h2>
+        {line && <p className="line-clamp-2 max-w-md text-[13px] leading-snug text-white/85 sm:text-[15px] sm:leading-relaxed">{line}</p>}
+        <button type="button" tabIndex={active ? 0 : -1} onClick={() => onOpen(target, slide.path)}
+          className="mt-1.5 inline-flex min-h-[40px] items-center gap-1.5 self-start rounded-btn bg-white px-3.5 text-[14px] font-semibold text-ink-900 transition-colors hover:bg-sunken sm:min-h-[44px] sm:px-4 sm:text-[15px]">
           Book now <ArrowRight size={16} />
         </button>
       </div>
@@ -97,10 +105,15 @@ function FeaturedCard({ service, photo, onOpen }) {
 }
 
 export default function HeroCarousel({ domains, onOpen }) {
-  const wide = useMedia('(min-width: 1024px)');
   const still = useMedia('(prefers-reduced-motion: reduce)');
   const byCode = new Map(domains.map((d) => [d.code, d]));
-  const slides = SLIDES.filter((s) => byCode.get(s.domain)?.services.length && !(wide && s.phoneOnly));
+  const slides = SLIDES.map((s) => {
+    const services = byCode.get(s.domain)?.services || [];
+    const target = s.services
+      ? s.services.map((c) => services.find((x) => x.code === c)).find(Boolean)
+      : services.find((x) => x.available !== false) || services[0];
+    return target ? { ...s, target } : null;
+  }).filter(Boolean);
   const featuredDomain = byCode.get(FEATURED.domain);
   const featured = featuredDomain?.services.find((s) => FEATURED.service.includes(s.code)) || featuredDomain?.services[0];
 
@@ -122,16 +135,33 @@ export default function HeroCarousel({ domains, onOpen }) {
     return () => clearInterval(t);
   }, [index, paused, still, count, go]);
 
-  // Slide set changes with the width (phone repair moves into the card): start over.
-  useEffect(() => { setIndex(0); track.current?.scrollTo({ left: 0 }); }, [wide]);
+  // Keep the active tab in view when the row scrolls (phones show a few at a time).
+  const tabs = useRef(null);
+  useEffect(() => {
+    const row = tabs.current; const tab = row?.children[index];
+    if (row && tab) row.scrollTo({ left: tab.offsetLeft - row.offsetLeft - 16, behavior: still ? 'auto' : 'smooth' });
+  }, [index, still]);
 
   if (!count) return null;
+
+  const tabRow = (className, overlay = false) => (
+    <div ref={overlay ? undefined : tabs} className={`gap-2 overflow-x-auto no-scrollbar ${className}`} role="tablist">
+      {slides.map((s, i) => (
+        <button key={s.key} type="button" role="tab" aria-selected={i === index} onClick={() => go(i)}
+          className={`min-h-[34px] shrink-0 rounded-btn px-3 text-[13px] font-semibold transition-colors ${
+            i === index ? 'bg-zappy-600 text-white'
+              : overlay ? 'bg-white/90 text-ink-900 hover:bg-white' : 'border border-line bg-white text-ink-700'}`}>
+          {s.tab}
+        </button>
+      ))}
+    </div>
+  );
 
   return (
     <section aria-label="What ZappyOne does" className="grid gap-4 lg:h-[340px] lg:grid-cols-[3fr_1fr]">
       <div
         aria-roledescription="carousel"
-        className="relative h-[220px] overflow-hidden rounded-card bg-ink-900 sm:h-[300px] lg:h-full"
+        className="relative h-[210px] overflow-hidden rounded-card bg-ink-900 sm:h-[300px] lg:h-full"
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => setPaused(false)}
         onFocus={() => setPaused(true)}
@@ -141,21 +171,12 @@ export default function HeroCarousel({ domains, onOpen }) {
         <div ref={track} className="flex h-full snap-x snap-mandatory overflow-x-auto no-scrollbar"
           onScroll={(e) => setIndex(Math.round(e.currentTarget.scrollLeft / e.currentTarget.clientWidth))}>
           {slides.map((s, i) => (
-            <Slide key={s.domain} slide={s} domain={byCode.get(s.domain)} active={i === index} onOpen={onOpen} />
+            <Slide key={s.key} slide={s} domain={byCode.get(s.domain)} target={s.target} active={i === index} onOpen={onOpen} />
           ))}
         </div>
-        {count > 1 && (
-          <div className="absolute bottom-3 left-5 right-5 flex gap-2 overflow-x-auto no-scrollbar sm:bottom-5 sm:left-9" role="tablist">
-            {slides.map((s, i) => (
-              <button key={s.domain} type="button" role="tab" aria-selected={i === index} onClick={() => go(i)}
-                className={`min-h-[32px] shrink-0 rounded-btn px-3 text-[13px] font-semibold transition-colors ${
-                  i === index ? 'bg-zappy-600 text-white' : 'bg-white/90 text-ink-900 hover:bg-white'}`}>
-                {s.tab}
-              </button>
-            ))}
-          </div>
-        )}
+        {count > 1 && tabRow('absolute bottom-5 left-9 right-5 hidden sm:flex', true)}
       </div>
+      {count > 1 && tabRow('-mx-4 -mt-2 flex px-4 sm:hidden')}
       {featured && <FeaturedCard service={featured} photo={FEATURED.photo} onOpen={onOpen} />}
     </section>
   );

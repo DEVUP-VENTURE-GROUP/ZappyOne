@@ -36,7 +36,7 @@ function ModuleCard({ mod, onOpen, index }) {
         )}
         
         {/* Play overlay */}
-        <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity-[2px]">
+        <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
           <div className="w-12 h-12 rounded-full bg-white/90 shadow-lg flex items-center justify-center text-zappy-600 pl-1">
             <Play size={20} className="fill-zappy-600" />
           </div>
