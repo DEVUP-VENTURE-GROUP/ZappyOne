@@ -249,8 +249,8 @@ export default function HomePage() {
         />
 
         {/* Phone: search stays pinned while the rest scrolls (desktop has it in the bar). */}
-        <div className="sticky top-0 z-30 border-b border-zappy-100 bg-zappy-50 md:hidden">
-          <div className="px-4 pb-3 pt-1">{searchBar}</div>
+        <div className="sticky top-0 z-30 rounded-b-sheet bg-zappy-100 md:hidden">
+          <div className="px-4 pb-4 pt-1">{searchBar}</div>
         </div>
 
         <main className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 pb-10 pt-5 sm:gap-10 sm:px-6 sm:pt-7">

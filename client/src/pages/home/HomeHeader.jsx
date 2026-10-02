@@ -3,7 +3,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Bell, ChevronDown, Loader2, MapPin, ScanLine, Search, UserRound } from 'lucide-react';
 import { useListNotificationsQuery } from '@shared/services/api';
-import { ZappyWordmark } from '@shared/components/common/ZappyLogo';
+import { ZappyWordmark, ZAPPY_MARK } from '@shared/components/common/ZappyLogo';
 import VoiceSearchButton from '../../components/common/VoiceSearchButton';
 import { prefetchRoute } from '../../lib/routePrefetch';
 
@@ -60,7 +60,7 @@ function Avatar({ isAuthed, avatar, compact = false }) {
 }
 
 /** Where the pro comes to — the one thing on the header you tap most. */
-function LocationBlock({ loc, onPickLocation, compact = false, align = 'left' }) {
+function LocationBlock({ loc, onPickLocation, compact = false, align = 'left', dropPin = false }) {
   const right = align === 'right';
   return (
     <button type="button" onClick={onPickLocation} className={`group min-w-0 max-w-full ${right ? 'text-right' : 'text-left'}`}
@@ -68,8 +68,15 @@ function LocationBlock({ loc, onPickLocation, compact = false, align = 'left' })
       <span className={`flex min-w-0 items-center gap-1 ${right ? 'justify-end' : ''}`}>
         {loc.loading
           ? <Loader2 size={15} className="shrink-0 animate-spin text-zappy-600" />
-          : <MapPin size={16} strokeWidth={2.4} className="shrink-0 text-amber-500" />}
-        <span className={`truncate font-extrabold leading-tight tracking-[-0.01em] text-zappy-700 ${compact ? 'text-[15px]' : 'text-[19px]'}`}>
+          : dropPin
+            ? (
+              <motion.span className="flex shrink-0" initial={{ y: -14, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
+                transition={{ type: 'spring', stiffness: 520, damping: 14, delay: 0.15 }}>
+                <MapPin size={18} strokeWidth={2.4} className="text-amber-500" />
+              </motion.span>
+            )
+            : <MapPin size={16} strokeWidth={2.4} className="shrink-0 text-amber-500" />}
+        <span className={`truncate font-extrabold leading-tight tracking-[-0.01em] text-zappy-700 ${compact ? 'text-[15px]' : 'text-[21px]'}`}>
           {loc.loading ? 'Finding you…' : loc.primary}
         </span>
         <ChevronDown size={16} strokeWidth={2.6} className="shrink-0 text-zappy-600 transition group-hover:translate-y-0.5" />
@@ -153,8 +160,8 @@ function BrandOrPlace({ loc, onPickLocation }) {
   }
 
   return (
-    <div className="relative h-11 min-w-0 flex-1 overflow-hidden">
-      <AnimatePresence initial={false} mode="popLayout">
+    <div className="relative h-12 min-w-0 flex-1 overflow-hidden">
+      <AnimatePresence mode="popLayout">
         <motion.div
           key={face}
           initial={{ y: '100%', opacity: 0 }}
@@ -165,11 +172,19 @@ function BrandOrPlace({ loc, onPickLocation }) {
         >
           {face === 'brand' ? (
             <button type="button" onClick={() => { setFace('place'); setTick((t) => t + 1); }}
-              aria-label="ZappyOne. Show your service location" className="flex items-center">
-              <ZappyWordmark size={28} />
+              aria-label="ZappyOne. Show your service location" className="flex items-center gap-2">
+              {/* The runner sprints in, then the name follows. */}
+              <motion.img src={ZAPPY_MARK} alt="" style={{ height: 34, width: 'auto' }}
+                initial={{ x: -48, skewX: -12, opacity: 0 }} animate={{ x: 0, skewX: 0, opacity: 1 }}
+                transition={{ type: 'spring', stiffness: 420, damping: 18 }} />
+              <motion.span className="text-[23px] font-extrabold leading-none tracking-[-0.02em]"
+                initial={{ x: -8, opacity: 0 }} animate={{ x: 0, opacity: 1 }}
+                transition={{ duration: 0.3, delay: 0.18, ease: 'easeOut' }}>
+                <span className="text-zappy-600">Zappy</span><span className="text-amber-500">One</span>
+              </motion.span>
             </button>
           ) : (
-            <LocationBlock loc={loc} onPickLocation={onPickLocation} />
+            <LocationBlock loc={loc} onPickLocation={onPickLocation} dropPin />
           )}
         </motion.div>
       </AnimatePresence>
@@ -216,10 +231,10 @@ export default function HomeHeader({ loc, isAuthed, avatar, onPickLocation, sear
       </header>
 
       {/* Phone: light header, scrolls away; search is pinned by the page below it. */}
-      <div className="bg-zappy-50 md:hidden" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+      <div className="bg-zappy-100 md:hidden" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
         {/* Brand and place take turns in one slot. Profile lives in the bottom
             bar, so the phone header keeps the bell (signed in) or Sign in. */}
-        <div className="flex items-center gap-2.5 px-4 pb-2 pt-3">
+        <div className="flex items-center gap-2.5 px-4 pb-2.5 pt-4">
           <BrandOrPlace loc={loc} onPickLocation={onPickLocation} />
           {isAuthed ? (
             <IconButton label={unread ? `${unread} unread notifications` : 'Notifications'} onClick={() => nav('/notifications')} badge={unread}>

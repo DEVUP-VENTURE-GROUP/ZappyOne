@@ -2,6 +2,9 @@
 // its edges on a transparent background (9KB), so it sits on any surface.
 import markUrl from '@assets/web/branding/zappy-mark.webp';
 
+/** The mark's URL, for places that animate its parts. */
+export const ZAPPY_MARK = markUrl;
+
 /**
  * Zappy brand marks.
  *
