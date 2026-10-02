@@ -69,10 +69,10 @@ function LocationBlock({ loc, onPickLocation, compact = false, align = 'left' })
         {loc.loading
           ? <Loader2 size={15} className="shrink-0 animate-spin text-zappy-600" />
           : <MapPin size={16} strokeWidth={2.4} className="shrink-0 text-amber-500" />}
-        <span className={`truncate font-extrabold leading-tight tracking-[-0.01em] text-navy ${compact ? 'text-[15px]' : 'text-[19px]'}`}>
+        <span className={`truncate font-extrabold leading-tight tracking-[-0.01em] text-zappy-700 ${compact ? 'text-[15px]' : 'text-[19px]'}`}>
           {loc.loading ? 'Finding you…' : loc.primary}
         </span>
-        <ChevronDown size={16} strokeWidth={2.6} className="shrink-0 text-navy transition group-hover:translate-y-0.5" />
+        <ChevronDown size={16} strokeWidth={2.6} className="shrink-0 text-zappy-600 transition group-hover:translate-y-0.5" />
       </span>
       {!loc.loading && loc.secondary && (
         <span className={`block truncate text-[12px] text-ink-500 ${compact && !right ? 'max-w-[220px]' : ''}`}>{loc.secondary}</span>
