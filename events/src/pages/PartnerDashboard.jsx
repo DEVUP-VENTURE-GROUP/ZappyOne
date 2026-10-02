@@ -1,3 +1,4 @@
+import { useScrollTopOnChange } from '@shared/components/common/ScrollToTop';
 import { useState, useRef, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectAuth } from '@shared/modules/auth/authSlice';
@@ -1970,6 +1971,7 @@ export default function PartnerDashboard() {
   const { accessToken } = useSelector(selectAuth);
   const [doLogout] = useLogoutMutation();
   const [activeTab, setActiveTab] = useState('overview');
+  useScrollTopOnChange(activeTab);
   const [notifOpen, setNotifOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { data: overview, refetch: refetchOverview } = usePartnerOverviewQuery();
@@ -2083,7 +2085,7 @@ export default function PartnerDashboard() {
           </div>
         </aside>
 
-        <main className="flex-1 overflow-y-auto">
+        <main data-scroll-root className="flex-1 overflow-y-auto">
           <header className="flex items-center justify-between border-b border-slate-200 bg-white px-8 py-4">
             <h1 className="text-[20px] font-semibold capitalize text-navy">{TABS.find((t) => t.id === activeTab)?.label}</h1>
             <button type="button" onClick={() => setNotifOpen(true)} aria-label={`Notifications${unreadNotifs ? `, ${unreadNotifs} unread` : ''}`}

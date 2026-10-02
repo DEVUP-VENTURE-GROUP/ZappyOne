@@ -1,3 +1,4 @@
+import { useScrollTopOnChange } from '@shared/components/common/ScrollToTop';
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { formatPaise } from '@shared/utils/money';
@@ -1531,6 +1532,8 @@ export default function RepairFlowPage({ vertical = 'mobile' }) {
   const [presetProblem, setPresetProblem] = useState(() => searchParams.get('problem') || null);
 
   const [step, setStep] = useState('brand');
+
+  useScrollTopOnChange(step);
   const [skipped, setSkipped] = useState(() => new Set());
   const [brand, setBrand] = useState(null);
   const [productType, setProductType] = useState(null);

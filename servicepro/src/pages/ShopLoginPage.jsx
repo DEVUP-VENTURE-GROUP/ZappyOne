@@ -1,3 +1,4 @@
+import { useScrollTopOnChange } from '@shared/components/common/ScrollToTop';
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
@@ -25,6 +26,7 @@ export default function ShopLoginPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [step, setStep] = useState('phone'); // phone -> otp -> register
+  useScrollTopOnChange(step);
   const [phone, setPhone] = useState('');
   const [digits, setDigits] = useState(['', '', '', '', '', '']);
   const [otpMeta, setOtpMeta] = useState({ cooldownSec: 30, resendsLeft: 3 });

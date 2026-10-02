@@ -1,3 +1,4 @@
+import { useScrollTopOnChange } from '@shared/components/common/ScrollToTop';
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
@@ -52,6 +53,7 @@ export default function LoginPage() {
   const [name, setName]         = useState('');
   const [email, setEmail]       = useState('');
   const [step, setStep]         = useState('phone');
+  useScrollTopOnChange(step);
   const [otpMeta, setOtpMeta]   = useState({ cooldownSec: 30, resendsLeft: 3 });
   const [isNewUser, setIsNewUser] = useState(true);
   const [pendingProfile, setPendingProfile] = useState(null);

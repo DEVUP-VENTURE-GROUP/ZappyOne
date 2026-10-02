@@ -1,3 +1,4 @@
+import { useScrollTopOnChange } from '@shared/components/common/ScrollToTop';
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import {
@@ -32,6 +33,7 @@ export default function PetBookingFlowPage() {
   const { categoryCode } = useParams();
   const nav = useNavigate();
   const [step, setStep] = useState('pets');
+  useScrollTopOnChange(step);
 
   const { data: petsData } = useMyPetsQuery();
   const { data: variantsData } = usePetVariantsQuery({ categoryCode });

@@ -1,3 +1,4 @@
+import { useScrollTopOnChange } from '../../components/common/ScrollToTop';
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -1286,6 +1287,8 @@ export default function ProviderRepairSetupPage() {
   const active = vertical && verticals.includes(vertical) ? vertical : verticals[0];
 
   const [step, setStep] = useState('brands');
+
+  useScrollTopOnChange(step);
   const [brandCodes, setBrandCodes] = useState(null);
   const [cityCode, setCityCode] = useState('');
 

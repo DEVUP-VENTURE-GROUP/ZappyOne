@@ -1,3 +1,4 @@
+import { useScrollTopOnChange } from '../../components/common/ScrollToTop';
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
@@ -175,6 +176,7 @@ export default function WorkerLoginPage({ allowSignup = true, portalLabel = 'Wor
   const [otpDigits, setOtpDigits] = useState(Array(OTP_LEN).fill(''));
   const [name, setName] = useState('');
   const [step, setStep] = useState('phone');
+  useScrollTopOnChange(step);
   const [otpMeta, setOtpMeta] = useState({ cooldownSec: 30, resendsLeft: 3 });
   const [isNewUser, setIsNewUser] = useState(true);
   const pendingOtp = useRef(null);

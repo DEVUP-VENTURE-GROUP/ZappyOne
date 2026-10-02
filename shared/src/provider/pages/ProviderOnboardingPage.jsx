@@ -1,3 +1,4 @@
+import { useScrollTopOnChange } from '../../components/common/ScrollToTop';
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -587,6 +588,8 @@ export default function ProviderOnboardingPage() {
   const { data: status, isLoading } = useProviderOnboardingStatusQuery();
 
   const [step, setStep] = useState('summary');
+
+  useScrollTopOnChange(step);
   const [domain, setDomain] = useState(null);
   const [lineCode, setLineCode] = useState(null);
   const [showRequest, setShowRequest] = useState(false);

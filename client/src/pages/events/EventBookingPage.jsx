@@ -1,3 +1,4 @@
+import { useScrollTopOnChange } from '@shared/components/common/ScrollToTop';
 import { useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -61,6 +62,8 @@ export default function EventBookingPage() {
   const advancePct = (cfg?.advancePaymentPct ?? 20) / 100;
 
   const [step, setStep] = useState(0);
+
+  useScrollTopOnChange(step);
   const [form, setForm] = useState({
     eventDate:     '',
     eventTimeSlot: '',

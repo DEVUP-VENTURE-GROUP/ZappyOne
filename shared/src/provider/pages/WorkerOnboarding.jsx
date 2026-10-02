@@ -10,6 +10,7 @@
  * verification (see /provider/onboarding), so this screen hands them straight
  * there instead of collecting a claim we cannot stand behind.
  */
+import { useScrollTopOnChange } from '../../components/common/ScrollToTop';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -28,6 +29,8 @@ export default function WorkerOnboarding({ onComplete }) {
   const [complete, { isLoading }] = useWorkerCompleteOnboardingMutation();
 
   const [step, setStep] = useState(0);
+
+  useScrollTopOnChange(step);
   const [name, setName] = useState(meData?.worker?.name ?? '');
   const [ecName, setEcName] = useState('');
   const [ecPhone, setEcPhone] = useState('');

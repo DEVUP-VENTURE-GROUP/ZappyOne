@@ -7,6 +7,7 @@ import { setAuth } from '../modules/auth/authSlice';
 import { API_BASE } from '../services/apiBase';
 import { I18nProvider } from '../i18n/I18nProvider';
 import ErrorBoundary from '../components/common/ErrorBoundary';
+import ScrollToTop from '../components/common/ScrollToTop';
 
 const SURFACE = import.meta.env.VITE_CLIENT_SURFACE || '';
 
@@ -54,6 +55,7 @@ export function mountApp({ App, store, roles = null, toastPosition = 'top-center
     if (!ready) return <Spinner />;
     return (
       <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <ScrollToTop />
         <I18nProvider>
           <ErrorBoundary>
             <App />

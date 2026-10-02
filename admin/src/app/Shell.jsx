@@ -237,7 +237,7 @@ export default function AdminDashboard() {
         </header>
 
         {/* Content */}
-        <main className="flex-1 overflow-y-auto">
+        <main data-scroll-root className="flex-1 overflow-y-auto">
           <AnimatePresence mode="wait">
             <motion.div
               key={active}
