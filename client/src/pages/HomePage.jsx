@@ -136,7 +136,9 @@ export default function HomePage() {
   }
 
   /* What we serve here. */
-  const { data: svc } = useGetServiceabilityQuery({ lat: loc.lat, lng: loc.lng }, { skip: loc.lat == null });
+  // A failed check must not hold the grid in skeletons forever: once it has
+  // answered (or failed), the catalog is shown as it is.
+  const { data: svc, isFetching: checkingArea } = useGetServiceabilityQuery({ lat: loc.lat, lng: loc.lng }, { skip: loc.lat == null });
   const { data: catalog, isLoading: loadingCatalog } = useLiveCatalogQuery();
   // Every service shows; whether it can be booked HERE is serviceability's answer.
   // Unknown location → treated as bookable (the flow asks for an address).
@@ -273,7 +275,7 @@ export default function HomePage() {
 
               {/* Intent first: the problem in their words, then the services. */}
               <ProblemChips services={services.filter((x) => x.available !== false)} />
-              {loadingCatalog || (loc.lat != null && !svc)
+              {loadingCatalog || (loc.lat != null && !svc && checkingArea)
                 ? <SkeletonGrid />
                 : <ServiceGrid domains={domains} onOpen={openService} />}
 
