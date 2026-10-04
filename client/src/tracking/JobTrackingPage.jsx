@@ -158,7 +158,7 @@ export default function JobTrackingPage({ job, extras = null, startCode = null, 
           {!['cancelled', 'failed'].includes(status) && (
             <PremiumTimeline steps={steps} activeStepIdx={activeStepIdx} timesByStatus={timesByStatus} />
           )}
-          {!['cancelled', 'failed'].includes(status) && <ActivityFeed events={feedEvents} />}
+          {!['cancelled', 'failed'].includes(status) && <ActivityFeed events={feedEvents} live={!job.terminal} />}
 
           {['cancelled', 'failed'].includes(status) && (
             <motion.div variants={fadeInUp} className="rounded-[24px] bg-white p-6 text-center ring-1 ring-slate-900/5 lg:[column-span:all]">

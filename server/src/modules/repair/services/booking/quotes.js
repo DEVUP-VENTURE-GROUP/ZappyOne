@@ -66,8 +66,20 @@ async function submitQuote({
     amountPaise: i.amountPaise != null ? i.amountPaise : (i.unitPricePaise || 0) * (i.quantity || 1),
   }));
 
+  /*
+   * The quoted work, plus the same customer platform fee and discount the
+   * booking was made with, then tax: the rule every repair bill follows
+   * (pricing.service buildPriceSnapshot). An inspection-only visit charged no
+   * platform fee, so the repair it leads to takes the current admin fee.
+   */
   const subtotalPaise = priced.reduce((sum, i) => sum + i.amountPaise, 0);
-  const taxPaise = Math.round((subtotalPaise * (cfg.taxPct || 0)) / 100);
+  const snap = booking.priceSnapshot || {};
+  const platformFeePaise = snap.resolutionPath === 'inspection_only'
+    ? (cfg.platformFeePaise || 0)
+    : (snap.platformFeePaise ?? cfg.platformFeePaise ?? 0);
+  const discountPaise = Math.min(snap.discountPaise || 0, subtotalPaise + platformFeePaise);
+  const taxablePaise = Math.max(0, subtotalPaise + platformFeePaise - discountPaise);
+  const taxPaise = Math.round((taxablePaise * (cfg.taxPct || 0)) / 100);
 
   /**
    * A fault found mid-repair belongs on the booking, not only on the quote.
@@ -94,8 +106,10 @@ async function submitQuote({
     qualityCode,
     items: priced,
     subtotalPaise,
+    platformFeePaise,
+    discountPaise,
     taxPaise,
-    totalPaise: subtotalPaise + taxPaise,
+    totalPaise: taxablePaise + taxPaise,
     warrantyDays,
     estimatedDurationMin,
     status: 'sent',
@@ -202,7 +216,11 @@ async function respondToQuote({ quoteId, userId, decision, reason = '' }) {
     booking.priceSnapshot = {
       ...booking.priceSnapshot,
       subtotalPaise: quote.subtotalPaise,
+      platformFeePaise: quote.platformFeePaise || 0,
+      discountPaise: quote.discountPaise || 0,
       taxPaise: quote.taxPaise,
+      // ZappyOne's cut follows the work actually approved, at the admin rate.
+      commissionPaise: Math.round(((quote.subtotalPaise || 0) * (cfg.commissionPct || 0)) / 100),
       inspectionCreditPaise: creditPaise,
       totalPaise: Math.max(0, quote.totalPaise - creditPaise),
       warrantyDays: quote.warrantyDays,

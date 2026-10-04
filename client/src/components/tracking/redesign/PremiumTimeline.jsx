@@ -31,8 +31,10 @@ export default function PremiumTimeline({ steps = STEPS, activeStepIdx, timesByS
 
       <div className="flex flex-col">
         {steps.map((s, i) => {
-          const done    = activeStepIdx > i;
-          const current = activeStepIdx === i;
+          // The final step reached is finished, not "in progress".
+          const finalReached = activeStepIdx === steps.length - 1 && i === steps.length - 1;
+          const done    = activeStepIdx > i || finalReached;
+          const current = activeStepIdx === i && !finalReached;
           // "searching" and "created" statuses map to the first step
           const at = timesByStatus[s.key];
 

@@ -68,6 +68,8 @@ const quoteSchema = new mongoose.Schema(
     items: { type: [quoteItemSchema], default: [] },
 
     subtotalPaise: { type: Number, required: true, min: 0 },
+    /** ZappyOne's fee on the customer's bill, carried from the booking (admin-set). */
+    platformFeePaise: { type: Number, default: 0, min: 0 },
     taxPaise: { type: Number, default: 0, min: 0 },
     discountPaise: { type: Number, default: 0, min: 0 },
     totalPaise: { type: Number, required: true, min: 0 },
