@@ -118,13 +118,20 @@ export const api = createApi({
   // Keep fetched data cached for 5 min after a component unmounts, so jumping
   // back to a tab shows data instantly (no skeleton) instead of refetching.
   keepUnusedDataFor: 300,
-  tagTypes: ['Account', 'AdminTeam', 'Payments', 'Me', 'Order', 'Worker', 'Earnings', 'AdminMetrics', 'Kyc', 'Plan', 'Subscription', 'Wallet', 'Notification', 'AdminUsers', 'Disputes', 'Payouts', 'Incentives', 'CancellationConfig', 'PricingCfg', 'AuditLogs', 'Addresses', 'Ad', 'Promo', 'Gamification', 'Recommendations', 'FeatureFlags', 'SupportTickets', 'Referral', 'ShieldFund', 'EventTheme', 'EventBooking', 'EventPartner', 'EventConfig', 'EventCategory', 'PartnerNotification', 'Fraud', 'Zone', 'City', 'PaymentMethods', 'UserDisputes', 'UserTickets', 'AdminAppeals', 'AdminTraining', 'WorkerGoals', 'Plans', 'Content', 'Rewards', 'WorkerOps', 'ReadyMode', 'Shop', 'ShopWorkers', 'ShopKyc',
+  tagTypes: ['JobChat', 'Account', 'AdminTeam', 'Payments', 'Me', 'Order', 'Worker', 'Earnings', 'AdminMetrics', 'Kyc', 'Plan', 'Subscription', 'Wallet', 'Notification', 'AdminUsers', 'Disputes', 'Payouts', 'Incentives', 'CancellationConfig', 'PricingCfg', 'AuditLogs', 'Addresses', 'Ad', 'Promo', 'Gamification', 'Recommendations', 'FeatureFlags', 'SupportTickets', 'Referral', 'ShieldFund', 'EventTheme', 'EventBooking', 'EventPartner', 'EventConfig', 'EventCategory', 'PartnerNotification', 'Fraud', 'Zone', 'City', 'PaymentMethods', 'UserDisputes', 'UserTickets', 'AdminAppeals', 'AdminTraining', 'WorkerGoals', 'Plans', 'Content', 'Rewards', 'WorkerOps', 'ReadyMode', 'Shop', 'ShopWorkers', 'ShopKyc',
     'RepairCatalog', 'RepairConfig', 'RepairPricing', 'RepairRequests', 'RepairBookings', 'RepairProvider', 'MyAssets',
     'HelpingConfig', 'HelpingTasks', 'HelpingAvailable', 'AdminHelpingTasks',
     'PetCatalog', 'MyPets', 'PetBookings', 'PetAvailable', 'PetRecurring', 'AdminPetBookings', 'AdminPetPricing', 'AdminPetCapabilities',
     'RepairIdentification', 'Onboarding', 'AdminBookings'],
   endpoints: (b) => ({
     // --- Auth ---
+    // Messages between a customer and the provider on any job (jobs/job-chat).
+    jobChat: b.query({ query: (id) => `/jobs/${id}/chat`, providesTags: (r, e, id) => [{ type: 'JobChat', id }] }),
+    sendJobChat: b.mutation({
+      query: ({ id, text }) => ({ url: `/jobs/${id}/chat`, method: 'POST', body: { text } }),
+      invalidatesTags: (r, e, a) => [{ type: 'JobChat', id: a.id }],
+    }),
+
     // Account: password, verified email and first-time setup (every account type).
     accountMe: b.query({ query: () => '/account/me', providesTags: ['Account'] }),
     setAccountName: b.mutation({ query: (body) => ({ url: '/account/name', method: 'POST', body }), invalidatesTags: ['Account', 'Me'] }),
@@ -2405,6 +2412,9 @@ export const {
   useAdminShieldTriggerPayoutMutation,
   useAdminShieldWriteOffFeeMutation,
   useAdminShieldUpdateFeeScheduleMutation,
+  // Job chat
+  useJobChatQuery,
+  useSendJobChatMutation,
   // Account
   useAccountMeQuery,
   useSetAccountNameMutation,

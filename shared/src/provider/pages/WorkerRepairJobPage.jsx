@@ -1,3 +1,4 @@
+import JobChatButton from '../../components/jobs/JobChatButton';
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
@@ -499,6 +500,7 @@ export default function WorkerRepairJobPage() {
           <p className="t-label">Repair job</p>
           <p className="font-semibold text-[#0F172A]">{booking.reference}</p>
         </div>
+        <JobChatButton jobId={booking._id} className="ml-auto" />
       </div></header>
 
       <div className="max-w-lg lg:max-w-2xl mx-auto px-4 pt-4 space-y-3">

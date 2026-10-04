@@ -1,3 +1,4 @@
+import JobChatButton from '../../components/jobs/JobChatButton';
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -111,6 +112,7 @@ export default function WorkerHelpingJobPage() {
           <h1 className="text-lg font-black text-[#0F172A] truncate">{task.title || task.reference}</h1>
           <p className="text-xs text-slate-400">{task.status.replace(/_/g, ' ')}</p>
         </div>
+        <JobChatButton jobId={task._id} className="ml-auto shrink-0" />
       </div>
 
       <Shell>

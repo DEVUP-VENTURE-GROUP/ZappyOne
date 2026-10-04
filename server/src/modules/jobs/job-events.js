@@ -197,4 +197,4 @@ async function notifyMoved(kind, doc, previous) {
   });
 }
 
-module.exports = { announce, announceOnSave, announceAssigned, alertNearbyProviders, notifyMoved };
+module.exports = { announce, announceOnSave, announceAssigned, alertNearbyProviders, notifyMoved, toProvider, push };

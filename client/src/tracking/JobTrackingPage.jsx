@@ -16,6 +16,7 @@ import {
 } from '../components/tracking/redesign';
 import { staggerContainer, fadeInUp } from '../lib/animations';
 import StartCodeCard from './StartCodeCard';
+import JobChat from '@shared/components/jobs/JobChat';
 
 /**
  * Live tracking — one page for every kind of job.
@@ -42,6 +43,7 @@ export default function JobTrackingPage({ job, extras = null, startCode = null, 
   const nav = useNavigate();
   const mapRef = useRef(null);
   const [sosOpen, setSosOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const socketStatus = useSocketStatus();
@@ -143,6 +145,7 @@ export default function JobTrackingPage({ job, extras = null, startCode = null, 
               <WorkerRichCard
                 job={job} eta={eta} status={status}
                 onCall={job.provider.phone ? () => { window.location.href = `tel:${job.provider.phone}`; } : undefined}
+                onChat={job.kind !== 'order' ? () => setChatOpen(true) : undefined}
                 onLive={showMap ? () => mapRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }) : undefined}
               />
             </div>
@@ -253,6 +256,9 @@ export default function JobTrackingPage({ job, extras = null, startCode = null, 
               </motion.div>
             </motion.div>
           )}
+        </AnimatePresence>
+        <AnimatePresence>
+          {chatOpen && <JobChat jobId={job.id} title={job.provider?.name || `Your ${job.noun || 'pro'}`} onClose={() => setChatOpen(false)} />}
         </AnimatePresence>
       </div>
     </PageTransition>

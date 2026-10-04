@@ -1,3 +1,4 @@
+import JobChatButton from '../../components/jobs/JobChatButton';
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Loader2, Navigation, PawPrint, AlertTriangle } from 'lucide-react';
@@ -120,6 +121,7 @@ export default function WorkerPetJobPage() {
       <div className="sticky top-0 z-10 bg-white border-b border-slate-100 px-4 py-3 flex items-center gap-3">
         <button type="button" onClick={() => nav(-1)} className="p-1 -ml-1"><ArrowLeft size={20} /></button>
         <h1 className="text-lg font-black text-[#0F172A]">{booking.reference}</h1>
+        <JobChatButton jobId={booking._id} className="ml-auto" />
       </div>
 
       <div className="max-w-lg mx-auto px-4 py-4 space-y-3 pb-10">

@@ -48,4 +48,28 @@ router.post('/:id/assign',
     } catch (err) { next(err); }
   });
 
+/**
+ * Messages between the customer and the provider on any job (jobs/job-chat).
+ * The signed-in role decides which side of the conversation you are on.
+ */
+const actorOf = (req) => ({ kind: req.auth.role, id: String(req.auth.sub) });
+
+router.get('/:id/chat',
+  authenticate, requireRole('user', 'worker', 'shop'),
+  async (req, res, next) => {
+    try {
+      res.json(await require('./job-chat.service').list({ jobId: req.params.id, actor: actorOf(req), before: req.query.before }));
+    } catch (err) { next(err); }
+  });
+
+router.post('/:id/chat',
+  authenticate, requireRole('user', 'worker', 'shop'),
+  makeLimiter({ windowMs: 60_000, max: 30, prefix: 'jobchat' }),
+  validate(Joi.object({ text: Joi.string().trim().min(1).max(1000).required() })),
+  async (req, res, next) => {
+    try {
+      res.status(201).json(await require('./job-chat.service').send({ jobId: req.params.id, actor: actorOf(req), text: req.body.text }));
+    } catch (err) { next(err); }
+  });
+
 module.exports = router;
