@@ -81,7 +81,7 @@ export default function SmartMatchSheet({ worker, onDismiss }) {
               <div className="flex items-center gap-2 mt-0.5">
                 <Star size={11} className="text-amber-400 fill-amber-400" />
                 <span className="text-xs font-semibold text-slate-700">
-                  {worker?.rating?.toFixed?.(1) || '4.8'}
+                  {worker?.rating ? Number(worker.rating).toFixed(1) : 'New'}
                 </span>
                 <span className="text-slate-300 text-xs">·</span>
                 <span className="text-xs text-slate-500">{worker?.completedJobs || 0}+ jobs</span>

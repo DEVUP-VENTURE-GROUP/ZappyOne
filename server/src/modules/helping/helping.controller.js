@@ -13,6 +13,7 @@ const pricingService = require('./services/pricing.service');
 const s3Service = require('../../core/storage/s3');
 const Worker = require('../worker/worker.model');
 const { providerCard } = require('../worker/provider-card');
+const { areaOf } = require('../jobs/privacy');
 const { approvedLines, assertApproved, lineOf, HELPING_LINE } = require('../onboarding/eligibility');
 const { announce } = require('../jobs/job-events');
 const { assertStartCode } = require('../jobs/start-code');
@@ -138,7 +139,7 @@ async function getTask(req, res, next) {
     const introduced = !NOT_YET_INTRODUCED.includes(task.status);
     res.json({
       task: signed,
-      provider: introduced ? await providerCard(task, { fallbackName: 'Your helper' }) : null,
+      provider: introduced ? await providerCard(task, { fallbackName: 'Your helper', active: !require('../jobs/kinds').KINDS.helping.ops.terminal.includes(task.status) }) : null,
       canCancel: CANCELLABLE_FROM.includes(task.status),
       // Shown as two figures, always.
       authorisation: pricingService.authorisationTotal(task.charge, task.itemMoney?.budgetPaise || 0),
@@ -298,8 +299,10 @@ async function listAvailable(req, res, next) {
         // Flagged separately: this is money they may need to front.
         itemBudgetPaise: t.itemMoney?.budgetPaise || 0,
         advanceRequired: t.itemMoney?.paymentModel === 'worker_advance',
-        pickupAddress: t.pickupLocation?.address,
-        destinationAddress: t.destination?.address,
+        // The customer's end is the area only until the task is taken; the store's
+        // address is public and needed to judge the trip (jobs/privacy).
+        pickupAddress: ['return', 'exchange'].includes(t.serviceType) ? areaOf(t.pickupLocation?.address) : t.pickupLocation?.address,
+        destinationAddress: ['return', 'exchange'].includes(t.serviceType) ? t.destination?.address : areaOf(t.destination?.address),
         scheduledAt: t.scheduledAt,
       })),
     });

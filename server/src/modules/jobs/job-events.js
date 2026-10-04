@@ -15,6 +15,7 @@ const { redis } = require('../../config/redis');
 const logger = require('../../core/logger');
 const { haversineKm } = require('../../core/geo/distance');
 const { KINDS, lineOf, providerOf } = require('./kinds');
+const { areaOf, roughCoords } = require('./privacy');
 
 /** Who cancelled decides who hears about it: the provider only when it wasn't them. */
 const lastActor = (doc) => (doc.statusHistory || []).at(-1)?.byRole || (doc.cancelledBy === 'user' ? 'user' : '');
@@ -132,12 +133,13 @@ async function alertNearbyProviders(kind, doc) {
     const title = `New ${k.label} job near you`;
     await Promise.all(reach.map((p) => {
       toProvider(p.kind, p.id, 'job.available', {
-        kind, id: String(doc._id), reference: doc.reference, line, area: start?.address || '', km: p.km,
-        coordinates: start ? [start.lng, start.lat] : null, ...(k.open.summary ? k.open.summary(doc) : {}),
+        // Before anyone accepts: the area and a rounded pin, never the house (jobs/privacy).
+        kind, id: String(doc._id), reference: doc.reference, line, area: areaOf(start?.address), km: p.km,
+        coordinates: start ? roughCoords([start.lng, start.lat]) : null, ...(k.open.summary ? k.open.summary(doc) : {}),
       });
       return push(p, {
         title,
-        body: [p.km != null ? `${p.km.toFixed(1)} km away` : null, start?.address].filter(Boolean).join(' · ') || 'Open the app to take it.',
+        body: [p.km != null ? `${p.km.toFixed(1)} km away` : null, areaOf(start?.address)].filter(Boolean).join(' · ') || 'Open the app to take it.',
         deepLink: k.open.listPath,
         data: { kind, id: String(doc._id) },
       });

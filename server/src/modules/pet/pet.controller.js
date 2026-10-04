@@ -22,6 +22,7 @@ const paymentService = require('./services/payment.service');
 const PROVIDER_SETTABLE = ['PROVIDER_EN_ROUTE', 'PROVIDER_ARRIVED', 'PET_HANDOVER', 'SERVICE_STARTED', 'SERVICE_PAUSED'];
 const s3Service = require('../../core/storage/s3');
 const { providerCard } = require('../worker/provider-card');
+const { areaOf } = require('../jobs/privacy');
 const { approvedLines, assertApproved, lineOf } = require('../onboarding/eligibility');
 const { announce } = require('../jobs/job-events');
 const { KINDS } = require('../jobs/kinds');
@@ -239,7 +240,7 @@ async function getBooking(req, res, next) {
     if (req.auth.role !== 'user') delete booking.handoverOtp;
     res.json({
       booking: await signBooking(booking),
-      provider: introduced ? await providerCard(booking, { fallbackName: 'Your pet pro' }) : null,
+      provider: introduced ? await providerCard(booking, { fallbackName: 'Your pet pro', active: !require('../jobs/kinds').KINDS.pet.ops.terminal.includes(booking.status) }) : null,
       canCancel: CANCELLABLE_FROM.includes(booking.status),
     });
   } catch (err) { next(err); }
@@ -326,7 +327,8 @@ async function listAvailableBookings(req, res, next) {
         categoryCode: b.categoryCode,
         serviceMode: b.serviceMode,
         pets: (b.pets || []).map((pet) => ({ snapshot: { name: pet.snapshot?.name, species: pet.snapshot?.species, size: pet.snapshot?.size } })),
-        serviceLocation: { address: b.serviceLocation?.address || '' },
+        // Not yours yet: the area only (jobs/privacy). The address comes with the job.
+        serviceLocation: { address: areaOf(b.serviceLocation?.address) },
         km: at?.length === 2 && b.serviceLocation?.coordinates?.length === 2
           ? Number(haversineKm(at[1], at[0], b.serviceLocation.coordinates[1], b.serviceLocation.coordinates[0]).toFixed(1)) : null,
         scheduledAt: b.scheduledAt,

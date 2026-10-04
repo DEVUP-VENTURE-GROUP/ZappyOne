@@ -122,7 +122,10 @@ async function getBooking(req, res, next) {
      * move, and naming someone who never turns up is worse than naming nobody.
      */
     const introduced = !['PENDING', 'CONFIRMED', 'PROVIDER_ASSIGNED'].includes(booking.status);
-    const provider = introduced ? await providerCard(booking, { fallbackName: 'Your technician' }) : null;
+    const provider = introduced ? await providerCard(booking, {
+      fallbackName: 'Your technician',
+      active: !require('../../jobs/kinds').KINDS.repair.ops.terminal.includes(booking.status),
+    }) : null;
 
     /**
      * Whether this booking can still be cancelled — decided HERE.

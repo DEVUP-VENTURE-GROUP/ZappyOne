@@ -21,7 +21,10 @@ async function listJobs(req, res, next) {
       filter.status = { $nin: ['COMPLETED', 'CANCELLED', 'REJECTED', 'EXPIRED', 'FAILED', 'REFUNDED'] };
     }
     const bookings = await RepairBooking.find(filter).sort({ createdAt: -1 }).limit(50).lean();
-    res.json({ bookings });
+    // A finished job keeps its record, but not the customer's home address (jobs/privacy).
+    const DONE = ['COMPLETED', 'CANCELLED', 'REJECTED', 'EXPIRED', 'FAILED', 'REFUNDED'];
+    const { areaOnly } = require('../../../jobs/privacy');
+    res.json({ bookings: bookings.map((b) => (DONE.includes(b.status) ? { ...b, location: areaOnly(b.location) } : b)) });
   } catch (err) { next(err); }
 }
 
