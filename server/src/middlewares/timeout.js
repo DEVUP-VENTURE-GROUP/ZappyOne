@@ -21,7 +21,7 @@ function timeoutMiddleware(ms = DEFAULT_TIMEOUT_MS) {
     const timer = setTimeout(() => {
       if (res.headersSent) return; // already responded, nothing to do
       res.status(503).json({
-        error: 'Request timed out. The server took too long to respond. Please try again.',
+        error: 'That took longer than expected. Please try again.',
         code: 'REQUEST_TIMEOUT',
         requestId: req.id,
       });

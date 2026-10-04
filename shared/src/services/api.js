@@ -134,6 +134,8 @@ export const api = createApi({
 
     // Account: password, verified email and first-time setup (every account type).
     accountMe: b.query({ query: () => '/account/me', providesTags: ['Account'] }),
+    // What sign-in may offer before anyone is signed in (email only once mail is set up).
+    accountCapabilities: b.query({ query: () => '/account/capabilities', keepUnusedDataFor: 3600 }),
     setAccountName: b.mutation({ query: (body) => ({ url: '/account/name', method: 'POST', body }), invalidatesTags: ['Account', 'Me'] }),
     setAccountPassword: b.mutation({ query: (body) => ({ url: '/account/password', method: 'POST', body }), invalidatesTags: ['Account'] }),
     startEmailVerification: b.mutation({ query: (body) => ({ url: '/account/email', method: 'POST', body }), invalidatesTags: ['Account'] }),
@@ -2430,6 +2432,7 @@ export const {
   useSendJobChatMutation,
   // Account
   useAccountMeQuery,
+  useAccountCapabilitiesQuery,
   useSetAccountNameMutation,
   useSetAccountPasswordMutation,
   useStartEmailVerificationMutation,

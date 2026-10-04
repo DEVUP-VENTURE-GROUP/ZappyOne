@@ -33,6 +33,11 @@ const self = (req) => ({ role: req.auth.role, id: req.auth.sub });
 const onlyAccounts = (req, res, next) => (ROLES.includes(req.auth?.role) ? next() : res.status(403).json({ error: 'Not available for this account', code: 'BAD_ROLE' }));
 const mailLimiter = makeLimiter({ windowMs: 15 * 60_000, max: 10, prefix: 'acctmail' });
 
+/** What sign-in screens may offer before anyone is signed in. */
+router.get('/capabilities', (req, res) => {
+  res.json({ email: require('../../core/mail/mailer').isConfigured() });
+});
+
 router.get('/me', authenticate, onlyAccounts, async (req, res, next) => {
   try { res.json(await svc.getStatus(req.auth.role, req.auth.sub)); } catch (e) { next(e); }
 });

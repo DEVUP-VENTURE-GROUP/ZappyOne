@@ -42,7 +42,7 @@ export default function LoginSecurityCard({ className = '' }) {
     <section className={`rounded-card border border-line bg-white ${className}`}>
       <p className="border-b border-line px-4 py-3 text-[15px] font-bold text-ink-900">Login & security</p>
 
-      <div className="border-b border-line p-4">
+      <div className={`p-4 ${st.mailConfigured ? 'border-b border-line' : ''}`}>
         <div className="flex items-center gap-3">
           <span className="flex h-9 w-9 items-center justify-center rounded-btn bg-sunken text-ink-700"><KeyRound size={16} /></span>
           <span className="min-w-0 flex-1">
@@ -62,7 +62,8 @@ export default function LoginSecurityCard({ className = '' }) {
         )}
       </div>
 
-      <div className="p-4">
+      {/* The email row appears once outgoing mail is set up; until then it could not be confirmed. */}
+      {st.mailConfigured && <div className="p-4">
         <div className="flex items-center gap-3">
           <span className="flex h-9 w-9 items-center justify-center rounded-btn bg-sunken text-ink-700"><Mail size={16} /></span>
           <span className="min-w-0 flex-1">
@@ -82,7 +83,7 @@ export default function LoginSecurityCard({ className = '' }) {
             </button>
           </form>
         )}
-      </div>
+      </div>}
     </section>
   );
 }

@@ -657,7 +657,7 @@ function DiagnoseStep({ vertical, problem, onResolved }) {
       setState(res);
       if (res.complete) onResolved(res.diagnosis, nextAnswers, nextTranscript);
     } catch (err) {
-      toast.error(err?.data?.error || 'Something went wrong');
+      toast.error(err?.data?.error || 'That did not go through. Please try again.');
     }
   }
 

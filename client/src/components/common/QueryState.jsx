@@ -75,7 +75,7 @@ export function ErrorState({ onRetry, message, className = '' }) {
       </div>
       <h3 className="text-base font-extrabold text-slate-900">{offline ? "You're offline" : "Couldn't load this"}</h3>
       <p className="text-sm text-slate-500 mt-1 max-w-[16rem]">
-        {message || (offline ? 'Check your connection and try again.' : 'Something went wrong on our end.')}
+        {message || (offline ? 'Check your connection and try again.' : 'This did not load. Pull down or tap retry.')}
       </p>
       {onRetry && (
         <button onClick={onRetry}

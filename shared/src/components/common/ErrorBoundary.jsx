@@ -42,15 +42,15 @@ export default class ErrorBoundary extends Component {
 
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 px-6 text-center">
-        <div className="w-16 h-16 rounded-2xl bg-rose-50 flex items-center justify-center mb-5">
-          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#f43f5e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
-            <line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
+        <div className="w-16 h-16 rounded-2xl bg-zappy-50 flex items-center justify-center mb-5">
+          {/* A refresh arrow, not a warning sign: this is a quick reload, not an alarm. */}
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1F4FD8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 12a9 9 0 1 1-3-6.7L21 8" /><path d="M21 3v5h-5" />
           </svg>
         </div>
-        <h1 className="text-xl font-extrabold text-slate-900">Something went wrong</h1>
+        <h1 className="text-xl font-extrabold text-slate-900">Let&apos;s load that again</h1>
         <p className="text-sm text-slate-500 mt-1.5 max-w-xs">
-          A part of the app hit an unexpected error. Your data is safe — let’s get you back on track.
+          This screen needs a quick refresh. Your bookings and details are safe.
         </p>
         <div className="flex items-center gap-2.5 mt-6">
           <button onClick={this.reset}

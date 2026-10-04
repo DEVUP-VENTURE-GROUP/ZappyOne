@@ -56,7 +56,7 @@ export default function AccountSetup({ appName = 'ZappyOne', intro, onDone, onSi
     try {
       if (askName) await setName({ name: name.trim() }).unwrap();
       if (askPassword) await setPassword({ newPassword: pw }).unwrap();
-      const wantEmail = email.trim().toLowerCase();
+      const wantEmail = st.mailConfigured ? email.trim().toLowerCase() : '';
       if (wantEmail && !(st.emailVerified && st.email === wantEmail) && st.pendingEmail !== wantEmail) {
         const r = await startEmail({ email: wantEmail }).unwrap();
         setSentTo(r.emailSent ? wantEmail : null);
@@ -110,7 +110,8 @@ export default function AccountSetup({ appName = 'ZappyOne', intro, onDone, onSi
             </>
           )}
 
-          <div>
+          {/* Email is asked for only once we can send the link that confirms it. */}
+          {st.mailConfigured && <div>
             <label htmlFor="setup-email" className="mb-1.5 block text-[13px] font-semibold text-ink-700">
               Email {st.emailRequired ? <span className="text-red-600">*</span> : <span className="font-normal text-ink-400">(optional)</span>}
             </label>
@@ -119,7 +120,7 @@ export default function AccountSetup({ appName = 'ZappyOne', intro, onDone, onSi
               {st.emailRequired ? 'For statements, receipts and resetting your password. We send a link to confirm it.' : 'For receipts and resetting your password for free. We send a link to confirm it.'}
             </p>
             {!emailOk && <p className="mt-1 text-[12px] font-semibold text-red-700">That email does not look right</p>}
-          </div>
+          </div>}
 
           <button type="submit" disabled={!ready || saving} className="btn-primary w-full">
             {saving && <Loader2 size={16} className="animate-spin" />} Continue

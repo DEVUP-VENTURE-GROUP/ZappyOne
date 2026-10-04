@@ -13,7 +13,7 @@ const { startMongo, stopMongo } = require('./helpers');
 
 jest.setTimeout(90000);
 
-let app; let svc; let mailer; let User; let Shop; let redis;
+let app; let svc; let mailer; let mailOn; let User; let Shop; let redis;
 const sent = [];
 
 beforeAll(async () => {
@@ -25,6 +25,7 @@ beforeAll(async () => {
   Shop = require('../src/modules/shop/shop.model');
   ({ redis } = require('../src/config/redis'));
   jest.spyOn(mailer, 'sendMail').mockImplementation(async (m) => { sent.push(m); return { sent: true }; });
+  mailOn = jest.spyOn(mailer, 'isConfigured').mockReturnValue(true);
 });
 afterAll(stopMongo);
 beforeEach(async () => { sent.length = 0; await redis.flushall(); });
@@ -108,6 +109,34 @@ test('HTTP password login: portal cookie, and the wrong portal is refused', asyn
   const wrong = await request(app).post('/api/auth/password/login').set('X-Client-Type', 'events')
     .send({ role: 'user', identifier: u.phone, password: 'webpass12' });
   expect(wrong.status).toBe(403);
+});
+
+test('without a mail server: no email asked for or offered, and a reset goes to the phone', async () => {
+  mailOn.mockReturnValue(false);
+  const auth = require('../src/modules/auth/auth.service');
+  const otp = jest.spyOn(auth, 'requestOtp').mockResolvedValue({ ok: true });
+  try {
+    const s = await Shop.collection.insertOne({ phone: '9800000777', businessName: 'Fix Hub', ownerName: 'Arun' });
+    expect(await svc.getStatus('shop', s.insertedId)).toMatchObject({ mailConfigured: false, emailRequired: false, needs: { email: false } });
+    await expect(svc.startEmailVerification({ role: 'shop', id: s.insertedId, email: 'a@b.co', baseUrl: 'http://x' }))
+      .rejects.toMatchObject({ code: 'EMAIL_UNAVAILABLE' });
+
+    const u = await customer({ name: 'Lata', email: 'lata@example.com', emailVerified: true });
+    const out = await svc.requestPasswordReset({ role: 'user', identifier: 'lata@example.com', baseUrl: 'http://x' });
+    expect(out).toMatchObject({ channel: 'sms' });
+    expect(otp).toHaveBeenCalledWith(u.phone, 'user');
+    expect((await request(app).get('/api/account/capabilities')).body).toEqual({ email: false });
+  } finally { mailOn.mockReturnValue(true); otp.mockRestore(); }
+});
+
+test('a reset email that fails to send falls back to the phone code', async () => {
+  const auth = require('../src/modules/auth/auth.service');
+  const otp = jest.spyOn(auth, 'requestOtp').mockResolvedValue({ ok: true });
+  mailer.sendMail.mockImplementationOnce(async () => ({ sent: false, reason: 'send_failed' }));
+  try {
+    await customer({ name: 'Imran', email: 'imran@example.com', emailVerified: true });
+    expect(await svc.requestPasswordReset({ role: 'user', identifier: 'imran@example.com', baseUrl: 'http://x' })).toMatchObject({ channel: 'sms' });
+  } finally { otp.mockRestore(); }
 });
 
 void mongoose;

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { Loader2, ArrowLeft, MailCheck } from 'lucide-react';
-import { usePasswordLoginMutation, useForgotPasswordMutation, useResetPasswordMutation } from '../../services/api';
+import { usePasswordLoginMutation, useForgotPasswordMutation, useResetPasswordMutation, useAccountCapabilitiesQuery } from '../../services/api';
 import PasswordField, { passwordOk } from './PasswordField';
 
 /**
@@ -23,13 +23,16 @@ export default function PasswordLogin({ role, onSuccess, onUseOtp }) {
   const [login, { isLoading: signingIn }] = usePasswordLoginMutation();
   const [forgot, { isLoading: asking }] = useForgotPasswordMutation();
   const [reset, { isLoading: resetting }] = useResetPasswordMutation();
+  // Email sign-in and reset links are offered only once outgoing mail is set up.
+  const { data: caps } = useAccountCapabilitiesQuery();
+  const email = !!caps?.email;
 
   async function doLogin(e) {
     e.preventDefault();
     try {
       const r = await login({ role, identifier: identifier.trim(), password }).unwrap();
       onSuccess(r);
-    } catch (err) { toast.error(err?.data?.error || 'Could not sign in'); }
+    } catch (err) { toast.error(err?.data?.error || 'That did not go through. Check your details and try again.'); }
   }
 
   async function doForgot(e) {
@@ -38,7 +41,7 @@ export default function PasswordLogin({ role, onSuccess, onUseOtp }) {
       const r = await forgot({ role, identifier: identifier.trim() }).unwrap();
       setSentTo(r.to);
       setMode(r.channel === 'sms' ? 'otp-reset' : 'sent');
-    } catch (err) { toast.error(err?.data?.error || 'Could not send a reset'); }
+    } catch (err) { toast.error(err?.data?.error || 'That did not go through. Check the number and try again.'); }
   }
 
   async function doOtpReset(e) {
@@ -48,13 +51,14 @@ export default function PasswordLogin({ role, onSuccess, onUseOtp }) {
       toast.success('Password changed. Sign in with it now.');
       setPassword(''); setOtp(''); setNewPw('');
       setMode('login');
-    } catch (err) { toast.error(err?.data?.error || 'Could not reset'); }
+    } catch (err) { toast.error(err?.data?.error || 'That did not go through. Check the code and try again.'); }
   }
 
   const idField = (
     <div>
-      <label htmlFor="pl-id" className="mb-1.5 block text-[13px] font-semibold text-ink-700">Mobile number or email</label>
-      <input id="pl-id" className="input w-full" autoComplete="username" value={identifier} onChange={(e) => setIdentifier(e.target.value)} placeholder="98765 43210 or you@example.com" />
+      <label htmlFor="pl-id" className="mb-1.5 block text-[13px] font-semibold text-ink-700">{email ? 'Mobile number or email' : 'Mobile number'}</label>
+      <input id="pl-id" className="input w-full" autoComplete="username" inputMode={email ? 'text' : 'tel'} value={identifier} onChange={(e) => setIdentifier(e.target.value)}
+        placeholder={email ? '98765 43210 or you@example.com' : '98765 43210'} />
     </div>
   );
 
@@ -90,7 +94,9 @@ export default function PasswordLogin({ role, onSuccess, onUseOtp }) {
   if (mode === 'forgot') {
     return (
       <form onSubmit={doForgot} className="space-y-4">
-        <p className="text-[14px] text-ink-500">We send a reset link to your confirmed email, or a code to your phone if you have not confirmed an email.</p>
+        <p className="text-[14px] text-ink-500">
+          {email ? 'We send a reset link to your confirmed email, or a code to your phone if you have not confirmed an email.' : 'We send a code to your phone. Enter it with your new password.'}
+        </p>
         {idField}
         <button type="submit" disabled={asking || identifier.trim().length < 5} className="btn-primary w-full">
           {asking && <Loader2 size={16} className="animate-spin" />} Send reset

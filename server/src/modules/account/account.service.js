@@ -67,10 +67,13 @@ const comparePassword = (pw, hash) => bcrypt.compare(pw, hash);
 function setupStatus(role, a) {
   const cfg = roleCfg(role);
   const name = (cfg.nameOf(a) || '').trim();
+  // Until outgoing mail is set up, nobody is asked for an email we cannot confirm.
+  const mailConfigured = mailer.isConfigured();
+  const emailRequired = !!cfg.emailRequired && mailConfigured;
   const needs = {
     name: !!cfg.nameRequired && name.length < 2,
     password: !a.passwordHash,
-    email: cfg.emailRequired && !a.email && !a.emailVerification?.email,
+    email: emailRequired && !a.email && !a.emailVerification?.email,
   };
   return {
     role,
@@ -79,12 +82,12 @@ function setupStatus(role, a) {
     email: a.email || null,
     emailVerified: !!a.emailVerified,
     pendingEmail: a.emailVerification?.email && a.emailVerification.email !== a.email ? a.emailVerification.email : null,
-    emailRequired: cfg.emailRequired,
+    emailRequired,
     hasPassword: !!a.passwordHash,
     passwordSetAt: a.passwordSetAt || null,
     needs,
     needsSetup: Object.values(needs).some(Boolean),
-    mailConfigured: mailer.isConfigured(),
+    mailConfigured,
   };
 }
 
@@ -136,6 +139,7 @@ async function setName({ role, id, name }) {
  */
 async function startEmailVerification({ role, id, email, baseUrl }) {
   const addr = String(email || '').trim().toLowerCase();
+  if (!mailer.isConfigured()) throw err(409, 'EMAIL_UNAVAILABLE', 'Adding an email is not available yet. Your phone number keeps your account secure.');
   if (!EMAIL_RE.test(addr) || addr.length > 120) throw err(400, 'BAD_EMAIL', 'Enter a valid email address');
   const Model = roleCfg(role).model();
   const a = await load(role, id);
@@ -222,14 +226,15 @@ async function loginWithPassword({ role, identifier, password }) {
 async function requestPasswordReset({ role, identifier, baseUrl }) {
   const a = await findByIdentifier(role, identifier, '+passwordReset');
   if (!a) return { sent: true, channel: 'email', to: null };
-  if (a.email && a.emailVerified) {
+  // Email first (free); if mail is not set up or the send fails, the phone code is the backup.
+  if (a.email && a.emailVerified && mailer.isConfigured()) {
     const token = newToken();
     a.passwordReset = { tokenHash: sha(token), expiresAt: new Date(Date.now() + RESET_TTL_MS) };
     await a.save();
     const link = `${baseUrl}/reset-password?token=${token}&r=${role}`;
     const sent = await mailer.sendMail({ to: a.email, ...templates.passwordReset({ name: roleCfg(role).nameOf(a), link }) });
-    if (!sent.sent) logger.info({ role, link }, '[ACCOUNT] reset link (mail not sent)');
-    return { sent: true, channel: 'email', to: mask(a.email) };
+    if (sent.sent) return { sent: true, channel: 'email', to: mask(a.email) };
+    logger.warn({ role, reason: sent.reason }, '[ACCOUNT] reset email not sent; falling back to SMS');
   }
   if (a.phone) {
     await require('../auth/auth.service').requestOtp(a.phone, role);

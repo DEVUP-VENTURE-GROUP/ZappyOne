@@ -23,8 +23,10 @@
 const common = {
   cwd: __dirname,
   autorestart: true,
-  max_restarts: 20,
-  restart_delay: 3000,
+  // Retry with a growing delay instead of giving up after a fixed count (see ecosystem.config.js).
+  exp_backoff_restart_delay: 500,
+  max_restarts: 1000,
+  min_uptime: 10000,
   exec_mode: 'fork',                 // never cluster: socket.io + in-memory geo buffer
   env: { NODE_ENV: 'production' },
   time: true,

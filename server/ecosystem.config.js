@@ -30,8 +30,13 @@
 const common = {
   cwd: __dirname,
   autorestart: true,
-  max_restarts: 20,
-  restart_delay: 3000,
+  // Keep coming back. A short outage of Mongo or Redis crashes the process on
+  // purpose (a clean restart beats running half-broken); pm2 then retries with
+  // a growing delay (0.5s, 1s, 2s … up to 15s) instead of stopping for good
+  // after a fixed number of tries, and resets once the app has stayed up.
+  exp_backoff_restart_delay: 500,
+  max_restarts: 1000,
+  min_uptime: 10000,
   // NEVER cluster mode. Socket.io rooms and the in-memory geo write-buffer are
   // per-process; cluster would fan connections across workers that can't see each
   // other's rooms/buffers. `instances` is deliberately omitted for the same reason.
