@@ -62,8 +62,12 @@ function toResult(e) {
 async function search({ q, lat, lng, userId, limit = 8 }) {
   const raw = String(q || '').trim();
   const [corpus, pop, affinity, here] = await Promise.all([getCorpus(), getPopularity(), getAffinity(userId), liveLinesAt(lat, lng)]);
-  // Every service is searchable everywhere; whether someone can come is the
-  // booking step's answer. What is live here only ranks first.
+  // Outside the launch region nothing is offered. Inside it every service is
+  // searchable; whether someone can come is the booking step's answer, and
+  // what is live at this point only ranks first.
+  if (here && here.status === 'not_here') {
+    return { query: raw, notHere: true, services: [], problems: [], categories: [], suggestions: [] };
+  }
   const pool = corpus;
   const liveHere = (e) => (here ? here.codes.has(e.lineCode) : false);
   const rank = (e, text) => 55 * text * TYPE_WEIGHT[e.type] + 15 * (pop.get(e.lineCode) || 0)
@@ -111,6 +115,7 @@ async function suggest({ q, lat, lng, limit = 6 }) {
   const raw = String(q || '').trim().toLowerCase();
   if (!raw) return (await trending({ lat, lng })).slice(0, limit);
   const [corpus, pop, here] = await Promise.all([getCorpus(), getPopularity(), liveLinesAt(lat, lng)]);
+  if (here && here.status === 'not_here') return [];
   const { keywords, tokens } = expandQuery(raw);
   return corpus
     .map((e) => {
@@ -127,6 +132,7 @@ async function suggest({ q, lat, lng, limit = 6 }) {
 /** What people are opening most; what is live here first. */
 async function trending({ lat, lng } = {}) {
   const [corpus, pop, here] = await Promise.all([getCorpus(), getPopularity(), liveLinesAt(lat, lng)]);
+  if (here && here.status === 'not_here') return [];
   const live = (e) => (here && here.codes.has(e.lineCode) ? 1 : 0);
   return corpus
     .filter((e) => e.type === 'service')

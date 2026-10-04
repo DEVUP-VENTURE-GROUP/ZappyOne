@@ -141,7 +141,11 @@ export default function SpotlightSearch({ open, onClose, lat, lng, initialQuery 
             </div>
           )}
 
-          {data && (
+          {data?.notHere && (
+            <p className="px-4 pt-6 text-[15px] text-slate-600">We don’t serve this location yet, so there’s nothing to book here. Change your address on the home screen.</p>
+          )}
+
+          {data && !data.notHere && (
             <>
               {data.corrected && <p className="px-4 pt-3 text-[13px] text-slate-500">Showing results for “{data.corrected}”</p>}
               <Group title={GROUP_LABEL.problems} items={data.problems} onOpen={openResult} />

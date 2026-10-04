@@ -258,19 +258,18 @@ export default function HomePage() {
         <main className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 pb-10 pt-5 sm:gap-10 sm:px-6 sm:pt-7">
           {activeJob && <ActiveJobCard job={activeJob} onOpen={() => nav(activeJob.href)} />}
 
-          {/* Every service shows everywhere: where nobody can come yet, a slim
-              note says so and records the demand, the catalog stays. */}
-          {notHere && (
+          {/* Inside Telangana every service shows; outside it, we say we are
+              not there yet and record the demand. */}
+          {notHere ? (
             <NotInYourArea
-              compact
               place={loc.primary}
               lat={loc.lat}
               lng={loc.lng}
               address={[loc.primary, loc.secondary].filter(Boolean).join(', ')}
+              areas={svc.areas}
               onChangeLocation={() => setLocSheet(true)}
             />
-          )}
-          {(
+          ) : (
             <>
               {svc?.status === 'closed_now' && <ClosedNowBanner nextOpening={svc.nextOpening} />}
 

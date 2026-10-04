@@ -81,11 +81,11 @@ test('where we serve, results include what is live there', async () => {
   expect(out.problems.map((p) => p.title)).toContain('Cracked screen');
 });
 
-test('where we do not serve yet, every service is still found (demand is captured at booking)', async () => {
+test('outside the launch region, nothing bookable is offered', async () => {
   const out = await search.search({ q: 'screen', ...FAR_AWAY });
-  expect(out.notHere).toBeFalsy();
-  expect(out.problems.map((p) => p.title)).toContain('Cracked screen');
-  expect((await search.trending(FAR_AWAY)).length).toBeGreaterThan(0);
+  expect(out.notHere).toBe(true);
+  expect(out.problems).toHaveLength(0);
+  expect(await search.trending(FAR_AWAY)).toHaveLength(0);
 });
 
 test('suggest returns paths into the live flows', async () => {
