@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { Search, X, Loader2, RotateCcw, Ban, Store, User, MapPin, ArrowRight } from 'lucide-react';
+import { Search, X, Loader2, RotateCcw, Ban, Store, User, MapPin } from 'lucide-react';
 import {
   useAdminBookingsQuery, useAdminBookingDetailQuery, useAdminForceCancelOrderMutation,
   useCancelRepairBookingMutation, useAdminCancelPetBookingMutation, useAdminCancelHelpingTaskMutation,
   useAdminRefundOrderMutation, useAdminCancelEventBookingMutation,
 } from '@shared/services/api';
 import { SectionHeader, Card, Th, Td, EmptyState, Pagination, fmt, fmtDate } from '../../ui/kit';
+import { InterventionPanel, NotesPanel } from './InterventionPanel';
 
 const SOURCES = [
   { id: '', label: 'All' },
@@ -103,7 +104,6 @@ export default function Bookings() {
 
 /** One booking's detail and actions; reused by the live board and stuck jobs. */
 export function BookingDrawer({ source, id, onClose }) {
-  const [, setParams] = useSearchParams();
   const { data, isLoading, refetch } = useAdminBookingDetailQuery({ source, id });
   const [cancelOrder, o] = useAdminForceCancelOrderMutation();
   const [cancelRepair, r] = useCancelRepairBookingMutation();
@@ -197,13 +197,11 @@ export function BookingDrawer({ source, id, onClose }) {
                     <RotateCcw size={14} /> Refund {fmt(b.totalPaise)}
                   </button>
                 )}
-                {data.actions.reassign && (
-                  <button onClick={() => setParams({ tab: 'intervention' })} className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-100 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-200">
-                    Reassign in Intervention <ArrowRight size={14} />
-                  </button>
-                )}
               </div>
             )}
+
+            {data.actions.intervene && <InterventionPanel source={source} id={id} onDone={refetch} />}
+            <NotesPanel source={source} id={id} />
           </div>
         )}
       </aside>

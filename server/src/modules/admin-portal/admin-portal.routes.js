@@ -90,6 +90,8 @@ function actionsFor(source, raw) {
     // Mirrors the refund endpoint: only online payments that were captured.
     refund: source === 'order' && raw.payment?.status === 'paid' && raw.payment?.method !== 'cash',
     reassign: source === 'order' && bucket === 'active',
+    // Assign or move a live repair, pet or helping job (jobs/intervention).
+    intervene: require('../jobs/intervention.service').canIntervene(source, raw.status),
     helpingRefundOutcome: source === 'helping' && ['CANCELLED', 'FAILED', 'REFUNDED'].includes(raw.status),
   };
 }
@@ -111,5 +113,54 @@ router.get('/bookings/:source/:id', async (req, res, next) => {
     res.json({ booking: row, history, address, actions: actionsFor(source, raw) });
   } catch (err) { next(err); }
 });
+
+/* Intervention: who could take a live job, hand it over, and team notes. */
+const intervention = require('../jobs/intervention.service');
+const auditService = require('../admin/audit.service');
+const JOB_KINDS = ['repair', 'pet', 'helping'];
+const validJob = (req, res) => {
+  const { source, id } = req.params;
+  if (!JOB_KINDS.includes(source) || !/^[0-9a-f]{24}$/i.test(id)) { res.status(400).json({ error: 'Unknown booking' }); return false; }
+  return true;
+};
+
+router.get('/bookings/:source/:id/candidates', async (req, res, next) => {
+  try {
+    if (!validJob(req, res)) return;
+    res.json(await intervention.candidates(req.params.source, req.params.id));
+  } catch (err) { next(err); }
+});
+
+router.post('/bookings/:source/:id/assign',
+  validate(Joi.object({
+    providerKind: Joi.string().valid('worker', 'shop').required(),
+    providerId: Joi.string().hex().length(24).required(),
+    reason: Joi.string().trim().min(5).max(300).required(),
+  })),
+  async (req, res, next) => {
+    try {
+      if (!validJob(req, res)) return;
+      const out = await intervention.assign({ kind: req.params.source, id: req.params.id, ...req.body, adminId: req.auth.sub });
+      await auditService.fromRequest(req, 'job.assign', { kind: req.params.source, id: req.params.id }, null, { ...req.body, ...out });
+      res.json(out);
+    } catch (err) { next(err); }
+  });
+
+router.get('/bookings/:source/:id/notes', async (req, res, next) => {
+  try {
+    if (!SOURCES.includes(req.params.source) || !/^[0-9a-f]{24}$/i.test(req.params.id)) return res.status(400).json({ error: 'Unknown booking' });
+    res.json({ notes: await intervention.listNotes(req.params.source, req.params.id) });
+  } catch (err) { next(err); }
+});
+
+router.post('/bookings/:source/:id/notes',
+  validate(Joi.object({ text: Joi.string().trim().min(2).max(1000).required() })),
+  async (req, res, next) => {
+    try {
+      if (!SOURCES.includes(req.params.source) || !/^[0-9a-f]{24}$/i.test(req.params.id)) return res.status(400).json({ error: 'Unknown booking' });
+      const note = await intervention.addNote({ kind: req.params.source, id: req.params.id, text: req.body.text, adminId: req.auth.sub, adminEmail: req.auth.email });
+      res.status(201).json({ note });
+    } catch (err) { next(err); }
+  });
 
 module.exports = router;

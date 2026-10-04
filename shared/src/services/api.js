@@ -2074,6 +2074,22 @@ export const api = createApi({
       query: (params = {}) => ({ url: adminApiPath('/bookings'), params }),
       providesTags: ['AdminBookings'],
     }),
+    adminJobCandidates: b.query({
+      query: ({ source, id }) => adminApiPath(`/bookings/${source}/${id}/candidates`),
+      providesTags: (r, e, a) => [{ type: 'AdminBookings', id: `${a.source}:${a.id}` }],
+    }),
+    adminAssignJob: b.mutation({
+      query: ({ source, id, ...body }) => ({ url: adminApiPath(`/bookings/${source}/${id}/assign`), method: 'POST', body }),
+      invalidatesTags: (r, e, a) => [{ type: 'AdminBookings', id: `${a.source}:${a.id}` }, 'AdminBookings'],
+    }),
+    adminJobNotes: b.query({
+      query: ({ source, id }) => adminApiPath(`/bookings/${source}/${id}/notes`),
+      providesTags: (r, e, a) => [{ type: 'AdminBookings', id: `notes:${a.source}:${a.id}` }],
+    }),
+    adminAddJobNote: b.mutation({
+      query: ({ source, id, text }) => ({ url: adminApiPath(`/bookings/${source}/${id}/notes`), method: 'POST', body: { text } }),
+      invalidatesTags: (r, e, a) => [{ type: 'AdminBookings', id: `notes:${a.source}:${a.id}` }],
+    }),
     adminBookingDetail: b.query({
       query: ({ source, id }) => adminApiPath(`/bookings/${source}/${id}`),
       providesTags: (r, e, a) => [{ type: 'AdminBookings', id: `${a.source}:${a.id}` }],
@@ -2585,6 +2601,10 @@ export const {
   // Order Intervention
   useAdminForceCancelOrderMutation,
   useAdminBookingsQuery,
+  useAdminJobCandidatesQuery,
+  useAdminAssignJobMutation,
+  useAdminJobNotesQuery,
+  useAdminAddJobNoteMutation,
   useAdminBookingDetailQuery,
   useAdminCancelPetBookingMutation,
   useAdminCancelHelpingTaskMutation,

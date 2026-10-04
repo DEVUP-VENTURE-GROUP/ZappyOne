@@ -65,7 +65,8 @@ async function announce(kind, doc, status) {
     const since = new Date(k.offer.since(doc) || Date.now());
     const start = k.open?.start(doc);
     toProvider(provider.kind, provider.id, 'job.offer', {
-      ...payload, area: start?.address || '', coordinates: start ? [start.lng, start.lat] : null,
+      // Until they accept: the area and a rounded pin (jobs/privacy).
+      ...payload, area: areaOf(start?.address), coordinates: start ? roughCoords([start.lng, start.lat]) : null,
       ...(k.open?.summary ? k.open.summary(doc) : {}),
       expiresAt: new Date(since.getTime() + k.offer.windowMin * 60000).toISOString(), windowSec: k.offer.windowMin * 60,
     });
@@ -184,4 +185,16 @@ async function announceAssigned(kind, doc) {
   });
 }
 
-module.exports = { announce, announceOnSave, announceAssigned, alertNearbyProviders };
+/** Ops moved a job away from a provider: their list drops it, and they are told why it went. */
+async function notifyMoved(kind, doc, previous) {
+  const k = KINDS[kind];
+  if (!k || !previous) return;
+  const id = String(doc._id);
+  toProvider(previous.kind, previous.id, 'job.update', { kind, id, status: 'MOVED', reference: doc.reference, at: new Date().toISOString() });
+  await push(previous, {
+    title: 'A job was moved', body: 'ZappyOne support passed this booking to another provider. Nothing for you to do.',
+    deepLink: k.providerLink(id), data: { kind, id, status: 'MOVED' },
+  });
+}
+
+module.exports = { announce, announceOnSave, announceAssigned, alertNearbyProviders, notifyMoved };
