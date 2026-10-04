@@ -11,7 +11,7 @@ import { useNotifyLaunchMutation } from '@shared/services/api';
  * nothing bookable is rendered, only ways forward — pick another location, see
  * where we operate, or ask to be told when we arrive here.
  */
-export default function NotInYourArea({ place, lat, lng, address, areas = [], onChangeLocation }) {
+export default function NotInYourArea({ place, lat, lng, address, areas = [], onChangeLocation, compact = false }) {
   const nav = useNavigate();
   const { accessToken, role } = useSelector(selectAuth);
   const [notifyLaunch, { isLoading }] = useNotifyLaunchMutation();
@@ -29,6 +29,27 @@ export default function NotInYourArea({ place, lat, lng, address, areas = [], on
     } catch (err) {
       toast.error(err?.data?.error || 'Could not save your request. Try again.');
     }
+  }
+
+  if (compact) {
+    return (
+      <section className="flex flex-col gap-3 rounded-card border border-line bg-white p-4 sm:flex-row sm:items-center">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-btn bg-amber-50 text-amber-600">
+          <MapPin size={18} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-[15px] font-semibold text-ink-900">We're launching in {place || 'your area'} soon</p>
+          <p className="text-[13px] text-ink-500">Browse everything below. Tap “Tell me” and we'll message you the day we start here.</p>
+        </div>
+        <div className="flex gap-2">
+          <button onClick={onChangeLocation} className="btn-outline flex-1 px-3 sm:flex-none">Change</button>
+          <button onClick={notify} disabled={notified || isLoading} className="btn-primary flex-1 px-3 sm:flex-none">
+            {isLoading ? <Loader2 size={16} className="animate-spin" /> : notified ? <Check size={16} /> : <BellRing size={16} />}
+            {notified ? 'Saved' : 'Tell me'}
+          </button>
+        </div>
+      </section>
+    );
   }
 
   return (

@@ -75,17 +75,17 @@ test('no match is said plainly, with labelled suggestions', async () => {
   expect(out.suggestions.map((s) => s.title)).toContain('Mobile Phones');
 });
 
-test('where we serve, results are limited to what is live there', async () => {
+test('where we serve, results include what is live there', async () => {
   const out = await search.search({ q: 'screen', ...MADHAPUR });
   expect(out.notHere).toBeFalsy();
   expect(out.problems.map((p) => p.title)).toContain('Cracked screen');
 });
 
-test('where we do not serve, nothing bookable is offered', async () => {
+test('where we do not serve yet, every service is still found (demand is captured at booking)', async () => {
   const out = await search.search({ q: 'screen', ...FAR_AWAY });
-  expect(out.notHere).toBe(true);
-  expect(out.problems).toHaveLength(0);
-  expect(await search.trending(FAR_AWAY)).toHaveLength(0);
+  expect(out.notHere).toBeFalsy();
+  expect(out.problems.map((p) => p.title)).toContain('Cracked screen');
+  expect((await search.trending(FAR_AWAY)).length).toBeGreaterThan(0);
 });
 
 test('suggest returns paths into the live flows', async () => {

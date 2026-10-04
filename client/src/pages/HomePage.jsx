@@ -258,23 +258,26 @@ export default function HomePage() {
         <main className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 pb-10 pt-5 sm:gap-10 sm:px-6 sm:pt-7">
           {activeJob && <ActiveJobCard job={activeJob} onOpen={() => nav(activeJob.href)} />}
 
-          {notHere ? (
+          {/* Every service shows everywhere: where nobody can come yet, a slim
+              note says so and records the demand, the catalog stays. */}
+          {notHere && (
             <NotInYourArea
+              compact
               place={loc.primary}
               lat={loc.lat}
               lng={loc.lng}
               address={[loc.primary, loc.secondary].filter(Boolean).join(', ')}
-              areas={svc.areas}
               onChangeLocation={() => setLocSheet(true)}
             />
-          ) : (
+          )}
+          {(
             <>
               {svc?.status === 'closed_now' && <ClosedNowBanner nextOpening={svc.nextOpening} />}
 
               {!loadingCatalog && <HeroCarousel domains={allDomains} onOpen={openService} />}
 
               {/* Intent first: the problem in their words, then the services. */}
-              <ProblemChips services={services.filter((x) => x.available !== false)} />
+              <ProblemChips services={services} />
               {loadingCatalog || (loc.lat != null && !svc && checkingArea)
                 ? <SkeletonGrid />
                 : <ServiceGrid domains={domains} onOpen={openService} />}

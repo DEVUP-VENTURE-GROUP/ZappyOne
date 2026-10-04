@@ -62,12 +62,12 @@ function toResult(e) {
 async function search({ q, lat, lng, userId, limit = 8 }) {
   const raw = String(q || '').trim();
   const [corpus, pop, affinity, here] = await Promise.all([getCorpus(), getPopularity(), getAffinity(userId), liveLinesAt(lat, lng)]);
-  if (here && here.status === 'not_here') {
-    return { query: raw, notHere: true, services: [], problems: [], categories: [], suggestions: [] };
-  }
-  const pool = here ? corpus.filter((e) => here.codes.has(e.lineCode)) : corpus;
+  // Every service is searchable everywhere; whether someone can come is the
+  // booking step's answer. What is live here only ranks first.
+  const pool = corpus;
+  const liveHere = (e) => (here ? here.codes.has(e.lineCode) : false);
   const rank = (e, text) => 55 * text * TYPE_WEIGHT[e.type] + 15 * (pop.get(e.lineCode) || 0)
-    + 3 * (affinity.has(e.lineCode) ? 1 : 0) + (e.isPopular ? 2 : 0);
+    + 3 * (affinity.has(e.lineCode) ? 1 : 0) + (e.isPopular ? 2 : 0) + (liveHere(e) ? 4 : 0);
 
   if (!raw) {
     // Discovery: what's live here, most-booked first.
@@ -111,12 +111,12 @@ async function suggest({ q, lat, lng, limit = 6 }) {
   const raw = String(q || '').trim().toLowerCase();
   if (!raw) return (await trending({ lat, lng })).slice(0, limit);
   const [corpus, pop, here] = await Promise.all([getCorpus(), getPopularity(), liveLinesAt(lat, lng)]);
-  const pool = here ? corpus.filter((e) => here.codes.has(e.lineCode)) : corpus;
   const { keywords, tokens } = expandQuery(raw);
-  return pool
+  return corpus
     .map((e) => {
       const { text, matched } = textScore(e, keywords, tokens);
-      return { e, s: matched ? text + (e._name.startsWith(raw) ? 0.3 : 0) + 0.2 * (pop.get(e.lineCode) || 0) : 0 };
+      const live = here && here.codes.has(e.lineCode) ? 0.1 : 0;
+      return { e, s: matched ? text + (e._name.startsWith(raw) ? 0.3 : 0) + 0.2 * (pop.get(e.lineCode) || 0) + live : 0 };
     })
     .filter((x) => x.s > 0)
     .sort((a, b) => b.s - a.s)
@@ -124,12 +124,13 @@ async function suggest({ q, lat, lng, limit = 6 }) {
     .map((x) => toResult(x.e));
 }
 
-/** What people here are opening most — live services only. */
+/** What people are opening most; what is live here first. */
 async function trending({ lat, lng } = {}) {
   const [corpus, pop, here] = await Promise.all([getCorpus(), getPopularity(), liveLinesAt(lat, lng)]);
+  const live = (e) => (here && here.codes.has(e.lineCode) ? 1 : 0);
   return corpus
-    .filter((e) => e.type === 'service' && (!here || here.codes.has(e.lineCode)))
-    .sort((a, b) => (pop.get(b.lineCode) || 0) - (pop.get(a.lineCode) || 0) || a.sortOrder - b.sortOrder)
+    .filter((e) => e.type === 'service')
+    .sort((a, b) => live(b) - live(a) || (pop.get(b.lineCode) || 0) - (pop.get(a.lineCode) || 0) || a.sortOrder - b.sortOrder)
     .slice(0, 8)
     .map(toResult);
 }
