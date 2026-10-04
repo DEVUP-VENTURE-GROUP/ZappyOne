@@ -40,7 +40,7 @@ import GrowingHere from '../../components/serviceability/GrowingHere';
 import { PayMethodPicker } from '@shared/components/common/PayMethodPicker';
 import BrandLogo from '@shared/components/common/BrandLogo';
 import { categoryPhoto } from '@shared/components/home/problemArt';
-import { ProblemCard, ProblemGrid } from './ProblemCard';
+import { ProblemLayout } from './ProblemCard';
 import { usePayBooking } from '@shared/hooks/usePayBooking';
 
 /**
@@ -616,9 +616,7 @@ function ProblemStep({ vertical, model, productType, fuelType, presetCode, onPic
               <h3 className="text-[15px] font-bold text-ink-900">{cat.name}</h3>
               <span className="text-[13px] text-ink-500">{cat.problems.length}</span>
             </div>
-            <ProblemGrid>
-              {cat.problems.map((p) => <ProblemCard key={p.code} vertical={vertical} problem={p} onPick={onPick} />)}
-            </ProblemGrid>
+            <ProblemLayout vertical={vertical} problems={cat.problems} onPick={onPick} />
           </section>
         );
       })}

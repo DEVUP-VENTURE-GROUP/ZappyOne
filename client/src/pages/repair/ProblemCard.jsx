@@ -1,4 +1,4 @@
-import { AlertTriangle, Wrench } from 'lucide-react';
+import { AlertTriangle, Wrench, ChevronRight } from 'lucide-react';
 import { problemPhoto } from '@shared/components/home/problemArt';
 
 /**
@@ -33,4 +33,28 @@ export function ProblemCard({ vertical, problem, onPick }) {
 /** The grid the cards sit in: two across on phones, more as room allows. */
 export function ProblemGrid({ children }) {
   return <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">{children}</div>;
+}
+
+/** A problem as a plain row, for headings whose problems have no photos of their own (vehicles). */
+export function ProblemRow({ problem, onPick }) {
+  return (
+    <button type="button" onClick={() => onPick(problem)}
+      className="flex w-full items-center gap-3 rounded-card border border-line bg-white p-3.5 text-left transition-colors hover:border-line-strong active:bg-canvas">
+      <span className="min-w-0 flex-1">
+        <span className="block text-[15px] font-semibold text-ink-900">{problem.name}</span>
+        {problem.requiresDiagnosis && <span className="mt-0.5 block text-[12px] font-medium text-amber-700">Priced after inspection</span>}
+      </span>
+      {problem.severity === 'critical' && <span className="chip bg-red-50 text-red-700"><AlertTriangle size={12} /> Urgent</span>}
+      <ChevronRight size={18} className="shrink-0 text-ink-300" />
+    </button>
+  );
+}
+
+/** Photo cards when this heading's problems have photos, rows when none do. */
+export function ProblemLayout({ vertical, problems, onPick }) {
+  const withPhotos = problems.some((p) => problemPhoto(vertical, p));
+  if (!withPhotos) {
+    return <div className="space-y-2">{problems.map((p) => <ProblemRow key={p.code} problem={p} onPick={onPick} />)}</div>;
+  }
+  return <ProblemGrid>{problems.map((p) => <ProblemCard key={p.code} vertical={vertical} problem={p} onPick={onPick} />)}</ProblemGrid>;
 }

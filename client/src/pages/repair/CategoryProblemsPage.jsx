@@ -4,7 +4,7 @@ import { useLiveCatalogQuery } from '@shared/services/api';
 import { CATEGORY_ICONS } from '@shared/components/home/LiveServices';
 import SEO from '@shared/components/SEO';
 import { categoryPhoto } from '@shared/components/home/problemArt';
-import { ProblemCard, ProblemGrid } from './ProblemCard';
+import { ProblemLayout } from './ProblemCard';
 
 /**
  * Everything under one heading — Display, Storage, Connectivity.
@@ -83,12 +83,8 @@ export default function CategoryProblemsPage() {
         </div>
 
         <div className="mt-4">
-          <ProblemGrid>
-            {category.problems.map((p) => (
-              <ProblemCard key={p.code} vertical={vertical} problem={p}
-                onPick={() => nav(`${service.path}?problem=${encodeURIComponent(p.code)}`)} />
-            ))}
-          </ProblemGrid>
+          <ProblemLayout vertical={vertical} problems={category.problems}
+            onPick={(p) => nav(`${service.path}?problem=${encodeURIComponent(p.code)}`)} />
         </div>
 
         {/* The list is curated, so leaving is a real option — not a dead end. */}

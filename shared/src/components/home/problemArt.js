@@ -2,12 +2,35 @@
  * Photos of repair problems, by catalog code.
  *
  * Files live in the global assets folder (assets/web/problems/<vertical>,
- * served at /problems/<vertical>), 480px webp, about 20KB each. A picture an
+ * served at /problems/<vertical>), 480px webp, about 20KB each. Phones and
+ * laptops have a photo per problem; vehicles a photo per heading. A picture an
  * admin uploads for a problem or heading always wins; these fill the rest so
  * the catalog looks deliberate without anyone uploading 60 photos.
  */
 const PHOTOS = {
   mobile: new Set(['app_crashing', 'autofocus_failure', 'back_glass_broken', 'back_panel_damaged', 'backup_restore', 'battery_draining_fast', 'battery_not_charging', 'battery_percentage_jumping', 'battery_swelling', 'black_display', 'bluetooth_problem', 'blurry_camera', 'boot_loop', 'broken_glass_display_ok', 'cable_not_detecting', 'call_microphone_issue', 'camera_glass_broken', 'camera_not_opening', 'camera_shaking', 'charging_port_damaged', 'cracked_screen', 'data_transfer', 'dead_pixels', 'display_dimming', 'display_flickering', 'display_touch_failure', 'earpiece_not_working', 'factory_reset', 'fast_charging_not_working', 'flash_not_working', 'frame_housing_damage', 'front_camera_failure', 'ghost_touch', 'gps_problem', 'green_pink_line', 'loose_charging_port', 'loudspeaker_distortion', 'microphone_not_working', 'network_signal_problem', 'nfc_problem', 'phone_freezing', 'phone_overheating', 'phone_slow', 'phone_wont_turn_on', 'power_button_issue', 'random_shutdown', 'screen_burn_in', 'sim_not_detected', 'sim_tray_issue', 'slow_charging', 'software_update_failure', 'speaker_low_muffled', 'speaker_not_working', 'storage_issue', 'touch_not_working', 'vibration_motor_issue', 'volume_button_issue', 'wifi_problem', 'wireless_charging_failure']),
+  laptop: new Set([
+    'lt_bios_password', 'lt_bios_update', 'lt_bluetooth', 'lt_boot_loop', 'lt_bsod', 'lt_cooling_service',
+    'lt_displayport', 'lt_driver_installation_p', 'lt_dust_cleaning', 'lt_factory_reset', 'lt_fan_not_working', 'lt_freezing',
+    'lt_hdmi', 'lt_heat_shutdown', 'lt_malware', 'lt_os_installation_p', 'lt_overheating', 'lt_sd_reader',
+    'lt_software_cleanup', 'lt_software_crashing', 'lt_startup_problems', 'lt_thermal_throttling', 'lt_thunderbolt', 'lt_usb_port',
+    'lt_wifi_disconnecting', 'lt_wifi_not_working', 'lt_windows_corrupted', 'lt_windows_installation', 'lt_windows_update_failure',
+  ]),
+};
+
+/** Photos drawn for whole headings (vehicles), at /problems/<vertical>/headings/<code>.webp. */
+const HEADINGS = {
+  two_wheeler: new Set([
+    'tw_battery_electrical', 'tw_brakes', 'tw_chain_drive', 'tw_clutch_gear', 'tw_cooling', 'tw_engine',
+    'tw_ev_battery', 'tw_ev_charging', 'tw_ev_controller', 'tw_ev_dashboard', 'tw_ev_motor', 'tw_maintenance',
+    'tw_roadside', 'tw_starting', 'tw_tyres_wheels',
+  ]),
+  four_wheeler: new Set([
+    'fw_battery_electrical', 'fw_body', 'fw_clutch', 'fw_cng', 'fw_cooling', 'fw_diagnostics',
+    'fw_doors_locks', 'fw_engine', 'fw_ev_battery', 'fw_ev_charging', 'fw_ev_motor', 'fw_exhaust',
+    'fw_fuel', 'fw_glass', 'fw_infotainment', 'fw_interior', 'fw_lights', 'fw_maintenance',
+    'fw_roadside', 'fw_safety', 'fw_starting', 'fw_steering', 'fw_transmission', 'fw_tyres_wheels',
+  ]),
 };
 
 /** The photo that stands for a whole heading (Display, Camera…). */
@@ -25,7 +48,10 @@ const COVERS = {
 };
 
 /** Service codes and booking-flow names that mean the same vertical. */
-const VERTICAL = { mobile: 'mobile', mobile_repair: 'mobile' };
+const VERTICAL = {
+  mobile: 'mobile', mobile_repair: 'mobile', laptop: 'laptop', laptop_repair: 'laptop',
+  two_wheeler: 'two_wheeler', four_wheeler: 'four_wheeler',
+};
 
 const url = (v, code) => (PHOTOS[v]?.has(code) ? `/problems/${v}/${code}.webp` : null);
 
@@ -40,6 +66,7 @@ export function categoryPhoto(vertical, category) {
   if (category?.imageUrl) return category.imageUrl;
   const v = VERTICAL[vertical];
   if (!v) return null;
+  if (HEADINGS[v]?.has(category?.code)) return `/problems/${v}/headings/${category.code}.webp`;
   const cover = url(v, COVERS[v]?.[category?.code]);
   if (cover) return cover;
   for (const p of category?.problems || []) {
