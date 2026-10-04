@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import {
   ArrowLeft, Save, User, FileText, Wrench,
   Building2, CreditCard, AlertCircle, GraduationCap,
-  Target, TrendingUp, Star, ChevronRight, Award, ShieldCheck,
+  Target, TrendingUp, Star, ChevronRight, ShieldCheck,
   Loader2, BarChart2, Shield, KeyRound,
 } from 'lucide-react';
 import {
@@ -41,7 +41,6 @@ const NAV_SECTIONS = [
     title: 'Insights',
     items: [
       { to: '/worker/goals',     Icon: TrendingUp,   label: 'Zone Benchmark',       desc: 'See how you rank nearby',          color: 'cyan' },
-      { to: '/plans',            Icon: Award,        label: 'Subscription Plan',    desc: 'Lower commission, more earnings',  color: 'violet' },
       { to: '/worker/kyc',       Icon: Shield,       label: 'KYC Documents',        desc: 'Verification & compliance',        color: 'slate' },
     ],
   },

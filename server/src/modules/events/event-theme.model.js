@@ -11,7 +11,7 @@ const eventThemeSchema = new mongoose.Schema({
   // Media — all S3 URLs
   coverImage:  { type: String, required: true },
   gallery:     { type: [String], default: [], validate: v => v.length <= 20 },
-  videoUrl:    String, // Short reel-style video
+  videoUrl:    String, // S3 key of an uploaded short video (never a pasted link)
 
   // Pricing
   startingPricePaise: { type: Number, required: true, min: 0 },

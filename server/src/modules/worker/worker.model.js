@@ -18,6 +18,8 @@ const workerSchema = new mongoose.Schema(
       // compound {isOnline,isAvailable,skills} index (Mongo fallback). Redundant index dropped.
     },
     rating: { type: Number, default: 5, min: 0, max: 5 },
+    /** How many ratings the average above is made of; 0 means "New", not 5 stars. */
+    reviewCount: { type: Number, default: 0 },
     totalJobs: { type: Number, default: 0 },
     completedJobs: { type: Number, default: 0 },
 

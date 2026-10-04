@@ -34,7 +34,7 @@ export default function PartnerLoginPage() {
   const [digits, setDigits] = useState(['', '', '', '', '', '']);
   const [otpMeta, setOtpMeta] = useState({ cooldownSec: 30, resendsLeft: 3 });
   const [isNew, setIsNew] = useState(false);
-  const [regForm, setRegForm] = useState({ businessName: '', ownerName: '', cities: '' });
+  const [regForm, setRegForm] = useState({ businessName: '', ownerName: '' });
   const [googleIdToken, setGoogleIdToken] = useState(null);
   const [gLoading, setGLoading] = useState(false);
 
@@ -78,8 +78,9 @@ export default function PartnerLoginPage() {
       role: 'event_partner',
       profile: { name: res.partner.businessName, phone: res.partner.phone, _id: res.partner._id },
     }));
-    toast.success(res.isNew ? `Welcome to Zappy, ${res.partner.businessName}! 🎉` : `Welcome to , ${res.partner.businessName}!`);
-    navigate('/partner', { replace: true });
+    toast.success(res.isNew ? `Welcome to ZappyOne, ${res.partner.businessName}` : `Welcome back, ${res.partner.businessName}`);
+    // A new partner sets up their business first: places served, photo, verification.
+    navigate(res.isNew ? '/partner/profile' : '/partner', { replace: true });
   }
 
   async function handleSendOtp(e) {
@@ -345,9 +346,8 @@ export default function PartnerLoginPage() {
                 </div>
                 <div className="space-y-4 mb-8">
                   {[
-                    { k: 'businessName', label: 'Business Name', placeholder: 'e.g. Dream Decors Bangalore' },
+                    { k: 'businessName', label: 'Business Name', placeholder: 'e.g. Dream Decors Hyderabad' },
                     { k: 'ownerName', label: 'Your Name', placeholder: 'e.g. Ravi Kumar' },
-                    { k: 'cities', label: 'Cities you serve', placeholder: 'bangalore, mumbai' },
                   ].map(({ k, label, placeholder }) => (
                     <div key={k}>
                       <label className="text-[12px] font-bold text-slate-700 block mb-1.5">{label} <span className="text-red-500">*</span></label>

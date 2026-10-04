@@ -74,6 +74,25 @@ export default function PlansPage() {
     );
   }
 
+  /*
+   * Plans are not sold until every benefit they list is applied at checkout
+   * (surge cap, fee waiver, cashback). Someone who already holds a plan still
+   * sees and manages it below.
+   */
+  if (!activeSub) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-canvas px-4">
+        <div className="w-full max-w-md rounded-card border border-line bg-white p-6 text-center">
+          <p className="text-[19px] font-bold text-ink-900">Plans are coming soon</p>
+          <p className="mt-2 text-[14px] leading-relaxed text-ink-500">
+            We are finishing ZappyOne memberships. When they open, every benefit listed will apply to your bookings automatically.
+          </p>
+          <button type="button" onClick={() => nav(-1)} className="btn-outline mt-5 w-full">Go back</button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 md:flex md:justify-center">
       <SEO

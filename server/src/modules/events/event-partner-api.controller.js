@@ -4,6 +4,24 @@ const EventPartner = require('./event-partner.model');
 const EventBooking = require('./event-booking.model');
 const EventCategory = require('./event-category.model');
 const logger = require('../../core/logger');
+const s3Service = require('../../core/storage/s3');
+
+/** Sign an S3 key for viewing; leaves full URLs alone. */
+const signKey = (k) => (k && !String(k).startsWith('https://') ? s3Service.getViewUrl(k).catch(() => null) : Promise.resolve(k || null));
+
+/** What a package may be created or edited with: nothing a partner should not set (status, rating, counts). */
+const THEME_FIELDS = ['title', 'description', 'coverImage', 'gallery', 'videoUrl', 'startingPricePaise', 'includedItems', 'excludedItems',
+  'setupDurationMinutes', 'setupAreaSqft', 'guestCapacity', 'cities', 'tags', 'categoryId'];
+function pickTheme(body) {
+  const out = {};
+  for (const k of THEME_FIELDS) if (body[k] !== undefined) out[k] = body[k];
+  if (out.videoUrl && /^https?:/i.test(out.videoUrl)) delete out.videoUrl; // uploads only, never pasted links
+  if (Array.isArray(out.cities)) out.cities = out.cities.map((c) => String(c).trim().toLowerCase()).filter(Boolean);
+  return out;
+}
+
+/** Partner's share of a booking at the rate frozen on it. */
+const PARTNER_NET = { $multiply: ['$pricing.totalPaise', { $divide: [{ $subtract: [100, { $ifNull: ['$pricing.platformCommissionPct', 10] }] }, 100] }] };
 
 /* Profile */
 
@@ -11,6 +29,7 @@ async function getMe(req, res, next) {
   try {
     const partner = await EventPartner.findById(req.auth.sub).lean();
     if (!partner) return res.status(404).json({ error: 'Partner not found' });
+    partner.profilePhotoUrl = await signKey(partner.profilePhotoKey);
     res.json({ partner });
   } catch (e) { next(e); }
 }
@@ -58,15 +77,19 @@ async function updateMe(req, res, next) {
 
 async function getMyThemes(req, res, next) {
   try {
-    const s3Service = require('../../core/storage/s3');
     const themes = await EventTheme.find({ partnerId: req.auth.sub })
       .sort({ createdAt: -1 })
       .populate('categoryId', 'name slug emoji')
       .lean();
     await Promise.all(themes.map(async t => {
+      // Keys travel alongside the signed URLs so an edit saves keys, never expiring links.
+      t.coverKey = t.coverImage;
+      t.videoKey = t.videoUrl || null;
+      t.galleryKeys = t.gallery || [];
       if (t.coverImage && !t.coverImage.startsWith('https://')) {
         try { t.coverImage = await s3Service.getViewUrl(t.coverImage); } catch {}
       }
+      t.videoUrl = await signKey(t.videoUrl);
       if (Array.isArray(t.gallery)) {
         t.gallery = await Promise.all(t.gallery.map(async k =>
           k && !k.startsWith('https://') ? s3Service.getViewUrl(k).catch(() => k) : k
@@ -84,7 +107,7 @@ async function createTheme(req, res, next) {
       return res.status(403).json({ error: 'KYC approval required before uploading themes', code: 'KYC_REQUIRED' });
     }
     const theme = await EventTheme.create({
-      ...req.body,
+      ...pickTheme(req.body),
       partnerId: req.auth.sub,
       status: 'pending', // always pending — admin must approve
     });
@@ -100,8 +123,7 @@ async function updateTheme(req, res, next) {
     if (!['pending', 'rejected'].includes(theme.status)) {
       return res.status(409).json({ error: 'Live themes cannot be edited. Contact admin for changes.', code: 'THEME_LIVE' });
     }
-    const ALLOWED = ['title', 'description', 'coverImage', 'gallery', 'videoUrl', 'startingPricePaise', 'includedItems', 'setupDurationMinutes', 'setupAreaSqft', 'guestCapacity', 'cities', 'tags', 'categoryId'];
-    for (const k of ALLOWED) { if (req.body[k] !== undefined) theme[k] = req.body[k]; }
+    Object.assign(theme, pickTheme(req.body));
     if (theme.status === 'rejected') theme.status = 'pending'; // auto-resubmit
     await theme.save();
     res.json({ theme });
@@ -126,14 +148,65 @@ async function getMyBookings(req, res, next) {
   try {
     const { status, page = 1 } = req.query;
     const q = { partnerId: req.auth.sub };
-    if (status) q.status = status;
+    // "upcoming" = accepted or being set up; everything else is a single status.
+    if (status === 'upcoming') q.status = { $in: ['partner_assigned', 'in_progress'] };
+    else if (status) q.status = status;
     const limit = 15;
     const [bookings, total] = await Promise.all([
-      EventBooking.find(q).select('-startCode').sort({ eventDate: 1 }).skip((page - 1) * limit).limit(limit)
-        .populate('userId', 'name phone').populate('themeId', 'title coverImage').lean(),
+      EventBooking.find(q).select('-startCode -statusHistory')
+        // Finished and cancelled read newest first; work still to do reads soonest first.
+        .sort({ eventDate: ['completed', 'cancelled'].includes(status) || !status ? -1 : 1 })
+        .skip((page - 1) * limit).limit(limit)
+        // The list needs a name and a place; phone and full address are on the booking itself.
+        .populate('userId', 'name').populate('themeId', 'title coverImage').lean(),
       EventBooking.countDocuments(q),
     ]);
     res.json({ bookings, total, page, pages: Math.ceil(total / limit) });
+  } catch (e) { next(e); }
+}
+
+/** One booking, everything the partner needs on the day; never the start code. */
+async function getMyBooking(req, res, next) {
+  try {
+    const b = await EventBooking.findOne({ _id: req.params.id, partnerId: req.auth.sub })
+      .select('-startCode').populate('userId', 'name phone').populate('themeId', 'title coverImage includedItems setupDurationMinutes').lean();
+    if (!b) return res.status(404).json({ error: 'Booking not found' });
+    // Contact details only once the booking is the partner's to do.
+    if (!['confirmed', 'partner_assigned', 'in_progress', 'completed'].includes(b.status) && b.userId) b.userId.phone = null;
+    b.roomPhotos = (await Promise.all((b.roomPhotos || []).map(signKey))).filter(Boolean);
+    b.setupPhotos = {
+      before: (await Promise.all((b.setupPhotos?.before || []).map(signKey))).filter(Boolean),
+      after: (await Promise.all((b.setupPhotos?.after || []).map(signKey))).filter(Boolean),
+    };
+    if (b.themeId?.coverImage) b.themeId.coverImage = await signKey(b.themeId.coverImage);
+    const pct = b.pricing?.platformCommissionPct ?? 10;
+    b.payout = { commissionPct: pct, netPaise: Math.round((b.pricing?.totalPaise || 0) * (100 - pct) / 100) };
+    res.json({ booking: b });
+  } catch (e) { next(e); }
+}
+
+/**
+ * Before/after photos of the setup. "Before" once the team is assigned,
+ * "after" once the work is under way; the finished photos are the proof the
+ * customer sees and what completing the booking requires.
+ */
+async function addSetupPhotos(req, res, next) {
+  try {
+    const { stage, keys } = req.body;
+    const OK = { before: ['partner_assigned', 'in_progress'], after: ['in_progress', 'completed'] };
+    const b = await EventBooking.findOne({ _id: req.params.id, partnerId: req.auth.sub }).select('status setupPhotos');
+    if (!b) return res.status(404).json({ error: 'Booking not found' });
+    if (!OK[stage].includes(b.status)) {
+      return res.status(409).json({
+        error: stage === 'before' ? 'Add "before" photos once you are assigned' : 'Add finished photos once the setup has started',
+        code: 'WRONG_STAGE',
+      });
+    }
+    const current = b.setupPhotos?.[stage] || [];
+    if (current.length + keys.length > 10) return res.status(400).json({ error: 'Up to 10 photos per stage' });
+    b.set(`setupPhotos.${stage}`, [...current, ...keys]);
+    await b.save();
+    res.json({ ok: true, count: current.length + keys.length });
   } catch (e) { next(e); }
 }
 
@@ -191,6 +264,10 @@ async function updateBookingStatus(req, res, next) {
       return res.status(409).json({ error: `Cannot transition from ${booking.status} to ${status}` });
     }
     await require('../jobs/start-code').assertStartCode('event', booking, status, req.body.code);
+    // Finished means the customer can see it finished.
+    if (status === 'completed' && !(booking.setupPhotos?.after || []).length) {
+      return res.status(409).json({ error: 'Add at least one photo of the finished setup before completing', code: 'PROOF_REQUIRED' });
+    }
 
     booking.status = status;
     booking.statusHistory.push({ status, meta: { updatedBy: 'partner' } });
@@ -199,7 +276,7 @@ async function updateBookingStatus(req, res, next) {
 
     if (status === 'completed') {
       // The commission agreed when this booking was made, not a number fixed in code.
-      const commissionPct = booking.pricing.platformCommissionPct ?? 15;
+      const commissionPct = booking.pricing.platformCommissionPct ?? 10;
       const netPaise = Math.round((booking.pricing.totalPaise || 0) * (100 - commissionPct) / 100);
       await EventPartner.updateOne({ _id: req.auth.sub }, {
         $inc: { completedEvents: 1, totalEarningsPaise: netPaise },
@@ -262,35 +339,46 @@ async function unblockDate(req, res, next) {
 async function getEarnings(req, res, next) {
   try {
     const pid = new mongoose.Types.ObjectId(req.auth.sub);
+    const done = { partnerId: pid, status: 'completed' };
+    const { getActiveConfig } = require('./event.service');
 
-    const [summary, monthly, recent] = await Promise.all([
+    const [summary, monthly, recent, upcoming, cfg] = await Promise.all([
       EventBooking.aggregate([
-        { $match: { partnerId: pid, status: 'completed' } },
-        { $group: { _id: null, grossPaise: { $sum: '$pricing.totalPaise' }, count: { $sum: 1 } } },
+        { $match: done },
+        { $group: { _id: null, grossPaise: { $sum: '$pricing.totalPaise' }, netPaise: { $sum: PARTNER_NET }, count: { $sum: 1 } } },
       ]),
       EventBooking.aggregate([
-        { $match: { partnerId: pid, status: 'completed' } },
+        { $match: done },
         { $group: {
-          _id: { year: { $year: '$updatedAt' }, month: { $month: '$updatedAt' } },
-          grossPaise: { $sum: '$pricing.totalPaise' }, count: { $sum: 1 },
-        }},
+          _id: { year: { $year: '$eventDate' }, month: { $month: '$eventDate' } },
+          grossPaise: { $sum: '$pricing.totalPaise' }, netPaise: { $sum: PARTNER_NET }, count: { $sum: 1 },
+        } },
         { $sort: { '_id.year': -1, '_id.month': -1 } },
         { $limit: 6 },
       ]),
-      EventBooking.find({ partnerId: req.auth.sub, status: 'completed' })
-        .sort({ updatedAt: -1 }).limit(10)
-        .populate('themeId', 'title').lean(),
+      EventBooking.find(done).sort({ eventDate: -1 }).limit(15).select('eventDate pricing themeId').populate('themeId', 'title').lean(),
+      EventBooking.aggregate([
+        { $match: { partnerId: pid, status: { $in: ['confirmed', 'partner_assigned', 'in_progress'] } } },
+        { $group: { _id: null, netPaise: { $sum: PARTNER_NET }, count: { $sum: 1 } } },
+      ]),
+      getActiveConfig(),
     ]);
 
     const gross = summary[0]?.grossPaise || 0;
-    const platformPct = 0.15;
-    const platform = Math.round(gross * platformPct);
-    const net = gross - platform;
-
+    const net = Math.round(summary[0]?.netPaise || 0);
     res.json({
-      grossPaise: gross, platformPaise: platform, netPaise: net,
+      grossPaise: gross, platformPaise: gross - net, netPaise: net,
       totalJobs: summary[0]?.count || 0,
-      monthly, recent,
+      // The rate new bookings are made at; each past booking keeps its own.
+      commissionPct: cfg.platformCommissionPct ?? 10,
+      upcomingNetPaise: Math.round(upcoming[0]?.netPaise || 0),
+      upcomingCount: upcoming[0]?.count || 0,
+      monthly: monthly.map((m) => ({ ...m, netPaise: Math.round(m.netPaise) })),
+      recent: recent.map((b) => {
+        const pct = b.pricing?.platformCommissionPct ?? 10;
+        const grossB = b.pricing?.totalPaise || 0;
+        return { _id: b._id, eventDate: b.eventDate, title: b.themeId?.title || 'Event', grossPaise: grossB, commissionPct: pct, netPaise: Math.round(grossB * (100 - pct) / 100) };
+      }),
     });
   } catch (e) { next(e); }
 }
@@ -311,16 +399,15 @@ async function getOverview(req, res, next) {
       EventBooking.countDocuments({ partnerId: pid, status: 'confirmed' }),
       EventBooking.aggregate([
         { $match: { partnerId: new mongoose.Types.ObjectId(pid), status: 'completed' } },
-        { $group: { _id: null, t: { $sum: '$pricing.totalPaise' } } },
+        { $group: { _id: null, net: { $sum: PARTNER_NET } } },
       ]),
     ]);
 
-    const gross = totalEarned[0]?.t || 0;
     res.json({
       partner,
       stats: {
         themes, upcomingEvents: upcoming, pendingConfirmations: pending,
-        netEarningsPaise: Math.round(gross * 0.85),
+        netEarningsPaise: Math.round(totalEarned[0]?.net || 0),
       },
     });
   } catch (e) { next(e); }
@@ -368,7 +455,7 @@ async function streamMyKycField(req, res, next) {
 module.exports = {
   getMe, updateMe,
   getMyThemes, createTheme, updateTheme, deleteTheme,
-  getMyBookings, updateBookingStatus, declineBooking,
+  getMyBookings, getMyBooking, addSetupPhotos, updateBookingStatus, declineBooking,
   getCalendar, blockDate, unblockDate,
   getEarnings, getOverview, getCategories,
   streamMyKycDoc, streamMyKycField,

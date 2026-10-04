@@ -1,75 +1,49 @@
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import {
-  ArrowLeft,
-  ShieldCheck,
-  Star,
-  Briefcase,
-  Clock,
-  Target,
-  UserCheck,
-  Repeat2,
-  Zap,
-  Wrench,
-  Droplets,
-  Wind,
-  Hammer,
-  Users,
-  Car,
-  Paintbrush2,
-  Smartphone,
-  Battery,
-  Layers,
-  Home,
-  Bike,
-  Fuel,
-  AlertTriangle,
-  Bolt,
-  SprayCan,
-} from 'lucide-react';
+import { ArrowLeft, ShieldCheck, Star, BadgeCheck, CalendarDays, Briefcase, MessageSquareQuote } from 'lucide-react';
 import { useGetOrderQuery, useGetWorkerPublicProfileQuery } from '@shared/services/api';
 
-/* Service icon map (mirrors WorkerDashboard) */
-const SERVICE_ICON_MAP = {
-  electrical:            { Icon: Bolt,          bg: 'bg-amber-100',   color: 'text-amber-600'   },
-  plumbing:              { Icon: Droplets,       bg: 'bg-blue-100',    color: 'text-blue-600'    },
-  ac_repair:             { Icon: Wind,           bg: 'bg-cyan-100',    color: 'text-cyan-600'    },
-  carpenter:             { Icon: Hammer,         bg: 'bg-orange-100',  color: 'text-orange-600'  },
-  helper:                { Icon: Users,          bg: 'bg-green-100',   color: 'text-green-600'   },
-  puncture:              { Icon: Car,            bg: 'bg-slate-100',   color: 'text-slate-500'   },
-  cleaning:              { Icon: SprayCan,       bg: 'bg-purple-100',  color: 'text-purple-600'  },
-  painting:              { Icon: Paintbrush2,    bg: 'bg-pink-100',    color: 'text-pink-600'    },
-  screen_replacement:    { Icon: Smartphone,     bg: 'bg-zappy-100',  color: 'text-zappy-600'  },
-  battery_replacement:   { Icon: Battery,        bg: 'bg-emerald-100', color: 'text-emerald-600' },
-  charging_issue:        { Icon: Bolt,           bg: 'bg-yellow-100',  color: 'text-yellow-600'  },
-  speaker_mic_issue:     { Icon: Layers,         bg: 'bg-violet-100',  color: 'text-violet-600'  },
-  software_issue:        { Icon: Wrench,         bg: 'bg-red-100',     color: 'text-red-600'     },
-  water_damage_check:    { Icon: Droplets,       bg: 'bg-sky-100',     color: 'text-sky-600'     },
-  mason:                 { Icon: Home,           bg: 'bg-stone-100',   color: 'text-stone-600'   },
-  battery_jump_start:    { Icon: Zap,            bg: 'bg-yellow-100',  color: 'text-yellow-600'  },
-  fuel_delivery:         { Icon: Fuel,           bg: 'bg-orange-100',  color: 'text-orange-600'  },
-  bike_wash:             { Icon: Bike,           bg: 'bg-cyan-100',    color: 'text-cyan-600'    },
-  car_wash:              { Icon: Car,            bg: 'bg-blue-100',    color: 'text-blue-600'    },
-  minor_roadside_repair: { Icon: AlertTriangle,  bg: 'bg-red-100',     color: 'text-red-600'     },
-};
+/**
+ * A provider's public profile: who they are, what ZappyOne has verified them
+ * for, and what customers actually said. Every number on this page comes from
+ * a record; where there is no record yet, the page says so ("New") instead of
+ * filling the gap.
+ */
 
-const PLACEHOLDER_REVIEWS = [
-  { name: 'R***a', rating: 5, comment: 'Excellent work, very professional and on time.', date: '2 days ago' },
-  { name: 'S***h', rating: 5, comment: 'Fixed the issue quickly. Would recommend.', date: '5 days ago' },
-  { name: 'A***y', rating: 4, comment: 'Good service, clean work.', date: '1 week ago' },
-];
+function since(date) {
+  if (!date) return null;
+  return new Date(date).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
+}
 
-const STATS = [
-  { label: 'Avg response time', value: '3 min', pct: 90 },
-  { label: 'On-time arrival', value: '94%', pct: 94 },
-  { label: 'Re-hired by customers', value: '67%', pct: 67 },
-];
+function ago(date) {
+  if (!date) return '';
+  const days = Math.floor((Date.now() - new Date(date).getTime()) / 86400000);
+  if (days < 1) return 'Today';
+  if (days < 7) return `${days} day${days === 1 ? '' : 's'} ago`;
+  if (days < 30) return `${Math.floor(days / 7)} week${days < 14 ? '' : 's'} ago`;
+  return new Date(date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+}
 
-const fadeInUp = {
-  initial: { opacity: 0, y: 16 },
-  animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.35, ease: [0.22, 1, 0.36, 1] },
-};
+function Stars({ value, size = 14 }) {
+  return (
+    <span className="flex items-center gap-0.5" aria-label={`${value} out of 5`}>
+      {[1, 2, 3, 4, 5].map((n) => (
+        <Star key={n} size={size} className={n <= Math.round(value) ? 'fill-amber-400 text-amber-400' : 'text-line-strong'} />
+      ))}
+    </span>
+  );
+}
+
+function Fact({ icon: Icon, label, value }) {
+  return (
+    <div className="flex items-center gap-3 rounded-card border border-line bg-white p-3.5">
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-btn bg-sunken text-ink-700"><Icon size={17} /></span>
+      <span className="min-w-0">
+        <span className="block text-[12px] text-ink-500">{label}</span>
+        <span className="block truncate text-[15px] font-semibold text-ink-900">{value}</span>
+      </span>
+    </div>
+  );
+}
 
 export default function WorkerProfilePage() {
   const { workerId } = useParams();
@@ -77,257 +51,135 @@ export default function WorkerProfilePage() {
   const orderId = searchParams.get('orderId');
   const nav = useNavigate();
 
-  /* Try dedicated public profile endpoint first */
-  const { data: profileData, isError: profileError } = useGetWorkerPublicProfileQuery(workerId, {
-    skip: !workerId,
-  });
+  const { data: profileData, isLoading } = useGetWorkerPublicProfileQuery(workerId, { skip: !workerId });
+  // Older bookings carry the provider's name on the order itself.
+  const { data: orderData } = useGetOrderQuery(orderId, { skip: !orderId || !!profileData });
 
-  /* Fallback: get worker data from order */
-  const { data: orderData } = useGetOrderQuery(orderId, {
-    skip: !orderId || !!profileData,
-  });
-
-  /* Resolve worker info from whichever source worked */
   const worker = profileData?.worker ?? null;
-  const order  = orderData?.order ?? null;
+  const order = orderData?.order ?? null;
+  const reviews = profileData?.reviews ?? [];
 
-  const name         = worker?.name         ?? order?.workerName   ?? 'Worker';
-  const rating       = worker?.rating       ?? order?.workerRating ?? 4.8;
-  const completedJobs = worker?.completedJobs ?? order?.workerJobs  ?? 0;
-  // Verified services replace the old self-declared skill list entirely.
+  const name = worker?.name ?? order?.workerName ?? 'Your pro';
+  const ratingCount = worker?.ratingCount ?? 0;
+  const rating = ratingCount ? worker?.rating : null;
+  const completedJobs = worker?.completedJobs ?? 0;
   const verifiedServices = worker?.verifiedServices ?? [];
-  const isKyc        = worker?.kyc?.status === 'approved' || order?.workerId != null;
-
+  const isVerified = !!worker?.verified;
+  const breakdown = worker?.breakdown ?? null;
   const initials = name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
-  /**
-   * Booking this technician again starts the flow for a service they are
-   * actually verified for. The old path guessed a legacy service code from
-   * their first self-declared skill, which could send a customer into a
-   * flow this person is not approved to do.
-   */
-  const bookablePath = verifiedServices.find((s) => s.path)?.path || null;
 
-  function handleRebook() {
-    if (!bookablePath) return nav('/services');
-    nav(`${bookablePath}?preferredWorker=${workerId}`);
-  }
+  // Rebooking starts a flow this person is verified for, never a guess.
+  const bookablePath = verifiedServices.find((s) => s.path)?.path || null;
+  const rebook = () => (bookablePath ? nav(`${bookablePath}?preferredWorker=${workerId}`) : nav('/services'));
 
   return (
-    <div className="min-h-screen pb-40" style={{ background: 'linear-gradient(#0f172a, #0f172a)' }}>
+    <div className="min-h-screen bg-canvas pb-32">
+      <header className="sticky top-0 z-20 border-b border-line bg-white">
+        <div className="mx-auto flex max-w-2xl items-center gap-2 px-4 py-2.5">
+          <button type="button" onClick={() => nav(-1)} aria-label="Back" className="back-btn -ml-1.5"><ArrowLeft size={19} /></button>
+          <p className="text-[17px] font-bold text-ink-900">Profile</p>
+        </div>
+      </header>
 
-      {/* Back button */}
-      <div className="sticky top-0 z-20 px-4 pt-4 pb-2 flex items-center" style={{ background: 'transparent' }}>
-        <motion.button
-          onClick={() => nav(-1)}
-          whileTap={{ scale: 0.9 }}
-          className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center"
-        >
-          <ArrowLeft size={18} strokeWidth={2.5} className="text-white" />
-        </motion.button>
-      </div>
-
-      {/* Hero */}
-      <div className="relative flex flex-col items-center pt-4 pb-8 px-4">
-        {/* Animated orb */}
-        <motion.div
-          className="absolute top-0 left-1/2 -translate-x-1/2 w-72 h-72 rounded-full blur-3xl pointer-events-none"
-          style={{ background: 'radial-gradient(circle, rgba(59,130,246,0.35), transparent)' }}
-          animate={{ scale: [1, 1.2, 1], opacity: [0.4, 0.65, 0.4] }}
-          transition={{ duration: 6, repeat: Infinity }}
-        />
-
-        {/* Avatar */}
-        <motion.div
-          className="relative z-10 w-24 h-24 rounded-full flex items-center justify-center text-white font-black text-3xl ring-4 ring-white/20 shadow-2xl"
-          style={{ background: 'linear-gradient(#3B82F6, #3B82F6)' }}
-          initial={{ scale: 0.7, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ type: 'spring', stiffness: 260, damping: 22, delay: 0.1 }}
-        >
-          {initials}
-          {/* Verified tick overlay */}
-          <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-green-500 flex items-center justify-center ring-2 ring-white">
-            <ShieldCheck size={14} strokeWidth={2.5} className="text-white" />
+      <main className="mx-auto flex max-w-2xl flex-col gap-4 px-4 pt-5">
+        {/* Who */}
+        <section className="flex items-center gap-4 rounded-card border border-line bg-white p-4">
+          <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-zappy-50 text-[22px] font-bold text-zappy-700">
+            {initials}
+          </span>
+          <div className="min-w-0">
+            <h1 className="truncate text-[21px] font-bold text-ink-900">{isLoading ? '…' : name}</h1>
+            <div className="mt-1 flex flex-wrap items-center gap-1.5">
+              {isVerified && <span className="chip bg-green-50 text-green-700"><ShieldCheck size={12} /> ID verified</span>}
+              {rating != null
+                ? <span className="chip bg-amber-50 text-amber-800"><Star size={12} className="fill-amber-400 text-amber-400" /> {Number(rating).toFixed(1)} · {ratingCount} rating{ratingCount === 1 ? '' : 's'}</span>
+                : <span className="chip bg-sunken text-ink-700">New on ZappyOne</span>}
+            </div>
           </div>
-        </motion.div>
+        </section>
 
-        {/* Name + badge */}
-        <motion.h1
-          className="mt-4 text-2xl font-black text-white z-10 text-center"
-          {...fadeInUp}
-          transition={{ delay: 0.15 }}
-        >
-          {name}
-        </motion.h1>
+        {/* Facts, all from records */}
+        <section className="grid grid-cols-2 gap-3">
+          <Fact icon={Briefcase} label="Jobs completed" value={completedJobs ? completedJobs.toLocaleString('en-IN') : 'None yet'} />
+          <Fact icon={CalendarDays} label="On ZappyOne since" value={since(worker?.memberSince) || '—'} />
+        </section>
 
-        <motion.div
-          className="flex items-center gap-1.5 mt-1.5 z-10"
-          {...fadeInUp}
-          transition={{ delay: 0.2 }}
-        >
-          <ShieldCheck size={14} strokeWidth={2.5} className="text-green-400" />
-          <span className="text-green-400 text-xs font-bold">KYC Verified</span>
-          <span className="text-white/20 mx-1">·</span>
-          <Star size={13} strokeWidth={2} className="text-amber-400 fill-amber-400" />
-          <span className="text-white text-sm font-bold">{typeof rating === 'number' ? rating.toFixed(1) : '4.8'}</span>
-          <span className="text-white/20 mx-1">·</span>
-          <Briefcase size={13} strokeWidth={2} className="text-white/60" />
-          <span className="text-white/60 text-xs font-medium">{completedJobs} jobs</span>
-        </motion.div>
-      </div>
-
-      {/* Content cards */}
-      <div className="max-w-lg lg:max-w-2xl mx-auto px-4 space-y-3">
-
-        {/* Trust badges row */}
-        <motion.div
-          className="flex gap-2 flex-wrap"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.22 }}
-        >
-          {[
-            { label: 'KYC Verified',          bg: 'bg-green-100',  text: 'text-green-700',  Icon: ShieldCheck },
-            { label: `${completedJobs} Jobs`,  bg: 'bg-zappy-100', text: 'text-zappy-700', Icon: Briefcase   },
-            { label: `${typeof rating === 'number' ? rating.toFixed(1) : '4.8'} Rating`, bg: 'bg-amber-100', text: 'text-amber-700', Icon: Star },
-          ].map(({ label, bg, text, Icon }) => (
-            <span
-              key={label}
-              className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold ${bg} ${text}`}
-            >
-              <Icon size={12} strokeWidth={2.5} />
-              {label}
-            </span>
-          ))}
-        </motion.div>
-
-        {/*
-          What this technician is VERIFIED for.
-          A self-declared skill list told the customer nothing — anyone could
-          tick "screen repair". These are services a reviewer approved, so the
-          badge means the platform is standing behind it.
-        */}
-        {verifiedServices.length > 0 && (
-          <motion.div
-            className="bg-white rounded-2xl p-4 shadow-sm"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.27 }}
-          >
-            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">
-              Verified to work on
-            </p>
-            <div className="flex flex-wrap gap-2">
+        {/* Verified for */}
+        <section className="rounded-card border border-line bg-white p-4">
+          <h2 className="text-[15px] font-bold text-ink-900">Verified for</h2>
+          <p className="mt-0.5 text-[13px] text-ink-500">ZappyOne checked their documents for each of these.</p>
+          {verifiedServices.length ? (
+            <div className="mt-3 flex flex-wrap gap-2">
               {verifiedServices.map((s) => (
-                <span
-                  key={s.code}
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700"
-                >
-                  <ShieldCheck size={12} strokeWidth={2.2} />
-                  {s.name}
-                </span>
+                <span key={s.code} className="chip bg-zappy-50 text-zappy-700"><BadgeCheck size={13} /> {s.name}</span>
               ))}
             </div>
-          </motion.div>
+          ) : (
+            <p className="mt-3 text-[14px] text-ink-500">No services verified yet.</p>
+          )}
+        </section>
+
+        {/* Rating spread */}
+        {ratingCount > 0 && breakdown && (
+          <section className="rounded-card border border-line bg-white p-4">
+            <div className="flex items-center gap-3">
+              <span className="text-[32px] font-bold leading-none tabular-nums text-ink-900">{Number(rating).toFixed(1)}</span>
+              <div>
+                <Stars value={rating} />
+                <p className="mt-0.5 text-[13px] text-ink-500">{ratingCount} rating{ratingCount === 1 ? '' : 's'}</p>
+              </div>
+            </div>
+            <div className="mt-3 space-y-1.5">
+              {[5, 4, 3, 2, 1].map((n) => {
+                const c = breakdown[n] || 0;
+                return (
+                  <div key={n} className="flex items-center gap-2 text-[12px] tabular-nums text-ink-500">
+                    <span className="w-3">{n}</span>
+                    <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-sunken">
+                      <span className="block h-full rounded-full bg-amber-400" style={{ width: `${(c / ratingCount) * 100}%` }} />
+                    </span>
+                    <span className="w-6 text-right">{c}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
         )}
 
-        {/* Why choose me — aspirational stats */}
-        <motion.div
-          className="bg-white rounded-2xl p-4 shadow-sm"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.31 }}
-        >
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-7 h-7 rounded-lg bg-zappy-50 flex items-center justify-center">
-              <Target size={13} strokeWidth={2.5} className="text-zappy-600" />
-            </div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Why Choose Me</p>
-          </div>
-          <div className="space-y-3">
-            {STATS.map(({ label, value, pct }, i) => (
-              <div key={label}>
-                <div className="flex items-center justify-between mb-1">
-                  <p className="text-xs font-semibold text-slate-600">{label}</p>
-                  <p className="text-xs font-extrabold text-zappy-600">{value}</p>
-                </div>
-                <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                  <motion.div
-                    className="h-full rounded-full bg-zappy-500"
-                    initial={{ width: 0 }}
-                    animate={{ width: `${pct}%` }}
-                    transition={{ duration: 0.9, ease: 'easeOut', delay: 0.35 + i * 0.1 }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* Recent reviews */}
-        <motion.div
-          className="bg-white rounded-2xl p-4 shadow-sm"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.36 }}
-        >
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-7 h-7 rounded-lg bg-amber-50 flex items-center justify-center">
-              <Star size={13} strokeWidth={2.5} className="text-amber-500" />
-            </div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Recent Reviews</p>
-          </div>
-
-          <div className="space-y-3">
-            {PLACEHOLDER_REVIEWS.map((review, i) => (
-              <motion.div
-                key={i}
-                className="p-3 bg-slate-50 rounded-xl"
-                initial={{ opacity: 0, x: -8 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.4 + i * 0.07 }}
-              >
-                <div className="flex items-center justify-between mb-1.5">
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-7 h-7 rounded-full bg-slate-300 flex items-center justify-center">
-                      <UserCheck size={12} strokeWidth={2} className="text-white" />
-                    </div>
-                    <p className="text-xs font-bold text-slate-700">{review.name}</p>
+        {/* What customers said */}
+        <section className="rounded-card border border-line bg-white p-4">
+          <h2 className="text-[15px] font-bold text-ink-900">What customers said</h2>
+          {reviews.length ? (
+            <ul className="mt-3 divide-y divide-line">
+              {reviews.map((r, i) => (
+                <li key={r.id || i} className="py-3 first:pt-0 last:pb-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[14px] font-semibold text-ink-900">{r.by || 'Customer'}</span>
+                    <span className="text-[12px] text-ink-400">{ago(r.at)}</span>
                   </div>
-                  <div className="flex items-center gap-0.5">
-                    {Array.from({ length: 5 }).map((_, j) => (
-                      <Star
-                        key={j}
-                        size={10}
-                        strokeWidth={j < review.rating ? 0 : 1.5}
-                        className={j < review.rating ? 'text-amber-400 fill-amber-400' : 'text-slate-200'}
-                      />
-                    ))}
+                  <div className="mt-1 flex items-center gap-2">
+                    <Stars value={r.rating} size={12} />
+                    {r.service && <span className="text-[12px] capitalize text-ink-500">{r.service}</span>}
                   </div>
-                </div>
-                <p className="text-xs text-slate-500 leading-relaxed">{review.comment}</p>
-                <p className="text-[10px] text-slate-300 mt-1 font-medium">{review.date}</p>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
+                  <p className="mt-1.5 text-[14px] leading-relaxed text-ink-700">{r.text}</p>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="mt-3 flex items-center gap-3 rounded-btn bg-sunken p-3 text-[14px] text-ink-500">
+              <MessageSquareQuote size={18} className="shrink-0" />
+              No written reviews yet. Reviews appear here after customers rate a finished job.
+            </div>
+          )}
+        </section>
+      </main>
 
-        {/* Rebook CTA */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.45 }}
-        >
-          <motion.button
-            onClick={handleRebook}
-            whileTap={{ scale: 0.97 }}
-            className="w-full h-14 rounded-2xl text-white font-extrabold text-base flex items-center justify-center gap-2.5 shadow-lg"
-            style={{ background: 'linear-gradient(#2563EB, #2563EB)', boxShadow: '0 8px 24px rgba(59,130,246,0.35)' }}
-          >
-            <Repeat2 size={20} strokeWidth={2.5} />
-            Book {name.split(' ')[0]} Again
-          </motion.button>
-        </motion.div>
+      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-white p-4" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)' }}>
+        <div className="mx-auto max-w-2xl">
+          <button type="button" onClick={rebook} className="btn-primary w-full">
+            {bookablePath ? `Book ${name.split(' ')[0]} again` : 'See services'}
+          </button>
+        </div>
       </div>
     </div>
   );

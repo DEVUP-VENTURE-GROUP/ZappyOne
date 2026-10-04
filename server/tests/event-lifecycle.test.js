@@ -86,7 +86,7 @@ test('a partner decline refunds everything paid', async () => {
 });
 
 test("the partner's share uses the booking's agreed commission", async () => {
-  const id = await booking({ status: 'in_progress' });
+  const id = await booking({ status: 'in_progress', setupPhotos: { before: [], after: ['event-photos/done.jpg'] } });
   const before = (await EventPartner.findById(partnerId).lean()).totalEarningsPaise || 0;
   const res = await request(app).patch(`/api/events/partner/bookings/${id}/status`)
     .set('Authorization', `Bearer ${signAccessToken({ sub: String(partnerId), role: 'event_partner' })}`)
@@ -94,6 +94,15 @@ test("the partner's share uses the booking's agreed commission", async () => {
   expect(res.status).toBe(200);
   const after = (await EventPartner.findById(partnerId).lean()).totalEarningsPaise;
   expect(after - before).toBe(88000); // 12% commission, not a fixed 15%
+});
+
+test('a booking cannot be completed without a photo of the finished setup', async () => {
+  const id = await booking({ status: 'in_progress' });
+  const res = await request(app).patch(`/api/events/partner/bookings/${id}/status`)
+    .set('Authorization', `Bearer ${signAccessToken({ sub: String(partnerId), role: 'event_partner' })}`)
+    .send({ status: 'completed' });
+  expect(res.status).toBe(409);
+  expect(res.body.code).toBe('PROOF_REQUIRED');
 });
 
 test("every change reaches the customer's own channel", async () => {

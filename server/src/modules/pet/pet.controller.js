@@ -257,7 +257,7 @@ async function cancelBooking(req, res, next) {
 async function rateBooking(req, res, next) {
   try {
     const booking = await PetBooking.findOne({ _id: req.params.id, userId: req.auth.sub })
-      .select('status workerId shopId rating ratedAt').lean();
+      .select('status workerId shopId rating ratedAt categoryCode').lean();
     if (!booking) return res.status(404).json({ error: 'Booking not found' });
     if (!['SERVICE_COMPLETED', 'CUSTOMER_CONFIRMATION', 'PAYMENT_PENDING', 'PAYMENT_COMPLETED', 'CLOSED'].includes(booking.status)) {
       return res.status(409).json({ error: 'You can rate this once the service is complete', code: 'NOT_COMPLETED' });
@@ -273,6 +273,10 @@ async function rateBooking(req, res, next) {
     await ratingService.applyRepairRating({
       workerId: booking.workerId, shopId: booking.shopId, rating: req.body.rating,
     }).catch(() => {});
+    await require('../review/review.service').recordReview({
+      kind: 'pet', jobId: booking._id, userId: req.auth.sub, workerId: booking.workerId, shopId: booking.shopId,
+      rating: req.body.rating, comment: req.body.comment, serviceLabel: String(booking.categoryCode || '').replace(/_/g, ' '),
+    });
 
     res.json({ ok: true });
   } catch (err) { next(err); }

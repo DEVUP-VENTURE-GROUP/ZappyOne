@@ -205,14 +205,14 @@ export default function EventBookingDetailPage() {
           <div className="bg-white rounded-2xl border border-slate-100 p-4">
             <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-3">Your Decorator</p>
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 bg-violet-400 rounded-xl flex items-center justify-center text-white font-black">
+              <div className="w-11 h-11 bg-zappy-50 rounded-xl flex items-center justify-center text-zappy-700 font-black">
                 {booking.partnerId.businessName?.[0]?.toUpperCase()}
               </div>
               <div className="flex-1">
                 <p className="font-semibold text-slate-900 text-sm">{booking.partnerId.businessName}</p>
                 <div className="flex items-center gap-1 mt-0.5">
                   <Star size={11} className="text-amber-400 fill-amber-400" />
-                  <span className="text-xs text-slate-500">{booking.partnerId.rating?.toFixed(1)} · {booking.partnerId.completedEvents} events</span>
+                  <span className="text-xs text-slate-500">{booking.partnerId.reviewCount ? `${Number(booking.partnerId.rating).toFixed(1)} · ` : 'New · '}{booking.partnerId.completedEvents || 0} events</span>
                 </div>
               </div>
               {booking.partnerId.phone && (
@@ -221,6 +221,25 @@ export default function EventBookingDetailPage() {
                 </a>
               )}
             </div>
+          </div>
+        )}
+
+        {/* The partner's photos of the setup: proof of what was done */}
+        {(booking.setupPhotos?.before?.length > 0 || booking.setupPhotos?.after?.length > 0) && (
+          <div className="rounded-card border border-line bg-white p-4">
+            <p className="text-[15px] font-bold text-ink-900">Setup photos</p>
+            {[['after', 'Finished setup'], ['before', 'Before they started']].map(([k, label]) => (booking.setupPhotos?.[k]?.length ? (
+              <div key={k} className="mt-3">
+                <p className="text-[13px] text-ink-500">{label}</p>
+                <div className="mt-1.5 flex gap-2 overflow-x-auto no-scrollbar">
+                  {booking.setupPhotos[k].map((src) => (
+                    <a key={src} href={src} target="_blank" rel="noreferrer" className="shrink-0">
+                      <img src={src} alt="" className="h-28 w-28 rounded-btn border border-line object-cover" />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            ) : null))}
           </div>
         )}
 

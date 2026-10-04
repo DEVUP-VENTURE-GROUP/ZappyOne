@@ -8,7 +8,9 @@ const cancelTierSchema = new mongoose.Schema({
 const eventConfigSchema = new mongoose.Schema({
   // Payments
   advancePaymentPct:     { type: Number, default: 20,  min: 0, max: 100 },
-  platformCommissionPct: { type: Number, default: 15,  min: 0, max: 50 },
+  // The platform's rule: 10% from the provider (pricing rules). Admin may change it;
+  // each booking freezes the rate it was made at.
+  platformCommissionPct: { type: Number, default: 10,  min: 0, max: 50 },
   travelFeePerKmPaise:   { type: Number, default: 0 },
 
   // Cancellation policy (admin editable)

@@ -13,10 +13,10 @@ import {
   useGetEventConfigQuery,
 } from '@shared/services/api';
 import toast from 'react-hot-toast';
+import AvailabilityPicker from './AvailabilityPicker';
 
 import { openCheckout } from '@shared/services/cashfree';
 
-const TIME_SLOTS = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM', '6:00 PM', '7:00 PM'];
 const STEPS = ['When & Where', 'Location', 'Specifics', 'Review'];
 
 function PremiumStepIndicator({ currentStep }) {
@@ -208,43 +208,9 @@ export default function EventBookingPage() {
           
           {/* Step 0: Date & Time */}
           {step === 0 && (
-            <motion.div key="step0" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-8 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-6 lg:items-start">
-              
-              <div className="bg-white rounded-[2rem] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-xl bg-zappy-50 text-zappy-500 flex items-center justify-center"><CalendarIcon size={20} /></div>
-                  <h3 className="font-black text-lg text-slate-900">Select Date</h3>
-                </div>
-                <input 
-                  type="date" 
-                  value={form.eventDate} 
-                  onChange={e => set('eventDate', e.target.value)}
-                  min={new Date(Date.now() + 86_400_000).toISOString().split('T')[0]}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-slate-800 font-bold focus:bg-white focus:border-zappy-500 focus:ring-4 focus:ring-zappy-500/10 outline-none transition-all cursor-pointer" 
-                />
-              </div>
-
-              <div className="bg-white rounded-[2rem] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 rounded-xl bg-fuchsia-50 text-fuchsia-500 flex items-center justify-center"><Clock size={20} /></div>
-                  <div>
-                    <h3 className="font-black text-lg text-slate-900">Select Time</h3>
-                    <p className="text-[10px] uppercase tracking-widest font-bold text-slate-400">Available Slots</p>
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-3 gap-3">
-                  {TIME_SLOTS.map(slot => (
-                    <button 
-                      key={slot} 
-                      onClick={() => set('eventTimeSlot', slot)}
-                      className={`py-3.5 rounded-2xl text-xs font-black transition-all duration-300 ${form.eventTimeSlot === slot ? 'bg-slate-900 text-white shadow-[0_10px_20px_rgba(0,0,0,0.15)] scale-105 ring-2 ring-slate-900 ring-offset-2' : 'bg-slate-50 text-slate-600 border border-slate-200 hover:border-slate-400 hover:bg-white hover:shadow-sm'}`}
-                    >
-                      {slot}
-                    </button>
-                  ))}
-                </div>
-              </div>
+            <motion.div key="step0" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
+              <AvailabilityPicker themeId={id} date={form.eventDate} slot={form.eventTimeSlot}
+                onDate={(d) => set('eventDate', d)} onSlot={(sl) => set('eventTimeSlot', sl)} />
             </motion.div>
           )}
 

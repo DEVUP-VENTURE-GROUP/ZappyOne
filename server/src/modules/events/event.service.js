@@ -21,6 +21,7 @@ async function resolveThemeImages(theme) {
     try { return await s3Service.getViewUrl(val); } catch { return val; }
   }
   theme.coverImage = await resolve(theme.coverImage);
+  theme.videoUrl = await resolve(theme.videoUrl);
   if (Array.isArray(theme.gallery)) {
     theme.gallery = await Promise.all(theme.gallery.map(resolve));
   }
@@ -45,7 +46,7 @@ async function getActiveConfig() {
 
 function defaultConfig() {
   return {
-    advancePaymentPct: 20, platformCommissionPct: 15, travelFeePerKmPaise: 0,
+    advancePaymentPct: 20, platformCommissionPct: 10, travelFeePerKmPaise: 0,
     cancellationPolicy: [
       { daysBeforeEvent: 7, refundPct: 100 },
       { daysBeforeEvent: 3, refundPct: 50  },
@@ -89,7 +90,7 @@ async function listThemes({ categorySlug, city, budgetMaxPaise, guestCount, page
   const [themes, total] = await Promise.all([
     EventTheme.find(q).sort(sortMap[sort] || sortMap.trending).skip((page - 1) * limit).limit(limit)
       .populate('categoryId', 'name slug emoji')
-      .populate('partnerId', 'businessName rating completedEvents')
+      .populate('partnerId', 'businessName rating reviewCount completedEvents')
       .lean(),
     EventTheme.countDocuments(q),
   ]);
@@ -100,7 +101,7 @@ async function listThemes({ categorySlug, city, budgetMaxPaise, guestCount, page
 async function getTheme(themeId, userId = null) {
   const theme = await EventTheme.findOne({ _id: themeId, status: { $in: ['approved', 'featured'] } })
     .populate('categoryId', 'name slug emoji')
-    .populate('partnerId', 'businessName rating completedEvents bio portfolioImages yearsExperience')
+    .populate('partnerId', 'businessName rating reviewCount completedEvents bio portfolioImages yearsExperience')
     .lean();
   if (!theme) throw Object.assign(new Error('Theme not found'), { status: 404 });
 
@@ -114,6 +115,36 @@ async function getTheme(themeId, userId = null) {
   }
   await resolveThemeImages(theme);
   return { ...theme, isSaved };
+}
+
+/**
+ * What a customer can pick for this package: the partner's blocked days and
+ * the slots already taken, over the bookable window. The booking itself still
+ * re-checks both, so this only keeps the picker honest.
+ */
+async function getThemeAvailability(themeId, days = 90) {
+  const theme = await EventTheme.findOne({ _id: themeId, status: { $in: ['approved', 'featured'] } })
+    .select('partnerId').lean();
+  if (!theme) throw Object.assign(new Error('Theme not found'), { status: 404 });
+  const cfg = await getActiveConfig();
+  const horizon = Math.min(Number(days) || 90, cfg.maxAdvanceBookingDays || 365);
+  const from = new Date();
+  const to = new Date(from.getTime() + horizon * 86_400_000);
+  const [partner, taken] = await Promise.all([
+    EventPartner.findById(theme.partnerId).select('blockedDates').lean(),
+    EventBooking.find({
+      partnerId: theme.partnerId,
+      eventDate: { $gte: from, $lte: to },
+      status: { $in: ['confirmed', 'partner_assigned', 'in_progress'] },
+    }).select('eventDate eventTimeSlot').lean(),
+  ]);
+  const ymd = (d) => new Date(d).toISOString().split('T')[0];
+  return {
+    blockedDates: (partner?.blockedDates || []).map(ymd).filter((d) => d >= ymd(from) && d <= ymd(to)),
+    taken: taken.map((b) => ({ date: ymd(b.eventDate), slot: b.eventTimeSlot })),
+    minAdvanceBookingHours: cfg.minAdvanceBookingHours,
+    maxAdvanceBookingDays: horizon,
+  };
 }
 
 // Save / Unsave
@@ -249,9 +280,17 @@ async function getUserBookings(userId, page = 1) {
 async function getBooking(bookingId, userId) {
   const booking = await EventBooking.findOne({ _id: bookingId, userId })
     .populate('themeId', 'title coverImage gallery includedItems excludedItems setupDurationMinutes')
-    .populate('partnerId', 'businessName rating bio portfolioImages completedEvents')
+    .populate('partnerId', 'businessName rating reviewCount bio portfolioImages completedEvents')
     .lean();
   if (!booking) throw Object.assign(new Error('Booking not found'), { status: 404 });
+
+  if (booking.setupPhotos) {
+    const sign = (k) => (k && !k.startsWith('https://') ? s3Service.getViewUrl(k).catch(() => null) : k);
+    booking.setupPhotos = {
+      before: (await Promise.all((booking.setupPhotos.before || []).map(sign))).filter(Boolean),
+      after: (await Promise.all((booking.setupPhotos.after || []).map(sign))).filter(Boolean),
+    };
+  }
 
   // Reveal partner contact only after booking is confirmed — prevents commission bypass
   const REVEAL_STATUSES = ['confirmed', 'partner_assigned', 'in_progress', 'completed'];
@@ -329,6 +368,11 @@ async function submitReview(bookingId, userId, { rating, review }) {
   if (booking.reviewedAt) throw Object.assign(new Error('Already reviewed'), { status: 409 });
 
   await EventBooking.updateOne({ _id: bookingId }, { $set: { userRating: rating, userReview: review, reviewedAt: new Date() } });
+
+  require('../review/review.service').recordReview({
+    kind: 'event', jobId: booking._id, userId, partnerId: booking.partnerId,
+    rating, comment: review || '', serviceLabel: 'Event decor',
+  });
 
   // Update theme moving-average rating
   const theme = await EventTheme.findById(booking.themeId).select('rating reviewCount').lean();
@@ -520,7 +564,7 @@ async function adminUpsertCategory(data) {
 
 module.exports = {
   paidPaiseOf,
-  getActiveConfig, listCategories, listThemes, getTheme, toggleSave, getSavedThemes,
+  getActiveConfig, listCategories, listThemes, getTheme, getThemeAvailability, toggleSave, getSavedThemes,
   createBooking, getUserBookings, getBooking, cancelBooking, submitReview,
   adminListThemes, adminUpdateThemeStatus, adminListBookings,
   adminListPartners, adminCreatePartner, adminUpdatePartner,

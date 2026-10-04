@@ -67,6 +67,16 @@ const eventBookingSchema = new mongoose.Schema({
   refundPaise:        { type: Number, default: 0 },
   refundStatus:       { type: String, enum: ['none', 'pending', 'processed'], default: 'none' },
 
+  /**
+   * The partner's proof of the setup: the room before they start and the finished
+   * decor. At least one "after" photo is required to complete the booking, and
+   * the customer sees both on their booking. S3 keys.
+   */
+  setupPhotos: {
+    before: { type: [String], default: [] },
+    after:  { type: [String], default: [] },
+  },
+
   // Review
   userRating:  { type: Number, min: 1, max: 5 },
   userReview:  String,

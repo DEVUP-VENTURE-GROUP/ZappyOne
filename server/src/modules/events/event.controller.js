@@ -17,6 +17,10 @@ async function getThemes(req, res, next) {
   } catch (e) { next(e); }
 }
 
+async function getThemeAvailability(req, res, next) {
+  try { res.json(await svc.getThemeAvailability(req.params.id, req.query.days)); } catch (e) { next(e); }
+}
+
 async function getTheme(req, res, next) {
   try { res.json({ theme: await svc.getTheme(req.params.id, req.auth?.sub) }); } catch (e) { next(e); }
 }
@@ -56,4 +60,4 @@ async function getConfig(req, res, next) {
   try { res.json(await svc.getActiveConfig()); } catch (e) { next(e); }
 }
 
-module.exports = { getCategories, getThemes, getTheme, toggleSave, getSaved, createBooking, getBookings, getBooking, cancelBooking, submitReview, getConfig };
+module.exports = { getCategories, getThemes, getTheme, getThemeAvailability, toggleSave, getSaved, createBooking, getBookings, getBooking, cancelBooking, submitReview, getConfig };

@@ -375,7 +375,7 @@ async function attachCompletionPhotos(req, res, next) {
 async function rateRepair(req, res, next) {
   try {
     const booking = await RepairBooking.findOne({ _id: req.params.id, userId: req.auth.sub })
-      .select('status ratedAt workerId shopId').lean();
+      .select('status ratedAt workerId shopId repairCode').lean();
     if (!booking) return res.status(404).json({ error: 'Booking not found' });
 
     if (booking.status !== 'COMPLETED') {
@@ -399,6 +399,10 @@ async function rateRepair(req, res, next) {
       shopId: booking.shopId,
       rating: req.body.rating,
     }).catch(() => { /* the customer's rating is recorded either way */ });
+    await require('../../review/review.service').recordReview({
+      kind: 'repair', jobId: booking._id, userId: req.auth.sub, workerId: booking.workerId, shopId: booking.shopId,
+      rating: req.body.rating, comment: req.body.comment, serviceLabel: String(booking.repairCode || '').replace(/_/g, ' '),
+    });
 
     res.json({ ok: true });
   } catch (err) { next(err); }

@@ -164,7 +164,7 @@ async function respondToApproval(req, res, next) {
 async function rateTask(req, res, next) {
   try {
     const task = await HelpingTask.findOne({ _id: req.params.id, userId: req.auth.sub })
-      .select('status ratedAt workerId').lean();
+      .select('status ratedAt workerId serviceType').lean();
     if (!task) return res.status(404).json({ error: 'Task not found' });
 
     if (!['COMPLETED', 'CUSTOMER_CONFIRMED', 'SETTLED'].includes(task.status)) {
@@ -185,6 +185,10 @@ async function rateTask(req, res, next) {
     await ratingService.applyRepairRating({
       workerId: task.workerId, shopId: null, rating: req.body.rating,
     }).catch(() => { /* the customer's rating is recorded either way */ });
+    await require('../review/review.service').recordReview({
+      kind: 'helping', jobId: task._id, userId: req.auth.sub, workerId: task.workerId,
+      rating: req.body.rating, comment: req.body.comment, serviceLabel: String(task.serviceType || '').replace(/_/g, ' '),
+    });
 
     res.json({ ok: true });
   } catch (err) { next(err); }

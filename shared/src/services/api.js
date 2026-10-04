@@ -1202,6 +1202,17 @@ export const api = createApi({
       query: (params = {}) => ({ url: '/events/partner/bookings', params }),
       providesTags: ['EventBooking'],
     }),
+    partnerBooking: b.query({
+      query: (id) => `/events/partner/bookings/${id}`,
+      providesTags: (r, e, id) => [{ type: 'EventBooking', id }, 'EventBooking'],
+    }),
+    addPartnerSetupPhotos: b.mutation({
+      query: ({ id, stage, keys }) => ({ url: `/events/partner/bookings/${id}/photos`, method: 'POST', body: { stage, keys } }),
+      invalidatesTags: ['EventBooking'],
+    }),
+    eventThemeAvailability: b.query({
+      query: (id) => `/events/themes/${id}/availability`,
+    }),
     updatePartnerBookingStatus: b.mutation({
       query: ({ id, status, code }) => ({ url: `/events/partner/bookings/${id}/status`, method: 'PATCH', body: { status, ...(code ? { code } : {}) } }),
       invalidatesTags: ['EventBooking'],
@@ -2386,6 +2397,9 @@ export const {
   useUpdateEventThemeMutation,
   useDeleteEventThemeMutation,
   usePartnerBookingsQuery,
+  usePartnerBookingQuery,
+  useAddPartnerSetupPhotosMutation,
+  useEventThemeAvailabilityQuery,
   useUpdatePartnerBookingStatusMutation,
   usePartnerCalendarQuery,
   useBlockEventDateMutation,

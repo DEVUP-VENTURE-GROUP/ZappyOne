@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ClipboardList, Wallet, Bell, Star, MapPin, HelpCircle, Package, ShoppingBag, PawPrint,
+  ClipboardList, Wallet, Bell, MapPin, HelpCircle, Package, ShoppingBag, PawPrint,
   LogOut, ChevronRight, ShieldCheck, Home, Briefcase, Plus,
   Trash2, X, Loader2, Scale, HeadphonesIcon, CreditCard,
   Pencil, Check, TrendingUp, Tag, Calendar, Shield, Gift,
@@ -457,12 +457,6 @@ export default function ProfilePage() {
                     </button>
                   </div>
                 )}
-              </motion.div>
-
-              <motion.div variants={fadeInUp}>
-                <MenuSection title={t('profile.section.account', 'Account')}>
-                  <MenuItem Icon={Star} label={t('profile.plans', 'Plans & Subscriptions')} sublabel={t('profile.plans.sub', 'Premium & Pro benefits')} onClick={() => nav('/plans')} />
-                </MenuSection>
               </motion.div>
 
               <motion.div variants={fadeInUp}>

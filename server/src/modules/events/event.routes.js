@@ -14,6 +14,7 @@ const router = express.Router();
 router.get('/config',        c.getConfig);
 router.get('/categories',    c.getCategories);
 router.get('/themes',        c.getThemes);
+router.get('/themes/:id/availability', c.getThemeAvailability);
 router.get('/themes/:id',    c.getTheme);
 
 // Auth-required user routes
@@ -43,6 +44,10 @@ partnerRouter.post('/themes',                 p.createTheme);
 partnerRouter.patch('/themes/:id',            p.updateTheme);
 partnerRouter.delete('/themes/:id',           p.deleteTheme);
 partnerRouter.get('/bookings',                p.getMyBookings);
+partnerRouter.get('/bookings/:id',            p.getMyBooking);
+partnerRouter.post('/bookings/:id/photos',
+  validate(Joi.object({ stage: Joi.string().valid('before', 'after').required(), keys: Joi.array().items(Joi.string().max(500)).min(1).max(10).required() })),
+  p.addSetupPhotos);
 partnerRouter.patch('/bookings/:id/status',
   require('../../middlewares/rateLimit').makeLimiter({ windowMs: 5 * 60_000, max: 10, prefix: 'evtcode' }),
   validate(Joi.object({ status: Joi.string().required(), code: Joi.string().pattern(/^[0-9]{4,6}$/).allow('', null), })),
