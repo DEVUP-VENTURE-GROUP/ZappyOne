@@ -14,7 +14,8 @@ export default function BookingSummary({ job, onReceipt }) {
   const whenLabel = when
     ? new Date(when).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })
     : '—';
-  const lines = (price.lines || []).filter(([, paise]) => paise > 0);
+  // Zero lines are left out; a negative line is a deduction (discount, credit).
+  const lines = (price.lines || []).filter(([, paise]) => paise && paise !== 0);
 
   return (
     <motion.div
@@ -49,7 +50,7 @@ export default function BookingSummary({ job, onReceipt }) {
           {lines.map(([label, paise]) => (
             <div key={label} className="flex justify-between items-baseline text-[12.5px] text-[#647084] py-[3px]">
               <span>{label}</span>
-              <span className="font-bold text-[#334155] tabular-nums">{rupeesOf(paise)}</span>
+              <span className={`font-bold tabular-nums ${paise < 0 ? 'text-green-700' : 'text-[#334155]'}`}>{paise < 0 ? `− ${rupeesOf(-paise)}` : rupeesOf(paise)}</span>
             </div>
           ))}
           {price.totalPaise != null && (

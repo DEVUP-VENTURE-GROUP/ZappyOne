@@ -82,6 +82,41 @@ const TERMINAL = ['completed', 'cancelled', 'failed'];
 const finish = (job) => ({ ...job, terminal: TERMINAL.includes(job.status) });
 
 
+/** "royal-enfield" + "royal-enfield-bullet-350" -> "Royal Enfield Bullet 350": the brand once. */
+function deviceName(brand = '', model = '') {
+  const b = String(brand || '').toLowerCase();
+  const m = String(model || '').toLowerCase();
+  const text = m && b && m.startsWith(b) ? m : [b, m].filter(Boolean).join(' ');
+  return text.replace(/[-_]+/g, ' ').split(' ').filter(Boolean).map((w) => w[0].toUpperCase() + w.slice(1)).join(' ');
+}
+
+/**
+ * Every rupee of a repair, adding up to the total. An approved quote lists the
+ * technician's own lines; otherwise the booked components. Anything the stored
+ * components do not explain is shown as its own line, never silently dropped.
+ * A negative amount is a deduction (discount, inspection already paid).
+ */
+function repairLines(s = {}, quote = null) {
+  const lines = quote?.items?.length
+    ? quote.items.map((i) => [`${i.label}${(i.quantity || 1) > 1 ? ` × ${i.quantity}` : ''}`, i.amountPaise || (i.unitPricePaise || 0) * (i.quantity || 1)])
+    : [
+      ['Parts', s.partPaise], ['Labour', s.labourPaise], ['Consumables', s.consumablesPaise], ['Travel', s.travelPaise],
+      ['Pickup & return', (s.pickupPaise || 0) + (s.returnPaise || 0)], ['Inspection', s.diagnosisFeePaise],
+    ];
+  if (!quote?.items?.length) {
+    const known = lines.reduce((t, [, p]) => t + (p || 0), 0);
+    const service = (s.subtotalPaise || 0) - known;
+    if (service > 0) lines.unshift(['Service', service]);
+  }
+  lines.push(['Platform fee', s.platformFeePaise], ['Taxes', s.taxPaise]);
+  if (s.discountPaise) lines.push(['Discount', -s.discountPaise]);
+  if (s.inspectionCreditPaise) lines.push(['Inspection already paid', -s.inspectionCreditPaise]);
+  const sum = lines.reduce((t, [, p]) => t + (p || 0), 0);
+  const gap = (s.totalPaise || 0) - sum;
+  if (s.totalPaise && Math.abs(gap) >= 100) lines.push([gap > 0 ? 'Other charges' : 'Adjustment', gap]);
+  return lines;
+}
+
 /** Who holds the job, as the server's provider card describes them (worker/provider-card). */
 const cardOf = (p) => (p ? {
   name: p.name, phone: p.phone, rating: p.rating, jobs: p.completedJobs, from: p.from || null,
@@ -98,18 +133,14 @@ export const KINDS = {
       return finish({
         kind: 'repair', id: b._id, reference: b.reference, noun: 'technician',
         service: `${human(b.vertical)} repair`,
-        subtitle: [b.brandCode, b.modelCode].filter(Boolean).join(' ').replace(/-/g, ' '), subtitleLabel: 'Device',
+        subtitle: deviceName(b.brandCode, b.modelCode), subtitleLabel: 'Device',
         status: repairStage(b.status) || 'in_progress', statusLabel, rawStatus: b.status,
         provider: cardOf(data.provider),
         place: pointOf(b.location),
         scheduledAt: b.scheduledAt, createdAt: b.createdAt,
         history: historyOf(b, repairStage),
         price: {
-          lines: [
-            ['Parts', s.partPaise], ['Labour', s.labourPaise], ['Consumables', s.consumablesPaise], ['Travel', s.travelPaise],
-            ['Pickup & return', (s.pickupPaise || 0) + (s.returnPaise || 0)], ['Inspection', s.diagnosisFeePaise],
-            ['Platform fee', s.platformFeePaise], ['Taxes', s.taxPaise],
-          ],
+          lines: repairLines(s, (data.quotes || []).find((q) => q.status === 'approved')),
           totalPaise: s.totalPaise ?? null, method: method(b.paymentMethod), paid: b.paymentStatus === 'paid',
           isEstimate: !!s.isEstimate,
           note: s.isEstimate ? 'This is an estimate. The final price is confirmed by a quote you approve.' : (s.warrantyDays > 0 ? `${s.warrantyDays}-day warranty` : ''),
