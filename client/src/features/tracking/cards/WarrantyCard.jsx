@@ -4,7 +4,7 @@
  * No Indian competitor shows warranty cards with in-app claims.
  */
 import { motion } from 'framer-motion';
-import { ShieldCheck, AlertCircle, RefreshCw } from 'lucide-react';
+import { ShieldCheck, RefreshCw } from 'lucide-react';
 import { useGetOrderWarrantyQuery } from '@shared/services/api';
 
 export default function WarrantyCard({ orderId, onClaimClick }) {

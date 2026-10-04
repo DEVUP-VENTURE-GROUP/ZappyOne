@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-  ArrowLeft, CheckCircle, Clock, Calendar, MapPin, Users, Phone, Star,
-  MessageCircle, XCircle, Loader2, AlertCircle, CreditCard, PartyPopper,
+  ArrowLeft, CheckCircle, Clock, Calendar, MapPin, Users, Phone, Star, XCircle, Loader2, CreditCard, PartyPopper,
 } from 'lucide-react';
 import {
   useGetEventBookingQuery, useCancelEventBookingMutation,

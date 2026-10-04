@@ -57,8 +57,10 @@ const headSha = git('rev-parse', 'HEAD');
 
 const changed = git('diff', '--name-status', '-M', baseSha, 'HEAD').split('\n').filter(Boolean).map((line) => {
   const parts = line.split('\t');
-  return { status: parts[0][0], file: parts[parts.length - 1] };
+  return { status: parts[0][0], file: parts[parts.length - 1], from: parts[0][0] === 'R' ? parts[1] : null };
 });
+/** A moved file's path before this change, so its old issues are not counted as new. */
+const priorPath = new Map(changed.filter((c) => c.from).map((c) => [c.file, c.from]));
 const live = changed.filter((c) => c.status !== 'D').map((c) => c.file);
 
 const numstat = git('diff', '--numstat', '-M', baseSha, 'HEAD').split('\n').filter(Boolean);
@@ -203,7 +205,10 @@ async function main() {
     })));
   };
   {
-    const [head, base] = await Promise.all([lintAt(ROOT, codeFiles), lintAt(baseDir, codeFiles)]);
+    const basePaths = codeFiles.map((f) => priorPath.get(f) || f);
+    const newPathOf = new Map(codeFiles.map((f, i) => [basePaths[i], f]));
+    const [head, baseRaw] = await Promise.all([lintAt(ROOT, codeFiles), lintAt(baseDir, basePaths)]);
+    const base = baseRaw.map((v) => ({ ...v, file: newPathOf.get(v.file) || v.file }));
     const count = (list) => list.reduce((m, v) => m.set(`${v.file}|${v.rule}`, (m.get(`${v.file}|${v.rule}`) || 0) + 1), new Map());
     const before = count(base);
     const after = count(head);

@@ -4,8 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ArrowLeft, CheckCircle2, Zap, ShieldOff, Award, TrendingUp, TrendingDown,
-  Target, Loader2, AlertCircle, Crown, Star, Shield, Rocket, Check, X
+  ArrowLeft, CheckCircle2, Zap, TrendingUp, Loader2, AlertCircle, Crown, Star, Rocket, Check,
 } from 'lucide-react';
 import {
   useListPlansQuery, useMySubscriptionQuery,

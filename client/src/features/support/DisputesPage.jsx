@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Scale, Plus, ChevronLeft, X, AlertCircle, CheckCircle2,
-  Clock, Send, Loader2, Upload, MessageCircle,
+  Scale, Plus, ChevronLeft, X, CheckCircle2, Clock, Send, Loader2, MessageCircle,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import {

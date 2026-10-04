@@ -1,18 +1,16 @@
 import PasswordLogin from '@shared/components/account/PasswordLogin';
 import { useScrollTopOnChange } from '@shared/components/common/ScrollToTop';
 import { useState, useRef, useEffect } from 'react';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
-import { Phone, ArrowRight, ChevronLeft, CheckCircle2, Loader2, Zap, Shield, Star, Smartphone, Laptop, Car, Bike, PawPrint, HeartHandshake } from 'lucide-react';
+import { Loader2, Shield } from 'lucide-react';
 import { useRequestOtpMutation, useLoginUserMutation } from '@shared/services/api';
 import ResendOtp from '@shared/components/auth/ResendOtp';
 import OtpOrbit from './OtpOrbit';
 import { setAuth } from '@shared/modules/auth/authSlice';
-import { ZappyLogo } from '@shared/components/common/ZappyLogo';
 import toast from 'react-hot-toast';
 import SEO, { LOGIN_SCHEMA, BASE_URL } from '@shared/components/SEO';
-import { easeSoft, springSnap, fadeInUp, staggerContainer } from '../../lib/animations';
 
 
 

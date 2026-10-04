@@ -5,25 +5,7 @@ import { formatPaise } from '@shared/utils/money';
 import { useSelector, useDispatch } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ArrowLeft,
-  Search,
-  ChevronRight,
-  Loader2,
-  ShieldCheck,
-  Star,
-  MapPin,
-  Clock,
-  Check,
-  AlertTriangle,
-  Smartphone,
-  Laptop,
-  Wrench,
-  HelpCircle,
-  X,
-  Home,
-  Truck,
-  Lock,
-  Plus,
+  ArrowLeft, Search, ChevronRight, Loader2, ShieldCheck, Star, MapPin, Clock, Check, AlertTriangle, Smartphone, Laptop, Wrench, HelpCircle, X, Home, Truck, Lock,
 } from 'lucide-react';
 import {
   useRepairBrandsQuery, useRepairModelsQuery, useRepairProblemsQuery,

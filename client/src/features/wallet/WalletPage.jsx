@@ -3,27 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ArrowLeft,
-  Plus,
-  TrendingUp,
-  TrendingDown,
-  AlertCircle,
-  Loader2,
-  Wallet,
-  Gift,
-  Trophy,
-  Receipt,
-  ArrowDownToLine,
-  ArrowUpFromLine,
-  Percent,
-  Users,
-  Star,
-  RefreshCw,
-  Crown,
-  ShieldCheck,
-  ChevronRight,
-  Zap,
-  CheckCircle2,
+  ArrowLeft, Plus, TrendingUp, TrendingDown, AlertCircle, Loader2, Gift, Receipt, ArrowDownToLine, ArrowUpFromLine, Percent, Star, RefreshCw, Crown, ChevronRight,
 } from 'lucide-react';
 import {
   useGetWalletQuery, useWalletTransactionsQuery,
@@ -32,7 +12,6 @@ import {
 import { selectAuth } from '@shared/modules/auth/authSlice';
 import { openCheckout } from '@shared/services/cashfree';
 import PageTransition from '../../components/common/PageTransition';
-import { staggerContainer, fadeInUp, scaleIn } from '../../lib/animations';
 import { useT } from '@shared/i18n/I18nProvider';
 import toast from 'react-hot-toast';
 

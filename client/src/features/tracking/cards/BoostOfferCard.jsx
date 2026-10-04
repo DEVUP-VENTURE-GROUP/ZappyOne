@@ -15,7 +15,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Zap, ChevronRight, X, ArrowRight, Flame, TrendingUp } from 'lucide-react';
+import { Zap, X, ArrowRight, Flame, TrendingUp } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 function buildOptions(amounts) {

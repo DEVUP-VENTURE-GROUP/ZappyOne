@@ -25,7 +25,6 @@ import { Smartphone, Laptop, Bike, Car, Droplets, PawPrint, ShoppingBag, PartyPo
 import { SkeletonList, SkeletonOrderCard } from '../../components/common/Skeleton';
 import { staggerContainer, fadeInUp } from '../../lib/animations';
 import { useT, useI18n } from '@shared/i18n/I18nProvider';
-import { serviceNameKey } from '@shared/i18n/translations';
 import { formatPaise } from '@shared/utils/money';
 import toast from 'react-hot-toast';
 

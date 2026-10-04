@@ -4,7 +4,7 @@
  * Completely unique in India. Emotional, viral, human.
  */
 import { useState, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Mic, MicOff, Send, Gift, Loader2, CheckCircle2 } from 'lucide-react';
 import { useSendTipMutation, usePresignUploadMutation } from '@shared/services/api';
 import toast from 'react-hot-toast';

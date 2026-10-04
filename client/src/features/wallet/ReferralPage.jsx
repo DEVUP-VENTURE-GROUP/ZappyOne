@@ -1,24 +1,9 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import {
-  Copy,
-  Check,
-  Share2,
-  MessageCircle,
-  Link2,
-  Gift,
-  Users,
-  Clock,
-  IndianRupee,
-  ChevronRight,
-  ArrowLeft,
-  UserCheck,
-  CircleDot,
-  Trophy,
-  Flame,
-  Wallet,
+  Copy, Check, Share2, MessageCircle, Link2, Gift, Users, Clock, ArrowLeft, Trophy, Flame, Wallet,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { selectAuth } from '@shared/modules/auth/authSlice';

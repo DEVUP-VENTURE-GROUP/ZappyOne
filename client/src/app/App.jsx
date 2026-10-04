@@ -2,7 +2,6 @@ import AccountSetupGate from '@shared/components/account/AccountSetupGate';
 import { VerifyEmailPage, ResetPasswordPage } from '@shared/components/account/AccountLinkPages';
 import { lazy, Suspense, useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { AnimatePresence } from 'framer-motion';
 import { useSelector } from 'react-redux';
 import { selectAuth } from '@shared/modules/auth/authSlice';
 import { useDisconnectOnLogout, useJobRealtime } from '@shared/hooks/useSocket';

@@ -24,6 +24,20 @@ const GROUPS = [
 
 const EXAMPLE_PAISE = 100000; // a ₹1,000 job, to show what the numbers mean
 
+/** A number typed into a box, or NaN when it is empty or not a number. */
+const num = (v) => (v === '' || v == null ? NaN : Number(v));
+const within = (n, lo, hi) => Number.isFinite(n) && n >= lo && n <= hi;
+
+/** What the row's boxes say, whether it can be saved, and whether it changed. */
+function readRow(row, fee, pct, tax) {
+  const feePaise = Math.round(num(fee) * 100);
+  const pctNum = num(pct);
+  const taxNum = tax === null ? 0 : num(tax);
+  const valid = within(feePaise, 0, 100000) && within(pctNum, 0, row.maxCommissionPct) && (tax === null || within(taxNum, 0, 40));
+  const dirty = feePaise !== row.platformFeePaise || pctNum !== row.commissionPct || (tax !== null && taxNum !== row.taxPct);
+  return { feePaise, pctNum, taxNum, valid, dirty };
+}
+
 function FeeRow({ row }) {
   const [fee, setFee] = useState(String(row.platformFeePaise / 100));
   const [pct, setPct] = useState(String(row.commissionPct));
@@ -35,13 +49,7 @@ function FeeRow({ row }) {
     setFee(String(row.platformFeePaise / 100)); setPct(String(row.commissionPct)); setTax(String(row.taxPct ?? 0));
   }, [row.platformFeePaise, row.commissionPct, row.taxPct]);
 
-  const feePaise = Math.round(Number(fee) * 100);
-  const pctNum = Number(pct);
-  const taxNum = hasTax ? Number(tax) : 0;
-  const valid = fee !== '' && pct !== '' && Number.isFinite(feePaise) && feePaise >= 0 && feePaise <= 100000
-    && Number.isFinite(pctNum) && pctNum >= 0 && pctNum <= row.maxCommissionPct
-    && (!hasTax || (tax !== '' && Number.isFinite(taxNum) && taxNum >= 0 && taxNum <= 40));
-  const dirty = feePaise !== row.platformFeePaise || pctNum !== row.commissionPct || (hasTax && taxNum !== row.taxPct);
+  const { feePaise, pctNum, taxNum, valid, dirty } = readRow(row, fee, pct, hasTax ? tax : null);
 
   const commission = Math.round(EXAMPLE_PAISE * (valid ? pctNum : 0) / 100);
   const taxPaise = valid ? Math.round((EXAMPLE_PAISE + feePaise) * taxNum / 100) : 0;

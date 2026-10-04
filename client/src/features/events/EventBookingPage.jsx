@@ -3,9 +3,7 @@ import { useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ArrowLeft, Calendar as CalendarIcon, Clock, MapPin, Users, FileText, Camera,
-  CheckCircle, AlertCircle, Loader2, Minus, Plus, ChevronRight, Zap, Star, ShieldCheck, Check,
-  Navigation, LocateFixed
+  ArrowLeft, Calendar as CalendarIcon, Clock, MapPin, Users, FileText, Camera, CheckCircle, Loader2, Minus, Plus, ChevronRight, Zap, ShieldCheck, Check, Navigation, LocateFixed,
 } from 'lucide-react';
 import {
   useGetEventThemeQuery, useCreateEventBookingMutation, usePresignUploadMutation,

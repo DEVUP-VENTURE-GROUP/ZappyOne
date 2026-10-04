@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Heart, Star, Clock, Users, CheckCircle, XCircle, Play, Calendar, Zap, MapPin, ChevronRight, Check, PartyPopper } from 'lucide-react';
+import { ArrowLeft, Heart, Star, Clock, Users, XCircle, Play, Calendar, Zap, MapPin, ChevronRight, Check, PartyPopper } from 'lucide-react';
 import { useGetEventThemeQuery, useToggleSaveEventThemeMutation } from '@shared/services/api';
 import toast from 'react-hot-toast';
 

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, TrendingUp, Play, Heart, Star, ChevronRight, ArrowUpRight, PartyPopper } from 'lucide-react';
+import { Search, TrendingUp, Play, Heart, Star, ArrowUpRight, PartyPopper } from 'lucide-react';
 import { useGetEventCategoriesQuery, useGetEventThemesQuery, useToggleSaveEventThemeMutation } from '@shared/services/api';
 import CrossSellBanner from '../../components/marketing/CrossSellBanner';
 import toast from 'react-hot-toast';

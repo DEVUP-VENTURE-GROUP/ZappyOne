@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Zap, X, ExternalLink } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Zap, ExternalLink } from 'lucide-react';
 import { useGetAdsByPlacementQuery, useTrackAdImpressionMutation, useTrackAdClickMutation } from '@shared/services/api';
 
 /**

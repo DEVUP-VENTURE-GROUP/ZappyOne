@@ -3,10 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ClipboardList, Wallet, Bell, MapPin, HelpCircle, Package, ShoppingBag, PawPrint,
-  LogOut, ChevronRight, ShieldCheck, Home, Briefcase, Plus,
-  Trash2, X, Loader2, Scale, HeadphonesIcon, CreditCard,
-  Pencil, Check, TrendingUp, Tag, Calendar, Shield, Gift,
+  ClipboardList, Wallet, Bell, MapPin, Package, ShoppingBag, PawPrint, LogOut, ChevronRight, ShieldCheck, Home, Briefcase, Plus, Trash2, X, Loader2, Scale, HeadphonesIcon, CreditCard, Pencil, Check, TrendingUp, Tag, Calendar, Shield, Gift,
 } from 'lucide-react';
 import { reverseGeocode } from '@shared/utils/reverseGeocode';
 import AddressAutocomplete from '../../components/common/AddressAutocomplete';
