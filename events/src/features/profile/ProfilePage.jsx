@@ -1,3 +1,4 @@
+import LoginSecurityCard from '@shared/components/account/LoginSecurityCard';
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import toast from 'react-hot-toast';
@@ -90,6 +91,8 @@ export default function ProfilePage() {
           {saving && <Loader2 size={16} className="animate-spin" />} Save profile
         </button>
       </Card>
+
+      <LoginSecurityCard />
 
       <KycSection partner={partner} token={accessToken} />
     </div>

@@ -1,3 +1,4 @@
+import PasswordLogin from '@shared/components/account/PasswordLogin';
 import { useScrollTopOnChange } from '@shared/components/common/ScrollToTop';
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -165,10 +166,20 @@ export default function ShopLoginPage() {
                   {sending ? <Loader2 size={18} className="animate-spin" /> : <span>Get OTP</span>}
                   {!sending && <ArrowRight size={16} className="absolute right-4" />}
                 </button>
-                <p className="text-center text-[12px] font-medium text-slate-500 mt-5">
+                <button type="button" onClick={() => setStep('password')} className="mt-4 text-center text-[14px] font-semibold text-zappy-600">
+                  Sign in with password
+                </button>
+                <p className="text-center text-[12px] font-medium text-slate-500 mt-4">
                   New shop? You'll set up your business right after verification.
                 </p>
               </motion.form>
+            )}
+
+            {step === 'password' && (
+              <motion.div key="password" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+                <h2 className="mb-4 text-lg font-bold text-slate-900">Sign in with password</h2>
+                <PasswordLogin role="shop" onSuccess={finishLogin} onUseOtp={() => setStep('phone')} />
+              </motion.div>
             )}
 
             {step === 'otp' && (

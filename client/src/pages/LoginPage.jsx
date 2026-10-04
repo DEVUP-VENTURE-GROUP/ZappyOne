@@ -1,13 +1,14 @@
+import PasswordLogin from '@shared/components/account/PasswordLogin';
 import { useScrollTopOnChange } from '@shared/components/common/ScrollToTop';
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import { Phone, ArrowRight, ChevronLeft, CheckCircle2, Loader2, Zap, Shield, Star, Smartphone, Laptop, Car, Bike, PawPrint, HeartHandshake } from 'lucide-react';
-import { useRequestOtpMutation, useLoginUserMutation, useUpdateMeMutation } from '@shared/services/api';
+import { useRequestOtpMutation, useLoginUserMutation } from '@shared/services/api';
 import ResendOtp from '@shared/components/auth/ResendOtp';
 import OtpOrbit from '../components/auth/OtpOrbit';
-import { setAuth, updateProfile } from '@shared/modules/auth/authSlice';
+import { setAuth } from '@shared/modules/auth/authSlice';
 import { ZappyLogo } from '@shared/components/common/ZappyLogo';
 import toast from 'react-hot-toast';
 import SEO, { LOGIN_SCHEMA, BASE_URL } from '@shared/components/SEO';
@@ -51,16 +52,15 @@ export default function LoginPage() {
   const OTP_LEN = 6; // 2Factor plain AUTOGEN (no template) sends 6-digit SMS OTP
   const [otpDigits, setOtpDigits] = useState(Array(OTP_LEN).fill(''));
   const [name, setName]         = useState('');
-  const [email, setEmail]       = useState('');
   const [step, setStep]         = useState('phone');
   useScrollTopOnChange(step);
   const [otpMeta, setOtpMeta]   = useState({ cooldownSec: 30, resendsLeft: 3 });
   const [isNewUser, setIsNewUser] = useState(true);
-  const [pendingProfile, setPendingProfile] = useState(null);
+  // Returning customers who set a password skip the paid OTP entirely.
+  const [withPassword, setWithPassword] = useState(false);
   const pendingOtp = useRef(null);
   const [requestOtp, { isLoading: sending }] = useRequestOtpMutation();
   const [loginUser,  { isLoading: loggingUser }]   = useLoginUserMutation();
-  const [updateMe,   { isLoading: savingProfile }]  = useUpdateMeMutation();
   const nav      = useNavigate();
   const loc      = useLocation();
   const dispatch = useDispatch();
@@ -168,13 +168,8 @@ export default function LoginPage() {
     window.clearTimeout(landingTimer.current);
     const profile = r.user;
     dispatch(setAuth({ accessToken: r.accessToken, refreshToken: r.refreshToken, profile, role: 'user' }));
-    if (!profile.name || !profile.email) {
-      setPendingProfile(profile);
-      setName(profile.name || '');
-      setEmail(profile.email || '');
-      setStep('complete');
-      return;
-    }
+    // Anything still missing (name, password, email) is asked once by the
+    // app-wide setup screen, so it is the same for OTP and password sign-ins.
     nav(loc.state?.from || '/', { replace: true });
   }
 
@@ -197,19 +192,6 @@ export default function LoginPage() {
       toast.error(detail);
       console.error('[verify] status:', err.status, 'body:', err.data);
     }
-  }
-
-  async function saveProfileAndContinue() {
-    const updates = {};
-    if (!pendingProfile?.name && name.trim()) updates.name = name.trim();
-    if (!pendingProfile?.email && email.trim()) updates.email = email.trim();
-    if (Object.keys(updates).length) {
-      try {
-        await updateMe(updates).unwrap();
-        dispatch(updateProfile(updates));
-      } catch { /* non-fatal — continue anyway */ }
-    }
-    nav(loc.state?.from || '/', { replace: true });
   }
 
 
@@ -377,6 +359,16 @@ export default function LoginPage() {
                 >
                   {/* Space instead of Google/Apple (Desktop) */}
                   <div className="hidden lg:block h-4"></div>
+                  {withPassword ? (
+                    <PasswordLogin
+                      role="user"
+                      onUseOtp={() => setWithPassword(false)}
+                      onSuccess={(r) => {
+                        dispatch(setAuth({ accessToken: r.accessToken, refreshToken: r.refreshToken, profile: r.user, role: 'user' }));
+                        nav(loc.state?.from || '/', { replace: true });
+                      }}
+                    />
+                  ) : (<>
 
                   {/* Phone Input */}
                   <div className="mb-6">
@@ -406,8 +398,10 @@ export default function LoginPage() {
                     {sending ? <Loader2 size={18} className="animate-spin" /> : null}
                     Continue
                   </button>
-
-                  {/* No extra social buttons here */}
+                  <button type="button" onClick={() => setWithPassword(true)} className="mt-3 w-full text-center text-[14px] font-semibold text-zappy-600">
+                    Sign in with password
+                  </button>
+                  </>)}
                 </motion.div>
               ) : step === 'otp' ? (
                 <motion.div
@@ -499,64 +493,6 @@ export default function LoginPage() {
                     {isLoading ? <Loader2 size={18} className="animate-spin" /> : null}
                     Verify & Continue
                   </button>
-                </motion.div>
-              ) : step === 'complete' ? (
-                <motion.div
-                  key="complete"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.3 }}
-                  className="w-full"
-                >
-                  <p className="text-center text-sm text-slate-500 mb-8 font-medium">Complete your profile to continue.</p>
-
-                  <div className="space-y-5 mb-8">
-                    {!pendingProfile?.name && (
-                      <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Your Name</label>
-                        <input
-                          type="text"
-                          className="w-full py-3.5 px-4 rounded-xl border border-slate-300 focus:border-[#0d5cf3] focus:ring-1 focus:ring-[#0d5cf3] outline-none text-slate-900 font-medium bg-white transition-all shadow-sm"
-                          placeholder="e.g. Priya Sharma"
-                          value={name}
-                          onChange={e => setName(e.target.value)}
-                          autoFocus
-                        />
-                      </div>
-                    )}
-
-                    <div>
-                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Email <span className="text-slate-400 font-medium normal-case">(for receipts)</span></label>
-                      <input
-                        type="email"
-                        inputMode="email"
-                        className="w-full py-3.5 px-4 rounded-xl border border-slate-300 focus:border-[#0d5cf3] focus:ring-1 focus:ring-[#0d5cf3] outline-none text-slate-900 font-medium bg-white transition-all shadow-sm"
-                        placeholder="you@example.com"
-                        value={email}
-                        onChange={e => setEmail(e.target.value)}
-                        onKeyDown={e => e.key === 'Enter' && saveProfileAndContinue()}
-                        autoFocus={!!pendingProfile?.name}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-3">
-                    <button
-                      onClick={saveProfileAndContinue}
-                      disabled={savingProfile || (!pendingProfile?.name && !name.trim())}
-                      className="w-full py-[14px] rounded-xl bg-[#0d5cf3] hover:bg-[#0047b3] text-white font-semibold text-[15px] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                    >
-                      {savingProfile ? <Loader2 size={18} className="animate-spin" /> : null}
-                      Continue
-                    </button>
-                    <button
-                      onClick={() => nav(loc.state?.from || '/', { replace: true })}
-                      className="w-full py-3 text-center text-sm text-slate-500 hover:text-slate-700 font-semibold transition-colors"
-                    >
-                      Skip for now
-                    </button>
-                  </div>
                 </motion.div>
               ) : null}
             </AnimatePresence>

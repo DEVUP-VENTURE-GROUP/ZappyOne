@@ -51,4 +51,7 @@ const eventPartnerSchema = new mongoose.Schema({
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin' },
 }, { timestamps: true });
 
+// Password, verified email and first-time setup, shared by every account type.
+eventPartnerSchema.plugin(require('../account/account.plugin'));
+
 module.exports = mongoose.model('EventPartner', eventPartnerSchema);

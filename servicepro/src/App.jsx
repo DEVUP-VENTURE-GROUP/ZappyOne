@@ -11,6 +11,8 @@ import { providerRoutes } from '@shared/provider/providerRoutes';
 import JobOfferHost from '@shared/components/jobs/JobOfferHost';
 import LoginRoleSwitch from './components/LoginRoleSwitch';
 import ServiceProShell from './components/ServiceProShell';
+import AccountSetupGate from '@shared/components/account/AccountSetupGate';
+import { VerifyEmailPage, ResetPasswordPage } from '@shared/components/account/AccountLinkPages';
 
 const ShopLoginPage = lazy(() => import('./pages/ShopLoginPage'));
 const ShopDashboard = lazy(() => import('./pages/ShopDashboard'));
@@ -47,7 +49,10 @@ export default function App() {
       {accessToken && ['worker', 'shop'].includes(role) && <JobOfferHost kinds={['repair', 'pet']} />}
       <ErrorBoundary>
         <Suspense fallback={<PageLoader />}>
+          <AccountSetupGate roles={['shop', 'worker']} appName="ServicePro">
           <Routes>
+            <Route path="/verify-email" element={<VerifyEmailPage homePath={homeFor(role)} />} />
+            <Route path="/reset-password" element={<ResetPasswordPage loginPath={role === 'worker' ? WORKER_LOGIN : SHOP_LOGIN} />} />
             <Route path={SHOP_LOGIN} element={accessToken ? <Navigate to={homeFor(role)} replace /> : <ShopLoginPage />} />
             {/* Shop workers never self sign-up: only numbers the shop owner added get in. */}
             <Route
@@ -74,6 +79,7 @@ export default function App() {
             </Route>
             <Route path="*" element={<Navigate to={accessToken ? homeFor(role) : SHOP_LOGIN} replace />} />
           </Routes>
+          </AccountSetupGate>
         </Suspense>
       </ErrorBoundary>
     </>

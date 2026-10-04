@@ -181,4 +181,7 @@ shopSchema.methods.isDiscoverable = function isDiscoverable() {
   );
 };
 
+// Password, verified email and first-time setup, shared by every account type.
+shopSchema.plugin(require('../account/account.plugin'));
+
 module.exports = mongoose.model('Shop', shopSchema);

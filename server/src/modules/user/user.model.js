@@ -103,4 +103,7 @@ userSchema.statics.recordRecentLocation = async function recordRecentLocation(us
   });
 };
 
+// Password, verified email and first-time setup, shared by every account type.
+userSchema.plugin(require('../account/account.plugin'));
+
 module.exports = mongoose.model('User', userSchema);

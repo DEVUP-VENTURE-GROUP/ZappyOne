@@ -1,3 +1,4 @@
+import LoginSecurityCard from '@shared/components/account/LoginSecurityCard';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, MapPin, Loader2, Check, Image as ImageIcon } from 'lucide-react';
@@ -141,6 +142,7 @@ export default function ShopProfilePage() {
       </div></header>
 
       <div className="max-w-lg lg:max-w-2xl mx-auto px-4 pt-4 space-y-3">
+        <LoginSecurityCard />
 
         {/* Cover photo */}
         <div className="card">

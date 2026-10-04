@@ -54,6 +54,8 @@ function mountRoutes(app) {
   app.use('/api/auth/admin', requireAdminOrigin);
 
   app.use('/api/auth', authRoutes);
+  // Password, verified email and first-time setup for every account type.
+  app.use('/api/account', require('../modules/account/account.routes'));
   app.use('/api/serviceability', require('../modules/zone/serviceability.routes'));
   app.use('/api/features', require('../modules/feature-flags/feature-flag.routes'));
   app.use('/api/users', userRoutes);

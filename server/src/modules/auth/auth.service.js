@@ -732,8 +732,11 @@ const WORKER_USERNAME_RE = /^[a-z0-9_]{3,30}$/;
 const normId = (v) => String(v == null ? '' : v).trim().toLowerCase();
 
 async function setWorkerCredentials({ workerId, username, password }) {
-  if (!password || password.length < 8) {
+  if (password != null && password.length < 8) {
     throw Object.assign(new Error('Password must be at least 8 characters'), { status: 400, code: 'WEAK_PASSWORD' });
+  }
+  if (!password && !username) {
+    throw Object.assign(new Error('Nothing to save'), { status: 400, code: 'NOTHING_TO_SAVE' });
   }
   const worker = await Worker.findById(workerId);
   if (!worker) throw Object.assign(new Error('Worker not found'), { status: 404 });
@@ -747,7 +750,10 @@ async function setWorkerCredentials({ workerId, username, password }) {
     if (clash) throw Object.assign(new Error('That Worker ID is already taken'), { status: 409, code: 'USERNAME_TAKEN' });
     worker.username = uname;
   }
-  worker.passwordHash = await hashPassword(password);
+  if (password) {
+    worker.passwordHash = await hashPassword(password);
+    worker.passwordSetAt = new Date();
+  }
   await worker.save();
   return { ok: true, username: worker.username || null };
 }
@@ -824,6 +830,7 @@ async function changeWorkerPassword({ workerId, currentPassword, newPassword }) 
 }
 
 module.exports = {
+  assertWorkerPortal,
   hashPassword,
   comparePassword,
   requestOtp,

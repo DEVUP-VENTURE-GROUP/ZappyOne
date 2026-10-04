@@ -1,3 +1,5 @@
+import AccountSetupGate from '@shared/components/account/AccountSetupGate';
+import { VerifyEmailPage, ResetPasswordPage } from '@shared/components/account/AccountLinkPages';
 import { lazy, Suspense, useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
@@ -121,7 +123,11 @@ export default function App() {
       {/* Route-level boundary — a crash in one page shows the recovery screen but
           auto-resets when the user navigates elsewhere (keyed by path). */}
       <ErrorBoundary key={location.pathname}>
+      <AccountSetupGate roles={['user']} appName="ZappyOne">
       <Routes location={location} key={location.pathname}>
+        {/* Links from our emails: confirm an email, reset a password. */}
+        <Route path="/verify-email" element={<VerifyEmailPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage loginPath="/login" />} />
         {/* Public */}
         {/* Public help content — FAQs + policy pages (admin-managed) */}
         <Route path="/faq" element={<FaqPage />} />
@@ -228,6 +234,7 @@ export default function App() {
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      </AccountSetupGate>
       </ErrorBoundary>
     </Suspense>
     </>

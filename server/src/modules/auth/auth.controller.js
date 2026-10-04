@@ -264,6 +264,26 @@ async function loginWorkerPassword(req, res, next) {
   } catch (err) { next(err); }
 }
 
+/**
+ * Password sign-in for any account type, after the first OTP sign-up set a
+ * password. Same cookie and portal rules as the OTP logins; the response
+ * carries the same account object each app already reads.
+ */
+const ACCOUNT_KEY = { user: 'user', worker: 'worker', shop: 'shop', event_partner: 'partner' };
+async function loginWithPassword(req, res, next) {
+  try {
+    const { role, identifier, password } = req.body;
+    assertPortalServes(req, role);
+    const account = await require('../account/account.service').loginWithPassword({ role, identifier, password });
+    if (role === 'worker') authService.assertWorkerPortal(account, portalOf(req));
+    const tokens = await require('./token.service').issueTokenPair({ sub: account._id.toString(), role, phone: account.phone });
+    setRtCookie(req, res, tokens.refreshToken);
+    const out = account.toObject();
+    delete out.passwordHash;
+    res.json(withMobileRt(req, { accessToken: tokens.accessToken, [ACCOUNT_KEY[role]]: out }, tokens.refreshToken));
+  } catch (err) { next(err); }
+}
+
 async function forgotWorkerPassword(req, res, next) {
   try {
     const result = await authService.requestWorkerPasswordReset(req.body);
@@ -289,5 +309,5 @@ module.exports = {
   requestOtp, resendOtp, loginUser, loginWorker, loginPartner, loginShop, googlePartnerLogin,
   loginAdmin, refresh, logout, revokeAll, verifySensitiveOtp,
   setWorkerCredentials, loginWorkerPassword, forgotWorkerPassword,
-  resetWorkerPassword, changeWorkerPassword,
+  resetWorkerPassword, changeWorkerPassword, loginWithPassword,
 };

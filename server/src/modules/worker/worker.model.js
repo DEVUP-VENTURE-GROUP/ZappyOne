@@ -242,4 +242,7 @@ workerSchema.index({ 'kyc.status': 1, rating: -1, isBlocked: 1 });
 // Admin worker list: most common filter combination
 workerSchema.index({ isOnline: 1, 'kyc.status': 1, createdAt: -1 });
 
+// Password, verified email and first-time setup, shared by every account type.
+workerSchema.plugin(require('../account/account.plugin'));
+
 module.exports = mongoose.model('Worker', workerSchema);

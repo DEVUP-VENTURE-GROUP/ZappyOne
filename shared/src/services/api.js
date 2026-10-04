@@ -118,13 +118,24 @@ export const api = createApi({
   // Keep fetched data cached for 5 min after a component unmounts, so jumping
   // back to a tab shows data instantly (no skeleton) instead of refetching.
   keepUnusedDataFor: 300,
-  tagTypes: ['AdminTeam', 'Payments', 'Me', 'Order', 'Worker', 'Earnings', 'AdminMetrics', 'Kyc', 'Plan', 'Subscription', 'Wallet', 'Notification', 'AdminUsers', 'Disputes', 'Payouts', 'Incentives', 'CancellationConfig', 'PricingCfg', 'AuditLogs', 'Addresses', 'Ad', 'Promo', 'Gamification', 'Recommendations', 'FeatureFlags', 'SupportTickets', 'Referral', 'ShieldFund', 'EventTheme', 'EventBooking', 'EventPartner', 'EventConfig', 'EventCategory', 'PartnerNotification', 'Fraud', 'Zone', 'City', 'PaymentMethods', 'UserDisputes', 'UserTickets', 'AdminAppeals', 'AdminTraining', 'WorkerGoals', 'Plans', 'Content', 'Rewards', 'WorkerOps', 'ReadyMode', 'Shop', 'ShopWorkers', 'ShopKyc',
+  tagTypes: ['Account', 'AdminTeam', 'Payments', 'Me', 'Order', 'Worker', 'Earnings', 'AdminMetrics', 'Kyc', 'Plan', 'Subscription', 'Wallet', 'Notification', 'AdminUsers', 'Disputes', 'Payouts', 'Incentives', 'CancellationConfig', 'PricingCfg', 'AuditLogs', 'Addresses', 'Ad', 'Promo', 'Gamification', 'Recommendations', 'FeatureFlags', 'SupportTickets', 'Referral', 'ShieldFund', 'EventTheme', 'EventBooking', 'EventPartner', 'EventConfig', 'EventCategory', 'PartnerNotification', 'Fraud', 'Zone', 'City', 'PaymentMethods', 'UserDisputes', 'UserTickets', 'AdminAppeals', 'AdminTraining', 'WorkerGoals', 'Plans', 'Content', 'Rewards', 'WorkerOps', 'ReadyMode', 'Shop', 'ShopWorkers', 'ShopKyc',
     'RepairCatalog', 'RepairConfig', 'RepairPricing', 'RepairRequests', 'RepairBookings', 'RepairProvider', 'MyAssets',
     'HelpingConfig', 'HelpingTasks', 'HelpingAvailable', 'AdminHelpingTasks',
     'PetCatalog', 'MyPets', 'PetBookings', 'PetAvailable', 'PetRecurring', 'AdminPetBookings', 'AdminPetPricing', 'AdminPetCapabilities',
     'RepairIdentification', 'Onboarding', 'AdminBookings'],
   endpoints: (b) => ({
     // --- Auth ---
+    // Account: password, verified email and first-time setup (every account type).
+    accountMe: b.query({ query: () => '/account/me', providesTags: ['Account'] }),
+    setAccountName: b.mutation({ query: (body) => ({ url: '/account/name', method: 'POST', body }), invalidatesTags: ['Account', 'Me'] }),
+    setAccountPassword: b.mutation({ query: (body) => ({ url: '/account/password', method: 'POST', body }), invalidatesTags: ['Account'] }),
+    startEmailVerification: b.mutation({ query: (body) => ({ url: '/account/email', method: 'POST', body }), invalidatesTags: ['Account'] }),
+    confirmEmail: b.mutation({ query: (body) => ({ url: '/account/email/verify', method: 'POST', body }), invalidatesTags: ['Account'] }),
+    completeAccountSetup: b.mutation({ query: () => ({ url: '/account/setup/complete', method: 'POST' }), invalidatesTags: ['Account'] }),
+    forgotPassword: b.mutation({ query: (body) => ({ url: '/account/password/forgot', method: 'POST', body }) }),
+    resetPassword: b.mutation({ query: (body) => ({ url: '/account/password/reset', method: 'POST', body }) }),
+    passwordLogin: b.mutation({ query: (body) => ({ url: '/auth/password/login', method: 'POST', body }) }),
+
     requestOtp: b.mutation({
       query: (body) => ({ url: '/auth/otp/request', method: 'POST', body }),
     }),
@@ -165,10 +176,6 @@ export const api = createApi({
 
     // --- User ---
     getMe: b.query({ query: () => '/users/me', providesTags: ['Me'] }),
-    updateMe: b.mutation({
-      query: (body) => ({ url: '/users/me', method: 'PATCH', body }),
-      invalidatesTags: ['Me'],
-    }),
     getAddresses: b.query({
       query: () => '/users/addresses',
       providesTags: ['Addresses'],
@@ -2167,7 +2174,6 @@ export const {
   useLoginAdminMutation,
   useLogoutMutation,
   useGetMeQuery,
-  useUpdateMeMutation,
   useLazySmartSearchQuery,
   useSearchTrendingQuery,
   useGetOrderQuery,
@@ -2383,6 +2389,16 @@ export const {
   useAdminShieldTriggerPayoutMutation,
   useAdminShieldWriteOffFeeMutation,
   useAdminShieldUpdateFeeScheduleMutation,
+  // Account
+  useAccountMeQuery,
+  useSetAccountNameMutation,
+  useSetAccountPasswordMutation,
+  useStartEmailVerificationMutation,
+  useConfirmEmailMutation,
+  useCompleteAccountSetupMutation,
+  useForgotPasswordMutation,
+  useResetPasswordMutation,
+  usePasswordLoginMutation,
   // Event Partner
   useLoginEventPartnerMutation,
   useGooglePartnerLoginMutation,

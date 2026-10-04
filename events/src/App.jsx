@@ -8,6 +8,8 @@ import ConnectionBanner from '@shared/components/common/ConnectionBanner';
 import RouteProgress from '@shared/components/common/RouteProgress';
 import ErrorBoundary from '@shared/components/common/ErrorBoundary';
 import { Spinner } from './components/ui';
+import AccountSetupGate from '@shared/components/account/AccountSetupGate';
+import { VerifyEmailPage, ResetPasswordPage } from '@shared/components/account/AccountLinkPages';
 
 /*
  * Each area of the partner portal is its own page and its own bundle, so a
@@ -54,7 +56,10 @@ export default function App() {
       <ConnectionBanner />
       <ErrorBoundary>
         <Suspense fallback={<PageLoader />}>
+          <AccountSetupGate roles={['event_partner']} appName="ZappyOne Events">
           <Routes>
+            <Route path="/verify-email" element={<VerifyEmailPage homePath="/partner" />} />
+            <Route path="/reset-password" element={<ResetPasswordPage loginPath={LOGIN} />} />
             <Route path={LOGIN} element={accessToken ? <Navigate to="/partner" replace /> : <PartnerLoginPage />} />
             <Route path="/partner/advertise" element={partner(<AdvertiserDashboard />)} />
             <Route path="/partner" element={partner(<PartnerShell />)}>
@@ -72,6 +77,7 @@ export default function App() {
             </Route>
             <Route path="*" element={<Navigate to={accessToken ? '/partner' : LOGIN} replace />} />
           </Routes>
+          </AccountSetupGate>
         </Suspense>
       </ErrorBoundary>
     </>

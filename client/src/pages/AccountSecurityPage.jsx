@@ -1,3 +1,4 @@
+import LoginSecurityCard from '@shared/components/account/LoginSecurityCard';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Shield, Smartphone, Clock, AlertTriangle, X } from 'lucide-react';
@@ -68,6 +69,8 @@ export default function AccountSecurityPage() {
       </header>
 
       <div className="p-4 space-y-4">
+        <LoginSecurityCard />
+
         {/* Login history */}
         <div className="bg-white rounded-xl shadow-sm">
           <div className="px-4 pt-4 pb-2 flex items-center gap-2">

@@ -1,3 +1,4 @@
+import LoginSecurityCard from '../../components/account/LoginSecurityCard';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -81,18 +82,15 @@ export default function WorkerEditProfilePage() {
   const [loaded, setLoaded] = useState(false);
   // Login credentials
   const [username, setUsername]   = useState('');
-  const [newPw,    setNewPw]      = useState('');
-  const [confirmPw, setConfirmPw] = useState('');
 
+  /** Worker ID only; the password and email live in the shared Login & security card. */
   async function saveCredentials() {
-    if (newPw.length < 8) { toast.error('Password must be at least 8 characters'); return; }
-    if (newPw !== confirmPw) { toast.error('Passwords do not match'); return; }
     try {
-      await setCredentials({ ...(username.trim() ? { username: username.trim() } : {}), password: newPw }).unwrap();
-      toast.success('Login credentials saved — you can now sign in with your password');
-      setNewPw(''); setConfirmPw('');
+      const r = await setCredentials({ username: username.trim() }).unwrap();
+      toast.success(`Worker ID saved: ${r.username}. Sign in with it and your password.`);
+      setUsername('');
     } catch (err) {
-      toast.error(err.data?.error || 'Could not save credentials');
+      toast.error(err.data?.error || 'Could not save your Worker ID');
     }
   }
 
@@ -223,35 +221,22 @@ export default function WorkerEditProfilePage() {
           </button>
         </div>
 
-        {/* Login Credentials — set a Worker ID + password to sign in without OTP */}
-        <div className="bg-white rounded-2xl p-5 shadow-sm">
-          <div className="flex items-center gap-2 mb-1">
-            <KeyRound size={15} className="text-zappy-500" />
-            <span className="text-sm font-semibold text-slate-700">Login Credentials</span>
+        <LoginSecurityCard />
+
+        {/* Worker ID: an easy name to sign in with instead of a phone number. */}
+        <div className="rounded-card border border-line bg-white p-4">
+          <div className="flex items-center gap-2">
+            <KeyRound size={15} className="text-zappy-600" />
+            <span className="text-[15px] font-bold text-ink-900">Worker ID</span>
           </div>
-          <p className="text-xs text-slate-400 mb-3">Set a Worker ID and password so you can sign in without an OTP each time.</p>
-          <div className="space-y-2.5">
-            <div>
-              <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Worker ID {me?.username ? `(current: ${me.username})` : '(optional)'}</label>
-              <input value={username} onChange={e => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))} maxLength={30}
-                placeholder={me?.username || 'e.g. ravi_kumar'}
-                className="mt-1 w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-zappy-300 transition" />
-            </div>
-            <div>
-              <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">New Password</label>
-              <input type="password" value={newPw} onChange={e => setNewPw(e.target.value)}
-                placeholder="At least 8 characters"
-                className="mt-1 w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-zappy-300 transition" />
-            </div>
-            <div>
-              <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Confirm Password</label>
-              <input type="password" value={confirmPw} onChange={e => setConfirmPw(e.target.value)}
-                placeholder="Re-enter password"
-                className="mt-1 w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-zappy-300 transition" />
-            </div>
-            <button onClick={saveCredentials} disabled={savingCreds || newPw.length < 8}
-              className="w-full flex items-center justify-center gap-1.5 bg-zappy-600 text-white text-sm font-bold rounded-xl py-2.5 disabled:opacity-50 hover:bg-zappy-700 transition">
-              {savingCreds ? <Loader2 size={13} className="animate-spin" /> : <KeyRound size={13} />} Save Login Credentials
+          <p className="mt-0.5 text-[13px] text-ink-500">
+            {me?.username ? `Yours is ${me.username}. Sign in with it and your password.` : 'Optional: a short ID to sign in with instead of your phone number.'}
+          </p>
+          <div className="mt-3 flex gap-2">
+            <input value={username} onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))} maxLength={30}
+              placeholder={me?.username || 'e.g. ravi_kumar'} className="input min-w-0 flex-1" aria-label="Worker ID" />
+            <button onClick={saveCredentials} disabled={savingCreds || username.trim().length < 3} className="btn-primary px-4">
+              {savingCreds && <Loader2 size={14} className="animate-spin" />} Save
             </button>
           </div>
         </div>

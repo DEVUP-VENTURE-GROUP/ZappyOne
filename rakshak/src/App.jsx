@@ -8,6 +8,8 @@ import RouteProgress from '@shared/components/common/RouteProgress';
 import ErrorBoundary from '@shared/components/common/ErrorBoundary';
 import { providerRoutes } from '@shared/provider/providerRoutes';
 import JobOfferHost from '@shared/components/jobs/JobOfferHost';
+import AccountSetupGate from '@shared/components/account/AccountSetupGate';
+import { VerifyEmailPage, ResetPasswordPage } from '@shared/components/account/AccountLinkPages';
 
 const WorkerLoginPage = lazy(() => import('@shared/provider/pages/WorkerLoginPage'));
 
@@ -33,13 +35,17 @@ export default function App() {
       {accessToken && role === 'worker' && <JobOfferHost kinds={['repair', 'pet', 'helping']} />}
       <ErrorBoundary>
         <Suspense fallback={<PageLoader />}>
+          <AccountSetupGate roles={['worker']} appName="Rakshak">
           <Routes>
+            <Route path="/verify-email" element={<VerifyEmailPage homePath="/worker" />} />
+            <Route path="/reset-password" element={<ResetPasswordPage loginPath={LOGIN} />} />
             {/* Anyone may sign up; what they can work on is decided per service by verification. */}
             <Route path={LOGIN} element={accessToken ? <Navigate to="/worker" replace /> : <WorkerLoginPage portalLabel="Rakshak" />} />
             <Route path="/worker/login" element={<Navigate to={LOGIN} replace />} />
             {providerRoutes({ loginPath: LOGIN, helping: true })}
             <Route path="*" element={<Navigate to={accessToken ? '/worker' : LOGIN} replace />} />
           </Routes>
+          </AccountSetupGate>
         </Suspense>
       </ErrorBoundary>
     </>

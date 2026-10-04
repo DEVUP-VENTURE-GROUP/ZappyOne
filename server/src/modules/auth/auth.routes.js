@@ -56,8 +56,9 @@ router.post(
   requireRole('worker'),
   validate(Joi.object({
     username: Joi.string().lowercase().pattern(/^[a-z0-9_]{3,30}$/).allow('', null).optional(),
-    password: Joi.string().min(8).max(100).required(),
-  })),
+    // The password is optional: it is usually set in Login & security (/api/account/password).
+    password: Joi.string().min(8).max(100).optional(),
+  }).or('username', 'password')),
   ctrl.setWorkerCredentials,
 );
 
@@ -156,6 +157,18 @@ router.post(
 
 // No body validation — refresh token comes from httpOnly cookie (primary) or
 // body (legacy). Nothing meaningful to validate at the route level.
+// Password sign-in for every account type (customers, workers, shops, event partners).
+router.post(
+  '/password/login',
+  authLimiter,
+  validate(Joi.object({
+    role: Joi.string().valid('user', 'worker', 'shop', 'event_partner').required(),
+    identifier: Joi.string().trim().max(120).required(),
+    password: Joi.string().max(72).required(),
+  })),
+  ctrl.loginWithPassword,
+);
+
 router.post('/refresh', authLimiter, ctrl.refresh);
 router.post('/logout', ctrl.logout);
 

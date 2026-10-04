@@ -85,6 +85,13 @@ const schema = Joi.object({
   KYC_API_URL:   Joi.string().allow('').default(''),// provider base URL
   KYC_API_KEY:   Joi.string().allow('').default(''),// provider bearer token
   KYC_TIMEOUT_MS: Joi.number().default(15000),
+  // Email (SMTP). Empty SMTP_HOST → mail is logged, not sent (links still work in dev).
+  SMTP_HOST:   Joi.string().allow('').default(''),
+  SMTP_PORT:   Joi.number().default(587),
+  SMTP_SECURE: Joi.boolean().default(false),        // true for port 465
+  SMTP_USER:   Joi.string().allow('').default(''),
+  SMTP_PASS:   Joi.string().allow('').default(''),
+  MAIL_FROM:   Joi.string().default('ZappyOne <no-reply@zappyone.com>'),
 }).unknown();
 
 const { value: env, error } = schema.validate(process.env, { abortEarly: false });
@@ -101,6 +108,10 @@ module.exports = {
   redis: { url: env.REDIS_URL },
   jwt: { secret: env.JWT_SECRET, expiresIn: env.JWT_EXPIRES_IN },
   googleMaps: { key: env.GOOGLE_MAPS_KEY },
+  mail: {
+    host: env.SMTP_HOST, port: env.SMTP_PORT, secure: env.SMTP_SECURE,
+    user: env.SMTP_USER, pass: env.SMTP_PASS, from: env.MAIL_FROM,
+  },
   aws: {
     region: env.AWS_REGION,
     bucket: env.AWS_S3_BUCKET,
