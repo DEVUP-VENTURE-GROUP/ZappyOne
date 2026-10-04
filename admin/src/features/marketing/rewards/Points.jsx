@@ -101,15 +101,18 @@ export default function RewardsConfig() {
             <div key={i} className="flex items-center gap-2">
               <input className={inp + ' flex-[2]'} value={t.label} onChange={(e) => setTier(i, 'label', e.target.value)} placeholder="Label" />
               <select className={inp + ' flex-1'} value={t.type} onChange={(e) => setTier(i, 'type', e.target.value)}>
-                <option value="points">points</option><option value="cashback">cashback (paise)</option><option value="none">none</option>
+                <option value="points">points</option><option value="cashback">cashback (₹)</option><option value="none">none</option>
               </select>
-              <input type="number" className={inp + ' w-20'} value={t.value} onChange={(e) => setTier(i, 'value', e.target.value)} title="value" />
+              {/* Cashback is typed in rupees and stored in paise. */}
+              <input type="number" min="0" className={inp + ' w-20'} value={t.type === 'cashback' ? (t.value || 0) / 100 : t.value}
+                onChange={(e) => setTier(i, 'value', t.type === 'cashback' ? Math.round(Number(e.target.value) * 100) : e.target.value)}
+                title={t.type === 'cashback' ? 'Cashback in rupees' : 'Points'} />
               <input type="number" className={inp + ' w-16'} value={t.weight} onChange={(e) => setTier(i, 'weight', e.target.value)} title="weight" />
               <button onClick={() => delTier(i)} className="text-rose-500 shrink-0"><Trash2 size={15} /></button>
             </div>
           ))}
         </div>
-        <p className="text-[11px] text-slate-400 mt-2">Higher weight = more likely. Cashback value is in paise (1000 = ₹10).</p>
+        <p className="text-[11px] text-slate-400 mt-2">Higher weight = more likely. Cashback is in rupees; points are whole points.</p>
       </div>
 
       <button onClick={onSave} disabled={saving} className="w-full bg-slate-900 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 disabled:opacity-50">

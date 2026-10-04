@@ -66,7 +66,7 @@ describe('POST /api/orders — input validation + access control', () => {
         pickupLocation: { lat: 17.4, lng: 78.4, address: 'Somewhere' },
       });
     expect(res.status).toBe(400);
-    // validate middleware responds with { error: 'Validation failed', details }.
+    // validate middleware responds with { error: <plain sentence>, details, fields }.
     expect(res.body.error).toBeTruthy();
   });
 

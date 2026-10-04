@@ -151,8 +151,9 @@ const PROBLEMS = [
   P('tw_puncture', 'Puncture / flat tyre', 'tw_roadside',
     ['tw_puncture_tubeless', 'tw_puncture_tube', 'tw_tyre_replacement'],
     { isPopular: true, severity: 'high' }),
+  // On hold: fuel delivery is not offered at launch (migration 003). Admin can publish it.
   P('tw_out_of_fuel', 'Out of fuel', 'tw_roadside', ['tw_fuel_delivery'],
-    { isPopular: true, severity: 'high', appliesToProductTypeCodes: PETROL }),
+    { isActive: false, severity: 'high', appliesToProductTypeCodes: PETROL }),
   P('tw_battery_dead_roadside', 'Battery dead', 'tw_roadside',
     ['tw_jump_start', 'tw_battery_replacement'], { isPopular: true, severity: 'high' }),
   P('tw_breakdown', 'Broken down — cannot ride', 'tw_roadside',

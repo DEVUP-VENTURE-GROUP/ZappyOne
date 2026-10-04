@@ -146,7 +146,8 @@ async function seedProblems(V, seed) {
           // is petrol or CNG, a Nexon petrol, diesel or electric.
           appliesToFuelTypes: p.appliesToFuelTypes || [],
           isPopular: !!p.isPopular,
-          isActive: true,
+          // A problem the seed marks as held (e.g. fuel delivery) starts unpublished.
+          isActive: p.isActive !== false,
         },
       },
       { upsert: true },

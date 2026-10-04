@@ -137,10 +137,11 @@ const QUOTABLE = ['ARRIVED', 'DIAGNOSING', 'AT_WORKSHOP', 'REPAIR_IN_PROGRESS'];
 function QuoteBuilder({ bookingId, repairCode, additional = false, onSent, onCancel }) {
   const [summary, setSummary] = useState('');
   const [warrantyDays, setWarrantyDays] = useState(90);
-  const [items, setItems] = useState([{ kind: 'part', label: '', unitPricePaise: '', quantity: 1 }]);
+  // Prices are typed in rupees, as people think of them; the server gets paise.
+  const [items, setItems] = useState([{ kind: 'part', label: '', priceRupees: '', quantity: 1 }]);
   const [submit, { isLoading }] = useSubmitRepairQuoteMutation();
 
-  const total = items.reduce((sum, i) => sum + (Number(i.unitPricePaise) || 0) * (Number(i.quantity) || 1), 0);
+  const total = items.reduce((sum, i) => sum + Math.round((Number(i.priceRupees) || 0) * 100) * (Number(i.quantity) || 1), 0);
 
   function setItem(idx, patch) {
     setItems((list) => list.map((it, i) => (i === idx ? { ...it, ...patch } : it)));
@@ -148,16 +149,17 @@ function QuoteBuilder({ bookingId, repairCode, additional = false, onSent, onCan
 
   async function send() {
     const clean = items
-      .filter((i) => i.label.trim() && Number(i.unitPricePaise) > 0)
+      .filter((i) => i.label.trim() && Number(i.priceRupees) > 0)
       .map((i) => ({
         kind: i.kind,
         label: i.label.trim(),
         quantity: Number(i.quantity) || 1,
-        unitPricePaise: Math.round(Number(i.unitPricePaise)),
+        unitPricePaise: Math.round(Number(i.priceRupees) * 100),
       }));
 
     if (!summary.trim()) return toast.error('Describe what you found');
-    if (!clean.length) return toast.error('Add at least one priced line');
+    if (!clean.length) return toast.error('Add at least one line with a description and a price');
+    if (total < 1000) return toast.error('The quote total must be at least ₹10. Check the prices you entered.');
 
     try {
       await submit({
@@ -214,16 +216,19 @@ function QuoteBuilder({ bookingId, repairCode, additional = false, onSent, onCan
             </select>
             <input value={item.label} onChange={(e) => setItem(idx, { label: e.target.value })}
               placeholder="Description" className="input text-sm flex-1" />
-            <input type="number" value={item.unitPricePaise}
-              onChange={(e) => setItem(idx, { unitPricePaise: e.target.value })}
-              placeholder="paise" className="input text-sm w-28" />
+            <label className="relative w-28 shrink-0">
+              <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm font-semibold text-ink-500">₹</span>
+              <input inputMode="decimal" value={item.priceRupees} aria-label="Price in rupees"
+                onChange={(e) => setItem(idx, { priceRupees: e.target.value.replace(/[^\d.]/g, '').replace(/(\..*)\./g, '$1') })}
+                placeholder="0" className="input w-full pl-7 text-sm tabular-nums" />
+            </label>
             {items.length > 1 && (
               <button onClick={() => setItems((l) => l.filter((_, i) => i !== idx))}
                 className="text-slate-400 hover:text-red-500 shrink-0"><Trash2 size={15} /></button>
             )}
           </div>
         ))}
-        <button onClick={() => setItems((l) => [...l, { kind: 'part', label: '', unitPricePaise: '', quantity: 1 }])}
+        <button onClick={() => setItems((l) => [...l, { kind: 'part', label: '', priceRupees: '', quantity: 1 }])}
           className="flex items-center gap-1.5 text-xs font-semibold text-zappy-600">
           <Plus size={13} /> Add line
         </button>

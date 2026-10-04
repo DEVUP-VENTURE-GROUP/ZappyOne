@@ -327,7 +327,14 @@ router.post(
       amountPaise: Joi.number().integer().min(0),
       warrantyDays: Joi.number().integer().min(0).default(0),
       note: Joi.string().max(300).allow('', null),
-    })).min(1).required(),
+    })).min(1).required()
+      // A whole quote under ₹10 is almost always rupees typed where paise were
+      // expected (₹500 sent as 500 paise = ₹5). Refuse it in words the
+      // technician understands rather than send the customer a ₹5 repair.
+      .custom((items, h) => {
+        const total = items.reduce((s, i) => s + (i.unitPricePaise || 0) * (i.quantity || 1), 0);
+        return total >= 1000 ? items : h.message({ custom: 'The quote total must be at least ₹10. Check the prices you entered.' });
+      }),
   })),
   ctrl.submitQuote,
 );

@@ -149,8 +149,9 @@ const PROBLEMS = [
     ['fw_jump_start', 'fw_battery_replacement'], { isPopular: true, severity: 'high' }),
   P('fw_flat_tyre', 'Flat tyre / puncture', 'fw_roadside',
     ['fw_puncture_repair', 'fw_tyre_replacement', 'fw_spare_wheel_fitment'], { isPopular: true, severity: 'high' }),
+  // On hold: fuel delivery is not offered at launch (migration 003). Admin can publish it.
   P('fw_out_of_fuel', 'Out of fuel', 'fw_roadside', ['fw_fuel_delivery'],
-    { severity: 'high', appliesToFuelTypes: ICE }),
+    { isActive: false, severity: 'high', appliesToFuelTypes: ICE }),
   P('fw_key_locked', 'Key locked inside or lost', 'fw_roadside', ['fw_lock_service'], { severity: 'high' }),
   P('fw_overheating_roadside', 'Overheating on the road', 'fw_roadside',
     ['fw_coolant_service', 'fw_towing'], { severity: 'high', appliesToFuelTypes: ICE }),

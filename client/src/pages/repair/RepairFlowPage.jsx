@@ -638,12 +638,22 @@ function DiagnoseStep({ vertical, problem, onResolved }) {
   const [transcript, setTranscript] = useState([]);
   const [submit, { isLoading }] = useSubmitRepairDiagnosticMutation();
   const [state, setState] = useState(null);
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
-  // Kick off with an empty answer set to get the first question.
+  // Kick off with an empty answer set to get the first question. A problem
+  // with no questions comes back already complete: move straight on, or the
+  // customer is left watching a spinner.
   useEffect(() => {
+    setFailed(false);
     submit({ vertical, problemCode: problem.code, answers: {} })
-      .unwrap().then(setState).catch(() => {});
-  }, [problem.code, vertical, submit]);
+      .unwrap()
+      .then((res) => {
+        setState(res);
+        if (res.complete || !res.nextQuestion) onResolved(res.diagnosis || null, {}, []);
+      })
+      .catch(() => setFailed(true));
+  }, [problem.code, vertical, submit, attempt]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function answer(questionId, optionId, multi) {
     const nextAnswers = multi
@@ -667,6 +677,21 @@ function DiagnoseStep({ vertical, problem, onResolved }) {
     } catch (err) {
       toast.error(err?.data?.error || 'Something went wrong');
     }
+  }
+
+  if (failed) {
+    return (
+      <Shell>
+        <div className="card py-8 text-center">
+          <p className="text-[15px] font-semibold text-ink-900">We could not load the questions</p>
+          <p className="mt-1 text-[13px] text-ink-500">Check your connection, then try again. You can also skip and the technician will check it on site.</p>
+          <div className="mt-4 flex justify-center gap-2">
+            <button type="button" onClick={() => setAttempt((n) => n + 1)} className="btn-primary">Try again</button>
+            <button type="button" onClick={() => onResolved(null, {}, [])} className="btn-outline">Skip</button>
+          </div>
+        </div>
+      </Shell>
+    );
   }
 
   if (!state) return <Spinner />;
