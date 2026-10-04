@@ -15,12 +15,26 @@ require('dotenv').config();
 const { S3Client, PutBucketCorsCommand, GetBucketCorsCommand } = require('@aws-sdk/client-s3');
 const config = require('../src/config');
 
+// Every web app that loads or uploads media: the five live portals, and their
+// local dev ports (client 5173, admin 5174, servicepro 5175, rakshak 5176,
+// events 5177; 4173 is `vite preview`).
 const ORIGINS = [
-  'https://www.zappyone.com',
   'https://zappyone.com',
+  'https://www.zappyone.com',
+  'https://admin.zappyone.com',
+  'https://servicepro.zappyone.com',
+  'https://rakshak.zappyone.com',
+  'https://events.zappyone.com',
   'http://localhost:5173',
+  'http://localhost:5174',
+  'http://localhost:5175',
+  'http://localhost:5176',
+  'http://localhost:5177',
   'http://localhost:4173',
 ];
+if (process.env.ADMIN_URL && !ORIGINS.includes(process.env.ADMIN_URL)) {
+  ORIGINS.push(process.env.ADMIN_URL);
+}
 if (process.env.CLIENT_URL && !ORIGINS.includes(process.env.CLIENT_URL)) {
   ORIGINS.push(process.env.CLIENT_URL);
 }
