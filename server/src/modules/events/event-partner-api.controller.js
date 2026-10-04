@@ -20,8 +20,8 @@ function pickTheme(body) {
   return out;
 }
 
-/** Partner's share of a booking at the rate frozen on it. */
-const PARTNER_NET = { $multiply: ['$pricing.totalPaise', { $divide: [{ $subtract: [100, { $ifNull: ['$pricing.platformCommissionPct', 10] }] }, 100] }] };
+// Partner's share of a booking at the rate frozen on it; our platform fee is never theirs.
+const { PARTNER_GROSS, PARTNER_NET, partnerGrossOf, partnerNetOf } = require('./event-money');
 
 /* Profile */
 
@@ -179,8 +179,7 @@ async function getMyBooking(req, res, next) {
       after: (await Promise.all((b.setupPhotos?.after || []).map(signKey))).filter(Boolean),
     };
     if (b.themeId?.coverImage) b.themeId.coverImage = await signKey(b.themeId.coverImage);
-    const pct = b.pricing?.platformCommissionPct ?? 10;
-    b.payout = { commissionPct: pct, netPaise: Math.round((b.pricing?.totalPaise || 0) * (100 - pct) / 100) };
+    b.payout = { commissionPct: b.pricing?.platformCommissionPct ?? 10, grossPaise: partnerGrossOf(b.pricing), netPaise: partnerNetOf(b.pricing) };
     res.json({ booking: b });
   } catch (e) { next(e); }
 }
@@ -276,8 +275,7 @@ async function updateBookingStatus(req, res, next) {
 
     if (status === 'completed') {
       // The commission agreed when this booking was made, not a number fixed in code.
-      const commissionPct = booking.pricing.platformCommissionPct ?? 10;
-      const netPaise = Math.round((booking.pricing.totalPaise || 0) * (100 - commissionPct) / 100);
+      const netPaise = partnerNetOf(booking.pricing);
       await EventPartner.updateOne({ _id: req.auth.sub }, {
         $inc: { completedEvents: 1, totalEarningsPaise: netPaise },
       });
@@ -345,13 +343,13 @@ async function getEarnings(req, res, next) {
     const [summary, monthly, recent, upcoming, cfg] = await Promise.all([
       EventBooking.aggregate([
         { $match: done },
-        { $group: { _id: null, grossPaise: { $sum: '$pricing.totalPaise' }, netPaise: { $sum: PARTNER_NET }, count: { $sum: 1 } } },
+        { $group: { _id: null, grossPaise: { $sum: PARTNER_GROSS }, netPaise: { $sum: PARTNER_NET }, count: { $sum: 1 } } },
       ]),
       EventBooking.aggregate([
         { $match: done },
         { $group: {
           _id: { year: { $year: '$eventDate' }, month: { $month: '$eventDate' } },
-          grossPaise: { $sum: '$pricing.totalPaise' }, netPaise: { $sum: PARTNER_NET }, count: { $sum: 1 },
+          grossPaise: { $sum: PARTNER_GROSS }, netPaise: { $sum: PARTNER_NET }, count: { $sum: 1 },
         } },
         { $sort: { '_id.year': -1, '_id.month': -1 } },
         { $limit: 6 },
@@ -375,9 +373,10 @@ async function getEarnings(req, res, next) {
       upcomingCount: upcoming[0]?.count || 0,
       monthly: monthly.map((m) => ({ ...m, netPaise: Math.round(m.netPaise) })),
       recent: recent.map((b) => {
-        const pct = b.pricing?.platformCommissionPct ?? 10;
-        const grossB = b.pricing?.totalPaise || 0;
-        return { _id: b._id, eventDate: b.eventDate, title: b.themeId?.title || 'Event', grossPaise: grossB, commissionPct: pct, netPaise: Math.round(grossB * (100 - pct) / 100) };
+        return {
+          _id: b._id, eventDate: b.eventDate, title: b.themeId?.title || 'Event',
+          grossPaise: partnerGrossOf(b.pricing), commissionPct: b.pricing?.platformCommissionPct ?? 10, netPaise: partnerNetOf(b.pricing),
+        };
       }),
     });
   } catch (e) { next(e); }

@@ -108,10 +108,11 @@ describe('pricing resolution', () => {
   beforeAll(async () => {
     await RepairConfig.create({
       vertical: 'mobile',
-    // Stated, not inherited: tax and commission are operator-set in admin and
+    // Stated, not inherited: tax, commission and the platform fee are operator-set in admin and
     // default to 0/10, so a test asserting rupee amounts has to fix its own rates.
     taxPct: 18,
     commissionPct: 15,
+    platformFeePaise: 0,
     });
     await Repair.create({
       code: 'display_assembly_replacement',

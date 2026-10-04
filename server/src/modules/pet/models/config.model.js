@@ -84,8 +84,8 @@ const pricingRuleSchema = new mongoose.Schema(
     monthlyThresholdNights: { type: Number, default: 30, min: 1 },
 
     /* Platform economics */
-    commissionPct: { type: Number, default: 15, min: 0, max: 100 },
-    platformFeePaise: { type: Number, default: 0, min: 0 },
+    commissionPct: { type: Number, default: 10, min: 0, max: 100 },
+    platformFeePaise: { type: Number, default: 1000, min: 0 }, // ₹10, admin-set
     taxPct: { type: Number, default: 0, min: 0, max: 100 },
 
     /**

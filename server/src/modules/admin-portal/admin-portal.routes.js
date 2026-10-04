@@ -163,4 +163,27 @@ router.post('/bookings/:source/:id/notes',
     } catch (err) { next(err); }
   });
 
+/* Economics: every service line's customer fee, provider commission and tax */
+
+const fees = require('./fees.service');
+
+router.get('/fees', async (req, res, next) => {
+  try { res.json({ lines: await fees.list(), defaults: fees.DEFAULTS }); } catch (err) { next(err); }
+});
+
+router.put('/fees/:line/:key',
+  validate(Joi.object({
+    platformFeePaise: Joi.number().integer().min(0).max(100000),
+    commissionPct: Joi.number().min(0).max(100),
+    taxPct: Joi.number().min(0).max(40),
+  }).or('platformFeePaise', 'commissionPct', 'taxPct')),
+  async (req, res, next) => {
+    try {
+      const { line, key } = req.params;
+      const out = await fees.update({ line, key, ...req.body, adminId: req.auth.sub });
+      await auditService.fromRequest(req, 'fees.update', { kind: `${line}_fees`, id: key }, out.before, out.after);
+      res.json({ lines: await fees.list() });
+    } catch (err) { next(err); }
+  });
+
 module.exports = router;

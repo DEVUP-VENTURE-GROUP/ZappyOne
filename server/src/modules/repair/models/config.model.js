@@ -60,7 +60,7 @@ const repairConfigSchema = new mongoose.Schema(
      * from admin, with no deployment.
      */
     commissionPct: { type: Number, default: 10, min: 0, max: 100 },
-    platformFeePaise: { type: Number, default: 0, min: 0 },
+    platformFeePaise: { type: Number, default: 1000, min: 0 }, // ₹10, admin-set
     /**
      * Zero until an operator sets the real rate in admin. A wrong tax rate is
      * worse than none: it is collected from customers and owed to the state,

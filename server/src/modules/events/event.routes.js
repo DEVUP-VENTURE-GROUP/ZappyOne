@@ -87,6 +87,7 @@ adminRouter.put('/config',
   validate(Joi.object({
     advancePaymentPct:      Joi.number().min(1).max(100),
     platformCommissionPct:  Joi.number().min(0).max(50),
+    platformFeePaise:       Joi.number().integer().min(0).max(100000),
     travelFeePerKmPaise:    Joi.number().integer().min(0),
     minAdvanceBookingHours: Joi.number().min(1).max(72),
     maxAdvanceBookingDays:  Joi.number().min(1).max(730),

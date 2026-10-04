@@ -154,6 +154,7 @@ function RuleRow({ rule }) {
     perMinutePaise: (rule.perMinutePaise || 0) / 100,
     perKmPaise: (rule.perKmPaise || 0) / 100,
     commissionPct: rule.commissionPct,
+    platformFeePaise: (rule.platformFeePaise || 0) / 100,
     minPaise: (rule.minPaise || 0) / 100,
     maxPaise: (rule.maxPaise || 0) / 100,
   });
@@ -170,6 +171,7 @@ function RuleRow({ rule }) {
         perMinutePaise: Math.round(form.perMinutePaise * 100),
         perKmPaise: Math.round(form.perKmPaise * 100),
         commissionPct: Number(form.commissionPct),
+        platformFeePaise: Math.round(form.platformFeePaise * 100),
         minPaise: Math.round(form.minPaise * 100),
         maxPaise: Math.round(form.maxPaise * 100),
       }).unwrap();
@@ -199,6 +201,7 @@ function RuleRow({ rule }) {
         <FormRow label="Per minute (₹)"><Input type="number" value={form.perMinutePaise} onChange={(e) => set('perMinutePaise', e.target.value)} /></FormRow>
         <FormRow label="Per km (₹)"><Input type="number" value={form.perKmPaise} onChange={(e) => set('perKmPaise', e.target.value)} /></FormRow>
         <FormRow label="Commission (%)"><Input type="number" value={form.commissionPct} onChange={(e) => set('commissionPct', e.target.value)} /></FormRow>
+        <FormRow label="Platform fee — customer (₹)"><Input type="number" value={form.platformFeePaise} onChange={(e) => set('platformFeePaise', e.target.value)} /></FormRow>
         <FormRow label="Min (₹)"><Input type="number" value={form.minPaise} onChange={(e) => set('minPaise', e.target.value)} /></FormRow>
         <FormRow label="Max (₹)"><Input type="number" value={form.maxPaise} onChange={(e) => set('maxPaise', e.target.value)} /></FormRow>
       </div>

@@ -83,7 +83,7 @@ const helpingConfigSchema = new mongoose.Schema(
 
     /** Taken from the SERVICE CHARGE only — never from item money (§32). */
     commissionPct: { type: Number, default: 10, min: 0, max: 100 },
-    platformFeePaise: { type: Number, default: 0, min: 0 },
+    platformFeePaise: { type: Number, default: 1000, min: 0 }, // ₹10, admin-set
     taxPct: { type: Number, default: 0, min: 0, max: 100 },
 
     /* Item money controls (§35). */

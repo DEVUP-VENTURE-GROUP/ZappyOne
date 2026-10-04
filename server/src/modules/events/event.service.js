@@ -39,14 +39,15 @@ async function getActiveConfig() {
   const cached = await redis.get(CFG_KEY).catch(() => null);
   if (cached) return JSON.parse(cached);
   const cfg = await EventConfig.findOne({ isActive: true }).lean();
-  const result = cfg || defaultConfig();
+  // A field added after the config was saved falls back to its default.
+  const result = { ...defaultConfig(), ...(cfg || {}) };
   redis.set(CFG_KEY, JSON.stringify(result), 'EX', CFG_TTL).catch(() => {});
   return result;
 }
 
 function defaultConfig() {
   return {
-    advancePaymentPct: 20, platformCommissionPct: 10, travelFeePerKmPaise: 0,
+    advancePaymentPct: 20, platformCommissionPct: 10, platformFeePaise: 1000, travelFeePerKmPaise: 0,
     cancellationPolicy: [
       { daysBeforeEvent: 7, refundPct: 100 },
       { daysBeforeEvent: 3, refundPct: 50  },
@@ -247,23 +248,18 @@ async function createBooking({ userId, themeId, eventDate, eventTimeSlot, addres
   }).lean();
   if (conflict) throw Object.assign(new Error('This time slot is not available'), { status: 409, code: 'SLOT_TAKEN' });
 
-  const totalPaise   = theme.startingPricePaise;
-  const advancePaise = Math.round(totalPaise * cfg.advancePaymentPct / 100);
+  const pricing = require('./event-money').priceBooking(theme, cfg);
+  const { totalPaise, advancePaise, remainingPaise } = pricing;
 
   const booking = await EventBooking.create({
     userId, themeId, partnerId: partner._id,
     eventDate: eventDateObj, eventTimeSlot,
     address, guestCount: guestCount || 1, notes, roomPhotos: roomPhotos || [],
-    pricing: {
-      totalPaise, advancePaise,
-      remainingPaise: totalPaise - advancePaise,
-      platformCommissionPct: cfg.platformCommissionPct,
-      advancePaymentPct: cfg.advancePaymentPct,
-    },
+    pricing,
     statusHistory: [{ status: 'pending_payment' }],
   });
 
-  return { booking, advancePaise, totalPaise, remainingPaise: totalPaise - advancePaise };
+  return { booking, advancePaise, totalPaise, remainingPaise };
 }
 
 async function getUserBookings(userId, page = 1) {
@@ -465,7 +461,7 @@ async function adminUpdatePartner(partnerId, patch) {
 
 async function adminGetConfig() {
   const cfg = await EventConfig.findOne({ isActive: true }).lean();
-  return cfg || defaultConfig();
+  return { ...defaultConfig(), ...(cfg || {}) };
 }
 
 async function adminUpdateConfig(patch, adminId) {

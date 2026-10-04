@@ -27,6 +27,8 @@ const eventBookingSchema = new mongoose.Schema({
 
   // Pricing snapshot locked at booking time
   pricing: {
+    themePricePaise:       Number,               // the partner's price for the setup
+    platformFeePaise:      { type: Number, default: 0 }, // ours, added for the customer
     totalPaise:            { type: Number, required: true },
     advancePaise:          { type: Number, required: true },
     remainingPaise:        { type: Number, required: true },

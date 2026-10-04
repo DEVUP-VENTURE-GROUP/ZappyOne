@@ -223,9 +223,19 @@ export default function ReturnTaskPage() {
         </button>
 
         {charge && (
-          <div className="rounded-2xl border-2 border-zappy-100 bg-zappy-50/50 p-4 flex justify-between font-bold">
-            <span>ZappyOne service fee</span>
-            <span>{formatPaise(charge.serviceChargePaise)}</span>
+          <div className="rounded-2xl border-2 border-zappy-100 bg-zappy-50/50 p-4 space-y-1 text-sm">
+            {[
+              ['Service fee', charge.baseFeePaise], ['Distance', charge.distanceFeePaise], ['Extra stops', charge.multiStopFeePaise],
+              ['Special handling', charge.specialHandlingPaise], ['Platform fee', charge.platformFeePaise],
+              ['Discount', -(charge.discountPaise || 0)], ['Taxes', charge.taxPaise],
+            ].filter(([, p]) => p).map(([label, p]) => (
+              <div key={label} className="flex justify-between text-slate-500">
+                <span>{label}</span><span>{p < 0 ? `− ${formatPaise(-p)}` : formatPaise(p)}</span>
+              </div>
+            ))}
+            <div className="flex justify-between font-bold pt-1 border-t border-zappy-100">
+              <span>Total</span><span>{formatPaise(charge.serviceChargePaise)}</span>
+            </div>
           </div>
         )}
         <PayMethodPicker

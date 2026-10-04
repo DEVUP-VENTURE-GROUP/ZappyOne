@@ -721,6 +721,13 @@ function ConfigTab() {
         {field('advancePaymentPct',     'Advance Payment %')}
         {field('platformCommissionPct', 'Platform Commission %')}
         <div>
+          <label className="block text-xs font-medium text-slate-600 mb-1">Platform fee — customer (₹)</label>
+          <input type="number" min="0" step="1"
+            value={Math.round((values.platformFeePaise ?? 0) / 100)}
+            onChange={e => setForm(p => ({ ...(p || values), platformFeePaise: Math.round(Number(e.target.value) * 100) }))}
+            className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:border-zappy-400 outline-none" />
+        </div>
+        <div>
           <label className="block text-xs font-medium text-slate-600 mb-1">Travel Fee / km (₹)</label>
           <input type="number" min="0" step="1"
             value={Math.round((values.travelFeePerKmPaise || 0) / 100)}

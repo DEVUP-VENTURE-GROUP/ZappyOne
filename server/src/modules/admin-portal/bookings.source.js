@@ -120,6 +120,7 @@ function normaliseOrder(o) {
     totalPaise: o.pricing?.totalPaise ?? Math.round((o.pricing?.total || 0) * 100),
     subtotalPaise: Math.round((o.pricing?.subtotal || o.pricing?.total || 0) * 100),
     commissionPaise: o.earnings?.platformPaise ?? null,
+    platformFeePaise: 0,
     providerEarningPaise: o.earnings?.workerPaise ?? null,
     itemMoneyPaise: 0,
     paymentMethod: o.payment?.method || null, paymentStatus: o.payment?.status || null,
@@ -136,6 +137,7 @@ function normaliseRepair(b) {
     totalPaise: b.priceSnapshot?.totalPaise || 0,
     subtotalPaise: b.priceSnapshot?.subtotalPaise || 0,
     commissionPaise: b.priceSnapshot?.commissionPaise ?? null,
+    platformFeePaise: b.priceSnapshot?.platformFeePaise || 0,
     providerEarningPaise: b.priceSnapshot
       ? (b.priceSnapshot.totalPaise || 0) - (b.priceSnapshot.taxPaise || 0)
         - (b.priceSnapshot.platformFeePaise || 0) - (b.priceSnapshot.commissionPaise || 0)
@@ -156,6 +158,7 @@ function normaliseHelping(t) {
     totalPaise: t.charge?.serviceChargePaise || 0,
     subtotalPaise: t.charge?.serviceChargePaise || 0,
     commissionPaise: t.charge?.commissionPaise ?? null,
+    platformFeePaise: t.charge?.platformFeePaise || 0,
     providerEarningPaise: t.charge?.workerEarningPaise ?? null,
     itemMoneyPaise: t.itemMoney?.actualPaise || 0,
     paymentMethod: t.paymentMethod || null, paymentStatus: bucketFor(t.status) === 'completed' ? 'paid' : null,
@@ -172,6 +175,7 @@ function normalisePet(b) {
     totalPaise: b.pricing?.totalPaise || 0,
     subtotalPaise: b.pricing?.subtotalPaise || 0,
     commissionPaise: b.pricing?.commissionPaise ?? null,
+    platformFeePaise: b.pricing?.platformFeePaise || 0,
     providerEarningPaise: b.pricing?.providerAmountPaise ?? null,
     itemMoneyPaise: 0,
     paymentMethod: b.paymentMethod || null, paymentStatus: b.paymentStatus || null,
@@ -179,19 +183,25 @@ function normalisePet(b) {
   };
 }
 
-/** An event booking: held by an event partner; the platform keeps the commission agreed on the booking. */
+/**
+ * An event booking: held by an event partner; the platform keeps the
+ * commission agreed on the booking, on the theme price, plus its platform fee.
+ */
 function normaliseEvent(b) {
+  const { partnerGrossOf, partnerNetOf } = require('../events/event-money');
   const total = b.pricing?.totalPaise || 0;
-  const commission = Math.round(total * (b.pricing?.platformCommissionPct ?? 0) / 100);
+  const gross = partnerGrossOf(b.pricing);
+  const net = partnerNetOf(b.pricing);
   return {
     _id: b._id, source: 'event', reference: `EVT-${String(b._id).slice(-6).toUpperCase()}`,
     userId: b.userId, workerId: null, shopId: null, partnerId: b.partnerId || null,
     vertical: 'event', serviceName: 'Event décor',
     status: b.status, statusBucket: bucketFor(b.status),
     totalPaise: total,
-    subtotalPaise: total,
-    commissionPaise: commission,
-    providerEarningPaise: total - commission,
+    subtotalPaise: gross,
+    commissionPaise: gross - net,
+    platformFeePaise: b.pricing?.platformFeePaise || 0,
+    providerEarningPaise: net,
     itemMoneyPaise: 0,
     paymentMethod: 'online',
     paymentStatus: b.remainingPayment?.status === 'paid' ? 'paid' : b.advancePayment?.status === 'paid' ? 'advance_paid' : 'pending',
@@ -299,6 +309,7 @@ async function aggregateTotals({ from, to } = {}) {
       cancelled: own.filter((r) => r.statusBucket === 'cancelled').length,
       gmvPaise: ownCompleted.reduce((sum, r) => sum + (r.totalPaise || 0), 0),
       commissionPaise: ownCompleted.reduce((sum, r) => sum + (r.commissionPaise || 0), 0),
+      platformFeePaise: ownCompleted.reduce((sum, r) => sum + (r.platformFeePaise || 0), 0),
     };
   }
 
@@ -309,6 +320,7 @@ async function aggregateTotals({ from, to } = {}) {
     activeBookings: rows.filter((r) => r.statusBucket === 'active').length,
     gmvPaise: completed.reduce((sum, r) => sum + (r.totalPaise || 0), 0),
     commissionPaise: completed.reduce((sum, r) => sum + (r.commissionPaise || 0), 0),
+    platformFeePaise: completed.reduce((sum, r) => sum + (r.platformFeePaise || 0), 0),
     bySource,
   };
 }

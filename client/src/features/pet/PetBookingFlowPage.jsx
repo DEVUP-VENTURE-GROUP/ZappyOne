@@ -29,6 +29,24 @@ function Shell({ children }) { return <div className="max-w-lg mx-auto px-4 py-4
 
 const STEPS = ['pets', 'variant', 'addons', 'schedule', 'location', 'providers', 'confirm'];
 
+/**
+ * Everything on a pet quote besides each pet's own line, so the breakdown
+ * adds up to the total. Peak-time pricing and waiting time show as one
+ * balancing line rather than leaving the sum short.
+ */
+function petExtraLines(q) {
+  const lines = [
+    ['Add-ons', q.addonsPaise], ['Travel', q.travelPaise], ['Pickup', q.pickupPaise],
+    ['Drop back', q.returnPaise], ['Special handling', q.specialHandlingPaise],
+    ['Stay discount', -(q.stayDiscountPaise || 0)], ['Coupon', -(q.couponPaise || 0)],
+    ['Platform fee', q.platformFeePaise], ['Taxes', q.taxPaise],
+  ].filter(([, p]) => p);
+  const shown = (q.lines || []).reduce((t, l) => t + (l.linePaise || 0), 0) + lines.reduce((t, [, p]) => t + p, 0);
+  const gap = (q.totalPaise || 0) - shown;
+  if (Math.abs(gap) >= 100) lines.splice(lines.length - 2, 0, [gap > 0 ? 'Peak time & waiting' : 'Adjustment', gap]);
+  return lines;
+}
+
 export default function PetBookingFlowPage() {
   const { categoryCode } = useParams();
   const nav = useNavigate();
@@ -287,7 +305,11 @@ export default function PetBookingFlowPage() {
               {quote.lines.map((l, i) => (
                 <div key={i} className="flex justify-between"><span>{selectedPets[i]?.name}</span><span>{formatPaise(l.linePaise)}</span></div>
               ))}
-              {quote.travelPaise > 0 && <div className="flex justify-between text-slate-500"><span>Travel</span><span>{formatPaise(quote.travelPaise)}</span></div>}
+              {petExtraLines(quote).map(([label, p]) => (
+                <div key={label} className="flex justify-between text-slate-500">
+                  <span>{label}</span><span>{p < 0 ? `− ${formatPaise(-p)}` : formatPaise(p)}</span>
+                </div>
+              ))}
               <div className="flex justify-between font-black pt-1 border-t border-zappy-100"><span>Total</span><span>{formatPaise(quote.totalPaise)}</span></div>
             </div>
           )}

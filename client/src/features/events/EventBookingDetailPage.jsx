@@ -184,6 +184,12 @@ export default function EventBookingDetailPage() {
         <div className="bg-white rounded-2xl border border-slate-100 p-4">
           <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-3">Payment Summary</p>
           <div className="space-y-2 text-sm">
+            {booking.pricing?.platformFeePaise > 0 && (
+              <>
+                <div className="flex justify-between"><span className="text-slate-600">Package</span><span>₹{Math.round((booking.pricing.themePricePaise || 0) / 100).toLocaleString('en-IN')}</span></div>
+                <div className="flex justify-between"><span className="text-slate-600">Platform fee</span><span>₹{Math.round(booking.pricing.platformFeePaise / 100).toLocaleString('en-IN')}</span></div>
+              </>
+            )}
             <div className="flex justify-between"><span className="text-slate-600">Total Amount</span><span className="font-bold">₹{Math.round((booking.pricing?.totalPaise || 0) / 100).toLocaleString('en-IN')}</span></div>
             <div className="flex justify-between">
               <span className="text-slate-600">Advance Paid</span>

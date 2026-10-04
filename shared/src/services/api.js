@@ -118,7 +118,7 @@ export const api = createApi({
   // Keep fetched data cached for 5 min after a component unmounts, so jumping
   // back to a tab shows data instantly (no skeleton) instead of refetching.
   keepUnusedDataFor: 300,
-  tagTypes: ['JobChat', 'Account', 'AdminTeam', 'Payments', 'Me', 'Order', 'Worker', 'Earnings', 'AdminMetrics', 'Kyc', 'Plan', 'Subscription', 'Wallet', 'Notification', 'AdminUsers', 'Disputes', 'Payouts', 'Incentives', 'CancellationConfig', 'PricingCfg', 'AuditLogs', 'Addresses', 'Ad', 'Promo', 'Gamification', 'Recommendations', 'FeatureFlags', 'SupportTickets', 'Referral', 'ShieldFund', 'EventTheme', 'EventBooking', 'EventPartner', 'EventConfig', 'EventCategory', 'PartnerNotification', 'Fraud', 'Zone', 'City', 'PaymentMethods', 'UserDisputes', 'UserTickets', 'AdminAppeals', 'AdminTraining', 'WorkerGoals', 'Plans', 'Content', 'Rewards', 'WorkerOps', 'ReadyMode', 'Shop', 'ShopWorkers', 'ShopKyc',
+  tagTypes: ['Fees', 'JobChat', 'Account', 'AdminTeam', 'Payments', 'Me', 'Order', 'Worker', 'Earnings', 'AdminMetrics', 'Kyc', 'Plan', 'Subscription', 'Wallet', 'Notification', 'AdminUsers', 'Disputes', 'Payouts', 'Incentives', 'CancellationConfig', 'PricingCfg', 'AuditLogs', 'Addresses', 'Ad', 'Promo', 'Gamification', 'Recommendations', 'FeatureFlags', 'SupportTickets', 'Referral', 'ShieldFund', 'EventTheme', 'EventBooking', 'EventPartner', 'EventConfig', 'EventCategory', 'PartnerNotification', 'Fraud', 'Zone', 'City', 'PaymentMethods', 'UserDisputes', 'UserTickets', 'AdminAppeals', 'AdminTraining', 'WorkerGoals', 'Plans', 'Content', 'Rewards', 'WorkerOps', 'ReadyMode', 'Shop', 'ShopWorkers', 'ShopKyc',
     'RepairCatalog', 'RepairConfig', 'RepairPricing', 'RepairRequests', 'RepairBookings', 'RepairProvider', 'MyAssets',
     'HelpingConfig', 'HelpingTasks', 'HelpingAvailable', 'AdminHelpingTasks',
     'PetCatalog', 'MyPets', 'PetBookings', 'PetAvailable', 'PetRecurring', 'AdminPetBookings', 'AdminPetPricing', 'AdminPetCapabilities',
@@ -1190,6 +1190,17 @@ export const api = createApi({
     adminShieldWriteOffFee: b.mutation({
       query: (id) => ({ url: adminApiPath(`/shield/fees/${id}/write-off`), method: 'POST' }),
       invalidatesTags: ['ShieldFund'],
+    }),
+
+    // Economics: fee, commission and tax for every service line (admin → Economics)
+    adminFees: b.query({
+      query: () => adminApiPath('/fees'),
+      providesTags: ['Fees'],
+    }),
+    adminUpdateFee: b.mutation({
+      query: ({ line, key, ...body }) => ({ url: adminApiPath(`/fees/${line}/${key}`), method: 'PUT', body }),
+      // Each line's own console reads the same numbers.
+      invalidatesTags: ['Fees', 'RepairConfig', 'HelpingConfig', 'AdminPetPricing', 'EventConfig'],
     }),
 
     // Event Partner dashboard
@@ -2412,6 +2423,8 @@ export const {
   useAdminShieldTriggerPayoutMutation,
   useAdminShieldWriteOffFeeMutation,
   useAdminShieldUpdateFeeScheduleMutation,
+  useAdminFeesQuery,
+  useAdminUpdateFeeMutation,
   // Job chat
   useJobChatQuery,
   useSendJobChatMutation,

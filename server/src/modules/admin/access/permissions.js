@@ -78,7 +78,7 @@ const AREA_RULES = [
   [/^\/(workers|kyc|shops|worker|worker-ops|incentives)(\/|$)/, 'providers'],
   [/^\/events(\/|$)/, 'events'],
   [/^\/(promos|cashback|referrals|rewards-config|plans|notifications|ads|content|cities)(\/|$)/, 'marketing'],
-  [/^\/(payments|payouts|wallet|shield|emergency-fund|audit)(\/|$)/, 'money'],
+  [/^\/(payments|payouts|wallet|shield|emergency-fund|audit|fees)(\/|$)/, 'money'],
   [/^\/(zones|launch-interest|fraud|cancellation-config|liveops|stuck-jobs)(\/|$)/, 'operations'],
   [/^\/(feature-flags|system|audit-logs)(\/|$)/, 'system'],
 ];

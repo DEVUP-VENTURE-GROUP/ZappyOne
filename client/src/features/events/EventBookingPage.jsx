@@ -114,8 +114,12 @@ export default function EventBookingPage() {
     }
   }
 
-  const totalPaise   = theme?.startingPricePaise || 0;
-  const advancePaise = Math.round(totalPaise * advancePct);
+  // Same rule as the server: our fee is on top and is paid with the advance;
+  // the balance on the day is the decorator's price alone.
+  const themePaise   = theme?.startingPricePaise || 0;
+  const feePaise     = cfg?.platformFeePaise ?? 0;
+  const totalPaise   = themePaise + feePaise;
+  const advancePaise = Math.round(themePaise * advancePct) + feePaise;
 
   async function handleRoomPhoto(e) {
     const files = Array.from(e.target.files || []);
@@ -416,17 +420,23 @@ export default function EventBookingPage() {
                   <h4 className="font-black text-slate-900 mb-5 flex items-center gap-2"><Zap size={18} className="text-yellow-500 fill-yellow-500"/> Cost Breakdown</h4>
                   <div className="space-y-4 text-[15px]">
                     <div className="flex justify-between text-slate-600 font-medium">
-                      <span>Total Package</span>
-                      <span className="font-bold text-slate-900">₹{Math.round(totalPaise / 100).toLocaleString('en-IN')}</span>
+                      <span>Package</span>
+                      <span className="font-bold text-slate-900">₹{Math.round(themePaise / 100).toLocaleString('en-IN')}</span>
                     </div>
-                    <div className="flex justify-between text-slate-600 font-medium">
-                      <span>Taxes & Fees</span>
-                      <span className="text-emerald-500 font-bold uppercase tracking-wide text-xs flex items-center gap-1"><CheckCircle size={14}/> Included</span>
+                    {feePaise > 0 && (
+                      <div className="flex justify-between text-slate-600 font-medium">
+                        <span>Platform fee</span>
+                        <span className="font-bold text-slate-900">₹{Math.round(feePaise / 100).toLocaleString('en-IN')}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between text-slate-900 font-bold">
+                      <span>Total</span>
+                      <span>₹{Math.round(totalPaise / 100).toLocaleString('en-IN')}</span>
                     </div>
                     
                     <div className="border-t border-slate-200 pt-4 flex justify-between items-center bg-white p-4 rounded-2xl shadow-sm">
                       <div>
-                        <span className="font-black text-slate-900 block">Advance Required ({Math.round(advancePct * 100)}%)</span>
+                        <span className="font-black text-slate-900 block">Advance required ({Math.round(advancePct * 100)}%{feePaise > 0 ? ' + platform fee' : ''})</span>
                         <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Pay now to lock slot</span>
                       </div>
                       <span className="font-black text-3xl text-zappy-600 tracking-tighter">₹{Math.round(advancePaise / 100).toLocaleString('en-IN')}</span>

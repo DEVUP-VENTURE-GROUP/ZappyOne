@@ -34,6 +34,7 @@ import {
   Activity,
   Coins,
   LineChart,
+  Percent,
 } from 'lucide-react';
 import Hub from '../ui/Hub';
 
@@ -69,6 +70,7 @@ const P = {
   Payouts: page(() => import('../features/money/Payouts')),
   Wallets: page(() => import('../features/money/Wallets')),
   ShieldFund: page(() => import('../features/money/ShieldFund')),
+  Economics: page(() => import('../features/money/Economics')),
   LiveBoard: page(() => import('../features/operations/live/LiveBoard')),
   StuckJobs: page(() => import('../features/operations/live/StuckJobs')),
   Zones: page(() => import('../features/operations/areas/Zones')),
@@ -160,6 +162,7 @@ export const NAV_GROUPS = [
   ] },
   { label: 'Money', items: [
     { id: 'money', area: 'money', label: 'Money', icon: IndianRupee, Comp: HUBS.money },
+    { id: 'economics', area: 'money', label: 'Economics', icon: Percent, Comp: P.Economics },
   ] },
   { label: 'Operations', items: [
     { id: 'liveops', area: 'operations', label: 'Live operations', icon: Radio, Comp: HUBS.liveops },
@@ -190,6 +193,7 @@ export const REDIRECTS = {
   analytics: ['insights', 'analytics'], business: ['insights', 'business'], heatmap: ['insights', 'geo'],
   support: ['helpdesk', 'tickets'], disputes: ['helpdesk', 'disputes'],
   rewardpoints: ['rewards', 'points'],
+  fees: ['economics'],
   payouts: ['money', 'payouts'], wallet: ['money', 'wallets'], shield: ['money', 'shield'],
   intervention: ['liveops', 'stuck'],
   zones: ['areas', 'zones'], cities: ['content', 'cities'],

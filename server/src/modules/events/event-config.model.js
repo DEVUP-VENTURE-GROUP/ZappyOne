@@ -11,6 +11,8 @@ const eventConfigSchema = new mongoose.Schema({
   // The platform's rule: 10% from the provider (pricing rules). Admin may change it;
   // each booking freezes the rate it was made at.
   platformCommissionPct: { type: Number, default: 10,  min: 0, max: 50 },
+  // Added to the customer's bill on every booking, collected with the advance.
+  platformFeePaise:      { type: Number, default: 1000, min: 0, max: 100000 },
   travelFeePerKmPaise:   { type: Number, default: 0 },
 
   // Cancellation policy (admin editable)
