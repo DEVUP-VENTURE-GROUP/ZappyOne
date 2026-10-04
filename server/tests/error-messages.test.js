@@ -29,3 +29,10 @@ test('database mistakes become plain requests', () => {
   expect(run(Object.assign(new Error('Cast to ObjectId failed'), { name: 'CastError' }))).toMatchObject({ status: 400, body: { code: 'BAD_ID' } });
   expect(run(Object.assign(new Error('E11000 duplicate key'), { code: 11000 }))).toMatchObject({ status: 409, body: { error: 'This already exists.' } });
 });
+
+test('a non-HTTP status on an error never crashes the reply', () => {
+  const e = Object.assign(new Error('This job can no longer be passed on'), { status: 'QA_PENDING', code: 'TOO_LATE_TO_DECLINE' });
+  expect(run(e).status).toBe(500);
+  const ok = Object.assign(new Error('This job can no longer be passed on'), { status: 409, code: 'TOO_LATE_TO_DECLINE', jobStatus: 'QA_PENDING' });
+  expect(run(ok)).toMatchObject({ status: 409, body: { error: 'This job can no longer be passed on', jobStatus: 'QA_PENDING' } });
+});

@@ -21,8 +21,11 @@ function fromDatabase(err) {
 
 // eslint-disable-next-line no-unused-vars
 function errorHandler(err, req, res, next) {
-  const db = !err.status && !err.statusCode ? fromDatabase(err) : null;
-  const status = db?.status || err.status || err.statusCode || 500;
+  const db = !Number.isInteger(err.status) && !Number.isInteger(err.statusCode) ? fromDatabase(err) : null;
+  // Only a real HTTP error code may reach the response; a stray field (a job's
+  // own status like 'QA_PENDING') must never crash the reply.
+  const httpCode = (v) => (Number.isInteger(v) && v >= 400 && v <= 599 ? v : null);
+  const status = db?.status || httpCode(err.status) || httpCode(err.statusCode) || 500;
   const code = db?.code || (typeof err.code === 'string' ? err.code : null) || (status >= 500 ? 'INTERNAL' : 'ERROR');
 
   if (status >= 500) {
@@ -33,7 +36,7 @@ function errorHandler(err, req, res, next) {
 
   // Pick up any extra fields the caller attached (e.g. activeOrderId, kycStatus).
   // An unexpected error's own fields are internals, never sent.
-  const expected = status < 500 || Boolean(err.status || err.statusCode);
+  const expected = status < 500 || Boolean(httpCode(err.status) || httpCode(err.statusCode));
   const extras = {};
   if (expected && !db) for (const k of Object.keys(err)) {
     if (!['message', 'status', 'statusCode', 'code', 'stack', 'name', 'details'].includes(k)) {

@@ -243,7 +243,7 @@ async function passBackToShop(booking, workerId, reason) {
     throw httpError('This job is not assigned to you', 403, 'FORBIDDEN');
   }
   if (!['CONFIRMED', 'PROVIDER_ASSIGNED', 'WORKER_ACCEPTED'].includes(booking.status)) {
-    throw httpError('You have already set out for this job — call your shop owner', 409, 'TOO_LATE_TO_DECLINE', { status: booking.status });
+    throw httpError('You have already set out for this job — call your shop owner', 409, 'TOO_LATE_TO_DECLINE', { jobStatus: booking.status });
   }
   if (!reason.trim()) throw httpError('Tell your shop why you are passing this job', 400, 'REASON_REQUIRED');
 
@@ -294,7 +294,7 @@ async function declineBooking({ bookingId, actorRole, actorId, reason = '' }) {
       'This job can no longer be passed on — it has already started',
       409,
       'TOO_LATE_TO_DECLINE',
-      { status: booking.status },
+      { jobStatus: booking.status },
     );
   }
 
