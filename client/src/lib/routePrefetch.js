@@ -7,11 +7,11 @@
 // fills the browser's module cache early. Subsequent lazy() resolves are sync.
 
 const loaders = {
-  '/':         () => import('../pages/HomePage'),
-  '/services': () => import('../pages/AllServicesPage'),
-  '/orders':   () => import('../pages/OrdersListPage'),
-  '/track':    () => import('../pages/TrackPage'),
-  '/profile':  () => import('../pages/ProfilePage'),
+  '/':         () => import('../features/home/HomePage'),
+  '/services': () => import('../features/catalog/AllServicesPage'),
+  '/orders':   () => import('../features/bookings/OrdersListPage'),
+  '/track':    () => import('../features/bookings/TrackPage'),
+  '/profile':  () => import('../features/account/ProfilePage'),
   // Category catalog is the #1 destination from the Home tiles, so it's worth
   // warming alongside the tabs. The service detail chunk is only prefetched on
   // demand (prefetchRoute) — it's one level deeper in the funnel.

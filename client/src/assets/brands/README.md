@@ -22,7 +22,7 @@ curl -s "http://localhost:4000/api/catalog/services/brands?category=mobile" | py
 
 ## Resolution order
 
-`components/catalog/BrandLogo.jsx` tries, in order:
+`shared/src/components/common/BrandLogo.jsx` tries, in order:
 
 1. a file in this folder matching the brand code
 2. the brand's `logoUrl` field, if it points at a real logo asset
