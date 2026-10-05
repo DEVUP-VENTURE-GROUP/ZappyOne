@@ -1,5 +1,5 @@
 import { useScrollTopOnChange } from '@shared/components/common/ScrollToTop';
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { formatPaise } from '@shared/utils/money';
 import { useSelector, useDispatch } from 'react-redux';
@@ -630,12 +630,31 @@ function DiagnoseStep({ vertical, problem, onResolved }) {
     setFailed(false);
     submit({ vertical, problemCode: problem.code, answers: {} })
       .unwrap()
-      .then((res) => {
-        setState(res);
-        if (res.complete || !res.nextQuestion) onResolved(res.diagnosis || null, {}, []);
-      })
+      .then(setState)
       .catch(() => setFailed(true));
   }, [problem.code, vertical, submit, attempt]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /*
+   * Whenever the flow has nothing left to ask (no questions at all, or the last
+   * one answered), hand the diagnosis back exactly once. Driven by state, not
+   * by the request, so no path can leave the customer on the spinner.
+   */
+  const resolved = useRef(false);
+  const latest = useRef({ answers: {}, transcript: [] });
+  latest.current = { answers, transcript };
+  const done = !!state && (state.complete || !state.nextQuestion);
+  useEffect(() => {
+    if (!done || resolved.current) return;
+    resolved.current = true;
+    onResolved(state.diagnosis || null, latest.current.answers, latest.current.transcript);
+  }, [done]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Last resort if moving on did not take: let the customer continue themselves.
+  const [stuck, setStuck] = useState(false);
+  useEffect(() => {
+    if (!done) return undefined;
+    const t = setTimeout(() => setStuck(true), 4000);
+    return () => clearTimeout(t);
+  }, [done]);
 
   async function answer(questionId, optionId, multi) {
     const nextAnswers = multi
@@ -652,10 +671,9 @@ function DiagnoseStep({ vertical, problem, onResolved }) {
     ];
     setTranscript(nextTranscript);
 
+    latest.current = { answers: nextAnswers, transcript: nextTranscript };
     try {
-      const res = await submit({ vertical, problemCode: problem.code, answers: nextAnswers }).unwrap();
-      setState(res);
-      if (res.complete) onResolved(res.diagnosis, nextAnswers, nextTranscript);
+      setState(await submit({ vertical, problemCode: problem.code, answers: nextAnswers }).unwrap());
     } catch (err) {
       toast.error(err?.data?.error || 'That did not go through. Please try again.');
     }
@@ -686,6 +704,12 @@ function DiagnoseStep({ vertical, problem, onResolved }) {
         <div className="card text-center py-10">
           <Loader2 size={22} className="animate-spin text-zappy-400 mx-auto" />
           <p className="text-sm text-slate-500 mt-3">Working out the likely repair…</p>
+          {stuck && (
+            <button type="button" className="btn-primary mt-4"
+              onClick={() => onResolved(state.diagnosis || null, latest.current.answers, latest.current.transcript)}>
+              Continue
+            </button>
+          )}
         </div>
       </Shell>
     );
