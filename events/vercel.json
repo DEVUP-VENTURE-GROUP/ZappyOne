@@ -53,9 +53,9 @@
       ]
     }
   ],
-  "ignoreCommand": "[ -n \"$VERCEL_GIT_PREVIOUS_SHA\" ] && git cat-file -e \"$VERCEL_GIT_PREVIOUS_SHA\" 2>/dev/null && git diff --quiet \"$VERCEL_GIT_PREVIOUS_SHA\" HEAD -- . ../shared ../assets",
   "git": {
     "deploymentEnabled": {
+      "main": true,
       "new-version-1.0": false,
       "checkpoint-main": false,
       "legacy-main": false
