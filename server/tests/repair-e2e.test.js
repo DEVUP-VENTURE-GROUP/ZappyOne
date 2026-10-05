@@ -112,6 +112,8 @@ beforeAll(async () => {
     skills: ['display_assembly_replacement'], kyc: { status: 'approved' },
   });
   ctx.workerId = worker._id;
+  // One technician does every cash job in this file; dues limits have their own test (worker-dues).
+  await require('../src/modules/order/cancellation.service').updateConfig({ workerDuesLimitPaise: 100000000, workerDuesWarnPaise: 100000000 }, null);
 
   await ProviderServiceArea.create({
     workerId: worker._id, cityCode: 'hyderabad',

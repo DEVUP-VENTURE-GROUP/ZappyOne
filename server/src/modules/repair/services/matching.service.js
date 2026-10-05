@@ -17,7 +17,6 @@ const { haversineKm } = require('../../../core/geo/distance');
  * stopped while the debt is still clearable rather than at the moment the
  * ledger refuses them.
  */
-const DUES_BLOCK_PAISE = -20000;   // -₹200
 
 
 
@@ -312,7 +311,8 @@ async function findProviders({
      * see. They keep every other kind of work; only cash is withheld,
      * and only until they clear.
      */
-    if (!s.shopId && (profile.wallet?.balancePaise ?? 0) <= DUES_BLOCK_PAISE) {
+    // The real wallet and the limit set in Economics (worker-dues), not a cached figure.
+    if (!s.shopId && !(await require('../../worker/worker-dues.service').filterWorkingWorkers([s.workerId])).has(String(s.workerId))) {
       rejected.push({ label, reason: 'dues_pending' });
       continue;
     }

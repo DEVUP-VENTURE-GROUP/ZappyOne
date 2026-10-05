@@ -59,9 +59,11 @@ async function settleCash({ source, bookingId, reference, isShop, ownerId, total
         amountPaise: platformPaise,
         reason: Transaction.REASONS.PLATFORM_COMMISSION,
         idempotencyKey: `${source}:cash_commission:${bookingId}`,
+        allowDebt: true, // owed, however deep; the dues limit stops new work instead
         refs,
         description: `Commission on cash ${source} ${reference}`,
       });
+      require('../worker/worker-dues.service').notifyIfCrossed(ownerId);
     } catch (err) {
       // The wallet is at its dues floor. The debt is still real, so it is kept
       // as a pending row rather than lost; matching stops offering this

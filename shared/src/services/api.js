@@ -502,6 +502,13 @@ export const api = createApi({
 
     // --- Wallet ---
     getWallet: b.query({ query: () => '/wallet', providesTags: ['Wallet'] }),
+    /** Worker: what they owe from cash jobs, the limit, and how to pay (worker-dues). */
+    workerDues: b.query({ query: () => '/wallet/dues', providesTags: ['Wallet'] }),
+    claimDuesPayment: b.mutation({ query: (body) => ({ url: '/wallet/dues/claims', method: 'POST', body }), invalidatesTags: ['Wallet'] }),
+    /** Admin: who owes what, and recording what they paid. */
+    adminDues: b.query({ query: () => adminApiPath('/dues'), providesTags: ['Wallet'] }),
+    adminRecordDuesPayment: b.mutation({ query: ({ workerId, ...body }) => ({ url: adminApiPath(`/dues/${workerId}/payments`), method: 'POST', body }), invalidatesTags: ['Wallet'] }),
+    adminRejectDuesClaim: b.mutation({ query: ({ id, note }) => ({ url: adminApiPath(`/dues/claims/${id}/reject`), method: 'POST', body: { note } }), invalidatesTags: ['Wallet'] }),
     walletTransactions: b.query({
       query: ({ page = 1, limit = 50 } = {}) => `/wallet/transactions?page=${page}&limit=${limit}`,
       providesTags: ['Wallet'],
@@ -2213,6 +2220,11 @@ export const {
   useSubscribeMutation,
   useCancelSubscriptionMutation,
   useGetWalletQuery,
+  useWorkerDuesQuery,
+  useClaimDuesPaymentMutation,
+  useAdminDuesQuery,
+  useAdminRecordDuesPaymentMutation,
+  useAdminRejectDuesClaimMutation,
   useWalletTransactionsQuery,
   useWalletTopupMutation,
   useVerifyPaymentMutation,

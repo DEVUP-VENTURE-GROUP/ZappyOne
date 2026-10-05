@@ -25,6 +25,9 @@ const CACHE_KEY = 'config:cancellation:active';
 const CACHE_TTL = 60;
 
 const DEFAULTS = {
+  workerDuesWarnPaise:        80000,
+  workerDuesLimitPaise:       100000,
+  duesPayInstructions:        '',
   freeCancelWindowSec:       120,   // 2 min grace after worker assigned
   userCancelFeeAssignedPaise: 2000, // ₹20 — assigned but within trip
   userCancelFeeOnWayPaise:    3000, // ₹30 — worker already on the way

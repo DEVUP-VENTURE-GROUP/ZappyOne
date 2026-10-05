@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Wallet, Zap, Clock, ChevronRight, Loader2, Building2, Smartphone, AlertCircle, Info, Banknote, ShieldCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useGetWorkerBankAccountsQuery, useGetWalletQuery, useRequestPayoutMutation } from '../../services/api';
+import DuesCard from '../DuesCard';
 
 const MIN_PAISE = 5000;   // ₹50 — must match server payout.service.js
 const MAX_PAISE = 2500000; // ₹25,000
@@ -117,7 +118,9 @@ export default function WorkerWithdrawPage() {
           </div>
         ) : (
           <div className="relative z-20 px-4 -mt-16 space-y-5">
-            
+            {/* Owing from cash jobs comes first: only what is left over can be withdrawn. */}
+            <DuesCard />
+
             {/* Amount Input */}
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-[1.5rem] border border-slate-100 shadow-[0_8px_30px_rgba(0,0,0,0.04)] p-5">
               <div className="flex items-center justify-between mb-3">

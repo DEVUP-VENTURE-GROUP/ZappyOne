@@ -112,7 +112,10 @@ async function alertNearbyProviders(kind, doc) {
     const start = k.open.start(doc);
     // Not back to whoever already passed on it or handed it back (jobs/give-back).
     const passed = new Set([...(doc.declinedBy || []), ...(doc.releasedBy || [])].map(String));
-    const providers = (await approvedProviders(line)).filter((p) => !passed.has(String(p.id)));
+    let providers = (await approvedProviders(line)).filter((p) => !passed.has(String(p.id)));
+    // Nobody at their dues limit is rung for new work (worker-dues).
+    const working = await require('../worker/worker-dues.service').filterWorkingWorkers(providers.filter((p) => p.kind === 'worker').map((p) => p.id));
+    providers = providers.filter((p) => p.kind !== 'worker' || working.has(String(p.id)));
     if (!providers.length) return;
 
     const Worker = require('../worker/worker.model');

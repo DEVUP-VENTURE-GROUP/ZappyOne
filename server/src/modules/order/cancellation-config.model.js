@@ -25,6 +25,11 @@ const cancellationConfigSchema = new mongoose.Schema(
     workerNoShowPenaltyPaise:   { type: Number, default: 5000 },  // ₹50 no-show
     lateWorkerCancelMultiplier: { type: Number, default: 2 },     // on_the_way/arrived → ×2
 
+    // Worker dues (worker-dues.service): what a worker may owe from cash jobs.
+    workerDuesWarnPaise:  { type: Number, default: 80000, min: 0 },   // ₹800: warned
+    workerDuesLimitPaise: { type: Number, default: 100000, min: 0 },  // ₹1,000: new jobs stop
+    duesPayInstructions:  { type: String, default: '', maxlength: 300 },
+
     // Behaviour thresholds
     workerRejectLimit:      { type: Number, default: 5 },   // consecutive rejects → auto-unavailable
     workerCancelLimit:      { type: Number, default: 3 },   // cancels in window → auto-block

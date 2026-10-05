@@ -23,6 +23,9 @@ async function transition(bookingId, next, { actorRole, actorId, reason = '', me
 
   assertActorMayAct(booking, actorRole, actorId);
 
+  // A worker at their dues limit takes no new job (worker-dues); one under way finishes.
+  if (next === 'WORKER_ACCEPTED' && actorRole === 'worker') await require('../../../worker/worker-dues.service').assertCanWork(actorId);
+
   // A shop's job never sets off without a named technician (jobs/assignment).
   require('../../../jobs/assignment').assertSomeoneTravels('repair', booking, next);
 

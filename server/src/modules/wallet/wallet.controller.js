@@ -19,7 +19,7 @@ async function getBalance(req, res, next) {
 
 async function getDues(req, res, next) {
   try {
-    const dues = await duesService.getDuesStatus(req.auth.sub);
+    const dues = await duesService.getDuesStatus(req.auth.sub, { detail: true });
     res.json({ dues });
   } catch (err) { next(err); }
 }
@@ -60,4 +60,12 @@ async function topup(req, res, next) {
   } catch (err) { next(err); }
 }
 
-module.exports = { getBalance, getDues, listTransactions, topup };
+/** "I paid ZappyOne directly": waits for admin to match it to the money received. */
+async function claimDuesPayment(req, res, next) {
+  try {
+    const claim = await duesService.claimPayment({ workerId: req.auth.sub, ...req.body });
+    res.status(201).json({ claim });
+  } catch (err) { next(err); }
+}
+
+module.exports = { getBalance, getDues, listTransactions, topup, claimDuesPayment };

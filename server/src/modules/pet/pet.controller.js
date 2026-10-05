@@ -373,6 +373,7 @@ async function acceptBooking(req, res, next) {
   try {
     const auth = { role: req.auth.role, id: req.auth.sub };
     const owner = auth.role === 'shop' ? { shopId: auth.id } : { workerId: auth.id };
+    if (auth.role === 'worker') await require('../worker/worker-dues.service').assertCanWork(auth.id);
     const current = await PetBooking.findById(req.params.id).select('status categoryCode serviceMode checkInAt checkOutAt pets workerId shopId').lean();
     if (!current) return res.status(404).json({ error: 'Booking not found' });
 

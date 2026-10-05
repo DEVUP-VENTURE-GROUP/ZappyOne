@@ -1,11 +1,18 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Loader2, Info } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAdminFeesQuery, useAdminUpdateFeeMutation } from '@shared/services/api';
 import { SectionHeader, Card, PageLoader, EmptyState, fmt } from '../../ui/kit';
+import CancellationRules from './economics/CancellationRules';
+import WorkerDues from './economics/WorkerDues';
 
 /**
- * Economics: what ZappyOne earns and collects on every service line.
+ * Economics: every money rule in one place, a tab per kind of rule, so none of
+ * it is fixed in code. Fees and commission per service, cancellation rules,
+ * and what workers may owe from cash jobs.
+ *
+ * Fees tab: what ZappyOne earns and collects on every service line.
  *
  *   Platform fee   added to the customer's bill on each booking (₹)
  *   Commission     taken from the provider's service money (%)
@@ -106,7 +113,7 @@ function FeeRow({ row }) {
   );
 }
 
-export default function Economics() {
+function FeesTab() {
   const { data, isLoading, isError } = useAdminFeesQuery();
   const byLine = useMemo(() => {
     const m = {};
@@ -119,8 +126,6 @@ export default function Economics() {
 
   return (
     <div className="space-y-5">
-      <SectionHeader title="Economics" subtitle="Platform fee, commission and tax for every service. Nothing here is fixed in code." />
-
       <div className="flex gap-3 rounded-xl border border-blue-100 bg-blue-50/60 px-4 py-3 text-[13px] leading-relaxed text-slate-600">
         <Info size={16} className="mt-0.5 shrink-0 text-blue-600" />
         <p>
@@ -159,6 +164,36 @@ export default function Economics() {
           </div>
         </Card>
       ) : null))}
+    </div>
+  );
+}
+
+const TABS = [
+  ['fees', 'Fees & commission', 'Platform fee, commission and tax for every service'],
+  ['cancellations', 'Cancellations', 'What cancelling costs customers, and what backing out costs providers'],
+  ['dues', 'Worker dues', 'What workers may owe from cash jobs, and recording what they pay'],
+];
+
+export default function Economics() {
+  const [params, setParams] = useSearchParams();
+  // `sub`, like every hub: `tab` is the admin section itself (app/Shell).
+  const tab = TABS.some(([id]) => id === params.get('sub')) ? params.get('sub') : 'fees';
+  const current = TABS.find(([id]) => id === tab);
+  return (
+    <div className="space-y-5">
+      <SectionHeader title="Economics" subtitle={`${current[2]}. Nothing here is fixed in code.`} />
+      <div className="flex gap-1 overflow-x-auto border-b border-slate-200" role="tablist">
+        {TABS.map(([id, label]) => (
+          <button key={id} type="button" role="tab" aria-selected={tab === id}
+            onClick={() => setParams((p) => { const n = new URLSearchParams(p); n.set('sub', id); return n; }, { replace: true })}
+            className={`-mb-px whitespace-nowrap border-b-2 px-3 py-2 text-sm font-semibold transition ${tab === id ? 'border-zappy-600 text-slate-900' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
+            {label}
+          </button>
+        ))}
+      </div>
+      {tab === 'fees' && <FeesTab />}
+      {tab === 'cancellations' && <CancellationRules />}
+      {tab === 'dues' && <WorkerDues />}
     </div>
   );
 }

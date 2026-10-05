@@ -329,26 +329,28 @@ describe('cash repairs', () => {
     expect(second.booking.cashCollectedAt).toEqual(first.booking.cashCollectedAt);
   });
 
-  it('keeps the commission as a due when the wallet is already at its limit', async () => {
+  it('takes the commission even past the dues limit, so the debt is never hidden', async () => {
     const Wallet = require('../src/modules/wallet/wallet.model');
-    // Push them to the floor, the way a run of cash jobs would.
+    // Already at the limit, the way a run of cash jobs would leave them.
     await Wallet.updateOne(
       { 'owner.kind': 'worker', 'owner.id': workerId },
-      { $set: { balancePaise: -49000 } },
+      { $set: { balancePaise: -99000 } }, // just under the ₹1,000 limit, so they may still accept
     );
 
     const booking = await bookAndComplete('cash-at-limit', {
       total: 118000, commission: 15000, paymentMethod: 'cash',
     });
 
-    // The debt is recorded rather than lost — the platform's revenue does not
-    // depend on whether the provider's wallet could absorb it.
-    const due = await Transaction.findOne({
-      idempotencyKey: `repair:cash_commission_unpaid:${booking._id}`,
-    }).lean();
-    expect(due).toBeTruthy();
-    expect(due.status).toBe('pending');
-    expect(due.amountPaise).toBe(-15000);
+    // The debit lands in the balance; the limit stops new work, not the debt.
+    const debit = await Transaction.findOne({ idempotencyKey: `repair:cash_commission:${booking._id}` }).lean();
+    expect(debit.status).toBe('succeeded');
+    expect(debit.amountPaise).toBe(-15000);
+    const w = await Wallet.findOne({ 'owner.kind': 'worker', 'owner.id': workerId }).lean();
+    expect(w.balancePaise).toBe(-114000);
+    expect(await Transaction.findOne({ idempotencyKey: `repair:cash_commission_unpaid:${booking._id}` })).toBeNull();
+    // Now past the limit: no new work until they pay.
+    await expect(require('../src/modules/worker/worker-dues.service').assertCanWork(workerId)).rejects.toMatchObject({ code: 'WALLET_BLOCKED' });
+    await Wallet.updateOne({ 'owner.kind': 'worker', 'owner.id': workerId }, { $set: { balancePaise: 0 } });
   });
 });
 

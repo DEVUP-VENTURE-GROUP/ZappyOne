@@ -3,6 +3,7 @@ import { ArrowLeft, ChevronRight, Loader2, MapPin, Banknote, ShieldCheck } from 
 import toast from 'react-hot-toast';
 import { formatPaise } from '../../utils/money';
 import { useProviderJobs } from '../useProviderJobs';
+import DuesCard from '../DuesCard';
 
 /**
  * Work — everything a provider holds, and everything open near them that
@@ -109,6 +110,7 @@ export default function WorkBoardPage({ kinds }) {
       </header>
 
       <main className="mx-auto flex max-w-3xl flex-col gap-7 px-4 py-5 sm:py-7">
+        <DuesCard compact />
         {isLoading && (
           <div className="flex justify-center py-16"><Loader2 size={24} className="animate-spin text-zappy-500" /></div>
         )}

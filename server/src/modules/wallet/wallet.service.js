@@ -59,7 +59,7 @@ async function getOrCreate({ kind, id }) {
  * @param {object}   [p.metadata]
  */
 async function apply({
-  kind, id, type, amountPaise, reason, idempotencyKey, refs = {}, description, metadata,
+  kind, id, type, amountPaise, reason, idempotencyKey, refs = {}, description, metadata, allowDebt = false,
 }) {
   if (!idempotencyKey) {
     throw Object.assign(new Error('idempotencyKey is required'), { code: 'WALLET_NO_IDEMPOTENCY' });
@@ -104,9 +104,11 @@ async function apply({
   //
   // Overdraft rules by owner kind:
   //   - user:   hard floor at 0 (must have balance to pay)
-  //   - worker: allowed to go negative (commission debt) down to hard limit.
-  //             Soft limit (-₹200) triggers warnings elsewhere; the hard limit
-  //             (-₹500) blocks the debit at the DB filter.
+  //   - worker: never below 0 for a withdrawal or anything they choose.
+  //             What they OWE (commission on cash jobs, penalties) is passed
+  //             with allowDebt and always lands, however deep: the debt is
+  //             real, and hiding it helps nobody. The dues limit (worker-dues,
+  //             set in Economics) stops new work instead.
   //
   // Freeze semantics:
   //   - DEBITS  on frozen wallets: always blocked (prevents withdrawals during fraud review)
@@ -119,10 +121,8 @@ async function apply({
     filter.isFrozen = false; // debits blocked on frozen wallets
     if (kind === 'user') {
       filter.balancePaise = { $gte: amountPaise };
-    } else if (kind === 'worker') {
-      // Allow the debit only if resulting balance >= HARD_LIMIT
-      const HARD_LIMIT_PAISE = -50000; // -₹500
-      filter.balancePaise = { $gte: HARD_LIMIT_PAISE + amountPaise };
+    } else if (kind === 'worker' && !allowDebt) {
+      filter.balancePaise = { $gte: amountPaise };
     }
   }
 
@@ -149,7 +149,7 @@ async function apply({
     await txn.save();
     const msg = type === 'debit'
       ? (kind === 'worker'
-          ? 'Debit would breach hard limit (-₹500). Clear dues first.'
+          ? 'Not enough balance in the wallet for this.'
           : 'Insufficient funds or wallet frozen')
       : 'Wallet credit failed — wallet document could not be created';
     throw Object.assign(new Error(msg), {

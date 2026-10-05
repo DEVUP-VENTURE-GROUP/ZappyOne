@@ -258,4 +258,37 @@ router.put('/fees/:line/:key',
     } catch (err) { next(err); }
   });
 
+/* Worker dues: who owes what from cash jobs, and recording what they paid */
+
+router.get('/dues', async (req, res, next) => {
+  try { res.json(await require('../worker/worker-dues.service').listOwing()); } catch (err) { next(err); }
+});
+
+router.post('/dues/:workerId/payments',
+  validate(Joi.object({
+    amountPaise: Joi.number().integer().min(100).max(10000000).required(),
+    method: Joi.string().valid('upi', 'cash', 'bank').default('upi'),
+    reference: Joi.string().trim().max(80).allow(''),
+    claimId: Joi.string().hex().length(24).allow(null, ''),
+  })),
+  async (req, res, next) => {
+    try {
+      const out = await require('../worker/worker-dues.service').recordPayment({
+        workerId: req.params.workerId, ...req.body, claimId: req.body.claimId || null, adminId: req.auth.sub,
+      });
+      await auditService.fromRequest(req, 'dues.payment', { kind: 'worker', id: req.params.workerId }, { duesPaise: out.before.duesPaise }, { duesPaise: out.after.duesPaise, amountPaise: req.body.amountPaise });
+      res.json(out);
+    } catch (err) { next(err); }
+  });
+
+router.post('/dues/claims/:id/reject',
+  validate(Joi.object({ note: Joi.string().trim().max(300).allow('') })),
+  async (req, res, next) => {
+    try {
+      const claim = await require('../worker/worker-dues.service').rejectClaim({ claimId: req.params.id, adminId: req.auth.sub, note: req.body.note || '' });
+      await auditService.fromRequest(req, 'dues.claim_rejected', { kind: 'worker', id: String(claim.workerId) }, null, { claimId: req.params.id });
+      res.json({ claim });
+    } catch (err) { next(err); }
+  });
+
 module.exports = router;

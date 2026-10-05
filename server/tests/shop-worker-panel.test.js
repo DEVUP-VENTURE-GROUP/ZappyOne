@@ -55,12 +55,17 @@ test('a shop technician passing a job hands it back to the shop, not the market'
   expect(out.declines.at(-1)).toMatchObject({ providerKind: 'worker', reason: 'Bike broke down' });
 });
 
-test('passing back needs a reason, and is refused once they have set out', async () => {
+test('passing back needs a reason, works up to the door, and is refused once work starts', async () => {
   const b = await booking();
   await expect(bookingService.declineBooking({ bookingId: b._id, actorRole: 'worker', actorId: tech._id, reason: ' ' }))
     .rejects.toMatchObject({ code: 'REASON_REQUIRED' });
+  // Up to the door it goes back to the shop to reassign; once work starts it does not.
   const onTheWay = await booking({ status: 'ON_THE_WAY' });
-  await expect(bookingService.declineBooking({ bookingId: onTheWay._id, actorRole: 'worker', actorId: tech._id, reason: 'x' }))
+  const back = await bookingService.declineBooking({ bookingId: onTheWay._id, actorRole: 'worker', actorId: tech._id, reason: 'vehicle problem' });
+  expect(back.status).toBe('PROVIDER_ASSIGNED');
+  expect(back.workerId).toBeNull();
+  const working = await booking({ status: 'REPAIR_IN_PROGRESS' });
+  await expect(bookingService.declineBooking({ bookingId: working._id, actorRole: 'worker', actorId: tech._id, reason: 'x' }))
     .rejects.toMatchObject({ code: 'TOO_LATE_TO_DECLINE' });
 });
 

@@ -34,6 +34,7 @@ async function adjustWallet(req, res, next) {
       idempotencyKey,
       description: description || `Admin ${type} by ${req.auth.sub}`,
       metadata: { adminId: req.auth.sub },
+      allowDebt: kind === 'worker', // a correction to what a worker owes
     });
 
     await auditService.fromRequest(

@@ -176,10 +176,12 @@ async function consequences({ kind, doc, provider, q, type, reason, note, from }
         kind: provider.kind, id: provider.id, type: 'debit', amountPaise: q.penaltyPaise,
         reason: Transaction.REASONS.ADMIN_ADJUSTMENT_DEBIT,
         idempotencyKey: `giveback:${row._id}`,
+        allowDebt: true,
         refs: kind === 'helping' ? { helpingTaskId: doc._id } : {},
         description: type === 'provider_no_show' ? `No-show on ${doc.reference || 'a job'}` : `Handed back ${doc.reference || 'a job'}`,
       });
       await JobGiveBack.updateOne({ _id: row._id }, { $set: { penaltyCharged: true } });
+      if (provider.kind === 'worker') require('../worker/worker-dues.service').notifyIfCrossed(provider.id);
     } catch (e) {
       logger.error({ err: e.message, jobId: String(doc._id) }, '[give-back] penalty not charged');
     }

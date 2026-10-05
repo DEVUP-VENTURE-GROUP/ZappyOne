@@ -8,6 +8,14 @@ const router = express.Router();
 
 router.get('/', authenticate, ctrl.getBalance);
 router.get('/dues', authenticate, requireRole('worker'), ctrl.getDues);
+router.post('/dues/claims', authenticate, requireRole('worker'),
+  validate(Joi.object({
+    amountPaise: Joi.number().integer().min(100).max(10000000).required(),
+    method: Joi.string().valid('upi', 'cash', 'bank').default('upi'),
+    reference: Joi.string().trim().max(80).allow(''),
+    note: Joi.string().trim().max(300).allow(''),
+  })),
+  ctrl.claimDuesPayment);
 router.get(
   '/transactions',
   authenticate,

@@ -19,6 +19,7 @@ import { API_BASE } from '../../services/apiBase';
 import { formatPaise } from '../../utils/money';
 import { ZappyLogo } from '../../components/common/ZappyLogo';
 import WorkerOnboarding from './WorkerOnboarding';
+import DuesCard from '../DuesCard';
 import ProviderServicesCard from '../../components/provider/ProviderServicesCard';
 import { useProviderJobs } from '../useProviderJobs';
 import {
@@ -287,6 +288,8 @@ export default function WorkerDashboard() {
             <ChevronRight size={18} className="shrink-0 text-slate-400" />
           </button>
         )}
+
+        <DuesCard />
 
         <div className="lg:hidden">
           <GreetingCard name={firstName} locationLabel={areaName} isOnline={isOnline} busy={toggling} disabled={!kycApproved} onToggle={toggleOnline} />

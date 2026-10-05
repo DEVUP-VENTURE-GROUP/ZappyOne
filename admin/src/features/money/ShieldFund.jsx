@@ -5,26 +5,24 @@ import {
   useAdminShieldWeekPayoutsQuery,
   useAdminShieldFeesQuery,
   useAdminShieldPendingSummaryQuery,
-  useAdminShieldFeeScheduleQuery,
   useAdminShieldTriggerPayoutMutation,
   useAdminShieldWriteOffFeeMutation,
-  useAdminShieldUpdateFeeScheduleMutation,
 } from '@shared/services/api';
 import {
   SectionHeader, StatCard, Card, Th, Td, StatusBadge,
   Pagination, EmptyState, PageLoader, fmt, fmtDate, SaveBtn,
 } from '../../ui/kit';
 import {
-  Shield, TrendingUp, Users, AlertTriangle, Clock,
-  Zap, ChevronDown, ChevronRight, RefreshCw,
+  Shield, TrendingUp, Users, Clock,
+  ChevronDown, ChevronRight, RefreshCw,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 /* Tabs */
-const TABS = ['Overview', 'Weekly Funds', 'Fee Records', 'Fee Schedule'];
+// The fee schedule itself is set in Economics → Cancellations.
+const TABS = ['Overview', 'Weekly Funds', 'Fee Records'];
 
 /* Helpers */
-function pct(n) { return `${n ?? 0}%`; }
 
 function HarmBadge({ score }) {
   const map = { 0: 'bg-slate-100 text-slate-500', 1: 'bg-yellow-100 text-yellow-700', 2: 'bg-orange-100 text-orange-700', 3: 'bg-red-100 text-red-700', 5: 'bg-red-200 text-red-800' };
@@ -365,249 +363,6 @@ function FeeRecordsTab() {
   );
 }
 
-/* Fee Schedule tab */
-function FeeScheduleTab() {
-  const { data, refetch } = useAdminShieldFeeScheduleQuery();
-  const [updateSchedule, { isLoading: saving }] = useAdminShieldUpdateFeeScheduleMutation();
-
-  // Local editable state — initialised from server data
-  const [fees, setFees]       = useState(null); // { searching:[0,1500,2500], ... }
-  const [harm, setHarm]       = useState(null); // { searching:1, ... }
-  const [workerPct, setWorkerPct]     = useState(null);
-  const [dirty, setDirty]     = useState(false);
-
-  // Sync from server once loaded
-  const remote = data;
-  const liveFees = fees ?? remote?.feeSchedule ?? {};
-  const liveHarm = harm ?? remote?.harmScores  ?? {};
-  const liveWorkerPct   = workerPct   ?? remote?.defaultSplit?.workerPct   ?? 85;
-  const livePlatformPct = 100 - liveWorkerPct;
-
-  function setFeeCell(stage, tierIdx, rupees) {
-    const paise = Math.max(0, Math.round(Number(rupees) || 0)) * 100;
-    setFees(prev => {
-      const base = prev ?? remote?.feeSchedule ?? {};
-      const row  = [...(base[stage] ?? [0, 0, 0])];
-      row[tierIdx] = paise;
-      return { ...base, [stage]: row };
-    });
-    setDirty(true);
-  }
-
-  function setHarmCell(stage, pts) {
-    setHarm(prev => ({ ...(prev ?? remote?.harmScores ?? {}), [stage]: Math.max(0, Math.round(Number(pts) || 0)) }));
-    setDirty(true);
-  }
-
-  async function handleSave() {
-    try {
-      await updateSchedule({
-        feeSchedule:      liveFees,
-        harmScores:       liveHarm,
-        splitWorkerPct:   liveWorkerPct,
-        splitPlatformPct: livePlatformPct,
-      }).unwrap();
-      toast.success('Fee schedule saved');
-      setDirty(false);
-      setFees(null); setHarm(null); setWorkerPct(null);
-      refetch();
-    } catch (err) {
-      toast.error(err.data?.error || 'Save failed');
-    }
-  }
-
-  const STAGES = [
-    { key: 'searching',  label: 'Searching (no worker yet)' },
-    { key: 'assigned',   label: 'Assigned (worker en route)' },
-    { key: 'on_the_way', label: 'On the way' },
-    { key: 'arrived',    label: 'Arrived at location' },
-  ];
-
-  const HARM_DESCS = {
-    searching:  'Worker lost queue position',
-    assigned:   'Worker committed but not yet moving',
-    on_the_way: 'Worker already travelling — wasted time & fuel',
-    arrived:    'Worker at doorstep — maximum harm',
-  };
-
-  return (
-    <div className="space-y-5">
-      {/* save bar */}
-      {dirty && (
-        <div className="flex items-center justify-between bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
-          <p className="text-sm font-semibold text-amber-800">You have unsaved changes</p>
-          <div className="flex gap-2">
-            <button
-              onClick={() => { setFees(null); setHarm(null); setWorkerPct(null); setDirty(false); }}
-              className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 border border-slate-200 bg-white hover:bg-slate-50 transition"
-            >
-              Discard
-            </button>
-            <SaveBtn loading={saving} onClick={handleSave}>Save changes</SaveBtn>
-          </div>
-        </div>
-      )}
-
-      {/* fee table */}
-      <Card className="overflow-hidden">
-        <div className="px-5 py-4 border-b border-slate-100">
-          <h3 className="text-sm font-bold text-slate-800">Cancellation fee schedule</h3>
-          <p className="text-xs text-slate-400 mt-0.5">
-            Enter amounts in ₹. Tiers based on user's cancellations in the last 30 days.
-            1st searching cancel is always <strong>₹0 + warning</strong> (not editable).
-          </p>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-slate-100">
-                <Th>Stage at cancellation</Th>
-                <Th>1st cancel (30 days)</Th>
-                <Th>2nd cancel (30 days)</Th>
-                <Th>3rd+ cancel (30 days)</Th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50">
-              {STAGES.map(({ key, label }) => {
-                const row = liveFees[key] ?? [0, 0, 0];
-                return (
-                  <tr key={key} className="hover:bg-slate-50/30">
-                    <Td>
-                      <div className="flex items-center gap-2">
-                        <StageLabel stage={key} />
-                        <span className="text-xs text-slate-500">{label}</span>
-                      </div>
-                    </Td>
-                    {[0, 1, 2].map(i => {
-                      const isGraceCell = key === 'searching' && i === 0;
-                      return (
-                        <td key={i} className="px-4 py-2.5">
-                          {isGraceCell ? (
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-xs font-semibold text-slate-400 bg-slate-100 px-2 py-1 rounded-lg">
-                                ₹0 — Grace
-                              </span>
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-1 w-24">
-                              <span className="text-sm text-slate-400 font-semibold">₹</span>
-                              <input
-                                type="number"
-                                min="0"
-                                max="1000"
-                                value={Math.round(row[i] / 100)}
-                                onChange={e => setFeeCell(key, i, e.target.value)}
-                                className="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-sm font-bold text-slate-900 outline-none focus:ring-2 focus:ring-zappy-500 focus:border-transparent transition tabular-nums"
-                              />
-                            </div>
-                          )}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </Card>
-
-      {/* harm score table */}
-      <Card className="overflow-hidden">
-        <div className="px-5 py-4 border-b border-slate-100">
-          <h3 className="text-sm font-bold text-slate-800">Harm scores (fund distribution weights)</h3>
-          <p className="text-xs text-slate-400 mt-0.5">Higher score = larger share of Monday's payout. Affects proportional distribution only.</p>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-slate-100">
-                <Th>Stage</Th><Th>Harm points</Th><Th>Meaning</Th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50">
-              {STAGES.map(({ key }) => (
-                <tr key={key} className="hover:bg-slate-50/30">
-                  <Td><StageLabel stage={key} /></Td>
-                  <td className="px-4 py-2.5">
-                    <input
-                      type="number"
-                      min="0"
-                      max="100"
-                      value={liveHarm[key] ?? 0}
-                      onChange={e => setHarmCell(key, e.target.value)}
-                      className="w-16 bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-sm font-bold text-slate-900 outline-none focus:ring-2 focus:ring-zappy-500 focus:border-transparent transition tabular-nums text-center"
-                    />
-                  </td>
-                  <Td muted>{HARM_DESCS[key]}</Td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Card>
-
-      {/* fund split */}
-      <Card className="p-5">
-        <h3 className="text-sm font-bold text-slate-800 mb-4">Fund split</h3>
-        <div className="flex items-center gap-6">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center shrink-0">
-              <Users size={18} className="text-green-700" />
-            </div>
-            <div>
-              <p className="text-xs text-slate-500 font-semibold mb-1">Workers' share (%)</p>
-              <div className="flex items-center gap-1">
-                <input
-                  type="number"
-                  min="50"
-                  max="100"
-                  value={liveWorkerPct}
-                  onChange={e => {
-                    const v = Math.min(100, Math.max(50, Number(e.target.value) || 85));
-                    setWorkerPct(v);
-                    setDirty(true);
-                  }}
-                  className="w-20 bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xl font-extrabold text-slate-900 outline-none focus:ring-2 focus:ring-zappy-500 transition tabular-nums text-center"
-                />
-                <span className="text-sm text-slate-500 font-bold">%</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="text-slate-300 text-xl font-light">+</div>
-
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center shrink-0">
-              <Zap size={18} className="text-blue-700" />
-            </div>
-            <div>
-              <p className="text-xs text-slate-500 font-semibold mb-1">Platform share (%)</p>
-              <p className="text-xl font-extrabold text-slate-900 tabular-nums py-1.5 px-2">{livePlatformPct}%</p>
-            </div>
-          </div>
-
-          <div className="text-slate-300 text-xl font-light">=</div>
-          <p className="text-xl font-extrabold text-slate-900">100%</p>
-        </div>
-        {liveWorkerPct + livePlatformPct !== 100 && (
-          <p className="text-xs text-red-500 mt-2 font-semibold">Must sum to 100%</p>
-        )}
-        <p className="text-xs text-slate-400 mt-3">
-          Changes apply from the next weekly cycle. Existing paid-out weeks are not affected.
-        </p>
-      </Card>
-
-      {!dirty && (
-        <div className="flex justify-end">
-          <SaveBtn loading={false} onClick={() => setDirty(true)}>Edit schedule</SaveBtn>
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* Root component */
 export default function ShieldFund() {
   const [tab, setTab] = useState('Overview');
 
@@ -642,7 +397,6 @@ export default function ShieldFund() {
       {tab === 'Overview'      && <OverviewTab />}
       {tab === 'Weekly Funds'  && <WeeklyFundsTab />}
       {tab === 'Fee Records'   && <FeeRecordsTab />}
-      {tab === 'Fee Schedule'  && <FeeScheduleTab />}
     </div>
   );
 }

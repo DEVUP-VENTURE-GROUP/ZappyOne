@@ -310,6 +310,7 @@ async function acceptTask(req, res, next) {
     const open = await HelpingTask.findById(req.params.id).select('serviceType').lean();
     if (!open) return res.status(404).json({ error: 'Task not found' });
     await assertApproved({ role: 'worker', id: req.auth.sub }, await lineOf('helping', open));
+    await require('../worker/worker-dues.service').assertCanWork(req.auth.sub);
 
     /*
      * Claimed atomically. Two helpers tapping accept at the same instant must

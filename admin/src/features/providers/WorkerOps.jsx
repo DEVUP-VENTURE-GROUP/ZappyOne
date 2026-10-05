@@ -68,7 +68,7 @@ export default function WorkerOps() {
       <div className="bg-white border border-slate-200 rounded-2xl p-5">
         <div className="flex items-center justify-between gap-3">
           <p className="text-sm font-bold text-slate-700">Cancellation & escalation policy</p>
-          <button type="button" onClick={() => setParams({ tab: 'cancellation' }, { replace: true })}
+          <button type="button" onClick={() => setParams({ tab: 'economics', sub: 'cancellations' }, { replace: true })}
             className="text-xs font-bold text-zappy-600 hover:text-zappy-800 flex items-center gap-1">
             Edit policy <ArrowRight size={13} />
           </button>
