@@ -18,7 +18,9 @@ const mongoose = require('mongoose');
  */
 const cancellationFeeRecordSchema = new mongoose.Schema(
   {
-    kind: { type: String, enum: ['order', 'repair'], default: 'order', index: true },
+    kind: { type: String, enum: ['order', 'repair', 'helping'], default: 'order', index: true },
+    /** The job, for kinds after repair (jobs/cancel-fee): one record per job. */
+    jobId: { type: mongoose.Schema.Types.ObjectId, default: undefined },
 
     orderId: {
       type: mongoose.Schema.Types.ObjectId, ref: 'Order', default: undefined,
@@ -94,6 +96,9 @@ cancellationFeeRecordSchema.index(
 );
 cancellationFeeRecordSchema.index(
   { repairBookingId: 1 }, { unique: true, partialFilterExpression: { repairBookingId: { $exists: true } } },
+);
+cancellationFeeRecordSchema.index(
+  { kind: 1, jobId: 1 }, { unique: true, partialFilterExpression: { jobId: { $exists: true } } },
 );
 
 module.exports = mongoose.model('CancellationFeeRecord', cancellationFeeRecordSchema);

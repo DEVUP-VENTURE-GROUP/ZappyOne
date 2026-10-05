@@ -110,7 +110,9 @@ async function alertNearbyProviders(kind, doc) {
     const line = await lineOf(kind, doc);
     if (!line || !k.open) return;
     const start = k.open.start(doc);
-    const providers = await approvedProviders(line);
+    // Not back to whoever already passed on it or handed it back (jobs/give-back).
+    const passed = new Set([...(doc.declinedBy || []), ...(doc.releasedBy || [])].map(String));
+    const providers = (await approvedProviders(line)).filter((p) => !passed.has(String(p.id)));
     if (!providers.length) return;
 
     const Worker = require('../worker/worker.model');

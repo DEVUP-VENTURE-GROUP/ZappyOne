@@ -241,7 +241,7 @@ router.get('/bookings/:id/cancellation-quote', authenticate, ctrl.previewCancell
 router.post(
   '/bookings/:id/cancel',
   authenticate,
-  validate(Joi.object({ reason: Joi.string().max(300).allow('', null) })),
+  validate(Joi.object({ reason: Joi.string().max(300).allow('', null), reasonCode: Joi.string().max(40).allow('', null) })),
   ctrl.cancelBooking,
 );
 

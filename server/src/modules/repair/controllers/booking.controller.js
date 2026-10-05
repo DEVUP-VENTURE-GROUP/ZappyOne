@@ -277,6 +277,19 @@ async function cancelBooking(req, res, next) {
      * cancellation.
      */
     const providerBackingOut = ['shop', 'worker'].includes(req.auth.role);
+    // An accepted job goes through the one give-back rule for every kind
+    // (jobs/give-back): reason, penalty, daily limit, the customer told.
+    const giveBack = require('../../jobs/give-back');
+    if (providerBackingOut && giveBack.RULES.repair.held.includes(before.status)) {
+      const out = await giveBack.giveBack({
+        kind: 'repair', id: req.params.id, actor: { kind: req.auth.role, id: req.auth.sub },
+        reason: req.body.reasonCode || 'other', note: req.body.reason || 'Provider cancelled',
+      });
+      return res.json({
+        booking: await RepairBooking.findById(req.params.id).lean(), reassigned: true,
+        cancellation: { feePaise: 0, earnedPaise: 0, refundPaise: 0, isGrace: true, message: out.message },
+      });
+    }
     if (providerBackingOut && bookingService.canReleaseToPool(before)) {
       const result = await bookingService.releaseToPool({
         bookingId: req.params.id,

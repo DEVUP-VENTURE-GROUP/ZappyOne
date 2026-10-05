@@ -242,15 +242,17 @@ async function passBackToShop(booking, workerId, reason) {
   if (String(booking.workerId || '') !== String(workerId)) {
     throw httpError('This job is not assigned to you', 403, 'FORBIDDEN');
   }
-  if (!['CONFIRMED', 'PROVIDER_ASSIGNED', 'WORKER_ACCEPTED'].includes(booking.status)) {
-    throw httpError('You have already set out for this job — call your shop owner', 409, 'TOO_LATE_TO_DECLINE', { jobStatus: booking.status });
+  // Up to the door: once work starts on the device it is no longer the technician's to hand over.
+  if (!['CONFIRMED', 'PROVIDER_ASSIGNED', 'WORKER_ACCEPTED', 'PICKUP_SCHEDULED', 'ON_THE_WAY', 'ARRIVED'].includes(booking.status)) {
+    throw httpError('Work has started on this job — call your shop owner', 409, 'TOO_LATE_TO_DECLINE', { jobStatus: booking.status });
   }
   if (!reason.trim()) throw httpError('Tell your shop why you are passing this job', 400, 'REASON_REQUIRED');
 
   booking.declines = booking.declines || [];
   booking.declines.push({ providerKind: 'worker', providerId: workerId, reason, at: new Date() });
   booking.workerId = null;
-  if (booking.status === 'WORKER_ACCEPTED') booking.status = 'PROVIDER_ASSIGNED';
+  // Back with the shop to give to someone else, who accepts it afresh.
+  if (['WORKER_ACCEPTED', 'PICKUP_SCHEDULED', 'ON_THE_WAY', 'ARRIVED'].includes(booking.status)) booking.status = 'PROVIDER_ASSIGNED';
   booking.statusHistory.push({
     status: booking.status, at: new Date(), actorRole: 'worker', actorId: workerId, reason: `passed back to shop: ${reason}`,
   });

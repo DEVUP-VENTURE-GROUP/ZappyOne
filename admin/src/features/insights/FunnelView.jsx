@@ -7,6 +7,26 @@ import { Findings, Panel, FunnelChart, Kpi, count, rupees } from './charts';
  * the share kept from the step before (red under 30%), and per service:
  * searched, booked, completed.
  */
+/** A reason and how often it came up, longest bar first. */
+function ReasonList({ title, rows }) {
+  const top = rows[0]?.n || 1;
+  return (
+    <div>
+      <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">{title}</p>
+      {rows.length ? (
+        <ul className="mt-2 space-y-2">
+          {rows.map((r) => (
+            <li key={r.reason} className="text-[13px]">
+              <div className="flex justify-between gap-3"><span className="truncate text-slate-700">{r.reason}</span><span className="tabular-nums font-semibold text-slate-900">{count(r.n)}</span></div>
+              <div className="mt-1 h-1.5 rounded-full bg-slate-100"><div className="h-1.5 rounded-full bg-slate-400" style={{ width: `${Math.max(4, (r.n / top) * 100)}%` }} /></div>
+            </li>
+          ))}
+        </ul>
+      ) : <p className="mt-2 text-[13px] text-slate-400">None in this period</p>}
+    </div>
+  );
+}
+
 export default function FunnelView({ days }) {
   const span = days === 1 ? 7 : days;
   const { data, isLoading, isError, refetch } = useAdminInsightsFunnelQuery(span, { pollingInterval: 120000 });
@@ -37,6 +57,20 @@ export default function FunnelView({ days }) {
             <Kpi label="Declined" value={count(data.quotes.declined)} />
             <Kpi label="Left to expire" value={count(data.quotes.expired)} hint={`${count(data.quotes.waiting)} still waiting`} />
             <Kpi label="Value lost" value={rupees(data.quotes.lostPaise)} hint="Declined or expired" />
+          </div>
+        </Panel>
+      )}
+
+      {data.cancellations && (data.cancellations.customerTotal > 0 || data.cancellations.who.provider > 0 || data.cancellations.providerHandBacks.length > 0) && (
+        <Panel title="Why jobs ended early" note="Cancelled jobs by who cancelled, and the reasons given">
+          <div className="grid grid-cols-3 gap-3">
+            <Kpi label="By customers" value={count(data.cancellations.who.customer)} />
+            <Kpi label="By providers" value={count(data.cancellations.who.provider)} />
+            <Kpi label="By ZappyOne" value={count(data.cancellations.who.ops)} />
+          </div>
+          <div className="mt-4 grid gap-5 sm:grid-cols-2">
+            <ReasonList title="Customers said" rows={data.cancellations.customer.map((r) => ({ reason: r.reason, n: r.n }))} />
+            <ReasonList title="Providers handed back because" rows={data.cancellations.providerHandBacks} />
           </div>
         </Panel>
       )}

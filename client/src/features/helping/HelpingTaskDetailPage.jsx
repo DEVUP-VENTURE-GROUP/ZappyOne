@@ -142,9 +142,9 @@ export default function HelpingTaskDetailPage() {
       onSOS={sos}
       cancel={data.canCancel ? {
         note: 'Cancelling before your helper starts is free. Any budget held for items comes back to you.',
-        run: async () => {
+        run: async (reason) => {
           try {
-            await cancel({ id: task._id, reason: 'Changed my mind' }).unwrap();
+            await cancel({ id: task._id, reason }).unwrap();
             toast.success('Task cancelled');
             refetch();
           } catch (err) {

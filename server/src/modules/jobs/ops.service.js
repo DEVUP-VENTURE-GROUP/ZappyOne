@@ -58,10 +58,46 @@ async function stuckJobs({ now = new Date() } = {}) {
  */
 async function attention({ now = new Date() } = {}) {
   const live = await liveJobs({ now });
+  const { JobGiveBack } = require('./give-back');
+
+  // A job two providers have already walked away from needs a person, not a third offer.
+  const handed = await JobGiveBack.aggregate([
+    { $match: { jobId: { $in: live.map((j) => new (require('mongoose').Types.ObjectId)(j.id)) }, toShop: false, type: { $ne: 'customer_no_show' } } },
+    { $group: { _id: '$jobId', n: { $sum: 1 } } },
+  ]);
+  const handedBy = new Map(handed.map((h) => [String(h._id), h.n]));
+  for (const j of live) {
+    j.handedBack = handedBy.get(j.id) || 0;
+    if (j.handedBack >= 2 && !j.stuck) j.stuck = `handed back by ${j.handedBack} providers`;
+  }
+
   const byWait = (a, b) => b.minutesInStatus - a.minutesInStatus;
   const stuck = live.filter((j) => j.stuck).sort(byWait);
   const waiting = live.filter((j) => !j.stuck && j.waiting && !j.hasProvider).sort(byWait);
-  return { stuck, waiting, count: stuck.length + waiting.length };
+
+  // Providers backing out of jobs today, worst first, before they hit the limit.
+  const cfg = await require('../order/cancellation.service').getConfig();
+  const day = new Date(now.getTime() - (cfg.workerCancelWindowSec || 86400) * 1000);
+  const rows = await JobGiveBack.aggregate([
+    { $match: { createdAt: { $gte: day }, type: { $ne: 'customer_no_show' }, toShop: false } },
+    { $group: { _id: { kind: '$providerKind', id: '$providerId' }, total: { $sum: 1 }, counted: { $sum: { $cond: ['$counted', 1, 0] } }, noShows: { $sum: { $cond: [{ $eq: ['$type', 'provider_no_show'] }, 1, 0] } }, pausedUntil: { $max: '$pausedUntil' } } },
+    { $match: { $or: [{ total: { $gte: 2 } }, { noShows: { $gte: 1 } }] } },
+    { $sort: { counted: -1, total: -1 } },
+    { $limit: 20 },
+  ]);
+  const Worker = require('../worker/worker.model');
+  const Shop = require('../shop/shop.model');
+  const names = new Map([
+    ...(await Worker.find({ _id: { $in: rows.filter((r) => r._id.kind === 'worker').map((r) => r._id.id) } }).select('name phone').lean()).map((w) => [String(w._id), w]),
+    ...(await Shop.find({ _id: { $in: rows.filter((r) => r._id.kind === 'shop').map((r) => r._id.id) } }).select('businessName phone').lean()).map((x) => [String(x._id), { name: x.businessName, phone: x.phone }]),
+  ]);
+  const backingOut = rows.map((r) => ({
+    kind: r._id.kind, id: String(r._id.id), name: names.get(String(r._id.id))?.name || 'Provider', phone: names.get(String(r._id.id))?.phone || null,
+    handedBack: r.total, counted: r.counted, noShows: r.noShows, limit: cfg.workerCancelLimit || 3,
+    pausedUntil: r.pausedUntil && r.pausedUntil > now ? r.pausedUntil : null,
+  }));
+
+  return { stuck, waiting, backingOut, count: stuck.length + waiting.length };
 }
 
 /** Counts for a board header: by kind, waiting, stuck. */

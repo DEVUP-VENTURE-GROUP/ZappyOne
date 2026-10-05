@@ -48,9 +48,9 @@ export default function PetBookingDetailPage() {
       onSOS={sos}
       cancel={data.canCancel ? {
         note: 'Cancelling before your pet pro sets off is free. Later, the cancellation policy for this service applies.',
-        run: async () => {
+        run: async (reason) => {
           try {
-            await cancel({ id: b._id, reason: 'Changed my mind' }).unwrap();
+            await cancel({ id: b._id, reason }).unwrap();
             toast.success('Booking cancelled');
             refetch();
           } catch (err) {

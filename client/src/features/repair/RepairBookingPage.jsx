@@ -7,7 +7,7 @@ import {
   useGetRepairBookingQuery, useRespondRepairQuoteMutation, useCancelRepairBookingMutation,
 } from '@shared/services/api';
 import toast from 'react-hot-toast';
-import { useRepairCancellationQuoteQuery, useRepairHandoverCodeQuery } from '@shared/services/api';
+import { useRepairHandoverCodeQuery } from '@shared/services/api';
 import HandoverCodeCard from '../tracking/cards/HandoverCodeCard';
 import { useRateRepairBookingMutation } from '@shared/services/api';
 import JobTrackingPage from '../tracking/JobTrackingPage';
@@ -176,99 +176,7 @@ function QuoteCard({ quote, onDecided }) {
   );
 }
 
-/**
- * Cancelling, with the price attached.
- *
- * This used to be `window.confirm('Cancel this repair booking?')` — a yes/no on
- * a decision that can cost real money, asked without mentioning the money. A
- * customer would cancel on a technician standing outside their door and learn
- * about the fee afterwards, which is how a support ticket is manufactured.
- *
- * The figure is fetched fresh when the sheet opens, because it depends on the
- * booking's status right now and on how often this customer has cancelled
- * recently. While it loads the confirm button stays disabled: agreeing to an
- * amount nobody has shown you is not agreement.
- */
-function CancelSheet({ bookingId, onClose, onConfirm, busy }) {
-  const { data: quote, isLoading } = useRepairCancellationQuoteQuery(bookingId);
 
-  const blocked = quote && quote.allowed === false;
-
-  return (
-    <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/50 p-3 sm:items-center">
-      <div className="w-full rounded-card bg-white p-5 shadow-2xl sm:max-w-sm">
-        <p className="text-base font-black text-[#0F172A]">
-          {blocked ? 'This one needs us' : 'Cancel this repair?'}
-        </p>
-
-        {isLoading ? (
-          <div className="flex justify-center py-6">
-            <Loader2 size={18} className="animate-spin text-slate-300" />
-          </div>
-        ) : (
-          <>
-            <p className="mt-1.5 text-[12.5px] leading-relaxed text-slate-600">
-              {quote?.message || 'You can cancel this booking.'}
-            </p>
-
-            {!blocked && (quote?.feePaise > 0 || quote?.earnedPaise > 0) && (
-              <div className="mt-3 space-y-1.5 rounded-2xl bg-slate-50 p-3">
-                {quote.earnedPaise > 0 && (
-                  <Row label="Inspection already done" value={rupees(quote.earnedPaise)} />
-                )}
-                {quote.feePaise > 0 && (
-                  <Row label="Cancellation fee" value={rupees(quote.feePaise)} />
-                )}
-                {quote.paidPaise > 0 && (
-                  <div className="mt-1 border-t border-slate-200 pt-1.5">
-                    <Row label="Back to you" value={rupees(quote.refundPaise)} strong />
-                  </div>
-                )}
-              </div>
-            )}
-
-            {!blocked && quote?.feePaise > 0 && (
-              <p className="mt-2 text-[11px] leading-relaxed text-slate-400">
-                Cancellation fees go to the Worker Shield Fund, which compensates
-                technicians for time they have already given up.
-              </p>
-            )}
-          </>
-        )}
-
-        <div className="mt-4 flex items-center gap-2">
-          <button
-            onClick={onClose}
-            className="flex-1 rounded-2xl border border-slate-200 py-3 text-sm font-bold text-slate-600"
-          >
-            {blocked ? 'Close' : 'Keep booking'}
-          </button>
-          {!blocked && (
-            <button
-              onClick={onConfirm}
-              disabled={busy || isLoading}
-              className="flex flex-1 items-center justify-center rounded-2xl bg-red-600 py-3 text-sm font-black text-white disabled:opacity-50"
-            >
-              {busy ? <Loader2 size={15} className="animate-spin" /> : 'Cancel it'}
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/** One line of the cancellation breakdown. */
-function Row({ label, value, strong }) {
-  return (
-    <div className="flex items-baseline justify-between gap-3">
-      <span className={`text-[12px] ${strong ? 'font-bold text-[#0F172A]' : 'text-slate-500'}`}>{label}</span>
-      <span className={`shrink-0 tabular-nums ${strong ? 'text-sm font-black text-emerald-700' : 'text-[12.5px] font-semibold text-slate-700'}`}>
-        {value}
-      </span>
-    </div>
-  );
-}
 
 /**
  * The code the customer reads out when their device changes hands.
@@ -477,8 +385,7 @@ export default function RepairBookingPage() {
   const { id } = useParams();
   const nav = useNavigate();
   const { data, isLoading, refetch } = useGetRepairBookingQuery(id, { pollingInterval: 30000 });
-  const [cancel, { isLoading: cancelling }] = useCancelRepairBookingMutation();
-  const [confirmingCancel, setConfirmingCancel] = useState(false);
+  const [cancel] = useCancelRepairBookingMutation();
   const sos = useJobSOS(id);
 
   if (isLoading) return <div className="flex min-h-screen items-center justify-center"><Loader2 size={26} className="animate-spin text-zappy-500" /></div>;
@@ -496,10 +403,9 @@ export default function RepairBookingPage() {
   const pendingQuote = quotes.find((q) => q.status === 'sent' || q.status === 'clarification_requested');
   const job = KINDS.repair.toJob(data, { statusLabel: STATUS_COPY[booking.status]?.label });
 
-  async function doCancel() {
+  async function doCancel(reason) {
     try {
-      const res = await cancel({ id, reason: 'Cancelled by customer' }).unwrap();
-      setConfirmingCancel(false);
+      const res = await cancel({ id, reason }).unwrap();
       // Say what it actually cost: the customer has just agreed to a number.
       toast.success(res?.cancellation?.feePaise > 0 ? `Cancelled. ${rupees(res.cancellation.feePaise)} fee applied` : 'Booking cancelled');
       refetch();
@@ -510,14 +416,13 @@ export default function RepairBookingPage() {
 
   return (
     <>
-      {confirmingCancel && <CancelSheet bookingId={id} busy={cancelling} onClose={() => setConfirmingCancel(false)} onConfirm={doCancel} />}
       <JobTrackingPage
         job={job}
         onBack={() => nav('/orders')}
         onSOS={sos}
         rebookHref={repairRebookHref(booking)}
         // The server decides whether it can still be cancelled; the sheet quotes the fee first.
-        cancel={data?.canCancel ? { open: () => setConfirmingCancel(true) } : null}
+        cancel={data?.canCancel ? { run: doCancel } : null}
         extras={(
           <>
             <HandoverCode booking={booking} />

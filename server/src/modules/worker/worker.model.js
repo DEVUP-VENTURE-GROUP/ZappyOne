@@ -197,6 +197,8 @@ const workerSchema = new mongoose.Schema(
       totalCancels:   { type: Number, default: 0 },  // worker-initiated cancellations
       totalNoShows:   { type: Number, default: 0 },  // no-show on completed disputes
       lastPenaltyAt:  { type: Date },
+      // Handed back too many jobs in a day (jobs/give-back): cannot go online until then.
+      pausedUntil:    { type: Date, default: null },
     },
 
     // Emergency contact for SOS feature

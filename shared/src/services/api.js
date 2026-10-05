@@ -126,6 +126,13 @@ export const api = createApi({
   endpoints: (b) => ({
     // --- Auth ---
     // Messages between a customer and the provider on any job (jobs/job-chat).
+    /** Customer: what cancelling costs now, and whether the provider changed or is late (jobs/give-back). */
+    jobOptions: b.query({ query: ({ id }) => `/jobs/${id}/options`, keepUnusedDataFor: 0 }),
+    reportProviderAbsent: b.mutation({ query: (id) => ({ url: `/jobs/${id}/provider-absent`, method: 'POST' }) }),
+    /** Provider: may they hand it back, what it costs, and the wait at the door. */
+    jobGiveBack: b.query({ query: ({ id, reason = 'other' }) => `/jobs/${id}/give-back?reason=${reason}`, keepUnusedDataFor: 0 }),
+    giveBackJob: b.mutation({ query: ({ id, ...body }) => ({ url: `/jobs/${id}/give-back`, method: 'POST', body }) }),
+    reportCustomerAbsent: b.mutation({ query: (id) => ({ url: `/jobs/${id}/customer-absent`, method: 'POST' }) }),
     jobChat: b.query({ query: (id) => `/jobs/${id}/chat`, providesTags: (r, e, id) => [{ type: 'JobChat', id }] }),
     sendJobChat: b.mutation({
       query: ({ id, text }) => ({ url: `/jobs/${id}/chat`, method: 'POST', body: { text } }),
@@ -1951,7 +1958,6 @@ export const api = createApi({
      * dropped before the server reads it, and a laptop price would quietly be
      * filed under mobile.
      */
-    /** What cancelling would cost — asked before the customer commits. */
     /** Photographs of the finished work. */
     attachRepairCompletionPhotos: b.mutation({
       query: ({ id, photos }) => ({
@@ -1979,10 +1985,6 @@ export const api = createApi({
         body: { kind, code },
       }),
       invalidatesTags: (r, e, { id }) => [{ type: 'RepairBookings', id }],
-    }),
-    repairCancellationQuote: b.query({
-      query: (id) => ({ url: `/repair/bookings/${id}/cancellation-quote` }),
-      providesTags: (r, e, id) => [{ type: 'RepairBooking', id }],
     }),
     /** ZappyOne market prices for this provider's jobs — fills a price sheet. */
     repairProviderSuggestedPricing: b.query({
@@ -2376,6 +2378,11 @@ export const {
   useAdminUpdateFeeMutation,
   // Job chat
   useJobChatQuery,
+  useJobOptionsQuery,
+  useReportProviderAbsentMutation,
+  useJobGiveBackQuery,
+  useGiveBackJobMutation,
+  useReportCustomerAbsentMutation,
   useSendJobChatMutation,
   // Account
   useAccountMeQuery,
@@ -2561,7 +2568,6 @@ export const {
   useRepairProviderPricingQuery,
   useBulkRepairProviderPricingMutation,
   useLazyRepairProviderSuggestedPricingQuery,
-  useRepairCancellationQuoteQuery,
   useRepairHandoverCodeQuery,
   useAttachRepairCompletionPhotosMutation,
   useRateRepairBookingMutation,

@@ -141,7 +141,7 @@ async function countRecentUserCancels(userId) {
     }),
     CancellationFeeRecord.countDocuments({
       userId,
-      kind: 'repair',
+      kind: { $in: ['repair', 'helping'] },
       createdAt: { $gte: since },
     }),
   ]);

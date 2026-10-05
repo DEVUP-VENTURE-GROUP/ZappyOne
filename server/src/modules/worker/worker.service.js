@@ -25,10 +25,15 @@ async function goOnline({ workerId, lng, lat }) {
   }
 
   // Load first to check KYC status — cheap guard before we write anything.
-  const existing = await Worker.findById(workerId).select('kyc.status isBlocked isOnline onlineSince').lean();
+  const existing = await Worker.findById(workerId).select('kyc.status isBlocked isOnline onlineSince penalties.pausedUntil').lean();
   if (!existing) throw Object.assign(new Error('Worker not found'), { status: 404, code: 'WORKER_NOT_FOUND' });
   if (existing.isBlocked) {
     throw Object.assign(new Error('Account is blocked'), { status: 403, code: 'WORKER_BLOCKED' });
+  }
+  const pausedUntil = existing.penalties?.pausedUntil;
+  if (pausedUntil && new Date(pausedUntil) > new Date()) {
+    const when = new Date(pausedUntil).toLocaleString('en-IN', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short', timeZone: 'Asia/Kolkata' });
+    throw Object.assign(new Error(`You handed back too many jobs today. You can go online again after ${when}.`), { status: 403, code: 'WORKER_PAUSED', pausedUntil });
   }
   // KYC approval is mandatory in all environments — no dev bypass.
   if (existing.kyc?.status !== 'approved') {

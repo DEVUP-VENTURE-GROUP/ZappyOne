@@ -1,5 +1,6 @@
 import JobChatButton from '../../components/jobs/JobChatButton';
 import OnSiteCard from '../OnSiteCard';
+import GiveBackCard from '../GiveBackCard';
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
@@ -502,7 +503,8 @@ export default function WorkerRepairJobPage() {
   }
 
   // A shop's job can go back to the owner until the technician sets out.
-  const canPassBack = !isOwner && !!booking.shopId && ['CONFIRMED', 'PROVIDER_ASSIGNED', 'WORKER_ACCEPTED'].includes(booking.status);
+  // Before they accept; once accepted, GiveBackCard hands it back (to the shop, for a shop's technician).
+  const canPassBack = !isOwner && !!booking.shopId && ['CONFIRMED', 'PROVIDER_ASSIGNED'].includes(booking.status);
   // Once a technician is named they do the steps from their own app (and share
   // their location); the owner follows along. Nobody named: the owner works it.
   const ownerWatching = isOwner && !!booking.workerId;
@@ -704,6 +706,8 @@ export default function WorkerRepairJobPage() {
             </div>
           </div>
         )}
+
+        <GiveBackCard jobId={booking._id} status={booking.status} />
 
         {canPassBack && (
           <div className="card">

@@ -57,12 +57,40 @@ function Section({ title, hint, jobs, tone, onOpen }) {
   );
 }
 
+/** Providers who keep handing jobs back today: a call before they reach the limit. */
+function BackingOut({ rows }) {
+  if (!rows.length) return null;
+  return (
+    <section className="space-y-2">
+      <div className="flex items-baseline justify-between">
+        <h3 className="text-sm font-bold text-slate-800">Providers backing out today</h3>
+        <span className="text-xs text-slate-500">Taken offline at the limit</span>
+      </div>
+      <Card className="divide-y divide-slate-100">
+        {rows.map((p) => (
+          <div key={`${p.kind}-${p.id}`} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
+            <div className="min-w-0">
+              <p className="truncate font-semibold text-slate-800">{p.name} <span className="font-normal text-slate-400">· {p.kind === 'shop' ? 'shop' : 'worker'}</span></p>
+              <p className="text-xs text-slate-500">
+                Handed back {p.handedBack}{p.noShows ? ` · ${p.noShows} no-show${p.noShows > 1 ? 's' : ''}` : ''} · {p.counted} of {p.limit} counted
+                {p.pausedUntil ? ` · offline until ${new Date(p.pausedUntil).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}` : ''}
+              </p>
+            </div>
+            {p.phone && <a href={`tel:${p.phone}`} className="shrink-0 rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 ring-1 ring-slate-200">Call</a>}
+          </div>
+        ))}
+      </Card>
+    </section>
+  );
+}
+
 export default function InterventionQueue() {
   const [open, setOpen] = useState(null);
   const { data, isLoading, isFetching, refetch } = useAdminBookingAttentionQuery(undefined, { pollingInterval: 30000 });
   if (isLoading) return <PageLoader />;
   const stuck = data?.stuck || [];
   const waiting = data?.waiting || [];
+  const backingOut = data?.backingOut || [];
 
   return (
     <div className="space-y-5">
@@ -71,6 +99,7 @@ export default function InterventionQueue() {
           <RefreshCw size={12} className={isFetching ? 'animate-spin' : ''} /> Refresh
         </button>
       </div>
+      <BackingOut rows={backingOut} />
       {!stuck.length && !waiting.length ? (
         <Card className="flex flex-col items-center gap-2 p-10 text-center">
           <CheckCircle2 size={28} className="text-emerald-500" />

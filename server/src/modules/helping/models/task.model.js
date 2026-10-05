@@ -348,6 +348,8 @@ const helpingTaskSchema = new mongoose.Schema(
     /** Booking for someone else: who the provider meets (jobs/on-site.js). */
     onSite: { type: new mongoose.Schema(require('../../jobs/on-site').onSiteField, { _id: false }), default: undefined },
     workerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Worker', default: null, index: true },
+    /** Helpers who handed this task back (jobs/give-back): it is not offered to them again. */
+    releasedBy: { type: [mongoose.Schema.Types.ObjectId], default: [] },
 
     serviceType: { type: String, enum: SERVICE_TYPES, required: true, index: true },
     /** Free text from the customer: "buy these 3 hardware items". */

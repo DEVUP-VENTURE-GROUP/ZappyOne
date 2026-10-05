@@ -1,5 +1,6 @@
 import JobChatButton from '../../components/jobs/JobChatButton';
 import OnSiteCard from '../OnSiteCard';
+import GiveBackCard from '../GiveBackCard';
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -119,6 +120,7 @@ export default function WorkerHelpingJobPage() {
       <Shell>
         {trip && <TripSharingBanner sharing={sharing} {...trip} />}
         <OnSiteCard onSite={task.onSite} />
+        <GiveBackCard jobId={task._id} status={task.status} />
         {task.pickupLocation?.address && (
           <a
             href={`https://maps.google.com/?q=${task.pickupLocation.coordinates?.[1]},${task.pickupLocation.coordinates?.[0]}`}

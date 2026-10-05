@@ -72,4 +72,101 @@ router.post('/:id/chat',
     } catch (err) { next(err); }
   });
 
+/* Backing out, no-shows and cancelling, the same for every kind (jobs/give-back, jobs/cancel-fee). */
+
+/** Why a customer cancels: fixed answers, so ops can see what goes wrong. */
+const CUSTOMER_REASONS = [
+  'Booked by mistake', 'Provider is taking too long', 'Found someone else', 'Price is too high',
+  'No longer needed', 'Want to change the time or address', 'Other reason',
+];
+
+async function jobFor(req, select) {
+  const { findJob } = require('./kinds');
+  const found = await findJob(req.params.id, select);
+  if (!found) throw Object.assign(new Error('Booking not found'), { status: 404 });
+  return found;
+}
+
+/** What cancelling costs the customer right now, in one shape for every kind. */
+async function customerCancelQuote(kind, doc) {
+  if (kind === 'repair') return require('../repair/services/cancellation.service').quoteCancellation(doc, { userId: doc.userId });
+  if (kind === 'helping') return require('./cancel-fee').quoteHelping(doc);
+  if (kind === 'pet') {
+    const q = await require('../pet/services/booking.service').quoteCancellation({ booking: doc });
+    if (!q.allowed) return { allowed: false, message: 'Your pet care has started. Contact support and we will sort it out.' };
+    const paidPaise = doc.paymentStatus === 'paid' ? (doc.pricing?.totalPaise || 0) : 0;
+    const feePaise = q.penaltyPaise || 0;
+    const rupees = (p) => `₹${Math.round(p / 100).toLocaleString('en-IN')}`;
+    const message = q.tier === 'provider_changed' ? 'No charge: your pet pro could not make it, so cancelling is free.'
+      : feePaise <= 0 ? 'You can cancel this booking free of charge.'
+        : paidPaise > 0 ? `Under this service's policy we keep ${rupees(feePaise)} and refund you ${rupees(q.refundPaise)}.`
+          : `Under this service's policy, cancelling now costs ${rupees(feePaise)}.`;
+    return { allowed: true, feePaise, earnedPaise: 0, paidPaise, refundPaise: paidPaise ? q.refundPaise : 0, free: q.tier === 'provider_changed' ? 'provider_changed' : null, message };
+  }
+  return { allowed: false, message: 'Cancel this booking from its own page.' };
+}
+
+router.get('/:id/options',
+  authenticate, requireRole('user'),
+  async (req, res, next) => {
+    try {
+      const { kind } = await jobFor(req, '_id');
+      const doc = await require('./kinds').KINDS[kind].model().findById(req.params.id).lean();
+      if (String(doc.userId) !== String(req.auth.sub)) return res.status(404).json({ error: 'Booking not found' });
+      const terminal = require('./kinds').KINDS[kind].ops?.terminal?.includes(doc.status);
+      res.json({
+        kind,
+        cancel: terminal ? null : await customerCancelQuote(kind, doc),
+        reasons: CUSTOMER_REASONS,
+        ...(terminal ? {} : await require('./give-back').customerView(kind, doc)),
+      });
+    } catch (err) { next(err); }
+  });
+
+router.post('/:id/provider-absent',
+  authenticate, requireRole('user'),
+  makeLimiter({ windowMs: 10 * 60_000, max: 5, prefix: 'jobabsent' }),
+  async (req, res, next) => {
+    try {
+      const { kind } = await jobFor(req, '_id');
+      res.json(await require('./give-back').reportProviderAbsent({ kind, id: req.params.id, userId: req.auth.sub }));
+    } catch (err) { next(err); }
+  });
+
+/** The provider's side: may they hand it back, what it costs, and the door wait. */
+router.get('/:id/give-back',
+  authenticate, requireRole('worker', 'shop'),
+  async (req, res, next) => {
+    try {
+      const { kind } = await jobFor(req, '_id');
+      const gb = require('./give-back');
+      const doc = await require('./kinds').KINDS[kind].model().findById(req.params.id).lean();
+      const actor = actorOf(req);
+      const view = gb.providerView(kind, doc);
+      const quote = view.canGiveBack ? await gb.preview({ kind, id: req.params.id, actor, reason: req.query.reason || 'other' }) : null;
+      res.json({ kind, ...view, quote });
+    } catch (err) { next(err); }
+  });
+
+router.post('/:id/give-back',
+  authenticate, requireRole('worker', 'shop'),
+  makeLimiter({ windowMs: 60_000, max: 10, prefix: 'jobgiveback' }),
+  validate(Joi.object({ reason: Joi.string().max(40).required(), note: Joi.string().trim().max(300).allow('', null) })),
+  async (req, res, next) => {
+    try {
+      const { kind } = await jobFor(req, '_id');
+      res.json(await require('./give-back').giveBack({ kind, id: req.params.id, actor: actorOf(req), reason: req.body.reason, note: req.body.note || '' }));
+    } catch (err) { next(err); }
+  });
+
+router.post('/:id/customer-absent',
+  authenticate, requireRole('worker', 'shop'),
+  makeLimiter({ windowMs: 60_000, max: 10, prefix: 'jobnoshow' }),
+  async (req, res, next) => {
+    try {
+      const { kind } = await jobFor(req, '_id');
+      res.json(await require('./give-back').reportCustomerAbsent({ kind, id: req.params.id, actor: actorOf(req) }));
+    } catch (err) { next(err); }
+  });
+
 module.exports = router;

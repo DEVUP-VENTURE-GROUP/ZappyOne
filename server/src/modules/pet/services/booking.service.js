@@ -277,7 +277,7 @@ async function releaseStaleAssignments({ now = new Date() } = {}) {
  * provider could not sell to anyone else, so late cancellation compensates
  * them rather than simply refunding everything.
  */
-async function quoteCancellation({ booking, by = 'customer' }) {
+async function quoteCancellation({ booking, by = 'customer', noShow = false }) {
   if (!CANCELLABLE_FROM.includes(booking.status)) {
     return { allowed: false, reason: 'This booking can no longer be cancelled' };
   }
@@ -300,19 +300,28 @@ async function quoteCancellation({ booking, by = 'customer' }) {
     };
   }
 
+  // A provider backed out or did not turn up (jobs/give-back): cancelling is free.
+  if (!noShow && await require('../../jobs/give-back').wasHandedBack(booking._id)) {
+    return { allowed: true, refundPaise: total, penaltyPaise: 0, providerCompensationPaise: 0, tier: 'provider_changed' };
+  }
+
   if (!policy?.tiers?.length) {
     return { allowed: true, refundPaise: total, penaltyPaise: 0, providerCompensationPaise: 0, tier: 'full_refund' };
   }
 
   const startsAt = booking.checkInAt || booking.scheduledAt;
-  const hoursBefore = startsAt ? (new Date(startsAt) - Date.now()) / 3600000 : 0;
+  // Nobody at the door is the no-show tier, whatever the clock says.
+  const hoursBefore = noShow ? -Infinity : startsAt ? (new Date(startsAt) - Date.now()) / 3600000 : 0;
 
-  const tier = [...policy.tiers]
+  const tier = noShow ? null : [...policy.tiers]
     .sort((a, b) => b.minHoursBefore - a.minHoursBefore)
     .find((t) => hoursBefore >= t.minHoursBefore);
 
   const refundPct = tier?.refundPct ?? policy.noShowRefundPct ?? 0;
-  const compPct = tier?.providerCompensationPct ?? 0;
+  // A wasted trip to an empty door: the provider gets the first version's at-the-door share of what is kept.
+  const compPct = noShow
+    ? (100 - refundPct) * ((await require('../../order/cancellation.service').getConfig()).workerShareArrivedPct ?? 70) / 100
+    : tier?.providerCompensationPct ?? 0;
 
   const refundPaise = Math.round(total * (refundPct / 100));
   return {
@@ -321,11 +330,11 @@ async function quoteCancellation({ booking, by = 'customer' }) {
     penaltyPaise: total - refundPaise,
     providerCompensationPaise: Math.round(total * (compPct / 100)),
     tier: tier?.label || 'no_show',
-    hoursBefore: Math.round(hoursBefore),
+    hoursBefore: Number.isFinite(hoursBefore) ? Math.round(hoursBefore) : null,
   };
 }
 
-async function cancelBooking({ bookingId, actorId, by = 'customer', reason = '' }) {
+async function cancelBooking({ bookingId, actorId, by = 'customer', reason = '', noShow = false }) {
   const booking = await PetBooking.findById(bookingId);
   if (!booking) throw httpError('Booking not found', 404, 'NOT_FOUND');
 
@@ -333,7 +342,7 @@ async function cancelBooking({ bookingId, actorId, by = 'customer', reason = '' 
     throw httpError('Not your booking', 403, 'FORBIDDEN');
   }
 
-  const quote = await quoteCancellation({ booking, by });
+  const quote = await quoteCancellation({ booking, by, noShow });
   if (!quote.allowed) throw httpError(quote.reason, 409, 'NOT_CANCELLABLE');
 
   booking.cancelledBy = by;
@@ -341,7 +350,7 @@ async function cancelBooking({ bookingId, actorId, by = 'customer', reason = '' 
   booking.penaltyPaise = quote.penaltyPaise;
   booking.providerCompensationPaise = quote.providerCompensationPaise;
   booking.refundPaise = quote.refundPaise;
-  booking.transitionTo('CANCELLED', { by: actorId, byRole: by, note: reason });
+  booking.transitionTo('CANCELLED', { by: actorId, byRole: noShow ? 'worker' : by, note: reason });
   await booking.save();
 
   // Paid online? Send the refund due now; a gateway failure is flagged for ops, never lost.

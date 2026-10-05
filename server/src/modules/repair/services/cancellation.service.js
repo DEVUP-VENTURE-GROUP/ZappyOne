@@ -1,5 +1,4 @@
 const CancellationFeeRecord = require('../../order/cancellation-shield.model');
-const shieldService = require('../../order/shield.service');
 const logger = require('../../../core/logger');
 
 /**
@@ -93,7 +92,7 @@ function inspectionPaise(booking) {
  * cancellation fee discovered after the fact is a support ticket; shown before
  * the button, it is an informed decision.
  */
-async function quoteCancellation(booking, { userId } = {}) {
+async function quoteCancellation(booking, { userId, noShow = false } = {}) {
   if (TERMINAL.includes(booking.status)) {
     return { allowed: false, reason: 'already_closed', message: 'This booking is already closed.' };
   }
@@ -108,17 +107,10 @@ async function quoteCancellation(booking, { userId } = {}) {
 
   const stage = STAGE_FOR_STATUS[booking.status] || 'created';
 
-  const cfg = await shieldService.getConfig();
-  const recentCount = userId ? await shieldService.countRecentUserCancels(userId) : 0;
-  const tierIdx = Math.min(recentCount, 2);
-
-  const stageFees = cfg.feeSchedule?.[stage] ?? [0, 0, 0];
-  let feePaise = stageFees[tierIdx] || 0;
-
-  // First cancellation while we are still finding someone is free, with a word
-  // of warning — the same grace the order flow gives.
-  const isGrace = stage === 'searching' && recentCount === 0;
-  if (isGrace) feePaise = 0;
+  // The shared schedule and its free moments (jobs/cancel-fee): first cancel while
+  // searching, the minutes just after acceptance, and after a provider backed out.
+  const fee = await require('../../jobs/cancel-fee').feeFor({ kind: 'repair', doc: booking, userId, stage, noShow });
+  const { feePaise, isGrace } = fee;
 
   const earnedPaise = DIAGNOSIS_DONE.includes(booking.status) ? inspectionPaise(booking) : 0;
   const paid = paidPaise(booking);
@@ -126,33 +118,18 @@ async function quoteCancellation(booking, { userId } = {}) {
 
   return {
     allowed: true,
-    stage,
+    stage: fee.stage,
+    free: fee.free,
     feePaise,
     earnedPaise,
     paidPaise: paid,
     refundPaise,
     isGrace,
-    harmScore: cfg.harmScores?.[stage] ?? 0,
-    cancelsInPeriod: recentCount,
+    harmScore: fee.harmScore,
+    cancelsInPeriod: fee.cancelsInPeriod,
     /** Plain-language summary, so every surface says the same thing. */
-    message: buildMessage({ feePaise, earnedPaise, refundPaise, paid, isGrace }),
+    message: require('../../jobs/cancel-fee').messageFor({ feePaise, earnedPaise, refundPaise, paidPaise: paid, free: fee.free, noun: 'technician' }),
   };
-}
-
-function rupees(paise) {
-  return `₹${Math.round(paise / 100).toLocaleString('en-IN')}`;
-}
-
-function buildMessage({ feePaise, earnedPaise, refundPaise, paid, isGrace }) {
-  if (isGrace) return 'No charge this time — but please avoid cancelling once a technician is on the way.';
-  const parts = [];
-  if (earnedPaise > 0) parts.push(`${rupees(earnedPaise)} for the inspection already done`);
-  if (feePaise > 0) parts.push(`a ${rupees(feePaise)} cancellation fee`);
-  if (!parts.length) return 'You can cancel this booking free of charge.';
-
-  const owed = parts.join(' and ');
-  if (paid > 0) return `We will keep ${owed}, and refund you ${rupees(refundPaise)}.`;
-  return `Cancelling now means ${owed}.`;
 }
 
 /**
@@ -168,6 +145,8 @@ function buildMessage({ feePaise, earnedPaise, refundPaise, paid, isGrace }) {
 async function assess(booking, { userId, quote = null } = {}) {
   const outcome = quote || await quoteCancellation(booking, { userId });
   if (!outcome.allowed) return outcome;
+  // Not the customer's doing: nothing to record, and it must not count against them.
+  if (outcome.free === 'provider_changed') return outcome;
 
   const existing = await CancellationFeeRecord.findOne({ repairBookingId: booking._id }).lean();
   if (existing) return { ...outcome, alreadyAssessed: true, feeRecord: existing };

@@ -18,6 +18,9 @@ import {
 import { staggerContainer, fadeInUp } from '../../lib/animations';
 import StartCodeCard from './StartCodeCard';
 import JobChat from '@shared/components/jobs/JobChat';
+import { useJobOptionsQuery, useReportProviderAbsentMutation } from '@shared/services/api';
+
+const rupees = (p) => `₹${Math.round((p || 0) / 100).toLocaleString('en-IN')}`;
 
 /**
  * Live tracking — one page for every kind of job.
@@ -32,8 +35,8 @@ import JobChat from '@shared/components/jobs/JobChat';
  *   extras       the kind's own cards, shown under the live status
  *   startCode    the customer's start code once the server issues it
  *   codeStage    when the code is due at a different moment than arrival (a delivery)
- *   cancel       when it can be cancelled now: { run, note } for a simple confirm,
- *                or { open } to show the kind's own sheet (a repair quotes its fee first)
+ *   cancel       when it can be cancelled now: { run(reason) }. The sheet shows what it
+ *                costs first (GET /jobs/:id/options), the same for every kind
  *   onRate       rate a completed job; omitted once rated
  *   onReceipt    download the receipt, when there is one
  *   onSOS        tell ZappyOne about an emergency (112 is always dialled first)
@@ -49,6 +52,12 @@ export default function JobTrackingPage({ job, extras = null, startCode = null, 
   const [chatOpen, setChatOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
+  // The cancel fee, a changed provider, and "not coming": the server's answer for this moment.
+  const optionsOn = ['repair', 'pet', 'helping'].includes(job.kind) && !job.terminal;
+  const { data: options, isFetching: optionsLoading, refetch: refetchOptions } = useJobOptionsQuery({ id: job.id, status: job.status }, { skip: !optionsOn });
+  const [reportAbsent, { isLoading: reportingAbsent }] = useReportProviderAbsentMutation();
+  const cancelQuote = options?.cancel;
   const socketStatus = useSocketStatus();
 
   // In the job's room for as long as it's live; positions only while someone travels.
@@ -156,6 +165,27 @@ export default function JobTrackingPage({ job, extras = null, startCode = null, 
 
           <StartCodeCard jobKey={`${job.kind}:${job.id}`} code={startCode} stage={codeStage || status} noun={job.noun} />
 
+          {options?.providerChangedAt && !job.provider && (
+            <div className="rounded-2xl bg-amber-50 px-4 py-3 text-[13px] leading-relaxed text-amber-900 ring-1 ring-amber-100">
+              <p className="font-semibold">Your {job.noun} could not make it</p>
+              <p className="mt-0.5">We are finding the next one now. If you would rather not wait, you can cancel free.</p>
+            </div>
+          )}
+          {options?.providerAbsent?.open && job.provider && (
+            <div className="rounded-2xl bg-white px-4 py-3 ring-1 ring-slate-100">
+              <p className="text-[13px] font-semibold text-navy">Is your {job.noun} not coming?</p>
+              <p className="mt-0.5 text-[12.5px] text-slate-500">Try calling them first. If they still are not on their way, we will find someone else.</p>
+              <button type="button" disabled={reportingAbsent}
+                onClick={async () => {
+                  try { const r = await reportAbsent(job.id).unwrap(); toast.success(r.message); refetchOptions(); }
+                  catch (err) { toast.error(err?.data?.error || 'Could not report that'); }
+                }}
+                className="mt-2.5 flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 text-[13px] font-semibold text-slate-700 disabled:opacity-50">
+                {reportingAbsent && <Loader2 size={14} className="animate-spin" />} Find me someone else
+              </button>
+            </div>
+          )}
+
           {extras}
 
           {!['cancelled', 'failed'].includes(status) && (
@@ -210,7 +240,7 @@ export default function JobTrackingPage({ job, extras = null, startCode = null, 
                   <HeadphonesIcon size={18} /> Get help
                 </button>
                 {cancel && (
-                  <button type="button" onClick={() => (cancel.open ? cancel.open() : setCancelOpen(true))}
+                  <button type="button" onClick={() => { setCancelReason(''); setCancelOpen(true); if (optionsOn) refetchOptions(); }}
                     className="flex h-11 w-full items-center justify-center gap-2 rounded-btn text-[14px] font-semibold text-ink-500 hover:text-red-600">
                     <X size={16} /> Cancel booking
                   </button>
@@ -227,15 +257,48 @@ export default function JobTrackingPage({ job, extras = null, startCode = null, 
               <motion.div className="relative rounded-t-[28px] bg-white px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-3"
                 initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', damping: 30, stiffness: 320 }}>
                 <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-slate-200" />
-                <p className="text-lg font-bold text-navy">Cancel this booking?</p>
-                {cancel.note && <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{cancel.note}</p>}
+                <p className="text-lg font-bold text-navy">{cancelQuote?.allowed === false ? 'This one needs us' : 'Cancel this booking?'}</p>
+                {optionsLoading && !cancelQuote ? (
+                  <div className="flex justify-center py-5"><Loader2 size={18} className="animate-spin text-slate-300" /></div>
+                ) : (
+                  <>
+                    <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{cancelQuote?.message || cancel.note || 'You can cancel this booking.'}</p>
+                    {cancelQuote?.allowed !== false && (cancelQuote?.feePaise > 0 || cancelQuote?.earnedPaise > 0) && (
+                      <div className="mt-3 space-y-1.5 rounded-2xl bg-slate-50 p-3 text-[13px]">
+                        {cancelQuote.earnedPaise > 0 && <div className="flex justify-between"><span className="text-slate-500">Inspection already done</span><span className="tabular-nums">{rupees(cancelQuote.earnedPaise)}</span></div>}
+                        {cancelQuote.feePaise > 0 && <div className="flex justify-between"><span className="text-slate-500">Cancellation fee</span><span className="tabular-nums">{rupees(cancelQuote.feePaise)}</span></div>}
+                        {cancelQuote.paidPaise > 0 && <div className="flex justify-between border-t border-slate-200 pt-1.5 font-semibold"><span>Back to you</span><span className="tabular-nums">{rupees(cancelQuote.refundPaise)}</span></div>}
+                        <p className="pt-1 text-[11px] leading-relaxed text-slate-400">Cancellation fees go to the providers whose time was lost.</p>
+                      </div>
+                    )}
+                    {cancelQuote?.allowed !== false && (options?.reasons || []).length > 0 && (
+                      <div className="mt-4">
+                        <p className="text-[12.5px] font-semibold text-slate-700">Why are you cancelling?</p>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {options.reasons.map((r) => (
+                            <button key={r} type="button" onClick={() => setCancelReason(r)}
+                              className={`rounded-full border px-3 py-1.5 text-[12.5px] font-medium ${cancelReason === r ? 'border-zappy-600 bg-zappy-50 text-zappy-700' : 'border-slate-200 text-slate-600'}`}>
+                              {r}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
                 <div className="mt-5 flex gap-3">
-                  <button type="button" onClick={() => setCancelOpen(false)} className="h-12 flex-1 rounded-2xl border border-slate-200 font-semibold text-slate-700">Keep booking</button>
-                  <button type="button" disabled={cancelling}
-                    onClick={async () => { setCancelling(true); try { await cancel.run(); setCancelOpen(false); } finally { setCancelling(false); } }}
-                    className="flex h-12 flex-1 items-center justify-center gap-2 rounded-2xl bg-red-600 font-semibold text-white disabled:opacity-50">
-                    {cancelling && <Loader2 size={16} className="animate-spin" />} Cancel booking
+                  <button type="button" onClick={() => setCancelOpen(false)} className="h-12 flex-1 rounded-2xl border border-slate-200 font-semibold text-slate-700">
+                    {cancelQuote?.allowed === false ? 'Close' : 'Keep booking'}
                   </button>
+                  {cancelQuote?.allowed === false ? (
+                    <button type="button" onClick={() => nav('/support')} className="h-12 flex-1 rounded-2xl bg-navy font-semibold text-white">Get help</button>
+                  ) : (
+                    <button type="button" disabled={cancelling || (optionsOn && (!cancelQuote || optionsLoading)) || (options?.reasons?.length > 0 && !cancelReason)}
+                      onClick={async () => { setCancelling(true); try { await cancel.run(cancelReason || 'Cancelled by customer'); setCancelOpen(false); } finally { setCancelling(false); } }}
+                      className="flex h-12 flex-1 items-center justify-center gap-2 rounded-2xl bg-red-600 font-semibold text-white disabled:opacity-50">
+                      {cancelling && <Loader2 size={16} className="animate-spin" />} Cancel booking
+                    </button>
+                  )}
                 </div>
               </motion.div>
             </motion.div>

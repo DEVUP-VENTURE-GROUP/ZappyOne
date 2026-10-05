@@ -445,9 +445,54 @@ async function funnel({ days = 7, now = Date.now() } = {}) {
     findings.push({ tone: 'warn', text: `Only ${quotes.approvalRate}% of repair quotes are approved; ₹${Math.round(quotes.lostPaise / 100).toLocaleString('en-IN')} was turned down or left to expire. Check what technicians are quoting.` });
   }
 
-  const result = { range: { days, from: new Date(start), to: new Date(now) }, steps, services, quotes, findings };
+  const cancellations = await cancellationReasons(range);
+  const topCustomer = cancellations.customer[0];
+  if (topCustomer && cancellations.customerTotal >= 5 && topCustomer.share >= 30) {
+    findings.push({ tone: 'warn', text: `Most customer cancellations say "${topCustomer.reason}" (${topCustomer.share}%).` });
+  }
+
+  const result = { range: { days, from: new Date(start), to: new Date(now) }, steps, services, quotes, cancellations, findings };
   cache.set(key, result);
   return result;
+}
+
+/**
+ * Why jobs ended early in the period: who cancelled (customer, provider, ops)
+ * and the customers' own reasons, plus why providers handed jobs back.
+ */
+async function cancellationReasons(range) {
+  const { ALL } = require('../jobs/kinds');
+  const who = { customer: 0, provider: 0, ops: 0 };
+  const reasons = new Map();
+  for (const k of ALL.filter((x) => ['repair', 'pet', 'helping'].includes(x.kind))) {
+    const docs = await k.model().find({ status: 'CANCELLED', updatedAt: range })
+      .select('statusHistory cancellationReason').limit(5000).lean();
+    for (const d of docs) {
+      const last = [...(d.statusHistory || [])].reverse().find((h) => h.status === 'CANCELLED') || {};
+      const role = last.byRole || last.actorRole || '';
+      const side = ['user', 'customer'].includes(role) ? 'customer' : ['worker', 'shop', 'provider'].includes(role) ? 'provider' : 'ops';
+      who[side] += 1;
+      if (side === 'customer') {
+        const text = String(d.cancellationReason || last.reason || last.note || '').trim() || 'No reason given';
+        reasons.set(text, (reasons.get(text) || 0) + 1);
+      }
+    }
+  }
+  const customerTotal = who.customer;
+  const customer = [...reasons.entries()].map(([reason, n]) => ({ reason, n, share: customerTotal ? Math.round((n / customerTotal) * 100) : 0 }))
+    .sort((a, b) => b.n - a.n).slice(0, 8);
+
+  const { JobGiveBack, REASONS } = require('../jobs/give-back');
+  const label = (code) => (code === 'no_show' ? 'Did not turn up' : code === 'customer_no_show' ? 'Customer not there' : REASONS.find((r) => r.code === code)?.label || code);
+  const given = await JobGiveBack.aggregate([
+    { $match: { createdAt: range, toShop: false } },
+    { $group: { _id: '$reason', n: { $sum: 1 } } },
+    { $sort: { n: -1 } },
+  ]);
+  return {
+    who, customerTotal, customer,
+    providerHandBacks: given.map((g) => ({ reason: label(g._id), n: g.n })),
+  };
 }
 
 /** First booking ever per customer, across every kind: customerId -> timestamp. */

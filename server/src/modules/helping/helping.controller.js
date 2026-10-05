@@ -142,7 +142,9 @@ async function getTask(req, res, next) {
     res.json({
       task: signed,
       provider: introduced ? await providerCard(task, { fallbackName: 'Your helper', active: !require('../jobs/kinds').KINDS.helping.ops.terminal.includes(task.status) }) : null,
-      canCancel: CANCELLABLE_FROM.includes(task.status),
+      canCancel: req.auth.role === 'user'
+        ? require('../jobs/cancel-fee').HELPING_SELF_CANCELLABLE.includes(task.status)
+        : CANCELLABLE_FROM.includes(task.status),
       // Shown as two figures, always.
       authorisation: pricingService.authorisationTotal(task.charge, task.itemMoney?.budgetPaise || 0),
       // What is owed right now: fee and item money, and whether the shopping is final.
@@ -211,19 +213,11 @@ async function cancelTaskAs(req, res, next, { byRole, ownerOnly }) {
       });
     }
 
-    task.cancellationReason = req.body.reason || '';
-    task.transitionTo('CANCELLED', { by: req.auth.sub, byRole });
-    // Nothing is bought before work starts, so a prepaid budget goes back whole.
-    await require('./services/money.service').releaseHold(task, {
-      amountPaise: require('./services/money.service').unspentHoldPaise(task), why: 'Task cancelled, budget returned',
+    // Priced before anything moves (jobs/cancel-fee): free until the helper is
+    // committed, a fee once they are on the way, support once work has started.
+    const cancellation = await require('../jobs/cancel-fee').cancelHelping({
+      task, byRole, actorId: req.auth.sub, reason: req.body.reason || '',
     });
-    await task.save();
-    // Cancellable states are all before work starts, so a paid service charge goes back in full.
-    if (task.paymentStatus === 'paid') {
-      await require('../payment/payment.service').refundBookingPayment({
-        source: 'helping', bookingId: task._id, reason: `Cancelled: ${task.cancellationReason || byRole}`,
-      });
-    }
     if (byRole === 'admin') {
       require('../notification/notification.service').notify({
         recipient: { kind: 'user', id: task.userId },
@@ -233,7 +227,7 @@ async function cancelTaskAs(req, res, next, { byRole, ownerOnly }) {
         deepLink: `/helping/tasks/${task._id}`,
       }).catch(() => {});
     }
-    res.json({ task: task.toObject() });
+    res.json({ task: task.toObject(), cancellation });
   } catch (err) { next(err); }
 }
 
@@ -277,7 +271,7 @@ async function listAvailable(req, res, next) {
     ]);
     const coords = worker?.currentLocation?.coordinates;
 
-    const filter = { status: { $in: ['CONFIRMED', 'WORKER_SEARCHING'] }, workerId: null, serviceType: { $in: types } };
+    const filter = { status: { $in: ['CONFIRMED', 'WORKER_SEARCHING'] }, workerId: null, serviceType: { $in: types }, releasedBy: { $ne: req.auth.sub } };
     const query = coords?.length === 2
       ? HelpingTask.find({
         ...filter,
@@ -323,7 +317,7 @@ async function acceptTask(req, res, next) {
      * so the loser's update matches nothing.
      */
     const task = await HelpingTask.findOneAndUpdate(
-      { _id: req.params.id, workerId: null, status: { $in: ['CONFIRMED', 'WORKER_SEARCHING', 'WORKER_ASSIGNED'] } },
+      { _id: req.params.id, workerId: null, releasedBy: { $ne: req.auth.sub }, status: { $in: ['CONFIRMED', 'WORKER_SEARCHING', 'WORKER_ASSIGNED'] } },
       {
         $set: { workerId: req.auth.sub, status: 'WORKER_ACCEPTED' },
         $push: {
