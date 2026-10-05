@@ -1,3 +1,4 @@
+import { useSafeBack } from '../../hooks/useBookingFlow';
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -8,6 +9,8 @@ import toast from 'react-hot-toast';
 export default function EventThemePage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  // Back to the previous page, or to /events/browse when this page was opened directly.
+  const goBack = useSafeBack('/events/browse');
   const { data, isLoading } = useGetEventThemeQuery(id);
   const [toggleSave] = useToggleSaveEventThemeMutation();
   const [galleryIdx, setGalleryIdx] = useState(0);
@@ -40,7 +43,7 @@ export default function EventThemePage() {
         </div>
         <h2 className="text-2xl font-black mb-2">Theme Vanished</h2>
         <p className="text-slate-500 mb-8 text-sm">This experience is no longer available.</p>
-        <button onClick={() => navigate(-1)} className="w-full py-4 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl font-bold transition-colors">Return</button>
+        <button onClick={() => goBack()} className="w-full py-4 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl font-bold transition-colors">Return</button>
       </motion.div>
     </div>
   );
@@ -56,7 +59,7 @@ export default function EventThemePage() {
       <div className="fixed top-0 left-0 right-0 z-50 p-4 flex justify-between items-center pointer-events-none">
         <motion.button 
           whileTap={{ scale: 0.9 }}
-          onClick={() => navigate(-1)} 
+          onClick={() => goBack()} 
           className="w-11 h-11 bg-white border border-slate-200 rounded-full flex items-center justify-center shadow-sm pointer-events-auto"
         >
           <ArrowLeft size={20} className="text-slate-700" />

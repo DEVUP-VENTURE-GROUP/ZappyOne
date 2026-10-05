@@ -1,3 +1,4 @@
+import { useSafeBack } from '../../hooks/useBookingFlow';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Loader2, Wrench } from 'lucide-react';
 import { useLiveCatalogQuery } from '@shared/services/api';
@@ -20,6 +21,8 @@ import { ProblemLayout } from './ProblemCard';
  */
 export default function CategoryProblemsPage() {
   const nav = useNavigate();
+  // Back to the previous page, or to /services when this page was opened directly.
+  const goBack = useSafeBack('/services');
   const { vertical, categoryCode } = useParams();
   const { data, isLoading } = useLiveCatalogQuery();
 
@@ -64,7 +67,7 @@ export default function CategoryProblemsPage() {
       <Header
         title={category.name}
         subtitle={service.name}
-        onBack={() => nav(-1)}
+        onBack={() => goBack()}
       />
 
       <div className="mx-auto max-w-4xl px-4">

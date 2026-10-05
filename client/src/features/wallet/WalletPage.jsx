@@ -1,3 +1,4 @@
+import { useSafeBack } from '../../hooks/useBookingFlow';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
@@ -19,6 +20,8 @@ const QUICK_AMOUNTS = [100, 500, 1000, 5000];
 
 export default function WalletPage() {
   const nav = useNavigate();
+  // Back to the previous page, or to /profile when this page was opened directly.
+  const goBack = useSafeBack('/profile');
   const tr = useT();
   const { profile } = useSelector(selectAuth);
   const { data: wallet, refetch: refetchWallet, isError: walletError } = useGetWalletQuery();
@@ -83,7 +86,7 @@ export default function WalletPage() {
           {/* Balance first, then the one thing you do here: add money. */}
           <header className="page-header">
             <div className="page-header-inner">
-              <button onClick={() => nav(-1)} className="back-btn" aria-label="Back"><ArrowLeft size={18} /></button>
+              <button onClick={() => goBack()} className="back-btn" aria-label="Back"><ArrowLeft size={18} /></button>
               <h1 className="h-card">{tr('wallet.title', 'Wallet')}</h1>
             </div>
           </header>

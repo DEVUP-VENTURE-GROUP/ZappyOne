@@ -36,17 +36,24 @@ const CONTENT_TYPE_EXTS = {
 // Audio content types skip the extension check (browser blobs have no extension)
 const AUDIO_TYPES = new Set(['audio/webm', 'audio/mp4', 'audio/ogg']);
 
-router.post(
-  '/presign',
-  authenticate,
-  validate(Joi.object({
-    folder: Joi.string().valid(
+/** Every folder an app may upload into. A folder missing here fails the upload (tests/upload-folders.test.js). */
+const UPLOAD_FOLDERS = [
       'kyc', 'kyc-docs', 'profile', 'order-proof', 'vehicle-health',
       'completion-photos', 'order-images', 'voice-tips', 'event-photos', 'shop',
       // Catalog artwork, uploaded by admin rather than pasted as a link.
       'catalog', 'brands', 'device-models', 'problems', 'problem-categories',
-      'service-images',
-    ).required(),
+      'service-images', 'service-domains', 'service-lines', 'ads', 'uploads',
+      // Helping: item and return photos from customers, proof photos from helpers.
+      'helping/items', 'helping/returns', 'helping/arrival', 'helping/handover', 'helping/alternatives',
+      // Pet care: pet profiles, and the provider's before/after photos.
+      'pet/photos', 'pet/before', 'pet/after'
+];
+
+router.post(
+  '/presign',
+  authenticate,
+  validate(Joi.object({
+    folder: Joi.string().valid(...UPLOAD_FOLDERS).required(),
     contentType: Joi.string().valid(...Object.keys(CONTENT_TYPE_EXTS)).required(),
     // Optional original filename — used for extension validation only; never stored.
     filename: Joi.string().max(260).optional().allow('', null),
@@ -72,3 +79,4 @@ router.post(
 router.get('/download/:key(*)', authenticate, ctrl.download);
 
 module.exports = router;
+module.exports.UPLOAD_FOLDERS = UPLOAD_FOLDERS;

@@ -1,3 +1,4 @@
+import { useSafeBack } from '../../hooks/useBookingFlow';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Heart, Star, Loader2 } from 'lucide-react';
@@ -6,6 +7,8 @@ import toast from 'react-hot-toast';
 
 export default function EventSavedThemesPage() {
   const navigate = useNavigate();
+  // Back to the previous page, or to /events when this page was opened directly.
+  const goBack = useSafeBack('/events');
   const { data, isLoading, refetch } = useGetSavedEventThemesQuery();
   const [toggleSave] = useToggleSaveEventThemeMutation();
   const themes = data?.themes || [];
@@ -19,7 +22,7 @@ export default function EventSavedThemesPage() {
     <div className="min-h-screen bg-slate-50 pb-20">
       <div className="bg-white border-b border-slate-100 px-4 pt-12 pb-4 sticky top-0 z-10">
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate(-1)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100">
+          <button onClick={() => goBack()} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100">
             <ArrowLeft size={18} />
           </button>
           <div>

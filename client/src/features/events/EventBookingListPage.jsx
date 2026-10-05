@@ -1,3 +1,4 @@
+import { useSafeBack } from '../../hooks/useBookingFlow';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -22,6 +23,8 @@ const STATUS_ICONS = {
 
 export default function EventBookingListPage() {
   const navigate = useNavigate();
+  // Back to the previous page, or to /events when this page was opened directly.
+  const goBack = useSafeBack('/events');
   const [page, setPage] = useState(1);
   const { data, isLoading } = useGetEventBookingsQuery(page);
   const bookings = data?.bookings || [];
@@ -30,7 +33,7 @@ export default function EventBookingListPage() {
     <div className="min-h-screen bg-slate-50 pb-20">
       <div className="bg-white border-b border-slate-100 px-4 pt-12 pb-4 sticky top-0 z-10">
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate(-1)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100">
+          <button onClick={() => goBack()} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100">
             <ArrowLeft size={18} className="text-slate-700" />
           </button>
           <div>

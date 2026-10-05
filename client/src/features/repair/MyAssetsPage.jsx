@@ -1,3 +1,4 @@
+import { useSafeBack } from '../../hooks/useBookingFlow';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Loader2, Plus, Trash2, Clock, MapPin, X } from 'lucide-react';
@@ -26,6 +27,8 @@ function Shell({ children }) {
 
 export default function MyAssetsPage() {
   const nav = useNavigate();
+  // Back to the previous page, or to /services when this page was opened directly.
+  const goBack = useSafeBack('/services');
   const { data, isLoading } = useMyAssetsQuery();
   const [deleteAsset] = useDeleteAssetMutation();
   const [showAdd, setShowAdd] = useState(false);
@@ -43,7 +46,7 @@ export default function MyAssetsPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="sticky top-0 z-10 bg-white border-b border-slate-100 px-4 py-3 flex items-center gap-3">
-        <button type="button" onClick={() => nav(-1)} className="p-1 -ml-1">
+        <button type="button" onClick={() => goBack()} className="p-1 -ml-1">
           <ArrowLeft size={20} />
         </button>
         <h1 className="text-lg font-black text-[#0F172A]">My things</h1>

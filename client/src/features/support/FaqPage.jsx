@@ -1,3 +1,4 @@
+import { useSafeBack } from '../../hooks/useBookingFlow';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -27,6 +28,8 @@ function FaqItem({ q, a, open, onToggle }) {
 
 export default function FaqPage() {
   const nav = useNavigate();
+  // Back to the previous page, or to /support when this page was opened directly.
+  const goBack = useSafeBack('/support');
   const { data, isLoading } = useGetFaqsQuery('user');
   const [openId, setOpenId] = useState(null);
   const [q, setQ] = useState('');
@@ -44,7 +47,7 @@ export default function FaqPage() {
       {/* Header */}
       <div className="sticky top-0 z-10 bg-white border-b border-slate-100 px-4 pt-4 pb-3">
         <div className="flex items-center gap-3">
-          <button onClick={() => nav(-1)} className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center">
+          <button onClick={() => goBack()} className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center">
             <ChevronLeft size={18} className="text-slate-600" />
           </button>
           <div className="flex items-center gap-2">

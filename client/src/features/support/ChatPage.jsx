@@ -1,3 +1,4 @@
+import { useSafeBack } from '../../hooks/useBookingFlow';
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
@@ -18,6 +19,8 @@ const CANNED = [
 export default function ChatPage() {
   const { id: orderId } = useParams();
   const nav = useNavigate();
+  // Back to the previous page, or to /support when this page was opened directly.
+  const goBack = useSafeBack('/support');
   const { role, accessToken: token } = useSelector(selectAuth);
   const [text, setText] = useState('');
   // Local messages layer: history from RTK Query + real-time from socket
@@ -99,7 +102,7 @@ export default function ChatPage() {
       {/* Header */}
       <header className="bg-white border-b border-slate-100 shrink-0">
         <div className="max-w-lg mx-auto px-4 h-14 flex items-center gap-3">
-          <button onClick={() => nav(-1)} className="back-btn">
+          <button onClick={() => goBack()} className="back-btn">
             <ArrowLeft size={18} strokeWidth={2.5} />
           </button>
           <div className="w-9 h-9 rounded-xl bg-zappy-gradient flex items-center justify-center text-white font-bold text-xs shrink-0">

@@ -1,6 +1,8 @@
 import { useScrollTopOnChange } from '@shared/components/common/ScrollToTop';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useFlowStep, useDraft, readDraft, clearDraft, useSafeBack } from '../../hooks/useBookingFlow';
+import ResumeBanner from '../../components/common/ResumeBanner';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft, Calendar as CalendarIcon, Clock, MapPin, Users, FileText, Camera, CheckCircle, Loader2, Minus, Plus, ChevronRight, Zap, ShieldCheck, Check, Navigation, LocateFixed,
@@ -59,10 +61,10 @@ export default function EventBookingPage() {
   const theme = data?.theme;
   const advancePct = (cfg?.advancePaymentPct ?? 20) / 100;
 
-  const [step, setStep] = useState(0);
-
-  useScrollTopOnChange(step);
-  const [form, setForm] = useState({
+  // Saved on this device as they go (useBookingFlow): leaving and coming back resumes.
+  const draftKey = `event:${id}`;
+  const [saved] = useState(() => readDraft(draftKey));
+  const [form, setForm] = useState(saved?.form ?? {
     eventDate:     '',
     eventTimeSlot: '',
     address:       { line1: '', city: '', pincode: '', landmark: '' },
@@ -70,6 +72,26 @@ export default function EventBookingPage() {
     notes:         '',
     roomPhotos:    [],
   });
+
+  // Each step is in the address, so the phone's Back goes one step back.
+  const hasWhen = !!(form.eventDate && form.eventTimeSlot);
+  const valid = (st) => st === '0' || ((st === '1' || st === '2') && hasWhen) || (st === '3' && hasWhen && !!form.address.line1);
+  const [stepKey, setStepKey, backTo] = useFlowStep('0', { valid });
+  const step = Number(stepKey);
+  const setStep = (n) => setStepKey(String(n));
+  const safeBack = useSafeBack(`/events/themes/${id}`);
+  useScrollTopOnChange(step);
+  useDraft(draftKey, { form, step: stepKey }, hasWhen);
+  const [resumed, setResumed] = useState(false);
+  useEffect(() => {
+    if (saved?.step && saved.step !== '0' && stepKey === '0' && valid(saved.step)) { setStepKey(saved.step, { replace: true }); setResumed(true); }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  function startOver() {
+    clearDraft(draftKey);
+    setForm({ eventDate: '', eventTimeSlot: '', address: { line1: '', city: '', pincode: '', landmark: '' }, guestCount: 1, notes: '', roomPhotos: [] });
+    setStepKey('0', { replace: true });
+    setResumed(false);
+  }
   const [uploading,    setUploading]    = useState(false);
   const [submitting,   setSubmitting]   = useState(false);
   const [locating,     setLocating]     = useState(false);
@@ -159,12 +181,14 @@ export default function EventBookingPage() {
           cfPaymentId: checkoutResp.cfPaymentId,
         }).unwrap();
         toast.success('🎉 Booking Confirmed! Your slot is locked.');
-        navigate(`/events/bookings/${bookingId}?paid=true`);
+        clearDraft(draftKey);
+        navigate(`/events/bookings/${bookingId}?paid=true`, { replace: true });
       } catch (payErr) {
         const msg = payErr?.message || '';
         if (msg.includes('cancelled')) {
           toast('Payment incomplete. We reserved your slot for 15 mins!', { icon: '⏱️' });
-          navigate(`/events/bookings/${bookingId}`);
+          clearDraft(draftKey);
+          navigate(`/events/bookings/${bookingId}`, { replace: true });
         } else {
           throw payErr;
         }
@@ -192,7 +216,7 @@ export default function EventBookingPage() {
       <div className="sticky top-0 z-40 bg-white border-b border-slate-200/50 pt-10 pb-8 px-4 shadow-[0_4px_30px_rgba(0,0,0,0.03)]">
         <div className="max-w-md lg:max-w-2xl mx-auto">
           <div className="flex items-center gap-4 mb-4">
-            <button onClick={() => step > 0 ? setStep(s => s - 1) : navigate(-1)} className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-700 hover:bg-slate-200 hover:scale-105 transition-all">
+            <button onClick={() => (step > 0 ? backTo(String(step - 1)) : safeBack())} aria-label="Back" className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-700 hover:bg-slate-200 hover:scale-105 transition-all">
               <ArrowLeft size={18} />
             </button>
             <div className="flex-1">
@@ -205,6 +229,7 @@ export default function EventBookingPage() {
         </div>
       </div>
 
+      {resumed && <ResumeBanner onStartOver={startOver} onDismiss={() => setResumed(false)} />}
       <div className="max-w-md lg:max-w-2xl mx-auto px-4 py-8">
         <AnimatePresence mode="wait">
           
@@ -465,7 +490,7 @@ export default function EventBookingPage() {
         <div className="max-w-md lg:max-w-2xl mx-auto">
           {step < 3 ? (
             <button 
-              onClick={() => setStep(s => s + 1)} 
+              onClick={() => setStep(step + 1)} 
               disabled={!canNext[step]}
               className="relative w-full py-4 bg-slate-900 text-white rounded-[1.5rem] font-black uppercase tracking-widest shadow-xl flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-40 hover:shadow-2xl hover:-translate-y-1"
             >

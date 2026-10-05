@@ -1,3 +1,4 @@
+import { useSafeBack } from '../../hooks/useBookingFlow';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { useGetServiceabilityQuery } from '@shared/services/api';
@@ -15,6 +16,8 @@ import SEO from '@shared/components/SEO';
  */
 export default function AllServicesPage() {
   const nav = useNavigate();
+  // Back to the previous page, or to / when this page was opened directly.
+  const goBack = useSafeBack('/');
   const here = loadGeoLocation();
   const { data: svc } = useGetServiceabilityQuery({ lat: here?.lat, lng: here?.lng }, { skip: here?.lat == null });
 
@@ -27,7 +30,7 @@ export default function AllServicesPage() {
 
       <header className="sticky top-0 z-20 border-b border-slate-100 bg-white">
         <div className="mx-auto flex max-w-4xl items-center gap-3 px-4 py-3">
-          <button onClick={() => nav(-1)} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100">
+          <button onClick={() => goBack()} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100">
             <ArrowLeft size={17} strokeWidth={2.5} />
           </button>
           <div>

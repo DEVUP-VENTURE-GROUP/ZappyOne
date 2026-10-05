@@ -1,3 +1,4 @@
+import { useSafeBack } from '../../hooks/useBookingFlow';
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, MapPin, AlertTriangle, Loader2 } from 'lucide-react';
@@ -31,6 +32,8 @@ function Shell({ children }) {
 
 export default function ReturnTaskPage() {
   const nav = useNavigate();
+  // Back to the previous page, or to /helping when this page was opened directly.
+  const goBack = useSafeBack('/helping');
   // A tile on the home showcase can open this straight on "exchange".
   const [params] = useSearchParams();
   const [isExchange, setIsExchange] = useState(params.get('mode') === 'exchange');
@@ -121,7 +124,7 @@ export default function ReturnTaskPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="sticky top-0 z-10 bg-white border-b border-slate-100 px-4 py-3 flex items-center gap-3">
-        <button type="button" onClick={() => nav(-1)} className="p-1 -ml-1"><ArrowLeft size={20} /></button>
+        <button type="button" onClick={() => goBack()} className="p-1 -ml-1"><ArrowLeft size={20} /></button>
         <h1 className="text-lg font-black text-[#0F172A]">{isExchange ? 'Exchange an Item' : 'Return an Item'}</h1>
       </div>
 
@@ -253,11 +256,14 @@ export default function ReturnTaskPage() {
       </div>
 
       {pickerFor && (
-        <LocationPicker
-          serviceLabel="Helping Services"
-          onCancel={() => setPickerFor(null)}
-          onConfirm={(loc) => { if (pickerFor === 'pickup') setPickupLoc(loc); else setDestLoc(loc); setPickerFor(null); }}
-        />
+        // The picker fills its container: give it the whole screen, above the bottom bar.
+        <div className="fixed inset-0 z-[150] bg-white">
+          <LocationPicker
+            serviceLabel="Helping Services"
+            onCancel={() => setPickerFor(null)}
+            onConfirm={(loc) => { if (pickerFor === 'pickup') setPickupLoc(loc); else setDestLoc(loc); setPickerFor(null); }}
+          />
+        </div>
       )}
     </div>
   );

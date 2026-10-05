@@ -1,3 +1,4 @@
+import { useSafeBack } from '../../hooks/useBookingFlow';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Bell, CheckCircle2 } from 'lucide-react';
@@ -25,6 +26,8 @@ function Toggle({ checked, onChange }) {
 
 export default function NotificationPrefsPage() {
   const nav = useNavigate();
+  // Back to the previous page, or to /profile when this page was opened directly.
+  const goBack = useSafeBack('/profile');
   const { data, isLoading } = useGetNotificationPrefsQuery();
   const [updatePrefs, { isLoading: isSaving }] = useUpdateNotificationPrefsMutation();
   const [prefs, setPrefs] = useState(null);
@@ -50,7 +53,7 @@ export default function NotificationPrefsPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <header className="bg-white border-b px-4 py-3 flex items-center gap-3 sticky top-0 z-10">
-        <button onClick={() => nav(-1)} className="p-1.5 rounded-lg hover:bg-slate-100">
+        <button onClick={() => goBack()} className="p-1.5 rounded-lg hover:bg-slate-100">
           <ArrowLeft className="w-5 h-5" />
         </button>
         <div className="flex-1">

@@ -1,3 +1,4 @@
+import { useSafeBack } from '../../hooks/useBookingFlow';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, Trash2, X, PawPrint, Loader2 } from 'lucide-react';
@@ -22,6 +23,8 @@ const SIZES = [
 
 export default function MyPetsPage() {
   const nav = useNavigate();
+  // Back to the previous page, or to /pet when this page was opened directly.
+  const goBack = useSafeBack('/pet');
   const { data, isLoading } = useMyPetsQuery();
   const [deletePet] = useDeleteMyPetMutation();
   const [showAdd, setShowAdd] = useState(false);
@@ -39,7 +42,7 @@ export default function MyPetsPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="sticky top-0 z-10 bg-white border-b border-slate-100 px-4 py-3 flex items-center gap-3">
-        <button type="button" onClick={() => nav(-1)} className="p-1 -ml-1"><ArrowLeft size={20} /></button>
+        <button type="button" onClick={() => goBack()} className="p-1 -ml-1"><ArrowLeft size={20} /></button>
         <h1 className="text-lg font-black text-[#0F172A]">My Pets</h1>
       </div>
 

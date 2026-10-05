@@ -1,3 +1,4 @@
+import { useSafeBack } from '../../hooks/useBookingFlow';
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
@@ -8,6 +9,8 @@ import { selectLocation, selectHasLocation } from '@shared/store/locationSlice';
 
 export default function NearbyShopsPage() {
   const nav = useNavigate();
+  // Back to the previous page, or to / when this page was opened directly.
+  const goBack = useSafeBack('/');
   const loc = useSelector(selectLocation);
   const hasLocation = useSelector(selectHasLocation);
   const [service, setService] = useState('');
@@ -23,7 +26,7 @@ export default function NearbyShopsPage() {
   return (
     <div className="min-h-screen bg-[#F9FAFB] pb-10">
       <header className="page-header"><div className="page-header-inner">
-        <button onClick={() => nav(-1)} className="back-btn"><ArrowLeft size={18} strokeWidth={2.5} /></button>
+        <button onClick={() => goBack()} className="back-btn"><ArrowLeft size={18} strokeWidth={2.5} /></button>
         <div>
           <p className="t-label">Trusted Local Businesses</p>
           <p className="font-semibold text-[#0F172A]">Nearby Shops</p>

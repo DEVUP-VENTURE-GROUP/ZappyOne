@@ -1,3 +1,4 @@
+import { useSafeBack } from '../../hooks/useBookingFlow';
 import LoginSecurityCard from '@shared/components/account/LoginSecurityCard';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -44,6 +45,8 @@ function DeleteConfirmSheet({ onClose, onConfirm, isLoading }) {
 
 export default function AccountSecurityPage() {
   const nav = useNavigate();
+  // Back to the previous page, or to /profile when this page was opened directly.
+  const goBack = useSafeBack('/profile');
   const dispatch = useDispatch();
   const { data } = useGetMeQuery();
   const [deleteAccount, { isLoading: isDeleting }] = useDeleteAccountMutation();
@@ -62,7 +65,7 @@ export default function AccountSecurityPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <header className="bg-white border-b px-4 py-3 flex items-center gap-3 sticky top-0 z-10">
-        <button onClick={() => nav(-1)} className="p-1.5 rounded-lg hover:bg-slate-100">
+        <button onClick={() => goBack()} className="p-1.5 rounded-lg hover:bg-slate-100">
           <ArrowLeft className="w-5 h-5" />
         </button>
         <h1 className="font-semibold text-slate-800">Account Security</h1>

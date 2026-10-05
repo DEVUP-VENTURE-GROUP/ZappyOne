@@ -1,6 +1,8 @@
 import { useScrollTopOnChange } from '@shared/components/common/ScrollToTop';
-import { useState, useEffect, useRef } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useFlowStep, useDraft, readDraft, clearDraft, useSafeBack } from '../../hooks/useBookingFlow';
+import ResumeBanner from '../../components/common/ResumeBanner';
 import {
   ArrowLeft, Loader2, MapPin, Check, PawPrint, Star, Plus,
 } from 'lucide-react';
@@ -47,28 +49,43 @@ function petExtraLines(q) {
   return lines;
 }
 
+/**
+ * Pet care booking. Each step is in the address so the phone's Back goes one
+ * step back, and the choices are saved on the device as the customer goes, so
+ * leaving and coming back resumes (useBookingFlow). "Start over" clears it.
+ */
 export default function PetBookingFlowPage() {
   const { categoryCode } = useParams();
   const nav = useNavigate();
-  const [step, setStep] = useState('pets');
-  useScrollTopOnChange(step);
+  const draftKey = `pet:${categoryCode}`;
+  const [run, setRun] = useState(0);
+  const saved = useMemo(() => readDraft(draftKey), [draftKey, run]);
+  return (
+    <PetBookingFlow key={`${categoryCode}-${run}`} categoryCode={categoryCode} saved={saved} draftKey={draftKey}
+      onStartOver={() => { clearDraft(draftKey); nav({ search: '' }, { replace: true }); setRun((n) => n + 1); }} />
+  );
+}
+
+function PetBookingFlow({ categoryCode, saved, draftKey, onStartOver }) {
+  const nav = useNavigate();
+  const safeBack = useSafeBack('/pet');
 
   const { data: petsData } = useMyPetsQuery();
   const { data: variantsData } = usePetVariantsQuery({ categoryCode });
   const pets = petsData?.pets || [];
   const variants = variantsData?.variants || [];
 
-  const [selectedPetIds, setSelectedPetIds] = useState([]);
-  const [variantByPet, setVariantByPet] = useState({}); // petId -> variantCode
-  const [addonsByPet, setAddonsByPet] = useState({}); // petId -> [addonCode]
-  const [checkInAt, setCheckInAt] = useState('');
-  const [checkOutAt, setCheckOutAt] = useState('');
-  const [scheduledAt, setScheduledAt] = useState('');
-  const [loc, setLoc] = useState(null);
-  const [destLoc, setDestLoc] = useState(null);
+  const [selectedPetIds, setSelectedPetIds] = useState(saved?.selectedPetIds ?? []);
+  const [variantByPet, setVariantByPet] = useState(saved?.variantByPet ?? {}); // petId -> variantCode
+  const [addonsByPet, setAddonsByPet] = useState(saved?.addonsByPet ?? {}); // petId -> [addonCode]
+  const [checkInAt, setCheckInAt] = useState(saved?.checkInAt ?? '');
+  const [checkOutAt, setCheckOutAt] = useState(saved?.checkOutAt ?? '');
+  const [scheduledAt, setScheduledAt] = useState(saved?.scheduledAt ?? '');
+  const [loc, setLoc] = useState(saved?.loc ?? null);
+  const [destLoc, setDestLoc] = useState(saved?.destLoc ?? null);
   const [pickerFor, setPickerFor] = useState(null);
   const [provider, setProvider] = useState(null);
-  const [paymentMethod, setPaymentMethod] = useState('cash');
+  const [paymentMethod, setPaymentMethod] = useState(saved?.paymentMethod ?? 'cash');
   // One key per visit to this screen, so a double tap cannot book twice.
   const [idempotencyKey] = useState(() => `web-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
   const { pay, paying } = usePayBooking();
@@ -83,6 +100,36 @@ export default function PetBookingFlowPage() {
   const [getQuote, { data: quoteData, isLoading: quoting }] = usePetQuoteMutation();
   const [searchProviders, { data: providersData, isLoading: searching }] = usePetProviderSearchMutation();
   const [create, { isLoading: booking }] = useCreatePetBookingMutation();
+
+  /*
+   * A step opens only with what it needs. Providers are a fresh search each
+   * time (availability changes), so a resume lands on the location step.
+   */
+  const hasVariant = !!variantByPet[selectedPetIds[0]];
+  const NEEDS = {
+    variant: selectedPetIds.length > 0, addons: hasVariant, schedule: hasVariant, location: hasVariant,
+    providers: !!providersData, confirm: !!provider,
+  };
+  const valid = (st) => st in NEEDS && NEEDS[st];
+  const [step, setStep, backTo] = useFlowStep('pets', { valid });
+  useScrollTopOnChange(step);
+  const PREV = {
+    variant: 'pets', addons: 'variant', schedule: 'addons',
+    location: needsDates || needsTransport ? 'addons' : 'schedule', providers: 'location', confirm: 'providers',
+  };
+  const back = () => (PREV[step] ? backTo(PREV[step]) : safeBack());
+
+  useDraft(draftKey, {
+    selectedPetIds, variantByPet, addonsByPet, checkInAt, checkOutAt, scheduledAt, loc, destLoc, paymentMethod,
+    step: ['providers', 'confirm'].includes(step) ? 'location' : step,
+  }, selectedPetIds.length > 0);
+  const [resumed, setResumed] = useState(false);
+  useEffect(() => {
+    if (saved?.step && saved.step !== 'pets' && step === 'pets' && valid(saved.step)) {
+      setStep(saved.step, { replace: true });
+      setResumed(true);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   function togglePet(petId) {
     setSelectedPetIds((prev) => (prev.includes(petId) ? prev.filter((id) => id !== petId) : [...prev, petId]));
@@ -174,7 +221,8 @@ export default function PetBookingFlowPage() {
       if (res.booking?.paymentMethod === 'online') {
         await pay({ bookingSource: 'pet', bookingId: res.booking._id, label: 'Pet care booking' });
       }
-      nav(`/pet/bookings/${res.booking._id}`);
+      clearDraft(draftKey);
+      nav(`/pet/bookings/${res.booking._id}`, { replace: true });
     } catch (err) {
       if (err?.data?.code === 'NOT_COMPATIBLE') {
         toast.error(err.data.error);
@@ -189,9 +237,10 @@ export default function PetBookingFlowPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="sticky top-0 z-10 bg-white border-b border-slate-100 px-4 py-3 flex items-center gap-3">
-        <button type="button" onClick={() => nav(-1)} className="p-1 -ml-1"><ArrowLeft size={20} /></button>
+        <button type="button" onClick={back} aria-label="Back" className="p-1 -ml-1"><ArrowLeft size={20} /></button>
         <h1 className="text-lg font-black text-[#0F172A] capitalize">{categoryCode.replace(/_/g, ' ')}</h1>
       </div>
+      {resumed && <ResumeBanner onStartOver={onStartOver} onDismiss={() => setResumed(false)} />}
 
       {step === 'pets' && (
         <Shell>
@@ -390,11 +439,14 @@ export default function PetBookingFlowPage() {
       )}
 
       {pickerFor && (
-        <LocationPicker
-          serviceLabel="Pet Services"
-          onCancel={() => setPickerFor(null)}
-          onConfirm={(l) => { if (pickerFor === 'loc') setLoc(l); else setDestLoc(l); setPickerFor(null); }}
-        />
+        // The picker fills its container: give it the whole screen, above the bottom bar.
+        <div className="fixed inset-0 z-[150] bg-white">
+          <LocationPicker
+            serviceLabel="Pet Services"
+            onCancel={() => setPickerFor(null)}
+            onConfirm={(l) => { if (pickerFor === 'loc') setLoc(l); else setDestLoc(l); setPickerFor(null); }}
+          />
+        </div>
       )}
     </div>
   );

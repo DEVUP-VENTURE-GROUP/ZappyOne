@@ -1,3 +1,4 @@
+import { useSafeBack } from '../../hooks/useBookingFlow';
 import { useState } from 'react';
 import SEO, { PLANS_SCHEMA, BASE_URL } from '@shared/components/SEO';
 import { useNavigate } from 'react-router-dom';
@@ -16,6 +17,8 @@ import toast from 'react-hot-toast';
 
 export default function PlansPage() {
   const nav = useNavigate();
+  // Back to the previous page, or to /profile when this page was opened directly.
+  const goBack = useSafeBack('/profile');
   const { profile, role } = useSelector(selectAuth);
   const audience = role === 'worker' ? 'worker' : 'user';
   const { data: plansData, isLoading } = useListPlansQuery(audience);
@@ -86,7 +89,7 @@ export default function PlansPage() {
           <p className="mt-2 text-[14px] leading-relaxed text-ink-500">
             We are finishing ZappyOne memberships. When they open, every benefit listed will apply to your bookings automatically.
           </p>
-          <button type="button" onClick={() => nav(-1)} className="btn-outline mt-5 w-full">Go back</button>
+          <button type="button" onClick={() => goBack()} className="btn-outline mt-5 w-full">Go back</button>
         </div>
       </div>
     );
@@ -111,7 +114,7 @@ export default function PlansPage() {
         </div>
 
         <header className="relative z-10 px-4 py-4 flex items-center justify-between sticky top-0 bg-slate-900/50 border-b border-white/5">
-          <motion.button onClick={() => nav(-1)} whileTap={{ scale: 0.9 }} className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white hover:bg-white/10 transition-colors border border-white/10">
+          <motion.button onClick={() => goBack()} whileTap={{ scale: 0.9 }} className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white hover:bg-white/10 transition-colors border border-white/10">
             <ArrowLeft size={20} strokeWidth={2.5} />
           </motion.button>
           <div className="text-center">

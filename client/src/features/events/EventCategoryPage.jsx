@@ -1,3 +1,4 @@
+import { useSafeBack } from '../../hooks/useBookingFlow';
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -32,6 +33,8 @@ const SORT_OPTIONS = [
 /* Theme Card (Reused from HomePage for consistency) */
 function ThemeCard({ theme, onSave }) {
   const navigate = useNavigate();
+  // Back to the previous page, or to /events when this page was opened directly.
+  const goBack = useSafeBack('/events');
   return (
     <motion.div whileHover={{ y: -6 }} onClick={() => navigate(`/events/themes/${theme._id}`)}
       className="bg-white rounded-[1.5rem] overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-slate-100/80 cursor-pointer group transition-all duration-300">
@@ -72,6 +75,8 @@ function ThemeCard({ theme, onSave }) {
 
 export default function EventCategoryPage() {
   const navigate = useNavigate();
+  // Back to the previous page, or to /events when this page was opened directly.
+  const goBack = useSafeBack('/events');
   const [params] = useSearchParams();
   const category = params.get('category') || '';
   const searchQ  = params.get('search') || '';
@@ -120,7 +125,7 @@ export default function EventCategoryPage() {
 
         {/* Top Nav */}
         <div className="relative z-10 px-5 pt-6 flex items-center justify-between">
-          <button onClick={() => navigate(-1)} className="w-10 h-10 bg-white/20 flex items-center justify-center rounded-full text-white hover:bg-white/30 transition-colors border border-white/20 shadow-lg">
+          <button onClick={() => goBack()} className="w-10 h-10 bg-white/20 flex items-center justify-center rounded-full text-white hover:bg-white/30 transition-colors border border-white/20 shadow-lg">
             <ArrowLeft size={20} />
           </button>
           <button onClick={() => setShowFilter(v => !v)} className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-bold border transition-all shadow-lg ${showFilter ? 'bg-white text-slate-900 border-white' : 'bg-white/20 text-white border-white/20 hover:bg-white/30'}`}>

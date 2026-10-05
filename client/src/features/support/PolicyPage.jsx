@@ -1,3 +1,4 @@
+import { useSafeBack } from '../../hooks/useBookingFlow';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Loader2, FileText } from 'lucide-react';
 import { useGetPolicyQuery } from '@shared/services/api';
@@ -10,6 +11,8 @@ import { useGetPolicyQuery } from '@shared/services/api';
 export default function PolicyPage() {
   const { slug } = useParams();
   const nav = useNavigate();
+  // Back to the previous page, or to /support when this page was opened directly.
+  const goBack = useSafeBack('/support');
   const { data, isLoading, isError } = useGetPolicyQuery(slug);
   const policy = data?.policy;
 
@@ -17,7 +20,7 @@ export default function PolicyPage() {
     <div className="min-h-screen bg-[#F9FAFB]">
       <div className="sticky top-0 z-10 bg-white border-b border-slate-100 px-4 pt-4 pb-3">
         <div className="flex items-center gap-3">
-          <button onClick={() => nav(-1)} className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center">
+          <button onClick={() => goBack()} className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center">
             <ChevronLeft size={18} className="text-slate-600" />
           </button>
           <div className="flex items-center gap-2 min-w-0">

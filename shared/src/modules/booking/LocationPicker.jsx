@@ -26,6 +26,7 @@ import {
   Building2,
   ArrowDownToLine,
   Landmark,
+  ArrowLeft,
 } from 'lucide-react';
 import {
   useGetAddressesQuery,
@@ -880,8 +881,14 @@ export default function LocationPicker({ onConfirm, onCancel, serviceLabel, serv
       {/* Top controls: step label + search + current location */}
       <div className="shrink-0 w-full max-w-md lg:max-w-none mx-auto px-4 pt-3 pb-2.5 space-y-3">
 
-        {/* Step label */}
+        {/* Step label, with a way out: closing keeps whatever was chosen before. */}
         <div className="flex items-center gap-1.5">
+          {onCancel && (
+            <button type="button" onClick={onCancel} aria-label="Back"
+              className="-ml-1 mr-1 flex h-9 w-9 items-center justify-center rounded-full bg-white text-slate-700 ring-1 ring-slate-100 hover:bg-slate-50">
+              <ArrowLeft size={17} />
+            </button>
+          )}
           <MapPin size={13} strokeWidth={2.6} className="text-[#2563EB]" />
           <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#2563EB]">
             {tr('locpick.step', 'Step 1 of 2 • Choose location')}

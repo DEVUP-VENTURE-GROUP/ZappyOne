@@ -1,3 +1,4 @@
+import { useSafeBack } from '../../hooks/useBookingFlow';
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
@@ -134,6 +135,8 @@ function TiltCard({ code, isLoading, copied, handleCopyCode }) {
 // Main Page
 export default function ReferralPage() {
   const navigate = useNavigate();
+  // Back to the previous page, or to /profile when this page was opened directly.
+  const goBack = useSafeBack('/profile');
   const auth = useSelector(selectAuth);
 
   const { data: referralData, isLoading } = useGetReferralCodeQuery(undefined, {
@@ -214,7 +217,7 @@ export default function ReferralPage() {
         {/* Header */}
         <div className="px-4 pt-12 pb-6 flex items-center justify-between">
           <motion.button 
-            onClick={() => navigate(-1)} 
+            onClick={() => goBack()} 
             className="w-10 h-10 bg-white/5 border border-white/10 rounded-full flex items-center justify-center text-slate-300 hover:bg-white/10 transition-colors"
             whileTap={{ scale: 0.9 }}
           >

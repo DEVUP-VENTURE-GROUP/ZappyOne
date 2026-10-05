@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSafeBack } from '../../hooks/useBookingFlow';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, TrendingUp, Play, Heart, Star, ArrowUpRight, PartyPopper } from 'lucide-react';
+import { Search, TrendingUp, Play, Heart, Star, ArrowUpRight, PartyPopper, ArrowLeft } from 'lucide-react';
 import { useGetEventCategoriesQuery, useGetEventThemesQuery, useToggleSaveEventThemeMutation } from '@shared/services/api';
 import CrossSellBanner from '../../components/marketing/CrossSellBanner';
 import toast from 'react-hot-toast';
@@ -128,6 +129,7 @@ function ThemeCard({ theme, onSave }) {
 }
 
 export default function EventsHomePage() {
+  const goBack = useSafeBack('/');
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [showReels, setShowReels] = useState(false);
@@ -161,7 +163,12 @@ export default function EventsHomePage() {
     <div className="min-h-screen bg-canvas pb-20 sm:pb-8">
       {/* Header: what this is, and search. No orbs, no gradient. */}
       <div className="border-b border-line bg-white">
-        <div className="mx-auto max-w-5xl px-5 pb-6 pt-8 sm:pb-8 sm:pt-12">
+        <div className="mx-auto max-w-5xl px-5 pb-6 pt-4 sm:pb-8 sm:pt-6">
+          {/* Events sit outside the tab bar, so they carry their own way back. */}
+          <button type="button" onClick={goBack} aria-label="Back"
+            className="mb-4 flex h-10 w-10 items-center justify-center rounded-btn bg-sunken text-ink-700 hover:bg-line">
+            <ArrowLeft size={18} />
+          </button>
           <h1 className="h-display">Events and décor</h1>
           <p className="mt-1.5 text-[15px] text-ink-500">Decor and planning for birthdays, showers, anniversaries and more.</p>
           <form onSubmit={handleSearch} className="mt-5 flex max-w-2xl items-center gap-3 rounded-btn border border-line bg-sunken px-3.5 transition-colors focus-within:border-zappy-600 focus-within:bg-white">

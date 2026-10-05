@@ -1,3 +1,4 @@
+import { useSafeBack } from '../../hooks/useBookingFlow';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -45,6 +46,8 @@ const REASON_LABEL = { order: 'Order reward', referral: 'Referral bonus', refere
 
 export default function RewardsPage() {
   const nav = useNavigate();
+  // Back to the previous page, or to /profile when this page was opened directly.
+  const goBack = useSafeBack('/profile');
   const t = useT();
   const reasonLabel = (reason) => t(`rewards.reason.${reason}`, REASON_LABEL[reason] || reason);
   const { data, isLoading } = useGetRewardsQuery();
@@ -78,7 +81,7 @@ export default function RewardsPage() {
   return (
     <div className="min-h-screen bg-[#F9FAFB] pb-10">
       <div className="sticky top-0 z-10 bg-white border-b border-slate-100 px-4 pt-4 pb-3 flex items-center gap-3">
-        <button onClick={() => nav(-1)} className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center"><ChevronLeft size={18} className="text-slate-600" /></button>
+        <button onClick={() => goBack()} className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center"><ChevronLeft size={18} className="text-slate-600" /></button>
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-xl bg-zappy-600 flex items-center justify-center"><Gift size={16} className="text-white" /></div>
           <h1 className="font-extrabold text-lg text-[#0F172A]">{t('rewards.title', 'Rewards')}</h1>

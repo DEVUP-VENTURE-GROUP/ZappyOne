@@ -1,3 +1,4 @@
+import { useSafeBack } from '../../hooks/useBookingFlow';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, TrendingUp, Package, Tag, ShoppingBag } from 'lucide-react';
 import { useGetSpendingQuery } from '@shared/services/api';
@@ -14,6 +15,8 @@ function Bar({ value, max, color = 'bg-zappy-500' }) {
 
 export default function SpendingPage() {
   const nav = useNavigate();
+  // Back to the previous page, or to /profile when this page was opened directly.
+  const goBack = useSafeBack('/profile');
   const { data, isLoading } = useGetSpendingQuery();
 
   const months = data?.monthly ?? [];
@@ -24,7 +27,7 @@ export default function SpendingPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <header className="bg-white border-b px-4 py-3 flex items-center gap-3 sticky top-0 z-10">
-        <button onClick={() => nav(-1)} className="p-1.5 rounded-lg hover:bg-slate-100">
+        <button onClick={() => goBack()} className="p-1.5 rounded-lg hover:bg-slate-100">
           <ArrowLeft className="w-5 h-5" />
         </button>
         <h1 className="font-semibold text-slate-800">Spending Analytics</h1>

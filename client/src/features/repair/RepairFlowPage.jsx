@@ -1,6 +1,8 @@
 import { useScrollTopOnChange } from '@shared/components/common/ScrollToTop';
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useFlowStep, useDraft, readDraft, clearDraft, useSafeBack } from '../../hooks/useBookingFlow';
+import ResumeBanner from '../../components/common/ResumeBanner';
 import { formatPaise } from '@shared/utils/money';
 import { useSelector, useDispatch } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -1532,8 +1534,27 @@ function ConfirmStep({
 
 /* Flow controller */
 
+/**
+ * The booking, kept as the customer goes (useBookingFlow): each step is in the
+ * address so the phone's Back goes one step back, and progress is saved on the
+ * device so leaving and coming back resumes it. "Start over" clears it.
+ */
 export default function RepairFlowPage({ vertical = 'mobile' }) {
   const nav = useNavigate();
+  const [params] = useSearchParams();
+  const draftKey = `repair:${vertical}`;
+  const [run, setRun] = useState(0);
+  // A problem picked from a home chip is a fresh start, not a resume.
+  const saved = useMemo(() => (params.get('problem') ? null : readDraft(draftKey)), [draftKey, run]); // eslint-disable-line react-hooks/exhaustive-deps
+  return (
+    <RepairFlow key={`${vertical}-${run}`} vertical={vertical} saved={saved} draftKey={draftKey}
+      onStartOver={() => { clearDraft(draftKey); nav({ search: '' }, { replace: true }); setRun((n) => n + 1); }} />
+  );
+}
+
+function RepairFlow({ vertical, saved, draftKey, onStartOver }) {
+  const nav = useNavigate();
+  const safeBack = useSafeBack('/');
   const loc = useSelector(selectLocation);
   const hasLocation = useSelector(selectHasLocation);
   // The address is confirmed on the map once per booking, at the step where it
@@ -1560,27 +1581,51 @@ export default function RepairFlowPage({ vertical = 'mobile' }) {
   const [searchParams] = useSearchParams();
   const [presetProblem, setPresetProblem] = useState(() => searchParams.get('problem') || null);
 
-  const [step, setStep] = useState('brand');
-
-  useScrollTopOnChange(step);
-  const [skipped, setSkipped] = useState(() => new Set());
-  const [brand, setBrand] = useState(null);
-  const [productType, setProductType] = useState(null);
-  const [family, setFamily] = useState(null);
-  const [model, setModel] = useState(null);
-  const [configuration, setConfiguration] = useState(null);
-  const [problem, setProblem] = useState(null);
-  const [diagnosis, setDiagnosis] = useState(null);
-  const [diagnosticAnswers, setDiagnosticAnswers] = useState(null);
-  const [diagnosticTranscript, setDiagnosticTranscript] = useState([]);
+  const [skipped, setSkipped] = useState(() => new Set(saved?.skipped || []));
+  const [brand, setBrand] = useState(saved?.brand ?? null);
+  const [productType, setProductType] = useState(saved?.productType ?? null);
+  const [family, setFamily] = useState(saved?.family ?? null);
+  const [model, setModel] = useState(saved?.model ?? null);
+  const [configuration, setConfiguration] = useState(saved?.configuration ?? null);
+  const [problem, setProblem] = useState(saved?.problem ?? null);
+  const [diagnosis, setDiagnosis] = useState(saved?.diagnosis ?? null);
+  const [diagnosticAnswers, setDiagnosticAnswers] = useState(saved?.diagnosticAnswers ?? null);
+  const [diagnosticTranscript, setDiagnosticTranscript] = useState(saved?.diagnosticTranscript ?? []);
   const [provider, setProvider] = useState(null);
   const [repairCode, setRepairCode] = useState(null);
   // The part grade the customer picked on the provider card. Null means they
   // were not offered a choice, and the diagnosis recommendation stands.
   const [qualityCode, setQualityCode] = useState(null);
   const [addOnCodes, setAddOnCodes] = useState([]);
-  const [serviceMode, setServiceMode] = useState('doorstep');
-  const [fuelType, setFuelType] = useState(null);
+  const [serviceMode, setServiceMode] = useState(saved?.serviceMode ?? 'doorstep');
+  const [fuelType, setFuelType] = useState(saved?.fuelType ?? null);
+
+  /*
+   * A step opens only with what it needs; anything else (a shared link, an
+   * expired draft) starts at the brand instead of an empty screen. The provider
+   * and its price are never restored: they are chosen again so the price is current.
+   */
+  const NEEDS = {
+    type: brand, family: brand, model: brand, config: model, fuel: model, problem: model,
+    diagnose: problem, mode: problem, provider: problem, addons: provider, confirm: provider,
+  };
+  const valid = (s) => steps.includes(s) && (!(s in NEEDS) || !!NEEDS[s]);
+  const [step, setStep, backTo] = useFlowStep('brand', { valid });
+  useScrollTopOnChange(step);
+
+  // Saved on this device as they go, so leaving and coming back resumes here.
+  useDraft(draftKey, {
+    brand, productType, family, model, configuration, fuelType, problem,
+    diagnosis, diagnosticAnswers, diagnosticTranscript, serviceMode, skipped: [...skipped],
+    step: ['addons', 'confirm'].includes(step) ? 'provider' : step,
+  }, !!brand);
+  const [resumed, setResumed] = useState(false);
+  useEffect(() => {
+    if (saved?.step && saved.step !== 'brand' && step === 'brand' && valid(saved.step)) {
+      setStep(saved.step, { replace: true });
+      setResumed(true);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   /**
    * The inspection fee is ZappyOne's, set in admin config — so it is read from
@@ -1594,26 +1639,28 @@ export default function RepairFlowPage({ vertical = 'mobile' }) {
   );
   const inspectionFeePaise = preview?.estimate?.totalPaise ?? 0;
 
-  function go(from, delta) {
-    const i = steps.indexOf(from);
-    let j = i + delta;
-    // Walk past steps this catalog had nothing to show for, in both directions.
+  /** The step `delta` away, walking past steps this catalog had nothing to show for. */
+  function stepFrom(from, delta) {
+    let j = steps.indexOf(from) + delta;
     while (j > 0 && j < steps.length && skipped.has(steps[j])) j += delta;
-    if (j < 0) return nav(-1);
-    return setStep(steps[Math.min(j, steps.length - 1)]);
+    return j < 0 ? null : steps[Math.min(j, steps.length - 1)];
   }
 
-  const next = (from) => go(from, 1);
-  const back = () => go(step, -1);
+  const next = (from, opts) => setStep(stepFrom(from, 1), opts);
+  const back = () => {
+    const prev = stepFrom(step, -1);
+    return prev ? backTo(prev) : safeBack();
+  };
 
   /** A step with nothing in it records itself and hands over to the next one. */
   const skip = useCallback((name) => {
     setSkipped((prev) => (prev.has(name) ? prev : new Set(prev).add(name)));
+    // Replaced, not added: Back must not land on a step that skips itself again.
     setStep((current) => {
       const i = steps.indexOf(current);
       return steps[Math.min(i + 1, steps.length - 1)];
-    });
-  }, [steps]);
+    }, { replace: true });
+  }, [steps, setStep]);
 
   const skipFamily = useCallback(() => skip('family'), [skip]);
   const skipAddOns = useCallback(() => skip('addons'), [skip]);
@@ -1663,6 +1710,7 @@ export default function RepairFlowPage({ vertical = 'mobile' }) {
     <div className="min-h-screen bg-[#F9FAFB] pb-10">
       <StepHeader steps={steps} step={step} onBack={back} title={titles[step]}
         subtitle={configuration?.name || deviceLabel || brand?.name} />
+      {resumed && <ResumeBanner onStartOver={onStartOver} onDismiss={() => setResumed(false)} />}
 
       {step === 'brand' && (
         <BrandStep vertical={vertical} onPick={(b) => { setBrand(b); next('brand'); }} />
@@ -1709,7 +1757,8 @@ export default function RepairFlowPage({ vertical = 'mobile' }) {
             setDiagnosis(d);
             setDiagnosticAnswers(rawAnswers || null);
             setDiagnosticTranscript(qa || []);
-            next('diagnose');
+            // No questions were asked: the step was never really seen, so Back skips it.
+            next('diagnose', { replace: !(qa || []).length });
           }} />
       )}
       {step === 'mode' && (
@@ -1756,7 +1805,7 @@ export default function RepairFlowPage({ vertical = 'mobile' }) {
           diagnosticAnswers={diagnosticAnswers} diagnosticTranscript={diagnosticTranscript}
           serviceMode={serviceMode} inspectionFeePaise={inspectionFeePaise}
           fuelType={fuelType}
-          onDone={(b) => nav(`/repair/bookings/${b._id}`)}
+          onDone={(b) => { clearDraft(draftKey); nav(`/repair/bookings/${b._id}`, { replace: true }); }}
         />
       )}
     </div>

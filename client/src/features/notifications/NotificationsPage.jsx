@@ -1,3 +1,4 @@
+import { useSafeBack } from '../../hooks/useBookingFlow';
 import { useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
@@ -160,6 +161,8 @@ function SectionLabel({ label }) {
 /* Main page */
 export default function NotificationsPage() {
   const nav = useNavigate();
+  // Back to the previous page, or to / when this page was opened directly.
+  const goBack = useSafeBack('/');
   
   const { data, isLoading, isFetching, isError, refetch } = useListNotificationsQuery({ page: 1, unreadOnly: false });
   const [markRead]   = useMarkNotificationReadMutation();
@@ -189,7 +192,7 @@ export default function NotificationsPage() {
         <header className="w-full max-w-[960px] mx-auto px-5 md:px-8 pt-10 pb-6 md:pt-14 md:pb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-6 border-b border-slate-100">
           <div className="flex-1">
             <button
-              onClick={() => nav(-1)}
+              onClick={() => goBack()}
               className="mb-6 w-10 h-10 flex items-center justify-center rounded-full border border-slate-200 text-slate-500 hover:bg-slate-50 transition-colors"
             >
               <ArrowLeft size={18} />

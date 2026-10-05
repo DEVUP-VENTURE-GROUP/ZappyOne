@@ -1,3 +1,4 @@
+import { useSafeBack } from '../../hooks/useBookingFlow';
 import { useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -41,6 +42,8 @@ import JobChat from '@shared/components/jobs/JobChat';
  */
 export default function JobTrackingPage({ job, extras = null, startCode = null, codeStage = null, cancel = null, onRate, onReceipt, onSOS, onBack, live = null }) {
   const nav = useNavigate();
+  // Back to the previous page, or to /orders when this page was opened directly.
+  const goBack = useSafeBack('/orders');
   const mapRef = useRef(null);
   const [sosOpen, setSosOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
@@ -110,7 +113,7 @@ export default function JobTrackingPage({ job, extras = null, startCode = null, 
 
         <TrackingHeader
           job={job} status={status} eta={eta} terminal={job.terminal}
-          onBack={onBack || (() => nav(-1))}
+          onBack={onBack || (() => goBack())}
           onSOS={() => setSosOpen(true)}
           onSupport={() => nav('/support')}
         />

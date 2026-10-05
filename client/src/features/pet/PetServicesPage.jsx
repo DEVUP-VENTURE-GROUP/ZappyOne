@@ -1,3 +1,4 @@
+import { useSafeBack } from '../../hooks/useBookingFlow';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Scissors, Home, Footprints, HeartHandshake, Car, Stethoscope,
@@ -28,13 +29,15 @@ const QUICK_LINKS = [
 
 export default function PetServicesPage() {
   const nav = useNavigate();
+  // Back to the previous page, or to / when this page was opened directly.
+  const goBack = useSafeBack('/');
   const { data, isLoading } = usePetCategoriesQuery();
   const categories = data?.categories || [];
 
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="sticky top-0 z-10 bg-white border-b border-slate-100 px-4 py-3 flex items-center gap-3">
-        <button type="button" onClick={() => nav(-1)} className="p-1 -ml-1"><ArrowLeft size={20} /></button>
+        <button type="button" onClick={() => goBack()} className="p-1 -ml-1"><ArrowLeft size={20} /></button>
         <h1 className="text-lg font-black text-[#0F172A]">Pet Services</h1>
       </div>
 

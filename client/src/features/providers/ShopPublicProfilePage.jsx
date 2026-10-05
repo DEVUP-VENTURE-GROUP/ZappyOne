@@ -1,3 +1,4 @@
+import { useSafeBack } from '../../hooks/useBookingFlow';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Store, Star, ShieldCheck, MapPin, Calendar, Loader2, ChevronRight } from 'lucide-react';
 import { useGetShopProfileQuery } from '@shared/services/api';
@@ -5,6 +6,8 @@ import { useGetShopProfileQuery } from '@shared/services/api';
 
 export default function ShopPublicProfilePage() {
   const nav = useNavigate();
+  // Back to the previous page, or to / when this page was opened directly.
+  const goBack = useSafeBack('/');
   const { id } = useParams();
   const { data, isLoading } = useGetShopProfileQuery(id);
   const shop = data?.shop;
@@ -38,7 +41,7 @@ export default function ShopPublicProfilePage() {
           </div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/20" />
-        <button onClick={() => nav(-1)} className="absolute top-4 left-4 w-9 h-9 rounded-full bg-white flex items-center justify-center shadow">
+        <button onClick={() => goBack()} className="absolute top-4 left-4 w-9 h-9 rounded-full bg-white flex items-center justify-center shadow">
           <ArrowLeft size={18} strokeWidth={2.5} />
         </button>
       </div>

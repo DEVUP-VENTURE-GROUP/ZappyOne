@@ -11,7 +11,7 @@ async function presign(req, res, next) {
   } catch (err) { next(err); }
 }
 
-const ALLOWED_FOLDERS = new Set(['kyc', 'profile', 'order-proof', 'vehicle-health', 'completion-photos', 'order-images', 'voice-tips', 'event-photos']);
+const ALLOWED_FOLDERS = new Set(['kyc', 'profile', 'order-proof', 'vehicle-health', 'completion-photos', 'order-images', 'voice-tips', 'event-photos', 'helping', 'pet', 'shop']);
 
 async function download(req, res, next) {
   try {

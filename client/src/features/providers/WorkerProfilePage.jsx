@@ -1,3 +1,4 @@
+import { useSafeBack } from '../../hooks/useBookingFlow';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, ShieldCheck, Star, BadgeCheck, CalendarDays, Briefcase, MessageSquareQuote } from 'lucide-react';
 import { useGetOrderQuery, useGetWorkerPublicProfileQuery } from '@shared/services/api';
@@ -50,6 +51,8 @@ export default function WorkerProfilePage() {
   const [searchParams] = useSearchParams();
   const orderId = searchParams.get('orderId');
   const nav = useNavigate();
+  // Back to the previous page, or to / when this page was opened directly.
+  const goBack = useSafeBack('/');
 
   const { data: profileData, isLoading } = useGetWorkerPublicProfileQuery(workerId, { skip: !workerId });
   // Older bookings carry the provider's name on the order itself.
@@ -76,7 +79,7 @@ export default function WorkerProfilePage() {
     <div className="min-h-screen bg-canvas pb-32">
       <header className="sticky top-0 z-20 border-b border-line bg-white">
         <div className="mx-auto flex max-w-2xl items-center gap-2 px-4 py-2.5">
-          <button type="button" onClick={() => nav(-1)} aria-label="Back" className="back-btn -ml-1.5"><ArrowLeft size={19} /></button>
+          <button type="button" onClick={() => goBack()} aria-label="Back" className="back-btn -ml-1.5"><ArrowLeft size={19} /></button>
           <p className="text-[17px] font-bold text-ink-900">Profile</p>
         </div>
       </header>

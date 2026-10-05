@@ -1,3 +1,4 @@
+import { useSafeBack } from '../../hooks/useBookingFlow';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, ShoppingBasket, PackageCheck, ChevronRight } from 'lucide-react';
 import { useHelpingServicesQuery } from '@shared/services/api';
@@ -28,6 +29,8 @@ const CARDS = [
 
 export default function HelpingServicesPage() {
   const nav = useNavigate();
+  // Back to the previous page, or to / when this page was opened directly.
+  const goBack = useSafeBack('/');
   const { data } = useHelpingServicesQuery();
   const configured = new Set((data?.services || []).map((s) => s.serviceType));
 
@@ -40,7 +43,7 @@ export default function HelpingServicesPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="sticky top-0 z-10 bg-white border-b border-slate-100 px-4 py-3 flex items-center gap-3">
-        <button type="button" onClick={() => nav(-1)} className="p-1 -ml-1"><ArrowLeft size={20} /></button>
+        <button type="button" onClick={() => goBack()} className="p-1 -ml-1"><ArrowLeft size={20} /></button>
         <h1 className="text-lg font-black text-[#0F172A]">Helping Services</h1>
       </div>
 
