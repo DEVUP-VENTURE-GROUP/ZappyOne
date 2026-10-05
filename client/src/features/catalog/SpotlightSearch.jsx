@@ -5,6 +5,7 @@ import { problemPhoto, categoryPhoto, servicePhoto } from '@shared/components/ho
 import { useLazySmartSearchQuery, useSearchTrendingQuery } from '@shared/services/api';
 import { getRecent, addRecent, clearRecent } from './recentSearches';
 import VoiceSearchButton from '../../components/common/VoiceSearchButton';
+import { trackSearch } from '../../hooks/useTelemetry';
 
 /**
  * Full-screen search over the live catalog.
@@ -122,6 +123,26 @@ export default function SpotlightSearch({ open, onClose, lat, lng, initialQuery 
     const id = setTimeout(() => runSearch({ q: term, lat, lng }, true), 220);
     return () => clearTimeout(id);
   }, [q, open, lat, lng, runSearch]);
+
+  /*
+   * Record what was searched once the customer stops typing, not every
+   * keystroke: admin sees what people look for and what we could not serve.
+   */
+  const logged = useRef('');
+  useEffect(() => {
+    const d = searchState.data;
+    const term = q.trim().toLowerCase();
+    if (!open || !d || term.length < 3 || logged.current === term || d.query?.toLowerCase() !== term) return undefined;
+    const t = setTimeout(() => {
+      logged.current = term;
+      const top = d.problems?.[0] || d.services?.[0] || d.categories?.[0];
+      trackSearch({
+        category: top?.lineCode || 'unmatched', query: term, lat, lng,
+        result: d.empty || d.notHere ? 'no_service' : 'served', userType: 'user',
+      });
+    }, 1500);
+    return () => clearTimeout(t);
+  }, [searchState.data, q, open, lat, lng]);
 
   const openResult = useCallback((item) => {
     if (q.trim()) setRecent(addRecent(q.trim()));

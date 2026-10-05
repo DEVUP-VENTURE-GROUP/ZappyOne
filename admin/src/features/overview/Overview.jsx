@@ -4,6 +4,7 @@ import {
   TrendingUp, Users, UserCheck,
 } from 'lucide-react';
 import { StatCard, PageLoader, LineSparkline, BarChart, Card, fmt } from '../../ui/kit';
+import DemandAlerts from './DemandAlerts';
 
 export default function Overview() {
   const { data: m, isLoading } = useAdminMetricsQuery();
@@ -17,6 +18,9 @@ export default function Overview() {
 
   return (
     <div className="space-y-6">
+      {/* What needs a person now, and what customers are looking for */}
+      <DemandAlerts />
+
       {/* Stat cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3">
         <StatCard label="Orders Today"    value={m.ordersToday}    Icon={ClipboardList} color="text-blue-600"   bg="bg-blue-50" />

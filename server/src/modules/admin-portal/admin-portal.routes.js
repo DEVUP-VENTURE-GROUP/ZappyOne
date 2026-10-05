@@ -163,6 +163,18 @@ router.post('/bookings/:source/:id/notes',
     } catch (err) { next(err); }
   });
 
+/* Bookings → Needs intervention: stuck jobs and jobs still waiting for a provider */
+
+router.get('/bookings/attention', async (req, res, next) => {
+  try { res.json(await require('../jobs/ops.service').attention()); } catch (err) { next(err); }
+});
+
+/* Overview → what customers are searching for, and what we could not serve */
+
+router.get('/alerts/search-demand', async (req, res, next) => {
+  try { res.json(await require('./search-demand.service').summary()); } catch (err) { next(err); }
+});
+
 /* Reviews: reported and auto-flagged reviews, and the admin's decision */
 
 const reviews = require('../review/review.service');

@@ -3,12 +3,14 @@ import { useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { Search, X, Loader2, RotateCcw, Ban, Store, User, MapPin } from 'lucide-react';
 import {
+  useAdminBookingAttentionQuery,
   useAdminBookingsQuery, useAdminBookingDetailQuery, useAdminForceCancelOrderMutation,
   useCancelRepairBookingMutation, useAdminCancelPetBookingMutation, useAdminCancelHelpingTaskMutation,
   useAdminRefundOrderMutation, useAdminCancelEventBookingMutation,
 } from '@shared/services/api';
 import { SectionHeader, Card, Th, Td, EmptyState, Pagination, fmt, fmtDate } from '../../ui/kit';
 import { InterventionPanel, NotesPanel } from './InterventionPanel';
+import InterventionQueue from './InterventionQueue';
 
 const SOURCES = [
   { id: '', label: 'All' },
@@ -42,6 +44,9 @@ export default function Bookings() {
   const [q, setQ] = useState('');
   const [page, setPage] = useState(1);
   const [open, setOpen] = useState(null);
+  // Two views: every booking, or only what needs a person now.
+  const [view, setView] = useState(params.get('view') === 'attention' ? 'attention' : 'all');
+  const { data: attention } = useAdminBookingAttentionQuery(undefined, { pollingInterval: 30000 });
   const query = { page, limit: 25, ...(source && { source }), ...(bucket && { bucket }), ...(q.trim() && { q: q.trim() }) };
   const { data, isFetching } = useAdminBookingsQuery(query);
   const rows = data?.rows || [];
@@ -49,8 +54,19 @@ export default function Bookings() {
   const reset = (fn) => (v) => { fn(v); setPage(1); };
   return (
     <div className="space-y-4">
-      <SectionHeader title="Bookings" subtitle={data ? `${data.total} matching` : 'Repair, pet, helping and legacy orders in one place'} />
+      <SectionHeader title="Bookings" subtitle={view === 'attention' ? 'Jobs that need a person now' : data ? `${data.total} matching` : 'Repair, pet, helping and legacy orders in one place'} />
 
+      <div className="flex gap-1 border-b border-slate-200" role="tablist">
+        {[['all', 'All bookings', null], ['attention', 'Needs intervention', attention?.count]].map(([id, text, n]) => (
+          <button key={id} type="button" role="tab" aria-selected={view === id} onClick={() => setView(id)}
+            className={`-mb-px flex items-center gap-2 border-b-2 px-3 py-2 text-sm font-semibold transition ${view === id ? 'border-zappy-600 text-slate-900' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
+            {text}
+            {n > 0 && <span className="rounded-full bg-red-600 px-1.5 py-0.5 text-[11px] font-bold leading-none text-white">{n}</span>}
+          </button>
+        ))}
+      </div>
+
+      {view === 'attention' ? <InterventionQueue /> : (<>
       <div className="flex flex-wrap items-center gap-2">
         {SOURCES.map((s) => (
           <button key={s.id} onClick={() => reset(setSource)(s.id)}
@@ -98,6 +114,7 @@ export default function Bookings() {
       {data?.total > 25 && <Pagination page={page} total={data.total} limit={25} onChange={setPage} onPrev={() => setPage((p) => p - 1)} onNext={() => setPage((p) => p + 1)} />}
 
       {open && <BookingDrawer {...open} onClose={() => setOpen(null)} />}
+      </>)}
     </div>
   );
 }

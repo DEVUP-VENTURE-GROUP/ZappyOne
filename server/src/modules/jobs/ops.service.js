@@ -49,6 +49,19 @@ async function stuckJobs({ now = new Date() } = {}) {
     .sort((a, b) => b.minutesInStatus - a.minutesInStatus);
 }
 
+/**
+ * What needs a person now, for the Bookings → Needs intervention tab: jobs
+ * past their time limit, then jobs still waiting for a provider. Longest
+ * first in each group.
+ */
+async function attention({ now = new Date() } = {}) {
+  const live = await liveJobs({ now });
+  const byWait = (a, b) => b.minutesInStatus - a.minutesInStatus;
+  const stuck = live.filter((j) => j.stuck).sort(byWait);
+  const waiting = live.filter((j) => !j.stuck && j.waiting && !j.hasProvider).sort(byWait);
+  return { stuck, waiting, count: stuck.length + waiting.length };
+}
+
 /** Counts for a board header: by kind, waiting, stuck. */
 function summarise(jobs) {
   const byKind = {};
@@ -66,4 +79,4 @@ function summarise(jobs) {
   };
 }
 
-module.exports = { liveJobs, stuckJobs, summarise, since };
+module.exports = { liveJobs, stuckJobs, attention, summarise, since };

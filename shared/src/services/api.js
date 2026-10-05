@@ -1205,6 +1205,9 @@ export const api = createApi({
     }),
 
     // Economics: fee, commission and tax for every service line (admin → Economics)
+    // Bookings → Needs intervention, and Overview → what customers search for
+    adminBookingAttention: b.query({ query: () => adminApiPath('/bookings/attention'), providesTags: ['AdminMetrics'] }),
+    adminSearchDemand: b.query({ query: () => adminApiPath('/alerts/search-demand') }),
     adminFees: b.query({
       query: () => adminApiPath('/fees'),
       providesTags: ['Fees'],
@@ -2436,6 +2439,8 @@ export const {
   useAdminShieldWriteOffFeeMutation,
   useAdminShieldUpdateFeeScheduleMutation,
   useAdminFeesQuery,
+  useAdminBookingAttentionQuery,
+  useAdminSearchDemandQuery,
   useAdminUpdateFeeMutation,
   // Job chat
   useJobChatQuery,

@@ -39,9 +39,17 @@ async function repairLine(vertical) {
  * Ops view of a job: is it live, where is it, and is it stuck?
  * `stuck(doc, minutesInStatus, now)` returns a short reason, or null.
  */
+/** "45 min", "3 h 10 min", "23 days": how long, the way a person says it. */
+const duration = (mins) => {
+  const m = Math.round(mins);
+  if (m < 60) return `${m} min`;
+  if (m < 48 * 60) return `${Math.floor(m / 60)} h${m % 60 ? ` ${m % 60} min` : ''}`;
+  return `${Math.floor(m / 1440)} days`;
+};
+
 const after = (limits, fallback) => (doc, mins) => {
   const limit = limits[doc.status] ?? fallback;
-  return limit != null && mins > limit ? `${doc.status.replace(/_/g, ' ').toLowerCase()} for ${Math.round(mins)} min` : null;
+  return limit != null && mins > limit ? `${doc.status.replace(/_/g, ' ').toLowerCase()} for ${duration(mins)}` : null;
 };
 
 const HELPING_LINE = { shopping: 'shopping_pickup', pickup: 'shopping_pickup', return: 'returns_exchange', exchange: 'returns_exchange' };
