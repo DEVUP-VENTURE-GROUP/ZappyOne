@@ -189,6 +189,22 @@ router.get('/insights/funnel', async (req, res, next) => {
   try { res.json(await require('./analytics.service').funnel({ days: Number(req.query.days) || 7 })); } catch (err) { next(err); }
 });
 
+router.get('/insights/customers', async (req, res, next) => {
+  try { res.json(await require('./analytics.service').customers({ days: Number(req.query.days) || 30 })); } catch (err) { next(err); }
+});
+
+router.get('/insights/money', async (req, res, next) => {
+  try { res.json(await require('./analytics.service').money({ days: Number(req.query.days) || 30 })); } catch (err) { next(err); }
+});
+
+router.get('/insights/live', async (req, res, next) => {
+  try { res.json(await require('./analytics.service').live()); } catch (err) { next(err); }
+});
+
+router.get('/insights/geo', async (req, res, next) => {
+  try { res.json(await require('./analytics.service').geo({ days: Number(req.query.days) || 30, service: req.query.service || null })); } catch (err) { next(err); }
+});
+
 router.get('/insights/demand', async (req, res, next) => {
   try { res.json(await require('./search-demand.service').demand({ days: Number(req.query.days) || 7 })); } catch (err) { next(err); }
 });

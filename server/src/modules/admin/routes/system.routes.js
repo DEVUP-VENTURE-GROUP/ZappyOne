@@ -18,7 +18,6 @@ router.post(
 
 router.get('/alerts', ctrl.getAlerts);
 
-router.get('/retention', opCtrl.getRetention);
 
 // FCM health check
 router.get('/notifications/health', async (req, res, next) => {

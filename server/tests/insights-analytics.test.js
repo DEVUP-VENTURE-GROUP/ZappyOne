@@ -117,3 +117,62 @@ test('funnel: people at each step, and the step that loses the most', async () =
   expect(out.steps[3]).toMatchObject({ ofFirst: 10 });
   expect(out.findings[0].text).toMatch(/Biggest drop: visited the app → searched/);
 });
+
+test('customers: new against returning, cohorts, sign-ups who booked, ratings', async () => {
+  const User = require('../src/modules/user/user.model');
+  const Review = require('../src/modules/review/review.model');
+  await User.collection.insertMany([
+    { _id: asha, phone: '9800000111', name: 'Asha Rao', createdAt: daysAgo(2) },
+    { _id: ravi, phone: '9800000110', name: 'Ravi Kumar', createdAt: daysAgo(40) },
+    { phone: '9800000112', name: 'Never Booked', createdAt: daysAgo(2) },
+  ]);
+  await Review.collection.insertMany([
+    { kind: 'pet', jobId: new mongoose.Types.ObjectId(), userId: asha, rating: 5, comment: 'Lovely', status: 'visible', excluded: false, flagged: false, createdAt: daysAgo(1) },
+    { kind: 'repair', jobId: new mongoose.Types.ObjectId(), userId: ravi, rating: 1, comment: 'Came late', status: 'visible', excluded: false, flagged: false, createdAt: daysAgo(1) },
+  ]);
+  const out = await analytics.customers({ days: 7, now: NOW });
+  // Ravi booked 9 days ago, so this week he is returning; Asha is new.
+  expect(out.totals).toMatchObject({ customers: 2, newCustomers: 1, returning: 1, repeatRate: 50, signups: 2, activated: 1, averageRating: 3 });
+  expect(out.lowRatings).toEqual([expect.objectContaining({ rating: 1, text: 'Came late', by: 'Ravi K.' })]);
+  expect(out.cohorts).toHaveLength(6);
+  expect(out.cohorts.at(-1)).toMatchObject({ customers: 1 }); // Asha's first booking is this month
+});
+
+test('money: what we earn, split, per service and payment method', async () => {
+  const out = await analytics.money({ days: 7, now: NOW });
+  expect(out.current).toMatchObject({
+    gmvPaise: 380000, commissionPaise: 20000 + 10000 + 7000, platformFeePaise: 3000, takePaise: 40000, jobs: 3,
+  });
+  expect(out.current.takeRate).toBe(10.5);
+  expect(out.byService[0]).toMatchObject({ label: 'Mobile Repair', takePaise: 32000 });
+  expect(out.daily).toHaveLength(7);
+});
+
+test('map: ~1 km cells, providers, when, and where to expand', async () => {
+  const out = await analytics.geo({ days: 7, now: NOW });
+  const madhapur = out.cells.find((c) => c.lat === 17.44 && c.lng === 78.39);
+  expect(madhapur).toMatchObject({ bookings: 3, completed: 2, cancelled: 1, area: 'Madhapur, Hyderabad' });
+  expect(out.when.flat().reduce((a, b) => a + b, 0)).toBe(4);
+  expect(out.totals).toMatchObject({ bookings: 4, mapped: 4 });
+  expect(JSON.stringify(out.cells)).not.toMatch(/Flat|House/);
+  expect(out.areas[0].area).toBe('Madhapur, Hyderabad');
+});
+
+test('highlights: repair quotes, customers slipping away, live now', async () => {
+  const { RepairQuote } = require('../src/modules/repair/models/quote.model');
+  const q = (status, total) => ({ bookingId: new mongoose.Types.ObjectId(), status, totalPaise: total, createdAt: daysAgo(2), updatedAt: daysAgo(2) });
+  await RepairQuote.collection.insertMany([q('approved', 300000), q('rejected', 200000), q('expired', 100000), q('sent', 50000)]);
+  const f = await analytics.funnel({ days: 7, now: NOW + 200000 }); // past the 3-minute cache
+  expect(f.quotes).toMatchObject({ sent: 4, approved: 1, declined: 1, expired: 1, waiting: 1, lostPaise: 300000, approvalRate: 33.3 });
+
+  // Ravi's job 40 days ago was done and he has not booked since.
+  await RepairBooking.collection.insertOne({
+    userId: new mongoose.Types.ObjectId(), vertical: 'mobile', status: 'COMPLETED', reference: 'R-old', brandCode: 'x', modelCode: 'y',
+    priceSnapshot: { totalPaise: 100000 }, statusHistory: [], createdAt: daysAgo(40), updatedAt: daysAgo(40),
+  });
+  const c = await analytics.customers({ days: 7, now: NOW + 200000 });
+  expect(c.atRisk.people).toBe(1);
+
+  const l = await analytics.live();
+  expect(l).toEqual(expect.objectContaining({ onApp: expect.any(Number), jobsLive: expect.any(Number), workersOnline: expect.any(Number) }));
+});

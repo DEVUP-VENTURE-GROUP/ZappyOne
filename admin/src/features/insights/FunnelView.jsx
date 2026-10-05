@@ -1,6 +1,6 @@
 import { useAdminInsightsFunnelQuery } from '@shared/services/api';
 import { PageLoader } from '../../ui/kit';
-import { Findings, Panel, FunnelChart, count } from './charts';
+import { Findings, Panel, FunnelChart, Kpi, count, rupees } from './charts';
 
 /**
  * Funnel: where do customers drop off? People at each step of the period,
@@ -28,6 +28,18 @@ export default function FunnelView({ days }) {
       <Panel title="From visit to completed job" note={`People, last ${span} days · each step counted on its own`}>
         <FunnelChart steps={data.steps} />
       </Panel>
+
+      {data.quotes?.sent > 0 && (
+        <Panel title="Repair quotes" note="After the technician checks the device, the customer approves the price or not">
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+            <Kpi label="Quotes sent" value={count(data.quotes.sent)} />
+            <Kpi label="Approved" value={data.quotes.approvalRate == null ? count(data.quotes.approved) : `${data.quotes.approvalRate}%`} accent="#10B981" hint={`${count(data.quotes.approved)} · ${rupees(data.quotes.approvedPaise)}`} />
+            <Kpi label="Declined" value={count(data.quotes.declined)} />
+            <Kpi label="Left to expire" value={count(data.quotes.expired)} hint={`${count(data.quotes.waiting)} still waiting`} />
+            <Kpi label="Value lost" value={rupees(data.quotes.lostPaise)} hint="Declined or expired" />
+          </div>
+        </Panel>
+      )}
 
       <Panel title="By service" note="People who searched, booked and had the job done">
         {data.services.length ? (

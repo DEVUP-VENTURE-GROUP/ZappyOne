@@ -69,7 +69,7 @@ export function Kpi({ label, value, delta, invert, spark, hint, accent = '#1F4FD
  * previous period, and an optional second series as a line on its own scale
  * (money beside counts). Hover shows the day's numbers.
  */
-export function TrendChart({ days = [], bar, barLabel, prev, line, lineLabel, lineFormat = count, height = 220, sameScale = false }) {
+export function TrendChart({ days = [], bar, barLabel, prev, line, lineLabel, lineFormat = count, barFormat = count, height = 220, sameScale = false }) {
   const ref = useRef(null);
   const [hover, setHover] = useState(null);
   const w = 720; const h = height; const pad = { l: 8, r: 8, t: 14, b: 26 };
@@ -124,8 +124,8 @@ export function TrendChart({ days = [], bar, barLabel, prev, line, lineLabel, li
         <div className="pointer-events-none absolute top-8 z-10 min-w-[150px] rounded-xl border border-slate-200 bg-white px-3 py-2 text-[12px] shadow-lg"
           style={{ left: `clamp(0px, calc(${((hover + 0.5) / n) * 100}% - 75px), calc(100% - 160px))` }}>
           <p className="font-semibold text-slate-800">{shortDay(days[hover].date)}</p>
-          <p className="mt-1 flex justify-between gap-3 text-slate-600"><span>{barLabel}</span><b className="tabular-nums text-slate-900">{count(days[hover][bar])}</b></p>
-          {prev && <p className="flex justify-between gap-3 text-slate-400"><span>Previous</span><span className="tabular-nums">{count(days[hover][prev])}</span></p>}
+          <p className="mt-1 flex justify-between gap-3 text-slate-600"><span>{barLabel}</span><b className="tabular-nums text-slate-900">{barFormat(days[hover][bar])}</b></p>
+          {prev && <p className="flex justify-between gap-3 text-slate-400"><span>Previous</span><span className="tabular-nums">{barFormat(days[hover][prev])}</span></p>}
           {line && <p className="flex justify-between gap-3 text-emerald-700"><span>{lineLabel}</span><b className="tabular-nums">{lineFormat(days[hover][line])}</b></p>}
         </div>
       )}
@@ -200,6 +200,38 @@ export function FunnelChart({ steps = [] }) {
         );
       })}
     </ol>
+  );
+}
+
+/** One number in the live strip. */
+function LiveStat({ label, value, tone = 'text-white' }) {
+  return (
+    <div className="min-w-[110px]">
+      <p className={`text-[22px] font-semibold leading-none tabular-nums ${tone}`}>{count(value)}</p>
+      <p className="mt-1 text-[11.5px] text-slate-400">{label}</p>
+    </div>
+  );
+}
+
+/** Right now, refreshed every 15 seconds: who is on the app and what is moving. */
+export function LiveNow({ data }) {
+  if (!data) return null;
+  return (
+    <section className="flex flex-wrap items-center gap-x-8 gap-y-4 rounded-2xl bg-slate-900 px-5 py-4">
+      <div className="flex items-center gap-2 pr-2">
+        <span className="relative flex h-2.5 w-2.5">
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-70" />
+          <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400" />
+        </span>
+        <span className="text-[12px] font-semibold uppercase tracking-wider text-slate-300">Live now</span>
+      </div>
+      <LiveStat label="on the app" value={data.onApp} />
+      <LiveStat label="in a booking" value={data.inBooking} tone="text-sky-300" />
+      <LiveStat label="jobs in progress" value={data.jobsLive} />
+      <LiveStat label="waiting for a provider" value={data.waitingForProvider} tone={data.waitingForProvider ? 'text-amber-300' : 'text-white'} />
+      <LiveStat label="workers online" value={data.workersOnline} tone="text-emerald-300" />
+      {data.stuck > 0 && <LiveStat label="past the time limit" value={data.stuck} tone="text-rose-300" />}
+    </section>
   );
 }
 

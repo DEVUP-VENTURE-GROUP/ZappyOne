@@ -51,7 +51,7 @@ export default function DemandAlerts() {
       <Card className="p-5">
         <div className="flex items-baseline justify-between">
           <p className="text-sm font-bold text-slate-800">What customers are looking for</p>
-          <Link to="?tab=searchintel" className="text-xs font-semibold text-zappy-600 hover:underline">Search insights</Link>
+          <Link to="?tab=insights&sub=demand" className="text-xs font-semibold text-zappy-600 hover:underline">Demand insights</Link>
         </div>
         {!d ? (
           <p className="mt-3 text-sm text-slate-400">Loading…</p>

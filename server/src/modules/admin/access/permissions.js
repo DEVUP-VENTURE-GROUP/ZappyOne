@@ -64,9 +64,9 @@ const ROLES = {
 /** First match wins; order specific paths before general ones. Paths are relative to the admin API root. */
 const AREA_RULES = [
   [/^\/(me|admins)(\/|$)/, 'admins'],
-  [/^\/(metrics|revenue|alerts)(\/|$)/, 'overview'],
-  [/^\/intelligence(\/|$)/, 'intelligence'],
-  [/^\/(insights|analytics|business|demand-patterns|geo-analytics|heatmap|otp-analytics|retention|search-analytics)(\/|$)/, 'insights'],
+  [/^\/(metrics|alerts)(\/|$)/, 'overview'],
+  [/^\/insights(\/|$)/, 'insights'],
+  [/^\/otp-analytics(\/|$)/, 'system'],
   // Each engine's bookings live under its catalog prefix but are bookings work.
   [/^\/(pet\/bookings|helping\/tasks|repair\/bookings)(\/|$)/, 'bookings'],
   [/^\/onboarding\/(overview|domains|lines)(\/|$)/, 'catalog'],

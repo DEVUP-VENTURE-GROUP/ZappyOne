@@ -1,6 +1,6 @@
-import { useAdminInsightsOverviewQuery } from '@shared/services/api';
+import { useAdminInsightsOverviewQuery, useAdminInsightsLiveQuery } from '@shared/services/api';
 import { PageLoader } from '../../ui/kit';
-import { Kpi, TrendChart, RankBars, Findings, Panel, rupees, count, minutes, Delta } from './charts';
+import { Kpi, TrendChart, RankBars, Findings, Panel, LiveNow, rupees, count, minutes, Delta } from './charts';
 
 /**
  * Today: is the business healthy? Bookings, money and service quality for the
@@ -11,6 +11,7 @@ const ROUND = (n) => (n == null ? '—' : `${n}%`);
 
 export default function TodayView({ days }) {
   const { data, isLoading, isError, refetch } = useAdminInsightsOverviewQuery(days, { pollingInterval: 120000 });
+  const { data: live } = useAdminInsightsLiveQuery(undefined, { pollingInterval: 15000 });
   if (isLoading) return <PageLoader />;
   if (isError || !data) {
     return (
@@ -28,6 +29,7 @@ export default function TodayView({ days }) {
 
   return (
     <div className="space-y-5">
+      <LiveNow data={live} />
       <Findings items={data.findings} />
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">

@@ -35,6 +35,7 @@ import {
   Coins,
   LineChart,
   Percent,
+  MessageSquare as MessageSquareIcon,
   Star,
 } from 'lucide-react';
 import Hub from '../ui/Hub';
@@ -84,6 +85,7 @@ const P = {
   CityPages: page(() => import('../features/marketing/content/CityPages')),
   Alerts: page(() => import('../features/system/Alerts')),
   Infrastructure: page(() => import('../features/system/Infrastructure')),
+  SignInCodes: page(() => import('../features/system/SignInCodes')),
   FeatureFlags: page(() => import('../features/system/FeatureFlags')),
   AuditLog: page(() => import('../features/system/AuditLog')),
   Team: page(() => import('../features/system/Team')),
@@ -127,6 +129,7 @@ const HUBS = {
   status: hub('System status', 'What needs attention now, and the health of the platform underneath', [
     { id: 'alerts', label: 'Alerts', icon: AlertCircle, Comp: P.Alerts },
     { id: 'infra', label: 'Infrastructure', icon: Server, Comp: P.Infrastructure },
+    { id: 'codes', label: 'Sign-in codes', icon: MessageSquareIcon, Comp: P.SignInCodes },
   ]),
 };
 
@@ -192,8 +195,8 @@ export const SECTIONS = Object.fromEntries(NAV_GROUPS.flatMap((g) => g.items).ma
 export const REDIRECTS = {
   orders: ['bookings'],
   onboarding: ['verification'], kyc: ['verification'],
-  intelligence: ['insights'], searchintel: ['insights', 'search'], retention: ['insights', 'retention'],
-  analytics: ['insights', 'analytics'], business: ['insights', 'business'], heatmap: ['insights', 'geo'],
+  intelligence: ['insights'], searchintel: ['insights', 'demand'], retention: ['insights', 'customers'],
+  analytics: ['insights', 'today'], business: ['insights', 'money'], heatmap: ['insights', 'map'],
   support: ['helpdesk', 'tickets'], disputes: ['helpdesk', 'disputes'],
   rewardpoints: ['rewards', 'points'],
   fees: ['economics'],

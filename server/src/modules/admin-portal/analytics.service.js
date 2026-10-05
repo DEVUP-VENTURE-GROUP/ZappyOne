@@ -47,6 +47,15 @@ function areaFor(source, doc) {
   return raw && !NOT_A_PLACE.test(raw.trim()) ? raw : null;
 }
 
+/** Where the job was, rounded to about 100 m: enough for a map, never a doorstep. */
+function pointFor(source, doc) {
+  const p = source === 'event'
+    ? (doc.address?.lat != null && doc.address?.lng != null ? { lat: doc.address.lat, lng: doc.address.lng } : null)
+    : KINDS[source]?.ops?.where?.(doc);
+  if (!p || !Number.isFinite(p.lat) || !Number.isFinite(p.lng)) return null;
+  return { lat: Math.round(p.lat * 1000) / 1000, lng: Math.round(p.lng * 1000) / 1000 };
+}
+
 function assignMinutes(doc) {
   const hit = (doc.statusHistory || []).find((h) => ASSIGNED.has(h.status));
   if (!hit?.at || !doc.createdAt) return null;
@@ -68,6 +77,7 @@ async function bookingsIn(from, to) {
         service: r.serviceName,
         serviceKey: `${source}:${r.vertical || 'event'}`,
         area: areaFor(source, d),
+        point: pointFor(source, d),
         assignMin: assignMinutes(d),
         take: (r.commissionPaise || 0) + (r.platformFeePaise || 0),
         at: new Date(r.createdAt).getTime(),
@@ -317,6 +327,12 @@ async function supply({ days = 7, now = Date.now() } = {}) {
   if (slow) findings.push({ tone: 'warn', text: `${slow.label}: ${slow.medianAssignMin} min to get a provider. More providers online at peak hours would fix it.` });
   const decliner = providers.filter((p) => p.declines >= 5).sort((a, b) => b.declines - a.declines)[0];
   if (decliner) findings.push({ tone: 'warn', text: `${decliner.name} passed on ${decliner.declines} jobs. A call to understand why is worth it.` });
+  const { ServiceLine } = require('../onboarding/onboarding.model');
+  const liveCodes = new Set((await ServiceLine.find({ status: 'live' }).select('code').lean()).map((l) => l.code));
+  const idle = services.filter((s) => liveCodes.has(s.lineCode) && s.providers && !s.bookings);
+  if (idle.length) {
+    findings.push({ tone: 'warn', text: `${idle.length} live ${idle.length === 1 ? 'service has' : 'services have'} providers but no bookings: ${idle.slice(0, 3).map((s) => s.label).join(', ')}${idle.length > 3 ? '…' : ''}. Promote them or check their prices.` });
+  }
   const stuckNow = stuck.length;
   if (stuckNow) findings.push({ tone: 'bad', text: `${stuckNow} live ${stuckNow === 1 ? 'job is' : 'jobs are'} past the time limit right now.` });
 
@@ -407,9 +423,366 @@ async function funnel({ days = 7, now = Date.now() } = {}) {
   }
   if (visitors && booked) findings.push({ tone: 'good', text: `${Math.round((booked / visitors) * 1000) / 10}% of visitors booked this period.` });
 
-  const result = { range: { days, from: new Date(start), to: new Date(now) }, steps, services, findings };
+  // Repair quotes sent to customers in the period, and what happened to them.
+  const { RepairQuote } = require('../repair/models/quote.model');
+  const quoteRows = await RepairQuote.aggregate([
+    { $match: { createdAt: range, status: { $in: ['sent', 'approved', 'rejected', 'expired', 'clarification_requested'] } } },
+    { $group: { _id: '$status', n: { $sum: 1 }, value: { $sum: { $ifNull: ['$totalPaise', 0] } } } },
+  ]);
+  const q = Object.fromEntries(quoteRows.map((r) => [r._id, r]));
+  const decided = (q.approved?.n || 0) + (q.rejected?.n || 0) + (q.expired?.n || 0);
+  const quotes = {
+    sent: quoteRows.reduce((t, r) => t + r.n, 0),
+    approved: q.approved?.n || 0,
+    declined: q.rejected?.n || 0,
+    expired: q.expired?.n || 0,
+    waiting: (q.sent?.n || 0) + (q.clarification_requested?.n || 0),
+    approvedPaise: q.approved?.value || 0,
+    lostPaise: (q.rejected?.value || 0) + (q.expired?.value || 0),
+    approvalRate: decided ? Math.round(((q.approved?.n || 0) / decided) * 1000) / 10 : null,
+  };
+  if (decided >= 5 && quotes.approvalRate < 60) {
+    findings.push({ tone: 'warn', text: `Only ${quotes.approvalRate}% of repair quotes are approved; ₹${Math.round(quotes.lostPaise / 100).toLocaleString('en-IN')} was turned down or left to expire. Check what technicians are quoting.` });
+  }
+
+  const result = { range: { days, from: new Date(start), to: new Date(now) }, steps, services, quotes, findings };
   cache.set(key, result);
   return result;
 }
 
-module.exports = { overview, supply, funnel, bookingsIn, totals, istDayStart, lineMapper };
+/** First booking ever per customer, across every kind: customerId -> timestamp. */
+async function firstBookings(userIds) {
+  const first = new Map();
+  if (!userIds.length) return first;
+  const { Types } = require('mongoose');
+  const ids = userIds.map((id) => new Types.ObjectId(id));
+  await Promise.all(KIND_SOURCES.map(async (source) => {
+    const rows = await KINDS[source].model().aggregate([
+      { $match: { userId: { $in: ids } } },
+      { $group: { _id: '$userId', at: { $min: '$createdAt' } } },
+    ]);
+    for (const r of rows) {
+      const k = String(r._id);
+      const t = new Date(r.at).getTime();
+      if (!first.has(k) || t < first.get(k)) first.set(k, t);
+    }
+  }));
+  return first;
+}
+
+/**
+ * Customers: do people come back, and are they happy? New against returning
+ * customers per day, monthly cohorts (of those who first booked in a month,
+ * the share who booked again in each month after), sign-ups who went on to
+ * book, and ratings per service from the review store.
+ */
+async function customers({ days = 30, now = Date.now() } = {}) {
+  days = [7, 30, 90].includes(Number(days)) ? Number(days) : 30;
+  const key = `customers:${days}:${Math.floor(now / CACHE_MS)}`;
+  if (cache.has(key)) return cache.get(key);
+  const User = require('../user/user.model');
+  const Review = require('../review/review.model');
+  const { maskName } = require('../review/review.service');
+  const start = istDayStart(now) - (days - 1) * DAY;
+  const cohortStart = new Date(new Date(now + IST).getUTCFullYear(), new Date(now + IST).getUTCMonth() - 5, 1).getTime() - IST;
+
+  const [rows, history, signups, reviews] = await Promise.all([
+    bookingsIn(start, now),
+    bookingsIn(cohortStart, now),
+    User.find({ createdAt: { $gte: new Date(start) } }).select('_id').lean(),
+    Review.find({ createdAt: { $gte: new Date(start) }, excluded: false }).populate('userId', 'name').lean(),
+  ]);
+  const people = [...new Set(rows.map((r) => r.userId).filter(Boolean))];
+  const first = await firstBookings([...new Set(history.map((r) => r.userId).filter(Boolean))]);
+  const isNew = (id) => (first.get(id) || 0) >= start;
+  const newPeople = people.filter(isNew);
+
+  // Per day: new and returning customers who booked.
+  const daily = [];
+  for (let t = start; t <= now; t += DAY) {
+    const ids = [...new Set(rows.filter((r) => r.at >= t && r.at < t + DAY).map((r) => r.userId).filter(Boolean))];
+    const n = ids.filter(isNew).length;
+    daily.push({ date: istDate(t), customers: ids.length, newCustomers: n, returning: ids.length - n });
+  }
+
+  // Monthly cohorts by first booking, last six months.
+  const monthOf = (t) => { const d = new Date(t + IST); return d.getUTCFullYear() * 12 + d.getUTCMonth(); };
+  const label = (m) => new Date(Date.UTC(Math.floor(m / 12), m % 12, 1)).toLocaleDateString('en-IN', { month: 'short', year: '2-digit' });
+  const activeMonths = new Map();
+  for (const r of history) {
+    if (!r.userId) continue;
+    if (!activeMonths.has(r.userId)) activeMonths.set(r.userId, new Set());
+    activeMonths.get(r.userId).add(monthOf(r.at));
+  }
+  const nowMonth = monthOf(now);
+  const cohorts = [];
+  for (let m = nowMonth - 5; m <= nowMonth; m += 1) {
+    const members = [...first].filter(([, t]) => monthOf(t) === m).map(([id]) => id);
+    const after = [];
+    for (let k = 1; k <= nowMonth - m && k <= 3; k += 1) {
+      const back = members.filter((id) => activeMonths.get(id)?.has(m + k)).length;
+      after.push(members.length ? Math.round((back / members.length) * 100) : null);
+    }
+    cohorts.push({ month: label(m), customers: members.length, after });
+  }
+
+  // Ratings per service, and the latest low ones to read.
+  const kindLabel = { repair: 'Repairs', pet: 'Pet care', helping: 'Helping', event: 'Event décor', order: 'Older orders' };
+  const ratingsByKind = Object.entries(reviews.reduce((acc, r) => { (acc[r.kind] ||= []).push(r.rating); return acc; }, {}))
+    .map(([kind, list]) => ({ key: kind, label: kindLabel[kind] || kind, average: Math.round((list.reduce((a, b) => a + b, 0) / list.length) * 10) / 10, reviews: list.length }))
+    .sort((a, b) => b.reviews - a.reviews);
+  const low = reviews.filter((r) => r.rating <= 2).sort((a, b) => b.createdAt - a.createdAt).slice(0, 5)
+    .map((r) => ({ id: String(r._id), rating: r.rating, text: r.comment, service: r.serviceLabel || kindLabel[r.kind], by: maskName(r.userId?.name), at: r.createdAt }));
+  const avg = reviews.length ? Math.round((reviews.reduce((a, r) => a + r.rating, 0) / reviews.length) * 10) / 10 : null;
+
+  const findings = [];
+  // At risk: had a job done, then nothing for 30 to 120 days. Worth a nudge.
+  const last = new Map();
+  for (const r of history) {
+    if (!r.userId) continue;
+    const cur = last.get(r.userId) || { at: 0, done: 0, service: null };
+    if (r.at > cur.at) { cur.at = r.at; cur.service = r.service; }
+    if (r.statusBucket === 'completed') cur.done += 1;
+    last.set(r.userId, cur);
+  }
+  const atRiskList = [...last.values()].filter((v) => v.done && now - v.at >= 30 * DAY && now - v.at <= 120 * DAY);
+  const atRiskBy = [...groupBy(atRiskList, (v) => v.service)].map(([service, list]) => ({ key: service, label: service, people: list.length }))
+    .sort((a, b) => b.people - a.people).slice(0, 5);
+  if (atRiskList.length >= 3) findings.push({ tone: 'warn', text: `${atRiskList.length} past customers have not booked in over a month. A reminder for their last service could bring them back.` });
+
+  const signupIds = signups.map((u) => String(u._id));
+  const activated = signupIds.filter((id) => first.has(id)).length;
+
+  if (people.length >= 5) {
+    const rr = Math.round(((people.length - newPeople.length) / people.length) * 100);
+    findings.push({ tone: rr >= 30 ? 'good' : 'warn', text: `${rr}% of customers this period had booked before.${rr < 30 ? ' A follow-up offer after the first job would lift it.' : ''}` });
+  }
+  if (signupIds.length >= 5) {
+    const ar = Math.round((activated / signupIds.length) * 100);
+    if (ar < 40) findings.push({ tone: 'warn', text: `Only ${ar}% of new sign-ups have booked. A first-booking offer could convert the rest.` });
+  }
+  if (avg != null && reviews.length >= 5) findings.push({ tone: avg >= 4.3 ? 'good' : 'warn', text: `Average rating ${avg} from ${reviews.length} reviews.` });
+  if (low.length) findings.push({ tone: 'bad', text: `${low.length} low rating${low.length > 1 ? 's' : ''} (2 stars or less) to read and follow up.` });
+
+  const result = {
+    range: { days, from: new Date(start), to: new Date(now) },
+    totals: {
+      customers: people.length, newCustomers: newPeople.length, returning: people.length - newPeople.length,
+      repeatRate: people.length ? Math.round(((people.length - newPeople.length) / people.length) * 1000) / 10 : null,
+      signups: signupIds.length, activated, activationRate: signupIds.length ? Math.round((activated / signupIds.length) * 1000) / 10 : null,
+      averageRating: avg, reviews: reviews.length,
+    },
+    daily, cohorts, ratings: ratingsByKind, lowRatings: low, atRisk: { people: atRiskList.length, byService: atRiskBy }, findings,
+  };
+  cache.set(key, result);
+  return result;
+}
+
+/**
+ * Money: what makes us money? Booked value against what we earn (commission
+ * and platform fee separately), what providers earned, take rate, per service,
+ * per area and by payment method. Completed jobs only: money is counted when
+ * the work is done.
+ */
+async function money({ days = 30, now = Date.now() } = {}) {
+  days = [7, 30, 90].includes(Number(days)) ? Number(days) : 30;
+  const key = `money:${days}:${Math.floor(now / CACHE_MS)}`;
+  if (cache.has(key)) return cache.get(key);
+  const start = istDayStart(now) - (days - 1) * DAY;
+  const prevStart = start - (now - start);
+  const [rows, prevRows] = await Promise.all([bookingsIn(start, now), bookingsIn(prevStart, start)]);
+  const done = rows.filter((r) => r.statusBucket === 'completed');
+  const prevDone = prevRows.filter((r) => r.statusBucket === 'completed');
+
+  const sum = (list, f) => list.reduce((s, r) => s + (f(r) || 0), 0);
+  const fig = (list) => {
+    const gmv = sum(list, (r) => r.totalPaise);
+    const commission = sum(list, (r) => r.commissionPaise);
+    const fee = sum(list, (r) => r.platformFeePaise);
+    return {
+      gmvPaise: gmv, commissionPaise: commission, platformFeePaise: fee, takePaise: commission + fee,
+      providerPaise: sum(list, (r) => r.providerEarningPaise), jobs: list.length,
+      aovPaise: list.length ? Math.round(gmv / list.length) : 0,
+      takeRate: gmv ? Math.round(((commission + fee) / gmv) * 1000) / 10 : null,
+    };
+  };
+  const cur = fig(done);
+  const prev = fig(prevDone);
+  const delta = Object.fromEntries(['gmvPaise', 'takePaise', 'commissionPaise', 'platformFeePaise', 'aovPaise'].map((k) => [k, change(cur[k], prev[k])]));
+
+  const daily = [];
+  const shift = start - prevStart;
+  for (let t = start; t <= now; t += DAY) {
+    const d = fig(done.filter((r) => r.at >= t && r.at < t + DAY));
+    const p = fig(prevDone.filter((r) => r.at >= t - shift && r.at < t - shift + DAY));
+    daily.push({ date: istDate(t), takePaise: d.takePaise, gmvPaise: d.gmvPaise, prevTakePaise: p.takePaise });
+  }
+  const byService = [...groupBy(done, (r) => r.serviceKey)].map(([k, list]) => ({ key: k, label: list[0].service, ...fig(list) }))
+    .sort((a, b) => b.takePaise - a.takePaise);
+  const byArea = [...groupBy(done, (r) => r.area)].map(([area, list]) => ({ key: area, label: area, ...fig(list) }))
+    .sort((a, b) => b.takePaise - a.takePaise).slice(0, 8);
+  const byMethod = [...groupBy(done, (r) => (r.paymentMethod === 'online' || r.source === 'event' ? 'online' : r.paymentMethod ? 'cash' : 'unknown'))]
+    .map(([method, list]) => ({ key: method, label: method === 'online' ? 'Paid online' : method === 'cash' ? 'Cash' : 'Not recorded', ...fig(list) }));
+
+  const findings = [];
+  const d = delta.takePaise;
+  if (cur.takePaise && d != null && Math.abs(d) >= 10) findings.push({ tone: d > 0 ? 'good' : 'bad', text: `We earned ${d > 0 ? `${d}% more` : `${Math.abs(d)}% less`} than the previous period.` });
+  const top = byService[0];
+  if (top && cur.takePaise) findings.push({ tone: 'good', text: `${top.label} brings ${Math.round((top.takePaise / cur.takePaise) * 100)}% of what we earn.` });
+  const lowTake = byService.filter((s) => s.jobs >= 5 && s.takeRate != null && s.takeRate < 8)[0];
+  if (lowTake) findings.push({ tone: 'warn', text: `${lowTake.label} keeps only ${lowTake.takeRate}% of its value. Review its fee and commission in Economics.` });
+  const cash = byMethod.find((m) => m.key === 'cash');
+  if (cash && cur.jobs >= 5 && cash.jobs / cur.jobs > 0.7) findings.push({ tone: 'warn', text: `${Math.round((cash.jobs / cur.jobs) * 100)}% of jobs are paid in cash. Commission on those is collected from providers later.` });
+
+  const result = { range: { days, from: new Date(start), to: new Date(now) }, current: cur, previous: prev, delta, daily, byService, byArea, byMethod, findings };
+  cache.set(key, result);
+  return result;
+}
+
+/**
+ * Map: where the business happens. Cells of about 1 km with bookings,
+ * completed jobs, cancellations, what we earned, searches and the searches we
+ * could not serve; provider coverage (shop service areas, online workers);
+ * when bookings come in (day of week × hour, India time); and areas ranked,
+ * with the gap between demand and providers as the place to expand.
+ */
+async function geo({ days = 30, service = null, now = Date.now() } = {}) {
+  days = [7, 30, 90].includes(Number(days)) ? Number(days) : 30;
+  service = service && /^[a-z0-9_]{2,40}$/.test(service) ? service : null;
+  const key = `geo:${days}:${service || 'all'}:${Math.floor(now / CACHE_MS)}`;
+  if (cache.has(key)) return cache.get(key);
+  const { SearchEvent } = require('../telemetry/telemetry.model');
+  const { ProviderServiceArea } = require('../repair/models/config.model');
+  const Worker = require('../worker/worker.model');
+  const start = istDayStart(now) - (days - 1) * DAY;
+
+  const [allRows, searches, areas, workers, map] = await Promise.all([
+    bookingsIn(start, now),
+    SearchEvent.find({ createdAt: { $gte: new Date(start) }, lat: { $ne: null }, lng: { $ne: null }, category: service || { $ne: 'all_services' } })
+      .select('lat lng result city userId sessionId').lean(),
+    ProviderServiceArea.find({ isActive: true, center: { $ne: null } }).select('center radiusKm shopId workerId').lean(),
+    Worker.find({ isOnline: true, 'currentLocation.coordinates.0': { $exists: true } }).select('currentLocation').lean(),
+    lineMapper(),
+  ]);
+  // One service at a time, or all of them; the filter list is every service with bookings.
+  const rows = service ? allRows.filter((r) => map.lineOf(r) === service) : allRows;
+  const serviceList = [...new Set(allRows.map((r) => map.lineOf(r)).filter(Boolean))].map((code) => ({ code, label: map.label(code) }));
+
+  // ~1 km cells.
+  const cellOf = (lat, lng) => `${(Math.round(lat * 100) / 100).toFixed(2)},${(Math.round(lng * 100) / 100).toFixed(2)}`;
+  const cells = new Map();
+  const cell = (lat, lng) => {
+    const k = cellOf(lat, lng);
+    if (!cells.has(k)) {
+      const [a, b] = k.split(',').map(Number);
+      cells.set(k, { lat: a, lng: b, bookings: 0, completed: 0, cancelled: 0, takePaise: 0, searches: 0, unserved: 0, area: null });
+    }
+    return cells.get(k);
+  };
+  for (const r of rows) {
+    if (!r.point) continue;
+    const c = cell(r.point.lat, r.point.lng);
+    c.bookings += 1;
+    if (r.statusBucket === 'completed') { c.completed += 1; c.takePaise += r.take; }
+    if (r.statusBucket === 'cancelled') c.cancelled += 1;
+    if (r.area && !c.area) c.area = r.area;
+  }
+  const seen = new Set();
+  for (const s of searches) {
+    if (!Number.isFinite(s.lat) || !Number.isFinite(s.lng)) continue;
+    const who = String(s.userId || s.sessionId || s._id);
+    const k = `${who}|${cellOf(s.lat, s.lng)}|${s.result}`;
+    if (seen.has(k)) continue; // one person in one place counts once
+    seen.add(k);
+    const c = cell(s.lat, s.lng);
+    c.searches += 1;
+    if (s.result === 'no_service') c.unserved += 1;
+    if (s.city && !c.area) c.area = s.city;
+  }
+
+  const providers = [
+    ...areas.map((a) => ({ kind: a.shopId ? 'shop' : 'worker', lat: a.center.coordinates[1], lng: a.center.coordinates[0], radiusKm: a.radiusKm || 5, live: false })),
+    ...workers.map((w) => ({ kind: 'worker', lat: Math.round(w.currentLocation.coordinates[1] * 1000) / 1000, lng: Math.round(w.currentLocation.coordinates[0] * 1000) / 1000, radiusKm: 0, live: true })),
+  ].filter((p) => Number.isFinite(p.lat) && Number.isFinite(p.lng));
+
+  // When: day of week × hour, India time.
+  const when = Array.from({ length: 7 }, () => Array(24).fill(0));
+  for (const r of rows) {
+    const d = new Date(r.at + IST);
+    when[d.getUTCDay()][d.getUTCHours()] += 1;
+  }
+
+  // Areas ranked; the expansion gap is demand with no provider covering it.
+  const covered = (c) => providers.some((p) => {
+    const km = Math.hypot((p.lat - c.lat) * 111, (p.lng - c.lng) * 111 * Math.cos((c.lat * Math.PI) / 180));
+    return km <= Math.max(p.radiusKm, 3);
+  });
+  const byArea = new Map();
+  for (const c of cells.values()) {
+    const name = c.area || `${c.lat.toFixed(2)}, ${c.lng.toFixed(2)}`;
+    if (!byArea.has(name)) byArea.set(name, { area: name, lat: c.lat, lng: c.lng, bookings: 0, completed: 0, cancelled: 0, takePaise: 0, searches: 0, unserved: 0, uncovered: 0 });
+    const a = byArea.get(name);
+    for (const f of ['bookings', 'completed', 'cancelled', 'takePaise', 'searches', 'unserved']) a[f] += c[f];
+    if (!covered(c)) a.uncovered += c.searches + c.bookings;
+  }
+  const areasRanked = [...byArea.values()].sort((x, y) => (y.bookings + y.searches) - (x.bookings + x.searches)).slice(0, 12);
+  const expand = [...byArea.values()].filter((a) => a.unserved + a.uncovered > 0).sort((x, y) => (y.unserved + y.uncovered) - (x.unserved + x.uncovered)).slice(0, 5);
+
+  const findings = [];
+  if (expand[0]) {
+    const n = expand[0].unserved + expand[0].uncovered;
+    findings.push({ tone: 'bad', text: `${expand[0].area}: ${n} ${n === 1 ? 'search or booking' : 'searches and bookings'} with no provider nearby. The first place to recruit.` });
+  }
+  const hot = areasRanked.filter((a) => a.bookings >= 5 && a.cancelled / a.bookings >= 0.3)[0];
+  if (hot) findings.push({ tone: 'warn', text: `${hot.area}: ${Math.round((hot.cancelled / hot.bookings) * 100)}% of bookings cancelled. Check provider reach there.` });
+  let peak = { n: 0 };
+  when.forEach((hours, dow) => hours.forEach((n, h) => { if (n > peak.n) peak = { n, dow, h }; }));
+  if (peak.n >= 3) {
+    const day = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][peak.dow];
+    findings.push({ tone: 'good', text: `Busiest time: ${day} around ${peak.h % 12 || 12} ${peak.h < 12 ? 'am' : 'pm'}. Keep the most providers online then.` });
+  }
+
+  const result = {
+    range: { days, from: new Date(start), to: new Date(now) },
+    cells: [...cells.values()],
+    providers,
+    when,
+    areas: areasRanked,
+    expand,
+    totals: {
+      cells: cells.size, bookings: rows.length, mapped: rows.filter((r) => r.point).length,
+      searches: [...cells.values()].reduce((s, c) => s + c.searches, 0), providers: providers.length, online: workers.length,
+    },
+    services: serviceList,
+    findings,
+  };
+  cache.set(key, result);
+  return result;
+}
+
+/**
+ * Right now: people on the app this minute, people in a booking flow, live
+ * jobs and providers online. Not cached; it is cheap and should feel live.
+ */
+async function live() {
+  const { VisitorSession } = require('../telemetry/telemetry.model');
+  const { activeNowCount } = require('../telemetry/telemetry.controller');
+  const Worker = require('../worker/worker.model');
+  const ops = require('../jobs/ops.service');
+  const twoMin = new Date(Date.now() - 2 * 60_000);
+  const [onApp, inBooking, jobs, workersOnline] = await Promise.all([
+    activeNowCount(),
+    VisitorSession.countDocuments({ lastSeen: { $gte: twoMin }, userType: { $in: ['guest', 'user'] }, currentPath: { $regex: '^/(repair|pet/book/|helping/(shopping|returns)|events/book/)' } }),
+    ops.liveJobs(),
+    Worker.countDocuments({ isOnline: true }),
+  ]);
+  return {
+    onApp, inBooking, workersOnline,
+    jobsLive: jobs.length,
+    waitingForProvider: jobs.filter((j) => j.waiting && !j.hasProvider).length,
+    stuck: jobs.filter((j) => j.stuck).length,
+    at: new Date(),
+  };
+}
+
+module.exports = { overview, supply, funnel, customers, money, geo, live, bookingsIn, totals, istDayStart, lineMapper };

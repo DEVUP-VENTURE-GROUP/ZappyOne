@@ -561,9 +561,6 @@ export const api = createApi({
     getPricingConfig: b.query({ query: () => '/pricing', providesTags: ['PricingCfg'] }),
 
     // --- Admin: Extended ---
-    adminAnalytics: b.query({
-      query: (days = 30) => adminApiPath(`/analytics?days=${days}`),
-    }),
     adminOtpAnalytics: b.query({
       query: (days = 7) => adminApiPath(`/otp-analytics?days=${days}`),
     }),
@@ -614,48 +611,7 @@ export const api = createApi({
       query: ({ cfOrderId, reference }) => ({ url: adminApiPath(`/payments/${cfOrderId}/mark-refunded`), method: 'POST', body: { reference } }),
       invalidatesTags: ['Payments'],
     }),
-    // Business Intelligence (scenarios 81-85)
-    adminServicePnL: b.query({
-      query: (days = 30) => adminApiPath(`/business/service-pnl?days=${days}`),
-    }),
-    adminChurnRisk: b.query({
-      query: () => adminApiPath('/business/churn-risk'),
-    }),
-    adminDeadCategories: b.query({
-      query: (days = 30) => adminApiPath(`/business/dead-categories?days=${days}`),
-    }),
-    adminGeoReadiness: b.query({
-      query: ({ lat, lng, radiusKm = 15 }) => adminApiPath(`/business/geo-readiness?lat=${lat}&lng=${lng}&radiusKm=${radiusKm}`),
-    }),
-    adminQuoteAbandonment: b.query({
-      query: (days = 7) => adminApiPath(`/business/quote-abandonment?days=${days}`),
-    }),
 
-    // Intelligence & Expansion dashboard
-    adminIntelLiveTraffic: b.query({
-      query: () => adminApiPath('/intelligence/live-traffic'),
-    }),
-    adminIntelVisitorLocations: b.query({
-      query: (days = 30) => adminApiPath(`/intelligence/visitor-locations?days=${days}`),
-    }),
-    adminIntelUnmetDemand: b.query({
-      query: (days = 30) => adminApiPath(`/intelligence/unmet-demand?days=${days}`),
-    }),
-    adminIntelExpansion: b.query({
-      query: (days = 30) => adminApiPath(`/intelligence/expansion?days=${days}`),
-    }),
-    adminIntelCeo: b.query({
-      query: () => adminApiPath('/intelligence/ceo'),
-    }),
-    adminIntelFunnel: b.query({
-      query: (days = 30) => adminApiPath(`/intelligence/funnel?days=${days}`),
-    }),
-    adminIntelReport: b.query({
-      query: (period = 'daily') => adminApiPath(`/intelligence/report?period=${period}`),
-    }),
-    adminIntelPartners: b.query({
-      query: (days = 30) => adminApiPath(`/intelligence/partners?days=${days}`),
-    }),
 
     // Admin push notifications — via RTK so they ride the silent token-refresh
     // (previously raw fetch() → 401 'Invalid or expired token' on AT expiry).
@@ -778,9 +734,6 @@ export const api = createApi({
     adminWorkerOps: b.query({
       query: () => adminApiPath('/worker-ops'),
       providesTags: ['WorkerOps'],
-    }),
-    adminSearchAnalytics: b.query({
-      query: (days = 7) => ({ url: adminApiPath('/search-analytics'), params: { days } }),
     }),
     adminWorkerPenalties: b.query({
       query: (id) => adminApiPath(`/workers/${id}/penalties`),
@@ -941,19 +894,6 @@ export const api = createApi({
 
 
 
-    // --- Admin: Geo Analytics (Heatmap) ---
-    adminGeoAnalytics: b.query({
-      query: ({ days = 30, precision = 2, service } = {}) => ({
-        url: adminApiPath('/geo-analytics'),
-        params: { days, precision, service },
-      }),
-    }),
-    adminDemandPatterns: b.query({
-      query: ({ days = 30, service } = {}) => ({
-        url: adminApiPath('/demand-patterns'),
-        params: { days, service },
-      }),
-    }),
 
     // --- Admin: System Health ---
     adminSystemHealth: b.query({
@@ -976,9 +916,6 @@ export const api = createApi({
     }),
 
     // --- Admin: Retention ---
-    adminRetention: b.query({
-      query: (days = 30) => adminApiPath(`/retention?days=${days}`),
-    }),
 
     // --- Admin: Support Tickets ---
     adminSupportTickets: b.query({
@@ -1207,6 +1144,10 @@ export const api = createApi({
     adminInsightsOverview: b.query({ query: (days = 7) => ({ url: adminApiPath('/insights/overview'), params: { days } }) }),
     adminInsightsSupply: b.query({ query: (days = 7) => ({ url: adminApiPath('/insights/supply'), params: { days } }) }),
     adminInsightsFunnel: b.query({ query: (days = 7) => ({ url: adminApiPath('/insights/funnel'), params: { days } }) }),
+    adminInsightsCustomers: b.query({ query: (days = 30) => ({ url: adminApiPath('/insights/customers'), params: { days } }) }),
+    adminInsightsMoney: b.query({ query: (days = 30) => ({ url: adminApiPath('/insights/money'), params: { days } }) }),
+    adminInsightsLive: b.query({ query: () => adminApiPath('/insights/live') }),
+    adminInsightsGeo: b.query({ query: ({ days = 30, service } = {}) => ({ url: adminApiPath('/insights/geo'), params: { days, ...(service && { service }) } }) }),
     adminInsightsDemand: b.query({ query: (days = 7) => ({ url: adminApiPath('/insights/demand'), params: { days } }) }),
     adminBookingAttention: b.query({ query: () => adminApiPath('/bookings/attention'), providesTags: ['AdminMetrics'] }),
     adminSearchDemand: b.query({ query: () => adminApiPath('/alerts/search-demand') }),
@@ -2276,7 +2217,6 @@ export const {
   useGetPaymentAvailabilityQuery,
   useCreateBookingPaymentMutation,
   useGetPricingConfigQuery,
-  useAdminAnalyticsQuery,
   useAdminPaymentsQuery,
   useAdminLaunchInterestQuery,
   useAdminMeQuery,
@@ -2288,19 +2228,6 @@ export const {
   useAdminRetryRefundMutation,
   useAdminMarkRefundedMutation,
   useAdminReconcilePaymentMutation,
-  useAdminServicePnLQuery,
-  useAdminChurnRiskQuery,
-  useAdminDeadCategoriesQuery,
-  useAdminGeoReadinessQuery,
-  useAdminQuoteAbandonmentQuery,
-  useAdminIntelLiveTrafficQuery,
-  useAdminIntelVisitorLocationsQuery,
-  useAdminIntelUnmetDemandQuery,
-  useAdminIntelExpansionQuery,
-  useAdminIntelCeoQuery,
-  useAdminIntelFunnelQuery,
-  useAdminIntelReportQuery,
-  useAdminIntelPartnersQuery,
   useLazyAdminNotificationHealthQuery,
   useLazyAdminNotificationStatsQuery,
   useAdminSendNotificationMutation,
@@ -2330,7 +2257,6 @@ export const {
   useAdminListRecentReferralsQuery,
   useAdminGetCancellationConfigQuery,
   useAdminWorkerOpsQuery,
-  useAdminSearchAnalyticsQuery,
   useAdminUpdateCancellationConfigMutation,
   useAdminWorkerPenaltiesQuery,
   useAdminKycDocUrlsQuery,
@@ -2397,13 +2323,10 @@ export const {
   useAdminDeletePromoMutation,
   // Gamification + Recommendations
   // Enterprise admin
-  useAdminGeoAnalyticsQuery,
-  useAdminDemandPatternsQuery,
   useAdminSystemHealthQuery,
   useAdminFeatureFlagsQuery,
   useAdminSetFeatureFlagMutation,
   useAdminAlertsQuery,
-  useAdminRetentionQuery,
   useAdminSupportTicketsQuery,
   useAdminReplyTicketMutation,
   useAdminLiveOpsQuery, useAdminStuckJobsQuery,
@@ -2445,6 +2368,10 @@ export const {
   useAdminInsightsDemandQuery,
   useAdminInsightsSupplyQuery,
   useAdminInsightsFunnelQuery,
+  useAdminInsightsCustomersQuery,
+  useAdminInsightsMoneyQuery,
+  useAdminInsightsGeoQuery,
+  useAdminInsightsLiveQuery,
   useAdminSearchDemandQuery,
   useAdminUpdateFeeMutation,
   // Job chat
