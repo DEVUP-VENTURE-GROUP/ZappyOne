@@ -216,7 +216,7 @@ export default function ShopDashboard() {
     { Icon: Briefcase, tone: 'amber', label: "Today's Jobs", value: earnings?.jobs || 0, sub: 'View all', onClick: () => nav('/shop/earnings') },
     { Icon: Wrench, tone: 'blue', label: 'Needs action', value: needsAction.length, sub: needsAction.length ? 'Assign now' : null, subTone: 'text-zappy-600' },
     { Icon: Users, tone: 'violet', label: 'Technicians', value: workers.length, sub: 'Manage team', onClick: () => nav('/shop/workers') },
-    { Icon: Star, tone: 'cyan', label: 'Rating', value: shop?.rating ? Number(shop.rating).toFixed(1) : '—', sub: `${shop?.reviewCount || 0} reviews` },
+    { Icon: Star, tone: 'cyan', label: 'Rating', value: shop?.rating ? Number(shop.rating).toFixed(1) : '—', sub: `${shop?.reviewCount || 0} reviews`, onClick: () => nav('/shop/reviews') },
     { Icon: ShieldCheck, tone: 'rose', label: 'Awaiting approval', value: pendingApprovals, sub: pendingApprovals ? 'Skills & prices' : null },
   ];
 

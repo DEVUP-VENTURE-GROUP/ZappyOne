@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { LogOut,
   LayoutDashboard, IndianRupee, Wallet as WalletIcon, Bell, Star, User, ChevronRight, Wifi,
   TrendingUp, TrendingDown, Search, Radio, Loader2, Target, Building2, GraduationCap,
-  ShieldCheck, ShoppingBag,
+  ShieldCheck, ShoppingBag, Scale,
 } from 'lucide-react';
 import { ZappyLogo } from '../common/ZappyLogo';
 
@@ -55,7 +55,8 @@ export const NAV_ITEMS = [
   { key: 'services', label: 'My services', Icon: ShieldCheck, to: '/provider/onboarding' },
   { key: 'withdraw', label: 'Withdraw', Icon: WalletIcon, to: '/worker/withdraw' },
   { key: 'bank', label: 'Bank & UPI', Icon: Building2, to: '/worker/bank' },
-  { key: 'reviews', label: 'Reviews', Icon: Star, to: '/worker/appeals' },
+  { key: 'reviews', label: 'Reviews', Icon: Star, to: '/worker/reviews' },
+  { key: 'appeals', label: 'Appeals', Icon: Scale, to: '/worker/appeals' },
   { key: 'training', label: 'Training', Icon: GraduationCap, to: '/worker/training' },
   { key: 'goals', label: 'Goals', Icon: Target, to: '/worker/goals' },
 ];

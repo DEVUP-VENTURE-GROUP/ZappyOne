@@ -118,7 +118,7 @@ export const api = createApi({
   // Keep fetched data cached for 5 min after a component unmounts, so jumping
   // back to a tab shows data instantly (no skeleton) instead of refetching.
   keepUnusedDataFor: 300,
-  tagTypes: ['Fees', 'JobChat', 'Account', 'AdminTeam', 'Payments', 'Me', 'Order', 'Worker', 'Earnings', 'AdminMetrics', 'Kyc', 'Plan', 'Subscription', 'Wallet', 'Notification', 'AdminUsers', 'Disputes', 'Payouts', 'Incentives', 'CancellationConfig', 'PricingCfg', 'AuditLogs', 'Addresses', 'Ad', 'Promo', 'Gamification', 'Recommendations', 'FeatureFlags', 'SupportTickets', 'Referral', 'ShieldFund', 'EventTheme', 'EventBooking', 'EventPartner', 'EventConfig', 'EventCategory', 'PartnerNotification', 'Fraud', 'Zone', 'City', 'PaymentMethods', 'UserDisputes', 'UserTickets', 'AdminAppeals', 'AdminTraining', 'WorkerGoals', 'Plans', 'Content', 'Rewards', 'WorkerOps', 'ReadyMode', 'Shop', 'ShopWorkers', 'ShopKyc',
+  tagTypes: ['Reviews', 'Fees', 'JobChat', 'Account', 'AdminTeam', 'Payments', 'Me', 'Order', 'Worker', 'Earnings', 'AdminMetrics', 'Kyc', 'Plan', 'Subscription', 'Wallet', 'Notification', 'AdminUsers', 'Disputes', 'Payouts', 'Incentives', 'CancellationConfig', 'PricingCfg', 'AuditLogs', 'Addresses', 'Ad', 'Promo', 'Gamification', 'Recommendations', 'FeatureFlags', 'SupportTickets', 'Referral', 'ShieldFund', 'EventTheme', 'EventBooking', 'EventPartner', 'EventConfig', 'EventCategory', 'PartnerNotification', 'Fraud', 'Zone', 'City', 'PaymentMethods', 'UserDisputes', 'UserTickets', 'AdminAppeals', 'AdminTraining', 'WorkerGoals', 'Plans', 'Content', 'Rewards', 'WorkerOps', 'ReadyMode', 'Shop', 'ShopWorkers', 'ShopKyc',
     'RepairCatalog', 'RepairConfig', 'RepairPricing', 'RepairRequests', 'RepairBookings', 'RepairProvider', 'MyAssets',
     'HelpingConfig', 'HelpingTasks', 'HelpingAvailable', 'AdminHelpingTasks',
     'PetCatalog', 'MyPets', 'PetBookings', 'PetAvailable', 'PetRecurring', 'AdminPetBookings', 'AdminPetPricing', 'AdminPetCapabilities',
@@ -134,6 +134,12 @@ export const api = createApi({
 
     // Account: password, verified email and first-time setup (every account type).
     accountMe: b.query({ query: () => '/account/me', providesTags: ['Account'] }),
+    // A provider's own reviews, and reporting one for moderation.
+    myReviews: b.query({ query: (page = 1) => ({ url: '/reviews/mine', params: { page } }), providesTags: ['Reviews'] }),
+    reportReview: b.mutation({ query: ({ id, reason }) => ({ url: `/reviews/${id}/report`, method: 'POST', body: { reason } }), invalidatesTags: ['Reviews'] }),
+    // Admin review moderation.
+    adminReviews: b.query({ query: (params = {}) => ({ url: adminApiPath('/reviews'), params }), providesTags: ['Reviews'] }),
+    adminModerateReview: b.mutation({ query: ({ id, ...body }) => ({ url: adminApiPath(`/reviews/${id}`), method: 'PATCH', body }), invalidatesTags: ['Reviews'] }),
     // What sign-in may offer before anyone is signed in (email only once mail is set up).
     accountCapabilities: b.query({ query: () => '/account/capabilities', keepUnusedDataFor: 3600 }),
     setAccountName: b.mutation({ query: (body) => ({ url: '/account/name', method: 'POST', body }), invalidatesTags: ['Account', 'Me'] }),
@@ -2433,6 +2439,10 @@ export const {
   // Account
   useAccountMeQuery,
   useAccountCapabilitiesQuery,
+  useMyReviewsQuery,
+  useReportReviewMutation,
+  useAdminReviewsQuery,
+  useAdminModerateReviewMutation,
   useSetAccountNameMutation,
   useSetAccountPasswordMutation,
   useStartEmailVerificationMutation,

@@ -163,6 +163,32 @@ router.post('/bookings/:source/:id/notes',
     } catch (err) { next(err); }
   });
 
+/* Reviews: reported and auto-flagged reviews, and the admin's decision */
+
+const reviews = require('../review/review.service');
+
+router.get('/reviews', async (req, res, next) => {
+  try {
+    res.json(await reviews.adminList({
+      flagged: req.query.flagged === '1', rating: req.query.rating, page: Math.max(1, Number(req.query.page) || 1),
+    }));
+  } catch (err) { next(err); }
+});
+
+router.patch('/reviews/:id',
+  validate(Joi.object({
+    action: Joi.string().valid('hide', 'show', 'exclude', 'include', 'dismiss').required(),
+    reason: Joi.string().trim().max(300).allow(''),
+  })),
+  async (req, res, next) => {
+    try {
+      if (!/^[0-9a-f]{24}$/i.test(req.params.id)) return res.status(404).json({ error: 'Review not found' });
+      const after = await reviews.moderate(req.params.id, req.body, req.auth.sub);
+      await auditService.fromRequest(req, `review.${req.body.action}`, { kind: 'review', id: req.params.id }, null, { status: after.status, excluded: after.excluded, reason: req.body.reason });
+      res.json({ ok: true });
+    } catch (err) { next(err); }
+  });
+
 /* Economics: every service line's customer fee, provider commission and tax */
 
 const fees = require('./fees.service');

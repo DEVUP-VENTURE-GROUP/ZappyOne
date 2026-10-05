@@ -70,3 +70,33 @@ test('public summary: real words only, masked names, hidden text left out', asyn
   // Hidden words still count as stars.
   expect(out.breakdown).toMatchObject({ 5: 1, 2: 1 });
 });
+
+test("a provider sees their own reviews, reports one, and only they can", async () => {
+  const w = await worker();
+  const job = () => new mongoose.Types.ObjectId();
+  await reviews.recordReview({ kind: 'repair', jobId: job(), userId, workerId: w, rating: 5, comment: 'Quick and neat', serviceLabel: 'Screen' });
+  const bad = await reviews.recordReview({ kind: 'pet', jobId: job(), userId, workerId: w, rating: 1, comment: 'Never came' });
+
+  const out = await reviews.mine({ role: 'worker', id: w });
+  expect(out).toMatchObject({ rating: 3, reviewCount: 2, total: 2, breakdown: { 1: 1, 5: 1 } });
+  expect(out.reviews[0]).toMatchObject({ by: 'Ravi K.', reported: false });
+
+  await reviews.report({ role: 'worker', id: w }, String(bad._id), 'I was never assigned this job');
+  expect((await Review.findById(bad._id)).flagReason).toMatch(/Reported by provider/);
+  const stranger = new mongoose.Types.ObjectId();
+  await expect(reviews.report({ role: 'worker', id: stranger }, String(bad._id), 'not mine at all')).rejects.toMatchObject({ status: 404 });
+  await expect(reviews.mine({ role: 'user', id: userId })).rejects.toMatchObject({ status: 403 });
+});
+
+test('admin decides on a reported review; excluding it fixes the rating', async () => {
+  const w = await worker();
+  await reviews.recordReview({ kind: 'repair', jobId: new mongoose.Types.ObjectId(), userId, workerId: w, rating: 5 });
+  const bad = await reviews.recordReview({ kind: 'repair', jobId: new mongoose.Types.ObjectId(), userId, workerId: w, rating: 1, comment: 'call 9876543210' });
+  expect((await reviews.adminList({ flagged: true })).reviews.map((r) => r.id)).toEqual([String(bad._id)]);
+
+  await reviews.moderate(String(bad._id), { action: 'exclude', reason: 'Not this provider' }, null);
+  expect(await Worker.findById(w).lean()).toMatchObject({ rating: 5, reviewCount: 1 });
+  expect((await reviews.adminList({ flagged: true })).total).toBe(0);
+  await reviews.moderate(String(bad._id), { action: 'include' }, null);
+  expect(await Worker.findById(w).lean()).toMatchObject({ rating: 3, reviewCount: 2 });
+});

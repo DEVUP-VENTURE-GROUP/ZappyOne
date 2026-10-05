@@ -100,4 +100,105 @@ async function publicSummary({ workerId, shopId }, { limit = 12 } = {}) {
   };
 }
 
-module.exports = { recordReview, recomputeRating, publicSummary, maskName, autoFlag };
+/** Which provider field a signed-in account's reviews are filed under. */
+const OWNER_KEY = { worker: 'workerId', shop: 'shopId', event_partner: 'partnerId' };
+
+/**
+ * A provider's own reviews: every one, newest first, with the star spread and
+ * the rating customers see. Hidden reviews are included with a note (the
+ * provider should know what was said); excluded ones are marked as not counted.
+ */
+async function mine({ role, id }, { page = 1, limit = 20 } = {}) {
+  const key = OWNER_KEY[role];
+  if (!key) throw Object.assign(new Error('Reviews are for service providers'), { status: 403, code: 'BAD_ROLE' });
+  const match = { [key]: oid(id) };
+  const skip = (Math.max(1, page) - 1) * limit;
+  const [rows, total, spread, counted] = await Promise.all([
+    Review.find(match).sort({ createdAt: -1 }).skip(skip).limit(limit).populate('userId', 'name').lean(),
+    Review.countDocuments(match),
+    Review.aggregate([{ $match: { ...match, excluded: false } }, { $group: { _id: '$rating', n: { $sum: 1 } } }]),
+    Review.aggregate([{ $match: { ...match, excluded: false } }, { $group: { _id: null, avg: { $avg: '$rating' }, n: { $sum: 1 } } }]),
+  ]);
+  const breakdown = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+  for (const r of spread) breakdown[r._id] = r.n;
+  return {
+    rating: counted[0] ? Number(counted[0].avg.toFixed(1)) : 0,
+    reviewCount: counted[0]?.n || 0,
+    breakdown,
+    total,
+    page,
+    pages: Math.max(1, Math.ceil(total / limit)),
+    reviews: rows.map((r) => ({
+      id: String(r._id),
+      kind: r.kind,
+      rating: r.rating,
+      text: r.comment,
+      service: r.serviceLabel,
+      at: r.createdAt,
+      by: maskName(r.userId?.name),
+      hidden: r.status === 'hidden',
+      excluded: r.excluded,
+      reported: r.flagged,
+    })),
+  };
+}
+
+/**
+ * The provider asks for a review to be looked at (fake, abusive, wrong job).
+ * It goes to the admin moderation queue; nothing changes until an admin decides.
+ */
+async function report({ role, id }, reviewId, reason) {
+  const key = OWNER_KEY[role];
+  if (!key || !mongoose.isValidObjectId(reviewId)) throw Object.assign(new Error('Review not found'), { status: 404, code: 'NOT_FOUND' });
+  const r = await Review.findOne({ _id: reviewId, [key]: oid(id) });
+  if (!r) throw Object.assign(new Error('Review not found'), { status: 404, code: 'NOT_FOUND' });
+  if (r.flagged) return { reported: true, already: true };
+  r.flagged = true;
+  r.flagReason = `Reported by provider: ${String(reason).trim().slice(0, 300)}`;
+  await r.save();
+  return { reported: true };
+}
+
+/** Admin queue: reported/auto-flagged first, or every review of a rating. */
+async function adminList({ flagged, rating, page = 1, limit = 30 } = {}) {
+  const q = {};
+  if (flagged) q.flagged = true;
+  if (rating) q.rating = Number(rating);
+  const [rows, total] = await Promise.all([
+    Review.find(q).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit)
+      .populate('userId', 'name phone').populate('workerId', 'name').populate('shopId', 'businessName').populate('partnerId', 'businessName').lean(),
+    Review.countDocuments(q),
+  ]);
+  return {
+    total, page, pages: Math.max(1, Math.ceil(total / limit)),
+    reviews: rows.map((r) => ({
+      id: String(r._id), kind: r.kind, rating: r.rating, text: r.comment, service: r.serviceLabel, at: r.createdAt,
+      customer: r.userId ? { name: r.userId.name, phone: r.userId.phone } : null,
+      provider: r.shopId?.businessName || r.partnerId?.businessName || r.workerId?.name || null,
+      status: r.status, excluded: r.excluded, flagged: r.flagged, flagReason: r.flagReason, moderation: r.moderation,
+    })),
+  };
+}
+
+/**
+ * An admin's decision. hide/show: the words on public pages. exclude/include:
+ * whether the stars count (the provider's rating is recomputed). dismiss:
+ * the report was looked at and the review stays as it is.
+ */
+async function moderate(reviewId, { action, reason = '' }, adminId) {
+  const r = await Review.findById(reviewId);
+  if (!r) throw Object.assign(new Error('Review not found'), { status: 404, code: 'NOT_FOUND' });
+  const set = {
+    hide: { status: 'hidden' }, show: { status: 'visible' },
+    exclude: { excluded: true }, include: { excluded: false }, dismiss: {},
+  }[action];
+  if (!set) throw Object.assign(new Error('Unknown action'), { status: 400, code: 'BAD_ACTION' });
+  Object.assign(r, set, { flagged: false, moderation: { by: adminId || null, at: new Date(), reason: String(reason).slice(0, 300) } });
+  await r.save();
+  if (action === 'exclude' || action === 'include') {
+    await recomputeRating({ workerId: r.workerId, shopId: r.shopId, partnerId: r.partnerId });
+  }
+  return r.toObject();
+}
+
+module.exports = { recordReview, recomputeRating, publicSummary, maskName, autoFlag, mine, report, adminList, moderate, OWNER_KEY };

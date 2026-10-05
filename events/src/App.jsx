@@ -27,6 +27,7 @@ const PackageEditorPage = lazy(() => import('./features/packages/PackageEditorPa
 const CalendarPage = lazy(() => import('./features/calendar/CalendarPage'));
 const EarningsPage = lazy(() => import('./features/earnings/EarningsPage'));
 const ProfilePage = lazy(() => import('./features/profile/ProfilePage'));
+const ProviderReviewsPage = lazy(() => import('@shared/provider/pages/ProviderReviewsPage'));
 
 const LOGIN = '/partner/login';
 
@@ -73,6 +74,7 @@ export default function App() {
                 <Route path="packages/:id/edit" element={<PackageEditorPage />} />
                 <Route path="calendar" element={<CalendarPage />} />
                 <Route path="earnings" element={<EarningsPage />} />
+                <Route path="reviews" element={<ProviderReviewsPage embedded />} />
               </Route>
             </Route>
             <Route path="*" element={<Navigate to={accessToken ? '/partner' : LOGIN} replace />} />

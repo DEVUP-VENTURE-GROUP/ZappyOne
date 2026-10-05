@@ -9,6 +9,7 @@ const WorkerNotificationsPage = lazy(() => import('./pages/WorkerNotificationsPa
 const WorkerBankPage = lazy(() => import('./pages/WorkerBankPage'));
 const WorkerWithdrawPage = lazy(() => import('./pages/WorkerWithdrawPage'));
 const WorkerAppealsPage = lazy(() => import('./pages/WorkerAppealsPage'));
+const ProviderReviewsPage = lazy(() => import('./pages/ProviderReviewsPage'));
 const WorkerEarningsPage = lazy(() => import('./pages/WorkerEarningsPage'));
 const WorkerTrainingPage = lazy(() => import('./pages/WorkerTrainingPage'));
 const WorkerGoalsPage = lazy(() => import('./pages/WorkerGoalsPage'));
@@ -52,6 +53,7 @@ export function providerRoutes({ loginPath, helping = false, onboardRoles = ['wo
     <Route key="w-kyc" path="/worker/kyc" element={shopTeam ? w(<WorkerKycPage />) : <Navigate to="/provider/onboarding" replace />} />,
     <Route key="w-profile" path="/worker/profile" element={w(<WorkerEditProfilePage />)} />,
     <Route key="w-notif" path="/worker/notifications" element={w(<WorkerNotificationsPage />)} />,
+    <Route key="w-reviews" path="/worker/reviews" element={w(<ProviderReviewsPage back="/worker" />)} />,
     ...independentOnly,
     <Route key="w-repair" path="/worker/repair/:id" element={job(<WorkerRepairJobPage />)} />,
     <Route key="w-work" path="/worker/work" element={w(<WorkBoardPage kinds={kinds} />)} />,

@@ -35,7 +35,8 @@ const NAV_SECTIONS = [
       // verification per service, not by a list they set themselves.
       { to: '/provider/onboarding', Icon: ShieldCheck, label: 'Services & Verification', desc: 'What you are approved to work on', color: 'emerald' },
       { to: '/worker/training',  Icon: GraduationCap,label: 'Training & Certification', desc: 'Video courses + quiz certs',   color: 'rose' },
-      { to: '/worker/appeals',   Icon: AlertCircle,  label: 'Appeals',                  desc: 'Contest ratings & penalties',  color: 'orange' },
+      { to: '/worker/reviews',   Icon: Star,         label: 'My reviews',               desc: 'What customers said about you', color: 'orange' },
+      { to: '/worker/appeals',   Icon: AlertCircle,  label: 'Appeals',                  desc: 'Contest penalties',            color: 'orange' },
     ],
   },
   {

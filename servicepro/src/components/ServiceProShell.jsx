@@ -1,7 +1,7 @@
 import { Outlet, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import {
-  LayoutDashboard, Wrench, Users, IndianRupee, Store, ShieldCheck, PlusCircle, Bell, UserRound,
+  LayoutDashboard, Wrench, Users, IndianRupee, Store, ShieldCheck, PlusCircle, Bell, UserRound, Star,
 } from 'lucide-react';
 import PortalShell from '@shared/components/worker/PortalShell';
 import { selectAuth, logout } from '@shared/modules/auth/authSlice';
@@ -21,6 +21,7 @@ const OWNER_PAGES = [
   { key: 'team', label: 'Team', Icon: Users, to: '/shop/workers', primary: true },
   { key: 'earnings', label: 'Earnings', Icon: IndianRupee, to: '/shop/earnings', primary: true },
   { key: 'shop', label: 'Shop & hours', Icon: Store, to: '/shop/profile', primary: true },
+  { key: 'reviews', label: 'Reviews', Icon: Star, to: '/shop/reviews' },
   { key: 'kyc', label: 'Verification', Icon: ShieldCheck, to: '/shop/kyc' },
   { key: 'services', label: 'Add a service', Icon: PlusCircle, to: '/provider/onboarding' },
 ];

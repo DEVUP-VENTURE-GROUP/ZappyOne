@@ -35,6 +35,7 @@ import {
   Coins,
   LineChart,
   Percent,
+  Star,
 } from 'lucide-react';
 import Hub from '../ui/Hub';
 
@@ -53,6 +54,7 @@ const P = {
   Bookings: page(() => import('../features/bookings/Bookings')),
   Tickets: page(() => import('../features/support/Tickets')),
   Disputes: page(() => import('../features/support/Disputes')),
+  Reviews: page(() => import('../features/support/Reviews')),
   Promos: page(() => import('../features/marketing/Promos')),
   Cashback: page(() => import('../features/marketing/rewards/Cashback')),
   Points: page(() => import('../features/marketing/rewards/Points')),
@@ -95,9 +97,10 @@ const hub = (title, subtitle, views) => {
 };
 
 const HUBS = {
-  helpdesk: hub('Help desk', 'Customer tickets and disputes', [
+  helpdesk: hub('Help desk', 'Customer tickets, disputes and reviews', [
     { id: 'tickets', label: 'Tickets', icon: HeadphonesIcon, Comp: P.Tickets },
     { id: 'disputes', label: 'Disputes', icon: Scale, Comp: P.Disputes },
+    { id: 'reviews', label: 'Reviews', icon: Star, Comp: P.Reviews },
   ]),
   rewards: hub('Rewards', 'Cashback, referrals and loyalty points', [
     { id: 'cashback', label: 'Cashback & referrals', icon: Coins, Comp: P.Cashback },
