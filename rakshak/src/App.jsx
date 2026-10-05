@@ -9,6 +9,7 @@ import ErrorBoundary from '@shared/components/common/ErrorBoundary';
 import { providerRoutes } from '@shared/provider/providerRoutes';
 import JobOfferHost from '@shared/components/jobs/JobOfferHost';
 import AccountSetupGate from '@shared/components/account/AccountSetupGate';
+import OnlineLocation from '@shared/provider/OnlineLocation';
 import { VerifyEmailPage, ResetPasswordPage } from '@shared/components/account/AccountLinkPages';
 
 const WorkerLoginPage = lazy(() => import('@shared/provider/pages/WorkerLoginPage'));
@@ -35,6 +36,7 @@ export default function App() {
       {accessToken && role === 'worker' && <JobOfferHost kinds={['repair', 'pet', 'helping']} />}
       <ErrorBoundary>
         <Suspense fallback={<PageLoader />}>
+          <OnlineLocation />
           <AccountSetupGate roles={['worker']} appName="Rakshak">
           <Routes>
             <Route path="/verify-email" element={<VerifyEmailPage homePath="/worker" />} />

@@ -1,5 +1,6 @@
 import { useSafeBack } from '../../hooks/useBookingFlow';
 import { useNavigate } from 'react-router-dom';
+import { servicePhoto } from '@shared/components/home/problemArt';
 import { ArrowLeft, ShoppingBasket, PackageCheck, ChevronRight } from 'lucide-react';
 import { useHelpingServicesQuery } from '@shared/services/api';
 
@@ -61,9 +62,13 @@ export default function HelpingServicesPage() {
               onClick={() => nav(c.path)}
               className="w-full flex items-center gap-4 rounded-2xl border-2 border-slate-200 bg-white p-5 text-left hover:border-zappy-300 transition"
             >
-              <span className="shrink-0 w-12 h-12 rounded-2xl bg-zappy-50 grid place-items-center">
-                <Icon size={22} className="text-zappy-600" />
-              </span>
+              {servicePhoto(c.key) ? (
+                <img src={servicePhoto(c.key)} alt="" loading="lazy" className="h-16 w-16 shrink-0 rounded-2xl object-cover" />
+              ) : (
+                <span className="shrink-0 w-12 h-12 rounded-2xl bg-zappy-50 grid place-items-center">
+                  <Icon size={22} className="text-zappy-600" />
+                </span>
+              )}
               <span className="flex-1 min-w-0">
                 <span className="block font-black text-[#0F172A]">{c.title}</span>
                 <span className="block text-xs text-slate-500 mt-0.5">{c.subtitle}</span>

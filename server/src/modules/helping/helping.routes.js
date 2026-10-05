@@ -104,6 +104,7 @@ router.post('/tasks',
     paymentModel: Joi.string().valid(...OFFERED_PAYMENT_MODELS).default('worker_advance'),
     specialHandling: Joi.boolean().default(false),
     idempotencyKey: Joi.string().max(120).allow(null),
+    onSite: require('../jobs/on-site').onSiteSchema,
   })),
   ctrl.createTask);
 

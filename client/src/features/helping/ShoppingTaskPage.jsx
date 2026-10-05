@@ -12,6 +12,7 @@ import ImageUploadField from '@shared/components/common/ImageUploadField';
 import { useHelpingQuoteMutation, useCreateHelpingTaskMutation } from '@shared/services/api';
 import { formatPaise } from '@shared/utils/money';
 import { PayMethodPicker } from '@shared/components/common/PayMethodPicker';
+import SomeoneElse from '@shared/components/booking/SomeoneElse';
 import { usePayBooking } from '@shared/hooks/usePayBooking';
 
 /**
@@ -54,6 +55,8 @@ export default function ShoppingTaskPage() {
   const [getQuote, { data: quoteData, isLoading: quoting }] = useHelpingQuoteMutation();
   const [create, { isLoading: booking }] = useCreateHelpingTaskMutation();
   const [paymentMethod, setPaymentMethod] = useState('cash');
+  // Booking for someone else: who the provider meets ('incomplete' while being typed).
+  const [onSite, setOnSite] = useState(null);
   // One key per visit to this screen, so a double tap cannot book twice.
   const [idempotencyKey] = useState(() => `web-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
   const { pay, paying } = usePayBooking();
@@ -97,7 +100,9 @@ export default function ShoppingTaskPage() {
     if (!(await covered('shopping_pickup', pickupLoc))) { setNotHere(true); window.scrollTo({ top: 0 }); return; }
 
     try {
+      if (onSite === 'incomplete') { toast.error('Add their name and mobile number, or untick "for someone else".'); return; }
       const res = await create({
+        ...(onSite && { onSite }),
         serviceType: mode === 'shop' ? 'shopping' : 'pickup',
         title: mode === 'shop' ? 'Shopping task' : 'Pickup task',
         instructions,
@@ -315,6 +320,7 @@ export default function ShoppingTaskPage() {
             </div>
           </div>
         )}
+        <SomeoneElse onChange={setOnSite} />
         <PayMethodPicker
           value={paymentMethod}
           onChange={setPaymentMethod}

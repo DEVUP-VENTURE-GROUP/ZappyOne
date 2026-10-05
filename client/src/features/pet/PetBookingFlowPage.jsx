@@ -15,6 +15,7 @@ import {
 } from '@shared/services/api';
 import { formatPaise } from '@shared/utils/money';
 import { PayMethodPicker } from '@shared/components/common/PayMethodPicker';
+import SomeoneElse from '@shared/components/booking/SomeoneElse';
 import { usePayBooking } from '@shared/hooks/usePayBooking';
 
 /**
@@ -86,6 +87,8 @@ function PetBookingFlow({ categoryCode, saved, draftKey, onStartOver }) {
   const [pickerFor, setPickerFor] = useState(null);
   const [provider, setProvider] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState(saved?.paymentMethod ?? 'cash');
+  // Booking for someone else: who the provider meets ('incomplete' while being typed).
+  const [onSite, setOnSite] = useState(null);
   // One key per visit to this screen, so a double tap cannot book twice.
   const [idempotencyKey] = useState(() => `web-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
   const { pay, paying } = usePayBooking();
@@ -203,7 +206,9 @@ function PetBookingFlow({ categoryCode, saved, draftKey, onStartOver }) {
   async function book() {
     if (!loc) { toast.error('Choose a location'); return; }
     try {
+      if (onSite === 'incomplete') { toast.error('Add their name and mobile number, or untick "for someone else".'); return; }
       const res = await create({
+        ...(onSite && { onSite }),
         categoryCode,
         serviceMode: primaryVariant?.allowedModes?.[0] || 'doorstep',
         pets: petEntries(),
@@ -430,6 +435,7 @@ function PetBookingFlow({ categoryCode, saved, draftKey, onStartOver }) {
               <span>Total</span><span>{formatPaise(quote.totalPaise)}</span>
             </div>
           )}
+          <SomeoneElse onChange={setOnSite} />
           <PayMethodPicker value={paymentMethod} onChange={setPaymentMethod} />
           <button type="button" onClick={book} disabled={booking || paying}
             className="w-full rounded-2xl bg-[#0F172A] text-white font-bold py-4 disabled:opacity-50">

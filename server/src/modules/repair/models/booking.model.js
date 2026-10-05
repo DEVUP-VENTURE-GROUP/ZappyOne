@@ -182,6 +182,8 @@ const repairBookingSchema = new mongoose.Schema(
 
     /* What is being repaired */
     brandCode: { type: String, required: true, lowercase: true, index: true },
+    /** Booking for someone else: who the provider meets (jobs/on-site.js). */
+    onSite: { type: new mongoose.Schema(require('../../jobs/on-site').onSiteField, { _id: false }), default: undefined },
     modelCode: { type: String, required: true, lowercase: true, index: true },
     modelId: { type: mongoose.Schema.Types.ObjectId, ref: 'DeviceModel', default: null },
     variantLabel: { type: String, default: '' },

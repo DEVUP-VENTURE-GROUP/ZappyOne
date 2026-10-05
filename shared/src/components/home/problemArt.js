@@ -20,6 +20,7 @@ const PHOTOS = {
 
 /** Photos drawn for whole headings (vehicles), at /problems/<vertical>/headings/<code>.webp. */
 const HEADINGS = {
+  water_tank_care: new Set(['wt_cleaning', 'wt_inspection', 'wt_flushing', 'wt_repair', 'wt_addons']),
   two_wheeler: new Set([
     'tw_battery_electrical', 'tw_brakes', 'tw_chain_drive', 'tw_clutch_gear', 'tw_cooling', 'tw_engine',
     'tw_ev_battery', 'tw_ev_charging', 'tw_ev_controller', 'tw_ev_dashboard', 'tw_ev_motor', 'tw_maintenance',
@@ -51,6 +52,7 @@ const COVERS = {
 const VERTICAL = {
   mobile: 'mobile', mobile_repair: 'mobile', laptop: 'laptop', laptop_repair: 'laptop',
   two_wheeler: 'two_wheeler', four_wheeler: 'four_wheeler',
+  water_tank_care: 'water_tank_care',
 };
 
 const url = (v, code) => (PHOTOS[v]?.has(code) ? `/problems/${v}/${code}.webp` : null);
@@ -86,11 +88,18 @@ const SERVICE_COVERS = {
   laptop: '/problems/laptop/lt_overheating.webp',
   two_wheeler: '/problems/two_wheeler/headings/tw_engine.webp',
   four_wheeler: '/problems/four_wheeler/headings/fw_engine.webp',
+  water_tank_care: '/problems/water_tank_care/headings/wt_cleaning.webp',
+};
+/** Helping: each errand type has its own photo; the two service lines use their main one. */
+const HELPING = {
+  shopping: 'shopping', pickup: 'pickup', return: 'return', exchange: 'exchange',
+  shopping_pickup: 'shopping', returns_exchange: 'return', helping_services: 'shopping', helping: 'shopping',
 };
 const PET_SERVICES = new Set(['pet_boarding', 'pet_check', 'pet_grooming', 'pet_home_care', 'pet_transport', 'pet_vet_assist', 'pet_walk']);
 
 export function servicePhoto(code) {
   if (PET_SERVICES.has(code)) return `/services/pet/${code}.webp`;
   if (code === 'pet_services') return '/services/pet/pet_grooming.webp';
+  if (HELPING[code]) return `/services/helping/${HELPING[code]}.webp`;
   return SERVICE_COVERS[VERTICAL[code]] || null;
 }

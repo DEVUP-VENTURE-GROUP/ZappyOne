@@ -22,6 +22,7 @@ import LocationPicker from '@shared/modules/booking/LocationPicker';
 import toast from 'react-hot-toast';
 import GrowingHere from '../catalog/serviceability/GrowingHere';
 import { PayMethodPicker } from '@shared/components/common/PayMethodPicker';
+import SomeoneElse from '@shared/components/booking/SomeoneElse';
 import BrandLogo from '@shared/components/common/BrandLogo';
 import { categoryPhoto } from '@shared/components/home/problemArt';
 import { ProblemLayout } from './ProblemCard';
@@ -1395,11 +1396,15 @@ function ConfirmStep({
   );
   const onlineEnabled = !!payPreview?.payment?.onlineEnabled;
   const [paymentMethod, setPaymentMethod] = useState('cash');
+  // Booking for someone else: who the provider meets ('incomplete' while being typed).
+  const [onSite, setOnSite] = useState(null);
   const { pay, paying } = usePayBooking();
 
   async function book() {
     try {
+      if (onSite === 'incomplete') { toast.error('Add their name and mobile number, or untick "for someone else".'); return; }
       const res = await create({
+        ...(onSite && { onSite }),
         vertical,
         brandCode: brand.code,
         modelCode: model.code,
@@ -1514,6 +1519,7 @@ function ConfirmStep({
       </div>
 
       {/* How this gets paid, said plainly before the button. Online appears only when the server can take it. */}
+      <SomeoneElse onChange={setOnSite} />
       <PayMethodPicker
         value={paymentMethod}
         onChange={setPaymentMethod}

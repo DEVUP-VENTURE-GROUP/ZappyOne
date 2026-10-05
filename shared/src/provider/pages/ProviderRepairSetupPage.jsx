@@ -828,7 +828,7 @@ function cellKey(repairCode, qualityCode) {
  * No Zappy band is fetched or shown: the provider names their own number.
  */
 function PriceRow({
-  repair, values, onChange, existing,
+  repair, values, onChange, existing, onRemove,
 }) {
   const [open, setOpen] = useState(false);
 
@@ -845,8 +845,15 @@ function PriceRow({
   const typed = tiers.filter((t) => values[cellKey(repair.code, t.code)]);
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white">
-      <button onClick={toggle} className="flex w-full items-center gap-3 p-3.5 text-left">
+    <div className="relative rounded-2xl border border-slate-200 bg-white">
+      {/* One tap: stop offering this job (undo in the message). */}
+      {onRemove && (
+        <button type="button" onClick={() => onRemove(repair)} aria-label={`Stop offering ${repair.name}`} title="Stop offering this job"
+          className="absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full text-slate-400 hover:bg-rose-50 hover:text-rose-600">
+          <X size={16} />
+        </button>
+      )}
+      <button onClick={toggle} className={`flex w-full items-center gap-3 p-3.5 text-left ${onRemove ? 'pr-11' : ''}`}>
         <span className="min-w-0 flex-1">
           <span className="block text-sm font-semibold text-[#0F172A]">{repair.name}</span>
           {live.length ? (
@@ -947,6 +954,37 @@ function PricingStep({ vertical, onBack, onNext }) {
   const [fetchSuggested, { isFetching: suggesting }] = useLazyRepairProviderSuggestedPricingQuery();
 
   const brandCodes = catalog?.brands || [];
+  const [saveWork] = useSaveRepairCapabilitiesMutation();
+
+  /**
+   * Take one job off this provider's work in a tap, from the price list, and
+   * offer to put it back. Saved the same way as the work step, so the job
+   * stops being offered to customers too.
+   */
+  async function setWork(codes) {
+    const all = [...new Set((catalog?.groups || []).flatMap((g) => g.repairs).map((r) => r.code))];
+    return saveWork({
+      vertical, repairCodes: codes, candidateCodes: all, brandCodes,
+      skillLevel: catalog?.skillLevel || 2, serviceModes: ['doorstep', 'workshop', 'pickup_repair'],
+    }).unwrap();
+  }
+  async function removeJob(repair) {
+    const before = claimed.map((r) => r.code);
+    try {
+      await setWork(before.filter((c) => c !== repair.code));
+      toast((t) => (
+        <span className="flex items-center gap-3 text-sm">
+          {repair.name} removed
+          <button type="button" className="font-bold text-zappy-600"
+            onClick={() => { toast.dismiss(t.id); setWork(before).catch(() => toast.error('Could not put it back. Tick it again in the work step.')); }}>
+            Undo
+          </button>
+        </span>
+      ), { duration: 6000 });
+    } catch (err) {
+      toast.error(err?.data?.error || 'That did not go through. Please try again.');
+    }
+  }
   const [brand, setBrand] = useState(null);
   // undefined = the model list; null = the brand-level baseline; a code = that
   // specific model. The name is held alongside it because the list it came from
@@ -1154,6 +1192,7 @@ function PricingStep({ vertical, onBack, onNext }) {
                 values={values}
                 onChange={setValue}
                 existing={existing}
+                onRemove={claimed.length > 1 ? removeJob : undefined}
               />
             ))}
           </div>

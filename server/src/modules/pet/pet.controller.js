@@ -199,12 +199,14 @@ async function findProviders(req, res, next) {
 
 async function createBooking(req, res, next) {
   try {
+    const { onSite, ...body } = req.body;
     const { booking, replayed } = await bookingService.createBooking({
-      ...req.body,
+      ...body,
       userId: req.auth.sub,
       idempotencyKey: req.get('Idempotency-Key') || req.body.idempotencyKey || null,
     });
-    res.status(replayed ? 200 : 201).json({ booking, replayed });
+    const saved = await require('../jobs/on-site').saveOnSite(require('./models/booking.model').PetBooking, booking._id, onSite, replayed);
+    res.status(replayed ? 200 : 201).json({ booking: saved ? { ...(booking.toObject?.() || booking), onSite: saved } : booking, replayed });
   } catch (err) { next(err); }
 }
 

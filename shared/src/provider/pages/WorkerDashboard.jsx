@@ -20,7 +20,6 @@ import { formatPaise } from '../../utils/money';
 import { ZappyLogo } from '../../components/common/ZappyLogo';
 import WorkerOnboarding from './WorkerOnboarding';
 import ProviderServicesCard from '../../components/provider/ProviderServicesCard';
-import { useLocationBroadcast } from '../useLocationBroadcast';
 import { useProviderJobs } from '../useProviderJobs';
 import {
   Avatar, GreetingCard, StatCard, Panel, EarningsOverview,
@@ -141,7 +140,7 @@ export default function WorkerDashboard() {
     return () => socket.off('kyc.rejected', onRejected);
   }, [token, dispatch, refetchMe]);
 
-  useLocationBroadcast({ isOnline, token, currentOrderId: me?.currentOrderId });
+  // Location is shared app-wide while online (provider/OnlineLocation), not only on this page.
 
   // After every hook, so the hook count never changes.
   if (meData && !me?.onboardingComplete) return <WorkerOnboarding onComplete={refetchMe} />;

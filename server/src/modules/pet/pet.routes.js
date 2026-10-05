@@ -144,6 +144,7 @@ router.post('/bookings', authenticate, requireRole('user'),
     specialHandling: Joi.boolean().default(false),
     couponPaise: Joi.number().integer().min(0).default(0),
     idempotencyKey: Joi.string().max(120).allow(null),
+    onSite: require('../jobs/on-site').onSiteSchema,
   })),
   ctrl.createBooking);
 

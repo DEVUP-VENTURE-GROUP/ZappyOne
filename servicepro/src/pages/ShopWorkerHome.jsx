@@ -11,7 +11,6 @@ import {
 import { selectAuth } from '@shared/modules/auth/authSlice';
 import { useGeolocation } from '@shared/hooks/useGeolocation';
 import { formatPaise } from '@shared/utils/money';
-import { useLocationBroadcast } from '@shared/provider/useLocationBroadcast';
 import { useProviderJobs } from '@shared/provider/useProviderJobs';
 
 /**
@@ -38,7 +37,7 @@ export default function ShopWorkerHome() {
   const kycApproved = kycStatus === 'approved';
   // Already sent: nothing to do but wait, so don't send them back to the form.
   const kycWaiting = kycStatus === 'pending_review';
-  useLocationBroadcast({ isOnline: onDuty, token: accessToken, currentOrderId: me?.currentOrderId });
+  // Location is shared app-wide while on duty (provider/OnlineLocation), not only on this page.
 
   async function toggleDuty() {
     if (kycWaiting) { toast('Your ID is being checked — you can go on duty once it is approved'); return; }

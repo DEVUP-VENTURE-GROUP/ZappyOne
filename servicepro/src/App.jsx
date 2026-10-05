@@ -12,6 +12,7 @@ import JobOfferHost from '@shared/components/jobs/JobOfferHost';
 import LoginRoleSwitch from './components/LoginRoleSwitch';
 import ServiceProShell from './components/ServiceProShell';
 import AccountSetupGate from '@shared/components/account/AccountSetupGate';
+import OnlineLocation from '@shared/provider/OnlineLocation';
 import { VerifyEmailPage, ResetPasswordPage } from '@shared/components/account/AccountLinkPages';
 
 const ShopLoginPage = lazy(() => import('./pages/ShopLoginPage'));
@@ -50,6 +51,7 @@ export default function App() {
       {accessToken && ['worker', 'shop'].includes(role) && <JobOfferHost kinds={['repair', 'pet']} />}
       <ErrorBoundary>
         <Suspense fallback={<PageLoader />}>
+          <OnlineLocation />
           <AccountSetupGate roles={['shop', 'worker']} appName="ServicePro">
           <Routes>
             <Route path="/verify-email" element={<VerifyEmailPage homePath={homeFor(role)} />} />

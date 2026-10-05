@@ -345,6 +345,8 @@ const helpingTaskSchema = new mongoose.Schema(
   {
     reference: { type: String, required: true, unique: true, index: true },
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+    /** Booking for someone else: who the provider meets (jobs/on-site.js). */
+    onSite: { type: new mongoose.Schema(require('../../jobs/on-site').onSiteField, { _id: false }), default: undefined },
     workerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Worker', default: null, index: true },
 
     serviceType: { type: String, enum: SERVICE_TYPES, required: true, index: true },

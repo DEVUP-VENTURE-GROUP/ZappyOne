@@ -94,12 +94,14 @@ async function quote(req, res, next) {
 
 async function createTask(req, res, next) {
   try {
+    const { onSite, ...body } = req.body;
     const { task, replayed } = await taskService.createTask({
-      ...req.body,
+      ...body,
       userId: req.auth.sub,
       idempotencyKey: req.get('Idempotency-Key') || req.body.idempotencyKey || null,
     });
-    res.status(replayed ? 200 : 201).json({ task, replayed });
+    const saved = await require('../jobs/on-site').saveOnSite(require('./models/task.model').HelpingTask, task._id, onSite, replayed);
+    res.status(replayed ? 200 : 201).json({ task: saved ? { ...(task.toObject?.() || task), onSite: saved } : task, replayed });
   } catch (err) { next(err); }
 }
 

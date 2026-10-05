@@ -154,6 +154,7 @@ router.post(
     // Cash until the gateway is live; the server still decides what is allowed.
     paymentMethod: Joi.string().valid('cash', 'online').default('cash'),
     idempotencyKey: Joi.string().max(120).allow(null),
+    onSite: require('../jobs/on-site').onSiteSchema,
   })),
   ctrl.createBooking,
 );

@@ -1,4 +1,5 @@
 import JobChatButton from '../../components/jobs/JobChatButton';
+import OnSiteCard from '../OnSiteCard';
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Loader2, Navigation, PawPrint, AlertTriangle } from 'lucide-react';
@@ -126,6 +127,7 @@ export default function WorkerPetJobPage() {
 
       <div className="max-w-lg mx-auto px-4 py-4 space-y-3 pb-10">
         {trip && !isOwner && <TripSharingBanner sharing={sharing} {...trip} />}
+        <OnSiteCard onSite={booking.onSite} />
         {isOwner && (
           <div className="rounded-2xl border-2 border-slate-200 bg-white p-4">
             <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Who goes</p>

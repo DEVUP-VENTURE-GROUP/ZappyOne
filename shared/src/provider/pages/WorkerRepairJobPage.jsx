@@ -1,4 +1,5 @@
 import JobChatButton from '../../components/jobs/JobChatButton';
+import OnSiteCard from '../OnSiteCard';
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
@@ -505,6 +506,7 @@ export default function WorkerRepairJobPage() {
 
       <div className="max-w-lg lg:max-w-2xl mx-auto px-4 pt-4 space-y-3">
         {onTrip && !isOwner && <TripSharingBanner sharing={sharingLocation} {...tripOf('repair', booking)} />}
+        <OnSiteCard onSite={booking.onSite} />
         {isOwner && (
           <div className="card">
             <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Technician</p>
