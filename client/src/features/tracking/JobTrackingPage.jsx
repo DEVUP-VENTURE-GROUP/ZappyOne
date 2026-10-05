@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import {
-  CheckCircle, HeadphonesIcon, Loader2, ShieldAlert, ShieldCheck, X, Navigation,
+  CheckCircle, HeadphonesIcon, Loader2, ShieldAlert, ShieldCheck, X, Navigation, Repeat2,
 } from 'lucide-react';
 import LiveTrackingMap from '@shared/modules/tracking/LiveTrackingMap';
 import { useTrackingFeed } from '@shared/hooks/useLiveTrip';
@@ -40,7 +40,7 @@ import JobChat from '@shared/components/jobs/JobChat';
  *   onBack       where back goes
  *   live         { workerLocation, etaMinutes } to use instead of the job's own feed
  */
-export default function JobTrackingPage({ job, extras = null, startCode = null, codeStage = null, cancel = null, onRate, onReceipt, onSOS, onBack, live = null }) {
+export default function JobTrackingPage({ job, extras = null, startCode = null, codeStage = null, cancel = null, onRate, onReceipt, onSOS, onBack, live = null, rebookHref = null }) {
   const nav = useNavigate();
   // Back to the previous page, or to /orders when this page was opened directly.
   const goBack = useSafeBack('/orders');
@@ -193,9 +193,17 @@ export default function JobTrackingPage({ job, extras = null, startCode = null, 
           <div className="mx-auto w-full max-w-2xl space-y-2.5 px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-4 sm:px-6 lg:max-w-4xl">
             {status === 'completed' && onRate && <RatingPanel onRate={onRate} />}
             {job.terminal ? (
-              <button type="button" onClick={() => nav('/')} className="btn-primary w-full">
-                Back to home
-              </button>
+              <>
+                {/* The same job again, one tap: the booking opens with it already chosen. */}
+                {rebookHref && status === 'completed' && (
+                  <button type="button" onClick={() => nav(rebookHref)} className="btn-primary w-full">
+                    <Repeat2 size={18} /> Book again
+                  </button>
+                )}
+                <button type="button" onClick={() => nav('/')} className={rebookHref && status === 'completed' ? 'btn-outline w-full' : 'btn-primary w-full'}>
+                  Back to home
+                </button>
+              </>
             ) : (
               <>
                 <button type="button" onClick={() => nav('/support')} className="btn-outline w-full">

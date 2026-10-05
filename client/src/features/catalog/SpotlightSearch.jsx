@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, ChevronRight, Clock, Search, X } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Clock, Search, X, Wrench } from 'lucide-react';
+import { problemPhoto, categoryPhoto, servicePhoto } from '@shared/components/home/problemArt';
 import { useLazySmartSearchQuery, useSearchTrendingQuery } from '@shared/services/api';
 import { getRecent, addRecent, clearRecent } from './recentSearches';
 import VoiceSearchButton from '../../components/common/VoiceSearchButton';
@@ -19,15 +20,35 @@ const GROUP_LABEL = { problems: 'Problems we fix', services: 'Services', categor
 /** Enter opens the best match, in the order the results are shown. */
 const topResult = (data) => data?.problems?.[0] || data?.services?.[0] || data?.categories?.[0] || null;
 
-function ResultRow({ item, onOpen }) {
+/** The result's own photo: the problem's, its heading's, else the service's. */
+function photoOf(item) {
+  return (item.problemCode && problemPhoto(item.vertical, { code: item.problemCode }))
+    || (item.categoryCode && categoryPhoto(item.vertical, { code: item.categoryCode }))
+    || servicePhoto(item.lineCode) || servicePhoto(item.vertical) || null;
+}
+
+/** The typed words in bold inside a title, so the customer sees why it matched. */
+function Highlight({ text, words }) {
+  if (!words.length) return text;
+  const safe = words.map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  const re = new RegExp(`(${safe.join('|')})`, 'ig');
+  return String(text).split(re).map((part, i) => (i % 2 ? <b key={i} className="font-semibold text-navy">{part}</b> : part));
+}
+
+function ResultRow({ item, onOpen, words = [], showSubtitle = true }) {
+  const photo = photoOf(item);
   return (
     <li>
       <button type="button" onClick={() => onOpen(item)}
-        className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-slate-50 focus-visible:bg-slate-50 focus-visible:outline-none">
-        <Search size={16} className="shrink-0 text-slate-400" aria-hidden="true" />
+        className="flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-slate-50 focus-visible:bg-slate-50 focus-visible:outline-none">
+        <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-100">
+          {photo
+            ? <img src={photo} alt="" loading="lazy" className="h-full w-full object-cover" />
+            : <Wrench size={18} className="text-slate-400" aria-hidden="true" />}
+        </span>
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-[15px] text-navy">{item.title}</span>
-          {item.subtitle && <span className="block truncate text-[12.5px] text-slate-500">{item.subtitle}</span>}
+          <span className="block truncate text-[15px] text-slate-700"><Highlight text={item.title} words={words} /></span>
+          {showSubtitle && item.subtitle && <span className="block truncate text-[12.5px] text-slate-500">{item.subtitle}</span>}
         </span>
         <ChevronRight size={16} className="shrink-0 text-slate-300" aria-hidden="true" />
       </button>
@@ -35,14 +56,42 @@ function ResultRow({ item, onOpen }) {
   );
 }
 
-function Group({ title, items, onOpen }) {
+function Group({ title, items, onOpen, words }) {
   if (!items?.length) return null;
   return (
     <section className="pt-3">
       <h3 className="px-4 pb-1 text-[12px] font-semibold uppercase tracking-[0.08em] text-slate-500">{title}</h3>
-      <ul>{items.map((it) => <ResultRow key={`${it.type}:${it.code}`} item={it} onOpen={onOpen} />)}</ul>
+      <ul>{items.map((it) => <ResultRow key={`${it.type}:${it.code}`} item={it} onOpen={onOpen} words={words} />)}</ul>
     </section>
   );
+}
+
+/**
+ * Problems grouped under the service they belong to ("2-Wheeler": Puncture,
+ * Slow puncture), each group ending with a way into the whole service.
+ */
+function ProblemGroups({ problems, onOpen, words }) {
+  if (!problems?.length) return null;
+  const groups = [];
+  for (const p of problems) {
+    let g = groups.find((x) => x.lineCode === p.lineCode);
+    if (!g) groups.push((g = { lineCode: p.lineCode, name: p.subtitle, path: p.path.split('?')[0], items: [] }));
+    g.items.push(p);
+  }
+  return groups.map((g) => (
+    <section key={g.lineCode} className="pt-3">
+      <h3 className="px-4 pb-1 text-[12px] font-semibold uppercase tracking-[0.08em] text-slate-500">{g.name}</h3>
+      <ul>
+        {g.items.map((it) => <ResultRow key={it.code} item={it} onOpen={onOpen} words={words} showSubtitle={false} />)}
+        <li>
+          <button type="button" onClick={() => onOpen({ path: g.path })}
+            className="flex w-full items-center justify-between px-4 py-2.5 text-[13.5px] font-semibold text-zappy-600 hover:bg-slate-50">
+            All {g.name} repairs <ChevronRight size={15} />
+          </button>
+        </li>
+      </ul>
+    </section>
+  ));
 }
 
 export default function SpotlightSearch({ open, onClose, lat, lng, initialQuery = '' }) {
@@ -68,7 +117,9 @@ export default function SpotlightSearch({ open, onClose, lat, lng, initialQuery 
     if (!open) return undefined;
     const term = q.trim();
     if (!term) return undefined;
-    const id = setTimeout(() => runSearch({ q: term, lat, lng }), 150);
+    if (term.length < 2) return undefined;
+    // Repeat queries come from the client cache (preferCacheValue), not the server.
+    const id = setTimeout(() => runSearch({ q: term, lat, lng }, true), 220);
     return () => clearTimeout(id);
   }, [q, open, lat, lng, runSearch]);
 
@@ -84,6 +135,7 @@ export default function SpotlightSearch({ open, onClose, lat, lng, initialQuery 
   const data = term ? searchState.data : null;
   const loading = term && (searchState.isFetching || searchState.isUninitialized);
   const trending = trendData?.trending || [];
+  const words = term.toLowerCase().split(/\s+/).filter((w) => w.length > 1);
 
   return (
     <div className="fixed inset-0 z-[120] flex flex-col bg-white" role="dialog" aria-modal="true" aria-label="Search">
@@ -104,9 +156,8 @@ export default function SpotlightSearch({ open, onClose, lat, lng, initialQuery 
               aria-label="Search a service or what’s wrong"
               className="min-w-0 flex-1 bg-transparent text-[16px] text-navy outline-none placeholder:text-slate-400"
             />
-            {q
-              ? <button type="button" onClick={() => setQ('')} aria-label="Clear" className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-200"><X size={16} /></button>
-              : <VoiceSearchButton onResult={(text) => setQ(text)} />}
+            {q && <button type="button" onClick={() => setQ('')} aria-label="Clear" className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-200"><X size={16} /></button>}
+            <VoiceSearchButton onResult={(text) => setQ(text)} />
           </div>
         </div>
       </div>
@@ -141,6 +192,13 @@ export default function SpotlightSearch({ open, onClose, lat, lng, initialQuery 
             </div>
           )}
 
+          {term && searchState.isError && !searchState.isFetching && (
+            <div className="px-4 pt-6 text-center">
+              <p className="text-[15px] text-slate-700">Search did not load.</p>
+              <button type="button" onClick={() => runSearch({ q: term, lat, lng })} className="btn-outline mt-3 min-h-[40px] px-4 text-[14px]">Try again</button>
+            </div>
+          )}
+
           {data?.notHere && (
             <p className="px-4 pt-6 text-[15px] text-slate-600">We don’t serve this location yet, so there’s nothing to book here. Change your address on the home screen.</p>
           )}
@@ -148,9 +206,9 @@ export default function SpotlightSearch({ open, onClose, lat, lng, initialQuery 
           {data && !data.notHere && (
             <>
               {data.corrected && <p className="px-4 pt-3 text-[13px] text-slate-500">Showing results for “{data.corrected}”</p>}
-              <Group title={GROUP_LABEL.problems} items={data.problems} onOpen={openResult} />
-              <Group title={GROUP_LABEL.services} items={data.services} onOpen={openResult} />
-              <Group title={GROUP_LABEL.categories} items={data.categories} onOpen={openResult} />
+              <Group title={GROUP_LABEL.services} items={data.services} onOpen={openResult} words={words} />
+              <ProblemGroups problems={data.problems} onOpen={openResult} words={words} />
+              <Group title={GROUP_LABEL.categories} items={data.categories} onOpen={openResult} words={words} />
               {data.empty && (
                 <>
                   <p className="px-4 pt-5 text-[15px] text-slate-700">No match for “{term}”.</p>

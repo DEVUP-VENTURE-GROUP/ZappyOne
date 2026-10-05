@@ -162,13 +162,29 @@ function fromRepair(b) {
      * spanner. Nothing here names a vertical — a new one seeds in (§91).
      */
     iconCode: [b.vertical, b.repairCode].filter(Boolean).join(' '),
-    // Mirrors how the repair routes are actually shaped in App.jsx.
-    rebookHref: b.vertical ? (b.vertical === 'mobile' ? '/repair' : `/repair/${b.vertical}`) : null,
+    // Same device and problem, one tap: the flow opens with them chosen.
+    rebookHref: repairRebookHref(b),
     canInvoice: false,
     createdAt: b.createdAt,
     href: `/repair/bookings/${b._id}`,
     raw: b,
   };
+}
+
+/**
+ * Where "Rebook" goes for a repair. The address mirrors App.jsx (two_wheeler →
+ * /repair/two-wheeler; this used the code as-is and opened a missing page), and
+ * carries the brand, model and problem so the flow skips straight to them.
+ */
+export function repairRebookHref(b) {
+  if (!b.vertical) return null;
+  const base = b.vertical === 'mobile' ? '/repair' : `/repair/${b.vertical.replace(/_/g, '-')}`;
+  const q = new URLSearchParams();
+  if (b.brandCode) q.set('brand', b.brandCode);
+  if (b.brandCode && b.modelCode) q.set('model', b.modelCode);
+  if (b.problemCodes?.[0]) q.set('problem', b.problemCodes[0]);
+  const qs = q.toString();
+  return qs ? `${base}?${qs}` : base;
 }
 
 /* Pet care: the owner is done once the service is; payment has its own card. */

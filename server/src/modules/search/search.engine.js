@@ -15,6 +15,10 @@ const STOPWORDS = new Set([
   'with', 'of', 'do', 'does', 'is', 'are', 'any', 'show', 'order', 'fix', 'fixing', 'repairing',
   'it', 'and', 'call', 'now', 'today', 'urgent', 'urgently', 'asap', 'broke', 'broken', 'not',
   'working', 'issue', 'issues', 'problem', 'problems', 'wala', 'wale', 'wont', 'cant', 'in',
+  'has', 'have', 'had', 'got', 'gone', 'went', 'there', 'this', 'that', 'on', 'very', 'so', 'just', 'also',
+  // Common Hindi and Telugu fillers in spoken requests (bike ka puncture ho gaya).
+  'ka', 'ki', 'ke', 'hai', 'hua', 'hui', 'ho', 'gaya', 'gayi', 'mera', 'meri', 'mere', 'karna', 'chahiye',
+  'kar', 'karo', 'do', 'nahi', 'raha', 'rahi', 'lo', 'avvaledu', 'ledu',
 ]);
 
 // Everyday term → canonical keyword(s) that appear in service names/codes.
@@ -180,4 +184,97 @@ function textScore(entry, keywords, tokens) {
   return { text: best, matched };
 }
 
-module.exports = { tokenize, editDistance, fuzzyEq, expandQuery, textScore, SYNONYMS, STOPWORDS, INTENTS };
+/**
+ * The words people use for each service, beyond its catalog name. A problem
+ * inside a service carries them too, so "bike puncture" finds the two-wheeler
+ * puncture and not the car one. Keyed by repair vertical or line code.
+ */
+const LINE_CONCEPTS = {
+  two_wheeler: 'bike motorcycle motorbike scooter scooty two wheeler 2 activa ev',
+  four_wheeler: 'car vehicle four wheeler 4 suv jeep',
+  mobile: 'phone mobile smartphone iphone android cellphone',
+  laptop: 'laptop computer notebook macbook pc',
+  water_tank_care: 'tank water sump overhead',
+  pet: 'pet dog cat puppy kitten',
+  helping: 'shopping pickup delivery errand return exchange courier',
+  event: 'party birthday decoration decor event celebration',
+};
+function conceptsForLine(line) {
+  const keys = [line.repairVertical, line.code, line.code?.split('_')[0], line.domainCode];
+  const words = new Set();
+  for (const k of keys) for (const w of (LINE_CONCEPTS[k] || '').split(' ').filter(Boolean)) words.add(w);
+  return words;
+}
+
+/**
+ * Turn a phrase into concepts: each meaningful word the customer typed, with
+ * its everyday synonyms. Intent words ("towing" for a puncture) are extras:
+ * they can lift a result but never count against one.
+ */
+function parseQuery(raw) {
+  const tokens = tokenize(raw).filter((t) => !STOPWORDS.has(t));
+  const concepts = tokens.map((t) => {
+    const words = new Set([t]);
+    if (SYNONYMS[t]) words.add(SYNONYMS[t]);
+    if (t.length > 3 && t.endsWith('s')) { words.add(t.slice(0, -1)); if (SYNONYMS[t.slice(0, -1)]) words.add(SYNONYMS[t.slice(0, -1)]); }
+    return { token: t, words };
+  });
+  const lower = String(raw || '').toLowerCase();
+  const extras = new Set();
+  for (const intent of INTENTS) if (intent.phrases.some((ph) => lower.includes(ph))) intent.keywords.forEach((k) => extras.add(k));
+  // Only filler words typed ("fix it now"): the intent is all we have.
+  if (!concepts.length) for (const k of extras) concepts.push({ token: k, words: new Set([k]) });
+  return { tokens, concepts, extras, joined: tokens.join(' ') };
+}
+
+/** How strongly one word matches an entry, and the catalog word it was corrected to (typos). */
+function wordMatch(entry, w, allowFuzzy) {
+  if (entry._nameTerms.has(w)) return { s: 1 };
+  if (w.length >= 3 && (entry._name.includes(w) || entry._code.includes(w))) return { s: 0.85 };
+  if (entry._lineTerms?.has(w)) return { s: 0.7 };
+  if (entry._terms.has(w)) return { s: 0.6 };
+  if (!allowFuzzy || w.length < 4) return { s: 0 };
+  let best = { s: 0 };
+  for (const t of entry._nameTerms) { const v = fuzzyTier(w, t); if (v > best.s) best = { s: v, fixed: t }; }
+  return best;
+}
+
+/**
+ * Score one entry: the share of the customer's concepts it covers, weighted by
+ * how well each matched, plus whole-phrase and intent bonuses. A result that
+ * matches every word beats one that matches one word strongly.
+ */
+function scoreEntry(entry, query) {
+  const { concepts, extras, joined } = query;
+  if (!concepts.length) return { text: 0, coverage: 0, matched: false };
+  let sum = 0;
+  let hit = 0;
+  const fixed = {};
+  const hits = [];
+  for (const c of concepts) {
+    let best = { s: 0 };
+    for (const w of c.words) {
+      const m = wordMatch(entry, w, w === c.token && c.fuzzy !== false);
+      if (m.s > best.s) best = m;
+      if (best.s === 1) break;
+    }
+    if (best.s > 0) { hit += 1; sum += best.s; hits.push(c.token); if (best.fixed) fixed[c.token] = best.fixed; }
+  }
+  if (!hit) return { text: 0, coverage: 0, matched: false, hits };
+  let text = sum / concepts.length;
+  if (joined && entry._name === joined) text += 0.4;
+  else if (joined && entry._name.startsWith(joined)) text += 0.3;
+  else if (joined.length > 3 && entry._name.includes(joined)) text += 0.2;
+  for (const k of extras) if (entry._nameTerms.has(k)) { text += 0.05; break; }
+  // A title with words the customer did not say ("Slow puncture" for "puncture")
+  // is a narrower case; the plain match comes first. Synonyms count as said.
+  const said = new Set([...concepts.flatMap((c) => [...c.words]), ...Object.values(fixed)]);
+  const extra = tokenize(entry._name).filter((w) => w.length > 2 && !said.has(w) && !said.has(SYNONYMS[w])).length;
+  text -= Math.min(0.2, 0.04 * extra);
+  return { text, coverage: hit / concepts.length, matched: true, fixed, hits };
+}
+
+module.exports = {
+  tokenize, editDistance, fuzzyEq, expandQuery, textScore, parseQuery, scoreEntry, conceptsForLine,
+  SYNONYMS, STOPWORDS, INTENTS, LINE_CONCEPTS,
+};

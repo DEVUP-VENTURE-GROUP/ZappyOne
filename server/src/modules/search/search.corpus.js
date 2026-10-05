@@ -13,7 +13,7 @@
  */
 const { loadLiveLines } = require('../onboarding/coverage.service');
 const { ProblemCategory, Problem } = require('../repair/models/problem.model');
-const { SYNONYMS } = require('./search.engine');
+const { SYNONYMS, conceptsForLine } = require('./search.engine');
 const logger = require('../../core/logger');
 
 const REFRESH_MS = 60_000;
@@ -40,12 +40,17 @@ function termsFor(name, ...context) {
   return { _nameTerms: nameTerms, _terms: terms };
 }
 
-function entry({ type, id, title, subtitle, path, lineCode, order = 0, popular = false }, ...context) {
+function entry({ type, id, title, subtitle, path, lineCode, order = 0, popular = false, lineTerms, vertical = null, problemCode = null, categoryCode = null }, ...context) {
+  const terms = termsFor(title, subtitle, ...context);
+  // A service is known by its everyday names ("bike" for the 2-Wheeler line).
+  if (type === 'service' && lineTerms) lineTerms.forEach((w) => terms._nameTerms.add(w));
   return {
     type, id, code: id, title, subtitle, path, lineCode, sortOrder: order, isPopular: popular,
+    vertical, problemCode, categoryCode,
     _name: String(title).toLowerCase(),
     _code: String(id).toLowerCase().replace(/[_:]/g, ' '),
-    ...termsFor(title, subtitle, ...context),
+    _lineTerms: lineTerms || new Set(),
+    ...terms,
   };
 }
 
@@ -63,9 +68,12 @@ async function build() {
 
   const entries = [];
   for (const line of lines) {
+    const lineTerms = conceptsForLine(line);
+    splitWords(line.name).forEach((w) => lineTerms.add(w));
     entries.push(entry({
       type: 'service', id: line.code, title: line.name, subtitle: domainName.get(line.domainCode) || '',
       path: line.customerPath, lineCode: line.code, order: line.displayOrder || 0, popular: !!line.isPopular,
+      lineTerms, vertical: line.repairVertical || null,
     }, line.description, line.tagline, line.code.replace(/_/g, ' ')));
 
     if (!line.repairVertical) continue;
@@ -76,6 +84,7 @@ async function build() {
       entries.push(entry({
         type: 'category', id: `${line.code}:${c.code}`, title: c.name, subtitle: line.name,
         path: `/repair/category/${art}/${c.code}`, lineCode: line.code, order: c.displayOrder || 0,
+        lineTerms, vertical: line.repairVertical, categoryCode: c.code,
       }));
     }
     for (const p of problems.filter((x) => x.vertical === line.repairVertical && published.has(x.categoryCode))) {
@@ -83,6 +92,7 @@ async function build() {
         type: 'problem', id: `${line.code}:${p.code}`, title: p.name, subtitle: line.name,
         path: `${line.customerPath}?problem=${encodeURIComponent(p.code)}`, lineCode: line.code,
         order: p.displayOrder || 0, popular: !!p.isPopular,
+        lineTerms, vertical: line.repairVertical, problemCode: p.code, categoryCode: p.categoryCode,
       }, line.name));
     }
   }

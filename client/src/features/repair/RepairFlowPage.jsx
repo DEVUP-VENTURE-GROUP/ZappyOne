@@ -1544,8 +1544,8 @@ export default function RepairFlowPage({ vertical = 'mobile' }) {
   const [params] = useSearchParams();
   const draftKey = `repair:${vertical}`;
   const [run, setRun] = useState(0);
-  // A problem picked from a home chip is a fresh start, not a resume.
-  const saved = useMemo(() => (params.get('problem') ? null : readDraft(draftKey)), [draftKey, run]); // eslint-disable-line react-hooks/exhaustive-deps
+  // A problem picked from a home chip, or a rebook, is a fresh start, not a resume.
+  const saved = useMemo(() => (params.get('problem') || params.get('brand') ? null : readDraft(draftKey)), [draftKey, run]); // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <RepairFlow key={`${vertical}-${run}`} vertical={vertical} saved={saved} draftKey={draftKey}
       onStartOver={() => { clearDraft(draftKey); nav({ search: '' }, { replace: true }); setRun((n) => n + 1); }} />
@@ -1619,6 +1619,31 @@ function RepairFlow({ vertical, saved, draftKey, onStartOver }) {
     diagnosis, diagnosticAnswers, diagnosticTranscript, serviceMode, skipped: [...skipped],
     step: ['addons', 'confirm'].includes(step) ? 'provider' : step,
   }, !!brand);
+  /*
+   * Rebook (?brand=…&model=…&problem=…): the same device, found in the
+   * catalog, then straight to the problem, where the problem is picked too.
+   * A device no longer in the catalog simply starts at the brand.
+   */
+  const searchParamsNow = useSearchParams()[0];
+  const rebookBrand = searchParamsNow.get('brand');
+  const rebookModel = searchParamsNow.get('model');
+  const rebooking = !!rebookBrand && !brand;
+  const { data: rbBrands } = useRepairBrandsQuery(vertical, { skip: !rebooking });
+  const { data: rbModels } = useRepairModelsQuery(
+    // Model codes start with the brand (samsung-galaxy-s23); search by the model's own words.
+    { vertical, brandCode: rebookBrand, q: (rebookModel || '').replace(`${rebookBrand}-`, '').replace(/-/g, ' ') },
+    { skip: !rebooking || !rebookModel },
+  );
+  useEffect(() => {
+    if (!rebooking || !rbBrands) return;
+    const b = (rbBrands.brands || []).find((x) => x.code === rebookBrand);
+    if (!b) return;
+    const m = rebookModel ? (rbModels?.models || []).find((x) => x.code === rebookModel) : null;
+    if (rebookModel && !rbModels) return; // wait for the models
+    setBrand(b);
+    if (m) { setModel(m); setStep('problem', { replace: true }); } else setStep('model', { replace: true });
+  }, [rebooking, rbBrands, rbModels]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const [resumed, setResumed] = useState(false);
   useEffect(() => {
     if (saved?.step && saved.step !== 'brand' && step === 'brand' && valid(saved.step)) {

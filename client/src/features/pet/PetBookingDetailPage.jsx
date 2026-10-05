@@ -42,6 +42,7 @@ export default function PetBookingDetailPage() {
     <JobTrackingPage
       job={job}
       onBack={() => nav('/orders')}
+      rebookHref={b.categoryCode ? `/pet/book/${b.categoryCode}` : null}
       // The owner reads this out when the pet pro is at the door (not when they bring the pet in).
       startCode={b.serviceMode !== 'provider_location' ? b.handoverOtp : null}
       onSOS={sos}

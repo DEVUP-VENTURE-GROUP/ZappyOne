@@ -10,7 +10,7 @@ import { useRef, useState, useCallback, useEffect } from 'react';
  *     onResult: (text) => setQuery(text),
  *   });
  */
-export default function useSpeechRecognition({ lang = 'en-IN', onResult, onError } = {}) {
+export default function useSpeechRecognition({ lang = 'en-IN', onResult, onInterim, onError } = {}) {
   const SR = typeof window !== 'undefined'
     ? (window.SpeechRecognition || window.webkitSpeechRecognition)
     : null;
@@ -20,6 +20,8 @@ export default function useSpeechRecognition({ lang = 'en-IN', onResult, onError
   const recRef = useRef(null);
   const onResultRef = useRef(onResult);
   const onErrorRef = useRef(onError);
+  const onInterimRef = useRef(onInterim);
+  useEffect(() => { onInterimRef.current = onInterim; }, [onInterim]);
   useEffect(() => { onResultRef.current = onResult; }, [onResult]);
   useEffect(() => { onErrorRef.current = onError; }, [onError]);
 
@@ -33,13 +35,20 @@ export default function useSpeechRecognition({ lang = 'en-IN', onResult, onError
     try {
       const rec = new SR();
       rec.lang = lang;
-      rec.interimResults = false;
+      // Interim results so the words appear as they are spoken.
+      rec.interimResults = true;
       rec.maxAlternatives = 1;
       rec.continuous = false;
 
       rec.onresult = (e) => {
-        const text = e.results?.[0]?.[0]?.transcript?.trim();
-        if (text) onResultRef.current?.(text);
+        let interim = '';
+        let final = '';
+        for (let i = e.resultIndex; i < e.results.length; i += 1) {
+          const t = e.results[i][0]?.transcript || '';
+          if (e.results[i].isFinal) final += t; else interim += t;
+        }
+        if (interim) onInterimRef.current?.(interim.trim());
+        if (final.trim()) onResultRef.current?.(final.trim());
       };
       rec.onend = () => setListening(false);
       rec.onerror = (e) => {

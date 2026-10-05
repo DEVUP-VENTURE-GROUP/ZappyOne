@@ -136,6 +136,7 @@ export default function HelpingTaskDetailPage() {
     <JobTrackingPage
       job={job}
       onBack={() => nav('/orders')}
+      rebookHref={['return', 'exchange'].includes(task.serviceType) ? '/helping/returns' : '/helping/shopping'}
       startCode={codeStage === 'done' ? null : task.handoverOtp}
       codeStage={codeStage === 'done' ? null : codeStage}
       onSOS={sos}

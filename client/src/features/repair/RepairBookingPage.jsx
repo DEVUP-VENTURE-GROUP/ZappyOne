@@ -11,6 +11,7 @@ import { useRepairCancellationQuoteQuery, useRepairHandoverCodeQuery } from '@sh
 import HandoverCodeCard from '../tracking/cards/HandoverCodeCard';
 import { useRateRepairBookingMutation } from '@shared/services/api';
 import JobTrackingPage from '../tracking/JobTrackingPage';
+import { repairRebookHref } from '../bookings/useMyJobs';
 import { KINDS } from '../tracking/kinds';
 import { useJobSOS } from '../tracking/useJobSOS';
 import { formatPaise } from '@shared/utils/money';
@@ -502,6 +503,7 @@ export default function RepairBookingPage() {
         job={job}
         onBack={() => nav('/orders')}
         onSOS={sos}
+        rebookHref={repairRebookHref(booking)}
         // The server decides whether it can still be cancelled; the sheet quotes the fee first.
         cancel={data?.canCancel ? { open: () => setConfirmingCancel(true) } : null}
         extras={(
