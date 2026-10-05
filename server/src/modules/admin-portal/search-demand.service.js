@@ -70,7 +70,6 @@ async function demand({ days = 7, now = Date.now() } = {}) {
   days = [7, 30, 90].includes(Number(days)) ? Number(days) : 7;
   const { ServiceLine, ProviderEnrolment } = require('../onboarding/onboarding.model');
   const { bookingsIn, istDayStart } = require('./analytics.service');
-  const { HELPING_LINE } = require('../jobs/kinds');
   const start = istDayStart(now) - (days - 1) * DAY;
   const prevStart = start - (now - start);
   const range = { $gte: new Date(start) };
@@ -102,12 +101,10 @@ async function demand({ days = 7, now = Date.now() } = {}) {
     summary({ now }),
   ]);
 
-  // A booking's service line: repairs by vertical, pet by its category, helping by its type.
-  const byVertical = new Map(lines.filter((l) => l.repairVertical).map((l) => [l.repairVertical, l.code]));
-  const lineOfRow = (r) => (r.source === 'repair' ? byVertical.get(r.vertical)
-    : r.source === 'pet' ? r.vertical : r.source === 'helping' ? HELPING_LINE[r.vertical] : null);
+  // A booking's service line, the same way every Insights screen maps it.
+  const { lineOf } = await require('./analytics.service').lineMapper();
   const booked = new Map();
-  for (const r of bookings) { const l = lineOfRow(r); if (l) booked.set(l, (booked.get(l) || 0) + 1); }
+  for (const r of bookings) { const l = lineOf(r); if (l) booked.set(l, (booked.get(l) || 0) + 1); }
 
   const name = new Map(lines.map((l) => [l.code, l.name]));
   const pretty = (code) => name.get(code) || String(code).replace(/_/g, ' ').replace(/^\w/, (c) => c.toUpperCase());

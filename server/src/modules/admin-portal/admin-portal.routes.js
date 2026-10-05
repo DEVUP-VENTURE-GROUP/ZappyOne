@@ -181,6 +181,14 @@ router.get('/insights/overview', async (req, res, next) => {
   try { res.json(await require('./analytics.service').overview({ days: Number(req.query.days) || 7 })); } catch (err) { next(err); }
 });
 
+router.get('/insights/supply', async (req, res, next) => {
+  try { res.json(await require('./analytics.service').supply({ days: Number(req.query.days) || 7 })); } catch (err) { next(err); }
+});
+
+router.get('/insights/funnel', async (req, res, next) => {
+  try { res.json(await require('./analytics.service').funnel({ days: Number(req.query.days) || 7 })); } catch (err) { next(err); }
+});
+
 router.get('/insights/demand', async (req, res, next) => {
   try { res.json(await require('./search-demand.service').demand({ days: Number(req.query.days) || 7 })); } catch (err) { next(err); }
 });

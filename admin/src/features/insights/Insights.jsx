@@ -19,6 +19,8 @@ import SearchIntel from './SearchIntel';
 import Retention from './Retention';
 import TodayView from './TodayView';
 import DemandView from './DemandView';
+import SupplyView from './SupplyView';
+import FunnelView from './FunnelView';
 
 /* helpers */
 const inr = (n) => `₹${Math.round(Number(n) || 0).toLocaleString('en-IN')}`;
@@ -593,6 +595,8 @@ const VIEWS = [
 const SCREENS = [
   { id: 'today', label: 'Today', question: 'Is the business healthy?', Comp: TodayView },
   { id: 'demand', label: 'Demand', question: 'What do people want that we do not give them?', Comp: DemandView },
+  { id: 'supply', label: 'Supply', question: 'Do we have enough providers, in the right places?', Comp: SupplyView },
+  { id: 'funnel', label: 'Funnel', question: 'Where do customers drop off?', Comp: FunnelView },
 ];
 const PERIODS = [[1, 'Today'], [7, '7 days'], [30, '30 days'], [90, '90 days']];
 

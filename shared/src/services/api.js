@@ -1205,6 +1205,8 @@ export const api = createApi({
     // Bookings → Needs intervention, and Overview → what customers search for
     // Insights, from the bookings the platform takes today
     adminInsightsOverview: b.query({ query: (days = 7) => ({ url: adminApiPath('/insights/overview'), params: { days } }) }),
+    adminInsightsSupply: b.query({ query: (days = 7) => ({ url: adminApiPath('/insights/supply'), params: { days } }) }),
+    adminInsightsFunnel: b.query({ query: (days = 7) => ({ url: adminApiPath('/insights/funnel'), params: { days } }) }),
     adminInsightsDemand: b.query({ query: (days = 7) => ({ url: adminApiPath('/insights/demand'), params: { days } }) }),
     adminBookingAttention: b.query({ query: () => adminApiPath('/bookings/attention'), providesTags: ['AdminMetrics'] }),
     adminSearchDemand: b.query({ query: () => adminApiPath('/alerts/search-demand') }),
@@ -2441,6 +2443,8 @@ export const {
   useAdminBookingAttentionQuery,
   useAdminInsightsOverviewQuery,
   useAdminInsightsDemandQuery,
+  useAdminInsightsSupplyQuery,
+  useAdminInsightsFunnelQuery,
   useAdminSearchDemandQuery,
   useAdminUpdateFeeMutation,
   // Job chat

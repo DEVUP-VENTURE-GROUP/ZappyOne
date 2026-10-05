@@ -168,6 +168,41 @@ export function RankBars({ rows = [], value, format = count, sub, color = '#1F4F
   );
 }
 
+/**
+ * A funnel: one bar per step, narrowing as people drop out, with the share
+ * of the first step and of the step before beside each.
+ */
+export function FunnelChart({ steps = [] }) {
+  const first = steps[0]?.people || 0;
+  if (!first) return <p className="py-6 text-center text-sm text-slate-400">No visits in this period yet</p>;
+  return (
+    <ol className="space-y-2.5">
+      {steps.map((s, i) => {
+        const w = Math.max(3, (s.people / first) * 100);
+        const weak = i > 0 && s.fromPrevious != null && s.fromPrevious < 30;
+        return (
+          <li key={s.key} className="grid grid-cols-[150px_1fr_120px] items-center gap-3 text-[13px] max-sm:grid-cols-[110px_1fr_90px]">
+            <span className="font-medium text-slate-700">{s.label}</span>
+            {s.notRecorded ? (
+              <span className="flex h-9 items-center rounded-lg border border-dashed border-slate-200 px-3 text-[12px] text-slate-400">Recording started today</span>
+            ) : (
+              <span className="h-9 overflow-hidden rounded-lg bg-slate-100">
+                <span className="flex h-full items-center rounded-lg px-3 text-[12.5px] font-semibold text-white tabular-nums"
+                  style={{ width: `${w}%`, background: `linear-gradient(90deg, #1F4FD8, ${i ? '#3B6BEA' : '#1F4FD8'})`, opacity: 1 - i * 0.12 }}>
+                  {count(s.people)}
+                </span>
+              </span>
+            )}
+            <span className="text-right text-[12px] tabular-nums text-slate-500">
+              {i === 0 ? 'Start' : s.fromPrevious == null ? '—' : <><b className={weak ? 'text-rose-600' : 'text-slate-800'}>{s.fromPrevious}%</b> of previous</>}
+            </span>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
 /** What changed, in sentences, at the top of a screen. */
 export function Findings({ items = [] }) {
   if (!items.length) return null;

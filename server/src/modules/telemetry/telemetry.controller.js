@@ -77,6 +77,9 @@ function enrichGeoFromIpAsync(sessionId, ip) {
 }
 
 /* POST /api/telemetry/pageview */
+/** The customer app's booking flows: repair (every vertical), pet, helping and events. */
+const BOOKING_PATH = /^\/(repair(\/(laptop|two-wheeler|four-wheeler|water-tank-care))?\/?(\?|$)|pet\/book\/|helping\/(shopping|returns)|events\/book\/)/;
+
 async function pageview(req, res) {
   res.status(204).end(); // respond immediately — ingest is fire-and-forget
   try {
@@ -103,9 +106,11 @@ async function pageview(req, res) {
       ...(hasCoord ? { lat, lng } : {}),
     };
 
+    // Opening a booking flow is the funnel's middle step; only the first time counts.
+    const startsBooking = typeof path === 'string' && BOOKING_PATH.test(path);
     const existing = await VisitorSession.findOneAndUpdate(
       { sessionId },
-      { $setOnInsert: setOnInsert, $set: set, $inc: { pageCount: 1 } },
+      { $setOnInsert: setOnInsert, $set: set, $inc: { pageCount: 1 }, ...(startsBooking ? { $min: { bookingStartedAt: now } } : {}) },
       { upsert: true, new: false, setDefaultsOnInsert: true }
     ).select('city lat').lean();
 

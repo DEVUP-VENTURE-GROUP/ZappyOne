@@ -93,3 +93,27 @@ test('demand: searchers against providers and bookings, per service', async () =
   expect(out.services.find((x) => x.lineCode === 'pet_boarding')).toMatchObject({ searchers: 1, providers: 0, unserved: 1 });
   expect(out.searchers).toBe(4);
 });
+
+test('supply: providers per service, who is doing the work, declines', async () => {
+  const Worker = require('../src/modules/worker/worker.model');
+  const w = await Worker.collection.insertOne({ phone: '9800000999', name: 'Kiran', isOnline: true, rating: 4.6, reviewCount: 3 });
+  await ProviderEnrolment.create({ providerKind: 'individual', workerId: w.insertedId, domainCode: 'electronics', lineCode: 'mobile_repair', status: 'approved' });
+  await RepairBooking.collection.updateMany({ status: 'COMPLETED', createdAt: { $gte: daysAgo(3) } }, { $set: { workerId: w.insertedId } });
+  await RepairBooking.collection.updateOne({ status: 'CANCELLED' }, { $set: { declines: [{ providerKind: 'worker', providerId: w.insertedId, at: daysAgo(3) }] } });
+
+  const out = await analytics.supply({ days: 7, now: NOW });
+  const mobile = out.services.find((s) => s.lineCode === 'mobile_repair');
+  expect(mobile).toMatchObject({ label: 'Mobile Phones', providers: 2, shops: 1, workers: 1, online: 1, bookings: 3 });
+  expect(out.providers[0]).toMatchObject({ name: 'Kiran', kind: 'worker', completed: 2, declines: 1, rating: 4.6 });
+});
+
+test('funnel: people at each step, and the step that loses the most', async () => {
+  const { VisitorSession } = require('../src/modules/telemetry/telemetry.model');
+  await VisitorSession.collection.insertMany(Array.from({ length: 20 }, (_, i) => ({
+    sessionId: `s-${i}`, userType: 'guest', firstSeen: daysAgo(1), lastSeen: daysAgo(1), bookingStartedAt: i < 6 ? daysAgo(1) : null,
+  })));
+  const out = await analytics.funnel({ days: 7, now: NOW });
+  expect(out.steps.map((s) => [s.key, s.people])).toEqual([['visited', 20], ['searched', 4], ['opened', 6], ['booked', 2], ['completed', 2]]);
+  expect(out.steps[3]).toMatchObject({ ofFirst: 10 });
+  expect(out.findings[0].text).toMatch(/Biggest drop: visited the app → searched/);
+});

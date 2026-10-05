@@ -26,6 +26,8 @@ async function liveJobs({ now = new Date(), cap = 500 } = {}) {
         id: String(d._id),
         reference: d.reference || null,
         title: k.ops.title(d),
+        // Which service: repair vertical, pet category or helping type (Insights groups by it).
+        vertical: d.vertical || d.categoryCode || d.serviceType || null,
         status: d.status,
         waiting: k.ops.waiting.includes(d.status),
         hasProvider: Boolean(d.workerId || d.shopId || d.partnerId),
