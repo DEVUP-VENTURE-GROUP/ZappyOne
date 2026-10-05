@@ -32,6 +32,7 @@ async function submitQuote({
   repairCode, qualityCode = null, items = [], warrantyDays = 0,
   estimatedDurationMin = null, idempotencyKey = null,
   isAdditional = false, foundProblemCodes = [], foundNote = '',
+  replacesAgreed = false, replaceReason = '',
 }) {
   const booking = await RepairBooking.findById(bookingId);
   if (!booking) throw httpError('Booking not found', 404, 'NOT_FOUND');
@@ -67,13 +68,37 @@ async function submitQuote({
   }));
 
   /*
-   * The quoted work, plus the same customer platform fee and discount the
-   * booking was made with, then tax: the rule every repair bill follows
+   * What the quote adds to, decided from the booking, never from the form.
+   *
+   * A booking that already has an agreed price (booked at a fixed price, or a
+   * quote the customer approved earlier) keeps it: anything the technician
+   * quotes now is EXTRA on top. Only a booking with no price yet (diagnosis
+   * needed, or an inspection visit) is priced by the quote alone. Treating
+   * every quote as the whole bill let "₹290 for parts" replace a booked ₹690.
+   */
+  const snap = booking.priceSnapshot || {};
+  const agreed = (snap.subtotalPaise || 0) > 0 && snap.isEstimate !== true
+    && !['diagnosis_required', 'inspection_only'].includes(snap.resolutionPath);
+  /*
+   * Re-pricing the whole job instead is allowed, but only on purpose: the
+   * technician says so and why, and the customer is shown that the agreed
+   * price is being replaced before they approve.
+   */
+  if (agreed && replacesAgreed && String(replaceReason || '').trim().length < 5) {
+    throw httpError('Say why the agreed price has to change (at least a few words)', 400, 'REASON_REQUIRED');
+  }
+  const replacing = agreed && replacesAgreed;
+  const basePaise = agreed && !replacing ? snap.subtotalPaise : 0;
+  const extraPaise = priced.reduce((sum, i) => sum + i.amountPaise, 0);
+  isAdditional = isAdditional || (agreed && !replacing);
+
+  /*
+   * The agreed work plus the new lines, the booking's platform fee (charged
+   * once) and discount, then tax: the rule every repair bill follows
    * (pricing.service buildPriceSnapshot). An inspection-only visit charged no
    * platform fee, so the repair it leads to takes the current admin fee.
    */
-  const subtotalPaise = priced.reduce((sum, i) => sum + i.amountPaise, 0);
-  const snap = booking.priceSnapshot || {};
+  const subtotalPaise = basePaise + extraPaise;
   const platformFeePaise = snap.resolutionPath === 'inspection_only'
     ? (cfg.platformFeePaise || 0)
     : (snap.platformFeePaise ?? cfg.platformFeePaise ?? 0);
@@ -105,6 +130,10 @@ async function submitQuote({
     repairCode,
     qualityCode,
     items: priced,
+    basePaise,
+    extraPaise,
+    replacesPaise: replacing ? snap.subtotalPaise : 0,
+    replaceReason: replacing ? String(replaceReason).trim().slice(0, 300) : '',
     subtotalPaise,
     platformFeePaise,
     discountPaise,

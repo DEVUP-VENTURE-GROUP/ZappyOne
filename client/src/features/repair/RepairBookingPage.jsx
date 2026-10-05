@@ -90,11 +90,23 @@ function QuoteCard({ quote, onDecided }) {
 
       <p className="text-xs text-slate-600 mt-2 leading-relaxed">{quote.diagnosisSummary}</p>
 
+      {quote.replacesPaise > 0 && (
+        <p className="mt-2 rounded-lg bg-white px-2.5 py-2 text-[11.5px] text-slate-700">
+          This replaces the {rupees(quote.replacesPaise)} you booked at{quote.replaceReason ? `: ${quote.replaceReason}` : '.'}
+        </p>
+      )}
+
       <div className="mt-3 space-y-1.5 bg-white rounded-xl p-3">
+        {quote.basePaise > 0 && (
+          <div className="flex items-start justify-between gap-3 text-sm">
+            <p className="text-slate-500">Booked repair (already agreed)</p>
+            <span className="font-semibold text-[#0F172A] shrink-0">{rupees(quote.basePaise)}</span>
+          </div>
+        )}
         {(quote.items || []).map((item, i) => (
           <div key={i} className="flex items-start justify-between gap-3 text-sm">
             <div className="min-w-0">
-              <p className="text-[#0F172A] truncate">{item.label}</p>
+              <p className="text-[#0F172A] truncate">{quote.basePaise > 0 ? '+ ' : ''}{item.label}</p>
               {item.quantity > 1 && <p className="text-[11px] text-slate-400">× {item.quantity}</p>}
             </div>
             <span className="font-semibold text-[#0F172A] shrink-0">{rupees(item.amountPaise)}</span>

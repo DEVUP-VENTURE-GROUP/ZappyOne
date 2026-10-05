@@ -311,6 +311,9 @@ router.post(
     diagnosisPhotos: Joi.array().items(Joi.string().max(500)).max(10).default([]),
     // Raised because something else turned up once the device was open.
     isAdditional: Joi.boolean().default(false),
+    // Re-pricing the whole agreed job instead of adding on top: on purpose, with a reason.
+    replacesAgreed: Joi.boolean().default(false),
+    replaceReason: Joi.string().trim().max(300).allow('', null),
     foundProblemCodes: Joi.array().items(Joi.string().max(80)).max(10).default([]),
     foundNote: Joi.string().max(1000).allow('', null),
     repairCode: Joi.string().max(80).required(),

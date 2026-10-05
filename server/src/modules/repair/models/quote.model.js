@@ -67,6 +67,16 @@ const quoteSchema = new mongoose.Schema(
 
     items: { type: [quoteItemSchema], default: [] },
 
+    /**
+     * The price already agreed for this booking that the quote builds on (the
+     * booked price, or an earlier approved quote), and the new lines on top.
+     * subtotal = base + extra. Base is 0 when the booking had no price yet.
+     */
+    basePaise: { type: Number, default: 0, min: 0 },
+    extraPaise: { type: Number, default: 0, min: 0 },
+    /** When the technician re-priced the whole job on purpose: the agreed amount this replaces, and why. */
+    replacesPaise: { type: Number, default: 0, min: 0 },
+    replaceReason: { type: String, default: '' },
     subtotalPaise: { type: Number, required: true, min: 0 },
     /** ZappyOne's fee on the customer's bill, carried from the booking (admin-set). */
     platformFeePaise: { type: Number, default: 0, min: 0 },

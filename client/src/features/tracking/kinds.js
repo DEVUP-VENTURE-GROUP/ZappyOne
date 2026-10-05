@@ -103,6 +103,8 @@ function repairLines(s = {}, quote = null) {
       ['Parts', s.partPaise], ['Labour', s.labourPaise], ['Consumables', s.consumablesPaise], ['Travel', s.travelPaise],
       ['Pickup & return', (s.pickupPaise || 0) + (s.returnPaise || 0)], ['Inspection', s.diagnosisFeePaise],
     ];
+  // Extra work quoted on top of the booked price: the booked price is its own line.
+  if (quote?.items?.length && quote.basePaise > 0) lines.unshift(['Booked repair', quote.basePaise]);
   if (!quote?.items?.length) {
     const known = lines.reduce((t, [, p]) => t + (p || 0), 0);
     const service = (s.subtotalPaise || 0) - known;
@@ -140,7 +142,7 @@ export const KINDS = {
         scheduledAt: b.scheduledAt, createdAt: b.createdAt,
         history: historyOf(b, repairStage),
         price: {
-          lines: repairLines(s, (data.quotes || []).find((q) => q.status === 'approved')),
+          lines: repairLines(s, (data.quotes || []).filter((q) => q.status === 'approved').sort((x, y) => new Date(y.createdAt) - new Date(x.createdAt))[0]),
           totalPaise: s.totalPaise ?? null, method: method(b.paymentMethod), paid: b.paymentStatus === 'paid',
           isEstimate: !!s.isEstimate,
           note: s.isEstimate ? 'This is an estimate. The final price is confirmed by a quote you approve.' : (s.warrantyDays > 0 ? `${s.warrantyDays}-day warranty` : ''),

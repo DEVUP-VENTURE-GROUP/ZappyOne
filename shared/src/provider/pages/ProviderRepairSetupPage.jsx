@@ -335,6 +335,19 @@ function WorkStep({ vertical, cityCode, brandCodes, onBack, onNext }) {
   function tickUpToLevel() {
     setSelected((prev) => new Set([...prev, ...upToLevel]));
   }
+  // Undoing in one tap, at every level: everything, or one heading.
+  function untickAll() { setSelected(new Set()); }
+  function setGroup(group, on) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      for (const r of group.repairs) { if (on) next.add(r.code); else next.delete(r.code); }
+      return next;
+    });
+    if (on) {
+      const top = group.repairs.reduce((m, r) => Math.max(m, r.minSkillLevel || 1), 1);
+      if (top > skillLevel) setSkillLevel(top);
+    }
+  }
 
   async function persist() {
     try {
@@ -376,6 +389,15 @@ function WorkStep({ vertical, cityCode, brandCodes, onBack, onNext }) {
           busy={saving}
           nextLabel="Save"
         >
+          {(() => {
+            const all = group.repairs.every((r) => selected.has(r.code));
+            return (
+              <button type="button" onClick={() => setGroup(group, !all)}
+                className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white py-2.5 text-[13px] font-semibold text-slate-700 hover:border-slate-300">
+                {all ? 'Untick all in this heading' : 'Tick all in this heading'}
+              </button>
+            );
+          })()}
           <div className="space-y-2">
             {group.repairs.map((r) => {
               const on = selected.has(r.code);
@@ -485,18 +507,35 @@ function WorkStep({ vertical, cityCode, brandCodes, onBack, onNext }) {
             ? <><Check size={14} /> All {upToLevel.length} jobs up to level {skillLevel} ticked</>
             : <>Tick all {upToLevel.length} jobs up to level {skillLevel}</>}
         </button>
-        <p className="mt-1.5 text-center text-[11px] text-slate-500">Then open any heading to untick what you don&apos;t do.</p>
+        {selected.size > 0 && (
+          <button type="button" onClick={untickAll}
+            className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white py-2.5 text-[13px] font-semibold text-slate-700 hover:border-slate-300">
+            Untick all {selected.size} jobs
+          </button>
+        )}
+        <p className="mt-1.5 text-center text-[11px] text-slate-500">Tap the box on a heading to tick or untick all of it, or open it to choose job by job.</p>
       </div>
 
       <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
         {groups.map((g) => {
           const Icon = CATEGORY_ICONS[g.code] || Wrench;
           const count = g.repairs.filter((r) => selected.has(r.code)).length;
+          const all = count === g.repairs.length && count > 0;
           return (
+            <div key={g.code} className="relative">
             <button
-              key={g.code}
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setGroup(g, !all); }}
+              aria-label={all ? `Untick all of ${g.name}` : `Tick all of ${g.name}`}
+              className={`absolute right-2.5 top-2.5 z-10 flex h-6 w-6 items-center justify-center rounded-md border transition ${
+                all ? 'border-zappy-600 bg-zappy-600 text-white' : count ? 'border-zappy-600 bg-white text-zappy-600' : 'border-slate-300 bg-white'
+              }`}
+            >
+              {all ? <Check size={14} strokeWidth={3.5} /> : count ? <span className="h-0.5 w-2.5 rounded bg-zappy-600" /> : null}
+            </button>
+            <button
               onClick={() => setOpenGroup(g.code)}
-              className={`flex flex-col items-start gap-2 rounded-2xl border p-3 text-left transition ${
+              className={`flex h-full w-full flex-col items-start gap-2 rounded-2xl border p-3 text-left transition ${
                 count ? 'border-zappy-500 bg-zappy-50/50' : 'border-slate-200 bg-white hover:border-slate-300'
               }`}
             >
@@ -523,6 +562,7 @@ function WorkStep({ vertical, cityCode, brandCodes, onBack, onNext }) {
                 </span>
               )}
             </button>
+            </div>
           );
         })}
       </div>
@@ -1339,7 +1379,7 @@ export default function ProviderRepairSetupPage() {
   }, [work, brandCodes]);
 
   const isShop = onboarding?.providerKind === 'shop';
-  const LABEL = { mobile: 'Phone repair', laptop: 'Laptop repair' };
+  const LABEL = { mobile: 'Phone repair', laptop: 'Laptop repair', two_wheeler: '2-wheeler repair', four_wheeler: '4-wheeler repair', water_tank_care: 'Water & tank care' };
 
   const done = useMemo(() => {
     const set = new Set();

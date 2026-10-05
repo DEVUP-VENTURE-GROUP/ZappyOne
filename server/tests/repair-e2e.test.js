@@ -375,6 +375,8 @@ describe('§28 pickup & repair path', () => {
         { kind: 'labour', label: 'Fitting + calibration', unitPricePaise: 450000, quantity: 1 },
       ],
       idempotencyKey: 'e2e-quote-1',
+      // The technician re-prices the whole booked job after inspecting.
+      replacesAgreed: true, replaceReason: 'Full assembly needed, not the booked part',
     });
 
     expect(quote.revision).toBe(1);
@@ -461,6 +463,7 @@ describe('§28 pickup & repair path', () => {
       bookingId: b._id, actorRole: 'worker', actorId: ctx.workerId,
       diagnosisSummary: 'Display only.', repairCode: 'display_assembly_replacement',
       items: [{ kind: 'part', label: 'Display', unitPricePaise: 2000000, quantity: 1 }],
+      replacesAgreed: true, replaceReason: 'Re-priced after opening the device',
     });
 
     const second = await booking.submitQuote({
@@ -470,6 +473,7 @@ describe('§28 pickup & repair path', () => {
         { kind: 'part', label: 'Display', unitPricePaise: 2000000, quantity: 1 },
         { kind: 'part', label: 'Frame', unitPricePaise: 400000, quantity: 1 },
       ],
+      replacesAgreed: true, replaceReason: 'Re-priced after opening the device',
     });
 
     expect(second.quote.revision).toBe(2);
@@ -480,5 +484,54 @@ describe('§28 pickup & repair path', () => {
     expect(old.status).toBe('superseded');
     // The original figure is preserved, not rewritten.
     expect(old.subtotalPaise).toBe(2000000);
+  });
+});
+
+describe('extra work on a booking with an agreed price', () => {
+  /*
+   * The bug the team hit live: booked at a fixed price, the technician quoted
+   * only the extra parts, and approving it replaced the booked price. Extra
+   * work adds on top; the platform fee is charged once.
+   */
+  it('booked price + extra parts + platform fee; replacing needs a reason', async () => {
+    // Earlier tests used the stock up; this one is about pricing, not stock.
+    await ProviderInventory.updateOne({ workerId: ctx.workerId, partId: ctx.partId }, { $inc: { quantity: 5 } });
+    const { booking: b } = await booking.createBooking({
+      userId: ctx.userId,
+      brandCode: 'samsung', modelCode: 'samsung-s23-ultra',
+      problemCodes: ['cracked_screen'],
+      repairCode: 'display_assembly_replacement', qualityCode: 'premium',
+      serviceMode: 'doorstep',
+      workerId: ctx.workerId,
+      location: { coordinates: [LNG, LAT], address: '12 Test Street', cityCode: 'hyderabad' },
+      idempotencyKey: 'e2e-extra-1',
+    });
+    const booked = await RepairBooking.findById(b._id).lean();
+    const agreedSubtotal = booked.priceSnapshot.subtotalPaise;
+    expect(agreedSubtotal).toBeGreaterThan(0);
+
+    await passHandoverGates(b._id);
+    for (const s of ['WORKER_ACCEPTED', 'ON_THE_WAY', 'ARRIVED']) {
+      await booking.transition(b._id, s, { actorRole: 'worker', actorId: ctx.workerId });
+    }
+
+    // Re-pricing the whole job without saying why is refused.
+    await expect(booking.submitQuote({
+      bookingId: b._id, actorRole: 'worker', actorId: ctx.workerId,
+      diagnosisSummary: 'x', repairCode: 'display_assembly_replacement',
+      items: [{ kind: 'part', label: 'Display', unitPricePaise: 29000 }], replacesAgreed: true,
+    })).rejects.toMatchObject({ code: 'REASON_REQUIRED' });
+
+    const { quote } = await booking.submitQuote({
+      bookingId: b._id, actorRole: 'worker', actorId: ctx.workerId,
+      diagnosisSummary: 'Charging port also loose.', repairCode: 'display_assembly_replacement',
+      items: [{ kind: 'part', label: 'Charging port', unitPricePaise: 29000, quantity: 1 }],
+    });
+    expect(quote).toMatchObject({ basePaise: agreedSubtotal, extraPaise: 29000, subtotalPaise: agreedSubtotal + 29000, isAdditional: true });
+
+    const { booking: approved } = await booking.respondToQuote({ quoteId: quote._id, userId: ctx.userId, decision: 'approve' });
+    expect(approved.priceSnapshot.subtotalPaise).toBe(agreedSubtotal + 29000);
+    expect(approved.priceSnapshot.platformFeePaise).toBe(booked.priceSnapshot.platformFeePaise);
+    expect(approved.priceSnapshot.totalPaise).toBeGreaterThan(booked.priceSnapshot.totalPaise);
   });
 });

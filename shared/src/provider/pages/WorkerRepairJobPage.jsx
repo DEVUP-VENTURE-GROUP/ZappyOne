@@ -136,7 +136,13 @@ const QUOTABLE = ['ARRIVED', 'DIAGNOSING', 'AT_WORKSHOP', 'REPAIR_IN_PROGRESS'];
  * second fault is doing the right thing, and the alternatives are quietly
  * fixing it and arguing about the bill, or quietly not fixing it at all.
  */
-function QuoteBuilder({ bookingId, repairCode, additional = false, onSent, onCancel }) {
+function QuoteBuilder({ bookingId, repairCode, additional = false, snapshot = {}, onSent, onCancel }) {
+  // A price the customer already agreed to (fixed price at booking) stays: what
+  // is quoted now goes on top of it, unless the provider says why it must change.
+  const agreedPaise = (snapshot.subtotalPaise || 0) > 0 && snapshot.isEstimate !== true
+    && !['diagnosis_required', 'inspection_only'].includes(snapshot.resolutionPath) ? snapshot.subtotalPaise : 0;
+  const [replace, setReplace] = useState(false);
+  const [replaceReason, setReplaceReason] = useState('');
   const [summary, setSummary] = useState('');
   const [warrantyDays, setWarrantyDays] = useState(90);
   // Prices are typed in rupees, as people think of them; the server gets paise.
@@ -162,6 +168,7 @@ function QuoteBuilder({ bookingId, repairCode, additional = false, onSent, onCan
     if (!summary.trim()) return toast.error('Describe what you found');
     if (!clean.length) return toast.error('Add at least one line with a description and a price');
     if (total < 1000) return toast.error('The quote total must be at least ₹10. Check the prices you entered.');
+    if (agreedPaise && replace && replaceReason.trim().length < 5) return toast.error('Say why the agreed price has to change');
 
     try {
       await submit({
@@ -172,6 +179,7 @@ function QuoteBuilder({ bookingId, repairCode, additional = false, onSent, onCan
         items: clean,
         isAdditional: additional,
         ...(additional ? { foundNote: summary.trim() } : {}),
+        ...(agreedPaise && replace ? { replacesAgreed: true, replaceReason: replaceReason.trim() } : {}),
       }).unwrap();
       toast.success(additional
         ? 'Sent — the customer decides before you carry on'
@@ -191,10 +199,34 @@ function QuoteBuilder({ bookingId, repairCode, additional = false, onSent, onCan
         <button onClick={onCancel} className="text-slate-400"><X size={17} /></button>
       </div>
 
+      {agreedPaise > 0 && (
+        <div className="space-y-2 rounded-xl bg-slate-50 p-2.5">
+          <p className="text-[12px] text-slate-700">
+            The customer booked this at <b>{rupees(agreedPaise)}</b>.
+          </p>
+          <div className="grid grid-cols-2 gap-1.5">
+            {[[false, `Add on top of ${rupees(agreedPaise)}`], [true, 'Change the whole price']].map(([v, label]) => (
+              <button key={label} type="button" onClick={() => setReplace(v)}
+                className={`rounded-lg border px-2 py-2 text-[12px] font-semibold ${replace === v ? 'border-zappy-600 bg-white text-zappy-700' : 'border-slate-200 bg-white text-slate-600'}`}>
+                {label}
+              </button>
+            ))}
+          </div>
+          {replace ? (
+            <textarea rows={2} value={replaceReason} onChange={(e) => setReplaceReason(e.target.value)}
+              placeholder="Why the booked price no longer fits, e.g. a different part is needed"
+              className="w-full resize-none rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-zappy-100" />
+          ) : (
+            <p className="text-[11.5px] text-slate-500">Enter only the extra parts or work. The booked price stays.</p>
+          )}
+        </div>
+      )}
+
       {additional && (
         <p className="rounded-xl bg-amber-50 p-2.5 text-[11.5px] leading-relaxed text-amber-800">
-          Include everything the customer is paying in total, not just the new part — they approve
-          one figure. Work stops until they answer, and the clock pauses while it does.
+          {agreedPaise && !replace
+            ? 'Enter only what is extra. Work stops until the customer answers, and the clock pauses while it does.'
+            : 'Include everything the customer is paying in total, not just the new part. Work stops until they answer, and the clock pauses while it does.'}
         </p>
       )}
 
@@ -242,9 +274,15 @@ function QuoteBuilder({ bookingId, repairCode, additional = false, onSent, onCan
           className="input text-sm w-32" />
       </div>
 
+      {agreedPaise > 0 && !replace && (
+        <div className="space-y-1 px-1 text-[12.5px] text-slate-600">
+          <div className="flex justify-between"><span>Booked price</span><span className="tabular-nums">{rupees(agreedPaise)}</span></div>
+          <div className="flex justify-between"><span>Extra</span><span className="tabular-nums">+ {rupees(total)}</span></div>
+        </div>
+      )}
       <div className="flex items-center justify-between bg-slate-50 rounded-xl px-3 py-2.5">
-        <span className="text-sm font-semibold text-slate-600">Subtotal (before tax)</span>
-        <span className="text-lg font-black text-[#0F172A]">{rupees(total)}</span>
+        <span className="text-sm font-semibold text-slate-600">{agreedPaise > 0 && !replace ? 'New subtotal (before fees)' : 'Subtotal (before tax)'}</span>
+        <span className="text-lg font-black text-[#0F172A]">{rupees(agreedPaise > 0 && !replace ? agreedPaise + total : total)}</span>
       </div>
 
       <button onClick={send} disabled={isLoading} className="btn-primary w-full">
@@ -701,6 +739,7 @@ export default function WorkerRepairJobPage() {
             bookingId={id}
             repairCode={booking.repairCode || 'display_assembly_replacement'}
             additional={showQuote === 'additional'}
+            snapshot={booking.priceSnapshot || {}}
             onSent={() => { setShowQuote(false); refetch(); }}
             onCancel={() => setShowQuote(false)}
           />
