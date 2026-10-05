@@ -5,6 +5,8 @@ async function getMe(req, res, next) {
   try {
     const user = await User.findById(req.auth.sub).lean();
     if (!user) return res.status(404).json({ error: 'User not found' });
+    // The photo is stored as a key; screens get a viewable link.
+    user.avatar = user.avatarKey ? await require('../../core/storage/s3').signMedia(user.avatarKey).catch(() => null) : null;
     res.json({ user });
   } catch (err) { next(err); }
 }

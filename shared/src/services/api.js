@@ -134,6 +134,10 @@ export const api = createApi({
 
     // Account: password, verified email and first-time setup (every account type).
     accountMe: b.query({ query: () => '/account/me', providesTags: ['Account'] }),
+    // Profile photo (asked once) and "What's new" seen, for every account type.
+    setAccountPhoto: b.mutation({ query: (key) => ({ url: '/account/photo', method: 'POST', body: { key } }), invalidatesTags: ['Account', 'Me'] }),
+    skipAccountPhoto: b.mutation({ query: () => ({ url: '/account/photo/skip', method: 'POST' }), invalidatesTags: ['Account'] }),
+    markReleaseSeen: b.mutation({ query: (release) => ({ url: '/account/release-seen', method: 'POST', body: { release } }), invalidatesTags: ['Account'] }),
     // A provider's own reviews, and reporting one for moderation.
     myReviews: b.query({ query: (page = 1) => ({ url: '/reviews/mine', params: { page } }), providesTags: ['Reviews'] }),
     reportReview: b.mutation({ query: ({ id, reason }) => ({ url: `/reviews/${id}/report`, method: 'POST', body: { reason } }), invalidatesTags: ['Reviews'] }),
@@ -2440,6 +2444,9 @@ export const {
   useAccountMeQuery,
   useAccountCapabilitiesQuery,
   useMyReviewsQuery,
+  useSetAccountPhotoMutation,
+  useSkipAccountPhotoMutation,
+  useMarkReleaseSeenMutation,
   useReportReviewMutation,
   useAdminReviewsQuery,
   useAdminModerateReviewMutation,

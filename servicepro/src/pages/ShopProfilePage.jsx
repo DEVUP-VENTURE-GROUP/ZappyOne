@@ -96,7 +96,8 @@ export default function ShopProfilePage() {
         businessName: form.businessName.trim(),
         category: form.category.trim(),
         hours: form.hours,
-        coverImageUrl: form.coverImageUrl || undefined,
+        // Only a new upload (a storage key) is sent; the loaded photo is a short-lived link, never saved back.
+        coverImageUrl: form.coverImageUrl && !/^https?:/i.test(form.coverImageUrl) ? form.coverImageUrl : undefined,
         bio: form.bio || undefined,
         yearsActive: form.yearsActive === '' ? undefined : Number(form.yearsActive),
         ...(form.lat !== '' && form.lng !== '' && form.address && {

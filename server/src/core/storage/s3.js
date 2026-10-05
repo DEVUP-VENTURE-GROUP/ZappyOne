@@ -60,6 +60,8 @@ async function getViewUrl(key, expiresIn = 86400) {
  */
 async function signMedia(ref) {
   if (!ref) return null;
+  // A signed link of ours saved by mistake has long expired: sign its key afresh.
+  ref = keyFromMedia(ref);
   if (String(ref).startsWith('http')) return ref;
   try { return await getViewUrl(ref); } catch { return null; }
 }

@@ -139,4 +139,25 @@ test('a reset email that fails to send falls back to the phone code', async () =
   } finally { otp.mockRestore(); }
 });
 
+test('profile photo: asked once, own uploads only, shown everywhere; each update seen once', async () => {
+  const u = await customer({ name: 'Nisha' });
+  expect(await svc.getStatus('user', u._id)).toMatchObject({ hasPhoto: false, askPhoto: true, lastSeenRelease: null, photoUrl: null });
+
+  await expect(svc.setPhoto({ role: 'user', id: u._id, key: 'profile/someoneelse/abc' })).rejects.toMatchObject({ code: 'BAD_PHOTO' });
+  const st = await svc.setPhoto({ role: 'user', id: u._id, key: `profile/${u._id}/a1b2-c3` });
+  expect(st).toMatchObject({ hasPhoto: true, askPhoto: false });
+  expect((await User.findById(u._id).lean()).avatarKey).toBe(`profile/${u._id}/a1b2-c3`);
+
+  const v = await customer({ name: 'Om' });
+  expect(await svc.skipPhoto({ role: 'user', id: v._id })).toMatchObject({ hasPhoto: false, askPhoto: false });
+
+  await svc.markReleaseSeen({ role: 'user', id: v._id, release: '2026-10' });
+  expect(await svc.getStatus('user', v._id)).toMatchObject({ lastSeenRelease: '2026-10' });
+
+  // A worker with no photo of their own shows their verified ID selfie.
+  const Worker = require('../src/modules/worker/worker.model');
+  const w = await Worker.collection.insertOne({ phone: '9800000555', name: 'Raju', kyc: { selfieUrl: 'kyc/x/selfie' } });
+  expect(await svc.getStatus('worker', w.insertedId)).toMatchObject({ hasPhoto: true, askPhoto: false });
+});
+
 void mongoose;

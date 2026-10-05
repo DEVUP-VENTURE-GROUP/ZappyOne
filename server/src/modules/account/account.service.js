@@ -63,6 +63,14 @@ const bcrypt = require('bcryptjs');
 const hashPassword = (pw) => bcrypt.hash(pw, 12);
 const comparePassword = (pw, hash) => bcrypt.compare(pw, hash);
 
+/**
+ * Where each account type keeps its photo. Workers and partners already had
+ * one; a shop's picture is its cover photo; customers use avatarKey. A worker
+ * with no photo of their own shows their verified ID selfie.
+ */
+const PHOTO_FIELD = { user: 'avatarKey', worker: 'profilePhotoKey', shop: 'coverImageUrl', event_partner: 'profilePhotoKey' };
+const photoKeyOf = (role, a) => a[PHOTO_FIELD[role]] || (role === 'worker' ? a.kyc?.selfieUrl : null) || null;
+
 /** What a signed-in account still has to do; the single rule every app reads. */
 function setupStatus(role, a) {
   const cfg = roleCfg(role);
@@ -88,6 +96,11 @@ function setupStatus(role, a) {
     needs,
     needsSetup: Object.values(needs).some(Boolean),
     mailConfigured,
+    hasPhoto: !!photoKeyOf(role, a),
+    // Asked once, for new and existing accounts alike; skipping is remembered.
+    askPhoto: !photoKeyOf(role, a) && !a.photoPromptSeenAt,
+    lastSeenRelease: a.lastSeenRelease || null,
+    joinedAt: a.createdAt || null,
   };
 }
 
@@ -98,7 +111,39 @@ async function load(role, id, extra = '') {
 }
 
 async function getStatus(role, id) {
-  return setupStatus(role, await load(role, id));
+  const a = await load(role, id);
+  const status = setupStatus(role, a);
+  const key = photoKeyOf(role, a);
+  status.photoUrl = key ? await require('../../core/storage/s3').signMedia(key).catch(() => null) : null;
+  return status;
+}
+
+/**
+ * A new profile photo. Only a key this account just uploaded (its own id in
+ * the path, a photo folder) is accepted, so nobody can point their profile at
+ * someone else's file.
+ */
+async function setPhoto({ role, id, key }) {
+  const k = String(key || '');
+  const ok = new RegExp(`^(profile|shop|event-photos)/${String(id)}/[A-Za-z0-9-]+([.][a-z0-9]+)?$`).test(k);
+  if (!ok) throw err(400, 'BAD_PHOTO', 'Upload the photo again and then save.');
+  const a = await load(role, id);
+  a[PHOTO_FIELD[role]] = k;
+  a.photoPromptSeenAt = a.photoPromptSeenAt || new Date();
+  await a.save();
+  return getStatus(role, id);
+}
+
+/** "Skip for now" on the photo prompt: not asked again. */
+async function skipPhoto({ role, id }) {
+  await roleCfg(role).model().updateOne({ _id: id }, { $set: { photoPromptSeenAt: new Date() } });
+  return getStatus(role, id);
+}
+
+/** The person has seen this update's "What's new". */
+async function markReleaseSeen({ role, id, release }) {
+  await roleCfg(role).model().updateOne({ _id: id }, { $set: { lastSeenRelease: String(release).slice(0, 40) } });
+  return { ok: true };
 }
 
 async function notifyPasswordChanged(role, a) {
@@ -283,7 +328,7 @@ async function completeSetup({ role, id }) {
   return st;
 }
 
-module.exports = {
+module.exports = { setPhoto, skipPhoto, markReleaseSeen, PHOTO_FIELD,
   ROLES, checkPassword, phoneVariants, setupStatus,
   getStatus, setPassword, setName, startEmailVerification, confirmEmail,
   loginWithPassword, requestPasswordReset, resetWithToken, resetWithOtp, completeSetup,

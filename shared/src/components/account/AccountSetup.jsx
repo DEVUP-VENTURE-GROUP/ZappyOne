@@ -3,8 +3,9 @@ import toast from 'react-hot-toast';
 import { Loader2, MailCheck, ShieldCheck, LogOut } from 'lucide-react';
 import {
   useAccountMeQuery, useSetAccountNameMutation, useSetAccountPasswordMutation,
-  useStartEmailVerificationMutation, useCompleteAccountSetupMutation,
+  useStartEmailVerificationMutation, useCompleteAccountSetupMutation, useSkipAccountPhotoMutation,
 } from '../../services/api';
+import ProfilePhoto from './ProfilePhoto';
 import { ZappyLogo } from '../common/ZappyLogo';
 import PasswordField, { passwordOk } from './PasswordField';
 
@@ -16,7 +17,11 @@ import PasswordField, { passwordOk } from './PasswordField';
  *
  * Everything is on one screen and saved in order: name, password, email (a
  * confirmation link is sent; the account works before it is opened), then
- * setup is marked complete.
+ * setup is marked complete. A profile photo is offered on the same screen.
+ *
+ * Accounts that are already set up but have never been asked for a photo
+ * (including everyone who signed up before photos existed) see a short
+ * photo-only version once; "Skip for now" is remembered.
  */
 export default function AccountSetup({ appName = 'ZappyOne', intro, onDone, onSignOut }) {
   const { data: st, isLoading } = useAccountMeQuery();
@@ -24,6 +29,7 @@ export default function AccountSetup({ appName = 'ZappyOne', intro, onDone, onSi
   const [setPassword] = useSetAccountPasswordMutation();
   const [startEmail] = useStartEmailVerificationMutation();
   const [complete] = useCompleteAccountSetupMutation();
+  const [skipPhoto, { isLoading: skipping }] = useSkipAccountPhotoMutation();
 
   const [name, setNameV] = useState('');
   const [pw, setPw] = useState('');
@@ -62,6 +68,8 @@ export default function AccountSetup({ appName = 'ZappyOne', intro, onDone, onSi
         setSentTo(r.emailSent ? wantEmail : null);
       }
       await complete().unwrap();
+      // They saw the photo offer here; it is not asked again on its own screen.
+      if (st.askPhoto) await skipPhoto().unwrap().catch(() => {});
       toast.success('All set');
       onDone?.();
     } catch (err) {
@@ -69,18 +77,47 @@ export default function AccountSetup({ appName = 'ZappyOne', intro, onDone, onSi
     } finally { setSaving(false); }
   }
 
+  const header = (
+    <header className="border-b border-line bg-white">
+      <div className="mx-auto flex max-w-md items-center justify-between px-5 py-3.5">
+        <ZappyLogo size={26} />
+        {onSignOut && (
+          <button type="button" onClick={onSignOut} className="flex items-center gap-1.5 text-[13px] font-semibold text-ink-500 hover:text-ink-900">
+            <LogOut size={15} /> Sign out
+          </button>
+        )}
+      </div>
+    </header>
+  );
+
+  // Already set up; only the photo is new to them.
+  if (!st.needsSetup) {
+    const provider = st.role !== 'user';
+    return (
+      <div className="flex min-h-screen flex-col bg-canvas">
+        {header}
+        <main className="mx-auto w-full max-w-md flex-1 px-5 py-8 text-center">
+          <h1 className="text-[24px] font-bold leading-tight text-ink-900">{st.role === 'shop' ? 'Add a photo of your shop' : 'Add your photo'}</h1>
+          <p className="mx-auto mt-2 max-w-sm text-[15px] text-ink-500">
+            {provider
+              ? 'Customers book more readily when they can see who is coming. Your photo shows on your profile and on their booking.'
+              : `It helps your technician recognise you, and makes ${appName} feel like yours.`}
+          </p>
+          <div className="mt-8 rounded-card border border-line bg-white p-6">
+            <ProfilePhoto url={st.photoUrl} role={st.role} size={112} label={st.role === 'shop' ? 'Shop photo' : 'Your photo'} onSaved={() => onDone?.()} />
+          </div>
+          <button type="button" onClick={() => skipPhoto().unwrap().then(() => onDone?.()).catch(() => {})} disabled={skipping}
+            className="mt-4 w-full text-[14px] font-semibold text-ink-500 hover:text-ink-900">
+            {skipping ? <Loader2 size={15} className="mx-auto animate-spin" /> : 'Skip for now'}
+          </button>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen flex-col bg-canvas">
-      <header className="border-b border-line bg-white">
-        <div className="mx-auto flex max-w-md items-center justify-between px-5 py-3.5">
-          <ZappyLogo size={26} />
-          {onSignOut && (
-            <button type="button" onClick={onSignOut} className="flex items-center gap-1.5 text-[13px] font-semibold text-ink-500 hover:text-ink-900">
-              <LogOut size={15} /> Sign out
-            </button>
-          )}
-        </div>
-      </header>
+      {header}
 
       <main className="mx-auto w-full max-w-md flex-1 px-5 py-6">
         <span className="flex h-11 w-11 items-center justify-center rounded-btn bg-zappy-50 text-zappy-600"><ShieldCheck size={21} /></span>
@@ -90,6 +127,8 @@ export default function AccountSetup({ appName = 'ZappyOne', intro, onDone, onSi
         </p>
 
         <form onSubmit={submit} className="mt-6 space-y-5 rounded-card border border-line bg-white p-5">
+          <ProfilePhoto url={st.photoUrl} role={st.role} label={st.role === 'shop' ? 'Shop photo' : 'Your photo'} />
+
           {askName && (
             <div>
               <label htmlFor="setup-name" className="mb-1.5 block text-[13px] font-semibold text-ink-700">Your name</label>

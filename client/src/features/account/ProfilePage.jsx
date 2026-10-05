@@ -1,3 +1,4 @@
+import ProfilePhoto from '@shared/components/account/ProfilePhoto';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
@@ -207,14 +208,8 @@ export default function ProfilePage() {
               variants={fadeInUp}
             >
               <div className="flex flex-col items-center text-center gap-3 relative z-10">
-                {/* Their photo, or their initials — never a stock face that reads as someone else's account. */}
-                <div className="w-20 h-20 rounded-full flex items-center justify-center shrink-0 overflow-hidden bg-zappy-100 text-zappy-700">
-                  {user?.avatar
-                    ? <img src={user.avatar} alt={user?.name || 'Your photo'} className="w-full h-full object-cover" />
-                    : <span className="text-[26px] font-semibold" aria-hidden="true">
-                        {(user?.name || '').trim().split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join('') || '?'}
-                      </span>}
-                </div>
+                {/* Their own photo, changeable here; the same one shows in the header and on bookings. */}
+                <ProfilePhoto url={user?.avatar} role="user" size={88} />
                 <div className="flex-1 min-w-0">
                   <h2 className="font-black text-2xl tracking-tight text-[#0F172A]">{user?.name || 'User'}</h2>
                   <p className="text-sm font-semibold text-slate-500 mt-1">{user?.phone || user?.email || '—'}</p>

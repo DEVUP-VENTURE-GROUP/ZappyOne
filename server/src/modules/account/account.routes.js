@@ -42,6 +42,17 @@ router.get('/me', authenticate, onlyAccounts, async (req, res, next) => {
   try { res.json(await svc.getStatus(req.auth.role, req.auth.sub)); } catch (e) { next(e); }
 });
 
+router.post('/photo', authenticate, onlyAccounts,
+  validate(Joi.object({ key: Joi.string().trim().max(300).required() })),
+  async (req, res, next) => { try { res.json(await svc.setPhoto({ ...self(req), key: req.body.key })); } catch (e) { next(e); } });
+
+router.post('/photo/skip', authenticate, onlyAccounts,
+  async (req, res, next) => { try { res.json(await svc.skipPhoto(self(req))); } catch (e) { next(e); } });
+
+router.post('/release-seen', authenticate, onlyAccounts,
+  validate(Joi.object({ release: Joi.string().trim().max(40).required() })),
+  async (req, res, next) => { try { res.json(await svc.markReleaseSeen({ ...self(req), release: req.body.release })); } catch (e) { next(e); } });
+
 router.post('/name', authenticate, onlyAccounts,
   validate(Joi.object({ name: Joi.string().trim().min(2).max(60).required() })),
   async (req, res, next) => { try { res.json(await svc.setName({ ...self(req), name: req.body.name })); } catch (e) { next(e); } });

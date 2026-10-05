@@ -33,6 +33,10 @@ function accountPlugin(schema) {
     },
     /** Set once the account finished first-time setup (name, password, email where required). */
     profileCompletedAt: { type: Date, default: null },
+    /** When we last asked for a profile photo; asked once, skipping is fine. */
+    photoPromptSeenAt: { type: Date, default: null },
+    /** The last "What's new" this account has seen, so each update is shown once. */
+    lastSeenRelease: { type: String, default: null },
   });
   schema.index({ 'emailVerification.tokenHash': 1 }, { sparse: true });
   schema.index({ 'passwordReset.tokenHash': 1 }, { sparse: true });

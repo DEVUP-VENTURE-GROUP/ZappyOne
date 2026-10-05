@@ -4,6 +4,8 @@ const userSchema = new mongoose.Schema(
   {
     phone: { type: String, required: true, unique: true, index: true },
     name: { type: String, trim: true },
+    /** Profile photo: storage key, signed when read (account.service). */
+    avatarKey: { type: String, default: null },
     email: { type: String, lowercase: true, sparse: true },
     passwordHash: { type: String, select: false },
     savedAddresses: [

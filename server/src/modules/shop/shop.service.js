@@ -71,10 +71,8 @@ function withOpenState(shop) {
 
 async function resolveShopImages(shop) {
   if (!shop) return shop;
-  async function resolve(val) {
-    if (!val || val.startsWith('http')) return val;
-    try { return await s3Service.getViewUrl(val); } catch { return val; }
-  }
+  // Same rule as every other photo: stored keys, and old saved links of ours, are signed fresh.
+  const resolve = (val) => (val ? s3Service.signMedia(val).then((u) => u || val) : val);
   shop.coverImageUrl = await resolve(shop.coverImageUrl);
   if (Array.isArray(shop.galleryImages)) {
     shop.galleryImages = await Promise.all(shop.galleryImages.map(resolve));
@@ -179,6 +177,9 @@ async function updateProfile(shopId, patch) {
   for (const key of PROFILE_FIELDS) {
     if (patch[key] !== undefined) set[key] = patch[key];
   }
+  // Photos are stored as keys; a signed link sent back from the form must not replace one.
+  if (set.coverImageUrl) set.coverImageUrl = s3Service.keyFromMedia(set.coverImageUrl);
+  if (Array.isArray(set.galleryImages)) set.galleryImages = set.galleryImages.map(s3Service.keyFromMedia);
   if (Object.keys(set).length === 0) {
     throw Object.assign(new Error('Nothing to update'), { status: 400 });
   }

@@ -1,4 +1,5 @@
 import LoginSecurityCard from '../../components/account/LoginSecurityCard';
+import ProfilePhoto from '../../components/account/ProfilePhoto';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -9,7 +10,7 @@ import {
   Loader2, BarChart2, Shield, KeyRound,
 } from 'lucide-react';
 import {
-  useGetWorkerMeQuery, useUpdateWorkerProfileMutation, useSetWorkerCredentialsMutation,
+  useGetWorkerMeQuery, useUpdateWorkerProfileMutation, useSetWorkerCredentialsMutation, useAccountMeQuery,
   useProviderOnboardingStatusQuery,
 } from '../../services/api';
 import toast from 'react-hot-toast';
@@ -64,6 +65,7 @@ const COLOR_MAP = {
 export default function WorkerEditProfilePage() {
   const nav = useNavigate();
   const { data: meData, isLoading } = useGetWorkerMeQuery();
+  const { data: account } = useAccountMeQuery();
   const me = meData?.worker;
   const [updateProfile, { isLoading: isSaving }] = useUpdateWorkerProfileMutation();
   const [setCredentials, { isLoading: savingCreds }] = useSetWorkerCredentialsMutation();
@@ -143,11 +145,9 @@ export default function WorkerEditProfilePage() {
 
       <div className="max-w-lg lg:max-w-2xl mx-auto px-4 pt-5 space-y-5">
 
-        {/* Avatar placeholder + stats */}
+        {/* Photo (same one as the dashboard) + stats */}
         <div className="bg-white rounded-2xl p-4 flex items-center gap-4 shadow-sm">
-          <div className="w-14 h-14 rounded-full bg-zappy-100 flex items-center justify-center text-2xl font-bold text-zappy-600 shrink-0">
-            {(me?.name || 'W')[0].toUpperCase()}
-          </div>
+          <ProfilePhoto url={account?.photoUrl} role="worker" size={64} />
           <div className="flex-1 min-w-0">
             <p className="font-bold text-slate-800 truncate">{me?.name || 'Your Name'}</p>
             <p className="text-xs text-slate-500 mt-0.5">

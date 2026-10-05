@@ -6,7 +6,7 @@ import {
   LogOut, ChevronRight, ShieldCheck, X, Menu, Bell, BadgeIndianRupee, Briefcase,
   Clock, Star, MapPin, Radio,
 } from 'lucide-react';
-import {
+import { useAccountMeQuery,
   useGetWorkerMeQuery, useGoOnlineMutation, useGoOfflineMutation, useGetEarningsQuery,
   useGetKycStatusQuery, useListNotificationsQuery, useLogoutMutation, useProviderOnboardingStatusQuery,
 } from '../../services/api';
@@ -98,7 +98,6 @@ export default function WorkerDashboard() {
   const [callLogout] = useLogoutMutation();
   const { getCurrent } = useGeolocation();
 
-  const [avatarUrl, setAvatarUrl] = useState(null);
   const [areaName, setAreaName] = useState(null);
   const [toggling, setToggling] = useState(false);
   const [onlineSec, setOnlineSec] = useState(0);
@@ -113,16 +112,9 @@ export default function WorkerDashboard() {
   // Service verification collects the same documents; don't ask twice while it's in flight.
   const verificationInFlight = (providerStatus?.enrolments || []).some((e) => ['pending_review', 'approved'].includes(e.status));
 
-  // Profile photo through the API (works on the split prod origin).
-  useEffect(() => {
-    if (!token || !me?.profilePhotoKey) return undefined;
-    let url;
-    fetch(`${API_BASE}/api/workers/me/avatar`, { headers: { Authorization: `Bearer ${token}` } })
-      .then((r) => (r.ok ? r.blob() : null))
-      .then((blob) => { if (blob) { url = URL.createObjectURL(blob); setAvatarUrl(url); } })
-      .catch(() => {});
-    return () => { if (url) URL.revokeObjectURL(url); };
-  }, [token, me?.profilePhotoKey]);
+  // The same photo as settings and setup: the account's, or the verified ID selfie.
+  const { data: account } = useAccountMeQuery();
+  const avatarUrl = account?.photoUrl || null;
 
   // Online clock, from the server's stamp so it survives a refresh.
   useEffect(() => {
