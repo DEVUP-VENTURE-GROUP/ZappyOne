@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useLiveCatalogQuery } from '../../services/api';
 import { distinctArt } from './serviceArt';
+import { servicePhoto, categoryPhoto } from './problemArt';
 
 /**
  * What a customer can book today, and what each service covers.
@@ -155,7 +156,7 @@ function ServiceRow({ services, onOpen }) {
         {services.map((s) => (
           <CategoryTile
             key={s.code}
-            category={{ code: s.code, name: s.name, icon: s.icon, imageUrl: s.imageUrl || characters.get(s.code)?.still, subtitle: '' }}
+            category={{ code: s.code, name: s.name, icon: s.icon, imageUrl: s.imageUrl || servicePhoto(s.code) || characters.get(s.code)?.still, subtitle: '' }}
             onOpen={() => onOpen(s)}
           />
         ))}
@@ -172,8 +173,8 @@ function ServiceCard({ service, character, onOpenService, onOpenCategory }) {
   return (
     <div className="overflow-hidden rounded-xl bg-white">
       <button onClick={onOpenService} className="group flex w-full items-center gap-3.5 px-4 py-3.5 text-left">
-        {service.imageUrl
-          ? <img src={service.imageUrl} alt="" className="h-11 w-11 shrink-0 rounded-lg object-cover" />
+        {service.imageUrl || servicePhoto(service.code)
+          ? <img src={service.imageUrl || servicePhoto(service.code)} alt="" className="h-11 w-11 shrink-0 rounded-lg object-cover" />
           : character
             ? <img src={character.still} alt="" className="h-12 w-12 shrink-0 rounded-xl bg-[#EEF3FB] object-contain mix-blend-multiply" />
             : <Icon size={24} className="shrink-0 text-zappy-700" strokeWidth={1.6} />}
@@ -195,7 +196,8 @@ function ServiceCard({ service, character, onOpenService, onOpenCategory }) {
             {coverage.map((group) => (
               <CategoryTile
                 key={group.code}
-                category={group}
+                // A repair heading with no upload shows our photo for it (cover or one of its problems).
+                category={{ ...group, imageUrl: categoryPhoto(service.code, group) }}
                 onOpen={() => onOpenCategory(group)}
               />
             ))}

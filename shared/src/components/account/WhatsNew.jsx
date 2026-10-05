@@ -15,7 +15,7 @@ export default function WhatsNew({ role, appName = 'ZappyOne' }) {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-      className="fixed inset-0 z-[90] flex items-end justify-center bg-ink-900/40 sm:items-center"
+      className="fixed inset-0 z-[250] flex items-end justify-center bg-ink-900/40 sm:items-center"
       role="dialog" aria-modal="true" aria-labelledby="whatsnew-title">
       <motion.section initial={{ y: 30 }} animate={{ y: 0 }} transition={{ duration: 0.2 }}
         className="w-full max-w-md rounded-t-sheet bg-white p-6 pb-[calc(env(safe-area-inset-bottom,0px)+24px)] sm:rounded-sheet">

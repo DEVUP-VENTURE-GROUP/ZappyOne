@@ -60,7 +60,7 @@ export default function JobChat({ jobId, title = 'Messages', onClose }) {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[80] flex items-end justify-center bg-ink-900/40 sm:items-stretch sm:justify-end"
+      className="fixed inset-0 z-[140] flex items-end justify-center bg-ink-900/40 sm:items-stretch sm:justify-end"
       onClick={(e) => e.target === e.currentTarget && onClose()}>
       <motion.section initial={{ y: 40 }} animate={{ y: 0 }} exit={{ y: 40 }} transition={{ duration: 0.18 }}
         aria-label="Messages"

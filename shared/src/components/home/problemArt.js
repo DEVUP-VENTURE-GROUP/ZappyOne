@@ -75,3 +75,22 @@ export function categoryPhoto(vertical, category) {
   }
   return null;
 }
+
+/**
+ * The photo that stands for a whole service (a tile on "All services" and the
+ * home grid), when admin has not uploaded one. Only services we have a real
+ * photo for are listed; the rest keep their illustration or icon.
+ */
+const SERVICE_COVERS = {
+  mobile: '/problems/mobile/cracked_screen.webp',
+  laptop: '/problems/laptop/lt_overheating.webp',
+  two_wheeler: '/problems/two_wheeler/headings/tw_engine.webp',
+  four_wheeler: '/problems/four_wheeler/headings/fw_engine.webp',
+};
+const PET_SERVICES = new Set(['pet_boarding', 'pet_check', 'pet_grooming', 'pet_home_care', 'pet_transport', 'pet_vet_assist', 'pet_walk']);
+
+export function servicePhoto(code) {
+  if (PET_SERVICES.has(code)) return `/services/pet/${code}.webp`;
+  if (code === 'pet_services') return '/services/pet/pet_grooming.webp';
+  return SERVICE_COVERS[VERTICAL[code]] || null;
+}
