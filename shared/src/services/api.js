@@ -559,9 +559,6 @@ export const api = createApi({
 
     // --- Pricing (public) ---
     getPricingConfig: b.query({ query: () => '/pricing', providesTags: ['PricingCfg'] }),
-    adminRevenue: b.query({
-      query: (days = 7) => adminApiPath(`/revenue?days=${days}`),
-    }),
 
     // --- Admin: Extended ---
     adminAnalytics: b.query({
@@ -1206,6 +1203,9 @@ export const api = createApi({
 
     // Economics: fee, commission and tax for every service line (admin → Economics)
     // Bookings → Needs intervention, and Overview → what customers search for
+    // Insights, from the bookings the platform takes today
+    adminInsightsOverview: b.query({ query: (days = 7) => ({ url: adminApiPath('/insights/overview'), params: { days } }) }),
+    adminInsightsDemand: b.query({ query: (days = 7) => ({ url: adminApiPath('/insights/demand'), params: { days } }) }),
     adminBookingAttention: b.query({ query: () => adminApiPath('/bookings/attention'), providesTags: ['AdminMetrics'] }),
     adminSearchDemand: b.query({ query: () => adminApiPath('/alerts/search-demand') }),
     adminFees: b.query({
@@ -2274,7 +2274,6 @@ export const {
   useGetPaymentAvailabilityQuery,
   useCreateBookingPaymentMutation,
   useGetPricingConfigQuery,
-  useAdminRevenueQuery,
   useAdminAnalyticsQuery,
   useAdminPaymentsQuery,
   useAdminLaunchInterestQuery,
@@ -2440,6 +2439,8 @@ export const {
   useAdminShieldUpdateFeeScheduleMutation,
   useAdminFeesQuery,
   useAdminBookingAttentionQuery,
+  useAdminInsightsOverviewQuery,
+  useAdminInsightsDemandQuery,
   useAdminSearchDemandQuery,
   useAdminUpdateFeeMutation,
   // Job chat

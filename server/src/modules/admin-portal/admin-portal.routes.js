@@ -175,6 +175,16 @@ router.get('/alerts/search-demand', async (req, res, next) => {
   try { res.json(await require('./search-demand.service').summary()); } catch (err) { next(err); }
 });
 
+/* Insights: the business from the bookings taken today (repair, pet, helping, events) */
+
+router.get('/insights/overview', async (req, res, next) => {
+  try { res.json(await require('./analytics.service').overview({ days: Number(req.query.days) || 7 })); } catch (err) { next(err); }
+});
+
+router.get('/insights/demand', async (req, res, next) => {
+  try { res.json(await require('./search-demand.service').demand({ days: Number(req.query.days) || 7 })); } catch (err) { next(err); }
+});
+
 /* Reviews: reported and auto-flagged reviews, and the admin's decision */
 
 const reviews = require('../review/review.service');

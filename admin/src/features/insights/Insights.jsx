@@ -17,6 +17,8 @@ import Heatmap from './Heatmap';
 import Analytics from './Analytics';
 import SearchIntel from './SearchIntel';
 import Retention from './Retention';
+import TodayView from './TodayView';
+import DemandView from './DemandView';
 
 /* helpers */
 const inr = (n) => `₹${Math.round(Number(n) || 0).toLocaleString('en-IN')}`;
@@ -583,65 +585,79 @@ const VIEWS = [
   { id: 'retention', label: 'Retention & Cohorts', icon: Users,     Comp: Retention },
 ];
 
+/**
+ * Insights: six screens, each answering one question, from the bookings the
+ * platform takes today. Today and Demand are built; the older reports stay
+ * reachable from "Older reports" until their replacements land, then go.
+ */
+const SCREENS = [
+  { id: 'today', label: 'Today', question: 'Is the business healthy?', Comp: TodayView },
+  { id: 'demand', label: 'Demand', question: 'What do people want that we do not give them?', Comp: DemandView },
+];
+const PERIODS = [[1, 'Today'], [7, '7 days'], [30, '30 days'], [90, '90 days']];
+
 export default function Intelligence() {
   const [params, setParams] = useSearchParams();
-  const sub = params.get('sub') || 'ceo';
-  const active = VIEWS.find((v) => v.id === sub) || VIEWS[0];
-  const [open, setOpen] = useState(false);
-  const ActiveComp = active.Comp;
-  const ActiveIcon = active.icon;
+  const [olderOpen, setOlderOpen] = useState(false);
+  const sub = params.get('sub') || 'today';
+  const days = [1, 7, 30, 90].includes(Number(params.get('days'))) ? Number(params.get('days')) : 7;
+  const screen = SCREENS.find((x) => x.id === sub);
+  const older = VIEWS.find((v) => v.id === sub);
 
-  function pick(id) {
+  function set(key, value) {
     const next = new URLSearchParams(params);
     next.set('tab', 'insights');
-    next.set('sub', id);
+    next.set(key, String(value));
     setParams(next, { replace: true });
-    setOpen(false);
+    setOlderOpen(false);
   }
 
+  const Active = screen?.Comp || older?.Comp || TodayView;
   return (
-    <div className="max-w-7xl mx-auto">
-      {/* Title + dropdown */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl flex items-center justify-center" style={{ background: 'linear-gradient(#6366f1, #6366f1)' }}>
-            <Activity size={20} className="text-white" />
-          </div>
-          <div>
-            <h1 className="text-xl font-black text-slate-900 leading-none">Insights</h1>
-            <p className="text-xs text-slate-400 mt-1">Live demand → data-driven hiring, marketing &amp; city launches</p>
-          </div>
+    <div className="mx-auto max-w-7xl">
+      <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="text-[22px] font-semibold tracking-tight text-slate-900">Insights</h1>
+          <p className="mt-1 text-[13px] text-slate-500">{screen ? screen.question : older ? `${older.label} (older report, being replaced)` : ''}</p>
         </div>
+        {screen && (
+          <div className="flex rounded-xl border border-slate-200 bg-white p-0.5 text-[12.5px] font-medium" role="group" aria-label="Period">
+            {PERIODS.map(([d, text]) => (
+              <button key={d} type="button" onClick={() => set('days', d)} aria-pressed={days === d}
+                className={`rounded-lg px-3 py-1.5 transition ${days === d ? 'bg-slate-900 text-white' : 'text-slate-600 hover:text-slate-900'}`}>{text}</button>
+            ))}
+          </div>
+        )}
+      </div>
 
-        <div className="relative">
-          <button onClick={() => setOpen((o) => !o)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-slate-200 shadow-sm text-sm font-bold text-slate-800 hover:border-slate-300">
-            <ActiveIcon size={15} className="text-zappy-500" />
-            {active.label}
-            <ChevronDown size={15} className={`text-slate-400 transition ${open ? 'rotate-180' : ''}`} />
+      <div className="mb-6 flex items-center gap-1 border-b border-slate-200" role="tablist">
+        {SCREENS.map((x) => (
+          <button key={x.id} type="button" role="tab" aria-selected={sub === x.id} onClick={() => set('sub', x.id)}
+            className={`-mb-px border-b-2 px-3.5 py-2.5 text-[13.5px] font-semibold transition ${sub === x.id ? 'border-[#1F4FD8] text-slate-900' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
+            {x.label}
           </button>
-          {open && (
+        ))}
+        <div className="relative ml-auto">
+          <button type="button" onClick={() => setOlderOpen((o) => !o)}
+            className={`flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[12px] font-medium ${older ? 'text-slate-900' : 'text-slate-400 hover:text-slate-700'}`}>
+            Older reports <ChevronDown size={13} className={olderOpen ? 'rotate-180' : ''} />
+          </button>
+          {olderOpen && (
             <>
-              <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-              <div className="absolute right-0 mt-2 w-60 bg-white rounded-2xl border border-slate-100 shadow-xl z-20 p-1.5">
-                {VIEWS.map((v) => {
-                  const Icon = v.icon;
-                  return (
-                    <button key={v.id} onClick={() => pick(v.id)}
-                      className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium text-left transition ${
-                        v.id === active.id ? 'bg-zappy-50 text-zappy-700' : 'text-slate-600 hover:bg-slate-50'}`}>
-                      <Icon size={15} className={v.id === active.id ? 'text-zappy-500' : 'text-slate-400'} />
-                      {v.label}
-                    </button>
-                  );
-                })}
+              <div className="fixed inset-0 z-10" onClick={() => setOlderOpen(false)} />
+              <div className="absolute right-0 z-20 mt-1 w-56 rounded-xl border border-slate-200 bg-white p-1 shadow-lg">
+                <p className="px-2.5 py-1.5 text-[11px] text-slate-400">Built on the retired order engine; replaced step by step.</p>
+                {VIEWS.map((v) => (
+                  <button key={v.id} type="button" onClick={() => set('sub', v.id)}
+                    className={`w-full rounded-lg px-2.5 py-1.5 text-left text-[13px] ${v.id === sub ? 'bg-slate-100 text-slate-900' : 'text-slate-600 hover:bg-slate-50'}`}>{v.label}</button>
+                ))}
               </div>
             </>
           )}
         </div>
       </div>
 
-      <ActiveComp />
+      <Active days={days} />
     </div>
   );
 }

@@ -66,7 +66,7 @@ const AREA_RULES = [
   [/^\/(me|admins)(\/|$)/, 'admins'],
   [/^\/(metrics|revenue|alerts)(\/|$)/, 'overview'],
   [/^\/intelligence(\/|$)/, 'intelligence'],
-  [/^\/(analytics|business|demand-patterns|geo-analytics|heatmap|otp-analytics|retention|search-analytics)(\/|$)/, 'insights'],
+  [/^\/(insights|analytics|business|demand-patterns|geo-analytics|heatmap|otp-analytics|retention|search-analytics)(\/|$)/, 'insights'],
   // Each engine's bookings live under its catalog prefix but are bookings work.
   [/^\/(pet\/bookings|helping\/tasks|repair\/bookings)(\/|$)/, 'bookings'],
   [/^\/onboarding\/(overview|domains|lines)(\/|$)/, 'catalog'],
