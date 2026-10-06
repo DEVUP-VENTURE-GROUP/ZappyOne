@@ -1615,7 +1615,9 @@ function RepairFlow({ vertical, saved, draftKey, onStartOver }) {
    */
   const NEEDS = {
     type: brand, family: brand, model: brand, config: model, fuel: model, problem: model,
-    diagnose: problem, mode: problem, provider: problem, addons: provider, confirm: provider,
+    // An inspection has no provider chosen and no add-ons: it confirms straight after its own screen.
+    diagnose: problem, mode: problem, provider: problem,
+    addons: provider, confirm: provider || (serviceMode === 'diagnosis_only' && problem),
   };
   const valid = (s) => steps.includes(s) && (!(s in NEEDS) || !!NEEDS[s]);
   const [step, setStep, backTo] = useFlowStep('brand', { valid });
@@ -1815,7 +1817,17 @@ function RepairFlow({ vertical, saved, draftKey, onStartOver }) {
             setProvider(p);
             setRepairCode(code);
             setQualityCode(quality || null);
-            next('provider');
+            if (serviceMode === 'diagnosis_only') {
+              // Nothing to add to an inspection: past add-ons, and Back skips them too.
+              setSkipped((prev) => (prev.has('addons') ? prev : new Set(prev).add('addons')));
+              setStep('confirm');
+            } else if (skipped.has('addons')) {
+              // Switched from an inspection back to a repair: add-ons are offered again.
+              setSkipped((prev) => { const n = new Set(prev); n.delete('addons'); return n; });
+              setStep('addons');
+            } else {
+              next('provider');
+            }
           }}
         />
       )}
