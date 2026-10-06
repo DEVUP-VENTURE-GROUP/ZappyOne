@@ -502,6 +502,10 @@ export default function WorkerRepairJobPage() {
     }
   }
 
+  // What the customer pays now: the job, plus any earlier cancellation fee riding on it.
+  const carriedPaise = booking.carriedFee?.paise > 0 ? booking.carriedFee.paise : 0;
+  const duePaise = (snap.totalPaise || 0) + carriedPaise;
+
   // A shop's job can go back to the owner until the technician sets out.
   // Before they accept; once accepted, GiveBackCard hands it back (to the shop, for a shop's technician).
   const canPassBack = !isOwner && !!booking.shopId && ['CONFIRMED', 'PROVIDER_ASSIGNED'].includes(booking.status);
@@ -579,21 +583,22 @@ export default function WorkerRepairJobPage() {
           <div className={`card ${booking.paymentStatus === 'paid' ? 'ring-emerald-200 bg-emerald-50/40' : 'ring-amber-200 bg-amber-50/40'}`}>
             {booking.paymentStatus === 'paid' ? (
               <p className="flex items-center gap-1.5 text-sm font-bold text-emerald-800">
-                <Check size={15} /> {rupees(snap.totalPaise)} {booking.paymentMethod === 'cash' ? 'collected in cash' : 'paid online'}
+                <Check size={15} /> {rupees(duePaise)} {booking.paymentMethod === 'cash' ? 'collected in cash' : 'paid online'}
               </p>
             ) : (
               <>
                 {booking.paymentMethod === 'cash' ? (
                   <>
-                    <p className="text-sm font-bold text-[#0F172A]">Collect {rupees(snap.totalPaise)} in cash</p>
+                    <p className="text-sm font-bold text-[#0F172A]">Collect {rupees(duePaise)} in cash</p>
                     <p className="mt-0.5 text-[11px] leading-relaxed text-slate-600">
                       Take the payment from the customer, then record it here. Your commission is
                       deducted from your wallet afterwards.
+                      {carriedPaise > 0 && ` This includes ${rupees(carriedPaise)} the customer owed from an earlier cancelled booking; it comes off your wallet too.`}
                     </p>
                   </>
                 ) : (
                   <>
-                    <p className="text-sm font-bold text-[#0F172A]">Waiting for {rupees(snap.totalPaise)} online</p>
+                    <p className="text-sm font-bold text-[#0F172A]">Waiting for {rupees(duePaise)} online</p>
                     <p className="mt-0.5 text-[11px] leading-relaxed text-slate-600">
                       The customer chose to pay online and can pay from their booking screen. If they
                       cannot, take cash instead and record it here.
@@ -607,7 +612,7 @@ export default function WorkerRepairJobPage() {
                 >
                   {collecting
                     ? <><Loader2 size={15} className="animate-spin" /> Recording…</>
-                    : <>I've collected {rupees(snap.totalPaise)} in cash</>}
+                    : <>I've collected {rupees(duePaise)} in cash</>}
                 </button>
               </>
             )}

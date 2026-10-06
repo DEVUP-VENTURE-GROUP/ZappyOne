@@ -92,13 +92,14 @@ async function record(kind, doc, q) {
   if (q.free === 'provider_changed') return null; // not theirs to count
   const CancellationFeeRecord = require('../order/cancellation-shield.model');
   try {
-    return await CancellationFeeRecord.create({
+    const rec = await CancellationFeeRecord.create({
       kind, jobId: doc._id, userId: doc.userId, workerId: doc.workerId || null, shopId: doc.shopId || null,
       cancelledAtStage: q.stage, feePaise: q.feePaise, earnedFeePaise: q.earnedPaise || 0,
       refundedPaise: q.refundPaise || 0, isGrace: q.isGrace, harmScore: q.harmScore, cancelsInPeriod: q.cancelsInPeriod,
       collectionStatus: q.isGrace ? 'grace' : q.feePaise === 0 ? 'zero_fee' : 'pending_next_order',
       warningIssuedAt: q.isGrace ? new Date() : null,
     });
+    return await collectNow(rec, { keptFromRefund: q.feePaise > 0 && (q.paidPaise || 0) >= q.feePaise });
   } catch (e) {
     if (e.code !== 11000) require('../../core/logger').error({ err: e.message, id: String(doc._id) }, '[cancel-fee] not recorded');
     return null;
@@ -161,4 +162,137 @@ async function cancelForNoShow({ kind, doc, actor, reason }) {
   throw Object.assign(new Error('Not supported for this booking'), { status: 400 });
 }
 
-module.exports = { feeFor, messageFor, quoteHelping, cancelHelping, cancelForNoShow, record, HELPING_STAGE, HELPING_SELF_CANCELLABLE };
+/*
+ * Getting the fee in, and into the Worker Shield Fund (order/shield.service).
+ *
+ *   paid online      kept out of the refund          → collected now
+ *   wallet balance   taken from the customer wallet   → collected now
+ *   otherwise        rides on their next booking as its own line, paid with
+ *                    it in cash or online, and collected when that job settles
+ *
+ * Collected fees go into this week's fund and the provider who lost the trip
+ * gets a harm entry; the Monday run pays providers their share of the pool
+ * (Economics → Cancellations). A fee left unpaid for FEE_WRITE_OFF_DAYS is
+ * written off rather than chased forever.
+ */
+const FEE_WRITE_OFF_DAYS = 60;
+const shield = () => require('../order/shield.service');
+const Records = () => require('../order/cancellation-shield.model');
+const DEAD = ['CANCELLED', 'REFUNDED', 'FAILED', 'EXPIRED', 'REJECTED'];
+
+/** Collect a just-recorded fee if we can; otherwise it waits for the next booking. */
+async function collectNow(rec, { keptFromRefund = false } = {}) {
+  if (!rec || rec.feePaise <= 0 || rec.collectionStatus !== 'pending_next_order') return rec;
+  let status = null;
+  if (keptFromRefund) status = 'collected_refund';
+  else {
+    try {
+      const Transaction = require('../payment/transaction.model');
+      await require('../wallet/wallet.service').apply({
+        kind: 'user', id: rec.userId, type: 'debit', amountPaise: rec.feePaise,
+        reason: Transaction.REASONS.CANCELLATION_FEE, idempotencyKey: `cancelfee:wallet:${rec._id}`,
+        description: 'Cancellation fee, paid from your wallet',
+      });
+      status = 'collected_wallet';
+    } catch { /* no balance: it rides on the next booking */ }
+  }
+  if (!status) return rec;
+  await Records().updateOne({ _id: rec._id }, { $set: { collectionStatus: status, collectedAt: new Date() } });
+  await shield().addToFund(rec._id, rec.feePaise, rec.workerId, rec.harmScore);
+  return { ...(rec.toObject?.() || rec), collectionStatus: status };
+}
+
+const modelOf = (kind) => require('./kinds').KINDS[kind]?.model();
+
+/** Fees this customer still owes, tidied first: too old → written off; riding on a cancelled job → back to waiting. */
+async function pendingFor(userId) {
+  const R = Records();
+  const cutoff = new Date(Date.now() - FEE_WRITE_OFF_DAYS * 86400000);
+  await R.updateMany({ userId, collectionStatus: 'pending_next_order', createdAt: { $lt: cutoff } }, { $set: { collectionStatus: 'written_off' } });
+  const riding = await R.find({ userId, collectionStatus: 'on_next_booking' }).select('carriedOnJobId').lean();
+  for (const r of riding) {
+    const found = r.carriedOnJobId ? await require('./kinds').findJob(r.carriedOnJobId, 'status') : null;
+    if (!found || DEAD.includes(found.doc.status)) {
+      await R.updateOne({ _id: r._id, collectionStatus: 'on_next_booking' }, { $set: { collectionStatus: 'pending_next_order', carriedOnJobId: null } });
+    }
+  }
+  // Fees from the retired order flow stay with it.
+  const records = await R.find({ userId, collectionStatus: 'pending_next_order', kind: { $ne: 'order' } }).sort({ createdAt: 1 }).lean();
+  return { totalPaise: records.reduce((t, r) => t + r.feePaise, 0), records };
+}
+
+/** Put what the customer still owes on a booking they just made. Each fee rides on one booking only. */
+async function attachCarried(kind, jobId, userId) {
+  try {
+    const { records } = await pendingFor(userId);
+    const claimed = [];
+    for (const r of records) {
+      const ok = await Records().updateOne(
+        { _id: r._id, collectionStatus: 'pending_next_order' },
+        { $set: { collectionStatus: 'on_next_booking', carriedOnJobId: jobId } },
+      );
+      if (ok.modifiedCount) claimed.push(r);
+    }
+    if (!claimed.length) return null;
+    const carried = { paise: claimed.reduce((t, r) => t + r.feePaise, 0), recordIds: claimed.map((r) => r._id), from: claimed[0].createdAt, settledAt: null };
+    await modelOf(kind).updateOne({ _id: jobId }, { $set: { carriedFee: carried } });
+    return carried;
+  } catch (e) {
+    require('../../core/logger').warn({ err: e.message, jobId: String(jobId) }, '[cancel-fee] could not carry fees onto booking');
+    return null;
+  }
+}
+
+/** The earlier fee riding on this booking, in paise. */
+const carriedPaise = (doc) => (doc?.carriedFee?.paise > 0 ? doc.carriedFee.paise : 0);
+
+/**
+ * The booking carrying a fee was settled: the fee was paid with it. On a cash
+ * job the provider holds it, so it comes off their wallet like commission; it
+ * then goes into the shield fund. Idempotent per booking.
+ */
+async function settleCarried(kind, bookingId) {
+  const Model = modelOf(kind);
+  if (!Model) return null;
+  const doc = await Model.findOneAndUpdate(
+    { _id: bookingId, 'carriedFee.paise': { $gt: 0 }, 'carriedFee.settledAt': null },
+    { $set: { 'carriedFee.settledAt': new Date() } },
+    { new: true },
+  ).lean();
+  if (!doc) return null;
+  const paise = doc.carriedFee.paise;
+  if (doc.paymentMethod === 'cash' && doc.workerId && !doc.shopId) {
+    const Transaction = require('../payment/transaction.model');
+    await require('../wallet/wallet.service').apply({
+      kind: 'worker', id: doc.workerId, type: 'debit', amountPaise: paise, allowDebt: true,
+      reason: Transaction.REASONS.CANCELLATION_FEE, idempotencyKey: `cancelfee:carried:${kind}:${doc._id}`,
+      description: `A customer's earlier cancellation fee, collected by you in cash on ${doc.reference || 'a job'}`,
+    }).catch((e) => require('../../core/logger').error({ err: e.message }, '[cancel-fee] carried fee not taken from wallet'));
+    require('../worker/worker-dues.service').notifyIfCrossed(doc.workerId);
+  }
+  if (doc.paymentMethod === 'cash' && doc.shopId) {
+    // Shops have no wallet rail yet: booked as owed by the shop, like their commission.
+    const Transaction = require('../payment/transaction.model');
+    await Transaction.create({
+      type: 'debit', owner: { kind: 'platform', id: null }, amountPaise: -paise,
+      reason: Transaction.REASONS.CANCELLATION_FEE, idempotencyKey: `cancelfee:carried_shop:${kind}:${doc._id}`,
+      description: `Earlier cancellation fee collected in cash by the shop on ${doc.reference || 'a job'}`,
+      metadata: { shopId: String(doc.shopId), bookingId: String(doc._id), cash: true }, status: 'succeeded',
+    }).catch((e) => { if (e.code !== 11000) throw e; });
+  }
+  for (const id of doc.carriedFee.recordIds || []) {
+    const rec = await Records().findOneAndUpdate(
+      { _id: id, collectionStatus: 'on_next_booking' },
+      { $set: { collectionStatus: 'collected_next_order', collectedAt: new Date() } },
+      { new: true },
+    ).lean();
+    if (rec) await shield().addToFund(rec._id, rec.feePaise, rec.workerId, rec.harmScore);
+  }
+  return paise;
+}
+
+module.exports = {
+  feeFor, messageFor, quoteHelping, cancelHelping, cancelForNoShow, record, HELPING_STAGE, HELPING_SELF_CANCELLABLE,
+  collectNow, pendingFor, attachCarried, carriedPaise, settleCarried, FEE_WRITE_OFF_DAYS,
+};
+

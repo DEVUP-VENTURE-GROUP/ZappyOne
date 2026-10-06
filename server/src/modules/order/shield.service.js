@@ -523,7 +523,7 @@ async function runWeeklyPayout({ triggeredBy = 'cron', triggeredById = null } = 
           type:     'shield_payout',
           title:    `₹${Math.round(amount / 100)} Shield payout received 💪`,
           body:     `${entry.cancellationsCount} cancellation${entry.cancellationsCount > 1 ? 's' : ''} this week. Keep going!`,
-          deepLink: '/worker/shield-payouts',
+          deepLink: '/worker/earnings',
           data:     { weekId: String(week._id), amountPaise: amount },
         }).catch(() => {});
 
@@ -605,6 +605,8 @@ module.exports = {
   getSummary,
   getWeekBounds,
   getOrCreateCurrentWeek,
+  // Every job kind's collected cancellation fees join the same fund (jobs/cancel-fee).
+  addToFund,
   getConfig,
   updateConfig,
   // Kept for places that need static defaults (e.g. display fallbacks)

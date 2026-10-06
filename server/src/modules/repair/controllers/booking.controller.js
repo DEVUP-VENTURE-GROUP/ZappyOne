@@ -27,6 +27,8 @@ async function createBooking(req, res, next) {
       idempotencyKey: req.get('Idempotency-Key') || req.body.idempotencyKey || null,
     });
     const saved = await require('../../jobs/on-site').saveOnSite(require('../models/booking.model').RepairBooking, booking._id, onSite, replayed);
+    // An earlier unpaid cancellation fee rides on this booking (jobs/cancel-fee).
+    if (!replayed) await require('../../jobs/cancel-fee').attachCarried('repair', booking._id, req.auth.sub);
     res.status(replayed ? 200 : 201).json({ booking: saved ? { ...(booking.toObject?.() || booking), onSite: saved } : booking, replayed });
   } catch (err) { next(err); }
 }

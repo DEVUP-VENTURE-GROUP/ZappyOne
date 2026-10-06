@@ -185,6 +185,8 @@ async function assess(booking, { userId, quote = null } = {}) {
     return { ...outcome, feeRecord: null };
   }
 
+  // Paid online: the fee was kept out of the refund. Otherwise the wallet, or the next booking.
+  feeRecord = await require('../../jobs/cancel-fee').collectNow(feeRecord, { keptFromRefund: outcome.feePaise > 0 && outcome.paidPaise >= outcome.feePaise + (outcome.earnedPaise || 0) });
   return { ...outcome, feeRecord };
 }
 

@@ -184,6 +184,8 @@ const repairBookingSchema = new mongoose.Schema(
     brandCode: { type: String, required: true, lowercase: true, index: true },
     /** Booking for someone else: who the provider meets (jobs/on-site.js). */
     onSite: { type: new mongoose.Schema(require('../../jobs/on-site').onSiteField, { _id: false }), default: undefined },
+    /** An earlier cancellation fee paid with this booking (jobs/cancel-fee). */
+    carriedFee: { type: require('../../jobs/carried-fee.field'), default: undefined },
     modelCode: { type: String, required: true, lowercase: true, index: true },
     modelId: { type: mongoose.Schema.Types.ObjectId, ref: 'DeviceModel', default: null },
     variantLabel: { type: String, default: '' },

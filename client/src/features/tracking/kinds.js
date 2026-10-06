@@ -96,6 +96,12 @@ function deviceName(brand = '', model = '') {
  * components do not explain is shown as its own line, never silently dropped.
  * A negative amount is a deduction (discount, inspection already paid).
  */
+/** An earlier cancellation fee riding on this booking: its own line, and part of what is paid now. */
+const CARRIED = 'Cancellation fee from an earlier booking';
+const carried = (doc) => (doc?.carriedFee?.paise > 0 ? doc.carriedFee.paise : 0);
+const withCarried = (lines, doc) => (carried(doc) ? [...lines, [CARRIED, carried(doc)]] : lines);
+const plusCarried = (total, doc) => (total == null ? null : total + carried(doc));
+
 function repairLines(s = {}, quote = null) {
   const lines = quote?.items?.length
     ? quote.items.map((i) => [`${i.label}${(i.quantity || 1) > 1 ? ` × ${i.quantity}` : ''}`, i.amountPaise || (i.unitPricePaise || 0) * (i.quantity || 1)])
@@ -142,8 +148,8 @@ export const KINDS = {
         scheduledAt: b.scheduledAt, createdAt: b.createdAt,
         history: historyOf(b, repairStage),
         price: {
-          lines: repairLines(s, (data.quotes || []).filter((q) => q.status === 'approved').sort((x, y) => new Date(y.createdAt) - new Date(x.createdAt))[0]),
-          totalPaise: s.totalPaise ?? null, method: method(b.paymentMethod), paid: b.paymentStatus === 'paid',
+          lines: withCarried(repairLines(s, (data.quotes || []).filter((q) => q.status === 'approved').sort((x, y) => new Date(y.createdAt) - new Date(x.createdAt))[0]), b),
+          totalPaise: plusCarried(s.totalPaise ?? null, b), method: method(b.paymentMethod), paid: b.paymentStatus === 'paid',
           isEstimate: !!s.isEstimate,
           note: s.isEstimate ? 'This is an estimate. The final price is confirmed by a quote you approve.' : (s.warrantyDays > 0 ? `${s.warrantyDays}-day warranty` : ''),
         },
@@ -170,8 +176,8 @@ export const KINDS = {
         scheduledAt: b.scheduledAt || b.checkInAt, createdAt: b.createdAt,
         history: historyOf(b, petStage),
         price: {
-          lines: [['Services', p.servicesPaise], ['Add-ons', p.addonsPaise], ['Travel', p.travelPaise], ['Platform fee', p.platformFeePaise], ['Taxes', p.taxPaise]],
-          totalPaise: p.totalPaise ?? null, method: method(b.paymentMethod), paid: b.paymentStatus === 'paid',
+          lines: withCarried([['Services', p.servicesPaise], ['Add-ons', p.addonsPaise], ['Travel', p.travelPaise], ['Platform fee', p.platformFeePaise], ['Taxes', p.taxPaise]], b),
+          totalPaise: plusCarried(p.totalPaise ?? null, b), method: method(b.paymentMethod), paid: b.paymentStatus === 'paid',
           note: p.stayDiscountPaise > 0 ? `Includes a stay discount of ₹${Math.round(p.stayDiscountPaise / 100)}` : '',
         },
         proofs: (b.proofs || []).map((x) => x.url).filter(Boolean),
@@ -199,8 +205,8 @@ export const KINDS = {
         history: historyOf(t, helpingStage),
         // The service fee only; item money is the customer's own and shown on its own card.
         price: {
-          lines: [['Service', c.baseFeePaise], ['Distance', c.distanceFeePaise], ['Waiting', c.waitingFeePaise], ['Extra stops', c.multiStopFeePaise], ['Platform fee', c.platformFeePaise], ['Taxes', c.taxPaise]],
-          totalPaise: data.authorisation?.serviceChargePaise ?? c.serviceChargePaise ?? null,
+          lines: withCarried([['Service', c.baseFeePaise], ['Distance', c.distanceFeePaise], ['Waiting', c.waitingFeePaise], ['Extra stops', c.multiStopFeePaise], ['Platform fee', c.platformFeePaise], ['Taxes', c.taxPaise]], t),
+          totalPaise: plusCarried(data.authorisation?.serviceChargePaise ?? c.serviceChargePaise ?? null, t),
           method: method(t.paymentMethod), paid: t.paymentStatus === 'paid',
           note: data.authorisation?.note || '',
         },

@@ -27,8 +27,11 @@ async function finishedJobs(match, since) {
       ...match, status: { $in: k.earning.done }, [k.earning.at]: { $gte: since },
     }).select(k.earning.fields).lean();
     for (const r of rows) {
+      const paise = k.earning.share(r);
+      const gross = k.earning.gross ? k.earning.gross(r) : paise;
       finished.push({
-        kind: k.kind, paise: k.earning.share(r), platformPaise: k.earning.platform ? k.earning.platform(r) : 0,
+        kind: k.kind, id: String(r._id), reference: r.reference || null, label: k.earning.label ? k.earning.label(r) : k.label,
+        paise, gross, platformPaise: k.earning.platform ? k.earning.platform(r) : Math.max(0, gross - paise),
         cash: r.paymentMethod === 'cash', at: dotted(r, k.earning.at),
       });
     }

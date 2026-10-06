@@ -74,7 +74,9 @@ const KINDS = {
     earning: {
       done: ['COMPLETED'],
       at: 'completedAt',
-      fields: 'priceSnapshot paymentMethod completedAt',
+      fields: 'priceSnapshot paymentMethod completedAt reference vertical',
+      gross: (b) => require('../repair/services/settlement.service').splitFor(b).totalPaise,
+      label: (b) => `${(b.vertical || 'repair').replace(/_/g, ' ')} repair`,
       share: (b) => require('../repair/services/settlement.service').splitFor(b).providerPaise,
       platform: (b) => require('../repair/services/settlement.service').splitFor(b).platformPaise,
     },
@@ -132,7 +134,9 @@ const KINDS = {
     earning: {
       done: ['SERVICE_COMPLETED', 'CUSTOMER_CONFIRMATION', 'PAYMENT_PENDING', 'PAYMENT_COMPLETED', 'CLOSED'],
       at: 'execution.completedAt',
-      fields: 'pricing.providerAmountPaise paymentMethod execution.completedAt',
+      fields: 'pricing.providerAmountPaise pricing.totalPaise paymentMethod execution.completedAt reference categoryCode',
+      gross: (b) => b.pricing?.totalPaise || 0,
+      label: (b) => (b.categoryCode || 'pet care').replace(/_/g, ' '),
       share: (b) => b.pricing?.providerAmountPaise || 0,
     },
     copy: {
@@ -205,7 +209,9 @@ const KINDS = {
     earning: {
       done: ['COMPLETED', 'CUSTOMER_CONFIRMED', 'SETTLED'],
       at: 'completedAt',
-      fields: 'charge.workerEarningPaise paymentMethod completedAt',
+      fields: 'charge.workerEarningPaise charge.serviceChargePaise paymentMethod completedAt reference serviceType',
+      gross: (t) => t.charge?.serviceChargePaise || 0,
+      label: (t) => `${t.serviceType || 'helping'} task`,
       share: (t) => t.charge?.workerEarningPaise || 0,
     },
     copy: {

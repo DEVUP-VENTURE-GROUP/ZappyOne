@@ -31,19 +31,27 @@ function CustomerFees() {
   const { data, isLoading } = useAdminShieldFeeScheduleQuery();
   const [save, { isLoading: saving }] = useAdminShieldUpdateFeeScheduleMutation();
   const [grid, setGrid] = useState(null);
+  const [share, setShare] = useState('');
 
   useEffect(() => {
     if (data?.feeSchedule) setGrid(Object.fromEntries(STAGES.map(([s]) => [s, (data.feeSchedule[s] || [0, 0, 0]).map(toRupees)])));
+    if (data?.defaultSplit) setShare(String(data.defaultSplit.workerPct));
   }, [data]);
 
   if (isLoading || !grid) return <PageLoader />;
   const paise = Object.fromEntries(STAGES.map(([s]) => [s, grid[s].map(toPaise)]));
-  const valid = STAGES.every(([s]) => paise[s].every((p) => Number.isFinite(p) && p >= 0 && p <= 100000));
-  const dirty = STAGES.some(([s]) => paise[s].some((p, i) => p !== (data.feeSchedule[s] || [])[i]));
+  const shareNum = share === '' ? NaN : Number(share);
+  const valid = STAGES.every(([s]) => paise[s].every((p) => Number.isFinite(p) && p >= 0 && p <= 100000))
+    && Number.isInteger(shareNum) && shareNum >= 50 && shareNum <= 100;
+  const dirty = STAGES.some(([s]) => paise[s].some((p, i) => p !== (data.feeSchedule[s] || [])[i]))
+    || shareNum !== data.defaultSplit?.workerPct;
 
   async function submit() {
     try {
-      await save({ feeSchedule: { created: data.feeSchedule.created || [0, 0, 0], ...paise } }).unwrap();
+      await save({
+        feeSchedule: { created: data.feeSchedule.created || [0, 0, 0], ...paise },
+        splitWorkerPct: shareNum, splitPlatformPct: 100 - shareNum,
+      }).unwrap();
       toast.success('Customer cancellation fees saved');
     } catch (err) { toast.error(err?.data?.error || 'Could not save. Try again.'); }
   }
@@ -84,7 +92,11 @@ function CustomerFees() {
           </tbody>
         </table>
       </div>
-      {!valid && <p className="px-4 pb-3 text-[12px] text-red-600">Each fee is ₹0 to ₹1,000.</p>}
+      <Setting title="Providers' share of the Shield fund"
+        hint="Every fee collected goes into the week's fund. Each Monday this share is paid to the providers whose trips were cancelled, by how far they had got; ZappyOne keeps the rest.">
+        <UnitInput value={share} onChange={setShare} unit="%" min={50} max={100} label="Providers' share" />
+      </Setting>
+      {!valid && <p className="px-4 pb-3 text-[12px] text-red-600">Each fee is ₹0 to ₹1,000; the providers' share is 50 to 100%.</p>}
     </Card>
   );
 }
@@ -117,8 +129,6 @@ export const numField = (key, lo, hi, scale = 1) => ({
 
 const PROVIDER_FIELDS = [
   numField('freeCancelWindowSec', 0, 60, 60),
-  numField('workerShareOnWayPct', 0, 100),
-  numField('workerShareArrivedPct', 0, 100),
   rupeeField('workerCancelPenaltyPaise', 100000),
   { ...numField('lateWorkerCancelMultiplier', 1, 10), toValue: (v) => (v === '' ? NaN : Number(v)) },
   numField('workerCancelLimit', 1, 20),
@@ -134,18 +144,12 @@ function ProviderRules() {
       <div className="flex items-start justify-between gap-3 px-4 py-3">
         <div>
           <h3 className="text-sm font-bold text-slate-800">Timing and provider rules</h3>
-          <p className="mt-0.5 text-[12px] text-slate-500">When cancelling turns paid, what the provider gets from a fee, and what backing out of an accepted job costs them.</p>
+          <p className="mt-0.5 text-[12px] text-slate-500">When cancelling turns paid, and what backing out of an accepted job costs a provider.</p>
         </div>
         <SaveButton busy={f.saving} disabled={!f.dirty || !f.valid} onClick={() => f.submit('Cancellation rules saved')} />
       </div>
       <Setting title="Free minutes after a provider accepts" hint="A customer who cancels within this time pays nothing.">
         <UnitInput value={f.form.freeCancelWindowSec} onChange={f.set('freeCancelWindowSec')} unit="min" max={60} label="Free minutes" />
-      </Setting>
-      <Setting title="Provider's share of a fee: on the way" hint="Of a customer's fee once the provider had set off.">
-        <UnitInput value={f.form.workerShareOnWayPct} onChange={f.set('workerShareOnWayPct')} unit="%" max={100} label="Share on the way" />
-      </Setting>
-      <Setting title="Provider's share of a fee: at the door" hint="Also what a provider gets when the customer was not there.">
-        <UnitInput value={f.form.workerShareArrivedPct} onChange={f.set('workerShareArrivedPct')} unit="%" max={100} label="Share at the door" />
       </Setting>
       <Setting title="Handing back an accepted job" hint="Charged from the second hand-back in the period; the first is a warning. Genuine reasons are free.">
         <RupeeInput value={f.form.workerCancelPenaltyPaise} onChange={f.set('workerCancelPenaltyPaise')} label="Hand-back penalty" />
@@ -162,7 +166,7 @@ function ProviderRules() {
       <Setting title="Provider did not turn up" hint="Charged when a customer reports the provider never came.">
         <RupeeInput value={f.form.workerNoShowPenaltyPaise} onChange={f.set('workerNoShowPenaltyPaise')} label="No-show penalty" />
       </Setting>
-      {!f.valid && <p className="px-4 pb-3 text-[12px] text-red-600">Check the boxes: amounts ₹0 to ₹1,000, shares 0 to 100%.</p>}
+      {!f.valid && <p className="px-4 pb-3 text-[12px] text-red-600">Check the boxes: amounts ₹0 to ₹1,000.</p>}
     </Card>
   );
 }

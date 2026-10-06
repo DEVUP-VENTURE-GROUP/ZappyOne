@@ -25,7 +25,8 @@ const ITEM_FINAL = new Set(['purchased', 'not_found', 'out_of_stock', 'rejected'
 const shoppingDone = (task) => (task.items || []).every((i) => ITEM_FINAL.has(i.status));
 
 function feeDuePaise(task) {
-  return task.paymentStatus === 'paid' ? 0 : (task.charge?.serviceChargePaise || 0);
+  // An earlier cancellation fee riding on the task is paid with the service fee (jobs/cancel-fee).
+  return task.paymentStatus === 'paid' ? 0 : (task.charge?.serviceChargePaise || 0) + require('../../jobs/cancel-fee').carriedPaise(task);
 }
 
 /** Item money still owed by the customer, or null while the shopping is unfinished. */

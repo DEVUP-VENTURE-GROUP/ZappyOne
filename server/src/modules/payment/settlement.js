@@ -101,7 +101,15 @@ async function settleCash({ source, bookingId, reference, isShop, ownerId, total
  * @param {number} p.platformPaise   the platform's cut, frozen at booking time
  * @param {object} [p.refs]          wallet refs, e.g. { orderId }
  */
-async function settleProviderShare({ source, booking, reference, paymentMethod, totalPaise, platformPaise, refs = {} }) {
+async function settleProviderShare(args) {
+  const result = await settleShare(args);
+  // An earlier cancellation fee paid with this booking goes to the shield fund (jobs/cancel-fee).
+  await require('../jobs/cancel-fee').settleCarried(args.source, args.booking._id)
+    .catch((err) => logger.error({ err: err.message, bookingId: String(args.booking._id) }, '[settlement] carried cancellation fee not settled'));
+  return result;
+}
+
+async function settleShare({ source, booking, reference, paymentMethod, totalPaise, platformPaise, refs = {} }) {
   if (!totalPaise || totalPaise <= 0) return { settled: false, reason: 'zero_value', totalPaise: totalPaise || 0 };
 
   // Shop-employed workers are paid by their shop; the shop is the counterparty.

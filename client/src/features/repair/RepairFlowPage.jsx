@@ -23,6 +23,7 @@ import toast from 'react-hot-toast';
 import GrowingHere from '../catalog/serviceability/GrowingHere';
 import { PayMethodPicker } from '@shared/components/common/PayMethodPicker';
 import SomeoneElse from '@shared/components/booking/SomeoneElse';
+import PendingFeeNotice from '@shared/components/booking/PendingFeeNotice';
 import BrandLogo from '@shared/components/common/BrandLogo';
 import { categoryPhoto } from '@shared/components/home/problemArt';
 import { ProblemLayout } from './ProblemCard';
@@ -1520,6 +1521,7 @@ function ConfirmStep({
 
       {/* How this gets paid, said plainly before the button. Online appears only when the server can take it. */}
       <SomeoneElse onChange={setOnSite} />
+      <PendingFeeNotice />
       <PayMethodPicker
         value={paymentMethod}
         onChange={setPaymentMethod}

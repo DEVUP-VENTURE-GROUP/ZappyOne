@@ -347,6 +347,8 @@ const helpingTaskSchema = new mongoose.Schema(
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     /** Booking for someone else: who the provider meets (jobs/on-site.js). */
     onSite: { type: new mongoose.Schema(require('../../jobs/on-site').onSiteField, { _id: false }), default: undefined },
+    /** An earlier cancellation fee paid with this booking (jobs/cancel-fee). */
+    carriedFee: { type: require('../../jobs/carried-fee.field'), default: undefined },
     workerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Worker', default: null, index: true },
     /** Helpers who handed this task back (jobs/give-back): it is not offered to them again. */
     releasedBy: { type: [mongoose.Schema.Types.ObjectId], default: [] },

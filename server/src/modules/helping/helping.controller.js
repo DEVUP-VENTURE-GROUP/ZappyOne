@@ -101,6 +101,7 @@ async function createTask(req, res, next) {
       idempotencyKey: req.get('Idempotency-Key') || req.body.idempotencyKey || null,
     });
     const saved = await require('../jobs/on-site').saveOnSite(require('./models/task.model').HelpingTask, task._id, onSite, replayed);
+    if (!replayed) await require('../jobs/cancel-fee').attachCarried('helping', task._id, req.auth.sub);
     res.status(replayed ? 200 : 201).json({ task: saved ? { ...(task.toObject?.() || task), onSite: saved } : task, replayed });
   } catch (err) { next(err); }
 }

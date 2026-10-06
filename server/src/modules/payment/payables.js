@@ -24,7 +24,8 @@ const PAYABLES = {
       if (b.priceSnapshot?.isEstimate && b.status !== 'APPROVED') {
         throw fail('This repair is priced after diagnosis — approve the quote before paying.', 409, 'QUOTE_APPROVAL_REQUIRED');
       }
-      return { amountPaise: b.priceSnapshot?.totalPaise || 0 };
+      // An earlier cancellation fee riding on the booking is paid with it (jobs/cancel-fee).
+      return { amountPaise: (b.priceSnapshot?.totalPaise || 0) + require('../jobs/cancel-fee').carriedPaise(b) };
     },
     markPaid(b, intent) { b.paymentStatus = 'paid'; b.paymentId = intent._id; },
     commission: (b) => b.priceSnapshot?.commissionPaise || 0,
@@ -36,7 +37,7 @@ const PAYABLES = {
       if (['PRICE_PENDING', 'AWAITING_CUSTOMER_APPROVAL'].includes(b.status)) {
         throw fail('Approve the final price before paying.', 409, 'PRICE_NOT_APPROVED');
       }
-      return { amountPaise: b.pricing?.totalPaise || 0 };
+      return { amountPaise: (b.pricing?.totalPaise || 0) + require('../jobs/cancel-fee').carriedPaise(b) };
     },
     markPaid(b, intent) { b.paymentStatus = 'paid'; b.paymentId = String(intent._id); },
     commission: (b) => b.pricing?.commissionPaise || 0,

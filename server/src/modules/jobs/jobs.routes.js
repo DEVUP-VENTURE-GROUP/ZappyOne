@@ -10,6 +10,17 @@ const { makeLimiter } = require('../../middlewares/rateLimit');
 const router = express.Router();
 
 /**
+ * Cancellation fees the customer still owes from earlier bookings: shown before
+ * they confirm the next one, which carries them (jobs/cancel-fee).
+ */
+router.get('/pending-fee', authenticate, requireRole('user'), async (req, res, next) => {
+  try {
+    const { totalPaise, records } = await require('./cancel-fee').pendingFor(req.auth.sub);
+    res.json({ totalPaise, count: records.length, since: records[0]?.createdAt || null });
+  } catch (err) { next(err); }
+});
+
+/**
  * SOS from the customer's tracking screen. The app has already dialled 112;
  * this tells ZappyOne through the one customer-SOS path (worker/sos.service):
  * the admin SOS panel and ops room hear it with who is on site, an urgent

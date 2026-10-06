@@ -16,6 +16,7 @@ import {
 import { formatPaise } from '@shared/utils/money';
 import { PayMethodPicker } from '@shared/components/common/PayMethodPicker';
 import SomeoneElse from '@shared/components/booking/SomeoneElse';
+import PendingFeeNotice from '@shared/components/booking/PendingFeeNotice';
 import { usePayBooking } from '@shared/hooks/usePayBooking';
 
 /**
@@ -436,6 +437,7 @@ function PetBookingFlow({ categoryCode, saved, draftKey, onStartOver }) {
             </div>
           )}
           <SomeoneElse onChange={setOnSite} />
+          <PendingFeeNotice />
           <PayMethodPicker value={paymentMethod} onChange={setPaymentMethod} />
           <button type="button" onClick={book} disabled={booking || paying}
             className="w-full rounded-2xl bg-[#0F172A] text-white font-bold py-4 disabled:opacity-50">

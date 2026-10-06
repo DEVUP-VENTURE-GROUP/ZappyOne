@@ -2,7 +2,6 @@ const Worker = require('../worker.model');
 const { haversineKm } = require('../../../core/geo/distance');
 const zoneService = require('../../zone/zone.service');
 const pricingService = require('../../pricing/pricing.service');
-const { ServiceLine } = require('../../onboarding/onboarding.model');
 
 /** Where the work is and how the worker is doing: demand zones, local reputation, leaderboard, benchmarks, per-job earnings, goals. */
 
@@ -246,87 +245,63 @@ async function getZoneBenchmark(req, res, next) {
 
 /* Per-Job Earnings Breakdown */
 
-/** Service names come from the catalog; an unknown code is shown tidied up. */
-function toLabel(slug, names) {
-  return names.get(slug) || (slug || 'Service').replace(/_/g, ' ').replace(/w/g, (c) => c.toUpperCase());
-}
 
+/**
+ * The worker's earnings, job by job, for every kind of job (jobs/earnings),
+ * plus what the Worker Shield Fund paid them for trips customers cancelled.
+ * Same shape the Earnings page has always read.
+ */
 async function getJobEarnings(req, res, next) {
   try {
-    const Order = require('../../order/order.model');
+    const { finishedJobs } = require('../../jobs/earnings');
+    const Transaction = require('../../payment/transaction.model');
     const page = Number(req.query.page) || 1;
     const limit = 25;
-    const { period } = req.query; // week | month | 3months
+    const days = { week: 7, month: 30, '3months': 91 }[req.query.period];
+    const since = days ? new Date(Date.now() - days * 86400000) : new Date(0);
 
-    const now = new Date();
-    let since = null;
-    if (period === 'week') { since = new Date(now); since.setDate(now.getDate() - 7); }
-    else if (period === 'month') { since = new Date(now); since.setMonth(now.getMonth() - 1); }
-    else if (period === '3months') { since = new Date(now); since.setMonth(now.getMonth() - 3); }
-
-    const matchQuery = { workerId: req.auth.sub, status: 'completed' };
-    if (since) matchQuery.completedAt = { $gte: since };
-
-    const [orders, total, agg] = await Promise.all([
-      Order.find(matchQuery)
-        .sort({ completedAt: -1 })
-        .skip((page - 1) * limit)
-        .limit(limit)
-        .select('service pricing earnings completedAt orderId surgeMultiplier tip')
-        .lean(),
-      Order.countDocuments(matchQuery),
-      Order.aggregate([
-        { $match: matchQuery },
-        { $group: {
-          _id: null,
-          totalNet: { $sum: '$earnings.workerPaise' },
-          totalTips: { $sum: '$tip' },
-          totalBonus: { $sum: '$earnings.bonusPaise' },
-          count: { $sum: 1 },
-          surgeCount: { $sum: { $cond: [{ $gt: ['$surgeMultiplier', 1] }, 1, 0] } },
-        }},
-      ]),
+    const [jobs, shield] = await Promise.all([
+      finishedJobs({ workerId: req.auth.sub }, since),
+      Transaction.find({
+        'owner.kind': 'worker', 'owner.id': req.auth.sub, status: 'succeeded',
+        reason: Transaction.REASONS.SHIELD_PAYOUT, createdAt: { $gte: since },
+      }).select('amountPaise createdAt').lean(),
     ]);
 
-    const lines = await ServiceLine.find({ code: { $in: [...new Set(orders.map((o) => o.service).filter(Boolean))] } })
-      .select('code name').lean();
-    const names = new Map(lines.map((l) => [l.code, l.name]));
+    const rows = [
+      ...jobs.map((j) => ({
+        _id: j.id,
+        orderId: j.reference || j.id.slice(-8).toUpperCase(),
+        service: j.kind,
+        serviceLabel: j.label.charAt(0).toUpperCase() + j.label.slice(1),
+        completedAt: j.at,
+        gross: j.gross,
+        platformFee: j.platformPaise,
+        net: j.paise,
+        bonus: 0,
+        tip: 0,
+        surgeMultiplier: 1,
+        cash: j.cash,
+        commissionPct: j.gross > 0 ? Math.round((j.platformPaise / j.gross) * 100) : 0,
+      })),
+      ...shield.map((t) => ({
+        _id: String(t._id), orderId: 'SHIELD', service: 'shield', serviceLabel: 'Cancellation pay (Shield fund)',
+        completedAt: t.createdAt, gross: t.amountPaise, platformFee: 0, net: t.amountPaise, bonus: t.amountPaise,
+        tip: 0, surgeMultiplier: 1, commissionPct: 0,
+      })),
+    ].sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt));
 
-    const jobs = orders.map(o => {
-      const grossPaise = o.pricing?.totalPaise ?? (o.pricing?.total || 0) * 100;
-      // Before settlement the split is the commission locked on the order, never a guess.
-      const rate = o.earnings?.commissionRate ?? o.pricing?.snapshotCommissionRate ?? 0;
-      const platformPaise = o.earnings?.platformPaise ?? Math.round(grossPaise * rate);
-      const workerPaise = o.earnings?.workerPaise ?? grossPaise - platformPaise;
-      const bonusPaise = o.earnings?.bonusPaise || 0;
-      const tipPaise = o.tip || 0;
-      return {
-        _id: o._id,
-        orderId: o.orderId || String(o._id).slice(-8).toUpperCase(),
-        service: o.service,
-        serviceLabel: toLabel(o.service, names),
-        completedAt: o.completedAt,
-        gross: grossPaise,
-        platformFee: platformPaise,
-        net: workerPaise + bonusPaise + tipPaise,
-        bonus: bonusPaise,
-        tip: tipPaise,
-        surgeMultiplier: o.surgeMultiplier || 1,
-        commissionPct: grossPaise > 0 ? Math.round((platformPaise / grossPaise) * 100) : Math.round(rate * 100),
-      };
-    });
-
-    const s = agg[0] || {};
     res.json({
-      jobs,
-      total,
+      jobs: rows.slice((page - 1) * limit, page * limit),
+      total: rows.length,
       page,
-      totalPages: Math.ceil(total / limit),
+      totalPages: Math.ceil(rows.length / limit),
       summary: {
-        totalNet: (s.totalNet || 0) + (s.totalTips || 0) + (s.totalBonus || 0),
-        totalTips: s.totalTips || 0,
-        count: s.count || 0,
-        surgeCount: s.surgeCount || 0,
+        totalNet: rows.reduce((t, r) => t + r.net, 0),
+        totalTips: 0,
+        shieldPaise: shield.reduce((t, r) => t + r.amountPaise, 0),
+        count: jobs.length,
+        surgeCount: 0,
       },
     });
   } catch (err) { next(err); }

@@ -18,7 +18,7 @@ const mongoose = require('mongoose');
  */
 const cancellationFeeRecordSchema = new mongoose.Schema(
   {
-    kind: { type: String, enum: ['order', 'repair', 'helping'], default: 'order', index: true },
+    kind: { type: String, enum: ['order', 'repair', 'helping', 'pet'], default: 'order', index: true },
     /** The job, for kinds after repair (jobs/cancel-fee): one record per job. */
     jobId: { type: mongoose.Schema.Types.ObjectId, default: undefined },
 
@@ -70,12 +70,15 @@ const cancellationFeeRecordSchema = new mongoose.Schema(
 
     collectionStatus: {
       type: String,
-      enum: ['grace', 'zero_fee', 'collected_wallet', 'pending_next_order', 'collected_next_order', 'written_off'],
+      // collected_refund: kept out of an online refund · on_next_booking: riding on the job in carriedOnJobId
+      enum: ['grace', 'zero_fee', 'collected_wallet', 'collected_refund', 'pending_next_order', 'on_next_booking', 'collected_next_order', 'written_off'],
       default: 'pending_next_order',
       index: true,
     },
     collectedAt:         { type: Date, default: null },
     collectedFromOrderId: { type: mongoose.Schema.Types.ObjectId, ref: 'Order', default: null },
+    /** The later booking (any kind) this fee is being paid with (jobs/cancel-fee). */
+    carriedOnJobId: { type: mongoose.Schema.Types.ObjectId, default: null, index: true },
 
     // Which weekly fund pool this fee was added to
     addedToFundWeekId: { type: mongoose.Schema.Types.ObjectId, ref: 'ShieldFundWeek', default: null, index: true },

@@ -345,6 +345,7 @@ async function cancelBooking({ bookingId, actorId, by = 'customer', reason = '',
   const quote = await quoteCancellation({ booking, by, noShow });
   if (!quote.allowed) throw httpError(quote.reason, 409, 'NOT_CANCELLABLE');
 
+  const from = booking.status;
   booking.cancelledBy = by;
   booking.cancellationReason = reason;
   booking.penaltyPaise = quote.penaltyPaise;
@@ -352,6 +353,19 @@ async function cancelBooking({ bookingId, actorId, by = 'customer', reason = '',
   booking.refundPaise = quote.refundPaise;
   booking.transitionTo('CANCELLED', { by: actorId, byRole: noShow ? 'worker' : by, note: reason });
   await booking.save();
+
+  // The customer's fee joins every other kind's (jobs/cancel-fee): kept from the
+  // refund, taken from the wallet, or carried to their next booking, then into
+  // the shield fund that pays the provider for the lost trip.
+  if (by === 'customer' && quote.penaltyPaise > 0) {
+    const stage = noShow ? 'arrived' : { PROVIDER_ARRIVED: 'arrived', PROVIDER_EN_ROUTE: 'on_the_way', PROVIDER_ACCEPTED: 'assigned', PET_HANDOVER: 'arrived' }[from] || 'searching';
+    const cfg = await require('../../order/shield.service').getConfig();
+    const paidPaise = booking.paymentStatus === 'paid' ? (booking.pricing?.totalPaise || 0) : 0;
+    await require('../../jobs/cancel-fee').record('pet', booking, {
+      stage, feePaise: quote.penaltyPaise, isGrace: false, harmScore: cfg.harmScores?.[stage] ?? 0, cancelsInPeriod: 0,
+      refundPaise: quote.refundPaise, paidPaise,
+    });
+  }
 
   // Paid online? Send the refund due now; a gateway failure is flagged for ops, never lost.
   if (booking.paymentStatus === 'paid' && quote.refundPaise > 0) {
