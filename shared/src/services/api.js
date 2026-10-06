@@ -130,6 +130,12 @@ export const api = createApi({
     /** Customer: unpaid cancellation fees the next booking will carry. */
     myPendingCancelFee: b.query({ query: () => '/jobs/pending-fee', keepUnusedDataFor: 0 }),
     jobOptions: b.query({ query: ({ id }) => `/jobs/${id}/options`, keepUnusedDataFor: 0 }),
+    /** Customer: boost while searching, tip once done (jobs/boost-tip). */
+    boostJob: b.mutation({ query: ({ id, amountPaise }) => ({ url: `/jobs/${id}/boost`, method: 'POST', body: { amountPaise } }) }),
+    tipJob: b.mutation({ query: ({ id, ...body }) => ({ url: `/jobs/${id}/tip`, method: 'POST', body }), invalidatesTags: ['Wallet'] }),
+    /** Admin: Economics → Boost & tips. */
+    adminBoostTips: b.query({ query: () => adminApiPath('/economics/boost-tips'), providesTags: ['PricingCfg'] }),
+    adminUpdateBoostTips: b.mutation({ query: (body) => ({ url: adminApiPath('/economics/boost-tips'), method: 'PUT', body }), invalidatesTags: ['PricingCfg'] }),
     reportProviderAbsent: b.mutation({ query: (id) => ({ url: `/jobs/${id}/provider-absent`, method: 'POST' }) }),
     /** Provider: may they hand it back, what it costs, and the wait at the door. */
     jobGiveBack: b.query({ query: ({ id, reason = 'other' }) => `/jobs/${id}/give-back?reason=${reason}`, keepUnusedDataFor: 0 }),
@@ -2395,6 +2401,10 @@ export const {
   useJobOptionsQuery,
   useMyPendingCancelFeeQuery,
   useReportProviderAbsentMutation,
+  useBoostJobMutation,
+  useTipJobMutation,
+  useAdminBoostTipsQuery,
+  useAdminUpdateBoostTipsMutation,
   useJobGiveBackQuery,
   useGiveBackJobMutation,
   useReportCustomerAbsentMutation,

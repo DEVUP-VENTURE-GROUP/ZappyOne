@@ -504,7 +504,8 @@ export default function WorkerRepairJobPage() {
 
   // What the customer pays now: the job, plus any earlier cancellation fee riding on it.
   const carriedPaise = booking.carriedFee?.paise > 0 ? booking.carriedFee.paise : 0;
-  const duePaise = (snap.totalPaise || 0) + carriedPaise;
+  const boostPaise = booking.boost?.paise > 0 ? booking.boost.paise : 0; // all yours
+  const duePaise = (snap.totalPaise || 0) + carriedPaise + boostPaise;
 
   // A shop's job can go back to the owner until the technician sets out.
   // Before they accept; once accepted, GiveBackCard hands it back (to the shop, for a shop's technician).

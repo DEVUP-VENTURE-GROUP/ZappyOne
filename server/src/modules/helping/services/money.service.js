@@ -26,7 +26,8 @@ const shoppingDone = (task) => (task.items || []).every((i) => ITEM_FINAL.has(i.
 
 function feeDuePaise(task) {
   // An earlier cancellation fee riding on the task is paid with the service fee (jobs/cancel-fee).
-  return task.paymentStatus === 'paid' ? 0 : (task.charge?.serviceChargePaise || 0) + require('../../jobs/cancel-fee').carriedPaise(task);
+  return task.paymentStatus === 'paid' ? 0 : (task.charge?.serviceChargePaise || 0) + require('../../jobs/cancel-fee').carriedPaise(task)
+    + require('../../jobs/boost-tip').boostPaise(task); // the customer's boost, paid with the fee
 }
 
 /** Item money still owed by the customer, or null while the shopping is unfinished. */

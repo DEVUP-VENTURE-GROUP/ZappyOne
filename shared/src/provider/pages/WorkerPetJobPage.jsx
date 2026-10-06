@@ -198,7 +198,7 @@ export default function WorkerPetJobPage() {
         {['SERVICE_COMPLETED', 'CUSTOMER_CONFIRMATION', 'PAYMENT_PENDING', 'PAYMENT_COMPLETED'].includes(booking.status) && (
           <CollectPaymentCard
             // Plus any earlier cancellation fee the customer pays with this booking.
-            amountPaise={(booking.pricing?.totalPaise || 0) + (booking.carriedFee?.paise > 0 ? booking.carriedFee.paise : 0)}
+            amountPaise={(booking.pricing?.totalPaise || 0) + (booking.carriedFee?.paise > 0 ? booking.carriedFee.paise : 0) + (booking.boost?.paise || 0)}
             paymentMethod={booking.paymentMethod}
             paid={booking.paymentStatus === 'paid'}
             collecting={collecting}

@@ -258,6 +258,31 @@ router.put('/fees/:line/:key',
     } catch (err) { next(err); }
   });
 
+/* Economics → Boost & tips: the first version's settings, edited here */
+
+router.get('/economics/boost-tips', async (req, res, next) => {
+  try { res.json({ settings: await require('../jobs/boost-tip').settings() }); } catch (err) { next(err); }
+});
+
+router.put('/economics/boost-tips',
+  validate(Joi.object({
+    boostEnabled: Joi.boolean(),
+    boostOptions: Joi.array().items(Joi.number().integer().min(1).max(1000)).min(1).max(8),
+    boostMaxPaise: Joi.number().integer().min(0).max(100000),
+    tipOptions: Joi.array().items(Joi.number().integer().min(1).max(1000)).min(1).max(6),
+    tipMaxPaise: Joi.number().integer().min(0).max(100000),
+  }).min(1)),
+  async (req, res, next) => {
+    try {
+      const bt = require('../jobs/boost-tip');
+      const before = await bt.settings();
+      await require('../pricing/services/config.service').updateActiveConfig(req.body, req.auth.sub);
+      const after = await bt.settings();
+      await auditService.fromRequest(req, 'economics.boost_tips', { kind: 'system', id: null }, before, after);
+      res.json({ settings: after });
+    } catch (err) { next(err); }
+  });
+
 /* Worker dues: who owes what from cash jobs, and recording what they paid */
 
 router.get('/dues', async (req, res, next) => {

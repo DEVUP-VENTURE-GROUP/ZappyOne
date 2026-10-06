@@ -196,7 +196,7 @@ export const REDIRECTS = {
   analytics: ['insights', 'today'], business: ['insights', 'money'], heatmap: ['insights', 'map'],
   support: ['helpdesk', 'tickets'], disputes: ['helpdesk', 'disputes'],
   rewardpoints: ['rewards', 'points'],
-  fees: ['economics'], cancellation: ['economics', 'cancellations'], dues: ['economics', 'dues'],
+  fees: ['economics'], cancellation: ['economics', 'cancellations'], dues: ['economics', 'dues'], tips: ['economics', 'boost'],
   payouts: ['money', 'payouts'], wallet: ['money', 'wallets'], shield: ['money', 'shield'],
   intervention: ['liveops', 'stuck'],
   zones: ['areas', 'zones'], cities: ['content', 'cities'],

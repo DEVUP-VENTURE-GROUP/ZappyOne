@@ -20,7 +20,8 @@ const REASONS = {
   REFUND: 'refund',
   WALLET_TOPUP: 'wallet_topup',
   ADMIN_ADJUSTMENT_CREDIT: 'admin_adjustment_credit',
-  DUES_PAYMENT: 'dues_payment',               // a worker paid what they owed ZappyOne
+  DUES_PAYMENT: 'dues_payment',
+  TIP: 'tip',                                 // a customer's thank-you, all of it the provider's               // a worker paid what they owed ZappyOne
 
   // Debits (negative)
   ORDER_PAYMENT: 'order_payment',

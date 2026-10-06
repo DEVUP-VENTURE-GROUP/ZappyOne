@@ -31,7 +31,8 @@ async function finishedJobs(match, since) {
       const gross = k.earning.gross ? k.earning.gross(r) : paise;
       finished.push({
         kind: k.kind, id: String(r._id), reference: r.reference || null, label: k.earning.label ? k.earning.label(r) : k.label,
-        paise, gross, platformPaise: k.earning.platform ? k.earning.platform(r) : Math.max(0, gross - paise),
+        paise, gross, boostPaise: r.boost?.paise || 0, tipPaise: r.tip?.paise || 0, tipMethod: r.tip?.method || null,
+        platformPaise: k.earning.platform ? k.earning.platform(r) : Math.max(0, gross + (r.boost?.paise || 0) - paise),
         cash: r.paymentMethod === 'cash', at: dotted(r, k.earning.at),
       });
     }

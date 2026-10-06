@@ -106,6 +106,9 @@ async function settleProviderShare(args) {
   // An earlier cancellation fee paid with this booking goes to the shield fund (jobs/cancel-fee).
   await require('../jobs/cancel-fee').settleCarried(args.source, args.booking._id)
     .catch((err) => logger.error({ err: err.message, bookingId: String(args.booking._id) }, '[settlement] carried cancellation fee not settled'));
+  // The customer's boost is all the provider's (jobs/boost-tip).
+  await require('../jobs/boost-tip').settleBoost(args.source, args.booking._id)
+    .catch((err) => logger.error({ err: err.message, bookingId: String(args.booking._id) }, '[settlement] boost not paid to provider'));
   return result;
 }
 

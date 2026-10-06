@@ -6,6 +6,7 @@ import { useAdminFeesQuery, useAdminUpdateFeeMutation } from '@shared/services/a
 import { SectionHeader, Card, PageLoader, EmptyState, fmt } from '../../ui/kit';
 import CancellationRules from './economics/CancellationRules';
 import WorkerDues from './economics/WorkerDues';
+import BoostTips from './economics/BoostTips';
 
 /**
  * Economics: every money rule in one place, a tab per kind of rule, so none of
@@ -172,6 +173,7 @@ const TABS = [
   ['fees', 'Fees & commission', 'Platform fee, commission and tax for every service'],
   ['cancellations', 'Cancellations', 'What cancelling costs customers, and what backing out costs providers'],
   ['dues', 'Worker dues', 'What workers may owe from cash jobs, and recording what they pay'],
+  ['boost', 'Boost & tips', 'What customers may add for a faster match, and tip after a job'],
 ];
 
 export default function Economics() {
@@ -194,6 +196,7 @@ export default function Economics() {
       {tab === 'fees' && <FeesTab />}
       {tab === 'cancellations' && <CancellationRules />}
       {tab === 'dues' && <WorkerDues />}
+      {tab === 'boost' && <BoostTips />}
     </div>
   );
 }

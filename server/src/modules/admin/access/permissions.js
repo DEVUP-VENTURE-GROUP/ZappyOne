@@ -79,7 +79,7 @@ const AREA_RULES = [
   [/^\/events(\/|$)/, 'events'],
   [/^\/(promos|cashback|referrals|rewards-config|plans|notifications|ads|content|cities)(\/|$)/, 'marketing'],
   // Economics settings (fees, cancellation and dues rules) and dues are money work.
-  [/^\/(payments|payouts|wallet|shield|emergency-fund|audit|fees|dues|cancellation-config)(\/|$)/, 'money'],
+  [/^\/(payments|payouts|wallet|shield|emergency-fund|audit|fees|dues|economics|cancellation-config)(\/|$)/, 'money'],
   [/^\/(zones|launch-interest|fraud|liveops|stuck-jobs)(\/|$)/, 'operations'],
   [/^\/(feature-flags|system|audit-logs)(\/|$)/, 'system'],
 ];

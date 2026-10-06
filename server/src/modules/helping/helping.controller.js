@@ -292,7 +292,9 @@ async function listAvailable(req, res, next) {
         stopCount: (t.stops || []).length,
         distanceKm: t.charge?.distanceKm,
         // What they take home, not what the customer pays.
-        earningPaise: t.charge?.workerEarningPaise || 0,
+        earningPaise: (t.charge?.workerEarningPaise || 0) + (t.boost?.paise || 0),
+        // The customer's boost, all of it theirs, shown on its own.
+        boostPaise: t.boost?.paise || 0,
         // Flagged separately: this is money they may need to front.
         itemBudgetPaise: t.itemMoney?.budgetPaise || 0,
         advanceRequired: t.itemMoney?.paymentModel === 'worker_advance',

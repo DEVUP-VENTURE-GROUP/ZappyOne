@@ -72,7 +72,7 @@ const SOURCES = {
       kind: 'pet', id: b._id, service: nameOf(b.categoryCode),
       title: (b.pets || []).map((p) => [p.snapshot?.name, p.snapshot?.species].filter(Boolean).join(', ')).join(' · ') || 'Pet care',
       where: b.serviceLocation?.address || '', km: b.km ?? null,
-      earningPaise: b.pricing?.providerAmountPaise || 0, at: b.scheduledAt || b.checkInAt || null,
+      earningPaise: b.pricing?.providerAmountPaise || 0, boostPaise: b.boostPaise || 0, at: b.scheduledAt || b.checkInAt || null,
     })),
   },
   helping: {
@@ -85,7 +85,7 @@ const SOURCES = {
       kind: 'helping', id: t._id, service: nameOf(t.serviceType),
       title: t.title || (t.itemCount ? `${t.itemCount} item${t.itemCount > 1 ? 's' : ''}` : 'Errand'),
       where: t.pickupAddress || '', to: t.destinationAddress || '', km: t.distanceKm ?? null,
-      earningPaise: t.earningPaise || 0, at: t.scheduledAt || null,
+      earningPaise: t.earningPaise || 0, boostPaise: t.boostPaise || 0, at: t.scheduledAt || null,
       // Money the helper may have to front, shown before they commit.
       frontPaise: t.advanceRequired ? t.itemBudgetPaise : 0,
     })),

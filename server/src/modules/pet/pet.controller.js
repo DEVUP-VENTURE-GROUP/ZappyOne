@@ -337,7 +337,9 @@ async function listAvailableBookings(req, res, next) {
         scheduledAt: b.scheduledAt,
         checkInAt: b.checkInAt,
         checkOutAt: b.checkOutAt,
-        pricing: { providerAmountPaise: b.pricing?.providerAmountPaise || 0 },
+        // What they take home, the customer's boost included (all of it theirs).
+        pricing: { providerAmountPaise: (b.pricing?.providerAmountPaise || 0) + (b.boost?.paise || 0) },
+        boostPaise: b.boost?.paise || 0,
       })),
     });
   } catch (err) { next(err); }

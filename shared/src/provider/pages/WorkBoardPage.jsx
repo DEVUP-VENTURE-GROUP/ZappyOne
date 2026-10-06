@@ -47,6 +47,8 @@ function OpenCard({ job, busy, onTake }) {
         <div className="shrink-0 text-right">
           <p className="text-[17px] font-bold tabular-nums text-emerald-700">{formatPaise(job.earningPaise)}</p>
           <p className="text-[11px] text-slate-500">you earn</p>
+          {/* The customer added this for a faster match; it is all theirs, and included above. */}
+          {job.boostPaise > 0 && <p className="mt-0.5 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700">+{formatPaise(job.boostPaise)} boost</p>}
         </div>
       </div>
 

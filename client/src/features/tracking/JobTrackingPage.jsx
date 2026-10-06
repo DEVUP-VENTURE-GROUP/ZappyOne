@@ -17,6 +17,8 @@ import {
 } from './redesign';
 import { staggerContainer, fadeInUp } from '../../lib/animations';
 import StartCodeCard from './StartCodeCard';
+import JobBoostCard from './cards/JobBoostCard';
+import JobTipCard from './cards/JobTipCard';
 import JobChat from '@shared/components/jobs/JobChat';
 import { useJobOptionsQuery, useReportProviderAbsentMutation } from '@shared/services/api';
 
@@ -54,7 +56,8 @@ export default function JobTrackingPage({ job, extras = null, startCode = null, 
   const [cancelling, setCancelling] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
   // The cancel fee, a changed provider, and "not coming": the server's answer for this moment.
-  const optionsOn = ['repair', 'pet', 'helping'].includes(job.kind) && !job.terminal;
+  // Live jobs (cancel, boost, provider changed) and finished ones (tip).
+  const optionsOn = ['repair', 'pet', 'helping'].includes(job.kind) && (!job.terminal || job.status === 'completed');
   const { data: options, isFetching: optionsLoading, refetch: refetchOptions } = useJobOptionsQuery({ id: job.id, status: job.status }, { skip: !optionsOn });
   const [reportAbsent, { isLoading: reportingAbsent }] = useReportProviderAbsentMutation();
   const cancelQuote = options?.cancel;
@@ -171,6 +174,9 @@ export default function JobTrackingPage({ job, extras = null, startCode = null, 
               <p className="mt-0.5">We are finding the next one now. If you would rather not wait, you can cancel free.</p>
             </div>
           )}
+          {!job.provider && !job.terminal && (
+            <JobBoostCard jobId={job.id} boost={options?.boost} since={job.createdAt} noun={job.noun} onBoosted={refetchOptions} />
+          )}
           {options?.providerAbsent?.open && job.provider && (
             <div className="rounded-2xl bg-white px-4 py-3 ring-1 ring-slate-100">
               <p className="text-[13px] font-semibold text-navy">Is your {job.noun} not coming?</p>
@@ -187,6 +193,10 @@ export default function JobTrackingPage({ job, extras = null, startCode = null, 
           )}
 
           {extras}
+
+          {status === 'completed' && (
+            <JobTipCard jobId={job.id} tip={options?.tip} name={job.provider?.name ? firstNameOf(job.provider.name) : null} onTipped={refetchOptions} />
+          )}
 
           {!['cancelled', 'failed'].includes(status) && (
             <PremiumTimeline steps={steps} activeStepIdx={activeStepIdx} timesByStatus={timesByStatus} />

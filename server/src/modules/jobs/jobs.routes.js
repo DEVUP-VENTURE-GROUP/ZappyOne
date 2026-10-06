@@ -125,12 +125,43 @@ router.get('/:id/options',
       const doc = await require('./kinds').KINDS[kind].model().findById(req.params.id).lean();
       if (String(doc.userId) !== String(req.auth.sub)) return res.status(404).json({ error: 'Booking not found' });
       const terminal = require('./kinds').KINDS[kind].ops?.terminal?.includes(doc.status);
+      const bt = require('./boost-tip');
+      const s = await bt.settings();
       res.json({
         kind,
         cancel: terminal ? null : await customerCancelQuote(kind, doc),
         reasons: CUSTOMER_REASONS,
+        boost: await bt.boostView(kind, doc, s),
+        tip: await bt.tipView(kind, doc, s),
         ...(terminal ? {} : await require('./give-back').customerView(kind, doc)),
       });
+    } catch (err) { next(err); }
+  });
+
+/** Boost while searching, tip once done (jobs/boost-tip). */
+router.post('/:id/boost',
+  authenticate, requireRole('user'),
+  makeLimiter({ windowMs: 60_000, max: 10, prefix: 'jobboost' }),
+  validate(Joi.object({ amountPaise: Joi.number().integer().min(100).max(1000000).required() })),
+  async (req, res, next) => {
+    try {
+      const { kind } = await jobFor(req, '_id');
+      res.json(await require('./boost-tip').addBoost({ kind, id: req.params.id, userId: req.auth.sub, amountPaise: req.body.amountPaise }));
+    } catch (err) { next(err); }
+  });
+
+router.post('/:id/tip',
+  authenticate, requireRole('user'),
+  makeLimiter({ windowMs: 60_000, max: 5, prefix: 'jobtip' }),
+  validate(Joi.object({
+    amountPaise: Joi.number().integer().min(100).max(1000000).required(),
+    method: Joi.string().valid('wallet', 'cash').default('wallet'),
+    message: Joi.string().trim().max(200).allow(''),
+  })),
+  async (req, res, next) => {
+    try {
+      const { kind } = await jobFor(req, '_id');
+      res.json(await require('./boost-tip').addTip({ kind, id: req.params.id, userId: req.auth.sub, ...req.body }));
     } catch (err) { next(err); }
   });
 

@@ -99,8 +99,14 @@ function deviceName(brand = '', model = '') {
 /** An earlier cancellation fee riding on this booking: its own line, and part of what is paid now. */
 const CARRIED = 'Cancellation fee from an earlier booking';
 const carried = (doc) => (doc?.carriedFee?.paise > 0 ? doc.carriedFee.paise : 0);
-const withCarried = (lines, doc) => (carried(doc) ? [...lines, [CARRIED, carried(doc)]] : lines);
-const plusCarried = (total, doc) => (total == null ? null : total + carried(doc));
+/** The customer's boost for a faster match: also its own line, and all the provider's. */
+const boosted = (doc) => (doc?.boost?.paise > 0 ? doc.boost.paise : 0);
+const withCarried = (lines, doc) => [
+  ...lines,
+  ...(boosted(doc) ? [['Boost for a faster match', boosted(doc)]] : []),
+  ...(carried(doc) ? [[CARRIED, carried(doc)]] : []),
+];
+const plusCarried = (total, doc) => (total == null ? null : total + carried(doc) + boosted(doc));
 
 function repairLines(s = {}, quote = null) {
   const lines = quote?.items?.length
