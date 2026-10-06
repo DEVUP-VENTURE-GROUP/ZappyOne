@@ -424,7 +424,8 @@ async function submitDiagnostic(req, res, next) {
 async function previewPrice(req, res, next) {
   try {
     const { repairCode, brandCode, modelCode, qualityCode, serviceMode = 'doorstep', cityCode } = req.query;
-    if (!repairCode) return res.status(400).json({ error: 'repairCode is required', code: 'REPAIR_REQUIRED' });
+    // An inspection's fee does not depend on a repair; everything else does.
+    if (!repairCode && serviceMode !== 'diagnosis_only') return res.status(400).json({ error: 'repairCode is required', code: 'REPAIR_REQUIRED' });
 
     const ctx = {
       vertical: verticalOf(req),
@@ -433,7 +434,7 @@ async function previewPrice(req, res, next) {
       serviceMode,
       cityCode: cityCode || null,
     };
-    const reference = await pricingService.resolveReferencePrice(ctx);
+    const reference = repairCode ? await pricingService.resolveReferencePrice(ctx) : null;
     const snapshot = await pricingService.buildPriceSnapshot({
       vertical: verticalOf(req), repairCode, referencePrice: reference, serviceMode,
     });

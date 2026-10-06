@@ -280,10 +280,10 @@ describe('when it goes wrong', () => {
     expect(quote.feePaise).toBeGreaterThan(0);
   });
 
-  it('a booking with no provider is still created, for dispatch to pick up', async () => {
+  it('a booking with no provider chosen is offered straight away to one who can do it', async () => {
     const { booking } = await bookingService.createBooking(baseBooking());
-    expect(booking.status).toBe('CONFIRMED');
-    expect(booking.shopId).toBeFalsy();
+    expect(booking.status).toBe('PROVIDER_ASSIGNED');
+    expect(String(booking.shopId || booking.workerId)).toBeTruthy();
   });
 
   it('never books a service mode the repair does not allow', async () => {

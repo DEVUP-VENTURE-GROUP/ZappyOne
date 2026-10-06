@@ -45,6 +45,13 @@ async function submitQuote({
 
   if (!items.length) throw httpError('A quote needs at least one line item', 400, 'EMPTY_QUOTE');
 
+  // The repair being quoted must be one of this device's: an inspection has none
+  // yet, and a phone repair code on a laptop would mislabel the job everywhere.
+  const { Repair } = require('../../models/repair.model');
+  if (!(await Repair.exists({ code: repairCode, vertical: booking.vertical, isActive: true }))) {
+    throw httpError('Choose the repair you will do from the list', 400, 'UNKNOWN_REPAIR');
+  }
+
   /**
    * A quote only means something once the device has actually been looked at.
    * Quoting from an earlier state used to silently leave the booking behind —
@@ -264,6 +271,8 @@ async function respondToQuote({ quoteId, userId, decision, reason = '' }) {
     // A credited fee means the earlier payment no longer settles the booking.
     if (creditPaise > 0) booking.paymentStatus = 'unpaid';
     booking.activeQuoteId = quote._id;
+    // An inspection becomes the repair that was quoted and approved.
+    if (!booking.repairCode && quote.repairCode) booking.repairCode = quote.repairCode;
     booking.applyTransition('APPROVED', { actorRole: 'customer', actorId: userId, reason: 'quote approved' });
     await booking.save();
     eventsService.announceQuoteDecision(booking, quote, 'approve').catch(() => {});

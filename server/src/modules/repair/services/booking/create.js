@@ -301,6 +301,13 @@ async function createBooking({
     // Announced after the save, so nothing is advertised that could roll back.
     eventsService.announceTransition(booking, booking.status).catch(() => {});
 
+    // Nobody chosen (an inspection, or priced after diagnosis): offer it to the
+    // best provider now, one at a time, exactly as a released job is re-offered.
+    if (!hasProvider) {
+      const offered = await require('./assignment').redispatch(booking._id).catch(() => null);
+      if (offered?.assigned) return { booking: (await RepairBooking.findById(booking._id).lean()), replayed: false };
+    }
+
     return { booking: booking.toObject(), replayed: false };
   } catch (err) {
     // Lost an idempotency race — return the winner instead of failing.

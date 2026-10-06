@@ -19,7 +19,7 @@ import { formatPaise } from '../../utils/money';
 import { usePublishTripLocation, MOVING_STATUSES, tripOf } from '../../hooks/useLiveTrip';
 import TripSharingBanner from '../../components/worker/TripSharingBanner';
 import SOSButton from '../../components/worker/SOSButton';
-import { useVerifyRepairHandoverCodeMutation, useDeclineRepairBookingMutation } from '../../services/api';
+import { useVerifyRepairHandoverCodeMutation, useDeclineRepairBookingMutation, useRepairWorkCatalogQuery } from '../../services/api';
 import PassReasonPicker from '../../components/worker/PassReasonPicker';
 import OtpEntry from '../../components/common/OtpEntry';
 import ArrivalProximity, { useArrivalProximity } from '../../components/common/ArrivalProximity';
@@ -137,7 +137,30 @@ const QUOTABLE = ['ARRIVED', 'DIAGNOSING', 'AT_WORKSHOP', 'REPAIR_IN_PROGRESS'];
  * second fault is doing the right thing, and the alternatives are quietly
  * fixing it and arguing about the bill, or quietly not fixing it at all.
  */
-function QuoteBuilder({ bookingId, repairCode, additional = false, snapshot = {}, onSent, onCancel }) {
+/**
+ * What the technician will fix, when the booking came in as an inspection and
+ * has no repair yet: their vertical's catalog, the jobs they do listed first.
+ */
+function RepairPicker({ vertical, value, onChange }) {
+  const { data, isLoading } = useRepairWorkCatalogQuery({ vertical });
+  const seen = new Set();
+  const repairs = (data?.groups || []).flatMap((g) => g.repairs).filter((r) => !seen.has(r.code) && seen.add(r.code))
+    .sort((a, b) => Number(b.selected) - Number(a.selected) || a.name.localeCompare(b.name));
+  return (
+    <div>
+      <label className="text-[12px] font-bold text-slate-700 block mb-1.5">What will you fix?</label>
+      <select value={value} onChange={(e) => onChange(e.target.value)} disabled={isLoading}
+        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-zappy-100">
+        <option value="">{isLoading ? 'Loading…' : 'Choose the repair'}</option>
+        {repairs.map((r) => <option key={r.code} value={r.code}>{r.name}{r.selected ? '' : ' (not in your list)'}</option>)}
+      </select>
+    </div>
+  );
+}
+
+function QuoteBuilder({ bookingId, repairCode: bookedRepair, vertical, additional = false, snapshot = {}, onSent, onCancel }) {
+  // An inspection has no repair yet: the technician says which one they quote for.
+  const [repairCode, setRepairCode] = useState(bookedRepair || '');
   // A price the customer already agreed to (fixed price at booking) stays: what
   // is quoted now goes on top of it, unless the provider says why it must change.
   const agreedPaise = (snapshot.subtotalPaise || 0) > 0 && snapshot.isEstimate !== true
@@ -166,6 +189,7 @@ function QuoteBuilder({ bookingId, repairCode, additional = false, snapshot = {}
         unitPricePaise: Math.round(Number(i.priceRupees) * 100),
       }));
 
+    if (!repairCode) return toast.error('Choose the repair you will do');
     if (!summary.trim()) return toast.error('Describe what you found');
     if (!clean.length) return toast.error('Add at least one line with a description and a price');
     if (total < 1000) return toast.error('The quote total must be at least ₹10. Check the prices you entered.');
@@ -230,6 +254,8 @@ function QuoteBuilder({ bookingId, repairCode, additional = false, snapshot = {}
             : 'Include everything the customer is paying in total, not just the new part. Work stops until they answer, and the clock pauses while it does.'}
         </p>
       )}
+
+      {!bookedRepair && <RepairPicker vertical={vertical} value={repairCode} onChange={setRepairCode} />}
 
       <div>
         <label className="text-[12px] font-bold text-slate-700 block mb-1.5">What did you find?</label>
@@ -747,7 +773,8 @@ export default function WorkerRepairJobPage() {
         {showQuote ? (
           <QuoteBuilder
             bookingId={id}
-            repairCode={booking.repairCode || 'display_assembly_replacement'}
+            repairCode={booking.repairCode || null}
+            vertical={booking.vertical}
             additional={showQuote === 'additional'}
             snapshot={booking.priceSnapshot || {}}
             onSent={() => { setShowQuote(false); refetch(); }}

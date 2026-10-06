@@ -460,9 +460,51 @@ function toPublic(provider) {
   return rest;
 }
 
+/**
+ * Who can come and inspect a device when no repair is chosen yet.
+ *
+ * An inspection has no repair to price, so findProviders (which matches on a
+ * repair's price) has nobody to return. Anyone verified for this line who does
+ * at least one job in this vertical and covers the address can look at it:
+ * nearest first, never someone blocked, unverified, or at their dues limit.
+ */
+async function findInspectors({ vertical, lat, lng, cityCode = null }) {
+  const areas = await findServiceableProviders({ lat, lng, cityCode, serviceMode: 'doorstep' });
+  if (!areas.length) return [];
+
+  const workerIds = areas.filter((a) => a.workerId).map((a) => a.workerId);
+  const shopIds = areas.filter((a) => a.shopId).map((a) => a.shopId);
+  const [caps, workers, shops, line] = await Promise.all([
+    ProviderCapability.find({
+      vertical, isActive: true,
+      $or: [{ workerId: { $in: workerIds } }, { shopId: { $in: shopIds } }],
+    }).select('workerId shopId').lean(),
+    Worker.find({ _id: { $in: workerIds } }).select('isBlocked kyc rating').lean(),
+    Shop.find({ _id: { $in: shopIds } }).select('isBlocked isActive kyc rating').lean(),
+    require('../../jobs/kinds').KINDS.repair.line({ vertical }),
+  ]);
+  const can = new Set(caps.map((c) => String(c.workerId || c.shopId)));
+  const approved = line
+    ? new Set((await require('../../onboarding/eligibility').approvedProviders(line)).map((p) => String(p.id)))
+    : null;
+  const working = await require('../../worker/worker-dues.service').filterWorkingWorkers(workerIds);
+  const profile = new Map([...workers, ...shops].map((p) => [String(p._id), p]));
+
+  return areas
+    .filter((a) => {
+      const id = String(a.workerId || a.shopId);
+      const p = profile.get(id);
+      if (!p || p.isBlocked || p.isActive === false || !can.has(id)) return false;
+      if (approved && !approved.has(id)) return false;
+      return a.shopId || working.has(id);
+    })
+    .sort((x, y) => (x.distanceKm ?? 99) - (y.distanceKm ?? 99) || (profile.get(String(y.workerId || y.shopId))?.rating || 0) - (profile.get(String(x.workerId || x.shopId))?.rating || 0));
+}
+
 module.exports = {
   candidateAreas,
   findProviders,
+  findInspectors,
   findServiceableProviders,
   checkInventory,
   rank,

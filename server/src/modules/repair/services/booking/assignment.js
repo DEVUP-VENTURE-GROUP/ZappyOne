@@ -112,13 +112,17 @@ async function redispatch(bookingId) {
   }
 
   const coords = booking.location?.coordinates;
-  if (!booking.repairCode || !Array.isArray(coords) || coords.length !== 2) {
+  if (!Array.isArray(coords) || coords.length !== 2) {
     return { assigned: false, reason: 'insufficient_context' };
   }
 
   const tried = new Set((booking.declines || []).map((d) => String(d.providerId)));
 
-  const { providers } = await matchingService.findProviders({
+  // An inspection (or a symptom-only booking) has no repair to match on: anyone
+  // verified for the vertical who covers the address can come and look.
+  const { providers } = !booking.repairCode
+    ? { providers: await matchingService.findInspectors({ vertical: booking.vertical, lat: coords[1], lng: coords[0], cityCode: booking.location?.cityCode || null }) }
+    : await matchingService.findProviders({
     vertical: booking.vertical,
     repairCode: booking.repairCode,
     brandCode: booking.brandCode,

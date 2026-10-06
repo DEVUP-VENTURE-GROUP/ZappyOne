@@ -830,8 +830,7 @@ function ModeStep({ diagnosis, inspectionFeePaise, onPick }) {
                 {o.available && o.note && <p className="text-[11px] text-amber-600 mt-1">{o.note}</p>}
                 {o.available && o.fee != null && (
                   <p className="text-[11px] font-semibold text-emerald-700 mt-1">
-                    {o.fee > 0 ? `${formatPaise(o.fee)} inspection fee` : 'Inspection fee applies'}
-                    {' · '}adjusted against the repair if you go ahead
+                    {o.fee > 0 ? `${formatPaise(o.fee)} inspection fee · adjusted against the repair if you go ahead` : 'Free inspection'}
                   </p>
                 )}
                 {!o.available && (
@@ -1487,11 +1486,12 @@ function ConfirmStep({
           <>
             <div className="flex items-center justify-between">
               <span className="text-sm font-bold text-[#0F172A]">Inspection fee</span>
-              <span className="text-2xl font-black text-[#0F172A]">{formatPaise(price)}</span>
+              <span className="text-2xl font-black text-[#0F172A]">{price == null ? '…' : price > 0 ? formatPaise(price) : 'Free'}</span>
             </div>
             <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
-              Charged by ZappyOne for the technician's visit and diagnosis. If you go ahead with the repair
-              afterwards, this amount comes off the repair bill — you are not charged twice for the same visit.
+              {price > 0
+                ? "Charged by ZappyOne for the technician's visit and diagnosis. If you go ahead with the repair afterwards, this amount comes off the repair bill, so you are not charged twice for the same visit."
+                : 'A technician visits and tells you what is wrong. You only pay if you go ahead with the repair they quote.'}
             </p>
           </>
         ) : price != null ? (
@@ -1666,11 +1666,13 @@ function RepairFlow({ vertical, saved, draftKey, onStartOver }) {
    * known, which is also when the inspection option becomes offerable.
    */
   const previewRepair = diagnosis?.primaryRepairCode || diagnosis?.recommendations?.[0]?.repairCode;
+  // Asked even with no repair suggested: the inspection fee does not depend on one.
   const { data: preview } = useRepairPricePreviewQuery(
-    { vertical, repairCode: previewRepair, brandCode: brand?.code, modelCode: model?.code, serviceMode: 'diagnosis_only' },
-    { skip: !previewRepair },
+    { vertical, repairCode: previewRepair || undefined, brandCode: brand?.code, modelCode: model?.code, serviceMode: 'diagnosis_only' },
+    { skip: !vertical },
   );
-  const inspectionFeePaise = preview?.estimate?.totalPaise ?? 0;
+  // null until known, so nothing is claimed about the fee before it has loaded.
+  const inspectionFeePaise = preview ? (preview.estimate?.totalPaise ?? 0) : null;
 
   /** The step `delta` away, walking past steps this catalog had nothing to show for. */
   function stepFrom(from, delta) {

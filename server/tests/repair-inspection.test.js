@@ -259,3 +259,47 @@ describe('inspection → repair conversion', () => {
     expect(stored.diagnosisSummary).toContain('Motherboard damage');
   });
 });
+
+describe('an inspection reaches a technician', () => {
+  const nearby = new mongoose.Types.ObjectId();
+
+  beforeAll(async () => {
+    const Worker = require('../src/modules/worker/worker.model');
+    const { ProviderServiceArea } = require('../src/modules/repair/models/config.model');
+    const { ProviderCapability } = require('../src/modules/repair/models/capability.model');
+    await Worker.collection.insertOne({ _id: nearby, phone: '9811100001', name: 'Imran', isBlocked: false, kyc: { status: 'approved' }, rating: 4.7 });
+    await ProviderServiceArea.create({
+      workerId: nearby, cityCode: 'hyderabad', center: { type: 'Point', coordinates: loc.coordinates }, radiusKm: 10, serviceModes: ['doorstep'],
+    });
+    // Does phone work at all: that is enough to come and look.
+    await ProviderCapability.create({ workerId: nearby, vertical: 'mobile', repairCode: 'battery_replacement', isActive: true });
+  });
+
+  it('is offered to the nearest technician who does this kind of device, with nobody chosen', async () => {
+    const { booking } = await bookingService.createBooking({
+      userId, brandCode: 'samsung', modelCode: 'samsung-s23-ultra',
+      serviceMode: 'diagnosis_only', location: loc, idempotencyKey: 'insp-offer-1',
+    });
+    expect(booking.status).toBe('PROVIDER_ASSIGNED');
+    expect(String(booking.workerId)).toBe(String(nearby));
+  });
+
+  it('a quote names one of this device\'s repairs, and approving it makes it the booking\'s repair', async () => {
+    const { booking } = await bookingService.createBooking({
+      userId, brandCode: 'samsung', modelCode: 'samsung-s23-ultra',
+      serviceMode: 'diagnosis_only', location: loc, idempotencyKey: 'insp-offer-2',
+    });
+    for (const s of ['WORKER_ACCEPTED', 'ON_THE_WAY', 'ARRIVED']) {
+      await bookingService.transition(booking._id, s, { actorRole: 'worker', actorId: nearby });
+    }
+    const quote = (repairCode) => bookingService.submitQuote({
+      bookingId: booking._id, actorRole: 'worker', actorId: nearby,
+      diagnosisSummary: 'Battery swollen.', repairCode, warrantyDays: 90,
+      items: [{ kind: 'part', label: 'Battery', unitPricePaise: 120000, quantity: 1 }],
+    });
+    await expect(quote('tw_tube_fix')).rejects.toMatchObject({ code: 'UNKNOWN_REPAIR' });
+    const { quote: q } = await quote('battery_replacement');
+    await bookingService.respondToQuote({ quoteId: q._id, userId, decision: 'approve' });
+    expect((await RepairBooking.findById(booking._id).lean()).repairCode).toBe('battery_replacement');
+  });
+});
