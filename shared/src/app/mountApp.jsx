@@ -1,13 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import ReactDOM from 'react-dom/client';
 import { Provider } from 'react-redux';
-import { BrowserRouter } from 'react-router-dom';
+import { BrowserRouter, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { setAuth } from '../modules/auth/authSlice';
 import { API_BASE } from '../services/apiBase';
 import { I18nProvider } from '../i18n/I18nProvider';
 import ErrorBoundary from '../components/common/ErrorBoundary';
 import ScrollToTop from '../components/common/ScrollToTop';
+import { watchForUpdates, applyUpdateIfWaiting } from './appUpdate';
+
+/** A newer version waiting is applied when the screen changes, never in the middle of one. */
+function UpdateOnNavigate() {
+  const { pathname } = useLocation();
+  useEffect(() => { applyUpdateIfWaiting(); }, [pathname]);
+  return null;
+}
 
 const SURFACE = import.meta.env.VITE_CLIENT_SURFACE || '';
 
@@ -56,6 +64,7 @@ export function mountApp({ App, store, roles = null, toastPosition = 'top-center
     return (
       <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <ScrollToTop />
+        <UpdateOnNavigate />
         <I18nProvider>
           <ErrorBoundary>
             <App />
@@ -65,6 +74,9 @@ export function mountApp({ App, store, roles = null, toastPosition = 'top-center
       </BrowserRouter>
     );
   }
+
+  // An open tab follows deploys instead of breaking on them (app/appUpdate).
+  watchForUpdates();
 
   ReactDOM.createRoot(document.getElementById('root')).render(
     <React.StrictMode>

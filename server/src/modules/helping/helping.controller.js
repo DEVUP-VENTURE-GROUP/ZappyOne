@@ -338,6 +338,8 @@ async function acceptTask(req, res, next) {
         error: 'Another helper has already taken this task', code: 'ALREADY_CLAIMED',
       });
     }
+    // Answering a "job waiting" alert from offline puts them on duty.
+    await require('../worker/presence').markLive(req.auth.sub).catch(() => {});
     announce('helping', task, 'WORKER_ACCEPTED');
     res.json({ task });
   } catch (err) { next(err); }

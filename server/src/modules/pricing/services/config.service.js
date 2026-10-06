@@ -92,6 +92,7 @@ function toView(doc) {
     minWorkerRating:              doc.minWorkerRating              ?? 3.0,
     // Stale order
     staleNudgeMinutes:            doc.staleNudgeMinutes            ?? 5,
+    presenceOfflineMinutes:       doc.presenceOfflineMinutes       ?? 5,
     staleRedispatchMinutes:       doc.staleRedispatchMinutes       ?? 10,
     staleOtwAlertMinutes:         doc.staleOtwAlertMinutes         ?? 20,
     // Tip

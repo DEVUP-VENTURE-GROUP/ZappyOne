@@ -352,6 +352,7 @@ const helpingTaskSchema = new mongoose.Schema(
     /** Customer's boost while searching, and tip once done; 100% the provider's (jobs/boost-tip). */
     boost: { type: require('../../jobs/boost-tip.field').boost, default: undefined },
     tip: { type: require('../../jobs/boost-tip.field').tip, default: undefined },
+    matching: { type: require('../../jobs/matching.field'), default: () => ({}) },
     workerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Worker', default: null, index: true },
     /** Helpers who handed this task back (jobs/give-back): it is not offered to them again. */
     releasedBy: { type: [mongoose.Schema.Types.ObjectId], default: [] },

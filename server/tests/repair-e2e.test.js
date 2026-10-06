@@ -110,6 +110,7 @@ beforeAll(async () => {
   const worker = await Worker.create({
     phone: '9876500001', name: 'Ravi Repairs', rating: 4.8, completedJobs: 120,
     skills: ['display_assembly_replacement'], kyc: { status: 'approved' },
+    isOnline: true, lastSeenAt: new Date(), // live: only live workers are offered (worker/presence)
   });
   ctx.workerId = worker._id;
   // One technician does every cash job in this file; dues limits have their own test (worker-dues).

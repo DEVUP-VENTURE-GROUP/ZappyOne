@@ -143,6 +143,16 @@ export default function WorkerDashboard() {
 
   // Location is shared app-wide while online (provider/OnlineLocation), not only on this page.
 
+  // Opened (or reloaded) while already online: name the area from the last
+  // position the server has, not only at the moment they tapped Go online.
+  const lastCoords = me?.currentLocation?.coordinates;
+  useEffect(() => {
+    if (!isOnline || areaName || lastCoords?.length !== 2 || (!lastCoords[0] && !lastCoords[1])) return;
+    reverseGeocode(lastCoords[1], lastCoords[0])
+      .then(({ primary, secondary }) => setAreaName(secondary ? `${primary}, ${secondary.split(',')[0]}` : primary))
+      .catch(() => {});
+  }, [isOnline, areaName, lastCoords?.[0], lastCoords?.[1]]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // After every hook, so the hook count never changes.
   if (meData && !me?.onboardingComplete) return <WorkerOnboarding onComplete={refetchMe} />;
 

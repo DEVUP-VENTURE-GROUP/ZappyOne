@@ -127,6 +127,7 @@ async function start() {
     startRepairSlaWorker();
     startPetScheduler();
     startShieldPayoutWorker();
+    startMatchingWaves();
     // Backup for missed Cashfree webhooks; capture is exactly-once, so overlap is harmless.
     setInterval(() => {
       require('./modules/payment/payment.service').reconcilePendingIntents()
@@ -324,51 +325,25 @@ function startStaleOrderWorker() {
 }
 
 function startWorkerHeartbeatSweep() {
-  const OFFLINE_AFTER_MS = 30 * 60 * 1000; // 30 min without ping → mark offline in Mongo
+  /*
+   * Presence (worker/presence): a worker silent past the presence window is
+   * set offline and their app is told. Every minute, so a closed phone stops
+   * being offered jobs within minutes instead of half an hour.
+   */
+  const presence = require("./modules/worker/presence");
+  const run = () => presence.sweep().catch((err) => logger.warn({ err: err.message }, "[PRESENCE] sweep failed"));
+  run();
+  setInterval(run, 60 * 1000);
+  logger.info("[PRESENCE] Silent-worker sweep running (every minute)");
+}
 
-  async function sweepStaleWorkers() {
-    try {
-      const Worker = require("./modules/worker/worker.model");
-      const geoService = require("./modules/worker/geo.service");
-      const cutoff = new Date(Date.now() - OFFLINE_AFTER_MS);
-      const stale = await Worker.find({
-        isOnline: true,
-        lastSeenAt: { $lt: cutoff },
-        // Don't force-offline a worker mid-order — that would confuse dispatch.
-        currentOrderId: null,
-      })
-        .select("_id skills")
-        .lean();
-
-      for (const w of stale) {
-        await Worker.updateOne(
-          { _id: w._id },
-          { $set: { isOnline: false, isAvailable: false } },
-        );
-        await geoService.markOffline(String(w._id));
-        logger.info(
-          { workerId: w._id },
-          "[HEARTBEAT] Worker auto-offlined after 30 min inactivity",
-        );
-      }
-      if (stale.length > 0) {
-        logger.info(
-          { count: stale.length },
-          "[HEARTBEAT] Stale worker sweep complete",
-        );
-      }
-    } catch (err) {
-      logger.warn(
-        { err: err.message },
-        "[HEARTBEAT] Stale worker sweep failed",
-      );
-    }
-  }
-
-  // Run every 10 minutes — frequent enough to clean up but not spammy.
-  sweepStaleWorkers().catch(() => {});
-  setInterval(() => sweepStaleWorkers().catch(() => {}), 10 * 60 * 1000);
-  logger.info("[HEARTBEAT] Worker heartbeat sweep started (every 10 minutes)");
+function startMatchingWaves() {
+  // Jobs nobody has taken: re-offer repairs, ask offline providers nearby to come online, tell the customer (jobs/waves).
+  const waves = require("./modules/jobs/waves");
+  setInterval(() => {
+    waves.sweep().catch((err) => logger.warn({ err: err.message }, "[WAVES] sweep failed"));
+  }, 60 * 1000);
+  logger.info("[WAVES] Finding-someone waves running (every minute)");
 }
 
 function startShieldPayoutWorker() {

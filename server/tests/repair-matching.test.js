@@ -41,6 +41,8 @@ async function makeProvider({
     skills: ['display_assembly_replacement'],
     kyc: { status: 'approved' },
     isBlocked: false,
+    // On duty and heard from just now: only live workers are offered (worker/presence).
+    isOnline: true, lastSeenAt: new Date(),
   });
 
   // Offset latitude so each provider sits a predictable distance away.

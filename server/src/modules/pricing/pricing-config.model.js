@@ -148,7 +148,9 @@ const pricingConfigSchema = new mongoose.Schema(
     minWorkerRating: { type: Number, default: 3.0 },
 
     // Stale order watchdog
-    staleNudgeMinutes: { type: Number, default: 5 },         // nudge after X min assigned
+    staleNudgeMinutes: { type: Number, default: 5 },         // nudge after X min assigned; offline wave (jobs/waves)
+    // A worker silent this long is set offline (worker/presence).
+    presenceOfflineMinutes: { type: Number, default: 5, min: 2, max: 60 },
     staleRedispatchMinutes: { type: Number, default: 10 },   // re-dispatch after X min
     staleOtwAlertMinutes: { type: Number, default: 20 },     // on_the_way alert after X min
 

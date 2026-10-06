@@ -267,7 +267,7 @@ describe('an inspection reaches a technician', () => {
     const Worker = require('../src/modules/worker/worker.model');
     const { ProviderServiceArea } = require('../src/modules/repair/models/config.model');
     const { ProviderCapability } = require('../src/modules/repair/models/capability.model');
-    await Worker.collection.insertOne({ _id: nearby, phone: '9811100001', name: 'Imran', isBlocked: false, kyc: { status: 'approved' }, rating: 4.7 });
+    await Worker.collection.insertOne({ _id: nearby, phone: '9811100001', name: 'Imran', isBlocked: false, kyc: { status: 'approved' }, rating: 4.7, isOnline: true, lastSeenAt: new Date() });
     await ProviderServiceArea.create({
       workerId: nearby, cityCode: 'hyderabad', center: { type: 'Point', coordinates: loc.coordinates }, radiusKm: 10, serviceModes: ['doorstep'],
     });

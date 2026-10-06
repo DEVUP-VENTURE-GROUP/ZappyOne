@@ -35,6 +35,12 @@ router.get('/me/shop', authenticate, requireRole('worker'), async (req, res, nex
 router.post('/online', authenticate, requireRole('worker'), workerOnlineLimiter,
   validate(Joi.object({ lat: Joi.number().required(), lng: Joi.number().required() })), ctrl.goOnline);
 router.post('/offline', authenticate, requireRole('worker'), ctrl.goOffline);
+// Every minute while on duty, moving or not (worker/presence). Answers whether the server still has them online.
+router.post('/heartbeat', authenticate, requireRole('worker'),
+  validate(Joi.object({ lat: Joi.number().min(-90).max(90), lng: Joi.number().min(-180).max(180) })),
+  async (req, res, next) => {
+    try { res.json(await require('./presence').heartbeat({ workerId: req.auth.sub, lat: req.body.lat, lng: req.body.lng })); } catch (err) { next(err); }
+  });
 router.post('/location', authenticate, requireRole('worker'), validate(locationSchema), ctrl.updateLocation);
 router.get('/earnings', authenticate, requireRole('worker'), ctrl.getEarnings);
 router.get('/orders', authenticate, requireRole('worker'), ctrl.getOrders);

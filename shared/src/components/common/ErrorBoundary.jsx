@@ -1,4 +1,5 @@
 import { Component } from 'react';
+import { isStaleChunkError, reloadForUpdate } from '../../app/appUpdate';
 
 /**
  * App-wide error boundary. Without one, a single render error white-screens the
@@ -17,6 +18,8 @@ export default class ErrorBoundary extends Component {
   }
 
   componentDidCatch(error, info) {
+    // A page file missing after a deploy is not an error: load the new version (app/appUpdate).
+    if (isStaleChunkError(error) && reloadForUpdate()) { this.setState({ reloading: true }); return; }
     // Surface in the console; best-effort beacon to telemetry if available.
     // eslint-disable-next-line no-console
     console.error('[ErrorBoundary]', error, info?.componentStack);
@@ -39,6 +42,8 @@ export default class ErrorBoundary extends Component {
 
   render() {
     if (!this.state.hasError) return this.props.children;
+    // Reloading onto the new version: a blank moment, not an error screen.
+    if (this.state.reloading) return <div className="min-h-screen bg-slate-50" />;
 
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 px-6 text-center">

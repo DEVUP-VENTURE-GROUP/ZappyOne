@@ -76,6 +76,18 @@ function buildApp() {
   app.use(express.urlencoded({ extended: true, limit: "500kb" }));
   app.use(sanitizeMiddleware);
   app.use(morgan("tiny"));
+  // Any request slower than 1.5 s is named with its route, so the slow screens
+  // can be found from the logs (grep SLOW) instead of guessed at.
+  app.use((req, res, next) => {
+    const started = process.hrtime.bigint();
+    res.on("finish", () => {
+      const ms = Number(process.hrtime.bigint() - started) / 1e6;
+      if (ms < 1500) return;
+      const route = req.route?.path ? `${req.baseUrl || ""}${req.route.path}` : req.originalUrl.split("?")[0];
+      require("./core/logger").warn({ ms: Math.round(ms), method: req.method, route, status: res.statusCode }, "SLOW request");
+    });
+    next();
+  });
   app.use(globalLimiter);
   app.use(timeoutMiddleware(30_000)); // kill requests hanging >30s
 

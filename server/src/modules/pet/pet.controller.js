@@ -407,6 +407,7 @@ async function acceptBooking(req, res, next) {
     ).lean();
 
     if (!booking) return res.status(409).json({ error: 'Another provider has already taken this', code: 'ALREADY_CLAIMED' });
+    if (auth.role === 'worker') await require('../worker/presence').markLive(auth.id).catch(() => {});
     announce('pet', booking, 'PROVIDER_ACCEPTED');
     res.json({ booking });
   } catch (err) { next(err); }

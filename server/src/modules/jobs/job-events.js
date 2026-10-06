@@ -103,7 +103,7 @@ const ALERT_MAX = 40;
  * online. A provider with no known position is still told — they chose to work
  * this service and can judge the distance themselves from the job card.
  */
-async function alertNearbyProviders(kind, doc) {
+async function alertNearbyProviders(kind, doc, { offlineOnly = false } = {}) {
   try {
     const { approvedProviders } = require('../onboarding/eligibility');
     const k = KINDS[kind];
@@ -123,9 +123,13 @@ async function alertNearbyProviders(kind, doc) {
     const workerIds = providers.filter((p) => p.kind === 'worker').map((p) => p.id);
     const shopIds = providers.filter((p) => p.kind === 'shop').map((p) => p.id);
     const [workers, shops] = await Promise.all([
-      // Like any partner app: you're rung only while you're online. Shops are reachable in their hours.
-      Worker.find({ _id: { $in: workerIds }, isOnline: true, isActive: { $ne: false } }).select('currentLocation').lean(),
-      Shop.find({ _id: { $in: shopIds }, isActive: { $ne: false } }).select('address.location').lean(),
+      // Rung only while really there (worker/presence); the offline wave asks the others to come online.
+      Worker.find({ _id: { $in: workerIds }, isActive: { $ne: false } }).select('currentLocation isOnline lastSeenAt').lean()
+        .then(async (rows) => {
+          const live = await require('../worker/presence').liveIds(rows.map((r) => r._id));
+          return rows.filter((r) => (offlineOnly ? !live.has(String(r._id)) : live.has(String(r._id))));
+        }),
+      offlineOnly ? [] : Shop.find({ _id: { $in: shopIds }, isActive: { $ne: false } }).select('address.location').lean(),
     ]);
     const distance = (coords) => (start && coords?.length === 2 ? haversineKm(start.lat, start.lng, coords[1], coords[0]) : null);
     const reach = [
@@ -136,7 +140,7 @@ async function alertNearbyProviders(kind, doc) {
       .sort((a, b) => (a.km ?? ALERT_RADIUS_KM) - (b.km ?? ALERT_RADIUS_KM))
       .slice(0, ALERT_MAX);
 
-    const title = `New ${k.label} job near you`;
+    const title = offlineOnly ? `A ${k.label} job near you is waiting` : `New ${k.label} job near you`;
     await Promise.all(reach.map((p) => {
       toProvider(p.kind, p.id, 'job.available', {
         // Before anyone accepts: the area and a rounded pin, never the house (jobs/privacy).
@@ -145,7 +149,9 @@ async function alertNearbyProviders(kind, doc) {
       });
       return push(p, {
         title,
-        body: [p.km != null ? `${p.km.toFixed(1)} km away` : null, areaOf(start?.address)].filter(Boolean).join(' · ') || 'Open the app to take it.',
+        body: offlineOnly
+          ? `${p.km != null ? `${p.km.toFixed(1)} km away. ` : ''}Nobody has taken it yet. Go online to take it.`
+          : [p.km != null ? `${p.km.toFixed(1)} km away` : null, areaOf(start?.address)].filter(Boolean).join(' · ') || 'Open the app to take it.',
         deepLink: k.open.listPath,
         data: { kind, id: String(doc._id) },
       });

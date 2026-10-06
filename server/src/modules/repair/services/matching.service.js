@@ -235,7 +235,17 @@ async function findProviders({
   const rejected = [];
   const candidates = [];
 
-  for (const s of serviceable) {
+  // Asked once for everyone, not once per provider: who is really there now
+  // (worker/presence) and who is under their dues limit (worker-dues).
+  const workerIdsHere = serviceable.filter((x) => x.workerId).map((x) => x.workerId);
+  const [liveSet, workingSet] = await Promise.all([
+    require('../../worker/presence').liveIds(workerIdsHere),
+    require('../../worker/worker-dues.service').filterWorkingWorkers(workerIdsHere),
+  ]);
+
+  // Every provider is checked at the same time: each check is several reads,
+  // and one after another they added up to seconds on the customer's screen.
+  await Promise.all(serviceable.map(async (s) => {
     const ownerFilter = s.shopId
       ? { shopId: new mongoose.Types.ObjectId(s.shopId) }
       : { workerId: new mongoose.Types.ObjectId(s.workerId) };
@@ -247,12 +257,12 @@ async function findProviders({
       isActive: true,
     });
 
-    if (!capability) { rejected.push({ label, reason: 'no_capability' }); continue; }
+    if (!capability) { rejected.push({ label, reason: 'no_capability' }); return; }
     if (!capability.covers({ brandCode, modelCode, qualityCode, serviceMode })) {
-      rejected.push({ label, reason: 'capability_scope' }); continue;
+      rejected.push({ label, reason: 'capability_scope' }); return;
     }
     if ((capability.skillLevel || 1) < (repair.minSkillLevel || 1)) {
-      rejected.push({ label, reason: 'insufficient_skill' }); continue;
+      rejected.push({ label, reason: 'insufficient_skill' }); return;
     }
 
     const priceCtx = { vertical, repairCode, brandCode, modelCode, qualityCode, serviceMode, cityCode };
@@ -274,11 +284,11 @@ async function findProviders({
     // Diagnosis-first jobs are quoted after inspection, so a missing price is
     // expected there and must not exclude an otherwise capable provider.
     if (!price && repair.pricingMode !== 'diagnosis_required') {
-      rejected.push({ label, reason: 'no_approved_price' }); continue;
+      rejected.push({ label, reason: 'no_approved_price' }); return;
     }
 
     const inv = await checkInventory({ shopId: s.shopId, workerId: s.workerId, repair, brandCode, modelCode, qualityCode });
-    if (inv.needsPart && !inv.inStock) { rejected.push({ label, reason: inv.reason || 'out_of_stock' }); continue; }
+    if (inv.needsPart && !inv.inStock) { rejected.push({ label, reason: inv.reason || 'out_of_stock' }); return; }
 
     /*
      * `coverImageUrl` / `profilePhotoKey` are selected because the customer's
@@ -298,9 +308,13 @@ async function findProviders({
         .select('name rating completedJobs penalties isBlocked kyc isOnline wallet profilePhotoKey')
         .lean();
 
-    if (!profile) { rejected.push({ label, reason: 'profile_missing' }); continue; }
-    if (profile.isBlocked) { rejected.push({ label, reason: 'blocked' }); continue; }
-    if (profile.kyc?.status !== 'approved') { rejected.push({ label, reason: 'kyc_not_approved' }); continue; }
+    if (!profile) { rejected.push({ label, reason: 'profile_missing' }); return; }
+    if (profile.isBlocked) { rejected.push({ label, reason: 'blocked' }); return; }
+    // A worker who is not really there now is never shown or offered (worker/presence).
+    if (!s.shopId && !liveSet.has(String(s.workerId))) {
+      rejected.push({ label, reason: 'offline' }); return;
+    }
+    if (profile.kyc?.status !== 'approved') { rejected.push({ label, reason: 'kyc_not_approved' }); return; }
 
     /**
      * A technician deep in commission debt is not given more cash work.
@@ -312,12 +326,12 @@ async function findProviders({
      * and only until they clear.
      */
     // The real wallet and the limit set in Economics (worker-dues), not a cached figure.
-    if (!s.shopId && !(await require('../../worker/worker-dues.service').filterWorkingWorkers([s.workerId])).has(String(s.workerId))) {
+    if (!s.shopId && !workingSet.has(String(s.workerId))) {
       rejected.push({ label, reason: 'dues_pending' });
-      continue;
+      return;
     }
 
-    const quality = qualityCode ? await PartQuality.findOne({ code: qualityCode }).lean() : null;
+    const quality = qualityCode ? qualityByCode.get(qualityCode) || null : null;
 
     // Grade names and warranties come from the PartQuality rows, never from a
     // hardcoded list — a grade admin adds tomorrow has to appear here by itself.
@@ -365,7 +379,7 @@ async function findProviders({
       partId: inv.partId || null,
       serviceMode,
     });
-  }
+  }));
 
   if (!candidates.length) {
     /*
@@ -468,7 +482,7 @@ function toPublic(provider) {
  * at least one job in this vertical and covers the address can look at it:
  * nearest first, never someone blocked, unverified, or at their dues limit.
  */
-async function findInspectors({ vertical, lat, lng, cityCode = null }) {
+async function findInspectors({ vertical, lat, lng, cityCode = null, includeOffline = false }) {
   const areas = await findServiceableProviders({ lat, lng, cityCode, serviceMode: 'doorstep' });
   if (!areas.length) return [];
 
@@ -488,6 +502,7 @@ async function findInspectors({ vertical, lat, lng, cityCode = null }) {
     ? new Set((await require('../../onboarding/eligibility').approvedProviders(line)).map((p) => String(p.id)))
     : null;
   const working = await require('../../worker/worker-dues.service').filterWorkingWorkers(workerIds);
+  const live = await require('../../worker/presence').liveIds(workerIds);
   const profile = new Map([...workers, ...shops].map((p) => [String(p._id), p]));
 
   return areas
@@ -496,8 +511,11 @@ async function findInspectors({ vertical, lat, lng, cityCode = null }) {
       const p = profile.get(id);
       if (!p || p.isBlocked || p.isActive === false || !can.has(id)) return false;
       if (approved && !approved.has(id)) return false;
-      return a.shopId || working.has(id);
+      if (a.shopId) return true;
+      // Offline workers only when asked (the come-online wave), never for an offer.
+      return working.has(id) && (includeOffline || live.has(id));
     })
+    .map((a) => ({ ...a, live: !!a.shopId || live.has(String(a.workerId)) }))
     .sort((x, y) => (x.distanceKm ?? 99) - (y.distanceKm ?? 99) || (profile.get(String(y.workerId || y.shopId))?.rating || 0) - (profile.get(String(x.workerId || x.shopId))?.rating || 0));
 }
 
