@@ -236,6 +236,7 @@ async function submitForReview({ owner, enrolmentId }) {
   enrolment.requirementSetId = set._id;
   enrolment.reviewNote = '';
   await enrolment.save();
+  require('../messaging/verification').submitted(enrolment).catch(() => {});
   return enrolment;
 }
 
@@ -265,6 +266,7 @@ async function decide({ enrolmentId, decision, note = '', adminId }) {
   enrolment.reviewedAt = new Date();
   enrolment.reviewNote = note;
   await enrolment.save();
+  if (['approved', 'rejected'].includes(decision)) require('../messaging/verification').decided(enrolment).catch(() => {});
 
   /*
    * A shop's registered address is real and known the moment they are

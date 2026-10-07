@@ -117,6 +117,23 @@ async function customerCancelQuote(kind, doc) {
   return { allowed: false, message: 'Cancel this booking from its own page.' };
 }
 
+/** The receipt PDF for a finished job (messaging/receipt): the same one the "job done" email carries. */
+router.get('/:id/receipt',
+  authenticate, requireRole('user'),
+  async (req, res, next) => {
+    try {
+      const { kind } = await jobFor(req, '_id');
+      const k = require('./kinds').KINDS[kind];
+      const doc = await k.model().findById(req.params.id).lean();
+      if (!doc || String(doc.userId) !== String(req.auth.sub)) return res.status(404).json({ error: 'Booking not found' });
+      if (!k.earning?.done.includes(doc.status)) return res.status(409).json({ error: 'The receipt is ready once the job is done.', code: 'NOT_DONE' });
+      const pdf = await require('../messaging/receipt').build(kind, doc);
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `inline; filename="${pdf.filename}"`);
+      res.send(pdf.buffer);
+    } catch (err) { next(err); }
+  });
+
 router.get('/:id/options',
   authenticate, requireRole('user'),
   async (req, res, next) => {

@@ -9,6 +9,7 @@ import {
   CreditCard,
   Gift,
   FileText,
+  Mail,
   FileCheck,
   Crown,
   Megaphone as Campaign,
@@ -85,6 +86,7 @@ const P = {
   Infrastructure: page(() => import('../features/system/Infrastructure')),
   SignInCodes: page(() => import('../features/system/SignInCodes')),
   FeatureFlags: page(() => import('../features/system/FeatureFlags')),
+  Messages: page(() => import('../features/system/Messages')),
   AuditLog: page(() => import('../features/system/AuditLog')),
   Team: page(() => import('../features/system/Team')),
 };
@@ -177,6 +179,7 @@ export const NAV_GROUPS = [
   ] },
   { label: 'System', items: [
     { id: 'status', area: 'system', label: 'System status', icon: Server, Comp: HUBS.status },
+    { id: 'messages', area: 'system', label: 'Messages', icon: Mail, Comp: P.Messages },
     { id: 'flags', area: 'system', label: 'Feature flags', icon: ToggleRight, Comp: P.FeatureFlags },
     { id: 'audit', area: 'system', label: 'Audit logs', icon: FileText, Comp: P.AuditLog },
     { id: 'team', area: 'admins', label: 'Admin team', icon: Users, Comp: P.Team },

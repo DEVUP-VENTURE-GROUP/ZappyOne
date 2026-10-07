@@ -103,6 +103,9 @@ const emitToWorker = (workerId, event, payload) => emitToProvider('worker', work
 const emitToShop = (shopId, event, payload) => emitToProvider('shop', shopId, event, payload);
 
 /** Persisted + pushed notification. Never rejects into the caller. */
+/** Repairs are in the message catalog: their customer notices come from messaging/lifecycle. */
+const CATALOGUED = true;
+
 async function notify({ kind, id, type, title, body, deepLink, data }) {
   if (!id) return;
   try {
@@ -208,7 +211,8 @@ async function announceTransition(booking, status) {
   const providerId = booking.workerId || booking.shopId;
   const providerKind = booking.workerId ? 'worker' : 'shop';
 
-  if (copy.customer) {
+  // Customer notices are the message catalog's (messaging/lifecycle, via job-events.announce).
+  if (copy.customer && !CATALOGUED) {
     await notify({
       kind: 'user',
       id: booking.userId,
@@ -220,7 +224,8 @@ async function announceTransition(booking, status) {
     });
   }
 
-  if (copy.provider && providerId) {
+  // Cancelled → messaging (only when someone else cancelled); completed → "you earned" at settlement.
+  if (copy.provider && providerId && !(CATALOGUED && ['CANCELLED', 'COMPLETED'].includes(status))) {
     await notify({
       kind: providerKind,
       id: providerId,
@@ -244,14 +249,19 @@ async function announceQuote(booking, quote) {
     totalPaise: quote.totalPaise,
   });
 
-  await notify({
-    kind: 'user',
-    id: booking.userId,
-    type: 'system_alert',
-    title: quote.revision > 1 ? '📋 Updated quote needs your approval' : '📋 Quote ready — your approval needed',
-    body: `₹${Math.round(quote.totalPaise / 100).toLocaleString('en-IN')} — review and approve to let work begin.`,
-    deepLink: `/repair/bookings/${booking._id}`,
-    data: { bookingId: String(booking._id), quoteId: String(quote._id), revision: String(quote.revision) },
+  // Push + email with the quote's lines (messaging/catalog 'quote.ready').
+  const { jobFacts, rupees } = require('../../messaging/facts');
+  const f = await jobFacts('repair', booking);
+  const lines = [
+    ...(quote.basePaise > 0 ? [['Booked repair (already agreed)', rupees(quote.basePaise)]] : []),
+    ...(quote.items || []).map((i) => [`${quote.basePaise > 0 ? '+ ' : ''}${i.label}${(i.quantity || 1) > 1 ? ` × ${i.quantity}` : ''}`, rupees(i.amountPaise ?? (i.unitPricePaise || 0) * (i.quantity || 1))]),
+    ...(quote.platformFeePaise ? [['Platform fee', rupees(quote.platformFeePaise)]] : []),
+    ...(quote.discountPaise ? [['Discount', `− ${rupees(quote.discountPaise)}`]] : []),
+    ...(quote.taxPaise ? [['Taxes', rupees(quote.taxPaise)]] : []),
+  ];
+  await require('../../messaging/send').send('quote.ready', {
+    to: { kind: 'user', id: booking.userId }, refId: `quote:${quote._id}`,
+    ctx: { f, quote: { summary: quote.diagnosisSummary, lines, total: rupees(quote.totalPaise), revision: quote.revision } },
   });
 }
 

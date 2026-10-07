@@ -72,13 +72,19 @@ async function announce(kind, doc, status) {
     });
   }
 
-  const forCustomer = copy.customer[status];
+  // Repairs, pet care and helping: every customer notice (push + email) and the
+  // provider's "customer cancelled" come from the message catalog (messaging/lifecycle).
+  const catalogued = !!require('../messaging/lifecycle').MAP[kind];
+  if (catalogued) {
+    require('../messaging/lifecycle').onStatus(kind, doc, status).catch(() => {});
+  }
+  const forCustomer = catalogued ? null : copy.customer[status];
   if (forCustomer) {
     await push({ kind: 'user', id: doc.userId }, {
       title: forCustomer[0], body: forCustomer[1], deepLink: k.link(id), data: { kind, id, status },
     });
   }
-  const forProvider = copy.provider[status];
+  const forProvider = catalogued && status === 'CANCELLED' ? null : copy.provider[status];
   // Cancellations reach the provider only when someone else made them.
   if (forProvider && provider && (forProvider[2] === 'always' || lastActor(doc) === 'user')) {
     await push(provider, {
@@ -147,13 +153,10 @@ async function alertNearbyProviders(kind, doc, { offlineOnly = false } = {}) {
         kind, id: String(doc._id), reference: doc.reference, line, area: areaOf(start?.address), km: p.km,
         coordinates: start ? roughCoords([start.lng, start.lat]) : null, ...(k.open.summary ? k.open.summary(doc) : {}),
       });
-      return push(p, {
-        title,
-        body: offlineOnly
-          ? `${p.km != null ? `${p.km.toFixed(1)} km away. ` : ''}Nobody has taken it yet. Go online to take it.`
-          : [p.km != null ? `${p.km.toFixed(1)} km away` : null, areaOf(start?.address)].filter(Boolean).join(' · ') || 'Open the app to take it.',
-        deepLink: k.open.listPath,
-        data: { kind, id: String(doc._id) },
+      const summary = k.open.summary ? k.open.summary(doc) : {};
+      return require('../messaging/send').send(offlineOnly ? 'provider.job_waiting' : 'provider.job_nearby', {
+        to: { kind: p.kind, id: p.id },
+        ctx: { label: k.label, km: p.km, area: areaOf(start?.address), earningPaise: summary.earningPaise, boostPaise: summary.boostPaise },
       });
     }));
   } catch (err) {

@@ -128,6 +128,7 @@ async function start() {
     startPetScheduler();
     startShieldPayoutWorker();
     startMatchingWaves();
+    startTimedMessages();
     // Backup for missed Cashfree webhooks; capture is exactly-once, so overlap is harmless.
     setInterval(() => {
       require('./modules/payment/payment.service').reconcilePendingIntents()
@@ -335,6 +336,15 @@ function startWorkerHeartbeatSweep() {
   run();
   setInterval(run, 60 * 1000);
   logger.info("[PRESENCE] Silent-worker sweep running (every minute)");
+}
+
+function startTimedMessages() {
+  // Rate reminders, Monday summaries for providers, the 8 am summary for ops (messaging/lifecycle).
+  const lifecycle = require("./modules/messaging/lifecycle");
+  setInterval(() => {
+    lifecycle.sweep().catch((err) => logger.warn({ err: err.message }, "[MESSAGES] timed sweep failed"));
+  }, 5 * 60 * 1000);
+  logger.info("[MESSAGES] Timed messages running (every 5 minutes)");
 }
 
 function startMatchingWaves() {

@@ -86,8 +86,9 @@ describe('open pet bookings', () => {
     const res = await post(`/pet/bookings/${insertedId}/accept`, as(approved._id, 'worker'));
     expect(res.status).toBe(200);
     expect(res.body.booking.status).toBe('PROVIDER_ACCEPTED');
-    await new Promise((r) => setTimeout(r, 200));
-    expect(await Notification.countDocuments({ 'recipient.id': customer, title: 'Pet pro confirmed' })).toBe(1);
+    await new Promise((r) => setTimeout(r, 400));
+    // The customer hears it once, in the message catalog's words (messaging/catalog 'booking.accepted').
+    expect(await Notification.countDocuments({ 'recipient.id': customer, type: 'worker_assigned', title: /is on your booking$/ })).toBe(1);
 
     const second = await post(`/pet/bookings/${insertedId}/accept`, as(other._id, 'worker'));
     expect(second.status).toBe(409);

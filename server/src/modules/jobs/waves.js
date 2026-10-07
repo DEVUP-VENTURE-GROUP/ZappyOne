@@ -74,13 +74,8 @@ async function sweep({ now = Date.now() } = {}) {
           if (claimed.modifiedCount) {
             out.slowNotices += 1;
             const boostable = await require('./boost-tip').boostView(kind, d).then((v) => v.available).catch(() => false);
-            await events.push({ kind: 'user', id: d.userId }, {
-              title: 'Still finding someone for you',
-              body: boostable
-                ? 'It is taking longer than usual. Adding a little for the provider often helps; you can also wait.'
-                : 'It is taking longer than usual. We are still looking and will tell you the moment someone accepts.',
-              deepLink: KINDS[kind].link(String(d._id)), data: { kind, id: String(d._id), status: 'SLOW' },
-            });
+            const f = await require('../messaging/facts').jobFacts(kind, d);
+            await require('../messaging/send').send('booking.slow', { to: { kind: 'user', id: d.userId }, ctx: { f, boostable }, refId: `${kind}:${f.id}` });
           }
         }
       } catch (e) {
@@ -100,11 +95,9 @@ async function alertOffline(kind, doc) {
     const providers = await require('../repair/services/matching.service')
       .findInspectors({ vertical: doc.vertical, lat: coords[1], lng: coords[0], cityCode: doc.location?.cityCode || null, includeOffline: true });
     const offline = providers.filter((p) => p.workerId && !p.live).slice(0, 30);
-    await Promise.all(offline.map((p) => events.push({ kind: 'worker', id: p.workerId }, {
-      title: 'A repair near you is waiting',
-      body: `${p.distanceKm != null ? `${p.distanceKm.toFixed(1)} km away. ` : ''}Go online to take it.`,
-      deepLink: '/worker/work', data: { kind, id: String(doc._id) },
-    }).catch(() => {})));
+    await Promise.all(offline.map((p) => require('../messaging/send').send('provider.job_waiting', {
+      to: { kind: 'worker', id: p.workerId }, ctx: { label: 'repair', km: p.distanceKm },
+    })));
     return;
   }
   await events.alertNearbyProviders(kind, doc, { offlineOnly: true });

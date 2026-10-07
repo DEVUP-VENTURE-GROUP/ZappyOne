@@ -109,6 +109,18 @@ async function settleProviderShare(args) {
   // The customer's boost is all the provider's (jobs/boost-tip).
   await require('../jobs/boost-tip').settleBoost(args.source, args.booking._id)
     .catch((err) => logger.error({ err: err.message, bookingId: String(args.booking._id) }, '[settlement] boost not paid to provider'));
+  // Tell them what they earned (messaging/catalog 'provider.paid'), once per job.
+  if (result?.settled) {
+    const to = result.ownerKind === 'shop' ? { kind: 'shop', id: result.ownerId } : { kind: 'worker', id: result.ownerId };
+    const { KINDS } = require('../jobs/kinds');
+    KINDS[args.source]?.model().findById(args.booking._id).lean()
+      .then((doc) => doc && require('../messaging/facts').jobFacts(args.source, doc))
+      .then((f) => f && require('../messaging/send').send('provider.paid', {
+        to, refId: `${args.source}:${args.booking._id}`,
+        ctx: { f, earningPaise: (result.providerPaise || 0) + (f.linesPaise.find(([l]) => l === 'Boost for a faster match')?.[1] || 0), cash: !!result.cash },
+      }))
+      .catch(() => {});
+  }
   return result;
 }
 

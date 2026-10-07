@@ -30,7 +30,7 @@ const SMS_TYPES = new Set([
   'order_cancelled',
 ]);
 
-async function notify({ recipient, type, title, body, data = {}, deepLink, sms = false }) {
+async function notify({ recipient, type, title, body, data = {}, deepLink, sms = false, push = true }) {
   if (!Notification.TYPES.includes(type)) {
     logger.warn({ type }, 'Unknown notification type — proceeding anyway');
   }
@@ -72,7 +72,8 @@ async function notify({ recipient, type, title, body, data = {}, deepLink, sms =
   // Online users already receive the notification via the socket pub/sub above.
   // FCM costs money per send; skipping for live sessions saves ~30-60% of pushes.
   const isOnline = await redis.get(`presence:${recipient.kind}:${recipient.id}`).catch(() => null);
-  if (!isOnline) {
+  // `push: false`: quiet hours for a non-urgent message (messaging/send) — in-app only.
+  if (!isOnline && push) {
     notificationsQueue.add('push', {
       notificationId: String(doc._id),
       recipient,

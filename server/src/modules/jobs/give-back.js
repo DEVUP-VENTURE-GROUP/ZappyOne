@@ -244,11 +244,9 @@ async function release({ kind, doc, provider, reasonLabel, toShop, actor }) {
 
   if (!toShop) {
     // The customer hears it from us, not by watching the map go blank.
-    events.push({ kind: 'user', id: doc.userId }, {
-      title: 'Finding you someone else',
-      body: 'Your provider could not make it. We are finding the next one now. You can also cancel free.',
-      deepLink: KINDS[kind].link(id), data: { kind, id, status: 'PROVIDER_CHANGED' },
-    }).catch(() => {});
+    require('../messaging/facts').jobFacts(kind, doc.toObject ? doc.toObject() : doc)
+      .then((f) => require('../messaging/send').send('booking.provider_changed', { to: { kind: 'user', id: doc.userId }, ctx: { f: { ...f, provider: null } } }))
+      .catch(() => {});
     events.toProvider(provider.kind, provider.id, 'job.update', { kind, id, status: 'MOVED', at: new Date().toISOString() });
   }
 }

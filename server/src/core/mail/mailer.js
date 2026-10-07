@@ -33,14 +33,14 @@ function isConfigured() {
   return !!config.mail?.host;
 }
 
-async function sendMail({ to, subject, html, text }) {
+async function sendMail({ to, subject, html, text, attachments, replyTo }) {
   const t = getTransport();
   if (!t) {
     logger.info({ to, subject, preview: text?.slice(0, 300) }, '[MAIL] SMTP not configured; message logged, not sent');
     return { sent: false, reason: 'not_configured' };
   }
   try {
-    const info = await t.sendMail({ from: config.mail.from, to, subject, html, text });
+    const info = await t.sendMail({ from: config.mail.from, to, subject, html, text, ...(replyTo ? { replyTo } : {}), ...(attachments?.length ? { attachments } : {}) });
     logger.info({ to, subject, id: info.messageId }, '[MAIL] sent');
     return { sent: true, id: info.messageId };
   } catch (err) {

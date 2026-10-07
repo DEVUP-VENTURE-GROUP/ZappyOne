@@ -108,8 +108,8 @@ async function sendFcm({ tokens, title, body, data = {}, imageUrl } = {}) {
         webpush: {
           headers: { Urgency: 'high', TTL: '86400' },
           notification: {
-            icon:  '/branding/zappylogo.png',
-            badge: '/branding/zappylogo.png',
+            icon:  '/logo.png',
+            badge: '/icons/icon-192.png',
             vibrate: [200, 100, 200],
             requireInteraction: data.type === 'new_job_request' || data.type === 'sos',
             ...(imageUrl ? { image: imageUrl } : {}),
@@ -267,6 +267,23 @@ async function processJob(job) {
     }
 
     return fcmResult;
+  }
+
+  /* Email (messaging/send): retried by the queue when the provider fails. */
+  if (job.name === 'email') {
+    const { logId, to, subject, html, text, replyTo, attachments } = job.data;
+    const { MessageLog } = require('../modules/messaging/send');
+    const result = await require('../core/mail/mailer').sendMail({ to, subject, html, text, replyTo, attachments });
+    if (result.sent) {
+      await MessageLog.updateOne({ _id: logId }, { $set: { status: 'sent', reason: '' } }).catch(() => {});
+      return result;
+    }
+    if (result.reason === 'not_configured') {
+      await MessageLog.updateOne({ _id: logId }, { $set: { status: 'skipped', reason: 'email not set up yet (SMTP)' } }).catch(() => {});
+      return result;
+    }
+    await MessageLog.updateOne({ _id: logId }, { $set: { status: 'failed', reason: `attempt ${job.attemptsMade + 1} failed` } }).catch(() => {});
+    throw new Error('email send failed'); // the queue retries with backoff
   }
 
   /* SMS notification */

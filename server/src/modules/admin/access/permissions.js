@@ -81,7 +81,7 @@ const AREA_RULES = [
   // Economics settings (fees, cancellation and dues rules) and dues are money work.
   [/^\/(payments|payouts|wallet|shield|emergency-fund|audit|fees|dues|economics|cancellation-config)(\/|$)/, 'money'],
   [/^\/(zones|launch-interest|fraud|liveops|stuck-jobs)(\/|$)/, 'operations'],
-  [/^\/(feature-flags|system|audit-logs)(\/|$)/, 'system'],
+  [/^\/(feature-flags|system|audit-logs|messages)(\/|$)/, 'system'],
 ];
 
 function areaFor(path) {

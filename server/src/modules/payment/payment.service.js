@@ -386,7 +386,16 @@ async function reconcilePendingIntents({ now = Date.now(), limit = 50 } = {}) {
  */
 async function refundBookingPayment({ source, bookingId, amountPaise, reason = 'Booking cancelled' }) {
   const intent = await PaymentIntent.findOne({ bookingSource: source, bookingId, status: 'captured' });
-  return refundIntent(intent, { amountPaise, reason, label: source, ref: bookingId });
+  const out = await refundIntent(intent, { amountPaise, reason, label: source, ref: bookingId });
+  if (out.refunded && !out.duplicate) {
+    // messaging/catalog 'payment.refunded', once per refund.
+    const { KINDS } = require('../jobs/kinds');
+    KINDS[source]?.model().findById(bookingId).lean()
+      .then((doc) => doc && require('../messaging/facts').jobFacts(source, doc)
+        .then((f) => require('../messaging/send').send('payment.refunded', { to: { kind: 'user', id: doc.userId }, ctx: { f, refundPaise: out.amountPaise }, refId: `${source}:${bookingId}:${out.amountPaise}` })))
+      .catch(() => {});
+  }
+  return out;
 }
 
 /**

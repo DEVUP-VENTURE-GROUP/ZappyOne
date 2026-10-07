@@ -237,6 +237,16 @@ async function triggerCustomerSOS({ userId, orderId, jobId, lat, lng, message })
 
   /* 1. Same store, same queue the admin console already reads. */
   const incidentKey = `sos:customer:${userId}:${now}`;
+  // Ops by email as well as the panel (messaging/catalog 'admin.sos').
+  require('../messaging/send').send('admin.sos', {
+    to: 'ops', refId: `sos:${userId}:${now}`,
+    ctx: {
+      who: `Customer ${user?.name || ''} (${user?.phone || 'no phone'})`.replace('  ', ' '),
+      reference: order?._id ? String(order._id).slice(-8).toUpperCase() : null,
+      area: order?.pickupLocation?.address || '',
+      at: new Date(now).toLocaleString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Kolkata' }),
+    },
+  }).catch(() => {});
   await redis.setex(incidentKey, 86400, JSON.stringify(incident));
   await redis.lpush('sos:active', incidentKey);
   await redis.expire('sos:active', 86400);

@@ -21,6 +21,9 @@ import JobBoostCard from './cards/JobBoostCard';
 import JobTipCard from './cards/JobTipCard';
 import JobChat from '@shared/components/jobs/JobChat';
 import { useJobOptionsQuery, useReportProviderAbsentMutation } from '@shared/services/api';
+import { useSelector } from 'react-redux';
+import { selectAuth } from '@shared/modules/auth/authSlice';
+import { API_BASE } from '@shared/services/apiBase';
 
 const rupees = (p) => `₹${Math.round((p || 0) / 100).toLocaleString('en-IN')}`;
 
@@ -61,6 +64,23 @@ export default function JobTrackingPage({ job, extras = null, startCode = null, 
   const { data: options, isFetching: optionsLoading, refetch: refetchOptions } = useJobOptionsQuery({ id: job.id, status: job.status }, { skip: !optionsOn });
   const [reportAbsent, { isLoading: reportingAbsent }] = useReportProviderAbsentMutation();
   const cancelQuote = options?.cancel;
+  const { accessToken } = useSelector(selectAuth);
+
+  // The receipt PDF for a finished job (the same one the "job done" email carries).
+  const downloadReceipt = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/jobs/${job.id}/receipt`, { headers: { Authorization: `Bearer ${accessToken}` } });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'Could not get the receipt');
+      const url = URL.createObjectURL(await res.blob());
+      const a = document.createElement('a');
+      a.href = url; a.download = `ZappyOne-receipt-${job.reference || job.id}.pdf`;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+    } catch (err) {
+      toast.error(err.message || 'Could not get the receipt');
+    }
+  };
+  const receiptHandler = onReceipt || (status === 'completed' && ['repair', 'pet', 'helping'].includes(job.kind) ? downloadReceipt : undefined);
   const socketStatus = useSocketStatus();
 
   // In the job's room for as long as it's live; positions only while someone travels.
@@ -210,7 +230,7 @@ export default function JobTrackingPage({ job, extras = null, startCode = null, 
             </motion.div>
           )}
 
-          <BookingSummary job={job} onReceipt={onReceipt} />
+          <BookingSummary job={job} onReceipt={receiptHandler} />
 
           {status === 'completed' && job.proofs.length > 0 && (
             <motion.div variants={fadeInUp} className="rounded-2xl bg-white p-4 ring-1 ring-slate-100">

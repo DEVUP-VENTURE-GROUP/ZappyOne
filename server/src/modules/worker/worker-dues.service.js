@@ -142,10 +142,11 @@ async function notifyIfCrossed(workerId) {
     const { redis } = require('../../config/redis');
     const key = `dues:told:${workerId}:${dues.status}`;
     if (!(await redis.set(key, '1', 'EX', 24 * 3600, 'NX'))) return;
-    const r = (p) => `₹${Math.round(p / 100).toLocaleString('en-IN')}`;
-    await require('../jobs/job-events').push({ kind: 'worker', id: workerId }, dues.status === 'blocked'
-      ? { title: 'New jobs are paused', body: `You owe ${r(dues.duesPaise)} from cash jobs. Pay it to start getting jobs again.`, deepLink: '/worker', data: { kind: 'dues' } }
-      : { title: `You owe ${r(dues.duesPaise)}`, body: `New jobs stop at ${r(dues.limitPaise)}. Pay some now to keep working.`, deepLink: '/worker', data: { kind: 'dues' } });
+    // Push + email (messaging/catalog 'provider.dues').
+    await require('../messaging/send').send('provider.dues', {
+      to: { kind: 'worker', id: workerId },
+      ctx: { state: dues.status, duesPaise: dues.duesPaise, limitPaise: dues.limitPaise, payInstructions: dues.payInstructions },
+    });
   } catch (e) {
     logger.warn({ err: e.message }, '[dues] notify failed');
   }
@@ -185,12 +186,9 @@ async function recordPayment({ workerId, amountPaise, method = 'upi', reference 
     const { redis } = require('../../config/redis');
     await redis.del(`dues:told:${workerId}:blocked`, `dues:told:${workerId}:warning`).catch(() => {});
   }
-  require('../jobs/job-events').push({ kind: 'worker', id: workerId }, {
-    title: 'Payment received',
-    body: after.duesPaise > 0
-      ? `Thanks. You now owe ₹${Math.round(after.duesPaise / 100)}${after.isBlocked ? '. Pay a little more to get jobs again.' : '.'}`
-      : 'Thanks. You owe nothing now.',
-    deepLink: '/worker', data: { kind: 'dues' },
+  require('../messaging/send').send('provider.dues', {
+    to: { kind: 'worker', id: workerId },
+    ctx: { state: 'paid', duesPaise: after.duesPaise, limitPaise: after.limitPaise },
   }).catch(() => {});
   return { before, after };
 }

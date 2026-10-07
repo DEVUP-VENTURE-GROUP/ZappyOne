@@ -133,6 +133,12 @@ export const api = createApi({
     /** Customer: boost while searching, tip once done (jobs/boost-tip). */
     boostJob: b.mutation({ query: ({ id, amountPaise }) => ({ url: `/jobs/${id}/boost`, method: 'POST', body: { amountPaise } }) }),
     tipJob: b.mutation({ query: ({ id, ...body }) => ({ url: `/jobs/${id}/tip`, method: 'POST', body }), invalidatesTags: ['Wallet'] }),
+    /** Admin → Messages: every automatic email and push (messaging/). */
+    adminMessages: b.query({ query: () => adminApiPath('/messages'), providesTags: ['Content'] }),
+    adminMessagePreview: b.query({ query: (key) => adminApiPath(`/messages/${key}/preview`), keepUnusedDataFor: 0 }),
+    adminMessageLog: b.query({ query: (key) => ({ url: adminApiPath('/messages/log'), params: key ? { key } : {} }), keepUnusedDataFor: 0 }),
+    adminSendTestMessage: b.mutation({ query: ({ key, to }) => ({ url: adminApiPath(`/messages/${key}/test`), method: 'POST', body: { to } }) }),
+    adminUpdateMessageSettings: b.mutation({ query: (body) => ({ url: adminApiPath('/messages/settings'), method: 'PUT', body }), invalidatesTags: ['Content'] }),
     /** Admin: Economics → Boost & tips. */
     adminBoostTips: b.query({ query: () => adminApiPath('/economics/boost-tips'), providesTags: ['PricingCfg'] }),
     adminUpdateBoostTips: b.mutation({ query: (body) => ({ url: adminApiPath('/economics/boost-tips'), method: 'PUT', body }), invalidatesTags: ['PricingCfg'] }),
@@ -2404,6 +2410,11 @@ export const {
   useBoostJobMutation,
   useTipJobMutation,
   useAdminBoostTipsQuery,
+  useAdminMessagesQuery,
+  useAdminMessagePreviewQuery,
+  useAdminMessageLogQuery,
+  useAdminSendTestMessageMutation,
+  useAdminUpdateMessageSettingsMutation,
   useAdminUpdateBoostTipsMutation,
   useJobGiveBackQuery,
   useGiveBackJobMutation,
