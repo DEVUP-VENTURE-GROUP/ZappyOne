@@ -33,9 +33,9 @@ test('a shop puts its own technician on a pet job, and no one else\'s', async ()
   expect(String((await PetBooking.findById(jobId).lean()).workerId)).toBe(String(mine.insertedId));
 });
 
-test('a shop pet job cannot head out unnamed; a stay at the shop needs no one named', () => {
+test('a shop pet job may head out with the owner going themselves; a stay at the shop needs no one named', () => {
   const unnamed = { shopId: oid(), workerId: null, status: 'PROVIDER_ACCEPTED', serviceMode: 'home_visit', serviceLocation: HOME };
-  expect(() => assertSomeoneTravels('pet', unnamed, 'PROVIDER_EN_ROUTE')).toThrow(expect.objectContaining({ code: 'ASSIGN_TECHNICIAN_FIRST' }));
+  expect(() => assertSomeoneTravels('pet', unnamed, 'PROVIDER_EN_ROUTE')).not.toThrow();
   // Boarding at the shop: starting the service is not a trip.
   expect(() => assertSomeoneTravels('pet', { ...unnamed, serviceMode: 'boarding' }, 'SERVICE_STARTED')).not.toThrow();
   // An independent pro is the traveller themselves.

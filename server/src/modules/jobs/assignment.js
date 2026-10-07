@@ -5,22 +5,20 @@
  * every kind of job a shop can take:
  *
  *   - the owner can put any of their own technicians on it, and nobody else's
- *   - nobody sets off without being named, so the customer sees who is coming
- *     and can follow them live (the trip is tracked by technician)
+ *   - the owner may also go themselves; the customer then follows the owner's
+ *     phone live (jobs/:id/owner-location), exactly as they would a technician
  */
 const { KINDS, findJob } = require('./kinds');
 
 const err = (message, status, code) => Object.assign(new Error(message), { status, code });
 
-/** Throws when a shop job would start travelling with no technician on it. */
-function assertSomeoneTravels(kind, doc, next) {
-  const trip = KINDS[kind]?.trip;
-  if (!trip || !doc.shopId || doc.workerId) return;
-  if (!trip.travelling.includes(next)) return;
-  const plain = typeof doc.toObject === 'function' ? doc.toObject() : doc;
-  if (!trip.heading({ ...plain, status: next })) return;
-  throw err('Put one of your technicians on this job first — the customer sees who is coming.', 409, 'ASSIGN_TECHNICIAN_FIRST');
-}
+/**
+ * A shop job may set off with no technician named: the owner is going
+ * themselves and is followed live from their own phone. Kept as the single
+ * place this rule lives, should it ever need to tighten again.
+ */
+// eslint-disable-next-line no-unused-vars
+function assertSomeoneTravels(kind, doc, next) {}
 
 /** The owner hands a job to one of their own technicians. */
 async function assignTechnician({ jobId, shopId, workerId }) {

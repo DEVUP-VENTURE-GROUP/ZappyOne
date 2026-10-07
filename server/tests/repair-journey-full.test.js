@@ -261,11 +261,11 @@ describe('when it goes wrong', () => {
     expect(quote.feePaise).toBe(0);
   });
 
-  it('a shop job does not set off until a technician is named', async () => {
+  it('a shop owner can set off on a job themselves, with no technician named', async () => {
     const { booking } = await bookingService.createBooking(baseBooking({ shopId: shop._id }));
     await bookingService.transition(booking._id, 'WORKER_ACCEPTED', { actorRole: 'shop', actorId: String(shop._id) });
-    await expect(bookingService.transition(booking._id, 'ON_THE_WAY', { actorRole: 'shop', actorId: String(shop._id) }))
-      .rejects.toMatchObject({ code: 'ASSIGN_TECHNICIAN_FIRST' });
+    const moved = await bookingService.transition(booking._id, 'ON_THE_WAY', { actorRole: 'shop', actorId: String(shop._id) });
+    expect((moved.booking || moved).status).toBe('ON_THE_WAY');
   });
 
   it('cancelling once a technician is travelling is not', async () => {
