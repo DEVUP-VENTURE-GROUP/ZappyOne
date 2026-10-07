@@ -258,6 +258,16 @@ const providerEnrolmentSchema = new mongoose.Schema(
     reviewedById: { type: mongoose.Schema.Types.ObjectId, default: null },
     reviewedAt: { type: Date, default: null },
     reviewNote: { type: String, default: '' },
+
+    /**
+     * Documents the reviewer asked to be sent again, and why. While set, the
+     * provider replaces only these; everything else they sent stands.
+     */
+    redo: {
+      codes: { type: [String], default: [] },
+      note: { type: String, default: '' },
+      requestedAt: { type: Date, default: null },
+    },
   },
   { timestamps: true },
 );

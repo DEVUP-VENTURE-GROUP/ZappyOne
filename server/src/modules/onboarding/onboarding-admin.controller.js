@@ -275,7 +275,7 @@ const enrolments = {
    */
   decide: async (req, res, next) => {
     try {
-      const { decision, note = '' } = req.body;
+      const { decision, note = '', docCodes = [] } = req.body;
       const before = await ProviderEnrolment.findById(req.params.id).lean();
       if (!before) return res.status(404).json({ error: 'Enrolment not found' });
 
@@ -284,6 +284,7 @@ const enrolments = {
         decision,
         note,
         adminId: req.auth.sub,
+        docCodes,
       });
 
       await auditService.fromRequest(
@@ -317,7 +318,10 @@ const enrolments = {
           title: `You're approved for ${lineName}`,
           body: 'Set up your services and pricing to start receiving jobs.',
         },
-        rejected: {
+        rejected: enrolment.redo?.codes?.length ? {
+          title: `${lineName}: please send ${enrolment.redo.codes.length === 1 ? 'one document' : `${enrolment.redo.codes.length} documents`} again`,
+          body: note || 'Open the app and upload the documents we asked for.',
+        } : {
           title: `${lineName} verification needs attention`,
           body: note || 'Please review your documents and submit again.',
         },
@@ -325,7 +329,7 @@ const enrolments = {
           title: `${lineName} has been paused`,
           body: note || 'Contact support to restore this service.',
         },
-      }[decision];
+      }[enrolment.status];
 
       await eventsService.notify({
         kind: enrolment.providerKind === 'shop' ? 'shop' : 'worker',

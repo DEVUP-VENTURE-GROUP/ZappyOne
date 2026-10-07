@@ -76,6 +76,13 @@ function Queue() {
   const [decide, { isLoading: deciding }] = useAdminDecideEnrolmentMutation();
   const [notes, setNotes] = useState({});
   const [open, setOpen] = useState(null);
+  // Documents ticked to be sent again, per application.
+  const [picked, setPicked] = useState({});
+  const togglePick = (rowId, code) => setPicked((p) => {
+    const cur = new Set(p[rowId] || []);
+    if (cur.has(code)) cur.delete(code); else cur.add(code);
+    return { ...p, [rowId]: [...cur] };
+  });
 
   if (isLoading) return <PageLoader />;
   const items = data?.items || [];
@@ -86,9 +93,16 @@ function Queue() {
     if (decision === 'rejected' && !note.trim()) {
       return toast.error('Tell them what to fix before rejecting');
     }
+    const docCodes = picked[row._id] || [];
+    if (decision === 'changes' && !docCodes.length) {
+      setOpen(row._id);
+      return toast.error('Tick the documents they should send again');
+    }
     try {
-      await decide({ id: row._id, decision, note }).unwrap();
-      toast.success(decision === 'approved' ? 'Approved — provider notified' : 'Decision sent');
+      await decide({ id: row._id, decision, note, ...(decision === 'changes' && { docCodes }) }).unwrap();
+      setPicked((p) => ({ ...p, [row._id]: [] }));
+      toast.success(decision === 'approved' ? 'Approved — provider notified'
+        : decision === 'changes' ? `Asked for ${docCodes.length} document${docCodes.length > 1 ? 's' : ''} again — provider notified` : 'Decision sent');
       refetch();
     } catch (err) {
       toast.error(err?.data?.error || 'Failed');
@@ -129,6 +143,11 @@ function Queue() {
                 <StatusBadge status={row.status} />
                 {row.submittedAt && <span className="text-[11px] text-slate-400">{fmtDate(row.submittedAt)}</span>}
               </div>
+              {row.status === 'rejected' && row.redo?.codes?.length > 0 && (
+                <p className="mt-1.5 text-[11px] font-semibold text-red-600">
+                  Waiting for them to send again: {row.redo.codes.join(', ')}
+                </p>
+              )}
 
               <button
                 onClick={() => setOpen(open === row._id ? null : row._id)}
@@ -150,7 +169,13 @@ function Queue() {
                     */}
                   <div className="mt-2 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     {(row.documents || []).map((d) => (
-                      <DocumentCard key={d.code} doc={d} />
+                      <div key={d.code} className="space-y-1">
+                        <DocumentCard doc={d} />
+                        <label className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-600 cursor-pointer">
+                          <input type="checkbox" checked={(picked[row._id] || []).includes(d.code)} onChange={() => togglePick(row._id, d.code)} />
+                          Ask for this one again
+                        </label>
+                      </div>
                     ))}
                   </div>
 
@@ -179,6 +204,11 @@ function Queue() {
               <button onClick={() => act(row, 'approved')} disabled={deciding}
                 className="px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-xs font-bold disabled:opacity-60">
                 {deciding ? <Loader2 size={13} className="animate-spin" /> : 'Approve'}
+              </button>
+              <button onClick={() => act(row, 'changes')} disabled={deciding}
+                title="Send back only the ticked documents; everything else stands"
+                className="px-3 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 text-xs font-bold">
+                Ask again{(picked[row._id] || []).length ? ` (${picked[row._id].length})` : ''}
               </button>
               <button onClick={() => act(row, 'rejected')} disabled={deciding}
                 className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold">

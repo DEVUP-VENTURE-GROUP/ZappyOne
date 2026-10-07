@@ -371,6 +371,13 @@ function VerifyStep({ lineCode, onDone }) {
   }
 
   const decided = ['approved', 'suspended'].includes(enrolment?.status);
+  // The reviewer asked for named documents again: only those can change now.
+  const redo = enrolment?.status === 'rejected' && enrolment?.redo?.codes?.length ? new Set(enrolment.redo.codes) : null;
+  const redoSince = redo && enrolment.redo.requestedAt ? new Date(enrolment.redo.requestedAt) : null;
+  const sentAgain = (code) => {
+    const d = (enrolment?.documents || []).find((x) => x.code === code);
+    return !!d?.url && (!redoSince || new Date(d.uploadedAt) > redoSince);
+  };
 
   /**
    * Put one file behind the document, however it was obtained.
@@ -473,7 +480,21 @@ function VerifyStep({ lineCode, onDone }) {
           <p className="text-xs text-emerald-700 mt-1">Set up your services and pricing to start receiving jobs.</p>
         </div>
       )}
-      {enrolment?.status === 'rejected' && enrolment.reviewNote && (
+      {redo && (
+        <div className="card bg-red-50 ring-red-200">
+          <p className="text-sm font-bold text-red-900">
+            Please send {redo.size === 1 ? 'this document' : 'these documents'} again
+          </p>
+          <ul className="mt-1.5 space-y-0.5">
+            {reqs.documents.filter((d) => redo.has(d.code)).map((d) => (
+              <li key={d.code} className="text-xs font-semibold text-red-800">· {d.label}{sentAgain(d.code) ? ' (done)' : ''}</li>
+            ))}
+          </ul>
+          {enrolment.reviewNote && <p className="text-xs text-red-700 mt-1.5 leading-relaxed">{enrolment.reviewNote}</p>}
+          <p className="text-[11px] text-red-600 mt-1.5">Everything else you sent is fine and stays as it is.</p>
+        </div>
+      )}
+      {!redo && enrolment?.status === 'rejected' && enrolment.reviewNote && (
         <div className="card bg-red-50 ring-red-200">
           <p className="text-sm font-bold text-red-900">Needs changes</p>
           <p className="text-xs text-red-700 mt-1 leading-relaxed">{enrolment.reviewNote}</p>
@@ -482,8 +503,11 @@ function VerifyStep({ lineCode, onDone }) {
 
       <p className="text-xs font-bold text-slate-500 uppercase tracking-wide px-1">Documents</p>
       {reqs.documents.map((d) => {
-        const uploaded = !!have[d.code];
-        const isMissing = missingCodes.has(d.code);
+        const again = redo?.has(d.code);
+        // Locked when the reviewer accepted it; open (and not yet done) when they asked for it again.
+        const locked = decided || (redo && !again);
+        const uploaded = again ? sentAgain(d.code) : !!have[d.code];
+        const isMissing = missingCodes.has(d.code) || (again && !uploaded);
         return (
           <div key={d.code} className={`card ${uploaded ? 'ring-emerald-200 bg-emerald-50/30' : isMissing ? 'ring-red-200' : ''}`}>
             <div className="flex items-start gap-3">
@@ -494,11 +518,15 @@ function VerifyStep({ lineCode, onDone }) {
                 <p className="font-semibold text-sm text-[#0F172A]">
                   {d.label}{!d.required && <span className="text-slate-400 font-normal"> · optional</span>}
                 </p>
-                {carried.has(d.code)
+                {again
+                  ? <p className="text-xs font-semibold text-red-700 mt-0.5 leading-relaxed">{uploaded ? 'New copy added. Submit when ready.' : 'Asked for again: send a new, clear copy.'}</p>
+                  : redo
+                    ? <p className="text-xs text-emerald-700 mt-0.5">Accepted</p>
+                    : carried.has(d.code)
                   ? <p className="text-xs text-emerald-700 mt-0.5 leading-relaxed">Already on file from your verification. Nothing to do.</p>
                   : d.hint && <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">{d.hint}</p>}
               </div>
-              {!decided && !carried.has(d.code) && (d.capture ? (
+              {!locked && (again || !carried.has(d.code)) && (d.capture ? (
                 /*
                   This one has to be taken now. A file picker would let the
                   gallery answer a question about the present moment, which is
@@ -539,7 +567,7 @@ function VerifyStep({ lineCode, onDone }) {
               <input
                 className={`input text-sm w-full mt-1.5 ${missingCodes.has(f.code) ? '!ring-2 !ring-red-200' : ''}`}
                 value={fields[f.code] ?? savedFields[f.code] ?? ''}
-                disabled={decided}
+                disabled={decided || !!redo}
                 onChange={(e) => setFields((s) => ({ ...s, [f.code]: e.target.value }))}
               />
               {f.hint && <p className="text-[11px] text-slate-400 mt-1">{f.hint}</p>}
@@ -574,7 +602,7 @@ function VerifyStep({ lineCode, onDone }) {
         <button onClick={send} disabled={submitting || enrolment?.status === 'pending_review'} className="btn-primary w-full">
           {submitting
             ? <><Loader2 size={15} className="animate-spin" /> Sending…</>
-            : enrolment?.status === 'pending_review' ? 'Awaiting review' : 'Submit for verification'}
+            : enrolment?.status === 'pending_review' ? 'Awaiting review' : redo ? 'Send for review again' : 'Submit for verification'}
         </button>
       )}
     </Shell>

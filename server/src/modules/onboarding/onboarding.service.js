@@ -139,9 +139,12 @@ async function saveSubmission({ owner, enrolmentId, documents = [], fields = [],
   if (['approved', 'suspended'].includes(enrolment.status)) {
     throw httpError('This enrolment has already been decided', 409, 'ALREADY_DECIDED');
   }
+  // Asked for specific documents again: only those can change.
+  const redo = enrolment.redo?.codes?.length ? new Set(enrolment.redo.codes) : null;
 
   for (const doc of documents) {
     const code = String(doc.code).toLowerCase();
+    if (redo && !redo.has(code)) continue;
     const at = enrolment.documents.findIndex((d) => d.code === code);
     const row = {
       code,
@@ -159,7 +162,7 @@ async function saveSubmission({ owner, enrolmentId, documents = [], fields = [],
     else enrolment.documents.push(row);
   }
 
-  for (const f of fields) {
+  for (const f of (redo ? [] : fields)) {
     const code = String(f.code).toLowerCase();
     const at = enrolment.fields.findIndex((x) => x.code === code);
     const row = { code, value: f.value ?? '' };
@@ -212,6 +215,17 @@ async function submitForReview({ owner, enrolmentId }) {
     missing.push({ kind: 'declaration', code: 'declarations', label: 'Accept the service conditions' });
   }
 
+  // Each document the reviewer asked for must be a new one, sent after the request.
+  if (enrolment.redo?.codes?.length) {
+    const since = enrolment.redo.requestedAt || new Date(0);
+    for (const code of enrolment.redo.codes) {
+      const d = enrolment.documents.find((x) => x.code === code);
+      if (!d?.url || !(new Date(d.uploadedAt) > since)) {
+        missing.push({ kind: 'document', code, label: set.documents.find((x) => x.code === code)?.label || code });
+      }
+    }
+  }
+
   if (missing.length) {
     throw httpError('Some required items are still missing', 400, 'INCOMPLETE', { missing });
   }
@@ -235,6 +249,7 @@ async function submitForReview({ owner, enrolmentId }) {
   enrolment.submittedAt = new Date();
   enrolment.requirementSetId = set._id;
   enrolment.reviewNote = '';
+  enrolment.redo = { codes: [], note: '', requestedAt: null };
   await enrolment.save();
   require('../messaging/verification').submitted(enrolment).catch(() => {});
   return enrolment;
@@ -248,8 +263,9 @@ async function submitForReview({ owner, enrolmentId }) {
  * Scoped to a single line on purpose: revoking a provider's laptop approval
  * must not touch the phone work they are already doing well.
  */
-async function decide({ enrolmentId, decision, note = '', adminId }) {
-  const allowed = ['approved', 'rejected', 'suspended'];
+async function decide({ enrolmentId, decision, note = '', adminId, docCodes = [] }) {
+  // 'changes': send back named documents only; the rest of the application stands.
+  const allowed = ['approved', 'rejected', 'suspended', 'changes'];
   if (!allowed.includes(decision)) {
     throw httpError('Unknown decision', 400, 'UNKNOWN_DECISION', { allowed });
   }
@@ -261,6 +277,14 @@ async function decide({ enrolmentId, decision, note = '', adminId }) {
     throw httpError('This application has not been submitted yet', 409, 'NOT_SUBMITTED');
   }
 
+  if (decision === 'changes') {
+    const codes = [...new Set((docCodes || []).map((c) => String(c).toLowerCase()))];
+    if (!codes.length) throw httpError('Pick the documents to send again', 400, 'NO_DOCUMENTS');
+    enrolment.redo = { codes, note, requestedAt: new Date() };
+    decision = 'rejected';
+  } else {
+    enrolment.redo = { codes: [], note: '', requestedAt: null };
+  }
   enrolment.status = decision;
   enrolment.reviewedById = adminId || null;
   enrolment.reviewedAt = new Date();
