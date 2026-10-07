@@ -1426,6 +1426,15 @@ export default function ProviderRepairSetupPage() {
 
   const go = (next) => { setStep(next); window.scrollTo({ top: 0, behavior: 'smooth' }); };
 
+  // Already set up: open on the prices (what people come back to change), not
+  // at step one. Every earlier step is still a tap away in the bar above.
+  const [landed, setLanded] = useState(null);
+  useEffect(() => {
+    if (!work || landed === active) return;
+    setLanded(active);
+    if (work.selectedCount && brandCodes?.length !== 0) setStep('pricing');
+  }, [work, active, landed, brandCodes]);
+
   return (
     <div className="min-h-screen bg-[#F9FAFB] pb-10">
       <header className="sticky top-0 z-20 border-b border-slate-100 bg-white">

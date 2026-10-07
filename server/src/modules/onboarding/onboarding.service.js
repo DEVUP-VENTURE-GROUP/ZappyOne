@@ -77,6 +77,7 @@ function ownerFilter(owner) {
 
 /** Every line this provider has started, in any state. */
 async function listEnrolments(owner) {
+  await enrolSetUpWork(owner).catch(() => {});
   const rows = await ProviderEnrolment.find(ownerFilter(owner)).sort({ updatedAt: -1 }).lean();
   if (!rows.length) return [];
 
@@ -86,6 +87,24 @@ async function listEnrolments(owner) {
   const byCode = new Map(lines.map((l) => [l.code, l]));
 
   return rows.map((r) => ({ ...r, line: byCode.get(r.lineCode) || null }));
+}
+
+/**
+ * Work set up without an application for it. The repair setup screen let a
+ * provider choose their work and prices for a service they never applied for,
+ * so it never showed under their services and could never be verified (a shop
+ * priced phone repair and saw only its other services). Any repair work they
+ * have set up gets its application, as a draft for them to finish.
+ */
+async function enrolSetUpWork(owner) {
+  const { ProviderCapability } = require('../repair/models/capability.model');
+  const verticals = await ProviderCapability.distinct('vertical', { ...ownerFilter(owner), isActive: true });
+  if (!verticals.length) return;
+  const lines = await ServiceLine.find({ repairVertical: { $in: verticals }, status: 'live', isActive: true, isArchived: false }).select('code').lean();
+  const have = new Set(await ProviderEnrolment.distinct('lineCode', ownerFilter(owner)));
+  for (const l of lines) {
+    if (!have.has(l.code)) await enrol({ owner, providerKind: owner.providerKind, lineCode: l.code }).catch(() => {});
+  }
 }
 
 /**
