@@ -655,7 +655,7 @@ export default function WorkerRepairJobPage() {
         <div className="card space-y-2.5">
           <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Job</p>
           {[
-            ['Device', `${booking.brandCode} ${booking.modelCode}`],
+            ['Device', booking.deviceName || `${booking.brandCode} ${booking.modelCode}`],
             /*
              * The powertrain, where the vertical has one.
              *

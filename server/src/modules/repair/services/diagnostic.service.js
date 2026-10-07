@@ -148,6 +148,19 @@ async function resolve({ problemCode, flow, answers = {}, vertical = null }) {
   const flowComplete = flow ? isComplete(flow, answers) : true;
   const flowInconclusive = flowEngaged && flowComplete && votes.size === 0;
 
+  /*
+   * The problem the customer picked is evidence too, and the strongest single
+   * piece: several problems share one question set (the battery & power flow
+   * serves "charging port damaged" as well), so one answer like "drains fast"
+   * out-voted the problem itself and a damaged port was booked as a battery
+   * replacement. Its own repairs start ahead of any one answer; only several
+   * answers pointing elsewhere can overtake (or tie, and then it is inspected).
+   */
+  const PROBLEM_PRIOR = 2;
+  if (votes.size) {
+    for (const code of problem?.candidateRepairCodes || []) votes.set(code, (votes.get(code) || 0) + PROBLEM_PRIOR);
+  }
+
   let candidateCodes = [...votes.keys()];
   const fromFlow = candidateCodes.length > 0;
   if (!fromFlow && !flowInconclusive) candidateCodes = problem?.candidateRepairCodes || [];

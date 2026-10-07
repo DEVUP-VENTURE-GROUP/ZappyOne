@@ -142,6 +142,13 @@ async function getBooking(req, res, next) {
      *
      * A permission is the server's to state, never the client's to guess.
      */
+    // The device in words ("Samsung Galaxy S23 Ultra"), never its catalog code.
+    const [brandDoc, modelDoc] = await Promise.all([
+      require('../../service/brand.model').findOne({ code: booking.brandCode }).select('name').lean(),
+      require('../../service/device-model.model').findOne({ code: booking.modelCode }).select('name').lean(),
+    ]).catch(() => [null, null]);
+    booking.deviceName = [brandDoc?.name || booking.brandCode, modelDoc?.name || booking.modelCode].filter(Boolean).join(' ');
+
     res.json({
       booking,
       quotes,
