@@ -602,7 +602,7 @@ function ProblemStep({ vertical, model, productType, fuelType, presetCode, onPic
               <h3 className="text-[15px] font-bold text-ink-900">{cat.name}</h3>
               <span className="text-[13px] text-ink-500">{cat.problems.length}</span>
             </div>
-            <ProblemLayout vertical={vertical} problems={cat.problems} onPick={onPick} />
+            <ProblemLayout vertical={vertical} problems={cat.problems} category={cat} onPick={onPick} />
           </section>
         );
       })}

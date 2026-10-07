@@ -1,13 +1,13 @@
 import { AlertTriangle, Wrench, ChevronRight } from 'lucide-react';
-import { problemPhoto } from '@shared/components/home/problemArt';
+import { problemPhotoIn } from '@shared/components/home/problemArt';
 
 /**
  * One problem as a picture card: what it looks like, what it is called, and
  * whether it is priced only after an inspection. Problems without a photo get
  * the same card with a calm icon, so a grid never looks broken.
  */
-export function ProblemCard({ vertical, problem, onPick }) {
-  const photo = problemPhoto(vertical, problem);
+export function ProblemCard({ vertical, problem, category, onPick }) {
+  const photo = problemPhotoIn(vertical, problem, category);
   return (
     <button type="button" onClick={() => onPick(problem)}
       className="group flex flex-col overflow-hidden rounded-card border border-line bg-white text-left transition-colors duration-150 hover:border-line-strong active:bg-canvas">
@@ -51,10 +51,10 @@ export function ProblemRow({ problem, onPick }) {
 }
 
 /** Photo cards when this heading's problems have photos, rows when none do. */
-export function ProblemLayout({ vertical, problems, onPick }) {
-  const withPhotos = problems.some((p) => problemPhoto(vertical, p));
+export function ProblemLayout({ vertical, problems, category, onPick }) {
+  const withPhotos = problems.some((p) => problemPhotoIn(vertical, p, category));
   if (!withPhotos) {
     return <div className="space-y-2">{problems.map((p) => <ProblemRow key={p.code} problem={p} onPick={onPick} />)}</div>;
   }
-  return <ProblemGrid>{problems.map((p) => <ProblemCard key={p.code} vertical={vertical} problem={p} onPick={onPick} />)}</ProblemGrid>;
+  return <ProblemGrid>{problems.map((p) => <ProblemCard key={p.code} vertical={vertical} problem={p} category={category} onPick={onPick} />)}</ProblemGrid>;
 }

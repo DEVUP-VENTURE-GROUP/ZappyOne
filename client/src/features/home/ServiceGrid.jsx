@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Wrench } from 'lucide-react';
 import { SERVICE_ICONS } from '@shared/components/home/LiveServices';
-import { distinctArt } from '@shared/components/home/serviceArt';
+import { distinctArt, servicePhoto } from '@shared/components/home/serviceArt';
 import { problemPhoto } from '@shared/components/home/problemArt';
 
 /**
@@ -14,14 +14,15 @@ import { problemPhoto } from '@shared/components/home/problemArt';
  */
 function Tile({ service, character, onOpen }) {
   const Icon = SERVICE_ICONS[service.icon] || Wrench;
-  // An admin-set picture wins; then the service's ZappyOne character; then its icon.
-  const art = service.imageUrl || character?.still;
+  // An admin-set picture wins; then the service's own photo; then its ZappyOne character; then its icon.
+  const photo = servicePhoto(service);
+  const art = photo || character?.still;
   return (
     <button type="button" onClick={onOpen}
       className="group flex flex-col items-center gap-2 rounded-card text-center focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-zappy-600/20">
       <span className="flex aspect-square w-full items-center justify-center overflow-hidden rounded-card bg-sunken transition-colors duration-150 group-active:bg-line">
         {art
-          ? <img src={art} alt="" loading="lazy" className={`h-full w-full ${service.imageUrl ? 'object-cover' : 'object-contain mix-blend-multiply pt-1.5'}`} />
+          ? <img src={art} alt="" loading="lazy" className={`h-full w-full ${photo ? 'object-cover' : 'object-contain mix-blend-multiply pt-1.5'}`} />
           : <Icon strokeWidth={1.6} className="h-[36%] w-[36%] text-ink-700" />}
       </span>
       <span className="line-clamp-2 text-[13px] font-semibold leading-[1.25] text-ink-900">{service.name}</span>

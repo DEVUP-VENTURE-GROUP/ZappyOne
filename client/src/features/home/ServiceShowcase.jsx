@@ -87,14 +87,16 @@ function ServiceCard({ service, onOpen }) {
 }
 
 function Section({ domain, onOpen }) {
-  const art = artFor(domain.services[0]?.code, domain.code);
+  // The section's own photo when it has one (helping errands), else its character.
+  const photo = servicePhoto(domain.services[0]);
+  const art = photo ? { still: photo } : artFor(domain.services[0]?.code, domain.code);
   const [title, line] = PITCH[domain.code] || [domain.name, domain.description];
   return (
     <section aria-labelledby={`band-${domain.code}`} className="grid gap-3 lg:grid-cols-[280px_minmax(0,1fr)] lg:gap-8">
       <div className="flex items-center gap-3 lg:items-start">
         {art && (
           <img src={art.still} alt="" loading="lazy"
-            className="h-12 w-12 shrink-0 rounded-full bg-sunken object-contain mix-blend-multiply lg:h-16 lg:w-16" />
+            className={`h-12 w-12 shrink-0 rounded-full bg-sunken lg:h-16 lg:w-16 ${photo ? 'object-cover' : 'object-contain mix-blend-multiply'}`} />
         )}
         <div className="min-w-0">
           <h3 id={`band-${domain.code}`} className="text-[17px] font-bold leading-snug text-ink-900">{domain.name}</h3>

@@ -86,7 +86,7 @@ export default function CategoryProblemsPage() {
         </div>
 
         <div className="mt-4">
-          <ProblemLayout vertical={vertical} problems={category.problems}
+          <ProblemLayout vertical={vertical} problems={category.problems} category={category}
             onPick={(p) => nav(`${service.path}?problem=${encodeURIComponent(p.code)}`)} />
         </div>
 

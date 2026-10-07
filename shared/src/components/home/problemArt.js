@@ -67,6 +67,19 @@ export function problemPhoto(vertical, problem) {
   return url(VERTICAL[vertical], problem?.code);
 }
 
+/**
+ * Verticals whose problems borrow their heading's photo when they have none of
+ * their own, so every issue inside a heading is a picture card (laptop).
+ */
+const HEADING_FALLBACK = new Set(['laptop']);
+
+/** A problem's picture inside a heading: its own, else the heading's where that vertical allows it. */
+export function problemPhotoIn(vertical, problem, category) {
+  const own = problemPhoto(vertical, problem);
+  if (own || !category || !HEADING_FALLBACK.has(VERTICAL[vertical])) return own;
+  return categoryPhoto(vertical, category);
+}
+
 /** A heading's picture: its own upload, its cover, else any of its problems'. */
 export function categoryPhoto(vertical, category) {
   if (category?.imageUrl) return category.imageUrl;
