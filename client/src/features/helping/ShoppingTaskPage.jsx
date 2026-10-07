@@ -2,7 +2,7 @@ import { useSafeBack } from '../../hooks/useBookingFlow';
 import { useState, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
-  ArrowLeft, Plus, Trash2, MapPin, Loader2, ShoppingBasket, PackageSearch, Info,
+  ArrowLeft, Plus, Trash2, MapPin, Loader2, Info,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import GrowingHere from '../catalog/serviceability/GrowingHere';
@@ -153,17 +153,18 @@ export default function ShoppingTaskPage() {
       </div>
 
       <Shell>
-        <div className="flex rounded-2xl bg-slate-100 p-1">
-          {[['shop', 'Shop for Me', ShoppingBasket], ['pickup', 'Pick Up for Me', PackageSearch]].map(([k, label, Icon]) => (
+        {/* The two errands, each with its own photo (assets/web/services/helping). */}
+        <div className="grid grid-cols-2 gap-3">
+          {[['shop', 'Shop for Me', '/services/helping/shopping.webp'], ['pickup', 'Pick Up for Me', '/services/helping/pickup.webp']].map(([k, label, photo]) => (
             <button
               key={k}
               type="button"
               onClick={() => setMode(k)}
-              className={`flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-bold transition ${
-                mode === k ? 'bg-white text-[#0F172A] shadow' : 'text-slate-400'
-              }`}
+              aria-pressed={mode === k}
+              className={`overflow-hidden rounded-2xl bg-white text-left ring-2 transition ${mode === k ? 'ring-zappy-600 shadow-sm' : 'ring-slate-100 hover:ring-slate-200'}`}
             >
-              <Icon size={14} /> {label}
+              <img src={photo} alt="" loading="lazy" className="aspect-[16/10] w-full object-cover" />
+              <span className={`block px-3 py-2.5 text-sm font-bold ${mode === k ? 'text-[#0F172A]' : 'text-slate-500'}`}>{label}</span>
             </button>
           ))}
         </div>

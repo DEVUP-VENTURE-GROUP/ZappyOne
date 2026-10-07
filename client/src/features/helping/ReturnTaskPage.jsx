@@ -135,17 +135,18 @@ export default function ReturnTaskPage() {
       </div>
 
       <Shell>
-        <div className="flex rounded-2xl bg-slate-100 p-1">
-          {[['return', 'Return'], ['exchange', 'Exchange']].map(([k, label]) => (
+        {/* Return or exchange, each with its own photo (assets/web/services/helping). */}
+        <div className="grid grid-cols-2 gap-3">
+          {[['return', 'Return an Item', '/services/helping/return.webp'], ['exchange', 'Exchange an Item', '/services/helping/exchange.webp']].map(([k, label, photo]) => (
             <button
               key={k}
               type="button"
               onClick={() => setIsExchange(k === 'exchange')}
-              className={`flex-1 rounded-xl py-2.5 text-sm font-bold transition ${
-                (k === 'exchange') === isExchange ? 'bg-white text-[#0F172A] shadow' : 'text-slate-400'
-              }`}
+              aria-pressed={(k === 'exchange') === isExchange}
+              className={`overflow-hidden rounded-2xl bg-white text-left ring-2 transition ${(k === 'exchange') === isExchange ? 'ring-zappy-600 shadow-sm' : 'ring-slate-100 hover:ring-slate-200'}`}
             >
-              {label}
+              <img src={photo} alt="" loading="lazy" className="aspect-[16/10] w-full object-cover" />
+              <span className={`block px-3 py-2.5 text-sm font-bold ${(k === 'exchange') === isExchange ? 'text-[#0F172A]' : 'text-slate-500'}`}>{label}</span>
             </button>
           ))}
         </div>

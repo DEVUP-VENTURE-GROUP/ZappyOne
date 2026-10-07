@@ -1,3 +1,4 @@
+import { servicePhoto as problemServicePhoto } from './problemArt';
 /**
  * ZappyOne's characters — one per kind of work, a still and a short loop.
  *
@@ -108,5 +109,8 @@ const SERVICE_PHOTOS = new Set([
 
 export function servicePhoto(service) {
   if (service?.imageUrl) return service.imageUrl;
-  return SERVICE_PHOTOS.has(service?.code) ? `/services/pet/${service.code}.webp` : null;
+  if (SERVICE_PHOTOS.has(service?.code)) return `/services/pet/${service.code}.webp`;
+  // Helping errands use their real photos (shopping, pickup, return, exchange); others keep their character.
+  const photo = problemServicePhoto(service?.code);
+  return photo && photo.startsWith('/services/helping/') ? photo : null;
 }
