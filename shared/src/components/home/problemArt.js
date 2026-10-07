@@ -3,7 +3,7 @@
  *
  * Files live in the global assets folder (assets/web/problems/<vertical>,
  * served at /problems/<vertical>), 480px webp, about 20KB each. Phones and
- * laptops have a photo per problem; vehicles a photo per heading. A picture an
+ * laptops have a photo per problem; laptops and vehicles a photo per heading. A picture an
  * admin uploads for a problem or heading always wins; these fill the rest so
  * the catalog looks deliberate without anyone uploading 60 photos.
  */
@@ -18,8 +18,12 @@ const PHOTOS = {
   ]),
 };
 
-/** Photos drawn for whole headings (vehicles), at /problems/<vertical>/headings/<code>.webp. */
+/** Photos drawn for whole headings, at /problems/<vertical>/headings/<code>.webp. */
 const HEADINGS = {
+  laptop: new Set([
+    'display', 'battery_power', 'charging', 'keyboard_touchpad', 'body_hinge', 'audio', 'camera', 'storage', 'performance',
+    'software', 'connectivity', 'overheating', 'advanced_hardware', 'liquid_damage', 'data_recovery', 'upgrade', 'maintenance',
+  ]),
   water_tank_care: new Set(['wt_cleaning', 'wt_inspection', 'wt_flushing', 'wt_repair', 'wt_addons']),
   two_wheeler: new Set([
     'tw_battery_electrical', 'tw_brakes', 'tw_chain_drive', 'tw_clutch_gear', 'tw_cooling', 'tw_engine',
@@ -85,7 +89,7 @@ export function categoryPhoto(vertical, category) {
  */
 const SERVICE_COVERS = {
   mobile: '/problems/mobile/cracked_screen.webp',
-  laptop: '/problems/laptop/lt_overheating.webp',
+  laptop: '/problems/laptop/headings/display.webp',
   two_wheeler: '/problems/two_wheeler/headings/tw_engine.webp',
   four_wheeler: '/problems/four_wheeler/headings/fw_engine.webp',
   water_tank_care: '/problems/water_tank_care/headings/wt_cleaning.webp',
