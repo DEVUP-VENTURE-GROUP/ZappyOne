@@ -43,30 +43,31 @@ function withOpenState(shop) {
   const now = istParts();
   const today = hours.find((h) => h.day === now.day) || null;
 
-  const toMinutes = (hhmm) => {
-    const [h, m] = String(hhmm || '').split(':').map(Number);
-    return Number.isFinite(h) && Number.isFinite(m) ? h * 60 + m : null;
-  };
-
-  let openNow = false;
-  if (today && !today.isClosed) {
-    const open = toMinutes(today.opensAt);
-    const close = toMinutes(today.closesAt);
-    const minutes = now.minutesOfDay;
-    if (open != null && close != null) {
-      // A close time before the open time is an overnight shift, which is
-      // ordinary for repair shops beside night markets.
-      openNow = close > open
-        ? minutes >= open && minutes < close
-        : minutes >= open || minutes < close;
-    }
-  }
+  // Overnight shifts included (an 8 pm - 6 am shop is open at 2 am): Shop.openFromHours.
+  const openNow = Shop.openFromHours(hours, now);
 
   return {
     ...shop,
     openNow,
     todayHours: today && !today.isClosed ? { opensAt: today.opensAt, closesAt: today.closesAt } : null,
   };
+}
+
+/**
+ * The services a shop is listed for are its approved service applications.
+ * They were only copied over when an admin decided one, so a shop approved
+ * before that copy existed (or whose copy failed) stayed "Not live" with a
+ * Services gap forever. Brought up to date whenever the owner opens the app.
+ */
+async function syncServices(shop) {
+  if (!shop?._id) return shop;
+  const { ProviderEnrolment } = require('../onboarding/onboarding.model');
+  const approved = await ProviderEnrolment.find({ shopId: shop._id, status: 'approved' }).select('lineCode domainCode').lean();
+  const codes = approved.map((e) => e.lineCode).sort();
+  if (codes.join() === [...(shop.services || [])].sort().join()) return shop;
+  const set = { services: codes, ...(!shop.category && approved[0] ? { category: approved[0].domainCode } : {}) };
+  await Shop.updateOne({ _id: shop._id }, { $set: set });
+  return { ...shop, ...set };
 }
 
 async function resolveShopImages(shop) {
@@ -447,6 +448,7 @@ module.exports = {
   removeWorkerFromShop,
   getShopEarnings,
   resolveShopImages,
+  syncServices,
   /**
    * The open/closed rule, exported so NOBODY recomputes it.
    *

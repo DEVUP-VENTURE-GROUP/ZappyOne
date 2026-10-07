@@ -5,8 +5,9 @@ const shopService = require('./shop.service');
 
 async function getMe(req, res, next) {
   try {
-    const shop = await Shop.findById(req.auth.sub).lean();
+    let shop = await Shop.findById(req.auth.sub).lean();
     if (!shop) return res.status(404).json({ error: 'Shop not found' });
+    shop = await shopService.syncServices(shop).catch(() => shop);
     /*
      * `openNow` is computed HERE, from India's clock, and sent to the owner —
      * the identical value customers are given. The dashboard used to work it

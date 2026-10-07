@@ -146,21 +146,33 @@ shopSchema.methods.nextOpening = function nextOpening(when = new Date()) {
   return null;
 };
 
+/**
+ * Open at this IST moment? A closing time earlier than the opening time is an
+ * overnight shift (ordinary for repair shops near night markets): it is open
+ * from the opening time to midnight on its own day, and from midnight to the
+ * closing time on the NEXT day, which is read from yesterday's row. Reading
+ * only today's row showed an 8 pm - 6 am shop as closed all night after 12.
+ */
+function openFromHours(hours, { day, minutesOfDay: minutes }) {
+  const span = (row) => {
+    if (!row || row.isClosed) return null;
+    const open = toMinutes(row.opensAt);
+    const close = toMinutes(row.closesAt);
+    return open == null || close == null ? null : { open, close };
+  };
+  const today = span(hours.find((h) => h.day === day));
+  const yesterday = span(hours.find((h) => h.day === (day + 6) % 7));
+  if (today && (today.close > today.open
+    ? minutes >= today.open && minutes < today.close
+    : minutes >= today.open)) return true;
+  return !!(yesterday && yesterday.close <= yesterday.open && minutes < yesterday.close);
+}
+shopSchema.statics.openFromHours = openFromHours;
+
 shopSchema.methods.isOpenAt = function isOpenAt(when = new Date()) {
   if (!this.hours?.length) return null;
-
   // Hours are Indian local time; the server clock is not.
-  const { day, minutesOfDay: minutes } = istParts(when);
-  const row = this.hours.find((h) => h.day === day);
-  if (!row || row.isClosed || !row.opensAt || !row.closesAt) return false;
-
-  const open = toMinutes(row.opensAt);
-  const close = toMinutes(row.closesAt);
-  if (open == null || close == null) return false;
-
-  // A closing time earlier than the opening time means the shift runs past
-  // midnight, which is ordinary for repair shops near markets.
-  return close > open ? minutes >= open && minutes < close : minutes >= open || minutes < close;
+  return openFromHours(this.hours, istParts(when));
 };
 
 /**
