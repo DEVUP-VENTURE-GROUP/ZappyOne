@@ -121,7 +121,7 @@ export function useTrackingFeed(bookingId, { enabled = true, live = enabled } = 
  * fires far more often than anyone needs, so posts are throttled — battery on a
  * working technician's phone is a real constraint, not a detail.
  */
-export function usePublishTripLocation(bookingId, active, { minIntervalMs = 10000 } = {}) {
+export function usePublishTripLocation(bookingId, active, { minIntervalMs = 10000, asOwner = false } = {}) {
   const { accessToken: token } = useSelector(selectAuth);
   const lastSent = useRef(0);
   /**
@@ -154,7 +154,8 @@ export function usePublishTripLocation(bookingId, active, { minIntervalMs = 1000
         if (now - lastSent.current < minIntervalMs) return;
         lastSent.current = now;
 
-        fetch(`${API_BASE}/api/workers/location`, {
+        // A shop owner doing the job themselves reports through the job, not a worker profile.
+        fetch(asOwner ? `${API_BASE}/api/jobs/${bookingId}/owner-location` : `${API_BASE}/api/workers/location`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify({

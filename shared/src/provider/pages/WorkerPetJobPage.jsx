@@ -52,7 +52,9 @@ export default function WorkerPetJobPage() {
   const trip = tripOf('pet', data?.booking);
   // The shop owner manages the job; the technician on it is the one travelling.
   const isOwner = useSelector(selectRole) === 'shop';
-  const sharing = usePublishTripLocation(id, Boolean(trip) && !isOwner);
+  // The owner shares their own position when they go themselves (no carer on the job).
+  const ownerGoing = isOwner && !data?.booking?.workerId;
+  const sharing = usePublishTripLocation(id, Boolean(trip) && (!isOwner || ownerGoing), { asOwner: ownerGoing });
 
   if (isLoading) return <div className="flex justify-center py-24"><Loader2 size={24} className="animate-spin text-zappy-400" /></div>;
   if (!data?.booking) return <div className="text-center py-24 text-slate-400">Booking not found</div>;
@@ -127,14 +129,14 @@ export default function WorkerPetJobPage() {
       </div>
 
       <div className="max-w-lg mx-auto px-4 py-4 space-y-3 pb-10">
-        {trip && !isOwner && <TripSharingBanner sharing={sharing} {...trip} />}
+        {trip && (!isOwner || ownerGoing) && <TripSharingBanner sharing={sharing} {...trip} />}
         <OnSiteCard onSite={booking.onSite} />
         <GiveBackCard jobId={booking._id} status={booking.status} />
         {isOwner && (
           <div className="rounded-2xl border-2 border-slate-200 bg-white p-4">
             <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Who goes</p>
             {!booking.workerId && (
-              <p className="mt-1 text-[12px] text-amber-700">Nobody is on this job yet. Name who goes — the owner sees them and can follow them live.</p>
+              <p className="mt-1 text-[12px] text-slate-600">You can go yourself: use the steps below and the pet's owner follows you live. Or hand it to one of your team.</p>
             )}
             <AssignTechnician jobId={id} workerId={booking.workerId} onDone={refetch} startOpen={!booking.workerId} />
           </div>

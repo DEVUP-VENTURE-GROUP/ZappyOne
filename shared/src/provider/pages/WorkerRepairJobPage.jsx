@@ -441,7 +441,9 @@ export default function WorkerRepairJobPage() {
   const onTrip = MOVING_STATUSES.includes(status);
   // The shop owner manages the job; the technician on it is the one travelling.
   const isOwner = useSelector(selectRole) === 'shop';
-  const sharingLocation = usePublishTripLocation(id, onTrip && !isOwner);
+  // The owner shares their own position when they go themselves (no technician on the job).
+  const ownerGoing = isOwner && !data?.booking?.workerId;
+  const sharingLocation = usePublishTripLocation(id, onTrip && (!isOwner || ownerGoing), { asOwner: ownerGoing });
 
   /**
    * Proximity, computed up here for the SAME reason — a hook must run on every
@@ -576,13 +578,15 @@ export default function WorkerRepairJobPage() {
       </div></header>
 
       <div className="max-w-lg lg:max-w-2xl mx-auto px-4 pt-4 space-y-3">
-        {onTrip && !isOwner && <TripSharingBanner sharing={sharingLocation} {...tripOf('repair', booking)} />}
+        {onTrip && (!isOwner || ownerGoing) && <TripSharingBanner sharing={sharingLocation} {...tripOf('repair', booking)} />}
         <OnSiteCard onSite={booking.onSite} />
         {isOwner && (
           <div className="card">
             <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Technician</p>
             {!booking.workerId && (
-              <p className="mt-1 text-[12px] text-amber-700">Nobody is on this job yet. Name who goes — the customer sees them and can follow them live.</p>
+              <p className="mt-1 text-[12px] text-slate-600">
+                You can go yourself: use the steps below and the customer follows you live. Or hand it to one of your technicians.
+              </p>
             )}
             <AssignTechnician jobId={id} workerId={booking.workerId} onDone={refetch} startOpen={!booking.workerId} />
           </div>

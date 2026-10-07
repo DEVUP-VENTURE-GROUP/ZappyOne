@@ -91,6 +91,28 @@ const CUSTOMER_REASONS = [
   'No longer needed', 'Want to change the time or address', 'Other reason',
 ];
 
+/**
+ * A shop owner going to the job themselves (no technician on it): their phone's
+ * position, shown live to the customer exactly as a technician's would be.
+ */
+router.post('/:id/owner-location',
+  authenticate, requireRole('shop'),
+  makeLimiter({ windowMs: 60_000, max: 30, prefix: 'ownerloc' }),
+  validate(Joi.object({ lat: Joi.number().min(-90).max(90).required(), lng: Joi.number().min(-180).max(180).required() })),
+  async (req, res, next) => {
+    try {
+      const { doc } = await jobFor(req, 'shopId workerId status');
+      if (String(doc.shopId || '') !== String(req.auth.sub)) return res.status(403).json({ error: 'This job is not yours' });
+      if (doc.workerId) return res.status(204).end(); // their technician is the one being followed
+      const { redis } = require('../../config/redis');
+      await redis.publish('order:event', JSON.stringify({
+        orderId: String(doc._id), event: 'worker.location',
+        payload: { lat: req.body.lat, lng: req.body.lng, at: Date.now(), hdg: null, spd: null },
+      }));
+      res.status(204).end();
+    } catch (err) { next(err); }
+  });
+
 async function jobFor(req, select) {
   const { findJob } = require('./kinds');
   const found = await findJob(req.params.id, select);
