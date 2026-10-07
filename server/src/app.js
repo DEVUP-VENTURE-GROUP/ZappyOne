@@ -72,6 +72,8 @@ function buildApp() {
   // Mount it BEFORE express.json() so the body isn't parsed.
   app.use("/api/payments/webhook", paymentRoutes.webhookRouter);
 
+  // Smaller responses on slow mobile data: JSON shrinks 70-80% gzipped (live sockets are unaffected).
+  app.use(require("compression")({ threshold: 1024 }));
   app.use(express.json({ limit: "500kb" }));
   app.use(express.urlencoded({ extended: true, limit: "500kb" }));
   app.use(sanitizeMiddleware);

@@ -73,9 +73,10 @@ export function defineZappyApp({ command, port, plugins, surface = '', chunks = 
       strictPort: true,
       fs: { allow: [REPO_ROOT] },
       proxy: {
-        '/api': 'http://localhost:4000',
+        // ZAPPY_API overrides it (e.g. a second local API on another port); 4000 by default.
+        '/api': process.env.ZAPPY_API || 'http://localhost:4000',
         '/socket.io': {
-          target: 'http://localhost:4000',
+          target: process.env.ZAPPY_API || 'http://localhost:4000',
           ws: true,
           configure: (proxy) => {
             proxy.on('error', (err) => {

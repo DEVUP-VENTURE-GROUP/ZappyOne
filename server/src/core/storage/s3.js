@@ -22,7 +22,13 @@ const s3 = new S3Client({
  * Generates a presigned PUT URL — client uploads directly to S3, never streams through our API.
  * This is how you scale file uploads; never proxy binary data through Node.
  */
+/** Storage is optional: with no bucket or keys, uploads are refused politely and photos are skipped. */
+const isConfigured = () => !!(config.aws.bucket && config.aws.accessKeyId && config.aws.secretAccessKey);
+
 async function getUploadUrl({ folder, contentType, userId }) {
+  if (!isConfigured()) {
+    throw Object.assign(new Error('Photo uploads are not available right now. You can continue without a photo.'), { status: 503, code: 'S3_NOT_CONFIGURED' });
+  }
   const key = `${folder}/${userId}/${uuid()}`;
   const cmd = new PutObjectCommand({
     Bucket: config.aws.bucket,
@@ -42,6 +48,7 @@ async function getUploadUrl({ folder, contentType, userId }) {
 }
 
 async function getViewUrl(key, expiresIn = 86400) {
+  if (!isConfigured()) return null;
   const cmd = new GetObjectCommand({ Bucket: config.aws.bucket, Key: key });
   return getSignedUrl(s3, cmd, { expiresIn });
 }
@@ -162,6 +169,7 @@ async function signDocsMedia(docs) {
 }
 
 async function getDownloadUrl(key, expiresIn = 300) {
+  if (!isConfigured()) return null;
   const filename = key.split('/').pop();
   const cmd = new GetObjectCommand({
     Bucket: config.aws.bucket,
@@ -179,6 +187,7 @@ async function getDownloadUrl(key, expiresIn = 300) {
  * Bucket stays fully private; our server is the authenticated gateway.
  */
 async function streamToResponse(key, res) {
+  if (!isConfigured()) return res.status(503).json({ error: 'Files are not available right now.', code: 'S3_NOT_CONFIGURED' });
   const cmd = new GetObjectCommand({ Bucket: config.aws.bucket, Key: key });
   const obj = await s3.send(cmd);
 
@@ -205,7 +214,7 @@ async function deleteObject(key) {
 }
 
 module.exports = {
-  getUploadUrl, getViewUrl, getDownloadUrl,
+  isConfigured, getUploadUrl, getViewUrl, getDownloadUrl,
   signMedia, signMediaList, signDocMedia, signDocsMedia,
   keyFromMedia, normalizeDocMedia,
   MEDIA_FIELDS, MEDIA_LIST_FIELDS,

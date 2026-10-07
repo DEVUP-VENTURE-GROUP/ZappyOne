@@ -891,6 +891,19 @@ function ProviderStep({
     { skip: inspectionOnly || !repairCode || !hasLocation },
   );
 
+  /*
+   * Technicians cover this address but none is online right now. Instead of a
+   * dead end, the customer can book at ZappyOne's standard price: the job is
+   * offered to whoever comes online first (jobs/waves), and they are told the
+   * moment someone accepts. Only when a standard price exists for the repair.
+   */
+  const allOffline = !data?.providers?.length && (data?.nearbyCount || 0) > 0 && data?.primaryReason === 'offline';
+  const { data: standard } = useRepairPricePreviewQuery(
+    { vertical, repairCode, brandCode: brand?.code, modelCode: model?.code, serviceMode },
+    { skip: !allOffline || !repairCode },
+  );
+  const standardPaise = standard?.reference && standard?.estimate?.totalPaise > 0 ? standard.estimate.totalPaise : null;
+
   function confirmPin({ address, lat, lng }) {
     dispatch(setLocation({ lat, lng, address }));
     onPinConfirmed?.();
@@ -1046,6 +1059,11 @@ function ProviderStep({
         } else if (notListed) {
           title = `${nearby} ${nearby === 1 ? 'shop' : 'shops'} near you, none offering ${repairName} yet`;
           body = 'An inspection finds the exact fault and gets you a firm quote from a nearby technician.';
+        } else if (allOffline) {
+          title = `${nearby} ${nearby === 1 ? 'technician' : 'technicians'} near you, none online this minute`;
+          body = standardPaise
+            ? 'Book now and we will offer it to the first one who comes online. You will be told the moment someone accepts, and you can cancel free until then.'
+            : 'Try again shortly, or book an inspection to hold your place.';
         } else if (nearby > 0) {
           title = `${nearby} ${nearby === 1 ? 'shop' : 'shops'} near you, none free right now`;
           body = 'Try again shortly, or book an inspection to hold your place.';
@@ -1057,6 +1075,14 @@ function ProviderStep({
             <p className="mt-3 text-sm font-bold text-slate-700">{title}</p>
             <p className="mt-1 text-xs leading-relaxed text-slate-500">{body}</p>
             <div className="mt-4 flex flex-wrap justify-center gap-2">
+              {allOffline && standardPaise && (
+                <button
+                  onClick={() => onPick({ auto: true, name: 'First available technician', totalPaise: standardPaise }, repairCode, null)}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-zappy-600 px-4 py-2.5 text-xs font-bold text-white"
+                >
+                  <Check size={13} /> Book now for {formatPaise(standardPaise)}
+                </button>
+              )}
               {nearby > 0 && onInspectInstead && (
                 <button
                   onClick={onInspectInstead}

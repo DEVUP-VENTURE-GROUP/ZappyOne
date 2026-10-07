@@ -39,9 +39,10 @@ const schema = Joi.object({
   JWT_EXPIRES_IN: Joi.string().default('7d'),
   GOOGLE_MAPS_KEY: Joi.string().default(''),  // optional — haversine fallback used when absent
   AWS_REGION: Joi.string().default('ap-south-1'),
-  AWS_S3_BUCKET: Joi.string().required(),
-  AWS_ACCESS_KEY_ID: Joi.string().required(),
-  AWS_SECRET_ACCESS_KEY: Joi.string().required(),
+  // Optional: without them the API still runs; uploads say they are unavailable (core/storage/s3).
+  AWS_S3_BUCKET: Joi.string().allow('').default(''),
+  AWS_ACCESS_KEY_ID: Joi.string().allow('').default(''),
+  AWS_SECRET_ACCESS_KEY: Joi.string().allow('').default(''),
   DISPATCH_RADIUS_KM: Joi.number().default(5),
   DISPATCH_MAX_CANDIDATES: Joi.number().default(20),
   DISPATCH_OFFER_TIMEOUT_MS: Joi.number().default(35000),

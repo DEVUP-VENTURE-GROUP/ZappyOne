@@ -18,6 +18,9 @@ const analyzeSchema = Joi.object({
 });
 
 // Presigned PUT target — client uploads the photo directly to S3.
+/** Whether photo search is set up (its AI key), so the app shows the camera only when it works. */
+router.get('/status', (req, res) => res.json({ enabled: !!require('../../config').lens.apiKey }));
+
 router.post('/upload-url', authenticate, requireRole('user'), lensLimiter, validate(uploadUrlSchema), ctrl.getUploadUrl);
 
 // Analyze uploaded photo(s) → diagnosis + bookable matches + real quote.

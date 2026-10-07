@@ -124,10 +124,12 @@ export function SearchBar({ terms, onOpen, onVoice, onLens }) {
       </button>
       <span className="h-6 w-px bg-slate-200" aria-hidden="true" />
       <VoiceSearchButton onResult={onVoice} />
+      {onLens && (
       <button type="button" onClick={onLens} aria-label="Scan a photo to find the right service"
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-btn text-ink-500 transition hover:bg-sunken hover:text-ink-900">
-        <ScanLine size={17} />
-      </button>
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-btn text-ink-500 transition hover:bg-sunken hover:text-ink-900">
+          <ScanLine size={17} />
+        </button>
+      )}
     </div>
   );
 }

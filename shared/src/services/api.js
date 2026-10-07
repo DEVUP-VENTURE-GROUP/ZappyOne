@@ -127,6 +127,7 @@ export const api = createApi({
     // --- Auth ---
     // Messages between a customer and the provider on any job (jobs/job-chat).
     /** Customer: what cancelling costs now, and whether the provider changed or is late (jobs/give-back). */
+    lensStatus: b.query({ query: () => '/lens/status', keepUnusedDataFor: 3600 }),
     /** Customer: unpaid cancellation fees the next booking will carry. */
     myPendingCancelFee: b.query({ query: () => '/jobs/pending-fee', keepUnusedDataFor: 0 }),
     jobOptions: b.query({ query: ({ id }) => `/jobs/${id}/options`, keepUnusedDataFor: 0 }),
@@ -2406,6 +2407,7 @@ export const {
   useJobChatQuery,
   useJobOptionsQuery,
   useMyPendingCancelFeeQuery,
+  useLensStatusQuery,
   useReportProviderAbsentMutation,
   useBoostJobMutation,
   useTipJobMutation,

@@ -2,7 +2,7 @@ const express = require('express');
 const Joi = require('joi');
 const ctrl = require('./auth.controller');
 const { validate } = require('../../middlewares/validate');
-const { authLimiter, adminAuthLimiter, otpPhoneLimiter } = require('../../middlewares/rateLimit');
+const { authLimiter, refreshLimiter, adminAuthLimiter, otpPhoneLimiter } = require('../../middlewares/rateLimit');
 const { authenticate, requireRole } = require('../../middlewares/auth');
 
 const router = express.Router();
@@ -169,7 +169,7 @@ router.post(
   ctrl.loginWithPassword,
 );
 
-router.post('/refresh', authLimiter, ctrl.refresh);
+router.post('/refresh', refreshLimiter, ctrl.refresh);
 router.post('/logout', ctrl.logout);
 
 // Revoke all sessions for the authenticated user (sign out everywhere).

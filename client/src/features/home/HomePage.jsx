@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 import toast from 'react-hot-toast';
 import { ChevronRight } from 'lucide-react';
 import { selectAuth, selectIsAuthed } from '@shared/modules/auth/authSlice';
-import { useGetServiceabilityQuery, useLiveCatalogQuery, useGetEventCategoriesQuery } from '@shared/services/api';
+import { useGetServiceabilityQuery, useLiveCatalogQuery, useGetEventCategoriesQuery, useLensStatusQuery } from '@shared/services/api';
 import { useGeolocation, loadGeoLocation } from '@shared/hooks/useGeolocation';
 import { saveGeoLocation } from '@shared/utils/geoCache';
 import { reverseGeocode } from '@shared/utils/reverseGeocode';
@@ -80,6 +80,8 @@ export default function HomePage() {
   const [spotOpen, setSpotOpen] = useState(false);
   const [spotQuery, setSpotQuery] = useState('');
   const [lensOpen, setLensOpen] = useState(false);
+  const { data: lensStatus } = useLensStatusQuery();
+  const lensReady = !!lensStatus?.enabled;
   const [locSheet, setLocSheet] = useState(false);
   const [locDetecting, setLocDetecting] = useState(false);
 
@@ -220,7 +222,8 @@ export default function HomePage() {
       terms={searchTerms}
       onOpen={() => setSpotOpen(true)}
       onVoice={(text) => { setSpotQuery(text); setSpotOpen(true); }}
-      onLens={() => setLensOpen(true)}
+      // Only when photo search is set up on the server; never a button that fails.
+      onLens={lensReady ? () => setLensOpen(true) : undefined}
     />
   );
 

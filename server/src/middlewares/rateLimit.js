@@ -38,6 +38,12 @@ const globalLimiter   = makeLimiter({ windowMs: 15_000,     max: 200, prefix: 'g
 // Auth: 20 req / min — OTP dev testing fires frequently
 const authLimiter     = makeLimiter({ windowMs: 60_000,     max: 20,  prefix: 'auth'   });
 
+// Session refresh: every app open and reload restores the session once, and a
+// whole office or mobile network can share one IP. It needs a valid httpOnly
+// refresh cookie to do anything, so it gets a generous limit of its own instead
+// of sharing login's (which logged people out after ~10 page loads).
+const refreshLimiter  = makeLimiter({ windowMs: 60_000,     max: 300, prefix: 'refresh' });
+
 // OTP per-phone: 5 send requests per hour (enforced in service layer via Redis INCR)
 // This IP-level limiter is an extra defence layer — prevents a single IP from
 // cycling through many phone numbers. 20 phones/hr per IP is reasonable.
@@ -87,7 +93,7 @@ const telemetryLimiter = makeLimiter({ windowMs: 60_000,    max: 120, prefix: 't
 const lensLimiter      = makeLimiter({ windowMs: 60_000,    max: 15,  prefix: 'lens'   });
 
 module.exports = {
-  globalLimiter, authLimiter, adminAuthLimiter, otpPhoneLimiter, orderLimiter, workerOnlineLimiter,
+  globalLimiter, authLimiter, refreshLimiter, adminAuthLimiter, otpPhoneLimiter, orderLimiter, workerOnlineLimiter,
   cancelLimiter, topupLimiter, ratingLimiter,
   quoteLimiter, nearbyLimiter, disputeLimiter, telemetryLimiter, lensLimiter,
   makeLimiter,
