@@ -1417,12 +1417,18 @@ export default function ProviderRepairSetupPage() {
   const isShop = onboarding?.providerKind === 'shop';
   const LABEL = { mobile: 'Phone repair', laptop: 'Laptop repair', two_wheeler: '2-wheeler repair', four_wheeler: '4-wheeler repair', water_tank_care: 'Water & tank care' };
 
+  // Every step shows what is really saved, read from the same data the step uses.
+  const { data: areaData } = useRepairServiceAreasQuery(active);
+  const { data: priceData } = useRepairProviderPricingQuery(active);
   const done = useMemo(() => {
     const set = new Set();
     if (brandCodes?.length) set.add('brands');
     if (work?.selectedCount) set.add('work');
+    if ((areaData?.areas || []).some((a) => a.center?.coordinates?.length === 2 || a.pincodes?.length)) set.add('area');
+    if (onboarding?.profile?.hours?.length) set.add('hours');
+    if (priceData?.pricing?.length) set.add('pricing');
     return set;
-  }, [brandCodes, work]);
+  }, [brandCodes, work, areaData, priceData, onboarding]);
 
   const go = (next) => { setStep(next); window.scrollTo({ top: 0, behavior: 'smooth' }); };
 
