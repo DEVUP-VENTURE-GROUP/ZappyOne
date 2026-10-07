@@ -327,6 +327,10 @@ async function bulkCapabilities(req, res, next) {
       saved.push(code);
     }
 
+    // Already approved for this service: their skills count as verified.
+    await require('../../../onboarding/auto-provision.service').approveSkillsForApprovedLines(
+      req.auth.role === 'shop' ? { shopId: req.auth.sub } : { workerId: req.auth.sub },
+    ).catch(() => {});
     res.json({ saved: saved.length, skipped: tooHigh, selected: saved });
   } catch (err) { next(err); }
 }

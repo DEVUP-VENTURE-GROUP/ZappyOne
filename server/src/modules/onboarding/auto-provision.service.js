@@ -151,6 +151,7 @@ async function provisionCoverage({ shopId = null, workerId = null, coordinates }
   const { ProviderEnrolment, ServiceLine } = require('./onboarding.model');
   const enrolments = await ProviderEnrolment.find({ ...key, status: 'approved' }).lean();
   if (!enrolments.length) return;
+  await approveSkillsForApprovedLines(key).catch(() => {});
 
   const lines = await ServiceLine.find({ code: { $in: enrolments.map((e) => e.lineCode) } }).lean();
 
@@ -169,3 +170,29 @@ async function provisionCoverage({ shopId = null, workerId = null, coordinates }
 }
 
 module.exports = { provisionCoverage };
+
+/**
+ * Skills that wait for a check are checked by the service approval itself:
+ * an admin who approved this provider for phone repair has verified them for
+ * it. Without this, level 3-4 work (screens, cameras, charging ports) stayed
+ * "pending" for ever, because nothing ever approved a skill on its own, and
+ * those providers were never matched. Runs on approval, on saving skills and
+ * on going online, so existing providers are put right without anyone acting.
+ */
+async function approveSkillsForApprovedLines({ shopId = null, workerId = null }) {
+  const key = shopId ? { shopId } : { workerId };
+  if (!key.shopId && !key.workerId) return 0;
+  const { ProviderEnrolment, ServiceLine } = require('./onboarding.model');
+  const lineCodes = await ProviderEnrolment.distinct('lineCode', { ...key, status: 'approved' });
+  if (!lineCodes.length) return 0;
+  const verticals = await ServiceLine.distinct('repairVertical', { code: { $in: lineCodes }, repairVertical: { $ne: null } });
+  if (!verticals.length) return 0;
+  const { ProviderCapability } = require('../repair/models/capability.model');
+  const r = await ProviderCapability.updateMany(
+    { ...key, vertical: { $in: verticals }, verificationStatus: 'pending' },
+    { $set: { verificationStatus: 'approved' } },
+  );
+  return r.modifiedCount || 0;
+}
+
+module.exports.approveSkillsForApprovedLines = approveSkillsForApprovedLines;

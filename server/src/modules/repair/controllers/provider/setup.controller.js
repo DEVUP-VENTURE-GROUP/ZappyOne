@@ -99,6 +99,13 @@ async function upsertCapability(req, res, next) {
       );
     }
 
+    if (doc.verificationStatus === 'pending') {
+      // Approved for this service already: the skill counts as verified.
+      await require('../../../onboarding/auto-provision.service').approveSkillsForApprovedLines(
+        req.auth.role === 'shop' ? { shopId: req.auth.sub } : { workerId: req.auth.sub },
+      ).catch(() => {});
+      doc.verificationStatus = (await doc.constructor.findById(doc._id).select('verificationStatus').lean())?.verificationStatus || doc.verificationStatus;
+    }
     res.json({
       capability: doc,
       pendingVerification: doc.verificationStatus === 'pending',

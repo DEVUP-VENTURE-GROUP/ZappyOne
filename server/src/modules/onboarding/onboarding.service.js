@@ -291,6 +291,11 @@ async function decide({ enrolmentId, decision, note = '', adminId, docCodes = []
   enrolment.reviewNote = note;
   await enrolment.save();
   if (['approved', 'rejected'].includes(decision)) require('../messaging/verification').decided(enrolment).catch(() => {});
+  if (decision === 'approved') {
+    await require('./auto-provision.service').approveSkillsForApprovedLines(
+      enrolment.shopId ? { shopId: enrolment.shopId } : { workerId: enrolment.workerId },
+    ).catch(() => {});
+  }
 
   /*
    * A shop's registered address is real and known the moment they are
