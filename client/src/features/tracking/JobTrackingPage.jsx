@@ -80,7 +80,7 @@ export default function JobTrackingPage({ job, extras = null, startCode = null, 
       toast.error(err.message || 'Could not get the receipt');
     }
   };
-  const receiptHandler = onReceipt || (status === 'completed' && ['repair', 'pet', 'helping'].includes(job.kind) ? downloadReceipt : undefined);
+  const receiptHandler = onReceipt || (job.status === 'completed' && ['repair', 'pet', 'helping'].includes(job.kind) ? downloadReceipt : undefined);
   const socketStatus = useSocketStatus();
 
   // In the job's room for as long as it's live; positions only while someone travels.
