@@ -499,6 +499,13 @@ async function recordHandover({ taskId, workerId, trackingNumber = '', acknowled
     task.proofs.push({ kind: 'merchant_acknowledgement', key, capturedAt: new Date() });
   }
 
+  // Handed over at the drop-off, wherever the app last left the task: the trip
+  // there and the arrival are recorded on the way, never skipped silently.
+  for (const step of ['RETURNING', 'AT_DROPOFF']) {
+    if (task.status !== step && !['AT_DROPOFF'].includes(task.status) && task.canTransition(step)) {
+      task.transitionTo(step, { by: workerId, byRole: 'worker' });
+    }
+  }
   task.transitionTo('HANDED_OVER', { by: workerId, byRole: 'worker' });
   await task.save();
 

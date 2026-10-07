@@ -34,11 +34,23 @@ const PET_DEFAULT_MODES = {
   pet_check: ['home_visit'],
 };
 
+/** The default ways of working; vehicle mechanics also go to a breakdown. */
+const DEFAULT_REPAIR_MODES = ['doorstep', 'pickup_repair'];
+const ROAD_VERTICALS = new Set(['two_wheeler', 'four_wheeler']);
+
 /** One ProviderServiceArea per owner covers every repair vertical they hold. */
-async function provisionRepairArea(key, coordinates) {
+async function provisionRepairArea(key, coordinates, verticals = []) {
   const { ProviderServiceArea } = require('../repair/models/config.model');
+  const modes = verticals.some((v) => ROAD_VERTICALS.has(v)) ? [...DEFAULT_REPAIR_MODES, 'roadside'] : DEFAULT_REPAIR_MODES;
 
   const rows = await ProviderServiceArea.find(key).lean();
+  // A mechanic's untouched default area never had roadside, so roadside jobs
+  // (jump start, puncture, fuel) never reached them. Add it to exactly that
+  // default; an area the provider set up themselves is left alone.
+  const untouched = rows.filter((a) => (a.serviceModes || []).join() === DEFAULT_REPAIR_MODES.join());
+  if (modes.includes('roadside') && untouched.length) {
+    await ProviderServiceArea.updateMany({ _id: { $in: untouched.map((a) => a._id) } }, { $addToSet: { serviceModes: 'roadside' } });
+  }
 
   /*
    * A row with neither a map pin nor a pincode matches NOBODY — it is not a
@@ -62,7 +74,7 @@ async function provisionRepairArea(key, coordinates) {
     cityCode: 'hyderabad',
     center: { type: 'Point', coordinates },
     radiusKm: 10,
-    serviceModes: ['doorstep', 'pickup_repair'],
+    serviceModes: modes,
     isActive: true,
   });
   logger.info({ ...key, coordinates }, '[auto-provision] created a default repair service area');
@@ -77,6 +89,14 @@ async function provisionPetCapability(key, coordinates, categoryCode) {
     let touched = false;
     if (!existing.categoryCodes.includes(categoryCode)) {
       existing.categoryCodes.push(categoryCode);
+      touched = true;
+    }
+    // Each line brings the ways it is delivered. Only the first line's modes
+    // used to be written, so a carer approved for boarding and then grooming
+    // was never found for doorstep grooming. Adds what is missing, removes nothing.
+    const missing = (PET_DEFAULT_MODES[categoryCode] || ['doorstep']).filter((m) => !existing.modes.includes(m));
+    if (missing.length) {
+      existing.modes.push(...missing);
       touched = true;
     }
     // A boarding line with zero capacity is exactly this same bug again —
@@ -136,7 +156,7 @@ async function provisionCoverage({ shopId = null, workerId = null, coordinates }
 
   const needsRepairArea = lines.some((l) => l.repairVertical);
   if (needsRepairArea) {
-    await provisionRepairArea(key, coordinates).catch((err) => {
+    await provisionRepairArea(key, coordinates, lines.map((l) => l.repairVertical).filter(Boolean)).catch((err) => {
       logger.warn({ err: err.message, ...key }, '[auto-provision] repair service area failed');
     });
   }

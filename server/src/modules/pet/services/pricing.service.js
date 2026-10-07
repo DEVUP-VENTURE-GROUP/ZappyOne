@@ -79,13 +79,17 @@ function nightsBetween(checkIn, checkOut) {
  * them, which is what keeps seven categories on one engine.
  */
 function baseForUnit({ rule, variant, durationMinutes, nights, days, visits, distanceKm }) {
+  // A rule that sets only its base price means that price per night, day or
+  // visit. Twelve home-care services were written that way and priced at ₹0
+  // (the customer paid only the platform fee, the carer nothing).
+  const each = (rate) => (rate > 0 ? rate : rule.basePaise || 0);
   switch (variant.pricingUnit) {
     case 'per_night':
-      return rule.perNightPaise * Math.max(1, nights || 1);
+      return each(rule.perNightPaise) * Math.max(1, nights || 1);
     case 'per_day':
-      return rule.perDayPaise * Math.max(1, days || 1);
+      return each(rule.perDayPaise) * Math.max(1, days || 1);
     case 'per_visit':
-      return rule.perVisitPaise * Math.max(1, visits || 1);
+      return each(rule.perVisitPaise) * Math.max(1, visits || 1);
     case 'per_minute': {
       const mins = durationMinutes || variant.durationMinutes || variant.estimatedMinutes || 30;
       return rule.perMinutePaise * mins + rule.basePaise;

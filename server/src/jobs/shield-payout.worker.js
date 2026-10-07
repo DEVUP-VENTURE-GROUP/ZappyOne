@@ -37,6 +37,7 @@ const shieldWorker = new Worker(
   },
   {
     connection: createBullConnection(),
+    prefix: require('../config/redis').bullPrefix,
     concurrency: 2,
   }
 );

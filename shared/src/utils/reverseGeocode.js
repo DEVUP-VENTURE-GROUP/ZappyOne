@@ -148,7 +148,27 @@ function dedupe(result) {
   return { ...result, secondary: parts.join(', ') || null };
 }
 
-export async function reverseGeocode(lat, lng) {
+/*
+ * One lookup per spot. Home, the header and the profile all ask for the same
+ * address at once, and every screen change asked again: each was a paid Google
+ * call and a wait. Answers are kept for the session per ~10 m square, and two
+ * screens asking at the same moment share the one request.
+ */
+const answers = new Map();
+
+export function reverseGeocode(lat, lng) {
+  const key = `${Number(lat).toFixed(4)},${Number(lng).toFixed(4)}`;
+  if (!answers.has(key)) {
+    const pending = lookup(lat, lng);
+    answers.set(key, pending);
+    // A fallback answer is not worth keeping: try again next time.
+    pending.then((r) => { if (r?.primary === 'Location found') answers.delete(key); }, () => answers.delete(key));
+    if (answers.size > 50) answers.delete(answers.keys().next().value);
+  }
+  return answers.get(key);
+}
+
+async function lookup(lat, lng) {
   const google = await reverseGeocodeGoogle(lat, lng);
   if (google) return dedupe(google);
 

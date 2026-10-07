@@ -16,7 +16,7 @@
 
 const { Server } = require('socket.io');
 const { createAdapter } = require('@socket.io/redis-adapter');
-const { createPubSubPair, redis } = require('../config/redis');
+const { createPubSubPair, redis, socketKey, scoped } = require('../config/redis');
 const { socketCorsOrigin } = require('../config/origins');
 const { verifyToken } = require('../modules/auth/auth.service');
 const etaService = require('../modules/worker/eta.service');
@@ -56,7 +56,7 @@ function initSockets(httpServer) {
     pingTimeout: 20000,
     transports: ['websocket', 'polling'],
   });
-  io.adapter(createAdapter(pubClient, subClient));
+  io.adapter(createAdapter(pubClient, subClient, { key: socketKey }));
 
   // --- JWT handshake auth ---
   io.use((socket, next) => {
@@ -301,7 +301,7 @@ function initSockets(httpServer) {
 
   // --- Redis pub/sub → socket room bridge ---
   // Dispatch worker publishes events; we relay them to the right rooms.
-  const subscriber = subClient.duplicate();
+  const subscriber = scoped(subClient.duplicate());
 
   subscriber.subscribe('order:event', 'worker:offer', 'worker:offer_cancel', 'worker:assigned', 'surge:alert', 'order:boost', 'worker:kyc_rejected', 'worker:job_pulled', 'provider:repair', (err) => {
     if (err) logger.error({ err }, 'Pub/sub subscribe failed');

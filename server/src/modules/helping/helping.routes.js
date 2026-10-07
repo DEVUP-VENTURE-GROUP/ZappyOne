@@ -3,7 +3,6 @@ const Joi = require('joi');
 const ctrl = require('./helping.controller');
 const { authenticate, requireRole } = require('../../middlewares/auth');
 const { validate } = require('../../middlewares/validate');
-const { makeLimiter } = require('../../middlewares/rateLimit');
 const { SERVICE_TYPES, OFFERED_PAYMENT_MODELS } = require('./models/config.model');
 const { PROOF_KINDS, ITEM_STATUSES, RETURN_METHODS } = require('./models/task.model');
 
@@ -134,7 +133,7 @@ router.post('/tasks/:id/cancel',
 router.post('/tasks/:id/accept', authenticate, requireRole('worker'), ctrl.acceptTask);
 
 // Rate-limited: a 4-digit code is guessable given enough tries.
-const startCodeLimiter = makeLimiter({ windowMs: 5 * 60_000, max: 10, prefix: 'helpcode' });
+const startCodeLimiter = require('../../middlewares/rateLimit').codeAttemptLimiter('helpcode');
 router.post('/tasks/:id/status',
   authenticate, requireRole('worker'), startCodeLimiter,
   validate(Joi.object({

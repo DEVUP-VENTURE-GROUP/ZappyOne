@@ -34,6 +34,28 @@ const NEXT_STATUS = {
   EN_ROUTE: ['ARRIVED'],
   ARRIVED: ['TASK_STARTED'],
   TASK_STARTED: ['IN_PROGRESS'],
+  // Done at the shop (or collected from the customer, for a return): the trip
+  // to the customer (or the drop-off) is shared live from here.
+  IN_PROGRESS: ['RETURNING'],
+  RETURNING: ['AT_DROPOFF'],
+};
+
+/**
+ * Where money changes hands and where the task ends. A delivery is paid and
+ * finished at the customer's door; a return is paid while still with the
+ * customer and finished once the store or courier has it.
+ */
+const isReturnTask = (task) => ['return', 'exchange'].includes(task.serviceType);
+const paidAt = (task) => (isReturnTask(task) ? ['IN_PROGRESS', 'RETURNING', 'AT_DROPOFF', 'HANDED_OVER'] : ['RETURNING', 'HANDED_OVER']);
+const finishesAt = (task) => (isReturnTask(task) ? ['HANDED_OVER'] : ['RETURNING', 'HANDED_OVER']);
+
+const MOVE_LABEL = {
+  EN_ROUTE: () => "I'm on my way",
+  ARRIVED: () => "I've arrived",
+  TASK_STARTED: () => 'Start the task',
+  IN_PROGRESS: () => 'Begin',
+  RETURNING: (task) => ({ return: 'Heading to the drop-off', exchange: 'Heading to the store', pickup: 'Collected, heading to the customer' }[task.serviceType] || 'Bought everything, heading to the customer'),
+  AT_DROPOFF: () => "I'm at the drop-off",
 };
 
 function Shell({ children }) {
@@ -100,9 +122,15 @@ export default function WorkerHelpingJobPage() {
     }
   }
 
-  const nextMoves = NEXT_STATUS[task.status] || [];
   // The server works out what is owed: the fee, plus the receipt total once the shopping is final.
   const due = data.due || { totalPaise: 0, itemsPending: false };
+  // Only the moves that make sense now: shopping leaves the store once every
+  // item is settled and nothing waits on the customer; a delivery has no drop-off.
+  const nextMoves = (NEXT_STATUS[task.status] || []).filter((s) => {
+    if (s === 'RETURNING') return !pendingApproval && (isReturn || !due.itemsPending);
+    if (s === 'AT_DROPOFF') return isReturn;
+    return true;
+  });
   const settledUp = due.totalPaise <= 0 && !due.itemsPending;
 
   return (
@@ -143,10 +171,7 @@ export default function WorkerHelpingJobPage() {
             {nextMoves.map((s) => (
               <button key={s} type="button" onClick={() => move(s)}
                 className="w-full rounded-2xl bg-[#0F172A] text-white font-bold py-3.5">
-                {s === 'EN_ROUTE' && "I'm on my way"}
-                {s === 'ARRIVED' && "I've arrived"}
-                {s === 'TASK_STARTED' && 'Start the task'}
-                {s === 'IN_PROGRESS' && 'Begin'}
+                {MOVE_LABEL[s]?.(task) || s}
               </button>
             ))}
           </div>
@@ -177,7 +202,7 @@ export default function WorkerHelpingJobPage() {
           </p>
         )}
 
-        {['IN_PROGRESS', 'AT_DROPOFF', 'HANDED_OVER'].includes(task.status) && !pendingApproval && !due.itemsPending && due.totalPaise > 0 && (
+        {paidAt(task).includes(task.status) && !pendingApproval && !due.itemsPending && due.totalPaise > 0 && (
           <CollectPaymentCard
             amountPaise={due.totalPaise}
             paymentMethod={due.feePaise > 0 ? task.paymentMethod : 'cash'}
@@ -188,7 +213,7 @@ export default function WorkerHelpingJobPage() {
           />
         )}
 
-        {['IN_PROGRESS', 'AT_DROPOFF', 'HANDED_OVER'].includes(task.status) && !pendingApproval && settledUp && (
+        {finishesAt(task).includes(task.status) && !pendingApproval && settledUp && (
           <button type="button" onClick={finish} disabled={completing}
             className="w-full rounded-2xl bg-emerald-600 text-white font-bold py-3.5 disabled:opacity-50">
             {completing ? 'Completing…' : 'Complete task'}
@@ -387,6 +412,8 @@ function ReturnExecution({ task, onChanged }) {
       </div>
     );
   }
+  // Handed over at the store or courier, not while still with the customer.
+  if (!['RETURNING', 'AT_DROPOFF'].includes(task.status)) return null;
 
   return (
     <div className="rounded-2xl border-2 border-slate-200 bg-white p-4 space-y-3">

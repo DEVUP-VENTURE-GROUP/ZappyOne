@@ -205,6 +205,7 @@ function startDispatchWorker() {
 
     const worker = new BullWorker(QUEUES.DISPATCH, processDispatchJob, {
       connection: createBullConnection(),
+      prefix: require('./config/redis').bullPrefix,
       concurrency: 5, // was 10 — each concurrent job held a Redis sub-connection
       lockDuration: 300_000,
     });
@@ -240,6 +241,7 @@ function startNotificationsWorker() {
 
     const worker = new BullWorker(QUEUES.NOTIFICATIONS, processJob, {
       connection: createBullConnection(),
+      prefix: require('./config/redis').bullPrefix,
       concurrency: 5,
     });
     worker.on("failed", (job, err) =>

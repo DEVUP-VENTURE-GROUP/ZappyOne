@@ -51,6 +51,8 @@ jest.mock('../src/config/redis', () => {
     redis: base,
     createBullConnection: () => new Redis(),
     createPubSubPair: () => ({ pubClient: new Redis(), subClient: new Redis() }),
+    // No namespace under test: same names as production.
+    scoped: (client) => client, bullPrefix: 'bull', socketKey: 'socket.io',
   };
 });
 

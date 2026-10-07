@@ -79,7 +79,13 @@ const SERVICE_MODES = [
   { key: 'doorstep', label: 'At the customer', hint: 'You travel to them' },
   { key: 'workshop', label: 'At my workshop', hint: 'They come to you' },
   { key: 'pickup_repair', label: 'Pickup & return', hint: 'You collect and drop back' },
+  { key: 'roadside', label: 'Roadside help', hint: 'You go to wherever the vehicle has stopped', vehiclesOnly: true },
 ];
+/** Vehicles are also fixed where they broke down; nothing else is. */
+const ROAD = new Set(['two_wheeler', 'four_wheeler']);
+const modesFor = (vertical) => SERVICE_MODES.filter((m) => !m.vehiclesOnly || ROAD.has(vertical));
+/** Every way of working a skill may carry; the server keeps only what each repair allows. */
+const workModesFor = (vertical) => modesFor(vertical).map((m) => m.key);
 
 /* Chrome */
 
@@ -357,7 +363,7 @@ function WorkStep({ vertical, cityCode, brandCodes, onBack, onNext }) {
         candidateCodes: allCodes,
         brandCodes,
         skillLevel,
-        serviceModes: ['doorstep', 'workshop', 'pickup_repair'],
+        serviceModes: workModesFor(vertical),
       }).unwrap();
 
       if (res.skipped?.length) {
@@ -751,7 +757,7 @@ function AreaStep({ vertical, profile, onBack, onNext, onCity }) {
       <div className="rounded-2xl border border-slate-200 bg-white p-4">
         <p className="text-xs font-bold uppercase tracking-wide text-slate-500">How you work</p>
         <div className="mt-2 space-y-2">
-          {SERVICE_MODES.map((m) => {
+          {modesFor(vertical).map((m) => {
             const on = form.serviceModes.includes(m.key);
             return (
               <button
@@ -1005,7 +1011,7 @@ function PricingStep({ vertical, onBack, onNext }) {
     const all = [...new Set((catalog?.groups || []).flatMap((g) => g.repairs).map((r) => r.code))];
     return saveWork({
       vertical, repairCodes: codes, candidateCodes: all, brandCodes,
-      skillLevel: catalog?.skillLevel || 2, serviceModes: ['doorstep', 'workshop', 'pickup_repair'],
+      skillLevel: catalog?.skillLevel || 2, serviceModes: workModesFor(vertical),
     }).unwrap();
   }
   async function removeJob(repair) {

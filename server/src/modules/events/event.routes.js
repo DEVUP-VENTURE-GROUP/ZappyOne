@@ -49,7 +49,7 @@ partnerRouter.post('/bookings/:id/photos',
   validate(Joi.object({ stage: Joi.string().valid('before', 'after').required(), keys: Joi.array().items(Joi.string().max(500)).min(1).max(10).required() })),
   p.addSetupPhotos);
 partnerRouter.patch('/bookings/:id/status',
-  require('../../middlewares/rateLimit').makeLimiter({ windowMs: 5 * 60_000, max: 10, prefix: 'evtcode' }),
+  require('../../middlewares/rateLimit').codeAttemptLimiter('evtcode'),
   validate(Joi.object({ status: Joi.string().required(), code: Joi.string().pattern(/^[0-9]{4,6}$/).allow('', null), })),
   p.updateBookingStatus);
 partnerRouter.post('/bookings/:id/decline',   p.declineBooking);

@@ -197,6 +197,8 @@ async function submitQuote({
 
   await booking.save();
 
+  // The new status, to every open screen (home card, lists), not just the tracking room.
+  eventsService.announceTransition(booking, 'CUSTOMER_APPROVAL_PENDING').catch(() => {});
   eventsService.announceQuote(booking, quote).catch(() => {});
 
   return { quote: quote.toObject(), replayed: false };
@@ -275,6 +277,7 @@ async function respondToQuote({ quoteId, userId, decision, reason = '' }) {
     if (!booking.repairCode && quote.repairCode) booking.repairCode = quote.repairCode;
     booking.applyTransition('APPROVED', { actorRole: 'customer', actorId: userId, reason: 'quote approved' });
     await booking.save();
+    eventsService.announceTransition(booking, 'APPROVED').catch(() => {});
     eventsService.announceQuoteDecision(booking, quote, 'approve').catch(() => {});
     return { quote: quote.toObject(), booking: booking.toObject() };
   }
@@ -296,6 +299,7 @@ async function respondToQuote({ quoteId, userId, decision, reason = '' }) {
     booking.applyTransition('REJECTED', { actorRole: 'customer', actorId: userId, reason: reason || 'quote rejected' });
     await booking.save();
     await releaseStock({ shopId: booking.shopId, workerId: booking.workerId, partId: booking.partId });
+    eventsService.announceTransition(booking, 'REJECTED').catch(() => {});
   }
 
   eventsService.announceQuoteDecision(booking, quote, 'reject').catch(() => {});

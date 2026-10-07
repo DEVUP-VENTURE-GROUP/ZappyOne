@@ -452,6 +452,15 @@ async function completeTask(req, res, next) {
 
     // Shopping and pickups end at the customer's door: their code confirms they got it.
     await assertStartCode('helping', task, 'COMPLETED', req.body?.code);
+    // The code is the handover: a delivery still on its way (or, from an older
+    // app, still marked as shopping) is recorded as handed over, then completed.
+    if (!task.returnDetail) {
+      for (const step of ['RETURNING', 'HANDED_OVER']) {
+        if (task.status !== 'HANDED_OVER' && task.canTransition(step)) {
+          task.transitionTo(step, { by: req.auth.sub, byRole: 'worker', note: step === 'HANDED_OVER' ? 'Delivered to the customer' : '' });
+        }
+      }
+    }
     task.transitionTo('COMPLETED', { by: req.auth.sub, byRole: 'worker' });
     await task.save();
 

@@ -2,13 +2,15 @@ const rateLimit = require('express-rate-limit');
 const RedisStore = require('rate-limit-redis').default;
 const { redis } = require('../config/redis');
 
-function makeLimiter({ windowMs, max, prefix, skipFailedRequests = false }) {
+function makeLimiter({ windowMs, max, prefix, skipFailedRequests = false, skipSuccessfulRequests = false, keyGenerator }) {
   return rateLimit({
     windowMs,
     max,
     standardHeaders: true,
     legacyHeaders: false,
     skipFailedRequests,
+    skipSuccessfulRequests,
+    ...(keyGenerator ? { keyGenerator, validate: { keyGeneratorIpFallback: false } } : {}),
     store: new RedisStore({
       sendCommand: (...args) => redis.call(...args),
       prefix: `rl:${prefix}:`,
@@ -92,9 +94,21 @@ const telemetryLimiter = makeLimiter({ windowMs: 60_000,    max: 120, prefix: 't
 // 15/min absorbs a quick re-scan or two; blocks anyone hammering the model.
 const lensLimiter      = makeLimiter({ windowMs: 60_000,    max: 15,  prefix: 'lens'   });
 
+/**
+ * Guessing a customer's 4-6 digit code on one job. Counts WRONG attempts only,
+ * per person per job: a worker moving a job through its steps never touches
+ * it (it used to count every status change, so the second errand inside five
+ * minutes was refused mid-job), and a whole mobile network sharing one IP is
+ * not one person.
+ */
+const codeAttemptLimiter = (prefix) => makeLimiter({
+  windowMs: 5 * 60_000, max: 10, prefix, skipSuccessfulRequests: true,
+  keyGenerator: (req) => `${req.auth?.sub || req.ip}:${req.params.id || ''}`,
+});
+
 module.exports = {
   globalLimiter, authLimiter, refreshLimiter, adminAuthLimiter, otpPhoneLimiter, orderLimiter, workerOnlineLimiter,
   cancelLimiter, topupLimiter, ratingLimiter,
   quoteLimiter, nearbyLimiter, disputeLimiter, telemetryLimiter, lensLimiter,
-  makeLimiter,
+  makeLimiter, codeAttemptLimiter,
 };

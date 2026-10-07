@@ -35,6 +35,10 @@ const schema = Joi.object({
   PORT: Joi.number().default(4000),
   MONGO_URI: Joi.string().required(),
   REDIS_URL: Joi.string().required(),
+  // Keeps one environment's queues, caches and live events apart from another's
+  // on a shared Redis. Production runs without one; every other environment
+  // defaults to its own name, so a local API can never take production's jobs.
+  REDIS_NAMESPACE: Joi.string().allow('').optional(),
   JWT_SECRET: Joi.string().min(32).required(),
   JWT_EXPIRES_IN: Joi.string().default('7d'),
   GOOGLE_MAPS_KEY: Joi.string().default(''),  // optional — haversine fallback used when absent
@@ -106,7 +110,10 @@ module.exports = {
   env: env.NODE_ENV,
   port: env.PORT,
   mongo: { uri: env.MONGO_URI },
-  redis: { url: env.REDIS_URL },
+  redis: {
+    url: env.REDIS_URL,
+    namespace: env.REDIS_NAMESPACE ?? (env.NODE_ENV === 'production' ? '' : env.NODE_ENV),
+  },
   jwt: { secret: env.JWT_SECRET, expiresIn: env.JWT_EXPIRES_IN },
   googleMaps: { key: env.GOOGLE_MAPS_KEY },
   mail: {

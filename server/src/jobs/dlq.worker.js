@@ -75,6 +75,7 @@ async function start() {
 
   const worker = new BullWorker('dead-letter', processDlqJob, {
     connection: createBullConnection(),
+    prefix: require('../config/redis').bullPrefix,
     concurrency: 5,
   });
 

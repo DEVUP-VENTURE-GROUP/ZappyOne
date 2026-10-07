@@ -81,6 +81,7 @@ async function start() {
 
   const worker = new BullWorker('payments', processPaymentsJob, {
     connection: createBullConnection(),
+    prefix: require('../config/redis').bullPrefix,
     concurrency: 3,
   });
 

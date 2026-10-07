@@ -1,5 +1,5 @@
 const { Queue, QueueEvents } = require('bullmq');
-const { createBullConnection } = require('../config/redis');
+const { createBullConnection, bullPrefix: prefix } = require('../config/redis');
 const EventEmitter = require('events');
 
 // BullMQ's internal Bus attaches many listeners — raise the limit to suppress warning
@@ -17,6 +17,7 @@ const QUEUES = {
 
 const dispatchQueue = new Queue(QUEUES.DISPATCH, {
   connection,
+  prefix,
   defaultJobOptions: {
     attempts: 2,
     backoff: { type: 'exponential', delay: 3000 },
@@ -28,6 +29,7 @@ const dispatchQueue = new Queue(QUEUES.DISPATCH, {
 
 const notificationsQueue = new Queue(QUEUES.NOTIFICATIONS, {
   connection,
+  prefix,
   defaultJobOptions: {
     attempts: 3,
     backoff: { type: 'exponential', delay: 2000 },
@@ -38,6 +40,7 @@ const notificationsQueue = new Queue(QUEUES.NOTIFICATIONS, {
 
 const paymentsQueue = new Queue(QUEUES.PAYMENTS, {
   connection,
+  prefix,
   defaultJobOptions: {
     attempts: 5,
     backoff: { type: 'exponential', delay: 5000, maxDelay: 60000 },
@@ -50,6 +53,7 @@ const paymentsQueue = new Queue(QUEUES.PAYMENTS, {
 // A separate worker (dlq.worker.js) processes these: alerts support + triggers refund.
 const dlqQueue = new Queue(QUEUES.DLQ, {
   connection,
+  prefix,
   defaultJobOptions: {
     attempts: 1,
     removeOnComplete: { age: 604800 }, // 7 days visibility for ops
@@ -60,6 +64,7 @@ const dlqQueue = new Queue(QUEUES.DLQ, {
 // Shield Fund queue — weekly payouts + deferred fee collection
 const shieldQueue = new Queue('shield', {
   connection,
+  prefix,
   defaultJobOptions: {
     attempts: 3,
     backoff: { type: 'exponential', delay: 5000 },
@@ -83,6 +88,7 @@ shieldQueue.add(
 // regular orders. Same processDispatchJob logic, dedicated BullWorker in dispatch.worker.js.
 const emergencyDispatchQueue = new Queue(QUEUES.DISPATCH_EMERGENCY, {
   connection,
+  prefix,
   defaultJobOptions: {
     attempts: 3,  // one extra retry vs regular — emergencies get more chances
     backoff: { type: 'exponential', delay: 2000 },
@@ -94,8 +100,8 @@ const emergencyDispatchQueue = new Queue(QUEUES.DISPATCH_EMERGENCY, {
 // Share one extra connection between both QueueEvents — saves 1 connection vs 2.
 // BullMQ still creates internal BlockingConnections per QueueEvents for XREAD.
 const eventsConn = createBullConnection();
-const dispatchEvents = new QueueEvents(QUEUES.DISPATCH, { connection: eventsConn });
-const emergencyDispatchEvents = new QueueEvents(QUEUES.DISPATCH_EMERGENCY, { connection: eventsConn });
+const dispatchEvents = new QueueEvents(QUEUES.DISPATCH, { connection: eventsConn, prefix });
+const emergencyDispatchEvents = new QueueEvents(QUEUES.DISPATCH_EMERGENCY, { connection: eventsConn, prefix });
 
 function routeToDlq(queue) {
   return async ({ jobId, failedReason }) => {

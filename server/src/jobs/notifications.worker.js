@@ -361,6 +361,7 @@ async function main() {
 
   const bullWorker = new BullWorker(QUEUES.NOTIFICATIONS, processJob, {
     connection: createBullConnection(),
+    prefix: require('../config/redis').bullPrefix,
     concurrency: 20,
   });
 

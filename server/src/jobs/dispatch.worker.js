@@ -661,6 +661,7 @@ async function main() {
     processDispatchJob,
     {
       connection:   createBullConnection(),
+      prefix: require('../config/redis').bullPrefix,
       concurrency:  50,
       lockDuration: 360_000, // 6 min lock — covers the full 5-min search window + overhead
     },
@@ -674,6 +675,7 @@ async function main() {
     processDispatchJob,
     {
       connection:   createBullConnection(),
+      prefix: require('../config/redis').bullPrefix,
       concurrency:  5,
       lockDuration: 360_000,
     },
