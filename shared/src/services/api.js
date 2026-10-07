@@ -1366,7 +1366,8 @@ export const api = createApi({
     shopMe: b.query({ query: () => '/shops/me/profile', providesTags: ['Shop'] }),
     updateShopMe: b.mutation({
       query: (body) => ({ url: '/shops/me/profile', method: 'PATCH', body }),
-      invalidatesTags: ['Shop'],
+      // The setup flow reads the profile (hours, address) from the repair onboarding status.
+      invalidatesTags: ['Shop', 'RepairProvider'],
     }),
     shopKycStatus: b.query({ query: () => '/shops/me/kyc/status', providesTags: ['ShopKyc'] }),
     submitShopKyc: b.mutation({

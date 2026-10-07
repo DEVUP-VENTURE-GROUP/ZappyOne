@@ -643,7 +643,15 @@ function AreaStep({ vertical, profile, onBack, onNext, onCity }) {
     }));
   }
 
-  async function persist() {
+  /** Back keeps what was filled in, when it is complete enough to save. */
+  async function back() {
+    const complete = form.cityCode.trim() && form.serviceModes.length && form.center
+      && (!needsWorkshop || form.workshopAddress.trim());
+    if (complete) await persist({ quiet: true });
+    onBack();
+  }
+
+  async function persist({ quiet = false } = {}) {
     if (!form.cityCode.trim()) { toast.error('Which city do you work in?'); return; }
     if (!form.serviceModes.length) { toast.error('Pick at least one way of working'); return; }
     // Without a pin the radius means nothing and no customer can reach them.
@@ -663,9 +671,9 @@ function AreaStep({ vertical, profile, onBack, onNext, onCity }) {
         workshopAddress: form.workshopAddress,
       }).unwrap();
       onCity(form.cityCode.trim().toLowerCase());
-      onNext();
+      if (!quiet) onNext();
     } catch (err) {
-      toast.error(err?.data?.error || 'Could not save your area');
+      if (!quiet) toast.error(err?.data?.error || 'Could not save your area');
     }
   }
 
@@ -673,8 +681,8 @@ function AreaStep({ vertical, profile, onBack, onNext, onCity }) {
     <StepShell
       title="Where do you work?"
       hint="Pin your shop, then say how far around it you will go. Jobs outside that circle never reach you."
-      onBack={onBack}
-      onNext={persist}
+      onBack={back}
+      onNext={() => persist()}
       busy={saving}
     >
       {/*
@@ -818,17 +826,34 @@ function HoursStep({ profile, onBack, onNext }) {
     { day: 0, opensAt: '', closesAt: '', isClosed: true },
   ]));
 
-  async function save() {
+  // Saved as they change, so stepping back and forth never loses an edit.
+  const [saved, setSaved] = useState(JSON.stringify(hours));
+  const [status, setStatus] = useState('');
+  const current = JSON.stringify(hours);
+  const persist = async () => {
+    if (current === saved || incompleteDay(hours)) return true;
+    setStatus('saving');
+    try {
+      await update({ hours }).unwrap();
+      setSaved(current); setStatus('saved');
+      return true;
+    } catch (err) {
+      setStatus('');
+      toast.error(err?.data?.error || 'Could not save your timings');
+      return false;
+    }
+  };
+  useEffect(() => {
+    if (current === saved) return undefined;
+    const t = setTimeout(persist, 900);
+    return () => clearTimeout(t);
+  }, [current]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function next() {
     // An open day with no times is a promise nobody can keep.
     const bad = incompleteDay(hours);
     if (bad) return toast.error(`Set opening and closing times for ${bad}`);
-
-    try {
-      await update({ hours }).unwrap();
-      onNext();
-    } catch (err) {
-      toast.error(err?.data?.error || 'Could not save your timings');
-    }
+    if (await persist()) onNext();
     return undefined;
   }
 
@@ -836,11 +861,16 @@ function HoursStep({ profile, onBack, onNext }) {
     <StepShell
       title="When are you open?"
       hint="Customers see this before booking. A day left closed takes no bookings."
-      onBack={onBack}
-      onNext={save}
+      onBack={async () => { await persist(); onBack(); }}
+      onNext={next}
       busy={isLoading}
     >
       <WeeklyHours hours={hours} onChange={setHours} />
+      {status && (
+        <p className="px-1 text-xs font-semibold text-slate-500">
+          {status === 'saving' ? 'Saving…' : 'Saved'}
+        </p>
+      )}
     </StepShell>
   );
 }
