@@ -54,6 +54,8 @@ async function announce(kind, doc, status) {
   const id = String(doc._id);
   const provider = providerOf(kind, doc);
   const payload = { kind, id, status, reference: doc.reference, at: new Date().toISOString() };
+  // Taking a job ends a run of passed offers (jobs/offer-streak).
+  if (doc.workerId && require('./give-back').RULES[kind]?.accepted.includes(status)) require('./offer-streak').took(doc.workerId);
 
   toRoom(id, 'job.status', payload);
   // Personal channels too, so lists and home cards update without the job open.

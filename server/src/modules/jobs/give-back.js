@@ -69,10 +69,17 @@ const RULES = {
   },
 };
 
-/** Minutes a provider waits at the door before "customer not here" opens. */
+/**
+ * Minutes a provider waits at the door before "customer not here" opens, and
+ * minutes past the booked time (or acceptance) before "provider not coming"
+ * opens. Set in Economics → Cancellations; these are the fallbacks.
+ */
 const CUSTOMER_WAIT_MIN = 10;
-/** Minutes past the booked time (or acceptance) before "provider not coming" opens. */
 const PROVIDER_LATE_MIN = 30;
+async function waits() {
+  const cfg = await require('../order/cancellation.service').getConfig();
+  return { customer: cfg.customerWaitMinutes ?? CUSTOMER_WAIT_MIN, provider: cfg.providerLateMinutes ?? PROVIDER_LATE_MIN };
+}
 
 /* The record: one row per give-back or no-show, for limits, ops and the funnel. */
 const giveBackSchema = new mongoose.Schema({
@@ -279,25 +286,25 @@ async function giveBack({ kind, id, actor, reason, note = '' }) {
 }
 
 /**
- * The customer says the provider is not coming. Opens PROVIDER_LATE_MIN after
+ * The customer says the provider is not coming. Opens providerLateMinutes after
  * the booked time (or acceptance, for a job wanted now) while nobody has
  * arrived. The provider is charged the no-show penalty and the job goes to the
  * next provider; the customer may also cancel free.
  */
-function providerLateAt(kind, doc) {
+function providerLateAt(kind, doc, minutes = PROVIDER_LATE_MIN) {
   const rule = RULES[kind];
   if (!rule || !doc.workerId && !doc.shopId) return null;
   if (![...rule.accepted, ...rule.travelling].includes(doc.status)) return null;
   const base = doc.scheduledAt || doc.checkInAt || enteredAt(doc, rule.accepted);
   if (!base) return null;
   const startOf = Math.max(new Date(base).getTime(), enteredAt(doc, rule.accepted)?.getTime() || 0);
-  return new Date(startOf + PROVIDER_LATE_MIN * 60000);
+  return new Date(startOf + minutes * 60000);
 }
 
 async function reportProviderAbsent({ kind, id, userId }) {
   const { doc } = await load(kind, id);
   if (String(doc.userId) !== String(userId)) throw err(404, 'NOT_FOUND', 'Booking not found');
-  const at = providerLateAt(kind, doc);
+  const at = providerLateAt(kind, doc, (await waits()).provider);
   if (!at) throw err(409, 'NOT_NOW', 'Your provider has already arrived, or this booking is not waiting on them.');
   if (Date.now() < at.getTime()) {
     throw err(409, 'TOO_SOON', `Give them until ${at.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' })}. You can call them from this screen meanwhile.`);
@@ -312,22 +319,22 @@ async function reportProviderAbsent({ kind, id, userId }) {
 }
 
 /**
- * The provider waited at the door and nobody came. Opens CUSTOMER_WAIT_MIN
+ * The provider waited at the door and nobody came. Opens customerWaitMinutes
  * after arriving. The job ends as the customer's late cancellation: the
  * arrived-stage fee, part of which compensates the provider's trip.
  */
-function customerWaitAt(kind, doc) {
+function customerWaitAt(kind, doc, minutes = CUSTOMER_WAIT_MIN) {
   const rule = RULES[kind];
   if (!rule || !rule.atCustomer(doc).includes(doc.status)) return null;
   const arrived = enteredAt(doc, rule.atCustomer(doc));
-  return arrived ? new Date(arrived.getTime() + CUSTOMER_WAIT_MIN * 60000) : null;
+  return arrived ? new Date(arrived.getTime() + minutes * 60000) : null;
 }
 
 async function reportCustomerAbsent({ kind, id, actor }) {
   const { doc } = await load(kind, id);
   const provider = holderOf(doc, actor);
   if (!provider) throw err(403, 'FORBIDDEN', 'This job is not yours');
-  const at = customerWaitAt(kind, doc);
+  const at = customerWaitAt(kind, doc, (await waits()).customer);
   if (!at) throw err(409, 'NOT_NOW', 'Mark yourself arrived at the customer first.');
   if (Date.now() < at.getTime()) {
     const mins = Math.ceil((at.getTime() - Date.now()) / 60000);
@@ -355,7 +362,7 @@ async function wasHandedBack(jobId) {
 /** What the customer's screen may offer: a changed provider, and "not coming" when it opens. */
 async function customerView(kind, doc) {
   const last = await JobGiveBack.findOne({ jobId: doc._id, toShop: false, type: { $ne: 'customer_no_show' } }).sort({ createdAt: -1 }).lean();
-  const lateAt = providerLateAt(kind, doc);
+  const lateAt = providerLateAt(kind, doc, (await waits()).provider);
   return {
     providerChangedAt: last?.createdAt || null,
     providerAbsent: lateAt ? { opensAt: lateAt, open: Date.now() >= lateAt.getTime() } : null,
@@ -363,9 +370,9 @@ async function customerView(kind, doc) {
 }
 
 /** What the provider's screen may offer. */
-function providerView(kind, doc) {
+async function providerView(kind, doc) {
   const rule = RULES[kind];
-  const waitAt = customerWaitAt(kind, doc);
+  const waitAt = customerWaitAt(kind, doc, (await waits()).customer);
   return {
     canGiveBack: !!rule?.held.includes(doc.status),
     customerAbsent: waitAt ? { opensAt: waitAt, open: Date.now() >= waitAt.getTime() } : null,

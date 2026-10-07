@@ -194,6 +194,7 @@ const workerSchema = new mongoose.Schema(
     penalties: {
       totalOffers:    { type: Number, default: 0 },  // offers received
       totalRejects:   { type: Number, default: 0 },  // rejected/timed-out offers
+      rejectStreak:   { type: Number, default: 0 },  // offers passed in a row since the last accept (jobs/offer-streak)
       totalCancels:   { type: Number, default: 0 },  // worker-initiated cancellations
       totalNoShows:   { type: Number, default: 0 },  // no-show on completed disputes
       lastPenaltyAt:  { type: Date },

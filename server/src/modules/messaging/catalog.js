@@ -186,6 +186,11 @@ const CATALOG = {
     sample: () => sampleJob(),
     build: ({ f }) => ({ push: { title: 'Booking cancelled', body: `The customer cancelled ${f.service} (${f.reference}). Nothing more to do.`, link: f.providerLink } }),
   },
+  'provider.offers_paused': {
+    audience: 'provider', type: 'penalty_applied', channels: ['push'], urgent: true, label: 'Set offline after passing on offers',
+    sample: () => ({ count: 5 }),
+    build: ({ count }) => ({ push: { title: 'You are offline for now', body: `You passed on ${count} jobs in a row, so we stopped sending you new ones. Go online again when you are free to take work.`, link: '/worker' } }),
+  },
   'provider.paid': {
     audience: 'provider', type: 'worker_earning', channels: ['push'], label: 'Paid for a job',
     sample: () => ({ ...sampleJob(), earningPaise: 220500, cash: true }),

@@ -328,6 +328,8 @@ async function declineBooking({ bookingId, actorRole, actorId, reason = '' }) {
   });
 
   await booking.save();
+  // A run of passes takes a worker offline (jobs/offer-streak); one pass costs nothing.
+  if (actorRole === 'worker') await require('../../../jobs/offer-streak').passed(actorId);
 
   // Hand it straight to the next provider. Failure here must not undo the
   // decline itself — the provider has passed either way, and an unassigned

@@ -201,7 +201,7 @@ router.get('/:id/give-back',
       const gb = require('./give-back');
       const doc = await require('./kinds').KINDS[kind].model().findById(req.params.id).lean();
       const actor = actorOf(req);
-      const view = gb.providerView(kind, doc);
+      const view = await gb.providerView(kind, doc);
       const quote = view.canGiveBack ? await gb.preview({ kind, id: req.params.id, actor, reason: req.query.reason || 'other' }) : null;
       res.json({ kind, ...view, quote });
     } catch (err) { next(err); }

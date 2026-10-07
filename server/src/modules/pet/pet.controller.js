@@ -420,6 +420,7 @@ async function declineBooking(req, res, next) {
       bookingId: req.params.id, auth: { role: req.auth.role, id: req.auth.sub }, reason: req.body?.reason || 'Declined',
     });
     if (!booking) return res.status(409).json({ error: 'This booking is no longer waiting for you', code: 'NOT_OFFERED' });
+    if (req.auth.role === 'worker') await require('../jobs/offer-streak').passed(req.auth.sub);
     res.json({ booking });
   } catch (err) { next(err); }
 }

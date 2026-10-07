@@ -37,7 +37,9 @@ const DEFAULTS = {
   workerCancelPenaltyPaise:   2000,
   workerNoShowPenaltyPaise:   5000,
   lateWorkerCancelMultiplier: 2,
-  workerRejectLimit:          5,
+  workerRejectLimit:          5,   // offers passed in a row before the worker is set offline
+  customerWaitMinutes:        10,  // at the door before "customer not here"
+  providerLateMinutes:        30,  // past the booked time before "provider not coming"
   workerCancelLimit:          3,   // penalised cancels in the window before auto-offline
   workerShareOnWayPct:        50,
   workerShareArrivedPct:      70,

@@ -32,6 +32,8 @@ const cancellationConfigSchema = new mongoose.Schema(
 
     // Behaviour thresholds
     workerRejectLimit:      { type: Number, default: 5 },   // consecutive rejects → auto-unavailable
+    customerWaitMinutes:    { type: Number, default: 10, min: 1, max: 60 },  // at the door before "customer not here"
+    providerLateMinutes:    { type: Number, default: 30, min: 5, max: 180 }, // past the booked time before "provider not coming"
     workerCancelLimit:      { type: Number, default: 3 },   // cancels in window → auto-block
     workerCancelWindowSec:  { type: Number, default: 86400 }, // 24h window for cancel counting
 

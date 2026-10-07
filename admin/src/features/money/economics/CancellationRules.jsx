@@ -134,6 +134,9 @@ const PROVIDER_FIELDS = [
   numField('workerCancelLimit', 1, 20),
   numField('workerCancelWindowSec', 1, 168, 3600),
   rupeeField('workerNoShowPenaltyPaise', 100000),
+  numField('workerRejectLimit', 1, 50),
+  numField('customerWaitMinutes', 1, 60),
+  numField('providerLateMinutes', 5, 180),
 ];
 
 function ProviderRules() {
@@ -166,7 +169,16 @@ function ProviderRules() {
       <Setting title="Provider did not turn up" hint="Charged when a customer reports the provider never came.">
         <RupeeInput value={f.form.workerNoShowPenaltyPaise} onChange={f.set('workerNoShowPenaltyPaise')} label="No-show penalty" />
       </Setting>
-      {!f.valid && <p className="px-4 pb-3 text-[12px] text-red-600">Check the boxes: amounts ₹0 to ₹1,000.</p>}
+      <Setting title="Offers passed in a row before going offline" hint="A worker who keeps passing is set offline so customers are not matched to them. No charge; they go online again with one tap. Accepting a job resets the count.">
+        <UnitInput value={f.form.workerRejectLimit} onChange={f.set('workerRejectLimit')} unit="offers" min={1} max={50} label="Passes in a row" />
+      </Setting>
+      <Setting title="Wait at the door before 'customer not here'" hint="After this long at the address, the provider can close the job and the customer pays the at-the-door fee.">
+        <UnitInput value={f.form.customerWaitMinutes} onChange={f.set('customerWaitMinutes')} unit="min" min={1} max={60} label="Wait at the door" />
+      </Setting>
+      <Setting title="Late before 'provider not coming'" hint="This long past the booked time with nobody there, the customer can report it: the provider pays the no-show penalty and the next one is sent.">
+        <UnitInput value={f.form.providerLateMinutes} onChange={f.set('providerLateMinutes')} unit="min" min={5} max={180} label="Provider late by" />
+      </Setting>
+      {!f.valid && <p className="px-4 pb-3 text-[12px] text-red-600">Check the boxes: amounts ₹0 to ₹1,000, waits and limits within their ranges.</p>}
     </Card>
   );
 }
