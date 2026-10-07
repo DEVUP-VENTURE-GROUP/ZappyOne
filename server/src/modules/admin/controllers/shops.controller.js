@@ -117,6 +117,7 @@ async function kycDocUrls(req, res, next) {
       },
       gstNumber: kyc?.gstNumber ?? null,
       panNumber: kyc?.panNumber ?? null,
+      selfieMetadata: kyc?.selfieMetadata ?? null,
     });
   } catch (err) { next(err); }
 }

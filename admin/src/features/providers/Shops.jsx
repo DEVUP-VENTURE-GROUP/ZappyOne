@@ -17,6 +17,7 @@ import {
   EmptyState, PageLoader, fmtDate,
 } from '../../ui/kit';
 import toast from 'react-hot-toast';
+import { SelfieMetaBadges } from './KycReview';
 
 /* Permanent doc hook — server-proxied, no URL expiry */
 function useKycDoc(shopId, docType, token, enabled = true) {
@@ -113,6 +114,9 @@ function KycDocViewer({ shopId, onClose }) {
                   </div>
                 ))}
               </div>
+
+              {/* Where and when the owner's selfie was taken (live camera only). */}
+              {data?.docs?.hasSelfie && <SelfieMetaBadges meta={data?.selfieMetadata} />}
 
               {optionalDocs.length > 0 && (
                 <div className="grid grid-cols-2 gap-4">

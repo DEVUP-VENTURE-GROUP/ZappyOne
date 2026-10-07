@@ -6,11 +6,13 @@ import {
 } from 'lucide-react';
 import { useShopKycStatusQuery, useSubmitShopKycMutation, usePresignUploadMutation } from '@shared/services/api';
 import toast from 'react-hot-toast';
+import LiveSelfieCapture from '@shared/components/kyc/LiveSelfieCapture';
 
 const DOCS = [
   { key: 'ownerIdUrl', label: "Owner's ID Proof", sublabel: 'Aadhaar / PAN / Voter ID — clear photo', Icon: IdCard, required: true },
   { key: 'shopPhotoUrl', label: 'Shop Photo', sublabel: 'Photo of your shop front / signboard', Icon: Store, required: true },
-  { key: 'selfieUrl', label: 'Owner Selfie', sublabel: 'A clear selfie of the shop owner', Icon: Camera, required: true },
+  // Taken live with the front camera, with the place and time it was taken: never picked from a gallery.
+  { key: 'selfieUrl', label: 'Owner Selfie', sublabel: 'Taken live with your front camera; your location is recorded', Icon: Camera, required: true, live: true },
   { key: 'businessRegistrationUrl', label: 'Business Registration (optional)', sublabel: 'Shop & establishment license, if you have one', Icon: FileText, required: false },
   { key: 'gstCertificateUrl', label: 'GST Certificate (optional)', sublabel: 'If your shop is GST-registered', Icon: FileText, required: false },
 ];
@@ -40,11 +42,13 @@ export default function ShopKycPage() {
   const [gstNumber, setGstNumber] = useState('');
   const [panNumber, setPanNumber] = useState('');
   const [uploading, setUploading] = useState(null);
+  const [selfieMeta, setSelfieMeta] = useState(null);
+  const [capturing, setCapturing] = useState(false);
 
   const status = data?.kyc?.status || 'not_submitted';
   const rejectionReason = data?.kyc?.reviewNote;
 
-  async function handleUpload(docKey, file) {
+  async function handleUpload(docKey, file, meta = null) {
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) return toast.error('File too large — max 5MB');
     try {
@@ -53,7 +57,8 @@ export default function ShopKycPage() {
       const res = await fetch(signed.uploadUrl, { method: 'PUT', body: file, headers: { 'Content-Type': file.type || 'image/jpeg' } });
       if (!res.ok) throw new Error('upload failed');
       setUrls((prev) => ({ ...prev, [docKey]: signed.key }));
-      toast.success('Document uploaded');
+      if (meta) setSelfieMeta(meta);
+      toast.success(meta ? 'Selfie saved' : 'Document uploaded');
     } catch {
       toast.error('Upload failed. Please try again.');
     } finally {
@@ -65,8 +70,9 @@ export default function ShopKycPage() {
     if (!urls.ownerIdUrl || !urls.shopPhotoUrl || !urls.selfieUrl) {
       return toast.error('Owner ID, shop photo, and selfie are all required');
     }
+    if (!selfieMeta) return toast.error('Take your selfie with the camera');
     try {
-      await submitKyc({ ...urls, gstNumber: gstNumber || undefined, panNumber: panNumber || undefined }).unwrap();
+      await submitKyc({ ...urls, selfieMetadata: selfieMeta, gstNumber: gstNumber || undefined, panNumber: panNumber || undefined }).unwrap();
       toast.success('Documents submitted for review');
       refetch();
     } catch (err) {
@@ -133,7 +139,18 @@ export default function ShopKycPage() {
           </div>
         </div>
 
-        {DOCS.map(({ key, label, sublabel, Icon, required }) => {
+        {capturing && (
+          <LiveSelfieCapture
+            title="Owner selfie"
+            onCancel={() => setCapturing(false)}
+            onCapture={(blob, meta) => {
+              setCapturing(false);
+              handleUpload('selfieUrl', new File([blob], 'selfie.jpg', { type: blob.type || 'image/jpeg' }), meta);
+            }}
+          />
+        )}
+
+        {DOCS.map(({ key, label, sublabel, Icon, required, live }) => {
           const uploaded = !!urls[key];
           const isUploading = uploading === key;
           return (
@@ -151,10 +168,18 @@ export default function ShopKycPage() {
                   {uploaded && (
                     <div className="flex items-center gap-1.5 mt-1.5">
                       <CheckCircle2 size={12} strokeWidth={2.5} className="text-success-600" />
-                      <span className="text-xs font-semibold text-success-700">Uploaded</span>
+                      <span className="text-xs font-semibold text-success-700">{live ? 'Taken live' : 'Uploaded'}</span>
                     </div>
                   )}
                 </div>
+                {live ? (
+                  <button type="button" onClick={() => setCapturing(true)} disabled={isUploading}
+                    className={`btn-secondary text-xs py-2 px-3 ${isUploading ? 'opacity-50' : ''}`}>
+                    {isUploading
+                      ? <span className="flex items-center gap-1.5"><Loader2 size={11} className="animate-spin" /> Saving</span>
+                      : <span className="flex items-center gap-1.5"><Camera size={11} strokeWidth={2.5} />{uploaded ? 'Retake' : 'Take selfie'}</span>}
+                  </button>
+                ) : (
                 <label className={`btn-secondary cursor-pointer text-xs py-2 px-3 ${isUploading ? 'opacity-50' : ''}`}>
                   {isUploading ? (
                     <span className="flex items-center gap-1.5"><Loader2 size={11} className="animate-spin" /> Uploading</span>
@@ -163,6 +188,7 @@ export default function ShopKycPage() {
                   )}
                   <input type="file" accept="image/*" className="hidden" disabled={isUploading} onChange={(e) => handleUpload(key, e.target.files?.[0])} />
                 </label>
+                )}
               </div>
             </div>
           );

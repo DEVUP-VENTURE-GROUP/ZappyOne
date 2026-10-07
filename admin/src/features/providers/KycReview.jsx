@@ -166,7 +166,7 @@ function useAddress(lat, lng) {
 }
 
 /* Selfie metadata strip */
-function SelfieMetaBadges({ meta }) {
+export function SelfieMetaBadges({ meta }) {
   const addr = useAddress(meta?.lat, meta?.lng);
 
   if (!meta) {

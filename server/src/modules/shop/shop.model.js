@@ -61,6 +61,7 @@ const shopSchema = new mongoose.Schema(
       ownerIdUrl:            String, // Aadhaar/PAN of the owner — S3 key
       shopPhotoUrl:          String, // storefront photo — S3 key
       selfieUrl:             String,
+      selfieMetadata:        mongoose.Schema.Types.Mixed, // live capture: time, lat/lng, accuracy
       gstCertificateUrl:     String, // optional
       businessRegistrationUrl: String, // optional
       gstNumber:  String,

@@ -59,6 +59,16 @@ router.post(
     ownerIdUrl: Joi.string().required(),
     shopPhotoUrl: Joi.string().required(),
     selfieUrl: Joi.string().required(),
+    // The live camera's record: when and where the selfie was taken.
+    selfieMetadata: Joi.object({
+      capturedAt: Joi.string().isoDate().required(),
+      captureMethod: Joi.string().valid('live_camera').required(),
+      lat: Joi.number().min(-90).max(90).required(),
+      lng: Joi.number().min(-180).max(180).required(),
+      accuracy: Joi.number().min(0).allow(null),
+      geoStatus: Joi.string().max(20).optional(),
+      userAgent: Joi.string().max(300).optional(),
+    }).required(),
     gstCertificateUrl: Joi.string().optional(),
     businessRegistrationUrl: Joi.string().optional(),
     gstNumber: Joi.string().max(30).optional(),

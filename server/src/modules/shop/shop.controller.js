@@ -62,6 +62,7 @@ async function submitKyc(req, res, next) {
         'kyc.ownerIdUrl': ownerIdUrl,
         'kyc.shopPhotoUrl': shopPhotoUrl,
         'kyc.selfieUrl': selfieUrl,
+        'kyc.selfieMetadata': req.body.selfieMetadata,
         'kyc.gstCertificateUrl': gstCertificateUrl || undefined,
         'kyc.businessRegistrationUrl': businessRegistrationUrl || undefined,
         'kyc.gstNumber': gstNumber || undefined,
