@@ -183,17 +183,27 @@ async function search(req, res) {
 
 // Client-side crash beacon (from the app's ErrorBoundary). Logged for monitoring;
 // never blocks and never trusts the payload beyond logging.
+/** The last screen crashes from real devices, newest first (read by ops; see clientErrors). */
+const CLIENT_ERRORS_KEY = 'telemetry:client-errors';
+
 async function clientError(req, res) {
   res.status(204).end();
   try {
-    const { message, stack, errorStack, path } = req.body || {};
-    logger.warn({
+    const { message, stack, errorStack, path, app, healed } = req.body || {};
+    const row = {
       msg: typeof message === 'string' ? message.slice(0, 500) : null,
       errorStack: typeof errorStack === 'string' ? errorStack.slice(0, 1500) : null,
       componentStack: typeof stack === 'string' ? stack.slice(0, 1000) : null,
       path: typeof path === 'string' ? path.slice(0, 220) : null,
-      ua: req.headers['user-agent'],
-    }, '[CLIENT-ERROR] React error boundary tripped');
+      app: typeof app === 'string' ? app.slice(0, 40) : null,
+      healed: !!healed,
+      ua: String(req.headers['user-agent'] || '').slice(0, 200),
+      origin: String(req.headers.origin || '').slice(0, 80),
+      at: new Date().toISOString(),
+    };
+    logger.warn(row, '[CLIENT-ERROR] React error boundary tripped');
+    // Kept where they can be read back, not only in a process log nobody sees.
+    await redis.multi().lpush(CLIENT_ERRORS_KEY, JSON.stringify(row)).ltrim(CLIENT_ERRORS_KEY, 0, 299).exec();
   } catch { /* best-effort */ }
 }
 

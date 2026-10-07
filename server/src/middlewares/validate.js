@@ -37,7 +37,11 @@ const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 const rupees = (paise) => `₹${(Number(paise) / 100).toLocaleString('en-IN', { maximumFractionDigits: 2 })}`;
 
 function humanize(d) {
-  const key = d.context?.key;
+  // An item in a list is named by its list ("one of the ways of working"), never "3".
+  const path = (d.path || []).filter((p) => typeof p === 'string');
+  const key = typeof d.context?.key === 'number' || /^\d+$/.test(String(d.context?.key ?? ''))
+    ? path[path.length - 1]
+    : d.context?.key;
   const isMoney = /Paise$/.test(key || '');
   const label = labelOf(key);
   const limit = d.context?.limit;

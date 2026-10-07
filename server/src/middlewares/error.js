@@ -19,6 +19,21 @@ function fromDatabase(err) {
   return null;
 }
 
+/**
+ * A message written for us, not for the person: job states in capitals
+ * (IN_PROGRESS), database or library wording. Replaced by what it means.
+ */
+const INTERNAL = /\b[A-Z]{2,}(?:_[A-Z]+)+\b|Cast to|ObjectId|E11000|\bundefined\b|\bnull\b|is not a function|Cannot read prop|[Ii]llegal transition|Cannot move a/;
+const PLAIN_BY_STATUS = {
+  400: 'Some details are not quite right. Check them and try again.',
+  401: 'Please sign in again to continue.',
+  403: 'This is not available on your account.',
+  404: 'We could not find that. It may have been removed.',
+  409: 'This was just updated. Refresh to see the latest.',
+  429: 'Please wait a moment and try again.',
+};
+const plain = (message, status) => (message && INTERNAL.test(message) ? PLAIN_BY_STATUS[status] || CALM : message);
+
 // eslint-disable-next-line no-unused-vars
 function errorHandler(err, req, res, next) {
   const db = !Number.isInteger(err.status) && !Number.isInteger(err.statusCode) ? fromDatabase(err) : null;
@@ -45,7 +60,7 @@ function errorHandler(err, req, res, next) {
   }
 
   res.status(status).json({
-    error: db?.message || (expected && err.message) || CALM,
+    error: plain(db?.message || (expected && err.message), status) || CALM,
     code,
     requestId: req.id,
     ...(err.details ? { details: err.details } : {}),
