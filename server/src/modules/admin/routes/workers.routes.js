@@ -35,7 +35,10 @@ router.get('/workers/:id/kyc/docs', ctrl.kycDocUrls);
 router.get('/workers/:id/kyc/stream/:docType', ctrl.kycStreamDoc);
 router.post(
   '/workers/:id/kyc/clarify',
-  validate(Joi.object({ message: Joi.string().min(5).max(500).required() })),
+  validate(Joi.object({
+    message: Joi.string().min(5).max(500).required(),
+    docCodes: Joi.array().items(Joi.string().valid('aadhaarUrl', 'licenseUrl', 'selfieUrl')).default([]),
+  })),
   ctrl.kycRequestClarification,
 );
 router.get('/workers/:id/penalties', ctrl.getWorkerPenaltyStats);

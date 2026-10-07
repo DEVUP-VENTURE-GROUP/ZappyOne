@@ -107,6 +107,7 @@ async function approveKyc(req, res, next) {
           'kyc.status':          'approved',
           'kyc.reviewedAt':      new Date(),
           'kyc.reviewedBy':      req.auth.sub,
+          'kyc.clarification':   null,
           'kyc.rejectionReason': null,
           'kyc.changeRequest':   null, // clear any pending change request on approval
           // Set profile photo from selfie — permanent, no URL expiry via avatar endpoint
@@ -167,6 +168,7 @@ async function rejectKyc(req, res, next) {
             'kyc.selfieMetadata':  snap.selfieMetadata ?? null,
             'kyc.reviewedAt':      now,
             'kyc.reviewedBy':      req.auth.sub,
+            'kyc.clarification':   null,
             'kyc.rejectionReason': req.body.reason,
             'kyc.lastRejectedAt':  now,
             'kyc.isUpdate':        false,
@@ -187,6 +189,7 @@ async function rejectKyc(req, res, next) {
               newRejectionCount >= SUSPENSION_THRESHOLD ? 'suspended' : 'rejected',
             'kyc.reviewedAt': now,
             'kyc.reviewedBy': req.auth.sub,
+            'kyc.clarification': null,
             'kyc.rejectionReason': req.body.reason,
             'kyc.lastRejectedAt': now,
             'kyc.rejectionCount': newRejectionCount,
@@ -406,6 +409,7 @@ async function kycRequestClarification(req, res, next) {
           'kyc.clarification': {
             active:      true,
             message:     req.body.message,
+            docCodes:    req.body.docCodes || [],
             requestedAt: new Date(),
             requestedBy: req.auth?.sub ?? null,
           },

@@ -67,6 +67,8 @@ const workerSchema = new mongoose.Schema(
       clarification: {
         active:      { type: Boolean, default: false },
         message:     { type: String, maxlength: 500 },  // what admin asked to fix
+        // The documents asked for again (aadhaarUrl, licenseUrl, selfieUrl); empty = all.
+        docCodes:    { type: [String], default: [] },
         requestedAt: Date,
         requestedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin' },
       },

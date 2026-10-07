@@ -49,6 +49,17 @@ async function updateMe(req, res, next) {
     for (const k of KYC_DOC_FIELDS) {
       if (req.body[k] !== undefined) kycPatch[`kyc.${k}`] = req.body[k];
     }
+    // The live selfie's record: kept only with a real camera capture and a location.
+    const sm = req.body.liveSelfieMeta;
+    if (req.body.liveSelfie !== undefined) {
+      if (!sm || sm.captureMethod !== 'live_camera' || typeof sm.lat !== 'number' || typeof sm.lng !== 'number') {
+        return res.status(400).json({ error: 'Take your selfie with the camera, with location on.', code: 'KYC_LIVE_SELFIE_REQUIRED' });
+      }
+      kycPatch['kyc.liveSelfieMeta'] = {
+        capturedAt: String(sm.capturedAt || ''), captureMethod: 'live_camera', lat: sm.lat, lng: sm.lng,
+        accuracy: typeof sm.accuracy === 'number' ? sm.accuracy : null,
+      };
+    }
     if (req.body.gstNumber !== undefined) kycPatch['kyc.gstNumber'] = req.body.gstNumber;
     if (req.body.panNumber  !== undefined) kycPatch['kyc.panNumber']  = req.body.panNumber;
 
@@ -63,6 +74,12 @@ async function updateMe(req, res, next) {
     const currentStatus   = current?.kyc?.status;
     if (Object.keys(kycPatch).length > 0 && mandatoryFilled && currentStatus !== 'approved') {
       kycPatch['kyc.status'] = 'pending';
+    }
+    // Asked for named documents again: once each is a new copy, it goes back to review.
+    const clar = current?.kyc?.clarification;
+    if (clar?.active && clar.docCodes?.length) {
+      const allNew = clar.docCodes.every((k) => kycPatch[`kyc.${k}`] && kycPatch[`kyc.${k}`] !== current.kyc[k]);
+      if (allNew) kycPatch['kyc.clarification'] = null;
     }
 
     const update = { $set: { ...patch, ...kycPatch } };

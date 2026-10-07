@@ -7,10 +7,12 @@ const { validate } = require('../../middlewares/validate');
 const router = express.Router();
 
 const kycSubmitSchema = Joi.object({
-  aadhaarUrl: Joi.string().required(),
+  // Required on a full submission; when the reviewer asked for named
+  // documents again only those are sent (worker/kyc.controller).
+  aadhaarUrl: Joi.string().allow('', null),
   // Optional: a bench technician need not drive. Aadhaar + live selfie prove who they are.
   licenseUrl: Joi.string().allow('', null),
-  selfieUrl:  Joi.string().required(),
+  selfieUrl:  Joi.string().allow('', null),
   selfieMetadata: Joi.object({
     capturedAt:    Joi.string().isoDate().optional(),
     captureMethod: Joi.string().valid('live_camera', 'upload').optional(),

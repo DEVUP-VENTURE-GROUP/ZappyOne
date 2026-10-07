@@ -61,7 +61,7 @@ async function approvePartnerKyc(req, res, next) {
   try {
     const partner = await EventPartner.findByIdAndUpdate(
       req.params.id,
-      { $set: { 'kyc.status': 'approved', 'kyc.reviewedAt': new Date(), 'kyc.reviewNote': req.body.note || '' } },
+      { $set: { 'kyc.status': 'approved', 'kyc.reviewedAt': new Date(), 'kyc.reviewNote': req.body.note || '', 'kyc.clarification': null } },
       { new: true }
     ).lean();
     if (!partner) return res.status(404).json({ error: 'Partner not found' });
@@ -82,13 +82,36 @@ async function approvePartnerKyc(req, res, next) {
   } catch (e) { next(e); }
 }
 
+/** Ask for named documents again; status stays in review, the partner re-uploads only those. */
+const PARTNER_DOCS = ['aadharFront', 'aadharBack', 'panCard', 'liveSelfie', 'gstCertificate', 'businessRegistration'];
+async function clarifyPartnerKyc(req, res, next) {
+  try {
+    const docCodes = [...new Set((req.body.docCodes || []).filter((c) => PARTNER_DOCS.includes(c)))];
+    const message = String(req.body.message || '').trim().slice(0, 500);
+    if (!docCodes.length) return res.status(400).json({ error: 'Pick the documents to send again', code: 'NO_DOCUMENTS' });
+    if (message.length < 5) return res.status(400).json({ error: 'Tell them what to fix', code: 'MESSAGE_REQUIRED' });
+    const partner = await EventPartner.findByIdAndUpdate(req.params.id, {
+      $set: { 'kyc.status': 'pending', 'kyc.clarification': { active: true, message, docCodes, requestedAt: new Date() } },
+    }, { new: true }).lean();
+    if (!partner) return res.status(404).json({ error: 'Partner not found' });
+    require('../notification/notification.service').notify({
+      recipient: { kind: 'event_partner', id: String(partner._id) },
+      type: 'kyc_clarification',
+      title: `Please send ${docCodes.length === 1 ? 'one document' : `${docCodes.length} documents`} again`,
+      body: message,
+      data: { partnerId: String(partner._id) },
+    }).catch(() => {});
+    res.json({ partner });
+  } catch (e) { next(e); }
+}
+
 async function rejectPartnerKyc(req, res, next) {
   try {
     const { reason } = req.body;
     if (!reason) return res.status(400).json({ error: 'Rejection reason required' });
     const partner = await EventPartner.findByIdAndUpdate(
       req.params.id,
-      { $set: { 'kyc.status': 'rejected', 'kyc.reviewedAt': new Date(), 'kyc.reviewNote': reason } },
+      { $set: { 'kyc.status': 'rejected', 'kyc.reviewedAt': new Date(), 'kyc.reviewNote': reason, 'kyc.clarification': null } },
       { new: true }
     ).lean();
     if (!partner) return res.status(404).json({ error: 'Partner not found' });
@@ -212,6 +235,6 @@ async function blockPartner(req, res, next) {
 module.exports = {
   listThemes, updateThemeStatus, listBookings, cancelBooking,
   listPartners, getPartner, createPartner, updatePartner,
-  approvePartnerKyc, rejectPartnerKyc, streamPartnerKycDoc, streamPartnerKycField, streamOwnKycDoc, blockPartner,
+  approvePartnerKyc, rejectPartnerKyc, clarifyPartnerKyc, streamPartnerKycDoc, streamPartnerKycField, streamOwnKycDoc, blockPartner,
   getConfig, updateConfig, getAnalytics, listCategories, upsertCategory,
 };

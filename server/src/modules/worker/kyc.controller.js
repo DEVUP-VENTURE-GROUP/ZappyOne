@@ -51,10 +51,25 @@ async function submitKyc(req, res, next) {
       }
     }
 
+    // Asked for named documents again: only those are sent and each must be a
+    // new copy; everything else already on file is kept as it is.
+    const asked = clarificationActive && w.kyc.clarification.docCodes?.length ? w.kyc.clarification.docCodes : null;
+    if (asked) {
+      const notNew = asked.filter((k) => !req.body[k] || req.body[k] === w.kyc[k]);
+      if (notNew.length) {
+        return res.status(400).json({ error: 'Add a new copy of each document we asked for.', code: 'KYC_DOCS_REQUIRED', missing: notNew });
+      }
+      for (const k of ['aadhaarUrl', 'licenseUrl', 'selfieUrl']) if (!asked.includes(k)) req.body[k] = w.kyc[k] || null;
+      if (!asked.includes('selfieUrl')) req.body.selfieMetadata = w.kyc.selfieMetadata;
+    } else if (!req.body.aadhaarUrl || !req.body.selfieUrl) {
+      return res.status(400).json({ error: 'Add your Aadhaar and a live selfie.', code: 'KYC_DOCS_REQUIRED' });
+    }
+
     // Location is MANDATORY — anti-fraud + dispatch zoning. Reject submissions
     // whose live selfie has no GPS fix (denied/spoofed/unavailable).
     const meta = req.body.selfieMetadata;
-    if (!meta || typeof meta.lat !== 'number' || typeof meta.lng !== 'number') {
+    const freshSelfie = !asked || asked.includes('selfieUrl');
+    if (freshSelfie && (!meta || typeof meta.lat !== 'number' || typeof meta.lng !== 'number')) {
       return res.status(400).json({
         error: 'Location is required. Please enable GPS/location and recapture your live selfie.',
         code: 'KYC_LOCATION_REQUIRED',
@@ -63,7 +78,7 @@ async function submitKyc(req, res, next) {
     // Reject mock-provider fixes and coordinates outside the service area
     // (VPN / IP-geolocation place spoofed selfies in e.g. Peru / Costa Rica).
     const { validateLocation } = require('../../core/geo/validate');
-    const locCheck = validateLocation({ lat: meta.lat, lng: meta.lng, accuracy: meta.accuracy, mock: meta.mock, maxAccuracy: 500 });
+    const locCheck = !freshSelfie ? { ok: true } : validateLocation({ lat: meta.lat, lng: meta.lng, accuracy: meta.accuracy, mock: meta.mock, maxAccuracy: 500 });
     if (!locCheck.ok) {
       return res.status(422).json({
         error: locCheck.reason === 'mock_location'

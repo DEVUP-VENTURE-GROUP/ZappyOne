@@ -47,12 +47,12 @@ function DocRow({ field, storedKey, pendingKey, disabled, token, onUploaded }) {
     return () => { cancelled = true; if (url) URL.revokeObjectURL(url); };
   }, [storedKey, pendingKey, field.key, token]);
 
-  async function take(file) {
+  async function take(file, meta = null) {
     setBusy(true);
     try {
       const key = await uploadFile(presign, file, { folder: 'kyc-docs', maxMb: 10 });
       setPreview(URL.createObjectURL(file));
-      onUploaded(field.key, key);
+      onUploaded(field.key, key, meta);
     } catch (e) { toast.error(e?.data?.error || e.message || 'Upload failed'); } finally { setBusy(false); }
   }
 
@@ -61,7 +61,7 @@ function DocRow({ field, storedKey, pendingKey, disabled, token, onUploaded }) {
     <div className="flex items-center gap-3 py-3">
       {camera && (
         <LiveSelfieCapture onCancel={() => setCamera(false)}
-          onCapture={(blob) => { setCamera(false); take(new File([blob], 'selfie.jpg', { type: 'image/jpeg' })); }} />
+          onCapture={(blob, meta) => { setCamera(false); take(new File([blob], 'selfie.jpg', { type: 'image/jpeg' }), meta); }} />
       )}
       <span className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-btn border border-line bg-sunken text-ink-500">
         {preview ? <img src={preview} alt="" className="h-full w-full object-cover" /> : field.camera ? <Camera size={18} /> : field.required ? <IdCard size={18} /> : <FileText size={18} />}
@@ -88,15 +88,19 @@ function DocRow({ field, storedKey, pendingKey, disabled, token, onUploaded }) {
 export default function KycSection({ partner, token }) {
   const [updateMe, { isLoading: saving }] = useUpdatePartnerMeMutation();
   const [pending, setPending] = useState({});
+  const [selfieMeta, setSelfieMeta] = useState(null);
   const [pan, setPan] = useState(partner?.kyc?.panNumber || '');
   const [gst, setGst] = useState(partner?.kyc?.gstNumber || '');
   const kyc = partner?.kyc || {};
   const status = kyc.status || 'not_submitted';
   const st = STATE[status] || STATE.not_submitted;
-  const locked = status === 'approved' || status === 'pending';
+  // The reviewer asked for named documents again: only those open, the rest are kept.
+  const clar = kyc.clarification?.active ? kyc.clarification : null;
+  const asked = clar?.docCodes?.length ? new Set(clar.docCodes) : null;
+  const locked = status === 'approved' || (status === 'pending' && !clar);
 
-  const required = FIELDS.filter((f) => f.required);
-  const doneRequired = required.filter((f) => kyc[f.key] || pending[f.key]).length;
+  const required = asked ? FIELDS.filter((f) => asked.has(f.key)) : FIELDS.filter((f) => f.required);
+  const doneRequired = required.filter((f) => (asked ? pending[f.key] : kyc[f.key] || pending[f.key])).length;
   const ready = doneRequired === required.length;
   const panOk = !pan || /^[A-Z]{5}[0-9]{4}[A-Z]$/.test(pan);
 
@@ -104,7 +108,11 @@ export default function KycSection({ partner, token }) {
     if (!ready) return toast.error('Upload all four required documents first');
     if (!panOk) return toast.error('PAN looks wrong. It is 5 letters, 4 digits, 1 letter.');
     try {
-      await updateMe({ ...pending, panNumber: pan || undefined, gstNumber: gst || undefined }).unwrap();
+      await updateMe({
+        ...pending,
+        ...(pending.liveSelfie && { liveSelfieMeta: selfieMeta }),
+        panNumber: pan || undefined, gstNumber: gst || undefined,
+      }).unwrap();
       setPending({});
       toast.success('Submitted for review');
     } catch (e) { toast.error(e?.data?.error || 'Could not submit'); }
@@ -118,7 +126,9 @@ export default function KycSection({ partner, token }) {
       </div>
       <div className="p-4">
         <p className="text-[14px] text-ink-500">
-          {status === 'rejected' ? `Sent back: ${kyc.reviewNote || 'please re-upload clear documents.'}` : st.text}
+          {clar
+            ? `Please send again: ${FIELDS.filter((f) => asked?.has(f.key)).map((f) => f.label).join(', ')}. ${clar.message} Everything else is kept.`
+            : status === 'rejected' ? `Sent back: ${kyc.reviewNote || 'please re-upload clear documents.'}` : st.text}
         </p>
         {!locked && (
           <div className="mt-3">
@@ -132,8 +142,8 @@ export default function KycSection({ partner, token }) {
         )}
         <div className="mt-2 divide-y divide-line">
           {FIELDS.map((f) => (
-            <DocRow key={f.key} field={f} storedKey={kyc[f.key]} pendingKey={pending[f.key]} disabled={locked} token={token}
-              onUploaded={(k, key) => setPending((p) => ({ ...p, [k]: key }))} />
+            <DocRow key={f.key} field={f} storedKey={kyc[f.key]} pendingKey={pending[f.key]} disabled={locked || (asked && !asked.has(f.key))} token={token}
+              onUploaded={(k, key, meta) => { setPending((p) => ({ ...p, [k]: key })); if (meta) setSelfieMeta(meta); }} />
           ))}
         </div>
         {!locked && (

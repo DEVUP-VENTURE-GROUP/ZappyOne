@@ -776,7 +776,7 @@ export const api = createApi({
       invalidatesTags: ['AdminUsers'],
     }),
     adminKycClarify: b.mutation({
-      query: ({ id, message }) => ({ url: adminApiPath(`/workers/${id}/kyc/clarify`), method: 'POST', body: { message } }),
+      query: ({ id, message, docCodes = [] }) => ({ url: adminApiPath(`/workers/${id}/kyc/clarify`), method: 'POST', body: { message, docCodes } }),
     }),
     adminKycChangeRequests: b.query({
       query: () => adminApiPath('/kyc/change-requests'),
@@ -1353,6 +1353,11 @@ export const api = createApi({
       query: ({ id, ...body }) => ({ url: adminApiPath(`/events/partners/${id}/kyc/approve`), method: 'POST', body }),
       invalidatesTags: ['EventPartner'],
     }),
+    /** Ask an event partner for named documents again (stays in review). */
+    adminClarifyEventPartnerKyc: b.mutation({
+      query: ({ id, message, docCodes }) => ({ url: adminApiPath(`/events/partners/${id}/kyc/clarify`), method: 'POST', body: { message, docCodes } }),
+      invalidatesTags: ['EventPartner'],
+    }),
     adminRejectEventPartnerKyc: b.mutation({
       query: ({ id, reason }) => ({ url: adminApiPath(`/events/partners/${id}/kyc/reject`), method: 'POST', body: { reason } }),
       invalidatesTags: ['EventPartner'],
@@ -1405,6 +1410,11 @@ export const api = createApi({
     }),
     adminApproveShopKyc: b.mutation({
       query: (id) => ({ url: adminApiPath(`/shops/${id}/kyc/approve`), method: 'POST' }),
+      invalidatesTags: ['Shop', 'ShopKyc'],
+    }),
+    /** Ask a shop for named documents again (stays in review). */
+    adminClarifyShopKyc: b.mutation({
+      query: ({ id, message, docCodes }) => ({ url: adminApiPath(`/shops/${id}/kyc/clarify`), method: 'POST', body: { message, docCodes } }),
       invalidatesTags: ['Shop', 'ShopKyc'],
     }),
     adminRejectShopKyc: b.mutation({
@@ -2495,6 +2505,7 @@ export const {
   useAdminGetEventPartnerQuery,
   useAdminApproveEventPartnerKycMutation,
   useAdminRejectEventPartnerKycMutation,
+  useAdminClarifyEventPartnerKycMutation,
   useAdminBlockEventPartnerMutation,
   // Shop
   useLoginShopMutation,
@@ -2511,6 +2522,7 @@ export const {
   useAdminShopsQuery,
   useAdminApproveShopKycMutation,
   useAdminRejectShopKycMutation,
+  useAdminClarifyShopKycMutation,
   useAdminBlockShopMutation,
   useAdminShopKycDocUrlsQuery,
   // Repair vertical (admin)

@@ -129,6 +129,11 @@ export default function WorkerKycPage() {
   // Admin asked for a fix ("upload a clear selfie") — re-open the upload form
   // even though the submission is still technically pending_review.
   const needsClarification = status === 'pending_review' && clarification?.active;
+  // Asked for named documents again: only those are opened; the rest are kept.
+  const asked = needsClarification && clarification.docCodes?.length ? new Set(clarification.docCodes) : null;
+  const opens = (key) => !asked || asked.has(key);
+  const ready = asked ? [...asked].every((k) => urls[k]) : !!(urls.aadhaarUrl && urls.selfieUrl);
+  const DOC_NAME = { aadhaarUrl: 'Aadhaar', licenseUrl: 'Driving licence', selfieUrl: 'Live selfie' };
 
   async function handleRequestChange() {
     if (changeMsg.trim().length < 10) { toast.error('Please describe why you need to change documents (min 10 chars)'); return; }
@@ -192,17 +197,18 @@ export default function WorkerKycPage() {
 
   /* Submit */
   async function submit() {
-    if (!urls.aadhaarUrl || !urls.selfieUrl) {
-      toast.error('Aadhaar and a live selfie are required');
+    if (!ready) {
+      toast.error(asked ? 'Add a new copy of each document asked for' : 'Aadhaar and a live selfie are required');
       return;
     }
     // Location is mandatory — the live selfie must carry GPS coordinates.
-    if (typeof selfieMetadata?.lat !== 'number' || typeof selfieMetadata?.lng !== 'number') {
+    if (opens('selfieUrl') && (typeof selfieMetadata?.lat !== 'number' || typeof selfieMetadata?.lng !== 'number')) {
       toast.error('Location is required. Please enable GPS and recapture your live selfie.');
       return;
     }
     try {
-      await submitKyc({ ...urls, selfieMetadata }).unwrap();
+      const body = asked ? Object.fromEntries([...asked].map((k) => [k, urls[k]])) : { ...urls };
+      await submitKyc({ ...body, ...(opens('selfieUrl') && { selfieMetadata }) }).unwrap();
       toast.success('Documents submitted for review');
       refetch();
     } catch (err) {
@@ -345,7 +351,11 @@ export default function WorkerKycPage() {
                 <div>
                   <p className="text-xs font-bold text-amber-700 uppercase tracking-wide">Action needed from admin</p>
                   <p className="text-sm text-amber-700 mt-1 leading-relaxed">{clarification.message}</p>
-                  <p className="text-xs text-amber-500 mt-1.5">Please fix the above and re-upload your documents below.</p>
+                  <p className="text-xs text-amber-600 mt-1.5">
+                    {asked
+                      ? `Send again: ${[...asked].map((k) => DOC_NAME[k] || k).join(', ')}. Everything else is kept.`
+                      : 'Please fix the above and re-upload your documents below.'}
+                  </p>
                 </div>
               </div>
             </div>
@@ -391,7 +401,7 @@ export default function WorkerKycPage() {
                       <p className="font-semibold text-sm text-[#0F172A]">{label}</p>
                       {required && <span className="text-red-500 text-xs font-bold">*</span>}
                     </div>
-                    <p className="text-xs text-slate-400 mt-0.5">{sublabel}</p>
+                    <p className="text-xs text-slate-400 mt-0.5">{opens(key) ? sublabel : 'Accepted, nothing to change'}</p>
                     {uploaded && (
                       <div className="flex items-center gap-1.5 mt-1.5">
                         <CheckCircle2 size={12} strokeWidth={2.5} className="text-success-600" />
@@ -399,7 +409,7 @@ export default function WorkerKycPage() {
                       </div>
                     )}
                   </div>
-                  <label className={`btn-secondary cursor-pointer text-xs py-2 px-3 ${isUploading ? 'opacity-50' : ''}`}>
+                  {opens(key) && <label className={`btn-secondary cursor-pointer text-xs py-2 px-3 ${isUploading ? 'opacity-50' : ''}`}>
                     {isUploading ? (
                       <span className="flex items-center gap-1.5"><Loader2 size={11} className="animate-spin" /> Uploading</span>
                     ) : (
@@ -412,7 +422,7 @@ export default function WorkerKycPage() {
                       disabled={isUploading}
                       onChange={(e) => handleUpload(key, e.target.files?.[0])}
                     />
-                  </label>
+                  </label>}
                 </div>
               </div>
             );
@@ -459,7 +469,7 @@ export default function WorkerKycPage() {
                 ) : null}
               </div>
 
-              {!selfieUploading && (
+              {!selfieUploading && opens('selfieUrl') && (
                 <button
                   onClick={() => setShowCamera(true)}
                   className={`btn-secondary text-xs py-2 px-3 ${selfieUploaded ? 'border-success-200 text-success-700' : 'border-zappy-200 text-zappy-700'}`}
@@ -499,7 +509,7 @@ export default function WorkerKycPage() {
           <div className="max-w-lg lg:max-w-2xl mx-auto px-4 pt-3 pb-2">
             <button
               onClick={submit}
-              disabled={submitting || !urls.aadhaarUrl || !urls.licenseUrl || !urls.selfieUrl}
+              disabled={submitting || !ready}
               className="btn-primary w-full"
             >
               {submitting

@@ -19,6 +19,15 @@ const eventPartnerSchema = new mongoose.Schema({
     aadharBack:           String, // mandatory
     panCard:              String, // mandatory
     liveSelfie:           String, // mandatory
+    // When and where the live selfie was taken (camera only, location required).
+    liveSelfieMeta:       { type: mongoose.Schema.Types.Mixed, default: null },
+    // Reviewer asked for named documents again; status stays pending.
+    clarification: {
+      active:      { type: Boolean, default: false },
+      message:     { type: String, maxlength: 500 },
+      docCodes:    { type: [String], default: [] },
+      requestedAt: Date,
+    },
     gstCertificate:       String, // optional
     businessRegistration: String, // optional
     // Legacy flat array kept for backward compat

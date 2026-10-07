@@ -1,12 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, CheckCircle, XCircle, Star, Eye, EyeOff, Zap, Users, Package, Settings2, BarChart2, TrendingUp, ChevronRight, Plus, X, ShieldCheck, ShieldOff, FileText, Phone, MapPin, ZoomIn, AlertTriangle, Building2 } from 'lucide-react';
-import { useAdminEventThemesQuery, useAdminUpdateThemeStatusMutation, useAdminEventBookingsQuery, useAdminEventPartnersQuery, useAdminEventAnalyticsQuery, useAdminEventConfigQuery, useAdminUpdateEventConfigMutation, useAdminEventCategoriesQuery, useAdminUpsertEventCategoryMutation, useAdminCreateEventPartnerMutation, useAdminGetEventPartnerQuery, useAdminApproveEventPartnerKycMutation, useAdminRejectEventPartnerKycMutation, useAdminBlockEventPartnerMutation, useAdminCancelEventBookingMutation } from '@shared/services/api';
+import { useAdminEventThemesQuery, useAdminUpdateThemeStatusMutation, useAdminEventBookingsQuery, useAdminEventPartnersQuery, useAdminEventAnalyticsQuery, useAdminEventConfigQuery, useAdminUpdateEventConfigMutation, useAdminEventCategoriesQuery, useAdminUpsertEventCategoryMutation, useAdminCreateEventPartnerMutation, useAdminGetEventPartnerQuery, useAdminApproveEventPartnerKycMutation, useAdminRejectEventPartnerKycMutation, useAdminClarifyEventPartnerKycMutation, useAdminBlockEventPartnerMutation, useAdminCancelEventBookingMutation } from '@shared/services/api';
 import { useSelector } from 'react-redux';
 import { selectAuth } from '@shared/modules/auth/authSlice';
 import { API_BASE } from '@shared/services/apiBase';
 import { adminApiPath } from '@/config/admin';
 import toast from 'react-hot-toast';
+import AskAgain from '../providers/AskAgain';
+import { SelfieMetaBadges } from '../providers/KycReview';
 
 const TABS = [
   { id: 'themes',    label: 'Themes',    Icon: Star },
@@ -283,6 +285,7 @@ function PartnerDrawer({ partnerId, onClose, onRefresh }) {
   const { data, isLoading, refetch } = useAdminGetEventPartnerQuery(partnerId);
   const [approveKyc]  = useAdminApproveEventPartnerKycMutation();
   const [rejectKyc]   = useAdminRejectEventPartnerKycMutation();
+  const [clarifyKyc]  = useAdminClarifyEventPartnerKycMutation();
   const [blockPartner]= useAdminBlockEventPartnerMutation();
   const [rejectNote, setRejectNote] = useState('');
   const [showReject, setShowReject] = useState(false);
@@ -415,9 +418,25 @@ function PartnerDrawer({ partnerId, onClose, onRefresh }) {
               )}
             </div>
 
+            {/* Where and when the live selfie was taken */}
+            {partner.kyc?.liveSelfie && <SelfieMetaBadges meta={partner.kyc?.liveSelfieMeta} />}
+
             {/* KYC Actions */}
             {partner.kyc?.status !== 'approved' && (
               <div className="space-y-3">
+                {partner.kyc?.clarification?.active && (
+                  <p className="rounded-xl bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800">
+                    Waiting for them to send again: {(partner.kyc.clarification.docCodes || []).join(', ')}
+                  </p>
+                )}
+                <AskAgain
+                  docs={[
+                    { code: 'aadharFront', label: 'Aadhaar front' }, { code: 'aadharBack', label: 'Aadhaar back' },
+                    { code: 'panCard', label: 'PAN card' }, { code: 'liveSelfie', label: 'Live selfie' },
+                    { code: 'gstCertificate', label: 'GST certificate' }, { code: 'businessRegistration', label: 'Business registration' },
+                  ]}
+                  onSend={async ({ docCodes, message }) => { await clarifyKyc({ id: partnerId, docCodes, message }).unwrap(); refetch(); onRefresh(); }}
+                />
                 <button onClick={handleApprove}
                   className="w-full py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2">
                   <ShieldCheck size={16} />Approve KYC

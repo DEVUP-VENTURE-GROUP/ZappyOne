@@ -9,7 +9,7 @@ import {
   Phone, Star, Loader2, ChevronRight, User, MapPin, Users,
 } from 'lucide-react';
 import {
-  useAdminShopsQuery, useAdminApproveShopKycMutation, useAdminRejectShopKycMutation,
+  useAdminShopsQuery, useAdminApproveShopKycMutation, useAdminRejectShopKycMutation, useAdminClarifyShopKycMutation,
   useAdminBlockShopMutation, useAdminShopKycDocUrlsQuery,
 } from '@shared/services/api';
 import {
@@ -18,6 +18,7 @@ import {
 } from '../../ui/kit';
 import toast from 'react-hot-toast';
 import { SelfieMetaBadges } from './KycReview';
+import AskAgain from './AskAgain';
 
 /* Permanent doc hook — server-proxied, no URL expiry */
 function useKycDoc(shopId, docType, token, enabled = true) {
@@ -53,6 +54,7 @@ function KycDocViewer({ shopId, onClose }) {
   const { accessToken: token } = useSelector(selectAuth);
   const { data, isLoading: metaLoading } = useAdminShopKycDocUrlsQuery(shopId);
   const [lightbox, setLightbox] = useState(null);
+  const [clarifyShop] = useAdminClarifyShopKycMutation();
 
   const { url: ownerIdUrl, loading: l1 } = useKycDoc(shopId, 'ownerId', token, !metaLoading && !!data?.docs?.hasOwnerId);
   const { url: shopPhotoUrl, loading: l2 } = useKycDoc(shopId, 'shopPhoto', token, !metaLoading && !!data?.docs?.hasShopPhoto);
@@ -117,6 +119,20 @@ function KycDocViewer({ shopId, onClose }) {
 
               {/* Where and when the owner's selfie was taken (live camera only). */}
               {data?.docs?.hasSelfie && <SelfieMetaBadges meta={data?.selfieMetadata} />}
+
+              {data?.clarification && (
+                <p className="rounded-xl bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800">
+                  Waiting for them to send again: {(data.clarification.docCodes || []).join(', ')}
+                </p>
+              )}
+              <AskAgain
+                docs={[
+                  { code: 'ownerIdUrl', label: "Owner's ID" }, { code: 'shopPhotoUrl', label: 'Shop photo' },
+                  { code: 'selfieUrl', label: 'Owner selfie' }, { code: 'businessRegistrationUrl', label: 'Business registration' },
+                  { code: 'gstCertificateUrl', label: 'GST certificate' },
+                ]}
+                onSend={({ docCodes, message }) => clarifyShop({ id: shopId, docCodes, message }).unwrap()}
+              />
 
               {optionalDocs.length > 0 && (
                 <div className="grid grid-cols-2 gap-4">

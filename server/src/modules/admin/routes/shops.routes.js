@@ -13,6 +13,15 @@ router.get('/shops/:id', ctrl.getShop);
 router.get('/shops/:id/kyc/docs', ctrl.kycDocUrls);
 router.get('/shops/:id/kyc/stream/:docType', ctrl.kycStreamDoc);
 router.post('/shops/:id/kyc/approve', ctrl.approveKyc);
+// Ask the shop for named documents again; the application stays in review.
+router.post(
+  '/shops/:id/kyc/clarify',
+  validate(Joi.object({
+    message: Joi.string().min(5).max(500).required(),
+    docCodes: Joi.array().items(Joi.string().valid('ownerIdUrl', 'shopPhotoUrl', 'selfieUrl', 'businessRegistrationUrl', 'gstCertificateUrl')).min(1).required(),
+  })),
+  ctrl.clarifyKyc,
+);
 router.post(
   '/shops/:id/kyc/reject',
   validate(Joi.object({ reason: Joi.string().max(500).allow('', null).optional() })),

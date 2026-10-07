@@ -79,6 +79,7 @@ adminRouter.get('/partners/:id',                  a.getPartner);
 adminRouter.patch('/partners/:id',                a.updatePartner);
 adminRouter.post('/partners/:id/kyc/approve',     a.approvePartnerKyc);
 adminRouter.post('/partners/:id/kyc/reject',      a.rejectPartnerKyc);
+adminRouter.post('/partners/:id/kyc/clarify',     a.clarifyPartnerKyc);
 adminRouter.get('/partners/:id/kyc/field/:fieldName',   a.streamPartnerKycField);
 adminRouter.get('/partners/:id/kyc/stream/:idx',        a.streamPartnerKycDoc);
 adminRouter.post('/partners/:id/block',           a.blockPartner);

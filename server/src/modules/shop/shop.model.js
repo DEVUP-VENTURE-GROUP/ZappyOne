@@ -62,6 +62,13 @@ const shopSchema = new mongoose.Schema(
       shopPhotoUrl:          String, // storefront photo — S3 key
       selfieUrl:             String,
       selfieMetadata:        mongoose.Schema.Types.Mixed, // live capture: time, lat/lng, accuracy
+      // Reviewer asked for named documents again; status stays pending_review.
+      clarification: {
+        active:      { type: Boolean, default: false },
+        message:     { type: String, maxlength: 500 },
+        docCodes:    { type: [String], default: [] },
+        requestedAt: Date,
+      },
       gstCertificateUrl:     String, // optional
       businessRegistrationUrl: String, // optional
       gstNumber:  String,

@@ -20,6 +20,7 @@ import { selectAuth } from '@shared/modules/auth/authSlice';
 import { adminApiPath } from '@/config/admin';
 import { API_BASE } from '@shared/services/apiBase';
 import toast from 'react-hot-toast';
+import AskAgain from './AskAgain';
 
 /* Image lightbox */
 function Lightbox({ url, label, onClose }) {
@@ -234,7 +235,6 @@ function KycDetailPanel({ worker, onDone }) {
   const [showReject, setShowReject] = useState(false);
   const [showClarify, setShowClarify] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
-  const [clarifyMsg, setClarifyMsg]     = useState('');
   const [viewingSnap, setViewingSnap]   = useState(false);
 
   const { accessToken: token } = useSelector(selectAuth);
@@ -286,18 +286,6 @@ function KycDetailPanel({ worker, onDone }) {
     } catch (err) { toast.error(err.data?.error || 'Failed'); }
   }
 
-  async function onClarify() {
-    if (!clarifyMsg.trim() || clarifyMsg.length < 5) {
-      toast.error('Enter a clarification message (min 5 chars)');
-      return;
-    }
-    try {
-      await clarify({ id: worker._id, message: clarifyMsg }).unwrap();
-      toast.success('Clarification request sent to worker');
-      setShowClarify(false);
-      setClarifyMsg('');
-    } catch (err) { toast.error(err.data?.error || 'Failed'); }
-  }
 
   return (
     <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
@@ -488,31 +476,19 @@ function KycDetailPanel({ worker, onDone }) {
         </div>
       )}
 
-      {/* Clarification form */}
+      {/* Ask for named documents again (status stays pending) */}
       {showClarify && (
-        <div className="px-5 pb-5 space-y-3">
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
-            <p className="text-xs font-bold text-amber-700 mb-1">Send a clarification request (status stays pending)</p>
-            <textarea
-              rows={3}
-              autoFocus
-              className="w-full bg-white border border-amber-200 rounded-lg px-3 py-2 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-amber-400 resize-none"
-              placeholder="e.g. Your selfie is unclear. Please retake in good lighting facing straight at the camera."
-              value={clarifyMsg}
-              onChange={(e) => setClarifyMsg(e.target.value)}
-            />
-          </div>
-          <div className="flex gap-2">
-            <button onClick={() => { setShowClarify(false); setClarifyMsg(''); }}
-              className="flex-1 text-xs font-semibold py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition">
-              Cancel
-            </button>
-            <button onClick={onClarify} disabled={clarifying}
-              className="flex-1 flex items-center justify-center gap-1.5 text-xs font-bold py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white transition disabled:opacity-50">
-              {clarifying ? <Loader2 size={13} className="animate-spin" /> : <MessageSquare size={13} />}
-              Send Message
-            </button>
-          </div>
+        <div className="px-5 pb-5">
+          <AskAgain
+            docs={[
+              { code: 'aadhaarUrl', label: 'Aadhaar' }, { code: 'licenseUrl', label: 'Driving licence' },
+              { code: 'selfieUrl', label: 'Live selfie' },
+            ]}
+            onSend={async ({ docCodes, message }) => {
+              await clarify({ id: worker._id, message, docCodes }).unwrap();
+              setShowClarify(false);
+            }}
+          />
         </div>
       )}
     </div>

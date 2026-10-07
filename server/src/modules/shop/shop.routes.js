@@ -56,9 +56,11 @@ router.get('/me/kyc/status', ctrl.getKycStatus);
 router.post(
   '/me/kyc/submit',
   validate(Joi.object({
-    ownerIdUrl: Joi.string().required(),
-    shopPhotoUrl: Joi.string().required(),
-    selfieUrl: Joi.string().required(),
+    // Required on a full submission; when the reviewer asked for named
+    // documents again only those are sent (shop.controller submitKyc).
+    ownerIdUrl: Joi.string().allow('', null),
+    shopPhotoUrl: Joi.string().allow('', null),
+    selfieUrl: Joi.string().allow('', null),
     // The live camera's record: when and where the selfie was taken.
     selfieMetadata: Joi.object({
       capturedAt: Joi.string().isoDate().required(),
@@ -68,7 +70,7 @@ router.post(
       accuracy: Joi.number().min(0).allow(null),
       geoStatus: Joi.string().max(20).optional(),
       userAgent: Joi.string().max(300).optional(),
-    }).required(),
+    }).allow(null),
     gstCertificateUrl: Joi.string().optional(),
     businessRegistrationUrl: Joi.string().optional(),
     gstNumber: Joi.string().max(30).optional(),

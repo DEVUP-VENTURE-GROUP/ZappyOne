@@ -42,8 +42,24 @@ async function submitKyc(req, res, next) {
     const shop = await Shop.findById(req.auth.sub).select('kyc').lean();
     if (!shop) return res.status(404).json({ error: 'Shop not found' });
 
-    if (shop.kyc?.status === 'pending_review') {
+    const clar = shop.kyc?.clarification?.active ? shop.kyc.clarification : null;
+    if (shop.kyc?.status === 'pending_review' && !clar) {
       return res.status(409).json({ error: 'KYC already submitted and under review', code: 'KYC_PENDING' });
+    }
+    // Asked for named documents again: only those are sent, each a new copy;
+    // everything else on file is kept.
+    const asked = clar?.docCodes?.length ? clar.docCodes : null;
+    if (asked) {
+      const notNew = asked.filter((k) => !req.body[k] || req.body[k] === shop.kyc[k]);
+      if (notNew.length) return res.status(400).json({ error: 'Add a new copy of each document we asked for.', code: 'KYC_DOCS_REQUIRED', missing: notNew });
+      for (const k of ['ownerIdUrl', 'shopPhotoUrl', 'selfieUrl', 'businessRegistrationUrl', 'gstCertificateUrl']) if (!asked.includes(k)) req.body[k] = req.body[k] || shop.kyc[k];
+      if (!asked.includes('selfieUrl')) req.body.selfieMetadata = shop.kyc.selfieMetadata;
+    }
+    if (!asked || asked.includes('selfieUrl')) {
+      const m = req.body.selfieMetadata;
+      if (!m || m.captureMethod !== 'live_camera' || typeof m.lat !== 'number' || typeof m.lng !== 'number') {
+        return res.status(400).json({ error: 'Take your selfie with the camera, with location on.', code: 'KYC_LIVE_SELFIE_REQUIRED' });
+      }
     }
     if (shop.kyc?.status === 'approved') {
       return res.status(409).json({ error: 'Shop is already verified', code: 'KYC_ALREADY_APPROVED' });
@@ -71,6 +87,7 @@ async function submitKyc(req, res, next) {
         'kyc.submittedAt': new Date(),
         'kyc.reviewedAt': null,
         'kyc.reviewNote': null,
+        'kyc.clarification': null,
       },
     });
     res.json({ ok: true, status: 'pending_review' });

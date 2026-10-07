@@ -47,6 +47,10 @@ export default function ShopKycPage() {
 
   const status = data?.kyc?.status || 'not_submitted';
   const rejectionReason = data?.kyc?.reviewNote;
+  // The reviewer asked for named documents again: only those open, the rest are kept.
+  const clar = data?.kyc?.clarification?.active ? data.kyc.clarification : null;
+  const asked = clar?.docCodes?.length ? new Set(clar.docCodes) : null;
+  const opens = (key) => !asked || asked.has(key);
 
   async function handleUpload(docKey, file, meta = null) {
     if (!file) return;
@@ -67,12 +71,15 @@ export default function ShopKycPage() {
   }
 
   async function submit() {
-    if (!urls.ownerIdUrl || !urls.shopPhotoUrl || !urls.selfieUrl) {
+    if (asked) {
+      if (![...asked].every((k) => urls[k])) return toast.error('Add a new copy of each document asked for');
+    } else if (!urls.ownerIdUrl || !urls.shopPhotoUrl || !urls.selfieUrl) {
       return toast.error('Owner ID, shop photo, and selfie are all required');
     }
-    if (!selfieMeta) return toast.error('Take your selfie with the camera');
+    if (opens('selfieUrl') && !selfieMeta) return toast.error('Take your selfie with the camera');
     try {
-      await submitKyc({ ...urls, selfieMetadata: selfieMeta, gstNumber: gstNumber || undefined, panNumber: panNumber || undefined }).unwrap();
+      const docs = asked ? Object.fromEntries([...asked].map((k) => [k, urls[k]])) : urls;
+      await submitKyc({ ...docs, ...(opens('selfieUrl') && { selfieMetadata: selfieMeta }), gstNumber: gstNumber || undefined, panNumber: panNumber || undefined }).unwrap();
       toast.success('Documents submitted for review');
       refetch();
     } catch (err) {
@@ -88,7 +95,7 @@ export default function ShopKycPage() {
     );
   }
 
-  if (status === 'pending_review' || status === 'approved' || status === 'suspended') {
+  if ((status === 'pending_review' && !clar) || status === 'approved' || status === 'suspended') {
     const meta = STATUS_META[status];
     return (
       <div className="min-h-screen bg-[#F9FAFB]">
@@ -117,6 +124,16 @@ export default function ShopKycPage() {
       </div></header>
 
       <div className="max-w-lg lg:max-w-2xl mx-auto px-4 pt-4 space-y-3">
+
+        {clar && (
+          <div className="card bg-amber-50 ring-1 ring-amber-200">
+            <p className="text-xs font-bold text-amber-800 uppercase tracking-wide">Please send again</p>
+            <p className="text-sm text-amber-800 mt-1 leading-relaxed">{clar.message}</p>
+            <p className="text-xs text-amber-700 mt-1.5">
+              {DOCS.filter((d) => asked?.has(d.key)).map((d) => d.label).join(', ')}. Everything else you sent is kept.
+            </p>
+          </div>
+        )}
 
         {status === 'rejected' && rejectionReason && (
           <div className="card bg-red-50 ring-1 ring-red-200">
@@ -164,7 +181,7 @@ export default function ShopKycPage() {
                     <p className="font-semibold text-sm text-[#0F172A]">{label}</p>
                     {required && <span className="text-red-500 text-xs font-bold">*</span>}
                   </div>
-                  <p className="text-xs text-slate-400 mt-0.5">{sublabel}</p>
+                  <p className="text-xs text-slate-400 mt-0.5">{opens(key) ? sublabel : 'Accepted, nothing to change'}</p>
                   {uploaded && (
                     <div className="flex items-center gap-1.5 mt-1.5">
                       <CheckCircle2 size={12} strokeWidth={2.5} className="text-success-600" />
@@ -172,7 +189,7 @@ export default function ShopKycPage() {
                     </div>
                   )}
                 </div>
-                {live ? (
+                {!opens(key) ? null : live ? (
                   <button type="button" onClick={() => setCapturing(true)} disabled={isUploading}
                     className={`btn-secondary text-xs py-2 px-3 ${isUploading ? 'opacity-50' : ''}`}>
                     {isUploading
@@ -203,7 +220,7 @@ export default function ShopKycPage() {
 
       <div className="fixed inset-x-0 z-30 bg-white border-t border-slate-100 safe-pb bottom-[var(--frame-bottom,0px)] left-[var(--frame-left,0px)]">
         <div className="max-w-lg lg:max-w-2xl mx-auto px-4 pt-3 pb-2">
-          <button onClick={submit} disabled={submitting || !urls.ownerIdUrl || !urls.shopPhotoUrl || !urls.selfieUrl} className="btn-primary w-full">
+          <button onClick={submit} disabled={submitting || (asked ? ![...asked].every((k) => urls[k]) : (!urls.ownerIdUrl || !urls.shopPhotoUrl || !urls.selfieUrl))} className="btn-primary w-full">
             {submitting ? <><Loader2 size={15} className="animate-spin" /> Submitting…</> : <><ShieldCheck size={15} strokeWidth={2.5} /> Submit for Verification</>}
           </button>
         </div>

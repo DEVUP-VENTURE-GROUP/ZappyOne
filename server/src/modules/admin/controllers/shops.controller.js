@@ -45,7 +45,7 @@ async function approveKyc(req, res, next) {
 
     const shop = await Shop.findByIdAndUpdate(
       req.params.id,
-      { $set: { 'kyc.status': 'approved', 'kyc.reviewedAt': new Date(), 'kyc.reviewedBy': req.auth.sub, 'kyc.reviewNote': null } },
+      { $set: { 'kyc.status': 'approved', 'kyc.reviewedAt': new Date(), 'kyc.reviewedBy': req.auth.sub, 'kyc.reviewNote': null, 'kyc.clarification': null } },
       { new: true },
     );
 
@@ -67,6 +67,26 @@ async function approveKyc(req, res, next) {
   } catch (err) { next(err); }
 }
 
+/** Ask for named documents again; status stays pending_review, the shop re-uploads only those. */
+async function clarifyKyc(req, res, next) {
+  try {
+    const before = await Shop.findById(req.params.id).select('kyc').lean();
+    if (!before) return res.status(404).json({ error: 'Shop not found' });
+    const clarification = { active: true, message: req.body.message, docCodes: req.body.docCodes, requestedAt: new Date() };
+    await Shop.updateOne({ _id: req.params.id }, { $set: { 'kyc.status': 'pending_review', 'kyc.clarification': clarification } });
+    await auditService.fromRequest(req, 'admin.shop_kyc_clarify', { kind: 'shop', id: req.params.id }, before.kyc, { clarification });
+    require('../../notification/notification.service').notify({
+      recipient: { kind: 'shop', id: req.params.id },
+      type: 'kyc_clarification',
+      title: `Please send ${req.body.docCodes.length === 1 ? 'one document' : `${req.body.docCodes.length} documents`} again`,
+      body: req.body.message,
+      deepLink: '/shop/kyc',
+      data: { kycStatus: 'pending_review' },
+    }).catch(() => {});
+    res.json({ ok: true });
+  } catch (err) { next(err); }
+}
+
 async function rejectKyc(req, res, next) {
   try {
     const before = await Shop.findById(req.params.id).select('kyc').lean();
@@ -75,7 +95,7 @@ async function rejectKyc(req, res, next) {
 
     const shop = await Shop.findByIdAndUpdate(
       req.params.id,
-      { $set: { 'kyc.status': 'rejected', 'kyc.reviewedAt': new Date(), 'kyc.reviewedBy': req.auth.sub, 'kyc.reviewNote': reason || null } },
+      { $set: { 'kyc.status': 'rejected', 'kyc.reviewedAt': new Date(), 'kyc.reviewedBy': req.auth.sub, 'kyc.reviewNote': reason || null, 'kyc.clarification': null } },
       { new: true },
     );
 
@@ -118,6 +138,7 @@ async function kycDocUrls(req, res, next) {
       gstNumber: kyc?.gstNumber ?? null,
       panNumber: kyc?.panNumber ?? null,
       selfieMetadata: kyc?.selfieMetadata ?? null,
+      clarification: kyc?.clarification?.active ? kyc.clarification : null,
     });
   } catch (err) { next(err); }
 }
@@ -168,4 +189,4 @@ async function blockShop(req, res, next) {
   } catch (err) { next(err); }
 }
 
-module.exports = { listShops, listKycPending, getShop, approveKyc, rejectKyc, blockShop, kycDocUrls, kycStreamDoc };
+module.exports = { listShops, listKycPending, getShop, approveKyc, rejectKyc, clarifyKyc, blockShop, kycDocUrls, kycStreamDoc };
