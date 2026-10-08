@@ -61,3 +61,21 @@ export function formatPaiseRange(minPaise, maxPaise) {
   if (minPaise === maxPaise) return formatPaise(minPaise);
   return `${formatPaise(minPaise)}–${GROUPED.format(Math.round(maxPaise / 100))}`;
 }
+
+/**
+ * What rides on a booking's bill beside its own price: an earlier cancellation
+ * fee, the customer's boost, and a tip they put on the bill. The server adds
+ * the same (payment/payables), so every screen shows the amount actually due.
+ */
+export function billAddOnsPaise(booking) {
+  if (!booking) return 0;
+  const carried = booking.carriedFee?.paise > 0 ? booking.carriedFee.paise : 0;
+  const boost = booking.boost?.paise > 0 ? booking.boost.paise : 0;
+  const tip = booking.tip?.method === 'with_payment' && booking.tip.paise > 0 ? booking.tip.paise : 0;
+  return carried + boost + tip;
+}
+
+/** Just the tip on the bill, for "includes ₹50 tip" lines. */
+export function billTipPaise(booking) {
+  return booking?.tip?.method === 'with_payment' && booking.tip.paise > 0 ? booking.tip.paise : 0;
+}

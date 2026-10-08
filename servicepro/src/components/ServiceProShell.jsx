@@ -1,7 +1,7 @@
 import { Outlet, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import {
-  LayoutDashboard, Wrench, Users, IndianRupee, Store, ShieldCheck, PlusCircle, Bell, UserRound, Star, MessageSquareQuote } from 'lucide-react';
+  LayoutDashboard, Wrench, Users, IndianRupee, Store, ShieldCheck, PlusCircle, Bell, UserRound, Star, MessageSquareQuote, Scale } from 'lucide-react';
 import PortalShell from '@shared/components/worker/PortalShell';
 import { selectAuth, logout } from '@shared/modules/auth/authSlice';
 import {
@@ -23,6 +23,7 @@ const OWNER_PAGES = [
   { key: 'shop', label: 'Shop & hours', Icon: Store, to: '/shop/profile', primary: true },
   { key: 'reviews', label: 'Reviews', Icon: Star, to: '/shop/reviews' },
   { key: 'kyc', label: 'Verification', Icon: ShieldCheck, to: '/shop/kyc' },
+  { key: 'appeals', label: 'Appeals', Icon: Scale, to: '/shop/appeals' },
   { key: 'services', label: 'Add a service', Icon: PlusCircle, to: '/provider/onboarding' },
 ];
 
@@ -31,6 +32,7 @@ const TECHNICIAN_PAGES = [
   { key: 'alerts', label: 'Alerts', Icon: Bell, to: '/worker/notifications', primary: true },
   { key: 'profile', label: 'Profile', Icon: UserRound, to: '/worker/profile', primary: true },
   { key: 'kyc', label: 'ID check', Icon: ShieldCheck, to: '/worker/kyc', primary: true },
+  { key: 'appeals', label: 'Appeals', Icon: Scale, to: '/worker/appeals' },
 ];
 
 export default function ServiceProShell() {

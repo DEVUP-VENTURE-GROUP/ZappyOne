@@ -234,6 +234,8 @@ export function useJobRealtime({ alerts = false } = {}) {
     const onJob = (p) => {
       const type = JOB_TAGS[p?.kind];
       if (type) refresh([type, { type, id: p.id }, ...(OPEN_TAGS[p.kind] ? [OPEN_TAGS[p.kind]] : [])]);
+      // A customer put a tip on the bill: the provider hears it the moment it happens.
+      if (p?.tipPaise > 0) toast.success(`₹${Math.round(p.tipPaise / 100)} tip from your customer. It is all yours.`, { icon: '🎉', duration: 6000 });
     };
     // Quote events are repair-only and carry no id; the repair lists are small.
     const onQuote = () => refresh(['RepairBookings']);

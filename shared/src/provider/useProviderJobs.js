@@ -116,7 +116,8 @@ export function useProviderJobs({ kinds = ['repair', 'pet', 'helping'] } = {}) {
   const open = useMemo(() => [
     ...(has('pet') ? SOURCES.pet.open(petOpen.data) : []),
     ...(has('helping') ? SOURCES.helping.open(helpOpen.data) : []),
-  ].sort((a, b) => (a.km ?? 99) - (b.km ?? 99)),
+    // A customer who raised their offer is waiting on it: those first, then nearest.
+  ].sort((a, b) => Number(b.boostPaise > 0) - Number(a.boostPaise > 0) || (a.km ?? 99) - (b.km ?? 99)),
   [petOpen.data, helpOpen.data, kinds.join()]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // A service the provider isn't verified for yet shows nothing open; say which.

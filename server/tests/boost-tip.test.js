@@ -120,3 +120,50 @@ describe('tip', () => {
     expect(rows.some((r) => r.tipPaise === 5000)).toBe(true);
   });
 });
+
+describe('tip on the bill (before paying)', () => {
+  const money = () => require('../src/modules/helping/services/money.service');
+
+  test('offered when the bill is due: added to it, changed, taken off; never before the bill', async () => {
+    const user = new mongoose.Types.ObjectId();
+    const early = await task(user, 'EN_ROUTE', { workerId });
+    await expect(bt.addTip({ kind: 'helping', id: early._id, userId: user, amountPaise: 5000, method: 'with_payment' })).rejects.toMatchObject({ code: 'NOT_DUE' });
+
+    const t = await task(user, 'RETURNING', { workerId, paymentMethod: 'cash' });
+    const view = await bt.tipView('helping', t.toObject());
+    expect(view).toMatchObject({ available: true, beforePayment: true, billPaise: 12000, paymentMethod: 'cash' });
+
+    expect((await bt.addTip({ kind: 'helping', id: t._id, userId: user, amountPaise: 5000, method: 'with_payment' })).totalPaise).toBe(17000);
+    expect(money().amountDue(await HelpingTask.findById(t._id)).totalPaise).toBe(17000);
+    // Still the bill alone in the view, and the tip can be changed until paid.
+    expect((await bt.tipView('helping', (await HelpingTask.findById(t._id)).toObject())).billPaise).toBe(12000);
+    expect((await bt.addTip({ kind: 'helping', id: t._id, userId: user, amountPaise: 2000, method: 'with_payment' })).totalPaise).toBe(14000);
+    expect((await bt.addTip({ kind: 'helping', id: t._id, userId: user, amountPaise: 0, method: 'with_payment' })).totalPaise).toBe(12000);
+    expect((await HelpingTask.findById(t._id).lean()).tip).toBeUndefined();
+
+    // Paid: no more changes on the bill.
+    await HelpingTask.updateOne({ _id: t._id }, { $set: { paymentStatus: 'paid' } });
+    await expect(bt.addTip({ kind: 'helping', id: t._id, userId: user, amountPaise: 2000, method: 'with_payment' })).rejects.toMatchObject({ code: 'ALREADY_PAID' });
+  });
+
+  test('paid online: the tip reaches the worker at settlement, once; in cash nothing moves', async () => {
+    const user = new mongoose.Types.ObjectId();
+    const settle = require('../src/modules/payment/settlement').settleProviderShare;
+    const online = await task(user, 'COMPLETED', { workerId, paymentStatus: 'paid', tip: { paise: 3000, method: 'with_payment' } });
+    const args = { source: 'helping', booking: online.toObject(), reference: online.reference, paymentMethod: 'online', totalPaise: 12000, platformPaise: 1200 };
+    await settle(args);
+    await settle(args);
+    expect(await Transaction.countDocuments({ idempotencyKey: `tip:worker:helping:${online._id}`, amountPaise: 3000 })).toBe(1);
+
+    const cash = await task(user, 'COMPLETED', { workerId, paymentMethod: 'cash', paymentStatus: 'paid', tip: { paise: 3000, method: 'with_payment' } });
+    expect(await bt.settleTip('helping', cash._id)).toBe(0);
+    expect(await Transaction.countDocuments({ idempotencyKey: `tip:worker:helping:${cash._id}` })).toBe(0);
+  });
+
+  test('a boost reaches helpers who handed the job back at the lower price', async () => {
+    const user = new mongoose.Types.ObjectId();
+    const t = await task(user, 'WORKER_SEARCHING', { releasedBy: [workerId] });
+    await bt.addBoost({ kind: 'helping', id: t._id, userId: user, amountPaise: 1000 });
+    expect((await HelpingTask.findById(t._id).lean()).releasedBy).toEqual([]);
+  });
+});

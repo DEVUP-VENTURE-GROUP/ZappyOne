@@ -34,7 +34,9 @@ function bill(kind, doc) {
   const carried = doc.carriedFee?.paise || 0;
   if (boost) lines.push(['Boost for a faster match', boost]);
   if (carried) lines.push(['Cancellation fee from an earlier booking', carried]);
-  total += boost + carried;
+  const tip = doc.tip?.method === 'with_payment' ? doc.tip.paise || 0 : 0;
+  if (tip) lines.push(['Tip for your provider', tip]);
+  total += boost + carried + tip;
   return { lines: lines.filter(([, p]) => p), total };
 }
 

@@ -20,6 +20,7 @@ import { formatPaise } from '../../utils/money';
 import { ZappyLogo } from '../../components/common/ZappyLogo';
 import WorkerOnboarding from './WorkerOnboarding';
 import DuesCard from '../DuesCard';
+import MyAreaChip from '../../components/worker/MyAreaChip';
 import ProviderServicesCard from '../../components/provider/ProviderServicesCard';
 import { useProviderJobs } from '../useProviderJobs';
 import {
@@ -266,6 +267,12 @@ export default function WorkerDashboard() {
             </button>
             <span className="lg:hidden"><ZappyLogo size={20} /></span>
             <h1 className="hidden truncate text-[18px] font-bold text-navy lg:block">Hello, {firstName}</h1>
+            {/* On a big screen the greeting card is not shown: where they are lives up here instead. */}
+            {isOnline && (
+              <span className="hidden min-w-0 lg:block">
+                <MyAreaChip label={areaName} coordinates={lastCoords} live />
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-2 lg:gap-3">
             <div className="hidden lg:block">

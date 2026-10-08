@@ -82,7 +82,7 @@ const JOB_ICONS = [
   [/event|decor/, PartyPopper],
   [/helping|shopping|pickup|return|grocery|medicine/, ShoppingBag],
 ];
-function serviceVisual(code = '') {
+export function serviceVisual(code = '') {
   const s = code.toLowerCase();
   return JOB_ICONS.find(([re]) => re.test(s))?.[1] || null;
 }

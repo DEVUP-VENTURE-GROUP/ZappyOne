@@ -6,20 +6,22 @@ const { validate } = require('../../middlewares/validate');
 
 const router = express.Router();
 
-router.get('/', authenticate, requireRole('worker'), ctrl.listMyAppeals);
+// Workers and shops appeal the same way (a rating, a penalty, a pause, dues…).
+router.get('/', authenticate, requireRole('worker', 'shop'), ctrl.listMyAppeals);
 router.post(
   '/',
   authenticate,
-  requireRole('worker'),
+  requireRole('worker', 'shop'),
   validate(Joi.object({
-    type:        Joi.string().valid('rating', 'penalty', 'cancellation', 'order_issue').required(),
+    type:        Joi.string().valid('rating', 'penalty', 'cancellation', 'order_issue', 'pause', 'dues', 'verification').required(),
     orderId:     Joi.string().hex().length(24).optional().allow(null, ''),
+    jobRef:      Joi.string().trim().max(40).allow('', null),
     subject:     Joi.string().min(5).max(200).required(),
     description: Joi.string().min(20).max(2000).required(),
   })),
   ctrl.createAppeal
 );
-router.get('/:id', authenticate, requireRole('worker'), ctrl.getAppeal);
+router.get('/:id', authenticate, requireRole('worker', 'shop'), ctrl.getAppeal);
 
 const adminRouter = express.Router();
 adminRouter.use(authenticate, requireRole('admin'));

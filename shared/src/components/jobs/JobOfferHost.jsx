@@ -32,7 +32,9 @@ const MODE_LABEL = {
 };
 const OPEN_WINDOW_SEC = 90;
 const when = (at) => (at ? new Date(at).toLocaleString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }) : '');
-const keyOf = (o) => `${o.kind}:${o.id}`;
+// The boost is part of the key: passing at ₹400 is not passing at ₹450, so a
+// boosted job rings again for everyone, including whoever passed or hid it.
+const keyOf = (o) => `${o.kind}:${o.id}:${o.boostPaise || 0}`;
 
 /* Each source shaped into what the alert shows. */
 const fromRepair = (b) => ({
@@ -40,7 +42,8 @@ const fromRepair = (b) => ({
   heading: 'New repair job',
   title: b.device || [b.brandCode, b.modelCode].filter(Boolean).join(' ').replace(/-/g, ' ') || 'Device repair',
   valueLabel: (b.isEstimate ?? b.priceSnapshot?.isEstimate) ? 'Estimate' : 'Job value',
-  valuePaise: b.totalPaise ?? b.priceSnapshot?.totalPaise ?? 0,
+  valuePaise: (b.totalPaise ?? b.priceSnapshot?.totalPaise ?? 0) + (b.boostPaise ?? b.boost?.paise ?? 0),
+  boostPaise: b.boostPaise ?? b.boost?.paise ?? 0,
   cash: b.paymentMethod === 'cash',
   howLabel: MODE_LABEL[b.serviceMode] || b.serviceMode,
   address: b.address ?? b.location?.address ?? '',
@@ -56,7 +59,8 @@ const fromPetOffer = (b) => ({
   heading: 'A customer chose you',
   title: b.title || (b.pets || []).map((p) => p.snapshot?.name).filter(Boolean).join(', ') || 'Pet care',
   valueLabel: 'You earn',
-  valuePaise: b.earningPaise ?? b.pricing?.providerAmountPaise ?? 0,
+  valuePaise: b.earningPaise ?? ((b.pricing?.providerAmountPaise ?? 0) + (b.boost?.paise ?? 0)),
+  boostPaise: b.boostPaise ?? b.boost?.paise ?? 0,
   howLabel: b.service || (b.categoryCode || '').replace(/_/g, ' '),
   address: b.area ?? b.serviceLocation?.address ?? '',
   coordinates: b.coordinates ?? b.serviceLocation?.coordinates ?? null,
@@ -71,6 +75,7 @@ const fromOpen = (p) => ({
   title: p.title || 'New job',
   valueLabel: 'You earn',
   valuePaise: p.earningPaise || 0,
+  boostPaise: p.boostPaise || 0,
   howLabel: p.service || p.kind,
   address: p.area || '',
   coordinates: p.coordinates || null,
@@ -104,7 +109,8 @@ export default function JobOfferHost({ kinds = ['repair', 'pet', 'helping'], myL
   const [handled, setHandled] = useState(() => new Set()); // answered, hidden or expired
 
   const push = useCallback((offer) => {
-    setLive((q) => (q.some((o) => keyOf(o) === keyOf(offer)) ? q : [...q, offer]));
+    // The same job at a higher amount replaces the older alert.
+    setLive((q) => (q.some((o) => keyOf(o) === keyOf(offer)) ? q : [...q.filter((o) => !(o.kind === offer.kind && o.id === offer.id)), offer]));
   }, []);
 
   useEffect(() => {
@@ -141,13 +147,20 @@ export default function JobOfferHost({ kinds = ['repair', 'pet', 'helping'], myL
   const offer = useMemo(() => {
     const seen = new Set();
     return [...live, ...recovered]
-      .filter((o) => { const k = keyOf(o); if (seen.has(k) || handled.has(k)) return false; seen.add(k); return true; })
+      // Hidden only at that amount or less: a list fetched before a boost cannot bring back the lower one.
+      .filter((o) => {
+        const job = `${o.kind}:${o.id}`;
+        const hiddenAt = Math.max(-1, ...[...handled].filter((h) => h.startsWith(`${job}:`)).map((h) => Number(h.split(':')[2])));
+        if (seen.has(job) || (o.boostPaise || 0) <= hiddenAt) return false;
+        seen.add(job);
+        return true;
+      })
       .sort((a, b) => Number(b.mode === 'offered') - Number(a.mode === 'offered'))[0] || null;
   }, [live, recovered, handled]);
 
   const done = useCallback((o) => {
     setHandled((s) => new Set(s).add(keyOf(o)));
-    setLive((q) => q.filter((x) => keyOf(x) !== keyOf(o)));
+    setLive((q) => q.filter((x) => !(x.kind === o.kind && x.id === o.id)));
     refetchRepair?.();
     refetchPet?.();
   }, [refetchRepair, refetchPet]);

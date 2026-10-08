@@ -214,7 +214,8 @@ export default function JobTrackingPage({ job, extras = null, startCode = null, 
 
           {extras}
 
-          {status === 'completed' && (
+          {/* At the bill (optional tip, total with it in), or after the job. */}
+          {(status === 'completed' || options?.tip?.beforePayment) && (
             <JobTipCard jobId={job.id} tip={options?.tip} name={job.provider?.name ? firstNameOf(job.provider.name) : null} onTipped={refetchOptions} />
           )}
 

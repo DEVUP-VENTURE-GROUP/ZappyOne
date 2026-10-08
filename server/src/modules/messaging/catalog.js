@@ -170,8 +170,8 @@ const CATALOG = {
     sample: () => ({ label: 'pet care', km: 2.4, area: 'Kondapur', earningPaise: 45000, boostPaise: 2000 }),
     build: ({ label, km, area, earningPaise, boostPaise = 0 }) => ({
       push: {
-        title: `New ${label} job near you`,
-        body: [earningPaise ? `Earn ${rupees(earningPaise)}${boostPaise ? ` (incl. ${rupees(boostPaise)} boost)` : ''}` : null, km != null ? `${Number(km).toFixed(1)} km away` : null, area].filter(Boolean).join(' · ') || 'Open the app to take it.',
+        title: boostPaise ? `Customer raised the offer: +${rupees(boostPaise)}` : `New ${label} job near you`,
+        body: [earningPaise ? `${boostPaise ? `${label} job · ` : ''}Earn ${rupees(earningPaise)}${boostPaise ? ` (incl. ${rupees(boostPaise)} extra, all yours)` : ''}` : null, km != null ? `${Number(km).toFixed(1)} km away` : null, area].filter(Boolean).join(' · ') || 'Open the app to take it.',
         link: '/worker/work',
       },
     }),

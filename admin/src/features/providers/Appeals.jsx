@@ -11,7 +11,7 @@ const STATUS_COLOR = {
   upheld:       'bg-emerald-50 text-emerald-700 border-emerald-200',
   dismissed:    'bg-red-50 text-red-700 border-red-200',
 };
-const TYPE_LABEL = { rating: 'Rating', penalty: 'Penalty', cancellation: 'Cancellation', order_issue: 'Order Issue' };
+const TYPE_LABEL = { rating: 'Rating', penalty: 'Penalty', cancellation: 'Cancellation', order_issue: 'A job', pause: 'Taken offline', dues: 'Dues', verification: 'Verification' };
 
 function AppealRow({ appeal }) {
   const [expanded, setExpanded] = useState(false);
@@ -41,7 +41,7 @@ function AppealRow({ appeal }) {
           </div>
           <p className="font-semibold text-slate-800 text-sm truncate">{appeal.subject}</p>
           <p className="text-xs text-slate-500 mt-0.5 truncate">
-            {appeal.workerId?.name ?? 'Worker'} · {new Date(appeal.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+            {appeal.shopId ? `${appeal.shopId.businessName || 'Shop'} (shop)` : appeal.workerId?.name ?? 'Worker'}{appeal.jobRef ? ` · ${appeal.jobRef}` : ''} · {new Date(appeal.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
           </p>
         </div>
         {expanded ? <ChevronUp size={14} className="text-slate-400 shrink-0" /> : <ChevronDown size={14} className="text-slate-400 shrink-0" />}

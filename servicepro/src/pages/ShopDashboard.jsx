@@ -14,6 +14,7 @@ import ProviderServicesCard from '@shared/components/provider/ProviderServicesCa
 import ShopJobs from '../components/ShopJobs';
 import { useProviderJobs } from '@shared/provider/useProviderJobs';
 import { StatCard, Panel, inr, EarningsOverview, PerformanceGrid } from '@shared/components/worker/DashboardUI';
+import MyAreaChip from '@shared/components/worker/MyAreaChip';
 
 /**
  * The shop owner's dashboard.
@@ -231,6 +232,8 @@ export default function ShopDashboard() {
         <div className="min-w-0 flex-1">
           <p className="text-[10.5px] font-black uppercase tracking-[0.12em] text-slate-400">Shop partner</p>
           <h1 className="truncate text-[20px] font-black tracking-tight text-[#0F172A]">{shop?.businessName}</h1>
+          {/* Where customers find the shop, on every screen size. */}
+          {hasPin && <MyAreaChip coordinates={shop.address.location.coordinates} live={liveNow} className="mt-1" />}
         </div>
         {/* Whether customers can find you, stated where it cannot be missed. */}
         <span className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 ${

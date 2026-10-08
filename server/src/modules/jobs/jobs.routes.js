@@ -172,6 +172,7 @@ router.get('/:id/options',
         reasons: CUSTOMER_REASONS,
         boost: await bt.boostView(kind, doc, s),
         tip: await bt.tipView(kind, doc, s),
+        reschedule: terminal ? { allowed: false } : await require('./reschedule').view(kind, doc),
         ...(terminal ? {} : await require('./give-back').customerView(kind, doc)),
       });
     } catch (err) { next(err); }
@@ -193,14 +194,27 @@ router.post('/:id/tip',
   authenticate, requireRole('user'),
   makeLimiter({ windowMs: 60_000, max: 5, prefix: 'jobtip' }),
   validate(Joi.object({
-    amountPaise: Joi.number().integer().min(100).max(1000000).required(),
-    method: Joi.string().valid('wallet', 'cash').default('wallet'),
+    // 0 takes a tip off the bill (method with_payment) before it is paid.
+    amountPaise: Joi.number().integer().min(0).max(1000000).required(),
+    method: Joi.string().valid('wallet', 'cash', 'with_payment').default('wallet'),
     message: Joi.string().trim().max(200).allow(''),
   })),
   async (req, res, next) => {
     try {
       const { kind } = await jobFor(req, '_id');
       res.json(await require('./boost-tip').addTip({ kind, id: req.params.id, userId: req.auth.sub, ...req.body }));
+    } catch (err) { next(err); }
+  });
+
+/** Move a booking made for later, before the provider sets off (jobs/reschedule). */
+router.post('/:id/reschedule',
+  authenticate, requireRole('user'),
+  makeLimiter({ windowMs: 10 * 60_000, max: 10, prefix: 'jobmove' }),
+  validate(Joi.object({ scheduledAt: Joi.date().iso().required() })),
+  async (req, res, next) => {
+    try {
+      const { kind } = await jobFor(req, '_id');
+      res.json(await require('./reschedule').reschedule({ kind, id: req.params.id, userId: req.auth.sub, scheduledAt: req.body.scheduledAt }));
     } catch (err) { next(err); }
   });
 

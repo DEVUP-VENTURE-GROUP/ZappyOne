@@ -44,6 +44,25 @@ async function push(recipient, { title, body, deepLink, data }) {
 }
 
 /**
+ * Ring the one provider a job is offered to, with everything needed to decide.
+ * Again after a boost, so the alert shows the higher amount.
+ */
+function ringOffer(kind, doc) {
+  const k = KINDS[kind];
+  const provider = providerOf(kind, doc);
+  if (!k?.offer || !provider) return;
+  const since = new Date(k.offer.since(doc) || Date.now());
+  const start = k.open?.start(doc);
+  toProvider(provider.kind, provider.id, 'job.offer', {
+    kind, id: String(doc._id), status: doc.status, reference: doc.reference, at: new Date().toISOString(),
+    // Until they accept: the area and a rounded pin (jobs/privacy).
+    area: areaOf(start?.address), coordinates: start ? roughCoords([start.lng, start.lat]) : null,
+    ...(k.open?.summary ? k.open.summary(doc) : {}),
+    expiresAt: new Date(since.getTime() + k.offer.windowMin * 60000).toISOString(), windowSec: k.offer.windowMin * 60,
+  });
+}
+
+/**
  * Announce one status change on any job. The room always hears it; who is
  * pushed what comes from the kind's copy in jobs/kinds.js.
  */
@@ -63,16 +82,7 @@ async function announce(kind, doc, status) {
   if (provider) toProvider(provider.kind, provider.id, 'job.update', payload);
 
   // Offered to one provider: ring them with everything needed to decide.
-  if (provider && k.offer?.status === status) {
-    const since = new Date(k.offer.since(doc) || Date.now());
-    const start = k.open?.start(doc);
-    toProvider(provider.kind, provider.id, 'job.offer', {
-      // Until they accept: the area and a rounded pin (jobs/privacy).
-      ...payload, area: areaOf(start?.address), coordinates: start ? roughCoords([start.lng, start.lat]) : null,
-      ...(k.open?.summary ? k.open.summary(doc) : {}),
-      expiresAt: new Date(since.getTime() + k.offer.windowMin * 60000).toISOString(), windowSec: k.offer.windowMin * 60,
-    });
-  }
+  if (provider && k.offer?.status === status) ringOffer(kind, doc);
 
   // Repairs, pet care and helping: every customer notice (push + email) and the
   // provider's "customer cancelled" come from the message catalog (messaging/lifecycle).
@@ -218,4 +228,5 @@ async function notifyMoved(kind, doc, previous) {
   });
 }
 
-module.exports = { announce, announceOnSave, announceAssigned, alertNearbyProviders, notifyMoved, toProvider, push };
+module.exports = {
+  ringOffer, announce, announceOnSave, announceAssigned, alertNearbyProviders, notifyMoved, toProvider, push };

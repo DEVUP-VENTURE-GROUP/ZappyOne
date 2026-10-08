@@ -235,7 +235,7 @@ export default function ProfilePage() {
                   <MenuItem Icon={Bell} label={t('profile.notifications', 'Notifications')} onClick={() => nav('/notifications')} />
                   <MenuItem Icon={TrendingUp} label={t('profile.spending', 'Spending Analytics')} sublabel={t('profile.spending.sub', 'Monthly & service breakdown')} onClick={() => nav('/spending')} />
                   <MenuItem Icon={Tag} label={t('profile.promos', 'Promo Codes')} sublabel={t('profile.promos.sub', 'Browse all active offers')} onClick={() => nav('/promos')} />
-                  <MenuItem Icon={Calendar} label={t('profile.scheduled', 'Scheduled Bookings')} sublabel={t('profile.scheduled.sub', 'View & reschedule')} onClick={() => nav('/scheduled')} />
+                  <MenuItem Icon={Calendar} label={t('profile.scheduled', 'Your schedule')} sublabel={t('profile.scheduled.sub', 'Upcoming bookings, change times, add to calendar')} onClick={() => nav('/scheduled')} />
                 </MenuSection>
               </motion.div>
 

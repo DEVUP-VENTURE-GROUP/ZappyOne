@@ -15,7 +15,7 @@ import toast from 'react-hot-toast';
 import { useSelector } from 'react-redux';
 import { selectRole } from '../../modules/auth/authSlice';
 import AssignTechnician from '../components/AssignTechnician';
-import { formatPaise } from '../../utils/money';
+import { formatPaise, billTipPaise } from '../../utils/money';
 import { usePublishTripLocation, MOVING_STATUSES, tripOf } from '../../hooks/useLiveTrip';
 import TripSharingBanner from '../../components/worker/TripSharingBanner';
 import SOSButton from '../../components/worker/SOSButton';
@@ -533,7 +533,8 @@ export default function WorkerRepairJobPage() {
   // What the customer pays now: the job, plus any earlier cancellation fee riding on it.
   const carriedPaise = booking.carriedFee?.paise > 0 ? booking.carriedFee.paise : 0;
   const boostPaise = booking.boost?.paise > 0 ? booking.boost.paise : 0; // all yours
-  const duePaise = (snap.totalPaise || 0) + carriedPaise + boostPaise;
+  const tipPaise = billTipPaise(booking); // the customer put it on the bill: all yours
+  const duePaise = (snap.totalPaise || 0) + carriedPaise + boostPaise + tipPaise;
 
   // A shop's job can go back to the owner until the technician sets out.
   // Before they accept; once accepted, GiveBackCard hands it back (to the shop, for a shop's technician).
@@ -613,9 +614,12 @@ export default function WorkerRepairJobPage() {
         {readyForPayment && (snap.totalPaise || 0) > 0 && (
           <div className={`card ${booking.paymentStatus === 'paid' ? 'ring-emerald-200 bg-emerald-50/40' : 'ring-amber-200 bg-amber-50/40'}`}>
             {booking.paymentStatus === 'paid' ? (
-              <p className="flex items-center gap-1.5 text-sm font-bold text-emerald-800">
-                <Check size={15} /> {rupees(duePaise)} {booking.paymentMethod === 'cash' ? 'collected in cash' : 'paid online'}
-              </p>
+              <>
+                <p className="flex items-center gap-1.5 text-sm font-bold text-emerald-800">
+                  <Check size={15} /> {rupees(duePaise)} {booking.paymentMethod === 'cash' ? 'collected in cash' : 'paid online'}
+                </p>
+                {tipPaise > 0 && <p className="mt-1 text-[12px] font-bold text-rose-700">Includes a {rupees(tipPaise)} tip from the customer.</p>}
+              </>
             ) : (
               <>
                 {booking.paymentMethod === 'cash' ? (
@@ -636,12 +640,17 @@ export default function WorkerRepairJobPage() {
                     </p>
                   </>
                 )}
+                {tipPaise > 0 && (
+                  <p className="mt-2 rounded-xl bg-rose-50 px-2.5 py-1.5 text-[12px] font-bold text-rose-700">
+                    Includes a {rupees(tipPaise)} tip from the customer. All yours.
+                  </p>
+                )}
                 <button
                   onClick={collect}
                   disabled={collecting}
                   className={`${booking.paymentMethod === 'cash' ? 'btn-primary' : 'btn-secondary'} w-full mt-2.5`}
                 >
-                  {collecting
+                {collecting
                     ? <><Loader2 size={15} className="animate-spin" /> Recording…</>
                     : <>I've collected {rupees(duePaise)} in cash</>}
                 </button>

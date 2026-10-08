@@ -131,9 +131,12 @@ export const api = createApi({
     /** Customer: unpaid cancellation fees the next booking will carry. */
     myPendingCancelFee: b.query({ query: () => '/jobs/pending-fee', keepUnusedDataFor: 0 }),
     jobOptions: b.query({ query: ({ id }) => `/jobs/${id}/options`, keepUnusedDataFor: 0 }),
+    /** Move a booking made for later (jobs/reschedule): repairs, pet care, helping. */
+    rescheduleJob: b.mutation({ query: ({ id, scheduledAt }) => ({ url: `/jobs/${id}/reschedule`, method: 'POST', body: { scheduledAt } }), invalidatesTags: ['RepairBookings', 'PetBookings', 'HelpingTasks'] }),
     /** Customer: boost while searching, tip once done (jobs/boost-tip). */
     boostJob: b.mutation({ query: ({ id, amountPaise }) => ({ url: `/jobs/${id}/boost`, method: 'POST', body: { amountPaise } }) }),
-    tipJob: b.mutation({ query: ({ id, ...body }) => ({ url: `/jobs/${id}/tip`, method: 'POST', body }), invalidatesTags: ['Wallet'] }),
+    // A tip on the bill changes what the booking says is due: refresh the bookings too.
+    tipJob: b.mutation({ query: ({ id, ...body }) => ({ url: `/jobs/${id}/tip`, method: 'POST', body }), invalidatesTags: ['Wallet', 'RepairBookings', 'PetBookings', 'HelpingTasks'] }),
     /** Admin → Messages: every automatic email and push (messaging/). */
     adminMessages: b.query({ query: () => adminApiPath('/messages'), providesTags: ['Content'] }),
     adminMessagePreview: b.query({ query: (key) => adminApiPath(`/messages/${key}/preview`), keepUnusedDataFor: 0 }),
@@ -2440,6 +2443,7 @@ export const {
   // Job chat
   useJobChatQuery,
   useJobOptionsQuery,
+  useRescheduleJobMutation,
   useMyPendingCancelFeeQuery,
   useLensStatusQuery,
   useReportProviderAbsentMutation,

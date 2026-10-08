@@ -20,7 +20,7 @@ import {
   useAddHelpingProofMutation, useRecordHelpingHandoverMutation, useCompleteHelpingTaskMutation,
   useCollectHelpingCashMutation,
 } from '../../services/api';
-import { formatPaise } from '../../utils/money';
+import { formatPaise, billTipPaise } from '../../utils/money';
 
 /**
  * Worker execution — §10, §11, §12, §13, §27, §28, §29.
@@ -205,6 +205,7 @@ export default function WorkerHelpingJobPage() {
         {paidAt(task).includes(task.status) && !pendingApproval && !due.itemsPending && due.totalPaise > 0 && (
           <CollectPaymentCard
             amountPaise={due.totalPaise}
+            tipPaise={billTipPaise(task)}
             paymentMethod={due.feePaise > 0 ? task.paymentMethod : 'cash'}
             paid={false}
             collecting={collecting}

@@ -7,10 +7,13 @@
  * those who passed at the lower price. Paid with the booking (its own line);
  * nothing is charged if they cancel before anyone accepts.
  *
- * TIP — once the job is done, a thank-you that goes 100% to the provider:
- * from the customer's wallet balance (money moves now), or "I gave it in
- * cash" (recorded so the provider sees the thanks; nothing moves). Card tips
- * wait for online payments.
+ * TIP — a thank-you that goes 100% to the provider. Three ways:
+ *   with the bill   offered when the bill is due ("₹410 · add a tip?"): it
+ *                   rides on the amount to pay — in the cash the provider
+ *                   collects, or in the online payment, then credited to
+ *                   them at settlement. Changeable until the bill is paid.
+ *   wallet          from the customer's balance; money moves now.
+ *   cash            "I gave it in cash" after the job: recorded, nothing moves.
  *
  * The amounts, the maximums and the on/off switch are set in Admin →
  * Economics → Boost & tips (the first version's settings, PricingConfig).
@@ -87,16 +90,20 @@ async function reRing(kind, doc) {
   const events = require('./job-events');
   const id = String(doc._id);
   try {
-    if (kind === 'pet') {
-      // Passing on the lower price is not passing on this one.
-      await KINDS.pet.model().updateOne({ _id: doc._id }, { $set: { declinedBy: [] } });
-      doc.declinedBy = [];
+    // Passing on the lower price is not passing on this one: everyone who
+    // passed or handed it back hears it again, on the alert and the Work board.
+    const seen = { pet: 'declinedBy', helping: 'releasedBy' }[kind];
+    if (seen) {
+      await KINDS[kind].model().updateOne({ _id: doc._id }, { $set: { [seen]: [] } });
+      doc[seen] = [];
     }
     const plain = doc.toObject();
     const holder = plain.shopId ? { kind: 'shop', id: plain.shopId } : plain.workerId ? { kind: 'worker', id: plain.workerId } : null;
     if (holder) {
-      // Offered to one provider: their offer card updates, and they are told.
+      // Offered to one provider: their offer rings again with the higher amount, and they are told.
       events.toProvider(holder.kind, holder.id, 'job.update', { kind, id, status: plain.status, boostPaise: boostPaise(plain), at: new Date().toISOString() });
+      if (kind === 'repair') require('../repair/services/events.service').announceOffer(plain);
+      else if (KINDS[kind].offer?.status === plain.status) events.ringOffer(kind, plain);
       await events.push(holder, {
         title: `Customer added ${rupees(boostPaise(plain))}`,
         body: 'All of it is yours if you take this job.',
@@ -150,12 +157,44 @@ async function settleBoost(kind, bookingId) {
 
 const isDone = (kind, doc) => !!KINDS[kind]?.earning?.done.includes(doc.status);
 
+/** Where the bill falls due: the tip is offered here, before the customer pays. */
+const PAY_STAGE = {
+  repair: ['QA_PENDING', 'READY_FOR_RETURN', 'OUT_FOR_RETURN', 'COMPLETED'],
+  pet: ['SERVICE_COMPLETED', 'CUSTOMER_CONFIRMATION', 'PAYMENT_PENDING'],
+  helping: ['IN_PROGRESS', 'RETURNING', 'AT_DROPOFF', 'HANDED_OVER'],
+};
+
+/** A tip the customer added to the bill: paid with it, all the provider's. */
+const billTipPaise = (doc) => (doc?.tip?.paise > 0 && doc.tip.method === 'with_payment' ? doc.tip.paise : 0);
+
+/** The bill is due and unpaid, and someone is on the job: a tip can ride on it. */
+const billOpen = (kind, doc) => !!PAY_STAGE[kind]?.includes(doc.status) && doc.paymentStatus !== 'paid'
+  && !!(doc.workerId || doc.shopId);
+
+/** What the customer pays now, before any tip on the bill. Null when nothing is due. */
+function billPaise(kind, doc) {
+  try {
+    const Model = KINDS[kind].model();
+    const live = typeof doc.save === 'function' ? doc : Model.hydrate(doc);
+    const { amountPaise } = require('../payment/payables').PAYABLES[kind].payable(live);
+    return Math.max(0, amountPaise - billTipPaise(doc)) || null;
+  } catch { return null; }
+}
+
 async function tipView(kind, doc, s = null) {
   s = s || await settings();
+  const onBill = billTipPaise(doc);
+  const tipped = doc.tip?.paise > 0;
+  const bill = s.tipMaxPaise > 0 && billOpen(kind, doc) && (!tipped || onBill > 0) ? billPaise(kind, doc) : null;
+  const beforePayment = !!bill;
   const done = isDone(kind, doc) && !!(doc.workerId || doc.shopId);
   return {
-    available: done && s.tipMaxPaise > 0 && !(doc.tip?.paise > 0),
-    given: doc.tip?.paise > 0 ? { paise: doc.tip.paise, method: doc.tip.method } : null,
+    available: s.tipMaxPaise > 0 && (beforePayment || (done && !tipped)),
+    given: tipped ? { paise: doc.tip.paise, method: doc.tip.method } : null,
+    // The bill is due: tip on it, and see the total with the tip in.
+    beforePayment,
+    billPaise: bill,
+    paymentMethod: doc.paymentMethod || null,
     options: s.tipOptions.filter((r) => r * 100 <= s.tipMaxPaise),
     maxPaise: s.tipMaxPaise,
   };
@@ -166,13 +205,15 @@ async function addTip({ kind, id, userId, amountPaise, method = 'wallet', messag
   const Model = KINDS[kind]?.model();
   if (!Model) throw err(400, 'NOT_SUPPORTED', 'This booking cannot take a tip.');
   const s = await settings();
-  if (!Number.isInteger(amountPaise) || amountPaise < 100 || amountPaise > s.tipMaxPaise) {
+  const removing = method === 'with_payment' && amountPaise === 0;
+  if (!removing && (!Number.isInteger(amountPaise) || amountPaise < 100 || amountPaise > s.tipMaxPaise)) {
     throw err(400, 'BAD_AMOUNT', `A tip is ₹1 to ${rupees(s.tipMaxPaise)}.`);
   }
   const doc = await Model.findOne({ _id: id, userId });
   if (!doc) throw err(404, 'NOT_FOUND', 'Booking not found');
-  if (!isDone(kind, doc)) throw err(409, 'NOT_DONE', 'You can tip once the job is done.');
   if (!(doc.workerId || doc.shopId)) throw err(409, 'NO_PROVIDER', 'Nobody to tip on this booking.');
+  if (method === 'with_payment') return tipOnBill({ kind, Model, doc, userId, amountPaise, message });
+  if (!isDone(kind, doc)) throw err(409, 'NOT_DONE', 'You can tip once the job is done.');
 
   // Claim the tip slot first, so two taps never tip twice.
   const claimed = await Model.findOneAndUpdate(
@@ -219,4 +260,71 @@ async function addTip({ kind, id, userId, amountPaise, method = 'wallet', messag
   return { tipPaise: amountPaise, method, message: 'Thank you. Your tip has gone to them.' };
 }
 
-module.exports = { settings, boostView, addBoost, settleBoost, tipView, addTip, boostPaise, BOOSTABLE };
+/**
+ * Tip on the bill: set, changed or taken off (0) until the bill is paid. The
+ * provider is told the new amount to collect, so the cash in hand matches.
+ */
+async function tipOnBill({ kind, Model, doc, userId, amountPaise, message }) {
+  if (doc.paymentStatus === 'paid') throw err(409, 'ALREADY_PAID', 'This bill is already paid. You can still tip from your wallet.');
+  if (!billOpen(kind, doc)) throw err(409, 'NOT_DUE', 'You can add a tip when your bill is ready.');
+  const update = amountPaise > 0
+    ? { $set: { tip: { paise: amountPaise, method: 'with_payment', message: String(message || '').slice(0, 200), at: new Date() } } }
+    : { $unset: { tip: 1 } };
+  // Only over no tip, or over an earlier tip on this same unpaid bill.
+  const row = await Model.findOneAndUpdate(
+    { _id: doc._id, userId, paymentStatus: { $ne: 'paid' }, $or: [{ 'tip.paise': { $exists: false } }, { 'tip.paise': 0 }, { 'tip.method': 'with_payment' }] },
+    update, { new: true },
+  );
+  if (!row) throw err(409, 'ALREADY_TIPPED', 'You have already tipped for this job. Thank you!');
+
+  const total = (billPaise(kind, row) || 0) + amountPaise;
+  const id = String(row._id);
+  const to = row.workerId ? { kind: 'worker', id: row.workerId } : { kind: 'shop', id: row.shopId };
+  const events = require('./job-events');
+  // Their screen updates the amount to collect at once.
+  events.toProvider(to.kind, to.id, 'job.update', { kind, id, status: row.status, tipPaise: amountPaise, at: new Date().toISOString() });
+  if (amountPaise > 0) {
+    events.push(to, {
+      title: `${rupees(amountPaise)} tip from your customer`,
+      body: row.paymentMethod === 'cash'
+        ? `Collect ${rupees(total)} in cash: the bill plus your tip. The tip is all yours.`
+        : `They pay ${rupees(total)} online, your tip included. It reaches your wallet with the job.`,
+      deepLink: KINDS[kind].providerLink(id), data: { kind, id },
+    }).catch(() => {});
+  }
+  return {
+    tipPaise: amountPaise, method: 'with_payment', totalPaise: total,
+    message: amountPaise > 0 ? `Tip added. You pay ${rupees(total)} in all.` : `Tip removed. You pay ${rupees(total)}.`,
+  };
+}
+
+/**
+ * The bill was paid: a tip on it is the provider's. Online, ZappyOne holds it
+ * and pays it on; in cash they already have it. Idempotent per booking.
+ */
+async function settleTip(kind, bookingId) {
+  const Model = KINDS[kind]?.model();
+  if (!Model) return null;
+  const doc = await Model.findOneAndUpdate(
+    { _id: bookingId, 'tip.method': 'with_payment', 'tip.paise': { $gt: 0 }, 'tip.settledAt': null },
+    { $set: { 'tip.settledAt': new Date() } },
+    { new: true },
+  ).lean();
+  if (!doc || doc.paymentMethod === 'cash') return doc ? 0 : null;
+  const Transaction = require('../payment/transaction.model');
+  if (doc.workerId && !doc.shopId) {
+    await require('../wallet/wallet.service').apply({
+      kind: 'worker', id: doc.workerId, type: 'credit', amountPaise: doc.tip.paise, reason: Transaction.REASONS.TIP,
+      idempotencyKey: `tip:worker:${kind}:${doc._id}`, description: `Tip on ${doc.reference || 'a job'}`,
+    });
+  } else if (doc.shopId) {
+    await Transaction.create({
+      type: 'credit', owner: { kind: 'platform', id: null }, amountPaise: doc.tip.paise, reason: Transaction.REASONS.TIP,
+      idempotencyKey: `tip:shop:${kind}:${doc._id}`, description: `Tip for shop on ${doc.reference || ''}`,
+      metadata: { shopId: String(doc.shopId), bookingId: String(doc._id) }, status: 'succeeded',
+    }).catch((e) => { if (e.code !== 11000) throw e; });
+  }
+  return doc.tip.paise;
+}
+
+module.exports = { settings, boostView, addBoost, settleBoost, tipView, addTip, settleTip, boostPaise, billTipPaise, BOOSTABLE, PAY_STAGE };

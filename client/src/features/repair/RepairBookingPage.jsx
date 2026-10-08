@@ -15,7 +15,7 @@ import RepairWarrantyCard from './RepairWarrantyCard';
 import { repairRebookHref } from '../bookings/useMyJobs';
 import { KINDS } from '../tracking/kinds';
 import { useJobSOS } from '../tracking/useJobSOS';
-import { formatPaise } from '@shared/utils/money';
+import { formatPaise, billAddOnsPaise } from '@shared/utils/money';
 import { PayNowButton } from '@shared/components/common/PayMethodPicker';
 import { API_BASE } from '@shared/services/apiBase';
 import { useSelector } from 'react-redux';
@@ -351,6 +351,8 @@ function RateRepair({ booking }) {
 /** How the money works for this booking, said plainly. */
 function PaymentNote({ booking }) {
   const snap = booking.priceSnapshot || {};
+  // The repair plus anything riding on the bill (earlier fee, boost, tip).
+  const duePaise = (snap.totalPaise || 0) + billAddOnsPaise(booking);
   return (
     <div className="rounded-card bg-white p-[18px] ring-1 ring-slate-100">
       {booking.paymentStatus === 'paid' ? (
@@ -359,7 +361,7 @@ function PaymentNote({ booking }) {
         <>
           <p className="text-[14px] font-bold text-navy">Pay in cash when the job is done</p>
           <p className="mt-0.5 text-[12.5px] leading-relaxed text-slate-500">
-            Hand {rupees(snap.totalPaise)} to the technician after they finish. Nothing is charged before that, and they cannot close the job without recording it.
+            Hand {rupees(duePaise)} to the technician after they finish. Nothing is charged before that, and they cannot close the job without recording it.
           </p>
         </>
       ) : snap.isEstimate && booking.status !== 'APPROVED' ? (
@@ -370,7 +372,7 @@ function PaymentNote({ booking }) {
         <>
           <p className="text-[14px] font-bold text-navy">Online payment pending</p>
           <p className="mb-2 mt-0.5 text-[12.5px] leading-relaxed text-slate-500">If online payment is down, pay the technician in cash instead. They record it.</p>
-          <PayNowButton bookingSource="repair" bookingId={booking._id} amountLabel={rupees(snap.totalPaise)} label="Repair booking" />
+          <PayNowButton bookingSource="repair" bookingId={booking._id} amountLabel={rupees(duePaise)} label="Repair booking" />
         </>
       )}
     </div>

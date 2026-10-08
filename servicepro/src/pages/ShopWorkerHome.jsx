@@ -12,6 +12,7 @@ import { selectAuth } from '@shared/modules/auth/authSlice';
 import { useGeolocation } from '@shared/hooks/useGeolocation';
 import { formatPaise } from '@shared/utils/money';
 import { useProviderJobs } from '@shared/provider/useProviderJobs';
+import MyAreaChip from '@shared/components/worker/MyAreaChip';
 
 /**
  * A shop technician's home. The shop assigns the work and pays its staff, so
@@ -72,6 +73,7 @@ export default function ShopWorkerHome() {
           <div className="min-w-0 flex-1">
             <p className="truncate text-base font-black text-navy">{me?.name || 'Technician'}</p>
             <p className="truncate text-xs text-slate-500">{shop ? `Working for ${shop.name}` : 'Loading your shop…'}</p>
+            {onDuty && <MyAreaChip coordinates={me?.currentLocation?.coordinates} live className="mt-1" />}
           </div>
           {shop?.phone && (
             <a href={`tel:${shop.phone}`} className="flex h-10 items-center gap-1.5 rounded-xl bg-slate-100 px-3 text-xs font-bold text-slate-700" aria-label="Call shop owner">

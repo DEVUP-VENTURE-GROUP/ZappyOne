@@ -2,7 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useGetPetBookingQuery, useCancelPetBookingMutation, useRatePetBookingMutation } from '@shared/services/api';
-import { formatPaise } from '@shared/utils/money';
+import { formatPaise, billAddOnsPaise } from '@shared/utils/money';
 import { PayNowButton } from '@shared/components/common/PayMethodPicker';
 import JobTrackingPage from '../tracking/JobTrackingPage';
 import { KINDS } from '../tracking/kinds';
@@ -65,8 +65,8 @@ export default function PetBookingDetailPage() {
       extras={payOnline ? (
         <div className="rounded-card bg-white p-[18px] ring-1 ring-slate-100">
           <p className="text-[14px] font-bold text-navy">Pay online</p>
-          <p className="mt-0.5 text-[12.5px] text-slate-500">{formatPaise(b.pricing?.totalPaise)} for this booking</p>
-          <PayNowButton bookingSource="pet" bookingId={b._id} amountLabel={formatPaise(b.pricing?.totalPaise)} label="Pet care booking" className="mt-3" />
+          <p className="mt-0.5 text-[12.5px] text-slate-500">{formatPaise((b.pricing?.totalPaise || 0) + billAddOnsPaise(b))} for this booking</p>
+          <PayNowButton bookingSource="pet" bookingId={b._id} amountLabel={formatPaise((b.pricing?.totalPaise || 0) + billAddOnsPaise(b))} label="Pet care booking" className="mt-3" />
         </div>
       ) : null}
     />

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, Navigation, Clock, IndianRupee, Briefcase, Banknote, Loader2, X } from 'lucide-react';
+import { MapPin, Navigation, Clock, IndianRupee, Briefcase, Banknote, Loader2, X, Sparkles } from 'lucide-react';
 import { kmBetween } from '../../utils/distance';
 import PassReasonPicker from '../worker/PassReasonPicker';
 import { startRinging } from '../../utils/alertSound';
@@ -20,7 +20,8 @@ import { formatPaise } from '../../utils/money';
  *
  * offer: {
  *   heading, title, valueLabel, valuePaise, cash, howLabel, address, landmark,
- *   coordinates, whenLabel, frontPaise, expiresAt, windowSec, acceptLabel, askReason
+ *   coordinates, whenLabel, frontPaise, expiresAt, windowSec, acceptLabel, askReason,
+ *   boostPaise (what the customer added; already inside valuePaise)
  * }
  * onAccept() / onDecline(reason) are the kind's own calls; both may throw.
  */
@@ -68,6 +69,7 @@ export default function JobOfferAlert({ offer, myLocation, onAccept, onDecline, 
   const km = offer.km ?? kmBetween(myLocation, offer.coordinates);
   const pct = Math.max(0, Math.min(100, (left / windowSec) * 100));
   const urgent = left <= windowSec / 5;
+  const boost = offer.boostPaise > 0 ? offer.boostPaise : 0;
 
   function openDirections() {
     const [lng, lat] = offer.coordinates || [];
@@ -113,6 +115,26 @@ export default function JobOfferAlert({ offer, myLocation, onAccept, onDecline, 
             />
           </div>
 
+          {/* A raised offer is the first thing they see, and it is all theirs. */}
+          {boost > 0 && (
+            <motion.div
+              className="relative overflow-hidden bg-gradient-to-r from-amber-400 via-amber-300 to-amber-400 px-5 py-3 text-amber-950"
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <motion.span
+                aria-hidden
+                className="absolute inset-y-0 -left-1/3 w-1/3 bg-gradient-to-r from-transparent via-white/60 to-transparent"
+                animate={{ x: ['0%', '400%'] }}
+                transition={{ duration: 1.8, repeat: Infinity, repeatDelay: 1.2, ease: 'easeInOut' }}
+              />
+              <p className="relative flex items-center gap-2 text-[13px] font-extrabold">
+                <Sparkles size={16} /> Customer raised the offer by {formatPaise(boost)}
+              </p>
+              <p className="relative text-[11px] font-semibold text-amber-900">All of it is yours on top of the job price. Take it before someone else does.</p>
+            </motion.div>
+          )}
+
           <div className="p-5">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
@@ -127,11 +149,16 @@ export default function JobOfferAlert({ offer, myLocation, onAccept, onDecline, 
             </div>
 
             <div className="mt-3 grid grid-cols-2 gap-2">
-              <div className="rounded-2xl bg-slate-50 p-3">
+              <div className={`rounded-2xl p-3 ${boost ? 'bg-amber-50 ring-2 ring-amber-300' : 'bg-slate-50'}`}>
                 <p className="flex items-center gap-1 text-[11px] font-semibold text-slate-500">
                   <IndianRupee size={11} /> {offer.valueLabel}
                 </p>
                 <p className="mt-0.5 text-[18px] font-bold tabular-nums text-navy">{formatPaise(offer.valuePaise)}</p>
+                {boost > 0 && (
+                  <p className="text-[11px] font-semibold tabular-nums text-amber-700">
+                    <span className="text-slate-400 line-through">{formatPaise(offer.valuePaise - boost)}</span> + {formatPaise(boost)} extra
+                  </p>
+                )}
                 {offer.cash && (
                   <p className="flex items-center gap-1 text-[11px] font-medium text-emerald-700">
                     <Banknote size={10} /> Collect in cash

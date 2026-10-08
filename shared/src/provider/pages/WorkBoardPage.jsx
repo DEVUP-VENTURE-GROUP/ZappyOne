@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, ChevronRight, Loader2, MapPin, Banknote, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Loader2, MapPin, Banknote, ShieldCheck, Sparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { formatPaise } from '../../utils/money';
 import { useProviderJobs } from '../useProviderJobs';
@@ -38,7 +38,12 @@ function MineRow({ job, onOpen }) {
 
 function OpenCard({ job, busy, onTake }) {
   return (
-    <article className="flex flex-col gap-3 rounded-xl bg-white p-4 ring-1 ring-slate-200/80">
+    <article className={`flex flex-col gap-3 overflow-hidden rounded-xl bg-white p-4 ${job.boostPaise > 0 ? 'ring-2 ring-amber-300 shadow-[0_6px_20px_-8px_rgba(245,158,11,0.45)]' : 'ring-1 ring-slate-200/80'}`}>
+      {job.boostPaise > 0 && (
+        <p className="-mx-4 -mt-4 flex items-center gap-1.5 bg-gradient-to-r from-amber-400 to-amber-300 px-4 py-1.5 text-[12px] font-extrabold text-amber-950">
+          <Sparkles size={13} /> Customer raised the offer by {formatPaise(job.boostPaise)} · all yours
+        </p>
+      )}
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-[12px] font-semibold capitalize text-zappy-700">{job.service}</p>
@@ -48,7 +53,7 @@ function OpenCard({ job, busy, onTake }) {
           <p className="text-[17px] font-bold tabular-nums text-emerald-700">{formatPaise(job.earningPaise)}</p>
           <p className="text-[11px] text-slate-500">you earn</p>
           {/* The customer added this for a faster match; it is all theirs, and included above. */}
-          {job.boostPaise > 0 && <p className="mt-0.5 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700">+{formatPaise(job.boostPaise)} boost</p>}
+          {job.boostPaise > 0 && <p className="mt-0.5 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700">incl. +{formatPaise(job.boostPaise)} extra</p>}
         </div>
       </div>
 

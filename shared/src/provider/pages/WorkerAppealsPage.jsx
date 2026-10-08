@@ -12,9 +12,12 @@ const STATUS_CONFIG = {
   dismissed:    { label: 'Dismissed',      color: 'rose',    Icon: XCircle },
 };
 
-const TYPE_OPTS = ['rating', 'penalty', 'cancellation', 'order_issue'];
-const TYPE_LABELS = { rating: 'Rating Dispute', penalty: 'Penalty Appeal', cancellation: 'Cancellation Reversal', order_issue: 'Order Issue' };
-const TYPE_ICONS = { rating: StarIcon, penalty: AlertCircle, cancellation: XCircle, order_issue: Flag };
+const TYPE_OPTS = ['rating', 'penalty', 'cancellation', 'pause', 'dues', 'verification', 'order_issue'];
+const TYPE_LABELS = {
+  rating: 'A rating or review', penalty: 'A penalty or fine', cancellation: 'A cancellation', pause: 'Being taken offline',
+  dues: 'My dues or payments', verification: 'My verification', order_issue: 'Something about a job',
+};
+const TYPE_ICONS = { rating: StarIcon, penalty: AlertCircle, cancellation: XCircle, pause: Clock, dues: FileText, verification: CheckCircle2, order_issue: Flag };
 
 function StarIcon(props) {
   return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>;
@@ -30,7 +33,7 @@ function StatusBadge({ status }) {
 }
 
 function NewAppealSheet({ onClose }) {
-  const [form, setForm] = useState({ type: 'rating', subject: '', description: '', orderId: '' });
+  const [form, setForm] = useState({ type: 'rating', subject: '', description: '', jobRef: '' });
   const [create, { isLoading }] = useCreateWorkerAppealMutation();
   function set(k, v) { setForm(f => ({ ...f, [k]: v })); }
 
@@ -90,11 +93,11 @@ function NewAppealSheet({ onClose }) {
               </div>
 
               <div>
-                <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">Order ID <span className="font-medium normal-case text-slate-300">(Optional)</span></label>
+                <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-1">Booking reference <span className="font-medium normal-case text-slate-300">(Optional)</span></label>
                 <input
                   className="w-full bg-slate-50 border-2 border-transparent focus:bg-white focus:border-zappy-500 rounded-2xl px-4 py-3.5 text-[15px] font-mono font-bold text-slate-800 outline-none transition-all placeholder:text-slate-400 placeholder:font-sans placeholder:font-medium shadow-inner"
-                  placeholder="Paste order ID if applicable"
-                  value={form.orderId} onChange={e => set('orderId', e.target.value)}
+                  placeholder="e.g. ZR5ZRJXCRP, on the job screen"
+                  value={form.jobRef} maxLength={40} onChange={e => set('jobRef', e.target.value.toUpperCase())}
                 />
               </div>
 
@@ -229,9 +232,9 @@ export default function WorkerAppealsPage() {
                           <Clock size={12} strokeWidth={2.5} />
                           Submitted on {new Date(a.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                         </p>
-                        {a.orderId && (
+                        {(a.jobRef || a.orderId) && (
                           <span className="text-[10px] font-mono font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded border border-slate-100">
-                            ID: {a.orderId.slice(-6)}
+                            {a.jobRef || `ID: ${a.orderId.slice(-6)}`}
                           </span>
                         )}
                       </div>

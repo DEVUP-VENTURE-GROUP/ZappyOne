@@ -22,6 +22,7 @@ const ShopKycPage = lazy(() => import('./pages/ShopKycPage'));
 const ShopWorkersPage = lazy(() => import('./pages/ShopWorkersPage'));
 const ShopEarningsPage = lazy(() => import('./pages/ShopEarningsPage'));
 const ShopPriceRequestsPage = lazy(() => import('./pages/ShopPriceRequestsPage'));
+const AppealsPage = lazy(() => import('@shared/provider/pages/WorkerAppealsPage'));
 const ProviderReviewsPage = lazy(() => import('@shared/provider/pages/ProviderReviewsPage'));
 const WorkerLoginPage = lazy(() => import('@shared/provider/pages/WorkerLoginPage'));
 const ShopWorkerHome = lazy(() => import('./pages/ShopWorkerHome'));
@@ -73,6 +74,7 @@ export default function App() {
             <Route path="/shop/workers" element={shop(<ShopWorkersPage />)} />
             <Route path="/shop/earnings" element={shop(<ShopEarningsPage />)} />
             <Route path="/shop/price-requests" element={shop(<ShopPriceRequestsPage />)} />
+            <Route path="/shop/appeals" element={shop(<AppealsPage />)} />
             <Route path="/shop/reviews" element={shop(<ProviderReviewsPage back="/shop" />)} />
             {providerRoutes({
               loginPath: WORKER_LOGIN,
