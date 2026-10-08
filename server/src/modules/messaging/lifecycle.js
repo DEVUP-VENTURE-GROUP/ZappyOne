@@ -31,6 +31,7 @@ const MAP = {
     OUT_FOR_RETURN: ['On its way back', 'Your device is on its way back to you.'],
     COMPLETED: 'booking.completed',
     CANCELLED: 'booking.cancelled',
+    EXPIRED: 'booking.cancelled',
   },
   pet: {
     BOOKED: 'booking.confirmed',
@@ -54,7 +55,7 @@ const MAP = {
 };
 
 const roleOf = (doc) => {
-  const h = [...(doc.statusHistory || [])].reverse().find((x) => x.status === 'CANCELLED') || {};
+  const h = [...(doc.statusHistory || [])].reverse().find((x) => ['CANCELLED', 'EXPIRED'].includes(x.status)) || {};
   return h.byRole || h.actorRole || (doc.cancelledBy === 'user' ? 'user' : doc.cancelledBy) || '';
 };
 
@@ -93,7 +94,7 @@ async function onStatus(kind, doc, status) {
     if (entry === 'booking.cancelled') {
       const role = roleOf(doc);
       const by = ['user', 'customer'].includes(role) ? 'you' : ['worker', 'shop', 'provider'].includes(role) ? 'provider' : 'zappyone';
-      const h = [...(doc.statusHistory || [])].reverse().find((x) => x.status === 'CANCELLED') || {};
+      const h = [...(doc.statusHistory || [])].reverse().find((x) => ['CANCELLED', 'EXPIRED'].includes(x.status)) || {};
       const reason = doc.cancellationReason || h.reason || h.note || '';
       await send(entry, { to: customer, ctx: { f, by, reason, ...(await cancelMoney(kind, doc)) }, refId: ref });
       // The provider hears it only when someone else cancelled.

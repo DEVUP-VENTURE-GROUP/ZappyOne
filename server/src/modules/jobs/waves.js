@@ -36,10 +36,30 @@ function waitingSince(doc) {
   return new Date(hit?.at || doc.updatedAt || doc.createdAt).getTime();
 }
 
+const NO_PROVIDER = 'We could not find anyone available in time';
+
+/** Nobody took it in time: closed, free, the customer told (booking.cancelled). */
+async function closeUnmatched(kind, d) {
+  if (kind === 'repair') {
+    await require('../repair/services/booking.service').transition(d._id, 'EXPIRED', { actorRole: 'system', actorId: null, reason: NO_PROVIDER });
+    return;
+  }
+  if (kind === 'helping') {
+    const { HelpingTask } = require('../helping/models/task.model');
+    const task = await HelpingTask.findById(d._id);
+    if (task) await require('./cancel-fee').cancelHelping({ task, byRole: 'system', actorId: null, reason: NO_PROVIDER });
+    return;
+  }
+  if (kind === 'pet') {
+    await require('../pet/services/booking.service').cancelBooking({ bookingId: d._id, actorId: null, by: 'admin', reason: NO_PROVIDER });
+  }
+}
+
 async function sweep({ now = Date.now() } = {}) {
   const { waveMin, slowMin } = await timings();
+  const { unmatchedCloseMinutes = 15 } = await require('../order/cancellation.service').getConfig();
   const events = require('./job-events');
-  const out = { reoffered: 0, offlineWaves: 0, slowNotices: 0 };
+  const out = { reoffered: 0, offlineWaves: 0, slowNotices: 0, closed: 0 };
 
   for (const [kind, w] of Object.entries(WAITING)) {
     const Model = KINDS[kind].model();
@@ -49,6 +69,16 @@ async function sweep({ now = Date.now() } = {}) {
       d._kind = kind;
       const waitedMin = (now - waitingSince(d)) / 60000;
       try {
+        // Waited past the limit with nobody (from the booked time, if it is a later booking): closed free.
+        const from = Math.max(waitingSince(d), d.scheduledAt ? new Date(d.scheduledAt).getTime() : 0);
+        if ((now - from) / 60000 >= unmatchedCloseMinutes) {
+          await closeUnmatched(kind, d);
+          // If someone comes online near them soon, they are told (jobs/comeback).
+          await require('./comeback').remember(kind, d);
+          out.closed += 1;
+          continue;
+        }
+
         // Repairs: try the round again; someone may have come online.
         if (kind === 'repair') {
           const r = await require('../repair/services/booking/assignment').redispatch(d._id).catch(() => null);

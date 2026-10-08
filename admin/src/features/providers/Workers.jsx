@@ -431,7 +431,7 @@ function WorkerDetailPanel({ worker, onClose, onRefetch }) {
                 {/* stats row */}
                 <div className="grid grid-cols-3 gap-2">
                   <div className="bg-slate-50 rounded-xl p-3 text-center">
-                    <p className="text-lg font-extrabold text-slate-900">{worker.rating?.toFixed(1) ?? '—'}</p>
+                    <p className="text-lg font-extrabold text-slate-900">{worker.reviewCount ? Number(worker.rating).toFixed(1) : 'New'}</p>
                     <p className="text-[11px] text-slate-400">Rating ★</p>
                   </div>
                   <div className="bg-slate-50 rounded-xl p-3 text-center">
@@ -721,7 +721,7 @@ export default function Workers() {
                       {w.skills?.length > 2 && <span className="text-[10px] text-slate-400">+{w.skills.length - 2}</span>}
                     </div>
                   </Td>
-                  <Td><span className="font-semibold">{w.rating?.toFixed(1) ?? '—'} ★</span></Td>
+                  <Td><span className="font-semibold">{w.reviewCount ? `${Number(w.rating).toFixed(1)} ★` : 'New'}</span></Td>
                   <Td muted>{w.completedJobs ?? 0}</Td>
                   <Td><StatusBadge status={w.kyc?.status || 'not_submitted'} /></Td>
                   <Td>

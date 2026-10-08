@@ -86,6 +86,8 @@ async function goOnline({ workerId, lng, lat }) {
   require('../onboarding/auto-provision.service')
     .provisionCoverage({ workerId, coordinates: [lng, lat] })
     .catch((err) => logger.warn({ err: err.message, workerId }, '[worker] auto-provision on goOnline failed'));
+  // Customers nearby whose booking just closed unmatched hear that someone is free now.
+  require('../jobs/comeback').onWorkerOnline(workerId, lat, lng).catch(() => {});
   return worker;
 }
 

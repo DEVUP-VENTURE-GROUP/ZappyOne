@@ -107,11 +107,11 @@ function UserDrawer({ userId, onClose, onBlock }) {
                     )}
                   </div>
                 </div>
-                <StatusBadge status={u.isBlocked ? 'blocked' : 'online'} />
+                <StatusBadge status={u.isBlocked ? 'blocked' : 'active'} />
               </div>
 
               <div className="grid grid-cols-3 gap-3 mt-4">
-                <Stat label="Rating" value={`${u.rating?.toFixed(1) || '5.0'} ★`} />
+                <Stat label="Rating" value={u.ratingCount ? `${Number(u.rating).toFixed(1)} ★` : 'New'} />
                 <Stat label="Orders" value={u.totalOrders ?? orders.length} />
                 <Stat label="Joined" value={fmtDate(u.createdAt)} small />
               </div>
@@ -289,8 +289,8 @@ export default function Users() {
                   <Td><span className="font-semibold text-slate-900">{u.name || '—'}</span></Td>
                   <Td muted>{u.phone}</Td>
                   <Td muted>{u.email || '—'}</Td>
-                  <Td><span className="font-semibold">{u.rating?.toFixed(1) || '5.0'} ★</span></Td>
-                  <Td><StatusBadge status={u.isBlocked ? 'blocked' : 'online'} /></Td>
+                  <Td><span className="font-semibold">{u.ratingCount ? `${Number(u.rating).toFixed(1)} ★` : 'New'}</span></Td>
+                  <Td><StatusBadge status={u.isBlocked ? 'blocked' : 'active'} /></Td>
                   <Td muted>{fmtDate(u.createdAt)}</Td>
                   <Td>
                     <ChevronRight size={14} className="text-slate-300" />

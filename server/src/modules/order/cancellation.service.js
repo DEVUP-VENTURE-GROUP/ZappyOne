@@ -43,6 +43,7 @@ const DEFAULTS = {
   workerCancelLimit:          3,   // penalised cancels in the window before auto-offline
   workerPauseMinutes:         120, // how long that auto-offline lasts
   maxActiveJobs:              2,   // jobs one worker may hold at once (jobs/workload)
+  unmatchedCloseMinutes:      15,  // nobody took it: closed free after this (jobs/waves)
   workerShareOnWayPct:        50,
   workerShareArrivedPct:      70,
   workerCancelWindowSec:      86400, // 24h = "per day"

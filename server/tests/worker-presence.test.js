@@ -79,3 +79,48 @@ test('a job nobody takes: offline wave after 5 minutes, slow notice after 10, ea
   out = await waves.sweep();
   expect(out.slowNotices).toBe(0);
 });
+
+test('a job nobody takes for the set time is closed free, and the customer is not charged', async () => {
+  const userId = new mongoose.Types.ObjectId();
+  const t = await HelpingTask.create({
+    reference: 'HT-WV-2', userId, serviceType: 'shopping', status: 'WORKER_SEARCHING', pickupLocation: HERE, destination: HERE,
+    statusHistory: [{ status: 'WORKER_SEARCHING', at: ago(61) }], charge: { serviceChargePaise: 10000, workerEarningPaise: 9000 },
+  });
+  const out = await waves.sweep();
+  expect(out.closed).toBeGreaterThanOrEqual(1);
+  const after = await HelpingTask.findById(t._id).lean();
+  expect(after.status).toBe('CANCELLED');
+  const fee = await mongoose.connection.collection('cancellationfeerecords').countDocuments({ jobId: t._id, feePaise: { $gt: 0 } });
+  expect(fee).toBe(0);
+});
+
+test('a later booking is not closed before its booked time', async () => {
+  const t = await HelpingTask.create({
+    reference: 'HT-WV-3', userId: new mongoose.Types.ObjectId(), serviceType: 'shopping', status: 'WORKER_SEARCHING', pickupLocation: HERE, destination: HERE,
+    scheduledAt: new Date(Date.now() + 3 * 3600e3),
+    statusHistory: [{ status: 'WORKER_SEARCHING', at: ago(90) }], charge: { serviceChargePaise: 10000, workerEarningPaise: 9000 },
+  });
+  await waves.sweep();
+  expect((await HelpingTask.findById(t._id).lean()).status).toBe('WORKER_SEARCHING');
+});
+
+test('after a job closes unmatched, a nearby worker coming online tells the customer once', async () => {
+  const { ServiceLine, ProviderEnrolment } = require('../src/modules/onboarding/onboarding.model');
+  const comeback = require('../src/modules/jobs/comeback');
+  await ServiceLine.updateOne({ code: 'shopping_pickup' }, { $setOnInsert: { code: 'shopping_pickup', name: 'Shopping & Pickup Help', domainCode: 'helping_services', status: 'live', customerPath: '/helping' } }, { upsert: true });
+  const userId = new mongoose.Types.ObjectId();
+  const t = await HelpingTask.create({
+    reference: 'HT-WV-4', userId, serviceType: 'shopping', status: 'WORKER_SEARCHING', pickupLocation: HERE, destination: HERE,
+    statusHistory: [{ status: 'WORKER_SEARCHING', at: ago(20) }], charge: { serviceChargePaise: 10000, workerEarningPaise: 9000 },
+  });
+  await waves.sweep();
+  expect((await HelpingTask.findById(t._id).lean()).status).toBe('CANCELLED');
+  expect(await comeback.UnmatchedWatch.countDocuments({ jobId: t._id })).toBe(1);
+
+  const workerId = new mongoose.Types.ObjectId();
+  await ProviderEnrolment.create({ providerKind: 'individual', workerId, domainCode: 'helping_services', lineCode: 'shopping_pickup', status: 'approved' });
+  const [lng, lat] = HERE.coordinates;
+  expect(await comeback.onWorkerOnline(workerId, lat, lng)).toBeGreaterThanOrEqual(1);
+  expect((await comeback.UnmatchedWatch.findOne({ jobId: t._id }).lean()).notifiedAt).toBeTruthy();
+  expect(await comeback.onWorkerOnline(workerId, lat, lng)).toBe(0);
+});

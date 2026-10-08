@@ -37,6 +37,7 @@ const cancellationConfigSchema = new mongoose.Schema(
     workerCancelLimit:      { type: Number, default: 3 },   // cancels in window → auto-block
     workerPauseMinutes:     { type: Number, default: 120, min: 15, max: 1440 }, // how long that lasts
     maxActiveJobs:          { type: Number, default: 2, min: 1, max: 10 },      // jobs one worker may hold at once
+    unmatchedCloseMinutes:  { type: Number, default: 15, min: 10, max: 1440 },  // nobody took it: closed free after this
     workerCancelWindowSec:  { type: Number, default: 86400 }, // 24h window for cancel counting
 
     // Score degradation weights (added to dispatch score — higher = worse rank)

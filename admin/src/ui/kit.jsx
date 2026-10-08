@@ -105,6 +105,7 @@ export function StatusBadge({ status }) {
     rejected: 'bg-red-100 text-red-700',
     processing: 'bg-blue-100 text-blue-700',
     online: 'bg-green-100 text-green-700',
+    active: 'bg-green-100 text-green-700',
     offline: 'bg-slate-100 text-slate-600',
     blocked: 'bg-red-100 text-red-700',
     not_submitted: 'bg-slate-100 text-slate-500',

@@ -234,7 +234,7 @@ function ShopDetailPanel({ shop, onClose, onRefetch, reviewMode }) {
           <div className="overflow-y-auto flex-1 p-5 space-y-4">
             <div className="grid grid-cols-3 gap-2">
               <div className="bg-slate-50 rounded-xl p-3 text-center">
-                <p className="text-lg font-extrabold text-slate-900">{shop.rating?.toFixed(1) ?? '—'}</p>
+                <p className="text-lg font-extrabold text-slate-900">{shop.reviewCount ? Number(shop.rating).toFixed(1) : 'New'}</p>
                 <p className="text-[11px] text-slate-400">Rating ★</p>
               </div>
               <div className="bg-slate-50 rounded-xl p-3 text-center">

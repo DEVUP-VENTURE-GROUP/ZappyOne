@@ -134,6 +134,7 @@ const PROVIDER_FIELDS = [
   numField('workerCancelLimit', 1, 20),
   numField('workerPauseMinutes', 15, 1440),
   numField('maxActiveJobs', 1, 10),
+  numField('unmatchedCloseMinutes', 10, 1440),
   numField('workerCancelWindowSec', 1, 168, 3600),
   rupeeField('workerNoShowPenaltyPaise', 100000),
   numField('workerRejectLimit', 1, 50),
@@ -170,6 +171,9 @@ function ProviderRules() {
       </Setting>
       <Setting title="Jobs one worker can hold at once" hint="Accepted and not yet finished. Stops one person taking more than they can reach.">
         <UnitInput value={f.form.maxActiveJobs} onChange={f.set('maxActiveJobs')} unit="jobs" min={1} max={10} label="Jobs at once" />
+      </Setting>
+      <Setting title="Close a booking nobody takes after" hint="Counted from booking (or from the booked time, for later bookings). The customer is told, is not charged, and hears if someone nearby comes online in the next 3 hours.">
+        <UnitInput value={f.form.unmatchedCloseMinutes} onChange={f.set('unmatchedCloseMinutes')} unit="min" min={10} max={1440} label="Close after" />
       </Setting>
       <Setting title="Counted over" hint="The period hand-backs are counted in.">
         <UnitInput value={f.form.workerCancelWindowSec} onChange={f.set('workerCancelWindowSec')} unit="hours" min={1} max={168} label="Counting period" />

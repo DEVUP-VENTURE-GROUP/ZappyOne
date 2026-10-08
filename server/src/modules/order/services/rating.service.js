@@ -129,6 +129,7 @@ async function workerRateUser({ orderId, workerId, rating, review }) {
       const n = totalCompleted;
       const newRating = (user.rating * (n - 1) + rating) / n;
       user.rating = Number(newRating.toFixed(2));
+      user.ratingCount = n;
       await user.save();
     }
   }

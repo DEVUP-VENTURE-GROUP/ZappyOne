@@ -34,6 +34,8 @@ const userSchema = new mongoose.Schema(
     deviceTokens: [{ type: String }], // FCM / Web Push tokens for push notifications
     defaultPayment: { type: String, enum: ['cash', 'upi', 'card'], default: 'upi' },
     rating: { type: Number, default: 5, min: 0, max: 5 },
+    // How many ratings `rating` is the average of; none means "new", not five stars.
+    ratingCount: { type: Number, default: 0 },
     isBlocked: { type: Boolean, default: false },
 
     // Lifetime abuse counters — persisted in Mongo so Redis TTL expiry
