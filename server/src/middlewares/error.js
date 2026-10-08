@@ -45,6 +45,14 @@ function errorHandler(err, req, res, next) {
 
   if (status >= 500) {
     logger.error({ err: err.message, stack: err.stack, path: req.path, reqId: req.id }, 'Unhandled error');
+    // Into Admin → Live errors, with who it happened to (telemetry/errors).
+    try {
+      require('../modules/telemetry/errors.service').record({
+        kind: 'server', app: 'api', path: req.originalUrl || req.path, message: err.message, stack: err.stack,
+        api: { method: req.method, url: req.originalUrl || req.path, status, code, requestId: req.id },
+        ua: req.headers?.['user-agent'], role: req.auth?.role || 'guest', userId: req.auth?.sub || null,
+      });
+    } catch { /* monitoring never breaks the reply */ }
   } else {
     logger.warn({ err: err.message, path: req.path, status, code, reqId: req.id }, 'Handled error');
   }

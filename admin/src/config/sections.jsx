@@ -37,6 +37,7 @@ import {
   Percent,
   MessageSquare as MessageSquareIcon,
   Star,
+  Bug,
 } from 'lucide-react';
 import Hub from '../ui/Hub';
 
@@ -87,6 +88,7 @@ const P = {
   SignInCodes: page(() => import('../features/system/SignInCodes')),
   FeatureFlags: page(() => import('../features/system/FeatureFlags')),
   Messages: page(() => import('../features/system/Messages')),
+  LiveErrors: page(() => import('../features/system/LiveErrors')),
   AuditLog: page(() => import('../features/system/AuditLog')),
   Team: page(() => import('../features/system/Team')),
 };
@@ -179,6 +181,7 @@ export const NAV_GROUPS = [
   ] },
   { label: 'System', items: [
     { id: 'status', area: 'system', label: 'System status', icon: Server, Comp: HUBS.status },
+    { id: 'errors', area: 'system', label: 'Live errors', icon: Bug, Comp: P.LiveErrors },
     { id: 'messages', area: 'system', label: 'Messages', icon: Mail, Comp: P.Messages },
     { id: 'flags', area: 'system', label: 'Feature flags', icon: ToggleRight, Comp: P.FeatureFlags },
     { id: 'audit', area: 'system', label: 'Audit logs', icon: FileText, Comp: P.AuditLog },

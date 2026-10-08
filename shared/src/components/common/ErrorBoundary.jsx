@@ -1,4 +1,5 @@
 import { Component, useEffect } from 'react';
+import { reportError } from '../../utils/errorReporter';
 
 /** Retries the screen every few seconds; offers home after a while. */
 function AutoRetry({ tries, onRetry }) {
@@ -76,20 +77,11 @@ export default class ErrorBoundary extends Component {
   }
 
   report(error, info, healed) {
-    try {
-      const url = `${import.meta.env.VITE_API_URL || ''}/api/telemetry/client-error`;
-      if (navigator.sendBeacon) {
-        navigator.sendBeacon(url, JSON.stringify({
-          message: String(error?.message || error).slice(0, 500),
-          errorStack: String(error?.stack || '').slice(0, 1500),   // real JS stack (file:line of the throw)
-          stack: String(info?.componentStack || '').slice(0, 1000), // React component stack
-          path: window.location.pathname + window.location.search,
-          app: window.location.hostname.split('.')[0],
-          healed,
-          at: Date.now(),
-        }));
-      }
-    } catch { /* telemetry is best-effort */ }
+    // Admin → Live errors, with who it happened to (utils/errorReporter).
+    reportError({
+      kind: 'crash', message: String(error?.message || error), stack: String(error?.stack || ''),
+      componentStack: String(info?.componentStack || ''), healed,
+    });
   }
 
   // The count lives here, so a retry that fails again is not retried forever.

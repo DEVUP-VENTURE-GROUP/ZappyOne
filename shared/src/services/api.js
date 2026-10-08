@@ -1,4 +1,5 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { reportApiFailure, setReporterToken } from '../utils/errorReporter';
 import { Mutex } from 'async-mutex';
 import toast from 'react-hot-toast';
 import { setAuth, logout } from '../modules/auth/authSlice';
@@ -53,8 +54,11 @@ if (_bc) {
 }
 
 const baseQueryWithReauth = async (args, api, extraOptions) => {
+  setReporterToken(() => api.getState().auth?.accessToken);
   let result = await rawBaseQuery(args, api, extraOptions);
 
+  // What the person was shown going wrong reaches Admin → Live errors (utils/errorReporter).
+  if (result.error && result.error.status !== 401) reportApiFailure(args, result.error);
   if (result.error?.status !== 401) return result;
 
   // Single-device: this worker's session was replaced by a login on another
@@ -122,7 +126,7 @@ export const api = createApi({
     'RepairCatalog', 'RepairConfig', 'RepairPricing', 'RepairRequests', 'RepairBookings', 'RepairProvider', 'MyAssets',
     'HelpingConfig', 'HelpingTasks', 'HelpingAvailable', 'AdminHelpingTasks',
     'PetCatalog', 'MyPets', 'PetBookings', 'PetAvailable', 'PetRecurring', 'AdminPetBookings', 'AdminPetPricing', 'AdminPetCapabilities',
-    'RepairIdentification', 'Onboarding', 'AdminBookings'],
+    'RepairIdentification', 'Onboarding', 'AdminBookings', 'ErrorIssues'],
   endpoints: (b) => ({
     // --- Auth ---
     // Messages between a customer and the provider on any job (jobs/job-chat).
@@ -1531,6 +1535,12 @@ export const api = createApi({
       query: () => '/provider/onboarding/status',
       providesTags: ['Onboarding'],
     }),
+    /** What this provider uploaded: identity once, then each service's application (onboarding/my-documents). */
+    providerMyDocuments: b.query({
+      query: () => '/provider/onboarding/my-documents',
+      providesTags: ['Onboarding', 'Kyc'],
+      keepUnusedDataFor: 0,
+    }),
     providerDomains: b.query({
       query: () => '/provider/onboarding/domains',
       providesTags: ['Onboarding'],
@@ -1602,6 +1612,13 @@ export const api = createApi({
     }),
     /** Repairs customers can see but nobody can do, and unanswered price requests. */
     adminCoverageGaps: b.query({ query: () => ({ url: adminApiPath('/onboarding/gaps') }), providesTags: ['Onboarding'] }),
+    /** Admin → Live errors (telemetry/errors): pulse, live feed, issues, plan, message. */
+    adminErrorPulse: b.query({ query: () => adminApiPath('/errors/pulse'), keepUnusedDataFor: 0 }),
+    adminErrorLive: b.query({ query: (params = {}) => ({ url: adminApiPath('/errors/live'), params }), keepUnusedDataFor: 0 }),
+    adminErrorIssues: b.query({ query: (params = {}) => ({ url: adminApiPath('/errors/issues'), params }), providesTags: ['ErrorIssues'], keepUnusedDataFor: 0 }),
+    adminErrorIssue: b.query({ query: (id) => adminApiPath(`/errors/issues/${id}`), providesTags: ['ErrorIssues'], keepUnusedDataFor: 0 }),
+    adminPlanErrorIssue: b.mutation({ query: ({ id, ...body }) => ({ url: adminApiPath(`/errors/issues/${id}/plan`), method: 'PATCH', body }), invalidatesTags: ['ErrorIssues'] }),
+    adminMessageErrorIssue: b.mutation({ query: ({ id, ...body }) => ({ url: adminApiPath(`/errors/issues/${id}/message`), method: 'POST', body }), invalidatesTags: ['ErrorIssues'] }),
     adminOnboardingLineRequests: b.query({
       query: (params = {}) => ({ url: adminApiPath('/onboarding/line-requests'), params }),
       providesTags: ['Onboarding'],
@@ -2443,6 +2460,9 @@ export const {
   // Job chat
   useJobChatQuery,
   useJobOptionsQuery,
+  useProviderMyDocumentsQuery,
+  useAdminErrorPulseQuery, useAdminErrorLiveQuery, useAdminErrorIssuesQuery, useAdminErrorIssueQuery,
+  useAdminPlanErrorIssueMutation, useAdminMessageErrorIssueMutation,
   useRescheduleJobMutation,
   useMyPendingCancelFeeQuery,
   useLensStatusQuery,

@@ -189,7 +189,15 @@ const CLIENT_ERRORS_KEY = 'telemetry:client-errors';
 async function clientError(req, res) {
   res.status(204).end();
   try {
-    const { message, stack, errorStack, path, app, healed } = req.body || {};
+    const { message, stack, errorStack, path, app, healed, kind, severity, api, auth, release } = req.body || {};
+    // Grouped, attributed and kept for the admin console (telemetry/errors).
+    const errors = require('./errors.service');
+    errors.record({
+      kind: ['crash', 'js', 'api'].includes(kind) ? kind : 'crash', severity, app, path, message,
+      stack: errorStack, componentStack: stack, api: api && typeof api === 'object' ? api : null,
+      ua: req.headers['user-agent'], release, ...errors.whoFrom(auth || req.headers.authorization),
+    });
+    if (kind === 'api' || kind === 'js') return;
     const row = {
       msg: typeof message === 'string' ? message.slice(0, 500) : null,
       errorStack: typeof errorStack === 'string' ? errorStack.slice(0, 1500) : null,
