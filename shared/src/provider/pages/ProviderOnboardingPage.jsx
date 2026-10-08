@@ -19,6 +19,7 @@ import {
 } from '../../services/api';
 import LiveSelfieCapture from '../../components/kyc/LiveSelfieCapture';
 import toast from 'react-hot-toast';
+import { prepareImage } from '../../utils/prepareImage';
 
 /**
  * Provider onboarding — the first thing a shop owner or technician does.
@@ -386,7 +387,8 @@ function VerifyStep({ lineCode, onDone }) {
    * capture method, time and location — so a reviewer can tell a picture taken
    * at the shop from one that arrived by WhatsApp.
    */
-  async function upload(code, file, meta = null) {
+  async function upload(code, picked, meta = null) {
+    const file = await prepareImage(picked);
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) return toast.error('File too large — max 5MB');
     try {

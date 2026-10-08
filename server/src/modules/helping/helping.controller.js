@@ -314,6 +314,8 @@ async function acceptTask(req, res, next) {
     if (!open) return res.status(404).json({ error: 'Task not found' });
     await assertApproved({ role: 'worker', id: req.auth.sub }, await lineOf('helping', open));
     await require('../worker/worker-dues.service').assertCanWork(req.auth.sub);
+    // One person, a few jobs at a time (jobs/workload; cap set in Economics).
+    await require('../jobs/workload').assertCanTakeAnother(req.auth.sub);
 
     /*
      * Claimed atomically. Two helpers tapping accept at the same instant must

@@ -288,7 +288,7 @@ export default function EventThemePage() {
               <div className="flex-1 text-center sm:text-left z-10">
                 <h4 className="font-black text-2xl text-white mb-1">{theme.partnerId.businessName}</h4>
                 <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">
-                  <span className="flex items-center gap-1"><Star size={12} className="text-amber-400 fill-amber-400"/> {theme.partnerId.rating?.toFixed(1) || '4.9'}</span>
+                  <span className="flex items-center gap-1"><Star size={12} className="text-amber-400 fill-amber-400"/> {theme.partnerId.reviewCount ? Number(theme.partnerId.rating).toFixed(1) : 'New'}</span>
                   <span className="w-1 h-1 bg-slate-700 rounded-full" />
                   <span>{theme.partnerId.completedEvents || '10+'} Hosted</span>
                 </div>

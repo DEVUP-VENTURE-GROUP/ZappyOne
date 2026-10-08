@@ -139,8 +139,12 @@ function FuelStep({ model, fuels, onPick }) {
 
 /* Shared chrome */
 
-function StepHeader({ steps, step, onBack, title, subtitle }) {
-  const index = steps.indexOf(step);
+function StepHeader({ steps, step, onBack, title, subtitle, skipped = new Set() }) {
+  // Numbered by the screens actually shown: steps a device does not need skip
+  // themselves, and counting them made the number jump (1, 2, 4, 7, 9, 12).
+  const shown = steps.filter((s) => s === step || !skipped.has(s));
+  const index = shown.indexOf(step);
+  const ahead = shown.length - index - 1;
   return (
     <header className="sticky top-0 z-20 bg-white border-b border-slate-100">
       <div className="max-w-lg lg:max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
@@ -149,7 +153,7 @@ function StepHeader({ steps, step, onBack, title, subtitle }) {
         </button>
         <div className="flex-1 min-w-0">
           <p className="text-[11px] font-bold text-zappy-600 uppercase tracking-wide">
-            Step {index + 1} of {steps.length}
+            Step {index + 1}{ahead > 0 ? '' : ' · last step'}
           </p>
           <p className="font-bold text-[#0F172A] truncate">{title}</p>
           {subtitle && <p className="text-xs text-slate-400 truncate">{subtitle}</p>}
@@ -158,7 +162,7 @@ function StepHeader({ steps, step, onBack, title, subtitle }) {
       <div className="h-0.5 bg-slate-100">
         <motion.div
           className="h-full bg-zappy-600"
-          animate={{ width: `${((index + 1) / steps.length) * 100}%` }}
+          animate={{ width: `${((index + 1) / shown.length) * 100}%` }}
           transition={{ duration: 0.25 }}
         />
       </div>
@@ -1796,7 +1800,7 @@ function RepairFlow({ vertical, saved, draftKey, onStartOver }) {
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] pb-10">
-      <StepHeader steps={steps} step={step} onBack={back} title={titles[step]}
+      <StepHeader steps={steps} step={step} skipped={skipped} onBack={back} title={titles[step]}
         subtitle={configuration?.name || deviceLabel || brand?.name} />
       {resumed && <ResumeBanner onStartOver={onStartOver} onDismiss={() => setResumed(false)} />}
 

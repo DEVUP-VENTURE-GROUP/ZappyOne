@@ -30,6 +30,8 @@ function withOpenState(shop) {
   if (!shop) return shop;
 
   const hours = shop.hours || [];
+  // No reviews yet reads as new (null), never a default five stars.
+  if (shop.reviewCount === 0) shop = { ...shop, rating: null };
   if (!hours.length) return { ...shop, openNow: null, todayHours: null };
 
   /*
@@ -258,9 +260,11 @@ async function addWorkerToShop(shopId, { phone, name, skills }) {
 }
 
 async function listShopWorkers(shopId) {
-  return Worker.find({ shopId })
-    .select('name phone skills rating totalJobs completedJobs isOnline isAvailable kyc.status createdAt')
+  const rows = await Worker.find({ shopId })
+    .select('name phone skills rating reviewCount totalJobs completedJobs isOnline isAvailable kyc.status createdAt')
     .lean();
+  // No reviews yet reads as new, never a default five stars.
+  return rows.map((w) => (w.reviewCount ? w : { ...w, rating: null }));
 }
 
 /**

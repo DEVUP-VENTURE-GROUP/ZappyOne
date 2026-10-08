@@ -25,15 +25,24 @@ async function goOnline({ workerId, lng, lat }) {
   }
 
   // Load first to check KYC status — cheap guard before we write anything.
-  const existing = await Worker.findById(workerId).select('kyc.status isBlocked isOnline onlineSince penalties.pausedUntil').lean();
+  const existing = await Worker.findById(workerId).select('kyc.status isBlocked isOnline onlineSince penalties.pausedUntil penalties.lastPenaltyAt').lean();
   if (!existing) throw Object.assign(new Error('Worker not found'), { status: 404, code: 'WORKER_NOT_FOUND' });
   if (existing.isBlocked) {
     throw Object.assign(new Error('Account is blocked'), { status: 403, code: 'WORKER_BLOCKED' });
   }
-  const pausedUntil = existing.penalties?.pausedUntil;
+  // The pause lasts the length set in Economics, counted from the last hand-back
+  // (pauses set under the old whole-day rule are shortened to it too).
+  let pausedUntil = existing.penalties?.pausedUntil;
+  if (pausedUntil && existing.penalties?.lastPenaltyAt) {
+    const { workerPauseMinutes = 120 } = await require('../order/cancellation.service').getConfig();
+    const cap = new Date(new Date(existing.penalties.lastPenaltyAt).getTime() + workerPauseMinutes * 60000);
+    if (cap < new Date(pausedUntil)) pausedUntil = cap;
+  }
   if (pausedUntil && new Date(pausedUntil) > new Date()) {
-    const when = new Date(pausedUntil).toLocaleString('en-IN', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short', timeZone: 'Asia/Kolkata' });
-    throw Object.assign(new Error(`You handed back too many jobs today. You can go online again after ${when}.`), { status: 403, code: 'WORKER_PAUSED', pausedUntil });
+    const at = new Date(pausedUntil);
+    const sameDay = at.toDateString() === new Date().toDateString();
+    const when = at.toLocaleString('en-IN', { hour: 'numeric', minute: '2-digit', ...(sameDay ? {} : { day: 'numeric', month: 'short' }), timeZone: 'Asia/Kolkata' });
+    throw Object.assign(new Error(`You handed back too many jobs today, so you are paused for a short while. You can go online again at ${when}.`), { status: 403, code: 'WORKER_PAUSED', pausedUntil });
   }
   // KYC approval is mandatory in all environments — no dev bypass.
   if (existing.kyc?.status !== 'approved') {

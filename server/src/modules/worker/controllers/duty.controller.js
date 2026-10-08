@@ -8,6 +8,8 @@ async function getMe(req, res, next) {
   try {
     const worker = await Worker.findById(req.auth.sub).lean();
     if (!worker) return res.status(404).json({ error: 'Worker not found' });
+    // No reviews yet reads as new, never a default five stars.
+    if (!worker.reviewCount) worker.rating = null;
     res.json({ worker });
   } catch (err) { next(err); }
 }

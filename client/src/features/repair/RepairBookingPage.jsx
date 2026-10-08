@@ -11,6 +11,7 @@ import { useRepairHandoverCodeQuery } from '@shared/services/api';
 import HandoverCodeCard from '../tracking/cards/HandoverCodeCard';
 import { useRateRepairBookingMutation } from '@shared/services/api';
 import JobTrackingPage from '../tracking/JobTrackingPage';
+import RepairWarrantyCard from './RepairWarrantyCard';
 import { repairRebookHref } from '../bookings/useMyJobs';
 import { KINDS } from '../tracking/kinds';
 import { useJobSOS } from '../tracking/useJobSOS';
@@ -432,6 +433,7 @@ export default function RepairBookingPage() {
             {pendingQuote && <QuoteCard quote={pendingQuote} onDecided={refetch} />}
             <ServiceReport booking={booking} />
             <RateRepair booking={booking} />
+            <RepairWarrantyCard booking={booking} />
             <PaymentNote booking={booking} />
             {quotes.length > 0 && (
               <div className="rounded-card bg-white p-[18px] ring-1 ring-slate-100">

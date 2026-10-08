@@ -64,7 +64,7 @@ export default function WorkerProfileSheet({ workerId, open, onClose }) {
                     </div>
                     <div className="flex items-center gap-1.5 mt-1">
                       <Star size={14} className="fill-amber-400 text-amber-400" />
-                      <span className="font-bold">{Number(w.rating ?? 5).toFixed(1)}</span>
+                      <span className="font-bold">{w.rating != null && w.reviewCount !== 0 ? Number(w.rating).toFixed(1) : 'New'}</span>
                       <span className="text-white/50 text-[13px]">({total} rating{total !== 1 ? 's' : ''})</span>
                     </div>
                   </div>

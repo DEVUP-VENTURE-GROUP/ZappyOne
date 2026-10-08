@@ -35,6 +35,8 @@ const cancellationConfigSchema = new mongoose.Schema(
     customerWaitMinutes:    { type: Number, default: 10, min: 1, max: 60 },  // at the door before "customer not here"
     providerLateMinutes:    { type: Number, default: 30, min: 5, max: 180 }, // past the booked time before "provider not coming"
     workerCancelLimit:      { type: Number, default: 3 },   // cancels in window → auto-block
+    workerPauseMinutes:     { type: Number, default: 120, min: 15, max: 1440 }, // how long that lasts
+    maxActiveJobs:          { type: Number, default: 2, min: 1, max: 10 },      // jobs one worker may hold at once
     workerCancelWindowSec:  { type: Number, default: 86400 }, // 24h window for cancel counting
 
     // Score degradation weights (added to dispatch score — higher = worse rank)

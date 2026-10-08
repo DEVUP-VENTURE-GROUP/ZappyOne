@@ -172,6 +172,10 @@ function actorFrom(req) {
 
 async function transitionBooking(req, res, next) {
   try {
+    // Accepting a job: one person, a few jobs at a time (jobs/workload; cap set in Economics).
+    if (req.body.status === 'WORKER_ACCEPTED' && req.auth.role === 'worker') {
+      await require('../../jobs/workload').assertCanTakeAnother(req.auth.sub);
+    }
     const booking = await bookingService.transition(req.params.id, req.body.status, {
       ...actorFrom(req),
       reason: req.body.reason || '',

@@ -13,6 +13,7 @@ import { useSelector } from 'react-redux';
 import { selectAuth } from '../../modules/auth/authSlice';
 import LiveSelfieCapture from '../../components/kyc/LiveSelfieCapture';
 import toast from 'react-hot-toast';
+import { prepareImage } from '../../utils/prepareImage';
 
 /* Hook: load worker's own doc as blob (no URL expiry) */
 function useMyDoc(docType, token, enabled) {
@@ -162,7 +163,8 @@ export default function WorkerKycPage() {
   }
 
   /* File upload (Aadhaar / License) */
-  async function handleUpload(docKey, file) {
+  async function handleUpload(docKey, picked) {
+    const file = await prepareImage(picked);
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) { toast.error('File too large — max 5MB'); return; }
     try {

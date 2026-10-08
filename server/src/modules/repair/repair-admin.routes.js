@@ -72,6 +72,11 @@ router.get('/repair/dashboard', ctrl.operations.dashboard);
 router.get('/repair/bookings', ctrl.operations.bookings);
 router.get('/repair/quotes', ctrl.operations.quotes);
 router.get('/repair/warranty-claims', ctrl.operations.warrantyClaims);
+router.patch('/repair/warranty-claims/:id', async (req, res, next) => {
+  try {
+    res.json({ claim: await require('./services/warranty.service').decide({ id: req.params.id, status: req.body.status, note: req.body.note, adminId: req.auth.sub }) });
+  } catch (e) { next(e); }
+});
 router.get('/repair/capabilities', ctrl.operations.capabilities);
 
 module.exports = router;

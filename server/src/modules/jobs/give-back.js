@@ -75,6 +75,12 @@ const RULES = {
  * opens. Set in Economics → Cancellations; these are the fallbacks.
  */
 const CUSTOMER_WAIT_MIN = 10;
+
+/** "2 hours", "45 minutes": the pause after too many hand-backs, in words. */
+function pauseLabel(cfg) {
+  const m = cfg.workerPauseMinutes ?? 120;
+  return m >= 60 && m % 60 === 0 ? `${m / 60} hour${m === 60 ? '' : 's'}` : `${m} minutes`;
+}
 const PROVIDER_LATE_MIN = 30;
 async function waits() {
   const cfg = await require('../order/cancellation.service').getConfig();
@@ -157,7 +163,7 @@ async function quote({ kind, doc, provider, reason, type = 'give_back' }) {
   else if (genuine) message = 'No charge for this reason. We will find someone else for the customer.';
   else if (isWarning) message = 'No charge this time. The next job you hand back today costs you money, so only accept what you can do.';
   else message = `Handing this back costs ${rupees(penaltyPaise)}${late ? ' because you had already set off' : ''}. It is taken from your wallet.`;
-  if (pauses) message += ` This is your ${limit}th today, so you will be taken offline until tomorrow.`;
+  if (pauses) message += ` This is your ${limit}th today, so you will be taken offline for ${pauseLabel(cfg)}.`;
 
   return {
     allowed: rule.held.includes(doc.status), late, genuine, counts, isWarning, penaltyPaise, pauses, toShop,
@@ -169,7 +175,8 @@ async function quote({ kind, doc, provider, reason, type = 'give_back' }) {
 /** Charge, count and (at the limit) pause. Best effort: the give-back already happened. */
 async function consequences({ kind, doc, provider, q, type, reason, note, from }) {
   const cfg = await require('../order/cancellation.service').getConfig();
-  const pausedUntil = q.pauses ? new Date(Date.now() + (cfg.workerCancelWindowSec || 86400) * 1000) : null;
+  // A short pause, set in Economics (workerPauseMinutes), not the whole counting period.
+  const pausedUntil = q.pauses ? new Date(Date.now() + (cfg.workerPauseMinutes ?? 120) * 60000) : null;
   const row = await JobGiveBack.create({
     kind, jobId: doc._id, providerKind: provider.kind, providerId: provider.id, type,
     reason, note: String(note || '').slice(0, 300), status: from, late: q.late, genuine: q.genuine,
@@ -206,8 +213,8 @@ async function consequences({ kind, doc, provider, q, type, reason, note, from }
     if (pausedUntil) {
       await require('../worker/geo.service').markOffline(provider.id).catch(() => {});
       require('./job-events').push({ kind: 'worker', id: provider.id }, {
-        title: 'You are offline until tomorrow',
-        body: `You handed back ${q.limit} jobs today. You can go online again after ${pausedUntil.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' })}.`,
+        title: `You are offline for ${pauseLabel(cfg)}`,
+        body: `You handed back ${q.limit} jobs today. You can go online again at ${pausedUntil.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Kolkata' })}.`,
         deepLink: '/worker', data: { kind: 'paused' },
       }).catch(() => {});
     }

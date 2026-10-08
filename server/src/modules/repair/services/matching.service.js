@@ -305,7 +305,7 @@ async function findProviders({
         .select('businessName rating reviewCount completedJobs isActive isBlocked kyc coverImageUrl')
         .lean()
       : await Worker.findById(s.workerId)
-        .select('name rating completedJobs penalties isBlocked kyc isOnline wallet profilePhotoKey')
+        .select('name rating reviewCount completedJobs penalties isBlocked kyc isOnline wallet profilePhotoKey')
         .lean();
 
     if (!profile) { rejected.push({ label, reason: 'profile_missing' }); return; }
@@ -372,7 +372,8 @@ async function findProviders({
       etaMinutes: capability.estimatedDurationMin || price?.estimatedDurationMin || repair.estimatedDurationMin,
       skillLevel: capability.skillLevel || 1,
       qualityRank: quality?.rank ?? 0,
-      rating: profile.rating ?? null,
+      // No reviews yet reads as new (null), never a default five stars; ranking treats it as neutral.
+      rating: profile.reviewCount ? profile.rating : null,
       completedJobs: profile.completedJobs ?? 0,
       penalties: profile.penalties || null,
       stockScore: inv.stockScore,

@@ -16,6 +16,7 @@ import toast from 'react-hot-toast';
 import AvailabilityPicker from './AvailabilityPicker';
 
 import { openCheckout } from '@shared/services/cashfree';
+import { prepareImage } from '@shared/utils/prepareImage';
 
 const STEPS = ['When & Where', 'Location', 'Specifics', 'Review'];
 
@@ -146,7 +147,8 @@ export default function EventBookingPage() {
     if (!files.length) return;
     setUploading(true);
     try {
-      const keys = await Promise.all(files.map(async (file) => {
+      const keys = await Promise.all(files.map(async (picked) => {
+        const file = await prepareImage(picked);
         const { data: signed } = await presignUpload({ contentType: file.type || 'image/jpeg', folder: 'event-photos' });
         await fetch(signed.uploadUrl, { method: 'PUT', body: file, headers: { 'Content-Type': file.type || 'image/jpeg' } });
         return signed.key;

@@ -41,6 +41,8 @@ const DEFAULTS = {
   customerWaitMinutes:        10,  // at the door before "customer not here"
   providerLateMinutes:        30,  // past the booked time before "provider not coming"
   workerCancelLimit:          3,   // penalised cancels in the window before auto-offline
+  workerPauseMinutes:         120, // how long that auto-offline lasts
+  maxActiveJobs:              2,   // jobs one worker may hold at once (jobs/workload)
   workerShareOnWayPct:        50,
   workerShareArrivedPct:      70,
   workerCancelWindowSec:      86400, // 24h = "per day"

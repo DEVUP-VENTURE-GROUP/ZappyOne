@@ -27,7 +27,7 @@ import {
   useRequestRepairCatalogAdditionMutation,
   useRepairServiceAreasQuery, useUpsertRepairServiceAreaMutation,
   useRepairProviderPricingQuery, useBulkRepairProviderPricingMutation,
-  useLazyRepairProviderSuggestedPricingQuery, useRepairProviderSuggestedPricingQuery,
+  useLazyRepairProviderSuggestedPricingQuery, useRepairProviderSuggestedPricingQuery, useSetShopWarrantyMutation,
   useRepairModelsQuery,
 } from '../../services/api';
 import { useUpdateShopMeMutation } from '../../services/api';
@@ -916,6 +916,50 @@ function StandardPricesStep({ vertical, onBack, onNext }) {
   );
 }
 
+/**
+ * The warranty the shop gives, per repair. It rides on every price the shop has
+ * for that repair and is what the customer is shown and can claim against.
+ */
+const WARRANTY_CHOICES = [0, 30, 60, 90, 180, 365];
+function WarrantySettings({ vertical, claimed, rows, onSaved }) {
+  const [setWarranty] = useSetShopWarrantyMutation();
+  const current = (code, fallback) => {
+    const mine = rows.filter((r) => r.repairCode === code).map((r) => r.warrantyDays || 0);
+    return mine.length ? Math.max(...mine) : fallback || 0;
+  };
+  async function change(code, days) {
+    try {
+      const res = await setWarranty({ vertical, repairCode: code, warrantyDays: days }).unwrap();
+      toast.success(res.updated ? `Warranty set to ${days ? `${days} days` : 'none'}` : 'Saved — it applies once you set a price for this job');
+      onSaved?.();
+    } catch (err) {
+      toast.error(err?.data?.error || 'Could not save the warranty');
+    }
+  }
+  return (
+    <div className="mt-3 rounded-2xl border border-slate-200 bg-white p-4">
+      <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Warranty you give</p>
+      <p className="mt-0.5 text-[11px] text-slate-500">Customers see this before they book and can claim within it.</p>
+      <div className="mt-2 divide-y divide-slate-100">
+        {claimed.map((r) => (
+          <label key={r.code} className="flex items-center justify-between gap-3 py-2">
+            <span className="min-w-0 truncate text-[13px] text-slate-700">{r.name}</span>
+            <select
+              className="rounded-lg border border-slate-200 px-2 py-1 text-xs font-semibold"
+              value={current(r.code, r.warrantyDays)}
+              onChange={(e) => change(r.code, Number(e.target.value))}
+            >
+              {[...new Set([...WARRANTY_CHOICES, current(r.code, r.warrantyDays)])].sort((a, b) => a - b).map((d) => (
+                <option key={d} value={d}>{d ? `${d} days` : 'No warranty'}</option>
+              ))}
+            </select>
+          </label>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /* 4. Prices */
 
 /**
@@ -1428,6 +1472,7 @@ function PricingStep({ vertical, onBack, onNext }) {
           )}
         </>
       )}
+      {claimed.length > 0 && <WarrantySettings vertical={vertical} claimed={claimed} rows={pricing?.pricing || []} onSaved={refetch} />}
     </StepShell>
   );
 }

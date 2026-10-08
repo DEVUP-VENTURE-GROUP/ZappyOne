@@ -4,8 +4,11 @@
  * `presign` is the RTK mutation trigger from usePresignUploadMutation. The key
  * is what gets saved on a record; a signed URL for viewing is minted on read.
  */
+import { prepareImage } from '@shared/utils/prepareImage';
+
 export async function uploadFile(presign, file, { folder = 'event-photos', maxMb = 10 } = {}) {
   if (!file) throw new Error('No file chosen');
+  file = await prepareImage(file); // eslint-disable-line no-param-reassign
   if (file.size > maxMb * 1024 * 1024) throw new Error(`That file is over ${maxMb}MB. Pick a smaller one.`);
   const contentType = file.type || 'image/jpeg';
   const signed = await presign({ contentType, folder, filename: file.name }).unwrap();

@@ -2039,6 +2039,15 @@ export const api = createApi({
         url: '/repair/provider/pricing/suggested', params: { vertical, brandCode, modelCode },
       }),
     }),
+    /** A shop's warranty on one repair, applied to all its prices for it. */
+    setShopWarranty: b.mutation({ query: (body) => ({ url: '/repair/provider/pricing/warranty', method: 'PATCH', body }) }),
+    repairWarranty: b.query({ query: (id) => ({ url: `/repair/bookings/${id}/warranty` }), providesTags: (r, e, id) => [{ type: 'RepairBookings', id }] }),
+    claimRepairWarranty: b.mutation({
+      query: ({ id, ...body }) => ({ url: `/repair/bookings/${id}/warranty-claims`, method: 'POST', body }),
+      invalidatesTags: (r, e, { id }) => [{ type: 'RepairBookings', id }],
+    }),
+    adminWarrantyClaims: b.query({ query: () => ({ url: adminApiPath('/repair/warranty-claims'), params: { limit: 100 } }) }),
+    adminDecideWarrantyClaim: b.mutation({ query: ({ id, ...body }) => ({ url: adminApiPath(`/repair/warranty-claims/${id}`), method: 'PATCH', body }) }),
     bulkRepairProviderPricing: b.mutation({
       query: ({ vertical = 'mobile', rows }) => ({
         url: '/repair/provider/pricing/bulk',
@@ -2640,6 +2649,11 @@ export const {
   useLazyRepairProviderSuggestedPricingQuery,
   useRepairProviderSuggestedPricingQuery,
   useAdminCoverageGapsQuery,
+  useSetShopWarrantyMutation,
+  useRepairWarrantyQuery,
+  useClaimRepairWarrantyMutation,
+  useAdminDecideWarrantyClaimMutation,
+  useAdminWarrantyClaimsQuery,
   useRepairHandoverCodeQuery,
   useAttachRepairCompletionPhotosMutation,
   useRateRepairBookingMutation,

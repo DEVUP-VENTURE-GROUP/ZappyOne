@@ -4,6 +4,7 @@ import { Camera, Loader2, UserRound } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { usePresignUploadMutation, useSetAccountPhotoMutation } from '../../services/api';
 import { updateProfile } from '../../modules/auth/authSlice';
+import { prepareImage } from '../../utils/prepareImage';
 
 const FOLDER = { shop: 'shop', event_partner: 'event-photos' };
 const MAX_MB = 8;
@@ -28,10 +29,11 @@ export default function ProfilePhoto({ url, role = 'user', size = 88, label = 'Y
   const busy = uploading || saving;
 
   async function pick(e) {
-    const file = e.target.files?.[0];
+    const picked = e.target.files?.[0];
     e.target.value = '';
-    if (!file) return;
-    if (!file.type.startsWith('image/')) { toast.error('Choose a photo (JPG or PNG).'); return; }
+    if (!picked) return;
+    const file = await prepareImage(picked);
+    if (!file.type.startsWith('image/')) { toast.error('Choose a photo.'); return; }
     if (file.size > MAX_MB * 1024 * 1024) { toast.error(`That photo is over ${MAX_MB}MB. Choose a smaller one.`); return; }
     setPreview(URL.createObjectURL(file));
     setUploading(true);

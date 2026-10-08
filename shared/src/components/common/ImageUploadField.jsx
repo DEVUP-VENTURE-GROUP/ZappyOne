@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { Upload, Loader2, X, ImageIcon } from 'lucide-react';
 import { usePresignUploadMutation } from '../../services/api';
 import toast from 'react-hot-toast';
+import { prepareImage } from '../../utils/prepareImage';
 
 /**
  * Pick an image from the device. Never ask anyone to paste a URL.
@@ -30,7 +31,8 @@ export default function ImageUploadField({
   const [preview, setPreview] = useState(null);
   const [showPaste, setShowPaste] = useState(false);
 
-  async function upload(file) {
+  async function upload(picked) {
+    const file = await prepareImage(picked);
     if (!file) return;
     if (file.size > maxMb * 1024 * 1024) {
       toast.error(`That file is over ${maxMb}MB — pick a smaller one`);

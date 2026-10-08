@@ -27,7 +27,9 @@ function time(at) {
 export default function JobChat({ jobId, title = 'Messages', onClose }) {
   const dispatch = useDispatch();
   const { accessToken, role } = useSelector(selectAuth);
-  const { data, isLoading } = useJobChatQuery(jobId);
+  // Fresh every time it opens (a cached thread hid what arrived while it was
+  // closed), and a light poll in case a live message is missed on a weak network.
+  const { data, isLoading } = useJobChatQuery(jobId, { refetchOnMountOrArgChange: true, pollingInterval: 10000 });
   const [send, { isLoading: sending }] = useSendJobChatMutation();
   const [text, setText] = useState('');
   const listRef = useRef(null);

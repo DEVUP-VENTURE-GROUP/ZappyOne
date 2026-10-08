@@ -179,6 +179,24 @@ router.post('/price-requests', authenticate, requireRole('user'),
     location: locationSchema.required(),
   })),
   wrap((req) => priceRequests.create({ userId: req.auth.sub, body: req.body })));
+/* Warranty: what is left on a finished repair, and a claim within it (services/warranty). */
+const warranty = require('./services/warranty.service');
+router.get('/bookings/:id/warranty', authenticate, requireRole('user'),
+  wrap((req) => warranty.statusFor({ bookingId: req.params.id, userId: req.auth.sub })));
+router.post('/bookings/:id/warranty-claims', authenticate, requireRole('user'),
+  validate(Joi.object({
+    issueDescription: Joi.string().trim().min(10).max(2000).required(),
+    photos: Joi.array().items(Joi.string().max(500)).max(5).default([]),
+  })),
+  wrap(async (req) => ({ claim: await warranty.claim({ bookingId: req.params.id, userId: req.auth.sub, ...req.body }) })));
+router.patch('/provider/pricing/warranty', authenticate, requireRole('shop'),
+  validate(Joi.object({
+    vertical: Joi.string().max(30).required(),
+    repairCode: Joi.string().max(80).required(),
+    warrantyDays: Joi.number().integer().min(0).max(730).required(),
+  })),
+  wrap((req) => warranty.setShopWarranty({ shopId: req.auth.sub, ...req.body })));
+
 router.get('/price-requests/:id', authenticate, requireRole('user'),
   wrap((req) => priceRequests.viewForCustomer({ id: req.params.id, userId: req.auth.sub })));
 router.post('/price-requests/:id/cancel', authenticate, requireRole('user'),

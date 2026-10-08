@@ -132,6 +132,8 @@ const PROVIDER_FIELDS = [
   rupeeField('workerCancelPenaltyPaise', 100000),
   { ...numField('lateWorkerCancelMultiplier', 1, 10), toValue: (v) => (v === '' ? NaN : Number(v)) },
   numField('workerCancelLimit', 1, 20),
+  numField('workerPauseMinutes', 15, 1440),
+  numField('maxActiveJobs', 1, 10),
   numField('workerCancelWindowSec', 1, 168, 3600),
   rupeeField('workerNoShowPenaltyPaise', 100000),
   numField('workerRejectLimit', 1, 50),
@@ -160,8 +162,14 @@ function ProviderRules() {
       <Setting title="Once on the way, multiply by" hint="Handing back after setting off wastes more of the customer's time.">
         <UnitInput value={f.form.lateWorkerCancelMultiplier} onChange={f.set('lateWorkerCancelMultiplier')} unit="×" min={1} max={10} step={0.5} label="Late multiplier" />
       </Setting>
-      <Setting title="Hand-backs before going offline" hint="Reaching this many in the period takes a worker offline until it ends.">
+      <Setting title="Hand-backs before going offline" hint="Reaching this many in the period takes a worker offline for the time below.">
         <UnitInput value={f.form.workerCancelLimit} onChange={f.set('workerCancelLimit')} unit="jobs" min={1} max={20} label="Daily limit" />
+      </Setting>
+      <Setting title="Offline for" hint="How long a worker who reached that limit stays offline. Short is enough to make the point.">
+        <UnitInput value={f.form.workerPauseMinutes} onChange={f.set('workerPauseMinutes')} unit="min" min={15} max={1440} label="Pause length" />
+      </Setting>
+      <Setting title="Jobs one worker can hold at once" hint="Accepted and not yet finished. Stops one person taking more than they can reach.">
+        <UnitInput value={f.form.maxActiveJobs} onChange={f.set('maxActiveJobs')} unit="jobs" min={1} max={10} label="Jobs at once" />
       </Setting>
       <Setting title="Counted over" hint="The period hand-backs are counted in.">
         <UnitInput value={f.form.workerCancelWindowSec} onChange={f.set('workerCancelWindowSec')} unit="hours" min={1} max={168} label="Counting period" />

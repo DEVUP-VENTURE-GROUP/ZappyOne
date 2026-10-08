@@ -255,7 +255,8 @@ async function findProviders({
 
     if (!provider) { reject('profile_missing'); continue; }
 
-    const rating = provider.rating || 0;
+    // No reviews yet: neutral for ranking, shown as new (never a default five stars).
+    const rating = provider.reviewCount ? provider.rating || 0 : 4;
     const acceptance = provider.acceptanceRate ?? 100;
     const completed = provider.completedJobs || 0;
 
@@ -274,7 +275,7 @@ async function findProviders({
       shopId: cap.shopId,
       name: provider.businessName || provider.name,
       providerType: cap.providerType,
-      rating,
+      rating: provider.reviewCount ? provider.rating : null,
       reviewCount: provider.reviewCount || 0,
       completedJobs: completed,
       experienceYears: cap.experienceYears || 0,

@@ -57,7 +57,8 @@ async function list({ jobId, actor, before, limit = 50 }) {
   const rows = await ChatMessage.find(filter).sort({ createdAt: -1 }).limit(Math.min(limit, 100)).lean();
   // Whatever the other side sent is now read.
   await ChatMessage.updateMany(
-    { jobId, readAt: { $exists: false }, $nor: [{ 'from.kind': actor.kind, 'from.id': actor.id }] },
+    // Ids compared as ObjectIds: as strings this never matched, so people's own messages were marked read.
+    { jobId, readAt: { $exists: false }, $nor: [{ 'from.kind': actor.kind, 'from.id': new (require('mongoose').Types.ObjectId)(String(actor.id)) }] },
     { $set: { readAt: new Date() } },
   );
   return {

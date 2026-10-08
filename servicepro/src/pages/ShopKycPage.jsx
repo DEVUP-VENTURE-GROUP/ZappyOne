@@ -7,6 +7,7 @@ import {
 import { useShopKycStatusQuery, useSubmitShopKycMutation, usePresignUploadMutation } from '@shared/services/api';
 import toast from 'react-hot-toast';
 import LiveSelfieCapture from '@shared/components/kyc/LiveSelfieCapture';
+import { prepareImage } from '@shared/utils/prepareImage';
 
 const DOCS = [
   { key: 'ownerIdUrl', label: "Owner's ID Proof", sublabel: 'Aadhaar / PAN / Voter ID — clear photo', Icon: IdCard, required: true },
@@ -52,7 +53,8 @@ export default function ShopKycPage() {
   const asked = clar?.docCodes?.length ? new Set(clar.docCodes) : null;
   const opens = (key) => !asked || asked.has(key);
 
-  async function handleUpload(docKey, file, meta = null) {
+  async function handleUpload(docKey, picked, meta = null) {
+    const file = await prepareImage(picked);
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) return toast.error('File too large — max 5MB');
     try {

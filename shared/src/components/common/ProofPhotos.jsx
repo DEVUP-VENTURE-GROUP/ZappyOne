@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Camera, X, CheckCircle, Loader2 } from 'lucide-react';
 import { usePresignUploadMutation } from '../../services/api';
 import toast from 'react-hot-toast';
+import { prepareImage } from '../../utils/prepareImage';
 
 /**
  * Photographs of the finished work, taken before a job can be closed.
@@ -35,9 +36,10 @@ export default function ProofPhotos({
   const ready = readyKeys(photos).length;
 
   const capture = useCallback(async (e) => {
-    const file = e.target.files?.[0];
+    const picked = e.target.files?.[0];
     e.target.value = '';
-    if (!file) return;
+    if (!picked) return;
+    const file = await prepareImage(picked);
 
     const id = Date.now();
     const preview = URL.createObjectURL(file);

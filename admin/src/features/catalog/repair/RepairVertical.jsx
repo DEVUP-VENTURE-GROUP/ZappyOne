@@ -19,6 +19,7 @@ import {
 import { SectionHeader, Card, StatCard, Th, Td, EmptyState, PageLoader, StatusBadge, fmt, fmtDate } from '../../../ui/kit';
 import CatalogTable from './CatalogTable';
 import toast from 'react-hot-toast';
+import WarrantyClaims from './WarrantyClaims';
 
 /**
  * Repair admin console — one screen serving every repair vertical.
@@ -323,6 +324,8 @@ function Overview({ vertical }) {
           </Card>
         ))}
       </div>
+
+      <WarrantyClaims />
 
       <Card className="p-4">
         <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wide mb-3">Bookings by status</p>

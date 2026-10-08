@@ -6,6 +6,7 @@ import { useShopMeQuery, useUpdateShopMeMutation, usePresignUploadMutation } fro
 import LocationPicker from '@shared/modules/booking/LocationPicker';
 import toast from 'react-hot-toast';
 import WeeklyHours, { incompleteDay } from '@shared/components/provider/WeeklyHours';
+import { prepareImage } from '@shared/utils/prepareImage';
 
 /*
  * The old hardcoded service menu lived here — thirty tick-boxes a shop could
@@ -67,7 +68,8 @@ export default function ShopProfilePage() {
     setPickingAddress(false);
   }
 
-  async function handleCoverUpload(file) {
+  async function handleCoverUpload(picked) {
+    const file = await prepareImage(picked);
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) return toast.error('Image too large — max 5MB');
     try {

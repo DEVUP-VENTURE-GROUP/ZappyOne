@@ -15,6 +15,9 @@ const CONTENT_TYPE_EXTS = {
   'image/png':        ['.png'],
   'image/webp':       ['.webp'],
   'image/heic':       ['.heic'],
+  'image/heif':       ['.heif', '.heic'],
+  'image/gif':        ['.gif'],
+  'image/avif':       ['.avif'],
   'application/pdf':  ['.pdf'],
   // Audio — voice tip notes recorded in-browser
   'audio/webm':       ['.webm'],
