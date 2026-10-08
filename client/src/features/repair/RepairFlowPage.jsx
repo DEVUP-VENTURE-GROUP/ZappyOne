@@ -19,6 +19,8 @@ import {
 } from '@shared/services/api';
 import { selectLocation, selectHasLocation, setLocation } from '@shared/store/locationSlice';
 import LocationPicker from '@shared/modules/booking/LocationPicker';
+import { doorAddress } from '@shared/utils/doorAddress';
+import ArrivalBadge from '@shared/components/common/ArrivalBadge';
 import toast from 'react-hot-toast';
 import GrowingHere from '../catalog/serviceability/GrowingHere';
 import { PayMethodPicker } from '@shared/components/common/PayMethodPicker';
@@ -911,7 +913,7 @@ function ProviderStep({
       const res = await askPrices({
         vertical, brandCode: brand?.code, modelCode: model?.code, configurationCode: configuration?.code || null,
         problemCodes: problem?.code ? [problem.code] : [], repairCode, serviceMode,
-        location: { coordinates: [location.lng, location.lat], address: location.address || '' },
+        location: { coordinates: [location.lng, location.lat], address: doorAddress(location) },
       }).unwrap();
       navigate(`/repair/price-requests/${res.request._id}`);
     } catch (err) {
@@ -924,8 +926,8 @@ function ProviderStep({
   );
   const standardPaise = standard?.reference && standard?.estimate?.totalPaise > 0 ? standard.estimate.totalPaise : null;
 
-  function confirmPin({ address, lat, lng }) {
-    dispatch(setLocation({ lat, lng, address }));
+  function confirmPin({ address, lat, lng, notes }) {
+    dispatch(setLocation({ lat, lng, address, notes }));
     onPinConfirmed?.();
     setPicking(false);
   }
@@ -1012,7 +1014,8 @@ function ProviderStep({
     const all = recommended
       ? [recommended, ...providers.filter((p) => !samePlace(p, recommended))]
       : [...providers];
-    if (sortBy === 'fast') return [...all].sort((a, b) => (a.etaMinutes ?? 1e9) - (b.etaMinutes ?? 1e9));
+    // Fastest = soonest at the door (jobs/arrival); a workshop visit has none, so the job length decides.
+    if (sortBy === 'fast') return [...all].sort((a, b) => (a.arrivalMinutes ?? a.etaMinutes ?? 1e9) - (b.arrivalMinutes ?? b.etaMinutes ?? 1e9));
     if (sortBy === 'cheap') return [...all].sort((a, b) => priceOf(a) - priceOf(b));
     return all; // 'best' — server order
   })();
@@ -1271,15 +1274,19 @@ function ProviderCard({ p, recommended, onPick }) {
               Finishing another job — can reach you about {p.availableInMinutes >= 60 ? `${Math.round(p.availableInMinutes / 60)} hour` : `${p.availableInMinutes} min`} later
             </p>
           )}
+          {/* How soon at the door, from where they are now (jobs/arrival). */}
+          {p.arrivalMinutes != null && (
+            <ArrivalBadge minutes={p.arrivalMinutes} withinPromise={p.arrivalWithinPromise} busy={p.busy} className="mt-1.5" />
+          )}
           <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-0.5">
             {p.rating != null && (
               <span className="flex items-center gap-1 text-[11px] font-bold text-slate-600">
                 <Star size={11} className="fill-amber-400 text-amber-400" /> {Number(p.rating).toFixed(1)}
               </span>
             )}
-            {p.etaMinutes && (
+            {(p.durationMinutes || p.etaMinutes) && (
               <span className="flex items-center gap-1 text-[11px] text-slate-500">
-                <Clock size={11} /> ~{p.etaMinutes} min
+                <Clock size={11} /> Repair takes ~{p.durationMinutes || p.etaMinutes} min
               </span>
             )}
             {p.distanceKm != null && (
@@ -1499,7 +1506,9 @@ function ConfirmStep({
         zappyRecommended: !!provider?.zappyRecommended,
         location: {
           coordinates: [location.lng, location.lat],
-          address: location.address || 'Current location',
+          // Door details in front of the street (utils/doorAddress), and kept as the landmark.
+          address: doorAddress(location) || 'Current location',
+          landmark: (location.notes || '').slice(0, 150),
         },
         paymentMethod: onlineEnabled ? paymentMethod : 'cash',
         idempotencyKey,

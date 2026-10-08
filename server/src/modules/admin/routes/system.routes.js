@@ -199,6 +199,25 @@ router.post(
 );
 
 router.get('/liveops', opCtrl.getLiveOps);
+// Arrival promises kept (jobs/promise): on-time overall, by hour, area and provider.
+router.get('/liveops/arrivals', async (req, res, next) => {
+  try { res.json(await require('../../jobs/promise').report({ days: Math.min(90, Number(req.query.days) || 7) })); } catch (err) { next(err); }
+});
+// Who is online and how sure we are where they are (worker.service LOCATION_MAX_M).
+router.get('/liveops/locations', async (req, res, next) => {
+  try {
+    const Worker = require('../../worker/worker.model');
+    const rows = await Worker.find({ isOnline: true }).select('name phone currentLocation shopId').limit(500).lean();
+    const live = await require('../../worker/presence').liveIds(rows.map((r) => r._id));
+    res.json({
+      workers: rows.map((w) => ({
+        id: w._id, name: w.name, phone: w.phone, shop: !!w.shopId, live: live.has(String(w._id)),
+        lat: w.currentLocation?.coordinates?.[1] ?? null, lng: w.currentLocation?.coordinates?.[0] ?? null,
+        accuracyM: w.currentLocation?.accuracyM ?? null, updatedAt: w.currentLocation?.updatedAt || null,
+      })),
+    });
+  } catch (err) { next(err); }
+});
 
 // Live jobs past their kind's time limit, every kind (rules in jobs/kinds.js).
 router.get('/stuck-jobs', async (req, res, next) => {

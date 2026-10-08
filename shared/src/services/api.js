@@ -135,6 +135,8 @@ export const api = createApi({
     /** Customer: unpaid cancellation fees the next booking will carry. */
     myPendingCancelFee: b.query({ query: () => '/jobs/pending-fee', keepUnusedDataFor: 0 }),
     jobOptions: b.query({ query: ({ id }) => `/jobs/${id}/options`, keepUnusedDataFor: 0 }),
+    /** How soon someone can be at this spot for a service, before booking (jobs/arrival). */
+    jobArrival: b.query({ query: ({ line, lat, lng }) => ({ url: '/jobs/arrival', params: { line, lat, lng } }), keepUnusedDataFor: 30 }),
     /** Move a booking made for later (jobs/reschedule): repairs, pet care, helping. */
     rescheduleJob: b.mutation({ query: ({ id, scheduledAt }) => ({ url: `/jobs/${id}/reschedule`, method: 'POST', body: { scheduledAt } }), invalidatesTags: ['RepairBookings', 'PetBookings', 'HelpingTasks'] }),
     /** Customer: boost while searching, tip once done (jobs/boost-tip). */
@@ -1614,6 +1616,9 @@ export const api = createApi({
     adminCoverageGaps: b.query({ query: () => ({ url: adminApiPath('/onboarding/gaps') }), providesTags: ['Onboarding'] }),
     /** Admin → Live errors (telemetry/errors): pulse, live feed, issues, plan, message. */
     adminErrorPulse: b.query({ query: () => adminApiPath('/errors/pulse'), keepUnusedDataFor: 0 }),
+    /** Live operations → Arrivals: promises kept (jobs/promise) and how sure we are where workers are. */
+    adminArrivalReport: b.query({ query: (days = 7) => ({ url: adminApiPath('/liveops/arrivals'), params: { days } }), keepUnusedDataFor: 0 }),
+    adminWorkerLocations: b.query({ query: () => adminApiPath('/liveops/locations'), keepUnusedDataFor: 0 }),
     adminErrorLive: b.query({ query: (params = {}) => ({ url: adminApiPath('/errors/live'), params }), keepUnusedDataFor: 0 }),
     adminErrorIssues: b.query({ query: (params = {}) => ({ url: adminApiPath('/errors/issues'), params }), providesTags: ['ErrorIssues'], keepUnusedDataFor: 0 }),
     adminErrorIssue: b.query({ query: (id) => adminApiPath(`/errors/issues/${id}`), providesTags: ['ErrorIssues'], keepUnusedDataFor: 0 }),
@@ -2463,7 +2468,9 @@ export const {
   useProviderMyDocumentsQuery,
   useAdminErrorPulseQuery, useAdminErrorLiveQuery, useAdminErrorIssuesQuery, useAdminErrorIssueQuery,
   useAdminPlanErrorIssueMutation, useAdminMessageErrorIssueMutation,
+  useAdminArrivalReportQuery, useAdminWorkerLocationsQuery,
   useRescheduleJobMutation,
+  useJobArrivalQuery,
   useMyPendingCancelFeeQuery,
   useLensStatusQuery,
   useReportProviderAbsentMutation,

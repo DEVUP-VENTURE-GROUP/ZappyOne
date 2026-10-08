@@ -18,6 +18,8 @@ import { PayMethodPicker } from '@shared/components/common/PayMethodPicker';
 import SomeoneElse from '@shared/components/booking/SomeoneElse';
 import PendingFeeNotice from '@shared/components/booking/PendingFeeNotice';
 import { usePayBooking } from '@shared/hooks/usePayBooking';
+import { doorAddress } from '@shared/utils/doorAddress';
+import ArrivalBadge from '@shared/components/common/ArrivalBadge';
 
 /**
  * One adaptive booking flow for all seven categories (§3, §54).
@@ -180,7 +182,7 @@ function PetBookingFlow({ categoryCode, saved, draftKey, onStartOver }) {
         pets: petEntries(),
         checkInAt: checkInAt || null,
         checkOutAt: checkOutAt || null,
-        serviceLocation: loc ? { type: 'Point', coordinates: [loc.lng, loc.lat], address: loc.address } : null,
+        serviceLocation: loc ? { type: 'Point', coordinates: [loc.lng, loc.lat], address: doorAddress(loc) } : null,
       }).unwrap();
     } catch (err) {
       toast.error(err?.data?.error || 'Could not price this');
@@ -194,7 +196,7 @@ function PetBookingFlow({ categoryCode, saved, draftKey, onStartOver }) {
         variantCode: variantByPet[selectedPetIds[0]],
         serviceMode: primaryVariant?.allowedModes?.[0] || 'doorstep',
         pets: petEntries(),
-        serviceLocation: loc ? { type: 'Point', coordinates: [loc.lng, loc.lat], address: loc.address } : null,
+        serviceLocation: loc ? { type: 'Point', coordinates: [loc.lng, loc.lat], address: doorAddress(loc) } : null,
         checkInAt: checkInAt || null,
         checkOutAt: checkOutAt || null,
       }).unwrap();
@@ -216,7 +218,7 @@ function PetBookingFlow({ categoryCode, saved, draftKey, onStartOver }) {
         scheduledAt: scheduledAt || null,
         checkInAt: checkInAt || null,
         checkOutAt: checkOutAt || null,
-        serviceLocation: { type: 'Point', coordinates: [loc.lng, loc.lat], address: loc.address },
+        serviceLocation: { type: 'Point', coordinates: [loc.lng, loc.lat], address: doorAddress(loc) },
         destination: destLoc ? { type: 'Point', coordinates: [destLoc.lng, destLoc.lat], address: destLoc.address } : undefined,
         workerId: provider?.workerId || undefined,
         shopId: provider?.shopId || undefined,
@@ -415,10 +417,12 @@ function PetBookingFlow({ categoryCode, saved, draftKey, onStartOver }) {
               <span className="flex-1 min-w-0">
                 <span className="block font-bold text-[#0F172A]">{p.name}</span>
                 <span className="flex items-center gap-2 text-xs text-slate-500 mt-0.5">
-                  <Star size={11} className="fill-amber-400 text-amber-400" /> {p.rating?.toFixed(1) || '—'}
+                  <Star size={11} className="fill-amber-400 text-amber-400" /> {p.rating != null ? p.rating.toFixed(1) : 'New'}
                   {p.distanceKm != null && <span>· {p.distanceKm} km</span>}
                   {p.completedJobs > 0 && <span>· {p.completedJobs} jobs</span>}
                 </span>
+                {/* A visit: how soon they can be at the door (jobs/arrival). */}
+                {p.arrivalMinutes != null && <ArrivalBadge minutes={p.arrivalMinutes} withinPromise={p.arrivalWithinPromise} className="mt-1.5" />}
               </span>
             </button>
           ))}

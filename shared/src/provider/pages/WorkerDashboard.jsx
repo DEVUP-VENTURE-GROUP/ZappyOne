@@ -167,11 +167,11 @@ export default function WorkerDashboard() {
         toast.success('You are offline. No new work will ring.');
       } else {
         const pos = await getCurrent();
-        // Worse than 500 m is an IP guess (laptops): say so before customers rely on it.
-        if (pos.accuracy && pos.accuracy > 500) {
-          toast('Your location is approximate. Use your phone so customers see where you really are.', { duration: 6000 });
+        // The server refuses worse than 500 m (a laptop's IP guess); 100–500 m works, with a tip.
+        if (pos.accuracy > 100 && pos.accuracy <= 500) {
+          toast('Your location is a little rough. Step near a window or outdoors for a sharper fix.', { duration: 5000 });
         }
-        await goOnline({ lat: pos.lat, lng: pos.lng }).unwrap();
+        await goOnline({ lat: pos.lat, lng: pos.lng, accuracy: pos.accuracy ?? null }).unwrap();
         toast.success('You are online. New work near you will ring.');
         reverseGeocode(pos.lat, pos.lng)
           .then(({ primary, secondary }) => setAreaName(secondary ? `${primary}, ${secondary.split(',')[0]}` : primary))

@@ -13,7 +13,14 @@ const { activeTrip } = require('./active-trip');
 const GPS_MAX_SPEED_KMH = 150;
 
 
-async function goOnline({ workerId, lng, lat }) {
+/**
+ * Worse than this and the position is a guess (a laptop's IP location, a
+ * phone indoors without GPS): jobs would ring for the wrong area and customers
+ * would watch the wrong dot. Going online needs a real fix.
+ */
+const LOCATION_MAX_M = 500;
+
+async function goOnline({ workerId, lng, lat, accuracy = null }) {
   // Reject foreign / impossible coordinates (VPN, IP-geolocation, spoofing).
   // Server is authoritative — a worker physically in India must report India.
   const { isInIndia } = require('../../core/geo/validate');
@@ -21,6 +28,13 @@ async function goOnline({ workerId, lng, lat }) {
     throw Object.assign(
       new Error('Could not verify your location is within the service area. Turn off any VPN and enable precise GPS.'),
       { status: 422, code: 'LOCATION_OUT_OF_AREA' },
+    );
+  }
+
+  if (typeof accuracy === 'number' && accuracy > LOCATION_MAX_M) {
+    throw Object.assign(
+      new Error(`Your location is only accurate to about ${Math.round(accuracy / 100) / 10} km. Go online from your phone with location (GPS) on, near a window or outdoors.`),
+      { status: 422, code: 'LOCATION_TOO_ROUGH', accuracy: Math.round(accuracy), maxAccuracy: LOCATION_MAX_M },
     );
   }
 
@@ -63,6 +77,7 @@ async function goOnline({ workerId, lng, lat }) {
         isAvailable: true,
         'currentLocation.coordinates': [lng, lat],
         'currentLocation.updatedAt': new Date(),
+        'currentLocation.accuracyM': typeof accuracy === 'number' ? Math.round(accuracy) : null,
         lastSeenAt: new Date(),
         // Stamp the session start only on the offline→online transition. A
         // redundant goOnline mid-session (reconnect, second device) keeps the
@@ -327,4 +342,4 @@ async function getEarnings({ workerId, range = 'today' }) {
   };
 }
 
-module.exports = { goOnline, goOffline, updateLocation, getEarnings };
+module.exports = { goOnline, goOffline, updateLocation, getEarnings, LOCATION_MAX_M };

@@ -33,7 +33,8 @@ router.get('/me/shop', authenticate, requireRole('worker'), async (req, res, nex
   try { res.json(await require('../shop/shop.service').shopWorkerSummary(req.auth.sub)); } catch (err) { next(err); }
 });
 router.post('/online', authenticate, requireRole('worker'), workerOnlineLimiter,
-  validate(Joi.object({ lat: Joi.number().required(), lng: Joi.number().required() })), ctrl.goOnline);
+  // accuracy: metres, from the phone's GPS. Worse than LOCATION_MAX_M is refused (worker.service).
+  validate(Joi.object({ lat: Joi.number().required(), lng: Joi.number().required(), accuracy: Joi.number().min(0).max(1e6).allow(null) })), ctrl.goOnline);
 router.post('/offline', authenticate, requireRole('worker'), ctrl.goOffline);
 // Every minute while on duty, moving or not (worker/presence). Answers whether the server still has them online.
 router.post('/heartbeat', authenticate, requireRole('worker'),

@@ -77,6 +77,8 @@ async function announce(kind, doc, status) {
   if (doc.workerId && require('./give-back').RULES[kind]?.accepted.includes(status)) require('./offer-streak').took(doc.workerId);
 
   toRoom(id, 'job.status', payload);
+  // The arrival promise: set on accept, kept on arrival, closed on hand-back or end (jobs/promise).
+  require('./promise').onStatus(kind, doc, status).catch(() => {});
   // Personal channels too, so lists and home cards update without the job open.
   toProvider('user', doc.userId, 'job.update', payload);
   if (provider) toProvider(provider.kind, provider.id, 'job.update', payload);

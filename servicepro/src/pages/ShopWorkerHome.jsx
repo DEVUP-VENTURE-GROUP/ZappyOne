@@ -50,7 +50,8 @@ export default function ShopWorkerHome() {
         toast.success('You are off duty');
       } else {
         const pos = await getCurrent();
-        await goOnline({ lat: pos.lat, lng: pos.lng }).unwrap();
+        // The server refuses a location worse than 500 m (worker.service LOCATION_MAX_M).
+        await goOnline({ lat: pos.lat, lng: pos.lng, accuracy: pos.accuracy ?? null }).unwrap();
         toast.success('You are on duty');
       }
       refetchMe();

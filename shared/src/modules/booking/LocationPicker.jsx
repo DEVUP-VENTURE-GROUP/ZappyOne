@@ -800,7 +800,7 @@ export default function LocationPicker({ onConfirm, onCancel, serviceLabel, serv
     // Publish the CONFIRMED pin, not just the GPS fix. Every other screen reads
     // the store, and what the customer dragged the pin to beats what the phone
     // guessed — otherwise a corrected address is thrown away on navigation.
-    dispatch(setReduxLocation({ lat: coords.lat, lng: coords.lng, address }));
+    dispatch(setReduxLocation({ lat: coords.lat, lng: coords.lng, address, notes }));
     onConfirm({ address, lat: coords.lat, lng: coords.lng, notes });
   }
 

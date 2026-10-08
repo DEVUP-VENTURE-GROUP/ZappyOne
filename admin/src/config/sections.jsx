@@ -76,6 +76,7 @@ const P = {
   ShieldFund: page(() => import('../features/money/ShieldFund')),
   Economics: page(() => import('../features/money/Economics')),
   LiveBoard: page(() => import('../features/operations/live/LiveBoard')),
+  Arrivals: page(() => import('../features/operations/live/Arrivals')),
   StuckJobs: page(() => import('../features/operations/live/StuckJobs')),
   Zones: page(() => import('../features/operations/areas/Zones')),
   LaunchDemand: page(() => import('../features/operations/areas/LaunchDemand')),
@@ -119,6 +120,7 @@ const HUBS = {
   liveops: hub('Live operations', 'Jobs in progress right now, and the ones that need a hand', [
     { id: 'board', label: 'Live board', icon: Radio, Comp: P.LiveBoard },
     { id: 'stuck', label: 'Stuck jobs', icon: Zap, Comp: P.StuckJobs },
+    { id: 'arrivals', label: 'Arrivals', icon: Activity, Comp: P.Arrivals },
   ]),
   areas: hub('Service areas', 'Where ZappyOne serves, and where customers are asking for it', [
     { id: 'zones', label: 'Zones', icon: MapIcon, Comp: P.Zones },

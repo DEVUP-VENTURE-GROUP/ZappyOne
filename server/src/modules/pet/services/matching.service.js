@@ -287,6 +287,18 @@ async function findProviders({
   }
 
   const ranked = results.sort((a, b) => b.score - a.score).slice(0, limit);
+  // A visit to the customer: how soon each can be at the door (jobs/arrival).
+  const at = serviceLocation?.coordinates;
+  if (ranked.length && !isStay && serviceMode !== 'provider_location' && at?.length === 2) {
+    const est = await require('../../jobs/arrival').forProviders(
+      ranked.map((r) => ({ kind: r.shopId ? 'shop' : 'worker', id: String(r.shopId || r.workerId) })),
+      { lat: at[1], lng: at[0] },
+    ).catch(() => new Map());
+    for (const r of ranked) {
+      const e = est.get(`${r.shopId ? 'shop' : 'worker'}:${r.shopId || r.workerId}`);
+      if (e) Object.assign(r, { arrivalMinutes: e.minutes, arrivalWithinPromise: e.withinPromise });
+    }
+  }
   if (ranked.length) {
     return { providers: ranked, nearbyCount: capabilities.length, primaryReason: null };
   }

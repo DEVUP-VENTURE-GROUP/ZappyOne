@@ -117,6 +117,8 @@ const workerSchema = new mongoose.Schema(
       type: { type: String, enum: ['Point'], default: 'Point' },
       coordinates: { type: [Number], default: [0, 0] }, // [lng, lat]
       updatedAt: { type: Date, default: Date.now },
+      /** Metres, as the phone reported it when they went online. Null: an older app that did not say. */
+      accuracyM: { type: Number, default: null },
     },
     currentOrderId: { type: mongoose.Schema.Types.ObjectId, ref: 'Order', default: null },
 

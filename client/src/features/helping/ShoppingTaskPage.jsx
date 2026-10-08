@@ -15,6 +15,8 @@ import { PayMethodPicker } from '@shared/components/common/PayMethodPicker';
 import SomeoneElse from '@shared/components/booking/SomeoneElse';
 import PendingFeeNotice from '@shared/components/booking/PendingFeeNotice';
 import { usePayBooking } from '@shared/hooks/usePayBooking';
+import { doorAddress } from '@shared/utils/doorAddress';
+import NearestArrival from '@shared/components/common/NearestArrival';
 
 /**
  * "Shop for Me" / "Pick Up for Me" — §4 to §11.
@@ -82,9 +84,9 @@ export default function ShoppingTaskPage() {
     try {
       await getQuote({
         serviceType: mode === 'shop' ? 'shopping' : 'pickup',
-        pickupLocation: { type: 'Point', coordinates: [pickupLoc.lng, pickupLoc.lat], address: pickupLoc.address },
+        pickupLocation: { type: 'Point', coordinates: [pickupLoc.lng, pickupLoc.lat], address: doorAddress(pickupLoc) },
         destination: destLoc
-          ? { type: 'Point', coordinates: [destLoc.lng, destLoc.lat], address: destLoc.address } : null,
+          ? { type: 'Point', coordinates: [destLoc.lng, destLoc.lat], address: doorAddress(destLoc) } : null,
         items: mode === 'shop' ? items.filter((i) => i.name).map((i) => ({
           ...i, maxApprovedPricePaise: Math.round((Number(i.maxApprovedPricePaise) || 0) * 100),
         })) : [],
@@ -107,9 +109,9 @@ export default function ShoppingTaskPage() {
         serviceType: mode === 'shop' ? 'shopping' : 'pickup',
         title: mode === 'shop' ? 'Shopping task' : 'Pickup task',
         instructions,
-        pickupLocation: { type: 'Point', coordinates: [pickupLoc.lng, pickupLoc.lat], address: pickupLoc.address },
+        pickupLocation: { type: 'Point', coordinates: [pickupLoc.lng, pickupLoc.lat], address: doorAddress(pickupLoc) },
         destination: destLoc
-          ? { type: 'Point', coordinates: [destLoc.lng, destLoc.lat], address: destLoc.address } : undefined,
+          ? { type: 'Point', coordinates: [destLoc.lng, destLoc.lat], address: doorAddress(destLoc) } : undefined,
         items: mode === 'shop'
           ? items.filter((i) => i.name.trim()).map((i) => ({
             ...i, maxApprovedPricePaise: Math.round((Number(i.maxApprovedPricePaise) || 0) * 100),
@@ -276,6 +278,7 @@ export default function ShoppingTaskPage() {
               <span className="block font-bold text-[#0F172A] truncate">{pickupLoc?.address || 'Choose a location'}</span>
             </span>
           </button>
+          <NearestArrival line={mode === 'shop' ? 'shopping' : 'pickup'} loc={pickupLoc} noun="helper" />
           <button
             type="button"
             onClick={() => setPickerFor('dest')}

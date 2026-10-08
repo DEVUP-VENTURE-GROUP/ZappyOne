@@ -69,7 +69,9 @@ test('email only to a verified address, once per event and job', async () => {
 });
 
 test('quiet hours: non-urgent stays in-app, urgent still pushes', async () => {
-  await settings.update({ quietFromHour: 0, quietToHour: 23 }); // nearly all day
+  // A window around the current IST hour, so this holds whatever time the suite runs.
+  const h = Number(new Date().toLocaleString('en-IN', { hour: 'numeric', hour12: false, timeZone: 'Asia/Kolkata' })) % 24;
+  await settings.update({ quietFromHour: (h + 23) % 24, quietToHour: (h + 2) % 24 });
   const u = await customer();
   await send('booking.rate_reminder', { to: { kind: 'user', id: u._id }, ctx: CATALOG['booking.rate_reminder'].sample(), refId: 'r:1' });
   await send('booking.arrived', { to: { kind: 'user', id: u._id }, ctx: CATALOG['booking.arrived'].sample(), refId: 'r:1' });

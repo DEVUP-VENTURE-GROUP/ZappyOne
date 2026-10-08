@@ -47,6 +47,8 @@ const locationSlice = createSlice({
       // An update that carries no address must not erase the one we have —
       // a GPS refresh behind a confirmed pin would otherwise blank the label.
       if (payload.address != null) state.address = payload.address;
+      // Door details (flat, gate, landmark) belong to a confirmed pin; a new pin replaces them.
+      if (payload.address != null) state.notes = payload.notes || '';
       state.resolvedAt = Date.now();
 
       saveGeoLocation({

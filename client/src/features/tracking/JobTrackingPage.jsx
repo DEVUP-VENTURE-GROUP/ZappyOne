@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import {
-  CheckCircle, HeadphonesIcon, Loader2, ShieldAlert, ShieldCheck, X, Navigation, Repeat2,
+  CheckCircle, HeadphonesIcon, Loader2, ShieldAlert, ShieldCheck, X, Navigation, Repeat2, Clock,
 } from 'lucide-react';
 import LiveTrackingMap from '@shared/modules/tracking/LiveTrackingMap';
 import { useTrackingFeed } from '@shared/hooks/useLiveTrip';
@@ -183,6 +183,18 @@ export default function JobTrackingPage({ job, extras = null, startCode = null, 
                 onChat={job.kind !== 'order' ? () => setChatOpen(true) : undefined}
                 onLive={showMap ? () => mapRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }) : undefined}
               />
+            </div>
+          )}
+
+          {/* The arrival promise (jobs/promise): due by when, said plainly when it slips. */}
+          {options?.arrival && !options.arrival.arrivedAt && job.provider && !job.terminal && (
+            <div className={`flex items-center gap-3 rounded-2xl px-4 py-3 ring-1 lg:[column-span:all] ${options.arrival.late ? 'bg-amber-50 ring-amber-200' : 'bg-white ring-slate-100'}`}>
+              <Clock size={18} className={options.arrival.late ? 'text-amber-600' : 'text-zappy-600'} />
+              <p className="text-[13px] text-slate-700">
+                {options.arrival.late
+                  ? <>Running late. We have told your {job.noun}; follow them live below, or call them.</>
+                  : <>Your {job.noun} is due by <b className="text-navy">{new Date(options.arrival.dueBy).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' })}</b>{options.arrival.scheduled ? ' (your booked time)' : ''}.</>}
+              </p>
             </div>
           )}
 

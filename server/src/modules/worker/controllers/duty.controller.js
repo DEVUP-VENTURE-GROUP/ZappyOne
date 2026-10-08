@@ -16,7 +16,7 @@ async function getMe(req, res, next) {
 
 async function goOnline(req, res, next) {
   try {
-    const worker = await workerService.goOnline({ workerId: req.auth.sub, lat: req.body.lat, lng: req.body.lng });
+    const worker = await workerService.goOnline({ workerId: req.auth.sub, lat: req.body.lat, lng: req.body.lng, accuracy: req.body.accuracy });
     res.json({ worker });
   } catch (err) { next(err); }
 }

@@ -13,6 +13,8 @@ import { PayMethodPicker } from '@shared/components/common/PayMethodPicker';
 import SomeoneElse from '@shared/components/booking/SomeoneElse';
 import PendingFeeNotice from '@shared/components/booking/PendingFeeNotice';
 import { usePayBooking } from '@shared/hooks/usePayBooking';
+import { doorAddress } from '@shared/utils/doorAddress';
+import NearestArrival from '@shared/components/common/NearestArrival';
 
 /**
  * Return / Exchange — §22 to §31.
@@ -68,9 +70,9 @@ export default function ReturnTaskPage() {
     try {
       await getQuote({
         serviceType: isExchange ? 'exchange' : 'return',
-        pickupLocation: { type: 'Point', coordinates: [pickupLoc.lng, pickupLoc.lat], address: pickupLoc.address },
+        pickupLocation: { type: 'Point', coordinates: [pickupLoc.lng, pickupLoc.lat], address: doorAddress(pickupLoc) },
         destination: destLoc
-          ? { type: 'Point', coordinates: [destLoc.lng, destLoc.lat], address: destLoc.address } : null,
+          ? { type: 'Point', coordinates: [destLoc.lng, destLoc.lat], address: doorAddress(destLoc) } : null,
         items: [],
       }).unwrap();
     } catch (err) {
@@ -94,9 +96,9 @@ export default function ReturnTaskPage() {
         ...(onSite && { onSite }),
         serviceType: isExchange ? 'exchange' : 'return',
         title: isExchange ? 'Exchange task' : 'Return task',
-        pickupLocation: { type: 'Point', coordinates: [pickupLoc.lng, pickupLoc.lat], address: pickupLoc.address },
+        pickupLocation: { type: 'Point', coordinates: [pickupLoc.lng, pickupLoc.lat], address: doorAddress(pickupLoc) },
         destination: destLoc
-          ? { type: 'Point', coordinates: [destLoc.lng, destLoc.lat], address: destLoc.address } : undefined,
+          ? { type: 'Point', coordinates: [destLoc.lng, destLoc.lat], address: doorAddress(destLoc) } : undefined,
         returnDetail: { ...form, merchantInstructions: form.merchantInstructions || (invoiceKey ? `Invoice: ${invoiceKey}` : '') },
         paymentMethod,
         idempotencyKey,
@@ -217,6 +219,7 @@ export default function ReturnTaskPage() {
               <span className="block font-bold text-[#0F172A] truncate">{pickupLoc?.address || 'Choose a location'}</span>
             </span>
           </button>
+          <NearestArrival line="return" loc={pickupLoc} noun="helper" />
           <button type="button" onClick={() => setPickerFor('dest')}
             className="w-full flex items-center gap-3 rounded-2xl border-2 border-slate-200 bg-white p-4 text-left">
             <MapPin size={18} className="text-emerald-500 shrink-0" />

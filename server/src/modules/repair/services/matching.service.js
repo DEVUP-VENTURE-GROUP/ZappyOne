@@ -387,7 +387,9 @@ async function findProviders({
       // marketplace rather than a column of identical-looking numbers (§70).
       priceOptions: gradeOptions,
       warrantyDays: price?.warrantyDays ?? repair.warrantyDays ?? 0,
+      // How long the repair itself takes (not how soon they arrive: arrivalMinutes, below).
       etaMinutes: capability.estimatedDurationMin || price?.estimatedDurationMin || repair.estimatedDurationMin,
+      durationMinutes: capability.estimatedDurationMin || price?.estimatedDurationMin || repair.estimatedDurationMin,
       skillLevel: capability.skillLevel || 1,
       qualityRank: quality?.rank ?? 0,
       // No reviews yet reads as new (null), never a default five stars; ranking treats it as neutral.
@@ -435,6 +437,22 @@ async function findProviders({
     };
   }
 
+  // How soon each can be at the door (jobs/arrival), when someone comes to the customer.
+  if (serviceMode !== 'workshop' && typeof lat === 'number') {
+    const est = await require('../../jobs/arrival').forProviders(
+      candidates.map((c) => ({ kind: c.shopId ? 'shop' : 'worker', id: String(c.shopId || c.workerId), busyMin: c.busy ? c.availableInMinutes : 0 })),
+      { lat, lng },
+    ).catch(() => new Map());
+    for (const c of candidates) {
+      const e = est.get(`${c.shopId ? 'shop' : 'worker'}:${c.shopId || c.workerId}`);
+      if (e) Object.assign(c, { arrivalMinutes: e.minutes, arrivalWithinPromise: e.withinPromise, arrivalSource: e.source, ...(e.km != null && { distanceKm: e.km }) });
+    }
+  }
+
+  // Kept their arrival promises lately (jobs/promise): part of the ranking, neutral when too few visits.
+  const kept = await require('../../jobs/promise').onTimeRates(candidates.map((c) => c.shopId || c.workerId)).catch(() => new Map());
+  for (const c of candidates) c.onTimeRate = kept.get(String(c.shopId || c.workerId)) ?? null;
+
   const ranked = rank(candidates, cfg);
   const capped = ranked.slice(0, limit || cfg.maxProvidersShown || 10);
 
@@ -460,7 +478,9 @@ function rank(candidates, cfg) {
   const dists = candidates.map((c) => c.distanceKm).filter((d) => d != null);
   const minDist = dists.length ? Math.min(...dists) : 0;
   const maxDist = dists.length ? Math.max(...dists) : 0;
-  const etas = candidates.map((c) => c.etaMinutes).filter((e) => e != null);
+  // Speed is how soon they are at the door when we know it; otherwise how long the job takes.
+  const speedOf = (c) => c.arrivalMinutes ?? c.etaMinutes;
+  const etas = candidates.map(speedOf).filter((e) => e != null);
   const minEta = etas.length ? Math.min(...etas) : 0;
   const maxEta = etas.length ? Math.max(...etas) : 0;
   const maxWarranty = Math.max(...candidates.map((c) => c.warrantyDays || 0), 1);
@@ -478,7 +498,7 @@ function rank(candidates, cfg) {
         price: invNormalise(c.totalPaise, minPrice, maxPrice) * (w.price ?? 1),
         partQuality: normalise(c.qualityRank, 0, maxQuality) * (w.partQuality ?? 1),
         warranty: normalise(c.warrantyDays, 0, maxWarranty) * (w.warranty ?? 1),
-        eta: invNormalise(c.etaMinutes, minEta, maxEta) * (w.eta ?? 1),
+        eta: invNormalise(speedOf(c), minEta, maxEta) * (w.eta ?? 1),
         distance: invNormalise(c.distanceKm, minDist, maxDist) * (w.distance ?? 1),
         rating: normalise(c.rating ?? 4, 1, 5) * (w.rating ?? 1),
         completionRate: normalise(Math.min(c.completedJobs, 100), 0, 100) * (w.completionRate ?? 1),
@@ -486,6 +506,7 @@ function rank(candidates, cfg) {
         responseTime: normalise(acceptance, 0, 1) * (w.responseTime ?? 1),
         skillLevel: normalise(c.skillLevel, 1, 4) * (w.skillLevel ?? 1),
         inventory: (c.stockScore ?? 1) * (w.inventory ?? 1),
+        onTime: (c.onTimeRate ?? 0.8) * (w.onTime ?? 1),
       };
 
       const score = Object.values(parts).reduce((a, b) => a + b, 0);

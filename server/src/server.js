@@ -354,6 +354,8 @@ function startMatchingWaves() {
   const waves = require("./modules/jobs/waves");
   setInterval(() => {
     waves.sweep().catch((err) => logger.warn({ err: err.message }, "[WAVES] sweep failed"));
+    // Arrival promises past due with nobody there: customer told, provider nudged (jobs/promise).
+    require("./modules/jobs/promise").sweep().catch((err) => logger.warn({ err: err.message }, "[PROMISE] sweep failed"));
   }, 60 * 1000);
   logger.info("[WAVES] Finding-someone waves running (every minute)");
 }

@@ -173,6 +173,7 @@ router.get('/:id/options',
         boost: await bt.boostView(kind, doc, s),
         tip: await bt.tipView(kind, doc, s),
         reschedule: terminal ? { allowed: false } : await require('./reschedule').view(kind, doc),
+        arrival: await require('./promise').viewFor(doc._id),
         ...(terminal ? {} : await require('./give-back').customerView(kind, doc)),
       });
     } catch (err) { next(err); }
@@ -203,6 +204,23 @@ router.post('/:id/tip',
     try {
       const { kind } = await jobFor(req, '_id');
       res.json(await require('./boost-tip').addTip({ kind, id: req.params.id, userId: req.auth.sub, ...req.body }));
+    } catch (err) { next(err); }
+  });
+
+/**
+ * How soon someone verified for a service can be at this spot, before booking
+ * (jobs/arrival). line: a service line code, or a helping serviceType.
+ */
+router.get('/arrival',
+  authenticate,
+  makeLimiter({ windowMs: 60_000, max: 30, prefix: 'jobarrival' }),
+  async (req, res, next) => {
+    try {
+      const lat = Number(req.query.lat); const lng = Number(req.query.lng);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) return res.status(400).json({ error: 'Choose a location first.' });
+      const { HELPING_LINE } = require('./kinds');
+      const line = HELPING_LINE[req.query.line] || String(req.query.line || '').slice(0, 60);
+      res.json({ arrival: await require('./arrival').nearest({ lineCode: line, lat, lng }) });
     } catch (err) { next(err); }
   });
 
