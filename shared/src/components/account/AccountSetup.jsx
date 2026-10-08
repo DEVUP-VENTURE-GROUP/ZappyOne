@@ -62,7 +62,7 @@ export default function AccountSetup({ appName = 'ZappyOne', intro, onDone, onSi
     try {
       if (askName) await setName({ name: name.trim() }).unwrap();
       if (askPassword) await setPassword({ newPassword: pw }).unwrap();
-      const wantEmail = st.mailConfigured ? email.trim().toLowerCase() : '';
+      const wantEmail = email.trim().toLowerCase();
       if (wantEmail && !(st.emailVerified && st.email === wantEmail) && st.pendingEmail !== wantEmail) {
         const r = await startEmail({ email: wantEmail }).unwrap();
         setSentTo(r.emailSent ? wantEmail : null);
@@ -121,9 +121,12 @@ export default function AccountSetup({ appName = 'ZappyOne', intro, onDone, onSi
 
       <main className="mx-auto w-full max-w-md flex-1 px-5 py-6">
         <span className="flex h-11 w-11 items-center justify-center rounded-btn bg-zappy-50 text-zappy-600"><ShieldCheck size={21} /></span>
-        <h1 className="mt-3 text-[24px] font-bold leading-tight text-ink-900">Finish setting up your account</h1>
+        {/* Already set up and only the email is missing: say just that. */}
+        <h1 className="mt-3 text-[24px] font-bold leading-tight text-ink-900">{!askName && !askPassword ? 'Add your email' : 'Finish setting up your account'}</h1>
         <p className="mt-1 text-[15px] text-ink-500">
-          {intro || `Set a password so you can sign in to ${appName} without waiting for an OTP next time.`}
+          {!askName && !askPassword
+            ? 'So booking confirmations, receipts and updates reach you. It takes a moment.'
+            : intro || `Set a password so you can sign in to ${appName} without waiting for an OTP next time.`}
         </p>
 
         <form onSubmit={submit} className="mt-6 space-y-5 rounded-card border border-line bg-white p-5">
@@ -149,17 +152,17 @@ export default function AccountSetup({ appName = 'ZappyOne', intro, onDone, onSi
             </>
           )}
 
-          {/* Email is asked for only once we can send the link that confirms it. */}
-          {st.mailConfigured && <div>
+          {/* Everyone gives an email: receipts and booking updates go there. */}
+          <div>
             <label htmlFor="setup-email" className="mb-1.5 block text-[13px] font-semibold text-ink-700">
               Email {st.emailRequired ? <span className="text-red-600">*</span> : <span className="font-normal text-ink-400">(optional)</span>}
             </label>
             <input id="setup-email" type="email" inputMode="email" autoComplete="email" className="input w-full" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
             <p className="mt-1 text-[12px] text-ink-500">
-              {st.emailRequired ? 'For statements, receipts and resetting your password. We send a link to confirm it.' : 'For receipts and resetting your password for free. We send a link to confirm it.'}
+              {st.role === 'user' ? 'Booking confirmations, receipts and updates come here. We send a link to confirm it.' : 'For statements, receipts and resetting your password. We send a link to confirm it.'}
             </p>
             {!emailOk && <p className="mt-1 text-[12px] font-semibold text-red-700">That email does not look right</p>}
-          </div>}
+          </div>
 
           <button type="submit" disabled={!ready || saving} className="btn-primary w-full">
             {saving && <Loader2 size={16} className="animate-spin" />} Continue

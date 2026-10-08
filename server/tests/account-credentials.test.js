@@ -39,7 +39,8 @@ async function customer(extra = {}) {
 
 test('setup status lists what each account type still needs', async () => {
   const u = await customer();
-  expect((await svc.getStatus('user', u._id)).needs).toEqual({ name: true, password: true, email: false });
+  // Everyone gives an email now: booking updates and receipts go there.
+  expect((await svc.getStatus('user', u._id)).needs).toEqual({ name: true, password: true, email: true });
   const s = await Shop.collection.insertOne({ businessName: 'Fix It', ownerName: 'Ravi', phone: '9000099001' });
   expect((await svc.getStatus('shop', s.insertedId)).needs).toEqual({ name: false, password: true, email: true });
 });
@@ -111,15 +112,15 @@ test('HTTP password login: portal cookie, and the wrong portal is refused', asyn
   expect(wrong.status).toBe(403);
 });
 
-test('without a mail server: no email asked for or offered, and a reset goes to the phone', async () => {
+test('without a mail server: the email is still asked for and kept (confirmed once mail is on), and a reset goes to the phone', async () => {
   mailOn.mockReturnValue(false);
   const auth = require('../src/modules/auth/auth.service');
   const otp = jest.spyOn(auth, 'requestOtp').mockResolvedValue({ ok: true });
   try {
     const s = await Shop.collection.insertOne({ phone: '9800000777', businessName: 'Fix Hub', ownerName: 'Arun' });
-    expect(await svc.getStatus('shop', s.insertedId)).toMatchObject({ mailConfigured: false, emailRequired: false, needs: { email: false } });
-    await expect(svc.startEmailVerification({ role: 'shop', id: s.insertedId, email: 'a@b.co', baseUrl: 'http://x' }))
-      .rejects.toMatchObject({ code: 'EMAIL_UNAVAILABLE' });
+    expect(await svc.getStatus('shop', s.insertedId)).toMatchObject({ mailConfigured: false, emailRequired: true, needs: { email: true } });
+    const saved = await svc.startEmailVerification({ role: 'shop', id: s.insertedId, email: 'a@b.co', baseUrl: 'http://x' });
+    expect(saved).toMatchObject({ emailSent: false, needs: { email: false } });
 
     const u = await customer({ name: 'Lata', email: 'lata@example.com', emailVerified: true });
     const out = await svc.requestPasswordReset({ role: 'user', identifier: 'lata@example.com', baseUrl: 'http://x' });

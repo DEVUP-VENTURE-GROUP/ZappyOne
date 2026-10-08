@@ -41,9 +41,12 @@ export function SectionHeader({ title, subtitle, children }) {
 export function StatCard({ label, value, Icon, color = 'text-blue-600', bg = 'bg-blue-50', sub }) {
   return (
     <div className="bg-white rounded-xl border border-slate-100 p-4 shadow-sm">
-      <div className={`w-9 h-9 rounded-xl ${bg} flex items-center justify-center mb-3`}>
-        <Icon size={16} className={color} />
-      </div>
+      {/* The icon is optional: a card without one must not take the page down. */}
+      {Icon && (
+        <div className={`w-9 h-9 rounded-xl ${bg} flex items-center justify-center mb-3`}>
+          <Icon size={16} className={color} />
+        </div>
+      )}
       <p className="text-2xl font-extrabold text-slate-900 tabular-nums">{value}</p>
       <p className="text-xs text-slate-400 font-semibold mt-1">{label}</p>
       {sub && <p className="text-[11px] text-slate-400 mt-0.5">{sub}</p>}

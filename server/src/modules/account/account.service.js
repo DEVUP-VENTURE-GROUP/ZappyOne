@@ -19,7 +19,8 @@ const templates = require('../../core/mail/templates');
  *   event_partner   events partner                password + email
  */
 const ROLES = {
-  user: { model: () => require('../user/user.model'), nameOf: (a) => a.name, emailRequired: false, nameRequired: true },
+  // Everyone gives an email: receipts, booking updates and account recovery go there.
+  user: { model: () => require('../user/user.model'), nameOf: (a) => a.name, emailRequired: true, nameRequired: true },
   worker: { model: () => require('../worker/worker.model'), nameOf: (a) => a.name, emailRequired: true },
   shop: { model: () => require('../shop/shop.model'), nameOf: (a) => a.ownerName || a.businessName, emailRequired: true },
   event_partner: { model: () => require('../events/event-partner.model'), nameOf: (a) => a.ownerName || a.businessName, emailRequired: true },
@@ -75,9 +76,10 @@ const photoKeyOf = (role, a) => a[PHOTO_FIELD[role]] || (role === 'worker' ? a.k
 function setupStatus(role, a) {
   const cfg = roleCfg(role);
   const name = (cfg.nameOf(a) || '').trim();
-  // Until outgoing mail is set up, nobody is asked for an email we cannot confirm.
+  // Asked whether or not outgoing mail is set up yet: the address is kept and
+  // its confirmation link goes out once mail is on (see getStatus).
   const mailConfigured = mailer.isConfigured();
-  const emailRequired = !!cfg.emailRequired && mailConfigured;
+  const emailRequired = !!cfg.emailRequired;
   const needs = {
     name: !!cfg.nameRequired && name.length < 2,
     password: !a.passwordHash,
@@ -110,8 +112,13 @@ async function load(role, id, extra = '') {
   return a;
 }
 
-async function getStatus(role, id) {
+async function getStatus(role, id, baseUrl = null) {
   const a = await load(role, id);
+  // An address saved while mail was off gets its confirmation link now that it is on.
+  const pending = a.emailVerification?.email;
+  if (baseUrl && pending && !a.emailVerified && !a.emailVerification.sentAt && mailer.isConfigured()) {
+    startEmailVerification({ role, id, email: pending, baseUrl }).catch(() => {});
+  }
   const status = setupStatus(role, a);
   const key = photoKeyOf(role, a);
   status.photoUrl = key ? await require('../../core/storage/s3').signMedia(key).catch(() => null) : null;
@@ -184,7 +191,6 @@ async function setName({ role, id, name }) {
  */
 async function startEmailVerification({ role, id, email, baseUrl }) {
   const addr = String(email || '').trim().toLowerCase();
-  if (!mailer.isConfigured()) throw err(409, 'EMAIL_UNAVAILABLE', 'Adding an email is not available yet. Your phone number keeps your account secure.');
   if (!EMAIL_RE.test(addr) || addr.length > 120) throw err(400, 'BAD_EMAIL', 'Enter a valid email address');
   const Model = roleCfg(role).model();
   const a = await load(role, id);
@@ -199,15 +205,17 @@ async function startEmailVerification({ role, id, email, baseUrl }) {
   if (sends > 5) throw err(429, 'TOO_MANY_EMAILS', 'Too many emails sent. Try again in an hour.');
 
   const token = newToken();
-  a.emailVerification = { email: addr, tokenHash: sha(token), expiresAt: new Date(Date.now() + VERIFY_TTL_MS), sentAt: new Date() };
+  a.emailVerification = { email: addr, tokenHash: sha(token), expiresAt: new Date(Date.now() + VERIFY_TTL_MS), sentAt: null };
   // An account with no email yet shows the pending one, unverified.
   if (!a.email) { a.email = addr; a.emailVerified = false; }
   await a.save();
 
   const link = `${baseUrl}/verify-email?token=${token}&r=${role}`;
   const t = templates.verifyEmail({ name: roleCfg(role).nameOf(a), link });
-  const sent = await mailer.sendMail({ to: addr, ...t });
-  if (!sent.sent) logger.info({ role, id: String(a._id), link }, '[ACCOUNT] verification link (mail not sent)');
+  const sent = mailer.isConfigured() ? await mailer.sendMail({ to: addr, ...t }) : { sent: false };
+  // sentAt marks a link that really left; getStatus sends one when mail comes on.
+  if (sent.sent) await roleCfg(role).model().updateOne({ _id: a._id }, { $set: { 'emailVerification.sentAt': new Date() } });
+  else logger.info({ role, id: String(a._id) }, '[ACCOUNT] email saved; confirmation link not sent (mail not set up)');
   return { ...setupStatus(role, a), emailSent: sent.sent };
 }
 

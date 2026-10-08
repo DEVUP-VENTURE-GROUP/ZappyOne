@@ -39,7 +39,7 @@ router.get('/capabilities', (req, res) => {
 });
 
 router.get('/me', authenticate, onlyAccounts, async (req, res, next) => {
-  try { res.json(await svc.getStatus(req.auth.role, req.auth.sub)); } catch (e) { next(e); }
+  try { res.json(await svc.getStatus(req.auth.role, req.auth.sub, baseUrlFor(req, req.auth.role))); } catch (e) { next(e); }
 });
 
 router.post('/photo', authenticate, onlyAccounts,
