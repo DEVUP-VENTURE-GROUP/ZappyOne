@@ -128,9 +128,54 @@ async function resolveReferencePrice(ctx) {
   };
 }
 
+/*
+ * Two supply models. A SHOP sets its own prices (its rows below). An
+ * INDIVIDUAL is ZappyOne's own provider and always charges the ZappyOne
+ * standard price, the same number the "market price" suggestion shows. Only
+ * where no standard is set yet does their own price stand in.
+ */
+const PART_GRADES = ['oem', 'premium', 'standard'];
+
+function standardAsProvider(ref) {
+  if (!ref?.recommendedPaise) return null;
+  return {
+    partPaise: ref.partCostPaise || 0,
+    labourPaise: ref.labourPaise || 0,
+    consumablesPaise: 0, travelPaise: 0, pickupPaise: 0, returnPaise: 0,
+    totalPaise: ref.recommendedPaise,
+    warrantyDays: ref.warrantyDays,
+    estimatedDurationMin: null,
+    providerPricingId: null,
+    referencePricingId: ref.referencePricingId,
+    version: ref.version,
+    resolutionPath: `standard:${ref.resolutionPath}`,
+  };
+}
+
+/** The ZappyOne standard price at each grade it is set for (an individual's prices). */
+async function standardPriceOptions(ctx) {
+  const options = [];
+  for (const qualityCode of PART_GRADES) {
+    const ref = await resolveReferencePrice({ ...ctx, qualityCode });
+    if (!ref?.recommendedPaise) continue;
+    if (ref.resolutionPath.includes('qualityCode') || qualityCode === 'standard') {
+      options.push({ qualityCode, ...standardAsProvider(ref) });
+    }
+  }
+  if (options.length) return options.sort((a, b) => a.totalPaise - b.totalPaise);
+  const plain = standardAsProvider(await resolveReferencePrice({ ...ctx, qualityCode: null }));
+  return plain ? [{ qualityCode: null, ...plain }] : [];
+}
+
 /** A specific provider's bookable price for a job, or null if they have none. */
 async function resolveProviderPrice(ctx, { shopId = null, workerId = null } = {}) {
   if (!shopId && !workerId) return null;
+  if (!shopId) {
+    const options = await standardPriceOptions(ctx);
+    // Where ZappyOne has not set a standard yet (most vehicle work today), the
+    // individual's own price stands in until it does.
+    if (options.length) return (ctx.qualityCode ? options.find((o) => o.qualityCode === ctx.qualityCode) : null) || options[0];
+  }
 
   const rows = await ProviderPricing.find({
     ...(shopId ? { shopId } : { workerId }),
@@ -184,6 +229,10 @@ function shapePrice(row) {
  */
 async function resolveProviderPriceOptions(ctx, { shopId = null, workerId = null } = {}) {
   if (!shopId && !workerId) return [];
+  if (!shopId) {
+    const standard = await standardPriceOptions(ctx);
+    if (standard.length) return standard;
+  }
 
   const rows = await ProviderPricing.find({
     ...(shopId ? { shopId } : { workerId }),
@@ -516,6 +565,7 @@ module.exports = {
   resolveReferencePrice,
   resolveProviderPrice,
   resolveProviderPriceOptions,
+  standardPriceOptions,
   evaluateDeviation,
   buildPriceSnapshot,
   buildAddOnSnapshots,

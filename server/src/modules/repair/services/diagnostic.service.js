@@ -156,8 +156,13 @@ async function resolve({ problemCode, flow, answers = {}, vertical = null }) {
    * replacement. Its own repairs start ahead of any one answer; only several
    * answers pointing elsewhere can overtake (or tie, and then it is inspected).
    */
+  // Only for a SHARED question set: a problem's own triage tree is written to
+  // overrule its first guess ("AC not cooling" is often the blower, not gas).
   const PROBLEM_PRIOR = 2;
-  if (votes.size) {
+  const sharedFlow = !!(flow?.code && problem?.candidateRepairCodes?.length
+    && (await Problem.countDocuments({ diagnosticFlowCode: flow.code, isActive: true, ...scope })) > 1);
+  const offTopic = !(problem?.candidateRepairCodes || []).some((c) => votes.has(c));
+  if (votes.size && sharedFlow && offTopic) {
     for (const code of problem?.candidateRepairCodes || []) votes.set(code, (votes.get(code) || 0) + PROBLEM_PRIOR);
   }
 
