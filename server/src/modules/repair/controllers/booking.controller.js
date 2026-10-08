@@ -20,7 +20,7 @@ const reportService = require('../services/report.service');
 
 async function createBooking(req, res, next) {
   try {
-    const { onSite, ...body } = req.body;
+    const { onSite, priceRequestId, ...body } = req.body;
     const { booking, replayed } = await bookingService.createBooking({
       ...body,
       userId: req.auth.sub,
@@ -29,6 +29,12 @@ async function createBooking(req, res, next) {
     const saved = await require('../../jobs/on-site').saveOnSite(require('../models/booking.model').RepairBooking, booking._id, onSite, replayed);
     // An earlier unpaid cancellation fee rides on this booking (jobs/cancel-fee).
     if (!replayed) await require('../../jobs/cancel-fee').attachCarried('repair', booking._id, req.auth.sub);
+    // Booked from a price request: close it and tell the other shops (services/price-request).
+    if (!replayed && priceRequestId) {
+      await require('../services/price-request.service').markBooked({
+        priceRequestId, userId: req.auth.sub, bookingId: booking._id, shopId: booking.shopId,
+      }).catch(() => {});
+    }
     res.status(replayed ? 200 : 201).json({ booking: saved ? { ...(booking.toObject?.() || booking), onSite: saved } : booking, replayed });
   } catch (err) { next(err); }
 }

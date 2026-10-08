@@ -118,7 +118,7 @@ export const api = createApi({
   // Keep fetched data cached for 5 min after a component unmounts, so jumping
   // back to a tab shows data instantly (no skeleton) instead of refetching.
   keepUnusedDataFor: 300,
-  tagTypes: ['Reviews', 'Fees', 'JobChat', 'Account', 'AdminTeam', 'Payments', 'Me', 'Order', 'Worker', 'Earnings', 'AdminMetrics', 'Kyc', 'Plan', 'Subscription', 'Wallet', 'Notification', 'AdminUsers', 'Disputes', 'Payouts', 'Incentives', 'CancellationConfig', 'PricingCfg', 'AuditLogs', 'Addresses', 'Ad', 'Promo', 'Gamification', 'Recommendations', 'FeatureFlags', 'SupportTickets', 'Referral', 'ShieldFund', 'EventTheme', 'EventBooking', 'EventPartner', 'EventConfig', 'EventCategory', 'PartnerNotification', 'Fraud', 'Zone', 'City', 'PaymentMethods', 'UserDisputes', 'UserTickets', 'AdminAppeals', 'AdminTraining', 'WorkerGoals', 'Plans', 'Content', 'Rewards', 'WorkerOps', 'ReadyMode', 'Shop', 'ShopWorkers', 'ShopKyc',
+  tagTypes: ['PriceRequest', 'Reviews', 'Fees', 'JobChat', 'Account', 'AdminTeam', 'Payments', 'Me', 'Order', 'Worker', 'Earnings', 'AdminMetrics', 'Kyc', 'Plan', 'Subscription', 'Wallet', 'Notification', 'AdminUsers', 'Disputes', 'Payouts', 'Incentives', 'CancellationConfig', 'PricingCfg', 'AuditLogs', 'Addresses', 'Ad', 'Promo', 'Gamification', 'Recommendations', 'FeatureFlags', 'SupportTickets', 'Referral', 'ShieldFund', 'EventTheme', 'EventBooking', 'EventPartner', 'EventConfig', 'EventCategory', 'PartnerNotification', 'Fraud', 'Zone', 'City', 'PaymentMethods', 'UserDisputes', 'UserTickets', 'AdminAppeals', 'AdminTraining', 'WorkerGoals', 'Plans', 'Content', 'Rewards', 'WorkerOps', 'ReadyMode', 'Shop', 'ShopWorkers', 'ShopKyc',
     'RepairCatalog', 'RepairConfig', 'RepairPricing', 'RepairRequests', 'RepairBookings', 'RepairProvider', 'MyAssets',
     'HelpingConfig', 'HelpingTasks', 'HelpingAvailable', 'AdminHelpingTasks',
     'PetCatalog', 'MyPets', 'PetBookings', 'PetAvailable', 'PetRecurring', 'AdminPetBookings', 'AdminPetPricing', 'AdminPetCapabilities',
@@ -1597,6 +1597,8 @@ export const api = createApi({
       }),
       invalidatesTags: ['Onboarding'],
     }),
+    /** Repairs customers can see but nobody can do, and unanswered price requests. */
+    adminCoverageGaps: b.query({ query: () => ({ url: adminApiPath('/onboarding/gaps') }), providesTags: ['Onboarding'] }),
     adminOnboardingLineRequests: b.query({
       query: (params = {}) => ({ url: adminApiPath('/onboarding/line-requests'), params }),
       providesTags: ['Onboarding'],
@@ -1891,6 +1893,18 @@ export const api = createApi({
       invalidatesTags: ['AdminPetCapabilities'],
     }),
     repairProviders: b.query({ query: (params) => ({ url: '/repair/providers', params }) }),
+    /* Price requests: ask nearby shops for their price (repair/services/price-request). */
+    createPriceRequest: b.mutation({ query: (body) => ({ url: '/repair/price-requests', method: 'POST', body }) }),
+    priceRequest: b.query({ query: (id) => ({ url: `/repair/price-requests/${id}` }), providesTags: (r, e, id) => [{ type: 'PriceRequest', id }] }),
+    cancelPriceRequest: b.mutation({
+      query: (id) => ({ url: `/repair/price-requests/${id}/cancel`, method: 'POST' }),
+      invalidatesTags: (r, e, id) => [{ type: 'PriceRequest', id }],
+    }),
+    shopPriceRequests: b.query({ query: () => ({ url: '/repair/provider/price-requests' }), providesTags: ['PriceRequest'] }),
+    offerPrice: b.mutation({
+      query: ({ id, ...body }) => ({ url: `/repair/provider/price-requests/${id}/offer`, method: 'POST', body }),
+      invalidatesTags: ['PriceRequest'],
+    }),
     createRepairBooking: b.mutation({
       query: (body) => ({ url: '/repair/bookings', method: 'POST', body }),
       invalidatesTags: ['RepairBookings'],
@@ -2598,6 +2612,11 @@ export const {
   useResumePetRecurringMutation, useCancelPetRecurringMutation, useAdminPetBookingsQuery, useAdminPetPricingQuery, useAdminUpdatePetPricingMutation,
   useAdminPetCapabilitiesQuery, useAdminUpdatePetCapabilityMutation,
   useRepairProvidersQuery,
+  useCreatePriceRequestMutation,
+  usePriceRequestQuery,
+  useCancelPriceRequestMutation,
+  useShopPriceRequestsQuery,
+  useOfferPriceMutation,
   useCreateRepairBookingMutation,
   useMyRepairBookingsQuery,
   useGetRepairBookingQuery,
@@ -2619,6 +2638,8 @@ export const {
   useRepairProviderPricingQuery,
   useBulkRepairProviderPricingMutation,
   useLazyRepairProviderSuggestedPricingQuery,
+  useRepairProviderSuggestedPricingQuery,
+  useAdminCoverageGapsQuery,
   useRepairHandoverCodeQuery,
   useAttachRepairCompletionPhotosMutation,
   useRateRepairBookingMutation,

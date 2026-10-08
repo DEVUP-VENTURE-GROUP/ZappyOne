@@ -176,6 +176,31 @@ const CATALOG = {
       },
     }),
   },
+  'provider.price_request': {
+    audience: 'provider', type: 'job_assigned', channels: ['push'], urgent: true, label: 'A customer asks for your price',
+    sample: () => ({ device: 'Samsung Galaxy S23 Ultra', repair: 'Battery Replacement', km: 2.1 }),
+    build: ({ device, repair, km }) => ({
+      push: {
+        title: 'A customer near you wants your price',
+        body: `${repair} for a ${device}${km != null ? ` · ${Number(km).toFixed(1)} km away` : ''}. Reply with your price to win the job.`,
+        link: '/shop/price-requests',
+      },
+    }),
+  },
+  'provider.price_request_closed': {
+    audience: 'provider', type: 'job_removed', channels: ['push'], label: 'Price request went elsewhere',
+    sample: () => ({ device: 'Samsung Galaxy S23 Ultra', repair: 'Battery Replacement' }),
+    build: ({ device, repair }) => ({
+      push: { title: 'The customer chose another shop', body: `${repair} for a ${device}. Your price is saved for the next one.`, link: '/shop/price-requests' },
+    }),
+  },
+  'customer.price_offer': {
+    audience: 'customer', type: 'order_delayed', channels: ['push'], urgent: true, label: 'A shop sent its price',
+    sample: () => ({ shop: 'MB Groups', price: '₹1,450', repair: 'Battery Replacement', id: 'x' }),
+    build: ({ shop, price, repair, id }) => ({
+      push: { title: `${shop} can do it for ${price}`, body: `${repair}. Compare prices and book the one you like.`, link: `/repair/price-requests/${id}` },
+    }),
+  },
   'provider.job_waiting': {
     audience: 'provider', type: 'job_reminder', channels: ['push'], urgent: true, label: 'Job waiting (offline providers, 5 min)',
     sample: () => ({ label: 'repair', km: 3.1 }),

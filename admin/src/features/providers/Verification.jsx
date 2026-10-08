@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import {
   Inbox, ShieldCheck, Plus, Loader2, Check, X, Store, User,
   Archive, Pencil, MessageSquarePlus, Camera, Upload, MapPin, FileWarning,
+  AlertTriangle,
 } from 'lucide-react';
 import {
   useAdminOnboardingListQuery,
@@ -45,11 +46,13 @@ const TABS = [
   { id: 'workers', label: 'Worker identity', icon: User },
   { id: 'shops', label: 'Shop identity', icon: Store },
   { id: 'requests', label: 'Service requests', icon: MessageSquarePlus },
+  { id: 'gaps', label: 'Coverage gaps', icon: AlertTriangle },
   { id: 'requirements', label: 'Requirements', icon: ShieldCheck },
 ];
 
 const WorkerIdentity = lazy(() => import('./KycReview'));
 const ShopIdentity = lazy(() => import('./Shops'));
+const CoverageGaps = lazy(() => import('./CoverageGaps'));
 
 /* Verification queue */
 
@@ -698,6 +701,7 @@ export default function ProviderOnboarding() {
       <Suspense fallback={<PageLoader />}>
         {tab === 'workers' && <WorkerIdentity />}
         {tab === 'shops' && <ShopIdentity reviewMode />}
+        {tab === 'gaps' && <CoverageGaps />}
       </Suspense>
       {tab === 'requests' && <Requests />}
       {tab === 'requirements' && <CatalogTable resource="requirements" />}

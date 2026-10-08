@@ -8,6 +8,7 @@ import {
   useShopMeQuery, useShopKycStatusQuery, useShopEarningsQuery,
   useShopWorkersQuery, useRepairOnboardingStatusQuery,
   useProviderOnboardingStatusQuery,
+  useShopPriceRequestsQuery,
 } from '@shared/services/api';
 import ProviderServicesCard from '@shared/components/provider/ProviderServicesCard';
 import ShopJobs from '../components/ShopJobs';
@@ -118,6 +119,9 @@ function TeamPanel({ workers, jobs, onManage }) {
 
 export default function ShopDashboard() {
   const nav = useNavigate();
+  // Customers near the shop asking for its price (repair/services/price-request).
+  const { data: priceReqs } = useShopPriceRequestsQuery(undefined, { pollingInterval: 60000 });
+  const askingNow = (priceReqs?.requests || []).filter((r) => !r.myOffer).length;
   const { data, isLoading } = useShopMeQuery();
   const { data: kycData } = useShopKycStatusQuery();
   const { data: earnings } = useShopEarningsQuery('today');
@@ -240,6 +244,18 @@ export default function ShopDashboard() {
       </div>
 
       <div className="mx-auto max-w-6xl px-4 pt-4">
+        {askingNow > 0 && (
+          <button type="button" onClick={() => nav('/shop/price-requests')}
+            className="mb-4 flex w-full items-center justify-between gap-3 rounded-2xl border border-zappy-200 bg-zappy-50 p-4 text-left">
+            <span>
+              <span className="block text-[14px] font-black text-[#0F172A]">
+                {askingNow} {askingNow === 1 ? 'customer is' : 'customers are'} asking for your price
+              </span>
+              <span className="block text-[12.5px] text-slate-600">Reply with your price to win the job.</span>
+            </span>
+            <span className="shrink-0 rounded-xl bg-zappy-600 px-3 py-2 text-xs font-bold text-white">Reply</span>
+          </button>
+        )}
 
         {/* Only shown when something genuinely blocks the shop */}
         {!isDiscoverable && (

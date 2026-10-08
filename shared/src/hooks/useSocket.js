@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectAuth } from '../modules/auth/authSlice';
 import { getSocket, disconnectSocket } from '../services/socket';
@@ -257,4 +257,18 @@ export function useJobRealtime({ alerts = false } = {}) {
       socket.off('repair.quote_decision', onQuote);
     };
   }, [token, alerts, dispatch]);
+}
+
+/** Run `handler` whenever this person's socket receives `event` (e.g. a price request or offer). */
+export function useSocketEvent(event, handler) {
+  const { accessToken: token } = useSelector(selectAuth);
+  const ref = useRef(handler);
+  ref.current = handler;
+  useEffect(() => {
+    if (!token || !event) return undefined;
+    const socket = getSocket(token);
+    const on = (payload) => ref.current?.(payload);
+    socket.on(event, on);
+    return () => socket.off(event, on);
+  }, [token, event]);
 }

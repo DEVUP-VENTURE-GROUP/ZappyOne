@@ -155,9 +155,44 @@ router.post(
     paymentMethod: Joi.string().valid('cash', 'online').default('cash'),
     idempotencyKey: Joi.string().max(120).allow(null),
     onSite: require('../jobs/on-site').onSiteSchema,
+    // Booked from a shop's answer to a price request (services/price-request).
+    priceRequestId: objectId.allow(null),
   })),
   ctrl.createBooking,
 );
+
+/*
+ * Price requests: no shop nearby has priced this repair for the device yet, so
+ * the customer asks them all; each shop can answer with its price.
+ */
+const priceRequests = require('./services/price-request.service');
+const wrap = (fn) => async (req, res, next) => { try { res.json(await fn(req)); } catch (e) { next(e); } };
+router.post('/price-requests', authenticate, requireRole('user'),
+  validate(Joi.object({
+    vertical: Joi.string().max(30).required(),
+    brandCode: Joi.string().max(60).required(),
+    modelCode: Joi.string().max(120).required(),
+    configurationCode: Joi.string().max(120).allow('', null),
+    problemCodes: Joi.array().items(Joi.string().max(80)).max(5).default([]),
+    repairCode: Joi.string().max(80).required(),
+    serviceMode: Joi.string().valid(...SERVICE_MODES).default('doorstep'),
+    location: locationSchema.required(),
+  })),
+  wrap((req) => priceRequests.create({ userId: req.auth.sub, body: req.body })));
+router.get('/price-requests/:id', authenticate, requireRole('user'),
+  wrap((req) => priceRequests.viewForCustomer({ id: req.params.id, userId: req.auth.sub })));
+router.post('/price-requests/:id/cancel', authenticate, requireRole('user'),
+  wrap(async (req) => ({ request: await priceRequests.cancel({ id: req.params.id, userId: req.auth.sub }) })));
+router.get('/provider/price-requests', authenticate, requireRole('shop'),
+  wrap(async (req) => ({ requests: await priceRequests.listForShop({ shopId: req.auth.sub }) })));
+router.post('/provider/price-requests/:id/offer', authenticate, requireRole('shop'),
+  validate(Joi.object({
+    totalPaise: Joi.number().integer().min(5000).max(20000000).required(),
+    qualityCode: Joi.string().valid('oem', 'premium', 'standard').allow(null),
+    warrantyDays: Joi.number().integer().min(0).max(365).default(0),
+    note: Joi.string().max(300).allow('', null),
+  })),
+  wrap(async (req) => ({ request: await priceRequests.offer({ shopId: req.auth.sub, id: req.params.id, requestedById: req.auth.sub, ...req.body }) })));
 
 /* Saved assets — the customer's own tanks, phones, vehicles */
 

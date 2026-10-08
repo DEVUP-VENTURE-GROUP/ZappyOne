@@ -7,14 +7,14 @@ import { formatPaise } from '@shared/utils/money';
 import { useSelector, useDispatch } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ArrowLeft, Search, ChevronRight, Loader2, ShieldCheck, Star, MapPin, Clock, Check, AlertTriangle, Smartphone, Laptop, Wrench, HelpCircle, X, Home, Truck, Lock,
+  ArrowLeft, Search, ChevronRight, Loader2, ShieldCheck, Star, MapPin, Clock, Check, AlertTriangle, Smartphone, Laptop, Wrench, HelpCircle, X, Home, Truck, Lock, Store,
 } from 'lucide-react';
 import {
   useRepairBrandsQuery, useRepairModelsQuery, useRepairProblemsQuery,
   useRepairProductTypesQuery, useRepairFamiliesQuery, useRepairConfigurationsQuery,
   useSubmitModelIdentificationMutation, useMyModelIdentificationsQuery,
   useSubmitRepairDiagnosticMutation, useRepairProvidersQuery, useRepairPricePreviewQuery,
-  useCreateRepairBookingMutation, useSubmitRepairCatalogRequestMutation,
+  useCreateRepairBookingMutation, useSubmitRepairCatalogRequestMutation, useCreatePriceRequestMutation,
   useRepairAddOnsQuery,
 } from '@shared/services/api';
 import { selectLocation, selectHasLocation, setLocation } from '@shared/store/locationSlice';
@@ -898,6 +898,22 @@ function ProviderStep({
    * moment someone accepts. Only when a standard price exists for the repair.
    */
   const allOffline = !data?.providers?.length && (data?.nearbyCount || 0) > 0 && data?.primaryReason === 'offline';
+
+  // Nobody nearby has priced this exact repair: ask them all (repair/services/price-request).
+  const navigate = useNavigate();
+  const [askPrices, { isLoading: asking }] = useCreatePriceRequestMutation();
+  async function askShops() {
+    try {
+      const res = await askPrices({
+        vertical, brandCode: brand?.code, modelCode: model?.code, configurationCode: configuration?.code || null,
+        problemCodes: problem?.code ? [problem.code] : [], repairCode, serviceMode,
+        location: { coordinates: [location.lng, location.lat], address: location.address || '' },
+      }).unwrap();
+      navigate(`/repair/price-requests/${res.request._id}`);
+    } catch (err) {
+      toast.error(err?.data?.error || 'Could not ask the shops');
+    }
+  }
   const { data: standard } = useRepairPricePreviewQuery(
     { vertical, repairCode, brandCode: brand?.code, modelCode: model?.code, serviceMode },
     { skip: !allOffline || !repairCode },
@@ -1057,8 +1073,8 @@ function ProviderStep({
         } else if (data?.reason === 'service_mode_not_allowed') {
           body = 'This repair cannot be done the way you chose. Go back and pick another option.';
         } else if (notListed) {
-          title = `${nearby} ${nearby === 1 ? 'shop' : 'shops'} near you, none offering ${repairName} yet`;
-          body = 'An inspection finds the exact fault and gets you a firm quote from a nearby technician.';
+          title = `${nearby} ${nearby === 1 ? 'shop' : 'shops'} near you, none has priced ${repairName} yet`;
+          body = 'Ask them: each shop sends its price, and you book the one you like. Or book an inspection for a firm quote.';
         } else if (allOffline) {
           title = `${nearby} ${nearby === 1 ? 'technician' : 'technicians'} near you, none online this minute`;
           body = standardPaise
@@ -1081,6 +1097,15 @@ function ProviderStep({
                   className="inline-flex items-center gap-1.5 rounded-xl bg-zappy-600 px-4 py-2.5 text-xs font-bold text-white"
                 >
                   <Check size={13} /> Book now for {formatPaise(standardPaise)}
+                </button>
+              )}
+              {notListed && repairCode && !needsDiagnosis && (
+                <button
+                  onClick={askShops}
+                  disabled={asking}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-zappy-600 px-4 py-2.5 text-xs font-bold text-white disabled:opacity-60"
+                >
+                  {asking ? <Loader2 size={13} className="animate-spin" /> : <Store size={13} />} Ask nearby shops for their price
                 </button>
               )}
               {nearby > 0 && onInspectInstead && (

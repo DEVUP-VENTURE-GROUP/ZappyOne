@@ -27,7 +27,7 @@ import {
   useRequestRepairCatalogAdditionMutation,
   useRepairServiceAreasQuery, useUpsertRepairServiceAreaMutation,
   useRepairProviderPricingQuery, useBulkRepairProviderPricingMutation,
-  useLazyRepairProviderSuggestedPricingQuery,
+  useLazyRepairProviderSuggestedPricingQuery, useRepairProviderSuggestedPricingQuery,
   useRepairModelsQuery,
 } from '../../services/api';
 import { useUpdateShopMeMutation } from '../../services/api';
@@ -875,6 +875,47 @@ function HoursStep({ profile, onBack, onNext }) {
   );
 }
 
+/* 4a. Prices, for an individual: ZappyOne's standard, nothing to set */
+
+/**
+ * Individual providers are ZappyOne's own: customers pay the ZappyOne standard
+ * price for their work (shops set their own). Shown so they know what each job
+ * pays, never as a sheet to fill.
+ */
+function StandardPricesStep({ vertical, onBack, onNext }) {
+  const { data: work } = useRepairWorkCatalogQuery({ vertical });
+  const { data, isLoading } = useRepairProviderSuggestedPricingQuery({ vertical });
+  const names = new Map((work?.groups || []).flatMap((g) => g.repairs).map((r) => [r.code, r.name]));
+  const best = new Map();
+  for (const s of data?.suggestions || []) {
+    const cur = best.get(s.repairCode);
+    if (!cur || s.totalPaise < cur) best.set(s.repairCode, s.totalPaise);
+  }
+  const rows = [...best.entries()].sort((a, b) => (names.get(a[0]) || a[0]).localeCompare(names.get(b[0]) || b[0]));
+  return (
+    <StepShell
+      title="ZappyOne sets your prices"
+      hint="Customers pay the ZappyOne standard price for your work, and you keep it after the 10% platform commission. Nothing to set here."
+      onBack={onBack}
+      onNext={onNext}
+      nextLabel="Finish"
+    >
+      <div className="card divide-y divide-slate-100 p-0">
+        {isLoading && <div className="p-4"><Spinner pad="py-6" /></div>}
+        {!isLoading && !rows.length && (
+          <p className="p-4 text-xs text-slate-500">Standard prices for your work will show here as ZappyOne sets them.</p>
+        )}
+        {rows.map(([code, paise]) => (
+          <div key={code} className="flex items-center justify-between gap-3 px-4 py-2.5">
+            <span className="text-[13px] text-slate-700">{names.get(code) || code}</span>
+            <span className="text-[13px] font-bold tabular-nums text-[#0F172A]">from {rupees(paise)}</span>
+          </div>
+        ))}
+      </div>
+    </StepShell>
+  );
+}
+
 /* 4. Prices */
 
 /**
@@ -1522,7 +1563,17 @@ export default function ProviderRepairSetupPage() {
                 onNext={() => go('pricing')}
               />
             )}
-            {step === 'pricing' && (
+            {step === 'pricing' && !isShop && (
+              <StandardPricesStep
+                vertical={active}
+                onBack={() => go('area')}
+                onNext={() => {
+                  toast.success("Setup saved — you're ready for jobs");
+                  nav('/worker');
+                }}
+              />
+            )}
+            {step === 'pricing' && isShop && (
               <PricingStep
                 vertical={active}
                 onBack={() => go(isShop ? 'hours' : 'area')}

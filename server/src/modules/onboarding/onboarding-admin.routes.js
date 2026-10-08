@@ -31,4 +31,9 @@ router.get('/onboarding/line-requests', ctrl.lineRequests.list);
 router.post('/onboarding/line-requests/:id/approve', ctrl.lineRequests.approve);
 router.post('/onboarding/line-requests/:id/reject', ctrl.lineRequests.reject);
 
+/* What customers can see but nobody can do, and price requests nobody answered (read only). */
+router.get('/onboarding/gaps', async (req, res, next) => {
+  try { res.json(await require('../repair/services/gaps.service').gaps()); } catch (e) { next(e); }
+});
+
 module.exports = router;
