@@ -415,3 +415,20 @@ describe('re-dispatch after release', () => {
     expect(res.reason).toBe('not_awaiting_provider');
   });
 });
+
+// Last in the file: once the line exists the vertical is gated for the rest of the run.
+describe('verified for the service, not only as a person', () => {
+  it('a provider whose ID is approved but whose service is not gets no offer', async () => {
+    const { ServiceLine, ProviderEnrolment } = require('../src/modules/onboarding/onboarding.model');
+    await Promise.all([Worker.deleteMany({}), ProviderServiceArea.deleteMany({}), ProviderCapability.deleteMany({}), ProviderPricing.deleteMany({})]);
+    await ServiceLine.create({ code: 'mobile_repair', name: 'Mobile repair', domainCode: 'repair_services', status: 'live', repairVertical: 'mobile' });
+    await makeProvider({ name: 'Approved For Mobile', priceP: 1000000 });
+    await makeProvider({ name: 'Only ID Checked', priceP: 900000 });
+    const ok = await Worker.findOne({ name: 'Approved For Mobile' });
+    await ProviderEnrolment.create({ workerId: ok._id, providerKind: 'individual', domainCode: 'repair_services', lineCode: 'mobile_repair', status: 'approved' });
+
+    const res = await matching.findProviders(baseQuery);
+    expect(res.providers.map((p) => p.name)).toEqual(['Approved For Mobile']);
+    expect(res.rejected.some((r) => r.reason === 'service_not_approved')).toBe(true);
+  });
+});

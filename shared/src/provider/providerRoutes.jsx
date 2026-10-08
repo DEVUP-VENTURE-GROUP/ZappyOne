@@ -9,6 +9,7 @@ const WorkerNotificationsPage = lazy(() => import('./pages/WorkerNotificationsPa
 const WorkerBankPage = lazy(() => import('./pages/WorkerBankPage'));
 const WorkerWithdrawPage = lazy(() => import('./pages/WorkerWithdrawPage'));
 const WorkerAppealsPage = lazy(() => import('./pages/WorkerAppealsPage'));
+const MyDocumentsPage = lazy(() => import('./pages/MyDocumentsPage'));
 const ProviderReviewsPage = lazy(() => import('./pages/ProviderReviewsPage'));
 const WorkerEarningsPage = lazy(() => import('./pages/WorkerEarningsPage'));
 const WorkerTrainingPage = lazy(() => import('./pages/WorkerTrainingPage'));
@@ -41,7 +42,6 @@ export function providerRoutes({ loginPath, helping = false, onboardRoles = ['wo
   const independentOnly = shopTeam ? [] : [
     <Route key="w-bank" path="/worker/bank" element={w(<WorkerBankPage />)} />,
     <Route key="w-withdraw" path="/worker/withdraw" element={w(<WorkerWithdrawPage />)} />,
-    <Route key="w-appeals" path="/worker/appeals" element={w(<WorkerAppealsPage />)} />,
     <Route key="w-earnings" path="/worker/earnings" element={w(<WorkerEarningsPage />)} />,
     <Route key="w-training" path="/worker/training" element={w(<WorkerTrainingPage />)} />,
     <Route key="w-goals" path="/worker/goals" element={w(<WorkerGoalsPage />)} />,
@@ -52,6 +52,9 @@ export function providerRoutes({ loginPath, helping = false, onboardRoles = ['wo
     // Independents verify once, through their services (onboarding/identity.js); a shop's team keeps the ID check.
     <Route key="w-kyc" path="/worker/kyc" element={shopTeam ? w(<WorkerKycPage />) : <Navigate to="/provider/onboarding" replace />} />,
     <Route key="w-profile" path="/worker/profile" element={w(<WorkerEditProfilePage />)} />,
+    // Every provider, a shop's team too: appeal a decision, and see what you uploaded.
+    <Route key="w-appeals" path="/worker/appeals" element={w(<WorkerAppealsPage />)} />,
+    <Route key="p-docs" path="/provider/documents" element={job(<MyDocumentsPage />)} />,
     <Route key="w-notif" path="/worker/notifications" element={w(<WorkerNotificationsPage />)} />,
     <Route key="w-reviews" path="/worker/reviews" element={w(<ProviderReviewsPage back="/worker" />)} />,
     ...independentOnly,

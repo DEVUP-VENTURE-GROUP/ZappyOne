@@ -63,7 +63,9 @@ function DocRow({ field, storedKey, pendingKey, disabled, token, onUploaded }) {
         <LiveSelfieCapture onCancel={() => setCamera(false)}
           onCapture={(blob, meta) => { setCamera(false); take(new File([blob], 'selfie.jpg', { type: 'image/jpeg' }), meta); }} />
       )}
-      <span className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-btn border border-line bg-sunken text-ink-500">
+      <span role={preview ? 'button' : undefined} tabIndex={preview ? 0 : undefined} title={preview ? 'Open full size' : undefined}
+        onClick={() => preview && window.open(preview, '_blank', 'noopener')}
+        className={`relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-btn border border-line bg-sunken text-ink-500 ${preview ? 'cursor-zoom-in' : ''}`}>
         {preview ? <img src={preview} alt="" className="h-full w-full object-cover" /> : field.camera ? <Camera size={18} /> : field.required ? <IdCard size={18} /> : <FileText size={18} />}
         {done && <CheckCircle2 size={16} className="absolute -bottom-0.5 -right-0.5 rounded-full bg-white text-green-600" />}
       </span>
@@ -146,6 +148,12 @@ export default function KycSection({ partner, token }) {
               onUploaded={(k, key, meta) => { setPending((p) => ({ ...p, [k]: key })); if (meta) setSelfieMeta(meta); }} />
           ))}
         </div>
+        {locked && (kyc.panNumber || kyc.gstNumber) && (
+          <dl className="mt-2 grid gap-2 border-t border-line pt-3 text-[13px] sm:grid-cols-2">
+            {kyc.panNumber && <div className="flex justify-between gap-3"><dt className="text-ink-500">PAN</dt><dd className="font-mono font-semibold text-ink-900">{kyc.panNumber}</dd></div>}
+            {kyc.gstNumber && <div className="flex justify-between gap-3"><dt className="text-ink-500">GST</dt><dd className="font-mono font-semibold text-ink-900">{kyc.gstNumber}</dd></div>}
+          </dl>
+        )}
         {!locked && (
           <>
             <div className="mt-3 grid gap-3 sm:grid-cols-2">

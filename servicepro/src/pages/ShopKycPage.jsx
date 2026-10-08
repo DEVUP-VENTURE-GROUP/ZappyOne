@@ -8,6 +8,7 @@ import { useShopKycStatusQuery, useSubmitShopKycMutation, usePresignUploadMutati
 import toast from 'react-hot-toast';
 import LiveSelfieCapture from '@shared/components/kyc/LiveSelfieCapture';
 import { prepareImage } from '@shared/utils/prepareImage';
+import MyVerificationPanel from '@shared/provider/MyVerificationPanel';
 
 const DOCS = [
   { key: 'ownerIdUrl', label: "Owner's ID Proof", sublabel: 'Aadhaar / PAN / Voter ID — clear photo', Icon: IdCard, required: true },
@@ -24,7 +25,7 @@ const STATUS_META = {
     card: 'bg-amber-50 ring-1 ring-amber-200', icon: 'text-amber-600', title_: 'text-amber-800', body_: 'text-amber-600',
   },
   approved: {
-    title: 'Shop Verified ✓', body: 'Your shop is verified. Complete your profile to appear in Nearby Shops.', Icon: ShieldCheck,
+    title: 'Shop identity verified', body: 'Your documents are checked. Jobs come only for the services approved below.', Icon: ShieldCheck,
     card: 'bg-emerald-50 ring-1 ring-emerald-200', icon: 'text-emerald-600', title_: 'text-emerald-800', body_: 'text-emerald-600',
   },
   suspended: {
@@ -113,6 +114,8 @@ export default function ShopKycPage() {
               <p className={`text-xs mt-0.5 ${meta.body_}`}>{meta.body}</p>
             </div>
           </div>
+          {/* What the shop gave us, and where each service stands. */}
+          <div className="mt-4"><MyVerificationPanel isShop /></div>
         </div>
       </div>
     );

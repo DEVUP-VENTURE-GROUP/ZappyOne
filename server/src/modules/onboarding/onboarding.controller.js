@@ -438,8 +438,64 @@ async function liveCatalog(req, res, next) {
   } catch (err) { next(err); }
 }
 
+/**
+ * Everything this provider has given us, to look at: their identity documents
+ * (the person, or the shop) and each service's application with its status and
+ * documents. Read-only; files come back as short-lived view links.
+ */
+async function myDocuments(req, res, next) {
+  try {
+    const owner = ownerOf(req);
+    const s3 = require('../../core/storage/s3');
+    const identity = require('./identity');
+    const { KycRequirementSet, ServiceLine } = require('./onboarding.model');
+    const isShop = owner.kind === 'shop';
+
+    // Labels as the provider was asked for them.
+    const sets = await KycRequirementSet.find({ providerKind: owner.providerKind }).select('documents fields').lean();
+    const label = new Map();
+    for (const set of sets) for (const x of [...(set.documents || []), ...(set.fields || [])]) if (!label.has(x.code)) label.set(x.code, x.label);
+    const nameOf = (code) => label.get(code) || code.replace(/_/g, ' ').replace(/^./, (c) => c.toUpperCase());
+    const view = async (url) => (url ? s3.signMedia(url).catch(() => null) : null);
+
+    let idStatus; let idDocs;
+    if (isShop) {
+      const shop = await Shop.findById(owner.id).select('kyc').lean();
+      idStatus = shop?.kyc?.status || 'not_submitted';
+      idDocs = [...(await identity.shopOnFile(owner.id)).docs];
+    } else {
+      const w = await Worker.findById(owner.id).select('kyc').lean();
+      idStatus = w?.kyc?.status || 'not_submitted';
+      idDocs = [...await identity.identityOnFile(owner.id)];
+    }
+
+    const rows = await ProviderEnrolment.find(service.ownerFilter(owner)).sort({ createdAt: 1 }).lean();
+    const lines = await ServiceLine.find({ code: { $in: rows.map((r) => r.lineCode) } }).select('code name').lean();
+    const lineName = new Map(lines.map((l) => [l.code, l.name]));
+    const idCodes = new Set(isShop ? identity.SHOP_CODES : identity.IDENTITY_CODES);
+
+    res.json({
+      identity: {
+        status: idStatus,
+        documents: await Promise.all(idDocs.map(async ([code, d]) => ({
+          code, label: nameOf(code), url: await view(d.url), uploadedAt: d.uploadedAt || null, live: d.captureMethod === 'live_camera',
+        }))),
+      },
+      services: await Promise.all(rows.map(async (r) => ({
+        lineCode: r.lineCode, name: lineName.get(r.lineCode) || r.lineCode, status: r.status,
+        submittedAt: r.submittedAt || null, reviewedAt: r.reviewedAt || null, reviewNote: r.reviewNote || '',
+        // The service's own evidence; identity is shown once, above.
+        documents: await Promise.all((r.documents || []).filter((d) => d.url && !idCodes.has(d.code)).map(async (d) => ({
+          code: d.code, label: nameOf(d.code), url: await view(d.url), uploadedAt: d.uploadedAt || null, live: d.captureMethod === 'live_camera',
+        }))),
+        fields: (r.fields || []).filter((f) => f.value).map((f) => ({ code: f.code, label: nameOf(f.code), value: f.value })),
+      }))),
+    });
+  } catch (err) { next(err); }
+}
+
 module.exports = {
-  listDomains, listLines, myEnrolments, getRequirements,
+  listDomains, listLines, myEnrolments, getRequirements, myDocuments,
   enrol, saveSubmission, submitForReview, requestLine, status,
   liveCatalog,
 };

@@ -1,7 +1,7 @@
 import { Outlet, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import {
-  LayoutDashboard, Wrench, Users, IndianRupee, Store, ShieldCheck, PlusCircle, Bell, UserRound, Star, MessageSquareQuote, Scale } from 'lucide-react';
+  LayoutDashboard, Wrench, Users, IndianRupee, Store, ShieldCheck, PlusCircle, Bell, UserRound, Star, MessageSquareQuote, Scale, FileText } from 'lucide-react';
 import PortalShell from '@shared/components/worker/PortalShell';
 import { selectAuth, logout } from '@shared/modules/auth/authSlice';
 import {
@@ -33,6 +33,7 @@ const TECHNICIAN_PAGES = [
   { key: 'profile', label: 'Profile', Icon: UserRound, to: '/worker/profile', primary: true },
   { key: 'kyc', label: 'ID check', Icon: ShieldCheck, to: '/worker/kyc', primary: true },
   { key: 'appeals', label: 'Appeals', Icon: Scale, to: '/worker/appeals' },
+  { key: 'documents', label: 'My documents', Icon: FileText, to: '/provider/documents' },
 ];
 
 export default function ServiceProShell() {

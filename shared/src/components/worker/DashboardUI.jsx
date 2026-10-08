@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { LogOut,
   LayoutDashboard, IndianRupee, Wallet as WalletIcon, Bell, Star, User, ChevronRight, Wifi,
   TrendingUp, TrendingDown, Search, Radio, Loader2, Target, Building2, GraduationCap,
-  ShieldCheck, ShoppingBag, Scale,
+  ShieldCheck, ShoppingBag, Scale, FileText,
 } from 'lucide-react';
 import { ZappyLogo } from '../common/ZappyLogo';
 
@@ -53,6 +53,7 @@ export const NAV_ITEMS = [
   { key: 'profile', label: 'Profile', Icon: User, to: '/worker/profile', primary: true },
   // Everything else: the menu on a phone; on a computer the sidebar shows all of it.
   { key: 'services', label: 'My services', Icon: ShieldCheck, to: '/provider/onboarding' },
+  { key: 'documents', label: 'My documents', Icon: FileText, to: '/provider/documents' },
   { key: 'withdraw', label: 'Withdraw', Icon: WalletIcon, to: '/worker/withdraw' },
   { key: 'bank', label: 'Bank & UPI', Icon: Building2, to: '/worker/bank' },
   { key: 'reviews', label: 'Reviews', Icon: Star, to: '/worker/reviews' },

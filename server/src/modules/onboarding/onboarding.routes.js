@@ -27,6 +27,7 @@ router.get('/status', ...providerOnly, ctrl.status);
 router.get('/domains', ...providerOnly, ctrl.listDomains);
 router.get('/lines', ...providerOnly, ctrl.listLines);
 router.get('/enrolments', ...providerOnly, ctrl.myEnrolments);
+router.get('/my-documents', ...providerOnly, ctrl.myDocuments);
 router.get('/lines/:lineCode/requirements', ...providerOnly, ctrl.getRequirements);
 
 router.post(

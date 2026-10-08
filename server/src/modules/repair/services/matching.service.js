@@ -238,6 +238,12 @@ async function findProviders({
   // Asked once for everyone, not once per provider: who is really there now
   // (worker/presence) and who is under their dues limit (worker-dues).
   const workerIdsHere = serviceable.filter((x) => x.workerId).map((x) => x.workerId);
+  // Verified for THIS service, not only as a person or shop: identity approval
+  // alone never brings work (onboarding/eligibility, per-service enrolment).
+  const line = await require('../../jobs/kinds').KINDS.repair.line({ vertical });
+  const approvedHere = line
+    ? new Set((await require('../../onboarding/eligibility').approvedProviders(line)).map((p) => p.id))
+    : null;
   const [liveSet, workingSet, freeSet] = await Promise.all([
     require('../../worker/presence').liveIds(workerIdsHere),
     require('../../worker/worker-dues.service').filterWorkingWorkers(workerIdsHere),
@@ -317,6 +323,9 @@ async function findProviders({
       rejected.push({ label, reason: 'offline' }); return;
     }
     if (profile.kyc?.status !== 'approved') { rejected.push({ label, reason: 'kyc_not_approved' }); return; }
+    if (approvedHere && !approvedHere.has(String(s.shopId || s.workerId))) {
+      rejected.push({ label, reason: 'service_not_approved' }); return;
+    }
 
     /**
      * A technician deep in commission debt is not given more cash work.
