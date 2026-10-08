@@ -124,6 +124,11 @@ async function alertNearbyProviders(kind, doc, { offlineOnly = false } = {}) {
     // Nobody at their dues limit is rung for new work (worker-dues).
     const working = await require('../worker/worker-dues.service').filterWorkingWorkers(providers.filter((p) => p.kind === 'worker').map((p) => p.id));
     providers = providers.filter((p) => p.kind !== 'worker' || working.has(String(p.id)));
+    // Free workers first (or on the last stretch of a job); only if none is free
+    // are those mid-job with room for one more told (jobs/workload).
+    const { free, busy } = await require('./workload').classify(providers.filter((p) => p.kind === 'worker').map((p) => p.id));
+    const anyFree = providers.some((p) => p.kind === 'worker' && free.has(String(p.id)));
+    providers = providers.filter((p) => p.kind !== 'worker' || free.has(String(p.id)) || (!anyFree && busy.has(String(p.id))));
     if (!providers.length) return;
 
     const Worker = require('../worker/worker.model');

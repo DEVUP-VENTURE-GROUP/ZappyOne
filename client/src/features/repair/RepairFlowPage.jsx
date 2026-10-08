@@ -1266,6 +1266,11 @@ function ProviderCard({ p, recommended, onPick }) {
               </span>
             )}
           </div>
+          {p.busy && (
+            <p className="mt-1 text-[11px] font-semibold text-amber-700">
+              Finishing another job — can reach you about {p.availableInMinutes >= 60 ? `${Math.round(p.availableInMinutes / 60)} hour` : `${p.availableInMinutes} min`} later
+            </p>
+          )}
           <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-0.5">
             {p.rating != null && (
               <span className="flex items-center gap-1 text-[11px] font-bold text-slate-600">

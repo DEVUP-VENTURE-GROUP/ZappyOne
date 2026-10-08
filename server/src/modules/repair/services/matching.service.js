@@ -238,9 +238,11 @@ async function findProviders({
   // Asked once for everyone, not once per provider: who is really there now
   // (worker/presence) and who is under their dues limit (worker-dues).
   const workerIdsHere = serviceable.filter((x) => x.workerId).map((x) => x.workerId);
-  const [liveSet, workingSet] = await Promise.all([
+  const [liveSet, workingSet, freeSet] = await Promise.all([
     require('../../worker/presence').liveIds(workerIdsHere),
     require('../../worker/worker-dues.service').filterWorkingWorkers(workerIdsHere),
+    // Free / mid-job with room for one more / at their cap (jobs/workload).
+    require('../../jobs/workload').classify(workerIdsHere),
   ]);
 
   // Every provider is checked at the same time: each check is several reads,
@@ -330,6 +332,13 @@ async function findProviders({
       rejected.push({ label, reason: 'dues_pending' });
       return;
     }
+    // At their cap: not listed. Mid-job with room for one more: listed only if
+    // nobody free can come (decided below), arriving after their current job.
+    const busy = !s.shopId && !freeSet.free.has(String(s.workerId));
+    if (busy && !freeSet.busy.has(String(s.workerId))) {
+      rejected.push({ label, reason: 'busy' });
+      return;
+    }
 
     const quality = qualityCode ? qualityByCode.get(qualityCode) || null : null;
 
@@ -379,8 +388,18 @@ async function findProviders({
       stockScore: inv.stockScore,
       partId: inv.partId || null,
       serviceMode,
+      // Mid-way through another job: can reach this one only after it.
+      ...(busy && { busy: true, availableInMinutes: require('../../jobs/workload').BUSY_EXTRA_MIN }),
     });
   }));
+
+  // Anyone free means the busy are left out; with nobody free they are the
+  // honest answer, shown with their later arrival.
+  if (candidates.some((c) => !c.busy)) {
+    for (let i = candidates.length - 1; i >= 0; i -= 1) {
+      if (candidates[i].busy) { rejected.push({ label: `worker:${candidates[i].workerId}`, reason: 'busy' }); candidates.splice(i, 1); }
+    }
+  }
 
   if (!candidates.length) {
     /*
@@ -503,6 +522,7 @@ async function findInspectors({ vertical, lat, lng, cityCode = null, includeOffl
     ? new Set((await require('../../onboarding/eligibility').approvedProviders(line)).map((p) => String(p.id)))
     : null;
   const working = await require('../../worker/worker-dues.service').filterWorkingWorkers(workerIds);
+  const { free, busy } = await require('../../jobs/workload').classify(workerIds);
   const live = await require('../../worker/presence').liveIds(workerIds);
   const profile = new Map([...workers, ...shops].map((p) => [String(p._id), p]));
 
@@ -514,8 +534,11 @@ async function findInspectors({ vertical, lat, lng, cityCode = null, includeOffl
       if (approved && !approved.has(id)) return false;
       if (a.shopId) return true;
       // Offline workers only when asked (the come-online wave), never for an offer.
-      return working.has(id) && (includeOffline || live.has(id));
+      return working.has(id) && (free.has(id) || busy.has(id)) && (includeOffline || live.has(id));
     })
+    // Mid-job workers only when nobody free can look at it.
+    .filter((a, _, all) => !a.workerId || free.has(String(a.workerId))
+      || !all.some((x) => x.workerId && free.has(String(x.workerId))))
     .map((a) => ({ ...a, live: !!a.shopId || live.has(String(a.workerId)) }))
     .sort((x, y) => (x.distanceKm ?? 99) - (y.distanceKm ?? 99) || (profile.get(String(y.workerId || y.shopId))?.rating || 0) - (profile.get(String(x.workerId || x.shopId))?.rating || 0));
 }
