@@ -92,6 +92,13 @@ router.post('/onboarding/complete', authenticate, requireRole('worker'),
 router.get('/me/avatar', authenticate, requireRole('worker'), ctrl.streamAvatar);
 router.get('/nearby', authenticate, nearbyLimiter, ctrl.getNearbyWorkers);
 router.get('/demand-zones', authenticate, requireRole('worker'), ctrl.getDemandZones);
+// Where surge is on (or nobody is) for the services this worker does, near them (jobs/surge).
+router.get('/hot-zones', authenticate, requireRole('worker'), async (req, res, next) => {
+  try {
+    const lat = parseFloat(req.query.lat); const lng = parseFloat(req.query.lng);
+    res.json(await require('../jobs/surge').hotZonesFor({ workerId: req.auth.sub, lat: Number.isFinite(lat) ? lat : undefined, lng: Number.isFinite(lng) ? lng : undefined }));
+  } catch (err) { next(err); }
+});
 
 /* Shift Slots — predictive availability */
 router.get('/shifts', authenticate, requireRole('worker'), ctrl.getShifts);

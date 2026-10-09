@@ -155,7 +155,7 @@ export default function JobOfferAlert({ offer, myLocation, onAccept, onDecline, 
                 </p>
                 <p className="mt-0.5 text-[18px] font-bold tabular-nums text-navy">{formatPaise(offer.valuePaise)}</p>
                 {offer.surgePaise > 0 && (
-                  <p className="text-[11px] font-semibold tabular-nums text-orange-600">incl. +{formatPaise(offer.surgePaise)} surge (busy / rain / night)</p>
+                  <p className="text-[11px] font-semibold tabular-nums text-orange-600">incl. +{formatPaise(offer.surgePaise)} surge, yours</p>
                 )}
                 {boost > 0 && (
                   <p className="text-[11px] font-semibold tabular-nums text-amber-700">

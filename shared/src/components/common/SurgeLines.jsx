@@ -4,15 +4,15 @@ import { useSurgeQuoteQuery } from '../../services/api';
 import { formatPaise } from '../../utils/money';
 
 /**
- * What is added to a price right now, and why — one line per reason (jobs/surge):
- * busy area, peak hours, weekend, rain, late night. The amounts are held for a
+ * What is added to a price right now (jobs/surge): Surge fee, Rain fee,
+ * Late-night fee — plain names; tap a line for why. The amounts are held for a
  * few minutes (the lock); the booking pays exactly these.
  *
  * useSurge() fetches the quote for a price screen; <SurgeLines> shows it.
  * Pass the quote's id with the booking (surgeQuoteId) and its base (surgeBasePaise).
  */
-const ICON = { busy: Flame, peak: Clock, weekend: CalendarDays, rain: CloudRain, night: Moon };
-const TONE = { busy: 'text-orange-600', peak: 'text-amber-600', weekend: 'text-violet-600', rain: 'text-sky-600', night: 'text-indigo-600' };
+const ICON = { surge: Flame, busy: Flame, peak: Clock, weekend: CalendarDays, rain: CloudRain, night: Moon };
+const TONE = { surge: 'text-orange-600', busy: 'text-orange-600', peak: 'text-amber-600', weekend: 'text-violet-600', rain: 'text-sky-600', night: 'text-indigo-600' };
 
 export function useSurge({ kind, line, vertical, serviceMode, loc, basePaise, skip = false }) {
   const ok = !skip && !!kind && typeof loc?.lat === 'number' && basePaise != null;

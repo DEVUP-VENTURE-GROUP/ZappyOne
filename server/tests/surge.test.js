@@ -50,7 +50,7 @@ test('off by default: no lines, no lock', async () => {
 test('lines: busy capped by the ceiling, rain and night flat, all of it never above the price', () => {
   const s = { ...config.SURGE_DEFAULTS, ceilingPaise: 15000, nightStartHour: 22, nightEndHour: 6 };
   const big = surge.linesFor(100000, { busy: 1.3, rainPaise: 3000, nightPaise: 2000 }, s);
-  expect(big.lines.map((l) => [l.type, l.paise])).toEqual([['busy', 15000], ['rain', 3000], ['night', 2000]]);
+  expect(big.lines.map((l) => [l.type, l.label, l.paise])).toEqual([['surge', 'Surge fee', 15000], ['rain', 'Rain fee', 3000], ['night', 'Late-night fee', 2000]]);
   expect(big.total).toBe(20000);
   const small = surge.linesFor(2000, { busy: 1, rainPaise: 3000, nightPaise: 2000 }, s);
   expect(small.total).toBeLessThanOrEqual(2000);
@@ -76,7 +76,20 @@ test('a zone surges only with demand AND someone nearby to pull in, in small ste
 
   const q = await surge.quote({ kind: 'helping', line, ...AT, basePaise: 20000 });
   expect(q.quoteId).toBeTruthy();
-  expect(q.lines.find((l) => l.type === 'busy').paise).toBe(2000);
+  expect(q.lines.find((l) => l.type === 'surge').paise).toBe(2000);
+});
+
+test('hot zones: a worker approved for the line sees the surging zone near them; others see nothing', async () => {
+  const { ProviderEnrolment } = require('../src/modules/onboarding/onboarding.model');
+  const me = new mongoose.Types.ObjectId();
+  await ProviderEnrolment.create({ workerId: me, providerKind: 'individual', domainCode: 'helping_services', lineCode: 'shopping_pickup', status: 'approved' });
+  const hot = await surge.hotZonesFor({ workerId: me, lat: AT.lat + 0.02, lng: AT.lng });
+  expect(hot.on).toBe(true);
+  expect(hot.sharePct).toBe(60);
+  expect(hot.zones[0]).toMatchObject({ line: 'shopping_pickup', multiplier: 1.1 });
+  expect(hot.zones[0].km).toBeGreaterThan(1);
+  const other = await surge.hotZonesFor({ workerId: new mongoose.Types.ObjectId(), lat: AT.lat, lng: AT.lng });
+  expect(other.zones).toHaveLength(0);
 });
 
 test('booking pays the locked quote; split 60/40; an expired quote with a moved price is refused first', async () => {

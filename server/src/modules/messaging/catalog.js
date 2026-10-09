@@ -206,6 +206,17 @@ const CATALOG = {
     sample: () => ({ label: 'repair', km: 3.1 }),
     build: ({ label, km }) => ({ push: { title: `A ${label} job near you is waiting`, body: `${km != null ? `${Number(km).toFixed(1)} km away. ` : ''}Nobody has taken it yet. Go online to take it.`, link: '/worker' } }),
   },
+  'provider.surge_zone': {
+    audience: 'provider', type: 'job_reminder', channels: ['push'], urgent: false, label: 'Busy zone near you (surge on)',
+    sample: () => ({ service: 'Shopping & pickup', area: 'Madhapur', km: 2.4, sharePct: 60 }),
+    build: ({ service, area, km, sharePct }) => ({
+      push: {
+        title: `Surge on${area ? ` in ${area}` : ' near you'}`,
+        body: `${service || 'Jobs'}: more bookings than pros${km != null ? `, ${Number(km).toFixed(1)} km away` : ''}. You keep ${sharePct}% of the surge. Head there to earn more.`,
+        link: '/worker',
+      },
+    }),
+  },
   'provider.job_cancelled': {
     audience: 'provider', type: 'job_removed', channels: ['push'], urgent: true, label: 'Customer cancelled',
     sample: () => sampleJob(),

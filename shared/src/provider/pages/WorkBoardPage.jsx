@@ -4,6 +4,10 @@ import toast from 'react-hot-toast';
 import { formatPaise } from '../../utils/money';
 import { useProviderJobs } from '../useProviderJobs';
 import DuesCard from '../DuesCard';
+import HotZonesCard from '../../components/worker/HotZonesCard';
+import { useGetWorkerMeQuery } from '../../services/api';
+import { useSelector } from 'react-redux';
+import { selectRole } from '../../modules/auth/authSlice';
 
 /**
  * Work — everything a provider holds, and everything open near them that
@@ -92,6 +96,9 @@ function OpenCard({ job, busy, onTake }) {
 export default function WorkBoardPage({ kinds }) {
   const nav = useNavigate();
   const { mine, open, notApproved, isLoading, taking, take, refetch } = useProviderJobs({ kinds });
+  // A worker's own position for the surge zones card; a shop owner has none.
+  const isWorker = useSelector(selectRole) === 'worker';
+  const { data: me } = useGetWorkerMeQuery(undefined, { skip: !isWorker });
 
   async function onTake(job) {
     try {
@@ -118,6 +125,7 @@ export default function WorkBoardPage({ kinds }) {
 
       <main className="mx-auto flex max-w-3xl flex-col gap-7 px-4 py-5 sm:py-7">
         <DuesCard compact />
+        {isWorker && <HotZonesCard coords={me?.worker?.currentLocation?.coordinates} />}
         {isLoading && (
           <div className="flex justify-center py-16"><Loader2 size={24} className="animate-spin text-zappy-500" /></div>
         )}

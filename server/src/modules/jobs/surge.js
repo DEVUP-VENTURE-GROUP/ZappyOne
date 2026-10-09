@@ -182,6 +182,8 @@ async function tick({ now = Date.now() } = {}) {
       const next = Math.round((target > prev ? Math.min(target, prev + STEP) : Math.max(target, prev - STEP)) * 100) / 100;
       const v = { multiplier: next, target, demand, supply: have, at: now, noSupply: have === 0 && demand > 0 };
       await redis.set(k(`v:${line}:${zone}`), JSON.stringify(v), 'EX', STALE_SEC);
+      // Just started surging: tell free pros nearby, once per zone per 30 min (supply follows the money).
+      if (next > 1 && prev <= 1) callFreeProsIn(line, zone, s).catch(() => {});
       let center = null;
       try { center = h3.cellToLatLng(zone); } catch { /* fallback zone ids have no centre */ }
       if (center) points.push(center);
@@ -191,6 +193,62 @@ async function tick({ now = Date.now() } = {}) {
   await redis.set(k('snapshot'), JSON.stringify({ at: now, zones: snapshot }), 'EX', 600);
   await redis.set(k('points'), JSON.stringify(points.slice(0, 200)), 'EX', 1800);
   return { zones: snapshot.length };
+}
+
+const CALL_KM = 6;
+/** Free, online pros approved for this line within CALL_KM of a zone that just started surging. */
+async function callFreeProsIn(line, zone, s) {
+  const { redis } = r();
+  const once = await redis.set(k(`called:${line}:${zone}`), '1', 'EX', 1800, 'NX');
+  if (!once) return 0;
+  const [lat, lng] = h3.cellToLatLng(zone);
+  const providers = await require('../onboarding/eligibility').approvedProviders(line);
+  const ids = providers.filter((p) => p.kind === 'worker').map((p) => p.id);
+  const [live, load, workers] = await Promise.all([
+    require('../worker/presence').liveIds(ids),
+    require('./workload').classify(ids),
+    require('../worker/worker.model').find({ _id: { $in: ids } }).select('currentLocation').lean(),
+  ]);
+  const { haversineKm } = require('../../core/geo/distance');
+  const area = await require('../onboarding/onboarding.model').ServiceLine.findOne({ code: line }).select('name').lean();
+  const place = process.env.NODE_ENV === 'test' ? null : await require('../maps/google-maps.service').reverseGeocode(lat, lng).then((g) => g?.locality || g?.sublocality || g?.area || null).catch(() => null);
+  let told = 0;
+  for (const w of workers) {
+    const id = String(w._id);
+    const c = w.currentLocation?.coordinates;
+    if (!live.has(id) || !load.free.has(id) || c?.length !== 2) continue;
+    const km = haversineKm(c[1], c[0], lat, lng);
+    if (km > CALL_KM || areaOf(zone).includes(zoneOf(c[1], c[0]))) continue; // already there
+    await require('../messaging/send').send('provider.surge_zone', {
+      to: { kind: 'worker', id }, refId: `surge:${zone}:${Math.floor(Date.now() / 1800000)}`,
+      ctx: { service: area?.name || line.replace(/_/g, ' '), area: place, km, sharePct: s.providerSharePct },
+    }).catch(() => {});
+    told += 1;
+  }
+  return told;
+}
+
+/**
+ * Hot zones for one worker: where the services they are approved for are
+ * surging (or have nobody) near them right now, nearest first. From the
+ * engine's last minute (no extra reads of demand).
+ */
+async function hotZonesFor({ workerId, lat, lng, km = 15 }) {
+  const { s } = await settings();
+  const lines = await require('../onboarding/eligibility').approvedLines({ role: 'worker', id: workerId });
+  const { zones: all } = await zones();
+  const { haversineKm } = require('../../core/geo/distance');
+  const names = new Map((await require('../onboarding/onboarding.model').ServiceLine.find({ code: { $in: [...lines] } }).select('code name').lean()).map((l) => [l.code, l.name]));
+  const out = all
+    .filter((z) => lines.has(z.line) && z.lat != null && (z.multiplier > 1 || z.noSupply))
+    .map((z) => ({
+      line: z.line, service: names.get(z.line) || z.line.replace(/_/g, ' '), lat: z.lat, lng: z.lng,
+      km: typeof lat === 'number' ? Math.round(haversineKm(lat, lng, z.lat, z.lng) * 10) / 10 : null,
+      multiplier: z.multiplier, demand: z.demand, supply: z.supply, nobody: !!z.noSupply,
+    }))
+    .filter((z) => z.km == null || z.km <= km)
+    .sort((a, b) => (b.multiplier - a.multiplier) || ((a.km ?? 99) - (b.km ?? 99)));
+  return { on: s.enabled && !s.killSwitch, sharePct: s.providerSharePct, zones: out.slice(0, 8) };
 }
 
 /** Every 10 minutes: weather where people are booking (jobs/weather). */
@@ -235,18 +293,25 @@ async function factorsNow({ line, lat, lng, at = new Date() }) {
   };
 }
 
-/** The lines and amounts for a base price, from a set of factors. */
+/**
+ * The lines and amounts for a base price, from a set of factors. Three lines
+ * at most, in words customers already know from other apps:
+ *   Surge fee       busy area, peak hours, weekend — one line, within the ceiling
+ *   Rain fee        flat, only when it is raining at the door
+ *   Late-night fee  flat, at night
+ * The why sits behind the line (`reason`), not in its name.
+ */
 function linesFor(base, f, s) {
-  const pct = [];
-  if (f.busy > 1) pct.push({ type: 'busy', label: 'High demand nearby', reason: 'More bookings than pros nearby right now', paise: base * (f.busy - 1) });
-  if (f.peak) pct.push({ type: 'peak', label: f.peak.label, reason: 'A busy time of day', paise: base * (f.peak.m - 1) });
-  if (f.weekend) pct.push({ type: 'weekend', label: 'Weekend', reason: 'Weekends are in demand', paise: base * (f.weekend - 1) });
-  // Busy, peak and weekend together never above the ceiling: scaled down evenly.
-  const sum = pct.reduce((a, l) => a + l.paise, 0);
-  const scale = sum > s.ceilingPaise ? s.ceilingPaise / sum : 1;
-  const lines = pct.map((l) => ({ ...l, paise: Math.round(l.paise * scale) })).filter((l) => l.paise >= 100);
-  if (f.rainPaise) lines.push({ type: 'rain', label: 'Raining', reason: 'Pros travel in the rain to reach you', paise: f.rainPaise });
-  if (f.nightPaise) lines.push({ type: 'night', label: 'Late night', reason: `Between ${s.nightStartHour}:00 and ${s.nightEndHour}:00`, paise: f.nightPaise });
+  const parts = [];
+  if (f.busy > 1) parts.push(['More bookings than pros nearby right now', base * (f.busy - 1)]);
+  if (f.peak) parts.push([`${f.peak.label || 'Peak hours'}`, base * (f.peak.m - 1)]);
+  if (f.weekend) parts.push(['Weekend demand', base * (f.weekend - 1)]);
+  const lines = [];
+  const raw = parts.reduce((a, [, p]) => a + p, 0);
+  const surgePaise = Math.round(Math.min(raw, s.ceilingPaise));
+  if (surgePaise >= 100) lines.push({ type: 'surge', label: 'Surge fee', reason: parts.map(([r]) => r).join(' · '), paise: surgePaise });
+  if (f.rainPaise) lines.push({ type: 'rain', label: 'Rain fee', reason: 'It is raining where you are; pros travel in it to reach you', paise: f.rainPaise });
+  if (f.nightPaise) lines.push({ type: 'night', label: 'Late-night fee', reason: `Bookings between ${s.nightStartHour}:00 and ${s.nightEndHour}:00`, paise: f.nightPaise });
   // Never more than the price itself (≤ 2× in all).
   let total = lines.reduce((a, l) => a + l.paise, 0);
   if (base > 0 && total > base) {
@@ -479,5 +544,5 @@ async function report({ days = 7 } = {}) {
 
 module.exports = {
   zoneOf, recordDemand, tick, pollWeather, quote, precheck, attach, baseOf, markBooked, settleSurge, factorsNow, linesFor,
-  surgePaise, providerSurgePaise, zones, report, settings, isVisit, SurgeQuote,
+  surgePaise, providerSurgePaise, zones, report, settings, isVisit, SurgeQuote, hotZonesFor, callFreeProsIn,
 };

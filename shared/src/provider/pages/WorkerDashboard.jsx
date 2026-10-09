@@ -21,6 +21,7 @@ import { ZappyLogo } from '../../components/common/ZappyLogo';
 import WorkerOnboarding from './WorkerOnboarding';
 import DuesCard from '../DuesCard';
 import MyAreaChip from '../../components/worker/MyAreaChip';
+import HotZonesCard from '../../components/worker/HotZonesCard';
 import ProviderServicesCard from '../../components/provider/ProviderServicesCard';
 import { useProviderJobs } from '../useProviderJobs';
 import {
@@ -307,6 +308,8 @@ export default function WorkerDashboard() {
         )}
 
         <DuesCard />
+        {/* Where surge is on for their services: go there, earn more (jobs/surge). */}
+        {isOnline && <HotZonesCard coords={lastCoords} />}
 
         <div className="lg:hidden">
           <GreetingCard name={firstName} locationLabel={areaName} isOnline={isOnline} busy={toggling} disabled={!kycApproved} onToggle={toggleOnline} />

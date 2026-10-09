@@ -138,6 +138,8 @@ export const api = createApi({
     /** How soon someone can be at this spot for a service, before booking (jobs/arrival). */
     /** Surge lines + a 10-minute lock for a price screen (jobs/surge). */
     surgeQuote: b.query({ query: (params) => ({ url: '/jobs/surge-quote', params }), keepUnusedDataFor: 0 }),
+    /** Worker: where surge is on near them, for the services they do (jobs/surge). */
+    workerHotZones: b.query({ query: ({ lat, lng } = {}) => ({ url: '/workers/hot-zones', params: { lat, lng } }), keepUnusedDataFor: 30 }),
     jobArrival: b.query({ query: ({ line, lat, lng }) => ({ url: '/jobs/arrival', params: { line, lat, lng } }), keepUnusedDataFor: 30 }),
     /** Move a booking made for later (jobs/reschedule): repairs, pet care, helping. */
     rescheduleJob: b.mutation({ query: ({ id, scheduledAt }) => ({ url: `/jobs/${id}/reschedule`, method: 'POST', body: { scheduledAt } }), invalidatesTags: ['RepairBookings', 'PetBookings', 'HelpingTasks'] }),
@@ -2476,6 +2478,7 @@ export const {
   useRescheduleJobMutation,
   useJobArrivalQuery,
   useSurgeQuoteQuery,
+  useWorkerHotZonesQuery,
   useMyPendingCancelFeeQuery,
   useLensStatusQuery,
   useReportProviderAbsentMutation,
