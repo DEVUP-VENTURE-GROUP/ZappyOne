@@ -25,7 +25,12 @@ const { gatewayReady } = require('../../payment/payables');
 async function listBrands(req, res, next) {
   try {
     const cfg = await pricingService.getConfig(verticalOf(req));
-    const rows = await Brand.find({ category: verticalOf(req), isActive: true })
+    // Customers see only brands with at least one model to pick: an empty or
+    // duplicate brand ("Apple Mac" beside "Apple / MacBook") is a dead end.
+    // Providers see every brand — a shop can repair a brand we have not listed models for yet.
+    const provider = ['worker', 'shop', 'admin'].includes(req.auth?.role);
+    const withModels = provider ? null : await DeviceModel.distinct('brandCode', { isActive: true, ...verticalFilter(verticalOf(req)) });
+    const rows = await Brand.find({ category: verticalOf(req), isActive: true, ...(withModels && { code: { $in: withModels } }) })
       .sort({ sortOrder: 1, name: 1 })
       .select('code name logoUrl sortOrder')
       .lean();
@@ -59,8 +64,15 @@ async function listModels(req, res, next) {
       isActive: true,
       ...verticalFilter(verticalOf(req)),
     };
-    if (productTypeCode) filter.productTypeCode = String(productTypeCode).toLowerCase();
+    const and = [];
     if (familyCode) filter.familyCode = String(familyCode).toLowerCase();
+    else if (productTypeCode) {
+      // Models carry their type through their family (MacBook Air → macbook);
+      // matching only the model's own field returned nothing at all.
+      const pt = String(productTypeCode).toLowerCase();
+      const fams = await ProductFamily.distinct('code', { vertical: verticalOf(req), brandCode: filter.brandCode, productTypeCode: pt, isActive: true });
+      and.push({ $or: [{ productTypeCode: pt }, { familyCode: { $in: fams } }] });
+    }
     if (seriesCode) filter.seriesCode = String(seriesCode).toLowerCase();
 
     /**
@@ -71,14 +83,15 @@ async function listModels(req, res, next) {
      */
     if (q) {
       const pattern = rx(q);
-      filter.$and = [{
+      and.push({
         $or: [
           { name: pattern },
           { modelNumbers: pattern },
           { productNumbers: pattern },
         ],
-      }];
+      });
     }
+    if (and.length) filter.$and = and;
 
     const [models, total] = await Promise.all([
       DeviceModel.find(filter)
@@ -106,9 +119,17 @@ async function listModels(req, res, next) {
  */
 async function listProductTypes(req, res, next) {
   try {
-    const productTypes = await ProductType.find({
-      vertical: verticalOf(req), isActive: true, isArchived: false,
-    }).sort({ displayOrder: 1, name: 1 }).lean();
+    const filter = { vertical: verticalOf(req), isActive: true, isArchived: false };
+    // For a brand: only the types it actually makes (Apple → MacBook), never all of them.
+    if (req.query.brandCode) {
+      const brandCode = String(req.query.brandCode).toLowerCase();
+      const [fromFamilies, fromModels] = await Promise.all([
+        ProductFamily.distinct('productTypeCode', { vertical: verticalOf(req), brandCode, isActive: true }),
+        DeviceModel.distinct('productTypeCode', { brandCode, isActive: true, ...verticalFilter(verticalOf(req)) }),
+      ]);
+      filter.code = { $in: [...fromFamilies, ...fromModels].filter(Boolean) };
+    }
+    const productTypes = await ProductType.find(filter).sort({ displayOrder: 1, name: 1 }).lean();
 
     const signedTypes = await s3Service.signDocsMedia(productTypes);
     res.json({ productTypes: signedTypes, popular: signedTypes.filter((t) => t.isPopular) });

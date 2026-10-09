@@ -337,11 +337,19 @@ function BrandStep({ vertical, onPick }) {
  * MacBook's "battery replacement" and a gaming laptop's are different jobs
  * with different parts, skills and prices.
  */
-function DeviceTypeStep({ vertical, onPick }) {
-  const { data, isLoading } = useRepairProductTypesQuery(vertical);
-  if (isLoading) return <Spinner />;
-
+function DeviceTypeStep({ vertical, brand, onPick, onAuto }) {
+  // Only the types this brand makes; with just one, there is nothing to ask.
+  const { data, isLoading } = useRepairProductTypesQuery(brand?.code ? { vertical, brandCode: brand.code } : vertical);
   const types = data?.productTypes || [];
+  const only = !isLoading && types.length === 1 ? types[0] : null;
+  const none = !isLoading && types.length === 0;
+  useEffect(() => {
+    // Answered for them, and skipped so Back goes to the brand, not here again.
+    if (only) onAuto(only);
+    else if (none) onAuto(null);
+  }, [only, none]); // eslint-disable-line react-hooks/exhaustive-deps
+  if (isLoading || only || none) return <Spinner />;
+
   return (
     <Shell>
       <div className="grid grid-cols-2 gap-2.5">
@@ -1871,7 +1879,8 @@ function RepairFlow({ vertical, saved, draftKey, onStartOver }) {
         <BrandStep vertical={vertical} onPick={(b) => { setBrand(b); next('brand'); }} />
       )}
       {step === 'type' && (
-        <DeviceTypeStep vertical={vertical} onPick={(t) => { setProductType(t); next('type'); }} />
+        <DeviceTypeStep vertical={vertical} brand={brand} onPick={(t) => { setProductType(t); next('type'); }}
+          onAuto={(t) => { setProductType(t); skip('type'); }} />
       )}
       {step === 'family' && (
         <FamilyStep vertical={vertical} brand={brand} productType={productType}

@@ -1678,8 +1678,9 @@ export const api = createApi({
       providesTags: (r, e, vertical = 'mobile') => [{ type: 'RepairCatalog', id: `${vertical}:brands` }],
     }),
     repairProductTypes: b.query({
-      query: (vertical = 'mobile') => ({ url: '/repair/product-types', params: { vertical } }),
-      providesTags: (r, e, vertical = 'mobile') => [{ type: 'RepairCatalog', id: `${vertical}:product-types` }],
+      // vertical, or { vertical, brandCode } for the types that brand makes.
+      query: (arg = 'mobile') => ({ url: '/repair/product-types', params: typeof arg === 'string' ? { vertical: arg } : arg }),
+      providesTags: (r, e, arg = 'mobile') => [{ type: 'RepairCatalog', id: `${typeof arg === 'string' ? arg : `${arg.vertical}:${arg.brandCode}`}:product-types` }],
     }),
     repairFamilies: b.query({
       query: ({ brandCode, productTypeCode, vertical = 'mobile' }) => ({
