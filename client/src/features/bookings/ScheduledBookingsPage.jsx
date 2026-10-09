@@ -3,11 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import {
-  ArrowLeft, CalendarDays, Clock, ChevronRight, X, Loader2, CalendarPlus, CalendarClock, Radio, Wrench,
+  ArrowLeft, CalendarDays, Clock, ChevronRight, X, Loader2, CalendarPlus, CalendarClock, Radio, Wrench, Repeat2,
   Smartphone, PawPrint, ShoppingBag, PartyPopper, MapPin,
 } from 'lucide-react';
 import {
   useRescheduleOrderMutation, useGetEventBookingsQuery, useJobOptionsQuery, useRescheduleJobMutation,
+  useMyRepeatsQuery, useRepeatActionMutation,
 } from '@shared/services/api';
 import { useSafeBack } from '../../hooks/useBookingFlow';
 import { useMyJobs } from './useMyJobs';
@@ -116,8 +117,10 @@ export default function ScheduledBookingsPage() {
     return out;
   }, [ahead]);
 
+  const { data: repeatData } = useMyRepeatsQuery();
+  const repeats = repeatData?.plans || [];
   const loading = isLoading || eventsLoading;
-  const empty = !loading && !live.length && !ahead.length;
+  const empty = !loading && !live.length && !ahead.length && !repeats.length;
 
   return (
     <div className="min-h-screen bg-slate-50 pb-16">
@@ -173,6 +176,13 @@ export default function ScheduledBookingsPage() {
                 </div>
               </section>
             ))}
+
+            {repeats.length > 0 && (
+              <section>
+                <SectionTitle Icon={Repeat2}>Repeats</SectionTitle>
+                <div className="space-y-2">{repeats.map((p) => <RepeatRow key={p._id} plan={p} />)}</div>
+              </section>
+            )}
 
             <PlanAhead onBook={(href) => nav(href)} />
           </>
@@ -411,6 +421,37 @@ function MoveSheet({ item, onClose }) {
         )}
       </motion.div>
     </motion.div>
+  );
+}
+
+/** A repeat (jobs/recurring): how often, the next one, and skip / pause / resume / stop. */
+function RepeatRow({ plan }) {
+  const [act, { isLoading }] = useRepeatActionMutation();
+  const run = async (action, done) => {
+    try { await act({ planId: plan._id, action }).unwrap(); toast.success(done); } catch (err) { toast.error(err?.data?.error || 'Could not change it'); }
+  };
+  const paused = plan.status === 'paused';
+  return (
+    <div className="rounded-2xl bg-white p-3.5 ring-1 ring-slate-100">
+      <div className="flex items-start gap-3">
+        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${paused ? 'bg-slate-100 text-slate-400' : 'bg-zappy-50 text-zappy-600'}`}><Repeat2 size={18} /></span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-[14px] font-semibold capitalize text-navy">{plan.title}</span>
+          <span className="block text-[12px] text-slate-500">
+            {plan.everyLabel[0].toUpperCase() + plan.everyLabel.slice(1)} · {paused ? 'paused' : `next ${plan.nextLabel}`}
+          </span>
+          {plan.lastError && !paused && <span className="block text-[11.5px] text-amber-700">Last try did not go through; we will try again.</span>}
+        </span>
+        {isLoading && <Loader2 size={16} className="animate-spin text-slate-400" />}
+      </div>
+      <div className="mt-2.5 flex flex-wrap gap-1.5">
+        {!paused && <button type="button" disabled={isLoading} onClick={() => run('skip', 'Next one skipped')} className="rounded-full border border-slate-200 px-3 py-1 text-[12px] font-semibold text-slate-700">Skip next</button>}
+        {paused
+          ? <button type="button" disabled={isLoading} onClick={() => run('resume', 'Repeat resumed')} className="rounded-full border border-zappy-300 px-3 py-1 text-[12px] font-semibold text-zappy-700">Resume</button>
+          : <button type="button" disabled={isLoading} onClick={() => run('pause', 'Repeat paused')} className="rounded-full border border-slate-200 px-3 py-1 text-[12px] font-semibold text-slate-700">Pause</button>}
+        <button type="button" disabled={isLoading} onClick={() => run('stop', 'Repeat stopped')} className="rounded-full border border-red-200 px-3 py-1 text-[12px] font-semibold text-red-700">Stop</button>
+      </div>
+    </div>
   );
 }
 

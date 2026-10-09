@@ -11,6 +11,7 @@ import AssignTechnician from '../components/AssignTechnician';
 import ProofPhotos, { readyKeys } from '../../components/common/ProofPhotos';
 import CollectPaymentCard from '../../components/common/CollectPaymentCard';
 import { formatPaise, billTipPaise, surgeOnBill } from '../../utils/money';
+import RateCustomerCard from '../../components/worker/RateCustomerCard';
 import TripSharingBanner from '../../components/worker/TripSharingBanner';
 import { useStartCodeGate } from '../../components/worker/StartCodePrompt';
 import SOSButton from '../../components/worker/SOSButton';
@@ -207,6 +208,9 @@ export default function WorkerPetJobPage() {
             collecting={collecting}
             onCollect={recordCash}
           />
+        )}
+        {['SERVICE_COMPLETED', 'CUSTOMER_CONFIRMATION', 'PAYMENT_PENDING', 'PAYMENT_COMPLETED', 'CLOSED'].includes(booking.status) && (
+          <RateCustomerCard jobId={booking._id} rated={!!booking.customerRating?.stars} />
         )}
         {/* Safety: on every live job, one hold away. */}
         {!ownerWatching && ['PROVIDER_ACCEPTED', 'PROVIDER_EN_ROUTE', 'PROVIDER_ARRIVED', 'PET_HANDOVER', 'SERVICE_STARTED', 'SERVICE_PAUSED'].includes(booking.status) && (

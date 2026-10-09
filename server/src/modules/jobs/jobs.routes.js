@@ -245,6 +245,44 @@ router.get('/surge-quote',
     } catch (err) { next(err); }
   });
 
+/** The provider rates the customer after the job (jobs/customer-rating). */
+router.post('/:id/rate-customer',
+  authenticate, requireRole('worker', 'shop'),
+  makeLimiter({ windowMs: 60_000, max: 10, prefix: 'ratecust' }),
+  validate(Joi.object({
+    stars: Joi.number().integer().min(1).max(5).required(),
+    tags: Joi.array().items(Joi.string().max(40)).max(6).default([]),
+    note: Joi.string().trim().max(300).allow(''),
+  })),
+  async (req, res, next) => {
+    try {
+      const { kind } = await jobFor(req, '_id');
+      res.json(await require('./customer-rating').rate({ kind, id: req.params.id, role: req.auth.role, providerId: req.auth.sub, ...req.body }));
+    } catch (err) { next(err); }
+  });
+
+/* Repeats: a booking made again every week / 2 weeks / month / 3 months (jobs/recurring). */
+router.get('/recurring', authenticate, requireRole('user'), async (req, res, next) => {
+  try { res.json({ plans: await require('./recurring').mine(req.auth.sub) }); } catch (err) { next(err); }
+});
+router.post('/:id/repeat',
+  authenticate, requireRole('user'),
+  validate(Joi.object({ every: Joi.string().valid('week', '2weeks', 'month', '3months').required(), endAfter: Joi.number().integer().min(1).max(52).allow(null) })),
+  async (req, res, next) => {
+    try {
+      const { kind } = await jobFor(req, '_id');
+      res.status(201).json(await require('./recurring').create({ kind, bookingId: req.params.id, userId: req.auth.sub, ...req.body }));
+    } catch (err) { next(err); }
+  });
+router.post('/recurring/:planId/:action',
+  authenticate, requireRole('user'),
+  async (req, res, next) => {
+    try {
+      if (!['skip', 'pause', 'resume', 'stop'].includes(req.params.action)) return res.status(400).json({ error: 'Unknown action' });
+      res.json({ plan: await require('./recurring').act({ id: req.params.planId, userId: req.auth.sub, action: req.params.action }) });
+    } catch (err) { next(err); }
+  });
+
 /** Move a booking made for later, before the provider sets off (jobs/reschedule). */
 router.post('/:id/reschedule',
   authenticate, requireRole('user'),

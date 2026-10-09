@@ -19,6 +19,7 @@ import { staggerContainer, fadeInUp } from '../../lib/animations';
 import StartCodeCard from './StartCodeCard';
 import JobBoostCard from './cards/JobBoostCard';
 import JobTipCard from './cards/JobTipCard';
+import RepeatCard from './cards/RepeatCard';
 import JobChat from '@shared/components/jobs/JobChat';
 import { useJobOptionsQuery, useReportProviderAbsentMutation } from '@shared/services/api';
 import { useSelector } from 'react-redux';
@@ -225,6 +226,11 @@ export default function JobTrackingPage({ job, extras = null, startCode = null, 
           )}
 
           {extras}
+
+          {/* The same booking on a schedule (jobs/recurring): repairs/services and helping. */}
+          {['repair', 'helping'].includes(job.kind) && status === 'completed' && (
+            <RepeatCard jobId={job.id} noun={job.noun === 'helper' ? 'task' : 'booking'} />
+          )}
 
           {/* At the bill (optional tip, total with it in), or after the job. */}
           {(status === 'completed' || options?.tip?.beforePayment) && (

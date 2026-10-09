@@ -465,7 +465,7 @@ async function previewPrice(req, res, next) {
 
 async function findProviders(req, res, next) {
   try {
-    const { repairCode, brandCode, modelCode, qualityCode, serviceMode = 'doorstep', lat, lng, pincode, cityCode } = req.query;
+    const { repairCode, brandCode, modelCode, qualityCode, serviceMode = 'doorstep', lat, lng, pincode, cityCode, scheduledAt } = req.query;
     if (!repairCode || lat == null || lng == null) {
       return res.status(400).json({ error: 'repairCode, lat and lng are required', code: 'PARAMS_REQUIRED' });
     }
@@ -478,6 +478,7 @@ async function findProviders(req, res, next) {
       lat: Number(lat), lng: Number(lng),
       pincode: pincode || null,
       cityCode: cityCode || null,
+      scheduledAt: scheduledAt && !Number.isNaN(new Date(scheduledAt).getTime()) ? new Date(scheduledAt) : null,
     });
 
     // Internal scoring never leaves the server (§71).

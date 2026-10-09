@@ -22,6 +22,7 @@ import LocationPicker from '@shared/modules/booking/LocationPicker';
 import { doorAddress } from '@shared/utils/doorAddress';
 import ArrivalBadge from '@shared/components/common/ArrivalBadge';
 import SurgeLines, { useSurge, surgeChanged } from '@shared/components/common/SurgeLines';
+import SlotPicker, { slotLabel } from '@shared/components/common/SlotPicker';
 import toast from 'react-hot-toast';
 import GrowingHere from '../catalog/serviceability/GrowingHere';
 import { PayMethodPicker } from '@shared/components/common/PayMethodPicker';
@@ -868,9 +869,31 @@ function ModeStep({ diagnosis, inspectionFeePaise, onPick }) {
  * another. Once there is a pin, the page turns into the thing worth reading:
  * what they chose, then who can actually do it and at what price.
  */
+/** As soon as possible, or a time later (SlotPicker). */
+function WhenChooser({ value, onChange }) {
+  const [open, setOpen] = useState(!!value);
+  return (
+    <div className="card space-y-2.5">
+      <p className="text-xs font-bold uppercase tracking-wide text-slate-500">When</p>
+      <div className="grid grid-cols-2 gap-2">
+        <button type="button" onClick={() => { setOpen(false); onChange(null); }}
+          className={`rounded-xl border-2 py-2.5 text-sm font-bold ${!value && !open ? 'border-zappy-600 bg-zappy-50 text-zappy-700' : 'border-slate-200 text-slate-600'}`}>
+          As soon as possible
+        </button>
+        <button type="button" onClick={() => setOpen(true)}
+          className={`rounded-xl border-2 py-2.5 text-sm font-bold ${value || open ? 'border-zappy-600 bg-zappy-50 text-zappy-700' : 'border-slate-200 text-slate-600'}`}>
+          {value ? slotLabel(value) : 'Pick a time'}
+        </button>
+      </div>
+      {open && <SlotPicker value={value} onChange={onChange} />}
+    </div>
+  );
+}
+
 function ProviderStep({
   vertical, diagnosis, model, brand, configuration, problem,
   location, hasLocation, serviceMode, onPick, onInspectInstead, pinConfirmed = true, onPinConfirmed,
+  scheduledAt = null, onWhen,
 }) {
   const dispatch = useDispatch();
   // Map first: the customer checks the pin before seeing who can come.
@@ -892,6 +915,8 @@ function ProviderStep({
       serviceMode,
       lat: location.lat,
       lng: location.lng,
+      // Later: whoever's hours cover that time, online now or not (jobs/work-hours).
+      ...(scheduledAt && { scheduledAt: new Date(scheduledAt).toISOString() }),
     },
     // An inspection needs no priced provider — any capable technician can look
     // at the device, so provider matching is skipped entirely for that path.
@@ -1034,6 +1059,9 @@ function ProviderStep({
         problem={problem} diagnosis={diagnosis} serviceMode={serviceMode}
         location={location} onChangeLocation={() => setPicking(true)}
       />
+
+      {/* When: now, or a time later (pros whose hours cover it, online or not). */}
+      {onWhen && <WhenChooser value={scheduledAt} onChange={onWhen} />}
 
       {needsDiagnosis && (
         <div className="card bg-zappy-50 ring-zappy-100">
@@ -1450,7 +1478,7 @@ function AddOnsStep({
 function ConfirmStep({
   vertical, brand, model, configuration, problem, diagnosis, provider, repairCode,
   qualityCode, serviceMode, inspectionFeePaise, location, onDone, fuelType,
-  diagnosticAnswers, diagnosticTranscript = [], addOnCodes = [],
+  diagnosticAnswers, diagnosticTranscript = [], addOnCodes = [], scheduledAt = null,
 }) {
   const [create, { isLoading }] = useCreateRepairBookingMutation();
   // A stable key per attempt so a double-tap cannot create two bookings (§46).
@@ -1517,6 +1545,7 @@ function ConfirmStep({
         paymentMethod: onlineEnabled ? paymentMethod : 'cash',
         idempotencyKey,
         ...surge.bookingFields,
+        ...(scheduledAt && { scheduledAt: new Date(scheduledAt).toISOString(), slotLabel: slotLabel(scheduledAt) }),
       }).unwrap();
       toast.success('Booking confirmed');
       // A fixed price is paid now; a diagnosis-first job is paid once its quote is approved.
@@ -1549,6 +1578,7 @@ function ConfirmStep({
             : (diagnosis?.recommendations?.[0]?.name || 'To be confirmed after diagnosis')],
           ['Provider', provider?.name || 'Assigned for you'],
           ['Service', MODE_LABEL[serviceMode] || serviceMode],
+          ['When', scheduledAt ? slotLabel(scheduledAt) : 'As soon as possible'],
         ].map(([k, v]) => (
           <div key={k} className="flex items-start justify-between gap-3">
             <span className="text-xs text-slate-500">{k}</span>
@@ -1685,6 +1715,8 @@ function RepairFlow({ vertical, saved, draftKey, onStartOver }) {
   const [qualityCode, setQualityCode] = useState(null);
   const [addOnCodes, setAddOnCodes] = useState([]);
   const [serviceMode, setServiceMode] = useState(saved?.serviceMode ?? 'doorstep');
+  // Null = as soon as possible; a Date = booked for then.
+  const [when, setWhen] = useState(null);
   const [fuelType, setFuelType] = useState(saved?.fuelType ?? null);
 
   /*
@@ -1891,6 +1923,8 @@ function RepairFlow({ vertical, saved, draftKey, onStartOver }) {
           location={loc} hasLocation={hasLocation}
           pinConfirmed={pinConfirmed} onPinConfirmed={() => setPinConfirmed(true)}
           serviceMode={serviceMode}
+          scheduledAt={when}
+          onWhen={(t) => { setWhen(t); setProvider(null); }}
           onInspectInstead={() => setServiceMode('diagnosis_only')}
           onPick={(p, code, quality) => {
             setProvider(p);
@@ -1930,7 +1964,7 @@ function RepairFlow({ vertical, saved, draftKey, onStartOver }) {
           addOnCodes={addOnCodes}
           diagnosticAnswers={diagnosticAnswers} diagnosticTranscript={diagnosticTranscript}
           serviceMode={serviceMode} inspectionFeePaise={inspectionFeePaise}
-          fuelType={fuelType}
+          fuelType={fuelType} scheduledAt={when}
           onDone={(b) => { clearDraft(draftKey); nav(`/repair/bookings/${b._id}`, { replace: true }); }}
         />
       )}

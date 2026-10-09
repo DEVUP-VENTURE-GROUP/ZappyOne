@@ -121,6 +121,13 @@ const workerSchema = new mongoose.Schema(
       accuracyM: { type: Number, default: null },
     },
     currentOrderId: { type: mongoose.Schema.Types.ObjectId, ref: 'Order', default: null },
+    /** The hours they take work and their days off (jobs/work-hours). Unset = no rule. */
+    workHours: {
+      setAt: { type: Date, default: null },
+      acceptLater: { type: Boolean, default: true },
+      week: { type: [new mongoose.Schema({ day: Number, on: Boolean, from: String, to: String }, { _id: false })], default: undefined },
+      daysOff: { type: [String], default: undefined },
+    },
 
     // Optional affiliation with a verified local Shop (shop.model.js) — e.g. a
     // technician employed by "Sharma Mobile Repair". Purely a tag: dispatch's

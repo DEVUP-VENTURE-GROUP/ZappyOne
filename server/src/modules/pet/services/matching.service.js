@@ -163,6 +163,7 @@ async function findProviders({
   serviceLocation = null,
   checkInAt = null,
   checkOutAt = null,
+  scheduledAt = null,
   serviceAreaCode = null,
   weights = DEFAULT_WEIGHTS,
   limit = 20,
@@ -251,9 +252,13 @@ async function findProviders({
 
     const provider = cap.shopId
       ? await Shop.findById(cap.shopId).select('businessName phone rating reviewCount').lean()
-      : await Worker.findById(cap.workerId).select('name phone rating reviewCount completedJobs acceptanceRate').lean();
+      : await Worker.findById(cap.workerId).select('name phone rating reviewCount completedJobs acceptanceRate workHours').lean();
 
     if (!provider) { reject('profile_missing'); continue; }
+    // Their week leaves this time out, or they are off that day (jobs/work-hours).
+    if (cap.workerId && require('../../jobs/work-hours').covers(provider.workHours, scheduledAt || checkInAt) === false) {
+      reject('outside_hours'); continue;
+    }
 
     // No reviews yet: neutral for ranking, shown as new (never a default five stars).
     const rating = provider.reviewCount ? provider.rating || 0 : 4;

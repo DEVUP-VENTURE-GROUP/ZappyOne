@@ -16,6 +16,7 @@ import { useSelector } from 'react-redux';
 import { selectRole } from '../../modules/auth/authSlice';
 import AssignTechnician from '../components/AssignTechnician';
 import { formatPaise, billTipPaise, surgeOnBill } from '../../utils/money';
+import RateCustomerCard from '../../components/worker/RateCustomerCard';
 import { usePublishTripLocation, MOVING_STATUSES, tripOf } from '../../hooks/useLiveTrip';
 import TripSharingBanner from '../../components/worker/TripSharingBanner';
 import SOSButton from '../../components/worker/SOSButton';
@@ -612,6 +613,9 @@ export default function WorkerRepairJobPage() {
           completion bills the provider their commission on the basis that they
           were paid.
         */}
+        {/* Done: the provider rates the customer, once (jobs/customer-rating). */}
+        {booking.status === 'COMPLETED' && <RateCustomerCard jobId={booking._id} rated={!!booking.customerRating?.stars} />}
+
         {readyForPayment && (snap.totalPaise || 0) > 0 && (
           <div className={`card ${booking.paymentStatus === 'paid' ? 'ring-emerald-200 bg-emerald-50/40' : 'ring-amber-200 bg-amber-50/40'}`}>
             {booking.paymentStatus === 'paid' ? (

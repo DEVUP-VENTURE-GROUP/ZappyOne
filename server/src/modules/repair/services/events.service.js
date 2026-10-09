@@ -178,8 +178,12 @@ function announceOffer(booking) {
     windowSec: OFFER_WINDOW_SEC,
   };
 
-  if (booking.workerId) emitToWorker(booking.workerId, 'repair.offer', payload);
-  if (booking.shopId) emitToShop(booking.shopId, 'repair.offer', payload);
+  // With how providers have rated this customer (jobs/customer-rating).
+  require('../../jobs/customer-rating').summaryFor(booking.userId).catch(() => null).then((customer) => {
+    const out = { ...payload, customer };
+    if (booking.workerId) emitToWorker(booking.workerId, 'repair.offer', out);
+    if (booking.shopId) emitToShop(booking.shopId, 'repair.offer', out);
+  });
 }
 
 /** The job is no longer available — pull the alert off their screen. */

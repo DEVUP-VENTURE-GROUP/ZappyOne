@@ -126,7 +126,7 @@ export const api = createApi({
     'RepairCatalog', 'RepairConfig', 'RepairPricing', 'RepairRequests', 'RepairBookings', 'RepairProvider', 'MyAssets',
     'HelpingConfig', 'HelpingTasks', 'HelpingAvailable', 'AdminHelpingTasks',
     'PetCatalog', 'MyPets', 'PetBookings', 'PetAvailable', 'PetRecurring', 'AdminPetBookings', 'AdminPetPricing', 'AdminPetCapabilities',
-    'RepairIdentification', 'Onboarding', 'AdminBookings', 'ErrorIssues', 'Surge'],
+    'RepairIdentification', 'Onboarding', 'AdminBookings', 'ErrorIssues', 'Surge', 'IdCheck', 'WorkerHours', 'Repeats'],
   endpoints: (b) => ({
     // --- Auth ---
     // Messages between a customer and the provider on any job (jobs/job-chat).
@@ -140,6 +140,15 @@ export const api = createApi({
     surgeQuote: b.query({ query: (params) => ({ url: '/jobs/surge-quote', params }), keepUnusedDataFor: 0 }),
     /** Worker: where surge is on near them, for the services they do (jobs/surge). */
     workerHotZones: b.query({ query: ({ lat, lng } = {}) => ({ url: '/workers/hot-zones', params: { lat, lng } }), keepUnusedDataFor: 30 }),
+    /** Provider rates the customer after the job (jobs/customer-rating). */
+    rateCustomer: b.mutation({ query: ({ id, ...body }) => ({ url: `/jobs/${id}/rate-customer`, method: 'POST', body }), invalidatesTags: ['RepairBookings', 'PetBookings', 'HelpingTasks'] }),
+    /** Worker's week: hours and days off (jobs/work-hours). */
+    workerHours: b.query({ query: () => '/workers/me/hours', providesTags: ['WorkerHours'], keepUnusedDataFor: 0 }),
+    saveWorkerHours: b.mutation({ query: (body) => ({ url: '/workers/me/hours', method: 'PUT', body }), invalidatesTags: ['WorkerHours'] }),
+    /** Repeats for repair and helping bookings (jobs/recurring). */
+    myRepeats: b.query({ query: () => '/jobs/recurring', providesTags: ['Repeats'], keepUnusedDataFor: 0 }),
+    repeatJob: b.mutation({ query: ({ id, every, endAfter }) => ({ url: `/jobs/${id}/repeat`, method: 'POST', body: { every, endAfter } }), invalidatesTags: ['Repeats'] }),
+    repeatAction: b.mutation({ query: ({ planId, action }) => ({ url: `/jobs/recurring/${planId}/${action}`, method: 'POST' }), invalidatesTags: ['Repeats'] }),
     jobArrival: b.query({ query: ({ line, lat, lng }) => ({ url: '/jobs/arrival', params: { line, lat, lng } }), keepUnusedDataFor: 30 }),
     /** Move a booking made for later (jobs/reschedule): repairs, pet care, helping. */
     rescheduleJob: b.mutation({ query: ({ id, scheduledAt }) => ({ url: `/jobs/${id}/reschedule`, method: 'POST', body: { scheduledAt } }), invalidatesTags: ['RepairBookings', 'PetBookings', 'HelpingTasks'] }),
@@ -1542,6 +1551,11 @@ export const api = createApi({
       providesTags: ['Onboarding'],
     }),
     /** What this provider uploaded: identity once, then each service's application (onboarding/my-documents). */
+    /** Instant ID check (onboarding/idcheck): Aadhaar by OTP and PAN; manual review when not available. */
+    providerIdCheck: b.query({ query: () => '/provider/onboarding/id-check', providesTags: ['IdCheck'], keepUnusedDataFor: 0 }),
+    startAadhaarCheck: b.mutation({ query: (body) => ({ url: '/provider/onboarding/id-check/aadhaar', method: 'POST', body }) }),
+    submitAadhaarOtp: b.mutation({ query: (body) => ({ url: '/provider/onboarding/id-check/aadhaar/otp', method: 'POST', body }), invalidatesTags: ['IdCheck', 'Onboarding'] }),
+    verifyPanCheck: b.mutation({ query: (body) => ({ url: '/provider/onboarding/id-check/pan', method: 'POST', body }), invalidatesTags: ['IdCheck'] }),
     providerMyDocuments: b.query({
       query: () => '/provider/onboarding/my-documents',
       providesTags: ['Onboarding', 'Kyc'],
@@ -2472,11 +2486,15 @@ export const {
   useJobChatQuery,
   useJobOptionsQuery,
   useProviderMyDocumentsQuery,
+  useProviderIdCheckQuery, useStartAadhaarCheckMutation, useSubmitAadhaarOtpMutation, useVerifyPanCheckMutation,
   useAdminErrorPulseQuery, useAdminErrorLiveQuery, useAdminErrorIssuesQuery, useAdminErrorIssueQuery,
   useAdminPlanErrorIssueMutation, useAdminMessageErrorIssueMutation,
   useAdminArrivalReportQuery, useAdminWorkerLocationsQuery, useAdminSurgeQuery, useAdminUpdateSurgeMutation,
   useRescheduleJobMutation,
   useJobArrivalQuery,
+  useMyRepeatsQuery, useRepeatJobMutation, useRepeatActionMutation,
+  useWorkerHoursQuery, useSaveWorkerHoursMutation,
+  useRateCustomerMutation,
   useSurgeQuoteQuery,
   useWorkerHotZonesQuery,
   useMyPendingCancelFeeQuery,

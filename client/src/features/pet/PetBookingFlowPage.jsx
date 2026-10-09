@@ -200,6 +200,8 @@ function PetBookingFlow({ categoryCode, saved, draftKey, onStartOver }) {
         serviceLocation: loc ? { type: 'Point', coordinates: [loc.lng, loc.lat], address: doorAddress(loc) } : null,
         checkInAt: checkInAt || null,
         checkOutAt: checkOutAt || null,
+        // Only pros whose hours cover a visit booked for later.
+        scheduledAt: scheduledAt || null,
       }).unwrap();
       setStep('providers');
     } catch (err) {

@@ -92,6 +92,23 @@ router.post('/onboarding/complete', authenticate, requireRole('worker'),
 router.get('/me/avatar', authenticate, requireRole('worker'), ctrl.streamAvatar);
 router.get('/nearby', authenticate, nearbyLimiter, ctrl.getNearbyWorkers);
 router.get('/demand-zones', authenticate, requireRole('worker'), ctrl.getDemandZones);
+// My hours: the week they take work and the days off (jobs/work-hours).
+router.get('/me/hours', authenticate, requireRole('worker'), async (req, res, next) => {
+  try { res.json({ hours: (await require('./worker.model').findById(req.auth.sub).select('workHours').lean())?.workHours || null }); } catch (err) { next(err); }
+});
+router.put('/me/hours', authenticate, requireRole('worker'),
+  validate(Joi.object({
+    week: Joi.array().items(Joi.object({ day: Joi.number().integer().min(0).max(6).required(), on: Joi.boolean().required(), from: Joi.string().max(5), to: Joi.string().max(5) })).max(7).required(),
+    daysOff: Joi.array().items(Joi.string().max(10)).max(60).default([]),
+    acceptLater: Joi.boolean().default(true),
+  })),
+  async (req, res, next) => {
+    try {
+      const hours = require('../jobs/work-hours').clean(req.body);
+      await require('./worker.model').updateOne({ _id: req.auth.sub }, { $set: { workHours: hours } });
+      res.json({ hours, message: 'Saved. Bookings for later will come to you inside these hours.' });
+    } catch (err) { next(err); }
+  });
 // Where surge is on (or nobody is) for the services this worker does, near them (jobs/surge).
 router.get('/hot-zones', authenticate, requireRole('worker'), async (req, res, next) => {
   try {

@@ -363,6 +363,10 @@ function startMatchingWaves() {
   setInterval(() => {
     require("./modules/jobs/surge").pollWeather().catch((err) => logger.warn({ err: err.message }, "[WEATHER] poll failed"));
   }, 10 * 60 * 1000);
+  // Repeats (repair, helping): book every repeat due within a few days, hourly (jobs/recurring).
+  setInterval(() => {
+    require("./modules/jobs/recurring").generateDue().catch((err) => logger.warn({ err: err.message }, "[RECURRING] generation failed"));
+  }, 60 * 60 * 1000);
   logger.info("[WAVES] Finding-someone waves running (every minute)");
 }
 

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShieldCheck, Clock, XCircle, FileText, Camera, ChevronRight, X, Loader2, PauseCircle, PencilLine } from 'lucide-react';
 import { useProviderMyDocumentsQuery } from '../services/api';
+import InstantIdCheck from './InstantIdCheck';
 
 /**
  * What you gave us, and where each service stands — for a worker or a shop,
@@ -48,6 +49,9 @@ export default function MyVerificationPanel({ isShop = false, addServiceHref = '
           {isShop ? 'Your shop' : 'Your'} ID is checked once and reused for every service. Each service is approved on its own; only approved services bring jobs.
         </p>
       </div>
+
+      {/* Instant, when ZappyOne has a KYC provider; otherwise nothing here and the team reviews. */}
+      <InstantIdCheck />
 
       <section className="rounded-2xl bg-white p-4 ring-1 ring-slate-100">
         <div className="flex items-center justify-between gap-3">

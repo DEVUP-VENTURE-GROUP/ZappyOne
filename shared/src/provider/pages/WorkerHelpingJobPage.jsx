@@ -21,6 +21,7 @@ import {
   useCollectHelpingCashMutation,
 } from '../../services/api';
 import { formatPaise, billTipPaise } from '../../utils/money';
+import RateCustomerCard from '../../components/worker/RateCustomerCard';
 
 /**
  * Worker execution — §10, §11, §12, §13, §27, §28, §29.
@@ -219,6 +220,9 @@ export default function WorkerHelpingJobPage() {
             className="w-full rounded-2xl bg-emerald-600 text-white font-bold py-3.5 disabled:opacity-50">
             {completing ? 'Completing…' : 'Complete task'}
           </button>
+        )}
+        {['COMPLETED', 'CUSTOMER_CONFIRMED', 'SETTLED'].includes(task.status) && (
+          <RateCustomerCard jobId={task._id} rated={!!task.customerRating?.stars} />
         )}
         {/* Safety: on every live job, one hold away. */}
         {!['COMPLETED', 'CUSTOMER_CONFIRMED', 'SETTLED', 'CANCELLED', 'FAILED', 'DISPUTED'].includes(task.status) && (

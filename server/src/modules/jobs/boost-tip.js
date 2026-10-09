@@ -103,7 +103,7 @@ async function reRing(kind, doc) {
       // Offered to one provider: their offer rings again with the higher amount, and they are told.
       events.toProvider(holder.kind, holder.id, 'job.update', { kind, id, status: plain.status, boostPaise: boostPaise(plain), at: new Date().toISOString() });
       if (kind === 'repair') require('../repair/services/events.service').announceOffer(plain);
-      else if (KINDS[kind].offer?.status === plain.status) events.ringOffer(kind, plain);
+      else if (KINDS[kind].offer?.status === plain.status) await events.ringOffer(kind, plain);
       await events.push(holder, {
         title: `Customer added ${rupees(boostPaise(plain))}`,
         body: 'All of it is yours if you take this job.',

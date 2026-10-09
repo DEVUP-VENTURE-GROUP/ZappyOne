@@ -28,6 +28,22 @@ router.get('/domains', ...providerOnly, ctrl.listDomains);
 router.get('/lines', ...providerOnly, ctrl.listLines);
 router.get('/enrolments', ...providerOnly, ctrl.myEnrolments);
 router.get('/my-documents', ...providerOnly, ctrl.myDocuments);
+
+/* Instant ID check (onboarding/idcheck): automatic with a KYC provider's keys, manual review otherwise. */
+const idOwner = (req) => ({ kind: req.auth.role === 'shop' ? 'shop' : 'worker', id: req.auth.sub });
+const idLimiter = require('../../middlewares/rateLimit').makeLimiter({ windowMs: 60 * 60_000, max: 8, prefix: 'idcheck' });
+router.get('/id-check', ...providerOnly, async (req, res, next) => {
+  try { res.json(await require('./idcheck').statusFor(idOwner(req))); } catch (err) { next(err); }
+});
+router.post('/id-check/aadhaar', ...providerOnly, idLimiter, validate(Joi.object({ aadhaar: Joi.string().trim().min(12).max(14).required() })), async (req, res, next) => {
+  try { res.json(await require('./idcheck').startAadhaar({ owner: idOwner(req), aadhaar: req.body.aadhaar })); } catch (err) { next(err); }
+});
+router.post('/id-check/aadhaar/otp', ...providerOnly, idLimiter, validate(Joi.object({ checkId: Joi.string().hex().length(24).required(), otp: Joi.string().trim().length(6).required() })), async (req, res, next) => {
+  try { res.json(await require('./idcheck').submitAadhaarOtp({ owner: idOwner(req), ...req.body })); } catch (err) { next(err); }
+});
+router.post('/id-check/pan', ...providerOnly, idLimiter, validate(Joi.object({ pan: Joi.string().trim().length(10).required() })), async (req, res, next) => {
+  try { res.json(await require('./idcheck').verifyPan({ owner: idOwner(req), pan: req.body.pan })); } catch (err) { next(err); }
+});
 router.get('/lines/:lineCode/requirements', ...providerOnly, ctrl.getRequirements);
 
 router.post(

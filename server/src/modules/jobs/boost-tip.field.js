@@ -39,4 +39,14 @@ const surge = new mongoose.Schema({
   settledAt: { type: Date, default: null },
 }, { _id: false });
 
-module.exports = { boost, tip, surge };
+/** The provider's rating of the customer (jobs/customer-rating). Never shown to the customer. */
+const customerRating = new mongoose.Schema({
+  stars: { type: Number, min: 1, max: 5 },
+  tags: { type: [String], default: [] },
+  note: { type: String, default: '', maxlength: 300 },
+  at: { type: Date, default: null },
+  byRole: { type: String, default: '' },
+  by: { type: mongoose.Schema.Types.ObjectId, default: null },
+}, { _id: false });
+
+module.exports = { boost, tip, surge, customerRating };

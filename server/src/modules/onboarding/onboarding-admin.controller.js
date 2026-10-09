@@ -229,6 +229,8 @@ const enrolments = {
 
       const shopById = new Map(shops.map((s) => [String(s._id), s]));
       const workerById = new Map(workers.map((w) => [String(w._id), w]));
+      // Instant ID check results (onboarding/idcheck), so a verified identity is one tap to approve.
+      const idChecks = await require('./idcheck').forReview([...shopIds, ...workerIds]).catch(() => new Map());
       const lineByCode = new Map(lineDocs.map((l) => [l.code, l]));
 
       /**
@@ -260,6 +262,7 @@ const enrolments = {
           documents,
           line: lineByCode.get(r.lineCode) || null,
           provider: r.shopId ? shopById.get(String(r.shopId)) || null : workerById.get(String(r.workerId)) || null,
+          idCheck: idChecks.get(String(r.shopId || r.workerId)) || null,
         };
       }));
 

@@ -36,6 +36,11 @@ const userSchema = new mongoose.Schema(
     rating: { type: Number, default: 5, min: 0, max: 5 },
     // How many ratings `rating` is the average of; none means "new", not five stars.
     ratingCount: { type: Number, default: 0 },
+    /** Set when providers rate this customer low or feel unsafe (jobs/customer-rating); ops looks before the next booking. */
+    flags: {
+      lowCustomerRating: { type: Boolean, default: false },
+      lowCustomerRatingAt: { type: Date, default: null },
+    },
     isBlocked: { type: Boolean, default: false },
 
     // Lifetime abuse counters — persisted in Mongo so Redis TTL expiry

@@ -132,6 +132,8 @@ async function redispatch(bookingId) {
     lat: coords[1],
     lng: coords[0],
     cityCode: booking.location?.cityCode || null,
+    // Booked for later: whoever's hours cover it (jobs/work-hours).
+    scheduledAt: booking.scheduledAt || null,
   });
 
   const next = (providers || []).find((p) => !tried.has(String(p.shopId || p.workerId)));

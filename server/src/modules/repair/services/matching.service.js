@@ -216,7 +216,11 @@ async function findProviders({
   pincode = null,
   cityCode = null,
   limit = null,
+  // A booking for later: workers whose hours cover it, online or not (jobs/work-hours).
+  scheduledAt = null,
 }) {
+  const hoursRule = require('../../jobs/work-hours');
+  const later = hoursRule.isLater(scheduledAt);
   const cfg = await pricingService.getConfig(vertical);
   const repair = await Repair.findOne({ code: repairCode, vertical, isActive: true }).lean();
   if (!repair) return { recommended: null, providers: [], rejected: [], reason: 'unknown_repair' };
@@ -313,14 +317,14 @@ async function findProviders({
         .select('businessName rating reviewCount completedJobs isActive isBlocked kyc coverImageUrl')
         .lean()
       : await Worker.findById(s.workerId)
-        .select('name rating reviewCount completedJobs penalties isBlocked kyc isOnline wallet profilePhotoKey')
+        .select('name rating reviewCount completedJobs penalties isBlocked kyc isOnline wallet profilePhotoKey workHours')
         .lean();
 
     if (!profile) { rejected.push({ label, reason: 'profile_missing' }); return; }
     if (profile.isBlocked) { rejected.push({ label, reason: 'blocked' }); return; }
-    // A worker who is not really there now is never shown or offered (worker/presence).
-    if (!s.shopId && !liveSet.has(String(s.workerId))) {
-      rejected.push({ label, reason: 'offline' }); return;
+    // Now: only someone really there (worker/presence). Later: whoever's hours cover it (jobs/work-hours).
+    if (!s.shopId && !hoursRule.availableFor(profile, scheduledAt, { live: liveSet.has(String(s.workerId)) })) {
+      rejected.push({ label, reason: later ? 'outside_hours' : 'offline' }); return;
     }
     if (profile.kyc?.status !== 'approved') { rejected.push({ label, reason: 'kyc_not_approved' }); return; }
     if (approvedHere && !approvedHere.has(String(s.shopId || s.workerId))) {
@@ -343,7 +347,8 @@ async function findProviders({
     }
     // At their cap: not listed. Mid-job with room for one more: listed only if
     // nobody free can come (decided below), arriving after their current job.
-    const busy = !s.shopId && !freeSet.free.has(String(s.workerId));
+    // Busy right now does not matter for a booking later.
+    const busy = !later && !s.shopId && !freeSet.free.has(String(s.workerId));
     if (busy && !freeSet.busy.has(String(s.workerId))) {
       rejected.push({ label, reason: 'busy' });
       return;
@@ -438,7 +443,7 @@ async function findProviders({
   }
 
   // How soon each can be at the door (jobs/arrival), when someone comes to the customer.
-  if (serviceMode !== 'workshop' && typeof lat === 'number') {
+  if (serviceMode !== 'workshop' && !later && typeof lat === 'number') {
     const est = await require('../../jobs/arrival').forProviders(
       candidates.map((c) => ({ kind: c.shopId ? 'shop' : 'worker', id: String(c.shopId || c.workerId), busyMin: c.busy ? c.availableInMinutes : 0 })),
       { lat, lng },

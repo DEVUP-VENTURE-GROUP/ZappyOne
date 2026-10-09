@@ -47,10 +47,12 @@ async function push(recipient, { title, body, deepLink, data }) {
  * Ring the one provider a job is offered to, with everything needed to decide.
  * Again after a boost, so the alert shows the higher amount.
  */
-function ringOffer(kind, doc) {
+async function ringOffer(kind, doc) {
   const k = KINDS[kind];
   const provider = providerOf(kind, doc);
   if (!k?.offer || !provider) return;
+  // How providers have rated this customer (jobs/customer-rating), to decide with.
+  const customer = await require('./customer-rating').summaryFor(doc.userId).catch(() => null);
   const since = new Date(k.offer.since(doc) || Date.now());
   const start = k.open?.start(doc);
   toProvider(provider.kind, provider.id, 'job.offer', {
@@ -58,6 +60,7 @@ function ringOffer(kind, doc) {
     // Until they accept: the area and a rounded pin (jobs/privacy).
     area: areaOf(start?.address), coordinates: start ? roughCoords([start.lng, start.lat]) : null,
     ...(k.open?.summary ? k.open.summary(doc) : {}),
+    customer,
     expiresAt: new Date(since.getTime() + k.offer.windowMin * 60000).toISOString(), windowSec: k.offer.windowMin * 60,
   });
 }
@@ -84,7 +87,7 @@ async function announce(kind, doc, status) {
   if (provider) toProvider(provider.kind, provider.id, 'job.update', payload);
 
   // Offered to one provider: ring them with everything needed to decide.
-  if (provider && k.offer?.status === status) ringOffer(kind, doc);
+  if (provider && k.offer?.status === status) ringOffer(kind, doc).catch(() => {});
 
   // Repairs, pet care and helping: every customer notice (push + email) and the
   // provider's "customer cancelled" come from the message catalog (messaging/lifecycle).
@@ -138,9 +141,11 @@ async function alertNearbyProviders(kind, doc, { offlineOnly = false } = {}) {
     providers = providers.filter((p) => p.kind !== 'worker' || working.has(String(p.id)));
     // Free workers first (or on the last stretch of a job); only if none is free
     // are those mid-job with room for one more told (jobs/workload).
-    const { free, busy } = await require('./workload').classify(providers.filter((p) => p.kind === 'worker').map((p) => p.id));
-    const anyFree = providers.some((p) => p.kind === 'worker' && free.has(String(p.id)));
-    providers = providers.filter((p) => p.kind !== 'worker' || free.has(String(p.id)) || (!anyFree && busy.has(String(p.id))));
+    if (!require('./work-hours').isLater(doc.scheduledAt || doc.checkInAt)) {
+      const { free, busy } = await require('./workload').classify(providers.filter((p) => p.kind === 'worker').map((p) => p.id));
+      const anyFree = providers.some((p) => p.kind === 'worker' && free.has(String(p.id)));
+      providers = providers.filter((p) => p.kind !== 'worker' || free.has(String(p.id)) || (!anyFree && busy.has(String(p.id))));
+    }
     if (!providers.length) return;
 
     const Worker = require('../worker/worker.model');
@@ -149,9 +154,15 @@ async function alertNearbyProviders(kind, doc, { offlineOnly = false } = {}) {
     const shopIds = providers.filter((p) => p.kind === 'shop').map((p) => p.id);
     const [workers, shops] = await Promise.all([
       // Rung only while really there (worker/presence); the offline wave asks the others to come online.
-      Worker.find({ _id: { $in: workerIds }, isActive: { $ne: false } }).select('currentLocation isOnline lastSeenAt').lean()
+      Worker.find({ _id: { $in: workerIds }, isActive: { $ne: false } }).select('currentLocation isOnline lastSeenAt workHours').lean()
         .then(async (rows) => {
           const live = await require('../worker/presence').liveIds(rows.map((r) => r._id));
+          // A job for later: whoever's hours cover it, online or not; never someone off then (jobs/work-hours).
+          const hoursRule = require('./work-hours');
+          const when = doc.scheduledAt || doc.checkInAt || null;
+          if (hoursRule.isLater(when)) {
+            return offlineOnly ? [] : rows.filter((r) => hoursRule.availableFor(r, when, { live: live.has(String(r._id)) }));
+          }
           return rows.filter((r) => (offlineOnly ? !live.has(String(r._id)) : live.has(String(r._id))));
         }),
       offlineOnly ? [] : Shop.find({ _id: { $in: shopIds }, isActive: { $ne: false } }).select('address.location').lean(),
@@ -166,11 +177,12 @@ async function alertNearbyProviders(kind, doc, { offlineOnly = false } = {}) {
       .slice(0, ALERT_MAX);
 
     const title = offlineOnly ? `A ${k.label} job near you is waiting` : `New ${k.label} job near you`;
+    const customer = await require('./customer-rating').summaryFor(doc.userId).catch(() => null);
     await Promise.all(reach.map((p) => {
       toProvider(p.kind, p.id, 'job.available', {
         // Before anyone accepts: the area and a rounded pin, never the house (jobs/privacy).
         kind, id: String(doc._id), reference: doc.reference, line, area: areaOf(start?.address), km: p.km,
-        coordinates: start ? roughCoords([start.lng, start.lat]) : null, ...(k.open.summary ? k.open.summary(doc) : {}),
+        coordinates: start ? roughCoords([start.lng, start.lat]) : null, ...(k.open.summary ? k.open.summary(doc) : {}), customer,
       });
       const summary = k.open.summary ? k.open.summary(doc) : {};
       return require('../messaging/send').send(offlineOnly ? 'provider.job_waiting' : 'provider.job_nearby', {

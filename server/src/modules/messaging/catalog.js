@@ -206,6 +206,24 @@ const CATALOG = {
     sample: () => ({ label: 'repair', km: 3.1 }),
     build: ({ label, km }) => ({ push: { title: `A ${label} job near you is waiting`, body: `${km != null ? `${Number(km).toFixed(1)} km away. ` : ''}Nobody has taken it yet. Go online to take it.`, link: '/worker' } }),
   },
+  'customer.recurring_booked': {
+    audience: 'customer', type: 'order_placed', channels: ['push'], label: 'Repeat booking made',
+    sample: () => ({ title: 'Water tank cleaning', when: 'Sun, 12 Oct, 10:00 am', link: '/repair/bookings/x' }),
+    build: ({ title, when, link }) => ({
+      push: { title: 'Your repeat booking is set', body: `${title}: ${when}. Change or skip it from Your schedule.`, link: link || '/scheduled' },
+    }),
+  },
+  'customer.recurring_failed': {
+    audience: 'customer', type: 'order_delayed', channels: ['push'], urgent: true, label: 'Repeat booking could not be made',
+    sample: () => ({ title: 'Water tank cleaning', when: 'Sun, 12 Oct, 10:00 am', paused: false }),
+    build: ({ title, when, paused }) => ({
+      push: {
+        title: 'We could not book your repeat',
+        body: `${title} on ${when}: nobody was available at that price. Book it yourself in a tap.${paused ? ' We paused this repeat after three misses.' : ''}`,
+        link: '/scheduled',
+      },
+    }),
+  },
   'provider.surge_zone': {
     audience: 'provider', type: 'job_reminder', channels: ['push'], urgent: false, label: 'Busy zone near you (surge on)',
     sample: () => ({ service: 'Shopping & pickup', area: 'Madhapur', km: 2.4, sharePct: 60 }),
@@ -313,6 +331,22 @@ const CATALOG = {
         intro: [`${who} raised an SOS. 112 was dialled on their phone. Call them now and follow the safety steps.`],
         rows: [['Booking', reference], ['Area', area], ['Time', at]],
         button: { label: 'Open the SOS panel', url: url('/dashboard?tab=liveops') },
+      },
+    }),
+  },
+  'ops.customer_flagged': {
+    audience: 'ops', type: 'report_received', channels: ['email'], urgent: true, label: 'Customer flagged by providers',
+    sample: () => ({ name: 'Aarav', phone: '98xxxxxx10', avg: 2.3, count: 4, unsafe: false, reference: 'RP7K2Q9M' }),
+    build: ({ name, phone, avg, count, unsafe, reference, url }) => ({
+      email: {
+        subject: unsafe ? `Provider felt unsafe with ${name}` : `${name} is rated ${avg}★ by providers`,
+        preheader: unsafe ? 'Check this customer before their next booking.' : `${count} ratings, average ${avg}.`,
+        heading: unsafe ? 'A provider felt unsafe' : 'A customer is rated low by providers',
+        intro: [unsafe
+          ? `A provider marked "I felt unsafe" after ${reference || 'a job'}. Call the provider, then decide on this customer.`
+          : `Providers have rated ${name} ${avg}★ over ${count} jobs. Look at the notes before their next booking.`],
+        rows: [['Customer', `${name} · ${phone}`], ['Average', `${avg}★ (${count})`], ['Last job', reference]],
+        button: { label: 'Open Customers', url: url('/dashboard?tab=customers') },
       },
     }),
   },

@@ -20,6 +20,7 @@ import {
 import LiveSelfieCapture from '../../components/kyc/LiveSelfieCapture';
 import toast from 'react-hot-toast';
 import { prepareImage } from '../../utils/prepareImage';
+import InstantIdCheck from '../InstantIdCheck';
 
 /**
  * Provider onboarding — the first thing a shop owner or technician does.
@@ -503,6 +504,8 @@ function VerifyStep({ lineCode, onDone }) {
         </div>
       )}
 
+      {/* Verify identity in a minute when ZappyOne has an instant check; otherwise our team reviews the uploads. */}
+      {!decided && reqs.documents.some((d) => ['aadhaar', 'owner_id', 'pan'].includes(d.code)) && <InstantIdCheck />}
       <p className="text-xs font-bold text-slate-500 uppercase tracking-wide px-1">Documents</p>
       {reqs.documents.map((d) => {
         const again = redo?.has(d.code);

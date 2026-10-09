@@ -45,6 +45,7 @@ const fromRepair = (b) => ({
   valuePaise: (b.totalPaise ?? b.priceSnapshot?.totalPaise ?? 0) + (b.boostPaise ?? b.boost?.paise ?? 0) + (b.surgePaise ?? b.surge?.providerPaise ?? 0),
   boostPaise: b.boostPaise ?? b.boost?.paise ?? 0,
   surgePaise: b.surgePaise ?? b.surge?.providerPaise ?? 0,
+  customer: b.customer || null,
   cash: b.paymentMethod === 'cash',
   howLabel: MODE_LABEL[b.serviceMode] || b.serviceMode,
   address: b.address ?? b.location?.address ?? '',
@@ -57,6 +58,7 @@ const fromRepair = (b) => ({
 
 const fromPetOffer = (b) => ({
   kind: 'pet', id: String(b.id || b._id), mode: 'offered', askReason: false,
+  customer: b.customer || null,
   heading: 'A customer chose you',
   title: b.title || (b.pets || []).map((p) => p.snapshot?.name).filter(Boolean).join(', ') || 'Pet care',
   valueLabel: 'You earn',
@@ -78,6 +80,7 @@ const fromOpen = (p) => ({
   valuePaise: p.earningPaise || 0,
   boostPaise: p.boostPaise || 0,
   surgePaise: p.surgePaise || 0,
+  customer: p.customer || null,
   howLabel: p.service || p.kind,
   address: p.area || '',
   coordinates: p.coordinates || null,

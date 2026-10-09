@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, Navigation, Clock, IndianRupee, Briefcase, Banknote, Loader2, X, Sparkles } from 'lucide-react';
+import { MapPin, Navigation, Clock, IndianRupee, Briefcase, Banknote, Loader2, X, Sparkles, Star } from 'lucide-react';
 import { kmBetween } from '../../utils/distance';
 import PassReasonPicker from '../worker/PassReasonPicker';
 import { startRinging } from '../../utils/alertSound';
@@ -191,6 +191,14 @@ export default function JobOfferAlert({ offer, myLocation, onAccept, onDecline, 
               </span>
               <Navigation size={15} className="mt-0.5 shrink-0 text-zappy-500" />
             </button>
+
+            {/* How other providers rated this customer (jobs/customer-rating). */}
+            {offer.customer && (
+              <p className={`mt-2 flex items-center gap-1.5 text-[12px] font-medium ${offer.customer.rating != null && offer.customer.rating < 3 ? 'text-red-700' : 'text-slate-600'}`}>
+                <Star size={12} className={offer.customer.rating != null ? 'fill-amber-400 text-amber-400' : 'text-slate-400'} />
+                {offer.customer.rating != null ? `Customer rated ${Number(offer.customer.rating).toFixed(1)} by ${offer.customer.count} provider${offer.customer.count === 1 ? '' : 's'}` : 'New customer'}
+              </p>
+            )}
 
             {offer.whenLabel && (
               <p className="mt-2 flex items-center gap-1.5 text-[12px] font-medium text-slate-600">

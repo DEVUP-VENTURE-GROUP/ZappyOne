@@ -10,6 +10,7 @@ const WorkerBankPage = lazy(() => import('./pages/WorkerBankPage'));
 const WorkerWithdrawPage = lazy(() => import('./pages/WorkerWithdrawPage'));
 const WorkerAppealsPage = lazy(() => import('./pages/WorkerAppealsPage'));
 const MyDocumentsPage = lazy(() => import('./pages/MyDocumentsPage'));
+const WorkerHoursPage = lazy(() => import('./pages/WorkerHoursPage'));
 const ProviderReviewsPage = lazy(() => import('./pages/ProviderReviewsPage'));
 const WorkerEarningsPage = lazy(() => import('./pages/WorkerEarningsPage'));
 const WorkerTrainingPage = lazy(() => import('./pages/WorkerTrainingPage'));
@@ -41,6 +42,8 @@ export function providerRoutes({ loginPath, helping = false, onboardRoles = ['wo
   const onboard = (el) => <RequireAuth role={onboardRoles} loginPath={onboardLoginPath}>{el}</RequireAuth>;
   const independentOnly = shopTeam ? [] : [
     <Route key="w-bank" path="/worker/bank" element={w(<WorkerBankPage />)} />,
+    // Their week: when bookings for later may come to them (jobs/work-hours).
+    <Route key="w-hours" path="/worker/hours" element={w(<WorkerHoursPage />)} />,
     <Route key="w-withdraw" path="/worker/withdraw" element={w(<WorkerWithdrawPage />)} />,
     <Route key="w-earnings" path="/worker/earnings" element={w(<WorkerEarningsPage />)} />,
     <Route key="w-training" path="/worker/training" element={w(<WorkerTrainingPage />)} />,

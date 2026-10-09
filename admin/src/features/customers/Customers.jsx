@@ -111,7 +111,7 @@ function UserDrawer({ userId, onClose, onBlock }) {
               </div>
 
               <div className="grid grid-cols-3 gap-3 mt-4">
-                <Stat label="Rating" value={u.ratingCount ? `${Number(u.rating).toFixed(1)} ★` : 'New'} />
+                <Stat label="Rated by providers" value={u.ratingCount ? `${Number(u.rating).toFixed(1)} ★ (${u.ratingCount})${u.flags?.lowCustomerRating ? ' · flagged' : ''}` : 'New'} />
                 <Stat label="Orders" value={u.totalOrders ?? orders.length} />
                 <Stat label="Joined" value={fmtDate(u.createdAt)} small />
               </div>
@@ -289,7 +289,9 @@ export default function Users() {
                   <Td><span className="font-semibold text-slate-900">{u.name || '—'}</span></Td>
                   <Td muted>{u.phone}</Td>
                   <Td muted>{u.email || '—'}</Td>
-                  <Td><span className="font-semibold">{u.ratingCount ? `${Number(u.rating).toFixed(1)} ★` : 'New'}</span></Td>
+                  {/* Rated by providers (jobs/customer-rating); flagged when low or marked unsafe. */}
+                  <Td><span className="font-semibold">{u.ratingCount ? `${Number(u.rating).toFixed(1)} ★` : 'New'}</span>
+                    {u.flags?.lowCustomerRating && <span className="ml-1.5 rounded-full bg-red-50 px-1.5 py-0.5 text-[10.5px] font-bold text-red-700">Flagged by providers</span>}</Td>
                   <Td><StatusBadge status={u.isBlocked ? 'blocked' : 'active'} /></Td>
                   <Td muted>{fmtDate(u.createdAt)}</Td>
                   <Td>

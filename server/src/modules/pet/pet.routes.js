@@ -116,6 +116,8 @@ router.post('/providers/search', authenticate, requireRole('user'),
     serviceLocation: locationSchema.allow(null),
     checkInAt: Joi.date().allow(null),
     checkOutAt: Joi.date().allow(null),
+    // A visit booked for later: only pros whose hours cover it (jobs/work-hours).
+    scheduledAt: Joi.date().allow(null),
     serviceAreaCode: Joi.string().max(60).allow(null),
   })),
   ctrl.findProviders);

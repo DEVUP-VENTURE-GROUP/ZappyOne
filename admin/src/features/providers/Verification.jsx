@@ -68,6 +68,17 @@ function ProviderCell({ row }) {
       <div className="min-w-0">
         <p className="font-semibold text-slate-900 text-sm truncate">{p.businessName || p.name}</p>
         <p className="text-[11px] text-slate-400">{p.phone}{isShop ? ' · shop' : ' · individual'}</p>
+        {/* Instant ID check results (server onboarding/idcheck). */}
+        {row.idCheck?.aadhaar && (
+          <p className={`mt-0.5 text-[11px] font-semibold ${row.idCheck.aadhaar.status === 'verified' ? 'text-emerald-700' : 'text-amber-700'}`}>
+            {row.idCheck.aadhaar.status === 'verified' ? '✓ Aadhaar verified automatically' : `⚠ Aadhaar name: ${row.idCheck.aadhaar.nameOnId}`} ({Math.round((row.idCheck.aadhaar.nameScore || 0) * 100)}% name match)
+          </p>
+        )}
+        {row.idCheck?.pan && (
+          <p className={`text-[11px] font-semibold ${row.idCheck.pan.status === 'verified' ? 'text-emerald-700' : 'text-amber-700'}`}>
+            {row.idCheck.pan.status === 'verified' ? '✓ PAN verified' : `⚠ PAN name: ${row.idCheck.pan.nameOnId}`}
+          </p>
+        )}
       </div>
     </div>
   );
