@@ -39,6 +39,12 @@ const pricingConfigSchema = new mongoose.Schema(
     // 0.10 = 10%. User must re-confirm if price spiked beyond this threshold.
     surgeTolerancePct: { type: Number, default: 0.10, min: 0.02, max: 0.50 },
 
+    /**
+     * Automatic surge for repairs, pet care and helping (jobs/surge). Set once
+     * in Economics → Surge; the engine decides every minute, per ~1 km zone.
+     */
+    surgeAuto: { type: mongoose.Schema.Types.Mixed, default: undefined },
+
     // Auto-pricing: Night surcharge
     nightSurchargeEnabled:    { type: Boolean, default: false },
     nightSurchargeMultiplier: { type: Number,  default: 1.3, min: 1.0, max: 3.0 },

@@ -157,6 +157,9 @@ router.post(
     onSite: require('../jobs/on-site').onSiteSchema,
     // Booked from a shop's answer to a price request (services/price-request).
     priceRequestId: objectId.allow(null),
+    // The surge quote the customer saw, and the price it was for (jobs/surge).
+    surgeQuoteId: Joi.string().max(40).allow(null, ''),
+    surgeBasePaise: Joi.number().integer().min(0).allow(null),
   })),
   ctrl.createBooking,
 );

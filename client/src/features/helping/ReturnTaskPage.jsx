@@ -15,6 +15,7 @@ import PendingFeeNotice from '@shared/components/booking/PendingFeeNotice';
 import { usePayBooking } from '@shared/hooks/usePayBooking';
 import { doorAddress } from '@shared/utils/doorAddress';
 import NearestArrival from '@shared/components/common/NearestArrival';
+import SurgeLines, { useSurge, surgeChanged } from '@shared/components/common/SurgeLines';
 
 /**
  * Return / Exchange — §22 to §31.
@@ -102,6 +103,7 @@ export default function ReturnTaskPage() {
         returnDetail: { ...form, merchantInstructions: form.merchantInstructions || (invoiceKey ? `Invoice: ${invoiceKey}` : '') },
         paymentMethod,
         idempotencyKey,
+        ...surge.bookingFields,
       }).unwrap();
       toast.success('Task requested');
       if (res.task?.paymentMethod === 'online') {
@@ -109,11 +111,18 @@ export default function ReturnTaskPage() {
       }
       nav(`/helping/tasks/${res.task._id}`);
     } catch (err) {
+      if (surgeChanged(err, surge.refetch)) { toast(err.data.error, { icon: '⚡' }); return; }
       toast.error(err?.data?.error || 'Could not create the task');
     }
   }
 
   const charge = quoteData?.charge;
+  // Busy area, rain, night: own lines on the service fee, held while they decide (jobs/surge).
+  const surge = useSurge({
+    kind: 'helping', line: isExchange ? 'exchange' : 'return', loc: pickupLoc,
+    basePaise: charge ? Math.max(0, (charge.serviceChargePaise || 0) - (charge.taxPaise || 0) - (charge.platformFeePaise || 0)) : null,
+    skip: !charge,
+  });
 
 
   if (notHere) {
@@ -247,8 +256,9 @@ export default function ReturnTaskPage() {
               </div>
             ))}
             <div className="flex justify-between font-bold pt-1 border-t border-zappy-100">
-              <span>Total</span><span>{formatPaise(charge.serviceChargePaise)}</span>
+              <span>Total</span><span>{formatPaise(charge.serviceChargePaise + surge.totalPaise)}</span>
             </div>
+            <SurgeLines quote={surge.quote} />
           </div>
         )}
         <SomeoneElse onChange={setOnSite} />

@@ -17,6 +17,7 @@ import PendingFeeNotice from '@shared/components/booking/PendingFeeNotice';
 import { usePayBooking } from '@shared/hooks/usePayBooking';
 import { doorAddress } from '@shared/utils/doorAddress';
 import NearestArrival from '@shared/components/common/NearestArrival';
+import SurgeLines, { useSurge, surgeChanged } from '@shared/components/common/SurgeLines';
 
 /**
  * "Shop for Me" / "Pick Up for Me" — §4 to §11.
@@ -119,6 +120,7 @@ export default function ShoppingTaskPage() {
           : [],
         paymentMethod,
         idempotencyKey,
+        ...surge.bookingFields,
       }).unwrap();
       toast.success('Task requested');
       if (res.task?.paymentMethod === 'online') {
@@ -126,11 +128,18 @@ export default function ShoppingTaskPage() {
       }
       nav(`/helping/tasks/${res.task._id}`);
     } catch (err) {
+      if (surgeChanged(err, surge.refetch)) { toast(err.data.error, { icon: '⚡' }); return; }
       toast.error(err?.data?.error || 'Could not create the task');
     }
   }
 
   const charge = quoteData?.charge;
+  // Busy area, rain, night: own lines on the service fee, held while they decide (jobs/surge).
+  const surge = useSurge({
+    kind: 'helping', line: mode === 'shop' ? 'shopping' : 'pickup', loc: pickupLoc,
+    basePaise: charge ? Math.max(0, (charge.serviceChargePaise || 0) - (charge.taxPaise || 0) - (charge.platformFeePaise || 0)) : null,
+    skip: !charge,
+  });
   const canQuote = !!pickupLoc && (mode === 'pickup' || items.some((i) => i.name.trim()));
 
 
@@ -314,8 +323,9 @@ export default function ShoppingTaskPage() {
               {charge.taxPaise > 0 && <Row label="Tax" value={charge.taxPaise} />}
               <div className="flex justify-between font-bold pt-1 border-t border-zappy-100">
                 <span>ZappyOne service fee</span>
-                <span>{formatPaise(charge.serviceChargePaise)}</span>
+                <span>{formatPaise(charge.serviceChargePaise + surge.totalPaise)}</span>
               </div>
+              <SurgeLines quote={surge.quote} />
               {mode === 'shop' && itemBudgetPaise > 0 && (
                 <div className="flex justify-between font-bold text-slate-500">
                   <span>Item budget (max)</span>

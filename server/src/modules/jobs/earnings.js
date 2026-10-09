@@ -32,7 +32,9 @@ async function finishedJobs(match, since) {
       finished.push({
         kind: k.kind, id: String(r._id), reference: r.reference || null, label: k.earning.label ? k.earning.label(r) : k.label,
         paise, gross, boostPaise: r.boost?.paise || 0, tipPaise: r.tip?.paise || 0, tipMethod: r.tip?.method || null,
-        platformPaise: k.earning.platform ? k.earning.platform(r) : Math.max(0, gross + (r.boost?.paise || 0) - paise),
+        // Their share of the surge (jobs/surge), inside `paise`.
+        surgePaise: r.surge?.providerPaise || 0,
+        platformPaise: k.earning.platform ? k.earning.platform(r) : Math.max(0, gross + (r.boost?.paise || 0) + (r.surge?.paise || 0) - paise),
         cash: r.paymentMethod === 'cash', at: dotted(r, k.earning.at),
       });
     }

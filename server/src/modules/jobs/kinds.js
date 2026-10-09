@@ -74,10 +74,10 @@ const KINDS = {
     earning: {
       done: ['COMPLETED'],
       at: 'completedAt',
-      fields: 'priceSnapshot paymentMethod completedAt reference vertical boost tip',
+      fields: 'priceSnapshot paymentMethod completedAt reference vertical boost tip surge',
       gross: (b) => require('../repair/services/settlement.service').splitFor(b).totalPaise,
       label: (b) => `${(b.vertical || 'repair').replace(/_/g, ' ')} repair`,
-      share: (b) => require('../repair/services/settlement.service').splitFor(b).providerPaise + (b.boost?.paise || 0),
+      share: (b) => require('../repair/services/settlement.service').splitFor(b).providerPaise + (b.boost?.paise || 0) + (b.surge?.providerPaise || 0),
       platform: (b) => require('../repair/services/settlement.service').splitFor(b).platformPaise,
     },
     // Repair copy lives with its richer event service (quotes, SLA); see repair/services/events.service.
@@ -127,7 +127,8 @@ const KINDS = {
       summary: (b) => ({
         title: (b.pets || []).map((p) => p.snapshot?.name).filter(Boolean).join(', ') || 'Pet care',
         service: (b.categoryCode || '').replace(/_/g, ' '),
-        earningPaise: (b.pricing?.providerAmountPaise || 0) + (b.boost?.paise || 0),
+        earningPaise: (b.pricing?.providerAmountPaise || 0) + (b.boost?.paise || 0) + (b.surge?.providerPaise || 0),
+        surgePaise: b.surge?.providerPaise || 0,
         boostPaise: b.boost?.paise || 0,
         at: b.scheduledAt || b.checkInAt || null,
       }),
@@ -135,10 +136,10 @@ const KINDS = {
     earning: {
       done: ['SERVICE_COMPLETED', 'CUSTOMER_CONFIRMATION', 'PAYMENT_PENDING', 'PAYMENT_COMPLETED', 'CLOSED'],
       at: 'execution.completedAt',
-      fields: 'pricing.providerAmountPaise pricing.totalPaise paymentMethod execution.completedAt reference categoryCode boost tip',
+      fields: 'pricing.providerAmountPaise pricing.totalPaise paymentMethod execution.completedAt reference categoryCode boost tip surge',
       gross: (b) => b.pricing?.totalPaise || 0,
       label: (b) => (b.categoryCode || 'pet care').replace(/_/g, ' '),
-      share: (b) => (b.pricing?.providerAmountPaise || 0) + (b.boost?.paise || 0),
+      share: (b) => (b.pricing?.providerAmountPaise || 0) + (b.boost?.paise || 0) + (b.surge?.providerPaise || 0),
     },
     copy: {
       customer: {
@@ -202,7 +203,8 @@ const KINDS = {
       summary: (t) => ({
         title: t.title || ((t.items || []).length ? `${t.items.length} item${t.items.length > 1 ? 's' : ''}` : 'Errand'),
         service: t.serviceType || 'helping',
-        earningPaise: (t.charge?.workerEarningPaise || 0) + (t.boost?.paise || 0),
+        earningPaise: (t.charge?.workerEarningPaise || 0) + (t.boost?.paise || 0) + (t.surge?.providerPaise || 0),
+        surgePaise: t.surge?.providerPaise || 0,
         boostPaise: t.boost?.paise || 0,
         at: t.scheduledAt || null,
         frontPaise: t.itemMoney?.paymentModel === 'worker_advance' ? t.itemMoney?.budgetPaise || 0 : 0,
@@ -211,10 +213,10 @@ const KINDS = {
     earning: {
       done: ['COMPLETED', 'CUSTOMER_CONFIRMED', 'SETTLED'],
       at: 'completedAt',
-      fields: 'charge.workerEarningPaise charge.serviceChargePaise paymentMethod completedAt reference serviceType boost tip',
+      fields: 'charge.workerEarningPaise charge.serviceChargePaise paymentMethod completedAt reference serviceType boost tip surge',
       gross: (t) => t.charge?.serviceChargePaise || 0,
       label: (t) => `${t.serviceType || 'helping'} task`,
-      share: (t) => (t.charge?.workerEarningPaise || 0) + (t.boost?.paise || 0),
+      share: (t) => (t.charge?.workerEarningPaise || 0) + (t.boost?.paise || 0) + (t.surge?.providerPaise || 0),
     },
     copy: {
       customer: {

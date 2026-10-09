@@ -262,6 +262,7 @@ const petBookingSchema = new mongoose.Schema(
     carriedFee: { type: require('../../jobs/carried-fee.field'), default: undefined },
     /** Customer's boost while searching, and tip once done; 100% the provider's (jobs/boost-tip). */
     boost: { type: require('../../jobs/boost-tip.field').boost, default: undefined },
+    surge: { type: require('../../jobs/boost-tip.field').surge, default: undefined },
     tip: { type: require('../../jobs/boost-tip.field').tip, default: undefined },
     matching: { type: require('../../jobs/matching.field'), default: () => ({}) },
 

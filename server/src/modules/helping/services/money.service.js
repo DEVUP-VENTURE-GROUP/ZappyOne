@@ -28,7 +28,8 @@ function feeDuePaise(task) {
   // An earlier cancellation fee riding on the task is paid with the service fee (jobs/cancel-fee).
   return task.paymentStatus === 'paid' ? 0 : (task.charge?.serviceChargePaise || 0) + require('../../jobs/cancel-fee').carriedPaise(task)
     + require('../../jobs/boost-tip').boostPaise(task) // the customer's boost, paid with the fee
-    + require('../../jobs/boost-tip').billTipPaise(task); // and a tip they put on the bill
+    + require('../../jobs/boost-tip').billTipPaise(task) // and a tip they put on the bill
+    + require('../../jobs/surge').surgePaise(task); // and the surge it was booked at (jobs/surge)
 }
 
 /** Item money still owed by the customer, or null while the shopping is unfinished. */

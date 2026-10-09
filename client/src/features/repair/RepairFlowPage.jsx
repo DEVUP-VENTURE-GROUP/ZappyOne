@@ -21,6 +21,7 @@ import { selectLocation, selectHasLocation, setLocation } from '@shared/store/lo
 import LocationPicker from '@shared/modules/booking/LocationPicker';
 import { doorAddress } from '@shared/utils/doorAddress';
 import ArrivalBadge from '@shared/components/common/ArrivalBadge';
+import SurgeLines, { useSurge, surgeChanged } from '@shared/components/common/SurgeLines';
 import toast from 'react-hot-toast';
 import GrowingHere from '../catalog/serviceability/GrowingHere';
 import { PayMethodPicker } from '@shared/components/common/PayMethodPicker';
@@ -1466,6 +1467,9 @@ function ConfirmStep({
   // Booking for someone else: who the provider meets ('incomplete' while being typed).
   const [onSite, setOnSite] = useState(null);
   const { pay, paying } = usePayBooking();
+  // Busy area, rain, night: added as their own lines, held while they decide (jobs/surge).
+  const priceBase = serviceMode === 'diagnosis_only' ? inspectionFeePaise : provider?.totalPaise;
+  const surge = useSurge({ kind: 'repair', vertical, serviceMode, loc: location, basePaise: priceBase, skip: priceBase == null });
 
   async function book() {
     try {
@@ -1512,6 +1516,7 @@ function ConfirmStep({
         },
         paymentMethod: onlineEnabled ? paymentMethod : 'cash',
         idempotencyKey,
+        ...surge.bookingFields,
       }).unwrap();
       toast.success('Booking confirmed');
       // A fixed price is paid now; a diagnosis-first job is paid once its quote is approved.
@@ -1520,6 +1525,8 @@ function ConfirmStep({
       }
       onDone(res.booking);
     } catch (err) {
+      // The price moved while they decided: show the new total, they book again.
+      if (surgeChanged(err, surge.refetch)) { toast(err.data.error, { icon: '⚡' }); return; }
       toast.error(err?.data?.error || 'Could not create the booking');
     }
   }
@@ -1555,8 +1562,9 @@ function ConfirmStep({
           <>
             <div className="flex items-center justify-between">
               <span className="text-sm font-bold text-[#0F172A]">Inspection fee</span>
-              <span className="text-2xl font-black text-[#0F172A]">{price == null ? '…' : price > 0 ? formatPaise(price) : 'Free'}</span>
+              <span className="text-2xl font-black text-[#0F172A]">{price == null ? '…' : price + surge.totalPaise > 0 ? formatPaise(price + surge.totalPaise) : 'Free'}</span>
             </div>
+            <SurgeLines quote={surge.quote} className="mt-2" />
             <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
               {price > 0
                 ? "Charged by ZappyOne for the technician's visit and diagnosis. If you go ahead with the repair afterwards, this amount comes off the repair bill, so you are not charged twice for the same visit."
@@ -1567,8 +1575,10 @@ function ConfirmStep({
           <>
             <div className="flex items-center justify-between">
               <span className="text-sm font-bold text-[#0F172A]">Total</span>
-              <span className="text-2xl font-black text-[#0F172A]">{formatPaise(price)}</span>
+              <span className="text-2xl font-black text-[#0F172A]">{formatPaise(price + surge.totalPaise)}</span>
             </div>
+            {surge.totalPaise > 0 && <p className="mt-0.5 text-[11px] text-slate-500">{formatPaise(price)} for the repair, plus:</p>}
+            <SurgeLines quote={surge.quote} className="mt-1.5" />
             <p className="text-[11px] text-slate-400 mt-1">
               Includes parts, labour and taxes. This is the price you pay — nothing is added later without your approval.
             </p>

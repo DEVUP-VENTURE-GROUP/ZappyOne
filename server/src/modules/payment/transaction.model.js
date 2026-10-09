@@ -33,6 +33,7 @@ const REASONS = {
   PLATFORM_COMMISSION: 'platform_commission',
   PLATFORM_FEE: 'platform_fee',
   SUBSCRIPTION_REVENUE: 'subscription_revenue',
+  SURGE_REVENUE: 'surge_revenue',             // ZappyOne's share of a surge, rain or night fee (jobs/surge)
 
   // Worker Cancellation Shield Fund
   SHIELD_PAYOUT: 'shield_payout',             // weekly fund payout credited to worker

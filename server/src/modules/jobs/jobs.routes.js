@@ -224,6 +224,27 @@ router.get('/arrival',
     } catch (err) { next(err); }
   });
 
+/**
+ * The surge lines for a price screen, and a lock that holds them (jobs/surge).
+ * kind + line + where + the price the surge applies to (service, not parts).
+ */
+router.get('/surge-quote',
+  authenticate, requireRole('user'),
+  makeLimiter({ windowMs: 60_000, max: 60, prefix: 'jobsurge' }),
+  async (req, res, next) => {
+    try {
+      const lat = Number(req.query.lat); const lng = Number(req.query.lng);
+      const kind = ['repair', 'pet', 'helping'].includes(req.query.kind) ? req.query.kind : null;
+      if (!kind || !Number.isFinite(lat) || !Number.isFinite(lng)) return res.json({ quoteId: null, lines: [], totalPaise: 0 });
+      const { HELPING_LINE } = require('./kinds');
+      let line = String(req.query.line || '').slice(0, 60);
+      if (kind === 'helping') line = HELPING_LINE[line] || line;
+      if (kind === 'repair' && req.query.vertical) line = await require('./kinds').KINDS.repair.line({ vertical: req.query.vertical }) || line;
+      const visit = require('./surge').isVisit(kind, { serviceMode: req.query.serviceMode || (kind === 'repair' ? 'doorstep' : undefined) });
+      res.json(await require('./surge').quote({ kind, line, lat, lng, basePaise: Math.max(0, Number(req.query.basePaise) || 0), userId: req.auth.sub, visit }));
+    } catch (err) { next(err); }
+  });
+
 /** Move a booking made for later, before the provider sets off (jobs/reschedule). */
 router.post('/:id/reschedule',
   authenticate, requireRole('user'),

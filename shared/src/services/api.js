@@ -126,7 +126,7 @@ export const api = createApi({
     'RepairCatalog', 'RepairConfig', 'RepairPricing', 'RepairRequests', 'RepairBookings', 'RepairProvider', 'MyAssets',
     'HelpingConfig', 'HelpingTasks', 'HelpingAvailable', 'AdminHelpingTasks',
     'PetCatalog', 'MyPets', 'PetBookings', 'PetAvailable', 'PetRecurring', 'AdminPetBookings', 'AdminPetPricing', 'AdminPetCapabilities',
-    'RepairIdentification', 'Onboarding', 'AdminBookings', 'ErrorIssues'],
+    'RepairIdentification', 'Onboarding', 'AdminBookings', 'ErrorIssues', 'Surge'],
   endpoints: (b) => ({
     // --- Auth ---
     // Messages between a customer and the provider on any job (jobs/job-chat).
@@ -136,6 +136,8 @@ export const api = createApi({
     myPendingCancelFee: b.query({ query: () => '/jobs/pending-fee', keepUnusedDataFor: 0 }),
     jobOptions: b.query({ query: ({ id }) => `/jobs/${id}/options`, keepUnusedDataFor: 0 }),
     /** How soon someone can be at this spot for a service, before booking (jobs/arrival). */
+    /** Surge lines + a 10-minute lock for a price screen (jobs/surge). */
+    surgeQuote: b.query({ query: (params) => ({ url: '/jobs/surge-quote', params }), keepUnusedDataFor: 0 }),
     jobArrival: b.query({ query: ({ line, lat, lng }) => ({ url: '/jobs/arrival', params: { line, lat, lng } }), keepUnusedDataFor: 30 }),
     /** Move a booking made for later (jobs/reschedule): repairs, pet care, helping. */
     rescheduleJob: b.mutation({ query: ({ id, scheduledAt }) => ({ url: `/jobs/${id}/reschedule`, method: 'POST', body: { scheduledAt } }), invalidatesTags: ['RepairBookings', 'PetBookings', 'HelpingTasks'] }),
@@ -1617,6 +1619,8 @@ export const api = createApi({
     /** Admin → Live errors (telemetry/errors): pulse, live feed, issues, plan, message. */
     adminErrorPulse: b.query({ query: () => adminApiPath('/errors/pulse'), keepUnusedDataFor: 0 }),
     /** Live operations → Arrivals: promises kept (jobs/promise) and how sure we are where workers are. */
+    adminSurge: b.query({ query: (days = 7) => ({ url: adminApiPath('/economics/surge'), params: { days } }), providesTags: ['Surge'], keepUnusedDataFor: 0 }),
+    adminUpdateSurge: b.mutation({ query: (body) => ({ url: adminApiPath('/economics/surge'), method: 'PUT', body }), invalidatesTags: ['Surge'] }),
     adminArrivalReport: b.query({ query: (days = 7) => ({ url: adminApiPath('/liveops/arrivals'), params: { days } }), keepUnusedDataFor: 0 }),
     adminWorkerLocations: b.query({ query: () => adminApiPath('/liveops/locations'), keepUnusedDataFor: 0 }),
     adminErrorLive: b.query({ query: (params = {}) => ({ url: adminApiPath('/errors/live'), params }), keepUnusedDataFor: 0 }),
@@ -2468,9 +2472,10 @@ export const {
   useProviderMyDocumentsQuery,
   useAdminErrorPulseQuery, useAdminErrorLiveQuery, useAdminErrorIssuesQuery, useAdminErrorIssueQuery,
   useAdminPlanErrorIssueMutation, useAdminMessageErrorIssueMutation,
-  useAdminArrivalReportQuery, useAdminWorkerLocationsQuery,
+  useAdminArrivalReportQuery, useAdminWorkerLocationsQuery, useAdminSurgeQuery, useAdminUpdateSurgeMutation,
   useRescheduleJobMutation,
   useJobArrivalQuery,
+  useSurgeQuoteQuery,
   useMyPendingCancelFeeQuery,
   useLensStatusQuery,
   useReportProviderAbsentMutation,

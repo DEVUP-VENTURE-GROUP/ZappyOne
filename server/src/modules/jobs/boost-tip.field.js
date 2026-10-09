@@ -21,4 +21,22 @@ const tip = new mongoose.Schema({
   settledAt: { type: Date, default: null },
 }, { _id: false });
 
-module.exports = { boost, tip };
+/**
+ * Surge on this booking (jobs/surge): busy area, rain, night — each its own
+ * line, frozen at booking. Paid with the booking; split at settlement between
+ * the provider (providerPaise) and ZappyOne (platformPaise).
+ */
+const surge = new mongoose.Schema({
+  paise: { type: Number, default: 0 },
+  // `type` is a field here, so it is spelled as one (a bare `type: String` would make the line a string).
+  lines: { type: [new mongoose.Schema({ type: { type: String }, label: String, reason: String, paise: Number }, { _id: false })], default: [] },
+  multiplier: { type: Number, default: 1 },
+  zone: { type: String, default: '' },
+  line: { type: String, default: '' },
+  providerPaise: { type: Number, default: 0 },
+  platformPaise: { type: Number, default: 0 },
+  quoteId: { type: String, default: '' },
+  settledAt: { type: Date, default: null },
+}, { _id: false });
+
+module.exports = { boost, tip, surge };

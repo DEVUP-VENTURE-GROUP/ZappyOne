@@ -143,6 +143,9 @@ router.post('/bookings', authenticate, requireRole('user'),
     specialHandling: Joi.boolean().default(false),
     couponPaise: Joi.number().integer().min(0).default(0),
     idempotencyKey: Joi.string().max(120).allow(null),
+    // The surge quote the customer saw, and the price it was for (jobs/surge).
+    surgeQuoteId: Joi.string().max(40).allow(null, ''),
+    surgeBasePaise: Joi.number().integer().min(0).allow(null),
     onSite: require('../jobs/on-site').onSiteSchema,
   })),
   ctrl.createBooking);

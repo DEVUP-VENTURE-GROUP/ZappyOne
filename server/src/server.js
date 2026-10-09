@@ -356,7 +356,13 @@ function startMatchingWaves() {
     waves.sweep().catch((err) => logger.warn({ err: err.message }, "[WAVES] sweep failed"));
     // Arrival promises past due with nobody there: customer told, provider nudged (jobs/promise).
     require("./modules/jobs/promise").sweep().catch((err) => logger.warn({ err: err.message }, "[PROMISE] sweep failed"));
+    // Automatic surge: every active zone, every minute (jobs/surge).
+    require("./modules/jobs/surge").tick().catch((err) => logger.warn({ err: err.message }, "[SURGE] tick failed"));
   }, 60 * 1000);
+  // Weather where people are booking, for the rain line (jobs/weather), every 10 minutes.
+  setInterval(() => {
+    require("./modules/jobs/surge").pollWeather().catch((err) => logger.warn({ err: err.message }, "[WEATHER] poll failed"));
+  }, 10 * 60 * 1000);
   logger.info("[WAVES] Finding-someone waves running (every minute)");
 }
 

@@ -20,6 +20,7 @@ import PendingFeeNotice from '@shared/components/booking/PendingFeeNotice';
 import { usePayBooking } from '@shared/hooks/usePayBooking';
 import { doorAddress } from '@shared/utils/doorAddress';
 import ArrivalBadge from '@shared/components/common/ArrivalBadge';
+import SurgeLines, { useSurge, surgeChanged } from '@shared/components/common/SurgeLines';
 
 /**
  * One adaptive booking flow for all seven categories (§3, §54).
@@ -224,6 +225,7 @@ function PetBookingFlow({ categoryCode, saved, draftKey, onStartOver }) {
         shopId: provider?.shopId || undefined,
         paymentMethod,
         idempotencyKey,
+        ...surge.bookingFields,
       }).unwrap();
       toast.success('Booked');
       if (res.booking?.paymentMethod === 'online') {
@@ -232,7 +234,9 @@ function PetBookingFlow({ categoryCode, saved, draftKey, onStartOver }) {
       clearDraft(draftKey);
       nav(`/pet/bookings/${res.booking._id}`, { replace: true });
     } catch (err) {
-      if (err?.data?.code === 'NOT_COMPATIBLE') {
+      if (surgeChanged(err, surge.refetch)) {
+        toast(err.data.error, { icon: '⚡' });
+      } else if (err?.data?.code === 'NOT_COMPATIBLE') {
         toast.error(err.data.error);
       } else {
         toast.error(err?.data?.error || 'Could not create the booking');
@@ -241,6 +245,12 @@ function PetBookingFlow({ categoryCode, saved, draftKey, onStartOver }) {
   }
 
   const quote = quoteData?.quote;
+  // Busy area, rain, night on a visit: own lines, held while they decide (jobs/surge).
+  const surge = useSurge({
+    kind: 'pet', line: categoryCode, serviceMode: primaryVariant?.allowedModes?.[0] || 'doorstep', loc,
+    basePaise: quote ? Math.max(0, (quote.totalPaise || 0) - (quote.taxPaise || 0) - (quote.platformFeePaise || 0)) : null,
+    skip: step !== 'confirm' || !quote,
+  });
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -436,8 +446,11 @@ function PetBookingFlow({ categoryCode, saved, draftKey, onStartOver }) {
             <p className="text-slate-500">{primaryVariant?.name} · {selectedPets.map((p) => p.name).join(', ')}</p>
           </div>
           {quote && (
-            <div className="rounded-2xl border-2 border-zappy-100 bg-zappy-50/50 p-4 flex justify-between font-black">
-              <span>Total</span><span>{formatPaise(quote.totalPaise)}</span>
+            <div className="rounded-2xl border-2 border-zappy-100 bg-zappy-50/50 p-4">
+              <div className="flex justify-between font-black">
+                <span>Total</span><span>{formatPaise(quote.totalPaise + surge.totalPaise)}</span>
+              </div>
+              <SurgeLines quote={surge.quote} className="mt-2" />
             </div>
           )}
           <SomeoneElse onChange={setOnSite} />

@@ -162,6 +162,8 @@ function announceOffer(booking) {
     totalPaise: booking.priceSnapshot?.totalPaise || 0,
     // What the customer added to be matched faster: all of it is the provider's.
     boostPaise: booking.boost?.paise || 0,
+    // Their share of the surge it was booked at (jobs/surge).
+    surgePaise: booking.surge?.providerPaise || 0,
     isEstimate: !!booking.priceSnapshot?.isEstimate,
     paymentMethod: booking.paymentMethod,
     address: booking.location?.address || '',

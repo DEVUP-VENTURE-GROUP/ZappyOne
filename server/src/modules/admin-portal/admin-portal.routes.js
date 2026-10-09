@@ -283,6 +283,44 @@ router.put('/economics/boost-tips',
     } catch (err) { next(err); }
   });
 
+/* Economics → Surge: automatic, set once (jobs/surge) */
+
+router.get('/economics/surge', async (req, res, next) => {
+  try {
+    const surge = require('../jobs/surge');
+    const [{ s }, zones, report] = await Promise.all([surge.settings(), surge.zones(), surge.report({ days: Math.min(90, Number(req.query.days) || 7) })]);
+    const lines = await require('../onboarding/onboarding.model').ServiceLine.find({ status: 'live', isActive: true }).select('code name').lean();
+    res.json({ settings: s, zones, report, lines });
+  } catch (err) { next(err); }
+});
+
+router.put('/economics/surge',
+  validate(Joi.object({
+    enabled: Joi.boolean(),
+    killSwitch: Joi.boolean(),
+    lines: Joi.array().items(Joi.string().max(60)).max(50),
+    maxMultiplier: Joi.number().min(1).max(2),
+    ceilingPaise: Joi.number().integer().min(0).max(100000),
+    rainPaise: Joi.number().integer().min(0).max(30000),
+    nightPaise: Joi.number().integer().min(0).max(30000),
+    nightStartHour: Joi.number().integer().min(0).max(23),
+    nightEndHour: Joi.number().integer().min(0).max(23),
+    providerSharePct: Joi.number().integer().min(0).max(100),
+    minDemand: Joi.number().integer().min(1).max(100),
+    lockMinutes: Joi.number().integer().min(2).max(30),
+  }).min(1)),
+  async (req, res, next) => {
+    try {
+      const surge = require('../jobs/surge');
+      const { s: before } = await surge.settings();
+      // Merged with what is set, so changing one limit never resets the others.
+      await require('../pricing/services/config.service').updateActiveConfig({ surgeAuto: { ...before, ...req.body } }, req.auth.sub);
+      const { s: after } = await surge.settings();
+      await auditService.fromRequest(req, 'economics.surge', { kind: 'system', id: null }, before, after);
+      res.json({ settings: after });
+    } catch (err) { next(err); }
+  });
+
 /* Worker dues: who owes what from cash jobs, and recording what they paid */
 
 router.get('/dues', async (req, res, next) => {

@@ -15,7 +15,7 @@ import toast from 'react-hot-toast';
 import { useSelector } from 'react-redux';
 import { selectRole } from '../../modules/auth/authSlice';
 import AssignTechnician from '../components/AssignTechnician';
-import { formatPaise, billTipPaise } from '../../utils/money';
+import { formatPaise, billTipPaise, surgeOnBill } from '../../utils/money';
 import { usePublishTripLocation, MOVING_STATUSES, tripOf } from '../../hooks/useLiveTrip';
 import TripSharingBanner from '../../components/worker/TripSharingBanner';
 import SOSButton from '../../components/worker/SOSButton';
@@ -534,7 +534,8 @@ export default function WorkerRepairJobPage() {
   const carriedPaise = booking.carriedFee?.paise > 0 ? booking.carriedFee.paise : 0;
   const boostPaise = booking.boost?.paise > 0 ? booking.boost.paise : 0; // all yours
   const tipPaise = billTipPaise(booking); // the customer put it on the bill: all yours
-  const duePaise = (snap.totalPaise || 0) + carriedPaise + boostPaise + tipPaise;
+  const surgePaise = surgeOnBill(booking); // collected with the bill; your share is in your earnings
+  const duePaise = (snap.totalPaise || 0) + carriedPaise + boostPaise + tipPaise + surgePaise;
 
   // A shop's job can go back to the owner until the technician sets out.
   // Before they accept; once accepted, GiveBackCard hands it back (to the shop, for a shop's technician).

@@ -109,6 +109,9 @@ async function settleProviderShare(args) {
   // The customer's boost is all the provider's (jobs/boost-tip).
   await require('../jobs/boost-tip').settleBoost(args.source, args.booking._id)
     .catch((err) => logger.error({ err: err.message, bookingId: String(args.booking._id) }, '[settlement] boost not paid to provider'));
+  // Surge: the provider's share to them, ZappyOne's booked as revenue (jobs/surge).
+  await require('../jobs/surge').settleSurge(args.source, args.booking._id)
+    .catch((err) => logger.error({ err: err.message, bookingId: String(args.booking._id) }, '[settlement] surge not split'));
   // A tip the customer put on the bill, likewise all theirs.
   await require('../jobs/boost-tip').settleTip(args.source, args.booking._id)
     .catch((err) => logger.error({ err: err.message, bookingId: String(args.booking._id) }, '[settlement] tip not paid to provider'));

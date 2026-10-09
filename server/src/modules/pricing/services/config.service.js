@@ -40,8 +40,25 @@ async function getActiveConfig() {
   return view;
 }
 
+/** Automatic surge (jobs/surge): the limits admin sets once. */
+const SURGE_DEFAULTS = {
+  enabled: false,            // off until switched on in Economics
+  killSwitch: false,         // everything to 1.0 at once
+  lines: [],                 // service lines it runs on; empty = every line
+  maxMultiplier: 1.3,        // busy-area ceiling (government rule for rides is 2.0)
+  ceilingPaise: 15000,       // busy/peak extra never above ₹150 per booking
+  rainPaise: 3000,           // ₹30 while it is raining at the door
+  nightPaise: 2000,          // ₹20 late at night
+  nightStartHour: 22,
+  nightEndHour: 6,
+  providerSharePct: 60,      // provider's share of every surge line; ZappyOne keeps the rest
+  minDemand: 3,              // bookings + searches in 15 min before a zone can surge
+  lockMinutes: 10,           // a quoted price holds this long
+};
+
 function toView(doc) {
   return {
+    surgeAuto: { ...SURGE_DEFAULTS, ...((doc.surgeAuto && typeof doc.surgeAuto === 'object') ? doc.surgeAuto : {}) },
     baseFeePaise: doc.baseFeePaise,
     perKmFeePaise: doc.perKmFeePaise,
     perMinFeePaise: doc.perMinFeePaise,
@@ -137,6 +154,7 @@ function toView(doc) {
 
 function envFallback() {
   return {
+    surgeAuto: { ...SURGE_DEFAULTS },
     baseFeePaise: config.pricing.baseFee * 100,
     perKmFeePaise: config.pricing.perKmFee * 100,
     perMinFeePaise: config.pricing.perMinFee * 100,
@@ -307,6 +325,7 @@ async function updateActiveConfig(patch, adminId) {
 }
 
 module.exports = {
+  SURGE_DEFAULTS,
   getActiveConfig,
   toView,
   envFallback,

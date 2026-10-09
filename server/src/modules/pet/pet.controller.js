@@ -199,7 +199,8 @@ async function findProviders(req, res, next) {
 
 async function createBooking(req, res, next) {
   try {
-    const { onSite, ...body } = req.body;
+    const { onSite, surgeQuoteId, surgeBasePaise, ...body } = req.body;
+    await require('../jobs/surge').precheck({ kind: 'pet', body: { ...body, surgeBasePaise }, userId: req.auth.sub, quoteId: surgeQuoteId });
     const { booking, replayed } = await bookingService.createBooking({
       ...body,
       userId: req.auth.sub,
@@ -207,7 +208,8 @@ async function createBooking(req, res, next) {
     });
     const saved = await require('../jobs/on-site').saveOnSite(require('./models/booking.model').PetBooking, booking._id, onSite, replayed);
     if (!replayed) await require('../jobs/cancel-fee').attachCarried('pet', booking._id, req.auth.sub);
-    res.status(replayed ? 200 : 201).json({ booking: saved ? { ...(booking.toObject?.() || booking), onSite: saved } : booking, replayed });
+    const surge = replayed ? null : await require('../jobs/surge').attach('pet', booking, { quoteId: surgeQuoteId, userId: req.auth.sub });
+    res.status(replayed ? 200 : 201).json({ booking: { ...(booking.toObject?.() || booking), ...(saved && { onSite: saved }), ...(surge && { surge }) }, replayed });
   } catch (err) { next(err); }
 }
 

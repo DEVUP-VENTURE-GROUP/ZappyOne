@@ -103,6 +103,9 @@ router.post('/tasks',
     paymentModel: Joi.string().valid(...OFFERED_PAYMENT_MODELS).default('worker_advance'),
     specialHandling: Joi.boolean().default(false),
     idempotencyKey: Joi.string().max(120).allow(null),
+    // The surge quote the customer saw, and the price it was for (jobs/surge).
+    surgeQuoteId: Joi.string().max(40).allow(null, ''),
+    surgeBasePaise: Joi.number().integer().min(0).allow(null),
     onSite: require('../jobs/on-site').onSiteSchema,
   })),
   ctrl.createTask);

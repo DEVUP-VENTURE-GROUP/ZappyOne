@@ -26,7 +26,7 @@ const PAYABLES = {
       }
       // An earlier cancellation fee riding on the booking is paid with it (jobs/cancel-fee).
       return { amountPaise: (b.priceSnapshot?.totalPaise || 0) + require('../jobs/cancel-fee').carriedPaise(b) + require('../jobs/boost-tip').boostPaise(b)
-        + require('../jobs/boost-tip').billTipPaise(b) };
+        + require('../jobs/boost-tip').billTipPaise(b) + require('../jobs/surge').surgePaise(b) };
     },
     markPaid(b, intent) { b.paymentStatus = 'paid'; b.paymentId = intent._id; },
     commission: (b) => b.priceSnapshot?.commissionPaise || 0,
@@ -39,7 +39,7 @@ const PAYABLES = {
         throw fail('Approve the final price before paying.', 409, 'PRICE_NOT_APPROVED');
       }
       return { amountPaise: (b.pricing?.totalPaise || 0) + require('../jobs/cancel-fee').carriedPaise(b) + require('../jobs/boost-tip').boostPaise(b)
-        + require('../jobs/boost-tip').billTipPaise(b) };
+        + require('../jobs/boost-tip').billTipPaise(b) + require('../jobs/surge').surgePaise(b) };
     },
     markPaid(b, intent) { b.paymentStatus = 'paid'; b.paymentId = String(intent._id); },
     commission: (b) => b.pricing?.commissionPaise || 0,

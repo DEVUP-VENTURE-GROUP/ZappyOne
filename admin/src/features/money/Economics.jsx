@@ -7,6 +7,7 @@ import { SectionHeader, Card, PageLoader, EmptyState, fmt } from '../../ui/kit';
 import CancellationRules from './economics/CancellationRules';
 import WorkerDues from './economics/WorkerDues';
 import BoostTips from './economics/BoostTips';
+import Surge from './economics/Surge';
 
 /**
  * Economics: every money rule in one place, a tab per kind of rule, so none of
@@ -174,6 +175,7 @@ const TABS = [
   ['cancellations', 'Cancellations', 'What cancelling costs customers, and what backing out costs providers'],
   ['dues', 'Worker dues', 'What workers may owe from cash jobs, and recording what they pay'],
   ['boost', 'Boost & tips', 'What customers may add for a faster match, and tip after a job'],
+  ['surge', 'Surge', 'Automatic: busy areas, rain and late night, priced every minute inside your limits'],
 ];
 
 export default function Economics() {
@@ -197,6 +199,7 @@ export default function Economics() {
       {tab === 'cancellations' && <CancellationRules />}
       {tab === 'dues' && <WorkerDues />}
       {tab === 'boost' && <BoostTips />}
+      {tab === 'surge' && <Surge />}
     </div>
   );
 }

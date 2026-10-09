@@ -36,7 +36,11 @@ function bill(kind, doc) {
   if (carried) lines.push(['Cancellation fee from an earlier booking', carried]);
   const tip = doc.tip?.method === 'with_payment' ? doc.tip.paise || 0 : 0;
   if (tip) lines.push(['Tip for your provider', tip]);
-  total += boost + carried + tip;
+  // Busy area, rain, night: each its own line, as the customer saw them (jobs/surge).
+  const surgeLines = doc.surge?.paise > 0 ? doc.surge.lines || [] : [];
+  for (const l of surgeLines) lines.push([l.label, l.paise]);
+  const surge = surgeLines.reduce((a, l) => a + (l.paise || 0), 0);
+  total += boost + carried + tip + surge;
   return { lines: lines.filter(([, p]) => p), total };
 }
 

@@ -72,10 +72,17 @@ export function billAddOnsPaise(booking) {
   const carried = booking.carriedFee?.paise > 0 ? booking.carriedFee.paise : 0;
   const boost = booking.boost?.paise > 0 ? booking.boost.paise : 0;
   const tip = booking.tip?.method === 'with_payment' && booking.tip.paise > 0 ? booking.tip.paise : 0;
-  return carried + boost + tip;
+  // Busy area, rain, night it was booked at (jobs/surge).
+  const surge = booking.surge?.paise > 0 ? booking.surge.paise : 0;
+  return carried + boost + tip + surge;
 }
 
 /** Just the tip on the bill, for "includes ₹50 tip" lines. */
 export function billTipPaise(booking) {
   return booking?.tip?.method === 'with_payment' && booking.tip.paise > 0 ? booking.tip.paise : 0;
+}
+
+/** The surge a booking was made at (busy area, rain, night): all of it is collected with the bill. */
+export function surgeOnBill(booking) {
+  return booking?.surge?.paise > 0 ? booking.surge.paise : 0;
 }

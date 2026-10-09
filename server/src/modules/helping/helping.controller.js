@@ -94,7 +94,8 @@ async function quote(req, res, next) {
 
 async function createTask(req, res, next) {
   try {
-    const { onSite, ...body } = req.body;
+    const { onSite, surgeQuoteId, surgeBasePaise, ...body } = req.body;
+    await require('../jobs/surge').precheck({ kind: 'helping', body: { ...body, surgeBasePaise }, userId: req.auth.sub, quoteId: surgeQuoteId });
     const { task, replayed } = await taskService.createTask({
       ...body,
       userId: req.auth.sub,
@@ -102,7 +103,8 @@ async function createTask(req, res, next) {
     });
     const saved = await require('../jobs/on-site').saveOnSite(require('./models/task.model').HelpingTask, task._id, onSite, replayed);
     if (!replayed) await require('../jobs/cancel-fee').attachCarried('helping', task._id, req.auth.sub);
-    res.status(replayed ? 200 : 201).json({ task: saved ? { ...(task.toObject?.() || task), onSite: saved } : task, replayed });
+    const surge = replayed ? null : await require('../jobs/surge').attach('helping', task, { quoteId: surgeQuoteId, userId: req.auth.sub });
+    res.status(replayed ? 200 : 201).json({ task: { ...(task.toObject?.() || task), ...(saved && { onSite: saved }), ...(surge && { surge }) }, replayed });
   } catch (err) { next(err); }
 }
 

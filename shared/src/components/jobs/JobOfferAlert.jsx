@@ -154,6 +154,9 @@ export default function JobOfferAlert({ offer, myLocation, onAccept, onDecline, 
                   <IndianRupee size={11} /> {offer.valueLabel}
                 </p>
                 <p className="mt-0.5 text-[18px] font-bold tabular-nums text-navy">{formatPaise(offer.valuePaise)}</p>
+                {offer.surgePaise > 0 && (
+                  <p className="text-[11px] font-semibold tabular-nums text-orange-600">incl. +{formatPaise(offer.surgePaise)} surge (busy / rain / night)</p>
+                )}
                 {boost > 0 && (
                   <p className="text-[11px] font-semibold tabular-nums text-amber-700">
                     <span className="text-slate-400 line-through">{formatPaise(offer.valuePaise - boost)}</span> + {formatPaise(boost)} extra
