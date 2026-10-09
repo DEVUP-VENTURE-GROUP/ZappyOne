@@ -1,0 +1,7 @@
+{
+  "name": "@zappy/core",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Business logic shared by every ZappyOne app: API, session, socket, store, hooks, types.",
+  "main": "index.ts"
+}

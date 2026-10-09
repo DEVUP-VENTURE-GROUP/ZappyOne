@@ -61,8 +61,17 @@ function readRt(req) {
 }
 
 /** Refuse a login for a role the requesting portal does not serve, before any session exists. */
+/**
+ * The ZappyOne app a native client is (`X-App: servicepro | rakshak`), for the
+ * same who-signs-in-where checks as the web portals. Cookies stay web-only.
+ */
+function appOf(req) {
+  const p = req.headers['x-app'];
+  return isMobile(req) && Object.prototype.hasOwnProperty.call(PORTALS, p) ? p : null;
+}
+
 function assertPortalServes(req, role) {
-  const portal = portalOf(req);
+  const portal = portalOf(req) || appOf(req);
   if (portal && !PORTALS[portal].roles.includes(role)) {
     throw Object.assign(new Error('This account signs in on a different ZappyOne app'), { status: 403, code: 'WRONG_PORTAL' });
   }
@@ -120,7 +129,7 @@ async function loginUser(req, res, next) {
 async function loginWorker(req, res, next) {
   try {
     assertPortalServes(req, 'worker');
-    const result = await authService.loginWorkerWithOtp({ ...req.body, portal: portalOf(req) });
+    const result = await authService.loginWorkerWithOtp({ ...req.body, portal: portalOf(req) || appOf(req) });
     setRtCookie(req, res, result.refreshToken);
     res.json(withMobileRt(req, { accessToken: result.accessToken, worker: result.worker }, result.refreshToken));
   } catch (err) { next(err); }
@@ -258,7 +267,7 @@ async function setWorkerCredentials(req, res, next) {
 async function loginWorkerPassword(req, res, next) {
   try {
     assertPortalServes(req, 'worker');
-    const result = await authService.loginWorkerWithPassword({ ...req.body, portal: portalOf(req) });
+    const result = await authService.loginWorkerWithPassword({ ...req.body, portal: portalOf(req) || appOf(req) });
     setRtCookie(req, res, result.refreshToken);
     res.json(withMobileRt(req, { accessToken: result.accessToken, worker: result.worker }, result.refreshToken));
   } catch (err) { next(err); }

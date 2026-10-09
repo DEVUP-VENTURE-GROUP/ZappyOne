@@ -1,0 +1,67 @@
+/**
+ * Design-system barrel.
+ * Screens import from here: `import { Button, Card, Text } from './'`.
+ */
+
+export { Text, Heading, SectionTitle } from './Text';
+export type { TextProps, HeadingProps } from './Text';
+
+export { SectionHeader } from './SectionHeader';
+export type { SectionHeaderProps } from './SectionHeader';
+
+export { ScalePressable } from './Pressable';
+export type { ScalePressableProps } from './Pressable';
+
+export { Button } from './Button';
+export type { ButtonProps, ButtonVariant, ButtonSize } from './Button';
+
+export { IconButton } from './IconButton';
+export type { IconButtonProps, IconButtonVariant } from './IconButton';
+
+export { Card } from './Card';
+export type { CardProps, CardVariant } from './Card';
+
+export { Gradient } from './Gradient';
+export type { GradientProps } from './Gradient';
+
+export { Input, SearchBar } from './Input';
+export type { InputProps, SearchBarProps } from './Input';
+
+export { Chip, Badge, StatusBadge } from './Chip';
+export type { ChipProps, ChipTone, BadgeProps, StatusBadgeProps } from './Chip';
+
+export { Skeleton, SkeletonCard, SkeletonList } from './Skeleton';
+export type { SkeletonProps, SkeletonListProps } from './Skeleton';
+
+export { EmptyState, ErrorState, LoadingState } from './States';
+export type { EmptyStateProps, ErrorStateProps, LoadingStateProps } from './States';
+
+export {
+  Divider,
+  Avatar,
+  Rating,
+  PriceRow,
+  formatRupees,
+} from './Misc';
+export type {
+  AvatarProps,
+  RatingProps,
+  PriceRowProps,
+} from './Misc';
+
+// Moved out of ./Misc once it grew a subtitle, a rule and safe-area handling.
+// The barrel path is unchanged, so existing imports keep working.
+export { ScreenHeader } from './ScreenHeader';
+export type { ScreenHeaderProps } from './ScreenHeader';
+
+export { HScrollRail } from './HScrollRail';
+export type { HScrollRailProps } from './HScrollRail';
+
+export { BottomSheet } from './BottomSheet';
+export type { BottomSheetProps } from './BottomSheet';
+
+export { Appear } from './Appear';
+export type { AppearProps } from './Appear';
+
+export { ZappyLogo } from './ZappyLogo';
+export type { ZappyLogoProps } from './ZappyLogo';
