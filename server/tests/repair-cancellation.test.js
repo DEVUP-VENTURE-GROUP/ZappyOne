@@ -70,7 +70,8 @@ describe('what cancelling costs', () => {
     expect(quote.allowed).toBe(true);
     expect(quote.stage).toBe('created');
     expect(quote.feePaise).toBe(0);
-    expect(quote.message).toMatch(/free of charge/i);
+    // Nobody has accepted yet: always free (jobs/cancel-fee).
+    expect(quote.message).toMatch(/no charge|free of charge/i);
   });
 
   it('charges once a technician is travelling', async () => {

@@ -55,6 +55,7 @@ function defaultConfig() {
       { daysBeforeEvent: 0, refundPct: 0   },
     ],
     minAdvanceBookingHours: 24, maxAdvanceBookingDays: 365,
+    partnerCancelPenalty: require('./partner-cancel').DEFAULTS.partnerCancelPenalty, partnerStrikeLimit: 3, partnerStrikeWindowDays: 90,
     sameDayBookingEnabled: false, videoEnabled: true, bookingEnabled: true,
   };
 }
@@ -70,6 +71,9 @@ async function listCategories() {
 
 async function listThemes({ categorySlug, city, budgetMaxPaise, guestCount, page = 1, sort = 'trending', search } = {}) {
   const q = { status: { $in: ['approved', 'featured'] } };
+  // A partner paused for cancelling too often is not offered (events/partner-cancel).
+  const paused = await require('./partner-cancel').pausedPartnerIds();
+  if (paused.length) q.partnerId = { $nin: paused };
   if (categorySlug) {
     const cat = await EventCategory.findOne({ slug: categorySlug }).select('_id').lean();
     if (cat) q.categoryId = cat._id;
@@ -214,7 +218,8 @@ async function createBooking({ userId, themeId, eventDate, eventTimeSlot, addres
   if (!theme) throw Object.assign(new Error('Theme not found or unavailable'), { status: 404 });
 
   const partner = theme.partnerId;
-  if (!partner || !partner.isActive || partner.isBlocked) {
+  // Paused for cancelling too often (events/partner-cancel): not bookable until reinstated.
+  if (!partner || !partner.isActive || partner.isBlocked || partner.suspendedAt) {
     throw Object.assign(new Error('This theme is not currently available'), { status: 409 });
   }
 
@@ -325,7 +330,8 @@ async function cancelBooking(bookingId, userId, reason) {
   }
 
   const cfg = await getActiveConfig();
-  const refundPct   = getRefundPct(cfg, booking.eventDate);
+  // The partner has not accepted yet: always a full refund (fees start once someone accepts).
+  const refundPct   = booking.status === 'confirmed' || booking.status === 'pending_payment' ? 100 : getRefundPct(cfg, booking.eventDate);
   const refundPaise = Math.round(paidPaiseOf(booking) * refundPct / 100);
 
   const updated = await EventBooking.findOneAndUpdate({ _id: bookingId, status: booking.status }, {

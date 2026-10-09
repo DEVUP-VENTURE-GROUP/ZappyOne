@@ -52,6 +52,14 @@ partnerRouter.patch('/bookings/:id/status',
   require('../../middlewares/rateLimit').codeAttemptLimiter('evtcode'),
   validate(Joi.object({ status: Joi.string().required(), code: Joi.string().pattern(/^[0-9]{4,6}$/).allow('', null), })),
   p.updateBookingStatus);
+// What cancelling would cost the partner, before they confirm (events/partner-cancel).
+partnerRouter.get('/bookings/:id/decline-quote', async (req, res, next) => {
+  try {
+    const b = await require('./event-booking.model').findOne({ _id: req.params.id, partnerId: req.auth.sub, status: 'confirmed' }).lean();
+    if (!b) return res.status(404).json({ error: 'Booking not found or cannot be declined at this stage' });
+    res.json({ quote: await require('./partner-cancel').quote(b) });
+  } catch (e) { next(e); }
+});
 partnerRouter.post('/bookings/:id/decline',   p.declineBooking);
 partnerRouter.get('/calendar',                p.getCalendar);
 partnerRouter.post('/calendar/block',         p.blockDate);
@@ -99,9 +107,20 @@ adminRouter.put('/config',
       daysBeforeEvent: Joi.number().integer().min(0).required(),
       refundPct:       Joi.number().min(0).max(100).required(),
     })),
+    // When a partner cancels (events/partner-cancel).
+    partnerCancelPenalty:   Joi.array().items(Joi.object({
+      daysBeforeEvent: Joi.number().integer().min(0).required(),
+      penaltyPct:      Joi.number().min(0).max(100).required(),
+    })).max(8),
+    partnerStrikeLimit:      Joi.number().integer().min(1).max(20),
+    partnerStrikeWindowDays: Joi.number().integer().min(7).max(365),
   }).min(1)),
   a.updateConfig);
 adminRouter.get('/analytics',        a.getAnalytics);
+// A partner paused for cancelling too often, back on (events/partner-cancel).
+adminRouter.post('/partners/:id/reinstate', async (req, res, next) => {
+  try { await require('./partner-cancel').reinstate(req.params.id); res.json({ ok: true }); } catch (e) { next(e); }
+});
 adminRouter.get('/categories',       a.listCategories);
 adminRouter.post('/categories',      a.upsertCategory);
 

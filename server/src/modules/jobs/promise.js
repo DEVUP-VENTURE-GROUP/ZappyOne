@@ -67,7 +67,7 @@ const providerOf = (doc) => (doc.workerId ? { kind: 'worker', id: doc.workerId }
 
 async function start(kind, doc) {
   const provider = providerOf(doc);
-  const at = KINDS[kind]?.open?.start?.(doc);
+  const at = require('./kinds').whereOf(kind, doc);
   if (!provider || !at || !isVisit(kind, doc)) return null;
   const now = Date.now();
   const booked = doc.scheduledAt ? new Date(doc.scheduledAt).getTime() : null;
@@ -134,7 +134,7 @@ async function sweep({ now = Date.now() } = {}) {
     if (!claimed.modifiedCount) continue;
     const doc = await KINDS[p.kind].model().findById(p.jobId).lean();
     if (!doc || KINDS[p.kind].ops?.terminal?.includes(doc.status)) { await ArrivalPromise.updateOne({ _id: p._id }, { $set: { closed: true } }); continue; }
-    const at = KINDS[p.kind].open.start(doc);
+    const at = require('./kinds').whereOf(p.kind, doc);
     const est = at ? (await require('./arrival').forProviders([{ kind: p.providerKind, id: p.providerId }], at)).get(`${p.providerKind}:${p.providerId}`) : null;
     const id = String(p.jobId);
     await events.push({ kind: 'user', id: p.userId }, {

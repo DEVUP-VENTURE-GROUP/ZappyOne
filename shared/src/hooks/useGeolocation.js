@@ -27,7 +27,9 @@ export const ACCURACY_BAD_M  = 500;  // >500m: rough area only — pin manually
  * satellite accuracy (±5–30m). Taking the best of N samples instead of the
  * first gives dramatically more accurate pickup coordinates.
  */
-function getBestPosition({ maxSamples = 4, windowMs = 8000 } = {}) {
+const GPS_LOCK_M = 30;
+
+function getBestPosition({ windowMs = 10000 } = {}) {
   return new Promise((resolve, reject) => {
     if (!navigator.geolocation) {
       reject(new Error('Geolocation not supported'));
@@ -60,10 +62,10 @@ function getBestPosition({ maxSamples = 4, windowMs = 8000 } = {}) {
           accuracy: pos.coords.accuracy,
         };
         samples.push(sample);
-        // Stop early if we get a very good fix
-        if (sample.accuracy <= ACCURACY_GOOD_M || samples.length >= maxSamples) {
-          finish();
-        }
+        // Stop only on a real GPS lock. The first readings are network guesses
+        // (±200–1500 m) and arrive within a second or two, so stopping after a
+        // count of them returned a guess. Otherwise keep the best until the window ends.
+        if (sample.accuracy <= GPS_LOCK_M) finish();
       },
       (err) => {
         if (samples.length > 0) {
@@ -93,7 +95,7 @@ export function useGeolocation() {
   const getCurrent = useCallback(() => new Promise((resolve, reject) => {
     setLoading(true);
     setError(null);
-    getBestPosition({ maxSamples: 4, windowMs: 8000 })
+    getBestPosition({ windowMs: 10000 })
       .then((loc) => {
         setLoading(false);
         saveGeoLocation(loc);
@@ -114,8 +116,11 @@ export function useGeolocation() {
           lat: pos.coords.latitude,
           lng: pos.coords.longitude,
           accuracy: pos.coords.accuracy,
+          heading: pos.coords.heading,
+          speed: pos.coords.speed,
         };
-        saveGeoLocation(loc);
+        // A rough reading never replaces a good saved fix (geoCache keeps the better one).
+        if (!(loc.accuracy > ACCURACY_WARN_M)) saveGeoLocation(loc);
         onPos(loc);
       },
       (err) => onErr?.(err),

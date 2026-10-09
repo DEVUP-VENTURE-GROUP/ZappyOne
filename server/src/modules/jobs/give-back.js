@@ -183,7 +183,16 @@ async function consequences({ kind, doc, provider, q, type, reason, note, from }
     counted: q.counts, penaltyPaise: q.penaltyPaise, pausedUntil, toShop: q.toShop,
   });
 
-  if (q.penaltyPaise > 0) {
+  if (q.penaltyPaise > 0 && provider.kind === 'shop') {
+    // Shops have no wallet: owed to ZappyOne and taken from the shop's payouts (shop/shop-payout).
+    const Transaction = require('../payment/transaction.model');
+    await Transaction.create({
+      type: 'debit', owner: { kind: 'platform', id: null }, amountPaise: -q.penaltyPaise, reason: Transaction.REASONS.PROVIDER_PENALTY,
+      idempotencyKey: `giveback:${row._id}`, description: type === 'provider_no_show' ? `Shop no-show on ${doc.reference || 'a job'}` : `Shop handed back ${doc.reference || 'a job'}`,
+      metadata: { shopId: String(provider.id), jobId: String(doc._id), kind }, status: 'succeeded',
+    }).then(() => JobGiveBack.updateOne({ _id: row._id }, { $set: { penaltyCharged: true } }))
+      .catch((e) => { if (e.code !== 11000) logger.error({ err: e.message, jobId: String(doc._id) }, '[give-back] shop penalty not recorded'); });
+  } else if (q.penaltyPaise > 0) {
     try {
       const Transaction = require('../payment/transaction.model');
       await require('../wallet/wallet.service').apply({

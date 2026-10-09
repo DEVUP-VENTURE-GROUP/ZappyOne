@@ -79,7 +79,7 @@ test('a partner decline refunds everything paid', async () => {
   const id = await booking();
   const res = await request(app).post(`/api/events/partner/bookings/${id}/decline`)
     .set('Authorization', `Bearer ${signAccessToken({ sub: String(partnerId), role: 'event_partner' })}`)
-    .send({ reason: 'Team unavailable' });
+    .send({ reason: 'Team unavailable', confirm: true }); // seen the cost first (events/partner-cancel)
   expect(res.status).toBe(200);
   expect(await refundedFor(id)).toBe(20000);
   expect((await EventBooking.findById(id).lean())).toMatchObject({ status: 'cancelled', refundStatus: 'pending', refundPaise: 20000 });

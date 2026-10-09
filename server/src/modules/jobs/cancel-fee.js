@@ -35,7 +35,8 @@ async function feeFor({ kind, doc, userId, stage, noShow = false }) {
   if (await require('./give-back').wasHandedBack(doc._id)) {
     return { ...base, feePaise: 0, isGrace: true, free: 'provider_changed' };
   }
-  if (stage === 'searching' && recent === 0) return { ...base, feePaise: 0, isGrace: true, free: 'first' };
+  // Nobody has accepted yet: always free, however often (fees start once someone accepts).
+  if (stage === 'searching' || stage === 'created') return { ...base, feePaise: 0, isGrace: true, free: 'not_accepted' };
   if (stage === 'assigned') {
     const { freeCancelWindowSec = 120 } = await require('../order/cancellation.service').getConfig();
     const accepted = enteredAt(doc, RULES[kind]?.accepted || []);
@@ -50,6 +51,7 @@ async function feeFor({ kind, doc, userId, stage, noShow = false }) {
 function messageFor({ feePaise, earnedPaise = 0, refundPaise, paidPaise, free, noun = 'provider' }) {
   if (free === 'provider_changed') return 'No charge: your provider could not make it, so cancelling is free.';
   if (free === 'just_accepted') return 'No charge if you cancel now. After a couple of minutes a fee applies.';
+  if (free === 'not_accepted') return `No charge: no ${noun} has accepted yet.`;
   if (free === 'first') return `No charge this time, but please avoid cancelling once a ${noun} is on the way.`;
   const parts = [];
   if (earnedPaise > 0) parts.push(`${rupees(earnedPaise)} for the inspection already done`);

@@ -2,6 +2,7 @@ import { metresBetween } from './distance';
 
 const KEY = 'zappy:loc';
 const MAX_AGE_MS = 30 * 60 * 1000; // 30 minutes
+const ROUGH_M = 150;
 
 /**
  * How far the position may drift before the stored address stops describing it.
@@ -65,6 +66,8 @@ export function loadGeoLocation() {
   const d = readRaw();
   if (!d || typeof d.lat !== 'number' || typeof d.lng !== 'number') return null;
   if (Date.now() - d.t > MAX_AGE_MS) return null;
+  // A rough fix (a laptop's network guess) is not worth reusing; 0 = a place the person chose.
+  if (typeof d.accuracy === 'number' && d.accuracy > ROUGH_M) return null;
   return {
     lat: d.lat,
     lng: d.lng,

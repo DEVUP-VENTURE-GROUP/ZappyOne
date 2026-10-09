@@ -234,6 +234,10 @@ async function declineBooking(req, res, next) {
 
     const { paidPaiseOf } = require('./event.service');
     const refundPaise = paidPaiseOf(booking);
+    // Ask first (events/partner-cancel quote): a partner sees the cost before cancelling.
+    if (req.body?.confirm !== true) {
+      return res.status(409).json({ code: 'CONFIRM_CANCEL', error: 'Confirm to cancel', quote: await require('./partner-cancel').quote(booking) });
+    }
     booking.status = 'cancelled';
     booking.cancellationReason = reason || 'Partner unavailable';
     booking.cancelledBy = 'partner';
@@ -245,6 +249,8 @@ async function declineBooking(req, res, next) {
       await require('../payment/payment.service').refundEventPayments({ bookingId: booking._id, reason: 'Partner cancelled' });
     }
     require('../jobs/job-events').announce('event', booking, 'cancelled').catch(() => {});
+    // The partner's penalty and strike; a pause at the limit (events/partner-cancel).
+    const penalty = await require('./partner-cancel').apply(booking.toObject ? booking.toObject() : booking);
 
     // Notify user — full refund on partner cancellation
     try {
@@ -259,7 +265,7 @@ async function declineBooking(req, res, next) {
       }).catch(() => {});
     } catch {}
 
-    res.json({ ok: true, bookingId: String(booking._id) });
+    res.json({ ok: true, bookingId: String(booking._id), penalty });
   } catch (e) { next(e); }
 }
 
@@ -381,8 +387,11 @@ async function getEarnings(req, res, next) {
 
     const gross = summary[0]?.grossPaise || 0;
     const net = Math.round(summary[0]?.netPaise || 0);
+    // Cancellation penalties come off what the partner is paid (events/partner-cancel).
+    const penaltiesPaise = await require('./partner-cancel').penaltiesOf(req.auth.sub);
     res.json({
       grossPaise: gross, platformPaise: gross - net, netPaise: net,
+      penaltiesPaise, netAfterPenaltiesPaise: Math.max(0, net - penaltiesPaise),
       totalJobs: summary[0]?.count || 0,
       // The rate new bookings are made at; each past booking keeps its own.
       commissionPct: cfg.platformCommissionPct ?? 10,

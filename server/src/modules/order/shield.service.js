@@ -41,7 +41,7 @@ const { redis }               = require('../../config/redis');
 
 const DEFAULT_FEE_SCHEDULE = {
   created:    [0,    0,    0   ],
-  searching:  [0,    1500, 2500],
+  searching:  [0, 0, 0],
   assigned:   [2000, 3000, 4000],
   on_the_way: [3000, 4000, 5000],
   arrived:    [5000, 6000, 7500],

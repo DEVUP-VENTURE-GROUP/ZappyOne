@@ -37,6 +37,7 @@ async function updateLocation(req, res, next) {
       orderId: req.body.orderId,
       repairBookingId: req.body.repairBookingId,
       jobId: req.body.jobId,
+      accuracy: req.body.accuracy,
     });
     res.json({ ok: true });
   } catch (err) {

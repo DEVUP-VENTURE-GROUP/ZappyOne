@@ -556,7 +556,9 @@ describe('cancellation cost depends on how close to the booking it is', () => {
       shopId: shop._id,
       serviceLocation: { type: 'Point', coordinates: [78.4, 17.4], address: 'Home' },
     });
-    return booking;
+    // Fees apply once a provider has accepted; before that it is always free.
+    await require('../src/modules/pet/models/booking.model').PetBooking.updateOne({ _id: booking._id }, { $set: { status: 'PROVIDER_ACCEPTED' } });
+    return { ...booking.toObject?.() || booking, status: 'PROVIDER_ACCEPTED' };
   }
 
   it('refunds in full well before the stay', async () => {

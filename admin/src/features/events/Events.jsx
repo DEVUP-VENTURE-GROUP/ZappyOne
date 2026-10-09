@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, CheckCircle, XCircle, Star, Eye, EyeOff, Zap, Users, Package, Settings2, BarChart2, TrendingUp, ChevronRight, Plus, X, ShieldCheck, ShieldOff, FileText, Phone, MapPin, ZoomIn, AlertTriangle, Building2 } from 'lucide-react';
-import { useAdminEventThemesQuery, useAdminUpdateThemeStatusMutation, useAdminEventBookingsQuery, useAdminEventPartnersQuery, useAdminEventAnalyticsQuery, useAdminEventConfigQuery, useAdminUpdateEventConfigMutation, useAdminEventCategoriesQuery, useAdminUpsertEventCategoryMutation, useAdminCreateEventPartnerMutation, useAdminGetEventPartnerQuery, useAdminApproveEventPartnerKycMutation, useAdminRejectEventPartnerKycMutation, useAdminClarifyEventPartnerKycMutation, useAdminBlockEventPartnerMutation, useAdminCancelEventBookingMutation } from '@shared/services/api';
+import { useAdminEventThemesQuery, useAdminUpdateThemeStatusMutation, useAdminEventBookingsQuery, useAdminEventPartnersQuery, useAdminEventAnalyticsQuery, useAdminEventConfigQuery, useAdminUpdateEventConfigMutation, useAdminEventCategoriesQuery, useAdminUpsertEventCategoryMutation, useAdminCreateEventPartnerMutation, useAdminGetEventPartnerQuery, useAdminApproveEventPartnerKycMutation, useAdminRejectEventPartnerKycMutation, useAdminClarifyEventPartnerKycMutation, useAdminBlockEventPartnerMutation, useAdminReinstateEventPartnerMutation, useAdminCancelEventBookingMutation } from '@shared/services/api';
 import { useSelector } from 'react-redux';
 import { selectAuth } from '@shared/modules/auth/authSlice';
 import { API_BASE } from '@shared/services/apiBase';
@@ -287,6 +287,7 @@ function PartnerDrawer({ partnerId, onClose, onRefresh }) {
   const [rejectKyc]   = useAdminRejectEventPartnerKycMutation();
   const [clarifyKyc]  = useAdminClarifyEventPartnerKycMutation();
   const [blockPartner]= useAdminBlockEventPartnerMutation();
+  const [reinstatePartner] = useAdminReinstateEventPartnerMutation();
   const [rejectNote, setRejectNote] = useState('');
   const [showReject, setShowReject] = useState(false);
   const [lightbox, setLightbox] = useState(null);
@@ -309,6 +310,10 @@ function PartnerDrawer({ partnerId, onClose, onRefresh }) {
   async function handleReject() {
     if (!rejectNote.trim()) return toast.error('Enter rejection reason');
     try { await rejectKyc({ id: partnerId, reason: rejectNote }).unwrap(); toast.success('KYC Rejected'); setShowReject(false); refetch(); onRefresh(); }
+    catch { toast.error('Failed'); }
+  }
+  async function handleReinstate() {
+    try { await reinstatePartner(partnerId).unwrap(); toast.success('Partner reinstated. Their listings are live again.'); refetch(); onRefresh(); }
     catch { toast.error('Failed'); }
   }
   async function handleBlock(block) {
@@ -460,6 +465,15 @@ function PartnerDrawer({ partnerId, onClose, onRefresh }) {
               </div>
             )}
 
+            {/* Paused for cancelling too often (server events/partner-cancel) */}
+            {partner.suspendedAt && (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 p-3">
+                <p className="text-sm font-bold text-amber-900">Paused since {new Date(partner.suspendedAt).toLocaleDateString('en-IN')}</p>
+                <p className="mt-0.5 text-[12px] text-amber-800">{partner.suspendReason || 'Too many cancellations'}. Listings hidden, no new bookings.</p>
+                <button onClick={handleReinstate} className="mt-2 w-full rounded-lg bg-amber-600 py-2 text-sm font-bold text-white">Reinstate partner</button>
+              </div>
+            )}
+
             {/* Block / Unblock */}
             <div className="border-t border-slate-100 pt-4">
               {partner.isBlocked ? (
@@ -553,6 +567,7 @@ function PartnersTab() {
                         KYC: {p.kyc?.status?.replace('_', ' ')}
                       </span>
                       {p.isBlocked && <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-50 text-red-700 border border-red-200">Blocked</span>}
+                      {p.suspendedAt && <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">Paused</span>}
                       {p.kyc?.status === 'not_submitted' && <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-600 border border-amber-200">Pending Review</span>}
                     </div>
                     <p className="text-xs text-slate-500 mt-0.5">{p.ownerName} · {p.phone}</p>

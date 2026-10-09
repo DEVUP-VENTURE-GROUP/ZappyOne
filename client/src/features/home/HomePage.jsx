@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 import toast from 'react-hot-toast';
 import { ChevronRight } from 'lucide-react';
 import { selectAuth, selectIsAuthed } from '@shared/modules/auth/authSlice';
-import { useGetServiceabilityQuery, useLiveCatalogQuery, useGetEventCategoriesQuery, useLensStatusQuery } from '@shared/services/api';
+import { useGetServiceabilityQuery, useLiveCatalogQuery, useGetEventCategoriesQuery, useLensStatusQuery, useSaveRecentLocationMutation } from '@shared/services/api';
 import { useGeolocation, loadGeoLocation } from '@shared/hooks/useGeolocation';
 import { saveGeoLocation } from '@shared/utils/geoCache';
 import { reverseGeocode } from '@shared/utils/reverseGeocode';
@@ -87,6 +87,13 @@ export default function HomePage() {
 
   /* Location: trusted cache first, then GPS; ask only when neither works. */
   const { getCurrent } = useGeolocation();
+  // A fresh, accurate fix is kept on the customer's record once a visit (admin sees it; next booking offers it).
+  const [saveRecent] = useSaveRecentLocationMutation();
+  const remember = (lat, lng, primary, secondary, accuracy) => {
+    if (!isAuthed || (accuracy && accuracy > 150)) return;
+    try { if (sessionStorage.getItem('zappy:loc_saved')) return; sessionStorage.setItem('zappy:loc_saved', '1'); } catch { /* storage blocked */ }
+    saveRecent({ address: [primary, secondary].filter(Boolean).join(', '), lat, lng }).catch(() => {});
+  };
   const [loc, setLoc] = useState(() => {
     const cached = loadGeoLocation();
     return { primary: 'Finding your location…', secondary: null, loading: true, lat: cached?.lat, lng: cached?.lng };
@@ -110,6 +117,7 @@ export default function HomePage() {
         }
         const { primary, secondary } = await reverseGeocode(lat, lng);
         setLoc({ primary, secondary, loading: false, lat, lng });
+        remember(lat, lng, primary, secondary, accuracy);
       })
       .catch(() => {
         setLoc({ primary: 'Set your location', secondary: null, loading: false });
@@ -120,9 +128,10 @@ export default function HomePage() {
   async function detectCurrentLocation() {
     setLocDetecting(true);
     try {
-      const { lat, lng } = await getCurrent();
+      const { lat, lng, accuracy } = await getCurrent();
       const { primary, secondary } = await reverseGeocode(lat, lng);
       setLoc({ primary, secondary, loading: false, lat, lng });
+      remember(lat, lng, primary, secondary, accuracy);
       setLocSheet(false);
     } catch {
       toast.error('Couldn’t get your location. Search for it instead.');
@@ -134,6 +143,7 @@ export default function HomePage() {
   function pickLocation({ lat, lng, primary, secondary }) {
     saveGeoLocation({ lat, lng, accuracy: 0 }); // a chosen place is trusted; don't re-ask next visit
     setLoc({ primary, secondary, loading: false, lat, lng });
+    remember(lat, lng, primary, secondary, 0);
     setLocSheet(false);
   }
 

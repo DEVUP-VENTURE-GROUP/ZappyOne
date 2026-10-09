@@ -1281,9 +1281,11 @@ export const api = createApi({
       invalidatesTags: ['PartnerNotification'],
     }),
     declineEventBooking: b.mutation({
-      query: ({ id, reason }) => ({ url: `/events/partner/bookings/${id}/decline`, method: 'POST', body: { reason } }),
+      // confirm: true once the partner has seen the cost (events/partner-cancel).
+      query: ({ id, reason }) => ({ url: `/events/partner/bookings/${id}/decline`, method: 'POST', body: { reason, confirm: true } }),
       invalidatesTags: ['EventBooking'],
     }),
+    eventDeclineQuote: b.query({ query: (id) => `/events/partner/bookings/${id}/decline-quote`, keepUnusedDataFor: 0 }),
 
     // Events (user-facing)
     getEventCategories: b.query({ query: () => '/events/categories', providesTags: ['EventCategory'] }),
@@ -1391,6 +1393,8 @@ export const api = createApi({
       query: ({ id, reason }) => ({ url: adminApiPath(`/events/partners/${id}/kyc/reject`), method: 'POST', body: { reason } }),
       invalidatesTags: ['EventPartner'],
     }),
+    /** Back on after a pause for cancelling (events/partner-cancel). */
+    adminReinstateEventPartner: b.mutation({ query: (id) => ({ url: adminApiPath(`/events/partners/${id}/reinstate`), method: 'POST' }), invalidatesTags: ['EventPartner'] }),
     adminBlockEventPartner: b.mutation({
       query: ({ id, block }) => ({ url: adminApiPath(`/events/partners/${id}/block`), method: 'POST', body: { block } }),
       invalidatesTags: ['EventPartner'],
@@ -2500,6 +2504,8 @@ export const {
   useAdminArrivalReportQuery, useAdminWorkerLocationsQuery, useAdminSurgeQuery, useAdminUpdateSurgeMutation,
   useRescheduleJobMutation,
   useJobArrivalQuery,
+  useAdminReinstateEventPartnerMutation,
+  useEventDeclineQuoteQuery,
   useVerifyActionOtpMutation, useShopPayoutsQuery, useRequestShopPayoutMutation, useAdminShopPayoutsQuery, useAdminDecideShopPayoutMutation,
   useMyRepeatsQuery, useRepeatJobMutation, useRepeatActionMutation,
   useWorkerHoursQuery, useSaveWorkerHoursMutation,

@@ -10,6 +10,8 @@ const router = express.Router();
 const locationSchema = Joi.object({
   lat: Joi.number().min(-90).max(90).required(),
   lng: Joi.number().min(-180).max(180).required(),
+  // Metres, from the phone. A rough reading does not replace a good stored position.
+  accuracy: Joi.number().min(0).max(1e6).allow(null),
   orderId: Joi.string().hex().length(24).optional().allow(null, ''),
   // A repair trip, rather than an order delivery. Same pipeline — spoof guard,
   // Redis geo, throttled writes — fanned out to the repair booking's room.

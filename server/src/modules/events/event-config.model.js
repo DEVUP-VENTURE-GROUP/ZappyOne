@@ -26,6 +26,14 @@ const eventConfigSchema = new mongoose.Schema({
     ],
   },
 
+  // When a partner cancels a confirmed booking (events/partner-cancel)
+  partnerCancelPenalty: {
+    type: [new mongoose.Schema({ daysBeforeEvent: Number, penaltyPct: Number }, { _id: false })],
+    default: undefined,
+  },
+  partnerStrikeLimit:      { type: Number, default: 3 },
+  partnerStrikeWindowDays: { type: Number, default: 90 },
+
   // Booking rules
   minAdvanceBookingHours: { type: Number, default: 24  },
   maxAdvanceBookingDays:  { type: Number, default: 365 },

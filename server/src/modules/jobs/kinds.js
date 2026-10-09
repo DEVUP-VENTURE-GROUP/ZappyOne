@@ -303,4 +303,16 @@ async function findJob(id, select = 'userId workerId shopId partnerId') {
   return null;
 }
 
-module.exports = { KINDS, ALL, lineOf, findJob, providerOf, HELPING_LINE, pointOf };
+/**
+ * Where a job happens — the customer's door, or the pickup — for every kind,
+ * including repairs, which are never "open" jobs and so have no open.start.
+ * { lat, lng, address } or null. Surge, the arrival promise, comebacks and the
+ * customer's remembered places all read it here.
+ */
+function whereOf(kind, doc) {
+  if (!doc) return null;
+  if (kind === 'repair') return place(doc.location);
+  return KINDS[kind]?.open?.start?.(doc) || null;
+}
+
+module.exports = { KINDS, ALL, lineOf, findJob, providerOf, HELPING_LINE, pointOf, whereOf };

@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { ArrowLeft, Phone, MapPin, Users, Clock, StickyNote, Camera, Loader2, CheckCircle2, XCircle, Navigation } from 'lucide-react';
 import {
-  usePartnerBookingQuery, useUpdatePartnerBookingStatusMutation, useDeclineEventBookingMutation,
+  usePartnerBookingQuery, useUpdatePartnerBookingStatusMutation, useDeclineEventBookingMutation, useEventDeclineQuoteQuery,
   useAddPartnerSetupPhotosMutation, usePresignUploadMutation,
 } from '@shared/services/api';
 import { useStartCodeGate } from '@shared/components/worker/StartCodePrompt';
@@ -25,6 +25,8 @@ export default function BookingDetailPage() {
   const [decline, { isLoading: declining }] = useDeclineEventBookingMutation();
   const gate = useStartCodeGate();
   const [declineOpen, setDeclineOpen] = useState(false);
+  // What cancelling costs, shown before they confirm (server events/partner-cancel).
+  const { data: declineQuote } = useEventDeclineQuoteQuery(id, { skip: !declineOpen });
   const [reason, setReason] = useState('');
 
   if (isLoading) return <Spinner />;
@@ -134,11 +136,16 @@ export default function BookingDetailPage() {
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink-900/40 sm:items-center" onClick={(e) => e.target === e.currentTarget && setDeclineOpen(false)}>
           <div className="w-full max-w-md rounded-t-sheet bg-white p-5 sm:rounded-card">
             <p className="text-[17px] font-bold text-ink-900">Decline this booking?</p>
-            <p className="mt-1 text-[14px] text-ink-500">The customer gets a full refund. Declining often lowers how high your packages show.</p>
+            <p className="mt-1 text-[14px] text-ink-500">The customer gets a full refund.</p>
+            {declineQuote?.quote ? (
+              <p className={`mt-2 rounded-btn px-3 py-2 text-[13px] leading-relaxed ${declineQuote.quote.penaltyPaise || declineQuote.quote.willPause ? 'bg-red-50 text-red-800' : 'bg-amber-50 text-amber-900'}`}>
+                {declineQuote.quote.message}
+              </p>
+            ) : <p className="mt-2 flex items-center gap-1.5 text-[13px] text-ink-500"><Loader2 size={13} className="animate-spin" /> Checking what it costs…</p>}
             <textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={3} placeholder="Reason (the customer sees this)" className="input mt-3 w-full" />
             <div className="mt-4 flex gap-2">
               <button type="button" onClick={() => setDeclineOpen(false)} className="btn-outline flex-1">Keep it</button>
-              <button type="button" onClick={doDecline} disabled={declining} className="btn-primary flex-1 bg-red-600 hover:bg-red-700">
+              <button type="button" onClick={doDecline} disabled={declining || !declineQuote?.quote} className="btn-primary flex-1 bg-red-600 hover:bg-red-700">
                 {declining && <Loader2 size={16} className="animate-spin" />} Decline
               </button>
             </div>

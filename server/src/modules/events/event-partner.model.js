@@ -53,6 +53,9 @@ const eventPartnerSchema = new mongoose.Schema({
 
   isActive:  { type: Boolean, default: true },
   isBlocked: { type: Boolean, default: false },
+  /** Paused for cancelling too often (events/partner-cancel): no listings, no new bookings, until admin reinstates. */
+  suspendedAt:   { type: Date, default: null },
+  suspendReason: { type: String, default: '' },
 
   // Blocked date slots (partner marks unavailable dates)
   blockedDates: { type: [Date], default: [] },

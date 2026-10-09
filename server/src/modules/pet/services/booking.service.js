@@ -277,12 +277,30 @@ async function releaseStaleAssignments({ now = new Date() } = {}) {
  * provider could not sell to anyone else, so late cancellation compensates
  * them rather than simply refunding everything.
  */
+/** Before a provider accepts, cancelling is always free. */
+const NOT_ACCEPTED = ['REQUESTED', 'PRICE_PENDING', 'AWAITING_CUSTOMER_APPROVAL', 'BOOKED', 'PROVIDER_SEARCHING', 'PROVIDER_ASSIGNED'];
+
+/**
+ * When admin has set no policy for a pet service. Hours before the visit (or
+ * check-in): 24+ full refund; 2–24 75%; under 2 50%; not there 0%. The
+ * provider gets 70% of what is kept — a wasted trip is paid for.
+ */
+const DEFAULT_PET_POLICY = {
+  code: 'default',
+  tiers: [
+    { label: '24h_plus', minHoursBefore: 24, refundPct: 100, providerCompensationPct: 0 },
+    { label: '2_to_24h', minHoursBefore: 2, refundPct: 75, providerCompensationPct: 17.5 },
+    { label: 'under_2h', minHoursBefore: -100000, refundPct: 50, providerCompensationPct: 35 },
+  ],
+  noShowRefundPct: 0,
+};
+
 async function quoteCancellation({ booking, by = 'customer', noShow = false }) {
   if (!CANCELLABLE_FROM.includes(booking.status)) {
     return { allowed: false, reason: 'This booking can no longer be cancelled' };
   }
 
-  const policy = booking.cancellationPolicyCode
+  let policy = booking.cancellationPolicyCode
     ? await PetCancellationPolicy.findOne({ code: booking.cancellationPolicyCode }).lean()
     : null;
 
@@ -300,14 +318,18 @@ async function quoteCancellation({ booking, by = 'customer', noShow = false }) {
     };
   }
 
+  // Nobody has accepted yet: always free (fees start once a provider accepts).
+  if (!noShow && NOT_ACCEPTED.includes(booking.status)) {
+    return { allowed: true, refundPaise: total, penaltyPaise: 0, providerCompensationPaise: 0, tier: 'not_accepted' };
+  }
+
   // A provider backed out or did not turn up (jobs/give-back): cancelling is free.
   if (!noShow && await require('../../jobs/give-back').wasHandedBack(booking._id)) {
     return { allowed: true, refundPaise: total, penaltyPaise: 0, providerCompensationPaise: 0, tier: 'provider_changed' };
   }
 
-  if (!policy?.tiers?.length) {
-    return { allowed: true, refundPaise: total, penaltyPaise: 0, providerCompensationPaise: 0, tier: 'full_refund' };
-  }
+  // No policy set for this service: the default, never "free at the door".
+  if (!policy?.tiers?.length) policy = DEFAULT_PET_POLICY;
 
   const startsAt = booking.checkInAt || booking.scheduledAt;
   // Nobody at the door is the no-show tier, whatever the clock says.

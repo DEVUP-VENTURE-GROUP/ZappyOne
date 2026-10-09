@@ -11,7 +11,8 @@ const shieldConfigSchema = new mongoose.Schema(
     // Index 0 = 1st cancel in 30 days, 1 = 2nd, 2 = 3rd+
     feeSchedule: {
       created:    { type: [Number], default: [0,    0,    0   ] },
-      searching:  { type: [Number], default: [0,    1500, 2500] },
+      // Free while nobody has accepted — fees start once someone accepts.
+      searching:  { type: [Number], default: [0,    0,    0   ] },
       assigned:   { type: [Number], default: [2000, 3000, 4000] },
       on_the_way: { type: [Number], default: [3000, 4000, 5000] },
       arrived:    { type: [Number], default: [5000, 6000, 7500] },

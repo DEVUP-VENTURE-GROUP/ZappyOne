@@ -35,6 +35,8 @@ async function createBooking(req, res, next) {
     const surge = replayed ? null : await require('../../jobs/surge').attach('repair', booking, { quoteId: surgeQuoteId, userId: req.auth.sub });
     // A tip chosen at checkout goes on the bill, inside what is paid (jobs/boost-tip).
     const tip = replayed ? null : await require('../../jobs/boost-tip').tipAtBooking('repair', booking, tipPaise).catch(() => null);
+    // Where the customer booked, kept on their record (admin sees it; the app offers it next time).
+    if (!replayed) require('../../jobs/place').remember('repair', booking).catch(() => {});
     // Booked from a price request: close it and tell the other shops (services/price-request).
     if (!replayed && priceRequestId) {
       await require('../services/price-request.service').markBooked({

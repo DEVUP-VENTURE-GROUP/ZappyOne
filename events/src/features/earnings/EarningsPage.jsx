@@ -28,6 +28,12 @@ export default function EarningsPage() {
         <Stat label="ZappyOne commission" value={rupees(d.platformPaise)} />
         <Stat label="Coming up" value={rupees(d.upcomingNetPaise)} hint={`${d.upcomingCount || 0} accepted bookings`} />
       </div>
+      {/* Penalties for cancelled bookings come off what you are paid (server events/partner-cancel). */}
+      {d.penaltiesPaise > 0 && (
+        <p className="rounded-card bg-red-50 px-4 py-3 text-[13px] text-red-800">
+          Cancellation penalties: {rupees(d.penaltiesPaise)}, taken from your payouts. After penalties you earned {rupees(d.netAfterPenaltiesPaise)}.
+        </p>
+      )}
 
       {!d.totalJobs ? (
         <Empty icon={Wallet} title="No earnings yet" text="Your share of each event shows here once you mark it completed." />

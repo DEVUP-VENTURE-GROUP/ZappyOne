@@ -23,10 +23,14 @@ export function useLocationBroadcast({ isOnline, token, currentOrderId, onPositi
     let lastSocket = 0;
     let lastMovedAt = Date.now();
 
+    let lastGoodAt = 0;
     const stop = watch(
       (pos) => {
-        handlers.current.onPosition?.(pos);
         const now = Date.now();
+        // Rough (network) reading while a good GPS fix is under 2 minutes old: ignore it.
+        if (pos.accuracy > 100 && now - lastGoodAt < 120000) return;
+        if (pos.accuracy <= 100) lastGoodAt = now;
+        handlers.current.onPosition?.(pos);
         const cur = { lat: pos.lat, lng: pos.lng };
         const moved = (lastSentRef.current ? (metresBetween(lastSentRef.current, cur) ?? 999) : 999) >= 15;
         if (moved) lastMovedAt = now;
@@ -46,7 +50,7 @@ export function useLocationBroadcast({ isOnline, token, currentOrderId, onPositi
           fetch(`${API_BASE}/api/workers/location`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-            body: JSON.stringify({ lat: pos.lat, lng: pos.lng, ...(currentOrderId && { orderId: currentOrderId }) }),
+            body: JSON.stringify({ lat: pos.lat, lng: pos.lng, accuracy: pos.accuracy ?? null, ...(currentOrderId && { orderId: currentOrderId }) }),
           }).catch(() => {});
         }
       },

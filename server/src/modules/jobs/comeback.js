@@ -34,7 +34,7 @@ async function remember(kind, doc) {
   try {
     const k = KINDS[kind];
     const lineCode = await k?.line?.(doc);
-    const at = k?.open?.start?.(doc);
+    const at = require('./kinds').whereOf(kind, doc);
     if (!lineCode || !at) return;
     const { ServiceLine } = require('../onboarding/onboarding.model');
     const line = await ServiceLine.findOne({ code: lineCode }).select('name customerPath').lean();

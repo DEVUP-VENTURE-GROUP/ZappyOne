@@ -364,6 +364,20 @@ const CATALOG = {
       },
     }),
   },
+  'ops.partner_paused': {
+    audience: 'ops', type: 'report_received', channels: ['email'], urgent: true, label: 'Event partner paused for cancelling',
+    sample: () => ({ partner: 'Dream Decor', phone: '98xxxxxx10', strikes: 3, windowDays: 90 }),
+    build: ({ partner, phone, strikes, windowDays, url }) => ({
+      email: {
+        subject: `${partner} paused: ${strikes} cancellations`,
+        preheader: 'Their listings are hidden until you review them.',
+        heading: 'An event partner was paused',
+        intro: [`${partner} cancelled ${strikes} confirmed bookings in ${windowDays} days, so their listings are hidden and new bookings stopped. Talk to them, then reinstate them from Event commerce if it is sorted.`],
+        rows: [['Partner', `${partner} · ${phone}`], ['Cancellations', `${strikes} in ${windowDays} days`]],
+        button: { label: 'Open Event commerce', url: url('/dashboard?tab=events') },
+      },
+    }),
+  },
   'admin.kyc_review': {
     audience: 'ops', type: 'report_received', channels: ['email'], label: 'New verification to review',
     sample: () => ({ who: 'Ravi Kumar (worker)', service: 'Mobile Phones' }),

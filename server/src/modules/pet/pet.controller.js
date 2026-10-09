@@ -211,6 +211,8 @@ async function createBooking(req, res, next) {
     const surge = replayed ? null : await require('../jobs/surge').attach('pet', booking, { quoteId: surgeQuoteId, userId: req.auth.sub });
     // A tip chosen at checkout goes on the bill, inside what is paid (jobs/boost-tip).
     const tip = replayed ? null : await require('../jobs/boost-tip').tipAtBooking('pet', booking, tipPaise).catch(() => null);
+    // Where the customer booked, kept on their record (admin sees it; the app offers it next time).
+    if (!replayed) require('../jobs/place').remember('pet', booking).catch(() => {});
     res.status(replayed ? 200 : 201).json({ booking: { ...(booking.toObject?.() || booking), ...(saved && { onSite: saved }), ...(surge && { surge }), ...(tip && { tip }) }, replayed });
   } catch (err) { next(err); }
 }

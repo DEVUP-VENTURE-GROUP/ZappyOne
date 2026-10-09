@@ -163,7 +163,7 @@ async function broadcastTrip(trip, { workerId, lat, lng }) {
     .catch(() => { /* an ETA is a nicety; never fail a location ping for it */ });
 }
 
-async function updateLocation({ workerId, lng, lat, orderId, repairBookingId, jobId }) {
+async function updateLocation({ workerId, lng, lat, orderId, repairBookingId, jobId, accuracy = null }) {
   // GPS spoof guard: reject location updates that imply impossible speed.
   // Stealth rejection — return ok:true so fraudsters don't know they're flagged.
   const lastLocKey = `worker:lastloc:${workerId}`;
@@ -188,7 +188,9 @@ async function updateLocation({ workerId, lng, lat, orderId, repairBookingId, jo
 
   // Throttle Mongo writes — only if >30s since last.
   const throttleKey = `loc:mongo:${workerId}`;
-  const shouldWriteDb = await redis.set(throttleKey, '1', 'EX', 30, 'NX');
+  // A rough reading (worse than LOCATION_MAX_M: a network guess) never overwrites the stored position.
+  const rough = typeof accuracy === 'number' && accuracy > LOCATION_MAX_M;
+  const shouldWriteDb = rough ? null : await redis.set(throttleKey, '1', 'EX', 30, 'NX');
   if (shouldWriteDb === 'OK') {
     await Worker.updateOne(
       { _id: workerId },
@@ -196,6 +198,7 @@ async function updateLocation({ workerId, lng, lat, orderId, repairBookingId, jo
         $set: {
           'currentLocation.coordinates': [lng, lat],
           'currentLocation.updatedAt': new Date(),
+          ...(typeof accuracy === 'number' && { 'currentLocation.accuracyM': Math.round(accuracy) }),
           lastSeenAt: new Date(),
         },
       }

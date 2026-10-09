@@ -381,7 +381,7 @@ async function precheck({ kind, body, userId, quoteId = null }) {
   let fresh = null; let active = false;
   try {
     const line = await KINDS[kind].line(body);
-    const at = KINDS[kind].open?.start?.(body);
+    const at = require('./kinds').whereOf(kind, body);
     const { s } = await settings();
     if (!line || !at || !isVisit(kind, body) || !lineOn(s, line)) return;
     if (await lockOf(quoteId, line, userId)) return;
@@ -411,7 +411,7 @@ async function attach(kind, booking, { quoteId = null, userId } = {}) {
   try {
     const doc = booking?.toObject ? booking.toObject() : booking;
     const line = await KINDS[kind].line(doc);
-    const at = KINDS[kind].open?.start?.(doc);
+    const at = require('./kinds').whereOf(kind, doc);
     if (!line || !at || !isVisit(kind, doc)) return null;
     const { s } = await settings();
     if (!lineOn(s, line)) return null;
