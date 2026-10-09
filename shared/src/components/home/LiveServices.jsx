@@ -91,7 +91,7 @@ export function CategoryTile({ category, onOpen }) {
       onClick={onOpen}
       className="group flex w-[200px] shrink-0 snap-start flex-col overflow-hidden rounded-card border border-line bg-white text-left transition-colors duration-150 hover:border-line-strong active:bg-canvas sm:w-[232px]"
     >
-      <span className="relative flex aspect-[4/5] w-full items-center justify-center overflow-hidden bg-sunken">
+      <span className={`relative flex aspect-[4/5] w-full items-center justify-center overflow-hidden ${!category.imageUrl && category.emoji && category.tone ? `bg-gradient-to-br ${category.tone}` : 'bg-sunken'}`}>
         {category.imageUrl ? (
           <img
             src={category.imageUrl}
@@ -104,7 +104,7 @@ export function CategoryTile({ category, onOpen }) {
           />
         ) : category.emoji ? (
           // An occasion with no photo yet: its own emoji, not another one's picture.
-          <span className="text-6xl transition-transform duration-300 group-hover:scale-110" aria-hidden="true">{category.emoji}</span>
+          <span className="text-6xl drop-shadow-md transition-transform duration-300 group-hover:scale-110" aria-hidden="true">{category.emoji}</span>
         ) : (
           <span className="flex h-14 w-14 items-center justify-center rounded-full border border-line bg-white text-zappy-600">
             <Icon size={24} strokeWidth={1.8} />

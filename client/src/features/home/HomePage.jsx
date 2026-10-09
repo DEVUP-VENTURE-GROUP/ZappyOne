@@ -24,7 +24,7 @@ import HomeHeader, { SearchBar } from './HomeHeader';
 import LocationSheet from './LocationSheet';
 import { ServiceGrid, ProblemChips } from './ServiceGrid';
 import { OffersRail, BookAgainRail, NearbyShopsLink } from './HomeRails';
-import { eventPhoto } from '../events/eventPhotos';
+import { eventPhoto, eventTone } from '../events/eventPhotos';
 
 /**
  * Home — what a customer can get done, right where they are.
@@ -179,7 +179,7 @@ export default function HomePage() {
         tagline: 'Birthdays, baby showers, anniversaries and more', highlights: [], coverage: [],
         options: cats.map((c) => ({
           code: c.slug, name: c.name, icon: 'PartyPopper',
-          imageUrl: eventPhoto(c) || undefined, emoji: c.emoji, path: `/events/browse?category=${c.slug}`,
+          imageUrl: eventPhoto(c) || undefined, emoji: c.emoji, tone: eventTone(c), path: `/events/browse?category=${c.slug}`,
         })),
       }],
     };
