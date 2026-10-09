@@ -29,7 +29,7 @@ export const ACCURACY_BAD_M  = 500;  // >500m: rough area only — pin manually
  */
 const GPS_LOCK_M = 30;
 
-function getBestPosition({ windowMs = 10000 } = {}) {
+export function getBestPosition({ windowMs = 10000 } = {}) {
   return new Promise((resolve, reject) => {
     if (!navigator.geolocation) {
       reject(new Error('Geolocation not supported'));
@@ -82,6 +82,19 @@ function getBestPosition({ windowMs = 10000 } = {}) {
     // Hard timeout — resolve with best sample collected so far
     setTimeout(finish, windowMs);
   });
+}
+
+/**
+ * Worse than ACCURACY_BAD_M is a guess from the internet connection (laptops,
+ * desktops): it can be the next town. Every "use my location" refuses it with
+ * this, and asks the person to search or drop a pin instead.
+ */
+export function tooRough(accuracy) {
+  return typeof accuracy === 'number' && accuracy > ACCURACY_BAD_M;
+}
+export function roughLocationMessage(accuracy) {
+  const within = accuracy >= 1000 ? `${Math.round(accuracy / 1000)} km` : `${Math.round(accuracy)} m`;
+  return `This device could only guess your location (within ${within}). Search your area or pick it on the map.`;
 }
 
 export function useGeolocation() {

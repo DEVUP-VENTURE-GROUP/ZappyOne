@@ -17,7 +17,7 @@ import { reverseGeocode } from '../../utils/reverseGeocode';
 import { getSocket } from '../../services/socket';
 import { API_BASE } from '../../services/apiBase';
 import { formatPaise } from '../../utils/money';
-import { ZappyLogo } from '../../components/common/ZappyLogo';
+import { ZappyWordmark } from '../../components/common/ZappyLogo';
 import WorkerOnboarding from './WorkerOnboarding';
 import DuesCard from '../DuesCard';
 import MyAreaChip from '../../components/worker/MyAreaChip';
@@ -234,7 +234,7 @@ export default function WorkerDashboard() {
               transition={{ type: 'spring', stiffness: 400, damping: 38 }}
             >
               <div className="flex items-center justify-between px-2 py-2">
-                <ZappyLogo size={22} />
+                <ZappyWordmark size={22} />
                 <button type="button" onClick={() => setDrawerOpen(false)} className="rounded-full p-1.5 hover:bg-slate-100" aria-label="Close menu">
                   <X size={18} className="text-slate-500" />
                 </button>
@@ -266,7 +266,7 @@ export default function WorkerDashboard() {
             <button type="button" className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-slate-100 lg:hidden" onClick={() => setDrawerOpen(true)} aria-label="Open menu">
               <Menu size={20} className="text-slate-700" />
             </button>
-            <span className="lg:hidden"><ZappyLogo size={20} /></span>
+            <span className="lg:hidden"><ZappyWordmark size={20} /></span>
             <h1 className="hidden truncate text-[18px] font-bold text-navy lg:block">Hello, {firstName}</h1>
             {/* On a big screen the greeting card is not shown: where they are lives up here instead. */}
             {isOnline && (

@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { usePartnerMeQuery, usePartnerOverviewQuery, usePartnerNotificationsQuery, useLogoutMutation } from '@shared/services/api';
 import { logout } from '@shared/modules/auth/authSlice';
-import { ZappyLogo } from '@shared/components/common/ZappyLogo';
+import { ZappyWordmark } from '@shared/components/common/ZappyLogo';
 import NotificationPanel from './NotificationPanel';
 import { Spinner } from '../../components/ui';
 
@@ -102,7 +102,7 @@ export default function PartnerShell() {
       {/* Computer: sidebar */}
       <aside className="fixed inset-y-0 left-0 hidden w-64 flex-col border-r border-line bg-white lg:flex">
         <div className="flex items-center gap-2.5 px-5 py-5">
-          <ZappyLogo size={28} />
+          <ZappyWordmark size={28} />
           <span className="text-[13px] font-medium text-ink-500">Event partner</span>
         </div>
         <div className="px-4 pb-4">{account}</div>
@@ -121,7 +121,7 @@ export default function PartnerShell() {
         <header className="sticky top-0 z-30 border-b border-line bg-white" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
           <div className="mx-auto flex h-14 max-w-5xl items-center gap-2 px-4 lg:h-16 lg:px-8">
             <button type="button" onClick={() => setMenuOpen(true)} aria-label="Menu" className="-ml-1 flex h-10 w-10 items-center justify-center rounded-btn hover:bg-sunken lg:hidden"><Menu size={20} /></button>
-            <span className="lg:hidden"><ZappyLogo size={24} /></span>
+            <span className="lg:hidden"><ZappyWordmark size={24} /></span>
             <div className="ml-auto">{bell}</div>
           </div>
         </header>
@@ -146,7 +146,7 @@ export default function PartnerShell() {
             <motion.div initial={{ x: '-100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }} transition={{ type: 'spring', damping: 30, stiffness: 320 }}
               className="flex h-full w-72 flex-col bg-white">
               <div className="flex items-center justify-between px-4 py-4">
-                <ZappyLogo size={24} />
+                <ZappyWordmark size={24} />
                 <button type="button" onClick={() => setMenuOpen(false)} aria-label="Close menu" className="flex h-10 w-10 items-center justify-center rounded-btn hover:bg-sunken"><X size={18} /></button>
               </div>
               <div className="px-4 pb-3">{account}</div>

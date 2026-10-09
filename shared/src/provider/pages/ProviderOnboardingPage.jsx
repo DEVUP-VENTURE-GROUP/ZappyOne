@@ -21,6 +21,17 @@ import LiveSelfieCapture from '../../components/kyc/LiveSelfieCapture';
 import toast from 'react-hot-toast';
 import { prepareImage } from '../../utils/prepareImage';
 import InstantIdCheck from '../InstantIdCheck';
+import { servicePhoto } from '../../components/home/problemArt';
+import { artFor } from '../../components/home/serviceArt';
+
+/** A picture for a service or a kind of work: its upload, our photo, else its character. */
+const pictureOf = (code, domainCode, imageUrl) => imageUrl || (code && servicePhoto(code)) || artFor(code, domainCode)?.still || null;
+
+function Thumb({ src }) {
+  return src
+    ? <img src={src} alt="" loading="lazy" className="h-14 w-14 shrink-0 rounded-xl bg-slate-50 object-cover" />
+    : null;
+}
 
 /**
  * Provider onboarding — the first thing a shop owner or technician does.
@@ -212,6 +223,7 @@ function DomainStep({ onPick }) {
       {(data?.domains || []).map((d) => (
         <button key={d.code} onClick={() => onPick(d)}
           className="card w-full flex items-center gap-3 text-left hover:ring-2 hover:ring-zappy-100 transition">
+          <Thumb src={pictureOf(null, d.code, d.imageUrl)} />
           <div className="flex-1 min-w-0">
             <p className="font-bold text-sm text-[#0F172A]">{d.name}</p>
             {d.description && <p className="text-xs text-slate-500 mt-0.5">{d.description}</p>}
@@ -250,7 +262,8 @@ function LineStep({ domain, onPick, onRequest }) {
           <button key={l.code} onClick={() => (live ? choose(l) : null)} disabled={!live || enrolling}
             className={`card w-full text-left transition ${live ? 'hover:ring-2 hover:ring-zappy-100' : 'opacity-70 cursor-default'}`}>
             <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
+              <Thumb src={pictureOf(l.code, domain.code, l.imageUrl)} />
+              <div className="min-w-0 flex-1">
                 <p className="font-bold text-sm text-[#0F172A]">{l.name}</p>
                 {l.description && <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">{l.description}</p>}
                 <div className="flex items-center gap-2 mt-1.5">

@@ -102,6 +102,9 @@ export function CategoryTile({ category, onOpen }) {
             className={`h-full w-full transition-transform duration-300 group-hover:scale-105 ${
               category.imageUrl.startsWith('/characters/') ? 'object-contain mix-blend-multiply pt-1' : 'object-cover'}`}
           />
+        ) : category.emoji ? (
+          // An occasion with no photo yet: its own emoji, not another one's picture.
+          <span className="text-6xl transition-transform duration-300 group-hover:scale-110" aria-hidden="true">{category.emoji}</span>
         ) : (
           <span className="flex h-14 w-14 items-center justify-center rounded-full border border-line bg-white text-zappy-600">
             <Icon size={24} strokeWidth={1.8} />

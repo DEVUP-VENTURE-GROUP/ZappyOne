@@ -7,6 +7,7 @@ import {
   ClipboardList, Wallet, Bell, MapPin, Package, ShoppingBag, PawPrint, LogOut, ChevronRight, ShieldCheck, Home, Briefcase, Plus, Trash2, X, Loader2, Scale, HeadphonesIcon, CreditCard, Pencil, Check, TrendingUp, Tag, Calendar, Shield, Gift,
 } from 'lucide-react';
 import { reverseGeocode } from '@shared/utils/reverseGeocode';
+import { getBestPosition, tooRough, roughLocationMessage } from '@shared/hooks/useGeolocation';
 import AddressAutocomplete from '../../components/common/AddressAutocomplete';
 import { useT } from '@shared/i18n/I18nProvider';
 import LanguageSwitcher from '../../components/common/LanguageSwitcher';
@@ -93,10 +94,11 @@ export default function ProfilePage() {
   function detectInto(setAddr, setErr) {
     setErr('');
     if (!navigator.geolocation) { setErr(t('profile.toast.geoUnsupported', 'Geolocation not supported')); return; }
-    navigator.geolocation.getCurrentPosition(
+    // The best of several readings (a GPS lock when there is one), and never an internet guess.
+    getBestPosition().then(
       async (pos) => {
-        const lat = pos.coords.latitude;
-        const lng = pos.coords.longitude;
+        if (tooRough(pos.accuracy)) { setErr(roughLocationMessage(pos.accuracy)); return; }
+        const { lat, lng } = pos;
         let address = '';
         try {
           const g = await reverseGeocode(lat, lng);

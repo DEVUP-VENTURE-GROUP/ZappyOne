@@ -556,11 +556,13 @@ async function adminGetAnalytics() {
 }
 
 async function adminListCategories() {
-  return EventCategory.find().sort({ sortOrder: 1 }).lean();
+  return s3Service.signDocsMedia(await EventCategory.find().sort({ sortOrder: 1 }).lean());
 }
 
 async function adminUpsertCategory(data) {
   const { slug, ...rest } = data;
+  // An uploaded cover is kept as its storage key (signed when read), never a link that expires.
+  if (rest.coverImage) rest.coverImage = s3Service.keyFromMedia(rest.coverImage);
   return EventCategory.findOneAndUpdate({ slug }, { $set: rest }, { upsert: true, new: true }).lean();
 }
 

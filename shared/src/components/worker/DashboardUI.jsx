@@ -5,7 +5,7 @@ import { LogOut,
   TrendingUp, TrendingDown, Search, Radio, Loader2, Target, Building2, GraduationCap,
   ShieldCheck, ShoppingBag, Scale, FileText, CalendarClock,
 } from 'lucide-react';
-import { ZappyLogo } from '../common/ZappyLogo';
+import { ZappyWordmark } from '../common/ZappyLogo';
 
 /**
  * Presentational building blocks for the worker dashboard.
@@ -139,7 +139,7 @@ export const WorkerSidebar = memo(function WorkerSidebar({
   return (
     <aside className="fixed inset-y-0 left-0 hidden w-64 flex-col border-r border-slate-200 bg-white lg:flex">
       <div className="flex items-center gap-2 px-6 py-5">
-        <ZappyLogo size={24} />
+        <ZappyWordmark size={24} />
         <span className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">{label}</span>
       </div>
       {account && <div className="px-3 pb-2">{account}</div>}

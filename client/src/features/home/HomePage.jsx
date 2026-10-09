@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 import { ChevronRight } from 'lucide-react';
 import { selectAuth, selectIsAuthed } from '@shared/modules/auth/authSlice';
 import { useGetServiceabilityQuery, useLiveCatalogQuery, useGetEventCategoriesQuery, useLensStatusQuery, useSaveRecentLocationMutation } from '@shared/services/api';
-import { useGeolocation, loadGeoLocation } from '@shared/hooks/useGeolocation';
+import { useGeolocation, loadGeoLocation, tooRough, roughLocationMessage } from '@shared/hooks/useGeolocation';
 import { saveGeoLocation } from '@shared/utils/geoCache';
 import { reverseGeocode } from '@shared/utils/reverseGeocode';
 import SEO, { HOME_SCHEMA, BASE_URL } from '@shared/components/SEO';
@@ -129,6 +129,9 @@ export default function HomePage() {
     setLocDetecting(true);
     try {
       const { lat, lng, accuracy } = await getCurrent();
+      // A laptop or desktop without GPS gives an internet-based guess that can be
+      // in the next town: refuse it, the same as on first load, rather than show it.
+      if (tooRough(accuracy)) { toast.error(roughLocationMessage(accuracy), { duration: 6000 }); return; }
       const { primary, secondary } = await reverseGeocode(lat, lng);
       setLoc({ primary, secondary, loading: false, lat, lng });
       remember(lat, lng, primary, secondary, accuracy);
@@ -176,7 +179,7 @@ export default function HomePage() {
         tagline: 'Birthdays, baby showers, anniversaries and more', highlights: [], coverage: [],
         options: cats.map((c) => ({
           code: c.slug, name: c.name, icon: 'PartyPopper',
-          imageUrl: c.coverImage || eventPhoto(c.slug), path: `/events/browse?category=${c.slug}`,
+          imageUrl: eventPhoto(c) || undefined, emoji: c.emoji, path: `/events/browse?category=${c.slug}`,
         })),
       }],
     };

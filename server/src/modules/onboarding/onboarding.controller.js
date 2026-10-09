@@ -373,7 +373,8 @@ async function liveCatalog(req, res, next) {
     for (const p of visibleProblems) {
       if (!p.isPopular) continue;
       const list = highlightsByVertical.get(p.vertical) || [];
-      if (list.length < 8) list.push({ code: p.code, name: p.name });
+      // Its heading too, so a chip without its own photo can borrow the heading's.
+      if (list.length < 8) list.push({ code: p.code, name: p.name, imageUrl: p.imageUrl || '', categoryCode: p.categoryCode || '' });
       highlightsByVertical.set(p.vertical, list);
     }
 

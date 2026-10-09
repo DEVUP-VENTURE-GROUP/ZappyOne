@@ -13,6 +13,7 @@ import {
   useGetEventConfigQuery,
 } from '@shared/services/api';
 import toast from 'react-hot-toast';
+import { getBestPosition, tooRough, roughLocationMessage } from '@shared/hooks/useGeolocation';
 import AvailabilityPicker from './AvailabilityPicker';
 
 import { openCheckout } from '@shared/services/cashfree';
@@ -105,10 +106,10 @@ export default function EventBookingPage() {
     if (!navigator.geolocation) { toast.error('Geolocation not supported by your browser'); return; }
     setLocating(true);
     try {
-      const pos = await new Promise((res, rej) => {
-        navigator.geolocation.getCurrentPosition(res, rej, { timeout: 10000, enableHighAccuracy: true });
-      });
-      const { latitude, longitude } = pos.coords;
+      // The best of several readings, and never an internet guess (laptops).
+      const pos = await getBestPosition();
+      if (tooRough(pos.accuracy)) { toast.error(roughLocationMessage(pos.accuracy), { duration: 6000 }); return; }
+      const { lat: latitude, lng: longitude } = pos;
       const resp = await fetch(
         `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&addressdetails=1`,
         { headers: { 'Accept-Language': 'en' } }

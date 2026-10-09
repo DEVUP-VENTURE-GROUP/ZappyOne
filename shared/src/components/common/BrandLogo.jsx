@@ -62,7 +62,15 @@ function cropToMark(url) {
   });
 }
 
-export default function BrandLogo({ name = '', url, className = 'h-8 w-20', active = false }) {
+/**
+ * A stock photo is not a logo. Early catalog rows carried Unsplash pictures
+ * (a phone that could be an iPhone, on Samsung's tile); until an admin uploads
+ * the real mark, the brand's name and initial stand in.
+ */
+const STOCK = /(^|\/\/)(images\.unsplash\.com|images\.pexels\.com|cdn\.pixabay\.com)\//i;
+
+export default function BrandLogo({ name = '', url: given, className = 'h-8 w-20', active = false }) {
+  const url = given && !STOCK.test(given) ? given : null;
   const key = url ? keyOf(url) : null;
   const [src, setSrc] = useState(() => (key && cropped.get(key)) || null);
   const [failed, setFailed] = useState(false);

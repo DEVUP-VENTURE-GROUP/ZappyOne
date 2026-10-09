@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Loader2, CheckCircle2, XCircle } from 'lucide-react';
 import { useConfirmEmailMutation, useResetPasswordMutation } from '../../services/api';
-import { ZappyLogo } from '../common/ZappyLogo';
+import { ZappyWordmark } from '../common/ZappyLogo';
 import PasswordField, { passwordOk } from './PasswordField';
 
 /**
@@ -12,7 +12,7 @@ import PasswordField, { passwordOk } from './PasswordField';
 function Frame({ children }) {
   return (
     <div className="flex min-h-screen flex-col items-center bg-canvas px-4 py-10">
-      <ZappyLogo size={30} />
+      <ZappyWordmark size={30} />
       <div className="mt-6 w-full max-w-md rounded-card border border-line bg-white p-6">{children}</div>
     </div>
   );

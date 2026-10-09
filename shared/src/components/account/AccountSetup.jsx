@@ -6,7 +6,7 @@ import {
   useStartEmailVerificationMutation, useCompleteAccountSetupMutation, useSkipAccountPhotoMutation,
 } from '../../services/api';
 import ProfilePhoto from './ProfilePhoto';
-import { ZappyLogo } from '../common/ZappyLogo';
+import { ZappyWordmark } from '../common/ZappyLogo';
 import PasswordField, { passwordOk } from './PasswordField';
 
 /**
@@ -80,7 +80,7 @@ export default function AccountSetup({ appName = 'ZappyOne', intro, onDone, onSi
   const header = (
     <header className="border-b border-line bg-white">
       <div className="mx-auto flex max-w-md items-center justify-between px-5 py-3.5">
-        <ZappyLogo size={26} />
+        <ZappyWordmark size={26} />
         {onSignOut && (
           <button type="button" onClick={onSignOut} className="flex items-center gap-1.5 text-[13px] font-semibold text-ink-500 hover:text-ink-900">
             <LogOut size={15} /> Sign out

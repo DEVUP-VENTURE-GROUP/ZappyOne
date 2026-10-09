@@ -6,31 +6,13 @@ import { Search, TrendingUp, Play, Heart, Star, ArrowUpRight, PartyPopper, Arrow
 import { useGetEventCategoriesQuery, useGetEventThemesQuery, useToggleSaveEventThemeMutation } from '@shared/services/api';
 import CrossSellBanner from '../../components/marketing/CrossSellBanner';
 import toast from 'react-hot-toast';
-import birthdayPhoto from '@assets/images/events/event_birthday.webp';
-import babyShowerPhoto from '@assets/images/events/event_baby.webp';
-import anniversaryPhoto from '@assets/images/events/event_anniversary.webp';
-import housewarmingPhoto from '@assets/images/events/event_housewarming.webp';
-import romanticPhoto from '@assets/images/events/event_romantic.webp';
 
-/* Category Images Map */
-const CATEGORY_MAP = {
-  'birthday': { img: birthdayPhoto, color: 'from-pink-500/80 to-transparent' },
-  'baby-shower': { img: babyShowerPhoto, color: 'from-blue-500/80 to-transparent' },
-  'anniversary': { img: anniversaryPhoto, color: 'from-purple-500/80 to-transparent' },
-  'housewarming': { img: housewarmingPhoto, color: 'from-amber-500/80 to-transparent' },
-  'romantic': { img: romanticPhoto, color: 'from-rose-500/80 to-transparent' },
-  'default': { img: birthdayPhoto, color: 'from-zappy-500/80 to-transparent' }
-};
+import { eventPhoto, eventTone } from './eventPhotos';
 
-function getCatStyles(name) {
-  if (!name) return CATEGORY_MAP['default'];
-  const key = name.toLowerCase();
-  if (key.includes('birth')) return CATEGORY_MAP['birthday'];
-  if (key.includes('baby')) return CATEGORY_MAP['baby-shower'];
-  if (key.includes('anniversary')) return CATEGORY_MAP['anniversary'];
-  if (key.includes('house')) return CATEGORY_MAP['housewarming'];
-  if (key.includes('romantic')) return CATEGORY_MAP['romantic'];
-  return CATEGORY_MAP['default'];
+function getCatStyles(cat) {
+  // Its own cover, else its exact photo; no photo: the occasion's emoji on its own colour.
+  const img = eventPhoto(cat);
+  return { img, color: 'from-black/10 to-transparent', tone: eventTone(cat), emoji: cat?.emoji || '🎉' };
 }
 
 /* Bento Grid Classes based on index */
@@ -193,13 +175,19 @@ export default function EventsHomePage() {
           
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
             {renderCategories.slice(0, 5).map((cat, idx) => {
-              const style = getCatStyles(cat.name);
+              const style = getCatStyles(cat);
               return (
                 <button key={cat._id || idx} onClick={() => navigate(`/events/browse?category=${cat.slug || cat.name?.toLowerCase()}`)}
                   className={`relative rounded-card overflow-hidden group cursor-pointer shadow-sm hover:shadow-xl transition-all duration-500 ${getBentoClass(idx)}`}>
                   
                   {/* Background Image */}
-                  <img src={style.img} alt={cat.name} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 group-hover:rotate-1 transition-all duration-700" />
+                  {style.img
+                    ? <img src={style.img} alt={cat.name} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 group-hover:rotate-1 transition-all duration-700" />
+                    : (
+                      <div className={`absolute inset-0 bg-gradient-to-br ${style.tone} flex items-center justify-center`}>
+                        <span className="text-5xl sm:text-6xl drop-shadow-md transition-transform duration-700 group-hover:scale-110" aria-hidden="true">{style.emoji}</span>
+                      </div>
+                    )}
                   
                   {/* Gradient Overlay */}
                   <div className={`absolute inset-0 bg-gradient-to-t ${style.color} mix-blend-multiply opacity-60 group-hover:opacity-80 transition-opacity duration-500`} />

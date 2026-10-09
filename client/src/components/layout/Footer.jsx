@@ -1,5 +1,5 @@
 import { ShieldCheck } from "lucide-react";
-import { ZappyLogo } from "@shared/components/common/ZappyLogo";
+import { ZappyWordmark } from "@shared/components/common/ZappyLogo";
 import { PORTAL_URLS } from "@shared/config/portals";
 import { useGetPoliciesQuery } from "@shared/services/api";
 
@@ -71,8 +71,7 @@ export default function Footer({ services = [], areas = [] }) {
         <div className="grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-4">
           <div className="col-span-2 md:col-span-1">
             <a href="/" className="flex items-center gap-2">
-              <ZappyLogo className="h-8 w-8 text-zappy-400" />
-              <span className="text-[20px] font-bold text-white">ZappyOne</span>
+              <ZappyWordmark size={32} tone="dark" />
             </a>
             <p className="mt-3 max-w-xs text-[14px] leading-relaxed text-slate-400">
               Verified professionals near you — booked in a few taps, tracked

@@ -29,12 +29,12 @@ export function ZappyLogo({ size = 48, className = '' }) {
   );
 }
 
-export function ZappyWordmark({ size = 28, className = '' }) {
+export function ZappyWordmark({ size = 28, className = '', tone = 'light' }) {
   return (
     <span className={`inline-flex items-center gap-1.5 ${className}`}>
       <img src={markUrl} alt="" height={size} style={{ height: size, width: 'auto' }} />
       <span className="font-extrabold leading-none tracking-[-0.02em]" style={{ fontSize: Math.round(size * 0.68) }}>
-        <span className="text-zappy-600">Zappy</span><span className="text-amber-500">One</span>
+        <span className={tone === 'dark' ? 'text-white' : 'text-zappy-600'}>Zappy</span><span className="text-amber-500">One</span>
       </span>
     </span>
   );

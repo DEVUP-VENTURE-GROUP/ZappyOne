@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Wrench } from 'lucide-react';
 import { SERVICE_ICONS } from '@shared/components/home/LiveServices';
 import { distinctArt, servicePhoto } from '@shared/components/home/serviceArt';
-import { problemPhoto } from '@shared/components/home/problemArt';
+import { problemPhotoIn } from '@shared/components/home/problemArt';
 
 /**
  * The services, as one even grid on a single neutral surface.
@@ -139,7 +139,7 @@ export function ProblemChips({ services }) {
         >
           {list.map((c, i) => {
             const Icon = SERVICE_ICONS[c.service.icon] || Wrench;
-            const photo = problemPhoto(c.service.artKey || c.service.code, c);
+            const photo = problemPhotoIn(c.service.artKey || c.service.code, c, c.categoryCode ? { code: c.categoryCode } : null);
             const copy = i >= chips.length;
             return (
               <button

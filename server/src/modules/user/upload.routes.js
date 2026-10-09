@@ -49,7 +49,9 @@ const UPLOAD_FOLDERS = [
       // Helping: item and return photos from customers, proof photos from helpers.
       'helping/items', 'helping/returns', 'helping/arrival', 'helping/handover', 'helping/alternatives',
       // Pet care: pet profiles, and the provider's before/after photos.
-      'pet/photos', 'pet/before', 'pet/after'
+      'pet/photos', 'pet/before', 'pet/after',
+      // Event occasion covers, uploaded by admin.
+      'events/occasions'
 ];
 
 router.post(

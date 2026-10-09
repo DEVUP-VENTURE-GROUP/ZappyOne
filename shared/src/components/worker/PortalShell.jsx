@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Menu, X, LogOut, ChevronRight } from 'lucide-react';
-import { ZappyLogo } from '../common/ZappyLogo';
+import { ZappyWordmark } from '../common/ZappyLogo';
 import { WorkerSidebar, WorkerBottomNav } from './DashboardUI';
 
 /**
@@ -70,7 +70,7 @@ export default function PortalShell({ items, label, title, subtitle, onSignOut, 
           <Menu size={20} className="text-slate-700" />
         </button>
         {/* Who is signed in is in the menu and on the page itself; not repeated here. */}
-        <ZappyLogo size={22} />
+        <ZappyWordmark size={22} />
       </header>
 
       {/* Phone menu: who you are, the pages the bottom bar does not show, sign out */}
@@ -85,7 +85,7 @@ export default function PortalShell({ items, label, title, subtitle, onSignOut, 
               aria-label="Menu"
             >
               <div className="flex items-center justify-between px-4 py-4">
-                <ZappyLogo size={22} />
+                <ZappyWordmark size={22} />
                 <button type="button" onClick={() => setMenuOpen(false)} aria-label="Close menu" className="flex h-9 w-9 items-center justify-center rounded-lg hover:bg-slate-100">
                   <X size={18} className="text-slate-600" />
                 </button>

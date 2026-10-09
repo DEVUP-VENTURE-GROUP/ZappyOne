@@ -101,7 +101,7 @@ export default function EventCategoryPage() {
   const themes = data?.themes || [];
   const cat = catData?.categories?.find(c => c.slug === category);
   
-  const heroStyle = getCatStyles(cat?.name);
+  const heroStyle = { ...getCatStyles(cat?.name), img: eventPhoto(cat) };
   const titleText = cat ? cat.name : searchQ ? `"${searchQ}"` : 'Explore Events';
 
   async function handleSave(id) {
@@ -116,7 +116,7 @@ export default function EventCategoryPage() {
       <div className="relative overflow-hidden sm:rounded-b-[3rem] shadow-xl pb-10 pt-safe">
         {/* Background Image & Gradients */}
         <div className="absolute inset-0 bg-slate-900">
-          {category || searchQ ? (
+          {(category || searchQ) && heroStyle.img ? (
             <img src={heroStyle.img} alt="Hero" className="w-full h-full object-cover opacity-60 mix-blend-overlay" />
           ) : null}
           <div className={`absolute inset-0 bg-gradient-to-t ${heroStyle.gradient} opacity-90`} />

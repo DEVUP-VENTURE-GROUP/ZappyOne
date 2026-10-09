@@ -50,7 +50,7 @@ function ServiceCard({ service, onOpen }) {
     tile: { ...c, imageUrl: categoryPhoto(service.artKey || service.code, c) || c.imageUrl }, path: `/repair/category/${service.artKey || service.code}/${c.code}`,
   }));
   const optionTiles = (service.options || []).map((o) => ({
-    tile: { code: o.code, name: o.name, icon: o.icon, imageUrl: o.imageUrl || '', subtitle: '' }, path: o.path, target: o.service,
+    tile: { code: o.code, name: o.name, icon: o.icon, emoji: o.emoji, imageUrl: o.imageUrl || '', subtitle: '' }, path: o.path, target: o.service,
   }));
   const tiles = repairTiles.length ? repairTiles : optionTiles;
   const count = repairTiles.length

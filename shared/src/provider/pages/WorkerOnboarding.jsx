@@ -18,7 +18,7 @@ import {
   User, Phone, Heart, ChevronRight, CheckCircle2, Loader2, ArrowLeft, ShieldCheck,
 } from 'lucide-react';
 import { useWorkerCompleteOnboardingMutation, useGetWorkerMeQuery } from '../../services/api';
-import { ZappyLogo } from '../../components/common/ZappyLogo';
+import { ZappyWordmark } from '../../components/common/ZappyLogo';
 import toast from 'react-hot-toast';
 
 const STEPS = ['name', 'emergency'];
@@ -191,7 +191,7 @@ export default function WorkerOnboarding({ onComplete }) {
       <header className="border-b border-line bg-white" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
         <div className="mx-auto w-full max-w-md px-5 pb-3 pt-4">
           <div className="flex items-center justify-between">
-            <ZappyLogo size={24} />
+            <ZappyWordmark size={24} />
             <span className="text-[13px] font-semibold tabular-nums text-ink-500">Step {step + 1} of {STEPS.length}</span>
           </div>
           <div className="mt-3 flex gap-1.5" aria-hidden="true">

@@ -13,7 +13,7 @@ import {
 } from '../../services/api';
 import ResendOtp from '../../components/auth/ResendOtp';
 import { setAuth } from '../../modules/auth/authSlice';
-import { ZappyLogo } from '../../components/common/ZappyLogo';
+import { ZappyWordmark } from '../../components/common/ZappyLogo';
 import toast from 'react-hot-toast';
 import SEO, { LOGIN_SCHEMA, BASE_URL } from '../../components/SEO';
 
@@ -336,10 +336,9 @@ export default function WorkerLoginPage({ allowSignup = true, portalLabel = 'Wor
           <div>
             {/* Brand */}
             <div className="relative z-10 flex items-center gap-2.5 mb-4 lg:mb-10">
-              <ZappyLogo size={40} />
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-lg lg:text-xl font-black text-slate-900 leading-none">Zappy</span>
+                  <ZappyWordmark size={30} />
                   <span className="text-[10px] font-black text-white bg-blue-600 px-2 py-[3px] rounded-md tracking-wide leading-none">WORKER</span>
                 </div>
                 <p className="text-[10px] lg:text-[10.5px] font-bold text-slate-400 uppercase tracking-[0.18em] mt-1">{portalLabel}</p>
