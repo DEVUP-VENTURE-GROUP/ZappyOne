@@ -277,7 +277,16 @@ function PetBookingFlow({ categoryCode, saved, draftKey, onStartOver }) {
             </div>
           )}
           <div className="space-y-2">
-            {pets.map((p) => (
+            {pets.map((p) => (!p.safetyAnsweredAt ? (
+              // An older profile without the safety answers: finish it before booking.
+              <button
+                key={p._id} type="button" onClick={() => nav(`/pet/my-pets?complete=${p._id}`)}
+                className="w-full flex items-center gap-3 rounded-2xl border-2 border-dashed border-amber-300 bg-amber-50/60 p-4 text-left"
+              >
+                <span className="font-bold text-[#0F172A]">{p.name}</span>
+                <span className="text-xs font-bold text-amber-800 ml-auto">Finish profile to book</span>
+              </button>
+            ) : (
               <button
                 key={p._id} type="button" onClick={() => togglePet(p._id)}
                 className={`w-full flex items-center gap-3 rounded-2xl border-2 p-4 text-left ${
@@ -290,7 +299,7 @@ function PetBookingFlow({ categoryCode, saved, draftKey, onStartOver }) {
                 <span className="font-bold text-[#0F172A]">{p.name}</span>
                 <span className="text-xs text-slate-400 capitalize ml-auto">{p.species} · {p.size?.replace('_', ' ')}</span>
               </button>
-            ))}
+            )))}
           </div>
           <button type="button" disabled={!selectedPetIds.length} onClick={() => setStep('variant')}
             className="w-full rounded-2xl bg-[#0F172A] text-white font-bold py-4 disabled:opacity-40">Continue</button>
@@ -300,6 +309,11 @@ function PetBookingFlow({ categoryCode, saved, draftKey, onStartOver }) {
       {step === 'variant' && (
         <Shell>
           <p className="text-sm font-bold text-slate-500">Choose the service</p>
+          {variantsData && !variants.filter((v) => selectedPets.every((p) => v.species.includes(p.species))).length && (
+            <p className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-600">
+              {variants.length ? 'This service is not offered for the pet you picked yet. Go back and choose another pet.' : 'This service is not open for booking yet. Please check back soon.'}
+            </p>
+          )}
           <div className="space-y-2">
             {variants.filter((v) => selectedPets.every((p) => v.species.includes(p.species))).map((v) => (
               <button

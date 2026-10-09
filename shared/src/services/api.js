@@ -1857,6 +1857,10 @@ export const api = createApi({
       query: (body) => ({ url: '/pet/my-pets', method: 'POST', body }),
       invalidatesTags: ['MyPets'],
     }),
+    updateMyPet: b.mutation({
+      query: ({ id, ...body }) => ({ url: `/pet/my-pets/${id}`, method: 'PATCH', body }),
+      invalidatesTags: ['MyPets'],
+    }),
     deleteMyPet: b.mutation({
       query: (id) => ({ url: `/pet/my-pets/${id}`, method: 'DELETE' }),
       invalidatesTags: ['MyPets'],
@@ -2684,7 +2688,7 @@ export const {
   useAdminUpdateHelpingConfigMutation, useAdminHelpingRefundOutcomeMutation,
   usePetCategoriesQuery, usePetVariantsQuery, usePetBreedsQuery, usePetAddonsQuery,
   useLazyPetCompatibilityQuery,
-  useMyPetsQuery, useCreateMyPetMutation, useDeleteMyPetMutation, useMyPetHistoryQuery,
+  useMyPetsQuery, useCreateMyPetMutation, useUpdateMyPetMutation, useDeleteMyPetMutation, useMyPetHistoryQuery,
   usePetQuoteMutation, usePetProviderSearchMutation,
   useCreatePetBookingMutation, useMyPetBookingsQuery, useGetPetBookingQuery,
   useCancelPetBookingMutation, useRatePetBookingMutation,

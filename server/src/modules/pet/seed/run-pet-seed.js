@@ -235,7 +235,8 @@ async function main() {
     packages: await seedPackages(),
     cancellationPolicies: await seedCancellationPolicies(),
     serviceAreas: await seedServiceAreas(),
-    demoProviders: await seedDemoProviders(),
+    // Demo providers are for development only: production gets the catalog, never fake partners.
+    demoProviders: process.env.NODE_ENV === 'production' ? { total: 0, created: 0, skipped: 0 } : await seedDemoProviders(),
   };
 
   for (const [name, r] of Object.entries(results)) {

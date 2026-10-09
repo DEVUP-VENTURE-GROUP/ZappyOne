@@ -124,11 +124,14 @@ async function createPet(req, res, next) {
     const pet = await PetPassport.create({
       ...req.body,
       userId: req.auth.sub,
+      safetyAnsweredAt: new Date(), // the create schema requires every safety answer
       photoKey: req.body.photoKey ? s3Service.keyFromMedia(req.body.photoKey) : '',
     });
     res.status(201).json({ pet });
   } catch (err) { next(err); }
 }
+
+const SAFETY_KEYS = ['size', 'gender', 'dob', 'weight', 'temperament', 'vaccinationStatus', 'biteRisk', 'aggressionLevel'];
 
 async function updatePet(req, res, next) {
   try {
@@ -136,6 +139,8 @@ async function updatePet(req, res, next) {
     if (req.body.photoKey) patch.photoKey = s3Service.keyFromMedia(req.body.photoKey);
     // If the customer corrects the size, the record says who confirmed it.
     if (req.body.size) patch.sizeConfirmedBy = 'customer';
+    // An older profile finished: every safety question answered in this edit.
+    if (SAFETY_KEYS.every((k) => req.body[k] != null && req.body[k] !== '' && !(k === 'temperament' && req.body[k] === 'unknown'))) patch.safetyAnsweredAt = new Date();
 
     const pet = await PetPassport.findOneAndUpdate(
       { _id: req.params.id, userId: req.auth.sub },

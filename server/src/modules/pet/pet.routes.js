@@ -38,33 +38,35 @@ router.get('/compatibility', authenticate, ctrl.checkCompatibility);
 
 /* Pet profiles (§4) */
 
-const petBody = Joi.object({
-  name: Joi.string().max(80).required(),
-  species: Joi.string().valid(...SPECIES).required(),
+// Every field a profile can hold. No defaults here: an edit sends only what changed,
+// and a default would quietly reset a stored answer (bite risk back to 'none').
+const petFields = Joi.object({
+  name: Joi.string().max(80),
+  species: Joi.string().valid(...SPECIES),
   breedCode: Joi.string().max(80).allow('', null),
   breed: Joi.string().max(120).allow('', null),
   gender: Joi.string().valid('male', 'female', 'unknown').allow(null),
   dob: Joi.date().allow(null),
   colour: Joi.string().max(80).allow('', null),
   weight: Joi.number().min(0).max(200).allow(null),
-  size: Joi.string().valid(...PET_SIZES).default('medium'),
+  size: Joi.string().valid(...PET_SIZES),
   photoKey: Joi.string().max(500).allow('', null),
-  allergies: Joi.array().items(Joi.string().max(100)).default([]),
+  allergies: Joi.array().items(Joi.string().max(100)),
   medicalNotes: Joi.string().max(2000).allow('', null),
   specialNeeds: Joi.string().max(1000).allow('', null),
   vetName: Joi.string().max(200).allow('', null),
   vetPhone: Joi.string().max(20).allow('', null),
   preferredVetAddress: Joi.string().max(300).allow('', null),
-  emergencyContact: Joi.object({ name: Joi.string().max(100).allow('', null), phone: Joi.string().max(20).allow('', null) }).default({}),
-  temperament: Joi.string().valid('calm', 'friendly', 'energetic', 'anxious', 'aggressive', 'unknown').default('unknown'),
-  energyLevel: Joi.string().valid('low', 'medium', 'high').default('medium'),
-  anxietyLevel: Joi.string().valid(...RISK_LEVELS).default('none'),
-  aggressionLevel: Joi.string().valid(...RISK_LEVELS).default('none'),
-  biteRisk: Joi.string().valid(...RISK_LEVELS).default('none'),
-  escapeRisk: Joi.string().valid(...RISK_LEVELS).default('none'),
+  emergencyContact: Joi.object({ name: Joi.string().max(100).allow('', null), phone: Joi.string().max(20).allow('', null) }),
+  temperament: Joi.string().valid('calm', 'friendly', 'energetic', 'anxious', 'aggressive', 'unknown'),
+  energyLevel: Joi.string().valid('low', 'medium', 'high'),
+  anxietyLevel: Joi.string().valid(...RISK_LEVELS),
+  aggressionLevel: Joi.string().valid(...RISK_LEVELS),
+  biteRisk: Joi.string().valid(...RISK_LEVELS),
+  escapeRisk: Joi.string().valid(...RISK_LEVELS),
   specialHandling: Joi.string().max(1000).allow('', null),
   behaviourNotes: Joi.string().max(1000).allow('', null),
-  vaccinationStatus: Joi.string().valid('up_to_date', 'partial', 'not_vaccinated', 'unknown').default('unknown'),
+  vaccinationStatus: Joi.string().valid('up_to_date', 'partial', 'not_vaccinated', 'unknown'),
   dietPreferences: Joi.string().max(500).allow('', null),
   feedingInstructions: Joi.string().max(1000).allow('', null),
   walkingInstructions: Joi.string().max(1000).allow('', null),
@@ -72,9 +74,31 @@ const petBody = Joi.object({
   ownerNotes: Joi.string().max(1000).allow('', null),
 });
 
+/** What a provider must know before handling the animal: asked, never assumed. */
+const SAFETY = {
+  size: Joi.string().valid(...PET_SIZES).required(),
+  gender: Joi.string().valid('male', 'female').required(),
+  dob: Joi.date().max('now').required(),
+  weight: Joi.number().min(0.2).max(200).required(),
+  temperament: Joi.string().valid('calm', 'friendly', 'energetic', 'anxious', 'aggressive').required(),
+  vaccinationStatus: Joi.string().valid('up_to_date', 'partial', 'not_vaccinated', 'unknown').required(), // 'unknown' = the owner said "Not sure"
+  biteRisk: Joi.string().valid(...RISK_LEVELS).required(),
+  aggressionLevel: Joi.string().valid(...RISK_LEVELS).required(),
+};
+const petCreate = petFields.keys({
+  name: Joi.string().max(80).required(),
+  species: Joi.string().valid(...SPECIES).required(),
+  ...SAFETY,
+  allergies: Joi.array().items(Joi.string().max(100)).default([]),
+  emergencyContact: Joi.object({ name: Joi.string().max(100).allow('', null), phone: Joi.string().max(20).allow('', null) }).default({}),
+  energyLevel: Joi.string().valid('low', 'medium', 'high').default('medium'),
+  anxietyLevel: Joi.string().valid(...RISK_LEVELS).default('none'),
+  escapeRisk: Joi.string().valid(...RISK_LEVELS).default('none'),
+});
+
 router.get('/my-pets', authenticate, requireRole('user'), ctrl.listMyPets);
-router.post('/my-pets', authenticate, requireRole('user'), validate(petBody), ctrl.createPet);
-router.patch('/my-pets/:id', authenticate, requireRole('user'), validate(petBody.fork(['name', 'species'], (f) => f.optional())), ctrl.updatePet);
+router.post('/my-pets', authenticate, requireRole('user'), validate(petCreate), ctrl.createPet);
+router.patch('/my-pets/:id', authenticate, requireRole('user'), validate(petFields), ctrl.updatePet);
 router.delete('/my-pets/:id', authenticate, requireRole('user'), ctrl.archivePet);
 router.get('/my-pets/:id/history', authenticate, requireRole('user'), ctrl.getPetHistory);
 

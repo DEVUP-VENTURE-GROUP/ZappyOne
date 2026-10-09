@@ -110,6 +110,9 @@ const petPassportSchema = new mongoose.Schema({
   aggressionLevel: { type: String, enum: RISK_LEVELS, default: 'none' },
   biteRisk: { type: String, enum: RISK_LEVELS, default: 'none', index: true },
   escapeRisk: { type: String, enum: RISK_LEVELS, default: 'none' },
+  /** When the owner answered the safety questions (size, age, temperament, vaccination, bite, strangers).
+   *  Null on older profiles, where 'none' above is a default, not an answer: booking asks first. */
+  safetyAnsweredAt: { type: Date, default: null },
   specialHandling: String,
   behaviourNotes: String,
 
