@@ -79,6 +79,15 @@ const KINDS = {
       label: (b) => `${(b.vertical || 'repair').replace(/_/g, ' ')} repair`,
       share: (b) => require('../repair/services/settlement.service').splitFor(b).providerPaise + (b.boost?.paise || 0) + (b.surge?.providerPaise || 0),
       platform: (b) => require('../repair/services/settlement.service').splitFor(b).platformPaise,
+      bill: (b) => {
+        const s = b.priceSnapshot || {};
+        const split = require('../repair/services/settlement.service').splitFor(b);
+        return {
+          totalPaise: s.totalPaise || 0, servicePaise: s.subtotalPaise || 0, platformFeePaise: s.platformFeePaise || 0,
+          taxPaise: s.taxPaise || 0, creditPaise: s.inspectionCreditPaise || 0, commissionPaise: s.commissionPaise || 0,
+          providerPaise: split.providerPaise,
+        };
+      },
     },
     // Repair copy lives with its richer event service (quotes, SLA); see repair/services/events.service.
     copy: null,
@@ -140,6 +149,13 @@ const KINDS = {
       gross: (b) => b.pricing?.totalPaise || 0,
       label: (b) => (b.categoryCode || 'pet care').replace(/_/g, ' '),
       share: (b) => (b.pricing?.providerAmountPaise || 0) + (b.boost?.paise || 0) + (b.surge?.providerPaise || 0),
+      bill: (b) => {
+        const p = b.pricing || {};
+        return {
+          totalPaise: p.totalPaise || 0, servicePaise: p.subtotalPaise || 0, platformFeePaise: p.platformFeePaise || 0,
+          taxPaise: p.taxPaise || 0, creditPaise: 0, commissionPaise: p.commissionPaise || 0, providerPaise: p.providerAmountPaise || 0,
+        };
+      },
     },
     copy: {
       customer: {
@@ -217,6 +233,15 @@ const KINDS = {
       gross: (t) => t.charge?.serviceChargePaise || 0,
       label: (t) => `${t.serviceType || 'helping'} task`,
       share: (t) => (t.charge?.workerEarningPaise || 0) + (t.boost?.paise || 0) + (t.surge?.providerPaise || 0),
+      bill: (t) => {
+        const c = t.charge || {};
+        return {
+          totalPaise: c.serviceChargePaise || 0,
+          servicePaise: Math.max(0, (c.serviceChargePaise || 0) - (c.platformFeePaise || 0) - (c.taxPaise || 0) + (c.discountPaise || 0)),
+          platformFeePaise: c.platformFeePaise || 0, taxPaise: c.taxPaise || 0, creditPaise: 0,
+          commissionPaise: c.commissionPaise || 0, providerPaise: c.workerEarningPaise || 0,
+        };
+      },
     },
     copy: {
       customer: {

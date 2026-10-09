@@ -141,6 +141,8 @@ export const api = createApi({
     /** Worker: where surge is on near them, for the services they do (jobs/surge). */
     workerHotZones: b.query({ query: ({ lat, lng } = {}) => ({ url: '/workers/hot-zones', params: { lat, lng } }), keepUnusedDataFor: 30 }),
     /** Provider rates the customer after the job (jobs/customer-rating). */
+    /** The money on one finished job, for its provider (server jobs/earnings forJob). */
+    jobEarnings: b.query({ query: (id) => `/jobs/${id}/earnings`, keepUnusedDataFor: 0 }),
     rateCustomer: b.mutation({ query: ({ id, ...body }) => ({ url: `/jobs/${id}/rate-customer`, method: 'POST', body }), invalidatesTags: ['RepairBookings', 'PetBookings', 'HelpingTasks'] }),
     /** Worker's week: hours and days off (jobs/work-hours). */
     workerHours: b.query({ query: () => '/workers/me/hours', providesTags: ['WorkerHours'], keepUnusedDataFor: 0 }),
@@ -2514,6 +2516,7 @@ export const {
   useMyRepeatsQuery, useRepeatJobMutation, useRepeatActionMutation,
   useWorkerHoursQuery, useSaveWorkerHoursMutation,
   useRateCustomerMutation,
+  useJobEarningsQuery,
   useSurgeQuoteQuery,
   useWorkerHotZonesQuery,
   useMyPendingCancelFeeQuery,

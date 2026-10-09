@@ -42,4 +42,65 @@ async function finishedJobs(match, since) {
   return finished;
 }
 
-module.exports = { rangeStart, finishedJobs };
+/**
+ * One job's money as its provider sees it: what the customer paid, line by
+ * line; what ZappyOne keeps; what is theirs; and how it settles (cash: they
+ * hold it all and ZappyOne's part comes off their wallet; online: their part
+ * goes to their wallet). Same parts as finishedJobs, so it matches Earnings.
+ */
+async function forJob(kind, id) {
+  const { KINDS } = require('./kinds');
+  const k = KINDS[kind];
+  if (!k?.earning?.bill) return null;
+  const doc = await k.model().findById(id)
+    .select(`${k.earning.fields} status workerId shopId carriedFee priceSnapshot pricing charge`).lean();
+  if (!doc) return null;
+
+  const b = k.earning.bill(doc);
+  const surgePaise = doc.surge?.paise || 0;
+  const surgeYoursPaise = doc.surge?.providerPaise || 0;
+  const boostPaise = doc.boost?.paise || 0;
+  const tipPaise = doc.tip?.paise || 0;
+  const tipOnBill = doc.tip?.method === 'with_payment' ? tipPaise : 0;
+  const carriedPaise = doc.carriedFee?.paise > 0 ? doc.carriedFee.paise : 0;
+  const discountPaise = Math.max(0, b.servicePaise + b.platformFeePaise + b.taxPaise - b.creditPaise - b.totalPaise);
+
+  const customerPaidPaise = b.totalPaise + surgePaise + boostPaise + tipOnBill + carriedPaise;
+  const youEarnPaise = b.providerPaise + boostPaise + surgeYoursPaise + tipPaise;
+  const line = (label, paise, note) => (paise ? [{ label, paise, ...(note && { note }) }] : []);
+  const pct = b.servicePaise > 0 ? Math.round((b.commissionPaise / b.servicePaise) * 100) : 0;
+
+  return {
+    kind, reference: doc.reference || null, status: doc.status,
+    done: k.earning.done.includes(doc.status), cash: doc.paymentMethod === 'cash',
+    customerPaidPaise,
+    bill: [
+      ...line('Service', b.servicePaise),
+      ...line('Platform fee', b.platformFeePaise),
+      ...line('GST', b.taxPaise),
+      ...line('Discount', -discountPaise),
+      ...line('Inspection already paid', -b.creditPaise),
+      ...line((doc.surge?.lines?.length === 1 && doc.surge.lines[0].label) || 'Surge fee', surgePaise),
+      ...line('Priority boost', boostPaise),
+      ...line('Tip', tipOnBill),
+      ...line('Earlier cancellation fee', carriedPaise),
+    ],
+    zappy: [
+      ...line(`Commission${pct ? ` (${pct}%)` : ''}`, b.commissionPaise),
+      ...line('Platform fee', b.platformFeePaise),
+      ...line('GST', b.taxPaise),
+      ...line('ZappyOne share of the surge fee', surgePaise - surgeYoursPaise),
+      ...line('Earlier cancellation fee', carriedPaise, 'owed by the customer from a cancelled booking'),
+    ],
+    zappyKeepsPaise: Math.max(0, customerPaidPaise - (youEarnPaise - (tipPaise - tipOnBill))),
+    youEarnPaise,
+    yours: [
+      ...line('Your share of the service', b.providerPaise),
+      ...line('Your share of the surge fee', surgeYoursPaise),
+      ...line('Priority boost', boostPaise),
+      ...line('Tip', tipPaise),
+    ],
+  };
+}
+
+module.exports = { rangeStart, finishedJobs, forJob };

@@ -30,9 +30,14 @@ const logger = require('../../../core/logger');
  * Read as: "you may not move a booking into this status, in one of these modes,
  * until this code has been accepted."
  */
+/** Modes where the technician works where the customer is: the start code is asked before any work. */
+const AT_CUSTOMER = ['doorstep', 'roadside', 'diagnosis_only'];
+
 const OTP_GATES = {
-  // Work starting where the customer is standing.
-  REPAIR_IN_PROGRESS: { kind: 'start', modes: ['doorstep'] },
+  // Work starting where the customer is standing: the inspection, or the repair
+  // when it starts straight away. One code; once given it covers both.
+  DIAGNOSING: { kind: 'start', modes: AT_CUSTOMER },
+  REPAIR_IN_PROGRESS: { kind: 'start', modes: AT_CUSTOMER },
   // The device leaving the customer's hands.
   DEVICE_PICKED_UP: { kind: 'handover', modes: ['pickup_repair'] },
   // The device going back. A doorstep repair never left, so it is exempt.
@@ -47,7 +52,7 @@ const FIELD = {
 };
 
 const LABEL = {
-  start: 'start the repair',
+  start: 'start work',
   handover: 'collect your device',
   return: 'hand your device back',
 };
@@ -161,6 +166,9 @@ async function assertGatePassed(booking, nextStatus) {
 
   const at = booking.otpVerified?.[`${kind}At`];
   if (at) return;
+  // A job that reached this point before the code was issued (e.g. a roadside
+  // job from before start codes covered it) gets one now, so it can go on.
+  await issue(booking._id, kind).catch(() => {});
 
   throw Object.assign(
     new Error(`Ask the customer for their code before you ${LABEL[kind]}.`),
@@ -178,6 +186,8 @@ async function assertGatePassed(booking, nextStatus) {
 async function issueForUpcoming(booking) {
   const upcoming = {
     doorstep: { ARRIVED: 'start' },
+    roadside: { ARRIVED: 'start' },
+    diagnosis_only: { ARRIVED: 'start' },
     pickup_repair: { WORKER_ACCEPTED: 'handover', PICKUP_SCHEDULED: 'handover', READY_FOR_RETURN: 'return', OUT_FOR_RETURN: 'return' },
     workshop: { QA_PENDING: 'return', READY_FOR_RETURN: 'return' },
   };

@@ -3,7 +3,7 @@ import OnSiteCard from '../OnSiteCard';
 import GiveBackCard from '../GiveBackCard';
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Loader2, Navigation, PawPrint, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Loader2, PawPrint, AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useSelector } from 'react-redux';
 import { selectRole } from '../../modules/auth/authSlice';
@@ -12,6 +12,8 @@ import ProofPhotos, { readyKeys } from '../../components/common/ProofPhotos';
 import CollectPaymentCard from '../../components/common/CollectPaymentCard';
 import { formatPaise, billTipPaise, surgeOnBill } from '../../utils/money';
 import RateCustomerCard from '../../components/worker/RateCustomerCard';
+import JobMapCard, { pointOf } from '../../components/worker/JobMapCard';
+import JobEarningsCard from '../../components/worker/JobEarningsCard';
 import TripSharingBanner from '../../components/worker/TripSharingBanner';
 import { useStartCodeGate } from '../../components/worker/StartCodePrompt';
 import SOSButton from '../../components/worker/SOSButton';
@@ -154,13 +156,8 @@ export default function WorkerPetJobPage() {
           </div>
         )}
 
-        {booking.serviceLocation?.address && (
-          <a href={`https://maps.google.com/?q=${booking.serviceLocation.coordinates?.[1]},${booking.serviceLocation.coordinates?.[0]}`}
-            target="_blank" rel="noreferrer"
-            className="flex items-center gap-2.5 rounded-2xl border-2 border-slate-200 bg-white p-4 text-sm">
-            <Navigation size={16} className="text-zappy-500 shrink-0" />
-            <span className="truncate">{booking.serviceLocation.address}</span>
-          </a>
+        {!['SERVICE_COMPLETED', 'CUSTOMER_CONFIRMATION', 'PAYMENT_PENDING', 'PAYMENT_COMPLETED', 'CLOSED'].includes(booking.status) && !['CANCELLED', 'REFUNDED'].includes(booking.status) && (
+          <JobMapCard to={pointOf(booking.serviceLocation)} live={!ownerWatching} />
         )}
 
         {ownerWatching && (nextMoves.length > 0 || offered || booking.status === 'SERVICE_STARTED') && (
@@ -209,6 +206,7 @@ export default function WorkerPetJobPage() {
             onCollect={recordCash}
           />
         )}
+        {['SERVICE_COMPLETED', 'CUSTOMER_CONFIRMATION', 'PAYMENT_PENDING', 'PAYMENT_COMPLETED', 'CLOSED'].includes(booking.status) && <JobEarningsCard jobId={booking._id} />}
         {['SERVICE_COMPLETED', 'CUSTOMER_CONFIRMATION', 'PAYMENT_PENDING', 'PAYMENT_COMPLETED', 'CLOSED'].includes(booking.status) && (
           <RateCustomerCard jobId={booking._id} rated={!!booking.customerRating?.stars} />
         )}

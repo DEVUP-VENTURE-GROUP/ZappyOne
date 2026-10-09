@@ -28,9 +28,14 @@ function splitFor(booking) {
     );
   }
 
-  // Defensive: a commission larger than the bill would pay the provider a
+  // The platform fee the customer paid and the GST on the bill are ZappyOne's
+  // too: the provider's share is the work, less commission (pricing rules:
+  // commission from the provider, platform fee from the customer).
+  platformPaise = Math.max(platformPaise, 0) + (snap.platformFeePaise || 0) + (snap.taxPaise || 0);
+
+  // Defensive: a share larger than the bill would pay the provider a
   // negative amount, which is never a legitimate outcome.
-  platformPaise = Math.min(Math.max(platformPaise, 0), totalPaise);
+  platformPaise = Math.min(platformPaise, totalPaise);
 
   return { totalPaise, platformPaise, providerPaise: totalPaise - platformPaise };
 }

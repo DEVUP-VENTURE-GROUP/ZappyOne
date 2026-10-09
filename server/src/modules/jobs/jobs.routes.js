@@ -261,6 +261,18 @@ router.post('/:id/rate-customer',
     } catch (err) { next(err); }
   });
 
+/** The money on one job, for the provider who did it (jobs/earnings forJob). */
+router.get('/:id/earnings', authenticate, requireRole('worker', 'shop'), async (req, res, next) => {
+  try {
+    const { kind, doc } = await jobFor(req, 'workerId shopId');
+    const mine = req.auth.role === 'shop' ? String(doc.shopId) === String(req.auth.sub) : String(doc.workerId) === String(req.auth.sub);
+    if (!mine) return res.status(404).json({ error: 'Booking not found' });
+    const earnings = await require('./earnings').forJob(kind, req.params.id);
+    if (!earnings) return res.status(404).json({ error: 'No earnings for this job' });
+    res.json({ earnings });
+  } catch (err) { next(err); }
+});
+
 /* Repeats: a booking made again every week / 2 weeks / month / 3 months (jobs/recurring). */
 router.get('/recurring', authenticate, requireRole('user'), async (req, res, next) => {
   try { res.json({ plans: await require('./recurring').mine(req.auth.sub) }); } catch (err) { next(err); }

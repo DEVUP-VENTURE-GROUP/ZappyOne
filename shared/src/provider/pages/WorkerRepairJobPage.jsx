@@ -17,6 +17,8 @@ import { selectRole } from '../../modules/auth/authSlice';
 import AssignTechnician from '../components/AssignTechnician';
 import { formatPaise, billTipPaise, surgeOnBill } from '../../utils/money';
 import RateCustomerCard from '../../components/worker/RateCustomerCard';
+import JobMapCard, { pointOf } from '../../components/worker/JobMapCard';
+import JobEarningsCard from '../../components/worker/JobEarningsCard';
 import { usePublishTripLocation, MOVING_STATUSES, tripOf } from '../../hooks/useLiveTrip';
 import TripSharingBanner from '../../components/worker/TripSharingBanner';
 import SOSButton from '../../components/worker/SOSButton';
@@ -52,12 +54,15 @@ const rupees = formatPaise;
  * the fact is how somebody ends up standing in a doorway retrying.
  */
 function gateFor(nextStatus, serviceMode) {
+  const atCustomer = ['doorstep', 'roadside', 'diagnosis_only'];
   const gates = {
-    REPAIR_IN_PROGRESS: ['doorstep'],
+    DIAGNOSING: atCustomer,
+    REPAIR_IN_PROGRESS: atCustomer,
     DEVICE_PICKED_UP: ['pickup_repair'],
     COMPLETED: ['pickup_repair', 'workshop'],
   };
   const kind = {
+    DIAGNOSING: 'start',
     REPAIR_IN_PROGRESS: 'start',
     DEVICE_PICKED_UP: 'handover',
     COMPLETED: 'return',
@@ -594,6 +599,10 @@ export default function WorkerRepairJobPage() {
             <AssignTechnician jobId={id} workerId={booking.workerId} onDone={refetch} startOpen={!booking.workerId} />
           </div>
         )}
+        {/* Where to go: only while the job is live and someone travels to the customer. */}
+        {booking.serviceMode !== 'workshop' && !['COMPLETED', 'CANCELLED', 'REJECTED', 'EXPIRED', 'FAILED', 'REFUNDED'].includes(booking.status) && (
+          <JobMapCard to={pointOf(booking.location)} live={!isOwner || ownerGoing} />
+        )}
         <div className="card">
           <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Status</p>
           <p className="font-bold text-[#0F172A] mt-1 capitalize">{booking.status.replace(/_/g, ' ').toLowerCase()}</p>
@@ -614,6 +623,7 @@ export default function WorkerRepairJobPage() {
           were paid.
         */}
         {/* Done: the provider rates the customer, once (jobs/customer-rating). */}
+        {booking.status === 'COMPLETED' && <JobEarningsCard jobId={booking._id} />}
         {booking.status === 'COMPLETED' && <RateCustomerCard jobId={booking._id} rated={!!booking.customerRating?.stars} />}
 
         {readyForPayment && (snap.totalPaise || 0) > 0 && (

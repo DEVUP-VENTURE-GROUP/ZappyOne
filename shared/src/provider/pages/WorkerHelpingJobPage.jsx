@@ -4,7 +4,7 @@ import GiveBackCard from '../GiveBackCard';
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  ArrowLeft, Loader2, Check, X, AlertTriangle, Navigation, Banknote,
+  ArrowLeft, Loader2, Check, X, AlertTriangle, Banknote,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ProofPhotos, { readyKeys } from '../../components/common/ProofPhotos';
@@ -22,6 +22,8 @@ import {
 } from '../../services/api';
 import { formatPaise, billTipPaise } from '../../utils/money';
 import RateCustomerCard from '../../components/worker/RateCustomerCard';
+import JobMapCard, { pointOf } from '../../components/worker/JobMapCard';
+import JobEarningsCard from '../../components/worker/JobEarningsCard';
 
 /**
  * Worker execution — §10, §11, §12, §13, §27, §28, §29.
@@ -150,15 +152,8 @@ export default function WorkerHelpingJobPage() {
         {trip && <TripSharingBanner sharing={sharing} {...trip} />}
         <OnSiteCard onSite={task.onSite} />
         <GiveBackCard jobId={task._id} status={task.status} />
-        {task.pickupLocation?.address && (
-          <a
-            href={`https://maps.google.com/?q=${task.pickupLocation.coordinates?.[1]},${task.pickupLocation.coordinates?.[0]}`}
-            target="_blank" rel="noreferrer"
-            className="flex items-center gap-2.5 rounded-2xl border-2 border-slate-200 bg-white p-4 text-sm"
-          >
-            <Navigation size={16} className="text-zappy-500 shrink-0" />
-            <span className="min-w-0 truncate">{task.pickupLocation.address}</span>
-          </a>
+        {!['COMPLETED', 'CUSTOMER_CONFIRMED', 'SETTLED'].includes(task.status) && !['CANCELLED', 'FAILED'].includes(task.status) && (
+          <JobMapCard to={pointOf(task.pickupLocation)} label="Pickup" />
         )}
 
         {task.instructions && (
@@ -221,6 +216,7 @@ export default function WorkerHelpingJobPage() {
             {completing ? 'Completing…' : 'Complete task'}
           </button>
         )}
+        {['COMPLETED', 'CUSTOMER_CONFIRMED', 'SETTLED'].includes(task.status) && <JobEarningsCard jobId={task._id} />}
         {['COMPLETED', 'CUSTOMER_CONFIRMED', 'SETTLED'].includes(task.status) && (
           <RateCustomerCard jobId={task._id} rated={!!task.customerRating?.stars} />
         )}
