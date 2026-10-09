@@ -10,8 +10,10 @@ import { RupeeInput, UnitInput, Setting, toRupees, toPaise } from './fields';
  * every minute from bookings vs pros nearby, live weather and the clock
  * (server jobs/surge). Nothing here is switched by hand day to day.
  *
- *   limits    on/off, services, the busy-area cap, the ₹ ceiling, rain and
- *             night amounts, the provider's share, how much demand counts
+ *   always    on by itself for every service where a pro travels to the
+ *             customer — nothing to switch per service or per day
+ *   limits    the busy-area cap, the ₹ ceiling, rain and night amounts, the
+ *             provider's share, how much demand counts
  *   kill      everything back to no surge at once
  *   live      every zone pricing right now, and why
  *   results   what it earned ZappyOne, and whether people still booked
@@ -26,7 +28,7 @@ export default function Surge() {
   useEffect(() => {
     if (s) {
       setForm({
-        enabled: s.enabled, lines: s.lines || [], maxMultiplier: s.maxMultiplier, ceilingPaise: toRupees(s.ceilingPaise),
+        maxMultiplier: s.maxMultiplier, ceilingPaise: toRupees(s.ceilingPaise),
         rainPaise: toRupees(s.rainPaise), nightPaise: toRupees(s.nightPaise), nightStartHour: s.nightStartHour, nightEndHour: s.nightEndHour,
         providerSharePct: s.providerSharePct, minDemand: s.minDemand, lockMinutes: s.lockMinutes,
       });
@@ -37,17 +39,16 @@ export default function Surge() {
   if (isLoading || !form) return <PageLoader />;
 
   const values = {
-    enabled: form.enabled, lines: form.lines, maxMultiplier: Number(form.maxMultiplier), ceilingPaise: toPaise(form.ceilingPaise),
+    maxMultiplier: Number(form.maxMultiplier), ceilingPaise: toPaise(form.ceilingPaise),
     rainPaise: toPaise(form.rainPaise), nightPaise: toPaise(form.nightPaise), nightStartHour: Number(form.nightStartHour),
     nightEndHour: Number(form.nightEndHour), providerSharePct: Number(form.providerSharePct), minDemand: Number(form.minDemand), lockMinutes: Number(form.lockMinutes),
   };
-  const bad = Object.entries(values).filter(([kk, v]) => kk !== 'lines' && kk !== 'enabled' && !Number.isFinite(v)).map(([kk]) => kk);
+  const bad = Object.entries(values).filter(([, v]) => !Number.isFinite(v)).map(([kk]) => kk);
 
   async function submit(patch = values) {
     try { await save(patch).unwrap(); toast.success('Saved. The engine uses it from the next minute.'); } catch (err) { toast.error(err?.data?.error || 'Could not save'); }
   }
   const set = (kk) => (v) => setForm((f) => ({ ...f, [kk]: v }));
-  const toggleLine = (code) => setForm((f) => ({ ...f, lines: f.lines.includes(code) ? f.lines.filter((c) => c !== code) : [...f.lines, code] }));
   const zones = data.zones?.zones || [];
   const surging = zones.filter((z) => z.multiplier > 1);
   const rep = data.report;
@@ -57,8 +58,10 @@ export default function Surge() {
       {/* Kill switch first: the one thing that may need a hand in a hurry. */}
       <Card className={`flex flex-wrap items-center justify-between gap-3 p-4 ${s.killSwitch ? 'bg-red-50 ring-1 ring-red-200' : ''}`}>
         <div>
-          <p className="text-sm font-bold text-slate-900">{s.killSwitch ? 'Surge is stopped everywhere' : s.enabled ? 'Surge is running automatically' : 'Surge is off'}</p>
-          <p className="text-[12px] text-slate-500">{s.killSwitch ? 'No one pays surge until you resume.' : 'Stops every zone at once, for an incident or a government notice.'}</p>
+          <p className="text-sm font-bold text-slate-900">{s.killSwitch ? 'Surge is stopped everywhere' : 'Surge runs by itself, for every service'}</p>
+          <p className="text-[12px] text-slate-500">{s.killSwitch
+            ? 'No one pays surge until you resume.'
+            : 'Every minute, every zone, inside the limits below. Stop it only for an incident or a government notice.'}</p>
         </div>
         <button type="button" onClick={() => submit({ killSwitch: !s.killSwitch })}
           className={`inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold ${s.killSwitch ? 'bg-emerald-600 text-white' : 'border border-red-300 text-red-700'}`}>
@@ -75,18 +78,7 @@ export default function Surge() {
 
       <Card className="overflow-hidden">
         <p className="px-4 pt-4 text-sm font-bold text-slate-900">Limits</p>
-        <p className="px-4 pb-2 text-[12px] text-slate-500">Set once. Every minute the engine prices each zone inside these.</p>
-        <Setting title="Run surge" hint="Off: nobody pays surge. On: automatic, inside the limits below.">
-          <input type="checkbox" checked={form.enabled} onChange={(e) => set('enabled')(e.target.checked)} className="h-5 w-5" />
-        </Setting>
-        <Setting title="Services" hint="None ticked = every live service. Surge applies only when someone travels to the customer.">
-          <div className="flex max-w-md flex-wrap justify-end gap-1.5">
-            {data.lines.map((l) => (
-              <button key={l.code} type="button" onClick={() => toggleLine(l.code)}
-                className={`rounded-full border px-2.5 py-1 text-[12px] font-semibold ${form.lines.includes(l.code) ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-200 text-slate-600'}`}>{l.name}</button>
-            ))}
-          </div>
-        </Setting>
+        <p className="px-4 pb-2 text-[12px] text-slate-500">Set once. Applies to every service where a pro travels to the customer; workshop visits and stays never surge.</p>
         <Setting title="Busy-area cap" hint="The most a busy zone raises the service price (1.3 = +30%). Rides are capped at 2.0 by law.">
           <UnitInput value={form.maxMultiplier} onChange={set('maxMultiplier')} label="Busy-area cap" unit="×" min={1} max={2} step={0.05} />
         </Setting>

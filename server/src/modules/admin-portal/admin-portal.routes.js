@@ -296,9 +296,7 @@ router.get('/economics/surge', async (req, res, next) => {
 
 router.put('/economics/surge',
   validate(Joi.object({
-    enabled: Joi.boolean(),
     killSwitch: Joi.boolean(),
-    lines: Joi.array().items(Joi.string().max(60)).max(50),
     maxMultiplier: Joi.number().min(1).max(2),
     ceilingPaise: Joi.number().integer().min(0).max(100000),
     rainPaise: Joi.number().integer().min(0).max(30000),

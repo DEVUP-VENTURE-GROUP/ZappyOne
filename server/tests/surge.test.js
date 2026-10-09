@@ -33,7 +33,7 @@ beforeAll(async () => {
 });
 afterAll(stopMongo);
 
-const enable = (extra = {}) => config.updateActiveConfig({ surgeAuto: { ...config.SURGE_DEFAULTS, enabled: true, minDemand: 2, ...AWAY, ...extra } }, adminId);
+const enable = (extra = {}) => config.updateActiveConfig({ surgeAuto: { ...config.SURGE_DEFAULTS, __configured: true, minDemand: 2, ...AWAY, ...extra } }, adminId);
 const task = (extra = {}) => {
   n += 1;
   return HelpingTask.create({
@@ -42,9 +42,11 @@ const task = (extra = {}) => {
   });
 };
 
-test('off by default: no lines, no lock', async () => {
+test('on by itself: a quiet zone at a quiet hour quotes nothing extra, but holds the price', async () => {
+  await enable();
   const q = await surge.quote({ kind: 'helping', line: 'shopping_pickup', ...AT, basePaise: 20000 });
-  expect(q).toMatchObject({ quoteId: null, totalPaise: 0, lines: [] });
+  expect(q).toMatchObject({ totalPaise: 0, lines: [] });
+  expect(q.quoteId).toBeTruthy();
 });
 
 test('lines: busy capped by the ceiling, rain and night flat, all of it never above the price', () => {

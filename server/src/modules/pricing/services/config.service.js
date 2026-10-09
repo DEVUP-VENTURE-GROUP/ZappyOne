@@ -42,9 +42,9 @@ async function getActiveConfig() {
 
 /** Automatic surge (jobs/surge): the limits admin sets once. */
 const SURGE_DEFAULTS = {
-  enabled: false,            // off until switched on in Economics
-  killSwitch: false,         // everything to 1.0 at once
-  lines: [],                 // service lines it runs on; empty = every line
+  // Always automatic, every service where someone travels to the customer.
+  // Nothing to switch per service; the kill switch is the one emergency stop.
+  killSwitch: false,
   maxMultiplier: 1.3,        // busy-area ceiling (government rule for rides is 2.0)
   ceilingPaise: 15000,       // busy/peak extra never above ₹150 per booking
   rainPaise: 3000,           // ₹30 while it is raining at the door

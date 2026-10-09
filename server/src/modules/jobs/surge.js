@@ -26,7 +26,7 @@
  *             the training data for the demand forecast and price model later.
  *
  * Fallbacks — when in doubt, no charge:
- *   off / kill switch / line not enabled / not a visit   → no surge
+ *   kill switch / not a visit                            → no surge
  *   Redis down, value stale (> STALE_SEC)                → busy 1.0
  *   too little demand (< minDemand)                      → busy 1.0
  *   nobody approved nearby (supply 0)                    → busy 1.0 (price cannot make supply)
@@ -85,10 +85,14 @@ const SurgeQuote = mongoose.models.SurgeQuote || mongoose.model('SurgeQuote', lo
 async function settings() {
   const cfg = await require('../pricing/services/config.service').getActiveConfig();
   const { SURGE_DEFAULTS } = require('../pricing/services/config.service');
-  return { s: { ...SURGE_DEFAULTS, ...(cfg.surgeAuto || {}) }, cfg };
+  const s = { ...SURGE_DEFAULTS, ...(cfg.surgeAuto || {}) };
+  // Tests that do not set surge up stay unaffected by the clock (a night fee would move their totals).
+  if (process.env.NODE_ENV === 'test' && !cfg.surgeAuto?.__configured) s.killSwitch = true;
+  return { s, cfg };
 }
 
-const lineOn = (s, line) => s.enabled && !s.killSwitch && !!line && (!s.lines?.length || s.lines.includes(line));
+// Always on, for every service where someone travels to the customer; only the kill switch stops it.
+const lineOn = (s, line) => !s.killSwitch && !!line;
 
 /** Does someone travel to the customer? Surge is the price of getting someone there. */
 function isVisit(kind, b) {
@@ -158,7 +162,7 @@ async function tick({ now = Date.now() } = {}) {
   const { s } = await settings();
   const { redis } = r();
   await redis.zremrangebyscore(k('active'), 0, now - WINDOW_MIN * 60000);
-  if (!s.enabled || s.killSwitch) return { zones: 0, off: true };
+  if (s.killSwitch) return { zones: 0, off: true };
   const active = await redis.zrangebyscore(k('active'), now - WINDOW_MIN * 60000, '+inf');
   const byLine = new Map();
   for (const m of active) {
@@ -248,7 +252,7 @@ async function hotZonesFor({ workerId, lat, lng, km = 15 }) {
     }))
     .filter((z) => z.km == null || z.km <= km)
     .sort((a, b) => (b.multiplier - a.multiplier) || ((a.km ?? 99) - (b.km ?? 99)));
-  return { on: s.enabled && !s.killSwitch, sharePct: s.providerSharePct, zones: out.slice(0, 8) };
+  return { on: !s.killSwitch, sharePct: s.providerSharePct, zones: out.slice(0, 8) };
 }
 
 /** Every 10 minutes: weather where people are booking (jobs/weather). */
