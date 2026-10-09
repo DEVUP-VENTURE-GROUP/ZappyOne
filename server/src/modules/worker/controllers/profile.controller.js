@@ -172,10 +172,13 @@ async function streamAvatar(req, res, next) {
 
 /* Bank Account Management */
 
+/** Bank accounts and UPI ids live on the worker, or on the shop for a shop owner. */
+const ownerModel = (req) => (req.auth.role === 'shop' ? require('../../shop/shop.model') : Worker);
+
 async function getBankAccounts(req, res, next) {
   try {
-    const worker = await Worker.findById(req.auth.sub).select('savedBankAccounts savedUpiIds').lean();
-    if (!worker) return res.status(404).json({ error: 'Worker not found' });
+    const worker = await ownerModel(req).findById(req.auth.sub).select('savedBankAccounts savedUpiIds').lean();
+    if (!worker) return res.status(404).json({ error: 'Account not found' });
     const banks = (worker.savedBankAccounts || []).map(b => ({
       ...b,
       accountNumber: `XXXX${b.accountNumber.slice(-4)}`,
@@ -187,8 +190,8 @@ async function getBankAccounts(req, res, next) {
 async function addBankAccount(req, res, next) {
   try {
     const { label, accountName, accountNumber, bankName, ifsc, type, upiId, upiLabel } = req.body;
-    const worker = await Worker.findById(req.auth.sub).select('savedBankAccounts savedUpiIds').lean();
-    if (!worker) return res.status(404).json({ error: 'Worker not found' });
+    const worker = await ownerModel(req).findById(req.auth.sub).select('savedBankAccounts savedUpiIds').lean();
+    if (!worker) return res.status(404).json({ error: 'Account not found' });
 
     const MAX_ACCOUNTS = 5;
     if (type === 'upi') {
@@ -199,7 +202,7 @@ async function addBankAccount(req, res, next) {
       const exists = (worker.savedUpiIds || []).some(u => u.upiId === upiId);
       if (exists) return res.status(409).json({ error: 'This UPI ID is already saved' });
 
-      await Worker.updateOne({ _id: req.auth.sub }, { $push: { savedUpiIds: { upiId, label: upiLabel || upiId, isDefault: false } } });
+      await ownerModel(req).updateOne({ _id: req.auth.sub }, { $push: { savedUpiIds: { upiId, label: upiLabel || upiId, isDefault: false } } });
     } else {
       if ((worker.savedBankAccounts || []).length >= MAX_ACCOUNTS) {
         return res.status(400).json({ error: `Maximum ${MAX_ACCOUNTS} bank accounts allowed. Delete one first.` });
@@ -208,9 +211,9 @@ async function addBankAccount(req, res, next) {
       const exists = (worker.savedBankAccounts || []).some(b => b.accountNumber === accountNumber && b.ifsc === ifsc);
       if (exists) return res.status(409).json({ error: 'This bank account is already saved' });
 
-      await Worker.updateOne({ _id: req.auth.sub }, { $push: { savedBankAccounts: { label, accountName, accountNumber, bankName, ifsc, isDefault: false } } });
+      await ownerModel(req).updateOne({ _id: req.auth.sub }, { $push: { savedBankAccounts: { label, accountName, accountNumber, bankName, ifsc, isDefault: false } } });
     }
-    const w = await Worker.findById(req.auth.sub).select('savedBankAccounts savedUpiIds').lean();
+    const w = await ownerModel(req).findById(req.auth.sub).select('savedBankAccounts savedUpiIds').lean();
     res.status(201).json({
       banks: (w.savedBankAccounts || []).map(b => ({ ...b, accountNumber: `XXXX${b.accountNumber.slice(-4)}` })),
       upiIds: w.savedUpiIds || [],
@@ -222,9 +225,9 @@ async function deleteBankAccount(req, res, next) {
   try {
     const { id, type } = req.params;
     if (type === 'upi') {
-      await Worker.updateOne({ _id: req.auth.sub }, { $pull: { savedUpiIds: { _id: id } } });
+      await ownerModel(req).updateOne({ _id: req.auth.sub }, { $pull: { savedUpiIds: { _id: id } } });
     } else {
-      await Worker.updateOne({ _id: req.auth.sub }, { $pull: { savedBankAccounts: { _id: id } } });
+      await ownerModel(req).updateOne({ _id: req.auth.sub }, { $pull: { savedBankAccounts: { _id: id } } });
     }
     res.json({ ok: true });
   } catch (err) { next(err); }
@@ -234,11 +237,11 @@ async function setDefaultBankAccount(req, res, next) {
   try {
     const { id, type } = req.params;
     if (type === 'upi') {
-      await Worker.updateOne({ _id: req.auth.sub }, { $set: { 'savedUpiIds.$[].isDefault': false } });
-      await Worker.updateOne({ _id: req.auth.sub, 'savedUpiIds._id': id }, { $set: { 'savedUpiIds.$.isDefault': true } });
+      await ownerModel(req).updateOne({ _id: req.auth.sub }, { $set: { 'savedUpiIds.$[].isDefault': false } });
+      await ownerModel(req).updateOne({ _id: req.auth.sub, 'savedUpiIds._id': id }, { $set: { 'savedUpiIds.$.isDefault': true } });
     } else {
-      await Worker.updateOne({ _id: req.auth.sub }, { $set: { 'savedBankAccounts.$[].isDefault': false } });
-      await Worker.updateOne({ _id: req.auth.sub, 'savedBankAccounts._id': id }, { $set: { 'savedBankAccounts.$.isDefault': true } });
+      await ownerModel(req).updateOne({ _id: req.auth.sub }, { $set: { 'savedBankAccounts.$[].isDefault': false } });
+      await ownerModel(req).updateOne({ _id: req.auth.sub, 'savedBankAccounts._id': id }, { $set: { 'savedBankAccounts.$.isDefault': true } });
     }
     res.json({ ok: true });
   } catch (err) { next(err); }

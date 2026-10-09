@@ -1,7 +1,7 @@
 const express = require('express');
 const Joi = require('joi');
 const ctrl = require('./shop.controller');
-const { authenticate, requireRole } = require('../../middlewares/auth');
+const { authenticate, requireRole, requireRecentOtp } = require('../../middlewares/auth');
 const { validate } = require('../../middlewares/validate');
 
 const router = express.Router();
@@ -28,6 +28,7 @@ router.patch(
   '/me/profile',
   validate(Joi.object({
     businessName: Joi.string().max(120).optional(),
+    ownerName: Joi.string().trim().min(2).max(100).optional(),
     category: Joi.string().max(60).optional(),
     services: Joi.array().items(Joi.string().max(60)).optional(),
     address: Joi.object({
@@ -80,6 +81,21 @@ router.post(
 );
 
 router.get('/me/workers', ctrl.listWorkers);
+
+/* Withdraw: what ZappyOne owes the shop, and asking for it (shop/shop-payout). */
+router.get('/me/payouts', async (req, res, next) => {
+  try { res.json(await require('./shop-payout').mine(req.auth.sub)); } catch (err) { next(err); }
+});
+router.post('/me/payouts',
+  requireRecentOtp, // money out: a fresh OTP, like a worker's payout
+  validate(Joi.object({
+    amountPaise: Joi.number().integer().min(1).max(100000000).required(),
+    type: Joi.string().valid('bank', 'upi').required(),
+    accountId: Joi.string().hex().length(24).required(),
+  })),
+  async (req, res, next) => {
+    try { res.status(201).json(await require('./shop-payout').request({ shopId: req.auth.sub, ...req.body })); } catch (err) { next(err); }
+  });
 router.post(
   '/me/workers',
   validate(Joi.object({

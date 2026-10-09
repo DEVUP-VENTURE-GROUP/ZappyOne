@@ -144,11 +144,12 @@ router.get('/leaderboard', authenticate, ctrl.getLeaderboard);
 router.get('/:id/public', authenticate, ctrl.getPublicProfile);
 
 /* Bank Accounts + UPI */
-router.get('/bank-accounts', authenticate, requireRole('worker'), ctrl.getBankAccounts);
+// Workers and shop owners (their payouts go here).
+router.get('/bank-accounts', authenticate, requireRole('worker', 'shop'), ctrl.getBankAccounts);
 router.post(
   '/bank-accounts',
   authenticate,
-  requireRole('worker'),
+  requireRole('worker', 'shop'),
   requireRecentOtp,          // bank details change needs recent OTP
   validate(Joi.object({
     type: Joi.string().valid('bank', 'upi').required(),
@@ -162,8 +163,8 @@ router.post(
   })),
   ctrl.addBankAccount
 );
-router.delete('/bank-accounts/:type/:id', authenticate, requireRole('worker'), ctrl.deleteBankAccount);
-router.patch('/bank-accounts/:type/:id/default', authenticate, requireRole('worker'), ctrl.setDefaultBankAccount);
+router.delete('/bank-accounts/:type/:id', authenticate, requireRole('worker', 'shop'), ctrl.deleteBankAccount);
+router.patch('/bank-accounts/:type/:id/default', authenticate, requireRole('worker', 'shop'), ctrl.setDefaultBankAccount);
 
 /* Customer Block */
 router.post(

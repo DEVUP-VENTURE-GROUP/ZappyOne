@@ -69,7 +69,7 @@ test('a zone surges only with demand AND someone nearby to pull in, in small ste
 
   const Shop = require('../src/modules/shop/shop.model');
   const { ProviderEnrolment } = require('../src/modules/onboarding/onboarding.model');
-  const shop = await Shop.create({ businessName: 'Near Shop', ownerName: 'O', phone: '9000001111', address: { text: 'x', location: { type: 'Point', coordinates: [AT.lng, AT.lat] } } });
+  const shop = await Shop.create({ businessName: 'Near Shop', ownerName: 'O', phone: '9000001111', kyc: { status: 'approved' }, services: [line], address: { text: 'x', location: { type: 'Point', coordinates: [AT.lng, AT.lat] } } });
   await ProviderEnrolment.create({ shopId: shop._id, providerKind: 'shop', domainCode: 'helping_services', lineCode: line, status: 'approved' });
   await surge.tick(); await surge.tick();
   z = (await surge.zones()).zones.find((x) => x.line === line);

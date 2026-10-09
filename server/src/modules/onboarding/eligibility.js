@@ -22,6 +22,13 @@ async function approvedLines(auth) {
 
 /** Throws 403 unless this provider is approved for the line. */
 async function assertApproved(auth, lineCode) {
+  // A shop that reads "Not live" to its owner takes no work (shop.service isLive).
+  if (auth?.role === 'shop') {
+    const live = await require('../shop/shop.service').liveShopIds([auth.id]);
+    if (!live.has(String(auth.id))) {
+      throw Object.assign(new Error('Your shop is not live yet. Finish your shop profile (address pin, hours) to take jobs.'), { status: 403, code: 'SHOP_NOT_LIVE' });
+    }
+  }
   if (lineCode && (await approvedLines(auth)).has(lineCode)) return;
   throw Object.assign(new Error('You are not verified for this service yet'), { status: 403, code: 'NOT_APPROVED_FOR_SERVICE' });
 }

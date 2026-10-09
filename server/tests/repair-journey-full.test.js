@@ -84,6 +84,8 @@ beforeAll(async () => {
   shop = await Shop.create({
     businessName: 'Test Repairs', ownerName: 'Owner', phone: '9000000001',
     kyc: { status: 'approved' }, isActive: true, services: ['mobile_repair'],
+    // A live shop has its address pinned (shop.service isLive).
+    address: { text: 'Test Repairs, Hyderabad', location: { type: 'Point', coordinates: [LNG, LAT] } },
   });
   tech = await Worker.create({
     phone: '9000000002', name: 'Tech One', shopId: shop._id,

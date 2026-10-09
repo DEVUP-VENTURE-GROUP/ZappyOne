@@ -3,6 +3,7 @@ import { useAdminPayoutsQuery, useAdminApprovePayoutMutation, useAdminRejectPayo
 import { CreditCard, X, CheckCircle2, XCircle } from 'lucide-react';
 import { SectionHeader, Pagination, StatusBadge, Card, Th, Td, EmptyState, fmtDate, fmt } from '../../ui/kit';
 import toast from 'react-hot-toast';
+import ShopPayouts from './ShopPayouts';
 
 // Must match the payout model's statuses.
 const STATUS_OPTS = ['', 'requested', 'approved', 'processing', 'paid', 'failed', 'rejected'];
@@ -61,6 +62,9 @@ export default function Payouts() {
   return (
     <div className="space-y-4">
       <SectionHeader title="Payouts" subtitle={data?.total != null ? `${data.total} total` : ''} />
+
+      {/* Shops ask, ops pays by bank / UPI and marks it here (server shop/shop-payout). */}
+      <ShopPayouts />
 
       <div className="flex gap-1.5 flex-wrap">
         {STATUS_OPTS.map(s => (

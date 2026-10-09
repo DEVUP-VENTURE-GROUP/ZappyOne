@@ -5,6 +5,7 @@ import { ArrowLeft, Wallet, Zap, Clock, ChevronRight, Loader2, Building2, Smartp
 import toast from 'react-hot-toast';
 import { useGetWorkerBankAccountsQuery, useGetWalletQuery, useRequestPayoutMutation } from '../../services/api';
 import DuesCard from '../DuesCard';
+import { useOtpGate } from '../../components/common/OtpGate';
 
 const MIN_PAISE = 5000;   // ₹50 — must match server payout.service.js
 const MAX_PAISE = 2500000; // ₹25,000
@@ -19,6 +20,7 @@ export default function WorkerWithdrawPage() {
   const { data: walletData, isLoading: walletLoading } = useGetWalletQuery();
   const { data: bankData, isLoading: bankLoading } = useGetWorkerBankAccountsQuery();
   const [requestPayout, { isLoading: submitting }] = useRequestPayoutMutation();
+  const otp = useOtpGate();
 
   const [amountRs, setAmountRs] = useState('');
   const [selectedId, setSelectedId] = useState('');
@@ -69,11 +71,12 @@ export default function WorkerWithdrawPage() {
     }
 
     try {
-      await requestPayout(body).unwrap();
+      // Payouts need a fresh OTP; asked for here when the server wants it.
+      await otp.run(() => requestPayout(body).unwrap());
       toast.success('Withdrawal requested successfully!');
       nav('/worker');
     } catch (err) {
-      toast.error(err?.data?.error || 'Failed to request withdrawal. Try again.');
+      if (err?.message !== 'cancelled') toast.error(err?.data?.error || 'Failed to request withdrawal. Try again.');
     }
   }
 
@@ -81,6 +84,7 @@ export default function WorkerWithdrawPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 md:flex md:justify-center md:bg-gradient-to-br md:from-slate-100 md:to-zappy-50/40">
+      {otp.modal}
       <div className="w-full max-w-lg lg:max-w-2xl bg-slate-50 min-h-screen relative shadow-[0_0_40px_rgba(0,0,0,0.05)] lg:shadow-[0_0_60px_rgba(0,0,0,0.08)] md:border-x border-slate-200/60 pb-8">
         
         {/* Cinematic Header */}

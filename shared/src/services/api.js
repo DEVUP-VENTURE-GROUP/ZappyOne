@@ -126,7 +126,7 @@ export const api = createApi({
     'RepairCatalog', 'RepairConfig', 'RepairPricing', 'RepairRequests', 'RepairBookings', 'RepairProvider', 'MyAssets',
     'HelpingConfig', 'HelpingTasks', 'HelpingAvailable', 'AdminHelpingTasks',
     'PetCatalog', 'MyPets', 'PetBookings', 'PetAvailable', 'PetRecurring', 'AdminPetBookings', 'AdminPetPricing', 'AdminPetCapabilities',
-    'RepairIdentification', 'Onboarding', 'AdminBookings', 'ErrorIssues', 'Surge', 'IdCheck', 'WorkerHours', 'Repeats'],
+    'RepairIdentification', 'Onboarding', 'AdminBookings', 'ErrorIssues', 'Surge', 'IdCheck', 'WorkerHours', 'Repeats', 'ShopPayouts'],
   endpoints: (b) => ({
     // --- Auth ---
     // Messages between a customer and the provider on any job (jobs/job-chat).
@@ -202,6 +202,13 @@ export const api = createApi({
     requestOtp: b.mutation({
       query: (body) => ({ url: '/auth/otp/request', method: 'POST', body }),
     }),
+    /** Re-confirm with an OTP before a sensitive change (bank details, payouts): 10 minutes. */
+    verifyActionOtp: b.mutation({ query: (body) => ({ url: '/auth/otp/verify-action', method: 'POST', body }) }),
+    /** Shop withdraw (shop/shop-payout). */
+    shopPayouts: b.query({ query: () => '/shops/me/payouts', providesTags: ['ShopPayouts'], keepUnusedDataFor: 0 }),
+    requestShopPayout: b.mutation({ query: (body) => ({ url: '/shops/me/payouts', method: 'POST', body }), invalidatesTags: ['ShopPayouts'] }),
+    adminShopPayouts: b.query({ query: (status = 'requested') => ({ url: adminApiPath('/payouts/shops'), params: { status } }), providesTags: ['ShopPayouts'], keepUnusedDataFor: 0 }),
+    adminDecideShopPayout: b.mutation({ query: ({ id, ...body }) => ({ url: adminApiPath(`/payouts/shops/${id}/decide`), method: 'POST', body }), invalidatesTags: ['ShopPayouts'] }),
     resendOtp: b.mutation({
       query: (body) => ({ url: '/auth/otp/resend', method: 'POST', body }),
     }),
@@ -2492,6 +2499,7 @@ export const {
   useAdminArrivalReportQuery, useAdminWorkerLocationsQuery, useAdminSurgeQuery, useAdminUpdateSurgeMutation,
   useRescheduleJobMutation,
   useJobArrivalQuery,
+  useVerifyActionOtpMutation, useShopPayoutsQuery, useRequestShopPayoutMutation, useAdminShopPayoutsQuery, useAdminDecideShopPayoutMutation,
   useMyRepeatsQuery, useRepeatJobMutation, useRepeatActionMutation,
   useWorkerHoursQuery, useSaveWorkerHoursMutation,
   useRateCustomerMutation,

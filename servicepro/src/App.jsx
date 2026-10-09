@@ -23,6 +23,11 @@ const ShopWorkersPage = lazy(() => import('./pages/ShopWorkersPage'));
 const ShopEarningsPage = lazy(() => import('./pages/ShopEarningsPage'));
 const ShopPriceRequestsPage = lazy(() => import('./pages/ShopPriceRequestsPage'));
 const AppealsPage = lazy(() => import('@shared/provider/pages/WorkerAppealsPage'));
+// Shared with workers: notifications and saved bank / UPI (the server keeps a shop's on the shop).
+const NotificationsPage = lazy(() => import('@shared/provider/pages/WorkerNotificationsPage'));
+const BankPage = lazy(() => import('@shared/provider/pages/WorkerBankPage'));
+const ShopWithdrawPage = lazy(() => import('./pages/ShopWithdrawPage'));
+const ShopAccountPage = lazy(() => import('./pages/ShopAccountPage'));
 const ProviderReviewsPage = lazy(() => import('@shared/provider/pages/ProviderReviewsPage'));
 const WorkerLoginPage = lazy(() => import('@shared/provider/pages/WorkerLoginPage'));
 const ShopWorkerHome = lazy(() => import('./pages/ShopWorkerHome'));
@@ -75,6 +80,10 @@ export default function App() {
             <Route path="/shop/earnings" element={shop(<ShopEarningsPage />)} />
             <Route path="/shop/price-requests" element={shop(<ShopPriceRequestsPage />)} />
             <Route path="/shop/appeals" element={shop(<AppealsPage />)} />
+            <Route path="/shop/account" element={shop(<ShopAccountPage />)} />
+            <Route path="/shop/notifications" element={shop(<NotificationsPage />)} />
+            <Route path="/shop/bank" element={shop(<BankPage />)} />
+            <Route path="/shop/withdraw" element={shop(<ShopWithdrawPage />)} />
             <Route path="/shop/reviews" element={shop(<ProviderReviewsPage back="/shop" />)} />
             {providerRoutes({
               loginPath: WORKER_LOGIN,

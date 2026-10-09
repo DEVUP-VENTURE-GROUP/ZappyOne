@@ -17,8 +17,7 @@ import {
   AlertTriangle,
   ShieldCheck,
   Store,
-  Clock,
-} from 'lucide-react';
+  Clock, CheckCircle2 } from 'lucide-react';
 import {
   useProviderOnboardingStatusQuery,
   useRepairBrandsQuery,
@@ -1477,15 +1476,41 @@ function PricingStep({ vertical, onBack, onNext }) {
   );
 }
 
+/** An approved service with nothing to set up here (pet care, helping): say so, and what brings its jobs. */
+function ReadyService({ name, isShop, onHours }) {
+  return (
+    <div className="space-y-3">
+      <div className="card flex items-start gap-3">
+        <CheckCircle2 size={20} className="mt-0.5 shrink-0 text-emerald-600" />
+        <div>
+          <p className="font-bold text-[#0F172A]">{name} is ready</p>
+          <p className="mt-0.5 text-[13px] leading-relaxed text-slate-600">
+            Nothing to set up here. ZappyOne sets the price for this service, and jobs near you
+            {isShop ? ' come to your shop while it is open.' : ' ring while you are online, and bookings for later come inside your hours.'}
+          </p>
+        </div>
+      </div>
+      <button type="button" onClick={onHours} className="btn-secondary w-full">{isShop ? 'Shop & hours' : 'Set my hours'}</button>
+    </div>
+  );
+}
+
 /* Flow */
 
 export default function ProviderRepairSetupPage() {
   const nav = useNavigate();
   const { data: onboarding } = useProviderOnboardingStatusQuery();
 
-  const verticals = onboarding?.repairVerticals?.length ? onboarding.repairVerticals : ['mobile'];
+  // Every approved service has a tab: repairs have steps; the rest (pet care,
+  // helping) need nothing set here, and say so, rather than vanishing.
+  const others = (onboarding?.enrolments || [])
+    .filter((e) => e.status === 'approved' && !e.line?.repairVertical)
+    .map((e) => ({ key: `line:${e.lineCode}`, code: e.lineCode, name: e.line?.name || e.lineCode.replace(/_/g, ' ') }));
+  const verticals = onboarding?.repairVerticals?.length ? onboarding.repairVerticals : (others.length ? [] : ['mobile']);
+  const tabs = [...verticals, ...others.map((o) => o.key)];
   const [vertical, setVertical] = useState(null);
-  const active = vertical && verticals.includes(vertical) ? vertical : verticals[0];
+  const active = vertical && tabs.includes(vertical) ? vertical : tabs[0];
+  const other = others.find((o) => o.key === active) || null;
 
   const [step, setStep] = useState('brands');
 
@@ -1493,7 +1518,7 @@ export default function ProviderRepairSetupPage() {
   const [brandCodes, setBrandCodes] = useState(null);
   const [cityCode, setCityCode] = useState('');
 
-  const { data: work } = useRepairWorkCatalogQuery({ vertical: active });
+  const { data: work } = useRepairWorkCatalogQuery({ vertical: active }, { skip: !!other });
 
   // Seed brands from what they already claim, so a return visit is not blank.
   useEffect(() => {
@@ -1504,8 +1529,8 @@ export default function ProviderRepairSetupPage() {
   const LABEL = { mobile: 'Phone repair', laptop: 'Laptop repair', two_wheeler: '2-wheeler repair', four_wheeler: '4-wheeler repair', water_tank_care: 'Water & tank care' };
 
   // Every step shows what is really saved, read from the same data the step uses.
-  const { data: areaData } = useRepairServiceAreasQuery(active);
-  const { data: priceData } = useRepairProviderPricingQuery(active);
+  const { data: areaData } = useRepairServiceAreasQuery(active, { skip: !!other });
+  const { data: priceData } = useRepairProviderPricingQuery(active, { skip: !!other });
   const done = useMemo(() => {
     const set = new Set();
     if (brandCodes?.length) set.add('brands');
@@ -1539,34 +1564,37 @@ export default function ProviderRepairSetupPage() {
               <ArrowLeft size={17} strokeWidth={2.5} />
             </button>
             <div className="min-w-0">
-              <p className="truncate font-bold text-[#0F172A]">Set up {LABEL[active] || active}</p>
+              <p className="truncate font-bold text-[#0F172A]">{other ? other.name : `Set up ${LABEL[active] || active}`}</p>
               <p className="text-xs text-slate-400">A few quick steps — you can come back any time</p>
             </div>
           </div>
 
-          {verticals.length > 1 && (
-            <div className="mt-2.5 flex gap-1.5">
-              {verticals.map((v) => (
+          {tabs.length > 1 && (
+            <div className="mt-2.5 flex gap-1.5 overflow-x-auto pb-0.5">
+              {tabs.map((v) => (
                 <button
                   key={v}
                   onClick={() => { setVertical(v); setBrandCodes(null); setStep('brands'); }}
-                  className={`flex-1 rounded-xl py-2 text-xs font-bold transition ${
+                  className={`min-w-[110px] flex-1 whitespace-nowrap rounded-xl px-2 py-2 text-xs font-bold transition ${
                     active === v ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600'
                   }`}
                 >
-                  {LABEL[v] || v}
+                  {LABEL[v] || others.find((o) => o.key === v)?.name || v}
                 </button>
               ))}
             </div>
           )}
 
-          <div className="mt-2.5">
-            <StepRail steps={stepsFor(isShop)} current={step} done={done} onJump={go} />
-          </div>
+          {!other && (
+            <div className="mt-2.5">
+              <StepRail steps={stepsFor(isShop)} current={step} done={done} onJump={go} />
+            </div>
+          )}
         </div>
       </header>
 
       <div className="mx-auto max-w-2xl px-4 pt-4">
+        {other ? <ReadyService name={other.name} isShop={isShop} onHours={() => nav(isShop ? '/shop/profile' : '/worker/hours')} /> : (
         <AnimatePresence mode="wait">
           <motion.div
             key={`${active}:${step}`}
@@ -1630,6 +1658,7 @@ export default function ProviderRepairSetupPage() {
             )}
           </motion.div>
         </AnimatePresence>
+        )}
 
         <button
           onClick={() => nav('/provider/onboarding')}

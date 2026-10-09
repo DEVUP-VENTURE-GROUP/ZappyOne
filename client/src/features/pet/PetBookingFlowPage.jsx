@@ -21,6 +21,7 @@ import { usePayBooking } from '@shared/hooks/usePayBooking';
 import { doorAddress } from '@shared/utils/doorAddress';
 import ArrivalBadge from '@shared/components/common/ArrivalBadge';
 import SurgeLines, { useSurge, surgeChanged } from '@shared/components/common/SurgeLines';
+import TipAtCheckout from '@shared/components/common/TipAtCheckout';
 
 /**
  * One adaptive booking flow for all seven categories (§3, §54).
@@ -228,6 +229,7 @@ function PetBookingFlow({ categoryCode, saved, draftKey, onStartOver }) {
         paymentMethod,
         idempotencyKey,
         ...surge.bookingFields,
+        ...(tip > 0 && { tipPaise: tip * 100 }),
       }).unwrap();
       toast.success('Booked');
       if (res.booking?.paymentMethod === 'online') {
@@ -253,6 +255,8 @@ function PetBookingFlow({ categoryCode, saved, draftKey, onStartOver }) {
     basePaise: quote ? Math.max(0, (quote.totalPaise || 0) - (quote.taxPaise || 0) - (quote.platformFeePaise || 0)) : null,
     skip: step !== 'confirm' || !quote,
   });
+  // An optional tip, in the total before paying (jobs/boost-tip tipAtBooking). Rupees.
+  const [tip, setTip] = useState(0);
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -450,11 +454,13 @@ function PetBookingFlow({ categoryCode, saved, draftKey, onStartOver }) {
           {quote && (
             <div className="rounded-2xl border-2 border-zappy-100 bg-zappy-50/50 p-4">
               <div className="flex justify-between font-black">
-                <span>Total</span><span>{formatPaise(quote.totalPaise + surge.totalPaise)}</span>
+                <span>Total</span><span>{formatPaise(quote.totalPaise + surge.totalPaise + tip * 100)}</span>
               </div>
               <SurgeLines quote={surge.quote} className="mt-2" />
+              {tip > 0 && <p className="mt-1 flex justify-between text-[12.5px] font-semibold text-rose-600"><span>Tip for your pro</span><span>+₹{tip}</span></p>}
             </div>
           )}
+          {quote && <TipAtCheckout value={tip} onChange={setTip} />}
           <SomeoneElse onChange={setOnSite} />
           <PendingFeeNotice />
           <PayMethodPicker value={paymentMethod} onChange={setPaymentMethod} />

@@ -319,6 +319,26 @@ router.put('/economics/surge',
     } catch (err) { next(err); }
   });
 
+/* Shop payouts: shops ask, ops pays by bank / UPI and marks it here (shop/shop-payout) */
+
+router.get('/payouts/shops', async (req, res, next) => {
+  try { res.json({ payouts: await require('../shop/shop-payout').adminList({ status: req.query.status || 'requested' }) }); } catch (err) { next(err); }
+});
+
+router.post('/payouts/shops/:id/decide',
+  validate(Joi.object({
+    decision: Joi.string().valid('paid', 'rejected').required(),
+    reference: Joi.string().trim().max(80).allow(''),
+    reason: Joi.string().trim().max(300).allow(''),
+  })),
+  async (req, res, next) => {
+    try {
+      const row = await require('../shop/shop-payout').decide({ id: req.params.id, ...req.body, adminId: req.auth.sub });
+      await auditService.fromRequest(req, `shop_payout.${req.body.decision}`, { kind: 'shop', id: row.shopId }, null, { amountPaise: row.amountPaise, reference: row.reference });
+      res.json({ payout: row });
+    } catch (err) { next(err); }
+  });
+
 /* Worker dues: who owes what from cash jobs, and recording what they paid */
 
 router.get('/dues', async (req, res, next) => {

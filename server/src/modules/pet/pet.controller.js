@@ -199,7 +199,7 @@ async function findProviders(req, res, next) {
 
 async function createBooking(req, res, next) {
   try {
-    const { onSite, surgeQuoteId, surgeBasePaise, ...body } = req.body;
+    const { onSite, surgeQuoteId, surgeBasePaise, tipPaise, ...body } = req.body;
     await require('../jobs/surge').precheck({ kind: 'pet', body: { ...body, surgeBasePaise }, userId: req.auth.sub, quoteId: surgeQuoteId });
     const { booking, replayed } = await bookingService.createBooking({
       ...body,
@@ -209,7 +209,9 @@ async function createBooking(req, res, next) {
     const saved = await require('../jobs/on-site').saveOnSite(require('./models/booking.model').PetBooking, booking._id, onSite, replayed);
     if (!replayed) await require('../jobs/cancel-fee').attachCarried('pet', booking._id, req.auth.sub);
     const surge = replayed ? null : await require('../jobs/surge').attach('pet', booking, { quoteId: surgeQuoteId, userId: req.auth.sub });
-    res.status(replayed ? 200 : 201).json({ booking: { ...(booking.toObject?.() || booking), ...(saved && { onSite: saved }), ...(surge && { surge }) }, replayed });
+    // A tip chosen at checkout goes on the bill, inside what is paid (jobs/boost-tip).
+    const tip = replayed ? null : await require('../jobs/boost-tip').tipAtBooking('pet', booking, tipPaise).catch(() => null);
+    res.status(replayed ? 200 : 201).json({ booking: { ...(booking.toObject?.() || booking), ...(saved && { onSite: saved }), ...(surge && { surge }), ...(tip && { tip }) }, replayed });
   } catch (err) { next(err); }
 }
 
@@ -312,6 +314,8 @@ async function providerPoint(auth) {
 async function listAvailableBookings(req, res, next) {
   try {
     const lines = await approvedLines({ role: req.auth.role, id: req.auth.sub });
+    // A shop that is not live sees no open jobs (shop.service isLive).
+    if (req.auth.role === 'shop' && !(await require('../shop/shop.service').liveShopIds([req.auth.sub])).has(String(req.auth.sub))) lines.clear();
     if (!lines.size) return res.json({ bookings: [], notApproved: true });
 
     const filter = {

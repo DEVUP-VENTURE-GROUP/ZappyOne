@@ -141,7 +141,8 @@ async function supplyByZone(line) {
     require('../worker/presence').liveIds(workerIds),
     require('./workload').classify(workerIds),
     require('../worker/worker.model').find({ _id: { $in: workerIds } }).select('currentLocation').lean(),
-    require('../shop/shop.model').find({ _id: { $in: shopIds }, isActive: { $ne: false } }).select('address.location').lean(),
+    require('../shop/shop.model').find({ _id: { $in: shopIds }, isActive: { $ne: false } }).select(require('../shop/shop.service').LIVE_FIELDS).lean()
+      .then((rows) => rows.filter(require('../shop/shop.service').isLive)),
   ]);
   const count = new Map();
   const add = (c) => { if (c?.length === 2 && (c[0] || c[1])) { const z = zoneOf(c[1], c[0]); count.set(z, (count.get(z) || 0) + 1); } };

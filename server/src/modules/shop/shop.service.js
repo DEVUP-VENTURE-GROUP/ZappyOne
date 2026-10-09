@@ -56,6 +56,29 @@ function withOpenState(shop) {
 }
 
 /**
+ * Is this shop live — may it get work right now? The SAME rule the owner's
+ * dashboard shows as "Live": active, not blocked, ID approved, address pinned,
+ * at least one approved service, and not closed by its own hours (no hours
+ * stated = open). A shop that reads "Not live" gets no offers.
+ * Needs: isActive isBlocked kyc.status address.location services hours.
+ */
+const LIVE_FIELDS = 'isActive isBlocked kyc.status address.location services hours';
+function isLive(shop) {
+  if (!shop || shop.isActive === false || shop.isBlocked) return false;
+  if (shop.kyc?.status !== 'approved') return false;
+  if (shop.address?.location?.coordinates?.length !== 2) return false;
+  if (!Array.isArray(shop.services) || !shop.services.length) return false;
+  return withOpenState(shop).openNow !== false;
+}
+
+/** The live ones among these shop ids (one read). */
+async function liveShopIds(ids) {
+  if (!ids?.length) return new Set();
+  const rows = await Shop.find({ _id: { $in: ids } }).select(LIVE_FIELDS).lean();
+  return new Set(rows.filter(isLive).map((r) => String(r._id)));
+}
+
+/**
  * The services a shop is listed for are its approved service applications.
  * They were only copied over when an admin decided one, so a shop approved
  * before that copy existed (or whose copy failed) stayed "Not live" with a
@@ -173,7 +196,7 @@ async function getShopProfile(shopId) {
  */
 const PROFILE_FIELDS = [
   'businessName', 'category', 'services', 'address', 'hours', 'coverImageUrl',
-  'galleryImages', 'bio', 'yearsActive', 'isActive',
+  'galleryImages', 'bio', 'yearsActive', 'isActive', 'ownerName',
 ];
 async function updateProfile(shopId, patch) {
   const set = {};
@@ -443,6 +466,9 @@ async function getShopEarnings(shopId, range = 'today') {
 }
 
 module.exports = {
+  isLive,
+  liveShopIds,
+  LIVE_FIELDS,
   findNearbyShops,
   getShopProfile,
   updateProfile,

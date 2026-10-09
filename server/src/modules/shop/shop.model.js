@@ -24,6 +24,22 @@ const shopSchema = new mongoose.Schema(
     ownerName:    { type: String, required: true, trim: true, maxlength: 100 },
     phone:        { type: String, required: true, unique: true, index: true },
     email:        { type: String, lowercase: true, sparse: true },
+    /** Where the shop's payouts go (shop/shop-payout); same shape as a worker's. */
+    savedBankAccounts: [{
+      label:         { type: String, maxlength: 80 },
+      accountName:   { type: String, required: true, maxlength: 100 },
+      accountNumber: { type: String, required: true, maxlength: 20 },
+      bankName:      { type: String, maxlength: 80 },
+      ifsc:          { type: String, required: true, maxlength: 11, uppercase: true },
+      isDefault:     { type: Boolean, default: false },
+      addedAt:       { type: Date, default: Date.now },
+    }],
+    savedUpiIds: [{
+      upiId:     { type: String, required: true, maxlength: 100 },
+      label:     { type: String, maxlength: 60 },
+      isDefault: { type: Boolean, default: false },
+      addedAt:   { type: Date, default: Date.now },
+    }],
 
     // What this shop offers — service codes from the SAME catalog customers
     // book from (service-catalog.model.js), so "nearby shops" can be filtered

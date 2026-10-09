@@ -327,4 +327,21 @@ async function settleTip(kind, bookingId) {
   return doc.tip.paise;
 }
 
-module.exports = { settings, boostView, addBoost, settleBoost, tipView, addTip, settleTip, boostPaise, billTipPaise, BOOSTABLE, PAY_STAGE };
+/**
+ * A tip chosen at checkout, before paying: it goes on the bill (with_payment),
+ * so the total paid — online now, or in cash at the end — includes it. Still
+ * changeable from the booking until the bill is paid. Within the admin's max.
+ */
+async function tipAtBooking(kind, booking, tipPaise) {
+  const paise = Math.round(Number(tipPaise) || 0);
+  if (paise < 100) return null;
+  const s = await settings();
+  if (!s.tipMaxPaise) return null;
+  const Model = KINDS[kind]?.model();
+  if (!Model) return null;
+  const tip = { paise: Math.min(paise, s.tipMaxPaise), method: 'with_payment', message: '', at: new Date() };
+  const res = await Model.updateOne({ _id: booking._id, $or: [{ 'tip.paise': { $exists: false } }, { 'tip.paise': 0 }] }, { $set: { tip } });
+  return res.modifiedCount ? tip : null;
+}
+
+module.exports = { settings, boostView, addBoost, settleBoost, tipView, addTip, settleTip, tipAtBooking, boostPaise, billTipPaise, BOOSTABLE, PAY_STAGE };

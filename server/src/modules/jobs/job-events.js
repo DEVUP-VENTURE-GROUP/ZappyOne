@@ -165,7 +165,9 @@ async function alertNearbyProviders(kind, doc, { offlineOnly = false } = {}) {
           }
           return rows.filter((r) => (offlineOnly ? !live.has(String(r._id)) : live.has(String(r._id))));
         }),
-      offlineOnly ? [] : Shop.find({ _id: { $in: shopIds }, isActive: { $ne: false } }).select('address.location').lean(),
+      // Only shops that read "Live" to their owner (shop.service isLive).
+      offlineOnly ? [] : Shop.find({ _id: { $in: shopIds }, isActive: { $ne: false } }).select(require('../shop/shop.service').LIVE_FIELDS).lean()
+        .then((rows) => rows.filter(require('../shop/shop.service').isLive)),
     ]);
     const distance = (coords) => (start && coords?.length === 2 ? haversineKm(start.lat, start.lng, coords[1], coords[0]) : null);
     const reach = [

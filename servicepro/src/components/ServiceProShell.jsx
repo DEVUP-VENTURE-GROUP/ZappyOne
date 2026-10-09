@@ -1,7 +1,7 @@
 import { Outlet, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import {
-  LayoutDashboard, Wrench, Users, IndianRupee, Store, ShieldCheck, PlusCircle, Bell, UserRound, Star, MessageSquareQuote, Scale, FileText } from 'lucide-react';
+  LayoutDashboard, Wrench, Users, IndianRupee, Store, ShieldCheck, PlusCircle, Bell, UserRound, Star, MessageSquareQuote, Scale, FileText, Wallet, Landmark } from 'lucide-react';
 import PortalShell from '@shared/components/worker/PortalShell';
 import { selectAuth, logout } from '@shared/modules/auth/authSlice';
 import {
@@ -20,6 +20,10 @@ const OWNER_PAGES = [
   { key: 'pricereq', label: 'Price requests', Icon: MessageSquareQuote, to: '/shop/price-requests' },
   { key: 'team', label: 'Team', Icon: Users, to: '/shop/workers', primary: true },
   { key: 'earnings', label: 'Earnings', Icon: IndianRupee, to: '/shop/earnings', primary: true },
+  { key: 'withdraw', label: 'Withdraw', Icon: Wallet, to: '/shop/withdraw' },
+  { key: 'bank', label: 'Bank & UPI', Icon: Landmark, to: '/shop/bank' },
+  { key: 'notifications', label: 'Notifications', Icon: Bell, to: '/shop/notifications' },
+  { key: 'account', label: 'Profile', Icon: UserRound, to: '/shop/account' },
   { key: 'shop', label: 'Shop & hours', Icon: Store, to: '/shop/profile', primary: true },
   { key: 'reviews', label: 'Reviews', Icon: Star, to: '/shop/reviews' },
   { key: 'kyc', label: 'Verification', Icon: ShieldCheck, to: '/shop/kyc' },

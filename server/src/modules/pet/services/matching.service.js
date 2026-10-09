@@ -251,10 +251,11 @@ async function findProviders({
     }
 
     const provider = cap.shopId
-      ? await Shop.findById(cap.shopId).select('businessName phone rating reviewCount').lean()
+      ? await Shop.findById(cap.shopId).select('businessName phone rating reviewCount isActive isBlocked kyc.status address.location services hours').lean()
       : await Worker.findById(cap.workerId).select('name phone rating reviewCount completedJobs acceptanceRate workHours').lean();
 
     if (!provider) { reject('profile_missing'); continue; }
+    if (cap.shopId && !require('../../shop/shop.service').isLive(provider)) { reject('shop_not_live'); continue; }
     // Their week leaves this time out, or they are off that day (jobs/work-hours).
     if (cap.workerId && require('../../jobs/work-hours').covers(provider.workHours, scheduledAt || checkInAt) === false) {
       reject('outside_hours'); continue;

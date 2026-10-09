@@ -23,6 +23,7 @@ import { doorAddress } from '@shared/utils/doorAddress';
 import ArrivalBadge from '@shared/components/common/ArrivalBadge';
 import SurgeLines, { useSurge, surgeChanged } from '@shared/components/common/SurgeLines';
 import SlotPicker, { slotLabel } from '@shared/components/common/SlotPicker';
+import TipAtCheckout from '@shared/components/common/TipAtCheckout';
 import toast from 'react-hot-toast';
 import GrowingHere from '../catalog/serviceability/GrowingHere';
 import { PayMethodPicker } from '@shared/components/common/PayMethodPicker';
@@ -1498,6 +1499,8 @@ function ConfirmStep({
   // Busy area, rain, night: added as their own lines, held while they decide (jobs/surge).
   const priceBase = serviceMode === 'diagnosis_only' ? inspectionFeePaise : provider?.totalPaise;
   const surge = useSurge({ kind: 'repair', vertical, serviceMode, loc: location, basePaise: priceBase, skip: priceBase == null });
+  // An optional tip, in the total before paying (jobs/boost-tip tipAtBooking). Rupees.
+  const [tip, setTip] = useState(0);
 
   async function book() {
     try {
@@ -1545,6 +1548,7 @@ function ConfirmStep({
         paymentMethod: onlineEnabled ? paymentMethod : 'cash',
         idempotencyKey,
         ...surge.bookingFields,
+        ...(tip > 0 && { tipPaise: tip * 100 }),
         ...(scheduledAt && { scheduledAt: new Date(scheduledAt).toISOString(), slotLabel: slotLabel(scheduledAt) }),
       }).unwrap();
       toast.success('Booking confirmed');
@@ -1592,7 +1596,7 @@ function ConfirmStep({
           <>
             <div className="flex items-center justify-between">
               <span className="text-sm font-bold text-[#0F172A]">Inspection fee</span>
-              <span className="text-2xl font-black text-[#0F172A]">{price == null ? '…' : price + surge.totalPaise > 0 ? formatPaise(price + surge.totalPaise) : 'Free'}</span>
+              <span className="text-2xl font-black text-[#0F172A]">{price == null ? '…' : price + surge.totalPaise + tip * 100 > 0 ? formatPaise(price + surge.totalPaise + tip * 100) : 'Free'}</span>
             </div>
             <SurgeLines quote={surge.quote} className="mt-2" />
             <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
@@ -1605,10 +1609,11 @@ function ConfirmStep({
           <>
             <div className="flex items-center justify-between">
               <span className="text-sm font-bold text-[#0F172A]">Total</span>
-              <span className="text-2xl font-black text-[#0F172A]">{formatPaise(price + surge.totalPaise)}</span>
+              <span className="text-2xl font-black text-[#0F172A]">{formatPaise(price + surge.totalPaise + tip * 100)}</span>
             </div>
-            {surge.totalPaise > 0 && <p className="mt-0.5 text-[11px] text-slate-500">{formatPaise(price)} for the repair, plus:</p>}
+            {(surge.totalPaise > 0 || tip > 0) && <p className="mt-0.5 text-[11px] text-slate-500">{formatPaise(price)} for the repair, plus:</p>}
             <SurgeLines quote={surge.quote} className="mt-1.5" />
+            {tip > 0 && <p className="mt-1 flex justify-between text-[12.5px] font-semibold text-rose-600"><span>Tip for your pro</span><span>+₹{tip}</span></p>}
             <p className="text-[11px] text-slate-400 mt-1">
               Includes parts, labour and taxes. This is the price you pay — nothing is added later without your approval.
             </p>
@@ -1627,6 +1632,8 @@ function ConfirmStep({
           </div>
         )}
       </div>
+
+      {price != null && <TipAtCheckout value={tip} onChange={setTip} />}
 
       {/* How this gets paid, said plainly before the button. Online appears only when the server can take it. */}
       <SomeoneElse onChange={setOnSite} />

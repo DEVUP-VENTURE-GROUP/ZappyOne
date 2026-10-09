@@ -350,6 +350,20 @@ const CATALOG = {
       },
     }),
   },
+  'ops.shop_payout': {
+    audience: 'ops', type: 'report_received', channels: ['email'], label: 'A shop asked for a payout',
+    sample: () => ({ shop: 'MB Groups', amount: '₹4,200', to: 'HDFC ••1234' }),
+    build: ({ shop, amount, to, url }) => ({
+      email: {
+        subject: `${shop} asked for ${amount}`,
+        preheader: `Pay to ${to}, then mark it paid.`,
+        heading: 'A shop asked for a payout',
+        intro: [`${shop} asked for ${amount} to ${to}. Send it, then mark it paid with the reference.`],
+        rows: [['Shop', shop], ['Amount', amount], ['To', to]],
+        button: { label: 'Open payouts', url: url('/dashboard?tab=money') },
+      },
+    }),
+  },
   'admin.kyc_review': {
     audience: 'ops', type: 'report_received', channels: ['email'], label: 'New verification to review',
     sample: () => ({ who: 'Ravi Kumar (worker)', service: 'Mobile Phones' }),

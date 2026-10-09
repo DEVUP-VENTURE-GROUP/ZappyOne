@@ -16,6 +16,7 @@ import { usePayBooking } from '@shared/hooks/usePayBooking';
 import { doorAddress } from '@shared/utils/doorAddress';
 import NearestArrival from '@shared/components/common/NearestArrival';
 import SurgeLines, { useSurge, surgeChanged } from '@shared/components/common/SurgeLines';
+import TipAtCheckout from '@shared/components/common/TipAtCheckout';
 
 /**
  * Return / Exchange — §22 to §31.
@@ -104,6 +105,7 @@ export default function ReturnTaskPage() {
         paymentMethod,
         idempotencyKey,
         ...surge.bookingFields,
+        ...(tip > 0 && { tipPaise: tip * 100 }),
       }).unwrap();
       toast.success('Task requested');
       if (res.task?.paymentMethod === 'online') {
@@ -123,6 +125,8 @@ export default function ReturnTaskPage() {
     basePaise: charge ? Math.max(0, (charge.serviceChargePaise || 0) - (charge.taxPaise || 0) - (charge.platformFeePaise || 0)) : null,
     skip: !charge,
   });
+  // An optional tip, in the total before paying (jobs/boost-tip tipAtBooking). Rupees.
+  const [tip, setTip] = useState(0);
 
 
   if (notHere) {
@@ -256,11 +260,13 @@ export default function ReturnTaskPage() {
               </div>
             ))}
             <div className="flex justify-between font-bold pt-1 border-t border-zappy-100">
-              <span>Total</span><span>{formatPaise(charge.serviceChargePaise + surge.totalPaise)}</span>
+              <span>Total</span><span>{formatPaise(charge.serviceChargePaise + surge.totalPaise + tip * 100)}</span>
             </div>
             <SurgeLines quote={surge.quote} />
+            {tip > 0 && <p className="flex justify-between text-[12.5px] font-semibold text-rose-600"><span>Tip for your helper</span><span>+₹{tip}</span></p>}
           </div>
         )}
+        {charge && <TipAtCheckout value={tip} onChange={setTip} />}
         <SomeoneElse onChange={setOnSite} />
         <PendingFeeNotice />
         <PayMethodPicker

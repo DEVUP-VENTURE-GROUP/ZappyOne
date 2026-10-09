@@ -314,7 +314,7 @@ async function findProviders({
      */
     const profile = s.shopId
       ? await Shop.findById(s.shopId)
-        .select('businessName rating reviewCount completedJobs isActive isBlocked kyc coverImageUrl')
+        .select('businessName rating reviewCount completedJobs isActive isBlocked kyc coverImageUrl address.location services hours')
         .lean()
       : await Worker.findById(s.workerId)
         .select('name rating reviewCount completedJobs penalties isBlocked kyc isOnline wallet profilePhotoKey workHours')
@@ -322,6 +322,8 @@ async function findProviders({
 
     if (!profile) { rejected.push({ label, reason: 'profile_missing' }); return; }
     if (profile.isBlocked) { rejected.push({ label, reason: 'blocked' }); return; }
+    // A shop that is not live (no pin, no approved service, closed by its hours…) gets no work.
+    if (s.shopId && !require('../../shop/shop.service').isLive(profile)) { rejected.push({ label, reason: 'shop_not_live' }); return; }
     // Now: only someone really there (worker/presence). Later: whoever's hours cover it (jobs/work-hours).
     if (!s.shopId && !hoursRule.availableFor(profile, scheduledAt, { live: liveSet.has(String(s.workerId)) })) {
       rejected.push({ label, reason: later ? 'outside_hours' : 'offline' }); return;
@@ -549,7 +551,7 @@ async function findInspectors({ vertical, lat, lng, cityCode = null, includeOffl
       $or: [{ workerId: { $in: workerIds } }, { shopId: { $in: shopIds } }],
     }).select('workerId shopId').lean(),
     Worker.find({ _id: { $in: workerIds } }).select('isBlocked kyc rating').lean(),
-    Shop.find({ _id: { $in: shopIds } }).select('isBlocked isActive kyc rating').lean(),
+    Shop.find({ _id: { $in: shopIds } }).select('isBlocked isActive kyc rating address.location services hours').lean(),
     require('../../jobs/kinds').KINDS.repair.line({ vertical }),
   ]);
   const can = new Set(caps.map((c) => String(c.workerId || c.shopId)));
@@ -566,6 +568,7 @@ async function findInspectors({ vertical, lat, lng, cityCode = null, includeOffl
       const id = String(a.workerId || a.shopId);
       const p = profile.get(id);
       if (!p || p.isBlocked || p.isActive === false || !can.has(id)) return false;
+      if (a.shopId && !require('../../shop/shop.service').isLive(p)) return false;
       if (approved && !approved.has(id)) return false;
       if (a.shopId) return true;
       // Offline workers only when asked (the come-online wave), never for an offer.

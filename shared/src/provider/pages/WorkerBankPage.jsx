@@ -7,24 +7,28 @@ import {
   useGetWorkerBankAccountsQuery, useAddWorkerBankAccountMutation,
   useDeleteWorkerBankAccountMutation, useSetDefaultWorkerBankAccountMutation,
 } from '../../services/api';
+import { useOtpGate } from '../../components/common/OtpGate';
 
 function AddSheet({ onClose }) {
   const [tab, setTab] = useState('bank');
   const [form, setForm] = useState({ label: '', accountName: '', accountNumber: '', bankName: '', ifsc: '', upiId: '', upiLabel: '' });
   const [add, { isLoading }] = useAddWorkerBankAccountMutation();
+  // Bank details need a fresh OTP; asked for here when the server wants it.
+  const otp = useOtpGate();
   function set(k, v) { setForm(f => ({ ...f, [k]: v })); }
 
   async function submit(e) {
     e.preventDefault();
     try {
-      await add({ type: tab, ...form }).unwrap();
+      await otp.run(() => add({ type: tab, ...form }).unwrap());
       toast.success(tab === 'upi' ? 'UPI ID added successfully!' : 'Bank account added successfully!');
       onClose();
-    } catch (err) { toast.error(err?.data?.error || 'Failed to add payment method'); }
+    } catch (err) { if (err?.message !== 'cancelled') toast.error(err?.data?.error || 'Failed to add payment method'); }
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+      {otp.modal}
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-slate-900/40" onClick={onClose} />
       
       <motion.div 
