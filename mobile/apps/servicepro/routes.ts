@@ -1,11 +1,11 @@
 /**
- * Server deep link → this app's screen, for notification taps. Only paths
- * listed here open anything; every other link is ignored (lib/pushRouting
- * has already refused unsafe ones). Add a line when a screen is built.
+ * Server deep link → this app's screen, for notification taps. ServicePro's
+ * screens use the website's own paths (/shop…, /worker…, /provider…), so a
+ * link opens as is; old paths are mapped the way the website redirects them.
  */
+import { providerPath } from '@zappy/ui/provider/paths';
+
 export function resolveRoute(deepLink: string): string | null {
-  const path = deepLink.split('?')[0];
-  if (path === '/' || path === '/home') return '/(main)';
-  if (path === '/account' || path === '/profile') return '/(main)/account';
-  return null;
+  const path = providerPath(deepLink);
+  return /^\/(shop|worker|provider)(\/|$)/.test(path) ? path : null;
 }

@@ -203,6 +203,8 @@ export interface ServerToClientEvents {
   'worker.presence': (payload: WorkerPresenceEvent) => void;
   'chat.message': (payload: ChatMessageEvent) => void;
   'eta.update': (payload: EtaUpdateEvent) => void;
+  /** A customer near the shop asked its price (repair price-request.service). */
+  'price_request.new': (payload: { id: string; reference?: string }) => void;
   'kyc.rejected': (payload: KycRejectedEvent) => void;
   'session:replaced': (payload: SessionReplacedEvent) => void;
   'server:rooms_reset': (payload: ServerRoomsResetEvent) => void;

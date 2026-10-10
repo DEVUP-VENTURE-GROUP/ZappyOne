@@ -1,10 +1,14 @@
 /**
- * Provider sign-in (the websites' WorkerLoginPage): a code to the phone, or a
- * Worker ID / email / phone with a password (the shared PasswordLogin, which
- * also resets a forgotten password). Signing up is the OTP path; what
- * a worker may do is decided later, per service, by verification.
+ * Provider sign-in (the websites' WorkerLoginPage and ShopLoginPage): a code
+ * to the phone, or a password (the shared PasswordLogin, which also resets a
+ * forgotten one). Signing up is the OTP path; what a provider may do is
+ * decided later, per service, by verification.
+ *
+ *   role    who is signing in: an individual or shop technician ('worker'), or a shop owner ('shop')
+ *   header  shown above the switch, e.g. ServicePro's owner / technician choice
+ *   params  passed to the OTP screen with the phone
  */
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useDispatch } from 'react-redux';
 import { saveSession } from '@zappy/core/api/tokenStorage';
@@ -21,19 +25,22 @@ import { spacing } from '../../theme/spacing';
 type Mode = 'otp' | 'password';
 const MODES: [Mode, string][] = [['otp', 'OTP'], ['password', 'Password']];
 
-export function WorkerLoginPage({ title, subtitle, otpPath = '/(auth)/otp' }: { title: string; subtitle: string; otpPath?: string }) {
+export function WorkerLoginPage({ title, subtitle, role = 'worker', header, params, otpPath = '/(auth)/otp' }: {
+  title: string; subtitle: string; role?: 'worker' | 'shop'; header?: ReactNode; params?: Record<string, string>; otpPath?: string;
+}) {
   const [mode, setMode] = useState<Mode>('otp');
   const dispatch = useDispatch();
 
   // Password sign-in keeps the session the way the OTP screen does; the root guard then goes home.
   async function signedIn(r: PasswordLoginResult) {
-    await saveSession({ accessToken: r.accessToken, refreshToken: r.refreshToken ?? '', role: 'worker' });
-    dispatch(setSession({ user: (r.worker as never) ?? null, role: 'worker' }));
+    await saveSession({ accessToken: r.accessToken, refreshToken: r.refreshToken ?? '', role });
+    dispatch(setSession({ user: ((role === 'shop' ? r.shop : r.worker) as never) ?? null, role }));
     socketClient.connect();
   }
 
   return (
     <AuthShell title={title} subtitle={subtitle}>
+      {header}
       <View style={styles.toggle} accessibilityRole="tablist">
         {MODES.map(([m, label]) => (
           <Pressable key={m} onPress={() => setMode(m)} accessibilityRole="tab" accessibilityState={{ selected: mode === m }} style={[styles.tab, mode === m && styles.tabOn]}>
@@ -41,7 +48,8 @@ export function WorkerLoginPage({ title, subtitle, otpPath = '/(auth)/otp' }: { 
           </Pressable>
         ))}
       </View>
-      {mode === 'otp' ? <PhoneOtpForm role="worker" otpPath={otpPath} /> : <PasswordLogin role="worker" idLabel="Worker ID, email or phone" onSuccess={signedIn} onUseOtp={() => setMode('otp')} />}
+      {mode === 'otp' ? <PhoneOtpForm role={role} otpPath={otpPath} params={params} />
+        : <PasswordLogin role={role} idLabel={role === 'worker' ? 'Worker ID, email or phone' : undefined} onSuccess={signedIn} onUseOtp={() => setMode('otp')} />}
     </AuthShell>
   );
 }

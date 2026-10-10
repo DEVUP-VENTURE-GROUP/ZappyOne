@@ -1,13 +1,21 @@
 import '../global.css';
 import { AppRoot, AppStack } from '@zappy/ui/app/AppRoot';
+import { AccountSetupGate } from '@zappy/ui/components/account/AccountSetupGate';
+import { WorkerFrame } from '@zappy/ui/provider/WorkerFrame';
 import { resolveRoute } from '../routes';
+import { homeFor } from '../src/menus';
 
 const ROLES = ['shop', 'worker'] as const;
+/** The kinds of work a shop takes (the website's JobOfferHost kinds). */
+const KINDS = ['repair', 'pet'];
 
 export default function RootLayout() {
   return (
-    <AppRoot roles={ROLES} home="/(main)" login="/(auth)/login" resolveRoute={resolveRoute}>
-      <AppStack />
+    <AppRoot roles={ROLES} home={homeFor} login="/(auth)/login" resolveRoute={resolveRoute}>
+      <AccountSetupGate roles={ROLES} appName="ServicePro">
+        <AppStack />
+        <WorkerFrame kinds={KINDS} />
+      </AccountSetupGate>
     </AppRoot>
   );
 }

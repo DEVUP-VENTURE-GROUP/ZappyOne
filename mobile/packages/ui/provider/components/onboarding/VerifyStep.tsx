@@ -5,13 +5,14 @@
  * without this screen knowing anything about either.
  */
 import { useMemo, useState } from 'react';
-import { Alert, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { Check, ShieldCheck } from 'lucide-react-native';
 import {
   useProviderLineRequirementsQuery, useProviderSaveEnrolmentMutation, useProviderSubmitEnrolmentMutation,
 } from '@zappy/core/api';
 import { captureLive, type LiveCaptureMeta } from '@zappy/core/lib/liveCapture';
-import { pickPhoto, uploadPhoto, type PickedPhoto } from '@zappy/core/lib/upload';
+import { pickDocument } from '@zappy/core/lib/pickDocument';
+import { uploadPhoto, type PickedPhoto } from '@zappy/core/lib/upload';
 import { Button, LoadingState, Text } from '../../../components';
 import { toast } from '../../../components/Toast';
 import { errText, type ApiErr } from '../../../lib/feedback';
@@ -26,15 +27,6 @@ interface EnrolmentDoc { code: string; url?: string; carried?: boolean; uploaded
 interface Missing { code: string; kind?: string }
 
 const ID_CODES = ['aadhaar', 'owner_id', 'pan'];
-
-/** Camera or gallery, asked once per upload (documents that must be live skip this). */
-function chooseSource(): Promise<'camera' | 'gallery' | null> {
-  return new Promise((resolve) => Alert.alert('Add the document', undefined, [
-    { text: 'Take a photo', onPress: () => resolve('camera') },
-    { text: 'Choose from gallery', onPress: () => resolve('gallery') },
-    { text: 'Cancel', style: 'cancel', onPress: () => resolve(null) },
-  ], { cancelable: true, onDismiss: () => resolve(null) }));
-}
 
 export function VerifyStep({ lineCode, onDone }: { lineCode: string; onDone: () => void }) {
   const { data, isLoading, refetch } = useProviderLineRequirementsQuery(lineCode);
@@ -84,9 +76,7 @@ export function VerifyStep({ lineCode, onDone }: { lineCode: string; onDone: () 
         const live = await captureLive({ front: doc.capture === 'user' });
         if (live) ({ photo, meta } = live);
       } else {
-        const source = await chooseSource();
-        if (!source) return;
-        photo = await pickPhoto({ camera: source === 'camera' });
+        photo = await pickDocument();
       }
     } catch (err) { toast.error((err as Error).message); return; }
     if (!photo) return;

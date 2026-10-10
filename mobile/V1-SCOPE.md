@@ -61,20 +61,20 @@ Technicians see the Rakshak screens above (same code, shop rules).
 
 | Screen | Web route | Source | Status |
 |---|---|---|---|
-| Sign in (owner or technician) | `/worker/login` | WorkerLoginPage | ☑ |
-| Shop home | `/shop` | ShopDashboard | ☐ |
-| Shop profile | `/shop/profile` | ShopProfile | ☐ |
-| Shop KYC | `/shop/kyc` | ShopKyc | ☐ |
-| Technicians | `/shop/workers` | ShopWorkers | ☐ |
-| Shop earnings | `/shop/earnings` | ShopEarnings | ☐ |
-| Price requests | `/shop/price-requests` | ShopPriceRequests | ☐ |
+| Sign in (owner or technician) | `/worker/login` | WorkerLoginPage | ▣ (OTP or password, owner / technician switch; new shops give both names) |
+| Shop home | `/shop` | ShopDashboard | ▣ |
+| Shop profile | `/shop/profile` | ShopProfile | ▣ (cover photo, map address, opening hours) |
+| Shop KYC | `/shop/kyc` | ShopKyc | ▣ (live selfie with location) |
+| Technicians | `/shop/workers` | ShopWorkers | ▣ |
+| Shop earnings | `/shop/earnings` | ShopEarnings | ▣ |
+| Price requests | `/shop/price-requests` | ShopPriceRequests | ▣ (live) |
 | Appeals | `/shop/appeals` | ShopAppeals | ▣ |
-| Account | `/shop/account` | ShopAccountPage | ☐ |
-| Notifications | `/shop/notifications` | ShopNotifications | ☐ |
+| Account | `/shop/account` | ShopAccountPage | ▣ (with Sign out) |
+| Notifications | `/shop/notifications` | ShopNotifications | ▣ |
 | Bank and UPI | `/shop/bank` | ShopBank | ▣ |
 | Withdraw | `/shop/withdraw` | ShopWithdrawPage | ▣ |
 | Reviews | `/shop/reviews` | ProviderReviewsPage | ▣ |
-| Onboarding, services, documents, jobs | as Rakshak | shared provider pages | ☐ |
+| Onboarding, services, documents, jobs | as Rakshak | shared provider pages | ▣ (shared Rakshak screens; shops also set timings, price sheets and warranty; technicians have the ID check and every worker page the website registers) |
 
 ## ZappyOne: customers (web: zappyone.com)
 

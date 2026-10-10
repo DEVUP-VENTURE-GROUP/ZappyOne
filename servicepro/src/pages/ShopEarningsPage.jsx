@@ -57,7 +57,7 @@ export default function ShopEarningsPage() {
             </div>
 
             <p className="text-[11px] text-slate-400 text-center pt-2">
-              Earnings across all workers linked to your shop, on the same commission model as Zappy Express.
+              Earnings across all technicians linked to your shop.
             </p>
           </>
         )}

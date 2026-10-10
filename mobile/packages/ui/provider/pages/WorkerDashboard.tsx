@@ -20,8 +20,6 @@ import {
   Menu,
   ShieldCheck,
   Star,
-  TrendingDown,
-  TrendingUp,
   Radio,
   MapPin,
 } from 'lucide-react-native';
@@ -48,7 +46,7 @@ import { HotZonesCard } from '../../components/worker/HotZonesCard';
 import { MineRow } from '../../components/worker/MineRow';
 import { MyAreaChip } from '../../components/worker/MyAreaChip';
 import { OnlineSwitch } from '../../components/worker/OnlineSwitch';
-import { WeekChart } from '../../components/worker/WeekChart';
+import { EarningsOverview, weekPoints } from '../../components/worker/EarningsOverview';
 import type { ApiErr } from '../../lib/feedback';
 import { describeCoordinates } from '../../location/geocode';
 import { colors, ink, success, danger } from '../../theme/colors';
@@ -170,7 +168,6 @@ export function WorkerDashboard({ kinds = KINDS }: { kinds?: string[] }) {
   const firstName = (me?.name || 'there').trim().split(/\s+/)[0];
   const week = last7(weekData?.dailyBreakdown);
   const deltaPct = weekDeltaPct(weekData?.dailyBreakdown);
-  const up = deltaPct >= 0;
 
   return (
     <View style={styles.page}>
@@ -261,19 +258,7 @@ export function WorkerDashboard({ kinds = KINDS }: { kinds?: string[] }) {
 
         <ProviderServicesCard />
 
-        <Panel title="Earnings overview" action={<LinkButton label="View details" onPress={() => go('/worker/earnings')} />}>
-          <Text variant="caption" color={colors.textSecondary}>This week</Text>
-          <Text variant="heading1" weight="black">{inr(weekData?.earningsRupees ?? 0)}</Text>
-          <View style={styles.inline}>
-            {up ? <TrendingUp size={13} color={success[600]} /> : <TrendingDown size={13} color={danger[600]} />}
-            <Text variant="caption" weight="bold" color={up ? success[600] : danger[600]}>{up ? '+' : ''}{deltaPct}% from last week</Text>
-          </View>
-          <View style={styles.chart}>
-            <WeekChart points={week.map((d: { date: string; earningsPaise: number }) => ({
-              label: new Date(d.date).toLocaleDateString('en-IN', { weekday: 'short' }), value: Math.round(d.earningsPaise / 100),
-            }))} />
-          </View>
-        </Panel>
+        <EarningsOverview weekRupees={weekData?.earningsRupees ?? 0} deltaPct={deltaPct} points={weekPoints(week)} onViewDetails={() => go('/worker/earnings')} />
       </ScrollView>
 
       <WorkerMenuSheet visible={menuOpen} onClose={() => setMenuOpen(false)} />
@@ -297,5 +282,4 @@ const styles = StyleSheet.create({
   list: { gap: spacing.sm },
   goOnline: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, backgroundColor: colors.primaryTint, borderRadius: radius.button, padding: spacing.md, minHeight: 52 },
   openRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, backgroundColor: colors.surfaceSecondary, borderRadius: radius.button, padding: spacing.md, minHeight: 56 },
-  chart: { marginTop: spacing.md },
 });

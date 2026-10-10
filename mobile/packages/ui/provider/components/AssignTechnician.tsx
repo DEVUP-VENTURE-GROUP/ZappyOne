@@ -12,12 +12,13 @@ import { colors, zappy, ink, slate, success } from '../../theme/colors';
 import { radius } from '../../theme/radius';
 import { spacing } from '../../theme/spacing';
 
-export function AssignTechnician({ jobId, workerId, onDone, startOpen = false }: { jobId: string; workerId?: string | null; onDone?: () => void; startOpen?: boolean }) {
+/** `busy` is { [workerId]: open job count }, so work goes to whoever is free. */
+export function AssignTechnician({ jobId, workerId, busy = {}, onDone, startOpen = false }: { jobId: string; workerId?: string | null; busy?: Record<string, number>; onDone?: () => void; startOpen?: boolean }) {
   const { data } = useShopWorkersQuery();
   const [assign, { isLoading }] = useAssignJobTechnicianMutation();
   const [open, setOpen] = useState(startOpen);
   type W = { _id: string; name: string; isOnline?: boolean; isBlocked?: boolean };
-  const workers: W[] = [...(data?.workers || [])].filter((w: W) => !w.isBlocked).sort((a: W, b: W) => Number(!!b.isOnline) - Number(!!a.isOnline));
+  const workers: W[] = [...(data?.workers || [])].filter((w: W) => !w.isBlocked).sort((a: W, b: W) => Number(!!b.isOnline) - Number(!!a.isOnline) || (busy[a._id] || 0) - (busy[b._id] || 0));
   const current = workers.find((w) => String(w._id) === String(workerId));
 
   async function give(id: string) {
@@ -42,7 +43,7 @@ export function AssignTechnician({ jobId, workerId, onDone, startOpen = false }:
             style={[styles.tech, isCurrent ? { borderColor: success[100], backgroundColor: success[50] } : null]}>
             <View style={[styles.onlineDot, { backgroundColor: w.isOnline ? success[500] : slate[300] }]} />
             <Text variant="bodySmall" weight="semibold" style={styles.flex} numberOfLines={1}>{w.name}</Text>
-            <Text variant="caption" color={ink[400]}>{w.isOnline ? 'online' : 'offline'}</Text>
+            <Text variant="caption" color={ink[400]}>{w.isOnline ? 'online' : 'offline'}{busy[w._id] ? ` · ${busy[w._id]} job${busy[w._id] === 1 ? '' : 's'}` : ''}</Text>
             {isCurrent ? <Check size={13} color={success[600]} /> : null}
           </Pressable>
         );
