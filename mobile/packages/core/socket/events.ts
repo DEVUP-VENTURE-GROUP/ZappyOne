@@ -88,6 +88,71 @@ export interface NotificationEvent {
   createdAt: string;
 }
 
+/** `repair.offer` — a repair offered to this provider (repair/services/events.service announceOffer). */
+export interface RepairOfferEvent {
+  bookingId: string;
+  reference?: string;
+  device?: string;
+  problemCodes: string[];
+  repairCode: string | null;
+  serviceMode?: string;
+  totalPaise: number;
+  /** Customer's boost: all of it is the provider's. */
+  boostPaise: number;
+  /** The provider's share of the surge. */
+  surgePaise: number;
+  isEstimate: boolean;
+  paymentMethod?: string;
+  address?: string;
+  landmark?: string;
+  /** [lng, lat] */
+  coordinates?: [number, number] | null;
+  scheduledAt?: string | null;
+  slotLabel?: string;
+  expiresAt: string;
+  windowSec: number;
+  customer?: { rating?: number | null; ratingCount?: number; flagged?: boolean } | null;
+}
+
+/** `repair.offer_closed` — take the offer off the screen. */
+export interface RepairOfferClosedEvent {
+  bookingId: string;
+  reason: string;
+}
+
+/** `repair.quote` / `repair.quote_decision` — a quote sent or answered (repair job room). */
+export interface RepairQuoteEvent {
+  [field: string]: unknown;
+}
+
+/** `worker.presence` — the server took the provider offline (e.g. no location signal). */
+export interface WorkerPresenceEvent {
+  online: boolean;
+  reason?: string;
+  at: string;
+}
+
+/** `chat.message` — a message on a job's chat (jobs/job-chat). */
+export interface ChatMessageEvent {
+  kind: JobKind;
+  jobId: string;
+  id: string;
+  text: string;
+  from: string;
+  at: string;
+  /** True on the sender's own devices. */
+  mine: boolean;
+}
+
+/** `eta.update` — how far the provider is, in the job room (worker/eta.service). */
+export interface EtaUpdateEvent {
+  distKm: number;
+  etaMinutes: number;
+  isArrivingSoon: boolean;
+  source?: string;
+  at: number;
+}
+
 /** `surge.alert` — a busy zone near a provider (server jobs/surge). */
 export interface SurgeAlertEvent {
   [field: string]: unknown;
@@ -131,6 +196,13 @@ export interface ServerToClientEvents {
   'worker.location': (payload: WorkerLocationEvent) => void;
   notification: (payload: NotificationEvent) => void;
   'surge.alert': (payload: SurgeAlertEvent) => void;
+  'repair.offer': (payload: RepairOfferEvent) => void;
+  'repair.offer_closed': (payload: RepairOfferClosedEvent) => void;
+  'repair.quote': (payload: RepairQuoteEvent) => void;
+  'repair.quote_decision': (payload: RepairQuoteEvent) => void;
+  'worker.presence': (payload: WorkerPresenceEvent) => void;
+  'chat.message': (payload: ChatMessageEvent) => void;
+  'eta.update': (payload: EtaUpdateEvent) => void;
   'kyc.rejected': (payload: KycRejectedEvent) => void;
   'session:replaced': (payload: SessionReplacedEvent) => void;
   'server:rooms_reset': (payload: ServerRoomsResetEvent) => void;
@@ -160,4 +232,4 @@ export interface ClientToServerEvents {
 export type ServerEventName = keyof ServerToClientEvents;
 
 /** Events scoped to a job room: after `server:rooms_reset`, rejoin every room you were in. */
-export const JOB_ROOM_EVENTS: readonly ServerEventName[] = ['job.status', 'worker.location'] as const;
+export const JOB_ROOM_EVENTS: readonly ServerEventName[] = ['job.status', 'worker.location', 'eta.update', 'repair.quote', 'repair.quote_decision'] as const;
