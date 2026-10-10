@@ -63,5 +63,7 @@ export type { BottomSheetProps } from './BottomSheet';
 export { Appear } from './Appear';
 export type { AppearProps } from './Appear';
 
-export { ZappyLogo } from './ZappyLogo';
+export { ZappyLogo, ZappyWordmark } from './ZappyLogo';
 export type { ZappyLogoProps } from './ZappyLogo';
+
+export { toast, ToastHost } from './Toast';

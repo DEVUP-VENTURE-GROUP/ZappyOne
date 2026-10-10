@@ -35,6 +35,7 @@ import { usePushNotifications } from '@zappy/core/hooks/usePushNotifications';
 import type { RouteResolver } from '@zappy/core/lib/pushRouting';
 import type { Role } from '@zappy/core/types/api';
 import { fontAssets } from '../theme';
+import { ToastHost } from '../components/Toast';
 
 const log = createLogger('app-root');
 
@@ -129,6 +130,7 @@ export function AppRoot(props: AppRootProps) {
   return (
     <Provider store={store}>
       <Guarded {...props} />
+      <ToastHost />
     </Provider>
   );
 }

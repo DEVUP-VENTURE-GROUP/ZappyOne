@@ -17,6 +17,7 @@
  */
 
 import React, { memo, useEffect } from 'react';
+import { Image, Text as RNText, View } from 'react-native';
 import Svg, { Circle, G, Line, Path } from 'react-native-svg';
 import Animated, {
   useAnimatedStyle,
@@ -27,7 +28,7 @@ import Animated, {
   cancelAnimation,
 } from 'react-native-reanimated';
 import { useReducedMotion } from '@zappy/core/hooks/useReducedMotion';
-import { accent } from '../theme/colors';
+import { accent, zappy } from '../theme/colors';
 import { easeSoft } from '../theme/animation';
 
 export interface ZappyLogoProps {
@@ -109,3 +110,21 @@ function ZappyLogoBase({
 }
 
 export const ZappyLogo = memo(ZappyLogoBase);
+
+/**
+ * The ZappyOne wordmark, as on the websites: the real mark (the running Z with
+ * the orange pin, from assets/web/branding) and "ZappyOne" with "Zappy" in the
+ * brand blue and "One" in the pin's amber.
+ */
+const MARK = require('../assets/branding/zappy-mark.webp');
+
+export function ZappyWordmark({ size = 24 }: { size?: number }) {
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }} accessibilityRole="image" accessibilityLabel="ZappyOne">
+      <Image source={MARK} style={{ height: size, width: size * 1.35 }} resizeMode="contain" />
+      <RNText style={{ fontFamily: 'Figtree-ExtraBold', fontSize: Math.round(size * 0.68), letterSpacing: -0.3 }}>
+        <RNText style={{ color: zappy[600] }}>Zappy</RNText><RNText style={{ color: accent[500] }}>One</RNText>
+      </RNText>
+    </View>
+  );
+}

@@ -158,7 +158,7 @@ export default function WorkerEarningsPage() {
           {/* Platform fee info */}
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="bg-zappy-50/50 border border-zappy-100/50 rounded-2xl p-4 flex gap-3 text-[13px] text-zappy-800/80 mb-8 font-medium">
             <Info size={16} className="shrink-0 mt-0.5 text-zappy-500" />
-            <p>Platform fee is deducted per job. You can reduce it by upgrading your subscription plan to <b>Go Pro</b>.</p>
+            <p>The platform fee is ZappyOne's commission, taken from each job. Tips and customer boosts are all yours.</p>
           </motion.div>
 
           {/* Jobs list */}

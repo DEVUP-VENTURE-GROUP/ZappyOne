@@ -32,6 +32,7 @@ const LOGIC = [
   { from: 'utils/distance.js', to: 'shared/distance.js', imports: {} },
   { from: 'components/jobs/jobOffers.js', to: 'shared/jobOffers.js', imports: {} },
   { from: 'provider/workerHome.js', to: 'shared/workerHome.js', imports: {} },
+  { from: 'provider/workerNotifications.js', to: 'shared/workerNotifications.js', imports: {} },
   { from: 'provider/useProviderJobs.js', to: 'shared/useProviderJobs.js', imports: { react: 'react', '../services/api': '../api/hooks' } },
 ];
 

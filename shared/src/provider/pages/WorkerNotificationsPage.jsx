@@ -16,6 +16,10 @@ import { useSelector } from 'react-redux';
 import { selectAuth } from '../../modules/auth/authSlice';
 import { getSocket } from '../../services/socket';
 import toast from 'react-hot-toast';
+import {
+  NOTIFICATION_TABS as TABS, NOTIFICATION_TAB_TYPES as TAB_TYPES, timeAgo, groupByDay, notificationPath as deepLinkPath,
+  emptyNotificationText,
+} from '../workerNotifications';
 
 /* Worker-specific type → visual config */
 const TYPE_CFG = {
@@ -47,53 +51,6 @@ const TYPE_CFG = {
   promotional:          { emoji: '🔥', label: 'Update',            bg: 'bg-orange-50', ring: 'ring-orange-200', color: 'text-orange-700', Icon: Zap                },
 };
 const DEFAULT_CFG = { emoji: '🔔', label: 'Notification', bg: 'bg-slate-50', ring: 'ring-slate-200', color: 'text-slate-600', Icon: Bell };
-
-/* Tab filter config */
-const TABS = [
-  { id: 'all',      label: 'All'      },
-  { id: 'jobs',     label: 'Jobs'     },
-  { id: 'earnings', label: 'Earnings' },
-  { id: 'kyc',      label: 'KYC'      },
-];
-const TAB_TYPES = {
-  jobs:     ['order_cancelled', 'job_assigned', 'order_completed'],
-  earnings: ['shield_payout', 'worker_earning', 'wallet_credited', 'penalty_applied', 'milestone_reached'],
-  kyc:      ['kyc_approved', 'kyc_rejected', 'kyc_clarification'],
-};
-
-/* Helpers */
-function timeAgo(d) {
-  const m = Math.floor((Date.now() - new Date(d)) / 60000);
-  if (m < 1)  return 'Just now';
-  if (m < 60) return `${m}m ago`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h ago`;
-  const days = Math.floor(h / 24);
-  return days === 1 ? 'Yesterday' : `${days}d ago`;
-}
-
-function groupByDay(items) {
-  const today = new Date(); today.setHours(0, 0, 0, 0);
-  const yest  = new Date(today); yest.setDate(today.getDate() - 1);
-  const g     = { today: [], yesterday: [], earlier: [] };
-  for (const n of items) {
-    const d = new Date(n.createdAt); d.setHours(0, 0, 0, 0);
-    if (d >= today)  g.today.push(n);
-    else if (d >= yest) g.yesterday.push(n);
-    else g.earlier.push(n);
-  }
-  return g;
-}
-
-function deepLinkPath(n) {
-  const link = n.deepLink;
-  if (link) return link;
-  const t = n.type;
-  if (t === 'kyc_approved' || t === 'kyc_rejected' || t === 'kyc_clarification') return '/worker/kyc';
-  if (t === 'shield_payout') return '/worker';
-  if (t?.includes('order') || t === 'job_assigned') return n.data?.orderId ? `/worker/jobs/${n.data.orderId}` : '/worker';
-  return '/worker';
-}
 
 /* Single notification card */
 function NotifCard({ n, onRead, nav }) {
@@ -170,15 +127,8 @@ function EmptyState({ tab }) {
         <Bell size={28} className="text-slate-300" />
       </div>
       <div>
-        <p className="font-semibold text-slate-700">
-          {tab === 'all' ? 'No notifications yet' : `No ${tab} notifications`}
-        </p>
-        <p className="text-sm text-slate-400 mt-1">
-          {tab === 'kyc' ? "KYC updates from admin will appear here"
-           : tab === 'earnings' ? "Earnings, payouts and penalties will appear here"
-           : tab === 'jobs' ? "Job events will appear here"
-           : "You're all caught up!"}
-        </p>
+        <p className="font-semibold text-slate-700">{emptyNotificationText(tab).title}</p>
+        <p className="text-sm text-slate-400 mt-1">{emptyNotificationText(tab).body}</p>
       </div>
     </div>
   );
