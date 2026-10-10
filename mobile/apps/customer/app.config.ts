@@ -8,6 +8,8 @@ const config: ExpoConfig = {
   name: 'ZappyOne',
   slug: 'zappy',
   scheme: 'zappyone',
+  // Phone apps only: no web bundle, so a browser hit on the dev server cannot fail a build.
+  platforms: ['ios', 'android'],
   version: '1.0.0',
   orientation: 'portrait',
   icon: './assets/images/icon.png',
