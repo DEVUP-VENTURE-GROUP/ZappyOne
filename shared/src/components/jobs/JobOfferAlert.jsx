@@ -5,6 +5,7 @@ import { kmBetween } from '../../utils/distance';
 import PassReasonPicker from '../worker/PassReasonPicker';
 import { startRinging } from '../../utils/alertSound';
 import { formatPaise } from '../../utils/money';
+import { offerClock as clock, DEFAULT_WINDOW_SEC } from './jobOffers';
 
 /**
  * A job has arrived — the provider is rung, not nudged. Every kind uses this.
@@ -25,15 +26,6 @@ import { formatPaise } from '../../utils/money';
  * }
  * onAccept() / onDecline(reason) are the kind's own calls; both may throw.
  */
-
-/** A window this long is read as minutes, never as a count of seconds. */
-function clock(totalSeconds) {
-  const m = Math.floor(totalSeconds / 60);
-  const s = totalSeconds % 60;
-  return `${m}:${String(s).padStart(2, '0')}`;
-}
-
-const DEFAULT_WINDOW_SEC = 10 * 60;
 
 export default function JobOfferAlert({ offer, myLocation, onAccept, onDecline, onClose, declineTitle }) {
   const [busy, setBusy] = useState(null); // 'accept' | 'decline'

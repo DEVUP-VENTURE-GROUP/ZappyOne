@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { ChevronRight, Wrench, Clock, Check, AlertTriangle, Ban } from 'lucide-react';
 import { useProviderOnboardingStatusQuery } from '../../services/api';
+import { servicesHeadline } from '../../provider/workerHome';
 
 /**
  * Where this provider stands, on their own dashboard.
@@ -40,25 +41,9 @@ export default function ProviderServicesCard({ className = '' }) {
   }
 
   const enrolments = data?.enrolments || [];
-  const next = data?.nextStep;
-  const approved = enrolments.filter((e) => e.status === 'approved');
 
   // The headline is whichever fact the provider most needs to act on.
-  const headline = !enrolments.length
-    ? { title: 'Choose what you work on', body: 'Pick your services to start receiving jobs.', tone: 'none' }
-    : next?.code === 'AWAITING_REVIEW'
-      ? { title: "We're reviewing your documents", body: 'Usually within a day — we\'ll notify you.', tone: 'pending' }
-      : next?.code === 'FIX_REJECTED'
-        ? { title: 'Verification needs changes', body: next.label, tone: 'attention' }
-        : next?.code === 'COMPLETE_VERIFICATION'
-          ? { title: 'Finish your verification', body: next.label, tone: 'pending' }
-          : {
-            title: approved.length === 1
-              ? `Approved for ${approved[0].line?.name || approved[0].lineCode}`
-              : `Approved for ${approved.length} services`,
-            body: 'Tap to add another service or update your details.',
-            tone: 'approved',
-          };
+  const headline = servicesHeadline(data);
 
   return (
     <button

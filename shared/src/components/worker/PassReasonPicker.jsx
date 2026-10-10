@@ -1,12 +1,8 @@
 import { Loader2 } from 'lucide-react';
 
-export const PASS_REASONS = [
-  'Busy on another job',
-  'Too far away',
-  "Don't have the part or tool",
-  'Not well / going off duty',
-  'Vehicle problem',
-];
+import { PASS_REASONS } from '../jobs/jobOffers';
+
+export { PASS_REASONS };
 
 /** Why a job is being passed — kept so owners and ops see real reasons, not "declined". */
 export default function PassReasonPicker({ title = 'Why are you passing this job?', busy, onPick, onCancel }) {

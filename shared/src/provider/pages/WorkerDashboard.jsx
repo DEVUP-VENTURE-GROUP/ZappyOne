@@ -24,6 +24,7 @@ import MyAreaChip from '../../components/worker/MyAreaChip';
 import HotZonesCard from '../../components/worker/HotZonesCard';
 import ProviderServicesCard from '../../components/provider/ProviderServicesCard';
 import { useProviderJobs } from '../useProviderJobs';
+import { last7, weekDeltaPct, hm, ratingLabel, kycBannerText } from '../workerHome';
 import {
   Avatar, GreetingCard, StatCard, Panel, EarningsOverview,
   WorkerSidebar, WorkerBottomNav, OnlineControl, MENU_ITEMS, inr,
@@ -70,18 +71,6 @@ function NotifBell({ token, onTap }) {
     </button>
   );
 }
-
-function last7(breakdown = []) {
-  const byDate = Object.fromEntries(breakdown.map((d) => [d.date, d]));
-  return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date();
-    d.setDate(d.getDate() - (6 - i));
-    const key = d.toISOString().slice(0, 10);
-    return byDate[key] || { date: key, earningsPaise: 0, jobs: 0 };
-  });
-}
-
-const hm = (sec) => `${Math.floor(sec / 3600)}h ${String(Math.floor((sec % 3600) / 60)).padStart(2, '0')}m`;
 
 export default function WorkerDashboard() {
   const nav = useNavigate();
@@ -204,14 +193,10 @@ export default function WorkerDashboard() {
 
   const firstName = (me?.name || 'there').trim().split(/\s+/)[0];
   const initials = (me?.name || 'W').split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
-  const rating = me?.completedJobs > 0 && me?.rating != null ? Number(me.rating).toFixed(1) : '—';
+  const rating = ratingLabel(me);
 
   const week = last7(weekData?.dailyBreakdown);
-  const prevWeekPaise = (weekData?.dailyBreakdown || [])
-    .filter((d) => { const age = (Date.now() - Date.parse(d.date)) / 86400000; return age >= 7 && age < 14; })
-    .reduce((s, d) => s + d.earningsPaise, 0);
-  const thisWeekPaise = week.reduce((s, d) => s + d.earningsPaise, 0);
-  const deltaPct = prevWeekPaise > 0 ? Math.round(((thisWeekPaise - prevWeekPaise) / prevWeekPaise) * 100) : (thisWeekPaise > 0 ? 100 : 0);
+  const deltaPct = weekDeltaPct(weekData?.dailyBreakdown);
 
   const stats = [
     { Icon: BadgeIndianRupee, tone: 'green', label: 'Today', value: inr(todayData?.earningsRupees ?? 0), sub: 'Earnings', onClick: () => nav('/worker/earnings') },
@@ -297,9 +282,7 @@ export default function WorkerDashboard() {
             <ShieldCheck size={18} className={kycStatus === 'rejected' ? 'text-red-600' : 'text-amber-600'} />
             <span className="min-w-0 flex-1">
               <span className="block text-[14px] font-semibold text-navy">
-                {kycStatus === 'pending_review' ? 'Your verification is under review'
-                  : kycStatus === 'rejected' ? 'Verification rejected. Tap to resubmit'
-                    : 'Choose a service and get verified to start earning'}
+                {kycBannerText(kycStatus)}
               </span>
               <span className="block text-[12px] text-slate-500">You verify once. Your ID is reused for every service you add.</span>
             </span>

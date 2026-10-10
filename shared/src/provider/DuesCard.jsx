@@ -2,6 +2,7 @@ import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { AlertTriangle, ChevronDown, Loader2, Wallet } from 'lucide-react';
 import { useWorkerDuesQuery, useClaimDuesPaymentMutation } from '../services/api';
+import { duesView, duesClaimError } from './workerHome';
 
 const rupees = (p) => `₹${Math.round((p || 0) / 100).toLocaleString('en-IN')}`;
 
@@ -27,23 +28,15 @@ export default function DuesCard({ compact = false }) {
   const [reference, setReference] = useState('');
 
   const d = data?.dues;
+  const view = duesView(d);
+  if (isLoading || !view) return null;
   const waiting = (d?.claims || []).filter((c) => c.status === 'pending');
-  if (isLoading || !d || (d.duesPaise <= 0 && !waiting.length)) return null;
-
-  const used = Math.min(100, Math.round((d.duesPaise / (d.limitPaise || 1)) * 100));
-  const title = d.status === 'blocked'
-    ? 'New jobs are paused'
-    : `You owe ZappyOne ${rupees(d.duesPaise)}`;
-  const body = d.status === 'blocked'
-    ? `You owe ${rupees(d.duesPaise)} from cash jobs. Pay at least ${rupees(d.duesPaise - d.limitPaise + 100)} to get jobs again. A job you are already on is not affected.`
-    : d.status === 'warning'
-      ? `New jobs stop at ${rupees(d.limitPaise)}. ${rupees(d.leftPaise)} left. Pay some now to keep working.`
-      : `This is ZappyOne's commission on cash jobs. New jobs stop at ${rupees(d.limitPaise)}. Online-paid jobs reduce it on their own.`;
+  const { used, title, body } = view;
 
   async function submit() {
+    const problem = duesClaimError({ amount, method, reference });
+    if (problem) return toast.error(problem);
     const paise = Math.round(Number(amount) * 100);
-    if (!Number.isFinite(paise) || paise < 100) return toast.error('Enter the amount you paid');
-    if (method !== 'cash' && reference.trim().length < 4) return toast.error('Enter the UPI or bank reference number');
     try {
       await claim({ amountPaise: paise, method, reference: reference.trim() }).unwrap();
       toast.success('Thanks. We will confirm it once we see the payment.');
