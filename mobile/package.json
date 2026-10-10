@@ -6,9 +6,9 @@
     "packages/*"
   ],
   "scripts": {
-    "customer": "npm run start -w @zappy/customer",
-    "servicepro": "npm run start -w @zappy/servicepro",
-    "rakshak": "npm run start -w @zappy/rakshak",
+    "customer": "npm run start -w @zappy/customer --",
+    "servicepro": "npm run start -w @zappy/servicepro --",
+    "rakshak": "npm run start -w @zappy/rakshak --",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "sync:api": "node tools/sync-api-hooks.js",
     "check:api": "node tools/sync-api-hooks.js --check"

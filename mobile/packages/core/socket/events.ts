@@ -205,6 +205,8 @@ export interface ServerToClientEvents {
   'eta.update': (payload: EtaUpdateEvent) => void;
   /** A customer near the shop asked its price (repair price-request.service). */
   'price_request.new': (payload: { id: string; reference?: string }) => void;
+  /** A shop answered the customer's price request. */
+  'price_request.offer': (payload: { id: string }) => void;
   'kyc.rejected': (payload: KycRejectedEvent) => void;
   'session:replaced': (payload: SessionReplacedEvent) => void;
   'server:rooms_reset': (payload: ServerRoomsResetEvent) => void;

@@ -29,6 +29,8 @@ const BANNER = (from) => `/**
  */
 const LOGIC = [
   { from: 'utils/money.js', to: 'shared/money.js', imports: {} },
+  { from: 'utils/doorAddress.js', to: 'shared/doorAddress.js', imports: {} },
+  { from: 'utils/slots.js', to: 'shared/slots.js', imports: {} },
   { from: 'utils/distance.js', to: 'shared/distance.js', imports: {} },
   { from: 'components/jobs/jobOffers.js', to: 'shared/jobOffers.js', imports: {} },
   { from: 'provider/workerHome.js', to: 'shared/workerHome.js', imports: {} },

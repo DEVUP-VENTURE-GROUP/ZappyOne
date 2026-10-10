@@ -4,7 +4,11 @@
  * screen exists here; any other link is ignored (lib/pushRouting has already
  * refused unsafe ones). Add a path when its screen is built.
  */
-const BUILT = [/^\/$/, /^\/home$/, /^\/services$/, /^\/profile$/];
+const BUILT = [
+  /^\/$/, /^\/home$/, /^\/services$/, /^\/profile$/,
+  /^\/repair(\/(laptop|two-wheeler|four-wheeler|water-tank-care))?$/,
+  /^\/repair\/price-requests\/[\w-]+$/, /^\/repair\/category\/[\w-]+\/[\w-]+$/,
+];
 
 export function resolveRoute(deepLink: string): string | null {
   const path = deepLink.split('?')[0];
