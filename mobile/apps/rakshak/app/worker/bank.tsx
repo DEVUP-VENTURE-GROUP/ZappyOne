@@ -1,3 +1,3 @@
-import { BankScreen } from '@zappy/ui/worker/screens/MoneyScreens';
+import { WorkerBankPage } from '@zappy/ui/provider/pages/WorkerBankPage';
 
-export default BankScreen;
+export default WorkerBankPage;

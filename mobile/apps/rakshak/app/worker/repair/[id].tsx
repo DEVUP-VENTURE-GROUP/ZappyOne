@@ -1,3 +1,3 @@
-import { RepairJobScreen } from '@zappy/ui/worker/screens/RepairJobScreen';
+import { WorkerRepairJobPage } from '@zappy/ui/provider/pages/WorkerRepairJobPage';
 
-export default RepairJobScreen;
+export default WorkerRepairJobPage;

@@ -1,3 +1,3 @@
-import { HelpingJobScreen } from '@zappy/ui/worker/screens/HelpingJobScreen';
+import { WorkerHelpingJobPage } from '@zappy/ui/provider/pages/WorkerHelpingJobPage';
 
-export default HelpingJobScreen;
+export default WorkerHelpingJobPage;

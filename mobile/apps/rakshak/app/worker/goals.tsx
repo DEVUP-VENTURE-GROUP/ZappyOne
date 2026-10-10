@@ -1,3 +1,3 @@
-import { GoalsScreen } from '@zappy/ui/worker/screens/MoneyScreens';
+import { WorkerGoalsPage } from '@zappy/ui/provider/pages/WorkerGoalsPage';
 
-export default GoalsScreen;
+export default WorkerGoalsPage;

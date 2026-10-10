@@ -1,3 +1,3 @@
-import { TrainingScreen } from '@zappy/ui/worker/screens/MoneyScreens';
+import { WorkerTrainingPage } from '@zappy/ui/provider/pages/WorkerTrainingPage';
 
-export default TrainingScreen;
+export default WorkerTrainingPage;

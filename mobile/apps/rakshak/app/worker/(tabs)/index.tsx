@@ -1,5 +1,5 @@
-import { WorkerHomeScreen } from '@zappy/ui/worker/screens/WorkerHomeScreen';
+import { WorkerDashboard } from '@zappy/ui/provider/pages/WorkerDashboard';
 
 export default function Home() {
-  return <WorkerHomeScreen kinds={['repair', 'pet', 'helping']} />;
+  return <WorkerDashboard kinds={['repair', 'pet', 'helping']} />;
 }

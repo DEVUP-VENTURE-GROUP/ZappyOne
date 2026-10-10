@@ -23,7 +23,7 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, {
   runOnJS,
   useAnimatedStyle,
@@ -120,7 +120,8 @@ function BottomSheetBase({
       onRequestClose={close}
       statusBarTranslucent
     >
-      <View style={styles.root}>
+      {/* A Modal is its own native window on Android: gestures need their own root inside it. */}
+      <GestureHandlerRootView style={styles.root}>
         <Animated.View style={[styles.backdrop, backdropStyle]}>
           <Animated.View
             style={StyleSheet.absoluteFill}
@@ -162,7 +163,7 @@ function BottomSheetBase({
             <View style={styles.body}>{children}</View>
           </Animated.View>
         </GestureDetector>
-      </View>
+      </GestureHandlerRootView>
     </Modal>
   );
 }

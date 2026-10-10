@@ -12,6 +12,7 @@
  *             disconnects the socket, clears cached data and goes to sign-in
  *   push      registers the device once signed in and routes taps through the
  *             app's own route table
+ *   gestures  one GestureHandlerRootView at the root, so every sheet can swipe
  *
  * Each app passes its roles, its home, and its route table; nothing else
  * differs between them.
@@ -22,6 +23,7 @@ import React, { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { useFonts } from 'expo-font';
 import { Provider } from 'react-redux';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { store } from '@zappy/core/store';
 import { useAppSelector } from '@zappy/core/store/hooks';
 import { getSession, clearSession } from '@zappy/core/api/tokenStorage';
@@ -128,10 +130,13 @@ function Guarded({ roles, home, login, resolveRoute, children }: AppRootProps) {
 
 export function AppRoot(props: AppRootProps) {
   return (
-    <Provider store={store}>
-      <Guarded {...props} />
-      <ToastHost />
-    </Provider>
+    // Gestures (sheets, swipes) only work beneath this root, so it wraps everything.
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <Provider store={store}>
+        <Guarded {...props} />
+        <ToastHost />
+      </Provider>
+    </GestureHandlerRootView>
   );
 }
 

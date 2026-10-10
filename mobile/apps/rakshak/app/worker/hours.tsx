@@ -1,3 +1,3 @@
-import { WorkerHoursScreen } from '@zappy/ui/worker/screens/ToolsScreens';
+import { WorkerHoursPage } from '@zappy/ui/provider/pages/WorkerHoursPage';
 
-export default WorkerHoursScreen;
+export default WorkerHoursPage;

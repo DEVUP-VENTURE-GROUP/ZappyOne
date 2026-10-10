@@ -1,3 +1,3 @@
-import { AppealsScreen } from '@zappy/ui/worker/screens/ToolsScreens';
+import { WorkerAppealsPage } from '@zappy/ui/provider/pages/WorkerAppealsPage';
 
-export default AppealsScreen;
+export default WorkerAppealsPage;

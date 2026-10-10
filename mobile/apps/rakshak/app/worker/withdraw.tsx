@@ -1,3 +1,3 @@
-import { WithdrawScreen } from '@zappy/ui/worker/screens/MoneyScreens';
+import { WorkerWithdrawPage } from '@zappy/ui/provider/pages/WorkerWithdrawPage';
 
-export default WithdrawScreen;
+export default WorkerWithdrawPage;

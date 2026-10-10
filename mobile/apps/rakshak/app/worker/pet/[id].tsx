@@ -1,3 +1,3 @@
-import { PetJobScreen } from '@zappy/ui/worker/screens/PetJobScreen';
+import { WorkerPetJobPage } from '@zappy/ui/provider/pages/WorkerPetJobPage';
 
-export default PetJobScreen;
+export default WorkerPetJobPage;

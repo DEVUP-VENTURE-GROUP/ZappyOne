@@ -1,20 +1,8 @@
 import { useState } from 'react';
 import { Eye, EyeOff, Check, Circle } from 'lucide-react';
+import { passwordChecks } from './passwordRules';
 
-/**
- * The same rules the server enforces, shown while typing so nobody meets them
- * only as an error after pressing the button.
- */
-export function passwordChecks(pw = '', phone = '') {
-  const digits = String(phone || '').replace(/\D/g, '').slice(-10);
-  return [
-    { ok: pw.length >= 8, label: 'At least 8 characters' },
-    { ok: /[a-zA-Z]/.test(pw) && /\d/.test(pw), label: 'A letter and a number' },
-    { ok: !digits || !pw.includes(digits), label: 'Not your phone number' },
-  ];
-}
-
-export const passwordOk = (pw, phone) => passwordChecks(pw, phone).every((c) => c.ok);
+export { passwordChecks, passwordOk } from './passwordRules';
 
 export default function PasswordField({ id, label = 'Password', value, onChange, autoComplete = 'new-password', showRules = false, phone, placeholder }) {
   const [show, setShow] = useState(false);

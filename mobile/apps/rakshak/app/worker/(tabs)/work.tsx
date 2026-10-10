@@ -1,5 +1,5 @@
-import { WorkBoardScreen } from '@zappy/ui/worker/screens/WorkBoardScreen';
+import { WorkBoardPage } from '@zappy/ui/provider/pages/WorkBoardPage';
 
 export default function Work() {
-  return <WorkBoardScreen kinds={['repair', 'pet', 'helping']} />;
+  return <WorkBoardPage kinds={['repair', 'pet', 'helping']} />;
 }

@@ -1,6 +1,7 @@
 import '../global.css';
 import { AppRoot, AppStack } from '@zappy/ui/app/AppRoot';
-import { WorkerFrame } from '@zappy/ui/worker/WorkerFrame';
+import { AccountSetupGate } from '@zappy/ui/components/account/AccountSetupGate';
+import { WorkerFrame } from '@zappy/ui/provider/WorkerFrame';
 import { resolveRoute } from '../routes';
 
 const ROLES = ['worker'] as const;
@@ -10,8 +11,10 @@ const KINDS = ['repair', 'pet', 'helping'];
 export default function RootLayout() {
   return (
     <AppRoot roles={ROLES} home="/worker" login="/(auth)/login" resolveRoute={resolveRoute}>
-      <AppStack />
-      <WorkerFrame kinds={KINDS} />
+      <AccountSetupGate roles={ROLES} appName="Rakshak">
+        <AppStack />
+        <WorkerFrame kinds={KINDS} />
+      </AccountSetupGate>
     </AppRoot>
   );
 }

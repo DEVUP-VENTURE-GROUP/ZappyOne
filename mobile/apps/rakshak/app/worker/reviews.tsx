@@ -1,3 +1,3 @@
-import { ReviewsScreen } from '@zappy/ui/worker/screens/ToolsScreens';
+import { ProviderReviewsPage } from '@zappy/ui/provider/pages/ProviderReviewsPage';
 
-export default ReviewsScreen;
+export default ProviderReviewsPage;
