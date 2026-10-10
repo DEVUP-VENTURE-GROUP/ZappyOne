@@ -48,7 +48,7 @@ const config: ExpoConfig = {
   extra: {
     // Which ZappyOne app this is; sent to the server as X-App (core/config/env).
     app: 'rakshak',
-      // eas: { projectId } is added by `eas init` (see mobile/README.md).
+      eas: { projectId: 'a891b7e7-3ce4-46e3-861f-f031e502a0be' },
   },
   owner: 'devup-ventures-01',
 };

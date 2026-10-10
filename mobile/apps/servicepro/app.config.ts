@@ -48,7 +48,7 @@ const config: ExpoConfig = {
   extra: {
     // Which ZappyOne app this is; sent to the server as X-App (core/config/env).
     app: 'servicepro',
-      // eas: { projectId } is added by `eas init` (see mobile/README.md).
+      eas: { projectId: 'a951d06b-96a0-4c63-956d-a47f40350ee3' },
   },
   owner: 'devup-ventures-01',
 };
