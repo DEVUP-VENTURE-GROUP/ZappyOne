@@ -3,18 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { Loader2, UserX, Undo2 } from 'lucide-react';
 import { useJobGiveBackQuery, useGiveBackJobMutation, useReportCustomerAbsentMutation } from '../services/api';
+import { minsUntil } from './jobFlows';
 
 /** Minutes until a time, rounded up; 0 once it has passed. */
-function minsUntil(at, now) {
-  return at ? Math.max(0, Math.ceil((new Date(at).getTime() - now) / 60000)) : 0;
-}
-
-/**
- * On every accepted job, for every kind (jobs/give-back): hand it back while
- * work has not started, and report the customer absent after the wait at the
- * door. The cost is shown before the provider confirms, worked out by the
- * server for the reason they pick.
- */
 export default function GiveBackCard({ jobId, status }) {
   const nav = useNavigate();
   const [open, setOpen] = useState(false);

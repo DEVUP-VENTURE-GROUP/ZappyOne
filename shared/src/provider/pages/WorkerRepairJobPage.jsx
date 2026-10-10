@@ -15,7 +15,7 @@ import toast from 'react-hot-toast';
 import { useSelector } from 'react-redux';
 import { selectRole } from '../../modules/auth/authSlice';
 import AssignTechnician from '../components/AssignTechnician';
-import { formatPaise, billTipPaise, surgeOnBill } from '../../utils/money';
+import { formatPaise } from '../../utils/money';
 import RateCustomerCard from '../../components/worker/RateCustomerCard';
 import JobMapCard, { pointOf } from '../../components/worker/JobMapCard';
 import JobEarningsCard from '../../components/worker/JobEarningsCard';
@@ -28,6 +28,11 @@ import OtpEntry from '../../components/common/OtpEntry';
 import ArrivalProximity, { useArrivalProximity } from '../../components/common/ArrivalProximity';
 import ProofPhotos, { readyKeys, photosSettled } from '../../components/common/ProofPhotos';
 import { useAttachRepairCompletionPhotosMutation } from '../../services/api';
+import {
+  repairGateFor as gateFor, REPAIR_GATE_COPY as GATE_COPY, repairNextAction as nextAction, REPAIR_QUOTABLE as QUOTABLE,
+  repairReadyForPayment, repairDue, canPassBackToShop, repairAgreedPaise, quoteTotalPaise, quotePayload, quoteRepairOptions,
+  qaState, qaPayload, QUOTE_LINE_KINDS, rupeesInput, REPAIR_PHOTO_STAGES, REPAIR_ENDED, REPAIR_NO_SOS,
+} from '../jobFlows';
 
 /**
  * Worker's repair job screen.
@@ -53,86 +58,6 @@ const rupees = formatPaise;
  * tapping a button that would be rejected — being told "ask for the code" after
  * the fact is how somebody ends up standing in a doorway retrying.
  */
-function gateFor(nextStatus, serviceMode) {
-  const atCustomer = ['doorstep', 'roadside', 'diagnosis_only'];
-  const gates = {
-    DIAGNOSING: atCustomer,
-    REPAIR_IN_PROGRESS: atCustomer,
-    DEVICE_PICKED_UP: ['pickup_repair'],
-    COMPLETED: ['pickup_repair', 'workshop'],
-  };
-  const kind = {
-    DIAGNOSING: 'start',
-    REPAIR_IN_PROGRESS: 'start',
-    DEVICE_PICKED_UP: 'handover',
-    COMPLETED: 'return',
-  }[nextStatus];
-
-  if (!kind) return null;
-  return gates[nextStatus].includes(serviceMode) ? kind : null;
-}
-
-const GATE_COPY = {
-  start: { title: 'Code to start work', hint: 'Ask the customer for their 6-digit code' },
-  handover: { title: 'Code to collect the device', hint: 'The customer reads this out as they hand it over' },
-  return: { title: 'Code to hand the device back', hint: 'Let them check the device first, then ask' },
-};
-
-/**
- * The single next step, derived from the status AND how the job is being done.
- *
- * Two holes this closes, both of which stranded a technician mid-job:
- *
- * 1. DIAGNOSING had no entry at all. The server allows
- *    DIAGNOSING → REPAIR_IN_PROGRESS, but the screen offered only "Raise a
- *    quote" — so on a job where the price was already agreed, the technician
- *    finished diagnosing and had nowhere to go.
- *
- * 2. The map ignored serviceMode, so a PICKUP job was driven like a doorstep
- *    visit: "Start trip" then "I've arrived", skipping the custody chain
- *    (scheduled → collected → at workshop → … → out for return) that exists
- *    precisely so a device leaving the customer's hands is accounted for.
- *
- * Every status the server can legally move on from now has a button. Cross-check
- * against TRANSITIONS in booking.model.js when adding a status.
- */
-function nextAction(status, serviceMode) {
-  const collecting = serviceMode === 'pickup_repair';
-
-  const map = {
-    PROVIDER_ASSIGNED: { to: 'WORKER_ACCEPTED', label: 'Accept job' },
-
-    // A collected device is scheduled for pickup, not travelled to.
-    WORKER_ACCEPTED: collecting
-      ? { to: 'PICKUP_SCHEDULED', label: 'Schedule the pickup' }
-      : { to: 'ON_THE_WAY', label: 'Start trip' },
-
-    ON_THE_WAY: { to: 'ARRIVED', label: "I've arrived" },
-    ARRIVED: { to: 'DIAGNOSING', label: 'Start diagnosis' },
-
-    // The missing one. Raising a quote stays available alongside it, for when
-    // the price has to change.
-    DIAGNOSING: { to: 'REPAIR_IN_PROGRESS', label: 'Start repair' },
-
-    APPROVED: { to: 'REPAIR_IN_PROGRESS', label: 'Start repair' },
-    REPAIR_IN_PROGRESS: { to: 'QA_PENDING', label: 'Finish repair — run QA' },
-
-    // A collected device is not finished until it is back with its owner.
-    QA_PENDING: collecting
-      ? { to: 'READY_FOR_RETURN', label: 'Ready to return' }
-      : { to: 'COMPLETED', label: 'Complete job' },
-
-    PICKUP_SCHEDULED: { to: 'DEVICE_PICKED_UP', label: 'Device collected' },
-    DEVICE_PICKED_UP: { to: 'AT_WORKSHOP', label: 'Arrived at workshop' },
-    AT_WORKSHOP: { to: 'DIAGNOSING', label: 'Start diagnosis' },
-    READY_FOR_RETURN: { to: 'OUT_FOR_RETURN', label: 'Out for return' },
-    OUT_FOR_RETURN: { to: 'COMPLETED', label: 'Delivered — complete' },
-  };
-  return map[status] || null;
-}
-
-const QUOTABLE = ['ARRIVED', 'DIAGNOSING', 'AT_WORKSHOP', 'REPAIR_IN_PROGRESS'];
-
 /* Quote builder */
 
 /**
@@ -149,9 +74,7 @@ const QUOTABLE = ['ARRIVED', 'DIAGNOSING', 'AT_WORKSHOP', 'REPAIR_IN_PROGRESS'];
  */
 function RepairPicker({ vertical, value, onChange }) {
   const { data, isLoading } = useRepairWorkCatalogQuery({ vertical });
-  const seen = new Set();
-  const repairs = (data?.groups || []).flatMap((g) => g.repairs).filter((r) => !seen.has(r.code) && seen.add(r.code))
-    .sort((a, b) => Number(b.selected) - Number(a.selected) || a.name.localeCompare(b.name));
+  const repairs = quoteRepairOptions(data?.groups);
   return (
     <div>
       <label className="text-[12px] font-bold text-slate-700 block mb-1.5">What will you fix?</label>
@@ -169,8 +92,7 @@ function QuoteBuilder({ bookingId, repairCode: bookedRepair, vertical, additiona
   const [repairCode, setRepairCode] = useState(bookedRepair || '');
   // A price the customer already agreed to (fixed price at booking) stays: what
   // is quoted now goes on top of it, unless the provider says why it must change.
-  const agreedPaise = (snapshot.subtotalPaise || 0) > 0 && snapshot.isEstimate !== true
-    && !['diagnosis_required', 'inspection_only'].includes(snapshot.resolutionPath) ? snapshot.subtotalPaise : 0;
+  const agreedPaise = repairAgreedPaise(snapshot);
   const [replace, setReplace] = useState(false);
   const [replaceReason, setReplaceReason] = useState('');
   const [summary, setSummary] = useState('');
@@ -179,39 +101,18 @@ function QuoteBuilder({ bookingId, repairCode: bookedRepair, vertical, additiona
   const [items, setItems] = useState([{ kind: 'part', label: '', priceRupees: '', quantity: 1 }]);
   const [submit, { isLoading }] = useSubmitRepairQuoteMutation();
 
-  const total = items.reduce((sum, i) => sum + Math.round((Number(i.priceRupees) || 0) * 100) * (Number(i.quantity) || 1), 0);
+  const total = quoteTotalPaise(items);
 
   function setItem(idx, patch) {
     setItems((list) => list.map((it, i) => (i === idx ? { ...it, ...patch } : it)));
   }
 
   async function send() {
-    const clean = items
-      .filter((i) => i.label.trim() && Number(i.priceRupees) > 0)
-      .map((i) => ({
-        kind: i.kind,
-        label: i.label.trim(),
-        quantity: Number(i.quantity) || 1,
-        unitPricePaise: Math.round(Number(i.priceRupees) * 100),
-      }));
-
-    if (!repairCode) return toast.error('Choose the repair you will do');
-    if (!summary.trim()) return toast.error('Describe what you found');
-    if (!clean.length) return toast.error('Add at least one line with a description and a price');
-    if (total < 1000) return toast.error('The quote total must be at least ₹10. Check the prices you entered.');
-    if (agreedPaise && replace && replaceReason.trim().length < 5) return toast.error('Say why the agreed price has to change');
+    const { body, error } = quotePayload({ repairCode, summary, items, warrantyDays, additional, agreedPaise, replace, replaceReason });
+    if (error) return toast.error(error);
 
     try {
-      await submit({
-        id: bookingId,
-        diagnosisSummary: summary.trim(),
-        repairCode,
-        warrantyDays: Number(warrantyDays) || 0,
-        items: clean,
-        isAdditional: additional,
-        ...(additional ? { foundNote: summary.trim() } : {}),
-        ...(agreedPaise && replace ? { replacesAgreed: true, replaceReason: replaceReason.trim() } : {}),
-      }).unwrap();
+      await submit({ id: bookingId, ...body }).unwrap();
       toast.success(additional
         ? 'Sent — the customer decides before you carry on'
         : 'Quote sent — waiting for the customer to approve');
@@ -277,7 +178,7 @@ function QuoteBuilder({ bookingId, repairCode: bookedRepair, vertical, additiona
           <div key={idx} className="flex items-center gap-2">
             <select value={item.kind} onChange={(e) => setItem(idx, { kind: e.target.value })}
               className="border border-slate-200 rounded-lg px-2 py-2 text-xs w-24 outline-none">
-              {['part', 'labour', 'consumable', 'travel', 'pickup', 'return', 'other'].map((k) => (
+              {QUOTE_LINE_KINDS.map((k) => (
                 <option key={k} value={k}>{k}</option>
               ))}
             </select>
@@ -286,7 +187,7 @@ function QuoteBuilder({ bookingId, repairCode: bookedRepair, vertical, additiona
             <label className="relative w-28 shrink-0">
               <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm font-semibold text-ink-500">₹</span>
               <input inputMode="decimal" value={item.priceRupees} aria-label="Price in rupees"
-                onChange={(e) => setItem(idx, { priceRupees: e.target.value.replace(/[^\d.]/g, '').replace(/(\..*)\./g, '$1') })}
+                onChange={(e) => setItem(idx, { priceRupees: rupeesInput(e.target.value) })}
                 placeholder="0" className="input w-full pl-7 text-sm tabular-nums" />
             </label>
             {items.length > 1 && (
@@ -338,20 +239,11 @@ function QAPanel({ bookingId, onDone }) {
   if (!checklist) return null;
 
   const items = checklist.items || [];
-  const requiredUntested = items.filter((i) => i.required && !results[i.code]);
-  const failedRequired = items.filter((i) => i.required && results[i.code] === 'fail');
+  const { requiredUntested, failedRequired } = qaState(items, results);
 
   async function send() {
     try {
-      const res = await submit({
-        id: bookingId,
-        stage: 'after',
-        checklistCode: checklist.code,
-        results: items.map((i) => ({
-          itemCode: i.code, label: i.label, required: i.required,
-          result: results[i.code] || 'not_tested',
-        })),
-      }).unwrap();
+      const res = await submit({ id: bookingId, ...qaPayload(checklist, results) }).unwrap();
 
       if (res.passed) {
         toast.success('QA passed — you can complete the job');
@@ -484,7 +376,7 @@ export default function WorkerRepairJobPage() {
    * Evidence is gathered at QA, while the device is still open on the bench —
    * not remembered afterwards from the van.
    */
-  const wantsPhotos = ['QA_PENDING', 'READY_FOR_RETURN'].includes(booking?.status);
+  const wantsPhotos = REPAIR_PHOTO_STAGES.includes(booking?.status);
   // A photo still uploading, or one that failed, is not evidence.
   const photosBlocked = wantsPhotos && !photosSettled(photos);
 
@@ -518,8 +410,7 @@ export default function WorkerRepairJobPage() {
    * so the figure is real. Anything before that is an estimate the technician
    * has not yet tested against the actual device.
    */
-  const readyForPayment = ['QA_PENDING', 'READY_FOR_RETURN', 'OUT_FOR_RETURN', 'COMPLETED']
-    .includes(booking.status) || booking.paymentStatus === 'paid';
+  const readyForPayment = repairReadyForPayment(booking);
   const snap = booking.priceSnapshot || {};
   const quotes = data?.quotes || [];
   // Stored as { raw, transcript }; older bookings have neither.
@@ -537,15 +428,11 @@ export default function WorkerRepairJobPage() {
   }
 
   // What the customer pays now: the job, plus any earlier cancellation fee riding on it.
-  const carriedPaise = booking.carriedFee?.paise > 0 ? booking.carriedFee.paise : 0;
-  const boostPaise = booking.boost?.paise > 0 ? booking.boost.paise : 0; // all yours
-  const tipPaise = billTipPaise(booking); // the customer put it on the bill: all yours
-  const surgePaise = surgeOnBill(booking); // collected with the bill; your share is in your earnings
-  const duePaise = (snap.totalPaise || 0) + carriedPaise + boostPaise + tipPaise + surgePaise;
+  const { duePaise, carriedPaise, tipPaise } = repairDue(booking);
 
   // A shop's job can go back to the owner until the technician sets out.
   // Before they accept; once accepted, GiveBackCard hands it back (to the shop, for a shop's technician).
-  const canPassBack = !isOwner && !!booking.shopId && ['CONFIRMED', 'PROVIDER_ASSIGNED'].includes(booking.status);
+  const canPassBack = canPassBackToShop(booking, isOwner);
   // Once a technician is named they do the steps from their own app (and share
   // their location); the owner follows along. Nobody named: the owner works it.
   const ownerWatching = isOwner && !!booking.workerId;
@@ -600,7 +487,7 @@ export default function WorkerRepairJobPage() {
           </div>
         )}
         {/* Where to go: only while the job is live and someone travels to the customer. */}
-        {booking.serviceMode !== 'workshop' && !['COMPLETED', 'CANCELLED', 'REJECTED', 'EXPIRED', 'FAILED', 'REFUNDED'].includes(booking.status) && (
+        {booking.serviceMode !== 'workshop' && !REPAIR_ENDED.includes(booking.status) && (
           <JobMapCard to={pointOf(booking.location)} live={!isOwner || ownerGoing} />
         )}
         <div className="card">
@@ -886,7 +773,7 @@ export default function WorkerRepairJobPage() {
           </button>
         )}
         {/* Safety: on every live job, one hold away. */}
-        {!ownerWatching && !['PROVIDER_ASSIGNED', 'COMPLETED', 'CANCELLED', 'REJECTED', 'EXPIRED', 'FAILED'].includes(booking.status) && (
+        {!ownerWatching && !REPAIR_NO_SOS.includes(booking.status) && (
           <div className="space-y-1.5 pt-2">
             <p className="text-[12px] font-semibold text-slate-500">Feeling unsafe or need urgent help?</p>
             <SOSButton jobId={booking._id} kind="repair" service={booking.vertical} />

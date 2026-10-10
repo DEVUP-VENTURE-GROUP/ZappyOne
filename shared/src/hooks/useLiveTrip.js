@@ -28,43 +28,8 @@ import { useGeolocation } from './useGeolocation';
  * in worker/active-trip.js. `toCustomer` decides whether the screen says
  * "coming to you" or just shows the trip.
  */
-const point = (p) => (p?.coordinates?.length === 2 ? { lng: p.coordinates[0], lat: p.coordinates[1], address: p.address || '' } : null);
+export { TRIPS, tripOf, MOVING_STATUSES } from '../provider/jobFlows';
 
-export const TRIPS = {
-  repair: (b) => {
-    if (['ON_THE_WAY', 'PICKUP_SCHEDULED'].includes(b.status)) return { to: point(b.location), toCustomer: true };
-    if (b.status === 'OUT_FOR_RETURN') return { to: point(b.location), toCustomer: true, returning: true };
-    if (b.status === 'DEVICE_PICKED_UP') return { to: null, toCustomer: false };
-    return null;
-  },
-  pet: (b) => {
-    if (b.status === 'PROVIDER_EN_ROUTE') return { to: point(b.serviceLocation), toCustomer: true };
-    if (b.status === 'SERVICE_STARTED' && b.serviceMode === 'transport') return { to: point(b.destination), toCustomer: false };
-    return null;
-  },
-  helping: (t) => {
-    const startsAtCustomer = ['return', 'exchange'].includes(t.serviceType);
-    if (t.status === 'EN_ROUTE') return { to: point(t.pickupLocation), toCustomer: startsAtCustomer };
-    if (t.status === 'RETURNING') return { to: point(t.destination) || point(t.pickupLocation), toCustomer: !startsAtCustomer };
-    return null;
-  },
-};
-
-/** The trip a job is on right now, or null. */
-export function tripOf(kind, job) {
-  return job ? TRIPS[kind]?.(job) || null : null;
-}
-
-/** Statuses in which a repair technician is genuinely travelling. */
-export const MOVING_STATUSES = ['ON_THE_WAY', 'OUT_FOR_RETURN', 'PICKUP_SCHEDULED', 'DEVICE_PICKED_UP'];
-
-/**
- * The customer's side: the technician's latest position, or null.
- *
- * Null is a real answer and is rendered as such — a map with no marker, or no
- * map at all, beats a marker parked at a stale position the customer believes
- * is live.
- */
 export function useTrackingFeed(bookingId, { enabled = true, live = enabled } = {}) {
   const { accessToken: token } = useSelector(selectAuth);
   const [workerLocation, setWorkerLocation] = useState(null);

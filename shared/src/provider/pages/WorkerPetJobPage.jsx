@@ -10,7 +10,7 @@ import { selectRole } from '../../modules/auth/authSlice';
 import AssignTechnician from '../components/AssignTechnician';
 import ProofPhotos, { readyKeys } from '../../components/common/ProofPhotos';
 import CollectPaymentCard from '../../components/common/CollectPaymentCard';
-import { formatPaise, billTipPaise, surgeOnBill } from '../../utils/money';
+import { formatPaise, billTipPaise } from '../../utils/money';
 import RateCustomerCard from '../../components/worker/RateCustomerCard';
 import JobMapCard, { pointOf } from '../../components/worker/JobMapCard';
 import JobEarningsCard from '../../components/worker/JobEarningsCard';
@@ -22,6 +22,7 @@ import {
   useGetPetBookingQuery, useAdvancePetBookingStatusMutation, useAddPetBookingProofMutation, useCollectPetCashMutation,
   useAcceptPetBookingMutation, useDeclinePetBookingMutation,
 } from '../../services/api';
+import { PET_NEXT as NEXT, PET_DONE, PET_PAY_STAGES, PET_LIVE, petDuePaise, petBrief } from '../jobFlows';
 
 /**
  * Worker execution (§10, §38, §39).
@@ -31,12 +32,6 @@ import {
  * pet's safety brief (bite risk, temperament) up front, every time, the way
  * `handlingBriefFor()` promises (§8).
  */
-const NEXT = {
-  PROVIDER_ACCEPTED: [['PROVIDER_EN_ROUTE', "I'm on my way"], ['SERVICE_STARTED', 'Start now (already there)']],
-  PROVIDER_EN_ROUTE: [['PROVIDER_ARRIVED', "I've arrived"]],
-  PROVIDER_ARRIVED: [['SERVICE_STARTED', 'Start the service']],
-};
-
 export default function WorkerPetJobPage() {
   const { id } = useParams();
   const nav = useNavigate();
@@ -63,8 +58,7 @@ export default function WorkerPetJobPage() {
   if (!data?.booking) return <div className="text-center py-24 text-slate-400">Booking not found</div>;
 
   const { booking } = data;
-  const brief = booking.pets[0]?.snapshot?.handlingBrief || booking.pets[0]?.snapshot || {};
-  const hasRisk = ['medium', 'high'].includes(brief.biteRisk) || ['medium', 'high'].includes(brief.aggressionLevel);
+  const { brief, risky: hasRisk, level: riskLevel } = petBrief(booking);
 
   async function move(status) {
     try {
@@ -152,11 +146,11 @@ export default function WorkerPetJobPage() {
         {hasRisk && (
           <div className="flex items-start gap-2 rounded-2xl border-2 border-red-200 bg-red-50 p-3.5 text-xs text-red-800">
             <AlertTriangle size={16} className="mt-0.5 shrink-0" />
-            <span>This pet is flagged {brief.biteRisk === 'high' || brief.aggressionLevel === 'high' ? 'high' : 'medium'} risk for handling. {brief.specialHandling || 'Take extra care and go slowly.'}</span>
+            <span>This pet is flagged {riskLevel} risk for handling. {brief.specialHandling || 'Take extra care and go slowly.'}</span>
           </div>
         )}
 
-        {!['SERVICE_COMPLETED', 'CUSTOMER_CONFIRMATION', 'PAYMENT_PENDING', 'PAYMENT_COMPLETED', 'CLOSED'].includes(booking.status) && !['CANCELLED', 'REFUNDED'].includes(booking.status) && (
+        {!PET_DONE.includes(booking.status) && !['CANCELLED', 'REFUNDED'].includes(booking.status) && (
           <JobMapCard to={pointOf(booking.serviceLocation)} live={!ownerWatching} />
         )}
 
@@ -195,10 +189,10 @@ export default function WorkerPetJobPage() {
           </>
         )}
 
-        {['SERVICE_COMPLETED', 'CUSTOMER_CONFIRMATION', 'PAYMENT_PENDING', 'PAYMENT_COMPLETED'].includes(booking.status) && (
+        {PET_PAY_STAGES.includes(booking.status) && (
           <CollectPaymentCard
             // Plus any earlier cancellation fee the customer pays with this booking.
-            amountPaise={(booking.pricing?.totalPaise || 0) + (booking.carriedFee?.paise > 0 ? booking.carriedFee.paise : 0) + (booking.boost?.paise || 0) + billTipPaise(booking) + surgeOnBill(booking)}
+            amountPaise={petDuePaise(booking)}
             tipPaise={billTipPaise(booking)}
             paymentMethod={booking.paymentMethod}
             paid={booking.paymentStatus === 'paid'}
@@ -206,12 +200,12 @@ export default function WorkerPetJobPage() {
             onCollect={recordCash}
           />
         )}
-        {['SERVICE_COMPLETED', 'CUSTOMER_CONFIRMATION', 'PAYMENT_PENDING', 'PAYMENT_COMPLETED', 'CLOSED'].includes(booking.status) && <JobEarningsCard jobId={booking._id} />}
-        {['SERVICE_COMPLETED', 'CUSTOMER_CONFIRMATION', 'PAYMENT_PENDING', 'PAYMENT_COMPLETED', 'CLOSED'].includes(booking.status) && (
+        {PET_DONE.includes(booking.status) && <JobEarningsCard jobId={booking._id} />}
+        {PET_DONE.includes(booking.status) && (
           <RateCustomerCard jobId={booking._id} rated={!!booking.customerRating?.stars} />
         )}
         {/* Safety: on every live job, one hold away. */}
-        {!ownerWatching && ['PROVIDER_ACCEPTED', 'PROVIDER_EN_ROUTE', 'PROVIDER_ARRIVED', 'PET_HANDOVER', 'SERVICE_STARTED', 'SERVICE_PAUSED'].includes(booking.status) && (
+        {!ownerWatching && PET_LIVE.includes(booking.status) && (
           <div className="space-y-1.5 pt-2">
             <p className="text-[12px] font-semibold text-slate-500">Feeling unsafe or need urgent help?</p>
             <SOSButton jobId={booking._id} kind="pet" service={booking.categoryCode} />

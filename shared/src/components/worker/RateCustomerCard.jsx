@@ -2,6 +2,7 @@ import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { Star, Loader2, ShieldAlert } from 'lucide-react';
 import { useRateCustomerMutation } from '../../services/api';
+import { rateOptions } from '../../provider/jobFlows';
 
 /**
  * After the job, the provider rates the customer (server jobs/customer-rating).
@@ -9,9 +10,6 @@ import { useRateCustomerMutation } from '../../services/api';
  * offers, and ZappyOne looks at anyone rated low or marked unsafe.
  * Shows once per job; nothing after it is sent.
  */
-const GOOD = [['on_time', 'Ready on time'], ['respectful', 'Respectful'], ['clear_instructions', 'Clear instructions'], ['easy_access', 'Easy to find'], ['paid_promptly', 'Paid promptly']];
-const BAD = [['no_show', 'Not there'], ['late', 'Kept me waiting'], ['rude', 'Rude'], ['wrong_details', 'Wrong details'], ['payment_issue', 'Payment trouble'], ['unsafe', 'I felt unsafe']];
-
 export default function RateCustomerCard({ jobId, rated }) {
   const [rate, { isLoading }] = useRateCustomerMutation();
   const [stars, setStars] = useState(0);
@@ -21,7 +19,7 @@ export default function RateCustomerCard({ jobId, rated }) {
   if (rated || done) {
     return <p className="rounded-2xl bg-slate-50 px-4 py-3 text-[12.5px] text-slate-500">You rated this customer. Thank you.</p>;
   }
-  const options = stars >= 4 ? GOOD : stars ? [...BAD, ...GOOD.slice(0, 2)] : [];
+  const options = rateOptions(stars);
   const toggle = (t) => setTags((xs) => (xs.includes(t) ? xs.filter((x) => x !== t) : [...xs, t]));
 
   async function send() {

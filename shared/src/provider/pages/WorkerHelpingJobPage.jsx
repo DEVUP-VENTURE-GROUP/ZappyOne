@@ -22,6 +22,10 @@ import {
 } from '../../services/api';
 import { formatPaise, billTipPaise } from '../../utils/money';
 import RateCustomerCard from '../../components/worker/RateCustomerCard';
+import {
+  helpingPaidAt as paidAt, helpingFinishesAt as finishesAt, helpingMoveLabel, helpingNextMoves, helpingItemDone,
+  HELPING_DONE, HELPING_NO_SOS, HELPING_HANDED,
+} from '../jobFlows';
 import JobMapCard, { pointOf } from '../../components/worker/JobMapCard';
 import JobEarningsCard from '../../components/worker/JobEarningsCard';
 
@@ -32,35 +36,6 @@ import JobEarningsCard from '../../components/worker/JobEarningsCard';
  * a handover with no proof is refused) — this screen exists to make the
  * RIGHT action obvious at each step, not to re-check the rules itself.
  */
-const NEXT_STATUS = {
-  WORKER_ACCEPTED: ['EN_ROUTE'],
-  EN_ROUTE: ['ARRIVED'],
-  ARRIVED: ['TASK_STARTED'],
-  TASK_STARTED: ['IN_PROGRESS'],
-  // Done at the shop (or collected from the customer, for a return): the trip
-  // to the customer (or the drop-off) is shared live from here.
-  IN_PROGRESS: ['RETURNING'],
-  RETURNING: ['AT_DROPOFF'],
-};
-
-/**
- * Where money changes hands and where the task ends. A delivery is paid and
- * finished at the customer's door; a return is paid while still with the
- * customer and finished once the store or courier has it.
- */
-const isReturnTask = (task) => ['return', 'exchange'].includes(task.serviceType);
-const paidAt = (task) => (isReturnTask(task) ? ['IN_PROGRESS', 'RETURNING', 'AT_DROPOFF', 'HANDED_OVER'] : ['RETURNING', 'HANDED_OVER']);
-const finishesAt = (task) => (isReturnTask(task) ? ['HANDED_OVER'] : ['RETURNING', 'HANDED_OVER']);
-
-const MOVE_LABEL = {
-  EN_ROUTE: () => "I'm on my way",
-  ARRIVED: () => "I've arrived",
-  TASK_STARTED: () => 'Start the task',
-  IN_PROGRESS: () => 'Begin',
-  RETURNING: (task) => ({ return: 'Heading to the drop-off', exchange: 'Heading to the store', pickup: 'Collected, heading to the customer' }[task.serviceType] || 'Bought everything, heading to the customer'),
-  AT_DROPOFF: () => "I'm at the drop-off",
-};
-
 function Shell({ children }) {
   return <div className="max-w-lg mx-auto px-4 py-4 space-y-3 pb-10">{children}</div>;
 }
@@ -129,11 +104,7 @@ export default function WorkerHelpingJobPage() {
   const due = data.due || { totalPaise: 0, itemsPending: false };
   // Only the moves that make sense now: shopping leaves the store once every
   // item is settled and nothing waits on the customer; a delivery has no drop-off.
-  const nextMoves = (NEXT_STATUS[task.status] || []).filter((s) => {
-    if (s === 'RETURNING') return !pendingApproval && (isReturn || !due.itemsPending);
-    if (s === 'AT_DROPOFF') return isReturn;
-    return true;
-  });
+  const nextMoves = helpingNextMoves(task, due, pendingApproval);
   const settledUp = due.totalPaise <= 0 && !due.itemsPending;
 
   return (
@@ -152,7 +123,7 @@ export default function WorkerHelpingJobPage() {
         {trip && <TripSharingBanner sharing={sharing} {...trip} />}
         <OnSiteCard onSite={task.onSite} />
         <GiveBackCard jobId={task._id} status={task.status} />
-        {!['COMPLETED', 'CUSTOMER_CONFIRMED', 'SETTLED'].includes(task.status) && !['CANCELLED', 'FAILED'].includes(task.status) && (
+        {!HELPING_DONE.includes(task.status) && !['CANCELLED', 'FAILED'].includes(task.status) && (
           <JobMapCard to={pointOf(task.pickupLocation)} label="Pickup" />
         )}
 
@@ -167,7 +138,7 @@ export default function WorkerHelpingJobPage() {
             {nextMoves.map((s) => (
               <button key={s} type="button" onClick={() => move(s)}
                 className="w-full rounded-2xl bg-[#0F172A] text-white font-bold py-3.5">
-                {MOVE_LABEL[s]?.(task) || s}
+                {helpingMoveLabel(s, task)}
               </button>
             ))}
           </div>
@@ -216,12 +187,12 @@ export default function WorkerHelpingJobPage() {
             {completing ? 'Completing…' : 'Complete task'}
           </button>
         )}
-        {['COMPLETED', 'CUSTOMER_CONFIRMED', 'SETTLED'].includes(task.status) && <JobEarningsCard jobId={task._id} />}
-        {['COMPLETED', 'CUSTOMER_CONFIRMED', 'SETTLED'].includes(task.status) && (
+        {HELPING_DONE.includes(task.status) && <JobEarningsCard jobId={task._id} />}
+        {HELPING_DONE.includes(task.status) && (
           <RateCustomerCard jobId={task._id} rated={!!task.customerRating?.stars} />
         )}
         {/* Safety: on every live job, one hold away. */}
-        {!['COMPLETED', 'CUSTOMER_CONFIRMED', 'SETTLED', 'CANCELLED', 'FAILED', 'DISPUTED'].includes(task.status) && (
+        {!HELPING_NO_SOS.includes(task.status) && (
           <div className="space-y-1.5 pt-2">
             <p className="text-[12px] font-semibold text-slate-500">Feeling unsafe or need urgent help?</p>
             <SOSButton jobId={task._id} kind="helping" service={task.serviceType} />
@@ -314,7 +285,7 @@ function ItemRow({ item, disabled, onPurchase, onUnavailable, onAlternative }) {
   const [showAlt, setShowAlt] = useState(false);
   const [alt, setAlt] = useState({ name: '', pricePaise: '', quantity: item.quantity, photoKey: '', note: '' });
 
-  const done = ['purchased', 'not_found', 'rejected', 'skipped'].includes(item.status);
+  const done = helpingItemDone(item);
 
   return (
     <div className="rounded-2xl border-2 border-slate-200 bg-white p-4 space-y-2.5">
@@ -388,7 +359,7 @@ function ReturnExecution({ task, onChanged }) {
   const [handover, { isLoading }] = useRecordHelpingHandoverMutation();
   const [addProof] = useAddHelpingProofMutation();
 
-  const done = ['HANDED_OVER', 'COMPLETED', 'CUSTOMER_CONFIRMED', 'SETTLED'].includes(task.status);
+  const done = HELPING_HANDED.includes(task.status);
 
   async function submitHandover() {
     const keys = readyKeys(proofs);

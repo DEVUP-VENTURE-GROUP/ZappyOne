@@ -6,10 +6,7 @@ import { useGeolocation } from '../../hooks/useGeolocation';
 const LiveTrackingMap = lazy(() => import('../../modules/tracking/LiveTrackingMap'));
 
 /** A stored GeoJSON point ({ coordinates: [lng, lat], address }) as { lat, lng, address }. */
-export function pointOf(loc) {
-  const c = loc?.coordinates;
-  return Array.isArray(c) && c.length === 2 && (c[0] || c[1]) ? { lat: c[1], lng: c[0], address: loc.address || '' } : null;
-}
+export { pointOf } from '../../provider/jobFlows';
 
 const km = (a, b) => {
   const r = (d) => (d * Math.PI) / 180;

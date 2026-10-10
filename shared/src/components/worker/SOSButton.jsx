@@ -10,19 +10,21 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ShieldAlert, Phone, Heart } from 'lucide-react';
 import { useTriggerSOSMutation } from '../../services/api';
 import toast from 'react-hot-toast';
+import { PET_EMERGENCY_CONTACTS, isPetJob as petJob } from '../../provider/jobFlows';
+
+/** A quick position for the alert; null when none comes in time (the server then uses the last known one). */
+function quickFix() {
+  return new Promise((resolve) => {
+    if (!navigator.geolocation) { resolve(null); return; }
+    navigator.geolocation.getCurrentPosition(
+      (p) => resolve({ lat: p.coords.latitude, lng: p.coords.longitude }),
+      () => resolve(null),
+      { enableHighAccuracy: true, timeout: 4000, maximumAge: 60000 },
+    );
+  });
+}
 
 // India pet emergency contacts shown after SOS triggers on a pet service job
-const PET_EMERGENCY_CONTACTS = [
-  { label: 'AWBI Helpline',      number: '1962',         hint: '24h Animal Welfare Board of India' },
-  { label: 'Blue Cross India',   number: '044-22350959', hint: 'Chennai — national vet referral' },
-  { label: 'PETA India',         number: '1800-22-PETA', hint: 'Emergency cruelty / welfare line' },
-  { label: 'General Emergency',  number: '112',          hint: 'Police / Ambulance' },
-];
-
-const PET_SERVICES = new Set([
-  'pet_grooming', 'pet_walking', 'pet_transport', 'pet_sitting', 'pet_vet_assist', 'pet_training_assist',
-]);
-
 export default function SOSButton({ orderId, jobId, kind, lat, lng, service }) {
   const [holding,   setHolding]   = useState(false);
   const [progress,  setProgress]  = useState(0);
@@ -31,7 +33,7 @@ export default function SOSButton({ orderId, jobId, kind, lat, lng, service }) {
   const timerRef   = useRef(null);
   const intervalRef = useRef(null);
   const HOLD_MS    = 3000;
-  const isPetJob   = kind === 'pet' || PET_SERVICES.has(service);
+  const isPetJob   = petJob(kind, service);
 
   function startHold() {
     if (triggered) return;
@@ -58,13 +60,10 @@ export default function SOSButton({ orderId, jobId, kind, lat, lng, service }) {
   }
 
   async function fire() {
-    if (lat == null || lng == null) {
-      toast.error('GPS not ready. Call 112 directly.', { duration: 6000 });
-      setTriggered(false);
-      return;
-    }
+    // Send even without a fix: the server uses the last known position.
+    const here = lat != null && lng != null ? { lat, lng } : await quickFix();
     try {
-      await triggerSOS({ orderId, jobId, lat, lng, type: isPetJob ? 'pet_emergency' : 'worker_sos' }).unwrap();
+      await triggerSOS({ orderId, jobId, lat: here?.lat, lng: here?.lng, type: isPetJob ? 'pet_emergency' : 'worker_sos' }).unwrap();
       setTriggered(true);
       const msg = isPetJob
         ? '🐾 SOS sent. Emergency contact + support notified. See vet contacts below.'
@@ -101,11 +100,7 @@ export default function SOSButton({ orderId, jobId, kind, lat, lng, service }) {
             style={{ WebkitUserSelect: 'none' }}
           >
             {triggered ? <Phone size={14} /> : isPetJob ? <Heart size={14} /> : <ShieldAlert size={14} />}
-            {triggered
-              ? 'SOS Active'
-              : lat == null
-                ? 'GPS off — Hold SOS'
-                : 'Hold 3s for SOS'}
+            {triggered ? 'SOS Active' : 'Hold 3s for SOS'}
 
             {/* Progress ring */}
             {holding && (

@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import { selectAuth } from '../../modules/auth/authSlice';
 import { getSocket } from '../../services/socket';
 import { api, useJobChatQuery, useSendJobChatMutation } from '../../services/api';
+import { CHAT_QUICK as QUICK } from '../../provider/jobFlows';
 
 /**
  * Messages about one job, between the customer and whoever is doing it. A
@@ -15,11 +16,6 @@ import { api, useJobChatQuery, useSendJobChatMutation } from '../../services/api
  *   jobId     the booking
  *   title     who you are talking to ("Ravi K.", "Your customer")
  */
-const QUICK = {
-  user: ['Where are you now?', 'I am at home', 'Please call me when you arrive', 'Ring the bell, I am inside'],
-  provider: ['I am on my way', 'I have reached, coming up', 'Running 10 minutes late, sorry', 'Please share the gate or flat number'],
-};
-
 function time(at) {
   return new Date(at).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' });
 }
