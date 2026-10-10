@@ -91,6 +91,13 @@ export const API_BASE_URL = `${API_ORIGIN}/api`;
 export const SOCKET_URL = API_ORIGIN;
 
 /**
+ * The websites' origin. Pictures the websites serve from the global assets
+ * folder (service and problem photos) load from here, so the apps show the
+ * same images without bundling them.
+ */
+export const WEB_ORIGIN = (process.env.EXPO_PUBLIC_WEB_URL ?? 'https://zappyone.com').replace(/\/+$/, '');
+
+/**
  * Request timeout in ms. Mobile networks are slower and less reliable than the
  * web client's, so this is deliberately more generous than a browser default.
  */
@@ -104,5 +111,6 @@ export const env = {
   API_ORIGIN,
   API_BASE_URL,
   SOCKET_URL,
+  WEB_ORIGIN,
   REQUEST_TIMEOUT_MS,
 } as const;

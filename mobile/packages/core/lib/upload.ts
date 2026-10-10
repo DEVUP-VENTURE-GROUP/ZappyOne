@@ -9,11 +9,17 @@ import { axiosClient } from '../api/axiosClient';
 
 export interface PickedPhoto { uri: string; mimeType: string }
 
-/** Take a photo with the camera (or pick from the gallery). Null if cancelled or not allowed. */
-export async function pickPhoto({ camera = true }: { camera?: boolean } = {}): Promise<PickedPhoto | null> {
+/**
+ * Take a photo with the camera (or pick from the gallery). Null if cancelled.
+ * `front` opens the selfie camera, for a live photo of the person.
+ */
+export async function pickPhoto({ camera = true, front = false }: { camera?: boolean; front?: boolean } = {}): Promise<PickedPhoto | null> {
   const perm = camera ? await ImagePicker.requestCameraPermissionsAsync() : await ImagePicker.requestMediaLibraryPermissionsAsync();
   if (!perm.granted) throw new Error(camera ? 'Allow the camera to take a photo.' : 'Allow photos to choose one.');
-  const opts: ImagePicker.ImagePickerOptions = { mediaTypes: ['images'], quality: 0.7, exif: false };
+  const opts: ImagePicker.ImagePickerOptions = {
+    mediaTypes: ['images'], quality: 0.7, exif: false,
+    ...(camera && front ? { cameraType: ImagePicker.CameraType.front } : {}),
+  };
   const res = camera ? await ImagePicker.launchCameraAsync(opts) : await ImagePicker.launchImageLibraryAsync(opts);
   if (res.canceled || !res.assets?.[0]) return null;
   const a = res.assets[0];
