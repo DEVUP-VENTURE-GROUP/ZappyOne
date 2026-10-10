@@ -1,5 +1,5 @@
-import { PhoneLoginScreen } from '@zappy/ui/auth/PhoneLoginScreen';
+import { WorkerLoginPage } from '@zappy/ui/provider/pages/WorkerLoginPage';
 
 export default function LoginScreen() {
-  return <PhoneLoginScreen title="ZappyOne Rakshak" subtitle="Earn with jobs and errands near you" role="worker" otpPath="/(auth)/otp" />;
+  return <WorkerLoginPage title="ZappyOne Rakshak" subtitle="Earn with jobs and errands near you" />;
 }

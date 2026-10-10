@@ -11,3 +11,6 @@ export default function RootLayout() {
     </AppRoot>
   );
 }
+
+// A crashed screen retries itself instead of taking the app down.
+export { ErrorBoundary } from '@zappy/ui/components/common/ErrorBoundary';

@@ -23,32 +23,32 @@ All 119 calls these screens use already exist in `@zappy/core/api`.
 | Job-offer popup: new work rings on any screen, accept or pass with a reason | JobOfferHost, JobOfferAlert, PassReasonPicker | acceptHelpingTask, acceptPetBooking, assignedPetBookings, declinePetBooking, declineRepairBooking, getWorkerMe, repairProviderJobs, transitionRepairBooking | job.offer, job.available, repair.offer, repair.offer_closed | ◐ built; ring sound needs the next dev build (expo-audio), vibration works now |
 | Location shared while online | OnlineLocation, useLocationBroadcast | getWorkerMe | worker:location (sent), worker.presence | ▣ |
 | Live job updates (lists refresh, tip toast) | useJobRealtime | (refreshes lists) | job.status, job.update, job.available, repair.quote, repair.quote_decision | ▣ |
-| Account setup gate (name, photo, password, what's new) | AccountSetupGate | accountMe, completeAccountSetup, setAccountName, setAccountPassword, setAccountPhoto, skipAccountPhoto, startEmailVerification, markReleaseSeen, presignUpload, logout | | ☐ |
-| Connection banner, error boundary | ConnectionBanner, ErrorBoundary | | | ◐ banner done; error screen to add |
+| Account setup gate (name, photo, password, what's new) | AccountSetupGate | accountMe, completeAccountSetup, setAccountName, setAccountPassword, setAccountPhoto, skipAccountPhoto, startEmailVerification, markReleaseSeen, presignUpload, logout | | ▣ |
+| Connection banner, error boundary | ConnectionBanner, ErrorBoundary | | | ▣ (error screen retries itself, reports to Live errors) |
 
 ### Screens
 
 | Screen | Web route | Calls | Live events | Status |
 |---|---|---|---|---|
-| Sign in: OTP **and Worker ID + password, forgot password** | `/login` | requestOtp, resendOtp, loginWorker, loginWorkerPassword, forgotWorkerPassword | | ◐ OTP done; password sign-in to add |
+| Sign in: OTP **and Worker ID + password, forgot password** | `/login` | requestOtp, resendOtp, loginWorker, loginWorkerPassword, forgotWorkerPassword | | ▣ (OTP + Worker ID / password; the website's forgot-password sends a code but has no screen to use it yet) |
 | Home / dashboard | `/worker` | 20: getWorkerMe, goOnline, goOffline, getEarnings, workerDues, claimDuesPayment, workerHotZones, getKycStatus, providerOnboardingStatus, workerCompleteOnboarding, accountMe, listNotifications, repairProviderJobs, assigned/available pet + helping, accept pet + helping, logout | notification, kyc.rejected, session:replaced | ▣ |
 | Work board | `/worker/work` | 11: repairProviderJobs, assigned/available pet + helping, accept pet + helping, workerDues, claimDuesPayment, workerHotZones, getWorkerMe | | ▣ |
-| Repair job | `/worker/repair/:id` | 21: getRepairBooking, transitionRepairBooking, verifyRepairHandoverCode, submitRepairQuote, repairWorkCatalog, repairQaChecklist, submitRepairQa, attachRepairCompletionPhotos, collectRepairCash, declineRepairBooking, giveBackJob, jobGiveBack, reportCustomerAbsent, jobEarnings, rateCustomer, jobChat, sendJobChat, presignUpload, triggerSOS, assignJobTechnician, shopWorkers | chat.message, eta.update, worker.location, room join | ☐ |
-| Pet job | `/worker/pet/:id` | 17: getPetBooking, acceptPetBooking, advancePetBookingStatus, addPetBookingProof, collectPetCash, declinePetBooking, giveBack, jobGiveBack, reportCustomerAbsent, jobEarnings, rateCustomer, jobChat, sendJobChat, presignUpload, triggerSOS, assignJobTechnician, shopWorkers | chat.message, eta.update, worker.location, room join | ☐ |
-| Helping job | `/worker/helping/:id` | 18: getHelpingTask, advanceHelpingStatus, addHelpingProof, updateHelpingItem, proposeHelpingAlternative, recordHelpingAdvance, recordHelpingHandover, completeHelpingTask, collectHelpingCash, giveBack, jobGiveBack, reportCustomerAbsent, jobEarnings, rateCustomer, jobChat, sendJobChat, presignUpload, triggerSOS | chat.message, eta.update, worker.location, room join | ☐ |
-| Join / onboarding | `/provider/onboarding` | 13: providerDomains, providerServiceLines, providerEnrol, providerLineRequirements, providerSaveEnrolment, providerSubmitEnrolment, providerRequestServiceLine, providerOnboardingStatus, providerIdCheck, startAadhaarCheck, submitAadhaarOtp, verifyPanCheck, presignUpload | | ☐ |
-| My services and prices | `/provider/services` | 18: liveCatalog, repairBrands, repairModels, repairWorkCatalog, repairProviderPricing, repairProviderSuggestedPricing (+lazy), bulkRepairProviderPricing, saveRepairCapabilities, repairServiceAreas, upsertRepairServiceArea, getAddresses, saveRecentLocation, getNearbyWorkers (lazy), requestRepairCatalogAddition, providerOnboardingStatus, setShopWarranty, updateShopMe | map | ☐ |
-| My documents | `/provider/documents` | 5: providerMyDocuments, providerIdCheck, startAadhaarCheck, submitAadhaarOtp, verifyPanCheck | | ☐ |
+| Repair job | `/worker/repair/:id` | 21: getRepairBooking, transitionRepairBooking, verifyRepairHandoverCode, submitRepairQuote, repairWorkCatalog, repairQaChecklist, submitRepairQa, attachRepairCompletionPhotos, collectRepairCash, declineRepairBooking, giveBackJob, jobGiveBack, reportCustomerAbsent, jobEarnings, rateCustomer, jobChat, sendJobChat, presignUpload, triggerSOS, assignJobTechnician, shopWorkers | chat.message, eta.update, worker.location, room join | ▣ |
+| Pet job | `/worker/pet/:id` | 17: getPetBooking, acceptPetBooking, advancePetBookingStatus, addPetBookingProof, collectPetCash, declinePetBooking, giveBack, jobGiveBack, reportCustomerAbsent, jobEarnings, rateCustomer, jobChat, sendJobChat, presignUpload, triggerSOS, assignJobTechnician, shopWorkers | chat.message, eta.update, worker.location, room join | ▣ |
+| Helping job | `/worker/helping/:id` | 18: getHelpingTask, advanceHelpingStatus, addHelpingProof, updateHelpingItem, proposeHelpingAlternative, recordHelpingAdvance, recordHelpingHandover, completeHelpingTask, collectHelpingCash, giveBack, jobGiveBack, reportCustomerAbsent, jobEarnings, rateCustomer, jobChat, sendJobChat, presignUpload, triggerSOS | chat.message, eta.update, worker.location, room join | ▣ |
+| Join / onboarding | `/provider/onboarding` | 13: providerDomains, providerServiceLines, providerEnrol, providerLineRequirements, providerSaveEnrolment, providerSubmitEnrolment, providerRequestServiceLine, providerOnboardingStatus, providerIdCheck, startAadhaarCheck, submitAadhaarOtp, verifyPanCheck, presignUpload | | ▣ (documents as photos; PDF upload needs a document picker in a later dev build) |
+| My services and prices | `/provider/services` | 18: liveCatalog, repairBrands, repairModels, repairWorkCatalog, repairProviderPricing, repairProviderSuggestedPricing (+lazy), bulkRepairProviderPricing, saveRepairCapabilities, repairServiceAreas, upsertRepairServiceArea, getAddresses, saveRecentLocation, getNearbyWorkers (lazy), requestRepairCatalogAddition, providerOnboardingStatus, setShopWarranty, updateShopMe | map | ▣ (individual: brands, work, area, standard prices; shop timings and price sheets come with ServicePro) |
+| My documents | `/provider/documents` | 5: providerMyDocuments, providerIdCheck, startAadhaarCheck, submitAadhaarOtp, verifyPanCheck | | ▣ |
 | Earnings | `/worker/earnings` | getJobEarnings | | ▣ |
-| Withdraw | `/worker/withdraw` | 7: getWallet, getWorkerBankAccounts, workerDues, claimDuesPayment, requestPayout, requestOtp, verifyActionOtp | | ☐ |
-| Bank and UPI | `/worker/bank` | 6: getWorkerBankAccounts, addWorkerBankAccount, deleteWorkerBankAccount, setDefaultWorkerBankAccount, requestOtp, verifyActionOtp | | ☐ |
-| Work hours | `/worker/hours` | workerHours, saveWorkerHours | | ☐ |
-| Goals | `/worker/goals` | getWorkerGoals, setWorkerGoal, getZoneBenchmark | | ☐ |
-| Training | `/worker/training` | getTrainingModules, getTrainingModule, submitTrainingQuiz | | ☐ |
-| Reviews | `/worker/reviews` | myReviews, reportReview | | ☐ |
-| Appeals | `/worker/appeals` | getWorkerAppeals, createWorkerAppeal | | ☐ |
+| Withdraw | `/worker/withdraw` | 7: getWallet, getWorkerBankAccounts, workerDues, claimDuesPayment, requestPayout, requestOtp, verifyActionOtp | | ▣ |
+| Bank and UPI | `/worker/bank` | 6: getWorkerBankAccounts, addWorkerBankAccount, deleteWorkerBankAccount, setDefaultWorkerBankAccount, requestOtp, verifyActionOtp | | ▣ |
+| Work hours | `/worker/hours` | workerHours, saveWorkerHours | | ▣ |
+| Goals | `/worker/goals` | getWorkerGoals, setWorkerGoal, getZoneBenchmark | | ▣ |
+| Training | `/worker/training` | getTrainingModules, getTrainingModule, submitTrainingQuiz | | ▣ (video opens in the phone's player) |
+| Reviews | `/worker/reviews` | myReviews, reportReview | | ▣ |
+| Appeals | `/worker/appeals` | getWorkerAppeals, createWorkerAppeal | | ▣ |
 | Notifications | `/worker/notifications` | listNotifications, markNotificationRead, markAllNotificationsRead | notification | ▣ |
-| Profile | `/worker/profile` | 9: accountMe, getWorkerMe, updateWorkerProfile, setWorkerCredentials, setAccountPassword, setAccountPhoto, startEmailVerification, presignUpload, providerOnboardingStatus | | ◐ interim account tab; full profile next |
+| Profile | `/worker/profile` | 9: accountMe, getWorkerMe, updateWorkerProfile, setWorkerCredentials, setAccountPassword, setAccountPhoto, startEmailVerification, presignUpload, providerOnboardingStatus | | ▣ |
 
 Web logic these screens share (port as logic, not copied UI): `utils/money.js`,
 `utils/distance.js`, `provider/useProviderJobs.js`, `modules/worker/workerSlice.js`,
@@ -68,12 +68,12 @@ Technicians see the Rakshak screens above (same code, shop rules).
 | Technicians | `/shop/workers` | ShopWorkers | ☐ |
 | Shop earnings | `/shop/earnings` | ShopEarnings | ☐ |
 | Price requests | `/shop/price-requests` | ShopPriceRequests | ☐ |
-| Appeals | `/shop/appeals` | ShopAppeals | ☐ |
+| Appeals | `/shop/appeals` | ShopAppeals | ▣ |
 | Account | `/shop/account` | ShopAccountPage | ☐ |
 | Notifications | `/shop/notifications` | ShopNotifications | ☐ |
-| Bank and UPI | `/shop/bank` | ShopBank | ☐ |
-| Withdraw | `/shop/withdraw` | ShopWithdrawPage | ☐ |
-| Reviews | `/shop/reviews` | ProviderReviewsPage | ☐ |
+| Bank and UPI | `/shop/bank` | ShopBank | ▣ |
+| Withdraw | `/shop/withdraw` | ShopWithdrawPage | ▣ |
+| Reviews | `/shop/reviews` | ProviderReviewsPage | ▣ |
 | Onboarding, services, documents, jobs | as Rakshak | shared provider pages | ☐ |
 
 ## ZappyOne: customers (web: zappyone.com)
