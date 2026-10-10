@@ -1,0 +1,24 @@
+# What EAS uploads for a mobile build. Replaces .gitignore for EAS, so keep
+# the usual exclusions here too. The apps need only mobile/.
+
+# Everything at the top level except mobile/
+/*
+!/mobile
+
+# Installed and generated files (EAS installs dependencies itself)
+node_modules/
+.expo/
+dist/
+web-build/
+ios/
+android/
+*.log
+
+# Local settings and secrets never leave this computer
+.env
+.env*.local
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
