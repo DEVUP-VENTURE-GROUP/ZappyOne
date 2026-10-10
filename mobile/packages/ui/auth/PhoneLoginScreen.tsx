@@ -10,7 +10,8 @@
 import React, { useState, type ReactNode } from 'react';
 import { StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useRequestOtpMutation, type OtpRole } from '@zappy/core/api/authApi';
+import { useRequestOtpMutation } from '@zappy/core/api';
+import type { OtpRole } from '@zappy/core/types/api';
 import { getApiErrorMessage } from '@zappy/core/api/apiSlice';
 import { stashDevOtp } from '@zappy/core/lib/devOtp';
 import { Button, Text } from '../components';

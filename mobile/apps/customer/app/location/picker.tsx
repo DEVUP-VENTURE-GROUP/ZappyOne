@@ -71,14 +71,14 @@ import {
   searchAddress,
   type GeoResult,
 } from '@zappy/ui/location/geocode';
-import { useGetAddressesQuery } from '@zappy/core/api/authApi';
+import { useGetAddressesQuery } from '@zappy/core/api';
 import { useAppDispatch, useAppSelector } from '@zappy/core/store/hooks';
 import { locationPicked, type DraftLocation } from '@zappy/core/store/locationDraftSlice';
 import { colors } from '@zappy/ui/theme/colors';
 import { radius } from '@zappy/ui/theme/radius';
 import { shadows } from '@zappy/ui/theme/shadows';
 import { screenPadding, spacing } from '@zappy/ui/theme/spacing';
-import type { RecentLocation, SavedAddress } from '@zappy/core/types/api';
+import type { RecentLocation, SavedAddress, SavedAddressWire } from '@zappy/core/types/api';
 
 /** Falls back to Hyderabad's centre only until a real fix or pick arrives. */
 const FALLBACK_PIN = { lat: 17.385, lng: 78.4867 };
@@ -156,8 +156,13 @@ export default function LocationPickerScreen() {
   const { serviceName: serviceNameParam } = useLocalSearchParams<{ serviceName?: string }>();
   const serviceName = serviceNameParam || null;
   const serviceAccent = colors.primary;
-  const savedAddresses = saved?.addresses ?? [];
-  const recentLocations = saved?.recentLocations ?? [];
+  // The server sends saved addresses as a GeoJSON point ([lng, lat]); the map wants lat/lng.
+  const savedAddresses: SavedAddress[] = (saved?.addresses ?? []).map((w: SavedAddressWire) => ({
+    ...w,
+    lat: w.location?.coordinates?.[1] ?? 0,
+    lng: w.location?.coordinates?.[0] ?? 0,
+  }));
+  const recentLocations: RecentLocation[] = saved?.recentLocations ?? [];
 
   // ── Move the pin ──────────────────────────────────────────────────────────
   const movePin = useCallback(

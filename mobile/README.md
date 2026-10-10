@@ -30,7 +30,7 @@ mobile/
 │       └── assets/images   icon and splash
 └── packages/
     ├── core/   @zappy/core: logic, no UI
-    │   ├── api/        one file per server area (authApi, uploadApi…), RTK Query
+    │   ├── api/        the websites' 542 server calls (generated from shared/), on the apps' secure connection
     │   ├── config/     environment: API address, which app this is
     │   ├── hooks/      useSocket, useLocationTracker, usePushNotifications, useSignOut
     │   ├── lib/        logger, session events, push helpers
@@ -50,7 +50,7 @@ mobile/
 
 | You are adding… | Put it in |
 |---|---|
-| A call to the server | `packages/core/api/<area>Api.ts`, then export it from `packages/core/api/index.ts` |
+| A call to the server | `shared/src/services/endpoints.js` (the websites' list, shared by every app), its hook in `shared/src/services/api.js`, then `npm run sync:api` here. Screens import hooks from `@zappy/core/api` by the web's names. Never edit `endpoints.generated.js` or `hooks.ts`. |
 | A data shape the server returns | `packages/core/types/api.ts`, with the server's own field names |
 | Logic two apps need (a hook, a helper) | `packages/core/hooks` or `packages/core/lib` |
 | A visual building block | `packages/ui/components` |
@@ -60,7 +60,7 @@ mobile/
 
 The rules that keep this strong:
 1. `packages/core` never imports from `packages/ui` or from an app. `packages/ui` never imports from an app.
-2. Screens never call `fetch` or `axios` directly. Every request goes through `packages/core/api`.
+2. Screens never call `fetch` or `axios` directly. Every request is a hook from `@zappy/core/api`, the same call the website makes.
 3. No made-up data on screens. If the server doesn't send something yet, the screen doesn't show it.
 4. Money is in paise from the server and shown in rupees. Prices are never calculated on the phone.
 5. One copy of anything shared. If you're copying a file between apps, it belongs in `packages/`.

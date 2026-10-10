@@ -26,7 +26,7 @@ import { store } from '@zappy/core/store';
 import { useAppSelector } from '@zappy/core/store/hooks';
 import { getSession, clearSession } from '@zappy/core/api/tokenStorage';
 import { apiSlice } from '@zappy/core/api/apiSlice';
-import { authApi } from '@zappy/core/api/authApi';
+import { api } from '@zappy/core/api';
 import { setSession, logout as logoutAction } from '@zappy/core/store/authSlice';
 import { onSessionEnd } from '@zappy/core/lib/sessionBus';
 import { socketClient } from '@zappy/core/socket/socketClient';
@@ -61,9 +61,11 @@ async function bootstrapSession(roles: readonly Role[]): Promise<void> {
   }
   if (session.role === 'user') {
     try {
-      const result = await store.dispatch(authApi.endpoints.getMe.initiate(undefined, { forceRefetch: true }));
-      if ('data' in result && result.data) {
-        store.dispatch(setSession({ user: result.data, role: 'user' }));
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const result: any = await store.dispatch((api.endpoints as any).getMe.initiate(undefined, { forceRefetch: true }));
+      const profile = result?.data?.user ?? result?.data;
+      if (profile) {
+        store.dispatch(setSession({ user: profile, role: 'user' }));
         return;
       }
       // A 401 here means the refresh itself failed (axiosClient already tried).

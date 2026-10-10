@@ -15,17 +15,25 @@ import { axiosClient } from './axiosClient';
 import type { ApiError, ApiErrorBody } from '../types/api';
 import { toApiError, normalizeError } from './apiError';
 
-export interface AxiosBaseQueryArgs {
-  url: string;
-  method?: AxiosRequestConfig['method'];
-  data?: AxiosRequestConfig['data'];
-  params?: AxiosRequestConfig['params'];
-  headers?: AxiosRequestConfig['headers'];
-}
+/**
+ * A request as the shared endpoint list writes it (same as the websites):
+ * a path string, or { url, method, body, params }. `data` is accepted too.
+ */
+export type AxiosBaseQueryArgs =
+  | string
+  | {
+      url: string;
+      method?: AxiosRequestConfig['method'];
+      body?: unknown;
+      data?: AxiosRequestConfig['data'];
+      params?: AxiosRequestConfig['params'];
+      headers?: AxiosRequestConfig['headers'];
+    };
 
 const axiosBaseQuery =
   (): BaseQueryFn<AxiosBaseQueryArgs, unknown, ApiError> =>
-  async ({ url, method = 'GET', data, params, headers }, api) => {
+  async (args, api) => {
+    const { url, method = 'GET', body, data, params, headers } = typeof args === 'string' ? { url: args } as Exclude<AxiosBaseQueryArgs, string> : args;
     try {
       // `api.signal` aborts when the last subscriber unsubscribes or the query
       // arg changes. Forwarding it is what actually cancels the HTTP request —
@@ -35,7 +43,7 @@ const axiosBaseQuery =
       const result = await axiosClient({
         url,
         method,
-        data,
+        data: body ?? data,
         params,
         headers,
         signal: api.signal,
@@ -50,10 +58,8 @@ const axiosBaseQuery =
 export const apiSlice = createApi({
   reducerPath: 'api',
   baseQuery: axiosBaseQuery(),
-  tagTypes: [
-    'Order', 'Worker', 'User', 'Wallet', 'Catalog', 'Chat', 'Notification',
-    'Rewards', 'Earnings', 'Kyc', 'SupportTicket', 'Dispute', 'Shop',
-  ],
+  // Tags and endpoints come from the shared list (sharedApi.ts).
+  tagTypes: [],
   endpoints: () => ({}),
 });
 

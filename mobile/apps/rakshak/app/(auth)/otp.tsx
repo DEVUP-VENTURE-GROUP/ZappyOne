@@ -1,5 +1,5 @@
 import { OtpScreen } from '@zappy/ui/auth/OtpScreen';
-import { useLoginWorkerMutation } from '@zappy/core/api/authApi';
+import { useLoginWorkerMutation } from '@zappy/core/api';
 
 export default function RakshakOtpScreen() {
   const [loginWorker] = useLoginWorkerMutation();

@@ -1,5 +1,5 @@
 import { OtpScreen } from '@zappy/ui/auth/OtpScreen';
-import { useLoginUserMutation } from '@zappy/core/api/authApi';
+import { useLoginUserMutation } from '@zappy/core/api';
 
 export default function CustomerOtpScreen() {
   const [loginUser] = useLoginUserMutation();

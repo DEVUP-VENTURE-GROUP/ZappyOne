@@ -1,5 +1,5 @@
 import { OtpScreen } from '@zappy/ui/auth/OtpScreen';
-import { useLoginShopMutation, useLoginWorkerMutation } from '@zappy/core/api/authApi';
+import { useLoginShopMutation, useLoginWorkerMutation } from '@zappy/core/api';
 import { useLocalSearchParams } from 'expo-router';
 
 export default function ServiceProOtpScreen() {

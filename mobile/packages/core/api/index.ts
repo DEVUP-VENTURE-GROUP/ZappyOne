@@ -1,15 +1,10 @@
 /**
- * Endpoint registration barrel.
+ * The apps' API. Screens import hooks from here, by the same names as the
+ * websites: `import { useGetMeQuery } from '@zappy/core/api';`
  *
- * `injectEndpoints` registers its endpoints only when the module is imported,
- * so the store imports this file once at boot and every endpoint exists before
- * any screen asks for it. Add each new endpoint module here.
+ * Importing this file registers every endpoint, so the store imports it once
+ * at boot (store/index.ts).
  */
-export * from './apiSlice';
-export * from './authApi';
-export * from './devicesApi';
-export * from './notificationsApi';
-export * from './contentApi';
-export * from './uploadApi';
-export * from './supportApi';
-export * from './disputesApi';
+export { apiSlice, getApiErrorCode, getApiErrorMessage, getApiErrorBody } from './apiSlice';
+export { api } from './sharedApi';
+export * from './hooks';

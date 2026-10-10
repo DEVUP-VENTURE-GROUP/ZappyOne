@@ -75,6 +75,8 @@ jobs:
           cache: npm
           cache-dependency-path: mobile/package-lock.json
       - run: npm ci
+      - name: Apps' API matches the websites' (shared/src/services)
+        run: npm run check:api
       - name: Type check all three apps
         run: npm run typecheck
       - name: Dependency audit (report-only)

@@ -9,6 +9,9 @@
 
 export type Role = 'user' | 'worker' | 'shop' | 'event_partner' | 'admin';
 
+/** Who an OTP is for: customer, worker (Rakshak or a shop's technician), shop owner, or event partner. */
+export type OtpRole = 'user' | 'worker' | 'shop' | 'event_partner';
+
 export type PaymentMethod = 'cash' | 'upi' | 'card';
 
 // ── Auth ─────────────────────────────────────────────────────────────────────

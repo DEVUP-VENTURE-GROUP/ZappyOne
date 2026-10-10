@@ -29,8 +29,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import { useRouter } from 'expo-router';
 import * as Notifications from 'expo-notifications';
 import { useAppSelector } from '../store/hooks';
-import { useRegisterDeviceTokenMutation } from '../api/authApi';
-import { useRegisterWorkerDeviceTokenMutation } from '../api/devicesApi';
+import { useRegisterDeviceTokenMutation, useRegisterWorkerDeviceTokenMutation } from '../api/hooks';
 import { destinationFrom, type RouteResolver } from '../lib/pushRouting';
 import {
   configurePushPresentation,

@@ -14,7 +14,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useResendOtpMutation } from '@zappy/core/api/authApi';
+import { useResendOtpMutation } from '@zappy/core/api';
 import { getApiErrorCode, getApiErrorMessage } from '@zappy/core/api/apiSlice';
 import { saveSession } from '@zappy/core/api/tokenStorage';
 import { setSession } from '@zappy/core/store/authSlice';
