@@ -4,24 +4,17 @@
  */
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
-import Constants from 'expo-constants';
+import MapView, { Marker } from 'react-native-maps';
 import { MapPin, Navigation } from 'lucide-react-native';
 import { useMyPosition } from '@zappy/core/hooks/useJobTrip';
+import { kmBetween } from '@zappy/core/shared/distance';
 import { Text } from '..';
 import { directions } from '../../lib/directions';
 import { RIPPLE } from '../../lib/feedback';
+import { mapProvider, mapsAvailable } from '../../lib/maps';
 import { colors, zappy, ink } from '../../theme/colors';
 import { radius } from '../../theme/radius';
 import { spacing } from '../../theme/spacing';
-
-const hasMapsKey = !!(Constants.expoConfig?.android?.config?.googleMaps?.apiKey);
-
-const kmBetween = (a: { lat: number; lng: number }, b: { lat: number; lng: number }) => {
-  const r = (d: number) => (d * Math.PI) / 180;
-  const h = Math.sin(r(b.lat - a.lat) / 2) ** 2 + Math.cos(r(a.lat)) * Math.cos(r(b.lat)) * Math.sin(r(b.lng - a.lng) / 2) ** 2;
-  return 12742 * Math.asin(Math.sqrt(h));
-};
 
 /* Where to go: the customer's pin and their own position, and one tap into navigation. */
 export function JobMapCard({ to, label = 'Customer location', live = true }: { to: { lat: number; lng: number; address?: string } | null; label?: string; live?: boolean }) {
@@ -31,8 +24,8 @@ export function JobMapCard({ to, label = 'Customer location', live = true }: { t
   return (
     <View style={styles.mapCard}>
       {/* A Google map needs the build's Maps key; without it Android cannot draw one, so the card stays useful without. */}
-      {hasMapsKey ? (
-        <MapView provider={PROVIDER_GOOGLE} style={styles.map} initialRegion={{ latitude: to.lat, longitude: to.lng, latitudeDelta: 0.02, longitudeDelta: 0.02 }}
+      {mapsAvailable ? (
+        <MapView provider={mapProvider} style={styles.map} initialRegion={{ latitude: to.lat, longitude: to.lng, latitudeDelta: 0.02, longitudeDelta: 0.02 }}
           showsUserLocation={live} toolbarEnabled={false} accessibilityLabel={`Map: ${label}`}>
           <Marker coordinate={{ latitude: to.lat, longitude: to.lng }} title={label} pinColor={zappy[600]} />
         </MapView>
