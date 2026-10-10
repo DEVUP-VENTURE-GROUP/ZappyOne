@@ -30,6 +30,7 @@ import { useSocket } from '@zappy/core/hooks/useSocket';
 import { colors } from '../theme/colors';
 import { shadows } from '../theme/shadows';
 import type { WorkerLocationEvent } from '@zappy/core/socket/events';
+import { mapsAvailable } from '../lib/maps';
 
 export interface LiveTrackingMapProps {
   orderId: string;
@@ -178,7 +179,10 @@ function LiveTrackingMapBase({
   );
 }
 
-export const LiveTrackingMap = memo(LiveTrackingMapBase);
+/** Without a map in this build (Android needs the Maps key), the tracking screen's own updates carry it. */
+const NoMap = (_: LiveTrackingMapProps) => null;
+
+export const LiveTrackingMap = memo(mapsAvailable ? LiveTrackingMapBase : NoMap);
 
 const styles = StyleSheet.create({
   root: { flex: 1, overflow: 'hidden', backgroundColor: colors.surfaceTertiary },

@@ -24,8 +24,9 @@
 import React, { memo, useCallback, useEffect, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import MapView, { Marker, type MapPressEvent, type MarkerDragStartEndEvent } from 'react-native-maps';
-import { LocateFixed } from 'lucide-react-native';
-import { IconButton } from '../components';
+import { LocateFixed, MapPin } from 'lucide-react-native';
+import { IconButton, Text } from '../components';
+import { mapsAvailable } from '../lib/maps';
 import { colors } from '../theme/colors';
 import { radius } from '../theme/radius';
 import { shadows } from '../theme/shadows';
@@ -120,9 +121,23 @@ function PickerMapBase({ lat, lng, hasPin = true, onMove, onRecenter, busy }: Pi
   );
 }
 
-export const PickerMap = memo(PickerMapBase);
+/**
+ * Without a map in this build (Android needs the Maps key), the pin is set by
+ * search, a saved address or the current location; this panel holds its place.
+ */
+function PickerMapFallback(_: PickerMapProps) {
+  return (
+    <View style={[styles.root, styles.fallback]} accessibilityLabel="Map">
+      <MapPin size={36} color={colors.primary} />
+      <Text variant="caption" color={colors.textSecondary} align="center">Search above or use your current location to set where we come.</Text>
+    </View>
+  );
+}
+
+export const PickerMap = memo(mapsAvailable ? PickerMapBase : PickerMapFallback);
 
 const styles = StyleSheet.create({
+  fallback: { alignItems: 'center', justifyContent: 'center', gap: spacing.sm, paddingHorizontal: spacing.xl, backgroundColor: colors.surfaceSecondary },
   root: { flex: 1, overflow: 'hidden', backgroundColor: colors.surfaceTertiary },
   recenter: { position: 'absolute', right: spacing.lg, bottom: spacing.lg },
   recenterButton: {
