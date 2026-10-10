@@ -14,6 +14,9 @@ import { colors, zappy, ink, slate, success, accent, danger } from '../theme/col
 import { radius } from '../theme/radius';
 import { spacing } from '../theme/spacing';
 
+/** Native touch feedback. NativeWind ignores Pressable's style-as-function, so pressed styles can't be used. */
+const RIPPLE = { color: 'rgba(16,24,40,0.08)' };
+
 /** "₹1,299" from whole rupees. */
 export const inr = (rupees: number) => `₹${Math.round(Number(rupees) || 0).toLocaleString('en-IN')}`;
 
@@ -59,7 +62,7 @@ export const StatTile = memo(function StatTile({ Icon, tone = 'blue', label, val
   const t = TONE[tone];
   return (
     <Pressable onPress={onPress} disabled={!onPress} accessibilityRole={onPress ? 'button' : undefined}
-      accessibilityLabel={`${label}: ${value}`} style={({ pressed }) => [styles.stat, pressed && styles.pressed]}>
+      accessibilityLabel={`${label}: ${value}`} android_ripple={RIPPLE} style={[styles.stat]}>
       <View style={[styles.statIcon, { backgroundColor: t.bg }]}><Icon size={18} color={t.fg} strokeWidth={2.3} /></View>
       <Text variant="caption" color={colors.textSecondary} style={styles.mtSm}>{label}</Text>
       <Text variant="heading2" weight="black" numberOfLines={1}>{value}</Text>
@@ -140,7 +143,7 @@ export interface MineJob { kind: string; id: string; to: string; title: string; 
 export function MineRow({ job, onPress, compact = false }: { job: MineJob; onPress: () => void; compact?: boolean }) {
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={`${job.title}, ${job.status}`}
-      style={({ pressed }) => [styles.mine, compact ? styles.mineCompact : styles.mineCard, pressed && styles.pressed]}>
+      android_ripple={RIPPLE} style={[styles.mine, compact ? styles.mineCompact : styles.mineCard]}>
       <View style={styles.flex}>
         <Text variant="body" weight="semibold" numberOfLines={1} style={styles.capitalize}>{job.title}</Text>
         {job.subtitle ? <Text variant="bodySmall" color={colors.textSecondary} numberOfLines={1} style={styles.capitalize}>{job.subtitle}</Text> : null}
@@ -198,7 +201,7 @@ export function OpenJobCard({ job, busy, onTake }: { job: OpenJob; busy?: boolea
         </View>
       ) : null}
       <Pressable onPress={onTake} disabled={busy} accessibilityRole="button" accessibilityLabel={`Take this job, ${formatPaise(job.earningPaise)}`}
-        style={({ pressed }) => [styles.take, (pressed || busy) && styles.dim]}>
+        android_ripple={RIPPLE} style={[styles.take, busy && styles.dim]}>
         <Text variant="button" color={colors.textInverse}>Take this job</Text>
       </Pressable>
     </View>
@@ -244,7 +247,7 @@ export function NoticeRow({ tone = 'amber', icon, title, body, onPress }: {
   const border = tone === 'red' ? danger[100] : tone === 'blue' ? zappy[100] : accent[100];
   return (
     <Pressable onPress={onPress} disabled={!onPress} accessibilityRole={onPress ? 'button' : undefined}
-      style={({ pressed }) => [styles.notice, { backgroundColor: bg, borderColor: border }, pressed && styles.pressed]}>
+      android_ripple={RIPPLE} style={[styles.notice, { backgroundColor: bg, borderColor: border }]}>
       {icon}
       <View style={styles.flex}>
         <Text variant="bodySmall" weight="semibold">{title}</Text>

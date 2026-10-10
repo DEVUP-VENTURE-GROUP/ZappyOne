@@ -17,6 +17,9 @@ import { colors, zappy, ink, slate, success, accent, danger } from '../theme/col
 import { radius } from '../theme/radius';
 import { spacing } from '../theme/spacing';
 
+/** Native touch feedback. NativeWind ignores Pressable's style-as-function, so pressed styles can't be used. */
+const RIPPLE = { color: 'rgba(16,24,40,0.08)' };
+
 const rupees = (p: number) => `₹${Math.round((p || 0) / 100).toLocaleString('en-IN')}`;
 
 const DUES_TONE: Record<string, { bg: string; border: string; icon: string; iconBg: string; bar: string }> = {
@@ -185,7 +188,7 @@ export function ServicesCard() {
   const tone = CHIP_TONE[headline.tone];
   return (
     <Pressable onPress={() => router.push('/provider/onboarding' as never)} accessibilityRole="button"
-      style={({ pressed }) => [styles.services, pressed && styles.pressed]}>
+      android_ripple={RIPPLE} style={[styles.services]}>
       <View style={[styles.iconBox, { backgroundColor: tone.bg }]}><Wrench size={17} color={tone.fg} /></View>
       <View style={styles.flex}>
         <Text variant="bodySmall" weight="bold">{headline.title}</Text>

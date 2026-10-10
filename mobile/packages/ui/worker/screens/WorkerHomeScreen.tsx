@@ -192,7 +192,7 @@ export function WorkerHomeScreen({ kinds = KINDS }: { kinds?: string[] }) {
         </View>
         <View style={styles.grid}>
           <StatTile Icon={Clock} tone="slate" label="Online" value={isOnline ? hm(onlineSec) : 'Off'} sub={isOnline ? 'This session' : 'Go online'} />
-          <StatTile Icon={Star} tone="amber" label="Rating" value={ratingLabel(me)} sub={`${me?.completedJobs ?? 0} jobs`} onPress={() => go('/worker/reviews')} />
+          <StatTile Icon={Star} tone="amber" label="Rating" value={ratingLabel(me)} sub={`${me?.completedJobs ?? 0} job${(me?.completedJobs ?? 0) === 1 ? '' : 's'}`} onPress={() => go('/worker/reviews')} />
         </View>
 
         <Panel title="In your hands" action={<LinkButton label="All work" onPress={() => go('/worker/work')} />}>

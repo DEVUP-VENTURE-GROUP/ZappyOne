@@ -25,6 +25,9 @@ import { radius } from '../../theme/radius';
 import { spacing } from '../../theme/spacing';
 import { providerPath } from '../paths';
 
+/** Native touch feedback. NativeWind ignores Pressable's style-as-function, so pressed styles can't be used. */
+const RIPPLE = { color: 'rgba(16,24,40,0.08)' };
+
 type Item = { _id: string; type: string; title: string; body?: string; createdAt: string; readAt?: string | null; deepLink?: string; data?: Record<string, unknown> };
 
 const TONE: Record<string, { bg: string; fg: string }> = {
@@ -129,7 +132,7 @@ export function WorkerNotificationsScreen() {
               <Pressable
                 onPress={() => { if (isUnread) void read(n._id); router.push(providerPath(notificationPath(n)) as never); }}
                 accessibilityRole="button" accessibilityLabel={`${isUnread ? 'Unread. ' : ''}${n.title}`}
-                style={({ pressed }) => [styles.card, isUnread ? { backgroundColor: tone.bg, borderColor: tone.bg } : null, pressed && styles.pressed]}>
+                android_ripple={RIPPLE} style={[styles.card, isUnread ? { backgroundColor: tone.bg, borderColor: tone.bg } : null]}>
                 <View style={[styles.icon, { backgroundColor: isUnread ? colors.surface : slate[100] }]}><Icon size={17} color={isUnread ? tone.fg : ink[400]} /></View>
                 <View style={styles.flex}>
                   <View style={styles.between}>

@@ -202,7 +202,7 @@ export default function WorkerDashboard() {
     { Icon: BadgeIndianRupee, tone: 'green', label: 'Today', value: inr(todayData?.earningsRupees ?? 0), sub: 'Earnings', onClick: () => nav('/worker/earnings') },
     { Icon: Briefcase, tone: 'blue', label: 'Jobs today', value: todayData?.jobs ?? 0, sub: 'Completed', onClick: () => nav('/worker/work') },
     { Icon: Clock, tone: 'cyan', label: 'Online', value: isOnline ? hm(onlineSec) : 'Off', sub: isOnline ? 'This session' : 'Go online' },
-    { Icon: Star, tone: 'amber', label: 'Rating', value: rating, sub: `${me?.completedJobs ?? 0} jobs`, onClick: () => nav('/worker/reviews') },
+    { Icon: Star, tone: 'amber', label: 'Rating', value: rating, sub: `${me?.completedJobs ?? 0} job${(me?.completedJobs ?? 0) === 1 ? '' : 's'}`, onClick: () => nav('/worker/reviews') },
   ];
 
   return (

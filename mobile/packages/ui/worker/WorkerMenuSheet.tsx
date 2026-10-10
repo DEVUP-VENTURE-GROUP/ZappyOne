@@ -12,6 +12,9 @@ import { colors, ink, danger } from '../theme/colors';
 import { radius } from '../theme/radius';
 import { spacing } from '../theme/spacing';
 
+/** Native touch feedback. NativeWind ignores Pressable's style-as-function, so pressed styles can't be used. */
+const RIPPLE = { color: 'rgba(16,24,40,0.08)' };
+
 export const WORKER_MENU = [
   { key: 'services', label: 'My services', Icon: ShieldCheck, to: '/provider/onboarding' },
   { key: 'documents', label: 'My documents', Icon: FileText, to: '/provider/documents' },
@@ -32,13 +35,13 @@ export function WorkerMenuSheet({ visible, onClose, items = WORKER_MENU }: { vis
       <View style={styles.list}>
         {items.map(({ key, label, Icon, to }) => (
           <Pressable key={key} accessibilityRole="button" onPress={() => { onClose(); router.push(to as never); }}
-            style={({ pressed }) => [styles.item, pressed && styles.pressed]}>
+            android_ripple={RIPPLE} style={[styles.item]}>
             <Icon size={19} color={ink[700]} strokeWidth={2.1} />
             <Text variant="body" weight="semibold" style={styles.flex}>{label}</Text>
             <ChevronRight size={16} color={ink[400]} />
           </Pressable>
         ))}
-        <Pressable accessibilityRole="button" onPress={() => { onClose(); void signOut(); }} style={({ pressed }) => [styles.item, pressed && styles.pressed]}>
+        <Pressable accessibilityRole="button" onPress={() => { onClose(); void signOut(); }} android_ripple={RIPPLE} style={[styles.item]}>
           <LogOut size={19} color={danger[600]} />
           <Text variant="body" weight="semibold" color={danger[600]} style={styles.flex}>Sign out</Text>
         </Pressable>
