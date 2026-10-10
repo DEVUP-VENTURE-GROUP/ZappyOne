@@ -39,6 +39,9 @@ const LOGIC = [
   { from: 'components/provider/weeklyHoursRules.js', to: 'shared/weeklyHoursRules.js', imports: {} },
   { from: 'components/account/passwordRules.js', to: 'shared/passwordRules.js', imports: {} },
   { from: 'config/releases.js', to: 'shared/releases.js', imports: {} },
+  { from: 'i18n/translations.js', to: 'shared/translations.js', imports: {} },
+  { from: 'components/events/eventPhotos.js', to: 'shared/eventPhotos.js', imports: {} },
+  { from: 'customer/useMyJobs.js', to: 'shared/useMyJobs.js', imports: { react: 'react', '../services/api': '../api/hooks', '../i18n/translations': './translations' } },
   { from: 'provider/useProviderJobs.js', to: 'shared/useProviderJobs.js', imports: { react: 'react', '../services/api': '../api/hooks' } },
 ];
 

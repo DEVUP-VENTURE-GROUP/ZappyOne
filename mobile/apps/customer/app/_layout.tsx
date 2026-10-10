@@ -6,7 +6,7 @@ const ROLES = ['user'] as const;
 
 export default function RootLayout() {
   return (
-    <AppRoot roles={ROLES} home="/(main)" login="/(auth)/login" resolveRoute={resolveRoute}>
+    <AppRoot roles={ROLES} home="/" login="/(auth)/login" resolveRoute={resolveRoute}>
       <AppStack />
     </AppRoot>
   );

@@ -18,7 +18,7 @@ import AdBanner from '../../components/marketing/AdBanner';
 import Footer from '../../components/layout/Footer';
 import SpotlightSearch from '../catalog/SpotlightSearch';
 import LensModal from '../catalog/LensModal';
-import { useMyJobs } from '../bookings/useMyJobs';
+import { useMyJobs } from '@shared/customer/useMyJobs';
 import { trackSearch } from '../../hooks/useTelemetry';
 import HomeHeader, { SearchBar } from './HomeHeader';
 import LocationSheet from './LocationSheet';

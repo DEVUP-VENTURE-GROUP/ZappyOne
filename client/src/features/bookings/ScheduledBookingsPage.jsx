@@ -11,7 +11,7 @@ import {
   useMyRepeatsQuery, useRepeatActionMutation,
 } from '@shared/services/api';
 import { useSafeBack } from '../../hooks/useBookingFlow';
-import { useMyJobs } from './useMyJobs';
+import { useMyJobs } from '@shared/customer/useMyJobs';
 import { serviceVisual } from './OrdersListPage';
 
 /**

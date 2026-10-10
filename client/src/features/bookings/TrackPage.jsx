@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapPin, ChevronRight, Loader2, Zap } from 'lucide-react';
-import { useMyJobs } from './useMyJobs';
+import { useMyJobs } from '@shared/customer/useMyJobs';
 import { useT } from '@shared/i18n/I18nProvider';
 
 /**

@@ -12,7 +12,7 @@ import HandoverCodeCard from '../tracking/cards/HandoverCodeCard';
 import { useRateRepairBookingMutation } from '@shared/services/api';
 import JobTrackingPage from '../tracking/JobTrackingPage';
 import RepairWarrantyCard from './RepairWarrantyCard';
-import { repairRebookHref } from '../bookings/useMyJobs';
+import { repairRebookHref } from '@shared/customer/useMyJobs';
 import { KINDS } from '../tracking/kinds';
 import { useJobSOS } from '../tracking/useJobSOS';
 import { formatPaise, billAddOnsPaise } from '@shared/utils/money';

@@ -15,7 +15,7 @@ import {
   Wrench,
   CheckCircle2,
 } from 'lucide-react';
-import { useMyJobs } from './useMyJobs';
+import { useMyJobs } from '@shared/customer/useMyJobs';
 import { ErrorState } from '../../components/common/QueryState';
 import PullToRefresh from '../../components/common/PullToRefresh';
 import { API_BASE } from '@shared/services/apiBase';
