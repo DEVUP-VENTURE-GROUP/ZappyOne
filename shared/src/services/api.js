@@ -4,7 +4,7 @@ import { Mutex } from 'async-mutex';
 import toast from 'react-hot-toast';
 import { setAuth, logout } from '../modules/auth/authSlice';
 import { adminApiPath } from '../config/admin';
-import { TAG_TYPES, endpoints } from './endpoints';
+import { TAG_TYPES, bindApi, endpoints } from './endpoints';
 
 // Debounced "signed out on another device" notice — a burst of in-flight requests
 // all 401 at once, but the user should see the message only once.
@@ -146,6 +146,8 @@ export const api = createApi({
   // Every server call, written once for the websites and the apps (services/endpoints).
   endpoints: (b) => endpoints(b, { adminApiPath }),
 });
+// The optimistic patches in endpoints.js need the finished API.
+bindApi(api);
 
 export const {
   useRequestOtpMutation,

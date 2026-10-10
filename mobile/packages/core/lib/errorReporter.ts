@@ -33,3 +33,43 @@ export function reportError({ kind = 'crash', message, stack = '', componentStac
     }).catch(() => {});
   } catch { /* reporting must never break the app */ }
 }
+
+type Handler = (error: unknown, isFatal?: boolean) => void;
+interface HermesTracker { enablePromiseRejectionTracker?: (o: { allRejections: boolean; onUnhandled: (id: number, e: unknown) => void; onHandled: () => void }) => void }
+let installed = false;
+
+/**
+ * The last safety net, installed once at start-up: a failed promise nobody
+ * caught, or a stray error outside a screen, is reported to Admin → Live
+ * errors and logged for the developer, never shown to the person using the
+ * app. Errors while drawing a screen are caught by ErrorBoundary instead; a
+ * truly fatal error still goes to React Native's own handler after reporting.
+ */
+export function installGlobalErrorHandlers(): void {
+  if (installed) return;
+  installed = true;
+  const text = (e: unknown) => (e instanceof Error ? e : new Error(String((e as { message?: string })?.message ?? e)));
+  try {
+    const hermes = (globalThis as { HermesInternal?: HermesTracker }).HermesInternal;
+    hermes?.enablePromiseRejectionTracker?.({
+      allRejections: true,
+      onUnhandled: (_id, e) => {
+        const err = text(e);
+        reportError({ kind: 'js', message: `Unhandled promise: ${err.message}`, stack: err.stack, healed: true });
+        if (__DEV__) console.log('[unhandled promise]', err.message);
+      },
+      onHandled: () => {},
+    });
+  } catch { /* not on Hermes: React Native's default tracking stays */ }
+  try {
+    const utils = (globalThis as { ErrorUtils?: { getGlobalHandler: () => Handler; setGlobalHandler: (h: Handler) => void } }).ErrorUtils;
+    if (!utils) return;
+    const previous = utils.getGlobalHandler();
+    utils.setGlobalHandler((e, isFatal) => {
+      const err = text(e);
+      reportError({ kind: isFatal ? 'crash' : 'js', message: err.message, stack: err.stack, healed: !isFatal });
+      if (isFatal) previous(e, isFatal);
+      else if (__DEV__) console.log('[error]', err.message);
+    });
+  } catch { /* the default handler stays */ }
+}

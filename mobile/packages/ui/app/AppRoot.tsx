@@ -33,11 +33,15 @@ import { setSession, logout as logoutAction } from '@zappy/core/store/authSlice'
 import { onSessionEnd } from '@zappy/core/lib/sessionBus';
 import { socketClient } from '@zappy/core/socket/socketClient';
 import { createLogger } from '@zappy/core/lib/logger';
+import { installGlobalErrorHandlers } from '@zappy/core/lib/errorReporter';
 import { usePushNotifications } from '@zappy/core/hooks/usePushNotifications';
 import type { RouteResolver } from '@zappy/core/lib/pushRouting';
 import type { Role } from '@zappy/core/types/api';
 import { fontAssets } from '../theme';
 import { ToastHost } from '../components/Toast';
+
+// Before any screen runs: a stray error is reported, never shown to the person using the app.
+installGlobalErrorHandlers();
 
 const log = createLogger('app-root');
 

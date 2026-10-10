@@ -22,6 +22,16 @@ export const TAG_TYPES = ['PriceRequest', 'Reviews', 'Fees', 'JobChat', 'Account
     'PetCatalog', 'MyPets', 'PetBookings', 'PetAvailable', 'PetRecurring', 'AdminPetBookings', 'AdminPetPricing', 'AdminPetCapabilities',
     'RepairIdentification', 'Onboarding', 'AdminBookings', 'ErrorIssues', 'Surge', 'IdCheck', 'WorkerHours', 'Repeats', 'ShopPayouts'];
 
+/**
+ * The finished API these endpoints live in, for the optimistic cache patches
+ * below (api.util.updateQueryData). Each platform binds it right after building
+ * its API; until then a patch is skipped and the request still goes through.
+ */
+let api = null;
+export function bindApi(built) { api = built; }
+/** Patch a cached query when the API is bound; a harmless no-op otherwise. */
+const patchQuery = (dispatch, name, args, recipe) => (api ? dispatch(api.util.updateQueryData(name, args, recipe)) : { undo() {} });
+
 /** `b` is RTK Query's endpoint builder. */
 export function endpoints(b, { adminApiPath }) {
   return {
@@ -251,9 +261,9 @@ export function endpoints(b, { adminApiPath }) {
       query: ({ id, reason }) => ({ url: `/orders/${id}/cancel`, method: 'POST', body: { reason } }),
       // Optimistic: flip status to cancelled immediately, roll back on failure.
       async onQueryStarted({ id }, { dispatch, queryFulfilled }) {
-        const patch = dispatch(api.util.updateQueryData('getOrder', id, (draft) => {
+        const patch = patchQuery(dispatch, 'getOrder', id, (draft) => {
           if (draft?.order) draft.order.status = 'cancelled';
-        }));
+        });
         try { await queryFulfilled; } catch { patch.undo(); }
       },
       invalidatesTags: (r, e, a) => ['Order', { type: 'Order', id: a.id }],
@@ -266,9 +276,9 @@ export function endpoints(b, { adminApiPath }) {
       }),
       // Optimistic: reflect the rating instantly so the UI switches to "rated".
       async onQueryStarted({ id, rating, review }, { dispatch, queryFulfilled }) {
-        const patch = dispatch(api.util.updateQueryData('getOrder', id, (draft) => {
+        const patch = patchQuery(dispatch, 'getOrder', id, (draft) => {
           if (draft?.order) { draft.order.rating = rating; if (review != null) draft.order.review = review; }
-        }));
+        });
         try { await queryFulfilled; } catch { patch.undo(); }
       },
       invalidatesTags: (r, e, a) => [{ type: 'Order', id: a.id }],
@@ -495,7 +505,7 @@ export function endpoints(b, { adminApiPath }) {
       async onQueryStarted(id, { dispatch, queryFulfilled }) {
         const patches = [];
         for (const unreadOnly of [false, true]) {
-          patches.push(dispatch(api.util.updateQueryData('listNotifications', { page: 1, unreadOnly }, (draft) => {
+          patches.push(patchQuery(dispatch, 'listNotifications', { page: 1, unreadOnly }, (draft) => {
             if (!draft?.notifications) return;
             if (unreadOnly) {
               draft.notifications = draft.notifications.filter((n) => String(n._id) !== String(id));
@@ -503,7 +513,7 @@ export function endpoints(b, { adminApiPath }) {
               const n = draft.notifications.find((x) => String(x._id) === String(id));
               if (n && !n.readAt) n.readAt = new Date().toISOString();
             }
-          })));
+          }));
         }
         try { await queryFulfilled; } catch { patches.forEach((p) => p.undo()); }
       },
