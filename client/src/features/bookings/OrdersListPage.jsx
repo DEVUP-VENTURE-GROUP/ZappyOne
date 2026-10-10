@@ -27,6 +27,7 @@ import { staggerContainer, fadeInUp } from '../../lib/animations';
 import { useT, useI18n } from '@shared/i18n/I18nProvider';
 import { formatPaise } from '@shared/utils/money';
 import toast from 'react-hot-toast';
+import { fetchOk } from '@shared/utils/fetchOk';
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
 // Colour tokens per terminal status. Uses subtle tints, not saturated fills,
@@ -341,8 +342,7 @@ export default function OrdersListPage() {
     if (downloadingId) return;
     setDownloadingId(orderId);
     try {
-      const res = await fetch(`${API_BASE}/api/orders/${orderId}/invoice`, { headers: { Authorization: `Bearer ${token}` } });
-      if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || t('activity.invoiceFailed', 'Failed to download invoice')); }
+      const res = await fetchOk(`${API_BASE}/api/orders/${orderId}/invoice`, { headers: { Authorization: `Bearer ${token}` } });
       const blob = new Blob([await res.text()], { type: 'text/html;charset=utf-8' });
       const url = URL.createObjectURL(blob);
       const win = window.open(url, '_blank', 'noopener');

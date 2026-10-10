@@ -54,7 +54,7 @@ if (_bc) {
   };
 }
 
-const baseQueryWithReauth = async (args, api, extraOptions) => {
+const baseQueryWithReauthRaw = async (args, api, extraOptions) => {
   setReporterToken(() => api.getState().auth?.accessToken);
   let result = await rawBaseQuery(args, api, extraOptions);
 
@@ -113,6 +113,25 @@ const baseQueryWithReauth = async (args, api, extraOptions) => {
   }
   return result;
 };
+
+/**
+ * A fault on our side is never shown as one. When the server fails (5xx) or
+ * the reply is not ours to read (a gateway page, a dropped connection), its
+ * text is taken off the error, so every screen's own calm line shows instead
+ * ("Could not take this job"). A 4xx message tells the person what to change
+ * and passes through. The full failure was already sent to Live errors.
+ */
+const OUR_SIDE = new Set(['FETCH_ERROR', 'PARSING_ERROR', 'TIMEOUT_ERROR']);
+function calm(result) {
+  const e = result?.error;
+  if (!e || !(OUR_SIDE.has(e.status) || (typeof e.status === 'number' && e.status >= 500))) return result;
+  const data = e.data && typeof e.data === 'object' ? { ...e.data } : {};
+  delete data.error;
+  delete data.message;
+  return { ...result, error: { ...e, data } };
+}
+
+const baseQueryWithReauth = async (args, api, extraOptions) => calm(await baseQueryWithReauthRaw(args, api, extraOptions));
 
 export const api = createApi({
   reducerPath: 'api',

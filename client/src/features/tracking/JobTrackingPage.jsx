@@ -25,6 +25,7 @@ import { useJobOptionsQuery, useReportProviderAbsentMutation } from '@shared/ser
 import { useSelector } from 'react-redux';
 import { selectAuth } from '@shared/modules/auth/authSlice';
 import { API_BASE } from '@shared/services/apiBase';
+import { fetchOk } from '@shared/utils/fetchOk';
 
 const rupees = (p) => `₹${Math.round((p || 0) / 100).toLocaleString('en-IN')}`;
 
@@ -70,8 +71,7 @@ export default function JobTrackingPage({ job, extras = null, startCode = null, 
   // The receipt PDF for a finished job (the same one the "job done" email carries).
   const downloadReceipt = async () => {
     try {
-      const res = await fetch(`${API_BASE}/api/jobs/${job.id}/receipt`, { headers: { Authorization: `Bearer ${accessToken}` } });
-      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'Could not get the receipt');
+      const res = await fetchOk(`${API_BASE}/api/jobs/${job.id}/receipt`, { headers: { Authorization: `Bearer ${accessToken}` } });
       const url = URL.createObjectURL(await res.blob());
       const a = document.createElement('a');
       a.href = url; a.download = `ZappyOne-receipt-${job.reference || job.id}.pdf`;

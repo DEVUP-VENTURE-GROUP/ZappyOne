@@ -43,6 +43,7 @@ import {
 } from './redesign';
 
 import { staggerContainer, fadeInUp } from '../../lib/animations';
+import { fetchOk } from '@shared/utils/fetchOk';
 
 /* Pick & Go handoff — worker asked mid-job to send this order to their shop;
    customer must confirm before fulfillmentMode actually changes. */
@@ -338,10 +339,9 @@ export default function OrderTrackingPage() {
 
   async function openInvoice() {
     try {
-      const res = await fetch(`${API_BASE}/api/orders/${id}/invoice`, {
+      const res = await fetchOk(`${API_BASE}/api/orders/${id}/invoice`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) throw new Error('Invoice not available');
       const html = await res.text();
       const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
       const url  = URL.createObjectURL(blob);

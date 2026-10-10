@@ -20,6 +20,7 @@ import { PayNowButton } from '@shared/components/common/PayMethodPicker';
 import { API_BASE } from '@shared/services/apiBase';
 import { useSelector } from 'react-redux';
 import { selectAuth } from '@shared/modules/auth/authSlice';
+import { fetchOk } from '@shared/utils/fetchOk';
 
 /**
  * Customer view of a repair booking.
@@ -241,10 +242,9 @@ function ServiceReport({ booking }) {
   async function open() {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/api/repair/bookings/${booking._id}/report`, {
+      const res = await fetchOk(`${API_BASE}/api/repair/bookings/${booking._id}/report`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) throw new Error('Report not available yet');
       const html = await res.text();
       const url = URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' }));
       window.open(url, '_blank', 'noopener');

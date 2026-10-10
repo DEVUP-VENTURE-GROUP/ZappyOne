@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import {
   useGetWalletQuery, useWalletTransactionsQuery,
-  useWalletTopupMutation, useVerifyPaymentMutation,
+  useWalletTopupMutation, useVerifyPaymentMutation, useGetPaymentAvailabilityQuery,
 } from '@shared/services/api';
 import { selectAuth } from '@shared/modules/auth/authSlice';
 import { openCheckout } from '@shared/services/cashfree';
@@ -28,6 +28,8 @@ export default function WalletPage() {
   const { data: txns, refetch: refetchTxns } = useWalletTransactionsQuery({ page: 1 });
   const [topup, { isLoading: starting }] = useWalletTopupMutation();
   const [verify] = useVerifyPaymentMutation();
+  // "Add money" is offered only while online payments work (payments/availability).
+  const online = !!useGetPaymentAvailabilityQuery().data?.online;
   const [busy, setBusy] = useState(false);
   const [customAmount, setCustomAmount] = useState('');
   const [showAddMoney, setShowAddMoney] = useState(false);
@@ -98,7 +100,7 @@ export default function WalletPage() {
               </p>
               {isFrozen ? (
                 <p className="chip mt-3 bg-red-50 text-red-700"><AlertCircle size={13} /> {tr('wallet.frozen', 'Wallet frozen. Contact support.')}</p>
-              ) : (
+              ) : online && (
                 <button onClick={() => setShowAddMoney(!showAddMoney)} className="btn-primary mt-4 w-full sm:w-auto">
                   <Plus size={16} /> {tr('wallet.addMoney', 'Add money')}
                 </button>
