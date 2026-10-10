@@ -13,7 +13,7 @@ import { useRateRepairBookingMutation } from '@shared/services/api';
 import JobTrackingPage from '../tracking/JobTrackingPage';
 import RepairWarrantyCard from './RepairWarrantyCard';
 import { repairRebookHref } from '@shared/customer/useMyJobs';
-import { KINDS } from '../tracking/kinds';
+import { KINDS } from '@shared/customer/jobKinds';
 import { useJobSOS } from '../tracking/useJobSOS';
 import { formatPaise, billAddOnsPaise } from '@shared/utils/money';
 import { PayNowButton } from '@shared/components/common/PayMethodPicker';

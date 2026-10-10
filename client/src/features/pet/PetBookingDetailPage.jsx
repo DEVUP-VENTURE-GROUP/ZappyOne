@@ -5,7 +5,7 @@ import { useGetPetBookingQuery, useCancelPetBookingMutation, useRatePetBookingMu
 import { formatPaise, billAddOnsPaise } from '@shared/utils/money';
 import { PayNowButton } from '@shared/components/common/PayMethodPicker';
 import JobTrackingPage from '../tracking/JobTrackingPage';
-import { KINDS } from '../tracking/kinds';
+import { KINDS } from '@shared/customer/jobKinds';
 import { useJobSOS } from '../tracking/useJobSOS';
 
 /**

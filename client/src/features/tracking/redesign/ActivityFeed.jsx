@@ -1,7 +1,7 @@
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Check } from 'lucide-react';
 import { fadeInUp } from '../../../lib/animations';
-import { fmtTime } from './_shared';
+import { fmtTime } from '@shared/customer/trackingSteps';
 
 /**
  * What has happened on the job, newest first, from the real status history.

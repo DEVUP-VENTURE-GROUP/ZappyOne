@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { CheckCircle, Clock, Zap } from 'lucide-react';
 import { fadeInUp } from '../../../lib/animations';
-import { STEPS, fmtTime } from './_shared';
+import { STEPS, fmtTime } from '@shared/customer/trackingSteps';
 
 /**
  * Vertical progress timeline showing all lifecycle stages.

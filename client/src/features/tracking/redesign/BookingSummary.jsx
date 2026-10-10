@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { Zap, MapPin, Clock, Wallet, FileText } from 'lucide-react';
 import { fadeInUp } from '../../../lib/animations';
-import { rupeesOf } from './_shared';
+import { rupeesOf } from '@shared/customer/trackingSteps';
 
 /**
  * Booking summary — service, address, when, payment, itemised lines, total,

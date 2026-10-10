@@ -23,7 +23,7 @@ import { selectAuth } from '@shared/modules/auth/authSlice';
 
 // Existing tracking modules (preserved intact)
 import LiveTrackingMap from '@shared/modules/tracking/LiveTrackingMap';
-import { KINDS } from './kinds';
+import { KINDS } from '@shared/customer/jobKinds';
 import PageTransition from '../../components/common/PageTransition';
 import BoostOfferCard from './cards/BoostOfferCard';
 import WorkerProfileSheet from '../providers/WorkerProfileSheet';
@@ -261,7 +261,7 @@ export default function OrderTrackingPage() {
   const canCancel = !terminal && !['arrived', 'in_progress'].includes(status);
   const eta         = liveOrder.etaMinutes;
   const distanceKm  = order.pricing?.distanceKm;
-  // The shared tracking pieces read one shape for every kind (tracking/kinds.js).
+  // The shared tracking pieces read one shape for every kind (shared/customer/jobKinds.js).
   const job = KINDS.order.toJob(data);
   const workerVisible = order.workerId && !terminal && status !== 'searching' && status !== 'created';
 

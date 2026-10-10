@@ -1,4 +1,4 @@
-import { tripOf } from '@shared/hooks/useLiveTrip';
+import { tripOf } from '../provider/jobFlows';
 
 /**
  * How each kind of job becomes the one shape the tracking page renders.

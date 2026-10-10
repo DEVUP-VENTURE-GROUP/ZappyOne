@@ -35,7 +35,7 @@ const rupees = (p) => `₹${Math.round((p || 0) / 100).toLocaleString('en-IN')}`
  * The first version's order tracking (live map, ETA, the pro's card, a
  * timeline and live feed, the start code, SOS) applied to the new flows:
  * each kind's page turns its data into the common `job` shape
- * (tracking/kinds.js) and passes its own extras — a repair quote to approve,
+ * (shared/customer/jobKinds.js) and passes its own extras — a repair quote to approve,
  * a helping item to decide on, a payment to make.
  *
  *   job          from KINDS[kind].toJob(...)

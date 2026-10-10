@@ -7,7 +7,7 @@
 const BUILT = [
   /^\/$/, /^\/home$/, /^\/services$/, /^\/profile$/,
   /^\/repair(\/(laptop|two-wheeler|four-wheeler|water-tank-care))?$/,
-  /^\/repair\/price-requests\/[\w-]+$/, /^\/repair\/category\/[\w-]+\/[\w-]+$/,
+  /^\/repair\/price-requests\/[\w-]+$/, /^\/repair\/bookings\/[\w-]+$/, /^\/repair\/category\/[\w-]+\/[\w-]+$/,
 ];
 
 export function resolveRoute(deepLink: string): string | null {

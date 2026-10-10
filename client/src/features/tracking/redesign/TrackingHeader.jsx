@@ -1,5 +1,5 @@
 import { ArrowLeft, Share2, ShieldAlert, HeadphonesIcon, Clock } from 'lucide-react';
-import { STATUS_PILL, shortId } from './_shared';
+import { STATUS_PILL, shortId } from '@shared/customer/trackingSteps';
 
 /**
  * The tracking page's header, for every job kind: where am I (service and
@@ -7,7 +7,7 @@ import { STATUS_PILL, shortId } from './_shared';
  * that belong here (share, SOS, support). Light surface; status is carried by
  * labelled chips, not by colour alone.
  *
- * `job` is the common tracked-job shape (tracking/kinds.js). Pricing lives in
+ * `job` is the common tracked-job shape (shared/customer/jobKinds.js). Pricing lives in
  * <BookingSummary/>.
  */
 function IconAction({ label, onClick, danger = false, children }) {
