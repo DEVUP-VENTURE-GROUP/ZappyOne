@@ -23,6 +23,7 @@ import { useAppSelector } from '@zappy/core/store/hooks';
 import type { ApiErr } from '../../lib/feedback';
 import { toast } from '../Toast';
 import { JobOfferAlert, type Offer } from './JobOfferAlert';
+import { errText } from '../../lib/feedback';
 
 export function JobOfferHost({ kinds = ['repair', 'pet', 'helping'] }: { kinds?: string[] }) {
   const router = useRouter();
@@ -79,7 +80,7 @@ export function JobOfferHost({ kinds = ['repair', 'pet', 'helping'] }: { kinds?:
       toast.success('It’s yours');
     } catch (err) {
       const e = err as ApiErr;
-      toast.error(e?.data?.code === 'ALREADY_CLAIMED' ? 'Someone else took it first' : e?.data?.error || 'Could not accept this job');
+      toast.error(e?.data?.code === 'ALREADY_CLAIMED' ? 'Someone else took it first' : errText(e, 'Could not accept this job'));
     }
     done(offer);
   }
@@ -97,7 +98,7 @@ export function JobOfferHost({ kinds = ['repair', 'pet', 'helping'] }: { kinds?:
       // An open job needs no answer: passing just hides it for you.
     } catch (err) {
       // A shop technician's pass must reach the owner; anyone else's is courtesy.
-      if (isShopTechnician && offer.kind === 'repair') { toast.error((err as ApiErr)?.data?.error || 'Could not pass the job back'); return; }
+      if (isShopTechnician && offer.kind === 'repair') { toast.error(errText(err, 'Could not pass the job back')); return; }
     }
     done(offer);
   }

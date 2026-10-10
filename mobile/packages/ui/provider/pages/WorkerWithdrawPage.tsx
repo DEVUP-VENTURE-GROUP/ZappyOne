@@ -6,14 +6,14 @@ import React, { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { AlertCircle, Banknote, Building2, Clock, ShieldCheck, Smartphone, Zap } from 'lucide-react-native';
+import { AlertCircle, Banknote, Building2, ShieldCheck, Smartphone } from 'lucide-react-native';
 import { useGetWorkerBankAccountsQuery, useGetWalletQuery, useRequestPayoutMutation } from '@zappy/core/api';
 import { Button, LoadingState, ScreenHeader, Text } from '../../components';
 import { toast } from '../../components/Toast';
 import { FieldLabel } from '../../components/common/FormField';
 import { useOtpGate } from '../../components/common/OtpGate';
 import { type ApiErr, errText } from '../../lib/feedback';
-import { colors, zappy, ink, slate, success, accent, danger } from '../../theme/colors';
+import { colors, zappy, ink, slate, success, danger } from '../../theme/colors';
 import { radius } from '../../theme/radius';
 import { spacing } from '../../theme/spacing';
 import { DuesCard } from '../DuesCard';
@@ -23,11 +23,10 @@ const MIN_PAISE = 5000;    // ₹50, must match server payout.service.js
 
 const MAX_PAISE = 2500000; // ₹25,000
 
-const SETTLE_OPTS = [
-  { id: 'instant', label: 'Instant transfer', desc: 'Within 30 minutes', feeRs: 9, Icon: Zap },
-  { id: 'next_day', label: 'Next day transfer', desc: 'By 9 AM tomorrow', feeRs: 0, Icon: Clock },
-];
-
+/*
+ * No speed or fee choice: payouts are reviewed and transferred by the team
+ * until a payout gateway is connected (as on the website). It returns with it.
+ */
 export function WorkerWithdrawPage() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -37,7 +36,6 @@ export function WorkerWithdrawPage() {
   const otp = useOtpGate();
   const [amountRs, setAmountRs] = useState('');
   const [selectedId, setSelectedId] = useState('');
-  const [settlementType, setSettlementType] = useState('next_day');
 
   const balancePaise: number = walletData?.balance ?? 0;
   const banks: Bank[] = bankData?.banks ?? [];
@@ -49,8 +47,7 @@ export function WorkerWithdrawPage() {
   const selected = methods.find((m) => m.id === selectedId) ?? methods.find((m) => m.isDefault) ?? methods[0];
 
   const amtRs = parseFloat(amountRs) || 0;
-  const feeRs = SETTLE_OPTS.find((o) => o.id === settlementType)?.feeRs ?? 0;
-  const netRs = Math.max(0, amtRs - feeRs);
+  const netRs = amtRs;
   const amtPaise = Math.round(amtRs * 100);
   const validationError = amtPaise < MIN_PAISE && amtRs > 0 ? `Minimum withdrawal is ₹${MIN_PAISE / 100}`
     : amtPaise > MAX_PAISE ? `Maximum withdrawal is ₹${MAX_PAISE / 100}`
@@ -130,32 +127,16 @@ export function WorkerWithdrawPage() {
             })}
           </View>
 
-          <View style={styles.card}>
-            <FieldLabel>TRANSFER SPEED</FieldLabel>
-            {SETTLE_OPTS.map(({ id, label, desc, feeRs: fee, Icon }) => {
-              const on = settlementType === id;
-              return (
-                <Pressable key={id} onPress={() => setSettlementType(id)} accessibilityRole="radio" accessibilityState={{ selected: on }} style={[styles.option, on && styles.optionOn]}>
-                  <View style={[styles.iconBox, on && { backgroundColor: zappy[600] }]}><Icon size={18} color={on ? '#fff' : ink[500]} /></View>
-                  <View style={styles.flex}><Text variant="bodySmall" weight="black">{label}</Text><Text variant="caption" color={ink[400]}>{desc}</Text></View>
-                  <View style={[styles.tag, { backgroundColor: fee ? accent[50] : success[50] }]}><Text variant="caption" weight="black" color={fee ? accent[700] : success[700]}>{fee ? `₹${fee} fee` : 'Free'}</Text></View>
-                  <View style={[styles.radio, on && styles.radioOn]}>{on ? <View style={styles.radioDot} /> : null}</View>
-                </Pressable>
-              );
-            })}
-          </View>
-
           {amtRs > 0 && !validationError ? (
             <View style={[styles.card, { backgroundColor: ink[900], borderColor: ink[900] }]}>
               <View style={styles.between}><Text variant="bodySmall" color={slate[400]}>Withdrawal amount</Text><Text variant="bodySmall" weight="bold" color="#fff">₹{amtRs.toFixed(2)}</Text></View>
-              <View style={styles.between}><Text variant="bodySmall" color={slate[400]}>Transfer fee</Text><Text variant="bodySmall" weight="bold" color={feeRs ? '#FCD34D' : '#86EFAC'}>-₹{feeRs.toFixed(2)}</Text></View>
               <View style={[styles.between, styles.topRule]}><Text variant="body" weight="black" color="#fff">You receive</Text><Text variant="heading2" weight="black" color={'#86EFAC'}>₹{netRs.toFixed(2)}</Text></View>
             </View>
           ) : null}
 
           <View style={[styles.row, styles.sunken, { alignItems: 'flex-start' }]}>
             <ShieldCheck size={16} color={success[500]} />
-            <Text variant="caption" color={ink[500]} style={styles.flex}>All withdrawals are securely processed. Instant transfers may take up to 30 mins depending on your bank's IMPS network status.</Text>
+            <Text variant="caption" color={ink[500]} style={styles.flex}>All withdrawals are securely processed. We review each one and send it to the account you chose.</Text>
           </View>
         </ScrollView>
       )}

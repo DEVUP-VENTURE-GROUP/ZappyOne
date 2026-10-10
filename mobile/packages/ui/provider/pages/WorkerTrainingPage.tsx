@@ -3,7 +3,7 @@
  * (the websites' WorkerTrainingPage).
  */
 import React, { useState } from 'react';
-import { Image, Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { AlertCircle, Award, BookOpen, Clock, PlayCircle } from 'lucide-react-native';
 import { useGetTrainingModulesQuery, useGetTrainingModuleQuery, useSubmitTrainingQuizMutation } from '@zappy/core/api';
 import { Button, EmptyState, LoadingState, ScreenHeader, Text } from '../../components';
@@ -13,6 +13,7 @@ import type { ApiErr } from '../../lib/feedback';
 import { colors, zappy, ink, slate, success, accent, danger } from '../../theme/colors';
 import { radius } from '../../theme/radius';
 import { spacing } from '../../theme/spacing';
+import { openLink } from '../../lib/openLink';
 
 const DIFF: Record<string, { label: string; bg: string }> = {
   beginner: { label: 'Beginner', bg: success[500] },
@@ -73,7 +74,7 @@ function QuizSheet({ moduleId, onClose }: { moduleId: string; onClose: () => voi
           {mod?.videoUrl && !videoWatched ? (
             <View style={styles.gap}>
               <Text variant="caption" weight="black" color={zappy[600]}>STEP 1: WATCH TRAINING</Text>
-              <Pressable onPress={() => Linking.openURL(mod.videoUrl)} style={styles.video} accessibilityRole="button" accessibilityLabel="Play the training video">
+              <Pressable onPress={() => openLink(mod.videoUrl, 'Could not play the video on this phone.')} style={styles.video} accessibilityRole="button" accessibilityLabel="Play the training video">
                 <PlayCircle size={48} color="#fff" />
                 <Text variant="bodySmall" weight="bold" color="#fff">Play the video</Text>
               </Pressable>

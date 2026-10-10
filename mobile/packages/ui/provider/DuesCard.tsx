@@ -12,6 +12,7 @@ import { toast } from '../components/Toast';
 import { colors, zappy, ink, slate, success, accent, danger } from '../theme/colors';
 import { radius } from '../theme/radius';
 import { spacing } from '../theme/spacing';
+import { errText } from '../lib/feedback';
 
 const rupees = (p: number) => `₹${Math.round((p || 0) / 100).toLocaleString('en-IN')}`;
 
@@ -42,7 +43,7 @@ export function DuesCard({ compact = false }: { compact?: boolean }) {
       toast.success('Thanks. We will confirm it once we see the payment.');
       setPaying(false); setAmount(''); setReference('');
     } catch (err) {
-      toast.error((err as { data?: { error?: string } })?.data?.error || 'Could not send that. Try again.');
+      toast.error(errText(err, 'Could not send that. Try again.'));
     }
   }
 

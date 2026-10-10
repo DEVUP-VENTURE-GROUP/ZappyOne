@@ -64,8 +64,8 @@ const FALLBACK: Record<ApiErrorKind, string> = {
   NOT_FOUND: "We couldn't find that.",
   CONFLICT: 'That changed while you were working. Please try again.',
   RATE_LIMITED: 'Too many attempts. Please wait a moment and try again.',
-  SERVER_ERROR: 'Something went wrong on our end. Please try again shortly.',
-  UNKNOWN_ERROR: 'Something went wrong. Please try again.',
+  SERVER_ERROR: 'That did not go through. Please try again in a moment.',
+  UNKNOWN_ERROR: 'That did not go through. Please try again.',
 };
 
 function kindForStatus(status: number): ApiErrorKind {

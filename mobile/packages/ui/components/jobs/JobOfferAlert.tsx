@@ -5,7 +5,7 @@
  * to them it asks why.
  */
 import React, { useEffect, useMemo, useState } from 'react';
-import { Linking, Modal, Pressable, StyleSheet, Vibration, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, Vibration, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Banknote, Briefcase, Clock, IndianRupee, MapPin, Navigation, Sparkles, Star, X } from 'lucide-react-native';
 import { kmBetween } from '@zappy/core/shared/distance';
@@ -15,6 +15,7 @@ import { Button, Text } from '..';
 import { colors, zappy, ink, slate, success, accent, danger } from '../../theme/colors';
 import { radius } from '../../theme/radius';
 import { spacing } from '../../theme/spacing';
+import { openLink } from '../../lib/openLink';
 
 export interface Offer {
   kind: string; id: string; mode: string; askReason: boolean; heading: string; title: string;
@@ -67,9 +68,9 @@ export function JobOfferAlert({ offer, myLocation, onAccept, onDecline, onClose,
   const pass = (reason: string) => act('decline', () => onDecline(reason));
   const directions = () => {
     const [lng, lat] = offer.coordinates || [];
-    Linking.openURL(lat && lng
+    openLink(lat && lng
       ? `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`
-      : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(offer.address || '')}`);
+      : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(offer.address || '')}`, 'Could not open maps on this phone.');
   };
 
   return (

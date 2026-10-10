@@ -12,8 +12,9 @@ import PasswordField, { passwordOk } from './PasswordField';
  *   role       'user' | 'worker' | 'shop' | 'event_partner'
  *   onSuccess  receives the login response ({ accessToken, user|worker|shop|partner })
  *   onUseOtp   switches the page back to OTP sign-in
+ *   idLabel    what the sign-in field takes, when it is more than phone/email (a Worker ID)
  */
-export default function PasswordLogin({ role, onSuccess, onUseOtp }) {
+export default function PasswordLogin({ role, onSuccess, onUseOtp, idLabel }) {
   const [mode, setMode] = useState('login'); // login | forgot | otp-reset | sent
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
@@ -56,8 +57,8 @@ export default function PasswordLogin({ role, onSuccess, onUseOtp }) {
 
   const idField = (
     <div>
-      <label htmlFor="pl-id" className="mb-1.5 block text-[13px] font-semibold text-ink-700">{email ? 'Mobile number or email' : 'Mobile number'}</label>
-      <input id="pl-id" className="input w-full" autoComplete="username" inputMode={email ? 'text' : 'tel'} value={identifier} onChange={(e) => setIdentifier(e.target.value)}
+      <label htmlFor="pl-id" className="mb-1.5 block text-[13px] font-semibold text-ink-700">{idLabel || (email ? 'Mobile number or email' : 'Mobile number')}</label>
+      <input id="pl-id" className="input w-full" autoComplete="username" inputMode={email || idLabel ? 'text' : 'tel'} value={identifier} onChange={(e) => setIdentifier(e.target.value)}
         placeholder={email ? '98765 43210 or you@example.com' : '98765 43210'} />
     </div>
   );

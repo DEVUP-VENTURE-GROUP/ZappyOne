@@ -20,6 +20,7 @@ import { colors, ink } from '../../theme/colors';
 import { radius } from '../../theme/radius';
 import { spacing } from '../../theme/spacing';
 import { DuesCard } from '../DuesCard';
+import { errText } from '../../lib/feedback';
 
 type Row = { type: 'head'; key: string; title: string } | { type: 'mine'; key: string; job: MineJob }
   | { type: 'open'; key: string; job: OpenJob } | { type: 'note'; key: string; text: string } | { type: 'verify'; key: string; kinds: string[] };
@@ -41,7 +42,7 @@ export function WorkBoardPage({ kinds }: { kinds: string[] }) {
       const e = err as { data?: { code?: string; error?: string } };
       if (e?.data?.code === 'ALREADY_CLAIMED') { toast.error('Someone else took it first'); refetch(); }
       else if (e?.data?.code === 'NOT_APPROVED_FOR_SERVICE') toast.error('Get verified for this service first');
-      else toast.error(e?.data?.error || 'Could not take this job');
+      else toast.error(errText(e, 'Could not take this job'));
     }
   }
 

@@ -57,6 +57,7 @@ import { spacing } from '../../theme/spacing';
 import { DuesCard } from '../DuesCard';
 import { WorkerMenuSheet } from '../WorkerMenuSheet';
 import { WorkerOnboarding } from './WorkerOnboarding';
+import { errText } from '../../lib/feedback';
 
 const KINDS = ['repair', 'pet', 'helping'];
 
@@ -150,10 +151,10 @@ export function WorkerDashboard({ kinds = KINDS }: { kinds?: string[] }) {
     } catch (err) {
       const e = err as ApiErr;
       if (e?.data?.code === 'ON_TRIP') {
-        toast.error(e.data.error || 'Finish your current job first');
+        toast.error(errText(e, 'Finish your current job first'));
         if (e.data.job?.link) go(e.data.job.link);
       } else {
-        toast.error(e?.data?.error || e?.message || 'Could not change your status');
+        toast.error(errText(e, 'Could not change your status'));
       }
     } finally {
       setToggling(false);

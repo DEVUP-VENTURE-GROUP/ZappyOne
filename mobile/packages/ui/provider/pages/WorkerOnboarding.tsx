@@ -14,6 +14,7 @@ import { ZappyWordmark } from '../../components/ZappyLogo';
 import { colors, zappy, ink, slate, success, danger } from '../../theme/colors';
 import { radius } from '../../theme/radius';
 import { spacing } from '../../theme/spacing';
+import { errText } from '../../lib/feedback';
 
 export function WorkerOnboarding({ onComplete }: { onComplete?: () => void }) {
   const router = useRouter();
@@ -38,7 +39,7 @@ export function WorkerOnboarding({ onComplete }: { onComplete?: () => void }) {
       onComplete?.();
       router.replace('/provider/onboarding' as never);
     } catch (err) {
-      toast.error((err as { data?: { error?: string } })?.data?.error || 'Setup failed');
+      toast.error(errText(err, 'Setup failed'));
     }
   }
 

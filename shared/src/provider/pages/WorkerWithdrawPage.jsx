@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Wallet, Zap, Clock, ChevronRight, Loader2, Building2, Smartphone, AlertCircle, Info, Banknote, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, Wallet, ChevronRight, Loader2, Building2, Smartphone, AlertCircle, Info, Banknote, ShieldCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useGetWorkerBankAccountsQuery, useGetWalletQuery, useRequestPayoutMutation } from '../../services/api';
 import DuesCard from '../DuesCard';
@@ -10,11 +10,11 @@ import { useOtpGate } from '../../components/common/OtpGate';
 const MIN_PAISE = 5000;   // ₹50 — must match server payout.service.js
 const MAX_PAISE = 2500000; // ₹25,000
 
-const SETTLE_OPTS = [
-  { id: 'instant',  label: 'Instant Transfer',   desc: 'Within 30 minutes',  feeRs: 9,   Icon: Zap,   color: 'amber' },
-  { id: 'next_day', label: 'Next Day Transfer',   desc: 'By 9 AM tomorrow',   feeRs: 0,   Icon: Clock, color: 'indigo' },
-];
-
+/*
+ * No speed or fee choice: payouts are reviewed and transferred by the team
+ * until a payout gateway is connected, so a "within 30 minutes, ₹9" option
+ * would promise what does not happen. It returns with the gateway.
+ */
 export default function WorkerWithdrawPage() {
   const nav = useNavigate();
   const { data: walletData, isLoading: walletLoading } = useGetWalletQuery();
@@ -24,7 +24,6 @@ export default function WorkerWithdrawPage() {
 
   const [amountRs, setAmountRs] = useState('');
   const [selectedId, setSelectedId] = useState('');
-  const [settlementType, setSettlementType] = useState('next_day');
 
   const balancePaise = walletData?.balance ?? 0;
   const balanceRs = (balancePaise / 100).toFixed(2);
@@ -39,8 +38,7 @@ export default function WorkerWithdrawPage() {
   const selected = allMethods.find(m => m.id === selectedId) ?? defaultMethod;
 
   const amtRs = parseFloat(amountRs) || 0;
-  const feeRs = SETTLE_OPTS.find(o => o.id === settlementType)?.feeRs ?? 0;
-  const netRs = Math.max(0, amtRs - feeRs);
+  const netRs = amtRs;
   const amtPaise = Math.round(amtRs * 100);
 
   const validationError = amtPaise < MIN_PAISE && amtRs > 0
@@ -211,49 +209,12 @@ export default function WorkerWithdrawPage() {
               )}
             </motion.div>
 
-            {/* Settlement Speed */}
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-white rounded-[1.5rem] border border-slate-100 shadow-[0_8px_30px_rgba(0,0,0,0.04)] p-5 space-y-3">
-              <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1">Transfer Speed</p>
-              {SETTLE_OPTS.map(opt => {
-                const Icon = opt.Icon;
-                const active = settlementType === opt.id;
-                const isAmber = opt.color === 'amber';
-                return (
-                  <button key={opt.id} onClick={() => setSettlementType(opt.id)}
-                    className={`w-full flex items-center gap-4 p-3.5 rounded-2xl border-2 transition-all duration-200 relative overflow-hidden ${active ? `border-${opt.color}-500 bg-${opt.color}-50/50 shadow-sm` : 'border-slate-100 hover:border-slate-300 hover:bg-slate-50'}`}>
-                    
-                    {active && <div className={`absolute inset-y-0 left-0 w-1 bg-${opt.color}-500`} />}
-                    
-                    <div className={`w-10 h-10 rounded-[10px] flex items-center justify-center shrink-0 transition-colors ${active ? `bg-${opt.color}-600 text-white shadow-md shadow-${opt.color}-600/20` : 'bg-slate-100 text-slate-500'}`}>
-                      <Icon size={18} strokeWidth={2.5} />
-                    </div>
-                    
-                    <div className="flex-1 text-left">
-                      <p className={`text-[14px] font-black leading-tight ${active ? `text-${opt.color}-900` : 'text-slate-700'}`}>{opt.label}</p>
-                      <p className={`text-xs font-semibold mt-0.5 ${active ? `text-${opt.color}-700/70` : 'text-slate-400'}`}>{opt.desc}</p>
-                    </div>
-                    
-                    <div className="text-right shrink-0 mr-3">
-                      <span className={`text-[11px] font-black uppercase tracking-wider px-2 py-1 rounded-md ${opt.feeRs > 0 ? (active ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500') : (active ? 'bg-zappy-100 text-zappy-700' : 'bg-emerald-50 text-emerald-600')}`}>
-                        {opt.feeRs > 0 ? `₹${opt.feeRs} Fee` : 'Free'}
-                      </span>
-                    </div>
-                    
-                    <div className={`w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center transition-all ${active ? `border-${opt.color}-600 bg-${opt.color}-600` : 'border-slate-300'}`}>
-                      {active && <div className="w-2 h-2 rounded-full bg-white" />}
-                    </div>
-                  </button>
-                );
-              })}
-            </motion.div>
-
             {/* Summary */}
             <AnimatePresence>
               {amtRs > 0 && !validationError && (
                 <motion.div initial={{ opacity: 0, height: 0, scale: 0.95 }} animate={{ opacity: 1, height: 'auto', scale: 1 }} exit={{ opacity: 0, height: 0, scale: 0.95 }} 
                   className="bg-slate-800 rounded-[1.5rem] p-5 shadow-xl shadow-slate-900/10 text-white space-y-3 overflow-hidden">
                   <div className="flex justify-between items-center"><span className="text-slate-400 font-semibold text-sm">Withdrawal amount</span><span className="font-bold">₹{amtRs.toFixed(2)}</span></div>
-                  <div className="flex justify-between items-center"><span className="text-slate-400 font-semibold text-sm">Transfer fee</span><span className={`font-bold ${feeRs > 0 ? 'text-amber-400' : 'text-emerald-400'}`}>-₹{feeRs.toFixed(2)}</span></div>
                   <div className="border-t border-slate-700 pt-3 flex justify-between items-center">
                     <span className="text-slate-200 font-black">You receive</span>
                     <span className="text-2xl font-black text-emerald-400">₹{netRs.toFixed(2)}</span>
@@ -265,7 +226,7 @@ export default function WorkerWithdrawPage() {
             {/* Security Notice */}
             <div className="flex items-start gap-2.5 bg-slate-100/80 rounded-2xl p-4 border border-slate-200 text-xs font-semibold text-slate-500 shadow-inner">
               <ShieldCheck size={16} className="shrink-0 text-emerald-500 mt-0.5" strokeWidth={2} />
-              <p className="leading-relaxed">All withdrawals are securely processed. Instant transfers may take up to 30 mins depending on your bank's IMPS network status.</p>
+              <p className="leading-relaxed">All withdrawals are securely processed. We review each one and send it to the account you chose.</p>
             </div>
 
             {/* Submit Button */}

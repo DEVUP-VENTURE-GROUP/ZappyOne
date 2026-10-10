@@ -3,6 +3,8 @@
  * a server error into the message to show.
  */
 
+import { getApiErrorMessage } from '@zappy/core/api/apiSlice';
+
 /** Android touch feedback for rows and cards (NativeWind ignores Pressable's style function). */
 export const RIPPLE = { color: 'rgba(16,24,40,0.08)' };
 
@@ -13,5 +15,9 @@ export interface ApiErr {
   message?: string;
 }
 
-/** The server's own message when it sent one, else the screen's fallback. */
-export const errText = (e: unknown, fallback: string): string => (e as ApiErr)?.data?.error || fallback;
+/**
+ * What to tell the person when a call fails: the server's message when it is
+ * theirs to act on (a 4xx), else the screen's own calm line. A fault on our
+ * side is never shown as one (core getApiErrorMessage).
+ */
+export const errText = (e: unknown, fallback: string): string => getApiErrorMessage(e, fallback);

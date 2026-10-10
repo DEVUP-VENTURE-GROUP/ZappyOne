@@ -2,13 +2,14 @@
  * Busy areas nearby with higher pay right now (the websites' HotZonesCard).
  */
 import React from 'react';
-import { Linking, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { Flame, Navigation, UserX } from 'lucide-react-native';
 import { useWorkerHotZonesQuery } from '@zappy/core/api';
 import { Text } from '..';
 import { colors, ink, slate, accent } from '../../theme/colors';
 import { radius } from '../../theme/radius';
 import { spacing } from '../../theme/spacing';
+import { directions } from '../../lib/directions';
 
 interface Zone { line: string; lat: number; lng: number; service: string; multiplier: number; nobody?: boolean; km?: number | null; demand?: number }
 
@@ -37,7 +38,7 @@ export function HotZonesCard({ coords }: { coords?: number[] | null }) {
                 {z.km != null ? ` · ${z.km} km away` : ''}{z.demand ? ` · ${z.demand} looking` : ''}
               </Text>
             </View>
-            <Pressable onPress={() => Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${z.lat},${z.lng}`)}
+            <Pressable onPress={() => directions(z.lat, z.lng)}
               accessibilityRole="link" accessibilityLabel={`Directions to ${z.service} surge area`} style={styles.go}>
               <Navigation size={12} color="#fff" /><Text variant="caption" weight="semibold" color="#fff">Go</Text>
             </Pressable>

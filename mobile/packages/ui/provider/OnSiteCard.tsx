@@ -2,7 +2,7 @@
  * Who is on site to meet the provider, with a call button (the websites' OnSiteCard).
  */
 import React from 'react';
-import { Linking, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { Phone, UserRound } from 'lucide-react-native';
 import { Text } from '../components';
 import { JobCard } from '../components/jobs/JobCard';
@@ -10,6 +10,7 @@ import { RIPPLE } from '../lib/feedback';
 import { ink, accent } from '../theme/colors';
 import { radius } from '../theme/radius';
 import { spacing } from '../theme/spacing';
+import { callNumber } from '../lib/openLink';
 
 /* Someone else meets them at the door (booked for a relative). */
 export function OnSiteCard({ onSite }: { onSite?: { name?: string; phone?: string } | null }) {
@@ -23,7 +24,7 @@ export function OnSiteCard({ onSite }: { onSite?: { name?: string; phone?: strin
         <Text variant="caption" color={ink[500]}>Booked for them by the customer</Text>
       </View>
       {onSite.phone ? (
-        <Pressable onPress={() => Linking.openURL(`tel:+91${onSite.phone}`)} android_ripple={RIPPLE} accessibilityRole="button" accessibilityLabel={`Call ${onSite.name}`} style={styles.callBtn}>
+        <Pressable onPress={() => callNumber(`+91${onSite.phone}`)} android_ripple={RIPPLE} accessibilityRole="button" accessibilityLabel={`Call ${onSite.name}`} style={styles.callBtn}>
           <Phone size={15} color="#fff" /><Text variant="bodySmall" weight="semibold" color="#fff">Call</Text>
         </Pressable>
       ) : null}

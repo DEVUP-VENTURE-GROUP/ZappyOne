@@ -86,15 +86,20 @@ export function getApiErrorCode(error: unknown): string | undefined {
  * `data` — that path is how axios's "Network Error" and "timeout of 20000ms
  * exceeded" reached the UI as user-facing copy.
  */
-export function getApiErrorMessage(error: unknown, fallback = 'Something went wrong'): string {
+export function getApiErrorMessage(error: unknown, fallback = 'That did not go through. Please try again.'): string {
+  // A fault on our side is never shown as one: the screen's own calm message
+  // stands in, whatever the server said (an unconfigured service, a 5xx).
+  const status = (error as { status?: unknown } | undefined)?.status;
+  if (typeof status === 'number' && status >= 500) return fallback;
+
+  // A 4xx message tells the person what to change, so it is shown as sent.
   const body = getApiErrorBody(error);
   if (body?.error) return body.error;
 
   const normalized = (error as ApiError | undefined)?.normalized;
   if (normalized) {
-    // A caller-supplied fallback is more specific than the generic
-    // "something went wrong", so it wins for the unclassifiable case only.
-    return normalized.kind === 'UNKNOWN_ERROR' ? fallback : normalized.message;
+    // The caller's fallback is more specific than a generic line.
+    return normalized.kind === 'UNKNOWN_ERROR' || normalized.kind === 'SERVER_ERROR' ? fallback : normalized.message;
   }
   return fallback;
 }

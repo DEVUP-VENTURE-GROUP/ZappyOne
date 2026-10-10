@@ -3,7 +3,7 @@
  * (the websites' SOSButton). Sends at once; the server falls back to the last position.
  */
 import React, { useRef, useState } from 'react';
-import { Linking, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { Heart, Phone, ShieldAlert } from 'lucide-react-native';
 import { useTriggerSOSMutation } from '@zappy/core/api';
 import { getBestPosition } from '@zappy/core/hooks/useBestPosition';
@@ -15,6 +15,7 @@ import { radius } from '../../theme/radius';
 import { spacing } from '../../theme/spacing';
 import { toast } from '../Toast';
 import { JobCard } from '../jobs/JobCard';
+import { callNumber } from '../../lib/openLink';
 
 const HOLD_MS = 3000;
 
@@ -55,7 +56,7 @@ export function SOSButton({ jobId, kind, service }: { jobId: string; kind: strin
     <View style={styles.gap}>
       <Text variant="caption" weight="semibold" color={ink[500]}>Feeling unsafe or need urgent help?</Text>
       <View style={styles.row}>
-        <Pressable onPress={() => Linking.openURL('tel:112')} android_ripple={RIPPLE} accessibilityRole="button" style={styles.call112}>
+        <Pressable onPress={() => callNumber('112')} android_ripple={RIPPLE} accessibilityRole="button" style={styles.call112}>
           <Phone size={14} color="#fff" /><Text variant="bodySmall" weight="bold" color="#fff">Call 112</Text>
         </Pressable>
         <Pressable onPressIn={start} onPressOut={stop} accessibilityRole="button" accessibilityLabel="Hold for three seconds to send SOS"
@@ -72,7 +73,7 @@ export function SOSButton({ jobId, kind, service }: { jobId: string; kind: strin
           {PET_EMERGENCY_CONTACTS.map((c: { label: string; number: string; hint: string }) => (
             <View key={c.number} style={styles.between}>
               <View style={styles.flex}><Text variant="caption" weight="bold">{c.label}</Text><Text variant="caption" color={ink[500]}>{c.hint}</Text></View>
-              <Pressable onPress={() => Linking.openURL(`tel:${c.number.replace(/[^0-9+]/g, '')}`)} style={styles.petCall}>
+              <Pressable onPress={() => callNumber(c.number)} style={styles.petCall}>
                 <Phone size={11} color={danger[600]} /><Text variant="caption" weight="bold" color={danger[600]}>{c.number}</Text>
               </Pressable>
             </View>

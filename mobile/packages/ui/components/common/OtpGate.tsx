@@ -20,6 +20,7 @@ import { spacing } from '../../theme/spacing';
 import { Button } from '../Button';
 import { Text } from '../Text';
 import { toast } from '../Toast';
+import { errText } from '../../lib/feedback';
 
 export function useOtpGate() {
   // Provider sessions boot without a profile, so the account status fills in the number.
@@ -51,7 +52,7 @@ export function useOtpGate() {
       await requestOtp({ phone, role }).unwrap();
       setSent(true);
       toast.success(`Code sent to ${phone.replace(/^(\+91)?(\d{2})\d{6}(\d{2})$/, '$2••••••$3')}`);
-    } catch (err) { toast.error((err as ApiErr)?.data?.error || 'Could not send the code'); }
+    } catch (err) { toast.error(errText(err, 'Could not send the code')); }
   }
   async function confirm() {
     try {
@@ -59,7 +60,7 @@ export function useOtpGate() {
       const p = pending.current; pending.current = null;
       setOpen(false); setCode(''); setSent(false);
       p?.resolve();
-    } catch (err) { toast.error((err as ApiErr)?.data?.error || 'That code did not work'); }
+    } catch (err) { toast.error(errText(err, 'That code did not work')); }
   }
 
   const modal = (

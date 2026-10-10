@@ -9,6 +9,7 @@ import { Button, Text } from '..';
 import { colors, zappy, ink, danger } from '../../theme/colors';
 import { radius } from '../../theme/radius';
 import { spacing } from '../../theme/spacing';
+import { errText } from '../../lib/feedback';
 
 /**
  * Runs a step; if the server answers "ask for the start code", asks for it
@@ -37,7 +38,7 @@ export function useStartCodePrompt() {
     if (!/^[0-9]{4,6}$/.test(code)) { setError('Enter the code the customer reads out'); return; }
     setBusy(true);
     try { await pending.current?.(code); setOpen(false); }
-    catch (err) { setError((err as { data?: { error?: string } })?.data?.error || 'That did not work. Try again.'); }
+    catch (err) { setError(errText(err, 'That did not work. Try again.')); }
     finally { setBusy(false); }
   }
 
