@@ -39,6 +39,7 @@ import type { RouteResolver } from '@zappy/core/lib/pushRouting';
 import type { Role } from '@zappy/core/types/api';
 import { fontAssets } from '../theme';
 import { ToastHost } from '../components/Toast';
+import { I18nProvider } from '../lib/i18n';
 
 // Before any screen runs: a stray error is reported, never shown to the person using the app.
 installGlobalErrorHandlers();
@@ -139,8 +140,10 @@ export function AppRoot(props: AppRootProps) {
     // Gestures (sheets, swipes) only work beneath this root, so it wraps everything.
     <GestureHandlerRootView style={{ flex: 1 }}>
       <Provider store={store}>
-        <Guarded {...props} />
-        <ToastHost />
+        <I18nProvider>
+          <Guarded {...props} />
+          <ToastHost />
+        </I18nProvider>
       </Provider>
     </GestureHandlerRootView>
   );

@@ -5,7 +5,7 @@
  * refused unsafe ones). Add a path when its screen is built.
  */
 const BUILT = [
-  /^\/$/, /^\/home$/, /^\/services$/, /^\/profile$/,
+  /^\/$/, /^\/home$/, /^\/services$/, /^\/profile$/, /^\/orders$/, /^\/track$/,
   /^\/repair(\/(laptop|two-wheeler|four-wheeler|water-tank-care))?$/,
   /^\/repair\/price-requests\/[\w-]+$/, /^\/repair\/bookings\/[\w-]+$/, /^\/repair\/category\/[\w-]+\/[\w-]+$/,
 ];
