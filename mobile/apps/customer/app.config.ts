@@ -44,6 +44,9 @@ const config: ExpoConfig = {
     'expo-notifications',
     ['expo-image-picker', { photosPermission: 'ZappyOne uses your photos to show what needs fixing.', microphonePermission: false }],
   ],
+  // Over-the-air JavaScript fixes (eas update); native changes still need a new build.
+  updates: { url: 'https://u.expo.dev/76a99e9d-8a13-418c-aa22-ca591fd5e3cf' },
+  runtimeVersion: { policy: 'appVersion' },
   experiments: { typedRoutes: true },
   extra: {
     // Which ZappyOne app this is; sent to the server as X-App (core/config/env).

@@ -44,6 +44,9 @@ const config: ExpoConfig = {
     'expo-notifications',
     ['expo-image-picker', { photosPermission: 'Rakshak uses your photos for KYC documents and job photos.', microphonePermission: false }],
   ],
+  // Over-the-air JavaScript fixes (eas update); native changes still need a new build.
+  updates: { url: 'https://u.expo.dev/a891b7e7-3ce4-46e3-861f-f031e502a0be' },
+  runtimeVersion: { policy: 'appVersion' },
   experiments: { typedRoutes: true },
   extra: {
     // Which ZappyOne app this is; sent to the server as X-App (core/config/env).

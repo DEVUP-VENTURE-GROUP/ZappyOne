@@ -15,11 +15,11 @@
     "update": "eas update"
   },
   "dependencies": {
-    "@zappy/core": "*",
-    "@zappy/ui": "*",
     "@expo-google-fonts/figtree": "^0.4.1",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@reduxjs/toolkit": "^2.12.0",
+    "@zappy/core": "*",
+    "@zappy/ui": "*",
     "axios": "^1.18.0",
     "expo": "~56.0.12",
     "expo-camera": "~56.0.8",
@@ -34,6 +34,7 @@
     "expo-secure-store": "~56.0.4",
     "expo-splash-screen": "~56.0.10",
     "expo-status-bar": "~56.0.4",
+    "expo-updates": "~56.0.19",
     "lucide-react-native": "^1.21.0",
     "nativewind": "^4.2.5",
     "react": "19.2.3",
