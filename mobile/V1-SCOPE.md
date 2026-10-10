@@ -8,7 +8,7 @@ porting a screen means rebuilding its layout for the phone, not its logic.
 Order: Rakshak → ServicePro (shop screens on top of the same worker screens)
 → Customer. Tick a row when it works on a phone against the live API.
 
-Legend: ☐ to do · ◐ in progress · ☑ done
+Legend: ☐ to do · ◐ in progress · ▣ built, to check on a phone · ☑ done (works on a phone against the live API)
 
 ## Rakshak: individual workers (web: rakshak.zappyone.com)
 
@@ -20,26 +20,26 @@ All 119 calls these screens use already exist in `@zappy/core/api`.
 
 | Piece | Web source | Server calls | Live events | Status |
 |---|---|---|---|---|
-| Job-offer popup: new work rings on any screen, accept or pass with a reason | JobOfferHost, JobOfferAlert, PassReasonPicker | acceptHelpingTask, acceptPetBooking, assignedPetBookings, declinePetBooking, declineRepairBooking, getWorkerMe, repairProviderJobs, transitionRepairBooking | job.offer, job.available, repair.offer, repair.offer_closed | ☐ |
-| Location shared while online | OnlineLocation, useLocationBroadcast | getWorkerMe | worker:location (sent), worker.presence | ☐ |
-| Live job updates (lists refresh, tip toast) | useJobRealtime | (refreshes lists) | job.status, job.update, job.available, repair.quote, repair.quote_decision | ☐ |
+| Job-offer popup: new work rings on any screen, accept or pass with a reason | JobOfferHost, JobOfferAlert, PassReasonPicker | acceptHelpingTask, acceptPetBooking, assignedPetBookings, declinePetBooking, declineRepairBooking, getWorkerMe, repairProviderJobs, transitionRepairBooking | job.offer, job.available, repair.offer, repair.offer_closed | ◐ built; ring sound needs the next dev build (expo-audio), vibration works now |
+| Location shared while online | OnlineLocation, useLocationBroadcast | getWorkerMe | worker:location (sent), worker.presence | ▣ |
+| Live job updates (lists refresh, tip toast) | useJobRealtime | (refreshes lists) | job.status, job.update, job.available, repair.quote, repair.quote_decision | ▣ |
 | Account setup gate (name, photo, password, what's new) | AccountSetupGate | accountMe, completeAccountSetup, setAccountName, setAccountPassword, setAccountPhoto, skipAccountPhoto, startEmailVerification, markReleaseSeen, presignUpload, logout | | ☐ |
-| Connection banner, error boundary | ConnectionBanner, ErrorBoundary | | | ☐ |
+| Connection banner, error boundary | ConnectionBanner, ErrorBoundary | | | ◐ banner done; error screen to add |
 
 ### Screens
 
 | Screen | Web route | Calls | Live events | Status |
 |---|---|---|---|---|
 | Sign in: OTP **and Worker ID + password, forgot password** | `/login` | requestOtp, resendOtp, loginWorker, loginWorkerPassword, forgotWorkerPassword | | ◐ OTP done; password sign-in to add |
-| Home / dashboard | `/worker` | 20: getWorkerMe, goOnline, goOffline, getEarnings, workerDues, claimDuesPayment, workerHotZones, getKycStatus, providerOnboardingStatus, workerCompleteOnboarding, accountMe, listNotifications, repairProviderJobs, assigned/available pet + helping, accept pet + helping, logout | notification, kyc.rejected, session:replaced | ☐ |
-| Work board | `/worker/work` | 11: repairProviderJobs, assigned/available pet + helping, accept pet + helping, workerDues, claimDuesPayment, workerHotZones, getWorkerMe | | ☐ |
+| Home / dashboard | `/worker` | 20: getWorkerMe, goOnline, goOffline, getEarnings, workerDues, claimDuesPayment, workerHotZones, getKycStatus, providerOnboardingStatus, workerCompleteOnboarding, accountMe, listNotifications, repairProviderJobs, assigned/available pet + helping, accept pet + helping, logout | notification, kyc.rejected, session:replaced | ▣ |
+| Work board | `/worker/work` | 11: repairProviderJobs, assigned/available pet + helping, accept pet + helping, workerDues, claimDuesPayment, workerHotZones, getWorkerMe | | ▣ |
 | Repair job | `/worker/repair/:id` | 21: getRepairBooking, transitionRepairBooking, verifyRepairHandoverCode, submitRepairQuote, repairWorkCatalog, repairQaChecklist, submitRepairQa, attachRepairCompletionPhotos, collectRepairCash, declineRepairBooking, giveBackJob, jobGiveBack, reportCustomerAbsent, jobEarnings, rateCustomer, jobChat, sendJobChat, presignUpload, triggerSOS, assignJobTechnician, shopWorkers | chat.message, eta.update, worker.location, room join | ☐ |
 | Pet job | `/worker/pet/:id` | 17: getPetBooking, acceptPetBooking, advancePetBookingStatus, addPetBookingProof, collectPetCash, declinePetBooking, giveBack, jobGiveBack, reportCustomerAbsent, jobEarnings, rateCustomer, jobChat, sendJobChat, presignUpload, triggerSOS, assignJobTechnician, shopWorkers | chat.message, eta.update, worker.location, room join | ☐ |
 | Helping job | `/worker/helping/:id` | 18: getHelpingTask, advanceHelpingStatus, addHelpingProof, updateHelpingItem, proposeHelpingAlternative, recordHelpingAdvance, recordHelpingHandover, completeHelpingTask, collectHelpingCash, giveBack, jobGiveBack, reportCustomerAbsent, jobEarnings, rateCustomer, jobChat, sendJobChat, presignUpload, triggerSOS | chat.message, eta.update, worker.location, room join | ☐ |
 | Join / onboarding | `/provider/onboarding` | 13: providerDomains, providerServiceLines, providerEnrol, providerLineRequirements, providerSaveEnrolment, providerSubmitEnrolment, providerRequestServiceLine, providerOnboardingStatus, providerIdCheck, startAadhaarCheck, submitAadhaarOtp, verifyPanCheck, presignUpload | | ☐ |
 | My services and prices | `/provider/services` | 18: liveCatalog, repairBrands, repairModels, repairWorkCatalog, repairProviderPricing, repairProviderSuggestedPricing (+lazy), bulkRepairProviderPricing, saveRepairCapabilities, repairServiceAreas, upsertRepairServiceArea, getAddresses, saveRecentLocation, getNearbyWorkers (lazy), requestRepairCatalogAddition, providerOnboardingStatus, setShopWarranty, updateShopMe | map | ☐ |
 | My documents | `/provider/documents` | 5: providerMyDocuments, providerIdCheck, startAadhaarCheck, submitAadhaarOtp, verifyPanCheck | | ☐ |
-| Earnings | `/worker/earnings` | getJobEarnings | | ☐ |
+| Earnings | `/worker/earnings` | getJobEarnings | | ▣ |
 | Withdraw | `/worker/withdraw` | 7: getWallet, getWorkerBankAccounts, workerDues, claimDuesPayment, requestPayout, requestOtp, verifyActionOtp | | ☐ |
 | Bank and UPI | `/worker/bank` | 6: getWorkerBankAccounts, addWorkerBankAccount, deleteWorkerBankAccount, setDefaultWorkerBankAccount, requestOtp, verifyActionOtp | | ☐ |
 | Work hours | `/worker/hours` | workerHours, saveWorkerHours | | ☐ |
@@ -47,8 +47,8 @@ All 119 calls these screens use already exist in `@zappy/core/api`.
 | Training | `/worker/training` | getTrainingModules, getTrainingModule, submitTrainingQuiz | | ☐ |
 | Reviews | `/worker/reviews` | myReviews, reportReview | | ☐ |
 | Appeals | `/worker/appeals` | getWorkerAppeals, createWorkerAppeal | | ☐ |
-| Notifications | `/worker/notifications` | listNotifications, markNotificationRead, markAllNotificationsRead | notification | ☐ |
-| Profile | `/worker/profile` | 9: accountMe, getWorkerMe, updateWorkerProfile, setWorkerCredentials, setAccountPassword, setAccountPhoto, startEmailVerification, presignUpload, providerOnboardingStatus | | ☐ |
+| Notifications | `/worker/notifications` | listNotifications, markNotificationRead, markAllNotificationsRead | notification | ▣ |
+| Profile | `/worker/profile` | 9: accountMe, getWorkerMe, updateWorkerProfile, setWorkerCredentials, setAccountPassword, setAccountPhoto, startEmailVerification, presignUpload, providerOnboardingStatus | | ◐ interim account tab; full profile next |
 
 Web logic these screens share (port as logic, not copied UI): `utils/money.js`,
 `utils/distance.js`, `provider/useProviderJobs.js`, `modules/worker/workerSlice.js`,
