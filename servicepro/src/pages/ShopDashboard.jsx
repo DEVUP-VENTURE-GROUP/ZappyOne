@@ -15,6 +15,7 @@ import ShopJobs from '../components/ShopJobs';
 import { useProviderJobs } from '@shared/provider/useProviderJobs';
 import { StatCard, Panel, inr, EarningsOverview, PerformanceGrid } from '@shared/components/worker/DashboardUI';
 import MyAreaChip from '@shared/components/worker/MyAreaChip';
+import { last7, weekDeltaPct } from '@shared/provider/workerHome';
 
 /**
  * The shop owner's dashboard.
@@ -183,30 +184,14 @@ export default function ShopDashboard() {
    * weekly chart and their completion/acceptance figures. An owner running a
    * business deserves at least what their own technician sees.
    */
-  // The server keys days by India's date; so must the chart, whatever the device clock.
-  const istKey = (d) => new Date(d.getTime() + 330 * 60000).toISOString().slice(0, 10);
-  const byDatePaise = Object.fromEntries((weekEarnings?.dailyBreakdown ?? []).map((d) => [d.date, d.earningsPaise]));
-  const sumDays = (from, to) => {
-    let acc = 0;
-    for (let i = from; i < to; i++) {
-      const d = new Date(); d.setDate(d.getDate() - i);
-      acc += byDatePaise[istKey(d)] || 0;
-    }
-    return acc;
-  };
-  const thisWeekPaise = sumDays(0, 7);
-  const lastWeekPaise = sumDays(7, 14);
-  const deltaPct = lastWeekPaise > 0
-    ? Math.round(((thisWeekPaise - lastWeekPaise) / lastWeekPaise) * 100)
-    : (thisWeekPaise > 0 ? 100 : 0);
-  const chartPoints = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(); d.setDate(d.getDate() - (6 - i));
-    const key = istKey(d);
-    return {
-      label: d.toLocaleDateString('en-IN', { weekday: 'short' }),
-      value: Math.round((byDatePaise[key] || 0) / 100),
-    };
-  });
+  // Days keyed by India's date, the way the server keys them (shared with the technician home).
+  const week = last7(weekEarnings?.dailyBreakdown);
+  const deltaPct = weekDeltaPct(weekEarnings?.dailyBreakdown);
+  const chartPoints = week.map((d) => ({
+    label: new Date(`${d.date}T00:00:00`).toLocaleDateString('en-IN', { weekday: 'short' }),
+    value: Math.round(d.earningsPaise / 100),
+  }));
+  const thisWeekPaise = week.reduce((s, d) => s + d.earningsPaise, 0);
   const weekRs = Math.round(thisWeekPaise / 100);
 
   const perfItems = [

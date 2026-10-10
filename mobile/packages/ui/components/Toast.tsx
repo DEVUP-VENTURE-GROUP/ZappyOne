@@ -4,7 +4,8 @@
  * `toast.error()`), so ported screens say the same thing the same way.
  *
  * Mounted once by AppRoot (<ToastHost />). A message with an `id` replaces an
- * earlier one with the same id instead of stacking.
+ * earlier one with the same id instead of stacking. `action` adds one button,
+ * e.g. Undo, that runs and closes the message.
  */
 import React, { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -17,14 +18,15 @@ import { radius } from '../theme/radius';
 import { spacing } from '../theme/spacing';
 
 type Tone = 'info' | 'success' | 'error';
-interface ToastOptions { id?: string; duration?: number }
-interface ToastItem { key: string; message: string; tone: Tone; duration: number }
+interface ToastAction { label: string; onPress: () => void }
+interface ToastOptions { id?: string; duration?: number; action?: ToastAction }
+interface ToastItem { key: string; message: string; tone: Tone; duration: number; action?: ToastAction }
 
 const listeners = new Set<(t: ToastItem) => void>();
 let seq = 0;
 
 function emit(message: string, tone: Tone, opts: ToastOptions = {}) {
-  const item = { key: opts.id || `t${++seq}`, message, tone, duration: opts.duration ?? (tone === 'error' ? 5000 : 3500) };
+  const item = { key: opts.id || `t${++seq}`, message, tone, action: opts.action, duration: opts.duration ?? (opts.action ? 6000 : tone === 'error' ? 5000 : 3500) };
   listeners.forEach((l) => l(item));
 }
 
@@ -65,6 +67,11 @@ export function ToastHost({ bottomOffset = 72 }: { bottomOffset?: number }) {
             >
               <Icon size={18} color={ICON_COLOR[t.tone]} />
               <Text variant="bodySmall" weight="medium" color={colors.textInverse} style={styles.text}>{t.message}</Text>
+              {t.action ? (
+                <Pressable onPress={() => { setItems((list) => list.filter((x) => x !== t)); t.action!.onPress(); }} hitSlop={8} accessibilityRole="button">
+                  <Text variant="bodySmall" weight="bold" color="#93C5FD">{t.action.label}</Text>
+                </Pressable>
+              ) : null}
             </Pressable>
           </Animated.View>
         );

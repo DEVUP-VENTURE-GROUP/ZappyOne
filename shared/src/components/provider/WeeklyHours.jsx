@@ -1,53 +1,7 @@
 import toast from 'react-hot-toast';
+import { DAYS, MINUTE_STEPS, to12Hour, to24Hour, dayLength, incompleteDay, dayOf, withDay, weekdaysLike } from './weeklyHoursRules';
 
-/**
- * A shop's opening hours for the week — the one editor for setup and profile.
- *
- *   hours     [{ day: 0-6 (Sun first), opensAt: 'HH:MM', closesAt: 'HH:MM', isClosed }]
- *   onChange  receives the whole new list
- *
- * Times are three plain selects (hour, minute, AM/PM), not <input type="time">:
- * that control's 12/24-hour display follows the browser's locale, so a phone set
- * to 24-hour shows no AM/PM at all, and on a narrow screen it clips the time to
- * a single digit. The value stored is unchanged — "HH:MM", 24-hour — which is
- * what the server validates and compares against.
- */
-export const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-const MINUTE_STEPS = ['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'];
-
-function to12Hour(value) {
-  if (!/^\d{2}:\d{2}$/.test(value || '')) return { hour: '', minute: '', meridiem: 'AM' };
-  const [h, m] = value.split(':').map(Number);
-  return { hour: String(h % 12 === 0 ? 12 : h % 12), minute: String(m).padStart(2, '0'), meridiem: h >= 12 ? 'PM' : 'AM' };
-}
-
-function to24Hour({ hour, minute, meridiem }) {
-  if (!hour) return '';
-  let h = Number(hour) % 12;
-  if (meridiem === 'PM') h += 12;
-  return `${String(h).padStart(2, '0')}:${minute || '00'}`;
-}
-
-/**
- * The day read back in hours. "8:00 AM to 12:00 PM · 4 hours" makes a slipped
- * AM/PM obvious, where two dropdowns reading "12" and "PM" look fine.
- */
-function dayLength(opensAt, closesAt) {
-  const mins = (t) => (/^\d{2}:\d{2}$/.test(t || '') ? Number(t.slice(0, 2)) * 60 + Number(t.slice(3)) : null);
-  const from = mins(opensAt);
-  const to = mins(closesAt);
-  if (from == null || to == null) return null;
-  // A closing time at or before opening runs past midnight.
-  const span = to > from ? to - from : (24 * 60 - from) + to;
-  const h = Math.floor(span / 60);
-  const m = span % 60;
-  return {
-    label: [h ? `${h} hour${h === 1 ? '' : 's'}` : '', m ? `${m} min` : ''].filter(Boolean).join(' ') || '0 min',
-    overnight: to <= from,
-    // Legal but unusual — and what an AM/PM slip looks like.
-    short: span > 0 && span < 180,
-  };
-}
+export { DAYS, incompleteDay };
 
 function TimeField({ value, onChange, label }) {
   const parts = to12Hour(value);
@@ -74,29 +28,26 @@ function TimeField({ value, onChange, label }) {
   );
 }
 
-/** The first open day with no times, if any — check before saving. */
-export function incompleteDay(hours) {
-  const bad = hours.find((h) => !h.isClosed && (!h.opensAt || !h.closesAt));
-  return bad ? DAYS[bad.day] : null;
-}
-
+/**
+ * A shop's opening hours for the week — the one editor for setup and profile.
+ *
+ *   hours     [{ day: 0-6 (Sun first), opensAt: 'HH:MM', closesAt: 'HH:MM', isClosed }]
+ *   onChange  receives the whole new list
+ *
+ * Times are three plain selects (hour, minute, AM/PM), not <input type="time">:
+ * that control's 12/24-hour display follows the browser's locale, so a phone set
+ * to 24-hour shows no AM/PM at all, and on a narrow screen it clips the time to
+ * a single digit. The value stored is unchanged — "HH:MM", 24-hour — which is
+ * what the server validates and compares against.
+ */
 export default function WeeklyHours({ hours, onChange }) {
-  function setDay(day, patch) {
-    const next = [...hours];
-    const at = next.findIndex((h) => h.day === day);
-    const base = at >= 0 ? next[at] : { day, opensAt: '', closesAt: '', isClosed: false };
-    if (at >= 0) next[at] = { ...base, ...patch }; else next.push({ ...base, ...patch });
-    onChange(next);
-  }
+  const setDay = (day, patch) => onChange(withDay(hours, day, patch));
 
   /** Most shops keep one weekday schedule — set it once, not six times. */
   function applyWeekdays() {
-    const template = hours.find((h) => !h.isClosed && h.opensAt && h.closesAt);
-    if (!template) return toast.error('Set one day first, then apply it to the rest');
-    onChange([
-      ...[1, 2, 3, 4, 5, 6].map((day) => ({ day, opensAt: template.opensAt, closesAt: template.closesAt, isClosed: false })),
-      ...hours.filter((h) => h.day === 0),
-    ]);
+    const week = weekdaysLike(hours);
+    if (!week) return toast.error('Set one day first, then apply it to the rest');
+    onChange(week);
     return toast.success('Applied Monday to Saturday');
   }
 
@@ -107,7 +58,7 @@ export default function WeeklyHours({ hours, onChange }) {
       </button>
       <div className="mt-2 divide-y divide-slate-100 rounded-2xl border border-slate-200 bg-white px-3.5">
         {DAYS.map((label, day) => {
-          const row = hours.find((h) => h.day === day) || { day, opensAt: '', closesAt: '', isClosed: true };
+          const row = dayOf(hours, day);
           const len = row.isClosed ? null : dayLength(row.opensAt, row.closesAt);
           return (
             /* Day and Open/Closed lead; the times sit beside them on a wide screen and beneath on a phone. */

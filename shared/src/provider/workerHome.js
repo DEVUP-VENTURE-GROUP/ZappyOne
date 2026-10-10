@@ -9,12 +9,15 @@
 const rupees = (p) => `₹${Math.round((p || 0) / 100).toLocaleString('en-IN')}`;
 
 /** The last 7 days, oldest first, with empty days filled in. */
+/** A day as the server keys it: India's date, whatever the device clock says. */
+export const istKey = (d) => new Date(d.getTime() + 330 * 60000).toISOString().slice(0, 10);
+
 export function last7(breakdown = []) {
   const byDate = Object.fromEntries(breakdown.map((d) => [d.date, d]));
   return Array.from({ length: 7 }, (_, i) => {
     const d = new Date();
     d.setDate(d.getDate() - (6 - i));
-    const key = d.toISOString().slice(0, 10);
+    const key = istKey(d);
     return byDate[key] || { date: key, earningsPaise: 0, jobs: 0 };
   });
 }

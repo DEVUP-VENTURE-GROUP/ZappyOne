@@ -10,7 +10,7 @@ import { Check, ShieldCheck } from 'lucide-react-native';
 import {
   useProviderLineRequirementsQuery, useProviderSaveEnrolmentMutation, useProviderSubmitEnrolmentMutation,
 } from '@zappy/core/api';
-import { getBestPosition } from '@zappy/core/hooks/useBestPosition';
+import { captureLive, type LiveCaptureMeta } from '@zappy/core/lib/liveCapture';
 import { pickPhoto, uploadPhoto, type PickedPhoto } from '@zappy/core/lib/upload';
 import { Button, LoadingState, Text } from '../../../components';
 import { toast } from '../../../components/Toast';
@@ -24,16 +24,8 @@ import { ob } from './onboardingStyles';
 
 interface EnrolmentDoc { code: string; url?: string; carried?: boolean; uploadedAt?: string }
 interface Missing { code: string; kind?: string }
-interface CaptureMeta { captureMethod: 'live_camera'; capturedAt: string; lat?: number; lng?: number }
 
 const ID_CODES = ['aadhaar', 'owner_id', 'pan'];
-
-/** A live photo carries when and where it was taken, so a reviewer can tell it from a forwarded picture. */
-async function liveMeta(): Promise<CaptureMeta> {
-  const meta: CaptureMeta = { captureMethod: 'live_camera', capturedAt: new Date().toISOString() };
-  try { const p = await getBestPosition({ windowMs: 4000 }); meta.lat = p.lat; meta.lng = p.lng; } catch { /* location is optional evidence */ }
-  return meta;
-}
 
 /** Camera or gallery, asked once per upload (documents that must be live skip this). */
 function chooseSource(): Promise<'camera' | 'gallery' | null> {
@@ -85,12 +77,12 @@ export function VerifyStep({ lineCode, onDone }: { lineCode: string; onDone: () 
 
   async function pickFor(doc: RequiredDoc) {
     let photo: PickedPhoto | null = null;
-    let meta: CaptureMeta | null = null;
+    let meta: LiveCaptureMeta | null = null;
     try {
       if (doc.capture) {
         // This one has to be taken now: the gallery cannot answer a question about the present moment.
-        photo = await pickPhoto({ camera: true, front: doc.capture === 'user' });
-        if (photo) meta = await liveMeta();
+        const live = await captureLive({ front: doc.capture === 'user' });
+        if (live) ({ photo, meta } = live);
       } else {
         const source = await chooseSource();
         if (!source) return;
@@ -102,7 +94,7 @@ export function VerifyStep({ lineCode, onDone }: { lineCode: string; onDone: () 
     setUploading(doc.code);
     try {
       const key = await uploadPhoto(photo, 'kyc');
-      await save({ id: enrolment._id, documents: [{ code: doc.code, url: key, ...(meta || {}) }] }).unwrap();
+      await save({ id: enrolment._id, documents: [{ code: doc.code, url: key, ...(meta ? { captureMethod: meta.captureMethod, capturedAt: meta.capturedAt, lat: meta.lat, lng: meta.lng } : {}) }] }).unwrap();
       await refetch();
       toast.success(meta ? 'Photo captured' : 'Uploaded');
     } catch { toast.error('Upload failed. Please try again.'); }

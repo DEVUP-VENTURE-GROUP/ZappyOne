@@ -43,13 +43,15 @@ export interface OtpScreenProps {
   title: string;
   subtitle: string;
   /** The app's sign-in call for this code. `name` is set for a new account. */
-  verify: (input: { phone: string; otp: string; name?: string; params: Record<string, string | undefined> }) => Promise<VerifiedSession>;
+  verify: (input: { phone: string; otp: string; name?: string; second?: string; params: Record<string, string | undefined> }) => Promise<VerifiedSession>;
   /** Label and placeholder for a new account's name. */
   nameLabel?: string;
   namePlaceholder?: string;
+  /** A second required detail for a new account (a new shop also gives its owner's name). */
+  secondField?: { label: string; placeholder: string } | null;
 }
 
-export function OtpScreen({ title, subtitle, verify, nameLabel = 'Your name', namePlaceholder = 'What should we call you?' }: OtpScreenProps) {
+export function OtpScreen({ title, subtitle, verify, nameLabel = 'Your name', namePlaceholder = 'What should we call you?', secondField = null }: OtpScreenProps) {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const params = useLocalSearchParams<Record<string, string>>();
@@ -57,6 +59,7 @@ export function OtpScreen({ title, subtitle, verify, nameLabel = 'Your name', na
 
   const [otp, setOtp] = useState('');
   const [name, setName] = useState('');
+  const [second, setSecond] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [verifying, setVerifying] = useState(false);
   const [cooldown, setCooldown] = useState(Number(cooldownSec ?? 30));
@@ -66,7 +69,7 @@ export function OtpScreen({ title, subtitle, verify, nameLabel = 'Your name', na
 
   const isNew = isNewUser === '1';
   const complete = otp.length === OTP_LENGTH;
-  const canVerify = complete && (!isNew || name.trim().length > 0);
+  const canVerify = complete && (!isNew || (name.trim().length > 0 && (!secondField || second.trim().length > 0)));
 
   useEffect(() => {
     const id = setInterval(() => setCooldown((c) => (c > 0 ? c - 1 : 0)), 1000);
@@ -82,6 +85,7 @@ export function OtpScreen({ title, subtitle, verify, nameLabel = 'Your name', na
         phone: String(phone),
         otp,
         ...(isNew && name.trim() ? { name: name.trim() } : {}),
+        ...(isNew && secondField && second.trim() ? { second: second.trim() } : {}),
         params,
       });
       await saveSession({ accessToken: session.accessToken, refreshToken: session.refreshToken, role: session.role });
@@ -98,7 +102,7 @@ export function OtpScreen({ title, subtitle, verify, nameLabel = 'Your name', na
     } finally {
       setVerifying(false);
     }
-  }, [canVerify, verifying, verify, phone, otp, isNew, name, params, dispatch]);
+  }, [canVerify, verifying, verify, phone, otp, isNew, name, second, secondField, params, dispatch]);
 
   // Auto-submit once per complete code, for returning accounts only.
   const submittedFor = useRef<string | null>(null);
@@ -175,6 +179,17 @@ export function OtpScreen({ title, subtitle, verify, nameLabel = 'Your name', na
           placeholder={namePlaceholder}
           value={name}
           onChangeText={setName}
+          autoCapitalize="words"
+          maxLength={100}
+          containerStyle={styles.nameInput}
+        />
+      ) : null}
+      {isNew && secondField ? (
+        <Input
+          label={secondField.label}
+          placeholder={secondField.placeholder}
+          value={second}
+          onChangeText={setSecond}
           autoCapitalize="words"
           maxLength={100}
           containerStyle={styles.nameInput}

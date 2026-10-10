@@ -44,8 +44,8 @@ const log = createLogger('app-root');
 export interface AppRootProps {
   /** Accounts this app signs in. Anything else is signed out on boot. */
   roles: readonly Role[];
-  /** Where a signed-in account lands, e.g. '/(main)'. */
-  home: string;
+  /** Where a signed-in account lands, e.g. '/worker', or per role when one app serves two (ServicePro). */
+  home: string | ((role: Role | null) => string);
   /** The app's sign-in screen, e.g. '/(auth)/login'. */
   login: string;
   /** Server deep link → this app's screen, or null. */
@@ -95,6 +95,8 @@ function Guarded({ roles, home, login, resolveRoute, children }: AppRootProps) {
 
   // Subscribed, so signing in re-runs the guard below.
   const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated);
+  const role = useAppSelector((s) => s.auth.role);
+  const homePath = typeof home === 'function' ? home(role) : home;
 
   usePushNotifications(resolveRoute);
 
@@ -121,8 +123,8 @@ function Guarded({ roles, home, login, resolveRoute, children }: AppRootProps) {
     if (!ready) return;
     const inAuth = segments[0] === '(auth)';
     if (!isAuthenticated && !inAuth) router.replace(login as never);
-    else if (isAuthenticated && inAuth) router.replace(home as never);
-  }, [ready, segments, router, isAuthenticated, home, login]);
+    else if (isAuthenticated && inAuth) router.replace(homePath as never);
+  }, [ready, segments, router, isAuthenticated, homePath, login]);
 
   if (!ready) return null;
   return <>{children}</>;

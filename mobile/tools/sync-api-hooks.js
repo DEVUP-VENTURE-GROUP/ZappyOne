@@ -36,6 +36,7 @@ const LOGIC = [
   { from: 'provider/jobFlows.js', to: 'shared/jobFlows.js', imports: { '../utils/money': './money' } },
   { from: 'components/home/problemArt.js', to: 'shared/problemArt.js', imports: {} },
   { from: 'components/home/serviceArt.js', to: 'shared/serviceArt.js', imports: { './problemArt': './problemArt' } },
+  { from: 'components/provider/weeklyHoursRules.js', to: 'shared/weeklyHoursRules.js', imports: {} },
   { from: 'components/account/passwordRules.js', to: 'shared/passwordRules.js', imports: {} },
   { from: 'config/releases.js', to: 'shared/releases.js', imports: {} },
   { from: 'provider/useProviderJobs.js', to: 'shared/useProviderJobs.js', imports: { react: 'react', '../services/api': '../api/hooks' } },

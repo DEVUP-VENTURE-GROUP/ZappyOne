@@ -13,9 +13,11 @@ export default function ServiceProOtpScreen() {
       subtitle={owner ? 'Sign in to run your shop' : 'Sign in as a technician of your shop'}
       nameLabel={owner ? 'Your shop name' : 'Your name'}
       namePlaceholder={owner ? 'As customers will see it' : 'Your full name, as on your ID'}
-      verify={async ({ phone, otp, name }) => {
+      // A new shop gives its owner's name too; the server needs both to open it.
+      secondField={owner ? { label: 'Owner name', placeholder: 'Your full name' } : null}
+      verify={async ({ phone, otp, name, second }) => {
         if (owner) {
-          const r = await loginShop({ phone, otp, ...(name ? { businessName: name } : {}) }).unwrap();
+          const r = await loginShop({ phone, otp, ...(name ? { businessName: name } : {}), ...(second ? { ownerName: second } : {}) }).unwrap();
           return { accessToken: r.accessToken, refreshToken: r.refreshToken, role: 'shop' };
         }
         const r = await loginWorker({ phone, otp, ...(name ? { name } : {}) }).unwrap();
