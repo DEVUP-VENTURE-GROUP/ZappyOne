@@ -69,10 +69,11 @@ export async function ensureAndroidChannel(): Promise<void> {
   if (Platform.OS !== 'android') return;
   try {
     await Notifications.setNotificationChannelAsync(ANDROID_CHANNEL_ID, {
-      name: 'Zappy alerts',
+      name: 'ZappyOne alerts',
       description: 'Booking updates, messages and job offers.',
       importance: Notifications.AndroidImportance.HIGH,
-      sound: 'default',
+      // No `sound`: unset means the phone's normal sound. A string here names a
+      // custom sound file, and 'default' is not one.
       vibrationPattern: [0, 250, 250, 250],
       lockscreenVisibility: Notifications.AndroidNotificationVisibility.PRIVATE,
     });
