@@ -6,6 +6,7 @@ import { ArrowLeft, Shield, Smartphone, Clock, AlertTriangle, X } from 'lucide-r
 import { useGetMeQuery, useDeleteAccountMutation } from '@shared/services/api';
 import { useDispatch } from 'react-redux';
 import { logout } from '@shared/modules/auth/authSlice';
+import toast from 'react-hot-toast';
 
 function DeleteConfirmSheet({ onClose, onConfirm, isLoading }) {
   const [confirm, setConfirm] = useState('');
@@ -18,7 +19,7 @@ function DeleteConfirmSheet({ onClose, onConfirm, isLoading }) {
         </div>
         <div className="bg-rose-50 rounded-xl p-3 text-sm text-rose-700 space-y-1">
           <p className="font-medium">This action is permanent.</p>
-          <p className="text-xs">Your profile, addresses, and order history will be anonymised within 30 days. Active orders must be completed or cancelled first.</p>
+          <p className="text-xs">Your sign-in, name, contact details, photo and saved details are removed now. Past bookings and payments are kept without your details. Open bookings must be finished first.</p>
         </div>
         <div>
           <label className="text-xs font-medium text-slate-600 block mb-1">
@@ -57,9 +58,13 @@ export default function AccountSecurityPage() {
   async function handleDelete() {
     try {
       await deleteAccount().unwrap();
+      toast.success('Your account has been deleted');
       dispatch(logout());
       nav('/', { replace: true });
-    } catch {}
+    } catch (err) {
+      // The server says why (a booking still open, money still in the wallet).
+      toast.error(err?.data?.error || 'Could not delete the account. Try again.');
+    }
   }
 
   return (
@@ -118,7 +123,7 @@ export default function AccountSecurityPage() {
           </div>
           <div className="px-4 pb-4">
             <p className="text-xs text-slate-500 mb-3">
-              Deleting your account is irreversible. Your data will be anonymised within 30 days in compliance with our privacy policy.
+              Deleting your account is irreversible. Your personal details are removed straight away; past bookings and payments are kept without them, as the law requires.
             </p>
             <button
               onClick={() => setShowDelete(true)}

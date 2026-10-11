@@ -200,19 +200,9 @@ async function getSpending(req, res, next) {
   } catch (err) { next(err); }
 }
 
+/** The customer app's delete-account call; the same deletion every account type gets (account/account-deletion). */
 async function deleteAccount(req, res, next) {
-  try {
-    await User.findByIdAndUpdate(req.auth.sub, {
-      $set: {
-        isDeleted: true,
-        deletedAt: new Date(),
-        name: 'Deleted User',
-        email: null,
-        deviceTokens: [],
-      },
-    });
-    res.json({ ok: true });
-  } catch (err) { next(err); }
+  try { res.json(await require('../account/account-deletion').deleteAccount({ role: 'user', id: req.auth.sub })); } catch (err) { next(err); }
 }
 
 async function setDefaultPaymentMethod(req, res, next) {

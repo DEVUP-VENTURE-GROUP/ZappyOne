@@ -42,6 +42,10 @@ router.get('/me', authenticate, onlyAccounts, async (req, res, next) => {
   try { res.json(await svc.getStatus(req.auth.role, req.auth.sub, baseUrlFor(req, req.auth.role))); } catch (e) { next(e); }
 });
 
+/** Delete this account (every app): refused while a job is open or money is still in the wallet. */
+router.delete('/me', authenticate, onlyAccounts,
+  async (req, res, next) => { try { res.json(await require('./account-deletion').deleteAccount(self(req))); } catch (e) { next(e); } });
+
 router.post('/photo', authenticate, onlyAccounts,
   validate(Joi.object({ key: Joi.string().trim().max(300).required() })),
   async (req, res, next) => { try { res.json(await svc.setPhoto({ ...self(req), key: req.body.key })); } catch (e) { next(e); } });

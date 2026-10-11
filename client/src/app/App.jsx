@@ -73,6 +73,7 @@ const PromosHubPage                = lazy(() => import('../features/wallet/Promo
 const ScheduledBookingsPage        = lazy(() => import('../features/bookings/ScheduledBookingsPage'));
 const AccountSecurityPage          = lazy(() => import('../features/account/AccountSecurityPage'));
 const FaqPage                      = lazy(() => import('../features/support/FaqPage'));
+const DeleteAccountPage            = lazy(() => import('../features/support/DeleteAccountPage'));
 const PolicyPage                   = lazy(() => import('../features/support/PolicyPage'));
 const RewardsPage                  = lazy(() => import('../features/wallet/RewardsPage'));
 
@@ -131,6 +132,8 @@ export default function App() {
         {/* Public */}
         {/* Public help content — FAQs + policy pages (admin-managed) */}
         <Route path="/faq" element={<FaqPage />} />
+        {/* Public, signed out: how to delete an account (Google Play account-deletion link). */}
+        <Route path="/delete-account" element={<DeleteAccountPage />} />
         <Route path="/policy/:slug" element={<PolicyPage />} />
 
         <Route path="/login" element={token ? <Navigate to="/" replace /> : <LoginPage />} />

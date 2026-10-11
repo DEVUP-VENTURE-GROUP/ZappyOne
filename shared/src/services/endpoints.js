@@ -1046,8 +1046,9 @@ export function endpoints(b, { adminApiPath }) {
     }),
 
     // --- Account Deletion ---
+    // Every account type (account/account-deletion): refused while a job is open or money is in the wallet.
     deleteAccount: b.mutation({
-      query: () => ({ url: '/users/me', method: 'DELETE' }),
+      query: () => ({ url: '/account/me', method: 'DELETE' }),
     }),
 
     // --- Available Promos ---
