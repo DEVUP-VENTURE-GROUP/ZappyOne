@@ -28,9 +28,7 @@ const config: ExpoConfig = {
     package: 'com.zappyone.rakshak',
     adaptiveIcon: {
       backgroundColor: '#FFFFFF',
-      foregroundImage: './assets/images/android-icon-foreground.png',
-      backgroundImage: './assets/images/android-icon-background.png',
-      monochromeImage: './assets/images/android-icon-monochrome.png',
+      foregroundImage: './assets/images/adaptive-icon.png',
     },
     permissions: ['ACCESS_FINE_LOCATION', 'ACCESS_COARSE_LOCATION', 'CAMERA', 'POST_NOTIFICATIONS'],
     // Merged in by libraries but never used: overlays, and broad storage (photos use the system picker).
@@ -42,7 +40,7 @@ const config: ExpoConfig = {
     'expo-dev-client',
     'expo-secure-store',
     'expo-font',
-    ['expo-splash-screen', { image: './assets/images/splash-icon.png', resizeMode: 'contain', backgroundColor: '#FFFFFF' }],
+    ['expo-splash-screen', { image: './assets/images/splash.png', imageWidth: 200, resizeMode: 'contain', backgroundColor: '#FFFFFF' }],
     ['expo-location', { locationWhenInUsePermission: 'Rakshak uses your location to show nearby jobs and to share your trip with the customer.' }],
     ['expo-camera', { cameraPermission: 'Rakshak uses the camera for KYC documents and job photos.', recordAudioAndroid: false }],
     'expo-notifications',
