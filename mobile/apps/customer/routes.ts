@@ -10,6 +10,7 @@ const BUILT = [
   /^\/support$/, /^\/support\/tickets\/[\w-]+$/, /^\/disputes(\/[\w-]+)?$/,
   /^\/wallet$/, /^\/spending$/, /^\/promos$/, /^\/rewards$/, /^\/referral$/,
   /^\/pet$/, /^\/pet\/my-pets(\/[\w-]+)?$/, /^\/pet\/book\/[\w-]+$/, /^\/pet\/bookings\/[\w-]+$/, /^\/pet\/recurring$/,
+  /^\/helping(\/(shopping|returns))?$/, /^\/helping\/tasks\/[\w-]+$/,
   /^\/repair(\/(laptop|two-wheeler|four-wheeler|water-tank-care))?$/,
   /^\/repair\/price-requests\/[\w-]+$/, /^\/repair\/bookings\/[\w-]+$/, /^\/repair\/category\/[\w-]+\/[\w-]+$/,
 ];

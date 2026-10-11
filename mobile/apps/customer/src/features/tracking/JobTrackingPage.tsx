@@ -42,8 +42,8 @@ import { useStatusNotice } from './useStatusNotice';
 
 const NEEDS_YOU = ['CUSTOMER_APPROVAL_PENDING', 'AWAITING_CUSTOMER_APPROVAL', 'APPROVAL_REQUIRED'];
 
-export function JobTrackingPage({ job, extras = null, startCode = null, cancel = null, onRate, onSOS, rebookHref = null }: {
-  job: TrackedJob; extras?: React.ReactNode; startCode?: string | null; cancel?: { run: (reason: string) => Promise<void>; note?: string } | null;
+export function JobTrackingPage({ job, extras = null, startCode = null, codeStage = null, cancel = null, onRate, onSOS, rebookHref = null }: {
+  job: TrackedJob; extras?: React.ReactNode; startCode?: string | null; codeStage?: string | null; cancel?: { run: (reason: string) => Promise<void>; note?: string } | null;
   onRate?: (stars: number) => void; onSOS?: () => Promise<void>; rebookHref?: string | null;
 }) {
   const router = useRouter();
@@ -92,7 +92,7 @@ export function JobTrackingPage({ job, extras = null, startCode = null, cancel =
             onLive={showMap ? () => scroll.current?.scrollTo({ y: 0, animated: true }) : undefined} />
         ) : null}
         <ProviderStatusNotes jobId={job.id} noun={job.noun} options={options} hasProvider={!!job.provider} live={!job.terminal} onChanged={refetchOptions} />
-        <StartCodeCard jobKey={`${job.kind}:${job.id}`} code={startCode} stage={status} noun={job.noun} />
+        <StartCodeCard jobKey={`${job.kind}:${job.id}`} code={startCode} stage={codeStage || status} noun={job.noun} />
         {!job.provider && !job.terminal ? <JobBoostCard jobId={job.id} boost={options?.boost} since={job.createdAt} noun={job.noun} onBoosted={refetchOptions} /> : null}
         {extras}
         {['repair', 'helping'].includes(job.kind) && status === 'completed' ? <RepeatCard jobId={job.id} noun={job.noun === 'helper' ? 'task' : 'booking'} /> : null}
