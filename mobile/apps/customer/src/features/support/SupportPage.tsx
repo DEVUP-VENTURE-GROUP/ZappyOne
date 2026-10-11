@@ -40,7 +40,7 @@ export function SupportPage() {
         refreshControl={<RefreshControl refreshing={isFetching && !isLoading} onRefresh={refetch} tintColor={zappy[500]} />}>
         <View style={styles.email}>
           <View style={styles.flex}>
-            <Text variant="caption" weight="bold" color={zappy[200] ?? '#BFD0FF'}>{t('support.direct', 'DIRECT EMAIL SUPPORT')}</Text>
+            <Text variant="caption" weight="bold" color={zappy[200]}>{t('support.direct', 'DIRECT EMAIL SUPPORT')}</Text>
             <Text variant="bodySmall" weight="black" color="#fff">{EMAIL}</Text>
             <Text variant="caption" color={slate[400]}>{t('support.desk', '24/7 Dedicated Customer Resolution Desk')}</Text>
           </View>

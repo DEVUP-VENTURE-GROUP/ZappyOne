@@ -8,6 +8,7 @@ const BUILT = [
   /^\/$/, /^\/home$/, /^\/services$/, /^\/profile$/, /^\/orders$/, /^\/track$/,
   /^\/notifications$/, /^\/notification-prefs$/, /^\/account-security$/, /^\/faq$/, /^\/policy\/[\w-]+$/,
   /^\/support$/, /^\/support\/tickets\/[\w-]+$/, /^\/disputes(\/[\w-]+)?$/,
+  /^\/wallet$/, /^\/spending$/, /^\/promos$/, /^\/rewards$/, /^\/referral$/,
   /^\/repair(\/(laptop|two-wheeler|four-wheeler|water-tank-care))?$/,
   /^\/repair\/price-requests\/[\w-]+$/, /^\/repair\/bookings\/[\w-]+$/, /^\/repair\/category\/[\w-]+\/[\w-]+$/,
 ];
