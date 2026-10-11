@@ -46,6 +46,7 @@ const LOGIC = [
   { from: 'components/events/eventPhotos.js', to: 'shared/eventPhotos.js', imports: {} },
   { from: 'customer/useMyJobs.js', to: 'shared/useMyJobs.js', imports: { react: 'react', '../services/api': '../api/hooks', '../i18n/translations': './translations' } },
   { from: 'constants/services.js', to: 'shared/services.js', imports: {} },
+  { from: 'customer/schedule.js', to: 'shared/schedule.js', imports: {} },
   { from: 'customer/jobKinds.js', to: 'shared/jobKinds.js', imports: { '../provider/jobFlows': './jobFlows' } },
   { from: 'customer/trackingSteps.js', to: 'shared/trackingSteps.js', imports: {} },
   { from: 'provider/useProviderJobs.js', to: 'shared/useProviderJobs.js', imports: { react: 'react', '../services/api': '../api/hooks' } },

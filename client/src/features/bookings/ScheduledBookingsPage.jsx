@@ -13,6 +13,8 @@ import {
 import { useSafeBack } from '../../hooks/useBookingFlow';
 import { useMyJobs } from '@shared/customer/useMyJobs';
 import { serviceVisual } from './OrdersListPage';
+import { KIND_LABEL, buildSchedule, movesThroughJobs, dayLabel, icsFor, timeLabel, untilLabel } from '@shared/customer/schedule';
+import { buildSlots, startOfDay } from '@shared/utils/slots';
 
 /**
  * Your schedule — everything booked, in time order, in one place.
@@ -27,44 +29,9 @@ import { serviceVisual } from './OrdersListPage';
  * server's answer, never guessed here.
  */
 
-const DAY_MS = 86400000;
-const LEAD_MIN = 30;
-const KIND_LABEL = { repair: 'Repair', pet: 'Pet care', helping: 'Helping', order: 'Service', event: 'Event' };
-
-const startOfDay = (d) => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; };
-function dayLabel(d) {
-  const diff = Math.round((startOfDay(d) - startOfDay(new Date())) / DAY_MS);
-  if (diff === 0) return 'Today';
-  if (diff === 1) return 'Tomorrow';
-  return new Date(d).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short' });
-}
-const timeLabel = (d) => new Date(d).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' });
-
-function untilLabel(ms) {
-  if (ms <= 0) return 'Starting now';
-  const m = Math.floor(ms / 60000);
-  const d = Math.floor(m / 1440); const h = Math.floor((m % 1440) / 60); const mm = m % 60;
-  if (d > 0) return `in ${d}d ${h}h`;
-  if (h > 0) return `in ${h}h ${mm}m`;
-  return `in ${mm} min`;
-}
-
-/** An .ics file for the phone's calendar: the booking at its time, one hour long. */
+/** An .ics file for the phone's calendar (shared/customer/schedule builds it). */
 function addToCalendar(item) {
-  const start = new Date(item.when);
-  const end = new Date(start.getTime() + 60 * 60000);
-  const fmt = (d) => d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
-  const esc = (s) => String(s || '').replace(/[,;\\]/g, (c) => `\\${c}`).replace(/\n/g, ' ');
-  const ics = [
-    'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//ZappyOne//Booking//EN', 'BEGIN:VEVENT',
-    `UID:${item.key}@zappyone.com`, `DTSTAMP:${fmt(new Date())}`, `DTSTART:${fmt(start)}`, `DTEND:${fmt(end)}`,
-    `SUMMARY:${esc(`ZappyOne · ${item.title}`)}`,
-    `DESCRIPTION:${esc(`${KIND_LABEL[item.kind] || 'Booking'}${item.reference ? ` ${item.reference}` : ''}. Track it in the ZappyOne app.`)}`,
-    ...(item.address ? [`LOCATION:${esc(item.address)}`] : []),
-    'BEGIN:VALARM', 'TRIGGER:-PT30M', 'ACTION:DISPLAY', 'DESCRIPTION:Your ZappyOne booking is in 30 minutes', 'END:VALARM',
-    'END:VEVENT', 'END:VCALENDAR',
-  ].join('\r\n');
-  const url = URL.createObjectURL(new Blob([ics], { type: 'text/calendar' }));
+  const url = URL.createObjectURL(new Blob([icsFor(item)], { type: 'text/calendar' }));
   const a = document.createElement('a');
   a.href = url; a.download = `zappyone-${item.key}.ics`;
   document.body.appendChild(a); a.click(); a.remove();
@@ -82,40 +49,10 @@ export default function ScheduledBookingsPage() {
   const [now, setNow] = useState(Date.now());
   useEffect(() => { const t = setInterval(() => setNow(Date.now()), 30000); return () => clearInterval(t); }, []);
 
-  const { live, ahead } = useMemo(() => {
-    const items = active.map((j) => {
-      const at = j.raw?.scheduledAt || j.raw?.checkInAt || null;
-      return {
-        key: `${j.kind}-${j.id}`, id: j.id, kind: j.kind, title: j.title, stage: j.stage, reference: j.reference,
-        iconCode: j.iconCode, href: j.href, address: j.address, when: at,
-        // Booked for later: a time well past when it was booked ("now" bookings carry their own moment).
-        later: !!at && new Date(at).getTime() > now - 3600000
-          && new Date(at).getTime() - new Date(j.raw?.createdAt || 0).getTime() > 15 * 60000,
-        order: j.kind === 'order' ? j.raw : null,
-      };
-    });
-    const events = (eventData?.bookings || [])
-      .filter((b) => b.eventDate && !['cancelled', 'completed'].includes(b.status) && new Date(b.eventDate).getTime() > now - DAY_MS)
-      .map((b) => ({
-        key: `event-${b._id}`, id: b._id, kind: 'event', title: b.themeId?.title || 'Event décor', iconCode: 'event',
-        when: b.eventDate, slot: b.eventTimeSlot, href: `/events/bookings/${b._id}`, later: true, address: b.venue?.address || '',
-      }));
-    return {
-      live: items.filter((i) => !i.later),
-      ahead: [...items.filter((i) => i.later), ...events].sort((a, b) => new Date(a.when) - new Date(b.when)),
-    };
-  }, [active, eventData, now]);
-
-  const next = ahead[0] || null;
-  const days = useMemo(() => {
-    const out = [];
-    for (const item of ahead.slice(1)) {
-      const label = dayLabel(item.when);
-      const last = out[out.length - 1];
-      if (last?.label === label) last.items.push(item); else out.push({ label, items: [item] });
-    }
-    return out;
-  }, [ahead]);
+  const { live, ahead, next, days } = useMemo(
+    () => buildSchedule({ active, eventBookings: eventData?.bookings || [], now }),
+    [active, eventData, now],
+  );
 
   const { data: repeatData } = useMyRepeatsQuery();
   const repeats = repeatData?.plans || [];
@@ -316,26 +253,13 @@ function BookingRow({ item, onOpen, onMove }) {
 
 /* ------------------------------------------------------------------ */
 
-/** The next 7 days and half-hour times from 8 am to 8 pm, from 30 minutes out. */
+/** The next 7 days and half-hour times from 8 am to 8 pm, from 30 minutes out (shared slot rules). */
 function useSlots() {
-  return useMemo(() => {
-    const earliest = Date.now() + LEAD_MIN * 60000;
-    const out = [];
-    for (let d = 0; d < 7; d += 1) {
-      const day = startOfDay(Date.now() + d * DAY_MS);
-      const times = [];
-      for (let m = 8 * 60; m <= 20 * 60; m += 30) {
-        const t = new Date(day.getTime() + m * 60000);
-        if (t.getTime() >= earliest) times.push(t);
-      }
-      if (times.length) out.push({ day, times });
-    }
-    return out;
-  }, []);
+  return useMemo(() => buildSlots({ days: 7, leadMinutes: 30, fromHour: 8, toHour: 20 }), []);
 }
 
 function MoveSheet({ item, onClose }) {
-  const generic = ['repair', 'pet', 'helping'].includes(item.kind);
+  const generic = movesThroughJobs(item);
   const { data: options, isLoading: checking } = useJobOptionsQuery({ id: item.id, status: 'move' }, { skip: !generic });
   const [moveJob, { isLoading: movingJob }] = useRescheduleJobMutation();
   const [moveOrder, { isLoading: movingOrder }] = useRescheduleOrderMutation();
