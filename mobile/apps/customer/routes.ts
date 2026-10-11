@@ -11,9 +11,13 @@ const BUILT = [
   /^\/wallet$/, /^\/spending$/, /^\/promos$/, /^\/rewards$/, /^\/referral$/,
   /^\/pet$/, /^\/pet\/my-pets(\/[\w-]+)?$/, /^\/pet\/book\/[\w-]+$/, /^\/pet\/bookings\/[\w-]+$/, /^\/pet\/recurring$/,
   /^\/helping(\/(shopping|returns))?$/, /^\/helping\/tasks\/[\w-]+$/,
+  /^\/my-assets$/, /^\/nearby-shops$/, /^\/shops\/[\w-]+$/,
   /^\/repair(\/(laptop|two-wheeler|four-wheeler|water-tank-care))?$/,
   /^\/repair\/price-requests\/[\w-]+$/, /^\/repair\/bookings\/[\w-]+$/, /^\/repair\/category\/[\w-]+\/[\w-]+$/,
 ];
+
+/** Whether this app has a screen for `path`: entries to screens not built yet are hidden, not dead ends. */
+export const isBuilt = (path: string) => BUILT.some((re) => re.test(path.split('?')[0]));
 
 export function resolveRoute(deepLink: string): string | null {
   const path = deepLink.split('?')[0];
