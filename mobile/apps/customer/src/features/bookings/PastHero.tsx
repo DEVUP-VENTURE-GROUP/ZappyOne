@@ -1,15 +1,16 @@
 /**
  * The last completed job, featured (the website's PastHero): when, total,
- * rating, and Rate / Rebook. Only a completed job gets this card; a cancelled
+ * rating, and Rate / Rebook / Invoice. Only a completed job gets this card; a cancelled
  * one would get undue weight.
  */
 import { StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { CheckCircle2, Repeat2, Star } from 'lucide-react-native';
+import { CheckCircle2, FileDown, Repeat2, Star } from 'lucide-react-native';
 import { formatPaise } from '@zappy/core/shared/money';
 import { Button, Text } from '@zappy/ui/components';
 import { jobIcon } from '@zappy/ui/components/jobs/jobIcons';
 import { useI18n } from '@zappy/ui/lib/i18n';
+import { useOpenDocument } from '@zappy/ui/lib/openDocument';
 import { accent, colors, ink, navy, success } from '@zappy/ui/theme/colors';
 import { radius } from '@zappy/ui/theme/radius';
 import { spacing } from '@zappy/ui/theme/spacing';
@@ -21,6 +22,8 @@ export function PastHero({ job }: { job: MyJob }) {
   const router = useRouter();
   const { t, lang } = useI18n();
   const Icon = jobIcon(job.iconCode);
+  const { open, opening } = useOpenDocument();
+  const invoice = `/api/orders/${job.id}/invoice`;
   return (
     <View style={styles.card}>
       <View style={styles.banner}>
@@ -39,6 +42,7 @@ export function PastHero({ job }: { job: MyJob }) {
         </View>
         <View style={styles.actions}>
           {job.rating == null ? <Button label={t('activity.rate', 'Rate')} size="small" variant="outline" icon={<Star size={14} color={ink[900]} />} onPress={() => router.push(job.href as never)} /> : null}
+          {job.canInvoice ? <Button label={t('activity.invoice', 'Invoice')} size="small" variant="ghost" loading={opening === invoice} icon={<FileDown size={14} color={ink[500]} />} onPress={() => open(invoice)} /> : null}
           {job.rebookHref ? <Button label={t('activity.rebook', 'Rebook')} size="small" variant="outline" icon={<Repeat2 size={14} color={ink[900]} />} onPress={() => router.push(job.rebookHref as never)} /> : null}
         </View>
       </View>

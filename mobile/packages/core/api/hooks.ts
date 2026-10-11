@@ -178,6 +178,7 @@ export const useAdminDeletePromoMutation = h.useAdminDeletePromoMutation;
 export const useAdminSystemHealthQuery = h.useAdminSystemHealthQuery;
 export const useAdminFeatureFlagsQuery = h.useAdminFeatureFlagsQuery;
 export const useAppReleaseQuery = h.useAppReleaseQuery;
+export const useDocLinkMutation = h.useDocLinkMutation;
 export const useAdminAppReleasesQuery = h.useAdminAppReleasesQuery;
 export const useAdminSetAppReleaseMutation = h.useAdminSetAppReleaseMutation;
 export const useAdminSetFeatureFlagMutation = h.useAdminSetFeatureFlagMutation;

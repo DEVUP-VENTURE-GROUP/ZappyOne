@@ -1053,6 +1053,8 @@ export function endpoints(b, { adminApiPath }) {
     }),
 
     // --- Account Deletion ---
+    // A five-minute link to open a receipt, invoice or service report in the browser (account/doc-link).
+    docLink: b.mutation({ query: (path) => ({ url: '/account/doc-link', method: 'POST', body: { path } }) }),
     // Every account type (account/account-deletion): refused while a job is open or money is in the wallet.
     deleteAccount: b.mutation({
       query: () => ({ url: '/account/me', method: 'DELETE' }),

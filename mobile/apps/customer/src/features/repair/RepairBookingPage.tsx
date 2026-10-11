@@ -2,8 +2,7 @@
  * A repair, tracked live on the shared tracking page (the website's
  * RepairBookingPage). Repair-specific here: the handover codes, a quote to
  * approve, the rating with a comment, the warranty, the quote history and how
- * to pay. The service report opens on the website for now (it is a printable
- * page, and the apps have no document viewer yet).
+ * to pay. The service report opens in the browser (account/doc-link).
  */
 import { StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -27,6 +26,7 @@ import { QuoteHistory } from './booking/QuoteHistory';
 import { RateRepair } from './booking/RateRepair';
 import { REPAIR_STATUS } from './booking/repairStatusCopy';
 import { RepairWarrantyCard } from './booking/RepairWarrantyCard';
+import { ServiceReport } from './booking/ServiceReport';
 
 export function RepairBookingPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -59,6 +59,7 @@ export function RepairBookingPage() {
           <HandoverCode booking={booking} />
           {hint ? <View style={styles.hint}><Text variant="caption" color={ink[700]}>{hint}</Text></View> : null}
           {pendingQuote ? <QuoteCard quote={pendingQuote} onDecided={refetch} /> : null}
+          <ServiceReport booking={booking} />
           <RateRepair booking={booking} />
           <RepairWarrantyCard booking={booking} />
           <PaymentNote booking={booking} />

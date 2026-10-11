@@ -19,6 +19,7 @@ import { JobChat } from '@zappy/ui/components/jobs/JobChat';
 import { callNumber } from '@zappy/ui/lib/openLink';
 import { LiveTrackingMap } from '@zappy/ui/maps/LiveTrackingMap';
 import { mapsAvailable } from '@zappy/ui/lib/maps';
+import { useOpenDocument } from '@zappy/ui/lib/openDocument';
 import { colors, ink, success } from '@zappy/ui/theme/colors';
 import { radius } from '@zappy/ui/theme/radius';
 import { spacing } from '@zappy/ui/theme/spacing';
@@ -73,6 +74,9 @@ export function JobTrackingPage({ job, extras = null, startCode = null, codeStag
   const target = job.trip?.to || (job.place.lat != null && job.place.lng != null ? { lat: job.place.lat, lng: job.place.lng } : null);
   const showMap = mapsAvailable && !job.terminal && ['assigned', 'on_the_way', 'arrived'].includes(status) && !!target;
   const stopped = status === 'cancelled' || status === 'failed';
+  // The receipt PDF for a finished job (the one the "job done" email carries), opened in the browser.
+  const { open: openDoc } = useOpenDocument();
+  const hasReceipt = status === 'completed' && ['repair', 'pet', 'helping'].includes(job.kind);
   const back = () => (router.canGoBack() ? router.back() : router.replace('/orders' as never));
 
   return (
@@ -105,7 +109,7 @@ export function JobTrackingPage({ job, extras = null, startCode = null, codeStag
             <Text variant="bodySmall" color={ink[500]} style={styles.centerText}>{job.statusLabel || 'It is no longer being tracked.'}</Text>
           </View>
         ) : null}
-        <BookingSummary job={job} />
+        <BookingSummary job={job} onReceipt={hasReceipt ? () => openDoc(`/api/jobs/${job.id}/receipt`) : undefined} />
         {status === 'completed' && job.proofs.length ? (
           <View style={styles.card}>
             <View style={styles.inline}><CheckCircle size={15} color={success[600]} /><Text variant="bodySmall" weight="bold">Photos of the work</Text></View>

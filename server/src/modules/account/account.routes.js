@@ -42,6 +42,15 @@ router.get('/me', authenticate, onlyAccounts, async (req, res, next) => {
   try { res.json(await svc.getStatus(req.auth.role, req.auth.sub, baseUrlFor(req, req.auth.role))); } catch (e) { next(e); }
 });
 
+/** A five-minute link to open one of this account's documents in the browser (account/doc-link). */
+router.post('/doc-link', authenticate, onlyAccounts,
+  validate(Joi.object({ path: Joi.string().trim().max(200).required() })),
+  (req, res) => {
+    const docs = require('./doc-link');
+    if (!docs.isDocument(req.body.path)) return res.status(400).json({ error: 'That is not a document', code: 'NOT_A_DOCUMENT' });
+    res.json({ token: docs.sign(req.auth, req.body.path) });
+  });
+
 /** Delete this account (every app): refused while a job is open or money is still in the wallet. */
 router.delete('/me', authenticate, onlyAccounts,
   async (req, res, next) => { try { res.json(await require('./account-deletion').deleteAccount(self(req))); } catch (e) { next(e); } });

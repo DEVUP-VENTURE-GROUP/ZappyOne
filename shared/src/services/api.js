@@ -325,6 +325,7 @@ export const {
   useAdminSystemHealthQuery,
   useAdminFeatureFlagsQuery,
   useAppReleaseQuery,
+  useDocLinkMutation,
   useAdminAppReleasesQuery,
   useAdminSetAppReleaseMutation,
   useAdminSetFeatureFlagMutation,

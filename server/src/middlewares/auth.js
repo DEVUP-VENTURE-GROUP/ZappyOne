@@ -17,13 +17,19 @@ async function invalidateBanCache(role, sub) {
 async function authenticate(req, res, next) {
   const header = req.headers.authorization || '';
   const token = header.startsWith('Bearer ') ? header.slice(7) : null;
-  if (!token) return res.status(401).json({ error: 'Missing token' });
 
   let auth;
-  try {
-    auth = verifyToken(token);
-  } catch {
-    return res.status(401).json({ error: 'Please sign in again to continue.', code: 'SESSION_EXPIRED' });
+  if (!token && req.method === 'GET' && req.query?.dl) {
+    // A document opened in the phone's browser (account/doc-link): good only for this exact path.
+    auth = require('../modules/account/doc-link').verify(req.query.dl, req.baseUrl + req.path);
+    if (!auth) return res.status(401).json({ error: 'This link has expired. Open it again from the app.', code: 'LINK_EXPIRED' });
+  } else {
+    if (!token) return res.status(401).json({ error: 'Missing token' });
+    try {
+      auth = verifyToken(token);
+    } catch {
+      return res.status(401).json({ error: 'Please sign in again to continue.', code: 'SESSION_EXPIRED' });
+    }
   }
   req.auth = auth;
 
