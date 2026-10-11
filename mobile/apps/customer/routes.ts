@@ -11,6 +11,7 @@ const BUILT = [
   /^\/wallet$/, /^\/spending$/, /^\/promos$/, /^\/rewards$/, /^\/referral$/,
   /^\/pet$/, /^\/pet\/my-pets(\/[\w-]+)?$/, /^\/pet\/book\/[\w-]+$/, /^\/pet\/bookings\/[\w-]+$/, /^\/pet\/recurring$/,
   /^\/helping(\/(shopping|returns))?$/, /^\/helping\/tasks\/[\w-]+$/,
+  /^\/events(\/(browse|saved|bookings))?$/, /^\/events\/(themes|bookings)\/[\w-]+$/,
   /^\/my-assets$/, /^\/scheduled$/, /^\/plans$/, /^\/worker-profile\/[\w-]+$/, /^\/nearby-shops$/, /^\/shops\/[\w-]+$/,
   /^\/repair(\/(laptop|two-wheeler|four-wheeler|water-tank-care))?$/,
   /^\/repair\/price-requests\/[\w-]+$/, /^\/repair\/bookings\/[\w-]+$/, /^\/repair\/category\/[\w-]+\/[\w-]+$/,
@@ -18,10 +19,10 @@ const BUILT = [
 
 /**
  * What a signed-out guest may browse (the website's public pages): home, the
- * catalogue, help and policies, and the map picker home uses. Booking, bookings
+ * catalogue, events and décor, help and policies, and the map picker home uses. Booking, bookings
  * and the account ask for sign-in first.
  */
-const PUBLIC = [/^\/$/, /^\/home$/, /^\/services$/, /^\/faq$/, /^\/policy\/[\w-]+$/, /^\/location\/picker$/];
+const PUBLIC = [/^\/$/, /^\/home$/, /^\/services$/, /^\/faq$/, /^\/policy\/[\w-]+$/, /^\/location\/picker$/, /^\/events(\/browse)?$/, /^\/events\/themes\/[\w-]+$/];
 export const isPublic = (path: string) => PUBLIC.some((re) => re.test(path.split('?')[0]));
 
 /** Whether this app has a screen for `path`: entries to screens not built yet are hidden, not dead ends. */
