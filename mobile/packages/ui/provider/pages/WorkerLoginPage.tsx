@@ -4,7 +4,7 @@
  * forgotten one). Signing up is the OTP path; what a provider may do is
  * decided later, per service, by verification.
  *
- *   role    who is signing in: an individual or shop technician ('worker'), or a shop owner ('shop')
+ *   role    who is signing in: a customer ('user'), an individual or shop technician ('worker'), or a shop owner ('shop')
  *   header  shown above the switch, e.g. ServicePro's owner / technician choice
  *   params  passed to the OTP screen with the phone
  */
@@ -26,7 +26,7 @@ type Mode = 'otp' | 'password';
 const MODES: [Mode, string][] = [['otp', 'OTP'], ['password', 'Password']];
 
 export function WorkerLoginPage({ title, subtitle, role = 'worker', header, params, otpPath = '/(auth)/otp' }: {
-  title: string; subtitle: string; role?: 'worker' | 'shop'; header?: ReactNode; params?: Record<string, string>; otpPath?: string;
+  title: string; subtitle: string; role?: 'user' | 'worker' | 'shop'; header?: ReactNode; params?: Record<string, string>; otpPath?: string;
 }) {
   const [mode, setMode] = useState<Mode>('otp');
   const dispatch = useDispatch();
@@ -34,7 +34,7 @@ export function WorkerLoginPage({ title, subtitle, role = 'worker', header, para
   // Password sign-in keeps the session the way the OTP screen does; the root guard then goes home.
   async function signedIn(r: PasswordLoginResult) {
     await saveSession({ accessToken: r.accessToken, refreshToken: r.refreshToken ?? '', role });
-    dispatch(setSession({ user: ((role === 'shop' ? r.shop : r.worker) as never) ?? null, role }));
+    dispatch(setSession({ user: ((r as Record<string, unknown>)[role] as never) ?? null, role }));
     socketClient.connect();
   }
 
