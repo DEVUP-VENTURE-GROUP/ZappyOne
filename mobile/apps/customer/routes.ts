@@ -5,7 +5,7 @@
  * refused unsafe ones). Add a path when its screen is built.
  */
 const BUILT = [
-  /^\/$/, /^\/home$/, /^\/services$/, /^\/profile$/, /^\/orders$/, /^\/track$/,
+  /^\/$/, /^\/home$/, /^\/services$/, /^\/profile$/, /^\/orders$/, /^\/orders\/[\w-]+$/, /^\/track$/,
   /^\/notifications$/, /^\/notification-prefs$/, /^\/account-security$/, /^\/faq$/, /^\/policy\/[\w-]+$/,
   /^\/support$/, /^\/support\/tickets\/[\w-]+$/, /^\/disputes(\/[\w-]+)?$/,
   /^\/wallet$/, /^\/spending$/, /^\/promos$/, /^\/rewards$/, /^\/referral$/,
