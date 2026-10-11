@@ -16,6 +16,14 @@ const BUILT = [
   /^\/repair\/price-requests\/[\w-]+$/, /^\/repair\/bookings\/[\w-]+$/, /^\/repair\/category\/[\w-]+\/[\w-]+$/,
 ];
 
+/**
+ * What a signed-out guest may browse (the website's public pages): home, the
+ * catalogue, help and policies, and the map picker home uses. Booking, bookings
+ * and the account ask for sign-in first.
+ */
+const PUBLIC = [/^\/$/, /^\/home$/, /^\/services$/, /^\/faq$/, /^\/policy\/[\w-]+$/, /^\/location\/picker$/];
+export const isPublic = (path: string) => PUBLIC.some((re) => re.test(path.split('?')[0]));
+
 /** Whether this app has a screen for `path`: entries to screens not built yet are hidden, not dead ends. */
 export const isBuilt = (path: string) => BUILT.some((re) => re.test(path.split('?')[0]));
 

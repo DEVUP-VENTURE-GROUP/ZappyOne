@@ -9,6 +9,15 @@ const router = express.Router();
 
 router.get('/system/health', ctrl.getSystemHealth);
 
+// Admin → System → App versions: the oldest app version still allowed to run.
+router.get('/app-releases', ctrl.getAppReleases);
+router.put('/app-releases/:app',
+  validate(Joi.object({
+    minVersion: Joi.string().pattern(/^\d+(\.\d+){0,2}$/).required(),
+    latestVersion: Joi.string().pattern(/^\d+(\.\d+){0,2}$/).required(),
+    message: Joi.string().allow('').max(240).default(''),
+  })),
+  ctrl.setAppRelease);
 router.get('/feature-flags', ctrl.getFeatureFlags);
 router.post(
   '/feature-flags',

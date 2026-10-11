@@ -324,6 +324,9 @@ export const {
   // Enterprise admin
   useAdminSystemHealthQuery,
   useAdminFeatureFlagsQuery,
+  useAppReleaseQuery,
+  useAdminAppReleasesQuery,
+  useAdminSetAppReleaseMutation,
   useAdminSetFeatureFlagMutation,
   useAdminAlertsQuery,
   useAdminSupportTicketsQuery,

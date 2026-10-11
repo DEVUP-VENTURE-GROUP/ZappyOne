@@ -20,7 +20,7 @@ export const TAG_TYPES = ['PriceRequest', 'Reviews', 'Fees', 'JobChat', 'Account
     'RepairCatalog', 'RepairConfig', 'RepairPricing', 'RepairRequests', 'RepairBookings', 'RepairProvider', 'MyAssets',
     'HelpingConfig', 'HelpingTasks', 'HelpingAvailable', 'AdminHelpingTasks',
     'PetCatalog', 'MyPets', 'PetBookings', 'PetAvailable', 'PetRecurring', 'AdminPetBookings', 'AdminPetPricing', 'AdminPetCapabilities',
-    'RepairIdentification', 'Onboarding', 'AdminBookings', 'ErrorIssues', 'Surge', 'IdCheck', 'WorkerHours', 'Repeats', 'ShopPayouts'];
+    'RepairIdentification', 'Onboarding', 'AdminBookings', 'ErrorIssues', 'Surge', 'IdCheck', 'WorkerHours', 'Repeats', 'ShopPayouts', 'AppReleases'];
 
 /**
  * The finished API these endpoints live in, for the optimistic cache patches
@@ -868,6 +868,13 @@ export function endpoints(b, { adminApiPath }) {
     }),
 
     // --- Admin: Feature Flags ---
+    // Oldest version of a phone app still allowed to run (app-release); public, read on launch.
+    appRelease: b.query({ query: (app) => `/app-release/${app}`, keepUnusedDataFor: 60 }),
+    adminAppReleases: b.query({ query: () => adminApiPath('/app-releases'), providesTags: ['AppReleases'] }),
+    adminSetAppRelease: b.mutation({
+      query: ({ app, ...body }) => ({ url: adminApiPath(`/app-releases/${app}`), method: 'PUT', body }),
+      invalidatesTags: ['AppReleases'],
+    }),
     adminFeatureFlags: b.query({
       query: () => adminApiPath('/feature-flags'),
       providesTags: ['FeatureFlags'],

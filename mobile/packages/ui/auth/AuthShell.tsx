@@ -66,7 +66,10 @@ function AuthShellBase({ title, subtitle, children, footer }: AuthShellProps) {
       </View>
 
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        // Edge-to-edge Android (Expo 56) no longer resizes the window for the
+        // keyboard, so both platforms pad: the code boxes stay above the keys.
+        behavior="padding"
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : insets.bottom}
         style={styles.flex}
       >
         <ScrollView

@@ -2,6 +2,7 @@ import toast from 'react-hot-toast';
 import { ToggleLeft, ToggleRight, Loader2 } from 'lucide-react';
 import { useAdminFeatureFlagsQuery, useAdminSetFeatureFlagMutation } from '@shared/services/api';
 import { SectionHeader, Card, PageLoader, fmtDate } from '../../ui/kit';
+import AppVersions from './AppVersions';
 
 /**
  * Platform kill switches. The list comes from the server — every flag shown
@@ -56,6 +57,7 @@ export default function FeatureFlags() {
           );
         })}
       </Card>
+      <AppVersions />
     </div>
   );
 }

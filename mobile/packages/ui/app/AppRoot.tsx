@@ -20,7 +20,7 @@
  */
 
 import React, { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Stack, useRouter, useSegments } from 'expo-router';
+import { Stack, usePathname, useRouter, useSegments } from 'expo-router';
 import { useFonts } from 'expo-font';
 import { Provider } from 'react-redux';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -40,6 +40,7 @@ import type { Role } from '@zappy/core/types/api';
 import { fontAssets } from '../theme';
 import { ToastHost } from '../components/Toast';
 import { I18nProvider } from '../lib/i18n';
+import { UpdateGate } from './UpdateGate';
 
 // Before any screen runs: a stray error is reported, never shown to the person using the app.
 installGlobalErrorHandlers();
@@ -55,6 +56,12 @@ export interface AppRootProps {
   login: string;
   /** Server deep link → this app's screen, or null. */
   resolveRoute: RouteResolver;
+  /**
+   * Screens a signed-out guest may see (the customer app's home and catalogue,
+   * like the website). Anything else sends them to sign-in, and back to it after.
+   * Omitted: every screen needs an account (the provider apps).
+   */
+  isPublic?: (path: string) => boolean;
   /** The app's Stack screens. */
   children: ReactNode;
 }
@@ -90,8 +97,11 @@ async function bootstrapSession(roles: readonly Role[]): Promise<void> {
   store.dispatch(setSession({ user: null, role: session.role }));
 }
 
-function Guarded({ roles, home, login, resolveRoute, children }: AppRootProps) {
+function Guarded({ roles, home, login, resolveRoute, isPublic, children }: AppRootProps) {
   const segments = useSegments();
+  const pathname = usePathname();
+  /** Where a guest was going when sign-in was asked for. */
+  const returnTo = useRef<string | null>(null);
   const router = useRouter();
   const [sessionReady, setSessionReady] = useState(false);
   const [fontsLoaded, fontError] = useFonts(fontAssets);
@@ -127,9 +137,16 @@ function Guarded({ roles, home, login, resolveRoute, children }: AppRootProps) {
   useEffect(() => {
     if (!ready) return;
     const inAuth = segments[0] === '(auth)';
-    if (!isAuthenticated && !inAuth) router.replace(login as never);
-    else if (isAuthenticated && inAuth) router.replace(homePath as never);
-  }, [ready, segments, router, isAuthenticated, homePath, login]);
+    if (!isAuthenticated && !inAuth) {
+      if (isPublic?.(pathname)) return;
+      returnTo.current = isPublic ? pathname : null;
+      router.replace(login as never);
+    } else if (isAuthenticated && inAuth) {
+      const next = returnTo.current;
+      returnTo.current = null;
+      router.replace((next || homePath) as never);
+    }
+  }, [ready, segments, pathname, router, isAuthenticated, homePath, login, isPublic]);
 
   if (!ready) return null;
   return <>{children}</>;
@@ -141,7 +158,9 @@ export function AppRoot(props: AppRootProps) {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <Provider store={store}>
         <I18nProvider>
-          <Guarded {...props} />
+          <UpdateGate>
+            <Guarded {...props} />
+          </UpdateGate>
           <ToastHost />
         </I18nProvider>
       </Provider>

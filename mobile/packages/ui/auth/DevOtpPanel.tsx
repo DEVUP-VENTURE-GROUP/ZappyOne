@@ -24,7 +24,7 @@
 
 import React, { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { TriangleAlert, WandSparkles } from 'lucide-react-native';
+import { WandSparkles } from 'lucide-react-native';
 import { ScalePressable, Text } from '../components';
 import { accent, colors } from '../theme/colors';
 import { radius } from '../theme/radius';
@@ -50,26 +50,9 @@ function DevOtpPanelBase({ state, onFill }: DevOtpPanelProps) {
     </View>
   );
 
-  // The server answered but sent no code: the SMS provider is configured (or
-  // this is a production backend), so there is nothing to offer.
-  if (state.kind === 'missing') {
-    return (
-      <View style={[styles.panel, styles.panelMuted]}>
-        <View style={styles.headRow}>
-          {badge}
-          <TriangleAlert size={13} color={accent[700]} />
-        </View>
-        <Text variant="caption" color={colors.textSecondary} style={styles.body}>
-          SMS provider is not configured in this development environment, and the
-          API returned no development code for this number.
-        </Text>
-        <Text variant="caption" color={colors.textMuted} style={styles.hint}>
-          Read the code from the API server log, then type it above. Verification
-          is unchanged.
-        </Text>
-      </View>
-    );
-  }
+  // No code came back: the SMS was really sent (or this is a production
+  // backend), so there is nothing to offer and nothing worth a warning.
+  if (state.kind === 'missing') return null;
 
   return (
     <ScalePressable
@@ -116,7 +99,6 @@ const styles = StyleSheet.create({
     marginBottom: spacing.base,
     gap: spacing.xs,
   },
-  panelMuted: { borderColor: colors.borderStrong },
 
   headRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   badge: {
@@ -131,5 +113,4 @@ const styles = StyleSheet.create({
   actionRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
 
   body: { lineHeight: 17, marginTop: spacing.xxs },
-  hint: { lineHeight: 16, marginTop: spacing.xxs },
 });

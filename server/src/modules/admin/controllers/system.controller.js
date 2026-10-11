@@ -82,6 +82,24 @@ async function setFeatureFlag(req, res, next) {
   }
 }
 
+const appReleases = require('../../app-release/app-release.service');
+
+async function getAppReleases(req, res, next) {
+  try { res.json({ releases: await appReleases.all() }); } catch (err) { next(err); }
+}
+
+async function setAppRelease(req, res, next) {
+  try {
+    const { app } = req.params;
+    if (!appReleases.APPS.includes(app)) return res.status(404).json({ error: 'Unknown app' });
+    const before = await appReleases.forApp(app);
+    const releases = await appReleases.set(app, req.body, req.auth.sub);
+    await auditService.fromRequest(req, 'admin.app_release_update', { kind: 'system', id: null },
+      { app, minVersion: before.minVersion, latestVersion: before.latestVersion }, { app, ...req.body });
+    res.json({ releases });
+  } catch (err) { next(err); }
+}
+
 async function getAlerts(req, res, next) {
   try {
     const now = new Date();
@@ -227,4 +245,5 @@ async function getAlerts(req, res, next) {
   }
 }
 
-module.exports = { getSystemHealth, getFeatureFlags, setFeatureFlag, getAlerts };
+module.exports = {
+  getAppReleases, setAppRelease, getSystemHealth, getFeatureFlags, setFeatureFlag, getAlerts };
