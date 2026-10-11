@@ -11,7 +11,7 @@ const BUILT = [
   /^\/wallet$/, /^\/spending$/, /^\/promos$/, /^\/rewards$/, /^\/referral$/,
   /^\/pet$/, /^\/pet\/my-pets(\/[\w-]+)?$/, /^\/pet\/book\/[\w-]+$/, /^\/pet\/bookings\/[\w-]+$/, /^\/pet\/recurring$/,
   /^\/helping(\/(shopping|returns))?$/, /^\/helping\/tasks\/[\w-]+$/,
-  /^\/my-assets$/, /^\/scheduled$/, /^\/nearby-shops$/, /^\/shops\/[\w-]+$/,
+  /^\/my-assets$/, /^\/scheduled$/, /^\/plans$/, /^\/worker-profile\/[\w-]+$/, /^\/nearby-shops$/, /^\/shops\/[\w-]+$/,
   /^\/repair(\/(laptop|two-wheeler|four-wheeler|water-tank-care))?$/,
   /^\/repair\/price-requests\/[\w-]+$/, /^\/repair\/bookings\/[\w-]+$/, /^\/repair\/category\/[\w-]+\/[\w-]+$/,
 ];
