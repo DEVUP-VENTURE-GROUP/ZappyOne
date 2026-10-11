@@ -20,8 +20,8 @@ function Line({ k, v, strong }: { k: string; v: string; strong?: boolean }) {
   return <View style={styles.line}><Text variant="caption" weight={strong ? 'bold' : 'regular'} color={strong ? ink[900] : ink[500]}>{k}</Text><Text variant="caption" weight={strong ? 'bold' : 'semibold'}>{v}</Text></View>;
 }
 
-export function CancelSheet({ visible, onClose, quote, loading, quoteNeeded, reasons, onCancel }: {
-  visible: boolean; onClose: () => void; quote?: CancelQuote; loading: boolean; quoteNeeded: boolean; reasons: string[]; onCancel: (reason: string) => Promise<void>;
+export function CancelSheet({ visible, onClose, quote, loading, quoteNeeded, reasons, note, onCancel }: {
+  visible: boolean; onClose: () => void; quote?: CancelQuote; loading: boolean; quoteNeeded: boolean; reasons: string[]; note?: string; onCancel: (reason: string) => Promise<void>;
 }) {
   const router = useRouter();
   const [reason, setReason] = useState('');
@@ -40,7 +40,7 @@ export function CancelSheet({ visible, onClose, quote, loading, quoteNeeded, rea
       <View style={styles.body}>
         {loading && !quote ? <ActivityIndicator color={slate[300]} /> : (
           <>
-            <Text variant="bodySmall" color={ink[700]}>{quote?.message || 'You can cancel this booking.'}</Text>
+            <Text variant="bodySmall" color={ink[700]}>{quote?.message || note || 'You can cancel this booking.'}</Text>
             {costs ? (
               <View style={styles.costs}>
                 {quote?.earnedPaise ? <Line k="Inspection already done" v={rupees(quote.earnedPaise)} /> : null}

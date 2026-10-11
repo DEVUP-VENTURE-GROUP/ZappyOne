@@ -43,7 +43,7 @@ import { useStatusNotice } from './useStatusNotice';
 const NEEDS_YOU = ['CUSTOMER_APPROVAL_PENDING', 'AWAITING_CUSTOMER_APPROVAL', 'APPROVAL_REQUIRED'];
 
 export function JobTrackingPage({ job, extras = null, startCode = null, cancel = null, onRate, onSOS, rebookHref = null }: {
-  job: TrackedJob; extras?: React.ReactNode; startCode?: string | null; cancel?: { run: (reason: string) => Promise<void> } | null;
+  job: TrackedJob; extras?: React.ReactNode; startCode?: string | null; cancel?: { run: (reason: string) => Promise<void>; note?: string } | null;
   onRate?: (stars: number) => void; onSOS?: () => Promise<void>; rebookHref?: string | null;
 }) {
   const router = useRouter();
@@ -130,7 +130,7 @@ export function JobTrackingPage({ job, extras = null, startCode = null, cancel =
         )}
       </View>
 
-      {cancel ? <CancelSheet visible={cancelOpen} onClose={() => setCancelOpen(false)} quote={options?.cancel} loading={optionsLoading} quoteNeeded={optionsOn} reasons={options?.reasons || []} onCancel={cancel.run} /> : null}
+      {cancel ? <CancelSheet visible={cancelOpen} onClose={() => setCancelOpen(false)} quote={options?.cancel} loading={optionsLoading} quoteNeeded={optionsOn} reasons={options?.reasons || []} note={cancel.note} onCancel={cancel.run} /> : null}
       <SosSheet visible={sosOpen} onClose={() => setSosOpen(false)} onAlert={onSOS} />
       {chatOpen ? <JobChat jobId={job.id} title={job.provider?.name || `Your ${job.noun}`} onClose={() => setChatOpen(false)} /> : null}
       <ConnectionBanner />
