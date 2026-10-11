@@ -65,14 +65,22 @@ function readRt(req) {
  * The ZappyOne app a native client is (`X-App: servicepro | rakshak`), for the
  * same who-signs-in-where checks as the web portals. Cookies stay web-only.
  */
+/**
+ * Who each native app signs in, where it differs from its web portal: the
+ * ServicePro app is also the event partner's app (the web keeps events.zappyone.com).
+ */
+const APP_ROLES = { servicepro: ['shop', 'worker', 'event_partner'] };
+
 function appOf(req) {
   const p = req.headers['x-app'];
   return isMobile(req) && Object.prototype.hasOwnProperty.call(PORTALS, p) ? p : null;
 }
 
 function assertPortalServes(req, role) {
-  const portal = portalOf(req) || appOf(req);
-  if (portal && !PORTALS[portal].roles.includes(role)) {
+  const portal = portalOf(req);
+  const app = portal ? null : appOf(req);
+  const roles = portal ? PORTALS[portal].roles : app ? (APP_ROLES[app] || PORTALS[app].roles) : null;
+  if (roles && !roles.includes(role)) {
     throw Object.assign(new Error('This account signs in on a different ZappyOne app'), { status: 403, code: 'WRONG_PORTAL' });
   }
 }
@@ -140,7 +148,7 @@ async function loginPartner(req, res, next) {
     assertPortalServes(req, 'event_partner');
     const result = await authService.loginEventPartnerWithOtp(req.body);
     setRtCookie(req, res, result.refreshToken);
-    res.json({ accessToken: result.accessToken, partner: result.partner });
+    res.json(withMobileRt(req, { accessToken: result.accessToken, partner: result.partner, isNew: result.isNew }, result.refreshToken));
   } catch (err) { next(err); }
 }
 
@@ -161,7 +169,7 @@ async function googlePartnerLogin(req, res, next) {
       return res.json({ needsRegistration: true, googleId: result.googleId, email: result.email, suggestedName: result.suggestedName });
     }
     setRtCookie(req, res, result.refreshToken);
-    res.json({ accessToken: result.accessToken, partner: result.partner, isNew: result.isNew });
+    res.json(withMobileRt(req, { accessToken: result.accessToken, partner: result.partner, isNew: result.isNew }, result.refreshToken));
   } catch (err) { next(err); }
 }
 

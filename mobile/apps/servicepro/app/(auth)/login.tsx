@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { Store, Wrench } from 'lucide-react-native';
+import { PartyPopper, Store, Wrench } from 'lucide-react-native';
 import { Text } from '@zappy/ui/components';
 import { WorkerLoginPage } from '@zappy/ui/provider/pages/WorkerLoginPage';
 import { colors, ink, slate, zappy } from '@zappy/ui/theme/colors';
@@ -10,15 +10,26 @@ import { spacing } from '@zappy/ui/theme/spacing';
 const ROLES = [
   { key: 'shop', label: 'Shop owner', Icon: Store },
   { key: 'worker', label: 'Shop worker', Icon: Wrench },
+  { key: 'event_partner', label: 'Event business', Icon: PartyPopper },
 ] as const;
+type As = (typeof ROLES)[number]['key'];
 
-/** The same shop, two ways in (the website's LoginRoleSwitch): the owner, or a technician of the shop. */
+const SUBTITLE: Record<As, string> = {
+  shop: 'Sign in to run your shop',
+  worker: 'Sign in as a technician of your shop',
+  event_partner: 'Sign in to run your decor and events business',
+};
+
+/**
+ * Three ways in (the website's LoginRoleSwitch): a shop's owner, a technician
+ * of the shop, or an event partner (decor and events, events.zappyone.com on the web).
+ */
 export default function LoginScreen() {
-  const [as, setAs] = useState<'shop' | 'worker'>('shop');
+  const [as, setAs] = useState<As>('shop');
   return (
     <WorkerLoginPage
       title="ZappyOne ServicePro"
-      subtitle={as === 'shop' ? 'Sign in to run your shop' : 'Sign in as a technician of your shop'}
+      subtitle={SUBTITLE[as]}
       role={as}
       params={{ as }}
       header={
@@ -42,6 +53,6 @@ const styles = StyleSheet.create({
   wrap: { gap: 6, marginBottom: spacing.md },
   center: { textAlign: 'center' },
   switch: { flexDirection: 'row', gap: 4, padding: 4, borderRadius: radius.large, backgroundColor: slate[100] },
-  tab: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, minHeight: 40, borderRadius: radius.medium },
+  tab: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 2, minHeight: 48, paddingHorizontal: 4, borderRadius: radius.medium },
   tabOn: { backgroundColor: colors.surface, borderWidth: 1, borderColor: zappy[100] },
 });

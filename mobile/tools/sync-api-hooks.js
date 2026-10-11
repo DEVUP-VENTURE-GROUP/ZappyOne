@@ -49,6 +49,8 @@ const LOGIC = [
   { from: 'customer/schedule.js', to: 'shared/schedule.js', imports: {} },
   { from: 'customer/jobKinds.js', to: 'shared/jobKinds.js', imports: { '../provider/jobFlows': './jobFlows' } },
   { from: 'customer/trackingSteps.js', to: 'shared/trackingSteps.js', imports: {} },
+  { from: 'events/partnerBookings.js', to: 'shared/partnerBookings.js', imports: {} },
+  { from: 'constants/telanganaPlaces.js', to: 'shared/telanganaPlaces.js', imports: {} },
   { from: 'provider/useProviderJobs.js', to: 'shared/useProviderJobs.js', imports: { react: 'react', '../services/api': '../api/hooks' } },
 ];
 

@@ -5,6 +5,7 @@ import { PageHeader, Spinner, Empty } from '../../components/ui';
 import { FILTERS, StatusChip } from './status';
 import { rupees, shortDate } from '../../lib/format';
 import { placeName } from '@shared/constants/telanganaPlaces';
+import { partnerNetPaise } from '@shared/events/partnerBookings';
 
 /** Every booking, filtered by what the partner needs to do with it. */
 export default function BookingsPage() {
@@ -36,8 +37,7 @@ export default function BookingsPage() {
       ) : (
         <ul className={`space-y-2.5 ${isFetching ? 'opacity-60' : ''}`}>
           {rows.map((b) => {
-            const pct = b.pricing?.platformCommissionPct ?? 10;
-            const net = Math.round((b.pricing?.totalPaise || 0) * (100 - pct) / 100);
+            const net = partnerNetPaise(b);
             return (
               <li key={b._id}>
                 <Link to={`/partner/bookings/${b._id}`} className="flex items-center gap-3 rounded-card border border-line bg-white p-3.5 hover:border-line-strong">

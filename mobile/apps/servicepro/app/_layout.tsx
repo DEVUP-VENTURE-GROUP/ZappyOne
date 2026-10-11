@@ -5,7 +5,8 @@ import { WorkerFrame } from '@zappy/ui/provider/WorkerFrame';
 import { resolveRoute } from '../routes';
 import { homeFor } from '../src/menus';
 
-const ROLES = ['shop', 'worker'] as const;
+/** Shops and their technicians, and event partners (the web keeps events.zappyone.com for them too). */
+const ROLES = ['shop', 'worker', 'event_partner'] as const;
 /** The kinds of work a shop takes (the website's JobOfferHost kinds). */
 const KINDS = ['repair', 'pet'];
 

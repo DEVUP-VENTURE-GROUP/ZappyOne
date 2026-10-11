@@ -28,4 +28,4 @@ export const TECHNICIAN_MENU = [
 ];
 
 /** Where each account lands. */
-export const homeFor = (role: string | null) => (role === 'worker' ? '/worker' : '/shop');
+export const homeFor = (role: string | null) => (role === 'worker' ? '/worker' : role === 'event_partner' ? '/partner' : '/shop');

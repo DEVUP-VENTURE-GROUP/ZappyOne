@@ -1,32 +1,22 @@
 /**
- * How each booking state reads to a partner, and the one thing they do next.
- * The transitions mirror the server (event-partner-api updateBookingStatus):
- * confirmed -> partner_assigned -> in_progress (host's start code) -> completed
- * (needs a photo of the finished setup).
+ * How each booking state looks to a partner. The labels, next steps and filters
+ * are shared with the ServicePro app (shared/events/partnerBookings).
  */
-export const STATUS = {
-  pending_payment:  { label: 'Awaiting payment', tone: 'bg-sunken text-ink-700' },
-  confirmed:        { label: 'New request', tone: 'bg-amber-50 text-amber-800' },
-  partner_assigned: { label: 'Accepted', tone: 'bg-zappy-50 text-zappy-700' },
-  in_progress:      { label: 'Setting up', tone: 'bg-zappy-50 text-zappy-700' },
-  completed:        { label: 'Completed', tone: 'bg-green-50 text-green-700' },
-  cancelled:        { label: 'Cancelled', tone: 'bg-red-50 text-red-700' },
-  disputed:         { label: 'Under review', tone: 'bg-red-50 text-red-700' },
+import { PARTNER_STATUS_LABEL, NEXT_STEP, FILTERS } from '@shared/events/partnerBookings';
+
+export { NEXT_STEP, FILTERS };
+
+const TONE = {
+  pending_payment:  'bg-sunken text-ink-700',
+  confirmed:        'bg-amber-50 text-amber-800',
+  partner_assigned: 'bg-zappy-50 text-zappy-700',
+  in_progress:      'bg-zappy-50 text-zappy-700',
+  completed:        'bg-green-50 text-green-700',
+  cancelled:        'bg-red-50 text-red-700',
+  disputed:         'bg-red-50 text-red-700',
 };
 
-export const NEXT_STEP = {
-  confirmed:        { to: 'partner_assigned', label: 'Accept booking' },
-  partner_assigned: { to: 'in_progress', label: 'Start setup', needsCode: true },
-  in_progress:      { to: 'completed', label: 'Mark completed', needsAfterPhoto: true },
-};
-
-export const FILTERS = [
-  { key: 'confirmed', label: 'New' },
-  { key: 'upcoming', label: 'Upcoming' },
-  { key: 'completed', label: 'Completed' },
-  { key: 'cancelled', label: 'Cancelled' },
-  { key: '', label: 'All' },
-];
+export const STATUS = Object.fromEntries(Object.entries(PARTNER_STATUS_LABEL).map(([k, label]) => [k, { label, tone: TONE[k] }]));
 
 export function StatusChip({ status }) {
   const s = STATUS[status] || { label: status, tone: 'bg-sunken text-ink-700' };

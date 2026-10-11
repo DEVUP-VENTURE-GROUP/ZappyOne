@@ -9,13 +9,7 @@ import {
 import { Spinner, Card, Field } from '../../components/ui';
 import { uploadFile } from '../../lib/upload';
 import PlacePicker from '../profile/PlacePicker';
-import { EDITABLE } from './PackagesPage';
-
-const EMPTY = {
-  title: '', description: '', categoryId: '', price: '', setupHours: '2', guestsMax: '50',
-  included: [], excluded: [], cities: [],
-  cover: null, gallery: [], video: null, // each { key, url }
-};
+import { EDITABLE, EMPTY_PACKAGE as EMPTY, packageForm, packageProblems, packageBody } from '@shared/events/partnerBookings';
 
 /**
  * Create or edit a package. Media are uploaded files only: a cover photo,
@@ -40,17 +34,7 @@ export default function PackageEditorPage() {
   const theme = isEdit ? themes?.themes?.find((t) => t._id === id) : null;
   useEffect(() => {
     if (!theme) return;
-    setForm({
-      title: theme.title || '', description: theme.description || '',
-      categoryId: theme.categoryId?._id || theme.categoryId || '',
-      price: theme.startingPricePaise ? String(Math.round(theme.startingPricePaise / 100)) : '',
-      setupHours: String(Math.round((theme.setupDurationMinutes || 120) / 6) / 10),
-      guestsMax: String(theme.guestCapacity?.max || 50),
-      included: theme.includedItems || [], excluded: theme.excludedItems || [], cities: theme.cities || [],
-      cover: theme.coverKey ? { key: theme.coverKey, url: theme.coverImage } : null,
-      gallery: (theme.galleryKeys || []).map((k, i) => ({ key: k, url: theme.gallery?.[i] })),
-      video: theme.videoKey ? { key: theme.videoKey, url: theme.videoUrl } : null,
-    });
+    setForm(packageForm(theme));
   }, [theme?._id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // A new partner's areas are the sensible default for a new package.
@@ -81,21 +65,11 @@ export default function PackageEditorPage() {
   const price = Number(form.price) || 0;
   // The live rate; each booking freezes the rate it is made at.
   const pct = earnings?.commissionPct ?? 10;
-  const problems = [
-    !form.title.trim() && 'a title', !form.categoryId && 'a category', price < 500 && 'a price of at least ₹500',
-    !form.cover && 'a cover photo', !form.cities.length && 'at least one place you serve', !form.included.length && 'what is included',
-  ].filter(Boolean);
+  const problems = packageProblems(form);
 
   async function save() {
     if (problems.length) return toast.error(`Add ${problems[0]}`);
-    const body = {
-      title: form.title.trim(), description: form.description.trim(), categoryId: form.categoryId,
-      startingPricePaise: Math.round(price * 100),
-      setupDurationMinutes: Math.max(30, Math.round(Number(form.setupHours || 2) * 60)),
-      guestCapacity: { min: 1, max: Math.max(1, Number(form.guestsMax) || 50) },
-      includedItems: form.included, excludedItems: form.excluded, cities: form.cities,
-      coverImage: form.cover.key, gallery: form.gallery.map((g) => g.key), videoUrl: form.video?.key || '',
-    };
+    const body = packageBody(form);
     try {
       if (isEdit) await update({ id, ...body }).unwrap(); else await create(body).unwrap();
       toast.success(isEdit ? 'Saved. It goes live after review.' : 'Package sent for review. We usually respond within a day.');

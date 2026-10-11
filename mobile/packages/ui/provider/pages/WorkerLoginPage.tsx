@@ -4,7 +4,7 @@
  * forgotten one). Signing up is the OTP path; what a provider may do is
  * decided later, per service, by verification.
  *
- *   role    who is signing in: a customer ('user'), an individual or shop technician ('worker'), or a shop owner ('shop')
+ *   role    who is signing in: a customer ('user'), an individual or shop technician ('worker'), a shop owner ('shop'), or an event partner ('event_partner')
  *   header  shown above the switch, e.g. ServicePro's owner / technician choice
  *   params  passed to the OTP screen with the phone
  *   footer  under the card, e.g. the customer app's "Continue browsing"
@@ -27,7 +27,7 @@ type Mode = 'otp' | 'password';
 const MODES: [Mode, string][] = [['otp', 'OTP'], ['password', 'Password']];
 
 export function WorkerLoginPage({ title, subtitle, role = 'worker', header, footer, params, otpPath = '/(auth)/otp' }: {
-  title: string; subtitle: string; role?: 'user' | 'worker' | 'shop'; header?: ReactNode; footer?: ReactNode; params?: Record<string, string>; otpPath?: string;
+  title: string; subtitle: string; role?: 'user' | 'worker' | 'shop' | 'event_partner'; header?: ReactNode; footer?: ReactNode; params?: Record<string, string>; otpPath?: string;
 }) {
   const [mode, setMode] = useState<Mode>('otp');
   const dispatch = useDispatch();

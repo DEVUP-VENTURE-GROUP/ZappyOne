@@ -12,6 +12,7 @@ import { StatusChip, NEXT_STEP } from './status';
 import { rupees, longDate } from '../../lib/format';
 import { uploadFile } from '../../lib/upload';
 import { placeName } from '@shared/constants/telanganaPlaces';
+import { PHOTO_STATES, BEFORE_OPEN, AFTER_OPEN } from '@shared/events/partnerBookings';
 
 /**
  * One booking, worked from top to bottom: what, when, where, the customer's
@@ -105,14 +106,14 @@ export default function BookingDetailPage() {
         </Card>
       )}
 
-      {['partner_assigned', 'in_progress', 'completed'].includes(b.status) && (
+      {PHOTO_STATES.includes(b.status) && (
         <Card className="space-y-4 p-4">
           <div>
             <p className="text-[15px] font-bold text-ink-900">Setup photos</p>
             <p className="text-[13px] text-ink-500">The customer sees these. At least one finished photo is needed to complete.</p>
           </div>
-          <PhotoStage id={id} stage="before" title="Before you start" photos={b.setupPhotos?.before} enabled={['partner_assigned', 'in_progress'].includes(b.status)} onDone={refetch} />
-          <PhotoStage id={id} stage="after" title="Finished setup" photos={b.setupPhotos?.after} enabled={['in_progress', 'completed'].includes(b.status)}
+          <PhotoStage id={id} stage="before" title="Before you start" photos={b.setupPhotos?.before} enabled={BEFORE_OPEN.includes(b.status)} onDone={refetch} />
+          <PhotoStage id={id} stage="after" title="Finished setup" photos={b.setupPhotos?.after} enabled={AFTER_OPEN.includes(b.status)}
             lockedText="Add these once the setup has started" onDone={refetch} />
         </Card>
       )}

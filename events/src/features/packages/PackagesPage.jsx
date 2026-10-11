@@ -5,16 +5,15 @@ import { usePartnerThemesQuery, useDeleteEventThemeMutation } from '@shared/serv
 import { PageHeader, Spinner, Empty } from '../../components/ui';
 import { rupees } from '../../lib/format';
 import { placeName } from '@shared/constants/telanganaPlaces';
+import { PACKAGE_STATUS_LABEL, EDITABLE } from '@shared/events/partnerBookings';
 
-/** Packages go live only after review; live ones are changed through support. */
-export const PACKAGE_STATUS = {
-  pending: { label: 'In review', tone: 'bg-amber-50 text-amber-800' },
-  approved: { label: 'Live', tone: 'bg-green-50 text-green-700' },
-  featured: { label: 'Live · Featured', tone: 'bg-green-50 text-green-700' },
-  hidden: { label: 'Hidden', tone: 'bg-sunken text-ink-700' },
-  rejected: { label: 'Needs changes', tone: 'bg-red-50 text-red-700' },
+const TONE = {
+  pending: 'bg-amber-50 text-amber-800', approved: 'bg-green-50 text-green-700', featured: 'bg-green-50 text-green-700',
+  hidden: 'bg-sunken text-ink-700', rejected: 'bg-red-50 text-red-700',
 };
-export const EDITABLE = ['pending', 'rejected'];
+/** Packages go live only after review; live ones are changed through support (shared/events/partnerBookings). */
+export const PACKAGE_STATUS = Object.fromEntries(Object.entries(PACKAGE_STATUS_LABEL).map(([k, label]) => [k, { label, tone: TONE[k] }]));
+export { EDITABLE };
 
 export default function PackagesPage() {
   const { data, isLoading } = usePartnerThemesQuery();

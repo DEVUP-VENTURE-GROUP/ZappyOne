@@ -6,6 +6,7 @@ import { usePartnerCalendarQuery, useBlockEventDateMutation, useUnblockEventDate
 import { PageHeader, Spinner, Card } from '../../components/ui';
 import { StatusChip } from '../bookings/status';
 import { longDate, ymd } from '../../lib/format';
+import { monthCells } from '@shared/events/partnerBookings';
 
 const WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
@@ -31,10 +32,7 @@ export default function CalendarPage() {
   if (isLoading) return <Spinner />;
 
   const today = ymd(new Date());
-  const first = new Date(month);
-  const lead = (first.getDay() + 6) % 7; // Monday first
-  const daysIn = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
-  const cells = [...Array(lead).fill(null), ...Array.from({ length: daysIn }, (_, i) => new Date(month.getFullYear(), month.getMonth(), i + 1))];
+  const cells = monthCells(month); // Monday first
   const isCurrentMonth = month.getFullYear() === new Date().getFullYear() && month.getMonth() === new Date().getMonth();
 
   const pk = picked ? ymd(picked) : null;

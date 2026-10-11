@@ -13,6 +13,7 @@ jest.mock('../src/modules/auth/auth.service', () => ({
   refresh: jest.fn(),
   revoke: jest.fn().mockResolvedValue(true),
   loginShopWithOtp: jest.fn(),
+  loginEventPartnerWithOtp: jest.fn(),
 }));
 
 const express = require('express');
@@ -111,6 +112,7 @@ describe('provider portal sessions', () => {
   app.use(cookieParser());
   app.post('/api/auth/refresh', ctrl.refresh);
   app.post('/api/auth/shop/login', ctrl.loginShop);
+  app.post('/api/auth/partner/login', ctrl.loginPartner);
   app.use((err, req, res, next) => res.status(err.status || 500).json({ code: err.code }));
 
   beforeEach(() => jest.clearAllMocks());
@@ -132,5 +134,28 @@ describe('provider portal sessions', () => {
     expect(res.status).toBe(403);
     expect(res.body.code).toBe('WRONG_PORTAL');
     expect(authService.loginShopWithOtp).not.toHaveBeenCalled();
+  });
+
+  test('the ServicePro app signs in an event partner and keeps the refresh token on the phone', async () => {
+    authService.loginEventPartnerWithOtp.mockResolvedValue({ accessToken: 'at', refreshToken: 'ev1', partner: { _id: 'p1' }, isNew: false });
+    const res = await request(app).post('/api/auth/partner/login')
+      .set('X-Client-Type', 'mobile').set('X-App', 'servicepro').send({ phone: '9000000002', otp: '1234' });
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ accessToken: 'at', refreshToken: 'ev1', isNew: false });
+  });
+
+  test('event partners stay off the ServicePro website and the Rakshak app', async () => {
+    const web = await request(app).post('/api/auth/partner/login').set('X-Client-Type', 'servicepro').send({ phone: '9000000002', otp: '1234' });
+    const rakshak = await request(app).post('/api/auth/partner/login').set('X-Client-Type', 'mobile').set('X-App', 'rakshak').send({ phone: '9000000002', otp: '1234' });
+    expect([web.body.code, rakshak.body.code]).toEqual(['WRONG_PORTAL', 'WRONG_PORTAL']);
+    expect(authService.loginEventPartnerWithOtp).not.toHaveBeenCalled();
+  });
+
+  test('the events website never gets the refresh token in the body', async () => {
+    authService.loginEventPartnerWithOtp.mockResolvedValue({ accessToken: 'at', refreshToken: 'ev1', partner: { _id: 'p1' }, isNew: true });
+    const res = await request(app).post('/api/auth/partner/login').set('X-Client-Type', 'events').send({ phone: '9000000002', otp: '1234' });
+    expect(res.status).toBe(200);
+    expect(res.body.refreshToken).toBeUndefined();
+    expect(res.headers['set-cookie'].join(';')).toMatch(/zappy_ev_rt=ev1/);
   });
 });
