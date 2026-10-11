@@ -13,6 +13,7 @@ import { useSignOut } from '@zappy/core/hooks/useSignOut';
 import { useAppSelector } from '@zappy/core/store/hooks';
 import { Button, Text } from '@zappy/ui/components';
 import { LanguageSwitcher } from '@zappy/ui/components/account/LanguageSwitcher';
+import { LegalLinks } from '@zappy/ui/components/account/LegalLinks';
 import { MenuItem, MenuSection } from '@zappy/ui/components/account/MenuSection';
 import { ProfilePhoto } from '@zappy/ui/components/account/ProfilePhoto';
 import { toast } from '@zappy/ui/components/Toast';
@@ -76,6 +77,7 @@ export function ProfilePage() {
         <MenuItem Icon={Bell} label={t('profile.notifSettings', 'Notification Settings')} sublabel={t('profile.notifSettings.sub', 'Manage what you receive')} onPress={go('/notification-prefs')} />
         <MenuItem Icon={Shield} label={t('profile.security', 'Account Security')} sublabel={t('profile.security.sub', 'Login history & deletion')} onPress={go('/account-security')} />
       </MenuSection>
+      <LegalLinks title={t('profile.section.legal', 'Legal')} />
 
       {confirmLogout ? (
         <View style={styles.confirm}>

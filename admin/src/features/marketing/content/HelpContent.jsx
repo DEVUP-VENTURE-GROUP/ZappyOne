@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import toast from 'react-hot-toast';
-import { Plus, Pencil, Trash2, X, Loader2, HelpCircle, FileText, Eye, EyeOff } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, Loader2, Eye, EyeOff } from 'lucide-react';
 import {
   useAdminListContentQuery,
   useAdminCreateContentMutation,
@@ -59,7 +59,8 @@ function Editor({ type, initial, onClose }) {
           <>
             <Field label="Slug (URL)"><input className={inp} value={form.slug} onChange={(e) => setForm((p) => ({ ...p, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-') }))} placeholder="refund-policy" disabled={!!initial} /></Field>
             <Field label="Title"><input className={inp} value={form.title} onChange={set('title')} maxLength={160} /></Field>
-            <Field label="Body (one point per line)"><textarea className={inp} rows={10} value={form.body} onChange={set('body')} maxLength={20000} /></Field>
+            <Field label="Body (one point per line; numbered lines are headings)"><textarea className={inp} rows={14} value={form.body} onChange={set('body')} maxLength={20000} /></Field>
+            <p className="text-xs text-slate-500">Company details fill in from Messages → Business details: {'{{legalName}} {{address}} {{gstin}} {{supportEmail}} {{supportPhone}} {{grievanceOfficer}} {{grievanceEmail}} {{customerUrl}}'}. A line whose detail is blank is hidden.</p>
           </>
         )}
 
@@ -110,8 +111,12 @@ function Row({ item, onEdit }) {
 }
 
 /* Page */
-export default function Content() {
-  const [tab, setTab] = useState('faq');
+/**
+ * FAQs (Help content), or with `type="policy"` the legal pages (the Legal
+ * pages tab). Everything here is read by the apps and websites from the database.
+ */
+export default function Content({ type = 'faq', title = 'FAQs', subtitle = 'Questions and answers shown in Help on every app (fully editable).' }) {
+  const tab = type;
   const { data, isLoading } = useAdminListContentQuery(tab);
   const [editing, setEditing] = useState(null); // item or 'new'
   const items = data?.items || [];
@@ -120,21 +125,12 @@ export default function Content() {
     <div className="max-w-3xl">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h2 className="text-xl font-extrabold text-slate-900">Content & Help</h2>
-          <p className="text-sm text-slate-500">FAQs and policy pages shown to customers (fully editable).</p>
+          <h2 className="text-xl font-extrabold text-slate-900">{title}</h2>
+          <p className="text-sm text-slate-500">{subtitle}</p>
         </div>
         <button onClick={() => setEditing('new')} className="inline-flex items-center gap-1.5 bg-slate-900 text-white text-sm font-bold px-4 py-2.5 rounded-xl">
           <Plus size={16} /> New {tab === 'faq' ? 'FAQ' : 'Page'}
         </button>
-      </div>
-
-      <div className="flex gap-2 mb-4">
-        {[['faq', 'FAQs', HelpCircle], ['policy', 'Policy Pages', FileText]].map(([id, label, Icon]) => (
-          <button key={id} onClick={() => setTab(id)}
-            className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-bold ${tab === id ? 'bg-zappy-600 text-white' : 'bg-white text-slate-600 border border-slate-200'}`}>
-            <Icon size={15} /> {label}
-          </button>
-        ))}
       </div>
 
       {isLoading ? (

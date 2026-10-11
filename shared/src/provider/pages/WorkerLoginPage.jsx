@@ -10,6 +10,7 @@ import {
 import { useRequestOtpMutation, useLoginWorkerMutation } from '../../services/api';
 import PasswordLogin from '../../components/account/PasswordLogin';
 import ResendOtp from '../../components/auth/ResendOtp';
+import LegalConsent from '../../components/auth/LegalConsent';
 import { setAuth } from '../../modules/auth/authSlice';
 import { ZappyWordmark } from '../../components/common/ZappyLogo';
 import toast from 'react-hot-toast';
@@ -428,6 +429,7 @@ export default function WorkerLoginPage({ allowSignup = true, portalLabel = 'Wor
                       <p className="text-[12px] font-medium text-slate-400 leading-tight mt-0.5">Your data is always protected</p>
                     </div>
                   </div>
+                  <LegalConsent audience="provider" className="mt-4" />
                 </motion.div>
 
               ) : step === 'phone' && mode === 'password' ? (

@@ -7,6 +7,7 @@ import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-mo
 import { Loader2, Shield } from 'lucide-react';
 import { useRequestOtpMutation, useLoginUserMutation } from '@shared/services/api';
 import ResendOtp from '@shared/components/auth/ResendOtp';
+import LegalConsent from '@shared/components/auth/LegalConsent';
 import OtpOrbit from './OtpOrbit';
 import { setAuth } from '@shared/modules/auth/authSlice';
 import toast from 'react-hot-toast';
@@ -399,6 +400,7 @@ export default function LoginPage() {
                   <button type="button" onClick={() => setWithPassword(true)} className="mt-3 w-full text-center text-[14px] font-semibold text-zappy-600">
                     Sign in with password
                   </button>
+                  <LegalConsent className="mt-4" />
                   </>)}
                 </motion.div>
               ) : step === 'otp' ? (

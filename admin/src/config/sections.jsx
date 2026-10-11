@@ -83,6 +83,7 @@ const P = {
   Fraud: page(() => import('../features/operations/Fraud')),
   Notifications: page(() => import('../features/marketing/Notifications')),
   HelpContent: page(() => import('../features/marketing/content/HelpContent')),
+  LegalPages: page(() => import('../features/marketing/content/LegalPages')),
   CityPages: page(() => import('../features/marketing/content/CityPages')),
   Alerts: page(() => import('../features/system/Alerts')),
   Infrastructure: page(() => import('../features/system/Infrastructure')),
@@ -126,8 +127,9 @@ const HUBS = {
     { id: 'zones', label: 'Zones', icon: MapIcon, Comp: P.Zones },
     { id: 'demand', label: 'Launch demand', icon: BellRing, Comp: P.LaunchDemand },
   ]),
-  content: hub('Content & SEO', 'Help articles and the public city pages', [
-    { id: 'help', label: 'Help content', icon: FileText, Comp: P.HelpContent },
+  content: hub('Content & SEO', 'Help, the legal pages and the public city pages', [
+    { id: 'help', label: 'FAQs', icon: FileText, Comp: P.HelpContent },
+    { id: 'legal', label: 'Legal pages', icon: Scale, Comp: P.LegalPages },
     { id: 'cities', label: 'SEO city pages', icon: Globe, Comp: P.CityPages },
   ]),
   status: hub('System status', 'What needs attention now, and the health of the platform underneath', [

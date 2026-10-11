@@ -1,5 +1,7 @@
 const Content = require('./content.model');
 const logger = require('../../core/logger');
+const { LEGAL_PAGES } = require('./legal');
+const businessSettings = require('../messaging/settings');
 
 /**
  * Default content seeded ONCE if the collection is empty. This only populates
@@ -17,7 +19,11 @@ const DEFAULT_FAQS = [
   { category: 'Warranty', order: 1, question: 'Is my service covered by warranty?', answer: "Many repair services include a service warranty. If a covered issue recurs within the warranty period, we'll re-service it. See the Warranty Guidelines for what's covered." },
 ];
 
-const DEFAULT_POLICIES = [
+/**
+ * The pages first shipped (2026-09). A page whose body still equals one of
+ * these was never edited, so it is upgraded to the full legal text.
+ */
+const LEGACY_POLICIES = [
   {
     slug: 'refund-policy',
     title: 'Refund Policy',
@@ -62,26 +68,63 @@ const DEFAULT_POLICIES = [
   },
 ];
 
+const LEGACY_BODIES = new Set(LEGACY_POLICIES.map((p) => p.body));
+
 let _seeded = false;
 
-/** Idempotent one-time seed — only inserts when the collection is empty. */
+/**
+ * Idempotent seed, once per process. An empty collection gets the FAQs and
+ * legal pages; after that, a legal page that is missing is added, and one
+ * still holding its first-shipped text is upgraded. A page an admin edited is
+ * never touched.
+ */
 async function ensureSeeded() {
   if (_seeded) return;
+  _seeded = true;
   try {
     const count = await Content.estimatedDocumentCount();
     if (count === 0) {
-      await Content.insertMany([
-        ...DEFAULT_FAQS.map((f) => ({ type: 'faq', ...f, audience: 'all', isActive: true })),
-        ...DEFAULT_POLICIES.map((p) => ({ type: 'policy', ...p, audience: 'all', isActive: true })),
-      ], { ordered: false });
-      logger.info('[CONTENT] Seeded default FAQs + policy pages');
+      await Content.insertMany(DEFAULT_FAQS.map((f) => ({ type: 'faq', ...f, audience: 'all', isActive: true })), { ordered: false });
+      logger.info('[CONTENT] Seeded default FAQs');
     }
-    _seeded = true;
+    await syncLegalPages();
   } catch (err) {
     // Duplicate-key from a concurrent seed is fine; anything else is non-fatal.
     if (err.code !== 11000) logger.warn({ err: err.message }, '[CONTENT] Seed skipped');
-    _seeded = true;
   }
+}
+
+async function syncLegalPages() {
+  const existing = await Content.find({ type: 'policy', slug: { $in: LEGAL_PAGES.map((p) => p.slug) } }).select('slug body').lean();
+  const bySlug = new Map(existing.map((d) => [d.slug, d]));
+  const ops = [];
+  LEGAL_PAGES.forEach((p, order) => {
+    const doc = bySlug.get(p.slug);
+    if (!doc) ops.push({ insertOne: { document: { type: 'policy', ...p, order, audience: 'all', isActive: true } } });
+    else if (LEGACY_BODIES.has(doc.body)) ops.push({ updateOne: { filter: { _id: doc._id }, update: { $set: { title: p.title, body: p.body, order } } } });
+  });
+  if (!ops.length) return;
+  await Content.bulkWrite(ops, { ordered: false });
+  logger.info({ changed: ops.length }, '[CONTENT] Legal pages added or upgraded');
+}
+
+const TOKEN = /\{\{(\w+)\}\}/g;
+
+/**
+ * Company details into a page, from Admin → Messages → Business details.
+ * A line whose detail is blank is left out rather than shown half-empty;
+ * a blank grievance email falls back to the support email.
+ */
+function fillTokens(body, s) {
+  const values = {
+    brandName: s.brandName, legalName: s.legalName, gstin: s.gstin, address: s.address,
+    supportEmail: s.supportEmail, supportPhone: s.supportPhone, customerUrl: String(s.customerUrl || '').replace(/\/+$/, ''),
+    grievanceOfficer: s.grievanceOfficer, grievanceEmail: s.grievanceEmail || s.supportEmail,
+  };
+  return String(body || '').split('\n')
+    .filter((line) => ![...line.matchAll(TOKEN)].some(([, k]) => !String(values[k] ?? '').trim()))
+    .map((line) => line.replace(TOKEN, (_, k) => String(values[k]).trim()))
+    .join('\n');
 }
 
 /** Public: active FAQs grouped by category, ordered. */
@@ -110,7 +153,8 @@ async function getPolicy(slug) {
     .select('slug title body updatedAt')
     .lean();
   if (!doc) return null;
-  return { slug: doc.slug, title: doc.title, body: doc.body, updatedAt: doc.updatedAt };
+  const details = await businessSettings.get().catch(() => businessSettings.current());
+  return { slug: doc.slug, title: doc.title, body: fillTokens(doc.body, details), updatedAt: doc.updatedAt };
 }
 
 /** Public: list of active policy pages (slug + title) — used for footer/menus. */
@@ -123,4 +167,4 @@ async function listPolicies() {
     .then((docs) => docs.map((d) => ({ slug: d.slug, title: d.title })));
 }
 
-module.exports = { ensureSeeded, listFaqs, getPolicy, listPolicies };
+module.exports = { ensureSeeded, listFaqs, getPolicy, listPolicies, fillTokens };

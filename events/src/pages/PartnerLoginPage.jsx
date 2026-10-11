@@ -6,6 +6,7 @@ import { useDispatch } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Phone, ArrowRight, ChevronLeft, Loader2, EyeOff, CalendarDays, Smile, Users, Award, Palette, ShieldCheck, Flower2 } from 'lucide-react';
 import { useRequestOtpMutation, useLoginEventPartnerMutation, useGooglePartnerLoginMutation } from '@shared/services/api';
+import LegalConsent from '@shared/components/auth/LegalConsent';
 import ResendOtp from '@shared/components/auth/ResendOtp';
 import { setAuth } from '@shared/modules/auth/authSlice';
 import { signInWithGoogle } from '../lib/firebase';
@@ -307,6 +308,7 @@ export default function PartnerLoginPage() {
                 <button type="button" onClick={() => setStep('password')} className="mt-4 text-center text-[14px] font-semibold text-zappy-600">
                   Sign in with password
                 </button>
+                <LegalConsent audience="provider" className="mt-3" />
                 <p className="text-center text-[12px] font-medium text-slate-500 mt-4">
                   New? You'll be able to register after OTP verification
                 </p>

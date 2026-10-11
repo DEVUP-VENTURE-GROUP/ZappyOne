@@ -4,7 +4,8 @@ const mongoose = require('mongoose');
  * The business details every message carries: who we are, how to reach us,
  * where the apps live. Edited in Admin → Messages → Business details; nothing
  * here is invented. A blank GSTIN means receipts say "Receipt", never
- * "Tax invoice", and a blank address is simply left out.
+ * "Tax invoice", and a blank address is simply left out. The legal pages
+ * read these too (content.service fillTokens).
  */
 const schema = new mongoose.Schema({
   key: { type: String, default: 'default', unique: true },
@@ -15,6 +16,9 @@ const schema = new mongoose.Schema({
   address: { type: String, default: '', maxlength: 300 },
   supportEmail: { type: String, default: 'support@zappyone.com', maxlength: 120 },
   supportPhone: { type: String, default: '+91 93927 56435', maxlength: 20 },
+  /** Named on the legal pages, as the IT Rules and the DPDP Act require. A blank email falls back to supportEmail. */
+  grievanceOfficer: { type: String, default: '', maxlength: 100 },
+  grievanceEmail: { type: String, default: '', maxlength: 120 },
   customerUrl: { type: String, default: 'https://www.zappyone.com' },
   rakshakUrl: { type: String, default: 'https://rakshak.zappyone.com' },
   serviceproUrl: { type: String, default: 'https://servicepro.zappyone.com' },

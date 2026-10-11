@@ -58,7 +58,10 @@ export function PhoneOtpForm({ role, otpPath, params }: PhoneOtpFormProps) {
         returnKeyType="go" onSubmitEditing={isValid ? handleSendOtp : undefined} autoFocus />
       <Button label="Continue" onPress={handleSendOtp} loading={isLoading} disabled={!isValid} fullWidth size="large" style={styles.submit} />
       <Text variant="caption" color={colors.textMuted} align="center" style={styles.legal}>
-        By continuing, you agree to ZappyOne&apos;s Terms of Service and Privacy Policy.
+        By continuing, you agree to ZappyOne&apos;s{' '}
+        <Text variant="caption" weight="semibold" color={colors.primary} onPress={() => router.push(`/policy/${role === 'user' ? 'terms' : 'partner-terms'}` as never)}>{role === 'user' ? 'Terms of Use' : 'Partner Terms'}</Text>
+        {' '}and{' '}
+        <Text variant="caption" weight="semibold" color={colors.primary} onPress={() => router.push('/policy/privacy-policy' as never)}>Privacy Policy</Text>.
       </Text>
     </>
   );

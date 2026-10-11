@@ -12,6 +12,7 @@ import { useSignOut } from '@zappy/core/hooks/useSignOut';
 import { Button, Input, LoadingState, ScreenHeader, Text } from '@zappy/ui/components';
 import { toast } from '@zappy/ui/components/Toast';
 import { DeleteAccountCard } from '@zappy/ui/components/account/DeleteAccountCard';
+import { LegalLinks } from '@zappy/ui/components/account/LegalLinks';
 import { LoginSecurityCard } from '@zappy/ui/components/account/LoginSecurityCard';
 import { ProfilePhoto } from '@zappy/ui/components/account/ProfilePhoto';
 import { RIPPLE, errText } from '@zappy/ui/lib/feedback';
@@ -99,6 +100,7 @@ export function PartnerAccountPage() {
         </View>
 
         <LoginSecurityCard />
+        <LegalLinks audience="provider" />
         <Button label="Sign out" variant="outline" icon={<LogOut size={16} color={danger[600]} />} onPress={signOut} fullWidth />
         <DeleteAccountCard />
       </ScrollView>

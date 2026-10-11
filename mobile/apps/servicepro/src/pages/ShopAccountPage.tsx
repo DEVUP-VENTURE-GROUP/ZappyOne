@@ -16,6 +16,7 @@ import { colors, danger, ink, slate, zappy } from '@zappy/ui/theme/colors';
 import { radius } from '@zappy/ui/theme/radius';
 import { spacing } from '@zappy/ui/theme/spacing';
 import { DeleteAccountCard } from '@zappy/ui/components/account/DeleteAccountCard';
+import { LegalLinks } from '@zappy/ui/components/account/LegalLinks';
 
 const LINKS: [string, string, typeof Store, string][] = [
   ['Shop & hours', 'Name, photos, address and opening hours', Store, '/shop/profile'],
@@ -71,8 +72,9 @@ export function ShopAccountPage() {
           ))}
         </View>
 
+        <LegalLinks audience="provider" />
         <Button label="Sign out" variant="outline" icon={<LogOut size={16} color={danger[600]} />} onPress={signOut} fullWidth />
-          <DeleteAccountCard />
+        <DeleteAccountCard />
       </ScrollView>
     </View>
   );

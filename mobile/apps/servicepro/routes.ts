@@ -10,3 +10,6 @@ export function resolveRoute(deepLink: string): string | null {
   const path = providerPath(deepLink);
   return /^\/(shop|worker|provider|partner)(\/|$)/.test(path) ? path : null;
 }
+
+/** What a signed-out visitor may open: the legal pages linked from sign-in. */
+export const isPublic = (path: string) => /^\/policy\/[\w-]+$/.test(path.split('?')[0]);

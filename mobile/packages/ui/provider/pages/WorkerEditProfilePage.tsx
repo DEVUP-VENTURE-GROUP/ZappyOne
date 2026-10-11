@@ -42,6 +42,7 @@ import { radius } from '../../theme/radius';
 import { spacing } from '../../theme/spacing';
 import { providerPath } from '../paths';
 import { DeleteAccountCard } from '../../components/account/DeleteAccountCard';
+import { LegalLinks } from '../../components/account/LegalLinks';
 
 const NAV_SECTIONS = [
   { title: 'Earnings & finance', items: [
@@ -164,6 +165,7 @@ export function WorkerEditProfilePage() {
             </View>
           ))}
 
+          <LegalLinks audience="provider" />
           <Button label="Sign out" variant="outline" icon={<LogOut size={16} color={danger[600]} />} onPress={signOut} fullWidth />
           <DeleteAccountCard />
         </ScrollView>

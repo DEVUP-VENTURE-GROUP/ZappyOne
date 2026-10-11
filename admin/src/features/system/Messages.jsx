@@ -136,12 +136,14 @@ const FIELDS = [
   ['brandName', 'Brand name', 'Shown in every email and receipt'],
   ['legalName', 'Company (legal name)', 'Emails say "ZappyOne is a venture of …"; receipts are issued by it'],
   ['gstin', 'GSTIN', 'Printed on receipts. With GST actually charged, a receipt becomes a tax invoice'],
-  ['address', 'Registered address', 'In the email footer and on receipts'],
+  ['address', 'Registered address', 'In the email footer, on receipts and on the legal pages'],
   ['supportEmail', 'Support email', 'Replies to automatic emails go here'],
   ['supportPhone', 'Support phone', 'In the footer of every email'],
+  ['grievanceOfficer', 'Grievance Officer (name)', 'Named on the Privacy Policy and Grievance Redressal pages, as Indian law requires'],
+  ['grievanceEmail', 'Grievance email', 'Where grievances go; blank uses the support email'],
 ];
 
-function BusinessDetails({ s }) {
+export function BusinessDetails({ s }) {
   const [form, setForm] = useState(null);
   const [save, { isLoading }] = useAdminUpdateMessageSettingsMutation();
   useEffect(() => {

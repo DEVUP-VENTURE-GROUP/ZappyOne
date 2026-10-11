@@ -2,7 +2,7 @@ import '../global.css';
 import { AppRoot, AppStack } from '@zappy/ui/app/AppRoot';
 import { AccountSetupGate } from '@zappy/ui/components/account/AccountSetupGate';
 import { WorkerFrame } from '@zappy/ui/provider/WorkerFrame';
-import { resolveRoute } from '../routes';
+import { isPublic, resolveRoute } from '../routes';
 import { homeFor } from '../src/menus';
 
 /** Shops and their technicians, and event partners (the web keeps events.zappyone.com for them too). */
@@ -12,7 +12,7 @@ const KINDS = ['repair', 'pet'];
 
 export default function RootLayout() {
   return (
-    <AppRoot roles={ROLES} home={homeFor} login="/(auth)/login" resolveRoute={resolveRoute}>
+    <AppRoot roles={ROLES} home={homeFor} login="/(auth)/login" resolveRoute={resolveRoute} isPublic={isPublic}>
       <AccountSetupGate roles={ROLES} appName="ServicePro">
         <AppStack />
         <WorkerFrame kinds={KINDS} />

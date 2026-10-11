@@ -6,6 +6,7 @@ import { useDispatch } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Store, ArrowRight, ChevronLeft, Loader2, Wrench, ShieldCheck, Users } from 'lucide-react';
 import { useRequestOtpMutation, useLoginShopMutation } from '@shared/services/api';
+import LegalConsent from '@shared/components/auth/LegalConsent';
 import ResendOtp from '@shared/components/auth/ResendOtp';
 import { setAuth } from '@shared/modules/auth/authSlice';
 import toast from 'react-hot-toast';
@@ -169,6 +170,7 @@ export default function ShopLoginPage() {
                 <button type="button" onClick={() => setStep('password')} className="mt-4 text-center text-[14px] font-semibold text-zappy-600">
                   Sign in with password
                 </button>
+                <LegalConsent audience="provider" className="mt-3" />
                 <p className="text-center text-[12px] font-medium text-slate-500 mt-4">
                   New shop? You'll set up your business right after verification.
                 </p>
