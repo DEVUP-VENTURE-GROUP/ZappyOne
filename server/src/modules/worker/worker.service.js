@@ -88,6 +88,8 @@ async function goOnline({ workerId, lng, lat, accuracy = null }) {
     { new: true }
   );
   await geoService.markOnline(worker);
+  // A real offline→online switch, for the surge hop check (jobs/surge-guard).
+  if (!existing.isOnline) require('../jobs/surge-guard').noteOnline(worker._id).catch(() => {});
   await pricingService.recordSupply(worker._id, lat, lng);
   // Seed GPS baseline so first updateLocation has a reference point.
   redis.set(`worker:lastloc:${workerId}`, JSON.stringify({ lat, lng, ts: Date.now() }), 'EX', 600).catch(() => {});

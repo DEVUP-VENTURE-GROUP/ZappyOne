@@ -42,7 +42,7 @@ router.get(
 router.get('/fraud/events/:actorKind/:actorId', async (req, res, next) => {
   try {
     const { actorKind, actorId } = req.params;
-    if (!['user', 'worker'].includes(actorKind)) {
+    if (!['user', 'worker', 'shop'].includes(actorKind)) {
       return res.status(400).json({ error: 'Invalid actorKind' });
     }
     if (!OBJECT_ID.test(actorId)) {

@@ -61,7 +61,12 @@ test('lines: busy capped by the ceiling, rain and night flat, all of it never ab
 test('a zone surges only with demand AND someone nearby to pull in, in small steps', async () => {
   await enable();
   const line = 'shopping_pickup';
-  for (let i = 0; i < 6; i += 1) await surge.recordDemand({ line, ...AT, userId: new mongoose.Types.ObjectId() });
+  // Real, signed-in customers: only they count as demand (jobs/surge-guard).
+  const User = require('../src/modules/user/user.model');
+  for (let i = 0; i < 6; i += 1) {
+    const u = await User.create({ name: `Customer ${i}`, phone: `98000000${10 + i}` });
+    await surge.recordDemand({ line, ...AT, userId: u._id });
+  }
   // Nobody approved nearby: raising the price cannot bring anyone.
   await surge.tick();
   let z = (await surge.zones()).zones.find((x) => x.line === line);

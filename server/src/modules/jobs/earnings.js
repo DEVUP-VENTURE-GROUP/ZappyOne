@@ -33,7 +33,8 @@ async function finishedJobs(match, since) {
         kind: k.kind, id: String(r._id), reference: r.reference || null, label: k.earning.label ? k.earning.label(r) : k.label,
         paise, gross, boostPaise: r.boost?.paise || 0, tipPaise: r.tip?.paise || 0, tipMethod: r.tip?.method || null,
         // Their share of the surge (jobs/surge), inside `paise`.
-        surgePaise: r.surge?.providerPaise || 0,
+        surgePaise: require('./surge').providerSurgePaise(r),
+        surgeHeldPaise: require('./surge').heldSurgePaise(r),
         platformPaise: k.earning.platform ? k.earning.platform(r) : Math.max(0, gross + (r.boost?.paise || 0) + (r.surge?.paise || 0) - paise),
         cash: r.paymentMethod === 'cash', at: dotted(r, k.earning.at),
       });
@@ -58,7 +59,8 @@ async function forJob(kind, id) {
 
   const b = k.earning.bill(doc);
   const surgePaise = doc.surge?.paise || 0;
-  const surgeYoursPaise = doc.surge?.providerPaise || 0;
+  const surgeYoursPaise = require('./surge').providerSurgePaise(doc);
+  const surgeHeldPaise = require('./surge').heldSurgePaise(doc);
   const boostPaise = doc.boost?.paise || 0;
   const tipPaise = doc.tip?.paise || 0;
   const tipOnBill = doc.tip?.method === 'with_payment' ? tipPaise : 0;
@@ -89,7 +91,8 @@ async function forJob(kind, id) {
       ...line(`Commission${pct ? ` (${pct}%)` : ''}`, b.commissionPaise),
       ...line('Platform fee', b.platformFeePaise),
       ...line('GST', b.taxPaise),
-      ...line('ZappyOne share of the surge fee', surgePaise - surgeYoursPaise),
+      ...line('ZappyOne share of the surge fee', surgePaise - surgeYoursPaise - surgeHeldPaise),
+      ...line('Your surge share, held for review', surgeHeldPaise, 'paid to you if the review clears it'),
       ...line('Earlier cancellation fee', carriedPaise, 'owed by the customer from a cancelled booking'),
     ],
     zappyKeepsPaise: Math.max(0, customerPaidPaise - (youEarnPaise - (tipPaise - tipOnBill))),

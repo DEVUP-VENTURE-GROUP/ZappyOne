@@ -37,6 +37,9 @@ const surge = new mongoose.Schema({
   platformPaise: { type: Number, default: 0 },
   quoteId: { type: String, default: '' },
   settledAt: { type: Date, default: null },
+  /** The provider's share held for review (jobs/surge-guard pairCheck), and when admin released it. */
+  heldAt: { type: Date, default: null },
+  releasedAt: { type: Date, default: null },
 }, { _id: false });
 
 /** The provider's rating of the customer (jobs/customer-rating). Never shown to the customer. */

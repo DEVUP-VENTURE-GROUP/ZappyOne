@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Shield, ShieldAlert, AlertOctagon, Ban, X, Loader2,
-  MapPin, Gauge, RotateCcw, Users, Star, CreditCard, MapPinned,
+  MapPin, Gauge, RotateCcw, Users, Star, CreditCard, MapPinned, TrendingUp,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import {
@@ -19,6 +19,7 @@ const TYPE_META = {
   payment_anomaly:      { label: 'Payment Anomaly',      Icon: CreditCard },
   rating_manipulation:  { label: 'Rating Manipulation',  Icon: Star },
   fake_location:        { label: 'Fake Location',        Icon: MapPinned },
+  surge_farming:        { label: 'Surge Farming',        Icon: TrendingUp },
 };
 
 const SEVERITY_DOT = {
@@ -42,6 +43,7 @@ const TYPE_TABS = [
   { id: 'refund_abuse',       label: 'Refund Abuse' },
   { id: 'duplicate_account',  label: 'Duplicate' },
   { id: 'rating_manipulation',label: 'Rating' },
+  { id: 'surge_farming',      label: 'Surge' },
 ];
 
 function timeAgo(date) {
@@ -62,6 +64,7 @@ function detailSummary(ev) {
     case 'duplicate_account':   return d.reason === 'shared_phone' ? `${d.accountCount} accounts on phone` : `${d.accountCount} accounts on device`;
     case 'rating_manipulation': return `${d.fiveStarPairCount7d}× 5★ same pair (7d)`;
     case 'gps_spoof':           return `${d.speedMps} m/s jump · ${d.distMetres}m`;
+    case 'surge_farming':       return `${[(d.reasons || []).includes('same_pair') && `${d.surgeJobs} surge jobs with one customer (${d.days}d)`, (d.reasons || []).includes('on_off_switching') && `went online ${d.onlineSwitches}× around the booking`].filter(Boolean).join(' · ') || 'surge share held'} · ₹${Math.round((d.heldPaise || 0) / 100)} held · dismiss to pay out`;
     default:                    return Object.keys(d).length ? JSON.stringify(d).slice(0, 60) : '—';
   }
 }
@@ -145,7 +148,8 @@ export default function Fraud() {
     }
     try {
       const res = await resolve({ id: ev._id, status: newStatus }).unwrap();
-      toast.success(newStatus === 'blocked' ? (res.actorBlocked ? 'Actor blocked' : 'Event marked blocked') : `Event ${newStatus}`);
+      toast.success(newStatus === 'blocked' ? (res.actorBlocked ? 'Actor blocked' : 'Event marked blocked')
+        : res.releasedPaise ? `Dismissed · ₹${Math.round(res.releasedPaise / 100)} surge paid to the provider` : `Event ${newStatus}`);
     } catch (e) {
       toast.error(e.data?.error || 'Action failed');
     }
@@ -157,7 +161,7 @@ export default function Fraud() {
 
   return (
     <div className="p-5 space-y-5">
-      <SectionHeader title="Fraud Detection" subtitle="Suspicious activity across users and workers (last 30 days)" />
+      <SectionHeader title="Fraud Detection" subtitle="Suspicious activity across customers, workers and shops (last 30 days)" />
 
       {/* Summary bar */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">

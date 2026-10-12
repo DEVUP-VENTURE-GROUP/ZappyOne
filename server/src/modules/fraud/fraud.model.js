@@ -8,6 +8,7 @@ const FRAUD_TYPES = [
   'payment_anomaly',
   'rating_manipulation',
   'fake_location',
+  'surge_farming',
 ];
 
 const SEVERITIES = ['low', 'medium', 'high', 'critical'];
@@ -18,7 +19,7 @@ const fraudEventSchema = new mongoose.Schema(
     type: { type: String, enum: FRAUD_TYPES, required: true, index: true },
     severity: { type: String, enum: SEVERITIES, required: true, index: true },
 
-    actorKind: { type: String, enum: ['user', 'worker'], required: true },
+    actorKind: { type: String, enum: ['user', 'worker', 'shop'], required: true },
     actorId: { type: mongoose.Schema.Types.ObjectId, required: true, index: true },
     actorName: { type: String },
     actorPhone: { type: String },

@@ -107,6 +107,8 @@ function isVisit(kind, b) {
 async function recordDemand({ line, lat, lng, userId = null }) {
   if (!line || typeof lat !== 'number') return;
   try {
+    // Only real customers make an area busy (jobs/surge-guard).
+    if (!(await require('./surge-guard').countsAsDemand(userId))) return;
     const zone = zoneOf(lat, lng);
     const { redis } = r();
     if (userId) {
@@ -179,13 +181,15 @@ async function tick({ now = Date.now() } = {}) {
     for (const zone of zones) {
       const area = areaOf(zone);
       const demand = await demandIn(line, area);
-      const have = area.reduce((a, z) => a + (supply.get(z) || 0), 0);
+      const live = area.reduce((a, z) => a + (supply.get(z) || 0), 0);
+      // A sudden drop counts only slowly: going offline together cannot make a surge (jobs/surge-guard).
+      const { supply: have, damped } = await require('./surge-guard').steadySupply(line, zone, live);
       // Too little evidence, or nobody to pull in: no busy surge.
       const target = demand < s.minDemand || have === 0 ? 1.0 : Math.min(stepFor(demand / have), s.maxMultiplier);
       const prevRaw = await redis.get(k(`v:${line}:${zone}`));
       const prev = prevRaw ? JSON.parse(prevRaw).multiplier : 1.0;
       const next = Math.round((target > prev ? Math.min(target, prev + STEP) : Math.max(target, prev - STEP)) * 100) / 100;
-      const v = { multiplier: next, target, demand, supply: have, at: now, noSupply: have === 0 && demand > 0 };
+      const v = { multiplier: next, target, demand, supply: have, liveSupply: live, damped, at: now, noSupply: have === 0 && demand > 0 };
       await redis.set(k(`v:${line}:${zone}`), JSON.stringify(v), 'EX', STALE_SEC);
       // Just started surging: tell free pros nearby, once per zone per 30 min (supply follows the money).
       if (next > 1 && prev <= 1) callFreeProsIn(line, zone, s).catch(() => {});
@@ -444,7 +448,10 @@ function markBooked(quoteId, kind, bookingId) {
 
 const surgePaise = (doc) => (doc?.surge?.paise > 0 ? doc.surge.paise : 0);
 /** What the provider takes home from the surge (for earnings and offers). */
-const providerSurgePaise = (doc) => (doc?.surge?.paise > 0 ? doc.surge.providerPaise || 0 : 0);
+/** The provider's surge share as earned: nothing while it is held for review (jobs/surge-guard), all of it once released. */
+const providerSurgePaise = (doc) => (doc?.surge?.paise > 0 && !(doc.surge.heldAt && !doc.surge.releasedAt) ? doc.surge.providerPaise || 0 : 0);
+/** Held for review right now: the amount, else 0. */
+const heldSurgePaise = (doc) => (doc?.surge?.heldAt && !doc.surge.releasedAt ? doc.surge.providerPaise || 0 : 0);
 
 /**
  * The booking settled: split the surge. Online, ZappyOne holds it, pays the
@@ -466,6 +473,19 @@ async function settleSurge(kind, bookingId) {
   const ref = doc.reference || String(doc._id);
   const ignoreDup = (e) => { if (e.code !== 11000) throw e; };
   const cash = doc.paymentMethod === 'cash';
+  // The same customer and provider surging again and again: the provider's share waits for admin (jobs/surge-guard).
+  const { held } = providerPaise > 0 ? await require('./surge-guard').payoutCheck(kind, doc) : { held: false };
+  if (held) {
+    await Model.updateOne({ _id: doc._id }, { $set: { 'surge.heldAt': new Date() } });
+    // Cash: the provider has the customer's money, so the held share is owed back until released.
+    if (cash && doc.workerId && !doc.shopId) {
+      await wallet.apply({
+        kind: 'worker', id: doc.workerId, type: 'debit', amountPaise: providerPaise, allowDebt: true,
+        reason: Transaction.REASONS.PLATFORM_COMMISSION, idempotencyKey: `surge:held:${kind}:${doc._id}`,
+        description: `Surge on cash ${ref} held for review`,
+      });
+    }
+  }
 
   if (cash && platformPaise > 0) {
     if (doc.workerId && !doc.shopId) {
@@ -482,7 +502,7 @@ async function settleSurge(kind, bookingId) {
       }).catch(ignoreDup);
     }
   }
-  if (!cash && providerPaise > 0) {
+  if (!cash && providerPaise > 0 && !held) {
     if (doc.workerId && !doc.shopId) {
       await wallet.apply({
         kind: 'worker', id: doc.workerId, type: 'credit', amountPaise: providerPaise,
@@ -506,6 +526,39 @@ async function settleSurge(kind, bookingId) {
     }).catch(ignoreDup);
   }
   return { providerPaise, platformPaise };
+}
+
+/**
+ * Admin cleared a held surge share (the fraud alert was dismissed): pay the
+ * provider what was held. Once per booking; a share never held is left alone.
+ */
+async function releaseHeld(kind, bookingId) {
+  const Model = KINDS[kind]?.model();
+  if (!Model) return null;
+  const doc = await Model.findOneAndUpdate(
+    { _id: bookingId, 'surge.heldAt': { $ne: null }, 'surge.releasedAt': null },
+    { $set: { 'surge.releasedAt': new Date() } },
+    { new: true },
+  ).lean();
+  if (!doc) return null;
+  const { providerPaise } = doc.surge;
+  if (!(providerPaise > 0)) return { releasedPaise: 0 };
+  const Transaction = require('../payment/transaction.model');
+  const ref = doc.reference || String(doc._id);
+  if (doc.workerId && !doc.shopId) {
+    await require('../wallet/wallet.service').apply({
+      kind: 'worker', id: doc.workerId, type: 'credit', amountPaise: providerPaise,
+      reason: Transaction.REASONS.WORKER_EARNING, idempotencyKey: `surge:release:${kind}:${doc._id}`,
+      description: `Surge on ${ref}, released after review`,
+    });
+  } else if (doc.shopId) {
+    await Transaction.create({
+      type: 'credit', owner: { kind: 'platform', id: null }, amountPaise: providerPaise, reason: Transaction.REASONS.WORKER_EARNING,
+      idempotencyKey: `surge:release:${kind}:${doc._id}`, description: `Shop earning (surge, released after review) — ${kind} ${ref}`,
+      metadata: { shopId: String(doc.shopId), bookingId: String(doc._id) }, status: 'succeeded',
+    }).catch((e) => { if (e.code !== 11000) throw e; });
+  }
+  return { releasedPaise: providerPaise };
 }
 
 /* Admin */
@@ -548,6 +601,7 @@ async function report({ days = 7 } = {}) {
 }
 
 module.exports = {
+  releaseHeld,
   zoneOf, recordDemand, tick, pollWeather, quote, precheck, attach, baseOf, markBooked, settleSurge, factorsNow, linesFor,
-  surgePaise, providerSurgePaise, zones, report, settings, isVisit, SurgeQuote, hotZonesFor, callFreeProsIn,
+  surgePaise, providerSurgePaise, heldSurgePaise, zones, report, settings, isVisit, SurgeQuote, hotZonesFor, callFreeProsIn,
 };

@@ -40,9 +40,9 @@ async function createOrDedupe({ type, severity, actorKind, actorId, actorName, a
 
 async function resolveActorIdentity(actorKind, actorId) {
   try {
-    const Model = actorKind === 'worker' ? Worker : User;
-    const doc = await Model.findById(actorId).select('name phone').lean();
-    return { actorName: doc?.name || null, actorPhone: doc?.phone || null };
+    const Model = actorKind === 'worker' ? Worker : actorKind === 'shop' ? require('../shop/shop.model') : User;
+    const doc = await Model.findById(actorId).select('name businessName phone').lean();
+    return { actorName: doc?.name || doc?.businessName || null, actorPhone: doc?.phone || null };
   } catch {
     return { actorName: null, actorPhone: null };
   }
@@ -207,6 +207,16 @@ async function logGpsSpoofEvent(workerId, details = {}) {
 }
 
 /* 6. Summary — counts by type/severity/status for last 30 days */
+/**
+ * Surge farming (jobs/surge-guard): one alert per held booking, so each held
+ * share is released or kept by its own decision. Throws, so the caller pays
+ * normally when the alert cannot be raised (nothing is held without one).
+ */
+async function logSurgeFarming({ actorKind, actorId, severity = 'medium', details }) {
+  const id = await resolveActorIdentity(actorKind, actorId);
+  return createOrDedupe({ type: 'surge_farming', severity, actorKind, actorId, ...id, details }, 0);
+}
+
 async function getFraudSummary() {
   const since = new Date(Date.now() - 30 * DAY);
   const weekAgo = new Date(Date.now() - 7 * DAY);
@@ -290,12 +300,19 @@ async function resolveEvent(id, { status, adminNote, adminId }) {
   // If blocking, also block the underlying actor.
   let actorBlocked = false;
   if (status === 'blocked') {
-    const Model = event.actorKind === 'worker' ? Worker : User;
+    const Model = event.actorKind === 'worker' ? Worker : event.actorKind === 'shop' ? require('../shop/shop.model') : User;
     const updated = await Model.findByIdAndUpdate(event.actorId, { $set: { isBlocked: true } }, { new: true });
     actorBlocked = !!updated;
   }
 
-  return { event: event.toObject(), actorBlocked };
+  // A held surge share: a false alarm pays it out; anything else keeps it back (jobs/surge-guard).
+  let releasedPaise = 0;
+  if (event.type === 'surge_farming' && status === 'dismissed' && event.details?.bookingId) {
+    const out = await require('../jobs/surge').releaseHeld(event.details.kind, event.details.bookingId);
+    releasedPaise = out?.releasedPaise || 0;
+  }
+
+  return { event: event.toObject(), actorBlocked, releasedPaise };
 }
 
 module.exports = {
@@ -304,6 +321,7 @@ module.exports = {
   detectDuplicateAccounts,
   detectRatingManipulation,
   logGpsSpoofEvent,
+  logSurgeFarming,
   getFraudSummary,
   listEvents,
   listEventsForActor,

@@ -77,7 +77,7 @@ const KINDS = {
       fields: 'priceSnapshot paymentMethod completedAt reference vertical boost tip surge',
       gross: (b) => require('../repair/services/settlement.service').splitFor(b).totalPaise,
       label: (b) => `${(b.vertical || 'repair').replace(/_/g, ' ')} repair`,
-      share: (b) => require('../repair/services/settlement.service').splitFor(b).providerPaise + (b.boost?.paise || 0) + (b.surge?.providerPaise || 0),
+      share: (b) => require('../repair/services/settlement.service').splitFor(b).providerPaise + (b.boost?.paise || 0) + require('./surge').providerSurgePaise(b),
       platform: (b) => require('../repair/services/settlement.service').splitFor(b).platformPaise,
       bill: (b) => {
         const s = b.priceSnapshot || {};
@@ -148,7 +148,7 @@ const KINDS = {
       fields: 'pricing.providerAmountPaise pricing.totalPaise paymentMethod execution.completedAt reference categoryCode boost tip surge',
       gross: (b) => b.pricing?.totalPaise || 0,
       label: (b) => (b.categoryCode || 'pet care').replace(/_/g, ' '),
-      share: (b) => (b.pricing?.providerAmountPaise || 0) + (b.boost?.paise || 0) + (b.surge?.providerPaise || 0),
+      share: (b) => (b.pricing?.providerAmountPaise || 0) + (b.boost?.paise || 0) + require('./surge').providerSurgePaise(b),
       bill: (b) => {
         const p = b.pricing || {};
         return {
@@ -232,7 +232,7 @@ const KINDS = {
       fields: 'charge.workerEarningPaise charge.serviceChargePaise paymentMethod completedAt reference serviceType boost tip surge',
       gross: (t) => t.charge?.serviceChargePaise || 0,
       label: (t) => `${t.serviceType || 'helping'} task`,
-      share: (t) => (t.charge?.workerEarningPaise || 0) + (t.boost?.paise || 0) + (t.surge?.providerPaise || 0),
+      share: (t) => (t.charge?.workerEarningPaise || 0) + (t.boost?.paise || 0) + require('./surge').providerSurgePaise(t),
       bill: (t) => {
         const c = t.charge || {};
         return {

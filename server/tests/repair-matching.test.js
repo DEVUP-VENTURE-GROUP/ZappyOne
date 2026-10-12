@@ -405,6 +405,22 @@ describe('re-dispatch after release', () => {
     expect(String(after.workerId)).not.toBe(String(passed._id));
   });
 
+  it('a customer boost reaches the provider who passed at the lower price', async () => {
+    const passed = await makeProvider({ name: 'Passed Before', priceP: 1000000 });
+    const booking = await unassignedBooking([passed._id]);
+    expect((await bookingService.redispatch(booking._id)).reason).toBe('no_one_left');
+
+    await require('../src/modules/pricing/services/config.service').updateActiveConfig(
+      { boostEnabled: true, boostOptions: [10, 20, 50], boostMaxPaise: 6000 }, new mongooseLib.Types.ObjectId(),
+    );
+    await require('../src/modules/jobs/boost-tip').addBoost({ kind: 'repair', id: booking._id, userId: booking.userId, amountPaise: 2000 });
+
+    const after = await RepairBooking.findById(booking._id).lean();
+    expect(after.status).toBe('PROVIDER_ASSIGNED');
+    expect(String(after.workerId)).toBe(String(passed._id));
+    expect(after.boost.paise).toBe(2000);
+  });
+
   it('leaves a job that already has a provider alone', async () => {
     await makeProvider({ name: 'Someone', priceP: 1000000 });
     const booking = await unassignedBooking();
