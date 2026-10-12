@@ -37,7 +37,8 @@ import { saveGeoLocation, loadGeoLocation } from '../../utils/geoCache';
 import {
   useGeolocation, ACCURACY_GOOD_M, ACCURACY_WARN_M, ACCURACY_BAD_M,
 } from '../../hooks/useGeolocation';
-import { useGoogleMaps, GOOGLE_MAPS_KEY } from '../../services/maps';
+import { useGoogleMaps } from '../../services/maps';
+import { geocodeGoogle, placeSuggestions, pointOf } from '../../services/googlePlaces';
 import { SERVICE_WORKER_EMOJI, SERVICE_COLORS } from '../../constants/services';
 import { useT } from '../../i18n/I18nProvider';
 import { setLocation as setReduxLocation, selectLocation, selectHasLocation } from '../../store/locationSlice';
@@ -534,36 +535,10 @@ export default function LocationPicker({ onConfirm, onCancel, serviceLabel, serv
         let settled = false;
         const finish = (fn) => { if (!settled) { settled = true; fn(); } };
         const guard = setTimeout(() => finish(mapboxFallback), 1200); // Google hung → Mapbox
-        try {
-          const svc = new window.google.maps.places.AutocompleteService();
-          const bias = coords
-            ? new window.google.maps.Circle({ center: { lat: coords.lat, lng: coords.lng }, radius: 50000 })
-            : (detectedLoc
-              ? new window.google.maps.Circle({ center: { lat: detectedLoc.lat, lng: detectedLoc.lng }, radius: 50000 })
-              : null);
-
-          svc.getPlacePredictions(
-            { input: searchQ, componentRestrictions: { country: 'in' }, locationBias: bias },
-            (predictions, status) => {
-              clearTimeout(guard);
-              if (status === 'OK' && predictions?.length) {
-                finish(() => {
-                  setResults(predictions.map((p) => ({
-                    id          : p.place_id,
-                    _isGoogle   : true,
-                    _placeId    : p.place_id,
-                    text        : p.structured_formatting?.main_text || p.description,
-                    place_name  : p.description,
-                    secondaryText: p.structured_formatting?.secondary_text || '',
-                  })));
-                  setSearching(false);
-                });
-              } else {
-                finish(mapboxFallback); // denied/quota/zero → Mapbox
-              }
-            },
-          );
-        } catch { clearTimeout(guard); finish(mapboxFallback); }
+        const rows = await placeSuggestions(searchQ, coords || detectedLoc || undefined);
+        clearTimeout(guard);
+        if (rows) finish(() => { setResults(rows); setSearching(false); });
+        else finish(mapboxFallback); // denied/quota/zero → Mapbox
         return;
       }
 
@@ -811,36 +786,13 @@ export default function LocationPicker({ onConfirm, onCancel, serviceLabel, serv
 
   async function selectSearchResult(f) {
     if (f._isGoogle && f._placeId) {
-      // Resolve Google Place ID → coordinates via geocoding REST API
-      try {
-        const r = await fetch(
-          `https://maps.googleapis.com/maps/api/geocode/json` +
-          `?place_id=${encodeURIComponent(f._placeId)}&key=${GOOGLE_MAPS_KEY}&language=en`,
-        );
-        const d = await r.json();
-        const loc = d.results?.[0]?.geometry?.location;
-        if (loc) {
-          const { lat, lng } = loc;
-          saveRecent({ address: f.place_name, lat, lng }).catch(() => {});
-          applyPicked(lat, lng);
-          return;
-        }
-      } catch { /* fall through to address-based geocode */ }
-
-      // Fallback: geocode by description string
-      try {
-        const r = await fetch(
-          `https://maps.googleapis.com/maps/api/geocode/json` +
-          `?address=${encodeURIComponent(f.place_name)}&key=${GOOGLE_MAPS_KEY}&region=in&language=en`,
-        );
-        const d = await r.json();
-        const loc = d.results?.[0]?.geometry?.location;
-        if (loc) {
-          saveRecent({ address: f.place_name, lat: loc.lat, lng: loc.lng }).catch(() => {});
-          applyPicked(loc.lat, loc.lng);
-          return;
-        }
-      } catch { /* ignored */ }
+      // Google place → point, by its id, else by its description (Maps JS geocoder).
+      const hit = pointOf(await geocodeGoogle({ placeId: f._placeId })) || pointOf(await geocodeGoogle({ address: f.place_name }));
+      if (hit) {
+        saveRecent({ address: f.place_name, lat: hit.lat, lng: hit.lng }).catch(() => {});
+        applyPicked(hit.lat, hit.lng);
+        return;
+      }
     }
 
     // Mapbox feature — has f.center = [lng, lat]

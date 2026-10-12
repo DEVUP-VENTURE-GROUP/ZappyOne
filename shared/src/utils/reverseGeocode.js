@@ -1,7 +1,7 @@
 /**
  * Smart reverse geocoding — three-tier with Google Maps as primary.
  *
- * Tier 1 — Google Geocoding API (most accurate for Indian addresses:
+ * Tier 1 — Google geocoder via the Maps JS script (most accurate for Indian addresses:
  *           sublocality, pincode, colony names)
  * Tier 2 — Mapbox Geocoding (good Indian coverage, fast)
  * Tier 3 — Nominatim/OSM (open-source fallback, no key required)
@@ -11,23 +11,18 @@
  *   secondary — "City, State"
  */
 
-const GOOGLE_KEY = import.meta.env.VITE_GOOGLE_MAPS_KEY;
+import { geocodeGoogle, googleReady } from '../services/googlePlaces';
+
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
 
 // Tier 1: Google Geocoding API
 
 async function reverseGeocodeGoogle(lat, lng) {
-  if (!GOOGLE_KEY) return null;
+  // Only once the Maps script is on the page (the website-locked key works through it, not REST).
+  if (!googleReady()) return null;
   try {
-    const r = await fetch(
-      `https://maps.googleapis.com/maps/api/geocode/json` +
-      `?latlng=${lat},${lng}&key=${GOOGLE_KEY}&language=en&region=in`,
-    );
-    if (!r.ok) return null;
-    const d = await r.json();
-    if (d.status !== 'OK' || !d.results?.[0]) return null;
-
-    const result = d.results[0];
+    const result = await geocodeGoogle({ location: { lat: Number(lat), lng: Number(lng) } });
+    if (!result) return null;
     const parts  = result.address_components || [];
 
     const get = (...types) => {
