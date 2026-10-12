@@ -40,6 +40,8 @@ export const isProduction = APP_ENV === 'production';
 export const isDevelopment = APP_ENV === 'development';
 
 const DEFAULT_PORT = 4000;
+/** The live API, the only place a production bundle may ever talk to. */
+const PRODUCTION_API_ORIGIN = 'https://api.zappyone.com';
 
 /**
  * Pull the LAN host Metro is being served from, e.g. "192.168.1.7:8081".
@@ -74,8 +76,12 @@ function resolveApiOrigin(): string {
       : `http://localhost:${DEFAULT_PORT}`;
   }
 
-  // Staging/production MUST be configured explicitly. Failing loudly here is
-  // far safer than silently shipping a build that points at localhost.
+  // A production bundle without the variable (an over-the-air update published
+  // without the EAS environment) still reaches the live API, never localhost.
+  if (APP_ENV === 'production') return PRODUCTION_API_ORIGIN;
+
+  // Staging MUST be configured explicitly. Failing loudly here is far safer
+  // than silently shipping a build that points at localhost.
   throw new Error(
     `[env] EXPO_PUBLIC_API_URL is required for the "${APP_ENV}" environment but was not set.`,
   );
