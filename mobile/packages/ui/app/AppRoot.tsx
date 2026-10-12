@@ -41,6 +41,7 @@ import { fontAssets } from '../theme';
 import { ToastHost } from '../components/Toast';
 import { I18nProvider } from '../lib/i18n';
 import { UpdateGate } from './UpdateGate';
+import { useSilentUpdates } from './useSilentUpdates';
 
 // Before any screen runs: a stray error is reported, never shown to the person using the app.
 installGlobalErrorHandlers();
@@ -114,6 +115,7 @@ function Guarded({ roles, home, login, resolveRoute, isPublic, children }: AppRo
   const homePath = typeof home === 'function' ? home(role) : home;
 
   usePushNotifications(resolveRoute);
+  useSilentUpdates();
 
   useEffect(() => {
     if (booted.current) return;

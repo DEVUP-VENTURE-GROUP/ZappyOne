@@ -40,6 +40,8 @@ const config: ExpoConfig = {
     'expo-dev-client',
     'expo-secure-store',
     'expo-font',
+    // Release builds are shrunk and obfuscated (R8), as Google Play asks.
+    ['expo-build-properties', { android: { enableProguardInReleaseBuilds: true, enableShrinkResourcesInReleaseBuilds: true } }],
     ['expo-splash-screen', { image: './assets/images/splash.png', imageWidth: 200, resizeMode: 'contain', backgroundColor: '#FFFFFF' }],
     ['expo-location', { locationWhenInUsePermission: 'ServicePro uses your location to show nearby jobs and to share your trip with the customer.' }],
     ['expo-camera', { cameraPermission: 'ServicePro uses the camera for KYC documents and job photos.', recordAudioAndroid: false }],

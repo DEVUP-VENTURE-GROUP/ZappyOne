@@ -40,6 +40,8 @@ const config: ExpoConfig = {
     'expo-dev-client',
     'expo-secure-store',
     'expo-font',
+    // Release builds are shrunk and obfuscated (R8), as Google Play asks.
+    ['expo-build-properties', { android: { enableProguardInReleaseBuilds: true, enableShrinkResourcesInReleaseBuilds: true } }],
     ['expo-splash-screen', { image: './assets/images/splash.png', imageWidth: 200, resizeMode: 'contain', backgroundColor: '#FFFFFF' }],
     ['expo-location', { locationWhenInUsePermission: 'ZappyOne uses your location to find professionals near you and to track your booking.' }],
     ['expo-camera', { cameraPermission: 'ZappyOne uses the camera for photos of what needs fixing.', recordAudioAndroid: false }],
