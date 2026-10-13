@@ -57,6 +57,11 @@ async function createBooking({
   discountPaise = 0,
   paymentMethod = 'cash',
   idempotencyKey = null,
+  // Booked as one item of a group (repair/services/group).
+  groupId = null,
+  itemLabel = '',
+  skipJourney = false,
+  skipPlatformFee = false,
 }) {
   if (!location?.coordinates?.length || !location.address) {
     throw httpError('A pickup location with coordinates and an address is required', 400, 'LOCATION_REQUIRED');
@@ -202,7 +207,7 @@ async function createBooking({
   const priceSnapshot = (repairCode || isInspectionOnly)
     ? await pricingService.buildPriceSnapshot({
       vertical, repairCode, providerPrice, referencePrice, serviceMode, discountPaise, distanceKm,
-      addOnsTotalPaise, addOnsCommissionPaise,
+      addOnsTotalPaise, addOnsCommissionPaise, skipJourney, skipPlatformFee,
     })
     : {
       subtotalPaise: 0, totalPaise: 0, currency: 'INR',
@@ -264,6 +269,8 @@ async function createBooking({
       shopId,
       workerId,
       zappyRecommended,
+      groupId,
+      itemLabel,
       paymentMethod,
       location: { ...location, type: 'Point' },
       scheduledAt,

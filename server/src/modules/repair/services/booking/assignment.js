@@ -287,7 +287,19 @@ async function passBackToShop(booking, workerId, reason) {
  * unassigned so dispatch can try someone else, and the reason is kept.
  */
 
-async function declineBooking({ bookingId, actorRole, actorId, reason = '' }) {
+async function declineBooking({ bookingId, actorRole, actorId, reason = '', withGroup = true }) {
+  // Passing on one item of a group passes on the provider's other items too (repair/services/group).
+  const before = withGroup ? await RepairBooking.findById(bookingId).select('groupId shopId workerId').lean() : null;
+  const siblings = before?.groupId ? await require('../group.service').siblingsOf(before, ['PROVIDER_ASSIGNED', 'CONFIRMED']) : [];
+  const out = await declineOne({ bookingId, actorRole, actorId, reason });
+  for (const sib of siblings) {
+    await declineOne({ bookingId: sib._id, actorRole, actorId, reason: reason || 'passed with the rest of the visit' })
+      .catch((e) => require('../../../../core/logger').warn({ err: e.message, bookingId: String(sib._id) }, '[group] sibling not passed'));
+  }
+  return out;
+}
+
+async function declineOne({ bookingId, actorRole, actorId, reason = '' }) {
   const booking = await RepairBooking.findById(bookingId);
   if (!booking) throw httpError('Booking not found', 404, 'NOT_FOUND');
 

@@ -462,6 +462,72 @@ describe('provider list shows what the customer will pay', () => {
   });
 });
 
+describe('several items in one booking (services/group)', () => {
+  const group = require('../src/modules/repair/services/group.service');
+  const { RepairBooking } = require('../src/modules/repair/models/booking.model');
+  const item = (label) => ({ vertical: 'mobile', label, brandCode: baseQuery.brandCode, modelCode: baseQuery.modelCode, repairCode: baseQuery.repairCode, qualityCode: baseQuery.qualityCode, problemCodes: ['screen_cracked'] });
+  const where = { address: 'Madhapur', coordinates: [LNG, LAT], cityCode: 'hyderabad' };
+
+  afterEach(async () => {
+    await Promise.all([
+      Worker.deleteMany({}), ProviderServiceArea.deleteMany({}), ProviderCapability.deleteMany({}),
+      ProviderPricing.deleteMany({}), ProviderInventory.deleteMany({}), RepairBooking.deleteMany({}),
+    ]);
+    await RepairConfig.updateMany({ vertical: 'mobile' }, { $set: { groupDiscountPct: 0 } });
+    pricingService.invalidateConfigCache();
+  });
+
+  it('one provider for both: the visit and the platform fee once, the second item discounted', async () => {
+    await RepairConfig.updateMany({ vertical: 'mobile' }, { $set: { platformFeePaise: 1000, taxPct: 0, visitFreeKm: 3, visitPerKmPaise: 600, visitMaxFeePaise: 15000, visitBaseFeePaise: 0, groupDiscountPct: 10 } });
+    pricingService.invalidateConfigCache();
+    await makeProvider({ name: 'Both Shop', priceP: 75000, distanceKm: 5 });
+    const q = await group.quote({ items: [item('Mine'), item('Second')], location: where, serviceMode: 'doorstep' });
+    expect(q.split).toBeNull();
+    const o = q.options[0];
+    expect(o.plan).toBe('single');
+    const visit = o.lines[0].journeyPaise;
+    expect(visit).toBeGreaterThan(0);
+    expect(o.lines[1].journeyPaise).toBe(0);           // one trip
+    expect(o.totals.platformFeePaise).toBe(1000);      // once
+    expect(o.lines[1].discountPaise).toBe(7500);       // 10% off the second
+    expect(o.totals.totalPaise).toBe(75000 + 75000 - 7500 + visit + 1000);
+  });
+
+  it('books both under one group at the quoted total; accepting one accepts the visit', async () => {
+    const w = await makeProvider({ name: 'Both Shop', priceP: 75000, distanceKm: 1 });
+    const q = await group.quote({ items: [item('A'), item('B')], location: where, serviceMode: 'doorstep' });
+    const { group: g, bookings } = await group.create({ userId: new mongoose.Types.ObjectId(), items: [item('A'), item('B')], location: where, serviceMode: 'doorstep', idempotencyKey: 'grp-test-1' });
+    expect(bookings).toHaveLength(2);
+    expect(bookings.every((b) => String(b.groupId) === String(g._id) && String(b.workerId) === String(w._id))).toBe(true);
+    expect(bookings.reduce((a, b) => a + b.priceSnapshot.totalPaise, 0)).toBe(q.options[0].totals.totalPaise);
+    expect(bookings.map((b) => b.itemLabel).sort()).toEqual(['A', 'B']);
+
+    await require('../src/modules/repair/services/booking/lifecycle').transition(bookings[0]._id, 'WORKER_ACCEPTED', { actorRole: 'worker', actorId: w._id });
+    const after = await RepairBooking.find({ groupId: g._id }).lean();
+    expect(after.map((b) => b.status)).toEqual(['WORKER_ACCEPTED', 'WORKER_ACCEPTED']);
+
+    // The same key again returns the same group, no second booking.
+    const again = await group.create({ userId: bookings[0].userId, items: [item('A'), item('B')], location: where, serviceMode: 'doorstep', idempotencyKey: 'grp-test-1' });
+    expect(again.replayed).toBe(true);
+    expect(await RepairBooking.countDocuments({ groupId: g._id })).toBe(2);
+  });
+
+  it('passing on one item passes on the other item for that provider', async () => {
+    const w = await makeProvider({ name: 'Only Shop', priceP: 75000, distanceKm: 1 });
+    const { bookings } = await group.create({ userId: new mongoose.Types.ObjectId(), items: [item('A'), item('B')], location: where, serviceMode: 'doorstep' });
+    await require('../src/modules/repair/services/booking/assignment').declineBooking({ bookingId: bookings[0]._id, actorRole: 'worker', actorId: w._id, reason: 'busy' });
+    const after = await RepairBooking.find({ _id: { $in: bookings.map((b) => b._id) } }).lean();
+    expect(after.every((b) => b.declines.some((d) => String(d.providerId) === String(w._id)))).toBe(true);
+    expect(after.every((b) => !b.workerId)).toBe(true);
+  });
+
+  it('suggests other services even before there is history', async () => {
+    const out = await require('../src/modules/repair/services/suggest.service').suggest({ vertical: 'mobile', repairCode: baseQuery.repairCode });
+    expect(Array.isArray(out)).toBe(true);
+    expect(out.every((s) => s.repairCode !== baseQuery.repairCode)).toBe(true);
+  });
+});
+
 // Last in the file: once the line exists the vertical is gated for the rest of the run.
 describe('verified for the service, not only as a person', () => {
   it('a provider whose ID is approved but whose service is not gets no offer', async () => {

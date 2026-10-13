@@ -341,6 +341,11 @@ async function buildPriceSnapshot({
   distanceKm = null,
   addOnsTotalPaise = 0,
   addOnsCommissionPaise = 0,
+  // Another item in a group (repair/services/group): this provider is already
+  // making the trip (skipJourney), and the platform fee is already on the
+  // group's first item (skipPlatformFee).
+  skipJourney = false,
+  skipPlatformFee = false,
 }) {
   const cfg = await getConfig(vertical);
   const repair = repairCode ? await Repair.findOne({ code: repairCode, vertical }).lean() : null;
@@ -404,14 +409,14 @@ async function buildPriceSnapshot({
   const consumablesPaise = fromProvider ? 0 : (source.consumablesPaise || 0);
   // A doorstep or roadside visit pays the provider's journey (a provider's own
   // travel price, when they set one, wins).
-  const travelPaise = source.travelPaise || (ON_LOCATION_MODES.includes(serviceMode) ? visitFeePaise(cfg, distanceKm) : 0);
+  const travelPaise = skipJourney ? 0 : (source.travelPaise || (ON_LOCATION_MODES.includes(serviceMode) ? visitFeePaise(cfg, distanceKm) : 0));
 
   // Collection and return are the platform's logistics, priced by distance —
   // not part of what the provider quoted for the repair itself.
-  const pickupPaise = serviceMode === 'pickup_repair'
+  const pickupPaise = serviceMode === 'pickup_repair' && !skipJourney
     ? (source.pickupPaise || logisticsFeePaise(cfg, distanceKm, cfg.pickupFeePaise))
     : 0;
-  const returnPaise = serviceMode === 'pickup_repair'
+  const returnPaise = serviceMode === 'pickup_repair' && !skipJourney
     ? (source.returnPaise || logisticsFeePaise(cfg, distanceKm, cfg.returnFeePaise))
     : 0;
 
@@ -427,7 +432,7 @@ async function buildPriceSnapshot({
   // A small job is topped up to the minimum job value, so it is worth the trip (0 = off).
   const smallJobPaise = cfg.minJobPaise > base ? cfg.minJobPaise - base : 0;
   const subtotalPaise = base + travelPaise + pickupPaise + returnPaise + smallJobPaise + (addOnsTotalPaise || 0);
-  const platformFeePaise = cfg.platformFeePaise || 0;
+  const platformFeePaise = skipPlatformFee ? 0 : (cfg.platformFeePaise || 0);
   const discounted = Math.max(0, subtotalPaise + platformFeePaise - (discountPaise || 0));
   const taxPaise = Math.round((discounted * (cfg.taxPct || 0)) / 100);
   const totalPaise = discounted + taxPaise;

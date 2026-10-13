@@ -173,6 +173,13 @@ const repairConfigSchema = new mongoose.Schema(
      */
     minJobPaise: { type: Number, default: 0, min: 0 },
 
+    /**
+     * Several vehicles or devices in one booking (repair/services/group): every
+     * item after the first comes off by this much (0 = off). The visit and the
+     * platform fee are charged once for the group either way.
+     */
+    groupDiscountPct: { type: Number, default: 0, min: 0, max: 50 },
+
     /** Legacy flat fees — used only when the per-km rate is not configured. */
     pickupFeePaise: { type: Number, default: 0, min: 0 },
     returnFeePaise: { type: Number, default: 0, min: 0 },

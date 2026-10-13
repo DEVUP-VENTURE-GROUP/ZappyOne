@@ -250,6 +250,10 @@ const repairBookingSchema = new mongoose.Schema(
     workerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Worker', default: null, index: true },
     /** True when the provider came from Zappy's ranking rather than customer choice. */
     zappyRecommended: { type: Boolean, default: false },
+    /** Booked together with other vehicles or devices, one visit (repair/models/group.model). */
+    groupId: { type: mongoose.Schema.Types.ObjectId, ref: 'RepairBookingGroup', default: null, index: true },
+    /** The customer's own name for this item in a group ("Dad's bike"). */
+    itemLabel: { type: String, maxlength: 60, default: '' },
 
     /* Where and when */
     location: {

@@ -115,6 +115,59 @@ router.post(
 
 /* Bookings */
 
+/*
+ * Several vehicles or devices in one booking (services/group): the ways it can
+ * be done and what each costs, booking it, and the group with its items.
+ */
+const groupItem = Joi.object({
+  vertical: Joi.string().max(30).default('mobile'),
+  label: Joi.string().max(60).allow('', null),
+  brandCode: Joi.string().max(60).required(),
+  modelCode: Joi.string().max(120).required(),
+  modelId: objectId.allow(null),
+  variantLabel: Joi.string().max(120).allow('', null),
+  fuelType: Joi.string().max(30).allow('', null),
+  configurationCode: Joi.string().max(120).allow('', null),
+  problemCodes: Joi.array().items(Joi.string().max(80)).default([]),
+  diagnosisSummary: Joi.string().max(2000).allow('', null),
+  repairCode: Joi.string().max(80).required(),
+  qualityCode: Joi.string().max(60).allow(null),
+  addOnCodes: Joi.array().items(Joi.string().max(80)).max(10).default([]),
+});
+const groupBase = {
+  items: Joi.array().items(groupItem).min(2).max(6).required(),
+  serviceMode: Joi.string().valid(...SERVICE_MODES).default('doorstep'),
+  location: locationSchema.required(),
+  scheduledAt: Joi.date().allow(null),
+};
+router.post('/booking-groups/quote', authenticate, requireRole('user'), validate(Joi.object(groupBase)), async (req, res, next) => {
+  try { res.json(await require('./services/group.service').quote(req.body)); } catch (err) { next(err); }
+});
+router.post('/booking-groups', authenticate, requireRole('user'), validate(Joi.object({
+  ...groupBase,
+  slotLabel: Joi.string().max(80).allow('', null),
+  paymentMethod: Joi.string().valid('cash', 'online').default('cash'),
+  // A single-provider option ('shop:<id>' / 'worker:<id>') or 'split'; omitted, the best one.
+  choice: Joi.string().max(40).allow(null),
+  idempotencyKey: Joi.string().max(120).allow(null),
+})), async (req, res, next) => {
+  try {
+    const out = await require('./services/group.service').create({ ...req.body, userId: req.auth.sub });
+    res.status(out.replayed ? 200 : 201).json(out);
+  } catch (err) { next(err); }
+});
+router.get('/booking-groups/:id', authenticate, requireRole('user'), async (req, res, next) => {
+  try { res.json(await require('./services/group.service').get(req.params.id, req.auth.sub)); } catch (err) { next(err); }
+});
+// "Also add…": learned from what customers book together (services/suggest).
+router.get('/suggestions', authenticate, async (req, res, next) => {
+  try {
+    const { vertical = 'mobile', repairCode } = req.query;
+    if (!repairCode) return res.json({ suggestions: [] });
+    res.json({ suggestions: await require('./services/suggest.service').suggest({ vertical: String(vertical), repairCode: String(repairCode) }) });
+  } catch (err) { next(err); }
+});
+
 // Literal path first — otherwise `/bookings/:id` would match "mine".
 router.get('/bookings/mine', authenticate, requireRole('user'), ctrl.listMyBookings);
 

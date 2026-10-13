@@ -17,7 +17,7 @@ const { releaseStock, consumeStock } = require('./stock');
  * Ownership is asserted here — §51: a worker's app claiming a booking id is not
  * evidence that the booking is theirs.
  */
-async function transition(bookingId, next, { actorRole, actorId, reason = '', meta = null } = {}) {
+async function transition(bookingId, next, { actorRole, actorId, reason = '', meta = null, withGroup = true } = {}) {
   const booking = await RepairBooking.findById(bookingId);
   if (!booking) throw httpError('Booking not found', 404, 'NOT_FOUND');
 
@@ -103,6 +103,16 @@ async function transition(bookingId, next, { actorRole, actorId, reason = '', me
   // Announced after the state is durably saved — never notify about something
   // that might still roll back.
   eventsService.announceTransition(booking, next).catch(() => {});
+
+  // One visit, one answer: accepting one item of a group accepts the provider's
+  // other items waiting for them (repair/services/group).
+  if (withGroup && next === 'WORKER_ACCEPTED' && booking.groupId) {
+    const siblings = await require('../group.service').siblingsOf(booking, ['PROVIDER_ASSIGNED']);
+    for (const s of siblings) {
+      await transition(s._id, next, { actorRole, actorId, reason: 'accepted with the rest of the visit', withGroup: false })
+        .catch((e) => require('../../../../core/logger').warn({ err: e.message, bookingId: String(s._id) }, '[group] sibling not accepted'));
+    }
+  }
 
   return booking.toObject();
 }

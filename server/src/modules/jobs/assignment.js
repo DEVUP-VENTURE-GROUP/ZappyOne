@@ -30,6 +30,11 @@ async function assignTechnician({ jobId, shopId, workerId }) {
   if (kind === 'repair') {
     const { assignWorker } = require('../repair/services/booking/assignment');
     const { booking, worker } = await assignWorker({ bookingId: jobId, shopId, workerId });
+    // One visit: the technician gets the shop's other items in the group too (repair/services/group).
+    const siblings = await require('../repair/services/group.service').siblingsOf(booking, ['PROVIDER_ASSIGNED', 'WORKER_ACCEPTED']);
+    for (const s of siblings) {
+      await assignWorker({ bookingId: s._id, shopId, workerId }).catch((e) => require('../../core/logger').warn({ err: e.message, bookingId: String(s._id) }, '[group] sibling not assigned'));
+    }
     return { kind, job: booking, worker };
   }
 
