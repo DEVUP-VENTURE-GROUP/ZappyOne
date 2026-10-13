@@ -24,6 +24,7 @@ const TYPES = [
   'order_delayed',
   'order_reassigned',
   'rating_request',
+  'booking_unfinished',
   'trip_started',
   'refund_processed',
 

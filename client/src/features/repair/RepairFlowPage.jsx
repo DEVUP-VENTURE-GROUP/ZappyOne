@@ -34,6 +34,9 @@ import { categoryPhoto } from '@shared/components/home/problemArt';
 import { ProblemLayout } from './ProblemCard';
 import { usePayBooking } from '@shared/hooks/usePayBooking';
 import { billExtras, chosenPrice, freeVisit, totalOf } from '@shared/customer/repairBill';
+import { useCheckoutDraft } from '@shared/customer/useCheckoutDraft';
+import { selectAuth } from '@shared/modules/auth/authSlice';
+import { useClearCheckoutDraftMutation } from '@shared/services/api';
 
 /**
  * Customer repair booking flow — one engine, every vertical.
@@ -1687,11 +1690,12 @@ export default function RepairFlowPage({ vertical = 'mobile' }) {
   const [params] = useSearchParams();
   const draftKey = `repair:${vertical}`;
   const [run, setRun] = useState(0);
+  const [clearServerDraft] = useClearCheckoutDraftMutation();
   // A problem picked from a home chip, or a rebook, is a fresh start, not a resume.
   const saved = useMemo(() => (params.get('problem') || params.get('brand') ? null : readDraft(draftKey)), [draftKey, run]); // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <RepairFlow key={`${vertical}-${run}`} vertical={vertical} saved={saved} draftKey={draftKey}
-      onStartOver={() => { clearDraft(draftKey); nav({ search: '' }, { replace: true }); setRun((n) => n + 1); }} />
+      onStartOver={() => { clearDraft(draftKey); clearServerDraft('repair').catch(() => {}); nav({ search: '' }, { replace: true }); setRun((n) => n + 1); }} />
   );
 }
 
@@ -1766,6 +1770,15 @@ function RepairFlow({ vertical, saved, draftKey, onStartOver }) {
     diagnosis, diagnosticAnswers, diagnosticTranscript, serviceMode, skipped: [...skipped],
     step: ['addons', 'confirm'].includes(step) ? 'provider' : step,
   }, !!brand);
+  // Got as far as choosing who does it: home's "Continue your booking" and one
+  // reminder push can bring them back (jobs/checkout-draft), on any device.
+  const signedIn = !!useSelector(selectAuth)?.accessToken;
+  const late = !!problem && ['provider', 'addons', 'confirm'].includes(step);
+  const draftDone = useCheckoutDraft('repair', late ? {
+    title: problem.name || 'Repair', step: step === 'confirm' ? 'Confirm' : 'Choose who',
+    path: `/repair${vertical === 'mobile' ? '' : `/${vertical.replace(/_/g, '-')}`}`,
+    pricePaise: provider ? totalOf(chosenPrice(provider, qualityCode)) : null,
+  } : null, signedIn);
   /*
    * Rebook (?brand=…&model=…&problem=…): the same device, found in the
    * catalog, then straight to the problem, where the problem is picked too.
@@ -1992,7 +2005,7 @@ function RepairFlow({ vertical, saved, draftKey, onStartOver }) {
           diagnosticAnswers={diagnosticAnswers} diagnosticTranscript={diagnosticTranscript}
           serviceMode={serviceMode} inspectionFeePaise={inspectionFeePaise}
           fuelType={fuelType} scheduledAt={when}
-          onDone={(b) => { clearDraft(draftKey); nav(`/repair/bookings/${b._id}`, { replace: true }); }}
+          onDone={(b) => { clearDraft(draftKey); draftDone(); nav(`/repair/bookings/${b._id}`, { replace: true }); }}
         />
       )}
     </div>

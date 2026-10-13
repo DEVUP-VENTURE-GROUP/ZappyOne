@@ -8,6 +8,9 @@ import { useCoverageCheck } from '../catalog/useCoverageCheck';
 import LocationPicker from '@shared/modules/booking/LocationPicker';
 import ImageUploadField from '@shared/components/common/ImageUploadField';
 import { useHelpingQuoteMutation, useCreateHelpingTaskMutation } from '@shared/services/api';
+import { useSelector } from 'react-redux';
+import { useCheckoutDraft } from '@shared/customer/useCheckoutDraft';
+import { selectAuth } from '@shared/modules/auth/authSlice';
 import { formatPaise } from '@shared/utils/money';
 import { PayMethodPicker } from '@shared/components/common/PayMethodPicker';
 import SomeoneElse from '@shared/components/booking/SomeoneElse';
@@ -111,6 +114,7 @@ export default function ReturnTaskPage() {
       if (res.task?.paymentMethod === 'online') {
         await pay({ bookingSource: 'helping', bookingId: res.task._id, label: 'Helper service charge' });
       }
+      draftDone();
       nav(`/helping/tasks/${res.task._id}`);
     } catch (err) {
       if (surgeChanged(err, surge.refetch)) { toast(err.data.error, { icon: '⚡' }); return; }
@@ -119,6 +123,11 @@ export default function ReturnTaskPage() {
   }
 
   const charge = quoteData?.charge;
+  // Priced and ready to request: home's "Continue your booking" and one reminder push (jobs/checkout-draft).
+  const signedIn = !!useSelector(selectAuth)?.accessToken;
+  const draftDone = useCheckoutDraft('helping', charge ? {
+    title: 'Return or exchange', step: 'Confirm', path: '/helping/returns', pricePaise: charge.serviceChargePaise ?? null,
+  } : null, signedIn);
   // Busy area, rain, night: own lines on the service fee, held while they decide (jobs/surge).
   const surge = useSurge({
     kind: 'helping', line: isExchange ? 'exchange' : 'return', loc: pickupLoc,

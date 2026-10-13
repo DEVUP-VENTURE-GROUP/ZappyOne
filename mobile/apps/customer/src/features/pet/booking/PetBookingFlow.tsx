@@ -11,6 +11,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLazyPetCompatibilityQuery, useMyPetsQuery, usePetProviderSearchMutation, usePetQuoteMutation, usePetVariantsQuery } from '@zappy/core/api';
 import { clearDraft } from '@zappy/core/lib/drafts';
+import { useAppSelector } from '@zappy/core/store/hooks';
+import { useCheckoutDraft } from '@zappy/core/shared/useCheckoutDraft';
 import { doorAddress } from '@zappy/core/shared/doorAddress';
 import { Button, ScreenHeader, Text } from '@zappy/ui/components';
 import { SlotPicker } from '@zappy/ui/components/booking/SlotPicker';
@@ -118,6 +120,12 @@ export function PetBookingFlow({ categoryCode, saved, draftKey, onStartOver }: {
   });
   const afterAddons = (opts?: { replace?: boolean }) => setStep(stay || transport ? 'location' : 'schedule', opts);
   const quoteResult: PetQuote | undefined = quoteData?.quote;
+  // Got as far as where: home's "Continue your booking" and one reminder push (jobs/checkout-draft).
+  const signedIn = useAppSelector((s) => s.auth.isAuthenticated);
+  const draftDone = useCheckoutDraft('pet', ['location', 'providers', 'confirm'].includes(step) ? {
+    title: categoryCode.replace(/_/g, ' '), step: step === 'confirm' ? 'Confirm' : 'Choose who',
+    path: `/pet/book/${categoryCode}`, pricePaise: quoteResult?.totalPaise ?? null,
+  } : null, signedIn);
 
   return (
     <View style={[styles.page, { paddingTop: insets.top }]}>
@@ -143,7 +151,7 @@ export function PetBookingFlow({ categoryCode, saved, draftKey, onStartOver }: {
         {step === 'confirm' && provider && loc ? (
           <PetConfirmStep categoryCode={categoryCode} serviceMode={mode} variantName={variant?.name} petNames={chosenPets.map((p) => p.name)} pets={entries()}
             provider={provider} quote={quoteResult} loc={loc} dest={dest} scheduledAt={scheduledAt} checkIn={checkIn} checkOut={checkOut}
-            onBooked={(id) => { clearDraft(draftKey); router.replace(`/pet/bookings/${id}` as never); }} />
+            onBooked={(id) => { clearDraft(draftKey); draftDone(); router.replace(`/pet/bookings/${id}` as never); }} />
         ) : null}
       </ScrollView>
     </View>

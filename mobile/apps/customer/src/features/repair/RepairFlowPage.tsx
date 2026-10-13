@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { clearDraft, readDraft } from '@zappy/core/lib/drafts';
+import { useClearCheckoutDraftMutation } from '@zappy/core/api';
 import { LoadingState } from '@zappy/ui/components';
 import { RepairFlow, type RepairDraft } from './RepairFlow';
 
@@ -17,6 +18,7 @@ export function RepairFlowPage({ vertical = 'mobile' }: { vertical?: string }) {
   const draftKey = `repair:${vertical}`;
   const fresh = !!(params.problem || params.brand);
   const [run, setRun] = useState(0);
+  const [clearServerDraft] = useClearCheckoutDraftMutation();
   const [saved, setSaved] = useState<RepairDraft | null | undefined>(fresh ? null : undefined);
 
   useEffect(() => {
@@ -29,6 +31,6 @@ export function RepairFlowPage({ vertical = 'mobile' }: { vertical?: string }) {
   if (saved === undefined) return <View style={{ flex: 1 }}><LoadingState /></View>;
   return (
     <RepairFlow key={`${vertical}-${run}`} vertical={vertical} saved={run ? null : saved} draftKey={draftKey}
-      onStartOver={() => { clearDraft(draftKey); router.setParams({ problem: undefined, brand: undefined, model: undefined }); setRun((n) => n + 1); }} />
+      onStartOver={() => { clearDraft(draftKey); clearServerDraft('repair').catch(() => {}); router.setParams({ problem: undefined, brand: undefined, model: undefined }); setRun((n) => n + 1); }} />
   );
 }

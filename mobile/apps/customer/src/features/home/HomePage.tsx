@@ -29,6 +29,7 @@ import { SpotlightSearch } from '../catalog/SpotlightSearch';
 import { ClosedNowBanner } from '../catalog/serviceability/ClosedNowBanner';
 import { NotInYourArea } from '../catalog/serviceability/NotInYourArea';
 import { ActiveJobCard } from './ActiveJobCard';
+import { ContinueBookingCard } from './ContinueBookingCard';
 import { HeroCarousel } from './HeroCarousel';
 import { HomeHeader, SearchBar, type HomeLocation } from './HomeHeader';
 import { BookAgainRail, NearbyShopsLink, OffersRail } from './HomeRails';
@@ -153,6 +154,8 @@ export function HomePage() {
       <View style={styles.searchWrap}><SearchBar terms={terms} onOpen={() => setSpotOpen(true)} /></View>
       <ScrollView contentContainerStyle={styles.body} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
         {activeJob ? <ActiveJobCard job={activeJob} onOpen={() => router.push(activeJob.href as never)} /> : null}
+        {/* A booking started and left: back to where they stopped (jobs/checkout-draft). */}
+        <ContinueBookingCard isAuthed={isAuthed} />
         {notHere ? (
           <NotInYourArea place={loc.primary} lat={loc.lat} lng={loc.lng} address={[loc.primary, loc.secondary].filter(Boolean).join(', ')}
             areas={svc.areas} onChangeLocation={() => setLocSheet(true)} />

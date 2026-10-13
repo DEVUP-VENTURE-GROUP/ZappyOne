@@ -9,6 +9,9 @@ import { StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useRepairBrandsQuery, useRepairModelsQuery, useRepairPricePreviewQuery, useRepairProductTypesQuery } from '@zappy/core/api';
 import { clearDraft } from '@zappy/core/lib/drafts';
+import { useAppSelector } from '@zappy/core/store/hooks';
+import { chosenPrice, totalOf } from '@zappy/core/shared/repairBill';
+import { useCheckoutDraft } from '@zappy/core/shared/useCheckoutDraft';
 import { ResumeBanner } from '@zappy/ui/components/common/ResumeBanner';
 import { useDraft, useFlowStep } from '@zappy/ui/lib/bookingFlow';
 import { useBookingLocation } from '@zappy/ui/lib/bookingLocation';
@@ -70,6 +73,15 @@ export function RepairFlow({ vertical, saved, draftKey, onStartOver }: { vertica
     brand, productType, family, model, configuration, fuelType, problem, diagnosis, diagnosticAnswers, diagnosticTranscript, serviceMode,
     skipped: [...skipped], step: step === 'addons' || step === 'confirm' ? 'provider' : step,
   }, !!brand);
+  // Got as far as choosing who does it: home's "Continue your booking" and one
+  // reminder push can bring them back (jobs/checkout-draft), on any device.
+  const signedIn = useAppSelector((s) => s.auth.isAuthenticated);
+  const late = !!problem && ['provider', 'addons', 'confirm'].includes(step);
+  const draftDone = useCheckoutDraft('repair', late ? {
+    title: problem.name || 'Repair', step: step === 'confirm' ? 'Confirm' : 'Choose who',
+    path: `/repair${vertical === 'mobile' ? '' : `/${vertical.replace(/_/g, '-')}`}`,
+    pricePaise: provider ? totalOf(chosenPrice(provider, qualityCode)) : null,
+  } : null, signedIn);
 
   // A step opens only with what it needs; the provider and price are never restored.
   const NEEDS: Record<string, unknown> = {
@@ -179,7 +191,7 @@ export function RepairFlow({ vertical, saved, draftKey, onStartOver }: { vertica
           provider={provider} repairCode={repairCode} qualityCode={qualityCode} serviceMode={serviceMode} inspectionFeePaise={inspectionFeePaise}
           location={location} fuelType={fuelType} diagnosticAnswers={diagnosticAnswers} diagnosticTranscript={diagnosticTranscript}
           addOnCodes={addOnCodes} scheduledAt={when}
-          onDone={(b) => { clearDraft(draftKey); router.replace(`/repair/bookings/${b._id}` as never); }} />
+          onDone={(b) => { clearDraft(draftKey); draftDone(); router.replace(`/repair/bookings/${b._id}` as never); }} />
       ) : null}
     </View>
   );

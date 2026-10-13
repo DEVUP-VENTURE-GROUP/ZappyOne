@@ -22,6 +22,9 @@ import { doorAddress } from '@shared/utils/doorAddress';
 import ArrivalBadge from '@shared/components/common/ArrivalBadge';
 import SurgeLines, { useSurge, surgeChanged } from '@shared/components/common/SurgeLines';
 import TipAtCheckout from '@shared/components/common/TipAtCheckout';
+import { useCheckoutDraft } from '@shared/customer/useCheckoutDraft';
+import { selectAuth } from '@shared/modules/auth/authSlice';
+import { useClearCheckoutDraftMutation } from '@shared/services/api';
 
 /**
  * One adaptive booking flow for all seven categories (§3, §54).
@@ -63,12 +66,13 @@ function petExtraLines(q) {
 export default function PetBookingFlowPage() {
   const { categoryCode } = useParams();
   const nav = useNavigate();
+  const [clearServerDraft] = useClearCheckoutDraftMutation();
   const draftKey = `pet:${categoryCode}`;
   const [run, setRun] = useState(0);
   const saved = useMemo(() => readDraft(draftKey), [draftKey, run]);
   return (
     <PetBookingFlow key={`${categoryCode}-${run}`} categoryCode={categoryCode} saved={saved} draftKey={draftKey}
-      onStartOver={() => { clearDraft(draftKey); nav({ search: '' }, { replace: true }); setRun((n) => n + 1); }} />
+      onStartOver={() => { clearDraft(draftKey); clearServerDraft('pet').catch(() => {}); nav({ search: '' }, { replace: true }); setRun((n) => n + 1); }} />
   );
 }
 
@@ -236,6 +240,7 @@ function PetBookingFlow({ categoryCode, saved, draftKey, onStartOver }) {
         await pay({ bookingSource: 'pet', bookingId: res.booking._id, label: 'Pet care booking' });
       }
       clearDraft(draftKey);
+      draftDone();
       nav(`/pet/bookings/${res.booking._id}`, { replace: true });
     } catch (err) {
       if (surgeChanged(err, surge.refetch)) {
@@ -249,6 +254,12 @@ function PetBookingFlow({ categoryCode, saved, draftKey, onStartOver }) {
   }
 
   const quote = quoteData?.quote;
+  // Got as far as where: home's "Continue your booking" and one reminder push (jobs/checkout-draft).
+  const signedIn = !!useSelector(selectAuth)?.accessToken;
+  const draftDone = useCheckoutDraft('pet', ['location', 'providers', 'confirm'].includes(step) ? {
+    title: categoryCode.replace(/_/g, ' '), step: step === 'confirm' ? 'Confirm' : 'Choose who',
+    path: `/pet/book/${categoryCode}`, pricePaise: quote?.totalPaise ?? null,
+  } : null, signedIn);
   // Busy area, rain, night on a visit: own lines, held while they decide (jobs/surge).
   const surge = useSurge({
     kind: 'pet', line: categoryCode, serviceMode: primaryVariant?.allowedModes?.[0] || 'doorstep', loc,

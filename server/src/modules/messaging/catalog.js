@@ -158,6 +158,17 @@ const CATALOG = {
       },
     }),
   },
+  'customer.finish_booking': {
+    audience: 'customer', type: 'booking_unfinished', channels: ['push'], label: 'Unfinished booking (30 min later, once)',
+    sample: () => ({ title: 'Bike wash', step: 'Confirm', pricePaise: 49900, link: '/repair/two-wheeler' }),
+    build: ({ title, pricePaise, link }) => ({
+      push: {
+        title: `Your ${String(title || 'booking').toLowerCase()} is one step away`,
+        body: `${pricePaise ? `₹${Math.round(pricePaise / 100).toLocaleString('en-IN')}, ` : ''}everything you picked is saved. Tap to finish booking.`,
+        link,
+      },
+    }),
+  },
   'booking.rate_reminder': {
     audience: 'customer', type: 'rating_request', channels: ['push'], label: 'Rate and tip reminder (2 h later)',
     sample: () => sampleJob(),

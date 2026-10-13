@@ -16,7 +16,7 @@
  * ----------------------------------------------------------------------------
  */
 
-export const TAG_TYPES = ['PriceRequest', 'Reviews', 'Fees', 'JobChat', 'Account', 'AdminTeam', 'Payments', 'Me', 'Order', 'Worker', 'Earnings', 'AdminMetrics', 'Kyc', 'Plan', 'Subscription', 'Wallet', 'Notification', 'AdminUsers', 'Disputes', 'Payouts', 'Incentives', 'CancellationConfig', 'PricingCfg', 'AuditLogs', 'Addresses', 'Ad', 'Promo', 'Gamification', 'Recommendations', 'FeatureFlags', 'SupportTickets', 'Referral', 'ShieldFund', 'EventTheme', 'EventBooking', 'EventPartner', 'EventConfig', 'EventCategory', 'PartnerNotification', 'Fraud', 'Zone', 'City', 'PaymentMethods', 'UserDisputes', 'UserTickets', 'AdminAppeals', 'AdminTraining', 'WorkerGoals', 'Plans', 'Content', 'Rewards', 'WorkerOps', 'ReadyMode', 'Shop', 'ShopWorkers', 'ShopKyc',
+export const TAG_TYPES = ['CheckoutDrafts', 'PriceRequest', 'Reviews', 'Fees', 'JobChat', 'Account', 'AdminTeam', 'Payments', 'Me', 'Order', 'Worker', 'Earnings', 'AdminMetrics', 'Kyc', 'Plan', 'Subscription', 'Wallet', 'Notification', 'AdminUsers', 'Disputes', 'Payouts', 'Incentives', 'CancellationConfig', 'PricingCfg', 'AuditLogs', 'Addresses', 'Ad', 'Promo', 'Gamification', 'Recommendations', 'FeatureFlags', 'SupportTickets', 'Referral', 'ShieldFund', 'EventTheme', 'EventBooking', 'EventPartner', 'EventConfig', 'EventCategory', 'PartnerNotification', 'Fraud', 'Zone', 'City', 'PaymentMethods', 'UserDisputes', 'UserTickets', 'AdminAppeals', 'AdminTraining', 'WorkerGoals', 'Plans', 'Content', 'Rewards', 'WorkerOps', 'ReadyMode', 'Shop', 'ShopWorkers', 'ShopKyc',
     'RepairCatalog', 'RepairConfig', 'RepairPricing', 'RepairRequests', 'RepairBookings', 'RepairProvider', 'MyAssets',
     'HelpingConfig', 'HelpingTasks', 'HelpingAvailable', 'AdminHelpingTasks',
     'PetCatalog', 'MyPets', 'PetBookings', 'PetAvailable', 'PetRecurring', 'AdminPetBookings', 'AdminPetPricing', 'AdminPetCapabilities',
@@ -41,6 +41,10 @@ export function endpoints(b, { adminApiPath }) {
     lensStatus: b.query({ query: () => '/lens/status', keepUnusedDataFor: 3600 }),
     /** Customer: unpaid cancellation fees the next booking will carry. */
     myPendingCancelFee: b.query({ query: () => '/jobs/pending-fee', keepUnusedDataFor: 0 }),
+    // A booking started and left (jobs/checkout-draft): home's "Continue your booking".
+    myCheckoutDrafts: b.query({ query: () => '/jobs/checkout-drafts', providesTags: ['CheckoutDrafts'] }),
+    saveCheckoutDraft: b.mutation({ query: ({ kind, ...body }) => ({ url: `/jobs/checkout-drafts/${kind}`, method: 'PUT', body }), invalidatesTags: ['CheckoutDrafts'] }),
+    clearCheckoutDraft: b.mutation({ query: (kind) => ({ url: `/jobs/checkout-drafts/${kind}`, method: 'DELETE' }), invalidatesTags: ['CheckoutDrafts'] }),
     jobOptions: b.query({ query: ({ id }) => `/jobs/${id}/options`, keepUnusedDataFor: 0 }),
     /** How soon someone can be at this spot for a service, before booking (jobs/arrival). */
     /** Surge lines + a 10-minute lock for a price screen (jobs/surge). */

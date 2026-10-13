@@ -25,6 +25,7 @@ import LocationSheet from './LocationSheet';
 import { ServiceGrid, ProblemChips } from './ServiceGrid';
 import { OffersRail, BookAgainRail, NearbyShopsLink } from './HomeRails';
 import { eventPhoto, eventTone } from '../events/eventPhotos';
+import ContinueBookingCard from './ContinueBookingCard';
 
 /**
  * Home — what a customer can get done, right where they are.
@@ -273,6 +274,8 @@ export default function HomePage() {
 
         <main className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 pb-10 pt-5 sm:gap-10 sm:px-6 sm:pt-7">
           {activeJob && <ActiveJobCard job={activeJob} onOpen={() => nav(activeJob.href)} />}
+          {/* A booking started and left: back to where they stopped (jobs/checkout-draft). */}
+          <ContinueBookingCard isAuthed={isAuthed} />
 
           {/* Inside Telangana every service shows; outside it, we say we are
               not there yet and record the demand. */}

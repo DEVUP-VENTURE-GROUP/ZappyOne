@@ -193,6 +193,8 @@ async function sweep() {
   out.reminders = await rateReminders().catch((e) => { logger.warn({ err: e.message }, '[messaging] reminders failed'); return 0; });
   out.weekly = await weeklySummaries().catch((e) => { logger.warn({ err: e.message }, '[messaging] weekly failed'); return 0; });
   out.daily = await dailySummary().catch((e) => { logger.warn({ err: e.message }, '[messaging] daily failed'); return false; });
+  // A booking started and left: one nudge to finish it (jobs/checkout-draft).
+  out.unfinished = await require('../jobs/checkout-draft').sweep().then((r) => r.sent).catch((e) => { logger.warn({ err: e.message }, '[messaging] unfinished failed'); return 0; });
   return out;
 }
 

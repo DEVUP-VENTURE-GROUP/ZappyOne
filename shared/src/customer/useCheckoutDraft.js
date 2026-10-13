@@ -1,0 +1,36 @@
+import { useCallback, useEffect, useRef } from 'react';
+import { useClearCheckoutDraftMutation, useSaveCheckoutDraftMutation } from '../services/api';
+
+/**
+ * Tell the server about a booking the customer has got far into (jobs/
+ * checkout-draft), for the website and the apps alike: home then offers
+ * "Continue your booking" and one reminder push goes out if they leave.
+ *
+ *   kind     'repair' | 'pet' | 'helping'
+ *   draft    { title, step, path, pricePaise } once they reach the later steps,
+ *            null before (nothing is saved for someone just browsing)
+ *   signedIn guests have no account to remind
+ *
+ * Saved a moment after it stops changing. Returns `done()`, called once the
+ * booking is made (or they start over), which clears it.
+ */
+export function useCheckoutDraft(kind, draft, signedIn = true) {
+  const [save] = useSaveCheckoutDraftMutation();
+  const [clear] = useClearCheckoutDraftMutation();
+  const key = draft && signedIn ? JSON.stringify(draft) : '';
+  const last = useRef('');
+
+  useEffect(() => {
+    if (!key || key === last.current) return undefined;
+    const t = setTimeout(() => {
+      last.current = key;
+      save({ kind, ...JSON.parse(key) }).catch(() => {});
+    }, 1500);
+    return () => clearTimeout(t);
+  }, [kind, key, save]);
+
+  return useCallback(() => {
+    last.current = '';
+    if (signedIn) clear(kind).catch(() => {});
+  }, [kind, signedIn, clear]);
+}

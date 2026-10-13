@@ -6,6 +6,8 @@
  */
 import { useMemo, useState } from 'react';
 import { useRouter } from 'expo-router';
+import { useAppSelector } from '@zappy/core/store/hooks';
+import { useCheckoutDraft } from '@zappy/core/shared/useCheckoutDraft';
 import { useCreateHelpingTaskMutation, useHelpingQuoteMutation } from '@zappy/core/api';
 import { doorAddress } from '@zappy/core/shared/doorAddress';
 import { toast } from '@zappy/ui/components/Toast';
@@ -33,6 +35,13 @@ export function useHelpingBooking({ serviceType, coverageLine }: { serviceType: 
   const [create, { isLoading: booking }] = useCreateHelpingTaskMutation();
 
   const charge: HelpingCharge | undefined = quoteData?.charge;
+  // Priced and ready to request: home's "Continue your booking" and one reminder push (jobs/checkout-draft).
+  const signedIn = useAppSelector((s) => s.auth.isAuthenticated);
+  const isReturn = ['return', 'exchange'].includes(serviceType);
+  const draftDone = useCheckoutDraft('helping', charge ? {
+    title: isReturn ? 'Return or exchange' : serviceType === 'shopping' ? 'Shopping errand' : 'Pickup and drop',
+    step: 'Confirm', path: isReturn ? '/helping/returns' : '/helping/shopping', pricePaise: charge.serviceChargePaise ?? null,
+  } : null, signedIn);
   const surge = useSurge({
     kind: 'helping', line: serviceType, loc: pickup,
     basePaise: charge ? Math.max(0, (charge.serviceChargePaise || 0) - (charge.taxPaise || 0) - (charge.platformFeePaise || 0)) : null,
@@ -56,6 +65,7 @@ export function useHelpingBooking({ serviceType, coverageLine }: { serviceType: 
         ...fields, paymentMethod: 'cash', idempotencyKey, ...surge.bookingFields, ...(tip > 0 && { tipPaise: tip * 100 }),
       }).unwrap();
       toast.success('Task requested');
+      draftDone();
       router.replace(`/helping/tasks/${res.task._id}` as never);
       return true;
     } catch (err) {

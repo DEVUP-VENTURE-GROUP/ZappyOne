@@ -13,6 +13,22 @@ const router = express.Router();
  * Cancellation fees the customer still owes from earlier bookings: shown before
  * they confirm the next one, which carries them (jobs/cancel-fee).
  */
+/* A booking started and not finished (jobs/checkout-draft): home's "Continue your booking". */
+router.get('/checkout-drafts', authenticate, requireRole('user'), async (req, res, next) => {
+  try { res.json({ drafts: await require('./checkout-draft').list(req.auth.sub) }); } catch (e) { next(e); }
+});
+router.put('/checkout-drafts/:kind', authenticate, requireRole('user'),
+  validate(Joi.object({
+    title: Joi.string().trim().max(80).required(), step: Joi.string().trim().max(40).allow('').default(''),
+    path: Joi.string().trim().max(300).pattern(/^\/(?!\/)/).required(), pricePaise: Joi.number().integer().min(0).allow(null).default(null),
+  })),
+  async (req, res, next) => {
+    try { res.json({ draft: await require('./checkout-draft').save(req.auth.sub, { kind: req.params.kind, ...req.body }) }); } catch (e) { next(e); }
+  });
+router.delete('/checkout-drafts/:kind', authenticate, requireRole('user'), async (req, res, next) => {
+  try { await require('./checkout-draft').clear(req.auth.sub, req.params.kind); res.json({ ok: true }); } catch (e) { next(e); }
+});
+
 router.get('/pending-fee', authenticate, requireRole('user'), async (req, res, next) => {
   try {
     const { totalPaise, records } = await require('./cancel-fee').pendingFor(req.auth.sub);
