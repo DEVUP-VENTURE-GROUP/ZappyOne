@@ -235,6 +235,17 @@ const CATALOG = {
       },
     }),
   },
+  'provider.boost_after_pass': {
+    audience: 'provider', type: 'job_reminder', channels: ['push'], urgent: true, label: 'Customer raised the price on a job you passed',
+    sample: () => ({ boostRupees: 20, totalBoostRupees: 40, link: '/worker' }),
+    build: ({ boostRupees, totalBoostRupees, link }) => ({
+      push: {
+        title: `Customer added ₹${boostRupees} to a job you passed`,
+        body: `It now pays ₹${totalBoostRupees} more, all of it yours. Go online to take it.`,
+        link,
+      },
+    }),
+  },
   'provider.job_cancelled': {
     audience: 'provider', type: 'job_removed', channels: ['push'], urgent: true, label: 'Customer cancelled',
     sample: () => sampleJob(),

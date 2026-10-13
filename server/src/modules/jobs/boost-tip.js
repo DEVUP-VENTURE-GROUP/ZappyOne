@@ -81,15 +81,17 @@ async function addBoost({ kind, id, userId, amountPaise }) {
     throw err(409, 'BOOST_MAX', `You can add up to ${rupees(s.boostMaxPaise)} in total.`);
   }
 
-  await reRing(kind, doc);
+  await reRing(kind, doc, amountPaise);
   return { boostPaise: boostPaise(doc), message: `Added ${rupees(amountPaise)}. We are telling providers nearby now.` };
 }
 
 /** Everyone nearby hears the higher offer, including those who passed at the lower one. */
-async function reRing(kind, doc) {
+async function reRing(kind, doc, amountPaise = 0) {
   const events = require('./job-events');
   const id = String(doc._id);
   try {
+    // Who passed at the lower price, read before the lists are cleared below.
+    const passers = passersOf(kind, doc);
     // Passing on the lower price is not passing on this one: everyone who
     // passed or handed it back hears it again, on the alert and the Work board.
     const seen = { pet: 'declinedBy', helping: 'releasedBy' }[kind];
@@ -117,9 +119,47 @@ async function reRing(kind, doc) {
       await events.alertNearbyProviders(kind, plain);
     }
     events.toProvider('user', plain.userId, 'job.update', { kind, id, status: plain.status, at: new Date().toISOString() });
+    // Those who passed and have since gone offline hear about it too; the online ones were just rung.
+    await tellOfflinePassers(kind, id, passers, amountPaise, boostPaise(plain));
   } catch (e) {
     require('../../core/logger').warn({ err: e.message, id }, '[boost] re-ring failed');
   }
+}
+
+const PASS_RECENT_MS = 60 * 60 * 1000;
+
+/** Providers who passed on this job (repairs: in the last hour), as { kind, id }. */
+function passersOf(kind, doc) {
+  if (kind === 'repair') {
+    return (doc.declines || []).filter((d) => d.providerId && Date.now() - new Date(d.at || 0).getTime() < PASS_RECENT_MS)
+      .map((d) => ({ kind: d.providerKind === 'shop' ? 'shop' : 'worker', id: String(d.providerId) }));
+  }
+  const list = { pet: doc.declinedBy, helping: doc.releasedBy }[kind] || [];
+  return list.map((pid) => ({ kind: null, id: String(pid) })); // worker or shop, resolved below
+}
+
+/**
+ * A boost reaches providers who passed and are now offline (a run of passes
+ * switches a worker offline): a push to come back and take it. Once per
+ * provider per job per amount; online workers were already rung.
+ */
+async function tellOfflinePassers(kind, id, passers, amountPaise, totalPaise) {
+  if (!passers.length || !amountPaise) return 0;
+  const Worker = require('../worker/worker.model');
+  const ids = [...new Set(passers.map((p) => p.id))];
+  const workers = new Set((await Worker.find({ _id: { $in: ids } }).select('_id').lean()).map((w) => String(w._id)));
+  const live = await require('../worker/presence').liveIds([...workers]);
+  let told = 0;
+  for (const pid of ids) {
+    const isWorker = workers.has(pid);
+    if (isWorker && live.has(pid)) continue;
+    await require('../messaging/send').send('provider.boost_after_pass', {
+      to: { kind: isWorker ? 'worker' : 'shop', id: pid }, refId: `boost-pass:${kind}:${id}:${totalPaise}:${pid}`,
+      ctx: { boostRupees: Math.round(amountPaise / 100), totalBoostRupees: Math.round(totalPaise / 100), link: KINDS[kind].providerLink(id) },
+    }).catch(() => {});
+    told += 1;
+  }
+  return told;
 }
 
 /**

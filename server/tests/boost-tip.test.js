@@ -167,3 +167,25 @@ describe('tip on the bill (before paying)', () => {
     expect((await HelpingTask.findById(t._id).lean()).releasedBy).toEqual([]);
   });
 });
+
+describe('boost reaches providers who passed and went offline', () => {
+  test('an offline passer is told to come back; an online one is rung, not pushed', async () => {
+    const send = require('../src/modules/messaging/send');
+    const spy = jest.spyOn(send, 'send').mockResolvedValue({ ok: true });
+    const Worker = require('../src/modules/worker/worker.model');
+    const offline = new mongoose.Types.ObjectId();
+    const online = new mongoose.Types.ObjectId();
+    await Worker.collection.insertMany([
+      { _id: offline, phone: '9800000555', name: 'Off', isOnline: false, kyc: { status: 'approved' } },
+      { _id: online, phone: '9800000556', name: 'On', isOnline: true, lastSeenAt: new Date(), kyc: { status: 'approved' } },
+    ]);
+    const user = new mongoose.Types.ObjectId();
+    const t = await task(user, 'WORKER_SEARCHING', { releasedBy: [offline, online] });
+    await bt.addBoost({ kind: 'helping', id: t._id, userId: user, amountPaise: 2000 });
+
+    const told = spy.mock.calls.filter(([ev]) => ev === 'provider.boost_after_pass');
+    expect(told.map(([, o]) => o.to)).toEqual([{ kind: 'worker', id: String(offline) }]);
+    expect(told[0][1].ctx).toMatchObject({ boostRupees: 20, totalBoostRupees: 20, link: `/worker/helping/${t._id}` });
+    spy.mockRestore();
+  });
+});
