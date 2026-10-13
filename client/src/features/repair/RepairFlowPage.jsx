@@ -33,6 +33,7 @@ import BrandLogo from '@shared/components/common/BrandLogo';
 import { categoryPhoto } from '@shared/components/home/problemArt';
 import { ProblemLayout } from './ProblemCard';
 import { usePayBooking } from '@shared/hooks/usePayBooking';
+import { billExtras, chosenPrice, freeVisit, totalOf } from '@shared/customer/repairBill';
 
 /**
  * Customer repair booking flow — one engine, every vertical.
@@ -1206,6 +1207,7 @@ function ProviderStep({
                 key={p.shopId || p.workerId || i}
                 p={p}
                 recommended={isPick}
+                serviceMode={serviceMode}
                 onPick={(qualityCode) => onPick(p, repairCode, qualityCode)}
               />
             );
@@ -1284,7 +1286,7 @@ function ChosenSummary({
  * tappable row. Choosing a row IS choosing the grade; there is no separate
  * confirm, because the price and the warranty are the whole decision.
  */
-function ProviderCard({ p, recommended, onPick }) {
+function ProviderCard({ p, recommended, serviceMode, onPick }) {
   const options = p.priceOptions?.length ? p.priceOptions : null;
 
   return (
@@ -1341,7 +1343,12 @@ function ProviderCard({ p, recommended, onPick }) {
         {!options && (
           <div className="shrink-0 text-right">
             {p.totalPaise != null
-              ? <p className="text-lg font-black text-[#0F172A]">{formatPaise(p.totalPaise)}</p>
+              ? (
+                <>
+                  <p className="text-lg font-black text-[#0F172A]">{formatPaise(totalOf({ pricePaise: p.totalPaise, bill: p.bill }))}</p>
+                  {freeVisit(p.bill, serviceMode) && <p className="text-[10.5px] font-bold text-emerald-600">Free visit</p>}
+                </>
+              )
               : <p className="text-xs font-bold text-amber-600">After diagnosis</p>}
           </div>
         )}
@@ -1370,7 +1377,7 @@ function ProviderCard({ p, recommended, onPick }) {
                   </span>
                 )}
               </span>
-              <span className="shrink-0 text-sm font-black text-[#0F172A]">{formatPaise(o.totalPaise)}</span>
+              <span className="shrink-0 text-sm font-black text-[#0F172A]">{formatPaise(totalOf({ pricePaise: o.totalPaise, bill: o.bill }))}</span>
               <ChevronRight size={14} className="shrink-0 text-slate-300" />
             </button>
           ))}
@@ -1505,7 +1512,9 @@ function ConfirmStep({
   const [onSite, setOnSite] = useState(null);
   const { pay, paying } = usePayBooking();
   // Busy area, rain, night: added as their own lines, held while they decide (jobs/surge).
-  const priceBase = serviceMode === 'diagnosis_only' ? inspectionFeePaise : provider?.totalPaise;
+  // The grade they picked, with the server's full bill for it (shared/customer/repairBill).
+  const chosen = chosenPrice(provider, qualityCode);
+  const priceBase = serviceMode === 'diagnosis_only' ? inspectionFeePaise : chosen.pricePaise;
   const surge = useSurge({ kind: 'repair', vertical, serviceMode, loc: location, basePaise: priceBase, skip: priceBase == null });
   // An optional tip, in the total before paying (jobs/boost-tip tipAtBooking). Rupees.
   const [tip, setTip] = useState(0);
@@ -1573,7 +1582,8 @@ function ConfirmStep({
   }
 
   const inspectionOnly = serviceMode === 'diagnosis_only';
-  const price = inspectionOnly ? inspectionFeePaise : provider?.totalPaise;
+  const price = inspectionOnly ? inspectionFeePaise : totalOf(chosen);
+  const extras = inspectionOnly ? [] : billExtras(chosen.bill);
 
   return (
     <Shell>
@@ -1619,13 +1629,14 @@ function ConfirmStep({
               <span className="text-sm font-bold text-[#0F172A]">Total</span>
               <span className="text-2xl font-black text-[#0F172A]">{formatPaise(price + surge.totalPaise + tip * 100)}</span>
             </div>
-            {(surge.totalPaise > 0 || tip > 0) && <p className="mt-0.5 text-[11px] text-slate-500">{formatPaise(price)} for the repair, plus:</p>}
+            {(extras.length > 0 || surge.totalPaise > 0 || tip > 0) && <p className="mt-0.5 text-[11px] text-slate-500">{formatPaise(chosen.pricePaise)} for the repair, plus:</p>}
+            {extras.map((l) => <p key={l.label} className="mt-1 flex justify-between text-[12.5px] font-semibold text-slate-600"><span>{l.label}</span><span>+{formatPaise(l.paise)}</span></p>)}
             <SurgeLines quote={surge.quote} className="mt-1.5" />
             {tip > 0 && <p className="mt-1 flex justify-between text-[12.5px] font-semibold text-rose-600"><span>Tip for your pro</span><span>+₹{tip}</span></p>}
             <p className="text-[11px] text-slate-400 mt-1">
               Includes parts, labour and taxes. This is the price you pay — nothing is added later without your approval.
             </p>
-            {serviceMode === 'pickup_repair' && (
+            {serviceMode === 'pickup_repair' && extras.some((l) => l.label.startsWith('Pickup')) && (
               <p className="text-[11px] text-slate-500 mt-1">
                 Pickup and return are included in this total.
               </p>

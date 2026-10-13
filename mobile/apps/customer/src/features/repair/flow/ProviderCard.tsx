@@ -7,6 +7,7 @@ import { memo } from 'react';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 import { ChevronRight, Clock, MapPin, ShieldCheck, Star } from 'lucide-react-native';
 import { formatPaise } from '@zappy/core/shared/money';
+import { freeVisit, totalOf } from '@zappy/core/shared/repairBill';
 import { Text } from '@zappy/ui/components';
 import { ArrivalBadge } from '@zappy/ui/components/booking/ArrivalBadge';
 import { webAsset } from '@zappy/ui/lib/media';
@@ -17,7 +18,7 @@ import { spacing } from '@zappy/ui/theme/spacing';
 import { flow } from './FlowChrome';
 import type { Provider } from './repairRules';
 
-export const ProviderCard = memo(function ProviderCard({ p, recommended, onPick }: { p: Provider; recommended: boolean; onPick: (qualityCode: string | null) => void }) {
+export const ProviderCard = memo(function ProviderCard({ p, recommended, serviceMode, onPick }: { p: Provider; recommended: boolean; serviceMode: string; onPick: (qualityCode: string | null) => void }) {
   const options = p.priceOptions?.length ? p.priceOptions : null;
   const img = webAsset(p.imageUrl);
   const later = p.availableInMinutes != null ? (p.availableInMinutes >= 60 ? `${Math.round(p.availableInMinutes / 60)} hour` : `${p.availableInMinutes} min`) : '';
@@ -39,7 +40,12 @@ export const ProviderCard = memo(function ProviderCard({ p, recommended, onPick 
             {p.completedJobs ? <Text variant="caption" color={ink[500]}>{p.completedJobs} jobs done</Text> : null}
           </View>
         </View>
-        {!options ? (p.totalPaise != null ? <Text variant="heading3" weight="black">{formatPaise(p.totalPaise)}</Text> : <Text variant="caption" weight="bold" color={accent[600]}>After diagnosis</Text>) : null}
+        {!options ? (p.totalPaise != null ? (
+          <View style={styles.price}>
+            <Text variant="heading3" weight="black">{formatPaise(totalOf({ pricePaise: p.totalPaise, bill: p.bill }))}</Text>
+            {freeVisit(p.bill, serviceMode) ? <Text variant="caption" weight="bold" color={success[600]}>Free visit</Text> : null}
+          </View>
+        ) : <Text variant="caption" weight="bold" color={accent[600]}>After diagnosis</Text>) : null}
       </View>
       {options ? options.map((o) => (
         <Pressable key={o.qualityCode || 'any'} onPress={() => onPick(o.qualityCode || null)} android_ripple={RIPPLE} accessibilityRole="button" style={styles.option}>
@@ -50,7 +56,7 @@ export const ProviderCard = memo(function ProviderCard({ p, recommended, onPick 
             </View>
             {o.warrantyDays ? <View style={styles.inline}><ShieldCheck size={10} color={success[600]} /><Text variant="caption" weight="semibold" color={success[600]}>{o.warrantyDays}-day warranty</Text></View> : null}
           </View>
-          <Text variant="bodySmall" weight="black">{formatPaise(o.totalPaise)}</Text>
+          <Text variant="bodySmall" weight="black">{formatPaise(totalOf({ pricePaise: o.totalPaise, bill: o.bill }))}</Text>
           <ChevronRight size={14} color={slate[300]} />
         </Pressable>
       )) : (
@@ -64,6 +70,7 @@ export const ProviderCard = memo(function ProviderCard({ p, recommended, onPick 
 });
 
 const styles = StyleSheet.create({
+  price: { alignItems: 'flex-end', maxWidth: 150 },
   pick: { borderColor: zappy[200], borderWidth: 2 },
   top: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md },
   photo: { width: 44, height: 44, borderRadius: radius.medium, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', backgroundColor: slate[100] },

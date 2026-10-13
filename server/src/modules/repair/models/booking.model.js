@@ -100,6 +100,8 @@ const priceSnapshotSchema = new mongoose.Schema(
     labourPaise: { type: Number, default: 0, min: 0 },
     consumablesPaise: { type: Number, default: 0, min: 0 },
     travelPaise: { type: Number, default: 0, min: 0 },
+    /** Top-up to the minimum job value (RepairConfig.minJobPaise). */
+    smallJobPaise: { type: Number, default: 0, min: 0 },
     pickupPaise: { type: Number, default: 0, min: 0 },
     returnPaise: { type: Number, default: 0, min: 0 },
     diagnosisFeePaise: { type: Number, default: 0, min: 0 },

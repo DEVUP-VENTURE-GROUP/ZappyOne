@@ -19,7 +19,7 @@ import { openLink } from '../../lib/openLink';
 
 export interface Offer {
   kind: string; id: string; mode: string; askReason: boolean; heading: string; title: string;
-  valueLabel: string; valuePaise: number; boostPaise?: number; surgePaise?: number; cash?: boolean;
+  valueLabel: string; valuePaise: number; boostPaise?: number; surgePaise?: number; travelPaise?: number; distanceKm?: number | null; cash?: boolean;
   howLabel?: string; address?: string; landmark?: string; coordinates?: number[] | null; km?: number | null;
   whenLabel?: string; frontPaise?: number; expiresAt?: string; windowSec?: number; acceptLabel?: string;
   customer?: { rating?: number | null; count?: number } | null;
@@ -102,6 +102,7 @@ export function JobOfferAlert({ offer, myLocation, onAccept, onDecline, onClose,
               <View style={[styles.tile, boost ? styles.tileBoost : null]}>
                 <View style={styles.inline}><IndianRupee size={11} color={ink[500]} /><Text variant="caption" weight="semibold" color={ink[500]}>{offer.valueLabel}</Text></View>
                 <Text variant="heading2" weight="bold">{formatPaise(offer.valuePaise)}</Text>
+                {(offer.travelPaise ?? 0) > 0 ? <Text variant="caption" weight="semibold" color={success[700]}>incl. +{formatPaise(offer.travelPaise)} travel{offer.distanceKm != null ? ` (${Math.round(offer.distanceKm * 10) / 10} km)` : ''}, yours</Text> : null}
                 {(offer.surgePaise ?? 0) > 0 ? <Text variant="caption" weight="semibold" color={accent[600]}>incl. +{formatPaise(offer.surgePaise)} surge, yours</Text> : null}
                 {boost > 0 ? <Text variant="caption" weight="semibold" color={accent[700]}>{formatPaise(offer.valuePaise - boost)} + {formatPaise(boost)} extra</Text> : null}
                 {offer.cash ? <View style={styles.inline}><Banknote size={11} color={success[700]} /><Text variant="caption" weight="medium" color={success[700]}>Collect in cash</Text></View> : null}

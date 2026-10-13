@@ -2,6 +2,7 @@ const { ZappyReferencePricing, ProviderPricing } = require('../models/pricing.mo
 const { RepairConfig } = require('../models/config.model');
 const { Repair } = require('../models/repair.model');
 const { httpError } = require('../../../core/errors');
+const { ON_LOCATION_MODES } = require('../service-modes');
 
 
 /**
@@ -304,27 +305,31 @@ async function evaluateDeviation({ vertical, totalPaise, referenceRecommendedPai
  * snapshot exists to provide.
  */
 /**
- * What collection and return cost for a journey of this length.
+ * What a journey of this length costs: a base to turn up, a per-kilometre rate
+ * after a free radius, and a ceiling so nobody is ever shocked. One formula for
+ * every journey (pickup and return, a doorstep or roadside visit); ride-hailing
+ * prices the same way. Flat fees priced a two-street trip the same as a
+ * thirty-kilometre one, which is unfair whichever way you look at it.
  *
- * A base to turn up, a per-kilometre rate after a free radius, and a ceiling so
- * nobody is ever shocked. Flat fees priced a two-street pickup the same as a
- * thirty-kilometre one, which is unfair in whichever direction you look at it.
- *
- * With no distance known — the provider has no pin, or the customer has not
- * placed one — it falls back to the configured flat fee rather than guessing a
- * journey length and billing for it.
+ * With no distance known (the provider has no pin, or none is chosen yet) it
+ * falls back to the flat fee given rather than guessing a journey and billing it.
  */
-function logisticsFeePaise(cfg, distanceKm, legacyFlatPaise) {
-  const perKm = cfg.pickupPerKmPaise || 0;
-  if (!perKm || distanceKm == null || !Number.isFinite(distanceKm)) {
-    return legacyFlatPaise || 0;
-  }
-
-  const chargeableKm = Math.max(0, distanceKm - (cfg.pickupFreeKm || 0));
-  const fee = (cfg.pickupBaseFeePaise || 0) + Math.round(chargeableKm * perKm);
-  const cap = cfg.pickupMaxFeePaise || 0;
-  return cap > 0 ? Math.min(fee, cap) : fee;
+function distanceFeePaise({ basePaise = 0, perKmPaise = 0, freeKm = 0, capPaise = 0 }, distanceKm, flatPaise = 0) {
+  if (!perKmPaise || distanceKm == null || !Number.isFinite(distanceKm)) return flatPaise || 0;
+  const chargeableKm = Math.max(0, distanceKm - (freeKm || 0));
+  const fee = basePaise + Math.round(chargeableKm * perKmPaise);
+  return capPaise > 0 ? Math.min(fee, capPaise) : fee;
 }
+
+/** Collection or return of the item, priced by distance. */
+const logisticsFeePaise = (cfg, distanceKm, legacyFlatPaise) => distanceFeePaise({
+  basePaise: cfg.pickupBaseFeePaise || 0, perKmPaise: cfg.pickupPerKmPaise || 0, freeKm: cfg.pickupFreeKm || 0, capPaise: cfg.pickupMaxFeePaise || 0,
+}, distanceKm, legacyFlatPaise);
+
+/** The provider travelling to a doorstep or roadside job, priced by distance. */
+const visitFeePaise = (cfg, distanceKm) => distanceFeePaise({
+  basePaise: cfg.visitBaseFeePaise || 0, perKmPaise: cfg.visitPerKmPaise || 0, freeKm: cfg.visitFreeKm || 0, capPaise: cfg.visitMaxFeePaise || 0,
+}, distanceKm, 0);
 
 async function buildPriceSnapshot({
   vertical,
@@ -397,7 +402,9 @@ async function buildPriceSnapshot({
   const partPaise = fromProvider ? 0 : (source.partPaise || 0);
   const labourPaise = fromProvider ? 0 : (source.labourPaise || 0);
   const consumablesPaise = fromProvider ? 0 : (source.consumablesPaise || 0);
-  const travelPaise = source.travelPaise || 0;
+  // A doorstep or roadside visit pays the provider's journey (a provider's own
+  // travel price, when they set one, wins).
+  const travelPaise = source.travelPaise || (ON_LOCATION_MODES.includes(serviceMode) ? visitFeePaise(cfg, distanceKm) : 0);
 
   // Collection and return are the platform's logistics, priced by distance —
   // not part of what the provider quoted for the repair itself.
@@ -417,7 +424,9 @@ async function buildPriceSnapshot({
   // Add-ons are part of the job the provider is doing, so they sit inside the
   // subtotal — taxed with it, and commissioned at the same rate (their own cut
   // is computed per line in buildAddOnSnapshots so a refund can name it).
-  const subtotalPaise = base + travelPaise + pickupPaise + returnPaise + (addOnsTotalPaise || 0);
+  // A small job is topped up to the minimum job value, so it is worth the trip (0 = off).
+  const smallJobPaise = cfg.minJobPaise > base ? cfg.minJobPaise - base : 0;
+  const subtotalPaise = base + travelPaise + pickupPaise + returnPaise + smallJobPaise + (addOnsTotalPaise || 0);
   const platformFeePaise = cfg.platformFeePaise || 0;
   const discounted = Math.max(0, subtotalPaise + platformFeePaise - (discountPaise || 0));
   const taxPaise = Math.round((discounted * (cfg.taxPct || 0)) / 100);
@@ -432,6 +441,7 @@ async function buildPriceSnapshot({
     travelPaise,
     pickupPaise,
     returnPaise,
+    smallJobPaise,
     diagnosisFeePaise: 0,
     platformFeePaise,
     taxPaise,
@@ -444,8 +454,8 @@ async function buildPriceSnapshot({
     providerPricingVersion: providerPrice?.version || null,
     referencePricingId: referencePrice?.referencePricingId || null,
     referencePricingVersion: referencePrice?.version || null,
-    /** How far the device has to travel, when that shaped the price. */
-    distanceKm: serviceMode === 'pickup_repair' ? distanceKm : null,
+    /** How far the journey is (the device's, or the provider's), when that shaped the price. */
+    distanceKm: serviceMode === 'pickup_repair' || ON_LOCATION_MODES.includes(serviceMode) ? distanceKm : null,
     resolutionPath: providerPrice?.resolutionPath || referencePrice?.resolutionPath || 'unresolved',
     pricingMode,
     isEstimate: !providerPrice,

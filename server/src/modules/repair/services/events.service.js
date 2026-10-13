@@ -160,6 +160,9 @@ function announceOffer(booking) {
     repairCode: booking.repairCode || null,
     serviceMode: booking.serviceMode,
     totalPaise: booking.priceSnapshot?.totalPaise || 0,
+    // The journey to the customer and how far, both theirs to know before accepting.
+    travelPaise: (booking.priceSnapshot?.travelPaise || 0) + (booking.priceSnapshot?.pickupPaise || 0) + (booking.priceSnapshot?.returnPaise || 0),
+    distanceKm: booking.priceSnapshot?.distanceKm ?? null,
     // What the customer added to be matched faster: all of it is the provider's.
     boostPaise: booking.boost?.paise || 0,
     // Their share of the surge it was booked at (jobs/surge).

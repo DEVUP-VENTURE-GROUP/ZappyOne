@@ -52,11 +52,18 @@ export function stepTitles(vertical: string, brandName: string | undefined, serv
   };
 }
 
+/** What the customer pays with a provider and grade, worked out by the server (shared/customer/repairBill). */
+export interface RepairBill {
+  totalPaise: number; travelPaise: number; pickupPaise: number; returnPaise: number;
+  platformFeePaise: number; taxPaise: number; smallJobPaise: number; distanceKm: number | null;
+}
+
 export interface Provider {
+  bill?: RepairBill | null;
   shopId?: string; workerId?: string; name: string; imageUrl?: string; totalPaise?: number | null; rating?: number | null;
   durationMinutes?: number; etaMinutes?: number; arrivalMinutes?: number | null; arrivalWithinPromise?: boolean; busy?: boolean; availableInMinutes?: number;
   distanceKm?: number | null; completedJobs?: number; warrantyDays?: number; zappyRecommended?: boolean; auto?: boolean;
-  priceOptions?: { qualityCode?: string | null; label: string; totalPaise: number; warrantyDays?: number; isGenuine?: boolean }[];
+  priceOptions?: { qualityCode?: string | null; label: string; totalPaise: number; warrantyDays?: number; isGenuine?: boolean; bill?: RepairBill | null }[];
 }
 
 /** Two results for the same shop or technician. */

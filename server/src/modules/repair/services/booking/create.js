@@ -12,6 +12,7 @@ const { httpError } = require('../../../../core/errors');
 const DUPLICATE_KEY = 11000;
 const { reserveStock, releaseStock } = require('./stock');
 const { providerDistanceKm } = require('./assignment');
+const { ON_LOCATION_MODES } = require('../../service-modes');
 
 /** Placing a repair booking. */
 
@@ -176,13 +177,14 @@ async function createBooking({
    * intent is the only case that carries no price yet.
    */
   /**
-   * How far the device has to travel, for the collection fee.
+   * How far the journey is: the device's (collection and return fees) or the
+   * provider's to a doorstep or roadside job (the visit fee).
    *
    * Straight-line, from the provider's service-area pin. It is a fee input, not
    * a routing promise, and a road-distance lookup per booking would cost an API
    * call to move the number by a few rupees.
    */
-  const distanceKm = serviceMode === 'pickup_repair'
+  const distanceKm = serviceMode === 'pickup_repair' || ON_LOCATION_MODES.includes(serviceMode)
     ? await providerDistanceKm({ shopId, workerId, coordinates: location.coordinates })
     : null;
 

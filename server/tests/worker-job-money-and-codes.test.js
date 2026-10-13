@@ -60,3 +60,19 @@ test('a job\'s breakdown adds up and matches the Earnings page', async () => {
   const [row] = await finishedJobs({ workerId }, new Date(0));
   expect(row.paise + row.tipPaise).toBe(e.youEarnPaise);
 });
+
+test('the provider sees the travel fee and the distance apart, all of it theirs, and it still adds up', async () => {
+  const workerId = new mongoose.Types.ObjectId();
+  const doc = await RepairBooking.collection.insertOne({
+    reference: 'RP-TEST-2', status: 'COMPLETED', completedAt: new Date(), workerId, userId: new mongoose.Types.ObjectId(),
+    paymentMethod: 'online', vertical: 'mobile',
+    // ₹750 repair, 5 km away: ₹12 travel inside the subtotal, ₹10 platform fee, 10% commission on the ₹750.
+    priceSnapshot: { subtotalPaise: 76200, travelPaise: 1200, distanceKm: 5, platformFeePaise: 1000, taxPaise: 0, totalPaise: 77200, commissionPaise: 7500 },
+  });
+  const { forJob } = require('../src/modules/jobs/earnings');
+  const e = await forJob('repair', doc.insertedId);
+  expect(e.bill).toEqual([{ label: 'Service', paise: 75000 }, { label: 'Travel (5 km)', paise: 1200 }, { label: 'Platform fee', paise: 1000 }]);
+  expect(e.yours).toEqual([{ label: 'Your share of the service', paise: 67500 }, { label: 'Travel (5 km), all yours', paise: 1200 }]);
+  expect(e.youEarnPaise).toBe(68700);
+  expect(e.customerPaidPaise).toBe(e.youEarnPaise + e.zappyKeepsPaise);
+});

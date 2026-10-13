@@ -502,10 +502,26 @@ async function findProviders(req, res, next) {
       scheduledAt: scheduledAt && !Number.isNaN(new Date(scheduledAt).getTime()) ? new Date(scheduledAt) : null,
     });
 
+    // What the customer pays with each provider (and each part grade): the
+    // booking's own price build, so the card, the confirm screen and the bill
+    // are one number (travel or pickup, platform fee, tax, small-job top-up).
+    const billOf = (p, totalPaise) => (totalPaise == null ? null : pricingService.buildPriceSnapshot({
+      vertical: verticalOf(req), repairCode, serviceMode, distanceKm: p.journeyKm ?? null,
+      providerPrice: { ...(p.price || {}), totalPaise },
+    }).then((s) => s && {
+      totalPaise: s.totalPaise, travelPaise: s.travelPaise || 0, pickupPaise: s.pickupPaise || 0, returnPaise: s.returnPaise || 0,
+      platformFeePaise: s.platformFeePaise || 0, taxPaise: s.taxPaise || 0, smallJobPaise: s.smallJobPaise || 0, distanceKm: s.distanceKm ?? null,
+    }));
+    const withBill = async (p) => (p ? {
+      ...p,
+      bill: await billOf(p, p.totalPaise),
+      priceOptions: await Promise.all((p.priceOptions || []).map(async (o) => ({ ...o, bill: await billOf(p, o.totalPaise) }))),
+    } : p);
+
     // Internal scoring never leaves the server (§71).
     res.json({
-      recommended: matchingService.toPublic(result.recommended),
-      providers: result.providers.map(matchingService.toPublic),
+      recommended: matchingService.toPublic(await withBill(result.recommended)),
+      providers: (await Promise.all(result.providers.map(withBill))).map(matchingService.toPublic),
       reason: result.reason,
       // Aggregate only, so the empty state can say what is actually wrong.
       nearbyCount: result.nearbyCount ?? 0,

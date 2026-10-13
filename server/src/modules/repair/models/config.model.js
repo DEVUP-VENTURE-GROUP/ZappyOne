@@ -155,6 +155,24 @@ const repairConfigSchema = new mongoose.Schema(
     /** Nobody should be surprised by a pickup fee. 0 = uncapped. */
     pickupMaxFeePaise: { type: Number, default: 25000, min: 0 },
 
+    /**
+     * Doorstep and roadside: the provider's journey to the customer, the same
+     * formula as pickup (pricing.service distanceFeePaise). Kept low on purpose:
+     * nearby is free so prices stay competitive, further away pays the
+     * provider's fuel and time, capped. All of it goes to the provider who
+     * travels; no commission is taken on it.
+     */
+    visitBaseFeePaise: { type: Number, default: 0, min: 0 },
+    visitPerKmPaise: { type: Number, default: 600, min: 0 },       // ₹6 a km
+    visitFreeKm: { type: Number, default: 3, min: 0 },
+    visitMaxFeePaise: { type: Number, default: 15000, min: 0 },    // ₹150; 0 = uncapped
+
+    /**
+     * A job below this value is topped up to it with a small-job fee, so a
+     * ₹100 fix across town is still worth doing. 0 = off.
+     */
+    minJobPaise: { type: Number, default: 0, min: 0 },
+
     /** Legacy flat fees — used only when the per-km rate is not configured. */
     pickupFeePaise: { type: Number, default: 0, min: 0 },
     returnFeePaise: { type: Number, default: 0, min: 0 },

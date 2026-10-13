@@ -51,6 +51,9 @@ export const fromRepair = (b) => ({
   valuePaise: (b.totalPaise ?? b.priceSnapshot?.totalPaise ?? 0) + (b.boostPaise ?? b.boost?.paise ?? 0) + (b.surgePaise ?? b.surge?.providerPaise ?? 0),
   boostPaise: b.boostPaise ?? b.boost?.paise ?? 0,
   surgePaise: b.surgePaise ?? b.surge?.providerPaise ?? 0,
+  // The journey fee (visit, or pickup and return) and how far: the provider's to know.
+  travelPaise: b.travelPaise ?? ((b.priceSnapshot?.travelPaise || 0) + (b.priceSnapshot?.pickupPaise || 0) + (b.priceSnapshot?.returnPaise || 0)),
+  distanceKm: b.distanceKm ?? b.priceSnapshot?.distanceKm ?? null,
   customer: b.customer || null,
   cash: b.paymentMethod === 'cash',
   howLabel: MODE_LABEL[b.serviceMode] || b.serviceMode,

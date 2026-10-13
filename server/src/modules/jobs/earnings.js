@@ -70,6 +70,11 @@ async function forJob(kind, id) {
   const customerPaidPaise = b.totalPaise + surgePaise + boostPaise + tipOnBill + carriedPaise;
   const youEarnPaise = b.providerPaise + boostPaise + surgeYoursPaise + tipPaise;
   const line = (label, paise, note) => (paise ? [{ label, paise, ...(note && { note }) }] : []);
+  // The journey and any small-job top-up sit inside the service total; the provider sees them apart.
+  const journeyPaise = b.journeyPaise || 0;
+  const smallJobPaise = b.smallJobPaise || 0;
+  const km = b.distanceKm != null ? ` (${Math.round(b.distanceKm * 10) / 10} km)` : '';
+  const journeyName = `${b.journeyLabel || 'Travel'}${km}`;
   const pct = b.servicePaise > 0 ? Math.round((b.commissionPaise / b.servicePaise) * 100) : 0;
 
   return {
@@ -77,7 +82,9 @@ async function forJob(kind, id) {
     done: k.earning.done.includes(doc.status), cash: doc.paymentMethod === 'cash',
     customerPaidPaise,
     bill: [
-      ...line('Service', b.servicePaise),
+      ...line('Service', b.servicePaise - journeyPaise - smallJobPaise),
+      ...line(journeyName, journeyPaise),
+      ...line('Small job top-up', smallJobPaise),
       ...line('Platform fee', b.platformFeePaise),
       ...line('GST', b.taxPaise),
       ...line('Discount', -discountPaise),
@@ -98,7 +105,9 @@ async function forJob(kind, id) {
     zappyKeepsPaise: Math.max(0, customerPaidPaise - (youEarnPaise - (tipPaise - tipOnBill))),
     youEarnPaise,
     yours: [
-      ...line('Your share of the service', b.providerPaise),
+      ...line('Your share of the service', b.providerPaise - journeyPaise - smallJobPaise),
+      ...line(`${journeyName}, all yours`, journeyPaise),
+      ...line('Small job top-up, all yours', smallJobPaise),
       ...line('Your share of the surge fee', surgeYoursPaise),
       ...line('Priority boost', boostPaise),
       ...line('Tip', tipPaise),

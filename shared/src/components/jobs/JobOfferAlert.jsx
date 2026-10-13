@@ -23,6 +23,7 @@ import { offerClock as clock, DEFAULT_WINDOW_SEC } from './jobOffers';
  *   heading, title, valueLabel, valuePaise, cash, howLabel, address, landmark,
  *   coordinates, whenLabel, frontPaise, expiresAt, windowSec, acceptLabel, askReason,
  *   boostPaise (what the customer added; already inside valuePaise)
+ *   travelPaise, distanceKm (the journey fee and how far; inside valuePaise)
  * }
  * onAccept() / onDecline(reason) are the kind's own calls; both may throw.
  */
@@ -146,6 +147,9 @@ export default function JobOfferAlert({ offer, myLocation, onAccept, onDecline, 
                   <IndianRupee size={11} /> {offer.valueLabel}
                 </p>
                 <p className="mt-0.5 text-[18px] font-bold tabular-nums text-navy">{formatPaise(offer.valuePaise)}</p>
+                {offer.travelPaise > 0 && (
+                  <p className="text-[11px] font-semibold tabular-nums text-emerald-700">incl. +{formatPaise(offer.travelPaise)} travel{offer.distanceKm != null ? ` (${Math.round(offer.distanceKm * 10) / 10} km)` : ''}, yours</p>
+                )}
                 {offer.surgePaise > 0 && (
                   <p className="text-[11px] font-semibold tabular-nums text-orange-600">incl. +{formatPaise(offer.surgePaise)} surge, yours</p>
                 )}

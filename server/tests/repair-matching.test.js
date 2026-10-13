@@ -432,6 +432,36 @@ describe('re-dispatch after release', () => {
   });
 });
 
+describe('provider list shows what the customer will pay', () => {
+  afterEach(async () => {
+    await Promise.all([
+      Worker.deleteMany({}), ProviderServiceArea.deleteMany({}),
+      ProviderCapability.deleteMany({}), ProviderPricing.deleteMany({}), ProviderInventory.deleteMany({}),
+    ]);
+    pricingService.invalidateConfigCache();
+  });
+
+  it('each provider carries the full bill the booking will charge: price + visit fee + platform fee', async () => {
+    await RepairConfig.updateMany({ vertical: 'mobile' }, { $set: { platformFeePaise: 1000, taxPct: 0, visitFreeKm: 3, visitPerKmPaise: 600, visitMaxFeePaise: 15000, visitBaseFeePaise: 0 } });
+    pricingService.invalidateConfigCache();
+    await makeProvider({ name: 'Five Km Shop', priceP: 75000, distanceKm: 5 });
+    const ctrl = require('../src/modules/repair/controllers/catalog.controller');
+    let body;
+    await ctrl.findProviders(
+      { query: { ...baseQuery, lat: String(LAT), lng: String(LNG) }, params: {}, headers: {}, vertical: 'mobile' },
+      { json: (b) => { body = b; }, status: () => ({ json: (b) => { body = b; } }) },
+      (e) => { throw e; },
+    );
+    const p = body.providers[0];
+    expect(p.bill.travelPaise).toBe(Math.round(Math.max(0, p.bill.distanceKm - 3) * 600));
+    expect(p.bill.totalPaise).toBe(75000 + p.bill.travelPaise + 1000);
+    const snap = await pricingService.buildPriceSnapshot({
+      vertical: 'mobile', repairCode: baseQuery.repairCode, serviceMode: 'doorstep', distanceKm: p.bill.distanceKm, providerPrice: { totalPaise: 75000 },
+    });
+    expect(snap.totalPaise).toBe(p.bill.totalPaise);
+  });
+});
+
 // Last in the file: once the line exists the vertical is gated for the rest of the run.
 describe('verified for the service, not only as a person', () => {
   it('a provider whose ID is approved but whose service is not gets no offer', async () => {

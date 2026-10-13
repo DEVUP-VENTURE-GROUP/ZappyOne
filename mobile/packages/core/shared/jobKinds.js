@@ -3,6 +3,7 @@
  * Do not edit: change the shared file, then run `npm run sync:api` from mobile/.
  */
 /* eslint-disable */
+import { feeLabel } from './repairBill';
 import { tripOf } from './jobFlows';
 
 /**
@@ -117,8 +118,7 @@ function repairLines(s = {}, quote = null) {
   const lines = quote?.items?.length
     ? quote.items.map((i) => [`${i.label}${(i.quantity || 1) > 1 ? ` × ${i.quantity}` : ''}`, i.amountPaise || (i.unitPricePaise || 0) * (i.quantity || 1)])
     : [
-      ['Parts', s.partPaise], ['Labour', s.labourPaise], ['Consumables', s.consumablesPaise], ['Travel', s.travelPaise],
-      ['Pickup & return', (s.pickupPaise || 0) + (s.returnPaise || 0)], ['Inspection', s.diagnosisFeePaise],
+      ['Parts', s.partPaise], ['Labour', s.labourPaise], ['Consumables', s.consumablesPaise], ['Inspection', s.diagnosisFeePaise],
     ];
   // Extra work quoted on top of the booked price: the booked price is its own line.
   if (quote?.items?.length && quote.basePaise > 0) lines.unshift(['Booked repair', quote.basePaise]);
@@ -127,7 +127,9 @@ function repairLines(s = {}, quote = null) {
     const service = (s.subtotalPaise || 0) - known;
     if (service > 0) lines.unshift(['Service', service]);
   }
-  lines.push(['Platform fee', s.platformFeePaise], ['Taxes', s.taxPaise]);
+  // Journey, platform fee and any small-job top-up as one fee, the way delivery apps show it (customer/repairBill).
+  const feePaise = (s.travelPaise || 0) + (s.pickupPaise || 0) + (s.returnPaise || 0) + (s.smallJobPaise || 0) + (s.platformFeePaise || 0);
+  lines.push([feeLabel(s), feePaise], ['Taxes', s.taxPaise]);
   if (s.discountPaise) lines.push(['Discount', -s.discountPaise]);
   if (s.inspectionCreditPaise) lines.push(['Inspection already paid', -s.inspectionCreditPaise]);
   const sum = lines.reduce((t, [, p]) => t + (p || 0), 0);

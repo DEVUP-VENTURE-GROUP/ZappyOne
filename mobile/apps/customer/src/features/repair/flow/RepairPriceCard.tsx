@@ -1,21 +1,25 @@
 /**
  * What the customer pays, said before the button (the website's confirm price
- * card): the inspection fee, a fixed total with any surge and tip shown as
- * their own lines, or a plain "priced after inspection".
+ * card): the inspection fee, a fixed total with the server's bill lines
+ * (travel or pickup, platform fee, small-job top-up, taxes), surge and tip each
+ * shown as their own line, or a plain "priced after inspection".
  */
 import { StyleSheet, View } from 'react-native';
 import { AlertTriangle } from 'lucide-react-native';
 import { formatPaise } from '@zappy/core/shared/money';
+import { billExtras, totalOf } from '@zappy/core/shared/repairBill';
 import { Text } from '@zappy/ui/components';
 import { SurgeLines, type SurgeQuote } from '@zappy/ui/components/booking/SurgeLines';
 import { accent, danger, ink } from '@zappy/ui/theme/colors';
 import { spacing } from '@zappy/ui/theme/spacing';
 import { flow } from './FlowChrome';
+import type { RepairBill } from './repairRules';
 
-export function RepairPriceCard({ inspectionOnly, price, surgeQuote, surgePaise, tip, pickup }: {
-  inspectionOnly: boolean; price: number | null | undefined; surgeQuote: SurgeQuote | null; surgePaise: number; tip: number; pickup: boolean;
+export function RepairPriceCard({ inspectionOnly, price, bill, surgeQuote, surgePaise, tip }: {
+  inspectionOnly: boolean; price: number | null | undefined; bill: RepairBill | null | undefined; surgeQuote: SurgeQuote | null; surgePaise: number; tip: number;
 }) {
-  const total = (price || 0) + surgePaise + tip * 100;
+  const extras = billExtras(bill);
+  const total = (totalOf({ pricePaise: price ?? null, bill }) || 0) + surgePaise + tip * 100;
   if (inspectionOnly) {
     return (
       <View style={flow.card}>
@@ -43,11 +47,11 @@ export function RepairPriceCard({ inspectionOnly, price, surgeQuote, surgePaise,
         <Text variant="bodySmall" weight="bold">Total</Text>
         <Text variant="heading2" weight="black">{formatPaise(total)}</Text>
       </View>
-      {surgePaise > 0 || tip > 0 ? <Text variant="caption" color={ink[500]}>{formatPaise(price)} for the repair, plus:</Text> : null}
+      {extras.length || surgePaise > 0 || tip > 0 ? <Text variant="caption" color={ink[500]}>{formatPaise(price)} for the repair, plus:</Text> : null}
+      {extras.map((l) => <View key={l.label} style={styles.total}><Text variant="caption" weight="semibold" color={ink[700]}>{l.label}</Text><Text variant="caption" weight="semibold" color={ink[700]}>+{formatPaise(l.paise)}</Text></View>)}
       <SurgeLines quote={surgeQuote} />
       {tip > 0 ? <View style={styles.total}><Text variant="caption" weight="semibold" color={danger[600]}>Tip for your pro</Text><Text variant="caption" weight="semibold" color={danger[600]}>+₹{tip}</Text></View> : null}
       <Text variant="caption" color={ink[400]}>Includes parts, labour and taxes. This is the price you pay: nothing is added later without your approval.</Text>
-      {pickup ? <Text variant="caption" color={ink[500]}>Pickup and return are included in this total.</Text> : null}
     </View>
   );
 }

@@ -22,6 +22,7 @@ import type { Diagnosis, QA } from './DiagnoseStep';
 import { Shell, flow } from './FlowChrome';
 import { RepairPriceCard } from './RepairPriceCard';
 import { MODE_LABEL, type Provider } from './repairRules';
+import { chosenPrice } from '@zappy/core/shared/repairBill';
 
 type Named = { code: string; name: string };
 
@@ -36,7 +37,9 @@ export function ConfirmStep({ vertical, brand, model, configuration, problem, di
   const [onSite, setOnSite] = useState<{ name: string; phone: string } | 'incomplete' | null>(null);
   const [tip, setTip] = useState(0);
   const inspectionOnly = serviceMode === 'diagnosis_only';
-  const price = inspectionOnly ? inspectionFeePaise : provider?.totalPaise;
+  // The grade they picked, with the server's full bill for it (shared/customer/repairBill).
+  const chosen = chosenPrice(provider, qualityCode);
+  const price = inspectionOnly ? inspectionFeePaise : chosen.pricePaise;
   const surge = useSurge({ kind: 'repair', vertical, serviceMode, loc: location, basePaise: price, skip: price == null });
 
   async function book() {
@@ -87,7 +90,7 @@ export function ConfirmStep({ vertical, brand, model, configuration, problem, di
           </View>
         ))}
       </View>
-      <RepairPriceCard inspectionOnly={inspectionOnly} price={price} surgeQuote={surge.quote} surgePaise={surge.totalPaise} tip={tip} pickup={serviceMode === 'pickup_repair'} />
+      <RepairPriceCard inspectionOnly={inspectionOnly} price={price} bill={inspectionOnly ? null : chosen.bill} surgeQuote={surge.quote} surgePaise={surge.totalPaise} tip={tip} />
       {price != null ? <TipAtCheckout value={tip} onChange={setTip} /> : null}
       <SomeoneElse onChange={setOnSite} />
       <PendingFeeNotice />

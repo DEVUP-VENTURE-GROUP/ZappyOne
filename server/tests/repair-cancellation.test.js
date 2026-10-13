@@ -329,6 +329,45 @@ describe('pricing shape', () => {
     });
     expect(snap.pickupPaise).toBe(0);
     expect(snap.returnPaise).toBe(0);
-    expect(snap.totalPaise).toBe(75000);
+    // The provider's own journey is the visit fee instead, capped (₹150 by default).
+    expect(snap.travelPaise).toBe(15000);
+    expect(snap.totalPaise).toBe(75000 + 15000);
+  });
+
+  /*
+   * The visit fee: a shop's ₹750 repair, the customer 5 km away. Near is free so
+   * prices stay competitive; beyond the free radius the provider's fuel and time
+   * are paid, per km, capped, all of it to the provider (commission is on the
+   * ₹750 only). Walk-in pays no journey.
+   */
+  describe('visit fee (doorstep and roadside)', () => {
+    const snap = (serviceMode, distanceKm) => pricingSvc.buildPriceSnapshot({
+      vertical: 'mobile', repairCode: 'battery_replacement', providerPrice: provider, referencePrice: reference, serviceMode, distanceKm,
+    });
+
+    it('₹750 at 5 km: ₹6 a km after 3 free km = ₹12, all of it to the provider', async () => {
+      const s = await snap('doorstep', 5);
+      expect(s.travelPaise).toBe(1200);
+      expect(s.totalPaise).toBe(75000 + 1200);
+      expect(s.commissionPaise).toBe(Math.round(75000 * 0.15)); // on the repair, not the journey
+      expect(s.distanceKm).toBe(5);
+    });
+
+    it('free inside the radius, the same for roadside, nothing for walk-in, nothing with no distance', async () => {
+      expect((await snap('doorstep', 2.5)).travelPaise).toBe(0);
+      expect((await snap('roadside', 5)).travelPaise).toBe(1200);
+      expect((await snap('workshop', 12)).travelPaise).toBe(0);
+      expect((await snap('doorstep', null)).travelPaise).toBe(0);
+    });
+
+    it('a minimum job value tops a small job up (off unless admin sets it)', async () => {
+      await Cfg.updateMany({ vertical: 'mobile' }, { $set: { minJobPaise: 100000 } });
+      pricingSvc.invalidateConfigCache();
+      const s = await snap('workshop', null);
+      expect(s.smallJobPaise).toBe(25000);
+      expect(s.totalPaise).toBe(100000);
+      await Cfg.updateMany({ vertical: 'mobile' }, { $set: { minJobPaise: 0 } });
+      pricingSvc.invalidateConfigCache();
+    });
   });
 });

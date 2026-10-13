@@ -104,7 +104,7 @@ export function ProviderStep({ vertical, diagnosis, model, brand, configuration,
             })}
           </ScrollView>
           {ranked.map((p, i) => (
-            <ProviderCard key={p.shopId || p.workerId || i} p={p} recommended={sortBy === 'best' && samePlace(p, result?.recommended)} onPick={(q) => onPick(p, repairCode, q)} />
+            <ProviderCard key={p.shopId || p.workerId || i} p={p} recommended={sortBy === 'best' && samePlace(p, result?.recommended)} serviceMode={serviceMode} onPick={(q) => onPick(p, repairCode, q)} />
           ))}
         </>
       ) : null}

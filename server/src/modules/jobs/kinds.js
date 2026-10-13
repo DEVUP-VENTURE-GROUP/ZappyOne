@@ -86,6 +86,12 @@ const KINDS = {
           totalPaise: s.totalPaise || 0, servicePaise: s.subtotalPaise || 0, platformFeePaise: s.platformFeePaise || 0,
           taxPaise: s.taxPaise || 0, creditPaise: s.inspectionCreditPaise || 0, commissionPaise: s.commissionPaise || 0,
           providerPaise: split.providerPaise,
+          // The journey (visit, or pickup and return) and any small-job top-up: inside the
+          // service total, all of it the provider's. Shown to them as their own lines.
+          journeyPaise: (s.travelPaise || 0) + (s.pickupPaise || 0) + (s.returnPaise || 0),
+          journeyLabel: (s.pickupPaise || 0) + (s.returnPaise || 0) > 0 ? 'Pickup & return' : 'Travel',
+          smallJobPaise: s.smallJobPaise || 0,
+          distanceKm: s.distanceKm ?? null,
         };
       },
     },

@@ -388,6 +388,10 @@ async function findProviders({
        */
       imageUrl: await s3Service.signMedia(s.shopId ? profile.coverImageUrl : profile.profilePhotoKey),
       distanceKm: s.distanceKm,
+      // From the provider's base pin, as the booking prices it (create.js), so the
+      // journey fee on the card is the one on the bill; distanceKm may later be
+      // replaced by the road distance from where they are now, for arrival.
+      journeyKm: s.distanceKm,
       price,
       totalPaise: price?.totalPaise ?? null,
       // Every grade this provider will do it at — what makes the list a
