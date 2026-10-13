@@ -165,6 +165,10 @@ async function create({ userId, items, location, serviceMode = 'doorstep', sched
     reference: newGroupReference(), userId, plan: chosen.plan, serviceMode, scheduledAt,
     location: { address: location.address, coordinates: location.coordinates }, totals: chosen.totals, idempotencyKey,
   });
+  // Items per provider, so each offer can say "2 items at this visit".
+  const providerOf = (i) => (chosen.plan === 'single' ? chosen.provider : chosen.providers[i]);
+  const perProvider = new Map();
+  items.forEach((_, i) => { const k = keyOf(providerOf(i)); perProvider.set(k, (perProvider.get(k) || 0) + 1); });
   const made = [];
   try {
     const { createBooking } = require('./booking/create');
@@ -176,7 +180,7 @@ async function create({ userId, items, location, serviceMode = 'doorstep', sched
         ...it, userId, serviceMode, location, scheduledAt, slotLabel, paymentMethod,
         shopId: p.shopId || null, workerId: p.workerId || null,
         discountPaise: line.discountPaise, skipJourney: line.skipJourney, skipPlatformFee: line.skipPlatformFee,
-        groupId: group._id, itemLabel: it.label || '',
+        groupId: group._id, itemLabel: it.label || '', groupSize: perProvider.get(keyOf(p)) || 1,
         idempotencyKey: idempotencyKey ? `${idempotencyKey}:${i}` : null,
       });
       made.push(booking._id);

@@ -14,7 +14,7 @@ const BUILT = [
   /^\/events(\/(browse|saved|bookings))?$/, /^\/events\/(themes|bookings)\/[\w-]+$/,
   /^\/my-assets$/, /^\/scheduled$/, /^\/plans$/, /^\/worker-profile\/[\w-]+$/, /^\/nearby-shops$/, /^\/shops\/[\w-]+$/,
   /^\/repair(\/(laptop|two-wheeler|four-wheeler|water-tank-care))?$/,
-  /^\/repair\/price-requests\/[\w-]+$/, /^\/repair\/bookings\/[\w-]+$/, /^\/repair\/category\/[\w-]+\/[\w-]+$/,
+  /^\/repair\/price-requests\/[\w-]+$/, /^\/repair\/bookings\/[\w-]+$/, /^\/repair\/groups\/[\w-]+$/, /^\/repair\/category\/[\w-]+\/[\w-]+$/,
 ];
 
 /**

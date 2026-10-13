@@ -43,6 +43,11 @@ export function endpoints(b, { adminApiPath }) {
     myPendingCancelFee: b.query({ query: () => '/jobs/pending-fee', keepUnusedDataFor: 0 }),
     // A booking started and left (jobs/checkout-draft): home's "Continue your booking".
     myCheckoutDrafts: b.query({ query: () => '/jobs/checkout-drafts', providesTags: ['CheckoutDrafts'] }),
+    // Several vehicles or devices in one booking (repair/services/group), and "also add…" suggestions.
+    quoteRepairGroup: b.mutation({ query: (body) => ({ url: '/repair/booking-groups/quote', method: 'POST', body }) }),
+    createRepairGroup: b.mutation({ query: (body) => ({ url: '/repair/booking-groups', method: 'POST', body }), invalidatesTags: ['RepairBookings', 'CheckoutDrafts'] }),
+    repairGroup: b.query({ query: (id) => `/repair/booking-groups/${id}`, providesTags: ['RepairBookings'] }),
+    repairSuggestions: b.query({ query: ({ vertical, repairCode }) => ({ url: '/repair/suggestions', params: { vertical, repairCode } }) }),
     saveCheckoutDraft: b.mutation({ query: ({ kind, ...body }) => ({ url: `/jobs/checkout-drafts/${kind}`, method: 'PUT', body }), invalidatesTags: ['CheckoutDrafts'] }),
     clearCheckoutDraft: b.mutation({ query: (kind) => ({ url: `/jobs/checkout-drafts/${kind}`, method: 'DELETE' }), invalidatesTags: ['CheckoutDrafts'] }),
     jobOptions: b.query({ query: ({ id }) => `/jobs/${id}/options`, keepUnusedDataFor: 0 }),

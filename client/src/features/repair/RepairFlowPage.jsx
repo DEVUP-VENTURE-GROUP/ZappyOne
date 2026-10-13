@@ -35,6 +35,10 @@ import { ProblemLayout } from './ProblemCard';
 import { usePayBooking } from '@shared/hooks/usePayBooking';
 import { billExtras, chosenPrice, freeVisit, totalOf } from '@shared/customer/repairBill';
 import { useCheckoutDraft } from '@shared/customer/useCheckoutDraft';
+import { groupItems, itemFrom } from '@shared/customer/repairBasket';
+import { useRepairBasket } from './basket/useRepairBasket';
+import BasketBar from './basket/BasketBar';
+import GroupCheckout from './basket/GroupCheckout';
 import { selectAuth } from '@shared/modules/auth/authSlice';
 import { useClearCheckoutDraftMutation } from '@shared/services/api';
 
@@ -1695,11 +1699,16 @@ export default function RepairFlowPage({ vertical = 'mobile' }) {
   const saved = useMemo(() => (params.get('problem') || params.get('brand') ? null : readDraft(draftKey)), [draftKey, run]); // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <RepairFlow key={`${vertical}-${run}`} vertical={vertical} saved={saved} draftKey={draftKey}
+      onAddAnother={(target) => {
+        // The next item starts fresh: same kind, a new run of this flow; another kind, its own flow.
+        clearDraft(`repair:${target.vertical}`);
+        if (target.vertical === vertical) { nav({ search: '' }, { replace: true }); setRun((n) => n + 1); } else nav(target.path);
+      }}
       onStartOver={() => { clearDraft(draftKey); clearServerDraft('repair').catch(() => {}); nav({ search: '' }, { replace: true }); setRun((n) => n + 1); }} />
   );
 }
 
-function RepairFlow({ vertical, saved, draftKey, onStartOver }) {
+function RepairFlow({ vertical, saved, draftKey, onStartOver, onAddAnother }) {
   const nav = useNavigate();
   const safeBack = useSafeBack('/');
   const loc = useSelector(selectLocation);
@@ -1773,6 +1782,12 @@ function RepairFlow({ vertical, saved, draftKey, onStartOver }) {
   // Got as far as choosing who does it: home's "Continue your booking" and one
   // reminder push can bring them back (jobs/checkout-draft), on any device.
   const signedIn = !!useSelector(selectAuth)?.accessToken;
+  // Several vehicles or devices in one visit (basket/): the others waiting, and this one as an item.
+  const basket = useRepairBasket();
+  const currentItem = useMemo(() => itemFrom({ vertical, brand, model, configuration, fuelType, problem, diagnosis, qualityCode }),
+    [vertical, brand, model, configuration, fuelType, problem, diagnosis, qualityCode]);
+  // Booking together once there is another item and this one is priced (not an inspection).
+  const groupMode = basket.items.length > 0 && !!currentItem && serviceMode !== 'diagnosis_only';
   const late = !!problem && ['provider', 'addons', 'confirm'].includes(step);
   const draftDone = useCheckoutDraft('repair', late ? {
     title: problem.name || 'Repair', step: step === 'confirm' ? 'Confirm' : 'Choose who',
@@ -1956,7 +1971,22 @@ function RepairFlow({ vertical, saved, draftKey, onStartOver }) {
           onPick={(m) => { setServiceMode(m); next('mode'); }}
         />
       )}
-      {step === 'provider' && (
+      {step === 'provider' && serviceMode !== 'diagnosis_only' && (
+        <BasketBar vertical={vertical} current={currentItem} count={basket.items.length}
+          onAddAnother={(t) => { basket.add(currentItem); onAddAnother(t); }}
+          onAddSuggestion={(s) => basket.add(itemFrom({ vertical, brand, model, configuration, fuelType, problem, diagnosis, repairCode: s.repairCode, repairName: s.name }))} />
+      )}
+      {step === 'provider' && groupMode && (
+        <>
+          <WhenChooser value={when} onChange={setWhen} />
+          <GroupCheckout
+            items={groupItems(basket.items, currentItem)} shown={[...basket.items, currentItem].filter(Boolean)}
+            location={loc} serviceMode={serviceMode} scheduledAt={when} slotLabel={when ? slotLabel(when) : ''}
+            onRemove={(i) => basket.remove(i)}
+            onBooked={(g) => { basket.clear(); clearDraft(draftKey); draftDone(); nav(`/repair/groups/${g._id}`, { replace: true }); }} />
+        </>
+      )}
+      {step === 'provider' && !groupMode && (
         <ProviderStep
           vertical={vertical} diagnosis={diagnosis} model={model} brand={brand}
           configuration={configuration} problem={problem}

@@ -673,6 +673,7 @@ const CONFIG_FIELDS = [
     ['diagnosisFeePaise', 'Inspection fee (₹)', 'money'],
     ['inspectionFeeCreditedOnRepair', 'Credit inspection fee against repair', 'bool'],
     ['minJobPaise', 'Minimum job value — smaller jobs are topped up (₹, 0 = off)', 'money'],
+    ['groupDiscountPct', 'Discount on each extra item in one visit (%, 0 = off)'],
   ] },
   // Journeys: priced by distance, all of it to whoever travels (no commission).
   { group: 'Visit fee — doorstep & roadside (provider travels)', keys: [

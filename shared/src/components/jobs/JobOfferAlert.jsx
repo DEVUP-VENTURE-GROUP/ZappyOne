@@ -147,6 +147,9 @@ export default function JobOfferAlert({ offer, myLocation, onAccept, onDecline, 
                   <IndianRupee size={11} /> {offer.valueLabel}
                 </p>
                 <p className="mt-0.5 text-[18px] font-bold tabular-nums text-navy">{formatPaise(offer.valuePaise)}</p>
+                {offer.groupSize > 1 && (
+                  <p className="text-[11px] font-bold text-zappy-700">1 of {offer.groupSize} items at this visit · your answer covers all</p>
+                )}
                 {offer.travelPaise > 0 && (
                   <p className="text-[11px] font-semibold tabular-nums text-emerald-700">incl. +{formatPaise(offer.travelPaise)} travel{offer.distanceKm != null ? ` (${Math.round(offer.distanceKm * 10) / 10} km)` : ''}, yours</p>
                 )}

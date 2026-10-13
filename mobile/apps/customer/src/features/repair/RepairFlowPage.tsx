@@ -31,6 +31,11 @@ export function RepairFlowPage({ vertical = 'mobile' }: { vertical?: string }) {
   if (saved === undefined) return <View style={{ flex: 1 }}><LoadingState /></View>;
   return (
     <RepairFlow key={`${vertical}-${run}`} vertical={vertical} saved={run ? null : saved} draftKey={draftKey}
+      onAddAnother={(target) => {
+        // The next item starts fresh: same kind, a new run of this flow; another kind, its own flow.
+        clearDraft(`repair:${target.vertical}`);
+        if (target.vertical === vertical) { router.setParams({ problem: undefined, brand: undefined, model: undefined }); setRun((n) => n + 1); } else router.push(target.path as never);
+      }}
       onStartOver={() => { clearDraft(draftKey); clearServerDraft('repair').catch(() => {}); router.setParams({ problem: undefined, brand: undefined, model: undefined }); setRun((n) => n + 1); }} />
   );
 }

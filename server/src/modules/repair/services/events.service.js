@@ -160,6 +160,8 @@ function announceOffer(booking) {
     repairCode: booking.repairCode || null,
     serviceMode: booking.serviceMode,
     totalPaise: booking.priceSnapshot?.totalPaise || 0,
+    // One of several items at the same visit: accepting or passing answers for all of them.
+    groupSize: booking.groupSize || 1,
     // The journey to the customer and how far, both theirs to know before accepting.
     travelPaise: (booking.priceSnapshot?.travelPaise || 0) + (booking.priceSnapshot?.pickupPaise || 0) + (booking.priceSnapshot?.returnPaise || 0),
     distanceKm: booking.priceSnapshot?.distanceKm ?? null,

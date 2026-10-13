@@ -501,6 +501,7 @@ describe('several items in one booking (services/group)', () => {
     expect(bookings.every((b) => String(b.groupId) === String(g._id) && String(b.workerId) === String(w._id))).toBe(true);
     expect(bookings.reduce((a, b) => a + b.priceSnapshot.totalPaise, 0)).toBe(q.options[0].totals.totalPaise);
     expect(bookings.map((b) => b.itemLabel).sort()).toEqual(['A', 'B']);
+    expect(bookings.every((b) => b.groupSize === 2)).toBe(true); // the offer says "1 of 2 items"
 
     await require('../src/modules/repair/services/booking/lifecycle').transition(bookings[0]._id, 'WORKER_ACCEPTED', { actorRole: 'worker', actorId: w._id });
     const after = await RepairBooking.find({ groupId: g._id }).lean();

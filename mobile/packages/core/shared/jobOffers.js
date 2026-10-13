@@ -59,6 +59,8 @@ export const fromRepair = (b) => ({
   // The journey fee (visit, or pickup and return) and how far: the provider's to know.
   travelPaise: b.travelPaise ?? ((b.priceSnapshot?.travelPaise || 0) + (b.priceSnapshot?.pickupPaise || 0) + (b.priceSnapshot?.returnPaise || 0)),
   distanceKm: b.distanceKm ?? b.priceSnapshot?.distanceKm ?? null,
+  // Several items at one visit: one answer covers them all (repair/services/group).
+  groupSize: b.groupSize || 1,
   customer: b.customer || null,
   cash: b.paymentMethod === 'cash',
   howLabel: MODE_LABEL[b.serviceMode] || b.serviceMode,

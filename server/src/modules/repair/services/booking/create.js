@@ -62,6 +62,7 @@ async function createBooking({
   itemLabel = '',
   skipJourney = false,
   skipPlatformFee = false,
+  groupSize = 1,
 }) {
   if (!location?.coordinates?.length || !location.address) {
     throw httpError('A pickup location with coordinates and an address is required', 400, 'LOCATION_REQUIRED');
@@ -271,6 +272,7 @@ async function createBooking({
       zappyRecommended,
       groupId,
       itemLabel,
+      groupSize,
       paymentMethod,
       location: { ...location, type: 'Point' },
       scheduledAt,

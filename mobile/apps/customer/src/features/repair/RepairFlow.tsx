@@ -12,6 +12,11 @@ import { clearDraft } from '@zappy/core/lib/drafts';
 import { useAppSelector } from '@zappy/core/store/hooks';
 import { chosenPrice, totalOf } from '@zappy/core/shared/repairBill';
 import { useCheckoutDraft } from '@zappy/core/shared/useCheckoutDraft';
+import { groupItems, itemFrom } from '@zappy/core/shared/repairBasket';
+import { WhenChooser, slotLabel } from '@zappy/ui/components/booking/SlotPicker';
+import { BasketBar } from './basket/BasketBar';
+import { GroupCheckout } from './basket/GroupCheckout';
+import { useRepairBasket } from './basket/useRepairBasket';
 import { ResumeBanner } from '@zappy/ui/components/common/ResumeBanner';
 import { useDraft, useFlowStep } from '@zappy/ui/lib/bookingFlow';
 import { useBookingLocation } from '@zappy/ui/lib/bookingLocation';
@@ -37,7 +42,7 @@ export interface RepairDraft {
   serviceMode?: string; skipped?: string[]; step?: string;
 }
 
-export function RepairFlow({ vertical, saved, draftKey, onStartOver }: { vertical: string; saved: RepairDraft | null; draftKey: string; onStartOver: () => void }) {
+export function RepairFlow({ vertical, saved, draftKey, onStartOver, onAddAnother }: { vertical: string; saved: RepairDraft | null; draftKey: string; onStartOver: () => void; onAddAnother: (t: { vertical: string; path: string }) => void }) {
   const router = useRouter();
   const params = useLocalSearchParams<{ problem?: string; brand?: string; model?: string }>();
   const { location, pick } = useBookingLocation();
@@ -76,6 +81,11 @@ export function RepairFlow({ vertical, saved, draftKey, onStartOver }: { vertica
   // Got as far as choosing who does it: home's "Continue your booking" and one
   // reminder push can bring them back (jobs/checkout-draft), on any device.
   const signedIn = useAppSelector((s) => s.auth.isAuthenticated);
+  // Several vehicles or devices in one visit (basket/): the others waiting, and this one as an item.
+  const basket = useRepairBasket();
+  const currentItem = useMemo(() => itemFrom({ vertical, brand, model, configuration, fuelType: fuelType || '', problem, diagnosis, qualityCode }),
+    [vertical, brand, model, configuration, fuelType, problem, diagnosis, qualityCode]);
+  const groupMode = basket.items.length > 0 && !!currentItem && serviceMode !== 'diagnosis_only';
   const late = !!problem && ['provider', 'addons', 'confirm'].includes(step);
   const draftDone = useCheckoutDraft('repair', late ? {
     title: problem.name || 'Repair', step: step === 'confirm' ? 'Confirm' : 'Choose who',
@@ -175,7 +185,21 @@ export function RepairFlow({ vertical, saved, draftKey, onStartOver }: { vertica
         }} />
       ) : null}
       {step === 'mode' ? <ModeStep diagnosis={diagnosis} inspectionFeePaise={inspectionFeePaise} onPick={(m) => { setServiceMode(m); next('mode'); }} /> : null}
-      {step === 'provider' ? (
+      {step === 'provider' && serviceMode !== 'diagnosis_only' ? (
+        <BasketBar vertical={vertical} current={currentItem} count={basket.items.length}
+          onAddAnother={(t) => { basket.add(currentItem); onAddAnother(t); }}
+          onAddSuggestion={(s) => basket.add(itemFrom({ vertical, brand, model, configuration, fuelType: fuelType || '', problem, diagnosis, repairCode: s.repairCode, repairName: s.name }))} />
+      ) : null}
+      {step === 'provider' && groupMode ? (
+        <>
+          <WhenChooser value={when} onChange={setWhen} />
+          <GroupCheckout items={groupItems(basket.items, currentItem)} shown={[...basket.items, currentItem].filter(Boolean)}
+            location={location} serviceMode={serviceMode} scheduledAt={when} slotLabel={when ? slotLabel(when) : ''}
+            onRemove={(i) => basket.remove(i)}
+            onBooked={(g) => { basket.clear(); clearDraft(draftKey); draftDone(); router.replace(`/repair/groups/${g._id}` as never); }} />
+        </>
+      ) : null}
+      {step === 'provider' && !groupMode ? (
         <ProviderStep vertical={vertical} diagnosis={diagnosis} model={model} brand={brand} configuration={configuration} problem={problem}
           location={location} serviceMode={serviceMode} pinConfirmed={pinConfirmed} onPinConfirmed={() => setPinConfirmed(true)}
           onChangeLocation={() => { setPinConfirmed(true); pick(); }} scheduledAt={when} onWhen={(t) => { setWhen(t); setProvider(null); }}

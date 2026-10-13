@@ -14,7 +14,9 @@ jest.setTimeout(60000);
 const oid = () => new mongoose.Types.ObjectId();
 const ago = (min) => new Date(Date.now() - min * 60000);
 const HOME = { type: 'Point', coordinates: [78.39, 17.44], address: 'Madhapur' };
-const insert = (Model, doc) => Model.collection.insertOne({ userId: oid(), createdAt: ago(1), ...doc });
+let ref = 0;
+// Each row its own reference: references are unique, and an earlier test may already have built that index.
+const insert = (Model, doc) => { ref += 1; return Model.collection.insertOne({ userId: oid(), createdAt: ago(1), reference: `OPS-TEST-${ref}`, ...doc }); };
 
 beforeAll(startMongo);
 afterAll(stopMongo);

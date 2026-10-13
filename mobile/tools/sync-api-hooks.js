@@ -50,6 +50,7 @@ const LOGIC = [
   { from: 'customer/jobKinds.js', to: 'shared/jobKinds.js', imports: { '../provider/jobFlows': './jobFlows', './repairBill': './repairBill' } },
   { from: 'customer/trackingSteps.js', to: 'shared/trackingSteps.js', imports: {} },
   { from: 'customer/repairBill.js', to: 'shared/repairBill.js', imports: {} },
+  { from: 'customer/repairBasket.js', to: 'shared/repairBasket.js', imports: {} },
   { from: 'customer/useCheckoutDraft.js', to: 'shared/useCheckoutDraft.js', imports: { react: 'react', '../services/api': '../api/hooks' } },
   { from: 'events/partnerBookings.js', to: 'shared/partnerBookings.js', imports: {} },
   { from: 'constants/telanganaPlaces.js', to: 'shared/telanganaPlaces.js', imports: {} },

@@ -254,6 +254,8 @@ const repairBookingSchema = new mongoose.Schema(
     groupId: { type: mongoose.Schema.Types.ObjectId, ref: 'RepairBookingGroup', default: null, index: true },
     /** The customer's own name for this item in a group ("Dad's bike"). */
     itemLabel: { type: String, maxlength: 60, default: '' },
+    /** How many items of the group this provider does at this visit (shown on the offer). */
+    groupSize: { type: Number, default: 1 },
 
     /* Where and when */
     location: {

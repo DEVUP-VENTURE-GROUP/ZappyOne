@@ -54,6 +54,7 @@ const RepairFlowPage               = lazy(() => import('../features/repair/Repai
 const CategoryProblemsPage         = lazy(() => import('../features/repair/CategoryProblemsPage'));
 const LegacyServiceRedirect        = lazy(() => import('../features/catalog/LegacyServiceRedirect'));
 const RepairBookingPage            = lazy(() => import('../features/repair/RepairBookingPage'));
+const RepairGroupPage              = lazy(() => import('../features/repair/basket/RepairGroupPage'));
 const PriceRequestPage             = lazy(() => import('../features/repair/PriceRequestPage'));
 const MyAssetsPage                  = lazy(() => import('../features/repair/MyAssetsPage'));
 const HelpingServicesPage           = lazy(() => import('../features/helping/HelpingServicesPage'));
@@ -220,6 +221,7 @@ export default function App() {
           element={<RequireAuth role="user"><CategoryProblemsPage /></RequireAuth>}
         />
         <Route path="/repair/bookings/:id" element={<RequireAuth role="user"><RepairBookingPage /></RequireAuth>} />
+        <Route path="/repair/groups/:id" element={<RequireAuth role="user"><RepairGroupPage /></RequireAuth>} />
         <Route path="/repair/price-requests/:id" element={<RequireAuth role="user"><PriceRequestPage /></RequireAuth>} />
         {/* Kept so existing worker links and notifications still resolve. */}
 
