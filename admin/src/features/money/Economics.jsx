@@ -8,6 +8,7 @@ import CancellationRules from './economics/CancellationRules';
 import WorkerDues from './economics/WorkerDues';
 import BoostTips from './economics/BoostTips';
 import Surge from './economics/Surge';
+import Dispatch from './economics/Dispatch';
 
 /**
  * Economics: every money rule in one place, a tab per kind of rule, so none of
@@ -175,6 +176,7 @@ const TABS = [
   ['cancellations', 'Cancellations', 'What cancelling costs customers, and what backing out costs providers'],
   ['dues', 'Worker dues', 'What workers may owe from cash jobs, and recording what they pay'],
   ['boost', 'Boost & tips', 'What customers may add for a faster match, and tip after a job'],
+  ['dispatch', 'Dispatch', 'How fast a job finds its pro: auto-accept, first look, several at once, then wider'],
   ['surge', 'Surge', 'Automatic: busy areas, rain and late night, priced every minute inside your limits'],
 ];
 
@@ -199,6 +201,7 @@ export default function Economics() {
       {tab === 'cancellations' && <CancellationRules />}
       {tab === 'dues' && <WorkerDues />}
       {tab === 'boost' && <BoostTips />}
+      {tab === 'dispatch' && <Dispatch />}
       {tab === 'surge' && <Surge />}
     </div>
   );

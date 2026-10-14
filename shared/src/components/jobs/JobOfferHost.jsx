@@ -3,11 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import toast from 'react-hot-toast';
 import JobOfferAlert from './JobOfferAlert';
-import { keyOf, fromRepair, fromPetOffer, fromOpen, recoveredOffers, pickOffer, withOffer } from './jobOffers';
+import { keyOf, fromRepair, fromPetOffer, fromOpen, recoveredOffers, pickOffer, withOffer, takeError } from './jobOffers';
 import { selectRole, selectAuth } from '../../modules/auth/authSlice';
 import { getSocket } from '../../services/socket';
 import {
-  useRepairProviderJobsQuery, useTransitionRepairBookingMutation, useDeclineRepairBookingMutation,
+  useRepairProviderJobsQuery, useTransitionRepairBookingMutation, useDeclineRepairBookingMutation, useClaimRepairBookingMutation,
   useAssignedPetBookingsQuery, useAcceptPetBookingMutation, useDeclinePetBookingMutation,
   useAcceptHelpingTaskMutation, useGetWorkerMeQuery,
 } from '../../services/api';
@@ -40,6 +40,7 @@ export default function JobOfferHost({ kinds = ['repair', 'pet', 'helping'], myL
   const { data: petData, refetch: refetchPet } = useAssignedPetBookingsQuery(undefined, { pollingInterval: 60000, skip: !has('pet') });
   const [acceptRepair] = useTransitionRepairBookingMutation();
   const [declineRepair] = useDeclineRepairBookingMutation();
+  const [claimRepair] = useClaimRepairBookingMutation();
   const [acceptPet] = useAcceptPetBookingMutation();
   const [declinePet] = useDeclinePetBookingMutation();
   const [acceptHelping] = useAcceptHelpingTaskMutation();
@@ -89,7 +90,10 @@ export default function JobOfferHost({ kinds = ['repair', 'pet', 'helping'], myL
 
   async function accept() {
     try {
-      if (offer.kind === 'repair') {
+      if (offer.kind === 'repair' && offer.broadcast) {
+        await claimRepair(offer.id).unwrap();
+        nav(`/worker/repair/${offer.id}`);
+      } else if (offer.kind === 'repair') {
         await acceptRepair({ id: offer.id, status: 'WORKER_ACCEPTED' }).unwrap();
         nav(`/worker/repair/${offer.id}`);
       } else if (offer.kind === 'pet') {
@@ -101,22 +105,21 @@ export default function JobOfferHost({ kinds = ['repair', 'pet', 'helping'], myL
       }
       toast.success('It’s yours');
     } catch (err) {
-      const taken = err?.data?.code === 'ALREADY_CLAIMED';
-      toast.error(taken ? 'Someone else took it first' : err?.data?.error || 'Could not accept this job');
+      toast.error(takeError(err));
     }
     done(offer);
   }
 
   async function decline(reason) {
     try {
-      if (offer.kind === 'repair') {
+      if (offer.kind === 'repair' && !offer.broadcast) {
         await declineRepair({ id: offer.id, reason }).unwrap();
         toast(isShopTechnician ? 'Sent back to your shop owner' : 'Passed. We’ll find someone else.');
       } else if (offer.kind === 'pet' && offer.mode === 'offered') {
         await declinePet({ id: offer.id, reason: reason || 'Declined by provider' }).unwrap();
         toast('Passed. We’ll find someone else.');
       }
-      // An open job needs no answer: passing just hides it for you.
+      // An open or broadcast job needs no answer: passing just hides it for you.
     } catch (err) {
       // A shop technician's pass must reach the owner; anyone else's is courtesy.
       if (isShopTechnician && offer.kind === 'repair') { toast.error(err?.data?.error || 'Could not pass the job back'); return; }

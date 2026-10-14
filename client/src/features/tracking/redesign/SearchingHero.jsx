@@ -1,4 +1,6 @@
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
+import { searchStage } from '@shared/customer/searchClock';
 import { Zap, MapPin, ShieldCheck } from 'lucide-react';
 import { fadeInUp } from '../../../lib/animations';
 
@@ -6,8 +8,17 @@ import { fadeInUp } from '../../../lib/animations';
  * Visual filler for the "searching" phase, when there's no worker to
  * populate the WorkerRichCard yet. Sets expectations, shows we're actively
  * looking, and communicates the trust story so the pane never feels empty.
+ * With `search` (server jobs/fast-assign), a live clock and what is happening
+ * now, in plain words.
  */
-export default function SearchingHero({ etaMinutes }) {
+export default function SearchingHero({ etaMinutes, search = null, noun = 'pro' }) {
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    if (!search) return undefined;
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [search]);
+  const stage = searchStage(search, noun, now);
   return (
     <motion.div
       variants={fadeInUp}
@@ -28,7 +39,7 @@ export default function SearchingHero({ etaMinutes }) {
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <p className="text-white font-extrabold tracking-[-.02em] text-[16px]">Finding the best pro nearby</p>
+            <p className="text-white font-extrabold tracking-[-.02em] text-[16px]">{stage ? `Finding your ${noun}` : 'Finding the best pro nearby'}</p>
             <span className="inline-flex items-center gap-1 text-[10px] font-extrabold px-2 py-[3px] rounded-lg"
               style={{ color: '#5AE39A', background: 'rgba(18,161,80,.16)' }}>
               <span className="w-[6px] h-[6px] rounded-full" style={{ background: '#34D27B', animation: 'zpt-beat 1.6s infinite' }} />
@@ -36,21 +47,26 @@ export default function SearchingHero({ etaMinutes }) {
             </span>
           </div>
           <p className="text-[12.5px] text-white/60 mt-0.5">
-            Broadcasting your request to top-rated professionals in your area
+            {stage ? stage.line : 'Broadcasting your request to top-rated professionals in your area'}
           </p>
         </div>
       </div>
 
       {/* scanning bar */}
       <div className="relative mt-4 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,.08)' }}>
-        <span className="absolute top-0 bottom-0 w-1/3 rounded-full"
-          style={{ background: 'linear-gradient(90deg,transparent,#2563FF,transparent)', animation: 'zpt-scan 1.8s linear infinite' }} />
+        {stage ? (
+          <span className="absolute top-0 bottom-0 left-0 rounded-full transition-[width] duration-1000"
+            style={{ width: `${Math.round(stage.pct * 100)}%`, background: stage.overdue ? '#F59E0B' : '#2563FF' }} />
+        ) : (
+          <span className="absolute top-0 bottom-0 w-1/3 rounded-full"
+            style={{ background: 'linear-gradient(90deg,transparent,#2563FF,transparent)', animation: 'zpt-scan 1.8s linear infinite' }} />
+        )}
       </div>
 
       <div className="grid grid-cols-3 gap-2 mt-4 relative">
         <MiniStat icon={<MapPin size={14} />} n={etaMinutes ? `~${etaMinutes} min` : 'Nearby'} l="Estimated match" />
         <MiniStat icon={<ShieldCheck size={14} />} n="Verified" l="ID + background" />
-        <MiniStat icon={<Zap size={14} />} n="Instant" l="Sub-second match" />
+        <MiniStat icon={<Zap size={14} />} n={stage ? stage.clock : 'Fast'} l={stage ? 'Searching for' : 'Quick match'} />
       </div>
     </motion.div>
   );

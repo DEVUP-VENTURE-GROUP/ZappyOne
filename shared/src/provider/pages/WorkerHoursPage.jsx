@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { ArrowLeft, Loader2, CalendarOff, X } from 'lucide-react';
 import { useWorkerHoursQuery, useSaveWorkerHoursMutation } from '../../services/api';
+import AutoAcceptCard from '../../components/provider/AutoAcceptCard';
 
 /**
  * My hours — the week a worker takes work, and their days off (server jobs/work-hours).
@@ -45,6 +46,8 @@ export default function WorkerHoursPage() {
         <p className="rounded-2xl bg-zappy-50 px-4 py-3 text-[12.5px] leading-relaxed text-zappy-900">
           Customers who book for later are matched to you only inside these hours, even when you are offline, and never on your days off. Jobs for right now still need you online.
         </p>
+
+        <AutoAcceptCard who="workers" />
 
         {isLoading ? <div className="flex h-40 items-center justify-center"><Loader2 className="animate-spin text-zappy-500" /></div> : (
           <>

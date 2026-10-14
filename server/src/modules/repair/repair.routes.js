@@ -323,6 +323,9 @@ router.post(
   ctrl.assignWorker,
 );
 
+/** First to claim a job put in front of several pros takes it (jobs/fast-assign). */
+router.post('/bookings/:id/claim', authenticate, requireRole('worker', 'shop'), ctrl.claimBooking);
+
 /**
  * Passing on a job is a normal answer, not a failure — see declineBooking.
  */

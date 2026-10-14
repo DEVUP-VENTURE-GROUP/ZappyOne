@@ -18,6 +18,7 @@ import {
 import { staggerContainer, fadeInUp } from '../../lib/animations';
 import StartCodeCard from './StartCodeCard';
 import JobBoostCard from './cards/JobBoostCard';
+import SlowSearchCard from './cards/SlowSearchCard';
 import JobTipCard from './cards/JobTipCard';
 import RepeatCard from './cards/RepeatCard';
 import JobChat from '@shared/components/jobs/JobChat';
@@ -174,7 +175,7 @@ export default function JobTrackingPage({ job, extras = null, startCode = null, 
             </motion.div>
           )}
 
-          {status === 'searching' && <SearchingHero etaMinutes={null} />}
+          {status === 'searching' && <SearchingHero etaMinutes={null} search={options?.search} noun={job.noun} />}
 
           {job.provider && !job.terminal && (
             <div className="lg:[column-span:all]">
@@ -206,6 +207,10 @@ export default function JobTrackingPage({ job, extras = null, startCode = null, 
               <p className="font-semibold">Your {job.noun} could not make it</p>
               <p className="mt-0.5">We are finding the next one now. If you would rather not wait, you can cancel free.</p>
             </div>
+          )}
+          {!job.provider && !job.terminal && options?.search && (
+            <SlowSearchCard jobId={job.id} noun={job.noun} search={options.search} reschedule={options.reschedule}
+              onCancel={cancel ? () => { setCancelReason(''); setCancelOpen(true); refetchOptions(); } : null} onMoved={refetchOptions} />
           )}
           {!job.provider && !job.terminal && (
             <JobBoostCard jobId={job.id} boost={options?.boost} since={job.createdAt} noun={job.noun} onBoosted={refetchOptions} />

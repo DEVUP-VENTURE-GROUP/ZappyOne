@@ -55,8 +55,17 @@ test('too soon, too far, someone else\'s, on the way, and past the limit are ref
   expect(await rs.view('helping', (await HelpingTask.findById(t._id).lean()))).toMatchObject({ allowed: false, left: 0 });
 });
 
-test('a booking for now has no time to move', async () => {
+test('a booking for now that someone holds has no time to move', async () => {
+  const user = new mongoose.Types.ObjectId();
+  const t = await task(user, 'WORKER_ACCEPTED', { scheduledAt: null, workerId: new mongoose.Types.ObjectId() });
+  expect(await rs.view('helping', t.toObject())).toMatchObject({ allowed: false });
+});
+
+test('a booking for now that nobody has taken can become one for later', async () => {
   const user = new mongoose.Types.ObjectId();
   const t = await task(user, 'WORKER_SEARCHING', { scheduledAt: null });
-  expect(await rs.view('helping', t.toObject())).toMatchObject({ allowed: false });
+  expect(await rs.view('helping', t.toObject())).toMatchObject({ allowed: true, fromNow: true });
+  const to = new Date(Date.now() + 3 * H);
+  await rs.reschedule({ kind: 'helping', id: t._id, userId: user, scheduledAt: to.toISOString() });
+  expect((await HelpingTask.findById(t._id).lean()).scheduledAt.getTime()).toBe(to.getTime());
 });

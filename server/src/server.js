@@ -297,9 +297,10 @@ function startRepairSlaWorker() {
         sweep().catch((err) =>
           logger.error({ err: err.message }, "[repair-sla] Sweep failed"),
         ),
-      60 * 1000,
+      // Every 10 s: a job wanted now gives its first pro a 30 s look (jobs/fast-assign).
+      10 * 1000,
     );
-    logger.info("[repair-sla] Repair SLA watchdog running in-process (sweeps every minute)");
+    logger.info("[repair-sla] Repair SLA watchdog running in-process (sweeps every 10 s)");
   } catch (err) {
     logger.error({ err: err.message }, "[repair-sla] Failed to start watchdog");
   }
@@ -352,8 +353,11 @@ function startTimedMessages() {
 function startMatchingWaves() {
   // Jobs nobody has taken: re-offer repairs, ask offline providers nearby to come online, tell the customer (jobs/waves).
   const waves = require("./modules/jobs/waves");
+  // Finding someone, every 10 s: assigned within two minutes (jobs/fast-assign).
   setInterval(() => {
     waves.sweep().catch((err) => logger.warn({ err: err.message }, "[WAVES] sweep failed"));
+  }, 10 * 1000);
+  setInterval(() => {
     // Arrival promises past due with nobody there: customer told, provider nudged (jobs/promise).
     require("./modules/jobs/promise").sweep().catch((err) => logger.warn({ err: err.message }, "[PROMISE] sweep failed"));
     // Automatic surge: every active zone, every minute (jobs/surge).

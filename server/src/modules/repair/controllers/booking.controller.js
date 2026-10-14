@@ -48,6 +48,56 @@ async function createBooking(req, res, next) {
   } catch (err) { next(err); }
 }
 
+/**
+ * Take a job put in front of several pros at once (jobs/fast-assign): the
+ * first to claim it gets it, atomically. Open to a pro it was offered to, or
+ * to one with auto-accept on who qualifies for it now (the engine claims for
+ * them through this same handler). A shop's own technician takes jobs from
+ * their shop, not from here. A worker who claims has accepted; a shop then
+ * gives it to one of its technicians.
+ */
+async function claimBooking(req, res, next) {
+  try {
+    const who = { kind: req.auth.role === 'shop' ? 'shop' : 'worker', id: String(req.auth.sub) };
+    const current = await RepairBooking.findById(req.params.id).select('status shopId workerId vertical matching location declines createdAt').lean();
+    if (!current) return res.status(404).json({ error: 'Booking not found', code: 'NOT_FOUND' });
+    if (who.kind === 'worker') {
+      const me = await require('../../worker/worker.model').findById(who.id).select('shopId').lean();
+      if (me?.shopId) return res.status(403).json({ error: 'Your shop gives you its jobs', code: 'SHOP_TECHNICIAN' });
+      await require('../../worker/worker-dues.service').assertCanWork(who.id);
+      await require('../../jobs/workload').assertCanTakeAnother(who.id);
+    }
+    await require('../../onboarding/eligibility').assertApproved({ role: who.kind, id: who.id }, await require('../../jobs/kinds').KINDS.repair.line(current));
+    const offered = (current.matching?.offeredTo || []).includes(`${who.kind}:${who.id}`);
+    if (!offered) {
+      const s = await require('../../jobs/fast-assign').settings();
+      const auto = await require('../../jobs/fast-assign').autoAcceptCandidates('repair', current, s.widenKm);
+      if (!auto.some((p) => p.kind === who.kind && p.id === who.id)) return res.status(403).json({ error: 'This job was not offered to you', code: 'NOT_OFFERED' });
+    }
+
+    const owner = who.kind === 'shop' ? { shopId: who.id } : { workerId: who.id };
+    const won = await RepairBooking.findOneAndUpdate(
+      { _id: req.params.id, status: 'CONFIRMED', shopId: null, workerId: null },
+      { $set: { ...owner, 'matching.claimedAt': new Date() } },
+      { new: true },
+    );
+    if (!won) return res.status(409).json({ error: 'Another pro has already taken this job', code: 'ALREADY_CLAIMED' });
+
+    won.applyTransition('PROVIDER_ASSIGNED', { actorRole: who.kind, actorId: who.id, reason: 'claimed' });
+    Object.assign(won, await require('../services/sla.service').deadlineFor(won, won.status));
+    await won.save();
+    require('../services/events.service').closeBroadcast(won, who.id);
+    let booking = won.toObject();
+    if (who.kind === 'worker') {
+      await require('../../worker/presence').markLive(who.id).catch(() => {});
+      booking = await require('../services/booking/lifecycle').transition(won._id, 'WORKER_ACCEPTED', { actorRole: 'worker', actorId: who.id });
+    } else {
+      require('../services/events.service').announceTransition(won, 'PROVIDER_ASSIGNED').catch(() => {});
+    }
+    res.json({ booking });
+  } catch (err) { next(err); }
+}
+
 async function listMyBookings(req, res, next) {
   try {
     const page = Number(req.query.page) || 1;
@@ -594,6 +644,7 @@ async function submitQA(req, res, next) {
 
 module.exports = {
   createBooking,
+  claimBooking,
   listMyBookings,
   getBookingReport,
   getBooking,

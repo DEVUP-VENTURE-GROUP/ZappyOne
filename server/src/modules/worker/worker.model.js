@@ -113,6 +113,16 @@ const workerSchema = new mongoose.Schema(
     // survives a page refresh or a switch between phone and web, instead of a
     // device-local timer that resets. Null when offline.
     onlineSince: { type: Date, default: null },
+    /**
+     * Auto-accept (jobs/fast-assign): the pro takes the next matching job near
+     * them without tapping, so customers are matched at once. Their choice;
+     * cancelling an auto-accepted job pauses it (autoAcceptPauseDays).
+     */
+    autoAccept: {
+      enabled: { type: Boolean, default: false },
+      maxKm: { type: Number, default: null, min: 1, max: 30 },
+      pausedUntil: { type: Date, default: null },
+    },
     currentLocation: {
       type: { type: String, enum: ['Point'], default: 'Point' },
       coordinates: { type: [Number], default: [0, 0] }, // [lng, lat]

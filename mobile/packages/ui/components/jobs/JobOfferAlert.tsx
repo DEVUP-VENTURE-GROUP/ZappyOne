@@ -21,7 +21,7 @@ export interface Offer {
   kind: string; id: string; mode: string; askReason: boolean; heading: string; title: string;
   valueLabel: string; valuePaise: number; boostPaise?: number; surgePaise?: number; travelPaise?: number; distanceKm?: number | null; groupSize?: number; cash?: boolean;
   howLabel?: string; address?: string; landmark?: string; coordinates?: number[] | null; km?: number | null;
-  whenLabel?: string; frontPaise?: number; expiresAt?: string; windowSec?: number; acceptLabel?: string;
+  whenLabel?: string; frontPaise?: number; expiresAt?: string; windowSec?: number; acceptLabel?: string; broadcast?: boolean;
   customer?: { rating?: number | null; count?: number } | null;
 }
 

@@ -57,6 +57,9 @@ async function closeUnmatched(kind, d) {
 
 async function sweep({ now = Date.now() } = {}) {
   const { waveMin, slowMin } = await timings();
+  // Wanted now: the two-minute clock (jobs/fast-assign), counted from when it was booked.
+  const fa = await require('./fast-assign').settings();
+  const fast = require('./fast-assign');
   const { unmatchedCloseMinutes = 15 } = await require('../order/cancellation.service').getConfig();
   const events = require('./job-events');
   const out = { reoffered: 0, offlineWaves: 0, slowNotices: 0, closed: 0 };
@@ -68,6 +71,10 @@ async function sweep({ now = Date.now() } = {}) {
     for (const d of docs) {
       d._kind = kind;
       const waitedMin = (now - waitingSince(d)) / 60000;
+      const later = d.scheduledAt && new Date(d.scheduledAt).getTime() - now > 60 * 60 * 1000;
+      const quick = fa.enabled && !later;
+      // From when it last started waiting for a pro: a job handed back starts the clock again.
+      const sinceBookedSec = (now - waitingSince(d)) / 1000;
       try {
         // Waited past the limit with nobody (from the booked time, if it is a later booking): closed free.
         const from = Math.max(waitingSince(d), d.scheduledAt ? new Date(d.scheduledAt).getTime() : 0);
@@ -79,13 +86,24 @@ async function sweep({ now = Date.now() } = {}) {
           continue;
         }
 
+        // Auto-accept at once: a pro who opted in, nearby, free (jobs/fast-assign).
+        if (quick && !d.matching?.autoTriedAt) {
+          const mine = await Model.updateOne({ _id: d._id, 'matching.autoTriedAt': null }, { $set: { 'matching.autoTriedAt': new Date(now) } });
+          if (mine.modifiedCount && await fast.tryAutoAccept(kind, d, fa.autoAcceptKm)) { out.autoAccepted = (out.autoAccepted || 0) + 1; continue; }
+        }
+        // At the deadline, auto-accept again, further out, before telling the customer.
+        if (quick && sinceBookedSec >= fa.deadlineSec && !d.matching?.autoWideTriedAt) {
+          const mine = await Model.updateOne({ _id: d._id, 'matching.autoWideTriedAt': null }, { $set: { 'matching.autoWideTriedAt': new Date(now) } });
+          if (mine.modifiedCount && await fast.tryAutoAccept(kind, d, fa.widenKm)) { out.autoAccepted = (out.autoAccepted || 0) + 1; continue; }
+        }
+
         // Repairs: try the round again; someone may have come online.
         if (kind === 'repair') {
           const r = await require('../repair/services/booking/assignment').redispatch(d._id).catch(() => null);
           if (r?.assigned) { out.reoffered += 1; continue; }
         }
 
-        if (waitedMin >= waveMin && !d.matching?.offlineWaveAt) {
+        if ((quick ? sinceBookedSec >= fa.firstLookSec + fa.broadcastSec : waitedMin >= waveMin) && !d.matching?.offlineWaveAt) {
           const claimed = await Model.updateOne(
             { _id: d._id, 'matching.offlineWaveAt': null },
             { $set: { 'matching.offlineWaveAt': new Date(now) } },
@@ -96,7 +114,7 @@ async function sweep({ now = Date.now() } = {}) {
           }
         }
 
-        if (waitedMin >= slowMin && !d.matching?.slowNoticeAt) {
+        if ((quick ? sinceBookedSec >= fa.deadlineSec : waitedMin >= slowMin) && !d.matching?.slowNoticeAt) {
           const claimed = await Model.updateOne(
             { _id: d._id, 'matching.slowNoticeAt': null },
             { $set: { 'matching.slowNoticeAt': new Date(now) } },
@@ -133,4 +151,4 @@ async function alertOffline(kind, doc) {
   await events.alertNearbyProviders(kind, doc, { offlineOnly: true });
 }
 
-module.exports = { sweep, timings, alertOffline };
+module.exports = { sweep, timings, alertOffline, waitingSince };

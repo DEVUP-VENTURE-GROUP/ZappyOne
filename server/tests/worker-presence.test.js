@@ -61,18 +61,18 @@ test('taking a job from an offline alert puts the worker on duty', async () => {
   expect((await presence.liveIds([w])).has(String(w))).toBe(true);
 });
 
-test('a job nobody takes: offline wave after 5 minutes, slow notice after 10, each once', async () => {
+test('a job nobody takes: offline wave after 75 s, slow notice at 2 min, each once', async () => {
   const userId = new mongoose.Types.ObjectId();
   const t = await HelpingTask.create({
     reference: 'HT-WV-1', userId, serviceType: 'shopping', status: 'WORKER_SEARCHING', pickupLocation: HERE, destination: HERE,
-    statusHistory: [{ status: 'WORKER_SEARCHING', at: ago(6) }], charge: { serviceChargePaise: 10000, workerEarningPaise: 9000 },
+    statusHistory: [{ status: 'WORKER_SEARCHING', at: ago(1.5) }], charge: { serviceChargePaise: 10000, workerEarningPaise: 9000 },
   });
   let out = await waves.sweep();
   expect(out.offlineWaves).toBe(1);
   expect(out.slowNotices).toBe(0);
   expect((await HelpingTask.findById(t._id).lean()).matching.offlineWaveAt).toBeTruthy();
 
-  await HelpingTask.updateOne({ _id: t._id }, { $set: { statusHistory: [{ status: 'WORKER_SEARCHING', at: ago(11) }] } });
+  await HelpingTask.updateOne({ _id: t._id }, { $set: { statusHistory: [{ status: 'WORKER_SEARCHING', at: ago(3) }] } });
   out = await waves.sweep();
   expect(out.offlineWaves).toBe(0); // not twice
   expect(out.slowNotices).toBe(1);

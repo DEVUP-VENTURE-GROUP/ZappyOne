@@ -15,7 +15,7 @@ export const TAG_TYPES = ['CheckoutDrafts', 'PriceRequest', 'Reviews', 'Fees', '
     'RepairCatalog', 'RepairConfig', 'RepairPricing', 'RepairRequests', 'RepairBookings', 'RepairProvider', 'MyAssets',
     'HelpingConfig', 'HelpingTasks', 'HelpingAvailable', 'AdminHelpingTasks',
     'PetCatalog', 'MyPets', 'PetBookings', 'PetAvailable', 'PetRecurring', 'AdminPetBookings', 'AdminPetPricing', 'AdminPetCapabilities',
-    'RepairIdentification', 'Onboarding', 'AdminBookings', 'ErrorIssues', 'Surge', 'IdCheck', 'WorkerHours', 'Repeats', 'ShopPayouts', 'AppReleases'];
+    'RepairIdentification', 'Onboarding', 'AdminBookings', 'ErrorIssues', 'Surge', 'IdCheck', 'WorkerHours', 'AutoAccept', 'Repeats', 'ShopPayouts', 'AppReleases'];
 
 /**
  * The finished API these endpoints live in, for the optimistic cache patches
@@ -56,6 +56,9 @@ export function endpoints(b, { adminApiPath }) {
     jobEarnings: b.query({ query: (id) => `/jobs/${id}/earnings`, keepUnusedDataFor: 0 }),
     rateCustomer: b.mutation({ query: ({ id, ...body }) => ({ url: `/jobs/${id}/rate-customer`, method: 'POST', body }), invalidatesTags: ['RepairBookings', 'PetBookings', 'HelpingTasks'] }),
     /** Worker's week: hours and days off (jobs/work-hours). */
+    // Auto-accept: jobs nearby come with no tap (server jobs/fast-assign). `who` is 'workers' or 'shops'.
+    autoAccept: b.query({ query: (who) => `/${who}/me/auto-accept`, providesTags: ['AutoAccept'], keepUnusedDataFor: 0 }),
+    saveAutoAccept: b.mutation({ query: ({ who, ...body }) => ({ url: `/${who}/me/auto-accept`, method: 'PUT', body }), invalidatesTags: ['AutoAccept'] }),
     workerHours: b.query({ query: () => '/workers/me/hours', providesTags: ['WorkerHours'], keepUnusedDataFor: 0 }),
     saveWorkerHours: b.mutation({ query: (body) => ({ url: '/workers/me/hours', method: 'PUT', body }), invalidatesTags: ['WorkerHours'] }),
     /** Repeats for repair and helping bookings (jobs/recurring). */
@@ -78,6 +81,8 @@ export function endpoints(b, { adminApiPath }) {
     /** Admin: Economics → Boost & tips. */
     adminBoostTips: b.query({ query: () => adminApiPath('/economics/boost-tips'), providesTags: ['PricingCfg'] }),
     adminUpdateBoostTips: b.mutation({ query: (body) => ({ url: adminApiPath('/economics/boost-tips'), method: 'PUT', body }), invalidatesTags: ['PricingCfg'] }),
+    adminDispatch: b.query({ query: () => adminApiPath('/economics/dispatch'), providesTags: ['PricingCfg'] }),
+    adminUpdateDispatch: b.mutation({ query: (body) => ({ url: adminApiPath('/economics/dispatch'), method: 'PUT', body }), invalidatesTags: ['PricingCfg'] }),
     reportProviderAbsent: b.mutation({ query: (id) => ({ url: `/jobs/${id}/provider-absent`, method: 'POST' }) }),
     /** Provider: may they hand it back, what it costs, and the wait at the door. */
     jobGiveBack: b.query({ query: ({ id, reason = 'other' }) => `/jobs/${id}/give-back?reason=${reason}`, keepUnusedDataFor: 0 }),
@@ -1911,6 +1916,11 @@ export function endpoints(b, { adminApiPath }) {
     assignJobTechnician: b.mutation({
       query: ({ id, workerId }) => ({ url: `/jobs/${id}/assign`, method: 'POST', body: { workerId } }),
       invalidatesTags: ['RepairBookings', 'RepairProvider', 'PetBookings'],
+    }),
+    /** Take a job offered to several pros at once; the first to claim it wins (409 ALREADY_CLAIMED after). */
+    claimRepairBooking: b.mutation({
+      query: (id) => ({ url: `/repair/bookings/${id}/claim`, method: 'POST' }),
+      invalidatesTags: ['RepairBookings', 'RepairProvider'],
     }),
     /** Provider passes on a job — it goes back for reassignment. */
     declineRepairBooking: b.mutation({

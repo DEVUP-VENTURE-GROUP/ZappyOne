@@ -298,7 +298,9 @@ async function giveBack({ kind, id, actor, reason, note = '' }) {
   await release({ kind, doc, provider, reasonLabel: r.label, toShop: q.toShop, actor });
   await consequences({ kind, doc, provider, q, type: 'give_back', reason, note, from })
     .catch((e) => logger.error({ err: e.message, id }, '[give-back] record failed'));
-  return { handedBack: true, toShop: q.toShop, penaltyPaise: q.penaltyPaise, paused: q.pauses, message: q.message };
+  // A job auto-accept took and they then gave back: auto-accept pauses (jobs/fast-assign).
+  const autoPaused = await require('./fast-assign').pauseIfAutoAccepted(doc, provider.kind, provider.id).catch(() => false);
+  return { handedBack: true, autoAcceptPaused: autoPaused, toShop: q.toShop, penaltyPaise: q.penaltyPaise, paused: q.pauses, message: q.message };
 }
 
 /**
@@ -331,6 +333,7 @@ async function reportProviderAbsent({ kind, id, userId }) {
   await release({ kind, doc, provider, reasonLabel: 'Did not turn up', toShop: false, actor: { kind: 'user', id: userId } });
   await consequences({ kind, doc, provider, q, type: 'provider_no_show', reason: 'no_show', from })
     .catch((e) => logger.error({ err: e.message, id }, '[give-back] no-show record failed'));
+  await require('./fast-assign').pauseIfAutoAccepted(doc, provider.kind, provider.id).catch(() => {});
   return { reassigned: true, message: 'Sorry about that. We are finding you someone else now, or you can cancel free.' };
 }
 

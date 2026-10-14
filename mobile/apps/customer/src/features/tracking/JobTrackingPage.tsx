@@ -25,6 +25,7 @@ import { radius } from '@zappy/ui/theme/radius';
 import { spacing } from '@zappy/ui/theme/spacing';
 import { CancelSheet } from './cards/CancelSheet';
 import { JobBoostCard } from './cards/JobBoostCard';
+import { SlowSearchCard } from './cards/SlowSearchCard';
 import { JobTipCard } from './cards/JobTipCard';
 import { ProviderStatusNotes } from './cards/ProviderStatusNotes';
 import { RepeatCard } from './cards/RepeatCard';
@@ -88,7 +89,7 @@ export function JobTrackingPage({ job, extras = null, startCode = null, codeStag
             <LiveTrackingMap orderId={job.id} pickupLat={target.lat} pickupLng={target.lng} initialWorkerLocation={feed.workerLocation} style={StyleSheet.absoluteFill} />
           </View>
         ) : null}
-        {status === 'searching' ? <SearchingHero /> : null}
+        {status === 'searching' ? <SearchingHero search={options?.search} noun={job.noun} /> : null}
         {job.provider && !job.terminal ? (
           <WorkerRichCard job={job} eta={eta}
             onCall={job.provider.phone ? () => callNumber(job.provider!.phone!) : undefined}
@@ -97,6 +98,10 @@ export function JobTrackingPage({ job, extras = null, startCode = null, codeStag
         ) : null}
         <ProviderStatusNotes jobId={job.id} noun={job.noun} options={options} hasProvider={!!job.provider} live={!job.terminal} onChanged={refetchOptions} />
         <StartCodeCard jobKey={`${job.kind}:${job.id}`} code={startCode} stage={codeStage || status} noun={job.noun} />
+        {!job.provider && !job.terminal && options?.search ? (
+          <SlowSearchCard jobId={job.id} noun={job.noun} search={options.search} reschedule={options.reschedule}
+            onCancel={cancel ? () => { setCancelOpen(true); refetchOptions(); } : null} onMoved={refetchOptions} />
+        ) : null}
         {!job.provider && !job.terminal ? <JobBoostCard jobId={job.id} boost={options?.boost} since={job.createdAt} noun={job.noun} onBoosted={refetchOptions} /> : null}
         {extras}
         {['repair', 'helping'].includes(job.kind) && status === 'completed' ? <RepeatCard jobId={job.id} noun={job.noun === 'helper' ? 'task' : 'booking'} /> : null}

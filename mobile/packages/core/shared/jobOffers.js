@@ -40,6 +40,11 @@ const when = (at) => (at ? new Date(at).toLocaleString('en-IN', { weekday: 'shor
 // boosted job rings again for everyone, including whoever passed or hid it.
 export const keyOf = (o) => `${o.kind}:${o.id}:${o.boostPaise || 0}`;
 
+/** What to say when a job could not be taken. */
+export const takeError = (err, fallback = 'Could not accept this job') => (
+  err?.data?.code === 'ALREADY_CLAIMED' || err?.status === 409 ? 'Taken by another pro' : err?.data?.error || fallback
+);
+
 /** A window this long is read as minutes, never as a count of seconds. */
 export function offerClock(totalSeconds) {
   const m = Math.floor(totalSeconds / 60);
@@ -49,8 +54,13 @@ export function offerClock(totalSeconds) {
 
 /* Each source shaped into what the alert shows. */
 export const fromRepair = (b) => ({
-  kind: 'repair', id: String(b.bookingId || b._id), mode: 'offered', askReason: true,
-  heading: 'New repair job',
+  kind: 'repair', id: String(b.bookingId || b._id), mode: 'offered',
+  // Sent to several pros at once (server jobs/fast-assign): the first to take it
+  // wins, so passing needs no reason and taking is a claim, not an answer.
+  broadcast: !!b.broadcast,
+  askReason: !b.broadcast,
+  heading: b.broadcast ? 'New repair job · first to take it' : 'New repair job',
+  ...(b.broadcast ? { acceptLabel: 'Take this job' } : {}),
   title: b.device || [b.brandCode, b.modelCode].filter(Boolean).join(' ').replace(/-/g, ' ') || 'Device repair',
   valueLabel: (b.isEstimate ?? b.priceSnapshot?.isEstimate) ? 'Estimate' : 'Job value',
   valuePaise: (b.totalPaise ?? b.priceSnapshot?.totalPaise ?? 0) + (b.boostPaise ?? b.boost?.paise ?? 0) + (b.surgePaise ?? b.surge?.providerPaise ?? 0),

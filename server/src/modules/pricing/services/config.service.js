@@ -41,6 +41,23 @@ async function getActiveConfig() {
 }
 
 /** Automatic surge (jobs/surge): the limits admin sets once. */
+/**
+ * Assigned within two minutes (jobs/fast-assign, jobs/waves), for every kind:
+ * auto-accept pros at once, a short first look for the best pro, then the job
+ * goes to several at once, then wider, then auto-accept again; at the deadline
+ * the customer is told honestly and offered a choice. Economics → Dispatch.
+ */
+const FAST_ASSIGN_DEFAULTS = {
+  enabled: true,
+  firstLookSec: 30,        // the best pro alone
+  broadcastSec: 45,        // then this many pros at once, first to take it wins
+  broadcastSize: 5,
+  deadlineSec: 120,        // the promise: someone by now, or the customer is told
+  autoAcceptKm: 5,         // how far an auto-accept pro may be given a job
+  widenKm: 15,             // after the broadcast, and for auto-accept at the deadline
+  autoAcceptPauseDays: 7,  // cancelling an auto-accepted job pauses auto-accept this long
+};
+
 const SURGE_DEFAULTS = {
   // Always automatic, every service where someone travels to the customer.
   // Nothing to switch per service; the kill switch is the one emergency stop.
@@ -59,6 +76,7 @@ const SURGE_DEFAULTS = {
 function toView(doc) {
   return {
     surgeAuto: { ...SURGE_DEFAULTS, ...((doc.surgeAuto && typeof doc.surgeAuto === 'object') ? doc.surgeAuto : {}) },
+    fastAssign: { ...FAST_ASSIGN_DEFAULTS, ...((doc.fastAssign && typeof doc.fastAssign === 'object') ? doc.fastAssign : {}) },
     baseFeePaise: doc.baseFeePaise,
     perKmFeePaise: doc.perKmFeePaise,
     perMinFeePaise: doc.perMinFeePaise,
@@ -324,7 +342,15 @@ async function updateActiveConfig(patch, adminId) {
   return next;
 }
 
+/** The fast-assign settings in force: admin's, over the defaults. */
+async function fastAssignSettings() {
+  const cfg = await getActiveConfig();
+  return { ...FAST_ASSIGN_DEFAULTS, ...(cfg.fastAssign || {}) };
+}
+
 module.exports = {
+  FAST_ASSIGN_DEFAULTS,
+  fastAssignSettings,
   SURGE_DEFAULTS,
   getActiveConfig,
   toView,

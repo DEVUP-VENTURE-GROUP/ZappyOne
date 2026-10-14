@@ -1,0 +1,45 @@
+/**
+ * The customer's view of a search for a pro (server jobs/fast-assign
+ * searchView): a clock, what is happening now, and at the deadline the honest
+ * choices. Platform-free; the website and the app both use it.
+ */
+
+const clock = (sec) => `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;
+
+/**
+ * Where the search is, `now` ms. null when there is nothing to count (someone
+ * has it, or it is for later).
+ *   clock     "0:45", time since booking
+ *   line      what we are doing right now, in plain words
+ *   overdue   the deadline passed: show the choices
+ *   pct       0–1 of the way to the deadline, for a progress bar
+ */
+export function searchStage(search, noun = 'pro', now = Date.now()) {
+  if (!search?.startedAt) return null;
+  const sec = Math.max(0, Math.floor((now - new Date(search.startedAt).getTime()) / 1000));
+  const { firstLookSec, broadcastSec, deadlineSec } = search;
+  const line = sec < firstLookSec ? `Asking the best ${noun} nearby`
+    : sec < firstLookSec + broadcastSec ? `Asking several ${noun}s at once`
+      : sec < deadlineSec ? `Asking every ${noun} nearby, a little further out`
+        : `Still asking every ${noun} nearby`;
+  return { clock: clock(sec), line, overdue: sec >= deadlineSec, pct: Math.min(1, sec / deadlineSec) };
+}
+
+/**
+ * Later times to offer when nobody is free now: in about two hours, this
+ * evening, tomorrow morning; each at least `leadMinutes` away, on the half hour,
+ * India time. [{ label, at }].
+ */
+export function laterSlots(leadMinutes = 30, now = Date.now()) {
+  const IST = 330 * 60000;
+  const half = (ms) => Math.ceil(ms / 1800000) * 1800000;
+  const istMidnight = Math.floor((now + IST) / 86400000) * 86400000 - IST;
+  const earliest = now + leadMinutes * 60000;
+  const label = (at) => new Date(at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', weekday: 'short', hour: 'numeric', minute: '2-digit' });
+  const picks = [
+    half(Math.max(earliest, now + 2 * 3600000)),
+    istMidnight + 18 * 3600000,
+    istMidnight + 24 * 3600000 + 10 * 3600000,
+  ].filter((at) => at >= earliest);
+  return [...new Set(picks)].sort((a, b) => a - b).map((at) => ({ label: label(at), at: new Date(at).toISOString() }));
+}

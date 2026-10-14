@@ -3,7 +3,9 @@
  *
  *   when      only a booking made for later, and only before the provider sets
  *             off (searching, offered or accepted). Once they are on the way,
- *             it is a cancel, not a move.
+ *             it is a cancel, not a move. A booking for now that nobody has
+ *             taken yet may also become one for later (jobs/fast-assign: "no
+ *             pro is free right now"), and it counts as a move.
  *   to        at least LEAD_MIN from now, at most AHEAD_DAYS out.
  *   how often MAX_MOVES per booking: a slot a provider planned their day
  *             around is not moved endlessly.
@@ -44,10 +46,11 @@ async function view(kind, doc) {
   if (!MOVABLE[kind]) return { allowed: false };
   const moves = await JobReschedule.countDocuments({ jobId: doc._id });
   const left = Math.max(0, MAX_MOVES - moves);
-  if (!doc.scheduledAt) return { allowed: false, left, reason: 'This booking is for now, so there is no time to move.' };
+  const searching = !doc.workerId && !doc.shopId;
+  if (!doc.scheduledAt && !searching) return { allowed: false, left, reason: 'This booking is for now, so there is no time to move.' };
   if (!MOVABLE[kind].includes(doc.status)) return { allowed: false, left, reason: 'Your provider is already on the way, so the time cannot be moved.' };
   if (!left) return { allowed: false, left, reason: `You have moved this booking ${MAX_MOVES} times already. Cancel and book again if you need another time.` };
-  return { allowed: true, left, leadMinutes: LEAD_MIN, aheadDays: AHEAD_DAYS };
+  return { allowed: true, left, leadMinutes: LEAD_MIN, aheadDays: AHEAD_DAYS, fromNow: !doc.scheduledAt };
 }
 
 async function reschedule({ kind, id, userId, scheduledAt }) {
@@ -66,7 +69,8 @@ async function reschedule({ kind, id, userId, scheduledAt }) {
   // Atomic: only if nothing moved on (status, time) since we looked.
   const set = { scheduledAt: to, ...(kind === 'repair' ? { slotLabel: istLabel(to) } : {}) };
   const row = await Model.findOneAndUpdate(
-    { _id: id, userId, status: { $in: MOVABLE[kind] }, scheduledAt: doc.scheduledAt },
+    // From now to later only while nobody holds it: a pro who took it meanwhile keeps it as booked.
+    { _id: id, userId, status: { $in: MOVABLE[kind] }, scheduledAt: doc.scheduledAt, ...(v.fromNow ? { workerId: null, shopId: null } : {}) },
     { $set: set }, { new: true },
   ).lean();
   if (!row) throw err(409, 'CHANGED', 'This booking just changed. Refresh and try again.');

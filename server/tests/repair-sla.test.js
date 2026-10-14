@@ -1,8 +1,8 @@
 /**
  * Stage clocks — the part of the flow a customer feels without being shown.
  *
- * A repair is handed to one provider, so the timings are a working person's:
- * ten minutes to answer, ten to get moving, ten to finish, ten to hand back.
+ * A repair wanted now gets a short first look (jobs/fast-assign), then goes to
+ * several pros at once; after that the timings are a working person's.
  * What is tested here is that the clock is fair — it stops when we are waiting
  * on the customer — and that the only stage acted on automatically is the one
  * where the customer is waiting on nobody.
@@ -53,14 +53,15 @@ async function newBooking(key) {
 }
 
 describe('stage clocks', () => {
-  it('gives the provider a working window to answer, not a ping', async () => {
+  it('gives the chosen pro a short first look when the job is wanted now', async () => {
     const booking = await newBooking('sla-1');
 
     expect(booking.status).toBe('PROVIDER_ASSIGNED');
-    const minutes = Math.round((booking.stageDeadlineAt - Date.now()) / 60000);
-    // Ten minutes: they are mid-job and the work is theirs alone.
-    expect(minutes).toBeGreaterThanOrEqual(9);
-    expect(minutes).toBeLessThanOrEqual(10);
+    expect(booking.matching.chosenByCustomer).toBe(true);
+    const seconds = Math.round((booking.stageDeadlineAt - Date.now()) / 1000);
+    // Customer-chosen: twice the 30 s first look, then others get the job.
+    expect(seconds).toBeGreaterThan(45);
+    expect(seconds).toBeLessThanOrEqual(60);
   });
 
   it('resets the clock at each stage', async () => {
@@ -118,7 +119,8 @@ describe('stage clocks', () => {
     expect(after.status).toBe('CONFIRMED');
     expect(after.workerId).toBeNull();
     expect(after.declines[0].reason).toBe('no_response');
-    expect(after.slaBreaches[0].stage).toBe('accept');
+    // A missed first look is not a breach; the job simply moves on to others.
+    expect(after.slaBreaches || []).toHaveLength(0);
   });
 
   it('flags a slow repair without cancelling work already under way', async () => {

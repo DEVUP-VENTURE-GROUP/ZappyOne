@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CalendarOff, Minus, Plus } from 'lucide-react-native';
 import { useWorkerHoursQuery, useSaveWorkerHoursMutation } from '@zappy/core/api';
 import { Button, LoadingState, ScreenHeader, Text } from '../../components';
+import { AutoAcceptCard } from '../../components/provider/AutoAcceptCard';
 import { toast } from '../../components/Toast';
 import { errText } from '../../lib/feedback';
 import { colors, zappy, ink, slate } from '../../theme/colors';
@@ -72,6 +73,7 @@ export function WorkerHoursPage() {
           <View style={styles.info}><Text variant="caption" color={zappy[800]}>
             Customers who book for later are matched to you only inside these hours, even when you are offline, and never on your days off. Jobs for right now still need you online.
           </Text></View>
+          <AutoAcceptCard who="workers" />
           <View style={styles.card}>
             {week.map((d) => (
               <View key={d.day} style={styles.dayRow}>

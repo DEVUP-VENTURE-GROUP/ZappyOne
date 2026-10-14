@@ -111,6 +111,15 @@ router.put('/me/hours', authenticate, requireRole('worker'),
       res.json({ hours, message: 'Saved. Bookings for later will come to you inside these hours.' });
     } catch (err) { next(err); }
   });
+// Auto-accept: jobs nearby come to me with no tap (jobs/fast-assign).
+router.get('/me/auto-accept', authenticate, requireRole('worker'), async (req, res, next) => {
+  try { res.json(await require('../jobs/fast-assign').autoAcceptOf('worker', req.auth.sub)); } catch (err) { next(err); }
+});
+router.put('/me/auto-accept', authenticate, requireRole('worker'),
+  validate(Joi.object({ enabled: Joi.boolean(), maxKm: Joi.number().min(1).max(30).allow(null) }).min(1)),
+  async (req, res, next) => {
+    try { res.json(await require('../jobs/fast-assign').setAutoAccept('worker', req.auth.sub, req.body)); } catch (err) { next(err); }
+  });
 // Where surge is on (or nobody is) for the services this worker does, near them (jobs/surge).
 router.get('/hot-zones', authenticate, requireRole('worker'), async (req, res, next) => {
   try {

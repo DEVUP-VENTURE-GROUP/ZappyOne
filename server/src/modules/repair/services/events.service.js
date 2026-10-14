@@ -143,14 +143,21 @@ const OFFER_WINDOW_SEC = 10 * 60;
  * to be decided on without opening anything else: what the device is, what is
  * wrong, what it pays, how far away, and where.
  */
-function announceOffer(booking) {
-  if (!booking.workerId && !booking.shopId) return;
+function announceOffer(booking, { to = null, windowSec = null } = {}) {
+  /*
+   * `to`: a broadcast (jobs/fast-assign) — the job is put in front of several
+   * pros at once and the first to claim it takes it, so the alert goes to this
+   * pro and says so (`broadcast`), and the app claims instead of accepting.
+   */
+  if (!to && !booking.workerId && !booking.shopId) return;
 
   // The alert counts down to the same moment the watchdog acts on, so the
   // provider's screen and the server never disagree about how long is left.
-  const expiresAt = booking.stageDeadlineAt
-    ? new Date(booking.stageDeadlineAt).toISOString()
-    : new Date(Date.now() + OFFER_WINDOW_SEC * 1000).toISOString();
+  const expiresAt = to
+    ? new Date(Date.now() + windowSec * 1000).toISOString()
+    : booking.stageDeadlineAt
+      ? new Date(booking.stageDeadlineAt).toISOString()
+      : new Date(Date.now() + OFFER_WINDOW_SEC * 1000).toISOString();
 
   const payload = {
     bookingId: String(booking._id),
@@ -180,15 +187,28 @@ function announceOffer(booking) {
     // How long the whole window is, so the alert can draw a countdown that is
     // actually to scale. Without it the client has to guess, and it guessed 90
     // seconds — leaving the bar pinned full for the first eight minutes.
-    windowSec: OFFER_WINDOW_SEC,
+    windowSec: to ? windowSec
+      : booking.stageDeadlineAt ? Math.max(1, Math.round((new Date(booking.stageDeadlineAt) - Date.now()) / 1000))
+        : OFFER_WINDOW_SEC,
+    broadcast: !!to,
   };
 
   // With how providers have rated this customer (jobs/customer-rating).
   require('../../jobs/customer-rating').summaryFor(booking.userId).catch(() => null).then((customer) => {
     const out = { ...payload, customer };
+    if (to) { (to.kind === 'shop' ? emitToShop : emitToWorker)(to.id, 'repair.offer', out); return; }
     if (booking.workerId) emitToWorker(booking.workerId, 'repair.offer', out);
     if (booking.shopId) emitToShop(booking.shopId, 'repair.offer', out);
   });
+}
+
+/** Someone took a broadcast job: off everyone else's screen ("taken by another pro"). */
+function closeBroadcast(booking, winnerId = null) {
+  for (const key of booking.matching?.offeredTo || []) {
+    const [kind, id] = key.split(':');
+    if (id === String(winnerId)) continue;
+    (kind === 'shop' ? emitToShop : emitToWorker)(id, 'repair.offer_closed', { bookingId: String(booking._id), reason: 'taken' });
+  }
 }
 
 /** The job is no longer available — pull the alert off their screen. */
@@ -309,6 +329,6 @@ async function announceQuoteDecision(booking, quote, decision) {
 }
 
 module.exports = {
-  announceTransition, announceQuote, announceQuoteDecision, announceOffer, announceOfferClosed,
+  announceTransition, announceQuote, announceQuoteDecision, announceOffer, announceOfferClosed, closeBroadcast,
   emitToRoom, emitToProvider, notify, OFFER_WINDOW_SEC, EVENT_COPY,
 };

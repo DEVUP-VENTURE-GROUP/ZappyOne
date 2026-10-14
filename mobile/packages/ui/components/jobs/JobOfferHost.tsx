@@ -11,6 +11,7 @@ import {
   useRepairProviderJobsQuery,
   useTransitionRepairBookingMutation,
   useDeclineRepairBookingMutation,
+  useClaimRepairBookingMutation,
   useAssignedPetBookingsQuery,
   useAcceptPetBookingMutation,
   useDeclinePetBookingMutation,
@@ -18,7 +19,7 @@ import {
   useGetWorkerMeQuery,
 } from '@zappy/core/api';
 import { useSocketEvent } from '@zappy/core/hooks/useSocketEvent';
-import { keyOf, fromRepair, fromPetOffer, fromOpen, recoveredOffers, pickOffer, withOffer } from '@zappy/core/shared/jobOffers';
+import { keyOf, fromRepair, fromPetOffer, fromOpen, recoveredOffers, pickOffer, withOffer, takeError } from '@zappy/core/shared/jobOffers';
 import { useAppSelector } from '@zappy/core/store/hooks';
 import type { ApiErr } from '../../lib/feedback';
 import { toast } from '../Toast';
@@ -38,6 +39,7 @@ export function JobOfferHost({ kinds = ['repair', 'pet', 'helping'] }: { kinds?:
   const { data: petData, refetch: refetchPet } = useAssignedPetBookingsQuery(undefined, { pollingInterval: 60000, skip: !has('pet') });
   const [acceptRepair] = useTransitionRepairBookingMutation();
   const [declineRepair] = useDeclineRepairBookingMutation();
+  const [claimRepair] = useClaimRepairBookingMutation();
   const [acceptPet] = useAcceptPetBookingMutation();
   const [declinePet] = useDeclinePetBookingMutation();
   const [acceptHelping] = useAcceptHelpingTaskMutation();
@@ -67,7 +69,10 @@ export function JobOfferHost({ kinds = ['repair', 'pet', 'helping'] }: { kinds?:
   async function accept() {
     if (!offer) return;
     try {
-      if (offer.kind === 'repair') {
+      if (offer.kind === 'repair' && offer.broadcast) {
+        await claimRepair(offer.id).unwrap();
+        router.push(`/worker/repair/${offer.id}` as never);
+      } else if (offer.kind === 'repair') {
         await acceptRepair({ id: offer.id, status: 'WORKER_ACCEPTED' }).unwrap();
         router.push(`/worker/repair/${offer.id}` as never);
       } else if (offer.kind === 'pet') {
@@ -79,8 +84,7 @@ export function JobOfferHost({ kinds = ['repair', 'pet', 'helping'] }: { kinds?:
       }
       toast.success('It’s yours');
     } catch (err) {
-      const e = err as ApiErr;
-      toast.error(e?.data?.code === 'ALREADY_CLAIMED' ? 'Someone else took it first' : errText(e, 'Could not accept this job'));
+      toast.error(takeError(err as ApiErr, errText(err as ApiErr, 'Could not accept this job')));
     }
     done(offer);
   }
@@ -88,14 +92,14 @@ export function JobOfferHost({ kinds = ['repair', 'pet', 'helping'] }: { kinds?:
   async function decline(reason: string) {
     if (!offer) return;
     try {
-      if (offer.kind === 'repair') {
+      if (offer.kind === 'repair' && !offer.broadcast) {
         await declineRepair({ id: offer.id, reason }).unwrap();
         toast(isShopTechnician ? 'Sent back to your shop owner' : 'Passed. We’ll find someone else.');
       } else if (offer.kind === 'pet' && offer.mode === 'offered') {
         await declinePet({ id: offer.id, reason: reason || 'Declined by provider' }).unwrap();
         toast('Passed. We’ll find someone else.');
       }
-      // An open job needs no answer: passing just hides it for you.
+      // An open or broadcast job needs no answer: passing just hides it for you.
     } catch (err) {
       // A shop technician's pass must reach the owner; anyone else's is courtesy.
       if (isShopTechnician && offer.kind === 'repair') { toast.error(errText(err, 'Could not pass the job back')); return; }

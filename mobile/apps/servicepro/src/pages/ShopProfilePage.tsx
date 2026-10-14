@@ -15,6 +15,7 @@ import { incompleteDay } from '@zappy/core/shared/weeklyHoursRules';
 import { Button, LoadingState, ScreenHeader, Text } from '@zappy/ui/components';
 import { toast } from '@zappy/ui/components/Toast';
 import { LoginSecurityCard } from '@zappy/ui/components/account/LoginSecurityCard';
+import { AutoAcceptCard } from '@zappy/ui/components/provider/AutoAcceptCard';
 import { LocationPicker } from '@zappy/ui/components/common/LocationPicker';
 import { WeeklyHours, type DayHours } from '@zappy/ui/components/provider/WeeklyHours';
 import { errText } from '@zappy/ui/lib/feedback';
@@ -88,6 +89,7 @@ export function ShopProfilePage() {
           onCancel={() => setPicking(false)} onConfirm={({ address, lat, lng }) => { set({ address, lat, lng }); setPicking(false); }} />
       ) : null}
       <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+        <AutoAcceptCard who="shops" />
         <LoginSecurityCard />
 
         <View style={styles.card}>

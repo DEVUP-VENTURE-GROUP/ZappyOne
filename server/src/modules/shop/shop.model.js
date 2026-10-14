@@ -126,6 +126,16 @@ const shopSchema = new mongoose.Schema(
     completedJobs: { type: Number, default: 0 },
 
     isActive:  { type: Boolean, default: true },  // owner-controlled: "open for bookings"
+    /**
+     * Auto-accept (jobs/fast-assign): the pro takes the next matching job near
+     * them without tapping, so customers are matched at once. Their choice;
+     * cancelling an auto-accepted job pauses it (autoAcceptPauseDays).
+     */
+    autoAccept: {
+      enabled: { type: Boolean, default: false },
+      maxKm: { type: Number, default: null, min: 1, max: 30 },
+      pausedUntil: { type: Date, default: null },
+    },
     isBlocked: { type: Boolean, default: false }, // admin-controlled
 
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin' },

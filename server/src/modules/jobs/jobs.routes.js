@@ -190,6 +190,7 @@ router.get('/:id/options',
         tip: await bt.tipView(kind, doc, s),
         reschedule: terminal ? { allowed: false } : await require('./reschedule').view(kind, doc),
         arrival: await require('./promise').viewFor(doc._id),
+        search: await require('./fast-assign').searchView(kind, doc),
         ...(terminal ? {} : await require('./give-back').customerView(kind, doc)),
       });
     } catch (err) { next(err); }

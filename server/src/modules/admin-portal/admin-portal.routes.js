@@ -283,6 +283,40 @@ router.put('/economics/boost-tips',
     } catch (err) { next(err); }
   });
 
+/* Economics → Dispatch: how fast a job finds its pro (jobs/fast-assign) */
+
+router.get('/economics/dispatch', async (req, res, next) => {
+  try { res.json({ settings: await require('../pricing/services/config.service').fastAssignSettings() }); } catch (err) { next(err); }
+});
+
+router.put('/economics/dispatch',
+  validate(Joi.object({
+    enabled: Joi.boolean(),
+    firstLookSec: Joi.number().integer().min(10).max(300),
+    broadcastSec: Joi.number().integer().min(15).max(600),
+    broadcastSize: Joi.number().integer().min(2).max(20),
+    deadlineSec: Joi.number().integer().min(60).max(1800),
+    autoAcceptKm: Joi.number().min(0.5).max(30),
+    widenKm: Joi.number().min(1).max(50),
+    autoAcceptPauseDays: Joi.number().integer().min(0).max(90),
+  }).min(1)),
+  async (req, res, next) => {
+    try {
+      const cfg = require('../pricing/services/config.service');
+      const before = await cfg.fastAssignSettings();
+      const next_ = { ...before, ...req.body };
+      if (next_.firstLookSec + next_.broadcastSec > next_.deadlineSec) {
+        return res.status(400).json({ error: 'The first look and the broadcast must end before the deadline', code: 'BAD_TIMINGS' });
+      }
+      if (next_.autoAcceptKm > next_.widenKm) return res.status(400).json({ error: 'The wider radius must be at least the auto-accept radius', code: 'BAD_RADIUS' });
+      // Merged with what is set, so changing one timing never resets the others.
+      await cfg.updateActiveConfig({ fastAssign: next_ }, req.auth.sub);
+      const after = await cfg.fastAssignSettings();
+      await auditService.fromRequest(req, 'economics.dispatch', { kind: 'system', id: null }, before, after);
+      res.json({ settings: after });
+    } catch (err) { next(err); }
+  });
+
 /* Economics → Surge: automatic, set once (jobs/surge) */
 
 router.get('/economics/surge', async (req, res, next) => {

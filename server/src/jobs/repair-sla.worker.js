@@ -43,6 +43,9 @@ async function reclaimUnaccepted(booking) {
   }
 
   const minutesLate = Math.round((Date.now() - new Date(booking.stageDeadlineAt).getTime()) / 60000);
+  // A short first look (jobs/fast-assign) passing is not lateness: no breach on the pro's record.
+  const assignedAt = [...(booking.statusHistory || [])].reverse().find((h) => h.status === 'PROVIDER_ASSIGNED')?.at;
+  const shortLook = assignedAt && new Date(booking.stageDeadlineAt).getTime() - new Date(assignedAt).getTime() <= 3 * 60 * 1000;
 
   await RepairBooking.updateOne(
     { _id: booking._id, status: 'PROVIDER_ASSIGNED' },
@@ -61,12 +64,14 @@ async function reclaimUnaccepted(booking) {
           reason: 'no_response',
           at: new Date(),
         },
-        slaBreaches: {
-          stage: 'accept',
-          dueAt: booking.stageDeadlineAt,
-          minutesLate,
-          at: new Date(),
-        },
+        ...(shortLook ? {} : {
+          slaBreaches: {
+            stage: 'accept',
+            dueAt: booking.stageDeadlineAt,
+            minutesLate,
+            at: new Date(),
+          },
+        }),
         statusHistory: {
           status: 'CONFIRMED',
           at: new Date(),

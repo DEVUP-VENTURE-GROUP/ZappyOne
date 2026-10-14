@@ -23,6 +23,15 @@ router.get('/:id', authenticate, ctrl.getPublicProfile);
 // Shop owner's own account — everything below requires role 'shop'
 router.use(authenticate, requireRole('shop'));
 
+// Auto-accept: jobs nearby come to me with no tap (jobs/fast-assign).
+router.get('/me/auto-accept', async (req, res, next) => {
+  try { res.json(await require('../jobs/fast-assign').autoAcceptOf('shop', req.auth.sub)); } catch (err) { next(err); }
+});
+router.put('/me/auto-accept',
+  validate(Joi.object({ enabled: Joi.boolean(), maxKm: Joi.number().min(1).max(30).allow(null) }).min(1)),
+  async (req, res, next) => {
+    try { res.json(await require('../jobs/fast-assign').setAutoAccept('shop', req.auth.sub, req.body)); } catch (err) { next(err); }
+  });
 router.get('/me/profile', ctrl.getMe);
 router.patch(
   '/me/profile',

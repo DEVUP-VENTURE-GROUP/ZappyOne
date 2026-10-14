@@ -136,8 +136,34 @@ async function redispatch(bookingId) {
     scheduledAt: booking.scheduledAt || null,
   });
 
-  const next = (providers || []).find((p) => !tried.has(String(p.shopId || p.workerId)));
-  if (!next) return { assigned: false, reason: 'no_one_left' };
+  const pool = (providers || []).filter((p) => !tried.has(String(p.shopId || p.workerId)));
+  if (!pool.length) return { assigned: false, reason: 'no_one_left' };
+
+  /*
+   * Wanted now, and the best pro had their first look: put it in front of
+   * several at once, first to claim wins (jobs/fast-assign). The broadcast,
+   * then everyone eligible once the broadcast window has passed, and again for
+   * pros who came online since, each at most once a minute. A booking for
+   * later keeps the one-at-a-time offer below: there is time to ask properly.
+   */
+  const fa = await require('../../../jobs/fast-assign').settings();
+  const waitedSec = (Date.now() - new Date(booking.createdAt).getTime()) / 1000;
+  const later = booking.scheduledAt && new Date(booking.scheduledAt).getTime() - Date.now() > 60 * 60 * 1000;
+  if (fa.enabled && !later && waitedSec >= fa.firstLookSec) {
+    const m = booking.matching || {};
+    const offered = new Set(m.offeredTo || []);
+    const fresh = pool.filter((p) => !offered.has(p.shopId ? `shop:${p.shopId}` : `worker:${p.workerId}`));
+    const wide = waitedSec >= fa.firstLookSec + fa.broadcastSec;
+    const due = wide
+      ? !m.widenedAt || Date.now() - new Date(m.widenedAt).getTime() >= 60 * 1000
+      : !m.broadcastAt;
+    if (!due || !fresh.length) return { assigned: false, reason: 'broadcast_open' };
+    const sent = await require('../../../jobs/fast-assign').broadcastRepair(booking, wide ? fresh : fresh.slice(0, fa.broadcastSize), wide ? 60 : fa.broadcastSec);
+    if (wide) await RepairBooking.updateOne({ _id: booking._id }, { $set: { 'matching.widenedAt': new Date() } });
+    return { assigned: false, reason: 'broadcast', offered: sent };
+  }
+
+  const next = pool[0];
 
   booking.shopId = next.shopId || null;
   booking.workerId = next.workerId || null;

@@ -296,6 +296,8 @@ async function createBooking({
      * booking with no provider yet — we stop at CONFIRMED for assignment.
      */
     const hasProvider = !!(workerId || shopId);
+    // The customer picked them: a longer first look before others are asked (jobs/fast-assign).
+    if (hasProvider) booking.matching = { ...(booking.matching?.toObject?.() || booking.matching || {}), chosenByCustomer: true };
     booking.applyTransition('CONFIRMED', { actorRole: 'system', reason: 'booking created' });
     if (hasProvider) {
       booking.applyTransition('PROVIDER_ASSIGNED', { actorRole: 'system', reason: 'provider chosen by customer' });

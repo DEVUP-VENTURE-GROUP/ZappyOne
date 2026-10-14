@@ -96,12 +96,12 @@ const CATALOG = {
     build: ({ f }) => ({ push: { title: 'Finding you someone else', body: `Your ${noun(f.kind)} could not make it. We are finding the next one now; you can also cancel free.`, link: f.link } }),
   },
   'booking.slow': {
-    audience: 'customer', type: 'order_delayed', channels: ['push'], label: 'Still finding someone (10 min)',
+    audience: 'customer', type: 'order_delayed', channels: ['push'], label: 'No pro free yet (2 min; jobs/fast-assign)',
     sample: () => ({ ...sampleJob({ provider: null }), boostable: true }),
     build: ({ f, boostable }) => ({
       push: {
-        title: 'Still finding someone for you',
-        body: boostable ? 'It is taking longer than usual. Adding a little for the provider often helps; you can also wait.' : 'It is taking longer than usual. We will tell you the moment someone accepts.',
+        title: 'No pro is free right now',
+        body: `We are still looking and will tell you the moment someone takes it.${boostable ? ' Adding a little for the pro often helps.' : ''} You can also book it for later, or cancel free.`,
         link: f.link,
       },
     }),

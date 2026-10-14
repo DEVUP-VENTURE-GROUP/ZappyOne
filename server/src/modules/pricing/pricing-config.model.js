@@ -44,6 +44,8 @@ const pricingConfigSchema = new mongoose.Schema(
      * in Economics → Surge; the engine decides every minute, per ~1 km zone.
      */
     surgeAuto: { type: mongoose.Schema.Types.Mixed, default: undefined },
+    // Assigned within two minutes (config.service FAST_ASSIGN_DEFAULTS); Economics → Dispatch.
+    fastAssign: { type: mongoose.Schema.Types.Mixed, default: undefined },
 
     // Auto-pricing: Night surcharge
     nightSurchargeEnabled:    { type: Boolean, default: false },

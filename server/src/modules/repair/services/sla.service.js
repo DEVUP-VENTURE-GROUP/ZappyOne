@@ -97,7 +97,18 @@ async function deadlineFor(booking, status) {
   const spec = NO_CLOCK.includes(status) ? null : STAGE_FOR_STATUS[status];
   if (!spec) return { stageDeadlineAt: null, slaPausedAt: null, slaPausedMs };
 
-  const minutes = sla[spec.field] ?? DEFAULTS[spec.field];
+  let minutes = sla[spec.field] ?? DEFAULTS[spec.field];
+  /*
+   * An offer for a job wanted now (jobs/fast-assign): the best pro gets a short
+   * first look (twice as long when the customer picked them), then it goes to
+   * several at once. A job claimed off a broadcast, or booked for later, keeps
+   * the usual window.
+   */
+  if (status === 'PROVIDER_ASSIGNED' && !booking.matching?.claimedAt
+    && !(booking.scheduledAt && new Date(booking.scheduledAt).getTime() - Date.now() > 60 * 60 * 1000)) {
+    const fa = await require('../../jobs/fast-assign').settings();
+    if (fa.enabled) minutes = (fa.firstLookSec * (booking.matching?.chosenByCustomer ? 2 : 1)) / 60;
+  }
   return {
     stageDeadlineAt: new Date(Date.now() + minutes * 60 * 1000),
     slaPausedAt: null,
