@@ -13,8 +13,6 @@ export default function FestiveDivider({ theme }) {
           <circle cx="18" cy="17" r="2.2" fill="#EA580C" />
           <path d="M14,23 Q18,27 22,23" stroke="#2F7D4A" strokeWidth="1.6" fill="none" strokeLinecap="round" />
         </g>
-        <circle cx="4" cy="6" r="1.6" fill={theme.accent} opacity=".6" />
-        <circle cx="32" cy="6" r="1.6" fill={theme.accent} opacity=".6" />
       </svg>
       <span className="h-px w-16 sm:w-28" style={{ background: `linear-gradient(90deg, ${theme.accent}, transparent)` }} />
     </div>

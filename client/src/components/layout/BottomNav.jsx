@@ -37,8 +37,6 @@ function Tab({ t, isActive, onPress, onWarm, badge = 0, festive = null }) {
         )}
       </div>
       <span className={`text-[11px] ${isActive ? 'font-semibold text-zappy-600' : 'font-medium text-ink-500'}`} style={isActive && festive ? { color: festive.accent } : undefined}>{label}</span>
-      {/* During a festival: a small marigold glowing under the tab you are on. */}
-      {isActive && festive && <span className="fz-glint absolute bottom-1 h-1.5 w-1.5 rounded-full" style={{ background: '#F59E0B', boxShadow: '0 0 8px #F59E0B' }} aria-hidden="true" />}
     </button>
   );
 }

@@ -74,10 +74,8 @@ export default function Footer({ services = [], areas = [], season = null, theme
       )}
       <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
         {season && theme && (
-          <p className="mb-8 flex items-center justify-center gap-2 text-center text-[13.5px] font-semibold text-amber-200">
-            <span className="fz-glint inline-block h-2 w-2 rounded-full bg-amber-400 shadow-[0_0_10px_#FBBF24]" aria-hidden="true" />
+          <p className="mb-8 text-center text-[13.5px] font-semibold text-amber-200">
             {season.greeting || season.name}, from all of us at ZappyOne
-            <span className="fz-glint inline-block h-2 w-2 rounded-full bg-amber-400 shadow-[0_0_10px_#FBBF24]" style={{ animationDelay: '1.3s' }} aria-hidden="true" />
           </p>
         )}
         <div className="grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-4">

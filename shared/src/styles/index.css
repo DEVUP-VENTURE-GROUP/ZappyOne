@@ -436,11 +436,8 @@
 @media (prefers-reduced-motion: reduce) { .fz-burst, .fz-petal, .fz-lantern { animation: none !important; } .fz-petal, .fz-lantern { display: none; } }
 
 /* ── Festive page (home/festive/FestiveReveal): the festival all the way down. ── */
-.fz-glint   { animation: fz-glint 2.6s ease-in-out infinite; }
 .fz-reveal  { opacity: 0; transform: translateY(28px) scale(.985); transition: opacity .7s cubic-bezier(.2,.8,.2,1), transform .7s cubic-bezier(.2,.8,.2,1); }
 .fz-reveal.fz-in { opacity: 1; transform: none; }
-@keyframes fz-glint  { 0%, 100% { opacity: .2; transform: scale(.7); } 50% { opacity: 1; transform: scale(1.1); } }
 @media (prefers-reduced-motion: reduce) {
-  .fz-glint { animation: none !important; }
   .fz-reveal { opacity: 1; transform: none; transition: none; }
 }
