@@ -64,6 +64,8 @@ function mountRoutes(app) {
   app.use('/api/users', userRoutes);
   app.use('/api/uploads', uploadRoutes);
   app.use('/api/workers', workerRoutes);
+  // ZappyOne's own staff in the Rakshak app: shifts, check-in, salary, leave (workforce/).
+  app.use('/api/workforce', require('../modules/workforce/workforce.routes'));
   app.use('/api/shops', shopRoutes);
   // Repair verticals — catalog, diagnostics, providers, bookings, quotes.
   app.use('/api/repair', repairRoutes);

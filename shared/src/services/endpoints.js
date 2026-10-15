@@ -15,7 +15,7 @@ export const TAG_TYPES = ['CheckoutDrafts', 'PriceRequest', 'Reviews', 'Fees', '
     'RepairCatalog', 'RepairConfig', 'RepairPricing', 'RepairRequests', 'RepairBookings', 'RepairProvider', 'MyAssets',
     'HelpingConfig', 'HelpingTasks', 'HelpingAvailable', 'AdminHelpingTasks',
     'PetCatalog', 'MyPets', 'PetBookings', 'PetAvailable', 'PetRecurring', 'AdminPetBookings', 'AdminPetPricing', 'AdminPetCapabilities',
-    'RepairIdentification', 'Onboarding', 'AdminBookings', 'ErrorIssues', 'Surge', 'IdCheck', 'WorkerHours', 'AutoAccept', 'Seasons', 'Repeats', 'ShopPayouts', 'AppReleases'];
+    'RepairIdentification', 'Onboarding', 'AdminBookings', 'ErrorIssues', 'Surge', 'IdCheck', 'WorkerHours', 'AutoAccept', 'Seasons', 'Workforce', 'WorkforceAdmin', 'Repeats', 'ShopPayouts', 'AppReleases'];
 
 /**
  * The finished API these endpoints live in, for the optimistic cache patches
@@ -59,6 +59,28 @@ export function endpoints(b, { adminApiPath }) {
     // Auto-accept: jobs nearby come with no tap (server jobs/fast-assign). `who` is 'workers' or 'shops'.
     autoAccept: b.query({ query: (who) => `/${who}/me/auto-accept`, providesTags: ['AutoAccept'], keepUnusedDataFor: 0 }),
     saveAutoAccept: b.mutation({ query: ({ who, ...body }) => ({ url: `/${who}/me/auto-accept`, method: 'PUT', body }), invalidatesTags: ['AutoAccept'] }),
+    // ZappyOne's own staff in the Rakshak app (server workforce/): shifts, check-in, salary, leave.
+    workforceMe: b.query({ query: () => '/workforce/me', providesTags: ['Workforce'] }),
+    bookShift: b.mutation({ query: (body) => ({ url: '/workforce/shifts', method: 'POST', body }), invalidatesTags: ['Workforce'] }),
+    cancelShift: b.mutation({ query: (id) => ({ url: `/workforce/shifts/${id}`, method: 'DELETE' }), invalidatesTags: ['Workforce'] }),
+    checkInShift: b.mutation({ query: (body) => ({ url: '/workforce/check-in', method: 'POST', body }), invalidatesTags: ['Workforce'] }),
+    checkOutShift: b.mutation({ query: () => ({ url: '/workforce/check-out', method: 'POST' }), invalidatesTags: ['Workforce'] }),
+    staffSalary: b.query({ query: (month) => ({ url: '/workforce/salary', params: month ? { month } : {} }), providesTags: ['Workforce'] }),
+    staffLeave: b.query({ query: () => '/workforce/leave', providesTags: ['Workforce'] }),
+    requestLeave: b.mutation({ query: (body) => ({ url: '/workforce/leave', method: 'POST', body }), invalidatesTags: ['Workforce'] }),
+    adminHubs: b.query({ query: () => adminApiPath('/workforce/hubs'), providesTags: ['WorkforceAdmin'] }),
+    adminCreateHub: b.mutation({ query: (body) => ({ url: adminApiPath('/workforce/hubs'), method: 'POST', body }), invalidatesTags: ['WorkforceAdmin'] }),
+    adminUpdateHub: b.mutation({ query: ({ id, ...body }) => ({ url: adminApiPath(`/workforce/hubs/${id}`), method: 'PUT', body }), invalidatesTags: ['WorkforceAdmin'] }),
+    adminStaff: b.query({ query: (q) => ({ url: adminApiPath('/workforce/staff'), params: q ? { q } : {} }), providesTags: ['WorkforceAdmin'] }),
+    adminSetStaff: b.mutation({ query: ({ workerId, ...body }) => ({ url: adminApiPath(`/workforce/staff/${workerId}`), method: 'PATCH', body }), invalidatesTags: ['WorkforceAdmin'] }),
+    adminRoster: b.query({ query: ({ hubId, from }) => ({ url: adminApiPath('/workforce/roster'), params: { hubId, ...(from ? { from } : {}) } }), providesTags: ['WorkforceAdmin'] }),
+    adminAssignShift: b.mutation({ query: (body) => ({ url: adminApiPath('/workforce/roster'), method: 'POST', body }), invalidatesTags: ['WorkforceAdmin'] }),
+    adminRemoveShift: b.mutation({ query: (id) => ({ url: adminApiPath(`/workforce/roster/${id}`), method: 'DELETE' }), invalidatesTags: ['WorkforceAdmin'] }),
+    adminLeave: b.query({ query: (status) => ({ url: adminApiPath('/workforce/leave'), params: status ? { status } : {} }), providesTags: ['WorkforceAdmin'] }),
+    adminDecideLeave: b.mutation({ query: ({ id, decision }) => ({ url: adminApiPath(`/workforce/leave/${id}`), method: 'POST', body: { decision } }), invalidatesTags: ['WorkforceAdmin'] }),
+    adminPayroll: b.query({ query: (month) => ({ url: adminApiPath('/workforce/payroll'), params: month ? { month } : {} }), providesTags: ['WorkforceAdmin'] }),
+    adminWorkforceSettings: b.query({ query: () => adminApiPath('/workforce/settings'), providesTags: ['WorkforceAdmin'] }),
+    adminSaveWorkforceSettings: b.mutation({ query: (body) => ({ url: adminApiPath('/workforce/settings'), method: 'PUT', body }), invalidatesTags: ['WorkforceAdmin'] }),
     workerHours: b.query({ query: () => '/workers/me/hours', providesTags: ['WorkerHours'], keepUnusedDataFor: 0 }),
     saveWorkerHours: b.mutation({ query: (body) => ({ url: '/workers/me/hours', method: 'PUT', body }), invalidatesTags: ['WorkerHours'] }),
     /** Repeats for repair and helping bookings (jobs/recurring). */

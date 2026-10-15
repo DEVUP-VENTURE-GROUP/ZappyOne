@@ -5,6 +5,7 @@ import { LogOut,
   TrendingUp, TrendingDown, Search, Radio, Loader2, Target, Building2, GraduationCap,
   ShieldCheck, ShoppingBag, Scale, FileText, CalendarClock,
 } from 'lucide-react';
+import { staffMenu } from '../../provider/staffPortal';
 import { ZappyWordmark } from '../common/ZappyLogo';
 
 /**
@@ -44,7 +45,7 @@ export function prettyService(code = '') {
  * surfaces is how a worker ends up with three routes to Earnings and no idea
  * where anything lives.
  */
-export const NAV_ITEMS = [
+const ALL_NAV_ITEMS = [
   // The bottom bar on a phone: the five places a worker goes every day.
   { key: 'dashboard', label: 'Home', Icon: LayoutDashboard, to: '/worker', primary: true },
   { key: 'work', label: 'Work', Icon: ShoppingBag, to: '/worker/work', primary: true },
@@ -62,6 +63,9 @@ export const NAV_ITEMS = [
   { key: 'training', label: 'Training', Icon: GraduationCap, to: '/worker/training' },
   { key: 'goals', label: 'Goals', Icon: Target, to: '/worker/goals' },
 ];
+
+// On Rakshak (ZappyOne staff only) the money pages give way to their shifts (provider/staffPortal).
+export const NAV_ITEMS = staffMenu(ALL_NAV_ITEMS);
 
 /** The phone menu: only what the bottom bar does not already show. */
 export const MENU_ITEMS = NAV_ITEMS.filter((i) => !i.primary);

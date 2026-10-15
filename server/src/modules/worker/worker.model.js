@@ -123,6 +123,17 @@ const workerSchema = new mongoose.Schema(
       maxKm: { type: Number, default: null, min: 1, max: 30 },
       pausedUntil: { type: Date, default: null },
     },
+    /**
+     * ZappyOne's own staff (workforce/): salaried, based at a hub, working
+     * booked shifts; job money is ZappyOne's, tips are theirs. Everyone else
+     * is a partner paid per job. Set by admin only.
+     */
+    employment: {
+      type: { type: String, enum: ['partner', 'staff'], default: 'partner', index: true },
+      hubId: { type: mongoose.Schema.Types.ObjectId, ref: 'Hub', default: null, index: true },
+      salaryPaise: { type: Number, default: 0, min: 0 },
+      joinedAt: { type: Date, default: null },
+    },
     currentLocation: {
       type: { type: String, enum: ['Point'], default: 'Point' },
       coordinates: { type: [Number], default: [0, 0] }, // [lng, lat]

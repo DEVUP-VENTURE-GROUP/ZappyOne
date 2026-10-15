@@ -22,7 +22,7 @@ const logger = require('../../core/logger');
 
 const ignoreDuplicate = (e) => { if (e.code !== 11000) throw e; };
 
-function bookCommission({ source, bookingId, reference, platformPaise, cash }) {
+function bookCommission({ source, bookingId, reference, platformPaise, cash, meta = null }) {
   if (platformPaise <= 0) return null;
   return Transaction.create({
     type: 'credit',
@@ -31,7 +31,7 @@ function bookCommission({ source, bookingId, reference, platformPaise, cash }) {
     reason: Transaction.REASONS.PLATFORM_COMMISSION,
     idempotencyKey: `${source}:commission:${bookingId}`,
     description: `${source} commission — ${reference}`,
-    metadata: { source, bookingId: String(bookingId), ...(cash ? { cash: true } : {}) },
+    metadata: { source, bookingId: String(bookingId), ...(cash ? { cash: true } : {}), ...(meta || {}) },
     status: 'succeeded',
   }).catch(ignoreDuplicate);
 }
@@ -101,7 +101,46 @@ async function settleCash({ source, bookingId, reference, isShop, ownerId, total
  * @param {number} p.platformPaise   the platform's cut, frozen at booking time
  * @param {object} [p.refs]          wallet refs, e.g. { orderId }
  */
+/**
+ * ZappyOne's own salaried staff (workforce/): the job's money is ZappyOne's,
+ * the customer's boost and the whole surge with it. Paid online, all of it is
+ * revenue; paid in cash, they hold it and owe all of it until they deposit it
+ * at the hub. Their tip is still theirs (settleTip, as for anyone).
+ */
+async function settleStaff({ source, booking, reference, paymentMethod, totalPaise, refs = {} }) {
+  const { KINDS } = require('../jobs/kinds');
+  const Model = KINDS[source]?.model();
+  const doc = Model ? await Model.findById(booking._id).select('boost surge').lean() : null;
+  const boostPaise = doc?.boost?.paise && !doc.boost.settledAt ? doc.boost.paise : 0;
+  const surgePaise = doc?.surge?.paise && !doc.surge.settledAt ? doc.surge.paise : 0;
+  if (Model && (boostPaise || surgePaise)) {
+    await Model.updateOne({ _id: booking._id }, { $set: { ...(boostPaise ? { 'boost.settledAt': new Date() } : {}), ...(surgePaise ? { 'surge.settledAt': new Date() } : {}) } });
+  }
+  const all = (totalPaise || 0) + boostPaise + surgePaise;
+  if (all <= 0) return { settled: false, reason: 'zero_value', totalPaise: 0 };
+  const cash = paymentMethod === 'cash';
+  if (cash) {
+    await walletService.apply({
+      kind: 'worker', id: booking.workerId, type: 'debit', amountPaise: all, allowDebt: true,
+      reason: Transaction.REASONS.PLATFORM_COMMISSION, idempotencyKey: `${source}:staff_cash:${booking._id}`, refs,
+      description: `Cash to deposit at your hub — ${source} ${reference}`,
+    });
+  }
+  // Tagged with the staff member and their hub, for the hub's profit and loss (workforce/finance).
+  const w = await require('../worker/worker.model').findById(booking.workerId).select('employment.hubId').lean();
+  await bookCommission({ source, bookingId: booking._id, reference, platformPaise: all, cash, meta: { staff: true, workerId: String(booking.workerId), hubId: w?.employment?.hubId ? String(w.employment.hubId) : null } });
+  return { settled: true, staff: true, cash, ownerKind: 'worker', ownerId: String(booking.workerId), totalPaise: all, providerPaise: 0, platformPaise: all };
+}
+
 async function settleProviderShare(args) {
+  if (!args.booking.shopId && args.booking.workerId && await require('../workforce/staff').isStaff(args.booking.workerId)) {
+    const result = await settleStaff(args);
+    await require('../jobs/cancel-fee').settleCarried(args.source, args.booking._id)
+      .catch((err) => logger.error({ err: err.message, bookingId: String(args.booking._id) }, '[settlement] carried cancellation fee not settled'));
+    await require('../jobs/boost-tip').settleTip(args.source, args.booking._id)
+      .catch((err) => logger.error({ err: err.message, bookingId: String(args.booking._id) }, '[settlement] tip not paid to staff'));
+    return result;
+  }
   const result = await settleShare(args);
   // An earlier cancellation fee paid with this booking goes to the shield fund (jobs/cancel-fee).
   await require('../jobs/cancel-fee').settleCarried(args.source, args.booking._id)

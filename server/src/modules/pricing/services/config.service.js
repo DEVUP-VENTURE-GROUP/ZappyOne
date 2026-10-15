@@ -47,6 +47,16 @@ async function getActiveConfig() {
  * goes to several at once, then wider, then auto-accept again; at the deadline
  * the customer is told honestly and offered a choice. Economics → Dispatch.
  */
+/**
+ * ZappyOne's own staff (workforce/): how salaries are worked out and when a
+ * shift may start. Economics → Workforce.
+ */
+const WORKFORCE_DEFAULTS = {
+  workingDays: 26,      // days a month a full salary pays for
+  checkInEarlyMin: 30,  // may check in this long before the shift
+  lateGraceMin: 10,     // after this, the check-in is marked late
+};
+
 const FAST_ASSIGN_DEFAULTS = {
   enabled: true,
   firstLookSec: 30,        // the best pro alone
@@ -77,6 +87,7 @@ function toView(doc) {
   return {
     surgeAuto: { ...SURGE_DEFAULTS, ...((doc.surgeAuto && typeof doc.surgeAuto === 'object') ? doc.surgeAuto : {}) },
     fastAssign: { ...FAST_ASSIGN_DEFAULTS, ...((doc.fastAssign && typeof doc.fastAssign === 'object') ? doc.fastAssign : {}) },
+    workforce: { ...WORKFORCE_DEFAULTS, ...((doc.workforce && typeof doc.workforce === 'object') ? doc.workforce : {}) },
     baseFeePaise: doc.baseFeePaise,
     perKmFeePaise: doc.perKmFeePaise,
     perMinFeePaise: doc.perMinFeePaise,
@@ -348,8 +359,15 @@ async function fastAssignSettings() {
   return { ...FAST_ASSIGN_DEFAULTS, ...(cfg.fastAssign || {}) };
 }
 
+async function workforceSettings() {
+  const cfg = await getActiveConfig();
+  return { ...WORKFORCE_DEFAULTS, ...(cfg.workforce || {}) };
+}
+
 module.exports = {
   FAST_ASSIGN_DEFAULTS,
+  WORKFORCE_DEFAULTS,
+  workforceSettings,
   fastAssignSettings,
   SURGE_DEFAULTS,
   getActiveConfig,

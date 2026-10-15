@@ -7,19 +7,20 @@ import {
   ArrowLeft, Save, User, FileText, Wrench,
   Building2, CreditCard, AlertCircle, GraduationCap,
   Target, TrendingUp, Star, ChevronRight, ShieldCheck,
-  Loader2, BarChart2, Shield, KeyRound,
+  Loader2, BarChart2, Shield, KeyRound, CalendarDays,
 } from 'lucide-react';
 import {
   useGetWorkerMeQuery, useUpdateWorkerProfileMutation, useSetWorkerCredentialsMutation, useAccountMeQuery,
   useProviderOnboardingStatusQuery,
 } from '../../services/api';
+import { STAFF_PORTAL, PARTNER_ONLY } from '../staffPortal';
 import toast from 'react-hot-toast';
 
 // Skills come from the LIVE admin catalog (/api/catalog/services), never a hardcoded
 // list — a hardcoded set silently drifts from the catalog, and dispatch matches
 // worker.skills to order.service by exact code, so a missing code = no eligible worker.
 
-const NAV_SECTIONS = [
+const ALL_NAV_SECTIONS = [
   {
     title: 'Earnings & Finance',
     items: [
@@ -48,6 +49,12 @@ const NAV_SECTIONS = [
     ],
   },
 ];
+
+// Rakshak (ZappyOne staff only): no per-job money pages; their shifts, salary and leave instead.
+const NAV_SECTIONS = STAFF_PORTAL
+  ? [{ title: 'My work', items: [{ to: '/worker/shifts', Icon: CalendarDays, label: 'Shifts, salary & leave', desc: 'Book shifts, see your month', color: 'indigo' }] },
+    ...ALL_NAV_SECTIONS.map((s) => ({ ...s, items: s.items.filter((i) => !PARTNER_ONLY.has(i.to)) })).filter((s) => s.items.length)]
+  : ALL_NAV_SECTIONS;
 
 const COLOR_MAP = {
   indigo:  { bg: 'bg-zappy-50',  icon: 'text-zappy-600' },

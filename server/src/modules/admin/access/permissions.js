@@ -24,6 +24,7 @@ const AREAS = {
   marketing: 'Promos, rewards, plans, notifications, ads and content',
   money: 'Payments, refunds, payouts, wallets',
   operations: 'Service areas, fraud, cancellation policy, live operations',
+  fleet: 'ZappyOne Fleet: own staff, hubs (dark stores), stock, roster, payroll and fleet finance',
   system: 'Feature flags, platform health, audit',
   admins: 'Admin team and roles',
 };
@@ -33,12 +34,12 @@ const ROLES = {
   ops: {
     label: 'Operations',
     permissions: ['overview:read', 'insights:read', 'intelligence:read', 'catalog:*', 'customers:*', 'bookings:*', 'support:*',
-      'providers:*', 'events:*', 'operations:*', 'marketing:read', 'money:read', 'system:read'],
+      'providers:*', 'events:*', 'operations:*', 'marketing:read', 'money:read', 'system:read', 'fleet:*'],
   },
   finance: {
     label: 'Finance',
     permissions: ['overview:read', 'insights:read', 'intelligence:read', 'money:*', 'bookings:read', 'customers:read',
-      'providers:read', 'marketing:read', 'events:read', 'system:read'],
+      'providers:read', 'marketing:read', 'events:read', 'system:read', 'fleet:*'],
   },
   support: {
     label: 'Support',
@@ -51,12 +52,16 @@ const ROLES = {
   analyst: {
     label: 'Analyst',
     permissions: ['overview:read', 'insights:read', 'intelligence:read', 'catalog:read', 'customers:read', 'bookings:read',
-      'providers:read', 'events:read', 'marketing:read', 'money:read', 'operations:read'],
+      'providers:read', 'events:read', 'marketing:read', 'money:read', 'operations:read', 'fleet:read'],
   },
   city_manager: {
     label: 'City manager',
     permissions: ['overview:read', 'insights:read', 'intelligence:read', 'bookings:*', 'customers:read', 'support:*',
-      'providers:*', 'operations:read'],
+      'providers:*', 'operations:read', 'fleet:*'],
+  },
+  fleet_manager: {
+    label: 'Fleet manager',
+    permissions: ['overview:read', 'fleet:*', 'bookings:read', 'providers:read', 'operations:read'],
   },
   board_member: { label: 'Board member', permissions: ['overview:read', 'insights:read', 'intelligence:read'] },
 };
@@ -77,7 +82,8 @@ const AREA_RULES = [
   [/^\/(support|disputes|reviews)(\/|$)/, 'support'],
   [/^\/(workers|kyc|shops|worker|worker-ops|incentives)(\/|$)/, 'providers'],
   [/^\/events(\/|$)/, 'events'],
-  [/^\/(promos|cashback|referrals|rewards-config|plans|notifications|ads|content|cities)(\/|$)/, 'marketing'],
+  [/^\/(promos|cashback|referrals|rewards-config|plans|notifications|ads|content|cities|seasons)(\/|$)/, 'marketing'],
+  [/^\/workforce(\/|$)/, 'fleet'],
   // Economics settings (fees, cancellation and dues rules) and dues are money work.
   [/^\/(payments|payouts|wallet|shield|emergency-fund|audit|fees|dues|economics|cancellation-config)(\/|$)/, 'money'],
   [/^\/(zones|launch-interest|fraud|liveops|stuck-jobs)(\/|$)/, 'operations'],

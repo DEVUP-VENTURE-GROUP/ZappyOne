@@ -4,8 +4,9 @@
  * holds the moves it makes. Timings: Economics → Dispatch (config.service
  * FAST_ASSIGN_DEFAULTS).
  *
- *   T+0     auto-accept: a pro who switched auto-accept on, nearby (autoAcceptKm),
- *           free and allowed this service, takes it with no tap
+ *   T+0     auto-accept: ZappyOne's own staff on duty first (workforce/), then a
+ *           pro who switched auto-accept on, nearby (autoAcceptKm), free and
+ *           allowed this service, takes it with no tap
  *   T+0     first look: the best-ranked pro alone (repairs; pet and errands
  *           already ring every live pro nearby)
  *   T+30s   broadcast: the next best pros at once, first to claim wins (repairs)
@@ -70,21 +71,29 @@ async function autoAcceptCandidates(kind, doc, radiusKm) {
   const shopIds = kind === 'helping' ? [] : approved.filter((p) => p.kind === 'shop' && !passed.has(p.id)).map((p) => p.id);
   const Worker = require('../worker/worker.model');
   const Shop = require('../shop/shop.model');
+  // ZappyOne's own staff on duty take jobs first, with or without the switch (workforce/).
+  const onDuty = [...await require('../workforce/staff').onDutyIds(now)].filter((id) => workerIds.includes(id));
   const [workers, shops] = await Promise.all([
-    Worker.find({ _id: { $in: workerIds }, isBlocked: { $ne: true }, ...notPaused }).select('currentLocation autoAccept').lean(),
+    Worker.find({ _id: { $in: workerIds }, isBlocked: { $ne: true }, $or: [notPaused, { _id: { $in: onDuty } }] }).select('currentLocation autoAccept employment').lean(),
     Shop.find({ _id: { $in: shopIds }, ...notPaused }).select(`${require('../shop/shop.service').LIVE_FIELDS} autoAccept`).lean(),
   ]);
   const live = await require('../worker/presence').liveIds(workers.map((w) => w._id));
   const { free } = await require('./workload').classify(workers.map((w) => w._id));
   const km = (c) => (c?.length === 2 ? haversineKm(at.lat, at.lng, c[1], c[0]) : null);
+  const duty = new Set(onDuty);
+  const hubs = duty.size ? await require('../workforce/hub.model').find({ _id: { $in: workers.map((w) => w.employment?.hubId).filter(Boolean) } }).select('serviceKm').lean() : [];
+  const reach = new Map(hubs.map((h) => [String(h._id), h.serviceKm]));
   return [
     ...workers.filter((w) => live.has(String(w._id)) && free.has(String(w._id)))
-      .map((w) => ({ kind: 'worker', id: String(w._id), km: km(w.currentLocation?.coordinates), maxKm: w.autoAccept?.maxKm })),
+      .map((w) => (duty.has(String(w._id))
+        // Staff on duty: as far as their hub serves, whatever this stage's radius.
+        ? { kind: 'worker', id: String(w._id), km: km(w.currentLocation?.coordinates), staff: true, reachKm: reach.get(String(w.employment?.hubId)) || radiusKm }
+        : { kind: 'worker', id: String(w._id), km: km(w.currentLocation?.coordinates), maxKm: w.autoAccept?.maxKm })),
     ...shops.filter(require('../shop/shop.service').isLive)
       .map((s) => ({ kind: 'shop', id: String(s._id), km: km(s.address?.location?.coordinates), maxKm: s.autoAccept?.maxKm })),
   ]
-    .filter((p) => p.km != null && p.km <= Math.min(radiusKm, p.maxKm || radiusKm))
-    .sort((a, b) => a.km - b.km);
+    .filter((p) => p.km != null && p.km <= (p.staff ? p.reachKm : Math.min(radiusKm, p.maxKm || radiusKm)))
+    .sort((a, b) => (Number(!!b.staff) - Number(!!a.staff)) || a.km - b.km);
 }
 
 /**

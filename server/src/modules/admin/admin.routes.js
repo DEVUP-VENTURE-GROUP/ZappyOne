@@ -8,6 +8,8 @@ router.use('/', require('./routes/team.routes'));
 router.use('/', require('./routes/metrics.routes'));
 router.use('/', require('./routes/orders.routes'));
 router.use('/', require('../admin-portal/admin-portal.routes'));
+// Workforce: hubs, staff, roster, leave, payroll (workforce/).
+router.use('/', require('../workforce/workforce.admin.routes'));
 // Admin → Messages: automatic emails and pushes (messaging/).
 router.use('/', require('../messaging/admin.routes'));
 router.use('/', require('./routes/workers.routes'));

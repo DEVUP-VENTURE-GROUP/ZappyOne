@@ -108,6 +108,8 @@ async function getDuesStatus(workerId, { detail = false } = {}) {
 
 /** Throws when the worker is at the limit. Wherever a worker is about to receive new work. */
 async function assertCanWork(workerId) {
+  // Staff hold the day's cash until they deposit it at the hub; that never stops them mid-shift.
+  if (await require('../workforce/staff').isStaff(workerId)) return;
   const dues = await getDuesStatus(workerId);
   if (dues.isBlocked) {
     const r = (p) => `₹${Math.round(p / 100).toLocaleString('en-IN')}`;
@@ -128,6 +130,11 @@ async function filterWorkingWorkers(workerIds) {
     { 'owner.id': 1, balancePaise: 1 },
   ).lean();
   const blocked = new Set(wallets.filter((w) => w.balancePaise <= -limitPaise).map((w) => String(w.owner.id)));
+  // Staff carry the shift's cash until they deposit it at the hub: never held back for it.
+  if (blocked.size) {
+    const staff = await require('./worker.model').find({ _id: { $in: [...blocked] }, 'employment.type': 'staff' }).select('_id').lean();
+    staff.forEach((w) => blocked.delete(String(w._id)));
+  }
   return new Set(workerIds.map(String).filter((id) => !blocked.has(id)));
 }
 

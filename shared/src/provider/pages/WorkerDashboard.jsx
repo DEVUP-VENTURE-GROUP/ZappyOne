@@ -6,7 +6,7 @@ import {
   LogOut, ChevronRight, ShieldCheck, X, Menu, Bell, BadgeIndianRupee, Briefcase,
   Clock, Star, MapPin, Radio,
 } from 'lucide-react';
-import { useAccountMeQuery,
+import { useAccountMeQuery, useWorkforceMeQuery,
   useGetWorkerMeQuery, useGoOnlineMutation, useGoOfflineMutation, useGetEarningsQuery,
   useGetKycStatusQuery, useListNotificationsQuery, useLogoutMutation, useProviderOnboardingStatusQuery,
 } from '../../services/api';
@@ -20,6 +20,9 @@ import { formatPaise } from '../../utils/money';
 import { ZappyWordmark } from '../../components/common/ZappyLogo';
 import WorkerOnboarding from './WorkerOnboarding';
 import DuesCard from '../DuesCard';
+import StaffDutyCard from '../StaffDutyCard';
+import StaffWaitingCard from '../StaffWaitingCard';
+import { STAFF_PORTAL } from '../staffPortal';
 import MyAreaChip from '../../components/worker/MyAreaChip';
 import HotZonesCard from '../../components/worker/HotZonesCard';
 import ProviderServicesCard from '../../components/provider/ProviderServicesCard';
@@ -73,6 +76,8 @@ function NotifBell({ token, onTap }) {
 }
 
 export default function WorkerDashboard() {
+  // ZappyOne staff see their shift and salary here (server workforce/); partners get { staff: false }.
+  const { data: staffMe } = useWorkforceMeQuery();
   const nav = useNavigate();
   const dispatch = useDispatch();
   const { accessToken: token } = useSelector(selectAuth);
@@ -199,7 +204,8 @@ export default function WorkerDashboard() {
   const deltaPct = weekDeltaPct(weekData?.dailyBreakdown);
 
   const stats = [
-    { Icon: BadgeIndianRupee, tone: 'green', label: 'Today', value: inr(todayData?.earningsRupees ?? 0), sub: 'Earnings', onClick: () => nav('/worker/earnings') },
+    // Staff are salaried (provider/staffPortal): no per-job earnings tile on Rakshak.
+    ...(STAFF_PORTAL ? [] : [{ Icon: BadgeIndianRupee, tone: 'green', label: 'Today', value: inr(todayData?.earningsRupees ?? 0), sub: 'Earnings', onClick: () => nav('/worker/earnings') }]),
     { Icon: Briefcase, tone: 'blue', label: 'Jobs today', value: todayData?.jobs ?? 0, sub: 'Completed', onClick: () => nav('/worker/work') },
     { Icon: Clock, tone: 'cyan', label: 'Online', value: isOnline ? hm(onlineSec) : 'Off', sub: isOnline ? 'This session' : 'Go online' },
     { Icon: Star, tone: 'amber', label: 'Rating', value: rating, sub: `${me?.completedJobs ?? 0} job${(me?.completedJobs ?? 0) === 1 ? '' : 's'}`, onClick: () => nav('/worker/reviews') },
@@ -290,9 +296,10 @@ export default function WorkerDashboard() {
           </button>
         )}
 
-        <DuesCard />
-        {/* Where surge is on for their services: go there, earn more (jobs/surge). */}
-        {isOnline && <HotZonesCard coords={lastCoords} />}
+        {/* ZappyOne staff: their shift, check-in and salary; everyone else: what they owe. */}
+        {staffMe?.staff ? <StaffDutyCard me={staffMe} /> : STAFF_PORTAL ? <StaffWaitingCard /> : <DuesCard />}
+        {/* Where surge is on for their services: go there, earn more (jobs/surge). Partners only. */}
+        {isOnline && !STAFF_PORTAL && <HotZonesCard coords={lastCoords} />}
 
         <div className="lg:hidden">
           <GreetingCard name={firstName} locationLabel={areaName} isOnline={isOnline} busy={toggling} disabled={!kycApproved} onToggle={toggleOnline} />
@@ -371,12 +378,14 @@ export default function WorkerDashboard() {
 
           <div className="space-y-5">
             <ProviderServicesCard />
-            <EarningsOverview
-              weekRupees={weekData?.earningsRupees ?? 0}
-              deltaPct={deltaPct}
-              points={week.map((d) => ({ label: new Date(d.date).toLocaleDateString('en-IN', { weekday: 'short' }), value: Math.round(d.earningsPaise / 100) }))}
-              onViewDetails={() => nav('/worker/earnings')}
-            />
+            {!STAFF_PORTAL && (
+              <EarningsOverview
+                weekRupees={weekData?.earningsRupees ?? 0}
+                deltaPct={deltaPct}
+                points={week.map((d) => ({ label: new Date(d.date).toLocaleDateString('en-IN', { weekday: 'short' }), value: Math.round(d.earningsPaise / 100) }))}
+                onViewDetails={() => nav('/worker/earnings')}
+              />
+            )}
           </div>
         </div>
       </main>

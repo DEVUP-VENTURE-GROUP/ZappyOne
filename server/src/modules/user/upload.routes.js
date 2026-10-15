@@ -53,7 +53,11 @@ const UPLOAD_FOLDERS = [
       // Event occasion covers, uploaded by admin.
       'events/occasions',
       // Festive home tiles, uploaded by admin (content/season).
-      'seasons'
+      'seasons',
+      // Staff check-in selfies at the hub (workforce/).
+      'staff-checkin',
+      // Fleet expense receipts, uploaded by admin (workforce/finance).
+      'fleet-receipts'
 ];
 
 router.post(

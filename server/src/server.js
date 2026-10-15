@@ -357,6 +357,10 @@ function startMatchingWaves() {
   setInterval(() => {
     waves.sweep().catch((err) => logger.warn({ err: err.message }, "[WAVES] sweep failed"));
   }, 10 * 1000);
+  // Staff shifts: never started = missed, left open = closed (workforce/shifts.service).
+  setInterval(() => {
+    require("./modules/workforce/shifts.service").sweep().catch((err) => logger.warn({ err: err.message }, "[SHIFTS] sweep failed"));
+  }, 5 * 60 * 1000);
   setInterval(() => {
     // Arrival promises past due with nobody there: customer told, provider nudged (jobs/promise).
     require("./modules/jobs/promise").sweep().catch((err) => logger.warn({ err: err.message }, "[PROMISE] sweep failed"));

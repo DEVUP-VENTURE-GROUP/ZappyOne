@@ -1,5 +1,6 @@
 import { lazy } from 'react';
 import { Route, Navigate } from 'react-router-dom';
+import { STAFF_PORTAL } from './staffPortal';
 import { RequireAuth } from '../components/common/RequireAuth';
 
 const WorkerDashboard = lazy(() => import('./pages/WorkerDashboard'));
@@ -11,6 +12,7 @@ const WorkerWithdrawPage = lazy(() => import('./pages/WorkerWithdrawPage'));
 const WorkerAppealsPage = lazy(() => import('./pages/WorkerAppealsPage'));
 const MyDocumentsPage = lazy(() => import('./pages/MyDocumentsPage'));
 const WorkerHoursPage = lazy(() => import('./pages/WorkerHoursPage'));
+const StaffShiftsPage = lazy(() => import('./pages/StaffShiftsPage'));
 const ProviderReviewsPage = lazy(() => import('./pages/ProviderReviewsPage'));
 const WorkerEarningsPage = lazy(() => import('./pages/WorkerEarningsPage'));
 const WorkerTrainingPage = lazy(() => import('./pages/WorkerTrainingPage'));
@@ -41,13 +43,15 @@ export function providerRoutes({ loginPath, helping = false, onboardRoles = ['wo
   const kinds = ['repair', 'pet', ...(helping ? ['helping'] : [])];
   const onboard = (el) => <RequireAuth role={onboardRoles} loginPath={onboardLoginPath}>{el}</RequireAuth>;
   const independentOnly = shopTeam ? [] : [
-    <Route key="w-bank" path="/worker/bank" element={w(<WorkerBankPage />)} />,
+    <Route key="w-bank" path="/worker/bank" element={w(STAFF_PORTAL ? <Navigate to="/worker/shifts" replace /> : <WorkerBankPage />)} />,
     // Their week: when bookings for later may come to them (jobs/work-hours).
-    <Route key="w-hours" path="/worker/hours" element={w(<WorkerHoursPage />)} />,
-    <Route key="w-withdraw" path="/worker/withdraw" element={w(<WorkerWithdrawPage />)} />,
-    <Route key="w-earnings" path="/worker/earnings" element={w(<WorkerEarningsPage />)} />,
+    <Route key="w-hours" path="/worker/hours" element={w(STAFF_PORTAL ? <Navigate to="/worker/shifts" replace /> : <WorkerHoursPage />)} />,
+    // ZappyOne staff: shifts at their hub, salary, leave (server workforce/).
+    <Route key="w-shifts" path="/worker/shifts" element={w(<StaffShiftsPage />)} />,
+    <Route key="w-withdraw" path="/worker/withdraw" element={w(STAFF_PORTAL ? <Navigate to="/worker/shifts" replace /> : <WorkerWithdrawPage />)} />,
+    <Route key="w-earnings" path="/worker/earnings" element={w(STAFF_PORTAL ? <Navigate to="/worker/shifts" replace /> : <WorkerEarningsPage />)} />,
     <Route key="w-training" path="/worker/training" element={w(<WorkerTrainingPage />)} />,
-    <Route key="w-goals" path="/worker/goals" element={w(<WorkerGoalsPage />)} />,
+    <Route key="w-goals" path="/worker/goals" element={w(STAFF_PORTAL ? <Navigate to="/worker/shifts" replace /> : <WorkerGoalsPage />)} />,
   ];
   return [
     <Route key="w" path="/worker" element={w(home || <WorkerDashboard />)} />,
@@ -56,7 +60,7 @@ export function providerRoutes({ loginPath, helping = false, onboardRoles = ['wo
     <Route key="w-kyc" path="/worker/kyc" element={shopTeam ? w(<WorkerKycPage />) : <Navigate to="/provider/onboarding" replace />} />,
     <Route key="w-profile" path="/worker/profile" element={w(<WorkerEditProfilePage />)} />,
     // Every provider, a shop's team too: appeal a decision, and see what you uploaded.
-    <Route key="w-appeals" path="/worker/appeals" element={w(<WorkerAppealsPage />)} />,
+    <Route key="w-appeals" path="/worker/appeals" element={w(STAFF_PORTAL ? <Navigate to="/worker/shifts" replace /> : <WorkerAppealsPage />)} />,
     <Route key="p-docs" path="/provider/documents" element={job(<MyDocumentsPage />)} />,
     <Route key="w-notif" path="/worker/notifications" element={w(<WorkerNotificationsPage />)} />,
     <Route key="w-reviews" path="/worker/reviews" element={w(<ProviderReviewsPage back="/worker" />)} />,
