@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 import toast from 'react-hot-toast';
 import { ChevronRight } from 'lucide-react';
 import { selectAuth, selectIsAuthed } from '@shared/modules/auth/authSlice';
-import { useGetServiceabilityQuery, useLiveCatalogQuery, useGetEventCategoriesQuery, useLensStatusQuery, useSaveRecentLocationMutation } from '@shared/services/api';
+import { useGetServiceabilityQuery, useLiveCatalogQuery, useGetEventCategoriesQuery, useLensStatusQuery, useSaveRecentLocationMutation, useCurrentSeasonQuery } from '@shared/services/api';
 import { useGeolocation, loadGeoLocation, tooRough, roughLocationMessage } from '@shared/hooks/useGeolocation';
 import { saveGeoLocation } from '@shared/utils/geoCache';
 import { reverseGeocode } from '@shared/utils/reverseGeocode';
@@ -26,6 +26,8 @@ import { ServiceGrid, ProblemChips } from './ServiceGrid';
 import { OffersRail, BookAgainRail, NearbyShopsLink } from './HomeRails';
 import { eventPhoto, eventTone } from '../events/eventPhotos';
 import ContinueBookingCard from './ContinueBookingCard';
+import FestiveHero from '@shared/components/home/festive/FestiveHero';
+import { themeOf } from '@shared/customer/season';
 
 /**
  * Home — what a customer can get done, right where they are.
@@ -231,6 +233,11 @@ export default function HomePage() {
   }, [pastJobs]);
 
   const notHere = svc?.status === 'not_here';
+  // A festival running (Admin → Festive home): its own top on home; light ones also tint the header.
+  const { data: seasonData } = useCurrentSeasonQuery();
+  const season = !notHere && !loadingCatalog ? seasonData?.season : null;
+  const theme = season ? themeOf(season.theme) : null;
+  const tint = theme && !theme.dark ? theme.top : null;
   const searchBar = (
     <SearchBar
       terms={searchTerms}
@@ -265,12 +272,15 @@ export default function HomePage() {
           avatar={profile?.avatar}
           onPickLocation={() => setLocSheet(true)}
           search={searchBar}
+          tint={tint}
         />
 
         {/* Phone: search stays pinned while the rest scrolls (desktop has it in the bar). */}
-        <div className="sticky top-0 z-30 rounded-b-sheet bg-zappy-100 md:hidden">
+        <div className={`sticky top-0 z-30 bg-zappy-100 md:hidden ${tint ? '' : 'rounded-b-sheet'}`} style={tint ? { background: tint } : undefined}>
           <div className="px-4 pb-4 pt-1">{searchBar}</div>
         </div>
+
+        {season && <FestiveHero season={season} theme={theme} services={services} onOpen={(s) => openService(s)} />}
 
         <main className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 pb-10 pt-5 sm:gap-10 sm:px-6 sm:pt-7">
           {activeJob && <ActiveJobCard job={activeJob} onOpen={() => nav(activeJob.href)} />}

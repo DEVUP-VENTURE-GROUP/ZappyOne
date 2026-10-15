@@ -23,6 +23,55 @@ const baseBody = Joi.object({
   isActive: Joi.boolean().default(true),
 });
 
+/* Festive home: seasons on the customer home (content/season). */
+
+const seasonBody = Joi.object({
+  name: Joi.string().trim().max(60).required(),
+  theme: Joi.string().valid(...require('../../content/season.model').THEMES).required(),
+  greeting: Joi.string().trim().max(40).allow(''),
+  headline: Joi.string().trim().max(60).required(),
+  subline: Joi.string().trim().max(120).allow(''),
+  startAt: Joi.date().iso().required(),
+  endAt: Joi.date().iso().required(),
+  tiles: Joi.array().items(Joi.object({
+    title: Joi.string().trim().max(40).required(),
+    serviceCode: Joi.string().trim().max(60).required(),
+    imageUrl: Joi.string().max(500).allow(''),
+    badge: Joi.string().trim().max(20).allow(''),
+  })).max(6),
+  promoCode: Joi.string().trim().uppercase().max(30).allow(''),
+  // No defaults here: on an edit, a field left out stays as it is (the model sets them on create).
+  isActive: Joi.boolean(),
+});
+
+router.get('/seasons', async (req, res, next) => {
+  try { res.json({ seasons: await require('../../content/season.service').list() }); } catch (err) { next(err); }
+});
+
+router.post('/seasons', validate(seasonBody), async (req, res, next) => {
+  try {
+    const season = await require('../../content/season.service').create(req.body, req.auth.sub);
+    await auditService.fromRequest(req, 'admin.season_create', { kind: 'season', id: season._id }, null, req.body);
+    res.status(201).json({ season });
+  } catch (err) { next(err); }
+});
+
+router.put('/seasons/:id', validate(seasonBody.fork(['name', 'theme', 'headline', 'startAt', 'endAt'], (f) => f.optional()).min(1)), async (req, res, next) => {
+  try {
+    const { before, after } = await require('../../content/season.service').update(req.params.id, req.body, req.auth.sub);
+    await auditService.fromRequest(req, 'admin.season_update', { kind: 'season', id: req.params.id }, before, after);
+    res.json({ season: after });
+  } catch (err) { next(err); }
+});
+
+router.delete('/seasons/:id', async (req, res, next) => {
+  try {
+    const before = await require('../../content/season.service').remove(req.params.id);
+    await auditService.fromRequest(req, 'admin.season_delete', { kind: 'season', id: req.params.id }, before, null);
+    res.json({ ok: true });
+  } catch (err) { next(err); }
+});
+
 /** GET /content — list everything (optionally filter by ?type=). */
 router.get('/content', async (req, res, next) => {
   try {

@@ -15,7 +15,7 @@ export const TAG_TYPES = ['CheckoutDrafts', 'PriceRequest', 'Reviews', 'Fees', '
     'RepairCatalog', 'RepairConfig', 'RepairPricing', 'RepairRequests', 'RepairBookings', 'RepairProvider', 'MyAssets',
     'HelpingConfig', 'HelpingTasks', 'HelpingAvailable', 'AdminHelpingTasks',
     'PetCatalog', 'MyPets', 'PetBookings', 'PetAvailable', 'PetRecurring', 'AdminPetBookings', 'AdminPetPricing', 'AdminPetCapabilities',
-    'RepairIdentification', 'Onboarding', 'AdminBookings', 'ErrorIssues', 'Surge', 'IdCheck', 'WorkerHours', 'AutoAccept', 'Repeats', 'ShopPayouts', 'AppReleases'];
+    'RepairIdentification', 'Onboarding', 'AdminBookings', 'ErrorIssues', 'Surge', 'IdCheck', 'WorkerHours', 'AutoAccept', 'Seasons', 'Repeats', 'ShopPayouts', 'AppReleases'];
 
 /**
  * The finished API these endpoints live in, for the optimistic cache patches
@@ -357,6 +357,12 @@ export function endpoints(b, { adminApiPath }) {
       query: (audience) => `/content/faqs${audience ? `?audience=${audience}` : ''}`,
       providesTags: ['Content'],
     }),
+    /** The festive season on the customer home now, or { season: null } (server content/season). */
+    currentSeason: b.query({ query: () => '/content/season', providesTags: ['Seasons'] }),
+    adminSeasons: b.query({ query: () => adminApiPath('/seasons'), providesTags: ['Seasons'] }),
+    adminCreateSeason: b.mutation({ query: (body) => ({ url: adminApiPath('/seasons'), method: 'POST', body }), invalidatesTags: ['Seasons'] }),
+    adminUpdateSeason: b.mutation({ query: ({ id, ...body }) => ({ url: adminApiPath(`/seasons/${id}`), method: 'PUT', body }), invalidatesTags: ['Seasons'] }),
+    adminDeleteSeason: b.mutation({ query: (id) => ({ url: adminApiPath(`/seasons/${id}`), method: 'DELETE' }), invalidatesTags: ['Seasons'] }),
     /** Published policy pages (slug + title) — the footer's legal links. */
     getPolicies: b.query({ query: () => '/content/policies' }),
     getPolicy: b.query({

@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { ChevronRight } from 'lucide-react';
 import { useGetAvailablePromosQuery } from '@shared/services/api';
-import { formatPaise } from '@shared/utils/money';
+import { offerHeadline, offerTerms } from '@shared/customer/season';
 
 /**
  * The quieter rows of Home. Each renders only when it has something real to
@@ -31,17 +31,6 @@ function Row({ children, cols = 'sm:grid-cols-2 lg:grid-cols-3' }) {
   );
 }
 
-function offerHeadline(p) {
-  if (p.type === 'percent') return `${p.discountValue}% off`;
-  return `${formatPaise(p.discountValue)} off`;
-}
-
-function offerTerms(p) {
-  const parts = [];
-  if (p.type === 'percent' && p.maxDiscountPaise) parts.push(`up to ${formatPaise(p.maxDiscountPaise)}`);
-  if (p.minOrderPaise) parts.push(`on ${formatPaise(p.minOrderPaise)}+`);
-  return parts.join(', ');
-}
 
 /** Live codes this customer can still use. Tap the code to copy it. */
 export function OffersRail({ isAuthed }) {

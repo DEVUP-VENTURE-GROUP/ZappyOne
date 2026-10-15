@@ -6,7 +6,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ChevronRight } from 'lucide-react-native';
 import { useGetAvailablePromosQuery } from '@zappy/core/api';
-import { formatPaise } from '@zappy/core/shared/money';
+import { offerHeadline, offerTerms } from '@zappy/core/shared/season';
 import { Text } from '@zappy/ui/components';
 import { toast } from '@zappy/ui/components/Toast';
 import { accent, colors, ink, zappy } from '@zappy/ui/theme/colors';
@@ -23,13 +23,9 @@ export function SectionTitle({ title, action, onAction }: { title: string; actio
 }
 
 interface Promo { code: string; name: string; type: string; discountValue: number; maxDiscountPaise?: number; minOrderPaise?: number; alreadyUsed?: boolean }
-const headline = (p: Promo) => (p.type === 'percent' ? `${p.discountValue}%` : formatPaise(p.discountValue));
-function terms(p: Promo) {
-  const parts = [];
-  if (p.type === 'percent' && p.maxDiscountPaise) parts.push(`up to ${formatPaise(p.maxDiscountPaise)}`);
-  if (p.minOrderPaise) parts.push(`on ${formatPaise(p.minOrderPaise)}+`);
-  return parts.join(', ');
-}
+// The amount alone ("20%", "₹100"); the card prints "off" under it.
+const headline = (p: Promo) => offerHeadline(p).replace(/ off$/, '');
+const terms = (p: Promo) => offerTerms(p);
 
 /** Live codes this customer can still use. Tap one to see its code. */
 export function OffersRail({ isAuthed }: { isAuthed: boolean }) {

@@ -38,6 +38,7 @@ import {
   MessageSquare as MessageSquareIcon,
   Star,
   Bug,
+  Sparkles,
 } from 'lucide-react';
 import Hub from '../ui/Hub';
 
@@ -58,6 +59,7 @@ const P = {
   Disputes: page(() => import('../features/support/Disputes')),
   Reviews: page(() => import('../features/support/Reviews')),
   Promos: page(() => import('../features/marketing/Promos')),
+  FestiveHome: page(() => import('../features/marketing/festive/FestiveHome')),
   Cashback: page(() => import('../features/marketing/rewards/Cashback')),
   Points: page(() => import('../features/marketing/rewards/Points')),
   Plans: page(() => import('../features/marketing/Plans')),
@@ -152,6 +154,7 @@ export const NAV_GROUPS = [
     { id: 'bookings', area: 'bookings', label: 'Bookings', icon: ShoppingBag, Comp: P.Bookings },
     { id: 'helpdesk', area: 'support', label: 'Help desk', icon: HeadphonesIcon, Comp: HUBS.helpdesk },
     { id: 'promos', area: 'marketing', label: 'Promo codes', icon: Ticket, Comp: P.Promos },
+    { id: 'festive', area: 'marketing', label: 'Festive home', icon: Sparkles, Comp: P.FestiveHome },
     { id: 'rewards', area: 'marketing', label: 'Rewards', icon: Gift, Comp: HUBS.rewards },
     { id: 'plans', area: 'marketing', label: 'Plans', icon: Crown, Comp: P.Plans },
   ] },

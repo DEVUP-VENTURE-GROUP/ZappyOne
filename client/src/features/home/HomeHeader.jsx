@@ -199,7 +199,7 @@ const LINKS = [
   { to: '/track', label: 'Track' },
 ];
 
-export default function HomeHeader({ loc, isAuthed, avatar, onPickLocation, search }) {
+export default function HomeHeader({ loc, isAuthed, avatar, onPickLocation, search, tint = null }) {
   const nav = useNavigate();
   const unread = useUnread(isAuthed);
 
@@ -233,7 +233,8 @@ export default function HomeHeader({ loc, isAuthed, avatar, onPickLocation, sear
       </header>
 
       {/* Phone: light header, scrolls away; search is pinned by the page below it. */}
-      <div className="bg-zappy-100 md:hidden" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+      {/* tint: a light festive season's colour, so the festive top flows out of the header. */}
+      <div className="bg-zappy-100 md:hidden" style={{ paddingTop: 'env(safe-area-inset-top, 0px)', ...(tint ? { background: tint } : {}) }}>
         {/* Brand and place take turns in one slot. Profile lives in the bottom
             bar, so the phone header keeps the bell (signed in) or Sign in. */}
         <div className="flex items-center gap-2.5 px-4 pb-2.5 pt-4">

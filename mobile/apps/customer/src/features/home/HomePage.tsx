@@ -12,7 +12,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
-  useGetEventCategoriesQuery, useGetServiceabilityQuery, useLiveCatalogQuery, useSaveRecentLocationMutation,
+  useCurrentSeasonQuery, useGetEventCategoriesQuery, useGetServiceabilityQuery, useLiveCatalogQuery, useSaveRecentLocationMutation,
 } from '@zappy/core/api';
 import { getBestPosition } from '@zappy/core/hooks/useBestPosition';
 import { loadGeoLocation, saveGeoLocation, tooRough } from '@zappy/core/lib/geoCache';
@@ -30,6 +30,8 @@ import { ClosedNowBanner } from '../catalog/serviceability/ClosedNowBanner';
 import { NotInYourArea } from '../catalog/serviceability/NotInYourArea';
 import { ActiveJobCard } from './ActiveJobCard';
 import { ContinueBookingCard } from './ContinueBookingCard';
+import { FestiveHero } from './festive/FestiveHero';
+import { themeOf } from '@zappy/core/shared/season';
 import { HeroCarousel } from './HeroCarousel';
 import { HomeHeader, SearchBar, type HomeLocation } from './HomeHeader';
 import { BookAgainRail, NearbyShopsLink, OffersRail } from './HomeRails';
@@ -140,19 +142,25 @@ export function HomePage() {
   const { current: activeJob, past: pastJobs, refetch: refetchJobs } = useMyJobs({ skip: !isAuthed });
   const rebooks = useMemo(() => quickRebooks(pastJobs), [pastJobs]);
   const notHere = svc?.status === 'not_here';
+  // A festival running (Admin → Festive home): its own top on home; light ones also tint the header.
+  const { data: seasonData, refetch: refetchSeason } = useCurrentSeasonQuery(undefined);
+  const season = !notHere && !loadingCatalog ? seasonData?.season : null;
+  const theme = season ? themeOf(season.theme) : null;
+  const tint = theme && !theme.dark ? theme.top : null;
 
   async function onRefresh() {
     setRefreshing(true);
-    await Promise.all([refetchCatalog(), loc.lat != null ? refetchArea() : null, isAuthed ? refetchJobs?.() : null].filter(Boolean));
+    await Promise.all([refetchCatalog(), refetchSeason(), loc.lat != null ? refetchArea() : null, isAuthed ? refetchJobs?.() : null].filter(Boolean));
     setRefreshing(false);
   }
 
   return (
     <View style={styles.page}>
-      <HomeHeader loc={loc} isAuthed={isAuthed} onPickLocation={() => setLocSheet(true)} />
+      <HomeHeader loc={loc} isAuthed={isAuthed} onPickLocation={() => setLocSheet(true)} tint={tint} />
       {/* Search stays pinned while the rest scrolls. */}
-      <View style={styles.searchWrap}><SearchBar terms={terms} onOpen={() => setSpotOpen(true)} /></View>
+      <View style={[styles.searchWrap, tint ? { backgroundColor: tint, borderBottomLeftRadius: 0, borderBottomRightRadius: 0 } : null]}><SearchBar terms={terms} onOpen={() => setSpotOpen(true)} /></View>
       <ScrollView contentContainerStyle={styles.body} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
+        {season ? <View style={styles.festive}><FestiveHero season={season} theme={theme} services={services} onOpen={(s) => openService(s)} /></View> : null}
         {activeJob ? <ActiveJobCard job={activeJob} onOpen={() => router.push(activeJob.href as never)} /> : null}
         {/* A booking started and left: back to where they stopped (jobs/checkout-draft). */}
         <ContinueBookingCard isAuthed={isAuthed} />
@@ -182,6 +190,8 @@ export function HomePage() {
 const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: colors.background },
   searchWrap: { paddingHorizontal: spacing.base, paddingBottom: spacing.base, paddingTop: 4, backgroundColor: zappy[100], borderBottomLeftRadius: radius.extraLarge, borderBottomRightRadius: radius.extraLarge },
+  // Edge to edge, flush under the search: undoes the body's padding.
+  festive: { marginHorizontal: -spacing.base, marginTop: -spacing.base },
   body: { padding: spacing.base, gap: spacing.xl, paddingBottom: spacing.xxxl },
   skelGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: '3.5%', rowGap: spacing.base },
   skel: { width: '31%', aspectRatio: 1, borderRadius: radius.large, backgroundColor: slate[100] },

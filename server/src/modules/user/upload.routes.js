@@ -51,7 +51,9 @@ const UPLOAD_FOLDERS = [
       // Pet care: pet profiles, and the provider's before/after photos.
       'pet/photos', 'pet/before', 'pet/after',
       // Event occasion covers, uploaded by admin.
-      'events/occasions'
+      'events/occasions',
+      // Festive home tiles, uploaded by admin (content/season).
+      'seasons'
 ];
 
 router.post(

@@ -377,3 +377,33 @@
 @media (prefers-reduced-motion: reduce) {
   [style*="zpt-"] { animation: none !important; }
 }
+
+/* ── Festive home (client home/festive): every movement eases, nothing snaps. ── */
+.fz-sway    { animation: fz-sway 3.4s ease-in-out infinite alternate; }
+.fz-twinkle { animation: fz-twinkle 1.7s ease-in-out infinite alternate; }
+.fz-flicker { animation: fz-flicker .9s ease-in-out infinite alternate; }
+.fz-float   { animation: fz-float 4.2s ease-in-out infinite alternate; }
+.fz-breathe { animation: fz-breathe 5s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: center; }
+.fz-fall    { animation: fz-fall 6s linear infinite; }
+.fz-drop    { animation: fz-drop .9s cubic-bezier(.2,.8,.2,1) both; }
+.fz-rise    { animation: fz-rise .65s cubic-bezier(.2,.8,.2,1) backwards; } /* not "both": once in, hover may lift it */
+.fz-shine   { background-size: 260% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: fz-shine 5.5s ease-in-out infinite; }
+.fz-sheen   { position: relative; overflow: hidden; }
+.fz-sheen::after { content: ''; position: absolute; inset: 0; pointer-events: none; transform: translateX(-120%);
+  background: linear-gradient(105deg, transparent 35%, rgba(255,255,255,.55) 50%, transparent 65%); animation: fz-sheen 4.2s ease-in-out infinite 1.2s; }
+.fz-tile { transition: transform .35s cubic-bezier(.2,.8,.2,1), box-shadow .35s ease; }
+.fz-tile:hover { transform: translateY(-4px); }
+@keyframes fz-sway    { from { transform: rotate(-3.5deg); } to { transform: rotate(3.5deg); } }
+@keyframes fz-twinkle { from { opacity: .3; } to { opacity: 1; } }
+@keyframes fz-flicker { from { transform: scale(.94, .84); opacity: .8; } to { transform: scale(1.06, 1.1); opacity: 1; } }
+@keyframes fz-float   { from { transform: translate(-2px, -4px) rotate(-4deg); } to { transform: translate(3px, 5px) rotate(4deg); } }
+@keyframes fz-breathe { from { transform: scale(.82); } to { transform: scale(1.14); } }
+@keyframes fz-fall    { 0% { transform: translateY(-8px); opacity: 0; } 15% { opacity: 1; } 100% { transform: translateY(14px); opacity: 0; } }
+@keyframes fz-drop    { from { transform: translateY(-18px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes fz-rise    { from { transform: translateY(16px) scale(.95); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes fz-shine   { 0%, 20% { background-position: 100% 0; } 60%, 100% { background-position: 0 0; } }
+@keyframes fz-sheen   { 0% { transform: translateX(-120%); } 45%, 100% { transform: translateX(120%); } }
+@media (prefers-reduced-motion: reduce) {
+  .fz-sway, .fz-twinkle, .fz-flicker, .fz-float, .fz-breathe, .fz-fall, .fz-drop, .fz-rise, .fz-shine, .fz-sheen::after { animation: none !important; }
+  .fz-shine { background-position: 100% 0; } /* the highlight rests off the text: plain ink */
+}

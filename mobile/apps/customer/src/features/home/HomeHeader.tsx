@@ -59,12 +59,13 @@ function useUnread(isAuthed: boolean) {
   return data?.unread ?? data?.notifications?.length ?? 0;
 }
 
-export function HomeHeader({ loc, isAuthed, onPickLocation }: { loc: HomeLocation; isAuthed: boolean; onPickLocation: () => void }) {
+/** tint: a light festive season's colour, so the festive top flows out of the header. */
+export function HomeHeader({ loc, isAuthed, onPickLocation, tint = null }: { loc: HomeLocation; isAuthed: boolean; onPickLocation: () => void; tint?: string | null }) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const unread = useUnread(isAuthed);
   return (
-    <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
+    <View style={[styles.header, { paddingTop: insets.top + spacing.sm }, tint ? { backgroundColor: tint } : null]}>
       <View style={styles.flex}>
         <ZappyWordmark size={22} />
         <Pressable onPress={onPickLocation} accessibilityRole="button" accessibilityLabel={`Service location: ${loc.primary}. Change location`} style={styles.loc}>
