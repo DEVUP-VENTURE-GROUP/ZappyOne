@@ -27,7 +27,6 @@ import { OffersRail, BookAgainRail, NearbyShopsLink } from './HomeRails';
 import { eventPhoto, eventTone } from '../events/eventPhotos';
 import ContinueBookingCard from './ContinueBookingCard';
 import FestiveHero from '@shared/components/home/festive/FestiveHero';
-import FestiveAmbient from '@shared/components/home/festive/FestiveAmbient';
 import FestiveReveal from '@shared/components/home/festive/FestiveReveal';
 import FestiveDivider from '@shared/components/home/festive/FestiveDivider';
 import { themeOf } from '@shared/customer/season';
@@ -271,7 +270,6 @@ export default function HomePage() {
       <div className="min-h-screen w-full overflow-x-clip bg-canvas"
         // A festival carries all the way down: the page takes its soft wash and warm glows.
         style={theme ? { background: `radial-gradient(60rem 40rem at 100% 30%, ${theme.accent}12, transparent 60%), radial-gradient(50rem 36rem at 0% 70%, ${theme.top}33, transparent 60%), ${theme.wash}` } : undefined}>
-        {season && <FestiveAmbient theme={season.theme} />}
         <HomeHeader
           loc={loc}
           isAuthed={isAuthed}

@@ -319,29 +319,6 @@ export function confettiPieces(colors, n = 26) {
 }
 
 /**
- * What drifts across the whole page while a festival is on (FestiveAmbient):
- * marigold petals falling (Navratri), embers rising (Diwali), gulal (Holi),
- * small kites (Sankranti), stars glinting (Eid), snow (Christmas). Few and
- * slow, so reading and tapping are never in the way.
- *   [{ x (%), size, color, delay, dur (ms), drift (px), shape, up }]
- */
-export function ambientParticles(themeKey, n = 14) {
-  const th = themeOf(themeKey);
-  const kind = { toran: 'petal', lights: 'ember', splash: 'gulal', kites: 'kite', crescent: 'star', stars: 'snow' }[th.motif] || 'petal';
-  const colors = {
-    petal: ['#F97316', '#FBBF24', '#EA580C', '#FDE047'], ember: ['#FCD34D', '#FB923C', '#FDE68A'],
-    gulal: ['#EC4899', '#22C55E', '#F59E0B', '#3B82F6', '#A855F7'], kite: ['#EF4444', '#F59E0B', '#8B5CF6', '#10B981'],
-    star: ['#FCD34D', '#FDE68A'], snow: ['#FFFFFF', '#E2E8F0'],
-  }[kind];
-  const rnd = seeded(17);
-  return Array.from({ length: n }, (_, i) => ({
-    x: Math.round(rnd() * 100), size: (kind === 'kite' ? 14 : kind === 'gulal' ? 10 : 7) + Math.round(rnd() * 7),
-    color: colors[i % colors.length], delay: Math.round(rnd() * 14000), dur: 11000 + Math.round(rnd() * 9000),
-    drift: Math.round((rnd() - 0.5) * 120), shape: kind, up: kind === 'ember',
-  }));
-}
-
-/**
  * The jhalar edge for bars (header, footer, the bottom tab bar): one 24×12
  * repeat of a fine line, a scallop and a bead, to tile along an edge.
  * `flip` hangs it upward (for a bar's top edge).

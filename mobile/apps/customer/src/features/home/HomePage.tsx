@@ -32,7 +32,6 @@ import { NotInYourArea } from '../catalog/serviceability/NotInYourArea';
 import { ActiveJobCard } from './ActiveJobCard';
 import { ContinueBookingCard } from './ContinueBookingCard';
 import { FestiveHero } from './festive/FestiveHero';
-import { FestiveAmbient } from './festive/FestiveAmbient';
 import { FestiveDivider } from './festive/FestiveDivider';
 import { themeOf } from '@zappy/core/shared/season';
 import { HeroCarousel } from './HeroCarousel';
@@ -188,7 +187,6 @@ export function HomePage() {
           </>
         )}
       </ScrollView>
-      {season ? <FestiveAmbient theme={season.theme} /> : null}
       <SpotlightSearch open={spotOpen} onClose={() => setSpotOpen(false)} lat={loc.lat} lng={loc.lng} />
       <LocationSheet open={locSheet} onClose={() => setLocSheet(false)} onUseCurrent={useCurrent} detecting={detecting} onPick={pick} />
     </View>
