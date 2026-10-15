@@ -26,19 +26,28 @@ beforeAll(async () => {
 afterAll(stopMongo);
 beforeEach(() => Promise.all([Season.deleteMany({}), Promo.deleteMany({})]));
 
+const QUIET = new Date('2027-05-20T12:00:00+05:30'); // between festivals in the built-in calendar
+
 test('home shows the festival only between its dates, and nothing between festivals', async () => {
-  expect((await request(app).get('/api/content/season')).body).toEqual({ season: null });
-  await Season.create(base({ startAt: new Date(Date.now() + H), endAt: new Date(Date.now() + 2 * H) }));
-  expect(await seasons.current()).toBeNull();
+  expect(await seasons.current(QUIET)).toBeNull();
+  await Season.create(base({ startAt: new Date(QUIET.getTime() + H), endAt: new Date(QUIET.getTime() + 2 * H) }));
+  expect(await seasons.current(QUIET)).toBeNull();
   await Season.create(base({ name: 'Running' }));
   const res = await request(app).get('/api/content/season');
   expect(res.body.season).toMatchObject({ name: 'Running', theme: 'navratri', headline: 'Festive-ready homes' });
   expect(res.body.season.tiles).toHaveLength(1);
 });
 
-test('a festival switched off does not show', async () => {
+test('a festival switched off does not show, nor the built-in one for those days', async () => {
   await Season.create(base({ isActive: false }));
   expect(await seasons.current()).toBeNull();
+});
+
+test('without a season of their own, home turns festive for the big festivals by itself, with no offer', async () => {
+  const diwali = await seasons.current(new Date('2026-11-06T12:00:00+05:30'));
+  expect(diwali).toMatchObject({ theme: 'diwali', greeting: 'Happy Diwali', auto: true, offer: null });
+  expect(diwali.tiles.length).toBeGreaterThan(0);
+  expect((await seasons.current(new Date('2027-01-14T12:00:00+05:30'))).theme).toBe('sankranti');
 });
 
 test('the offer shows only while its promo code is live, and says what it gives', async () => {

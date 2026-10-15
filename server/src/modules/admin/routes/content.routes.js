@@ -45,7 +45,10 @@ const seasonBody = Joi.object({
 });
 
 router.get('/seasons', async (req, res, next) => {
-  try { res.json({ seasons: await require('../../content/season.service').list() }); } catch (err) { next(err); }
+  try {
+    const svc = require('../../content/season.service');
+    res.json({ seasons: await svc.list(), auto: svc.upcomingAuto() });
+  } catch (err) { next(err); }
 });
 
 router.post('/seasons', validate(seasonBody), async (req, res, next) => {

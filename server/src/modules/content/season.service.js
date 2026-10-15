@@ -1,7 +1,9 @@
 /**
  * The festive season running now, for the customer home (content/season.model).
  * One at a time: if admin schedules two that overlap, the one that started
- * last shows. Its offer is a live promo or nothing, so the strip never
+ * last shows. With none from admin, the built-in festival calendar fills in
+ * (content/festival-calendar), unless admin switched that off by scheduling a
+ * season that is not shown over the same days. Its offer is a live promo or nothing, so the strip never
  * promises a discount the checkout would refuse.
  */
 const Season = require('./season.model');
@@ -24,13 +26,21 @@ async function liveOffer(code, now = new Date()) {
 
 /** What the customer home shows now, or null. */
 async function current(now = new Date()) {
-  const s = await Season.findOne({ isActive: true, startAt: { $lte: now }, endAt: { $gte: now } }).sort({ startAt: -1 }).lean();
-  if (!s) return null;
+  const s = await Season.findOne({ startAt: { $lte: now }, endAt: { $gte: now } }).sort({ isActive: -1, startAt: -1 }).lean();
+  if (!s) {
+    const f = require('./festival-calendar').festivalAt(now);
+    return f ? { id: f.id, name: f.name, theme: f.theme, greeting: f.greeting, headline: f.headline, subline: f.subline, endAt: f.endAt, tiles: f.tiles, offer: null, auto: true } : null;
+  }
+  // Admin's own season for these days, switched off: nothing festive (not even the built-in one).
+  if (!s.isActive) return null;
   return {
     id: String(s._id), name: s.name, theme: s.theme, greeting: s.greeting, headline: s.headline, subline: s.subline,
     endAt: s.endAt, tiles: s.tiles || [], offer: await liveOffer(s.promoCode, now),
   };
 }
+
+/** Admin: the built-in festivals coming up, to customise or switch off. */
+const upcomingAuto = (now = new Date()) => require('./festival-calendar').upcoming(now);
 
 /** Admin: every season, newest first, with whether its offer is live. */
 async function list() {
@@ -66,4 +76,4 @@ async function remove(id) {
   return before;
 }
 
-module.exports = { current, list, create, update, remove, liveOffer };
+module.exports = { current, list, upcomingAuto, create, update, remove, liveOffer };
