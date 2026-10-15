@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { useAdminMetricsQuery, useAdminInsightsOverviewQuery } from '@shared/services/api';
 import { PageLoader } from '../../ui/kit';
 import DemandAlerts from './DemandAlerts';
+import FleetSummary from './FleetSummary';
 import { Kpi, TrendChart, Panel, rupees, count } from '../insights/charts';
 
 /**
@@ -37,6 +38,9 @@ export default function Overview() {
           <Kpi label="Customers" value={m ? count(m.totalUsers) : '—'} hint="All time" />
         </div>
       </div>
+
+      {/* Our own staff and dark stores (Fleet), for roles that open it. */}
+      <FleetSummary />
 
       {week && (
         <Panel title="Last 7 days" note={<Link to="?tab=insights&sub=today&days=7" className="font-semibold text-[#1F4FD8] hover:underline">Open Insights</Link>}>

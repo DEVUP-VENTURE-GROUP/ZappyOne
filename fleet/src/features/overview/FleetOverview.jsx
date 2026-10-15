@@ -12,10 +12,12 @@ const RANGES = [[7, '7 days'], [30, '30 days'], [90, '90 days']];
  * then people (staff, on duty, attendance, utilisation), then the store
  * (stock value, low stock), with the month day by day and hub by hub.
  */
-export default function FleetOverview() {
-  const [days, setDays] = useState(30);
-  const { data, isLoading, isError } = useAdminFleetOverviewQuery(days);
-  if (isError) return <EmptyState message="Could not load the fleet overview. Refresh to try again." />;
+export default function FleetOverview({ days: fixedDays = null }) {
+  // Admin → Insights passes its own period; on its own it has a switch.
+  const [picked, setDays] = useState(30);
+  const days = fixedDays ? Math.max(7, fixedDays) : picked;
+  const { data, isLoading, isError, error } = useAdminFleetOverviewQuery(days);
+  if (isError) return <EmptyState message={error?.status === 403 ? 'Your role does not open Fleet.' : 'Could not load the fleet overview. Refresh to try again.'} />;
   if (isLoading || !data) return <PageLoader />;
   const k = data.kpis;
   const series = data.days.map((d) => ({ ...d, date: d.day, costPaise: d.salaryPaise + d.expensesPaise }));
@@ -25,12 +27,12 @@ export default function FleetOverview() {
     <div className="space-y-5">
       <div className="flex items-center justify-between gap-3">
         <p className="text-[13px] text-slate-500">{k.hubs} hubs, {k.staff} staff, <b className="text-emerald-600">{k.onDutyNow} on duty now</b></p>
-        <div className="flex rounded-lg bg-slate-100 p-0.5">
+        {!fixedDays && <div className="flex rounded-lg bg-slate-100 p-0.5">
           {RANGES.map(([d, label]) => (
             <button key={d} type="button" onClick={() => setDays(d)}
               className={`rounded-md px-3 py-1.5 text-[12.5px] font-semibold ${days === d ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}>{label}</button>
           ))}
-        </div>
+        </div>}
       </div>
 
       <FleetAttention />
