@@ -4,6 +4,7 @@ import { FESTIVE_PHOTOS, seasonTiles, tileLayout } from '../../../customer/seaso
 import FestiveMotif from './FestiveMotif';
 import FestiveOffer from './FestiveOffer';
 import FestiveRays from './FestiveRays';
+import FestiveSpotlight from './FestiveSpotlight';
 import FestiveTile from './FestiveTile';
 
 /** Real photos first; a service's own picture or art otherwise. */
@@ -11,10 +12,10 @@ const artOf = (s) => FESTIVE_PHOTOS[s.code] || servicePhoto(s) || artFor(s.code,
 
 /**
  * The top of home during a festival (server content/season, Admin → Festive
- * home), in the manner of Blinkit's festive home: the festival's colours with
- * soft rays and a fine jhalar, its artwork when uploaded, a greeting, a full
- * grid of real-photo tiles (a tall feature tile when there are five), and its
- * offer. Only live services become tiles; with no season, no festive top.
+ * home), in the manner of Blinkit's and Zepto's festive homes: the festival's
+ * colours with soft rays and a fine jhalar, a spotlight that changes scene
+ * every few seconds (greeting on a stage, services, our promise, the offer),
+ * a full grid of real-photo tiles (a tall feature tile at five), and its offer. Only live services become tiles; with no season, no festive top.
  */
 export default function FestiveHero({ season, theme, services, onOpen }) {
   const tiles = useMemo(() => seasonTiles(season, services, artOf), [season, services]);
@@ -25,21 +26,8 @@ export default function FestiveHero({ season, theme, services, onOpen }) {
       style={{ background: `linear-gradient(180deg, ${theme.top} 0%, ${theme.bottom} 92%)` }}>
       {theme.rays && <FestiveRays />}
       <FestiveMotif theme={season.theme} />
-      <div className="relative mx-auto flex w-full max-w-5xl flex-col gap-4 px-4 pb-5 pt-12 sm:px-6 sm:pt-16">
-        {season.artUrl && (
-          <img src={season.artUrl} alt="" className="fz-drop mx-auto -mb-1 max-h-[120px] w-auto max-w-full object-contain sm:max-h-[150px]" />
-        )}
-        <div className="text-center">
-          {season.greeting && (
-            <p className="text-[11.5px] font-extrabold uppercase tracking-[0.2em]" style={{ color: theme.accent }}>{season.greeting}</p>
-          )}
-          {/* A slow light passes across the headline, in the festival's own accent. */}
-          <h2 className="fz-shine mx-auto mt-1 max-w-md text-[24px] font-extrabold leading-[1.12] tracking-[-0.025em] [text-wrap:balance] sm:text-[32px]"
-            style={{ backgroundImage: `linear-gradient(110deg, ${theme.ink} 42%, ${theme.accent} 50%, ${theme.ink} 58%)` }}>
-            {season.headline}
-          </h2>
-          {season.subline && <p className="mx-auto mt-1 max-w-sm text-[13px] leading-relaxed [text-wrap:balance] sm:max-w-md sm:text-[14px]" style={{ color: theme.sub }}>{season.subline}</p>}
-        </div>
+      <div className="relative mx-auto flex w-full max-w-5xl flex-col gap-5 px-4 pb-5 pt-9 sm:px-6 sm:pt-12">
+        <FestiveSpotlight season={season} theme={theme} />
 
         {/* Phone: Blinkit's grid. Wide screens: every tile in one row. */}
         {tiles.length > 0 && (

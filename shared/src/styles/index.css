@@ -407,3 +407,30 @@
   .fz-sway, .fz-twinkle, .fz-flicker, .fz-float, .fz-breathe, .fz-fall, .fz-drop, .fz-rise, .fz-shine, .fz-sheen::after { animation: none !important; }
   .fz-shine { background-position: 100% 0; } /* the highlight rests off the text: plain ink */
 }
+
+/* ── Festive spotlight (home/festive/FestiveSpotlight): a scene every few seconds. ── */
+.fz-scene      { animation: fz-scene .55s cubic-bezier(.2,.8,.2,1) both; }
+.fz-curtain-l  { animation: fz-curtain-l 1.1s cubic-bezier(.65,0,.35,1) both; transform-origin: 0 0; }
+.fz-curtain-r  { animation: fz-curtain-r 1.1s cubic-bezier(.65,0,.35,1) both; transform-origin: 100% 0; }
+.fz-kenburns   { animation: fz-kenburns 6s ease-out both; }
+.fz-pop        { animation: fz-pop .6s cubic-bezier(.34,1.56,.64,1) both; }
+.fz-confetti   { animation-name: fz-confetti; animation-timing-function: cubic-bezier(.3,.6,.4,1); animation-fill-mode: both; animation-iteration-count: infinite; }
+.fz-fill       { animation: fz-fill linear both; transform-origin: 0 50%; }
+@keyframes fz-scene     { from { opacity: 0; transform: scale(1.03); } to { opacity: 1; transform: none; } }
+@keyframes fz-curtain-l { from { transform: scaleX(3.1); } to { transform: none; } }
+@keyframes fz-curtain-r { from { transform: scaleX(3.1); } to { transform: none; } }
+@keyframes fz-kenburns  { from { transform: scale(1.18) translate(2%, 2%); } to { transform: scale(1.02); } }
+@keyframes fz-pop       { from { opacity: 0; transform: scale(.6) translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes fz-confetti  { 0% { transform: translateY(-20px) rotate(0); opacity: 0; } 10% { opacity: 1; } 100% { transform: translateY(230px) rotate(540deg); opacity: 0; } }
+@keyframes fz-fill      { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@media (prefers-reduced-motion: reduce) {
+  .fz-curtain-l, .fz-curtain-r, .fz-kenburns, .fz-pop, .fz-confetti { animation: none !important; }
+  .fz-confetti { display: none; }
+}
+.fz-burst   { animation: fz-burst 2.4s cubic-bezier(.2,.8,.2,1) infinite both; transform-box: fill-box; transform-origin: center; }
+.fz-petal   { animation-name: fz-petal; animation-timing-function: linear; animation-iteration-count: infinite; animation-fill-mode: both; }
+.fz-lantern { animation-name: fz-lantern; animation-timing-function: ease-in-out; animation-iteration-count: infinite; animation-fill-mode: both; }
+@keyframes fz-burst   { 0% { transform: scale(.1); opacity: 0; } 12% { opacity: 1; } 55% { transform: scale(1); opacity: 1; } 100% { transform: scale(1.15); opacity: 0; } }
+@keyframes fz-petal   { 0% { transform: translate(0, -24px) rotate(0); opacity: 0; } 10% { opacity: 1; } 50% { transform: translate(var(--drift), 100px) rotate(200deg); } 90% { opacity: 1; } 100% { transform: translate(0, 230px) rotate(420deg); opacity: 0; } }
+@keyframes fz-lantern { 0% { transform: translateY(40px) scale(.85); opacity: 0; } 15% { opacity: 1; } 100% { transform: translateY(-230px) scale(1); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .fz-burst, .fz-petal, .fz-lantern { animation: none !important; } .fz-petal, .fz-lantern { display: none; } }

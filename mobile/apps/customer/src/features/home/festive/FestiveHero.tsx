@@ -19,6 +19,7 @@ import { radius } from '@zappy/ui/theme/radius';
 import { spacing } from '@zappy/ui/theme/spacing';
 import { FestiveMotif } from './FestiveMotif';
 import { FestiveOffer } from './FestiveOffer';
+import { FestiveSpotlight } from './FestiveSpotlight';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Any = any;
@@ -69,12 +70,7 @@ export function FestiveHero({ season, theme, services, onOpen }: { season: Any; 
       <FestiveMotif theme={season.theme} />
 
       <View style={styles.body}>
-        {season.artUrl ? <Animated.Image entering={reduce ? undefined : FadeInDown.duration(600)} source={{ uri: season.artUrl }} style={styles.artwork} resizeMode="contain" /> : null}
-        <Animated.View entering={reduce ? undefined : FadeInDown.duration(500)} style={styles.head}>
-          {season.greeting ? <Text variant="caption" weight="bold" color={theme.accent} style={styles.greeting}>{season.greeting.toUpperCase()}</Text> : null}
-          <Text variant="heading1" weight="black" color={theme.ink} style={styles.headline}>{season.headline}</Text>
-          {season.subline ? <Text variant="bodySmall" color={theme.sub} style={styles.center}>{season.subline}</Text> : null}
-        </Animated.View>
+        <FestiveSpotlight season={season} theme={theme} />
 
         {tiles.length ? (feature ? (
           // Five: a tall feature tile beside a two-by-two block, as on the website.
@@ -99,7 +95,7 @@ export function FestiveHero({ season, theme, services, onOpen }: { season: Any; 
 const styles = StyleSheet.create({
   band: { overflow: 'hidden', borderBottomLeftRadius: radius.extraLarge, borderBottomRightRadius: radius.extraLarge },
   artwork: { alignSelf: 'center', width: '100%', height: 110, marginBottom: -4 },
-  body: { paddingTop: 52, paddingHorizontal: spacing.base, paddingBottom: spacing.lg, gap: spacing.base },
+  body: { paddingTop: 38, paddingHorizontal: spacing.base, paddingBottom: spacing.lg, gap: spacing.base },
   head: { alignItems: 'center', gap: 4 },
   greeting: { letterSpacing: 2 },
   headline: { textAlign: 'center', letterSpacing: -0.5 },

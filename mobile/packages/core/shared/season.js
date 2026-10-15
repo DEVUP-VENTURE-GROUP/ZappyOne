@@ -22,37 +22,37 @@ export const THEMES = {
     label: 'Navratri · Dussehra · Bathukamma', dark: false,
     top: '#FFCF5A', bottom: '#FFF5DA', ink: '#4A2300', sub: '#7A4210', accent: '#C2410C',
     tile: '#FFF6DF', tileInk: '#4A2300', line: '#F1D08A', rays: true,
-    motif: 'toran', paint: ['#F59E0B', '#FBBF24', '#EA580C', '#2F7D4A', '#B7791F'],
+    curtain: '#EFA21C', motif: 'toran', paint: ['#F59E0B', '#FBBF24', '#EA580C', '#2F7D4A', '#B7791F'],
   },
   diwali: {
     label: 'Diwali', dark: true,
     top: '#1B1037', bottom: '#3A1C5C', ink: '#FFF4D6', sub: '#E5D4FF', accent: '#FBBF24',
     tile: '#2A1850', tileInk: '#FFF4D6', line: '#4C2D7A',
-    motif: 'lights', paint: ['#FCD34D', '#FB923C', '#FDE68A', '#5B3A1A'],
+    curtain: '#4A1D7A', motif: 'lights', paint: ['#FCD34D', '#FB923C', '#FDE68A', '#5B3A1A'],
   },
   holi: {
     label: 'Holi', dark: false,
     top: '#FBCFE8', bottom: '#E0F2FE', ink: '#4A044E', sub: '#6B2160', accent: '#DB2777',
     tile: '#FFFFFF', tileInk: '#4A044E', line: '#F5C2E0', rays: true,
-    motif: 'splash', paint: ['#EC4899', '#22C55E', '#F59E0B', '#3B82F6', '#A855F7'],
+    curtain: '#F472B6', motif: 'splash', paint: ['#EC4899', '#22C55E', '#F59E0B', '#3B82F6', '#A855F7'],
   },
   sankranti: {
     label: 'Sankranti · Pongal', dark: false,
     top: '#8ED8FA', bottom: '#E6F6FE', ink: '#0B3B5A', sub: '#1F5878', accent: '#EA580C',
     tile: '#FFFFFF', tileInk: '#0B3B5A', line: '#BCE6FA', rays: true,
-    motif: 'kites', paint: ['#EF4444', '#F59E0B', '#8B5CF6', '#10B981', '#0B3B5A'],
+    curtain: '#38A8E0', motif: 'kites', paint: ['#EF4444', '#F59E0B', '#8B5CF6', '#10B981', '#0B3B5A'],
   },
   eid: {
     label: 'Eid', dark: true,
     top: '#053D30', bottom: '#0B5D47', ink: '#ECFDF5', sub: '#B5F0D6', accent: '#FCD34D',
     tile: '#0A4A3A', tileInk: '#ECFDF5', line: '#17705A',
-    motif: 'crescent', paint: ['#FCD34D', '#FEF3C7', '#053D30'],
+    curtain: '#0E6B55', motif: 'crescent', paint: ['#FCD34D', '#FEF3C7', '#053D30'],
   },
   christmas: {
     label: 'Christmas · New Year', dark: true,
     top: '#6E1418', bottom: '#9B1C22', ink: '#FFF1F1', sub: '#FFD0D0', accent: '#FDE68A',
     tile: '#7E1A1F', tileInk: '#FFF1F1', line: '#A8343A',
-    motif: 'stars', paint: ['#FDE68A', '#FFFFFF', '#86EFAC'],
+    curtain: '#B3242B', motif: 'stars', paint: ['#FDE68A', '#FFFFFF', '#86EFAC'],
   },
 };
 
@@ -201,6 +201,121 @@ export function tileLayout(n) {
   if (n === 4 || n === 2) return { cols: 2, feature: false };
   if (n === 1) return { cols: 1, feature: false };
   return { cols: 3, feature: false };
+}
+
+/** How long each spotlight scene stays, in ms (Zepto's run 3–5 s). */
+export const SCENE_MS = 4200;
+
+/**
+ * The festive spotlight's scenes, Zepto-style: each an animated festive stage
+ * with one line from the season. Curtains opening on the greeting, fireworks
+ * bursting behind the festival's name, petals falling and lanterns rising
+ * behind the promise, and the offer with confetti (only while it is live).
+ */
+export function spotlightScenes(season) {
+  if (!season) return [];
+  const th = themeOf(season.theme);
+  const scenes = [{ kind: 'curtains', key: 'curtains' }];
+  // Navratri, Dussehra and Bathukamma: real photographs of the celebrations. Other festivals: fireworks.
+  if (th.motif === 'toran') {
+    scenes.push(
+      { kind: 'photo', key: 'bathukamma', ...SCENE_PHOTOS.bathukamma, title: season.headline },
+      { kind: 'photo', key: 'dandiya', ...SCENE_PHOTOS.dandiya, title: 'Dance all night. We will handle the rest.' },
+      { kind: 'photo', key: 'garba', ...SCENE_PHOTOS.garba, title: season.subline || season.headline },
+    );
+  } else {
+    scenes.push({ kind: 'fireworks', key: 'fireworks' });
+    if (season.subline) scenes.push({ kind: 'petals', key: 'petals' });
+  }
+  if (season.offer) scenes.push({ kind: 'offer', key: 'offer', offer: season.offer });
+  return scenes;
+}
+
+/**
+ * Real photographs of the celebrations (assets/web/festive, Unsplash License;
+ * credits there), with where the eye should rest when cropped.
+ */
+export const SCENE_PHOTOS = {
+  bathukamma: { photo: '/festive/bathukamma.webp', focus: '50% 42%', kicker: 'Bathukamma' },
+  dandiya: { photo: '/festive/dandiya.webp', focus: '50% 30%', kicker: 'Dandiya nights' },
+  garba: { photo: '/festive/garba.webp', focus: '50% 38%', kicker: 'Navratri garba' },
+};
+
+/**
+ * Fireworks for the stage (360×200): bursts, each a ring of sparks from its
+ * centre, in the festival's colours: [{ cx, cy, r, color, delay, sparks: [{ x2, y2 }] }].
+ */
+export function fireworkBursts(colors) {
+  const at = [[62, 58, 34], [298, 52, 30], [180, 30, 26], [118, 120, 22], [250, 128, 24]];
+  return at.map(([cx, cy, r], i) => ({
+    cx, cy, r, color: colors[i % colors.length], delay: i * 0.45,
+    sparks: Array.from({ length: 14 }, (_, k) => {
+      const a = (k / 14) * Math.PI * 2;
+      return { x1: cx + Math.cos(a) * r * 0.35, y1: cy + Math.sin(a) * r * 0.35, x2: cx + Math.cos(a) * r, y2: cy + Math.sin(a) * r };
+    }),
+  }));
+}
+
+/** Marigold petals falling across the stage: [{ x (%), size, color, delay, dur, drift }]. */
+export function fallingPetals(colors, n = 22) {
+  const rnd = seeded(5);
+  return Array.from({ length: n }, (_, i) => ({
+    x: Math.round(rnd() * 100), size: 7 + Math.round(rnd() * 7), color: colors[i % colors.length],
+    delay: Math.round(rnd() * 3000), dur: 3200 + Math.round(rnd() * 2400), drift: Math.round((rnd() - 0.5) * 60),
+  }));
+}
+
+/** Lanterns rising from the bottom of the stage: [{ x (%), size, delay, dur }]. */
+export function risingLanterns(n = 6) {
+  const rnd = seeded(3);
+  return Array.from({ length: n }, (_, i) => ({
+    x: 8 + Math.round((i / n) * 84 + rnd() * 6), size: 16 + Math.round(rnd() * 10), delay: Math.round(rnd() * 2500), dur: 4200 + Math.round(rnd() * 1800),
+  }));
+}
+
+/**
+ * Stage curtains for the greeting scene, in a 360×200 box: a drape from each
+ * top corner, swept aside, with folds; `fill` is the curtain's colour.
+ */
+export function curtainShapes(fill) {
+  const left = 'M0,0 L118,0 C96,40 70,92 26,128 C18,134 8,140 0,142 Z';
+  const right = 'M360,0 L242,0 C264,40 290,92 334,128 C342,134 352,140 360,142 Z';
+  const folds = [
+    'M30,0 C30,40 22,80 8,118', 'M62,0 C58,44 44,86 20,124', 'M92,0 C84,40 66,84 34,120',
+    'M330,0 C330,40 338,80 352,118', 'M298,0 C302,44 316,86 340,124', 'M268,0 C276,40 294,84 326,120',
+  ];
+  return [
+    { t: 'path', d: left, fill, o: 0.9, side: 'left' },
+    { t: 'path', d: right, fill, o: 0.9, side: 'right' },
+    ...folds.map((d, i) => ({ t: 'path', d, stroke: '#FFFFFF', sw: 1.2, o: 0.22, side: i < 3 ? 'left' : 'right' })),
+    // The tie-backs.
+    { t: 'path', d: 'M10,122 Q24,112 36,124', stroke: '#FFFFFF', sw: 2.4, o: 0.6, side: 'left' },
+    { t: 'path', d: 'M350,122 Q336,112 324,124', stroke: '#FFFFFF', sw: 2.4, o: 0.6, side: 'right' },
+  ];
+}
+
+/** Fairy lights strung in arcs across the stage (360×200): [{ cx, cy, r, delay }]. */
+export function fairyLights() {
+  const out = [];
+  // Both strings stay above the greeting (text starts around y 70).
+  [[6, 22, 62], [26, 20, 44]].forEach(([y0, sag, n]) => {
+    const p0 = { x: 6, y: y0 }; const p1 = { x: 180, y: y0 + sag }; const p2 = { x: 354, y: y0 };
+    const count = Math.round(n / 2);
+    for (let k = 0; k <= count; k += 1) {
+      const p = quad(p0, p1, p2, k / count);
+      out.push({ cx: p.x, cy: p.y, r: k % 3 ? 1.6 : 2.2, delay: (k % 7) * 0.22 });
+    }
+  });
+  return out;
+}
+
+/** Confetti for the offer scene: [{ x, rot, color, delay, dur, w, h }], x in %. */
+export function confettiPieces(colors, n = 26) {
+  const rnd = seeded(11);
+  return Array.from({ length: n }, (_, i) => ({
+    x: Math.round(rnd() * 100), rot: Math.round(rnd() * 360), color: colors[i % colors.length],
+    delay: Math.round(rnd() * 900), dur: 1600 + Math.round(rnd() * 1400), w: 5 + Math.round(rnd() * 4), h: 8 + Math.round(rnd() * 6),
+  }));
 }
 
 /**
