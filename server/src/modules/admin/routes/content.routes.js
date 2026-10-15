@@ -31,6 +31,7 @@ const seasonBody = Joi.object({
   greeting: Joi.string().trim().max(40).allow(''),
   headline: Joi.string().trim().max(60).required(),
   subline: Joi.string().trim().max(120).allow(''),
+  artUrl: Joi.string().max(500).allow(''),
   startAt: Joi.date().iso().required(),
   endAt: Joi.date().iso().required(),
   tiles: Joi.array().items(Joi.object({

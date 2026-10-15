@@ -26,6 +26,8 @@ const seasonSchema = new mongoose.Schema({
   greeting: { type: String, default: '', trim: true, maxlength: 40 },
   headline: { type: String, required: true, trim: true, maxlength: 60 },
   subline: { type: String, default: '', trim: true, maxlength: 120 },
+  // The festival's own artwork (uploaded), shown at the top: Durga's eyes, a diya, a kite…
+  artUrl: { type: String, default: '', maxlength: 500 },
   startAt: { type: Date, required: true },
   endAt: { type: Date, required: true },
   tiles: { type: [tileSchema], default: [] },

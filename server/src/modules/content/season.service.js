@@ -34,7 +34,7 @@ async function current(now = new Date()) {
   // Admin's own season for these days, switched off: nothing festive (not even the built-in one).
   if (!s.isActive) return null;
   return {
-    id: String(s._id), name: s.name, theme: s.theme, greeting: s.greeting, headline: s.headline, subline: s.subline,
+    id: String(s._id), name: s.name, theme: s.theme, greeting: s.greeting, headline: s.headline, subline: s.subline, artUrl: s.artUrl || '',
     endAt: s.endAt, tiles: s.tiles || [], offer: await liveOffer(s.promoCode, now),
   };
 }

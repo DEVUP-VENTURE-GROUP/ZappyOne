@@ -21,8 +21,8 @@ export const THEMES = {
   navratri: {
     label: 'Navratri · Dussehra · Bathukamma', dark: false,
     top: '#FFCF5A', bottom: '#FFF5DA', ink: '#4A2300', sub: '#7A4210', accent: '#C2410C',
-    tile: '#FFF9EA', tileInk: '#4A2300', line: '#F3D488',
-    motif: 'toran', paint: ['#F97316', '#FBBF24', '#EA580C', '#15803D', '#9A3412'],
+    tile: '#FFF6DF', tileInk: '#4A2300', line: '#F1D08A', rays: true,
+    motif: 'toran', paint: ['#F59E0B', '#FBBF24', '#EA580C', '#2F7D4A', '#B7791F'],
   },
   diwali: {
     label: 'Diwali', dark: true,
@@ -33,13 +33,13 @@ export const THEMES = {
   holi: {
     label: 'Holi', dark: false,
     top: '#FBCFE8', bottom: '#E0F2FE', ink: '#4A044E', sub: '#6B2160', accent: '#DB2777',
-    tile: '#FFFFFF', tileInk: '#4A044E', line: '#F5C2E0',
+    tile: '#FFFFFF', tileInk: '#4A044E', line: '#F5C2E0', rays: true,
     motif: 'splash', paint: ['#EC4899', '#22C55E', '#F59E0B', '#3B82F6', '#A855F7'],
   },
   sankranti: {
     label: 'Sankranti · Pongal', dark: false,
     top: '#8ED8FA', bottom: '#E6F6FE', ink: '#0B3B5A', sub: '#1F5878', accent: '#EA580C',
-    tile: '#FFFFFF', tileInk: '#0B3B5A', line: '#BCE6FA',
+    tile: '#FFFFFF', tileInk: '#0B3B5A', line: '#BCE6FA', rays: true,
     motif: 'kites', paint: ['#EF4444', '#F59E0B', '#8B5CF6', '#10B981', '#0B3B5A'],
   },
   eid: {
@@ -58,8 +58,11 @@ export const THEMES = {
 
 export const themeOf = (key) => THEMES[key] || THEMES.navratri;
 
-/** The drawing area every motif is laid out in; renderers scale it to the band's width. */
+/** The drawing area every motif is laid out in, drawn at about phone width. */
 export const MOTIF_BOX = { w: 360, h: 96 };
+
+/** Decorations that are a pattern repeat across a wide screen; the rest are one centred piece. */
+export const motifRepeats = (themeKey) => ['toran', 'lights', 'splash', 'stars'].includes(themeOf(themeKey).motif);
 
 /** Same numbers every render (no flicker, web and app alike). */
 function seeded(seed) {
@@ -93,16 +96,22 @@ export function motifShapes(themeKey) {
   const rnd = seeded(7);
 
   if (th.motif === 'toran') {
-    // A marigold toran: a rope across the top, strands of flowers, mango leaves between.
-    out.push({ t: 'path', d: `M0,5 Q${w / 2},11 ${w},5`, stroke: e, sw: 2.5 });
-    for (let i = 0; i < 12; i += 1) {
-      const x = 15 + i * 30;
-      const balls = i % 2 ? 3 : 5;
-      const sway = { g: `s${i}`, anim: 'sway', px: x, py: 7, delay: (i % 4) * 0.35 };
-      out.push({ t: 'path', d: `M${x},7 L${x},${10 + balls * 11}`, stroke: e, sw: 1, o: 0.6, ...sway });
-      for (let k = 0; k < balls; k += 1) out.push({ t: 'circle', cx: x, cy: 13 + k * 11, r: 5.4, fill: (k + i) % 2 ? b : a, ...sway });
-      out.push({ t: 'path', d: `M${x - 4},${12 + balls * 11} L${x},${22 + balls * 11} L${x + 4},${12 + balls * 11} Z`, fill: d, ...sway });
-      if (i < 11) out.push({ t: 'path', d: `M${x + 9},7 Q${x + 15},20 ${x + 21},7 Z`, fill: d, o: 0.9 });
+    // A jhalar: a fine gold border, scallops hanging from it, and at each join a
+    // small marigold bell on a thread that sways. Line art, not cartoon.
+    out.push({ t: 'path', d: `M0,3.5 L${w},3.5`, stroke: e, sw: 1.1 });
+    out.push({ t: 'path', d: `M0,7 L${w},7`, stroke: e, sw: 0.6, o: 0.7 });
+    for (let x = 0; x < w; x += 24) {
+      out.push({ t: 'path', d: `M${x},7 Q${x + 12},21 ${x + 24},7`, stroke: e, sw: 0.9 });
+      out.push({ t: 'circle', cx: x + 12, cy: 14.2, r: 1.1, fill: e });
+    }
+    for (let i = 0, x = 24; x < w; i += 1, x += 24) {
+      const long = i % 2 === 0;
+      const y = long ? 34 : 26;
+      const sway = { g: `b${i}`, anim: 'sway', px: x, py: 7, delay: (i % 5) * 0.4 };
+      out.push({ t: 'path', d: `M${x},7 L${x},${y - 4}`, stroke: e, sw: 0.6, ...sway });
+      out.push({ t: 'path', d: `M${x - 2.6},${y - 4.5} Q${x},${y - 7.5} ${x + 2.6},${y - 4.5}`, fill: d, ...sway });
+      out.push({ t: 'circle', cx: x, cy: y, r: long ? 3.6 : 3, fill: long ? a : c, ...sway });
+      out.push({ t: 'circle', cx: x - 0.9, cy: y - 0.9, r: long ? 1.1 : 0.9, fill: '#FFFFFF', o: 0.55, ...sway });
     }
   } else if (th.motif === 'lights') {
     // Two strings of lights, each bulb with a soft glow, and diyas along the bottom edge.
@@ -152,6 +161,46 @@ export function motifShapes(themeKey) {
     for (let k = 0; k < 30; k += 1) out.push({ t: 'circle', cx: rnd() * w, cy: rnd() * 92, r: 0.8 + rnd() * 1.8, fill: b, o: 0.4 + rnd() * 0.5, anim: 'fall', delay: (k % 10) * 0.6 });
   }
   return out;
+}
+
+/**
+ * Soft sunburst rays for the light themes, behind everything, in a box `w`×`h`
+ * (the whole band): wedges from a point above the middle, white and faint.
+ */
+export function rayShapes(w = 360, h = 420) {
+  const cx = w / 2; const cy = -h * 0.12; const R = h * 1.6;
+  const out = [];
+  for (let deg = 12; deg < 168; deg += 12) {
+    const a1 = (deg * Math.PI) / 180; const a2 = ((deg + 5) * Math.PI) / 180;
+    out.push({ t: 'path', d: `M${cx},${cy} L${cx + R * Math.cos(a1)},${cy + R * Math.sin(a1)} L${cx + R * Math.cos(a2)},${cy + R * Math.sin(a2)} Z`, fill: '#FFFFFF', o: 0.16 });
+  }
+  return out;
+}
+
+/**
+ * A real photo for a festive tile, by service (website paths, assets/web);
+ * services not here use their own picture or art.
+ */
+export const FESTIVE_PHOTOS = {
+  two_wheeler: '/problems/two_wheeler/headings/tw_maintenance.webp',
+  four_wheeler: '/problems/four_wheeler/headings/fw_body.webp',
+  water_tank_care: '/problems/water_tank_care/headings/wt_cleaning.webp',
+  mobile_repair: '/hero/phone-repair.webp',
+  laptop_repair: '/hero/phone-bench.webp',
+  events: '/hero/events.webp',
+  shopping_pickup: '/hero/helping.webp',
+};
+
+/**
+ * How the tiles sit, so the grid is always full (Blinkit's festive grid):
+ * 5 → a tall feature tile and four beside it; 4 → two by two; else rows of 3
+ * (or 2, or 1 wide). `feature`: the first tile spans two rows.
+ */
+export function tileLayout(n) {
+  if (n === 5) return { cols: 3, feature: true };
+  if (n === 4 || n === 2) return { cols: 2, feature: false };
+  if (n === 1) return { cols: 1, feature: false };
+  return { cols: 3, feature: false };
 }
 
 /**

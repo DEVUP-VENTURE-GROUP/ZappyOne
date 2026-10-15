@@ -16,7 +16,7 @@ const at = (day) => new Date(`${day}T00:00:00+05:30`);
 const LOOKS = {
   dussehra: {
     theme: 'navratri', greeting: 'Happy Bathukamma & Dussehra',
-    headline: 'Festive-ready, before the guests arrive', subline: 'Verified pros at your door, with the price agreed before work starts.',
+    headline: 'Festive-ready, before the guests arrive', subline: 'Verified pros at your door. Price agreed before work starts.',
     tiles: [
       { title: 'Ayudha Puja bike service', serviceCode: 'two_wheeler', badge: 'Puja' },
       { title: 'Car wash & care', serviceCode: 'four_wheeler', badge: '' },

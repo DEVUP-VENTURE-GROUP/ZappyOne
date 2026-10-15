@@ -8,6 +8,7 @@ import {
 import { THEMES, themeOf } from '@shared/customer/season';
 import FestiveHero from '@shared/components/home/festive/FestiveHero';
 import FestiveMotif from '@shared/components/home/festive/FestiveMotif';
+import ImageUploadField from '@shared/components/common/ImageUploadField';
 import { Card, FormRow, Input, Select, SaveBtn } from '../../../ui/kit';
 import SeasonTileRow from './SeasonTileRow';
 
@@ -28,7 +29,7 @@ function liveOffer(p, now = Date.now()) {
 export default function SeasonEditor({ season, onDone }) {
   const [form, setForm] = useState(() => ({
     name: season?.name || '', theme: season?.theme || 'navratri', greeting: season?.greeting || '',
-    headline: season?.headline || '', subline: season?.subline || '',
+    headline: season?.headline || '', subline: season?.subline || '', artUrl: season?.artUrl || '',
     startAt: local(season?.startAt), endAt: local(season?.endAt),
     tiles: season?.tiles?.length ? season.tiles.map((t) => ({ ...BLANK_TILE, ...t })) : [],
     promoCode: season?.promoCode || '', isActive: season?.isActive ?? true,
@@ -87,6 +88,9 @@ export default function SeasonEditor({ season, onDone }) {
         </div>
         <FormRow label="Headline"><Input value={form.headline} onChange={set('headline')} placeholder="Festive-ready homes, by verified pros" maxLength={60} /></FormRow>
         <FormRow label="Line under it"><Input value={form.subline} onChange={set('subline')} placeholder="Deep cleaning, repairs and décor before the guests arrive" maxLength={120} /></FormRow>
+        <FormRow label="Festival artwork" hint="Optional, but it is what makes the top feel festive: a transparent PNG or WebP of the festival (Durga's eyes, diyas, kites), about 1200×400.">
+          <ImageUploadField value={form.artUrl} onChange={set('artUrl')} folder="seasons" label="festival artwork" accept="image/*" maxMb={5} />
+        </FormRow>
         <div className="grid gap-4 sm:grid-cols-2">
           <FormRow label="Starts"><Input type="datetime-local" value={form.startAt} onChange={set('startAt')} /></FormRow>
           <FormRow label="Ends"><Input type="datetime-local" value={form.endAt} onChange={set('endAt')} /></FormRow>
