@@ -619,6 +619,8 @@ export const {
   useAdminPayrollQuery,
   useAdminWorkforceSettingsQuery,
   useAdminPayrollCsvMutation,
+  useAdminFleetAttentionQuery,
+  useAdminAutoFillRosterMutation,
   useAdminFleetOverviewQuery,
   useAdminFleetFinanceQuery,
   useAdminFleetExpensesQuery,

@@ -60,7 +60,7 @@ async function contactOf(to) {
 async function opsAddresses(s) {
   if (s.opsEmails?.length) return s.opsEmails;
   const Admin = require('../admin/admin.model');
-  const admins = await Admin.find({ isActive: { $ne: false }, role: { $in: ['super_admin', 'operations', 'ops_manager'] } }).select('email').limit(10).lean();
+  const admins = await Admin.find({ isActive: { $ne: false }, role: { $in: ['super_admin', 'ops', 'city_manager', 'fleet_manager'] } }).select('email').limit(10).lean();
   return admins.map((a) => a.email).filter(Boolean);
 }
 

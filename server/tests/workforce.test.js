@@ -185,3 +185,25 @@ describe('dark-store stock and the overview', () => {
     expect(out.kpis.lowStock).toBeGreaterThanOrEqual(1);
   });
 });
+
+describe('the fleet looks after itself', () => {
+  test('auto-fill puts free staff on short shifts, never someone on leave', async () => {
+    const watchdog = require('../src/modules/workforce/watchdog.service');
+    const h2 = await Hub.create({
+      name: 'Kondapur', city: 'Hyderabad', meetingPoint: { address: 'x', location: { type: 'Point', coordinates: [HUB.lng, HUB.lat] } },
+      shifts: [{ code: 'day', label: 'Day', start: '09:00', end: '18:00', need: 2 }],
+    });
+    const [a, b, c] = [await person(), await person(), await person()];
+    await Worker.updateMany({ _id: { $in: [a._id, b._id, c._id] } }, { $set: { 'employment.hubId': h2._id } });
+    const tomorrow = shifts.istDay(Date.now() + 86400000);
+    await Leave.create({ workerId: c._id, day: tomorrow, status: 'approved' });
+    const out = await watchdog.autoFill({ hubId: h2._id, days: 3 });
+    expect(out.filled).toBeGreaterThan(0);
+    const onTomorrow = await Shift.find({ hubId: h2._id, day: tomorrow }).lean();
+    expect(onTomorrow).toHaveLength(2);
+    expect(onTomorrow.map((s) => String(s.workerId))).not.toContain(String(c._id));
+    const att = await watchdog.attention();
+    expect(att).toHaveProperty('short');
+    expect(Array.isArray(att.lowStock)).toBe(true);
+  });
+});

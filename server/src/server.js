@@ -360,6 +360,8 @@ function startMatchingWaves() {
   // Staff shifts: never started = missed, left open = closed (workforce/shifts.service).
   setInterval(() => {
     require("./modules/workforce/shifts.service").sweep().catch((err) => logger.warn({ err: err.message }, "[SHIFTS] sweep failed"));
+    // Reminders, no-show chases, the 8 am fleet email (workforce/watchdog).
+    require("./modules/workforce/watchdog.service").tick().catch((err) => logger.warn({ err: err.message }, "[FLEET] watchdog failed"));
   }, 5 * 60 * 1000);
   setInterval(() => {
     // Arrival promises past due with nobody there: customer told, provider nudged (jobs/promise).

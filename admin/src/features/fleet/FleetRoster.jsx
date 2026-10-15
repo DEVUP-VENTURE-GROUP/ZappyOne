@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { X } from 'lucide-react';
-import { useAdminHubsQuery, useAdminRosterQuery, useAdminStaffQuery, useAdminAssignShiftMutation, useAdminRemoveShiftMutation } from '@shared/services/api';
+import { useAdminHubsQuery, useAdminRosterQuery, useAdminStaffQuery, useAdminAssignShiftMutation, useAdminRemoveShiftMutation, useAdminAutoFillRosterMutation } from '@shared/services/api';
 import { Card, PageLoader, EmptyState, Select } from '../../ui/kit';
 
 const STATUS = { booked: 'bg-slate-100 text-slate-700', checked_in: 'bg-emerald-50 text-emerald-700', done: 'bg-blue-50 text-blue-700', missed: 'bg-red-50 text-red-700' };
@@ -17,6 +17,7 @@ export default function FleetRoster() {
   const { data: staffData } = useAdminStaffQuery();
   const [assign] = useAdminAssignShiftMutation();
   const [remove] = useAdminRemoveShiftMutation();
+  const [autoFill, { isLoading: filling }] = useAdminAutoFillRosterMutation();
   const staff = (staffData?.workers || []).filter((w) => String(w.employment?.hubId) === hubId);
 
   const act = (p, ok) => p.unwrap().then(() => toast.success(ok)).catch((e) => toast.error(e?.data?.error || 'Could not do that'));
@@ -24,7 +25,12 @@ export default function FleetRoster() {
   if (!hubs.length) return <EmptyState message="Create a hub first." />;
   return (
     <div className="space-y-4">
-      <div className="w-60"><Select value={hubId} onChange={(e) => setHubId(e.target.value)} aria-label="Hub">{hubs.map((h) => <option key={h.id} value={h.id}>{h.name}</option>)}</Select></div>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="w-60"><Select value={hubId} onChange={(e) => setHubId(e.target.value)} aria-label="Hub">{hubs.map((h) => <option key={h.id} value={h.id}>{h.name}</option>)}</Select></div>
+        {/* Free staff onto the short places, fewest shifts first, never anyone on leave (workforce/watchdog). */}
+        <button type="button" disabled={filling || !hubId} onClick={() => autoFill(hubId).unwrap().then((r) => toast.success(r.filled ? `${r.filled} place${r.filled === 1 ? '' : 's'} filled` : 'Nothing to fill, or nobody free')).catch((e) => toast.error(e?.data?.error || 'Could not fill'))}
+          className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50">{filling ? 'Filling…' : 'Auto-fill the week'}</button>
+      </div>
       {isLoading || !data ? <PageLoader /> : (
         <div className="space-y-3">
           {data.days.map((d) => (

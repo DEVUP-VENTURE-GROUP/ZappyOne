@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useAdminFleetOverviewQuery } from '@shared/services/api';
 import { PageLoader, EmptyState } from '../../ui/kit';
 import { Kpi, Panel, RankBars, TrendChart, rupees, count } from '../insights/charts';
+import FleetAttention from './FleetAttention';
 
 const RANGES = [[7, '7 days'], [30, '30 days'], [90, '90 days']];
 
@@ -31,6 +32,8 @@ export default function FleetOverview() {
           ))}
         </div>
       </div>
+
+      <FleetAttention />
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Kpi label="Revenue" value={rupees(k.revenuePaise)} delta={k.revenueDelta} spark={spark('revenuePaise')} hint="Staff jobs, all of it ZappyOne's" />

@@ -328,6 +328,34 @@ const CATALOG = {
     }),
   },
 
+  /* ---------------- ZappyOne staff (workforce/watchdog) ---------------- */
+  'staff.shift_reminder': {
+    audience: 'provider', type: 'report_received', channels: ['push'], label: 'Shift starts in 30 minutes',
+    sample: () => ({ shift: 'Morning', start: '8:00 am', hub: 'Madhapur', place: 'Madhapur metro, pillar 12' }),
+    build: ({ shift, start, hub, place }) => ({ push: { title: `${shift} shift at ${start}`, body: `Check in at ${place || hub} with a selfie to start.`, link: '/worker' } }),
+  },
+  'staff.no_show': {
+    audience: 'provider', type: 'penalty_applied', channels: ['push'], urgent: true, label: 'Shift started, not checked in',
+    sample: () => ({ shift: 'Morning', start: '8:00 am', hub: 'Madhapur' }),
+    build: ({ shift, start, hub }) => ({ push: { title: 'Your shift has started', body: `${shift} at ${hub} started at ${start}. Check in now, or tell your manager if you cannot come.`, link: '/worker' } }),
+  },
+  'ops.fleet_daily': {
+    audience: 'ops', type: 'report_received', channels: ['email'], label: 'Fleet this morning (8 am)',
+    sample: () => ({ day: 'Thu, 16 Oct', short: ['Madhapur Evening today: 2 short'], noShows: ['Ravi, Madhapur Morning'], cash: ['Suresh: ₹2,400'], lowStock: ['Battery 4000mAh at Madhapur: 2 left'], leave: 3 }),
+    build: ({ day, short, noShows, cash, lowStock, leave, url }) => {
+      const list = (xs) => (xs.length ? xs.slice(0, 8).join('; ') : 'None');
+      return {
+        email: {
+          subject: `Fleet ${day}: ${short.length} short, ${noShows.length} no-shows, ${lowStock.length} low stock`,
+          preheader: short.length ? `Shifts short: ${list(short)}` : 'Every shift is covered.',
+          heading: `Fleet, ${day}`,
+          rows: [['Shifts short (today, tomorrow)', list(short)], ['No-shows yesterday', list(noShows)], ['Cash held over a day', list(cash)], ['Low stock', list(lowStock)], ['Leave waiting', String(leave)]],
+          button: { label: 'Open Fleet', url: url('/dashboard?tab=fleet') },
+        },
+      };
+    },
+  },
+
   /* ---------------- Admin / ops ---------------- */
   'admin.daily_summary': {
     audience: 'ops', type: 'report_received', channels: ['email'], label: 'Daily business summary (8 am)',

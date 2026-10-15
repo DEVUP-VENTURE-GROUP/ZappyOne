@@ -81,6 +81,8 @@ export function endpoints(b, { adminApiPath }) {
     adminPayroll: b.query({ query: (month) => ({ url: adminApiPath('/workforce/payroll'), params: month ? { month } : {} }), providesTags: ['WorkforceAdmin'] }),
     /** The month's payroll as CSV text (the server writes it), for download. */
     adminPayrollCsv: b.mutation({ query: (month) => ({ url: adminApiPath('/workforce/payroll'), params: { format: 'csv', ...(month ? { month } : {}) }, responseHandler: 'text' }) }),
+    adminFleetAttention: b.query({ query: () => adminApiPath('/workforce/attention'), providesTags: ['WorkforceAdmin'] }),
+    adminAutoFillRoster: b.mutation({ query: (hubId) => ({ url: adminApiPath('/workforce/roster/auto-fill'), method: 'POST', body: { hubId } }), invalidatesTags: ['WorkforceAdmin'] }),
     adminFleetOverview: b.query({ query: (days) => ({ url: adminApiPath('/workforce/overview'), params: days ? { days } : {} }), providesTags: ['WorkforceAdmin'] }),
     adminFleetFinance: b.query({ query: (month) => ({ url: adminApiPath('/workforce/finance'), params: month ? { month } : {} }), providesTags: ['WorkforceAdmin'] }),
     adminFleetExpenses: b.query({ query: ({ month, hubId } = {}) => ({ url: adminApiPath('/workforce/expenses'), params: { ...(month ? { month } : {}), ...(hubId ? { hubId } : {}) } }), providesTags: ['WorkforceAdmin'] }),

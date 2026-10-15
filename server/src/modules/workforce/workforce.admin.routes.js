@@ -107,6 +107,20 @@ router.patch('/workforce/staff/:workerId', validate(Joi.object({
   } catch (err) { next(err); }
 });
 
+/** What needs a person now (workforce/watchdog). */
+router.get('/workforce/attention', async (req, res, next) => {
+  try { res.json(await require('./watchdog.service').attention()); } catch (err) { next(err); }
+});
+
+/** Fill a hub's empty places for the coming week with staff who are free. */
+router.post('/workforce/roster/auto-fill', validate(Joi.object({ hubId: Joi.string().hex().length(24).required() })), async (req, res, next) => {
+  try {
+    const out = await require('./watchdog.service').autoFill({ hubId: req.body.hubId });
+    await auditService.fromRequest(req, 'workforce.roster_autofill', { kind: 'hub', id: req.body.hubId }, null, out);
+    res.json(out);
+  } catch (err) { next(err); }
+});
+
 router.get('/workforce/roster', async (req, res, next) => {
   try {
     const from = /^\d{4}-\d{2}-\d{2}$/.test(String(req.query.from || '')) ? req.query.from : undefined;
