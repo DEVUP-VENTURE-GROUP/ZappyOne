@@ -7,7 +7,8 @@ import { setAuth } from '@shared/modules/auth/authSlice';
 import { adminPath } from '@/config/admin';
 import toast from 'react-hot-toast';
 
-export default function AdminLoginPage() {
+/** Admin sign-in; the Fleet portal uses it too, with its own home path and title. */
+export default function AdminLoginPage({ homePath = adminPath('/dashboard'), title = 'Admin Portal' }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loginAdmin, { isLoading }] = useLoginAdminMutation();
@@ -29,7 +30,7 @@ export default function AdminLoginPage() {
         profile: r.admin,
         role: 'admin',
       }));
-      const next = loc.state?.from || adminPath('/dashboard');
+      const next = loc.state?.from || homePath;
       nav(next, { replace: true });
     } catch (err) {
       const code = err.data?.code;
@@ -50,7 +51,7 @@ export default function AdminLoginPage() {
             <ShieldCheck size={24} className="text-white" />
           </div>
           <div className="text-center">
-            <h1 className="text-white text-xl font-bold tracking-tight">Admin Portal</h1>
+            <h1 className="text-white text-xl font-bold tracking-tight">{title}</h1>
             <p className="text-slate-400 text-sm mt-0.5">Restricted access</p>
           </div>
         </div>

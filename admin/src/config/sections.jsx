@@ -40,10 +40,8 @@ import {
   Bug,
   Sparkles,
   Warehouse,
-  Package,
-  CalendarDays,
-  CalendarOff,
 } from 'lucide-react';
+import { FLEET_VIEWS, FLEET_TITLE, FLEET_SUBTITLE } from '../features/fleet/views';
 import Hub from '../ui/Hub';
 
 /**
@@ -64,14 +62,6 @@ const P = {
   Reviews: page(() => import('../features/support/Reviews')),
   Promos: page(() => import('../features/marketing/Promos')),
   FestiveHome: page(() => import('../features/marketing/festive/FestiveHome')),
-  FleetOverview: page(() => import('../features/fleet/FleetOverview')),
-  FleetHubs: page(() => import('../features/fleet/FleetHubs')),
-  FleetStock: page(() => import('../features/fleet/FleetStock')),
-  FleetStaff: page(() => import('../features/fleet/FleetStaff')),
-  FleetRoster: page(() => import('../features/fleet/FleetRoster')),
-  FleetLeave: page(() => import('../features/fleet/FleetLeave')),
-  FleetPayroll: page(() => import('../features/fleet/FleetPayroll')),
-  FleetFinance: page(() => import('../features/fleet/FleetFinance')),
   Cashback: page(() => import('../features/marketing/rewards/Cashback')),
   Points: page(() => import('../features/marketing/rewards/Points')),
   Plans: page(() => import('../features/marketing/Plans')),
@@ -117,16 +107,8 @@ const hub = (title, subtitle, views) => {
 };
 
 const HUBS = {
-  fleet: hub('ZappyOne Fleet', 'Your own staff and dark stores: people, shifts, stock and money', [
-    { id: 'overview', label: 'Overview', icon: LineChart, Comp: P.FleetOverview },
-    { id: 'hubs', label: 'Hubs', icon: Warehouse, Comp: P.FleetHubs },
-    { id: 'stock', label: 'Stock', icon: Package, Comp: P.FleetStock },
-    { id: 'staff', label: 'Staff', icon: Users, Comp: P.FleetStaff },
-    { id: 'roster', label: 'Roster', icon: CalendarDays, Comp: P.FleetRoster },
-    { id: 'leave', label: 'Leave', icon: CalendarOff, Comp: P.FleetLeave },
-    { id: 'payroll', label: 'Payroll', icon: Wallet, Comp: P.FleetPayroll },
-    { id: 'finance', label: 'Finance', icon: IndianRupee, Comp: P.FleetFinance },
-  ]),
+  // The same screens are the whole Fleet portal (fleet/ app).
+  fleet: hub(FLEET_TITLE, FLEET_SUBTITLE, FLEET_VIEWS),
   helpdesk: hub('Help desk', 'Customer tickets, disputes and reviews', [
     { id: 'tickets', label: 'Tickets', icon: HeadphonesIcon, Comp: P.Tickets },
     { id: 'disputes', label: 'Disputes', icon: Scale, Comp: P.Disputes },

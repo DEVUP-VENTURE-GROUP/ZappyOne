@@ -22,6 +22,8 @@ const RT_COOKIE_OPTS = {
 // Portals are *.zappyone.com, same-site with the API, so 'lax'/'strict' work.
 const PORTALS = {
   admin:      { cookie: 'zappy_admin_rt', roles: ['admin'], sameSite: 'strict', maxAge: 12 * 60 * 60 * 1000 },
+  // Fleet portal (fleet/ app): admin accounts, its own session, as short and strict as admin's.
+  fleet:      { cookie: 'zappy_fleet_rt', roles: ['admin'], sameSite: 'strict', maxAge: 12 * 60 * 60 * 1000 },
   servicepro: { cookie: 'zappy_sp_rt', roles: ['shop', 'worker'], sameSite: 'lax' },
   rakshak:    { cookie: 'zappy_rk_rt', roles: ['worker'], sameSite: 'lax' },
   events:     { cookie: 'zappy_ev_rt', roles: ['event_partner'], sameSite: 'lax' },
