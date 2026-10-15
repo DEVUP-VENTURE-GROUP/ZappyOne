@@ -40,6 +40,7 @@ const LOGIC = [
   { from: 'components/home/serviceArt.js', to: 'shared/serviceArt.js', imports: { './problemArt': './problemArt' } },
   { from: 'components/provider/weeklyHoursRules.js', to: 'shared/weeklyHoursRules.js', imports: {} },
   { from: 'components/provider/autoAccept.js', to: 'shared/autoAccept.js', imports: {} },
+  { from: 'provider/partnerPages.js', to: 'shared/partnerPages.js', imports: {} },
   { from: 'components/account/passwordRules.js', to: 'shared/passwordRules.js', imports: {} },
   { from: 'config/releases.js', to: 'shared/releases.js', imports: {} },
   { from: 'config/appVersion.js', to: 'shared/appVersion.js', imports: {} },

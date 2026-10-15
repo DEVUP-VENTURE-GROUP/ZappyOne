@@ -29,6 +29,7 @@ import {
   useGoOnlineMutation,
   useGoOfflineMutation,
   useGetEarningsQuery,
+  useWorkforceMeQuery,
   useGetKycStatusQuery,
   useListNotificationsQuery,
   useProviderOnboardingStatusQuery,
@@ -53,6 +54,9 @@ import { colors, ink, success, danger } from '../../theme/colors';
 import { radius } from '../../theme/radius';
 import { spacing } from '../../theme/spacing';
 import { DuesCard } from '../DuesCard';
+import { StaffDutyCard } from '../StaffDutyCard';
+import { StaffWaitingCard } from '../StaffWaitingCard';
+import { STAFF_APP } from '../staffApp';
 import { WorkerMenuSheet } from '../WorkerMenuSheet';
 import { WorkerOnboarding } from './WorkerOnboarding';
 import { errText } from '../../lib/feedback';
@@ -77,6 +81,8 @@ export function WorkerDashboard({ kinds = KINDS }: { kinds?: string[] }) {
   const insets = useSafeAreaInsets();
 
   const { data: meData, refetch: refetchMe } = useGetWorkerMeQuery(undefined, { pollingInterval: 60000 });
+  // ZappyOne staff see their shift and salary here (server workforce/); partners get { staff: false }.
+  const { data: staffMe } = useWorkforceMeQuery(undefined);
   const { data: todayData, refetch: refetchToday } = useGetEarningsQuery('today');
   const { data: weekData, refetch: refetchWeek } = useGetEarningsQuery('week');
   const { data: kycData, refetch: refetchKyc } = useGetKycStatusQuery(undefined);
@@ -205,11 +211,12 @@ export function WorkerDashboard({ kinds = KINDS }: { kinds?: string[] }) {
           />
         ) : null}
 
-        <DuesCard />
-        {isOnline ? <HotZonesCard coords={lastCoords} /> : null}
+        {staffMe?.staff ? <StaffDutyCard me={staffMe} /> : STAFF_APP ? <StaffWaitingCard /> : <DuesCard />}
+        {isOnline && !STAFF_APP ? <HotZonesCard coords={lastCoords} /> : null}
 
         <View style={styles.grid}>
-          <StatTile Icon={BadgeIndianRupee} tone="green" label="Today" value={inr(todayData?.earningsRupees ?? 0)} sub="Earnings" onPress={() => go('/worker/earnings')} />
+          {/* Staff are salaried: no per-job earnings tile on Rakshak. */}
+          {!STAFF_APP ? <StatTile Icon={BadgeIndianRupee} tone="green" label="Today" value={inr(todayData?.earningsRupees ?? 0)} sub="Earnings" onPress={() => go('/worker/earnings')} /> : null}
           <StatTile Icon={Briefcase} tone="blue" label="Jobs today" value={todayData?.jobs ?? 0} sub="Completed" onPress={() => go('/worker/work')} />
         </View>
         <View style={styles.grid}>
@@ -258,7 +265,7 @@ export function WorkerDashboard({ kinds = KINDS }: { kinds?: string[] }) {
 
         <ProviderServicesCard />
 
-        <EarningsOverview weekRupees={weekData?.earningsRupees ?? 0} deltaPct={deltaPct} points={weekPoints(week)} onViewDetails={() => go('/worker/earnings')} />
+        {!STAFF_APP ? <EarningsOverview weekRupees={weekData?.earningsRupees ?? 0} deltaPct={deltaPct} points={weekPoints(week)} onViewDetails={() => go('/worker/earnings')} /> : null}
       </ScrollView>
 
       <WorkerMenuSheet visible={menuOpen} onClose={() => setMenuOpen(false)} />

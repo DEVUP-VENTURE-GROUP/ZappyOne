@@ -23,6 +23,7 @@ import {
   Target,
   TrendingUp,
   User,
+  CalendarDays,
 } from 'lucide-react-native';
 import {
   useGetWorkerMeQuery,
@@ -42,9 +43,11 @@ import { radius } from '../../theme/radius';
 import { spacing } from '../../theme/spacing';
 import { providerPath } from '../paths';
 import { DeleteAccountCard } from '../../components/account/DeleteAccountCard';
+import { PARTNER_ONLY } from '@zappy/core/shared/partnerPages';
+import { STAFF_APP } from '../staffApp';
 import { LegalLinks } from '../../components/account/LegalLinks';
 
-const NAV_SECTIONS = [
+const ALL_NAV_SECTIONS = [
   { title: 'Earnings & finance', items: [
     { to: '/worker/earnings', Icon: BarChart2, label: 'Earnings breakdown', desc: 'Per-job breakdown & payslip', bg: zappy[50], fg: zappy[600] },
     { to: '/worker/goals', Icon: Target, label: 'Earnings goals', desc: 'Daily & weekly targets', bg: '#F5F3FF', fg: '#7C3AED' },
@@ -62,6 +65,12 @@ const NAV_SECTIONS = [
     { to: '/provider/documents', Icon: Shield, label: 'My documents', desc: 'Verification & compliance', bg: slate[100], fg: ink[700] },
   ] },
 ];
+
+// Rakshak (ZappyOne staff only): no per-job money pages; their shifts, salary and leave instead.
+const NAV_SECTIONS = STAFF_APP
+  ? [{ title: 'My work', items: [{ to: '/worker/shifts', Icon: CalendarDays, label: 'Shifts, salary & leave', desc: 'Book shifts, see your month', bg: zappy[50], fg: zappy[600] }] },
+    ...ALL_NAV_SECTIONS.map((sec) => ({ ...sec, items: sec.items.filter((i) => !PARTNER_ONLY.has(i.to)) })).filter((sec) => sec.items.length)]
+  : ALL_NAV_SECTIONS;
 
 export function WorkerEditProfilePage() {
   const router = useRouter();

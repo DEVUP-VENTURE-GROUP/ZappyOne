@@ -23,9 +23,11 @@ import { BottomSheet, Text } from '../components';
 import { RIPPLE } from '../lib/feedback';
 import { ink, danger } from '../theme/colors';
 import { radius } from '../theme/radius';
+import { staffMenu } from '@zappy/core/shared/partnerPages';
+import { STAFF_APP } from './staffApp';
 import { spacing } from '../theme/spacing';
 
-export const WORKER_MENU = [
+const ALL_WORKER_MENU = [
   { key: 'services', label: 'My services', Icon: ShieldCheck, to: '/provider/onboarding' },
   { key: 'documents', label: 'My documents', Icon: FileText, to: '/provider/documents' },
   { key: 'hours', label: 'My hours', Icon: CalendarClock, to: '/worker/hours' },
@@ -36,6 +38,9 @@ export const WORKER_MENU = [
   { key: 'training', label: 'Training', Icon: GraduationCap, to: '/worker/training' },
   { key: 'goals', label: 'Goals', Icon: Target, to: '/worker/goals' },
 ];
+
+// On Rakshak (ZappyOne staff only) the partner-only pages are left out (shared partnerPages).
+export const WORKER_MENU = staffMenu(ALL_WORKER_MENU, STAFF_APP);
 
 export function WorkerMenuSheet({ visible, onClose, items = WORKER_MENU }: { visible: boolean; onClose: () => void; items?: typeof WORKER_MENU }) {
   const router = useRouter();
