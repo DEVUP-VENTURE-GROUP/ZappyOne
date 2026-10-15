@@ -44,7 +44,7 @@ export default function AssignTechnician({ jobId, workerId, busy = {}, onDone, s
     <div className="mt-2">
       <button type="button" onClick={() => setOpen((v) => !v)} className="flex items-center gap-1.5 text-[11.5px] font-bold text-zappy-600">
         <UserPlus size={12} />
-        {current ? `On ${current.name} · change` : 'Assign a technician'}
+        {current ? `On ${current.name}, change` : 'Assign a technician'}
       </button>
 
       {open && (
@@ -65,7 +65,7 @@ export default function AssignTechnician({ jobId, workerId, busy = {}, onDone, s
                 <span className={`h-2 w-2 shrink-0 rounded-full ${w.isOnline ? 'bg-emerald-500' : 'bg-slate-300'}`} />
                 <span className="min-w-0 flex-1 truncate font-semibold text-slate-700">{w.name}</span>
                 <span className="shrink-0 text-[10.5px] text-slate-400">
-                  {w.isOnline ? 'online' : 'offline'}{load ? ` · ${load} job${load === 1 ? '' : 's'}` : ''}
+                  {w.isOnline ? 'online' : 'offline'}{load ? `, ${load} job${load === 1 ? '' : 's'}` : ''}
                 </span>
                 {isCurrent
                   ? <Check size={12} className="shrink-0 text-emerald-600" />

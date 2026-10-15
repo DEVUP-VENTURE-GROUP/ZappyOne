@@ -678,7 +678,7 @@ export default function WorkerRepairJobPage() {
             <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Quotes raised</p>
             {quotes.map((q) => (
               <div key={q._id} className="flex items-center justify-between text-xs py-1">
-                <span className="text-slate-500">r{q.revision} · {q.status.replace(/_/g, ' ')}</span>
+                <span className="text-slate-500">r{q.revision}, {q.status.replace(/_/g, ' ')}</span>
                 <span className="font-semibold text-[#0F172A]">{rupees(q.totalPaise)}</span>
               </div>
             ))}

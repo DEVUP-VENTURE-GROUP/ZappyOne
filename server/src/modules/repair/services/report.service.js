@@ -249,7 +249,7 @@ function renderHtml(data) {
   `)}
 
   <div class="footer">
-    Generated ${escape(formatDate(data.generatedAt))} · ZappyOne
+    Generated ${escape(formatDate(data.generatedAt))}, ZappyOne
   </div>
 </body></html>`;
 }

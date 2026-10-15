@@ -14,7 +14,7 @@ import { formatPaise } from '../utils/money';
  */
 export const THEMES = {
   navratri: {
-    label: 'Navratri · Dussehra · Bathukamma', dark: false,
+    label: 'Navratri, Dussehra, Bathukamma', dark: false,
     top: '#FFCF5A', bottom: '#FFF5DA', ink: '#4A2300', sub: '#7A4210', accent: '#C2410C',
     tile: '#FFF6DF', tileInk: '#4A2300', line: '#F1D08A', rays: true,
     curtain: '#EFA21C', wash: '#FFF8E8', motif: 'toran', paint: ['#F59E0B', '#FBBF24', '#EA580C', '#2F7D4A', '#B7791F'],
@@ -32,7 +32,7 @@ export const THEMES = {
     curtain: '#F472B6', wash: '#FFF6FB', motif: 'splash', paint: ['#EC4899', '#22C55E', '#F59E0B', '#3B82F6', '#A855F7'],
   },
   sankranti: {
-    label: 'Sankranti · Pongal', dark: false,
+    label: 'Sankranti, Pongal', dark: false,
     top: '#8ED8FA', bottom: '#E6F6FE', ink: '#0B3B5A', sub: '#1F5878', accent: '#EA580C',
     tile: '#FFFFFF', tileInk: '#0B3B5A', line: '#BCE6FA', rays: true,
     curtain: '#38A8E0', wash: '#F1F9FE', motif: 'kites', paint: ['#EF4444', '#F59E0B', '#8B5CF6', '#10B981', '#0B3B5A'],
@@ -44,7 +44,7 @@ export const THEMES = {
     curtain: '#0E6B55', wash: '#F0FAF5', motif: 'crescent', paint: ['#FCD34D', '#FEF3C7', '#053D30'],
   },
   christmas: {
-    label: 'Christmas · New Year', dark: true,
+    label: 'Christmas, New Year', dark: true,
     top: '#6E1418', bottom: '#9B1C22', ink: '#FFF1F1', sub: '#FFD0D0', accent: '#FDE68A',
     tile: '#7E1A1F', tileInk: '#FFF1F1', line: '#A8343A',
     curtain: '#B3242B', wash: '#FFF7F5', motif: 'stars', paint: ['#FDE68A', '#FFFFFF', '#86EFAC'],
@@ -232,7 +232,7 @@ export function spotlightScenes(season) {
  */
 export const SCENE_LOTTIES = {
   garba: { src: '/festive/lottie/garba.json', kicker: 'Navratri garba', card: '#FFDDD1' },
-  durga: { src: '/festive/lottie/durga.json', kicker: 'Durga Puja · Dussehra', card: '#FFFFFF' },
+  durga: { src: '/festive/lottie/durga.json', kicker: 'Durga Puja, Dussehra', card: '#FFFFFF' },
   diwali: { src: '/festive/lottie/diwali.json', kicker: 'Happy Diwali', card: '#FFFFFF' },
 };
 

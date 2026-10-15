@@ -34,7 +34,7 @@ function Row({ r }) {
             <span className="flex items-center gap-0.5">
               {[1, 2, 3, 4, 5].map((n) => <Star key={n} size={13} className={n <= r.rating ? 'fill-amber-400 text-amber-400' : 'text-slate-200'} />)}
             </span>
-            <span className="text-[12px] text-slate-400">{fmtDate(r.at)} · {r.kind}{r.service ? ` · ${r.service}` : ''}</span>
+            <span className="text-[12px] text-slate-400">{fmtDate(r.at)}, {r.kind}{r.service ? `, ${r.service}` : ''}</span>
           </div>
           <p className="mt-1 text-[13px] text-slate-500">
             <b className="text-slate-700">{r.customer?.name || 'Customer'}</b> about <b className="text-slate-700">{r.provider || 'provider'}</b>

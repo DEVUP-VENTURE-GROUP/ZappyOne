@@ -79,7 +79,7 @@ export function Pagination({ page, total, limit = 50, onPrev, onNext, totalPages
         <ChevronLeft size={13} /> Prev
       </button>
       <span className="text-xs text-slate-400 font-medium">
-        Page {page}{pages ? ` / ${pages}` : ''}{total != null ? ` · ${total} total` : ''}
+        Page {page}{pages ? ` / ${pages}` : ''}{total != null ? `, ${total} total` : ''}
       </span>
       <button
         disabled={pages != null && page >= pages}

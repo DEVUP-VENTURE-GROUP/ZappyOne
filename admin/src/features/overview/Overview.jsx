@@ -26,7 +26,7 @@ export default function Overview() {
       <div>
         <div className="mb-3 flex items-baseline justify-between">
           <h2 className="text-[15px] font-semibold text-slate-900">Today</h2>
-          <p className="text-[12px] text-slate-400">Since midnight, India time · compared with yesterday at this time</p>
+          <p className="text-[12px] text-slate-400">Since midnight, India time, compared with yesterday at this time</p>
         </div>
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 xl:grid-cols-6">
           <Kpi label="Bookings" value={count(t.bookings)} delta={d.bookings} hint={`${count(t.active)} in progress`} />

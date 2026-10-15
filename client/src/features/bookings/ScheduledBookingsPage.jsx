@@ -71,7 +71,7 @@ export default function ScheduledBookingsPage() {
             {!loading && !empty && (
               <p className="text-[12px] text-slate-500">
                 {ahead.length ? `${ahead.length} booking${ahead.length > 1 ? 's' : ''} ahead` : 'Nothing booked ahead'}
-                {live.length ? ` · ${live.length} happening now` : ''}
+                {live.length ? `, ${live.length} happening now` : ''}
               </p>
             )}
           </div>
@@ -188,7 +188,7 @@ function NextUpCard({ item, now, onOpen, onMove }) {
             </span>
             <span className="mt-1.5 block truncate text-[18px] font-bold capitalize leading-snug">{item.title}</span>
             <span className="mt-1 flex items-center gap-1.5 text-[13px] text-white/80">
-              <Clock size={13} /> {dayLabel(at)} · {item.slot || timeLabel(at)}
+              <Clock size={13} /> {dayLabel(at)}, {item.slot || timeLabel(at)}
             </span>
             {item.address && (
               <span className="mt-0.5 flex items-center gap-1.5 truncate text-[12px] text-white/65">
@@ -233,7 +233,7 @@ function BookingRow({ item, onOpen, onMove }) {
           <span className="block truncate text-[14px] font-semibold capitalize text-navy">{item.title}</span>
           <span className="mt-0.5 flex items-center gap-1 text-[12px] text-slate-500">
             <KindIcon item={item} size={12} className="text-slate-400" /> {KIND_LABEL[item.kind] || 'Booking'}
-            {item.slot ? ` · ${item.slot}` : ''}
+            {item.slot ? `, ${item.slot}` : ''}
           </span>
         </span>
       </button>
@@ -362,7 +362,7 @@ function RepeatRow({ plan }) {
         <span className="min-w-0 flex-1">
           <span className="block truncate text-[14px] font-semibold capitalize text-navy">{plan.title}</span>
           <span className="block text-[12px] text-slate-500">
-            {plan.everyLabel[0].toUpperCase() + plan.everyLabel.slice(1)} · {paused ? 'paused' : `next ${plan.nextLabel}`}
+            {plan.everyLabel[0].toUpperCase() + plan.everyLabel.slice(1)}, {paused ? 'paused' : `next ${plan.nextLabel}`}
           </span>
           {plan.lastError && !paused && <span className="block text-[11.5px] text-amber-700">Last try did not go through; we will try again.</span>}
         </span>

@@ -83,7 +83,7 @@ export default function SmartMatchSheet({ worker, onDismiss }) {
                 <span className="text-xs font-semibold text-slate-700">
                   {worker?.rating ? Number(worker.rating).toFixed(1) : 'New'}
                 </span>
-                <span className="text-slate-300 text-xs">·</span>
+                <span className="text-slate-300 text-xs">|</span>
                 <span className="text-xs text-slate-500">{worker?.completedJobs || 0}+ jobs</span>
               </div>
             </div>

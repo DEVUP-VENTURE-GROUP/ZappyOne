@@ -42,7 +42,7 @@ const CATALOG = {
     build: ({ f, name, s, url }) => ({
       push: { title: 'Booking confirmed', body: `${f.service}. We are finding the best ${noun(f.kind)} near you.`, link: f.link },
       email: {
-        subject: `Booking confirmed · ${f.service} · ${f.reference}`,
+        subject: `Booking confirmed, ${f.service}, ${f.reference}`,
         preheader: `We are finding the best ${noun(f.kind)} near you.`,
         heading: 'Your booking is confirmed',
         intro: [`Hi ${first(name)}, thanks for booking with ${s.brandName}. We are finding the best ${noun(f.kind)} near you and will let you know the moment someone accepts.`],
@@ -56,7 +56,7 @@ const CATALOG = {
     audience: 'customer', type: 'worker_assigned', channels: ['push'], urgent: true, label: 'Provider accepted',
     sample: () => sampleJob(),
     build: ({ f }) => ({
-      push: { title: `${prov(f)} is on your booking`, body: `${f.service}${f.provider?.rating ? ` · ★ ${f.provider.rating.toFixed(1)}` : ''}. You can call or chat from the app.`, link: f.link },
+      push: { title: `${prov(f)} is on your booking`, body: `${f.service}${f.provider?.rating ? `, ★ ${f.provider.rating.toFixed(1)}` : ''}. You can call or chat from the app.`, link: f.link },
     }),
   },
   'booking.on_the_way': {
@@ -80,7 +80,7 @@ const CATALOG = {
     build: ({ f, name, quote, url }) => ({
       push: { title: quote.revision > 1 ? 'Updated quote needs your approval' : 'Your quote is ready', body: `${quote.total} for ${f.service}. Work starts only when you approve.`, link: f.link },
       email: {
-        subject: `Quote for your ${f.service} · ${quote.total} · ${f.reference}`,
+        subject: `Quote for your ${f.service}, ${quote.total}, ${f.reference}`,
         preheader: 'Work starts only when you approve it.',
         heading: quote.revision > 1 ? 'An updated quote needs your approval' : 'Your quote is ready',
         intro: [`Hi ${first(name)}, ${prov(f)} has checked your booking.`, quote.summary ? `What they found: ${quote.summary}` : null].filter(Boolean),
@@ -112,8 +112,8 @@ const CATALOG = {
     build: ({ f, name, s, url }) => ({
       push: { title: 'All done', body: `${f.service} is complete. Your receipt is in your email and the app.`, link: f.link },
       email: {
-        subject: `Receipt · ${f.service} · ${f.reference}`,
-        preheader: `${f.total} · thank you for choosing ${s.brandName}.`,
+        subject: `Receipt, ${f.service}, ${f.reference}`,
+        preheader: `${f.total}, thank you for choosing ${s.brandName}.`,
         heading: 'Your job is done',
         intro: [`Hi ${first(name)}, ${prov(f)} has finished your ${f.service.toLowerCase()}. Your receipt is attached.`],
         rows: [...bookingRows(f), ['Paid by', f.method]], items: f.lines, total: [f.paid ? 'Total paid' : 'Total', f.total],
@@ -133,7 +133,7 @@ const CATALOG = {
       return {
         push: { title: 'Booking cancelled', body: `${f.service}. ${money}`, link: f.link },
         email: {
-          subject: `Booking cancelled · ${f.reference}`,
+          subject: `Booking cancelled, ${f.reference}`,
           preheader: money,
           heading: 'Your booking is cancelled',
           intro: [`Hi ${first(name)}, ${who}`, money],
@@ -150,7 +150,7 @@ const CATALOG = {
     build: ({ f, name, refundPaise, url }) => ({
       push: { title: `${rupees(refundPaise)} refund on its way`, body: `For ${f.service} (${f.reference}). It reaches your account in 5 to 7 working days.`, link: f.link },
       email: {
-        subject: `Refund of ${rupees(refundPaise)} · ${f.reference}`, preheader: 'It reaches your account in 5 to 7 working days.',
+        subject: `Refund of ${rupees(refundPaise)}, ${f.reference}`, preheader: 'It reaches your account in 5 to 7 working days.',
         heading: 'Your refund is on its way',
         intro: [`Hi ${first(name)}, we have sent ${rupees(refundPaise)} back for ${f.service}. Depending on your bank, it shows up in 5 to 7 working days.`],
         rows: [['Booking', f.reference], ['Refund', rupees(refundPaise)]],
@@ -182,7 +182,7 @@ const CATALOG = {
     build: ({ label, km, area, earningPaise, boostPaise = 0 }) => ({
       push: {
         title: boostPaise ? `Customer raised the offer: +${rupees(boostPaise)}` : `New ${label} job near you`,
-        body: [earningPaise ? `${boostPaise ? `${label} job · ` : ''}Earn ${rupees(earningPaise)}${boostPaise ? ` (incl. ${rupees(boostPaise)} extra, all yours)` : ''}` : null, km != null ? `${Number(km).toFixed(1)} km away` : null, area].filter(Boolean).join(' · ') || 'Open the app to take it.',
+        body: [earningPaise ? `${boostPaise ? `${label} job, ` : ''}Earn ${rupees(earningPaise)}${boostPaise ? ` (incl. ${rupees(boostPaise)} extra, all yours)` : ''}` : null, km != null ? `${Number(km).toFixed(1)} km away` : null, area].filter(Boolean).join(', ') || 'Open the app to take it.',
         link: '/worker/work',
       },
     }),
@@ -193,7 +193,7 @@ const CATALOG = {
     build: ({ device, repair, km }) => ({
       push: {
         title: 'A customer near you wants your price',
-        body: `${repair} for a ${device}${km != null ? ` · ${Number(km).toFixed(1)} km away` : ''}. Reply with your price to win the job.`,
+        body: `${repair} for a ${device}${km != null ? `, ${Number(km).toFixed(1)} km away` : ''}. Reply with your price to win the job.`,
         link: '/shop/price-requests',
       },
     }),
@@ -335,7 +335,7 @@ const CATALOG = {
     build: ({ day, bookings, completed, cancelled, gmvPaise, takePaise, newCustomers, stuck, kycWaiting, url }) => ({
       email: {
         subject: `ZappyOne yesterday: ${bookings} bookings, ${rupees(gmvPaise)}`,
-        preheader: `${completed} completed · ${cancelled} cancelled · ${rupees(takePaise)} earned`,
+        preheader: `${completed} completed, ${cancelled} cancelled, ${rupees(takePaise)} earned`,
         heading: `Yesterday, ${day}`,
         rows: [['Bookings', String(bookings)], ['Completed', String(completed)], ['Cancelled', String(cancelled)], ['Value of jobs', rupees(gmvPaise)], ['ZappyOne earned', rupees(takePaise)], ['New customers', String(newCustomers)], ['Jobs needing a person now', String(stuck)], ['Verifications waiting', String(kycWaiting)]],
         button: { label: 'Open Insights', url: url('/dashboard?tab=insights') },
@@ -347,7 +347,7 @@ const CATALOG = {
     sample: () => ({ who: 'Customer Aarav (98xxxxxx10)', reference: 'RP7K2Q9M', area: 'Madhapur', at: 'Mon, 6 Oct, 9:41 pm' }),
     build: ({ who, reference, area, at, url }) => ({
       email: {
-        subject: `SOS: ${reference || 'live job'} · ${area || ''}`.trim(),
+        subject: `SOS: ${reference || 'live job'}, ${area || ''}`.trim(),
         preheader: `${who} raised an SOS. Act now.`,
         heading: 'An SOS was raised',
         intro: [`${who} raised an SOS. 112 was dialled on their phone. Call them now and follow the safety steps.`],
@@ -367,7 +367,7 @@ const CATALOG = {
         intro: [unsafe
           ? `A provider marked "I felt unsafe" after ${reference || 'a job'}. Call the provider, then decide on this customer.`
           : `Providers have rated ${name} ${avg}★ over ${count} jobs. Look at the notes before their next booking.`],
-        rows: [['Customer', `${name} · ${phone}`], ['Average', `${avg}★ (${count})`], ['Last job', reference]],
+        rows: [['Customer', `${name}, ${phone}`], ['Average', `${avg}★ (${count})`], ['Last job', reference]],
         button: { label: 'Open Customers', url: url('/dashboard?tab=customers') },
       },
     }),
@@ -395,7 +395,7 @@ const CATALOG = {
         preheader: 'Their listings are hidden until you review them.',
         heading: 'An event partner was paused',
         intro: [`${partner} cancelled ${strikes} confirmed bookings in ${windowDays} days, so their listings are hidden and new bookings stopped. Talk to them, then reinstate them from Event commerce if it is sorted.`],
-        rows: [['Partner', `${partner} · ${phone}`], ['Cancellations', `${strikes} in ${windowDays} days`]],
+        rows: [['Partner', `${partner}, ${phone}`], ['Cancellations', `${strikes} in ${windowDays} days`]],
         button: { label: 'Open Event commerce', url: url('/dashboard?tab=events') },
       },
     }),

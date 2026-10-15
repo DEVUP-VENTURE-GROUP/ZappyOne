@@ -69,7 +69,7 @@ export function PartnerBookingDetailPage() {
             {cover ? <Image source={{ uri: cover }} style={styles.cover} /> : null}
             <View style={styles.flex}>
               <Text variant="heading3" weight="black">{b.themeId?.title || 'Event'}</Text>
-              <Text variant="caption" color={ink[500]}>{longDate(b.eventDate)}{b.eventTimeSlot ? ` · ${b.eventTimeSlot}` : ''}</Text>
+              <Text variant="caption" color={ink[500]}>{longDate(b.eventDate)}{b.eventTimeSlot ? `, ${b.eventTimeSlot}` : ''}</Text>
               <PartnerStatusChip status={b.status} />
             </View>
           </View>

@@ -21,7 +21,7 @@ export function NearestArrival({ line, loc, noun = 'provider' }: { line?: string
   return (
     <View style={[styles.box, styles.row, { backgroundColor: success[50] }]}>
       <ArrivalBadge minutes={a.minutes} withinPromise={a.withinPromise} busy={a.busy} />
-      <Text variant="caption" color={ink[700]}>{a.busy ? `The nearest ${noun} is finishing a job.` : `Nearest ${noun} ~${a.km} km away`}{a.nearby > 1 ? ` · ${a.nearby} nearby` : ''}</Text>
+      <Text variant="caption" color={ink[700]}>{a.busy ? `The nearest ${noun} is finishing a job.` : `Nearest ${noun} ~${a.km} km away`}{a.nearby > 1 ? `, ${a.nearby} nearby` : ''}</Text>
     </View>
   );
 }

@@ -18,7 +18,7 @@ export function ArrivalBar({ metres, radius: r }: { metres: number | null; radiu
       <MapPin size={18} color={within ? success[600] : accent[600]} />
       <View style={styles.flex}>
         <Text variant="bodySmall" weight="extrabold" color={within ? success[700] : accent[700]}>{within ? "You're at the location" : `${Math.round(metres)} m away`}</Text>
-        <Text variant="caption" color={within ? success[600] : accent[600]}>{within ? `${Math.round(metres)} m · tap to confirm arrival` : `Get within ${r} m to mark arrived`}</Text>
+        <Text variant="caption" color={within ? success[600] : accent[600]}>{within ? `${Math.round(metres)} m, tap to confirm arrival` : `Get within ${r} m to mark arrived`}</Text>
       </View>
     </JobCard>
   );

@@ -104,7 +104,7 @@ async function build(kind, doc) {
     [
       `The service was provided by ${f.provider?.name || 'the provider named above'}, an independent professional on the ${s.brandName} platform.`,
       isTaxInvoice ? 'Taxes are shown above as charged.' : 'No GST was charged on this booking.',
-      `Questions about this receipt: ${[s.supportEmail, s.supportPhone].filter(Boolean).join(' · ') || 'contact support in the app'}.`,
+      `Questions about this receipt: ${[s.supportEmail, s.supportPhone].filter(Boolean).join(', ') || 'contact support in the app'}.`,
       'This is a computer-generated document and needs no signature.',
     ].join(' '),
     X, y, { width: W, lineGap: 2 },

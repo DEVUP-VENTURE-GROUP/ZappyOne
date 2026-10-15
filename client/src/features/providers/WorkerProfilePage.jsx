@@ -95,7 +95,7 @@ export default function WorkerProfilePage() {
             <div className="mt-1 flex flex-wrap items-center gap-1.5">
               {isVerified && <span className="chip bg-green-50 text-green-700"><ShieldCheck size={12} /> ID verified</span>}
               {rating != null
-                ? <span className="chip bg-amber-50 text-amber-800"><Star size={12} className="fill-amber-400 text-amber-400" /> {Number(rating).toFixed(1)} · {ratingCount} rating{ratingCount === 1 ? '' : 's'}</span>
+                ? <span className="chip bg-amber-50 text-amber-800"><Star size={12} className="fill-amber-400 text-amber-400" /> {Number(rating).toFixed(1)}, {ratingCount} rating{ratingCount === 1 ? '' : 's'}</span>
                 : <span className="chip bg-sunken text-ink-700">New on ZappyOne</span>}
             </div>
           </div>

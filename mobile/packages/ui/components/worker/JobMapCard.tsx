@@ -34,7 +34,7 @@ export function JobMapCard({ to, label = 'Customer location', live = true }: { t
         <MapPin size={18} color={zappy[600]} />
         <View style={styles.flex}>
           <Text variant="caption" weight="bold" color={ink[400]}>
-            {label.toUpperCase()}{distance != null ? ` · ${distance < 1 ? `${Math.round(distance * 1000)} m` : `${distance.toFixed(1)} km`} away` : ''}
+            {label.toUpperCase()}{distance != null ? `, ${distance < 1 ? `${Math.round(distance * 1000)} m` : `${distance.toFixed(1)} km`} away` : ''}
           </Text>
           <Text variant="bodySmall" weight="semibold" numberOfLines={2}>{to.address || `${to.lat.toFixed(5)}, ${to.lng.toFixed(5)}`}</Text>
         </View>

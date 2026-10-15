@@ -201,7 +201,7 @@ export default function OtpOrbit({
                       : { type: 'spring', stiffness: 260, damping: 24, delay: i * 0.035 }
                 }
               >
-                {d || '·'}
+                {d || '–'}
               </motion.span>
             );
           })}

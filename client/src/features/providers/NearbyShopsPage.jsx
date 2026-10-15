@@ -86,7 +86,7 @@ export default function NearbyShopsPage() {
                     <p className="font-bold text-sm text-[#0F172A] truncate">{s.businessName}</p>
                     <ShieldCheck size={13} className="text-emerald-500 shrink-0" />
                   </div>
-                  <p className="text-xs text-slate-400 truncate">{(s.services || []).map((x) => x.name).join(' · ') || s.category}</p>
+                  <p className="text-xs text-slate-400 truncate">{(s.services || []).map((x) => x.name).join(', ') || s.category}</p>
                   <div className="flex items-center gap-3 mt-1 flex-wrap">
                     {s.rating > 0 && (
                       <span className="flex items-center gap-0.5 text-[11px] font-bold text-slate-600">
@@ -102,7 +102,7 @@ export default function NearbyShopsPage() {
                     */}
                     {s.openNow === true && (
                       <span className="text-[11px] font-bold text-emerald-600">
-                        Open now{s.todayHours ? ` · till ${s.todayHours.closesAt}` : ''}
+                        Open now{s.todayHours ? `, till ${s.todayHours.closesAt}` : ''}
                       </span>
                     )}
                     {s.openNow === false && (

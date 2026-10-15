@@ -35,7 +35,7 @@ function ItemRow({ item, disabled, onPurchase, onUnavailable, onAlternative }: {
       <View style={styles.between}>
         <View style={styles.flex}>
           <Text variant="body" weight="bold">{item.name} × {item.quantity}</Text>
-          {item.preferredBrand || item.preferredVariant ? <Text variant="caption" color={ink[400]}>{[item.preferredBrand, item.preferredVariant].filter(Boolean).join(' · ')}</Text> : null}
+          {item.preferredBrand || item.preferredVariant ? <Text variant="caption" color={ink[400]}>{[item.preferredBrand, item.preferredVariant].filter(Boolean).join(', ')}</Text> : null}
           <Text variant="caption" color={ink[500]}>Max: {formatPaise(item.maxApprovedPricePaise)}</Text>
         </View>
         <Text variant="caption" weight="bold" color={zappy[500]}>{item.status.replace(/_/g, ' ').toUpperCase()}</Text>

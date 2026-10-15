@@ -26,7 +26,7 @@ export const CompactRow = memo(function CompactRow({ job, last }: { job: MyJob; 
         <View style={styles.flex}>
           <View style={styles.inline}><Text variant="bodySmall" weight="bold" numberOfLines={1} style={styles.title}>{title}</Text><StatusPill job={job} /></View>
           <View style={styles.inline}>
-            <Text variant="caption" color={ink[500]}>{fmtTime(job.createdAt)} · </Text>
+            <Text variant="caption" color={ink[500]}>{fmtTime(job.createdAt)}, </Text>
             <Text variant="caption" weight="semibold">{formatPaise(job.totalPaise)}</Text>
             {job.rating ? <><Star size={10} color={accent[500]} fill={accent[500]} /><Text variant="caption" color={ink[500]}>{job.rating}</Text></> : null}
           </View>

@@ -128,7 +128,7 @@ export function WorkerPetJobPage() {
           </JobCard>
         ) : null}
         <JobCard>
-          <View style={styles.row}><PawPrint size={15} color={ink[900]} /><Text variant="body" weight="bold" style={styles.flex}>{[brief.name, brief.species, brief.size?.replace('_', ' ')].filter(Boolean).join(' · ')}</Text></View>
+          <View style={styles.row}><PawPrint size={15} color={ink[900]} /><Text variant="body" weight="bold" style={styles.flex}>{[brief.name, brief.species, brief.size?.replace('_', ' ')].filter(Boolean).join(', ')}</Text></View>
           {brief.breed ? <Text variant="caption" color={ink[500]}>{brief.breed}</Text> : null}
         </JobCard>
         {risky ? (

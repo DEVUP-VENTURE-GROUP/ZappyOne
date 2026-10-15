@@ -479,7 +479,7 @@ function TopUpModal({ onClose, onSuccess }) {
           </button>
         </div>
 
-        <p className="text-[10px] text-slate-400 text-center mt-3">Secured by Cashfree · UPI, Cards, Net Banking</p>
+        <p className="text-[10px] text-slate-400 text-center mt-3">Secured by Cashfree, UPI, Cards, Net Banking</p>
       </motion.div>
     </motion.div>
   );
@@ -721,7 +721,7 @@ export default function AdvertiserDashboard() {
                     <div key={i} className="flex items-center justify-between py-2 border-b border-slate-50 last:border-0">
                       <div>
                         <p className="text-xs font-semibold text-slate-700 capitalize">{tx.type}</p>
-                        <p className="text-[10px] text-slate-400">{tx.note} · {new Date(tx.at).toLocaleDateString('en-IN')}</p>
+                        <p className="text-[10px] text-slate-400">{tx.note}, {new Date(tx.at).toLocaleDateString('en-IN')}</p>
                       </div>
                       <span className={`text-sm font-black ${tx.amountPaise > 0 ? 'text-emerald-600' : 'text-red-500'}`}>
                         {tx.amountPaise > 0 ? '+' : ''}{fmtRupees(Math.abs(tx.amountPaise))}

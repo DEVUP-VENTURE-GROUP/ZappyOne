@@ -40,7 +40,7 @@ export function PetProvidersStep({ result, categoryCode, loc, onChangeLocation, 
           <Text variant="bodySmall" weight="bold">{p.name}</Text>
           <View style={styles.meta}>
             <Star size={11} color={accent[500]} fill={accent[500]} />
-            <Text variant="caption" color={ink[500]}>{p.rating != null ? p.rating.toFixed(1) : 'New'}{p.distanceKm != null ? ` · ${p.distanceKm} km` : ''}{p.completedJobs ? ` · ${p.completedJobs} jobs` : ''}</Text>
+            <Text variant="caption" color={ink[500]}>{p.rating != null ? p.rating.toFixed(1) : 'New'}{p.distanceKm != null ? `, ${p.distanceKm} km` : ''}{p.completedJobs ? `, ${p.completedJobs} jobs` : ''}</Text>
           </View>
           {p.arrivalMinutes != null ? <ArrivalBadge minutes={p.arrivalMinutes} withinPromise={p.arrivalWithinPromise} /> : null}
         </Pressable>

@@ -32,7 +32,7 @@ export const PartnerBookingRow = memo(function PartnerBookingRow({ booking: b, s
       </View>
       <View style={styles.body}>
         <Text variant="bodySmall" weight="bold" numberOfLines={1}>{b.themeId?.title || 'Event'}</Text>
-        <Text variant="caption" color={ink[500]} numberOfLines={1}>{shortDate(b.eventDate)}{b.eventTimeSlot ? ` · ${b.eventTimeSlot}` : ''} · {placeName(b.address?.city) || 'Location on booking'}</Text>
+        <Text variant="caption" color={ink[500]} numberOfLines={1}>{shortDate(b.eventDate)}{b.eventTimeSlot ? `, ${b.eventTimeSlot}` : ''}, {placeName(b.address?.city) || 'Location on booking'}</Text>
         <View style={styles.meta}>
           <PartnerStatusChip status={b.status} />
           <View style={styles.guests}><Users size={12} color={ink[400]} /><Text variant="caption" color={ink[500]}>{b.guestCount || 1}</Text></View>

@@ -40,7 +40,7 @@ export function NotInYourArea({ place, lat, lng, address, areas = [], onChangeLo
       {areas.length ? (
         <View style={styles.areas}>
           <Text variant="bodySmall" weight="semibold">Where we serve today</Text>
-          <Text variant="bodySmall" color={ink[700]}>{areas.map((a) => `${a.name}${a.city ? `, ${a.city}` : ''}`).join(' · ')}</Text>
+          <Text variant="bodySmall" color={ink[700]}>{areas.map((a) => `${a.name}${a.city ? `, ${a.city}` : ''}`).join(', ')}</Text>
         </View>
       ) : null}
     </View>

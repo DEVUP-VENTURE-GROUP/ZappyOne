@@ -50,7 +50,7 @@ export default function BookingsPage() {
                       <span className="truncate text-[15px] font-semibold text-ink-900">{b.themeId?.title || 'Event'}</span>
                     </span>
                     <span className="mt-0.5 block truncate text-[13px] text-ink-500">
-                      {shortDate(b.eventDate)} · {b.eventTimeSlot} · {placeName(b.address?.city) || 'Location on booking'}
+                      {shortDate(b.eventDate)}, {b.eventTimeSlot}, {placeName(b.address?.city) || 'Location on booking'}
                     </span>
                     <span className="mt-1 flex flex-wrap items-center gap-2 text-[12px] text-ink-500">
                       <StatusChip status={b.status} />

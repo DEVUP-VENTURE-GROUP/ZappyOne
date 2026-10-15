@@ -82,7 +82,7 @@ export default function TodayView({ days }) {
 
         <Panel title="By area" note="Top 10" className="lg:col-span-2">
           <RankBars rows={data.byArea.map((a) => ({ ...a, label: a.area }))} value="bookings"
-            sub={(a) => `${count(a.completed)} done · ${rupees(a.takePaise)} earned${a.cancelRate >= 25 ? ` · ${a.cancelRate}% cancelled` : ''}`}
+            sub={(a) => `${count(a.completed)} done, ${rupees(a.takePaise)} earned${a.cancelRate >= 25 ? `, ${a.cancelRate}% cancelled` : ''}`}
             empty="No bookings with an area yet" />
         </Panel>
       </div>

@@ -35,7 +35,7 @@ export default function MapETAChip({ eta, distanceKm, status }) {
           {eta} min away
         </p>
         <p className="text-[10.5px] font-semibold mt-0.5" style={{ color: '#647084' }}>
-          Estimated arrival{distanceKm != null ? ` · ${Number(distanceKm).toFixed(1)} km` : ''}
+          Estimated arrival{distanceKm != null ? `, ${Number(distanceKm).toFixed(1)} km` : ''}
         </p>
       </div>
     </motion.div>

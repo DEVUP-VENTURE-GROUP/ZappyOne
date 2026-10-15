@@ -225,7 +225,7 @@ function WeeklyFundsTab() {
                               <div key={p._id} className="bg-white rounded-lg border border-slate-100 px-3 py-2 flex items-center justify-between">
                                 <div>
                                   <p className="text-sm font-semibold text-slate-800">{p.worker?.name ?? 'Worker'}</p>
-                                  <p className="text-xs text-slate-400">{p.cancellationsCount} cancel{p.cancellationsCount !== 1 ? 's' : ''} · <HarmBadge score={p.harmScore} /></p>
+                                  <p className="text-xs text-slate-400">{p.cancellationsCount} cancel{p.cancellationsCount !== 1 ? 's' : ''}, <HarmBadge score={p.harmScore} /></p>
                                 </div>
                                 <p className="text-sm font-bold text-green-700">{fmt(p.amountPaise)}</p>
                               </div>

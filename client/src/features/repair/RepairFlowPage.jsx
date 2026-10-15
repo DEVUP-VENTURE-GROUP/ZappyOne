@@ -166,7 +166,7 @@ function StepHeader({ steps, step, onBack, title, subtitle, skipped = new Set() 
         </button>
         <div className="flex-1 min-w-0">
           <p className="text-[11px] font-bold text-zappy-600 uppercase tracking-wide">
-            Step {index + 1}{ahead > 0 ? '' : ' · last step'}
+            Step {index + 1}{ahead > 0 ? '' : ', last step'}
           </p>
           <p className="font-bold text-[#0F172A] truncate">{title}</p>
           {subtitle && <p className="text-xs text-slate-400 truncate">{subtitle}</p>}
@@ -534,7 +534,7 @@ function ModelStep({ vertical, deep, brand, productType, family, onPick }) {
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-sm text-[#0F172A] truncate">{m.name}</p>
                     {m.productNumbers?.length > 0 && (
-                      <p className="text-xs text-slate-400 truncate">{m.productNumbers.slice(0, 3).join(' · ')}</p>
+                      <p className="text-xs text-slate-400 truncate">{m.productNumbers.slice(0, 3).join(', ')}</p>
                     )}
                   </div>
                   <ChevronRight size={16} className="text-slate-300" />
@@ -855,7 +855,7 @@ function ModeStep({ diagnosis, inspectionFeePaise, onPick }) {
                 {o.available && o.note && <p className="text-[11px] text-amber-600 mt-1">{o.note}</p>}
                 {o.available && o.fee != null && (
                   <p className="text-[11px] font-semibold text-emerald-700 mt-1">
-                    {o.fee > 0 ? `${formatPaise(o.fee)} inspection fee · adjusted against the repair if you go ahead` : 'Free inspection'}
+                    {o.fee > 0 ? `${formatPaise(o.fee)} inspection fee, adjusted against the repair if you go ahead` : 'Free inspection'}
                   </p>
                 )}
                 {!o.available && (
@@ -1475,7 +1475,7 @@ function AddOnsStep({
                 )}
                 <span className="block text-xs text-slate-400 mt-0.5">
                   {a.estimatedDurationMin ? `+${a.estimatedDurationMin} min` : null}
-                  {a.estimatedDurationMin && a.warrantyDays ? ' · ' : null}
+                  {a.estimatedDurationMin && a.warrantyDays ? ', ' : null}
                   {a.warrantyDays ? `${a.warrantyDays}-day warranty` : null}
                 </span>
               </span>
@@ -1492,7 +1492,7 @@ function AddOnsStep({
         onClick={onContinue}
         className="w-full rounded-2xl bg-[#0F172A] text-white font-bold py-4 mt-2"
       >
-        {extraPaise > 0 ? `Continue · +${formatPaise(extraPaise)}` : 'Continue without extras'}
+        {extraPaise > 0 ? `Continue, +${formatPaise(extraPaise)}` : 'Continue without extras'}
       </button>
     </Shell>
   );

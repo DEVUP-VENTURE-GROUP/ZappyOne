@@ -47,9 +47,9 @@ export function WorkBoardPage({ kinds }: { kinds: string[] }) {
   }
 
   const rows: Row[] = [
-    { type: 'head', key: 'h-mine', title: `Your jobs${mine.length ? ` · ${mine.length}` : ''}` },
+    { type: 'head', key: 'h-mine', title: `Your jobs${mine.length ? `, ${mine.length}` : ''}` },
     ...(mine.length ? mine.map((j: MineJob) => ({ type: 'mine' as const, key: `m-${j.kind}-${j.id}`, job: j })) : [{ type: 'note' as const, key: 'n-mine', text: 'Nothing in hand right now.' }]),
-    { type: 'head', key: 'h-open', title: `Open near you${open.length ? ` · ${open.length}` : ''}` },
+    { type: 'head', key: 'h-open', title: `Open near you${open.length ? `, ${open.length}` : ''}` },
     ...open.map((j: OpenJob) => ({ type: 'open' as const, key: `o-${j.kind}-${j.id}`, job: j })),
     ...(!open.length && !notApproved.length ? [{ type: 'note' as const, key: 'n-open', text: 'No open jobs near you. New ones appear here, and you’ll get an alert.' }] : []),
     ...(notApproved.length ? [{ type: 'verify' as const, key: 'v', kinds: notApproved }] : []),

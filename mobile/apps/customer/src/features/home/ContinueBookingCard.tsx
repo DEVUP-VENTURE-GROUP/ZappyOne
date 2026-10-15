@@ -29,7 +29,7 @@ export function ContinueBookingCard({ isAuthed }: { isAuthed: boolean }) {
         <View style={styles.flex}>
           <Text variant="caption" weight="bold" color={zappy[700]}>CONTINUE YOUR BOOKING</Text>
           <Text variant="body" weight="bold" numberOfLines={1} style={styles.title}>{d.title}</Text>
-          <Text variant="caption" color={ink[500]}>{[d.pricePaise ? formatPaise(d.pricePaise) : null, 'everything you picked is saved'].filter(Boolean).join(' · ')}</Text>
+          <Text variant="caption" color={ink[500]}>{[d.pricePaise ? formatPaise(d.pricePaise) : null, 'everything you picked is saved'].filter(Boolean).join(', ')}</Text>
         </View>
         <View style={styles.go}><ArrowRight size={18} color="#fff" /></View>
       </Pressable>

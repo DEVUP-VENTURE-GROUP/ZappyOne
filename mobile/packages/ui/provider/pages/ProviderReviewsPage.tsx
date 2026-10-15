@@ -85,7 +85,7 @@ export function ProviderReviewsPage() {
               <View style={styles.between}>
                 <View style={styles.flex}>
                   <Stars value={r.rating} />
-                  <Text variant="caption" color={ink[500]}>{r.by}{r.service ? ` · ${r.service}` : ''} · {new Date(r.at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</Text>
+                  <Text variant="caption" color={ink[500]}>{r.by}{r.service ? `, ${r.service}` : ''}, {new Date(r.at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</Text>
                 </View>
                 {!r.reported && reporting !== r.id ? (
                   <Pressable onPress={() => setReporting(r.id)} hitSlop={8} style={styles.row}><Flag size={13} color={ink[500]} /><Text variant="caption" weight="semibold" color={ink[500]}>Report</Text></Pressable>
@@ -93,7 +93,7 @@ export function ProviderReviewsPage() {
               </View>
               {r.text ? <Text variant="bodySmall">{r.text}</Text> : null}
               <View style={styles.wrap}>
-                {r.reported ? <View style={[styles.tag, { backgroundColor: accent[50] }]}><Text variant="caption" weight="semibold" color={accent[700]}>Reported · being looked at</Text></View> : null}
+                {r.reported ? <View style={[styles.tag, { backgroundColor: accent[50] }]}><Text variant="caption" weight="semibold" color={accent[700]}>Reported, being looked at</Text></View> : null}
                 {r.hidden ? <View style={styles.tag}><EyeOff size={11} color={ink[500]} /><Text variant="caption" weight="semibold" color={ink[500]}>Not shown to customers</Text></View> : null}
                 {r.excluded ? <View style={styles.tag}><Text variant="caption" weight="semibold" color={ink[500]}>Not counted in your rating</Text></View> : null}
               </View>

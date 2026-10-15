@@ -687,7 +687,7 @@ export default function Zones() {
                           <p className="text-[11px] text-blue-100 mt-0.5 whitespace-nowrap">
                             {drawCount === 0
                               ? 'Tap the map to add corner points'
-                              : `${drawCount} point${drawCount > 1 ? 's' : ''} · ${drawCount >= 3 ? 'ready to complete' : 'need 3+'}`}
+                              : `${drawCount} point${drawCount > 1 ? 's' : ''}, ${drawCount >= 3 ? 'ready to complete' : 'need 3+'}`}
                           </p>
                         </div>
                       </div>

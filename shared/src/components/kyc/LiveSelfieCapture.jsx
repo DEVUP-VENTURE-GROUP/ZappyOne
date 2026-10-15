@@ -247,8 +247,8 @@ export default function LiveSelfieCapture({
                   </p>
                   <p className="text-white/70 text-[11px] mt-0.5">
                     {instruction || (isSelfie
-                      ? 'Look straight · Good lighting · No glasses'
-                      : 'Stand back · Keep any signage readable')}
+                      ? 'Look straight, Good lighting, No glasses'
+                      : 'Stand back, Keep any signage readable')}
                   </p>
                 </div>
               </div>

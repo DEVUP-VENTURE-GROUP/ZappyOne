@@ -88,7 +88,7 @@ function FeaturedCard({ service, photo, onOpen }) {
         <p className="mt-1 line-clamp-1 text-[14px] text-ink-500">{service.name}</p>
         <p className="mt-2.5 flex items-center gap-1.5 text-[13px] font-semibold text-ink-700">
           <CheckCircle2 size={15} className="text-green-600" /> Verified pros
-          <span className="text-ink-300" aria-hidden="true">·</span>
+          <span className="text-ink-300" aria-hidden="true">|</span>
           <span className="text-zappy-600">Quote first</span>
         </p>
         <div className="mt-3 flex gap-2">

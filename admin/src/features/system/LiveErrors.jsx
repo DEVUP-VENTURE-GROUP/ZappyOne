@@ -224,7 +224,7 @@ function LiveFeed({ filters, onOpen }) {
                     <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
                       <KindTag kind={e.kind} />
                       <RoleChip role={e.role} />
-                      {e.who && <span className="text-[12px] font-semibold text-slate-800">{e.who.name}{e.who.phone ? ` · ${e.who.phone}` : ''}</span>}
+                      {e.who && <span className="text-[12px] font-semibold text-slate-800">{e.who.name}{e.who.phone ? `, ${e.who.phone}` : ''}</span>}
                       <span className="text-[11.5px] text-slate-400">{appName(e.app)}</span>
                     </span>
                     <span className="mt-1 block truncate text-[13.5px] font-medium text-slate-900">{e.message}</span>
@@ -354,7 +354,7 @@ function IssueDrawer({ id, onClose }) {
                 <h2 className="mt-2 text-[18px] font-bold text-slate-900">{data.title}</h2>
                 <p className="font-mono text-[12px] text-slate-500">{data.where}</p>
                 <p className="mt-1 text-[12px] text-slate-500">
-                  {data.count.toLocaleString('en-IN')} times · {data.people.length} people · first {ago(data.firstSeen)} · last {ago(data.lastSeen)}
+                  {data.count.toLocaleString('en-IN')} times, {data.people.length} people, first {ago(data.firstSeen)}, last {ago(data.lastSeen)}
                 </p>
               </div>
               <button type="button" onClick={onClose} className="rounded-full p-2 hover:bg-slate-100" aria-label="Close"><X size={18} /></button>
@@ -370,7 +370,7 @@ function IssueDrawer({ id, onClose }) {
                   </select></label>
                 <label className="text-[12px] font-semibold text-slate-600">Priority
                   <select value={plan.priority} onChange={(e) => setPlan({ ...plan, priority: e.target.value })} className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-2 text-[13px]">
-                    <option value="P0">P0 · stops people now</option><option value="P1">P1 · today</option><option value="P2">P2 · this week</option><option value="P3">P3 · later</option>
+                    <option value="P0">P0, stops people now</option><option value="P1">P1, today</option><option value="P2">P2, this week</option><option value="P3">P3, later</option>
                   </select></label>
                 <label className="text-[12px] font-semibold text-slate-600">Owner
                   <input value={plan.owner} onChange={(e) => setPlan({ ...plan, owner: e.target.value })} placeholder="Who fixes it" className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-2 text-[13px]" /></label>
@@ -396,7 +396,7 @@ function IssueDrawer({ id, onClose }) {
               </div>
               <select value={msg.to} onChange={(e) => setMsg({ ...msg, to: e.target.value })} className="mt-3 w-full rounded-lg border border-slate-200 px-2 py-2 text-[13px]">
                 <option value="all">Everyone affected ({data.people.length})</option>
-                {data.people.map((p) => <option key={`${p.role}:${p.userId}`} value={`${p.role}:${p.userId}`}>{(ROLE[p.role] || ROLE.guest)[0]} · {p.name || p.userId}{p.phone ? ` · ${p.phone}` : ''}</option>)}
+                {data.people.map((p) => <option key={`${p.role}:${p.userId}`} value={`${p.role}:${p.userId}`}>{(ROLE[p.role] || ROLE.guest)[0]}, {p.name || p.userId}{p.phone ? `, ${p.phone}` : ''}</option>)}
               </select>
               <input value={msg.title} onChange={(e) => setMsg({ ...msg, title: e.target.value })} maxLength={80} className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-[13px] font-semibold" />
               <textarea value={msg.body} onChange={(e) => setMsg({ ...msg, body: e.target.value })} maxLength={300} rows={3} className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-[13px]" />
@@ -406,7 +406,7 @@ function IssueDrawer({ id, onClose }) {
               {!data.people.length && <p className="mt-1 text-[11.5px] text-slate-400">Only signed-in people can be messaged; this one happened to signed-out visitors.</p>}
               {data.messaged?.length > 0 && (
                 <ul className="mt-3 space-y-1 text-[11.5px] text-slate-500">
-                  {data.messaged.slice(-5).reverse().map((m, i) => <li key={i}>“{m.title}” to {m.to === 'all' ? 'everyone' : m.to} · {m.by} · {ago(m.at)}</li>)}
+                  {data.messaged.slice(-5).reverse().map((m, i) => <li key={i}>“{m.title}” to {m.to === 'all' ? 'everyone' : m.to}, {m.by}, {ago(m.at)}</li>)}
                 </ul>
               )}
             </section>
@@ -425,9 +425,9 @@ function IssueDrawer({ id, onClose }) {
                   <li key={e._id} className="flex items-start gap-3 px-3 py-2.5 text-[12px]">
                     <RoleChip role={e.role} />
                     <span className="min-w-0 flex-1">
-                      <span className="font-semibold text-slate-800">{e.who ? `${e.who.name}${e.who.phone ? ` · ${e.who.phone}` : ''}` : 'Signed-out visitor'}</span>
-                      <span className="block truncate font-mono text-[11px] text-slate-500">{e.api?.url ? `${e.api.method} ${e.api.url} → ${e.api.status || e.api.code}${e.api.requestId ? ` · ${e.api.requestId}` : ''}` : e.path}</span>
-                      <span className="block text-[11px] text-slate-400">{e.device}{e.release ? ` · build ${e.release}` : ''}</span>
+                      <span className="font-semibold text-slate-800">{e.who ? `${e.who.name}${e.who.phone ? `, ${e.who.phone}` : ''}` : 'Signed-out visitor'}</span>
+                      <span className="block truncate font-mono text-[11px] text-slate-500">{e.api?.url ? `${e.api.method} ${e.api.url} → ${e.api.status || e.api.code}${e.api.requestId ? `, ${e.api.requestId}` : ''}` : e.path}</span>
+                      <span className="block text-[11px] text-slate-400">{e.device}{e.release ? `, build ${e.release}` : ''}</span>
                     </span>
                     <span className="shrink-0 tabular-nums text-slate-400">{ago(e.at)}</span>
                   </li>

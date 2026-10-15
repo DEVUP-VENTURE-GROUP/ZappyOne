@@ -54,7 +54,7 @@ export default function InstantIdCheck({ className = '' }) {
       <div className="mt-3 rounded-xl bg-white p-3 ring-1 ring-emerald-100">
         <p className="text-[13px] font-bold text-slate-800">Aadhaar</p>
         {aOk ? (
-          <p className="mt-1 flex items-center gap-1.5 text-[12.5px] font-semibold text-emerald-700"><BadgeCheck size={14} /> Verified · ••••{data.aadhaar.last4} · {data.aadhaar.nameOnId}</p>
+          <p className="mt-1 flex items-center gap-1.5 text-[12.5px] font-semibold text-emerald-700"><BadgeCheck size={14} /> Verified, ••••{data.aadhaar.last4}, {data.aadhaar.nameOnId}</p>
         ) : (
           <>
             {data.aadhaar?.status === 'mismatch' && (
@@ -88,7 +88,7 @@ export default function InstantIdCheck({ className = '' }) {
       <div className="mt-2 rounded-xl bg-white p-3 ring-1 ring-emerald-100">
         <p className="text-[13px] font-bold text-slate-800">PAN <span className="font-normal text-slate-400">(needed for payouts above ₹20,000 a month)</span></p>
         {pOk ? (
-          <p className="mt-1 flex items-center gap-1.5 text-[12.5px] font-semibold text-emerald-700"><BadgeCheck size={14} /> Verified · {data.pan.pan} · {data.pan.nameOnId}</p>
+          <p className="mt-1 flex items-center gap-1.5 text-[12.5px] font-semibold text-emerald-700"><BadgeCheck size={14} /> Verified, {data.pan.pan}, {data.pan.nameOnId}</p>
         ) : (
           <div className="mt-2 flex gap-2">
             <input value={pan} onChange={(e) => setPan(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10))} placeholder="ABCDE1234F"

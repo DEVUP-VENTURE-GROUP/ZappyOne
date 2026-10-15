@@ -96,7 +96,7 @@ function Row({ item, onEdit }) {
     <div className={`flex items-start gap-3 p-3 rounded-xl border ${item.isActive ? 'border-slate-200 bg-white' : 'border-slate-100 bg-slate-50 opacity-70'}`}>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-bold text-slate-900 truncate">{isFaq ? item.question : item.title}</p>
-        <p className="text-xs text-slate-500 truncate mt-0.5">{isFaq ? `${item.category} · ${item.answer}` : `/${item.slug}`}</p>
+        <p className="text-xs text-slate-500 truncate mt-0.5">{isFaq ? `${item.category}, ${item.answer}` : `/${item.slug}`}</p>
       </div>
       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 shrink-0">{item.audience}</span>
       <button onClick={() => toggle({ id: item._id, isActive: !item.isActive })} title={item.isActive ? 'Hide' : 'Show'}

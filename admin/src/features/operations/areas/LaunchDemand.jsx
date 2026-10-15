@@ -24,7 +24,7 @@ export default function LaunchDemand() {
 
   return (
     <div className="space-y-5">
-      <SectionHeader title="Launch demand" subtitle={`${data?.total || 0} "notify me" requests in the last ${days} days · ${waiting} people waiting in areas we don't serve yet`}>
+      <SectionHeader title="Launch demand" subtitle={`${data?.total || 0} "notify me" requests in the last ${days} days, ${waiting} people waiting in areas we don't serve yet`}>
         <select value={days} onChange={(e) => setDays(Number(e.target.value))} className="text-xs border border-slate-200 rounded-lg px-2 py-1.5" aria-label="Window">
           {WINDOWS.map((d) => <option key={d} value={d}>Last {d} days</option>)}
         </select>

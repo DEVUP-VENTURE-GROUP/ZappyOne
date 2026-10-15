@@ -35,7 +35,7 @@ export function PastHero({ job }: { job: MyJob }) {
           <Text variant="heading3" weight="bold" style={styles.title}>{t(job.titleKey, job.title)}</Text>
           <StatusPill job={job} />
         </View>
-        <Text variant="bodySmall" color={ink[500]}>{dateBucket(job.createdAt, t, lang)} · {fmtTime(job.createdAt)}</Text>
+        <Text variant="bodySmall" color={ink[500]}>{dateBucket(job.createdAt, t, lang)}, {fmtTime(job.createdAt)}</Text>
         <View style={styles.inline}>
           <Text variant="bodySmall" weight="bold">{formatPaise(job.totalPaise)}</Text>
           {job.rating ? <><Star size={11} color={accent[500]} fill={accent[500]} /><Text variant="caption" color={ink[500]}>{job.rating}</Text></> : null}

@@ -543,8 +543,8 @@ export default function LocationPickerScreen() {
       {/*
         ── Header + search ──────────────────────────────────────────────────
         The website opens its location step behind a dark navy bar carrying the
-        SERVICE being booked — "Where do you need help? · Car Wash" — plus two
-        step pills, then a blue "Step 1 of 2 · Choose location" line above the
+        SERVICE being booked — "Where do you need help?, Car Wash" — plus two
+        step pills, then a blue "Step 1 of 2, Choose location" line above the
         search field. Without that context the picker reads as a detached map
         screen rather than the first half of a booking.
 
@@ -614,7 +614,7 @@ export default function LocationPickerScreen() {
           <View style={styles.stepLine}>
             <MapPin size={12} color={colors.primaryLight} />
             <Text variant="eyebrow" color={colors.primaryLight}>
-              Step 1 of 2 · Choose location
+              Step 1 of 2, Choose location
             </Text>
           </View>
         ) : null}

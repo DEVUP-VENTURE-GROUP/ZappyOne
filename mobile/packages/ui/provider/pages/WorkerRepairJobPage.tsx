@@ -247,7 +247,7 @@ export function WorkerRepairJobPage() {
             <Eyebrow>QUOTES RAISED</Eyebrow>
             {quotes.map((q) => (
               <View key={q._id} style={styles.between}>
-                <Text variant="caption" color={ink[500]}>r{q.revision} · {q.status.replace(/_/g, ' ')}</Text>
+                <Text variant="caption" color={ink[500]}>r{q.revision}, {q.status.replace(/_/g, ' ')}</Text>
                 <Text variant="caption" weight="semibold">{rupees(q.totalPaise)}</Text>
               </View>
             ))}

@@ -41,7 +41,7 @@ export function MyAssetsPage() {
       <ScrollView contentContainerStyle={[styles.body, { paddingBottom: insets.bottom + spacing.xxl }]}>
         <Text variant="bodySmall" color={ink[500]}>{t('assets.intro', 'Save a tank, phone or vehicle once and rebook against it without typing it in again.')}</Text>
         {isLoading ? <LoadingState /> : !assets.length ? <EmptyState icon={<Package size={28} color={slate[300]} />} title={t('assets.none', 'Nothing saved yet.')} /> : assets.map((a) => {
-          const name = `${a.brandName}${a.modelName ? ` · ${a.modelName}` : ''}`;
+          const name = `${a.brandName}${a.modelName ? `, ${a.modelName}` : ''}`;
           return (
             <View key={a._id} style={styles.card}>
               <View style={styles.flex}>

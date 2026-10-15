@@ -32,7 +32,7 @@ export function UpdateGate({ children }: { children: ReactNode }) {
       <Text variant="bodySmall" color={ink[500]} style={styles.center}>
         {data.message || t('update.body', 'This version of the app is no longer supported. Update to the latest version to keep booking and tracking your jobs.')}
       </Text>
-      <Text variant="caption" color={ink[400]}>{t('update.yours', 'Your version')} {version} · {t('update.needed', 'needed')} {data.minVersion}</Text>
+      <Text variant="caption" color={ink[400]}>{t('update.yours', 'Your version')} {version}, {t('update.needed', 'needed')} {data.minVersion}</Text>
       <Button label={t('update.cta', 'Update now')} icon={<Download size={16} color="#fff" />} fullWidth
         onPress={() => openLink(`market://details?id=${pkg}`, 'Open the Play Store and update ZappyOne.')} />
     </View>

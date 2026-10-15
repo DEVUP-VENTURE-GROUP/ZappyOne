@@ -65,7 +65,7 @@ export function WeeklyHours({ hours, onChange }: { hours: DayHours[]; onChange: 
                   </Pressable>
                   {len ? (
                     <Text variant="caption" weight="semibold" color={len.short ? accent[600] : ink[400]} style={styles.len}>
-                      {len.overnight ? 'overnight · ' : ''}{len.label}{len.short ? ', is that right?' : ''}
+                      {len.overnight ? 'overnight, ' : ''}{len.label}{len.short ? ', is that right?' : ''}
                     </Text>
                   ) : null}
                 </View>

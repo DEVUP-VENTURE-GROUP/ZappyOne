@@ -36,7 +36,7 @@ export function ModeStep({ diagnosis, inspectionFeePaise, onPick }: { diagnosis:
               <Text variant="caption" color={ink[500]}>{o.body}</Text>
               {o.available && o.note ? <Text variant="caption" color={accent[600]}>{o.note}</Text> : null}
               {o.available && o.fee != null ? (
-                <Text variant="caption" weight="semibold" color={success[700]}>{o.fee > 0 ? `${formatPaise(o.fee)} inspection fee · adjusted against the repair if you go ahead` : 'Free inspection'}</Text>
+                <Text variant="caption" weight="semibold" color={success[700]}>{o.fee > 0 ? `${formatPaise(o.fee)} inspection fee, adjusted against the repair if you go ahead` : 'Free inspection'}</Text>
               ) : null}
               {!o.available ? <Text variant="caption" weight="semibold" color={ink[400]}>Not for this repair: {MODE_BLOCKED_REASON[o.key]}</Text> : null}
             </View>

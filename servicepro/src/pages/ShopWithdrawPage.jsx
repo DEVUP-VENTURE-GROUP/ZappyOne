@@ -27,7 +27,7 @@ export default function ShopWithdrawPage() {
   const [dest, setDest] = useState(null);
 
   const options = useMemo(() => [
-    ...(accounts?.banks || []).map((b) => ({ key: `bank:${b._id}`, type: 'bank', id: b._id, label: `${b.bankName || b.label || 'Bank'} · ${b.accountNumber}`, isDefault: b.isDefault })),
+    ...(accounts?.banks || []).map((b) => ({ key: `bank:${b._id}`, type: 'bank', id: b._id, label: `${b.bankName || b.label || 'Bank'}, ${b.accountNumber}`, isDefault: b.isDefault })),
     ...(accounts?.upiIds || []).map((u) => ({ key: `upi:${u._id}`, type: 'upi', id: u._id, label: u.upiId, isDefault: u.isDefault })),
   ], [accounts]);
   useEffect(() => { if (!dest && options.length) setDest(options.find((o) => o.isDefault) || options[0]); }, [options, dest]);
@@ -106,7 +106,7 @@ export default function ShopWithdrawPage() {
                   <li key={h._id} className="flex items-center gap-3 px-4 py-3">
                     <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold ${tone}`}><Icon size={11} /> {label}</span>
                     <span className="min-w-0 flex-1 text-[12.5px] text-slate-600">
-                      {h.destination?.label}{h.reference ? ` · ref ${h.reference}` : ''}{h.reason ? ` · ${h.reason}` : ''}
+                      {h.destination?.label}{h.reference ? `, ref ${h.reference}` : ''}{h.reason ? `, ${h.reason}` : ''}
                       <span className="block text-[11px] text-slate-400">{new Date(h.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                     </span>
                     <span className="text-sm font-bold tabular-nums text-slate-900">{formatPaise(h.amountPaise)}</span>

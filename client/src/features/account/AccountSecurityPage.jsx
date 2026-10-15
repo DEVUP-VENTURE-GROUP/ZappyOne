@@ -96,7 +96,7 @@ export default function AccountSecurityPage() {
                     <p className="text-sm text-slate-700">{entry.device || 'Unknown device'}</p>
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className="text-xs text-slate-400">{entry.ip || '—'}</span>
-                      <span className="text-slate-200">·</span>
+                      <span className="text-slate-200">|</span>
                       <div className="flex items-center gap-1 text-xs text-slate-400">
                         <Clock className="w-3 h-3" />
                         {new Date(entry.at).toLocaleDateString('en-IN', {

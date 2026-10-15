@@ -92,7 +92,7 @@ function ThemesTab() {
                   {theme.isTrending && <Pill className="bg-orange-50 text-orange-700 border-orange-200">🔥 Trending</Pill>}
                 </div>
                 <div className="flex items-center gap-2 mt-0.5">
-                  <p className="text-xs text-slate-500">{theme.categoryId?.name} · {theme.partnerId?.businessName}</p>
+                  <p className="text-xs text-slate-500">{theme.categoryId?.name}, {theme.partnerId?.businessName}</p>
                   {editPriceId === theme._id ? (
                     <div className="flex items-center gap-1">
                       <span className="text-xs text-slate-500">₹</span>
@@ -115,7 +115,7 @@ function ThemesTab() {
                     </button>
                   )}
                 </div>
-                <p className="text-xs text-slate-400 mt-0.5">{theme.bookingCount} bookings · ⭐ {theme.rating?.toFixed(1) || '–'} ({theme.reviewCount})</p>
+                <p className="text-xs text-slate-400 mt-0.5">{theme.bookingCount} bookings, ⭐ {theme.rating?.toFixed(1) || '–'} ({theme.reviewCount})</p>
                 {theme.adminNote && <p className="text-xs text-amber-600 mt-1 italic">Note: {theme.adminNote}</p>}
               </div>
               <div className="flex gap-1.5 flex-wrap shrink-0">
@@ -368,7 +368,7 @@ function PartnerDrawer({ partnerId, onClose, onRefresh }) {
                 <div className="flex items-center gap-1.5"><Phone size={11} />{partner.phone}</div>
                 {partner.email && <div className="flex items-center gap-1.5"><Building2 size={11} />{partner.email}</div>}
                 <div className="flex items-center gap-1.5"><MapPin size={11} />{partner.cities?.join(', ') || '—'}</div>
-                <div className="flex items-center gap-1.5"><Star size={11} className="text-amber-400" />⭐ {partner.rating?.toFixed(1) || '–'} · {partner.completedEvents} events</div>
+                <div className="flex items-center gap-1.5"><Star size={11} className="text-amber-400" />⭐ {partner.rating?.toFixed(1) || '–'}, {partner.completedEvents} events</div>
                 <div>Themes: {partner.themeCount || 0}</div>
                 <div>Joined: {new Date(partner.createdAt).toLocaleDateString('en-IN')}</div>
               </div>
@@ -572,8 +572,8 @@ function PartnersTab() {
                       {p.suspendedAt && <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">Paused</span>}
                       {p.kyc?.status === 'not_submitted' && <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-600 border border-amber-200">Pending Review</span>}
                     </div>
-                    <p className="text-xs text-slate-500 mt-0.5">{p.ownerName} · {p.phone}</p>
-                    <p className="text-xs text-slate-400 mt-0.5">{p.cities?.join(', ')} · {p.completedEvents} events · ⭐ {p.rating?.toFixed(1) || '–'}</p>
+                    <p className="text-xs text-slate-500 mt-0.5">{p.ownerName}, {p.phone}</p>
+                    <p className="text-xs text-slate-400 mt-0.5">{p.cities?.join(', ')}, {p.completedEvents} events, ⭐ {p.rating?.toFixed(1) || '–'}</p>
                   </div>
                 </div>
                 <ChevronRight size={16} className="text-slate-300 shrink-0" />

@@ -59,16 +59,16 @@ export default function MoneyView({ days }) {
         </Panel>
         <Panel title="By service" note="What we earned">
           <RankBars rows={data.byService} value="takePaise" format={(v) => rupees(v)} color="#10B981"
-            sub={(s) => `${count(s.jobs)} jobs · ${rupees(s.gmvPaise)} booked · keeps ${s.takeRate ?? '—'}%`} empty="No completed jobs yet" />
+            sub={(s) => `${count(s.jobs)} jobs, ${rupees(s.gmvPaise)} booked, keeps ${s.takeRate ?? '—'}%`} empty="No completed jobs yet" />
         </Panel>
         <Panel title="By area" note="What we earned">
           <RankBars rows={data.byArea} value="takePaise" format={(v) => rupees(v)} color="#10B981"
-            sub={(a) => `${count(a.jobs)} jobs · ${rupees(a.gmvPaise)} booked`} empty="No completed jobs with an area yet" />
+            sub={(a) => `${count(a.jobs)} jobs, ${rupees(a.gmvPaise)} booked`} empty="No completed jobs with an area yet" />
         </Panel>
       </div>
 
       <Panel title="How customers paid" note="Completed jobs">
-        <RankBars rows={data.byMethod} value="jobs" sub={(m) => `${rupees(m.gmvPaise)} booked · ${rupees(m.takePaise)} earned`} empty="No completed jobs yet" />
+        <RankBars rows={data.byMethod} value="jobs" sub={(m) => `${rupees(m.gmvPaise)} booked, ${rupees(m.takePaise)} earned`} empty="No completed jobs yet" />
       </Panel>
     </div>
   );

@@ -391,7 +391,7 @@ function KycDetailPanel({ worker, onDone }) {
         {/* storage note */}
         {!docsLoading && (
           <p className="text-[10px] text-slate-400 text-center">
-            Documents stored permanently · fresh links generated on each view
+            Documents stored permanently, fresh links generated on each view
           </p>
         )}
       </div>
@@ -411,7 +411,7 @@ function KycDetailPanel({ worker, onDone }) {
                 return (
                   <div key={k} className={`flex items-center justify-between text-[11px] px-2.5 py-1.5 rounded-lg ${ok ? 'bg-green-50 text-green-700' : r.skipped ? 'bg-slate-50 text-slate-500' : 'bg-amber-50 text-amber-700'}`}>
                     <span className="font-bold uppercase">{k}</span>
-                    <span>{r.skipped ? 'skipped' : ok ? `verified${r.nameMatchScore != null ? ` · name ${Math.round(r.nameMatchScore * 100)}%` : ''}` : (r.error || 'not verified')}</span>
+                    <span>{r.skipped ? 'skipped' : ok ? `verified${r.nameMatchScore != null ? `, name ${Math.round(r.nameMatchScore * 100)}%` : ''}` : (r.error || 'not verified')}</span>
                   </div>
                 );
               })}
@@ -598,7 +598,7 @@ export default function AdminKycReview() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-bold text-slate-900">KYC Review</h2>
-          <p className="text-xs text-slate-400 mt-0.5">Documents stored permanently · proxied through secure server</p>
+          <p className="text-xs text-slate-400 mt-0.5">Documents stored permanently, proxied through secure server</p>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={refetch} className="p-2 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 transition">

@@ -184,7 +184,7 @@ export default function Training() {
                       </div>
                       <p className="font-semibold text-slate-800">{m.title}</p>
                       <p className="text-xs text-slate-500 mt-0.5 truncate">{m.description}</p>
-                      <p className="text-[10px] text-slate-400 mt-1">{(m.quiz || []).length} questions · Pass: {m.passingScore}% · {m.durationMin}min</p>
+                      <p className="text-[10px] text-slate-400 mt-1">{(m.quiz || []).length} questions, Pass: {m.passingScore}%, {m.durationMin}min</p>
                     </div>
                     <div className="flex gap-1.5 shrink-0">
                       <button onClick={() => toggleActive(m)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400" title={m.isActive ? 'Hide' : 'Publish'}>

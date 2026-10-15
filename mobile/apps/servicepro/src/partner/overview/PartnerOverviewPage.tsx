@@ -40,7 +40,7 @@ export function PartnerOverviewPage() {
       <View style={styles.head}>
         <View style={styles.flex}>
           <Text variant="heading2" weight="black">Hello, {partner?.ownerName?.split(' ')[0] || partner?.businessName || 'partner'}</Text>
-          <Text variant="bodySmall" color={ink[500]}>{partner?.businessName}{verified ? ' · Verified partner' : ''}</Text>
+          <Text variant="bodySmall" color={ink[500]}>{partner?.businessName}{verified ? ', Verified partner' : ''}</Text>
         </View>
         <View>
           <IconButton icon={<Bell size={20} color={ink[700]} />} accessibilityLabel={unread ? `Notifications, ${unread} unread` : 'Notifications'} onPress={() => router.push('/partner/notifications' as never)} />

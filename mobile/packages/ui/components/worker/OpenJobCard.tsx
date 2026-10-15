@@ -26,7 +26,7 @@ export function OpenJobCard({ job, busy, onTake }: { job: OpenJob; busy?: boolea
       {boost ? (
         <View style={styles.boostBar}>
           <Sparkles size={13} color={accent[700]} />
-          <Text variant="caption" weight="extrabold" color={accent[700]}>Customer raised the offer by {formatPaise(job.boostPaise)} · all yours</Text>
+          <Text variant="caption" weight="extrabold" color={accent[700]}>Customer raised the offer by {formatPaise(job.boostPaise)}, all yours</Text>
         </View>
       ) : null}
       <View style={styles.openHead}>
@@ -49,7 +49,7 @@ export function OpenJobCard({ job, busy, onTake }: { job: OpenJob; busy?: boolea
         </View>
       ) : null}
       {[job.km != null ? `${job.km} km away` : null, when(job.at)].filter(Boolean).length ? (
-        <Text variant="bodySmall" color={colors.textSecondary}>{[job.km != null ? `${job.km} km away` : null, when(job.at)].filter(Boolean).join(' · ')}</Text>
+        <Text variant="bodySmall" color={colors.textSecondary}>{[job.km != null ? `${job.km} km away` : null, when(job.at)].filter(Boolean).join(', ')}</Text>
       ) : null}
       {(job.frontPaise ?? 0) > 0 ? (
         <View style={styles.front}>

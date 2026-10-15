@@ -27,7 +27,7 @@ export function BasketBar({ vertical, current, count, onAddAnother, onAddSuggest
   if (!current) return null;
   return (
     <View style={flow.card}>
-      {count > 0 ? <Text variant="caption" weight="bold" color={zappy[700]}>{count + 1} items in this visit · one visit fee</Text> : null}
+      {count > 0 ? <Text variant="caption" weight="bold" color={zappy[700]}>{count + 1} items in this visit, one visit fee</Text> : null}
       {sameKind.length ? (
         <View style={styles.gap}>
           <View style={styles.row}><Sparkles size={12} color={ink[500]} /><Text variant="caption" weight="bold" color={ink[500]}>ALSO ADD FOR THIS {thingOf(vertical).toUpperCase()}</Text></View>

@@ -207,16 +207,16 @@ partSchema.methods.specSummary = function specSummary() {
         s.refreshHz && `${s.refreshHz}Hz`,
         s.isTouch ? 'Touch' : null,
         s.connector,
-      ].filter(Boolean).join(' · ');
+      ].filter(Boolean).join(', ');
     case 'ram':
       return [s.ddrGeneration, s.capacityGb && `${s.capacityGb}GB`, s.speedMhz && `${s.speedMhz}MHz`, s.formFactor]
-        .filter(Boolean).join(' · ');
+        .filter(Boolean).join(', ');
     case 'storage':
       return [s.storageInterface?.toUpperCase(), s.capacityGb && `${s.capacityGb}GB`, s.m2Size, s.pcieGen]
-        .filter(Boolean).join(' · ');
+        .filter(Boolean).join(', ');
     case 'battery':
       return [s.capacityWh && `${s.capacityWh}Wh`, s.voltage && `${s.voltage}V`, s.batteryModelNumber]
-        .filter(Boolean).join(' · ');
+        .filter(Boolean).join(', ');
     default:
       return this.manufacturerPartNumber || '';
   }

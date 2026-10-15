@@ -113,7 +113,7 @@ export function EventThemePage() {
               <View style={styles.initial}><Text variant="heading2" weight="black">{partner.businessName?.[0]?.toUpperCase()}</Text></View>
               <View style={styles.flex}>
                 <Text variant="heading3" weight="black" color="#fff">{partner.businessName}</Text>
-                <Text variant="caption" weight="bold" color={slate[300]}>★ {partner.reviewCount ? Number(partner.rating).toFixed(1) : 'New'} · {partner.completedEvents || 0} {t('events.hosted', 'hosted')}</Text>
+                <Text variant="caption" weight="bold" color={slate[300]}>★ {partner.reviewCount ? Number(partner.rating).toFixed(1) : 'New'}, {partner.completedEvents || 0} {t('events.hosted', 'hosted')}</Text>
                 {partner.bio ? <Text variant="bodySmall" color={slate[200]}>{partner.bio}</Text> : null}
               </View>
             </View>

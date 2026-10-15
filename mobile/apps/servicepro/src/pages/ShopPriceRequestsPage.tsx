@@ -51,7 +51,7 @@ function RequestCard({ r }: { r: Request }) {
         <Text variant="caption" color={ink[700]}>{r.deviceName}</Text>
         <View style={styles.meta}>
           <Text variant="caption" color={ink[500]}>{MODE[r.serviceMode] || r.serviceMode}</Text>
-          {r.distanceKm != null ? <View style={styles.inline}><MapPin size={11} color={ink[500]} /><Text variant="caption" color={ink[500]}>{r.distanceKm} km{r.area ? ` · ${r.area}` : ''}</Text></View> : null}
+          {r.distanceKm != null ? <View style={styles.inline}><MapPin size={11} color={ink[500]} /><Text variant="caption" color={ink[500]}>{r.distanceKm} km{r.area ? `, ${r.area}` : ''}</Text></View> : null}
           <View style={styles.inline}><Clock size={11} color={ink[500]} /><Text variant="caption" color={ink[500]}>{left(r.expiresAt)}</Text></View>
           {r.answers ? <Text variant="caption" color={ink[500]}>{r.answers} {r.answers === 1 ? 'shop has' : 'shops have'} answered</Text> : null}
         </View>

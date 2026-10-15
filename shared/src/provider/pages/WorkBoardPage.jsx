@@ -45,7 +45,7 @@ function OpenCard({ job, busy, onTake }) {
     <article className={`flex flex-col gap-3 overflow-hidden rounded-xl bg-white p-4 ${job.boostPaise > 0 ? 'ring-2 ring-amber-300 shadow-[0_6px_20px_-8px_rgba(245,158,11,0.45)]' : 'ring-1 ring-slate-200/80'}`}>
       {job.boostPaise > 0 && (
         <p className="-mx-4 -mt-4 flex items-center gap-1.5 bg-gradient-to-r from-amber-400 to-amber-300 px-4 py-1.5 text-[12px] font-extrabold text-amber-950">
-          <Sparkles size={13} /> Customer raised the offer by {formatPaise(job.boostPaise)} · all yours
+          <Sparkles size={13} /> Customer raised the offer by {formatPaise(job.boostPaise)}, all yours
         </p>
       )}
       <div className="flex items-start justify-between gap-3">
@@ -71,7 +71,7 @@ function OpenCard({ job, busy, onTake }) {
           </p>
         )}
         <p className="text-slate-500">
-          {[job.km != null ? `${job.km} km away` : null, when(job.at)].filter(Boolean).join(' · ')}
+          {[job.km != null ? `${job.km} km away` : null, when(job.at)].filter(Boolean).join(', ')}
         </p>
       </div>
 
@@ -132,7 +132,7 @@ export default function WorkBoardPage({ kinds }) {
 
         {!isLoading && (
           <section className="space-y-2.5">
-            <h2 className="text-[14px] font-semibold text-slate-600">Your jobs{mine.length ? ` · ${mine.length}` : ''}</h2>
+            <h2 className="text-[14px] font-semibold text-slate-600">Your jobs{mine.length ? `, ${mine.length}` : ''}</h2>
             {mine.length
               ? mine.map((j) => <MineRow key={`${j.kind}-${j.id}`} job={j} onOpen={() => nav(j.to)} />)
               : <p className="rounded-xl bg-white px-4 py-5 text-[14px] text-slate-500 ring-1 ring-slate-200/80">Nothing in hand right now.</p>}
@@ -141,7 +141,7 @@ export default function WorkBoardPage({ kinds }) {
 
         {!isLoading && open !== null && (
           <section className="space-y-2.5">
-            <h2 className="text-[14px] font-semibold text-slate-600">Open near you{open.length ? ` · ${open.length}` : ''}</h2>
+            <h2 className="text-[14px] font-semibold text-slate-600">Open near you{open.length ? `, ${open.length}` : ''}</h2>
             {open.length > 0 && (
               <div className="grid gap-3 sm:grid-cols-2">
                 {open.map((j) => <OpenCard key={`${j.kind}-${j.id}`} job={j} busy={taking} onTake={() => onTake(j)} />)}

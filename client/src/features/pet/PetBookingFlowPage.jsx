@@ -308,7 +308,7 @@ function PetBookingFlow({ categoryCode, saved, draftKey, onStartOver }) {
                   selectedPetIds.includes(p._id) ? 'border-zappy-500 bg-zappy-500 text-white' : 'border-slate-300'
                 }`}><Check size={14} strokeWidth={3} /></span>
                 <span className="font-bold text-[#0F172A]">{p.name}</span>
-                <span className="text-xs text-slate-400 capitalize ml-auto">{p.species} · {p.size?.replace('_', ' ')}</span>
+                <span className="text-xs text-slate-400 capitalize ml-auto">{p.species}, {p.size?.replace('_', ' ')}</span>
               </button>
             )))}
           </div>
@@ -459,8 +459,8 @@ function PetBookingFlow({ categoryCode, saved, draftKey, onStartOver }) {
                 <span className="block font-bold text-[#0F172A]">{p.name}</span>
                 <span className="flex items-center gap-2 text-xs text-slate-500 mt-0.5">
                   <Star size={11} className="fill-amber-400 text-amber-400" /> {p.rating != null ? p.rating.toFixed(1) : 'New'}
-                  {p.distanceKm != null && <span>· {p.distanceKm} km</span>}
-                  {p.completedJobs > 0 && <span>· {p.completedJobs} jobs</span>}
+                  {p.distanceKm != null && <span>| {p.distanceKm} km</span>}
+                  {p.completedJobs > 0 && <span>| {p.completedJobs} jobs</span>}
                 </span>
                 {/* A visit: how soon they can be at the door (jobs/arrival). */}
                 {p.arrivalMinutes != null && <ArrivalBadge minutes={p.arrivalMinutes} withinPromise={p.arrivalWithinPromise} className="mt-1.5" />}
@@ -474,7 +474,7 @@ function PetBookingFlow({ categoryCode, saved, draftKey, onStartOver }) {
         <Shell>
           <div className="rounded-2xl border-2 border-slate-200 bg-white p-4 space-y-1 text-sm">
             <p className="font-black text-[#0F172A]">{provider?.name}</p>
-            <p className="text-slate-500">{primaryVariant?.name} · {selectedPets.map((p) => p.name).join(', ')}</p>
+            <p className="text-slate-500">{primaryVariant?.name}, {selectedPets.map((p) => p.name).join(', ')}</p>
           </div>
           {quote && (
             <div className="rounded-2xl border-2 border-zappy-100 bg-zappy-50/50 p-4">

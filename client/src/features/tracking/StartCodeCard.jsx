@@ -69,7 +69,7 @@ export default function StartCodeCard({ jobKey, code, stage, noun = 'pro' }) {
             </span>
             <div className="flex-1">
               <p className="text-sm font-extrabold text-zappy-900">Is your {noun} with you?</p>
-              <p className="mt-0.5 text-xs text-zappy-700">Confirm to see the start code · shows in {left}s</p>
+              <p className="mt-0.5 text-xs text-zappy-700">Confirm to see the start code, shows in {left}s</p>
             </div>
             <button type="button" onClick={confirm} className="rounded-xl bg-zappy-600 px-3 py-1.5 text-xs font-bold text-white">Yes, show</button>
           </div>

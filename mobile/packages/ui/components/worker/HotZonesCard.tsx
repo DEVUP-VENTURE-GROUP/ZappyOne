@@ -35,7 +35,7 @@ export function HotZonesCard({ coords }: { coords?: number[] | null }) {
               <Text variant="bodySmall" weight="semibold" numberOfLines={1}>{z.service}</Text>
               <Text variant="caption" color={colors.textSecondary}>
                 {z.multiplier > 1 ? `Surge ${z.multiplier.toFixed(2)}×` : 'No pro nearby yet'}
-                {z.km != null ? ` · ${z.km} km away` : ''}{z.demand ? ` · ${z.demand} looking` : ''}
+                {z.km != null ? `, ${z.km} km away` : ''}{z.demand ? `, ${z.demand} looking` : ''}
               </Text>
             </View>
             <Pressable onPress={() => directions(z.lat, z.lng)}

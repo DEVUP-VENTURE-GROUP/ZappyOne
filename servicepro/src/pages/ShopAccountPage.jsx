@@ -55,7 +55,7 @@ export default function ShopAccountPage() {
             <input value={ownerName} onChange={(e) => setOwnerName(e.target.value)} maxLength={100}
               className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-zappy-100" />
           </label>
-          <p className="flex items-center gap-2 text-[13px] text-slate-600"><Phone size={14} className="text-slate-400" /> {shop.phone} <span className="text-[11px] text-slate-400">· sign-in number</span></p>
+          <p className="flex items-center gap-2 text-[13px] text-slate-600"><Phone size={14} className="text-slate-400" /> {shop.phone} <span className="text-[11px] text-slate-400">(sign-in number)</span></p>
           <p className="flex items-center gap-2 text-[13px] text-slate-600"><Mail size={14} className="text-slate-400" /> {shop.email || 'No email yet'}</p>
           <button type="button" onClick={submit} disabled={saving || ownerName.trim().length < 2 || ownerName.trim() === (shop.ownerName || '')}
             className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#0F172A] text-sm font-bold text-white disabled:opacity-40">

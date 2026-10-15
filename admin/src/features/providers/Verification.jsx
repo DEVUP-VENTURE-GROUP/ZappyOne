@@ -67,7 +67,7 @@ function ProviderCell({ row }) {
       </div>
       <div className="min-w-0">
         <p className="font-semibold text-slate-900 text-sm truncate">{p.businessName || p.name}</p>
-        <p className="text-[11px] text-slate-400">{p.phone}{isShop ? ' · shop' : ' · individual'}</p>
+        <p className="text-[11px] text-slate-400">{p.phone}{isShop ? ', shop' : ', individual'}</p>
         {/* Instant ID check results (server onboarding/idcheck). */}
         {row.idCheck?.aadhaar && (
           <p className={`mt-0.5 text-[11px] font-semibold ${row.idCheck.aadhaar.status === 'verified' ? 'text-emerald-700' : 'text-amber-700'}`}>
@@ -288,7 +288,7 @@ function Requests() {
               <p className="font-bold text-slate-900">{row.proposedName}</p>
               {row.description && <p className="text-xs text-slate-500 mt-0.5">{row.description}</p>}
               <p className="text-[11px] text-slate-400 mt-1">
-                {row.domainCode || 'no domain'} · {row.providerKind} · {fmtDate(row.createdAt)}
+                {row.domainCode || 'no domain'}, {row.providerKind}, {fmtDate(row.createdAt)}
               </p>
             </div>
             <div className="flex items-end gap-2 flex-wrap">

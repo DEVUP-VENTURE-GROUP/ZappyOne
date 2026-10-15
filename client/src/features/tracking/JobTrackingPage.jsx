@@ -267,7 +267,7 @@ export default function JobTrackingPage({ job, extras = null, startCode = null, 
 
           {!job.terminal && (
             <p className="flex items-center justify-center gap-2 pt-1 text-[11.5px] font-semibold text-[#647084]">
-              <ShieldCheck size={14} className="text-[#12A150]" /> Payment protected · Verified professionals
+              <ShieldCheck size={14} className="text-[#12A150]" /> Payment protected, Verified professionals
             </p>
           )}
         </motion.div>

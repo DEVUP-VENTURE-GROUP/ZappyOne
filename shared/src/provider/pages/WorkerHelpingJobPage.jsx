@@ -293,7 +293,7 @@ function ItemRow({ item, disabled, onPurchase, onUnavailable, onAlternative }) {
         <div className="min-w-0">
           <p className="font-bold text-[#0F172A]">{item.name} × {item.quantity}</p>
           {(item.preferredBrand || item.preferredVariant) && (
-            <p className="text-xs text-slate-400">{[item.preferredBrand, item.preferredVariant].filter(Boolean).join(' · ')}</p>
+            <p className="text-xs text-slate-400">{[item.preferredBrand, item.preferredVariant].filter(Boolean).join(', ')}</p>
           )}
           <p className="text-xs text-slate-500 mt-0.5">Max: {formatPaise(item.maxApprovedPricePaise)}</p>
         </div>

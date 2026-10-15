@@ -15,7 +15,7 @@ export default function BasketBar({ vertical, current, count, onAddAnother, onAd
   if (!current) return null;
   return (
     <div className="card space-y-2.5">
-      {count > 0 && <p className="text-[12px] font-bold text-zappy-700">{count + 1} items in this visit · one visit fee</p>}
+      {count > 0 && <p className="text-[12px] font-bold text-zappy-700">{count + 1} items in this visit, one visit fee</p>}
       {sameKind.length > 0 && (
         <div>
           <p className="mb-1.5 flex items-center gap-1 text-[11px] font-bold uppercase tracking-wide text-slate-500"><Sparkles size={12} /> Also add for this {thingOf(vertical)}</p>

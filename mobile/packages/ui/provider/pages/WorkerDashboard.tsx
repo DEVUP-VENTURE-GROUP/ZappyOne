@@ -230,7 +230,7 @@ export function WorkerDashboard({ kinds = KINDS }: { kinds?: string[] }) {
           )}
         </Panel>
 
-        <Panel title={`Open near you${open.length ? ` · ${open.length}` : ''}`} action={open.length > 0 ? <LinkButton label="See all" onPress={() => go('/worker/work')} /> : undefined}>
+        <Panel title={`Open near you${open.length ? `, ${open.length}` : ''}`} action={open.length > 0 ? <LinkButton label="See all" onPress={() => go('/worker/work')} /> : undefined}>
           {!isOnline ? (
             <Pressable onPress={toggleOnline} disabled={toggling} accessibilityRole="button" style={styles.goOnline}>
               <Radio size={18} color={colors.primary} />
@@ -241,10 +241,10 @@ export function WorkerDashboard({ kinds = KINDS }: { kinds?: string[] }) {
               {open.slice(0, 2).map((j: { kind: string; id: string; service: string; title: string; km?: number | null; where?: string; earningPaise: number }) => (
                 <Pressable key={`${j.kind}-${j.id}`} onPress={() => go('/worker/work')} accessibilityRole="button" style={styles.openRow}>
                   <View style={styles.flex}>
-                    <Text variant="bodySmall" weight="semibold" numberOfLines={1} style={styles.capitalize}>{j.service} · {j.title}</Text>
+                    <Text variant="bodySmall" weight="semibold" numberOfLines={1} style={styles.capitalize}>{j.service}, {j.title}</Text>
                     <View style={styles.inline}>
                       <MapPin size={12} color={ink[400]} />
-                      <Text variant="caption" color={colors.textSecondary} numberOfLines={1}>{[j.km != null ? `${j.km} km` : null, j.where].filter(Boolean).join(' · ')}</Text>
+                      <Text variant="caption" color={colors.textSecondary} numberOfLines={1}>{[j.km != null ? `${j.km} km` : null, j.where].filter(Boolean).join(', ')}</Text>
                     </View>
                   </View>
                   <Text variant="body" weight="bold" color={success[700]}>{formatPaise(j.earningPaise)}</Text>

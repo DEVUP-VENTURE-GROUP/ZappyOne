@@ -137,9 +137,9 @@ function TheMap({ data, layer }) {
       popup.setLngLat(e.lngLat).setHTML(
         `<div style="font:12px/1.5 Figtree,system-ui;color:#0F172A;min-width:150px">
           <b style="font-size:13px">${f.area || 'This area'}</b><br/>
-          ${f.bookings} bookings · ${f.completed} done<br/>
-          ₹${Number(f.take).toLocaleString('en-IN')} earned · ${rate}% cancelled<br/>
-          ${f.searches} searching · ${f.unserved} not served
+          ${f.bookings} bookings, ${f.completed} done<br/>
+          ₹${Number(f.take).toLocaleString('en-IN')} earned, ${rate}% cancelled<br/>
+          ${f.searches} searching, ${f.unserved} not served
         </div>`,
       ).addTo(m);
     };
@@ -182,7 +182,7 @@ function WhenGrid({ when }) {
             <tr key={DAYS[d]}>
               <td className="pr-2 text-[11px] font-medium text-slate-500">{DAYS[d]}</td>
               {hours.map((n, h) => (
-                <td key={h} title={`${DAYS[d]} ${h}:00 · ${n} bookings`} className="h-5 w-5 rounded"
+                <td key={h} title={`${DAYS[d]} ${h}:00, ${n} bookings`} className="h-5 w-5 rounded"
                   style={{ background: n ? `rgba(31,79,216,${0.12 + (n / max) * 0.88})` : '#F1F5F9' }} />
               ))}
             </tr>
@@ -240,7 +240,7 @@ export default function MapView({ days }) {
             {services.map((s) => <option key={s.code} value={s.code}>{s.label}</option>)}
           </select>
         </div>
-        <p className="mb-2 px-1 text-[12px] text-slate-500">{current.note}{isFetching ? ' · updating…' : ''}</p>
+        <p className="mb-2 px-1 text-[12px] text-slate-500">{current.note}{isFetching ? ', updating…' : ''}</p>
         <TheMap data={data} layer={layer} />
       </section>
 
@@ -285,7 +285,7 @@ export default function MapView({ days }) {
                   <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-rose-50 text-[12px] font-bold text-rose-600">{i + 1}</span>
                   <span className="min-w-0 text-[13px]">
                     <span className="block font-medium text-slate-800">{a.area}</span>
-                    <span className="block text-[11.5px] text-slate-500">{count(a.unserved)} not served · {count(a.uncovered)} outside every provider's reach</span>
+                    <span className="block text-[11.5px] text-slate-500">{count(a.unserved)} not served, {count(a.uncovered)} outside every provider's reach</span>
                   </span>
                 </li>
               ))}

@@ -197,7 +197,7 @@ const PET_STAGE = {
   BOOKED: 'Booked', PROVIDER_SEARCHING: 'Finding a pet pro', PROVIDER_ASSIGNED: 'Pet pro assigned',
   PROVIDER_ACCEPTED: 'Pet pro confirmed', PROVIDER_EN_ROUTE: 'On the way', PROVIDER_ARRIVED: 'Arrived',
   PET_HANDOVER: 'Handing over', SERVICE_STARTED: 'In progress', SERVICE_PAUSED: 'Paused',
-  SERVICE_COMPLETED: 'Completed', CUSTOMER_CONFIRMATION: 'Completed', PAYMENT_PENDING: 'Completed · payment due',
+  SERVICE_COMPLETED: 'Completed', CUSTOMER_CONFIRMATION: 'Completed', PAYMENT_PENDING: 'Completed, payment due',
   PAYMENT_COMPLETED: 'Completed', CLOSED: 'Completed', CANCELLED: 'Cancelled', REFUNDED: 'Refunded', DISPUTED: 'Under review',
 };
 

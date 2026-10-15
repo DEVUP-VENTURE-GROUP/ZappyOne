@@ -71,7 +71,7 @@ export function PayNowButton({ bookingSource, bookingId, amountLabel, label, onP
     >
       {paying
         ? <><Loader2 size={15} className="animate-spin" /> Opening payment…</>
-        : <><CreditCard size={15} /> Pay now{amountLabel ? ` · ${amountLabel}` : ''}</>}
+        : <><CreditCard size={15} /> Pay now{amountLabel ? `, ${amountLabel}` : ''}</>}
     </button>
   );
 }

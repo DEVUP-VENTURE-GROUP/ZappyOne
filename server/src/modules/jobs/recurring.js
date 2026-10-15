@@ -75,7 +75,7 @@ function templateOf(kind, b) {
 }
 
 const titleOf = (kind, b) => (kind === 'repair'
-  ? [b.deviceName || [b.brandCode, b.modelCode].filter(Boolean).join(' ').replace(/-/g, ' '), (b.repairCode || '').replace(/_/g, ' ')].filter(Boolean).join(' · ')
+  ? [b.deviceName || [b.brandCode, b.modelCode].filter(Boolean).join(' ').replace(/-/g, ' '), (b.repairCode || '').replace(/_/g, ' ')].filter(Boolean).join(', ')
   : b.title || `${b.serviceType} task`);
 
 /** "Repeat this": a plan from one of the customer's own bookings. */

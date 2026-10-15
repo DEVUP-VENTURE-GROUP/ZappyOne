@@ -109,7 +109,7 @@ export function NotesPanel({ source, id }) {
         {(data?.notes || []).map((n) => (
           <li key={n._id} className="rounded-lg bg-slate-50 p-2.5">
             <p className="text-xs text-slate-800">{n.text}</p>
-            <p className="mt-0.5 text-[10px] text-slate-400">{n.byEmail || 'Admin'} · {fmtDate(n.createdAt)}</p>
+            <p className="mt-0.5 text-[10px] text-slate-400">{n.byEmail || 'Admin'}, {fmtDate(n.createdAt)}</p>
           </li>
         ))}
         {!data?.notes?.length && <li className="text-xs text-slate-400">No notes yet.</li>}

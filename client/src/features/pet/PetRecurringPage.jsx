@@ -57,7 +57,7 @@ export default function PetRecurringPage() {
                   : s.status === 'paused' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'
               }`}>{s.status}</span>
             </div>
-            <p className="text-xs text-slate-400">{s.occurrencesCreated} scheduled · {s.occurrencesCompleted} completed</p>
+            <p className="text-xs text-slate-400">{s.occurrencesCreated} scheduled, {s.occurrencesCompleted} completed</p>
 
             {s.status !== 'cancelled' && s.status !== 'completed' && (
               <div className="flex gap-2 pt-1">

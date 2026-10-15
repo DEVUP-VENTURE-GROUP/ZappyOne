@@ -67,7 +67,7 @@ export function WorkerProfilePage() {
             <View style={styles.chips}>
               {w?.verified ? <View style={[styles.chip, { backgroundColor: success[50] }]}><ShieldCheck size={12} color={success[700]} /><Text variant="caption" weight="semibold" color={success[700]}>{t('worker.idVerified', 'ID verified')}</Text></View> : null}
               {rating != null
-                ? <View style={[styles.chip, { backgroundColor: accent[50] }]}><Star size={12} color={accent[500]} fill={accent[500]} /><Text variant="caption" weight="semibold" color={accent[700]}>{Number(rating).toFixed(1)} · {count} {t('worker.ratings', 'ratings')}</Text></View>
+                ? <View style={[styles.chip, { backgroundColor: accent[50] }]}><Star size={12} color={accent[500]} fill={accent[500]} /><Text variant="caption" weight="semibold" color={accent[700]}>{Number(rating).toFixed(1)}, {count} {t('worker.ratings', 'ratings')}</Text></View>
                 : <View style={[styles.chip, { backgroundColor: slate[100] }]}><Text variant="caption" weight="semibold" color={ink[700]}>{t('worker.new', 'New on ZappyOne')}</Text></View>}
             </View>
           </View>

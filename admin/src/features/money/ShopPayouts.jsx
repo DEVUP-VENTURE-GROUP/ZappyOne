@@ -44,10 +44,10 @@ export default function ShopPayouts() {
               <li key={r._id} className="px-4 py-3">
                 <div className="flex flex-wrap items-center gap-3">
                   <span className="min-w-0 flex-1">
-                    <span className="block text-sm font-semibold text-slate-900">{r.shop?.businessName || 'Shop'} <span className="font-normal text-slate-400">· {r.shop?.phone}</span></span>
+                    <span className="block text-sm font-semibold text-slate-900">{r.shop?.businessName || 'Shop'} <span className="font-normal text-slate-400">{r.shop?.phone}</span></span>
                     <span className="block text-[12px] text-slate-500">
-                      To {r.destination?.type === 'upi' ? `UPI ${r.destination.upiId}` : `${r.destination?.bankName || 'bank'} ••${r.destination?.accountLast4} · ${r.destination?.ifsc} · ${r.destination?.accountName}`}
-                      {' · '}{fmtDate(r.createdAt)}{r.reference ? ` · ref ${r.reference}` : ''}{r.reason ? ` · ${r.reason}` : ''}
+                      To {r.destination?.type === 'upi' ? `UPI ${r.destination.upiId}` : `${r.destination?.bankName || 'bank'} ••${r.destination?.accountLast4}, ${r.destination?.ifsc}, ${r.destination?.accountName}`}
+                      {', '}{fmtDate(r.createdAt)}{r.reference ? `, ref ${r.reference}` : ''}{r.reason ? `, ${r.reason}` : ''}
                     </span>
                   </span>
                   <span className="text-[15px] font-black tabular-nums">{fmt(r.amountPaise)}</span>

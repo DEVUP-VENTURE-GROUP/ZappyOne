@@ -34,7 +34,7 @@ export function PetDetailPage() {
           <View style={styles.photo}>{photo ? <Image source={{ uri: photo }} style={StyleSheet.absoluteFill} /> : <PawPrint size={26} color={zappy[400]} />}</View>
           <View style={styles.flex}>
             <Text variant="heading3" weight="black">{pet.name}</Text>
-            <Text variant="bodySmall" color={ink[500]} style={styles.cap}>{[pet.species, pet.breed, pet.size?.replace('_', ' ')].filter(Boolean).join(' · ')}</Text>
+            <Text variant="bodySmall" color={ink[500]} style={styles.cap}>{[pet.species, pet.breed, pet.size?.replace('_', ' ')].filter(Boolean).join(', ')}</Text>
             {pet.weight ? <Text variant="caption" color={ink[400]}>{pet.weight} kg</Text> : null}
           </View>
         </View>

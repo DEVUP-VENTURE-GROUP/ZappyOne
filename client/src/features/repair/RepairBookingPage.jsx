@@ -442,7 +442,7 @@ export default function RepairBookingPage() {
                 <p className="mb-2 text-[14px] font-bold text-navy">Quote history</p>
                 {quotes.map((q) => (
                   <div key={q._id} className="flex items-center justify-between py-1 text-[12.5px]">
-                    <span className="text-slate-500">Revision {q.revision} · {q.status.replace(/_/g, ' ')}</span>
+                    <span className="text-slate-500">Revision {q.revision}, {q.status.replace(/_/g, ' ')}</span>
                     <span className="font-semibold tabular-nums text-navy">{rupees(q.totalPaise)}</span>
                   </div>
                 ))}

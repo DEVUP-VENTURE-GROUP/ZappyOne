@@ -154,7 +154,7 @@ function footer(baseUrl, cities, categories) {
       </div>
       <div class="footer-bottom">
         <span>© ${new Date().getFullYear()} Zappy Technologies Pvt. Ltd. All rights reserved.</span>
-        <span><a href="${baseUrl}/privacy">Privacy Policy</a> · <a href="${baseUrl}/terms">Terms of Service</a></span>
+        <span><a href="${baseUrl}/privacy">Privacy Policy</a> | <a href="${baseUrl}/terms">Terms of Service</a></span>
       </div>
     </div>
   </footer>`;
@@ -378,7 +378,7 @@ ${breadcrumb([
   ])}
 <section class="hero">
   <div class="wrap">
-    <div class="hero-badge">${category.icon} ${locationName} · From ${category.startingPrice}</div>
+    <div class="hero-badge">${category.icon} ${locationName} | From ${category.startingPrice}</div>
     <h1 data-speakable="true">${category.h1Template(locationName)}</h1>
     <p data-speakable="true">${description}</p>
     <div class="hero-actions">

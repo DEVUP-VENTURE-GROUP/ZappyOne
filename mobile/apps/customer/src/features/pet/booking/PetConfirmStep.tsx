@@ -56,7 +56,7 @@ export function PetConfirmStep({ categoryCode, serviceMode, variantName, petName
     <View style={styles.gap}>
       <View style={styles.card}>
         <Text variant="bodySmall" weight="black">{provider.name}</Text>
-        <Text variant="caption" color={ink[500]}>{[variantName, petNames.join(', ')].filter(Boolean).join(' · ')}</Text>
+        <Text variant="caption" color={ink[500]}>{[variantName, petNames.join(', ')].filter(Boolean).join(', ')}</Text>
       </View>
       {quote ? (
         <View style={[styles.card, styles.total]}>

@@ -38,7 +38,7 @@ export function FestiveOffer({ offer, accent }: { offer: Any; accent: string }) 
       <View style={[styles.amount, { backgroundColor: accent }]}><Text variant="body" weight="black" color="#fff">{offerHeadline(offer)}</Text></View>
       <View style={styles.flex}>
         <Text variant="bodySmall" weight="bold" numberOfLines={1}>{offer.name}</Text>
-        <Text variant="caption" color={ink[500]} numberOfLines={1}>Code {offer.code}{terms ? ` · ${terms}` : ''}</Text>
+        <Text variant="caption" color={ink[500]} numberOfLines={1}>Code {offer.code}{terms ? `, ${terms}` : ''}</Text>
       </View>
       <ChevronRight size={18} color={ink[400]} />
       {!reduce && w ? <Animated.View pointerEvents="none" style={[styles.sheen, sheen]} /> : null}

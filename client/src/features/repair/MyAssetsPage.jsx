@@ -78,11 +78,11 @@ export default function MyAssetsPage() {
                     {VERTICAL_LABEL[a.vertical] || a.vertical}
                   </p>
                   <p className="font-bold text-[#0F172A] mt-0.5">
-                    {a.label || `${a.brandName}${a.modelName ? ` · ${a.modelName}` : ''}`}
+                    {a.label || `${a.brandName}${a.modelName ? `, ${a.modelName}` : ''}`}
                   </p>
                   {a.label && (
                     <p className="text-xs text-slate-500 mt-0.5">
-                      {a.brandName}{a.modelName ? ` · ${a.modelName}` : ''}
+                      {a.brandName}{a.modelName ? `, ${a.modelName}` : ''}
                     </p>
                   )}
                   {a.location?.address && (

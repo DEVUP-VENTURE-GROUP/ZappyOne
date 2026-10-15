@@ -36,7 +36,7 @@ export default function TrackingHeader({
           <div className="min-w-0 flex-1">
             <p className="truncate text-[17px] font-bold capitalize leading-tight text-ink-900">{job.service}</p>
             <p className="truncate text-[12px] tabular-nums text-ink-500">
-              {job.reference || `#${shortId(job.id)}`}{job.subtitle ? ` · ${job.subtitle}` : ''}
+              {job.reference || `#${shortId(job.id)}`}{job.subtitle ? `, ${job.subtitle}` : ''}
             </p>
           </div>
           <div className="flex shrink-0 items-center">

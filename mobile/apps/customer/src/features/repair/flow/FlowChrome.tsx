@@ -25,7 +25,7 @@ export function StepHeader({ steps, step, skipped, title, subtitle, onBack }: {
       <View style={styles.row}>
         <Pressable onPress={onBack} accessibilityRole="button" accessibilityLabel="Back" hitSlop={8} style={styles.back}><ArrowLeft size={17} color={ink[900]} /></Pressable>
         <View style={styles.flex}>
-          <Text variant="caption" weight="bold" color={zappy[600]}>STEP {index + 1}{last ? ' · LAST STEP' : ''}</Text>
+          <Text variant="caption" weight="bold" color={zappy[600]}>STEP {index + 1}{last ? ', LAST STEP' : ''}</Text>
           <Text variant="body" weight="bold" numberOfLines={1}>{title}</Text>
           {subtitle ? <Text variant="caption" color={ink[400]} numberOfLines={1}>{subtitle}</Text> : null}
         </View>

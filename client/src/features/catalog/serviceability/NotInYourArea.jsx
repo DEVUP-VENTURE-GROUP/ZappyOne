@@ -63,7 +63,7 @@ export default function NotInYourArea({ place, lat, lng, address, areas = [], on
         <div className="mt-10">
           <p className="text-[14px] font-semibold text-navy">Where we serve today</p>
           <p className="mt-1.5 text-[14px] leading-relaxed text-slate-600">
-            {areas.map((a) => `${a.name}${a.city ? `, ${a.city}` : ''}`).join(' · ')}
+            {areas.map((a) => `${a.name}${a.city ? `, ${a.city}` : ''}`).join(', ')}
           </p>
         </div>
       )}

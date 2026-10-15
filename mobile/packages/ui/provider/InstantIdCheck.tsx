@@ -56,7 +56,7 @@ export function InstantIdCheck() {
       <View style={styles.card}>
         <Text variant="bodySmall" weight="bold">Aadhaar</Text>
         {aOk ? (
-          <View style={styles.row}><BadgeCheck size={14} color={success[700]} /><Text variant="caption" weight="semibold" color={success[700]}>Verified · ••••{data.aadhaar.last4} · {data.aadhaar.nameOnId}</Text></View>
+          <View style={styles.row}><BadgeCheck size={14} color={success[700]} /><Text variant="caption" weight="semibold" color={success[700]}>Verified, ••••{data.aadhaar.last4}, {data.aadhaar.nameOnId}</Text></View>
         ) : (
           <>
             {data.aadhaar?.status === 'mismatch' ? (
@@ -79,7 +79,7 @@ export function InstantIdCheck() {
       <View style={styles.card}>
         <Text variant="bodySmall" weight="bold">PAN <Text variant="caption" color={ink[400]}>(needed for payouts above ₹20,000 a month)</Text></Text>
         {pOk ? (
-          <View style={styles.row}><BadgeCheck size={14} color={success[700]} /><Text variant="caption" weight="semibold" color={success[700]}>Verified · {data.pan.pan} · {data.pan.nameOnId}</Text></View>
+          <View style={styles.row}><BadgeCheck size={14} color={success[700]} /><Text variant="caption" weight="semibold" color={success[700]}>Verified, {data.pan.pan}, {data.pan.nameOnId}</Text></View>
         ) : (
           <View style={styles.row}>
             <TextInput value={pan} onChangeText={(v) => setPan(v.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10))} autoCapitalize="characters" placeholder="ABCDE1234F" placeholderTextColor={ink[400]} style={[styles.input, styles.flex]} />

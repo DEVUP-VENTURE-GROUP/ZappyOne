@@ -91,7 +91,7 @@ function Row({ row }) {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
           <p className="text-sm font-semibold text-slate-800">{row.name} <span className={`ml-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ${tone}`}>{label}</span></p>
-          <p className="text-[12px] text-slate-500">{row.phone || 'No phone'}{row.online ? ' · online' : ''}</p>
+          <p className="text-[12px] text-slate-500">{row.phone || 'No phone'}{row.online ? ', online' : ''}</p>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-base font-bold tabular-nums text-slate-900">{fmt(row.duesPaise)}</span>
@@ -101,7 +101,7 @@ function Row({ row }) {
       </div>
       {row.claims.map((c) => (
         <div key={c._id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-amber-50 px-3 py-2 text-[12.5px]">
-          <span className="text-amber-900">Says they paid <b>{fmt(c.amountPaise)}</b> by {c.method}{c.reference ? ` · ref ${c.reference}` : ''} · {new Date(c.createdAt).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
+          <span className="text-amber-900">Says they paid <b>{fmt(c.amountPaise)}</b> by {c.method}{c.reference ? `, ref ${c.reference}` : ''}, {new Date(c.createdAt).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
           <span className="flex gap-2">
             <button type="button" onClick={() => setOpen({ claim: c })} className="rounded-lg bg-emerald-600 px-2.5 py-1 text-xs font-semibold text-white">Check and confirm</button>
             <button type="button" onClick={async () => {

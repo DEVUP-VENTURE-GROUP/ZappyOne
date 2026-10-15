@@ -46,7 +46,7 @@ export const BookingRow = memo(function BookingRow({ item, onOpen, onMove }: { i
         </View>
         <View style={styles.flex}>
           <Text variant="bodySmall" weight="semibold" numberOfLines={1} style={styles.cap}>{item.title}</Text>
-          <View style={styles.inline}><Icon size={12} color={ink[400]} /><Text variant="caption" color={ink[500]}>{t(`kind.${item.kind}`, KIND_LABEL[item.kind as keyof typeof KIND_LABEL] || 'Booking')}{item.slot ? ` · ${item.slot}` : ''}</Text></View>
+          <View style={styles.inline}><Icon size={12} color={ink[400]} /><Text variant="caption" color={ink[500]}>{t(`kind.${item.kind}`, KIND_LABEL[item.kind as keyof typeof KIND_LABEL] || 'Booking')}{item.slot ? `, ${item.slot}` : ''}</Text></View>
         </View>
       </Pressable>
       <Pressable onPress={() => openLink(calendarLink(item))} accessibilityRole="button" accessibilityLabel={t('schedule.addCal', 'Add to calendar')} hitSlop={6} style={styles.cal}>

@@ -75,7 +75,7 @@ export default function MyPetsPage() {
             <span className="flex-1 min-w-0">
               <span className="block font-black text-[#0F172A]">{p.name}</span>
               <span className="block text-xs text-slate-500 capitalize">
-                {p.species}{p.breed ? ` · ${p.breed}` : ''} · {p.size.replace('_', ' ')}
+                {p.species}{p.breed ? `, ${p.breed}` : ''}, {p.size.replace('_', ' ')}
               </span>
               {!p.safetyAnsweredAt && (
                 <span role="button" tabIndex={0} onClick={(e) => { e.stopPropagation(); setFinishing(p); }}

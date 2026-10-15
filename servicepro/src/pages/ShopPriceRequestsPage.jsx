@@ -50,7 +50,7 @@ function RequestCard({ r }) {
         <p className="text-xs text-slate-600">{r.deviceName}</p>
         <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11.5px] text-slate-500">
           <span>{MODE[r.serviceMode] || r.serviceMode}</span>
-          {r.distanceKm != null && <span className="flex items-center gap-1"><MapPin size={11} /> {r.distanceKm} km{r.area ? ` · ${r.area}` : ''}</span>}
+          {r.distanceKm != null && <span className="flex items-center gap-1"><MapPin size={11} /> {r.distanceKm} km{r.area ? `, ${r.area}` : ''}</span>}
           <span className="flex items-center gap-1"><Clock size={11} /> {left(r.expiresAt)}</span>
           {r.answers > 0 && <span>{r.answers} {r.answers === 1 ? 'shop has' : 'shops have'} answered</span>}
         </p>

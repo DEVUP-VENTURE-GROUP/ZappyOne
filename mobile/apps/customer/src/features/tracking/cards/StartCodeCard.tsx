@@ -41,7 +41,7 @@ export function StartCodeCard({ jobKey, code, stage, noun }: { jobKey: string; c
         <View style={styles.icon}><HelpCircle size={18} color={zappy[700]} /></View>
         <View style={styles.flex}>
           <Text variant="bodySmall" weight="black" color={zappy[800]}>Is your {noun} with you?</Text>
-          <Text variant="caption" color={zappy[700]}>Confirm to see the start code · shows in {left}s</Text>
+          <Text variant="caption" color={zappy[700]}>Confirm to see the start code, shows in {left}s</Text>
         </View>
         <Button label="Yes, show" size="small" onPress={confirm} />
       </View>

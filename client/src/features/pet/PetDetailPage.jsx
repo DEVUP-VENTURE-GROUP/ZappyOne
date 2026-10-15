@@ -36,7 +36,7 @@ export default function PetDetailPage() {
           <div>
             <p className="font-black text-[#0F172A] text-lg">{pet.name}</p>
             <p className="text-sm text-slate-500 capitalize">
-              {pet.species}{pet.breed ? ` · ${pet.breed}` : ''} · {pet.size?.replace('_', ' ')}
+              {pet.species}{pet.breed ? `, ${pet.breed}` : ''}, {pet.size?.replace('_', ' ')}
             </p>
             {pet.weight && <p className="text-xs text-slate-400">{pet.weight} kg</p>}
           </div>

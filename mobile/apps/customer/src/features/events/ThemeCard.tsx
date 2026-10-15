@@ -33,7 +33,7 @@ export const ThemeCard = memo(function ThemeCard({ theme, onSave }: { theme: The
       </View>
       <View style={styles.body}>
         <Text variant="bodySmall" weight="black" numberOfLines={1}>{theme.title}</Text>
-        <Text variant="caption" weight="semibold" color={ink[400]} numberOfLines={1}>{[theme.categoryId?.name, theme.partnerId?.businessName].filter(Boolean).join(' · ')}</Text>
+        <Text variant="caption" weight="semibold" color={ink[400]} numberOfLines={1}>{[theme.categoryId?.name, theme.partnerId?.businessName].filter(Boolean).join(', ')}</Text>
         <View style={styles.foot}>
           <Text variant="body" weight="black" color={danger[600]}>{rupees(theme.startingPricePaise)}</Text>
           <View style={styles.rating}><Star size={12} color={accent[500]} fill={accent[500]} /><Text variant="caption" weight="bold" color={ink[700]}>{theme.rating ? theme.rating.toFixed(1) : '–'}</Text><Text variant="caption" color={ink[400]}>({theme.reviewCount || 0})</Text></View>

@@ -15,7 +15,7 @@ import { spacing } from '../theme/spacing';
 import { InstantIdCheck } from './InstantIdCheck';
 
 const STATUS: Record<string, { label: string; Icon: typeof ShieldCheck; bg: string; fg: string }> = {
-  approved: { label: 'Approved · you get jobs', Icon: ShieldCheck, bg: success[50], fg: success[700] },
+  approved: { label: 'Approved, you get jobs', Icon: ShieldCheck, bg: success[50], fg: success[700] },
   pending_review: { label: 'Under review', Icon: Clock, bg: accent[50], fg: accent[700] },
   draft: { label: 'Not submitted yet', Icon: PencilLine, bg: slate[100], fg: ink[500] },
   rejected: { label: 'Needs changes', Icon: XCircle, bg: danger[50], fg: danger[600] },
@@ -120,7 +120,7 @@ export function MyVerificationPanel({ isShop = false, addServiceHref = '/provide
       <Modal visible={!!open} transparent animationType="fade" onRequestClose={() => setOpen(null)}>
         <Pressable style={styles.viewer} onPress={() => setOpen(null)} accessibilityLabel="Close">
           {open?.url ? <Image source={{ uri: open.url }} style={styles.viewerImg} resizeMode="contain" /> : null}
-          <Text variant="bodySmall" weight="semibold" color="#fff">{open?.label}{open?.uploadedAt ? ` · ${when(open.uploadedAt)}` : ''}</Text>
+          <Text variant="bodySmall" weight="semibold" color="#fff">{open?.label}{open?.uploadedAt ? `, ${when(open.uploadedAt)}` : ''}</Text>
           <View style={styles.viewerClose}><X size={18} color={ink[900]} /></View>
         </Pressable>
       </Modal>

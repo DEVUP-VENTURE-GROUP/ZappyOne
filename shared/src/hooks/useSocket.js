@@ -242,7 +242,7 @@ export function useJobRealtime({ alerts = false } = {}) {
     const onAvailable = (p) => {
       if (OPEN_TAGS[p?.kind]) refresh([OPEN_TAGS[p.kind]]);
       if (alerts) {
-        toast(`New job near you${p.area ? ` · ${p.area}` : ''}`, { icon: '🔔', duration: 6000 });
+        toast(`New job near you${p.area ? `, ${p.area}` : ''}`, { icon: '🔔', duration: 6000 });
       }
     };
 

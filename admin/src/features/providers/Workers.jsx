@@ -284,7 +284,7 @@ function WorkerEarningsTab({ workerId }) {
             {days.map((d) => (
               <div key={d.date} className="flex-1 flex flex-col justify-end group relative h-full">
                 <div className="absolute -top-1 left-1/2 -translate-x-1/2 hidden group-hover:block bg-slate-800 text-white text-[9px] px-1.5 py-0.5 rounded whitespace-nowrap z-10 -translate-y-full">
-                  {d.date.slice(5)}: {fmt(d.earningsPaise)} · {d.ordersCompleted} jobs
+                  {d.date.slice(5)}: {fmt(d.earningsPaise)}, {d.ordersCompleted} jobs
                 </div>
                 <div className="w-full rounded-sm bg-zappy-500" style={{ height: `${Math.max((d.earningsPaise / maxEarn) * 100, 2)}%` }} />
               </div>
@@ -317,7 +317,7 @@ function WorkerEarningsTab({ workerId }) {
               <div key={d.id} className="flex items-center justify-between bg-red-50/50 rounded-lg px-3 py-2 text-xs">
                 <div>
                   <p className="font-semibold text-slate-700">{REASON_LABEL[d.reason] || d.reason}</p>
-                  <p className="text-[10px] text-slate-400">{fmtDate(d.date)}{d.orderId ? ` · #${String(d.orderId).slice(-6)}` : ''}</p>
+                  <p className="text-[10px] text-slate-400">{fmtDate(d.date)}{d.orderId ? `, #${String(d.orderId).slice(-6)}` : ''}</p>
                 </div>
                 <span className="font-bold text-red-600">-{fmt(d.amountPaise)}</span>
               </div>

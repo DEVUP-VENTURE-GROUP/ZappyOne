@@ -98,7 +98,7 @@ const pattern = (p = '') => normalise(String(p).split('?')[0]).replace(/\/#(?=\/
 function deviceOf(ua = '') {
   const os = /android/i.test(ua) ? 'Android' : /iphone|ipad|ios/i.test(ua) ? 'iOS' : /windows/i.test(ua) ? 'Windows' : /mac os/i.test(ua) ? 'Mac' : /linux/i.test(ua) ? 'Linux' : 'Other';
   const br = /edg\//i.test(ua) ? 'Edge' : /chrome|crios/i.test(ua) ? 'Chrome' : /safari/i.test(ua) ? 'Safari' : /firefox|fxios/i.test(ua) ? 'Firefox' : 'Other';
-  return `${os} · ${br}${/mobile/i.test(ua) ? ' · phone' : ''}`;
+  return `${os}, ${br}${/mobile/i.test(ua) ? ', phone' : ''}`;
 }
 
 /** Who sent it, from their own access token only. */

@@ -23,7 +23,7 @@ export default function FestiveOffer({ offer, theme }) {
       <span className="min-w-0 flex-1">
         <span className="block truncate text-[14px] font-bold text-ink-900">{offer.name}</span>
         <span className="block truncate text-[12px] text-ink-500">
-          Code <b className="font-semibold tracking-wide text-ink-700">{offer.code}</b>{terms ? ` · ${terms}` : ''}
+          Code <b className="font-semibold tracking-wide text-ink-700">{offer.code}</b>{terms ? `, ${terms}` : ''}
         </span>
       </span>
       <ChevronRight size={18} className="shrink-0 text-ink-400" />

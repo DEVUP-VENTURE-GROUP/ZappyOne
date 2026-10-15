@@ -673,7 +673,7 @@ export default function OrderTrackingPage() {
           {!terminal && (
             <div className="flex items-center justify-center gap-2 pt-1 text-[#647084] text-[11.5px] font-semibold">
               <ShieldCheck size={14} className="text-[#12A150]" />
-              Payment protected · Verified professionals
+              Payment protected, Verified professionals
             </div>
           )}
 

@@ -24,7 +24,7 @@ export const EventBookingRow = memo(function EventBookingRow({ booking, onPress 
       <View style={styles.cover}>{cover ? <Image source={{ uri: cover }} style={StyleSheet.absoluteFill} /> : <Text style={styles.emoji}>🎉</Text>}</View>
       <View style={styles.body}>
         <Text variant="bodySmall" weight="black" numberOfLines={1}>{booking.themeId?.title || 'Event booking'}</Text>
-        <Text variant="caption" color={ink[500]}>{eventDay(booking.eventDate)}{booking.eventTimeSlot ? ` · ${booking.eventTimeSlot}` : ''}</Text>
+        <Text variant="caption" color={ink[500]}>{eventDay(booking.eventDate)}{booking.eventTimeSlot ? `, ${booking.eventTimeSlot}` : ''}</Text>
         <View style={styles.foot}>
           <Text variant="caption" weight="bold" color={st.color}>{st.label}</Text>
           <Text variant="bodySmall" weight="black">{rupees(booking.pricing?.totalPaise)}</Text>

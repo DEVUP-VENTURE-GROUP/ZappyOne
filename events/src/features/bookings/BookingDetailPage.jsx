@@ -69,7 +69,7 @@ export default function BookingDetailPage() {
           {b.themeId?.coverImage && <img src={b.themeId.coverImage} alt="" className="h-16 w-16 shrink-0 rounded-btn object-cover" />}
           <div className="min-w-0 flex-1">
             <h1 className="text-[19px] font-bold leading-tight text-ink-900">{b.themeId?.title || 'Event'}</h1>
-            <p className="mt-0.5 text-[14px] text-ink-500">{longDate(b.eventDate)} · {b.eventTimeSlot}</p>
+            <p className="mt-0.5 text-[14px] text-ink-500">{longDate(b.eventDate)}, {b.eventTimeSlot}</p>
             <div className="mt-2"><StatusChip status={b.status} /></div>
           </div>
         </div>

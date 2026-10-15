@@ -52,7 +52,7 @@ export function ScheduledBookingsPage() {
   const open = (href: string) => router.push(href as never);
   const back = () => (router.canGoBack() ? router.back() : router.replace('/orders' as never));
   const subtitle = loading || empty ? undefined
-    : `${ahead.length ? `${ahead.length} ${t('schedule.ahead', 'booked ahead')}` : t('schedule.nothingAhead', 'Nothing booked ahead')}${live.length ? ` · ${live.length} ${t('schedule.happening', 'happening now')}` : ''}`;
+    : `${ahead.length ? `${ahead.length} ${t('schedule.ahead', 'booked ahead')}` : t('schedule.nothingAhead', 'Nothing booked ahead')}${live.length ? `, ${live.length} ${t('schedule.happening', 'happening now')}` : ''}`;
 
   return (
     <View style={[styles.page, { paddingTop: insets.top }]}>

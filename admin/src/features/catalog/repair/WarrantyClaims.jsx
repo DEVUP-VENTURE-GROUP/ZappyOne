@@ -31,7 +31,7 @@ export default function WarrantyClaims() {
       <div className="space-y-3">
         {rows.map((c) => (
           <div key={c._id} className="rounded-xl border border-slate-200 p-3">
-            <p className="text-xs text-slate-500">{new Date(c.createdAt).toLocaleString('en-IN')} · {c.repairCode} · {c.status.replace(/_/g, ' ')} · booking {String(c.bookingId).slice(-6)}</p>
+            <p className="text-xs text-slate-500">{new Date(c.createdAt).toLocaleString('en-IN')}, {c.repairCode}, {c.status.replace(/_/g, ' ')}, booking {String(c.bookingId).slice(-6)}</p>
             <p className="mt-1 text-sm text-slate-800">{c.issueDescription}</p>
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <input value={notes[c._id] || ''} onChange={(e) => setNotes((n) => ({ ...n, [c._id]: e.target.value }))}

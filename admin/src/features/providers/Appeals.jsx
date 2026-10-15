@@ -41,7 +41,7 @@ function AppealRow({ appeal }) {
           </div>
           <p className="font-semibold text-slate-800 text-sm truncate">{appeal.subject}</p>
           <p className="text-xs text-slate-500 mt-0.5 truncate">
-            {appeal.shopId ? `${appeal.shopId.businessName || 'Shop'} (shop)` : appeal.workerId?.name ?? 'Worker'}{appeal.jobRef ? ` · ${appeal.jobRef}` : ''} · {new Date(appeal.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+            {appeal.shopId ? `${appeal.shopId.businessName || 'Shop'} (shop)` : appeal.workerId?.name ?? 'Worker'}{appeal.jobRef ? `, ${appeal.jobRef}` : ''}, {new Date(appeal.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
           </p>
         </div>
         {expanded ? <ChevronUp size={14} className="text-slate-400 shrink-0" /> : <ChevronDown size={14} className="text-slate-400 shrink-0" />}

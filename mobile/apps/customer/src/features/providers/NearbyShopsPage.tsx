@@ -53,11 +53,11 @@ export function NearbyShopsPage() {
                   <View style={styles.cover}>{cover ? <Image source={{ uri: cover }} style={StyleSheet.absoluteFill} /> : <Store size={22} color={slate[300]} />}</View>
                   <View style={styles.flex}>
                     <View style={styles.inline}><Text variant="bodySmall" weight="bold" numberOfLines={1} style={styles.shrink}>{s.businessName}</Text><ShieldCheck size={13} color={success[500]} /></View>
-                    <Text variant="caption" color={ink[400]} numberOfLines={1}>{(s.services || []).map((x) => x.name).join(' · ') || s.category}</Text>
+                    <Text variant="caption" color={ink[400]} numberOfLines={1}>{(s.services || []).map((x) => x.name).join(', ') || s.category}</Text>
                     <View style={styles.meta}>
                       {s.rating ? <View style={styles.inline}><Star size={11} color={accent[500]} fill={accent[500]} /><Text variant="caption" weight="bold" color={ink[700]}>{s.rating.toFixed(1)}</Text></View> : null}
                       {s.completedJobs ? <Text variant="caption" color={ink[400]}>{s.completedJobs} {t('shops.jobs', 'jobs done')}</Text> : null}
-                      {s.openNow === true ? <Text variant="caption" weight="bold" color={success[600]}>{t('shops.open', 'Open now')}{s.todayHours?.closesAt ? ` · till ${s.todayHours.closesAt}` : ''}</Text> : null}
+                      {s.openNow === true ? <Text variant="caption" weight="bold" color={success[600]}>{t('shops.open', 'Open now')}{s.todayHours?.closesAt ? `, till ${s.todayHours.closesAt}` : ''}</Text> : null}
                       {s.openNow === false ? <Text variant="caption" weight="bold" color={ink[400]}>{t('shops.closed', 'Closed now')}</Text> : null}
                     </View>
                   </View>

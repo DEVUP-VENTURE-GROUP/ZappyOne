@@ -68,7 +68,7 @@ export default function App() {
             <Route
               path={WORKER_LOGIN}
               element={accessToken ? <Navigate to={homeFor(role)} replace />
-                : <WorkerLoginPage allowSignup={false} portalLabel="ServicePro · Shop team" heading="Shop worker login" footer={<LoginRoleSwitch active="worker" />} />}
+                : <WorkerLoginPage allowSignup={false} portalLabel="ServicePro, Shop team" heading="Shop worker login" footer={<LoginRoleSwitch active="worker" />} />}
             />
             <Route path="/worker/login" element={<Navigate to={WORKER_LOGIN} replace />} />
             {/* Every signed-in page sits in one frame: sidebar, or bottom bar + menu. */}

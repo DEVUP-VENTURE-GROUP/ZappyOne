@@ -174,7 +174,7 @@ export function BookingDrawer({ source, id, onClose }) {
               {b.commissionPaise != null && <Row k="ZappyOne commission" v={fmt(b.commissionPaise)} />}
               {b.providerEarningPaise != null && <Row k="Provider gets" v={fmt(b.providerEarningPaise)} />}
               {b.itemMoneyPaise > 0 && <Row k="Items bought (customer's money)" v={fmt(b.itemMoneyPaise)} />}
-              <Row k="Payment" v={`${label(b.paymentMethod || 'unknown')} · ${label(b.paymentStatus || 'pending')}`} />
+              <Row k="Payment" v={`${label(b.paymentMethod || 'unknown')}, ${label(b.paymentStatus || 'pending')}`} />
             </div>
 
             <div>
@@ -183,7 +183,7 @@ export function BookingDrawer({ source, id, onClose }) {
                 {data.history.map((e, i) => (
                   <li key={i}>
                     <p className="text-xs font-semibold capitalize text-slate-800">{label(e.status)}</p>
-                    <p className="text-[11px] text-slate-400">{fmtDate(e.at)}{e.by ? ` · ${e.by}` : ''}{e.note ? ` · ${e.note}` : ''}</p>
+                    <p className="text-[11px] text-slate-400">{fmtDate(e.at)}{e.by ? `, ${e.by}` : ''}{e.note ? `, ${e.note}` : ''}</p>
                   </li>
                 ))}
                 {!data.history.length && <li className="text-xs text-slate-400">No history recorded</li>}

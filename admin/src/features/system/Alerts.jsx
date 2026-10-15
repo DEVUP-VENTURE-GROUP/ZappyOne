@@ -28,7 +28,7 @@ export default function Alerts() {
     <div className="space-y-6">
       <SectionHeader
         title="Alerts"
-        subtitle={data?.checkedAt ? `Live · refreshes every 15s · last: ${new Date(data.checkedAt).toLocaleTimeString('en-IN')}` : undefined}
+        subtitle={data?.checkedAt ? `Live, refreshes every 15s, last: ${new Date(data.checkedAt).toLocaleTimeString('en-IN')}` : undefined}
       >
         <button
           onClick={refetch}

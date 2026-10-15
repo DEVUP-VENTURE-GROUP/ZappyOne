@@ -253,7 +253,7 @@ export default function HomePage() {
   return (
     <>
       <SEO
-        title="ZappyOne · Verified pros near you"
+        title="ZappyOne, Verified pros near you"
         description="Book verified professionals near you on ZappyOne: phone and laptop repair, vehicles, home, pet care and more, with prices before work starts and live tracking."
         canonical={BASE_URL}
         jsonLd={HOME_SCHEMA}

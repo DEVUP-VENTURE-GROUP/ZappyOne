@@ -56,7 +56,7 @@ export const translations = {
     'profile.language': 'भाषा',
     'profile.logout': 'लॉग आउट',
     'profile.logoutConfirm': 'क्या आप वाकई लॉग आउट करना चाहते हैं?',
-    'profile.version': 'Zappy प्लेटफ़ॉर्म · v1.0',
+    'profile.version': 'Zappy प्लेटफ़ॉर्म, v1.0',
     // Profile — section titles
     'profile.section.activity': 'गतिविधि',
     'profile.section.account': 'खाता',
@@ -389,7 +389,7 @@ export const translations = {
     'profile.language': 'భాష',
     'profile.logout': 'లాగ్ అవుట్',
     'profile.logoutConfirm': 'మీరు ఖచ్చితంగా లాగ్ అవుట్ చేయాలనుకుంటున్నారా?',
-    'profile.version': 'Zappy ప్లాట్‌ఫారమ్ · v1.0',
+    'profile.version': 'Zappy ప్లాట్‌ఫారమ్, v1.0',
     // Profile — section titles
     'profile.section.activity': 'కార్యకలాపం',
     'profile.section.account': 'ఖాతా',

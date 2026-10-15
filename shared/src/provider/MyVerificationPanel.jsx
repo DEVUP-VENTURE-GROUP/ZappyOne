@@ -16,7 +16,7 @@ import InstantIdCheck from './InstantIdCheck';
  */
 
 const STATUS = {
-  approved: { label: 'Approved · you get jobs', Icon: ShieldCheck, chip: 'bg-emerald-50 text-emerald-700 ring-emerald-200' },
+  approved: { label: 'Approved, you get jobs', Icon: ShieldCheck, chip: 'bg-emerald-50 text-emerald-700 ring-emerald-200' },
   pending_review: { label: 'Under review', Icon: Clock, chip: 'bg-amber-50 text-amber-800 ring-amber-200' },
   draft: { label: 'Not submitted yet', Icon: PencilLine, chip: 'bg-slate-100 text-slate-600 ring-slate-200' },
   rejected: { label: 'Needs changes', Icon: XCircle, chip: 'bg-red-50 text-red-700 ring-red-200' },
@@ -121,7 +121,7 @@ export default function MyVerificationPanel({ isShop = false, addServiceHref = '
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             <div className="relative max-h-full max-w-2xl" onClick={(e) => e.stopPropagation()}>
               <img src={open.url} alt={open.label} className="max-h-[80vh] rounded-2xl object-contain" />
-              <p className="mt-2 text-center text-[13px] font-semibold text-white">{open.label}{open.uploadedAt ? ` · ${when(open.uploadedAt)}` : ''}</p>
+              <p className="mt-2 text-center text-[13px] font-semibold text-white">{open.label}{open.uploadedAt ? `, ${when(open.uploadedAt)}` : ''}</p>
               <button type="button" onClick={() => setOpen(null)} aria-label="Close"
                 className="absolute -right-2 -top-2 flex h-9 w-9 items-center justify-center rounded-full bg-white text-navy shadow"><X size={18} /></button>
             </div>

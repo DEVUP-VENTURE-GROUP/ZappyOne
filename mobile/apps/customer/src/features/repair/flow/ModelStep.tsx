@@ -66,7 +66,7 @@ export function ModelStep({ vertical, deep, brand, productType, family, onPick }
                   <View style={styles.thumb}>{m.imageUrl ? <Image source={{ uri: webAsset(m.imageUrl) || undefined }} style={StyleSheet.absoluteFill} /> : <Device size={18} color={ink[400]} />}</View>
                   <View style={flow.flex}>
                     <Text variant="bodySmall" weight="semibold" numberOfLines={1}>{m.name}</Text>
-                    {m.productNumbers?.length ? <Text variant="caption" color={ink[400]} numberOfLines={1}>{m.productNumbers.slice(0, 3).join(' · ')}</Text> : null}
+                    {m.productNumbers?.length ? <Text variant="caption" color={ink[400]} numberOfLines={1}>{m.productNumbers.slice(0, 3).join(', ')}</Text> : null}
                   </View>
                   <ChevronRight size={16} color={slate[300]} />
                 </Pressable>

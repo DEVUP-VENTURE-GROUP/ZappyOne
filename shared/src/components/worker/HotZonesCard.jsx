@@ -28,7 +28,7 @@ export default function HotZonesCard({ coords, className = '' }) {
               <span className="block truncate text-[13.5px] font-semibold text-slate-900">{z.service}</span>
               <span className="block text-[12px] text-slate-500">
                 {z.multiplier > 1 ? `Surge ${z.multiplier.toFixed(2)}×` : 'No pro nearby yet'}
-                {z.km != null ? ` · ${z.km} km away` : ''}{z.demand ? ` · ${z.demand} looking` : ''}
+                {z.km != null ? `, ${z.km} km away` : ''}{z.demand ? `, ${z.demand} looking` : ''}
               </span>
             </span>
             <a href={`https://www.google.com/maps/dir/?api=1&destination=${z.lat},${z.lng}`} target="_blank" rel="noopener noreferrer"

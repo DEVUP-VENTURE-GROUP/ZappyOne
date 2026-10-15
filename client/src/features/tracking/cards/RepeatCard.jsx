@@ -24,7 +24,7 @@ export default function RepeatCard({ jobId, noun = 'booking' }) {
         className="flex w-full items-center gap-3 rounded-2xl bg-white px-4 py-3 text-left ring-1 ring-slate-100">
         <Repeat2 size={18} className="text-zappy-600" />
         <span className="min-w-0 flex-1 text-[13px] text-slate-700">
-          Repeats {existing.everyLabel}{existing.nextLabel ? ` · next ${existing.nextLabel}` : ' · paused'}
+          Repeats {existing.everyLabel}{existing.nextLabel ? `, next ${existing.nextLabel}` : ', paused'}
         </span>
         <ChevronRight size={16} className="text-slate-300" />
       </button>

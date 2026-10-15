@@ -34,7 +34,7 @@ export function AssignTechnician({ jobId, workerId, busy = {}, onDone, startOpen
   return (
     <View style={styles.gap}>
       <Pressable onPress={() => setOpen((v) => !v)} style={styles.row} hitSlop={6}>
-        <UserPlus size={13} color={zappy[600]} /><Text variant="caption" weight="bold" color={zappy[600]}>{current ? `On ${current.name} · change` : 'Assign a technician'}</Text>
+        <UserPlus size={13} color={zappy[600]} /><Text variant="caption" weight="bold" color={zappy[600]}>{current ? `On ${current.name}, change` : 'Assign a technician'}</Text>
       </Pressable>
       {open ? workers.map((w) => {
         const isCurrent = String(w._id) === String(workerId);
@@ -43,7 +43,7 @@ export function AssignTechnician({ jobId, workerId, busy = {}, onDone, startOpen
             style={[styles.tech, isCurrent ? { borderColor: success[100], backgroundColor: success[50] } : null]}>
             <View style={[styles.onlineDot, { backgroundColor: w.isOnline ? success[500] : slate[300] }]} />
             <Text variant="bodySmall" weight="semibold" style={styles.flex} numberOfLines={1}>{w.name}</Text>
-            <Text variant="caption" color={ink[400]}>{w.isOnline ? 'online' : 'offline'}{busy[w._id] ? ` · ${busy[w._id]} job${busy[w._id] === 1 ? '' : 's'}` : ''}</Text>
+            <Text variant="caption" color={ink[400]}>{w.isOnline ? 'online' : 'offline'}{busy[w._id] ? `, ${busy[w._id]} job${busy[w._id] === 1 ? '' : 's'}` : ''}</Text>
             {isCurrent ? <Check size={13} color={success[600]} /> : null}
           </Pressable>
         );

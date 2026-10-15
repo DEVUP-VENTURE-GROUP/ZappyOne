@@ -132,7 +132,7 @@ export function VerifyStep({ lineCode, onDone }: { lineCode: string; onDone: () 
         <View style={[ob.card, styles.red]}>
           <Text variant="bodySmall" weight="bold" color={danger[600]}>Please send {redo.size === 1 ? 'this document' : 'these documents'} again</Text>
           {reqs.documents.filter((d) => redo.has(d.code)).map((d) => (
-            <Text key={d.code} variant="caption" weight="semibold" color={danger[600]}>· {d.label}{sentAgain(d.code) ? ' (done)' : ''}</Text>
+            <Text key={d.code} variant="caption" weight="semibold" color={danger[600]}>{d.label}{sentAgain(d.code) ? ' (done)' : ''}</Text>
           ))}
           {enrolment.reviewNote ? <Text variant="caption" color={danger[600]}>{enrolment.reviewNote}</Text> : null}
           <Text variant="caption" color={danger[500]}>Everything else you sent is fine and stays as it is.</Text>
@@ -161,7 +161,7 @@ export function VerifyStep({ lineCode, onDone }: { lineCode: string; onDone: () 
       {reqs.fields.length ? <Text variant="caption" weight="bold" color={ink[500]} style={ob.label}>DETAILS</Text> : null}
       {reqs.fields.map((f) => (
         <View key={f.code} style={ob.card}>
-          <Text variant="caption" weight="semibold" color={ink[700]}>{f.label}{!f.required ? <Text variant="caption" color={ink[400]}> · optional</Text> : null}</Text>
+          <Text variant="caption" weight="semibold" color={ink[700]}>{f.label}{!f.required ? <Text variant="caption" color={ink[400]}>, optional</Text> : null}</Text>
           <TextInput value={fields[f.code] ?? savedFields[f.code] ?? ''} editable={!decided && !redo} onChangeText={(v) => setFields((s) => ({ ...s, [f.code]: v }))}
             accessibilityLabel={f.label} style={[styles.input, missingCodes.has(f.code) && styles.inputBad, (decided || !!redo) && styles.inputOff]} />
           {f.hint ? <Text variant="caption" color={ink[400]}>{f.hint}</Text> : null}

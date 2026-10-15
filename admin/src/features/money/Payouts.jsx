@@ -93,7 +93,7 @@ export default function Payouts() {
                     <p className="text-xs text-slate-400">{p.workerId?.phone}</p>
                   </Td>
                   <Td><span className="font-bold text-slate-900">{fmt(p.amountPaise)}</span></Td>
-                  <Td muted className="capitalize">{p.method || '—'}{p.destination?.upiId ? ` · ${p.destination.upiId}` : ''}</Td>
+                  <Td muted className="capitalize">{p.method || '—'}{p.destination?.upiId ? `, ${p.destination.upiId}` : ''}</Td>
                   <Td><StatusBadge status={p.status} /></Td>
                   <Td muted>{fmtDate(p.createdAt)}</Td>
                   <Td>

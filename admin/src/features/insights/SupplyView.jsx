@@ -49,7 +49,7 @@ export default function SupplyView({ days }) {
                   <tr key={s.lineCode}>
                     <td className="px-1 py-2.5 font-medium text-slate-800">{s.label}</td>
                     <td className={`px-1 py-2.5 text-right tabular-nums ${s.providers ? 'text-slate-900' : 'font-semibold text-rose-600'}`}>
-                      {s.providers ? <>{s.providers}<span className="ml-1 text-[11px] text-slate-400">{s.shops ? `${s.shops} shop${s.shops > 1 ? 's' : ''}` : ''}{s.shops && s.workers ? ' · ' : ''}{s.workers ? `${s.workers} worker${s.workers > 1 ? 's' : ''}` : ''}</span></> : 'None'}
+                      {s.providers ? <>{s.providers}<span className="ml-1 text-[11px] text-slate-400">{s.shops ? `${s.shops} shop${s.shops > 1 ? 's' : ''}` : ''}{s.shops && s.workers ? ', ' : ''}{s.workers ? `${s.workers} worker${s.workers > 1 ? 's' : ''}` : ''}</span></> : 'None'}
                     </td>
                     <td className="px-1 py-2.5 text-right tabular-nums text-slate-700">{count(s.online)}</td>
                     <td className="px-1 py-2.5 text-right tabular-nums font-semibold text-slate-900">{count(s.bookings)}</td>

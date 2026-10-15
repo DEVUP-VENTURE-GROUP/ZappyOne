@@ -20,7 +20,7 @@ export default function ContinueBookingCard({ isAuthed }) {
         <span className="min-w-0 flex-1">
           <span className="block text-[11px] font-bold uppercase tracking-wide text-zappy-700">Continue your booking</span>
           <span className="block truncate text-[15px] font-bold capitalize text-ink-900">{d.title}</span>
-          <span className="block text-[12px] text-ink-500">{[d.pricePaise ? formatPaise(d.pricePaise) : null, 'everything you picked is saved'].filter(Boolean).join(' · ')}</span>
+          <span className="block text-[12px] text-ink-500">{[d.pricePaise ? formatPaise(d.pricePaise) : null, 'everything you picked is saved'].filter(Boolean).join(', ')}</span>
         </span>
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zappy-600 text-white"><ArrowRight size={18} /></span>
       </button>

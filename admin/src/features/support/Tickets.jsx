@@ -121,7 +121,7 @@ export default function Support() {
     <div className="space-y-6">
       <SectionHeader
         title="Support Tickets"
-        subtitle={`${data?.total || 0} total · click a row to read & reply`}
+        subtitle={`${data?.total || 0} total, click a row to read & reply`}
       />
 
       {/* Filters */}

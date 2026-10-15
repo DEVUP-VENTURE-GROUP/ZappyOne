@@ -333,7 +333,7 @@ export default function WorkerDashboard() {
             </Panel>
 
             <Panel
-              title={`Open near you${open.length ? ` · ${open.length}` : ''}`}
+              title={`Open near you${open.length ? `, ${open.length}` : ''}`}
               action={open.length > 0 && <button type="button" onClick={() => nav('/worker/work')} className="text-[13px] font-semibold text-zappy-600 hover:underline">See all</button>}
             >
               {!isOnline ? (
@@ -352,9 +352,9 @@ export default function WorkerDashboard() {
                       className="flex w-full items-center gap-3 rounded-xl bg-slate-50 px-3.5 py-3 text-left hover:bg-slate-100"
                     >
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate text-[14px] font-semibold capitalize text-navy">{j.service} · {j.title}</span>
+                        <span className="block truncate text-[14px] font-semibold capitalize text-navy">{j.service}, {j.title}</span>
                         <span className="flex items-center gap-1 truncate text-[12.5px] text-slate-500">
-                          <MapPin size={12} /> {[j.km != null ? `${j.km} km` : null, j.where].filter(Boolean).join(' · ')}
+                          <MapPin size={12} /> {[j.km != null ? `${j.km} km` : null, j.where].filter(Boolean).join(', ')}
                         </span>
                       </span>
                       <span className="shrink-0 text-[15px] font-bold tabular-nums text-emerald-700">{formatPaise(j.earningPaise)}</span>

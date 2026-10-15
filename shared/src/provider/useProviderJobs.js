@@ -70,7 +70,7 @@ const SOURCES = {
     })),
     open: (d) => (d?.bookings || []).map((b) => ({
       kind: 'pet', id: b._id, service: nameOf(b.categoryCode),
-      title: (b.pets || []).map((p) => [p.snapshot?.name, p.snapshot?.species].filter(Boolean).join(', ')).join(' · ') || 'Pet care',
+      title: (b.pets || []).map((p) => [p.snapshot?.name, p.snapshot?.species].filter(Boolean).join(', ')).join(', ') || 'Pet care',
       where: b.serviceLocation?.address || '', km: b.km ?? null,
       earningPaise: b.pricing?.providerAmountPaise || 0, boostPaise: b.boostPaise || 0, at: b.scheduledAt || b.checkInAt || null,
     })),

@@ -317,7 +317,7 @@ export default function ProfilePage() {
                         {newAddr.lat && newAddr.lng && (
                           <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600">
                             <Check size={13} strokeWidth={2.5} />
-                            <span className="truncate">{t('profile.locationPinned', 'Location pinned')}{newAddr.address ? ` · ${newAddr.address}` : ''}</span>
+                            <span className="truncate">{t('profile.locationPinned', 'Location pinned')}{newAddr.address ? `, ${newAddr.address}` : ''}</span>
                           </div>
                         )}
 
@@ -500,7 +500,7 @@ export default function ProfilePage() {
                 </AnimatePresence>
               </motion.div>
 
-              <p className="text-center text-xs text-slate-300 pb-4">{t('profile.version', 'Zappy Platform · v1.0')}</p>
+              <p className="text-center text-xs text-slate-300 pb-4">{t('profile.version', 'Zappy Platform, v1.0')}</p>
             </div>
           </motion.div>
         )}

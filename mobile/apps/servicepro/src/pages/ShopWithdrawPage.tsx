@@ -36,7 +36,7 @@ export function ShopWithdrawPage() {
   const [dest, setDest] = useState<Dest | null>(null);
 
   const options: Dest[] = useMemo(() => [
-    ...(accounts?.banks || []).map((b: { _id: string; bankName?: string; label?: string; accountNumber: string; isDefault?: boolean }) => ({ key: `bank:${b._id}`, type: 'bank' as const, id: b._id, label: `${b.bankName || b.label || 'Bank'} · ${b.accountNumber}`, isDefault: b.isDefault })),
+    ...(accounts?.banks || []).map((b: { _id: string; bankName?: string; label?: string; accountNumber: string; isDefault?: boolean }) => ({ key: `bank:${b._id}`, type: 'bank' as const, id: b._id, label: `${b.bankName || b.label || 'Bank'}, ${b.accountNumber}`, isDefault: b.isDefault })),
     ...(accounts?.upiIds || []).map((u: { _id: string; upiId: string; isDefault?: boolean }) => ({ key: `upi:${u._id}`, type: 'upi' as const, id: u._id, label: u.upiId, isDefault: u.isDefault })),
   ], [accounts]);
   useEffect(() => { if (!dest && options.length) setDest(options.find((o) => o.isDefault) || options[0]); }, [options, dest]);
@@ -105,7 +105,7 @@ export function ShopWithdrawPage() {
                 <View key={h._id} style={styles.hist}>
                   <View style={[styles.pill, { backgroundColor: bg }]}><Icon size={11} color={fg} /><Text variant="caption" weight="bold" color={fg}>{label}</Text></View>
                   <View style={styles.flex}>
-                    <Text variant="caption" color={ink[700]} numberOfLines={2}>{[h.destination?.label, h.reference ? `ref ${h.reference}` : '', h.reason].filter(Boolean).join(' · ')}</Text>
+                    <Text variant="caption" color={ink[700]} numberOfLines={2}>{[h.destination?.label, h.reference ? `ref ${h.reference}` : '', h.reason].filter(Boolean).join(', ')}</Text>
                     <Text variant="caption" color={ink[400]}>{new Date(h.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</Text>
                   </View>
                   <Text variant="bodySmall" weight="bold">{formatPaise(h.amountPaise)}</Text>

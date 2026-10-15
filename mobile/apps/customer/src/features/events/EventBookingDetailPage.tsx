@@ -83,7 +83,7 @@ export function EventBookingDetailPage() {
             <View style={styles.info}>
               <Text variant="caption" weight="bold" color={ink[500]}>{t('events.decorator', 'YOUR DECORATOR')}</Text>
               <Text variant="bodySmall" weight="black">{partner.businessName}</Text>
-              <Text variant="caption" color={ink[500]}>★ {partner.reviewCount ? Number(partner.rating).toFixed(1) : 'New'} · {partner.completedEvents || 0} events</Text>
+              <Text variant="caption" color={ink[500]}>★ {partner.reviewCount ? Number(partner.rating).toFixed(1) : 'New'}, {partner.completedEvents || 0} events</Text>
             </View>
             {partner.phone ? <IconButton icon={<Phone size={18} color={zappy[600]} />} accessibilityLabel={t('events.call', 'Call the decorator')} onPress={() => callNumber(partner.phone)} /> : null}
           </View>

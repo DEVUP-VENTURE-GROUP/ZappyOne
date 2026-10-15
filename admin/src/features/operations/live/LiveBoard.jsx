@@ -92,7 +92,7 @@ export default function LiveBoard() {
               onClick={() => setKind(k)}
               className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${kind === k ? 'bg-slate-900 text-white' : 'bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50'}`}
             >
-              {text} · {n}
+              {text}, {n}
             </button>
           );
         })}
@@ -149,7 +149,7 @@ export default function LiveBoard() {
                     rel="noopener noreferrer"
                     className="min-w-0 flex-1 truncate font-mono text-xs text-slate-600 hover:text-slate-900"
                   >
-                    {String(w.id).slice(-8)} · {w.lat?.toFixed(4)}, {w.lng?.toFixed(4)}
+                    {String(w.id).slice(-8)}, {w.lat?.toFixed(4)}, {w.lng?.toFixed(4)}
                   </a>
                 </li>
               ))}

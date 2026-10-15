@@ -28,7 +28,7 @@ export function RepeatCard({ jobId, noun }: { jobId: string; noun: string }) {
     return (
       <Pressable onPress={() => router.push('/scheduled' as never)} accessibilityRole="button" style={[styles.card, styles.row]}>
         <Repeat2 size={18} color={zappy[600]} />
-        <Text variant="caption" color={ink[700]} style={styles.flex}>Repeats {existing.everyLabel}{existing.nextLabel ? ` · next ${existing.nextLabel}` : ' · paused'}</Text>
+        <Text variant="caption" color={ink[700]} style={styles.flex}>Repeats {existing.everyLabel}{existing.nextLabel ? `, next ${existing.nextLabel}` : ', paused'}</Text>
         <ChevronRight size={16} color={slate[300]} />
       </Pressable>
     );

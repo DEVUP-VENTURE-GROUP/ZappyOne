@@ -39,8 +39,8 @@ export function RepairGroupPage() {
         contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + spacing.xxl }]}
         ListHeaderComponent={(
           <View style={styles.card}>
-            <Text variant="caption" weight="bold" color={ink[500]}>ONE VISIT · {group.reference}</Text>
-            <Text variant="heading3" weight="black">{bookings.length} items · {done} done</Text>
+            <Text variant="caption" weight="bold" color={ink[500]}>ONE VISIT, {group.reference}</Text>
+            <Text variant="heading3" weight="black">{bookings.length} items, {done} done</Text>
             <Text variant="caption" color={ink[500]}>{group.location?.address}</Text>
             <Text variant="bodySmall" weight="bold">{formatPaise(group.totals?.totalPaise)} total</Text>
           </View>

@@ -151,7 +151,7 @@ export default function WorkerEditProfilePage() {
           <div className="flex-1 min-w-0">
             <p className="font-bold text-slate-800 truncate">{me?.name || 'Your Name'}</p>
             <p className="text-xs text-slate-500 mt-0.5">
-              ⭐ {me?.rating?.toFixed(1) ?? '—'} · {me?.completedJobs ?? 0} jobs completed
+              ⭐ {me?.rating?.toFixed(1) ?? '—'}, {me?.completedJobs ?? 0} jobs completed
             </p>
           </div>
           {me?.trust?.isVerified && (

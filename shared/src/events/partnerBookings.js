@@ -49,7 +49,7 @@ export function partnerNetPaise(b) {
 export const PACKAGE_STATUS_LABEL = {
   pending: 'In review',
   approved: 'Live',
-  featured: 'Live · Featured',
+  featured: 'Live, Featured',
   hidden: 'Hidden',
   rejected: 'Needs changes',
 };

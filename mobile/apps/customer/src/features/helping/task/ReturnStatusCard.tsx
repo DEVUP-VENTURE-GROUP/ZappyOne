@@ -20,7 +20,7 @@ export function ReturnStatusCard({ detail }: { detail: { productName: string; me
   return (
     <View style={styles.card}>
       <Text variant="body" weight="bold">{detail.productName}</Text>
-      <Text variant="bodySmall" color={ink[500]}>{[detail.merchantName, detail.orderId ? `Order ${detail.orderId}` : ''].filter(Boolean).join(' · ')}</Text>
+      <Text variant="bodySmall" color={ink[500]}>{[detail.merchantName, detail.orderId ? `Order ${detail.orderId}` : ''].filter(Boolean).join(', ')}</Text>
       <View style={[styles.pill, { backgroundColor: bg }]}><Text variant="caption" weight="bold" color={fg}>{t(`refund.${detail.refundStatus || 'unknown'}`, label)}</Text></View>
     </View>
   );

@@ -31,7 +31,7 @@ export default function FeatureFlags() {
     <div className="space-y-6">
       <SectionHeader
         title="Feature flags"
-        subtitle={`${flags.filter((f) => f.enabled).length} of ${flags.length} on · changes reach every server within 15 seconds`}
+        subtitle={`${flags.filter((f) => f.enabled).length} of ${flags.length} on, changes reach every server within 15 seconds`}
       />
       <Card className="divide-y divide-slate-50">
         {flags.map((f) => {

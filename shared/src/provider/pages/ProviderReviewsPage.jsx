@@ -112,7 +112,7 @@ export default function ProviderReviewsPage({ back = '/worker', embedded = false
                       <div className="min-w-0">
                         <Stars value={r.rating} />
                         <p className="mt-1 text-[13px] text-ink-500">
-                          {r.by}{r.service ? ` · ${r.service}` : ''} · {new Date(r.at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          {r.by}{r.service ? `, ${r.service}` : ''}, {new Date(r.at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                         </p>
                       </div>
                       {!r.reported && reporting !== r.id && (
@@ -123,7 +123,7 @@ export default function ProviderReviewsPage({ back = '/worker', embedded = false
                     </div>
                     {r.text && <p className="mt-2 text-[14px] leading-relaxed text-ink-900">{r.text}</p>}
                     <div className="mt-2 flex flex-wrap gap-1.5">
-                      {r.reported && <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-800">Reported · being looked at</span>}
+                      {r.reported && <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-800">Reported, being looked at</span>}
                       {r.hidden && <span className="flex items-center gap-1 rounded-full bg-sunken px-2 py-0.5 text-[11px] font-semibold text-ink-500"><EyeOff size={11} /> Not shown to customers</span>}
                       {r.excluded && <span className="rounded-full bg-sunken px-2 py-0.5 text-[11px] font-semibold text-ink-500">Not counted in your rating</span>}
                     </div>

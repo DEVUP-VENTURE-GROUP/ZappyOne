@@ -59,7 +59,7 @@ export const fromRepair = (b) => ({
   // wins, so passing needs no reason and taking is a claim, not an answer.
   broadcast: !!b.broadcast,
   askReason: !b.broadcast,
-  heading: b.broadcast ? 'New repair job · first to take it' : 'New repair job',
+  heading: b.broadcast ? 'New repair job, first to take it' : 'New repair job',
   ...(b.broadcast ? { acceptLabel: 'Take this job' } : {}),
   title: b.device || [b.brandCode, b.modelCode].filter(Boolean).join(' ').replace(/-/g, ' ') || 'Device repair',
   valueLabel: (b.isEstimate ?? b.priceSnapshot?.isEstimate) ? 'Estimate' : 'Job value',
@@ -100,7 +100,7 @@ export const fromPetOffer = (b) => ({
 
 export const fromOpen = (p) => ({
   kind: p.kind, id: String(p.id), mode: 'open', askReason: false,
-  heading: 'New job near you · first to accept',
+  heading: 'New job near you, first to accept',
   title: p.title || 'New job',
   valueLabel: 'You earn',
   valuePaise: p.earningPaise || 0,

@@ -555,7 +555,7 @@ function IdentificationQueue({ vertical }) {
             <div className="min-w-0">
               <p className="font-bold text-slate-900">
                 {row.brandName || row.brandCode || 'Unknown brand'}
-                {row.modelText ? ` · ${row.modelText}` : ''}
+                {row.modelText ? `, ${row.modelText}` : ''}
               </p>
               <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1.5">
                 {row.productNumber && (

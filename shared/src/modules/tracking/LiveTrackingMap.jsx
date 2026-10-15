@@ -653,7 +653,7 @@ export default function LiveTrackingMap({ pickup, workerLocation, service, statu
               }}
             >
               <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: color }} />
-              Live tracking · on the way
+              Live tracking, on the way
             </div>
           )}
           {isSearching && (

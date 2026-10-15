@@ -42,7 +42,7 @@ export default function JobMapCard({ to, label = 'Customer location', live = tru
       <div className="flex items-center gap-3 p-3">
         <MapPin size={18} className="shrink-0 text-zappy-600" />
         <div className="min-w-0 flex-1">
-          <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">{label}{distance != null && ` · ${distance < 1 ? `${Math.round(distance * 1000)} m` : `${distance.toFixed(1)} km`} away`}</p>
+          <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">{label}{distance != null && `, ${distance < 1 ? `${Math.round(distance * 1000)} m` : `${distance.toFixed(1)} km`} away`}</p>
           <p className="truncate text-sm font-semibold text-[#0F172A]">{to.address || `${to.lat.toFixed(5)}, ${to.lng.toFixed(5)}`}</p>
         </div>
         <a href={directions} target="_blank" rel="noreferrer"

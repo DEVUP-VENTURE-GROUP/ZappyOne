@@ -91,7 +91,7 @@ export default function ArrivalProximity({ metres, radius = ARRIVAL_RADIUS_M }) 
           <>
             <p className="text-sm font-extrabold text-green-800">You&apos;re at the location</p>
             <p className="text-xs font-medium text-green-600">
-              {Math.round(metres)} m · tap to confirm arrival
+              {Math.round(metres)} m, tap to confirm arrival
             </p>
           </>
         ) : (

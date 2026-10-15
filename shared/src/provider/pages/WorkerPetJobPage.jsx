@@ -139,7 +139,7 @@ export default function WorkerPetJobPage() {
           </div>
         )}
         <div className="rounded-2xl border-2 border-slate-200 bg-white p-4">
-          <p className="font-bold text-[#0F172A] flex items-center gap-1.5"><PawPrint size={14} /> {brief.name} · {brief.species} · {brief.size?.replace('_', ' ')}</p>
+          <p className="font-bold text-[#0F172A] flex items-center gap-1.5"><PawPrint size={14} /> {brief.name}, {brief.species}, {brief.size?.replace('_', ' ')}</p>
           {brief.breed && <p className="text-xs text-slate-500 mt-0.5">{brief.breed}</p>}
         </div>
 

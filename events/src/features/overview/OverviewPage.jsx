@@ -87,7 +87,7 @@ function BookingList({ title, empty, rows = [], to }) {
               <Link to={`/partner/bookings/${b._id}`} className="flex items-center gap-3 px-4 py-3 hover:bg-canvas">
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-[14px] font-semibold text-ink-900">{b.themeId?.title || 'Event'}</span>
-                  <span className="block text-[13px] text-ink-500">{shortDate(b.eventDate)} · {b.eventTimeSlot} · {placeName(b.address?.city) || '—'}</span>
+                  <span className="block text-[13px] text-ink-500">{shortDate(b.eventDate)}, {b.eventTimeSlot}, {placeName(b.address?.city) || '—'}</span>
                 </span>
                 <StatusChip status={b.status} />
               </Link>

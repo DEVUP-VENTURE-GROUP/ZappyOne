@@ -37,7 +37,7 @@ export default function WarrantyCard({ orderId, onClaimClick }) {
         </p>
         <p className={`text-[11px] font-medium ${urgent ? 'text-amber-600' : 'text-green-600'}`}>
           {daysLeft > 0
-            ? `Expires in ${daysLeft} day${daysLeft !== 1 ? 's' : ''} · ${expires.toLocaleDateString('en-IN')}`
+            ? `Expires in ${daysLeft} day${daysLeft !== 1 ? 's' : ''}, ${expires.toLocaleDateString('en-IN')}`
             : 'Expires today!'}
         </p>
       </div>

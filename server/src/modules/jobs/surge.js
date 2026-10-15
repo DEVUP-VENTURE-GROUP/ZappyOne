@@ -318,7 +318,7 @@ function linesFor(base, f, s) {
   const lines = [];
   const raw = parts.reduce((a, [, p]) => a + p, 0);
   const surgePaise = Math.round(Math.min(raw, s.ceilingPaise));
-  if (surgePaise >= 100) lines.push({ type: 'surge', label: 'Surge fee', reason: parts.map(([r]) => r).join(' · '), paise: surgePaise });
+  if (surgePaise >= 100) lines.push({ type: 'surge', label: 'Surge fee', reason: parts.map(([r]) => r).join(', '), paise: surgePaise });
   if (f.rainPaise) lines.push({ type: 'rain', label: 'Rain fee', reason: 'It is raining where you are; pros travel in it to reach you', paise: f.rainPaise });
   if (f.nightPaise) lines.push({ type: 'night', label: 'Late-night fee', reason: `Bookings between ${s.nightStartHour}:00 and ${s.nightEndHour}:00`, paise: f.nightPaise });
   // Never more than the price itself (≤ 2× in all).

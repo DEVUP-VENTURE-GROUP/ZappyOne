@@ -26,7 +26,7 @@ export default function NearestArrival({ line, loc, noun = 'provider', className
     <div className={`flex flex-wrap items-center gap-2 rounded-xl bg-emerald-50/60 px-3 py-2 ${className}`}>
       <ArrivalBadge minutes={a.minutes} withinPromise={a.withinPromise} busy={a.busy} />
       <span className="text-[12px] text-slate-600">
-        {a.busy ? `The nearest ${noun} is finishing a job.` : `Nearest ${noun} ~${a.km} km away`}{a.nearby > 1 ? ` · ${a.nearby} nearby` : ''}
+        {a.busy ? `The nearest ${noun} is finishing a job.` : `Nearest ${noun} ~${a.km} km away`}{a.nearby > 1 ? `, ${a.nearby} nearby` : ''}
       </span>
     </div>
   );

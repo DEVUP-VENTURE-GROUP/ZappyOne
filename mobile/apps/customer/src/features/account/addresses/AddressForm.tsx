@@ -41,7 +41,7 @@ export function AddressForm({ title, initial, saving, onSave, onCancel }: {
       <View style={styles.tags}>{TAGS.map((tag) => <Chip key={tag} label={t(`profile.tag.${tag}`, tag[0].toUpperCase() + tag.slice(1))} selected={draft.tag === tag} onPress={() => setDraft((d) => ({ ...d, tag }))} />)}</View>
       <Input value={draft.label} onChangeText={(label) => setDraft((d) => ({ ...d, label }))} placeholder={t('profile.labelPlaceholder', "Label (e.g. Mom's House)")} />
       {draft.place ? (
-        <View style={styles.pinned}><Check size={13} color={success[600]} /><Text variant="caption" weight="semibold" color={success[700]} style={styles.flex} numberOfLines={2}>{t('profile.locationPinned', 'Location pinned')} · {draft.place.address}</Text></View>
+        <View style={styles.pinned}><Check size={13} color={success[600]} /><Text variant="caption" weight="semibold" color={success[700]} style={styles.flex} numberOfLines={2}>{t('profile.locationPinned', 'Location pinned')}, {draft.place.address}</Text></View>
       ) : null}
       <Button label={draft.place ? t('profile.searchToChange', 'Change on the map') : t('profile.searchAddress', 'Pin your address on the map')} variant="outline" size="small"
         icon={<MapPin size={14} color={zappy[600]} />} onPress={() => pick(draft.place)} fullWidth />

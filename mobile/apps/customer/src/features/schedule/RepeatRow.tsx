@@ -26,7 +26,7 @@ export function RepeatRow({ plan }: { plan: RepeatPlan }) {
         <View style={[styles.icon, { backgroundColor: paused ? slate[100] : zappy[50] }]}><Repeat2 size={18} color={paused ? ink[400] : zappy[600]} /></View>
         <View style={styles.flex}>
           <Text variant="bodySmall" weight="semibold" numberOfLines={1} style={styles.cap}>{plan.title}</Text>
-          <Text variant="caption" color={ink[500]}>{plan.everyLabel.charAt(0).toUpperCase() + plan.everyLabel.slice(1)} · {paused ? t('repeat.paused', 'paused') : `${t('repeat.next', 'next')} ${plan.nextLabel}`}</Text>
+          <Text variant="caption" color={ink[500]}>{plan.everyLabel.charAt(0).toUpperCase() + plan.everyLabel.slice(1)}, {paused ? t('repeat.paused', 'paused') : `${t('repeat.next', 'next')} ${plan.nextLabel}`}</Text>
           {plan.lastError && !paused ? <Text variant="caption" color={accent[700]}>{t('repeat.retry', 'Last try did not go through; we will try again.')}</Text> : null}
         </View>
         {isLoading ? <ActivityIndicator size="small" color={slate[400]} /> : null}

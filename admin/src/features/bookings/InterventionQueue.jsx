@@ -23,7 +23,7 @@ function Row({ j, tone, onOpen }) {
           : <Hourglass size={16} className="mt-0.5 shrink-0 text-amber-500" />}
         <span className="min-w-0 flex-1">
           <span className="block text-sm font-semibold text-slate-800">
-            {KIND_LABEL[j.kind] || j.kind} · <span className="capitalize">{j.title}</span>
+            {KIND_LABEL[j.kind] || j.kind}, <span className="capitalize">{j.title}</span>
             {j.reference && <span className="ml-1.5 font-mono text-xs font-normal text-slate-400">{j.reference}</span>}
           </span>
           {j.stuck && <span className="mt-0.5 block text-xs font-semibold text-red-600">{j.stuck}</span>}
@@ -70,10 +70,10 @@ function BackingOut({ rows }) {
         {rows.map((p) => (
           <div key={`${p.kind}-${p.id}`} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
             <div className="min-w-0">
-              <p className="truncate font-semibold text-slate-800">{p.name} <span className="font-normal text-slate-400">· {p.kind === 'shop' ? 'shop' : 'worker'}</span></p>
+              <p className="truncate font-semibold text-slate-800">{p.name} <span className="font-normal text-slate-400">({p.kind === 'shop' ? 'shop' : 'worker'})</span></p>
               <p className="text-xs text-slate-500">
-                Handed back {p.handedBack}{p.noShows ? ` · ${p.noShows} no-show${p.noShows > 1 ? 's' : ''}` : ''} · {p.counted} of {p.limit} counted
-                {p.pausedUntil ? ` · offline until ${new Date(p.pausedUntil).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}` : ''}
+                Handed back {p.handedBack}{p.noShows ? `, ${p.noShows} no-show${p.noShows > 1 ? 's' : ''}` : ''}, {p.counted} of {p.limit} counted
+                {p.pausedUntil ? `, offline until ${new Date(p.pausedUntil).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}` : ''}
               </p>
             </div>
             {p.phone && <a href={`tel:${p.phone}`} className="shrink-0 rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 ring-1 ring-slate-200">Call</a>}

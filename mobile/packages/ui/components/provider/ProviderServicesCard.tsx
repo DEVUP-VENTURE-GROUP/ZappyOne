@@ -43,7 +43,7 @@ export function ProviderServicesCard() {
               const c = CHIP_TONE[chip.tone];
               return (
                 <View key={e._id} style={[styles.chip, { backgroundColor: c.bg }]}>
-                  <Text variant="caption" weight="bold" color={c.fg}>{e.line?.name || e.lineCode} · {chip.label}</Text>
+                  <Text variant="caption" weight="bold" color={c.fg}>{e.line?.name || e.lineCode}, {chip.label}</Text>
                 </View>
               );
             })}

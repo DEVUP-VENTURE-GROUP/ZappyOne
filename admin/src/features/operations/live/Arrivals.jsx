@@ -47,7 +47,7 @@ export default function Arrivals() {
         {!data.byHour.length ? <p className="text-[12px] text-slate-400">No visits yet.</p> : (
           <div className="flex h-28 items-end gap-1">
             {Array.from({ length: 24 }, (_, h) => data.byHour.find((r) => r.key === h)).map((r, h) => (
-              <div key={h} className="flex flex-1 flex-col items-center gap-1" title={r ? `${h}:00 · ${r.visits} visits · ${r.onTimePct}% on time` : `${h}:00 · none`}>
+              <div key={h} className="flex flex-1 flex-col items-center gap-1" title={r ? `${h}:00, ${r.visits} visits, ${r.onTimePct}% on time` : `${h}:00, none`}>
                 <div className={`w-full rounded-sm ${!r ? 'bg-slate-100' : r.onTimePct >= 90 ? 'bg-emerald-400' : r.onTimePct >= 75 ? 'bg-amber-400' : 'bg-red-400'}`}
                   style={{ height: `${r ? Math.max(8, (r.visits / maxHour) * 100) : 4}%` }} />
                 <span className="text-[9px] text-slate-400">{h % 3 === 0 ? h : ''}</span>
@@ -84,7 +84,7 @@ export default function Arrivals() {
                   <span className={`flex h-8 w-8 items-center justify-center rounded-full ${bad ? 'bg-red-50 text-red-600' : acc > 100 ? 'bg-amber-50 text-amber-600' : 'bg-emerald-50 text-emerald-600'}`}><Icon size={15} /></span>
                   <span className="min-w-0 flex-1">
                     <span className="font-semibold text-slate-800">{w.name || 'Unnamed'}</span>{w.shop && <span className="ml-1 text-[11px] text-slate-400">shop technician</span>}
-                    <span className="block text-[11.5px] text-slate-500">{w.phone}{!w.live ? ' · no signal lately' : ''}</span>
+                    <span className="block text-[11.5px] text-slate-500">{w.phone}{!w.live ? ', no signal lately' : ''}</span>
                   </span>
                   <span className={`text-[12px] font-semibold ${bad ? 'text-red-600' : acc > 100 ? 'text-amber-600' : 'text-emerald-600'}`}>
                     {acc == null ? 'accuracy unknown (old app)' : `within ${acc >= 1000 ? `${(acc / 1000).toFixed(1)} km` : `${acc} m`}`}

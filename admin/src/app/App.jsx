@@ -15,7 +15,7 @@ const Spinner = () => (
 // Deliberately bland: nothing here says this origin hosts an admin console.
 const NotFound = () => (
   <div className="min-h-screen flex items-center justify-center bg-white">
-    <p className="text-sm text-slate-400">404 · Not found</p>
+    <p className="text-sm text-slate-400">404, Not found</p>
   </div>
 );
 

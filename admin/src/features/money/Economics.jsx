@@ -103,7 +103,7 @@ function FeeRow({ row }) {
       </td>
       <td className="px-4 py-3 text-[12px] leading-relaxed text-slate-500 tabular-nums">
         {valid ? (
-          <>Customer pays <b className="text-slate-700">{fmt(EXAMPLE_PAISE + feePaise + taxPaise)}</b> · provider gets <b className="text-slate-700">{fmt(EXAMPLE_PAISE - commission)}</b> · ZappyOne earns <b className="text-slate-700">{fmt(commission + feePaise)}</b></>
+          <>Customer pays <b className="text-slate-700">{fmt(EXAMPLE_PAISE + feePaise + taxPaise)}</b>, provider gets <b className="text-slate-700">{fmt(EXAMPLE_PAISE - commission)}</b>, ZappyOne earns <b className="text-slate-700">{fmt(commission + feePaise)}</b></>
         ) : '—'}
       </td>
       <td className="px-4 py-3 text-right">

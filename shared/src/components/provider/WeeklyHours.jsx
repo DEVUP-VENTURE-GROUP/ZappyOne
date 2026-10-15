@@ -83,7 +83,7 @@ export default function WeeklyHours({ hours, onChange }) {
                   <TimeField label={`${label} closes at`} value={row.closesAt} onChange={(v) => setDay(day, { closesAt: v })} />
                   {len && (
                     <span className={`w-full text-[11px] font-semibold sm:w-auto ${len.short ? 'text-amber-600' : 'text-slate-400'}`}>
-                      {len.overnight ? 'overnight · ' : ''}{len.label}{len.short ? ' — is that right?' : ''}
+                      {len.overnight ? 'overnight, ' : ''}{len.label}{len.short ? ' — is that right?' : ''}
                     </span>
                   )}
                 </div>

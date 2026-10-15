@@ -10,7 +10,7 @@ interface Who { name?: string; rating?: number | null; jobs?: number; eta: numbe
 
 const COPY: Record<string, (w: Who) => string> = {
   searching: () => 'Finding a verified pro. We will tell you as soon as someone accepts.',
-  assigned: (w) => `${w.name || 'Your pro'} accepted your booking${w.rating ? ` · rated ${Number(w.rating).toFixed(1)}` : ''}`,
+  assigned: (w) => `${w.name || 'Your pro'} accepted your booking${w.rating ? `, rated ${Number(w.rating).toFixed(1)}` : ''}`,
   on_the_way: (w) => `${w.name || 'Your pro'} is on the way${w.eta != null ? `, arriving in about ${w.eta} min` : ''}`,
   arrived: (w) => `${w.name || 'Your pro'} has arrived. Share your start code when you are ready.`,
   in_progress: (w) => `Work in progress. ${w.name || 'Your pro'} is working on it.`,

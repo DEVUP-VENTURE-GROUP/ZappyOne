@@ -115,7 +115,7 @@ export function ShopWorkerHome() {
             <View key={title} style={styles.stat}>
               <Text variant="caption" weight="bold" color={ink[400]}>{title.toUpperCase()}</Text>
               <Text variant="heading2" weight="black">{t?.jobs ?? '–'}</Text>
-              <Text variant="caption" color={ink[500]}>jobs done · {t ? formatPaise(t.valuePaise) : '–'}</Text>
+              <Text variant="caption" color={ink[500]}>jobs done, {t ? formatPaise(t.valuePaise) : '–'}</Text>
             </View>
           ))}
         </View>

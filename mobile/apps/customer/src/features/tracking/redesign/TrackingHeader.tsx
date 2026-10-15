@@ -26,7 +26,7 @@ export function TrackingHeader({ job, eta, onBack, onSOS, onSupport }: { job: Tr
         <Pressable onPress={onBack} accessibilityRole="button" accessibilityLabel="Back" hitSlop={8} style={styles.action}><ArrowLeft size={19} color={ink[900]} /></Pressable>
         <View style={styles.flex}>
           <Text variant="body" weight="bold" numberOfLines={1} style={styles.cap}>{job.service}</Text>
-          <Text variant="caption" color={ink[500]} numberOfLines={1}>{job.reference || `#${shortId(job.id)}`}{job.subtitle ? ` · ${job.subtitle}` : ''}</Text>
+          <Text variant="caption" color={ink[500]} numberOfLines={1}>{job.reference || `#${shortId(job.id)}`}{job.subtitle ? `, ${job.subtitle}` : ''}</Text>
         </View>
         {!job.terminal && job.provider && onSOS ? <IconAction label="Emergency SOS" onPress={onSOS}><ShieldAlert size={18} color={danger[600]} /></IconAction> : null}
         {onSupport ? <IconAction label="Support" onPress={onSupport}><Headphones size={18} color={ink[700]} /></IconAction> : null}

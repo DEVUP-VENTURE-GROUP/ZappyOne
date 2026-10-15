@@ -217,7 +217,7 @@ export default function EventBookingDetailPage() {
                 <p className="font-semibold text-slate-900 text-sm">{booking.partnerId.businessName}</p>
                 <div className="flex items-center gap-1 mt-0.5">
                   <Star size={11} className="text-amber-400 fill-amber-400" />
-                  <span className="text-xs text-slate-500">{booking.partnerId.reviewCount ? `${Number(booking.partnerId.rating).toFixed(1)} · ` : 'New · '}{booking.partnerId.completedEvents || 0} events</span>
+                  <span className="text-xs text-slate-500">{booking.partnerId.reviewCount ? `${Number(booking.partnerId.rating).toFixed(1)}, ` : 'New, '}{booking.partnerId.completedEvents || 0} events</span>
                 </div>
               </div>
               {booking.partnerId.phone && (

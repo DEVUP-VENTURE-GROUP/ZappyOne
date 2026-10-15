@@ -384,7 +384,7 @@ function CommissionCalculator({ plans, activePlanCode }) {
             <div key={plan.code} className={`flex items-center justify-between px-4 py-3 rounded-xl border ${isActive ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-gradient-to-r from-amber-500/10 to-orange-500/10 border-amber-500/30'}`}>
               <div>
                 <p className={`text-[13px] font-bold ${isActive ? 'text-emerald-400' : 'text-amber-400'}`}>{plan.name} {isActive && <span className="text-[9px] uppercase tracking-widest bg-emerald-500/20 px-1.5 py-0.5 rounded ml-1">Active</span>}</p>
-                <p className="text-[10px] font-bold text-slate-400">{Math.round(commPct)}% fee · ₹{Math.round(plan.priceInPaise / 100)}/mo</p>
+                <p className="text-[10px] font-bold text-slate-400">{Math.round(commPct)}% fee, ₹{Math.round(plan.priceInPaise / 100)}/mo</p>
               </div>
               <div className="text-right">
                 <p className={`text-[15px] font-black ${isActive ? 'text-emerald-400' : 'text-amber-400'}`}>₹{net.toLocaleString('en-IN')}</p>

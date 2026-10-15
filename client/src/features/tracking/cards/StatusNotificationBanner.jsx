@@ -24,7 +24,7 @@ const STATES = {
   assigned: {
     Icon: UserCheck, tone: 'brand',
     title: (w) => `${w.name || 'Your pro'} accepted your booking`,
-    body: (w) => (w.rating ? `Rated ${Number(w.rating).toFixed(1)}${w.jobs ? ` · ${w.jobs} jobs done` : ''}` : 'Verified by ZappyOne'),
+    body: (w) => (w.rating ? `Rated ${Number(w.rating).toFixed(1)}${w.jobs ? `, ${w.jobs} jobs done` : ''}` : 'Verified by ZappyOne'),
   },
   on_the_way: {
     Icon: Navigation, tone: 'brand',

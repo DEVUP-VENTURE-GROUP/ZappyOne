@@ -52,7 +52,7 @@ function VideoReelCard({ theme, onSave }) {
         <div className="flex items-center gap-2 mt-2.5">
           <Star size={12} className="text-yellow-400 fill-yellow-400" />
           <span className="text-white/90 text-xs font-bold">{theme.rating?.toFixed(1) || '–'}</span>
-          <span className="text-white/30 text-xs">·</span>
+          <span className="text-white/30 text-xs">|</span>
           <span className="text-white/70 text-xs">{theme.bookingCount} booked</span>
         </div>
       </div>
@@ -96,7 +96,7 @@ function ThemeCard({ theme, onSave }) {
       </div>
       <div className="p-5">
         <p className="font-black text-[15px] text-slate-900 leading-tight line-clamp-1">{theme.title}</p>
-        <p className="text-xs font-semibold text-slate-400 mt-1.5 line-clamp-1">{theme.categoryId?.name} · {theme.partnerId?.businessName}</p>
+        <p className="text-xs font-semibold text-slate-400 mt-1.5 line-clamp-1">{theme.categoryId?.name}, {theme.partnerId?.businessName}</p>
         <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-100">
           <span className="text-base font-black text-rose-600">₹{Math.round((theme.startingPricePaise || 0) / 100).toLocaleString('en-IN')}</span>
           <div className="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-100">

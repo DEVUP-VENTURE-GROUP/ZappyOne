@@ -73,7 +73,7 @@ export function PartnerEarningsPage() {
                 <Pressable key={r._id} onPress={() => router.push(`/partner/bookings/${r._id}` as never)} android_ripple={RIPPLE} accessibilityRole="button" style={styles.recent}>
                   <View style={styles.flex}>
                     <Text variant="bodySmall" weight="semibold" numberOfLines={1}>{r.title}</Text>
-                    <Text variant="caption" color={ink[500]}>{shortDate(r.eventDate)} · paid {formatPaise(r.grossPaise)} · {r.commissionPct}%</Text>
+                    <Text variant="caption" color={ink[500]}>{shortDate(r.eventDate)}, paid {formatPaise(r.grossPaise)}, {r.commissionPct}%</Text>
                   </View>
                   <Text variant="bodySmall" weight="bold">{formatPaise(r.netPaise)}</Text>
                 </Pressable>

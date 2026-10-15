@@ -50,7 +50,7 @@ export function PetRecurringPage() {
                   </View>
                   <View style={[styles.pill, { backgroundColor: bg }]}><Text variant="caption" weight="bold" color={fg}>{s.status.toUpperCase()}</Text></View>
                 </View>
-                <Text variant="caption" color={ink[400]}>{s.occurrencesCreated} {t('pet.scheduled', 'scheduled')} · {s.occurrencesCompleted} {t('pet.completed', 'completed')}</Text>
+                <Text variant="caption" color={ink[400]}>{s.occurrencesCreated} {t('pet.scheduled', 'scheduled')}, {s.occurrencesCompleted} {t('pet.completed', 'completed')}</Text>
                 {live ? (
                   <View style={styles.row}>
                     <View style={styles.flex}>

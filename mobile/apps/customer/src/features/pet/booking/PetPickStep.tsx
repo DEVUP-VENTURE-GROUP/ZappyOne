@@ -31,7 +31,7 @@ export function PetPickStep({ pets, selected, onToggle, onContinue }: { pets: Pe
           <Pressable key={p._id} onPress={() => onToggle(p._id)} accessibilityRole="checkbox" accessibilityState={{ checked: on }} style={[styles.row, on && styles.on]}>
             <View style={[styles.box, on && styles.boxOn]}>{on ? <Check size={14} color="#fff" strokeWidth={3} /> : null}</View>
             <Text variant="bodySmall" weight="bold" style={styles.flex}>{p.name}</Text>
-            <Text variant="caption" color={ink[400]} style={styles.cap}>{p.species} · {p.size?.replace('_', ' ')}</Text>
+            <Text variant="caption" color={ink[400]} style={styles.cap}>{p.species}, {p.size?.replace('_', ' ')}</Text>
           </Pressable>
         );
       })}

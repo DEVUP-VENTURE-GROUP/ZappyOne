@@ -115,7 +115,7 @@ export default function HelpingTaskDetailPage() {
       {task.returnDetail && (
         <div className={card}>
           <p className="text-[15px] font-bold text-navy">{task.returnDetail.productName}</p>
-          <p className="text-sm text-slate-500">{task.returnDetail.merchantName} · Order {task.returnDetail.orderId}</p>
+          <p className="text-sm text-slate-500">{task.returnDetail.merchantName}, Order {task.returnDetail.orderId}</p>
           {(() => { const [text, tone] = REFUND[task.returnDetail.refundStatus] || REFUND.unknown; return <span className={`mt-2 inline-block rounded-full px-2.5 py-1 text-xs font-bold ${tone}`}>{text}</span>; })()}
         </div>
       )}

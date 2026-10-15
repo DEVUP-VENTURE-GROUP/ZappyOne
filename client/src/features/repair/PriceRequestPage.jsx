@@ -70,7 +70,7 @@ export default function PriceRequestPage() {
         <button type="button" onClick={() => nav(-1)} className="p-1 -ml-1" aria-label="Back"><ArrowLeft size={20} /></button>
         <div className="min-w-0">
           <p className="text-xs text-slate-500">Prices from shops near you</p>
-          <h1 className="truncate text-[15px] font-bold text-slate-900">{r.repairName} · {r.deviceName}</h1>
+          <h1 className="truncate text-[15px] font-bold text-slate-900">{r.repairName}, {r.deviceName}</h1>
         </div>
       </header>
 

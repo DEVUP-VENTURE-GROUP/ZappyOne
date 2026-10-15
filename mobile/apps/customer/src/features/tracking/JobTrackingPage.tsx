@@ -121,7 +121,7 @@ export function JobTrackingPage({ job, extras = null, startCode = null, codeStag
             <View style={styles.photos}>{job.proofs.map((url, i) => <View key={url + i} style={job.proofs.length === 1 ? styles.full : styles.half}><ProofPhoto url={url} index={i} /></View>)}</View>
           </View>
         ) : null}
-        {!job.terminal ? <View style={[styles.inline, styles.trust]}><ShieldCheck size={14} color={success[600]} /><Text variant="caption" weight="semibold" color={ink[500]}>Payment protected · Verified professionals</Text></View> : null}
+        {!job.terminal ? <View style={[styles.inline, styles.trust]}><ShieldCheck size={14} color={success[600]} /><Text variant="caption" weight="semibold" color={ink[500]}>Payment protected, Verified professionals</Text></View> : null}
       </ScrollView>
 
       <View style={[styles.bar, { paddingBottom: insets.bottom + spacing.base }]}>

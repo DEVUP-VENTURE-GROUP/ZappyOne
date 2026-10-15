@@ -17,7 +17,7 @@ const day = (d) => new Date(d).toLocaleDateString('en-IN', { day: 'numeric', mon
  */
 export default function FestiveHome() {
   const { data, isLoading, isError } = useAdminSeasonsQuery();
-  const [editing, setEditing] = useState(null); // null · 'new' · a season (with no _id: a new one, prefilled)
+  const [editing, setEditing] = useState(null); // null, 'new', a season (with no _id: a new one, prefilled)
   const [create, { isLoading: switching }] = useAdminCreateSeasonMutation();
   const customise = (f) => setEditing({ ...f, _id: undefined, name: f.name, isActive: true, promoCode: '' });
   async function switchOff(f) {
@@ -86,7 +86,7 @@ export default function FestiveHome() {
                         : !s.isActive ? <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-bold text-slate-500">Off</span> : null}
                     </div>
                     <p className="truncate text-[12.5px] text-slate-600">{s.headline}</p>
-                    <p className="text-[12px] text-slate-400">{day(s.startAt)} – {day(s.endAt)} · {s.tiles?.length || 0} tiles{s.promoCode ? ` · ${s.promoCode}${s.offerLive ? '' : ' (not live)'}` : ''}</p>
+                    <p className="text-[12px] text-slate-400">{day(s.startAt)} – {day(s.endAt)}, {s.tiles?.length || 0} tiles{s.promoCode ? `, ${s.promoCode}${s.offerLive ? '' : ' (not live)'}` : ''}</p>
                   </div>
                 </Card>
               </button>

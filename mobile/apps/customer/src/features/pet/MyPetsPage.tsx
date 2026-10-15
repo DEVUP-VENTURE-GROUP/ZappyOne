@@ -49,7 +49,7 @@ export function MyPetsPage() {
               <View style={styles.photo}>{photo ? <Image source={{ uri: photo }} style={StyleSheet.absoluteFill} /> : <PawPrint size={20} color={zappy[400]} />}</View>
               <View style={styles.flex}>
                 <Text variant="bodySmall" weight="black">{p.name}</Text>
-                <Text variant="caption" color={ink[500]} style={styles.cap}>{[p.species, p.breed, p.size.replace('_', ' ')].filter(Boolean).join(' · ')}</Text>
+                <Text variant="caption" color={ink[500]} style={styles.cap}>{[p.species, p.breed, p.size.replace('_', ' ')].filter(Boolean).join(', ')}</Text>
                 {!p.safetyAnsweredAt ? (
                   <Pressable onPress={() => setFinishing(p)} accessibilityRole="button" style={styles.finish}><Text variant="caption" weight="bold" color={accent[700]}>{t('pets.finishToBook', 'Finish profile to book')}</Text></Pressable>
                 ) : null}

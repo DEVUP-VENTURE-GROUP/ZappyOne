@@ -44,7 +44,7 @@ export function AddOnsStep({ vertical, provider, repairCode, qualityCode, brandC
       </View>
       {addOns.map((a) => {
         const on = picked.has(a.repairCode);
-        const meta = [a.estimatedDurationMin ? `+${a.estimatedDurationMin} min` : '', a.warrantyDays ? `${a.warrantyDays}-day warranty` : ''].filter(Boolean).join(' · ');
+        const meta = [a.estimatedDurationMin ? `+${a.estimatedDurationMin} min` : '', a.warrantyDays ? `${a.warrantyDays}-day warranty` : ''].filter(Boolean).join(', ');
         return (
           <Pressable key={a.repairCode} onPress={() => onToggle(a.repairCode)} android_ripple={RIPPLE} accessibilityRole="checkbox" accessibilityState={{ checked: on }}
             style={[flow.card, styles.row, on && styles.on]}>
@@ -58,7 +58,7 @@ export function AddOnsStep({ vertical, provider, repairCode, qualityCode, brandC
           </Pressable>
         );
       })}
-      <Button label={extraPaise > 0 ? `Continue · +${formatPaise(extraPaise)}` : 'Continue without extras'} onPress={onContinue} fullWidth />
+      <Button label={extraPaise > 0 ? `Continue, +${formatPaise(extraPaise)}` : 'Continue without extras'} onPress={onContinue} fullWidth />
     </Shell>
   );
 }

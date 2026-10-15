@@ -14,7 +14,7 @@ export function QuoteHistory({ quotes }: { quotes: Quote[] }) {
       <Text variant="bodySmall" weight="bold">Quote history</Text>
       {quotes.map((q) => (
         <View key={q._id} style={styles.row}>
-          <Text variant="caption" color={ink[500]}>Revision {q.revision} · {q.status.replace(/_/g, ' ')}</Text>
+          <Text variant="caption" color={ink[500]}>Revision {q.revision}, {q.status.replace(/_/g, ' ')}</Text>
           <Text variant="caption" weight="semibold">{formatPaise(q.totalPaise)}</Text>
         </View>
       ))}

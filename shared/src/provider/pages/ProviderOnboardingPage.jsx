@@ -503,7 +503,7 @@ function VerifyStep({ lineCode, onDone }) {
           </p>
           <ul className="mt-1.5 space-y-0.5">
             {reqs.documents.filter((d) => redo.has(d.code)).map((d) => (
-              <li key={d.code} className="text-xs font-semibold text-red-800">· {d.label}{sentAgain(d.code) ? ' (done)' : ''}</li>
+              <li key={d.code} className="text-xs font-semibold text-red-800">{d.label}{sentAgain(d.code) ? ' (done)' : ''}</li>
             ))}
           </ul>
           {enrolment.reviewNote && <p className="text-xs text-red-700 mt-1.5 leading-relaxed">{enrolment.reviewNote}</p>}
@@ -534,7 +534,7 @@ function VerifyStep({ lineCode, onDone }) {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-sm text-[#0F172A]">
-                  {d.label}{!d.required && <span className="text-slate-400 font-normal"> · optional</span>}
+                  {d.label}{!d.required && <span className="text-slate-400 font-normal">, optional</span>}
                 </p>
                 {again
                   ? <p className="text-xs font-semibold text-red-700 mt-0.5 leading-relaxed">{uploaded ? 'New copy added. Submit when ready.' : 'Asked for again: send a new, clear copy.'}</p>
@@ -580,7 +580,7 @@ function VerifyStep({ lineCode, onDone }) {
           {reqs.fields.map((f) => (
             <div key={f.code} className="card">
               <label className="text-xs font-semibold text-slate-600">
-                {f.label}{!f.required && <span className="text-slate-400 font-normal"> · optional</span>}
+                {f.label}{!f.required && <span className="text-slate-400 font-normal">, optional</span>}
               </label>
               <input
                 className={`input text-sm w-full mt-1.5 ${missingCodes.has(f.code) ? '!ring-2 !ring-red-200' : ''}`}

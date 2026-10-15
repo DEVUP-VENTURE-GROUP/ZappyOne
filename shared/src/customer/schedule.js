@@ -74,7 +74,7 @@ export function icsFor(item) {
   return [
     'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//ZappyOne//Booking//EN', 'BEGIN:VEVENT',
     `UID:${item.key}@zappyone.com`, `DTSTAMP:${stamp(new Date())}`, `DTSTART:${stamp(start)}`, `DTEND:${stamp(end)}`,
-    `SUMMARY:${esc(`ZappyOne · ${item.title}`)}`, `DESCRIPTION:${esc(describe(item))}`,
+    `SUMMARY:${esc(`ZappyOne, ${item.title}`)}`, `DESCRIPTION:${esc(describe(item))}`,
     ...(item.address ? [`LOCATION:${esc(item.address)}`] : []),
     'BEGIN:VALARM', 'TRIGGER:-PT30M', 'ACTION:DISPLAY', 'DESCRIPTION:Your ZappyOne booking is in 30 minutes', 'END:VALARM',
     'END:VEVENT', 'END:VCALENDAR',
@@ -85,6 +85,6 @@ export function icsFor(item) {
 export function calendarLink(item) {
   const start = new Date(item.when);
   const end = new Date(start.getTime() + 60 * 60000);
-  const q = new URLSearchParams({ action: 'TEMPLATE', text: `ZappyOne · ${item.title}`, dates: `${stamp(start)}/${stamp(end)}`, details: describe(item), ...(item.address && { location: item.address }) });
+  const q = new URLSearchParams({ action: 'TEMPLATE', text: `ZappyOne, ${item.title}`, dates: `${stamp(start)}/${stamp(end)}`, details: describe(item), ...(item.address && { location: item.address }) });
   return `https://calendar.google.com/calendar/render?${q.toString()}`;
 }

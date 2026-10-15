@@ -46,7 +46,7 @@ export default function StuckJobs() {
                   <AlertTriangle size={16} className="mt-0.5 shrink-0 text-red-500" />
                   <span className="min-w-0 flex-1">
                     <span className="block text-sm font-semibold text-slate-800">
-                      {KIND_LABEL[j.kind] || j.kind} · <span className="capitalize">{j.title}</span>
+                      {KIND_LABEL[j.kind] || j.kind}, <span className="capitalize">{j.title}</span>
                       {j.reference && <span className="ml-1.5 font-mono text-xs font-normal text-slate-400">{j.reference}</span>}
                     </span>
                     <span className="mt-0.5 block text-xs font-semibold text-red-600">{j.stuck}</span>

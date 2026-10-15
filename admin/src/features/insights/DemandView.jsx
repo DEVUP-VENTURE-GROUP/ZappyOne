@@ -40,7 +40,7 @@ export default function DemandView({ days }) {
         <TrendChart days={series} bar="people" barLabel="People searching" line="unserved" lineLabel="Could not serve" sameScale />
       </Panel>
 
-      <Panel title="Demand against supply" note="Searchers per provider: where to recruit · Booked: searchers who booked">
+      <Panel title="Demand against supply" note="Searchers per provider: where to recruit, Booked: searchers who booked">
         {data.services.length ? (
           <div className="-mx-1 overflow-x-auto">
             <table className="w-full min-w-[620px] text-[13px]">
@@ -70,12 +70,12 @@ export default function DemandView({ days }) {
 
       <div className="grid gap-5 lg:grid-cols-2">
         <Panel title="Asked for, not served" note="Add the service, or providers in that city">
-          <RankBars rows={data.unservedSearches.map((u) => ({ key: `${u.what}-${u.city}`, label: `“${u.what}”${u.city ? ` · ${u.city}` : ''}`, people: u.people }))}
+          <RankBars rows={data.unservedSearches.map((u) => ({ key: `${u.what}-${u.city}`, label: `“${u.what}”${u.city ? `, ${u.city}` : ''}`, people: u.people }))}
             value="people" color="#E11D48" empty="Everyone who searched found something" />
         </Panel>
         <Panel title="Most searched" note="This week, by people">
           <RankBars rows={data.topSearches.map((t) => ({ key: t.query, label: `“${t.query}”`, people: t.people, today: t.today, unserved: t.unserved }))}
-            value="people" sub={(t) => `${t.today} today${t.unserved ? ` · ${t.unserved} not served` : ''}`} empty="No typed searches yet" />
+            value="people" sub={(t) => `${t.today} today${t.unserved ? `, ${t.unserved} not served` : ''}`} empty="No typed searches yet" />
         </Panel>
       </div>
     </div>

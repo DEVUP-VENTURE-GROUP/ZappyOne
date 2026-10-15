@@ -175,7 +175,7 @@ async function recordPayment({ workerId, amountPaise, method = 'upi', reference 
     kind: 'worker', id: workerId, type: 'credit', amountPaise,
     reason: Transaction.REASONS.DUES_PAYMENT,
     idempotencyKey: claimId ? `dues:claim:${claimId}` : `dues:record:${workerId}:${Date.now()}`,
-    description: `Dues paid to ZappyOne (${method}${reference ? ` · ${reference}` : ''})`,
+    description: `Dues paid to ZappyOne (${method}${reference ? `, ${reference}` : ''})`,
     metadata: { adminId: String(adminId), method, reference, claimId: claimId ? String(claimId) : null },
   });
   if (claimId) {

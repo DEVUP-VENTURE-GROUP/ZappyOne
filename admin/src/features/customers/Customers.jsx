@@ -96,7 +96,7 @@ function UserDrawer({ userId, onClose, onBlock }) {
                         <span className="truncate">
                           {location.address}
                           {location.when && (
-                            <span className="text-slate-400"> · seen {fmtDate(location.when)}</span>
+                            <span className="text-slate-400">, seen {fmtDate(location.when)}</span>
                           )}
                         </span>
                       </div>
@@ -111,7 +111,7 @@ function UserDrawer({ userId, onClose, onBlock }) {
               </div>
 
               <div className="grid grid-cols-3 gap-3 mt-4">
-                <Stat label="Rated by providers" value={u.ratingCount ? `${Number(u.rating).toFixed(1)} ★ (${u.ratingCount})${u.flags?.lowCustomerRating ? ' · flagged' : ''}` : 'New'} />
+                <Stat label="Rated by providers" value={u.ratingCount ? `${Number(u.rating).toFixed(1)} ★ (${u.ratingCount})${u.flags?.lowCustomerRating ? ', flagged' : ''}` : 'New'} />
                 <Stat label="Orders" value={u.totalOrders ?? orders.length} />
                 <Stat label="Joined" value={fmtDate(u.createdAt)} small />
               </div>

@@ -12,7 +12,7 @@ const pct = (v) => (v == null ? '—' : `${v}%`);
 
 /** A cell in the cohort grid, darker for a higher share coming back. */
 function CohortCell({ value }) {
-  if (value == null) return <td className="px-1 py-2 text-center text-[12px] text-slate-300">·</td>;
+  if (value == null) return <td className="px-1 py-2 text-center text-[12px] text-slate-300">–</td>;
   const a = Math.min(1, value / 60);
   return (
     <td className="px-1 py-1.5 text-center">
@@ -42,7 +42,7 @@ export default function CustomersView({ days }) {
       <Findings items={data.findings} />
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Kpi label="Customers who booked" value={count(t.customers)} spark={data.daily.map((d) => d.customers)} hint={`${count(t.newCustomers)} new · ${count(t.returning)} returning`} />
+        <Kpi label="Customers who booked" value={count(t.customers)} spark={data.daily.map((d) => d.customers)} hint={`${count(t.newCustomers)} new, ${count(t.returning)} returning`} />
         <Kpi label="Came back" value={pct(t.repeatRate)} accent="#10B981" spark={data.daily.map((d) => d.returning)} hint="Had booked before this period" />
         <Kpi label="Sign-ups who booked" value={pct(t.activationRate)} hint={`${count(t.activated)} of ${count(t.signups)} new accounts`} />
         <Kpi label="Average rating" value={t.averageRating ?? '—'} hint={`${count(t.reviews)} reviews`} accent="#F59E0B" />
@@ -105,7 +105,7 @@ export default function CustomersView({ days }) {
                 </span>
                 <span className="min-w-0 flex-1 text-[13px]">
                   <span className="text-slate-800">{r.text || <i className="text-slate-400">No words, stars only</i>}</span>
-                  <span className="mt-0.5 block text-[11.5px] text-slate-400">{r.by} · {r.service} · {new Date(r.at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
+                  <span className="mt-0.5 block text-[11.5px] text-slate-400">{r.by}, {r.service}, {new Date(r.at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
                 </span>
               </li>
             ))}

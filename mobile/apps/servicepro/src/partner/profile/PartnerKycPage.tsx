@@ -117,8 +117,8 @@ export function PartnerKycPage() {
 
         {locked ? (kyc.panNumber || kyc.gstNumber ? (
           <View style={styles.card}>
-            {kyc.panNumber ? <Text variant="bodySmall" color={ink[700]}>PAN · {kyc.panNumber}</Text> : null}
-            {kyc.gstNumber ? <Text variant="bodySmall" color={ink[700]}>GST · {kyc.gstNumber}</Text> : null}
+            {kyc.panNumber ? <Text variant="bodySmall" color={ink[700]}>PAN, {kyc.panNumber}</Text> : null}
+            {kyc.gstNumber ? <Text variant="bodySmall" color={ink[700]}>GST, {kyc.gstNumber}</Text> : null}
           </View>
         ) : null) : (
           <View style={styles.card}>

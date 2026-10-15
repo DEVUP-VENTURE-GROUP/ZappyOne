@@ -229,7 +229,7 @@ async function processJob(job) {
     return sendFcm({
       tokens: worker.deviceTokens,
       title: '🔔 New Job Offer',
-      body: `${order.service.replace(/_/g, ' ')} · ₹${order.pricing.total} · ${order.pickupLocation.address?.slice(0, 60)}`,
+      body: `${order.service.replace(/_/g, ' ')}, ₹${order.pricing.total}, ${order.pickupLocation.address?.slice(0, 60)}`,
       data: { type: 'new_job_request', orderId: String(orderId) },
     });
   }

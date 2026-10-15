@@ -17,7 +17,7 @@ const PURPOSE_LABEL = {
 /** What a payment is for, in words an ops person recognises. */
 function forLabel(p) {
   const what = PURPOSE_LABEL[p.purpose] || p.purpose;
-  return p.bookingSource ? `${what} · ${p.bookingSource}${p.bookingReference ? ` ${p.bookingReference}` : ''}` : what;
+  return p.bookingSource ? `${what}, ${p.bookingSource}${p.bookingReference ? ` ${p.bookingReference}` : ''}` : what;
 }
 
 /**
@@ -98,10 +98,10 @@ export default function Payments() {
               <div key={p.id} className="py-3 flex flex-col sm:flex-row sm:items-center gap-2">
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-slate-800">
-                    {fmt(p.refund?.status === 'manual_required' ? p.refund.amountPaise : p.amountPaise)} · {forLabel(p)}
+                    {fmt(p.refund?.status === 'manual_required' ? p.refund.amountPaise : p.amountPaise)}, {forLabel(p)}
                   </p>
                   <p className="text-xs text-slate-500 truncate">
-                    {p.owner.name || 'Unknown'} {p.owner.phone ? `· ${p.owner.phone}` : ''} · {p.cfOrderId}
+                    {p.owner.name || 'Unknown'} {p.owner.phone ? `(${p.owner.phone})` : ''}, {p.cfOrderId}
                   </p>
                   <p className="text-xs text-rose-600 mt-0.5">
                     {p.refund?.status === 'manual_required'

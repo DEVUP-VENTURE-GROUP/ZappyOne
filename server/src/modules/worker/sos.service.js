@@ -102,7 +102,7 @@ async function triggerSOS({ workerId, lat: givenLat, lng: givenLng, orderId, job
   await redis.publish('notification:admin:ops', JSON.stringify({
     type:  'worker_sos',
     title: `🆘 SOS: ${worker.name}`,
-    body:  `${incident.address || 'Unknown address'} · ${lat?.toFixed(4)},${lng?.toFixed(4)}`,
+    body:  `${incident.address || 'Unknown address'}, ${lat?.toFixed(4)},${lng?.toFixed(4)}`,
     data:  { ...incident, incidentKey },
     urgent: true,
   }));
@@ -133,7 +133,7 @@ async function triggerSOS({ workerId, lat: givenLat, lng: givenLng, orderId, job
       description: [
         `Worker ${worker.name} (${worker.phone}) triggered SOS at ${new Date(now).toISOString()}.`,
         lat && lng ? `Location: https://maps.google.com/?q=${lat},${lng}` : '',
-        order ? `Job: ${order._id} · Service: ${order.service} · ${incident.address}` : 'No active job.',
+        order ? `Job: ${order._id}, Service: ${order.service}, ${incident.address}` : 'No active job.',
         `Incident key: ${incidentKey}`,
       ].filter(Boolean).join('\n'),
       priority: 'urgent',
@@ -255,7 +255,7 @@ async function triggerCustomerSOS({ userId, orderId, jobId, lat, lng, message })
   await redis.publish('notification:admin:ops', JSON.stringify({
     type: 'customer_sos',
     title: `🆘 CUSTOMER SOS: ${user.name}`,
-    body: `${incident.address || 'Unknown address'}${worker ? ` · worker on site: ${worker.name}` : ''}`,
+    body: `${incident.address || 'Unknown address'}${worker ? `, worker on site: ${worker.name}` : ''}`,
     data: { ...incident, incidentKey },
     urgent: true,
   }));
@@ -271,7 +271,7 @@ async function triggerCustomerSOS({ userId, orderId, jobId, lat, lng, message })
       description: [
         `Customer ${user.name} (${user.phone}) triggered SOS at ${new Date(now).toISOString()}.`,
         lat && lng ? `Location: https://maps.google.com/?q=${lat},${lng}` : '',
-        order ? `Job: ${order._id} · Service: ${order.service} · ${incident.address}` : 'No active job.',
+        order ? `Job: ${order._id}, Service: ${order.service}, ${incident.address}` : 'No active job.',
         worker ? `Worker on site: ${worker.name} (${worker.phone})` : 'No worker assigned.',
         `Incident key: ${incidentKey}`,
       ].filter(Boolean).join('\n'),

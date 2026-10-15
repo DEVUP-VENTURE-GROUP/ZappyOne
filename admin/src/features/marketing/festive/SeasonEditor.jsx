@@ -115,7 +115,7 @@ export default function SeasonEditor({ season, onDone }) {
         <FormRow label="Offer" hint={form.promoCode && !offer ? 'This code is not live right now, so no offer strip shows.' : 'A promo code from Promo codes. The strip shows exactly what it gives.'}>
           <Select value={form.promoCode} onChange={set('promoCode')}>
             <option value="">No offer</option>
-            {promos.map((p) => <option key={p.code} value={p.code}>{p.code} · {p.name}</option>)}
+            {promos.map((p) => <option key={p.code} value={p.code}>{p.code}, {p.name}</option>)}
           </Select>
         </FormRow>
 
@@ -138,7 +138,7 @@ export default function SeasonEditor({ season, onDone }) {
       </Card>
 
       <div className="xl:sticky xl:top-4 xl:self-start">
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Live preview · phone</p>
+        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Live preview, phone</p>
         <div className="mx-auto w-full max-w-[390px] overflow-hidden rounded-[28px] border-[6px] border-slate-900 bg-white">
           <FestiveHero season={preview} theme={theme} services={services} onOpen={() => {}} />
           <div className="h-24 bg-canvas" />

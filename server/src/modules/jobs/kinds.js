@@ -101,7 +101,7 @@ const KINDS = {
       terminal: ['COMPLETED', 'CANCELLED', 'REJECTED', 'EXPIRED', 'FAILED', 'REFUNDED'],
       fields: 'status userId workerId shopId reference vertical serviceMode location createdAt updatedAt statusHistory',
       where: (b) => place(b.location),
-      title: (b) => [b.vertical, b.serviceMode].filter(Boolean).join(' · ').replace(/_/g, ' '),
+      title: (b) => [b.vertical, b.serviceMode].filter(Boolean).join(', ').replace(/_/g, ' '),
       waiting: ['PENDING', 'CONFIRMED', 'PROVIDER_ASSIGNED'],
       // Workshop repairs legitimately take days; the doorstep moments are minutes.
       stuck: after({ PENDING: 15, CONFIRMED: 10, PROVIDER_ASSIGNED: 15, WORKER_ACCEPTED: 60, ON_THE_WAY: 60, ARRIVED: 90, CUSTOMER_APPROVAL_PENDING: 120 }, 3 * 24 * 60),

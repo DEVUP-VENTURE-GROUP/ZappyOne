@@ -30,7 +30,7 @@ export function NextUpCard({ item, now, onOpen, onMove }: { item: ScheduleItem; 
           <View style={styles.flex}>
             <View style={styles.kind}><Icon size={12} color="#fff" /><Text variant="caption" weight="semibold" color="#fff">{KIND_LABEL[item.kind as keyof typeof KIND_LABEL] || 'Booking'}</Text></View>
             <Text variant="body" weight="bold" color="#fff" numberOfLines={1} style={styles.cap}>{item.title}</Text>
-            <View style={styles.inline}><Clock size={13} color={SOFT} /><Text variant="caption" color={SOFT}>{dayLabel(at)} · {item.slot || timeLabel(at)}</Text></View>
+            <View style={styles.inline}><Clock size={13} color={SOFT} /><Text variant="caption" color={SOFT}>{dayLabel(at)}, {item.slot || timeLabel(at)}</Text></View>
             {item.address ? <View style={styles.inline}><MapPin size={12} color={SOFT} /><Text variant="caption" color={SOFT} numberOfLines={1} style={styles.flex}>{item.address}</Text></View> : null}
           </View>
         </View>

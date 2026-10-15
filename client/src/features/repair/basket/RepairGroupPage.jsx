@@ -24,8 +24,8 @@ export default function RepairGroupPage() {
     <div className="mx-auto max-w-lg space-y-3 px-4 py-4">
       <button type="button" onClick={() => back()} className="text-sm font-semibold text-slate-500">← Back</button>
       <div className="card">
-        <p className="text-xs font-bold uppercase tracking-wide text-slate-500">One visit · {group.reference}</p>
-        <p className="mt-1 text-lg font-black text-[#0F172A]">{bookings.length} items · {done} done</p>
+        <p className="text-xs font-bold uppercase tracking-wide text-slate-500">One visit, {group.reference}</p>
+        <p className="mt-1 text-lg font-black text-[#0F172A]">{bookings.length} items, {done} done</p>
         <p className="text-[12.5px] text-slate-500">{group.location?.address}</p>
         <p className="mt-1 text-[13px] font-bold">{formatPaise(group.totals?.totalPaise)} total</p>
       </div>

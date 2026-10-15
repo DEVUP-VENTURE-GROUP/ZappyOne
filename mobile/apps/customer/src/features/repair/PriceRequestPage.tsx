@@ -72,7 +72,7 @@ export function PriceRequestPage() {
   const status = r.status === 'booked' ? 'You booked one of these shops.' : r.status === 'cancelled' ? 'You closed this request.' : 'This request has closed.';
   return (
     <View style={[styles.page, { paddingTop: insets.top }]}>
-      <ScreenHeader title={`${r.repairName} · ${r.deviceName}`} subtitle="Prices from shops near you" onBack={back} />
+      <ScreenHeader title={`${r.repairName}, ${r.deviceName}`} subtitle="Prices from shops near you" onBack={back} />
       <ScrollView contentContainerStyle={[styles.body, { paddingBottom: insets.bottom + spacing.xl }]}>
         <View style={styles.card}>
           {open ? (

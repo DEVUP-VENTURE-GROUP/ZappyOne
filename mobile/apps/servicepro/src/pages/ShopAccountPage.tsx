@@ -57,7 +57,7 @@ export function ShopAccountPage() {
         <View style={styles.card}>
           <Text variant="caption" weight="semibold" color={ink[700]}>Your name (as on your ID)</Text>
           <TextInput value={ownerName} onChangeText={setOwnerName} maxLength={100} autoCapitalize="words" style={styles.input} />
-          <View style={styles.row}><Phone size={14} color={ink[400]} /><Text variant="caption" color={ink[700]}>{shop.phone} <Text variant="caption" color={ink[400]}>· sign-in number</Text></Text></View>
+          <View style={styles.row}><Phone size={14} color={ink[400]} /><Text variant="caption" color={ink[700]}>{shop.phone} <Text variant="caption" color={ink[400]}>(sign-in number)</Text></Text></View>
           <View style={styles.row}><Mail size={14} color={ink[400]} /><Text variant="caption" color={ink[700]}>{shop.email || 'No email yet'}</Text></View>
           <Button label="Save" onPress={submit} loading={saving} disabled={ownerName.trim().length < 2 || ownerName.trim() === (shop.ownerName || '')} fullWidth />
         </View>

@@ -116,7 +116,7 @@ export default function ShopWorkerHome() {
             <div key={title} className="rounded-2xl bg-white p-4 ring-1 ring-slate-100">
               <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-slate-400">{title}</p>
               <p className="mt-1 text-2xl font-black tabular-nums text-navy">{t?.jobs ?? '–'}</p>
-              <p className="text-xs text-slate-500">jobs done · <span className="tabular-nums">{t ? formatPaise(t.valuePaise) : '–'}</span></p>
+              <p className="text-xs text-slate-500">jobs done, <span className="tabular-nums">{t ? formatPaise(t.valuePaise) : '–'}</span></p>
             </div>
           ))}
         </section>

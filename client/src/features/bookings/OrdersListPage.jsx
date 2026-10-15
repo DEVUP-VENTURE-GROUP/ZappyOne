@@ -127,7 +127,7 @@ function CompactRow({ job, nav }) {
           <StatusPill job={job} />
         </div>
         <p className="text-xs text-slate-500 mt-1">
-          {fmtTime(job.createdAt)} · <span className="font-semibold text-[#0F172A]">{formatPaise(job.totalPaise)}</span>
+          {fmtTime(job.createdAt)}, <span className="font-semibold text-[#0F172A]">{formatPaise(job.totalPaise)}</span>
           {job.rating ? <span className="ml-1.5 inline-flex items-center gap-0.5"><Star size={10} className="fill-amber-400 text-amber-400" />{job.rating}</span> : null}
         </p>
       </button>
@@ -169,7 +169,7 @@ function PastHero({ job, nav, onInvoice, downloadingId }) {
           <StatusPill job={job} />
         </div>
         <p className="text-sm text-slate-500 mt-1">
-          {dateBucket(job.createdAt, t, lang)} · {fmtTime(job.createdAt)}
+          {dateBucket(job.createdAt, t, lang)}, {fmtTime(job.createdAt)}
         </p>
         <p className="text-sm text-slate-500 mt-0.5">
           <span className="font-bold text-[#0F172A]">{formatPaise(job.totalPaise)}</span>
