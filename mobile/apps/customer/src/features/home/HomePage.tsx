@@ -11,6 +11,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import {
   useCurrentSeasonQuery, useGetEventCategoriesQuery, useGetServiceabilityQuery, useLiveCatalogQuery, useSaveRecentLocationMutation,
 } from '@zappy/core/api';
@@ -31,6 +32,8 @@ import { NotInYourArea } from '../catalog/serviceability/NotInYourArea';
 import { ActiveJobCard } from './ActiveJobCard';
 import { ContinueBookingCard } from './ContinueBookingCard';
 import { FestiveHero } from './festive/FestiveHero';
+import { FestiveAmbient } from './festive/FestiveAmbient';
+import { FestiveDivider } from './festive/FestiveDivider';
 import { themeOf } from '@zappy/core/shared/season';
 import { HeroCarousel } from './HeroCarousel';
 import { HomeHeader, SearchBar, type HomeLocation } from './HomeHeader';
@@ -147,6 +150,7 @@ export function HomePage() {
   const season = !notHere && !loadingCatalog ? seasonData?.season : null;
   const theme = season ? themeOf(season.theme) : null;
   const tint = theme && !theme.dark ? theme.top : null;
+  const rise = (i: number) => (theme ? FadeInDown.delay(250 + i * 110).duration(600) : undefined);
 
   async function onRefresh() {
     setRefreshing(true);
@@ -155,7 +159,7 @@ export function HomePage() {
   }
 
   return (
-    <View style={styles.page}>
+    <View style={[styles.page, theme ? { backgroundColor: theme.wash } : null]}>
       <HomeHeader loc={loc} isAuthed={isAuthed} onPickLocation={() => setLocSheet(true)} tint={tint} />
       {/* Search stays pinned while the rest scrolls. */}
       <View style={[styles.searchWrap, tint ? { backgroundColor: tint, borderBottomLeftRadius: 0, borderBottomRightRadius: 0 } : null]}><SearchBar terms={terms} onOpen={() => setSpotOpen(true)} /></View>
@@ -171,16 +175,20 @@ export function HomePage() {
           <>
             {svc?.status === 'closed_now' ? <ClosedNowBanner nextOpening={svc.nextOpening} /> : null}
             {!loadingCatalog ? <HeroCarousel domains={allDomains} onOpen={openService} /> : null}
-            <ProblemChips services={services} />
-            {loadingCatalog || (loc.lat != null && !svc && checkingArea) ? <SkeletonGrid /> : <ServiceGrid domains={domains} onOpen={openService} />}
-            <BookAgainRail items={rebooks} />
-            <OffersRail isAuthed={isAuthed} />
-            {!loadingCatalog ? <ServiceShowcase domains={allDomains} onOpen={openService} /> : null}
+            {/* During a festival each section rises in after the last. */}
+            <Animated.View entering={rise(0)}><ProblemChips services={services} /></Animated.View>
+            {loadingCatalog || (loc.lat != null && !svc && checkingArea) ? <SkeletonGrid /> : <Animated.View entering={rise(1)}><ServiceGrid domains={domains} onOpen={openService} /></Animated.View>}
+            {theme ? <FestiveDivider accent={theme.accent} /> : null}
+            <Animated.View entering={rise(2)}><BookAgainRail items={rebooks} /></Animated.View>
+            <Animated.View entering={rise(3)}><OffersRail isAuthed={isAuthed} /></Animated.View>
+            {!loadingCatalog ? <Animated.View entering={rise(4)}><ServiceShowcase domains={allDomains} onOpen={openService} /></Animated.View> : null}
+            {theme ? <FestiveDivider accent={theme.accent} /> : null}
             <AdBanner isAuthed={isAuthed} />
             <NearbyShopsLink />
           </>
         )}
       </ScrollView>
+      {season ? <FestiveAmbient theme={season.theme} /> : null}
       <SpotlightSearch open={spotOpen} onClose={() => setSpotOpen(false)} lat={loc.lat} lng={loc.lng} />
       <LocationSheet open={locSheet} onClose={() => setLocSheet(false)} onUseCurrent={useCurrent} detecting={detecting} onPick={pick} />
     </View>

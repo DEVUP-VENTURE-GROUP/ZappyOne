@@ -17,37 +17,37 @@ export const THEMES = {
     label: 'Navratri · Dussehra · Bathukamma', dark: false,
     top: '#FFCF5A', bottom: '#FFF5DA', ink: '#4A2300', sub: '#7A4210', accent: '#C2410C',
     tile: '#FFF6DF', tileInk: '#4A2300', line: '#F1D08A', rays: true,
-    curtain: '#EFA21C', motif: 'toran', paint: ['#F59E0B', '#FBBF24', '#EA580C', '#2F7D4A', '#B7791F'],
+    curtain: '#EFA21C', wash: '#FFF8E8', motif: 'toran', paint: ['#F59E0B', '#FBBF24', '#EA580C', '#2F7D4A', '#B7791F'],
   },
   diwali: {
     label: 'Diwali', dark: true,
     top: '#1B1037', bottom: '#3A1C5C', ink: '#FFF4D6', sub: '#E5D4FF', accent: '#FBBF24',
     tile: '#2A1850', tileInk: '#FFF4D6', line: '#4C2D7A',
-    curtain: '#4A1D7A', motif: 'lights', paint: ['#FCD34D', '#FB923C', '#FDE68A', '#5B3A1A'],
+    curtain: '#4A1D7A', wash: '#FAF5FF', motif: 'lights', paint: ['#FCD34D', '#FB923C', '#FDE68A', '#5B3A1A'],
   },
   holi: {
     label: 'Holi', dark: false,
     top: '#FBCFE8', bottom: '#E0F2FE', ink: '#4A044E', sub: '#6B2160', accent: '#DB2777',
     tile: '#FFFFFF', tileInk: '#4A044E', line: '#F5C2E0', rays: true,
-    curtain: '#F472B6', motif: 'splash', paint: ['#EC4899', '#22C55E', '#F59E0B', '#3B82F6', '#A855F7'],
+    curtain: '#F472B6', wash: '#FFF6FB', motif: 'splash', paint: ['#EC4899', '#22C55E', '#F59E0B', '#3B82F6', '#A855F7'],
   },
   sankranti: {
     label: 'Sankranti · Pongal', dark: false,
     top: '#8ED8FA', bottom: '#E6F6FE', ink: '#0B3B5A', sub: '#1F5878', accent: '#EA580C',
     tile: '#FFFFFF', tileInk: '#0B3B5A', line: '#BCE6FA', rays: true,
-    curtain: '#38A8E0', motif: 'kites', paint: ['#EF4444', '#F59E0B', '#8B5CF6', '#10B981', '#0B3B5A'],
+    curtain: '#38A8E0', wash: '#F1F9FE', motif: 'kites', paint: ['#EF4444', '#F59E0B', '#8B5CF6', '#10B981', '#0B3B5A'],
   },
   eid: {
     label: 'Eid', dark: true,
     top: '#053D30', bottom: '#0B5D47', ink: '#ECFDF5', sub: '#B5F0D6', accent: '#FCD34D',
     tile: '#0A4A3A', tileInk: '#ECFDF5', line: '#17705A',
-    curtain: '#0E6B55', motif: 'crescent', paint: ['#FCD34D', '#FEF3C7', '#053D30'],
+    curtain: '#0E6B55', wash: '#F0FAF5', motif: 'crescent', paint: ['#FCD34D', '#FEF3C7', '#053D30'],
   },
   christmas: {
     label: 'Christmas · New Year', dark: true,
     top: '#6E1418', bottom: '#9B1C22', ink: '#FFF1F1', sub: '#FFD0D0', accent: '#FDE68A',
     tile: '#7E1A1F', tileInk: '#FFF1F1', line: '#A8343A',
-    curtain: '#B3242B', motif: 'stars', paint: ['#FDE68A', '#FFFFFF', '#86EFAC'],
+    curtain: '#B3242B', wash: '#FFF7F5', motif: 'stars', paint: ['#FDE68A', '#FFFFFF', '#86EFAC'],
   },
 };
 
@@ -312,6 +312,50 @@ export function confettiPieces(colors, n = 26) {
     delay: Math.round(rnd() * 900), dur: 1600 + Math.round(rnd() * 1400), w: 5 + Math.round(rnd() * 4), h: 8 + Math.round(rnd() * 6),
   }));
 }
+
+/**
+ * What drifts across the whole page while a festival is on (FestiveAmbient):
+ * marigold petals falling (Navratri), embers rising (Diwali), gulal (Holi),
+ * small kites (Sankranti), stars glinting (Eid), snow (Christmas). Few and
+ * slow, so reading and tapping are never in the way.
+ *   [{ x (%), size, color, delay, dur (ms), drift (px), shape, up }]
+ */
+export function ambientParticles(themeKey, n = 14) {
+  const th = themeOf(themeKey);
+  const kind = { toran: 'petal', lights: 'ember', splash: 'gulal', kites: 'kite', crescent: 'star', stars: 'snow' }[th.motif] || 'petal';
+  const colors = {
+    petal: ['#F97316', '#FBBF24', '#EA580C', '#FDE047'], ember: ['#FCD34D', '#FB923C', '#FDE68A'],
+    gulal: ['#EC4899', '#22C55E', '#F59E0B', '#3B82F6', '#A855F7'], kite: ['#EF4444', '#F59E0B', '#8B5CF6', '#10B981'],
+    star: ['#FCD34D', '#FDE68A'], snow: ['#FFFFFF', '#E2E8F0'],
+  }[kind];
+  const rnd = seeded(17);
+  return Array.from({ length: n }, (_, i) => ({
+    x: Math.round(rnd() * 100), size: (kind === 'kite' ? 14 : kind === 'gulal' ? 10 : 7) + Math.round(rnd() * 7),
+    color: colors[i % colors.length], delay: Math.round(rnd() * 14000), dur: 11000 + Math.round(rnd() * 9000),
+    drift: Math.round((rnd() - 0.5) * 120), shape: kind, up: kind === 'ember',
+  }));
+}
+
+/**
+ * The jhalar edge for bars (header, footer, the bottom tab bar): one 24×12
+ * repeat of a fine line, a scallop and a bead, to tile along an edge.
+ * `flip` hangs it upward (for a bar's top edge).
+ */
+export function jhalarTile(color, flip = false) {
+  const g = flip ? ' transform="translate(0 12) scale(1 -1)"' : '';
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="12" viewBox="0 0 24 12"><g${g} fill="none" stroke="${color}" stroke-width="1"><path d="M0,1.5 L24,1.5"/><path d="M0,1.5 Q12,13 24,1.5"/></g><circle cx="12" cy="${flip ? 4.4 : 7.6}" r="1.6" fill="${color}"/></svg>`;
+}
+
+/** The jhalar edge as one strip `width` wide (apps: drawn with SvgXml). */
+export function jhalarStrip(color, width, flip = false) {
+  const tile = jhalarTile(color, flip).replace(/^<svg[^>]*>|<\/svg>$/g, '');
+  const n = Math.ceil(width / 24);
+  const tiles = Array.from({ length: n }, (_, i) => `<g transform="translate(${i * 24} 0)">${tile}</g>`).join('');
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${n * 24}" height="12" viewBox="0 0 ${n * 24} 12">${tiles}</svg>`;
+}
+
+/** The jhalar edge as a CSS background image (websites). */
+export const jhalarCss = (color, flip = false) => `url("data:image/svg+xml,${encodeURIComponent(jhalarTile(color, flip))}")`;
 
 /**
  * The shapes in drawing order, those sharing a `g` gathered into one group

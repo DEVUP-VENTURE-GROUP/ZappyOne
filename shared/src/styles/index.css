@@ -434,3 +434,17 @@
 @keyframes fz-petal   { 0% { transform: translate(0, -24px) rotate(0); opacity: 0; } 10% { opacity: 1; } 50% { transform: translate(var(--drift), 100px) rotate(200deg); } 90% { opacity: 1; } 100% { transform: translate(0, 230px) rotate(420deg); opacity: 0; } }
 @keyframes fz-lantern { 0% { transform: translateY(40px) scale(.85); opacity: 0; } 15% { opacity: 1; } 100% { transform: translateY(-230px) scale(1); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .fz-burst, .fz-petal, .fz-lantern { animation: none !important; } .fz-petal, .fz-lantern { display: none; } }
+
+/* ── Festive page (home/festive/FestiveAmbient, FestiveReveal): the festival all the way down. ── */
+.fz-drift   { animation-name: fz-drift; animation-timing-function: linear; animation-iteration-count: infinite; animation-fill-mode: both; }
+.fz-ascend  { animation-name: fz-ascend; animation-timing-function: ease-in-out; animation-iteration-count: infinite; animation-fill-mode: both; }
+.fz-glint   { animation: fz-glint 2.6s ease-in-out infinite; }
+.fz-reveal  { opacity: 0; transform: translateY(28px) scale(.985); transition: opacity .7s cubic-bezier(.2,.8,.2,1), transform .7s cubic-bezier(.2,.8,.2,1); }
+.fz-reveal.fz-in { opacity: 1; transform: none; }
+@keyframes fz-drift  { 0% { transform: translate(0, -6vh) rotate(0); opacity: 0; } 8% { opacity: .9; } 50% { transform: translate(var(--drift), 50vh) rotate(220deg); } 92% { opacity: .9; } 100% { transform: translate(0, 106vh) rotate(440deg); opacity: 0; } }
+@keyframes fz-ascend { 0% { transform: translate(0, 106vh) scale(.7); opacity: 0; } 10% { opacity: .9; } 50% { transform: translate(var(--drift), 50vh) scale(1); } 90% { opacity: .8; } 100% { transform: translate(0, -6vh) scale(.8); opacity: 0; } }
+@keyframes fz-glint  { 0%, 100% { opacity: .2; transform: scale(.7); } 50% { opacity: 1; transform: scale(1.1); } }
+@media (prefers-reduced-motion: reduce) {
+  .fz-drift, .fz-ascend, .fz-glint { animation: none !important; display: none; }
+  .fz-reveal { opacity: 1; transform: none; transition: none; }
+}

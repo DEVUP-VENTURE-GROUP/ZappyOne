@@ -1,18 +1,32 @@
+import { View } from 'react-native';
 import { Tabs } from 'expo-router';
 import { ClipboardList, Home, LayoutGrid, MapPin, User } from 'lucide-react-native';
+import { useCurrentSeasonQuery } from '@zappy/core/api';
+import { themeOf } from '@zappy/core/shared/season';
 import { useT } from '@zappy/ui/lib/i18n';
+import { JhalarEdge } from '../../src/features/home/festive/JhalarEdge';
 import { colors } from '@zappy/ui/theme/colors';
 
 /**
  * The website's bottom bar on a phone (BottomNav): Home, Services, Bookings,
- * Track, Profile, in the customer's language.
+ * Track, Profile, in the customer's language. During a festival it wears it
+ * lightly: the festival's wash, a gold jhalar along the top, its accent.
  */
 export default function CustomerTabs() {
   const t = useT();
+  const { data } = useCurrentSeasonQuery(undefined);
+  const festive = data?.season ? themeOf(data.season.theme) : null;
   return (
     <Tabs screenOptions={{
       headerShown: false,
-      tabBarActiveTintColor: colors.primary,
+      tabBarActiveTintColor: festive ? festive.accent : colors.primary,
+      ...(festive ? {
+        tabBarBackground: () => (
+          <View style={{ flex: 1, backgroundColor: festive.wash }}>
+            <JhalarEdge color={festive.dark ? festive.accent : festive.paint[4] || festive.accent} />
+          </View>
+        ),
+      } : {}),
       tabBarInactiveTintColor: colors.textMuted,
       tabBarLabelStyle: { fontFamily: 'Figtree-Bold', fontSize: 11 },
     }}>

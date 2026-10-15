@@ -5,6 +5,7 @@ import { Bell, ChevronDown, Loader2, MapPin, ScanLine, Search, UserRound } from 
 import { useListNotificationsQuery } from '@shared/services/api';
 import { ZappyWordmark, ZAPPY_MARK } from '@shared/components/common/ZappyLogo';
 import VoiceSearchButton from '../../components/common/VoiceSearchButton';
+import { jhalarCss } from '@shared/customer/season';
 import { prefetchRoute } from '../../lib/routePrefetch';
 
 /**
@@ -199,14 +200,16 @@ const LINKS = [
   { to: '/track', label: 'Track' },
 ];
 
-export default function HomeHeader({ loc, isAuthed, avatar, onPickLocation, search, tint = null }) {
+export default function HomeHeader({ loc, isAuthed, avatar, onPickLocation, search, tint = null, festive = null }) {
   const nav = useNavigate();
   const unread = useUnread(isAuthed);
 
   return (
     <>
       {/* Desktop: one sticky bar. (DesktopNav steps aside on Home.) */}
-      <header className="sticky top-0 z-40 hidden border-b border-zappy-100 bg-zappy-50 md:block">
+      <header className="sticky top-0 z-40 hidden border-b border-zappy-100 bg-zappy-50 md:block" style={festive ? { background: festive.wash, borderBottomColor: 'transparent' } : undefined}>
+        {/* During a festival: the gold jhalar hangs from the bar. */}
+        {festive && <span aria-hidden="true" className="pointer-events-none absolute inset-x-0 -bottom-3 h-3" style={{ backgroundImage: jhalarCss(festive.dark ? festive.accent : festive.paint[4] || festive.accent), backgroundRepeat: 'repeat-x' }} />}
         <div className="mx-auto flex h-[76px] w-full max-w-6xl items-center gap-5 px-6">
           <NavLink to="/" aria-label="ZappyOne home" className="flex shrink-0 items-center">
             <ZappyWordmark size={30} />

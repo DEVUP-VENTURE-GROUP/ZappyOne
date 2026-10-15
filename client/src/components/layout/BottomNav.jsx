@@ -1,6 +1,7 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Home, ClipboardList, MapPin, User, LayoutGrid } from 'lucide-react';
-import { api, useListNotificationsQuery } from '@shared/services/api';
+import { api, useListNotificationsQuery, useCurrentSeasonQuery } from '@shared/services/api';
+import { themeOf, jhalarCss } from '@shared/customer/season';
 import { useSelector } from 'react-redux';
 import { selectIsAuthed } from '@shared/modules/auth/authSlice';
 import { prefetchRoute } from '../../lib/routePrefetch';
@@ -16,26 +17,28 @@ const TABS = [
   { key: 'profile',  label: 'Profile',  tKey: 'nav.profile',  path: '/profile', Icon: User },
 ];
 
-function Tab({ t, isActive, onPress, onWarm, badge = 0 }) {
+function Tab({ t, isActive, onPress, onWarm, badge = 0, festive = null }) {
   const { label, Icon } = t;
   return (
     <button
       onClick={onPress}
       onPointerDown={onWarm}
       onMouseEnter={onWarm}
-      className="flex min-h-[48px] flex-1 flex-col items-center justify-center gap-0.5 outline-none"
+      className="relative flex min-h-[48px] flex-1 flex-col items-center justify-center gap-0.5 outline-none"
       aria-label={label}
       aria-current={isActive ? 'page' : undefined}
     >
       <div className="relative">
-        <Icon size={22} strokeWidth={isActive ? 2.2 : 1.8} className={isActive ? 'text-zappy-600' : 'text-ink-400'} />
+        <Icon size={22} strokeWidth={isActive ? 2.2 : 1.8} className={isActive ? 'text-zappy-600' : 'text-ink-400'} style={isActive && festive ? { color: festive.accent } : undefined} />
         {badge > 0 && (
           <span className="absolute -top-1.5 -right-2 min-w-[16px] h-[16px] bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 leading-none ring-2 ring-white">
             {badge > 9 ? '9+' : badge}
           </span>
         )}
       </div>
-      <span className={`text-[11px] ${isActive ? 'font-semibold text-zappy-600' : 'font-medium text-ink-500'}`}>{label}</span>
+      <span className={`text-[11px] ${isActive ? 'font-semibold text-zappy-600' : 'font-medium text-ink-500'}`} style={isActive && festive ? { color: festive.accent } : undefined}>{label}</span>
+      {/* During a festival: a small marigold glowing under the tab you are on. */}
+      {isActive && festive && <span className="fz-glint absolute bottom-1 h-1.5 w-1.5 rounded-full" style={{ background: '#F59E0B', boxShadow: '0 0 8px #F59E0B' }} aria-hidden="true" />}
     </button>
   );
 }
@@ -54,6 +57,9 @@ export default function BottomNav({ active }) {
     { skip: !isAuthed, pollingInterval: 60000 }
   );
   const unreadCount = notifData?.notifications?.length || 0;
+  // A festival running (Admin → Festive home): the bar wears it lightly.
+  const { data: seasonData } = useCurrentSeasonQuery();
+  const festive = seasonData?.season ? themeOf(seasonData.season.theme) : null;
 
   // Prefetch a tab's data into the RTK cache so the page shows real content,
   // not a skeleton, by the time the navigation completes.
@@ -72,7 +78,9 @@ export default function BottomNav({ active }) {
     <nav
       aria-label="Main"
       className="fixed inset-x-0 bottom-0 z-[100] flex border-t border-line bg-white pb-[env(safe-area-inset-bottom)]"
+      style={festive ? { background: `linear-gradient(180deg, ${festive.wash}, #FFFFFF)`, borderTopColor: 'transparent' } : undefined}
     >
+      {festive && <span aria-hidden="true" className="pointer-events-none absolute inset-x-0 -top-[11px] h-3" style={{ backgroundImage: jhalarCss(festive.dark ? festive.accent : festive.paint[4] || festive.accent, true), backgroundRepeat: 'repeat-x' }} />}
       {TABS.map((t) => (
         <Tab
           key={t.key}
@@ -81,6 +89,7 @@ export default function BottomNav({ active }) {
           onPress={() => nav(t.path)}
           onWarm={warm(t.path)}
           badge={t.key === 'profile' ? unreadCount : 0}
+          festive={festive}
         />
       ))}
     </nav>

@@ -27,6 +27,9 @@ import { OffersRail, BookAgainRail, NearbyShopsLink } from './HomeRails';
 import { eventPhoto, eventTone } from '../events/eventPhotos';
 import ContinueBookingCard from './ContinueBookingCard';
 import FestiveHero from '@shared/components/home/festive/FestiveHero';
+import FestiveAmbient from '@shared/components/home/festive/FestiveAmbient';
+import FestiveReveal from '@shared/components/home/festive/FestiveReveal';
+import FestiveDivider from '@shared/components/home/festive/FestiveDivider';
 import { themeOf } from '@shared/customer/season';
 
 /**
@@ -265,7 +268,10 @@ export default function HomePage() {
       />
 
       {/* overflow-x-clip, not hidden: hidden makes this a scroll box and breaks the sticky header. */}
-      <div className="min-h-screen w-full overflow-x-clip bg-canvas">
+      <div className="min-h-screen w-full overflow-x-clip bg-canvas"
+        // A festival carries all the way down: the page takes its soft wash and warm glows.
+        style={theme ? { background: `radial-gradient(60rem 40rem at 100% 30%, ${theme.accent}12, transparent 60%), radial-gradient(50rem 36rem at 0% 70%, ${theme.top}33, transparent 60%), ${theme.wash}` } : undefined}>
+        {season && <FestiveAmbient theme={season.theme} />}
         <HomeHeader
           loc={loc}
           isAuthed={isAuthed}
@@ -273,6 +279,7 @@ export default function HomePage() {
           onPickLocation={() => setLocSheet(true)}
           search={searchBar}
           tint={tint}
+          festive={theme}
         />
 
         {/* Phone: search stays pinned while the rest scrolls (desktop has it in the bar). */}
@@ -305,23 +312,25 @@ export default function HomePage() {
               {!loadingCatalog && <HeroCarousel domains={allDomains} onOpen={openService} />}
 
               {/* Intent first: the problem in their words, then the services. */}
-              <ProblemChips services={services} />
+              <FestiveReveal on={!!season}><ProblemChips services={services} /></FestiveReveal>
               {loadingCatalog || (loc.lat != null && !svc && checkingArea)
                 ? <SkeletonGrid />
-                : <ServiceGrid domains={domains} onOpen={openService} />}
+                : <FestiveReveal on={!!season}><ServiceGrid domains={domains} onOpen={openService} /></FestiveReveal>}
+              {season && <FestiveDivider theme={theme} />}
 
               {/* Personal and real only: their own past bookings, live offers. */}
-              <BookAgainRail items={quickRebooks} onOpen={nav} />
-              <OffersRail isAuthed={isAuthed} />
+              <FestiveReveal on={!!season}><BookAgainRail items={quickRebooks} onOpen={nav} /></FestiveReveal>
+              <FestiveReveal on={!!season}><OffersRail isAuthed={isAuthed} /></FestiveReveal>
 
-              {!loadingCatalog && <ServiceShowcase domains={allDomains} onOpen={openService} />}
-              <AdBanner />
-              <NearbyShopsLink />
+              {!loadingCatalog && <FestiveReveal on={!!season}><ServiceShowcase domains={allDomains} onOpen={openService} /></FestiveReveal>}
+              {season && <FestiveDivider theme={theme} />}
+              <FestiveReveal on={!!season}><AdBanner /></FestiveReveal>
+              <FestiveReveal on={!!season}><NearbyShopsLink /></FestiveReveal>
             </>
           )}
         </main>
 
-        <Footer services={services} areas={svc?.areas || []} />
+        <Footer services={services} areas={svc?.areas || []} season={season} theme={theme} />
       </div>
 
       <LensModal open={lensOpen} onClose={() => setLensOpen(false)} lat={loc.lat} lng={loc.lng} />

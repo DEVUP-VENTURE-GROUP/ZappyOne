@@ -1,6 +1,7 @@
 import { ShieldCheck } from "lucide-react";
 import { ZappyWordmark } from "@shared/components/common/ZappyLogo";
 import { PORTAL_URLS } from "@shared/config/portals";
+import { jhalarCss } from '@shared/customer/season';
 import { useGetPoliciesQuery } from "@shared/services/api";
 
 /**
@@ -61,13 +62,24 @@ function Item({ href, children, external }) {
   );
 }
 
-export default function Footer({ services = [], areas = [] }) {
+export default function Footer({ services = [], areas = [], season = null, theme = null }) {
   const { data: policyData } = useGetPoliciesQuery();
   const policies = policyData?.policies || [];
   const cities = [...new Set(areas.map((a) => a.city).filter(Boolean))];
   return (
-    <footer className="bg-navy pb-24 pt-12 text-slate-300 sm:pb-12">
+    <footer className="relative bg-navy pb-24 pt-12 text-slate-300 sm:pb-12">
+      {/* During a festival: a gold jhalar along the top, and a greeting from us. */}
+      {season && theme && (
+        <span aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-3" style={{ backgroundImage: jhalarCss('#E8B04B'), backgroundRepeat: 'repeat-x' }} />
+      )}
       <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
+        {season && theme && (
+          <p className="mb-8 flex items-center justify-center gap-2 text-center text-[13.5px] font-semibold text-amber-200">
+            <span className="fz-glint inline-block h-2 w-2 rounded-full bg-amber-400 shadow-[0_0_10px_#FBBF24]" aria-hidden="true" />
+            {season.greeting || season.name} · from all of us at ZappyOne
+            <span className="fz-glint inline-block h-2 w-2 rounded-full bg-amber-400 shadow-[0_0_10px_#FBBF24]" style={{ animationDelay: '1.3s' }} aria-hidden="true" />
+          </p>
+        )}
         <div className="grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-4">
           <div className="col-span-2 md:col-span-1">
             <a href="/" className="flex items-center gap-2">
