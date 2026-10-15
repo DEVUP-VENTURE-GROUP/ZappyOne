@@ -2,7 +2,7 @@ import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { Plus, X } from 'lucide-react';
 import { useAdminCreateHubMutation, useAdminUpdateHubMutation } from '@shared/services/api';
-import { Card, FormRow, Input, SaveBtn } from '../../ui/kit';
+import { Card, FormRow, Input, SaveBtn } from '@admin/ui/kit';
 import HubPointPicker from './HubPointPicker';
 
 const BLANK_SHIFT = { code: '', label: '', start: '09:00', end: '18:00', need: 2 };

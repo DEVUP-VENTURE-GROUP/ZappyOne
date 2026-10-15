@@ -4,8 +4,8 @@ import { LogOut, ShieldOff, Warehouse } from 'lucide-react';
 import { logout } from '@shared/modules/auth/authSlice';
 import { useLogoutMutation, useAdminMeQuery } from '@shared/services/api';
 import Hub from '@admin/ui/Hub';
-import { FLEET_VIEWS, FLEET_TITLE, FLEET_SUBTITLE } from '@admin/features/fleet/views';
-import { fleetPath } from './fleetPaths';
+import { FLEET_VIEWS, FLEET_TITLE, FLEET_SUBTITLE } from '../config/views';
+import { fleetPath } from '../config/paths';
 
 /**
  * The Fleet portal once signed in: the fleet's screens and nothing else.

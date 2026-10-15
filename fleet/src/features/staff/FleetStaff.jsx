@@ -2,8 +2,8 @@ import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { Search } from 'lucide-react';
 import { useAdminStaffQuery, useAdminHubsQuery, useAdminSetStaffMutation } from '@shared/services/api';
-import { Card, PageLoader, Input, Select } from '../../ui/kit';
-import { rupees } from '../insights/charts';
+import { Card, PageLoader, Input, Select } from '@admin/ui/kit';
+import { rupees } from '@admin/features/insights/charts';
 
 /**
  * Staff: who is ZappyOne staff, at which hub, on what monthly salary. Search

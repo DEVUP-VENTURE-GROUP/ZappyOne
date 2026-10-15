@@ -1,7 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { fleetPath } from './fleetPaths';
+import { fleetPath } from '../config/paths';
 
 const FleetShell = lazy(() => import('./FleetShell'));
 const LoginPage = lazy(() => import('@admin/app/LoginPage'));

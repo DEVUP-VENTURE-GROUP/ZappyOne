@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAdminFleetOverviewQuery } from '@shared/services/api';
-import { PageLoader, EmptyState } from '../../ui/kit';
-import { Kpi, Panel, RankBars, TrendChart, rupees, count } from '../insights/charts';
+import { PageLoader, EmptyState } from '@admin/ui/kit';
+import { Kpi, Panel, RankBars, TrendChart, rupees, count } from '@admin/features/insights/charts';
 import FleetAttention from './FleetAttention';
 
 const RANGES = [[7, '7 days'], [30, '30 days'], [90, '90 days']];

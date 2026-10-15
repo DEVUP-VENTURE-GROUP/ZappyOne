@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useAdminHubsQuery, useAdminFleetStockQuery, useAdminAddStockItemMutation, useAdminStockActionMutation, useAdminStaffQuery } from '@shared/services/api';
-import { Card, PageLoader, EmptyState, Th, Td, Input, Select } from '../../ui/kit';
-import { Panel, rupees } from '../insights/charts';
+import { Card, PageLoader, EmptyState, Th, Td, Input, Select } from '@admin/ui/kit';
+import { Panel, rupees } from '@admin/features/insights/charts';
 
 /**
  * Stock (each hub's dark-store shelves): what is there and what it is worth,

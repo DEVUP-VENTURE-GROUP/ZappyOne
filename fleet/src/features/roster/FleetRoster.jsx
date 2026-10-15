@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { X } from 'lucide-react';
 import { useAdminHubsQuery, useAdminRosterQuery, useAdminStaffQuery, useAdminAssignShiftMutation, useAdminRemoveShiftMutation, useAdminAutoFillRosterMutation } from '@shared/services/api';
-import { Card, PageLoader, EmptyState, Select } from '../../ui/kit';
+import { Card, PageLoader, EmptyState, Select } from '@admin/ui/kit';
 
 const STATUS = { booked: 'bg-slate-100 text-slate-700', checked_in: 'bg-emerald-50 text-emerald-700', done: 'bg-blue-50 text-blue-700', missed: 'bg-red-50 text-red-700' };
 const dayLabel = (d) => new Date(`${d}T12:00:00+05:30`).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });

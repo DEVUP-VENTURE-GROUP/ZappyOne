@@ -41,7 +41,7 @@ import {
   Sparkles,
   Warehouse,
 } from 'lucide-react';
-import { FLEET_VIEWS, FLEET_TITLE, FLEET_SUBTITLE } from '../features/fleet/views';
+import { FLEET_VIEWS, FLEET_TITLE, FLEET_SUBTITLE } from '@fleet/config/views';
 import Hub from '../ui/Hub';
 
 /**
@@ -107,7 +107,7 @@ const hub = (title, subtitle, views) => {
 };
 
 const HUBS = {
-  // The same screens are the whole Fleet portal (fleet/ app).
+  // The Fleet portal's own screens (fleet/src), shown here too.
   fleet: hub(FLEET_TITLE, FLEET_SUBTITLE, FLEET_VIEWS),
   helpdesk: hub('Help desk', 'Customer tickets, disputes and reviews', [
     { id: 'tickets', label: 'Tickets', icon: HeadphonesIcon, Comp: P.Tickets },

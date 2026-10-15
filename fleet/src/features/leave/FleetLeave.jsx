@@ -1,6 +1,6 @@
 import toast from 'react-hot-toast';
 import { useAdminLeaveQuery, useAdminDecideLeaveMutation } from '@shared/services/api';
-import { Card, PageLoader, EmptyState } from '../../ui/kit';
+import { Card, PageLoader, EmptyState } from '@admin/ui/kit';
 
 const dayLabel = (d) => new Date(`${d}T12:00:00+05:30`).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
 

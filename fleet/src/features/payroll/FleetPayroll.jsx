@@ -2,9 +2,9 @@ import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { Download } from 'lucide-react';
 import { useAdminPayrollQuery, useAdminPayrollCsvMutation } from '@shared/services/api';
-import { Card, PageLoader, Th, Td } from '../../ui/kit';
-import { rupees } from '../insights/charts';
-import MonthPicker, { thisMonth } from './MonthPicker';
+import { Card, PageLoader, Th, Td } from '@admin/ui/kit';
+import { rupees } from '@admin/features/insights/charts';
+import MonthPicker, { thisMonth } from '../../ui/MonthPicker';
 
 /**
  * Payroll: each staff member's month: monthly salary for the days worked plus

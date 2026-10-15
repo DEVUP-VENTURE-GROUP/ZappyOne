@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Plus, Warehouse } from 'lucide-react';
 import { useAdminHubsQuery } from '@shared/services/api';
-import { Card, PageLoader, EmptyState } from '../../ui/kit';
+import { Card, PageLoader, EmptyState } from '@admin/ui/kit';
 import HubEditor from './HubEditor';
 
 /** Hubs (dark stores): where the fleet is based, its shifts, and how many staff each has. */

@@ -6,9 +6,9 @@ import {
   useAdminHubsQuery, useAdminFleetCashDepositMutation, useAdminStaffQuery,
 } from '@shared/services/api';
 import ImageUploadField from '@shared/components/common/ImageUploadField';
-import { Card, PageLoader, Th, Td, Input, Select, SaveBtn, FormRow } from '../../ui/kit';
-import { Panel, rupees } from '../insights/charts';
-import MonthPicker, { thisMonth } from './MonthPicker';
+import { Card, PageLoader, Th, Td, Input, Select, SaveBtn, FormRow } from '@admin/ui/kit';
+import { Panel, rupees } from '@admin/features/insights/charts';
+import MonthPicker, { thisMonth } from '../../ui/MonthPicker';
 
 const CATEGORY = { rent: 'Rent', electricity: 'Electricity', internet: 'Internet', fuel: 'Fuel', travel: 'Travel', tools: 'Tools', uniforms: 'Uniforms', parts: 'Parts', repairs: 'Repairs', salary_advance: 'Salary advance', other: 'Other' };
 const today = () => new Date(Date.now() + 330 * 60000).toISOString().slice(0, 10);
