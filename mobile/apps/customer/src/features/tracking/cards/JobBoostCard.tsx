@@ -1,7 +1,8 @@
 /**
  * Still finding someone after a minute (the website's JobBoostCard): the
- * customer may add a little for a faster match. All of it goes to whoever
- * takes the job, paid with the booking. Amounts come from Admin → Economics.
+ * customer may add a little for a faster match, paid with the booking. A
+ * partner pro who takes the job gets all of it; with ZappyOne's own salaried
+ * staff it is ZappyOne's. Amounts come from Admin → Economics.
  */
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -44,7 +45,7 @@ export function JobBoostCard({ jobId, boost, since, noun, onBoosted }: { jobId: 
         <View style={styles.icon}><Zap size={18} color={accent[600]} /></View>
         <View style={styles.flex}>
           <Text variant="bodySmall" weight="semibold">{boost.currentPaise ? `You added ${rupees(boost.currentPaise)}` : `Taking a little longer to find a ${noun}`}</Text>
-          <Text variant="caption" color={ink[500]}>Add a little extra and we will tell everyone nearby again. All of it goes to whoever takes the job, and you pay it with the booking.</Text>
+          <Text variant="caption" color={ink[500]}>Add a little extra and we will tell everyone nearby again. It helps us find someone faster, and you pay it with the booking.</Text>
         </View>
       </View>
       {boost.options.length ? <View style={styles.chips}>{boost.options.map((r) => <Chip key={r} label={`+₹${r}`} selected={picked === r} onPress={() => setPicked(r)} />)}</View> : null}

@@ -9,7 +9,8 @@ const AFTER_SEC = 60;
 
 /**
  * While we are still finding someone: the customer may add a little for a
- * faster match. Optional and quiet; all of it goes to whoever takes the job,
+ * faster match. Optional and quiet; a partner pro who takes the job gets all of
+ * it (with ZappyOne staff it is ZappyOne's, server workforce/),
  * and it is paid with the booking (nothing if they cancel before anyone
  * accepts). The amounts are set in Admin → Economics → Boost & tips.
  */
@@ -47,7 +48,7 @@ export default function JobBoostCard({ jobId, boost, since, noun, onBoosted }) {
             {boost.currentPaise ? `You added ${rupees(boost.currentPaise)}` : `Taking a little longer to find a ${noun}`}
           </p>
           <p className="mt-0.5 text-[12.5px] leading-relaxed text-slate-500">
-            Add a little extra and we will tell everyone nearby again. All of it goes to whoever takes the job, and you pay it with the booking.
+            Add a little extra and we will tell everyone nearby again. It helps us find someone faster, and you pay it with the booking.
           </p>
         </div>
       </div>
