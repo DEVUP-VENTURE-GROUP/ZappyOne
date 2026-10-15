@@ -179,7 +179,7 @@ async function roster({ hubId, from = istDay(), days = 7 }) {
       day,
       shifts: hub.shifts.map((s) => {
         const people = rows.filter((r) => r.day === day && r.code === s.code)
-          .map((r) => ({ id: String(r._id), workerId: String(r.workerId?._id || r.workerId), name: r.workerId?.name || 'Staff', phone: r.workerId?.phone || '', status: r.status, lateMin: r.lateMin, checkInAt: r.checkInAt }));
+          .map((r) => ({ id: String(r._id), workerId: String(r.workerId?._id || r.workerId), name: r.workerId?.name || 'Staff', phone: r.workerId?.phone || '', status: r.status, lateMin: r.lateMin, checkInAt: r.checkInAt, checkInDistanceM: r.checkInDistanceM, hasSelfie: !!r.checkInSelfie }));
         return { code: s.code, label: s.label, start: s.start, end: s.end, need: s.need, people, short: Math.max(0, s.need - people.length) };
       }),
     })),

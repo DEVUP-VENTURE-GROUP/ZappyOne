@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import { X } from 'lucide-react';
+import { Camera, X } from 'lucide-react';
 import { useAdminHubsQuery, useAdminRosterQuery, useAdminStaffQuery, useAdminAssignShiftMutation, useAdminRemoveShiftMutation, useAdminAutoFillRosterMutation } from '@shared/services/api';
 import { Card, PageLoader, EmptyState, Select } from '@admin/ui/kit';
+import AuthImage from '../../ui/AuthImage';
 
 const STATUS = { booked: 'bg-slate-100 text-slate-700', checked_in: 'bg-emerald-50 text-emerald-700', done: 'bg-blue-50 text-blue-700', missed: 'bg-red-50 text-red-700' };
 const dayLabel = (d) => new Date(`${d}T12:00:00+05:30`).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
@@ -18,6 +19,7 @@ export default function FleetRoster() {
   const [assign] = useAdminAssignShiftMutation();
   const [remove] = useAdminRemoveShiftMutation();
   const [autoFill, { isLoading: filling }] = useAdminAutoFillRosterMutation();
+  const [proof, setProof] = useState(null); // the check-in being looked at
   const staff = (staffData?.workers || []).filter((w) => String(w.employment?.hubId) === hubId);
 
   const act = (p, ok) => p.unwrap().then(() => toast.success(ok)).catch((e) => toast.error(e?.data?.error || 'Could not do that'));
@@ -48,6 +50,7 @@ export default function FleetRoster() {
                         <span key={p.id} className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[12px] font-semibold ${STATUS[p.status] || STATUS.booked}`}>
                           {p.name}{p.lateMin ? ` (late ${p.lateMin}m)` : ''}
                           {p.status === 'booked' && <button type="button" aria-label={`Take ${p.name} off`} onClick={() => act(remove(p.id), `${p.name} taken off`)}><X size={11} /></button>}
+                          {p.hasSelfie && <button type="button" aria-label={`${p.name}'s check-in selfie`} onClick={() => setProof(p)}><Camera size={11} /></button>}
                         </span>
                       ))}
                     </div>
@@ -61,6 +64,25 @@ export default function FleetRoster() {
               </div>
             </Card>
           ))}
+        </div>
+      )}
+
+      {/* Proof of check-in: the selfie, when and how far from the meeting point. */}
+      {proof && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setProof(null)} role="presentation">
+          <div className="w-full max-w-sm overflow-hidden rounded-2xl bg-white" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={`${proof.name} check-in`}>
+            <AuthImage path={`/workforce/shifts/${proof.id}/selfie`} alt={`${proof.name} at check-in`} className="aspect-square w-full" />
+            <div className="flex items-center justify-between gap-3 p-4">
+              <div>
+                <p className="text-sm font-bold text-slate-900">{proof.name}</p>
+                <p className="text-[12.5px] text-slate-500">
+                  Checked in {proof.checkInAt ? new Date(proof.checkInAt).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' }) : ''}
+                  {proof.checkInDistanceM != null ? `, ${proof.checkInDistanceM} m from the meeting point` : ''}{proof.lateMin ? `, ${proof.lateMin} min late` : ''}
+                </p>
+              </div>
+              <button type="button" onClick={() => setProof(null)} className="rounded-lg px-3 py-1.5 text-[13px] font-semibold text-slate-600 ring-1 ring-slate-200">Close</button>
+            </div>
+          </div>
         </div>
       )}
     </div>

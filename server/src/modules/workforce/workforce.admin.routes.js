@@ -121,6 +121,15 @@ router.post('/workforce/roster/auto-fill', validate(Joi.object({ hubId: Joi.stri
   } catch (err) { next(err); }
 });
 
+/** The selfie a staff member checked in with: proof they were at the hub. */
+router.get('/workforce/shifts/:id/selfie', async (req, res, next) => {
+  try {
+    const s = await require('./shift.model').findById(req.params.id).select('checkInSelfie').lean();
+    if (!s?.checkInSelfie) return res.status(404).json({ error: 'No check-in selfie for this shift' });
+    await require('../../core/storage/s3').streamToResponse(s.checkInSelfie, res);
+  } catch (err) { next(err); }
+});
+
 router.get('/workforce/roster', async (req, res, next) => {
   try {
     const from = /^\d{4}-\d{2}-\d{2}$/.test(String(req.query.from || '')) ? req.query.from : undefined;
