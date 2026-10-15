@@ -4,15 +4,15 @@ import SpotlightFireworks from './SpotlightFireworks';
 import SpotlightGreeting from './SpotlightGreeting';
 import SpotlightOffer from './SpotlightOffer';
 import SpotlightPetals from './SpotlightPetals';
-import SpotlightPhoto from './SpotlightPhoto';
+import SpotlightLottie from './SpotlightLottie';
 
 const still = () => typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
 /**
  * The festive spotlight, as Zepto's: a stage at the top of the festive band
  * that changes scene every few seconds, each scene its own festive animation
- * (curtains opening on the greeting, real photographs of Bathukamma, dandiya
- * and garba under twinkling lights and falling petals, the offer). Hovering or holding pauses it; a
+ * (curtains opening on the greeting, animated festival scenes such as a garba
+ * dancer and Durga Maa, fireworks, the offer). Hovering or holding pauses it; a
  * swipe changes scene. With reduced motion it stays on the first.
  */
 export default function FestiveSpotlight({ season, theme }) {
@@ -41,7 +41,7 @@ export default function FestiveSpotlight({ season, theme }) {
       {/* key: a new scene mounts afresh, so its animation starts from the beginning. */}
       <div key={`${scene.key}-${at}`} className="fz-scene absolute inset-0">
         {scene.kind === 'curtains' && <SpotlightGreeting season={season} theme={theme} />}
-        {scene.kind === 'photo' && <SpotlightPhoto scene={scene} theme={theme} />}
+        {scene.kind === 'lottie' && <SpotlightLottie scene={scene} theme={theme} />}
         {scene.kind === 'fireworks' && <SpotlightFireworks season={season} theme={theme} />}
         {scene.kind === 'petals' && <SpotlightPetals season={season} theme={theme} />}
         {scene.kind === 'offer' && <SpotlightOffer offer={scene.offer} theme={theme} />}

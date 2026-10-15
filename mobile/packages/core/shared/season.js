@@ -216,13 +216,12 @@ export function spotlightScenes(season) {
   if (!season) return [];
   const th = themeOf(season.theme);
   const scenes = [{ kind: 'curtains', key: 'curtains' }];
-  // Navratri, Dussehra and Bathukamma: real photographs of the celebrations. Other festivals: fireworks.
+  const lottie = (key, title) => ({ kind: 'lottie', key, ...SCENE_LOTTIES[key], title });
   if (th.motif === 'toran') {
-    scenes.push(
-      { kind: 'photo', key: 'bathukamma', ...SCENE_PHOTOS.bathukamma, title: season.headline },
-      { kind: 'photo', key: 'dandiya', ...SCENE_PHOTOS.dandiya, title: 'Dance all night. We will handle the rest.' },
-      { kind: 'photo', key: 'garba', ...SCENE_PHOTOS.garba, title: season.subline || season.headline },
-    );
+    // Navratri, Dussehra, Bathukamma: a garba dancer, then Durga Maa.
+    scenes.push(lottie('garba', season.headline), lottie('durga', season.subline || season.headline));
+  } else if (season.theme === 'diwali') {
+    scenes.push(lottie('diwali', season.headline), { kind: 'fireworks', key: 'fireworks' });
   } else {
     scenes.push({ kind: 'fireworks', key: 'fireworks' });
     if (season.subline) scenes.push({ kind: 'petals', key: 'petals' });
@@ -232,13 +231,14 @@ export function spotlightScenes(season) {
 }
 
 /**
- * Real photographs of the celebrations (assets/web/festive, Unsplash License;
- * credits there), with where the eye should rest when cropped.
+ * Animated festival scenes (Lottie, assets/web/festive/lottie, Lottie Simple
+ * License; credits there): the animation, the line above the title, and the
+ * card colour behind it (the animation's own ground, so it sits seamlessly).
  */
-export const SCENE_PHOTOS = {
-  bathukamma: { photo: '/festive/bathukamma.webp', focus: '50% 42%', kicker: 'Bathukamma' },
-  dandiya: { photo: '/festive/dandiya.webp', focus: '50% 30%', kicker: 'Dandiya nights' },
-  garba: { photo: '/festive/garba.webp', focus: '50% 38%', kicker: 'Navratri garba' },
+export const SCENE_LOTTIES = {
+  garba: { src: '/festive/lottie/garba.json', kicker: 'Navratri garba', card: '#FFDDD1' },
+  durga: { src: '/festive/lottie/durga.json', kicker: 'Durga Puja · Dussehra', card: '#FFFFFF' },
+  diwali: { src: '/festive/lottie/diwali.json', kicker: 'Happy Diwali', card: '#FFFFFF' },
 };
 
 /**

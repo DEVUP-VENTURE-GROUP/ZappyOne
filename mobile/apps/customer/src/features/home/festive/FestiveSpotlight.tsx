@@ -1,9 +1,8 @@
 /**
  * The festive spotlight (the website's FestiveSpotlight), as Zepto's: a stage
  * at the top of the festive band that changes scene every few seconds, each
- * its own festive animation (curtains opening on the greeting, real
- * photographs of Bathukamma, dandiya and garba under twinkling lights,
- * petals and lanterns, the offer). Holding
+ * its own festive animation (curtains opening on the greeting, animated
+ * festival scenes such as a garba dancer and Durga Maa, fireworks, the offer). Holding
  * pauses it; a swipe changes scene. With reduced motion it stays on the first.
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -15,14 +14,21 @@ import { SpotlightFireworks } from './SpotlightFireworks';
 import { SpotlightGreeting } from './SpotlightGreeting';
 import { SpotlightOffer } from './SpotlightOffer';
 import { SpotlightPetals } from './SpotlightPetals';
-import { SpotlightPhoto } from './SpotlightPhoto';
+import { SpotlightLottie } from './SpotlightLottie';
+import { lottieReady } from './lottieReady';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Any = any;
 
 export function FestiveSpotlight({ season, theme }: { season: Any; theme: Any }) {
   const reduce = useReducedMotion();
-  const scenes: Any[] = useMemo(() => spotlightScenes(season), [season]);
+  // A build without the Lottie player (before app build 3) shows fireworks in their place.
+  const scenes: Any[] = useMemo(() => {
+    const list = spotlightScenes(season);
+    if (lottieReady()) return list;
+    const out = list.filter((s: Any) => s.kind !== 'lottie');
+    return out.some((s: Any) => s.kind === 'fireworks') ? out : [out[0], { kind: 'fireworks', key: 'fireworks' }, ...out.slice(1)];
+  }, [season]);
   const [at, setAt] = useState(0);
   const [paused, setPaused] = useState(false);
   const startX = useRef<number | null>(null);
@@ -50,7 +56,7 @@ export function FestiveSpotlight({ season, theme }: { season: Any; theme: Any })
       {/* key: a new scene mounts afresh, so its animation starts from the beginning. */}
       <Animated.View key={`${scene.key}-${at}`} entering={FadeIn.duration(450)} style={StyleSheet.absoluteFill}>
         {scene.kind === 'curtains' ? <SpotlightGreeting season={season} theme={theme} /> : null}
-        {scene.kind === 'photo' ? <SpotlightPhoto scene={scene} theme={theme} /> : null}
+        {scene.kind === 'lottie' ? <SpotlightLottie scene={scene} theme={theme} /> : null}
         {scene.kind === 'fireworks' ? <SpotlightFireworks season={season} theme={theme} /> : null}
         {scene.kind === 'petals' ? <SpotlightPetals season={season} theme={theme} /> : null}
         {scene.kind === 'offer' ? <SpotlightOffer offer={scene.offer} theme={theme} /> : null}

@@ -36,6 +36,7 @@
     "expo-splash-screen": "~56.0.10",
     "expo-status-bar": "~56.0.4",
     "expo-updates": "~56.0.19",
+    "lottie-react-native": "~7.3.4",
     "lucide-react-native": "^1.21.0",
     "nativewind": "^4.2.5",
     "react": "19.2.3",

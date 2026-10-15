@@ -31,7 +31,7 @@ export default function FestiveHero({ season, theme, services, onOpen }) {
 
         {/* Phone: Blinkit's grid. Wide screens: every tile in one row. */}
         {tiles.length > 0 && (
-          <div className="grid gap-2.5 [grid-template-columns:repeat(var(--cols),minmax(0,1fr))] sm:gap-3 lg:[grid-template-columns:repeat(var(--wide),minmax(0,1fr))]"
+          <div className="grid gap-2.5 [grid-template-columns:repeat(var(--cols),minmax(0,1fr))] sm:gap-3 md:[grid-template-columns:repeat(var(--wide),minmax(0,1fr))]"
             style={{ '--cols': cols, '--wide': tiles.length }}>
             {tiles.map((t, i) => (
               <FestiveTile key={t.serviceCode + t.title} tile={t} theme={theme} index={i} feature={feature && i === 0} wide={cols < 3} onOpen={() => onOpen(t.service)} />

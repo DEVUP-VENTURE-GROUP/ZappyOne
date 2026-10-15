@@ -1,11 +1,13 @@
-# Festive spotlight photos
+# Festive spotlight animations
 
-Real photographs for the festive home spotlight (shared/src/customer/season.js
-SCENE_PHOTOS). All under the Unsplash License: free for commercial use, no
-permission or attribution required (credited here anyway).
+Lottie animations for the festive home spotlight (shared/src/customer/season.js
+SCENE_LOTTIES), from LottieFiles, free under the Lottie Simple License
+(https://lottiefiles.com/page/license): free for commercial use, no
+attribution required (credited here anyway). Images are embedded as WebP so
+each scene is one file.
 
-| File | Photo | Photographer |
+| File | Animation | Author |
 |---|---|---|
-| bathukamma.webp | https://unsplash.com/photos/_NKzV3Mn35w | lucidclick |
-| dandiya.webp | https://unsplash.com/photos/6MkllyTuDUg | Joydeep Sensarma |
-| garba.webp | https://unsplash.com/photos/uaxhyvTe7Wk | Raas Usa |
+| lottie/garba.json | https://lottiefiles.com/free-animation/dandia-navratri-kjN0V9w8Gm | Akash Ranjan |
+| lottie/durga.json | https://lottiefiles.com/free-animation/happy-durga-puja-MBSOu0eUhp | Akash Ranjan |
+| lottie/diwali.json | https://lottiefiles.com/free-animation/happy-diwali-ZGhokkDGrL | mehdin khan |

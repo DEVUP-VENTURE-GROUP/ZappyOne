@@ -48,7 +48,7 @@ function globalWebAssets() {
 const SHARED_DEPS = [
   'react', 'react-dom', 'react-redux', 'react-router-dom', '@reduxjs/toolkit',
   'async-mutex', 'react-hot-toast', 'lucide-react', 'framer-motion', 'clsx',
-  'mapbox-gl', 'socket.io-client', '@react-google-maps/api',
+  'mapbox-gl', 'socket.io-client', '@react-google-maps/api', 'lottie-web',
 ];
 
 /**
