@@ -13,7 +13,7 @@ const BRAND = '#1F4FD8';
 const toLatLng = ([lng, lat]) => [lat, lng];
 
 // A hub on the map: its meeting point and check-in ring, and the area it serves (drawn, pincodes, or its radius); other hubs shown faintly.
-export default function HubMap({ lat, lng, radiusM, serviceKm, area, places = [], placeName = '', search = false, others = [], onPick, onArea, onPlaces, onServiceKm }) {
+export default function HubMap({ lat, lng, radiusM, serviceKm, area, places = [], placeName = '', search = false, travel = null, others = [], onPick, onArea, onPlaces, onServiceKm }) {
   const box = useRef(null);
   const map = useRef(null);
   const layers = useRef(null);
@@ -142,7 +142,7 @@ export default function HubMap({ lat, lng, radiusM, serviceKm, area, places = []
       </div>
       {mode === 'places' && <AreaPicker places={places} near={lat != null ? { lat, lng } : null} onChange={onPlaces} />}
       <div ref={box} className="h-80 w-full overflow-hidden rounded-xl border border-slate-200" aria-label="Map of the hub" />
-      {mode !== 'area' && <CoverageBar center={lat != null ? { lat, lng } : null} place={placeName} serviceKm={serviceKm} liveKm={liveKm} area={area || []} places={places} onServiceKm={onServiceKm} />}
+      {mode !== 'area' && <CoverageBar center={lat != null ? { lat, lng } : null} place={placeName} serviceKm={serviceKm} liveKm={liveKm} area={area || []} places={places} travel={travel} onServiceKm={onServiceKm} />}
       <p className="flex items-center gap-1.5 text-[12px] text-slate-500">
         {mode === 'area'
           ? `Click the map to add corners of the area this hub serves. ${pts.length} corner${pts.length === 1 ? '' : 's'}${pts.length && pts.length < 3 ? ', at least 3 needed' : pts.length >= 3 ? `, about ${fmtKm2(areaKm2(pts))} km²${lat != null ? `, farthest ${fmtKm(Math.max(...pts.map(([x, y]) => distanceKm({ lat, lng }, { lat: y, lng: x }))))} km from the meeting point` : ''}` : ''}.`

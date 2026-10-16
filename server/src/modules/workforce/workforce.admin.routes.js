@@ -83,7 +83,12 @@ router.get('/workforce/hubs', async (req, res, next) => {
       Worker.aggregate([{ $match: { 'employment.type': 'staff' } }, { $group: { _id: '$employment.hubId', n: { $sum: 1 } } }]),
     ]);
     const n = new Map(counts.map((c) => [String(c._id), c.n]));
-    res.json({ hubs: hubs.map((h) => ({ ...h, id: String(h._id), staff: n.get(String(h._id)) || 0 })), search: require('../maps/mapbox.service').configured() });
+    const { fairBandMin } = await require('../pricing/services/config.service').fastAssignSettings();
+    res.json({
+      hubs: hubs.map((h) => ({ ...h, id: String(h._id), staff: n.get(String(h._id)) || 0 })),
+      search: require('../maps/mapbox.service').configured(),
+      travel: { ...require('../jobs/arrival').TRAVEL, promiseMin: fairBandMin },
+    });
   } catch (err) { next(err); }
 });
 

@@ -23,3 +23,8 @@ export const eastOf = (at, km) => ({ lat: at.lat, lng: at.lng + km / (111.32 * M
 
 export const fmtKm = (n) => (n < 10 ? n.toFixed(1) : String(Math.round(n)));
 export const fmtKm2 = (n) => Math.round(n).toLocaleString('en-IN');
+
+// Road minutes to reach `km` away, with the server's own estimate terms (jobs/arrival TRAVEL).
+export const reachMinutes = (km, t) => Math.max(1, Math.round(((km * t.roadFactor) / t.kmh) * 60 + t.fixedMin));
+// The farthest distance reachable within `min` minutes.
+export const kmWithin = (min, t) => Math.max(0, ((min - t.fixedMin) * t.kmh) / 60 / t.roadFactor);

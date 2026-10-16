@@ -9,7 +9,7 @@ import HubsMap from './HubsMap';
 export default function FleetHubs() {
   const { data, isLoading, isError } = useAdminHubsQuery();
   const [editing, setEditing] = useState(null);
-  if (editing) return <HubEditor hub={editing === 'new' ? null : editing} others={(data?.hubs || []).filter((h) => h.id !== editing.id)} search={!!data?.search} onDone={() => setEditing(null)} />;
+  if (editing) return <HubEditor hub={editing === 'new' ? null : editing} others={(data?.hubs || []).filter((h) => h.id !== editing.id)} search={!!data?.search} travel={data?.travel || null} onDone={() => setEditing(null)} />;
   if (isError) return <EmptyState message="Could not load the hubs." />;
   if (isLoading) return <PageLoader />;
   const hubs = data?.hubs || [];
