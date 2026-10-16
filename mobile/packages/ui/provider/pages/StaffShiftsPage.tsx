@@ -9,6 +9,7 @@ import {
 } from '@zappy/core/api';
 import { formatPaise } from '@zappy/core/shared/money';
 import { targetLine } from '@zappy/core/shared/staffTarget';
+import { shiftHours } from '@zappy/core/shared/clock';
 import { Button, LoadingState, ScreenHeader, Text } from '../../components';
 import { toast } from '../../components/Toast';
 import { errText } from '../../lib/feedback';
@@ -62,7 +63,7 @@ export function StaffShiftsPage() {
               {d.shifts.map((s: Any) => (
                 <View key={s.code} style={styles.shift}>
                   <View style={styles.flex}>
-                    <Text variant="bodySmall" weight="semibold">{s.label}, {s.start} to {s.end}</Text>
+                    <Text variant="bodySmall" weight="semibold">{s.label}, {shiftHours(s)}</Text>
                     <Text variant="caption" color={ink[500]}>{s.booked} of {s.need} booked</Text>
                   </View>
                   {s.mine ? (

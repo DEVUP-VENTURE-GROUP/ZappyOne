@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { shiftHours } from '../../utils/clock';
 import { targetLine } from '../staffTarget';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -67,7 +68,7 @@ export default function StaffShiftsPage() {
                     {d.shifts.map((s) => (
                       <div key={s.code} className="flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-2.5">
                         <div className="min-w-0 flex-1">
-                          <p className="text-[14px] font-semibold text-slate-900">{s.label}, {s.start} to {s.end}</p>
+                          <p className="text-[14px] font-semibold text-slate-900">{s.label}, {shiftHours(s)}</p>
                           <p className="text-[12px] text-slate-500">{s.booked} of {s.need} booked</p>
                         </div>
                         {s.mine ? (

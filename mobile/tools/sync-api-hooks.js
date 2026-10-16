@@ -43,6 +43,7 @@ const LOGIC = [
   { from: 'provider/partnerPages.js', to: 'shared/partnerPages.js', imports: {} },
   { from: 'provider/partnerBoard.js', to: 'shared/partnerBoard.js', imports: {} },
   { from: 'provider/staffTarget.js', to: 'shared/staffTarget.js', imports: {} },
+  { from: 'utils/clock.js', to: 'shared/clock.js', imports: {} },
   { from: 'components/account/passwordRules.js', to: 'shared/passwordRules.js', imports: {} },
   { from: 'config/releases.js', to: 'shared/releases.js', imports: {} },
   { from: 'config/appVersion.js', to: 'shared/appVersion.js', imports: {} },

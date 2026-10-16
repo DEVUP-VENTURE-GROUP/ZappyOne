@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { shiftHours, timeOf } from '@shared/utils/clock';
 import toast from 'react-hot-toast';
 import { Camera, X } from 'lucide-react';
 import { useAdminHubsQuery, useAdminRosterQuery, useAdminStaffQuery, useAdminAssignShiftMutation, useAdminRemoveShiftMutation, useAdminAutoFillRosterMutation } from '@shared/services/api';
@@ -42,7 +43,7 @@ export default function FleetRoster() {
                 {d.shifts.map((s) => (
                   <div key={s.code} className={`rounded-xl border p-3 ${s.short ? 'border-amber-200 bg-amber-50/40' : 'border-slate-200'}`}>
                     <div className="flex items-baseline justify-between">
-                      <p className="text-[13.5px] font-semibold text-slate-900">{s.label} {s.start}–{s.end}</p>
+                      <p className="text-[13.5px] font-semibold text-slate-900">{s.label} {shiftHours(s)}</p>
                       <p className={`text-[12px] font-bold ${s.short ? 'text-amber-700' : 'text-emerald-700'}`}>{s.people.length}/{s.need}{s.short ? `, ${s.short} short` : ''}</p>
                     </div>
                     <div className="mt-2 flex flex-wrap gap-1.5">
@@ -76,7 +77,7 @@ export default function FleetRoster() {
               <div>
                 <p className="text-sm font-bold text-slate-900">{proof.name}</p>
                 <p className="text-[12.5px] text-slate-500">
-                  Checked in {proof.checkInAt ? new Date(proof.checkInAt).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' }) : ''}
+                  Checked in {timeOf(proof.checkInAt)}
                   {proof.checkInDistanceM != null ? `, ${proof.checkInDistanceM} m from the meeting point` : ''}{proof.lateMin ? `, ${proof.lateMin} min late` : ''}
                 </p>
               </div>

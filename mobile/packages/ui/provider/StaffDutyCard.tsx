@@ -5,6 +5,7 @@
  * salary so far, and cash to deposit.
  */
 import { useState } from 'react';
+import { timeOf } from '@zappy/core/shared/clock';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Building2, CalendarDays, ChevronRight, LogIn, LogOut } from 'lucide-react-native';
@@ -21,7 +22,7 @@ import { spacing } from '../theme/spacing';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Any = any;
-const time = (d: string) => new Date(d).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' });
+const time = (d: string) => timeOf(d);
 
 export function StaffDutyCard({ me }: { me: Any }) {
   const router = useRouter();

@@ -331,12 +331,12 @@ const CATALOG = {
   /* ---------------- ZappyOne staff (workforce/watchdog) ---------------- */
   'staff.shift_reminder': {
     audience: 'provider', type: 'report_received', channels: ['push'], label: 'Shift starts in 30 minutes',
-    sample: () => ({ shift: 'Morning', start: '8:00 am', hub: 'Madhapur', place: 'Madhapur metro, pillar 12' }),
+    sample: () => ({ shift: 'Morning', start: '8:00 AM', hub: 'Madhapur', place: 'Madhapur metro, pillar 12' }),
     build: ({ shift, start, hub, place }) => ({ push: { title: `${shift} shift at ${start}`, body: `Check in at ${place || hub} with a selfie to start.`, link: '/worker' } }),
   },
   'staff.no_show': {
     audience: 'provider', type: 'penalty_applied', channels: ['push'], urgent: true, label: 'Shift started, not checked in',
-    sample: () => ({ shift: 'Morning', start: '8:00 am', hub: 'Madhapur' }),
+    sample: () => ({ shift: 'Morning', start: '8:00 AM', hub: 'Madhapur' }),
     build: ({ shift, start, hub }) => ({ push: { title: 'Your shift has started', body: `${shift} at ${hub} started at ${start}. Check in now, or tell your manager if you cannot come.`, link: '/worker' } }),
   },
   'ops.fleet_daily': {

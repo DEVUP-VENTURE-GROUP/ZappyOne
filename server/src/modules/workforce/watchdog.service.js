@@ -18,7 +18,8 @@ const Worker = require('../worker/worker.model');
 const shiftsService = require('./shifts.service');
 
 const send = (key, opts) => require('../messaging/send').send(key, opts).catch(() => {});
-const time = (d) => new Date(d).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Kolkata' });
+// 12-hour with AM/PM, India time: "8:00 AM".
+const time = (d) => new Date(d).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata' }).toUpperCase();
 const istDay = shiftsService.istDay;
 const DAY = 86400000;
 

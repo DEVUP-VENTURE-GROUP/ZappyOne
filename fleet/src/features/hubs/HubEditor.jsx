@@ -4,6 +4,7 @@ import { Plus, X } from 'lucide-react';
 import { useAdminCreateHubMutation, useAdminUpdateHubMutation } from '@shared/services/api';
 import { Card, FormRow, Input, SaveBtn } from '@admin/ui/kit';
 import HubMap from './HubMap';
+import { shiftHours } from '@shared/utils/clock';
 
 const bboxOf = (area) => {
   const ring = area?.coordinates?.[0] || [];
@@ -65,6 +66,7 @@ export default function HubEditor({ hub, others = [], search = false, travel = n
               <Input type="time" value={s.end} onChange={(e) => setShift(i, 'end', e.target.value)} aria-label="Ends" />
               <Input type="number" min={0} max={200} value={s.need} onChange={(e) => setShift(i, 'need', e.target.value)} aria-label="People needed" />
               <button type="button" onClick={() => setForm((f) => ({ ...f, shifts: f.shifts.filter((_, j) => j !== i) }))} aria-label="Remove shift" className="rounded-lg p-2 text-slate-400 hover:bg-slate-100"><X size={15} /></button>
+              <p className="col-span-full -mt-1 text-[11.5px] text-slate-500">{s.label || 'Shift'}: {shiftHours(s)}, {Number(s.need) || 0} people</p>
             </div>
           ))}
           {form.shifts.length < 8 && (

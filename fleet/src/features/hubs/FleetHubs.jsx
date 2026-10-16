@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { shiftHours } from '@shared/utils/clock';
 import { Plus, Warehouse } from 'lucide-react';
 import { useAdminHubsQuery } from '@shared/services/api';
 import { Card, PageLoader, EmptyState } from '@admin/ui/kit';
@@ -30,7 +31,7 @@ export default function FleetHubs() {
                 </div>
                 <p className="mt-0.5 truncate text-[12.5px] text-slate-500">{h.meetingPoint?.address || h.city}</p>
                 <p className="mt-2 text-[12.5px] text-slate-600">{h.staff} staff, {[h.area?.coordinates && 'drawn area', h.places?.length && `${h.places.length} pincode${h.places.length === 1 ? '' : 's'}/area${h.places.length === 1 ? '' : 's'}`].filter(Boolean).join(' + ') || `serves ${h.serviceKm} km`}, {h.shifts.length} shift{h.shifts.length === 1 ? '' : 's'}</p>
-                <p className="mt-1 text-[12px] text-slate-400">{h.shifts.map((s) => `${s.label} ${s.start}–${s.end} (${s.need})`).join(', ')}</p>
+                <p className="mt-1 text-[12px] text-slate-400">{h.shifts.map((s) => `${s.label} ${shiftHours(s)} (${s.need})`).join(', ')}</p>
               </Card>
             </button>
           ))}

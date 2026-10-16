@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { timeOf } from '../utils/clock';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { Building2, CalendarDays, ChevronRight, Loader2, LogIn, LogOut } from 'lucide-react';
@@ -7,7 +8,7 @@ import { formatPaise } from '../utils/money';
 import { prepareImage } from '../utils/prepareImage';
 import LiveSelfieCapture from '../components/kyc/LiveSelfieCapture';
 
-const time = (d) => new Date(d).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' });
+const time = timeOf;
 
 /**
  * For ZappyOne's own staff, at the top of the Rakshak home (server workforce/):
