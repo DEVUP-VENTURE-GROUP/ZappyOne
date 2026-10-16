@@ -27,7 +27,8 @@ const hubBody = Joi.object({
   lat: Joi.number().min(-90).max(90),
   lng: Joi.number().min(-180).max(180),
   radiusM: Joi.number().integer().min(50).max(2000),
-  serviceKm: Joi.number().min(1).max(40),
+  serviceKm: Joi.number().min(1).max(50),
+  area: Joi.array().items(Joi.array().ordered(Joi.number().min(-180).max(180).required(), Joi.number().min(-90).max(90).required())).min(3).max(200).allow(null),
   shifts: Joi.array().items(Joi.object({
     code: Joi.string().trim().max(20).required(), label: Joi.string().trim().max(40).required(),
     start: Joi.string().pattern(/^\d{2}:\d{2}$/).required(), end: Joi.string().pattern(/^\d{2}:\d{2}$/).required(),
@@ -41,6 +42,7 @@ const toDoc = (b) => {
   for (const k of ['name', 'city', 'radiusM', 'serviceKm', 'shifts', 'isActive']) if (b[k] !== undefined) out[k] = b[k];
   if (b.address !== undefined) out['meetingPoint.address'] = b.address;
   if (b.lat !== undefined && b.lng !== undefined) out['meetingPoint.location'] = { type: 'Point', coordinates: [b.lng, b.lat] };
+  if (b.area) out.area = require('./coverage').toPolygon(b.area);
   return out;
 };
 
@@ -60,6 +62,7 @@ router.post('/workforce/hubs', validate(hubBody.fork(['name', 'city', 'lat', 'ln
     const hub = await Hub.create({
       name: req.body.name, city: req.body.city, radiusM: req.body.radiusM, serviceKm: req.body.serviceKm, shifts: req.body.shifts || [],
       meetingPoint: { address: req.body.address || '', location: { type: 'Point', coordinates: [req.body.lng, req.body.lat] } },
+      ...(req.body.area ? { area: require('./coverage').toPolygon(req.body.area) } : {}),
     });
     await auditService.fromRequest(req, 'workforce.hub_create', { kind: 'hub', id: hub._id }, null, req.body);
     res.status(201).json({ hub });
@@ -70,7 +73,7 @@ router.put('/workforce/hubs/:id', validate(hubBody.min(1)), async (req, res, nex
   try {
     const before = await Hub.findById(req.params.id).lean();
     if (!before) return res.status(404).json({ error: 'Hub not found' });
-    const hub = await Hub.findByIdAndUpdate(req.params.id, { $set: toDoc(req.body) }, { new: true, runValidators: true }).lean();
+    const hub = await Hub.findByIdAndUpdate(req.params.id, { $set: toDoc(req.body), ...(req.body.area === null ? { $unset: { area: 1 } } : {}) }, { new: true, runValidators: true }).lean();
     await auditService.fromRequest(req, 'workforce.hub_update', { kind: 'hub', id: req.params.id }, before, hub);
     res.json({ hub });
   } catch (err) { next(err); }

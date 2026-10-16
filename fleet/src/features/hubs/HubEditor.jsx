@@ -3,26 +3,28 @@ import toast from 'react-hot-toast';
 import { Plus, X } from 'lucide-react';
 import { useAdminCreateHubMutation, useAdminUpdateHubMutation } from '@shared/services/api';
 import { Card, FormRow, Input, SaveBtn } from '@admin/ui/kit';
-import HubPointPicker from './HubPointPicker';
+import HubMap from './HubMap';
 
 const BLANK_SHIFT = { code: '', label: '', start: '09:00', end: '18:00', need: 2 };
 
 /** Create or edit a hub (dark store): where it is, how close check-in must be, how far it serves, its shifts. */
-export default function HubEditor({ hub, onDone }) {
+export default function HubEditor({ hub, others = [], onDone }) {
   const [form, setForm] = useState(() => ({
     name: hub?.name || '', city: hub?.city || 'Hyderabad', address: hub?.meetingPoint?.address || '',
     lat: hub?.meetingPoint?.location?.coordinates?.[1] ?? null, lng: hub?.meetingPoint?.location?.coordinates?.[0] ?? null,
     radiusM: hub?.radiusM ?? 200, serviceKm: hub?.serviceKm ?? 8, isActive: hub?.isActive ?? true,
+    area: hub?.area?.coordinates?.[0]?.slice(0, -1) || [],
     shifts: hub?.shifts?.length ? hub.shifts : [{ code: 'morning', label: 'Morning', start: '08:00', end: '14:00', need: 3 }, { code: 'evening', label: 'Evening', start: '14:00', end: '21:00', need: 3 }],
   }));
   const [create, { isLoading: creating }] = useAdminCreateHubMutation();
   const [update, { isLoading: updating }] = useAdminUpdateHubMutation();
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e?.target ? (e.target.type === 'checkbox' ? e.target.checked : e.target.value) : e }));
   const setShift = (i, k, v) => setForm((f) => ({ ...f, shifts: f.shifts.map((s, j) => (j === i ? { ...s, [k]: v } : s)) }));
-  const valid = form.name.trim() && form.city.trim() && form.lat != null && form.shifts.every((s) => s.code && s.label && /^\d{2}:\d{2}$/.test(s.start) && /^\d{2}:\d{2}$/.test(s.end));
+  const valid = form.name.trim() && form.city.trim() && form.lat != null && (form.area.length === 0 || form.area.length >= 3) && form.shifts.every((s) => s.code && s.label && /^\d{2}:\d{2}$/.test(s.start) && /^\d{2}:\d{2}$/.test(s.end));
 
   async function save() {
-    const body = { ...form, radiusM: Number(form.radiusM), serviceKm: Number(form.serviceKm), shifts: form.shifts.map((s) => ({ ...s, code: s.code.trim().toLowerCase().replace(/\s+/g, '-'), need: Number(s.need) })) };
+    const area = form.area.length >= 3 ? form.area : (hub?.area ? null : undefined);
+    const body = { ...form, area, radiusM: Number(form.radiusM), serviceKm: Number(form.serviceKm), shifts: form.shifts.map((s) => ({ ...s, code: s.code.trim().toLowerCase().replace(/\s+/g, '-'), need: Number(s.need) })) };
     try {
       if (hub?._id) await update({ id: hub._id, ...body }).unwrap(); else await create(body).unwrap();
       toast.success('Hub saved'); onDone();
@@ -35,15 +37,16 @@ export default function HubEditor({ hub, onDone }) {
         <FormRow label="Hub name"><Input value={form.name} onChange={set('name')} placeholder="Madhapur" maxLength={60} /></FormRow>
         <FormRow label="City"><Input value={form.city} onChange={set('city')} maxLength={40} /></FormRow>
       </div>
-      <FormRow label="Meeting point" hint="Click the map where staff meet. They check in here, with a selfie, to start a shift.">
+      <FormRow label="Meeting point and service area" hint="Click the map where staff meet; they check in there with a selfie. Then draw the area this hub serves, or leave it to the radius below.">
         <div className="space-y-2">
-          <HubPointPicker lat={form.lat} lng={form.lng} radiusM={Number(form.radiusM)} onPick={({ lat, lng }) => setForm((f) => ({ ...f, lat, lng }))} />
+          <HubMap lat={form.lat} lng={form.lng} radiusM={Number(form.radiusM)} serviceKm={Number(form.serviceKm)} area={form.area} others={others}
+            onPick={({ lat, lng }) => setForm((f) => ({ ...f, lat, lng }))} onArea={(area) => setForm((f) => ({ ...f, area }))} />
           <Input value={form.address} onChange={set('address')} maxLength={300} placeholder="Landmark or address staff will recognise" />
         </div>
       </FormRow>
       <div className="grid gap-4 sm:grid-cols-2">
         <FormRow label="Check-in radius (metres)" hint="How close to the meeting point check-in must be."><Input type="number" min={50} max={2000} value={form.radiusM} onChange={set('radiusM')} /></FormRow>
-        <FormRow label="Serves up to (km)" hint="How far its staff are sent for jobs."><Input type="number" min={1} max={40} value={form.serviceKm} onChange={set('serviceKm')} /></FormRow>
+        <FormRow label="Serves up to (km)" hint={form.area.length >= 3 ? 'Not used while an area is drawn.' : 'Orders within this distance of the meeting point go to this hub’s staff.'}><Input type="number" min={1} max={50} value={form.serviceKm} onChange={set('serviceKm')} /></FormRow>
       </div>
       <FormRow label="Shifts" hint="Staff book these; the number is how many people each shift needs.">
         <div className="space-y-2">

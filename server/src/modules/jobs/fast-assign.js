@@ -82,20 +82,23 @@ async function autoAcceptCandidates(kind, doc, radiusKm) {
   const { free } = await require('./workload').classify(workers.map((w) => w._id));
   const km = (c) => (c?.length === 2 ? haversineKm(at.lat, at.lng, c[1], c[0]) : null);
   const duty = new Set(onDuty);
-  const hubs = duty.size ? await require('../workforce/hub.model').find({ _id: { $in: workers.map((w) => w.employment?.hubId).filter(Boolean) } }).select('serviceKm').lean() : [];
-  const reach = new Map(hubs.map((h) => [String(h._id), h.serviceKm]));
+  const coverage = require('../workforce/coverage');
+  const hubs = duty.size ? await require('../workforce/hub.model').find({ _id: { $in: workers.map((w) => w.employment?.hubId).filter(Boolean) } }).select(coverage.HUB_FIELDS).lean() : [];
+  const hubOf = new Map(hubs.map((h) => [String(h._id), h]));
   const fairness = require('./fairness');
   const all = [
     ...workers.filter((w) => live.has(String(w._id)) && free.has(String(w._id)))
       .map((w) => (duty.has(String(w._id))
-        // Staff on duty: as far as their hub serves, whatever this stage's radius.
-        ? { kind: 'worker', id: String(w._id), km: km(w.currentLocation?.coordinates), staff: true, reachKm: reach.get(String(w.employment?.hubId)) || radiusKm, stats: fairness.statsOf(w) }
+        // Staff on duty: any job inside their hub's area (drawn, or its radius), whatever this stage's radius.
+        ? { kind: 'worker', id: String(w._id), km: km(w.currentLocation?.coordinates), staff: true, hub: hubOf.get(String(w.employment?.hubId)) || null, stats: fairness.statsOf(w) }
         : { kind: 'worker', id: String(w._id), km: km(w.currentLocation?.coordinates), maxKm: w.autoAccept?.maxKm, stats: fairness.statsOf(w) })),
     // A partner at its capacity (shop/partner.service) is offered nothing new until one finishes.
     ...shops.filter(require('../shop/shop.service').isLive).filter((s) => !fullShops.has(String(s._id)))
       .map((s) => ({ kind: 'shop', id: String(s._id), km: km(s.address?.location?.coordinates), maxKm: s.autoAccept?.maxKm, stats: fairness.statsOf(s) })),
   ];
-  const reachable = all.filter((p) => p.km != null && p.km <= (p.staff ? p.reachKm : Math.min(radiusKm, p.maxKm || radiusKm)));
+  const reachable = all.filter((p) => (p.staff
+    ? (p.hub ? coverage.covers(p.hub, at) : p.km != null && p.km <= radiusKm)
+    : p.km != null && p.km <= Math.min(radiusKm, p.maxKm || radiusKm)));
   return fairness.fairOrder(reachable, { promiseMin: (await settings()).fairBandMin });
 }
 

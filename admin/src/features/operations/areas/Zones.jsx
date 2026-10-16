@@ -13,6 +13,7 @@ import {
   useAdminDeleteZoneMutation, useAdminZoneStatsQuery,
 } from '@shared/services/api';
 import { SectionHeader, Card, PageLoader, FormRow, Input, Select } from '../../../ui/kit';
+import { baseLayer } from '../../../ui/map/tiles';
 
 // Fix Leaflet default icon path issue with Vite
 delete L.Icon.Default.prototype._getIconUrl;
@@ -25,26 +26,7 @@ L.Icon.Default.mergeOptions({
 const INDIA_CENTER = [20.5937, 78.9629];
 const INDIA_ZOOM = 5;
 
-const TILE_LAYERS = {
-  light: {
-    url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-    attr: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-    label: 'Voyager',
-    subdomains: 'abcd',
-  },
-  dark: {
-    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
-    attr: '&copy; OpenStreetMap &copy; CARTO',
-    label: 'Dark',
-    subdomains: 'abcd',
-  },
-  satellite: {
-    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-    attr: 'Tiles &copy; Esri &mdash; Source: Esri, USGS, NOAA',
-    label: 'Satellite',
-    subdomains: '',
-  },
-};
+const TILE_LAYERS = { light: { label: 'Map' }, dark: { label: 'Dark' }, satellite: { label: 'Satellite' } };
 
 const COLORS = ['#3B82F6', '#22C55E', '#F59E0B', '#EF4444', '#A855F7', '#06B6D4', '#EC4899', '#F97316'];
 const STATUS_LABEL = { active: 'Active', coming_soon: 'Coming Soon', disabled: 'Disabled' };
@@ -304,15 +286,7 @@ export default function Zones() {
         preferCanvas: true,
       });
 
-      const tile = L.tileLayer(
-        'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-        {
-          attribution: TILE_LAYERS.light.attr,
-          maxZoom: 19,
-          subdomains: 'abcd',
-          detectRetina: false,
-        }
-      ).addTo(map);
+      const tile = baseLayer('light').addTo(map);
       tileLayerRef.current = tile;
 
       L.control.attribution({ position: 'bottomright', prefix: false }).addTo(map);
@@ -358,15 +332,10 @@ export default function Zones() {
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !mapReady) return;
-    const cfg = TILE_LAYERS[activeStyle];
     if (tileLayerRef.current) {
       map.removeLayer(tileLayerRef.current);
     }
-    const newTile = L.tileLayer(cfg.url, {
-      attribution: cfg.attr,
-      maxZoom: 19,
-      subdomains: cfg.subdomains || 'abcd',
-    });
+    const newTile = baseLayer(activeStyle);
     // Insert below zone/draw layers so zones stay on top
     newTile.addTo(map);
     newTile.bringToBack();
