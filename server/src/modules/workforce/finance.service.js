@@ -55,7 +55,7 @@ async function hubFinance(month = payrollService.monthOf()) {
 
   revenue.forEach((r) => { const x = at(r._id); x.revenuePaise += r.paise; x.jobs += r.jobs; x.cashJobs += r.cashJobs; });
   expenses.forEach((e) => { const x = at(e._id.hub); x.expensesPaise += e.paise; x.byCategory[e._id.category] = (x.byCategory[e._id.category] || 0) + e.paise; });
-  payroll.rows.forEach((p) => { const x = at(p.hubId); x.salaryPaise += p.payPaise; x.staff += 1; x.cashWithStaffPaise += p.cashToDepositPaise; x.tipsPaise += p.tipsPaise; });
+  payroll.rows.forEach((p) => { const x = at(p.hubId); x.salaryPaise += p.totalPaise ?? p.payPaise; x.staff += 1; x.cashWithStaffPaise += p.cashToDepositPaise; x.tipsPaise += p.tipsPaise; });
   deposits.forEach((d) => { at(hubOf.get(String(d._id))).depositedPaise += d.paise; });
 
   const finish = (x) => ({

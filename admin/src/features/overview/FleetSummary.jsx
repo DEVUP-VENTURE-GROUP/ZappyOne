@@ -16,7 +16,7 @@ export default function FleetSummary() {
     <div>
       <div className="mb-3 flex items-baseline justify-between">
         <h2 className="text-[15px] font-semibold text-slate-900">Our fleet</h2>
-        <Link to="?tab=fleet" className="text-[12px] font-semibold text-[#1F4FD8] hover:underline">Open Fleet</Link>
+        <Link to="?tab=fleet" className="text-[12px] font-semibold text-[#1F4FD8] hover:underline">Fleet insights</Link>
       </div>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-6">
         <Kpi label="Revenue, 30 days" value={rupees(k.revenuePaise)} delta={k.revenueDelta} />

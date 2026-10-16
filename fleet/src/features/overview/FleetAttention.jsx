@@ -16,6 +16,7 @@ export default function FleetAttention() {
     ...data.noShows.map((s) => `${s.name} missed ${s.shift} at ${s.hub} yesterday`),
     ...data.cash.map((c) => `${c.name} still holds ${rupees(c.paise)} in cash`),
     ...data.lowStock.map((i) => `${i.name} at ${i.hub}: ${i.qty} ${i.unit} left`),
+    ...(data.slack || []).map((s) => `${s.name}: ${s.jobs} of ${s.targetJobs} jobs this month${s.manyGiveBacks ? `, ${s.givenBack} handed back` : ''}`),
     ...(data.leave ? [`${data.leave} leave request${data.leave === 1 ? '' : 's'} waiting`] : []),
   ];
   if (!items.length) {

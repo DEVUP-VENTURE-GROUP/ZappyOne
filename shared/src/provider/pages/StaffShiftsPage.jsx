@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { targetLine } from '../staffTarget';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { ArrowLeft, Loader2 } from 'lucide-react';
@@ -44,10 +45,11 @@ export default function StaffShiftsPage() {
             {salary && (
               <section className="rounded-2xl bg-white p-4 ring-1 ring-slate-100">
                 <p className="text-sm font-bold text-slate-900">Salary, this month</p>
-                <p className="mt-1 text-[26px] font-extrabold text-slate-900">{formatPaise(salary.payPaise)}</p>
+                <p className="mt-1 text-[26px] font-extrabold text-slate-900">{formatPaise(salary.totalPaise ?? salary.payPaise)}</p>
                 <p className="text-[12.5px] text-slate-500">
                   {salary.paidDays} of {salary.workingDays} days paid ({salary.workedDays} worked, {salary.leaveDays} leave) on a monthly salary of {formatPaise(salary.salaryPaise)}.
                 </p>
+                {targetLine(salary) && <p className="mt-2 rounded-xl bg-emerald-50 px-3 py-2 text-[12.5px] font-semibold text-emerald-800">{targetLine(salary)}</p>}
                 <div className="mt-3 grid grid-cols-3 gap-2 text-center">
                   <div className="rounded-xl bg-slate-50 py-2"><p className="text-[15px] font-bold text-slate-900">{formatPaise(salary.tipsPaise)}</p><p className="text-[11px] text-slate-500">Tips, yours</p></div>
                   <div className="rounded-xl bg-slate-50 py-2"><p className="text-[15px] font-bold text-slate-900">{salary.missedShifts}</p><p className="text-[11px] text-slate-500">Missed shifts</p></div>

@@ -60,8 +60,13 @@ async function attention(now = new Date()) {
       cash.push({ workerId: String(w.owner.id), name: staff.find((s) => String(s._id) === String(w.owner.id))?.name || 'Staff', paise: -w.balancePaise });
     }
   }
+  // This month so far: well under their pro-rated target, or handing jobs back often.
+  const { rows } = await require('./payroll.service').payroll();
+  const slack = rows.filter((r) => r.lowWork || r.manyGiveBacks)
+    .map((r) => ({ workerId: r.workerId, name: r.name, jobs: r.jobs, targetJobs: r.targetJobs, givenBack: r.givenBack, lowWork: r.lowWork, manyGiveBacks: r.manyGiveBacks }));
   return {
     short,
+    slack,
     noShows: noShows.map((s) => ({ name: s.workerId?.name || 'Staff', hub: s.hubId?.name || '', shift: s.label })),
     cash,
     lowStock: lowStock.map((i) => ({ name: i.name, hub: i.hubId?.name || '', qty: i.qty, unit: i.unit })),
@@ -83,6 +88,7 @@ async function morningEmail(now = new Date()) {
       noShows: a.noShows.map((s) => `${s.name}, ${s.hub} ${s.shift}`),
       cash: a.cash.map((c) => `${c.name}: ${r(c.paise)}`),
       lowStock: a.lowStock.map((i) => `${i.name} at ${i.hub}: ${i.qty} left`),
+      slack: a.slack.map((s) => `${s.name}: ${s.jobs} of ${s.targetJobs} jobs${s.givenBack ? `, ${s.givenBack} handed back` : ''}`),
       leave: a.leave,
     },
   });

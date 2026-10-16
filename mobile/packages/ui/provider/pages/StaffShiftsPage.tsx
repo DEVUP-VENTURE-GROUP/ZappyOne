@@ -8,6 +8,7 @@ import {
   useWorkforceMeQuery, useBookShiftMutation, useCancelShiftMutation, useStaffSalaryQuery, useStaffLeaveQuery, useRequestLeaveMutation,
 } from '@zappy/core/api';
 import { formatPaise } from '@zappy/core/shared/money';
+import { targetLine } from '@zappy/core/shared/staffTarget';
 import { Button, LoadingState, ScreenHeader, Text } from '../../components';
 import { toast } from '../../components/Toast';
 import { errText } from '../../lib/feedback';
@@ -43,8 +44,9 @@ export function StaffShiftsPage() {
           {salary ? (
             <View style={styles.card}>
               <Text variant="bodySmall" weight="bold">Salary, this month</Text>
-              <Text variant="heading1" weight="black">{formatPaise(salary.payPaise)}</Text>
+              <Text variant="heading1" weight="black">{formatPaise(salary.totalPaise ?? salary.payPaise)}</Text>
               <Text variant="caption" color={ink[500]}>{salary.paidDays} of {salary.workingDays} days paid ({salary.workedDays} worked, {salary.leaveDays} leave) on {formatPaise(salary.salaryPaise)} a month.</Text>
+              {targetLine(salary) ? <View style={styles.target}><Text variant="caption" weight="semibold" color={success[700]}>{targetLine(salary)}</Text></View> : null}
               <View style={styles.row3}>
                 <View style={styles.mini}><Text variant="bodySmall" weight="bold">{formatPaise(salary.tipsPaise)}</Text><Text variant="caption" color={ink[500]}>Tips, yours</Text></View>
                 <View style={styles.mini}><Text variant="bodySmall" weight="bold">{salary.missedShifts}</Text><Text variant="caption" color={ink[500]}>Missed</Text></View>
@@ -100,6 +102,7 @@ export function StaffShiftsPage() {
 }
 
 const styles = StyleSheet.create({
+  target: { padding: spacing.sm, borderRadius: radius.medium, backgroundColor: success[50] },
   page: { flex: 1, backgroundColor: colors.background },
   body: { padding: spacing.base, gap: spacing.md, paddingBottom: 60 },
   card: { backgroundColor: colors.surface, borderRadius: radius.large, borderWidth: 1, borderColor: colors.border, padding: spacing.base, gap: spacing.sm },

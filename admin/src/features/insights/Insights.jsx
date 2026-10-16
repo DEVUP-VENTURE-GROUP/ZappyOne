@@ -6,7 +6,6 @@ import FunnelView from './FunnelView';
 import CustomersView from './CustomersView';
 import MoneyView from './MoneyView';
 import MapView from './MapView';
-import FleetOverview from '@fleet/features/overview/FleetOverview';
 
 /**
  * Insights: eight screens, each answering one question a decision hangs on,
@@ -22,8 +21,6 @@ const SCREENS = [
   { id: 'customers', label: 'Customers', question: 'Do people come back, and are they happy?', Comp: CustomersView },
   { id: 'money', label: 'Money', question: 'What makes us money?', Comp: MoneyView },
   { id: 'map', label: 'Map', question: 'Where is the business, and where should it go next?', Comp: MapView },
-  // Our own staff and dark stores (fleet app's overview; at least 7 days).
-  { id: 'fleet', label: 'Fleet', question: 'Are our own hubs and staff paying for themselves?', Comp: FleetOverview },
 ];
 const PERIODS = [[1, 'Today'], [7, '7 days'], [30, '30 days'], [90, '90 days']];
 

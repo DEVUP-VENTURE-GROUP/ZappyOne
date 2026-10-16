@@ -55,6 +55,10 @@ const WORKFORCE_DEFAULTS = {
   workingDays: 26,      // days a month a full salary pays for
   checkInEarlyMin: 30,  // may check in this long before the shift
   lateGraceMin: 10,     // after this, the check-in is marked late
+  monthlyJobTarget: 100,        // jobs a full month expects; pro-rated by paid days
+  incentivePerJobPaise: 2000,   // paid for each job above the target (₹20)
+  lowWorkPct: 60,               // flagged when below this share of their pro-rated target
+  giveBackFlag: 5,              // flagged when they hand back this many jobs in a month
 };
 
 // Percent taken from a partner's service money, by who holds the job; Economics → Partner commission.

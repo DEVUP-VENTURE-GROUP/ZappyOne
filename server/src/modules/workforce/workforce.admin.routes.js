@@ -16,6 +16,10 @@ const auditService = require('../admin/audit.service');
 const router = express.Router();
 router.use(require('./activity').recorder);
 
+router.get('/workforce/insights', validate(Joi.object({ month: Joi.string().pattern(/^\d{4}-\d{2}$/) }), 'query'), async (req, res, next) => {
+  try { res.json(await require('./insights.service').insights(req.query.month)); } catch (err) { next(err); }
+});
+
 router.get('/workforce/activity', validate(Joi.object({ page: Joi.number().integer().min(1).max(10000), actorId: Joi.string().hex().length(24) }), 'query'), async (req, res, next) => {
   try { res.json(await require('./activity').list({ page: Number(req.query.page) || 1, actorId: req.query.actorId || null })); } catch (err) { next(err); }
 });
@@ -338,6 +342,8 @@ router.get('/workforce/settings', async (req, res, next) => {
 
 router.put('/workforce/settings', validate(Joi.object({
   workingDays: Joi.number().integer().min(20).max(31), checkInEarlyMin: Joi.number().integer().min(0).max(120), lateGraceMin: Joi.number().integer().min(0).max(60),
+  monthlyJobTarget: Joi.number().integer().min(0).max(1000), incentivePerJobPaise: Joi.number().integer().min(0).max(100000),
+  lowWorkPct: Joi.number().integer().min(0).max(100), giveBackFlag: Joi.number().integer().min(1).max(100),
 }).min(1)), async (req, res, next) => {
   try {
     const cfg = require('../pricing/services/config.service');

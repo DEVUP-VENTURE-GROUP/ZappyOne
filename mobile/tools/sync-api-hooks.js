@@ -42,6 +42,7 @@ const LOGIC = [
   { from: 'components/provider/autoAccept.js', to: 'shared/autoAccept.js', imports: {} },
   { from: 'provider/partnerPages.js', to: 'shared/partnerPages.js', imports: {} },
   { from: 'provider/partnerBoard.js', to: 'shared/partnerBoard.js', imports: {} },
+  { from: 'provider/staffTarget.js', to: 'shared/staffTarget.js', imports: {} },
   { from: 'components/account/passwordRules.js', to: 'shared/passwordRules.js', imports: {} },
   { from: 'config/releases.js', to: 'shared/releases.js', imports: {} },
   { from: 'config/appVersion.js', to: 'shared/appVersion.js', imports: {} },

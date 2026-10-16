@@ -5,18 +5,15 @@ import { useAdminPayrollQuery, useAdminPayrollCsvMutation } from '@shared/servic
 import { Card, PageLoader, Th, Td } from '@admin/ui/kit';
 import { rupees } from '@admin/features/insights/charts';
 import MonthPicker, { thisMonth } from '../../ui/MonthPicker';
+import PayRules from './PayRules';
 
-/**
- * Payroll: each staff member's month: monthly salary for the days worked plus
- * approved leave, out of the working days a full salary covers. Tips are theirs
- * on top; cash not yet deposited is shown so it is settled before paying.
- */
+// Payroll: salary for paid days, incentive above the pro-rated job target, tips theirs, cash to settle before paying.
 export default function FleetPayroll() {
   const [month, setMonth] = useState(thisMonth());
   const { data, isLoading } = useAdminPayrollQuery(month);
   const [csv, { isLoading: exporting }] = useAdminPayrollCsvMutation();
   const rows = data?.rows || [];
-  const total = rows.reduce((t, r) => t + r.payPaise, 0);
+  const total = rows.reduce((t, r) => t + (r.totalPaise ?? r.payPaise), 0);
 
   async function download() {
     try {
@@ -29,18 +26,19 @@ export default function FleetPayroll() {
 
   return (
     <div className="space-y-4">
+      <PayRules />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <MonthPicker value={month} onChange={setMonth} />
         <div className="flex items-center gap-3">
-          <p className="text-sm text-slate-600">Salaries due: <b className="text-slate-900">{rupees(total, { exact: true })}</b></p>
+          <p className="text-sm text-slate-600">Total due: <b className="text-slate-900">{rupees(total, { exact: true })}</b></p>
           <button type="button" onClick={download} disabled={exporting || !rows.length} className="flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white disabled:opacity-40"><Download size={14} /> Export CSV</button>
         </div>
       </div>
       {isLoading ? <PageLoader /> : (
         <Card className="overflow-x-auto p-0">
-          <table className="w-full min-w-[820px]">
+          <table className="w-full min-w-[1080px]">
             <thead className="bg-slate-50"><tr>
-              <Th>Staff</Th><Th right>Monthly salary</Th><Th right>Worked</Th><Th right>Leave</Th><Th right>Paid days</Th><Th right>Missed</Th><Th right>Late</Th><Th right>Salary due</Th><Th right>Tips</Th><Th right>Cash to deposit</Th>
+              <Th>Staff</Th><Th right>Monthly salary</Th><Th right>Worked</Th><Th right>Leave</Th><Th right>Paid days</Th><Th right>Missed</Th><Th right>Late</Th><Th right>Jobs / target</Th><Th right>Handed back</Th><Th right>Salary</Th><Th right>Incentive</Th><Th right>Total due</Th><Th right>Tips</Th><Th right>Cash to deposit</Th>
             </tr></thead>
             <tbody>
               {rows.map((r) => (
@@ -49,12 +47,16 @@ export default function FleetPayroll() {
                   <Td right>{rupees(r.salaryPaise, { exact: true })}</Td>
                   <Td right>{r.workedDays}</Td><Td right>{r.leaveDays}</Td><Td right>{r.paidDays}/{r.workingDays}</Td>
                   <Td right>{r.missedShifts || '–'}</Td><Td right>{r.lateShifts || '–'}</Td>
-                  <Td right><b>{rupees(r.payPaise, { exact: true })}</b></Td>
+                  <Td right><span className={r.lowWork ? 'font-semibold text-red-600' : r.extraJobs ? 'font-semibold text-emerald-700' : ''}>{r.jobs} / {r.targetJobs}</span>{r.extraJobs ? <span className="block text-[11px] text-emerald-700">+{r.extraJobs} above</span> : null}</Td>
+                  <Td right><span className={r.manyGiveBacks ? 'font-semibold text-red-600' : ''}>{r.givenBack || '–'}</span></Td>
+                  <Td right>{rupees(r.payPaise, { exact: true })}</Td>
+                  <Td right>{r.incentivePaise ? rupees(r.incentivePaise, { exact: true }) : '–'}</Td>
+                  <Td right><b>{rupees(r.totalPaise ?? r.payPaise, { exact: true })}</b></Td>
                   <Td right>{rupees(r.tipsPaise, { exact: true })}</Td>
                   <Td right><span className={r.cashToDepositPaise ? 'font-semibold text-amber-600' : ''}>{rupees(r.cashToDepositPaise, { exact: true })}</span></Td>
                 </tr>
               ))}
-              {!rows.length && <tr><td colSpan={10} className="px-4 py-8 text-center text-sm text-slate-400">No staff yet.</td></tr>}
+              {!rows.length && <tr><td colSpan={14} className="px-4 py-8 text-center text-sm text-slate-400">No staff yet.</td></tr>}
             </tbody>
           </table>
         </Card>

@@ -341,15 +341,15 @@ const CATALOG = {
   },
   'ops.fleet_daily': {
     audience: 'ops', type: 'report_received', channels: ['email'], label: 'Fleet this morning (8 am)',
-    sample: () => ({ day: 'Thu, 16 Oct', short: ['Madhapur Evening today: 2 short'], noShows: ['Ravi, Madhapur Morning'], cash: ['Suresh: ₹2,400'], lowStock: ['Battery 4000mAh at Madhapur: 2 left'], leave: 3 }),
-    build: ({ day, short, noShows, cash, lowStock, leave, url }) => {
+    sample: () => ({ day: 'Thu, 16 Oct', short: ['Madhapur Evening today: 2 short'], noShows: ['Ravi, Madhapur Morning'], cash: ['Suresh: ₹2,400'], lowStock: ['Battery 4000mAh at Madhapur: 2 left'], slack: ['Kiran: 21 of 60 jobs, 6 handed back'], leave: 3 }),
+    build: ({ day, short, noShows, cash, lowStock, slack = [], leave, url }) => {
       const list = (xs) => (xs.length ? xs.slice(0, 8).join('; ') : 'None');
       return {
         email: {
           subject: `Fleet ${day}: ${short.length} short, ${noShows.length} no-shows, ${lowStock.length} low stock`,
           preheader: short.length ? `Shifts short: ${list(short)}` : 'Every shift is covered.',
           heading: `Fleet, ${day}`,
-          rows: [['Shifts short (today, tomorrow)', list(short)], ['No-shows yesterday', list(noShows)], ['Cash held over a day', list(cash)], ['Low stock', list(lowStock)], ['Leave waiting', String(leave)]],
+          rows: [['Shifts short (today, tomorrow)', list(short)], ['No-shows yesterday', list(noShows)], ['Cash held over a day', list(cash)], ['Low stock', list(lowStock)], ['Under target or handing jobs back', list(slack)], ['Leave waiting', String(leave)]],
           button: { label: 'Open Fleet', url: url('/dashboard?tab=fleet') },
         },
       };

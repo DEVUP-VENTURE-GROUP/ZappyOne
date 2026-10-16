@@ -29,6 +29,8 @@ const GOOGLE_PER_CALL = 5; // at most this many Google lookups per estimate
 const round = (n) => Math.max(1, Math.round(n));
 // The road estimate's terms, shared with screens that show reach in minutes (Fleet hub map).
 const TRAVEL = { roadFactor: ROAD_FACTOR, kmh: CITY_KMH, fixedMin: 2 };
+// The farthest a worker reaches within `min` minutes on this estimate.
+const kmWithinPromise = (min = PROMISE_MIN) => Math.max(0, ((min - TRAVEL.fixedMin) * CITY_KMH) / 60 / ROAD_FACTOR);
 
 // Road minutes for a straight-line distance; shops add their preparation time.
 const roughMinutes = (km, kind = 'worker') => round(((km * ROAD_FACTOR) / CITY_KMH) * 60 + TRAVEL.fixedMin) + (kind === 'shop' ? SHOP_PREP_MIN : 0);
@@ -108,4 +110,4 @@ async function nearest({ lineCode, lat, lng }) {
   return { ...best, nearby: est.size, promiseMinutes: PROMISE_MIN };
 }
 
-module.exports = { travel, forProviders, nearest, roughMinutes, TRAVEL, PROMISE_MIN, SHOP_PREP_MIN };
+module.exports = { travel, forProviders, nearest, roughMinutes, kmWithinPromise, TRAVEL, PROMISE_MIN, SHOP_PREP_MIN };

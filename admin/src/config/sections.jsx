@@ -41,7 +41,7 @@ import {
   Sparkles,
   Warehouse,
 } from 'lucide-react';
-import { FLEET_VIEWS, FLEET_TITLE, FLEET_SUBTITLE } from '@fleet/config/views';
+import { ADMIN_FLEET_VIEWS } from '@/features/fleet/views';
 import Hub from '../ui/Hub';
 
 /**
@@ -107,8 +107,8 @@ const hub = (title, subtitle, views) => {
 };
 
 const HUBS = {
-  // The Fleet portal's own screens (fleet/src), shown here too.
-  fleet: hub(FLEET_TITLE, FLEET_SUBTITLE, FLEET_VIEWS),
+  // Oversight of the fleet; it is run in the Fleet portal (fleet/).
+  fleet: hub('Fleet insights', 'How your own hubs and staff are doing, and what to do about it', ADMIN_FLEET_VIEWS),
   helpdesk: hub('Help desk', 'Customer tickets, disputes and reviews', [
     { id: 'tickets', label: 'Tickets', icon: HeadphonesIcon, Comp: P.Tickets },
     { id: 'disputes', label: 'Disputes', icon: Scale, Comp: P.Disputes },
@@ -172,7 +172,7 @@ export const NAV_GROUPS = [
   ] },
   // ZappyOne's own staff (Rakshak) and dark stores: everything in one place (features/fleet).
   { label: 'Fleet', items: [
-    { id: 'fleet', area: 'fleet', label: 'Fleet', icon: Warehouse, Comp: HUBS.fleet },
+    { id: 'fleet', area: 'fleet', label: 'Fleet insights', icon: Warehouse, Comp: HUBS.fleet },
     { id: 'workers', area: 'providers', label: 'Workers', icon: Briefcase, Comp: P.Workers },
     { id: 'workerops', area: 'providers', label: 'Worker ops', icon: Activity, Comp: P.WorkerOps },
     { id: 'training', area: 'providers', label: 'Training', icon: GraduationCap, Comp: P.Training },

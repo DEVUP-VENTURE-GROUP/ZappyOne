@@ -207,3 +207,42 @@ describe('the fleet looks after itself', () => {
     expect(Array.isArray(att.lowStock)).toBe(true);
   });
 });
+
+describe('job target and incentive', () => {
+  const cfgService = require('../src/modules/pricing/services/config.service');
+  const { JobGiveBack } = require('../src/modules/jobs/give-back');
+  const shiftsOn = (s, days, month) => Shift.create(days.map((d) => {
+    const day = `${month}-${String(d).padStart(2, '0')}`;
+    return { workerId: s._id, hubId: hub._id, day, code: 'now', startAt: new Date(`${day}T09:00:00+05:30`), endAt: new Date(`${day}T17:00:00+05:30`), status: 'done' };
+  }));
+  const jobsDone = (s, count) => PetBooking.collection.insertMany(Array.from({ length: count }, (_, i) => ({
+    reference: `ZPT${n}${i}`, userId: new mongoose.Types.ObjectId(), categoryCode: 'pet_grooming', status: 'CLOSED', workerId: s._id, shopId: null,
+    execution: { completedAt: new Date() }, pricing: { totalPaise: 50000, providerAmountPaise: 0 }, statusHistory: [], createdAt: new Date(), updatedAt: new Date(),
+  })));
+
+  beforeAll(() => cfgService.updateActiveConfig({ workforce: { ...cfgService.WORKFORCE_DEFAULTS, monthlyJobTarget: 26, incentivePerJobPaise: 2000, lowWorkPct: 60, giveBackFlag: 3 } }, null));
+
+  test('the target follows paid days, and every job above it earns the incentive on top of salary', async () => {
+    const s = await person({ salary: 1300000 });
+    const month = payroll.monthOf();
+    await shiftsOn(s, [1, 2, 3, 4], month);
+    await jobsDone(s, 6);
+    const m = await payroll.myMonth(s._id, month);
+    expect(m).toMatchObject({ paidDays: 4, targetJobs: 4, jobs: 6, extraJobs: 2, incentivePaise: 4000, lowWork: false });
+    expect(m.totalPaise).toBe(m.payPaise + 4000);
+  });
+
+  test('well under target, or handing jobs back often, is flagged; admin insights say so', async () => {
+    const s = await person();
+    const month = payroll.monthOf();
+    await shiftsOn(s, [6, 7, 8, 9, 10, 11], month);
+    await jobsDone(s, 1);
+    await JobGiveBack.collection.insertMany([1, 2, 3].map(() => ({ kind: 'pet', jobId: new mongoose.Types.ObjectId(), providerKind: 'worker', providerId: s._id, type: 'give_back', createdAt: new Date() })));
+    const m = await payroll.myMonth(s._id, month);
+    expect(m).toMatchObject({ targetJobs: 6, jobs: 1, lowWork: true, givenBack: 3, manyGiveBacks: true });
+    const { signals, people } = await require('../src/modules/workforce/insights.service').insights(month);
+    expect(people.find((p) => p.workerId === String(s._id))).toMatchObject({ targetPct: 17 });
+    expect(signals.map((x) => x.title).join(' | ')).toMatch(/under target/);
+    expect(signals.map((x) => x.title).join(' | ')).toMatch(/handing jobs back/);
+  });
+});
