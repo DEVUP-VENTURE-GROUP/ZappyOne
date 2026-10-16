@@ -78,6 +78,7 @@ async function autoAcceptCandidates(kind, doc, radiusKm) {
     Shop.find({ _id: { $in: shopIds }, ...notPaused }).select(`${require('../shop/shop.service').LIVE_FIELDS} autoAccept`).lean(),
   ]);
   const live = await require('../worker/presence').liveIds(workers.map((w) => w._id));
+  const fullShops = await require('../shop/partner.service').atCapacity(shops.map((s) => s._id));
   const { free } = await require('./workload').classify(workers.map((w) => w._id));
   const km = (c) => (c?.length === 2 ? haversineKm(at.lat, at.lng, c[1], c[0]) : null);
   const duty = new Set(onDuty);
@@ -89,7 +90,8 @@ async function autoAcceptCandidates(kind, doc, radiusKm) {
         // Staff on duty: as far as their hub serves, whatever this stage's radius.
         ? { kind: 'worker', id: String(w._id), km: km(w.currentLocation?.coordinates), staff: true, reachKm: reach.get(String(w.employment?.hubId)) || radiusKm }
         : { kind: 'worker', id: String(w._id), km: km(w.currentLocation?.coordinates), maxKm: w.autoAccept?.maxKm })),
-    ...shops.filter(require('../shop/shop.service').isLive)
+    // A partner at its capacity (shop/partner.service) is offered nothing new until one finishes.
+    ...shops.filter(require('../shop/shop.service').isLive).filter((s) => !fullShops.has(String(s._id)))
       .map((s) => ({ kind: 'shop', id: String(s._id), km: km(s.address?.location?.coordinates), maxKm: s.autoAccept?.maxKm })),
   ]
     .filter((p) => p.km != null && p.km <= (p.staff ? p.reachKm : Math.min(radiusKm, p.maxKm || radiusKm)))

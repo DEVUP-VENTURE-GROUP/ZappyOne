@@ -128,6 +128,16 @@ const workerSchema = new mongoose.Schema(
      * booked shifts; job money is ZappyOne's, tips are theirs. Everyone else
      * is a partner paid per job. Set by admin only.
      */
+    /**
+     * In a partner's team (shopId set; shop/partner.service): a member, or a
+     * team lead who sees and assigns their group's jobs. leadId: their lead.
+     * lastAssignedAt: when the partner's dispatch last gave them a job (turns).
+     */
+    team: {
+      role: { type: String, enum: ['member', 'lead'], default: 'member' },
+      leadId: { type: mongoose.Schema.Types.ObjectId, ref: 'Worker', default: null },
+      lastAssignedAt: { type: Date, default: null },
+    },
     employment: {
       type: { type: String, enum: ['partner', 'staff'], default: 'partner', index: true },
       hubId: { type: mongoose.Schema.Types.ObjectId, ref: 'Hub', default: null, index: true },

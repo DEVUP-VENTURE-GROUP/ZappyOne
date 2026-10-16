@@ -229,7 +229,10 @@ async function findProviders({
     return { recommended: null, providers: [], rejected: [], reason: 'service_mode_not_allowed' };
   }
 
-  const serviceable = await findServiceableProviders({ lat, lng, pincode, cityCode, serviceMode });
+  // A partner at its capacity (shop/partner.service) is not offered more until one finishes.
+  const found = await findServiceableProviders({ lat, lng, pincode, cityCode, serviceMode });
+  const full = await require('../../shop/partner.service').atCapacity(found.filter((x) => x.shopId).map((x) => x.shopId));
+  const serviceable = found.filter((x) => !x.shopId || !full.has(String(x.shopId)));
   if (!serviceable.length) return { recommended: null, providers: [], rejected: [], reason: 'no_provider_in_area' };
 
   // One read for the grade catalog, rather than one per provider per grade.

@@ -91,6 +91,33 @@ router.post(
 
 router.get('/me/workers', ctrl.listWorkers);
 
+/* Partner OS (shop/partner.service): type, dispatch rule, capacity, team, numbers. */
+router.get('/me/partner', async (req, res, next) => {
+  try { res.json(await require('./partner.service').settingsOf(req.auth.sub)); } catch (err) { next(err); }
+});
+router.put('/me/partner',
+  validate(Joi.object({
+    partnerType: Joi.string().valid('shop', 'agency', 'company'),
+    mode: Joi.string().valid('manual', 'nearest', 'round_robin'),
+    capacity: Joi.number().integer().min(0).max(1000),
+  }).min(1)),
+  async (req, res, next) => {
+    try { res.json(await require('./partner.service').saveSettings(req.auth.sub, req.body)); } catch (err) { next(err); }
+  });
+router.post('/me/workers/bulk',
+  validate(Joi.object({ rows: Joi.array().items(Joi.object({ phone: Joi.string().trim().max(20).required(), name: Joi.string().trim().max(100).allow('') })).min(1).max(200).required() })),
+  async (req, res, next) => {
+    try { res.json(await require('./partner.service').invite(req.auth.sub, req.body.rows)); } catch (err) { next(err); }
+  });
+router.patch('/me/workers/:workerId/team',
+  validate(Joi.object({ role: Joi.string().valid('member', 'lead'), leadId: Joi.string().hex().length(24).allow(null) }).min(1)),
+  async (req, res, next) => {
+    try { res.json({ worker: await require('./partner.service').setRole(req.auth.sub, req.params.workerId, req.body) }); } catch (err) { next(err); }
+  });
+router.get('/me/insights', async (req, res, next) => {
+  try { res.json(await require('./partner.service').insights(req.auth.sub, Number(req.query.days) || 30)); } catch (err) { next(err); }
+});
+
 /* Withdraw: what ZappyOne owes the shop, and asking for it (shop/shop-payout). */
 router.get('/me/payouts', async (req, res, next) => {
   try { res.json(await require('./shop-payout').mine(req.auth.sub)); } catch (err) { next(err); }

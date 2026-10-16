@@ -64,12 +64,16 @@ router.post('/:id/sos',
  * repair, pet care, whatever the shop was booked for (jobs/assignment.js).
  */
 router.post('/:id/assign',
-  authenticate, requireRole('shop'),
+  authenticate, requireRole('shop', 'worker'),
   validate(Joi.object({ workerId: Joi.string().hex().length(24).required() })),
   async (req, res, next) => {
     try {
+      // A partner's team lead assigns within their own group (shop/partner.service).
+      const shopId = req.auth.role === 'shop'
+        ? req.auth.sub
+        : (await require('../shop/partner.service').assertLeadMayAssign(req.auth.sub, req.body.workerId)).shopId;
       const { kind, job, worker } = await require('./assignment').assignTechnician({
-        jobId: req.params.id, shopId: req.auth.sub, workerId: req.body.workerId,
+        jobId: req.params.id, shopId, workerId: req.body.workerId,
       });
       res.json({ kind, id: String(job._id), workerId: String(worker._id), workerName: worker.name || '' });
     } catch (err) { next(err); }

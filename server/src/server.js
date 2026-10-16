@@ -357,6 +357,10 @@ function startMatchingWaves() {
   setInterval(() => {
     waves.sweep().catch((err) => logger.warn({ err: err.message }, "[WAVES] sweep failed"));
   }, 10 * 1000);
+  // Partners on automatic dispatch: jobs they hold with nobody on them go to a member (shop/partner.service).
+  setInterval(() => {
+    require("./modules/shop/partner.service").dispatchSweep().catch((err) => logger.warn({ err: err.message }, "[PARTNER] dispatch failed"));
+  }, 15 * 1000);
   // Staff shifts: never started = missed, left open = closed (workforce/shifts.service).
   setInterval(() => {
     require("./modules/workforce/shifts.service").sweep().catch((err) => logger.warn({ err: err.message }, "[SHIFTS] sweep failed"));

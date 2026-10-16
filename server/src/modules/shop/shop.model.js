@@ -131,6 +131,22 @@ const shopSchema = new mongoose.Schema(
      * them without tapping, so customers are matched at once. Their choice;
      * cancelling an auto-accepted job pauses it (autoAcceptPauseDays).
      */
+    /**
+     * What kind of partner (shop/partner.service): a shop with a counter
+     * customers can walk into, an agency (a team with no counter), or a
+     * service company. Only shops are listed as places to walk in.
+     */
+    partnerType: { type: String, enum: ['shop', 'agency', 'company'], default: 'shop' },
+    /**
+     * How jobs reach the team (shop/partner.service): the owner assigns each
+     * (manual), the nearest free member gets it, or members take turns
+     * (round_robin). capacity: most jobs open at once; when full, ZappyOne
+     * stops offering new ones. 0 = no limit.
+     */
+    dispatch: {
+      mode: { type: String, enum: ['manual', 'nearest', 'round_robin'], default: 'manual' },
+      capacity: { type: Number, default: 0, min: 0, max: 1000 },
+    },
     autoAccept: {
       enabled: { type: Boolean, default: false },
       maxKm: { type: Number, default: null, min: 1, max: 30 },

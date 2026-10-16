@@ -68,6 +68,9 @@ async function claimBooking(req, res, next) {
       await require('../../jobs/workload').assertCanTakeAnother(who.id);
     }
     await require('../../onboarding/eligibility').assertApproved({ role: who.kind, id: who.id }, await require('../../jobs/kinds').KINDS.repair.line(current));
+    if (who.kind === 'shop' && (await require('../../shop/partner.service').atCapacity([who.id])).has(who.id)) {
+      return res.status(409).json({ error: 'You are at your job limit. Finish one first, or raise the limit in Settings.', code: 'PARTNER_FULL' });
+    }
     const offered = (current.matching?.offeredTo || []).includes(`${who.kind}:${who.id}`);
     if (!offered) {
       const s = await require('../../jobs/fast-assign').settings();
