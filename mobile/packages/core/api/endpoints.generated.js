@@ -1188,6 +1188,7 @@ export function endpoints(b, { adminApiPath }) {
     adminInsightsCustomers: b.query({ query: (days = 30) => ({ url: adminApiPath('/insights/customers'), params: { days } }) }),
     adminInsightsMoney: b.query({ query: (days = 30) => ({ url: adminApiPath('/insights/money'), params: { days } }) }),
     adminInsightsLive: b.query({ query: () => adminApiPath('/insights/live') }),
+    adminInsightsNextLaunch: b.query({ query: (days = 30) => ({ url: adminApiPath('/insights/next-launch'), params: { days } }) }),
     adminInsightsGeo: b.query({ query: ({ days = 30, service } = {}) => ({ url: adminApiPath('/insights/geo'), params: { days, ...(service && { service }) } }) }),
     adminInsightsDemand: b.query({ query: (days = 7) => ({ url: adminApiPath('/insights/demand'), params: { days } }) }),
     adminBookingAttention: b.query({ query: () => adminApiPath('/bookings/attention'), providesTags: ['AdminMetrics'] }),

@@ -201,6 +201,9 @@ router.get('/insights/live', async (req, res, next) => {
   try { res.json(await require('./analytics.service').live()); } catch (err) { next(err); }
 });
 
+router.get('/insights/next-launch', async (req, res, next) => {
+  try { res.json(await require('./expansion.service').nextLaunch({ days: Number(req.query.days) || 30 })); } catch (err) { next(err); }
+});
 router.get('/insights/geo', async (req, res, next) => {
   try { res.json(await require('./analytics.service').geo({ days: Number(req.query.days) || 30, service: req.query.service || null })); } catch (err) { next(err); }
 });
