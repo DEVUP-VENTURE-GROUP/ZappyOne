@@ -522,6 +522,7 @@ export const useAdminPayrollCsvMutation = h.useAdminPayrollCsvMutation;
 export const useAdminFleetAttentionQuery = h.useAdminFleetAttentionQuery;
 export const useAdminAutoFillRosterMutation = h.useAdminAutoFillRosterMutation;
 export const useAdminFleetOverviewQuery = h.useAdminFleetOverviewQuery;
+export const useAdminFleetActivityQuery = h.useAdminFleetActivityQuery;
 export const useAdminFleetFinanceQuery = h.useAdminFleetFinanceQuery;
 export const useAdminFleetExpensesQuery = h.useAdminFleetExpensesQuery;
 export const useAdminAddFleetExpenseMutation = h.useAdminAddFleetExpenseMutation;

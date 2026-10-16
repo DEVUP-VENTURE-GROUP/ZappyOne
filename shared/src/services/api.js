@@ -633,6 +633,7 @@ export const {
   useAdminFleetAttentionQuery,
   useAdminAutoFillRosterMutation,
   useAdminFleetOverviewQuery,
+  useAdminFleetActivityQuery,
   useAdminFleetFinanceQuery,
   useAdminFleetExpensesQuery,
   useAdminAddFleetExpenseMutation,

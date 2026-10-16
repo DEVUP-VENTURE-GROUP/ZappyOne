@@ -20,12 +20,15 @@ const auditLogSchema = new mongoose.Schema(
     after: mongoose.Schema.Types.Mixed,
     ip: String,
     userAgent: String,
+    // Which web portal the request came from (admin, fleet…), from x-client-type.
+    portal: { type: String, default: null },
   },
   { timestamps: { createdAt: "at", updatedAt: false } },
 );
 
 auditLogSchema.index({ "actor.id": 1, at: -1 });
 auditLogSchema.index({ action: 1, at: -1 });
+auditLogSchema.index({ portal: 1, at: -1 });
 // TTL: retain audit logs for 2 years
 auditLogSchema.index({ at: 1 }, { expireAfterSeconds: 60 * 60 * 24 * 730 });
 

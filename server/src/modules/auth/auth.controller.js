@@ -178,23 +178,29 @@ async function googlePartnerLogin(req, res, next) {
 async function loginAdmin(req, res, next) {
   const auditService = require('../admin/audit.service');
   try {
+    const portal = portalOf(req) === 'fleet' ? 'fleet' : 'admin';
     const result = await authService.loginAdmin({ ...req.body, ip: req.ip });
-    // Audit every successful admin login — required for compliance + intrusion detection.
-    auditService.log('admin.login_success', {
-      adminId: result.admin?._id,
-      email:   req.body.email,
-      ip:      req.ip,
-      ua:      req.headers['user-agent'],
+    // The Fleet portal only lets in admins whose access includes Fleet; refused before any session is kept.
+    if (portal === 'fleet') {
+      const Admin = require('../admin/admin.model');
+      const admin = await Admin.findById(result.admin?._id || result.admin?.id).lean();
+      if (!admin || !require('../admin/access/permissions').can(admin, 'fleet', 'read')) {
+        await authService.revoke(result.refreshToken).catch(() => {});
+        throw Object.assign(new Error('This account has no Fleet access'), { status: 403, code: 'NO_FLEET_ACCESS' });
+      }
+    }
+    // Every admin sign-in is recorded, with the portal: compliance and intrusion detection.
+    auditService.log({
+      actor: { kind: 'admin', id: result.admin?._id || result.admin?.id, email: req.body.email },
+      action: 'admin.login_success', ip: req.ip, userAgent: req.get('user-agent'), portal,
     }).catch(() => {});
-    setRtCookie(req, res, result.refreshToken, 'admin');
+    setRtCookie(req, res, result.refreshToken, portal);
     res.json({ accessToken: result.accessToken, admin: result.admin });
   } catch (err) {
-    // Audit failed attempts too — detects credential stuffing.
-    auditService.log('admin.login_failure', {
-      email: req.body?.email,
-      ip:    req.ip,
-      ua:    req.headers['user-agent'],
-      code:  err.code,
+    // Failed attempts too: credential stuffing shows up here.
+    auditService.log({
+      actor: { kind: 'system', email: req.body?.email }, action: 'admin.login_failure',
+      after: { code: err.code || null }, ip: req.ip, userAgent: req.get('user-agent'), portal: portalOf(req) === 'fleet' ? 'fleet' : 'admin',
     }).catch(() => {});
     next(err);
   }
@@ -214,6 +220,16 @@ async function refresh(req, res, next) {
         await authService.revoke(tokens.refreshToken).catch(() => {});
         clearRtCookie(req, res);
         return res.status(401).json({ error: 'Not a session for this app', code: 'RT_INVALID' });
+      }
+      // Fleet access taken away ends the Fleet session at its next renewal.
+      if (portal === 'fleet') {
+        const sub = require('jsonwebtoken').decode(tokens.accessToken)?.sub;
+        const admin = sub ? await require('../admin/admin.model').findById(sub).lean() : null;
+        if (!admin?.isActive || !require('../admin/access/permissions').can(admin, 'fleet', 'read')) {
+          await authService.revoke(tokens.refreshToken).catch(() => {});
+          clearRtCookie(req, res);
+          return res.status(401).json({ error: 'This account has no Fleet access', code: 'NO_FLEET_ACCESS' });
+        }
       }
       setRtCookie(req, res, tokens.refreshToken);
       return res.json({ accessToken: tokens.accessToken, role: tokens.role });

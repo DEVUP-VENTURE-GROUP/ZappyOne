@@ -14,6 +14,11 @@ const Worker = require('../worker/worker.model');
 const auditService = require('../admin/audit.service');
 
 const router = express.Router();
+router.use(require('./activity').recorder);
+
+router.get('/workforce/activity', validate(Joi.object({ page: Joi.number().integer().min(1).max(10000), actorId: Joi.string().hex().length(24) }), 'query'), async (req, res, next) => {
+  try { res.json(await require('./activity').list({ page: Number(req.query.page) || 1, actorId: req.query.actorId || null })); } catch (err) { next(err); }
+});
 
 const hubBody = Joi.object({
   name: Joi.string().trim().max(60),

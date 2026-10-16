@@ -5,8 +5,11 @@ import {
   useAdminTeamQuery, useAdminRolesQuery, useAdminMeQuery, useAdminCreateAdminMutation, useAdminUpdateAdminMutation,
 } from '@shared/services/api';
 import { SectionHeader, Card, Th, Td, PageLoader, StatusBadge, fmtDate } from '../../ui/kit';
+import AdminActivity from './AdminActivity';
 
 const splitList = (v) => v.split(',').map((x) => x.trim()).filter(Boolean);
+const FLEET = 'fleet:*';
+const opensFleet = (perms = []) => perms.some((p) => p === '*' || p === 'fleet:*' || p === 'fleet:read');
 
 /**
  * The admin team. Roles decide which areas each person can open; scope limits
@@ -19,6 +22,7 @@ export default function Team() {
   const { data: me } = useAdminMeQuery();
   const [update, { isLoading: saving }] = useAdminUpdateAdminMutation();
   const [creating, setCreating] = useState(false);
+  const [watching, setWatching] = useState(null);
 
   if (isLoading) return <PageLoader />;
   const roles = rolesData?.roles || [];
@@ -42,11 +46,13 @@ export default function Team() {
 
       <Card className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead><tr><Th>Name</Th><Th>Role</Th><Th>Scope</Th><Th>Last sign-in</Th><Th>Status</Th><Th /></tr></thead>
+          <thead><tr><Th>Name</Th><Th>Role</Th><Th>Fleet portal</Th><Th>Scope</Th><Th>Last sign-in</Th><Th>Status</Th><Th /></tr></thead>
           <tbody className="divide-y divide-slate-100">
             {(data?.admins || []).map((a) => {
               const self = me?.admin?.id === a.id;
               const scope = [...(a.scope?.markets || []), ...(a.scope?.cities || [])];
+              const byRole = opensFleet(roles.find((r) => r.id === a.role)?.permissions);
+              const extra = (a.permissions || []).includes(FLEET);
               return (
                 <tr key={a.id}>
                   <Td>{a.name}{self && <span className="ml-1 text-[11px] text-slate-400">(you)</span>}<span className="block text-[11px] text-slate-400">{a.email}</span></Td>
@@ -57,10 +63,21 @@ export default function Team() {
                       {roles.map((r) => <option key={r.id} value={r.id}>{r.label}</option>)}
                     </select>
                   </Td>
+                  <Td>
+                    {/* Fleet access comes with some roles; anyone else can be given it on its own. */}
+                    {byRole ? <span className="text-xs text-slate-500">With the role</span> : (
+                      <button type="button" disabled={saving}
+                        onClick={() => change(a, { permissions: extra ? (a.permissions || []).filter((p) => p !== FLEET) : [...(a.permissions || []), FLEET] }, extra ? `${a.name} can no longer open Fleet` : `${a.name} can now open Fleet`)}
+                        className={`rounded-md px-2 py-1 text-xs font-semibold ring-1 ${extra ? 'bg-emerald-50 text-emerald-700 ring-emerald-200' : 'text-slate-600 ring-slate-200 hover:bg-slate-50'}`}>
+                        {extra ? 'Given, remove' : 'Give access'}
+                      </button>
+                    )}
+                  </Td>
                   <Td muted>{scope.length ? scope.join(', ') : 'Everywhere'}</Td>
                   <Td muted>{a.lastLoginAt ? fmtDate(a.lastLoginAt) : 'Never'}</Td>
                   <Td><StatusBadge status={a.isActive ? 'approved' : 'blocked'} /></Td>
                   <Td>
+                    <button type="button" onClick={() => setWatching(a)} className="mr-3 text-xs font-semibold text-blue-600 hover:text-blue-800">Activity</button>
                     {!self && (
                       <button type="button" disabled={saving}
                         onClick={() => {
@@ -80,13 +97,14 @@ export default function Team() {
       </Card>
 
       {creating && <CreateAdmin roles={roles} onClose={() => setCreating(false)} />}
+      {watching && <AdminActivity admin={watching} onClose={() => setWatching(null)} />}
     </div>
   );
 }
 
 function CreateAdmin({ roles, onClose }) {
   const [create, { isLoading }] = useAdminCreateAdminMutation();
-  const [form, setForm] = useState({ name: '', email: '', password: '', role: 'ops', markets: '', cities: '' });
+  const [form, setForm] = useState({ name: '', email: '', password: '', role: 'ops', markets: '', cities: '', fleet: false });
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
   const valid = form.name.trim().length >= 2 && /\S+@\S+\.\S+/.test(form.email) && form.password.length >= 12;
 
@@ -95,6 +113,7 @@ function CreateAdmin({ roles, onClose }) {
     try {
       await create({
         name: form.name.trim(), email: form.email.trim(), password: form.password, role: form.role,
+        permissions: form.fleet && !opensFleet(roles.find((r) => r.id === form.role)?.permissions) ? [FLEET] : [],
         scope: { markets: splitList(form.markets).map((m) => m.toUpperCase()), cities: splitList(form.cities) },
       }).unwrap();
       toast.success('Admin added. Share the password with them securely.');
@@ -116,6 +135,14 @@ function CreateAdmin({ roles, onClose }) {
         <select className={field} value={form.role} onChange={set('role')} aria-label="Role">
           {roles.map((r) => <option key={r.id} value={r.id}>{r.label}</option>)}
         </select>
+        {opensFleet(roles.find((r) => r.id === form.role)?.permissions)
+          ? <p className="text-[12px] text-slate-500">This role can open the Fleet portal.</p>
+          : (
+            <label className="flex items-center gap-2 text-sm text-slate-700">
+              <input type="checkbox" checked={form.fleet} onChange={(e) => setForm((f) => ({ ...f, fleet: e.target.checked }))} className="h-4 w-4" />
+              Also give access to the Fleet portal
+            </label>
+          )}
         <input className={field} placeholder="Markets, e.g. IN (empty = all)" value={form.markets} onChange={set('markets')} />
         <input className={field} placeholder="Cities, e.g. Hyderabad (empty = all)" value={form.cities} onChange={set('cities')} />
         <button type="submit" disabled={!valid || isLoading} className="w-full bg-slate-900 text-white font-bold py-2.5 rounded-xl disabled:opacity-50">

@@ -1,5 +1,5 @@
 import { lazy } from 'react';
-import { CalendarDays, CalendarOff, IndianRupee, LineChart, Package, Users, Wallet, Warehouse } from 'lucide-react';
+import { CalendarDays, CalendarOff, History, IndianRupee, LineChart, Package, Users, Wallet, Warehouse } from 'lucide-react';
 
 /**
  * The Fleet portal's screens (fleet.zappyone.com), one folder each under
@@ -14,6 +14,7 @@ export const FLEET_VIEWS = [
   { id: 'leave', label: 'Leave', icon: CalendarOff, Comp: lazy(() => import('../features/leave/FleetLeave')) },
   { id: 'payroll', label: 'Payroll', icon: Wallet, Comp: lazy(() => import('../features/payroll/FleetPayroll')) },
   { id: 'finance', label: 'Finance', icon: IndianRupee, Comp: lazy(() => import('../features/finance/FleetFinance')) },
+  { id: 'activity', label: 'Activity', icon: History, Comp: lazy(() => import('../features/activity/FleetActivity')) },
 ];
 
 export const FLEET_TITLE = 'ZappyOne Fleet';
