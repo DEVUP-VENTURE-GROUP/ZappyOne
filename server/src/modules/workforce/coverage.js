@@ -11,10 +11,11 @@ function inRing(ring, lat, lng) {
   return inside;
 }
 
+// The drawn area and the pincodes and localities add up; the radius applies only when neither is set.
 function covers(hub, at) {
   if (!hub || !at || !hub.isActive) return false;
-  const ring = hub.area?.coordinates?.[0];
-  if (ring?.length >= 4) return inRing(ring, at.lat, at.lng);
+  const rings = [hub.area?.coordinates?.[0], ...(hub.places || []).map((p) => p.area?.coordinates?.[0])].filter((r) => r?.length >= 4);
+  if (rings.length) return rings.some((r) => inRing(r, at.lat, at.lng));
   const c = hub.meetingPoint?.location?.coordinates;
   return c?.length === 2 && haversineKm(at.lat, at.lng, c[1], c[0]) <= (hub.serviceKm || 0);
 }
@@ -27,6 +28,8 @@ function toPolygon(points) {
   return { type: 'Polygon', coordinates: [ring] };
 }
 
-const HUB_FIELDS = 'meetingPoint serviceKm area isActive';
+const boxPolygon = ({ south, west, north, east }) => ({ type: 'Polygon', coordinates: [[[west, south], [east, south], [east, north], [west, north], [west, south]]] });
 
-module.exports = { covers, inRing, toPolygon, HUB_FIELDS };
+const HUB_FIELDS = 'meetingPoint serviceKm area places isActive';
+
+module.exports = { covers, inRing, toPolygon, boxPolygon, HUB_FIELDS };

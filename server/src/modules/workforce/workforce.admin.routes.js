@@ -34,7 +34,18 @@ const hubBody = Joi.object({
     start: Joi.string().pattern(/^\d{2}:\d{2}$/).required(), end: Joi.string().pattern(/^\d{2}:\d{2}$/).required(),
     need: Joi.number().integer().min(0).max(200).required(),
   })).max(8),
+  places: Joi.array().items(Joi.object({
+    kind: Joi.string().valid('pincode', 'locality').required(), key: Joi.string().max(80).required(), name: Joi.string().allow('').max(80),
+    bbox: Joi.object({ west: Joi.number().min(-180).max(180).required(), south: Joi.number().min(-90).max(90).required(), east: Joi.number().min(-180).max(180).required(), north: Joi.number().min(-90).max(90).required() }).required(),
+  })).max(100).unique('key'),
   isActive: Joi.boolean(),
+});
+
+// A place's box from the map service becomes its area; a box over ~1° (about 110 km) is refused as a mistake.
+const toPlaces = (list = []) => list.map((p) => {
+  if (p.bbox.east <= p.bbox.west || p.bbox.north <= p.bbox.south) throw Object.assign(new Error(`${p.name || p.key} has no area`), { status: 400, code: 'BAD_PLACE' });
+  if (p.bbox.east - p.bbox.west > 1 || p.bbox.north - p.bbox.south > 1) throw Object.assign(new Error(`${p.name || p.key} is too large to serve from one hub`), { status: 400, code: 'PLACE_TOO_LARGE' });
+  return { kind: p.kind, key: p.key, name: p.name || '', area: require('./coverage').boxPolygon(p.bbox) };
 });
 
 const toDoc = (b) => {
@@ -46,6 +57,25 @@ const toDoc = (b) => {
   return out;
 };
 
+// Place search, and a pincode's or locality's area, for the hub map (Mapbox); `search` false on the hubs list hides them.
+const notSetUp = (res) => res.status(503).json({ error: 'Map search is not set up', code: 'MAPS_NOT_CONFIGURED' });
+router.get('/workforce/places', validate(Joi.object({ q: Joi.string().trim().min(2).max(120).required(), lat: Joi.number(), lng: Joi.number() }), 'query'), async (req, res, next) => {
+  try {
+    const maps = require('../maps/mapbox.service');
+    if (!maps.configured()) return notSetUp(res);
+    res.json({ places: await maps.search(req.query.q, { lat: req.query.lat, lng: req.query.lng }) });
+  } catch (err) { next(err); }
+});
+router.get('/workforce/areas', validate(Joi.object({ q: Joi.string().trim().min(2).max(80).required(), lat: Joi.number(), lng: Joi.number() }), 'query'), async (req, res, next) => {
+  try {
+    const maps = require('../maps/mapbox.service');
+    if (!maps.configured()) return notSetUp(res);
+    const area = await maps.areaOf(req.query.q, { lat: req.query.lat, lng: req.query.lng });
+    if (!area) return res.status(404).json({ error: `Could not find ${req.query.q}`, code: 'NOT_FOUND' });
+    res.json({ area });
+  } catch (err) { next(err); }
+});
+
 router.get('/workforce/hubs', async (req, res, next) => {
   try {
     const [hubs, counts] = await Promise.all([
@@ -53,7 +83,7 @@ router.get('/workforce/hubs', async (req, res, next) => {
       Worker.aggregate([{ $match: { 'employment.type': 'staff' } }, { $group: { _id: '$employment.hubId', n: { $sum: 1 } } }]),
     ]);
     const n = new Map(counts.map((c) => [String(c._id), c.n]));
-    res.json({ hubs: hubs.map((h) => ({ ...h, id: String(h._id), staff: n.get(String(h._id)) || 0 })) });
+    res.json({ hubs: hubs.map((h) => ({ ...h, id: String(h._id), staff: n.get(String(h._id)) || 0 })), search: require('../maps/mapbox.service').configured() });
   } catch (err) { next(err); }
 });
 
@@ -63,6 +93,7 @@ router.post('/workforce/hubs', validate(hubBody.fork(['name', 'city', 'lat', 'ln
       name: req.body.name, city: req.body.city, radiusM: req.body.radiusM, serviceKm: req.body.serviceKm, shifts: req.body.shifts || [],
       meetingPoint: { address: req.body.address || '', location: { type: 'Point', coordinates: [req.body.lng, req.body.lat] } },
       ...(req.body.area ? { area: require('./coverage').toPolygon(req.body.area) } : {}),
+      places: toPlaces(req.body.places),
     });
     await auditService.fromRequest(req, 'workforce.hub_create', { kind: 'hub', id: hub._id }, null, req.body);
     res.status(201).json({ hub });
@@ -73,7 +104,9 @@ router.put('/workforce/hubs/:id', validate(hubBody.min(1)), async (req, res, nex
   try {
     const before = await Hub.findById(req.params.id).lean();
     if (!before) return res.status(404).json({ error: 'Hub not found' });
-    const hub = await Hub.findByIdAndUpdate(req.params.id, { $set: toDoc(req.body), ...(req.body.area === null ? { $unset: { area: 1 } } : {}) }, { new: true, runValidators: true }).lean();
+    const set = toDoc(req.body);
+    if (req.body.places) set.places = toPlaces(req.body.places);
+    const hub = await Hub.findByIdAndUpdate(req.params.id, { $set: set, ...(req.body.area === null ? { $unset: { area: 1 } } : {}) }, { new: true, runValidators: true }).lean();
     await auditService.fromRequest(req, 'workforce.hub_update', { kind: 'hub', id: req.params.id }, before, hub);
     res.json({ hub });
   } catch (err) { next(err); }

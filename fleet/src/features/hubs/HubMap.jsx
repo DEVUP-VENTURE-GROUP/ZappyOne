@@ -1,15 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { MapPin, Pentagon, Undo2, Trash2, Circle } from 'lucide-react';
+import { MapPin, Pentagon, Undo2, Trash2, Circle, Hash } from 'lucide-react';
 import { baseLayer } from '@admin/ui/map/tiles';
+import PlaceSearch from './PlaceSearch';
+import AreaPicker from './AreaPicker';
 
 const HYDERABAD = [17.4239, 78.4738];
 const BRAND = '#1F4FD8';
 const toLatLng = ([lng, lat]) => [lat, lng];
 
-// A hub on the map: its meeting point and check-in ring, and the area it serves (drawn, or its radius); other hubs shown faintly.
-export default function HubMap({ lat, lng, radiusM, serviceKm, area, others = [], onPick, onArea }) {
+// A hub on the map: its meeting point and check-in ring, and the area it serves (drawn, pincodes, or its radius); other hubs shown faintly.
+export default function HubMap({ lat, lng, radiusM, serviceKm, area, places = [], search = false, others = [], onPick, onArea, onPlaces }) {
   const box = useRef(null);
   const map = useRef(null);
   const layers = useRef(null);
@@ -46,25 +48,35 @@ export default function HubMap({ lat, lng, radiusM, serviceKm, area, others = []
         : c && L.circle(toLatLng(c), { radius: (h.serviceKm || 0) * 1000, color: '#64748B', weight: 1, dashArray: '4 4', fillOpacity: 0.04 });
       shape?.bindTooltip(h.name, { sticky: true }).addTo(g);
     }
+    for (const p of places) {
+      const ring = p.area?.coordinates?.[0];
+      if (ring) L.polygon(ring.map(toLatLng), { color: '#0891B2', weight: 1.5, fillOpacity: 0.12 }).bindTooltip(p.kind === 'pincode' ? `${p.key} ${p.name || ''}` : p.name, { sticky: true }).addTo(g);
+    }
     const pts = area || [];
     if (pts.length >= 3) L.polygon(pts.map(toLatLng), { color: BRAND, weight: 2, fillOpacity: 0.1 }).addTo(g);
     else if (pts.length) L.polyline(pts.map(toLatLng), { color: BRAND, weight: 2, dashArray: '6 4' }).addTo(g);
     if (mode === 'area') pts.forEach((p) => L.circleMarker(toLatLng(p), { radius: 4, color: BRAND, weight: 2, fillColor: '#fff', fillOpacity: 1 }).addTo(g));
     if (lat != null) {
-      if (pts.length < 3) L.circle([lat, lng], { radius: (serviceKm || 0) * 1000, color: BRAND, weight: 1.5, dashArray: '6 6', fillOpacity: 0.05 }).addTo(g);
+      if (pts.length < 3 && !places.length) L.circle([lat, lng], { radius: (serviceKm || 0) * 1000, color: BRAND, weight: 1.5, dashArray: '6 6', fillOpacity: 0.05 }).addTo(g);
       L.circle([lat, lng], { radius: radiusM || 200, color: BRAND, weight: 1, fillOpacity: 0.15 }).addTo(g);
       L.circleMarker([lat, lng], { radius: 8, color: BRAND, weight: 3, fillColor: '#fff', fillOpacity: 1 }).addTo(g);
     }
-  }, [lat, lng, radiusM, serviceKm, area, others, mode]);
+  }, [lat, lng, radiusM, serviceKm, area, places, others, mode]);
 
   // Show the whole area served when the radius changes or a drawn area is finished.
   useEffect(() => {
     const m = map.current;
     if (!m || lat == null || mode === 'area') return;
-    const pts = area || [];
+    const pts = [...(area || []), ...places.flatMap((p) => p.area?.coordinates?.[0] || [])];
     const bounds = pts.length >= 3 ? L.latLngBounds(pts.map(toLatLng)) : L.latLng(lat, lng).toBounds((serviceKm || 1) * 2000);
     m.fitBounds(bounds, { padding: [24, 24], maxZoom: 15 });
-  }, [lat, lng, serviceKm, mode]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [lat, lng, serviceKm, mode, places]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // A searched place: go there; while placing the meeting point, it becomes the meeting point.
+  function goTo(place) {
+    map.current?.setView([place.lat, place.lng], 15);
+    if (modeRef.current === 'point') onPick({ lat: Number(place.lat.toFixed(6)), lng: Number(place.lng.toFixed(6)), address: place.label });
+  }
 
   const pts = area || [];
   const tab = (id, Icon, label) => (
@@ -79,7 +91,8 @@ export default function HubMap({ lat, lng, radiusM, serviceKm, area, others = []
       <div className="flex flex-wrap items-center gap-2">
         <div className="flex rounded-lg bg-slate-100 p-0.5">
           {tab('point', MapPin, 'Meeting point')}
-          {tab('area', Pentagon, 'Draw service area')}
+          {tab('area', Pentagon, 'Draw area')}
+          {search && tab('places', Hash, 'Pincodes & areas')}
         </div>
         {mode === 'area' && (
           <>
@@ -88,13 +101,17 @@ export default function HubMap({ lat, lng, radiusM, serviceKm, area, others = []
             <button type="button" onClick={() => setMode('point')} className="rounded-lg bg-blue-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-blue-700">Done</button>
           </>
         )}
+        {search && <div className="sm:ml-auto"><PlaceSearch near={lat != null ? { lat, lng } : null} onPlace={goTo} /></div>}
       </div>
+      {mode === 'places' && <AreaPicker places={places} near={lat != null ? { lat, lng } : null} onChange={onPlaces} />}
       <div ref={box} className="h-80 w-full overflow-hidden rounded-xl border border-slate-200" aria-label="Map of the hub" />
       <p className="flex items-center gap-1.5 text-[12px] text-slate-500">
         {mode === 'area'
           ? `Click the map to add corners of the area this hub serves. ${pts.length} corner${pts.length === 1 ? '' : 's'}${pts.length && pts.length < 3 ? ', at least 3 needed' : ''}.`
-          : pts.length >= 3
-            ? 'Orders inside the drawn area go to this hub’s staff. Grey dashed shapes are your other hubs.'
+          : mode === 'places'
+            ? 'Type pincodes or area names. Each is shown as the box the map service gives it, so edges are approximate; draw an area too for exact edges.'
+          : pts.length >= 3 || places.length
+            ? `Orders inside the ${[pts.length >= 3 && 'drawn area', places.length && `${places.length} pincode${places.length === 1 ? '' : 's'} or area${places.length === 1 ? '' : 's'}`].filter(Boolean).join(' or ')} go to this hub’s staff. Grey dashed shapes are your other hubs.`
             : <><Circle size={11} /> No area drawn: orders within {serviceKm || 0} km of the meeting point go to this hub’s staff. Draw an area to set it exactly.</>}
       </p>
     </div>

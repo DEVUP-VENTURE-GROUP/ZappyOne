@@ -28,6 +28,15 @@ const hubSchema = new mongoose.Schema({
   serviceKm: { type: Number, default: 8, min: 1, max: 50 }, // how far its staff are sent, when no area is drawn
   // The area it serves, drawn on the map; when set it decides, not serviceKm (workforce/coverage).
   area: { type: { type: String, enum: ['Polygon'] }, coordinates: { type: [[[Number]]], default: undefined } },
+  // Pincodes and localities it also serves, each with its area as the map service bounds it (workforce/coverage).
+  places: {
+    type: [new mongoose.Schema({
+      kind: { type: String, enum: ['pincode', 'locality'], required: true },
+      key: { type: String, required: true, maxlength: 80 }, name: { type: String, default: '', maxlength: 80 },
+      area: { type: { type: String, enum: ['Polygon'] }, coordinates: { type: [[[Number]]] } },
+    }, { _id: false })],
+    default: [],
+  },
   shifts: { type: [shiftSchema], default: [] },
   isActive: { type: Boolean, default: true, index: true },
 }, { timestamps: true });

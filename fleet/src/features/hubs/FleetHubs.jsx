@@ -9,7 +9,7 @@ import HubsMap from './HubsMap';
 export default function FleetHubs() {
   const { data, isLoading, isError } = useAdminHubsQuery();
   const [editing, setEditing] = useState(null);
-  if (editing) return <HubEditor hub={editing === 'new' ? null : editing} others={(data?.hubs || []).filter((h) => h.id !== editing.id)} onDone={() => setEditing(null)} />;
+  if (editing) return <HubEditor hub={editing === 'new' ? null : editing} others={(data?.hubs || []).filter((h) => h.id !== editing.id)} search={!!data?.search} onDone={() => setEditing(null)} />;
   if (isError) return <EmptyState message="Could not load the hubs." />;
   if (isLoading) return <PageLoader />;
   const hubs = data?.hubs || [];
@@ -29,7 +29,7 @@ export default function FleetHubs() {
                   <span className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${h.isActive ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>{h.isActive ? 'Open' : 'Closed'}</span>
                 </div>
                 <p className="mt-0.5 truncate text-[12.5px] text-slate-500">{h.meetingPoint?.address || h.city}</p>
-                <p className="mt-2 text-[12.5px] text-slate-600">{h.staff} staff, {h.area?.coordinates ? 'drawn area' : `serves ${h.serviceKm} km`}, {h.shifts.length} shift{h.shifts.length === 1 ? '' : 's'}</p>
+                <p className="mt-2 text-[12.5px] text-slate-600">{h.staff} staff, {[h.area?.coordinates && 'drawn area', h.places?.length && `${h.places.length} pincode${h.places.length === 1 ? '' : 's'}/area${h.places.length === 1 ? '' : 's'}`].filter(Boolean).join(' + ') || `serves ${h.serviceKm} km`}, {h.shifts.length} shift{h.shifts.length === 1 ? '' : 's'}</p>
                 <p className="mt-1 text-[12px] text-slate-400">{h.shifts.map((s) => `${s.label} ${s.start}–${s.end} (${s.need})`).join(', ')}</p>
               </Card>
             </button>

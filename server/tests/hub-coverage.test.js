@@ -27,3 +27,14 @@ test('a concave area: the notch is outside', () => {
 test('a closed hub serves nowhere', () => {
   expect(covers(hub({ isActive: false }), MADHAPUR)).toBe(false);
 });
+
+test('pincodes add to a drawn area, and once either is set the radius no longer applies', () => {
+  const { boxPolygon } = require('../src/modules/workforce/coverage');
+  const pin = { kind: 'pincode', key: '500081', area: boxPolygon({ south: 17.43, west: 78.37, north: 17.46, east: 78.40 }) };
+  const far = { lat: 17.60, lng: 78.55 };
+  const drawn = toPolygon([[78.54, 17.59], [78.56, 17.59], [78.56, 17.61], [78.54, 17.61]]);
+  expect(covers(hub({ places: [pin] }), MADHAPUR)).toBe(true);
+  expect(covers(hub({ places: [pin] }), km(10))).toBe(false);
+  expect(covers(hub({ places: [pin], area: drawn }), far)).toBe(true);
+  expect(covers(hub({ places: [pin], area: drawn }), MADHAPUR)).toBe(true);
+});

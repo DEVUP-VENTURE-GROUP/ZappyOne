@@ -5,15 +5,21 @@ import { useAdminCreateHubMutation, useAdminUpdateHubMutation } from '@shared/se
 import { Card, FormRow, Input, SaveBtn } from '@admin/ui/kit';
 import HubMap from './HubMap';
 
+const bboxOf = (area) => {
+  const ring = area?.coordinates?.[0] || [];
+  const xs = ring.map((c) => c[0]); const ys = ring.map((c) => c[1]);
+  return { west: Math.min(...xs), south: Math.min(...ys), east: Math.max(...xs), north: Math.max(...ys) };
+};
 const BLANK_SHIFT = { code: '', label: '', start: '09:00', end: '18:00', need: 2 };
 
 /** Create or edit a hub (dark store): where it is, how close check-in must be, how far it serves, its shifts. */
-export default function HubEditor({ hub, others = [], onDone }) {
+export default function HubEditor({ hub, others = [], search = false, onDone }) {
   const [form, setForm] = useState(() => ({
     name: hub?.name || '', city: hub?.city || 'Hyderabad', address: hub?.meetingPoint?.address || '',
     lat: hub?.meetingPoint?.location?.coordinates?.[1] ?? null, lng: hub?.meetingPoint?.location?.coordinates?.[0] ?? null,
     radiusM: hub?.radiusM ?? 200, serviceKm: hub?.serviceKm ?? 8, isActive: hub?.isActive ?? true,
     area: hub?.area?.coordinates?.[0]?.slice(0, -1) || [],
+    places: (hub?.places || []).map((p) => ({ ...p, bbox: bboxOf(p.area) })),
     shifts: hub?.shifts?.length ? hub.shifts : [{ code: 'morning', label: 'Morning', start: '08:00', end: '14:00', need: 3 }, { code: 'evening', label: 'Evening', start: '14:00', end: '21:00', need: 3 }],
   }));
   const [create, { isLoading: creating }] = useAdminCreateHubMutation();
@@ -24,7 +30,7 @@ export default function HubEditor({ hub, others = [], onDone }) {
 
   async function save() {
     const area = form.area.length >= 3 ? form.area : (hub?.area ? null : undefined);
-    const body = { ...form, area, radiusM: Number(form.radiusM), serviceKm: Number(form.serviceKm), shifts: form.shifts.map((s) => ({ ...s, code: s.code.trim().toLowerCase().replace(/\s+/g, '-'), need: Number(s.need) })) };
+    const body = { ...form, area, places: form.places.map(({ kind, key, name, bbox }) => ({ kind, key, name, bbox })), radiusM: Number(form.radiusM), serviceKm: Number(form.serviceKm), shifts: form.shifts.map((s) => ({ ...s, code: s.code.trim().toLowerCase().replace(/\s+/g, '-'), need: Number(s.need) })) };
     try {
       if (hub?._id) await update({ id: hub._id, ...body }).unwrap(); else await create(body).unwrap();
       toast.success('Hub saved'); onDone();
@@ -39,14 +45,15 @@ export default function HubEditor({ hub, others = [], onDone }) {
       </div>
       <FormRow label="Meeting point and service area" hint="Click the map where staff meet; they check in there with a selfie. Then draw the area this hub serves, or leave it to the radius below.">
         <div className="space-y-2">
-          <HubMap lat={form.lat} lng={form.lng} radiusM={Number(form.radiusM)} serviceKm={Number(form.serviceKm)} area={form.area} others={others}
-            onPick={({ lat, lng }) => setForm((f) => ({ ...f, lat, lng }))} onArea={(area) => setForm((f) => ({ ...f, area }))} />
+          <HubMap lat={form.lat} lng={form.lng} radiusM={Number(form.radiusM)} serviceKm={Number(form.serviceKm)} area={form.area} places={form.places} search={search} others={others}
+            onPick={({ lat, lng, address }) => setForm((f) => ({ ...f, lat, lng, address: address && !f.address ? address.slice(0, 300) : f.address }))}
+            onArea={(area) => setForm((f) => ({ ...f, area }))} onPlaces={(places) => setForm((f) => ({ ...f, places }))} />
           <Input value={form.address} onChange={set('address')} maxLength={300} placeholder="Landmark or address staff will recognise" />
         </div>
       </FormRow>
       <div className="grid gap-4 sm:grid-cols-2">
         <FormRow label="Check-in radius (metres)" hint="How close to the meeting point check-in must be."><Input type="number" min={50} max={2000} value={form.radiusM} onChange={set('radiusM')} /></FormRow>
-        <FormRow label="Serves up to (km)" hint={form.area.length >= 3 ? 'Not used while an area is drawn.' : 'Orders within this distance of the meeting point go to this hub’s staff.'}><Input type="number" min={1} max={50} value={form.serviceKm} onChange={set('serviceKm')} /></FormRow>
+        <FormRow label="Serves up to (km)" hint={form.area.length >= 3 || form.places.length ? 'Not used while an area, pincodes or areas are set.' : 'Orders within this distance of the meeting point go to this hub’s staff.'}><Input type="number" min={1} max={50} value={form.serviceKm} onChange={set('serviceKm')} /></FormRow>
       </div>
       <FormRow label="Shifts" hint="Staff book these; the number is how many people each shift needs.">
         <div className="space-y-2">
