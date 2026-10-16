@@ -1382,6 +1382,14 @@ export function endpoints(b, { adminApiPath }) {
       invalidatesTags: ['ShopKyc', 'Shop'],
     }),
     shopWorkers: b.query({ query: () => '/shops/me/workers', providesTags: ['ShopWorkers'] }),
+    // ServicePro partner OS (server shop/partner.service): type, dispatch, capacity, team, numbers.
+    partnerSettings: b.query({ query: () => '/shops/me/partner', providesTags: ['ShopWorkers'] }),
+    savePartnerSettings: b.mutation({ query: (body) => ({ url: '/shops/me/partner', method: 'PUT', body }), invalidatesTags: ['ShopWorkers'] }),
+    inviteShopTeam: b.mutation({ query: (rows) => ({ url: '/shops/me/workers/bulk', method: 'POST', body: { rows } }), invalidatesTags: ['ShopWorkers'] }),
+    setShopWorkerTeam: b.mutation({ query: ({ workerId, ...body }) => ({ url: `/shops/me/workers/${workerId}/team`, method: 'PATCH', body }), invalidatesTags: ['ShopWorkers'] }),
+    partnerInsights: b.query({ query: (days) => ({ url: '/shops/me/insights', params: days ? { days } : {} }), providesTags: ['ShopWorkers'] }),
+    /** A team lead's group and the jobs they may give out (POST /jobs/:id/assign does the giving). */
+    teamBoard: b.query({ query: () => '/jobs/team-board', providesTags: ['RepairBookings', 'PetBookings'] }),
     addShopWorker: b.mutation({
       query: (body) => ({ url: '/shops/me/workers', method: 'POST', body }),
       invalidatesTags: ['ShopWorkers'],

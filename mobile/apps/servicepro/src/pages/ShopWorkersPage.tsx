@@ -6,9 +6,11 @@
  */
 import { useState } from 'react';
 import { ActivityIndicator, Alert, FlatList, Pressable, StyleSheet, TextInput, View } from 'react-native';
-import { Briefcase, Circle, Clock, Plus, ShieldCheck, Star, Trash2, XCircle } from 'lucide-react-native';
-import { useAddShopWorkerMutation, useRemoveShopWorkerMutation, useShopWorkersQuery } from '@zappy/core/api';
-import { Button, EmptyState, LoadingState, ScreenHeader, Text } from '@zappy/ui/components';
+import { Briefcase, Circle, Clock, Crown, Plus, ShieldCheck, Star, Trash2, Users, XCircle } from 'lucide-react-native';
+import { useAddShopWorkerMutation, useRemoveShopWorkerMutation, useSetShopWorkerTeamMutation, useShopWorkersQuery } from '@zappy/core/api';
+import { Button, Chip, EmptyState, LoadingState, ScreenHeader, Text } from '@zappy/ui/components';
+import { DispatchSettingsCard } from '../components/DispatchSettingsCard';
+import { InviteTeamSheet } from '../components/InviteTeamSheet';
 import { toast } from '@zappy/ui/components/Toast';
 import { FullScreenSheet } from '@zappy/ui/components/common/FullScreenSheet';
 import { errText } from '@zappy/ui/lib/feedback';
@@ -23,7 +25,7 @@ const KYC_PILL: Record<string, { label: string; bg: string; fg: string; Icon: ty
   not_submitted: { label: 'Not verified yet', bg: slate[100], fg: ink[500], Icon: Circle },
 };
 
-interface Worker { _id: string; name?: string; phone?: string; rating?: number; isOnline?: boolean; kyc?: { status?: string } }
+interface Worker { _id: string; name?: string; phone?: string; rating?: number; isOnline?: boolean; kyc?: { status?: string }; team?: { role?: string; leadId?: string | null } }
 
 function AddWorkerSheet({ onClose }: { onClose: () => void }) {
   const [phone, setPhone] = useState('');
@@ -54,8 +56,12 @@ export function ShopWorkersPage() {
   const { data, isLoading } = useShopWorkersQuery();
   const [removeWorker] = useRemoveShopWorkerMutation();
   const [showAdd, setShowAdd] = useState(false);
+  const [inviting, setInviting] = useState(false);
+  const [setTeam] = useSetShopWorkerTeamMutation();
+  const teamAct = (body: Record<string, unknown>, ok: string) => setTeam(body).unwrap().then(() => toast.success(ok)).catch((e: unknown) => toast.error(errText(e, 'Could not save')));
   const [removingId, setRemovingId] = useState<string | null>(null);
   const workers: Worker[] = data?.workers || [];
+  const leads = workers.filter((w) => w.team?.role === 'lead');
 
   function remove(w: Worker) {
     Alert.alert(`Remove ${w.name || 'this worker'} from your shop?`, undefined, [
@@ -71,12 +77,13 @@ export function ShopWorkersPage() {
 
   return (
     <View style={styles.page}>
-      <ScreenHeader title="Team" safeArea right={<Button label="Add" size="small" icon={<Plus size={14} color="#fff" />} onPress={() => setShowAdd(true)} />} />
+      <ScreenHeader title="Team" safeArea right={<View style={styles.inline}><Button label="Many" size="small" variant="secondary" icon={<Users size={14} color={zappy[700]} />} onPress={() => setInviting(true)} /><Button label="Add" size="small" icon={<Plus size={14} color="#fff" />} onPress={() => setShowAdd(true)} /></View>} />
       {isLoading ? <LoadingState /> : (
         <FlatList
           data={workers}
           keyExtractor={(w) => w._id}
           contentContainerStyle={styles.body}
+          ListHeaderComponent={<DispatchSettingsCard />}
           ItemSeparatorComponent={() => <View style={styles.sep} />}
           ListEmptyComponent={<EmptyState title="No workers yet" message="Add a worker by their phone number to get started." actionLabel="Add worker" onAction={() => setShowAdd(true)} icon={<Briefcase size={26} color={slate[300]} />} />}
           renderItem={({ item: w }) => {
@@ -91,6 +98,15 @@ export function ShopWorkersPage() {
                     <View style={[styles.pill, { backgroundColor: kyc.bg }]}><kyc.Icon size={10} color={kyc.fg} /><Text variant="caption" weight="bold" color={kyc.fg}>{kyc.label}</Text></View>
                     {w.rating ? <View style={styles.inline}><Star size={10} color={accent[500]} fill={accent[500]} /><Text variant="caption" weight="bold" color={ink[500]}>{w.rating.toFixed(1)}</Text></View> : null}
                     <View style={styles.inline}><View style={[styles.dot, { backgroundColor: w.isOnline ? success[500] : slate[300] }]} /><Text variant="caption" weight="semibold" color={ink[400]}>{w.isOnline ? 'On duty' : 'Off duty'}</Text></View>
+                    {w.team?.role === 'lead' ? <View style={[styles.pill, { backgroundColor: accent[50] }]}><Crown size={10} color={accent[700]} /><Text variant="caption" weight="bold" color={accent[700]}>Team lead</Text></View> : null}
+                  </View>
+                  {/* Leads see and give out their group's jobs (server shop/partner.service). */}
+                  <View style={styles.meta}>
+                    <Chip label={w.team?.role === 'lead' ? 'Remove lead' : 'Make lead'} onPress={() => teamAct({ workerId: w._id, role: w.team?.role === 'lead' ? 'member' : 'lead' }, w.team?.role === 'lead' ? 'No longer a lead' : 'Made a team lead')} />
+                    {w.team?.role !== 'lead' ? leads.map((l) => {
+                      const inGroup = String(w.team?.leadId) === String(l._id);
+                      return <Chip key={l._id} label={`${l.name || l.phone}'s group`} selected={inGroup} onPress={() => teamAct({ workerId: w._id, leadId: inGroup ? null : l._id }, inGroup ? 'Taken out of the group' : 'Group saved')} />;
+                    }) : null}
                   </View>
                 </View>
                 <Pressable onPress={() => remove(w)} disabled={removingId === w._id} hitSlop={6} accessibilityRole="button" accessibilityLabel={`Remove ${w.name || 'worker'}`} style={styles.remove}>
@@ -102,6 +118,7 @@ export function ShopWorkersPage() {
         />
       )}
       {showAdd ? <AddWorkerSheet onClose={() => setShowAdd(false)} /> : null}
+      {inviting ? <InviteTeamSheet onClose={() => setInviting(false)} /> : null}
     </View>
   );
 }

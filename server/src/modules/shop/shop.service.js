@@ -286,7 +286,7 @@ async function addWorkerToShop(shopId, { phone, name, skills }) {
 
 async function listShopWorkers(shopId) {
   const rows = await Worker.find({ shopId })
-    .select('name phone skills rating reviewCount totalJobs completedJobs isOnline isAvailable kyc.status createdAt')
+    .select('name phone skills rating reviewCount totalJobs completedJobs isOnline isAvailable kyc.status createdAt team')
     .lean();
   // No reviews yet reads as new, never a default five stars.
   return rows.map((w) => (w.reviewCount ? w : { ...w, rating: null }));

@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  ArrowLeft, Plus, Trash2, Loader2, X, Star, Briefcase, ShieldCheck, Clock, XCircle, Circle,
+  ArrowLeft, Plus, Trash2, Loader2, X, Star, Briefcase, ShieldCheck, Clock, XCircle, Circle, Users, Crown,
 } from 'lucide-react';
-import { useShopWorkersQuery, useAddShopWorkerMutation, useRemoveShopWorkerMutation } from '@shared/services/api';
+import { useShopWorkersQuery, useAddShopWorkerMutation, useRemoveShopWorkerMutation, useSetShopWorkerTeamMutation } from '@shared/services/api';
+import DispatchSettingsCard from '../components/team/DispatchSettingsCard';
+import InviteTeamSheet from '../components/team/InviteTeamSheet';
 import toast from 'react-hot-toast';
 
 const KYC_PILL = {
@@ -18,6 +20,9 @@ export default function ShopWorkersPage() {
   const { data, isLoading } = useShopWorkersQuery();
   const [addWorker, { isLoading: adding }] = useAddShopWorkerMutation();
   const [removeWorker] = useRemoveShopWorkerMutation();
+  const [setTeam] = useSetShopWorkerTeamMutation();
+  const [inviting, setInviting] = useState(false);
+  const teamAct = (body, ok) => setTeam(body).unwrap().then(() => toast.success(ok)).catch((e) => toast.error(e?.data?.error || 'Could not save'));
 
   const [showAdd, setShowAdd] = useState(false);
   const [phone, setPhone] = useState('');
@@ -25,6 +30,7 @@ export default function ShopWorkersPage() {
   const [removingId, setRemovingId] = useState(null);
 
   const workers = data?.workers || [];
+  const leads = workers.filter((w) => w.team?.role === 'lead');
 
   async function handleAdd(e) {
     e.preventDefault();
@@ -57,13 +63,17 @@ export default function ShopWorkersPage() {
     <div className="min-h-screen bg-[#F9FAFB] pb-10">
       <header className="page-header"><div className="page-header-inner">
         <button onClick={() => nav('/shop')} className="back-btn"><ArrowLeft size={18} strokeWidth={2.5} /></button>
-        <h1 className="h-card">Workers</h1>
-        <button onClick={() => setShowAdd(true)} className="ml-auto btn-primary text-xs py-2 px-3 flex items-center gap-1">
+        <h1 className="h-card">Team</h1>
+        <button onClick={() => setInviting(true)} className="ml-auto flex items-center gap-1 rounded-lg px-3 py-2 text-xs font-bold text-zappy-700 ring-1 ring-zappy-200">
+          <Users size={14} strokeWidth={2.5} /> Add many
+        </button>
+        <button onClick={() => setShowAdd(true)} className="btn-primary text-xs py-2 px-3 flex items-center gap-1">
           <Plus size={14} strokeWidth={2.5} /> Add
         </button>
       </div></header>
 
       <div className="max-w-lg lg:max-w-2xl mx-auto px-4 pt-4 space-y-3">
+        <DispatchSettingsCard />
 
         {isLoading ? (
           <div className="flex justify-center py-16"><Loader2 size={24} className="animate-spin text-zappy-400" /></div>
@@ -98,6 +108,19 @@ export default function ShopWorkersPage() {
                     )}
                     <span className={`w-1.5 h-1.5 rounded-full ${w.isOnline ? 'bg-emerald-500' : 'bg-slate-300'}`} />
                     <span className="text-[10px] font-semibold text-slate-400">{w.isOnline ? 'On duty' : 'Off duty'}</span>
+                    {w.team?.role === 'lead' && <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700"><Crown size={10} /> Team lead</span>}
+                  </div>
+                  {/* Leads see and assign their group's jobs (server shop/partner.service). */}
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <button type="button" onClick={() => teamAct({ workerId: w._id, role: w.team?.role === 'lead' ? 'member' : 'lead' }, w.team?.role === 'lead' ? 'No longer a lead' : 'Made a team lead')}
+                      className="rounded-md px-2 py-1 text-[11px] font-semibold text-zappy-700 ring-1 ring-zappy-200">{w.team?.role === 'lead' ? 'Remove lead' : 'Make lead'}</button>
+                    {w.team?.role !== 'lead' && leads.length > 0 && (
+                      <select value={w.team?.leadId || ''} onChange={(e) => teamAct({ workerId: w._id, leadId: e.target.value || null }, 'Group saved')}
+                        className="rounded-md border border-slate-200 bg-white px-2 py-1 text-[11px] text-slate-600" aria-label="Team lead">
+                        <option value="">No group</option>
+                        {leads.map((l) => <option key={l._id} value={l._id}>In {l.name || l.phone}'s group</option>)}
+                      </select>
+                    )}
                   </div>
                 </div>
                 <button onClick={() => handleRemove(w._id)} disabled={removingId === w._id}
@@ -109,6 +132,8 @@ export default function ShopWorkersPage() {
           })
         )}
       </div>
+
+      {inviting && <InviteTeamSheet onClose={() => setInviting(false)} />}
 
       {/* Add worker sheet */}
       {showAdd && (

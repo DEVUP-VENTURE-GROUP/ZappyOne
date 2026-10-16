@@ -26,6 +26,7 @@ import { colors, ink, slate, success, zappy } from '@zappy/ui/theme/colors';
 import { radius } from '@zappy/ui/theme/radius';
 import { spacing } from '@zappy/ui/theme/spacing';
 import { TECHNICIAN_MENU } from '../menus';
+import { LeadBoardCard } from '../components/LeadBoardCard';
 
 interface Job { kind: string; id: string; to: string; title: string; subtitle?: string; status: string; attention?: boolean }
 
@@ -120,6 +121,9 @@ export function ShopWorkerHome() {
           ))}
         </View>
         <View style={styles.info}><Info size={12} color={ink[400]} /><Text variant="caption" color={ink[400]} style={styles.flex}>Job value is what customers paid your shop, not your pay. Your shop pays you directly.</Text></View>
+
+        {/* A partner's team lead gives out their group's jobs. */}
+        {me?.team?.role === 'lead' ? <LeadBoardCard /> : null}
 
         <View style={styles.card}>
           <View style={styles.titleRow}><ClipboardList size={15} color={zappy[600]} /><Text variant="bodySmall" weight="black">My jobs</Text></View>

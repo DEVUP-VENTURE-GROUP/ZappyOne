@@ -21,6 +21,7 @@ import { ZappyWordmark } from '../../components/common/ZappyLogo';
 import WorkerOnboarding from './WorkerOnboarding';
 import DuesCard from '../DuesCard';
 import StaffDutyCard from '../StaffDutyCard';
+import LeadBoardCard from '../components/LeadBoardCard';
 import StaffWaitingCard from '../StaffWaitingCard';
 import { STAFF_PORTAL } from '../staffPortal';
 import MyAreaChip from '../../components/worker/MyAreaChip';
@@ -298,6 +299,8 @@ export default function WorkerDashboard() {
 
         {/* ZappyOne staff: their shift, check-in and salary; everyone else: what they owe. */}
         {staffMe?.staff ? <StaffDutyCard me={staffMe} /> : STAFF_PORTAL ? <StaffWaitingCard /> : <DuesCard />}
+        {/* A partner's team lead gives out their group's jobs. */}
+        {me?.shopId && me?.team?.role === 'lead' && <LeadBoardCard />}
         {/* Where surge is on for their services: go there, earn more (jobs/surge). Partners only. */}
         {isOnline && !STAFF_PORTAL && <HotZonesCard coords={lastCoords} />}
 

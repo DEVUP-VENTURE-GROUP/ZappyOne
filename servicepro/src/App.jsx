@@ -20,6 +20,8 @@ const ShopDashboard = lazy(() => import('./pages/ShopDashboard'));
 const ShopProfilePage = lazy(() => import('./pages/ShopProfilePage'));
 const ShopKycPage = lazy(() => import('./pages/ShopKycPage'));
 const ShopWorkersPage = lazy(() => import('./pages/ShopWorkersPage'));
+const ShopOrdersPage = lazy(() => import('./pages/ShopOrdersPage'));
+const ShopInsightsPage = lazy(() => import('./pages/ShopInsightsPage'));
 const ShopEarningsPage = lazy(() => import('./pages/ShopEarningsPage'));
 const ShopPriceRequestsPage = lazy(() => import('./pages/ShopPriceRequestsPage'));
 const AppealsPage = lazy(() => import('@shared/provider/pages/WorkerAppealsPage'));
@@ -77,6 +79,8 @@ export default function App() {
             <Route path="/shop/profile" element={shop(<ShopProfilePage />)} />
             <Route path="/shop/kyc" element={shop(<ShopKycPage />)} />
             <Route path="/shop/workers" element={shop(<ShopWorkersPage />)} />
+            <Route path="/shop/orders" element={shop(<ShopOrdersPage />)} />
+            <Route path="/shop/insights" element={shop(<ShopInsightsPage />)} />
             <Route path="/shop/earnings" element={shop(<ShopEarningsPage />)} />
             <Route path="/shop/price-requests" element={shop(<ShopPriceRequestsPage />)} />
             <Route path="/shop/appeals" element={shop(<AppealsPage />)} />

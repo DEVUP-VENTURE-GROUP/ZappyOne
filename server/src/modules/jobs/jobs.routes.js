@@ -59,6 +59,11 @@ router.post('/:id/sos',
     } catch (err) { next(err); }
   });
 
+/* A partner's team lead: their group and the jobs they may give out (shop/partner.service). */
+router.get('/team-board', authenticate, requireRole('worker'), async (req, res, next) => {
+  try { res.json(await require('../shop/partner.service').leadBoard(req.auth.sub)); } catch (err) { next(err); }
+});
+
 /**
  * A shop owner puts one of their own technicians on any job the shop holds —
  * repair, pet care, whatever the shop was booked for (jobs/assignment.js).

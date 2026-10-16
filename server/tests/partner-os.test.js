@@ -104,3 +104,20 @@ test('insights count the partner’s finished jobs per member and per day', asyn
   expect(out.days.length).toBeGreaterThanOrEqual(30);
   expect(out).toHaveProperty('totals.team');
 });
+
+test('a lead’s board: their group, the jobs they are on, and jobs nobody is on yet', async () => {
+  await Worker.deleteMany({ shopId: shop._id });
+  await PetBooking.deleteMany({});
+  const lead = await member();
+  const mine = await member();
+  const outsider = await member();
+  await partner.setRole(shop._id, lead._id, { role: 'lead' });
+  await partner.setRole(shop._id, mine._id, { leadId: lead._id });
+  const free = await heldPet();
+  const ours = await heldPet({ workerId: mine._id, status: 'PROVIDER_EN_ROUTE' });
+  await heldPet({ workerId: outsider._id, status: 'PROVIDER_EN_ROUTE' });
+  const board = await partner.leadBoard(lead._id);
+  expect(board.members.map((m) => m.id).sort()).toEqual([String(lead._id), String(mine._id)].sort());
+  expect(board.jobs.map((j) => j.id).sort()).toEqual([String(free), String(ours)].sort());
+  await expect(partner.leadBoard(mine._id)).rejects.toMatchObject({ code: 'NOT_A_LEAD' });
+});

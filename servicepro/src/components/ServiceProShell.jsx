@@ -1,7 +1,7 @@
 import { Outlet, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import {
-  LayoutDashboard, Wrench, Users, IndianRupee, Store, ShieldCheck, PlusCircle, Bell, UserRound, Star, MessageSquareQuote, Scale, FileText, Wallet, Landmark } from 'lucide-react';
+  LayoutDashboard, Wrench, Users, IndianRupee, Store, ShieldCheck, PlusCircle, Bell, UserRound, Star, MessageSquareQuote, Scale, FileText, Wallet, Landmark, KanbanSquare, BarChart3 } from 'lucide-react';
 import PortalShell from '@shared/components/worker/PortalShell';
 import { selectAuth, logout } from '@shared/modules/auth/authSlice';
 import {
@@ -18,7 +18,9 @@ const OWNER_PAGES = [
   { key: 'home', label: 'Home', Icon: LayoutDashboard, to: '/shop', primary: true },
   { key: 'work', label: 'Work & prices', Icon: Wrench, to: '/provider/services', primary: true },
   { key: 'pricereq', label: 'Price requests', Icon: MessageSquareQuote, to: '/shop/price-requests' },
+  { key: 'orders', label: 'Orders', Icon: KanbanSquare, to: '/shop/orders' },
   { key: 'team', label: 'Team', Icon: Users, to: '/shop/workers', primary: true },
+  { key: 'insights', label: 'Insights', Icon: BarChart3, to: '/shop/insights' },
   { key: 'earnings', label: 'Earnings', Icon: IndianRupee, to: '/shop/earnings', primary: true },
   { key: 'withdraw', label: 'Withdraw', Icon: Wallet, to: '/shop/withdraw' },
   { key: 'bank', label: 'Bank & UPI', Icon: Landmark, to: '/shop/bank' },

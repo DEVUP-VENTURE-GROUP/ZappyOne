@@ -55,7 +55,7 @@ const SOURCES = {
       title: [b.brandCode, b.modelCode].filter(Boolean).join(' ').replace(/-/g, ' ') || 'Repair',
       subtitle: b.location?.address || nameOf(b.vertical),
       at: b.scheduledAt || b.createdAt, ...stage('repair', b.status),
-      workerId: b.workerId || null, valuePaise: b.priceSnapshot?.totalPaise || 0,
+      workerId: b.workerId || null, valuePaise: b.priceSnapshot?.totalPaise || 0, rawStatus: b.status,
       cashDue: b.paymentMethod === 'cash' && b.paymentStatus !== 'paid',
       late: !!b.stageDeadlineAt && new Date(b.stageDeadlineAt) < new Date(),
     })),
@@ -65,7 +65,7 @@ const SOURCES = {
       kind: 'pet', id: b._id, to: `/worker/pet/${b._id}`,
       title: (b.pets || []).map((p) => p.snapshot?.name).filter(Boolean).join(', ') || b.reference,
       subtitle: nameOf(b.categoryCode), at: b.scheduledAt || b.checkInAt || b.createdAt, ...stage('pet', b.status),
-      workerId: b.workerId || null, valuePaise: b.pricing?.totalPaise || b.pricing?.providerAmountPaise || 0,
+      workerId: b.workerId || null, valuePaise: b.pricing?.totalPaise || b.pricing?.providerAmountPaise || 0, rawStatus: b.status,
       cashDue: b.paymentMethod === 'cash' && b.paymentStatus !== 'paid',
     })),
     open: (d) => (d?.bookings || []).map((b) => ({

@@ -161,6 +161,36 @@ async function assertLeadMayAssign(leadId, workerId) {
   return lead;
 }
 
+/** A short line for a job on a lead's board, whatever its kind. */
+function summaryOf(kind, d) {
+  if (kind === 'repair') return { title: [d.brandCode, d.modelCode].filter(Boolean).join(' ').replace(/-/g, ' ') || 'Repair', where: d.location?.address || '' };
+  return { title: (d.pets || []).map((p) => p.snapshot?.name).filter(Boolean).join(', ') || d.reference || 'Pet care', where: d.serviceLocation?.address || '' };
+}
+
+/**
+ * A team lead's board: the people in their group (and themself), the jobs
+ * they are on, and the partner's jobs nobody is on yet, which the lead may give out.
+ */
+async function leadBoard(leadId) {
+  const lead = await Worker.findById(leadId).select('shopId team name phone isOnline').lean();
+  if (!lead?.shopId || lead.team?.role !== 'lead') throw err(403, 'NOT_A_LEAD', 'Only a team lead has a team board');
+  const group = await Worker.find({ shopId: lead.shopId, 'team.leadId': lead._id, isBlocked: { $ne: true } }).select('name phone isOnline').lean();
+  const people = [lead, ...group];
+  const ids = people.map((p) => p._id);
+  const jobs = [];
+  for (const [kind, statuses] of Object.entries(OPEN)) {
+    const rows = await KINDS[kind].model().find({
+      shopId: lead.shopId, status: { $in: statuses },
+      $or: [{ workerId: { $in: ids } }, { workerId: null, status: { $in: WAITING_FOR_A_MEMBER[kind] } }],
+    }).sort({ createdAt: 1 }).limit(100).lean();
+    for (const d of rows) jobs.push({ kind, id: String(d._id), status: d.status, workerId: d.workerId ? String(d.workerId) : null, at: d.scheduledAt || d.createdAt, ...summaryOf(kind, d) });
+  }
+  return {
+    members: people.map((p) => ({ id: String(p._id), name: p.name || p.phone, isOnline: !!p.isOnline, lead: String(p._id) === String(lead._id) })),
+    jobs,
+  };
+}
+
 /**
  * The partner's numbers over `days`: per member (jobs done, rating, value of
  * jobs) and per day, from the jobs themselves.
@@ -196,4 +226,4 @@ async function insights(shopId, days = 30) {
   };
 }
 
-module.exports = { dispatchSweep, pickMember, atCapacity, openJobs, settingsOf, saveSettings, invite, setRole, assertLeadMayAssign, insights };
+module.exports = { dispatchSweep, pickMember, atCapacity, openJobs, settingsOf, saveSettings, invite, setRole, assertLeadMayAssign, leadBoard, insights };
