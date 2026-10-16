@@ -171,3 +171,31 @@ test('the partner rate is frozen when the job is taken; a later admin change doe
   expect((await PetBooking.findById(id).lean()).pricing).toMatchObject({ commissionPaise: 2000, partnerRate: { holder: `shop:${shop._id}`, pct: 5 } });
   await cfg.updateActiveConfig({ partnerCommission: { shop: 5, agency: 5, company: 5, individual: 5 } }, null);
 });
+
+describe('an agreed rate for one partner', () => {
+  const commission = require('../src/modules/shop/partner-commission');
+
+  test('wins over their type’s rate, and the end date brings the type rate back', async () => {
+    await commission.setOverride({ kind: 'shop', id: shop._id, pct: 3, note: 'big agency', adminId: null });
+    expect(await commission.pctFor({ shopId: shop._id })).toBe(3);
+    expect(await commission.rateOf({ kind: 'shop', id: shop._id })).toMatchObject({ pct: 3, typePct: 5, custom: true });
+    await Shop.updateOne({ _id: shop._id }, { $set: { 'commissionOverride.until': new Date(Date.now() - 1000) } });
+    expect(await commission.rateOf({ kind: 'shop', id: shop._id })).toMatchObject({ pct: 5, custom: false });
+    expect((await commission.overrides()).find((r) => r.id === String(shop._id))).toMatchObject({ pct: 3, active: false });
+  });
+
+  test('a job taken under the agreed rate keeps it after the rate is cleared', async () => {
+    await commission.setOverride({ kind: 'shop', id: shop._id, pct: 2, adminId: null });
+    await PetBooking.deleteMany({});
+    const id = await heldPet({ pricing: { totalPaise: 50000, subtotalPaise: 45000, commissionPaise: 4000, commissionBasePaise: 40000, providerAmountPaise: 41000 } });
+    await commission.refreeze('pet', await PetBooking.findById(id));
+    await commission.setOverride({ kind: 'shop', id: shop._id, pct: null, adminId: null });
+    await commission.refreeze('pet', await PetBooking.findById(id));
+    expect((await PetBooking.findById(id).lean()).pricing.commissionPaise).toBe(800);
+    expect(await commission.pctFor({ shopId: shop._id })).toBe(5);
+  });
+
+  test('an end date in the past is refused', async () => {
+    await expect(commission.setOverride({ kind: 'shop', id: shop._id, pct: 4, until: new Date(Date.now() - 86400000), adminId: null })).rejects.toMatchObject({ code: 'BAD_UNTIL' });
+  });
+});

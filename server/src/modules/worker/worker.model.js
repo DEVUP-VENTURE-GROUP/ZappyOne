@@ -118,6 +118,8 @@ const workerSchema = new mongoose.Schema(
      * them without tapping, so customers are matched at once. Their choice;
      * cancelling an auto-accepted job pauses it (autoAcceptPauseDays).
      */
+    // A rate agreed with this partner alone, over their type's (shop/partner-commission); until null = no end.
+    commissionOverride: { pct: { type: Number, default: null, min: 0, max: 50 }, until: { type: Date, default: null }, note: { type: String, default: '', maxlength: 200 }, setBy: { type: mongoose.Schema.Types.ObjectId, default: null }, setAt: { type: Date, default: null } },
     // Jobs taken today and when last, for fair dispatch (jobs/fairness).
     dispatchStats: { day: { type: String, default: null }, jobs: { type: Number, default: 0 }, lastAt: { type: Date, default: null } },
     autoAccept: {

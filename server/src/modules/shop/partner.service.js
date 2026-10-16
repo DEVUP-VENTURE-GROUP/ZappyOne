@@ -86,9 +86,10 @@ async function dispatchSweep() {
 async function settingsOf(shopId) {
   const shop = await Shop.findById(shopId).select('partnerType dispatch').lean();
   if (!shop) throw err(404, 'NOT_FOUND', 'Partner not found');
+  const rate = await require('./partner-commission').rateOf({ kind: 'shop', id: shopId });
   return {
     partnerType: shop.partnerType || 'shop', dispatch: { mode: shop.dispatch?.mode || 'manual', capacity: shop.dispatch?.capacity || 0 },
-    openJobs: await openJobs(shopId), commissionPct: await require('./partner-commission').pctFor({ shopId }),
+    openJobs: await openJobs(shopId), commissionPct: rate?.pct ?? null, commissionUntil: rate?.custom ? rate.override.until : null,
   };
 }
 

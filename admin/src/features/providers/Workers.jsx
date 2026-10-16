@@ -51,6 +51,7 @@ import {
   EmptyState, PageLoader, fmtDate, fmt,
 } from '../../ui/kit';
 import toast from 'react-hot-toast';
+import PartnerRateCard from '../money/economics/PartnerRateCard';
 
 /* Reverse geocoding (OpenStreetMap Nominatim — free, no key) */
 const geoCache = {};
@@ -569,6 +570,8 @@ function WorkerDetailPanel({ worker, onClose, onRefetch }) {
                   </div>
                   <ChevronRight size={14} className="text-zappy-400" />
                 </button>
+
+                {!worker.shopId && <PartnerRateCard kind="worker" id={worker._id} />}
 
                 {/* Block/Unblock */}
                 <button

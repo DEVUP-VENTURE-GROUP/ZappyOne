@@ -337,6 +337,24 @@ router.put('/economics/partner-commission',
     } catch (err) { next(err); }
   });
 
+router.get('/economics/partner-commission/overrides', async (req, res, next) => {
+  try { res.json({ overrides: await require('../shop/partner-commission').overrides() }); } catch (err) { next(err); }
+});
+
+router.get('/economics/partner-commission/:kind(shop|worker)/:id', async (req, res, next) => {
+  try { res.json({ rate: await require('../shop/partner-commission').rateOf({ kind: req.params.kind, id: req.params.id }) }); } catch (err) { next(err); }
+});
+
+router.put('/economics/partner-commission/:kind(shop|worker)/:id',
+  validate(Joi.object({ pct: Joi.number().min(0).max(50).allow(null).required(), until: Joi.date().iso().allow(null), note: Joi.string().trim().max(200).allow('') })),
+  async (req, res, next) => {
+    try {
+      const { before, after } = await require('../shop/partner-commission').setOverride({ kind: req.params.kind, id: req.params.id, ...req.body, adminId: req.auth.sub });
+      await auditService.fromRequest(req, 'economics.partner_commission_override', { kind: req.params.kind, id: req.params.id }, before, after);
+      res.json({ rate: after });
+    } catch (err) { next(err); }
+  });
+
 /* Economics → Surge: automatic, set once (jobs/surge) */
 
 router.get('/economics/surge', async (req, res, next) => {

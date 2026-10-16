@@ -19,6 +19,7 @@ import {
 import toast from 'react-hot-toast';
 import { SelfieMetaBadges } from './KycReview';
 import AskAgain from './AskAgain';
+import PartnerRateCard from '../money/economics/PartnerRateCard';
 
 /* Permanent doc hook — server-proxied, no URL expiry */
 function useKycDoc(shopId, docType, token, enabled = true) {
@@ -293,6 +294,8 @@ function ShopDetailPanel({ shop, onClose, onRefetch, reviewMode }) {
                 <p className="font-semibold text-slate-700">{shop.category || '—'}</p>
               </div>
             </div>
+
+            <PartnerRateCard kind="shop" id={shop._id} />
 
             <div className="space-y-3 pt-1">
               {/* Approving happens only in Verification, so there is one place to decide. */}
