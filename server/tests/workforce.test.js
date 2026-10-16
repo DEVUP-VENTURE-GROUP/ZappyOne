@@ -24,7 +24,8 @@ jest.setTimeout(90000);
 
 const HUB = { lat: 17.4483, lng: 78.3915 };
 let hub; let n = 0;
-const today = () => shifts.istDay();
+// The running "now" shift belongs to the day it started: just after midnight that is yesterday.
+const today = () => shifts.istDay(Date.now() - 30 * 60000);
 const hhmm = (d) => new Date(d.getTime() + 330 * 60000).toISOString().slice(11, 16);
 
 async function person({ isStaff = true, salary = 1500000 } = {}) {

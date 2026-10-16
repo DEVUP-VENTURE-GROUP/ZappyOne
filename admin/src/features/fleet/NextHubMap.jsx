@@ -6,7 +6,7 @@ import { baseLayer } from '../../ui/map/tiles';
 const toLatLng = ([lng, lat]) => [lat, lng];
 
 // Demand cells coloured by who serves them, your hubs' areas, and the recommended sites with their promise radius.
-export default function NextLaunchMap({ cells, hubs, sites, focus }) {
+export default function NextHubMap({ cells, hubs, sites, focus }) {
   const box = useRef(null);
   const map = useRef(null);
   const layers = useRef(null);

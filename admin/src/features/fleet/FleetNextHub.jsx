@@ -1,16 +1,17 @@
 import { useState } from 'react';
 import { Sparkles, Users, Clock, Store, MapPin } from 'lucide-react';
-import { useAdminInsightsNextLaunchQuery } from '@shared/services/api';
+import { useAdminFleetNextHubQuery } from '@shared/services/api';
+import DaysPicker from './DaysPicker';
 import { PageLoader, EmptyState } from '../../ui/kit';
-import { Kpi, Panel, rupees } from './charts';
-import NextLaunchMap from './NextLaunchMap';
+import { Kpi, Panel, rupees } from '../insights/charts';
+import NextHubMap from './NextHubMap';
 
 const hr = (h) => `${h % 12 || 12} ${h < 12 ? 'am' : 'pm'}`;
 
 // Where the next hub should open (server admin-portal/expansion): coverage today, a plain summary, ranked sites, and the map.
-export default function NextLaunchView({ days }) {
-  const span = days < 7 ? 30 : days;
-  const { data, isLoading, isError } = useAdminInsightsNextLaunchQuery(span);
+export default function FleetNextHub() {
+  const [span, setSpan] = useState(30);
+  const { data, isLoading, isError } = useAdminFleetNextHubQuery(span);
   const [focus, setFocus] = useState(null);
   if (isError) return <EmptyState message="Could not work out where to launch next." />;
   if (isLoading || !data) return <PageLoader />;
@@ -18,6 +19,7 @@ export default function NextLaunchView({ days }) {
 
   return (
     <div className="space-y-5">
+      <DaysPicker value={span} onChange={setSpan} />
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Kpi label="Inside your hubs" value={`${c.hubPct}%`} hint="Of bookings and searches" accent="#16A34A" />
         <Kpi label="Partners only" value={`${c.partnerOnlyPct}%`} hint="No hub of yours reaches it" accent="#D97706" />
@@ -35,7 +37,7 @@ export default function NextLaunchView({ days }) {
 
       <div className="grid gap-5 lg:grid-cols-[1fr_380px]">
         <Panel title="Demand and coverage" note="Green: your hubs. Amber: partners only. Red: nobody. Numbers: recommended sites.">
-          <NextLaunchMap cells={data.cells} hubs={data.hubs} sites={data.sites} focus={focus} />
+          <NextHubMap cells={data.cells} hubs={data.hubs} sites={data.sites} focus={focus} />
         </Panel>
         <div className="space-y-3">
           {!data.sites.length && <EmptyState message="No unserved demand found yet." />}

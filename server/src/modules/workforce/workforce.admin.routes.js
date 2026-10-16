@@ -16,6 +16,10 @@ const auditService = require('../admin/audit.service');
 const router = express.Router();
 router.use(require('./activity').recorder);
 
+router.get('/workforce/next-hub', validate(Joi.object({ days: Joi.number().integer().min(7).max(90) }), 'query'), async (req, res, next) => {
+  try { res.json(await require('../admin-portal/expansion.service').nextLaunch({ days: Number(req.query.days) || 30 })); } catch (err) { next(err); }
+});
+
 router.get('/workforce/insights', validate(Joi.object({ month: Joi.string().pattern(/^\d{4}-\d{2}$/) }), 'query'), async (req, res, next) => {
   try { res.json(await require('./insights.service').insights(req.query.month)); } catch (err) { next(err); }
 });

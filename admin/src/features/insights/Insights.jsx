@@ -6,10 +6,9 @@ import FunnelView from './FunnelView';
 import CustomersView from './CustomersView';
 import MoneyView from './MoneyView';
 import MapView from './MapView';
-import NextLaunchView from './NextLaunchView';
 
 /**
- * Insights: nine screens, each answering one question a decision hangs on,
+ * Insights: eight screens, each answering one question a decision hangs on,
  * read from the bookings the platform takes today (repair, pet, helping,
  * events), searches and visits. The period switch applies to every screen;
  * screens that need a longer window say so and use it.
@@ -22,7 +21,6 @@ const SCREENS = [
   { id: 'customers', label: 'Customers', question: 'Do people come back, and are they happy?', Comp: CustomersView },
   { id: 'money', label: 'Money', question: 'What makes us money?', Comp: MoneyView },
   { id: 'map', label: 'Map', question: 'Where is the business, and where should it go next?', Comp: MapView },
-  { id: 'next', label: 'Next launch', question: 'Where should the next hub open, and what will it do?', Comp: NextLaunchView },
 ];
 const PERIODS = [[1, 'Today'], [7, '7 days'], [30, '30 days'], [90, '90 days']];
 

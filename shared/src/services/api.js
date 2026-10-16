@@ -374,7 +374,7 @@ export const {
   useAdminInsightsCustomersQuery,
   useAdminInsightsMoneyQuery,
   useAdminInsightsGeoQuery,
-  useAdminInsightsNextLaunchQuery,
+  useAdminFleetNextHubQuery,
   useAdminInsightsLiveQuery,
   useAdminSearchDemandQuery,
   useAdminUpdateFeeMutation,

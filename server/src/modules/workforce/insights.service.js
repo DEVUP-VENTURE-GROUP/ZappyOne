@@ -61,6 +61,11 @@ async function insights(month = payrollService.monthOf()) {
   const stars = people.filter((p) => p.extraJobs > 0);
   if (stars.length) add('good', `${stars.length} ${stars.length === 1 ? 'person is' : 'people are'} above target`, stars.slice(0, 5).map((p) => `${p.name} +${p.extraJobs}`).join(', '), `They earn ${rs(cfg.incentivePerJobPaise)} a job above target this month.`);
 
+  // Where demand nobody's hub serves is densest: the next hub (admin-portal/expansion).
+  const next = await require('../admin-portal/expansion.service').nextLaunch({ days: 30, sites: 1 }).catch(() => null);
+  const site = next?.sites?.[0];
+  if (site && site.jobsPerMonth >= 10) add('watch', `Next hub: ${site.area}`, `About ${site.jobsPerMonth} jobs a month nobody's hub serves${site.unserved ? `, ${site.unserved} searches found no one` : ''}; about ${site.staffNeeded} staff.`, 'See Next hub for the site, its services and its busiest hours.');
+
   const order = { risk: 0, watch: 1, good: 2 };
   signals.sort((a, b) => order[a.level] - order[b.level]);
   return { month, total: fin.total, hubs: hubRows, people, signals, promise: { minutes: fa.fairBandMin, km: promiseKm } };
