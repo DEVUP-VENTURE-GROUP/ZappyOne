@@ -85,6 +85,8 @@ export function endpoints(b, { adminApiPath }) {
     adminAutoFillRoster: b.mutation({ query: (hubId) => ({ url: adminApiPath('/workforce/roster/auto-fill'), method: 'POST', body: { hubId } }), invalidatesTags: ['WorkforceAdmin'] }),
     adminFleetPlaces: b.query({ query: ({ q, lat, lng }) => ({ url: adminApiPath('/workforce/places'), params: { q, ...(lat != null ? { lat, lng } : {}) } }) }),
     adminFleetArea: b.query({ query: ({ q, lat, lng }) => ({ url: adminApiPath('/workforce/areas'), params: { q, ...(lat != null ? { lat, lng } : {}) } }) }),
+    adminFleetAiBriefing: b.query({ query: (month) => ({ url: adminApiPath('/workforce/ai/briefing'), params: month ? { month } : {} }) }),
+    adminFleetAiAsk: b.mutation({ query: (body) => ({ url: adminApiPath('/workforce/ai/ask'), method: 'POST', body }) }),
     adminFleetNextHub: b.query({ query: (days = 30) => ({ url: adminApiPath('/workforce/next-hub'), params: { days } }), providesTags: ['WorkforceAdmin'] }),
     adminFleetInsights: b.query({ query: (month) => ({ url: adminApiPath('/workforce/insights'), params: month ? { month } : {} }), providesTags: ['WorkforceAdmin'] }),
     adminFleetActivity: b.query({ query: ({ page = 1, actorId } = {}) => ({ url: adminApiPath('/workforce/activity'), params: { page, ...(actorId ? { actorId } : {}) } }), providesTags: ['WorkforceAdmin'] }),

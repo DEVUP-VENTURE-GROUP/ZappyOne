@@ -80,6 +80,8 @@ const schema = Joi.object({
   SMS_FROM: Joi.string().default('ZAPPY'),
   // ZappyLens — visual service search via OpenRouter (OpenAI-compatible gateway)
   OPENROUTER_API_KEY:        Joi.string().default(''),   // empty → Lens disabled (503)
+  // Text models for admin analysis, tried in order; free ones by default (comma-separated).
+  AI_TEXT_MODELS:            Joi.string().default('nvidia/nemotron-3-super-120b-a12b:free,openrouter/free'),
   LENS_MODEL_FAST:           Joi.string().default('google/gemini-2.5-flash'),       // cheap first-pass vision (OpenRouter slug)
   LENS_MODEL_SMART:          Joi.string().default('anthropic/claude-sonnet-4.6'),   // escalation for ambiguous scans
   LENS_CONFIDENCE_THRESHOLD: Joi.number().min(0).max(1).default(0.7),               // below → escalate to smart model
@@ -169,6 +171,10 @@ module.exports = {
     apiUrl:    env.KYC_API_URL,
     apiKey:    env.KYC_API_KEY,
     timeoutMs: env.KYC_TIMEOUT_MS,
+  },
+  ai: {
+    apiKey: env.OPENROUTER_API_KEY,
+    textModels: env.AI_TEXT_MODELS.split(',').map((m) => m.trim()).filter(Boolean),
   },
   lens: {
     apiKey:              env.OPENROUTER_API_KEY,

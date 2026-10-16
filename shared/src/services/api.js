@@ -636,6 +636,8 @@ export const {
   useAdminFleetOverviewQuery,
   useAdminFleetActivityQuery,
   useAdminFleetInsightsQuery,
+  useLazyAdminFleetAiBriefingQuery,
+  useAdminFleetAiAskMutation,
   useLazyAdminFleetPlacesQuery,
   useLazyAdminFleetAreaQuery,
   useAdminFleetFinanceQuery,

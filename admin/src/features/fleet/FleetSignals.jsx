@@ -4,6 +4,7 @@ import { useAdminFleetInsightsQuery } from '@shared/services/api';
 import { Card, PageLoader, EmptyState } from '../../ui/kit';
 import { rupees } from '../insights/charts';
 import MonthPicker, { thisMonth } from '@fleet/ui/MonthPicker';
+import FleetAiPanel from './FleetAiPanel';
 
 const LEVEL = {
   risk: { label: 'Act now', Icon: AlertOctagon, ring: 'border-red-200 bg-red-50/60', text: 'text-red-800' },
@@ -25,6 +26,7 @@ export default function FleetSignals() {
         <MonthPicker value={month} onChange={setMonth} />
         <p className="text-[12px] text-slate-500">Hubs, rosters and payroll are run in the Fleet portal. This is the view from above.</p>
       </div>
+      {data.ai && <FleetAiPanel month={month} />}
       <Card className="grid grid-cols-2 gap-px overflow-hidden bg-slate-100 p-0 sm:grid-cols-4">
         {[
           ['Profit', rupees(t.profitPaise, { exact: true }), t.revenuePaise ? `${Math.round((t.profitPaise / t.revenuePaise) * 100)}% of revenue` : 'No revenue yet'],

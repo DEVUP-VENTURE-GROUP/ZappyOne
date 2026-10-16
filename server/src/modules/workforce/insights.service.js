@@ -68,7 +68,7 @@ async function insights(month = payrollService.monthOf()) {
 
   const order = { risk: 0, watch: 1, good: 2 };
   signals.sort((a, b) => order[a.level] - order[b.level]);
-  return { month, total: fin.total, hubs: hubRows, people, signals, promise: { minutes: fa.fairBandMin, km: promiseKm } };
+  return { month, total: fin.total, hubs: hubRows, people, signals, promise: { minutes: fa.fairBandMin, km: promiseKm }, ai: require('../ai/chat.service').enabled() };
 }
 
 module.exports = { insights };

@@ -16,6 +16,29 @@ const auditService = require('../admin/audit.service');
 const router = express.Router();
 router.use(require('./activity').recorder);
 
+// Fleet AI (workforce/fleet-ai): hidden when no AI key; a model that does not answer falls back to the worked-out signals on screen.
+router.get('/workforce/ai/briefing', validate(Joi.object({ month: Joi.string().pattern(/^\d{4}-\d{2}$/) }), 'query'), async (req, res, next) => {
+  try {
+    const fleetAi = require('./fleet-ai.service');
+    if (!fleetAi.enabled()) return res.status(503).json({ error: 'AI is not set up', code: 'AI_NOT_CONFIGURED' });
+    const out = await fleetAi.briefing(req.query.month || require('./payroll.service').monthOf());
+    if (!out) return res.status(503).json({ error: 'The AI did not answer just now. The signals below are worked out from the same figures.', code: 'AI_UNAVAILABLE' });
+    res.json(out);
+  } catch (err) { next(err); }
+});
+router.post('/workforce/ai/ask',
+  require('../../middlewares/rateLimit').makeLimiter({ windowMs: 60 * 60_000, max: 30, prefix: 'fleetai' }),
+  validate(Joi.object({ question: Joi.string().trim().min(4).max(300).required(), month: Joi.string().pattern(/^\d{4}-\d{2}$/) })),
+  async (req, res, next) => {
+    try {
+      const fleetAi = require('./fleet-ai.service');
+      if (!fleetAi.enabled()) return res.status(503).json({ error: 'AI is not set up', code: 'AI_NOT_CONFIGURED' });
+      const out = await fleetAi.ask(req.body.month || require('./payroll.service').monthOf(), req.body.question);
+      if (!out) return res.status(503).json({ error: 'The AI did not answer just now. Try again in a minute.', code: 'AI_UNAVAILABLE' });
+      res.json(out);
+    } catch (err) { next(err); }
+  });
+
 router.get('/workforce/next-hub', validate(Joi.object({ days: Joi.number().integer().min(7).max(90) }), 'query'), async (req, res, next) => {
   try { res.json(await require('../admin-portal/expansion.service').nextLaunch({ days: Number(req.query.days) || 30 })); } catch (err) { next(err); }
 });
