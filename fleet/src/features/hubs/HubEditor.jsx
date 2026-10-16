@@ -45,7 +45,8 @@ export default function HubEditor({ hub, others = [], search = false, onDone }) 
       </div>
       <FormRow label="Meeting point and service area" hint="Click the map where staff meet; they check in there with a selfie. Then draw the area this hub serves, or leave it to the radius below.">
         <div className="space-y-2">
-          <HubMap lat={form.lat} lng={form.lng} radiusM={Number(form.radiusM)} serviceKm={Number(form.serviceKm)} area={form.area} places={form.places} search={search} others={others}
+          <HubMap lat={form.lat} lng={form.lng} radiusM={Number(form.radiusM)} serviceKm={Number(form.serviceKm)} area={form.area} places={form.places} placeName={form.address.split(',')[0]} search={search} others={others}
+            onServiceKm={(km) => setForm((f) => ({ ...f, serviceKm: km }))}
             onPick={({ lat, lng, address }) => setForm((f) => ({ ...f, lat, lng, address: address && !f.address ? address.slice(0, 300) : f.address }))}
             onArea={(area) => setForm((f) => ({ ...f, area }))} onPlaces={(places) => setForm((f) => ({ ...f, places }))} />
           <Input value={form.address} onChange={set('address')} maxLength={300} placeholder="Landmark or address staff will recognise" />

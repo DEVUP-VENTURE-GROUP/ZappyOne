@@ -14,7 +14,7 @@ export default function HubsMap({ hubs, onOpen }) {
 
   useEffect(() => {
     if (!box.current || map.current) return undefined;
-    const m = L.map(box.current, { center: [17.4239, 78.4738], zoom: 10, attributionControl: false });
+    const m = L.map(box.current, { center: [17.4239, 78.4738], zoom: 10, zoomSnap: 0.25, attributionControl: false });
     baseLayer('light').addTo(m);
     layers.current = L.layerGroup().addTo(m);
     map.current = m;
