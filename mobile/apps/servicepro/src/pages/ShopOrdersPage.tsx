@@ -1,8 +1,4 @@
-/**
- * Every job the partner holds, as a board (the website's ShopOrdersPage): one
- * column at a time on a phone, filtered to one member or one lead's group.
- * Jobs nobody is on can be given to someone right from the card.
- */
+// The website's ShopOrdersPage, one column at a time on a phone.
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';

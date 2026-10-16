@@ -141,7 +141,9 @@ async function settleProviderShare(args) {
       .catch((err) => logger.error({ err: err.message, bookingId: String(args.booking._id) }, '[settlement] tip not paid to staff'));
     return result;
   }
-  const result = await settleShare(args);
+  // The holder's partner rate is final at payout; the caller's platform share moves by the same amount.
+  const delta = await require('../shop/partner-commission').refreeze(args.source, args.booking);
+  const result = await settleShare(delta ? { ...args, platformPaise: Math.max(0, (args.platformPaise || 0) + delta) } : args);
   // An earlier cancellation fee paid with this booking goes to the shield fund (jobs/cancel-fee).
   await require('../jobs/cancel-fee').settleCarried(args.source, args.booking._id)
     .catch((err) => logger.error({ err: err.message, bookingId: String(args.booking._id) }, '[settlement] carried cancellation fee not settled'));

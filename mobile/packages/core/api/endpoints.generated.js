@@ -123,6 +123,8 @@ export function endpoints(b, { adminApiPath }) {
     adminUpdateBoostTips: b.mutation({ query: (body) => ({ url: adminApiPath('/economics/boost-tips'), method: 'PUT', body }), invalidatesTags: ['PricingCfg'] }),
     adminDispatch: b.query({ query: () => adminApiPath('/economics/dispatch'), providesTags: ['PricingCfg'] }),
     adminUpdateDispatch: b.mutation({ query: (body) => ({ url: adminApiPath('/economics/dispatch'), method: 'PUT', body }), invalidatesTags: ['PricingCfg'] }),
+    adminPartnerCommission: b.query({ query: () => adminApiPath('/economics/partner-commission'), providesTags: ['PricingCfg'] }),
+    adminUpdatePartnerCommission: b.mutation({ query: (body) => ({ url: adminApiPath('/economics/partner-commission'), method: 'PUT', body }), invalidatesTags: ['PricingCfg'] }),
     reportProviderAbsent: b.mutation({ query: (id) => ({ url: `/jobs/${id}/provider-absent`, method: 'POST' }) }),
     /** Provider: may they hand it back, what it costs, and the wait at the door. */
     jobGiveBack: b.query({ query: ({ id, reason = 'other' }) => `/jobs/${id}/give-back?reason=${reason}`, keepUnusedDataFor: 0 }),

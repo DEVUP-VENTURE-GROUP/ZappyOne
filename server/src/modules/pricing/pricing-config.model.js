@@ -47,6 +47,7 @@ const pricingConfigSchema = new mongoose.Schema(
     // Assigned within two minutes (config.service FAST_ASSIGN_DEFAULTS); Economics → Dispatch.
     fastAssign: { type: mongoose.Schema.Types.Mixed, default: undefined },
     workforce: { type: mongoose.Schema.Types.Mixed, default: undefined },
+    partnerCommission: { type: mongoose.Schema.Types.Mixed, default: undefined },
 
     // Auto-pricing: Night surcharge
     nightSurchargeEnabled:    { type: Boolean, default: false },

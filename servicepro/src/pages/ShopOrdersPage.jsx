@@ -9,11 +9,7 @@ import AssignTechnician from '@shared/provider/components/AssignTechnician';
 
 const SHOP_KINDS = ['repair', 'pet'];
 
-/**
- * Every job the partner holds, as a board: new, assigned, on the way, in
- * progress, done. Filter to one member or one lead's group; jobs nobody is on
- * can be given to someone right from the card.
- */
+// Every job the partner holds as a board, filterable by member or lead's group.
 export default function ShopOrdersPage() {
   const nav = useNavigate();
   const { mine, isLoading } = useProviderJobs({ kinds: SHOP_KINDS });

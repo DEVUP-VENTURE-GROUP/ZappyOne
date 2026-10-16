@@ -111,6 +111,10 @@ const priceSnapshotSchema = new mongoose.Schema(
     taxPaise: { type: Number, default: 0, min: 0 },
     discountPaise: { type: Number, default: 0, min: 0 },
     commissionPaise: { type: Number, default: 0, min: 0 },
+    // What commission is a share of; a partner's own rate is applied to it (shop/partner-commission).
+    commissionBasePaise: { type: Number, default: null, min: 0 },
+    // The holder's partner rate, frozen when they took the job; another holder gets their own.
+    partnerRate: { holder: { type: String, default: null }, pct: { type: Number, default: null } },
 
     subtotalPaise: { type: Number, required: true, min: 0 },
     totalPaise: { type: Number, required: true, min: 0 },

@@ -364,6 +364,7 @@ async function quote({
     taxPaise,
     totalPaise,
     commissionPaise,
+    commissionBasePaise: serviceMoney,
     providerAmountPaise,
     currency: 'INR',
     distanceKm,

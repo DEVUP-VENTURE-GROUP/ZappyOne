@@ -4,10 +4,7 @@ import { Loader2, X } from 'lucide-react';
 import { useInviteShopTeamMutation } from '@shared/services/api';
 import { parseTeamList } from '@shared/provider/partnerBoard';
 
-/**
- * Add a whole team at once: one person a line, name and number. Each is added
- * as the single Add does and still verifies themselves before taking jobs.
- */
+// Adds many people at once; each still verifies their own ID before taking jobs.
 export default function InviteTeamSheet({ onClose }) {
   const [text, setText] = useState('');
   const [result, setResult] = useState(null);

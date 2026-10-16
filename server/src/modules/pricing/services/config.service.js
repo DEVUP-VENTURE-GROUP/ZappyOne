@@ -57,8 +57,13 @@ const WORKFORCE_DEFAULTS = {
   lateGraceMin: 10,     // after this, the check-in is marked late
 };
 
+// Percent taken from a partner's service money, by who holds the job; Economics → Partner commission.
+const PARTNER_COMMISSION_DEFAULTS = { shop: 5, agency: 5, company: 5, individual: 5 };
+
 const FAST_ASSIGN_DEFAULTS = {
   enabled: true,
+  fairBandMin: 10,         // everyone who can arrive within this is equal on distance; fewest jobs today wins
+
   firstLookSec: 30,        // the best pro alone
   broadcastSec: 45,        // then this many pros at once, first to take it wins
   broadcastSize: 5,
@@ -88,6 +93,7 @@ function toView(doc) {
     surgeAuto: { ...SURGE_DEFAULTS, ...((doc.surgeAuto && typeof doc.surgeAuto === 'object') ? doc.surgeAuto : {}) },
     fastAssign: { ...FAST_ASSIGN_DEFAULTS, ...((doc.fastAssign && typeof doc.fastAssign === 'object') ? doc.fastAssign : {}) },
     workforce: { ...WORKFORCE_DEFAULTS, ...((doc.workforce && typeof doc.workforce === 'object') ? doc.workforce : {}) },
+    partnerCommission: { ...PARTNER_COMMISSION_DEFAULTS, ...((doc.partnerCommission && typeof doc.partnerCommission === 'object') ? doc.partnerCommission : {}) },
     baseFeePaise: doc.baseFeePaise,
     perKmFeePaise: doc.perKmFeePaise,
     perMinFeePaise: doc.perMinFeePaise,
@@ -364,10 +370,17 @@ async function workforceSettings() {
   return { ...WORKFORCE_DEFAULTS, ...(cfg.workforce || {}) };
 }
 
+async function partnerCommissionSettings() {
+  const cfg = await getActiveConfig();
+  return { ...PARTNER_COMMISSION_DEFAULTS, ...(cfg.partnerCommission || {}) };
+}
+
 module.exports = {
   FAST_ASSIGN_DEFAULTS,
   WORKFORCE_DEFAULTS,
   workforceSettings,
+  PARTNER_COMMISSION_DEFAULTS,
+  partnerCommissionSettings,
   fastAssignSettings,
   SURGE_DEFAULTS,
   getActiveConfig,

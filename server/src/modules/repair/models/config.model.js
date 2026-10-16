@@ -30,6 +30,7 @@ const rankingWeightsSchema = new mongoose.Schema(
     responseTime: { type: Number, default: 1 },
     skillLevel: { type: Number, default: 1 },
     inventory: { type: Number, default: 1 },
+    fairShare: { type: Number, default: 1 },
   },
   { _id: false },
 );

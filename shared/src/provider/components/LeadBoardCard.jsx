@@ -4,10 +4,7 @@ import { Crown } from 'lucide-react';
 import { useTeamBoardQuery, useAssignJobTechnicianMutation } from '../../services/api';
 import { leadView } from '../partnerBoard';
 
-/**
- * A partner's team lead: jobs nobody is on yet, given to someone in the group
- * in one tap, and who in the group is on what (server shop/partner.service).
- */
+// A team lead gives out unassigned jobs to their group and sees who is on what.
 export default function LeadBoardCard() {
   const { data } = useTeamBoardQuery(undefined, { pollingInterval: 30000 });
   const [assign, { isLoading }] = useAssignJobTechnicianMutation();

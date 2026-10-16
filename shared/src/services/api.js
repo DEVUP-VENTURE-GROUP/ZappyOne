@@ -417,6 +417,8 @@ export const {
   useAdminUpdateBoostTipsMutation,
   useAdminDispatchQuery,
   useAdminUpdateDispatchMutation,
+  useAdminPartnerCommissionQuery,
+  useAdminUpdatePartnerCommissionMutation,
   useJobGiveBackQuery,
   useGiveBackJobMutation,
   useReportCustomerAbsentMutation,

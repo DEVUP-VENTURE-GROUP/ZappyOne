@@ -299,6 +299,7 @@ router.put('/economics/dispatch',
     autoAcceptKm: Joi.number().min(0.5).max(30),
     widenKm: Joi.number().min(1).max(50),
     autoAcceptPauseDays: Joi.number().integer().min(0).max(90),
+    fairBandMin: Joi.number().integer().min(5).max(60),
   }).min(1)),
   async (req, res, next) => {
     try {
@@ -314,6 +315,25 @@ router.put('/economics/dispatch',
       const after = await cfg.fastAssignSettings();
       await auditService.fromRequest(req, 'economics.dispatch', { kind: 'system', id: null }, before, after);
       res.json({ settings: after });
+    } catch (err) { next(err); }
+  });
+
+/* Economics → Partner commission: percent taken from each kind of partner (shop/partner-commission) */
+
+router.get('/economics/partner-commission', async (req, res, next) => {
+  try { res.json({ rates: await require('../pricing/services/config.service').partnerCommissionSettings() }); } catch (err) { next(err); }
+});
+
+router.put('/economics/partner-commission',
+  validate(Joi.object(Object.fromEntries(['shop', 'agency', 'company', 'individual'].map((k) => [k, Joi.number().min(0).max(50)]))).min(1)),
+  async (req, res, next) => {
+    try {
+      const cfg = require('../pricing/services/config.service');
+      const before = await cfg.partnerCommissionSettings();
+      await cfg.updateActiveConfig({ partnerCommission: { ...before, ...req.body } }, req.auth.sub);
+      const after = await cfg.partnerCommissionSettings();
+      await auditService.fromRequest(req, 'economics.partner_commission', { kind: 'system', id: null }, before, after);
+      res.json({ rates: after });
     } catch (err) { next(err); }
   });
 

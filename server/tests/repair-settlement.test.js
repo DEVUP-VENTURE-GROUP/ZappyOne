@@ -104,7 +104,7 @@ async function bookAndComplete(
 
   await RepairBooking.updateOne(
     { _id: booking._id },
-    { $set: { 'priceSnapshot.totalPaise': total, 'priceSnapshot.commissionPaise': commission, 'priceSnapshot.platformFeePaise': 0, 'priceSnapshot.taxPaise': 0 } }, // fee and GST: worker-job-money-and-codes
+    { $set: { 'priceSnapshot.totalPaise': total, 'priceSnapshot.commissionPaise': commission, 'priceSnapshot.commissionBasePaise': null, 'priceSnapshot.platformFeePaise': 0, 'priceSnapshot.taxPaise': 0 } }, // fee and GST: worker-job-money-and-codes
   );
 
   for (const s of ['WORKER_ACCEPTED', 'ON_THE_WAY', 'ARRIVED', 'REPAIR_IN_PROGRESS', 'QA_PENDING']) {

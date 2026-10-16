@@ -79,6 +79,17 @@ async function announce(kind, doc, status) {
   // Taking a job ends a run of passed offers (jobs/offer-streak).
   if (doc.workerId && require('./give-back').RULES[kind]?.accepted.includes(status)) require('./offer-streak').took(doc.workerId);
 
+  // Once someone holds the job: their commission rate (shop/partner-commission) and their fair-dispatch count (jobs/fairness).
+  const accepted = require('./give-back').RULES[kind]?.accepted.includes(status);
+  if (status === 'PROVIDER_ASSIGNED' || accepted) {
+    require('../shop/partner-commission').refreeze(kind, doc).catch(() => {});
+    const firstHold = status === 'PROVIDER_ASSIGNED' || !(doc.statusHistory || []).some((h) => h.status === 'PROVIDER_ASSIGNED');
+    if (provider && (provider.kind === 'worker' ? accepted && !doc.shopId : firstHold)) require('./fairness').recordTaken(provider).catch(() => {});
+  }
+
+  // A job that just started waiting is offered to auto-accept pros at once (jobs/waves).
+  require('./waves').kick(kind, doc).catch(() => {});
+
   toRoom(id, 'job.status', payload);
   // The arrival promise: set on accept, kept on arrival, closed on hand-back or end (jobs/promise).
   require('./promise').onStatus(kind, doc, status).catch(() => {});

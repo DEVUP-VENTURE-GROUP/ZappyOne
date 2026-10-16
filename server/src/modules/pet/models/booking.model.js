@@ -169,6 +169,9 @@ const pricingSnapshotSchema = new mongoose.Schema(
     totalPaise: { type: Number, required: true, min: 0 },
 
     commissionPaise: { type: Number, default: 0, min: 0 },
+    commissionBasePaise: { type: Number, default: null, min: 0 },
+    // The holder's partner rate, frozen when they took the job; another holder gets their own.
+    partnerRate: { holder: { type: String, default: null }, pct: { type: Number, default: null } },
     providerAmountPaise: { type: Number, default: 0, min: 0 },
 
     currency: { type: String, default: 'INR' },

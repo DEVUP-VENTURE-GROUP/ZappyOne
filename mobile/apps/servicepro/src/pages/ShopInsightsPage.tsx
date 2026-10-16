@@ -1,7 +1,4 @@
-/**
- * How the team did (the website's ShopInsightsPage): jobs and value per day,
- * and per member, over 7, 30 or 90 days (server shop/partner.service insights).
- */
+// The website's ShopInsightsPage.
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';

@@ -5,7 +5,7 @@ import { useAdminDispatchQuery, useAdminUpdateDispatchMutation } from '@shared/s
 import { Card, PageLoader, EmptyState } from '../../../ui/kit';
 import { Setting, UnitInput } from './fields';
 
-const KEYS = ['firstLookSec', 'broadcastSec', 'broadcastSize', 'deadlineSec', 'autoAcceptKm', 'widenKm', 'autoAcceptPauseDays'];
+const KEYS = ['firstLookSec', 'broadcastSec', 'broadcastSize', 'deadlineSec', 'autoAcceptKm', 'widenKm', 'autoAcceptPauseDays', 'fairBandMin'];
 
 /**
  * Dispatch: how fast a job wanted now finds its pro (server jobs/fast-assign),
@@ -34,7 +34,7 @@ export default function Dispatch() {
   const values = { enabled: form.enabled, ...Object.fromEntries(KEYS.map((k) => [k, Number(form[k])])) };
   const inRange = (k, lo, hi) => form[k] !== '' && Number.isFinite(values[k]) && values[k] >= lo && values[k] <= hi;
   const valid = inRange('firstLookSec', 10, 300) && inRange('broadcastSec', 15, 600) && inRange('broadcastSize', 2, 20)
-    && inRange('deadlineSec', 60, 1800) && inRange('autoAcceptKm', 0.5, 30) && inRange('widenKm', 1, 50) && inRange('autoAcceptPauseDays', 0, 90)
+    && inRange('deadlineSec', 60, 1800) && inRange('autoAcceptKm', 0.5, 30) && inRange('widenKm', 1, 50) && inRange('autoAcceptPauseDays', 0, 90) && inRange('fairBandMin', 5, 60)
     && values.firstLookSec + values.broadcastSec <= values.deadlineSec && values.autoAcceptKm <= values.widenKm;
   const dirty = KEYS.some((k) => values[k] !== s[k]) || values.enabled !== s.enabled;
   const set = (k) => (v) => setForm((f) => ({ ...f, [k]: v }));
@@ -86,6 +86,9 @@ export default function Dispatch() {
       </Setting>
       <Setting title="Pause after a give-back" hint="A pro who hands back a job auto-accept took for them loses auto-accept for this long.">
         <UnitInput value={form.autoAcceptPauseDays} onChange={set('autoAcceptPauseDays')} label="Pause days" unit="days" min={0} max={90} />
+      </Setting>
+      <Setting title="Fair share within" hint="Everyone who can reach the customer within this counts as equally close; the one with the fewest jobs today gets it, then whoever has waited longest. Beyond it, the nearest.">
+        <UnitInput value={form.fairBandMin} onChange={set('fairBandMin')} label="Fair share minutes" unit="min" min={5} max={60} />
       </Setting>
       {!valid && <p className="px-4 pb-3 text-[12px] text-red-600">Check the numbers: the first look and several-at-once must end before the customer is told, and the wider radius must be at least the auto-accept radius.</p>}
     </Card>

@@ -317,10 +317,10 @@ async function findProviders({
      */
     const profile = s.shopId
       ? await Shop.findById(s.shopId)
-        .select('businessName rating reviewCount completedJobs isActive isBlocked kyc coverImageUrl address.location services hours')
+        .select('businessName rating reviewCount completedJobs isActive isBlocked kyc coverImageUrl address.location services hours dispatchStats')
         .lean()
       : await Worker.findById(s.workerId)
-        .select('name rating reviewCount completedJobs penalties isBlocked kyc isOnline wallet profilePhotoKey workHours')
+        .select('name rating reviewCount completedJobs penalties isBlocked kyc isOnline wallet profilePhotoKey workHours dispatchStats')
         .lean();
 
     if (!profile) { rejected.push({ label, reason: 'profile_missing' }); return; }
@@ -409,6 +409,7 @@ async function findProviders({
       // No reviews yet reads as new (null), never a default five stars; ranking treats it as neutral.
       rating: profile.reviewCount ? profile.rating : null,
       completedJobs: profile.completedJobs ?? 0,
+      jobsToday: require('../../jobs/fairness').statsOf(profile).jobsToday,
       penalties: profile.penalties || null,
       stockScore: inv.stockScore,
       partId: inv.partId || null,
@@ -499,6 +500,9 @@ function rank(candidates, cfg) {
   const maxEta = etas.length ? Math.max(...etas) : 0;
   const maxWarranty = Math.max(...candidates.map((c) => c.warrantyDays || 0), 1);
   const maxQuality = Math.max(...candidates.map((c) => c.qualityRank || 0), 1);
+  const today = candidates.map((c) => c.jobsToday || 0);
+  const minToday = today.length ? Math.min(...today) : 0;
+  const maxToday = today.length ? Math.max(...today) : 0;
 
   return candidates
     .map((c) => {
@@ -521,6 +525,8 @@ function rank(candidates, cfg) {
         skillLevel: normalise(c.skillLevel, 1, 4) * (w.skillLevel ?? 1),
         inventory: (c.stockScore ?? 1) * (w.inventory ?? 1),
         onTime: (c.onTimeRate ?? 0.8) * (w.onTime ?? 1),
+        // Fewer jobs today ranks higher, so work spreads and someone new is not starved (jobs/fairness).
+        fairShare: invNormalise(c.jobsToday || 0, minToday, maxToday) * (w.fairShare ?? 1),
       };
 
       const score = Object.values(parts).reduce((a, b) => a + b, 0);

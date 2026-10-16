@@ -118,6 +118,8 @@ const workerSchema = new mongoose.Schema(
      * them without tapping, so customers are matched at once. Their choice;
      * cancelling an auto-accepted job pauses it (autoAcceptPauseDays).
      */
+    // Jobs taken today and when last, for fair dispatch (jobs/fairness).
+    dispatchStats: { day: { type: String, default: null }, jobs: { type: Number, default: 0 }, lastAt: { type: Date, default: null } },
     autoAccept: {
       enabled: { type: Boolean, default: false },
       maxKm: { type: Number, default: null, min: 1, max: 30 },

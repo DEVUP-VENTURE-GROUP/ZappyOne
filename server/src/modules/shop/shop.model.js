@@ -147,6 +147,8 @@ const shopSchema = new mongoose.Schema(
       mode: { type: String, enum: ['manual', 'nearest', 'round_robin'], default: 'manual' },
       capacity: { type: Number, default: 0, min: 0, max: 1000 },
     },
+    // Jobs taken today and when last, for fair dispatch (jobs/fairness).
+    dispatchStats: { day: { type: String, default: null }, jobs: { type: Number, default: 0 }, lastAt: { type: Date, default: null } },
     autoAccept: {
       enabled: { type: Boolean, default: false },
       maxKm: { type: Number, default: null, min: 1, max: 30 },

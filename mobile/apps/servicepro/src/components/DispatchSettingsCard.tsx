@@ -1,8 +1,4 @@
-/**
- * How jobs reach the team (the website's DispatchSettingsCard; server
- * shop/partner.service): the kind of partner, the dispatch rule, and the most
- * jobs it runs at once.
- */
+// The website's DispatchSettingsCard.
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { usePartnerSettingsQuery, useSavePartnerSettingsMutation } from '@zappy/core/api';
@@ -27,6 +23,7 @@ export function DispatchSettingsCard() {
       <View>
         <Text variant="bodySmall" weight="black">How jobs reach your team</Text>
         <Text variant="caption" color={ink[500]}>{data.openJobs} job{data.openJobs === 1 ? '' : 's'} open right now{data.dispatch.capacity ? ` of your limit of ${data.dispatch.capacity}` : ''}.</Text>
+        {data.commissionPct != null ? <Text variant="caption" color={ink[500]}>ZappyOne's commission: {data.commissionPct}% of the service money on each job.</Text> : null}
       </View>
       {DISPATCH_MODES.map((m) => {
         const on = data.dispatch.mode === m.key;

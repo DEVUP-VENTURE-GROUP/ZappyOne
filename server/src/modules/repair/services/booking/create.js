@@ -199,7 +199,7 @@ async function createBooking({
    * when there is a main job to attach them to — an inspection-only visit has
    * nothing to add disinfection to yet.
    */
-  const { addOns, addOnsTotalPaise, addOnsCommissionPaise } = (repairCode && !isInspectionOnly)
+  const { addOns, addOnsTotalPaise, addOnsCommissionPaise, addOnsCommissionBasePaise = 0 } = (repairCode && !isInspectionOnly)
     ? await pricingService.buildAddOnSnapshots({
       vertical, addOnCodes, primaryRepairCode: repairCode, ctx, shopId, workerId,
     })
@@ -208,7 +208,7 @@ async function createBooking({
   const priceSnapshot = (repairCode || isInspectionOnly)
     ? await pricingService.buildPriceSnapshot({
       vertical, repairCode, providerPrice, referencePrice, serviceMode, discountPaise, distanceKm,
-      addOnsTotalPaise, addOnsCommissionPaise, skipJourney, skipPlatformFee,
+      addOnsTotalPaise, addOnsCommissionPaise, addOnsCommissionBasePaise, skipJourney, skipPlatformFee,
     })
     : {
       subtotalPaise: 0, totalPaise: 0, currency: 'INR',

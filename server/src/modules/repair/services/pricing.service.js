@@ -341,6 +341,7 @@ async function buildPriceSnapshot({
   distanceKm = null,
   addOnsTotalPaise = 0,
   addOnsCommissionPaise = 0,
+  addOnsCommissionBasePaise = 0,
   // Another item in a group (repair/services/group): this provider is already
   // making the trip (skipJourney), and the platform fee is already on the
   // group's first item (skipPlatformFee).
@@ -438,6 +439,7 @@ async function buildPriceSnapshot({
   const totalPaise = discounted + taxPaise;
   const commissionPaise = Math.round((base * (cfg.commissionPct || 0)) / 100)
     + (addOnsCommissionPaise || 0);
+  const commissionBasePaise = base + (addOnsCommissionBasePaise || 0);
 
   return {
     partPaise,
@@ -452,6 +454,7 @@ async function buildPriceSnapshot({
     taxPaise,
     discountPaise: discountPaise || 0,
     commissionPaise,
+    commissionBasePaise,
     subtotalPaise,
     totalPaise,
     currency: 'INR',
@@ -501,7 +504,7 @@ async function buildAddOnSnapshots({
   workerId = null,
 }) {
   const codes = [...new Set((addOnCodes || []).filter(Boolean))];
-  if (!codes.length) return { addOns: [], addOnsTotalPaise: 0, addOnsCommissionPaise: 0 };
+  if (!codes.length) return { addOns: [], addOnsTotalPaise: 0, addOnsCommissionPaise: 0, addOnsCommissionBasePaise: 0 };
 
   const cfg = await getConfig(vertical);
   const repairs = await Repair.find({
@@ -517,6 +520,7 @@ async function buildAddOnSnapshots({
   const addOns = [];
   let addOnsTotalPaise = 0;
   let addOnsCommissionPaise = 0;
+  let addOnsCommissionBasePaise = 0;
 
   for (const code of codes) {
     const repair = found.get(code);
@@ -558,9 +562,10 @@ async function buildAddOnSnapshots({
     });
     addOnsTotalPaise += totalPaise;
     addOnsCommissionPaise += commissionPaise;
+    if (providerPrice) addOnsCommissionBasePaise += totalPaise;
   }
 
-  return { addOns, addOnsTotalPaise, addOnsCommissionPaise };
+  return { addOns, addOnsTotalPaise, addOnsCommissionPaise, addOnsCommissionBasePaise };
 }
 
 /** Reference band used as an indicative price when no provider is chosen yet. */

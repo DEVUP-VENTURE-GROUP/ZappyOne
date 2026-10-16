@@ -292,6 +292,9 @@ const chargeSchema = new mongoose.Schema(
     serviceChargePaise: { type: Number, default: 0, min: 0 },
     /** Zappy's cut, taken from the service charge only (§32, §34). */
     commissionPaise: { type: Number, default: 0, min: 0 },
+    commissionBasePaise: { type: Number, default: null, min: 0 },
+    // The holder's partner rate, frozen when they took the job; another holder gets their own.
+    partnerRate: { holder: { type: String, default: null }, pct: { type: Number, default: null } },
     /** What the helper earns: service charge minus commission. */
     workerEarningPaise: { type: Number, default: 0, min: 0 },
 

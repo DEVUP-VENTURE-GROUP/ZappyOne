@@ -28,6 +28,9 @@ const GOOGLE_PER_CALL = 5; // at most this many Google lookups per estimate
 
 const round = (n) => Math.max(1, Math.round(n));
 
+// Road minutes for a straight-line distance; shops add their preparation time.
+const roughMinutes = (km, kind = 'worker') => round(((km * ROAD_FACTOR) / CITY_KMH) * 60 + 2) + (kind === 'shop' ? SHOP_PREP_MIN : 0);
+
 /** Driving minutes from a to b ({ lat, lng }). Google when close and allowed; otherwise a road estimate. */
 async function travel(a, b, { google = true } = {}) {
   const km = haversineKm(a.lat, a.lng, b.lat, b.lng);
@@ -103,4 +106,4 @@ async function nearest({ lineCode, lat, lng }) {
   return { ...best, nearby: est.size, promiseMinutes: PROMISE_MIN };
 }
 
-module.exports = { travel, forProviders, nearest, PROMISE_MIN, SHOP_PREP_MIN };
+module.exports = { travel, forProviders, nearest, roughMinutes, PROMISE_MIN, SHOP_PREP_MIN };

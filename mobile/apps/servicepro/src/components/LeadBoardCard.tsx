@@ -1,7 +1,4 @@
-/**
- * A partner's team lead (the website's LeadBoardCard): jobs nobody is on yet,
- * given to someone in the group in one tap, and who in the group is on what.
- */
+// The website's LeadBoardCard.
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Crown } from 'lucide-react-native';

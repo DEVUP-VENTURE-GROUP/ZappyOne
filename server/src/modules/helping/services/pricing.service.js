@@ -157,6 +157,7 @@ async function quote({
 
     serviceChargePaise,
     commissionPaise,
+    commissionBasePaise: feesPaise,
     workerEarningPaise,
 
     currency: 'INR',

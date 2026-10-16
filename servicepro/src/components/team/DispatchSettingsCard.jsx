@@ -2,10 +2,7 @@ import toast from 'react-hot-toast';
 import { usePartnerSettingsQuery, useSavePartnerSettingsMutation } from '@shared/services/api';
 import { DISPATCH_MODES, PARTNER_TYPES } from '@shared/provider/partnerBoard';
 
-/**
- * How jobs reach the team (server shop/partner.service): what kind of partner
- * this is, the dispatch rule, and the most jobs it runs at once.
- */
+// Partner type, dispatch rule and job limit for the team (server shop/partner.service).
 export default function DispatchSettingsCard() {
   const { data } = usePartnerSettingsQuery();
   const [save, { isLoading }] = useSavePartnerSettingsMutation();
@@ -17,6 +14,7 @@ export default function DispatchSettingsCard() {
       <div>
         <p className="text-[14px] font-bold text-slate-900">How jobs reach your team</p>
         <p className="text-[12px] text-slate-500">{data.openJobs} job{data.openJobs === 1 ? '' : 's'} open right now{data.dispatch.capacity ? ` of your limit of ${data.dispatch.capacity}` : ''}.</p>
+        {data.commissionPct != null && <p className="mt-1 text-[12px] text-slate-500">ZappyOne's commission: {data.commissionPct}% of the service money on each job.</p>}
       </div>
       <div className="space-y-2">
         {DISPATCH_MODES.map((m) => (

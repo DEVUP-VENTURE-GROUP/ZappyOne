@@ -1,7 +1,4 @@
-/**
- * Add a whole team at once (the website's InviteTeamSheet): one person a line,
- * name and number. Each still verifies themselves before taking jobs.
- */
+// The website's InviteTeamSheet.
 import { useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 import { useInviteShopTeamMutation } from '@zappy/core/api';

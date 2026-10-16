@@ -164,7 +164,7 @@ describe('add-on pricing', () => {
     const r = await pricingService.buildAddOnSnapshots({
       vertical: V, addOnCodes: [], primaryRepairCode: 'wt_deep_cleaning', ctx, shopId,
     });
-    expect(r).toEqual({ addOns: [], addOnsTotalPaise: 0, addOnsCommissionPaise: 0 });
+    expect(r).toEqual({ addOns: [], addOnsTotalPaise: 0, addOnsCommissionPaise: 0, addOnsCommissionBasePaise: 0 });
   });
 });
 

@@ -121,3 +121,53 @@ test('a lead’s board: their group, the jobs they are on, and jobs nobody is on
   expect(board.jobs.map((j) => j.id).sort()).toEqual([String(free), String(ours)].sort());
   await expect(partner.leadBoard(mine._id)).rejects.toMatchObject({ code: 'NOT_A_LEAD' });
 });
+
+describe('partner commission', () => {
+  const commission = require('../src/modules/shop/partner-commission');
+  const settlement = require('../src/modules/payment/settlement');
+  const priced = (extra = {}) => heldPet({ pricing: { totalPaise: 50000, subtotalPaise: 45000, commissionPaise: 4000, commissionBasePaise: 40000, providerAmountPaise: 41000 }, ...extra });
+
+  test('a partner’s rate replaces the service’s commission on the frozen base, and the provider amount moves with it', async () => {
+    await PetBooking.deleteMany({});
+    const id = await priced({ status: 'PROVIDER_ACCEPTED' });
+    const doc = await PetBooking.findById(id);
+    expect(await commission.refreeze('pet', doc)).toBe(-2000);
+    const after = await PetBooking.findById(id).lean();
+    expect(after.pricing).toMatchObject({ commissionPaise: 2000, providerAmountPaise: 43000 });
+    expect(await commission.refreeze('pet', doc)).toBe(0);
+  });
+
+  test('admin rates apply by kind of partner; individual providers have their own', async () => {
+    const cfg = require('../src/modules/pricing/services/config.service');
+    await cfg.updateActiveConfig({ partnerCommission: { shop: 5, agency: 8, company: 5, individual: 3 } }, null);
+    expect(await commission.pctFor({ shopId: shop._id })).toBe(8);
+    const solo = await Worker.create({ name: 'Solo', phone: phone(), kyc: { status: 'approved' } });
+    expect(await commission.pctFor({ workerId: solo._id })).toBe(3);
+    await cfg.updateActiveConfig({ partnerCommission: { shop: 5, agency: 5, company: 5, individual: 5 } }, null);
+  });
+
+  test('a booking priced before the base was frozen keeps its commission', async () => {
+    const id = await heldPet();
+    expect(await commission.refreeze('pet', await PetBooking.findById(id))).toBe(0);
+  });
+
+  test('payout takes the partner rate, whatever the caller froze', async () => {
+    await PetBooking.deleteMany({});
+    const id = await priced({ status: 'PAYMENT_COMPLETED' });
+    const booking = await PetBooking.findById(id);
+    const out = await settlement.settleProviderShare({ source: 'pet', booking, reference: 'T1', paymentMethod: 'online', totalPaise: 50000, platformPaise: 4000 });
+    expect(out).toMatchObject({ settled: true, ownerKind: 'shop', platformPaise: 2000, providerPaise: 48000 });
+  });
+});
+
+test('the partner rate is frozen when the job is taken; a later admin change does not touch it', async () => {
+  const commission = require('../src/modules/shop/partner-commission');
+  const cfg = require('../src/modules/pricing/services/config.service');
+  await PetBooking.deleteMany({});
+  const id = await heldPet({ pricing: { totalPaise: 50000, subtotalPaise: 45000, commissionPaise: 4000, commissionBasePaise: 40000, providerAmountPaise: 41000 } });
+  await commission.refreeze('pet', await PetBooking.findById(id));
+  await cfg.updateActiveConfig({ partnerCommission: { shop: 5, agency: 9, company: 5, individual: 5 } }, null);
+  expect(await commission.refreeze('pet', await PetBooking.findById(id))).toBe(0);
+  expect((await PetBooking.findById(id).lean()).pricing).toMatchObject({ commissionPaise: 2000, partnerRate: { holder: `shop:${shop._id}`, pct: 5 } });
+  await cfg.updateActiveConfig({ partnerCommission: { shop: 5, agency: 5, company: 5, individual: 5 } }, null);
+});

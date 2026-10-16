@@ -52,6 +52,7 @@ async function assignTechnician({ jobId, shopId, workerId }) {
   doc.workerId = worker._id;
   // Their screens, and the customer's, pick it up at once.
   require('./job-events').announceAssigned(kind, doc).catch(() => {});
+  require('./fairness').recordTaken({ kind: 'worker', id: worker._id }).catch(() => {});
   return { kind, job: doc, worker };
 }
 

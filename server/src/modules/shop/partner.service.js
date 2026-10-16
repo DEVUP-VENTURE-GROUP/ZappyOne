@@ -1,19 +1,4 @@
-/**
- * ServicePro as a partner OS: shops, agencies and service companies with
- * their own teams, run without phone calls.
- *
- *   dispatch   a job the partner holds with nobody on it goes to a member
- *              by the partner's rule: the nearest free member, or turns
- *              (the one given a job longest ago); manual leaves it to the owner
- *   capacity   the most jobs a partner runs at once; at it, ZappyOne offers
- *              it nothing new until one finishes
- *   team       members and team leads; a lead sees and assigns their group
- *   invite     a whole list of names and numbers at once
- *   insights   per member and per day: jobs, rating, value
- *
- * Assignment goes through jobs/assignment.assignTechnician, the same path as
- * the owner's own button, so every rule there still applies.
- */
+// ServicePro as a partner OS: team dispatch, capacity, leads, bulk invite and insights; assignment goes through jobs/assignment.
 const Shop = require('./shop.model');
 const Worker = require('../worker/worker.model');
 const { KINDS } = require('../jobs/kinds');
@@ -52,7 +37,7 @@ async function atCapacity(shopIds = []) {
 
 /** The member a job should go to, by the partner's rule; null when nobody is free and on duty. */
 async function pickMember(shop, kind, doc) {
-  const members = await Worker.find({ shopId: shop._id, isBlocked: { $ne: true } }).select('currentLocation team').lean();
+  const members = await Worker.find({ shopId: shop._id, isBlocked: { $ne: true } }).select('currentLocation team dispatchStats').lean();
   if (!members.length) return null;
   const ids = members.map((m) => m._id);
   const [live, { free }] = await Promise.all([
@@ -65,14 +50,14 @@ async function pickMember(shop, kind, doc) {
     return ready.sort((a, b) => new Date(a.team?.lastAssignedAt || 0) - new Date(b.team?.lastAssignedAt || 0))[0];
   }
   const at = require('../jobs/kinds').whereOf(kind, doc);
-  const km = (m) => (at && m.currentLocation?.coordinates?.length === 2 ? haversineKm(at.lat, at.lng, m.currentLocation.coordinates[1], m.currentLocation.coordinates[0]) : Infinity);
-  return ready.sort((a, b) => km(a) - km(b))[0];
+  const km = (m) => (at && m.currentLocation?.coordinates?.length === 2 ? haversineKm(at.lat, at.lng, m.currentLocation.coordinates[1], m.currentLocation.coordinates[0]) : null);
+  // Nearest, but fairly: within the arrival promise the member with fewest jobs today goes (jobs/fairness).
+  const fairness = require('../jobs/fairness');
+  const { fairBandMin } = await require('../pricing/services/config.service').fastAssignSettings();
+  return fairness.fairOrder(ready.map((m) => ({ m, kind: 'worker', km: km(m), stats: fairness.statsOf(m) })), { promiseMin: fairBandMin })[0]?.m || null;
 }
 
-/**
- * Every few seconds: jobs partners hold with nobody on them, given to a member
- * by each partner's rule. Partners on manual are left alone.
- */
+// Gives partners' unassigned jobs to a member by each partner's rule; manual partners are left alone.
 async function dispatchSweep() {
   const auto = await Shop.find({ 'dispatch.mode': { $in: ['nearest', 'round_robin'] } }).select('dispatch').lean();
   if (!auto.length) return { assigned: 0 };
@@ -101,7 +86,10 @@ async function dispatchSweep() {
 async function settingsOf(shopId) {
   const shop = await Shop.findById(shopId).select('partnerType dispatch').lean();
   if (!shop) throw err(404, 'NOT_FOUND', 'Partner not found');
-  return { partnerType: shop.partnerType || 'shop', dispatch: { mode: shop.dispatch?.mode || 'manual', capacity: shop.dispatch?.capacity || 0 }, openJobs: await openJobs(shopId) };
+  return {
+    partnerType: shop.partnerType || 'shop', dispatch: { mode: shop.dispatch?.mode || 'manual', capacity: shop.dispatch?.capacity || 0 },
+    openJobs: await openJobs(shopId), commissionPct: await require('./partner-commission').pctFor({ shopId }),
+  };
 }
 
 async function saveSettings(shopId, { partnerType, mode, capacity }) {
@@ -167,10 +155,7 @@ function summaryOf(kind, d) {
   return { title: (d.pets || []).map((p) => p.snapshot?.name).filter(Boolean).join(', ') || d.reference || 'Pet care', where: d.serviceLocation?.address || '' };
 }
 
-/**
- * A team lead's board: the people in their group (and themself), the jobs
- * they are on, and the partner's jobs nobody is on yet, which the lead may give out.
- */
+// A lead's group (and themself), the jobs they are on, and the partner's unassigned jobs.
 async function leadBoard(leadId) {
   const lead = await Worker.findById(leadId).select('shopId team name phone isOnline').lean();
   if (!lead?.shopId || lead.team?.role !== 'lead') throw err(403, 'NOT_A_LEAD', 'Only a team lead has a team board');
@@ -191,10 +176,7 @@ async function leadBoard(leadId) {
   };
 }
 
-/**
- * The partner's numbers over `days`: per member (jobs done, rating, value of
- * jobs) and per day, from the jobs themselves.
- */
+// Jobs done and their value over `days`, per member and per day.
 async function insights(shopId, days = 30) {
   const since = new Date(Date.now() - Math.min(90, Math.max(7, days)) * 86400000);
   const members = await Worker.find({ shopId }).select('name phone rating team').lean();

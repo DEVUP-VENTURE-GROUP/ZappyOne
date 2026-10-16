@@ -77,7 +77,11 @@ async function seedConfig(overrides = {}) {
   });
 }
 
-beforeAll(async () => { await startMongo(); });
+beforeAll(async () => {
+  await startMongo();
+  // These tests are about the ledger at the line's 20%; partner rates have their own tests (partner-os).
+  await require('../src/modules/pricing/services/config.service').updateActiveConfig({ partnerCommission: { shop: 20, agency: 20, company: 20, individual: 20 } }, null);
+});
 afterAll(async () => { await stopMongo(); });
 
 beforeEach(async () => {

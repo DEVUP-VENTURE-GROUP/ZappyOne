@@ -9,6 +9,7 @@ import WorkerDues from './economics/WorkerDues';
 import BoostTips from './economics/BoostTips';
 import Surge from './economics/Surge';
 import Dispatch from './economics/Dispatch';
+import PartnerCommission from './economics/PartnerCommission';
 
 /**
  * Economics: every money rule in one place, a tab per kind of rule, so none of
@@ -173,6 +174,7 @@ function FeesTab() {
 
 const TABS = [
   ['fees', 'Fees & commission', 'Platform fee, commission and tax for every service'],
+  ['partners', 'Partner commission', 'What shops, agencies, companies and individual providers pay ZappyOne on each job'],
   ['cancellations', 'Cancellations', 'What cancelling costs customers, and what backing out costs providers'],
   ['dues', 'Worker dues', 'What workers may owe from cash jobs, and recording what they pay'],
   ['boost', 'Boost & tips', 'What customers may add for a faster match, and tip after a job'],
@@ -198,6 +200,7 @@ export default function Economics() {
         ))}
       </div>
       {tab === 'fees' && <FeesTab />}
+      {tab === 'partners' && <PartnerCommission />}
       {tab === 'cancellations' && <CancellationRules />}
       {tab === 'dues' && <WorkerDues />}
       {tab === 'boost' && <BoostTips />}

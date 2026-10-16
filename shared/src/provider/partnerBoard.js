@@ -1,8 +1,4 @@
-/**
- * ServicePro's partner OS, in words and rules both the website and the app use
- * (server shop/partner.service): the kinds of partner, how jobs reach the team,
- * which column of the orders board a job sits in, and reading a pasted team list.
- */
+// ServicePro partner OS words and rules shared by web and app (server shop/partner.service).
 
 export const PARTNER_TYPES = [
   { key: 'shop', label: 'Shop', hint: 'A counter customers can walk into.' },
@@ -38,10 +34,7 @@ export function bucketOf(rawStatus, workerId) {
   return 'in_progress';
 }
 
-/**
- * A pasted team list, one person a line, name and number in either order:
- * "Ravi Kumar, 98480 12345" or "9848012345 Ravi". Returns [{ name, phone }].
- */
+// A pasted team list, one person a line, name and number in either order.
 export function parseTeamList(text) {
   return String(text || '').split(/\r?\n/).map((line) => {
     const digits = (line.match(/\+?[\d\s-]{10,}/) || [''])[0];
@@ -51,17 +44,11 @@ export function parseTeamList(text) {
   }).filter((r) => r.phone || r.name);
 }
 
-/**
- * @typedef {{ kind: string, id: string, status: string, workerId: string | null, at?: string, title: string, where: string }} BoardJob
- * @typedef {{ id: string, name: string, isOnline: boolean, lead: boolean }} BoardMember
- */
+/** @typedef {{ kind: string, id: string, status: string, workerId: string | null, at?: string, title: string, where: string }} BoardJob */
+/** @typedef {{ id: string, name: string, isOnline: boolean, lead: boolean }} BoardMember */
 
-/**
- * A team lead's board (GET /jobs/team-board) read for the screen: jobs nobody
- * is on yet, and each person in the group with the jobs they are on.
- * @param {{ jobs?: BoardJob[], members?: BoardMember[] } | undefined} board
- * @returns {{ waiting: BoardJob[], people: (BoardMember & { jobs: BoardJob[] })[] }}
- */
+// A team lead's board (GET /jobs/team-board): jobs nobody is on, and each person with their jobs.
+/** @param {{ jobs?: BoardJob[], members?: BoardMember[] } | undefined} board @returns {{ waiting: BoardJob[], people: (BoardMember & { jobs: BoardJob[] })[] }} */
 export function leadView(board) {
   const jobs = board?.jobs || [];
   return {

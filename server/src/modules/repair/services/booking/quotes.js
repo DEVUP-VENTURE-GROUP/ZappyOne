@@ -258,7 +258,8 @@ async function respondToQuote({ quoteId, userId, decision, reason = '' }) {
       discountPaise: quote.discountPaise || 0,
       taxPaise: quote.taxPaise,
       // ZappyOne's cut follows the work actually approved, at the admin rate.
-      commissionPaise: Math.round(((quote.subtotalPaise || 0) * (cfg.commissionPct || 0)) / 100),
+      commissionPaise: await require('../../../shop/partner-commission').commissionOn(booking, quote.subtotalPaise, cfg.commissionPct),
+      commissionBasePaise: quote.subtotalPaise || 0,
       inspectionCreditPaise: creditPaise,
       totalPaise: Math.max(0, quote.totalPaise - creditPaise),
       warrantyDays: quote.warrantyDays,

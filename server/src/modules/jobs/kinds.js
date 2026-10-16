@@ -71,6 +71,8 @@ const KINDS = {
     // Repairs are offered to one provider at a time by the matching engine, never posted open.
     open: null,
     // What a finished job paid the provider — the settlement run's own split.
+    // Where the frozen commission lives; a partner's rate is re-applied here (shop/partner-commission).
+    commission: { path: 'priceSnapshot', provider: null },
     earning: {
       done: ['COMPLETED'],
       at: 'completedAt',
@@ -148,6 +150,8 @@ const KINDS = {
         at: b.scheduledAt || b.checkInAt || null,
       }),
     },
+    // Where the frozen commission lives; a partner's rate is re-applied here (shop/partner-commission).
+    commission: { path: 'pricing', provider: 'providerAmountPaise' },
     earning: {
       done: ['SERVICE_COMPLETED', 'CUSTOMER_CONFIRMATION', 'PAYMENT_PENDING', 'PAYMENT_COMPLETED', 'CLOSED'],
       at: 'execution.completedAt',
@@ -232,6 +236,8 @@ const KINDS = {
         frontPaise: t.itemMoney?.paymentModel === 'worker_advance' ? t.itemMoney?.budgetPaise || 0 : 0,
       }),
     },
+    // Where the frozen commission lives; a partner's rate is re-applied here (shop/partner-commission).
+    commission: { path: 'charge', provider: 'workerEarningPaise' },
     earning: {
       done: ['COMPLETED', 'CUSTOMER_CONFIRMED', 'SETTLED'],
       at: 'completedAt',

@@ -55,6 +55,18 @@ async function closeUnmatched(kind, d) {
   }
 }
 
+// Auto-accept the moment a job starts waiting, not at the next sweep; the same once-only claim as the sweep.
+async function kick(kind, doc) {
+  const w = WAITING[kind];
+  if (!w?.status.includes(doc.status) || Object.keys(w.unheld).some((k) => doc[k]) || doc.matching?.autoTriedAt) return null;
+  const fast = require('./fast-assign');
+  const fa = await fast.settings();
+  const later = doc.scheduledAt && new Date(doc.scheduledAt).getTime() - Date.now() > 60 * 60 * 1000;
+  if (!fa.enabled || later) return null;
+  const mine = await KINDS[kind].model().updateOne({ _id: doc._id, 'matching.autoTriedAt': null }, { $set: { 'matching.autoTriedAt': new Date() } });
+  return mine.modifiedCount ? fast.tryAutoAccept(kind, doc, fa.autoAcceptKm) : null;
+}
+
 async function sweep({ now = Date.now() } = {}) {
   const { waveMin, slowMin } = await timings();
   // Wanted now: the two-minute clock (jobs/fast-assign), counted from when it was booked.
@@ -151,4 +163,4 @@ async function alertOffline(kind, doc) {
   await events.alertNearbyProviders(kind, doc, { offlineOnly: true });
 }
 
-module.exports = { sweep, timings, alertOffline, waitingSince };
+module.exports = { sweep, kick, timings, alertOffline, waitingSince };
