@@ -33,6 +33,7 @@ import { ActiveJobCard } from './ActiveJobCard';
 import { ContinueBookingCard } from './ContinueBookingCard';
 import { FestiveHero } from './festive/FestiveHero';
 import { FestiveDivider } from './festive/FestiveDivider';
+import { SafeSection } from '@zappy/ui/components/common/SafeSection';
 import { themeOf } from '@zappy/core/shared/season';
 import { HeroCarousel } from './HeroCarousel';
 import { HomeHeader, SearchBar, type HomeLocation } from './HomeHeader';
@@ -163,7 +164,7 @@ export function HomePage() {
       {/* Search stays pinned while the rest scrolls. */}
       <View style={[styles.searchWrap, tint ? { backgroundColor: tint, borderBottomLeftRadius: 0, borderBottomRightRadius: 0 } : null]}><SearchBar terms={terms} onOpen={() => setSpotOpen(true)} /></View>
       <ScrollView contentContainerStyle={styles.body} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
-        {season ? <View style={styles.festive}><FestiveHero season={season} theme={theme} services={services} onOpen={(s) => openService(s)} /></View> : null}
+        {season ? <SafeSection name="festive-hero"><View style={styles.festive}><FestiveHero season={season} theme={theme} services={services} onOpen={(s) => openService(s)} /></View></SafeSection> : null}
         {activeJob ? <ActiveJobCard job={activeJob} onOpen={() => router.push(activeJob.href as never)} /> : null}
         {/* A booking started and left: back to where they stopped (jobs/checkout-draft). */}
         <ContinueBookingCard isAuthed={isAuthed} />
@@ -177,11 +178,11 @@ export function HomePage() {
             {/* During a festival each section rises in after the last. */}
             <Animated.View entering={rise(0)}><ProblemChips services={services} /></Animated.View>
             {loadingCatalog || (loc.lat != null && !svc && checkingArea) ? <SkeletonGrid /> : <Animated.View entering={rise(1)}><ServiceGrid domains={domains} onOpen={openService} /></Animated.View>}
-            {theme ? <FestiveDivider accent={theme.accent} /> : null}
+            {theme ? <SafeSection name="festive-divider"><FestiveDivider accent={theme.accent} /></SafeSection> : null}
             <Animated.View entering={rise(2)}><BookAgainRail items={rebooks} /></Animated.View>
             <Animated.View entering={rise(3)}><OffersRail isAuthed={isAuthed} /></Animated.View>
             {!loadingCatalog ? <Animated.View entering={rise(4)}><ServiceShowcase domains={allDomains} onOpen={openService} /></Animated.View> : null}
-            {theme ? <FestiveDivider accent={theme.accent} /> : null}
+            {theme ? <SafeSection name="festive-divider"><FestiveDivider accent={theme.accent} /></SafeSection> : null}
             <AdBanner isAuthed={isAuthed} />
             <NearbyShopsLink />
           </>

@@ -5,6 +5,7 @@ import { useCurrentSeasonQuery } from '@zappy/core/api';
 import { themeOf } from '@zappy/core/shared/season';
 import { useT } from '@zappy/ui/lib/i18n';
 import { JhalarEdge } from '../../src/features/home/festive/JhalarEdge';
+import { SafeSection } from '@zappy/ui/components/common/SafeSection';
 import { colors } from '@zappy/ui/theme/colors';
 
 /**
@@ -23,7 +24,7 @@ export default function CustomerTabs() {
       ...(festive ? {
         tabBarBackground: () => (
           <View style={{ flex: 1, backgroundColor: festive.wash }}>
-            <JhalarEdge color={festive.dark ? festive.accent : festive.paint[4] || festive.accent} />
+            <SafeSection name="festive-tabbar"><JhalarEdge color={festive.dark ? festive.accent : festive.paint[4] || festive.accent} /></SafeSection>
           </View>
         ),
       } : {}),
