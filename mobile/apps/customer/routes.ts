@@ -22,7 +22,7 @@ const BUILT = [
  * catalogue, events and décor, help and policies, and the map picker home uses. Booking, bookings
  * and the account ask for sign-in first.
  */
-const PUBLIC = [/^\/$/, /^\/home$/, /^\/services$/, /^\/faq$/, /^\/policy\/[\w-]+$/, /^\/location\/picker$/, /^\/events(\/browse)?$/, /^\/events\/themes\/[\w-]+$/];
+const PUBLIC = [/^\/$/, /^\/home$/, /^\/services$/, /^\/orders$/, /^\/track$/, /^\/profile$/, /^\/faq$/, /^\/policy\/[\w-]+$/, /^\/location\/picker$/, /^\/events(\/browse)?$/, /^\/events\/themes\/[\w-]+$/];
 export const isPublic = (path: string) => PUBLIC.some((re) => re.test(path.split('?')[0]));
 
 /** Whether this app has a screen for `path`: entries to screens not built yet are hidden, not dead ends. */

@@ -98,6 +98,10 @@ async function bootstrapSession(roles: readonly Role[]): Promise<void> {
   store.dispatch(setSession({ user: null, role: session.role }));
 }
 
+// Where a guest asked to sign in from a screen of their own choosing (SignInGate); they come back there after.
+let pendingReturn: string | null = null;
+export const rememberReturn = (path: string) => { pendingReturn = path; };
+
 function Guarded({ roles, home, login, resolveRoute, isPublic, children }: AppRootProps) {
   const segments = useSegments();
   const pathname = usePathname();
@@ -144,8 +148,9 @@ function Guarded({ roles, home, login, resolveRoute, isPublic, children }: AppRo
       returnTo.current = isPublic ? pathname : null;
       router.replace(login as never);
     } else if (isAuthenticated && inAuth) {
-      const next = returnTo.current;
+      const next = returnTo.current || pendingReturn;
       returnTo.current = null;
+      pendingReturn = null;
       router.replace((next || homePath) as never);
     }
   }, [ready, segments, pathname, router, isAuthenticated, homePath, login, isPublic]);
