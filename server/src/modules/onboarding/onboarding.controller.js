@@ -305,7 +305,10 @@ async function liveCatalog(req, res, next) {
     // Every live service, provider or not: customers in a launch region see the
     // whole catalog, and each service says whether anyone is verified for it
     // yet. Whether it can be booked HERE is serviceability's answer.
-    const { domains, lines } = await coverage.loadOfferedLines();
+    const { domains, lines: offered } = await coverage.loadOfferedLines();
+    // An app below a service's UI level would open the wrong screen, so it does not see it; the website is always current.
+    const uiLevel = req.get('x-client-type') === 'mobile' ? Number(req.get('x-ui-level')) || 0 : Infinity;
+    const lines = offered.filter((l) => (l.minUiLevel || 0) <= uiLevel);
 
 
     /**
@@ -399,6 +402,7 @@ async function liveCatalog(req, res, next) {
         highlights: highlightsByVertical.get(l.repairVertical) || [],
         coverage: coverageByVertical.get(l.repairVertical) || [],
         options: optionsByLine.get(l.code) || [],
+        form: l.form || null,
       });
     }
 

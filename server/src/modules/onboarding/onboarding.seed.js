@@ -14,19 +14,46 @@
  */
 
 // Family Assist, done only by ZappyOne staff; each opens the errand booking set to its helping service type.
-const assistLine = (code, type, name, icon, order, tagline, description) => ({
+// The UI level that first reads `form` from the catalog (shared/customer/helpModes UI_LEVEL).
+const FORM_UI_LEVEL = 2;
+const assistLine = (code, name, icon, order, tagline, description, form) => ({
   code, name, domainCode: 'family_assist', status: 'live', displayOrder: order, icon, providerKinds: ['individual'], staffOnly: true,
-  customerPath: `/helping/shopping?mode=${type}`, tagline, description, isPopular: true,
+  customerPath: `/helping/shopping?mode=${form.type}`, tagline, description, isPopular: true,
+  form: { assist: true, title: name, line: code, ...form }, minUiLevel: FORM_UI_LEVEL,
 });
 const FAMILY_ASSIST_LINES = [
-  assistLine('fa_grocery_run', 'grocery_run', 'Grocery run', 'ShoppingCart', 1, '₹149 + bill · about 60 min', 'We shop from your list, deliver and unpack'),
-  assistLine('fa_medicine_pickup', 'medicine', 'Medicine pickup', 'Pill', 2, '₹99 + bill · about 45 min', 'Pharmacy pickup with your prescription'),
-  assistLine('fa_parcel_drop', 'parcel_drop', 'Parcel return or drop', 'Package', 3, '₹99 · about 45 min', 'Courier, post office and return counters'),
-  assistLine('fa_doctor_escort', 'doctor_escort', 'Doctor visit escort', 'Stethoscope', 4, '₹399 · up to 2 hrs', 'For elders: we go along, wait and bring them back'),
-  assistLine('fa_queue_errand', 'queue_errand', 'Bank, post office or bill queue', 'Landmark', 5, '₹199 · about 60 min', 'We stand in line and submit your papers'),
-  assistLine('fa_elder_checkin', 'elder_checkin', 'Elder daily check-in', 'HeartHandshake', 6, '₹149 · 30 min visit', 'A visit, medicine reminder, small chores and an update to you'),
-  assistLine('fa_party_helper', 'party_helper', 'Party helper', 'PartyPopper', 7, '₹599 · 3 hrs', 'Serve, clear and clean during your home function'),
-  assistLine('fa_puja_help', 'puja_help', 'Puja / festival help', 'Flower2', 8, '₹399 · 2 hrs', 'Set-up, flowers and clean-up'),
+  assistLine('fa_grocery_run', 'Grocery run', 'ShoppingCart', 1, '₹149 + bill · about 60 min', 'We shop from your list, deliver and unpack', {
+    type: 'grocery_run', items: true, home: true, start: 'Deliver to (your home)', end: 'Preferred shop (optional)', photo: 'reference photo',
+    hint: 'Unpack in the kitchen, fridge items in the fridge', blurb: 'We shop from your list, deliver and unpack. You pay the bill at actual cost.',
+  }),
+  assistLine('fa_medicine_pickup', 'Medicine pickup', 'Pill', 2, '₹99 + bill · about 45 min', 'Pharmacy pickup with your prescription', {
+    type: 'medicine', items: true, home: true, start: 'Deliver to (your home)', end: 'Pharmacy (optional)', photo: 'prescription photo',
+    hint: 'Doctor name, or the pharmacy that has your order', blurb: 'Add each medicine with a photo of the prescription. You pay the bill at actual cost.',
+  }),
+  assistLine('fa_parcel_drop', 'Parcel return or drop', 'Package', 3, '₹99 · about 45 min', 'Courier, post office and return counters', {
+    type: 'parcel_drop', start: 'Collect from (your home)', end: 'Courier, post office or return counter', ask: 'What are we dropping?',
+    hint: 'e.g. Amazon return, label printed, drop at DTDC Kondapur', blurb: 'We collect the parcel, drop it and bring you the receipt.',
+  }),
+  assistLine('fa_doctor_escort', 'Doctor visit escort', 'Stethoscope', 4, '₹399 · up to 2 hrs', 'For elders: we go along, wait and bring them back', {
+    type: 'doctor_escort', when: true, start: 'Pick up from (their home)', end: 'Clinic or hospital', endRequired: true, ask: 'Who are we going with?',
+    hint: 'Name, age, anything we should know (wheelchair, hearing)', blurb: 'We go along, wait with them and bring them back. Up to 2 hours.',
+  }),
+  assistLine('fa_queue_errand', 'Bank, post office or bill queue', 'Landmark', 5, '₹199 · about 60 min', 'We stand in line and submit your papers', {
+    type: 'queue_errand', start: 'Collect papers from (your home)', end: 'Bank, post office or office', endRequired: true, ask: 'What needs doing there?',
+    hint: 'e.g. Submit KYC form at SBI Gachibowli, papers in the blue file', blurb: 'We stand in line and submit your papers. About 60 minutes.',
+  }),
+  assistLine('fa_elder_checkin', 'Elder daily check-in', 'HeartHandshake', 6, '₹149 · 30 min visit', 'A visit, medicine reminder, small chores and an update to you', {
+    type: 'elder_checkin', when: true, start: 'Their home', ask: 'Who are we visiting?',
+    hint: 'Name, medicines to remind, small chores, who to update', blurb: 'A 30 minute visit, medicine reminder, small chores and an update to you.',
+  }),
+  assistLine('fa_party_helper', 'Party helper', 'PartyPopper', 7, '₹599 · 3 hrs', 'Serve, clear and clean during your home function', {
+    type: 'party_helper', when: true, start: 'Where is the function?', ask: 'Tell us about the function',
+    hint: 'e.g. Birthday, 25 guests, serve snacks and clear plates', blurb: 'Serve, clear and clean for 3 hours. No cooking, no serving alcohol.',
+  }),
+  assistLine('fa_puja_help', 'Puja / festival help', 'Flower2', 8, '₹399 · 2 hrs', 'Set-up, flowers and clean-up', {
+    type: 'puja_help', when: true, start: 'Where is the puja?', ask: 'What do you need?',
+    hint: 'e.g. Ganesh puja, set up mandap, flowers, clean up after', blurb: 'Set-up, flowers and clean-up for 2 hours. Puja items are yours.',
+  }),
 ];
 
 const DOMAINS = [

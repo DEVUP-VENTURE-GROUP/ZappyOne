@@ -9,7 +9,7 @@ import GrowingHere from '../catalog/serviceability/GrowingHere';
 import { useCoverageCheck } from '../catalog/useCoverageCheck';
 import LocationPicker from '@shared/modules/booking/LocationPicker';
 import ImageUploadField from '@shared/components/common/ImageUploadField';
-import { useHelpingQuoteMutation, useCreateHelpingTaskMutation } from '@shared/services/api';
+import { useHelpingQuoteMutation, useCreateHelpingTaskMutation, useLiveCatalogQuery } from '@shared/services/api';
 import { useSelector } from 'react-redux';
 import { useCheckoutDraft } from '@shared/customer/useCheckoutDraft';
 import { selectAuth } from '@shared/modules/auth/authSlice';
@@ -22,7 +22,7 @@ import { doorAddress } from '@shared/utils/doorAddress';
 import NearestArrival from '@shared/components/common/NearestArrival';
 import SurgeLines, { useSurge, surgeChanged } from '@shared/components/common/SurgeLines';
 import TipAtCheckout from '@shared/components/common/TipAtCheckout';
-import { HELP_MODES, helpMode, helpPlaces } from '@shared/customer/helpModes';
+import { HELP_MODES, helpModeFrom, helpPlaces } from '@shared/customer/helpModes';
 
 /**
  * "Shop for Me" / "Pick Up for Me" — §4 to §11.
@@ -51,8 +51,12 @@ export default function ShoppingTaskPage() {
   const goBack = useSafeBack('/helping');
   // A tile on the home showcase can open this straight on "pick up for me".
   const [params] = useSearchParams();
-  const [mode, setMode] = useState(HELP_MODES[params.get('mode')] ? params.get('mode') : 'shop');
-  const spec = helpMode(mode);
+  const [mode, setMode] = useState(params.get('mode') || 'shop');
+  // Family Assist and later services bring their form from the catalog (shared/customer/helpModes).
+  const { data: catalog, isLoading: catalogLoading } = useLiveCatalogQuery();
+  const found = helpModeFrom(catalog, mode);
+  const spec = found || HELP_MODES.shop;
+  const waitingForForm = !found && catalogLoading;
   const shopping = !!spec.items;
   const [scheduledAt, setScheduledAt] = useState('');
   const [items, setItems] = useState([emptyItem()]);
@@ -164,6 +168,9 @@ export default function ShoppingTaskPage() {
   const canQuote = !!pickupLoc && (!spec.endRequired || !!destLoc) && (!shopping || items.some((i) => i.name.trim()));
 
 
+  if (waitingForForm) {
+    return <div className="flex justify-center py-24"><Loader2 size={24} className="animate-spin text-zappy-400" /></div>;
+  }
   if (notHere) {
     return (
       <div className="mx-auto max-w-lg px-4 py-6">

@@ -112,3 +112,16 @@ test('a booking is priced on the server and carries its listed duration', async 
     userId, serviceType: 'grocery_run', pickupLocation: HOME, items: [{ name: 'Whisky', description: 'alcohol', quantity: 1, maxApprovedPricePaise: 100000 }],
   })).rejects.toMatchObject({ code: 'RESTRICTED_ITEM' });
 });
+
+test('the catalog carries each form, and an app too old to draw it does not see the service', async () => {
+  const request = require('supertest');
+  const app = require('../src/app')();
+  const codes = (res) => res.body.domains.flatMap((d) => d.services).filter((s) => s.code.startsWith('fa_'));
+  const web = await request(app).get('/api/provider/onboarding/catalog');
+  expect(codes(web)).toHaveLength(8);
+  expect(codes(web).find((s) => s.code === 'fa_doctor_escort').form).toMatchObject({ type: 'doctor_escort', when: true, endRequired: true });
+  const oldApp = await request(app).get('/api/provider/onboarding/catalog').set('X-Client-Type', 'mobile');
+  expect(codes(oldApp)).toHaveLength(0);
+  const newApp = await request(app).get('/api/provider/onboarding/catalog').set('X-Client-Type', 'mobile').set('X-UI-Level', '2');
+  expect(codes(newApp)).toHaveLength(8);
+});

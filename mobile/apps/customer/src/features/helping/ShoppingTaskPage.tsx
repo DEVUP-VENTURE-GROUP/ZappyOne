@@ -22,7 +22,9 @@ import { HelpingCheckout } from './booking/HelpingCheckout';
 import { ModeTiles } from './booking/ModeTiles';
 import { ShoppingItemCard, emptyItem, type ShopItem } from './booking/ShoppingItemCard';
 import { useHelpingBooking } from './booking/useHelpingBooking';
-import { HELP_MODES, helpMode } from '@zappy/core/shared/helpModes';
+import { HELP_MODES, helpModeFrom } from '@zappy/core/shared/helpModes';
+import { useLiveCatalogQuery } from '@zappy/core/api';
+import { LoadingState } from '@zappy/ui/components';
 import { SlotPicker } from '@zappy/ui/components/booking/SlotPicker';
 
 type Mode = string;
@@ -33,8 +35,11 @@ export function ShoppingTaskPage() {
   const insets = useSafeAreaInsets();
   const t = useT();
   const params = useLocalSearchParams<{ mode?: string }>();
-  const [mode, setMode] = useState<Mode>(params.mode && (HELP_MODES as Record<string, unknown>)[params.mode] ? params.mode : 'shop');
-  const spec = helpMode(mode);
+  const [mode, setMode] = useState<Mode>(params.mode || 'shop');
+  // Family Assist and later services bring their form from the catalog (shared/customer/helpModes).
+  const { data: catalog, isLoading: catalogLoading } = useLiveCatalogQuery(undefined);
+  const found = helpModeFrom(catalog, mode);
+  const spec = found || HELP_MODES.shop;
   const shopping = !!spec.items;
   const [items, setItems] = useState<ShopItem[]>(() => [emptyItem()]);
   const [instructions, setInstructions] = useState('');
@@ -53,6 +58,9 @@ export function ShoppingTaskPage() {
     await h.book({ title: spec.task || spec.title, instructions, items: payload(), ...(when && { scheduledAt: when.toISOString() }) });
   }
 
+  if (!found && catalogLoading) {
+    return <View style={[styles.page, { paddingTop: insets.top }]}><LoadingState rows={4} /></View>;
+  }
   if (h.notHere) {
     return (
       <View style={[styles.page, { paddingTop: insets.top + spacing.base, paddingHorizontal: spacing.base }]}>

@@ -23,6 +23,7 @@ import axios, {
   type InternalAxiosRequestConfig,
 } from 'axios';
 import { API_BASE_URL, APP_ID, REQUEST_TIMEOUT_MS } from '../config/env';
+import { UI_LEVEL } from '../shared/helpModes';
 import { createLogger } from '../lib/logger';
 import { emitSessionEnd } from '../lib/sessionBus';
 import type { RefreshResponse } from '../types/api';
@@ -49,6 +50,8 @@ export const axiosClient = axios.create({
     'X-Client-Type': 'mobile',
     // Which app: customer, servicepro or rakshak (config/env APP_ID).
     'X-App': APP_ID,
+    // What screens this app can draw; the catalog hides services that need a newer app.
+    'X-UI-Level': String(UI_LEVEL),
   },
 });
 
