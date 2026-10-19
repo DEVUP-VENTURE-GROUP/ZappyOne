@@ -2,7 +2,7 @@ import { lazy } from 'react';
 import { CalendarDays, CalendarOff, History, IndianRupee, LineChart, Package, Users, Wallet, Warehouse } from 'lucide-react';
 
 /**
- * The Fleet portal's screens (fleet.zappyone.com), one folder each under
+ * The Fleet portal's screens (fleet-ioc.zappyone.com), one folder each under
  * features/. Admin → Fleet shows the same list, imported from here.
  */
 export const FLEET_VIEWS = [

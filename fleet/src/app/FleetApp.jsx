@@ -26,7 +26,7 @@ function RequireAdmin({ children }) {
   return children;
 }
 
-/** The Fleet portal (fleet.zappyone.com): sign in, then the fleet. Admin accounts with Fleet access only. */
+/** The Fleet portal (fleet-ioc.zappyone.com): sign in, then the fleet. Admin accounts with Fleet access only. */
 export default function FleetApp() {
   const { accessToken, role } = useSelector((s) => s.auth);
   const signedIn = !!accessToken && role === 'admin';

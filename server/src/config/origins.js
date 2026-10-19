@@ -17,13 +17,13 @@ const PRODUCTION_ORIGINS = [
   'https://servicepro.zappyone.com', // shop owners + shop workers (servicepro/ app)
   'https://events.zappyone.com',    // event partner portal
   'https://admin.zappyone.com',     // admin portal (admin/ app)
-  'https://fleet.zappyone.com',     // fleet portal (fleet/ app): admin accounts with Fleet access
+  'https://fleet-ioc.zappyone.com',     // fleet portal (fleet/ app): admin accounts with Fleet access
 ];
 
 /** Origins the admin portal is served from. `ADMIN_URL` adds staging. */
 function adminOrigins() {
   // The Fleet portal signs in with admin accounts and calls the admin API too.
-  const list = ['https://admin.zappyone.com', 'https://fleet.zappyone.com'];
+  const list = ['https://admin.zappyone.com', 'https://fleet-ioc.zappyone.com'];
   if (process.env.ADMIN_URL && !list.includes(process.env.ADMIN_URL)) list.push(process.env.ADMIN_URL);
   if (process.env.FLEET_URL && !list.includes(process.env.FLEET_URL)) list.push(process.env.FLEET_URL);
   return list;
