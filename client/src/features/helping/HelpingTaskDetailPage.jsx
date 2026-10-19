@@ -8,6 +8,8 @@ import { formatPaise } from '@shared/utils/money';
 import { PayNowButton } from '@shared/components/common/PayMethodPicker';
 import JobTrackingPage from '../tracking/JobTrackingPage';
 import { KINDS } from '@shared/customer/jobKinds';
+import { startsAtCustomer } from '@shared/provider/jobFlows';
+import { rebookPath } from '@shared/customer/helpModes';
 import { useJobSOS } from '../tracking/useJobSOS';
 
 /**
@@ -43,7 +45,7 @@ const card = 'rounded-[24px] bg-white p-[18px] ring-1 ring-slate-100';
 
 /** When the customer's code is due: collecting a return at their door, or receiving the shopping. */
 function codeStageFor(t) {
-  if (['return', 'exchange'].includes(t.serviceType)) return null; // the normal arrival moment
+  if (startsAtCustomer(t)) return null; // the normal arrival moment
   if (['RETURNING', 'AT_DROPOFF'].includes(t.status)) return 'arrived';
   if (['WORKER_ACCEPTED', 'EN_ROUTE', 'ARRIVED', 'TASK_STARTED', 'IN_PROGRESS', 'APPROVAL_REQUIRED'].includes(t.status)) return 'on_the_way';
   return 'done';
@@ -136,7 +138,7 @@ export default function HelpingTaskDetailPage() {
     <JobTrackingPage
       job={job}
       onBack={() => nav('/orders')}
-      rebookHref={['return', 'exchange'].includes(task.serviceType) ? '/helping/returns' : '/helping/shopping'}
+      rebookHref={rebookPath(task.serviceType)}
       startCode={codeStage === 'done' ? null : task.handoverOtp}
       codeStage={codeStage === 'done' ? null : codeStage}
       onSOS={sos}

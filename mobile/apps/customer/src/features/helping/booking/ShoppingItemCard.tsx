@@ -13,7 +13,7 @@ export interface ShopItem { key: string; name: string; quantity: number; preferr
 
 export const emptyItem = (): ShopItem => ({ key: Math.random().toString(36).slice(2), name: '', quantity: 1, preferredBrand: '', preferredSize: '', preferredVariant: '', maxApprovedPricePaise: '', notes: '', referenceImageKey: '' });
 
-export const ShoppingItemCard = memo(function ShoppingItemCard({ item, index, removable, onChange, onRemove }: { item: ShopItem; index: number; removable: boolean; onChange: (patch: Partial<ShopItem>) => void; onRemove: () => void }) {
+export const ShoppingItemCard = memo(function ShoppingItemCard({ item, index, removable, photoLabel, onChange, onRemove }: { item: ShopItem; index: number; removable: boolean; photoLabel?: string; onChange: (patch: Partial<ShopItem>) => void; onRemove: () => void }) {
   const t = useT();
   return (
     <View style={styles.card}>
@@ -31,7 +31,7 @@ export const ShoppingItemCard = memo(function ShoppingItemCard({ item, index, re
         <View style={styles.flex}><Input value={item.preferredVariant} onChangeText={(v) => onChange({ preferredVariant: v })} placeholder={t('shop.variant', 'Variant / size')} /></View>
       </View>
       <Input value={item.notes} onChangeText={(v) => onChange({ notes: v })} placeholder={t('shop.notes', 'Notes for the helper (optional)')} />
-      <ImageUploadField value={item.referenceImageKey} onChange={(v) => onChange({ referenceImageKey: v })} folder="helping/items" label="reference photo" />
+      <ImageUploadField value={item.referenceImageKey} onChange={(v) => onChange({ referenceImageKey: v })} folder="helping/items" label={photoLabel || 'reference photo'} />
     </View>
   );
 });

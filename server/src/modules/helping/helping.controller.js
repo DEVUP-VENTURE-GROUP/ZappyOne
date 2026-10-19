@@ -7,7 +7,7 @@
  */
 
 const { HelpingTask, CANCELLABLE_FROM } = require('./models/task.model');
-const { HelpingConfig, SERVICE_TYPES } = require('./models/config.model');
+const { HelpingConfig, SERVICE_TYPES, FAMILY_ASSIST_TYPES, startsAtCustomer } = require('./models/config.model');
 const taskService = require('./services/task.service');
 const pricingService = require('./services/pricing.service');
 const s3Service = require('../../core/storage/s3');
@@ -306,7 +306,7 @@ async function listAvailable(req, res, next) {
         advanceRequired: t.itemMoney?.paymentModel === 'worker_advance',
         // The customer's end is the area only until the task is taken; the store's
         // address is public and needed to judge the trip (jobs/privacy).
-        pickupAddress: ['return', 'exchange'].includes(t.serviceType) ? areaOf(t.pickupLocation?.address) : t.pickupLocation?.address,
+        pickupAddress: startsAtCustomer(t.serviceType) || FAMILY_ASSIST_TYPES.includes(t.serviceType) ? areaOf(t.pickupLocation?.address) : t.pickupLocation?.address,
         destinationAddress: ['return', 'exchange'].includes(t.serviceType) ? t.destination?.address : areaOf(t.destination?.address),
         scheduledAt: t.scheduledAt,
       })),

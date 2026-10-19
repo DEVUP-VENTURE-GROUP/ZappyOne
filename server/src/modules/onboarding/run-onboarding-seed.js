@@ -70,6 +70,7 @@ async function seedLines() {
           tagline: l.tagline || '',
           isPopular: !!l.isPopular,
           providerKinds: l.providerKinds || ['shop', 'individual'],
+          staffOnly: !!l.staffOnly,
           displayOrder: l.displayOrder || 0,
           isActive: true,
           isArchived: false,

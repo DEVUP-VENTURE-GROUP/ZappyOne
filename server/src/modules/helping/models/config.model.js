@@ -16,8 +16,15 @@
 
 const mongoose = require('mongoose');
 
-/** The four things a customer can ask a helper to do. */
-const SERVICE_TYPES = ['shopping', 'pickup', 'return', 'exchange'];
+/** Family Assist: done only by ZappyOne's own staff (onboarding/staff-lines). */
+const FAMILY_ASSIST_TYPES = ['grocery_run', 'medicine', 'parcel_drop', 'doctor_escort', 'queue_errand', 'elder_checkin', 'party_helper', 'puja_help'];
+
+/** Everything a customer can ask a helper to do. */
+const SERVICE_TYPES = ['shopping', 'pickup', 'return', 'exchange', ...FAMILY_ASSIST_TYPES];
+
+// These begin at the customer's door, so their code is taken when the work starts, not at handover.
+const STARTS_AT_CUSTOMER = ['return', 'exchange', 'parcel_drop', 'doctor_escort', 'queue_errand', 'elder_checkin', 'party_helper', 'puja_help'];
+const startsAtCustomer = (serviceType) => STARTS_AT_CUSTOMER.includes(serviceType);
 
 /**
  * How the item money moves (§8). Which of these are OFFERED is configuration;
@@ -149,4 +156,4 @@ helpingConfigSchema.methods.distanceFeeFor = function distanceFeeFor(km) {
 
 const HelpingConfig = mongoose.model('HelpingConfig', helpingConfigSchema);
 
-module.exports = { HelpingConfig, SERVICE_TYPES, PAYMENT_MODELS, OFFERED_PAYMENT_MODELS, normalisePaymentModel };
+module.exports = { HelpingConfig, SERVICE_TYPES, FAMILY_ASSIST_TYPES, startsAtCustomer, PAYMENT_MODELS, OFFERED_PAYMENT_MODELS, normalisePaymentModel };

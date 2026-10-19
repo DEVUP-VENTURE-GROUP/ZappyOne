@@ -15,12 +15,13 @@ import { surgeChanged, useSurge } from '@zappy/ui/components/booking/SurgeLines'
 import { usePickLocation, type BookingLocation } from '@zappy/ui/lib/bookingLocation';
 import { useCoverageCheck } from '@zappy/ui/lib/coverageCheck';
 import { errText } from '@zappy/ui/lib/feedback';
+import { helpPlaces } from '@zappy/core/shared/helpModes';
 
 export interface HelpingCharge { baseFeePaise?: number; distanceFeePaise?: number; multiStopFeePaise?: number; specialHandlingPaise?: number; platformFeePaise?: number; discountPaise?: number; taxPaise?: number; serviceChargePaise: number }
 
 const point = (l: BookingLocation) => ({ type: 'Point', coordinates: [l.lng, l.lat], address: doorAddress(l) });
 
-export function useHelpingBooking({ serviceType, coverageLine }: { serviceType: string; coverageLine: string }) {
+export function useHelpingBooking({ serviceType, coverageLine, homeFirst = false, draft }: { serviceType: string; coverageLine: string; homeFirst?: boolean; draft?: { title: string; path: string } }) {
   const router = useRouter();
   const [pickup, setPickup] = useState<BookingLocation | null>(null);
   const [dest, setDest] = useState<BookingLocation | null>(null);
@@ -39,9 +40,14 @@ export function useHelpingBooking({ serviceType, coverageLine }: { serviceType: 
   const signedIn = useAppSelector((s) => s.auth.isAuthenticated);
   const isReturn = ['return', 'exchange'].includes(serviceType);
   const draftDone = useCheckoutDraft('helping', charge ? {
-    title: isReturn ? 'Return or exchange' : serviceType === 'shopping' ? 'Shopping errand' : 'Pickup and drop',
-    step: 'Confirm', path: isReturn ? '/helping/returns' : '/helping/shopping', pricePaise: charge.serviceChargePaise ?? null,
+    title: draft?.title || (isReturn ? 'Return or exchange' : serviceType === 'shopping' ? 'Shopping errand' : 'Pickup and drop'),
+    step: 'Confirm', path: draft?.path || (isReturn ? '/helping/returns' : '/helping/shopping'), pricePaise: charge.serviceChargePaise ?? null,
   } : null, signedIn);
+  // Grocery and medicine: the customer gives home first and maybe a shop; the trip starts at the shop.
+  const places = () => {
+    const p = helpPlaces({ home: homeFirst }, pickup, dest) as { pickup: BookingLocation | null; destination: BookingLocation | null };
+    return { pickupLocation: p.pickup ? point(p.pickup) : null, destination: p.destination ? point(p.destination) : null };
+  };
   const surge = useSurge({
     kind: 'helping', line: serviceType, loc: pickup,
     basePaise: charge ? Math.max(0, (charge.serviceChargePaise || 0) - (charge.taxPaise || 0) - (charge.platformFeePaise || 0)) : null,
@@ -50,7 +56,7 @@ export function useHelpingBooking({ serviceType, coverageLine }: { serviceType: 
 
   async function quote(items: unknown[] = []) {
     if (!pickup) return;
-    try { await getQuote({ serviceType, pickupLocation: point(pickup), destination: dest ? point(dest) : null, items }).unwrap(); }
+    try { await getQuote({ serviceType, ...places(), items }).unwrap(); }
     catch (err) { toast.error(errText(err, 'Could not price this yet. Try again.')); }
   }
 
@@ -61,7 +67,7 @@ export function useHelpingBooking({ serviceType, coverageLine }: { serviceType: 
     if (onSite === 'incomplete') { toast.error('Add their name and mobile number, or untick "for someone else".'); return false; }
     try {
       const res = await create({
-        ...(onSite && { onSite }), serviceType, pickupLocation: point(pickup), destination: dest ? point(dest) : undefined,
+        ...(onSite && { onSite }), serviceType, ...places(), destination: places().destination || undefined,
         ...fields, paymentMethod: 'cash', idempotencyKey, ...surge.bookingFields, ...(tip > 0 && { tipPaise: tip * 100 }),
       }).unwrap();
       toast.success('Task requested');

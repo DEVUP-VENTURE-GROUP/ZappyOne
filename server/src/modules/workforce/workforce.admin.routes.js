@@ -179,6 +179,7 @@ router.patch('/workforce/staff/:workerId', validate(Joi.object({
     };
     const after = await Worker.findByIdAndUpdate(req.params.workerId, { $set: set }, { new: true }).select('name phone employment').lean();
     require('./staff').forget(req.params.workerId);
+    await require('../onboarding/staff-lines').syncWorker(req.params.workerId);
     await auditService.fromRequest(req, 'workforce.staff_set', { kind: 'worker', id: req.params.workerId }, before.employment, after.employment);
     res.json({ worker: after });
   } catch (err) { next(err); }

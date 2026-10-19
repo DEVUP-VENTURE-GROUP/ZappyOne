@@ -9,6 +9,8 @@ import { StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCancelHelpingTaskMutation, useGetHelpingTaskQuery, useRateHelpingTaskMutation, useRespondHelpingApprovalMutation } from '@zappy/core/api';
 import { KINDS } from '@zappy/core/shared/jobKinds';
+import { startsAtCustomer } from '@zappy/core/shared/jobFlows';
+import { rebookPath } from '@zappy/core/shared/helpModes';
 import { formatPaise } from '@zappy/core/shared/money';
 import { EmptyState, LoadingState, Text } from '@zappy/ui/components';
 import { toast } from '@zappy/ui/components/Toast';
@@ -32,11 +34,10 @@ const STATUS_LABEL: Record<string, string> = {
   CANCELLED: 'Cancelled', FAILED: 'Could not be completed', ITEM_UNAVAILABLE: 'Item unavailable', MERCHANT_REJECTED: 'Merchant did not accept it',
   EXCHANGE_UNAVAILABLE: 'Replacement unavailable', DISPUTED: 'Under review',
 };
-const RETURNS = ['return', 'exchange'];
 
 /** When the customer's code is due: at the door for a return; on delivery for shopping. */
 function codeStageFor(t: { serviceType: string; status: string }) {
-  if (RETURNS.includes(t.serviceType)) return null;
+  if (startsAtCustomer(t)) return null;
   if (['RETURNING', 'AT_DROPOFF'].includes(t.status)) return 'arrived';
   if (['WORKER_ACCEPTED', 'EN_ROUTE', 'ARRIVED', 'TASK_STARTED', 'IN_PROGRESS', 'APPROVAL_REQUIRED'].includes(t.status)) return 'on_the_way';
   return 'done';
@@ -68,7 +69,7 @@ export function HelpingTaskDetailPage() {
   }
 
   return (
-    <JobTrackingPage job={job} onSOS={sos} rebookHref={RETURNS.includes(task.serviceType) ? '/helping/returns' : '/helping/shopping'}
+    <JobTrackingPage job={job} onSOS={sos} rebookHref={rebookPath(task.serviceType)}
       startCode={stage === 'done' ? null : task.handoverOtp} codeStage={stage === 'done' ? null : stage}
       cancel={data.canCancel ? {
         note: t('helpTask.cancelNote', 'Cancelling before your helper starts is free. Any budget held for items comes back to you.'),

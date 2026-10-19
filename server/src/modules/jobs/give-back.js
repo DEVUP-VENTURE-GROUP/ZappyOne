@@ -60,8 +60,8 @@ const RULES = {
   helping: {
     held: ['WORKER_ACCEPTED', 'EN_ROUTE', 'ARRIVED'],
     late: ['EN_ROUTE', 'ARRIVED'],
-    // Only returns and exchanges start at the customer's door.
-    atCustomer: (t) => (['return', 'exchange'].includes(t.serviceType) ? ['ARRIVED'] : []),
+    // Returns, exchanges and at-home help start at the customer's door.
+    atCustomer: (t) => (require('../helping/models/config.model').startsAtCustomer(t.serviceType) ? ['ARRIVED'] : []),
     accepted: ['WORKER_ACCEPTED'],
     travelling: ['EN_ROUTE'],
     pool: 'WORKER_SEARCHING',

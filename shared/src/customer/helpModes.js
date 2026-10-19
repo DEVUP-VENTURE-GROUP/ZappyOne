@@ -1,0 +1,24 @@
+// Every errand the helping booking screen can take, keyed by its ?mode=: what it asks, where it starts and ends, and which service line covers it.
+export const HELP_MODES = {
+  shop: { type: 'shopping', line: 'shopping_pickup', title: 'Shopping for Me', items: true, start: 'Shop / market', end: 'Bring it to', task: 'Shopping task', draft: 'Shopping errand' },
+  pickup: { type: 'pickup', line: 'shopping_pickup', title: 'Pick Up for Me', start: 'Pickup location', end: 'Bring it to', ask: "What's being picked up?", hint: 'e.g. Repaired laptop from City Electronics, reference #4521', task: 'Pickup task', draft: 'Pickup and drop' },
+  grocery_run: { type: 'grocery_run', line: 'fa_grocery_run', title: 'Grocery run', assist: true, items: true, home: true, start: 'Deliver to (your home)', end: 'Preferred shop (optional)', photo: 'reference photo', hint: 'Unpack in the kitchen, fridge items in the fridge', blurb: 'We shop from your list, deliver and unpack. You pay the bill at actual cost.' },
+  medicine: { type: 'medicine', line: 'fa_medicine_pickup', title: 'Medicine pickup', assist: true, items: true, home: true, start: 'Deliver to (your home)', end: 'Pharmacy (optional)', photo: 'prescription photo', hint: 'Doctor name, or the pharmacy that has your order', blurb: 'Add each medicine with a photo of the prescription. You pay the bill at actual cost.' },
+  parcel_drop: { type: 'parcel_drop', line: 'fa_parcel_drop', title: 'Parcel return or drop', assist: true, start: 'Collect from (your home)', end: 'Courier, post office or return counter', ask: 'What are we dropping?', hint: 'e.g. Amazon return, label printed, drop at DTDC Kondapur', blurb: 'We collect the parcel, drop it and bring you the receipt.' },
+  doctor_escort: { type: 'doctor_escort', line: 'fa_doctor_escort', title: 'Doctor visit escort', assist: true, when: true, start: 'Pick up from (their home)', end: 'Clinic or hospital', endRequired: true, ask: 'Who are we going with?', hint: 'Name, age, anything we should know (wheelchair, hearing)', blurb: 'We go along, wait with them and bring them back. Up to 2 hours.' },
+  queue_errand: { type: 'queue_errand', line: 'fa_queue_errand', title: 'Bank, post office or bill queue', assist: true, start: 'Collect papers from (your home)', end: 'Bank, post office or office', endRequired: true, ask: 'What needs doing there?', hint: 'e.g. Submit KYC form at SBI Gachibowli, papers in the blue file', blurb: 'We stand in line and submit your papers. About 60 minutes.' },
+  elder_checkin: { type: 'elder_checkin', line: 'fa_elder_checkin', title: 'Elder daily check-in', assist: true, when: true, start: 'Their home', ask: 'Who are we visiting?', hint: 'Name, medicines to remind, small chores, who to update', blurb: 'A 30 minute visit, medicine reminder, small chores and an update to you.' },
+  party_helper: { type: 'party_helper', line: 'fa_party_helper', title: 'Party helper', assist: true, when: true, start: 'Where is the function?', ask: 'Tell us about the function', hint: 'e.g. Birthday, 25 guests, serve snacks and clear plates', blurb: 'Serve, clear and clean for 3 hours. No cooking, no serving alcohol.' },
+  puja_help: { type: 'puja_help', line: 'fa_puja_help', title: 'Puja / festival help', assist: true, when: true, start: 'Where is the puja?', ask: 'What do you need?', hint: 'e.g. Ganesh puja, set up mandap, flowers, clean up after', blurb: 'Set-up, flowers and clean-up for 2 hours. Puja items are yours.' },
+};
+
+export const helpMode = (key) => HELP_MODES[key] || HELP_MODES.shop;
+
+// Where "book again" goes for a finished task of this type.
+export const rebookPath = (type) => (['return', 'exchange'].includes(type) ? '/helping/returns' : HELP_MODES[type] ? `/helping/shopping?mode=${type}` : '/helping/shopping');
+
+// Grocery and medicine start at the shop when one is given, otherwise near home; everything else starts at the customer.
+export function helpPlaces(mode, start, end) {
+  if (!mode.home) return { pickup: start, destination: end };
+  return { pickup: end || start, destination: start };
+}

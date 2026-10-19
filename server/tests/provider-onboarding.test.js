@@ -87,7 +87,7 @@ describe('choosing what you work on', () => {
     const res = await request(app)
       .get(`${BASE}/lines?domainCode=vehicles`)
       .set(auth(ctx.shopToken));
-    expect(res.body.lines.map((l) => l.code)).toEqual(['two_wheeler', 'three_wheeler', 'four_wheeler']);
+    expect(res.body.lines.map((l) => l.code)).toEqual(['bike_wash', 'car_wash', 'two_wheeler', 'three_wheeler', 'four_wheeler']);
 
     // Two-wheelers opened; the larger vehicles have no customer flow yet and
     // must keep saying so rather than quietly accepting applications.

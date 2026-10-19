@@ -179,7 +179,10 @@ const HELPING_NEXT_STATUS = {
   TASK_STARTED: ['IN_PROGRESS'], IN_PROGRESS: ['RETURNING'], RETURNING: ['AT_DROPOFF'],
 };
 export const isReturnTask = (task) => ['return', 'exchange'].includes(task.serviceType);
-export const helpingPaidAt = (task) => (isReturnTask(task) ? ['IN_PROGRESS', 'RETURNING', 'AT_DROPOFF', 'HANDED_OVER'] : ['RETURNING', 'HANDED_OVER']);
+// Same list as the server's helping config.model STARTS_AT_CUSTOMER: these begin at the customer's door.
+const AT_CUSTOMER = ['return', 'exchange', 'parcel_drop', 'doctor_escort', 'queue_errand', 'elder_checkin', 'party_helper', 'puja_help'];
+export const startsAtCustomer = (task) => AT_CUSTOMER.includes(task?.serviceType);
+export const helpingPaidAt = (task) => (startsAtCustomer(task) ? ['IN_PROGRESS', 'RETURNING', 'AT_DROPOFF', 'HANDED_OVER'] : ['RETURNING', 'HANDED_OVER']);
 export const helpingFinishesAt = (task) => (isReturnTask(task) ? ['HANDED_OVER'] : ['RETURNING', 'HANDED_OVER']);
 export const HELPING_DONE = ['COMPLETED', 'CUSTOMER_CONFIRMED', 'SETTLED'];
 export const HELPING_NO_SOS = ['COMPLETED', 'CUSTOMER_CONFIRMED', 'SETTLED', 'CANCELLED', 'FAILED', 'DISPUTED'];
@@ -190,7 +193,11 @@ export function helpingMoveLabel(status, task) {
     ARRIVED: "I've arrived",
     TASK_STARTED: 'Start the task',
     IN_PROGRESS: 'Begin',
-    RETURNING: { return: 'Heading to the drop-off', exchange: 'Heading to the store', pickup: 'Collected, heading to the customer' }[task.serviceType] || 'Bought everything, heading to the customer',
+    RETURNING: {
+      return: 'Heading to the drop-off', exchange: 'Heading to the store', pickup: 'Collected, heading to the customer',
+      parcel_drop: 'Dropped, receipt in hand', doctor_escort: 'Visit done, heading back home', queue_errand: 'Done at the counter, heading back',
+      elder_checkin: 'Visit done', party_helper: 'Work done', puja_help: 'Work done',
+    }[task.serviceType] || 'Bought everything, heading to the customer',
     AT_DROPOFF: "I'm at the drop-off",
   };
   return labels[status] || status;
@@ -226,9 +233,10 @@ export const TRIPS = {
     return null;
   },
   helping: (t) => {
-    const startsAtCustomer = ['return', 'exchange'].includes(t.serviceType);
-    if (t.status === 'EN_ROUTE') return { to: point(t.pickupLocation), toCustomer: startsAtCustomer };
-    if (t.status === 'RETURNING') return { to: point(t.destination) || point(t.pickupLocation), toCustomer: !startsAtCustomer };
+    const atCustomer = startsAtCustomer(t);
+    if (t.status === 'EN_ROUTE') return { to: point(t.pickupLocation), toCustomer: atCustomer };
+    if (t.status === 'RETURNING' && atCustomer && !isReturnTask(t)) return t.destination ? { to: point(t.destination), toCustomer: false } : null;
+    if (t.status === 'RETURNING') return { to: point(t.destination) || point(t.pickupLocation), toCustomer: !atCustomer };
     return null;
   },
 };

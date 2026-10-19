@@ -52,7 +52,12 @@ const after = (limits, fallback) => (doc, mins) => {
   return limit != null && mins > limit ? `${doc.status.replace(/_/g, ' ').toLowerCase()} for ${duration(mins)}` : null;
 };
 
-const HELPING_LINE = { shopping: 'shopping_pickup', pickup: 'shopping_pickup', return: 'returns_exchange', exchange: 'returns_exchange' };
+const HELPING_LINE = {
+  shopping: 'shopping_pickup', pickup: 'shopping_pickup', return: 'returns_exchange', exchange: 'returns_exchange',
+  grocery_run: 'fa_grocery_run', medicine: 'fa_medicine_pickup', parcel_drop: 'fa_parcel_drop', doctor_escort: 'fa_doctor_escort',
+  queue_errand: 'fa_queue_errand', elder_checkin: 'fa_elder_checkin', party_helper: 'fa_party_helper', puja_help: 'fa_puja_help',
+};
+const startsAtCustomer = (type) => require('../helping/models/config.model').startsAtCustomer(type);
 
 const KINDS = {
   repair: {
@@ -205,20 +210,20 @@ const KINDS = {
     trip: {
       fields: 'status userId workerId serviceType pickupLocation destination',
       travelling: ['EN_ROUTE', 'RETURNING'],
-      // Shopping and pickups start at a shop and end at the customer; returns
-      // and exchanges start at the customer and end at a store.
+      // Shopping and pickups start at a shop and end at the customer; returns,
+      // exchanges and at-home help start at the customer. Help with no place to go has no trip back.
       heading: (t) => {
-        const startsAtCustomer = ['return', 'exchange'].includes(t.serviceType);
-        return t.status === 'EN_ROUTE'
-          ? to(t.pickupLocation, startsAtCustomer)
-          : to(t.destination, !startsAtCustomer) || to(t.pickupLocation, !startsAtCustomer);
+        const atCustomer = startsAtCustomer(t.serviceType);
+        if (t.status === 'EN_ROUTE') return to(t.pickupLocation, atCustomer);
+        if (atCustomer && !['return', 'exchange'].includes(t.serviceType)) return to(t.destination, false);
+        return to(t.destination, !atCustomer) || to(t.pickupLocation, !atCustomer);
       },
     },
     // The customer's code at the moment the helper is with them: collecting a
     // return, or handing over the shopping.
     startCode: {
       field: 'handoverOtp',
-      required: (t, next) => (['return', 'exchange'].includes(t.serviceType)
+      required: (t, next) => (startsAtCustomer(t.serviceType)
         ? next === 'TASK_STARTED'
         : next === 'COMPLETED'),
     },

@@ -22,6 +22,7 @@ import { doorAddress } from '@shared/utils/doorAddress';
 import NearestArrival from '@shared/components/common/NearestArrival';
 import SurgeLines, { useSurge, surgeChanged } from '@shared/components/common/SurgeLines';
 import TipAtCheckout from '@shared/components/common/TipAtCheckout';
+import { HELP_MODES, helpMode, helpPlaces } from '@shared/customer/helpModes';
 
 /**
  * "Shop for Me" / "Pick Up for Me" — §4 to §11.
@@ -50,7 +51,10 @@ export default function ShoppingTaskPage() {
   const goBack = useSafeBack('/helping');
   // A tile on the home showcase can open this straight on "pick up for me".
   const [params] = useSearchParams();
-  const [mode, setMode] = useState(params.get('mode') === 'pickup' ? 'pickup' : 'shop'); // 'shop' | 'pickup'
+  const [mode, setMode] = useState(HELP_MODES[params.get('mode')] ? params.get('mode') : 'shop');
+  const spec = helpMode(mode);
+  const shopping = !!spec.items;
+  const [scheduledAt, setScheduledAt] = useState('');
   const [items, setItems] = useState([emptyItem()]);
   const [instructions, setInstructions] = useState('');
   const [pickupLoc, setPickupLoc] = useState(null);
@@ -84,15 +88,17 @@ export default function ShoppingTaskPage() {
     setItems((prev) => (prev.length > 1 ? prev.filter((it) => it.key !== key) : prev));
   }
 
+  const point = (l) => (l ? { type: 'Point', coordinates: [l.lng, l.lat], address: doorAddress(l) } : null);
+  const places = helpPlaces(spec, pickupLoc, destLoc);
+
   async function refreshQuote() {
     if (!pickupLoc) return;
     try {
       await getQuote({
-        serviceType: mode === 'shop' ? 'shopping' : 'pickup',
-        pickupLocation: { type: 'Point', coordinates: [pickupLoc.lng, pickupLoc.lat], address: doorAddress(pickupLoc) },
-        destination: destLoc
-          ? { type: 'Point', coordinates: [destLoc.lng, destLoc.lat], address: doorAddress(destLoc) } : null,
-        items: mode === 'shop' ? items.filter((i) => i.name).map((i) => ({
+        serviceType: spec.type,
+        pickupLocation: point(places.pickup),
+        destination: point(places.destination),
+        items: shopping ? items.filter((i) => i.name).map((i) => ({
           ...i, maxApprovedPricePaise: Math.round((Number(i.maxApprovedPricePaise) || 0) * 100),
         })) : [],
       }).unwrap();
@@ -102,22 +108,24 @@ export default function ShoppingTaskPage() {
   }
 
   async function book() {
-    if (!pickupLoc) { toast.error(mode === 'shop' ? 'Where should the helper shop?' : 'Where is the pickup?'); return; }
-    if (mode === 'shop' && !items.some((i) => i.name.trim())) { toast.error('Add at least one item'); return; }
+    if (!pickupLoc) { toast.error(mode === 'shop' ? 'Where should the helper shop?' : `Choose: ${spec.start}`); return; }
+    if (spec.endRequired && !destLoc) { toast.error(`Choose: ${spec.end}`); return; }
+    if (shopping && !items.some((i) => i.name.trim())) { toast.error('Add at least one item'); return; }
+    if (spec.when && !scheduledAt) { toast.error('Pick a day and time'); return; }
 
-    if (!(await covered('shopping_pickup', pickupLoc))) { setNotHere(true); window.scrollTo({ top: 0 }); return; }
+    if (!(await covered(spec.line, pickupLoc))) { setNotHere(true); window.scrollTo({ top: 0 }); return; }
 
     try {
       if (onSite === 'incomplete') { toast.error('Add their name and mobile number, or untick "for someone else".'); return; }
       const res = await create({
         ...(onSite && { onSite }),
-        serviceType: mode === 'shop' ? 'shopping' : 'pickup',
-        title: mode === 'shop' ? 'Shopping task' : 'Pickup task',
+        serviceType: spec.type,
+        title: spec.task || spec.title,
         instructions,
-        pickupLocation: { type: 'Point', coordinates: [pickupLoc.lng, pickupLoc.lat], address: doorAddress(pickupLoc) },
-        destination: destLoc
-          ? { type: 'Point', coordinates: [destLoc.lng, destLoc.lat], address: doorAddress(destLoc) } : undefined,
-        items: mode === 'shop'
+        pickupLocation: point(places.pickup),
+        destination: point(places.destination) || undefined,
+        ...(scheduledAt && { scheduledAt: new Date(scheduledAt).toISOString() }),
+        items: shopping
           ? items.filter((i) => i.name.trim()).map((i) => ({
             ...i, maxApprovedPricePaise: Math.round((Number(i.maxApprovedPricePaise) || 0) * 100),
           }))
@@ -143,24 +151,24 @@ export default function ShoppingTaskPage() {
   // Priced and ready to request: home's "Continue your booking" and one reminder push (jobs/checkout-draft).
   const signedIn = !!useSelector(selectAuth)?.accessToken;
   const draftDone = useCheckoutDraft('helping', charge ? {
-    title: mode === 'shop' ? 'Shopping errand' : 'Pickup and drop', step: 'Confirm', path: '/helping/shopping', pricePaise: charge.serviceChargePaise ?? null,
+    title: spec.draft || spec.title, step: 'Confirm', path: `/helping/shopping?mode=${mode}`, pricePaise: charge.serviceChargePaise ?? null,
   } : null, signedIn);
   // Busy area, rain, night: own lines on the service fee, held while they decide (jobs/surge).
   const surge = useSurge({
-    kind: 'helping', line: mode === 'shop' ? 'shopping' : 'pickup', loc: pickupLoc,
+    kind: 'helping', line: spec.type, loc: pickupLoc,
     basePaise: charge ? Math.max(0, (charge.serviceChargePaise || 0) - (charge.taxPaise || 0) - (charge.platformFeePaise || 0)) : null,
     skip: !charge,
   });
   // An optional tip, in the total before paying (jobs/boost-tip tipAtBooking). Rupees.
   const [tip, setTip] = useState(0);
-  const canQuote = !!pickupLoc && (mode === 'pickup' || items.some((i) => i.name.trim()));
+  const canQuote = !!pickupLoc && (!spec.endRequired || !!destLoc) && (!shopping || items.some((i) => i.name.trim()));
 
 
   if (notHere) {
     return (
       <div className="mx-auto max-w-lg px-4 py-6">
         <GrowingHere
-          service={{ code: 'shopping_pickup', domainCode: 'helping_services', name: 'shopping and pickup' }}
+          service={{ code: spec.line, domainCode: spec.assist ? 'family_assist' : 'helping_services', name: spec.assist ? spec.title.toLowerCase() : 'shopping and pickup' }}
           lat={pickupLoc?.lat}
           lng={pickupLoc?.lng}
           address={pickupLoc?.address || ''}
@@ -173,11 +181,13 @@ export default function ShoppingTaskPage() {
     <div className="min-h-screen bg-slate-50">
       <div className="sticky top-0 z-10 bg-white border-b border-slate-100 px-4 py-3 flex items-center gap-3">
         <button type="button" onClick={() => goBack()} className="p-1 -ml-1"><ArrowLeft size={20} /></button>
-        <h1 className="text-lg font-black text-[#0F172A]">{mode === 'shop' ? 'Shopping for Me' : 'Pick Up for Me'}</h1>
+        <h1 className="text-lg font-black text-[#0F172A]">{spec.title}</h1>
       </div>
 
       <Shell>
-        {/* The two errands, each with its own photo (assets/web/services/helping). */}
+        {spec.assist ? (
+          <p className="rounded-2xl bg-zappy-50 px-4 py-3 text-sm font-semibold text-zappy-800">{spec.blurb}</p>
+        ) : (
         <div className="grid grid-cols-2 gap-3">
           {[['shop', 'Shop for Me', '/services/helping/shopping.webp'], ['pickup', 'Pick Up for Me', '/services/helping/pickup.webp']].map(([k, label, photo]) => (
             <button
@@ -192,8 +202,9 @@ export default function ShoppingTaskPage() {
             </button>
           ))}
         </div>
+        )}
 
-        {mode === 'shop' ? (
+        {shopping ? (
           <div className="space-y-3">
             <p className="text-xs font-bold uppercase tracking-wide text-slate-500">What do you need?</p>
             {items.map((item, idx) => (
@@ -252,7 +263,7 @@ export default function ShoppingTaskPage() {
                   value={item.referenceImageKey}
                   onChange={(v) => updateItem(item.key, { referenceImageKey: v })}
                   folder="helping/items"
-                  label="reference photo"
+                  label={spec.photo || 'reference photo'}
                 />
               </div>
             ))}
@@ -266,22 +277,22 @@ export default function ShoppingTaskPage() {
           </div>
         ) : (
           <div className="rounded-2xl border-2 border-slate-200 bg-white p-4 space-y-2.5">
-            <p className="text-xs font-bold uppercase tracking-wide text-slate-500">What's being picked up?</p>
+            <p className="text-xs font-bold uppercase tracking-wide text-slate-500">{spec.ask}</p>
             <textarea
               value={instructions}
               onChange={(e) => setInstructions(e.target.value)}
-              placeholder="e.g. Repaired laptop from City Electronics, reference #4521"
+              placeholder={spec.hint}
               rows={3}
               className="w-full rounded-xl border-2 border-slate-200 p-2.5"
             />
           </div>
         )}
 
-        {mode === 'shop' && (
+        {shopping && (
           <textarea
             value={instructions}
             onChange={(e) => setInstructions(e.target.value)}
-            placeholder="Anything else the helper should know?"
+            placeholder={spec.hint || 'Anything else the helper should know?'}
             rows={2}
             className="w-full rounded-xl border-2 border-slate-200 p-2.5 text-sm"
           />
@@ -296,11 +307,12 @@ export default function ShoppingTaskPage() {
           >
             <MapPin size={18} className="text-zappy-500 shrink-0" />
             <span className="min-w-0">
-              <span className="block text-xs text-slate-400">{mode === 'shop' ? 'Shop / market' : 'Pickup location'}</span>
+              <span className="block text-xs text-slate-400">{spec.start}</span>
               <span className="block font-bold text-[#0F172A] truncate">{pickupLoc?.address || 'Choose a location'}</span>
             </span>
           </button>
-          <NearestArrival line={mode === 'shop' ? 'shopping' : 'pickup'} loc={pickupLoc} noun="helper" />
+          <NearestArrival line={spec.type} loc={pickupLoc} noun="helper" />
+          {spec.end && (
           <button
             type="button"
             onClick={() => setPickerFor('dest')}
@@ -308,11 +320,25 @@ export default function ShoppingTaskPage() {
           >
             <MapPin size={18} className="text-emerald-500 shrink-0" />
             <span className="min-w-0">
-              <span className="block text-xs text-slate-400">Bring it to</span>
+              <span className="block text-xs text-slate-400">{spec.end}</span>
               <span className="block font-bold text-[#0F172A] truncate">{destLoc?.address || 'Choose a destination'}</span>
             </span>
           </button>
+          )}
         </div>
+
+        {spec.assist && (
+          <label className="block space-y-1.5">
+            <span className="text-xs font-bold uppercase tracking-wide text-slate-500">{spec.when ? 'When' : 'When (leave empty for now)'}</span>
+            <input
+              type="datetime-local"
+              value={scheduledAt}
+              min={new Date(Date.now() + 3600000 - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)}
+              onChange={(e) => setScheduledAt(e.target.value)}
+              className="w-full rounded-xl border-2 border-slate-200 bg-white p-2.5 font-medium"
+            />
+          </label>
+        )}
 
         <button
           type="button"
@@ -340,7 +366,7 @@ export default function ShoppingTaskPage() {
               </div>
               <SurgeLines quote={surge.quote} />
               {tip > 0 && <p className="flex justify-between text-[12.5px] font-semibold text-rose-600"><span>Tip for your helper</span><span>+₹{tip}</span></p>}
-              {mode === 'shop' && itemBudgetPaise > 0 && (
+              {shopping && itemBudgetPaise > 0 && (
                 <div className="flex justify-between font-bold text-slate-500">
                   <span>Item budget (max)</span>
                   <span>up to {formatPaise(itemBudgetPaise)}</span>
@@ -374,7 +400,7 @@ export default function ShoppingTaskPage() {
         // The picker fills its container: give it the whole screen, above the bottom bar.
         <div className="fixed inset-0 z-[150] bg-white">
           <LocationPicker
-            serviceLabel="Helping Services"
+            serviceLabel={spec.assist ? 'Family Assist' : 'Helping Services'}
             onCancel={() => setPickerFor(null)}
             onConfirm={(loc) => {
               if (pickerFor === 'pickup') setPickupLoc(loc); else setDestLoc(loc);

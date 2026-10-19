@@ -3,6 +3,7 @@ import {
   useListOrdersQuery, useMyRepairBookingsQuery, useMyPetBookingsQuery, useMyHelpingTasksQuery,
 } from '../services/api';
 import { serviceNameKey } from '../i18n/translations';
+import { rebookPath } from './helpModes';
 
 /**
  * Everything the customer has booked — orders, repairs, pet bookings and
@@ -265,7 +266,7 @@ function fromHelping(t) {
     address: where?.address || '',
     coordinates: where?.coordinates || null,
     iconCode: `helping ${t.serviceType || ''}`,
-    rebookHref: ['return', 'exchange'].includes(t.serviceType) ? '/helping/returns' : '/helping/shopping',
+    rebookHref: rebookPath(t.serviceType),
     canInvoice: false,
     createdAt: t.createdAt,
     href: `/helping/tasks/${t._id}`,

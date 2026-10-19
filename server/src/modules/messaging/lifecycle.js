@@ -47,12 +47,14 @@ const MAP = {
     CONFIRMED: 'booking.confirmed',
     WORKER_ACCEPTED: 'booking.accepted',
     EN_ROUTE: 'booking.on_the_way',
-    ARRIVED: (t) => (['return', 'exchange'].includes(t.serviceType) ? 'booking.arrived' : ['At the store', 'Your helper has reached the store.']),
-    RETURNING: ['On the way back', 'Your helper is heading to the drop-off.'],
+    ARRIVED: (t) => (require('../helping/models/config.model').startsAtCustomer(t.serviceType) ? 'booking.arrived' : ['At the store', 'Your helper has reached the store.']),
+    RETURNING: (t) => (AT_HOME_DONE.includes(t.serviceType) ? ['Work done', 'Your helper has finished. Please check and confirm.'] : ['On the way back', 'Your helper is heading to the drop-off.']),
     COMPLETED: 'booking.completed',
     CANCELLED: 'booking.cancelled',
   },
 };
+
+const AT_HOME_DONE = ['elder_checkin', 'party_helper', 'puja_help'];
 
 const roleOf = (doc) => {
   const h = [...(doc.statusHistory || [])].reverse().find((x) => ['CANCELLED', 'EXPIRED'].includes(x.status)) || {};

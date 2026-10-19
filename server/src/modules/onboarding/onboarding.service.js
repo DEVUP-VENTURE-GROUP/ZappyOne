@@ -38,7 +38,7 @@ async function listDomains() {
  * simply not enrollable — see `enrol()`.
  */
 async function listLines({ domainCode, providerKind = null } = {}) {
-  const filter = { isActive: true, isArchived: false };
+  const filter = { isActive: true, isArchived: false, staffOnly: { $ne: true } };
   if (domainCode) filter.domainCode = String(domainCode).toLowerCase();
   if (providerKind) filter.providerKinds = providerKind;
 
@@ -124,6 +124,9 @@ async function enrol({ owner, providerKind, lineCode }) {
       `${line.name} is not open for providers yet — we will notify you when it is.`,
       409, 'LINE_NOT_LIVE',
     );
+  }
+  if (line.staffOnly) {
+    throw httpError(`${line.name} is done by ZappyOne staff only`, 409, 'STAFF_ONLY_LINE');
   }
   if (!line.providerKinds.includes(providerKind)) {
     throw httpError(

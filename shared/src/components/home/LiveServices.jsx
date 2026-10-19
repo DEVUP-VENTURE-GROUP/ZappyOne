@@ -5,6 +5,7 @@ import {
   Monitor, Battery, Plug, Keyboard, Volume2, Camera, HardDrive, Gauge,
   Wifi, Thermometer, CircuitBoard, Database, ArrowUpCircle, Wand2, ShieldAlert,
   ClipboardCheck, ShieldCheck, Footprints, PackageCheck, PawPrint, Scissors, ShoppingBag, ShoppingBasket, Stethoscope, PartyPopper,
+  ShoppingCart, Pill, Package, Landmark, Flower2,
 } from 'lucide-react';
 import { useLiveCatalogQuery } from '../../services/api';
 import { distinctArt } from './serviceArt';
@@ -32,6 +33,7 @@ export const SERVICE_ICONS = {
   Smartphone, Laptop, Cpu, Bike, Car, Truck, Home, HeartHandshake, Baby, Users,
   Zap, Droplet, Droplets, AirVent, Sparkles, Wrench,
   ClipboardCheck, Footprints, PackageCheck, PawPrint, Scissors, ShoppingBag, ShoppingBasket, Stethoscope, PartyPopper,
+  ShoppingCart, Pill, Package, Landmark, Flower2,
 };
 
 /**

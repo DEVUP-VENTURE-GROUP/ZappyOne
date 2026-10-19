@@ -84,6 +84,8 @@ const serviceLineSchema = new mongoose.Schema(
       default: 'coming_soon',
       index: true,
     },
+    // Done only by ZappyOne's own staff: every staff member is approved for it, no partner can apply (onboarding/staff-lines).
+    staffOnly: { type: Boolean, default: false },
 
 
     /**

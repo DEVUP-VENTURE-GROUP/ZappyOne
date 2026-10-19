@@ -13,6 +13,22 @@
  * customer flow behind it wastes their time.
  */
 
+// Family Assist, done only by ZappyOne staff; each opens the errand booking set to its helping service type.
+const assistLine = (code, type, name, icon, order, tagline, description) => ({
+  code, name, domainCode: 'family_assist', status: 'live', displayOrder: order, icon, providerKinds: ['individual'], staffOnly: true,
+  customerPath: `/helping/shopping?mode=${type}`, tagline, description, isPopular: true,
+});
+const FAMILY_ASSIST_LINES = [
+  assistLine('fa_grocery_run', 'grocery_run', 'Grocery run', 'ShoppingCart', 1, '₹149 + bill · about 60 min', 'We shop from your list, deliver and unpack'),
+  assistLine('fa_medicine_pickup', 'medicine', 'Medicine pickup', 'Pill', 2, '₹99 + bill · about 45 min', 'Pharmacy pickup with your prescription'),
+  assistLine('fa_parcel_drop', 'parcel_drop', 'Parcel return or drop', 'Package', 3, '₹99 · about 45 min', 'Courier, post office and return counters'),
+  assistLine('fa_doctor_escort', 'doctor_escort', 'Doctor visit escort', 'Stethoscope', 4, '₹399 · up to 2 hrs', 'For elders: we go along, wait and bring them back'),
+  assistLine('fa_queue_errand', 'queue_errand', 'Bank, post office or bill queue', 'Landmark', 5, '₹199 · about 60 min', 'We stand in line and submit your papers'),
+  assistLine('fa_elder_checkin', 'elder_checkin', 'Elder daily check-in', 'HeartHandshake', 6, '₹149 · 30 min visit', 'A visit, medicine reminder, small chores and an update to you'),
+  assistLine('fa_party_helper', 'party_helper', 'Party helper', 'PartyPopper', 7, '₹599 · 3 hrs', 'Serve, clear and clean during your home function'),
+  assistLine('fa_puja_help', 'puja_help', 'Puja / festival help', 'Flower2', 8, '₹399 · 2 hrs', 'Set-up, flowers and clean-up'),
+];
+
 const DOMAINS = [
   { code: 'electronics', name: 'Electronics', icon: 'Cpu', displayOrder: 1, description: 'Phones, laptops and personal devices' },
   { code: 'vehicles', name: 'Vehicles', icon: 'Bike', displayOrder: 2, description: 'Two, three and four wheelers' },
@@ -106,6 +122,7 @@ const LINES = [
   { code: 'elder_care', name: 'Elder Care', domainCode: 'family_assist', status: 'coming_soon', displayOrder: 1, icon: 'HeartHandshake', providerKinds: ['individual'] },
   { code: 'child_care', name: 'Child Care', domainCode: 'family_assist', status: 'coming_soon', displayOrder: 2, icon: 'Baby', providerKinds: ['individual'] },
   { code: 'house_help', name: 'House Help', domainCode: 'family_assist', status: 'coming_soon', displayOrder: 3, icon: 'Users', providerKinds: ['individual'] },
+  ...FAMILY_ASSIST_LINES,
 
   /*
    * Helping Services. Not a repair-engine vertical — there is no device, no
@@ -326,4 +343,4 @@ const REQUIREMENT_SETS = [
   },
 ];
 
-module.exports = { DOMAINS, LINES, REQUIREMENT_SETS, IDENTITY_DOCS, SHOP_DOCS, SHOP_FIELDS };
+module.exports = { DOMAINS, LINES, FAMILY_ASSIST_LINES, REQUIREMENT_SETS, IDENTITY_DOCS, SHOP_DOCS, SHOP_FIELDS };
