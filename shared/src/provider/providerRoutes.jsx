@@ -3,26 +3,35 @@ import { Route, Navigate } from 'react-router-dom';
 import { STAFF_PORTAL } from './staffPortal';
 import { RequireAuth } from '../components/common/RequireAuth';
 
-const WorkerDashboard = lazy(() => import('./pages/WorkerDashboard'));
-const WorkerKycPage = lazy(() => import('./pages/WorkerKycPage'));
-const WorkerEditProfilePage = lazy(() => import('./pages/WorkerEditProfilePage'));
-const WorkerNotificationsPage = lazy(() => import('./pages/WorkerNotificationsPage'));
-const WorkerBankPage = lazy(() => import('./pages/WorkerBankPage'));
-const WorkerWithdrawPage = lazy(() => import('./pages/WorkerWithdrawPage'));
-const WorkerAppealsPage = lazy(() => import('./pages/WorkerAppealsPage'));
-const MyDocumentsPage = lazy(() => import('./pages/MyDocumentsPage'));
-const WorkerHoursPage = lazy(() => import('./pages/WorkerHoursPage'));
-const StaffShiftsPage = lazy(() => import('./pages/StaffShiftsPage'));
-const ProviderReviewsPage = lazy(() => import('./pages/ProviderReviewsPage'));
-const WorkerEarningsPage = lazy(() => import('./pages/WorkerEarningsPage'));
-const WorkerTrainingPage = lazy(() => import('./pages/WorkerTrainingPage'));
-const WorkerGoalsPage = lazy(() => import('./pages/WorkerGoalsPage'));
-const WorkerRepairJobPage = lazy(() => import('./pages/WorkerRepairJobPage'));
-const WorkerPetJobPage = lazy(() => import('./pages/WorkerPetJobPage'));
-const WorkBoardPage = lazy(() => import('./pages/WorkBoardPage'));
-const WorkerHelpingJobPage = lazy(() => import('./pages/WorkerHelpingJobPage'));
-const ProviderOnboardingPage = lazy(() => import('./pages/ProviderOnboardingPage'));
-const ProviderRepairSetupPage = lazy(() => import('./pages/ProviderRepairSetupPage'));
+const loaders = [];
+const page = (load) => { loaders.push(load); return lazy(load); };
+// Fetch every worker page once signed in, so moving between them never waits on a download.
+export const prefetchWorkerPages = () => {
+  const run = () => loaders.forEach((load) => load().catch(() => {}));
+  if (typeof window !== 'undefined' && window.requestIdleCallback) window.requestIdleCallback(run, { timeout: 3000 });
+  else setTimeout(run, 1500);
+};
+
+const WorkerDashboard = page(() => import('./pages/WorkerDashboard'));
+const WorkerKycPage = page(() => import('./pages/WorkerKycPage'));
+const WorkerEditProfilePage = page(() => import('./pages/WorkerEditProfilePage'));
+const WorkerNotificationsPage = page(() => import('./pages/WorkerNotificationsPage'));
+const WorkerBankPage = page(() => import('./pages/WorkerBankPage'));
+const WorkerWithdrawPage = page(() => import('./pages/WorkerWithdrawPage'));
+const WorkerAppealsPage = page(() => import('./pages/WorkerAppealsPage'));
+const MyDocumentsPage = page(() => import('./pages/MyDocumentsPage'));
+const WorkerHoursPage = page(() => import('./pages/WorkerHoursPage'));
+const StaffShiftsPage = page(() => import('./pages/StaffShiftsPage'));
+const ProviderReviewsPage = page(() => import('./pages/ProviderReviewsPage'));
+const WorkerEarningsPage = page(() => import('./pages/WorkerEarningsPage'));
+const WorkerTrainingPage = page(() => import('./pages/WorkerTrainingPage'));
+const WorkerGoalsPage = page(() => import('./pages/WorkerGoalsPage'));
+const WorkerRepairJobPage = page(() => import('./pages/WorkerRepairJobPage'));
+const WorkerPetJobPage = page(() => import('./pages/WorkerPetJobPage'));
+const WorkBoardPage = page(() => import('./pages/WorkBoardPage'));
+const WorkerHelpingJobPage = page(() => import('./pages/WorkerHelpingJobPage'));
+const ProviderOnboardingPage = page(() => import('./pages/ProviderOnboardingPage'));
+const ProviderRepairSetupPage = page(() => import('./pages/ProviderRepairSetupPage'));
 
 /**
  * Worker screens shared by servicepro (shop workers) and Rakshak (independents).

@@ -24,6 +24,7 @@ import StaffDutyCard from '../StaffDutyCard';
 import LeadBoardCard from '../components/LeadBoardCard';
 import StaffWaitingCard from '../StaffWaitingCard';
 import { STAFF_PORTAL } from '../staffPortal';
+import { useInWorkerFrame, useFrameGoOnline } from '../WorkerFrame';
 import MyAreaChip from '../../components/worker/MyAreaChip';
 import HotZonesCard from '../../components/worker/HotZonesCard';
 import ProviderServicesCard from '../../components/provider/ProviderServicesCard';
@@ -99,6 +100,7 @@ export default function WorkerDashboard() {
   const [toggling, setToggling] = useState(false);
   const [onlineSec, setOnlineSec] = useState(0);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const framed = useInWorkerFrame();
   const onlineStart = useRef(null);
 
   const me = meData?.worker;
@@ -149,6 +151,8 @@ export default function WorkerDashboard() {
       .then(({ primary, secondary }) => setAreaName(secondary ? `${primary}, ${secondary.split(',')[0]}` : primary))
       .catch(() => {});
   }, [isOnline, areaName, lastCoords?.[0], lastCoords?.[1]]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useFrameGoOnline(() => toggleOnline());
 
   // After every hook, so the hook count never changes.
   if (meData && !me?.onboardingComplete) return <WorkerOnboarding onComplete={refetchMe} />;
@@ -213,8 +217,8 @@ export default function WorkerDashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#F4F7FB] lg:pl-64">
-      <WorkerSidebar activeKey="dashboard" unread={unreadCount} onNavigate={handleNav} onGoOnline={toggleOnline} isOnline={isOnline} onSignOut={signOut} />
+    <div className={`min-h-screen bg-[#F4F7FB] ${framed ? '' : 'lg:pl-64'}`}>
+      {!framed && <WorkerSidebar activeKey="dashboard" unread={unreadCount} onNavigate={handleNav} onGoOnline={toggleOnline} isOnline={isOnline} onSignOut={signOut} />}
 
       <AnimatePresence>
         {drawerOpen && (

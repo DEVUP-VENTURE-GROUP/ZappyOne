@@ -7,6 +7,7 @@ import ConnectionBanner from '@shared/components/common/ConnectionBanner';
 import RouteProgress from '@shared/components/common/RouteProgress';
 import ErrorBoundary from '@shared/components/common/ErrorBoundary';
 import { providerRoutes } from '@shared/provider/providerRoutes';
+import WorkerFrame from '@shared/provider/WorkerFrame';
 import JobOfferHost from '@shared/components/jobs/JobOfferHost';
 import AccountSetupGate from '@shared/components/account/AccountSetupGate';
 import OnlineLocation from '@shared/provider/OnlineLocation';
@@ -44,7 +45,7 @@ export default function App() {
             {/* Anyone may sign up; what they can work on is decided per service by verification. */}
             <Route path={LOGIN} element={accessToken ? <Navigate to="/worker" replace /> : <WorkerLoginPage portalLabel="Rakshak" />} />
             <Route path="/worker/login" element={<Navigate to={LOGIN} replace />} />
-            {providerRoutes({ loginPath: LOGIN, helping: true })}
+            <Route element={<WorkerFrame />}>{providerRoutes({ loginPath: LOGIN, helping: true })}</Route>
             <Route path="*" element={<Navigate to={accessToken ? '/worker' : LOGIN} replace />} />
           </Routes>
           </AccountSetupGate>
