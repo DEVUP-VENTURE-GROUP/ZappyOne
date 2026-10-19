@@ -53,28 +53,37 @@ async function commissionOn(doc, basePaise, fallbackPct) {
   return Math.round(((basePaise || 0) * (pct ?? fallbackPct ?? 0)) / 100);
 }
 
-// Re-applies the holder's rate to a job's frozen base: updates the stored commission (and provider amount), mutates `doc` to match, returns the change in paise.
+// Re-applies the holder's rate to a job's frozen base, read fresh and written only if unchanged since (a late call never overwrites a newer price); mutates `doc` to match and returns the change against `doc`.
 async function refreeze(kind, doc) {
   const spec = KINDS[kind]?.commission;
-  const money = spec && doc?.[spec.path];
+  if (!spec || !doc?._id) return 0;
+  const Model = KINDS[kind].model();
+  const fresh = await Model.findById(doc._id).select(`${spec.path} shopId workerId`).lean();
+  const money = fresh?.[spec.path];
   if (!money || money.commissionBasePaise == null) return 0;
-  const holder = doc.shopId ? `shop:${doc.shopId}` : doc.workerId ? `worker:${doc.workerId}` : null;
+  const holder = fresh.shopId ? `shop:${fresh.shopId}` : fresh.workerId ? `worker:${fresh.workerId}` : null;
   const frozen = money.partnerRate?.holder === holder ? money.partnerRate.pct : null;
-  const pct = frozen ?? await pctFor(doc);
+  const pct = frozen ?? await pctFor(fresh);
   if (pct == null) return 0;
   const next = Math.round((money.commissionBasePaise * pct) / 100);
-  const delta = next - (money.commissionPaise || 0);
+  const change = next - (money.commissionPaise || 0);
   const set = frozen == null ? { [`${spec.path}.partnerRate`]: { holder, pct } } : {};
-  if (frozen == null) money.partnerRate = { holder, pct };
-  if (!delta) {
-    if (Object.keys(set).length) await KINDS[kind].model().updateOne({ _id: doc._id }, { $set: set });
-    return 0;
+  if (change) {
+    set[`${spec.path}.commissionPaise`] = next;
+    if (spec.provider) set[`${spec.path}.${spec.provider}`] = Math.max(0, (money[spec.provider] || 0) - change);
   }
-  set[`${spec.path}.commissionPaise`] = next;
-  if (spec.provider) set[`${spec.path}.${spec.provider}`] = Math.max(0, (money[spec.provider] || 0) - delta);
-  await KINDS[kind].model().updateOne({ _id: doc._id }, { $set: set });
-  money.commissionPaise = next;
-  if (spec.provider) money[spec.provider] = set[`${spec.path}.${spec.provider}`];
+  if (Object.keys(set).length) {
+    const unchanged = { _id: doc._id, [`${spec.path}.commissionBasePaise`]: money.commissionBasePaise };
+    if (money.commissionPaise != null) unchanged[`${spec.path}.commissionPaise`] = money.commissionPaise;
+    const r = await Model.updateOne(unchanged, { $set: set });
+    if (!r.matchedCount) return 0;
+  }
+  const mine = doc[spec.path];
+  if (!mine) return change;
+  const delta = next - (mine.commissionPaise || 0);
+  mine.commissionPaise = next;
+  mine.partnerRate = { holder, pct };
+  if (spec.provider && change) mine[spec.provider] = set[`${spec.path}.${spec.provider}`];
   return delta;
 }
 
