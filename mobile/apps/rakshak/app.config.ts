@@ -10,7 +10,7 @@ const config: ExpoConfig = {
   scheme: 'zappyone-rakshak',
   // Phone apps only: no web bundle, so a browser hit on the dev server cannot fail a build.
   platforms: ['ios', 'android'],
-  version: '1.0.0',
+  version: '1.0.1',
   orientation: 'portrait',
   icon: './assets/images/icon.png',
   userInterfaceStyle: 'light',
