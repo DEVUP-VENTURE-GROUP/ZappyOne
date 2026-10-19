@@ -451,6 +451,17 @@ async function getInvoice(req, res, next) {
     }
     const invoiceService = require('../service/invoice.service');
     const data = await invoiceService.getInvoiceData(req.params.id);
+    if (req.query.view === 'json') {
+      const paise = (r) => Math.round((Number(r) || 0) * 100);
+      return res.json({ bill: {
+        title: data.company.gstin && data.tax > 0 ? 'Tax invoice' : 'Receipt', number: data.invoiceNumber, issuedOn: data.invoiceDate,
+        business: { name: data.company.name, legalName: data.company.legalName, address: data.company.addressLines.join(', '), gstin: data.company.gstin, email: data.company.email },
+        customer: { name: data.customer.name, phone: data.customer.phone, address: data.customer.address },
+        service: String(data.order.service || 'Service').replace(/_/g, ' '), provider: data.worker?.name || null, reference: data.order.id.slice(-8).toUpperCase(),
+        lines: [...data.lineItems.map((l) => ({ label: l.label, paise: paise(l.amount) })), ...(data.tax ? [{ label: 'GST', paise: paise(data.tax) }] : [])],
+        totalPaise: paise(data.total), paidBy: data.order.paymentMethod, paid: data.order.paymentStatus !== 'pending',
+      } });
+    }
     const html = invoiceService.renderHtml(data);
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('Content-Disposition', `inline; filename="invoice-${data.invoiceNumber}.html"`);

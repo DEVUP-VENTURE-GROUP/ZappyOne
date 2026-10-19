@@ -174,6 +174,7 @@ router.get('/:id/receipt',
       const doc = await k.model().findById(req.params.id).lean();
       if (!doc || String(doc.userId) !== String(req.auth.sub)) return res.status(404).json({ error: 'Booking not found' });
       if (!k.earning?.done.includes(doc.status)) return res.status(409).json({ error: 'The receipt is ready once the job is done.', code: 'NOT_DONE' });
+      if (req.query.view === 'json') return res.json({ bill: await require('../messaging/receipt').view(kind, doc) });
       const pdf = await require('../messaging/receipt').build(kind, doc);
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `inline; filename="${pdf.filename}"`);

@@ -115,4 +115,22 @@ async function build(kind, doc) {
   return { buffer: Buffer.concat(chunks), filename: `${s.brandName}-${isTaxInvoice ? 'invoice' : 'receipt'}-${f.reference}.pdf`, number, facts: f };
 }
 
-module.exports = { build, receiptNumber };
+// The same receipt as data, for the app to show on its own screen (no browser).
+async function view(kind, doc) {
+  const s = await require('./settings').get();
+  const f = await jobFacts(kind, doc);
+  const taxPaise = (f.linesPaise.find(([l]) => l === 'Taxes') || [0, 0])[1];
+  const customer = doc.userId ? await require('../user/user.model').findById(doc.userId).select('name phone').lean() : null;
+  return {
+    title: s.gstin && taxPaise > 0 ? 'Tax invoice' : 'Receipt',
+    number: receiptNumber(f, doc),
+    issuedOn: doc.completedAt || doc.execution?.completedAt || doc.updatedAt || null,
+    business: { name: s.brandName, legalName: s.legalName || '', address: s.address || '', gstin: s.gstin || '', email: s.supportEmail || '' },
+    customer: { name: customer?.name || '', phone: customer?.phone || '', address: f.address || '' },
+    service: f.service, provider: f.provider?.name || null, reference: f.reference,
+    lines: f.linesPaise.map(([label, paise]) => ({ label, paise })), totalPaise: f.totalPaise,
+    paidBy: f.method || null, paid: f.paid !== false,
+  };
+}
+
+module.exports = { build, view, receiptNumber };

@@ -114,7 +114,7 @@ export function JobTrackingPage({ job, extras = null, startCode = null, codeStag
             <Text variant="bodySmall" color={ink[500]} style={styles.centerText}>{job.statusLabel || 'It is no longer being tracked.'}</Text>
           </View>
         ) : null}
-        <BookingSummary job={job} onReceipt={hasReceipt ? () => openDoc(`/api/jobs/${job.id}/receipt`) : undefined} />
+        <BookingSummary job={job} onReceipt={hasReceipt ? () => router.push(`/bill?source=job&id=${job.id}` as never) : undefined} />
         {status === 'completed' && job.proofs.length ? (
           <View style={styles.card}>
             <View style={styles.inline}><CheckCircle size={15} color={success[600]} /><Text variant="bodySmall" weight="bold">Photos of the work</Text></View>

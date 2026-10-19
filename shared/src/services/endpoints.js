@@ -1122,6 +1122,9 @@ export function endpoints(b, { adminApiPath }) {
     // --- Account Deletion ---
     // A five-minute link to open a receipt, invoice or service report in the browser (account/doc-link).
     docLink: b.mutation({ query: (path) => ({ url: '/account/doc-link', method: 'POST', body: { path } }) }),
+    // A finished booking's bill as data, for the app's own Bill screen (no browser).
+    jobBill: b.query({ query: (id) => ({ url: `/jobs/${id}/receipt`, params: { view: 'json' } }) }),
+    orderBill: b.query({ query: (id) => ({ url: `/orders/${id}/invoice`, params: { view: 'json' } }) }),
     // Every account type (account/account-deletion): refused while a job is open or money is in the wallet.
     deleteAccount: b.mutation({
       query: () => ({ url: '/account/me', method: 'DELETE' }),
