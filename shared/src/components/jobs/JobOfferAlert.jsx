@@ -6,6 +6,7 @@ import PassReasonPicker from '../worker/PassReasonPicker';
 import { startRinging } from '../../utils/alertSound';
 import { formatPaise } from '../../utils/money';
 import { offerClock as clock, DEFAULT_WINDOW_SEC } from './jobOffers';
+import { STAFF_PORTAL } from '../../provider/staffPortal';
 
 /**
  * A job has arrived — the provider is rung, not nudged. Every kind uses this.
@@ -146,17 +147,18 @@ export default function JobOfferAlert({ offer, myLocation, onAccept, onDecline, 
                 <p className="flex items-center gap-1 text-[11px] font-semibold text-slate-500">
                   <IndianRupee size={11} /> {offer.valueLabel}
                 </p>
-                <p className="mt-0.5 text-[18px] font-bold tabular-nums text-navy">{formatPaise(offer.valuePaise)}</p>
+                <p className="mt-0.5 text-[18px] font-bold tabular-nums text-navy">{STAFF_PORTAL ? 'Salaried' : formatPaise(offer.valuePaise)}</p>
+                {STAFF_PORTAL && <p className="text-[11px] font-semibold text-emerald-700">Tips are yours</p>}
                 {offer.groupSize > 1 && (
                   <p className="text-[11px] font-bold text-zappy-700">1 of {offer.groupSize} items at this visit, your answer covers all</p>
                 )}
-                {offer.travelPaise > 0 && (
+                {!STAFF_PORTAL && offer.travelPaise > 0 && (
                   <p className="text-[11px] font-semibold tabular-nums text-emerald-700">incl. +{formatPaise(offer.travelPaise)} travel{offer.distanceKm != null ? ` (${Math.round(offer.distanceKm * 10) / 10} km)` : ''}, yours</p>
                 )}
-                {offer.surgePaise > 0 && (
+                {!STAFF_PORTAL && offer.surgePaise > 0 && (
                   <p className="text-[11px] font-semibold tabular-nums text-orange-600">incl. +{formatPaise(offer.surgePaise)} surge, yours</p>
                 )}
-                {boost > 0 && (
+                {!STAFF_PORTAL && boost > 0 && (
                   <p className="text-[11px] font-semibold tabular-nums text-amber-700">
                     <span className="text-slate-400 line-through">{formatPaise(offer.valuePaise - boost)}</span> + {formatPaise(boost)} extra
                   </p>

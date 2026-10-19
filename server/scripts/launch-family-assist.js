@@ -20,7 +20,8 @@ async function launch() {
   let priced = 0;
   for (const cfg of CONFIGS.filter((c) => FAMILY_ASSIST_TYPES.includes(c.serviceType))) {
     // Insert-only: a price admin already changed is kept.
-    const r = await HelpingConfig.updateOne({ serviceType: cfg.serviceType }, { $setOnInsert: cfg }, { upsert: true });
+    const { commissionPct, ...rest } = cfg;
+    const r = await HelpingConfig.updateOne({ serviceType: cfg.serviceType }, { $setOnInsert: rest, $set: { commissionPct } }, { upsert: true });
     priced += r.upsertedCount || 0;
   }
   for (const line of FAMILY_ASSIST_LINES) {

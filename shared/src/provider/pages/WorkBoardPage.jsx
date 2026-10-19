@@ -8,6 +8,7 @@ import HotZonesCard from '../../components/worker/HotZonesCard';
 import { useGetWorkerMeQuery } from '../../services/api';
 import { useSelector } from 'react-redux';
 import { selectRole } from '../../modules/auth/authSlice';
+import { STAFF_PORTAL } from '../staffPortal';
 
 /**
  * Work — everything a provider holds, and everything open near them that
@@ -43,7 +44,7 @@ function MineRow({ job, onOpen }) {
 function OpenCard({ job, busy, onTake }) {
   return (
     <article className={`flex flex-col gap-3 overflow-hidden rounded-xl bg-white p-4 ${job.boostPaise > 0 ? 'ring-2 ring-amber-300 shadow-[0_6px_20px_-8px_rgba(245,158,11,0.45)]' : 'ring-1 ring-slate-200/80'}`}>
-      {job.boostPaise > 0 && (
+      {job.boostPaise > 0 && !STAFF_PORTAL && (
         <p className="-mx-4 -mt-4 flex items-center gap-1.5 bg-gradient-to-r from-amber-400 to-amber-300 px-4 py-1.5 text-[12px] font-extrabold text-amber-950">
           <Sparkles size={13} /> Customer raised the offer by {formatPaise(job.boostPaise)}, all yours
         </p>
@@ -53,12 +54,12 @@ function OpenCard({ job, busy, onTake }) {
           <p className="text-[12px] font-semibold capitalize text-zappy-700">{job.service}</p>
           <p className="mt-0.5 truncate text-[15px] font-semibold capitalize text-navy">{job.title}</p>
         </div>
-        <div className="shrink-0 text-right">
+        {!STAFF_PORTAL && <div className="shrink-0 text-right">
           <p className="text-[17px] font-bold tabular-nums text-emerald-700">{formatPaise(job.earningPaise)}</p>
           <p className="text-[11px] text-slate-500">you earn</p>
           {/* The customer added this for a faster match; it is all theirs, and included above. */}
           {job.boostPaise > 0 && <p className="mt-0.5 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700">incl. +{formatPaise(job.boostPaise)} extra</p>}
-        </div>
+        </div>}
       </div>
 
       <div className="space-y-1 text-[13px] text-slate-600">

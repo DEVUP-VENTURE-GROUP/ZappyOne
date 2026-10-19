@@ -16,6 +16,7 @@ import { colors, zappy, ink, slate, success, accent, danger } from '../../theme/
 import { radius } from '../../theme/radius';
 import { spacing } from '../../theme/spacing';
 import { openLink } from '../../lib/openLink';
+import { STAFF_APP } from '../../provider/staffApp';
 
 export interface Offer {
   kind: string; id: string; mode: string; askReason: boolean; heading: string; title: string;
@@ -59,7 +60,7 @@ export function JobOfferAlert({ offer, myLocation, onAccept, onDecline, onClose,
   const km = offer.km ?? kmBetween(myLocation, offer.coordinates);
   const pct = Math.max(0, Math.min(100, (left / windowSec) * 100));
   const urgent = left <= windowSec / 5;
-  const boost = (offer.boostPaise ?? 0) > 0 ? (offer.boostPaise as number) : 0;
+  const boost = !STAFF_APP && (offer.boostPaise ?? 0) > 0 ? (offer.boostPaise as number) : 0;
 
   const act = async (which: 'accept' | 'decline', fn: () => Promise<void>) => {
     setBusy(which);
@@ -101,10 +102,11 @@ export function JobOfferAlert({ offer, myLocation, onAccept, onDecline, onClose,
             <View style={styles.grid}>
               <View style={[styles.tile, boost ? styles.tileBoost : null]}>
                 <View style={styles.inline}><IndianRupee size={11} color={ink[500]} /><Text variant="caption" weight="semibold" color={ink[500]}>{offer.valueLabel}</Text></View>
-                <Text variant="heading2" weight="bold">{formatPaise(offer.valuePaise)}</Text>
+                <Text variant="heading2" weight="bold">{STAFF_APP ? 'Salaried' : formatPaise(offer.valuePaise)}</Text>
+                {STAFF_APP ? <Text variant="caption" weight="semibold" color={success[700]}>Tips are yours</Text> : null}
                 {(offer.groupSize ?? 1) > 1 ? <Text variant="caption" weight="bold" color={zappy[700]}>1 of {offer.groupSize} items at this visit, your answer covers all</Text> : null}
-                {(offer.travelPaise ?? 0) > 0 ? <Text variant="caption" weight="semibold" color={success[700]}>incl. +{formatPaise(offer.travelPaise)} travel{offer.distanceKm != null ? ` (${Math.round(offer.distanceKm * 10) / 10} km)` : ''}, yours</Text> : null}
-                {(offer.surgePaise ?? 0) > 0 ? <Text variant="caption" weight="semibold" color={accent[600]}>incl. +{formatPaise(offer.surgePaise)} surge, yours</Text> : null}
+                {!STAFF_APP && (offer.travelPaise ?? 0) > 0 ? <Text variant="caption" weight="semibold" color={success[700]}>incl. +{formatPaise(offer.travelPaise)} travel{offer.distanceKm != null ? ` (${Math.round(offer.distanceKm * 10) / 10} km)` : ''}, yours</Text> : null}
+                {!STAFF_APP && (offer.surgePaise ?? 0) > 0 ? <Text variant="caption" weight="semibold" color={accent[600]}>incl. +{formatPaise(offer.surgePaise)} surge, yours</Text> : null}
                 {boost > 0 ? <Text variant="caption" weight="semibold" color={accent[700]}>{formatPaise(offer.valuePaise - boost)} + {formatPaise(boost)} extra</Text> : null}
                 {offer.cash ? <View style={styles.inline}><Banknote size={11} color={success[700]} /><Text variant="caption" weight="medium" color={success[700]}>Collect in cash</Text></View> : null}
               </View>

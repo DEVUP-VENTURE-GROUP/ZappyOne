@@ -121,7 +121,8 @@ const assist = ({ serviceType, rupees, minutes, extraPer30, disclaimer, buys = n
   timeExtensionBlockMinutes: 30,
   timeExtensionFeePaise: inr(extraPer30),
   specialHandlingFeePaise: 0,
-  commissionPct: 10,
+  // Done by salaried staff: the whole fee is ZappyOne's, staff keep only tips.
+  commissionPct: 100,
   platformFeePaise: inr(10),
   taxPct: 0,
   allowedPaymentModels: buys ? ['worker_advance', 'prepaid_wallet'] : ['worker_advance'],

@@ -371,7 +371,7 @@ export default function WorkerDashboard() {
                           <MapPin size={12} /> {[j.km != null ? `${j.km} km` : null, j.where].filter(Boolean).join(', ')}
                         </span>
                       </span>
-                      <span className="shrink-0 text-[15px] font-bold tabular-nums text-emerald-700">{formatPaise(j.earningPaise)}</span>
+                      {!STAFF_PORTAL && <span className="shrink-0 text-[15px] font-bold tabular-nums text-emerald-700">{formatPaise(j.earningPaise)}</span>}
                     </button>
                   ))}
                 </div>

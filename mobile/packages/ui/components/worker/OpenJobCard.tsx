@@ -10,6 +10,7 @@ import { RIPPLE } from '../../lib/feedback';
 import { colors, ink, success, accent } from '../../theme/colors';
 import { radius } from '../../theme/radius';
 import { spacing } from '../../theme/spacing';
+import { STAFF_APP } from '../../provider/staffApp';
 
 export interface OpenJob {
   kind: string; id: string; service: string; title: string; where?: string; to?: string;
@@ -20,7 +21,7 @@ export const when = (at?: string | null) => (at ? new Date(at).toLocaleString('e
 
 /* Open work: what it pays and how far, before they commit. */
 export function OpenJobCard({ job, busy, onTake }: { job: OpenJob; busy?: boolean; onTake: () => void }) {
-  const boost = (job.boostPaise ?? 0) > 0;
+  const boost = !STAFF_APP && (job.boostPaise ?? 0) > 0;
   return (
     <View style={[styles.open, boost ? styles.openBoost : null]}>
       {boost ? (
@@ -34,11 +35,13 @@ export function OpenJobCard({ job, busy, onTake }: { job: OpenJob; busy?: boolea
           <Text variant="caption" weight="semibold" color={colors.primary} style={styles.capitalize}>{job.service}</Text>
           <Text variant="body" weight="semibold" numberOfLines={1} style={styles.capitalize}>{job.title}</Text>
         </View>
-        <View style={styles.right}>
-          <Text variant="heading3" weight="bold" color={success[700]}>{formatPaise(job.earningPaise)}</Text>
-          <Text variant="caption" color={colors.textSecondary}>you earn</Text>
-          {boost ? <Text variant="caption" weight="semibold" color={accent[700]}>incl. +{formatPaise(job.boostPaise)} extra</Text> : null}
-        </View>
+        {STAFF_APP ? null : (
+          <View style={styles.right}>
+            <Text variant="heading3" weight="bold" color={success[700]}>{formatPaise(job.earningPaise)}</Text>
+            <Text variant="caption" color={colors.textSecondary}>you earn</Text>
+            {boost ? <Text variant="caption" weight="semibold" color={accent[700]}>incl. +{formatPaise(job.boostPaise)} extra</Text> : null}
+          </View>
+        )}
       </View>
       {job.where ? (
         <View style={styles.rowTop}>
@@ -57,7 +60,7 @@ export function OpenJobCard({ job, busy, onTake }: { job: OpenJob; busy?: boolea
           <Text variant="caption" weight="medium" color={accent[700]} style={styles.flex}>You pay {formatPaise(job.frontPaise)} at the shop; the customer repays against the receipt</Text>
         </View>
       ) : null}
-      <Pressable onPress={onTake} disabled={busy} accessibilityRole="button" accessibilityLabel={`Take this job, ${formatPaise(job.earningPaise)}`}
+      <Pressable onPress={onTake} disabled={busy} accessibilityRole="button" accessibilityLabel={STAFF_APP ? 'Take this job' : `Take this job, ${formatPaise(job.earningPaise)}`}
         android_ripple={RIPPLE} style={[styles.take, busy && styles.dim]}>
         <Text variant="button" color={colors.textInverse}>Take this job</Text>
       </Pressable>

@@ -55,6 +55,9 @@ test('every service is priced from config at the listed fee', async () => {
   expect(q.baseFeePaise).toBe(39900);
   expect(q.distanceFeePaise).toBe(0);
   expect(q.serviceChargePaise).toBe(39900 + 1000);
+  // Salaried staff: nothing of the fee is a per-job earning.
+  expect(q.workerEarningPaise).toBe(0);
+  expect(q.commissionPaise).toBe(39900);
 });
 
 test('a second launch keeps a price admin changed', async () => {
