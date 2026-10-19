@@ -4,15 +4,15 @@
  * the shared slot rules, then move it.
  */
 import { useState } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useJobOptionsQuery, useRescheduleJobMutation, useRescheduleOrderMutation } from '@zappy/core/api';
 import { dayLabel, movesThroughJobs, timeLabel } from '@zappy/core/shared/schedule';
-import { BottomSheet, Button, Text } from '@zappy/ui/components';
+import { BottomSheet, Button, Skeleton, Text } from '@zappy/ui/components';
 import { SlotPicker } from '@zappy/ui/components/booking/SlotPicker';
 import { toast } from '@zappy/ui/components/Toast';
 import { errText } from '@zappy/ui/lib/feedback';
 import { useT } from '@zappy/ui/lib/i18n';
-import { accent, ink, zappy } from '@zappy/ui/theme/colors';
+import { accent, ink } from '@zappy/ui/theme/colors';
 import { radius } from '@zappy/ui/theme/radius';
 import { spacing } from '@zappy/ui/theme/spacing';
 import type { ScheduleItem } from './scheduleTypes';
@@ -42,7 +42,7 @@ export function MoveSheet({ item, onClose }: { item: ScheduleItem; onClose: () =
           <Text variant="body" weight="bold" style={styles.cap} numberOfLines={1}>{item.title}</Text>
           <Text variant="caption" color={ink[500]}>{t('schedule.now', 'Now')} {dayLabel(item.when)}, {timeLabel(item.when)}</Text>
         </View>
-        {generic && checking ? <ActivityIndicator color={zappy[500]} /> : !rule?.allowed ? (
+        {generic && checking ? <View style={{ gap: 8 }}><Skeleton height={14} width="80%" /><Skeleton height={14} width="60%" /><Skeleton height={40} /></View> : !rule?.allowed ? (
           <View style={styles.blocked}><Text variant="bodySmall" color={accent[700]}>{rule?.reason || t('schedule.cannotMove', 'This booking cannot be moved now.')}</Text></View>
         ) : (
           <>

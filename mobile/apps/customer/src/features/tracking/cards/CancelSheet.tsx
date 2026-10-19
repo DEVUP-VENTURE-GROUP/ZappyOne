@@ -5,9 +5,9 @@
  * longer be cancelled from here.
  */
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { BottomSheet, Button, Chip, Text } from '@zappy/ui/components';
+import { BottomSheet, Button, Chip, Skeleton, Text } from '@zappy/ui/components';
 import { ink, slate } from '@zappy/ui/theme/colors';
 import { radius } from '@zappy/ui/theme/radius';
 import { spacing } from '@zappy/ui/theme/spacing';
@@ -38,7 +38,7 @@ export function CancelSheet({ visible, onClose, quote, loading, quoteNeeded, rea
   return (
     <BottomSheet visible={visible} onClose={onClose} title={blocked ? 'This one needs us' : 'Cancel this booking?'}>
       <View style={styles.body}>
-        {loading && !quote ? <ActivityIndicator color={slate[300]} /> : (
+        {loading && !quote ? <View style={{ gap: 8 }}><Skeleton height={14} width="80%" /><Skeleton height={14} width="60%" /><Skeleton height={40} /></View> : (
           <>
             <Text variant="bodySmall" color={ink[700]}>{quote?.message || note || 'You can cancel this booking.'}</Text>
             {costs ? (

@@ -12,9 +12,10 @@
  */
 
 import React, { memo } from 'react';
-import { ActivityIndicator, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { CloudOff, Inbox, RefreshCw, WifiOff } from 'lucide-react-native';
 import { Button } from './Button';
+import { SkeletonList } from './Skeleton';
 import { Text, Heading } from './Text';
 import { colors, slate } from '../theme/colors';
 import { radius } from '../theme/radius';
@@ -117,17 +118,15 @@ export const ErrorState = memo(ErrorStateBase);
 
 export interface LoadingStateProps {
   label?: string;
+  rows?: number;
   style?: StyleProp<ViewStyle>;
 }
 
-function LoadingStateBase({ label, style }: LoadingStateProps) {
+// Loading looks like the content arriving (shimmering cards), never a bare spinner; `rows` sets how many.
+function LoadingStateBase({ label, style, rows = 3 }: LoadingStateProps) {
   return (
-    <View
-      style={[styles.container, style]}
-      accessibilityRole="progressbar"
-      accessibilityLabel={label ?? 'Loading'}
-    >
-      <ActivityIndicator color={colors.primary} />
+    <View style={[styles.skeleton, style]} accessibilityRole="progressbar" accessibilityLabel={label ?? 'Loading'}>
+      <SkeletonList count={rows} />
       {label ? (
         <Text variant="muted" align="center" style={styles.message}>
           {label}
@@ -140,6 +139,7 @@ function LoadingStateBase({ label, style }: LoadingStateProps) {
 export const LoadingState = memo(LoadingStateBase);
 
 const styles = StyleSheet.create({
+  skeleton: { width: '100%', padding: spacing.base },
   container: {
     alignItems: 'center',
     justifyContent: 'center',
