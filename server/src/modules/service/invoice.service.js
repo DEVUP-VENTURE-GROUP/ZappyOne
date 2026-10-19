@@ -18,12 +18,12 @@ const Order = require('../order/order.model');
 const User = require('../user/user.model');
 const Worker = require('../worker/worker.model');
 
-const COMPANY = {
-  name: 'Zappy Services',
-  addressLines: ['HITEC City, Hyderabad', 'Telangana 500081, India'],
-  gstin: '36AAACQ1234F1ZZ',
-  email: 'support@zappy.example',
-};
+// The business on the invoice comes from Admin → Messages → Business details; no GSTIN there means no GST lines.
+async function company() {
+  const s = await require('../messaging/settings').get();
+  return { name: s.brandName || 'ZappyOne', legalName: s.legalName || '', addressLines: s.address ? [s.address] : [], gstin: s.gstin || '', email: s.supportEmail || 'support@zappyone.com' };
+}
+const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : null);
 
 const TAX_RATE = 0.18; // GST 18% — applied on platform fee + commission only
 
@@ -47,17 +47,29 @@ async function getInvoiceData(orderId) {
     order.workerId ? Worker.findById(order.workerId).lean() : null,
   ]);
 
-  const subtotal = order.pricing.subtotal || (
-    order.pricing.baseFee + order.pricing.distanceFee + order.pricing.timeFee
-  );
-  const platformFee = order.pricing.platformFee || 0;
-  const taxableAmount = platformFee;
-  const tax = Math.round(taxableAmount * TAX_RATE);
+  const p = order.pricing || {};
+  const total = num(p.totalPaise) != null ? p.totalPaise / 100 : (num(p.total) ?? 0);
+  const co = await company();
+  const platformFee = num(p.platformFee) || 0;
+  const tax = co.gstin ? Math.round(platformFee * TAX_RATE) : 0;
+  // Only the lines this booking really has; whatever else made up the total is shown as one line, so the bill always adds up.
+  const lines = [
+    ['Service', num(p.baseFee)],
+    [num(p.distanceKm) != null ? `Distance (${p.distanceKm} km)` : 'Distance', num(p.distanceFee)],
+    [num(p.etaMinutes) != null ? `Time (about ${p.etaMinutes} min)` : 'Time', num(p.timeFee)],
+    ['Platform fee', platformFee || null],
+    ['Tip', num(p.tipPaise) ? p.tipPaise / 100 : null],
+    ['Discount', num(p.discountPaise) ? -p.discountPaise / 100 : null],
+  ].filter(([, a]) => a != null && a !== 0).map(([label, amount]) => ({ label, amount }));
+  const known = lines.reduce((t, l) => t + l.amount, 0) + tax;
+  const rest = Math.round((total - known) * 100) / 100;
+  if (Math.abs(rest) >= 1) lines.push({ label: lines.length ? 'Other charges' : 'Service', amount: rest });
+  const subtotal = Math.round((total - tax) * 100) / 100;
 
   return {
     invoiceNumber: invoiceNumber(order),
     invoiceDate: order.completedAt || order.createdAt,
-    company: COMPANY,
+    company: co,
     customer: {
       name: user?.name || '—',
       phone: user?.phone || '—',
@@ -78,19 +90,11 @@ async function getInvoiceData(orderId) {
       paymentMethod: order.payment?.method || 'unknown',
       paymentStatus: order.payment?.status || 'unknown',
     },
-    lineItems: [
-      { label: 'Service base fee', amount: order.pricing.baseFee },
-      { label: `Distance (${order.pricing.distanceKm} km)`, amount: order.pricing.distanceFee },
-      { label: `Time (~${order.pricing.etaMinutes} min)`, amount: order.pricing.timeFee },
-      { label: 'Platform fee', amount: platformFee },
-      ...(order.pricing.surgeMultiplier > 1
-        ? [{ label: `Surge (${order.pricing.surgeMultiplier}×)`, amount: 0, note: true }]
-        : []),
-    ],
+    lineItems: lines,
     subtotal,
     tax,
     taxRate: TAX_RATE,
-    total: order.pricing.total,
+    total,
     currency: 'INR',
   };
 }
@@ -124,11 +128,12 @@ function renderHtml(data) {
   <div class="head">
     <div>
       <h1>${escape(data.company.name)}</h1>
+      ${data.company.legalName ? `<div style="font-size:13px;color:#64748b">A venture of ${escape(data.company.legalName)}</div>` : ''}
       ${data.company.addressLines.map((l) => `<div style="font-size:13px;color:#64748b">${escape(l)}</div>`).join('')}
-      <div style="font-size:13px;color:#64748b">GSTIN: ${escape(data.company.gstin)}</div>
+      ${data.company.gstin ? `<div style="font-size:13px;color:#64748b">GSTIN: ${escape(data.company.gstin)}</div>` : ''}
     </div>
     <div style="text-align:right">
-      <div style="font-size:12px;color:#64748b;text-transform:uppercase;letter-spacing:0.1em">Invoice</div>
+      <div style="font-size:12px;color:#64748b;text-transform:uppercase;letter-spacing:0.1em">${data.company.gstin && data.tax > 0 ? 'Tax invoice' : 'Receipt'}</div>
       <div class="invn">${escape(data.invoiceNumber)}</div>
       <div style="font-size:13px;color:#64748b;margin-top:8px">${formatDate(data.invoiceDate)}</div>
       <div style="margin-top:12px"><span class="badge">PAID</span></div>
@@ -159,23 +164,28 @@ function renderHtml(data) {
       ${data.lineItems.map((li) => `
         <tr>
           <td>${escape(li.label)}</td>
-          <td class="right">${li.note ? '(included)' : `₹${li.amount}`}</td>
+          <td class="right">${money(li.amount)}</td>
         </tr>
       `).join('')}
     </tbody>
   </table>
 
   <div class="totals">
-    <div class="row"><span>Subtotal</span><span>₹${data.subtotal}</span></div>
-    <div class="row"><span>GST (${(data.taxRate * 100).toFixed(0)}% on platform fee)</span><span>₹${data.tax}</span></div>
-    <div class="row grand"><span>Total</span><span>₹${data.total}</span></div>
+    ${data.tax > 0 ? `<div class="row"><span>Subtotal</span><span>${money(data.subtotal)}</span></div>
+    <div class="row"><span>GST (${(data.taxRate * 100).toFixed(0)}% on platform fee)</span><span>${money(data.tax)}</span></div>` : ''}
+    <div class="row grand"><span>Total</span><span>${money(data.total)}</span></div>
   </div>
 
   <div class="footer">
     Thank you for choosing ${escape(data.company.name)}. For questions, email ${escape(data.company.email)}<br>
-    This is a computer-generated invoice and does not require a signature.
+    This is a computer-generated ${data.company.gstin && data.tax > 0 ? 'invoice' : 'receipt'} and does not require a signature.
   </div>
 </body></html>`;
+}
+
+function money(v) {
+  const n = Number(v) || 0;
+  return `${n < 0 ? '−' : ''}₹${Math.abs(n).toLocaleString('en-IN', { maximumFractionDigits: 2 })}`;
 }
 
 function escape(s) {
