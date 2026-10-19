@@ -463,7 +463,7 @@ function ConfigurationStep({ vertical, model, onPick, onSkip }) {
   );
 }
 
-function ModelStep({ vertical, deep, brand, productType, family, onPick }) {
+function ModelStep({ vertical, deep, brand, productType, family, onPick, onAuto }) {
   const [q, setQ] = useState('');
   const [showMissing, setShowMissing] = useState(false);
   const { data, isLoading } = useRepairModelsQuery({
@@ -483,6 +483,9 @@ function ModelStep({ vertical, deep, brand, productType, family, onPick }) {
     .find((r) => r.status === 'identified' && r.resolvedModelId);
 
   const models = data?.models || [];
+  // One model for this brand (a vehicle type for washes): nothing to ask, so it is chosen and the step skipped.
+  const only = !isLoading && !q && models.length === 1 ? models[0] : null;
+  useEffect(() => { if (only && onAuto) onAuto(only); }, [only]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Series is a label rather than a step: it groups a long list without adding
   // another tap to a funnel that is already deep.
@@ -516,7 +519,7 @@ function ModelStep({ vertical, deep, brand, productType, family, onPick }) {
           value={q} onChange={(e) => setQ(e.target.value)} autoFocus />
       </div>
 
-      {isLoading ? <Spinner /> : (
+      {isLoading || only ? <Spinner /> : (
         <div className="space-y-2">
           {grouped.map((group) => (
             <div key={group.key || 'ungrouped'} className="space-y-2">
@@ -1927,7 +1930,7 @@ function RepairFlow({ vertical, saved, draftKey, onStartOver, onAddAnother }) {
       )}
       {step === 'model' && (
         <ModelStep vertical={vertical} deep={deep} brand={brand} productType={productType} family={family}
-          onPick={(m) => { setModel(m); next('model'); }} />
+          onPick={(m) => { setModel(m); next('model'); }} onAuto={(m) => { setModel(m); skip('model'); }} />
       )}
       {step === 'config' && (
         <ConfigurationStep vertical={vertical} model={model}

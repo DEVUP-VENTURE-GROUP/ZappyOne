@@ -15,7 +15,7 @@
  */
 
 /** Verticals the repair engine currently serves. */
-const VERTICALS = ['mobile', 'laptop', 'two_wheeler', 'four_wheeler', 'water_tank_care'];
+const VERTICALS = ['mobile', 'laptop', 'two_wheeler', 'four_wheeler', 'water_tank_care', 'bike_wash', 'car_wash'];
 
 const DEFAULT_VERTICAL = 'mobile';
 

@@ -173,7 +173,7 @@ export function RepairFlow({ vertical, saved, draftKey, onStartOver, onAddAnothe
       {step === 'brand' ? <BrandStep vertical={vertical} onPick={(b) => { setBrand(b); next('brand'); }} /> : null}
       {step === 'type' ? <DeviceTypeStep vertical={vertical} brand={brand} onPick={(t) => { setProductType(t); next('type'); }} onAuto={(t) => { setProductType(t); skip('type'); }} /> : null}
       {step === 'family' && brand ? <FamilyStep vertical={vertical} brand={brand} productType={productType} onPick={(f) => { setFamily(f); next('family'); }} onSkip={skipFamily} /> : null}
-      {step === 'model' && brand ? <ModelStep vertical={vertical} deep={deep} brand={brand} productType={productType} family={family} onPick={(m) => { setModel(m); next('model'); }} /> : null}
+      {step === 'model' && brand ? <ModelStep vertical={vertical} deep={deep} brand={brand} productType={productType} family={family} onPick={(m) => { setModel(m); next('model'); }} onAuto={(m) => { setModel(m); skip('model'); }} /> : null}
       {step === 'config' && model ? <ConfigurationStep vertical={vertical} model={model} onPick={(c) => { setConfiguration(c); next('config'); }} onSkip={skipConfig} /> : null}
       {step === 'fuel' ? <FuelStep model={model} fuels={modelFuels} onPick={(f) => { setFuelType(f.code); next('fuel'); }} /> : null}
       {step === 'problem' && model ? <ProblemStep vertical={vertical} model={model} productType={productType} fuelType={fuelType} presetCode={presetProblem} onPick={(p) => { setPresetProblem(null); setProblem(p); next('problem'); }} /> : null}

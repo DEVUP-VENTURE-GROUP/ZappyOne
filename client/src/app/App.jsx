@@ -202,6 +202,8 @@ export default function App() {
         <Route path="/repair/two-wheeler" element={<RequireAuth role="user"><RepairFlowPage vertical="two_wheeler" /></RequireAuth>} />
         <Route path="/repair/four-wheeler" element={<RequireAuth role="user"><RepairFlowPage vertical="four_wheeler" /></RequireAuth>} />
         <Route path="/repair/water-tank-care" element={<RequireAuth role="user"><RepairFlowPage vertical="water_tank_care" /></RequireAuth>} />
+        <Route path="/repair/bike-wash" element={<RequireAuth role="user"><RepairFlowPage vertical="bike_wash" /></RequireAuth>} />
+        <Route path="/repair/car-wash" element={<RequireAuth role="user"><RepairFlowPage vertical="car_wash" /></RequireAuth>} />
         <Route path="/my-assets" element={<RequireAuth role="user"><MyAssetsPage /></RequireAuth>} />
         <Route path="/helping" element={<RequireAuth role="user"><HelpingServicesPage /></RequireAuth>} />
         <Route path="/helping/shopping" element={<RequireAuth role="user"><ShoppingTaskPage /></RequireAuth>} />

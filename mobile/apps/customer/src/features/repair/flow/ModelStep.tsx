@@ -5,7 +5,7 @@
  * state (a brand is added before its models), so the way forward is the main
  * action, not a faint link.
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Image, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { ChevronRight, HelpCircle, Laptop, Search, Smartphone } from 'lucide-react-native';
 import { useMyModelIdentificationsQuery, useRepairModelsQuery } from '@zappy/core/api';
@@ -21,8 +21,8 @@ import { Shell, Spinner, flow } from './FlowChrome';
 
 export interface Model extends Coded { seriesName?: string; imageUrl?: string; productNumbers?: string[]; productTypeCode?: string; fuelTypes?: string[] }
 
-export function ModelStep({ vertical, deep, brand, productType, family, onPick }: {
-  vertical: string; deep: boolean; brand: Coded; productType: Coded | null; family: Coded | null; onPick: (m: Model) => void;
+export function ModelStep({ vertical, deep, brand, productType, family, onPick, onAuto }: {
+  vertical: string; deep: boolean; brand: Coded; productType: Coded | null; family: Coded | null; onPick: (m: Model) => void; onAuto?: (m: Model) => void;
 }) {
   const [q, setQ] = useState('');
   const [missing, setMissing] = useState(false);
@@ -30,6 +30,9 @@ export function ModelStep({ vertical, deep, brand, productType, family, onPick }
   const { data: identifications } = useMyModelIdentificationsQuery(vertical, { skip: !deep });
   const identified = ((identifications?.requests || []) as { status: string; resolvedModelId?: Model }[]).find((r) => r.status === 'identified' && r.resolvedModelId);
   const models: Model[] = data?.models || [];
+  // One model for this brand (a vehicle type for washes): chosen for them and the step skipped.
+  const only = !isLoading && !q && models.length === 1 ? models[0] : null;
+  useEffect(() => { if (only && onAuto) onAuto(only); }, [only]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Series is a label, not a step: it groups a long list without another tap.
   const grouped: { key: string; items: Model[] }[] = [];
@@ -56,7 +59,7 @@ export function ModelStep({ vertical, deep, brand, productType, family, onPick }
         <TextInput value={q} onChangeText={setQ} autoFocus placeholder={deep ? `Search ${brand.name} models or product number…` : `Search ${brand.name} models…`}
           placeholderTextColor={ink[400]} style={styles.input} accessibilityLabel="Search models" />
       </View>
-      {isLoading ? <Spinner /> : (
+      {isLoading || only ? <Spinner /> : (
         <>
           {grouped.map((g) => (
             <View key={g.key || 'all'} style={styles.group}>

@@ -13,7 +13,7 @@ const BUILT = [
   /^\/helping(\/(shopping|returns))?$/, /^\/helping\/tasks\/[\w-]+$/,
   /^\/events(\/(browse|saved|bookings))?$/, /^\/events\/(themes|bookings)\/[\w-]+$/,
   /^\/my-assets$/, /^\/scheduled$/, /^\/plans$/, /^\/worker-profile\/[\w-]+$/, /^\/nearby-shops$/, /^\/shops\/[\w-]+$/,
-  /^\/repair(\/(laptop|two-wheeler|four-wheeler|water-tank-care))?$/,
+  /^\/repair(\/(laptop|two-wheeler|four-wheeler|water-tank-care|bike-wash|car-wash))?$/,
   /^\/repair\/price-requests\/[\w-]+$/, /^\/repair\/bookings\/[\w-]+$/, /^\/repair\/groups\/[\w-]+$/, /^\/repair\/category\/[\w-]+\/[\w-]+$/,
 ];
 

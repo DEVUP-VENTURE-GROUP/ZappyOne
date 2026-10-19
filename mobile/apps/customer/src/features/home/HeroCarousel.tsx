@@ -18,14 +18,16 @@ import type { HomeDomain, HomeService } from './homeCatalog';
 
 /** `services`: catalog codes the slide stands for; it opens the first one offered. Photos are served at /hero. */
 const SLIDES = [
-  { key: 'electronics', domain: 'electronics', services: ['mobile_repair', 'mobile', 'laptop_repair', 'laptop'], tab: 'Phone & laptop', photo: '/hero/phone-repair.webp',
-    title: 'Phone or laptop repair', line: 'Fixed at your door. You approve the price before work starts.' },
+  { key: 'car_wash', domain: 'vehicles', services: ['car_wash'], tab: 'Car wash', photo: '/hero/vehicle-care.webp', title: 'Car wash at your parking', line: 'Foam wash, inside vacuum or full clean. From ₹299.' },
+  { key: 'bike_wash', domain: 'vehicles', services: ['bike_wash'], tab: 'Bike wash', photo: '/hero/two-wheeler.webp', title: 'Bike wash at your door', line: 'Quick, foam or foam + polish. From ₹99.' },
   { key: 'two_wheeler', domain: 'vehicles', services: ['two_wheeler'], tab: '2-Wheeler', photo: '/hero/two-wheeler.webp', title: 'Bike trouble, sorted', line: 'A mechanic comes to you, at home or on the road.' },
   { key: 'four_wheeler', domain: 'vehicles', services: ['four_wheeler'], tab: '4-Wheeler', photo: '/hero/vehicle-care.webp', title: 'Car care at your door', line: 'Checks and repairs where your car is parked.' },
   { key: 'water_tank_care', domain: 'home_services', services: ['water_tank_care'], tab: 'Water tank', photo: '/hero/water-tank.webp' },
   { key: 'pet_services', domain: 'pet_services', tab: 'Pet care', photo: '/hero/pet-care.webp', path: '/pet' },
   { key: 'helping_services', domain: 'helping_services', tab: 'Shopping & returns', photo: '/hero/helping.webp', path: '/helping' },
   { key: 'events', domain: 'events', tab: 'Events', photo: '/hero/events.webp', path: '/events' },
+  { key: 'electronics', domain: 'electronics', services: ['mobile_repair', 'mobile', 'laptop_repair', 'laptop'], tab: 'Phone & laptop', photo: '/hero/phone-repair.webp',
+    title: 'Phone or laptop repair', line: 'Fixed at your door. You approve the price before work starts.' },
 ] as { key: string; domain: string; services?: string[]; tab: string; photo: string; title?: string; line?: string; path?: string }[];
 // `line` is the wide-screen sub-line; phones show the title only, as on the website.
 const SLIDE_MS = 6000;

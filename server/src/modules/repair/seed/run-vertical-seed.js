@@ -54,6 +54,8 @@ const SEEDS = {
   two_wheeler: { data: './two-wheeler.seed', flows: './two-wheeler-diagnostics.seed', models: './two-wheeler-models.seed' },
   four_wheeler: { data: './four-wheeler.seed', flows: './four-wheeler-diagnostics.seed', models: './four-wheeler-models.seed' },
   water_tank_care: { data: './water-tank-care.seed', flows: './water-tank-care-diagnostics.seed', models: './water-tank-care-models.seed' },
+  bike_wash: { data: './bike-wash.seed', flows: null, models: './bike-wash-models.seed' },
+  car_wash: { data: './car-wash.seed', flows: null, models: './car-wash-models.seed' },
 };
 
 function loadSeed(vertical) {
@@ -146,6 +148,7 @@ async function seedProblems(V, seed) {
           // is petrol or CNG, a Nexon petrol, diesel or electric.
           appliesToFuelTypes: p.appliesToFuelTypes || [],
           isPopular: !!p.isPopular,
+          displayOrder: p.displayOrder ?? 0,
           // A problem the seed marks as held (e.g. fuel delivery) starts unpublished.
           isActive: p.isActive !== false,
         },

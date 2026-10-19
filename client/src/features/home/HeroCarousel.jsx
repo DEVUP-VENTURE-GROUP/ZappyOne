@@ -12,8 +12,10 @@ import { PITCH } from '@shared/components/home/serviceArt';
  */
 /** `services`: catalog codes the slide stands for; it opens the first one offered. */
 const SLIDES = [
-  { key: 'electronics', domain: 'electronics', services: ['mobile_repair', 'mobile', 'laptop_repair', 'laptop'], tab: 'Phone & laptop', photo: '/hero/phone-repair.webp',
-    title: 'Phone or laptop repair', line: 'Fixed at your door. You approve the price before work starts.' },
+  { key: 'car_wash', domain: 'vehicles', services: ['car_wash'], tab: 'Car wash', photo: '/hero/vehicle-care.webp',
+    title: 'Car wash at your parking', line: 'Foam wash, inside vacuum or full clean. From ₹299.' },
+  { key: 'bike_wash', domain: 'vehicles', services: ['bike_wash'], tab: 'Bike wash', photo: '/hero/two-wheeler.webp',
+    title: 'Bike wash at your door', line: 'Quick, foam or foam + polish. From ₹99.' },
   { key: 'two_wheeler', domain: 'vehicles', services: ['two_wheeler'], tab: '2-Wheeler', photo: '/hero/two-wheeler.webp',
     title: 'Bike trouble, sorted', line: 'A mechanic comes to you, at home or on the road.' },
   { key: 'four_wheeler', domain: 'vehicles', services: ['four_wheeler'], tab: '4-Wheeler', photo: '/hero/vehicle-care.webp',
@@ -22,8 +24,10 @@ const SLIDES = [
   { key: 'pet_services', domain: 'pet_services', tab: 'Pet care', photo: '/hero/pet-care.webp', path: '/pet' },
   { key: 'helping_services', domain: 'helping_services', tab: 'Shopping & returns', photo: '/hero/helping.webp', path: '/helping' },
   { key: 'events', domain: 'events', tab: 'Events', photo: '/hero/events.webp', path: '/events' },
+  { key: 'electronics', domain: 'electronics', services: ['mobile_repair', 'mobile', 'laptop_repair', 'laptop'], tab: 'Phone & laptop', photo: '/hero/phone-repair.webp',
+    title: 'Phone or laptop repair', line: 'Fixed at your door. You approve the price before work starts.' },
 ];
-const FEATURED = { domain: 'electronics', service: ['mobile_repair', 'mobile'], photo: '/hero/phone-bench.webp' };
+const FEATURED = { domain: 'vehicles', service: ['car_wash'], photo: '/hero/vehicle-care.webp' };
 const SLIDE_MS = 6000;
 
 function useMedia(query) {

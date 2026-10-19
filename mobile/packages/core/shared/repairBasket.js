@@ -16,10 +16,12 @@ export const ADD_TARGETS = [
   { vertical: 'mobile', label: 'Phone', path: '/repair' },
   { vertical: 'laptop', label: 'Laptop', path: '/repair/laptop' },
   { vertical: 'water_tank_care', label: 'Water tank', path: '/repair/water-tank-care' },
+  { vertical: 'bike_wash', label: 'Bike wash', path: '/repair/bike-wash' },
+  { vertical: 'car_wash', label: 'Car wash', path: '/repair/car-wash' },
 ];
 
 /** "vehicle", "device" or "tank", for "+ Add another …". */
-export const thingOf = (vertical) => ({ two_wheeler: 'vehicle', four_wheeler: 'vehicle', water_tank_care: 'tank' }[vertical] || 'device');
+export const thingOf = (vertical) => ({ two_wheeler: 'vehicle', four_wheeler: 'vehicle', bike_wash: 'vehicle', car_wash: 'vehicle', water_tank_care: 'tank' }[vertical] || 'device');
 
 /** The chosen repair of a flow: what the diagnosis landed on. */
 export const repairOf = (diagnosis) => diagnosis?.primaryRepairCode || diagnosis?.recommendations?.[0]?.repairCode || null;

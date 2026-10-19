@@ -45,6 +45,8 @@ const LINES = [
   // liveCatalog filters it out without one. A line can otherwise be `live`,
   // fully priced and completely unreachable, which is exactly what both
   // vehicle lines were until this was noticed.
+  { code: 'bike_wash', name: 'Bike Wash', domainCode: 'vehicles', repairVertical: 'bike_wash', status: 'live', displayOrder: 0, icon: 'Bike', customerPath: '/repair/bike-wash', tagline: 'At your door, from ₹99', isPopular: true },
+  { code: 'car_wash', name: 'Car Wash', domainCode: 'vehicles', repairVertical: 'car_wash', status: 'live', displayOrder: 0, icon: 'Car', customerPath: '/repair/car-wash', tagline: 'At your door, from ₹299', isPopular: true },
   {
     code: 'two_wheeler', name: '2-Wheeler', domainCode: 'vehicles', status: 'live',
     displayOrder: 1, icon: 'Bike', repairVertical: 'two_wheeler',

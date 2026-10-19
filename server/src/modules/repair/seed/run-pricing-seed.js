@@ -145,6 +145,8 @@ async function main() {
     mobileBands: await seedBands(MOBILE_PRICING, 'mobile'),
     laptopBands: await seedBands(LAPTOP_PRICING, 'laptop'),
     waterBands: await seedBands(WATER_TANK_CARE_PRICING, 'water_tank_care'),
+    bikeWashBands: await seedBands(require('./wash.seed').BIKE.PRICING, 'bike_wash'),
+    carWashBands: await seedBands(require('./wash.seed').CAR.PRICING, 'car_wash'),
     config: await seedConfig(),
   };
 
