@@ -32,9 +32,14 @@ export default function FleetStaff() {
 
   return (
     <div className="space-y-4">
+      {hubData && !hubs.length && (
+        <p className="rounded-lg bg-amber-50 px-3 py-2.5 text-[13px] font-semibold text-amber-800">
+          Staff work from a hub. Create your first hub in the Hubs tab, then come back here to add people.
+        </p>
+      )}
       <label className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3">
         <Search size={15} className="text-slate-400" />
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Find a Rakshak by name or phone to add" className="w-full bg-transparent py-2.5 text-sm outline-none" />
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Find a Rakshak by name or phone (2+ letters) to add" className="w-full bg-transparent py-2.5 text-sm outline-none" />
       </label>
       {!q && <p className="text-[12.5px] text-slate-500">Showing your staff. Search to add someone who signed up on Rakshak.</p>}
       {isLoading ? <PageLoader /> : (
