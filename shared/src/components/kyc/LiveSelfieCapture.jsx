@@ -19,6 +19,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { Camera, RefreshCw, CheckCircle2, X, Loader2, AlertTriangle, MapPin } from 'lucide-react';
+import { onePosition } from '../../utils/position';
 
 const STEPS = ['ready', 'streaming', 'countdown', 'preview', 'error'];
 
@@ -40,25 +41,17 @@ export default function LiveSelfieCapture({
   const [previewUrl, setPreviewUrl] = useState(null);
   const [errorMsg, setErrorMsg]   = useState('');
   const [geoStatus, setGeoStatus] = useState('fetching'); // fetching | ok | denied
+  const [geoError, setGeoError] = useState('');
 
   const isSelfie = facingMode === 'user';
 
   // Fetch geo — location is MANDATORY for onboarding, so allow retry.
   const fetchGeo = useCallback(() => {
-    if (!navigator.geolocation) { setGeoStatus('denied'); return; }
     setGeoStatus('fetching');
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        geoRef.current = {
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
-          accuracy: pos.coords.accuracy,
-        };
-        setGeoStatus('ok');
-      },
-      () => setGeoStatus('denied'),
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-    );
+    setGeoError('');
+    onePosition()
+      .then((pos) => { geoRef.current = pos; setGeoStatus('ok'); })
+      .catch((err) => { setGeoError(err.message); setGeoStatus('denied'); });
   }, []);
 
   // Fetch geo in background as soon as component mounts
@@ -199,7 +192,7 @@ export default function LiveSelfieCapture({
             <div className="flex items-center gap-1.5">
               <MapPin size={12} className={geoStatus === 'ok' ? 'text-green-600' : geoStatus === 'fetching' ? 'text-amber-500' : 'text-red-500'} />
               <span className={`text-[11px] font-bold ${geoStatus === 'ok' ? 'text-green-700' : geoStatus === 'fetching' ? 'text-amber-700' : 'text-red-600'}`}>
-                {geoStatus === 'ok' ? 'Location captured ✓' : geoStatus === 'fetching' ? 'Fetching location…' : 'Location required — enable GPS'}
+                {geoStatus === 'ok' ? 'Location captured ✓' : geoStatus === 'fetching' ? 'Fetching location…' : 'Location needed'}
               </span>
             </div>
             {geoStatus === 'denied' && (
@@ -339,7 +332,7 @@ export default function LiveSelfieCapture({
                   <div className="flex items-center gap-1.5 bg-red-50 rounded-xl px-3 py-2 mb-2">
                     <AlertTriangle size={12} className="text-red-500 shrink-0" />
                     <span className="text-[11px] font-semibold text-red-600">
-                      {geoStatus === 'fetching' ? 'Getting your location… please wait' : 'Location is required to submit. Enable GPS and tap Retry above.'}
+                      {geoStatus === 'fetching' ? 'Getting your location… please wait' : `${geoError || 'Location is required to submit.'} Then tap Retry above.`}
                     </span>
                   </div>
                 )}

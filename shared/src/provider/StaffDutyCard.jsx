@@ -7,6 +7,7 @@ import { useCheckInShiftMutation, useCheckOutShiftMutation, usePresignUploadMuta
 import { formatPaise } from '../utils/money';
 import { prepareImage } from '../utils/prepareImage';
 import LiveSelfieCapture from '../components/kyc/LiveSelfieCapture';
+import { onePosition } from '../utils/position';
 
 const time = timeOf;
 
@@ -27,13 +28,7 @@ export default function StaffDutyCard({ me }) {
   const shift = me.current;
   const onDuty = shift?.status === 'checked_in';
 
-  function here() {
-    return new Promise((resolve, reject) => {
-      if (!navigator.geolocation) { reject(new Error('Turn on location to check in.')); return; }
-      navigator.geolocation.getCurrentPosition((p) => resolve({ lat: p.coords.latitude, lng: p.coords.longitude }),
-        () => reject(new Error('Turn on location to check in.')), { enableHighAccuracy: true, timeout: 15000 });
-    });
-  }
+  const here = () => onePosition().then(({ lat, lng }) => ({ lat, lng }));
 
   async function onSelfie(blob) {
     setSelfie(false);
