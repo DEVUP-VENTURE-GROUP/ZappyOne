@@ -41,7 +41,7 @@ export default function FleetStaff() {
         <Search size={15} className="text-slate-400" />
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Find a Rakshak by name or phone (2+ letters) to add" className="w-full bg-transparent py-2.5 text-sm outline-none" />
       </label>
-      {!q && <p className="text-[12.5px] text-slate-500">Showing your staff. Search to add someone who signed up on Rakshak.</p>}
+      {!q && <p className="text-[12.5px] text-slate-500">Your staff first, then the newest Rakshak sign-ups. Pick a hub and salary, then Make staff.</p>}
       {isLoading ? <PageLoader /> : (
         <Card className="divide-y divide-slate-100 p-0">
           {(data?.workers || []).map((w) => {
@@ -62,7 +62,7 @@ export default function FleetStaff() {
               </div>
             );
           })}
-          {!(data?.workers || []).length && <p className="px-4 py-8 text-center text-sm text-slate-400">{q ? 'Nobody found.' : 'No staff yet. Search for a Rakshak to add.'}</p>}
+          {!(data?.workers || []).length && <p className="px-4 py-8 text-center text-sm text-slate-400">{q ? 'Nobody found.' : 'Nobody has signed up on Rakshak yet.'}</p>}
         </Card>
       )}
     </div>

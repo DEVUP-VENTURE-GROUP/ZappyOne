@@ -154,9 +154,14 @@ router.get('/workforce/staff', async (req, res, next) => {
     const q = String(req.query.q || '').trim();
     const filter = q
       ? { $or: [{ name: new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i') }, { phone: new RegExp(q.replace(/\D/g, '') || '^$') }], shopId: null }
-      : { 'employment.type': 'staff' };
-    const workers = await Worker.find(filter).select('name phone employment isOnline').sort({ name: 1 }).limit(100).lean();
-    res.json({ workers });
+      : null;
+    if (filter) return res.json({ workers: await Worker.find(filter).select('name phone employment isOnline').sort({ name: 1 }).limit(100).lean() });
+    // No search: staff first, then the newest Rakshak sign-ups who could be added.
+    const [staff, others] = await Promise.all([
+      Worker.find({ 'employment.type': 'staff' }).select('name phone employment isOnline').sort({ name: 1 }).limit(200).lean(),
+      Worker.find({ shopId: null, 'employment.type': { $ne: 'staff' } }).select('name phone employment isOnline').sort({ createdAt: -1 }).limit(50).lean(),
+    ]);
+    res.json({ workers: [...staff, ...others] });
   } catch (err) { next(err); }
 });
 
