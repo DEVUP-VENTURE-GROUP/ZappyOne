@@ -10,7 +10,7 @@ function makeLimiter({ windowMs, max, prefix, skipFailedRequests = false, skipSu
     legacyHeaders: false,
     skipFailedRequests,
     skipSuccessfulRequests,
-    ...(keyGenerator ? { keyGenerator, validate: { keyGeneratorIpFallback: false } } : {}),
+    ...(keyGenerator ? { keyGenerator } : {}),
     store: new RedisStore({
       sendCommand: (...args) => redis.call(...args),
       prefix: `rl:${prefix}:`,

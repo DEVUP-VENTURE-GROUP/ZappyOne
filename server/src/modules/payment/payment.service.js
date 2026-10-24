@@ -222,6 +222,8 @@ async function capturePayment({ cfOrderId, cfPaymentId, amountPaise, eventName, 
   // Amount sanity check
   if (Math.abs(intent.amountPaise - amountPaise) > 100) {
     logger.error({ expected: intent.amountPaise, got: amountPaise, cfPaymentId }, 'Amount mismatch — possible tampering');
+    // Not applied, so it must not read as captured; appliedAt stays so a replay cannot apply it.
+    await PaymentIntent.updateOne({ _id: intent._id }, { $set: { status: 'failed', failureReason: 'amount_mismatch' } });
     return { ok: false, action: 'amount_mismatch' };
   }
 
