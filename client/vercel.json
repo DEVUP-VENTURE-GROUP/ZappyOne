@@ -4,6 +4,18 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
+      "source": "/in",
+      "destination": "https://api.zappyone.com/in"
+    },
+    {
+      "source": "/in/:path*",
+      "destination": "https://api.zappyone.com/in/:path*"
+    },
+    {
+      "source": "/sitemap-cities.xml",
+      "destination": "https://api.zappyone.com/sitemap.xml"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

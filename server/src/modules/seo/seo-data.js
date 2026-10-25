@@ -1,317 +1,85 @@
-/**
- * SEO Data — cities, areas, categories, FAQs, voice queries.
- * This is the single source of truth for all programmatic SEO pages.
- * Admin can extend this via the DB (future); currently static for reliability.
- */
+// Programmatic SEO data: every state and union territory with its main cities, and the services ZappyOne really sells. A city is live only when listed in LIVE or marked live in admin (City.live).
 
-const CITIES = [
-  {
-    slug: 'hyderabad', name: 'Hyderabad', state: 'Telangana',
-    lat: 17.3850, lng: 78.4867, population: '10M+', pinCodes: ['500081', '500032', '500034'],
-    description: 'India\'s tech capital with instant on-demand services across all major areas.',
-    areas: [
-      { slug: 'madhapur',      name: 'Madhapur' },
-      { slug: 'gachibowli',    name: 'Gachibowli' },
-      { slug: 'kondapur',      name: 'Kondapur' },
-      { slug: 'hitech-city',   name: 'HiTech City' },
-      { slug: 'jubilee-hills', name: 'Jubilee Hills' },
-      { slug: 'banjara-hills', name: 'Banjara Hills' },
-      { slug: 'kukatpally',    name: 'Kukatpally' },
-      { slug: 'secunderabad',  name: 'Secunderabad' },
-      { slug: 'lb-nagar',      name: 'LB Nagar' },
-      { slug: 'dilsukhnagar',  name: 'Dilsukhnagar' },
-      { slug: 'ameerpet',      name: 'Ameerpet' },
-      { slug: 'begumpet',      name: 'Begumpet' },
-    ],
-  },
-  {
-    slug: 'bangalore', name: 'Bangalore', state: 'Karnataka',
-    lat: 12.9716, lng: 77.5946, population: '13M+', pinCodes: ['560001', '560034', '560103'],
-    description: 'Silicon Valley of India — verified professionals available 24/7.',
-    areas: [
-      { slug: 'koramangala',    name: 'Koramangala' },
-      { slug: 'indiranagar',    name: 'Indiranagar' },
-      { slug: 'whitefield',     name: 'Whitefield' },
-      { slug: 'electronic-city',name: 'Electronic City' },
-      { slug: 'jp-nagar',       name: 'JP Nagar' },
-      { slug: 'hsr-layout',     name: 'HSR Layout' },
-      { slug: 'jayanagar',      name: 'Jayanagar' },
-      { slug: 'marathahalli',   name: 'Marathahalli' },
-      { slug: 'hebbal',         name: 'Hebbal' },
-      { slug: 'yelahanka',      name: 'Yelahanka' },
-      { slug: 'rajajinagar',    name: 'Rajajinagar' },
-      { slug: 'malleswaram',    name: 'Malleswaram' },
-    ],
-  },
-  {
-    slug: 'mumbai', name: 'Mumbai', state: 'Maharashtra',
-    lat: 19.0760, lng: 72.8777, population: '20M+', pinCodes: ['400001', '400053', '400076'],
-    description: 'The city that never sleeps gets instant services — any time, any area.',
-    areas: [
-      { slug: 'andheri',    name: 'Andheri' },
-      { slug: 'bandra',     name: 'Bandra' },
-      { slug: 'powai',      name: 'Powai' },
-      { slug: 'thane',      name: 'Thane' },
-      { slug: 'borivali',   name: 'Borivali' },
-      { slug: 'malad',      name: 'Malad' },
-      { slug: 'goregaon',   name: 'Goregaon' },
-      { slug: 'kandivali',  name: 'Kandivali' },
-      { slug: 'mulund',     name: 'Mulund' },
-      { slug: 'ghatkopar',  name: 'Ghatkopar' },
-      { slug: 'kurla',      name: 'Kurla' },
-      { slug: 'navi-mumbai',name: 'Navi Mumbai' },
-    ],
-  },
-  {
-    slug: 'delhi', name: 'Delhi', state: 'Delhi',
-    lat: 28.6139, lng: 77.2090, population: '32M+', pinCodes: ['110001', '110045', '110096'],
-    description: 'India\'s capital — trusted on-demand professionals across NCR.',
-    areas: [
-      { slug: 'connaught-place', name: 'Connaught Place' },
-      { slug: 'south-delhi',     name: 'South Delhi' },
-      { slug: 'dwarka',          name: 'Dwarka' },
-      { slug: 'rohini',          name: 'Rohini' },
-      { slug: 'lajpat-nagar',    name: 'Lajpat Nagar' },
-      { slug: 'saket',           name: 'Saket' },
-      { slug: 'janakpuri',       name: 'Janakpuri' },
-      { slug: 'preet-vihar',     name: 'Preet Vihar' },
-      { slug: 'noida',           name: 'Noida' },
-      { slug: 'gurugram',        name: 'Gurugram' },
-      { slug: 'faridabad',       name: 'Faridabad' },
-      { slug: 'ghaziabad',       name: 'Ghaziabad' },
-    ],
-  },
-  {
-    slug: 'chennai', name: 'Chennai', state: 'Tamil Nadu',
-    lat: 13.0827, lng: 80.2707, population: '11M+', pinCodes: ['600001', '600020', '600096'],
-    description: 'The Detroit of India — fast, reliable home and vehicle services.',
-    areas: [
-      { slug: 'anna-nagar',    name: 'Anna Nagar' },
-      { slug: 't-nagar',       name: 'T Nagar' },
-      { slug: 'adyar',         name: 'Adyar' },
-      { slug: 'velachery',     name: 'Velachery' },
-      { slug: 'tambaram',      name: 'Tambaram' },
-      { slug: 'perambur',      name: 'Perambur' },
-      { slug: 'omr',           name: 'OMR' },
-      { slug: 'sholinganallur',name: 'Sholinganallur' },
-      { slug: 'guindy',        name: 'Guindy' },
-      { slug: 'porur',         name: 'Porur' },
-      { slug: 'chromepet',     name: 'Chromepet' },
-      { slug: 'ambattur',      name: 'Ambattur' },
-    ],
-  },
-  {
-    slug: 'pune', name: 'Pune', state: 'Maharashtra',
-    lat: 18.5204, lng: 73.8567, population: '7M+', pinCodes: ['411001', '411014', '411045'],
-    description: 'The Oxford of the East — smart city with instant professional services.',
-    areas: [
-      { slug: 'koregaon-park',  name: 'Koregaon Park' },
-      { slug: 'baner',          name: 'Baner' },
-      { slug: 'hinjewadi',      name: 'Hinjewadi' },
-      { slug: 'wakad',          name: 'Wakad' },
-      { slug: 'kothrud',        name: 'Kothrud' },
-      { slug: 'hadapsar',       name: 'Hadapsar' },
-      { slug: 'viman-nagar',    name: 'Viman Nagar' },
-      { slug: 'kalyani-nagar',  name: 'Kalyani Nagar' },
-      { slug: 'aundh',          name: 'Aundh' },
-      { slug: 'magarpatta',     name: 'Magarpatta' },
-      { slug: 'kondhwa',        name: 'Kondhwa' },
-      { slug: 'pimpri',         name: 'Pimpri' },
-    ],
-  },
-];
+const LIVE = new Set(['hyderabad']);
 
-const CATEGORIES = [
-  {
-    slug: 'mobile-repair',
-    name: 'Mobile Repair',
-    plural: 'Mobile Repair Services',
-    icon: '📱',
-    spaPath: '/book?service=mobile_repair',
-    searchTerms: ['mobile repair near me', 'phone repair', 'screen repair', 'mobile service center', 'smartphone repair'],
-    voiceQuery: 'Who can repair my phone near me?',
-    h1Template: (loc) => `Mobile Repair in ${loc} — Doorstep Service`,
-    descTemplate: (loc) => `Cracked screen? Battery issues? Get certified mobile repair technicians at your doorstep in ${loc}. All brands. Same-day service. Warranty on repairs.`,
-    features: ['All Brands Covered', 'Screen Replacement', 'Battery Replacement', 'Water Damage Repair', 'Software Issues', '30-Day Warranty'],
-    avgTime: '30–60 min',
-    startingPrice: '₹199',
-    faqs: [
-      { q: 'How quickly can a mobile repair technician arrive?', a: 'Zappy connects you with verified mobile repair technicians in under 15 minutes. Average arrival time is 20–30 minutes in most areas.' },
-      { q: 'Do you repair all mobile phone brands?', a: 'Yes. Our technicians service all major brands including Samsung, Apple, Xiaomi, OnePlus, Oppo, Vivo, Realme, and all other Android and iOS devices.' },
-      { q: 'Is there a warranty on mobile repairs?', a: 'Yes. All repairs come with a 30-day warranty. If the same issue recurs within 30 days, we fix it free of charge.' },
-      { q: 'What is the cost of mobile screen replacement?', a: 'Screen replacement starts from ₹699 and varies by model. You get an exact price quote before the technician begins work — no hidden charges.' },
-      { q: 'Can I get my phone repaired at home?', a: 'Absolutely. Zappy offers doorstep mobile repair across all major areas. Book online and a technician comes to you — home, office, or anywhere.' },
-    ],
-    howTo: {
-      name: 'How to Book Mobile Repair with Zappy',
-      steps: [
-        { name: 'Describe the Problem', text: 'Open Zappy and describe your phone issue — cracked screen, battery drain, charging port, etc.' },
-        { name: 'Get an Instant Quote', text: 'Receive a transparent price quote upfront. No hidden charges, no surprises.' },
-        { name: 'Technician Arrives', text: 'A verified technician reaches your location in 20–30 minutes with all parts and tools.' },
-        { name: 'Repair Done', text: 'Your phone is repaired on-site. Test it before paying. 30-day warranty included.' },
-      ],
-    },
-  },
-  {
-    slug: 'bike-puncture',
-    name: 'Bike Puncture Repair',
-    plural: 'Bike Puncture Services',
-    icon: '🏍️',
-    spaPath: '/book?service=bike_puncture',
-    searchTerms: ['bike puncture near me', 'two wheeler puncture', 'tyre repair near me', 'motorcycle puncture', 'scooter tyre repair'],
-    voiceQuery: 'Who can fix my bike puncture near me?',
-    h1Template: (loc) => `Bike Puncture Repair in ${loc} — Roadside Assistance`,
-    descTemplate: (loc) => `Stuck with a flat tyre in ${loc}? Zappy sends a puncture repair mechanic to your exact location in minutes. Two-wheelers, scooters, motorcycles — all covered.`,
-    features: ['Doorstep Service', 'All Two-Wheelers', 'Tubeless & Tube Tyres', 'Emergency Roadside', 'Cash & Online Payment', 'Instant Response'],
-    avgTime: '15–30 min',
-    startingPrice: '₹149',
-    faqs: [
-      { q: 'How fast can you fix a bike puncture near me?', a: 'Zappy dispatches a mechanic immediately. Average response time is 15–20 minutes. For roadside emergencies, we prioritize your request.' },
-      { q: 'Do you repair both tube and tubeless tyres?', a: 'Yes. We repair both tube-type and tubeless tyres for all two-wheelers including scooters, motorcycles, and mopeds.' },
-      { q: 'What is the cost of bike puncture repair?', a: 'Bike puncture repair starts from ₹149. Tubeless tyre repair may cost slightly more. You get a quote before the mechanic starts work.' },
-      { q: 'Do you provide roadside assistance?', a: 'Yes. Zappy offers roadside puncture repair. Share your live location and our mechanic reaches you wherever you are.' },
-      { q: 'Can you replace a tyre if it cannot be repaired?', a: 'Yes. If the puncture cannot be patched, the mechanic can replace the inner tube or arrange a new tyre at competitive prices.' },
-    ],
-    howTo: {
-      name: 'How to Get Bike Puncture Repair with Zappy',
-      steps: [
-        { name: 'Share Your Location', text: 'Open Zappy and share your current location — roadside or at home.' },
-        { name: 'Instant Dispatch', text: 'The nearest verified mechanic is dispatched immediately to your location.' },
-        { name: 'Repair On-Site', text: 'The mechanic repairs your puncture on the spot with all necessary tools.' },
-        { name: 'Pay & Ride', text: 'Pay securely via Zappy. Cash and online both accepted. Get back on the road.' },
-      ],
-    },
-  },
-  {
-    slug: 'laptop-repair',
-    name: 'Laptop Repair',
-    plural: 'Laptop Repair Services',
-    icon: '💻',
-    spaPath: '/book?service=laptop_repair',
-    searchTerms: ['laptop repair near me', 'computer repair', 'laptop service center', 'laptop not working', 'laptop screen repair'],
-    voiceQuery: 'Who can fix my laptop near me?',
-    h1Template: (loc) => `Laptop Repair in ${loc} — Certified Technicians`,
-    descTemplate: (loc) => `Laptop not starting? Slow performance? Get certified laptop repair at your doorstep in ${loc}. All brands. Virus removal, screen replacement, RAM upgrade — all covered.`,
-    features: ['All Laptop Brands', 'Screen Replacement', 'Virus Removal', 'Hardware Upgrades', 'Data Recovery', '60-Day Warranty'],
-    avgTime: '1–3 hours',
-    startingPrice: '₹299',
-    faqs: [
-      { q: 'Do you repair all laptop brands?', a: 'Yes. Zappy technicians repair all laptop brands including Dell, HP, Lenovo, Apple MacBook, Asus, Acer, Samsung, and more.' },
-      { q: 'How long does laptop repair take?', a: 'Most common repairs like screen replacement, RAM upgrade, and virus removal are done within 1–3 hours on-site. Complex repairs may take longer.' },
-      { q: 'Can you recover data from a damaged laptop?', a: 'Yes. Our technicians provide data recovery services. We\'ll attempt to recover your data before any repair that might affect storage.' },
-      { q: 'What does laptop repair cost?', a: 'Laptop repair starts from ₹299 for diagnostics. You get a detailed quote after the initial check — no work begins without your approval.' },
-      { q: 'Do you repair MacBooks?', a: 'Yes. We have Apple MacBook certified technicians who can handle screen replacements, battery replacements, keyboard issues, and software problems.' },
-    ],
-    howTo: {
-      name: 'How to Book Laptop Repair with Zappy',
-      steps: [
-        { name: 'Describe the Issue', text: 'Tell us what\'s wrong — slow laptop, broken screen, won\'t start, virus, etc.' },
-        { name: 'Get a Quote', text: 'Receive a transparent estimate. Approve before any work begins.' },
-        { name: 'Technician at Your Door', text: 'A certified technician arrives at your location with tools and parts.' },
-        { name: 'Repair & Warranty', text: 'Laptop repaired on-site. 60-day warranty on all repairs.' },
-      ],
-    },
-  },
-  {
-    slug: 'birthday-decoration',
-    name: 'Birthday Decoration',
-    plural: 'Birthday Decoration Services',
-    icon: '🎂',
-    spaPath: '/events',
-    searchTerms: ['birthday decoration near me', 'birthday party decoration', 'room decoration for birthday', 'balloon decoration', 'surprise decoration'],
-    voiceQuery: 'Who can do birthday decorations near me today?',
-    h1Template: (loc) => `Birthday Decoration in ${loc} — Same-Day Setup`,
-    descTemplate: (loc) => `Make birthdays unforgettable in ${loc}. Professional birthday decorators create magical themes — balloon bouquets, backdrops, fairy lights, and more. Book online, we set up at your venue.`,
-    features: ['Theme-Based Décor', 'Balloon Arrangements', 'LED & Fairy Lights', 'Photo Booth Setup', 'Cake Table Décor', 'Same-Day Booking'],
-    avgTime: '2–4 hours setup',
-    startingPrice: '₹1,499',
-    faqs: [
-      { q: 'Can I book birthday decoration for the same day?', a: 'Yes. Zappy accepts same-day birthday decoration bookings subject to availability. Book at least 2 hours in advance for same-day service.' },
-      { q: 'What themes are available for birthday decoration?', a: 'We offer themes including Unicorn, Superhero, Princess, Balloon Fiesta, Floral, Fairy Lights, and more. Custom themes are also available.' },
-      { q: 'What does birthday decoration cost?', a: 'Birthday decoration starts from ₹1,499. Package prices vary based on theme, balloon count, and add-ons. Full pricing shown before booking.' },
-      { q: 'Do you provide decorations at home, hotels, and halls?', a: 'Yes. Zappy decorators set up at homes, hotel rooms, banquet halls, restaurants, and outdoor venues.' },
-      { q: 'Is 30% advance payment required for event booking?', a: 'Yes. A 30% advance payment is collected to confirm your slot. The remaining 70% is collected on the event day after the setup is complete.' },
-    ],
-    howTo: {
-      name: 'How to Book Birthday Decoration with Zappy',
-      steps: [
-        { name: 'Choose Your Theme', text: 'Browse decoration themes and pick your favourite or request a custom design.' },
-        { name: 'Select Date & Time', text: 'Pick your event date, time slot, and share the venue address.' },
-        { name: 'Pay 30% Advance', text: 'Confirm your booking with a small 30% advance. Balance paid on the day.' },
-        { name: 'We Set Up Everything', text: 'Our professional decorator arrives and transforms your venue.' },
-      ],
-    },
-  },
-  {
-    slug: 'electrician',
-    name: 'Electrician',
-    plural: 'Electrician Services',
-    icon: '⚡',
-    spaPath: '/book?service=electrician',
-    searchTerms: ['electrician near me', 'electrical repair near me', 'electrician for home', 'wiring repair', 'fan installation near me'],
-    voiceQuery: 'Can I get an electrician near me right now?',
-    h1Template: (loc) => `Electrician in ${loc} — Same-Day Home Service`,
-    descTemplate: (loc) => `Power cut? Fan not working? Get a verified electrician at your home in ${loc} within 30 minutes. Wiring, switches, fans, AC, inverter — all electrical work covered.`,
-    features: ['Licensed Electricians', 'Wiring & Rewiring', 'Fan & Light Installation', 'Switch Board Repair', 'AC & Geyser Wiring', 'Emergency Service'],
-    avgTime: '30–90 min',
-    startingPrice: '₹199',
-    faqs: [
-      { q: 'How quickly can an electrician reach my home?', a: 'Zappy dispatches a verified electrician within 15 minutes of booking. Average arrival time is 25–35 minutes.' },
-      { q: 'Do your electricians handle both minor and major electrical work?', a: 'Yes. From replacing a fuse to complete home rewiring, our certified electricians handle all types of electrical work safely.' },
-      { q: 'Is electrical work covered under warranty?', a: 'Yes. All electrical work done by Zappy technicians carries a 30-day service warranty.' },
-      { q: 'Do you provide emergency electrician services?', a: 'Yes. Zappy\'s emergency service is available 24/7. Mark your booking as urgent for priority dispatch.' },
-      { q: 'What is the minimum charge for an electrician visit?', a: 'Electrician service starts from ₹199 for a visit and basic inspection. Additional charges apply based on work done.' },
-    ],
-    howTo: {
-      name: 'How to Book an Electrician with Zappy',
-      steps: [
-        { name: 'Describe the Electrical Issue', text: 'Tell us what needs fixing — power failure, fan, wiring, switch board, etc.' },
-        { name: 'Instant Dispatch', text: 'A verified electrician near you is dispatched immediately.' },
-        { name: 'Safe Repair at Home', text: 'The electrician arrives with tools and fixes the issue safely and efficiently.' },
-        { name: 'Pay After Work', text: 'Review the completed work and pay securely through Zappy.' },
-      ],
-    },
-  },
-  {
-    slug: 'plumber',
-    name: 'Plumber',
-    plural: 'Plumbing Services',
-    icon: '🔧',
-    spaPath: '/book?service=plumber',
-    searchTerms: ['plumber near me', 'plumbing repair near me', 'pipe leak repair', 'drain cleaning', 'tap repair near me'],
-    voiceQuery: 'Can I get a plumber near me right now?',
-    h1Template: (loc) => `Plumber in ${loc} — Emergency & Scheduled Service`,
-    descTemplate: (loc) => `Leaking pipe? Blocked drain? Get a certified plumber at your home in ${loc} within 30 minutes. All plumbing repairs, installation, and maintenance covered.`,
-    features: ['Emergency Plumbing', 'Pipe Leak Repair', 'Drain Unblocking', 'Tap & Faucet Repair', 'Geyser Installation', 'Bathroom Fitting'],
-    avgTime: '30–120 min',
-    startingPrice: '₹199',
-    faqs: [
-      { q: 'How fast can a plumber reach my home?', a: 'Zappy dispatches the nearest verified plumber to your location. Average arrival time is 25–35 minutes.' },
-      { q: 'Do you handle emergency plumbing like burst pipes?', a: 'Yes. Zappy has emergency plumbing available 24/7. For urgent issues like burst pipes or major leaks, mark your booking as emergency.' },
-      { q: 'What plumbing services do you offer?', a: 'We cover pipe repair, tap replacement, drainage cleaning, bathroom fitting, geyser installation, toilet repair, and complete plumbing maintenance.' },
-      { q: 'Is there a warranty on plumbing work?', a: 'Yes. All plumbing work comes with a 30-day service warranty. If the same issue returns, we fix it at no charge.' },
-      { q: 'What is the cost of a plumber visit?', a: 'Plumbing services start from ₹199 for a visit and inspection. You get a detailed quote before any repair work begins.' },
-    ],
-    howTo: {
-      name: 'How to Book a Plumber with Zappy',
-      steps: [
-        { name: 'Describe the Issue', text: 'Tell us about the plumbing problem — leaking pipe, blocked drain, broken tap, etc.' },
-        { name: 'Instant Dispatch', text: 'The nearest certified plumber is dispatched to your location immediately.' },
-        { name: 'Professional Repair', text: 'The plumber arrives with tools and materials and fixes the issue efficiently.' },
-        { name: 'Pay Securely', text: 'Approve the work and pay through Zappy. 30-day warranty on all work.' },
-      ],
-    },
-  },
-];
-
-const CITY_MAP = Object.fromEntries(CITIES.map(c => [c.slug, c]));
-const CATEGORY_MAP = Object.fromEntries(CATEGORIES.map(c => [c.slug, c]));
-
-// Speakable content blocks for Google Assistant / voice search
-const BRAND_SPEAKABLE = {
-  name: 'Zappy',
-  tagline: 'Instant help from verified professionals. Available 24/7.',
-  description: 'Zappy is India\'s fastest on-demand service platform. Book plumbers, electricians, mobile repair technicians, bike mechanics, and birthday decorators instantly. Professionals reach you in under 30 minutes.',
+const AREAS = {
+  hyderabad: ['Madhapur', 'Gachibowli', 'Kondapur', 'HiTech City', 'Jubilee Hills', 'Banjara Hills', 'Kukatpally', 'Secunderabad', 'LB Nagar', 'Dilsukhnagar', 'Ameerpet', 'Begumpet', 'Narsingi', 'Manikonda', 'Miyapur', 'Kompally'],
+  bengaluru: ['Koramangala', 'Indiranagar', 'Whitefield', 'Electronic City', 'JP Nagar', 'HSR Layout', 'Jayanagar', 'Marathahalli', 'Hebbal', 'Yelahanka'],
+  mumbai: ['Andheri', 'Bandra', 'Powai', 'Borivali', 'Malad', 'Goregaon', 'Kandivali', 'Mulund', 'Ghatkopar', 'Kurla'],
+  delhi: ['Connaught Place', 'South Delhi', 'Dwarka', 'Rohini', 'Lajpat Nagar', 'Saket', 'Janakpuri', 'Preet Vihar'],
+  chennai: ['Anna Nagar', 'T Nagar', 'Adyar', 'Velachery', 'Tambaram', 'OMR', 'Guindy', 'Porur'],
+  pune: ['Koregaon Park', 'Baner', 'Hinjewadi', 'Wakad', 'Kothrud', 'Hadapsar', 'Viman Nagar', 'Aundh'],
 };
 
-module.exports = { CITIES, CATEGORIES, CITY_MAP, CATEGORY_MAP, BRAND_SPEAKABLE };
+const STATES = [
+  ['Andhra Pradesh', [['Visakhapatnam', 17.6868, 83.2185], ['Vijayawada', 16.5062, 80.648], ['Amaravati', 16.5131, 80.5165], ['Guntur', 16.3067, 80.4365], ['Tirupati', 13.6288, 79.4192], ['Nellore', 14.4426, 79.9865], ['Kurnool', 15.8281, 78.0373], ['Rajahmundry', 17.0005, 81.804], ['Kakinada', 16.9891, 82.2475], ['Anantapur', 14.6819, 77.6006]]],
+  ['Arunachal Pradesh', [['Itanagar', 27.0844, 93.6053]]],
+  ['Assam', [['Guwahati', 26.1445, 91.7362], ['Dibrugarh', 27.4728, 94.912], ['Silchar', 24.8333, 92.7789], ['Jorhat', 26.7509, 94.2037]]],
+  ['Bihar', [['Patna', 25.5941, 85.1376], ['Gaya', 24.7914, 85.0002], ['Muzaffarpur', 26.1209, 85.3647], ['Bhagalpur', 25.2425, 86.9842]]],
+  ['Chhattisgarh', [['Raipur', 21.2514, 81.6296], ['Bhilai', 21.1938, 81.3509], ['Bilaspur', 22.0797, 82.1409]]],
+  ['Goa', [['Panaji', 15.4909, 73.8278], ['Margao', 15.2832, 73.9862], ['Vasco da Gama', 15.3982, 73.8113]]],
+  ['Gujarat', [['Ahmedabad', 23.0225, 72.5714], ['Surat', 21.1702, 72.8311], ['Vadodara', 22.3072, 73.1812], ['Rajkot', 22.3039, 70.8022], ['Gandhinagar', 23.2156, 72.6369], ['Bhavnagar', 21.7645, 72.1519], ['Jamnagar', 22.4707, 70.0577]]],
+  ['Haryana', [['Gurugram', 28.4595, 77.0266], ['Faridabad', 28.4089, 77.3178], ['Panipat', 29.3909, 76.9635], ['Ambala', 30.3782, 76.7767], ['Karnal', 29.6857, 76.9905], ['Hisar', 29.1492, 75.7217]]],
+  ['Himachal Pradesh', [['Shimla', 31.1048, 77.1734], ['Dharamshala', 32.219, 76.3234], ['Manali', 32.2432, 77.1892]]],
+  ['Jharkhand', [['Ranchi', 23.3441, 85.3096], ['Jamshedpur', 22.8046, 86.2029], ['Dhanbad', 23.7957, 86.4304], ['Bokaro', 23.6693, 86.1511]]],
+  ['Karnataka', [['Bengaluru', 12.9716, 77.5946], ['Mysuru', 12.2958, 76.6394], ['Mangaluru', 12.9141, 74.856], ['Hubballi', 15.3647, 75.124], ['Belagavi', 15.8497, 74.4977], ['Kalaburagi', 17.3297, 76.8343]]],
+  ['Kerala', [['Thiruvananthapuram', 8.5241, 76.9366], ['Kochi', 9.9312, 76.2673], ['Kozhikode', 11.2588, 75.7804], ['Thrissur', 10.5276, 76.2144], ['Kollam', 8.8932, 76.6141]]],
+  ['Madhya Pradesh', [['Bhopal', 23.2599, 77.4126], ['Indore', 22.7196, 75.8577], ['Jabalpur', 23.1815, 79.9864], ['Gwalior', 26.2183, 78.1828], ['Ujjain', 23.1765, 75.7885]]],
+  ['Maharashtra', [['Mumbai', 19.076, 72.8777], ['Pune', 18.5204, 73.8567], ['Nagpur', 21.1458, 79.0882], ['Thane', 19.2183, 72.9781], ['Nashik', 19.9975, 73.7898], ['Navi Mumbai', 19.033, 73.0297], ['Aurangabad', 19.8762, 75.3433], ['Solapur', 17.6599, 75.9064], ['Kolhapur', 16.705, 74.2433]]],
+  ['Manipur', [['Imphal', 24.817, 93.9368]]],
+  ['Meghalaya', [['Shillong', 25.5788, 91.8933]]],
+  ['Mizoram', [['Aizawl', 23.7271, 92.7176]]],
+  ['Nagaland', [['Kohima', 25.6751, 94.1086], ['Dimapur', 25.9091, 93.7266]]],
+  ['Odisha', [['Bhubaneswar', 20.2961, 85.8245], ['Cuttack', 20.4625, 85.883], ['Rourkela', 22.2604, 84.8536], ['Puri', 19.8135, 85.8312]]],
+  ['Punjab', [['Ludhiana', 30.901, 75.8573], ['Amritsar', 31.634, 74.8723], ['Jalandhar', 31.326, 75.5762], ['Patiala', 30.3398, 76.3869], ['Mohali', 30.7046, 76.7179]]],
+  ['Rajasthan', [['Jaipur', 26.9124, 75.7873], ['Jodhpur', 26.2389, 73.0243], ['Udaipur', 24.5854, 73.7125], ['Kota', 25.2138, 75.8648], ['Ajmer', 26.4499, 74.6399], ['Bikaner', 28.0229, 73.3119]]],
+  ['Sikkim', [['Gangtok', 27.3389, 88.6065]]],
+  ['Tamil Nadu', [['Chennai', 13.0827, 80.2707], ['Coimbatore', 11.0168, 76.9558], ['Madurai', 9.9252, 78.1198], ['Tiruchirappalli', 10.7905, 78.7047], ['Salem', 11.6643, 78.146], ['Tirunelveli', 8.7139, 77.7567], ['Vellore', 12.9165, 79.1325]]],
+  ['Telangana', [['Hyderabad', 17.385, 78.4867], ['Secunderabad', 17.4399, 78.4983], ['Warangal', 17.9689, 79.5941], ['Karimnagar', 18.4386, 79.1288], ['Nizamabad', 18.6725, 78.094], ['Khammam', 17.2473, 80.1514], ['Mahbubnagar', 16.7488, 77.9855], ['Nalgonda', 17.0575, 79.2671], ['Sangareddy', 17.6248, 78.0823], ['Siddipet', 18.1018, 78.852], ['Vikarabad', 17.3381, 77.9044]]],
+  ['Tripura', [['Agartala', 23.8315, 91.2868]]],
+  ['Uttar Pradesh', [['Lucknow', 26.8467, 80.9462], ['Kanpur', 26.4499, 80.3319], ['Noida', 28.5355, 77.391], ['Ghaziabad', 28.6692, 77.4538], ['Agra', 27.1767, 78.0081], ['Varanasi', 25.3176, 82.9739], ['Prayagraj', 25.4358, 81.8463], ['Meerut', 28.9845, 77.7064]]],
+  ['Uttarakhand', [['Dehradun', 30.3165, 78.0322], ['Haridwar', 29.9457, 78.1642], ['Rishikesh', 30.0869, 78.2676]]],
+  ['West Bengal', [['Kolkata', 22.5726, 88.3639], ['Howrah', 22.5958, 88.2636], ['Durgapur', 23.5204, 87.3119], ['Siliguri', 26.7271, 88.3953], ['Asansol', 23.6739, 86.9524]]],
+  ['Andaman and Nicobar Islands', [['Port Blair', 11.6234, 92.7265]]],
+  ['Chandigarh', [['Chandigarh', 30.7333, 76.7794]]],
+  ['Dadra and Nagar Haveli and Daman and Diu', [['Daman', 20.3974, 72.8328], ['Silvassa', 20.2766, 73.0169]]],
+  ['Delhi', [['Delhi', 28.6139, 77.209], ['New Delhi', 28.6139, 77.2088]]],
+  ['Jammu and Kashmir', [['Srinagar', 34.0837, 74.7973], ['Jammu', 32.7266, 74.857]]],
+  ['Ladakh', [['Leh', 34.1526, 77.5771]]],
+  ['Lakshadweep', [['Kavaratti', 10.5593, 72.6358]]],
+  ['Puducherry', [['Puducherry', 11.9416, 79.8083]]],
+];
+
+const slugify = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+
+const CITIES = STATES.flatMap(([state, cities]) => cities.map(([name, lat, lng]) => {
+  const slug = slugify(name);
+  return {
+    slug, name, state, stateSlug: slugify(state), lat, lng, live: LIVE.has(slug),
+    areas: (AREAS[slug] || []).map((a) => ({ slug: slugify(a), name: a })),
+  };
+}));
+
+// What ZappyOne really sells, each opening its real booking screen.
+const CATEGORIES = [
+  { slug: 'bike-wash', name: 'Bike wash at home', short: 'Bike wash', spaPath: '/repair/bike-wash', what: 'Quick, foam, or foam and polish wash for scooters and bikes at your parking.' },
+  { slug: 'car-wash', name: 'Car wash at home', short: 'Car wash', spaPath: '/repair/car-wash', what: 'Exterior, foam with inside vacuum, or full clean for hatchbacks, sedans and SUVs at your parking.' },
+  { slug: 'phone-repair', name: 'Phone repair at home', short: 'Phone repair', spaPath: '/repair', what: 'Screen, battery, charging and more, diagnosed at your door before you are quoted.' },
+  { slug: 'laptop-repair', name: 'Laptop repair at home', short: 'Laptop repair', spaPath: '/repair/laptop', what: 'Screen, keyboard, battery, slow laptop and upgrades, diagnosed before you are quoted.' },
+  { slug: 'grocery-shopping-help', name: 'Grocery run', short: 'Grocery run', spaPath: '/helping/shopping?mode=grocery_run', what: 'We shop from your list, deliver and unpack. The bill is paid at actual cost.' },
+  { slug: 'medicine-pickup', name: 'Medicine pickup', short: 'Medicine pickup', spaPath: '/helping/shopping?mode=medicine', what: 'Pharmacy pickup with your prescription, delivered to your door.' },
+  { slug: 'parcel-drop', name: 'Parcel return or drop', short: 'Parcel drop', spaPath: '/helping/shopping?mode=parcel_drop', what: 'We collect the parcel, drop it at the courier, post office or return counter and bring the receipt.' },
+  { slug: 'doctor-visit-escort', name: 'Doctor visit escort for elders', short: 'Doctor visit escort', spaPath: '/helping/shopping?mode=doctor_escort', what: 'We go along to the clinic or hospital, wait, and bring them back home.' },
+  { slug: 'bank-bill-queue-help', name: 'Bank, post office and bill queue help', short: 'Queue help', spaPath: '/helping/shopping?mode=queue_errand', what: 'We stand in line and submit your papers at the bank, post office or bill counter.' },
+  { slug: 'elder-care-visits', name: 'Elder daily check-in', short: 'Elder check-in', spaPath: '/helping/shopping?mode=elder_checkin', what: 'A visit, medicine reminder, small chores and an update to the family.' },
+  { slug: 'party-helper', name: 'Party helper', short: 'Party helper', spaPath: '/helping/shopping?mode=party_helper', what: 'Serving, clearing and cleaning during your home function.' },
+  { slug: 'puja-festival-help', name: 'Puja and festival help', short: 'Puja help', spaPath: '/helping/shopping?mode=puja_help', what: 'Set-up, flowers and clean-up for your puja or festival.' },
+  { slug: 'pet-grooming', name: 'Pet grooming and care', short: 'Pet grooming', spaPath: '/pet', what: 'Bath, haircut, hygiene and care for your dog or cat.' },
+  { slug: 'event-decoration', name: 'Event and party decoration', short: 'Event decoration', spaPath: '/events', what: 'Birthday, anniversary and festive decoration at home or a venue.' },
+];
+
+const CITY_MAP = Object.fromEntries(CITIES.map((c) => [c.slug, c]));
+const CATEGORY_MAP = Object.fromEntries(CATEGORIES.map((c) => [c.slug, c]));
+const STATE_LIST = STATES.map(([state]) => ({ name: state, slug: slugify(state) }));
+
+module.exports = { CITIES, CATEGORIES, CITY_MAP, CATEGORY_MAP, STATE_LIST, slugify };

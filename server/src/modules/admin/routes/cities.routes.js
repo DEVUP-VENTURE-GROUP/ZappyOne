@@ -21,6 +21,7 @@ const cityBody = Joi.object({
   description: Joi.string().allow('').max(500).default(''),
   pinCodes:    Joi.array().items(Joi.string().pattern(/^\d{6}$/)).max(20).default([]),
   isActive:    Joi.boolean().default(true),
+  live:        Joi.boolean().default(false),
   areas:       Joi.array().items(areaSchema).max(50).default([]),
 });
 

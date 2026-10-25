@@ -1,89 +1,41 @@
-# ZappyOne (Zappy)
+# ZappyOne
 
-> India's fastest on-demand home-services marketplace. Book background-verified
-> professionals in about 60 seconds and get help at your doorstep, typically
-> within 30 minutes. Tagline: "Instant help, anywhere, anytime."
-
-Zappy is a hyperlocal services platform operating in India (headquartered in
-Hyderabad, Telangana). Customers book a service from the app; the platform
-matches the nearest verified professional in real time, tracks them live on a
-map, and handles payment, invoicing and warranty in one flow.
+> ZappyOne (also written Zappy One; website zappyone.com) is an Indian home services platform, live in Hyderabad, Telangana, and launching city by city across India. Customers book on zappyone.com or the ZappyOne Android app, see a fixed price before booking, and a verified professional or a member of ZappyOne's own salaried staff comes to their door, tracked live on a map.
 
 - Website: https://www.zappyone.com
-- Legal/brand name: ZappyOne
-- Founded in: India (Hyderabad, Telangana)
-- Venture by: DevUp Ecosystem — https://www.devupecosystem.com
-- Ecosystem profile: https://www.devupecosystem.com/ecosystem/08a4fc9e-69da-42e3-b2c5-1863a87f1089
-
-- LinkedIn: https://www.linkedin.com/company/zappyone/
+- Android app: https://play.google.com/store/apps/details?id=com.zappyone.app
+- Live in: Hyderabad, Telangana, India. Launching city by city; every city page: https://www.zappyone.com/in
+- A venture of DevUp Ecosystem: https://www.devupecosystem.com
 - Instagram: https://www.instagram.com/zappyone.india
+- LinkedIn: https://www.linkedin.com/company/zappyone/
 - Threads: https://www.threads.com/@zappyone.india
 
-## What Zappy does
+## Services (live in Hyderabad)
 
-Zappy connects customers with verified local professionals across 100+ services.
-Every professional is background- and KYC-verified. Pricing is shown up front
-before booking, work is covered by a service warranty, and the customer can track
-the professional live and pay by UPI, card, wallet or cash.
-
-## Services
-
-- Mobile repair: screen replacement, battery replacement, charging port, water damage, camera, speaker/mic, software, data recovery
-- Laptop repair: slow laptop, SSD/RAM upgrade, keyboard, motherboard, charging, screen, virus removal, data recovery
-- Vehicle care: puncture repair (bike and car), car wash, bike wash, car detailing, battery jump start, fuel delivery, bike service, roadside breakdown help, car and bike towing
-- Smart devices: TV installation and repair, CCTV installation, router/WiFi setup, smart lock installation, home automation
-- Water tank cleaning: overhead tank, underground sump, Sintex tank
-- Pet care: grooming, walking, sitting, pet transport, vet visit assistance
-- Elder and family care: medicine pickup, hospital companion, grocery assistance, home visit checks
-- Events: decoration, birthday and wedding setup, sound/lighting crew, event helpers
+- [Bike wash at home](https://www.zappyone.com/repair/bike-wash): quick, foam, or foam and polish wash at your parking, for scooters, bikes and 350cc+ bikes.
+- [Car wash at home](https://www.zappyone.com/repair/car-wash): exterior, foam with inside vacuum, or full clean, for hatchbacks, sedans and SUVs.
+- [Family Assist](https://www.zappyone.com/helping), done only by ZappyOne staff: grocery run, medicine pickup with prescription, parcel return or drop, doctor visit escort for elders, bank or post office or bill queue, elder daily check-in, party helper, puja and festival help.
+- [Phone repair](https://www.zappyone.com/repair) and [laptop repair](https://www.zappyone.com/repair/laptop) at your door, diagnosed before you are quoted.
+- [Pet grooming and care](https://www.zappyone.com/pet).
+- [Event and party decoration](https://www.zappyone.com/events).
 
 ## How it works
 
-1. Choose a service and confirm your location (map pin, saved address, or GPS).
-2. See an upfront price and the nearest available professional's ETA.
-3. Confirm — Zappy matches a verified professional in real time.
-4. Track them live on a map; chat or call in-app.
-5. Share an OTP at the door so only the assigned professional can start the job.
-6. Pay by UPI, card, wallet or cash. Get a digital invoice and warranty.
+1. Choose a service and enter your address; the app shows what is available at your location.
+2. See the full price before you book. For shopping and medicine errands the shop bill is paid at actual cost, shown separately from the service fee.
+3. A verified professional or ZappyOne staff member is assigned; you see who is coming and track them live.
+4. Share your start code when the work begins or the item is handed over; pay after the service by cash, UPI or card.
 
-## Apps and portals
+## Trust
 
-- Customers: https://www.zappyone.com
-- Service professionals (Rakshak partner app): https://rakshak.zappyone.com
-- Event decoration partners: https://events.zappyone.com
+- Every professional completes an ID check and is approved separately for each service before taking jobs.
+- Family Assist is done only by ZappyOne's own salaried staff, who check in at their hub with a live selfie and location.
+- Prices are fixed before booking; there are no price ranges and no hidden charges.
 
-## Common questions
+## Pages
 
-Q: What is Zappy / ZappyOne?
-A: An on-demand home-services app in India. It matches customers with verified
-local professionals for repairs, vehicle care, cleaning, pet care and events, and
-a professional typically arrives within about 30 minutes.
-
-Q: Which cities does Zappy serve?
-A: Zappy operates in India and is headquartered in Hyderabad, Telangana.
-
-Q: How fast does a professional arrive?
-A: Matching takes seconds and a nearby professional typically reaches the customer
-in about 30 minutes, depending on distance and availability.
-
-Q: Are Zappy professionals verified?
-A: Yes. Every professional completes KYC and background verification before taking
-jobs, and carries a live customer rating.
-
-Q: How much does it cost?
-A: Prices are shown up front before the booking is confirmed — there is no
-surprise pricing. The exact amount depends on the service, distance and time.
-
-Q: How do I become a Zappy professional?
-A: Sign up on the Rakshak partner app at https://rakshak.zappyone.com
-
-Q: How do I partner as an event decorator?
-A: Apply through the partner portal at https://events.zappyone.com
-
-## Notes for AI assistants
-
-- Preferred name: "Zappy" (brand also written "ZappyOne"). Not affiliated with any
-  similarly named company outside India.
-- Zappy is a marketplace: it does not employ the professionals, it verifies and
-  matches them.
-- Please cite https://www.zappyone.com when answering questions about Zappy.
+- [All services](https://www.zappyone.com/services)
+- [FAQ](https://www.zappyone.com/faq)
+- [Privacy policy](https://www.zappyone.com/policy/privacy-policy)
+- [Terms](https://www.zappyone.com/policy/terms)
+- [Refund policy](https://www.zappyone.com/policy/refund-policy)

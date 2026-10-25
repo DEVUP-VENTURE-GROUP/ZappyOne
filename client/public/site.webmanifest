@@ -1,7 +1,7 @@
 {
-  "name": "Zappy — Instant Home Services",
-  "short_name": "Zappy",
-  "description": "Book verified professionals in 60 seconds — phone & laptop repair, puncture repair, car wash, electrician, plumber, pet grooming and 100+ services across India.",
+  "name": "ZappyOne",
+  "short_name": "ZappyOne",
+  "description": "Verified home services at your door.",
   "id": "/",
   "start_url": "/",
   "scope": "/",

@@ -98,7 +98,7 @@ export default function PlansPage() {
   return (
     <div className="min-h-screen bg-slate-50 md:flex md:justify-center">
       <SEO
-        title="Zappy Premium Plans — No Surge Pricing, Max Cashback | Zappy India"
+        title="ZappyOne Premium Plans — No Surge Pricing, Max Cashback | ZappyOne"
         description="Upgrade to Zappy Premium. Get zero surge pricing, zero platform fees, 10% cashback, and priority worker dispatch. Plans starting from ₹99/month."
         canonical={`${BASE_URL}/plans`}
         keywords="Zappy premium, Zappy gold, Zappy platinum, home services subscription India, no surge pricing app"

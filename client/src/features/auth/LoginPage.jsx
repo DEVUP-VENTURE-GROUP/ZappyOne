@@ -197,7 +197,7 @@ export default function LoginPage() {
   return (
     <>
       <SEO
-        title="Login to Zappy — Book Home Services Instantly"
+        title="Login to ZappyOne — Book Home Services Instantly"
         description="Login to Zappy with your phone number. Book verified professionals for home services instantly — puncture repair, phone repair, laptop repair and more."
         canonical={`${BASE_URL}/login`}
         keywords="Zappy login, book home services India, on-demand services app login"

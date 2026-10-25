@@ -15,6 +15,8 @@ const citySchema = new mongoose.Schema({
   description: { type: String, default: '' },
   pinCodes:    { type: [String], default: [] },
   isActive:    { type: Boolean, default: true },
+  // Taking bookings here: the city page says Book now instead of Coming soon (seo/template).
+  live:        { type: Boolean, default: false },
   areas:       { type: [areaSchema], default: [] },
 }, { timestamps: true });
 

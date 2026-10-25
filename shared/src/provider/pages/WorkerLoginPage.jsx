@@ -295,7 +295,7 @@ export default function WorkerLoginPage({ allowSignup = true, portalLabel = 'Wor
   return (
     <>
       <SEO
-        title="Worker Login — Zappy Partner Portal"
+        title="Worker Login — ZappyOne Partner Portal"
         description="Sign in to your Zappy worker dashboard. Accept nearby jobs, track earnings and get paid instantly."
         canonical={`${BASE_URL}/worker/login`}
         jsonLd={LOGIN_SCHEMA}

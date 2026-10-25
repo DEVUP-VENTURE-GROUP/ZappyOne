@@ -1,4 +1,4 @@
-# Zappy — zappyone.com
+# ZappyOne — zappyone.com
 # robots.txt
 
 User-agent: *

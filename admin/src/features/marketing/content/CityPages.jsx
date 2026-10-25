@@ -13,7 +13,7 @@ import { SectionHeader, Card, FormRow, Input, SaveBtn, PageLoader, EmptyState } 
 
 const EMPTY_CITY = {
   slug: '', name: '', state: '', lat: '', lng: '',
-  population: '', description: '', pinCodes: '', isActive: true,
+  population: '', description: '', pinCodes: '', isActive: true, live: false,
 };
 
 function slugify(str) {
@@ -156,6 +156,15 @@ function CityFormModal({ initial, onClose, onSave, saving }) {
               className="w-4 h-4 text-blue-600 rounded"
             />
             <span className="text-sm font-semibold text-slate-700">Active (included in sitemap + SEO pages)</span>
+          </label>
+
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox" checked={!!form.live}
+              onChange={e => setForm(p => ({ ...p, live: e.target.checked }))}
+              className="w-4 h-4 text-blue-600 rounded"
+            />
+            <span className="text-sm font-semibold text-slate-700">Live (taking bookings here: its page says Book now, not Coming soon)</span>
           </label>
 
           {/* Areas */}
