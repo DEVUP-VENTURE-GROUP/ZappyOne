@@ -1,6 +1,6 @@
 # ZappyOne
 
-> ZappyOne (also written Zappy One; website zappyone.com) is an Indian home services platform, live in Hyderabad, Telangana, and launching city by city across India. Customers book on zappyone.com or the ZappyOne Android app, see a fixed price before booking, and a verified professional or a member of ZappyOne's own salaried staff comes to their door, tracked live on a map.
+> ZappyOne (one word; people also search Zappy One, Zappy1 or Zappyone; website zappyone.com) is an Indian home services platform, live in Hyderabad, Telangana, and launching city by city across India. Customers book on zappyone.com or the ZappyOne Android app, see a fixed price before booking, and a verified professional or a member of ZappyOne's own salaried staff comes to their door, tracked live on a map.
 
 - Website: https://www.zappyone.com
 - Android app: https://play.google.com/store/apps/details?id=com.zappyone.app

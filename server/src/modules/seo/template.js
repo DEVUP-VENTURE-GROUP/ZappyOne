@@ -5,7 +5,7 @@ const SOCIAL = ['https://www.instagram.com/zappyone.india', 'https://www.linkedi
 
 const esc = (v) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const json = (o) => JSON.stringify(o).replace(/</g, '\\u003c');
-const ORG = { '@type': 'Organization', '@id': `${BASE}/#organization`, name: 'ZappyOne', alternateName: ['Zappy One'], url: `${BASE}/`, logo: `${BASE}/logo.png`, sameAs: SOCIAL };
+const ORG = { '@type': 'Organization', '@id': `${BASE}/#organization`, name: 'ZappyOne', alternateName: ['Zappy One', 'Zappy1', 'Zappyone'], url: `${BASE}/`, logo: `${BASE}/logo.png`, sameAs: SOCIAL };
 
 const CSS = `
 :root{--brand:#1F4FD8;--ink:#0F172A;--muted:#475569;--line:#E2E8F0;--canvas:#F8FAFC;--soft:#EEF3FD}
