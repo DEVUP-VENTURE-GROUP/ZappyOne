@@ -5,7 +5,7 @@
   "rewrites": [
     {
       "source": "/in",
-      "destination": "https://api.zappyone.com/in"
+      "destination": "https://api.zappyone.com/in/"
     },
     {
       "source": "/in/:path*",
