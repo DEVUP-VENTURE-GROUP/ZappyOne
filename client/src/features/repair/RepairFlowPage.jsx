@@ -320,17 +320,25 @@ function BrandStep({ vertical, onPick, onAuto }) {
   return (
     <Shell>
       {showMissing && <MissingItemSheet kind="brand" onClose={() => setShowMissing(false)} />}
-      {typeWord && <p className="text-xs font-bold text-slate-500 uppercase tracking-wide px-1">Choose your {typeWord}</p>}
-      {popular.length > 0 && !typeWord && (
+      {typeWord ? (
         <>
-          <p className="text-xs font-bold text-slate-500 uppercase tracking-wide px-1">Popular brands</p>
-          <div className="grid grid-cols-3 gap-2.5">{popular.map((b) => <Tile key={b.code} b={b} />)}</div>
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-wide px-1">Choose your {typeWord}</p>
+          <div className="grid grid-cols-3 gap-2.5">{brands.map((b) => <Tile key={b.code} b={b} />)}</div>
         </>
-      )}
-      {rest.length > 0 && (
+      ) : (
         <>
-          {!typeWord && <p className="text-xs font-bold text-slate-500 uppercase tracking-wide px-1 pt-2">All brands</p>}
-          <div className="grid grid-cols-3 gap-2.5">{(typeWord ? brands : rest).map((b) => <Tile key={b.code} b={b} />)}</div>
+          {popular.length > 0 && (
+            <>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-wide px-1">Popular brands</p>
+              <div className="grid grid-cols-3 gap-2.5">{popular.map((b) => <Tile key={b.code} b={b} />)}</div>
+            </>
+          )}
+          {rest.length > 0 && (
+            <>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-wide px-1 pt-2">All brands</p>
+              <div className="grid grid-cols-3 gap-2.5">{rest.map((b) => <Tile key={b.code} b={b} />)}</div>
+            </>
+          )}
         </>
       )}
       {!typeWord && (
