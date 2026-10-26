@@ -129,6 +129,20 @@ async function resolveReferencePrice(ctx) {
   };
 }
 
+// One query for a whole list: repairCode -> the most specific reference row's recommended price.
+async function referencePriceMap(ctx, repairCodes) {
+  if (!repairCodes.length) return new Map();
+  const rows = await ZappyReferencePricing.find({ vertical: ctx.vertical, repairCode: { $in: repairCodes }, supersededAt: null, isActive: true }).lean();
+  const byRepair = new Map();
+  for (const r of rows) byRepair.set(r.repairCode, [...(byRepair.get(r.repairCode) || []), r]);
+  const out = new Map();
+  for (const [code, list] of byRepair) {
+    const row = pickMostSpecific(list, { ...ctx, repairCode: code });
+    if (row) out.set(code, row.recommendedPaise);
+  }
+  return out;
+}
+
 /*
  * Two supply models. A SHOP sets its own prices (its rows below). An
  * INDIVIDUAL is ZappyOne's own provider and always charges the ZappyOne
@@ -583,6 +597,7 @@ module.exports = {
   getConfig,
   invalidateConfigCache,
   resolveReferencePrice,
+  referencePriceMap,
   resolveProviderPrice,
   resolveProviderPriceOptions,
   standardPriceOptions,

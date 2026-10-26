@@ -41,3 +41,14 @@ test('one price per type and package, never a range', async () => {
   expect((await resolveReferencePrice({ vertical: 'electrician', repairCode: 'el_fan', brandCode: 'el_home' })).recommendedPaise).toBe(24900);
   expect((await resolveReferencePrice({ vertical: 'ac_service', repairCode: 'ac_gas', brandCode: 'ac_window' })).recommendedPaise).toBe(219900);
 });
+
+test('package list carries each package price and time for the chosen type', async () => {
+  const { listProblems } = require('../src/modules/repair/controllers/catalog.controller');
+  const DeviceModel = require('../src/modules/service/device-model.model');
+  const model = await DeviceModel.findOne({ brandCode: 'hc_2bhk' }).lean();
+  let body;
+  await listProblems({ query: { vertical: 'home_cleaning', modelCode: model.code } }, { json: (b) => { body = b; } }, (e) => { throw e; });
+  const full = body.categories.flatMap((c) => c.problems).find((p) => p.code === 'hc_full_deep_req');
+  expect(full).toMatchObject({ pricePaise: 399900 });
+  expect(full.durationMin).toBeGreaterThan(0);
+});

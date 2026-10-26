@@ -7,15 +7,23 @@ import { memo } from 'react';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 import { AlertTriangle, ChevronRight, Wrench } from 'lucide-react-native';
 import { problemPhotoIn } from '@zappy/core/shared/problemArt';
+import { formatPaise } from '@zappy/core/shared/money';
 import { Text } from '@zappy/ui/components';
 import { webAsset } from '@zappy/ui/lib/media';
-import { accent, colors, danger, ink, slate } from '@zappy/ui/theme/colors';
+import { accent, colors, danger, ink, slate, zappy } from '@zappy/ui/theme/colors';
 import { radius } from '@zappy/ui/theme/radius';
 import { spacing } from '@zappy/ui/theme/spacing';
 
-export interface Problem { code: string; name: string; severity?: string; requiresDiagnosis?: boolean }
+export interface Problem { code: string; name: string; severity?: string; requiresDiagnosis?: boolean; pricePaise?: number; durationMin?: number }
 
 const Urgent = () => <View style={styles.urgent}><AlertTriangle size={12} color={danger[600]} /><Text variant="caption" weight="semibold" color={danger[600]}>Urgent</Text></View>;
+
+const Price = ({ problem, end }: { problem: Problem; end?: boolean }) => (problem.pricePaise ? (
+  <View style={end ? styles.priceEnd : styles.price}>
+    <Text variant="body" weight="bold" color={zappy[600]}>{formatPaise(problem.pricePaise)}</Text>
+    {problem.durationMin ? <Text variant="caption" color={ink[500]}>{problem.durationMin} min</Text> : null}
+  </View>
+) : null);
 
 const ProblemCard = memo(function ProblemCard({ photo, problem, onPick }: { photo: string | null; problem: Problem; onPick: (p: Problem) => void }) {
   return (
@@ -27,6 +35,7 @@ const ProblemCard = memo(function ProblemCard({ photo, problem, onPick }: { phot
       <View style={styles.body}>
         <Text variant="bodySmall" weight="semibold" numberOfLines={2}>{problem.name}</Text>
         {problem.requiresDiagnosis ? <Text variant="caption" weight="medium" color={accent[700]}>Priced after inspection</Text> : null}
+        <Price problem={problem} />
       </View>
     </Pressable>
   );
@@ -40,6 +49,7 @@ const ProblemRow = memo(function ProblemRow({ problem, onPick }: { problem: Prob
         {problem.requiresDiagnosis ? <Text variant="caption" weight="medium" color={accent[700]}>Priced after inspection</Text> : null}
       </View>
       {problem.severity === 'critical' ? <Urgent /> : null}
+      <Price problem={problem} end />
       <ChevronRight size={18} color={slate[300]} />
     </Pressable>
   );
@@ -61,5 +71,7 @@ const styles = StyleSheet.create({
   badge: { position: 'absolute', top: 8, left: 8, borderRadius: radius.pill, paddingHorizontal: 6, paddingVertical: 2, backgroundColor: '#fff' },
   body: { gap: 2, padding: spacing.md },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.md, borderRadius: radius.large, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
+  price: { flexDirection: 'row', alignItems: 'baseline', gap: 6, marginTop: 2 },
+  priceEnd: { alignItems: 'flex-end' },
   urgent: { flexDirection: 'row', alignItems: 'center', gap: 3 },
 });

@@ -1,5 +1,13 @@
 import { AlertTriangle, Wrench, ChevronRight } from 'lucide-react';
 import { problemPhotoIn } from '@shared/components/home/problemArt';
+import { formatPaise } from '@shared/utils/money';
+
+const Price = ({ problem, className = '' }) => (problem.pricePaise > 0 ? (
+  <span className={`flex items-baseline gap-1.5 ${className}`}>
+    <span className="text-[17px] font-bold tabular-nums text-brand-600">{formatPaise(problem.pricePaise)}</span>
+    {problem.durationMin > 0 && <span className="text-[12px] text-ink-500">{problem.durationMin} min</span>}
+  </span>
+) : null);
 
 /**
  * One problem as a picture card: what it looks like, what it is called, and
@@ -25,6 +33,7 @@ export function ProblemCard({ vertical, problem, category, onPick }) {
         {problem.requiresDiagnosis && (
           <span className="text-[12px] font-medium text-amber-700">Priced after inspection</span>
         )}
+        <Price problem={problem} className="mt-auto pt-1" />
       </span>
     </button>
   );
@@ -45,6 +54,7 @@ export function ProblemRow({ problem, onPick }) {
         {problem.requiresDiagnosis && <span className="mt-0.5 block text-[12px] font-medium text-amber-700">Priced after inspection</span>}
       </span>
       {problem.severity === 'critical' && <span className="chip bg-red-50 text-red-700"><AlertTriangle size={12} /> Urgent</span>}
+      {problem.pricePaise > 0 && <Price problem={problem} className="shrink-0 flex-col items-end gap-0 text-right" />}
       <ChevronRight size={18} className="shrink-0 text-ink-300" />
     </button>
   );

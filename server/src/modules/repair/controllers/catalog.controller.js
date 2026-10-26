@@ -239,6 +239,25 @@ async function listMyIdentificationRequests(req, res, next) {
   } catch (err) { next(err); }
 }
 
+// A problem that leads straight to one fixed-price job shows its price and time on the card (washes, tank cleaning).
+async function fixedPrices(vertical, modelCode, problems) {
+  const single = problems.filter((p) => !p.requiresDiagnosis && p.candidateRepairCodes?.length === 1);
+  if (!modelCode || !single.length) return new Map();
+  const codes = single.map((p) => p.candidateRepairCodes[0]);
+  const [model, repairs] = await Promise.all([
+    DeviceModel.findOne({ code: modelCode }).select('brandCode').lean(),
+    Repair.find({ vertical, code: { $in: codes }, pricingMode: 'fixed', isActive: { $ne: false } }).select('code estimatedDurationMin').lean(),
+  ]);
+  const prices = await pricingService.referencePriceMap({ vertical, brandCode: model?.brandCode || null, modelCode }, repairs.map((r) => r.code));
+  const out = new Map();
+  for (const p of single) {
+    const r = repairs.find((x) => x.code === p.candidateRepairCodes[0]);
+    const pricePaise = r && prices.get(r.code);
+    if (pricePaise > 0) out.set(p.code, { pricePaise, durationMin: r.estimatedDurationMin || null });
+  }
+  return out;
+}
+
 async function listProblems(req, res, next) {
   try {
     const { modelCode, productTypeCode, fuelType } = req.query;
@@ -301,6 +320,7 @@ async function listProblems(req, res, next) {
      */
     const problems = await s3Service.signDocsMedia(rows);
     const signedCategories = await s3Service.signDocsMedia(categories);
+    const fixed = await fixedPrices(verticalOf(req), modelCode, rows);
 
     const byCategory = signedCategories.map((c) => ({
       code: c.code,
@@ -317,6 +337,7 @@ async function listProblems(req, res, next) {
           isPopular: p.isPopular,
           imageUrl: p.imageUrl || '',
           videoUrl: p.videoUrl || '',
+          ...(fixed.get(p.code) || {}),
         })),
     })).filter((c) => c.problems.length > 0);
 
