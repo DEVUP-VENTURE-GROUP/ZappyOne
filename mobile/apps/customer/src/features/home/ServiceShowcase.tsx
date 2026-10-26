@@ -9,6 +9,7 @@ import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ChevronRight } from 'lucide-react-native';
 import { categoryPhoto } from '@zappy/core/shared/problemArt';
+import { formatPaise } from '@zappy/core/shared/money';
 import { artFor, PITCH, servicePhoto, tilePhoto } from '@zappy/core/shared/serviceArt';
 import { Text } from '@zappy/ui/components';
 import { CategoryTile, type TileCategory } from '@zappy/ui/components/home/CategoryTile';
@@ -33,6 +34,7 @@ function cardsFor(domain: HomeDomain): HomeService[] {
   const asTiles = services.length >= 3;
   return [{
     code: domain.code, domainCode: domain.code, name: home.name, path: home.path, icon: services[0].icon, coverage: [],
+    fromPaise: Math.min(...services.map((s) => s.fromPaise || Infinity)),
     countLabel: asTiles ? 'services' : 'options',
     options: asTiles
       ? services.map((s) => ({ code: s.code, name: s.name, icon: s.icon, imageUrl: servicePhoto(s), path: s.path, service: s }))
@@ -58,6 +60,12 @@ const ServiceCard = memo(function ServiceCard({ service, onOpen }: { service: Ho
         </View>
         <View style={styles.flex}>
           <Text variant="body" weight="bold">{service.name}</Text>
+          {service.fromPaise && Number.isFinite(service.fromPaise) ? (
+            <View style={styles.from}>
+              <Text variant="caption" color={ink[500]}>Starting from</Text>
+              <Text variant="body" weight="bold" color={zappy[600]}>{formatPaise(service.fromPaise)}</Text>
+            </View>
+          ) : null}
           {count ? <Text variant="caption" color={ink[500]}>{count}</Text> : null}
         </View>
         <View style={styles.book}><Text variant="caption" weight="semibold" color="#fff">Book</Text><ChevronRight size={16} color="#fff" /></View>
@@ -109,6 +117,7 @@ export function ServiceShowcase({ domains, onOpen }: { domains: HomeDomain[]; on
 const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
   inline: { flexDirection: 'row', alignItems: 'center' },
+  from: { flexDirection: 'row', alignItems: 'baseline', gap: 6 },
   wrap: { gap: spacing.xl },
   head: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
   section: { gap: spacing.md },

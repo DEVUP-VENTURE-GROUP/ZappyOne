@@ -302,6 +302,30 @@ async function serviceOptions(lines) {
   return out;
 }
 
+// The lowest price each live service can be booked for ("Starting from"): the cheapest current reference price for repair-engine services, the lowest admin fee for errands.
+async function fromPrices(lines) {
+  const out = new Map();
+  const verticals = [...new Set(lines.map((l) => l.repairVertical).filter(Boolean))];
+  const helpTypes = new Map(lines.map((l) => [l.code, l.form?.type ? [l.form.type] : (HELPING_OPTIONS[l.code] || []).map((o) => o.code)]));
+  const types = [...new Set([...helpTypes.values()].flat())];
+  const { ZappyReferencePricing } = require('../repair/models/pricing.model');
+  const { HelpingConfig } = require('../helping/models/config.model');
+  const [bands, fees] = await Promise.all([
+    verticals.length ? ZappyReferencePricing.aggregate([
+      { $match: { vertical: { $in: verticals }, supersededAt: null, isActive: true, recommendedPaise: { $gt: 0 } } },
+      { $group: { _id: '$vertical', min: { $min: '$recommendedPaise' } } },
+    ]) : [],
+    types.length ? HelpingConfig.find({ serviceType: { $in: types }, isActive: true, baseFeePaise: { $gt: 0 } }).select('serviceType baseFeePaise').lean() : [],
+  ]);
+  const byVertical = new Map(bands.map((b) => [b._id, b.min]));
+  const byType = new Map(fees.map((f) => [f.serviceType, f.baseFeePaise]));
+  for (const l of lines) {
+    const prices = [byVertical.get(l.repairVertical), ...helpTypes.get(l.code).map((t) => byType.get(t))].filter((x) => x > 0);
+    if (prices.length) out.set(l.code, Math.min(...prices));
+  }
+  return out;
+}
+
 async function liveCatalog(req, res, next) {
   try {
     // Every live service, provider or not: customers in a launch region see the
@@ -383,7 +407,7 @@ async function liveCatalog(req, res, next) {
       highlightsByVertical.set(p.vertical, list);
     }
 
-    const optionsByLine = await serviceOptions(lines);
+    const [optionsByLine, fromByLine] = await Promise.all([serviceOptions(lines), fromPrices(lines).catch(() => new Map())]);
 
     const byDomain = new Map();
     for (const l of lines) {
@@ -405,6 +429,7 @@ async function liveCatalog(req, res, next) {
         coverage: coverageByVertical.get(l.repairVertical) || [],
         options: optionsByLine.get(l.code) || [],
         form: l.form || null,
+        fromPaise: fromByLine.get(l.code) || null,
       });
     }
 

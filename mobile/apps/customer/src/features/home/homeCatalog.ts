@@ -13,6 +13,7 @@ export interface HomeService {
   coverage?: { code: string; name: string; imageUrl?: string; problems?: { name: string }[] }[];
   options?: { code: string; name: string; icon?: string; imageUrl?: string; emoji?: string; toneColor?: string; path: string; service?: HomeService }[];
   countLabel?: string;
+  fromPaise?: number | null;
 }
 export interface HomeDomain { code: string; name: string; description?: string; services: HomeService[] }
 

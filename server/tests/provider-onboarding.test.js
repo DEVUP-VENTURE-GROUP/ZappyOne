@@ -516,6 +516,21 @@ describe('customer catalog', () => {
     expect(electronics.services.every((sv) => sv.hasProviders === true)).toBe(true);
   });
 
+  it('says the lowest price each service starts from', async () => {
+    const { ZappyReferencePricing } = require('../src/modules/repair/models/pricing.model');
+    const base = { vertical: 'mobile', brandCode: null, modelCode: null, qualityCode: null, serviceMode: null, cityCode: null, supersededAt: null, isActive: true };
+    await ZappyReferencePricing.collection.insertMany([
+      { ...base, repairCode: 'a', minPaise: 49900, recommendedPaise: 49900, maxPaise: 49900 },
+      { ...base, repairCode: 'b', minPaise: 29900, recommendedPaise: 29900, maxPaise: 29900 },
+      { ...base, repairCode: 'c', recommendedPaise: 9900, supersededAt: new Date() },
+    ]);
+    const res = await request(app).get(`${BASE}/catalog`);
+    const services = res.body.domains.flatMap((d) => d.services);
+    expect(services.find((s) => s.code === 'mobile_repair').fromPaise).toBe(29900);
+    expect(services.find((s) => s.code === 'laptop_repair').fromPaise).toBeNull();
+    await ZappyReferencePricing.deleteMany({ repairCode: { $in: ['a', 'b', 'c'] } });
+  });
+
   it('groups what a service covers under its headings', async () => {
     const res = await request(app).get(`${BASE}/catalog`);
     const mobile = res.body.domains

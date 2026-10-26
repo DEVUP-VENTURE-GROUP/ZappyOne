@@ -3,6 +3,7 @@ import { ChevronRight, Wrench } from 'lucide-react';
 import { SERVICE_ICONS, CategoryTile } from '@shared/components/home/LiveServices';
 import { artFor, PITCH, servicePhoto, tilePhoto } from '@shared/components/home/serviceArt';
 import { categoryPhoto } from '@shared/components/home/problemArt';
+import { formatPaise } from '@shared/utils/money';
 
 /**
  * Every service, section by section, with what is inside each one.
@@ -36,6 +37,7 @@ function cardsFor(domain) {
     name: home.name,
     path: home.path,
     icon: services[0].icon,
+    fromPaise: Math.min(...services.map((s) => s.fromPaise || Infinity)),
     coverage: [],
     countLabel: asTiles ? 'services' : 'options',
     options: asTiles
@@ -69,7 +71,13 @@ function ServiceCard({ service, onOpen }) {
         </span>
         <span className="min-w-0 flex-1">
           <span className="block text-[17px] font-bold leading-snug text-ink-900">{service.name}</span>
-          {count && <span className="block text-[14px] text-ink-500">{count}</span>}
+          {Number.isFinite(service.fromPaise) && service.fromPaise > 0 && (
+            <span className="mt-0.5 flex items-baseline gap-1.5">
+              <span className="text-[12px] text-ink-500">Starting from</span>
+              <span className="text-[17px] font-bold tabular-nums text-brand-600">{formatPaise(service.fromPaise)}</span>
+            </span>
+          )}
+          {count && <span className="block text-[13px] text-ink-500">{count}</span>}
         </span>
         <span className="flex min-h-[40px] shrink-0 items-center rounded-btn bg-zappy-600 px-3.5 text-[14px] font-semibold text-white">
           Book <ChevronRight size={16} />
