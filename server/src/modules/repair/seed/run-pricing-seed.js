@@ -147,6 +147,7 @@ async function main() {
     waterBands: await seedBands(WATER_TANK_CARE_PRICING, 'water_tank_care'),
     bikeWashBands: await seedBands(require('./wash.seed').BIKE.PRICING, 'bike_wash'),
     carWashBands: await seedBands(require('./wash.seed').CAR.PRICING, 'car_wash'),
+    homeServiceBands: await Promise.all(Object.entries(require('./home-services.seed').HOME_SERVICES).map(([v, s]) => seedBands(s.PRICING, v))),
     config: await seedConfig(),
   };
 

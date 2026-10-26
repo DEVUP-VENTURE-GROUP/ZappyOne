@@ -56,6 +56,14 @@ const FAMILY_ASSIST_LINES = [
   }),
 ];
 
+// Partner-run home services on the repair engine (repair/seed/home-services.seed).
+const HOME_SERVICE_LINES = [
+  { code: 'cleaning', name: 'Home Cleaning', domainCode: 'home_services', repairVertical: 'home_cleaning', status: 'live', displayOrder: 1, icon: 'Sparkles', customerPath: '/repair/home-cleaning', tagline: 'Deep clean by trained teams, from ₹499', description: 'Full home, kitchen, bathroom and move-in or move-out deep cleaning', isPopular: true },
+  { code: 'electrical', name: 'Electrician', domainCode: 'home_services', repairVertical: 'electrician', status: 'live', displayOrder: 2, icon: 'Zap', customerPath: '/repair/electrician', tagline: 'Fans, switches, lights and wiring, from ₹129', description: 'Fan and light installs, switch and socket repairs, MCB, inverter and inspection visits', isPopular: true },
+  { code: 'plumbing', name: 'Plumber', domainCode: 'home_services', repairVertical: 'plumbing', status: 'live', displayOrder: 3, icon: 'Droplet', customerPath: '/repair/plumbing', tagline: 'Taps, leaks and blockages, from ₹149', description: 'Tap and mixer replacement, leak repair, blockage clearing, flush tanks and motor installs', isPopular: true },
+  { code: 'appliance', name: 'AC Service & Repair', domainCode: 'home_services', repairVertical: 'ac_service', status: 'live', displayOrder: 4, icon: 'AirVent', customerPath: '/repair/ac-service', tagline: 'Split and window AC, from ₹299', description: 'Foam jet service, gas refill, repair visits, installation and uninstallation', isPopular: true },
+];
+
 const DOMAINS = [
   { code: 'electronics', name: 'Electronics', icon: 'Cpu', displayOrder: 1, description: 'Phones, laptops and personal devices' },
   { code: 'vehicles', name: 'Vehicles', icon: 'Bike', displayOrder: 2, description: 'Two, three and four wheelers' },
@@ -140,10 +148,7 @@ const LINES = [
   { code: 'pet_transport', name: 'Pet Pickup & Assistance', domainCode: 'pet_services', status: 'live', displayOrder: 5, icon: 'Car', customerPath: '/pet/book/pet_transport', description: 'Safe transport to the vet, groomer or boarding' },
   { code: 'pet_vet_assist', name: 'Vet & Appointment Assistance', domainCode: 'pet_services', status: 'live', displayOrder: 6, icon: 'Stethoscope', customerPath: '/pet/book/pet_vet_assist', description: 'Logistics support for a vet visit — not a substitute for one' },
   { code: 'pet_check', name: 'Pet Check & Home Visit', domainCode: 'pet_services', status: 'live', displayOrder: 7, icon: 'ClipboardCheck', customerPath: '/pet/book/pet_check', description: 'A quick visual check-in on your pet while you are out' },
-  { code: 'electrical', name: 'Electrical', domainCode: 'home_services', status: 'coming_soon', displayOrder: 2, icon: 'Zap' },
-  { code: 'plumbing', name: 'Plumbing', domainCode: 'home_services', status: 'coming_soon', displayOrder: 3, icon: 'Droplet' },
-  { code: 'appliance', name: 'Appliances & AC', domainCode: 'home_services', status: 'coming_soon', displayOrder: 4, icon: 'AirVent' },
-  { code: 'cleaning', name: 'Cleaning', domainCode: 'home_services', status: 'coming_soon', displayOrder: 5, icon: 'Sparkles' },
+  ...HOME_SERVICE_LINES,
 
   /* Family assist — people-facing work, so the bar is higher (see below). */
   { code: 'elder_care', name: 'Elder Care', domainCode: 'family_assist', status: 'coming_soon', displayOrder: 1, icon: 'HeartHandshake', providerKinds: ['individual'] },
@@ -370,4 +375,4 @@ const REQUIREMENT_SETS = [
   },
 ];
 
-module.exports = { DOMAINS, LINES, FAMILY_ASSIST_LINES, REQUIREMENT_SETS, IDENTITY_DOCS, SHOP_DOCS, SHOP_FIELDS };
+module.exports = { DOMAINS, LINES, FAMILY_ASSIST_LINES, HOME_SERVICE_LINES, REQUIREMENT_SETS, IDENTITY_DOCS, SHOP_DOCS, SHOP_FIELDS };

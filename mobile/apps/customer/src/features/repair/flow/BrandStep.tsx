@@ -1,7 +1,8 @@
 /**
  * Which brand: the popular ones first, then all, and a way to tell us a missing one (the website's BrandStep).
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { PACKAGE_TYPE_WORD } from '@zappy/core/shared/repairBasket';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { HelpCircle } from 'lucide-react-native';
 import { useRepairBrandsQuery } from '@zappy/core/api';
@@ -24,21 +25,33 @@ function Tile({ b, onPick }: { b: Coded; onPick: (b: Coded) => void }) {
   );
 }
 
-export function BrandStep({ vertical, onPick }: { vertical: string; onPick: (b: Coded) => void }) {
+export function BrandStep({ vertical, onPick, onAuto }: { vertical: string; onPick: (b: Coded) => void; onAuto?: (b: Coded) => void }) {
   const { data, isLoading } = useRepairBrandsQuery(vertical);
   const [missing, setMissing] = useState(false);
-  if (isLoading) return <Spinner />;
+  const typeWord = (PACKAGE_TYPE_WORD as Record<string, string>)[vertical];
+  const only: Coded | null = !isLoading && data?.brands?.length === 1 ? data.brands[0] : null;
+  useEffect(() => { if (only && onAuto) onAuto(only); }, [only]); // eslint-disable-line react-hooks/exhaustive-deps
+  if (isLoading || only) return <Spinner />;
   const brands: Coded[] = data?.brands || [];
   const popular: Coded[] = data?.popular || [];
   const rest = brands.filter((b) => !popular.some((p) => p.code === b.code));
   return (
     <Shell>
       {missing ? <MissingItemSheet kind="brand" onClose={() => setMissing(false)} /> : null}
-      {popular.length ? <Text variant="caption" weight="bold" color={ink[500]} style={flow.label}>POPULAR BRANDS</Text> : null}
-      {popular.length ? <View style={styles.grid}>{popular.map((b) => <Tile key={b.code} b={b} onPick={onPick} />)}</View> : null}
-      {rest.length ? <Text variant="caption" weight="bold" color={ink[500]} style={flow.label}>ALL BRANDS</Text> : null}
-      {rest.length ? <View style={styles.grid}>{rest.map((b) => <Tile key={b.code} b={b} onPick={onPick} />)}</View> : null}
-      <Pressable onPress={() => setMissing(true)} style={flow.link}><HelpCircle size={15} color={zappy[600]} /><Text variant="bodySmall" weight="semibold" color={zappy[600]}>Can't find your brand?</Text></Pressable>
+      {typeWord ? (
+        <>
+          <Text variant="caption" weight="bold" color={ink[500]} style={flow.label}>{`CHOOSE YOUR ${typeWord.toUpperCase()}`}</Text>
+          <View style={styles.grid}>{brands.map((b) => <Tile key={b.code} b={b} onPick={onPick} />)}</View>
+        </>
+      ) : (
+        <>
+          {popular.length ? <Text variant="caption" weight="bold" color={ink[500]} style={flow.label}>POPULAR BRANDS</Text> : null}
+          {popular.length ? <View style={styles.grid}>{popular.map((b) => <Tile key={b.code} b={b} onPick={onPick} />)}</View> : null}
+          {rest.length ? <Text variant="caption" weight="bold" color={ink[500]} style={flow.label}>ALL BRANDS</Text> : null}
+          {rest.length ? <View style={styles.grid}>{rest.map((b) => <Tile key={b.code} b={b} onPick={onPick} />)}</View> : null}
+          <Pressable onPress={() => setMissing(true)} style={flow.link}><HelpCircle size={15} color={zappy[600]} /><Text variant="bodySmall" weight="semibold" color={zappy[600]}>Can't find your brand?</Text></Pressable>
+        </>
+      )}
     </Shell>
   );
 }

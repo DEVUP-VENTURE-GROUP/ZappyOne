@@ -1526,7 +1526,7 @@ export default function ProviderRepairSetupPage() {
   }, [work, brandCodes]);
 
   const isShop = onboarding?.providerKind === 'shop';
-  const LABEL = { mobile: 'Phone repair', laptop: 'Laptop repair', two_wheeler: '2-wheeler repair', four_wheeler: '4-wheeler repair', water_tank_care: 'Water & tank care', bike_wash: 'Bike wash', car_wash: 'Car wash' };
+  const LABEL = { mobile: 'Phone repair', laptop: 'Laptop repair', two_wheeler: '2-wheeler repair', four_wheeler: '4-wheeler repair', water_tank_care: 'Water & tank care', bike_wash: 'Bike wash', car_wash: 'Car wash', home_cleaning: 'Home cleaning', electrician: 'Electrician', plumbing: 'Plumbing', ac_service: 'AC service' };
 
   // Every step shows what is really saved, read from the same data the step uses.
   const { data: areaData } = useRepairServiceAreasQuery(active, { skip: !!other });

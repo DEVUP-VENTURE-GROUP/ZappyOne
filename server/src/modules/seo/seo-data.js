@@ -64,6 +64,10 @@ const CITIES = STATES.flatMap(([state, cities]) => cities.map(([name, lat, lng])
 const CATEGORIES = [
   { slug: 'bike-wash', name: 'Bike wash at home', short: 'Bike wash', spaPath: '/repair/bike-wash', what: 'Quick, foam, or foam and polish wash for scooters and bikes at your parking.' },
   { slug: 'car-wash', name: 'Car wash at home', short: 'Car wash', spaPath: '/repair/car-wash', what: 'Exterior, foam with inside vacuum, or full clean for hatchbacks, sedans and SUVs at your parking.' },
+  { slug: 'home-cleaning', name: 'Home deep cleaning', short: 'Home cleaning', spaPath: '/repair/home-cleaning', what: 'Full home, kitchen, bathroom and move-in or move-out deep cleaning by trained teams.' },
+  { slug: 'electrician', name: 'Electrician at home', short: 'Electrician', spaPath: '/repair/electrician', what: 'Fan and light installs, switch and socket repairs, MCB, inverter and inspection visits.' },
+  { slug: 'plumber', name: 'Plumber at home', short: 'Plumber', spaPath: '/repair/plumbing', what: 'Tap and mixer replacement, leak repair, blockage clearing, flush tanks and motor installs.' },
+  { slug: 'ac-service', name: 'AC service and repair', short: 'AC service', spaPath: '/repair/ac-service', what: 'Split and window AC foam service, gas refill, repairs, installation and uninstallation.' },
   { slug: 'phone-repair', name: 'Phone repair at home', short: 'Phone repair', spaPath: '/repair', what: 'Screen, battery, charging and more, diagnosed at your door before you are quoted.' },
   { slug: 'laptop-repair', name: 'Laptop repair at home', short: 'Laptop repair', spaPath: '/repair/laptop', what: 'Screen, keyboard, battery, slow laptop and upgrades, diagnosed before you are quoted.' },
   { slug: 'grocery-shopping-help', name: 'Grocery run', short: 'Grocery run', spaPath: '/helping/shopping?mode=grocery_run', what: 'We shop from your list, deliver and unpack. The bill is paid at actual cost.' },

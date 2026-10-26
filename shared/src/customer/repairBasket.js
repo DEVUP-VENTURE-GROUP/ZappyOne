@@ -13,10 +13,17 @@ export const ADD_TARGETS = [
   { vertical: 'water_tank_care', label: 'Water tank', path: '/repair/water-tank-care' },
   { vertical: 'bike_wash', label: 'Bike wash', path: '/repair/bike-wash' },
   { vertical: 'car_wash', label: 'Car wash', path: '/repair/car-wash' },
+  { vertical: 'home_cleaning', label: 'Home cleaning', path: '/repair/home-cleaning' },
+  { vertical: 'electrician', label: 'Electrician', path: '/repair/electrician' },
+  { vertical: 'plumbing', label: 'Plumber', path: '/repair/plumbing' },
+  { vertical: 'ac_service', label: 'AC service', path: '/repair/ac-service' },
 ];
 
+// Fixed-price package services: the brand slot holds a type (vehicle, home size, AC type), so it is worded as that.
+export const PACKAGE_TYPE_WORD = { bike_wash: 'vehicle', car_wash: 'car type', home_cleaning: 'home size', electrician: 'place', plumbing: 'place', ac_service: 'AC type' };
+
 /** "vehicle", "device" or "tank", for "+ Add another …". */
-export const thingOf = (vertical) => ({ two_wheeler: 'vehicle', four_wheeler: 'vehicle', bike_wash: 'vehicle', car_wash: 'vehicle', water_tank_care: 'tank' }[vertical] || 'device');
+export const thingOf = (vertical) => ({ two_wheeler: 'vehicle', four_wheeler: 'vehicle', bike_wash: 'vehicle', car_wash: 'vehicle', water_tank_care: 'tank', home_cleaning: 'home', electrician: 'job', plumbing: 'job', ac_service: 'AC' }[vertical] || 'device');
 
 /** The chosen repair of a flow: what the diagnosis landed on. */
 export const repairOf = (diagnosis) => diagnosis?.primaryRepairCode || diagnosis?.recommendations?.[0]?.repairCode || null;

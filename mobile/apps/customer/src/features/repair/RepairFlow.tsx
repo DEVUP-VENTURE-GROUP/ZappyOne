@@ -170,7 +170,7 @@ export function RepairFlow({ vertical, saved, draftKey, onStartOver, onAddAnothe
     <View style={styles.page}>
       <StepHeader steps={steps} step={step} skipped={skipped} onBack={back} title={titles[step]} subtitle={configuration?.name || deviceLabel || brand?.name} />
       {resumed ? <ResumeBanner onStartOver={onStartOver} onDismiss={() => setResumed(false)} /> : null}
-      {step === 'brand' ? <BrandStep vertical={vertical} onPick={(b) => { setBrand(b); next('brand'); }} /> : null}
+      {step === 'brand' ? <BrandStep vertical={vertical} onPick={(b) => { setBrand(b); next('brand'); }} onAuto={(b) => { setBrand(b); skip('brand'); }} /> : null}
       {step === 'type' ? <DeviceTypeStep vertical={vertical} brand={brand} onPick={(t) => { setProductType(t); next('type'); }} onAuto={(t) => { setProductType(t); skip('type'); }} /> : null}
       {step === 'family' && brand ? <FamilyStep vertical={vertical} brand={brand} productType={productType} onPick={(f) => { setFamily(f); next('family'); }} onSkip={skipFamily} /> : null}
       {step === 'model' && brand ? <ModelStep vertical={vertical} deep={deep} brand={brand} productType={productType} family={family} onPick={(m) => { setModel(m); next('model'); }} onAuto={(m) => { setModel(m); skip('model'); }} /> : null}

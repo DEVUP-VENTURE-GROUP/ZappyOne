@@ -56,6 +56,7 @@ const SEEDS = {
   water_tank_care: { data: './water-tank-care.seed', flows: './water-tank-care-diagnostics.seed', models: './water-tank-care-models.seed' },
   bike_wash: { data: './bike-wash.seed', flows: null, models: './bike-wash-models.seed' },
   car_wash: { data: './car-wash.seed', flows: null, models: './car-wash-models.seed' },
+  ...Object.fromEntries(Object.entries(require('./home-services.seed').HOME_SERVICES).map(([v, s]) => [v, { data: s.data, flows: null, models: s.models }])),
 };
 
 function loadSeed(vertical) {
@@ -65,11 +66,11 @@ function loadSeed(vertical) {
     throw new Error(`No seed data for vertical "${vertical}". Known: ${known}`);
   }
   // eslint-disable-next-line global-require, import/no-dynamic-require
-  const data = require(entry.data);
+  const data = typeof entry.data === 'string' ? require(entry.data) : entry.data;
   // eslint-disable-next-line global-require, import/no-dynamic-require
   const FLOWS = entry.flows ? require(entry.flows).FLOWS : [];
   // eslint-disable-next-line global-require, import/no-dynamic-require
-  const models = entry.models ? require(entry.models) : null;
+  const models = typeof entry.models === 'string' ? require(entry.models) : entry.models || null;
   return { data, FLOWS, models };
 }
 

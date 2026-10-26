@@ -1,12 +1,18 @@
-// Bike Wash and Car Wash as data on the repair engine, like Water & Tank Care: vehicle type fills the brand slot, one model per type (the flow skips it), each wash is a fixed-price package priced by admin reference price.
+// Fixed-price package services as data on the repair engine (washes, home services): the type fills the brand slot, one model per type (the flow skips it), each package is priced per type by admin reference price.
 const D = 'doorstep';
 
 const toCode = (brandCode, name) => `${brandCode}-${name}`.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 const inr = (rupees) => Math.round(rupees * 100);
 
-function washVertical({ vertical, prefix, label, types, packages }) {
+const WASH_QA = [
+  { code: 'before_after_photos', label: 'Before and after photos taken', required: true },
+  { code: 'no_marks_left', label: 'No soap marks or streaks left on paint or glass', required: true },
+  { code: 'area_clean', label: 'Parking area left clean', required: true },
+];
+
+function packageVertical({ vertical, prefix, label, types, packages, skill = { name: 'Washer', description: 'Trained in waterless, foam and polish washes' }, qa = WASH_QA, group = 'washes', qaCode = 'wash' }) {
   const BRANDS = types.map((t, i) => ({ code: `${prefix}_${t.code}`, name: t.name, sortOrder: i + 1 }));
-  const CATEGORY = `${prefix}_washes`;
+  const CATEGORY = `${prefix}_${group}`;
   const PROBLEM_CATEGORIES = [{ code: CATEGORY, name: `Choose your ${label.toLowerCase()}`, icon: 'sparkles', displayOrder: 1 }];
   const PROBLEMS = packages.map((p, i) => ({
     code: `${prefix}_${p.code}_req`, name: p.name, categoryCode: CATEGORY,
@@ -15,14 +21,10 @@ function washVertical({ vertical, prefix, label, types, packages }) {
   const REPAIRS = packages.map((p) => ({
     code: `${prefix}_${p.code}`, name: p.name, pricingMode: 'fixed', minSkillLevel: 1, modes: [D], durationMin: p.minutes, warrantyDays: 0,
   }));
-  const SKILL_LEVELS = [{ level: 1, name: 'Washer', description: 'Trained in waterless, foam and polish washes', requiresVerification: false }];
+  const SKILL_LEVELS = [{ level: 1, name: skill.name, description: skill.description, requiresVerification: false }];
   const QA_CHECKLISTS = [{
-    code: `${prefix}_wash_standard`, name: `${label} QA`, stage: 'after', repairCodes: REPAIRS.map((r) => r.code),
-    items: [
-      { code: 'before_after_photos', label: 'Before and after photos taken', required: true },
-      { code: 'no_marks_left', label: 'No soap marks or streaks left on paint or glass', required: true },
-      { code: 'area_clean', label: 'Parking area left clean', required: true },
-    ],
+    code: `${prefix}_${qaCode}_standard`, name: `${label} QA`, stage: 'after', repairCodes: REPAIRS.map((r) => r.code),
+    items: qa,
   }];
   const MODELS = BRANDS.map((b) => ({ brandCode: b.code, name: types.find((t) => `${prefix}_${t.code}` === b.code).name }));
   const PRICING = packages.flatMap((p) => types.map((t) => {
@@ -37,6 +39,8 @@ function washVertical({ vertical, prefix, label, types, packages }) {
 }
 
 // Prices checked 2026-10-19: about ₹300 a basic foam car wash, ₹499 a doorstep foam wash with interior (DriveU), ₹299 a basic doorstep bike wash. Admin can change any of them.
+const washVertical = packageVertical;
+
 const BIKE = washVertical({
   vertical: 'bike_wash', prefix: 'bw', label: 'Bike wash',
   types: [{ code: 'scooter', name: 'Scooter' }, { code: 'bike', name: 'Bike' }, { code: 'big_bike', name: 'Big bike (350cc+)' }],
@@ -57,4 +61,4 @@ const CAR = washVertical({
   ],
 });
 
-module.exports = { BIKE, CAR, toCode };
+module.exports = { BIKE, CAR, toCode, packageVertical };

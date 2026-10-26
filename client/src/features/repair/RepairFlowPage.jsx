@@ -35,7 +35,7 @@ import { ProblemLayout } from './ProblemCard';
 import { usePayBooking } from '@shared/hooks/usePayBooking';
 import { billExtras, chosenPrice, freeVisit, totalOf } from '@shared/customer/repairBill';
 import { useCheckoutDraft } from '@shared/customer/useCheckoutDraft';
-import { groupItems, itemFrom } from '@shared/customer/repairBasket';
+import { groupItems, itemFrom, PACKAGE_TYPE_WORD } from '@shared/customer/repairBasket';
 import { useRepairBasket } from './basket/useRepairBasket';
 import BasketBar from './basket/BasketBar';
 import GroupCheckout from './basket/GroupCheckout';
@@ -295,10 +295,13 @@ function IdentifySheet({ vertical, brand, onClose }) {
 }
 
 
-function BrandStep({ vertical, onPick }) {
+function BrandStep({ vertical, onPick, onAuto }) {
   const { data, isLoading } = useRepairBrandsQuery(vertical);
   const [showMissing, setShowMissing] = useState(false);
-  if (isLoading) return <Spinner />;
+  const typeWord = PACKAGE_TYPE_WORD[vertical];
+  const only = !isLoading && data?.brands?.length === 1 ? data.brands[0] : null;
+  useEffect(() => { if (only && onAuto) onAuto(only); }, [only]); // eslint-disable-line react-hooks/exhaustive-deps
+  if (isLoading || only) return <Spinner />;
 
   const brands = data?.brands || [];
   const popular = data?.popular || [];
@@ -317,7 +320,8 @@ function BrandStep({ vertical, onPick }) {
   return (
     <Shell>
       {showMissing && <MissingItemSheet kind="brand" onClose={() => setShowMissing(false)} />}
-      {popular.length > 0 && (
+      {typeWord && <p className="text-xs font-bold text-slate-500 uppercase tracking-wide px-1">Choose your {typeWord}</p>}
+      {popular.length > 0 && !typeWord && (
         <>
           <p className="text-xs font-bold text-slate-500 uppercase tracking-wide px-1">Popular brands</p>
           <div className="grid grid-cols-3 gap-2.5">{popular.map((b) => <Tile key={b.code} b={b} />)}</div>
@@ -325,14 +329,16 @@ function BrandStep({ vertical, onPick }) {
       )}
       {rest.length > 0 && (
         <>
-          <p className="text-xs font-bold text-slate-500 uppercase tracking-wide px-1 pt-2">All brands</p>
-          <div className="grid grid-cols-3 gap-2.5">{rest.map((b) => <Tile key={b.code} b={b} />)}</div>
+          {!typeWord && <p className="text-xs font-bold text-slate-500 uppercase tracking-wide px-1 pt-2">All brands</p>}
+          <div className="grid grid-cols-3 gap-2.5">{(typeWord ? brands : rest).map((b) => <Tile key={b.code} b={b} />)}</div>
         </>
       )}
-      <button onClick={() => setShowMissing(true)}
-        className="w-full flex items-center justify-center gap-2 text-sm font-semibold text-zappy-600 py-3">
-        <HelpCircle size={15} /> Can't find your brand?
-      </button>
+      {!typeWord && (
+        <button onClick={() => setShowMissing(true)}
+          className="w-full flex items-center justify-center gap-2 text-sm font-semibold text-zappy-600 py-3">
+          <HelpCircle size={15} /> Can't find your brand?
+        </button>
+      )}
     </Shell>
   );
 }
@@ -1918,7 +1924,7 @@ function RepairFlow({ vertical, saved, draftKey, onStartOver, onAddAnother }) {
       {resumed && <ResumeBanner onStartOver={onStartOver} onDismiss={() => setResumed(false)} />}
 
       {step === 'brand' && (
-        <BrandStep vertical={vertical} onPick={(b) => { setBrand(b); next('brand'); }} />
+        <BrandStep vertical={vertical} onPick={(b) => { setBrand(b); next('brand'); }} onAuto={(b) => { setBrand(b); skip('brand'); }} />
       )}
       {step === 'type' && (
         <DeviceTypeStep vertical={vertical} brand={brand} onPick={(t) => { setProductType(t); next('type'); }}
