@@ -25,7 +25,8 @@ async function launch() {
     priced += r.upsertedCount || 0;
   }
   for (const line of FAMILY_ASSIST_LINES) {
-    await ServiceLine.updateOne({ code: line.code }, { $set: { ...line, isActive: true, isArchived: false } }, { upsert: true });
+    // On only when first created: a re-run never undoes admin switching a service off.
+    await ServiceLine.updateOne({ code: line.code }, { $set: { ...line, isArchived: false }, $setOnInsert: { isActive: true } }, { upsert: true });
   }
   const hidden = await ServiceLine.updateMany({ code: { $in: HIDE } }, { $set: { isActive: false } });
   await ServiceDomain.updateOne({ code: 'family_assist' }, { $set: { displayOrder: 3, isActive: true, isArchived: false, description: 'Errands, elders and home help by ZappyOne staff' } });

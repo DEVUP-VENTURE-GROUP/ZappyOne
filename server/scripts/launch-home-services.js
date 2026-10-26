@@ -13,7 +13,8 @@ const { HOME_SERVICE_LINES } = require('../src/modules/onboarding/onboarding.see
 
 async function launch() {
   for (const line of HOME_SERVICE_LINES) {
-    await ServiceLine.updateOne({ code: line.code }, { $set: { ...line, providerKinds: ['shop', 'individual'], isActive: true, isArchived: false } }, { upsert: true });
+    // On only when first created: a re-run never undoes admin switching a service off.
+    await ServiceLine.updateOne({ code: line.code }, { $set: { ...line, providerKinds: ['shop', 'individual'], isArchived: false }, $setOnInsert: { isActive: true } }, { upsert: true });
   }
   await ServiceLine.updateOne({ code: 'water_tank_care' }, { $set: { displayOrder: 5 } });
   await ServiceDomain.updateOne({ code: 'home_services' }, { $set: { isActive: true, isArchived: false } });

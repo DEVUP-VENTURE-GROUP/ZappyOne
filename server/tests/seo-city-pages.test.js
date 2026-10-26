@@ -33,7 +33,7 @@ test('a live city books now; a coming-soon city says so and has no service pages
 });
 
 test('no fake ratings or old brand anywhere, and structured data parses', async () => {
-  for (const path of ['/in', '/in/state/telangana', '/in/hyderabad', '/in/hyderabad/medicine-pickup', '/in/delhi']) {
+  for (const path of ['/in', '/in/state/telangana', '/in/hyderabad', '/in/hyderabad/grocery-shopping-help', '/in/delhi']) {
     const res = await request(app).get(path);
     expect(res.status).toBe(200);
     expect(res.text).not.toMatch(/ratingValue|reviewCount|aggregateRating/i);
