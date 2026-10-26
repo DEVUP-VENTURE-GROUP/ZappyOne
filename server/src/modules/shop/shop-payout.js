@@ -28,6 +28,8 @@ const schema = new mongoose.Schema({
   decidedBy: { type: mongoose.Schema.Types.ObjectId, default: null },
   decidedAt: { type: Date, default: null },
 }, { timestamps: true });
+// One open request per shop, enforced by the database so two quick taps cannot both pass the check.
+schema.index({ shopId: 1 }, { unique: true, partialFilterExpression: { status: 'requested' }, name: 'one_open_request' });
 const ShopPayout = mongoose.models.ShopPayout || mongoose.model('ShopPayout', schema);
 
 const err = (status, code, message) => Object.assign(new Error(message), { status, code });
@@ -75,7 +77,10 @@ async function request({ shopId, amountPaise, type, accountId }) {
     if (!a) throw err(400, 'NO_ACCOUNT', 'Choose one of your saved bank accounts.');
     destination = { type: 'bank', label: a.label || a.bankName || 'Bank', accountName: a.accountName, accountLast4: String(a.accountNumber).slice(-4), ifsc: a.ifsc, bankName: a.bankName };
   }
-  const row = await ShopPayout.create({ shopId, amountPaise, destination });
+  const row = await ShopPayout.create({ shopId, amountPaise, destination }).catch((e) => {
+    if (e?.code === 11000) throw err(409, 'OPEN_REQUEST', 'You already have a payout on its way. Ask again once it is paid.');
+    throw e;
+  });
   require('../messaging/send').send('ops.shop_payout', {
     to: 'ops', refId: `shoppayout:${row._id}`, ctx: { shop: shop.businessName, amount: rupees(amountPaise), to: destination.label },
   }).catch(() => {});

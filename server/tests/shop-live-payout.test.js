@@ -73,3 +73,15 @@ test('a tip chosen at checkout is on the bill (within the max), once', async () 
   const due = require('../src/modules/helping/services/money.service').amountDue(await HelpingTask.findById(t._id));
   expect(due.feePaise).toBe(9000 + 5000);
 });
+
+test('two payout requests at the same instant make exactly one', async () => {
+  const s = await shop({ savedUpiIds: [{ upiId: 'race@upi', label: 'Race UPI', isDefault: true }] });
+  const id = String(s._id);
+  await Transaction.create({ type: 'credit', owner: { kind: 'platform', id: null }, amountPaise: 90000, reason: 'worker_earning', idempotencyKey: `race-${id}`, metadata: { shopId: id }, status: 'succeeded' });
+  await payout.ShopPayout.syncIndexes();
+  const upi = (await Shop.findById(id).lean()).savedUpiIds[0]._id;
+  const tries = await Promise.allSettled([1, 2, 3].map(() => payout.request({ shopId: id, amountPaise: 20000, type: 'upi', accountId: upi })));
+  expect(tries.filter((t) => t.status === 'fulfilled')).toHaveLength(1);
+  expect(tries.filter((t) => t.status === 'rejected').every((t) => t.reason.code === 'OPEN_REQUEST')).toBe(true);
+  expect(await payout.ShopPayout.countDocuments({ shopId: id })).toBe(1);
+});
