@@ -9,6 +9,7 @@ import { adminApiPath } from '@/config/admin';
 import toast from 'react-hot-toast';
 import AskAgain from '../providers/AskAgain';
 import OccasionsTab from './OccasionsTab';
+import EventsSwitch from './EventsSwitch';
 import { SelfieMetaBadges } from '../providers/KycReview';
 
 const TABS = [
@@ -829,6 +830,8 @@ export default function Events() {
         <h2 className="text-lg font-bold text-slate-900">Event Commerce</h2>
         <p className="text-sm text-slate-500 mt-0.5">Manage themes, partners, bookings and configuration</p>
       </div>
+
+      <EventsSwitch />
 
       <div className="flex gap-2 border-b border-slate-100 pb-0.5">
         {TABS.map(({ id, label, Icon }) => (

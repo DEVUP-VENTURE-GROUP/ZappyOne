@@ -14,6 +14,7 @@ const FLAGS = {
   referrals: { label: 'Referrals', description: 'Referral codes are accepted at sign-up and referral rewards are granted.', defaultOn: true },
   chat: { label: 'In-job chat', description: 'Customers and providers can message each other during a job.', defaultOn: true },
   ads: { label: 'Ads', description: 'Sponsored banners are shown in the customer app.', defaultOn: true },
+  events: { label: 'Events', description: 'Customers see Events (occasions, themes, decorators) and can book them. Off hides it everywhere; bookings already made carry on.', defaultOn: true },
 };
 
 const featureFlagSchema = new mongoose.Schema(

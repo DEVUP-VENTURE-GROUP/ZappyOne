@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useSafeBack } from '../../hooks/useBookingFlow';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, TrendingUp, Play, Heart, Star, ArrowUpRight, PartyPopper, ArrowLeft } from 'lucide-react';
-import { useGetEventCategoriesQuery, useGetEventThemesQuery, useToggleSaveEventThemeMutation } from '@shared/services/api';
+import { useGetEventCategoriesQuery, useGetEventConfigQuery, useGetEventThemesQuery, useToggleSaveEventThemeMutation } from '@shared/services/api';
 import CrossSellBanner from '../../components/marketing/CrossSellBanner';
 import toast from 'react-hot-toast';
 
@@ -117,11 +117,13 @@ export default function EventsHomePage() {
   const [showReels, setShowReels] = useState(false);
 
   const { data: catData } = useGetEventCategoriesQuery();
+  const { data: config } = useGetEventConfigQuery();
   const { data: trendingData } = useGetEventThemesQuery({ sort: 'trending', limit: 12 });
   const { data: videoData } = useGetEventThemesQuery({ sort: 'trending', limit: 6 });
   const [toggleSave] = useToggleSaveEventThemeMutation();
 
   const categories = catData?.categories || [];
+  const paused = config?.live === false;
   const trending   = trendingData?.themes || [];
   const videoThemes = (videoData?.themes || []).filter(t => t.videoUrl);
 
@@ -140,6 +142,22 @@ export default function EventsHomePage() {
   ];
 
   const renderCategories = categories.length ? categories : fallbackCategories;
+
+  if (paused) {
+    return (
+      <div className="min-h-screen bg-canvas px-4 py-16">
+        <div className="mx-auto max-w-sm text-center">
+          <PartyPopper size={40} className="mx-auto text-slate-300" />
+          <h1 className="mt-4 text-xl font-bold text-ink-900">Events are not open right now</h1>
+          <p className="mt-2 text-sm text-slate-500">Event décor bookings are paused for the moment. Your existing bookings carry on as planned.</p>
+          <div className="mt-6 flex justify-center gap-2">
+            <button type="button" onClick={() => navigate('/events/bookings')} className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700">My event bookings</button>
+            <button type="button" onClick={() => navigate('/')} className="rounded-xl bg-zappy-600 px-4 py-2.5 text-sm font-bold text-white">Back to home</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-canvas pb-20 sm:pb-8">

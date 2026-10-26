@@ -62,7 +62,11 @@ function defaultConfig() {
 
 // Categories
 
+// Events switched off (feature-flags 'events'): customers are offered nothing, so every home section and banner drops away, old apps included.
+const eventsOn = () => require('../feature-flags/feature-flag.service').isEnabled('events');
+
 async function listCategories() {
+  if (!(await eventsOn())) return [];
   const rows = await EventCategory.find({ isActive: true }).sort({ sortOrder: 1, name: 1 }).lean();
   return s3Service.signDocsMedia(rows);
 }
@@ -70,6 +74,7 @@ async function listCategories() {
 // Themes
 
 async function listThemes({ categorySlug, city, budgetMaxPaise, guestCount, page = 1, sort = 'trending', search } = {}) {
+  if (!(await eventsOn())) return { themes: [], total: 0, page: 1, pages: 0 };
   const q = { status: { $in: ['approved', 'featured'] } };
   // A partner paused for cancelling too often is not offered (events/partner-cancel).
   const paused = await require('./partner-cancel').pausedPartnerIds();
@@ -210,6 +215,7 @@ async function getSavedThemes(userId) {
 // Booking
 
 async function createBooking({ userId, themeId, eventDate, eventTimeSlot, address, guestCount, notes, roomPhotos }) {
+  await require('../feature-flags/feature-flag.service').assertEnabled('events');
   const cfg = await getActiveConfig();
   if (!cfg.bookingEnabled) throw Object.assign(new Error('Event bookings are temporarily unavailable'), { status: 503 });
 

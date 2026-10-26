@@ -7,7 +7,7 @@ import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowUpRight, CalendarCheck, Heart, PartyPopper, Search, TrendingUp } from 'lucide-react-native';
-import { useGetEventCategoriesQuery, useGetEventThemesQuery } from '@zappy/core/api';
+import { useGetEventCategoriesQuery, useGetEventConfigQuery, useGetEventThemesQuery } from '@zappy/core/api';
 import { EmptyState, ScreenHeader, Skeleton, Text } from '@zappy/ui/components';
 import { useT } from '@zappy/ui/lib/i18n';
 import { colors, danger, ink, slate } from '@zappy/ui/theme/colors';
@@ -26,12 +26,23 @@ export function EventsHomePage() {
   const t = useT();
   const [search, setSearch] = useState('');
   const { data: cats } = useGetEventCategoriesQuery(undefined);
+  const { data: config } = useGetEventConfigQuery(undefined);
   const { data: trending, isLoading } = useGetEventThemesQuery({ sort: 'trending', limit: 12 });
   const save = useSaveTheme();
   const occasions: Occasion[] = (cats?.categories?.length ? cats.categories : FALLBACK).slice(0, 5);
   const themes: Theme[] = trending?.themes || [];
   const back = () => (router.canGoBack() ? router.back() : router.replace('/' as never));
   const submit = () => { if (search.trim()) router.push(`/events/browse?search=${encodeURIComponent(search.trim())}` as never); };
+
+  if ((config as { live?: boolean } | undefined)?.live === false) {
+    return (
+      <View style={[styles.page, { paddingTop: insets.top }]}>
+        <ScreenHeader title={t('events.title', 'Events')} onBack={back} />
+        <EmptyState icon={<PartyPopper size={44} color={slate[300]} />} title={t('events.paused', 'Events are not open right now')}
+          message={t('events.pausedHint', 'Event décor bookings are paused for the moment. Your existing bookings carry on as planned.')} />
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.page, { paddingTop: insets.top }]}>

@@ -57,7 +57,10 @@ async function submitReview(req, res, next) {
 }
 
 async function getConfig(req, res, next) {
-  try { res.json(await svc.getActiveConfig()); } catch (e) { next(e); }
+  try {
+    const [cfg, live] = await Promise.all([svc.getActiveConfig(), require('../feature-flags/feature-flag.service').isEnabled('events')]);
+    res.json({ ...(cfg?.toObject ? cfg.toObject() : cfg), live });
+  } catch (e) { next(e); }
 }
 
 module.exports = { getCategories, getThemes, getTheme, getThemeAvailability, toggleSave, getSaved, createBooking, getBookings, getBooking, cancelBooking, submitReview, getConfig };
