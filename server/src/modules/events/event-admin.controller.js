@@ -46,6 +46,10 @@ async function upsertCategory(req, res, next) {
   try { res.json({ category: await svc.adminUpsertCategory(req.body) }); } catch (e) { next(e); }
 }
 
+async function deleteCategory(req, res, next) {
+  try { res.json(await svc.adminDeleteCategory(req.params.slug)); } catch (e) { next(e); }
+}
+
 /* Partner KYC actions */
 
 async function getPartner(req, res, next) {
@@ -236,5 +240,5 @@ module.exports = {
   listThemes, updateThemeStatus, listBookings, cancelBooking,
   listPartners, getPartner, createPartner, updatePartner,
   approvePartnerKyc, rejectPartnerKyc, clarifyPartnerKyc, streamPartnerKycDoc, streamPartnerKycField, streamOwnKycDoc, blockPartner,
-  getConfig, updateConfig, getAnalytics, listCategories, upsertCategory,
+  getConfig, updateConfig, getAnalytics, listCategories, upsertCategory, deleteCategory,
 };

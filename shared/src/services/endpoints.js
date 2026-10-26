@@ -1364,6 +1364,10 @@ export function endpoints(b, { adminApiPath }) {
       query: (body) => ({ url: adminApiPath('/events/categories'), method: 'POST', body }),
       invalidatesTags: ['EventCategory'],
     }),
+    adminDeleteEventCategory: b.mutation({
+      query: (slug) => ({ url: adminApiPath(`/events/categories/${slug}`), method: 'DELETE' }),
+      invalidatesTags: ['EventCategory'],
+    }),
     adminGetEventPartner: b.query({
       query: (id) => adminApiPath(`/events/partners/${id}`),
       providesTags: (r, e, id) => [{ type: 'EventPartner', id }],

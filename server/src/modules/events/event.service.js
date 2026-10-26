@@ -556,14 +556,39 @@ async function adminGetAnalytics() {
 }
 
 async function adminListCategories() {
-  return s3Service.signDocsMedia(await EventCategory.find().sort({ sortOrder: 1 }).lean());
+  const [rows, counts] = await Promise.all([
+    EventCategory.find().sort({ sortOrder: 1, name: 1 }).lean(),
+    EventTheme.aggregate([{ $group: { _id: '$categoryId', n: { $sum: 1 } } }]),
+  ]);
+  const used = new Map(counts.map((c) => [String(c._id), c.n]));
+  return s3Service.signDocsMedia(rows.map((r) => ({ ...r, themesUsing: used.get(String(r._id)) || 0 })));
 }
 
+const slugOf = (name) => String(name || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
+
 async function adminUpsertCategory(data) {
-  const { slug, ...rest } = data;
+  const { slug: given, ...rest } = data;
+  const slug = given || slugOf(rest.name);
+  if (!slug || slug.length < 2) throw Object.assign(new Error('Give the occasion a name'), { status: 400, code: 'NAME_REQUIRED' });
+  const exists = await EventCategory.exists({ slug });
+  if (!exists && !rest.name) throw Object.assign(new Error('Give the occasion a name'), { status: 400, code: 'NAME_REQUIRED' });
   // An uploaded cover is kept as its storage key (signed when read), never a link that expires.
   if (rest.coverImage) rest.coverImage = s3Service.keyFromMedia(rest.coverImage);
+  if (!exists && rest.sortOrder == null) {
+    const last = await EventCategory.findOne().sort({ sortOrder: -1 }).select('sortOrder').lean();
+    rest.sortOrder = (last?.sortOrder || 0) + 1;
+  }
   return EventCategory.findOneAndUpdate({ slug }, { $set: rest }, { upsert: true, new: true }).lean();
+}
+
+// Removed only when no theme uses it; otherwise hiding keeps those themes and their bookings whole.
+async function adminDeleteCategory(slug) {
+  const cat = await EventCategory.findOne({ slug }).select('_id name').lean();
+  if (!cat) throw Object.assign(new Error('Occasion not found'), { status: 404, code: 'NOT_FOUND' });
+  const using = await EventTheme.countDocuments({ categoryId: cat._id });
+  if (using) throw Object.assign(new Error(`${using} theme${using === 1 ? '' : 's'} use ${cat.name}. Hide it instead, or move those themes first.`), { status: 409, code: 'IN_USE', themesUsing: using });
+  await EventCategory.deleteOne({ _id: cat._id });
+  return { deleted: slug };
 }
 
 module.exports = {
@@ -573,5 +598,5 @@ module.exports = {
   adminListThemes, adminUpdateThemeStatus, adminListBookings,
   adminListPartners, adminCreatePartner, adminUpdatePartner,
   adminGetConfig, adminUpdateConfig, adminGetAnalytics,
-  adminListCategories, adminUpsertCategory,
+  adminListCategories, adminUpsertCategory, adminDeleteCategory,
 };

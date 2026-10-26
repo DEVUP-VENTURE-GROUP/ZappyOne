@@ -29,7 +29,6 @@ export default function ImageUploadField({
   const [presign] = usePresignUploadMutation();
   const [busy, setBusy] = useState(false);
   const [preview, setPreview] = useState(null);
-  const [showPaste, setShowPaste] = useState(false);
 
   async function upload(picked) {
     const file = await prepareImage(picked);
@@ -123,24 +122,6 @@ export default function ImageUploadField({
         </div>
       )}
 
-      {/* For the rare operator who genuinely has a CDN address already. */}
-      {showPaste ? (
-        <input
-          className="w-full rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs outline-none focus:ring-2 focus:ring-blue-500"
-          value={value ?? ''}
-          placeholder="https://…"
-          onChange={(e) => onChange(e.target.value)}
-          onBlur={() => !value && setShowPaste(false)}
-        />
-      ) : (
-        <button
-          type="button"
-          onClick={() => setShowPaste(true)}
-          className="text-[10.5px] font-semibold text-slate-400 hover:text-slate-600"
-        >
-          or paste a link
-        </button>
-      )}
     </div>
   );
 }

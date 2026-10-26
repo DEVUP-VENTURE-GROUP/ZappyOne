@@ -7,8 +7,8 @@ import { selectAuth } from '@shared/modules/auth/authSlice';
 import { API_BASE } from '@shared/services/apiBase';
 import { adminApiPath } from '@/config/admin';
 import toast from 'react-hot-toast';
-import ImageUploadField from '@shared/components/common/ImageUploadField';
 import AskAgain from '../providers/AskAgain';
+import OccasionsTab from './OccasionsTab';
 import { SelfieMetaBadges } from '../providers/KycReview';
 
 const TABS = [
@@ -820,40 +820,6 @@ function ConfigTab() {
 }
 
 /* Main */
-/**
- * Occasions customers browse by (Birthday, Engagement…), each with its own
- * cover photo. Without one the customer sees the occasion's emoji tile, never
- * another occasion's photo.
- */
-function OccasionsTab() {
-  const { data, isLoading } = useAdminEventCategoriesQuery();
-  const [save] = useAdminUpsertEventCategoryMutation();
-  const cats = data?.categories || [];
-
-  async function update(slug, patch) {
-    try { await save({ slug, ...patch }).unwrap(); toast.success('Saved'); }
-    catch (e) { toast.error(e?.data?.error || 'Could not save'); }
-  }
-
-  if (isLoading) return <div className="flex justify-center py-10"><Loader2 className="animate-spin text-slate-400" /></div>;
-  return (
-    <div className="space-y-3">
-      <p className="text-sm text-slate-500">Give every occasion its own cover photo. Occasions without one show their emoji on a coloured tile.</p>
-      <div className="grid gap-3 sm:grid-cols-2">
-        {cats.map((c) => (
-          <div key={c.slug} className="rounded-xl border border-slate-200 bg-white p-3 space-y-2">
-            <div className="flex items-center justify-between gap-2">
-              <p className="font-semibold text-slate-900">{c.emoji} {c.name}</p>
-              <span className={`text-[11px] font-bold ${c.coverImage ? 'text-emerald-600' : 'text-amber-600'}`}>{c.coverImage ? 'Has a photo' : 'No photo yet'}</span>
-            </div>
-            <ImageUploadField value={c.coverImage || ''} onChange={(key) => update(c.slug, { coverImage: key || '' })} folder="events/occasions" label="cover photo" />
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 export default function Events() {
   const [activeTab, setActiveTab] = useState('themes');
 

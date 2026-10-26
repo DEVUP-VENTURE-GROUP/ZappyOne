@@ -496,6 +496,7 @@ export const {
   useAdminEventAnalyticsQuery,
   useAdminEventCategoriesQuery,
   useAdminUpsertEventCategoryMutation,
+  useAdminDeleteEventCategoryMutation,
   useAdminCancelEventBookingMutation,
   useDeclineEventBookingMutation,
   useAdminGetEventPartnerQuery,

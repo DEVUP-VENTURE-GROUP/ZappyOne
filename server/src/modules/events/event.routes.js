@@ -122,6 +122,18 @@ adminRouter.post('/partners/:id/reinstate', async (req, res, next) => {
   try { await require('./partner-cancel').reinstate(req.params.id); res.json({ ok: true }); } catch (e) { next(e); }
 });
 adminRouter.get('/categories',       a.listCategories);
-adminRouter.post('/categories',      a.upsertCategory);
+// Occasions are data: add, rename, reorder, hide, photo; one in use by themes is hidden, never deleted.
+adminRouter.post('/categories',
+  validate(Joi.object({
+    slug:        Joi.string().trim().lowercase().pattern(/^[a-z0-9-]{2,40}$/),
+    name:        Joi.string().trim().min(2).max(60),
+    emoji:       Joi.string().trim().max(8).allow(''),
+    description: Joi.string().trim().max(200).allow(''),
+    coverImage:  Joi.string().trim().max(500).allow(''),
+    sortOrder:   Joi.number().integer().min(0).max(999),
+    isActive:    Joi.boolean(),
+  }).or('slug', 'name')),
+  a.upsertCategory);
+adminRouter.delete('/categories/:slug', a.deleteCategory);
 
 module.exports = { router, adminRouter, partnerRouter };
