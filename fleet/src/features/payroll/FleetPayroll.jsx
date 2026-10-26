@@ -6,6 +6,7 @@ import { Card, PageLoader, Th, Td } from '@admin/ui/kit';
 import { rupees } from '@admin/features/insights/charts';
 import MonthPicker, { thisMonth } from '../../ui/MonthPicker';
 import PayRules from './PayRules';
+import ShiftRule from './ShiftRule';
 
 // Payroll: salary for paid days, incentive above the pro-rated job target, tips theirs, cash to settle before paying.
 export default function FleetPayroll() {
@@ -26,6 +27,7 @@ export default function FleetPayroll() {
 
   return (
     <div className="space-y-4">
+      <ShiftRule />
       <PayRules />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <MonthPicker value={month} onChange={setMonth} />
