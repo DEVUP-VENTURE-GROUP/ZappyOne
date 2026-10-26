@@ -216,7 +216,7 @@ const LARGE_CAPACITIES = [
   'Up to 2,000 L', '2,000 – 5,000 L', '5,000 – 10,000 L', 'Above 10,000 L',
 ];
 
-/** [min, typical, max] in rupees, blended across the five sources above. */
+// [min, typical, max] rupees from the sources above; only typical is charged, one price per tank size.
 const CLEANING_DOMESTIC_RUPEES = [
   [349, 499, 699],
   [549, 699, 899],
@@ -234,8 +234,8 @@ const RCC_PREMIUM = 1.2;
 
 function tier(brand, capacities, bands, repair = 'wt_deep_cleaning') {
   return capacities.map((name, i) => {
-    const [min, typical, max] = bands[i];
-    return { repair, brand, model: { brandCode: brand, name }, min: inrW(min), typical: inrW(typical), max: inrW(max), warranty: 30 };
+    const typical = bands[i][1];
+    return { repair, brand, model: { brandCode: brand, name }, min: inrW(typical), typical: inrW(typical), max: inrW(typical), warranty: 30 };
   });
 }
 
@@ -251,14 +251,14 @@ const pricePoint = (rupees) => Math.round(rupees / 10) * 10 - 1;
 
 function rccTier(capacities, bands, repair = 'wt_deep_cleaning') {
   return capacities.map((name, i) => {
-    const [min, typical, max] = bands[i];
+    const price = inrW(pricePoint(bands[i][1] * RCC_PREMIUM));
     return {
       repair,
       brand: 'rcc_concrete',
       model: { brandCode: 'rcc_concrete', name },
-      min: inrW(pricePoint(min * RCC_PREMIUM)),
-      typical: inrW(pricePoint(typical * RCC_PREMIUM)),
-      max: inrW(pricePoint(max * RCC_PREMIUM)),
+      min: price,
+      typical: price,
+      max: price,
       warranty: 30,
     };
   });
@@ -274,8 +274,8 @@ const WATER_TANK_CARE_PRICING = [
   // ESTIMATES, not competitor-sourced — see the note above. Flat across every
   // tank type and capacity: both are visit-time-priced, not labour/capacity
   // priced, so a single default row is honest rather than fabricating a ladder.
-  { repair: 'wt_health_inspection', brand: null, model: null, min: inrW(249), typical: inrW(349), max: inrW(499), warranty: 0 },
-  { repair: 'wt_tank_pipe_flushing', brand: null, model: null, min: inrW(299), typical: inrW(399), max: inrW(599), warranty: 15 },
+  { repair: 'wt_health_inspection', brand: null, model: null, min: inrW(349), typical: inrW(349), max: inrW(349), warranty: 0 },
+  { repair: 'wt_tank_pipe_flushing', brand: null, model: null, min: inrW(399), typical: inrW(399), max: inrW(399), warranty: 15 },
 ];
 
 module.exports = {
