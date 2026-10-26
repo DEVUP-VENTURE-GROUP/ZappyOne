@@ -535,6 +535,7 @@ export const useAdminFleetAttentionQuery = h.useAdminFleetAttentionQuery;
 export const useAdminAutoFillRosterMutation = h.useAdminAutoFillRosterMutation;
 export const useAdminFleetOverviewQuery = h.useAdminFleetOverviewQuery;
 export const useAdminFleetActivityQuery = h.useAdminFleetActivityQuery;
+export const useAdminFleetMissedOrdersQuery = h.useAdminFleetMissedOrdersQuery;
 export const useAdminFleetInsightsQuery = h.useAdminFleetInsightsQuery;
 export const useLazyAdminFleetAiBriefingQuery = h.useLazyAdminFleetAiBriefingQuery;
 export const useAdminFleetAiAskMutation = h.useAdminFleetAiAskMutation;

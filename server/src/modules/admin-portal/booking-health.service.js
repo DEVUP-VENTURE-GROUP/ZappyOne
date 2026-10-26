@@ -66,4 +66,48 @@ async function bookingHealth({ days = 7 } = {}) {
   return { days: d, since, kinds: kinds.filter(Boolean) };
 }
 
-module.exports = { bookingHealth };
+const MISSED_LIMIT = 300;
+const LOST = ['CANCELLED', ...NO_PROVIDER];
+const areaOf = {
+  repair: (d) => d.location?.address,
+  pet: (d) => d.serviceLocation?.address,
+  helping: (d) => d.pickupLocation?.address || d.destination?.address,
+};
+const istHour = { $hour: { date: '$createdAt', timezone: 'Asia/Kolkata' } };
+
+function missedRow(kind, d) {
+  const last = [...(d.statusHistory || [])].reverse().find((x) => LOST.includes(x.status));
+  const lostAt = last?.at ? new Date(last.at) : null;
+  return {
+    id: String(d._id), reference: d.reference || '', kind, service: keyOf[kind](d), status: d.status,
+    at: d.createdAt, lostAt,
+    waitedMin: lostAt ? Math.max(0, Math.round((lostAt - new Date(d.createdAt)) / 60000)) : null,
+    reason: d.cancelReason || d.cancellationReason || last?.reason || last?.note || '',
+    by: d.status === 'CANCELLED' ? (last?.actorRole || last?.byRole || 'system') : 'nobody accepted',
+    area: (areaOf[kind](d) || '').slice(0, 120),
+  };
+}
+
+// Every order lost in the window (no provider took it, or a provider or the system cancelled it), newest first, plus orders made and lost per hour of the day (IST).
+async function missedOrders({ days = 7 } = {}) {
+  const d = Math.min(Math.max(Number(days) || 7, 1), 90);
+  const since = new Date(Date.now() - d * 86400000);
+  const perKind = await Promise.all(['repair', 'pet', 'helping'].map(async (kind) => {
+    const model = KINDS[kind].model();
+    const [lost, made] = await Promise.all([
+      model.find({ createdAt: { $gte: since }, status: { $in: LOST } })
+        .select('reference status createdAt statusHistory vertical categoryCode serviceType cancelReason cancellationReason location.address serviceLocation.address pickupLocation.address destination.address')
+        .sort({ createdAt: -1 }).limit(MISSED_LIMIT).lean(),
+      model.aggregate([{ $match: { createdAt: { $gte: since } } }, { $group: { _id: istHour, n: { $sum: 1 } } }]),
+    ]);
+    return { rows: lost.map((x) => missedRow(kind, x)).filter((r) => !['user', 'customer'].includes(r.by)), made };
+  }).map((p) => p.catch(() => ({ rows: [], made: [] }))));
+
+  const orders = perKind.flatMap((k) => k.rows).sort((a, b) => new Date(b.at) - new Date(a.at)).slice(0, MISSED_LIMIT);
+  const hours = Array.from({ length: 24 }, (_, h) => ({ hour: h, made: 0, missed: 0 }));
+  for (const k of perKind) for (const m of k.made) if (hours[m._id]) hours[m._id].made += m.n;
+  for (const o of orders) hours[Number(new Date(o.at).toLocaleString('en-US', { timeZone: 'Asia/Kolkata', hour: 'numeric', hourCycle: 'h23' }))].missed += 1;
+  return { days: d, since, total: orders.length, orders, hours };
+}
+
+module.exports = { bookingHealth, missedOrders };

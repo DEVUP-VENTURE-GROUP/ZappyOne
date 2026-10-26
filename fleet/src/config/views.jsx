@@ -1,5 +1,5 @@
 import { lazy } from 'react';
-import { CalendarDays, CalendarOff, History, IndianRupee, LineChart, Package, Users, Wallet, Warehouse } from 'lucide-react';
+import { CalendarDays, CalendarOff, CircleSlash, History, IndianRupee, LineChart, Package, Users, Wallet, Warehouse } from 'lucide-react';
 
 /**
  * The Fleet portal's screens (fleet-ioc.zappyone.com), one folder each under
@@ -7,6 +7,7 @@ import { CalendarDays, CalendarOff, History, IndianRupee, LineChart, Package, Us
  */
 export const FLEET_VIEWS = [
   { id: 'overview', label: 'Overview', icon: LineChart, Comp: lazy(() => import('../features/overview/FleetOverview')) },
+  { id: 'missed', label: 'Missed orders', icon: CircleSlash, Comp: lazy(() => import('../features/missed/FleetMissed')) },
   { id: 'hubs', label: 'Hubs', icon: Warehouse, Comp: lazy(() => import('../features/hubs/FleetHubs')) },
   { id: 'stock', label: 'Stock', icon: Package, Comp: lazy(() => import('../features/stock/FleetStock')) },
   { id: 'staff', label: 'Staff', icon: Users, Comp: lazy(() => import('../features/staff/FleetStaff')) },

@@ -646,6 +646,7 @@ export const {
   useAdminAutoFillRosterMutation,
   useAdminFleetOverviewQuery,
   useAdminFleetActivityQuery,
+  useAdminFleetMissedOrdersQuery,
   useAdminFleetInsightsQuery,
   useLazyAdminFleetAiBriefingQuery,
   useAdminFleetAiAskMutation,

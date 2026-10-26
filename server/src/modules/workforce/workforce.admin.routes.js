@@ -47,6 +47,11 @@ router.get('/workforce/insights', validate(Joi.object({ month: Joi.string().patt
   try { res.json(await require('./insights.service').insights(req.query.month)); } catch (err) { next(err); }
 });
 
+// Orders nobody took or a provider or the system cancelled: which, when, where, why, and by hour of day.
+router.get('/workforce/missed-orders', validate(Joi.object({ days: Joi.number().integer().min(1).max(90) }), 'query'), async (req, res, next) => {
+  try { res.json(await require('../admin-portal/booking-health.service').missedOrders({ days: req.query.days })); } catch (err) { next(err); }
+});
+
 router.get('/workforce/activity', validate(Joi.object({ page: Joi.number().integer().min(1).max(10000), actorId: Joi.string().hex().length(24) }), 'query'), async (req, res, next) => {
   try { res.json(await require('./activity').list({ page: Number(req.query.page) || 1, actorId: req.query.actorId || null })); } catch (err) { next(err); }
 });

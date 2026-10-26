@@ -94,6 +94,7 @@ export function endpoints(b, { adminApiPath }) {
     adminFleetAiAsk: b.mutation({ query: (body) => ({ url: adminApiPath('/workforce/ai/ask'), method: 'POST', body }) }),
     adminFleetNextHub: b.query({ query: (days = 30) => ({ url: adminApiPath('/workforce/next-hub'), params: { days } }), providesTags: ['WorkforceAdmin'] }),
     adminFleetInsights: b.query({ query: (month) => ({ url: adminApiPath('/workforce/insights'), params: month ? { month } : {} }), providesTags: ['WorkforceAdmin'] }),
+    adminFleetMissedOrders: b.query({ query: (days = 7) => ({ url: adminApiPath('/workforce/missed-orders'), params: { days } }) }),
     adminFleetActivity: b.query({ query: ({ page = 1, actorId } = {}) => ({ url: adminApiPath('/workforce/activity'), params: { page, ...(actorId ? { actorId } : {}) } }), providesTags: ['WorkforceAdmin'] }),
     adminFleetOverview: b.query({ query: (days) => ({ url: adminApiPath('/workforce/overview'), params: days ? { days } : {} }), providesTags: ['WorkforceAdmin'] }),
     adminFleetFinance: b.query({ query: (month) => ({ url: adminApiPath('/workforce/finance'), params: month ? { month } : {} }), providesTags: ['WorkforceAdmin'] }),
