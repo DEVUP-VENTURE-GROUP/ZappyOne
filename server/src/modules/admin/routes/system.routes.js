@@ -26,6 +26,10 @@ router.post(
 );
 
 router.get('/alerts', ctrl.getAlerts);
+// What is waiting on a person, for the sidebar bell (admin/todo.service).
+router.get('/todo', async (req, res, next) => {
+  try { res.json(await require('../todo.service').forAdmin(req.admin)); } catch (err) { next(err); }
+});
 
 
 // FCM health check

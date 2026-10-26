@@ -332,6 +332,7 @@ export const {
   useAdminSetAppReleaseMutation,
   useAdminSetFeatureFlagMutation,
   useAdminAlertsQuery,
+  useAdminTodoQuery,
   useAdminSupportTicketsQuery,
   useAdminReplyTicketMutation,
   useAdminLiveOpsQuery, useAdminStuckJobsQuery,

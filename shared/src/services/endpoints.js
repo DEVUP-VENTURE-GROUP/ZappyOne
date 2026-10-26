@@ -954,6 +954,8 @@ export function endpoints(b, { adminApiPath }) {
     adminAlerts: b.query({
       query: () => adminApiPath('/alerts'),
     }),
+    // What is waiting on a person (admin/todo.service), for the sidebar bell.
+    adminTodo: b.query({ query: () => adminApiPath('/todo') }),
 
     // --- Admin: Retention ---
 

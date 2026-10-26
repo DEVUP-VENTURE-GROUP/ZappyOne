@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { LogOut, Menu, X, ChevronRight, Zap } from 'lucide-react';
 import { logout } from '@shared/modules/auth/authSlice';
 import { useLogoutMutation, useAdminAlertsQuery, useAdminMeQuery } from '@shared/services/api';
+import TodoBell from './TodoBell';
 import { adminPath } from '@/config/admin';
 import { NAV_GROUPS, SECTIONS, REDIRECTS } from '@/config/sections';
 
@@ -162,6 +163,8 @@ export default function AdminDashboard() {
             <X size={14} />
           </button>
         </div>
+
+        <TodoBell onOpen={handleNav} />
 
         {/* Live status */}
         <div className="px-4 py-2.5" style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
