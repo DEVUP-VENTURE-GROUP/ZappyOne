@@ -8,6 +8,7 @@ import { inr } from '@zappy/ui/components/worker/DashboardUI';
 import { colors, ink, success, zappy } from '@zappy/ui/theme/colors';
 import { radius } from '@zappy/ui/theme/radius';
 import { spacing } from '@zappy/ui/theme/spacing';
+import { StatementButton } from '../components/StatementButton';
 
 const RANGES = [{ key: 'today', label: 'Today' }, { key: 'week', label: 'This week' }, { key: 'month', label: 'This month' }];
 
@@ -18,6 +19,7 @@ export function ShopEarningsPage() {
     <View style={styles.page}>
       <ScreenHeader title="Earnings" safeArea />
       <ScrollView contentContainerStyle={styles.body}>
+        <StatementButton />
         <View style={styles.row}>
           {RANGES.map((r) => (
             <Pressable key={r.key} onPress={() => setRange(r.key)} accessibilityRole="tab" accessibilityState={{ selected: range === r.key }} style={[styles.range, range === r.key && styles.rangeOn]}>

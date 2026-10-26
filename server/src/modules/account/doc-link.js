@@ -18,6 +18,7 @@ const DOCUMENTS = [
   new RegExp(`^/api/jobs/${ID}/receipt$`),
   new RegExp(`^/api/repair/bookings/${ID}/report$`),
   new RegExp(`^/api/orders/${ID}/invoice$`),
+  /^\/api\/shops\/me\/statement\/\d{4}-\d{2}\.csv$/,
 ];
 
 const isDocument = (path) => DOCUMENTS.some((re) => re.test(path));

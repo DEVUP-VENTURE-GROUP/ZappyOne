@@ -92,12 +92,41 @@ router.post(
 router.get('/me/workers', ctrl.listWorkers);
 
 /* Partner OS (shop/partner.service): type, dispatch rule, capacity, team, numbers. */
+router.get('/me/agreement', async (req, res, next) => {
+  try {
+    const shop = await require('./shop.model').findById(req.auth.sub).select('partnerType agreement').lean();
+    const terms = require('./partner-terms');
+    res.json({ terms: await terms.termsFor(shop?.partnerType), agreement: shop?.agreement || null, current: terms.isCurrent(shop?.agreement) });
+  } catch (err) { next(err); }
+});
+router.post('/me/agreement', async (req, res, next) => {
+  try { res.json({ agreement: await require('./partner-terms').accept(req.auth.sub) }); } catch (err) { next(err); }
+});
+// The same CSV at a plain path, so the app can open it in the phone's browser with a document link (account/doc-link).
+router.get('/me/statement/:month.csv', async (req, res, next) => {
+  try {
+    const st = require('./shop-statement');
+    const out = await st.statement(req.auth.sub, req.params.month);
+    res.set('Content-Disposition', `attachment; filename="zappyone-statement-${out.month}.csv"`).type('text/csv').send(st.toCsv(out));
+  } catch (err) { next(err); }
+});
+router.get('/me/statement', async (req, res, next) => {
+  try {
+    const st = require('./shop-statement');
+    const out = await st.statement(req.auth.sub, req.query.month);
+    if (req.query.format !== 'csv') return res.json(out);
+    res.set('Content-Disposition', `attachment; filename="zappyone-statement-${out.month}.csv"`).type('text/csv').send(st.toCsv(out));
+  } catch (err) { next(err); }
+});
+router.get('/me/dues', async (req, res, next) => {
+  try { res.json(await require('./shop-dues').duesOf(req.auth.sub)); } catch (err) { next(err); }
+});
 router.get('/me/partner', async (req, res, next) => {
   try { res.json(await require('./partner.service').settingsOf(req.auth.sub)); } catch (err) { next(err); }
 });
 router.put('/me/partner',
   validate(Joi.object({
-    partnerType: Joi.string().valid('shop', 'agency', 'company'),
+    partnerType: Joi.string().valid('shop', 'agency', 'company', 'individual'),
     mode: Joi.string().valid('manual', 'nearest', 'round_robin'),
     capacity: Joi.number().integer().min(0).max(1000),
   }).min(1)),

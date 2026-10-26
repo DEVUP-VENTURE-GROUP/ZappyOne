@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, IndianRupee, Briefcase, Users, Loader2 } from 'lucide-react';
 import { useShopEarningsQuery } from '@shared/services/api';
+import StatementDownload from '@shared/provider/components/StatementDownload';
 
 const RANGES = [
   { key: 'today', label: 'Today' },
@@ -22,6 +23,7 @@ export default function ShopEarningsPage() {
       </div></header>
 
       <div className="max-w-lg lg:max-w-2xl mx-auto px-4 pt-4 space-y-3">
+        <StatementDownload />
 
         <div className="flex gap-2">
           {RANGES.map((r) => (

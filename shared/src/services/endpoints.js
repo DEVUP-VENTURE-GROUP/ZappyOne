@@ -523,6 +523,10 @@ export function endpoints(b, { adminApiPath }) {
     /** Admin: who owes what, and recording what they paid. */
     adminDues: b.query({ query: () => adminApiPath('/dues'), providesTags: ['Wallet'] }),
     adminRecordDuesPayment: b.mutation({ query: ({ workerId, ...body }) => ({ url: adminApiPath(`/dues/${workerId}/payments`), method: 'POST', body }), invalidatesTags: ['Wallet'] }),
+    // Partner shops' commission owed from cash jobs (shop/shop-dues).
+    shopDues: b.query({ query: () => '/shops/me/dues', providesTags: ['Wallet'] }),
+    adminShopDues: b.query({ query: () => adminApiPath('/dues/shops'), providesTags: ['Wallet'] }),
+    adminRecordShopDuesPayment: b.mutation({ query: ({ shopId, ...body }) => ({ url: adminApiPath(`/dues/shops/${shopId}/payment`), method: 'POST', body }), invalidatesTags: ['Wallet'] }),
     adminRejectDuesClaim: b.mutation({ query: ({ id, note }) => ({ url: adminApiPath(`/dues/claims/${id}/reject`), method: 'POST', body: { note } }), invalidatesTags: ['Wallet'] }),
     walletTransactions: b.query({
       query: ({ page = 1, limit = 50 } = {}) => `/wallet/transactions?page=${page}&limit=${limit}`,
@@ -1400,6 +1404,10 @@ export function endpoints(b, { adminApiPath }) {
     // ServicePro partner OS (server shop/partner.service): type, dispatch, capacity, team, numbers.
     partnerSettings: b.query({ query: () => '/shops/me/partner', providesTags: ['ShopWorkers'] }),
     savePartnerSettings: b.mutation({ query: (body) => ({ url: '/shops/me/partner', method: 'PUT', body }), invalidatesTags: ['ShopWorkers'] }),
+    // Partner terms: public before sign-up (by type), and this shop's acceptance (shop/partner-terms).
+    partnerTerms: b.query({ query: (type) => ({ url: '/auth/shop/partner-terms', params: { type } }) }),
+    shopAgreement: b.query({ query: () => '/shops/me/agreement', providesTags: ['ShopWorkers'] }),
+    acceptShopAgreement: b.mutation({ query: () => ({ url: '/shops/me/agreement', method: 'POST' }), invalidatesTags: ['ShopWorkers'] }),
     inviteShopTeam: b.mutation({ query: (rows) => ({ url: '/shops/me/workers/bulk', method: 'POST', body: { rows } }), invalidatesTags: ['ShopWorkers'] }),
     setShopWorkerTeam: b.mutation({ query: ({ workerId, ...body }) => ({ url: `/shops/me/workers/${workerId}/team`, method: 'PATCH', body }), invalidatesTags: ['ShopWorkers'] }),
     partnerInsights: b.query({ query: (days) => ({ url: '/shops/me/insights', params: days ? { days } : {} }), providesTags: ['ShopWorkers'] }),
