@@ -956,6 +956,7 @@ export function endpoints(b, { adminApiPath }) {
     }),
     // What is waiting on a person (admin/todo.service), for the sidebar bell.
     adminTodo: b.query({ query: () => adminApiPath('/todo') }),
+    adminBookingHealth: b.query({ query: (days = 7) => ({ url: adminApiPath('/insights/booking-health'), params: { days } }) }),
 
     // --- Admin: Retention ---
 

@@ -177,6 +177,11 @@ router.get('/alerts/search-demand', async (req, res, next) => {
 
 /* Insights: the business from the bookings taken today (repair, pet, helping, events) */
 
+// Where bookings go wrong: made, finished, cancelled, no provider, waiting, and acceptance time (admin-portal/booking-health).
+router.get('/insights/booking-health', async (req, res, next) => {
+  try { res.json(await require('./booking-health.service').bookingHealth({ days: req.query.days })); } catch (err) { next(err); }
+});
+
 router.get('/insights/overview', async (req, res, next) => {
   try { res.json(await require('./analytics.service').overview({ days: Number(req.query.days) || 7 })); } catch (err) { next(err); }
 });

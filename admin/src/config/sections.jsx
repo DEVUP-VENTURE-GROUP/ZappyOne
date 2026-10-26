@@ -81,6 +81,7 @@ const P = {
   Economics: page(() => import('../features/money/Economics')),
   LiveBoard: page(() => import('../features/operations/live/LiveBoard')),
   Arrivals: page(() => import('../features/operations/live/Arrivals')),
+  BookingHealth: page(() => import('../features/operations/live/BookingHealth')),
   StuckJobs: page(() => import('../features/operations/live/StuckJobs')),
   Zones: page(() => import('../features/operations/areas/Zones')),
   LaunchDemand: page(() => import('../features/operations/areas/LaunchDemand')),
@@ -128,6 +129,7 @@ const HUBS = {
     { id: 'board', label: 'Live board', icon: Radio, Comp: P.LiveBoard },
     { id: 'stuck', label: 'Stuck jobs', icon: Zap, Comp: P.StuckJobs },
     { id: 'arrivals', label: 'Arrivals', icon: Activity, Comp: P.Arrivals },
+    { id: 'health', label: 'Booking health', icon: Activity, Comp: P.BookingHealth },
   ]),
   areas: hub('Service areas', 'Where ZappyOne serves, and where customers are asking for it', [
     { id: 'zones', label: 'Zones', icon: MapIcon, Comp: P.Zones },

@@ -333,6 +333,7 @@ export const {
   useAdminSetFeatureFlagMutation,
   useAdminAlertsQuery,
   useAdminTodoQuery,
+  useAdminBookingHealthQuery,
   useAdminSupportTicketsQuery,
   useAdminReplyTicketMutation,
   useAdminLiveOpsQuery, useAdminStuckJobsQuery,
