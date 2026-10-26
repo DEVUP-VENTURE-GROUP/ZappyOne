@@ -93,7 +93,7 @@ export function foldIntoHub(domain) {
 export const PITCH = {
   electronics: ['Phone or laptop repair', 'Fixed at your door. You approve the price before work starts.'],
   vehicles: ['Bike or car wash', 'At your parking, from a quick wipe to full detailing.'],
-  home_services: ['Home services', 'Cleaning, electrician, plumber, AC and water tank care at your door.'],
+  home_services: ['Home services', 'Water tank and sump cleaning at your door, photographed before and after.'],
   pet_services: ['Pet care', 'Grooming, walks and stays with verified pet carers.'],
   family_assist: ['Family Assist', 'Errands, elder visits and help at home, by ZappyOne staff and verified helpers.'],
   events: ['Events and décor', 'Decor and planning for birthdays, showers and more.'],
@@ -112,5 +112,9 @@ export function servicePhoto(service) {
   if (SERVICE_PHOTOS.has(service?.code)) return `/services/pet/${service.code}.webp`;
   // Helping errands use their real photos (shopping, pickup, return, exchange); others keep their character.
   const photo = problemServicePhoto(service?.code);
-  return photo && (photo.startsWith('/services/helping/') || photo.startsWith('/services/tiles/')) ? photo : null;
+  return photo && photo.startsWith('/services/helping/') ? photo : null;
 }
+
+// The square photo for a service's tile in the home grid only (assets/web/services/tiles); everywhere else keeps its own picture.
+const TILES = new Set(['bike_wash', 'car_wash', 'water_tank_care', 'shopping_pickup', 'fa_grocery_run', 'fa_doctor_escort', 'fa_elder_checkin', 'fa_party_helper', 'fa_puja_help']);
+export const tilePhoto = (code) => (TILES.has(code) ? `/services/tiles/${code}.webp` : null);

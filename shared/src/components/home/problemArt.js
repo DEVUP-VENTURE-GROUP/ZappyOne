@@ -114,11 +114,7 @@ const HELPING = {
 };
 const PET_SERVICES = new Set(['pet_boarding', 'pet_check', 'pet_grooming', 'pet_home_care', 'pet_transport', 'pet_vet_assist', 'pet_walk']);
 
-// Photo tiles for home and section grids (assets/web/services/tiles, 320 px WebP).
-const TILES = new Set(['bike_wash', 'car_wash', 'water_tank_care', 'shopping_pickup', 'fa_grocery_run', 'fa_doctor_escort', 'fa_elder_checkin', 'fa_party_helper', 'fa_puja_help']);
-
 export function servicePhoto(code) {
-  if (TILES.has(code)) return `/services/tiles/${code}.webp`;
   if (PET_SERVICES.has(code)) return `/services/pet/${code}.webp`;
   if (code === 'pet_services') return '/services/pet/pet_grooming.webp';
   if (HELPING[code]) return `/services/helping/${HELPING[code]}.webp`;

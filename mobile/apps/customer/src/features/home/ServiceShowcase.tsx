@@ -9,7 +9,7 @@ import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ChevronRight } from 'lucide-react-native';
 import { categoryPhoto } from '@zappy/core/shared/problemArt';
-import { artFor, PITCH, servicePhoto } from '@zappy/core/shared/serviceArt';
+import { artFor, PITCH, servicePhoto, tilePhoto } from '@zappy/core/shared/serviceArt';
 import { Text } from '@zappy/ui/components';
 import { CategoryTile, type TileCategory } from '@zappy/ui/components/home/CategoryTile';
 import { serviceIcon } from '@zappy/ui/components/home/serviceIcons';
@@ -77,7 +77,7 @@ function gridOf(domain: HomeDomain): (GridTile & { service: HomeService })[] | n
   if (services.length === 1 && services[0].options?.length) {
     return services[0].options.map((o) => ({ code: o.code, name: o.name, icon: o.icon, emoji: o.emoji, toneColor: o.toneColor, imageUrl: o.imageUrl || servicePhoto({ code: o.code }) || '', path: o.path, service: services[0] }));
   }
-  return services.map((s) => ({ code: s.code, name: s.name, icon: s.icon, imageUrl: servicePhoto(s) || '', path: s.path, service: s }));
+  return services.map((s) => ({ code: s.code, name: s.name, icon: s.icon, imageUrl: tilePhoto(s.code) || servicePhoto(s) || '', path: s.path, service: s }));
 }
 
 function Section({ domain, onOpen }: { domain: HomeDomain; onOpen: (s: HomeService, path?: string) => void }) {

@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { ChevronRight, Wrench } from 'lucide-react';
 import { SERVICE_ICONS, CategoryTile } from '@shared/components/home/LiveServices';
-import { artFor, PITCH, servicePhoto } from '@shared/components/home/serviceArt';
+import { artFor, PITCH, servicePhoto, tilePhoto } from '@shared/components/home/serviceArt';
 import { categoryPhoto } from '@shared/components/home/problemArt';
 import ServiceTileGrid from './ServiceTileGrid';
 
@@ -55,7 +55,7 @@ function gridOf(domain) {
   if (services.length === 1 && services[0].options?.length) {
     return services[0].options.map((o) => ({ code: o.code, name: o.name, icon: o.icon, emoji: o.emoji, tone: o.tone, imageUrl: o.imageUrl || servicePhoto({ code: o.code }) || '', path: o.path, service: services[0] }));
   }
-  return services.map((s) => ({ code: s.code, name: s.name, icon: s.icon, imageUrl: servicePhoto(s) || '', path: s.path, service: s }));
+  return services.map((s) => ({ code: s.code, name: s.name, icon: s.icon, imageUrl: tilePhoto(s.code) || servicePhoto(s) || '', path: s.path, service: s }));
 }
 
 function ServiceCard({ service, onOpen }) {
