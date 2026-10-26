@@ -136,7 +136,9 @@ const shopSchema = new mongoose.Schema(
      * customers can walk into, an agency (a team with no counter), or a
      * service company. Only shops are listed as places to walk in.
      */
-    partnerType: { type: String, enum: ['shop', 'agency', 'company'], default: 'shop' },
+    partnerType: { type: String, enum: ['shop', 'agency', 'company', 'individual'], default: 'shop' },
+    // The partner terms accepted (shop/partner-terms): which version, when, at what rate.
+    agreement: { version: { type: String, default: null }, acceptedAt: { type: Date, default: null }, ratePct: { type: Number, default: null } },
     /**
      * How jobs reach the team (shop/partner.service): the owner assigns each
      * (manual), the nearest free member gets it, or members take turns

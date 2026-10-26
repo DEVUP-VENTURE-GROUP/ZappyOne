@@ -4,6 +4,7 @@ export const PARTNER_TYPES = [
   { key: 'shop', label: 'Shop', hint: 'A counter customers can walk into.' },
   { key: 'agency', label: 'Agency', hint: 'A team that goes to customers; no counter.' },
   { key: 'company', label: 'Service company', hint: 'A registered company with its own staff.' },
+  { key: 'individual', label: 'Independent professional', hint: 'You work on your own, with or without a helper.' },
 ];
 
 export const DISPATCH_MODES = [

@@ -571,7 +571,7 @@ async function loginEventPartnerWithOtp({ phone, otp, businessName, ownerName, c
 // events-only one. First login only collects the identity fields a login form
 // can reasonably ask for; category/services/address are completed afterward
 // via the shop's own profile endpoint (shop.isDiscoverable() gates the rest).
-async function loginShopWithOtp({ phone, otp, businessName, ownerName, category, services }) {
+async function loginShopWithOtp({ phone, otp, businessName, ownerName, category, services, partnerType = 'shop', acceptTerms }) {
   const ok = await verifyOtp(phone, otp);
   if (!ok) throw Object.assign(new Error('Invalid OTP'), { status: 401, code: 'OTP_INVALID' });
 
@@ -585,8 +585,14 @@ async function loginShopWithOtp({ phone, otp, businessName, ownerName, category,
         { status: 400, code: 'SHOP_ONBOARDING_REQUIRED' }
       );
     }
+    // Older apps send nothing: the account opens and the dashboard asks for the terms; an explicit no is refused.
+    if (acceptTerms === false) {
+      throw Object.assign(new Error('Accept the partner terms to create your account.'), { status: 400, code: 'TERMS_REQUIRED' });
+    }
+    const terms = await require('../shop/partner-terms').termsFor(partnerType);
     shop = await Shop.create({
-      phone, businessName, ownerName,
+      phone, businessName, ownerName, partnerType: terms.type,
+      ...(acceptTerms === true ? { agreement: { version: terms.version, acceptedAt: new Date(), ratePct: terms.ratePct } } : {}),
       category: category || '',
       services: Array.isArray(services) ? services : (services || '').split(',').map(s => s.trim()).filter(Boolean),
       isActive: true,

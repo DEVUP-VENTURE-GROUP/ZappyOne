@@ -147,7 +147,7 @@ async function findNearbyShops({ lat, lng, service, radiusKm = 10, limit = 20 })
     isBlocked: false,
     'address.location.coordinates': { $exists: true },
     // Only shops are places to walk into; agencies and service companies come to you (shop/partner.service).
-    partnerType: { $nin: ['agency', 'company'] },
+    partnerType: { $nin: ['agency', 'company', 'individual'] },
   })
     .where('address.location').near({
       center: { type: 'Point', coordinates: [lng, lat] },

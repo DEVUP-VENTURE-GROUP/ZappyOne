@@ -144,9 +144,16 @@ router.post(
     ownerName:    Joi.string().max(100).optional(),
     category:     Joi.string().max(60).optional(),
     services:     Joi.alternatives().try(Joi.array().items(Joi.string()), Joi.string()).optional(),
+    partnerType:  Joi.string().valid('shop', 'agency', 'company', 'individual').optional(),
+    acceptTerms:  Joi.boolean().optional(),
   })),
   ctrl.loginShop,
 );
+
+// What a new partner agrees to, with their type's live commission rate; read before signing up.
+router.get('/shop/partner-terms', async (req, res, next) => {
+  try { res.json(await require('../shop/partner-terms').termsFor(String(req.query.type || 'shop'))); } catch (err) { next(err); }
+});
 
 router.post(
   '/admin/login',

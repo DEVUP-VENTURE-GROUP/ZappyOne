@@ -5,7 +5,9 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Store, ArrowRight, ChevronLeft, Loader2, Wrench, ShieldCheck, Users } from 'lucide-react';
-import { useRequestOtpMutation, useLoginShopMutation } from '@shared/services/api';
+import { useRequestOtpMutation, useLoginShopMutation, usePartnerTermsQuery } from '@shared/services/api';
+import { PARTNER_TYPES } from '@shared/provider/partnerBoard';
+import PartnerTermsList from '@shared/provider/components/PartnerTermsList';
 import LegalConsent from '@shared/components/auth/LegalConsent';
 import ResendOtp from '@shared/components/auth/ResendOtp';
 import { setAuth } from '@shared/modules/auth/authSlice';
@@ -33,7 +35,9 @@ export default function ShopLoginPage() {
   const [digits, setDigits] = useState(['', '', '', '', '', '']);
   const [otpMeta, setOtpMeta] = useState({ cooldownSec: 30, resendsLeft: 3 });
   const [isNew, setIsNew] = useState(false);
-  const [regForm, setRegForm] = useState({ businessName: '', ownerName: '' });
+  const [regForm, setRegForm] = useState({ businessName: '', ownerName: '', partnerType: 'shop', acceptTerms: false });
+  const { data: terms } = usePartnerTermsQuery(regForm.partnerType, { skip: step !== 'register' });
+  const solo = regForm.partnerType === 'individual';
 
   const otpRefs = useRef([]);
   const [requestOtp, { isLoading: sending }] = useRequestOtpMutation();
@@ -104,6 +108,7 @@ export default function ShopLoginPage() {
   async function handleRegister(e) {
     e.preventDefault();
     if (!regForm.businessName || !regForm.ownerName) return toast.error('Fill in all required fields');
+    if (!regForm.acceptTerms) return toast.error('Accept the partner terms to continue');
     await doLogin(regForm);
   }
 
@@ -212,13 +217,25 @@ export default function ShopLoginPage() {
             {step === 'register' && (
               <motion.form key="register" onSubmit={handleRegister} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex flex-col">
                 <div className="mb-6">
-                  <h3 className="text-lg font-bold text-slate-900 mb-1">Set up your shop 🎉</h3>
-                  <p className="text-sm text-slate-500">You can add services, address & KYC after this</p>
+                  <h3 className="text-lg font-bold text-slate-900 mb-1">Join ZappyOne as a partner</h3>
+                  <p className="text-sm text-slate-500">You can add services, address and verification after this</p>
                 </div>
-                <div className="space-y-4 mb-8">
+                <div className="space-y-4 mb-6">
+                  <div>
+                    <p className="text-[12px] font-bold text-slate-700 mb-1.5">You are a <span className="text-red-500">*</span></p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {PARTNER_TYPES.map((t) => (
+                        <button key={t.key} type="button" onClick={() => setRegForm((p) => ({ ...p, partnerType: t.key }))} aria-pressed={regForm.partnerType === t.key}
+                          className={`rounded-xl border px-3 py-2.5 text-left transition-colors ${regForm.partnerType === t.key ? 'border-zappy-500 bg-zappy-50 ring-2 ring-zappy-100' : 'border-slate-200 bg-white hover:border-slate-300'}`}>
+                          <span className="block text-[13px] font-bold text-slate-900">{t.label}</span>
+                          <span className="block text-[11px] leading-snug text-slate-500">{t.hint}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                   {[
-                    { k: 'businessName', label: 'Shop / Business Name', placeholder: 'e.g. Sharma Mobile Repair' },
-                    { k: 'ownerName', label: 'Your Name', placeholder: 'e.g. Ramesh Sharma' },
+                    { k: 'businessName', label: solo ? 'Your work name' : 'Business name', placeholder: solo ? 'e.g. Ramesh Electricals' : 'e.g. Sharma Mobile Repair' },
+                    { k: 'ownerName', label: 'Your name', placeholder: 'e.g. Ramesh Sharma' },
                   ].map(({ k, label, placeholder }) => (
                     <div key={k}>
                       <label className="text-[12px] font-bold text-slate-700 block mb-1.5">{label} <span className="text-red-500">*</span></label>
@@ -227,10 +244,15 @@ export default function ShopLoginPage() {
                         className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 placeholder:text-slate-400 outline-none text-sm focus:border-zappy-500 focus:bg-white focus:ring-2 focus:ring-zappy-100 transition-all" />
                     </div>
                   ))}
+                  <PartnerTermsList terms={terms} />
+                  <label className="flex items-start gap-2.5 cursor-pointer">
+                    <input type="checkbox" checked={regForm.acceptTerms} onChange={(e) => setRegForm((p) => ({ ...p, acceptTerms: e.target.checked }))} className="mt-0.5 h-4 w-4 rounded text-zappy-600" />
+                    <span className="text-[13px] font-semibold text-slate-700">I accept the ZappyOne partner terms{terms ? `, including ${terms.ratePct}% commission per completed job` : ''}.</span>
+                  </label>
                 </div>
-                <button type="submit" disabled={logging || !regForm.businessName || !regForm.ownerName}
+                <button type="submit" disabled={logging || !regForm.businessName || !regForm.ownerName || !regForm.acceptTerms}
                   className="w-full py-4 bg-zappy-600 hover:bg-zappy-700 text-white rounded-xl font-bold text-[15px] flex items-center justify-center transition-all disabled:opacity-50 shadow-md">
-                  {logging ? <Loader2 size={20} className="animate-spin" /> : <span>Create Shop Account</span>}
+                  {logging ? <Loader2 size={20} className="animate-spin" /> : <span>Create partner account</span>}
                 </button>
               </motion.form>
             )}
