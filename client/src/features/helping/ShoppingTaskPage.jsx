@@ -175,7 +175,7 @@ export default function ShoppingTaskPage() {
     return (
       <div className="mx-auto max-w-lg px-4 py-6">
         <GrowingHere
-          service={{ code: spec.line, domainCode: spec.assist ? 'family_assist' : 'helping_services', name: spec.assist ? spec.title.toLowerCase() : 'shopping and pickup' }}
+          service={{ code: spec.line, domainCode: 'family_assist', name: spec.assist ? spec.title.toLowerCase() : 'shopping and pickup' }}
           lat={pickupLoc?.lat}
           lng={pickupLoc?.lng}
           address={pickupLoc?.address || ''}

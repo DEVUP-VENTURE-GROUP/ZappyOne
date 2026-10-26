@@ -97,10 +97,10 @@ export function foldIntoHub(domain) {
 /** What each section does, in the customer's words: [headline, one line]. */
 export const PITCH = {
   electronics: ['Phone or laptop repair', 'Fixed at your door. You approve the price before work starts.'],
-  vehicles: ['Bike or car trouble', 'A mechanic comes to you, at home or on the road.'],
-  home_services: ['Water tank care', 'Tank and sump cleaning, photographed before and after.'],
+  vehicles: ['Bike or car wash', 'At your parking, from a quick wipe to full detailing.'],
+  home_services: ['Home services', 'Cleaning, electrician, plumber, AC and water tank care at your door.'],
   pet_services: ['Pet care', 'Grooming, walks and stays with verified pet carers.'],
-  helping_services: ['Shopping, pickups and returns', 'A verified helper makes the trip and sends photos at each step.'],
+  family_assist: ['Family Assist', 'Errands, elder visits and help at home, by ZappyOne staff and verified helpers.'],
   events: ['Events and décor', 'Decor and planning for birthdays, showers and more.'],
 };
 

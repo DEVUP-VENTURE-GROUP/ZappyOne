@@ -50,7 +50,7 @@ export function ReturnTaskPage() {
   if (h.notHere) {
     return (
       <View style={[styles.page, { paddingTop: insets.top + spacing.base, paddingHorizontal: spacing.base }]}>
-        <GrowingHere service={{ code: 'returns_exchange', domainCode: 'helping_services', name: 'returns' }} lat={h.pickup?.lat} lng={h.pickup?.lng} address={h.pickup?.address || ''} onChangeLocation={() => h.setNotHere(false)} />
+        <GrowingHere service={{ code: 'returns_exchange', domainCode: 'family_assist', name: 'returns' }} lat={h.pickup?.lat} lng={h.pickup?.lng} address={h.pickup?.address || ''} onChangeLocation={() => h.setNotHere(false)} />
       </View>
     );
   }

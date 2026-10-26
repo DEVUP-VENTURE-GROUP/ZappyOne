@@ -68,7 +68,7 @@ describe('choosing what you work on', () => {
     const res = await request(app).get(`${BASE}/domains`).set(auth(ctx.shopToken));
     expect(res.status).toBe(200);
     expect(res.body.domains.map((d) => d.code))
-      .toEqual(['electronics', 'vehicles', 'home_services', 'family_assist', 'helping_services', 'pet_services']);
+      .toEqual(['electronics', 'vehicles', 'home_services', 'family_assist', 'pet_services']);
   });
 
   it('shows which electronics services are actually open', async () => {
@@ -105,8 +105,9 @@ describe('choosing what you work on', () => {
   it('hides individual-only work from a shop account', async () => {
     // Elder care is done by a person, not a storefront — a shop should never
     // be offered it in the first place.
+    // Only the errands a shop can run (Family Assist now holds them too); never individual-only or staff-only work.
     const forShop = await request(app).get(`${BASE}/lines?domainCode=family_assist`).set(auth(ctx.shopToken));
-    expect(forShop.body.lines).toHaveLength(0);
+    expect(forShop.body.lines.map((l) => l.code).sort()).toEqual(['returns_exchange', 'shopping_pickup']);
 
     const forWorker = await request(app).get(`${BASE}/lines?domainCode=family_assist`).set(auth(ctx.workerToken));
     expect(forWorker.body.lines.map((l) => l.code)).toContain('elder_care');

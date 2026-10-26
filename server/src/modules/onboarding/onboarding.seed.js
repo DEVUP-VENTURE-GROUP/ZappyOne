@@ -69,7 +69,6 @@ const DOMAINS = [
   { code: 'vehicles', name: 'Vehicles', icon: 'Bike', displayOrder: 2, description: 'Two, three and four wheelers' },
   { code: 'home_services', name: 'Home Services', icon: 'Home', displayOrder: 3, description: 'Repairs and upkeep inside the home' },
   { code: 'family_assist', name: 'Family Assist', icon: 'HeartHandshake', displayOrder: 4, description: 'Help for children, elders and the household' },
-  { code: 'helping_services', name: 'Helping Services', icon: 'ShoppingBag', displayOrder: 5, description: 'A trusted person for a real-world errand — shopping, pickup, returns' },
   { code: 'pet_services', name: 'Pet Services', icon: 'PawPrint', displayOrder: 6, description: 'Grooming, boarding, walking and care for your dog or cat' },
 ];
 
@@ -163,8 +162,8 @@ const LINES = [
    * (liveCatalog's own rule), and a helper only reaches "approved" through
    * this same domain's requirement set below.
    */
-  { code: 'shopping_pickup', name: 'Shopping & Pickup Help', domainCode: 'helping_services', status: 'live', displayOrder: 1, icon: 'ShoppingBasket', customerPath: '/helping/shopping', tagline: 'A trusted person to buy or collect it for you', description: 'Buy items from a shop, or collect a pickup, with photos and a receipt at every step', isPopular: true },
-  { code: 'returns_exchange', name: 'Returns & Exchange Assistant', domainCode: 'helping_services', status: 'live', displayOrder: 2, icon: 'PackageCheck', customerPath: '/helping/returns', tagline: 'We handle the physical trip, not the merchant’s decision', description: 'A helper takes your return or exchange to the store or courier and brings back proof' },
+  { code: 'shopping_pickup', name: 'Shopping & Pickup Help', domainCode: 'family_assist', status: 'live', displayOrder: 9, icon: 'ShoppingBasket', customerPath: '/helping/shopping', tagline: 'A trusted person to buy or collect it for you', description: 'Buy items from a shop, or collect a pickup, with photos and a receipt at every step', isPopular: true },
+  { code: 'returns_exchange', name: 'Returns & Exchange Assistant', domainCode: 'family_assist', status: 'live', displayOrder: 10, icon: 'PackageCheck', customerPath: '/helping/returns', tagline: 'We handle the physical trip, not the merchant’s decision', description: 'A helper takes your return or exchange to the store or courier and brings back proof' },
 ];
 
 /* Verification requirements */
@@ -296,8 +295,24 @@ const REQUIREMENT_SETS = [
    * here is financial trust, not a skill (§40).
    */
   {
-    name: 'Helping Services — individual',
-    domainCode: 'helping_services', lineCode: null, providerKind: 'individual',
+    name: 'Shopping & pickup — individual',
+    domainCode: 'family_assist', lineCode: 'shopping_pickup', providerKind: 'individual',
+    documents: [
+      ...IDENTITY_DOCS,
+      { code: 'address_proof', label: 'Address proof', required: true },
+    ],
+    fields: [
+      { code: 'can_advance_money', label: 'Can you front cash for a purchase and be reimbursed?', required: true },
+      { code: 'vehicle_type', label: 'How do you get around? (walk / two-wheeler / other)', required: true },
+    ],
+    declarations: [
+      'I will buy or collect only what the customer approved, at the price they approved.',
+      'I will never spend beyond my advance limit without the customer funding it first.',
+    ],
+  },
+  {
+    name: 'Returns & exchange — individual',
+    domainCode: 'family_assist', lineCode: 'returns_exchange', providerKind: 'individual',
     documents: [
       ...IDENTITY_DOCS,
       { code: 'address_proof', label: 'Address proof', required: true },

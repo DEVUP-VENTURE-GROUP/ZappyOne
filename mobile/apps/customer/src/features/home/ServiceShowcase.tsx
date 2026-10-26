@@ -22,7 +22,7 @@ import type { HomeDomain, HomeService } from './homeCatalog';
 /** Where a section's own page is, for its single card's Book action. */
 const SECTION_HOME: Record<string, { name: string; path: string }> = {
   pet_services: { name: 'Pet care', path: '/pet' },
-  helping_services: { name: 'Helping services', path: '/helping' },
+  family_assist: { name: 'Family Assist', path: '/helping' },
 };
 
 /** Repairs: a card per service. A section without headings reads as ONE card, its services (or their jobs) as tiles. */

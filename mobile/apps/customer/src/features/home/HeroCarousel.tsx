@@ -24,7 +24,7 @@ const SLIDES = [
   { key: 'four_wheeler', domain: 'vehicles', services: ['four_wheeler'], tab: '4-Wheeler', photo: '/hero/vehicle-care.webp', title: 'Car care at your door', line: 'Checks and repairs where your car is parked.' },
   { key: 'water_tank_care', domain: 'home_services', services: ['water_tank_care'], tab: 'Water tank', photo: '/hero/water-tank.webp' },
   { key: 'pet_services', domain: 'pet_services', tab: 'Pet care', photo: '/hero/pet-care.webp', path: '/pet' },
-  { key: 'helping_services', domain: 'helping_services', tab: 'Shopping & returns', photo: '/hero/helping.webp', path: '/helping' },
+  { key: 'family_assist', domain: 'family_assist', tab: 'Family Assist', photo: '/hero/helping.webp', path: '/helping' },
   { key: 'events', domain: 'events', tab: 'Events', photo: '/hero/events.webp', path: '/events' },
   { key: 'electronics', domain: 'electronics', services: ['mobile_repair', 'mobile', 'laptop_repair', 'laptop'], tab: 'Phone & laptop', photo: '/hero/phone-repair.webp',
     title: 'Phone or laptop repair', line: 'Fixed at your door. You approve the price before work starts.' },

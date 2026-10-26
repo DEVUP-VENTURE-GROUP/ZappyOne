@@ -142,7 +142,7 @@ export default function ReturnTaskPage() {
     return (
       <div className="mx-auto max-w-lg px-4 py-6">
         <GrowingHere
-          service={{ code: 'returns_exchange', domainCode: 'helping_services', name: 'returns' }}
+          service={{ code: 'returns_exchange', domainCode: 'family_assist', name: 'returns' }}
           lat={pickupLoc?.lat}
           lng={pickupLoc?.lng}
           address={pickupLoc?.address || ''}

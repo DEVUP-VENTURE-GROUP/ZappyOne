@@ -64,7 +64,7 @@ export function ShoppingTaskPage() {
   if (h.notHere) {
     return (
       <View style={[styles.page, { paddingTop: insets.top + spacing.base, paddingHorizontal: spacing.base }]}>
-        <GrowingHere service={{ code: spec.line, domainCode: spec.assist ? 'family_assist' : 'helping_services', name: spec.assist ? spec.title.toLowerCase() : 'shopping and pickup' }} lat={h.pickup?.lat} lng={h.pickup?.lng} address={h.pickup?.address || ''} onChangeLocation={() => h.setNotHere(false)} />
+        <GrowingHere service={{ code: spec.line, domainCode: 'family_assist', name: spec.assist ? spec.title.toLowerCase() : 'shopping and pickup' }} lat={h.pickup?.lat} lng={h.pickup?.lng} address={h.pickup?.address || ''} onChangeLocation={() => h.setNotHere(false)} />
       </View>
     );
   }

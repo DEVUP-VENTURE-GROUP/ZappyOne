@@ -16,7 +16,7 @@ import { categoryPhoto } from '@shared/components/home/problemArt';
 /** Where a section's own page is, for its single card's Book action. */
 const SECTION_HOME = {
   pet_services: { name: 'Pet care', path: '/pet' },
-  helping_services: { name: 'Helping services', path: '/helping' },
+  family_assist: { name: 'Family Assist', path: '/helping' },
 };
 
 /**
