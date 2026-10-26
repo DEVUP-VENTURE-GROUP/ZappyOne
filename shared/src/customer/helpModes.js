@@ -30,3 +30,15 @@ export function rebookPath(type) {
   if (type === 'pickup') return '/helping/shopping?mode=pickup';
   return type && type !== 'shopping' ? `/helping/shopping?mode=${type}` : '/helping/shopping';
 }
+
+// A Family Assist card's live fee (admin HelpingConfig), so cards never show a stale figure; the catalog tagline's own ₹ prefix gives way to it.
+export function helpCardPrice(service, helping) {
+  const fees = new Map((helping?.services || []).map((s) => [s.serviceType, s.baseFeePaise]));
+  const types = service.form?.type ? [[service.form.type, '']] : service.code === 'shopping_pickup' ? [['pickup', 'Pickup'], ['shopping', 'Shopping']] : [];
+  const prices = types.map(([t, label]) => ({ label, paise: fees.get(t) })).filter((p) => p.paise > 0);
+  const tagline = service.tagline || service.description || '';
+  const shops = prices.some((p) => p.label === 'Shopping');
+  if (!prices.length) return { prices, plusBill: false, note: tagline };
+  const m = tagline.match(/^₹[\d,]+\s*(\+\s*bill)?\s*·?\s*(.*)$/);
+  return { prices, plusBill: shops || !!m?.[1], note: m ? m[2] : tagline };
+}
