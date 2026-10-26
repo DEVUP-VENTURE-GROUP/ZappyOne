@@ -18,7 +18,7 @@ router.get('/me', async (req, res, next) => {
   try {
     const w = await require('../worker/worker.model').findById(req.auth.sub).select('employment').lean();
     if (w?.employment?.type !== 'staff') return res.json({ staff: false });
-    res.json({ staff: true, ...(await shifts.myShifts(req.auth.sub)) });
+    res.json({ staff: true, staffId: await require('./staff-id').ensure(req.auth.sub), ...(await shifts.myShifts(req.auth.sub)) });
   } catch (err) { next(err); }
 });
 

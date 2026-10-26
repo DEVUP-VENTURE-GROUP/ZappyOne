@@ -72,6 +72,9 @@ export function InterventionPanel({ source, id, onDone }) {
           <p className="text-xs font-bold text-slate-800">Offer this booking to {picked.name}?</p>
           <textarea rows={2} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Reason (kept in the job history)"
             className="w-full resize-none rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-zappy-200" />
+          {reason.trim().length < 5 && (
+            <p className="text-[11px] text-slate-500">Write a short reason (at least 5 letters), e.g. "Nearest free staff". It is kept in the job history.</p>
+          )}
           <div className="flex gap-2">
             <button type="button" onClick={() => setPicked(null)} className="flex-1 rounded-lg bg-white py-2 text-xs font-bold text-slate-600 ring-1 ring-slate-200">Back</button>
             <button type="button" onClick={confirm} disabled={assigning || reason.trim().length < 5}

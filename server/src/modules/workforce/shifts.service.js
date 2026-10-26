@@ -128,7 +128,9 @@ async function checkIn({ workerId, lat, lng, selfieKey }) {
   if (!s) throw err(409, 'NO_SHIFT_NOW', `No shift to start now. You can check in ${cfg.checkInEarlyMin} minutes before your shift.`);
   const [hLng, hLat] = hub.meetingPoint.location.coordinates;
   const metres = Math.round(haversineKm(lat, lng, hLat, hLng) * 1000);
-  if (metres > hub.radiusM) throw err(409, 'TOO_FAR', `You are ${metres >= 1000 ? `${(metres / 1000).toFixed(1)} km` : `${metres} m`} from ${hub.name}. Check in at the meeting point.`);
+  // At least 500 m: GPS on a phone indoors drifts a few hundred metres (workforce check-in).
+  const allowedM = Math.max(hub.radiusM || 0, 500);
+  if (metres > allowedM) throw err(409, 'TOO_FAR', `You are ${metres >= 1000 ? `${(metres / 1000).toFixed(1)} km` : `${metres} m`} from ${hub.name}. Check in at the meeting point.`);
   const late = Math.max(0, Math.round((now - s.startAt.getTime()) / 60000));
   s.status = 'checked_in';
   s.checkInAt = new Date(now);

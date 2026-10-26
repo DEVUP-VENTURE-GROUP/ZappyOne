@@ -59,6 +59,7 @@ const WORKFORCE_DEFAULTS = {
   incentivePerJobPaise: 2000,   // paid for each job above the target (₹20)
   lowWorkPct: 60,               // flagged when below this share of their pro-rated target
   giveBackFlag: 5,              // flagged when they hand back this many jobs in a month
+  shiftRequired: false,         // off: staff who are online take jobs without a booked shift
 };
 
 // Percent taken from a partner's service money, by who holds the job; Economics → Partner commission.

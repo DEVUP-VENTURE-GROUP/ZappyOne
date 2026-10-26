@@ -3,7 +3,7 @@
  * MENU_ITEMS, same order), plus sign out.
  */
 import React from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Linking, Pressable, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
   Building2,
@@ -17,13 +17,14 @@ import {
   Target,
   Wallet,
   ChevronRight,
+  PhoneCall,
 } from 'lucide-react-native';
 import { useSignOut } from '@zappy/core/hooks/useSignOut';
 import { BottomSheet, Text } from '../components';
 import { RIPPLE } from '../lib/feedback';
 import { ink, danger } from '../theme/colors';
 import { radius } from '../theme/radius';
-import { staffMenu } from '@zappy/core/shared/partnerPages';
+import { staffMenu, STAFF_HELP_PHONE } from '@zappy/core/shared/partnerPages';
 import { STAFF_APP } from './staffApp';
 import { spacing } from '../theme/spacing';
 
@@ -56,6 +57,12 @@ export function WorkerMenuSheet({ visible, onClose, items = WORKER_MENU }: { vis
             <ChevronRight size={16} color={ink[400]} />
           </Pressable>
         ))}
+        {STAFF_APP ? (
+          <Pressable accessibilityRole="button" onPress={() => { onClose(); void Linking.openURL(`tel:+91${STAFF_HELP_PHONE}`); }} android_ripple={RIPPLE} style={[styles.item]}>
+            <PhoneCall size={19} color={danger[600]} strokeWidth={2.1} />
+            <Text variant="body" weight="bold" color={danger[600]} style={styles.flex}>Call ZappyOne help</Text>
+          </Pressable>
+        ) : null}
         <Pressable accessibilityRole="button" onPress={() => { onClose(); void signOut(); }} android_ripple={RIPPLE} style={[styles.item]}>
           <LogOut size={19} color={danger[600]} />
           <Text variant="body" weight="semibold" color={danger[600]} style={styles.flex}>Sign out</Text>

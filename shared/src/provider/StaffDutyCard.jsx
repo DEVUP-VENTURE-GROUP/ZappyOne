@@ -55,7 +55,7 @@ export default function StaffDutyCard({ me }) {
       <div className="flex items-center gap-3 px-4 pt-4">
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-zappy-50 text-zappy-700"><Building2 size={19} /></span>
         <div className="min-w-0 flex-1">
-          <p className="text-[12px] font-bold uppercase tracking-wide text-slate-500">ZappyOne staff, {me.hub.name}</p>
+          <p className="text-[12px] font-bold uppercase tracking-wide text-slate-500">ZappyOne staff, {me.hub.name}{me.staffId ? ` · ID ${me.staffId}` : ''}</p>
           <p className="truncate text-[15px] font-bold text-slate-900">
             {shift ? `${shift.label || 'Shift'}, ${time(shift.startAt)} to ${time(shift.endAt)}` : 'No shift booked today'}
           </p>

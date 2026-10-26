@@ -37,8 +37,9 @@ async function listDomains() {
  * "vehicles are opening soon" is useful, and lets us measure demand. They are
  * simply not enrollable — see `enrol()`.
  */
-async function listLines({ domainCode, providerKind = null } = {}) {
-  const filter = { isActive: true, isArchived: false, staffOnly: { $ne: true } };
+async function listLines({ domainCode, providerKind = null, staff = false } = {}) {
+  // Staff-only services are listed for ZappyOne staff (already approved for them), never for partners.
+  const filter = { isActive: true, isArchived: false, ...(staff ? {} : { staffOnly: { $ne: true } }) };
   if (domainCode) filter.domainCode = String(domainCode).toLowerCase();
   if (providerKind) filter.providerKinds = providerKind;
 

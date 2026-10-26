@@ -28,7 +28,14 @@ const forget = (workerId) => cache.delete(String(workerId));
 async function onDutyIds(now = new Date()) {
   const rows = await Shift.find({ status: 'checked_in', startAt: { $lte: new Date(now.getTime() + 60 * 60000) }, endAt: { $gte: now } })
     .select('workerId').lean();
-  return new Set(rows.map((r) => String(r.workerId)));
+  const ids = new Set(rows.map((r) => String(r.workerId)));
+  // Shifts optional (Fleet settings, shiftRequired off): staff who are online count as on duty.
+  const { shiftRequired } = await require('../pricing/services/config.service').workforceSettings();
+  if (!shiftRequired) {
+    const online = await Worker.find({ 'employment.type': 'staff', isOnline: true, isBlocked: { $ne: true } }).select('_id').lean();
+    online.forEach((w) => ids.add(String(w._id)));
+  }
+  return ids;
 }
 
 module.exports = { isStaff, forget, onDutyIds };

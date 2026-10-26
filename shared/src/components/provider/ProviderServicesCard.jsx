@@ -72,7 +72,7 @@ export default function ProviderServicesCard({ className = '' }) {
                   className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10.5px] font-bold ${TONE[chip.tone]}`}
                 >
                   <Icon size={10} />
-                  {e.line?.name || e.lineCode}
+                  {e.line?.name || e.lineCode}: {chip.label}
                 </span>
               );
             })}

@@ -1,11 +1,12 @@
 import { memo } from 'react';
 import { motion } from 'framer-motion';
-import { LogOut,
+import { LogOut, PhoneCall,
   LayoutDashboard, IndianRupee, Wallet as WalletIcon, Bell, Star, User, ChevronRight, Wifi,
   TrendingUp, TrendingDown, Search, Radio, Loader2, Target, Building2, GraduationCap,
   ShieldCheck, ShoppingBag, Scale, FileText, CalendarClock,
 } from 'lucide-react';
-import { staffMenu } from '../../provider/staffPortal';
+import { staffMenu, STAFF_PORTAL } from '../../provider/staffPortal';
+import { STAFF_HELP_PHONE } from '../../provider/partnerPages';
 import { ZappyWordmark } from '../common/ZappyLogo';
 
 /**
@@ -188,6 +189,13 @@ export const WorkerSidebar = memo(function WorkerSidebar({
         </div>
       )}
 
+      {STAFF_PORTAL && (
+        <div className="px-3 pt-2">
+          <a href={`tel:+91${STAFF_HELP_PHONE}`} className="flex w-full items-center gap-3 rounded-xl bg-rose-50 px-3 py-2.5 text-[14px] font-bold text-rose-700 hover:bg-rose-100">
+            <PhoneCall size={18} strokeWidth={2.2} /> Call ZappyOne help
+          </a>
+        </div>
+      )}
       {onSignOut && (
         <div className="border-t border-slate-200 p-3">
           <button

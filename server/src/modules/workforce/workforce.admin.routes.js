@@ -148,20 +148,42 @@ router.put('/workforce/hubs/:id', validate(hubBody.min(1)), async (req, res, nex
   } catch (err) { next(err); }
 });
 
-/** Staff, and anyone to make staff: search Rakshak workers by name or phone. */
+// The hub nearest each person's last known location, so adding them to the fleet starts on the right hub.
+async function withNearestHub(workers) {
+  const hubs = await Hub.find({ isActive: { $ne: false } }).select('name meetingPoint').lean();
+  const { haversineKm } = require('../../core/geo/distance');
+  return workers.map((w) => {
+    const c = w.currentLocation?.coordinates;
+    if (!hubs.length || !c || (!c[0] && !c[1])) return w;
+    let best = null;
+    for (const h of hubs) {
+      const [lng, lat] = h.meetingPoint?.location?.coordinates || [];
+      if (lat == null) continue;
+      const km = haversineKm(c[1], c[0], lat, lng);
+      if (!best || km < best.km) best = { id: String(h._id), name: h.name, km: Math.round(km * 10) / 10 };
+    }
+    const { currentLocation, ...rest } = w;
+    return { ...rest, nearestHub: best };
+  });
+}
+
+/** Staff, and anyone to make staff: search Rakshak workers by name, phone or staff ID. */
 router.get('/workforce/staff', async (req, res, next) => {
   try {
+    await require('./staff-id').ensureAll();
     const q = String(req.query.q || '').trim();
+    const fields = 'name phone employment isOnline currentLocation';
+    const esc = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const filter = q
-      ? { $or: [{ name: new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i') }, { phone: new RegExp(q.replace(/\D/g, '') || '^$') }], shopId: null }
+      ? { $or: [{ name: new RegExp(esc, 'i') }, { phone: new RegExp(q.replace(/\D/g, '') || '^$') }, { 'employment.staffId': new RegExp(`^${esc}`, 'i') }], shopId: null }
       : null;
-    if (filter) return res.json({ workers: await Worker.find(filter).select('name phone employment isOnline').sort({ name: 1 }).limit(100).lean() });
+    if (filter) return res.json({ workers: await withNearestHub(await Worker.find(filter).select(fields).sort({ name: 1 }).limit(100).lean()) });
     // No search: staff first, then the newest Rakshak sign-ups who could be added.
     const [staff, others] = await Promise.all([
-      Worker.find({ 'employment.type': 'staff' }).select('name phone employment isOnline').sort({ name: 1 }).limit(200).lean(),
-      Worker.find({ shopId: null, 'employment.type': { $ne: 'staff' } }).select('name phone employment isOnline').sort({ createdAt: -1 }).limit(50).lean(),
+      Worker.find({ 'employment.type': 'staff' }).select(fields).sort({ name: 1 }).limit(200).lean(),
+      Worker.find({ shopId: null, 'employment.type': { $ne: 'staff' } }).select(fields).sort({ createdAt: -1 }).limit(50).lean(),
     ]);
-    res.json({ workers: [...staff, ...others] });
+    res.json({ workers: await withNearestHub([...staff, ...others]) });
   } catch (err) { next(err); }
 });
 
@@ -185,6 +207,7 @@ router.patch('/workforce/staff/:workerId', validate(Joi.object({
     const after = await Worker.findByIdAndUpdate(req.params.workerId, { $set: set }, { new: true }).select('name phone employment').lean();
     require('./staff').forget(req.params.workerId);
     await require('../onboarding/staff-lines').syncWorker(req.params.workerId);
+    if (staff) await require('./staff-id').ensure(req.params.workerId);
     await auditService.fromRequest(req, 'workforce.staff_set', { kind: 'worker', id: req.params.workerId }, before.employment, after.employment);
     res.json({ worker: after });
   } catch (err) { next(err); }
@@ -377,6 +400,7 @@ router.put('/workforce/settings', validate(Joi.object({
   workingDays: Joi.number().integer().min(20).max(31), checkInEarlyMin: Joi.number().integer().min(0).max(120), lateGraceMin: Joi.number().integer().min(0).max(60),
   monthlyJobTarget: Joi.number().integer().min(0).max(1000), incentivePerJobPaise: Joi.number().integer().min(0).max(100000),
   lowWorkPct: Joi.number().integer().min(0).max(100), giveBackFlag: Joi.number().integer().min(1).max(100),
+  shiftRequired: Joi.boolean(),
 }).min(1)), async (req, res, next) => {
   try {
     const cfg = require('../pricing/services/config.service');

@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LogOut, ChevronRight, ShieldCheck, X, Menu, Bell, BadgeIndianRupee, Briefcase,
-  Clock, Star, MapPin, Radio,
+  Clock, Star, MapPin, Radio, PhoneCall,
 } from 'lucide-react';
 import { useAccountMeQuery, useWorkforceMeQuery,
   useGetWorkerMeQuery, useGoOnlineMutation, useGoOfflineMutation, useGetEarningsQuery,
@@ -24,6 +24,7 @@ import StaffDutyCard from '../StaffDutyCard';
 import LeadBoardCard from '../components/LeadBoardCard';
 import StaffWaitingCard from '../StaffWaitingCard';
 import { STAFF_PORTAL } from '../staffPortal';
+import { STAFF_HELP_PHONE } from '../partnerPages';
 import { useInWorkerFrame, useFrameGoOnline } from '../WorkerFrame';
 import MyAreaChip from '../../components/worker/MyAreaChip';
 import HotZonesCard from '../../components/worker/HotZonesCard';
@@ -247,6 +248,11 @@ export default function WorkerDashboard() {
                     <span className="flex-1 text-left">{item.label}</span>
                   </button>
                 ))}
+                {STAFF_PORTAL && (
+                  <a href={`tel:+91${STAFF_HELP_PHONE}`} className="flex w-full items-center gap-3 rounded-xl bg-rose-50 px-3 py-2.5 text-[14px] font-bold text-rose-700">
+                    <PhoneCall size={18} /> <span>Call ZappyOne help</span>
+                  </a>
+                )}
                 <button type="button" onClick={signOut} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[14px] font-semibold text-rose-600 hover:bg-rose-50">
                   <LogOut size={18} /> <span>Sign out</span>
                 </button>

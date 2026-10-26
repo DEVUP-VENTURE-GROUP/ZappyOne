@@ -24,3 +24,6 @@ export function staffMenu(items, staff) {
     .map((i) => (i.to === '/worker/earnings' ? { ...i, key: 'shifts', label: 'Shifts', to: '/worker/shifts' } : i))
     .filter((i) => !PARTNER_ONLY.has(i.to));
 }
+
+// ZappyOne staff help and emergency line, called straight from the Rakshak menu.
+export const STAFF_HELP_PHONE = '9392756435';

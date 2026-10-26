@@ -55,7 +55,7 @@ export function StaffDutyCard({ me }: { me: Any }) {
       <View style={styles.row}>
         <View style={styles.icon}><Building2 size={19} color={zappy[700]} /></View>
         <View style={styles.flex}>
-          <Text variant="caption" weight="bold" color={ink[500]}>ZAPPYONE STAFF, {String(me.hub.name).toUpperCase()}</Text>
+          <Text variant="caption" weight="bold" color={ink[500]}>ZAPPYONE STAFF, {String(me.hub.name).toUpperCase()}{me.staffId ? ` · ID ${me.staffId}` : ''}</Text>
           <Text variant="body" weight="bold" numberOfLines={1}>{shift ? `${shift.label || 'Shift'}, ${time(shift.startAt)} to ${time(shift.endAt)}` : 'No shift booked today'}</Text>
           {shift ? <Text variant="caption" weight="semibold" color={onDuty ? success[600] : ink[500]}>{onDuty ? 'On duty. Jobs near you come to you first.' : `Check in at ${me.hub.address || me.hub.name}`}</Text> : null}
         </View>

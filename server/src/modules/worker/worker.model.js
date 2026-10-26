@@ -147,6 +147,8 @@ const workerSchema = new mongoose.Schema(
       hubId: { type: mongoose.Schema.Types.ObjectId, ref: 'Hub', default: null, index: true },
       salaryPaise: { type: Number, default: 0, min: 0 },
       joinedAt: { type: Date, default: null },
+      // Permanent ID for the ID card and search (workforce/staff-id), e.g. ZO00012.
+      staffId: { type: String, default: null },
     },
     currentLocation: {
       type: { type: String, enum: ['Point'], default: 'Point' },
@@ -293,5 +295,7 @@ workerSchema.index({ isOnline: 1, 'kyc.status': 1, createdAt: -1 });
 
 // Password, verified email and first-time setup, shared by every account type.
 workerSchema.plugin(require('../account/account.plugin'));
+
+workerSchema.index({ 'employment.staffId': 1 }, { unique: true, partialFilterExpression: { 'employment.staffId': { $type: 'string' } } });
 
 module.exports = mongoose.model('Worker', workerSchema);

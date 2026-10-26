@@ -24,7 +24,7 @@ const hubSchema = new mongoose.Schema({
       coordinates: { type: [Number], required: true }, // [lng, lat]
     },
   },
-  radiusM: { type: Number, default: 200, min: 50, max: 2000 }, // check-in must be this close
+  radiusM: { type: Number, default: 500, min: 50, max: 2000 }, // check-in must be this close (never under 500 m in practice)
   serviceKm: { type: Number, default: 8, min: 1, max: 50 }, // how far its staff are sent, when no area is drawn
   // The area it serves, drawn on the map; when set it decides, not serviceKm (workforce/coverage).
   area: { type: { type: String, enum: ['Polygon'] }, coordinates: { type: [[[Number]]], default: undefined } },

@@ -31,9 +31,11 @@ async function listDomains(req, res, next) {
 async function listLines(req, res, next) {
   try {
     const owner = ownerOf(req);
+    const staff = owner.kind === 'worker' && await require('../workforce/staff').isStaff(owner.id);
     const lines = await service.listLines({
       domainCode: req.query.domainCode,
       providerKind: owner.providerKind,
+      staff,
     });
 
     // Pair each line with this provider's own state on it, so the picker can

@@ -19,7 +19,7 @@ export default function FleetStaff() {
   const hubs = hubData?.hubs || [];
 
   async function save(w) {
-    const d = { hubId: w.employment?.hubId || hubs[0]?.id || null, salary: (w.employment?.salaryPaise || 1300000) / 100, ...draft[w._id] };
+    const d = { hubId: w.employment?.hubId || w.nearestHub?.id || hubs[0]?.id || null, salary: (w.employment?.salaryPaise || 1300000) / 100, ...draft[w._id] };
     try {
       await setStaff({ workerId: w._id, type: 'staff', hubId: d.hubId, salaryRupees: Number(d.salary) }).unwrap();
       toast.success(`${w.name || 'They'} ${w.employment?.type === 'staff' ? 'updated' : 'joined the fleet'}`);
@@ -39,19 +39,19 @@ export default function FleetStaff() {
       )}
       <label className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3">
         <Search size={15} className="text-slate-400" />
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Find a Rakshak by name or phone (2+ letters) to add" className="w-full bg-transparent py-2.5 text-sm outline-none" />
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Find by name, phone or staff ID (ZO…)" className="w-full bg-transparent py-2.5 text-sm outline-none" />
       </label>
       {!q && <p className="text-[12.5px] text-slate-500">Your staff first, then the newest Rakshak sign-ups. Pick a hub and salary, then Make staff.</p>}
       {isLoading ? <PageLoader /> : (
         <Card className="divide-y divide-slate-100 p-0">
           {(data?.workers || []).map((w) => {
             const isStaff = w.employment?.type === 'staff';
-            const d = { hubId: w.employment?.hubId || '', salary: (w.employment?.salaryPaise || 0) / 100 || '', ...draft[w._id] };
+            const d = { hubId: w.employment?.hubId || w.nearestHub?.id || '', salary: (w.employment?.salaryPaise || 0) / 100 || '', ...draft[w._id] };
             return (
               <div key={w._id} className="flex flex-wrap items-center gap-3 px-4 py-3">
                 <div className="min-w-[160px] flex-1">
-                  <p className="text-sm font-semibold text-slate-900">{w.name || 'Unnamed'} {isStaff && <span className="ml-1 rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-bold text-blue-700">Staff</span>}</p>
-                  <p className="text-[12px] text-slate-500">{w.phone}{isStaff ? `, ${rupees(w.employment.salaryPaise, { exact: true })} a month` : ''}</p>
+                  <p className="text-sm font-semibold text-slate-900">{w.name || 'Unnamed'} {isStaff && <span className="ml-1 rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-bold text-blue-700">Staff{w.employment?.staffId ? ` · ${w.employment.staffId}` : ''}</span>}</p>
+                  <p className="text-[12px] text-slate-500">{w.phone}{isStaff ? `, ${rupees(w.employment.salaryPaise, { exact: true })} a month` : ''}{!isStaff && w.nearestHub ? `, nearest hub ${w.nearestHub.name} (${w.nearestHub.km} km)` : ''}</p>
                 </div>
                 <div className="w-40"><Select value={d.hubId} onChange={(e) => field(w, 'hubId', e.target.value)} aria-label="Hub">
                   <option value="">Pick hub…</option>{hubs.map((h) => <option key={h.id} value={h.id}>{h.name}</option>)}
