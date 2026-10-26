@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Wrench } from 'lucide-react';
 import { SERVICE_ICONS } from '@shared/components/home/LiveServices';
-import { distinctArt, servicePhoto } from '@shared/components/home/serviceArt';
+import { distinctArt, servicePhoto, tilePhoto } from '@shared/components/home/serviceArt';
 import { problemPhotoIn } from '@shared/components/home/problemArt';
 
 /**
@@ -15,7 +15,7 @@ import { problemPhotoIn } from '@shared/components/home/problemArt';
 function Tile({ service, character, onOpen }) {
   const Icon = SERVICE_ICONS[service.icon] || Wrench;
   // An admin-set picture wins; then the service's own photo; then its ZappyOne character; then its icon.
-  const photo = servicePhoto(service);
+  const photo = tilePhoto(service.code) || servicePhoto(service);
   const art = photo || character?.still;
   return (
     <button type="button" onClick={onOpen}

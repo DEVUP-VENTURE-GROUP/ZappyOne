@@ -18,7 +18,6 @@ import { colors, ink, slate, zappy } from '@zappy/ui/theme/colors';
 import { radius } from '@zappy/ui/theme/radius';
 import { spacing } from '@zappy/ui/theme/spacing';
 import type { HomeDomain, HomeService } from './homeCatalog';
-import { ServiceTileGrid, type GridTile } from './ServiceTileGrid';
 
 /** Where a section's own page is, for its single card's Book action. */
 const SECTION_HOME: Record<string, { name: string; path: string }> = {
@@ -54,7 +53,9 @@ const ServiceCard = memo(function ServiceCard({ service, onOpen }: { service: Ho
   return (
     <View style={styles.card}>
       <Pressable onPress={() => onOpen(service)} accessibilityRole="button" accessibilityLabel={`Book ${service.name}`} style={styles.cardHead}>
-        <View style={styles.cardIcon}><Icon size={24} color={ink[700]} strokeWidth={1.8} /></View>
+        <View style={styles.cardIcon}>
+          {tilePhoto(service.code) ? <Image source={{ uri: webAsset(tilePhoto(service.code)) || undefined }} style={styles.cardPhoto} resizeMode="cover" /> : <Icon size={24} color={ink[700]} strokeWidth={1.8} />}
+        </View>
         <View style={styles.flex}>
           <Text variant="body" weight="bold">{service.name}</Text>
           {count ? <Text variant="caption" color={ink[500]}>{count}</Text> : null}
@@ -70,16 +71,6 @@ const ServiceCard = memo(function ServiceCard({ service, onOpen }: { service: Ho
   );
 });
 
-// The tile grid for a section: one tile per service, or a single service's choices (events); deep repairs keep their cards.
-function gridOf(domain: HomeDomain): (GridTile & { service: HomeService })[] | null {
-  if (domain.code === 'electronics') return null;
-  const { services } = domain;
-  if (services.length === 1 && services[0].options?.length) {
-    return services[0].options.map((o) => ({ code: o.code, name: o.name, icon: o.icon, emoji: o.emoji, toneColor: o.toneColor, imageUrl: o.imageUrl || servicePhoto({ code: o.code }) || '', path: o.path, service: services[0] }));
-  }
-  return services.map((s) => ({ code: s.code, name: s.name, icon: s.icon, imageUrl: tilePhoto(s.code) || servicePhoto(s) || '', path: s.path, service: s }));
-}
-
 function Section({ domain, onOpen }: { domain: HomeDomain; onOpen: (s: HomeService, path?: string) => void }) {
   // The section's own photo when it has one, else its character.
   const photo = servicePhoto(domain.services[0]);
@@ -94,9 +85,7 @@ function Section({ domain, onOpen }: { domain: HomeDomain; onOpen: (s: HomeServi
           <Text variant="caption" color={ink[500]}>{line || title}</Text>
         </View>
       </View>
-      {gridOf(domain)
-        ? <ServiceTileGrid tiles={gridOf(domain) as GridTile[]} onOpen={(t) => { const g = t as GridTile & { service: HomeService }; onOpen(g.service, g.path); }} />
-        : cardsFor(domain).map((s) => <ServiceCard key={s.code} service={s} onOpen={onOpen} />)}
+      {cardsFor(domain).map((s) => <ServiceCard key={s.code} service={s} onOpen={onOpen} />)}
     </View>
   );
 }
@@ -127,7 +116,8 @@ const styles = StyleSheet.create({
   avatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: slate[100] },
   card: { overflow: 'hidden', borderRadius: radius.large, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
   cardHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingHorizontal: spacing.base, paddingTop: spacing.base },
-  cardIcon: { width: 48, height: 48, borderRadius: radius.button, alignItems: 'center', justifyContent: 'center', backgroundColor: slate[100] },
+  cardIcon: { width: 48, height: 48, borderRadius: radius.button, alignItems: 'center', justifyContent: 'center', overflow: 'hidden', backgroundColor: slate[100] },
+  cardPhoto: { width: '100%', height: '100%' },
   book: { flexDirection: 'row', alignItems: 'center', minHeight: 40, paddingLeft: 14, paddingRight: 8, borderRadius: radius.button, backgroundColor: zappy[600] },
   tiles: { gap: spacing.md, padding: spacing.base, paddingTop: spacing.md },
   tagline: { paddingHorizontal: spacing.base, paddingBottom: spacing.base, paddingTop: spacing.sm },

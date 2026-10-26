@@ -5,7 +5,7 @@
  */
 import { memo, useMemo } from 'react';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
-import { distinctArt, servicePhoto } from '@zappy/core/shared/serviceArt';
+import { distinctArt, servicePhoto, tilePhoto } from '@zappy/core/shared/serviceArt';
 import { Text } from '@zappy/ui/components';
 import { serviceIcon } from '@zappy/ui/components/home/serviceIcons';
 import { webAsset } from '@zappy/ui/lib/media';
@@ -16,7 +16,7 @@ import type { HomeDomain, HomeService } from './homeCatalog';
 
 const Tile = memo(function Tile({ service, character, onOpen }: { service: HomeService; character?: { still?: string }; onOpen: () => void }) {
   const Icon = serviceIcon(service.icon);
-  const photo = servicePhoto(service);
+  const photo = tilePhoto(service.code) || servicePhoto(service);
   const art = webAsset(photo || character?.still);
   return (
     <Pressable onPress={onOpen} accessibilityRole="button" accessibilityLabel={service.name} style={styles.tile}>

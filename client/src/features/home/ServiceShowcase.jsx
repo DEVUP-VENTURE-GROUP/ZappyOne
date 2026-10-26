@@ -3,7 +3,6 @@ import { ChevronRight, Wrench } from 'lucide-react';
 import { SERVICE_ICONS, CategoryTile } from '@shared/components/home/LiveServices';
 import { artFor, PITCH, servicePhoto, tilePhoto } from '@shared/components/home/serviceArt';
 import { categoryPhoto } from '@shared/components/home/problemArt';
-import ServiceTileGrid from './ServiceTileGrid';
 
 /**
  * Every service, section by section, with what is inside each one.
@@ -45,19 +44,6 @@ function cardsFor(domain) {
   }];
 }
 
-/**
- * The tile grid for a section: one tile per service, or for a single service with choices (events) its choices.
- * Deep repairs (phones, laptops) keep their cards, whose problem areas are the point.
- */
-function gridOf(domain) {
-  if (domain.code === 'electronics') return null;
-  const { services } = domain;
-  if (services.length === 1 && services[0].options?.length) {
-    return services[0].options.map((o) => ({ code: o.code, name: o.name, icon: o.icon, emoji: o.emoji, tone: o.tone, imageUrl: o.imageUrl || servicePhoto({ code: o.code }) || '', path: o.path, service: services[0] }));
-  }
-  return services.map((s) => ({ code: s.code, name: s.name, icon: s.icon, imageUrl: tilePhoto(s.code) || servicePhoto(s) || '', path: s.path, service: s }));
-}
-
 function ServiceCard({ service, onOpen }) {
   const Icon = SERVICE_ICONS[service.icon] || Wrench;
   const repairTiles = (service.coverage || []).map((c) => ({
@@ -76,8 +62,10 @@ function ServiceCard({ service, onOpen }) {
       <button type="button" onClick={() => onOpen(service)}
         className="flex w-full items-center gap-3 px-4 pt-4 text-left sm:px-5 sm:pt-5"
         aria-label={`Book ${service.name}`}>
-        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-btn bg-sunken text-ink-700">
-          <Icon size={24} strokeWidth={1.8} />
+        <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-btn bg-sunken text-ink-700">
+          {tilePhoto(service.code)
+            ? <img src={tilePhoto(service.code)} alt="" loading="lazy" className="h-full w-full object-cover" />
+            : <Icon size={24} strokeWidth={1.8} />}
         </span>
         <span className="min-w-0 flex-1">
           <span className="block text-[17px] font-bold leading-snug text-ink-900">{service.name}</span>
@@ -117,13 +105,9 @@ function Section({ domain, onOpen }) {
           <p className="text-[13px] leading-snug text-ink-500">{line || title}</p>
         </div>
       </div>
-      {gridOf(domain) ? (
-        <ServiceTileGrid tiles={gridOf(domain)} onOpen={(t) => onOpen(t.service, t.path)} />
-      ) : (
-        <div className="flex min-w-0 flex-col gap-3">
-          {cardsFor(domain).map((s) => <ServiceCard key={s.code} service={s} onOpen={onOpen} />)}
-        </div>
-      )}
+      <div className="flex min-w-0 flex-col gap-3">
+        {cardsFor(domain).map((s) => <ServiceCard key={s.code} service={s} onOpen={onOpen} />)}
+      </div>
     </section>
   );
 }
