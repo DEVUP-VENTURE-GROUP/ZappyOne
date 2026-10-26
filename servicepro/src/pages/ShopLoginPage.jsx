@@ -146,7 +146,7 @@ export default function ShopLoginPage() {
           <div className="w-14 h-14 rounded-2xl bg-zappy-600 flex items-center justify-center shadow-lg shadow-zappy-200 mb-4">
             <Store size={26} className="text-white" strokeWidth={2} />
           </div>
-          <h1 className="text-[22px] font-black text-slate-900 tracking-tight">Zappy Shop Partner</h1>
+          <h1 className="text-[22px] font-black text-slate-900 tracking-tight">ZappyOne Shop Partner</h1>
           <p className="text-[13px] text-slate-500 font-medium mt-1">Manage your shop, workers & earnings</p>
         </div>
 

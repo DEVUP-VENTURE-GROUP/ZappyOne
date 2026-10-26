@@ -144,7 +144,7 @@ export default function ShopWorkersPage() {
               <h3 className="text-lg font-bold text-slate-900">Add Worker</h3>
               <button type="button" onClick={() => setShowAdd(false)} className="text-slate-400 hover:text-slate-600"><X size={20} /></button>
             </div>
-            <p className="text-xs text-slate-400 -mt-2">If this phone number already belongs to a Zappy worker, we'll just link them to your shop.</p>
+            <p className="text-xs text-slate-400 -mt-2">If this phone number already belongs to a ZappyOne worker, we'll just link them to your shop.</p>
             <div>
               <label className="text-[12px] font-bold text-slate-700 block mb-1.5">Phone Number <span className="text-red-500">*</span></label>
               <input value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))} placeholder="10-digit mobile number"

@@ -72,7 +72,7 @@ function ZappyLogoBase({
   }));
 
   return (
-    <Animated.View style={animatedStyle} accessibilityRole="image" accessibilityLabel="Zappy">
+    <Animated.View style={animatedStyle} accessibilityRole="image" accessibilityLabel="ZappyOne">
       <Svg viewBox="0 0 64 64" width={size} height={size}>
         {/* Speed lines */}
         <G stroke={color} strokeWidth={4.6} strokeLinecap="round" opacity={0.9}>

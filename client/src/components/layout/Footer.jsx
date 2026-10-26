@@ -143,7 +143,7 @@ export default function Footer({ services = [], areas = [], season = null, theme
         )}
 
         <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-6 text-[12px] text-slate-500 md:flex-row">
-          <p>© {new Date().getFullYear()} Zappy Technologies</p>
+          <p>© {new Date().getFullYear()} ZappyOne, a venture of DevUp Ecosystem</p>
           <div className="flex flex-wrap items-center justify-center gap-5">
             {SOCIALS.map(({ label, href }) => (
               <a

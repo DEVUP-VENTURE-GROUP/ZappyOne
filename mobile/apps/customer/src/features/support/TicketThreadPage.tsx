@@ -48,7 +48,7 @@ export function TicketThreadPage() {
           <Text variant="caption" weight="semibold" color={overdue ? danger[600] : ink[500]}>{overdue ? t('ticket.overdue', 'Response overdue. Escalated to our senior team') : `${t('ticket.replyWithin', 'Expected reply within')} ${hoursLeft}h`}</Text>
         </View>
       ) : null}
-      <MessageThread messages={ticket.messages || []} teamLabel="Zappy Support" open={open} sending={sending} placeholder={t('ticket.replyHint', 'Reply to support…')} onSend={reply}
+      <MessageThread messages={ticket.messages || []} teamLabel="ZappyOne Support" open={open} sending={sending} placeholder={t('ticket.replyHint', 'Reply to support…')} onSend={reply}
         footer={ticket.status === 'resolved' ? (
           <View style={styles.resolved}>
             <CheckCircle2 size={16} color={success[600]} />

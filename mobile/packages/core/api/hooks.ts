@@ -348,6 +348,7 @@ export const useAdminUpdateEventConfigMutation = h.useAdminUpdateEventConfigMuta
 export const useAdminEventAnalyticsQuery = h.useAdminEventAnalyticsQuery;
 export const useAdminEventCategoriesQuery = h.useAdminEventCategoriesQuery;
 export const useAdminUpsertEventCategoryMutation = h.useAdminUpsertEventCategoryMutation;
+export const useAdminDeleteEventCategoryMutation = h.useAdminDeleteEventCategoryMutation;
 export const useAdminCancelEventBookingMutation = h.useAdminCancelEventBookingMutation;
 export const useDeclineEventBookingMutation = h.useDeclineEventBookingMutation;
 export const useAdminGetEventPartnerQuery = h.useAdminGetEventPartnerQuery;

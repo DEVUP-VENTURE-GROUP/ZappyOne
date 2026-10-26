@@ -95,7 +95,7 @@ export const LiveTrackingMap: React.FC<LiveTrackingMapProps> = ({
       </View>
 
       <Text variant="caption" align="center">
-        The live map is available in the Zappy mobile app.
+        The live map is available in the ZappyOne mobile app.
       </Text>
     </View>
   );

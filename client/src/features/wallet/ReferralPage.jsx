@@ -184,8 +184,8 @@ export default function ReferralPage() {
   function handleWebShare() {
     if (navigator.share) {
       navigator.share({
-        title: 'Join Zappy & Get ₹50',
-        text: `Use my VIP code ${code} on Zappy and get ₹50 off your first home service booking!`,
+        title: 'Join ZappyOne & Get ₹50',
+        text: `Use my VIP code ${code} on ZappyOne and get ₹50 off your first home service booking!`,
         url: referralLink,
       }).catch(() => {});
     } else {
@@ -195,7 +195,7 @@ export default function ReferralPage() {
 
   function handleWhatsApp() {
     const msg = encodeURIComponent(
-      `Hey! Use my Zappy VIP code *${code}* and get ₹50 off your first booking!\n${referralLink}`
+      `Hey! Use my ZappyOne VIP code *${code}* and get ₹50 off your first booking!\n${referralLink}`
     );
     window.open(`https://wa.me/?text=${msg}`, '_blank');
   }
@@ -238,7 +238,7 @@ export default function ReferralPage() {
               <span className=" text-zappy-400">Get ₹100.</span>
             </h1>
             <p className="text-slate-400 text-sm leading-relaxed max-w-[280px] mx-auto font-medium">
-              Invite friends to Zappy. They get a discount, and you earn real wallet cash when they book.
+              Invite friends to ZappyOne. They get a discount, and you earn real wallet cash when they book.
             </p>
           </motion.div>
 

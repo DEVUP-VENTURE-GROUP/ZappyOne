@@ -42,7 +42,7 @@ function ScratchCard({ card, onScratch, revealing }) {
   );
 }
 
-const REASON_LABEL = { order: 'Order reward', referral: 'Referral bonus', referee_join: 'Welcome bonus', scratch: 'Scratch card', redeem: 'Redeemed to wallet', admin_grant: 'Bonus from Zappy' };
+const REASON_LABEL = { order: 'Order reward', referral: 'Referral bonus', referee_join: 'Welcome bonus', scratch: 'Scratch card', redeem: 'Redeemed to wallet', admin_grant: 'Bonus from ZappyOne' };
 
 export default function RewardsPage() {
   const nav = useNavigate();

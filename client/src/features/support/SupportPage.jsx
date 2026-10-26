@@ -111,7 +111,7 @@ function TicketThread({ ticketId, onBack }) {
               }`}>
                 {isSupport && (
                   <p className="text-[10px] font-black text-slate-500 mb-0.5 uppercase tracking-wide">
-                    Zappy Support
+                    ZappyOne Support
                   </p>
                 )}
                 <p className="text-sm leading-relaxed">{msg.text}</p>

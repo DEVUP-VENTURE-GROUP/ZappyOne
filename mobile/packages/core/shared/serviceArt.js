@@ -18,11 +18,11 @@ const CHARACTERS = {
   cars: 'Vehicle mechanic',
   home: 'Home service pro',
   pets: 'Pet carer',
-  more: 'Zappy helper',
+  more: 'ZappyOne helper',
   events: 'Event planner',
   elders: 'Care companion',
   car: 'Car',
-  helper: 'Zappy helper',
+  helper: 'ZappyOne helper',
 };
 
 /** Stills with no loop of their own. */

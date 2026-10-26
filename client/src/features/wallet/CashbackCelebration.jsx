@@ -198,7 +198,7 @@ export default function CashbackCelebration({ amountPaise, totalEarnedPaise, onC
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.5 }}
               >
-                is back in your wallet — just for using Zappy!
+                is back in your wallet — just for using ZappyOne!
               </motion.p>
             </div>
 

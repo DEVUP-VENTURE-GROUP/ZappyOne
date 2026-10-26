@@ -614,7 +614,7 @@ export default function AdvertiserDashboard() {
               </div>
             </div>
             <div>
-              <p className="font-black text-navy-900 text-2xl tracking-tight leading-none">Zappy Ads</p>
+              <p className="font-black text-navy-900 text-2xl tracking-tight leading-none">ZappyOne Ads</p>
               <p className="text-[11px] text-slate-500 font-bold uppercase tracking-widest mt-1">Advertiser Portal</p>
             </div>
           </div>

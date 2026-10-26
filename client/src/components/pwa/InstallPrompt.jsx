@@ -46,7 +46,7 @@ export default function InstallPrompt() {
           <motion.div
             key="install-prompt"
             role="dialog"
-            aria-label="Install the Zappy app"
+            aria-label="Install the ZappyOne app"
             initial={false}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -85,7 +85,7 @@ export default function InstallPrompt() {
                 <ZappyAppIcon size={52} variant="light" className="shrink-0" />
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <h3 className="text-base font-bold text-navy-900 leading-tight">Install Zappy</h3>
+                    <h3 className="text-base font-bold text-navy-900 leading-tight">Install ZappyOne</h3>
                     <BadgeCheck size={16} className="text-zappy-600 shrink-0" aria-label="Verified" />
                   </div>
                   <p className="mt-1 text-[13px] leading-snug text-slate-500">

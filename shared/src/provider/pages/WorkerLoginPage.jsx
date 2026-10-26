@@ -15,6 +15,7 @@ import { setAuth } from '../../modules/auth/authSlice';
 import { ZappyWordmark } from '../../components/common/ZappyLogo';
 import toast from 'react-hot-toast';
 import SEO, { LOGIN_SCHEMA, BASE_URL } from '../../components/SEO';
+import { STAFF_PORTAL } from '../staffPortal';
 
 /*
  * Signing up collects a name and nothing else.
@@ -296,7 +297,7 @@ export default function WorkerLoginPage({ allowSignup = true, portalLabel = 'Wor
     <>
       <SEO
         title="Worker Login — ZappyOne Partner Portal"
-        description="Sign in to your Zappy worker dashboard. Accept nearby jobs, track earnings and get paid instantly."
+        description="Sign in to your ZappyOne worker dashboard. Accept nearby jobs, track earnings and get paid instantly."
         canonical={`${BASE_URL}/worker/login`}
         jsonLd={LOGIN_SCHEMA}
       />
@@ -324,13 +325,12 @@ export default function WorkerLoginPage({ allowSignup = true, portalLabel = 'Wor
             {/* Headline */}
             <div className="relative z-10 max-w-md">
               <h1 className="text-[30px] sm:text-[42px] lg:text-[52px] font-black leading-[1.05] tracking-tight text-slate-900">
-                Work on<br />your time.<br />
-                <span className="text-blue-600">Earn on<br />every job.</span>
+                {STAFF_PORTAL ? <>Your shifts.<br />Your hub.<br /><span className="text-blue-600">Salary every<br />month.</span></>
+                  : <>Work on<br />your time.<br /><span className="text-blue-600">Earn on<br />every job.</span></>}
               </h1>
               <div className="w-12 lg:w-14 h-[5px] lg:h-[6px] rounded-full bg-amber-400 mt-3.5 mb-3 lg:mt-5 lg:mb-4" />
               <p className="text-[13px] lg:text-base font-medium text-slate-500 leading-relaxed max-w-xs">
-                Join thousands of professionals earning{' '}
-                <span className="font-bold text-slate-700">₹500 – ₹2,000</span> daily with Zappy.
+                {STAFF_PORTAL ? 'ZappyOne staff: book your shifts, check in at your hub, and keep every tip.' : 'Verified jobs near you, the price agreed before you start, and support from the ZappyOne team.'}
               </p>
             </div>
           </div>

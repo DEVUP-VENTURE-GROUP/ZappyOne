@@ -195,10 +195,10 @@ export default function PartnerLoginPage() {
 
           {/* Branding Logo */}
           <div className="flex items-center gap-2.5 mb-10 lg:mb-16">
-            <img src={logoUrl} alt="Zappy" className="h-8 lg:h-9 object-contain drop-shadow-sm" />
+            <img src={logoUrl} alt="ZappyOne" className="h-8 lg:h-9 object-contain drop-shadow-sm" />
             <div className="flex flex-col">
               <span className="text-[22px] lg:text-2xl font-black leading-none tracking-tight text-slate-900 lg:text-white">
-                Zappy<span className="text-[#f59e0b]">one</span>
+                Zappy<span className="text-[#f59e0b]">One</span>
               </span>
               <span className="text-[10px] font-bold text-zappy-700 lg:text-zappy-300 uppercase tracking-widest mt-0.5">
                 Event Decoration

@@ -367,7 +367,7 @@ function PriceApprovals({ vertical }) {
     <div className="space-y-3">
       <SectionHeader
         title="Provider price approvals"
-        subtitle="Each price is judged against the Zappy reference band for the same repair, model and quality."
+        subtitle="Each price is judged against the ZappyOne reference band for the same repair, model and quality."
       />
       <Card className="overflow-hidden">
         <div className="overflow-x-auto">
@@ -375,7 +375,7 @@ function PriceApprovals({ vertical }) {
             <thead>
               <tr className="border-b border-slate-100">
                 <Th>Repair</Th><Th>Model</Th><Th>Quality</Th>
-                <Th>Provider price</Th><Th>Zappy reference</Th><Th>Deviation</Th><Th right>Decision</Th>
+                <Th>Provider price</Th><Th>ZappyOne reference</Th><Th>Deviation</Th><Th right>Decision</Th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">

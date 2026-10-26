@@ -500,7 +500,7 @@ export default function ProfilePage() {
                 </AnimatePresence>
               </motion.div>
 
-              <p className="text-center text-xs text-slate-300 pb-4">{t('profile.version', 'Zappy Platform, v1.0')}</p>
+              <p className="text-center text-xs text-slate-300 pb-4">{t('profile.version', 'ZappyOne Platform, v1.0')}</p>
             </div>
           </motion.div>
         )}

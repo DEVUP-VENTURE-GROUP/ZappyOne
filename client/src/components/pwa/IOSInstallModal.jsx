@@ -13,7 +13,7 @@ import { ZappyAppIcon } from '@shared/components/common/ZappyLogo';
 const STEPS = [
   { Icon: Share, title: 'Tap the Share button', body: 'It’s in Safari’s toolbar — the square with an upward arrow.' },
   { Icon: Plus,  title: 'Select “Add to Home Screen”', body: 'Scroll the share sheet until you find it.' },
-  { Icon: Check, title: 'Tap “Add”', body: 'Zappy lands on your home screen like a native app.' },
+  { Icon: Check, title: 'Tap “Add”', body: 'ZappyOne lands on your home screen like a native app.' },
 ];
 
 export default function IOSInstallModal({ open, onClose }) {
@@ -72,7 +72,7 @@ export default function IOSInstallModal({ open, onClose }) {
             <div className="flex flex-col items-center text-center mb-5">
               <ZappyAppIcon size={56} variant="light" />
               <h2 id="ios-install-title" className="mt-3 text-lg font-bold text-navy-900">
-                Add Zappy to your Home Screen
+                Add ZappyOne to your Home Screen
               </h2>
               <p className="mt-1 text-sm text-slate-500">
                 Three quick taps — no App Store needed.

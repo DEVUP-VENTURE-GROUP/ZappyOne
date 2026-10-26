@@ -9,7 +9,7 @@ import { Download, Loader2 } from 'lucide-react';
  * states. Purely presentational — the parent owns the install logic and passes
  * `loading` + `onClick`.
  */
-export default function InstallButton({ onClick, loading = false, label = 'Install Zappy' }) {
+export default function InstallButton({ onClick, loading = false, label = 'Install ZappyOne' }) {
   const [ripples, setRipples] = useState([]);
 
   const spawnRipple = (e) => {

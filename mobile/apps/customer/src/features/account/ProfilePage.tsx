@@ -90,7 +90,7 @@ export function ProfilePage() {
       ) : (
         <Button label={t('profile.logout', 'Log Out')} variant="dangerGhost" icon={<LogOut size={16} color={danger[500]} />} onPress={() => setConfirmLogout(true)} fullWidth />
       )}
-      <Text variant="caption" color={ink[300]} style={styles.center}>{t('profile.version', 'Zappy Platform, v1.0')}</Text>
+      <Text variant="caption" color={ink[300]} style={styles.center}>{t('profile.version', 'ZappyOne Platform, v1.0')}</Text>
     </ScrollView>
   );
 }

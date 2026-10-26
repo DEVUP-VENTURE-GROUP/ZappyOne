@@ -99,9 +99,9 @@ export default function PlansPage() {
     <div className="min-h-screen bg-slate-50 md:flex md:justify-center">
       <SEO
         title="ZappyOne Premium Plans — No Surge Pricing, Max Cashback | ZappyOne"
-        description="Upgrade to Zappy Premium. Get zero surge pricing, zero platform fees, 10% cashback, and priority worker dispatch. Plans starting from ₹99/month."
+        description="Upgrade to ZappyOne Premium. Get zero surge pricing, zero platform fees, 10% cashback, and priority worker dispatch. Plans starting from ₹99/month."
         canonical={`${BASE_URL}/plans`}
-        keywords="Zappy premium, Zappy gold, Zappy platinum, home services subscription India, no surge pricing app"
+        keywords="ZappyOne premium, ZappyOne gold, ZappyOne platinum, home services subscription India, no surge pricing app"
         jsonLd={PLANS_SCHEMA}
       />
       <div className="w-full max-w-lg bg-slate-900 min-h-screen relative shadow-[0_0_40px_rgba(0,0,0,0.2)] md:border-x border-slate-800 pb-12 overflow-hidden">
@@ -118,7 +118,7 @@ export default function PlansPage() {
             <ArrowLeft size={20} strokeWidth={2.5} />
           </motion.button>
           <div className="text-center">
-            <p className="text-[10px] font-black text-amber-400 uppercase tracking-widest">{audience === 'worker' ? 'Partner Pro' : 'Zappy Premium'}</p>
+            <p className="text-[10px] font-black text-amber-400 uppercase tracking-widest">{audience === 'worker' ? 'Partner Pro' : 'ZappyOne Premium'}</p>
             <h1 className="text-white font-black tracking-wide text-[15px]">Subscription Plans</h1>
           </div>
           <div className="w-10 h-10" />
@@ -132,7 +132,7 @@ export default function PlansPage() {
               <Crown size={36} className="text-slate-900" strokeWidth={2} />
             </motion.div>
             <motion.h2 initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.1 }} className="text-3xl font-black text-white mb-3">
-              {audience === 'worker' ? 'Maximize Your Earnings' : 'Experience Zappy Premium'}
+              {audience === 'worker' ? 'Maximize Your Earnings' : 'Experience ZappyOne Premium'}
             </motion.h2>
             <motion.p initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 }} className="text-slate-400 font-medium px-4">
               {audience === 'worker' ? 'Keep more of what you earn, get priority matching, and unlock premium badges.' : 'No surge pricing, priority matching, and exclusive premium support.'}

@@ -322,14 +322,14 @@ export default function OrderTrackingPage() {
       toast('SOS sent — 112 dialled and our safety team has been alerted', { icon: '🚨', duration: 8000 });
     } catch {
       // Never claim we were told when we were not.
-      toast.error('112 dialled. We could not reach Zappy support — please call us on the help line too.', { duration: 10000 });
+      toast.error('112 dialled. We could not reach ZappyOne support — please call us on the help line too.', { duration: 10000 });
     }
   }
 
   function shareTripLink() {
     const url = `${window.location.origin}/track?order=${id}`;
     if (navigator.share) {
-      navigator.share({ title: 'Track my Zappy service', text: 'Follow my live service tracking', url }).catch(() => {});
+      navigator.share({ title: 'Track my ZappyOne service', text: 'Follow my live service tracking', url }).catch(() => {});
     } else {
       navigator.clipboard.writeText(url)
         .then(() => toast.success('Link copied to clipboard'))
@@ -446,7 +446,7 @@ export default function OrderTrackingPage() {
                   You're one of our <span className="text-amber-400">early pioneers</span> in this location
                 </p>
                 <div className="rounded-xl px-4 py-3 mb-5 text-xs text-zappy-200 text-center leading-relaxed" style={{ background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.2)' }}>
-                  No Zappy workers are in your zone <strong className="text-white">yet</strong> — but we're expanding fast.
+                  No ZappyOne workers are in your zone <strong className="text-white">yet</strong> — but we're expanding fast.
                   <br /><span className="text-amber-300 font-semibold">Sit tight — it won't be long.</span>
                 </div>
                 <div className="space-y-2.5">
@@ -804,7 +804,7 @@ export default function OrderTrackingPage() {
                   </div>
                   <p className="text-xl font-black text-[#0F172A] text-center">Emergency SOS?</p>
                   <p className="text-sm text-slate-500 text-center leading-relaxed">
-                    This will call <strong>112 (Emergency Services)</strong> and notify Zappy support about your location. Only use in a genuine emergency.
+                    This will call <strong>112 (Emergency Services)</strong> and notify ZappyOne support about your location. Only use in a genuine emergency.
                   </p>
                   <div className="w-full space-y-2.5 mt-2">
                     <motion.button onClick={triggerSOS} whileTap={{ scale: 0.97 }}

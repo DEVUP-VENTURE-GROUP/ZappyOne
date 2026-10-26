@@ -154,7 +154,7 @@ export default function AdminDashboard() {
               <Zap size={14} strokeWidth={2.5} className="text-white" />
             </div>
             <div>
-              <p className="text-white font-black text-sm leading-none">Zappy</p>
+              <p className="text-white font-black text-sm leading-none">ZappyOne</p>
               <p className="text-slate-500 text-[10px] font-medium leading-none mt-0.5">Admin Console</p>
             </div>
           </div>

@@ -51,7 +51,7 @@ function PickerMapWebBase({ lat, lng, hasPin = true, onRecenter, busy }: PickerM
       ) : null}
 
       <Text variant="caption" color={colors.textMuted} align="center" style={styles.note}>
-        The draggable map is available in the Zappy mobile app. Search, or pick a
+        The draggable map is available in the ZappyOne mobile app. Search, or pick a
         saved address, to set the pin here.
       </Text>
 

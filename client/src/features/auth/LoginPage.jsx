@@ -198,9 +198,9 @@ export default function LoginPage() {
     <>
       <SEO
         title="Login to ZappyOne — Book Home Services Instantly"
-        description="Login to Zappy with your phone number. Book verified professionals for home services instantly — puncture repair, phone repair, laptop repair and more."
+        description="Login to ZappyOne with your phone number. Book verified professionals for home services instantly — puncture repair, phone repair, laptop repair and more."
         canonical={`${BASE_URL}/login`}
-        keywords="Zappy login, book home services India, on-demand services app login"
+        keywords="ZappyOne login, book home services India, on-demand services app login"
         jsonLd={LOGIN_SCHEMA}
       />
       <div className="h-screen w-full flex font-sans bg-white relative overflow-hidden">
@@ -228,7 +228,7 @@ export default function LoginPage() {
               <div className="flex flex-col flex-1 shrink-0 max-w-[50%]">
                 {/* Logo */}
                 <div className="flex items-center gap-3 mb-10 xl:mb-12">
-                  <img src="/logo.png" alt="Zappy Logo" className="h-10 xl:h-12 w-auto" />
+                  <img src="/logo.png" alt="ZappyOne Logo" className="h-10 xl:h-12 w-auto" />
                 </div>
 
                 {/* Text */}
@@ -261,7 +261,7 @@ export default function LoginPage() {
                     <div className="bg-[#031542] px-5 pb-5 pt-1 rounded-b-[24px]">
                       <div className="flex justify-between items-center mb-5">
                         <div className="flex items-center gap-1.5">
-                          <img src="/logo.png" alt="Zappy Logo" className="h-4 w-auto" />
+                          <img src="/logo.png" alt="ZappyOne Logo" className="h-4 w-auto" />
                         </div>
                         <div className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center">
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
@@ -339,10 +339,10 @@ export default function LoginPage() {
             <div className="flex flex-col items-center mb-8">
               {/* Logo inside card (Mobile) */}
               <div className="lg:hidden flex items-center gap-2.5 mb-8">
-                <img src="/logo.png" alt="Zappy Logo" className="h-9 w-auto" />
+                <img src="/logo.png" alt="ZappyOne Logo" className="h-9 w-auto" />
               </div>
 
-              <h2 className="text-[28px] font-bold text-[#031542] mb-1.5 tracking-tight">Welcome to Zappy</h2>
+              <h2 className="text-[28px] font-bold text-[#031542] mb-1.5 tracking-tight">Welcome to ZappyOne</h2>
               <p className="text-slate-500 font-medium text-[15px]">Log in to connect with us!</p>
             </div>
 
