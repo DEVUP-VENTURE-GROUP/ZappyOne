@@ -117,5 +117,5 @@ export function servicePhoto(service) {
   if (SERVICE_PHOTOS.has(service?.code)) return `/services/pet/${service.code}.webp`;
   // Helping errands use their real photos (shopping, pickup, return, exchange); others keep their character.
   const photo = problemServicePhoto(service?.code);
-  return photo && photo.startsWith('/services/helping/') ? photo : null;
+  return photo && (photo.startsWith('/services/helping/') || photo.startsWith('/services/tiles/')) ? photo : null;
 }

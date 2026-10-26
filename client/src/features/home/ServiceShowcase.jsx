@@ -3,6 +3,7 @@ import { ChevronRight, Wrench } from 'lucide-react';
 import { SERVICE_ICONS, CategoryTile } from '@shared/components/home/LiveServices';
 import { artFor, PITCH, servicePhoto } from '@shared/components/home/serviceArt';
 import { categoryPhoto } from '@shared/components/home/problemArt';
+import ServiceTileGrid from './ServiceTileGrid';
 
 /**
  * Every service, section by section, with what is inside each one.
@@ -42,6 +43,19 @@ function cardsFor(domain) {
       ? services.map((s) => ({ code: s.code, name: s.name, icon: s.icon, imageUrl: servicePhoto(s), path: s.path, service: s }))
       : services.flatMap((s) => (s.options || []).map((o) => ({ ...o, service: s }))),
   }];
+}
+
+/**
+ * The tile grid for a section: one tile per service, or for a single service with choices (events) its choices.
+ * Deep repairs (phones, laptops) keep their cards, whose problem areas are the point.
+ */
+function gridOf(domain) {
+  if (domain.code === 'electronics') return null;
+  const { services } = domain;
+  if (services.length === 1 && services[0].options?.length) {
+    return services[0].options.map((o) => ({ code: o.code, name: o.name, icon: o.icon, emoji: o.emoji, tone: o.tone, imageUrl: o.imageUrl || servicePhoto({ code: o.code }) || '', path: o.path, service: services[0] }));
+  }
+  return services.map((s) => ({ code: s.code, name: s.name, icon: s.icon, imageUrl: servicePhoto(s) || '', path: s.path, service: s }));
 }
 
 function ServiceCard({ service, onOpen }) {
@@ -103,9 +117,13 @@ function Section({ domain, onOpen }) {
           <p className="text-[13px] leading-snug text-ink-500">{line || title}</p>
         </div>
       </div>
-      <div className="flex min-w-0 flex-col gap-3">
-        {cardsFor(domain).map((s) => <ServiceCard key={s.code} service={s} onOpen={onOpen} />)}
-      </div>
+      {gridOf(domain) ? (
+        <ServiceTileGrid tiles={gridOf(domain)} onOpen={(t) => onOpen(t.service, t.path)} />
+      ) : (
+        <div className="flex min-w-0 flex-col gap-3">
+          {cardsFor(domain).map((s) => <ServiceCard key={s.code} service={s} onOpen={onOpen} />)}
+        </div>
+      )}
     </section>
   );
 }

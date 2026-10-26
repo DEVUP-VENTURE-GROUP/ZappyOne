@@ -18,6 +18,7 @@ import { colors, ink, slate, zappy } from '@zappy/ui/theme/colors';
 import { radius } from '@zappy/ui/theme/radius';
 import { spacing } from '@zappy/ui/theme/spacing';
 import type { HomeDomain, HomeService } from './homeCatalog';
+import { ServiceTileGrid, type GridTile } from './ServiceTileGrid';
 
 /** Where a section's own page is, for its single card's Book action. */
 const SECTION_HOME: Record<string, { name: string; path: string }> = {
@@ -69,6 +70,16 @@ const ServiceCard = memo(function ServiceCard({ service, onOpen }: { service: Ho
   );
 });
 
+// The tile grid for a section: one tile per service, or a single service's choices (events); deep repairs keep their cards.
+function gridOf(domain: HomeDomain): (GridTile & { service: HomeService })[] | null {
+  if (domain.code === 'electronics') return null;
+  const { services } = domain;
+  if (services.length === 1 && services[0].options?.length) {
+    return services[0].options.map((o) => ({ code: o.code, name: o.name, icon: o.icon, emoji: o.emoji, toneColor: o.toneColor, imageUrl: o.imageUrl || servicePhoto({ code: o.code }) || '', path: o.path, service: services[0] }));
+  }
+  return services.map((s) => ({ code: s.code, name: s.name, icon: s.icon, imageUrl: servicePhoto(s) || '', path: s.path, service: s }));
+}
+
 function Section({ domain, onOpen }: { domain: HomeDomain; onOpen: (s: HomeService, path?: string) => void }) {
   // The section's own photo when it has one, else its character.
   const photo = servicePhoto(domain.services[0]);
@@ -83,7 +94,9 @@ function Section({ domain, onOpen }: { domain: HomeDomain; onOpen: (s: HomeServi
           <Text variant="caption" color={ink[500]}>{line || title}</Text>
         </View>
       </View>
-      {cardsFor(domain).map((s) => <ServiceCard key={s.code} service={s} onOpen={onOpen} />)}
+      {gridOf(domain)
+        ? <ServiceTileGrid tiles={gridOf(domain) as GridTile[]} onOpen={(t) => { const g = t as GridTile & { service: HomeService }; onOpen(g.service, g.path); }} />
+        : cardsFor(domain).map((s) => <ServiceCard key={s.code} service={s} onOpen={onOpen} />)}
     </View>
   );
 }

@@ -18,8 +18,8 @@ import type { HomeDomain, HomeService } from './homeCatalog';
 
 /** `services`: catalog codes the slide stands for; it opens the first one offered. Photos are served at /hero. */
 const SLIDES = [
-  { key: 'car_wash', domain: 'vehicles', services: ['car_wash'], tab: 'Car wash', photo: '/hero/vehicle-care.webp', title: 'Car wash at your parking', line: 'Foam wash, inside vacuum or full clean. From ₹299.' },
-  { key: 'bike_wash', domain: 'vehicles', services: ['bike_wash'], tab: 'Bike wash', photo: '/hero/two-wheeler.webp', title: 'Bike wash at your door', line: 'Quick, foam or foam + polish. From ₹99.' },
+  { key: 'car_wash', domain: 'vehicles', services: ['car_wash'], tab: 'Car wash', photo: '/hero/car-wash.webp', title: 'Car wash at your parking', line: 'Foam wash, inside vacuum or full clean. From ₹299.' },
+  { key: 'bike_wash', domain: 'vehicles', services: ['bike_wash'], tab: 'Bike wash', photo: '/hero/bike-wash.webp', title: 'Bike wash at your door', line: 'Foam wash, chain clean and lube, or polish. From ₹99.' },
   { key: 'two_wheeler', domain: 'vehicles', services: ['two_wheeler'], tab: '2-Wheeler', photo: '/hero/two-wheeler.webp', title: 'Bike trouble, sorted', line: 'A mechanic comes to you, at home or on the road.' },
   { key: 'four_wheeler', domain: 'vehicles', services: ['four_wheeler'], tab: '4-Wheeler', photo: '/hero/vehicle-care.webp', title: 'Car care at your door', line: 'Checks and repairs where your car is parked.' },
   { key: 'water_tank_care', domain: 'home_services', services: ['water_tank_care'], tab: 'Water tank', photo: '/hero/water-tank.webp' },
