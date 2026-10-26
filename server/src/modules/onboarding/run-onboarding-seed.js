@@ -71,6 +71,7 @@ async function seedLines() {
           isPopular: !!l.isPopular,
           providerKinds: l.providerKinds || ['shop', 'individual'],
           staffOnly: !!l.staffOnly,
+          staffDoes: !!l.staffDoes,
           form: l.form || null,
           minUiLevel: l.minUiLevel || 0,
           displayOrder: l.displayOrder || 0,

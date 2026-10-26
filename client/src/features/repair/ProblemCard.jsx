@@ -4,7 +4,9 @@ import { formatPaise } from '@shared/utils/money';
 
 const Price = ({ problem, className = '' }) => (problem.pricePaise > 0 ? (
   <span className={`flex items-baseline gap-1.5 ${className}`}>
-    <span className="text-[17px] font-bold tabular-nums text-brand-600">{formatPaise(problem.pricePaise)}</span>
+    {problem.surgePaise > 0 && <span className="text-[12px] tabular-nums text-ink-400 line-through">{formatPaise(problem.pricePaise)}</span>}
+    <span className="text-[17px] font-bold tabular-nums text-brand-600">{formatPaise(problem.pricePaise + (problem.surgePaise || 0))}</span>
+    {problem.surgePaise > 0 && <span className="text-[11px] font-semibold text-amber-700">Surge</span>}
     {problem.durationMin > 0 && <span className="text-[12px] text-ink-500">{problem.durationMin} min</span>}
   </span>
 ) : null);

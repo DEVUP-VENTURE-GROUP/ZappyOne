@@ -4,6 +4,7 @@
  * idempotency key per visit so a double tap cannot book twice; a price that
  * moved while they decided is refreshed and they book again.
  */
+import { deviceName } from '@zappy/core/shared/deviceName';
 import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Check } from 'lucide-react-native';
@@ -70,7 +71,7 @@ export function ConfirmStep({ vertical, brand, model, configuration, problem, di
   }
 
   const rows: [string, string][] = [
-    ['Device', `${brand.name} ${model.name}`],
+    ['Device', deviceName(brand, model)],
     ...(configuration ? [['Build', configuration.name] as [string, string]] : []),
     ['Problem', problem.name],
     ['Repair', inspectionOnly ? 'Decided after inspection' : diagnosis?.recommendations?.[0]?.name || 'To be confirmed after diagnosis'],

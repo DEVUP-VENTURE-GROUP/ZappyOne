@@ -4,6 +4,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useFlowStep, useDraft, readDraft, clearDraft, useSafeBack } from '../../hooks/useBookingFlow';
 import ResumeBanner from '../../components/common/ResumeBanner';
 import { formatPaise } from '@shared/utils/money';
+import { deviceName } from '@shared/customer/deviceName';
+import { useProsArrive } from '@shared/customer/prosArrive';
 import { useSelector, useDispatch } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -595,6 +597,8 @@ function ModelStep({ vertical, deep, brand, productType, family, onPick, onAuto 
 }
 
 function ProblemStep({ vertical, model, productType, fuelType, presetCode, onPick }) {
+  const loc = useSelector(selectLocation);
+  const pin = typeof loc?.lat === 'number' ? { lat: Math.round(loc.lat * 1000) / 1000, lng: Math.round(loc.lng * 1000) / 1000 } : null;
   /*
    * The product type narrows the list as much as the model does.
    *
@@ -610,6 +614,8 @@ function ProblemStep({ vertical, model, productType, fuelType, presetCode, onPic
     // An EV owner is never asked about spark plugs, a petrol owner never about
     // a CNG regulator, and only a diesel is asked about its DPF.
     fuelType: fuelType || undefined,
+    // The pin, rounded to ~100 m, so package prices include surge there now.
+    ...(pin && { lat: pin.lat, lng: pin.lng }),
   });
 
   /**
@@ -940,6 +946,7 @@ function ProviderStep({
   const needsDiagnosis = diagnosis?.requiresDiagnosis;
   const inspectionOnly = serviceMode === 'diagnosis_only';
 
+  const [pollMs, setPollMs] = useState(0);
   const { data, isLoading, isFetching } = useRepairProvidersQuery(
     {
       vertical,
@@ -954,8 +961,12 @@ function ProviderStep({
     },
     // An inspection needs no priced provider — any capable technician can look
     // at the device, so provider matching is skipped entirely for that path.
-    { skip: inspectionOnly || !repairCode || !hasLocation },
+    { skip: inspectionOnly || !repairCode || !hasLocation, pollingInterval: pollMs },
   );
+  useProsArrive(data?.providers, !!data && !isFetching, setPollMs, (n) => {
+    toast.success(n === 1 ? 'A pro just became free near you. Pick them below.' : `${n} pros just became free near you. Pick one below.`, { duration: 6000 });
+    try { navigator.vibrate?.(200); } catch { /* not supported */ }
+  });
 
   /*
    * Technicians cover this address but none is online right now. Instead of a
@@ -1261,7 +1272,7 @@ function samePlace(a, b) {
 function ChosenSummary({
   brand, model, configuration, problem, diagnosis, serviceMode, location, onChangeLocation,
 }) {
-  const device = [brand?.name, model?.name].filter(Boolean).join(' ') || 'Your device';
+  const device = deviceName(brand, model) || 'Your device';
   const fault = problem?.name || diagnosis?.recommendations?.[0]?.repairName || diagnosis?.summary;
 
   return (
@@ -1616,7 +1627,7 @@ function ConfirmStep({
           {inspectionOnly ? 'Your inspection' : 'Your repair'}
         </p>
         {[
-          ['Device', `${brand.name} ${model.name}`],
+          ['Device', deviceName(brand, model)],
           ...(configuration ? [['Build', configuration.name]] : []),
           ['Problem', problem.name],
           ['Repair', inspectionOnly
@@ -1903,7 +1914,7 @@ function RepairFlow({ vertical, saved, draftKey, onStartOver, onAddAnother }) {
     else if (modelFuels.length === 0) { setFuelType(null); skip('fuel'); }
   }, [step, modelFuels, skip]);
 
-  const deviceLabel = [brand?.name, model?.name].filter(Boolean).join(' ');
+  const deviceLabel = deviceName(brand, model);
 
   const noun = NOUNS[vertical] || DEFAULT_NOUNS;
 

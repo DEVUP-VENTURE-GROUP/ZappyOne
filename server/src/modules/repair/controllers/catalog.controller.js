@@ -240,7 +240,7 @@ async function listMyIdentificationRequests(req, res, next) {
 }
 
 // A problem that leads straight to one fixed-price job shows its price and time on the card (washes, tank cleaning).
-async function fixedPrices(vertical, modelCode, problems) {
+async function fixedPrices(vertical, modelCode, problems, at = {}) {
   const single = problems.filter((p) => !p.requiresDiagnosis && p.candidateRepairCodes?.length === 1);
   if (!modelCode || !single.length) return new Map();
   const codes = single.map((p) => p.candidateRepairCodes[0]);
@@ -254,6 +254,13 @@ async function fixedPrices(vertical, modelCode, problems) {
     const r = repairs.find((x) => x.code === p.candidateRepairCodes[0]);
     const pricePaise = r && prices.get(r.code);
     if (pricePaise > 0) out.set(p.code, { pricePaise, durationMin: r.estimatedDurationMin || null });
+  }
+  // Surge right now at the customer's pin (jobs/surge), so the card shows what checkout will charge.
+  const line = out.size && Number.isFinite(Number(at.lat)) && Number.isFinite(Number(at.lng)) ? await require('../../jobs/kinds').KINDS.repair.line({ vertical }) : null;
+  if (line) {
+    const rows = [...out.values()];
+    const extra = await require('../../jobs/surge').preview({ line, lat: Number(at.lat), lng: Number(at.lng), bases: rows.map((x) => x.pricePaise) });
+    rows.forEach((x, i) => { if (extra[i] > 0) x.surgePaise = extra[i]; });
   }
   return out;
 }
@@ -320,7 +327,7 @@ async function listProblems(req, res, next) {
      */
     const problems = await s3Service.signDocsMedia(rows);
     const signedCategories = await s3Service.signDocsMedia(categories);
-    const fixed = await fixedPrices(verticalOf(req), modelCode, rows);
+    const fixed = await fixedPrices(verticalOf(req), modelCode, rows, { lat: req.query.lat, lng: req.query.lng });
 
     const byCategory = signedCategories.map((c) => ({
       code: c.code,

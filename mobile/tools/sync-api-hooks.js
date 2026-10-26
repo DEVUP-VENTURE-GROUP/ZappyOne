@@ -53,6 +53,8 @@ const LOGIC = [
   { from: 'constants/services.js', to: 'shared/services.js', imports: {} },
   { from: 'customer/schedule.js', to: 'shared/schedule.js', imports: {} },
   { from: 'customer/helpModes.js', to: 'shared/helpModes.js', imports: {} },
+  { from: 'customer/deviceName.js', to: 'shared/deviceName.js', imports: {} },
+  { from: 'customer/prosArrive.js', to: 'shared/prosArrive.js', imports: { react: 'react' } },
   { from: 'customer/jobKinds.js', to: 'shared/jobKinds.js', imports: { '../provider/jobFlows': './jobFlows', './repairBill': './repairBill' } },
   { from: 'customer/trackingSteps.js', to: 'shared/trackingSteps.js', imports: {} },
   { from: 'customer/repairBill.js', to: 'shared/repairBill.js', imports: {} },

@@ -4,6 +4,7 @@
  * nothing to ask records itself as skipped and hands over, progress is saved on
  * the phone, and the provider and price are always chosen fresh.
  */
+import { deviceName } from '@zappy/core/shared/deviceName';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -164,7 +165,7 @@ export function RepairFlow({ vertical, saved, draftKey, onStartOver, onAddAnothe
 
   if (typesLoading) return <View style={styles.page}><Spinner /></View>;
   const titles = stepTitles(vertical, brand?.name, serviceMode);
-  const deviceLabel = [brand?.name, model?.name].filter(Boolean).join(' ');
+  const deviceLabel = deviceName(brand, model);
 
   return (
     <View style={styles.page}>
@@ -176,7 +177,7 @@ export function RepairFlow({ vertical, saved, draftKey, onStartOver, onAddAnothe
       {step === 'model' && brand ? <ModelStep vertical={vertical} deep={deep} brand={brand} productType={productType} family={family} onPick={(m) => { setModel(m); next('model'); }} onAuto={(m) => { setModel(m); skip('model'); }} /> : null}
       {step === 'config' && model ? <ConfigurationStep vertical={vertical} model={model} onPick={(c) => { setConfiguration(c); next('config'); }} onSkip={skipConfig} /> : null}
       {step === 'fuel' ? <FuelStep model={model} fuels={modelFuels} onPick={(f) => { setFuelType(f.code); next('fuel'); }} /> : null}
-      {step === 'problem' && model ? <ProblemStep vertical={vertical} model={model} productType={productType} fuelType={fuelType} presetCode={presetProblem} onPick={(p) => { setPresetProblem(null); setProblem(p); next('problem'); }} /> : null}
+      {step === 'problem' && model ? <ProblemStep vertical={vertical} model={model} pin={location} productType={productType} fuelType={fuelType} presetCode={presetProblem} onPick={(p) => { setPresetProblem(null); setProblem(p); next('problem'); }} /> : null}
       {step === 'diagnose' && problem ? (
         <DiagnoseStep vertical={vertical} problem={problem} onResolved={(d, raw, qa) => {
           setDiagnosis(d); setDiagnosticAnswers(raw || null); setDiagnosticTranscript(qa || []);

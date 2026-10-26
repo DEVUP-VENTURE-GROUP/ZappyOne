@@ -3,6 +3,7 @@
  * ChosenSummary): device, fault, how, and where, with the address one tap from
  * being corrected without losing the rest of the flow.
  */
+import { deviceName } from '@zappy/core/shared/deviceName';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { MapPin, Wrench } from 'lucide-react-native';
 import { Text } from '@zappy/ui/components';
@@ -18,7 +19,7 @@ export function ChosenSummary({ brand, model, configuration, problem, diagnosis,
   brand?: { name: string } | null; model?: { name: string } | null; configuration?: { name: string } | null; problem?: { name: string } | null;
   diagnosis?: Diagnosis | null; serviceMode: string; location: BookingLocation | null; onChangeLocation: () => void;
 }) {
-  const device = [brand?.name, model?.name].filter(Boolean).join(' ') || 'Your device';
+  const device = deviceName(brand, model) || 'Your device';
   const fault = problem?.name || diagnosis?.recommendations?.[0]?.repairName || diagnosis?.summary;
   return (
     <View style={flow.card}>

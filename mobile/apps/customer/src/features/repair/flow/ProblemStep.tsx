@@ -20,11 +20,12 @@ import type { Model } from './ModelStep';
 
 interface Category { code: string; name: string; imageUrl?: string; problems: Problem[] }
 
-export function ProblemStep({ vertical, model, productType, fuelType, presetCode, onPick }: {
+export function ProblemStep({ vertical, model, productType, fuelType, presetCode, onPick, pin }: {
+  pin?: { lat?: number; lng?: number } | null;
   vertical: string; model: Model; productType: Coded | null; fuelType: string | null; presetCode: string | null; onPick: (p: Problem) => void;
 }) {
   // The model's own type is preferred over the step's: the catalog knows better than the tap did.
-  const { data, isLoading } = useRepairProblemsQuery({ vertical, modelCode: model.code, productTypeCode: model.productTypeCode || productType?.code, fuelType: fuelType || undefined });
+  const { data, isLoading } = useRepairProblemsQuery({ vertical, modelCode: model.code, productTypeCode: model.productTypeCode || productType?.code, fuelType: fuelType || undefined, ...(typeof pin?.lat === 'number' && typeof pin?.lng === 'number' && { lat: Math.round(pin.lat * 1000) / 1000, lng: Math.round(pin.lng * 1000) / 1000 }) });
   const categories: Category[] = data?.categories || [];
 
   useEffect(() => {

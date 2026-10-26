@@ -4,10 +4,12 @@
  * actually do it at what price, sortable without hiding anyone.
  */
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Vibration, View } from 'react-native';
 import { AlertTriangle, HelpCircle } from 'lucide-react-native';
 import { useRepairPricePreviewQuery, useRepairProvidersQuery } from '@zappy/core/api';
+import { useProsArrive } from '@zappy/core/shared/prosArrive';
 import { Button, Text } from '@zappy/ui/components';
+import { toast } from '@zappy/ui/components/Toast';
 import { WhenChooser } from '@zappy/ui/components/booking/SlotPicker';
 import type { BookingLocation } from '@zappy/ui/lib/bookingLocation';
 import { accent, colors, ink, zappy } from '@zappy/ui/theme/colors';
@@ -37,10 +39,15 @@ export function ProviderStep({ vertical, diagnosis, model, brand, configuration,
   const inspectionOnly = serviceMode === 'diagnosis_only';
   const ready = pinConfirmed && !!location;
 
+  const [pollMs, setPollMs] = useState(0);
   const { data, isFetching } = useRepairProvidersQuery({
     vertical, repairCode, brandCode: brand?.code, modelCode: model?.code, serviceMode, lat: location?.lat, lng: location?.lng,
     ...(scheduledAt && { scheduledAt: scheduledAt.toISOString() }),
-  }, { skip: inspectionOnly || !repairCode || !ready });
+  }, { skip: inspectionOnly || !repairCode || !ready, pollingInterval: pollMs });
+  useProsArrive((data as { providers?: unknown[] } | undefined)?.providers, !!data && !isFetching, setPollMs, (n: number) => {
+    toast.success(n === 1 ? 'A pro just became free near you. Pick them below.' : `${n} pros just became free near you. Pick one below.`);
+    Vibration.vibrate(200);
+  });
   const result = data as (ProvidersResult & { providers?: Provider[]; recommended?: Provider }) | undefined;
   const providers = result?.providers || [];
   const allOffline = !providers.length && (result?.nearbyCount || 0) > 0 && result?.primaryReason === 'offline';

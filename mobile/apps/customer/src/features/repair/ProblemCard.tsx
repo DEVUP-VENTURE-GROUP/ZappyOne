@@ -14,13 +14,15 @@ import { accent, colors, danger, ink, slate, zappy } from '@zappy/ui/theme/color
 import { radius } from '@zappy/ui/theme/radius';
 import { spacing } from '@zappy/ui/theme/spacing';
 
-export interface Problem { code: string; name: string; severity?: string; requiresDiagnosis?: boolean; pricePaise?: number; durationMin?: number }
+export interface Problem { code: string; name: string; severity?: string; requiresDiagnosis?: boolean; pricePaise?: number; surgePaise?: number; durationMin?: number }
 
 const Urgent = () => <View style={styles.urgent}><AlertTriangle size={12} color={danger[600]} /><Text variant="caption" weight="semibold" color={danger[600]}>Urgent</Text></View>;
 
 const Price = ({ problem, end }: { problem: Problem; end?: boolean }) => (problem.pricePaise ? (
   <View style={end ? styles.priceEnd : styles.price}>
-    <Text variant="body" weight="bold" color={zappy[600]}>{formatPaise(problem.pricePaise)}</Text>
+    {problem.surgePaise ? <Text variant="caption" color={ink[400]} style={styles.struck}>{formatPaise(problem.pricePaise)}</Text> : null}
+    <Text variant="body" weight="bold" color={zappy[600]}>{formatPaise(problem.pricePaise + (problem.surgePaise || 0))}</Text>
+    {problem.surgePaise ? <Text variant="caption" weight="semibold" color={accent[700]}>Surge</Text> : null}
     {problem.durationMin ? <Text variant="caption" color={ink[500]}>{problem.durationMin} min</Text> : null}
   </View>
 ) : null);
@@ -73,5 +75,6 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.md, borderRadius: radius.large, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
   price: { flexDirection: 'row', alignItems: 'baseline', gap: 6, marginTop: 2 },
   priceEnd: { alignItems: 'flex-end' },
+  struck: { textDecorationLine: 'line-through' },
   urgent: { flexDirection: 'row', alignItems: 'center', gap: 3 },
 });

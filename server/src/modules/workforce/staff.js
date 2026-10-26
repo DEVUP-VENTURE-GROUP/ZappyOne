@@ -38,4 +38,24 @@ async function onDutyIds(now = new Date()) {
   return ids;
 }
 
-module.exports = { isStaff, forget, onDutyIds };
+// On-duty staff who can reach a place: their hub serves it (workforce/coverage), or with no hub, they stand within fallbackKm.
+async function onDutyNear({ lat, lng }, { fallbackKm = 5, now = new Date() } = {}) {
+  const ids = [...await onDutyIds(now)];
+  if (!ids.length) return [];
+  const { haversineKm } = require('../../core/geo/distance');
+  const coverage = require('./coverage');
+  const workers = await Worker.find({ _id: { $in: ids }, isBlocked: { $ne: true } }).select('currentLocation employment.hubId').lean();
+  const hubIds = workers.map((w) => w.employment?.hubId).filter(Boolean);
+  const hubs = hubIds.length ? await require('./hub.model').find({ _id: { $in: hubIds } }).select(coverage.HUB_FIELDS).lean() : [];
+  const hubOf = new Map(hubs.map((h) => [String(h._id), h]));
+  const at = { lat, lng };
+  return workers.map((w) => {
+    const c = w.currentLocation?.coordinates;
+    const km = c?.length === 2 ? haversineKm(lat, lng, c[1], c[0]) : null;
+    const hub = hubOf.get(String(w.employment?.hubId));
+    const reaches = hub ? coverage.covers(hub, at) : km != null && km <= fallbackKm;
+    return reaches ? { workerId: String(w._id), km } : null;
+  }).filter(Boolean);
+}
+
+module.exports = { isStaff, forget, onDutyIds, onDutyNear };

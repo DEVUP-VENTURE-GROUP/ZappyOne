@@ -204,6 +204,8 @@ async function checkInventory({ shopId, workerId, repair, brandCode, modelCode, 
  * reason each provider was excluded, which is what makes "no providers found"
  * debuggable by ops instead of a silent empty list.
  */
+const STAFF_CAPABILITY = { covers: () => true, skillLevel: 1, estimatedDurationMin: null };
+
 async function findProviders({
   vertical = 'mobile',
   repairCode,
@@ -231,6 +233,12 @@ async function findProviders({
 
   // A partner at its capacity (shop/partner.service) is not offered more until one finishes.
   const found = await findServiceableProviders({ lat, lng, pincode, cityCode, serviceMode });
+  // ZappyOne staff on duty reach the customer through their hub, not a drawn service area (workforce/staff).
+  if (serviceMode !== 'workshop' && !later && typeof lat === 'number') {
+    for (const st of await require('../../workforce/staff').onDutyNear({ lat, lng }).catch(() => [])) {
+      if (!found.some((f) => f.workerId === st.workerId)) found.push({ owner: `w:${st.workerId}`, shopId: null, workerId: st.workerId, distanceKm: st.km, areaId: null, workshopLocation: null, staff: true });
+    }
+  }
   const full = await require('../../shop/partner.service').atCapacity(found.filter((x) => x.shopId).map((x) => x.shopId));
   const serviceable = found.filter((x) => !x.shopId || !full.has(String(x.shopId)));
   if (!serviceable.length) return { recommended: null, providers: [], rejected: [], reason: 'no_provider_in_area' };
@@ -266,11 +274,12 @@ async function findProviders({
       : { workerId: new mongoose.Types.ObjectId(s.workerId) };
     const label = s.shopId ? `shop:${s.shopId}` : `worker:${s.workerId}`;
 
+    // Staff on a fixed-price job need no capability row: ZappyOne trains them and prices it at the standard.
     const capability = await ProviderCapability.findOne({
       ...ownerFilter,
       repairCode,
       isActive: true,
-    });
+    }) || (s.staff && repair.pricingMode === 'fixed' ? STAFF_CAPABILITY : null);
 
     if (!capability) { rejected.push({ label, reason: 'no_capability' }); return; }
     if (!capability.covers({ brandCode, modelCode, qualityCode, serviceMode })) {

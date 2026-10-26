@@ -95,8 +95,8 @@ const LINES = [
   // liveCatalog filters it out without one. A line can otherwise be `live`,
   // fully priced and completely unreachable, which is exactly what both
   // vehicle lines were until this was noticed.
-  { code: 'bike_wash', name: 'Bike Wash', domainCode: 'vehicles', repairVertical: 'bike_wash', status: 'live', displayOrder: 0, icon: 'Bike', customerPath: '/repair/bike-wash', tagline: 'At your door, from ₹99', isPopular: true },
-  { code: 'car_wash', name: 'Car Wash', domainCode: 'vehicles', repairVertical: 'car_wash', status: 'live', displayOrder: 0, icon: 'Car', customerPath: '/repair/car-wash', tagline: 'At your door, from ₹299', isPopular: true },
+  { code: 'bike_wash', name: 'Bike Wash', domainCode: 'vehicles', repairVertical: 'bike_wash', status: 'live', displayOrder: 0, icon: 'Bike', customerPath: '/repair/bike-wash', tagline: 'At your door, from ₹99', isPopular: true, staffDoes: true },
+  { code: 'car_wash', name: 'Car Wash', domainCode: 'vehicles', repairVertical: 'car_wash', status: 'live', displayOrder: 0, icon: 'Car', customerPath: '/repair/car-wash', tagline: 'At your door, from ₹299', isPopular: true, staffDoes: true },
   {
     code: 'two_wheeler', name: '2-Wheeler', domainCode: 'vehicles', status: 'live',
     displayOrder: 1, icon: 'Bike', repairVertical: 'two_wheeler',
@@ -116,7 +116,7 @@ const LINES = [
   // others stay coming_soon until they get the same treatment.
   {
     code: 'water_tank_care', name: 'Water & Tank Care', domainCode: 'home_services',
-    status: 'live', displayOrder: 1, icon: 'Droplets', repairVertical: 'water_tank_care',
+    status: 'live', displayOrder: 1, icon: 'Droplets', repairVertical: 'water_tank_care', staffDoes: true,
     description: 'Tank and sump cleaning, health inspection, pipe flushing, repair and protection',
     customerPath: '/repair/water-tank-care', tagline: 'Photographed before and after', isPopular: true,
   },

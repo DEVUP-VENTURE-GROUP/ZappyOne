@@ -86,6 +86,8 @@ const serviceLineSchema = new mongoose.Schema(
     },
     // Done only by ZappyOne's own staff: every staff member is approved for it, no partner can apply (onboarding/staff-lines).
     staffOnly: { type: Boolean, default: false },
+    // ZappyOne staff do this service too, alongside partners: every staff member is approved for it (onboarding/staff-lines).
+    staffDoes: { type: Boolean, default: false },
     // What its booking screen asks (helping engine), so a new service needs no app update; see shared/customer/helpModes.
     form: { type: mongoose.Schema.Types.Mixed, default: null },
     // Apps below this UI level (X-UI-Level header; old apps send none) cannot open it, so it is hidden there.
