@@ -26,7 +26,7 @@ test('both washes are registered verticals', () => {
   expect(VERTICALS).toEqual(expect.arrayContaining(['bike_wash', 'car_wash']));
 });
 
-test('each wash has its vehicle types, one model per type and three packages', async () => {
+test('each wash has its vehicle types, one model per type, and its packages in order', async () => {
   const Brand = require('../src/modules/service/brand.model');
   const DeviceModel = require('../src/modules/service/device-model.model');
   const { Problem } = require('../src/modules/repair/models/problem.model');
@@ -34,8 +34,8 @@ test('each wash has its vehicle types, one model per type and three packages', a
   expect((await Brand.find({ category: 'car_wash' }).lean()).map((b) => b.name).sort()).toEqual(['Hatchback', 'SUV', 'Sedan']);
   expect(await DeviceModel.countDocuments({ vertical: 'bike_wash' })).toBe(3);
   expect((await Problem.find({ vertical: 'bike_wash' }).sort({ displayOrder: 1 }).lean()).map((p) => p.name))
-    .toEqual(['Quick wash (waterless wipe)', 'Foam wash', 'Foam wash + polish']);
-  expect(await Repair.countDocuments({ vertical: 'car_wash', pricingMode: 'fixed' })).toBe(3);
+    .toEqual(['Foam wash', 'Foam wash + chain clean and lube', 'Foam wash + polish', 'Quick wash (waterless wipe)']);
+  expect(await Repair.countDocuments({ vertical: 'car_wash', pricingMode: 'fixed' })).toBe(6);
 });
 
 test('one price per vehicle type and package, no range', async () => {
@@ -44,4 +44,8 @@ test('one price per vehicle type and package, no range', async () => {
   expect(quick.recommendedPaise).toBe(9900);
   const full = await resolveReferencePrice({ vertical: 'car_wash', repairCode: 'cw_full_clean', brandCode: 'cw_suv' });
   expect(full).toMatchObject({ minPaise: 99900, recommendedPaise: 99900, maxPaise: 99900 });
+  const deep = await resolveReferencePrice({ vertical: 'car_wash', repairCode: 'cw_interior_deep', brandCode: 'cw_sedan' });
+  expect(deep.recommendedPaise).toBe(149900);
+  const chain = await resolveReferencePrice({ vertical: 'bike_wash', repairCode: 'bw_foam_chain', brandCode: 'bw_big_bike' });
+  expect(chain.recommendedPaise).toBe(34900);
 });

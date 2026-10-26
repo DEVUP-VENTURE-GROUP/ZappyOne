@@ -13,12 +13,12 @@ const { ServiceDomain, ServiceLine } = require('../src/modules/onboarding/onboar
 const WASH_LINES = [
   {
     code: 'bike_wash', name: 'Bike Wash', domainCode: 'vehicles', repairVertical: 'bike_wash', status: 'live', displayOrder: 1, icon: 'Bike',
-    description: 'Quick, foam or foam + polish wash for scooters and bikes, at your parking', customerPath: '/repair/bike-wash',
+    description: 'Foam wash, chain clean and lube, polish or a quick waterless wipe for scooters and bikes, at your parking', customerPath: '/repair/bike-wash',
     tagline: 'At your door, from ₹99', isPopular: true, isActive: true,
   },
   {
     code: 'car_wash', name: 'Car Wash', domainCode: 'vehicles', repairVertical: 'car_wash', status: 'live', displayOrder: 2, icon: 'Car',
-    description: 'Exterior, foam + vacuum or full clean for hatchbacks, sedans and SUVs, at your parking', customerPath: '/repair/car-wash',
+    description: 'Foam wash, inside vacuum, interior deep clean or full detailing for hatchbacks, sedans and SUVs, at your parking', customerPath: '/repair/car-wash',
     tagline: 'At your door, from ₹299', isPopular: true, isActive: true,
   },
 ];

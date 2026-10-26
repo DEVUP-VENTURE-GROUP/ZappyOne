@@ -62,8 +62,8 @@ const CITIES = STATES.flatMap(([state, cities]) => cities.map(([name, lat, lng])
 
 // What ZappyOne really sells, each opening its real booking screen.
 const CATEGORIES = [
-  { slug: 'bike-wash', name: 'Bike wash at home', short: 'Bike wash', spaPath: '/repair/bike-wash', what: 'Quick, foam, or foam and polish wash for scooters and bikes at your parking.' },
-  { slug: 'car-wash', name: 'Car wash at home', short: 'Car wash', spaPath: '/repair/car-wash', what: 'Exterior, foam with inside vacuum, or full clean for hatchbacks, sedans and SUVs at your parking.' },
+  { slug: 'bike-wash', name: 'Bike wash at home', short: 'Bike wash', spaPath: '/repair/bike-wash', what: 'Foam wash, chain clean and lube, polish or a quick waterless wipe for scooters and bikes at your parking.' },
+  { slug: 'car-wash', name: 'Car wash at home', short: 'Car wash', spaPath: '/repair/car-wash', what: 'Foam wash, inside vacuum, interior deep clean with seat shampoo, or full detailing for hatchbacks, sedans and SUVs at your parking.' },
   { slug: 'home-cleaning', name: 'Home deep cleaning', short: 'Home cleaning', spaPath: '/repair/home-cleaning', what: 'Full home, kitchen, bathroom and move-in or move-out deep cleaning by trained teams.' },
   { slug: 'electrician', name: 'Electrician at home', short: 'Electrician', spaPath: '/repair/electrician', what: 'Fan and light installs, switch and socket repairs, MCB, inverter and inspection visits.' },
   { slug: 'plumber', name: 'Plumber at home', short: 'Plumber', spaPath: '/repair/plumbing', what: 'Tap and mixer replacement, leak repair, blockage clearing, flush tanks and motor installs.' },

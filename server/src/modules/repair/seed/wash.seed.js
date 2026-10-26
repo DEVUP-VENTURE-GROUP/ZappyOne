@@ -38,26 +38,28 @@ function packageVertical({ vertical, prefix, label, types, packages, skill = { n
   };
 }
 
-// Prices checked 2026-10-19: about ₹300 a basic foam car wash, ₹499 a doorstep foam wash with interior (DriveU), ₹299 a basic doorstep bike wash. Admin can change any of them.
-const washVertical = packageVertical;
-
-const BIKE = washVertical({
+// Prices checked 2026-10-19 and 2026-10-26: about ₹300 a basic foam car wash (industry guide), doorstep bike wash from ₹299 (Ride N Repair), interior shampoo is the top car-cleaning service at Urban Company; chain is re-lubed after any wet bike wash. Admin can change any price.
+const BIKE = packageVertical({
   vertical: 'bike_wash', prefix: 'bw', label: 'Bike wash',
   types: [{ code: 'scooter', name: 'Scooter' }, { code: 'bike', name: 'Bike' }, { code: 'big_bike', name: 'Big bike (350cc+)' }],
   packages: [
-    { code: 'quick', name: 'Quick wash (waterless wipe)', minutes: 20, prices: { scooter: 99, bike: 129, big_bike: 159 } },
     { code: 'foam', name: 'Foam wash', minutes: 40, prices: { scooter: 199, bike: 229, big_bike: 279 } },
+    { code: 'foam_chain', name: 'Foam wash + chain clean and lube', minutes: 50, prices: { scooter: 249, bike: 299, big_bike: 349 } },
     { code: 'foam_polish', name: 'Foam wash + polish', minutes: 60, prices: { scooter: 349, bike: 399, big_bike: 449 } },
+    { code: 'quick', name: 'Quick wash (waterless wipe)', minutes: 20, prices: { scooter: 99, bike: 129, big_bike: 159 } },
   ],
 });
 
-const CAR = washVertical({
+const CAR = packageVertical({
   vertical: 'car_wash', prefix: 'cw', label: 'Car wash',
   types: [{ code: 'hatchback', name: 'Hatchback' }, { code: 'sedan', name: 'Sedan' }, { code: 'suv', name: 'SUV' }],
   packages: [
-    { code: 'exterior', name: 'Exterior wash (waterless)', minutes: 40, prices: { hatchback: 299, sedan: 349, suv: 399 } },
     { code: 'foam_vacuum', name: 'Foam wash + inside vacuum', minutes: 75, prices: { hatchback: 499, sedan: 599, suv: 699 } },
+    { code: 'foam_exterior', name: 'Foam wash (outside only)', minutes: 45, prices: { hatchback: 399, sedan: 449, suv: 549 } },
+    { code: 'exterior', name: 'Exterior wash (waterless)', minutes: 40, prices: { hatchback: 299, sedan: 349, suv: 399 } },
     { code: 'full_clean', name: 'Full clean (foam, interior, dashboard, mats, glass, tyre shine)', minutes: 120, prices: { hatchback: 799, sedan: 899, suv: 999 } },
+    { code: 'interior_deep', name: 'Interior deep clean (seat and mat shampoo, dashboard, roof)', minutes: 150, prices: { hatchback: 1299, sedan: 1499, suv: 1799 } },
+    { code: 'detailing', name: 'Full detailing (foam, interior shampoo, wax polish, tyre shine)', minutes: 240, prices: { hatchback: 1999, sedan: 2299, suv: 2699 } },
   ],
 });
 
