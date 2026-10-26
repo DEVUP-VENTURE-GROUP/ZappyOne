@@ -411,6 +411,22 @@ router.post('/payouts/shops/:id/decide',
     } catch (err) { next(err); }
   });
 
+/* Shop dues: commission partner shops owe from cash jobs, and recording what they paid (shop/shop-dues) */
+
+router.get('/dues/shops', async (req, res, next) => {
+  try { res.json({ shops: await require('../shop/shop-dues').owingShops() }); } catch (err) { next(err); }
+});
+
+router.post('/dues/shops/:shopId/payment',
+  validate(Joi.object({ amountRupees: Joi.number().positive().max(10000000).required(), reference: Joi.string().trim().min(3).max(80).required() })),
+  async (req, res, next) => {
+    try {
+      const dues = await require('../shop/shop-dues').recordPayment({ shopId: req.params.shopId, amountPaise: Math.round(req.body.amountRupees * 100), reference: req.body.reference, adminId: req.auth.sub });
+      await auditService.fromRequest(req, 'shop_dues.payment', { kind: 'shop', id: req.params.shopId }, null, { amountRupees: req.body.amountRupees, reference: req.body.reference });
+      res.json({ dues });
+    } catch (err) { next(err); }
+  });
+
 /* Worker dues: who owes what from cash jobs, and recording what they paid */
 
 router.get('/dues', async (req, res, next) => {

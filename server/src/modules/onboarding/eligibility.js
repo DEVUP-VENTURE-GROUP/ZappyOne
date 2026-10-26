@@ -28,6 +28,8 @@ async function assertApproved(auth, lineCode) {
     if (!live.has(String(auth.id))) {
       throw Object.assign(new Error('Your shop is not live yet. Finish your shop profile (address pin, hours) to take jobs.'), { status: 403, code: 'SHOP_NOT_LIVE' });
     }
+    // Commission owed from cash jobs past the limit stops new work, as for workers (shop/shop-dues).
+    await require('../shop/shop-dues').assertShopCanWork(auth.id);
   }
   if (lineCode && (await approvedLines(auth)).has(lineCode)) return;
   throw Object.assign(new Error('You are not verified for this service yet'), { status: 403, code: 'NOT_APPROVED_FOR_SERVICE' });
@@ -36,8 +38,9 @@ async function assertApproved(auth, lineCode) {
 /** Everyone approved for a line — for alerting them to a new job. */
 async function approvedProviders(lineCode) {
   const rows = await ProviderEnrolment.find({ lineCode, status: 'approved' }).select('workerId shopId').lean();
+  const blocked = await require('../shop/shop-dues').blockedShops(rows.filter((r) => r.shopId).map((r) => r.shopId));
   return rows.map((r) => (r.shopId ? { kind: 'shop', id: String(r.shopId) } : { kind: 'worker', id: String(r.workerId) }))
-    .filter((p) => p.id && p.id !== 'null');
+    .filter((p) => p.id && p.id !== 'null' && !(p.kind === 'shop' && blocked.has(p.id)));
 }
 
 module.exports = { lineOf, approvedLines, assertApproved, approvedProviders, HELPING_LINE };

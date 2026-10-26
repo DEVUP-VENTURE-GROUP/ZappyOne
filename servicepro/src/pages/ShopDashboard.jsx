@@ -11,6 +11,8 @@ import {
   useShopPriceRequestsQuery,
 } from '@shared/services/api';
 import ProviderServicesCard from '@shared/components/provider/ProviderServicesCard';
+import PartnerTermsCard from '@shared/provider/components/PartnerTermsCard';
+import PartnerDuesCard from '@shared/provider/components/PartnerDuesCard';
 import ShopJobs from '../components/ShopJobs';
 import { useProviderJobs } from '@shared/provider/useProviderJobs';
 import { StatCard, Panel, inr, EarningsOverview, PerformanceGrid } from '@shared/components/worker/DashboardUI';
@@ -295,6 +297,8 @@ export default function ShopDashboard() {
         {/* Main grid */}
         <div className="mt-5 grid gap-5 lg:grid-cols-3">
           <div className="space-y-5 lg:col-span-2">
+            <PartnerTermsCard />
+            <PartnerDuesCard />
             <Panel
               title="Jobs"
               action={needsAction.length ? (

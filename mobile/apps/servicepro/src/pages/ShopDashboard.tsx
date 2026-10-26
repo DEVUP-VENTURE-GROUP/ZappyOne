@@ -25,6 +25,8 @@ import { accent, colors, danger, ink, slate, success, zappy } from '@zappy/ui/th
 import { radius } from '@zappy/ui/theme/radius';
 import { spacing } from '@zappy/ui/theme/spacing';
 import { ShopJobs } from '../components/ShopJobs';
+import { PartnerTermsCard } from '../components/PartnerTermsCard';
+import { PartnerDuesCard } from '../components/PartnerDuesCard';
 import { TeamPanel, type TeamWorker } from '../components/TeamPanel';
 import { OWNER_MENU } from '../menus';
 
@@ -145,6 +147,8 @@ export function ShopDashboard() {
           <StatTile Icon={ShieldCheck} tone="rose" label="Awaiting approval" value={pendingApprovals} sub={pendingApprovals ? 'Skills & prices' : undefined} />
         </View>
 
+        <PartnerTermsCard />
+        <PartnerDuesCard />
         <Panel title="Jobs" action={needsAction.length ? <View style={styles.need}><Text variant="caption" weight="black" color={accent[700]}>{needsAction.length} need{needsAction.length === 1 ? 's' : ''} you</Text></View> : undefined}>
           <ShopJobs kinds={SHOP_KINDS} />
         </Panel>

@@ -5,6 +5,7 @@ import { useAdminDuesQuery, useAdminRecordDuesPaymentMutation, useAdminRejectDue
 import { Card, PageLoader, StatCard, fmt } from '../../../ui/kit';
 import { RupeeInput, Setting, toPaise } from './fields';
 import { useRuleForm, rupeeField } from './CancellationRules';
+import ShopDues from './ShopDues';
 
 const STATUS = {
   blocked: ['New jobs stopped', 'bg-red-50 text-red-700'],
@@ -28,7 +29,7 @@ function Limits() {
       <div className="flex items-start justify-between gap-3 px-4 py-3">
         <div>
           <h3 className="text-sm font-bold text-slate-800">Dues limits</h3>
-          <p className="mt-0.5 text-[12px] text-slate-500">On a cash job the worker keeps everything and owes ZappyOne the commission. Their wallet can go below zero up to the limit.</p>
+          <p className="mt-0.5 text-[12px] text-slate-500">On a cash job the worker or partner business keeps everything and owes ZappyOne the commission. What they owe can grow up to the limit; the same limits apply to partner businesses.</p>
         </div>
         <button type="button" onClick={() => f.submit('Dues limits saved')} disabled={!f.dirty || !f.valid || !order || f.saving}
           className="inline-flex min-w-[72px] items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:bg-slate-100 disabled:text-slate-400">
@@ -139,6 +140,7 @@ export default function WorkerDues() {
               ? data.rows.map((r) => <Row key={r.workerId} row={r} />)
               : <p className="border-t border-slate-100 px-4 py-8 text-center text-sm text-slate-400">No worker owes anything right now.</p>}
           </Card>
+          <ShopDues />
         </>
       )}
     </div>
