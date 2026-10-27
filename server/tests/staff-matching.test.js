@@ -73,7 +73,7 @@ describe('staff are rung one at a time, fairest first, and never given a job wit
   const { RepairBooking } = require('../src/modules/repair/models/booking.model');
   const events = require('../src/modules/repair/services/events.service');
 
-  test('ring the first, wait, then ring the second; auto-accept never takes it for staff', async () => {
+  test('ring the first, wait, then ring the second; nobody takes it without Accept', async () => {
     const a = { kind: 'worker', id: 'a', staff: true };
     const b = { kind: 'worker', id: 'b', staff: true };
     jest.spyOn(fast, 'autoAcceptCandidates').mockResolvedValue([a, b]);
@@ -81,7 +81,6 @@ describe('staff are rung one at a time, fairest first, and never given a job wit
     const doc = await RepairBooking.collection.insertOne({ status: 'CONFIRMED', shopId: null, workerId: null, userId: null, matching: {} });
     const get = () => RepairBooking.findById(doc.insertedId).lean();
 
-    expect(await fast.tryAutoAccept('repair', await get(), 5)).toBeNull();
     expect((await fast.ringNextStaff('repair', await get(), 5)).id).toBe('a');
     let d = await get();
     expect(d.matching.offeredTo).toEqual(['worker:a']);

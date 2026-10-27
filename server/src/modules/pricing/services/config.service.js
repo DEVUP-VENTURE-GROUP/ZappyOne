@@ -77,6 +77,8 @@ const FAST_ASSIGN_DEFAULTS = {
   widenKm: 15,             // after the broadcast, and for auto-accept at the deadline
   autoAcceptPauseDays: 7,  // cancelling an auto-accepted job pauses auto-accept this long
   staffRingSec: 10,        // each on-duty staff member, fairest first, is rung this long; the job is theirs only on Accept
+  ringSec: 30,             // every nearby free pro is rung this long, round after round, a little wider each time
+  autoAssignSec: 180,      // nobody tapped Accept by now: the fairest nearby free pro is given it
 };
 
 const SURGE_DEFAULTS = {

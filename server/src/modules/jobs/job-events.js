@@ -94,7 +94,8 @@ async function announce(kind, doc, status) {
   // The arrival promise: set on accept, kept on arrival, closed on hand-back or end (jobs/promise).
   require('./promise').onStatus(kind, doc, status).catch(() => {});
   // Personal channels too, so lists and home cards update without the job open.
-  toProvider('user', doc.userId, 'job.update', payload);
+  // `accepted` lets the customer's screen ring the moment a pro takes it.
+  toProvider('user', doc.userId, 'job.update', accepted ? { ...payload, accepted: true } : payload);
   if (provider) toProvider(provider.kind, provider.id, 'job.update', payload);
 
   // Offered to one provider: ring them with everything needed to decide.
@@ -155,7 +156,7 @@ async function ringOne(kind, doc, workerId, windowSec) {
   }).catch(() => {});
 }
 
-async function alertNearbyProviders(kind, doc, { offlineOnly = false } = {}) {
+async function alertNearbyProviders(kind, doc, { offlineOnly = false, round = 0 } = {}) {
   try {
     const { approvedProviders } = require('../onboarding/eligibility');
     const k = KINDS[kind];
@@ -204,13 +205,20 @@ async function alertNearbyProviders(kind, doc, { offlineOnly = false } = {}) {
         .then((rows) => rows.filter(require('../shop/shop.service').isLive)),
     ]);
     const distance = (coords) => (start && coords?.length === 2 ? haversineKm(start.lat, start.lng, coords[1], coords[0]) : null);
-    const reach = [
+    const all = [
       ...workers.map((w) => ({ kind: 'worker', id: String(w._id), km: distance(w.currentLocation?.coordinates) })),
       ...shops.map((s) => ({ kind: 'shop', id: String(s._id), km: distance(s.address?.location?.coordinates) })),
-    ]
-      .filter((p) => p.km == null || p.km <= ALERT_RADIUS_KM)
-      .sort((a, b) => (a.km ?? ALERT_RADIUS_KM) - (b.km ?? ALERT_RADIUS_KM))
-      .slice(0, ALERT_MAX);
+    ].sort((a, b) => (a.km ?? ALERT_RADIUS_KM) - (b.km ?? ALERT_RADIUS_KM));
+    // Now-jobs ring for ringSec, nearest first, widening each round from autoAcceptKm to widenKm; nobody that near yet → the wide circle at once.
+    const now = !offlineOnly && !require('./work-hours').isLater(doc.scheduledAt || doc.checkInAt);
+    const fa = now ? await require('./fast-assign').settings() : null;
+    const rounds = fa ? Math.max(1, Math.floor(fa.autoAssignSec / fa.ringSec) - 1) : 1;
+    const radiusKm = fa ? fa.autoAcceptKm + ((fa.widenKm - fa.autoAcceptKm) * Math.min(round, rounds)) / rounds : ALERT_RADIUS_KM;
+    const within = (r) => all.filter((p) => p.km == null || p.km <= r);
+    const reach = (within(radiusKm).length ? within(radiusKm) : within(fa ? fa.widenKm : ALERT_RADIUS_KM)).slice(0, ALERT_MAX);
+    const ring = fa ? { windowSec: fa.ringSec, expiresAt: new Date(Date.now() + fa.ringSec * 1000).toISOString(), round } : {};
+    const pushedBefore = new Set(doc.matching?.pushed || []);
+    if (fa && reach.length) await KINDS[kind].model().updateOne({ _id: doc._id }, { $addToSet: { 'matching.pushed': { $each: reach.map((p) => `${p.kind}:${p.id}`) } } });
 
     const title = offlineOnly ? `A ${k.label} job near you is waiting` : `New ${k.label} job near you`;
     const customer = await require('./customer-rating').summaryFor(doc.userId).catch(() => null);
@@ -218,9 +226,11 @@ async function alertNearbyProviders(kind, doc, { offlineOnly = false } = {}) {
       toProvider(p.kind, p.id, 'job.available', {
         // Before anyone accepts: the area and a rounded pin, never the house (jobs/privacy).
         kind, id: String(doc._id), reference: doc.reference, line, area: areaOf(start?.address), km: p.km,
-        coordinates: start ? roughCoords([start.lng, start.lat]) : null, ...(k.open.summary ? k.open.summary(doc) : {}), customer,
+        coordinates: start ? roughCoords([start.lng, start.lat]) : null, ...(k.open.summary ? k.open.summary(doc) : {}), customer, ...ring,
       });
       const summary = k.open.summary ? k.open.summary(doc) : {};
+      // A later round re-rings the app; the phone push goes once per pro.
+      if (pushedBefore.has(`${p.kind}:${p.id}`)) return null;
       return require('../messaging/send').send(offlineOnly ? 'provider.job_waiting' : 'provider.job_nearby', {
         to: { kind: p.kind, id: p.id },
         ctx: { label: k.label, km: p.km, area: areaOf(start?.address), earningPaise: summary.earningPaise, boostPaise: summary.boostPaise },

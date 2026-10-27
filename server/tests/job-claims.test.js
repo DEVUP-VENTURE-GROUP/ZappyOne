@@ -191,7 +191,30 @@ describe('what rings on the provider’s phone', () => {
     }, 'CONFIRMED'));
     const alerts = heard.filter((h) => h.event === 'job.available');
     expect(alerts.map((a) => a.id)).toEqual([String(approved._id)]);
-    expect(alerts[0].payload).toMatchObject({ kind: 'helping', title: 'Groceries', earningPaise: 9000 });
+    expect(alerts[0].payload).toMatchObject({ kind: 'helping', title: 'Groceries', earningPaise: 9000, windowSec: 30, round: 0 });
+    expect(new Date(alerts[0].payload.expiresAt).getTime() - Date.now()).toBeLessThanOrEqual(30000);
+  });
+
+  test('a later ring round rings the app again but never pushes the phone twice', async () => {
+    const { alertNearbyProviders } = require('../src/modules/jobs/job-events');
+    const send = jest.spyOn(require('../src/modules/messaging/send'), 'send').mockResolvedValue(null);
+    const { insertedId } = await HelpingTask.collection.insertOne({
+      reference: 'ZHROUND', userId: customer, status: 'CONFIRMED', serviceType: 'shopping', title: 'Groceries',
+      pickupLocation: HOME, charge: { workerEarningPaise: 9000 }, items: [], statusHistory: [], matching: {},
+    });
+    await alertNearbyProviders('helping', await HelpingTask.findById(insertedId).lean(), { round: 0 });
+    const heard = await listen(async () => alertNearbyProviders('helping', await HelpingTask.findById(insertedId).lean(), { round: 1 }));
+    expect(heard.filter((h) => h.event === 'job.available').map((a) => a.payload.round)).toEqual([1]);
+    expect(send.mock.calls.filter(([key]) => key === 'provider.job_nearby')).toHaveLength(1);
+    send.mockRestore();
+  });
+
+  test('the customer hears the moment a pro accepts', async () => {
+    const heard = await listen(() => announce('pet', {
+      _id: oid(), reference: 'ZPACC', userId: customer, workerId: approved._id, status: 'PROVIDER_ACCEPTED',
+      categoryCode: 'pet_grooming', serviceLocation: HOME, pets: [], pricing: {}, statusHistory: [],
+    }, 'PROVIDER_ACCEPTED'));
+    expect(heard.find((h) => h.event === 'job.update' && h.kind === 'user')?.payload).toMatchObject({ accepted: true });
   });
 });
 

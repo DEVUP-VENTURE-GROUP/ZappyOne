@@ -81,3 +81,28 @@ export function startRinging({ intervalMs = 2500, vibratePattern = [300, 120, 30
   const timer = setInterval(ring, intervalMs);
   return () => { clearInterval(timer); try { note?.close(); } catch { /* already gone */ } };
 }
+
+// The customer's "someone is coming": a bright rising jingle, twice, plus a buzz and a system notice if the tab is hidden.
+export function playAcceptedAlert({ title = 'Your pro accepted', body = 'They are getting ready to come to you.' } = {}) {
+  try {
+    const ctx = getAudioCtx();
+    if (ctx) {
+      if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+      [0, 0.9].forEach((start) => [[0, 523], [0.12, 659], [0.24, 784], [0.36, 1047]].forEach(([d, freq]) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'triangle';
+        osc.frequency.value = freq;
+        const t = ctx.currentTime + start + d;
+        gain.gain.setValueAtTime(0.35, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + (d === 0.36 ? 0.45 : 0.16));
+        osc.start(t);
+        osc.stop(t + 0.5);
+      }));
+    }
+    navigator.vibrate?.([200, 80, 200, 80, 400]);
+    if (document.hidden && window.Notification?.permission === 'granted') new window.Notification(title, { body, tag: 'zappy-accepted' });
+  } catch { /* sound is a bonus */ }
+}

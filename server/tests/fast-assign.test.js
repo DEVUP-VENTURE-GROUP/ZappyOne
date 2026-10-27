@@ -1,11 +1,10 @@
 /**
- * Assigned within two minutes (jobs/fast-assign).
+ * Assigned within three minutes (jobs/fast-assign).
  *
  *   - a repair offered to several pros at once goes to the first to claim it;
  *     the rest are told it is taken, and a pro it was never offered to is refused
- *   - a pro with auto-accept on, nearby and free, takes a job with no tap
- *   - a paused auto-accept, or a pro too far for their own limit, is skipped
- *   - giving back an auto-accepted job pauses that pro's auto-accept
+ *   - nobody is given a job instantly; at the auto-assign time a nearby free
+ *     pro is given it, never one who passed or a shop's technician
  */
 const request = require('supertest');
 const mongoose = require('mongoose');
@@ -111,58 +110,45 @@ describe('a repair broadcast to several pros', () => {
   });
 });
 
-describe('auto-accept', () => {
-  test('the nearest free pro with auto-accept on takes the job with no tap', async () => {
-    const near = await pro({ km: 1, autoAccept: { enabled: true } });
-    const far = await pro({ km: 3, autoAccept: { enabled: true } });
-    const off = await pro({ km: 0.5 });
-    await Promise.all([near, far, off].map((w) => enrol(w, 'pet_grooming', 'pet_services')));
-
+describe('auto-assign', () => {
+  test('nobody is given a job instantly, even with the old auto-accept switch on', async () => {
+    const w = await pro({ km: 0.5, autoAccept: { enabled: true } });
+    await enrol(w, 'pet_grooming', 'pet_services');
     const job = await openPet();
-    const who = await fastAssign.tryAutoAccept('pet', job, 5);
-    expect(who).toMatchObject({ kind: 'worker', id: String(near._id) });
-    const after = await PetBooking.findById(job._id).lean();
-    expect(String(after.workerId)).toBe(String(near._id));
-    expect(after.matching.autoAcceptedAt).toBeTruthy();
-  });
-
-  test('skips a paused pro and one beyond their own distance limit', async () => {
-    await Worker.updateMany({}, { $set: { 'autoAccept.enabled': false } });
-    const paused = await pro({ km: 0.5, autoAccept: { enabled: true, pausedUntil: new Date(Date.now() + 86400000) } });
-    const limited = await pro({ km: 4, autoAccept: { enabled: true, maxKm: 2 } });
-    await Promise.all([paused, limited].map((w) => enrol(w, 'pet_grooming', 'pet_services')));
-
-    const job = await openPet();
-    expect(await fastAssign.tryAutoAccept('pet', job, 5)).toBeNull();
+    await require('../src/modules/jobs/waves').kick('pet', job);
     expect((await PetBooking.findById(job._id).lean()).workerId).toBeNull();
   });
 
-  test('giving back an auto-accepted job pauses that pro auto-accept', async () => {
-    const w = await pro({ autoAccept: { enabled: true } });
-    expect(await fastAssign.pauseIfAutoAccepted({ matching: { autoAcceptedAt: new Date() } }, 'worker', w._id)).toBe(true);
-    const after = await Worker.findById(w._id).lean();
-    expect(after.autoAccept.pausedUntil.getTime()).toBeGreaterThan(Date.now() + 6 * 86400000);
-    // A job they tapped themselves never pauses it.
-    expect(await fastAssign.pauseIfAutoAccepted({ matching: {} }, 'worker', w._id)).toBe(false);
+  test('when nobody accepted in time, a nearby free pro is given it; one who passed and a shop technician are skipped', async () => {
+    await Worker.updateMany({}, { $set: { isBlocked: true } });
+    const passed = await pro({ km: 0.3 });
+    const tech = await pro({ km: 0.4 });
+    await Worker.updateOne({ _id: tech._id }, { $set: { shopId: oid() } });
+    const free = await pro({ km: 2 });
+    await Promise.all([passed, tech, free].map((w) => enrol(w, 'pet_grooming', 'pet_services')));
+
+    const job = await openPet();
+    await PetBooking.updateOne({ _id: job._id }, { $set: { declinedBy: [passed._id] } });
+    const who = await fastAssign.autoAssign('pet', await PetBooking.findById(job._id).lean(), 15);
+    expect(who).toMatchObject({ kind: 'worker', id: String(free._id) });
+    const after = await PetBooking.findById(job._id).lean();
+    expect(String(after.workerId)).toBe(String(free._id));
+    expect(after.matching.autoAcceptedBy).toBe(`worker:${free._id}`);
+  });
+
+  test('nobody free nearby: nothing is assigned', async () => {
+    await Worker.updateMany({}, { $set: { isBlocked: true } });
+    const job = await openPet();
+    expect(await fastAssign.autoAssign('pet', job, 15)).toBeNull();
   });
 });
 
-describe('the auto-accept switch', () => {
-  const put = (w, body) => request(app).put('/api/workers/me/auto-accept').set('Authorization', `Bearer ${as(w._id)}`).send(body);
-
-  test('a worker turns it on, sets a limit, and reads it back', async () => {
+describe('the retired auto-accept switch', () => {
+  test('is hidden and cannot be turned on', async () => {
     const w = await pro();
-    const on = await put(w, { enabled: true, maxKm: 3 });
-    expect(on.status).toBe(200);
-    expect(on.body).toMatchObject({ available: true, autoAccept: { enabled: true, maxKm: 3 } });
     const read = await request(app).get('/api/workers/me/auto-accept').set('Authorization', `Bearer ${as(w._id)}`);
-    expect(read.body.radiusKm).toBe(5);
-  });
-
-  test('a shop technician cannot turn it on: their shop gives them work', async () => {
-    const tech = await pro();
-    await Worker.updateOne({ _id: tech._id }, { $set: { shopId: oid() } });
-    const res = await put(tech, { enabled: true });
+    expect(read.body.available).toBe(false);
+    const res = await request(app).put('/api/workers/me/auto-accept').set('Authorization', `Bearer ${as(w._id)}`).send({ enabled: true });
     expect(res.status).toBe(403);
     expect(res.body.code).toBe('AUTO_ACCEPT_UNAVAILABLE');
   });
@@ -172,7 +158,7 @@ describe('the customer search clock', () => {
   test('counts from booking, and is gone once someone has the job or it is for later', async () => {
     const job = await openPet();
     const view = await fastAssign.searchView('pet', job);
-    expect(view).toMatchObject({ firstLookSec: 30, broadcastSec: 45, deadlineSec: 120 });
+    expect(view).toMatchObject({ firstLookSec: 30, broadcastSec: 45, deadlineSec: 180 });
     expect(await fastAssign.searchView('pet', { ...job, workerId: oid() })).toBeNull();
     expect(await fastAssign.searchView('pet', { ...job, scheduledAt: new Date(Date.now() + 3600000) })).toBeNull();
   });

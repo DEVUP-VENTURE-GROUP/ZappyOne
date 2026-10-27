@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { selectAuth } from '../modules/auth/authSlice';
+import { selectAuth, selectRole } from '../modules/auth/authSlice';
+import { playAcceptedAlert } from '../utils/alertSound';
 import { getSocket, disconnectSocket } from '../services/socket';
 import {
   setStatus, setWorkerLocation, setWorkerInfo, clearActiveOrder, setEta,
@@ -223,6 +224,7 @@ const OPEN_TAGS = { pet: 'PetAvailable', helping: 'HelpingAvailable' };
 
 export function useJobRealtime({ alerts = false } = {}) {
   const { accessToken: token } = useSelector(selectAuth);
+  const isCustomer = useSelector(selectRole) === 'user';
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -235,6 +237,10 @@ export function useJobRealtime({ alerts = false } = {}) {
       const type = JOB_TAGS[p?.kind];
       if (type) refresh([type, { type, id: p.id }, ...(OPEN_TAGS[p.kind] ? [OPEN_TAGS[p.kind]] : [])]);
       // A customer put a tip on the bill: the provider hears it the moment it happens.
+      if (isCustomer && p?.accepted) {
+        playAcceptedAlert();
+        toast.success('Your pro accepted. They are getting ready to come to you.', { icon: '🎉', duration: 7000 });
+      }
       if (p?.tipPaise > 0) toast.success(`₹${Math.round(p.tipPaise / 100)} tip from your customer. It is all yours.`, { icon: '🎉', duration: 6000 });
     };
     // Quote events are repair-only and carry no id; the repair lists are small.
@@ -258,7 +264,7 @@ export function useJobRealtime({ alerts = false } = {}) {
       socket.off('repair.quote', onQuote);
       socket.off('repair.quote_decision', onQuote);
     };
-  }, [token, alerts, dispatch]);
+  }, [token, alerts, dispatch, isCustomer]);
 }
 
 /** Run `handler` whenever this person's socket receives `event` (e.g. a price request or offer). */

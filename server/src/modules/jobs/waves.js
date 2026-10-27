@@ -55,7 +55,7 @@ async function closeUnmatched(kind, d) {
   }
 }
 
-// Auto-accept the moment a job starts waiting, not at the next sweep; the same once-only claim as the sweep.
+// Staff are rung the moment a job starts waiting, not at the next sweep; the same once-only claim as the sweep.
 async function kick(kind, doc) {
   const w = WAITING[kind];
   if (!w?.status.includes(doc.status) || Object.keys(w.unheld).some((k) => doc[k]) || doc.matching?.autoTriedAt) return null;
@@ -65,8 +65,7 @@ async function kick(kind, doc) {
   if (!fa.enabled || later) return null;
   const mine = await KINDS[kind].model().updateOne({ _id: doc._id, 'matching.autoTriedAt': null }, { $set: { 'matching.autoTriedAt': new Date() } });
   if (!mine.modifiedCount) return null;
-  // Staff first, each rung in turn until one accepts; partners with auto-accept only when no staff can come.
-  return (await fast.ringNextStaff(kind, doc, fa.autoAcceptKm)) || fast.tryAutoAccept(kind, doc, fa.autoAcceptKm);
+  return fast.ringNextStaff(kind, doc, fa.autoAcceptKm);
 }
 
 async function sweep({ now = Date.now() } = {}) {
@@ -100,20 +99,26 @@ async function sweep({ now = Date.now() } = {}) {
           continue;
         }
 
-        // Staff first, one at a time; then a pro who opted in to auto-accept, nearby, free (jobs/fast-assign).
+        // Staff first, one at a time (partners nearby were rung when it opened, jobs/job-events).
         if (quick && !d.matching?.autoTriedAt) {
           const mine = await Model.updateOne({ _id: d._id, 'matching.autoTriedAt': null }, { $set: { 'matching.autoTriedAt': new Date(now) } });
-          if (mine.modifiedCount && (await fast.ringNextStaff(kind, d, fa.autoAcceptKm) || await fast.tryAutoAccept(kind, d, fa.autoAcceptKm))) { out.autoAccepted = (out.autoAccepted || 0) + 1; continue; }
+          if (mine.modifiedCount && await fast.ringNextStaff(kind, d, fa.autoAcceptKm)) { out.staffRung = (out.staffRung || 0) + 1; continue; }
+        }
+        // Nobody tapped Accept in time: the fairest nearby free pro is given it, as far as widenKm.
+        if (quick && sinceBookedSec >= fa.autoAssignSec && !d.matching?.autoWideTriedAt) {
+          const mine = await Model.updateOne({ _id: d._id, 'matching.autoWideTriedAt': null }, { $set: { 'matching.autoWideTriedAt': new Date(now) } });
+          if (mine.modifiedCount && await fast.autoAssign(kind, d, fa.widenKm)) { out.autoAssigned = (out.autoAssigned || 0) + 1; continue; }
+        }
+        // Every ringSec until then, every nearby free pro is rung again, a little wider each round.
+        const round = Math.floor(sinceBookedSec / fa.ringSec);
+        if (quick && round >= 1 && sinceBookedSec < fa.autoAssignSec && round > (d.matching?.ringRound || 0)) {
+          const mine = await Model.updateOne({ _id: d._id, $or: [{ 'matching.ringRound': null }, { 'matching.ringRound': { $lt: round } }] }, { $set: { 'matching.ringRound': round } });
+          if (mine.modifiedCount) { await events.alertNearbyProviders(kind, d, { round }); out.rung = (out.rung || 0) + 1; }
         }
         // A staff member's ring is open: wait for them. Ended unanswered: ring the next staff member.
         if (quick && d.matching?.staffRing) {
           if (fast.staffDeciding(d, now)) continue;
           if (await fast.ringNextStaff(kind, d, fa.autoAcceptKm)) { out.staffRung = (out.staffRung || 0) + 1; continue; }
-        }
-        // At the deadline, auto-accept again, further out, before telling the customer.
-        if (quick && sinceBookedSec >= fa.deadlineSec && !d.matching?.autoWideTriedAt) {
-          const mine = await Model.updateOne({ _id: d._id, 'matching.autoWideTriedAt': null }, { $set: { 'matching.autoWideTriedAt': new Date(now) } });
-          if (mine.modifiedCount && await fast.tryAutoAccept(kind, d, fa.widenKm)) { out.autoAccepted = (out.autoAccepted || 0) + 1; continue; }
         }
 
         // Repairs: try the round again; someone may have come online.
@@ -133,7 +138,7 @@ async function sweep({ now = Date.now() } = {}) {
           }
         }
 
-        if ((quick ? sinceBookedSec >= fa.deadlineSec : waitedMin >= slowMin) && !d.matching?.slowNoticeAt) {
+        if ((quick ? sinceBookedSec >= Math.max(fa.deadlineSec, fa.autoAssignSec) : waitedMin >= slowMin) && !d.matching?.slowNoticeAt) {
           const claimed = await Model.updateOne(
             { _id: d._id, 'matching.slowNoticeAt': null },
             { $set: { 'matching.slowNoticeAt': new Date(now) } },

@@ -57,8 +57,9 @@ export function JobOfferHost({ kinds = ['repair', 'pet', 'helping'] }: { kinds?:
   const recovered = useMemo(() => recoveredOffers(repairData, petData), [repairData, petData]);
   const offer: Offer | null = useMemo(() => pickOffer(live, recovered, handled), [live, recovered, handled]);
 
-  const done = useCallback((o: Offer) => {
-    setHandled((s) => new Set(s).add(keyOf(o)));
+  // A ring that ran out is only off screen; the next ring round may show it again.
+  const done = useCallback((o: Offer, why?: 'expired' | 'dismissed') => {
+    if (why !== 'expired') setHandled((s) => new Set(s).add(keyOf(o)));
     setLive((q) => q.filter((x) => !(x.kind === o.kind && x.id === o.id)));
     refetchRepair?.();
     refetchPet?.();
@@ -115,7 +116,7 @@ export function JobOfferHost({ kinds = ['repair', 'pet', 'helping'] }: { kinds?:
       onAccept={accept}
       onDecline={decline}
       declineTitle={isShopTechnician ? 'Why are you passing this back to your shop?' : undefined}
-      onClose={() => done(offer)}
+      onClose={(why) => done(offer, why)}
     />
   );
 }

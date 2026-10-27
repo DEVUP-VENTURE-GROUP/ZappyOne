@@ -79,8 +79,9 @@ export default function JobOfferHost({ kinds = ['repair', 'pet', 'helping'], myL
   // Offered-to-you first: they're yours to lose. Then open jobs, oldest first.
   const offer = useMemo(() => pickOffer(live, recovered, handled), [live, recovered, handled]);
 
-  const done = useCallback((o) => {
-    setHandled((s) => new Set(s).add(keyOf(o)));
+  // A ring that ran out is only off screen; the next ring round may show it again.
+  const done = useCallback((o, why) => {
+    if (why !== 'expired') setHandled((s) => new Set(s).add(keyOf(o)));
     setLive((q) => q.filter((x) => !(x.kind === o.kind && x.id === o.id)));
     refetchRepair?.();
     refetchPet?.();
@@ -135,7 +136,7 @@ export default function JobOfferHost({ kinds = ['repair', 'pet', 'helping'], myL
       onAccept={accept}
       onDecline={decline}
       declineTitle={isShopTechnician ? 'Why are you passing this back to your shop?' : undefined}
-      onClose={() => done(offer)}
+      onClose={(why) => done(offer, why)}
     />
   );
 }

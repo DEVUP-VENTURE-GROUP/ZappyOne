@@ -1,23 +1,18 @@
 /**
- * Assigned within two minutes, for every kind of job (repairs, pet care,
+ * Assigned within three minutes, for every kind of job (repairs, pet care,
  * errands). The waves sweep (jobs/waves, every 10 s) drives the clock; this
  * holds the moves it makes. Timings: Economics → Dispatch (config.service
- * FAST_ASSIGN_DEFAULTS).
+ * FAST_ASSIGN_DEFAULTS). Nobody is ever given a job instantly.
  *
- *   T+0     auto-accept: ZappyOne's own staff on duty first (workforce/), then a
- *           pro who switched auto-accept on, nearby (autoAcceptKm), free and
- *           allowed this service, takes it with no tap
- *   T+0     first look: the best-ranked pro alone (repairs; pet and errands
- *           already ring every live pro nearby)
- *   T+30s   broadcast: the next best pros at once, first to claim wins (repairs)
- *   T+75s   wider: every eligible pro, a bigger radius, offline pros nudged
- *   T+120s  auto-accept again, as far as widenKm; then the customer is told
- *           honestly and chooses: keep searching, later, or cancel free
+ *   T+0     ZappyOne staff on duty are rung one at a time (staffRingSec each);
+ *           at the same moment every nearby free pro is rung for ringSec,
+ *           first to tap Accept wins
+ *   +ringSec  rung again, a little wider each round, up to widenKm
+ *   T+autoAssignSec  still nobody: the fairest nearby free pro (jobs/fairness)
+ *           is given it; then the customer is told and chooses
  *
- * Auto-accept and claiming go through the same handlers a pro's own tap
- * uses, so every rule still applies there: dues limit, workload, approval per
- * service, a pet stay's free bed. Cancelling an auto-accepted job pauses the
- * pro's auto-accept (autoAcceptPauseDays), so it cannot be farmed.
+ * Assigning goes through the same handler a pro's own tap uses, so every rule
+ * still applies: dues limit, workload, approval per service, a pet stay's bed.
  */
 const logger = require('../../core/logger');
 const { haversineKm } = require('../../core/geo/distance');
@@ -58,15 +53,15 @@ function passersOf(doc) {
   ]);
 }
 
-/** Pros with auto-accept on who could take this job now, nearest first. */
-async function autoAcceptCandidates(kind, doc, radiusKm) {
+/** Pros who could take this job now, fairest first; `anyone` drops the auto-accept switch (the auto-assign at autoAssignSec). */
+async function autoAcceptCandidates(kind, doc, radiusKm, { anyone = false } = {}) {
   const at = pointOf(kind, doc);
   const line = await KINDS[kind].line(doc);
   if (!at || !line) return [];
   const approved = await require('../onboarding/eligibility').approvedProviders(line);
   const passed = passersOf(doc);
   const now = new Date();
-  const notPaused = { 'autoAccept.enabled': true, $or: [{ 'autoAccept.pausedUntil': null }, { 'autoAccept.pausedUntil': { $lte: now } }] };
+  const notPaused = anyone ? {} : { 'autoAccept.enabled': true, $or: [{ 'autoAccept.pausedUntil': null }, { 'autoAccept.pausedUntil': { $lte: now } }] };
   const workerIds = approved.filter((p) => p.kind === 'worker' && !passed.has(p.id)).map((p) => p.id);
   const shopIds = kind === 'helping' ? [] : approved.filter((p) => p.kind === 'shop' && !passed.has(p.id)).map((p) => p.id);
   const Worker = require('../worker/worker.model');
@@ -74,8 +69,8 @@ async function autoAcceptCandidates(kind, doc, radiusKm) {
   // ZappyOne's own staff on duty take jobs first, with or without the switch (workforce/).
   const onDuty = [...await require('../workforce/staff').onDutyIds(now)].filter((id) => workerIds.includes(id));
   const [workers, shops] = await Promise.all([
-    Worker.find({ _id: { $in: workerIds }, isBlocked: { $ne: true }, $or: [notPaused, { _id: { $in: onDuty } }] }).select('currentLocation autoAccept employment dispatchStats').lean(),
-    Shop.find({ _id: { $in: shopIds }, ...notPaused }).select(`${require('../shop/shop.service').LIVE_FIELDS} autoAccept dispatchStats`).lean(),
+    Worker.find({ _id: { $in: workerIds }, isBlocked: { $ne: true }, ...(anyone ? { shopId: null } : { $or: [notPaused, { _id: { $in: onDuty } }] }) }).select('currentLocation autoAccept employment dispatchStats').lean(),
+    anyone ? [] : Shop.find({ _id: { $in: shopIds }, ...notPaused }).select(`${require('../shop/shop.service').LIVE_FIELDS} autoAccept dispatchStats`).lean(),
   ]);
   const live = await require('../worker/presence').liveIds(workers.map((w) => w._id));
   const fullShops = await require('../shop/partner.service').atCapacity(shops.map((s) => s._id));
@@ -103,13 +98,12 @@ async function autoAcceptCandidates(kind, doc, radiusKm) {
 }
 
 /**
- * Give the job to the nearest auto-accept pro who can take it (trying the next
- * if one cannot). Returns who took it, or null.
+ * Nobody tapped Accept by autoAssignSec: give it to the fairest nearby free pro,
+ * staff or partner, trying the next if one cannot take it. Returns who took it, or null.
  */
-async function tryAutoAccept(kind, doc, radiusKm) {
+async function autoAssign(kind, doc, radiusKm) {
   try {
-    // Staff never get a job without tapping Accept: they are rung in turn (ringNextStaff).
-    const candidates = (await module.exports.autoAcceptCandidates(kind, doc, radiusKm)).filter((c) => !c.staff).slice(0, 3);
+    const candidates = (await module.exports.autoAcceptCandidates(kind, doc, radiusKm, { anyone: true })).slice(0, 3);
     for (const who of candidates) {
       const r = await TAKE[kind](who, doc._id);
       if (!r.ok) continue;
@@ -117,7 +111,7 @@ async function tryAutoAccept(kind, doc, radiusKm) {
       return who;
     }
   } catch (e) {
-    logger.warn({ err: e.message, kind, id: String(doc._id) }, '[fast-assign] auto-accept failed');
+    logger.warn({ err: e.message, kind, id: String(doc._id) }, '[fast-assign] auto-assign failed');
   }
   return null;
 }
@@ -191,7 +185,7 @@ async function searchView(kind, doc) {
   const s = await settings();
   if (!s.enabled) return null;
   return {
-    startedAt: new Date(require('./waves').waitingSince({ ...doc, _kind: kind })), firstLookSec: s.firstLookSec, broadcastSec: s.broadcastSec, deadlineSec: s.deadlineSec,
+    startedAt: new Date(require('./waves').waitingSince({ ...doc, _kind: kind })), firstLookSec: s.firstLookSec, broadcastSec: s.broadcastSec, deadlineSec: Math.max(s.deadlineSec, s.autoAssignSec),
     toldAt: doc.matching?.slowNoticeAt || null,
     // A ZappyOne pro is deciding right now: the customer sees the same countdown.
     ringingUntil: staffDeciding(doc) ? doc.matching.staffRing.until : null,
@@ -209,8 +203,8 @@ async function autoAcceptOf(kind, id) {
   return {
     autoAccept: { enabled: !!a.enabled, maxKm: a.maxKm ?? null, pausedUntil: paused },
     radiusKm: s.autoAcceptKm, pauseDays: s.autoAcceptPauseDays,
-    // Off platform-wide, or a shop's technician (the shop gives them work): no toggle.
-    available: s.enabled && !(kind === 'worker' && me?.shopId),
+    // Nobody is given a job instantly any more (rings, then auto-assign): the switch is retired.
+    available: false,
   };
 }
 
@@ -225,4 +219,4 @@ async function setAutoAccept(kind, id, { enabled, maxKm }) {
   return autoAcceptOf(kind, id);
 }
 
-module.exports = { settings, asProvider, TAKE, tryAutoAccept, ringNextStaff, staffDeciding, autoAcceptCandidates, broadcastRepair, pauseIfAutoAccepted, autoAcceptOf, setAutoAccept, searchView };
+module.exports = { settings, asProvider, TAKE, autoAssign, ringNextStaff, staffDeciding, autoAcceptCandidates, broadcastRepair, pauseIfAutoAccepted, autoAcceptOf, setAutoAccept, searchView };

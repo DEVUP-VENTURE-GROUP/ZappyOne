@@ -11,12 +11,12 @@ module.exports = new mongoose.Schema({
   offeredTo: { type: [String], default: [] },
   broadcastAt: { type: Date, default: null },
   widenedAt: { type: Date, default: null },
-  /** Taken by a pro with auto-accept on (their own choice; cancelling it pauses auto-accept). */
+  /** Given to a pro automatically when nobody tapped Accept by autoAssignSec. */
   autoAcceptedAt: { type: Date, default: null },
   autoAcceptedBy: { type: String, default: null }, // 'kind:id', so only that pro's auto-accept pauses
   /** Claimed off a broadcast (a shop then has its usual time to give it to a technician). */
   claimedAt: { type: Date, default: null },
-  /** Auto-accept was tried: at once (near), and at the deadline (wider). */
+  /** Staff ring started (autoTriedAt) and the auto-assign was tried (autoWideTriedAt). */
   autoTriedAt: { type: Date, default: null },
   autoWideTriedAt: { type: Date, default: null },
   /** The customer picked this provider themselves (they get a longer first look). */
@@ -24,4 +24,7 @@ module.exports = new mongoose.Schema({
   /** Staff turn (jobs/fast-assign ringNextStaff): who is being rung now and until when, and every staff member rung so far. */
   staffRing: { type: new mongoose.Schema({ to: String, until: Date }, { _id: false }), default: null },
   staffTried: { type: [String], default: [] },
+  /** Ring rounds to nearby pros (jobs/waves): the last round sent, and who was already pushed, so a round re-rings the app but never re-pushes. */
+  ringRound: { type: Number, default: 0 },
+  pushed: { type: [String], default: [] },
 }, { _id: false });
