@@ -95,7 +95,7 @@ export const fromPetOffer = (b) => ({
 
 export const fromOpen = (p) => ({
   kind: p.kind, id: String(p.id), mode: 'open', askReason: false,
-  heading: 'New job near you, first to accept',
+  heading: p.yourTurn ? 'New job for you, accept before the timer ends' : 'New job near you, first to accept',
   title: p.title || 'New job',
   valueLabel: 'You earn',
   valuePaise: p.earningPaise || 0,
@@ -108,8 +108,8 @@ export const fromOpen = (p) => ({
   km: p.km ?? null,
   whenLabel: when(p.at),
   frontPaise: p.frontPaise || 0,
-  expiresAt: new Date(Date.now() + OPEN_WINDOW_SEC * 1000).toISOString(),
-  windowSec: OPEN_WINDOW_SEC,
+  expiresAt: p.expiresAt || new Date(Date.now() + OPEN_WINDOW_SEC * 1000).toISOString(),
+  windowSec: p.windowSec || OPEN_WINDOW_SEC,
   acceptLabel: 'Take this job',
 });
 

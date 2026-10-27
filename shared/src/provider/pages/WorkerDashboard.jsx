@@ -174,6 +174,8 @@ export default function WorkerDashboard() {
         }
         await goOnline({ lat: pos.lat, lng: pos.lng, accuracy: pos.accuracy ?? null }).unwrap();
         toast.success('You are online. New work near you will ring.');
+        // Allowed once, a job also shows as a phone notification while this tab is in the background.
+        try { if (window.Notification?.permission === 'default') window.Notification.requestPermission(); } catch { /* not supported */ }
         reverseGeocode(pos.lat, pos.lng)
           .then(({ primary, secondary }) => setAreaName(secondary ? `${primary}, ${secondary.split(',')[0]}` : primary))
           .catch(() => {});

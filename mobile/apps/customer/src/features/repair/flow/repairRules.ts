@@ -60,7 +60,7 @@ export interface RepairBill {
 
 export interface Provider {
   bill?: RepairBill | null;
-  shopId?: string; workerId?: string; name: string; imageUrl?: string; totalPaise?: number | null; rating?: number | null;
+  shopId?: string; workerId?: string; zappyPool?: boolean; staffCount?: number; name: string; imageUrl?: string; totalPaise?: number | null; rating?: number | null;
   durationMinutes?: number; etaMinutes?: number; arrivalMinutes?: number | null; arrivalWithinPromise?: boolean; busy?: boolean; availableInMinutes?: number;
   distanceKm?: number | null; completedJobs?: number; warrantyDays?: number; zappyRecommended?: boolean; auto?: boolean;
   priceOptions?: { qualityCode?: string | null; label: string; totalPaise: number; warrantyDays?: number; isGenuine?: boolean; bill?: RepairBill | null }[];
@@ -71,7 +71,7 @@ export function samePlace(a?: Provider | null, b?: Provider | null) {
   if (!a || !b) return false;
   if (a.shopId && b.shopId) return String(a.shopId) === String(b.shopId);
   if (a.workerId && b.workerId) return String(a.workerId) === String(b.workerId);
-  return false;
+  return !!(a.zappyPool && b.zappyPool);
 }
 
 const priceOf = (p: Provider) => p.totalPaise ?? Math.min(...(p.priceOptions || []).map((o) => o.totalPaise ?? Infinity), Infinity);

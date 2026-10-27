@@ -5,7 +5,7 @@ import { useAdminDispatchQuery, useAdminUpdateDispatchMutation } from '@shared/s
 import { Card, PageLoader, EmptyState } from '../../../ui/kit';
 import { Setting, UnitInput } from './fields';
 
-const KEYS = ['firstLookSec', 'broadcastSec', 'broadcastSize', 'deadlineSec', 'autoAcceptKm', 'widenKm', 'autoAcceptPauseDays', 'fairBandMin'];
+const KEYS = ['firstLookSec', 'broadcastSec', 'broadcastSize', 'deadlineSec', 'autoAcceptKm', 'widenKm', 'autoAcceptPauseDays', 'fairBandMin', 'staffRingSec'];
 
 /**
  * Dispatch: how fast a job wanted now finds its pro (server jobs/fast-assign),
@@ -34,7 +34,7 @@ export default function Dispatch() {
   const values = { enabled: form.enabled, ...Object.fromEntries(KEYS.map((k) => [k, Number(form[k])])) };
   const inRange = (k, lo, hi) => form[k] !== '' && Number.isFinite(values[k]) && values[k] >= lo && values[k] <= hi;
   const valid = inRange('firstLookSec', 10, 300) && inRange('broadcastSec', 15, 600) && inRange('broadcastSize', 2, 20)
-    && inRange('deadlineSec', 60, 1800) && inRange('autoAcceptKm', 0.5, 30) && inRange('widenKm', 1, 50) && inRange('autoAcceptPauseDays', 0, 90) && inRange('fairBandMin', 5, 60)
+    && inRange('deadlineSec', 60, 1800) && inRange('autoAcceptKm', 0.5, 30) && inRange('widenKm', 1, 50) && inRange('autoAcceptPauseDays', 0, 90) && inRange('fairBandMin', 5, 60) && inRange('staffRingSec', 5, 60)
     && values.firstLookSec + values.broadcastSec <= values.deadlineSec && values.autoAcceptKm <= values.widenKm;
   const dirty = KEYS.some((k) => values[k] !== s[k]) || values.enabled !== s.enabled;
   const set = (k) => (v) => setForm((f) => ({ ...f, [k]: v }));
@@ -83,6 +83,9 @@ export default function Dispatch() {
       </Setting>
       <Setting title="Wider radius" hint="Used once everyone sees the job, and for the last auto-accept try.">
         <UnitInput value={form.widenKm} onChange={set('widenKm')} label="Wider km" unit="km" min={1} max={50} />
+      </Setting>
+      <Setting title="Each staff member's turn" hint="ZappyOne staff are never given a job without tapping Accept. The fairest one nearby is rung for this long, then the next. The customer sees the same countdown.">
+        <UnitInput value={form.staffRingSec} onChange={set('staffRingSec')} label="Ring time" unit="seconds" min={5} max={60} />
       </Setting>
       <Setting title="Pause after a give-back" hint="A pro who hands back a job auto-accept took for them loses auto-accept for this long.">
         <UnitInput value={form.autoAcceptPauseDays} onChange={set('autoAcceptPauseDays')} label="Pause days" unit="days" min={0} max={90} />

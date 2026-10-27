@@ -23,6 +23,11 @@ export function searchStage(search, noun = 'pro', now = Date.now()) {
   if (!search?.startedAt) return null;
   const sec = Math.max(0, Math.floor((now - new Date(search.startedAt).getTime()) / 1000));
   const { firstLookSec, broadcastSec, deadlineSec } = search;
+  // A ZappyOne pro has the job on their screen right now: count their seconds down.
+  const ringLeft = search.ringingUntil ? Math.ceil((new Date(search.ringingUntil).getTime() - now) / 1000) : 0;
+  if (ringLeft > 0) {
+    return { clock: clock(sec), line: `A ZappyOne ${noun} nearby is looking at your job · ${ringLeft}s`, ringLeft, overdue: false, pct: Math.min(1, sec / deadlineSec) };
+  }
   const line = sec < firstLookSec ? `Asking the best ${noun} nearby`
     : sec < firstLookSec + broadcastSec ? `Asking several ${noun}s at once`
       : sec < deadlineSec ? `Asking every ${noun} nearby, a little further out`

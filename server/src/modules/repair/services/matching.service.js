@@ -236,7 +236,9 @@ async function findProviders({
   // ZappyOne staff on duty reach the customer through their hub, not a drawn service area (workforce/staff).
   if (serviceMode !== 'workshop' && !later && typeof lat === 'number') {
     for (const st of await require('../../workforce/staff').onDutyNear({ lat, lng }).catch(() => [])) {
-      if (!found.some((f) => f.workerId === st.workerId)) found.push({ owner: `w:${st.workerId}`, shopId: null, workerId: st.workerId, distanceKm: st.km, areaId: null, workshopLocation: null, staff: true });
+      const had = found.find((f) => f.workerId === st.workerId);
+      if (had) had.staff = true;
+      else found.push({ owner: `w:${st.workerId}`, shopId: null, workerId: st.workerId, distanceKm: st.km, areaId: null, workshopLocation: null, staff: true });
     }
   }
   const full = await require('../../shop/partner.service').atCapacity(found.filter((x) => x.shopId).map((x) => x.shopId));
@@ -423,6 +425,7 @@ async function findProviders({
       stockScore: inv.stockScore,
       partId: inv.partId || null,
       serviceMode,
+      ...(s.staff && { staff: true }),
       // Mid-way through another job: can reach this one only after it.
       ...(busy && { busy: true, availableInMinutes: require('../../jobs/workload').BUSY_EXTRA_MIN }),
     });
@@ -547,6 +550,22 @@ function rank(candidates, cfg) {
 }
 
 /** Strip internal scoring before anything customer-facing is serialised. */
+// The customer never picks one staff member: all on-duty staff become one "ZappyOne pro" option, and dispatch gives the job to the fair nearest (jobs/fast-assign, jobs/fairness). Partners stay listed by name.
+function poolStaff({ recommended, providers }) {
+  const free = providers.filter((p) => p.staff && !p.busy);
+  // All staff mid-job: still one option, arriving after their current job.
+  const staff = free.length ? free : providers.filter((p) => p.staff);
+  if (!staff.length) return { recommended, providers: providers.filter((p) => !p.staff) };
+  const soonest = [...staff].sort((a, b) => (a.arrivalMinutes ?? Infinity) - (b.arrivalMinutes ?? Infinity) || (a.distanceKm ?? Infinity) - (b.distanceKm ?? Infinity))[0];
+  const pool = {
+    ...soonest,
+    zappyPool: true, staff: undefined, shopId: null, workerId: null, imageUrl: null,
+    name: 'ZappyOne pro', staffCount: staff.length, rating: null, completedJobs: undefined, jobsToday: undefined, onTimeRate: undefined,
+    zappyRecommended: true,
+  };
+  return { recommended: pool, providers: [pool, ...providers.filter((p) => !p.staff)] };
+}
+
 function toPublic(provider) {
   if (!provider) return null;
   const { _scoreParts, score, price, penalties, ...rest } = provider;
@@ -604,6 +623,7 @@ async function findInspectors({ vertical, lat, lng, cityCode = null, includeOffl
 }
 
 module.exports = {
+  poolStaff,
   candidateAreas,
   findProviders,
   findInspectors,

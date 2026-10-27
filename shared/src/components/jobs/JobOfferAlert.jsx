@@ -44,7 +44,7 @@ export default function JobOfferAlert({ offer, myLocation, onAccept, onDecline, 
   // a ringtone that outlives its alert is how an app gets uninstalled.
   useEffect(() => {
     if (!offer) return undefined;
-    return startRinging();
+    return startRinging({ title: offer.heading || 'New job for you', body: offer.title || 'Open ZappyOne to accept' });
   }, [offer]);
 
   useEffect(() => {

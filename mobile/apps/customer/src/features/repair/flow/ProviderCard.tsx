@@ -20,7 +20,7 @@ import type { Provider } from './repairRules';
 
 export const ProviderCard = memo(function ProviderCard({ p, recommended, serviceMode, onPick }: { p: Provider; recommended: boolean; serviceMode: string; onPick: (qualityCode: string | null) => void }) {
   const options = p.priceOptions?.length ? p.priceOptions : null;
-  const img = webAsset(p.imageUrl);
+  const img = webAsset(p.zappyPool ? '/branding/zappy-mark.webp' : p.imageUrl);
   const later = p.availableInMinutes != null ? (p.availableInMinutes >= 60 ? `${Math.round(p.availableInMinutes / 60)} hour` : `${p.availableInMinutes} min`) : '';
   return (
     <View style={[flow.card, recommended && styles.pick]}>
@@ -31,6 +31,7 @@ export const ProviderCard = memo(function ProviderCard({ p, recommended, service
             <Text variant="bodySmall" weight="bold" numberOfLines={1} style={styles.shrink}>{p.name}</Text>
             {recommended ? <View style={styles.instant}><Text variant="caption" weight="black" color={zappy[700]}>INSTANT</Text></View> : null}
           </View>
+          {p.zappyPool ? <Text variant="caption" color={ink[500]}>Trained and verified by ZappyOne. The nearest free pro is asked first{(p.staffCount || 0) > 1 ? `, ${p.staffCount} on duty near you` : ''}.</Text> : null}
           {p.busy ? <Text variant="caption" weight="semibold" color={accent[700]}>Finishing another job: can reach you about {later} later</Text> : null}
           {p.arrivalMinutes != null ? <ArrivalBadge minutes={p.arrivalMinutes} withinPromise={p.arrivalWithinPromise} busy={p.busy} /> : null}
           <View style={styles.meta}>

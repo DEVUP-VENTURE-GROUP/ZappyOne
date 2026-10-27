@@ -45,3 +45,9 @@ test('a thousand candidates rank quickly', () => {
   fairOrder(many);
   expect(Date.now() - t).toBeLessThan(50);
 });
+
+test('two staff with no location yet still take turns: fewest jobs, then longest idle', () => {
+  const st = { staff: true };
+  expect(ids(fairOrder([c('had2', null, 2, 0, st), c('had1', null, 1, 0, st)]))).toEqual(['had1', 'had2']);
+  expect(ids(fairOrder([c('justDid', null, 1, Date.now(), st), c('idle', null, 1, Date.now() - 600000, st)]))).toEqual(['idle', 'justDid']);
+});

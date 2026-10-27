@@ -50,8 +50,7 @@ export function ProviderStep({ vertical, diagnosis, model, brand, configuration,
   });
   const result = data as (ProvidersResult & { providers?: Provider[]; recommended?: Provider }) | undefined;
   const providers = result?.providers || [];
-  const allOffline = !providers.length && (result?.nearbyCount || 0) > 0 && result?.primaryReason === 'offline';
-  const { data: standard } = useRepairPricePreviewQuery({ vertical, repairCode, brandCode: brand?.code, modelCode: model?.code, serviceMode }, { skip: !allOffline || !repairCode });
+  const { data: standard } = useRepairPricePreviewQuery({ vertical, repairCode, brandCode: brand?.code, modelCode: model?.code, serviceMode }, { skip: !!providers.length || !result || !repairCode });
   const standardPaise = standard?.reference && standard?.estimate?.totalPaise > 0 ? standard.estimate.totalPaise as number : null;
 
   if (!ready) return <ConfirmPinCard location={location} onConfirm={onPinConfirmed} onPick={onChangeLocation} />;
@@ -94,7 +93,7 @@ export function ProviderStep({ vertical, diagnosis, model, brand, configuration,
       {!isFetching && !ranked.length ? (
         <NoProvidersCard data={result} vertical={vertical} location={location!} standardPaise={standardPaise} needsDiagnosis={needsDiagnosis}
           request={{ brandCode: brand?.code, modelCode: model?.code, configurationCode: configuration?.code || null, problemCodes: problem?.code ? [problem.code] : [], repairCode, serviceMode }}
-          onBookStandard={() => onPick({ auto: true, name: 'First available technician', totalPaise: standardPaise }, repairCode, null)}
+          onBookStandard={() => onPick({ auto: true, name: 'ZappyOne pro', totalPaise: standardPaise }, repairCode, null)}
           onInspectInstead={onInspectInstead} onChangeLocation={onChangeLocation} />
       ) : null}
       {ranked.length ? (

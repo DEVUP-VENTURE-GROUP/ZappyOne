@@ -54,3 +54,45 @@ test('leaving staff removes only the staff approval, never a partner enrolment o
   await syncAllStaff();
   expect(await ProviderEnrolment.countDocuments({ workerId: partner._id, lineCode: 'bike_wash' })).toBe(1);
 });
+
+test('the customer sees one ZappyOne pro option, never a named staff member, and partners stay listed', () => {
+  const { poolStaff } = matching;
+  const kausar = { workerId: 'k', name: 'Kausar', staff: true, arrivalMinutes: 6, totalPaise: 9900, price: { totalPaise: 9900 } };
+  const ravi = { workerId: 'r', name: 'Ravi', staff: true, arrivalMinutes: 4, totalPaise: 9900, price: { totalPaise: 9900 } };
+  const shop = { shopId: 's', name: 'Shine Wash', totalPaise: 12900 };
+  const out = poolStaff({ recommended: kausar, providers: [kausar, shop, ravi] });
+  expect(out.providers.map((p) => p.name)).toEqual(['ZappyOne pro', 'Shine Wash']);
+  expect(out.recommended).toMatchObject({ zappyPool: true, workerId: null, shopId: null, staffCount: 2, arrivalMinutes: 4, totalPaise: 9900 });
+  expect(poolStaff({ recommended: shop, providers: [shop] }).providers).toEqual([shop]);
+  const busyOnly = poolStaff({ recommended: null, providers: [{ ...kausar, busy: true, availableInMinutes: 25 }] });
+  expect(busyOnly.providers[0]).toMatchObject({ zappyPool: true, busy: true, staffCount: 1 });
+});
+
+describe('staff are rung one at a time, fairest first, and never given a job without Accept', () => {
+  const fast = require('../src/modules/jobs/fast-assign');
+  const { RepairBooking } = require('../src/modules/repair/models/booking.model');
+  const events = require('../src/modules/repair/services/events.service');
+
+  test('ring the first, wait, then ring the second; auto-accept never takes it for staff', async () => {
+    const a = { kind: 'worker', id: 'a', staff: true };
+    const b = { kind: 'worker', id: 'b', staff: true };
+    jest.spyOn(fast, 'autoAcceptCandidates').mockResolvedValue([a, b]);
+    const offer = jest.spyOn(events, 'announceOffer').mockImplementation(() => {});
+    const doc = await RepairBooking.collection.insertOne({ status: 'CONFIRMED', shopId: null, workerId: null, userId: null, matching: {} });
+    const get = () => RepairBooking.findById(doc.insertedId).lean();
+
+    expect(await fast.tryAutoAccept('repair', await get(), 5)).toBeNull();
+    expect((await fast.ringNextStaff('repair', await get(), 5)).id).toBe('a');
+    let d = await get();
+    expect(d.matching.offeredTo).toEqual(['worker:a']);
+    expect(fast.staffDeciding(d)).toBe(true);
+    expect(fast.staffDeciding(d, Date.now() + 11000)).toBe(false);
+    expect((await fast.ringNextStaff('repair', d, 5)).id).toBe('b');
+    d = await get();
+    expect(d.matching.staffTried).toEqual(['a', 'b']);
+    expect(await fast.ringNextStaff('repair', d, 5)).toBeNull();
+    expect(offer).toHaveBeenCalledTimes(2);
+    expect(d.workerId).toBeNull();
+    jest.restoreAllMocks();
+  });
+});

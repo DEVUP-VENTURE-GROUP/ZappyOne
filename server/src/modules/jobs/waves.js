@@ -64,7 +64,9 @@ async function kick(kind, doc) {
   const later = doc.scheduledAt && new Date(doc.scheduledAt).getTime() - Date.now() > 60 * 60 * 1000;
   if (!fa.enabled || later) return null;
   const mine = await KINDS[kind].model().updateOne({ _id: doc._id, 'matching.autoTriedAt': null }, { $set: { 'matching.autoTriedAt': new Date() } });
-  return mine.modifiedCount ? fast.tryAutoAccept(kind, doc, fa.autoAcceptKm) : null;
+  if (!mine.modifiedCount) return null;
+  // Staff first, each rung in turn until one accepts; partners with auto-accept only when no staff can come.
+  return (await fast.ringNextStaff(kind, doc, fa.autoAcceptKm)) || fast.tryAutoAccept(kind, doc, fa.autoAcceptKm);
 }
 
 async function sweep({ now = Date.now() } = {}) {
@@ -98,10 +100,15 @@ async function sweep({ now = Date.now() } = {}) {
           continue;
         }
 
-        // Auto-accept at once: a pro who opted in, nearby, free (jobs/fast-assign).
+        // Staff first, one at a time; then a pro who opted in to auto-accept, nearby, free (jobs/fast-assign).
         if (quick && !d.matching?.autoTriedAt) {
           const mine = await Model.updateOne({ _id: d._id, 'matching.autoTriedAt': null }, { $set: { 'matching.autoTriedAt': new Date(now) } });
-          if (mine.modifiedCount && await fast.tryAutoAccept(kind, d, fa.autoAcceptKm)) { out.autoAccepted = (out.autoAccepted || 0) + 1; continue; }
+          if (mine.modifiedCount && (await fast.ringNextStaff(kind, d, fa.autoAcceptKm) || await fast.tryAutoAccept(kind, d, fa.autoAcceptKm))) { out.autoAccepted = (out.autoAccepted || 0) + 1; continue; }
+        }
+        // A staff member's ring is open: wait for them. Ended unanswered: ring the next staff member.
+        if (quick && d.matching?.staffRing) {
+          if (fast.staffDeciding(d, now)) continue;
+          if (await fast.ringNextStaff(kind, d, fa.autoAcceptKm)) { out.staffRung = (out.staffRung || 0) + 1; continue; }
         }
         // At the deadline, auto-accept again, further out, before telling the customer.
         if (quick && sinceBookedSec >= fa.deadlineSec && !d.matching?.autoWideTriedAt) {

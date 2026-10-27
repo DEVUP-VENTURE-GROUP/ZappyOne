@@ -21,4 +21,7 @@ module.exports = new mongoose.Schema({
   autoWideTriedAt: { type: Date, default: null },
   /** The customer picked this provider themselves (they get a longer first look). */
   chosenByCustomer: { type: Boolean, default: false },
+  /** Staff turn (jobs/fast-assign ringNextStaff): who is being rung now and until when, and every staff member rung so far. */
+  staffRing: { type: new mongoose.Schema({ to: String, until: Date }, { _id: false }), default: null },
+  staffTried: { type: [String], default: [] },
 }, { _id: false });

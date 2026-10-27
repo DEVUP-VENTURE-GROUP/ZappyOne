@@ -519,7 +519,7 @@ async function findProviders(req, res, next) {
       return res.status(400).json({ error: 'repairCode, lat and lng are required', code: 'PARAMS_REQUIRED' });
     }
 
-    const result = await matchingService.findProviders({
+    const found = await matchingService.findProviders({
       vertical: verticalOf(req),
       repairCode, brandCode, modelCode,
       qualityCode: qualityCode || null,
@@ -529,6 +529,7 @@ async function findProviders(req, res, next) {
       cityCode: cityCode || null,
       scheduledAt: scheduledAt && !Number.isNaN(new Date(scheduledAt).getTime()) ? new Date(scheduledAt) : null,
     });
+    const result = { ...found, ...matchingService.poolStaff(found) };
 
     // What the customer pays with each provider (and each part grade): the
     // booking's own price build, so the card, the confirm screen and the bill

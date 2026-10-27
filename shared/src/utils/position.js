@@ -1,3 +1,5 @@
+import { getBestPosition } from '../hooks/useGeolocation';
+
 // One position for a check-in or a photo: GPS first, then the device's normal fix (laptops have no GPS and time out), with a message a person can act on.
 const read = (opts) => new Promise((resolve, reject) => navigator.geolocation.getCurrentPosition(
   (p) => resolve({ lat: p.coords.latitude, lng: p.coords.longitude, accuracy: p.coords.accuracy }), reject, opts,
@@ -9,7 +11,8 @@ export const LOCATION_UNAVAILABLE = 'Could not find your location. Turn on locat
 export async function onePosition() {
   if (!navigator.geolocation) throw Object.assign(new Error(LOCATION_UNAVAILABLE), { code: 2 });
   try {
-    return await read({ enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+    // Best of the readings over up to 8 s, stopping at a real GPS lock: the first reading is often a rough network guess.
+    return await getBestPosition({ windowMs: 8000 });
   } catch (err) {
     if (err?.code === 1) throw Object.assign(new Error(LOCATION_BLOCKED), { code: 1 });
     try {

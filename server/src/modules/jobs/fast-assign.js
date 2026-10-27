@@ -108,7 +108,8 @@ async function autoAcceptCandidates(kind, doc, radiusKm) {
  */
 async function tryAutoAccept(kind, doc, radiusKm) {
   try {
-    const candidates = (await autoAcceptCandidates(kind, doc, radiusKm)).slice(0, 3);
+    // Staff never get a job without tapping Accept: they are rung in turn (ringNextStaff).
+    const candidates = (await module.exports.autoAcceptCandidates(kind, doc, radiusKm)).filter((c) => !c.staff).slice(0, 3);
     for (const who of candidates) {
       const r = await TAKE[kind](who, doc._id);
       if (!r.ok) continue;
@@ -120,6 +121,36 @@ async function tryAutoAccept(kind, doc, radiusKm) {
   }
   return null;
 }
+
+const UNHELD = { repair: { shopId: null, workerId: null }, pet: { shopId: null, workerId: null }, helping: { workerId: null } };
+
+/**
+ * Staff turn: ring the fairest on-duty staff member not yet rung (jobs/fairness), for staffRingSec. The job is
+ * theirs only when they tap Accept; when the ring ends unanswered the sweep rings the next. Returns who was rung, or null when no staff are left.
+ */
+async function ringNextStaff(kind, doc, radiusKm) {
+  try {
+    const s = await settings();
+    const tried = new Set((doc.matching?.staffTried || []).map(String));
+    const next = (await module.exports.autoAcceptCandidates(kind, doc, radiusKm)).find((c) => c.staff && !tried.has(c.id));
+    if (!next) return null;
+    const until = new Date(Date.now() + s.staffRingSec * 1000);
+    const add = { 'matching.staffTried': next.id, ...(kind === 'repair' && { 'matching.offeredTo': `worker:${next.id}` }) };
+    const r = await KINDS[kind].model().updateOne({ _id: doc._id, ...UNHELD[kind] }, { $set: { 'matching.staffRing': { to: next.id, until } }, $addToSet: add });
+    if (!r.modifiedCount) return null;
+    if (kind === 'repair') require('../repair/services/events.service').announceOffer(doc, { to: { kind: 'worker', id: next.id }, windowSec: s.staffRingSec });
+    else await require('./job-events').ringOne(kind, doc, next.id, s.staffRingSec);
+    // The customer's screen refetches and counts the same ring down.
+    require('./job-events').toProvider('user', doc.userId, 'job.update', { kind, id: String(doc._id), status: doc.status, at: new Date().toISOString() });
+    return next;
+  } catch (e) {
+    logger.warn({ err: e.message, kind, id: String(doc._id) }, '[fast-assign] staff ring failed');
+    return null;
+  }
+}
+
+/** A staff member is deciding right now: nobody else is offered the job until their ring ends. */
+const staffDeciding = (doc, now = Date.now()) => !!doc.matching?.staffRing?.until && new Date(doc.matching.staffRing.until).getTime() > now;
 
 /**
  * Repairs: put the job in front of these pros at once; the first to claim it
@@ -162,6 +193,9 @@ async function searchView(kind, doc) {
   return {
     startedAt: new Date(require('./waves').waitingSince({ ...doc, _kind: kind })), firstLookSec: s.firstLookSec, broadcastSec: s.broadcastSec, deadlineSec: s.deadlineSec,
     toldAt: doc.matching?.slowNoticeAt || null,
+    // A ZappyOne pro is deciding right now: the customer sees the same countdown.
+    ringingUntil: staffDeciding(doc) ? doc.matching.staffRing.until : null,
+    asked: (doc.matching?.staffTried || []).length,
   };
 }
 
@@ -191,4 +225,4 @@ async function setAutoAccept(kind, id, { enabled, maxKm }) {
   return autoAcceptOf(kind, id);
 }
 
-module.exports = { settings, asProvider, TAKE, tryAutoAccept, autoAcceptCandidates, broadcastRepair, pauseIfAutoAccepted, autoAcceptOf, setAutoAccept, searchView };
+module.exports = { settings, asProvider, TAKE, tryAutoAccept, ringNextStaff, staffDeciding, autoAcceptCandidates, broadcastRepair, pauseIfAutoAccepted, autoAcceptOf, setAutoAccept, searchView };

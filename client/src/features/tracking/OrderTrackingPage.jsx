@@ -475,7 +475,7 @@ export default function OrderTrackingPage() {
                 service={order.service}
                 status={status}
                 height="42vh"
-                pickupLabel="📍 You're here"
+                pickupLabel="You're here"
               />
               <MapETAChip eta={eta} distanceKm={distanceKm} status={status} />
             </motion.div>

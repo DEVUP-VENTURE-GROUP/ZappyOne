@@ -305,6 +305,7 @@ router.put('/economics/dispatch',
     widenKm: Joi.number().min(1).max(50),
     autoAcceptPauseDays: Joi.number().integer().min(0).max(90),
     fairBandMin: Joi.number().integer().min(5).max(60),
+    staffRingSec: Joi.number().integer().min(5).max(60),
   }).min(1)),
   async (req, res, next) => {
     try {

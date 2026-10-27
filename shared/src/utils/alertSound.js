@@ -63,7 +63,15 @@ export function playOfferAlert() {
  * repair offer keeps ringing for as long as it is on screen. Returns a stop
  * function; callers MUST call it when the alert closes.
  */
-export function startRinging({ intervalMs = 2500, vibratePattern = [300, 120, 300] } = {}) {
+export function startRinging({ intervalMs = 2500, vibratePattern = [300, 120, 300], title = 'New job for you', body = 'Open ZappyOne to accept' } = {}) {
+  // Tab in the background: a system notification too, so the job is seen, not only heard.
+  let note = null;
+  try {
+    if (typeof document !== 'undefined' && document.hidden && window.Notification?.permission === 'granted') {
+      note = new window.Notification(title, { body, requireInteraction: true, tag: 'zappy-job' });
+      note.onclick = () => { window.focus(); note.close(); };
+    }
+  } catch { /* notifications are a bonus */ }
   const ring = () => {
     playOfferAlert();
     try { navigator.vibrate?.(vibratePattern); } catch { /* not supported */ }
@@ -71,5 +79,5 @@ export function startRinging({ intervalMs = 2500, vibratePattern = [300, 120, 30
 
   ring();
   const timer = setInterval(ring, intervalMs);
-  return () => clearInterval(timer);
+  return () => { clearInterval(timer); try { note?.close(); } catch { /* already gone */ } };
 }

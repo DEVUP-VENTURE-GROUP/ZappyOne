@@ -137,6 +137,24 @@ const ALERT_MAX = 40;
  * online. A provider with no known position is still told — they chose to work
  * this service and can judge the distance themselves from the job card.
  */
+// One staff member's ring for an open job (jobs/fast-assign staff turn): the same card everyone nearby gets, with its own countdown.
+async function ringOne(kind, doc, workerId, windowSec) {
+  const k = KINDS[kind];
+  if (!k.open) return;
+  const start = k.open.start(doc);
+  const line = await lineOf(kind, doc);
+  const customer = await require('./customer-rating').summaryFor(doc.userId).catch(() => null);
+  const summary = k.open.summary ? k.open.summary(doc) : {};
+  toProvider('worker', workerId, 'job.available', {
+    kind, id: String(doc._id), reference: doc.reference, line, area: areaOf(start?.address), km: null,
+    coordinates: start ? roughCoords([start.lng, start.lat]) : null, ...summary, customer,
+    windowSec, expiresAt: new Date(Date.now() + windowSec * 1000).toISOString(), yourTurn: true,
+  });
+  await require('../messaging/send').send('provider.job_nearby', {
+    to: { kind: 'worker', id: workerId }, ctx: { label: k.label, km: null, area: areaOf(start?.address), earningPaise: summary.earningPaise, boostPaise: summary.boostPaise },
+  }).catch(() => {});
+}
+
 async function alertNearbyProviders(kind, doc, { offlineOnly = false } = {}) {
   try {
     const { approvedProviders } = require('../onboarding/eligibility');
@@ -147,6 +165,11 @@ async function alertNearbyProviders(kind, doc, { offlineOnly = false } = {}) {
     // Not back to whoever already passed on it or handed it back (jobs/give-back).
     const passed = new Set([...(doc.declinedBy || []), ...(doc.releasedBy || [])].map(String));
     let providers = (await approvedProviders(line)).filter((p) => !passed.has(String(p.id)));
+    // Staff on duty are rung one at a time, fairest first (jobs/fast-assign), not all at once.
+    if (!offlineOnly && !require('./work-hours').isLater(doc.scheduledAt || doc.checkInAt)) {
+      const onDuty = await require('../workforce/staff').onDutyIds();
+      providers = providers.filter((p) => p.kind !== 'worker' || !onDuty.has(String(p.id)));
+    }
     // Nobody at their dues limit is rung for new work (worker-dues).
     const working = await require('../worker/worker-dues.service').filterWorkingWorkers(providers.filter((p) => p.kind === 'worker').map((p) => p.id));
     providers = providers.filter((p) => p.kind !== 'worker' || working.has(String(p.id)));
@@ -255,5 +278,5 @@ async function notifyMoved(kind, doc, previous) {
   });
 }
 
-module.exports = {
+module.exports = { ringOne,
   ringOffer, announce, announceOnSave, announceAssigned, alertNearbyProviders, notifyMoved, toProvider, push };

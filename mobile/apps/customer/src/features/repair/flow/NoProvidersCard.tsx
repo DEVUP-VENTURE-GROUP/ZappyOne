@@ -33,9 +33,9 @@ export function NoProvidersCard({ data, vertical, request, location, standardPai
   const repairName = data?.repairName || 'this repair';
   const locationProblem = data?.reason === 'no_provider_in_area';
   const notListed = nearby > 0 && ['no_capability', 'capability_scope', 'no_approved_price'].includes(data?.primaryReason || '');
-  const allOffline = nearby > 0 && data?.primaryReason === 'offline';
+  const bookNow = !!standardPaise && !needsDiagnosis && data?.reason !== 'service_mode_not_allowed';
 
-  if (locationProblem || (nearby === 0 && !data?.reason)) {
+  if (!bookNow && (locationProblem || (nearby === 0 && !data?.reason))) {
     return <GrowingHere service={{ code: vertical, name: data?.repairName || 'repair' }} lat={location.lat} lng={location.lng} address={location.address} onChangeLocation={onChangeLocation} />;
   }
 
@@ -49,11 +49,12 @@ export function NoProvidersCard({ data, vertical, request, location, standardPai
   const plural = (word: string) => `${nearby} ${nearby === 1 ? word : `${word}s`}`;
   let title = 'No technicians available right now';
   let body = 'We could not find anyone able to do this repair today.';
-  if (data?.reason === 'service_mode_not_allowed') body = 'This repair cannot be done the way you chose. Go back and pick another option.';
+  if (bookNow) { title = `Book now for ${formatPaise(standardPaise!)}`; body = 'Nobody is listed this minute. Book and we give it to the nearest ZappyOne pro the moment one is free, usually within minutes. You are told when someone accepts, and you can cancel free until then.'; }
+  else if (data?.reason === 'service_mode_not_allowed') body = 'This repair cannot be done the way you chose. Go back and pick another option.';
   else if (notListed) { title = `${plural('shop')} near you, none has priced ${repairName} yet`; body = 'Ask them: each shop sends its price, and you book the one you like. Or book an inspection for a firm quote.'; }
-  else if (allOffline) {
+  else if (nearby > 0 && data?.primaryReason === 'offline') {
     title = `${plural('technician')} near you, none online this minute`;
-    body = standardPaise ? 'Book now and we will offer it to the first one who comes online. You will be told the moment someone accepts, and you can cancel free until then.' : 'Try again shortly, or book an inspection to hold your place.';
+    body = 'Try again shortly, or book an inspection to hold your place.';
   } else if (nearby > 0) { title = `${plural('shop')} near you, none free right now`; body = 'Try again shortly, or book an inspection to hold your place.'; }
 
   return (
@@ -62,7 +63,7 @@ export function NoProvidersCard({ data, vertical, request, location, standardPai
       <Text variant="bodySmall" weight="bold" color={ink[700]} style={styles.center}>{title}</Text>
       <Text variant="caption" color={ink[500]} style={styles.center}>{body}</Text>
       <View style={styles.actions}>
-        {allOffline && standardPaise ? <Button label={`Book now for ${formatPaise(standardPaise)}`} size="small" icon={<Check size={14} color="#fff" />} onPress={onBookStandard} /> : null}
+        {bookNow ? <Button label={`Book now for ${formatPaise(standardPaise)}`} size="small" icon={<Check size={14} color="#fff" />} onPress={onBookStandard} /> : null}
         {notListed && !needsDiagnosis ? <Button label="Ask nearby shops for their price" size="small" loading={asking} icon={<Store size={14} color="#fff" />} onPress={askShops} /> : null}
         {nearby > 0 && onInspectInstead ? <Button label="Book an inspection instead" size="small" variant="secondary" icon={<ShieldCheck size={14} color={ink[700]} />} onPress={onInspectInstead} /> : null}
         {nearby === 0 ? <Button label="Change location" size="small" variant="outline" icon={<MapPin size={14} color={ink[700]} />} onPress={onChangeLocation} /> : null}

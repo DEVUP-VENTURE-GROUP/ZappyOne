@@ -993,7 +993,7 @@ function ProviderStep({
   }
   const { data: standard } = useRepairPricePreviewQuery(
     { vertical, repairCode, brandCode: brand?.code, modelCode: model?.code, serviceMode },
-    { skip: !allOffline || !repairCode },
+    { skip: !!data?.providers?.length || !data || !repairCode },
   );
   const standardPaise = standard?.reference && standard?.estimate?.totalPaise > 0 ? standard.estimate.totalPaise : null;
 
@@ -1132,9 +1132,12 @@ function ProviderStep({
         const notListed = nearby > 0 && ['no_capability', 'capability_scope', 'no_approved_price']
           .includes(data?.primaryReason);
 
+        // A ZappyOne price exists: the customer always has Book now; dispatch gives it to the fair nearest pro who can take it.
+        const bookNow = !!standardPaise && !needsDiagnosis && data?.reason !== 'service_mode_not_allowed';
+
         // Nobody verified covers this address at all: say we're growing here,
         // record it as demand, and offer to notify — no booking is made.
-        if (locationProblem || (nearby === 0 && !data?.reason)) {
+        if (!bookNow && (locationProblem || (nearby === 0 && !data?.reason))) {
           return (
             <GrowingHere
               service={{ code: vertical, name: data?.repairName || 'repair' }}
@@ -1148,7 +1151,10 @@ function ProviderStep({
 
         let title = 'No technicians available right now';
         let body = 'We could not find anyone able to do this repair today.';
-        if (locationProblem) {
+        if (bookNow) {
+          title = `Book now for ${formatPaise(standardPaise)}`;
+          body = 'Nobody is listed this minute. Book and we give it to the nearest ZappyOne pro the moment one is free, usually within minutes. You are told when someone accepts, and you can cancel free until then.';
+        } else if (locationProblem) {
           title = 'No repair shops cover this address yet';
           body = 'Moving the pin to a nearby area often finds someone.';
         } else if (data?.reason === 'service_mode_not_allowed') {
@@ -1172,9 +1178,9 @@ function ProviderStep({
             <p className="mt-3 text-sm font-bold text-slate-700">{title}</p>
             <p className="mt-1 text-xs leading-relaxed text-slate-500">{body}</p>
             <div className="mt-4 flex flex-wrap justify-center gap-2">
-              {allOffline && standardPaise && (
+              {bookNow && (
                 <button
-                  onClick={() => onPick({ auto: true, name: 'First available technician', totalPaise: standardPaise }, repairCode, null)}
+                  onClick={() => onPick({ auto: true, name: 'ZappyOne pro', totalPaise: standardPaise }, repairCode, null)}
                   className="inline-flex items-center gap-1.5 rounded-xl bg-zappy-600 px-4 py-2.5 text-xs font-bold text-white"
                 >
                   <Check size={13} /> Book now for {formatPaise(standardPaise)}
@@ -1258,7 +1264,7 @@ function samePlace(a, b) {
   if (!a || !b) return false;
   if (a.shopId && b.shopId) return String(a.shopId) === String(b.shopId);
   if (a.workerId && b.workerId) return String(a.workerId) === String(b.workerId);
-  return false;
+  return !!(a.zappyPool && b.zappyPool);
 }
 
 /**
@@ -1331,9 +1337,11 @@ function ProviderCard({ p, recommended, serviceMode, onPick }) {
             customer recognises from the high street is the difference between
             a list of names and a list of businesses. */}
         <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-100">
-          {p.imageUrl
-            ? <img src={p.imageUrl} alt="" className="h-full w-full object-cover" />
-            : <span className="text-[15px] font-black text-slate-400">{(p.name || '?')[0].toUpperCase()}</span>}
+          {p.zappyPool
+            ? <img src="/branding/zappy-mark.webp" alt="" className="h-7 w-7 object-contain" />
+            : p.imageUrl
+              ? <img src={p.imageUrl} alt="" className="h-full w-full object-cover" />
+              : <span className="text-[15px] font-black text-slate-400">{(p.name || '?')[0].toUpperCase()}</span>}
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
@@ -1344,6 +1352,11 @@ function ProviderCard({ p, recommended, serviceMode, onPick }) {
               </span>
             )}
           </div>
+          {p.zappyPool && (
+            <p className="mt-0.5 text-[11px] text-slate-500">
+              Trained and verified by ZappyOne. The nearest free pro is asked first{p.staffCount > 1 ? `, ${p.staffCount} on duty near you` : ''}.
+            </p>
+          )}
           {p.busy && (
             <p className="mt-1 text-[11px] font-semibold text-amber-700">
               Finishing another job — can reach you about {p.availableInMinutes >= 60 ? `${Math.round(p.availableInMinutes / 60)} hour` : `${p.availableInMinutes} min`} later

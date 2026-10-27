@@ -48,6 +48,25 @@ export interface LiveTrackingMapProps {
 /** Padding around the fitted pair, in points. Leaves room for the bottom card. */
 const FIT_EDGE = { top: 90, right: 70, bottom: 240, left: 70 };
 
+/** A pan by the customer pauses following this long; then the camera follows again. */
+const USER_HOLD_MS = 15000;
+/** Closer than this, frame the door itself. */
+const NEAR_M = 150;
+
+function metresBetween(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
+  const R = 6371000;
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const h = Math.sin(toRad(b.lat - a.lat) / 2) ** 2 + Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(toRad(b.lng - a.lng) / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+
+function bearingOf(from: { lat: number; lng: number }, to: { lat: number; lng: number }) {
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const y = Math.sin(toRad(to.lng - from.lng)) * Math.cos(toRad(to.lat));
+  const x = Math.cos(toRad(from.lat)) * Math.sin(toRad(to.lat)) - Math.sin(toRad(from.lat)) * Math.cos(toRad(to.lat)) * Math.cos(toRad(to.lng - from.lng));
+  return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
+}
+
 /** Re-frame only when a point moves more than ~25m. */
 const REFRAME_THRESHOLD_DEG = 0.00022;
 
@@ -71,13 +90,19 @@ function LiveTrackingMapBase({
   const mapRef = useRef<MapView>(null);
   const [workerLocation, setWorkerLocation] = useState(initialWorkerLocation);
   const lastFitted = useRef<{ lat: number; lng: number } | null>(null);
+  const [heading, setHeading] = useState(0);
+  const prev = useRef<{ lat: number; lng: number } | null>(null);
+  const heldUntil = useRef(0);
   const socketClient = useSocket(orderId);
 
   // Socket wiring is untouched: same event, same client, same room.
   useEffect(() => {
     const handler = (payload: WorkerLocationEvent) => {
       if (typeof payload?.lat === 'number' && typeof payload?.lng === 'number') {
-        setWorkerLocation({ lat: payload.lat, lng: payload.lng });
+        const next = { lat: payload.lat, lng: payload.lng };
+        if (prev.current && metresBetween(prev.current, next) > 3) setHeading(bearingOf(prev.current, next));
+        prev.current = next;
+        setWorkerLocation(next);
       }
     };
     socketClient.on('worker.location', handler);
@@ -92,6 +117,12 @@ function LiveTrackingMapBase({
 
   const fitBoth = useCallback(() => {
     if (!workerLocation) return;
+    // At the door: the door, close in; otherwise both pins, zooming in by itself as they get closer.
+    if (metresBetween(workerLocation, { lat: pickupLat, lng: pickupLng }) < NEAR_M) {
+      mapRef.current?.animateCamera({ center: { latitude: pickupLat, longitude: pickupLng }, zoom: 17 }, { duration: 800 });
+      lastFitted.current = workerLocation;
+      return;
+    }
     mapRef.current?.fitToCoordinates(
       [
         { latitude: pickupLat, longitude: pickupLng },
@@ -103,7 +134,7 @@ function LiveTrackingMapBase({
   }, [workerLocation, pickupLat, pickupLng]);
 
   useEffect(() => {
-    if (!followWorker || !workerLocation) return;
+    if (!followWorker || !workerLocation || Date.now() < heldUntil.current) return;
     if (!movedEnough(lastFitted.current, workerLocation)) return;
     fitBoth();
   }, [followWorker, workerLocation, fitBoth]);
@@ -111,7 +142,9 @@ function LiveTrackingMapBase({
   // `isGesture` distinguishes a pan by the customer from our own animations.
   const handleRegionChange = useCallback(
     (_region: Region, details?: { isGesture?: boolean }) => {
-      if (details?.isGesture) onUserPan?.();
+      if (!details?.isGesture) return;
+      heldUntil.current = Date.now() + USER_HOLD_MS;
+      onUserPan?.();
     },
     [onUserPan],
   );
@@ -152,6 +185,9 @@ function LiveTrackingMapBase({
               coordinate={{ latitude: workerLocation.lat, longitude: workerLocation.lng }}
               title="Your professional"
               anchor={{ x: 0.5, y: 0.5 }}
+              // The arrow points where they are heading (the icon itself points north-east).
+              rotation={(heading + 315) % 360}
+              flat
               // Re-rendering a custom marker view on every tick is the single
               // biggest cause of jank on Android maps.
               tracksViewChanges={false}

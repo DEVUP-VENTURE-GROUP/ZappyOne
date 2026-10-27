@@ -36,7 +36,7 @@ export default function JobMapCard({ to, label = 'Customer location', live = tru
     <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
       <div className="relative h-[220px] sm:h-[280px] lg:h-[320px]">
         <Suspense fallback={<div className="flex h-full items-center justify-center bg-slate-50"><Loader2 size={20} className="animate-spin text-slate-400" /></div>}>
-          <LiveTrackingMap pickup={to} workerLocation={me} status="on_the_way" height="100%" pickupLabel={label} />
+          <LiveTrackingMap pickup={to} workerLocation={me} status="on_the_way" height="100%" pickupLabel={label} workerLabel="You" />
         </Suspense>
       </div>
       <div className="flex items-center gap-3 p-3">

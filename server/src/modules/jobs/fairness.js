@@ -19,7 +19,9 @@ function fairOrder(candidates, { promiseMin = PROMISE_MIN } = {}) {
     .sort((a, b) => (Number(!!b.c.staff) - Number(!!a.c.staff))
       || (Number(b.band) - Number(a.band))
       || (a.band ? (a.s.jobsToday - b.s.jobsToday) || (a.s.lastAt - b.s.lastAt) : 0)
-      || ((a.c.km ?? Infinity) - (b.c.km ?? Infinity)))
+      || ((a.c.km ?? Infinity) - (b.c.km ?? Infinity))
+      // Same distance or both unknown (no GPS yet): still the fewest jobs, then the longest idle, never the same person by default.
+      || (a.s.jobsToday - b.s.jobsToday) || (a.s.lastAt - b.s.lastAt))
     .map((x) => x.c);
 }
 

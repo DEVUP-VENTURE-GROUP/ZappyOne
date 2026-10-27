@@ -76,6 +76,7 @@ const FAST_ASSIGN_DEFAULTS = {
   autoAcceptKm: 5,         // how far an auto-accept pro may be given a job
   widenKm: 15,             // after the broadcast, and for auto-accept at the deadline
   autoAcceptPauseDays: 7,  // cancelling an auto-accepted job pauses auto-accept this long
+  staffRingSec: 10,        // each on-duty staff member, fairest first, is rung this long; the job is theirs only on Accept
 };
 
 const SURGE_DEFAULTS = {
