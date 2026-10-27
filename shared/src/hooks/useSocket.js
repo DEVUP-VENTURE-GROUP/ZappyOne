@@ -107,7 +107,7 @@ export function useOrderSocket(orderId, callbacks = {}) {
     };
 
     const onCancelled = () => {
-      toast('Order cancelled', { id: 'order-cancel', icon: '❌' });
+      toast('Order cancelled', { id: 'order-cancel' });
       dispatch(clearActiveOrder());
     };
 
@@ -239,16 +239,16 @@ export function useJobRealtime({ alerts = false } = {}) {
       // A customer put a tip on the bill: the provider hears it the moment it happens.
       if (isCustomer && p?.accepted) {
         playAcceptedAlert();
-        toast.success('Your pro accepted. They are getting ready to come to you.', { icon: '🎉', duration: 7000 });
+        toast.success('Your pro accepted. They are getting ready to come to you.', { duration: 7000 });
       }
-      if (p?.tipPaise > 0) toast.success(`₹${Math.round(p.tipPaise / 100)} tip from your customer. It is all yours.`, { icon: '🎉', duration: 6000 });
+      if (p?.tipPaise > 0) toast.success(`₹${Math.round(p.tipPaise / 100)} tip from your customer. It is all yours.`, { duration: 6000 });
     };
     // Quote events are repair-only and carry no id; the repair lists are small.
     const onQuote = () => refresh(['RepairBookings']);
     const onAvailable = (p) => {
       if (OPEN_TAGS[p?.kind]) refresh([OPEN_TAGS[p.kind]]);
       if (alerts) {
-        toast(`New job near you${p.area ? `, ${p.area}` : ''}`, { icon: '🔔', duration: 6000 });
+        toast(`New job near you${p.area ? `, ${p.area}` : ''}`, { duration: 6000 });
       }
     };
 

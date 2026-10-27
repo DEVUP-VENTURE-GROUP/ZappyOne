@@ -64,7 +64,7 @@ export default function RewardsPage() {
       const res = await scratch(cardId).unwrap();
       const r = res.reward;
       if (r && r.type !== 'none') { setReveal(r); toast.success(t('rewards.toast.won', 'You won {x}!').replace('{x}', r.label)); }
-      else toast(t('rewards.toast.betterLuck', 'Better luck next time!'), { icon: '🎁' });
+      else toast(t('rewards.toast.betterLuck', 'Better luck next time!'));
     } catch (err) { toast.error(err?.data?.error || t('rewards.toast.scratchFailed', 'Could not scratch')); }
   }
 

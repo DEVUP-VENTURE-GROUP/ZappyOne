@@ -1624,7 +1624,7 @@ function ConfirmStep({
       onDone(res.booking);
     } catch (err) {
       // The price moved while they decided: show the new total, they book again.
-      if (surgeChanged(err, surge.refetch)) { toast(err.data.error, { icon: '⚡' }); return; }
+      if (surgeChanged(err, surge.refetch)) { toast(err.data.error); return; }
       toast.error(err?.data?.error || 'Could not create the booking');
     }
   }

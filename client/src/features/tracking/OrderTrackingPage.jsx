@@ -283,7 +283,7 @@ export default function OrderTrackingPage() {
       setShowCancel(false); setCancelReason('');
       if (result.feeRupees > 0) {
         toast(`Order cancelled — ₹${result.feeRupees} cancellation fee charged`,
-          { id: 'order-cancel', icon: '💳', duration: 5000 });
+          { id: 'order-cancel', duration: 5000 });
       } else {
         toast.success('Order cancelled — no charge', { id: 'order-cancel' });
       }
@@ -319,7 +319,7 @@ export default function OrderTrackingPage() {
         body: JSON.stringify({ lat: pickup?.lat, lng: pickup?.lng }),
       });
       if (!res.ok) throw new Error(String(res.status));
-      toast('SOS sent — 112 dialled and our safety team has been alerted', { icon: '🚨', duration: 8000 });
+      toast('SOS sent — 112 dialled and our safety team has been alerted', { duration: 8000 });
     } catch {
       // Never claim we were told when we were not.
       toast.error('112 dialled. We could not reach ZappyOne support — please call us on the help line too.', { duration: 10000 });
@@ -451,7 +451,7 @@ export default function OrderTrackingPage() {
                 </div>
                 <div className="space-y-2.5">
                   <motion.button whileTap={{ scale: 0.97 }}
-                    onClick={() => toast("We'll notify you the moment workers go live in your area!", { icon: '🔔', duration: 4000, style: { fontWeight: 600 } })}
+                    onClick={() => toast("We'll notify you the moment workers go live in your area!", { duration: 4000, style: { fontWeight: 600 } })}
                     className="w-full h-12 rounded-2xl font-extrabold text-sm flex items-center justify-center gap-2 text-white"
                     style={{ background: 'linear-gradient(#3B82F6, #3B82F6)', boxShadow: '0 6px 20px rgba(59,130,246,0.45)' }}>
                     <span>🔔</span> Notify me when live here
@@ -918,7 +918,7 @@ export default function OrderTrackingPage() {
                       )}
                       <div className="flex gap-2">
                         <button onClick={() => setWorkerNotHereMode(false)} className="flex-1 h-10 rounded-xl bg-slate-100 text-slate-700 text-sm font-semibold">Back</button>
-                        <button onClick={() => { setShowArrivedSheet(false); setWorkerNotHereMode(false); toast('Sheet closed — tap "Confirm" when ready', { icon: '⏳' }); }}
+                        <button onClick={() => { setShowArrivedSheet(false); setWorkerNotHereMode(false); toast('Sheet closed — tap "Confirm" when ready'); }}
                           className="flex-1 h-10 rounded-xl bg-slate-100 text-slate-700 text-sm font-semibold">Wait & check later</button>
                       </div>
                     </div>

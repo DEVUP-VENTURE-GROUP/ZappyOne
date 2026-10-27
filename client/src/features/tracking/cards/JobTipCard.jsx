@@ -95,7 +95,7 @@ function TipOnBill({ jobId, tip, name, onTipped }) {
     setPicked(r);
     try {
       const res = await tipJob({ id: jobId, amountPaise: r * 100, method: 'with_payment' }).unwrap();
-      toast.success(res.message, r ? { icon: '💛' } : undefined);
+      toast.success(res.message);
       onTipped?.();
     } catch (err) {
       setPicked(null);

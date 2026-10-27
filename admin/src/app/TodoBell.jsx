@@ -15,7 +15,7 @@ export default function TodoBell({ onOpen }) {
     if (data == null) return;
     if (last.current != null && total > last.current) {
       const msg = `${total - last.current} new item${total - last.current === 1 ? '' : 's'} waiting for you`;
-      toast(msg, { icon: '🔔' });
+      toast(msg);
       try { if (window.Notification?.permission === 'granted') new window.Notification('ZappyOne admin', { body: msg }); } catch { /* notifications are a bonus */ }
     }
     last.current = total;

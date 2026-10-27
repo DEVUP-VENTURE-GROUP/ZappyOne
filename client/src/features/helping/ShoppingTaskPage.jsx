@@ -146,7 +146,7 @@ export default function ShoppingTaskPage() {
       draftDone();
       nav(`/helping/tasks/${res.task._id}`);
     } catch (err) {
-      if (surgeChanged(err, surge.refetch)) { toast(err.data.error, { icon: '⚡' }); return; }
+      if (surgeChanged(err, surge.refetch)) { toast(err.data.error); return; }
       toast.error(err?.data?.error || 'Could not create the task');
     }
   }

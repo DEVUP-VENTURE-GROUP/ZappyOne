@@ -189,7 +189,7 @@ export default function EventBookingPage() {
       } catch (payErr) {
         const msg = payErr?.message || '';
         if (msg.includes('cancelled')) {
-          toast('Payment incomplete. We reserved your slot for 15 mins!', { icon: '⏱️' });
+          toast('Payment incomplete. We reserved your slot for 15 mins!');
           clearDraft(draftKey);
           navigate(`/events/bookings/${bookingId}`, { replace: true });
         } else {

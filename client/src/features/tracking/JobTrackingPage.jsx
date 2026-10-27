@@ -115,7 +115,7 @@ export default function JobTrackingPage({ job, extras = null, startCode = null, 
     if (!onSOS) return;
     try {
       await onSOS();
-      toast('112 dialled, and our safety team has been alerted', { icon: '🚨', duration: 8000 });
+      toast('112 dialled, and our safety team has been alerted', { duration: 8000 });
     } catch {
       // Never claim we were told when we were not.
       toast.error('112 dialled. We could not reach ZappyOne support. Please call us too.', { duration: 10000 });

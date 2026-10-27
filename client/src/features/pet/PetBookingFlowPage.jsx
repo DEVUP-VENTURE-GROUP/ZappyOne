@@ -244,7 +244,7 @@ function PetBookingFlow({ categoryCode, saved, draftKey, onStartOver }) {
       nav(`/pet/bookings/${res.booking._id}`, { replace: true });
     } catch (err) {
       if (surgeChanged(err, surge.refetch)) {
-        toast(err.data.error, { icon: '⚡' });
+        toast(err.data.error);
       } else if (err?.data?.code === 'NOT_COMPATIBLE') {
         toast.error(err.data.error);
       } else {
