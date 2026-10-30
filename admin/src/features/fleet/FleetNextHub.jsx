@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Sparkles, Users, Clock, Store, MapPin } from 'lucide-react';
+import { Users, Clock, Store, MapPin, Lightbulb } from 'lucide-react';
 import { useAdminFleetNextHubQuery } from '@shared/services/api';
 import DaysPicker from './DaysPicker';
 import { PageLoader, EmptyState } from '../../ui/kit';
@@ -28,7 +28,7 @@ export default function FleetNextHub() {
       </div>
 
       <section className="rounded-2xl border border-[#1F4FD8]/20 bg-[#1F4FD8]/[0.04] p-5">
-        <p className="flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-wide text-[#1F4FD8]"><Sparkles size={13} /> What the data says</p>
+        <p className="flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-wide text-[#1F4FD8]"><Lightbulb size={13} /> What the data says</p>
         <ul className="mt-2 space-y-1.5">
           {data.summary.map((t) => <li key={t} className="text-[14px] leading-relaxed text-slate-800">{t}</li>)}
         </ul>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Sparkles } from 'lucide-react';
+import { PartyPopper, Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAdminSeasonsQuery, useAdminCreateSeasonMutation } from '@shared/services/api';
 import { themeOf } from '@shared/customer/season';
@@ -58,7 +58,7 @@ export default function FestiveHome() {
               const now = Date.now() >= new Date(f.startAt).getTime();
               return (
                 <div key={f.id} className="flex flex-wrap items-center gap-3 py-2.5">
-                  <span className="h-9 w-9 shrink-0 rounded-lg" style={{ background: `linear-gradient(180deg, ${t.top}, ${t.bottom})` }} />
+                  <span className="h-9 w-9 shrink-0 rounded-lg" style={{ background: `${t.bottom}` }} />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold text-slate-800">{f.greeting}{now && <span className="ml-2 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-bold text-emerald-700">Showing now</span>}</p>
                     <p className="text-[12px] text-slate-400">{day(f.startAt)} – {day(new Date(new Date(f.endAt).getTime() - 1))}</p>
@@ -71,14 +71,14 @@ export default function FestiveHome() {
           </div>
         </Card>
       )}
-      {!seasons.length ? <EmptyState icon={Sparkles} message="None of your own yet. The automatic festivals above show until you add one." /> : (
+      {!seasons.length ? <EmptyState icon={PartyPopper} message="None of your own yet. The automatic festivals above show until you add one." /> : (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {seasons.map((s) => {
             const t = themeOf(s.theme);
             return (
               <button key={s.id} type="button" onClick={() => setEditing(s)} className="text-left">
                 <Card className="overflow-hidden p-0 transition hover:shadow-md">
-                  <div className="h-16" style={{ background: `linear-gradient(180deg, ${t.top}, ${t.bottom})` }} />
+                  <div className="h-16" style={{ background: `${t.bottom}` }} />
                   <div className="space-y-1 p-4">
                     <div className="flex items-center justify-between gap-2">
                       <p className="truncate text-sm font-bold text-slate-800">{s.name}</p>

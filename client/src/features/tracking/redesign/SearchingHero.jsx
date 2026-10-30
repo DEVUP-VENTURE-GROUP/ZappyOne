@@ -28,9 +28,6 @@ export default function SearchingHero({ etaMinutes, search = null, noun = 'pro' 
         boxShadow: '0 12px 34px -12px rgba(15,23,42,.28)',
       }}
     >
-      {/* animated aura */}
-      <div className="absolute -top-8 -right-8 w-40 h-40 rounded-full pointer-events-none"
-        style={{ background: 'radial-gradient(circle,rgba(37,99,235,.45),transparent 70%)', animation: 'zpt-aura 4s ease-in-out infinite' }} />
 
       <div className="flex items-center gap-3 relative">
         <div className="w-11 h-11 rounded-[14px] flex items-center justify-center shrink-0"

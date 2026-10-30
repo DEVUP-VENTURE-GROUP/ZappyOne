@@ -207,8 +207,6 @@ export default function EventsHomePage() {
                       </div>
                     )}
                   
-                  {/* Gradient Overlay */}
-                  <div className={`absolute inset-0 bg-gradient-to-t ${style.color} mix-blend-multiply opacity-60 group-hover:opacity-80 transition-opacity duration-500`} />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80" />
                   
                   {/* Content */}

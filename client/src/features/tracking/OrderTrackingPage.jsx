@@ -378,10 +378,7 @@ export default function OrderTrackingPage() {
       )}
 
       <div className="min-h-screen pb-[164px]" style={{
-        background:
-          'radial-gradient(1200px 600px at 15% -10%, #DDE6FB 0%, transparent 55%),' +
-          'radial-gradient(1000px 700px at 110% 6%, #EDE7FB 0%, transparent 50%),' +
-          'linear-gradient(#EEF2FB, #EEF2FB)',
+        background: '#EEF2FB',
       }}>
         {/* Socket-degraded banner */}
         <AnimatePresence>

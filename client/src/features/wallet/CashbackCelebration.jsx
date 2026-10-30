@@ -165,9 +165,6 @@ export default function CashbackCelebration({ amountPaise, totalEarnedPaise, onC
             <X size={14} />
           </button>
 
-          {/* Top gradient glow */}
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-32 rounded-full opacity-30"
-            style={{ background: 'radial-gradient(ellipse, #8b5cf6, transparent)', filter: 'blur(20px)' }} />
 
           <div className="relative px-6 pt-8 pb-6 space-y-5">
             {/* Sparkle ring */}

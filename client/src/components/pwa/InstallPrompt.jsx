@@ -62,13 +62,6 @@ export default function InstallPrompt() {
                          shadow-[0_20px_50px_-12px_rgba(15,23,42,0.28)]
                          p-4 sm:p-5"
             >
-              {/* Ambient brand glow */}
-              <div
-                aria-hidden
-                className="pointer-events-none absolute -top-16 -right-16 w-40 h-40 rounded-full opacity-40 blur-3xl"
-                style={{ background: 'radial-gradient(circle, rgba(37,99,235,0.5), transparent 70%)' }}
-              />
-
               {/* Close */}
               <button
                 type="button"

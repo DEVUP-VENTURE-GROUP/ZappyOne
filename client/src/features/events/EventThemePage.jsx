@@ -280,7 +280,6 @@ export default function EventThemePage() {
           {/* Partner Bento */}
           {theme.partnerId && (
             <div className="col-span-2 md:col-span-4 bg-slate-900 rounded-[2rem] p-6 flex flex-col sm:flex-row items-center gap-5 relative overflow-hidden mt-2">
-              <div className="absolute right-0 top-0 w-64 h-64 bg-gradient-to-br from-zappy-500/20 to-fuchsia-500/20 rounded-full blur-3xl pointer-events-none" />
               
               <div className="w-20 h-20 bg-white rounded-[1.5rem] flex items-center justify-center text-slate-900 font-black text-3xl shrink-0 shadow-lg transform -rotate-3 z-10">
                 {theme.partnerId.businessName?.[0]?.toUpperCase()}

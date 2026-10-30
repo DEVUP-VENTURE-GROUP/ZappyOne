@@ -13,7 +13,7 @@ export default function HotZonesCard({ coords, className = '' }) {
   const zones = data?.zones || [];
   if (!data?.on || !zones.length) return null;
   return (
-    <section className={`overflow-hidden rounded-2xl border border-orange-200 bg-gradient-to-br from-orange-50 to-white ${className}`}>
+    <section className={`overflow-hidden rounded-2xl border border-orange-200 bg-orange-50 ${className}`}>
       <div className="flex items-center justify-between gap-3 px-4 pt-3.5">
         <p className="flex items-center gap-1.5 text-[14px] font-black text-orange-900"><Flame size={16} className="text-orange-500" /> Surge near you</p>
         <span className="rounded-full bg-orange-100 px-2 py-0.5 text-[11px] font-bold text-orange-800">You keep {data.sharePct}% of surge</span>

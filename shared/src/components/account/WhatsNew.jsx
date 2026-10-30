@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Loader2, Sparkles, Check } from 'lucide-react';
+import { Loader2, Check, Megaphone } from 'lucide-react';
 import { useMarkReleaseSeenMutation } from '../../services/api';
 import { RELEASE } from '../../config/releases';
 
@@ -19,7 +19,7 @@ export default function WhatsNew({ role, appName = 'ZappyOne' }) {
       role="dialog" aria-modal="true" aria-labelledby="whatsnew-title">
       <motion.section initial={{ y: 30 }} animate={{ y: 0 }} transition={{ duration: 0.2 }}
         className="w-full max-w-md rounded-t-sheet bg-white p-6 pb-[calc(env(safe-area-inset-bottom,0px)+24px)] sm:rounded-sheet">
-        <span className="flex h-11 w-11 items-center justify-center rounded-btn bg-zappy-50 text-zappy-600"><Sparkles size={20} /></span>
+        <span className="flex h-11 w-11 items-center justify-center rounded-btn bg-zappy-50 text-zappy-600"><Megaphone size={20} /></span>
         <h2 id="whatsnew-title" className="mt-3 text-[22px] font-bold text-ink-900">What&apos;s new in {appName}</h2>
         <ul className="mt-4 space-y-3.5">
           {items.map(([title, text]) => (

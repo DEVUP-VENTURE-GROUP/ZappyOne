@@ -3,7 +3,7 @@
  */
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { MapPin, Banknote, Sparkles } from 'lucide-react-native';
+import { MapPin, Banknote, TrendingUp } from 'lucide-react-native';
 import { formatPaise } from '@zappy/core/shared/money';
 import { Text } from '..';
 import { RIPPLE } from '../../lib/feedback';
@@ -26,7 +26,7 @@ export function OpenJobCard({ job, busy, onTake }: { job: OpenJob; busy?: boolea
     <View style={[styles.open, boost ? styles.openBoost : null]}>
       {boost ? (
         <View style={styles.boostBar}>
-          <Sparkles size={13} color={accent[700]} />
+          <TrendingUp size={13} color={accent[700]} />
           <Text variant="caption" weight="extrabold" color={accent[700]}>Customer raised the offer by {formatPaise(job.boostPaise)}, all yours</Text>
         </View>
       ) : null}

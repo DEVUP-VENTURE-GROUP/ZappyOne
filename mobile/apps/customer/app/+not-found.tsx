@@ -4,7 +4,7 @@
  */
 import { StyleSheet, View } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
-import { Sparkles } from 'lucide-react-native';
+import { Compass } from 'lucide-react-native';
 import { Button, Text } from '@zappy/ui/components';
 import { useT } from '@zappy/ui/lib/i18n';
 import { colors, ink, zappy } from '@zappy/ui/theme/colors';
@@ -18,7 +18,7 @@ export default function NotFound() {
     <>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={styles.page}>
-        <View style={styles.icon}><Sparkles size={28} color={zappy[600]} /></View>
+        <View style={styles.icon}><Compass size={28} color={zappy[600]} /></View>
         <Text variant="heading3" weight="bold" style={styles.center}>{t('soon.title', 'Coming to the app soon')}</Text>
         <Text variant="bodySmall" color={ink[500]} style={styles.center}>{t('soon.body', 'This part of ZappyOne is on its way to the app. Everything else is ready to use.')}</Text>
         <Button label={t('soon.home', 'Go to home')} onPress={() => router.replace('/' as never)} fullWidth />

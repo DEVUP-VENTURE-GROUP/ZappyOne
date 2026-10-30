@@ -24,7 +24,7 @@
 
 import React, { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { WandSparkles } from 'lucide-react-native';
+import { KeyRound } from 'lucide-react-native';
 import { ScalePressable, Text } from '../components';
 import { accent, colors } from '../theme/colors';
 import { radius } from '../theme/radius';
@@ -74,7 +74,7 @@ function DevOtpPanelBase({ state, onFill }: DevOtpPanelProps) {
         </Text>
 
         <View style={styles.actionRow}>
-          <WandSparkles size={13} color={colors.primary} />
+          <KeyRound size={13} color={colors.primary} />
           <Text variant="caption" weight="semibold" color={colors.primary}>
             Use Dev OTP - tap to fill
           </Text>

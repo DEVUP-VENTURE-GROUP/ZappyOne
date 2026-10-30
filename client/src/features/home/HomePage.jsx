@@ -277,8 +277,8 @@ export default function HomePage() {
 
       {/* overflow-x-clip, not hidden: hidden makes this a scroll box and breaks the sticky header. */}
       <div className="min-h-screen w-full overflow-x-clip bg-canvas"
-        // A festival carries all the way down: the page takes its soft wash and warm glows.
-        style={theme ? { background: `radial-gradient(60rem 40rem at 100% 30%, ${theme.accent}12, transparent 60%), radial-gradient(50rem 36rem at 0% 70%, ${theme.top}33, transparent 60%), ${theme.wash}` } : undefined}>
+        // A festival carries all the way down in the page's own plain wash.
+        style={theme ? { background: theme.wash } : undefined}>
         <HomeHeader
           loc={loc}
           isAuthed={isAuthed}

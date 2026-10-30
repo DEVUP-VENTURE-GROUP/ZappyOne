@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import {
   Smartphone, Laptop, Cpu, Bike, Car, Truck, Home, HeartHandshake, Baby, Users,
-  Zap, Droplet, Droplets, AirVent, Sparkles, Wrench, ChevronRight,
+  Zap, Droplet, Droplets, AirVent, SprayCan, Wrench, ChevronRight,
   Monitor, Battery, Plug, Keyboard, Volume2, Camera, HardDrive, Gauge,
   Wifi, Thermometer, CircuitBoard, Database, ArrowUpCircle, Wand2, ShieldAlert,
   ClipboardCheck, ShieldCheck, Footprints, PackageCheck, PawPrint, Scissors, ShoppingBag, ShoppingBasket, Stethoscope, PartyPopper,
@@ -32,7 +32,7 @@ import { servicePhoto, categoryPhoto } from './problemArt';
 /** Icon names are stored as data; this maps them, with a sane fallback. */
 export const SERVICE_ICONS = {
   Smartphone, Laptop, Cpu, Bike, Car, Truck, Home, HeartHandshake, Baby, Users,
-  Zap, Droplet, Droplets, AirVent, Sparkles, Wrench,
+  Zap, Droplet, Droplets, AirVent, Sparkles: SprayCan, Wrench,
   ClipboardCheck, Footprints, PackageCheck, PawPrint, Scissors, ShoppingBag, ShoppingBasket, Stethoscope, PartyPopper,
   ShoppingCart, Pill, Package, Landmark, Flower2,
   UtensilsCrossed, Shirt, BedDouble, Bath, Hammer, WashingMachine, GlassWater, KeyRound, BatteryCharging, Sparkle, Palette, Leaf, FileText, Bug, Sofa, PaintRoller, GraduationCap, Music, Dumbbell, Plug, Camera, ShieldCheck,

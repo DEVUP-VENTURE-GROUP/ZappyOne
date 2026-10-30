@@ -5,7 +5,7 @@
  */
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { Plus, Sparkles } from 'lucide-react-native';
+import { Plus } from 'lucide-react-native';
 import { useRepairSuggestionsQuery, useRepairVerticalsQuery } from '@zappy/core/api';
 import { ADD_TARGETS, targetsWith, thingFor } from '@zappy/core/shared/repairBasket';
 import { Text } from '@zappy/ui/components';
@@ -33,7 +33,7 @@ export function BasketBar({ vertical, current, count, onAddAnother, onAddSuggest
       {count > 0 ? <Text variant="caption" weight="bold" color={zappy[700]}>{count + 1} items in this visit, one visit fee</Text> : null}
       {sameKind.length ? (
         <View style={styles.gap}>
-          <View style={styles.row}><Sparkles size={12} color={ink[500]} /><Text variant="caption" weight="bold" color={ink[500]}>ALSO ADD FOR THIS {thing.toUpperCase()}</Text></View>
+          <View style={styles.row}><Plus size={12} color={ink[500]} /><Text variant="caption" weight="bold" color={ink[500]}>ALSO ADD FOR THIS {thing.toUpperCase()}</Text></View>
           <View style={styles.wrap}>
             {sameKind.map((s) => (
               <Pressable key={s.repairCode} onPress={() => onAddSuggestion(s)} accessibilityRole="button" style={styles.chip}>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { AlertOctagon, Eye, Sparkles } from 'lucide-react';
+import { AlertOctagon, Eye, TrendingUp } from 'lucide-react';
 import { useAdminFleetInsightsQuery } from '@shared/services/api';
 import { Card, PageLoader, EmptyState } from '../../ui/kit';
 import { rupees } from '../insights/charts';
@@ -9,7 +9,7 @@ import FleetAiPanel from './FleetAiPanel';
 const LEVEL = {
   risk: { label: 'Act now', Icon: AlertOctagon, ring: 'border-red-200 bg-red-50/60', text: 'text-red-800' },
   watch: { label: 'Watch', Icon: Eye, ring: 'border-amber-200 bg-amber-50/60', text: 'text-amber-900' },
-  good: { label: 'Going well', Icon: Sparkles, ring: 'border-emerald-200 bg-emerald-50/60', text: 'text-emerald-800' },
+  good: { label: 'Going well', Icon: TrendingUp, ring: 'border-emerald-200 bg-emerald-50/60', text: 'text-emerald-800' },
 };
 
 // Admin's read of the fleet: the month's headline and what the numbers say to do (server workforce/insights).

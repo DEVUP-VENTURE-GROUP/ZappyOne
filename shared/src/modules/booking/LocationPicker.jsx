@@ -46,9 +46,9 @@ import { setLocation as setReduxLocation, selectLocation, selectHasLocation } fr
 const TOKEN    = import.meta.env.VITE_MAPBOX_TOKEN;
 
 const TAG_META = {
-  home:  { icon: Home,      bg: 'from-blue-500 to-blue-600',    ring: 'ring-blue-200'   },
-  work:  { icon: Briefcase, bg: 'from-violet-500 to-purple-600', ring: 'ring-purple-200' },
-  other: { icon: MapPin,    bg: 'from-slate-400 to-slate-500',   ring: 'ring-slate-200'  },
+  home:  { icon: Home,      bg: 'bg-zappy-600',    ring: 'ring-blue-200'   },
+  work:  { icon: Briefcase, bg: 'bg-zappy-700', ring: 'ring-purple-200' },
+  other: { icon: MapPin,    bg: 'bg-slate-500',   ring: 'ring-slate-200'  },
 };
 
 // Quick note chips for precise pin placement (§7/§8). Tapping prefixes the note.
@@ -1154,7 +1154,7 @@ export default function LocationPicker({ onConfirm, onCancel, serviceLabel, serv
                               return (
                                 <button key={sa._id} onClick={() => selectSaved(sa)}
                                   className="w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-left hover:bg-blue-50/60 transition">
-                                  <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${m.bg} flex items-center justify-center shrink-0`}>
+                                  <div className={`w-8 h-8 rounded-lg ${m.bg} flex items-center justify-center shrink-0`}>
                                     <Icon size={14} className="text-white" />
                                   </div>
                                   <div className="min-w-0 flex-1">

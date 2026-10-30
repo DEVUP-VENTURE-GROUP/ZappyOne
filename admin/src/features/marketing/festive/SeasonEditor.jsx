@@ -75,7 +75,7 @@ export default function SeasonEditor({ season, onDone }) {
             {Object.entries(THEMES).map(([key, t]) => (
               <button key={key} type="button" onClick={() => set('theme')(key)} aria-pressed={form.theme === key}
                 className={`relative h-20 overflow-hidden rounded-xl text-left ring-2 transition ${form.theme === key ? 'ring-blue-600' : 'ring-transparent hover:ring-slate-300'}`}
-                style={{ background: `linear-gradient(180deg, ${t.top}, ${t.bottom})` }}>
+                style={{ background: `${t.bottom}` }}>
                 <FestiveMotif theme={key} />
                 <span className="absolute inset-x-2 bottom-1.5 truncate text-[11px] font-bold" style={{ color: t.ink }}>{t.label}</span>
               </button>
