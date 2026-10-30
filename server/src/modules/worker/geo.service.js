@@ -577,6 +577,7 @@ async function findNearbyWorkers({ lat, lng, radiusKm = 5, limit = 25 }) {
       );
     }
     return geoResult.map((r) => ({
+      id: String(r[0]),
       distanceKm: parseFloat(r[1]),
       lng: parseFloat(r[2][0]),
       lat: parseFloat(r[2][1]),

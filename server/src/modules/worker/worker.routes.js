@@ -1,7 +1,7 @@
 const express = require('express');
 const Joi = require('joi');
 const ctrl = require('./controllers');
-const { authenticate, requireRole, requireRecentOtp } = require('../../middlewares/auth');
+const { authenticate, optionalAuth, requireRole, requireRecentOtp } = require('../../middlewares/auth');
 const { validate } = require('../../middlewares/validate');
 const { nearbyLimiter, workerOnlineLimiter } = require('../../middlewares/rateLimit');
 
@@ -92,7 +92,8 @@ router.post('/onboarding/complete', authenticate, requireRole('worker'),
 
 // Stream profile avatar (selfie from approved KYC) — no URL expiry
 router.get('/me/avatar', authenticate, requireRole('worker'), ctrl.streamAvatar);
-router.get('/nearby', authenticate, nearbyLimiter, ctrl.getNearbyWorkers);
+// Guests see pros on the location map too; only blurred, anonymous spots go out.
+router.get('/nearby', optionalAuth, nearbyLimiter, ctrl.getNearbyWorkers);
 router.get('/demand-zones', authenticate, requireRole('worker'), ctrl.getDemandZones);
 // My hours: the week they take work and the days off (jobs/work-hours).
 router.get('/me/hours', authenticate, requireRole('worker'), async (req, res, next) => {

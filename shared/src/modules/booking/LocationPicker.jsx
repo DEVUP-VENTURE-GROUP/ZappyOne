@@ -6,12 +6,10 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   MapPin,
-  Navigation,
   Home,
   Briefcase,
   Clock,
   Search,
-  ChevronRight,
   ChevronDown,
   Loader2,
   X,
@@ -20,7 +18,6 @@ import {
   Star,
   CheckCircle,
   Pencil,
-  Lock,
   ArrowRight,
   DoorOpen,
   Building2,
@@ -39,7 +36,6 @@ import {
 } from '../../hooks/useGeolocation';
 import { useGoogleMaps } from '../../services/maps';
 import { geocodeGoogle, placeSuggestions, pointOf } from '../../services/googlePlaces';
-import { SERVICE_WORKER_EMOJI, SERVICE_COLORS } from '../../constants/services';
 import { useT } from '../../i18n/I18nProvider';
 import { setLocation as setReduxLocation, selectLocation, selectHasLocation } from '../../store/locationSlice';
 
@@ -69,12 +65,6 @@ function deriveNearbyInfo(pin, workers) {
   return { count, nearestKm: Math.round(nearestKm * 10) / 10, etaMin, density };
 }
 
-const DENSITY_META = {
-  high:   { dot: '#22c55e', label: 'High availability' },
-  medium: { dot: '#eab308', label: 'Medium availability' },
-  low:    { dot: '#f97316', label: 'Limited availability' },
-  none:   { dot: '#f59e0b', label: 'No workers here yet' },
-};
 
 function ensureLocPickStyles() {
   if (document.getElementById('zlp-styles')) return;
@@ -112,189 +102,31 @@ function ensureLocPickStyles() {
       0%,100% { filter:drop-shadow(0 6px 14px rgba(37,99,235,.65)) drop-shadow(0 2px 4px rgba(0,0,0,.5)); }
       50%      { filter:drop-shadow(0 6px 22px rgba(37,99,235,.95)) drop-shadow(0 2px 4px rgba(0,0,0,.5)); }
     }
-    @keyframes zlp-wheel-spin {
-      from { transform:rotate(0deg); }
-      to   { transform:rotate(360deg); }
-    }
-    @keyframes zlp-bike-bounce {
-      0%,100% { transform:translateY(0px)   rotate(-1.5deg); }
-      30%      { transform:translateY(-5px)  rotate(1.5deg);  }
-      60%      { transform:translateY(-2px)  rotate(2deg);    }
-      80%      { transform:translateY(-6px)  rotate(-1deg);   }
-    }
-    @keyframes zlp-speed-line {
-      0%   { transform:scaleX(1)   translateX(0);   opacity:.85; }
-      60%  { transform:scaleX(0.4) translateX(6px); opacity:.3;  }
-      100% { transform:scaleX(0)   translateX(10px);opacity:0;   }
-    }
-    @keyframes zlp-worker-shadow {
-      0%,100% { transform:scaleX(1);   opacity:0.4; }
-      50%      { transform:scaleX(0.6); opacity:0.2; }
-    }
-    @keyframes zlp-neon-pulse {
-      0%,100% { opacity:.7; }
-      50%      { opacity:1;  }
-    }
   `;
   document.head.appendChild(s);
 }
 
-const VEHICLE_SERVICES = new Set([
-  'puncture','bike_wash','car_wash','battery_jump_start','fuel_delivery','minor_roadside_repair',
-]);
-
-function makeWorkerDot(emoji = '👷', accentColor = '#22c55e', serviceSlug = '', animDelay = '0s') {
-  ensureLocPickStyles();
-  const isVehicle = VEHICLE_SERVICES.has(serviceSlug);
-  const c = accentColor;
-  const dur = isVehicle ? '1.1s' : '1.8s';
-
+// A pro nearby, drawn top-down like Uber's cars: a scooter in brand blue that turns to face where it is heading.
+function makeScooterEl() {
   const wrap = document.createElement('div');
-  wrap.style.cssText = `
-    position:relative;display:flex;flex-direction:column;align-items:center;
-    cursor:default;user-select:none;transition:transform 0.35s ease;
-  `;
-
-  const bikeEl = document.createElement('div');
-  bikeEl.style.cssText = `
-    display:flex;flex-direction:column;align-items:center;
-    animation:zlp-bike-bounce ${dur} ease-in-out infinite;
-    animation-delay:${animDelay};transform-origin:center bottom;
-  `;
-  wrap._bikeEl = bikeEl;
-  wrap.appendChild(bikeEl);
-
-  if (isVehicle) {
-    // SVG Bike with spinning wheels
-    const r = 10; // wheel radius
-    const bikeW = 56, bikeH = 34;
-    const wheelSpeedDur = isVehicle ? '0.55s' : '1.2s';
-    const svgNs = 'http://www.w3.org/2000/svg';
-
-    // Speed lines container (left of bike)
-    const lines = document.createElement('div');
-    lines.style.cssText = `
-      position:absolute;left:-18px;top:50%;transform:translateY(-50%);
-      display:flex;flex-direction:column;gap:3px;
-    `;
-    [1, 0.7, 0.45].forEach((op, i) => {
-      const ln = document.createElement('div');
-      ln.style.cssText = `
-        width:${12 - i * 3}px;height:2px;border-radius:2px;
-        background:${c};opacity:${op};
-        animation:zlp-speed-line ${0.5 + i * 0.12}s ease-out infinite;
-        animation-delay:${(i * 0.15 + parseFloat(animDelay))}s;
-      `;
-      lines.appendChild(ln);
-    });
-    bikeEl.appendChild(lines);
-
-    // SVG bike
-    const svg = document.createElementNS(svgNs, 'svg');
-    svg.setAttribute('width', bikeW);
-    svg.setAttribute('height', bikeH);
-    svg.setAttribute('viewBox', `0 0 ${bikeW} ${bikeH}`);
-    svg.style.cssText = `display:block;filter:drop-shadow(0 0 6px ${c}cc) drop-shadow(0 2px 8px rgba(0,0,0,0.8));`;
-
-    const mk = (tag, attrs) => {
-      const el = document.createElementNS(svgNs, tag);
-      Object.entries(attrs).forEach(([k, v]) => el.setAttribute(k, v));
-      return el;
-    };
-
-    // Wheel centres
-    const lx = 11, rx = bikeW - 11, wy = bikeH - r - 1;
-
-    // Defs for spinning wheel groups
-    const defs = mk('defs', {});
-
-    // Left wheel group (spinning)
-    const gL = mk('g', { style: `transform-origin:${lx}px ${wy}px;animation:zlp-wheel-spin ${wheelSpeedDur} linear infinite;animation-delay:${animDelay};` });
-    gL.appendChild(mk('circle', { cx: lx, cy: wy, r, stroke: c, 'stroke-width': '2.2', fill: 'none' }));
-    // spokes
-    [0,60,120].forEach(a => {
-      const rad = a * Math.PI / 180;
-      gL.appendChild(mk('line', {
-        x1: lx, y1: wy,
-        x2: lx + r * 0.85 * Math.cos(rad), y2: wy + r * 0.85 * Math.sin(rad),
-        stroke: c, 'stroke-width': '1', opacity: '0.6',
-      }));
-    });
-    gL.appendChild(mk('circle', { cx: lx, cy: wy, r: '2', fill: c }));
-
-    // Right wheel group (spinning)
-    const gR = mk('g', { style: `transform-origin:${rx}px ${wy}px;animation:zlp-wheel-spin ${wheelSpeedDur} linear infinite;animation-delay:${animDelay};` });
-    gR.appendChild(mk('circle', { cx: rx, cy: wy, r, stroke: c, 'stroke-width': '2.2', fill: 'none' }));
-    [0,60,120].forEach(a => {
-      const rad = a * Math.PI / 180;
-      gR.appendChild(mk('line', {
-        x1: rx, y1: wy,
-        x2: rx + r * 0.85 * Math.cos(rad), y2: wy + r * 0.85 * Math.sin(rad),
-        stroke: c, 'stroke-width': '1', opacity: '0.6',
-      }));
-    });
-    gR.appendChild(mk('circle', { cx: rx, cy: wy, r: '2', fill: c }));
-
-    // Frame: seat-stay (seat→rear axle), chain-stay (BB→rear), down-tube, top-tube, fork
-    const BB = { x: lx + 16, y: wy - 2 };  // bottom bracket
-    const HT = { x: rx - 6,  y: 5 };        // head tube top
-    const ST = { x: lx + 12, y: 6 };        // seat top
-
-    const frameLines = [
-      [BB.x, BB.y, lx, wy],          // chain-stay L
-      [BB.x, BB.y, rx, wy],          // chain-stay R (drive side)
-      [BB.x, BB.y, ST.x, ST.y],      // seat tube
-      [ST.x, ST.y, HT.x, HT.y],     // top tube
-      [BB.x, BB.y, HT.x + 2, HT.y + 8], // down tube
-      [rx, wy, HT.x + 2, HT.y + 8], // fork
-      [ST.x, ST.y, ST.x - 6, ST.y - 3], // saddle
-    ];
-    frameLines.forEach(([x1,y1,x2,y2]) => {
-      svg.appendChild(mk('line', { x1, y1, x2, y2, stroke: c, 'stroke-width': '2', 'stroke-linecap': 'round' }));
-    });
-
-    // Rider silhouette (simple: torso + helmet)
-    svg.appendChild(mk('line', { x1: ST.x, y1: ST.y - 1, x2: HT.x - 2, y2: HT.y + 4, stroke: '#fff', 'stroke-width': '2.2', 'stroke-linecap': 'round', opacity: '0.85' }));
-    svg.appendChild(mk('circle', { cx: HT.x - 3, cy: HT.y + 1, r: '4.5', fill: '#fff', opacity: '0.85' }));
-
-    svg.appendChild(defs);
-    svg.appendChild(gL);
-    svg.appendChild(gR);
-    bikeEl.appendChild(svg);
-
-    // Neon glow ring under wheels
-    const glow = document.createElement('div');
-    glow.style.cssText = `
-      width:${bikeW}px;height:6px;border-radius:50%;margin-top:-2px;
-      background:radial-gradient(ellipse at center, ${c}88 0%, transparent 70%);
-      animation:zlp-neon-pulse 1.1s ease-in-out infinite;
-      animation-delay:${animDelay};
-    `;
-    bikeEl.appendChild(glow);
-
-  } else {
-    // Non-vehicle services: large emoji with glow
-    const emojiSpan = document.createElement('span');
-    emojiSpan.style.cssText = `
-      font-size:28px;line-height:1;display:block;
-      filter:drop-shadow(0 2px 6px rgba(0,0,0,0.8)) drop-shadow(0 0 10px ${c}99);
-    `;
-    emojiSpan.textContent = emoji;
-    bikeEl.appendChild(emojiSpan);
-  }
-
-  // Ground shadow
-  const shadow = document.createElement('div');
-  shadow.style.cssText = `
-    width:28px;height:5px;border-radius:50%;
-    background:rgba(0,0,0,0.5);filter:blur(3px);
-    margin-top:1px;
-    animation:zlp-worker-shadow ${dur} ease-in-out infinite;
-    animation-delay:${animDelay};
-  `;
-  wrap.appendChild(shadow);
+  wrap.style.cssText = 'width:30px;height:30px;pointer-events:none;';
+  wrap.innerHTML = `<div data-body style="width:30px;height:30px;transition:transform 1.2s ease;filter:drop-shadow(0 2px 3px rgba(15,23,42,.35))">
+    <svg viewBox="0 0 30 30" width="30" height="30" aria-hidden="true">
+      <rect x="11" y="3" width="8" height="5" rx="2.5" fill="#101828"/>
+      <rect x="11" y="22" width="8" height="5" rx="2.5" fill="#101828"/>
+      <path d="M10 9 Q15 5 20 9 L20 21 Q15 25 10 21 Z" fill="#1F4FD8" stroke="#fff" stroke-width="1.5"/>
+      <rect x="7" y="8.5" width="16" height="2.2" rx="1.1" fill="#101828"/>
+      <ellipse cx="15" cy="17" rx="3" ry="3.6" fill="#F59E0B"/>
+    </svg></div>`;
   return wrap;
 }
+
+const bearingOf = (a, b) => {
+  const y = Math.sin(((b.lng - a.lng) * Math.PI) / 180) * Math.cos((b.lat * Math.PI) / 180);
+  const x = Math.cos((a.lat * Math.PI) / 180) * Math.sin((b.lat * Math.PI) / 180)
+    - Math.sin((a.lat * Math.PI) / 180) * Math.cos((b.lat * Math.PI) / 180) * Math.cos(((b.lng - a.lng) * Math.PI) / 180);
+  return (Math.atan2(y, x) * 180) / Math.PI;
+};
 
 function makeUserLocationEl() {
   ensureLocPickStyles();
@@ -333,7 +165,6 @@ function makeUserLocationEl() {
   return wrap;
 }
 
-function ensureWorkerDotStyles() { ensureLocPickStyles(); }
 
 /**
  * How good is this fix, and say so honestly.
@@ -435,9 +266,9 @@ export default function LocationPicker({ onConfirm, onCancel, serviceLabel, serv
   }, []);
   const mapRef        = useRef(null);
   const stateRef      = useRef({ pendingCenter: null, ready: false, userLocMarker: null });
-  const workerMarkers = useRef([]);   // { marker, baseLng, baseLat }[]
+  const workerMarkers = useRef([]);   // { key, marker, el, at }[]
+  const nearbyLocRef  = useRef(null);
   const revTimer      = useRef(null);
-  const moveTimer     = useRef(null);
   const searchInputRef = useRef(null);
   const detectedLocRef = useRef(detectedLoc); // latest detected loc for async map callbacks
   useEffect(() => { detectedLocRef.current = detectedLoc; }, [detectedLoc]);
@@ -561,13 +392,13 @@ export default function LocationPicker({ onConfirm, onCancel, serviceLabel, serv
       const container = document.getElementById('zappy-locpick-map');
       if (!container || mapRef.current) return;
 
-      ensureWorkerDotStyles();
+      ensureLocPickStyles();
       mapboxgl.accessToken = TOKEN;
 
       const boot = detectedLocRef.current;
       const initCenter = stateRef.current.pendingCenter
         ?? (boot ? [boot.lng, boot.lat] : [77.5946, 12.9716]);
-      const initZoom = (stateRef.current.pendingCenter || boot) ? 17 : 12;
+      const initZoom = (stateRef.current.pendingCenter || boot) ? 17.6 : 12;
 
       const map = new mapboxgl.Map({
         container,
@@ -607,7 +438,7 @@ export default function LocationPicker({ onConfirm, onCancel, serviceLabel, serv
         }
         if (stateRef.current.pendingCenter) {
           // flyTo emits its own moveend → the centre gets reverse-geocoded there.
-          map.flyTo({ center: stateRef.current.pendingCenter, zoom: 17, duration: 900 });
+          map.flyTo({ center: stateRef.current.pendingCenter, zoom: 17.6, duration: 900 });
           stateRef.current.pendingCenter = null;
         } else {
           // Static initial centre — geocode it so the sheet + Confirm are ready
@@ -672,7 +503,6 @@ export default function LocationPicker({ onConfirm, onCancel, serviceLabel, serv
     return () => {
       clearTimeout(initTimer);
       clearTimeout(revTimer.current);
-      cancelAnimationFrame(moveTimer.current);
       (stateRef.current.resizeTimers || []).forEach(clearTimeout);
       stateRef.current.resizeTimers = null;
       stateRef.current.ro?.disconnect();
@@ -687,35 +517,54 @@ export default function LocationPicker({ onConfirm, onCancel, serviceLabel, serv
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps -- map mounts once for the whole screen
 
+  // Pros near the pin, refreshed every few seconds; each one glides to its new spot and turns toward it.
   async function _loadNearbyWorkers(map, loc) {
-    const workerEmoji = SERVICE_WORKER_EMOJI[service] ?? '👷';
-    const workerColor = SERVICE_COLORS[service]       ?? '#22c55e';
-    const serviceSlug = service ?? '';
-
-    // Clear previous markers
-    cancelAnimationFrame(moveTimer.current);
-    moveTimer.current = null;
-    workerMarkers.current.forEach((w) => w.marker.remove());
-    workerMarkers.current = [];
-
+    nearbyLocRef.current = loc;
     try {
       const res = await fetchNearby({ lat: loc.lat, lng: loc.lng }).unwrap();
       const workers = res?.workers || [];
       setNearbyCount(workers.length);
-      setNearbyInfo(deriveNearbyInfo(loc, workers)); // real ETA + density (§10/§11)
-
+      setNearbyInfo(deriveNearbyInfo(loc, workers));
+      const seen = new Set();
       workers.forEach((w, i) => {
-        const delay = `${(i * 0.22).toFixed(2)}s`;
-        const el = makeWorkerDot(workerEmoji, workerColor, serviceSlug, delay);
-        // Pin at worker's real last-known GPS position — no simulated drift
-        const marker = new mapboxgl.Marker({ element: el, anchor: 'bottom' })
-          .setLngLat([w.lng, w.lat])
-          .addTo(map);
-        workerMarkers.current.push({ marker });
+        const key = w.key || `i${i}`;
+        seen.add(key);
+        const known = workerMarkers.current.find((m) => m.key === key);
+        if (!known) {
+          const el = makeScooterEl();
+          const marker = new mapboxgl.Marker({ element: el, anchor: 'center' }).setLngLat([w.lng, w.lat]).addTo(map);
+          el.firstElementChild.style.transform = `rotate(${(i * 67) % 360}deg)`;
+          workerMarkers.current.push({ key, marker, el, at: { lng: w.lng, lat: w.lat } });
+          return;
+        }
+        const from = known.at; const to = { lng: w.lng, lat: w.lat };
+        if (from.lng === to.lng && from.lat === to.lat) return;
+        known.el.firstElementChild.style.transform = `rotate(${bearingOf(from, to)}deg)`;
+        const start = performance.now();
+        const step = (t) => {
+          const k = Math.min(1, (t - start) / 1600);
+          const e = k < 0.5 ? 2 * k * k : 1 - ((-2 * k + 2) ** 2) / 2;
+          known.marker.setLngLat([from.lng + (to.lng - from.lng) * e, from.lat + (to.lat - from.lat) * e]);
+          if (k < 1) requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
+        known.at = to;
       });
-
+      workerMarkers.current = workerMarkers.current.filter((m) => {
+        if (seen.has(m.key)) return true;
+        m.marker.remove();
+        return false;
+      });
     } catch { /* non-critical */ }
   }
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      const map = mapRef.current;
+      if (map && stateRef.current.ready && nearbyLocRef.current && !document.hidden) _loadNearbyWorkers(map, nearbyLocRef.current);
+    }, 8000);
+    return () => clearInterval(id);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- one poll for the screen's life
 
   // Recenter the (always-mounted) map on a location + refresh the blue "you" dot
   // and the nearby-worker pins. Falls back to a pending center if the map hasn't
@@ -726,7 +575,7 @@ export default function LocationPicker({ onConfirm, onCancel, serviceLabel, serv
       stateRef.current.pendingCenter = [loc.lng, loc.lat];
       return;
     }
-    map.flyTo({ center: [loc.lng, loc.lat], zoom: 16, duration: 800 });
+    map.flyTo({ center: [loc.lng, loc.lat], zoom: 17.6, duration: 800 });
     if (stateRef.current.userLocMarker) {
       stateRef.current.userLocMarker.setLngLat([loc.lng, loc.lat]);
     } else {
@@ -761,7 +610,7 @@ export default function LocationPicker({ onConfirm, onCancel, serviceLabel, serv
     setShowSaved(false);
     const map = mapRef.current;
     if (map && stateRef.current.ready) {
-      map.flyTo({ center: [lng, lat], zoom: 17, duration: 800 });
+      map.flyTo({ center: [lng, lat], zoom: 17.6, duration: 800 });
       _loadNearbyWorkers(map, { lat, lng });
     } else {
       stateRef.current.pendingCenter = [lng, lat];
@@ -823,7 +672,6 @@ export default function LocationPicker({ onConfirm, onCancel, serviceLabel, serv
   const canConfirm = !!coords && !!address && !geocoding;
   const savedCount = savedAddresses.length + recentLocations.length;
   const CHIP_ICONS = { 'Gate': DoorOpen, 'Flat / Door': Building2, 'Basement': ArrowDownToLine, 'Landmark': Landmark };
-  const density    = DENSITY_META[nearbyInfo?.density] || DENSITY_META.high;
 
   return (
     /* Mobile: full-bleed sheet experience. Desktop (lg+): the same flow framed
@@ -831,25 +679,17 @@ export default function LocationPicker({ onConfirm, onCancel, serviceLabel, serv
     <div className="flex flex-col h-full bg-[#F3F6FB] lg:max-w-2xl lg:mx-auto lg:my-6 lg:h-[calc(100%-3rem)] lg:rounded-card lg:overflow-hidden lg:shadow-[0_24px_70px_-24px_rgba(15,23,42,0.45)] lg:ring-1 lg:ring-slate-200">
 
       {/* Top controls: step label + search + current location */}
-      <div className="shrink-0 w-full max-w-md lg:max-w-none mx-auto px-4 pt-3 pb-2.5 space-y-3">
+      <div className="shrink-0 w-full max-w-md lg:max-w-none mx-auto px-4 pt-3 pb-2.5">
 
-        {/* Step label, with a way out: closing keeps whatever was chosen before. */}
-        <div className="flex items-center gap-1.5">
+        {/* Back and search on one line. */}
+        <div className="relative flex items-center gap-2">
           {onCancel && (
             <button type="button" onClick={onCancel} aria-label="Back"
-              className="-ml-1 mr-1 flex h-9 w-9 items-center justify-center rounded-full bg-white text-slate-700 ring-1 ring-slate-100 hover:bg-slate-50">
-              <ArrowLeft size={17} />
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-slate-800 ring-1 ring-slate-100">
+              <ArrowLeft size={19} />
             </button>
           )}
-          <MapPin size={13} strokeWidth={2.6} className="text-[#2563EB]" />
-          <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#2563EB]">
-            {tr('locpick.step', 'Step 1 of 2 • Choose location')}
-          </p>
-        </div>
-
-        {/* Search bar */}
-        <div className="relative">
-          <div className="flex items-center gap-2.5 bg-white rounded-full pl-4 pr-1.5 py-1.5 ring-1 ring-slate-100"
+          <div className="flex min-w-0 flex-1 items-center gap-2.5 bg-white rounded-full pl-4 pr-1.5 py-1.5 ring-1 ring-slate-100"
             style={{ boxShadow: '0 6px 22px rgba(37,99,235,0.10)' }}>
             <Search size={18} strokeWidth={2.4} className="text-[#2563EB] shrink-0" />
             <input
@@ -933,74 +773,25 @@ export default function LocationPicker({ onConfirm, onCancel, serviceLabel, serv
           )}
         </AnimatePresence>
 
-        {/* Use my current location — floats over the top of the map so the
-            map fills the space up to the search bar instead of being squeezed. */}
-        <motion.button
-          onClick={_goToMyLocation}
-          whileTap={{ scale: 0.985 }}
-          className="absolute top-3 left-3 right-3 z-20 flex items-center gap-3.5 bg-white rounded-2xl p-3 ring-1 ring-black/5 text-left"
-          style={{ boxShadow: '0 6px 22px rgba(15,23,42,0.14)' }}
-        >
-          <div className="relative shrink-0">
-            <div className="w-11 h-11 rounded-2xl bg-[#2563EB] flex items-center justify-center shadow-sm">
-              {geoState === 'loading'
-                ? <Loader2 size={18} strokeWidth={2.4} className="text-white animate-spin" />
-                : <Navigation size={18} strokeWidth={2.4} className="text-white" />}
-            </div>
-            {/* Green only for a fix worth trusting; amber otherwise. */}
-            {gpsReady && (
-              <span
-                className={`absolute -top-1 -right-1 h-3.5 w-3.5 rounded-full border-2 border-white ${
-                  fix.good ? 'bg-[#22C55E]' : 'bg-[#F59E0B]'
-                }`}
-              />
-            )}
+        {/* Only when it matters: still finding them, or a rough fix to fine-tune. */}
+        {(geoState === 'loading' || geoState === 'error' || (gpsReady && !fix.good)) && (
+          <div className="absolute left-3 right-3 top-3 z-20 flex justify-center">
+            <p className={`flex items-center gap-2 rounded-full bg-white px-3.5 py-2 text-[12.5px] font-semibold shadow-md ring-1 ring-black/5 ${geoState === 'error' ? 'text-red-600' : 'text-slate-700'}`}>
+              {geoState === 'loading' && <Loader2 size={13} className="animate-spin text-[#2563EB]" />}
+              {geoState === 'loading' ? tr('locpick.acquiring', 'Finding you…') : geoState === 'error' ? geoError : fix.text}
+            </p>
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-[14.5px] font-bold text-slate-900">{tr('locpick.useCurrent', 'Use my current location')}</p>
-            {geoState === 'loading' ? (
-              <p className="text-[12px] font-semibold text-[#2563EB] mt-0.5 flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" /> {tr('locpick.acquiring', 'GPS acquiring signal…')}
-              </p>
-            ) : geoState === 'error' ? (
-              <p className="text-[12px] font-medium text-red-500 mt-0.5">{geoError}</p>
-            ) : gpsReady ? (
-              <p className={`mt-0.5 text-[12px] font-semibold leading-snug ${fix.tone}`}>
-                {fix.text}
-              </p>
-            ) : (
-              <p className="text-[12px] font-medium text-slate-400 mt-0.5">{tr('locpick.fastest', 'Fastest & most accurate')}</p>
-            )}
-          </div>
-          <ChevronRight size={20} strokeWidth={2.2} className="text-slate-300 shrink-0" />
-        </motion.button>
+        )}
 
-        {/* Coverage pill — floats just above the sheet (bottom-left), mirroring
-            the recenter button, so it never collides with the location card. */}
+        {/* Live pros near the pin; nothing when there are none (the next step says what is possible). */}
         <AnimatePresence>
-          {nearbyCount !== null && (
+          {nearbyCount > 0 && (
             <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }}
-              className="absolute left-3 z-20 flex items-center gap-2 rounded-2xl bg-white px-3 py-2 ring-1 ring-black/5 max-w-[62%]"
-              style={{ bottom: sheetH + 12, boxShadow: '0 4px 16px rgba(15,23,42,0.14)' }}>
-              <span className="relative flex h-2.5 w-2.5 shrink-0 mt-0.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-60"
-                  style={{ background: nearbyCount === 0 ? '#F59E0B' : density.dot }} />
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5"
-                  style={{ background: nearbyCount === 0 ? '#F59E0B' : density.dot }} />
-              </span>
-              <div className="leading-tight min-w-0">
-                {nearbyCount === 0 ? (
-                  <>
-                    <p className="text-[12px] font-extrabold text-slate-800">{tr('locpick.noWorkers', 'No workers here yet')}</p>
-                    <p className="text-[10.5px] font-medium text-slate-400">{tr('locpick.tryNearby', 'Try a nearby area')}</p>
-                  </>
-                ) : (
-                  <>
-                    <p className="text-[12px] font-extrabold text-slate-800">{tr('locpick.nearestPro', 'Nearest pro ~{n} min').replace('{n}', nearbyInfo?.etaMin ?? 5)}</p>
-                    <p className="text-[10.5px] font-medium text-slate-400">{tr(`locpick.density.${nearbyInfo?.density || 'high'}`, density.label)}</p>
-                  </>
-                )}
-              </div>
+              className="absolute left-3 z-20 flex items-center gap-2 rounded-full bg-slate-900 px-3.5 py-2 text-white"
+              style={{ bottom: sheetH + 12, boxShadow: '0 6px 18px rgba(15,23,42,0.3)' }}>
+              <span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-70" /><span className="relative inline-flex h-2 w-2 rounded-full bg-green-400" /></span>
+              <span className="text-[12.5px] font-bold">{tr('locpick.prosNear', '{n} pros nearby').replace('{n}', nearbyCount)}</span>
+              {nearbyInfo?.etaMin && <span className="text-[12.5px] text-white/70">· about {nearbyInfo.etaMin} min</span>}
             </motion.div>
           )}
         </AnimatePresence>
@@ -1190,11 +981,6 @@ export default function LocationPicker({ onConfirm, onCancel, serviceLabel, serv
                         : <>{tr('locpick.confirm', 'Confirm This Location')} <ArrowRight size={18} strokeWidth={2.6} /></>}
                     </motion.button>
 
-                    {/* Trust line */}
-                    <div className="flex items-center justify-center gap-1.5 mt-3">
-                      <Lock size={12} className="text-slate-400" />
-                      <p className="text-[11.5px] font-medium text-slate-400">{tr('locpick.secure', 'Your location is secure and encrypted')}</p>
-                    </div>
                   </motion.div>
                 )}
               </AnimatePresence>
