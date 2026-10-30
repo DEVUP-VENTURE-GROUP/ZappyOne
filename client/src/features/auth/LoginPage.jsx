@@ -15,18 +15,6 @@ import SEO, { LOGIN_SCHEMA, BASE_URL } from '@shared/components/SEO';
 
 
 
-/* Animated background orb */
-function Orb({ x, y, size, color, delay = 0 }) {
-  return (
-    <motion.div
-      className="absolute rounded-full blur-3xl opacity-30 pointer-events-none"
-      style={{ left: `${x}%`, top: `${y}%`, width: size, height: size, background: color }}
-      animate={{ x: [-20, 20, -20], y: [-15, 15, -15], scale: [1, 1.15, 1] }}
-      transition={{ duration: 8 + delay, repeat: Infinity, ease: 'easeInOut', delay }}
-    />
-  );
-}
-
 /* OTP digit box */
 function OtpInput({ value, onChange, onKeyDown, inputRef, filled }) {
   return (
@@ -208,20 +196,6 @@ export default function LoginPage() {
         {/* LEFT PANEL - Branding (Desktop only) */}
         <div className="hidden lg:flex lg:w-[45%] xl:w-[50%] relative flex-col overflow-hidden bg-[#031542]">
 
-          {/* Abstract wavy lines background */}
-          <div className="absolute inset-0 pointer-events-none overflow-hidden flex items-center justify-center">
-            <div className="w-[800px] h-[800px] rounded-full border border-white/5 absolute -top-[10%] -left-[20%]"></div>
-            <div className="w-[1000px] h-[1000px] rounded-full border border-white/5 absolute -top-[20%] -left-[30%]"></div>
-            <div className="w-[1200px] h-[1200px] rounded-full border border-white/5 absolute -top-[30%] -left-[40%]"></div>
-            <div className="w-[1400px] h-[1400px] rounded-full border border-white/5 absolute -top-[40%] -left-[50%]"></div>
-          </div>
-          {/* Dot grid */}
-          <div className="absolute top-12 left-12 grid grid-cols-4 gap-2 opacity-20 pointer-events-none">
-            {Array.from({ length: 16 }).map((_, i) => (
-              <div key={i} className="w-1 h-1 bg-white rounded-full"></div>
-            ))}
-          </div>
-
           <div className="relative z-10 px-8 xl:px-12 h-full flex-1 flex flex-col justify-center">
             <div className="flex flex-row items-center justify-between w-full h-full max-h-[600px] gap-6 xl:gap-8">
 
@@ -315,24 +289,6 @@ export default function LoginPage() {
         {/* RIGHT PANEL - FORM */}
         <div className="w-full lg:w-[55%] xl:w-[50%] flex flex-col items-center justify-center min-h-screen relative bg-[#f4f7fa] lg:bg-white z-0 p-4 sm:p-6">
 
-          {/* Decorative corner circles (Mobile / tablet only) */}
-          <div className="absolute top-0 right-0 w-48 h-48 sm:w-64 sm:h-64 bg-[#e8f0fe] rounded-bl-[100%] pointer-events-none lg:hidden"></div>
-          <div className="absolute bottom-0 left-0 w-48 h-48 sm:w-64 sm:h-64 bg-[#e8f0fe] rounded-tr-[100%] pointer-events-none lg:hidden"></div>
-
-          {/* Dot grid pattern top left (Mobile only) */}
-          <div className="absolute top-8 left-8 grid grid-cols-4 gap-2 opacity-[0.15] lg:hidden">
-            {Array.from({ length: 16 }).map((_, i) => (
-              <div key={i} className="w-1.5 h-1.5 bg-slate-400 rounded-full"></div>
-            ))}
-          </div>
-
-          {/* Top Right Language Selector (Desktop) */}
-          <div className="absolute top-6 right-8 hidden lg:flex items-center gap-1.5 text-slate-600 text-[13px] font-semibold cursor-pointer hover:bg-slate-50 px-3 py-1.5 rounded-full transition-colors border border-transparent hover:border-slate-200">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M2 12h20"></path><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
-            English
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-50"><polyline points="6 9 12 15 18 9"></polyline></svg>
-          </div>
-
           {/* Form Card */}
           <div className="w-full max-w-[440px] bg-white lg:bg-transparent lg:shadow-none rounded-card shadow-[0_8px_30px_rgba(0,0,0,0.04)] lg:border-none border border-slate-100 p-8 sm:p-10 relative z-10 flex flex-col">
 
@@ -343,7 +299,7 @@ export default function LoginPage() {
               </div>
 
               <h2 className="text-[28px] font-bold text-[#031542] mb-1.5 tracking-tight">Welcome to ZappyOne</h2>
-              <p className="text-slate-500 font-medium text-[15px]">Log in to connect with us!</p>
+              <p className="text-center text-slate-500 font-medium text-[15px] [text-wrap:balance]">Sign in to book verified pros and track them live.</p>
             </div>
 
             <AnimatePresence mode="wait">
