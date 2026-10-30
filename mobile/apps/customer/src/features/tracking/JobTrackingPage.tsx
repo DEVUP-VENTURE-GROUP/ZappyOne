@@ -6,7 +6,7 @@ import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BadgeIndianRupee, Clock, Headphones, MailPlus, Repeat2, ShieldCheck, UserPlus, X } from 'lucide-react-native';
+import { BadgeIndianRupee, Clock, Headphones, MailPlus, Repeat2, ShieldCheck, UserPlus } from 'lucide-react-native';
 import { useAccountMeQuery, useJobOptionsQuery, useShareJobMutation } from '@zappy/core/api';
 import { toast } from '@zappy/ui/components/Toast';
 import { errText } from '@zappy/ui/lib/feedback';
@@ -33,6 +33,7 @@ import { BookingSummary } from './redesign/BookingSummary';
 import { ProofPhoto } from './redesign/ProofPhoto';
 import { RatingPanel } from './redesign/RatingPanel';
 import { SearchingHero } from './redesign/SearchingHero';
+import { RescheduleCancel } from './redesign/RescheduleCancel';
 import { Row, Section } from './redesign/Section';
 import { StatusBlock } from './redesign/StatusBlock';
 import { TrackingHeader } from './redesign/TrackingHeader';
@@ -157,11 +158,7 @@ export function JobTrackingPage({ job, extras = null, startCode = null, codeStag
           </Section>
         ) : null}
 
-        {cancel && !job.terminal ? (
-          <Section title="Cancel booking">
-            <Row first Icon={X} title="Cancel this booking" sub={cancel.note || 'You see any fee before you confirm.'} onPress={openCancel} tone="danger" />
-          </Section>
-        ) : null}
+        {!job.terminal ? <RescheduleCancel job={job} reschedule={options?.reschedule} cancel={cancel} onCancel={openCancel} onMoved={refetchOptions} /> : null}
       </ScrollView>
 
       {job.terminal ? (

@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import {
-  BadgeIndianRupee, Clock, HeadphonesIcon, Loader2, Navigation, Repeat2, ShieldAlert, ShieldCheck, MailPlus, UserPlus, UserX, X,
+  BadgeIndianRupee, Clock, HeadphonesIcon, Loader2, Navigation, Repeat2, ShieldAlert, ShieldCheck, MailPlus, UserPlus, UserX,
 } from 'lucide-react';
 import LiveTrackingMap from '@shared/modules/tracking/LiveTrackingMap';
 import { useTrackingFeed } from '@shared/hooks/useLiveTrip';
@@ -16,6 +16,7 @@ import {
   BookingSummary, ProofPhoto, RatingPanel, feedCopy, firstNameOf,
 } from './redesign';
 import StartCodeCard from './StartCodeCard';
+import RescheduleCancel from './redesign/RescheduleCancel';
 import JobBoostCard from './cards/JobBoostCard';
 import SlowSearchCard from './cards/SlowSearchCard';
 import JobTipCard from './cards/JobTipCard';
@@ -260,10 +261,8 @@ export default function JobTrackingPage({ job, extras = null, startCode = null, 
             </Section>
           )}
 
-          {cancel && !job.terminal && (
-            <Section title="Cancel booking">
-              <Row Icon={X} title="Cancel this booking" sub={cancel.note || 'You see any fee before you confirm.'} onClick={openCancel} tone="danger" />
-            </Section>
+          {!job.terminal && (
+            <RescheduleCancel job={job} reschedule={options?.reschedule} cancel={cancel} onCancel={openCancel} onMoved={refetchOptions} />
           )}
         </div>
 
