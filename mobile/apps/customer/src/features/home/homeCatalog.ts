@@ -18,10 +18,12 @@ export interface HomeService {
 export interface HomeDomain { code: string; name: string; description?: string; services: HomeService[] }
 
 /** Every service shows; whether it can be booked HERE is serviceability's answer (unknown location: bookable). */
-// What nobody covers at this address yet, for "Coming to your area".
-export function comingSoonOf(catalogDomains: HomeDomain[], liveCodes: Set<string> | null): HomeService[] {
+// What nobody covers at this address yet, for "Coming to your area", one row per category.
+export function comingSoonOf(catalogDomains: HomeDomain[], liveCodes: Set<string> | null): HomeDomain[] {
   if (!liveCodes) return [];
-  return catalogDomains.flatMap((d) => d.services.filter((s) => !liveCodes.has(s.code)).map((s) => ({ ...s, domainCode: d.code })));
+  return catalogDomains
+    .map((d) => ({ code: d.code, name: d.name, services: d.services.filter((s) => !liveCodes.has(s.code)).map((s) => ({ ...s, domainCode: d.code })) }))
+    .filter((g) => g.services.length);
 }
 
 export function buildDomains(catalogDomains: HomeDomain[], liveCodes: Set<string> | null, eventCats: { slug: string; name: string; emoji?: string; coverImage?: string }[]): HomeDomain[] {

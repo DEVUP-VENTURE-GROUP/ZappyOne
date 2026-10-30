@@ -112,7 +112,10 @@ export function ProblemChips({ services }) {
   return (
     <section aria-labelledby="home-problems">
       <div className="flex items-center justify-between gap-3">
-        <h2 id="home-problems" className="text-[13px] font-semibold text-ink-500">Common problems</h2>
+        <div>
+          <h2 id="home-problems" className="text-[17px] font-extrabold tracking-[-0.01em] text-ink-900">What's wrong?</h2>
+          <p className="text-[12.5px] text-ink-500">Tap the problem, see the price</p>
+        </div>
         <div className="flex gap-1.5">
           <button type="button" onClick={() => stepBy(-1)} aria-label="Previous problems"
             className="flex h-8 w-8 items-center justify-center rounded-full border border-line bg-white text-ink-700 hover:border-line-strong">
@@ -127,7 +130,7 @@ export function ProblemChips({ services }) {
       <div className="relative -mx-4 mt-2 sm:mx-0">
         <div
           ref={row}
-          className="flex gap-2 overflow-x-auto px-4 pb-1 no-scrollbar sm:px-0"
+          className="flex gap-3 overflow-x-auto px-4 pb-1 no-scrollbar sm:px-0"
           onMouseEnter={() => { hold.current = true; }}
           onMouseLeave={() => { hold.current = false; }}
           onTouchStart={() => { hold.current = true; }}
@@ -146,16 +149,15 @@ export function ProblemChips({ services }) {
                 onClick={() => nav(c.service.path)}
                 tabIndex={copy ? -1 : 0}
                 aria-hidden={copy || undefined}
-                className="flex min-h-[44px] shrink-0 items-center gap-2 rounded-full border border-line bg-white pl-1.5 pr-3.5 text-[13px] font-medium text-ink-900 transition-colors duration-150 hover:border-line-strong active:bg-canvas"
+                className="group flex w-[118px] shrink-0 flex-col gap-1.5 text-left focus-visible:outline-none sm:w-[132px]"
               >
-                {photo
-                  ? <img src={photo} alt="" loading="lazy" decoding="async" className="h-7 w-7 rounded-full object-cover" />
-                  : (
-                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-zappy-50 text-zappy-600">
-                      <Icon size={14} strokeWidth={2} />
-                    </span>
-                  )}
-                {c.name}
+                <span className="block aspect-[4/5] w-full overflow-hidden rounded-card bg-sunken ring-1 ring-line transition group-hover:ring-line-strong group-focus-visible:ring-2 group-focus-visible:ring-zappy-600">
+                  {photo
+                    ? <img src={photo} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]" />
+                    : <span className="flex h-full w-full items-center justify-center text-zappy-600"><Icon size={26} strokeWidth={1.6} /></span>}
+                </span>
+                <span className="line-clamp-2 text-[13px] font-semibold leading-[1.25] text-ink-900">{c.name}</span>
+                <span className="truncate text-[11.5px] text-ink-500">{c.service.name}</span>
               </button>
             );
           })}

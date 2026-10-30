@@ -67,7 +67,7 @@ export default function Footer({ services = [], areas = [], season = null, theme
   const policies = policyData?.policies || [];
   const cities = [...new Set(areas.map((a) => a.city).filter(Boolean))];
   return (
-    <footer className="relative bg-navy pb-24 pt-12 text-slate-300 sm:pb-12">
+    <footer className="relative bg-navy pb-8 pt-12 text-slate-300 sm:pb-12">
       {/* During a festival: a gold jhalar along the top, and a greeting from us. */}
       {season && theme && (
         <span aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-3" style={{ backgroundImage: jhalarCss('#E8B04B'), backgroundRepeat: 'repeat-x' }} />

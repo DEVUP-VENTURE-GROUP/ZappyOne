@@ -196,8 +196,9 @@ export default function HomePage() {
   // The quick grid folds a section with its own page (pet care) into one tile.
   const domains = useMemo(() => allDomains.map(foldIntoHub), [allDomains]);
   const services = useMemo(() => allDomains.flatMap((d) => d.services), [allDomains]);
+  // Grouped by category, one row each, so the list reads like a menu rather than one long strip.
   const comingSoon = useMemo(() => (liveCodes
-    ? (catalog?.domains || []).flatMap((d) => d.services.filter((s) => !liveCodes.has(s.code)).map((s) => ({ ...s, domainCode: d.code })))
+    ? (catalog?.domains || []).map((d) => ({ code: d.code, name: d.name, services: d.services.filter((s) => !liveCodes.has(s.code)).map((s) => ({ ...s, domainCode: d.code })) })).filter((g) => g.services.length)
     : []), [catalog, liveCodes]);
   const allServices = useMemo(() => (catalog?.domains || []).flatMap((d) => d.services), [catalog]);
   const searchTerms = useMemo(() => {
@@ -315,13 +316,22 @@ export default function HomePage() {
             <>
               {svc?.status === 'closed_now' && <ClosedNowBanner nextOpening={svc.nextOpening} />}
               {svc?.prosNearby > 0 && (
-                <p role="status" className="flex items-center gap-2 text-[13px] font-semibold text-ink-700">
-                  <span className="relative flex h-2.5 w-2.5">
+                <div role="status" className="flex items-center gap-3">
+                  <span className="relative flex h-2.5 w-2.5 shrink-0">
                     <span className="absolute inline-flex h-full w-full rounded-full bg-zappy-600 opacity-60 motion-safe:animate-ping" />
                     <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-zappy-600" />
                   </span>
-                  {svc.prosNearby} verified {svc.prosNearby === 1 ? 'pro is' : 'pros are'} open near {loc.primary || 'you'} right now
-                </p>
+                  <p className="min-w-0 leading-tight">
+                    {svc.fastestMin != null && svc.fastestMin <= 60 && (
+                      <span className="block text-[20px] font-black tracking-[-0.02em] text-ink-900">
+                        Pro at your door in <span className="text-zappy-600">{svc.fastestMin} min</span>
+                      </span>
+                    )}
+                    <span className={svc.fastestMin != null && svc.fastestMin <= 60 ? 'block text-[12.5px] font-semibold text-ink-500' : 'block text-[13px] font-semibold text-ink-700'}>
+                      {svc.prosNearby} verified {svc.prosNearby === 1 ? 'pro' : 'pros'} open near {loc.primary || 'you'} now
+                    </span>
+                  </p>
+                </div>
               )}
               {nothingLive && (
                 <div className="rounded-card border border-line bg-surface px-4 py-4">
@@ -330,7 +340,7 @@ export default function HomePage() {
                   <button type="button" onClick={() => setLocSheet(true)} className="mt-3 text-[13px] font-bold text-zappy-700">Change address</button>
                 </div>
               )}
-              {nothingLive && !loadingCatalog && <ComingSoonRow services={comingSoon} loc={loc} />}
+              {nothingLive && !loadingCatalog && <ComingSoonRow groups={comingSoon} loc={loc} />}
 
               {!loadingCatalog && !nothingLive && <HeroCarousel domains={allDomains} onOpen={openService} />}
 
@@ -347,7 +357,7 @@ export default function HomePage() {
 
               {!loadingCatalog && <FestiveReveal on={!!season}><ServiceShowcase domains={allDomains} onOpen={openService} /></FestiveReveal>}
               {isAuthed && <FestiveReveal on={!!season}><HomeMarketplace /></FestiveReveal>}
-              {!loadingCatalog && !nothingLive && <FestiveReveal on={!!season}><ComingSoonRow services={comingSoon} loc={loc} /></FestiveReveal>}
+              {!loadingCatalog && !nothingLive && <FestiveReveal on={!!season}><ComingSoonRow groups={comingSoon} loc={loc} /></FestiveReveal>}
               {season && <FestiveDivider theme={theme} />}
               <FestiveReveal on={!!season}><AdBanner /></FestiveReveal>
               <FestiveReveal on={!!season}><NearbyShopsLink /></FestiveReveal>

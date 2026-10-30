@@ -183,7 +183,12 @@ export function HomePage() {
             {svc?.prosNearby > 0 ? (
               <View accessibilityRole="text" style={styles.live}>
                 <View style={styles.liveDot} />
-                <Text variant="bodySmall" weight="semibold" color={ink[700]}>{svc.prosNearby} verified {svc.prosNearby === 1 ? 'pro is' : 'pros are'} open near {loc.primary || 'you'} right now</Text>
+                <View style={styles.flexText}>
+                  {svc.fastestMin != null && svc.fastestMin <= 60 ? (
+                    <Text variant="heading3" weight="bold">Pro at your door in <Text variant="heading3" weight="bold" color={zappy[600]}>{svc.fastestMin} min</Text></Text>
+                  ) : null}
+                  <Text variant="caption" weight="semibold" color={ink[500]}>{svc.prosNearby} verified {svc.prosNearby === 1 ? 'pro' : 'pros'} open near {loc.primary || 'you'} now</Text>
+                </View>
               </View>
             ) : null}
             {nothingLive ? (
@@ -193,7 +198,7 @@ export function HomePage() {
                 <Text variant="bodySmall" weight="bold" color={zappy[700]} onPress={() => setLocSheet(true)} accessibilityRole="button">Change address</Text>
               </View>
             ) : null}
-            {nothingLive && !loadingCatalog ? <ComingSoonRow services={comingSoon} loc={loc} /> : null}
+            {nothingLive && !loadingCatalog ? <ComingSoonRow groups={comingSoon} loc={loc} /> : null}
             {!loadingCatalog && !nothingLive ? <HeroCarousel domains={allDomains} onOpen={openService} /> : null}
             {/* During a festival each section rises in after the last. */}
             <Animated.View entering={rise(0)}><ProblemChips services={services} /></Animated.View>
@@ -203,7 +208,7 @@ export function HomePage() {
             <Animated.View entering={rise(3)}><OffersRail isAuthed={isAuthed} /></Animated.View>
             {!loadingCatalog ? <Animated.View entering={rise(4)}><ServiceShowcase domains={allDomains} onOpen={openService} /></Animated.View> : null}
             {isAuthed ? <HomeMarketplace loc={loc.lat != null && loc.lng != null ? { lat: loc.lat, lng: loc.lng, address: [loc.primary, loc.secondary].filter(Boolean).join(', ') } : null} /> : null}
-            {!loadingCatalog && !nothingLive ? <ComingSoonRow services={comingSoon} loc={loc} /> : null}
+            {!loadingCatalog && !nothingLive ? <ComingSoonRow groups={comingSoon} loc={loc} /> : null}
             {theme ? <SafeSection name="festive-divider"><FestiveDivider accent={theme.accent} /></SafeSection> : null}
             <AdBanner isAuthed={isAuthed} />
             <NearbyShopsLink />
@@ -217,6 +222,7 @@ export function HomePage() {
 }
 
 const styles = StyleSheet.create({
+  flexText: { flex: 1, minWidth: 0 },
   live: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   liveDot: { width: 9, height: 9, borderRadius: 5, backgroundColor: zappy[600] },
   joining: { gap: spacing.xs, padding: spacing.base, borderRadius: radius.large, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
