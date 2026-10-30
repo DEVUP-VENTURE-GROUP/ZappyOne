@@ -27,7 +27,7 @@ import { radius } from '@zappy/ui/theme/radius';
 import { spacing } from '@zappy/ui/theme/spacing';
 import { AdBanner } from '../../components/marketing/AdBanner';
 import { SpotlightSearch } from '../catalog/SpotlightSearch';
-import { ClosedNowBanner } from '../catalog/serviceability/ClosedNowBanner';
+import { backAt } from '@zappy/core/shared/opening';
 import { NotInYourArea } from '../catalog/serviceability/NotInYourArea';
 import { ActiveJobCard } from './ActiveJobCard';
 import { ContinueBookingCard } from './ContinueBookingCard';
@@ -168,7 +168,7 @@ export function HomePage() {
 
   return (
     <View style={[styles.page, theme ? { backgroundColor: theme.wash } : null]}>
-      <HomeHeader loc={loc} isAuthed={isAuthed} onPickLocation={() => setLocSheet(true)} tint={tint} festive={theme} greeting={season?.greeting || ''} eta={svc?.fastestMin != null && svc.fastestMin <= 60 ? svc.fastestMin : null} />
+      <HomeHeader loc={loc} isAuthed={isAuthed} onPickLocation={() => setLocSheet(true)} tint={tint} festive={theme} greeting={season?.greeting || ''} eta={svc?.fastestMin != null && svc.fastestMin <= 60 ? svc.fastestMin : null} closed={svc?.status === 'closed_now' ? backAt(svc.nextOpening) : null} />
       {/* Search stays pinned while the rest scrolls. */}
       <View style={[styles.searchWrap, tint ? { backgroundColor: tint, borderBottomLeftRadius: 0, borderBottomRightRadius: 0 } : null]}><SearchBar terms={terms} onOpen={() => setSpotOpen(true)} /></View>
       <ScrollView contentContainerStyle={styles.body} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
@@ -181,7 +181,6 @@ export function HomePage() {
             areas={svc.areas} onChangeLocation={() => setLocSheet(true)} />
         ) : (
           <>
-            {svc?.status === 'closed_now' ? <ClosedNowBanner nextOpening={svc.nextOpening} /> : null}
             {nothingLive ? (
               <NotInYourArea soon place={loc.primary} lat={loc.lat ?? undefined} lng={loc.lng ?? undefined} address={[loc.primary, loc.secondary].filter(Boolean).join(', ')}
                 areas={svc?.areas || []} onChangeLocation={() => setLocSheet(true)} />

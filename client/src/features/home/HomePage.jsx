@@ -10,7 +10,7 @@ import { saveGeoLocation } from '@shared/utils/geoCache';
 import { reverseGeocode } from '@shared/utils/reverseGeocode';
 import SEO, { HOME_SCHEMA, BASE_URL } from '@shared/components/SEO';
 import NotInYourArea from '../catalog/serviceability/NotInYourArea';
-import ClosedNowBanner from '../catalog/serviceability/ClosedNowBanner';
+import { backAt } from '@shared/customer/opening';
 import ComingSoonRow from './ComingSoonRow';
 import ServiceShowcase from './ServiceShowcase';
 import HeroCarousel from './HeroCarousel';
@@ -291,6 +291,7 @@ export default function HomePage() {
           festive={theme}
           greeting={season?.greeting || ''}
           eta={svc?.fastestMin != null && svc.fastestMin <= 60 ? svc.fastestMin : null}
+          closed={svc?.status === 'closed_now' ? backAt(svc.nextOpening) : null}
         />
 
         {/* Phone: search stays pinned while the rest scrolls (desktop has it in the bar). */}
@@ -318,7 +319,6 @@ export default function HomePage() {
             />
           ) : (
             <>
-              {svc?.status === 'closed_now' && <ClosedNowBanner nextOpening={svc.nextOpening} />}
               {nothingLive && (
                 <NotInYourArea soon place={loc.primary} lat={loc.lat} lng={loc.lng}
                   address={[loc.primary, loc.secondary].filter(Boolean).join(', ')} areas={svc?.areas || []} onChangeLocation={() => setLocSheet(true)} />
