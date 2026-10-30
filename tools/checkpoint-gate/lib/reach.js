@@ -14,7 +14,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const WEB_APPS = ['client', 'servicepro', 'rakshak', 'admin'];
+const WEB_APPS = ['client', 'servicepro', 'rakshak', 'admin', 'events'];
 const CODE = /\.(jsx?|tsx?|mjs|cjs)$/;
 
 function listFiles(dir, out = []) {

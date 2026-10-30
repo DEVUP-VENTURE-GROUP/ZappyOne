@@ -16,7 +16,7 @@ const CATEGORIES = [
   { code: 'pet_walk', name: 'Walk & Activity', icon: 'Footprints', displayOrder: 3, description: 'Walks and play sessions matched to your pet.' },
   { code: 'pet_home_care', name: 'Pet Home Care', icon: 'HeartHandshake', displayOrder: 4, description: 'Feeding, litter care and companionship visits at home.' },
   { code: 'pet_transport', name: 'Pet Pickup & Assistance', icon: 'Car', displayOrder: 5, description: 'Safe transport to the vet, groomer or boarding.' },
-  { code: 'pet_vet_assist', name: 'Vet & Appointment Assistance', icon: 'Stethoscope', displayOrder: 6, description: 'Logistics support for a vet visit - not a substitute for one.', disclaimer: 'ZappyOne helpers assist with transport, waiting and paperwork. They do not diagnose, prescribe or treat unless they are themselves a verified, licensed veterinary professional.' },
+  { code: 'pet_vet_assist', name: 'Vet & Appointment Assistance', icon: 'Stethoscope', displayOrder: 6, description: 'Logistics support for a vet visit — not a substitute for one.', disclaimer: 'ZappyOne helpers assist with transport, waiting and paperwork. They do not diagnose, prescribe or treat unless they are themselves a verified, licensed veterinary professional.' },
   { code: 'pet_check', name: 'Pet Check & Home Visit', icon: 'ClipboardCheck', displayOrder: 7, description: 'A quick visual check-in on your pet while you are out.', disclaimer: 'A pet check is a visual welfare check, not a medical exam. A provider will never diagnose a condition.' },
 ];
 

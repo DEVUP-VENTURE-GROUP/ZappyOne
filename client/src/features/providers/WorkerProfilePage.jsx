@@ -104,7 +104,7 @@ export default function WorkerProfilePage() {
         {/* Facts, all from records */}
         <section className="grid grid-cols-2 gap-3">
           <Fact icon={Briefcase} label="Jobs completed" value={completedJobs ? completedJobs.toLocaleString('en-IN') : 'None yet'} />
-          <Fact icon={CalendarDays} label="On ZappyOne since" value={since(worker?.memberSince) || '-'} />
+          <Fact icon={CalendarDays} label="On ZappyOne since" value={since(worker?.memberSince) || '—'} />
         </section>
 
         {/* Verified for */}

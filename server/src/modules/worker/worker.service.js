@@ -177,11 +177,11 @@ async function updateLocation({ workerId, lng, lat, orderId, repairBookingId, jo
       const elapsedHours = (Date.now() - last.ts) / 3_600_000;
       const speedKmh = elapsedHours > 0 ? distKm / elapsedHours : 0;
       if (speedKmh > GPS_MAX_SPEED_KMH) {
-        logger.warn({ workerId, speedKmh: Math.round(speedKmh), distKm: distKm.toFixed(2), lat, lng }, '[GPS] Spoof detected - location rejected');
+        logger.warn({ workerId, speedKmh: Math.round(speedKmh), distKm: distKm.toFixed(2), lat, lng }, '[GPS] Spoof detected — location rejected');
         redis.publish('worker:gps_spoof', JSON.stringify({ workerId, lat, lng, speedKmh: Math.round(speedKmh), at: Date.now() })).catch(() => {});
         return { ok: true };
       }
-    } catch { /* JSON parse error - proceed normally */ }
+    } catch { /* JSON parse error — proceed normally */ }
   }
   // Update baseline for the next call (TTL 5 min — resets if worker pauses pinging)
   redis.set(lastLocKey, JSON.stringify({ lat, lng, ts: Date.now() }), 'EX', 300).catch(() => {});

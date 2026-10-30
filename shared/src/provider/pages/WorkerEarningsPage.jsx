@@ -16,7 +16,7 @@ function EarningRow({ job, expanded, onToggle, index }) {
       className="bg-white rounded-[1.25rem] border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] overflow-hidden mb-3"
     >
       <button className="w-full flex items-center gap-4 p-4 text-left active:bg-slate-50 transition" onClick={onToggle}>
-        <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 shadow-sm ${hasSurge ? 'bg-amber-500' : 'bg-zappy-600'}`}>
+        <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 shadow-sm ${hasSurge ? 'bg-gradient-to-br from-amber-400 to-orange-500' : 'bg-gradient-to-br from-zappy-500 to-violet-600'}`}>
           {hasSurge ? <Zap size={18} className="text-white fill-white" /> : <TrendingUp size={18} className="text-white" />}
         </div>
         <div className="flex-1 min-w-0">
@@ -100,11 +100,13 @@ export default function WorkerEarningsPage() {
   function toggle(id) { setExpanded(p => p === id ? null : id); }
 
   return (
-    <div className="min-h-screen bg-slate-50 md:flex md:justify-center md:bg-slate-100">
+    <div className="min-h-screen bg-slate-50 md:flex md:justify-center md:bg-gradient-to-br md:from-slate-100 md:to-zappy-50/40">
       <div className="w-full max-w-lg lg:max-w-2xl bg-slate-50 min-h-screen relative shadow-[0_0_40px_rgba(0,0,0,0.05)] lg:shadow-[0_0_60px_rgba(0,0,0,0.08)] md:border-x border-slate-200/60">
         
         {/* Cinematic Header */}
         <header className="relative pt-6 pb-24 overflow-hidden rounded-b-[2.5rem] shadow-sm z-10" style={{ background: 'linear-gradient(#0f172a, #0f172a)' }}>
+          <motion.div className="absolute top-0 right-0 w-64 h-64 bg-zappy-500/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.8, 0.5] }} transition={{ duration: 4, repeat: Infinity }} />
+          <motion.div className="absolute bottom-0 left-0 w-48 h-48 bg-emerald-500/20 rounded-full blur-3xl translate-y-1/3 -translate-x-1/4" animate={{ scale: [1, 1.3, 1], opacity: [0.3, 0.6, 0.3] }} transition={{ duration: 5, repeat: Infinity, delay: 1 }} />
           
           <div className="relative z-10 px-5">
             <div className="flex items-center justify-between mb-8">

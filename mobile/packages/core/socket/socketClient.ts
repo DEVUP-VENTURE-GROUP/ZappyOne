@@ -84,7 +84,7 @@ class SocketClient {
       token = await refreshAccessToken();
     }
     if (!token) {
-      log.warn('no access token available - socket not connected');
+      log.warn('no access token available — socket not connected');
       return;
     }
 
@@ -127,7 +127,7 @@ class SocketClient {
 
     // The Redis adapter loses room membership on restart — re-subscribe.
     this.socket.on('server:rooms_reset', (payload) => {
-      log.warn('server rooms reset - resubscribing', payload);
+      log.warn('server rooms reset — resubscribing', payload);
       for (const orderId of this.subscribedOrderIds) {
         this.socket?.emit('order:subscribe', { orderId });
       }
@@ -135,7 +135,7 @@ class SocketClient {
 
     // Another device logged in and evicted this session.
     this.socket.on('session:replaced', (payload) => {
-      log.warn('session replaced - ending local session', payload);
+      log.warn('session replaced — ending local session', payload);
       emitSessionEnd('session_replaced');
     });
 

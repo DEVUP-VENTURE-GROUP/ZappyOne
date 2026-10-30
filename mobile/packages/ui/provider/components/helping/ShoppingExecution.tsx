@@ -77,7 +77,7 @@ export function ShoppingExecution({ task, onChanged, disabled }: { task: Task; o
       await updateItem({ id: task._id, itemId: item._id, status: 'purchased', actualPricePaise: Math.round(price * 100) }).unwrap();
       toast.success('Marked purchased'); onChanged();
     } catch (err) {
-      if ((err as ApiErr)?.data?.code === 'APPROVAL_REQUIRED') toast.error('That price is above what the customer approved - propose it as an alternative instead');
+      if ((err as ApiErr)?.data?.code === 'APPROVAL_REQUIRED') toast.error('That price is above what the customer approved — propose it as an alternative instead');
       else toast.error(errText(err, 'Could not save this'));
     }
   }
@@ -89,8 +89,8 @@ export function ShoppingExecution({ task, onChanged, disabled }: { task: Task; o
     if (!advanceAmount) return;
     try {
       await recordAdvance({ id: task._id, amountPaise: Math.round(Number(advanceAmount) * 100) }).unwrap();
-      toast.success('Advance recorded - you will be reimbursed on settlement'); setAdvanceAmount(''); onChanged();
-    } catch (err) { toast.error(errText(err, 'That is more than the advance limit - the customer must fund it')); }
+      toast.success('Advance recorded — you will be reimbursed on settlement'); setAdvanceAmount(''); onChanged();
+    } catch (err) { toast.error(errText(err, 'That is more than the advance limit — the customer must fund it')); }
   }
 
   return (

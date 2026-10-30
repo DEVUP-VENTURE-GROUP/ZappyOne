@@ -75,11 +75,9 @@ async function rate({ kind, id, role, providerId, stars, tags = [], note = '' })
 /** What a provider sees about a customer on an offer: average and count, or "new". */
 async function summaryFor(userId) {
   if (!userId || !mongoose.isValidObjectId(String(userId))) return null;
-  const u = await require('../user/user.model').findById(userId).select('rating ratingCount abuse.missedVisits abuse.cashRefused').lean();
+  const u = await require('../user/user.model').findById(userId).select('rating ratingCount').lean();
   if (!u) return null;
-  // What a pro sees before accepting: how other pros rated them, and whether they were not home or did not pay before.
-  const record = { missedVisits: u.abuse?.missedVisits || 0, cashRefused: u.abuse?.cashRefused || 0 };
-  return u.ratingCount ? { rating: u.rating, count: u.ratingCount, ...record } : { rating: null, count: 0, ...record };
+  return u.ratingCount ? { rating: u.rating, count: u.ratingCount } : { rating: null, count: 0 };
 }
 
 module.exports = { rate, summaryFor, TAGS, LABEL, RATE_DAYS };

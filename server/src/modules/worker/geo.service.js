@@ -44,7 +44,7 @@ async function flushGeoBuffer() {
     pipe.geoadd(ONLINE_GEO_KEY, lng, lat, wid);
     pipe.zadd(ALIVE_ZSET_KEY, now, wid);
   }
-  try { await pipe.exec(); } catch { /* dropped batch - next tick refreshes */ }
+  try { await pipe.exec(); } catch { /* dropped batch — next tick refreshes */ }
 }
 
 function startGeoFlusher() {

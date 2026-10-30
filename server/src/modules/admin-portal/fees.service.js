@@ -28,8 +28,6 @@ const row = (line, key, label, doc, commissionField = 'commissionPct') => ({
   commissionPct: doc ? (doc[commissionField] ?? 0) : DEFAULTS.commissionPct,
   // Events carry no tax line yet; every other engine adds taxPct on the bill.
   taxPct: line === 'event' ? null : (doc?.taxPct ?? 0),
-  // Booked jobs get at least this many days to ask for a redo (repair config redoGuaranteeDays); other engines have none yet.
-  redoGuaranteeDays: line === 'repair' ? (doc?.redoGuaranteeDays ?? 7) : null,
   maxCommissionPct: MAX.commissionPct[line],
   configured: Boolean(doc),
   updatedAt: doc?.updatedAt || null,
@@ -45,8 +43,6 @@ async function list() {
   ]);
 
   const repairBy = new Map(repair.map((c) => [c.vertical, c]));
-  // Services opened as data (repair/package-lines) are named by their service line.
-  const lineNames = new Map((await require('../onboarding/onboarding.model').ServiceLine.find({ repairVertical: { $in: [...repairBy.keys()] } }).select('repairVertical name').lean()).map((l) => [l.repairVertical, l.name]));
   const repairKeys = [...new Set([...Object.keys(VERTICAL_LABEL), ...repairBy.keys()])];
 
   const petBy = new Map();
@@ -54,7 +50,7 @@ async function list() {
   const helpingBy = new Map(helping.map((c) => [c.serviceType, c]));
 
   return [
-    ...repairKeys.map((k) => row('repair', k, VERTICAL_LABEL[k] || lineNames.get(k) || k, repairBy.get(k))),
+    ...repairKeys.map((k) => row('repair', k, VERTICAL_LABEL[k] || k, repairBy.get(k))),
     ...[...petBy.keys()].sort().map((k) => row('pet', k, PET_LABEL[k] || k, petBy.get(k))),
     ...SERVICE_TYPES.filter((k) => helpingBy.has(k)).map((k) => row('helping', k, HELPING_LABEL[k] || k, helpingBy.get(k))),
     // Events read their config merged over defaults, so a missing field means the default.
@@ -67,7 +63,7 @@ function httpError(message, status, code) {
 }
 
 /** Change one line's fee and/or commission. Returns { before, after } for the audit. */
-async function update({ line, key, platformFeePaise, commissionPct, taxPct, redoGuaranteeDays, adminId }) {
+async function update({ line, key, platformFeePaise, commissionPct, taxPct, adminId }) {
   if (!LINES.includes(line)) throw httpError('Unknown service line', 400, 'UNKNOWN_LINE');
   const patch = {};
   if (platformFeePaise !== undefined) patch.platformFeePaise = platformFeePaise;
@@ -80,11 +76,6 @@ async function update({ line, key, platformFeePaise, commissionPct, taxPct, redo
   if (taxPct !== undefined) {
     if (line === 'event') throw httpError('Event bookings do not carry a tax line yet', 400, 'NO_TAX_ON_LINE');
     patch.taxPct = taxPct;
-  }
-
-  if (redoGuaranteeDays !== undefined) {
-    if (line !== 'repair') throw httpError('A redo guarantee is set on booked services only', 400, 'NO_REDO_ON_LINE');
-    patch.redoGuaranteeDays = redoGuaranteeDays;
   }
 
   if (line === 'repair') {
@@ -130,7 +121,7 @@ async function update({ line, key, platformFeePaise, commissionPct, taxPct, redo
 
 function pick(doc, commissionField = 'commissionPct') {
   if (!doc) return null;
-  return { platformFeePaise: doc.platformFeePaise ?? null, commissionPct: doc[commissionField] ?? null, taxPct: doc.taxPct ?? null, redoGuaranteeDays: doc.redoGuaranteeDays ?? null };
+  return { platformFeePaise: doc.platformFeePaise ?? null, commissionPct: doc[commissionField] ?? null, taxPct: doc.taxPct ?? null };
 }
 
 /**

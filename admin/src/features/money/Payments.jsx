@@ -49,7 +49,7 @@ export default function Payments() {
     try {
       const out = await retry(p.cfOrderId).unwrap();
       if (out.refunded) toast.success('Refund sent to the gateway');
-      else toast.error('The gateway refused again - refund by bank transfer and record it');
+      else toast.error('The gateway refused again — refund by bank transfer and record it');
     } catch (err) { toast.error(err?.data?.error || 'Retry failed'); }
   }
 
@@ -105,7 +105,7 @@ export default function Payments() {
                   </p>
                   <p className="text-xs text-rose-600 mt-0.5">
                     {p.refund?.status === 'manual_required'
-                      ? `Refund refused by the gateway${p.refund.reason ? ` - ${p.refund.reason}` : ''}`
+                      ? `Refund refused by the gateway${p.refund.reason ? ` — ${p.refund.reason}` : ''}`
                       : `Paid, but not applied: ${p.reconciliationReason || 'unknown error'}`}
                   </p>
                 </div>
@@ -161,10 +161,10 @@ export default function Payments() {
                   <tr key={p.id}>
                     <Td muted>{fmtDate(p.createdAt)}</Td>
                     <Td>{forLabel(p)}</Td>
-                    <Td>{p.owner.name || '-'}{p.owner.phone ? <span className="block text-[11px] text-slate-400">{p.owner.phone}</span> : null}</Td>
+                    <Td>{p.owner.name || '—'}{p.owner.phone ? <span className="block text-[11px] text-slate-400">{p.owner.phone}</span> : null}</Td>
                     <Td right mono>{fmt(p.amountPaise)}</Td>
                     <Td><StatusBadge status={p.status} /></Td>
-                    <Td>{p.refund ? <><StatusBadge status={p.refund.status} /> <span className="text-[11px] text-slate-500">{fmt(p.refund.amountPaise)}</span></> : '-'}</Td>
+                    <Td>{p.refund ? <><StatusBadge status={p.refund.status} /> <span className="text-[11px] text-slate-500">{fmt(p.refund.amountPaise)}</span></> : '—'}</Td>
                   </tr>
                 ))}
               </tbody>

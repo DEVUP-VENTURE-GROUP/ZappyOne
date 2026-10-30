@@ -251,7 +251,7 @@ export default function LiveSelfieCapture({
             {step === 'countdown' && (
               <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/30">
                 <div className="bg-black/70 rounded-2xl px-6 py-4 text-center">
-                  <p className="text-white/80 text-xs font-bold mb-1">STAY STILL - CAPTURING IN</p>
+                  <p className="text-white/80 text-xs font-bold mb-1">STAY STILL — CAPTURING IN</p>
                   <p className="text-white text-6xl font-black tabular-nums">{countdown}</p>
                   {countdown === 3 && <p className="text-white/70 text-xs mt-1">Blink naturally</p>}
                   {countdown === 2 && <p className="text-white/70 text-xs mt-1">Hold steady…</p>}

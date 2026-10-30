@@ -40,7 +40,7 @@ export function AccountSecurityPage() {
               <View style={styles.flex}>
                 <Text variant="bodySmall" color={ink[700]}>{e.device || t('security.unknownDevice', 'Unknown device')}</Text>
                 <View style={styles.inline}>
-                  <Text variant="caption" color={ink[400]}>{e.ip || '-'}, </Text>
+                  <Text variant="caption" color={ink[400]}>{e.ip || '—'}, </Text>
                   <Clock size={11} color={ink[400]} />
                   <Text variant="caption" color={ink[400]}>{new Date(e.at).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: '2-digit', hour: '2-digit', minute: '2-digit' })}</Text>
                 </View>

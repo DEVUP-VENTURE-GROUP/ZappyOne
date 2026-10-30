@@ -1,5 +1,3 @@
-import { useCheckInThen } from '../useCheckIn';
-import { PRIVACY_PLEDGE } from '../../utils/partsRule';
 import JobChatButton from '../../components/jobs/JobChatButton';
 import OnSiteCard from '../OnSiteCard';
 import GiveBackCard from '../GiveBackCard';
@@ -27,13 +25,12 @@ import SOSButton from '../../components/worker/SOSButton';
 import { useVerifyRepairHandoverCodeMutation, useDeclineRepairBookingMutation, useRepairWorkCatalogQuery } from '../../services/api';
 import PassReasonPicker from '../../components/worker/PassReasonPicker';
 import OtpEntry from '../../components/common/OtpEntry';
-import { CashRefusedControl } from '../../components/common/CollectPaymentCard';
 import ArrivalProximity, { useArrivalProximity } from '../../components/common/ArrivalProximity';
 import ProofPhotos, { readyKeys, photosSettled } from '../../components/common/ProofPhotos';
 import { useAttachRepairCompletionPhotosMutation } from '../../services/api';
 import {
   repairGateFor as gateFor, REPAIR_GATE_COPY as GATE_COPY, repairNextAction as nextAction, REPAIR_QUOTABLE as QUOTABLE,
-  repairReadyForPayment, repairDue, canPassBackToShop, repairAgreedPaise, quoteTotalPaise, quotePayload, quoteRepairOptions, PART_GRADES,
+  repairReadyForPayment, repairDue, canPassBackToShop, repairAgreedPaise, quoteTotalPaise, quotePayload, quoteRepairOptions,
   qaState, qaPayload, QUOTE_LINE_KINDS, rupeesInput, REPAIR_PHOTO_STAGES, REPAIR_ENDED, REPAIR_NO_SOS,
 } from '../jobFlows';
 
@@ -103,8 +100,6 @@ function QuoteBuilder({ bookingId, repairCode: bookedRepair, vertical, additiona
   // Prices are typed in rupees, as people think of them; the server gets paise.
   const [items, setItems] = useState([{ kind: 'part', label: '', priceRupees: '', quantity: 1 }]);
   const [submit, { isLoading }] = useSubmitRepairQuoteMutation();
-  const [photos, setPhotos] = useState([]);
-  const needsPhoto = additional || agreedPaise > 0;
 
   const total = quoteTotalPaise(items);
 
@@ -113,14 +108,14 @@ function QuoteBuilder({ bookingId, repairCode: bookedRepair, vertical, additiona
   }
 
   async function send() {
-    const { body, error } = quotePayload({ repairCode, summary, items, warrantyDays, additional, agreedPaise, replace, replaceReason, photos: readyKeys(photos) });
+    const { body, error } = quotePayload({ repairCode, summary, items, warrantyDays, additional, agreedPaise, replace, replaceReason });
     if (error) return toast.error(error);
 
     try {
       await submit({ id: bookingId, ...body }).unwrap();
       toast.success(additional
-        ? 'Sent - the customer decides before you carry on'
-        : 'Quote sent - waiting for the customer to approve');
+        ? 'Sent — the customer decides before you carry on'
+        : 'Quote sent — waiting for the customer to approve');
       onSent();
     } catch (err) {
       toast.error(err?.data?.error || 'Could not send the quote');
@@ -180,8 +175,7 @@ function QuoteBuilder({ bookingId, repairCode: bookedRepair, vertical, additiona
       <div className="space-y-2">
         <label className="text-[12px] font-bold text-slate-700 block">Charges</label>
         {items.map((item, idx) => (
-          <div key={idx} className="space-y-1.5">
-          <div className="flex items-center gap-2">
+          <div key={idx} className="flex items-center gap-2">
             <select value={item.kind} onChange={(e) => setItem(idx, { kind: e.target.value })}
               className="border border-slate-200 rounded-lg px-2 py-2 text-xs w-24 outline-none">
               {QUOTE_LINE_KINDS.map((k) => (
@@ -200,18 +194,6 @@ function QuoteBuilder({ bookingId, repairCode: bookedRepair, vertical, additiona
               <button onClick={() => setItems((l) => l.filter((_, i) => i !== idx))}
                 className="text-slate-400 hover:text-red-500 shrink-0"><Trash2 size={15} /></button>
             )}
-          </div>
-          {item.kind === 'part' && (
-            <div role="radiogroup" aria-label="What this part is" className="grid grid-cols-3 gap-1.5">
-              {PART_GRADES.map((g) => (
-                <button key={g.key} type="button" role="radio" aria-checked={item.partGrade === g.key} onClick={() => setItem(idx, { partGrade: g.key })}
-                  className={`rounded-lg border px-2 py-1.5 text-left ${item.partGrade === g.key ? 'border-zappy-500 bg-zappy-50' : 'border-slate-200'}`}>
-                  <span className="block text-[12px] font-bold text-slate-800">{g.label}</span>
-                  <span className="block text-[10.5px] text-slate-500">{g.hint}</span>
-                </button>
-              ))}
-            </div>
-          )}
           </div>
         ))}
         <button onClick={() => setItems((l) => [...l, { kind: 'part', label: '', priceRupees: '', quantity: 1 }])}
@@ -237,12 +219,7 @@ function QuoteBuilder({ bookingId, repairCode: bookedRepair, vertical, additiona
         <span className="text-lg font-black text-[#0F172A]">{rupees(agreedPaise > 0 && !replace ? agreedPaise + total : total)}</span>
       </div>
 
-      {needsPhoto && (
-        <ProofPhotos photos={photos} onChange={setPhotos} folder="order-proof" max={4}
-          title="Photo of what you found" hint="The customer sees it with the price and approves before you carry on." requiredNote="At least one photo is needed for extra work" />
-      )}
-
-      <button onClick={send} disabled={isLoading || (needsPhoto && !photosSettled(photos))} className="btn-primary w-full">
+      <button onClick={send} disabled={isLoading} className="btn-primary w-full">
         {isLoading ? <><Loader2 size={15} className="animate-spin" /> Sending…</> : 'Send quote to customer'}
       </button>
     </div>
@@ -269,10 +246,10 @@ function QAPanel({ bookingId, onDone }) {
       const res = await submit({ id: bookingId, ...qaPayload(checklist, results) }).unwrap();
 
       if (res.passed) {
-        toast.success('QA passed - you can complete the job');
+        toast.success('QA passed — you can complete the job');
         onDone();
       } else {
-        toast.error('QA failed - fix the failed checks and re-run');
+        toast.error('QA failed — fix the failed checks and re-run');
       }
     } catch (err) {
       toast.error(err?.data?.error || 'Could not submit QA');
@@ -341,7 +318,6 @@ export default function WorkerRepairJobPage() {
   const nav = useNavigate();
   const { data, isLoading, refetch } = useGetRepairBookingQuery(id, { pollingInterval: 20000 });
   const [transition, { isLoading: moving }] = useTransitionRepairBookingMutation();
-  const checkedIn = useCheckInThen();
   const [collectCash, { isLoading: collecting }] = useCollectRepairCashMutation();
   const [showQuote, setShowQuote] = useState(false);
   const [otp, setOtp] = useState('');
@@ -476,7 +452,7 @@ export default function WorkerRepairJobPage() {
       // Attach whatever is genuinely in storage before the status moves on.
       const keys = readyKeys(photos);
       if (keys.length) await attachPhotos({ id, photos: keys }).unwrap();
-      await checkedIn(() => transition({ id, status: to }).unwrap());
+      await transition({ id, status: to }).unwrap();
       toast.success('Updated');
       refetch();
     } catch (err) {
@@ -497,12 +473,6 @@ export default function WorkerRepairJobPage() {
       </div></header>
 
       <div className="max-w-lg lg:max-w-2xl mx-auto px-4 pt-4 space-y-3">
-        {booking.returnOldParts && !['COMPLETED', 'CANCELLED'].includes(booking.status) && (
-          <p role="status" className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-[13px] font-semibold text-amber-900">
-            The customer asked for the replaced part back. Hand it over before you finish.
-          </p>
-        )}
-        {!['COMPLETED', 'CANCELLED'].includes(booking.status) && <p className="px-1 text-[11.5px] font-semibold text-slate-500">{PRIVACY_PLEDGE.partner}</p>}
         {onTrip && (!isOwner || ownerGoing) && <TripSharingBanner sharing={sharingLocation} {...tripOf('repair', booking)} />}
         <OnSiteCard onSite={booking.onSite} />
         {isOwner && (
@@ -529,7 +499,7 @@ export default function WorkerRepairJobPage() {
           Taking the money is the LAST step, not the first.
 
           This block used to sit at the top of the screen from the moment a job
-          was accepted - "Collect ₹1,638 in cash" with a button to confirm it,
+          was accepted — "Collect ₹1,638 in cash" with a button to confirm it,
           before the technician had left the shop. That invites recording money
           nobody has handed over, on an estimate that has not survived contact
           with the device. It now appears only once the work is finished and the
@@ -586,7 +556,6 @@ export default function WorkerRepairJobPage() {
                     ? <><Loader2 size={15} className="animate-spin" /> Recording…</>
                     : <>I've collected {rupees(duePaise)} in cash</>}
                 </button>
-                {booking.paymentMethod === 'cash' && <CashRefusedControl jobId={booking._id} />}
               </>
             )}
           </div>
@@ -608,14 +577,14 @@ export default function WorkerRepairJobPage() {
              */
             ...(booking.fuelType ? [['Fuel', booking.fuelType]] : []),
             ...(booking.configurationLabel ? [['Build', booking.configurationLabel]] : []),
-            ['Reported', (booking.problemCodes || []).join(', ').replace(/_/g, ' ') || '-'],
+            ['Reported', (booking.problemCodes || []).join(', ').replace(/_/g, ' ') || '—'],
             ['Repair', booking.repairCode?.replace(/_/g, ' ') || 'Diagnosis first'],
             ['Mode', (booking.serviceMode || '').replace(/_/g, ' ')],
             ['Address', booking.location?.address],
           ].map(([k, v]) => (
             <div key={k} className="flex items-start justify-between gap-3">
               <span className="text-xs text-slate-500">{k}</span>
-              <span className="text-sm font-semibold text-[#0F172A] text-right capitalize">{v || '-'}</span>
+              <span className="text-sm font-semibold text-[#0F172A] text-right capitalize">{v || '—'}</span>
             </div>
           ))}
         </div>

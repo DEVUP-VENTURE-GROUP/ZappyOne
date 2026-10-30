@@ -65,7 +65,7 @@ function detailSummary(ev) {
     case 'rating_manipulation': return `${d.fiveStarPairCount7d}× 5★ same pair (7d)`;
     case 'gps_spoof':           return `${d.speedMps} m/s jump, ${d.distMetres}m`;
     case 'surge_farming':       return `${[(d.reasons || []).includes('same_pair') && `${d.surgeJobs} surge jobs with one customer (${d.days}d)`, (d.reasons || []).includes('on_off_switching') && `went online ${d.onlineSwitches}× around the booking`].filter(Boolean).join(', ') || 'surge share held'}, ₹${Math.round((d.heldPaise || 0) / 100)} held, dismiss to pay out`;
-    default:                    return Object.keys(d).length ? JSON.stringify(d).slice(0, 60) : '-';
+    default:                    return Object.keys(d).length ? JSON.stringify(d).slice(0, 60) : '—';
   }
 }
 
@@ -97,7 +97,7 @@ function ActorModal({ actor, onClose }) {
         <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between shrink-0">
           <div>
             <p className="font-bold text-slate-900">{actor.actorName || 'Unknown actor'}</p>
-            <p className="text-xs text-slate-500">{actor.actorPhone || '-'}, {actor.actorKind}</p>
+            <p className="text-xs text-slate-500">{actor.actorPhone || '—'}, {actor.actorKind}</p>
           </div>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100"><X size={16} /></button>
         </div>
@@ -240,7 +240,7 @@ export default function Fraud() {
                       <td className="px-4 py-3">
                         <button onClick={() => setActor(ev)} className="text-left">
                           <span className="text-sm font-semibold text-zappy-700 hover:underline">{ev.actorName || 'Unknown'}</span>
-                          <span className="block text-[11px] text-slate-400">{ev.actorPhone || '-'}, <span className="capitalize">{ev.actorKind}</span></span>
+                          <span className="block text-[11px] text-slate-400">{ev.actorPhone || '—'}, <span className="capitalize">{ev.actorKind}</span></span>
                         </button>
                       </td>
                       <td className="px-4 py-3 text-xs text-slate-500 max-w-[220px] truncate">{detailSummary(ev)}</td>

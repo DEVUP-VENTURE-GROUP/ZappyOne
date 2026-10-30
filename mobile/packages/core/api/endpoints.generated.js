@@ -16,7 +16,7 @@
  * ----------------------------------------------------------------------------
  */
 
-export const TAG_TYPES = ['CheckoutDrafts', 'ServicePlans', 'MyPlans', 'ProviderPlans', 'PlanVisits', 'PartnerRates', 'PriceRequest', 'Reviews', 'Fees', 'JobChat', 'Account', 'AdminTeam', 'Payments', 'Me', 'Order', 'Worker', 'Earnings', 'AdminMetrics', 'Kyc', 'Plan', 'Subscription', 'Wallet', 'Notification', 'AdminUsers', 'Disputes', 'Payouts', 'Incentives', 'CancellationConfig', 'PricingCfg', 'AuditLogs', 'Addresses', 'Ad', 'Promo', 'Gamification', 'Recommendations', 'FeatureFlags', 'SupportTickets', 'Referral', 'ShieldFund', 'EventTheme', 'EventBooking', 'EventPartner', 'EventConfig', 'EventCategory', 'PartnerNotification', 'Fraud', 'Zone', 'City', 'PaymentMethods', 'UserDisputes', 'UserTickets', 'AdminAppeals', 'AdminTraining', 'WorkerGoals', 'Plans', 'Content', 'Rewards', 'WorkerOps', 'ReadyMode', 'Shop', 'ShopWorkers', 'ShopKyc',
+export const TAG_TYPES = ['CheckoutDrafts', 'PartnerRates', 'PriceRequest', 'Reviews', 'Fees', 'JobChat', 'Account', 'AdminTeam', 'Payments', 'Me', 'Order', 'Worker', 'Earnings', 'AdminMetrics', 'Kyc', 'Plan', 'Subscription', 'Wallet', 'Notification', 'AdminUsers', 'Disputes', 'Payouts', 'Incentives', 'CancellationConfig', 'PricingCfg', 'AuditLogs', 'Addresses', 'Ad', 'Promo', 'Gamification', 'Recommendations', 'FeatureFlags', 'SupportTickets', 'Referral', 'ShieldFund', 'EventTheme', 'EventBooking', 'EventPartner', 'EventConfig', 'EventCategory', 'PartnerNotification', 'Fraud', 'Zone', 'City', 'PaymentMethods', 'UserDisputes', 'UserTickets', 'AdminAppeals', 'AdminTraining', 'WorkerGoals', 'Plans', 'Content', 'Rewards', 'WorkerOps', 'ReadyMode', 'Shop', 'ShopWorkers', 'ShopKyc',
     'RepairCatalog', 'RepairConfig', 'RepairPricing', 'RepairRequests', 'RepairBookings', 'RepairProvider', 'MyAssets',
     'HelpingConfig', 'HelpingTasks', 'HelpingAvailable', 'AdminHelpingTasks',
     'PetCatalog', 'MyPets', 'PetBookings', 'PetAvailable', 'PetRecurring', 'AdminPetBookings', 'AdminPetPricing', 'AdminPetCapabilities',
@@ -47,31 +47,6 @@ export function endpoints(b, { adminApiPath }) {
     quoteRepairGroup: b.mutation({ query: (body) => ({ url: '/repair/booking-groups/quote', method: 'POST', body }) }),
     createRepairGroup: b.mutation({ query: (body) => ({ url: '/repair/booking-groups', method: 'POST', body }), invalidatesTags: ['RepairBookings', 'CheckoutDrafts'] }),
     repairGroup: b.query({ query: (id) => `/repair/booking-groups/${id}`, providesTags: ['RepairBookings'] }),
-    // Every bookable service with its screen words (server repair catalog listVerticals).
-    repairVerticals: b.query({ query: () => ({ url: '/repair/verticals' }), keepUnusedDataFor: 600 }),
-    // Zomato-style browsing (server repair/services/storefront).
-    storefronts: b.query({ query: ({ vertical, lat, lng, sort = 'best', serviceMode }) => ({ url: '/repair/storefronts', params: { vertical, lat, lng, sort, ...(serviceMode && { serviceMode }) } }) }),
-    storefrontMenu: b.query({ query: ({ kind, id, vertical }) => ({ url: `/repair/storefronts/${kind}/${id}/menu`, params: { vertical } }) }),
-    // Partners' monthly plans and packs (server service-plan/).
-    plansNear: b.query({ query: ({ vertical, lat, lng }) => ({ url: '/service-plans/near', params: { vertical, lat, lng } }), providesTags: ['ServicePlans'] }),
-    // The home's rail: plans near the customer across every service (service-plan plansNearAny).
-    plansNearAny: b.query({ query: ({ lat, lng }) => ({ url: '/service-plans/near-any', params: { lat, lng } }), providesTags: ['ServicePlans'] }),
-    planQuote: b.query({ query: ({ id, months }) => ({ url: `/service-plans/${id}/quote`, params: { months } }) }),
-    subscribePlan: b.mutation({ query: (body) => ({ url: '/service-plans/subscribe', method: 'POST', body }), invalidatesTags: ['MyPlans'] }),
-    myPlans: b.query({ query: () => ({ url: '/service-plans/mine' }), providesTags: ['MyPlans'] }),
-    pausePlanDay: b.mutation({ query: ({ id, day }) => ({ url: `/service-plans/subscriptions/${id}/pause`, method: 'POST', body: { day } }), invalidatesTags: ['MyPlans'] }),
-    cancelPlan: b.mutation({ query: ({ id, reason }) => ({ url: `/service-plans/subscriptions/${id}/cancel`, method: 'POST', body: { reason } }), invalidatesTags: ['MyPlans'] }),
-    ratePlanVisit: b.mutation({ query: ({ id, stars, comment }) => ({ url: `/service-plans/visits/${id}/rate`, method: 'POST', body: { stars, comment } }), invalidatesTags: ['MyPlans'] }),
-    providerPlanCatalog: b.query({ query: () => ({ url: '/service-plans/provider/catalog' }), providesTags: ['ProviderPlans'] }),
-    providerPlans: b.query({ query: () => ({ url: '/service-plans/provider/plans' }), providesTags: ['ProviderPlans'] }),
-    saveProviderPlan: b.mutation({ query: ({ id, ...body }) => ({ url: id ? `/service-plans/provider/plans/${id}` : '/service-plans/provider/plans', method: id ? 'PUT' : 'POST', body }), invalidatesTags: ['ProviderPlans'] }),
-    submitProviderPlan: b.mutation({ query: (id) => ({ url: `/service-plans/provider/plans/${id}/submit`, method: 'POST' }), invalidatesTags: ['ProviderPlans'] }),
-    setProviderPlanLive: b.mutation({ query: ({ id, live }) => ({ url: `/service-plans/provider/plans/${id}/live`, method: 'POST', body: { live } }), invalidatesTags: ['ProviderPlans'] }),
-    providerPlanSubscriptions: b.query({ query: () => ({ url: '/service-plans/provider/subscriptions' }), providesTags: ['ProviderPlans'] }),
-    providerPlanVisits: b.query({ query: ({ from, days = 7 } = {}) => ({ url: '/service-plans/provider/visits', params: { ...(from && { from }), days } }), providesTags: ['PlanVisits'] }),
-    assignPlanVisit: b.mutation({ query: ({ id, workerId }) => ({ url: `/service-plans/provider/visits/${id}/assign`, method: 'POST', body: { workerId } }), invalidatesTags: ['PlanVisits'] }),
-    startPlanVisit: b.mutation({ query: ({ id, code }) => ({ url: `/service-plans/provider/visits/${id}/start`, method: 'POST', body: { code } }), invalidatesTags: ['PlanVisits'] }),
-    completePlanVisit: b.mutation({ query: ({ id, photoKeys, note }) => ({ url: `/service-plans/provider/visits/${id}/complete`, method: 'POST', body: { photoKeys, note } }), invalidatesTags: ['PlanVisits'] }),
     repairSuggestions: b.query({ query: ({ vertical, repairCode }) => ({ url: '/repair/suggestions', params: { vertical, repairCode } }) }),
     saveCheckoutDraft: b.mutation({ query: ({ kind, ...body }) => ({ url: `/jobs/checkout-drafts/${kind}`, method: 'PUT', body }), invalidatesTags: ['CheckoutDrafts'] }),
     clearCheckoutDraft: b.mutation({ query: (kind) => ({ url: `/jobs/checkout-drafts/${kind}`, method: 'DELETE' }), invalidatesTags: ['CheckoutDrafts'] }),
@@ -165,11 +140,6 @@ export function endpoints(b, { adminApiPath }) {
     /** Provider: may they hand it back, what it costs, and the wait at the door. */
     jobGiveBack: b.query({ query: ({ id, reason = 'other' }) => `/jobs/${id}/give-back?reason=${reason}`, keepUnusedDataFor: 0 }),
     giveBackJob: b.mutation({ query: ({ id, ...body }) => ({ url: `/jobs/${id}/give-back`, method: 'POST', body }) }),
-    confirmJobSafe: b.mutation({ query: (id) => ({ url: `/jobs/${id}/safe`, method: 'POST' }) }),
-    askJobMoreTime: b.mutation({ query: ({ id, ...body }) => ({ url: `/jobs/${id}/more-time`, method: 'POST', body }) }),
-    blockJobCustomer: b.mutation({ query: ({ id, reason = '' }) => ({ url: `/jobs/${id}/block-customer`, method: 'POST', body: { reason } }) }),
-    // The pro reports the customer would not pay cash after the job (jobs/give-back reportCashRefused).
-    reportCashRefused: b.mutation({ query: ({ id, note }) => ({ url: `/jobs/${id}/cash-refused`, method: 'POST', body: { note } }) }),
     reportCustomerAbsent: b.mutation({ query: (id) => ({ url: `/jobs/${id}/customer-absent`, method: 'POST' }) }),
     jobChat: b.query({ query: (id) => `/jobs/${id}/chat`, providesTags: (r, e, id) => [{ type: 'JobChat', id }] }),
     sendJobChat: b.mutation({
@@ -238,13 +208,6 @@ export function endpoints(b, { adminApiPath }) {
     googlePartnerLogin: b.mutation({
       query: (body) => ({ url: '/auth/partner/google', method: 'POST', body }),
     }),
-    // ServicePro's one sign-in for every partner (server auth/servicepro-login).
-    serviceproLogin: b.mutation({ query: (body) => ({ url: '/auth/servicepro/login', method: 'POST', body }) }),
-    serviceproRegister: b.mutation({ query: (body) => ({ url: '/auth/servicepro/register', method: 'POST', body }) }),
-    providerProfileStatus: b.query({ query: () => ({ url: '/provider/onboarding/profile-status' }), providesTags: ['Onboarding', 'Shop', 'Kyc'] }),
-    // A shop's steps from sign-up to live (onboarding/profile-check setupJourney), for the home's Continue card.
-    providerSetupJourney: b.query({ query: () => ({ url: '/provider/onboarding/setup-journey' }), providesTags: ['Onboarding', 'Shop', 'Kyc', 'RepairPricing'] }),
-    providerWorkspace: b.query({ query: () => ({ url: '/provider/onboarding/workspace' }), providesTags: ['Onboarding'] }),
     loginShop: b.mutation({
       query: (body) => ({ url: '/auth/shop/login', method: 'POST', body }),
     }),
@@ -568,8 +531,6 @@ export function endpoints(b, { adminApiPath }) {
     adminRecordDuesPayment: b.mutation({ query: ({ workerId, ...body }) => ({ url: adminApiPath(`/dues/${workerId}/payments`), method: 'POST', body }), invalidatesTags: ['Wallet'] }),
     // Partner shops' commission owed from cash jobs (shop/shop-dues).
     shopDues: b.query({ query: () => '/shops/me/dues', providesTags: ['Wallet'] }),
-    // The shop reports a dues payment with its reference; admin confirms it (shop/shop-dues claimPayment).
-    claimShopDuesPayment: b.mutation({ query: (body) => ({ url: '/shops/me/dues/claims', method: 'POST', body }), invalidatesTags: ['Wallet'] }),
     adminShopDues: b.query({ query: () => adminApiPath('/dues/shops'), providesTags: ['Wallet'] }),
     adminRecordShopDuesPayment: b.mutation({ query: ({ shopId, ...body }) => ({ url: adminApiPath(`/dues/shops/${shopId}/payment`), method: 'POST', body }), invalidatesTags: ['Wallet'] }),
     adminRejectDuesClaim: b.mutation({ query: ({ id, note }) => ({ url: adminApiPath(`/dues/claims/${id}/reject`), method: 'POST', body: { note } }), invalidatesTags: ['Wallet'] }),
@@ -586,8 +547,6 @@ export function endpoints(b, { adminApiPath }) {
     }),
 
     // --- Payments ---
-    // The customer's payment for one booking and its refund status (payment routes /booking/:source/:id).
-    myBookingPayment: b.query({ query: ({ source, id }) => `/payments/booking/${source}/${id}`, providesTags: ['Payments'] }),
     verifyPayment: b.mutation({
       query: (body) => ({ url: '/payments/verify', method: 'POST', body }),
       invalidatesTags: ['Subscription', 'Wallet', 'RepairBookings', 'PetBookings', 'HelpingTasks'],
@@ -718,10 +677,6 @@ export function endpoints(b, { adminApiPath }) {
     adminBlockUser: b.mutation({
       query: ({ id, blocked }) => ({ url: adminApiPath(`/users/${id}/block`), method: 'POST', body: { blocked } }),
       invalidatesTags: ['AdminUsers'],
-    }),
-    adminWaiveCashDue: b.mutation({
-      query: ({ id, jobId }) => ({ url: adminApiPath(`/users/${id}/cash-due/${jobId}/waive`), method: 'POST' }),
-      invalidatesTags: (r, e, { id }) => [{ type: 'AdminUsers', id }],
     }),
     adminWalletAdjust: b.mutation({
       query: (body) => ({ url: adminApiPath('/wallet/adjust'), method: 'POST', body }),
@@ -1448,7 +1403,6 @@ export function endpoints(b, { adminApiPath }) {
 
     // Shop owner dashboard
     shopMe: b.query({ query: () => '/shops/me/profile', providesTags: ['Shop'] }),
-    shopShareLink: b.query({ query: () => '/shops/me/share-link' }),
     updateShopMe: b.mutation({
       query: (body) => ({ url: '/shops/me/profile', method: 'PATCH', body }),
       // The setup flow reads the profile (hours, address) from the repair onboarding status.
@@ -1714,11 +1668,6 @@ export function endpoints(b, { adminApiPath }) {
     adminErrorIssue: b.query({ query: (id) => adminApiPath(`/errors/issues/${id}`), providesTags: ['ErrorIssues'], keepUnusedDataFor: 0 }),
     adminPlanErrorIssue: b.mutation({ query: ({ id, ...body }) => ({ url: adminApiPath(`/errors/issues/${id}/plan`), method: 'PATCH', body }), invalidatesTags: ['ErrorIssues'] }),
     adminMessageErrorIssue: b.mutation({ query: ({ id, ...body }) => ({ url: adminApiPath(`/errors/issues/${id}/message`), method: 'POST', body }), invalidatesTags: ['ErrorIssues'] }),
-    // Partner plans outside the price band, and the plan money rules (server service-plan/).
-    adminPendingPlans: b.query({ query: () => ({ url: adminApiPath('/service-plans/pending') }), providesTags: ['ServicePlans'] }),
-    adminReviewPlan: b.mutation({ query: ({ id, approve, note }) => ({ url: adminApiPath(`/service-plans/${id}/review`), method: 'POST', body: { approve, note } }), invalidatesTags: ['ServicePlans'] }),
-    adminPlanConfig: b.query({ query: () => ({ url: adminApiPath('/service-plans/config') }), providesTags: ['ServicePlans'] }),
-    adminSetPlanConfig: b.mutation({ query: (body) => ({ url: adminApiPath('/service-plans/config'), method: 'PUT', body }), invalidatesTags: ['ServicePlans'] }),
     adminOnboardingLineRequests: b.query({
       query: (params = {}) => ({ url: adminApiPath('/onboarding/line-requests'), params }),
       providesTags: ['Onboarding'],
@@ -1794,10 +1743,6 @@ export function endpoints(b, { adminApiPath }) {
     // tank/phone/vehicle the customer can rebook against without re-typing it.
     myAssets: b.query({
       query: (params) => ({ url: '/repair/assets', params }),
-      providesTags: ['MyAssets'],
-    }),
-    myAssetHistory: b.query({
-      query: (id) => `/repair/assets/${id}/history`,
       providesTags: ['MyAssets'],
     }),
     createAsset: b.mutation({

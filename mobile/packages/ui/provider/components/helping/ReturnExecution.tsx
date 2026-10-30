@@ -34,7 +34,7 @@ export function ReturnExecution({ task, onChanged }: { task: Task; onChanged: ()
   }
 
   if (HELPING_HANDED.includes(task.status)) {
-    return <JobCard tone="green"><Text variant="bodySmall" color={success[700]}>Handover recorded - the merchant's own process takes it from here.</Text></JobCard>;
+    return <JobCard tone="green"><Text variant="bodySmall" color={success[700]}>Handover recorded — the merchant's own process takes it from here.</Text></JobCard>;
   }
   if (!['RETURNING', 'AT_DROPOFF'].includes(task.status)) return null;
   return (

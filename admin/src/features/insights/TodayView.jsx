@@ -7,7 +7,7 @@ import { Kpi, TrendChart, RankBars, Findings, Panel, LiveNow, rupees, count, min
  * chosen period beside the one before it, then where it comes from: each
  * service and each area. Read from repair, pet, helping and event bookings.
  */
-const ROUND = (n) => (n == null ? '-' : `${n}%`);
+const ROUND = (n) => (n == null ? '—' : `${n}%`);
 
 export default function TodayView({ days }) {
   const { data, isLoading, isError, refetch } = useAdminInsightsOverviewQuery(days, { pollingInterval: 120000 });

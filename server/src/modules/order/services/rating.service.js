@@ -30,7 +30,7 @@ async function rateOrder({ orderId, userId, rating, review }) {
   if (order.completedAt) {
     const ageSec = (Date.now() - new Date(order.completedAt).getTime()) / 1000;
     if (ageSec > RATING_WINDOW_SEC) {
-      throw Object.assign(new Error('Rating window expired - must rate within 7 days of completion'), {
+      throw Object.assign(new Error('Rating window expired — must rate within 7 days of completion'), {
         status: 409, code: 'RATING_EXPIRED',
       });
     }
@@ -73,7 +73,7 @@ async function rateOrder({ orderId, userId, rating, review }) {
     }).select('_id').lean();
     if (recentRating) {
       // Flag suspicious but don't hard-block: allow rating, mark for review
-      logger.warn({ userId, workerId: order.workerId, orderId }, '[RATING] Possible duplicate rating - same worker within 48h');
+      logger.warn({ userId, workerId: order.workerId, orderId }, '[RATING] Possible duplicate rating — same worker within 48h');
     }
   }
 

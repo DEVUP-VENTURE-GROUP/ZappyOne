@@ -14,26 +14,8 @@ const router = express.Router();
 
 /** Public: apps offer "Pay online" only while this says it works. */
 router.get('/availability', (req, res) => {
-  const gw = require('./gateway').active();
-  res.json({ online: !!gw, cash: true, gateway: gw, env: require('../../config').cashfree.env });
+  res.json({ online: payables.gatewayReady(), cash: true, env: require('../../config').cashfree.env });
 });
-
-// A customer's own payment for one booking and where its refund is: amount, status, date and the gateway's reference, so "refund initiated" is never a black box.
-router.get('/booking/:source/:id', authenticate,
-  validate(Joi.object({ source: Joi.string().valid('repair', 'pet', 'helping').required(), id: Joi.string().hex().length(24).required() }), 'params'),
-  async (req, res, next) => {
-    try {
-      const PaymentIntent = require('./payment-intent.model');
-      const intent = await PaymentIntent.findOne({ bookingSource: req.params.source, bookingId: req.params.id, 'owner.id': req.auth.sub, status: { $in: ['captured', 'refunded'] } })
-        .sort({ createdAt: -1 }).select('amountPaise status gateway refund appliedAt').lean();
-      if (!intent) return res.json({ payment: null });
-      const r = intent.refund || {};
-      res.json({ payment: {
-        amountPaise: intent.amountPaise, paidAt: intent.appliedAt || null, gateway: intent.gateway,
-        refund: r.status && r.status !== 'none' ? { status: r.status === 'manual_required' ? 'processing' : r.status, amountPaise: r.amountPaise || 0, reference: r.cfRefundId || null, at: r.at || null } : null,
-      } });
-    } catch (err) { next(err); }
-  });
 
 router.post(
   '/create-order',
@@ -65,8 +47,6 @@ router.post(
   validate(Joi.object({
     cfOrderId:   Joi.string().max(120).required(),
     cfPaymentId: Joi.string().max(120).required(),
-    // Razorpay checkout only: HMAC of its order and payment ids.
-    razorpaySignature: Joi.string().hex().length(64),
   })),
   ctrl.verify
 );
@@ -114,29 +94,6 @@ webhookRouter.post(
       res.status(500).json({ error: 'Processing failed' });
     }
   }
-);
-
-// Razorpay posts here (Dashboard > Webhooks, secret = RAZORPAY_WEBHOOK_SECRET); the body is checked byte for byte before it is read.
-webhookRouter.post(
-  '/razorpay',
-  express.raw({ type: 'application/json', limit: '1mb' }),
-  async (req, res) => {
-    const rzp = require('./razorpay.client');
-    if (!rzp.verifyWebhookSignature(req.body, req.get('x-razorpay-signature'))) {
-      logger.warn({ ip: req.ip }, 'Razorpay webhook signature verification failed');
-      return res.status(401).json({ error: 'Invalid signature' });
-    }
-    let payload;
-    try { payload = JSON.parse(req.body.toString('utf8')); } catch { return res.status(400).json({ error: 'Malformed JSON' }); }
-    try {
-      const result = await paymentService.handleRazorpayWebhook(payload);
-      logger.info({ event: payload.event, result }, 'Razorpay webhook processed');
-      res.json({ ok: true, ...result });
-    } catch (err) {
-      logger.error({ err: err.message, event: payload.event }, 'Razorpay webhook processing failed');
-      res.status(500).json({ error: 'Processing failed' });
-    }
-  },
 );
 
 module.exports = router;

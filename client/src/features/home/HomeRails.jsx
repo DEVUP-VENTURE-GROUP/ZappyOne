@@ -93,7 +93,7 @@ export function BookAgainRail({ items, onOpen }) {
   );
 }
 
-// Walk-in shops near the customer, for those who would rather carry the device in.
+/** Event décor themes, as published in admin. */
 export function NearbyShopsLink() {
   const nav = useNavigate();
   return (

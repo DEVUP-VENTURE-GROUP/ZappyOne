@@ -32,10 +32,6 @@ router.put('/me/auto-accept',
   async (req, res, next) => {
     try { res.json(await require('../jobs/fast-assign').setAutoAccept('shop', req.auth.sub, req.body)); } catch (err) { next(err); }
   });
-// The shop's own storefront link to share with its customers (shop/share-link).
-router.get('/me/share-link', async (req, res, next) => {
-  try { res.json(await require('./share-link').linkFor({ kind: 'shop', id: req.auth.sub }, { vertical: req.query.service ? String(req.query.service).slice(0, 40) : null })); } catch (err) { next(err); }
-});
 router.get('/me/profile', ctrl.getMe);
 router.patch(
   '/me/profile',
@@ -125,15 +121,6 @@ router.get('/me/statement', async (req, res, next) => {
 router.get('/me/dues', async (req, res, next) => {
   try { res.json(await require('./shop-dues').duesOf(req.auth.sub)); } catch (err) { next(err); }
 });
-// The shop tells ZappyOne it paid its dues, with the UPI or bank reference; admin confirms against the bank.
-router.post('/me/dues/claims',
-  validate(Joi.object({ amountRupees: Joi.number().min(1).max(10000000).required(), method: Joi.string().valid('upi', 'bank', 'cash').default('upi'), reference: Joi.string().trim().min(4).max(80).required(), note: Joi.string().trim().max(300).allow('') })),
-  async (req, res, next) => {
-    try {
-      const claim = await require('./shop-dues').claimPayment({ shopId: req.auth.sub, amountPaise: Math.round(req.body.amountRupees * 100), method: req.body.method, reference: req.body.reference, note: req.body.note || '' });
-      res.status(201).json({ claim });
-    } catch (err) { next(err); }
-  });
 router.get('/me/partner', async (req, res, next) => {
   try { res.json(await require('./partner.service').settingsOf(req.auth.sub)); } catch (err) { next(err); }
 });

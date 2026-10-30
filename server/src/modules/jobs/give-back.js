@@ -94,7 +94,7 @@ const giveBackSchema = new mongoose.Schema({
   providerKind: { type: String, enum: ['worker', 'shop'], required: true },
   providerId: { type: mongoose.Schema.Types.ObjectId, required: true },
   /** give_back: they backed out · provider_no_show: the customer reported them · customer_no_show: they reported the customer. */
-  type: { type: String, enum: ['give_back', 'provider_no_show', 'customer_no_show', 'cash_refused'], default: 'give_back' },
+  type: { type: String, enum: ['give_back', 'provider_no_show', 'customer_no_show'], default: 'give_back' },
   reason: { type: String, default: '' },
   note: { type: String, default: '', maxlength: 300 },
   status: { type: String, default: '' },
@@ -105,12 +105,8 @@ const giveBackSchema = new mongoose.Schema({
   penaltyCharged: { type: Boolean, default: false },
   pausedUntil: { type: Date, default: null },
   toShop: { type: Boolean, default: false },
-  userId: { type: mongoose.Schema.Types.ObjectId, default: null },
-  resolvedAt: { type: Date, default: null },
-  resolution: { type: String, enum: ['paid', 'waived', null], default: null },
 }, { timestamps: true });
 giveBackSchema.index({ providerId: 1, createdAt: -1 });
-giveBackSchema.index({ userId: 1, type: 1, resolvedAt: 1 }, { partialFilterExpression: { type: 'cash_refused' } });
 giveBackSchema.index({ createdAt: -1 });
 const JobGiveBack = mongoose.models.JobGiveBack || mongoose.model('JobGiveBack', giveBackSchema);
 
@@ -338,20 +334,7 @@ async function reportProviderAbsent({ kind, id, userId }) {
   await consequences({ kind, doc, provider, q, type: 'provider_no_show', reason: 'no_show', from })
     .catch((e) => logger.error({ err: e.message, id }, '[give-back] no-show record failed'));
   await require('./fast-assign').pauseIfAutoAccepted(doc, provider.kind, provider.id).catch(() => {});
-  // We broke the promise, so we say sorry in money too, once per booking (Economics, Cancellations).
-  const creditPaise = (await require('../order/cancellation.service').getConfig()).noShowCreditPaise ?? 5000;
-  let credited = 0;
-  if (creditPaise > 0) {
-    const Tx = require('../payment/transaction.model');
-    await require('../wallet/wallet.service').apply({
-      kind: 'user', id: userId, type: 'credit', amountPaise: creditPaise, reason: Tx.REASONS.NO_SHOW_CREDIT,
-      idempotencyKey: `noshow-credit:${kind}:${id}`, description: 'Sorry your pro did not come', metadata: { kind, jobId: String(id) },
-    }).then(() => { credited = creditPaise; }).catch((e) => logger.warn({ err: e.message, id }, '[give-back] no-show credit failed'));
-  }
-  return {
-    reassigned: true, creditPaise: credited,
-    message: credited ? `Sorry about that. ₹${Math.round(credited / 100)} is in your ZappyOne wallet, and we are finding you someone else now, or you can cancel free.` : 'Sorry about that. We are finding you someone else now, or you can cancel free.',
-  };
+  return { reassigned: true, message: 'Sorry about that. We are finding you someone else now, or you can cancel free.' };
 }
 
 /**
@@ -378,7 +361,6 @@ async function reportCustomerAbsent({ kind, id, actor }) {
   }
   const reason = 'Customer not there';
   const out = await require('./cancel-fee').cancelForNoShow({ kind, doc, actor, reason });
-  await require('../user/user.model').updateOne({ _id: doc.userId }, { $inc: { 'abuse.missedVisits': 1 } }).catch(() => {});
   await JobGiveBack.create({
     kind, jobId: doc._id, providerKind: provider.kind, providerId: provider.id, type: 'customer_no_show',
     reason: 'customer_no_show', status: doc.status,
@@ -391,48 +373,9 @@ async function reportCustomerAbsent({ kind, id, actor }) {
   return { closed: true, feePaise: out.feePaise, message: 'Closed. The customer is charged for the missed visit and part of it comes to you.' };
 }
 
-// The work is done but the customer will not pay the cash: recorded once per job, shown to the next pros, the customer told, and ZappyOne ops alerted to follow up.
-async function reportCashRefused({ kind, id, actor, note = '' }) {
-  const { doc } = await load(kind, id);
-  const provider = holderOf(doc, actor);
-  if (!provider) throw err(403, 'FORBIDDEN', 'This job is not yours');
-  if (doc.paymentStatus === 'paid' || doc.paymentStatus === 'refunded') throw err(409, 'ALREADY_PAID', 'This job is already paid.');
-  if (await JobGiveBack.exists({ jobId: doc._id, type: 'cash_refused' })) return { reported: true, duplicate: true, message: 'Already reported. ZappyOne is following up.' };
-  await JobGiveBack.create({ kind, jobId: doc._id, providerKind: provider.kind, providerId: provider.id, userId: doc.userId, type: 'cash_refused', reason: 'cash_refused', note: String(note).slice(0, 300), status: doc.status });
-  await require('../user/user.model').updateOne({ _id: doc.userId }, { $inc: { 'abuse.cashRefused': 1 } }).catch(() => {});
-  require('./job-events').push({ kind: 'user', id: doc.userId }, {
-    title: 'Payment still due', body: 'Your pro says the cash for this job was not paid. New bookings open again once it is paid, or tell us what went wrong from the booking.',
-    deepLink: KINDS[kind].link(String(doc._id)), data: { kind, id: String(doc._id) },
-  }).catch(() => {});
-  const { redis: r } = require('../../config/redis');
-  r.publish('notification:admin:ops', JSON.stringify({ type: 'cash_refused', title: 'Customer did not pay cash', body: `${kind} job ${doc.reference || doc._id}`, data: { kind, id: String(doc._id) }, urgent: true })).catch(() => {});
-  return { reported: true, message: 'Reported. The customer has been told and ZappyOne will follow up with them.' };
-}
-
-// Unpaid cash jobs that hold this customer's next booking; a job paid since then clears itself.
-async function openCashDues(userId) {
-  const rows = await JobGiveBack.find({ userId, type: 'cash_refused', resolvedAt: null }).sort({ createdAt: 1 }).limit(10).lean();
-  const open = [];
-  for (const row of rows) {
-    const job = await KINDS[row.kind]?.model().findById(row.jobId).select('paymentStatus reference').lean();
-    if (!job || ['paid', 'refunded'].includes(job.paymentStatus)) {
-      await JobGiveBack.updateOne({ _id: row._id, resolvedAt: null }, { $set: { resolvedAt: new Date(), resolution: 'paid' } });
-    } else open.push({ kind: row.kind, jobId: String(row.jobId), reference: job.reference || '', reportedAt: row.createdAt, note: row.note });
-  }
-  return open;
-}
-
-// Ops closes a dispute in the customer's favour; the hold lifts.
-async function waiveCashDue(userId, jobId) {
-  const res = await JobGiveBack.updateOne({ userId, jobId, type: 'cash_refused', resolvedAt: null }, { $set: { resolvedAt: new Date(), resolution: 'waived' } });
-  if (!res.matchedCount) throw err(404, 'NOT_FOUND', 'No open unpaid report on that job');
-  return { waived: true };
-}
-
-// The provider let the customer down: handed it back, or missed the arrival promise and is still not there. Cancelling is then free.
+/** Has a provider handed this job back? Then the customer may cancel free. */
 async function wasHandedBack(jobId) {
-  if (await JobGiveBack.exists({ jobId, type: { $in: ['give_back', 'provider_no_show'] }, toShop: false })) return true;
-  return !!(await require('./promise').ArrivalPromise.exists({ jobId, missedAt: { $ne: null }, arrivedAt: null, closed: false }));
+  return !!(await JobGiveBack.exists({ jobId, type: { $in: ['give_back', 'provider_no_show'] }, toShop: false }));
 }
 
 /** What the customer's screen may offer: a changed provider, and "not coming" when it opens. */
@@ -456,7 +399,6 @@ async function providerView(kind, doc) {
 }
 
 module.exports = {
-  reportCashRefused, openCashDues, waiveCashDue,
   REASONS, RULES, JobGiveBack, preview, giveBack, reportProviderAbsent, reportCustomerAbsent,
   wasHandedBack, customerView, providerView, enteredAt, CUSTOMER_WAIT_MIN, PROVIDER_LATE_MIN,
 };

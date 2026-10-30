@@ -14,30 +14,8 @@
  * across verticals — or inject an object through query-string parsing.
  */
 
-// Built in; every other vertical is a service line in the database (repair/package-lines), joined at startup and every minute.
-const BUILT_IN = ['mobile', 'laptop', 'two_wheeler', 'four_wheeler', 'water_tank_care', 'bike_wash', 'car_wash', 'home_cleaning', 'electrician', 'plumbing', 'ac_service'];
-const VERTICALS = [...BUILT_IN];
-const CODE = /^[a-z][a-z0-9_]{2,40}$/;
-
-function register(v) {
-  const code = String(v || '').toLowerCase();
-  if (CODE.test(code) && !VERTICALS.includes(code)) VERTICALS.push(code);
-  return code;
-}
-
-async function loadRegistered() {
-  const { ServiceLine } = require('../onboarding/onboarding.model');
-  (await ServiceLine.distinct('repairVertical', { repairVertical: { $nin: [null, ''] }, isArchived: { $ne: true } })).forEach(register);
-  return VERTICALS.length;
-}
-
-let timer = null;
-function startRefresh(everyMs = 60000) {
-  if (timer) return;
-  loadRegistered().catch(() => undefined);
-  timer = setInterval(() => loadRegistered().catch(() => undefined), everyMs);
-  timer.unref?.();
-}
+/** Verticals the repair engine currently serves. */
+const VERTICALS = ['mobile', 'laptop', 'two_wheeler', 'four_wheeler', 'water_tank_care', 'bike_wash', 'car_wash', 'home_cleaning', 'electrician', 'plumbing', 'ac_service'];
 
 const DEFAULT_VERTICAL = 'mobile';
 
@@ -83,5 +61,5 @@ function requireKnownVertical(req, res, next) {
 }
 
 module.exports = {
-  VERTICALS, BUILT_IN, DEFAULT_VERTICAL, verticalOf, isValid, requireKnownVertical, verticalFilter, register, loadRegistered, startRefresh,
+  VERTICALS, DEFAULT_VERTICAL, verticalOf, isValid, requireKnownVertical, verticalFilter,
 };

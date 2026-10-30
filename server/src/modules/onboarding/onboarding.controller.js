@@ -132,7 +132,6 @@ async function requestLine(req, res, next) {
       domainCode: req.body.domainCode,
       proposedName: req.body.proposedName,
       description: req.body.description,
-      packages: req.body.packages,
     });
     res.status(deduped ? 200 : 201).json({ request, deduped });
   } catch (err) { next(err); }

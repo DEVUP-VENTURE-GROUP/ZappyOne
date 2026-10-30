@@ -4,7 +4,6 @@
  * customer's start code, before/after photos, the handling-risk warning,
  * payment, earnings and rating. Rules are the shared jobFlows logic.
  */
-import { useCheckInThen } from '../useCheckIn';
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, View, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -60,7 +59,6 @@ export function WorkerPetJobPage() {
   const [addProof] = useAddPetBookingProofMutation();
   const [collectCash, { isLoading: collecting }] = useCollectPetCashMutation();
   const [acceptOffer, { isLoading: accepting }] = useAcceptPetBookingMutation();
-  const checkedIn = useCheckInThen();
   const [declineOffer, { isLoading: declining }] = useDeclinePetBookingMutation();
   const [before, setBefore] = useState<ProofPhoto[]>([]);
   const [after, setAfter] = useState<ProofPhoto[]>([]);
@@ -101,7 +99,7 @@ export function WorkerPetJobPage() {
   }
   async function answerOffer(yes: boolean) {
     try {
-      if (yes) { await checkedIn(() => acceptOffer(booking._id).unwrap()); toast.success('Accepted. The customer has been told.'); refetch(); }
+      if (yes) { await acceptOffer(booking._id).unwrap(); toast.success('Accepted. The customer has been told.'); refetch(); }
       else { await declineOffer({ id: booking._id, reason: 'Declined by provider' }).unwrap(); toast('Declined. We will find someone else.'); router.replace('/worker/work' as never); }
     } catch (err) { toast.error(errText(err, 'Could not send your answer')); refetch(); }
   }
@@ -167,7 +165,7 @@ export function WorkerPetJobPage() {
 
         {PET_PAY_STAGES.includes(booking.status) ? (
           <CollectPaymentCard amountPaise={petDuePaise(booking)} tipPaise={billTipPaise(booking)} paymentMethod={booking.paymentMethod}
-            paid={booking.paymentStatus === 'paid'} collecting={collecting} onCollect={recordCash} jobId={booking._id} />
+            paid={booking.paymentStatus === 'paid'} collecting={collecting} onCollect={recordCash} />
         ) : null}
         {PET_DONE.includes(booking.status) ? <JobEarningsCard jobId={booking._id} /> : null}
         {PET_DONE.includes(booking.status) ? <RateCustomerCard jobId={booking._id} rated={!!booking.customerRating?.stars} /> : null}

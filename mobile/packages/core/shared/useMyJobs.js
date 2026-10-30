@@ -86,7 +86,7 @@ const REPAIR_STAGE = {
   DIAGNOSING: 'Checking what is wrong',
   QUOTE_PENDING: 'Preparing your quote',
   CUSTOMER_APPROVAL_PENDING: 'Your approval needed',
-  APPROVED: 'Approved - work starting',
+  APPROVED: 'Approved — work starting',
   PICKUP_SCHEDULED: 'Pickup scheduled',
   DEVICE_PICKED_UP: 'Device collected',
   AT_WORKSHOP: 'At the workshop',

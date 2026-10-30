@@ -32,7 +32,7 @@ export default function PriceRevisionCard({ revision, onResolved }) {
         revisionId: revision._id || revision.revisionId,
         approved,
       }).unwrap();
-      toast.success(approved ? 'Price revision approved' : 'Revision rejected - original price stands');
+      toast.success(approved ? 'Price revision approved' : 'Revision rejected — original price stands');
       onResolved?.(approved);
     } catch (err) {
       toast.error(err.data?.error || 'Could not respond');

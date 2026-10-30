@@ -21,7 +21,7 @@ test('the terms a new partner reads carry their type\'s live rate', async () => 
   const res = await request(app).get('/api/auth/shop/partner-terms?type=individual');
   expect(res.status).toBe(200);
   expect(res.body).toMatchObject({ version: terms.VERSION, type: 'individual', ratePct: 5 });
-  expect(res.body.points[0]).not.toMatch(/\d+%/);
+  expect(res.body.points[0]).toContain('5% commission');
 });
 
 test('accepting at sign-up records version, time and rate; an explicit no is refused', async () => {

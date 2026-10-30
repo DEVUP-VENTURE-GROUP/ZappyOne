@@ -129,7 +129,7 @@ const PROBLEMS = [
   P('wt_routine_cleaning', 'Routine scheduled cleaning', 'wt_cleaning', ['wt_deep_cleaning']),
 
   /* Inspection: the "I don't know" catch-all (§8, §5) */
-  P('wt_unsure_condition', "Not sure if there's a problem - just check it", 'wt_inspection',
+  P('wt_unsure_condition', "Not sure if there's a problem — just check it", 'wt_inspection',
     ['wt_health_inspection'], { isPopular: true }),
   P('wt_before_buying', 'Checking a tank before moving in / buying', 'wt_inspection',
     ['wt_health_inspection']),
@@ -162,7 +162,7 @@ const PROBLEMS = [
   P('wt_insect_entry', 'Insects or debris getting in', 'wt_repair', ['wt_insect_protection']),
   P('wt_valve_problem', 'Valve or fitting needs replacing', 'wt_repair', ['wt_valve_replacement']),
   P('wt_installation_issue', 'New tank installation', 'wt_repair', ['wt_tank_installation']),
-  P('wt_repair_unsure', "Don't know what's wrong - just repair it", 'wt_repair',
+  P('wt_repair_unsure', "Don't know what's wrong — just repair it", 'wt_repair',
     ['wt_health_inspection'], { requiresDiagnosis: true }),
 
   /* Add-ons (§22) — bookable on their own until the cart exists */

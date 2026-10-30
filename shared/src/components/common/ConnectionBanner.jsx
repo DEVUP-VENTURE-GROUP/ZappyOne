@@ -35,7 +35,7 @@ export default function ConnectionBanner() {
           className="fixed top-0 inset-x-0 z-[300] flex items-center justify-center gap-2 py-2 px-4 bg-slate-900 text-white text-xs font-semibold"
           style={{ paddingTop: 'max(0.5rem, env(safe-area-inset-top))' }}
         >
-          <WifiOff size={14} /> You're offline - we'll reconnect automatically
+          <WifiOff size={14} /> You're offline — we'll reconnect automatically
         </motion.div>
       )}
       {online && showBackOnline && (

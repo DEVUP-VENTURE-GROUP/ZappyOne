@@ -21,8 +21,8 @@ async function toggleDispatch(req, res, next) {
       dispatchEnabled,
       activeOrderCount,
       message: dispatchEnabled
-        ? 'Dispatch enabled - queued orders will resume processing'
-        : `Dispatch paused - ${activeOrderCount} order(s) will re-queue every 60s until re-enabled`,
+        ? 'Dispatch enabled — queued orders will resume processing'
+        : `Dispatch paused — ${activeOrderCount} order(s) will re-queue every 60s until re-enabled`,
     });
   } catch (err) {
     next(err);

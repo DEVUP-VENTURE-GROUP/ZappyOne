@@ -37,7 +37,7 @@ const FLOWS = [
         // Cheapest possible question, and it ends the diagnosis outright often
         // enough to be worth asking before anything electrical.
         text: 'Is there fuel in the tank?',
-        subtitle: 'Worth checking the gauge before anything else - it is the most common cause.',
+        subtitle: 'Worth checking the gauge before anything else — it is the most common cause.',
         type: 'single',
         options: [
           { id: 'empty', label: 'Empty or nearly empty', recommendedServiceCode: 'tw_fuel_delivery', urgency: 'high' },
@@ -53,7 +53,7 @@ const FLOWS = [
         type: 'single',
         showIf: { fuel: ['has_fuel', 'unsure'] },
         options: [
-          { id: 'nothing', label: 'Nothing at all - completely dead', urgency: 'high' },
+          { id: 'nothing', label: 'Nothing at all — completely dead', urgency: 'high' },
           { id: 'dim', label: 'They come on but look weak or dim' },
           { id: 'normal', label: 'They come on normally' },
         ],
@@ -121,7 +121,7 @@ const FLOWS = [
           { id: 'stood', label: 'Stood unused for weeks', recommendedServiceCode: 'tw_carburetor_service' },
           { id: 'sputtering', label: 'Had been sputtering or losing power', recommendedServiceCode: 'tw_carburetor_service' },
           { id: 'noise', label: 'Made a loud noise then stopped', recommendedServiceCode: 'tw_engine_repair', urgency: 'high' },
-          { id: 'nothing_unusual', label: 'Nothing unusual - it just stopped starting' },
+          { id: 'nothing_unusual', label: 'Nothing unusual — it just stopped starting' },
         ],
       },
     ],
@@ -155,11 +155,11 @@ const FLOWS = [
         options: [
           {
             id: 'hazard_yes',
-            label: 'Yes - one or more of these is true',
+            label: 'Yes — one or more of these is true',
             recommendedServiceCode: 'tw_ev_safety_inspection',
             urgency: 'urgent',
           },
-          { id: 'hazard_no', label: 'No - nothing hot, swollen, leaking or burning' },
+          { id: 'hazard_no', label: 'No — nothing hot, swollen, leaking or burning' },
         ],
       },
       {
@@ -255,7 +255,7 @@ const FLOWS = [
         subtitle: 'A split sidewall cannot be safely patched, whatever the cause.',
         type: 'single',
         options: [
-          { id: 'flat_only', label: 'Just flat - no visible damage' },
+          { id: 'flat_only', label: 'Just flat — no visible damage' },
           { id: 'nail', label: 'There is a nail or object in the tread' },
           {
             id: 'sidewall',
@@ -343,7 +343,7 @@ const FLOWS = [
           },
           { id: 'slow_pickup', label: 'Pickup is slow but steady', recommendedServiceCode: 'tw_cvt_roller_replacement' },
           { id: 'juddering', label: 'Juddering or shuddering as it pulls away', recommendedServiceCode: 'tw_clutch_shoe_replacement' },
-          { id: 'noise_only', label: 'Mainly a noise - pickup is fine', recommendedServiceCode: 'tw_cvt_service' },
+          { id: 'noise_only', label: 'Mainly a noise — pickup is fine', recommendedServiceCode: 'tw_cvt_service' },
         ],
       },
       {

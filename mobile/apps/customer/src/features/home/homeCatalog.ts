@@ -18,15 +18,9 @@ export interface HomeService {
 export interface HomeDomain { code: string; name: string; description?: string; services: HomeService[] }
 
 /** Every service shows; whether it can be booked HERE is serviceability's answer (unknown location: bookable). */
-// What nobody covers at this address yet, for "Coming to your area".
-export function comingSoonOf(catalogDomains: HomeDomain[], liveCodes: Set<string> | null): HomeService[] {
-  if (!liveCodes) return [];
-  return catalogDomains.flatMap((d) => d.services.filter((s) => !liveCodes.has(s.code)).map((s) => ({ ...s, domainCode: d.code })));
-}
-
 export function buildDomains(catalogDomains: HomeDomain[], liveCodes: Set<string> | null, eventCats: { slug: string; name: string; emoji?: string; coverImage?: string }[]): HomeDomain[] {
   const list = catalogDomains
-    .map((d) => ({ ...d, services: d.services.map((s) => ({ ...s, domainCode: d.code, available: liveCodes ? liveCodes.has(s.code) : undefined })).filter((s) => s.available !== false) }))
+    .map((d) => ({ ...d, services: d.services.map((s) => ({ ...s, domainCode: d.code, available: liveCodes ? liveCodes.has(s.code) : undefined })) }))
     .filter((d) => d.services.length);
   if (!eventCats.length) return list;
   // Events run on their own module; they join as a section before pet care, each occasion a tile.

@@ -40,11 +40,11 @@ const FLOWS = [
         options: [
           {
             id: 'unsafe',
-            label: 'Yes - flooding, or a confined/hard-to-reach tank',
+            label: 'Yes — flooding, or a confined/hard-to-reach tank',
             recommendedServiceCode: 'wt_health_inspection',
             urgency: 'urgent',
           },
-          { id: 'safe', label: 'No - it is a visible drip I can point to' },
+          { id: 'safe', label: 'No — it is a visible drip I can point to' },
         ],
       },
       {
@@ -102,7 +102,7 @@ const FLOWS = [
     questions: [
       {
         id: 'access',
-        text: 'Does reaching this tank mean climbing into a confined space - an underground sump, a tight service shaft, or similar?',
+        text: 'Does reaching this tank mean climbing into a confined space — an underground sump, a tight service shaft, or similar?',
         subtitle: 'This is about how a technician reaches the tank, not how bad the damage looks.',
         type: 'single',
         options: [
@@ -172,7 +172,7 @@ const FLOWS = [
         type: 'single',
         showIf: { recency: ['overdue'] },
         options: [
-          { id: 'mild', label: 'Mild - some algae or slight tint', recommendedServiceCode: 'wt_deep_cleaning' },
+          { id: 'mild', label: 'Mild — some algae or slight tint', recommendedServiceCode: 'wt_deep_cleaning' },
           {
             id: 'strong',
             label: 'Strong smell or clearly dirty water',

@@ -71,9 +71,9 @@ async function getInvoiceData(orderId) {
     invoiceDate: order.completedAt || order.createdAt,
     company: co,
     customer: {
-      name: user?.name || '-',
-      phone: user?.phone || '-',
-      email: user?.email || '-',
+      name: user?.name || '—',
+      phone: user?.phone || '—',
+      email: user?.email || '—',
       address: order.pickupLocation.address,
     },
     worker: worker ? {

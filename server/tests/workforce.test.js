@@ -47,8 +47,6 @@ beforeAll(async () => {
     meetingPoint: { address: 'Madhapur metro', location: { type: 'Point', coordinates: [HUB.lng, HUB.lat] } },
     shifts: [{ code: 'now', label: 'Now', start: hhmm(start), end: hhmm(end), need: 2 }],
   });
-  // Own staff are locked for version 1; these tests cover the version 2 behaviour.
-  await require('../src/modules/feature-flags/feature-flag.service').set('own_staff', true, null);
 });
 afterAll(stopMongo);
 

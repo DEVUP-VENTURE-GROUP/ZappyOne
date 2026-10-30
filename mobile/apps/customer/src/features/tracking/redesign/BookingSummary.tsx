@@ -28,14 +28,14 @@ function SummaryRow({ icon, k, v, right }: { icon: React.ReactNode; k: string; v
 export function BookingSummary({ job, onReceipt }: { job: TrackedJob; onReceipt?: () => void }) {
   const price = job.price;
   const when = job.scheduledAt || job.createdAt;
-  const whenLabel = when ? new Date(when).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }) : '-';
+  const whenLabel = when ? new Date(when).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }) : '—';
   const lines = price.lines.filter(([, paise]) => paise);
   return (
     <View style={styles.card}>
       <Text variant="body" weight="black">Booking summary</Text>
       <SummaryRow icon={<Zap size={17} color={ink[500]} />} k="Service" v={job.service}
         right={job.subtitle ? <View style={styles.right}><Text variant="caption" weight="semibold" color={ink[500]}>{job.subtitleLabel || 'For'}</Text><Text variant="bodySmall" weight="bold" numberOfLines={1}>{job.subtitle}</Text></View> : null} />
-      <SummaryRow icon={<MapPin size={17} color={ink[500]} />} k="Address" v={job.place.address || '-'} />
+      <SummaryRow icon={<MapPin size={17} color={ink[500]} />} k="Address" v={job.place.address || '—'} />
       <SummaryRow icon={<Clock size={17} color={ink[500]} />} k={job.scheduledAt ? 'Scheduled' : 'Booked'} v={whenLabel}
         right={price.method ? <View style={styles.method}><Wallet size={14} color={zappy[600]} /><Text variant="caption" weight="bold">{price.method}</Text></View> : null} />
       {lines.length || price.totalPaise != null ? (

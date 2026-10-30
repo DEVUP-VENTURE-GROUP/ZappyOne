@@ -141,7 +141,7 @@ async function resolve({ disputeId, resolution, req }) {
         reason: Transaction.REASONS.REFUND,
         idempotencyKey: `dispute:refund:${disputeId}`,
         refs: { orderId: order._id },
-        description: `Refund - dispute ${dispute.category}`,
+        description: `Refund — dispute ${dispute.category}`,
       });
       resolution.refundAmountPaise = refundPaise;
     }
@@ -166,14 +166,14 @@ async function resolve({ disputeId, resolution, req }) {
           reason: Transaction.REASONS.ADMIN_ADJUSTMENT_DEBIT,
           idempotencyKey: `dispute:penalty:${disputeId}`,
           refs: { orderId: order._id },
-          description: `Penalty - dispute ${dispute.category}`,
+          description: `Penalty — dispute ${dispute.category}`,
         });
         resolution.penaltyAmountPaise = penaltyPaise;
       } catch (err) {
         if (err.code === 'WALLET_INSUFFICIENT') {
           // Mark as pending; admin's notes capture it
           resolution.adminNotes = (resolution.adminNotes || '') +
-            ` [INSUFFICIENT FUNDS - penalty of ₹${penaltyPaise / 100} pending]`;
+            ` [INSUFFICIENT FUNDS — penalty of ₹${penaltyPaise / 100} pending]`;
         } else {
           throw err;
         }
@@ -220,7 +220,7 @@ function resolutionSummary(r) {
     case 'no_action': return 'After review, no further action will be taken';
     case 'worker_penalty': return `Penalty of ₹${(r.penaltyAmountPaise || 0) / 100} applied`;
     case 'worker_warning': return 'A formal warning was issued';
-    case 'split_decision': return 'Resolution applied to both parties - see details';
+    case 'split_decision': return 'Resolution applied to both parties — see details';
     default: return 'Dispute closed';
   }
 }

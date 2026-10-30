@@ -15,6 +15,7 @@ const PRODUCTION_ORIGINS = [
   'https://www.zappyone.com',       // consumer (www)
   'https://rakshak.zappyone.com',   // independent workers (rakshak/ app)
   'https://servicepro.zappyone.com', // shop owners + shop workers (servicepro/ app)
+  'https://events.zappyone.com',    // event partner portal
   'https://admin.zappyone.com',     // admin portal (admin/ app)
   'https://fleet-ioc.zappyone.com',     // fleet portal (fleet/ app): admin accounts with Fleet access
 ];

@@ -17,17 +17,11 @@ const fs = require('fs');
 const mongoose = require('mongoose');
 
 const projectRoot = path.resolve(__dirname, '../../../../');
-// Read only when nothing has set the database yet: imported by the server or a test, the env it runs with must never be overridden.
-function loadEnv() {
-  if (process.env.MONGO_URI) return;
-  require('dotenv').config({ path: path.join(projectRoot, '.env') });
-  const overlayPath = path.join(projectRoot, `.env.${process.env.NODE_ENV || 'development'}`);
-  if (fs.existsSync(overlayPath)) {
-    require('dotenv').config({ path: overlayPath, override: true });
-  }
+require('dotenv').config({ path: path.join(projectRoot, '.env') });
+const overlayPath = path.join(projectRoot, `.env.${process.env.NODE_ENV || 'development'}`);
+if (fs.existsSync(overlayPath)) {
+  require('dotenv').config({ path: overlayPath, override: true });
 }
-
-loadEnv();
 
 const { ZappyReferencePricing } = require('../models/pricing.model');
 const { RepairConfig } = require('../models/config.model');

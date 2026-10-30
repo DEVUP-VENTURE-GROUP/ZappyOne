@@ -222,7 +222,7 @@ async function getAlerts(req, res, next) {
         id: 'all_clear',
         severity: 'ok',
         title: 'All Systems Normal',
-        message: 'No active alerts - platform is operating normally',
+        message: 'No active alerts — platform is operating normally',
       });
     }
 

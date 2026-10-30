@@ -120,7 +120,7 @@ async function activateFromPayment({ subscriptionId, paymentIntentId, cfPaymentI
   const sub = await Subscription.findById(subscriptionId);
   if (!sub) throw Object.assign(new Error('Subscription not found'), { status: 404 });
   if (sub.status === 'active') {
-    logger.info({ subscriptionId }, 'Subscription already active - webhook idempotency');
+    logger.info({ subscriptionId }, 'Subscription already active — webhook idempotency');
     return sub;
   }
 

@@ -47,7 +47,7 @@ async function authenticate(req, res, next) {
       }
     } catch (err) {
       // Redis hiccup — fail open (don't lock out a legit worker on infra blips).
-      logger.warn({ err: err.message, sub }, 'Single-device check failed - allowing through');
+      logger.warn({ err: err.message, sub }, 'Single-device check failed — allowing through');
     }
   }
 
@@ -78,7 +78,7 @@ async function authenticate(req, res, next) {
       }
     } catch (err) {
       // Ban check failure is non-fatal — allow through but log it
-      logger.warn({ err: err.message, sub, role }, 'Ban cache check failed - allowing request through');
+      logger.warn({ err: err.message, sub, role }, 'Ban cache check failed — allowing request through');
     }
   }
 

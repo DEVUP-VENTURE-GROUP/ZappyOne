@@ -24,9 +24,9 @@ const PORTALS = {
   admin:      { cookie: 'zappy_admin_rt', roles: ['admin'], sameSite: 'strict', maxAge: 12 * 60 * 60 * 1000 },
   // Fleet portal (fleet/ app): admin accounts, its own session, as short and strict as admin's.
   fleet:      { cookie: 'zappy_fleet_rt', roles: ['admin'], sameSite: 'strict', maxAge: 12 * 60 * 60 * 1000 },
-  // ServicePro is every partner's portal: shop or solo pro, a shop's technicians, and event partners.
-  servicepro: { cookie: 'zappy_sp_rt', roles: ['shop', 'worker', 'event_partner'], sameSite: 'lax' },
+  servicepro: { cookie: 'zappy_sp_rt', roles: ['shop', 'worker'], sameSite: 'lax' },
   rakshak:    { cookie: 'zappy_rk_rt', roles: ['worker'], sameSite: 'lax' },
+  events:     { cookie: 'zappy_ev_rt', roles: ['event_partner'], sameSite: 'lax' },
 };
 
 function portalOf(req) {
@@ -69,7 +69,7 @@ function readRt(req) {
  */
 /**
  * Who each native app signs in, where it differs from its web portal: the
- * ServicePro is the event partner's app on the web and on phones.
+ * ServicePro app is also the event partner's app (the web keeps events.zappyone.com).
  */
 const APP_ROLES = { servicepro: ['shop', 'worker', 'event_partner'] };
 
@@ -151,30 +151,6 @@ async function loginPartner(req, res, next) {
     const result = await authService.loginEventPartnerWithOtp(req.body);
     setRtCookie(req, res, result.refreshToken);
     res.json(withMobileRt(req, { accessToken: result.accessToken, partner: result.partner, isNew: result.isNew }, result.refreshToken));
-  } catch (err) { next(err); }
-}
-
-// ServicePro: one sign-in for shops and solo pros, a shop's technicians and event partners (auth/servicepro-login).
-function assertServicePro(req) {
-  const portal = portalOf(req) || appOf(req);
-  if (portal && portal !== 'servicepro') throw Object.assign(new Error('This sign-in is for ServicePro'), { status: 403, code: 'WRONG_PORTAL' });
-}
-function sendSession(req, res, r) {
-  setRtCookie(req, res, r.refreshToken);
-  res.json(withMobileRt(req, { accessToken: r.accessToken, role: r.role, account: r.account, isNew: !!r.isNew }, r.refreshToken));
-}
-async function serviceproLogin(req, res, next) {
-  try {
-    assertServicePro(req);
-    const r = await require('./servicepro-login').login(req.body);
-    if (!r.accessToken) return res.json({ ticket: r.ticket, accounts: r.accounts, needsRegistration: r.needsRegistration });
-    sendSession(req, res, r);
-  } catch (err) { next(err); }
-}
-async function serviceproRegister(req, res, next) {
-  try {
-    assertServicePro(req);
-    sendSession(req, res, await require('./servicepro-login').register(req.body));
   } catch (err) { next(err); }
 }
 
@@ -365,7 +341,6 @@ async function changeWorkerPassword(req, res, next) {
 }
 
 module.exports = {
-  serviceproLogin, serviceproRegister,
   requestOtp, resendOtp, loginUser, loginWorker, loginPartner, loginShop, googlePartnerLogin,
   loginAdmin, refresh, logout, revokeAll, verifySensitiveOtp,
   setWorkerCredentials, loginWorkerPassword, forgotWorkerPassword,

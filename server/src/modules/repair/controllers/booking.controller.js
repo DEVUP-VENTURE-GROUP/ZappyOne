@@ -181,8 +181,6 @@ async function getBooking(req, res, next) {
     booking.completionPhotos = await s3Service.signMediaList(booking.completionPhotos);
 
     const quotes = await RepairQuote.find({ bookingId: booking._id }).sort({ revision: -1 }).lean();
-    // The photo behind any extra price travels with the quote, so the customer sees why before approving.
-    await Promise.all(quotes.map(async (q) => { q.photoUrls = await s3Service.signMediaList(q.diagnosisPhotos || []); }));
 
     /**
      * Who is coming, for the person waiting at the door.
@@ -390,7 +388,7 @@ async function cancelBooking(req, res, next) {
           cancellation: {
             feePaise: 0, earnedPaise: 0, refundPaise: 0, isGrace: true,
             message: result.reoffered
-              ? 'Job released - we are finding another provider.'
+              ? 'Job released — we are finding another provider.'
               : 'Job released. We are still looking for another provider.',
           },
         });
@@ -495,15 +493,14 @@ async function rateRepair(req, res, next) {
     );
 
     // Feed the provider's running average, the same figure matching ranks on.
-    // A customer the provider brought through their own link is not counted in the public rating.
-    if (!booking.viaOwnLink) await ratingService.applyRepairRating({
+    await ratingService.applyRepairRating({
       workerId: booking.workerId,
       shopId: booking.shopId,
       rating: req.body.rating,
     }).catch(() => { /* the customer's rating is recorded either way */ });
     await require('../../review/review.service').recordReview({
       kind: 'repair', jobId: booking._id, userId: req.auth.sub, workerId: booking.workerId, shopId: booking.shopId,
-      rating: req.body.rating, comment: req.body.comment, serviceLabel: String(booking.repairCode || '').replace(/_/g, ' '), excluded: !!booking.viaOwnLink,
+      rating: req.body.rating, comment: req.body.comment, serviceLabel: String(booking.repairCode || '').replace(/_/g, ' '),
     });
 
     res.json({ ok: true });
@@ -584,7 +581,6 @@ async function respondToQuote(req, res, next) {
       userId: req.auth.sub,
       decision: req.body.decision,
       reason: req.body.reason || '',
-      returnOldParts: !!req.body.returnOldParts,
     });
     res.json(result);
   } catch (err) { next(err); }

@@ -43,10 +43,7 @@ export interface OtpScreenProps {
   title: string;
   subtitle: string;
   /** The app's sign-in call for this code. `name` is set for a new account. */
-  // Resolves null when the app takes over after the code (ServicePro's account picker and sign-up).
-  verify: (input: { phone: string; otp: string; name?: string; second?: string; params: Record<string, string | undefined> }) => Promise<VerifiedSession | null>;
-  // False when new accounts are set up after the code instead of here.
-  collectNewDetails?: boolean;
+  verify: (input: { phone: string; otp: string; name?: string; second?: string; params: Record<string, string | undefined> }) => Promise<VerifiedSession>;
   /** Label and placeholder for a new account's name. */
   nameLabel?: string;
   namePlaceholder?: string;
@@ -54,7 +51,7 @@ export interface OtpScreenProps {
   secondField?: { label: string; placeholder: string } | null;
 }
 
-export function OtpScreen({ title, subtitle, verify, nameLabel = 'Your name', namePlaceholder = 'What should we call you?', secondField = null, collectNewDetails = true }: OtpScreenProps) {
+export function OtpScreen({ title, subtitle, verify, nameLabel = 'Your name', namePlaceholder = 'What should we call you?', secondField = null }: OtpScreenProps) {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const params = useLocalSearchParams<Record<string, string>>();
@@ -70,7 +67,7 @@ export function OtpScreen({ title, subtitle, verify, nameLabel = 'Your name', na
   const [devOtp, setDevOtp] = useState(() => readDevOtp(String(phone)));
   const [resendOtp, { isLoading: resending }] = useResendOtpMutation();
 
-  const isNew = collectNewDetails && isNewUser === '1';
+  const isNew = isNewUser === '1';
   const complete = otp.length === OTP_LENGTH;
   const canVerify = complete && (!isNew || (name.trim().length > 0 && (!secondField || second.trim().length > 0)));
 
@@ -91,7 +88,6 @@ export function OtpScreen({ title, subtitle, verify, nameLabel = 'Your name', na
         ...(isNew && secondField && second.trim() ? { second: second.trim() } : {}),
         params,
       });
-      if (!session) return;
       await saveSession({ accessToken: session.accessToken, refreshToken: session.refreshToken, role: session.role });
       dispatch(setSession({ user: session.user ?? null, role: session.role }));
       clearDevOtp();

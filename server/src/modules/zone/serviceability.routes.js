@@ -28,14 +28,14 @@ router.post(
   notifyLimiter,
   authenticate,
   requireRole('user'),
-  validate(Joi.object({ ...point, address: Joi.string().max(300).allow('').default(''), lineCode: Joi.string().max(60).allow(null, '') })),
+  validate(Joi.object({ ...point, address: Joi.string().max(300).allow('').default('') })),
   async (req, res, next) => {
     try {
-      const { lat, lng, address, lineCode } = req.body;
+      const { lat, lng, address } = req.body;
       const cell = `${lat.toFixed(2)},${lng.toFixed(2)}`;
       await LaunchInterest.updateOne(
         { userId: req.auth.sub, cell },
-        { $setOnInsert: { location: { type: 'Point', coordinates: [lng, lat] }, address }, ...(lineCode ? { $addToSet: { lines: lineCode } } : {}) },
+        { $setOnInsert: { location: { type: 'Point', coordinates: [lng, lat] }, address } },
         { upsert: true },
       );
       res.json({ ok: true });

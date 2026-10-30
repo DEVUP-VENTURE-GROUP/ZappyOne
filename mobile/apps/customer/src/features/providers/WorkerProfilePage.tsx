@@ -15,7 +15,7 @@ import { accent, colors, ink, slate, success, zappy } from '@zappy/ui/theme/colo
 import { radius } from '@zappy/ui/theme/radius';
 import { spacing } from '@zappy/ui/theme/spacing';
 
-const since = (d?: string) => (d ? new Date(d).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' }) : '-');
+const since = (d?: string) => (d ? new Date(d).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' }) : '—');
 function ago(d?: string) {
   if (!d) return '';
   const days = Math.floor((Date.now() - new Date(d).getTime()) / 86400000);

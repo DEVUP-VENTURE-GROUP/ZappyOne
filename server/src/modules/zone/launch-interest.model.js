@@ -12,8 +12,6 @@ const launchInterestSchema = new mongoose.Schema(
     /** lat/lng rounded to 2 decimals (~1.1 km): the dedupe and aggregation key. */
     cell: { type: String, required: true },
     address: { type: String, default: '', maxlength: 300 },
-    // The services they asked for here, so recruiting knows which trades this area wants.
-    lines: { type: [String], default: [] },
     notifiedAt: { type: Date, default: null },
   },
   { timestamps: true },

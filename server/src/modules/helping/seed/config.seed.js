@@ -65,7 +65,7 @@ const PICKUP_CONFIG = {
   maxItems: 10,
   defaultDurationMinutes: 30,
   restrictedItemCategories: SHOPPING_CONFIG.restrictedItemCategories,
-  disclaimer: 'ZappyOne verifies only what is visible on pickup and handover - condition claims beyond that are not made.',
+  disclaimer: 'ZappyOne verifies only what is visible on pickup and handover — condition claims beyond that are not made.',
 };
 
 const RETURN_CONFIG = {

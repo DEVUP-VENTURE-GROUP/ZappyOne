@@ -5,7 +5,6 @@
  * rely on them meaning something.
  */
 import { useEffect, useState } from 'react';
-import { useFormDraft } from '@zappy/core/hooks/useFormDraft';
 import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -35,7 +34,6 @@ export function ShopProfilePage() {
   const { data, isLoading } = useShopMeQuery();
   const [updateShop, { isLoading: saving }] = useUpdateShopMeMutation();
   const [form, setForm] = useState<Form | null>(null);
-  const draft = useFormDraft<Form>(data?.shop?._id ? `shop-profile:${data.shop._id}` : null, form, setForm);
   const [picking, setPicking] = useState(false);
   const [uploading, setUploading] = useState(false);
   // The just-taken photo shows at once; the saved key is private until the next load signs it.
@@ -44,12 +42,12 @@ export function ShopProfilePage() {
   useEffect(() => {
     const s = data?.shop;
     if (!s || form) return;
-    draft.take({
+    setForm({
       businessName: s.businessName || '', category: s.category || '', bio: s.bio || '', yearsActive: s.yearsActive != null ? String(s.yearsActive) : '',
       hours: s.hours || [], address: s.address?.text || '', landmark: s.address?.landmark || '',
       lat: s.address?.location?.coordinates?.[1] ?? null, lng: s.address?.location?.coordinates?.[0] ?? null, coverImageUrl: s.coverImageUrl || '',
     });
-  }, [data, form]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [data, form]);
 
   if (isLoading || !form) return <View style={styles.page}><ScreenHeader title="Shop & hours" safeArea /><LoadingState /></View>;
   const set = (patch: Partial<Form>) => setForm((f) => (f ? { ...f, ...patch } : f));
@@ -78,7 +76,6 @@ export function ShopProfilePage() {
         bio: f.bio || undefined, yearsActive: f.yearsActive === '' ? undefined : Number(f.yearsActive),
         ...(f.lat != null && f.lng != null && f.address ? { address: { text: f.address, landmark: f.landmark || undefined, location: { coordinates: [f.lng, f.lat] } } } : {}),
       }).unwrap();
-      if (form) draft.saved(form);
       toast.success('Profile updated');
     } catch (err) { toast.error(errText(err, 'Failed to update profile')); }
   }
@@ -92,12 +89,6 @@ export function ShopProfilePage() {
           onCancel={() => setPicking(false)} onConfirm={({ address, lat, lng }) => { set({ address, lat, lng }); setPicking(false); }} />
       ) : null}
       <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
-        {draft.restored ? (
-          <View style={styles.restored}>
-            <Text variant="caption" weight="semibold" color={zappy[800]} style={{ flex: 1 }}>Your unsaved changes are back.</Text>
-            <Text variant="caption" weight="bold" color={zappy[700]} onPress={draft.discard} accessibilityRole="button">Discard</Text>
-          </View>
-        ) : null}
         <AutoAcceptCard who="shops" />
         <LoginSecurityCard />
 
@@ -159,7 +150,6 @@ export function ShopProfilePage() {
 }
 
 const styles = StyleSheet.create({
-  restored: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, borderWidth: 1, borderColor: zappy[200], backgroundColor: zappy[50] },
   page: { flex: 1, backgroundColor: colors.background },
   flex: { flex: 1, minWidth: 0 },
   dim: { opacity: 0.6 },

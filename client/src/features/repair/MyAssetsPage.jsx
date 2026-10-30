@@ -3,9 +3,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Loader2, Plus, Trash2, Clock, MapPin, X } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { partLine } from '@shared/utils/partsRule';
 import {
-  useMyAssetsQuery, useMyAssetHistoryQuery, useCreateAssetMutation, useDeleteAssetMutation,
+  useMyAssetsQuery, useCreateAssetMutation, useDeleteAssetMutation,
   useRepairBrandsQuery, useRepairModelsQuery,
 } from '@shared/services/api';
 
@@ -22,24 +21,6 @@ const VERTICAL_LABEL = {
   two_wheeler: '2-Wheeler', four_wheeler: '4-Wheeler',
 };
 
-// What was done on this thing, job by job, with the parts that went in.
-function AssetHistory({ id }) {
-  const { data, isLoading } = useMyAssetHistoryQuery(id);
-  const jobs = (data?.bookings || []).filter((b) => b.status === 'COMPLETED');
-  if (isLoading) return <p className="mt-2 text-xs text-slate-400">Loading history…</p>;
-  if (!jobs.length) return <p className="mt-2 text-xs text-slate-400">No finished jobs on this yet.</p>;
-  return (
-    <ol className="mt-2 space-y-2 border-l-2 border-slate-100 pl-3">
-      {jobs.map((b) => (
-        <li key={b._id} className="text-xs">
-          <p className="font-semibold capitalize text-slate-700">{(b.repairCode || 'Repair').replace(/_/g, ' ')}<span className="font-normal text-slate-400"> · {b.completedAt ? new Date(b.completedAt).toLocaleDateString('en-IN') : ''} · {b.reference}</span></p>
-          {b.parts.map((p, i) => <p key={i} className="text-slate-500">{partLine(p)}</p>)}
-        </li>
-      ))}
-    </ol>
-  );
-}
-
 function Shell({ children }) {
   return <div className="max-w-lg mx-auto px-4 py-4 space-y-3 pb-24">{children}</div>;
 }
@@ -51,7 +32,6 @@ export default function MyAssetsPage() {
   const { data, isLoading } = useMyAssetsQuery();
   const [deleteAsset] = useDeleteAssetMutation();
   const [showAdd, setShowAdd] = useState(false);
-  const [openId, setOpenId] = useState(null);
   const assets = data?.assets || [];
 
   async function remove(id) {
@@ -116,10 +96,6 @@ export default function MyAssetsPage() {
                       ? `Last serviced ${new Date(a.lastServicedAt).toLocaleDateString('en-IN')}`
                       : 'No service on record yet'}
                   </p>
-                  <button type="button" onClick={() => setOpenId(openId === a._id ? null : a._id)} aria-expanded={openId === a._id} className="mt-1.5 text-xs font-bold text-zappy-600">
-                    {openId === a._id ? 'Hide history' : 'Service history and parts'}
-                  </button>
-                  {openId === a._id && <AssetHistory id={a._id} />}
                 </div>
                 <button type="button" onClick={() => remove(a._id)} className="p-1.5 text-slate-300 hover:text-red-500 shrink-0">
                   <Trash2 size={16} />

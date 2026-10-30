@@ -45,13 +45,13 @@ export function repairNextAction(status, serviceMode) {
     ARRIVED: { to: 'DIAGNOSING', label: 'Start diagnosis' },
     DIAGNOSING: { to: 'REPAIR_IN_PROGRESS', label: 'Start repair' },
     APPROVED: { to: 'REPAIR_IN_PROGRESS', label: 'Start repair' },
-    REPAIR_IN_PROGRESS: { to: 'QA_PENDING', label: 'Finish repair - run QA' },
+    REPAIR_IN_PROGRESS: { to: 'QA_PENDING', label: 'Finish repair — run QA' },
     QA_PENDING: collecting ? { to: 'READY_FOR_RETURN', label: 'Ready to return' } : { to: 'COMPLETED', label: 'Complete job' },
     PICKUP_SCHEDULED: { to: 'DEVICE_PICKED_UP', label: 'Device collected' },
     DEVICE_PICKED_UP: { to: 'AT_WORKSHOP', label: 'Arrived at workshop' },
     AT_WORKSHOP: { to: 'DIAGNOSING', label: 'Start diagnosis' },
     READY_FOR_RETURN: { to: 'OUT_FOR_RETURN', label: 'Out for return' },
-    OUT_FOR_RETURN: { to: 'COMPLETED', label: 'Delivered - complete' },
+    OUT_FOR_RETURN: { to: 'COMPLETED', label: 'Delivered — complete' },
   };
   return map[status] || null;
 }
@@ -98,33 +98,21 @@ export function quoteTotalPaise(items) {
 }
 
 /** The quote lines to send, or the reason it can't be sent yet. */
-// What a part is, in the customer's words: the grade every part line carries (server repair quote partGrade).
-export const PART_GRADES = [
-  { key: 'original', label: 'Original', hint: 'From the brand' },
-  { key: 'oem', label: 'OEM', hint: 'Same maker, no brand box' },
-  { key: 'compatible', label: 'Compatible', hint: 'Third-party, lower price' },
-];
-
-export function quotePayload({ repairCode, summary, items, warrantyDays, additional, agreedPaise, replace, replaceReason, photos = /** @type {string[]} */ ([]) }) {
+export function quotePayload({ repairCode, summary, items, warrantyDays, additional, agreedPaise, replace, replaceReason }) {
   const clean = items
     .filter((i) => i.label.trim() && Number(i.priceRupees) > 0)
-    .map((i) => ({ kind: i.kind, label: i.label.trim(), quantity: Number(i.quantity) || 1, unitPricePaise: Math.round(Number(i.priceRupees) * 100), ...(i.kind === 'part' && { partGrade: i.partGrade || null }) }));
+    .map((i) => ({ kind: i.kind, label: i.label.trim(), quantity: Number(i.quantity) || 1, unitPricePaise: Math.round(Number(i.priceRupees) * 100) }));
   if (!repairCode) return { error: 'Choose the repair you will do' };
   if (!summary.trim()) return { error: 'Describe what you found' };
   if (!clean.length) return { error: 'Add at least one line with a description and a price' };
-  // Every part says what it is before the customer approves it.
-  if (clean.some((i) => i.kind === 'part' && !i.partGrade)) return { error: 'Say whether each part is original, OEM or compatible' };
   if (quoteTotalPaise(items) < 1000) return { error: 'The quote total must be at least ₹10. Check the prices you entered.' };
   if (agreedPaise && replace && replaceReason.trim().length < 5) return { error: 'Say why the agreed price has to change' };
-  // Extra or replacement work is sent with a photo of what was found, or not at all (server repair quotes).
-  if ((additional || agreedPaise > 0) && !photos.length) return { error: 'Add a photo of what you found, so the customer can see why it costs more' };
   return {
     body: {
       diagnosisSummary: summary.trim(),
       repairCode,
       warrantyDays: Number(warrantyDays) || 0,
       items: clean,
-      diagnosisPhotos: photos,
       isAdditional: additional,
       ...(additional ? { foundNote: summary.trim() } : {}),
       ...(agreedPaise && replace ? { replacesAgreed: true, replaceReason: replaceReason.trim() } : {}),
@@ -274,7 +262,7 @@ export const rateOptions = (stars) => (stars >= 4 ? RATE_GOOD : stars ? [...RATE
 
 export const PET_EMERGENCY_CONTACTS = [
   { label: 'AWBI Helpline', number: '1962', hint: '24h Animal Welfare Board of India' },
-  { label: 'Blue Cross India', number: '044-22350959', hint: 'Chennai - national vet referral' },
+  { label: 'Blue Cross India', number: '044-22350959', hint: 'Chennai — national vet referral' },
   { label: 'PETA India', number: '1800-22-PETA', hint: 'Emergency cruelty / welfare line' },
   { label: 'General Emergency', number: '112', hint: 'Police / Ambulance' },
 ];

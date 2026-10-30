@@ -12,7 +12,6 @@ import {
   quotePayload,
   quoteRepairOptions,
   QUOTE_LINE_KINDS,
-  PART_GRADES,
   rupeesInput,
 } from '@zappy/core/shared/jobFlows';
 import { formatPaise } from '@zappy/core/shared/money';
@@ -24,7 +23,6 @@ import { colors, zappy, ink, slate, accent } from '../../../theme/colors';
 import { radius } from '../../../theme/radius';
 import { spacing } from '../../../theme/spacing';
 import { RepairPicker } from './RepairPicker';
-import { ProofPhotos, photosSettled, readyKeys, type ProofPhoto } from '../../../components/common/ProofPhotos';
 
 export const rupees = formatPaise;
 
@@ -39,19 +37,16 @@ export function QuoteBuilder({ bookingId, bookedRepair, vertical, additional, sn
   const [warrantyDays, setWarrantyDays] = useState('90');
   const [items, setItems] = useState([{ kind: 'part', label: '', priceRupees: '', quantity: 1 }]);
   const [submit, { isLoading }] = useSubmitRepairQuoteMutation();
-  const [photos, setPhotos] = useState<ProofPhoto[]>([]);
-  // Extra or replacement work goes with a photo of what was found (server repair quotes).
-  const needsPhoto = additional || agreedPaise > 0;
   const { data: catalog, isLoading: loadingCatalog } = useRepairWorkCatalogQuery({ vertical }, { skip: !!bookedRepair });
   const total: number = quoteTotalPaise(items);
   const setItem = (idx: number, patch: object) => setItems((l) => l.map((it, i) => (i === idx ? { ...it, ...patch } : it)));
 
   async function send() {
-    const { body, error } = quotePayload({ repairCode, summary, items, warrantyDays, additional, agreedPaise, replace, replaceReason, photos: readyKeys(photos) });
+    const { body, error } = quotePayload({ repairCode, summary, items, warrantyDays, additional, agreedPaise, replace, replaceReason });
     if (error) { toast.error(error); return; }
     try {
       await submit({ id: bookingId, ...body }).unwrap();
-      toast.success(additional ? 'Sent - the customer decides before you carry on' : 'Quote sent - waiting for the customer to approve');
+      toast.success(additional ? 'Sent — the customer decides before you carry on' : 'Quote sent — waiting for the customer to approve');
       onSent();
     } catch (err) { toast.error(errText(err, 'Could not send the quote')); }
   }
@@ -99,8 +94,7 @@ export function QuoteBuilder({ bookingId, bookedRepair, vertical, additional, sn
       <View style={styles.gap}>
         <Text variant="caption" weight="bold">Charges</Text>
         {items.map((item, idx) => (
-          <React.Fragment key={idx}>
-          <View style={styles.line}>
+          <View key={idx} style={styles.line}>
             <RepairPicker value={item.kind} onChange={(v) => setItem(idx, { kind: v })} placeholder="Kind" options={QUOTE_LINE_KINDS.map((k: string) => ({ value: k, label: k }))} />
             <TextInput value={item.label} onChangeText={(v) => setItem(idx, { label: v })} placeholder="Description" placeholderTextColor={ink[400]} style={[styles.input, styles.flex]} />
             <View style={styles.price}>
@@ -109,20 +103,6 @@ export function QuoteBuilder({ bookingId, bookedRepair, vertical, additional, sn
             </View>
             {items.length > 1 ? <Pressable onPress={() => setItems((l) => l.filter((_, i) => i !== idx))} hitSlop={8} accessibilityLabel="Remove line"><Trash2 size={16} color={ink[400]} /></Pressable> : null}
           </View>
-          {item.kind === 'part' ? (
-            <View style={styles.grades} accessibilityRole="radiogroup" accessibilityLabel="What this part is">
-              {(PART_GRADES as { key: string; label: string; hint: string }[]).map((g) => {
-                const on = (item as { partGrade?: string }).partGrade === g.key;
-                return (
-                  <Pressable key={g.key} onPress={() => setItem(idx, { partGrade: g.key })} accessibilityRole="radio" accessibilityState={{ checked: on }} style={[styles.grade, on && styles.gradeOn]}>
-                    <Text variant="caption" weight="bold" color={on ? zappy[700] : ink[900]}>{g.label}</Text>
-                    <Text variant="caption" color={ink[500]} numberOfLines={2}>{g.hint}</Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          ) : null}
-          </React.Fragment>
         ))}
         <Pressable onPress={() => setItems((l) => [...l, { kind: 'part', label: '', priceRupees: '', quantity: 1 }])} style={styles.row} hitSlop={6}>
           <Plus size={14} color={zappy[600]} /><Text variant="caption" weight="semibold" color={zappy[600]}>Add line</Text>
@@ -142,16 +122,12 @@ export function QuoteBuilder({ bookingId, bookedRepair, vertical, additional, sn
         <Text variant="bodySmall" weight="semibold" color={ink[700]}>{agreedPaise > 0 && !replace ? 'New subtotal (before fees)' : 'Subtotal (before tax)'}</Text>
         <Text variant="heading3" weight="black">{rupees(agreedPaise > 0 && !replace ? agreedPaise + total : total)}</Text>
       </View>
-      {needsPhoto ? <ProofPhotos photos={photos} onChange={setPhotos} folder="order-proof" max={4} title="Photo of what you found" hint="The customer sees it with the price and approves before you carry on." requiredNote="At least one photo is needed for extra work" /> : null}
-      <Button label="Send quote to customer" onPress={send} loading={isLoading} disabled={needsPhoto && !photosSettled(photos)} fullWidth size="large" />
+      <Button label="Send quote to customer" onPress={send} loading={isLoading} fullWidth size="large" />
     </JobCard>
   );
 }
 
 const styles = StyleSheet.create({
-  grades: { flexDirection: 'row', gap: spacing.xs, marginTop: -spacing.xs },
-  grade: { flex: 1, padding: spacing.sm, borderRadius: radius.medium, borderWidth: 1, borderColor: colors.border },
-  gradeOn: { borderColor: zappy[500], backgroundColor: zappy[50] },
   flex: { flex: 1, minWidth: 0 },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   between: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: spacing.md },

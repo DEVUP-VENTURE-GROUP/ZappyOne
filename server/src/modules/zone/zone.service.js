@@ -97,7 +97,7 @@ async function getAllZones() {
   try {
     const cached = await redis.get(CACHE_KEY);
     if (cached) return JSON.parse(cached);
-  } catch { /* cache miss / redis down - fall through to DB */ }
+  } catch { /* cache miss / redis down — fall through to DB */ }
 
   const zones = await Zone.find().sort({ createdAt: -1 }).lean();
   try {

@@ -1,6 +1,7 @@
 const subscriptionService = require('./subscription.service');
 const paymentService = require('../payment/payment.service');
 const Subscription = require('./subscription.model');
+const config = require('../../config');
 
 async function listPlans(req, res, next) {
   try {
@@ -27,7 +28,14 @@ async function subscribe(req, res, next) {
       purpose: 'subscription',
       planCode: req.body.planCode,
     });
-    res.status(201).json(require('../payment/payment.controller').checkoutBody(result));
+    res.status(201).json({
+      paymentIntentId:  result.paymentIntent._id,
+      cfOrderId:        result.cfOrder.order_id,
+      paymentSessionId: result.cfOrder.payment_session_id,
+      amountPaise:      result.paymentIntent.amountPaise,
+      currency:         'INR',
+      cashfreeEnv:      config.cashfree.env,
+    });
   } catch (err) { next(err); }
 }
 

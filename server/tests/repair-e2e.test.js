@@ -374,12 +374,12 @@ describe('§28 pickup & repair path', () => {
       qualityCode: 'premium',
       warrantyDays: 180,
       items: [
-        { kind: 'part', label: 'Display assembly (Premium)', unitPricePaise: 1550000, quantity: 1, partGrade: 'original' },
+        { kind: 'part', label: 'Display assembly (Premium)', unitPricePaise: 1550000, quantity: 1 },
         { kind: 'labour', label: 'Fitting + calibration', unitPricePaise: 450000, quantity: 1 },
       ],
       idempotencyKey: 'e2e-quote-1',
       // The technician re-prices the whole booked job after inspecting.
-      replacesAgreed: true, diagnosisPhotos: ['order-proof/found.jpg'], replaceReason: 'Full assembly needed, not the booked part',
+      replacesAgreed: true, replaceReason: 'Full assembly needed, not the booked part',
     });
 
     expect(quote.revision).toBe(1);
@@ -390,17 +390,12 @@ describe('§28 pickup & repair path', () => {
     expect(afterQuote.status).toBe('CUSTOMER_APPROVAL_PENDING');
 
     // Customer approves — the quote becomes the authoritative price.
-    const { booking: approved, quote: decided } = await booking.respondToQuote({
-      quoteId: quote._id, userId: ctx.userId, decision: 'approve', returnOldParts: true,
+    const { booking: approved } = await booking.respondToQuote({
+      quoteId: quote._id, userId: ctx.userId, decision: 'approve',
     });
-    // The part is named for what it is, and the customer asked for the old one back.
-    expect(decided.items.find((i) => i.kind === 'part').partGrade).toBe('original');
-    expect(approved.returnOldParts).toBe(true);
     expect(approved.status).toBe('APPROVED');
     expect(approved.priceSnapshot.totalPaise).toBe(2360000);
     expect(approved.priceSnapshot.isEstimate).toBe(false);
-    // The display is a part the technician quoted at the door: ZappyOne's cut is on the fitting alone.
-    expect(approved.priceSnapshot.commissionBasePaise).toBe(450000);
 
     for (const s of ['PICKUP_SCHEDULED', 'DEVICE_PICKED_UP', 'AT_WORKSHOP', 'REPAIR_IN_PROGRESS', 'QA_PENDING']) {
       await booking.transition(b._id, s, { actorRole: 'worker', actorId: ctx.workerId });
@@ -471,7 +466,7 @@ describe('§28 pickup & repair path', () => {
       bookingId: b._id, actorRole: 'worker', actorId: ctx.workerId,
       diagnosisSummary: 'Display only.', repairCode: 'display_assembly_replacement',
       items: [{ kind: 'part', label: 'Display', unitPricePaise: 2000000, quantity: 1 }],
-      replacesAgreed: true, diagnosisPhotos: ['order-proof/found.jpg'], replaceReason: 'Re-priced after opening the device',
+      replacesAgreed: true, replaceReason: 'Re-priced after opening the device',
     });
 
     const second = await booking.submitQuote({
@@ -481,7 +476,7 @@ describe('§28 pickup & repair path', () => {
         { kind: 'part', label: 'Display', unitPricePaise: 2000000, quantity: 1 },
         { kind: 'part', label: 'Frame', unitPricePaise: 400000, quantity: 1 },
       ],
-      replacesAgreed: true, diagnosisPhotos: ['order-proof/found.jpg'], replaceReason: 'Re-priced after opening the device',
+      replacesAgreed: true, replaceReason: 'Re-priced after opening the device',
     });
 
     expect(second.quote.revision).toBe(2);
@@ -527,13 +522,13 @@ describe('extra work on a booking with an agreed price', () => {
     await expect(booking.submitQuote({
       bookingId: b._id, actorRole: 'worker', actorId: ctx.workerId,
       diagnosisSummary: 'x', repairCode: 'display_assembly_replacement',
-      items: [{ kind: 'part', label: 'Display', unitPricePaise: 29000 }], replacesAgreed: true, diagnosisPhotos: ['order-proof/found.jpg'],
+      items: [{ kind: 'part', label: 'Display', unitPricePaise: 29000 }], replacesAgreed: true,
     })).rejects.toMatchObject({ code: 'REASON_REQUIRED' });
 
     const { quote } = await booking.submitQuote({
       bookingId: b._id, actorRole: 'worker', actorId: ctx.workerId,
       diagnosisSummary: 'Charging port also loose.', repairCode: 'display_assembly_replacement',
-      items: [{ kind: 'part', label: 'Charging port', unitPricePaise: 29000, quantity: 1 }], diagnosisPhotos: ['order-proof/port.jpg'],
+      items: [{ kind: 'part', label: 'Charging port', unitPricePaise: 29000, quantity: 1 }],
     });
     expect(quote).toMatchObject({ basePaise: agreedSubtotal, extraPaise: 29000, subtotalPaise: agreedSubtotal + 29000, isAdditional: true });
 

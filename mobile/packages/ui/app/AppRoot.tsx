@@ -35,7 +35,6 @@ import { socketClient } from '@zappy/core/socket/socketClient';
 import { createLogger } from '@zappy/core/lib/logger';
 import { installGlobalErrorHandlers } from '@zappy/core/lib/errorReporter';
 import { usePushNotifications } from '@zappy/core/hooks/usePushNotifications';
-import { useJobRealtime } from '@zappy/core/hooks/useJobRealtime';
 import type { RouteResolver } from '@zappy/core/lib/pushRouting';
 import type { Role } from '@zappy/core/types/api';
 import { fontAssets } from '../theme';
@@ -121,8 +120,6 @@ function Guarded({ roles, home, login, resolveRoute, isPublic, children }: AppRo
 
   usePushNotifications(resolveRoute);
   useSilentUpdates();
-  // Providers get this from WorkerFrame; customers' bookings and plans refresh live here.
-  useJobRealtime({ enabled: isAuthenticated && role === 'user' });
 
   useEffect(() => {
     if (booted.current) return;

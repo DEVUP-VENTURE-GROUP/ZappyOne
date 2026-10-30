@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { Loader2, CheckCircle2 } from 'lucide-react';
-import { useAdminShopDuesQuery, useAdminRecordShopDuesPaymentMutation, useAdminRejectDuesClaimMutation } from '@shared/services/api';
+import { useAdminShopDuesQuery, useAdminRecordShopDuesPaymentMutation } from '@shared/services/api';
 import { Card, PageLoader, fmt } from '../../../ui/kit';
 import { RupeeInput } from './fields';
 
@@ -12,15 +12,6 @@ function Row({ row }) {
   const [amount, setAmount] = useState('');
   const [reference, setReference] = useState('');
   const [record, { isLoading }] = useAdminRecordShopDuesPaymentMutation();
-  const [reject] = useAdminRejectDuesClaimMutation();
-  async function confirmClaim(c) {
-    try { await record({ shopId: row.shopId, claimId: c._id }).unwrap(); toast.success(`Confirmed ${fmt(c.amountPaise)} from ${row.businessName}.`); }
-    catch (err) { toast.error(err?.data?.error || 'Could not confirm it'); }
-  }
-  async function rejectClaim(c) {
-    try { await reject({ id: c._id, note: 'Not found in the bank statement' }).unwrap(); toast.success('Marked as not found. The partner sees it.'); }
-    catch (err) { toast.error(err?.data?.error || 'Could not update it'); }
-  }
   async function submit() {
     const rupees = Number(amount);
     if (!(rupees > 0)) return toast.error('Enter the amount received');
@@ -47,17 +38,6 @@ function Row({ row }) {
           <button type="button" onClick={() => setOpen((v) => !v)} className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white">Record payment</button>
         </div>
       </div>
-      {(row.claims || []).map((c) => (
-        <div key={c._id} className="flex flex-wrap items-center gap-2 rounded-lg bg-amber-50 px-3 py-2 text-[12.5px]">
-          <span className="font-semibold text-amber-900">Partner says they paid {fmt(c.amountPaise)}</span>
-          <span className="font-mono text-amber-800">{c.reference}</span>
-          <span className="text-amber-700">{new Date(c.createdAt).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}</span>
-          <span className="ml-auto flex gap-1.5">
-            <button type="button" onClick={() => confirmClaim(c)} disabled={isLoading} className="rounded-lg bg-emerald-600 px-3 py-1 font-semibold text-white disabled:opacity-50">Confirm</button>
-            <button type="button" onClick={() => rejectClaim(c)} className="rounded-lg bg-white px-3 py-1 font-semibold text-slate-700 ring-1 ring-slate-200">Not found</button>
-          </span>
-        </div>
-      ))}
       {open && (
         <div className="flex flex-wrap items-center gap-2 rounded-lg bg-slate-50 p-2">
           <RupeeInput value={amount} onChange={setAmount} max={10000000} label="Amount received" />
@@ -74,7 +54,7 @@ function Row({ row }) {
   );
 }
 
-// Partner businesses that owe fees from cash jobs; the same limits as workers stop their new jobs (server shop/shop-dues).
+// Partner businesses that owe commission from cash jobs; the same limits as workers stop their new jobs (server shop/shop-dues).
 export default function ShopDues() {
   const { data, isLoading } = useAdminShopDuesQuery(undefined, { pollingInterval: 60000 });
   const rows = data?.shops || [];

@@ -22,7 +22,7 @@ import { radius } from '@zappy/ui/theme/radius';
 import { spacing } from '@zappy/ui/theme/spacing';
 
 interface Item { type?: string; code?: string; title?: string; subtitle?: string; path: string; vertical?: string; problemCode?: string; categoryCode?: string; lineCode?: string }
-interface Results { query?: string; corrected?: string; notHere?: boolean; empty?: boolean; services?: Item[]; problems?: Item[]; categories?: Item[]; suggestions?: Item[]; comingSoon?: Item[] }
+interface Results { query?: string; corrected?: string; notHere?: boolean; empty?: boolean; services?: Item[]; problems?: Item[]; categories?: Item[]; suggestions?: Item[] }
 
 const topResult = (d?: Results | null) => d?.problems?.[0] || d?.services?.[0] || d?.categories?.[0] || null;
 
@@ -177,14 +177,9 @@ export function SpotlightSearch({ open, onClose, lat, lng }: { open: boolean; on
               <Group title="Services" items={data.services} onOpen={openResult} words={words} />
               <ProblemGroups problems={data.problems} onOpen={openResult} words={words} />
               <Group title="Browse by type of problem" items={data.categories} onOpen={openResult} words={words} />
-              {data.comingSoon?.length ? (
-                <Text variant="bodySmall" color={ink[700]} style={styles.note}>
-                  {data.comingSoon.map((c) => c.title).join(', ')} {data.comingSoon.length > 1 ? 'are' : 'is'} not at your address yet. Pros are joining; find it under “Coming to your area” on home to be told the day it opens.
-                </Text>
-              ) : null}
               {data.empty ? (
                 <>
-                  {!data.comingSoon?.length ? <Text variant="body" color={ink[700]} style={styles.note}>No match for “{term}”.</Text> : null}
+                  <Text variant="body" color={ink[700]} style={styles.note}>No match for “{term}”.</Text>
                   <Group title="You can book these here" items={data.suggestions} onOpen={openResult} />
                 </>
               ) : null}

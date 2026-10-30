@@ -99,7 +99,7 @@ async function onJobCompleted({ workerId, completedJobs, workerRating, orderId }
     );
     logger.warn(
       { workerId, milestone: hit.jobs, workerRating, orderId },
-      'Milestone deferred - worker rating below threshold'
+      'Milestone deferred — worker rating below threshold'
     );
     // Notify worker so they understand why they didn't get the bonus
     notificationService.notify({
@@ -123,7 +123,7 @@ async function onJobCompleted({ workerId, completedJobs, workerRating, orderId }
       amountPaise: hit.bonusPaise,
       reason: Transaction.REASONS.ADMIN_ADJUSTMENT_CREDIT,
       idempotencyKey,
-      description: `Milestone bonus - ${hit.jobs} jobs completed`,
+      description: `Milestone bonus — ${hit.jobs} jobs completed`,
       metadata: { milestone: hit.jobs, bonusPaise: hit.bonusPaise },
     });
 
@@ -131,7 +131,7 @@ async function onJobCompleted({ workerId, completedJobs, workerRating, orderId }
       notificationService.notify({
         recipient: { kind: 'worker', id: workerId },
         type: 'wallet_credited',
-        title: `🏆 Milestone bonus - ₹${hit.bonusPaise / 100} credited!`,
+        title: `🏆 Milestone bonus — ₹${hit.bonusPaise / 100} credited!`,
         body: `Congratulations on completing your ${hit.jobs}${ordinalSuffix(hit.jobs)} job!`,
         deepLink: '/wallet',
         data: { milestone: hit.jobs },
@@ -176,7 +176,7 @@ async function checkRatingBonuses() {
           amountPaise: cfg.bonusPaise,
           reason: Transaction.REASONS.ADMIN_ADJUSTMENT_CREDIT,
           idempotencyKey: `incentive:rating:${w._id}:${monthTag}`,
-          description: `Quality bonus - rating ${w.rating.toFixed(1)} (${monthTag})`,
+          description: `Quality bonus — rating ${w.rating.toFixed(1)} (${monthTag})`,
           metadata: { ratingBonus: true, rating: w.rating, month: monthTag },
         });
         if (result.deduped) { skipped++; return; }
@@ -184,7 +184,7 @@ async function checkRatingBonuses() {
         notificationService.notify({
           recipient: { kind: 'worker', id: w._id },
           type: 'wallet_credited',
-          title: `⭐ Quality bonus - ₹${cfg.bonusPaise / 100} credited`,
+          title: `⭐ Quality bonus — ₹${cfg.bonusPaise / 100} credited`,
           body: `Your rating of ${w.rating.toFixed(1)} earned you this month's quality reward`,
           deepLink: '/wallet',
         }).catch(() => {});

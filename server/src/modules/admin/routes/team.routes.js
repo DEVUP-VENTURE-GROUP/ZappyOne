@@ -27,13 +27,11 @@ const view = (a) => ({
 });
 
 /** The signed-in admin, with what they may open — the console hides the rest. */
-router.get('/me', async (req, res) => {
+router.get('/me', (req, res) => {
   const a = req.admin;
-  // Fleet is ZappyOne's own staff, locked for version 1: its section leaves the console until the switch is on.
-  const staffOn = await require('../../feature-flags/feature-flag.service').isEnabled('own_staff');
   res.json({
     admin: view(a),
-    areas: visibleAreas(a).filter((x) => staffOn || x !== 'fleet'),
+    areas: visibleAreas(a),
     writable: Object.keys(AREAS).filter((area) => can(a, area, 'write')),
     permissions: [...permissionsOf(a)],
   });

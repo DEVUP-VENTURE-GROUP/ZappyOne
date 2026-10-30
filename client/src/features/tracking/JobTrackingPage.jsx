@@ -202,16 +202,6 @@ export default function JobTrackingPage({ job, extras = null, startCode = null, 
 
           <StartCodeCard jobKey={`${job.kind}:${job.id}`} code={startCode} stage={codeStage || status} noun={job.noun} />
 
-          {/* The pro said the work needs longer (jobs/more-time). */}
-          {options?.moreTime?.until && !job.terminal && (
-            <div className="flex items-center gap-3 rounded-2xl bg-white px-4 py-3 ring-1 ring-slate-100 lg:[column-span:all]">
-              <Clock size={18} className="text-zappy-600" />
-              <p className="text-[13px] text-slate-700">
-                {options.moreTime.reason}. Your {job.noun} expects to finish by <b className="text-navy">{new Date(options.moreTime.until).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' })}</b>. Nothing extra is charged unless you approve a new quote.
-              </p>
-            </div>
-          )}
-
           {options?.providerChangedAt && !job.provider && (
             <div className="rounded-2xl bg-amber-50 px-4 py-3 text-[13px] leading-relaxed text-amber-900 ring-1 ring-amber-100">
               <p className="font-semibold">Your {job.noun} could not make it</p>

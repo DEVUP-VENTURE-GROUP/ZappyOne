@@ -48,7 +48,7 @@ export default function Audit() {
                     <tr className="hover:bg-slate-50/60 transition-colors">
                       <Td muted className="whitespace-nowrap">{fmtDate(log.at || log.createdAt)}</Td>
                       <Td>
-                        <p className="font-semibold text-slate-900 text-xs">{log.actor?.email || log.actor?.kind || '-'}</p>
+                        <p className="font-semibold text-slate-900 text-xs">{log.actor?.email || log.actor?.kind || '—'}</p>
                         <p className="text-[11px] text-slate-400 capitalize">{log.actor?.kind}</p>
                       </Td>
                       <Td>

@@ -4,12 +4,11 @@
  * its models; a model priced on its own overrides it, so a shop sets a sensible
  * default once instead of typing a sheet per handset before its first booking.
  */
-import { PartsNote } from '../../../components/common/PartsNote';
 import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
-import { ChevronRight, Search } from 'lucide-react-native';
+import { ChevronRight, IndianRupee, Search } from 'lucide-react-native';
 import {
-  useBulkRepairProviderPricingMutation, useRepairBrandsQuery, useRepairModelsQuery,
+  useBulkRepairProviderPricingMutation, useLazyRepairProviderSuggestedPricingQuery, useRepairBrandsQuery, useRepairModelsQuery,
   useRepairProviderPricingQuery, useRepairWorkCatalogQuery, useSaveRepairCapabilitiesMutation,
 } from '@zappy/core/api';
 import { Button, LoadingState, Text } from '../../../components';
@@ -23,7 +22,7 @@ import { StepShell } from './StepShell';
 import { WarrantySettings } from './WarrantySettings';
 import { workModesFor } from './setupFlow';
 import {
-  countsFor, existingFor, rowsFromValues, type ClaimedRepair, type PriceRowData,
+  brandBaselineRows, countsFor, existingFor, marketFill, rowsFromValues, type ClaimedRepair, type PriceRowData, type Suggestion,
 } from './priceSheet';
 import { uniqueRepairs, type RepairGroup } from './workSelection';
 
@@ -31,6 +30,7 @@ export function PricingStep({ vertical, onBack, onNext }: { vertical: string; on
   const { data: catalog } = useRepairWorkCatalogQuery({ vertical });
   const { data: pricingData, isLoading, refetch } = useRepairProviderPricingQuery(vertical);
   const [bulkSave, { isLoading: saving }] = useBulkRepairProviderPricingMutation();
+  const [fetchSuggested, { isFetching: suggesting }] = useLazyRepairProviderSuggestedPricingQuery();
   const [saveWork] = useSaveRepairCapabilitiesMutation();
   const { data: brandsData } = useRepairBrandsQuery(vertical);
 
@@ -41,6 +41,7 @@ export function PricingStep({ vertical, onBack, onNext }: { vertical: string; on
   const [modelLabel, setModelLabel] = useState('');
   const [search, setSearch] = useState('');
   const [values, setValues] = useState<Record<string, string>>({});
+  const [fillingAll, setFillingAll] = useState(false);
   const activeBrand = brand || brandCodes[0] || null;
 
   // Searched on the server: the list comes 50 at a time, and a brand past that must still be findable.
@@ -70,7 +71,34 @@ export function PricingStep({ vertical, onBack, onNext }: { vertical: string; on
 
   function openSheet(code: string | null, label = '') { setModel(code); setModelLabel(label); setValues({}); }
 
+  /** Fill every empty box on this sheet with the market price; nothing saves until Save. */
+  async function fillMarketPrices() {
+    try {
+      const { suggestions = [] } = await fetchSuggested({ vertical, brandCode: activeBrand, modelCode: model ?? undefined }).unwrap();
+      const fill = marketFill(suggestions as Suggestion[], values, existing);
+      const n = Object.keys(fill).length;
+      if (!n) { toast('No market prices to add here. Enter yours below.'); return; }
+      setValues((v) => ({ ...v, ...fill }));
+      toast.success(`${n} price${n === 1 ? '' : 's'} filled. Change any, then Save prices.`);
+    } catch { toast.error('Could not load market prices'); }
+  }
 
+  /** Every brand at once: market prices become each brand's baseline wherever the shop has none. */
+  async function priceAllBrandsAtMarket() {
+    setFillingAll(true);
+    try {
+      const counted = await Promise.all(brandCodes.map(async (code) => {
+        const { suggestions = [] } = await fetchSuggested({ vertical, brandCode: code }).unwrap();
+        const rows = brandBaselineRows(suggestions as Suggestion[], pricing, code, claimed);
+        if (!rows.length) return 0;
+        return (await bulkSave({ vertical, rows }).unwrap()).savedCount || 0;
+      }));
+      const saved = counted.reduce((a: number, n: number) => a + n, 0);
+      toast.success(saved ? `${saved} prices set across ${brandCodes.length} brands. Edit any brand or model to change them.` : 'Every brand already has its prices');
+      refetch();
+    } catch (err) { toast.error(errText(err, 'Could not set market prices')); }
+    finally { setFillingAll(false); }
+  }
 
   async function saveSheet() {
     const rows = rowsFromValues(values, claimed, activeBrand, model ?? null);
@@ -92,6 +120,7 @@ export function PricingStep({ vertical, onBack, onNext }: { vertical: string; on
           <View style={styles.empty}><Text variant="bodySmall" weight="bold" color={ink[700]}>No jobs selected yet</Text><Text variant="caption" color={ink[500]}>Go back and tick the work you do first.</Text></View>
         ) : (
           <>
+            <Button label="Fill with ZappyOne market prices" variant="outline" icon={<IndianRupee size={15} color={zappy[700]} />} onPress={fillMarketPrices} loading={suggesting} fullWidth />
             {claimed.map((r) => (
               <PriceRow key={r.code} repair={r} values={values} existing={existing} onChange={(k, raw) => setValues((v) => ({ ...v, [k]: raw }))}
                 onRemove={claimed.length > 1 ? removeJob : undefined} />
@@ -106,9 +135,8 @@ export function PricingStep({ vertical, onBack, onNext }: { vertical: string; on
   const brandCount = counts.get('__brand__') || 0;
   const models: { code: string; name: string }[] = modelsData?.models || [];
   return (
-    <StepShell title="What do you charge?" hint="Set your own price for each job, per brand. Change a single model only where you charge differently."
+    <StepShell title="What do you charge?" hint="Fastest: one tap sets ZappyOne market prices for every brand. Then change only what you charge differently, a brand or a single model."
       onBack={onBack} onNext={onNext} nextLabel={pricing.length ? 'Continue' : 'Skip for now'}>
-      <PartsNote vertical={vertical} who="partner" />
       {!brandCodes.length ? (
         <View style={styles.empty}><Text variant="bodySmall" weight="bold" color={ink[700]}>No brands chosen yet</Text><Text variant="caption" color={ink[500]}>Go back to the first step and pick the brands you handle.</Text></View>
       ) : (
@@ -121,6 +149,8 @@ export function PricingStep({ vertical, onBack, onNext }: { vertical: string; on
               </Pressable>
             ))}
           </View>
+          <Button label={fillingAll ? 'Setting prices…' : `Use ZappyOne market prices for all ${brandCodes.length} brands`} icon={<IndianRupee size={15} color="#fff" />}
+            onPress={priceAllBrandsAtMarket} loading={fillingAll} fullWidth />
           <Pressable onPress={() => openSheet(null)} accessibilityRole="button" style={[styles.row, styles.brandRow]}>
             <View style={styles.flex}>
               <Text variant="bodySmall" weight="bold" color={zappy[800]}>Every {brandName(activeBrand)} model</Text>

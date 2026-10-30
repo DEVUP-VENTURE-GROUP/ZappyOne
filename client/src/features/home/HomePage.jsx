@@ -11,7 +11,6 @@ import { reverseGeocode } from '@shared/utils/reverseGeocode';
 import SEO, { HOME_SCHEMA, BASE_URL } from '@shared/components/SEO';
 import NotInYourArea from '../catalog/serviceability/NotInYourArea';
 import ClosedNowBanner from '../catalog/serviceability/ClosedNowBanner';
-import ComingSoonRow from './ComingSoonRow';
 import ServiceShowcase from './ServiceShowcase';
 import HeroCarousel from './HeroCarousel';
 import { foldIntoHub } from '@shared/components/home/serviceArt';
@@ -25,7 +24,6 @@ import HomeHeader, { SearchBar } from './HomeHeader';
 import LocationSheet from './LocationSheet';
 import { ServiceGrid, ProblemChips } from './ServiceGrid';
 import { OffersRail, BookAgainRail, NearbyShopsLink } from './HomeRails';
-import HomeMarketplace from './HomeMarketplace';
 import { eventPhoto, eventTone } from '../events/eventPhotos';
 import ContinueBookingCard from './ContinueBookingCard';
 import FestiveHero from '@shared/components/home/festive/FestiveHero';
@@ -162,9 +160,9 @@ export default function HomePage() {
   // answered (or failed), the catalog is shown as it is.
   const { data: svc, isFetching: checkingArea } = useGetServiceabilityQuery({ lat: loc.lat, lng: loc.lng }, { skip: loc.lat == null });
   const { data: catalog, isLoading: loadingCatalog } = useLiveCatalogQuery();
-  // Only what someone covers at this address is shown; the rest waits in "Coming to your area".
-  // Unknown location → everything shows (the flow asks for an address).
-  const liveCodes = useMemo(() => (svc && svc.status !== 'not_here' ? new Set(svc.lines.map((l) => l.code)) : null), [svc]);
+  // Every service shows; whether it can be booked HERE is serviceability's answer.
+  // Unknown location → treated as bookable (the flow asks for an address).
+  const liveCodes = useMemo(() => (svc ? new Set(svc.lines.map((l) => l.code)) : null), [svc]);
   // Events run on their own module; they join the catalog as a section here,
   // before pet services, with each celebration as a tile.
   const { data: eventCats } = useGetEventCategoriesQuery();
@@ -172,7 +170,7 @@ export default function HomePage() {
     const list = (catalog?.domains || [])
       .map((d) => ({
         ...d,
-        services: d.services.map((s) => ({ ...s, domainCode: d.code, available: liveCodes ? liveCodes.has(s.code) : undefined })).filter((s) => s.available !== false),
+        services: d.services.map((s) => ({ ...s, domainCode: d.code, available: liveCodes ? liveCodes.has(s.code) : undefined })),
       }))
       .filter((d) => d.services.length);
     const cats = eventCats?.categories || [];
@@ -196,10 +194,6 @@ export default function HomePage() {
   // The quick grid folds a section with its own page (pet care) into one tile.
   const domains = useMemo(() => allDomains.map(foldIntoHub), [allDomains]);
   const services = useMemo(() => allDomains.flatMap((d) => d.services), [allDomains]);
-  const comingSoon = useMemo(() => (liveCodes
-    ? (catalog?.domains || []).flatMap((d) => d.services.filter((s) => !liveCodes.has(s.code)).map((s) => ({ ...s, domainCode: d.code })))
-    : []), [catalog, liveCodes]);
-  const allServices = useMemo(() => (catalog?.domains || []).flatMap((d) => d.services), [catalog]);
   const searchTerms = useMemo(() => {
     const problems = services.flatMap((s) => (s.highlights || []).map((h) => h.name));
     return [...new Set(problems.length ? problems : services.map((s) => s.name))].slice(0, 8);
@@ -241,8 +235,6 @@ export default function HomePage() {
   }, [pastJobs]);
 
   const notHere = svc?.status === 'not_here';
-  // In the city, but no pro has joined at this address yet: say so honestly and lead with what is coming.
-  const nothingLive = !!liveCodes && liveCodes.size === 0;
   // A festival running (Admin → Festive home): its own top on home; light ones also tint the header.
   const { data: seasonData } = useCurrentSeasonQuery();
   const season = !notHere && !loadingCatalog ? seasonData?.season : null;
@@ -314,25 +306,8 @@ export default function HomePage() {
           ) : (
             <>
               {svc?.status === 'closed_now' && <ClosedNowBanner nextOpening={svc.nextOpening} />}
-              {svc?.prosNearby > 0 && (
-                <p role="status" className="flex items-center gap-2 text-[13px] font-semibold text-ink-700">
-                  <span className="relative flex h-2.5 w-2.5">
-                    <span className="absolute inline-flex h-full w-full rounded-full bg-zappy-600 opacity-60 motion-safe:animate-ping" />
-                    <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-zappy-600" />
-                  </span>
-                  {svc.prosNearby} verified {svc.prosNearby === 1 ? 'pro is' : 'pros are'} open near {loc.primary || 'you'} right now
-                </p>
-              )}
-              {nothingLive && (
-                <div className="rounded-card border border-line bg-surface px-4 py-4">
-                  <p className="text-[16px] font-extrabold text-ink-900">Pros are joining near {loc.primary || 'you'}</p>
-                  <p className="mt-1 text-[13.5px] leading-relaxed text-ink-500">Nobody is verified at this exact address yet. Tap the bell on what you need and we will tell you the day it opens, or try another address.</p>
-                  <button type="button" onClick={() => setLocSheet(true)} className="mt-3 text-[13px] font-bold text-zappy-700">Change address</button>
-                </div>
-              )}
-              {nothingLive && !loadingCatalog && <ComingSoonRow services={comingSoon} loc={loc} />}
 
-              {!loadingCatalog && !nothingLive && <HeroCarousel domains={allDomains} onOpen={openService} />}
+              {!loadingCatalog && <HeroCarousel domains={allDomains} onOpen={openService} />}
 
               {/* Intent first: the problem in their words, then the services. */}
               <FestiveReveal on={!!season}><ProblemChips services={services} /></FestiveReveal>
@@ -346,8 +321,6 @@ export default function HomePage() {
               <FestiveReveal on={!!season}><OffersRail isAuthed={isAuthed} /></FestiveReveal>
 
               {!loadingCatalog && <FestiveReveal on={!!season}><ServiceShowcase domains={allDomains} onOpen={openService} /></FestiveReveal>}
-              {isAuthed && <FestiveReveal on={!!season}><HomeMarketplace /></FestiveReveal>}
-              {!loadingCatalog && !nothingLive && <FestiveReveal on={!!season}><ComingSoonRow services={comingSoon} loc={loc} /></FestiveReveal>}
               {season && <FestiveDivider theme={theme} />}
               <FestiveReveal on={!!season}><AdBanner /></FestiveReveal>
               <FestiveReveal on={!!season}><NearbyShopsLink /></FestiveReveal>
@@ -355,7 +328,7 @@ export default function HomePage() {
           )}
         </main>
 
-        <Footer services={allServices} areas={svc?.areas || []} season={season} theme={theme} />
+        <Footer services={services} areas={svc?.areas || []} season={season} theme={theme} />
       </div>
 
       <LensModal open={lensOpen} onClose={() => setLensOpen(false)} lat={loc.lat} lng={loc.lng} />

@@ -14,7 +14,7 @@ const DEFAULT_FAQS = [
   { category: 'Bookings', order: 3, question: 'What happens if no worker is available?', answer: "If we can't find a pro within a short window, the order is cancelled automatically and any prepaid amount is refunded to your wallet. You can try again anytime." },
   { category: 'Payments', order: 1, question: 'What payment methods are supported?', answer: 'You can pay by UPI, card, cash, or your Zappy wallet balance. Choose your method during checkout.' },
   { category: 'Payments', order: 2, question: 'How do refunds work?', answer: 'Eligible refunds are credited to your Zappy wallet, usually instantly. See our Refund Policy for full details.' },
-  { category: 'Cancellations', order: 1, question: 'How do I cancel a booking?', answer: "Open the order and tap Cancel. A cancellation fee may apply depending on how far the pro has progressed - you'll see the exact amount before you confirm." },
+  { category: 'Cancellations', order: 1, question: 'How do I cancel a booking?', answer: "Open the order and tap Cancel. A cancellation fee may apply depending on how far the pro has progressed — you'll see the exact amount before you confirm." },
   { category: 'Safety & Trust', order: 1, question: 'Are the workers verified?', answer: 'Every pro completes KYC verification before they can accept jobs. You can see their rating and completed-job count on the tracking screen.' },
   { category: 'Warranty', order: 1, question: 'Is my service covered by warranty?', answer: "Many repair services include a service warranty. If a covered issue recurs within the warranty period, we'll re-service it. See the Warranty Guidelines for what's covered." },
 ];

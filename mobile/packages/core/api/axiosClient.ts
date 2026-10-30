@@ -223,7 +223,7 @@ axiosClient.interceptors.response.use(
     } catch (refreshError) {
       // Refresh genuinely failed: expired, revoked, or reuse detected. The
       // server has already invalidated the family — drop everything locally.
-      log.warn('token refresh failed - ending session');
+      log.warn('token refresh failed — ending session');
       processQueue(refreshError, null);
       await clearSession();
       endSession('refresh_failed');

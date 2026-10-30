@@ -24,26 +24,6 @@ router.get('/catalog', ctrl.liveCatalog);
 
 router.get('/status', ...providerOnly, ctrl.status);
 
-// What this partner must still fill in before their dashboard opens (onboarding/profile-check); event partners use it too.
-router.get('/profile-status', authenticate, requireRole('shop', 'worker', 'event_partner'), async (req, res, next) => {
-  try { res.json(await require('./profile-check').profileStatus(req.auth.role, req.auth.sub)); } catch (err) { next(err); }
-});
-router.get('/setup-journey', authenticate, requireRole('shop'), async (req, res, next) => {
-  try { res.json(await require('./profile-check').setupJourney(req.auth.sub)); } catch (err) { next(err); }
-});
-
-// The ServicePro dashboard for this partner's trades (onboarding/workspace); a shop's technician sees their shop's.
-router.get('/workspace', ...providerOnly, async (req, res, next) => {
-  try {
-    let owner = req.auth.role === 'shop' ? { kind: 'shop', id: req.auth.sub } : { kind: 'worker', id: req.auth.sub };
-    if (owner.kind === 'worker') {
-      const w = await require('../worker/worker.model').findById(req.auth.sub).select('shopId').lean();
-      if (w?.shopId) owner = { kind: 'shop', id: String(w.shopId) };
-    }
-    res.json(await require('./workspace').workspaceFor(owner));
-  } catch (err) { next(err); }
-});
-
 router.get('/domains', ...providerOnly, ctrl.listDomains);
 router.get('/lines', ...providerOnly, ctrl.listLines);
 router.get('/enrolments', ...providerOnly, ctrl.myEnrolments);
@@ -103,7 +83,6 @@ router.post(
     domainCode: Joi.string().max(60).allow('', null),
     proposedName: Joi.string().max(120).required(),
     description: Joi.string().max(1000).allow('', null),
-    packages: Joi.array().max(20).items(Joi.object({ name: Joi.string().trim().min(2).max(80).required(), minutes: Joi.number().integer().min(5).max(1440).required(), pricePaise: Joi.number().integer().min(100).max(100000000).required() })).default([]),
   })),
   ctrl.requestLine,
 );

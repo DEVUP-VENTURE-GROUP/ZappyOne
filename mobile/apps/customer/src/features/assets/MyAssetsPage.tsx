@@ -7,8 +7,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Clock, MapPin, Package, Plus, Trash2 } from 'lucide-react-native';
-import { useDeleteAssetMutation, useMyAssetHistoryQuery, useMyAssetsQuery } from '@zappy/core/api';
-import { partLine } from '@zappy/core/shared/partsRule';
+import { useDeleteAssetMutation, useMyAssetsQuery } from '@zappy/core/api';
 import { EmptyState, LoadingState, ScreenHeader, Text } from '@zappy/ui/components';
 import { toast } from '@zappy/ui/components/Toast';
 import { errText } from '@zappy/ui/lib/feedback';
@@ -21,26 +20,6 @@ import { VERTICAL_LABEL } from './assetLabels';
 
 interface Asset { _id: string; vertical: string; label?: string; brandName: string; modelName?: string; location?: { address?: string }; lastServicedAt?: string }
 
-interface HistoryJob { _id: string; status: string; reference: string; repairCode?: string; completedAt?: string; parts: { label: string; grade?: string; quantity?: number; warrantyDays?: number }[] }
-
-// What was done on this thing, job by job, with the parts that went in.
-function AssetHistory({ id }: { id: string }) {
-  const { data, isLoading } = useMyAssetHistoryQuery(id);
-  const jobs: HistoryJob[] = (data?.bookings || []).filter((b: HistoryJob) => b.status === 'COMPLETED');
-  if (isLoading) return <Text variant="caption" color={ink[400]}>Loading history…</Text>;
-  if (!jobs.length) return <Text variant="caption" color={ink[400]}>No finished jobs on this yet.</Text>;
-  return (
-    <View style={styles.history}>
-      {jobs.map((b) => (
-        <View key={b._id}>
-          <Text variant="caption" weight="semibold" color={ink[700]} style={styles.capitalize}>{(b.repairCode || 'Repair').replace(/_/g, ' ')} · {b.completedAt ? new Date(b.completedAt).toLocaleDateString('en-IN') : ''} · {b.reference}</Text>
-          {b.parts.map((p, i) => <Text key={i} variant="caption" color={ink[500]}>{partLine(p)}</Text>)}
-        </View>
-      ))}
-    </View>
-  );
-}
-
 export function MyAssetsPage() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -48,7 +27,6 @@ export function MyAssetsPage() {
   const { data, isLoading } = useMyAssetsQuery(undefined);
   const [remove] = useDeleteAssetMutation();
   const [showAdd, setShowAdd] = useState(false);
-  const [openId, setOpenId] = useState<string | null>(null);
   const assets: Asset[] = data?.assets || [];
   const back = () => (router.canGoBack() ? router.back() : router.replace('/profile' as never));
 
@@ -72,8 +50,6 @@ export function MyAssetsPage() {
                 {a.label ? <Text variant="caption" color={ink[500]}>{name}</Text> : null}
                 {a.location?.address ? <View style={styles.inline}><MapPin size={11} color={ink[400]} /><Text variant="caption" color={ink[400]}>{a.location.address}</Text></View> : null}
                 <View style={styles.inline}><Clock size={11} color={ink[400]} /><Text variant="caption" color={ink[400]}>{a.lastServicedAt ? `${t('assets.last', 'Last serviced')} ${new Date(a.lastServicedAt).toLocaleDateString('en-IN')}` : t('assets.never', 'No service on record yet')}</Text></View>
-                <Text variant="caption" weight="bold" color={zappy[600]} onPress={() => setOpenId(openId === a._id ? null : a._id)} accessibilityRole="button" style={styles.toggle}>{openId === a._id ? 'Hide history' : 'Service history and parts'}</Text>
-                {openId === a._id ? <AssetHistory id={a._id} /> : null}
               </View>
               <Pressable onPress={() => drop(a._id)} accessibilityRole="button" accessibilityLabel={t('common.delete', 'Delete')} hitSlop={8} style={styles.trash}><Trash2 size={16} color={slate[300]} /></Pressable>
             </View>
@@ -93,8 +69,5 @@ const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0, gap: 2 },
   inline: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
   trash: { padding: 6 },
-  toggle: { marginTop: spacing.xs },
-  history: { gap: spacing.sm, marginTop: spacing.xs, paddingLeft: spacing.sm, borderLeftWidth: 2, borderLeftColor: slate[100] },
-  capitalize: { textTransform: 'capitalize' },
   add: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, paddingVertical: spacing.base, borderRadius: radius.large, borderWidth: 2, borderStyle: 'dashed', borderColor: slate[300] },
 });

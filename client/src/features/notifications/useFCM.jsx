@@ -72,7 +72,7 @@ export function useFCM() {
     if (!FIREBASE_CONFIGURED) {
       setPermState('not_configured');
       if (import.meta.env.DEV) {
-        console.warn('[FCM] Firebase env vars not set - push notifications disabled.\n'
+        console.warn('[FCM] Firebase env vars not set — push notifications disabled.\n'
           + 'Set VITE_FIREBASE_* in .env and restart Vite.');
       }
       return;
@@ -144,7 +144,7 @@ export function useFCM() {
       });
 
       if (!fcmToken) {
-        if (import.meta.env.DEV) console.warn('[FCM] getToken returned empty - VAPID key wrong or SW not activated?');
+        if (import.meta.env.DEV) console.warn('[FCM] getToken returned empty — VAPID key wrong or SW not activated?');
         return;
       }
 

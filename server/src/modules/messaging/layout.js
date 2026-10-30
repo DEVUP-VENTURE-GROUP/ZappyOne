@@ -100,7 +100,7 @@ function render({
     ...(items.length ? ['', ...items.map(([l, a]) => `${l}  ${a}`), ...(total ? [`${total[0]}  ${total[1]}`] : [])] : []),
     button ? `\n${button.label}: ${button.url}` : null,
     note ? `\n${note}` : null,
-    '', '-', s.legalName ? `${s.brandName}, a venture of ${s.legalName}` : s.brandName, contact ? `Need help? ${contact}.` : null,
+    '', '—', s.legalName ? `${s.brandName}, a venture of ${s.legalName}` : s.brandName, contact ? `Need help? ${contact}.` : null,
     promotional ? `Stop these emails: ${site}/notification-prefs` : null,
   ].filter((l) => l !== null).join('\n');
 

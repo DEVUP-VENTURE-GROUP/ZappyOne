@@ -94,7 +94,7 @@ async function blockCustomer(req, res, next) {
     await Worker.updateOne({ _id: req.auth.sub }, { $addToSet: { 'trust.blockedFromUserIds': uid } });
     // Log the block with context for admin review
     const logger = require('../../../core/logger');
-    logger.info({ workerId: req.auth.sub, userId, orderId, reason }, '[WORKER] Customer blocked by worker - pending admin review');
+    logger.info({ workerId: req.auth.sub, userId, orderId, reason }, '[WORKER] Customer blocked by worker — pending admin review');
     res.json({ ok: true });
   } catch (err) { next(err); }
 }

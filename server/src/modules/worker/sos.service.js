@@ -66,7 +66,7 @@ async function triggerSOS({ workerId, lat: givenLat, lng: givenLng, orderId, job
     orderId:     order ? String(order._id) : null,
     service:     order?.service || null,
     address:     order?.pickupLocation?.address || null,
-    message:     message || 'SOS triggered - worker needs assistance',
+    message:     message || 'SOS triggered — worker needs assistance',
     type,        // 'worker_sos' | 'pet_emergency' (extensible)
     triggeredAt: new Date(now).toISOString(),
     acknowledged: false,
@@ -113,7 +113,7 @@ async function triggerSOS({ workerId, lat: givenLat, lng: givenLng, orderId, job
     notifService.notify({
       recipient: { kind: 'user', id: order.userId },
       type:  'worker_wellness',
-      title: '🆘 Safety alert - your worker needs help',
+      title: '🆘 Safety alert — your worker needs help',
       body:  'Your service provider has flagged an emergency. If you can, call 112 and help. Support has been notified.',
       deepLink: order.link || `/orders/${order._id}`,
       data: { callEmergency: true, workerPhone: worker.phone },
@@ -129,7 +129,7 @@ async function triggerSOS({ workerId, lat: givenLat, lng: givenLng, orderId, job
       raisedBy: { kind: 'worker', id: worker._id },
       category: 'other',
       orderId:  orderId ? order?._id : undefined, // only a real Order; other kinds are named below
-      subject:  `🆘 URGENT SOS - ${worker.name}`,
+      subject:  `🆘 URGENT SOS — ${worker.name}`,
       description: [
         `Worker ${worker.name} (${worker.phone}) triggered SOS at ${new Date(now).toISOString()}.`,
         lat && lng ? `Location: https://maps.google.com/?q=${lat},${lng}` : '',
@@ -150,7 +150,7 @@ async function triggerSOS({ workerId, lat: givenLat, lng: givenLng, orderId, job
       if (!raw) return;
       const stored = JSON.parse(raw);
       if (!stored.acknowledged) {
-        logger.error({ incidentKey, workerName: worker.name }, '[SOS] UNACKNOWLEDGED - RE-ESCALATING');
+        logger.error({ incidentKey, workerName: worker.name }, '[SOS] UNACKNOWLEDGED — RE-ESCALATING');
         await redis.publish('notification:admin:ops', JSON.stringify({
           type:  'worker_sos_unacknowledged',
           title: `🆘🔁 UNACKNOWLEDGED SOS: ${worker.name}`,
@@ -229,7 +229,7 @@ async function triggerCustomerSOS({ userId, orderId, jobId, lat, lng, message })
     orderId: order ? String(order._id) : null,
     service: order?.service || null,
     address: order?.pickupLocation?.address || null,
-    message: message || 'SOS triggered - customer needs assistance',
+    message: message || 'SOS triggered — customer needs assistance',
     triggeredAt: new Date(now).toISOString(),
     acknowledged: false,
     acknowledgedBy: null,
@@ -267,7 +267,7 @@ async function triggerCustomerSOS({ userId, orderId, jobId, lat, lng, message })
       raisedBy: { kind: 'user', id: user._id },
       category: 'other',
       orderId: orderId ? order?._id : undefined,
-      subject: `🆘 URGENT CUSTOMER SOS - ${user.name}`,
+      subject: `🆘 URGENT CUSTOMER SOS — ${user.name}`,
       description: [
         `Customer ${user.name} (${user.phone}) triggered SOS at ${new Date(now).toISOString()}.`,
         lat && lng ? `Location: https://maps.google.com/?q=${lat},${lng}` : '',
@@ -289,7 +289,7 @@ async function triggerCustomerSOS({ userId, orderId, jobId, lat, lng, message })
       if (!raw) return;
       const stored = JSON.parse(raw);
       if (!stored.acknowledged) {
-        logger.error({ incidentKey, customerName: user.name }, '[SOS] CUSTOMER SOS UNACKNOWLEDGED - RE-ESCALATING');
+        logger.error({ incidentKey, customerName: user.name }, '[SOS] CUSTOMER SOS UNACKNOWLEDGED — RE-ESCALATING');
         await redis.publish('notification:admin:ops', JSON.stringify({
           type: 'customer_sos_unacknowledged',
           title: `🆘🔁 UNACKNOWLEDGED CUSTOMER SOS: ${user.name}`,

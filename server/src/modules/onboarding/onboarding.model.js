@@ -52,8 +52,6 @@ const serviceDomainSchema = new mongoose.Schema(
     /** Hero image shown to customers. Blank falls back to the icon. */
     imageUrl: { type: String, default: '' },
     displayOrder: { type: Number, default: 0 },
-    // The ServicePro dashboard for partners in this domain: extra sections to show and what each is called (onboarding/workspace).
-    dashboard: { home: { type: String, default: undefined }, modules: { type: [String], default: undefined }, labels: { type: mongoose.Schema.Types.Mixed, default: undefined } },
     isActive: { type: Boolean, default: true, index: true },
     isArchived: { type: Boolean, default: false, index: true },
   },
@@ -105,11 +103,6 @@ const serviceLineSchema = new mongoose.Schema(
      * the home page needing to know the mapping.
      */
     customerPath: { type: String, default: '' },
-    // What the customer picks first on a package line (home size, AC type, vehicle), and the thing being serviced, for screen copy.
-    typeWord: { type: String, default: '', maxlength: 40 },
-    thing: { type: String, default: '', maxlength: 40 },
-    // Created from admin or an approved provider proposal (repair/package-lines), not a seed file.
-    packageDef: { type: mongoose.Schema.Types.Mixed, default: null },
     tagline: { type: String, default: '' },
     /**
      * Which character artwork the home grid should use. Falls back to the
@@ -318,8 +311,6 @@ const serviceLineRequestSchema = new mongoose.Schema(
     domainCode: { type: String, default: '', lowercase: true, index: true },
     proposedName: { type: String, required: true, trim: true, maxlength: 120 },
     description: { type: String, default: '', maxlength: 1000 },
-    // What the provider would offer: package name, how long it takes and their price; admin turns it into a bookable line on approval.
-    packages: { type: [{ _id: false, name: String, minutes: Number, pricePaise: Number }], default: [] },
     /** How many providers asked for the same thing — demand, not noise. */
     requestCount: { type: Number, default: 1 },
 

@@ -21,7 +21,7 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 const shortDate = (d: string) => new Date(d).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
 
 interface Month { _id: { year: number; month: number }; netPaise: number }
-interface Recent { _id: string; title: string; eventDate: string; grossPaise: number; netPaise: number }
+interface Recent { _id: string; title: string; eventDate: string; grossPaise: number; commissionPct: number; netPaise: number }
 
 export function PartnerEarningsPage() {
   const router = useRouter();
@@ -33,6 +33,7 @@ export function PartnerEarningsPage() {
   if (isError) return <View style={styles.page}>{header}<ErrorState onRetry={refetch} /></View>;
 
   const d = data || {};
+  const pct: number = d.commissionPct ?? 10;
   const monthly: Month[] = [...(d.monthly || [])].reverse();
   const peak = Math.max(1, ...monthly.map((m) => m.netPaise || 0));
 
@@ -40,11 +41,11 @@ export function PartnerEarningsPage() {
     <View style={styles.page}>
       {header}
       <ScrollView contentContainerStyle={styles.body} refreshControl={<RefreshControl refreshing={isFetching && !isLoading} onRefresh={refetch} />}>
-        <Text variant="bodySmall" color={ink[500]}>What each booking paid and what reached you.</Text>
+        <Text variant="bodySmall" color={ink[500]}>ZappyOne keeps {pct}% of each booking. You keep {100 - pct}%.</Text>
         <View style={styles.stats}>
           <OverviewStat label="You earned" value={formatPaise(d.netPaise)} hint={`${d.totalJobs || 0} completed events`} />
           <OverviewStat label="Customers paid" value={formatPaise(d.grossPaise)} />
-          <OverviewStat label="ZappyOne fee" value={formatPaise(d.platformPaise)} />
+          <OverviewStat label="ZappyOne commission" value={formatPaise(d.platformPaise)} />
           <OverviewStat label="Coming up" value={formatPaise(d.upcomingNetPaise)} hint={`${d.upcomingCount || 0} accepted bookings`} />
         </View>
         {/* Penalties for cancelled bookings come off what you are paid (server events/partner-cancel). */}
@@ -72,7 +73,7 @@ export function PartnerEarningsPage() {
                 <Pressable key={r._id} onPress={() => router.push(`/partner/bookings/${r._id}` as never)} android_ripple={RIPPLE} accessibilityRole="button" style={styles.recent}>
                   <View style={styles.flex}>
                     <Text variant="bodySmall" weight="semibold" numberOfLines={1}>{r.title}</Text>
-                    <Text variant="caption" color={ink[500]}>{shortDate(r.eventDate)}, paid {formatPaise(r.grossPaise)}</Text>
+                    <Text variant="caption" color={ink[500]}>{shortDate(r.eventDate)}, paid {formatPaise(r.grossPaise)}, {r.commissionPct}%</Text>
                   </View>
                   <Text variant="bodySmall" weight="bold">{formatPaise(r.netPaise)}</Text>
                 </Pressable>

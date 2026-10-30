@@ -165,15 +165,12 @@ async function serviceabilityAt({ lat, lng }) {
     // ones nobody covers yet read as coming soon (and record demand).
     const status = !covered.length ? (region ? 'coming_soon' : 'not_here')
       : covered.some((l) => l.openNow) ? 'available' : 'closed_now';
-    // Verified pros open right now who cover this point: the live count home shows.
-    const prosNearby = new Set([...coveredOwners.values()].flat().filter((k) => open.has(k) && !blocked.has(k))).size;
     result = {
       status,
       region,
       zone: zone ? { name: zone.name, city: zone.city } : null,
       areas,
       lines: covered,
-      prosNearby,
       ...(status === 'closed_now' && { nextOpening }),
     };
   }

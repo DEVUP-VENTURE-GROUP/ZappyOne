@@ -61,9 +61,9 @@ export default function Disputes() {
                 <tr key={d._id} className="hover:bg-slate-50/60 transition-colors">
                   <Td mono>#{d._id.slice(-8)}</Td>
                   <Td><span className="capitalize">{d.category?.replace(/_/g, ' ')}</span></Td>
-                  <Td muted className="capitalize">{d.raisedBy?.kind} - {d.raisedBy?.id?.toString().slice(-6)}</Td>
+                  <Td muted className="capitalize">{d.raisedBy?.kind} — {d.raisedBy?.id?.toString().slice(-6)}</Td>
                   <Td><StatusBadge status={d.status} /></Td>
-                  <Td muted>{d.slaDeadline ? fmtDate(d.slaDeadline) : '-'}</Td>
+                  <Td muted>{d.slaDeadline ? fmtDate(d.slaDeadline) : '—'}</Td>
                   <Td muted>{fmtDate(d.createdAt)}</Td>
                   <Td>
                     {d.status === 'open' || d.status === 'in_review' ? (
@@ -74,7 +74,7 @@ export default function Disputes() {
                         Resolve
                       </button>
                     ) : (
-                      <span className="text-xs text-slate-400">{d.resolution?.type?.replace(/_/g, ' ') || '-'}</span>
+                      <span className="text-xs text-slate-400">{d.resolution?.type?.replace(/_/g, ' ') || '—'}</span>
                     )}
                   </Td>
                 </tr>

@@ -59,7 +59,7 @@ function ShopHandoffBanner({ shopId, reason, onRespond, loading }) {
         <div className="flex-1 min-w-0">
           <p className="font-bold text-sm text-zappy-900">This repair needs shop tools</p>
           <p className="text-xs text-zappy-700 mt-0.5 leading-relaxed">
-            {reason ? `${reason} - ` : ''}Your worker suggests sending it to <span className="font-semibold">{shopName}</span>. Bring it there to continue.
+            {reason ? `${reason} — ` : ''}Your worker suggests sending it to <span className="font-semibold">{shopName}</span>. Bring it there to continue.
           </p>
         </div>
       </div>
@@ -181,7 +181,7 @@ export default function OrderTrackingPage() {
     setWorkerConfirmed(true);
     setShowArrivedSheet(false);
     try { sessionStorage.setItem(ssKey, '1'); } catch {}
-    toast.success('OTP revealed - share it with your worker to start');
+    toast.success('OTP revealed — share it with your worker to start');
   }
 
   useOrderSocket(order?._id);
@@ -282,10 +282,10 @@ export default function OrderTrackingPage() {
       const result = await cancelOrder({ id, reason: cancelReason || 'user_cancelled' }).unwrap();
       setShowCancel(false); setCancelReason('');
       if (result.feeRupees > 0) {
-        toast(`Order cancelled - ₹${result.feeRupees} cancellation fee charged`,
+        toast(`Order cancelled — ₹${result.feeRupees} cancellation fee charged`,
           { id: 'order-cancel', duration: 5000 });
       } else {
-        toast.success('Order cancelled - no charge', { id: 'order-cancel' });
+        toast.success('Order cancelled — no charge', { id: 'order-cancel' });
       }
       refetch();
     } catch (err) {
@@ -319,10 +319,10 @@ export default function OrderTrackingPage() {
         body: JSON.stringify({ lat: pickup?.lat, lng: pickup?.lng }),
       });
       if (!res.ok) throw new Error(String(res.status));
-      toast('SOS sent - 112 dialled and our safety team has been alerted', { duration: 8000 });
+      toast('SOS sent — 112 dialled and our safety team has been alerted', { duration: 8000 });
     } catch {
       // Never claim we were told when we were not.
-      toast.error('112 dialled. We could not reach ZappyOne support - please call us on the help line too.', { duration: 10000 });
+      toast.error('112 dialled. We could not reach ZappyOne support — please call us on the help line too.', { duration: 10000 });
     }
   }
 
@@ -395,7 +395,7 @@ export default function OrderTrackingPage() {
               }`}>
                 <Loader2 size={12} className="animate-spin shrink-0" />
                 {socketStatus === 'offline'
-                  ? 'Live updates unavailable - showing last known state'
+                  ? 'Live updates unavailable — showing last known state'
                   : 'Reconnecting live updates…'}
               </div>
             </motion.div>
@@ -423,7 +423,7 @@ export default function OrderTrackingPage() {
               onRespond={async (accept) => {
                 try {
                   await respondShopHandoff({ id: order._id, accept }).unwrap();
-                  toast.success(accept ? 'Confirmed - bring your device to the shop' : 'Declined - continuing on-site');
+                  toast.success(accept ? 'Confirmed — bring your device to the shop' : 'Declined — continuing on-site');
                 } catch (err) { toast.error(err?.data?.error || 'Failed to respond'); }
               }}
               loading={respondingHandoff}
@@ -446,8 +446,8 @@ export default function OrderTrackingPage() {
                   You're one of our <span className="text-amber-400">early pioneers</span> in this location
                 </p>
                 <div className="rounded-xl px-4 py-3 mb-5 text-xs text-zappy-200 text-center leading-relaxed" style={{ background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.2)' }}>
-                  No ZappyOne workers are in your zone <strong className="text-white">yet</strong> - but we're expanding fast.
-                  <br /><span className="text-amber-300 font-semibold">Sit tight - it won't be long.</span>
+                  No ZappyOne workers are in your zone <strong className="text-white">yet</strong> — but we're expanding fast.
+                  <br /><span className="text-amber-300 font-semibold">Sit tight — it won't be long.</span>
                 </div>
                 <div className="space-y-2.5">
                   <motion.button whileTap={{ scale: 0.97 }}
@@ -534,7 +534,7 @@ export default function OrderTrackingPage() {
                       <ShieldCheck size={18} strokeWidth={2} className="text-slate-400" />
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm font-extrabold text-slate-700">Service OTP - locked</p>
+                      <p className="text-sm font-extrabold text-slate-700">Service OTP — locked</p>
                       <p className="text-xs text-slate-400 mt-0.5">Revealed when your worker marks arrival</p>
                     </div>
                     <div className="flex gap-1.5 shrink-0">
@@ -566,7 +566,7 @@ export default function OrderTrackingPage() {
                   style={{ background: 'linear-gradient(#7c3aed, #7c3aed)', boxShadow: '0 12px 32px -4px rgba(124,58,237,0.4)' }}>
                   <div className="px-4 pt-4 pb-2 flex items-center gap-2">
                     <ShieldCheck size={15} strokeWidth={2} className="text-white/80" />
-                    <p className="text-xs font-extrabold text-white/80 uppercase tracking-widest">Worker is here - share your OTP</p>
+                    <p className="text-xs font-extrabold text-white/80 uppercase tracking-widest">Worker is here — share your OTP</p>
                   </div>
                   <div className="flex justify-center gap-3 px-4 pb-3">
                     {String(order.otp).split('').map((digit, i) => (
@@ -752,7 +752,7 @@ export default function OrderTrackingPage() {
                         <p className={`font-bold text-sm ${cancelPreview.isFree ? 'text-green-800' : 'text-red-800'}`}>
                           {cancelPreview.isFree
                             ? cancelPreview.secsLeft > 0
-                              ? `Free cancel - ${Math.floor(cancelPreview.secsLeft / 60)}m ${cancelPreview.secsLeft % 60}s left`
+                              ? `Free cancel — ${Math.floor(cancelPreview.secsLeft / 60)}m ${cancelPreview.secsLeft % 60}s left`
                               : 'No cancellation fee'
                             : `₹${cancelPreview.feeRupees} cancellation fee`}
                         </p>
@@ -810,10 +810,10 @@ export default function OrderTrackingPage() {
                     <motion.button onClick={triggerSOS} whileTap={{ scale: 0.97 }}
                       className="w-full h-14 rounded-2xl bg-red-600 text-white font-extrabold text-base flex items-center justify-center gap-2.5"
                       style={{ boxShadow: '0 8px 24px rgba(220,38,38,0.4)' }}>
-                      <ShieldAlert size={20} strokeWidth={2.5} /> Call 112 - I Need Help
+                      <ShieldAlert size={20} strokeWidth={2.5} /> Call 112 — I Need Help
                     </motion.button>
                     <button onClick={() => setShowSOSConfirm(false)} className="w-full h-12 rounded-2xl border border-slate-200 text-slate-600 font-semibold text-sm hover:bg-slate-50 transition">
-                      Cancel - I'm safe
+                      Cancel — I'm safe
                     </button>
                   </div>
                 </div>
@@ -895,7 +895,7 @@ export default function OrderTrackingPage() {
                       <motion.button onClick={confirmWorkerArrived} whileTap={{ scale: 0.97 }}
                         className="w-full h-14 rounded-2xl text-white font-extrabold text-base flex items-center justify-center gap-2.5"
                         style={{ background: 'linear-gradient(#7c3aed, #7c3aed)', boxShadow: '0 8px 24px rgba(124,58,237,0.4)' }}>
-                        <CheckCircle2 size={20} strokeWidth={2.5} /> Yes, they're here - show OTP
+                        <CheckCircle2 size={20} strokeWidth={2.5} /> Yes, they're here — show OTP
                       </motion.button>
                       <button onClick={() => { clearInterval(countdownRef.current); setWorkerNotHereMode(true); }}
                         className="w-full h-12 rounded-2xl border border-slate-200 text-slate-600 font-semibold text-sm hover:bg-slate-50 transition">
@@ -908,7 +908,7 @@ export default function OrderTrackingPage() {
                         <AlertCircle size={18} strokeWidth={2} className="text-red-500 shrink-0 mt-0.5" />
                         <div>
                           <p className="text-sm font-extrabold text-red-800">Worker hasn't arrived?</p>
-                          <p className="text-xs text-red-500 mt-0.5">Call them first - sometimes GPS delay causes an early ping. If they're genuinely not there, report it.</p>
+                          <p className="text-xs text-red-500 mt-0.5">Call them first — sometimes GPS delay causes an early ping. If they're genuinely not there, report it.</p>
                         </div>
                       </div>
                       {order.workerId && (
@@ -918,7 +918,7 @@ export default function OrderTrackingPage() {
                       )}
                       <div className="flex gap-2">
                         <button onClick={() => setWorkerNotHereMode(false)} className="flex-1 h-10 rounded-xl bg-slate-100 text-slate-700 text-sm font-semibold">Back</button>
-                        <button onClick={() => { setShowArrivedSheet(false); setWorkerNotHereMode(false); toast('Sheet closed - tap "Confirm" when ready'); }}
+                        <button onClick={() => { setShowArrivedSheet(false); setWorkerNotHereMode(false); toast('Sheet closed — tap "Confirm" when ready'); }}
                           className="flex-1 h-10 rounded-xl bg-slate-100 text-slate-700 text-sm font-semibold">Wait & check later</button>
                       </div>
                     </div>

@@ -37,11 +37,9 @@ async function listDomains() {
  * "vehicles are opening soon" is useful, and lets us measure demand. They are
  * simply not enrollable — see `enrol()`.
  */
-// Staff-only services belong to ZappyOne staff only while own staff runs; in version 1 (switch off) verified partners take them.
-const staffOnlyApplies = () => require('../feature-flags/feature-flag.service').isEnabled('own_staff');
-
 async function listLines({ domainCode, providerKind = null, staff = false } = {}) {
-  const filter = { isActive: true, isArchived: false, ...(staff || !(await staffOnlyApplies()) ? {} : { staffOnly: { $ne: true } }) };
+  // Staff-only services are listed for ZappyOne staff (already approved for them), never for partners.
+  const filter = { isActive: true, isArchived: false, ...(staff ? {} : { staffOnly: { $ne: true } }) };
   if (domainCode) filter.domainCode = String(domainCode).toLowerCase();
   if (providerKind) filter.providerKinds = providerKind;
 
@@ -124,11 +122,11 @@ async function enrol({ owner, providerKind, lineCode }) {
 
   if (line.status !== 'live') {
     throw httpError(
-      `${line.name} is not open for providers yet - we will notify you when it is.`,
+      `${line.name} is not open for providers yet — we will notify you when it is.`,
       409, 'LINE_NOT_LIVE',
     );
   }
-  if (line.staffOnly && await staffOnlyApplies()) {
+  if (line.staffOnly) {
     throw httpError(`${line.name} is done by ZappyOne staff only`, 409, 'STAFF_ONLY_LINE');
   }
   if (!line.providerKinds.includes(providerKind)) {
@@ -215,12 +213,6 @@ async function submitForReview({ owner, enrolmentId }) {
   if (enrolment.status === 'approved') {
     throw httpError('This line is already approved', 409, 'ALREADY_APPROVED');
   }
-  // A business's service is verified only once its profile is complete (onboarding/profile-check); a technician's identity travels with the application itself.
-  const status = owner.kind === 'shop' ? await require('./profile-check').profileStatus('shop', owner.id) : { missing: [] };
-  // Identity documents arrive with the application itself, so only the business details are required first.
-  const profile = { missing: status.missing.filter((m) => m.key !== 'kyc') };
-  profile.complete = profile.missing.length === 0;
-  if (!profile.complete) throw httpError(`Finish your profile first: ${profile.missing.map((m) => m.label.toLowerCase()).join(', ')}.`, 409, 'PROFILE_INCOMPLETE', { missing: profile.missing });
 
   await carryIdentity(enrolment);
   const { set } = await resolveRequirements({
@@ -352,7 +344,7 @@ async function decide({ enrolmentId, decision, note = '', adminId, docCodes = []
 
 /* "My service isn't listed" */
 
-async function requestLine({ owner, providerKind, domainCode = '', proposedName, description = '', packages = [] }) {
+async function requestLine({ owner, providerKind, domainCode = '', proposedName, description = '' }) {
   const filter = {
     ...ownerFilter(owner),
     proposedName: new RegExp(`^${String(proposedName).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i'),
@@ -367,7 +359,6 @@ async function requestLine({ owner, providerKind, domainCode = '', proposedName,
     domainCode: String(domainCode || '').toLowerCase(),
     proposedName,
     description,
-    packages,
   });
   return { request, deduped: false };
 }

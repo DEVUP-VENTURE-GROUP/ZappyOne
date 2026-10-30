@@ -98,8 +98,6 @@ async function submitQuote({
   const basePaise = agreed && !replacing ? snap.subtotalPaise : 0;
   const extraPaise = priced.reduce((sum, i) => sum + i.amountPaise, 0);
   isAdditional = isAdditional || (agreed && !replacing);
-  // Anything above what the customer already agreed is shown with a photo of what was found, or not sent at all: the price at the door never grows on a word alone.
-  if ((isAdditional || replacing) && !diagnosisPhotos.length) throw httpError('Add a photo of what you found, so the customer can see why it costs more.', 400, 'PHOTO_REQUIRED');
 
   /*
    * The agreed work plus the new lines, the booking's platform fee (charged
@@ -207,7 +205,7 @@ async function submitQuote({
 }
 
 /** Customer decision on a quote. Approval locks the figure permanently. */
-async function respondToQuote({ quoteId, userId, decision, reason = '', returnOldParts = false }) {
+async function respondToQuote({ quoteId, userId, decision, reason = '' }) {
   const quote = await RepairQuote.findById(quoteId);
   if (!quote) throw httpError('Quote not found', 404, 'NOT_FOUND');
   if (String(quote.userId) !== String(userId)) throw httpError('You do not have access to this quote', 403, 'FORBIDDEN');
@@ -253,17 +251,15 @@ async function respondToQuote({ quoteId, userId, decision, reason = '', returnOl
 
     // The approved quote becomes the booking's authoritative price. The original
     // estimate is left intact in history — it is not edited, it is superseded.
-    const agreedWork = quote.basePaise ? Math.min(quote.basePaise, booking.priceSnapshot?.commissionBasePaise ?? quote.basePaise) : 0;
-    const workBase = agreedWork + (quote.items || []).filter((i) => i.kind !== 'part').reduce((a, i) => a + (i.amountPaise || 0), 0);
     booking.priceSnapshot = {
       ...booking.priceSnapshot,
       subtotalPaise: quote.subtotalPaise,
       platformFeePaise: quote.platformFeePaise || 0,
       discountPaise: quote.discountPaise || 0,
       taxPaise: quote.taxPaise,
-      // ZappyOne's cut follows the work actually approved, at the admin rate; parts on the quote carry none.
-      commissionPaise: await require('../../../shop/partner-commission').commissionOn(booking, workBase, cfg.commissionPct),
-      commissionBasePaise: workBase,
+      // ZappyOne's cut follows the work actually approved, at the admin rate.
+      commissionPaise: await require('../../../shop/partner-commission').commissionOn(booking, quote.subtotalPaise, cfg.commissionPct),
+      commissionBasePaise: quote.subtotalPaise || 0,
       inspectionCreditPaise: creditPaise,
       totalPaise: Math.max(0, quote.totalPaise - creditPaise),
       warrantyDays: quote.warrantyDays,
@@ -277,7 +273,6 @@ async function respondToQuote({ quoteId, userId, decision, reason = '', returnOl
 
     // A credited fee means the earlier payment no longer settles the booking.
     if (creditPaise > 0) booking.paymentStatus = 'unpaid';
-    if (returnOldParts && (quote.items || []).some((i) => i.kind === 'part')) booking.returnOldParts = true;
     booking.activeQuoteId = quote._id;
     // An inspection becomes the repair that was quoted and approved.
     if (!booking.repairCode && quote.repairCode) booking.repairCode = quote.repairCode;

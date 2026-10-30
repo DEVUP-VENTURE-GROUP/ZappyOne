@@ -144,13 +144,18 @@ describe('provider portal sessions', () => {
     expect(res.body).toMatchObject({ accessToken: 'at', refreshToken: 'ev1', isNew: false });
   });
 
-  test('event partners sign in on the ServicePro website, in its own cookie, and stay off the Rakshak app', async () => {
-    authService.loginEventPartnerWithOtp.mockResolvedValue({ accessToken: 'at', refreshToken: 'ev1', partner: { _id: 'p1' }, isNew: true });
+  test('event partners stay off the ServicePro website and the Rakshak app', async () => {
     const web = await request(app).post('/api/auth/partner/login').set('X-Client-Type', 'servicepro').send({ phone: '9000000002', otp: '1234' });
-    expect(web.status).toBe(200);
-    expect(web.body.refreshToken).toBeUndefined();
-    expect(web.headers['set-cookie'].join(';')).toMatch(/zappy_sp_rt=ev1/);
     const rakshak = await request(app).post('/api/auth/partner/login').set('X-Client-Type', 'mobile').set('X-App', 'rakshak').send({ phone: '9000000002', otp: '1234' });
-    expect(rakshak.body.code).toBe('WRONG_PORTAL');
+    expect([web.body.code, rakshak.body.code]).toEqual(['WRONG_PORTAL', 'WRONG_PORTAL']);
+    expect(authService.loginEventPartnerWithOtp).not.toHaveBeenCalled();
+  });
+
+  test('the events website never gets the refresh token in the body', async () => {
+    authService.loginEventPartnerWithOtp.mockResolvedValue({ accessToken: 'at', refreshToken: 'ev1', partner: { _id: 'p1' }, isNew: true });
+    const res = await request(app).post('/api/auth/partner/login').set('X-Client-Type', 'events').send({ phone: '9000000002', otp: '1234' });
+    expect(res.status).toBe(200);
+    expect(res.body.refreshToken).toBeUndefined();
+    expect(res.headers['set-cookie'].join(';')).toMatch(/zappy_ev_rt=ev1/);
   });
 });

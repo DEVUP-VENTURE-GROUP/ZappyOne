@@ -178,7 +178,6 @@ export default function WorkerHelpingJobPage() {
             collecting={collecting}
             onCollect={recordCash}
             what={due.itemsPaise > 0 ? 'items and service fee' : 'service fee'}
-            jobId={task._id}
           />
         )}
 
@@ -223,7 +222,7 @@ function ShoppingExecution({ task, onChanged, disabled }) {
       onChanged();
     } catch (err) {
       if (err?.data?.code === 'APPROVAL_REQUIRED') {
-        toast.error('That price is above what the customer approved - propose it as an alternative instead');
+        toast.error('That price is above what the customer approved — propose it as an alternative instead');
       } else {
         toast.error(err?.data?.error || 'Could not save this');
       }
@@ -243,11 +242,11 @@ function ShoppingExecution({ task, onChanged, disabled }) {
     if (!advanceAmount) return;
     try {
       await recordAdvance({ id: task._id, amountPaise: Math.round(Number(advanceAmount) * 100) }).unwrap();
-      toast.success('Advance recorded - you will be reimbursed on settlement');
+      toast.success('Advance recorded — you will be reimbursed on settlement');
       setAdvanceAmount('');
       onChanged();
     } catch (err) {
-      toast.error(err?.data?.error || 'That is more than the advance limit - the customer must fund it');
+      toast.error(err?.data?.error || 'That is more than the advance limit — the customer must fund it');
     }
   }
 
@@ -381,7 +380,7 @@ function ReturnExecution({ task, onChanged }) {
   if (done) {
     return (
       <div className="rounded-2xl border-2 border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
-        Handover recorded - the merchant's own process takes it from here.
+        Handover recorded — the merchant's own process takes it from here.
       </div>
     );
   }

@@ -71,7 +71,7 @@ const SPECS = {
   },
   models: {
     title: 'Models',
-    hint: 'Belongs to a brand. Order decides where it sits in the customer list - lower is higher up, and 0 pins it to the top. Laptops need a Family or they cannot be reached in the customer flow. Comma-separated lists for multi-value columns.',
+    hint: 'Belongs to a brand. Order decides where it sits in the customer list — lower is higher up, and 0 pins it to the top. Laptops need a Family or they cannot be reached in the customer flow. Comma-separated lists for multi-value columns.',
     fields: [
       { key: 'brandCode', label: 'Brand' },
       { key: 'name', label: 'Model' },
@@ -104,7 +104,7 @@ const SPECS = {
   },
   problems: {
     title: 'Problems',
-    hint: 'What the CUSTOMER reports - a symptom, not a repair. "Requires diagnosis" forces a quote before any price is shown.',
+    hint: 'What the CUSTOMER reports — a symptom, not a repair. "Requires diagnosis" forces a quote before any price is shown.',
     fields: [
       { key: 'code', label: 'Code' },
       { key: 'name', label: 'Symptom' },
@@ -141,7 +141,7 @@ const SPECS = {
   },
   parts: {
     title: 'Parts',
-    hint: 'Never label an aftermarket part as genuine - quality grades carry that flag explicitly.',
+    hint: 'Never label an aftermarket part as genuine — quality grades carry that flag explicitly.',
     fields: [
       { key: 'sku', label: 'SKU' },
       { key: 'name', label: 'Part' },
@@ -158,7 +158,7 @@ const SPECS = {
   },
   'part-qualities': {
     title: 'Part Quality Grades',
-    hint: '"Genuine" is a legal claim - only set it for parts genuinely sourced through the OEM channel.',
+    hint: '"Genuine" is a legal claim — only set it for parts genuinely sourced through the OEM channel.',
     fields: [
       { key: 'code', label: 'Code' },
       { key: 'name', label: 'Grade' },
@@ -203,7 +203,7 @@ const SPECS = {
   },
   'product-types': {
     title: 'Product types',
-    hint: 'The kind of machine - laptop, gaming laptop, MacBook. Popular types surface first for customers.',
+    hint: 'The kind of machine — laptop, gaming laptop, MacBook. Popular types surface first for customers.',
     fields: [
       { key: 'code', label: 'Code' },
       { key: 'name', label: 'Name' },
@@ -215,7 +215,7 @@ const SPECS = {
   },
   'product-families': {
     title: 'Families',
-    hint: 'The product line - Pavilion, ThinkPad, ROG. Belongs to a brand, optionally scoped to a product type.',
+    hint: 'The product line — Pavilion, ThinkPad, ROG. Belongs to a brand, optionally scoped to a product type.',
     fields: [
       { key: 'brandCode', label: 'Brand' },
       { key: 'productTypeCode', label: 'Type' },
@@ -228,7 +228,7 @@ const SPECS = {
   },
   'product-series': {
     title: 'Series',
-    hint: 'A generation within a family - ThinkPad E Series, Pavilion 15. Used to group long model lists.',
+    hint: 'A generation within a family — ThinkPad E Series, Pavilion 15. Used to group long model lists.',
     fields: [
       { key: 'brandCode', label: 'Brand' },
       { key: 'familyCode', label: 'Family' },
@@ -240,7 +240,7 @@ const SPECS = {
   },
   configurations: {
     title: 'Configurations',
-    hint: 'The exact build of one model. This is where part compatibility resolves - two builds of the same laptop take different panels.',
+    hint: 'The exact build of one model. This is where part compatibility resolves — two builds of the same laptop take different panels.',
     fields: [
       { key: 'modelCode', label: 'Model' },
       { key: 'code', label: 'Code' },
@@ -535,7 +535,7 @@ function IdentificationQueue({ vertical }) {
         configurationCode: f.configurationCode || undefined,
         note: f.note || '',
       }).unwrap();
-      toast.success(status === 'identified' ? 'Identified - customer notified' : 'Closed');
+      toast.success(status === 'identified' ? 'Identified — customer notified' : 'Closed');
       refetch();
     } catch (err) {
       toast.error(err?.data?.error || 'Could not resolve this');
@@ -661,28 +661,28 @@ function Bookings({ vertical }) {
 
 const CONFIG_FIELDS = [
   { group: 'Price approval bands', keys: [
-    ['greenMaxDeviationPct', 'Green - auto-approve up to (%)'],
-    ['yellowMaxDeviationPct', 'Yellow - review up to (%)'],
+    ['greenMaxDeviationPct', 'Green — auto-approve up to (%)'],
+    ['yellowMaxDeviationPct', 'Yellow — review up to (%)'],
     ['autoApproveGreen', 'Auto-approve green prices', 'bool'],
     ['blockRed', 'Block red prices', 'bool'],
   ] },
   { group: 'Platform economics', keys: [
     ['commissionPct', 'Commission from provider (%)'],
     ['taxPct', 'Tax (%)'],
-    ['platformFeePaise', 'Platform fee - charged to customer (₹)', 'money'],
+    ['platformFeePaise', 'Platform fee — charged to customer (₹)', 'money'],
     ['diagnosisFeePaise', 'Inspection fee (₹)', 'money'],
     ['inspectionFeeCreditedOnRepair', 'Credit inspection fee against repair', 'bool'],
-    ['minJobPaise', 'Minimum job value - smaller jobs are topped up (₹, 0 = off)', 'money'],
+    ['minJobPaise', 'Minimum job value — smaller jobs are topped up (₹, 0 = off)', 'money'],
     ['groupDiscountPct', 'Discount on each extra item in one visit (%, 0 = off)'],
   ] },
   // Journeys: priced by distance, all of it to whoever travels (no commission).
-  { group: 'Visit fee - doorstep & roadside (provider travels)', keys: [
+  { group: 'Visit fee — doorstep & roadside (provider travels)', keys: [
     ['visitFreeKm', 'Free within (km)'],
     ['visitPerKmPaise', 'Per km after that (₹)', 'money'],
     ['visitBaseFeePaise', 'Base to turn up (₹)', 'money'],
     ['visitMaxFeePaise', 'Maximum visit fee (₹, 0 = no cap)', 'money'],
   ] },
-  { group: 'Pickup & return - device travels', keys: [
+  { group: 'Pickup & return — device travels', keys: [
     ['pickupFreeKm', 'Free within (km)'],
     ['pickupPerKmPaise', 'Per km after that (₹, each way)', 'money'],
     ['pickupBaseFeePaise', 'Base each way (₹)', 'money'],
@@ -715,7 +715,7 @@ function Configuration({ vertical }) {
       // Strip mongo bookkeeping so the server writes a clean new version.
       const { _id, __v, createdAt, updatedAt, version, supersededAt, ...payload } = cfg;
       await save({ ...payload, vertical }).unwrap();
-      toast.success('Configuration saved - a new version was written');
+      toast.success('Configuration saved — a new version was written');
       setDraft(null);
     } catch (err) { toast.error(err?.data?.error || 'Save failed'); }
   }
@@ -724,7 +724,7 @@ function Configuration({ vertical }) {
     <div className="space-y-4">
       <SectionHeader
         title="Configuration"
-        subtitle={`Version ${data?.config?.version ?? 1} - changes take effect immediately, no deployment needed.`}
+        subtitle={`Version ${data?.config?.version ?? 1} — changes take effect immediately, no deployment needed.`}
       >
         <button onClick={submit} disabled={saving || !draft}
           className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold text-sm px-4 py-2 rounded-lg transition">

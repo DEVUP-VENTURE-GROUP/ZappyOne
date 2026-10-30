@@ -108,7 +108,7 @@ async function recordDemand(lat, lng, service) {
       service: service || null,
       bucket: geoBucket(lat, lng),
     });
-  } catch (_) { /* non-fatal - heatmap degrades gracefully without this row */ }
+  } catch (_) { /* non-fatal — heatmap degrades gracefully without this row */ }
 
   // After recording demand, compute current surge and alert nearby workers if high
   try {

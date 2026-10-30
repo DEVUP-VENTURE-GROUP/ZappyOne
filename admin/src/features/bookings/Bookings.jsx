@@ -99,7 +99,7 @@ export default function Bookings() {
                 <tr key={`${r.source}:${r._id}`} onClick={() => setOpen({ source: r.source, id: r._id })} className="cursor-pointer hover:bg-slate-50/70">
                   <Td mono>{r.reference}</Td>
                   <Td><span className="font-medium text-slate-800">{r.serviceName}</span><span className="ml-1.5 text-[10px] uppercase text-slate-400">{r.source}</span></Td>
-                  <Td muted>{r.customer?.name || r.customer?.phone || '-'}</Td>
+                  <Td muted>{r.customer?.name || r.customer?.phone || '—'}</Td>
                   <Td muted>{r.provider ? r.provider.name : <span className="text-amber-600">Unassigned</span>}</Td>
                   <Td right>{fmt(r.totalPaise)}</Td>
                   <Td><span className={`rounded-full px-2 py-0.5 text-[11px] font-bold capitalize ${BUCKET_TONE[r.statusBucket]}`}>{label(r.status)}</span></Td>
@@ -141,7 +141,7 @@ export function BookingDrawer({ source, id, onClose }) {
         const cancel = { order: () => cancelOrder({ id, reason, refundFull: true }), repair: () => cancelRepair({ id, reason }),
           pet: () => cancelPet({ id, reason }), helping: () => cancelHelping({ id, reason }), event: () => cancelEvent({ id, reason }) }[source];
         await cancel().unwrap();
-        toast.success('Booking cancelled - the customer has been told');
+        toast.success('Booking cancelled — the customer has been told');
       }
       setConfirming(null); setReason(''); refetch();
     } catch (err) {
@@ -226,13 +226,13 @@ export function BookingDrawer({ source, id, onClose }) {
   );
 }
 
-function Person({ Icon, title, p, empty = '-' }) {
+function Person({ Icon, title, p, empty = '—' }) {
   return (
     <div className="rounded-xl bg-slate-50 p-3">
       <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">{title}</p>
       {p ? (
         <>
-          <p className="mt-1 flex items-center gap-1.5 font-semibold text-slate-800"><Icon size={12} />{p.name || '-'}</p>
+          <p className="mt-1 flex items-center gap-1.5 font-semibold text-slate-800"><Icon size={12} />{p.name || '—'}</p>
           {p.phone && <a href={`tel:${p.phone}`} className="text-xs text-zappy-600">{p.phone}</a>}
         </>
       ) : <p className="mt-1 text-xs text-amber-600">{empty}</p>}

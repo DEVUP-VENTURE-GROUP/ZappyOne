@@ -1,5 +1,4 @@
 import { useScrollTopOnChange } from '@shared/components/common/ScrollToTop';
-import { partsQuotedSeparately, PARTS_NOTE, PRIVACY_PLEDGE } from '@shared/utils/partsRule';
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useFlowStep, useDraft, readDraft, clearDraft, useSafeBack } from '../../hooks/useBookingFlow';
@@ -10,9 +9,10 @@ import { useProsArrive } from '@shared/customer/prosArrive';
 import { useSelector, useDispatch } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ArrowLeft, Search, ChevronRight, Loader2, ShieldCheck, Star, MapPin, Clock, Check, AlertTriangle, Smartphone, Laptop, Wrench, HelpCircle, X, Home, Truck, Lock, Store, EyeOff } from 'lucide-react';
+  ArrowLeft, Search, ChevronRight, Loader2, ShieldCheck, Star, MapPin, Clock, Check, AlertTriangle, Smartphone, Laptop, Wrench, HelpCircle, X, Home, Truck, Lock, Store,
+} from 'lucide-react';
 import {
-  useRepairBrandsQuery, useRepairModelsQuery, useRepairProblemsQuery, useRepairVerticalsQuery,
+  useRepairBrandsQuery, useRepairModelsQuery, useRepairProblemsQuery,
   useRepairProductTypesQuery, useRepairFamiliesQuery, useRepairConfigurationsQuery,
   useSubmitModelIdentificationMutation, useMyModelIdentificationsQuery,
   useSubmitRepairDiagnosticMutation, useRepairProvidersQuery, useRepairPricePreviewQuery,
@@ -37,8 +37,7 @@ import { ProblemLayout } from './ProblemCard';
 import { usePayBooking } from '@shared/hooks/usePayBooking';
 import { billExtras, chosenPrice, freeVisit, totalOf } from '@shared/customer/repairBill';
 import { useCheckoutDraft } from '@shared/customer/useCheckoutDraft';
-import { groupItems, itemFrom, typeWordOf } from '@shared/customer/repairBasket';
-import StorefrontStrip from '../providers/StorefrontStrip';
+import { groupItems, itemFrom, PACKAGE_TYPE_WORD } from '@shared/customer/repairBasket';
 import { useRepairBasket } from './basket/useRepairBasket';
 import BasketBar from './basket/BasketBar';
 import GroupCheckout from './basket/GroupCheckout';
@@ -202,7 +201,7 @@ function MissingItemSheet({ kind, brandCode, onClose }) {
   async function send() {
     try {
       await submit({ kind, ...form, brandName: form.brandName || brandCode }).unwrap();
-      toast.success("Thanks - we'll add it and let you know.");
+      toast.success("Thanks — we'll add it and let you know.");
       onClose();
     } catch (err) {
       toast.error(err?.data?.error || 'Could not send the request');
@@ -217,7 +216,7 @@ function MissingItemSheet({ kind, brandCode, onClose }) {
           <button onClick={onClose} className="text-slate-400"><X size={20} /></button>
         </div>
         <p className="text-xs text-slate-500 -mt-2">
-          We'll add it to the catalog. You won't lose your place - we'll message you when it's ready.
+          We'll add it to the catalog. You won't lose your place — we'll message you when it's ready.
         </p>
         {kind === 'brand' && (
           <input className="input text-sm w-full" placeholder="Brand name"
@@ -258,7 +257,7 @@ function IdentifySheet({ vertical, brand, onClose }) {
         brandName: brand?.name || '',
         ...form,
       }).unwrap();
-      toast.success("Sent - we'll identify it and message you.");
+      toast.success("Sent — we'll identify it and message you.");
       onClose();
     } catch (err) {
       toast.error(err?.data?.error || 'Could not send that');
@@ -273,7 +272,7 @@ function IdentifySheet({ vertical, brand, onClose }) {
           <button onClick={onClose} className="text-slate-400"><X size={20} /></button>
         </div>
         <p className="text-xs text-slate-500 -mt-1 leading-relaxed">
-          Turn the laptop over. The sticker on the base carries a product number - that identifies the
+          Turn the laptop over. The sticker on the base carries a product number — that identifies the
           exact machine, which decides which parts fit. Anything you can read helps.
         </p>
         <input className="input text-sm w-full" placeholder="Model name, if you know it"
@@ -284,13 +283,13 @@ function IdentifySheet({ vertical, brand, onClose }) {
           value={form.serialNumber} onChange={(e) => setForm((f) => ({ ...f, serialNumber: e.target.value }))} />
         <textarea rows={2}
           className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-zappy-100 resize-none"
-          placeholder="Anything else - screen size, year bought, where it was bought"
+          placeholder="Anything else — screen size, year bought, where it was bought"
           value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} />
         <button onClick={send} disabled={isLoading || !hasSomething} className="btn-primary w-full">
           {isLoading ? <><Loader2 size={15} className="animate-spin" /> Sending…</> : 'Send for identification'}
         </button>
         <p className="text-[11px] text-slate-400 text-center">
-          You can keep browsing - we'll notify you the moment we've identified it.
+          You can keep browsing — we'll notify you the moment we've identified it.
         </p>
       </div>
     </div>
@@ -301,8 +300,7 @@ function IdentifySheet({ vertical, brand, onClose }) {
 function BrandStep({ vertical, onPick, onAuto }) {
   const { data, isLoading } = useRepairBrandsQuery(vertical);
   const [showMissing, setShowMissing] = useState(false);
-  const { data: services } = useRepairVerticalsQuery();
-  const typeWord = typeWordOf(vertical, services?.items);
+  const typeWord = PACKAGE_TYPE_WORD[vertical];
   const only = !isLoading && data?.brands?.length === 1 ? data.brands[0] : null;
   useEffect(() => { if (only && onAuto) onAuto(only); }, [only]); // eslint-disable-line react-hooks/exhaustive-deps
   if (isLoading || only) return <Spinner />;
@@ -323,7 +321,6 @@ function BrandStep({ vertical, onPick, onAuto }) {
 
   return (
     <Shell>
-      <StorefrontStrip vertical={vertical} />
       {showMissing && <MissingItemSheet kind="brand" onClose={() => setShowMissing(false)} />}
       {typeWord ? (
         <>
@@ -456,7 +453,7 @@ function ConfigurationStep({ vertical, model, onPick, onSkip }) {
   return (
     <Shell>
       <p className="text-xs text-slate-500 px-1 leading-relaxed">
-        Same model, different builds. The screen and memory that fit depend on which one you own -
+        Same model, different builds. The screen and memory that fit depend on which one you own —
         pick the closest match, and the technician confirms it on arrival.
       </p>
       {configs.map((c) => (
@@ -578,7 +575,7 @@ function ModelStep({ vertical, deep, brand, productType, family, onPick, onAuto 
               </p>
               <p className="text-xs text-slate-500 mt-1 leading-relaxed">
                 {deep
-                  ? 'Tell us what is on the sticker and we will identify it - usually the same day.'
+                  ? 'Tell us what is on the sticker and we will identify it — usually the same day.'
                   : "Tell us which model you have and we'll add it."}
               </p>
               <button onClick={() => setShowMissing(true)} className="btn-primary w-full mt-4">
@@ -641,9 +638,8 @@ function ProblemStep({ vertical, model, productType, fuelType, presetCode, onPic
 
   return (
     <Shell>
-      <StorefrontStrip vertical={vertical} />
       <p className="text-xs text-slate-500 px-1">
-        Tell us what you're seeing. We'll work out the repair - we never assume it from the symptom alone.
+        Tell us what you're seeing. We'll work out the repair — we never assume it from the symptom alone.
       </p>
       {categories.map((cat) => {
         const cover = categoryPhoto(vertical, cat);
@@ -887,7 +883,7 @@ function ModeStep({ diagnosis, inspectionFeePaise, onPick }) {
                 )}
                 {!o.available && (
                   <p className="text-[11px] font-semibold text-slate-400 mt-1">
-                    Not for this repair - {MODE_BLOCKED_REASON[o.key]}
+                    Not for this repair — {MODE_BLOCKED_REASON[o.key]}
                   </p>
                 )}
               </div>
@@ -940,7 +936,6 @@ function ProviderStep({
   scheduledAt = null, onWhen,
 }) {
   const dispatch = useDispatch();
-  const { data: verticalList } = useRepairVerticalsQuery();
   // Map first: the customer checks the pin before seeing who can come.
   const [picking, setPicking] = useState(!pinConfirmed);
   // How the customer wants to compare the shops. 'best' keeps the server's
@@ -968,18 +963,6 @@ function ProviderStep({
     // at the device, so provider matching is skipped entirely for that path.
     { skip: inspectionOnly || !repairCode || !hasLocation, pollingInterval: pollMs },
   );
-  // From a storefront menu (?provider=shop:<id>): that provider is chosen the moment the list confirms they can take it here; otherwise the customer picks another.
-  const [linkParams] = useSearchParams();
-  const wanted = linkParams.get('provider');
-  const triedWanted = useRef(false);
-  useEffect(() => {
-    if (!wanted || triedWanted.current || !data || isFetching || !repairCode) return;
-    triedWanted.current = true;
-    const all = [data.recommended, ...(data.providers || [])].filter(Boolean);
-    const hit = all.find((p) => wanted === `shop:${p.shopId}` || wanted === `worker:${p.workerId}`);
-    if (hit) onPick(hit, repairCode, hit.priceOptions?.[0]?.qualityCode ?? null);
-    else toast('That provider cannot take this at your address right now. Pick another below.', { duration: 6000 });
-  }, [wanted, data, isFetching, repairCode]); // eslint-disable-line react-hooks/exhaustive-deps
   useProsArrive(data?.providers, !!data && !isFetching, setPollMs, (n) => {
     toast.success(n === 1 ? 'A pro just became free near you. Pick them below.' : `${n} pros just became free near you. Pick one below.`, { duration: 6000 });
     try { navigator.vibrate?.(200); } catch { /* not supported */ }
@@ -1050,7 +1033,7 @@ function ProviderStep({
               <p className="font-bold text-sm text-[#0F172A]">Inspection booking</p>
               <p className="text-xs text-slate-500 mt-1 leading-relaxed">
                 We will assign a qualified technician. They will inspect your device, explain what is wrong,
-                and give you a written diagnosis - with no obligation to proceed.
+                and give you a written diagnosis — with no obligation to proceed.
               </p>
             </div>
           </div>
@@ -1121,12 +1104,6 @@ function ProviderStep({
         problem={problem} diagnosis={diagnosis} serviceMode={serviceMode}
         location={location} onChangeLocation={() => setPicking(true)}
       />
-      {partsQuotedSeparately(vertical, verticalList?.items) && (
-        <p className="flex items-start gap-2 rounded-xl border border-zappy-100 bg-zappy-50 px-3 py-2.5 text-[12.5px] font-semibold leading-relaxed text-zappy-800">
-          <ShieldCheck size={15} className="mt-0.5 shrink-0" /> {PARTS_NOTE.customer}
-        </p>
-      )}
-      <p className="flex items-start gap-2 px-1 text-[12px] font-semibold text-slate-500"><EyeOff size={14} className="mt-0.5 shrink-0" /> {PRIVACY_PLEDGE.customer}</p>
 
       {/* When: now, or a time later (pros whose hours cover it, online or not). */}
       {onWhen && <WhenChooser value={scheduledAt} onChange={onWhen} />}
@@ -1382,7 +1359,7 @@ function ProviderCard({ p, recommended, serviceMode, onPick }) {
           )}
           {p.busy && (
             <p className="mt-1 text-[11px] font-semibold text-amber-700">
-              Finishing another job - can reach you about {p.availableInMinutes >= 60 ? `${Math.round(p.availableInMinutes / 60)} hour` : `${p.availableInMinutes} min`} later
+              Finishing another job — can reach you about {p.availableInMinutes >= 60 ? `${Math.round(p.availableInMinutes / 60)} hour` : `${p.availableInMinutes} min`} later
             </p>
           )}
           {/* How soon at the door, from where they are now (jobs/arrival). */}
@@ -1626,8 +1603,6 @@ function ConfirmStep({
         serviceMode,
         workerId: provider?.workerId || null,
         shopId: provider?.shopId || null,
-        // Arrived through this provider's own link: the server checks the code is theirs (shop/share-link).
-        via: (() => { try { return sessionStorage.getItem(`zappy:via:${provider?.shopId ? `shop:${provider.shopId}` : `worker:${provider?.workerId}`}`) || null; } catch { return null; } })(),
         zappyRecommended: !!provider?.zappyRecommended,
         location: {
           coordinates: [location.lng, location.lat],
@@ -1707,7 +1682,7 @@ function ConfirmStep({
             <SurgeLines quote={surge.quote} className="mt-1.5" />
             {tip > 0 && <p className="mt-1 flex justify-between text-[12.5px] font-semibold text-rose-600"><span>Tip for your pro</span><span>+₹{tip}</span></p>}
             <p className="text-[11px] text-slate-400 mt-1">
-              Includes parts, labour and taxes. This is the price you pay - nothing is added later without your approval.
+              Includes parts, labour and taxes. This is the price you pay — nothing is added later without your approval.
             </p>
             {serviceMode === 'pickup_repair' && extras.some((l) => l.label.startsWith('Pickup')) && (
               <p className="text-[11px] text-slate-500 mt-1">

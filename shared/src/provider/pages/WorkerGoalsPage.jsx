@@ -5,7 +5,7 @@ import { ArrowLeft, Target, Zap, TrendingUp, Plus, Edit2, Check, Loader2, X, Che
 import toast from 'react-hot-toast';
 import { useGetWorkerGoalsQuery, useSetWorkerGoalMutation, useGetZoneBenchmarkQuery } from '../../services/api';
 
-function ProgressRing({ pct, size = 96, stroke = 8, color = '#1F4FD8' }) {
+function ProgressRing({ pct, size = 96, stroke = 8, color = '#3B82F6' }) {
   const r = (size - stroke) / 2;
   const circ = 2 * Math.PI * r;
   const dash = (Math.min(pct, 100) / 100) * circ;
@@ -35,9 +35,14 @@ function GoalCard({ goal, onEdit, index }) {
   const remaining = Math.max(0, target - earned);
   const over = earned > target;
   
-  const barColor = pct >= 100 ? 'bg-emerald-500' : pct >= 60 ? 'bg-zappy-600' : 'bg-amber-500';
+  // Dynamic gradient based on progress
+  const bgGrad = pct >= 100 
+    ? 'from-emerald-500 to-teal-600' 
+    : pct >= 60 
+    ? 'from-zappy-500 to-violet-600' 
+    : 'from-amber-400 to-orange-500';
 
-  const ringColor = pct >= 100 ? '#10b981' : pct >= 60 ? '#1F4FD8' : '#f59e0b';
+  const ringColor = pct >= 100 ? '#10b981' : pct >= 60 ? '#3B82F6' : '#f59e0b';
 
   return (
     <motion.div
@@ -47,6 +52,7 @@ function GoalCard({ goal, onEdit, index }) {
       className={`bg-white rounded-[1.5rem] border shadow-[0_8px_30px_rgba(0,0,0,0.04)] p-5 relative overflow-hidden group ${pct >= 100 ? 'border-emerald-100 ring-1 ring-emerald-50' : 'border-slate-100'}`}
     >
       {/* Decorative background glow */}
+      <div className={`absolute -right-8 -top-8 w-32 h-32 rounded-full blur-3xl opacity-10 bg-gradient-to-br ${bgGrad} group-hover:opacity-20 transition-opacity`} />
 
       <div className="flex items-center gap-5 relative z-10">
         <div className="flex-shrink-0">
@@ -89,7 +95,7 @@ function GoalCard({ goal, onEdit, index }) {
           initial={{ width: 0 }}
           animate={{ width: `${Math.min(pct, 100)}%` }}
           transition={{ duration: 1.2, delay: 0.3, ease: "easeOut" }}
-          className={`h-full rounded-full ${barColor}`} 
+          className={`h-full rounded-full bg-gradient-to-r ${bgGrad}`} 
         />
       </div>
     </motion.div>
@@ -177,11 +183,13 @@ export default function WorkerGoalsPage() {
   const weeklyGoal = goals.find(g => g.period === 'weekly');
 
   return (
-    <div className="min-h-screen bg-slate-50 md:flex md:justify-center md:bg-slate-100">
+    <div className="min-h-screen bg-slate-50 md:flex md:justify-center md:bg-gradient-to-br md:from-slate-100 md:to-zappy-50/40">
       <div className="w-full max-w-lg lg:max-w-2xl bg-slate-50 min-h-screen relative shadow-[0_0_40px_rgba(0,0,0,0.05)] lg:shadow-[0_0_60px_rgba(0,0,0,0.08)] md:border-x border-slate-200/60">
         
         {/* Cinematic Header */}
         <header className="relative pt-6 pb-20 overflow-hidden rounded-b-[2.5rem] shadow-sm z-10" style={{ background: 'linear-gradient(#0f172a, #0f172a)' }}>
+          <motion.div className="absolute -top-10 -right-10 w-64 h-64 bg-fuchsia-500/20 rounded-full blur-3xl" animate={{ scale: [1, 1.2, 1], opacity: [0.4, 0.7, 0.4] }} transition={{ duration: 5, repeat: Infinity }} />
+          <motion.div className="absolute -bottom-20 -left-10 w-56 h-56 bg-zappy-500/20 rounded-full blur-3xl" animate={{ scale: [1, 1.3, 1], opacity: [0.3, 0.6, 0.3] }} transition={{ duration: 6, repeat: Infinity, delay: 1 }} />
           
           <div className="relative z-10 px-5">
             <div className="flex items-center justify-between mb-6">
@@ -219,7 +227,7 @@ export default function WorkerGoalsPage() {
                   <p className="text-xs text-zappy-200 mt-1 font-medium bg-white/10 inline-block px-2.5 py-1 rounded-full border border-white/10">Avg earning: ₹{(benchmark.zoneAvgPaise / 100).toFixed(0)} / week</p>
                   
                   <div className="mt-4 h-2 bg-zappy-900/50 rounded-full overflow-hidden shadow-inner">
-                    <motion.div initial={{ width: 0 }} animate={{ width: `${benchmark.percentile}%` }} transition={{ duration: 1, delay: 0.5 }} className="h-full bg-emerald-300 rounded-full" />
+                    <motion.div initial={{ width: 0 }} animate={{ width: `${benchmark.percentile}%` }} transition={{ duration: 1, delay: 0.5 }} className="h-full bg-teal-300 rounded-full" />
                   </div>
                 </div>
               </motion.div>

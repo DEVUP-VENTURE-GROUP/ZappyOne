@@ -78,7 +78,7 @@ export default function ProviderReviewsPage({ back = '/worker', embedded = false
           <>
             <section className="flex gap-5 rounded-card border border-line bg-white p-5">
               <div className="flex shrink-0 flex-col items-center justify-center">
-                <p className="text-[36px] font-extrabold leading-none text-ink-900 tabular-nums">{total ? data.rating.toFixed(1) : '-'}</p>
+                <p className="text-[36px] font-extrabold leading-none text-ink-900 tabular-nums">{total ? data.rating.toFixed(1) : '—'}</p>
                 <div className="mt-2"><Stars value={Math.round(data.rating)} /></div>
                 <p className="mt-1.5 text-[12px] text-ink-500">{total ? `${total} review${total === 1 ? '' : 's'}` : 'No reviews yet'}</p>
               </div>

@@ -31,9 +31,9 @@ export default function DemandView({ days }) {
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Kpi label="People searching" value={count(data.searchers)} spark={series.map((x) => x.people)} hint="One person searching twice is one" />
-        <Kpi label="We could serve" value={data.servedRate == null ? '-' : `${data.servedRate}%`} spark={series.map((x) => x.served)} accent="#10B981" />
+        <Kpi label="We could serve" value={data.servedRate == null ? '—' : `${data.servedRate}%`} spark={series.map((x) => x.served)} accent="#10B981" />
         <Kpi label="Could not serve" value={count(data.unserved)} spark={series.map((x) => x.unserved)} accent="#E11D48" hint="Nothing matched, or no one there" />
-        <Kpi label="Most wanted" value={top ? top.label : '-'} hint={top ? `${count(top.searchers)} people` : 'No searches yet'} />
+        <Kpi label="Most wanted" value={top ? top.label : '—'} hint={top ? `${count(top.searchers)} people` : 'No searches yet'} />
       </div>
 
       <Panel title="People searching per day" note={`Last ${span} days`}>
@@ -57,8 +57,8 @@ export default function DemandView({ days }) {
                     <td className="px-1 py-2.5 text-right tabular-nums"><span className="font-semibold text-slate-900">{count(s.searchers)}</span>
                       {s.prevSearchers ? <span className="ml-1.5"><Delta value={Math.round(((s.searchers - s.prevSearchers) / s.prevSearchers) * 100)} /></span> : null}</td>
                     <td className={`px-1 py-2.5 text-right tabular-nums ${s.providers ? 'text-slate-700' : 'font-semibold text-rose-600'}`}>{s.providers || 'None'}</td>
-                    <td className={`px-1 py-2.5 text-right tabular-nums font-semibold ${pressureTone(s.pressure)}`}>{s.pressure ?? '-'}</td>
-                    <td className={`px-1 py-2.5 text-right tabular-nums ${s.conversion != null && s.conversion < 10 && s.searchers >= 10 ? 'font-semibold text-amber-600' : 'text-slate-700'}`}>{s.conversion == null ? '-' : s.conversion >= 100 ? '100%+' : `${s.conversion}%`}</td>
+                    <td className={`px-1 py-2.5 text-right tabular-nums font-semibold ${pressureTone(s.pressure)}`}>{s.pressure ?? '—'}</td>
+                    <td className={`px-1 py-2.5 text-right tabular-nums ${s.conversion != null && s.conversion < 10 && s.searchers >= 10 ? 'font-semibold text-amber-600' : 'text-slate-700'}`}>{s.conversion == null ? '—' : s.conversion >= 100 ? '100%+' : `${s.conversion}%`}</td>
                     <td className={`px-1 py-2.5 text-right tabular-nums ${s.unserved ? 'font-semibold text-rose-600' : 'text-slate-400'}`}>{count(s.unserved)}</td>
                   </tr>
                 ))}

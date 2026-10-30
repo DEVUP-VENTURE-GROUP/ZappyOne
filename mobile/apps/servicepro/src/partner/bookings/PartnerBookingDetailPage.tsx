@@ -75,7 +75,7 @@ export function PartnerBookingDetailPage() {
           </View>
           <View style={styles.money}>
             <View style={styles.flex}><Text variant="caption" color={ink[500]}>Customer pays</Text><Text variant="body" weight="bold">{formatPaise(b.pricing?.totalPaise)}</Text></View>
-            <View style={styles.flex}><Text variant="caption" color={ink[500]}>You get</Text><Text variant="body" weight="bold" color={success[700]}>{formatPaise(b.payout?.netPaise)}</Text></View>
+            <View style={styles.flex}><Text variant="caption" color={ink[500]}>You get ({100 - (b.payout?.commissionPct ?? 10)}%)</Text><Text variant="body" weight="bold" color={success[700]}>{formatPaise(b.payout?.netPaise)}</Text></View>
           </View>
         </View>
 

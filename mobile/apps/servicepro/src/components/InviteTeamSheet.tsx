@@ -40,7 +40,7 @@ export function InviteTeamSheet({ onClose }: { onClose: () => void }) {
         <>
           {result.rows.map((r, i) => (
             <View key={i} style={styles.row}>
-              <Text variant="bodySmall" numberOfLines={1} style={styles.flex}>{r.name || '-'} <Text variant="caption" color={ink[400]}>{r.phone}</Text></Text>
+              <Text variant="bodySmall" numberOfLines={1} style={styles.flex}>{r.name || '—'} <Text variant="caption" color={ink[400]}>{r.phone}</Text></Text>
               <Text variant="caption" weight="bold" color={r.ok ? success[600] : danger[600]}>{r.ok ? (r.isNew ? 'Added' : 'Linked') : r.error}</Text>
             </View>
           ))}

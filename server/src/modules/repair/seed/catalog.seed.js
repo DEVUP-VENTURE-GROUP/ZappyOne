@@ -175,10 +175,10 @@ const PART_QUALITIES = [
 /* §16 Skill levels */
 
 const SKILL_LEVELS = [
-  { level: 1, name: 'Level 1 - Basic', description: 'Cleaning, SIM tray, accessories, basic software.', requiresVerification: false },
-  { level: 2, name: 'Level 2 - Component', description: 'Battery, speaker, earpiece and similar module swaps.', requiresVerification: false },
-  { level: 3, name: 'Level 3 - Advanced', description: 'Screen, camera, charging port, button flex repairs.', requiresVerification: true },
-  { level: 4, name: 'Level 4 - Micro-soldering', description: 'Motherboard, IC-level work, liquid damage, data recovery.', requiresVerification: true },
+  { level: 1, name: 'Level 1 — Basic', description: 'Cleaning, SIM tray, accessories, basic software.', requiresVerification: false },
+  { level: 2, name: 'Level 2 — Component', description: 'Battery, speaker, earpiece and similar module swaps.', requiresVerification: false },
+  { level: 3, name: 'Level 3 — Advanced', description: 'Screen, camera, charging port, button flex repairs.', requiresVerification: true },
+  { level: 4, name: 'Level 4 — Micro-soldering', description: 'Motherboard, IC-level work, liquid damage, data recovery.', requiresVerification: true },
 ];
 
 /* §27 QA checklists */

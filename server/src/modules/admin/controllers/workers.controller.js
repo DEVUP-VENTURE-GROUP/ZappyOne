@@ -130,7 +130,7 @@ async function approveKyc(req, res, next) {
       await notifService.notify({
         recipient: { kind: 'worker', id: req.params.id },
         type: 'kyc_approved',
-        title: '✅ KYC Approved - You can go online!',
+        title: '✅ KYC Approved — You can go online!',
         body: 'Your documents have been verified. Go online to start accepting jobs.',
         deepLink: '/worker',
         data: { kycStatus: 'approved' },
@@ -216,7 +216,7 @@ async function rejectKyc(req, res, next) {
         reason:   req.body.reason,
         status:   worker.kyc.status,
       }));
-    } catch { /* non-fatal - socket push is best-effort */ }
+    } catch { /* non-fatal — socket push is best-effort */ }
 
     // Send push notification to worker
     try {
@@ -517,7 +517,7 @@ async function respondChangeRequest(req, res, next) {
       recipient: { kind: 'worker', id: req.params.id },
       type: decision === 'approved' ? 'kyc_approved' : 'kyc_rejected',
       title: decision === 'approved'
-        ? '✅ Document change approved - you can now upload new documents'
+        ? '✅ Document change approved — you can now upload new documents'
         : '❌ Document change request denied',
       body: decision === 'denied' && denialReason ? denialReason : undefined,
       deepLink: '/worker/kyc',

@@ -140,7 +140,6 @@ const PROVIDER_FIELDS = [
   numField('workerRejectLimit', 1, 50),
   numField('customerWaitMinutes', 1, 60),
   numField('providerLateMinutes', 5, 180),
-  rupeeField('noShowCreditPaise', 50000),
 ];
 
 function ProviderRules() {
@@ -190,9 +189,6 @@ function ProviderRules() {
       </Setting>
       <Setting title="Late before 'provider not coming'" hint="This long past the booked time with nobody there, the customer can report it: the provider pays the no-show penalty and the next one is sent.">
         <UnitInput value={f.form.providerLateMinutes} onChange={f.set('providerLateMinutes')} unit="min" min={5} max={180} label="Provider late by" />
-      </Setting>
-      <Setting title="Sorry credit when a pro does not come" hint="Put in the customer's ZappyOne wallet once, when they report a no-show. ₹0 turns it off.">
-        <RupeeInput value={f.form.noShowCreditPaise} onChange={f.set('noShowCreditPaise')} max={500} label="Sorry credit" />
       </Setting>
       {!f.valid && <p className="px-4 pb-3 text-[12px] text-red-600">Check the boxes: amounts ₹0 to ₹1,000, waits and limits within their ranges.</p>}
     </Card>

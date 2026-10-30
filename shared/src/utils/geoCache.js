@@ -52,7 +52,7 @@ export function saveGeoLocation({ lat, lng, accuracy, address }) {
       address: address ?? (inheritable ? prev.address : ''),
       t: Date.now(),
     }));
-  } catch { /* private mode, quota, blocked storage - never break the page */ }
+  } catch { /* private mode, quota, blocked storage — never break the page */ }
 }
 
 function readRaw() {

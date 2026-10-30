@@ -252,22 +252,12 @@ export function useJobRealtime({ alerts = false } = {}) {
       }
     };
 
-    // Bursts (an approval sends several) collapse into one refresh.
-    let timer = null;
-    const onNotification = () => {
-      clearTimeout(timer);
-      timer = setTimeout(() => import('../utils/realtimeTags').then(({ NOTIFICATION_TAGS }) => refresh(NOTIFICATION_TAGS)), 250);
-    };
-
-    socket.on('notification', onNotification);
     socket.on('job.status', onJob);
     socket.on('job.update', onJob);
     socket.on('job.available', onAvailable);
     socket.on('repair.quote', onQuote);
     socket.on('repair.quote_decision', onQuote);
     return () => {
-      clearTimeout(timer);
-      socket.off('notification', onNotification);
       socket.off('job.status', onJob);
       socket.off('job.update', onJob);
       socket.off('job.available', onAvailable);

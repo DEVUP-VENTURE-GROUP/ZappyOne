@@ -123,7 +123,7 @@ function KycDocViewer({ workerId, onClose }) {
               {data?.isUpdate && (
                 <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5">
                   <AlertTriangle size={14} className="text-amber-500" />
-                  <span className="text-xs font-bold text-amber-700">This is a KYC update - previous approved docs are stored in history</span>
+                  <span className="text-xs font-bold text-amber-700">This is a KYC update — previous approved docs are stored in history</span>
                 </div>
               )}
 
@@ -177,7 +177,7 @@ function KycDocViewer({ workerId, onClose }) {
                       : <XCircle size={14} className="text-red-500" />
                     }
                     <span className={`text-sm font-bold ${meta.captureMethod === 'live_camera' ? 'text-green-700' : 'text-red-600'}`}>
-                      {meta.captureMethod === 'live_camera' ? 'Live camera capture verified' : '⚠ Static upload - not from live camera'}
+                      {meta.captureMethod === 'live_camera' ? 'Live camera capture verified' : '⚠ Static upload — not from live camera'}
                     </span>
                   </div>
                   <div className="grid grid-cols-2 gap-3 text-xs">
@@ -203,11 +203,11 @@ function KycDocViewer({ workerId, onClose }) {
               {!meta && (
                 <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
                   <AlertTriangle size={14} className="text-red-500" />
-                  <span className="text-xs font-bold text-red-600">No liveness metadata - selfie may be a static photo upload</span>
+                  <span className="text-xs font-bold text-red-600">No liveness metadata — selfie may be a static photo upload</span>
                 </div>
               )}
 
-              <p className="text-[11px] text-slate-400 text-center">📦 Documents stored permanently in secure storage - no expiry</p>
+              <p className="text-[11px] text-slate-400 text-center">📦 Documents stored permanently in secure storage — no expiry</p>
             </>
           )}
         </div>
@@ -491,7 +491,7 @@ function WorkerDetailPanel({ worker, onClose, onRefetch }) {
                   </div>
                   <div className="bg-slate-50 rounded-xl px-3 py-2">
                     <p className="font-bold text-slate-400 text-[10px] mb-0.5">Last seen</p>
-                    <p className="font-semibold text-slate-700">{worker.lastSeenAt ? fmtDate(worker.lastSeenAt) : '-'}</p>
+                    <p className="font-semibold text-slate-700">{worker.lastSeenAt ? fmtDate(worker.lastSeenAt) : '—'}</p>
                   </div>
                   <div className="bg-slate-50 rounded-xl px-3 py-2">
                     <p className="font-bold text-slate-400 text-[10px] mb-0.5">Total earnings</p>

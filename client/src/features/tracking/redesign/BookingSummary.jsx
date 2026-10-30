@@ -13,7 +13,7 @@ export default function BookingSummary({ job, onReceipt }) {
   const when = job.scheduledAt || job.createdAt;
   const whenLabel = when
     ? new Date(when).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })
-    : '-';
+    : '—';
   // Zero lines are left out; a negative line is a deduction (discount, credit).
   const lines = (price.lines || []).filter(([, paise]) => paise && paise !== 0);
 
@@ -31,7 +31,7 @@ export default function BookingSummary({ job, onReceipt }) {
         v={<span className="capitalize">{job.service}</span>}
         right={job.subtitle ? { k: job.subtitleLabel || 'For', v: job.subtitle } : null}
       />
-      <SummaryRow icon={<MapPin size={17} strokeWidth={2} />} k="Address" v={job.place?.address || '-'} />
+      <SummaryRow icon={<MapPin size={17} strokeWidth={2} />} k="Address" v={job.place?.address || '—'} />
       <SummaryRow
         icon={<Clock size={17} strokeWidth={2} />}
         k={job.scheduledAt ? 'Scheduled' : 'Booked'}

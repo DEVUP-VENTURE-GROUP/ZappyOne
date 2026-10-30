@@ -181,7 +181,7 @@ export default function ReturnTaskPage() {
           <p>
             ZappyOne will assist with the physical {isExchange ? 'exchange' : 'return'} task.
             Final acceptance{!isExchange && ', refund'}{isExchange && ', replacement availability'} remain
-            subject to the merchant's own policy - we don't decide that.
+            subject to the merchant's own policy — we don't decide that.
           </p>
         </div>
 

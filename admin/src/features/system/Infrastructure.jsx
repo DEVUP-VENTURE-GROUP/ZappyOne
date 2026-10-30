@@ -92,7 +92,7 @@ export default function SystemHealth() {
           : <XCircle size={22} className="text-red-500" />}
         <div>
           <p className={`font-bold text-sm ${overallOk ? 'text-emerald-800' : 'text-red-800'}`}>
-            {overallOk ? 'All Systems Operational' : 'System Degraded - Check Below'}
+            {overallOk ? 'All Systems Operational' : 'System Degraded — Check Below'}
           </p>
           <p className={`text-xs mt-0.5 ${overallOk ? 'text-emerald-600' : 'text-red-600'}`}>
             Server uptime: {fmtUptime(h.uptime || 0)}
@@ -161,7 +161,7 @@ export default function SystemHealth() {
         </div>
         {Object.values(h.queues || {}).some(q => (q?.failed || 0) > 0) && (
           <p className="text-xs text-red-600 mt-2 font-medium">
-            Failed jobs detected - investigate BullMQ dashboard or server logs.
+            Failed jobs detected — investigate BullMQ dashboard or server logs.
           </p>
         )}
       </div>

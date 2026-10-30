@@ -38,7 +38,7 @@ export function WorkerRichCard({ job, eta, onCall, onChat, onLive }: { job: Trac
       </View>
       <View style={styles.stats}>
         <View style={styles.stat}><View style={styles.inline}><Star size={14} color={accent[500]} fill={accent[500]} /><Text variant="body" weight="black">{p.rating != null ? Number(p.rating).toFixed(1) : 'New'}</Text></View><Text variant="caption" color={ink[500]}>Rating</Text></View>
-        <View style={styles.stat}><Text variant="body" weight="black">{p.jobs != null ? String(p.jobs) : '-'}</Text><Text variant="caption" color={ink[500]}>Jobs done</Text></View>
+        <View style={styles.stat}><Text variant="body" weight="black">{p.jobs != null ? String(p.jobs) : '—'}</Text><Text variant="caption" color={ink[500]}>Jobs done</Text></View>
         <View style={styles.stat}><View style={styles.inline}><ShieldCheck size={14} color={success[600]} /><Text variant="body" weight="black">ID</Text></View><Text variant="caption" color={ink[500]}>Verified</Text></View>
       </View>
       {tiles.length ? (

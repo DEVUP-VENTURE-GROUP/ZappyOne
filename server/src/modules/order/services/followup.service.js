@@ -26,7 +26,7 @@ async function rebookOrder({ userId, sourceOrderId }) {
     notes: p.notes || '',
   };
   if (pickupLocation.lat == null || pickupLocation.lng == null || !pickupLocation.address) {
-    throw Object.assign(new Error('Original order is missing location details - please book normally.'), { status: 400 });
+    throw Object.assign(new Error('Original order is missing location details — please book normally.'), { status: 400 });
   }
 
   const d = src.dropLocation;
@@ -80,7 +80,7 @@ async function requestShopHandoff({ orderId, workerId, shopId, reason }) {
     resolvedShopId = (await Worker.findById(workerId).select('shopId').lean())?.shopId;
   }
   if (!resolvedShopId) {
-    throw Object.assign(new Error('No shop to hand this job off to - you are not linked to a shop.'), { status: 400, code: 'NO_SHOP_LINKED' });
+    throw Object.assign(new Error('No shop to hand this job off to — you are not linked to a shop.'), { status: 400, code: 'NO_SHOP_LINKED' });
   }
 
   await Order.findByIdAndUpdate(orderId, {
@@ -109,7 +109,7 @@ async function requestShopHandoff({ orderId, workerId, shopId, reason }) {
       recipient: { kind: 'user', id: order.userId },
       type: 'shop_handoff_requested',
       title: '🔧 This repair needs shop tools',
-      body: `${reason ? reason + ' - ' : ''}Confirm sending your device to ${shop?.businessName || 'the shop'} to continue.`,
+      body: `${reason ? reason + ' — ' : ''}Confirm sending your device to ${shop?.businessName || 'the shop'} to continue.`,
       deepLink: `/orders/${orderId}`,
       data: { orderId: String(orderId), shopId: String(resolvedShopId) },
     });

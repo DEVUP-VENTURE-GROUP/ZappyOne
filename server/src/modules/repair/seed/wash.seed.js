@@ -10,7 +10,7 @@ const WASH_QA = [
   { code: 'area_clean', label: 'Parking area left clean', required: true },
 ];
 
-function packageVertical({ vertical, prefix, label, types, packages, skill = { name: 'Washer', description: 'Trained in waterless, foam and polish washes' }, qa = WASH_QA, group = 'washes', qaCode = 'wash', modes = [D] }) {
+function packageVertical({ vertical, prefix, label, types, packages, skill = { name: 'Washer', description: 'Trained in waterless, foam and polish washes' }, qa = WASH_QA, group = 'washes', qaCode = 'wash' }) {
   const BRANDS = types.map((t, i) => ({ code: `${prefix}_${t.code}`, name: t.name, sortOrder: i + 1 }));
   const CATEGORY = `${prefix}_${group}`;
   const PROBLEM_CATEGORIES = [{ code: CATEGORY, name: `Choose your ${label.toLowerCase()}`, icon: 'sparkles', displayOrder: 1 }];
@@ -19,7 +19,7 @@ function packageVertical({ vertical, prefix, label, types, packages, skill = { n
     candidateRepairCodes: [`${prefix}_${p.code}`], isPopular: true, displayOrder: i + 1,
   }));
   const REPAIRS = packages.map((p) => ({
-    code: `${prefix}_${p.code}`, name: p.name, pricingMode: 'fixed', minSkillLevel: 1, modes: p.modes || modes, durationMin: p.minutes, warrantyDays: 0,
+    code: `${prefix}_${p.code}`, name: p.name, pricingMode: 'fixed', minSkillLevel: 1, modes: [D], durationMin: p.minutes, warrantyDays: 0,
   }));
   const SKILL_LEVELS = [{ level: 1, name: skill.name, description: skill.description, requiresVerification: false }];
   const QA_CHECKLISTS = [{

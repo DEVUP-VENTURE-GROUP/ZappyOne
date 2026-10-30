@@ -408,7 +408,7 @@ export default function PaymentMethodsPage() {
                 />
               ))}
               <p className="text-center text-xs text-slate-400 pt-2">
-                Card details are tokenized - full card numbers are never stored
+                Card details are tokenized — full card numbers are never stored
               </p>
             </div>
           )}

@@ -112,8 +112,8 @@ async function reclaimUnaccepted(booking) {
       reason: handed.assigned ? undefined : handed.reason,
     },
     handed.assigned
-      ? '[repair-sla] provider did not answer - job re-offered to the next provider'
-      : '[repair-sla] provider did not answer - job released, nobody else available',
+      ? '[repair-sla] provider did not answer — job re-offered to the next provider'
+      : '[repair-sla] provider did not answer — job released, nobody else available',
   );
 
   return { reclaimed: true, reoffered: handed.assigned };
@@ -137,7 +137,7 @@ async function flagLate(booking) {
   if (minutesLate >= ESCALATE_AFTER_MIN) {
     logger.error(
       { bookingId: String(booking._id), reference: booking.reference, stage, minutesLate, status: booking.status },
-      '[repair-sla] job well past its stage - needs someone to look at it',
+      '[repair-sla] job well past its stage — needs someone to look at it',
     );
   }
 

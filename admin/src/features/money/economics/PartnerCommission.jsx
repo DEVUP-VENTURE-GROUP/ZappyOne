@@ -10,9 +10,8 @@ const TYPES = [
   ['agency', 'Agencies', 'A team that goes to customers, with no counter.'],
   ['company', 'Service companies', 'A registered company with its own staff.'],
   ['individual', 'Individual providers', 'One person working for themselves.'],
-  ['ownLinkPct', "Through the partner's own link", 'Bookings from customers the partner brought with their storefront link, for their first months; reviews from these never count in their public rating.'],
 ];
-const KEYS = [...TYPES.map(([k]) => k), 'ownLinkMonths'];
+const KEYS = TYPES.map(([k]) => k);
 const MAX = 50;
 const fmtDate = (d) => new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
 
@@ -54,7 +53,7 @@ export default function PartnerCommission() {
   if (isLoading || !form) return <PageLoader />;
 
   const values = Object.fromEntries(KEYS.map((k) => [k, Number(form[k])]));
-  const valid = KEYS.every((k) => form[k] !== '' && Number.isFinite(values[k]) && values[k] >= 0 && values[k] <= (k === 'ownLinkMonths' ? 36 : MAX));
+  const valid = KEYS.every((k) => form[k] !== '' && Number.isFinite(values[k]) && values[k] >= 0 && values[k] <= MAX);
   const dirty = KEYS.some((k) => values[k] !== rates[k]);
 
   async function submit() {
@@ -81,9 +80,6 @@ export default function PartnerCommission() {
             <UnitInput value={form[k]} onChange={(v) => setForm((f) => ({ ...f, [k]: v }))} label={`${title} commission percent`} unit="%" min={0} max={MAX} step={0.5} />
           </Setting>
         ))}
-        <Setting title="Own-link rate lasts" hint="Months from the day the partner joined ZappyOne. 0 turns the own-link rate off.">
-          <UnitInput value={form.ownLinkMonths} onChange={(v) => setForm((f) => ({ ...f, ownLinkMonths: v }))} label="Own-link months" unit="months" min={0} max={36} step={1} />
-        </Setting>
       </Card>
       <CustomRates />
     </div>

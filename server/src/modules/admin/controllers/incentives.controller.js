@@ -94,7 +94,7 @@ async function releaseDeferredMilestone(req, res, next) {
       amountPaise: data.bonusPaise,
       reason: Transaction.REASONS.ADMIN_ADJUSTMENT_CREDIT,
       idempotencyKey: `incentive:milestone:${workerId}:${milestone}:admin_release`,
-      description: `Milestone ${milestone} bonus - admin released after rating improvement`,
+      description: `Milestone ${milestone} bonus — admin released after rating improvement`,
     });
 
     await redis.del(key);

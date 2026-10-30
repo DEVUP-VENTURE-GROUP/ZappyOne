@@ -1,0 +1,157 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import toast from 'react-hot-toast';
+import {
+  Store, Phone, Power, Loader2, ChevronRight, ClipboardList, ShieldCheck, Info,
+} from 'lucide-react';
+import {
+  useGetWorkerMeQuery, useGetMyShopQuery, useGetKycStatusQuery, useGoOnlineMutation, useGoOfflineMutation,
+} from '@shared/services/api';
+import { selectAuth } from '@shared/modules/auth/authSlice';
+import { useGeolocation } from '@shared/hooks/useGeolocation';
+import { formatPaise } from '@shared/utils/money';
+import { useProviderJobs } from '@shared/provider/useProviderJobs';
+import MyAreaChip from '@shared/components/worker/MyAreaChip';
+
+/**
+ * A shop technician's home. The shop assigns the work and pays its staff, so
+ * there is no wallet, payout or service sign-up here — just duty, today's jobs
+ * and the shop they work for. Job value is what customers paid the shop.
+ */
+export default function ShopWorkerHome() {
+  const nav = useNavigate();
+  const { accessToken } = useSelector(selectAuth);
+  const { data: meData, refetch: refetchMe } = useGetWorkerMeQuery(undefined, { pollingInterval: 60000 });
+  const { data: shopData } = useGetMyShopQuery(undefined, { pollingInterval: 120000 });
+  const { data: kycData } = useGetKycStatusQuery();
+  // A shop's team works what the shop takes: repairs and pet care.
+  const { mine: jobs, isLoading: loadingJobs } = useProviderJobs({ kinds: ['repair', 'pet'] });
+  const [goOnline] = useGoOnlineMutation();
+  const [goOffline] = useGoOfflineMutation();
+  const { getCurrent } = useGeolocation();
+  const [toggling, setToggling] = useState(false);
+
+  const me = meData?.worker;
+  const onDuty = !!me?.isOnline;
+  const kycStatus = kycData?.kyc?.status;
+  const kycApproved = kycStatus === 'approved';
+  // Already sent: nothing to do but wait, so don't send them back to the form.
+  const kycWaiting = kycStatus === 'pending_review';
+  // Location is shared app-wide while on duty (provider/OnlineLocation), not only on this page.
+
+  async function toggleDuty() {
+    if (kycWaiting) { toast('Your ID is being checked — you can go on duty once it is approved'); return; }
+    if (!kycApproved) { toast.error('Verify your ID first — Aadhaar and a selfie, about 2 minutes'); nav('/worker/kyc'); return; }
+    setToggling(true);
+    try {
+      if (onDuty) {
+        await goOffline().unwrap();
+        toast.success('You are off duty');
+      } else {
+        const pos = await getCurrent();
+        // The server refuses a location worse than 500 m (worker.service LOCATION_MAX_M).
+        await goOnline({ lat: pos.lat, lng: pos.lng, accuracy: pos.accuracy ?? null }).unwrap();
+        toast.success('You are on duty');
+      }
+      refetchMe();
+    } catch (err) {
+      toast.error(err?.data?.error || err?.message || 'Could not change duty');
+      if (err?.data?.code === 'ON_TRIP' && err.data.job?.link) nav(err.data.job.link);
+    } finally {
+      setToggling(false);
+    }
+  }
+
+  const shop = shopData?.shop;
+  return (
+    <div className="pb-12">
+      <header className="bg-white border-b border-slate-100">
+        <div className="mx-auto flex max-w-lg items-center gap-3 px-4 py-4 lg:max-w-3xl">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-zappy-50">
+            <Store size={20} className="text-zappy-600" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-base font-black text-navy">{me?.name || 'Technician'}</p>
+            <p className="truncate text-xs text-slate-500">{shop ? `Working for ${shop.name}` : 'Loading your shop…'}</p>
+            {onDuty && <MyAreaChip coordinates={me?.currentLocation?.coordinates} live className="mt-1" />}
+          </div>
+          {shop?.phone && (
+            <a href={`tel:${shop.phone}`} className="flex h-10 items-center gap-1.5 rounded-xl bg-slate-100 px-3 text-xs font-bold text-slate-700" aria-label="Call shop owner">
+              <Phone size={14} /> Owner
+            </a>
+          )}
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-lg space-y-4 px-4 pt-4 lg:max-w-3xl">
+        <button
+          onClick={toggleDuty}
+          disabled={toggling}
+          className={`flex w-full items-center gap-3 rounded-2xl p-4 text-left ring-1 transition ${onDuty ? 'bg-emerald-50 ring-emerald-200' : 'bg-white ring-slate-200'}`}
+        >
+          <span className={`flex h-11 w-11 items-center justify-center rounded-full ${onDuty ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-500'}`}>
+            {toggling ? <Loader2 size={18} className="animate-spin" /> : <Power size={18} />}
+          </span>
+          <span className="flex-1">
+            <span className="block text-sm font-black text-navy">{onDuty ? 'On duty' : 'Off duty'}</span>
+            <span className="block text-xs text-slate-500">
+              {onDuty ? 'Your shop can give you jobs. Tap to go off duty.' : 'Tap to start receiving jobs from your shop.'}
+            </span>
+          </span>
+        </button>
+        {kycWaiting && (
+          <p className="flex w-full items-center gap-2 rounded-2xl bg-slate-100 p-3 text-xs font-semibold text-slate-600">
+            <ShieldCheck size={15} /> Your ID is being checked. We will notify you when you can go on duty.
+          </p>
+        )}
+        {!kycApproved && !kycWaiting && (
+          <button onClick={() => nav('/worker/kyc')} className="flex w-full items-center gap-2 rounded-2xl bg-amber-50 p-3 text-left text-xs font-semibold text-amber-800 ring-1 ring-amber-200">
+            <ShieldCheck size={15} /> Verify your ID to go on duty — Aadhaar and a selfie, about 2 minutes <ChevronRight size={14} className="ml-auto" />
+          </button>
+        )}
+
+        <section className="grid grid-cols-2 gap-3">
+          {[['Today', shopData?.today], ['This week', shopData?.week]].map(([title, t]) => (
+            <div key={title} className="rounded-2xl bg-white p-4 ring-1 ring-slate-100">
+              <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-slate-400">{title}</p>
+              <p className="mt-1 text-2xl font-black tabular-nums text-navy">{t?.jobs ?? '–'}</p>
+              <p className="text-xs text-slate-500">jobs done, <span className="tabular-nums">{t ? formatPaise(t.valuePaise) : '–'}</span></p>
+            </div>
+          ))}
+        </section>
+        <p className="flex items-start gap-1.5 text-[11px] leading-relaxed text-slate-400">
+          <Info size={12} className="mt-0.5 shrink-0" /> Job value is what customers paid your shop, not your pay. Your shop pays you directly.
+        </p>
+
+        <section className="rounded-2xl bg-white p-4 ring-1 ring-slate-100">
+          <p className="flex items-center gap-2 text-sm font-black text-navy"><ClipboardList size={15} className="text-zappy-600" /> My jobs</p>
+          {loadingJobs ? (
+            <div className="flex justify-center py-6"><Loader2 size={18} className="animate-spin text-slate-300" /></div>
+          ) : jobs.length === 0 ? (
+            <p className="py-6 text-center text-sm text-slate-500">No jobs right now. Your shop owner will assign the next one.</p>
+          ) : (
+            <ul className="mt-3 space-y-2">
+              {jobs.map((j) => (
+                <li key={`${j.kind}-${j.id}`}>
+                  <button onClick={() => nav(j.to)} className="flex w-full items-center gap-3 rounded-xl p-2.5 text-left ring-1 ring-slate-100 transition hover:ring-zappy-200">
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-semibold capitalize text-navy">{j.title}</span>
+                      <span className="block truncate text-[12px] capitalize text-slate-500">{j.subtitle}</span>
+                    </span>
+                    <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${j.attention ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600'}`}>
+                      {j.status}
+                    </span>
+                    <ChevronRight size={14} className="shrink-0 text-slate-300" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+      </main>
+
+    </div>
+  );
+}

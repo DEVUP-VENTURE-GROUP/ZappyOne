@@ -33,7 +33,7 @@ export default function Helping() {
     <div className="space-y-5">
       <SectionHeader
         title="Helping Services"
-        subtitle="Errands, shopping, returns and exchanges - pricing and live operations"
+        subtitle="Errands, shopping, returns and exchanges — pricing and live operations"
       />
 
       <div className="flex gap-1 rounded-xl bg-slate-100 p-1 w-fit">
@@ -80,7 +80,7 @@ function TasksTab({ exceptionsOnly }) {
   async function recordRefund(id, status) {
     const ref = window.prompt(
       status === 'refund_confirmed'
-        ? "Merchant's refund reference (required - this is the evidence)"
+        ? "Merchant's refund reference (required — this is the evidence)"
         : 'Reason / reference',
     );
     if (status === 'refund_confirmed' && !ref) {
@@ -126,9 +126,9 @@ function TasksTab({ exceptionsOnly }) {
                     ? `₹${rupees(t.itemMoney.actualPaise)}`
                     : t.itemMoney?.budgetPaise
                       ? `≤₹${rupees(t.itemMoney.budgetPaise)}`
-                      : '-'}
+                      : '—'}
                 </Td>
-                <Td muted>{t.returnDetail ? t.returnDetail.refundStatus.replace(/_/g, ' ') : '-'}</Td>
+                <Td muted>{t.returnDetail ? t.returnDetail.refundStatus.replace(/_/g, ' ') : '—'}</Td>
                 <Td>
                   {t.returnDetail && t.returnDetail.refundStatus === 'pending_merchant' && (
                     <div className="flex gap-1.5">
@@ -168,7 +168,7 @@ function ConfigTab() {
   const configs = data?.configs || [];
   const current = configs.find((c) => c.serviceType === (active || configs[0]?.serviceType));
 
-  if (!current) return <EmptyState icon={Package} message="No services configured yet - run the seeder" />;
+  if (!current) return <EmptyState icon={Package} message="No services configured yet — run the seeder" />;
 
   return (
     <div className="space-y-4">
@@ -254,7 +254,7 @@ function ConfigForm({ config }) {
           requiresQuote: !!s.requiresQuote,
         })),
       }).unwrap();
-      toast.success('Saved - live on the next quote');
+      toast.success('Saved — live on the next quote');
     } catch (err) {
       toast.error(err?.data?.error || 'Could not save');
     }
@@ -298,7 +298,7 @@ function ConfigForm({ config }) {
       <Card>
         <h3 className="mb-1 text-sm font-black text-slate-900">Distance slabs</h3>
         <p className="mb-3 text-xs text-slate-500">
-          A trip past the last slab is refused rather than priced on a guess - mark the final
+          A trip past the last slab is refused rather than priced on a guess — mark the final
           open-ended slab &quot;quote required&quot;.
         </p>
         <div className="space-y-2">
@@ -319,7 +319,7 @@ function ConfigForm({ config }) {
       <Card>
         <h3 className="mb-1 text-sm font-black text-slate-900">Item money &amp; limits</h3>
         <p className="mb-3 text-xs text-slate-500">
-          Item cost is never ZappyOne revenue and is never commissioned - these are the guardrails
+          Item cost is never ZappyOne revenue and is never commissioned — these are the guardrails
           around the customer&apos;s money, not pricing.
         </p>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

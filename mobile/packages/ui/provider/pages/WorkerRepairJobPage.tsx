@@ -5,8 +5,6 @@
  * radius; a quote when the price has to change; QA before completion; proof
  * photos; money last. Every rule is the shared jobFlows logic.
  */
-import { PrivacyPledge } from '../../components/common/PartsNote';
-import { useCheckInThen } from '../useCheckIn';
 import React, { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -52,7 +50,7 @@ import { RateCustomerCard } from '../../components/worker/RateCustomerCard';
 import { SOSButton } from '../../components/worker/SOSButton';
 import { TripSharingBanner } from '../../components/worker/TripSharingBanner';
 import { errText } from '../../lib/feedback';
-import { accent, colors, danger, ink, slate, zappy } from '../../theme/colors';
+import { colors, zappy, ink, slate, accent } from '../../theme/colors';
 import { radius } from '../../theme/radius';
 import { spacing } from '../../theme/spacing';
 import { GiveBackCard } from '../GiveBackCard';
@@ -67,7 +65,6 @@ export function WorkerRepairJobPage() {
   const insets = useSafeAreaInsets();
   const { data, isLoading, refetch } = useGetRepairBookingQuery(id, { pollingInterval: 20000 });
   const [transition, { isLoading: moving }] = useTransitionRepairBookingMutation();
-  const checkedIn = useCheckInThen();
   const [collectCash, { isLoading: collecting }] = useCollectRepairCashMutation();
   const [attachPhotos] = useAttachRepairCompletionPhotosMutation();
   const [verifyCode, { isLoading: verifying }] = useVerifyRepairHandoverCodeMutation();
@@ -131,7 +128,7 @@ export function WorkerRepairJobPage() {
     try {
       const keys = readyKeys(photos);
       if (keys.length) await attachPhotos({ id, photos: keys }).unwrap();
-      await checkedIn(() => transition({ id, status: to }).unwrap());
+      await transition({ id, status: to }).unwrap();
       toast.success('Updated'); refetch();
     } catch (err) { toast.error(errText(err, 'Could not update this job')); }
   }
@@ -140,7 +137,7 @@ export function WorkerRepairJobPage() {
     ['Device', booking.deviceName || `${booking.brandCode} ${booking.modelCode}`],
     ...(booking.fuelType ? [['Fuel', booking.fuelType] as [string, string]] : []),
     ...(booking.configurationLabel ? [['Build', booking.configurationLabel] as [string, string]] : []),
-    ['Reported', (booking.problemCodes || []).join(', ').replace(/_/g, ' ') || '-'],
+    ['Reported', (booking.problemCodes || []).join(', ').replace(/_/g, ' ') || '—'],
     ['Repair', booking.repairCode?.replace(/_/g, ' ') || 'Diagnosis first'],
     ['Mode', (booking.serviceMode || '').replace(/_/g, ' ')],
     ['Address', booking.location?.address],
@@ -158,10 +155,6 @@ export function WorkerRepairJobPage() {
       </View>
 
       <ScrollView contentContainerStyle={[styles.body, { paddingBottom: insets.bottom + spacing.xxxl }]} keyboardShouldPersistTaps="handled">
-        {booking.returnOldParts && !['COMPLETED', 'CANCELLED'].includes(booking.status) ? (
-          <View accessibilityRole="alert" style={styles.oldParts}><Text variant="bodySmall" weight="semibold" color={accent[700]}>The customer asked for the replaced part back. Hand it over before you finish.</Text></View>
-        ) : null}
-        {!['COMPLETED', 'CANCELLED'].includes(booking.status) ? <PrivacyPledge who="partner" /> : null}
         {onTrip && (!isOwner || ownerGoing) && trip ? <TripSharingBanner sharing={sharing} to={trip.to} toCustomer={trip.toCustomer} /> : null}
         <OnSiteCard onSite={booking.onSite} />
         {isOwner ? (
@@ -183,7 +176,7 @@ export function WorkerRepairJobPage() {
 
         {repairReadyForPayment(booking) && (snap.totalPaise || 0) > 0 ? (
           <CollectPaymentCard amountPaise={duePaise} tipPaise={tipPaise} carriedPaise={carriedPaise} paymentMethod={booking.paymentMethod}
-            paid={booking.paymentStatus === 'paid'} collecting={collecting} onCollect={collect} jobId={booking._id} />
+            paid={booking.paymentStatus === 'paid'} collecting={collecting} onCollect={collect} />
         ) : null}
 
         <JobCard>
@@ -191,7 +184,7 @@ export function WorkerRepairJobPage() {
           {details.map(([k, v]) => (
             <View key={k} style={styles.between}>
               <Text variant="caption" color={ink[500]}>{k}</Text>
-              <Text variant="bodySmall" weight="semibold" style={[styles.right, styles.capitalize]}>{v || '-'}</Text>
+              <Text variant="bodySmall" weight="semibold" style={[styles.right, styles.capitalize]}>{v || '—'}</Text>
             </View>
           ))}
         </JobCard>
@@ -300,7 +293,6 @@ export function WorkerRepairJobPage() {
 }
 
 const styles = StyleSheet.create({
-  oldParts: { padding: spacing.md, borderRadius: radius.medium, borderWidth: 1, borderColor: '#FDE68A', backgroundColor: '#FFFBEB' },
   page: { flex: 1, backgroundColor: colors.background },
   centerAll: { alignItems: 'center', justifyContent: 'center' },
   flex: { flex: 1, minWidth: 0 },

@@ -76,7 +76,7 @@ function DevOtpPanelBase({ state, onFill }: DevOtpPanelProps) {
         <View style={styles.actionRow}>
           <WandSparkles size={13} color={colors.primary} />
           <Text variant="caption" weight="semibold" color={colors.primary}>
-            Use Dev OTP - tap to fill
+            Use Dev OTP — tap to fill
           </Text>
         </View>
       </View>

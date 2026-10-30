@@ -32,7 +32,7 @@ async function listServices(req, res, next) {
         res.set('Cache-Control', 'public, max-age=60');
         return res.type('application/json').send(cached);
       }
-    } catch { /* redis down - fall through to DB */ }
+    } catch { /* redis down — fall through to DB */ }
 
     const services = await ServiceCatalog.find({ isActive: true }).sort({ sortOrder: 1, name: 1 }).lean();
     const payload = JSON.stringify({ services });

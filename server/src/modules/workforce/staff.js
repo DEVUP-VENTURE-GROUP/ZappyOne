@@ -26,8 +26,6 @@ const forget = (workerId) => cache.delete(String(workerId));
 
 /** Staff checked in on a shift that is running now: Set of worker id strings. */
 async function onDutyIds(now = new Date()) {
-  // Version 1 runs on partners only: with the switch off nobody is on duty, so dispatch, the ZappyOne pro option and staff alerts all fall away together.
-  if (!(await require('../feature-flags/feature-flag.service').isEnabled('own_staff'))) return new Set();
   const rows = await Shift.find({ status: 'checked_in', startAt: { $lte: new Date(now.getTime() + 60 * 60000) }, endAt: { $gte: now } })
     .select('workerId').lean();
   const ids = new Set(rows.map((r) => String(r.workerId)));

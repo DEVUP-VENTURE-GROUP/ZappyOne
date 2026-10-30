@@ -188,7 +188,7 @@ function BookingsTab() {
                   <td className="py-3 pr-4"><span className="font-mono text-xs text-slate-500">{String(b._id).slice(-6)}</span><br /><span className="text-xs text-slate-600">{b.themeId?.title}</span></td>
                   <td className="py-3 pr-4 text-xs">{b.userId?.name}<br /><span className="text-slate-400">{b.userId?.phone}</span></td>
                   <td className="py-3 pr-4 text-xs">{b.partnerId?.businessName}</td>
-                  <td className="py-3 pr-4 text-xs">{b.eventDate ? new Date(b.eventDate).toLocaleDateString('en-IN') : '-'}<br /><span className="text-slate-400">{b.eventTimeSlot}</span></td>
+                  <td className="py-3 pr-4 text-xs">{b.eventDate ? new Date(b.eventDate).toLocaleDateString('en-IN') : '—'}<br /><span className="text-slate-400">{b.eventTimeSlot}</span></td>
                   <td className="py-3 pr-4 text-xs font-semibold">₹{Math.round((b.pricing?.totalPaise || 0) / 100)}</td>
                   <td className="py-3">
                     <div className="flex items-center gap-2">
@@ -274,7 +274,7 @@ function AdminKycDocRow({ label, mandatory, s3Key, partnerId, docKey, token, onL
       <div className="flex-1">
         <p className="text-xs font-bold text-slate-700">{label}</p>
         <p className="text-[10px] text-slate-400 mt-0.5">
-          {s3Key ? (url ? '✅ Uploaded' : '⏳ Loading…') : mandatory ? '❌ Not uploaded' : '- Optional'}
+          {s3Key ? (url ? '✅ Uploaded' : '⏳ Loading…') : mandatory ? '❌ Not uploaded' : '— Optional'}
         </p>
       </div>
       {url && <ZoomIn size={14} className="text-slate-400 cursor-pointer hover:text-slate-600" onClick={() => onLightbox(url)} />}
@@ -368,7 +368,7 @@ function PartnerDrawer({ partnerId, onClose, onRefresh }) {
               <div className="grid grid-cols-2 gap-2 mt-3 text-xs text-slate-600">
                 <div className="flex items-center gap-1.5"><Phone size={11} />{partner.phone}</div>
                 {partner.email && <div className="flex items-center gap-1.5"><Building2 size={11} />{partner.email}</div>}
-                <div className="flex items-center gap-1.5"><MapPin size={11} />{partner.cities?.join(', ') || '-'}</div>
+                <div className="flex items-center gap-1.5"><MapPin size={11} />{partner.cities?.join(', ') || '—'}</div>
                 <div className="flex items-center gap-1.5"><Star size={11} className="text-amber-400" />⭐ {partner.rating?.toFixed(1) || '–'}, {partner.completedEvents} events</div>
                 <div>Themes: {partner.themeCount || 0}</div>
                 <div>Joined: {new Date(partner.createdAt).toLocaleDateString('en-IN')}</div>
@@ -584,7 +584,7 @@ function PartnersTab() {
           {!data?.partners?.length && (
             <div className="text-center py-12 text-slate-400 text-sm">
               <Users size={28} className="mx-auto mb-2 text-slate-200" />
-              No partners yet - partners will appear here after self-registration
+              No partners yet — partners will appear here after self-registration
             </div>
           )}
         </div>
@@ -627,7 +627,7 @@ function AnalyticsTab() {
 
       {/* Weekly trend */}
       <div className="bg-white rounded-xl border border-slate-200 p-4">
-        <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-3">Bookings - Last 7 Days</p>
+        <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-3">Bookings — Last 7 Days</p>
         {s.weeklyTrend?.length ? (
           <div className="flex items-end gap-2 h-20">
             {(() => {
@@ -758,7 +758,7 @@ function ConfigTab() {
         {field('advancePaymentPct',     'Advance Payment %')}
         {field('platformCommissionPct', 'Platform Commission %')}
         <div>
-          <label className="block text-xs font-medium text-slate-600 mb-1">Platform fee - customer (₹)</label>
+          <label className="block text-xs font-medium text-slate-600 mb-1">Platform fee — customer (₹)</label>
           <input type="number" min="0" step="1"
             value={Math.round((values.platformFeePaise ?? 0) / 100)}
             onChange={e => setForm(p => ({ ...(p || values), platformFeePaise: Math.round(Number(e.target.value) * 100) }))}
@@ -781,7 +781,7 @@ function ConfigTab() {
           <input type="number" min="1" max="730" value={values.maxAdvanceBookingDays ?? ''} onChange={e => setForm(p => ({ ...(p || values), maxAdvanceBookingDays: Number(e.target.value) }))}
             className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:border-zappy-400 outline-none" />
           {(values.maxAdvanceBookingDays === 0 || values.maxAdvanceBookingDays < 1) && (
-            <p className="text-xs text-red-500 mt-1">Must be ≥ 1 - setting 0 blocks all bookings</p>
+            <p className="text-xs text-red-500 mt-1">Must be ≥ 1 — setting 0 blocks all bookings</p>
           )}
         </div>
       </div>

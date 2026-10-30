@@ -107,7 +107,7 @@ test('HTTP password login: portal cookie, and the wrong portal is refused', asyn
   expect(ok.status).toBe(200);
   expect(ok.body.accessToken).toBeTruthy();
   expect(ok.body.user.passwordHash).toBeUndefined();
-  const wrong = await request(app).post('/api/auth/password/login').set('X-Client-Type', 'servicepro')
+  const wrong = await request(app).post('/api/auth/password/login').set('X-Client-Type', 'events')
     .send({ role: 'user', identifier: u.phone, password: 'webpass12' });
   expect(wrong.status).toBe(403);
 });

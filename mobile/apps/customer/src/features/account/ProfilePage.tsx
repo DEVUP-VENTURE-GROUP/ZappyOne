@@ -46,7 +46,7 @@ export function ProfilePage() {
       <View style={styles.hero}>
         <ProfilePhoto url={user?.avatar} role="user" size={88} />
         <Text variant="heading2" weight="black">{user?.name || 'User'}</Text>
-        <Text variant="bodySmall" weight="semibold" color={ink[500]}>{user?.phone || user?.email || '-'}</Text>
+        <Text variant="bodySmall" weight="semibold" color={ink[500]}>{user?.phone || user?.email || '—'}</Text>
         <View style={styles.verified}><ShieldCheck size={14} color={success[600]} /><Text variant="caption" weight="black" color={success[700]}>{t('profile.verified', 'Verified')}</Text></View>
       </View>
 
@@ -61,7 +61,6 @@ export function ProfilePage() {
         <MenuItem Icon={Bell} label={t('profile.notifications', 'Notifications')} onPress={go('/notifications')} />
         <MenuItem Icon={TrendingUp} label={t('profile.spending', 'Spending Analytics')} sublabel={t('profile.spending.sub', 'Monthly & service breakdown')} onPress={go('/spending')} />
         <MenuItem Icon={Tag} label={t('profile.promos', 'Promo Codes')} sublabel={t('profile.promos.sub', 'Browse all active offers')} onPress={go('/promos')} />
-        <MenuItem Icon={Calendar} label={t('profile.plans', 'My plans')} sublabel={t('profile.plans.sub', 'Monthly plans, start codes, pause a day')} onPress={go('/my-plans')} />
         <MenuItem Icon={Calendar} label={t('profile.scheduled', 'Your schedule')} sublabel={t('profile.scheduled.sub', 'Upcoming bookings, change times, add to calendar')} onPress={go('/scheduled')} />
       </MenuSection>
 

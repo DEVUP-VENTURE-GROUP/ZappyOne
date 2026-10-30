@@ -2,44 +2,19 @@
  * What to collect from the customer, and recording it once paid
  * (the websites' CollectPaymentCard).
  */
-import React, { useState } from 'react';
+import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Check, Heart } from 'lucide-react-native';
-import { useReportCashRefusedMutation } from '@zappy/core/api';
 import { formatPaise } from '@zappy/core/shared/money';
 import { Button, Text } from '..';
-import { toast } from '../Toast';
-import { errText } from '../../lib/feedback';
 import { ink, success, danger } from '../../theme/colors';
 import { radius } from '../../theme/radius';
 import { spacing } from '../../theme/spacing';
 import { JobCard } from '../jobs/JobCard';
 
-// "Customer did not pay", with a confirm step; the same control on every kind of job (server: jobs/give-back reportCashRefused).
-export function CashRefusedControl({ jobId }: { jobId: string }) {
-  const [asking, setAsking] = useState(false);
-  const [report, { isLoading }] = useReportCashRefusedMutation();
-  async function send() {
-    try { toast.success((await report({ id: jobId }).unwrap()).message); setAsking(false); }
-    catch (err) { toast.error(errText(err, 'Could not send the report')); }
-  }
-  if (!asking) {
-    return <Text variant="bodySmall" weight="semibold" color={ink[500]} style={styles.link} onPress={() => setAsking(true)} accessibilityRole="button">Customer did not pay</Text>;
-  }
-  return (
-    <View style={styles.unpaid}>
-      <Text variant="bodySmall" weight="semibold" color={danger[600]}>Report that the customer did not pay? They are told, their next booking waits until it is paid, and ZappyOne follows up.</Text>
-      <View style={styles.row}>
-        <Button label="Yes, report" variant="danger" size="small" loading={isLoading} onPress={send} />
-        <Button label="Cancel" variant="outline" size="small" onPress={() => setAsking(false)} />
-      </View>
-    </View>
-  );
-}
-
 /* The money step: collect cash and record it, or wait for the online payment. */
-export function CollectPaymentCard({ amountPaise, paymentMethod, paid, collecting, onCollect, what = 'payment', tipPaise = 0, carriedPaise = 0, jobId }: {
-  amountPaise: number; paymentMethod?: string; paid?: boolean; collecting?: boolean; onCollect: () => void; what?: string; tipPaise?: number; carriedPaise?: number; jobId?: string;
+export function CollectPaymentCard({ amountPaise, paymentMethod, paid, collecting, onCollect, what = 'payment', tipPaise = 0, carriedPaise = 0 }: {
+  amountPaise: number; paymentMethod?: string; paid?: boolean; collecting?: boolean; onCollect: () => void; what?: string; tipPaise?: number; carriedPaise?: number;
 }) {
   if (!amountPaise || amountPaise <= 0) return null;
   const amount = formatPaise(amountPaise);
@@ -66,7 +41,6 @@ export function CollectPaymentCard({ amountPaise, paymentMethod, paid, collectin
       </Text>
       {tip}
       <Button label={`I've collected ${amount} in cash`} variant={cash ? 'primary' : 'outline'} onPress={onCollect} loading={collecting} fullWidth style={styles.mtSm} />
-      {cash && jobId ? <CashRefusedControl jobId={jobId} /> : null}
     </JobCard>
   );
 }
@@ -75,7 +49,5 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   mtXs: { marginTop: 2 },
   mtSm: { marginTop: spacing.sm },
-  link: { textAlign: 'center', paddingVertical: spacing.xs, marginTop: spacing.sm },
-  unpaid: { gap: spacing.sm, padding: spacing.md, borderRadius: radius.medium, backgroundColor: danger[50], marginTop: spacing.sm },
   tip: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: danger[50], borderRadius: radius.button, paddingHorizontal: spacing.sm, paddingVertical: 6, marginTop: spacing.sm },
 });

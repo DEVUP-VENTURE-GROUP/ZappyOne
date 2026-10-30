@@ -33,7 +33,7 @@ const FLOWS = [
         type: 'single',
         options: [
           { id: 'yes', label: 'Yes, I can see the screen normally', urgency: 'normal' },
-          { id: 'partial', label: 'Partly - lines, patches or dim areas', urgency: 'high' },
+          { id: 'partial', label: 'Partly — lines, patches or dim areas', urgency: 'high' },
           { id: 'no', label: 'No, the screen is black', urgency: 'high' },
         ],
       },
@@ -82,7 +82,7 @@ const FLOWS = [
             label: 'Yes, only the outer glass is cracked',
             recommendedServiceCode: 'glass_replacement',
             recommendedPartQuality: 'premium',
-            priceHint: 'Glass-only repair - significantly cheaper than a full display.',
+            priceHint: 'Glass-only repair — significantly cheaper than a full display.',
           },
           {
             id: 'no',
@@ -101,13 +101,13 @@ const FLOWS = [
         options: [
           {
             id: 'yes',
-            label: 'Yes - it vibrates or makes sounds',
+            label: 'Yes — it vibrates or makes sounds',
             recommendedServiceCode: 'display_assembly_replacement',
             urgency: 'high',
           },
           {
             id: 'no',
-            label: 'No - completely dead',
+            label: 'No — completely dead',
             // Not a display job at all; this is a power investigation.
             recommendedServiceCode: 'motherboard_repair',
             urgency: 'urgent',
@@ -195,7 +195,7 @@ const FLOWS = [
             label: 'The back or screen is lifting / bulging',
             recommendedServiceCode: 'battery_replacement',
             urgency: 'urgent',
-            priceHint: 'A swelling battery is a safety issue - stop using the phone.',
+            priceHint: 'A swelling battery is a safety issue — stop using the phone.',
           },
           {
             id: 'overheats',

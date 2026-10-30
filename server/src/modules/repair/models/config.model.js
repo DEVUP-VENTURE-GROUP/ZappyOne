@@ -62,8 +62,6 @@ const repairConfigSchema = new mongoose.Schema(
      */
     commissionPct: { type: Number, default: 10, min: 0, max: 100 },
     platformFeePaise: { type: Number, default: 1000, min: 0 }, // ₹10, admin-set
-    // Every job booked on ZappyOne gets at least this many days to ask for a redo, whatever the provider's own warranty; the reason to book here and not off the app.
-    redoGuaranteeDays: { type: Number, default: 7, min: 0, max: 365 },
     /**
      * Zero until an operator sets the real rate in admin. A wrong tax rate is
      * worse than none: it is collected from customers and owed to the state,

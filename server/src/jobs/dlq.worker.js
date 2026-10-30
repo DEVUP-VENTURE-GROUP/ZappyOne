@@ -23,7 +23,7 @@ async function processDlqJob(job) {
 
   const order = await Order.findById(orderId);
   if (!order) {
-    logger.warn({ orderId }, '[DLQ] Order not found - may have been deleted');
+    logger.warn({ orderId }, '[DLQ] Order not found — may have been deleted');
     return { skipped: true };
   }
 

@@ -114,42 +114,10 @@ function showZappySheet(amountPaise, purpose) {
  * @param {string} [p.purpose]          Label shown in the sheet (e.g. "Wallet Top-up")
  * @returns {Promise<{ cfOrderId, cfPaymentId }>}
  */
-const RAZORPAY_URL = 'https://checkout.razorpay.com/v1/checkout.js';
-let rzpPromise = null;
-function loadRazorpay() {
-  if (window.Razorpay) return Promise.resolve();
-  if (rzpPromise) return rzpPromise;
-  rzpPromise = new Promise((resolve, reject) => {
-    const s = document.createElement('script');
-    s.src = RAZORPAY_URL;
-    s.onload = resolve;
-    s.onerror = () => { rzpPromise = null; reject(new Error('Failed to load the payment page')); };
-    document.body.appendChild(s);
-  });
-  return rzpPromise;
-}
-
-// Razorpay's checkout, opened only when the server chose it (no Cashfree keys); resolves with what /payments/verify checks.
-async function openRazorpay({ razorpayKeyId, razorpayOrderId, cfOrderId, amountPaise, purpose }) {
-  await loadRazorpay();
-  return new Promise((resolve, reject) => {
-    const rzp = new window.Razorpay({
-      key: razorpayKeyId, order_id: razorpayOrderId, amount: amountPaise, currency: 'INR',
-      name: 'ZappyOne', description: purpose || 'Payment', theme: { color: '#1F4FD8' },
-      handler: (r) => resolve({ cfOrderId, cfPaymentId: r.razorpay_payment_id, razorpaySignature: r.razorpay_signature }),
-      modal: { ondismiss: () => reject(new Error('Payment cancelled')) },
-    });
-    rzp.on('payment.failed', (r) => reject(new Error(r?.error?.description || 'Payment failed')));
-    rzp.open();
-  });
-}
-
-/** Opens whichever checkout the server's create-order chose (`gateway`), after ZappyOne's own confirmation sheet. */
-export async function openCheckout({ gateway = 'cashfree', paymentSessionId, cfOrderId, cashfreeEnv = 'sandbox', amountPaise, purpose, razorpayKeyId, razorpayOrderId }) {
+export async function openCheckout({ paymentSessionId, cfOrderId, cashfreeEnv = 'sandbox', amountPaise, purpose }) {
   if (amountPaise) {
     await showZappySheet(amountPaise, purpose);
   }
-  if (gateway === 'razorpay') return openRazorpay({ razorpayKeyId, razorpayOrderId, cfOrderId, amountPaise, purpose });
 
   await loadSdk();
 

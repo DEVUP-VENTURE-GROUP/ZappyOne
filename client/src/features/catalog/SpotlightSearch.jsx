@@ -230,14 +230,9 @@ export default function SpotlightSearch({ open, onClose, lat, lng, initialQuery 
               <Group title={GROUP_LABEL.services} items={data.services} onOpen={openResult} words={words} />
               <ProblemGroups problems={data.problems} onOpen={openResult} words={words} />
               <Group title={GROUP_LABEL.categories} items={data.categories} onOpen={openResult} words={words} />
-              {data.comingSoon?.length > 0 && (
-                <p className="mx-4 mt-4 rounded-xl bg-sunken px-3 py-2.5 text-[13.5px] text-ink-700">
-                  <b>{data.comingSoon.map((c) => c.title).join(', ')}</b> {data.comingSoon.length > 1 ? 'are' : 'is'} not at your address yet. Pros are joining; find it under “Coming to your area” on home to be told the day it opens.
-                </p>
-              )}
               {data.empty && (
                 <>
-                  {!data.comingSoon?.length && <p className="px-4 pt-5 text-[15px] text-slate-700">No match for “{term}”.</p>}
+                  <p className="px-4 pt-5 text-[15px] text-slate-700">No match for “{term}”.</p>
                   <Group title="You can book these here" items={data.suggestions} onOpen={openResult} />
                 </>
               )}

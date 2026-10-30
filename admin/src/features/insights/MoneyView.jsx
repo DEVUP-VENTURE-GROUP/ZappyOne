@@ -31,7 +31,7 @@ export default function MoneyView({ days }) {
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
         <Kpi label="We earned" value={rupees(c.takePaise)} delta={d.takePaise} accent="#10B981" spark={data.daily.map((x) => x.takePaise)} hint={`${count(c.jobs)} completed jobs`} />
         <Kpi label="Booked value" value={rupees(c.gmvPaise)} delta={d.gmvPaise} spark={data.daily.map((x) => x.gmvPaise)} hint="What customers paid" />
-        <Kpi label="Take rate" value={c.takeRate == null ? '-' : `${c.takeRate}%`} hint="What we keep of booked value" />
+        <Kpi label="Take rate" value={c.takeRate == null ? '—' : `${c.takeRate}%`} hint="What we keep of booked value" />
         <Kpi label="Providers earned" value={rupees(c.providerPaise)} hint="After our commission" />
         <Kpi label="Average order" value={rupees(c.aovPaise)} delta={d.aovPaise} />
       </div>
@@ -59,7 +59,7 @@ export default function MoneyView({ days }) {
         </Panel>
         <Panel title="By service" note="What we earned">
           <RankBars rows={data.byService} value="takePaise" format={(v) => rupees(v)} color="#10B981"
-            sub={(s) => `${count(s.jobs)} jobs, ${rupees(s.gmvPaise)} booked, keeps ${s.takeRate ?? '-'}%`} empty="No completed jobs yet" />
+            sub={(s) => `${count(s.jobs)} jobs, ${rupees(s.gmvPaise)} booked, keeps ${s.takeRate ?? '—'}%`} empty="No completed jobs yet" />
         </Panel>
         <Panel title="By area" note="What we earned">
           <RankBars rows={data.byArea} value="takePaise" format={(v) => rupees(v)} color="#10B981"

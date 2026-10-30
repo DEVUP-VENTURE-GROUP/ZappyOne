@@ -150,8 +150,6 @@ const shopSchema = new mongoose.Schema(
       capacity: { type: Number, default: 0, min: 0, max: 1000 },
     },
     // A rate agreed with this partner alone, over their type's (shop/partner-commission); until null = no end.
-    // The secret in this partner's own storefront link; bookings that come through it pay the own-link commission (shop/share-link).
-    shareCode: { type: String, default: undefined },
     commissionOverride: { pct: { type: Number, default: null, min: 0, max: 50 }, until: { type: Date, default: null }, note: { type: String, default: '', maxlength: 200 }, setBy: { type: mongoose.Schema.Types.ObjectId, default: null }, setAt: { type: Date, default: null } },
     // Jobs taken today and when last, for fair dispatch (jobs/fairness).
     dispatchStats: { day: { type: String, default: null }, jobs: { type: Number, default: 0 }, lastAt: { type: Date, default: null } },
@@ -170,8 +168,6 @@ const shopSchema = new mongoose.Schema(
 stripEmptyPoints(shopSchema, ['address.location']);
 
 shopSchema.index({ 'address.location': '2dsphere' });
-// Unique only among real codes; partners without one yet are not indexed.
-shopSchema.index({ shareCode: 1 }, { unique: true, partialFilterExpression: { shareCode: { $type: 'string' } } });
 // Fast "which shops offer X, near me, verified and open" queries.
 shopSchema.index({ services: 1, isActive: 1, isBlocked: 1, 'kyc.status': 1 });
 
@@ -192,20 +188,18 @@ const toMinutes = (hhmm) => {
  * The next opening within a week, as { day, opensAt } in IST, or null if no
  * hours are set. "Today" counts only if opening is still ahead.
  */
-function nextOpeningOf(hours, when = new Date()) {
-  if (!hours?.length) return null;
+shopSchema.methods.nextOpening = function nextOpening(when = new Date()) {
+  if (!this.hours?.length) return null;
   const { day, minutesOfDay } = istParts(when);
   for (let ahead = 0; ahead < 7; ahead++) {
     const d = (day + ahead) % 7;
-    const row = hours.find((h) => h.day === d);
+    const row = this.hours.find((h) => h.day === d);
     const open = row && !row.isClosed ? toMinutes(row.opensAt) : null;
     if (open == null || (ahead === 0 && open <= minutesOfDay)) continue;
     return { day: d, opensAt: row.opensAt, daysAhead: ahead };
   }
   return null;
-}
-shopSchema.statics.nextOpeningOf = nextOpeningOf;
-shopSchema.methods.nextOpening = function nextOpening(when = new Date()) { return nextOpeningOf(this.hours, when); };
+};
 
 /**
  * Open at this IST moment? A closing time earlier than the opening time is an

@@ -172,7 +172,7 @@ partSchema.pre('validate', function validateSpec(next) {
   const missing = required.filter((f) => this.spec[f] == null || this.spec[f] === '');
   if (missing.length) {
     return next(new Error(
-      `A ${this.spec.specType} part needs ${missing.join(' and ')} - without it the part cannot be matched to a device.`,
+      `A ${this.spec.specType} part needs ${missing.join(' and ')} — without it the part cannot be matched to a device.`,
     ));
   }
   return next();

@@ -52,7 +52,7 @@ async function processDispatchJob(job) {
   // Jobs are re-queued with a 60s delay and drain normally once re-enabled.
   const cfg = await pricingService.getActiveConfig();
   if (!cfg.dispatchEnabled) {
-    logger.warn({ orderId }, '[DISPATCH] Dispatch paused by admin - re-queuing in 60s');
+    logger.warn({ orderId }, '[DISPATCH] Dispatch paused by admin — re-queuing in 60s');
     const pausedTargetQueue = job.data.isEmergency ? emergencyDispatchQueue : dispatchQueue;
     await pausedTargetQueue.add('dispatch', job.data, { delay: 60_000 });
     return { ok: false, reason: 'dispatch_paused' };
@@ -121,11 +121,11 @@ async function processDispatchJob(job) {
     await redis.expire(zoneKey, 120); // auto-expire if something goes wrong
     if (zoneCount > ZONE_DISPATCH_CAP) {
       await redis.decr(zoneKey); // we're not proceeding, give the slot back
-      logger.info({ orderId, zoneBucket, zoneCount }, '[DISPATCH] Zone at capacity - re-queuing in 10s');
+      logger.info({ orderId, zoneBucket, zoneCount }, '[DISPATCH] Zone at capacity — re-queuing in 10s');
       await dispatchQueue.add('dispatch', job.data, { delay: ZONE_DISPATCH_DELAY });
       return { ok: false, reason: 'zone_throttled', zoneBucket };
     }
-  } catch (_) { /* Redis error - proceed without throttle, fail open */ }
+  } catch (_) { /* Redis error — proceed without throttle, fail open */ }
 
   // Decrement zone counter when this job exits (success or failure).
   const releaseZoneSlot = () => redis.decr(zoneKey).catch(() => {});
@@ -187,7 +187,7 @@ async function processDispatchJob(job) {
 
         alreadyNotified.add(wIdStr);
         logger.info({ orderId, workerId: wIdStr, distKm: distKm.toFixed(2) },
-          '[DISPATCH] Worker came online mid-dispatch - offering immediately');
+          '[DISPATCH] Worker came online mid-dispatch — offering immediately');
 
         await redis.publish('worker:offer', JSON.stringify({
           workerId: wIdStr,
@@ -196,7 +196,7 @@ async function processDispatchJob(job) {
       } catch { /* best-effort */ }
     });
   } catch (err) {
-    logger.warn({ err: err.message }, '[DISPATCH] Could not subscribe to worker:came_online - continuing without it');
+    logger.warn({ err: err.message }, '[DISPATCH] Could not subscribe to worker:came_online — continuing without it');
   }
 
   const releaseCameOnlineSub = () => {
@@ -261,7 +261,7 @@ async function processDispatchJob(job) {
     .zoneGapBonusPaise(lat, lng, cfg)
     .catch(() => 0);
   if (zoneBonusPaise > 0) {
-    logger.info({ orderId, zoneBonusPaise }, '[ZEROWAIT] Under-supplied zone - positioning bonus applied');
+    logger.info({ orderId, zoneBonusPaise }, '[ZEROWAIT] Under-supplied zone — positioning bonus applied');
   }
 
   const urgencyBonusForStep = (stepIdx) => {
@@ -311,7 +311,7 @@ async function processDispatchJob(job) {
       if (freshBoostPaise > lastBoostPaise) {
         logger.info(
           { orderId, fromPaise: lastBoostPaise, toPaise: freshBoostPaise, reOffering: alreadyNotified.size },
-          '[DISPATCH] 💰 Offer boosted mid-search - re-opening to workers who already passed',
+          '[DISPATCH] 💰 Offer boosted mid-search — re-opening to workers who already passed',
         );
         lastBoostPaise = freshBoostPaise;
         alreadyNotified.clear();
@@ -320,13 +320,13 @@ async function processDispatchJob(job) {
       const elapsedMs = Date.now() - jobStartMs;
       logger.info(
         { orderId, stepIdx: stepIdx + 1, totalSteps: radiusSteps.length, radiusKm, elapsedSec: Math.round(elapsedMs / 1000) },
-        `[DISPATCH] Step ${stepIdx + 1}/${radiusSteps.length} - searching ${radiusKm}km`,
+        `[DISPATCH] Step ${stepIdx + 1}/${radiusSteps.length} — searching ${radiusKm}km`,
       );
 
       const radiusLabel = radiusKm < 1 ? `${Math.round(radiusKm * 1000)}m` : `${radiusKm}km`;
       const userMsg = stepIdx === 0
         ? 'Searching for nearby workers…'
-        : `Expanding search to ${radiusLabel} - still looking…`;
+        : `Expanding search to ${radiusLabel} — still looking…`;
 
       await emitToOrderRoom(order._id, 'order.dispatch_update', {
         message: userMsg,
@@ -353,7 +353,7 @@ async function processDispatchJob(job) {
       if (candidates.length === 0) {
         // Early small-radius steps: skip instantly (no workers within 500m is normal).
         if (stepIdx < INSTANT_SKIP_STEPS) {
-          logger.info({ orderId, radiusKm, stepIdx }, '[DISPATCH] No workers - instant skip (early step)');
+          logger.info({ orderId, radiusKm, stepIdx }, '[DISPATCH] No workers — instant skip (early step)');
           continue;
         }
 
@@ -372,7 +372,7 @@ async function processDispatchJob(job) {
           if (anyLeft.length === 0) {
             logger.info(
               { orderId, alreadyNotified: alreadyNotified.size },
-              '[DISPATCH] All available workers already notified - stopping expansion early',
+              '[DISPATCH] All available workers already notified — stopping expansion early',
             );
             break; // fall through to force-assign / min-search hold
           }
@@ -549,10 +549,10 @@ async function processDispatchJob(job) {
   if (remainingMs > 0) {
     logger.info(
       { orderId, remainingMs: Math.round(remainingMs / 1000) },
-      '[DISPATCH] Radius steps done early - holding for minimum search window',
+      '[DISPATCH] Radius steps done early — holding for minimum search window',
     );
     await emitToOrderRoom(order._id, 'order.dispatch_update', {
-      message: 'Still searching - please hold…',
+      message: 'Still searching — please hold…',
       radiusKm: config.dispatch.radiusSteps.at(-1),
     });
 
@@ -581,7 +581,7 @@ async function processDispatchJob(job) {
         ).catch(() => {});
         logger.info(
           { orderId, boostPaise: boostNow, round: boostRounds },
-          '[DISPATCH] 💰 Boosted during hold - re-opening the search at the new price',
+          '[DISPATCH] 💰 Boosted during hold — re-opening the search at the new price',
         );
         restart = true;
         break;
@@ -602,7 +602,7 @@ async function processDispatchJob(job) {
    * through to a retry (with the now-higher accept bonus) and, if still nobody,
    * a graceful failure + full refund via markOrderFailed. */
   if (cfg.forceAssignEnabled) {
-    logger.info({ orderId }, '[DISPATCH] Voluntary window elapsed - force-assign enabled by admin, attempting');
+    logger.info({ orderId }, '[DISPATCH] Voluntary window elapsed — force-assign enabled by admin, attempting');
     await emitToOrderRoom(order._id, 'order.dispatch_update', {
       message: 'Assigning the nearest available worker…',
     });
@@ -613,13 +613,13 @@ async function processDispatchJob(job) {
       return forceResult;
     }
   } else {
-    logger.info({ orderId }, '[DISPATCH] Voluntary window elapsed - no force-assign (acceptance-first)');
+    logger.info({ orderId }, '[DISPATCH] Voluntary window elapsed — no force-assign (acceptance-first)');
   }
 
   /* Retry dispatch if under limit */
   if (retryCount < MAX_RETRIES) {
     const nextRetry = retryCount + 1;
-    logger.info({ orderId, nextRetry }, '[DISPATCH] No workers found - scheduling retry');
+    logger.info({ orderId, nextRetry }, '[DISPATCH] No workers found — scheduling retry');
 
     const retryTargetQueue = job.data.isEmergency ? emergencyDispatchQueue : dispatchQueue;
     await retryTargetQueue.add(
@@ -633,14 +633,14 @@ async function processDispatchJob(job) {
     );
 
     await emitToOrderRoom(order._id, 'order.dispatch_update', {
-      message: 'No available workers right now - retrying shortly…',
+      message: 'No available workers right now — retrying shortly…',
     });
 
     return { ok: false, reason: 'retrying', retryCount: nextRetry };
   }
 
   /* Truly no workers after all retries */
-  logger.info({ orderId }, '[DISPATCH] All attempts exhausted - marking failed');
+  logger.info({ orderId }, '[DISPATCH] All attempts exhausted — marking failed');
   const finalOrder = await Order.findById(orderId);
   if (finalOrder && finalOrder.status === 'searching') {
     await markOrderFailed(finalOrder, 'no_workers_available');

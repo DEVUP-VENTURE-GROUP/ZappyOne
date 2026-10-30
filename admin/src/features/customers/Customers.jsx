@@ -3,7 +3,6 @@ import {
   useAdminListUsersQuery,
   useAdminGetUserQuery,
   useAdminBlockUserMutation,
-  useAdminWaiveCashDueMutation,
 } from '@shared/services/api';
 import {
   Search, ShieldOff, ShieldCheck, Users as UsersIcon,
@@ -41,8 +40,6 @@ function UserDrawer({ userId, onClose, onBlock }) {
   const { data, isFetching } = useAdminGetUserQuery(userId, { skip: !userId });
   const u = data?.user;
   const orders = data?.orders || [];
-  const cashDues = data?.cashDues || [];
-  const [waive, { isLoading: waiving }] = useAdminWaiveCashDueMutation();
   const location = bestKnownLocation(u);
 
   const statusColor = {
@@ -83,7 +80,7 @@ function UserDrawer({ userId, onClose, onBlock }) {
                   {(u.name || u.phone || '?')[0].toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-bold text-slate-900 text-lg leading-tight truncate">{u.name || '-'}</p>
+                  <p className="font-bold text-slate-900 text-lg leading-tight truncate">{u.name || '—'}</p>
                   <div className="mt-1 space-y-0.5">
                     <div className="flex items-center gap-1.5 text-sm text-slate-500">
                       <Phone size={12} />{u.phone}
@@ -120,27 +117,6 @@ function UserDrawer({ userId, onClose, onBlock }) {
               </div>
             </div>
 
-            {cashDues.length > 0 && (
-              <div className="mx-5 mt-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5">
-                <p className="text-xs font-bold uppercase tracking-wide text-amber-800">Unpaid cash, new bookings on hold</p>
-                <ul className="mt-2 space-y-2">
-                  {cashDues.map((d) => (
-                    <li key={d.jobId} className="flex items-center justify-between gap-2 text-sm">
-                      <span className="min-w-0">
-                        <span className="font-semibold capitalize text-slate-800">{d.kind} {d.reference}</span>
-                        <span className="block text-xs text-slate-500">Reported {fmtDate(d.reportedAt)}{d.note ? `: ${d.note}` : ''}</span>
-                      </span>
-                      <button type="button" disabled={waiving}
-                        onClick={() => waive({ id: userId, jobId: d.jobId }).unwrap().then(() => toast.success('Hold lifted')).catch((e) => toast.error(e?.data?.error || 'Could not lift the hold'))}
-                        className="shrink-0 rounded-lg bg-white px-2.5 py-1 text-xs font-bold text-amber-800 ring-1 ring-amber-200 hover:bg-amber-100">
-                        Waive
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
             {/* recent bookings */}
             <div className="px-5 py-4">
               <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-3">
@@ -154,7 +130,7 @@ function UserDrawer({ userId, onClose, onBlock }) {
                     <div key={o._id} className="flex items-center justify-between bg-slate-50 rounded-xl px-3 py-2.5">
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-semibold text-slate-800 capitalize truncate">
-                          {(o.service || '').replace(/_/g, ' ')}{o.reference ? ` · ${o.reference}` : ''}
+                          {(o.service || '').replace(/_/g, ' ')}
                         </p>
                         <p className="text-xs text-slate-400 mt-0.5">{fmtDate(o.createdAt)}</p>
                       </div>
@@ -310,9 +286,9 @@ export default function Users() {
                   onClick={() => setSelectedId(u._id)}
                   className="hover:bg-slate-50/80 transition-colors cursor-pointer"
                 >
-                  <Td><span className="font-semibold text-slate-900">{u.name || '-'}</span></Td>
+                  <Td><span className="font-semibold text-slate-900">{u.name || '—'}</span></Td>
                   <Td muted>{u.phone}</Td>
-                  <Td muted>{u.email || '-'}</Td>
+                  <Td muted>{u.email || '—'}</Td>
                   {/* Rated by providers (jobs/customer-rating); flagged when low or marked unsafe. */}
                   <Td><span className="font-semibold">{u.ratingCount ? `${Number(u.rating).toFixed(1)} ★` : 'New'}</span>
                     {u.flags?.lowCustomerRating && <span className="ml-1.5 rounded-full bg-red-50 px-1.5 py-0.5 text-[10.5px] font-bold text-red-700">Flagged by providers</span>}</Td>

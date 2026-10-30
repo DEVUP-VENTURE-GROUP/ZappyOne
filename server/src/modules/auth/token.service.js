@@ -149,16 +149,16 @@ async function rotateTokenPair(presentedRefreshToken) {
       Date.now() - stored.rotatedAt < 8000;
 
     if (!isConcurrentRace) {
-      logger.warn({ sub, family, presentedGen: gen, currentGen: stored.currentGen }, 'RT reuse detected - revoking family');
+      logger.warn({ sub, family, presentedGen: gen, currentGen: stored.currentGen }, 'RT reuse detected — revoking family');
       await redis.del(familyKey(sub, family));
-      throw Object.assign(new Error('Token reuse detected - please log in again'), {
+      throw Object.assign(new Error('Token reuse detected — please log in again'), {
         status: 401,
         code: 'RT_REUSE',
       });
     }
 
     // Multi-tab race: issue fresh tokens for the already-current gen.
-    logger.info({ sub, family, presentedGen: gen, currentGen: stored.currentGen }, 'RT concurrent race resolved - re-issuing for current gen');
+    logger.info({ sub, family, presentedGen: gen, currentGen: stored.currentGen }, 'RT concurrent race resolved — re-issuing for current gen');
     const raceAccessToken = signAccessToken({ sub, role, phone: decoded.phone, email: decoded.email, ...(role === 'worker' ? { sid: family } : {}) });
     const raceTokenId = crypto.randomBytes(16).toString('hex');
     const raceRefreshToken = jwt.sign(

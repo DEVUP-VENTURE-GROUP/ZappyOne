@@ -372,23 +372,14 @@ const lineRequests = {
         return res.status(400).json({ error: 'code and domainCode are required', code: 'PARAMS_REQUIRED' });
       }
 
-      // With packages (the provider's own, or admin's edit of them) the approval opens a bookable fixed-price line at once; without, a bare line as before.
-      const offered = req.body.packages?.length ? req.body.packages : (reqDoc.packages || []);
-      const slug = (s) => String(s).toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 30) || 'job';
-      const line = offered.length
-        ? await require('../repair/package-lines.service').upsertPackageLine({
-          code: String(code).toLowerCase(), name: name || reqDoc.proposedName, domainCode: String(domainCode).toLowerCase(), description: reqDoc.description,
-          typeWord: req.body.typeWord || '', types: req.body.types, thing: req.body.thing || 'job',
-          packages: offered.map((p, i) => ({ code: p.code || `${slug(p.name)}_${i + 1}`.slice(0, 30), name: p.name, minutes: p.minutes, prices: p.prices || { one: Math.round((p.pricePaise || 0) / 100) } })),
-        })
-        : await ServiceLine.create({
-          code: String(code).toLowerCase(),
-          name: name || reqDoc.proposedName,
-          domainCode: String(domainCode).toLowerCase(),
-          description: reqDoc.description,
-          status,
-          repairVertical,
-        });
+      const line = await ServiceLine.create({
+        code: String(code).toLowerCase(),
+        name: name || reqDoc.proposedName,
+        domainCode: String(domainCode).toLowerCase(),
+        description: reqDoc.description,
+        status,
+        repairVertical,
+      });
 
       reqDoc.status = 'approved';
       reqDoc.resultLineCode = line.code;

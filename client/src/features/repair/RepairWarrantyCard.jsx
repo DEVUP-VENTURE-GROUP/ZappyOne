@@ -8,9 +8,9 @@ import { useRepairWarrantyQuery, useClaimRepairWarrantyMutation } from '@shared/
  * that window (repair/services/warranty). One open claim per booking.
  */
 const CLAIM_STATUS = {
-  submitted: 'Claim received - we reply within a day',
+  submitted: 'Claim received — we reply within a day',
   under_review: 'We are looking into your claim',
-  approved: 'Claim approved - we will arrange the fix free',
+  approved: 'Claim approved — we will arrange the fix free',
   rejected: 'Claim not covered',
   resolved: 'Claim resolved',
 };
@@ -31,7 +31,7 @@ export default function RepairWarrantyCard({ booking }) {
     if (text.trim().length < 10) return toast.error('Tell us what went wrong (a sentence is enough)');
     try {
       await claim({ id: booking._id, issueDescription: text.trim() }).unwrap();
-      toast.success('Claim sent - we will reply within a day');
+      toast.success('Claim sent — we will reply within a day');
       setOpen(false); setText('');
     } catch (err) {
       toast.error(err?.data?.error || 'Could not send the claim');
@@ -48,7 +48,7 @@ export default function RepairWarrantyCard({ booking }) {
       <p className="mt-0.5 text-[12.5px] text-slate-500">
         {data.active ? `Covered until ${until}.` : `Ended on ${until}.`}
       </p>
-      {c && <p className="mt-2 rounded-lg bg-slate-50 px-3 py-2 text-[12.5px] font-semibold text-slate-700">{CLAIM_STATUS[c.status] || c.status}{c.reviewNote ? ` - ${c.reviewNote}` : ''}</p>}
+      {c && <p className="mt-2 rounded-lg bg-slate-50 px-3 py-2 text-[12.5px] font-semibold text-slate-700">{CLAIM_STATUS[c.status] || c.status}{c.reviewNote ? ` — ${c.reviewNote}` : ''}</p>}
       {data.active && !claimOpen && !open && (
         <button type="button" onClick={() => setOpen(true)} className="mt-3 text-[13px] font-bold text-zappy-600">
           Something is not right? Claim warranty

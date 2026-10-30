@@ -276,7 +276,7 @@ async function passBackToShop(booking, workerId, reason) {
   }
   // Up to the door: once work starts on the device it is no longer the technician's to hand over.
   if (!['CONFIRMED', 'PROVIDER_ASSIGNED', 'WORKER_ACCEPTED', 'PICKUP_SCHEDULED', 'ON_THE_WAY', 'ARRIVED'].includes(booking.status)) {
-    throw httpError('Work has started on this job - call your shop owner', 409, 'TOO_LATE_TO_DECLINE', { jobStatus: booking.status });
+    throw httpError('Work has started on this job — call your shop owner', 409, 'TOO_LATE_TO_DECLINE', { jobStatus: booking.status });
   }
   if (!reason.trim()) throw httpError('Tell your shop why you are passing this job', 400, 'REASON_REQUIRED');
 
@@ -337,7 +337,7 @@ async function declineOne({ bookingId, actorRole, actorId, reason = '' }) {
 
   if (!['PROVIDER_ASSIGNED', 'CONFIRMED'].includes(booking.status)) {
     throw httpError(
-      'This job can no longer be passed on - it has already started',
+      'This job can no longer be passed on — it has already started',
       409,
       'TOO_LATE_TO_DECLINE',
       { jobStatus: booking.status },

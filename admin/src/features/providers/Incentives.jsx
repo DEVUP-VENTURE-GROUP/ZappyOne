@@ -57,7 +57,7 @@ export default function Incentives() {
   async function runSweep() {
     try {
       const result = await ratingSweep().unwrap();
-      toast.success(`Rating sweep complete - ${result.updated ?? 0} workers updated`);
+      toast.success(`Rating sweep complete — ${result.updated ?? 0} workers updated`);
     } catch (err) {
       toast.error(err.data?.error || 'Sweep failed');
     }
@@ -142,7 +142,7 @@ export default function Incentives() {
         <h3 className="text-sm font-bold text-slate-700 mb-1">Rating Recalculation Sweep</h3>
         <p className="text-xs text-slate-400 mb-5">
           Recomputes lifetime average ratings for all workers from their completed order reviews.
-          Safe to run at any time - idempotent operation.
+          Safe to run at any time — idempotent operation.
         </p>
         <button
           onClick={runSweep}

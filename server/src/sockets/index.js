@@ -37,7 +37,7 @@ function initSockets(httpServer) {
   // `order:subscribe` and rejoin their rooms.
   pubClient.on('ready', () => {
     if (io) {
-      logger.warn('[SOCKET] Redis reconnected - broadcasting rooms_reset to all clients');
+      logger.warn('[SOCKET] Redis reconnected — broadcasting rooms_reset to all clients');
       io.emit('server:rooms_reset', { reason: 'redis_reconnect', at: Date.now() });
     }
   });
@@ -212,13 +212,13 @@ function initSockets(httpServer) {
           const elapsedSec = Math.max(1, (Date.now() - prev.ts) / 1000);
           observedSpeedMps = distMetresFromPrev / elapsedSec;
           if (observedSpeedMps > 41.7) { // > 150 km/h
-            logger.warn({ workerId: id, speedMps: Math.round(observedSpeedMps) }, '[SPOOFING] Suspicious GPS jump - rejected');
+            logger.warn({ workerId: id, speedMps: Math.round(observedSpeedMps) }, '[SPOOFING] Suspicious GPS jump — rejected');
             require('../modules/fraud/fraud.service')
               .logGpsSpoofEvent(id, { speedMps: observedSpeedMps, distMetres: distMetresFromPrev })
               .catch(() => {});
             return;
           }
-        } catch { /* malformed prev - allow through */ }
+        } catch { /* malformed prev — allow through */ }
       }
       await redis.set(prevKey, JSON.stringify({ lat, lng, ts: Date.now() }), 'EX', 300);
 

@@ -119,8 +119,6 @@ const workerSchema = new mongoose.Schema(
      * cancelling an auto-accepted job pauses it (autoAcceptPauseDays).
      */
     // A rate agreed with this partner alone, over their type's (shop/partner-commission); until null = no end.
-    // The secret in this partner's own storefront link; bookings that come through it pay the own-link commission (shop/share-link).
-    shareCode: { type: String, default: undefined },
     commissionOverride: { pct: { type: Number, default: null, min: 0, max: 50 }, until: { type: Date, default: null }, note: { type: String, default: '', maxlength: 200 }, setBy: { type: mongoose.Schema.Types.ObjectId, default: null }, setAt: { type: Date, default: null } },
     // Jobs taken today and when last, for fair dispatch (jobs/fairness).
     dispatchStats: { day: { type: String, default: null }, jobs: { type: Number, default: 0 }, lastAt: { type: Date, default: null } },
@@ -288,10 +286,7 @@ const workerSchema = new mongoose.Schema(
 );
 
 // CRITICAL: Compound geo index used by the matcher.
-workerSchema.index({ 'trust.blockedFromUserIds': 1 }, { sparse: true });
 workerSchema.index({ currentLocation: '2dsphere' });
-// Unique only among real codes; partners without one yet are not indexed.
-workerSchema.index({ shareCode: 1 }, { unique: true, partialFilterExpression: { shareCode: { $type: 'string' } } });
 workerSchema.index({ isOnline: 1, isAvailable: 1, skills: 1 });
 // Dispatch rating filter: used in geo.service.js Worker.find() on every candidate batch
 workerSchema.index({ 'kyc.status': 1, rating: -1, isBlocked: 1 });

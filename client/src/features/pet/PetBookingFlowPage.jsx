@@ -437,11 +437,11 @@ function PetBookingFlow({ categoryCode, saved, draftKey, onStartOver }) {
                 />
               );
             }
-            let text = 'No provider is free for this yet - try a different time.';
+            let text = 'No provider is free for this yet — try a different time.';
             if (reason === 'outside_radius') {
-              text = `${nearby} ${nearby === 1 ? 'provider covers' : 'providers cover'} this service nearby, but not this address - try a location closer to town.`;
+              text = `${nearby} ${nearby === 1 ? 'provider covers' : 'providers cover'} this service nearby, but not this address — try a location closer to town.`;
             } else if (reason === 'no_capacity') {
-              text = `${nearby} ${nearby === 1 ? 'provider is' : 'providers are'} fully booked for those dates - try different dates.`;
+              text = `${nearby} ${nearby === 1 ? 'provider is' : 'providers are'} fully booked for those dates — try different dates.`;
             }
             return (
               <div className="text-center py-10 text-slate-400 text-sm px-4">

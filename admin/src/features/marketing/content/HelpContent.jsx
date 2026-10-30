@@ -136,7 +136,7 @@ export default function Content({ type = 'faq', title = 'FAQs', subtitle = 'Ques
       {isLoading ? (
         <div className="flex justify-center py-16"><Loader2 size={24} className="animate-spin text-zappy-500" /></div>
       ) : items.length === 0 ? (
-        <p className="text-center text-slate-400 py-16 text-sm">No {tab === 'faq' ? 'FAQs' : 'pages'} yet - add one.</p>
+        <p className="text-center text-slate-400 py-16 text-sm">No {tab === 'faq' ? 'FAQs' : 'pages'} yet — add one.</p>
       ) : (
         <div className="space-y-2">
           {items.map((it) => <Row key={it._id} item={it} onEdit={setEditing} />)}

@@ -28,7 +28,7 @@ function autoFlag(comment) {
  * itself records the rating; never throws, because the customer's rating is
  * already saved on their booking either way.
  */
-async function recordReview({ kind, jobId, userId, workerId = null, shopId = null, partnerId = null, rating, comment = '', serviceLabel = '', excluded = false }) {
+async function recordReview({ kind, jobId, userId, workerId = null, shopId = null, partnerId = null, rating, comment = '', serviceLabel = '' }) {
   try {
     if (!rating || !jobId || !userId) return null;
     const flagReason = autoFlag(comment);
@@ -38,7 +38,7 @@ async function recordReview({ kind, jobId, userId, workerId = null, shopId = nul
         $setOnInsert: {
           kind, jobId, userId, workerId, shopId, partnerId, serviceLabel,
           rating, comment: String(comment || '').slice(0, 1000),
-          flagged: !!flagReason, flagReason: flagReason || '', excluded: !!excluded,
+          flagged: !!flagReason, flagReason: flagReason || '',
         },
       },
       { upsert: true, new: true },

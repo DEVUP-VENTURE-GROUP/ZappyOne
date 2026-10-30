@@ -98,7 +98,7 @@ async function workerStartTrip({ orderId, workerId, workerLat, workerLng }) {
       notificationService.notify({
         recipient: { kind: 'worker', id: workerId },
         type: 'trip_started',
-        title: `Trip started - arrive in ${eta} min`,
+        title: `Trip started — arrive in ${eta} min`,
         body: `Customer is waiting. Arrive within ${eta} minutes to avoid a late-arrival deduction.`,
         deepLink: `/worker/jobs/${orderId}`,
         data: { orderId: String(orderId), etaMinutes: String(eta) },
@@ -141,7 +141,7 @@ async function workerArrive({ orderId, workerId, workerLat, workerLng }) {
     if (distKm > ARRIVE_BLOCK_KM) {
       logger.warn(
         { workerId, orderId, distKm: distKm.toFixed(3) },
-        '[ARRIVE] Worker too far from pickup - possible GPS spoof',
+        '[ARRIVE] Worker too far from pickup — possible GPS spoof',
       );
       throw Object.assign(
         new Error(`You are ${Math.round(distKm * 1000)}m from the pickup location. Get closer before marking arrived.`),
@@ -174,14 +174,14 @@ async function workerArrive({ orderId, workerId, workerLat, workerLng }) {
         updates.tripLateMinutes           = lateMinutes;
         updates.lateArrivalPenaltyPaise   = penaltyPaise;
 
-        logger.info({ orderId, workerId, lateMinutes, penaltyPaise }, '[ARRIVE] Late arrival - penalty will be deducted at settlement');
+        logger.info({ orderId, workerId, lateMinutes, penaltyPaise }, '[ARRIVE] Late arrival — penalty will be deducted at settlement');
 
         // Warn worker immediately
         const notificationService = require('../../notification/notification.service');
         notificationService.notify({
           recipient: { kind: 'worker', id: workerId },
           type: 'late_arrival_penalty',
-          title: `Late by ${lateMinutes} min - ₹${Math.round(penaltyPaise / 100)} deducted`,
+          title: `Late by ${lateMinutes} min — ₹${Math.round(penaltyPaise / 100)} deducted`,
           body: `You arrived ${lateMinutes} minute${lateMinutes > 1 ? 's' : ''} late. ₹${Math.round(penaltyPaise / 100)} will be deducted from this job's earnings.`,
           deepLink: `/worker/jobs/${orderId}`,
           data: { orderId: String(orderId), penaltyPaise: String(penaltyPaise), lateMinutes: String(lateMinutes) },
@@ -200,7 +200,7 @@ async function workerArrive({ orderId, workerId, workerLat, workerLng }) {
       }
     }
   } catch (err) {
-    logger.warn({ orderId, err: err.message }, '[ARRIVE] Penalty calculation failed - skipping');
+    logger.warn({ orderId, err: err.message }, '[ARRIVE] Penalty calculation failed — skipping');
   }
 
   await Order.findByIdAndUpdate(orderId, { $set: updates });
@@ -396,7 +396,7 @@ async function workerComplete({ orderId, workerId, completionPhotos = [] }) {
         // Edge case — log and continue. Admin can pursue recovery.
         logger.error(
           { workerId, orderId, hardLimitBreach: true },
-          'Cash commission debit blocked by hard limit - order completed but commission unrecovered'
+          'Cash commission debit blocked by hard limit — order completed but commission unrecovered'
         );
       } else {
         throw err;
@@ -411,7 +411,7 @@ async function workerComplete({ orderId, workerId, completionPhotos = [] }) {
         notificationService.notify({
           recipient: { kind: 'worker', id: workerId },
           type: 'wallet_credited',
-          title: dues.status === 'blocked' ? '🚫 Wallet blocked - add funds now' : '⚠️ Low wallet balance',
+          title: dues.status === 'blocked' ? '🚫 Wallet blocked — add funds now' : '⚠️ Low wallet balance',
           body: dues.status === 'blocked'
             ? `Your dues (₹${dues.duesPaise / 100}) exceed the limit. Top up to continue working.`
             : `Your wallet balance is ₹${dues.balancePaise / 100}. Add funds to avoid being blocked.`,
@@ -622,7 +622,7 @@ async function workerComplete({ orderId, workerId, completionPhotos = [] }) {
       recipient: { kind: 'user', id: order.userId },
       type: 'rating_request',
       title: '⭐ How was your service?',
-      body: `Rate your ${order.service.replace(/_/g, ' ')} - it only takes 5 seconds.`,
+      body: `Rate your ${order.service.replace(/_/g, ' ')} — it only takes 5 seconds.`,
       deepLink: `/orders/${order._id}`,
       data: { orderId: String(order._id) },
     }).catch(() => {});

@@ -36,9 +36,9 @@ export default function Arrivals() {
       </div>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat Icon={CheckCircle2} label="On time" value={o.onTimePct != null ? `${o.onTimePct}%` : '-'} tone={pctTone(o.onTimePct)} sub="arrived by the promise + 5 min" />
-        <Stat Icon={AlarmClock} label="Late by, when late" value={o.avgLateMin ? `${o.avgLateMin} min` : '-'} tone="text-slate-900" sub="average" />
-        <Stat Icon={Navigation} label="Visits measured" value={o.visits} tone="text-slate-900" sub={`promised ~${o.avgPromisedMin ?? '-'} min on average`} />
+        <Stat Icon={CheckCircle2} label="On time" value={o.onTimePct != null ? `${o.onTimePct}%` : '—'} tone={pctTone(o.onTimePct)} sub="arrived by the promise + 5 min" />
+        <Stat Icon={AlarmClock} label="Late by, when late" value={o.avgLateMin ? `${o.avgLateMin} min` : '—'} tone="text-slate-900" sub="average" />
+        <Stat Icon={Navigation} label="Visits measured" value={o.visits} tone="text-slate-900" sub={`promised ~${o.avgPromisedMin ?? '—'} min on average`} />
         <Stat Icon={Timer} label="On the way now" value={data.onTrackNow} tone="text-blue-600" sub="promises still running" />
       </div>
 
@@ -61,11 +61,11 @@ export default function Arrivals() {
       <div className="grid gap-4 lg:grid-cols-2">
         <Table title="Providers, least on time first" empty="No provider has 1 measured visit yet."
           rows={data.byProvider} cols={[['Provider', (r) => <span className="font-semibold">{r.name} <span className="text-[11px] font-normal text-slate-400">{r.kind}</span></span>],
-            ['Visits', (r) => r.visits], ['On time', (r) => <span className={`font-bold ${pctTone(r.onTimePct)}`}>{r.onTimePct}%</span>], ['Late by', (r) => (r.avgLateMin ? `${r.avgLateMin} min` : '-')]]} />
+            ['Visits', (r) => r.visits], ['On time', (r) => <span className={`font-bold ${pctTone(r.onTimePct)}`}>{r.onTimePct}%</span>], ['Late by', (r) => (r.avgLateMin ? `${r.avgLateMin} min` : '—')]]} />
         <Table title="Areas (~1 km), least on time first" empty="No area measured yet."
           rows={[...data.byArea].sort((a, b) => (a.onTimePct ?? 101) - (b.onTimePct ?? 101))}
           cols={[['Area', (r) => <a className="font-mono text-blue-600 hover:underline" href={`https://www.google.com/maps?q=${r.key}`} target="_blank" rel="noreferrer">{r.key}</a>],
-            ['Visits', (r) => r.visits], ['On time', (r) => <span className={`font-bold ${pctTone(r.onTimePct)}`}>{r.onTimePct}%</span>], ['Promised', (r) => (r.avgPromisedMin ? `~${r.avgPromisedMin} min` : '-')]]} />
+            ['Visits', (r) => r.visits], ['On time', (r) => <span className={`font-bold ${pctTone(r.onTimePct)}`}>{r.onTimePct}%</span>], ['Promised', (r) => (r.avgPromisedMin ? `~${r.avgPromisedMin} min` : '—')]]} />
       </div>
 
       <Card className="overflow-hidden">

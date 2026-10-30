@@ -56,7 +56,6 @@ async function createBooking({
   slotLabel = '',
   discountPaise = 0,
   paymentMethod = 'cash',
-  via = null,
   idempotencyKey = null,
   // Booked as one item of a group (repair/services/group).
   groupId = null,
@@ -74,7 +73,6 @@ async function createBooking({
     const existing = await RepairBooking.findOne({ idempotencyKey }).lean();
     if (existing) return { booking: existing, replayed: true };
   }
-  await require('../../../jobs/customer-gate').assertCustomerCanBook(userId);
   await zoneService.assertBookableLocation(location);
 
   const repair = repairCode
@@ -136,7 +134,7 @@ async function createBooking({
     require('../../../payment/payables').assertOnlineAvailable(paymentMethod);
     const payCfg = await pricingService.getConfig(vertical);
     if (!payCfg?.onlinePaymentsEnabled) {
-      const err = new Error('Online payment is not available yet - this booking can be paid in cash.');
+      const err = new Error('Online payment is not available yet — this booking can be paid in cash.');
       err.status = 400;
       err.code = 'ONLINE_PAYMENTS_DISABLED';
       throw err;
@@ -248,7 +246,6 @@ async function createBooking({
   }
 
   try {
-    const viaOwnLink = await require('../../../shop/share-link').matches({ via, shopId, workerId });
     const booking = await RepairBooking.create({
       reference: newReference(),
       userId,
@@ -273,7 +270,6 @@ async function createBooking({
       shopId,
       workerId,
       zappyRecommended,
-      viaOwnLink,
       groupId,
       itemLabel,
       groupSize,

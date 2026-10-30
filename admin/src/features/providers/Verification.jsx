@@ -59,7 +59,7 @@ const CoverageGaps = lazy(() => import('./CoverageGaps'));
 function ProviderCell({ row }) {
   const p = row.provider;
   const isShop = !!row.shopId;
-  if (!p) return <span className="text-slate-300">-</span>;
+  if (!p) return <span className="text-slate-300">—</span>;
   return (
     <div className="flex items-start gap-2">
       <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
@@ -115,8 +115,8 @@ function Queue() {
     try {
       await decide({ id: row._id, decision, note, ...(decision === 'changes' && { docCodes }) }).unwrap();
       setPicked((p) => ({ ...p, [row._id]: [] }));
-      toast.success(decision === 'approved' ? 'Approved - provider notified'
-        : decision === 'changes' ? `Asked for ${docCodes.length} document${docCodes.length > 1 ? 's' : ''} again - provider notified` : 'Decision sent');
+      toast.success(decision === 'approved' ? 'Approved — provider notified'
+        : decision === 'changes' ? `Asked for ${docCodes.length} document${docCodes.length > 1 ? 's' : ''} again — provider notified` : 'Decision sent');
       refetch();
     } catch (err) {
       toast.error(err?.data?.error || 'Failed');
@@ -268,7 +268,7 @@ function Requests() {
         domainCode: f.domainCode || row.domainCode,
         status: f.status || 'coming_soon',
       }).unwrap();
-      toast.success(row.packages?.length ? 'Service opened with the proposed jobs; the provider can now get verified for it' : 'Service created');
+      toast.success('Service created');
       refetch();
     } catch (err) { toast.error(err?.data?.error || 'Failed'); }
   }
@@ -287,11 +287,6 @@ function Requests() {
             <div className="min-w-0">
               <p className="font-bold text-slate-900">{row.proposedName}</p>
               {row.description && <p className="text-xs text-slate-500 mt-0.5">{row.description}</p>}
-              {row.packages?.length > 0 && (
-                <ul className="mt-2 space-y-0.5 text-xs text-slate-700">
-                  {row.packages.map((p, i) => <li key={i}>{p.name} · {p.minutes} min · <span className="font-semibold">₹{Math.round(p.pricePaise / 100).toLocaleString('en-IN')}</span></li>)}
-                </ul>
-              )}
               <p className="text-[11px] text-slate-400 mt-1">
                 {row.domainCode || 'no domain'}, {row.providerKind}, {fmtDate(row.createdAt)}
               </p>
@@ -313,7 +308,7 @@ function Requests() {
               />
               <button onClick={() => doApprove(row)}
                 className="px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-xs font-bold">
-                {row.packages?.length ? 'Open for booking' : 'Create service'}
+                Create service
               </button>
               <button onClick={async () => { await reject({ id: row._id, note: '' }).unwrap(); refetch(); }}
                 className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold">
@@ -358,7 +353,7 @@ function Field({ field, value, onChange }) {
   if (field.type === 'select') {
     return (
       <select className={base} value={value ?? ''} onChange={(e) => onChange(e.target.value)}>
-        <option value="">-</option>
+        <option value="">—</option>
         {field.options.map((o) => <option key={o} value={o}>{o}</option>)}
       </select>
     );
@@ -415,7 +410,7 @@ function CatalogTable({ resource }) {
 
   async function doArchive(row) {
     if (!window.confirm(
-      `Archive "${row.name || row.code}"?\n\nProviders already approved against it keep their approval - it simply stops being offered.`,
+      `Archive "${row.name || row.code}"?\n\nProviders already approved against it keep their approval — it simply stops being offered.`,
     )) return;
     try {
       await archive({ resource, id: row._id }).unwrap();
@@ -514,8 +509,8 @@ function CatalogTable({ resource }) {
 
 function renderValue(row, field) {
   const v = row[field.key];
-  if (v == null || v === '') return <span className="text-slate-300">-</span>;
-  if (field.type === 'boolean') return v ? <Check size={13} className="text-green-600" /> : <span className="text-slate-300">-</span>;
+  if (v == null || v === '') return <span className="text-slate-300">—</span>;
+  if (field.type === 'boolean') return v ? <Check size={13} className="text-green-600" /> : <span className="text-slate-300">—</span>;
   return String(v);
 }
 
@@ -562,7 +557,7 @@ function RequirementEditor({ items, onSaved }) {
       <div>
         <h4 className="text-sm font-bold text-slate-900">Documents, details and declarations</h4>
         <p className="text-xs text-slate-500 mt-0.5">
-          What the provider is actually asked for. Changes apply to the next submission - decisions already
+          What the provider is actually asked for. Changes apply to the next submission — decisions already
           made stay judged against the rules that were in force.
         </p>
       </div>
@@ -575,7 +570,7 @@ function RequirementEditor({ items, onSaved }) {
         <option value="">Choose a requirement set…</option>
         {items.map((i) => (
           <option key={i._id} value={i._id}>
-            {i.name} - {i.domainCode}{i.lineCode ? ` / ${i.lineCode}` : ''} ({i.providerKind})
+            {i.name} — {i.domainCode}{i.lineCode ? ` / ${i.lineCode}` : ''} ({i.providerKind})
           </option>
         ))}
       </select>
@@ -597,7 +592,7 @@ function RequirementEditor({ items, onSaved }) {
               onChange={(e) => setDraft((d) => ({ ...d, fields: e.target.value }))} />
           </div>
           <div>
-            <p className="text-xs font-bold text-slate-600 mb-1">Declarations - one per line</p>
+            <p className="text-xs font-bold text-slate-600 mb-1">Declarations — one per line</p>
             <textarea rows={12}
               className="w-full border border-slate-200 rounded-lg px-2.5 py-2 text-xs outline-none focus:ring-2 focus:ring-blue-500"
               value={draft.declarations}
@@ -659,7 +654,7 @@ function DocumentCard({ doc }) {
           }`}
           title={live
             ? 'Taken with the camera at submission time'
-            : 'Supplied as a file - could be from anywhere'}
+            : 'Supplied as a file — could be from anywhere'}
         >
           {live ? <Camera size={10} /> : <Upload size={10} />}
           {live ? 'Live capture' : 'Uploaded'}
@@ -695,7 +690,7 @@ export default function ProviderOnboarding() {
     <div className="space-y-4">
       <SectionHeader
         title="Verification"
-        subtitle="Every provider check - service applications, identity, and what each service requires."
+        subtitle="Every provider check — service applications, identity, and what each service requires."
       />
 
       <div className="flex gap-1.5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'thin' }}>

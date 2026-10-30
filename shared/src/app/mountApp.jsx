@@ -46,7 +46,7 @@ async function restoreSession(store, roles) {
     let cached = null;
     try { cached = JSON.parse(sessionStorage.getItem('zappy_profile_v2')); } catch { /* none */ }
     store.dispatch(setAuth({ accessToken: data.accessToken, profile: cached ?? { sub: claims?.sub }, role }));
-  } catch { /* offline - stay signed out */ }
+  } catch { /* offline — stay signed out */ }
 }
 
 const Spinner = () => (

@@ -22,17 +22,6 @@ const { gatewayReady } = require('../../payment/payables');
 
 /* Catalog */
 
-// Every service the repair engine books, with the words its screens use; apps read this instead of keeping their own list.
-async function listVerticals(req, res, next) {
-  try {
-    const { ServiceLine } = require('../../onboarding/onboarding.model');
-    const rows = await ServiceLine.find({ repairVertical: { $nin: [null, ''] }, isArchived: { $ne: true }, isActive: { $ne: false } })
-      .select('code name repairVertical customerPath typeWord thing icon status domainCode').sort({ displayOrder: 1, name: 1 }).lean();
-    res.set('Cache-Control', 'public, max-age=300');
-    res.json({ items: rows.map((r) => ({ vertical: r.repairVertical, line: r.code, name: r.name, path: r.customerPath || `/repair/${r.repairVertical.replace(/_/g, '-')}`, typeWord: r.typeWord || '', thing: r.thing || '', icon: r.icon || '', status: r.status, domainCode: r.domainCode })) });
-  } catch (err) { next(err); }
-}
-
 async function listBrands(req, res, next) {
   try {
     const cfg = await pricingService.getConfig(verticalOf(req));
@@ -213,7 +202,7 @@ async function submitIdentificationRequest(req, res, next) {
 
     if (!modelText && !productNumber && !serialNumber && !(imageUrls || []).length) {
       return res.status(400).json({
-        error: 'Tell us anything you can - a model name, the number on the sticker, or a photo of it.',
+        error: 'Tell us anything you can — a model name, the number on the sticker, or a photo of it.',
         code: 'IDENTIFICATION_EMPTY',
       });
     }
@@ -601,7 +590,6 @@ async function submitCatalogRequest(req, res, next) {
 }
 
 module.exports = {
-  listVerticals,
   listBrands,
   listModels,
   listProductTypes,

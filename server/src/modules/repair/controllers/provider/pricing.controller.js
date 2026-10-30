@@ -57,7 +57,7 @@ async function applyPriceSubmission({ owner, vertical, requestedByRole, requeste
       error: {
         status: 400,
         body: {
-          error: 'Choose which part quality this price is for - customers see the grade they are buying.',
+          error: 'Choose which part quality this price is for — customers see the grade they are buying.',
           code: 'QUALITY_REQUIRED',
         },
       },
@@ -128,8 +128,8 @@ async function applyPriceSubmission({ owner, vertical, requestedByRole, requeste
       kind: 'abnormal_price',
       entityType: 'ProviderPricing',
       entityId: doc._id,
-      title: `${repair.name} - ${modelCode || brandCode || 'all models'}`,
-      summary: `LIVE ₹${Math.round(totalPaise / 100)} vs reference ₹${Math.round(reference.recommendedPaise / 100)} (${evaluation.deviationPct}%) - review, not blocking`,
+      title: `${repair.name} — ${modelCode || brandCode || 'all models'}`,
+      summary: `LIVE ₹${Math.round(totalPaise / 100)} vs reference ₹${Math.round(reference.recommendedPaise / 100)} (${evaluation.deviationPct}%) — review, not blocking`,
       proposed: { totalPaise, warrantyDays },
       current: { recommendedPaise: reference.recommendedPaise },
       requestedByRole,

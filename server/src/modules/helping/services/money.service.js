@@ -75,7 +75,7 @@ const payable = {
   payable(task) {
     const due = amountDue(task);
     if (due.totalPaise <= 0 && due.itemsPending) {
-      throw httpError('Your helper is still shopping - pay once the bill is final', 409, 'ITEMS_NOT_FINAL');
+      throw httpError('Your helper is still shopping — pay once the bill is final', 409, 'ITEMS_NOT_FINAL');
     }
     return { amountPaise: due.totalPaise, breakdown: { feePaise: due.feePaise, itemsPaise: due.itemsPaise } };
   },
@@ -155,7 +155,7 @@ async function holdBudget(task) {
       description: `Shopping budget held for ${task.reference}`,
     });
   } catch (err) {
-    throw httpError('Your wallet does not have enough for this shopping budget - top up, or pay the helper at delivery',
+    throw httpError('Your wallet does not have enough for this shopping budget — top up, or pay the helper at delivery',
       402, 'WALLET_INSUFFICIENT', { budgetPaise: amount });
   }
   task.itemMoney.heldPaise = amount;
@@ -172,7 +172,7 @@ async function releaseHold(task, { amountPaise, why }) {
     reason: Transaction.REASONS.PRODUCT_REFUND,
     idempotencyKey: `helping-unspent-${task._id}`,
     refs: { helpingTaskId: task._id },
-    description: `${why} - ${task.reference}`,
+    description: `${why} — ${task.reference}`,
   });
   task.itemMoney.refundedPaise = (task.itemMoney.refundedPaise || 0) + amountPaise;
   return amountPaise;

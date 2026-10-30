@@ -6,7 +6,6 @@ import {
   Wifi, Thermometer, CircuitBoard, Database, ArrowUpCircle, Wand2, ShieldAlert,
   ClipboardCheck, ShieldCheck, Footprints, PackageCheck, PawPrint, Scissors, ShoppingBag, ShoppingBasket, Stethoscope, PartyPopper,
   ShoppingCart, Pill, Package, Landmark, Flower2,
-  UtensilsCrossed, Shirt, BedDouble, Bath, Hammer, WashingMachine, GlassWater, KeyRound, BatteryCharging, Sparkle, Palette, Leaf, FileText, Bug, Sofa, PaintRoller, GraduationCap, Music, Dumbbell,
 } from 'lucide-react';
 import { useLiveCatalogQuery } from '../../services/api';
 import { distinctArt } from './serviceArt';
@@ -35,7 +34,6 @@ export const SERVICE_ICONS = {
   Zap, Droplet, Droplets, AirVent, Sparkles, Wrench,
   ClipboardCheck, Footprints, PackageCheck, PawPrint, Scissors, ShoppingBag, ShoppingBasket, Stethoscope, PartyPopper,
   ShoppingCart, Pill, Package, Landmark, Flower2,
-  UtensilsCrossed, Shirt, BedDouble, Bath, Hammer, WashingMachine, GlassWater, KeyRound, BatteryCharging, Sparkle, Palette, Leaf, FileText, Bug, Sofa, PaintRoller, GraduationCap, Music, Dumbbell, Plug, Camera, ShieldCheck,
 };
 
 /**

@@ -156,7 +156,7 @@ const PROBLEMS = [
     { isActive: false, severity: 'high', appliesToProductTypeCodes: PETROL }),
   P('tw_battery_dead_roadside', 'Battery dead', 'tw_roadside',
     ['tw_jump_start', 'tw_battery_replacement'], { isPopular: true, severity: 'high' }),
-  P('tw_breakdown', 'Broken down - cannot ride', 'tw_roadside',
+  P('tw_breakdown', 'Broken down — cannot ride', 'tw_roadside',
     ['tw_roadside_minor_repair', 'tw_towing'], { severity: 'high', requiresDiagnosis: true }),
   P('tw_accident_damage', 'Accident damage', 'tw_roadside', ['tw_towing'],
     { severity: 'critical', requiresDiagnosis: true }),

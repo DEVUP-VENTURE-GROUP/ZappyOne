@@ -2,7 +2,7 @@ const express = require('express');
 const Joi = require('joi');
 const ctrl = require('./controllers');
 const { authenticate, requireRole } = require('../../middlewares/auth');
-const { requireKnownVertical, isValid } = require('./vertical');
+const { requireKnownVertical, VERTICALS } = require('./vertical');
 const { SERVICE_MODES } = require('./service-modes');
 const { validate } = require('../../middlewares/validate');
 const { makeLimiter, ratingLimiter } = require('../../middlewares/rateLimit');
@@ -45,22 +45,6 @@ const locationSchema = Joi.object({
  * Deep catalog. Literal segments precede the parameterised model route so
  * `/models/:modelCode/configurations` is never swallowed by a brand path.
  */
-router.get('/verticals', ctrl.listVerticals);
-
-// Zomato-style browsing: who near the customer offers this service, and one storefront's menu (services/storefront).
-router.get('/storefronts', authenticate, requireKnownVertical, validate(Joi.object({
-  vertical: Joi.string().max(40).required(), lat: Joi.number().min(-90).max(90).required(), lng: Joi.number().min(-180).max(180).required(),
-  sort: Joi.string().valid(...require('./services/storefront.service').SORTS).default('best'), serviceMode: Joi.string().valid('doorstep', 'workshop', 'roadside').default('doorstep'),
-}), 'query'), async (req, res, next) => {
-  try { res.json(await require('./services/storefront.service').listStorefronts(req.query)); } catch (err) { next(err); }
-});
-router.get('/storefronts/:kind/:id/menu', authenticate, requireKnownVertical, validate(Joi.object({ vertical: Joi.string().max(40).required() }), 'query'), async (req, res, next) => {
-  try {
-    const menu = await require('./services/storefront.service').storefrontMenu({ kind: req.params.kind, id: req.params.id, vertical: req.query.vertical });
-    if (!menu) return res.status(404).json({ error: 'Storefront not found', code: 'NOT_FOUND' });
-    res.json(menu);
-  } catch (err) { next(err); }
-});
 router.get('/product-types', authenticate, requireKnownVertical, ctrl.listProductTypes);
 router.get('/brands', authenticate, requireKnownVertical, ctrl.listBrands);
 router.get('/brands/:brandCode/families', authenticate, requireKnownVertical, ctrl.listFamilies);
@@ -222,8 +206,6 @@ router.post(
     discountPaise: Joi.number().integer().min(0).default(0),
     // Cash until the gateway is live; the server still decides what is allowed.
     paymentMethod: Joi.string().valid('cash', 'online').default('cash'),
-    // The provider's own-link code, when the customer arrived through it (shop/share-link).
-    via: Joi.string().pattern(/^[a-z0-9]{8,24}$/).allow(null, ''),
     idempotencyKey: Joi.string().max(120).allow(null),
     onSite: require('../jobs/on-site').onSiteSchema,
     // Booked from a shop's answer to a price request (services/price-request).
@@ -458,7 +440,6 @@ router.post(
       partId: objectId.allow(null),
       partSku: Joi.string().max(80).allow(null),
       qualityCode: Joi.string().max(60).allow(null),
-      partGrade: Joi.string().valid('original', 'oem', 'compatible').allow(null),
       quantity: Joi.number().integer().min(1).default(1),
       unitPricePaise: Joi.number().integer().min(0).required(),
       amountPaise: Joi.number().integer().min(0),
@@ -483,7 +464,6 @@ router.post(
   validate(Joi.object({
     decision: Joi.string().valid('approve', 'reject', 'clarify').required(),
     reason: Joi.string().max(500).allow('', null),
-    returnOldParts: Joi.boolean().default(false),
   })),
   ctrl.respondToQuote,
 );
@@ -523,7 +503,7 @@ router.put(
   '/provider/capabilities',
   ...providerOnly,
   validate(Joi.object({
-    vertical: Joi.string().custom((v, h) => (isValid(v) ? v.toLowerCase() : h.error('any.only'))),
+    vertical: Joi.string().valid(...VERTICALS),
     repairCode: Joi.string().max(80).required(),
     brandCodes: Joi.array().items(Joi.string().max(60)).default([]),
     modelCodes: Joi.array().items(Joi.string().max(120)).default([]),
@@ -541,7 +521,7 @@ router.put(
   '/provider/service-areas',
   ...providerOnly,
   validate(Joi.object({
-    vertical: Joi.string().custom((v, h) => (isValid(v) ? v.toLowerCase() : h.error('any.only'))),
+    vertical: Joi.string().valid(...VERTICALS),
     cityCode: Joi.string().max(60).required(),
     areaNames: Joi.array().items(Joi.string().max(120)).default([]),
     pincodes: Joi.array().items(Joi.string().max(10)).default([]),
@@ -576,7 +556,7 @@ router.put(
   '/provider/inventory',
   ...providerOnly,
   validate(Joi.object({
-    vertical: Joi.string().custom((v, h) => (isValid(v) ? v.toLowerCase() : h.error('any.only'))),
+    vertical: Joi.string().valid(...VERTICALS),
     partId: objectId.required(),
     quantity: Joi.number().integer().min(0).default(0),
     costPaise: Joi.number().integer().min(0).default(0),
@@ -593,7 +573,7 @@ router.post(
   '/provider/pricing',
   ...providerOnly,
   validate(Joi.object({
-    vertical: Joi.string().custom((v, h) => (isValid(v) ? v.toLowerCase() : h.error('any.only'))),
+    vertical: Joi.string().valid(...VERTICALS),
     repairCode: Joi.string().max(80).required(),
     brandCode: Joi.string().max(60).allow(null),
     modelCode: Joi.string().max(120).allow(null),
@@ -625,7 +605,7 @@ router.post(
   '/provider/pricing/bulk',
   ...providerOnly,
   validate(Joi.object({
-    vertical: Joi.string().custom((v, h) => (isValid(v) ? v.toLowerCase() : h.error('any.only'))),
+    vertical: Joi.string().valid(...VERTICALS),
     rows: Joi.array().min(1).max(200).items(Joi.object({
       repairCode: Joi.string().max(80).required(),
       brandCode: Joi.string().max(60).allow(null),

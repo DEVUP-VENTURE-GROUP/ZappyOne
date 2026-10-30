@@ -45,10 +45,9 @@ const TONE = {
   green: { bg: success[50], fg: success[600] },
   amber: { bg: accent[50], fg: accent[600] },
   slate: { bg: slate[100], fg: ink[700] },
-  // ZappyOne's palette (the websites' TONE): blue and ink; green only for money in, amber only for what needs you.
-  violet: { bg: slate[100], fg: ink[900] },
-  cyan: { bg: slate[100], fg: ink[900] },
-  rose: { bg: zappy[50], fg: zappy[600] },
+  violet: { bg: '#F5F3FF', fg: '#7C3AED' },
+  cyan: { bg: '#ECFEFF', fg: '#0891B2' },
+  rose: { bg: '#FFF1F2', fg: '#E11D48' },
 } as const;
 
 type Tone = keyof typeof TONE;

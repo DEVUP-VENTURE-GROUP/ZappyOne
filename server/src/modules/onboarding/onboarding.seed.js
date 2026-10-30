@@ -145,7 +145,7 @@ const LINES = [
   { code: 'pet_walk', name: 'Pet Walk & Activity', domainCode: 'pet_services', status: 'live', displayOrder: 3, icon: 'Footprints', customerPath: '/pet/book/pet_walk', description: 'Walks and play sessions matched to your pet', isPopular: true },
   { code: 'pet_home_care', name: 'Pet Home Care', domainCode: 'pet_services', status: 'live', displayOrder: 4, icon: 'HeartHandshake', customerPath: '/pet/book/pet_home_care', description: 'Feeding, litter care and companionship visits at home' },
   { code: 'pet_transport', name: 'Pet Pickup & Assistance', domainCode: 'pet_services', status: 'live', displayOrder: 5, icon: 'Car', customerPath: '/pet/book/pet_transport', description: 'Safe transport to the vet, groomer or boarding' },
-  { code: 'pet_vet_assist', name: 'Vet & Appointment Assistance', domainCode: 'pet_services', status: 'live', displayOrder: 6, icon: 'Stethoscope', customerPath: '/pet/book/pet_vet_assist', description: 'Logistics support for a vet visit - not a substitute for one' },
+  { code: 'pet_vet_assist', name: 'Vet & Appointment Assistance', domainCode: 'pet_services', status: 'live', displayOrder: 6, icon: 'Stethoscope', customerPath: '/pet/book/pet_vet_assist', description: 'Logistics support for a vet visit — not a substitute for one' },
   { code: 'pet_check', name: 'Pet Check & Home Visit', domainCode: 'pet_services', status: 'live', displayOrder: 7, icon: 'ClipboardCheck', customerPath: '/pet/book/pet_check', description: 'A quick visual check-in on your pet while you are out' },
   ...HOME_SERVICE_LINES,
 
@@ -190,7 +190,7 @@ const SHOP_FIELDS = [
 const REQUIREMENT_SETS = [
   /* Electronics — domain-wide defaults. */
   {
-    name: 'Electronics - shop',
+    name: 'Electronics — shop',
     domainCode: 'electronics', lineCode: null, providerKind: 'shop',
     documents: SHOP_DOCS,
     fields: SHOP_FIELDS,
@@ -200,7 +200,7 @@ const REQUIREMENT_SETS = [
     ],
   },
   {
-    name: 'Electronics - individual technician',
+    name: 'Electronics — individual technician',
     domainCode: 'electronics', lineCode: null, providerKind: 'individual',
     documents: IDENTITY_DOCS,
     fields: [{ code: 'experience_years', label: 'Years of repair experience', required: true }],
@@ -215,7 +215,7 @@ const REQUIREMENT_SETS = [
    * explicitly and shows they can actually do the work.
    */
   {
-    name: 'Laptops - individual technician',
+    name: 'Laptops — individual technician',
     domainCode: 'electronics', lineCode: 'laptop_repair', providerKind: 'individual',
     documents: [
       ...IDENTITY_DOCS,
@@ -233,7 +233,7 @@ const REQUIREMENT_SETS = [
     minSkillLevel: 2,
   },
   {
-    name: 'Laptops - shop',
+    name: 'Laptops — shop',
     domainCode: 'electronics', lineCode: 'laptop_repair', providerKind: 'shop',
     documents: [
       ...SHOP_DOCS,
@@ -250,7 +250,7 @@ const REQUIREMENT_SETS = [
 
   /* Vehicles. */
   {
-    name: 'Vehicles - shop',
+    name: 'Vehicles — shop',
     domainCode: 'vehicles', lineCode: null, providerKind: 'shop',
     documents: [
       ...SHOP_DOCS,
@@ -260,7 +260,7 @@ const REQUIREMENT_SETS = [
     declarations: ['I hold valid third-party liability cover for vehicles in my custody.'],
   },
   {
-    name: 'Vehicles - individual mechanic',
+    name: 'Vehicles — individual mechanic',
     domainCode: 'vehicles', lineCode: null, providerKind: 'individual',
     documents: [
       ...IDENTITY_DOCS,
@@ -272,7 +272,7 @@ const REQUIREMENT_SETS = [
 
   /* Home services. */
   {
-    name: 'Home services - individual',
+    name: 'Home services — individual',
     domainCode: 'home_services', lineCode: null, providerKind: 'individual',
     documents: [
       ...IDENTITY_DOCS,
@@ -282,7 +282,7 @@ const REQUIREMENT_SETS = [
     declarations: ['I will carry my own tools and leave the work area clean.'],
   },
   {
-    name: 'Home services - shop',
+    name: 'Home services — shop',
     domainCode: 'home_services', lineCode: null, providerKind: 'shop',
     documents: SHOP_DOCS,
     fields: SHOP_FIELDS,
@@ -295,7 +295,7 @@ const REQUIREMENT_SETS = [
    * here is financial trust, not a skill (§40).
    */
   {
-    name: 'Shopping & pickup - individual',
+    name: 'Shopping & pickup — individual',
     domainCode: 'family_assist', lineCode: 'shopping_pickup', providerKind: 'individual',
     documents: [
       ...IDENTITY_DOCS,
@@ -311,7 +311,7 @@ const REQUIREMENT_SETS = [
     ],
   },
   {
-    name: 'Returns & exchange - individual',
+    name: 'Returns & exchange — individual',
     domainCode: 'family_assist', lineCode: 'returns_exchange', providerKind: 'individual',
     documents: [
       ...IDENTITY_DOCS,
@@ -334,7 +334,7 @@ const REQUIREMENT_SETS = [
    * for a 20-minute walk.
    */
   {
-    name: 'Pet Services - individual',
+    name: 'Pet Services — individual',
     domainCode: 'pet_services', lineCode: null, providerKind: 'individual',
     documents: [
       ...IDENTITY_DOCS,
@@ -350,7 +350,7 @@ const REQUIREMENT_SETS = [
     ],
   },
   {
-    name: 'Pet Services - shop / facility',
+    name: 'Pet Services — shop / facility',
     domainCode: 'pet_services', lineCode: null, providerKind: 'shop',
     documents: [
       ...SHOP_DOCS,
@@ -369,7 +369,7 @@ const REQUIREMENT_SETS = [
    * verification and references are not paperwork here — they are the product.
    */
   {
-    name: 'Family assist - individual',
+    name: 'Family assist — individual',
     domainCode: 'family_assist', lineCode: null, providerKind: 'individual',
     documents: [
       ...IDENTITY_DOCS,

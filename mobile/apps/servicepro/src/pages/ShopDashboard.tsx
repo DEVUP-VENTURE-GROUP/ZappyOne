@@ -11,7 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AlertTriangle, Briefcase, Clock, IndianRupee, MapPin, Menu, ShieldCheck, Star, Users, Wrench, XCircle } from 'lucide-react-native';
 import {
   useProviderOnboardingStatusQuery, useRepairOnboardingStatusQuery, useShopEarningsQuery, useShopKycStatusQuery, useShopMeQuery,
-  useShopPriceRequestsQuery, useShopWorkersQuery, useProviderWorkspaceQuery,
+  useShopPriceRequestsQuery, useShopWorkersQuery,
 } from '@zappy/core/api';
 import { useProviderJobs } from '@zappy/core/shared/useProviderJobs';
 import { last7, weekDeltaPct } from '@zappy/core/shared/workerHome';
@@ -19,6 +19,7 @@ import { Button, LoadingState, Text } from '@zappy/ui/components';
 import { ProviderServicesCard } from '@zappy/ui/components/provider/ProviderServicesCard';
 import { Panel, StatTile, inr } from '@zappy/ui/components/worker/DashboardUI';
 import { EarningsOverview, weekPoints } from '@zappy/ui/components/worker/EarningsOverview';
+import { MyAreaChip } from '@zappy/ui/components/worker/MyAreaChip';
 import { WorkerMenuSheet } from '@zappy/ui/provider/WorkerMenuSheet';
 import { accent, colors, danger, ink, slate, success, zappy } from '@zappy/ui/theme/colors';
 import { radius } from '@zappy/ui/theme/radius';
@@ -26,14 +27,8 @@ import { spacing } from '@zappy/ui/theme/spacing';
 import { ShopJobs } from '../components/ShopJobs';
 import { PartnerTermsCard } from '../components/PartnerTermsCard';
 import { PartnerDuesCard } from '../components/PartnerDuesCard';
-import { ShareStorefront } from '../components/ShareStorefront';
-import { SetupJourney } from '../components/SetupJourney';
-import { TradeToday } from '../components/TradeToday';
-import { ShopHeader } from '../components/ShopHeader';
-import { ZappyWordmark } from '@zappy/ui/components/ZappyLogo';
 import { TeamPanel, type TeamWorker } from '../components/TeamPanel';
 import { OWNER_MENU } from '../menus';
-import { HeaderBell } from '../components/HeaderBell';
 
 const KYC_META: Record<string, { label: string; bg: string; fg: string; Icon: typeof ShieldCheck }> = {
   not_submitted: { label: 'Verification pending', bg: slate[100], fg: ink[500], Icon: AlertTriangle },
@@ -70,7 +65,6 @@ export function ShopDashboard() {
   const { data: week } = useShopEarningsQuery('week');
   const { data: teamData } = useShopWorkersQuery();
   const { mine: jobs } = useProviderJobs({ kinds: SHOP_KINDS });
-  const { data: workspace } = useProviderWorkspaceQuery(undefined);
   const { data: setup } = useRepairOnboardingStatusQuery('mobile');
   // Service verification already collected the owner's ID, shop photo and selfie: no second ask while it is in flight.
   const { data: providerStatus } = useProviderOnboardingStatusQuery();
@@ -90,7 +84,7 @@ export function ShopDashboard() {
   const needsAction = (jobs as { attention?: boolean; workerId?: string | null }[]).filter((j) => j.attention || !j.workerId);
   const pendingApprovals = (setup?.pending?.skillVerifications || 0) + (setup?.pending?.priceApprovals || 0);
   const days = last7(week?.dailyBreakdown);
-  const rating = shop?.rating ? Number(shop.rating).toFixed(1) : '-';
+  const rating = shop?.rating ? Number(shop.rating).toFixed(1) : '—';
 
   async function onRefresh() { setRefreshing(true); await refetch(); setRefreshing(false); }
 
@@ -98,14 +92,19 @@ export function ShopDashboard() {
     <View style={styles.page}>
       <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
         <Pressable onPress={() => setMenuOpen(true)} accessibilityRole="button" accessibilityLabel="Menu" style={styles.iconBtn}><Menu size={18} color={ink[900]} /></Pressable>
-        <ZappyWordmark size={22} />
-        <View style={styles.flex} />
-        <HeaderBell to="/shop/notifications" />
+        <View style={styles.flex}>
+          <Text variant="caption" weight="black" color={ink[400]}>SHOP PARTNER</Text>
+          <Text variant="heading3" weight="black" numberOfLines={1}>{shop?.businessName}</Text>
+          {hasPin ? <MyAreaChip coordinates={shop.address.location.coordinates} live={liveNow} /> : null}
+        </View>
+        {/* Whether customers can find you, stated where it cannot be missed. */}
+        <View style={[styles.live, liveNow ? styles.liveOn : null]}>
+          <View style={[styles.liveDot, { backgroundColor: liveNow ? success[500] : slate[300] }]} />
+          <Text variant="caption" weight="bold" color={liveNow ? success[700] : ink[500]}>{liveNow ? 'Live' : isOpen === false ? 'Closed now' : 'Not live'}</Text>
+        </View>
       </View>
 
       <ScrollView contentContainerStyle={styles.body} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
-        <ShopHeader shop={shop} trade={workspace?.domains?.[0]?.name} live={!!liveNow} isOpen={isOpen}
-          blocker={kycStatus !== 'approved' ? 'Documents not approved yet' : !hasPin ? 'Pin your shop address' : !shop?.services?.length ? 'Add a service' : null} />
         {askingNow > 0 ? (
           <Pressable onPress={() => go('/shop/price-requests')} accessibilityRole="button" style={styles.asking}>
             <View style={styles.flex}>
@@ -148,9 +147,6 @@ export function ShopDashboard() {
           <StatTile Icon={ShieldCheck} tone="rose" label="Awaiting approval" value={pendingApprovals} sub={pendingApprovals ? 'Skills & prices' : undefined} />
         </View>
 
-        <SetupJourney />
-        {liveNow ? <ShareStorefront /> : null}
-        <TradeToday home={workspace?.home} kinds={SHOP_KINDS} />
         <PartnerTermsCard />
         <PartnerDuesCard />
         <Panel title="Jobs" action={needsAction.length ? <View style={styles.need}><Text variant="caption" weight="black" color={accent[700]}>{needsAction.length} need{needsAction.length === 1 ? 's' : ''} you</Text></View> : undefined}>
@@ -179,6 +175,9 @@ const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
   header: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingHorizontal: spacing.base, paddingBottom: spacing.md, backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border },
   iconBtn: { width: 40, height: 40, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.border },
+  live: { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: radius.pill, borderWidth: 1, borderColor: slate[200], paddingHorizontal: 10, paddingVertical: 6 },
+  liveOn: { borderColor: success[100], backgroundColor: success[50] },
+  liveDot: { width: 8, height: 8, borderRadius: 4 },
   body: { padding: spacing.base, gap: spacing.base, paddingBottom: spacing.xxxl },
   asking: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.base, borderRadius: radius.large, borderWidth: 1, borderColor: zappy[200], backgroundColor: zappy[50] },
   block: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md, padding: spacing.base, borderRadius: radius.large, borderWidth: 1 },

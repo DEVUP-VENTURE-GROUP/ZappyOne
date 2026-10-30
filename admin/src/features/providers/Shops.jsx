@@ -162,7 +162,7 @@ function KycDocViewer({ shopId, onClose }) {
                 </div>
               )}
 
-              <p className="text-[11px] text-slate-400 text-center">📦 Documents stored permanently in secure storage - no expiry</p>
+              <p className="text-[11px] text-slate-400 text-center">📦 Documents stored permanently in secure storage — no expiry</p>
             </>
           )}
         </div>
@@ -291,7 +291,7 @@ function ShopDetailPanel({ shop, onClose, onRefetch, reviewMode }) {
               </div>
               <div className="bg-slate-50 rounded-xl px-3 py-2">
                 <p className="font-bold text-slate-400 text-[10px] mb-0.5">Category</p>
-                <p className="font-semibold text-slate-700">{shop.category || '-'}</p>
+                <p className="font-semibold text-slate-700">{shop.category || '—'}</p>
               </div>
             </div>
 

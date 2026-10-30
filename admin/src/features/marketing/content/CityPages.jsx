@@ -115,7 +115,7 @@ function CityFormModal({ initial, onClose, onSave, saving }) {
             <FormRow label="City Name *">
               <Input {...f('name')} placeholder="e.g. Hyderabad" />
             </FormRow>
-            <FormRow label="URL Slug *" hint="Used in /in/:city - auto-filled">
+            <FormRow label="URL Slug *" hint="Used in /in/:city — auto-filled">
               <Input {...f('slug')} placeholder="hyderabad" className="font-mono text-sm" />
             </FormRow>
             <FormRow label="State *">
@@ -180,7 +180,7 @@ function CityFormModal({ initial, onClose, onSave, saving }) {
             </div>
             {areas.length === 0 ? (
               <p className="text-xs text-slate-400 text-center py-4 bg-slate-50 rounded-xl">
-                No areas yet - click "Add Area" to add localities
+                No areas yet — click "Add Area" to add localities
               </p>
             ) : (
               <div className="space-y-2">
@@ -374,7 +374,7 @@ export default function Cities() {
                             </div>
                           </>
                         ) : (
-                          <p className="text-xs text-slate-400">No areas - click Edit to add localities.</p>
+                          <p className="text-xs text-slate-400">No areas — click Edit to add localities.</p>
                         )}
                         {city.pinCodes?.length > 0 && (
                           <p className="text-xs text-slate-400 mt-2">

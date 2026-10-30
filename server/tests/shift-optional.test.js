@@ -5,11 +5,7 @@ const cfg = require('../src/modules/pricing/services/config.service');
 const staff = require('../src/modules/workforce/staff');
 
 jest.setTimeout(60000);
-beforeAll(async () => {
-  await startMongo();
-  // Own staff are locked for version 1; these tests cover the version 2 behaviour.
-  await require('../src/modules/feature-flags/feature-flag.service').set('own_staff', true, null);
-});
+beforeAll(startMongo);
 afterAll(stopMongo);
 
 test('online staff are on duty unless shifts are required', async () => {

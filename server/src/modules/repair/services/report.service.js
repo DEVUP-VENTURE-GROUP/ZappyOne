@@ -36,7 +36,7 @@ function escape(s) {
 }
 
 function formatDate(d) {
-  if (!d) return '-';
+  if (!d) return '—';
   return new Date(d).toLocaleString('en-IN', {
     day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
     timeZone: 'Asia/Kolkata',
@@ -102,8 +102,8 @@ async function getReportData(bookingId) {
   return {
     booking,
     repair,
-    brandName: brand?.name || booking.brandCode || '-',
-    modelName: model?.name || booking.modelCode || '-',
+    brandName: brand?.name || booking.brandCode || '—',
+    modelName: model?.name || booking.modelCode || '—',
     provider: shop?.name || worker?.name || 'Assigned technician',
     providerPhone: shop?.phone || worker?.phone || '',
     qaResults: qa?.results || [],
@@ -240,7 +240,7 @@ function renderHtml(data) {
   `)}
 
   ${price.warrantyDays ? section('Warranty', `
-    <div class="note">This work is covered for ${price.warrantyDays} days from ${escape(formatDate(booking.completedAt || booking.updatedAt))}. Keep this report - it is your proof of service.</div>
+    <div class="note">This work is covered for ${price.warrantyDays} days from ${escape(formatDate(booking.completedAt || booking.updatedAt))}. Keep this report — it is your proof of service.</div>
   `) : ''}
 
   ${section('Who did the work', `

@@ -165,8 +165,8 @@ export default function Surge() {
                 {rep.lines.map((l) => (
                   <tr key={l.line}>
                     <td className="px-4 py-2 font-semibold">{l.line.replace(/_/g, ' ')}</td>
-                    <td className="px-3 py-2">{l.conversionPlain != null ? `${l.conversionPlain}% of ${l.plainQuotes}` : '-'}</td>
-                    <td className="px-3 py-2">{l.conversionSurged != null ? <span className={l.conversionPlain != null && l.conversionSurged < l.conversionPlain - 15 ? 'font-bold text-red-600' : ''}>{l.conversionSurged}% of {l.surgedQuotes}</span> : '-'}</td>
+                    <td className="px-3 py-2">{l.conversionPlain != null ? `${l.conversionPlain}% of ${l.plainQuotes}` : '—'}</td>
+                    <td className="px-3 py-2">{l.conversionSurged != null ? <span className={l.conversionPlain != null && l.conversionSurged < l.conversionPlain - 15 ? 'font-bold text-red-600' : ''}>{l.conversionSurged}% of {l.surgedQuotes}</span> : '—'}</td>
                     <td className="px-3 py-2 tabular-nums">{fmt(l.surgePaise)}</td>
                   </tr>
                 ))}

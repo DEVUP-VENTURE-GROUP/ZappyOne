@@ -16,7 +16,7 @@ async function ensureAdminSeeded() {
   const name = `${firstName} ${lastName}`.trim();
 
   if (!email || !password) {
-    logger.warn('ADMIN_EMAIL or ADMIN_PASSWORD not set - skipping admin seed');
+    logger.warn('ADMIN_EMAIL or ADMIN_PASSWORD not set — skipping admin seed');
     return;
   }
 
@@ -26,7 +26,7 @@ async function ensureAdminSeeded() {
     const anySuper = await Admin.exists({ role: 'super_admin', isActive: true });
     if (!anySuper) {
       await Admin.updateOne({ _id: existing._id }, { $set: { role: 'super_admin', isActive: true } });
-      logger.warn({ email }, 'No active super admin - the env admin was promoted');
+      logger.warn({ email }, 'No active super admin — the env admin was promoted');
     }
     return;
   }

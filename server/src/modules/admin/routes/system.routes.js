@@ -190,7 +190,7 @@ router.post(
       for (let i = 0; i < recList.length; i += CHUNK) {
         try {
           inAppDelivered += await notificationService.notifyMany(recList.slice(i, i + CHUNK), payload);
-        } catch (e) { /* keep going - partial in-app delivery is still delivery */ }
+        } catch (e) { /* keep going — partial in-app delivery is still delivery */ }
       }
 
       // 2) Best-effort FCM push to recipients that have device tokens (bonus channel).

@@ -7,7 +7,7 @@ function vibrate(pattern) {
     if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
       navigator.vibrate(pattern);
     }
-  } catch { /* unsupported - ignore */ }
+  } catch { /* unsupported — ignore */ }
 }
 
 export const haptics = {

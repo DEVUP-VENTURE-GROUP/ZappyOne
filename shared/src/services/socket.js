@@ -15,7 +15,7 @@ export function getSocket(token) {
   // Never connect without a valid token — server will reject it and log
   // "No auth token found" which is noisy and misleading in the console.
   if (!token) {
-    if (import.meta.env.DEV) console.warn('[Socket] getSocket called without token - skipping');
+    if (import.meta.env.DEV) console.warn('[Socket] getSocket called without token — skipping');
     return { connected: false, emit: () => {}, on: () => {}, once: () => {}, off: () => {} };
   }
 

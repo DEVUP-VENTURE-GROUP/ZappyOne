@@ -254,8 +254,6 @@ const repairBookingSchema = new mongoose.Schema(
     workerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Worker', default: null, index: true },
     /** True when the provider came from Zappy's ranking rather than customer choice. */
     zappyRecommended: { type: Boolean, default: false },
-    // Came through the provider's own link (shop/share-link): their customer, their commission rate, and the review does not count in their public rating.
-    viaOwnLink: { type: Boolean, default: false, index: true },
     /** Booked together with other vehicles or devices, one visit (repair/models/group.model). */
     groupId: { type: mongoose.Schema.Types.ObjectId, ref: 'RepairBookingGroup', default: null, index: true },
     /** The customer's own name for this item in a group ("Dad's bike"). */
@@ -278,8 +276,6 @@ const repairBookingSchema = new mongoose.Schema(
 
     /* Money */
     priceSnapshot: { type: priceSnapshotSchema, required: true },
-    // The customer asked for the replaced parts back when approving the quote; the technician hands them over at the end.
-    returnOldParts: { type: Boolean, default: false },
     paymentId: { type: mongoose.Schema.Types.ObjectId, ref: 'PaymentIntent', default: null },
     /**
      * How this repair gets paid for.

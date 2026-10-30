@@ -176,7 +176,7 @@ router.get('/audit/worker-trust', async (req, res, next) => {
         total:  dist.total,
       },
       suspiciousVelocity: { count: suspiciousVelocity.length, samples: suspiciousVelocity },
-      unratedWorkers: { count: zeroRatingWorkers.length, note: 'Workers with 5+ jobs but still at default 5★ - may never have been rated', samples: zeroRatingWorkers },
+      unratedWorkers: { count: zeroRatingWorkers.length, note: 'Workers with 5+ jobs but still at default 5★ — may never have been rated', samples: zeroRatingWorkers },
     });
   } catch (err) { next(err); }
 });

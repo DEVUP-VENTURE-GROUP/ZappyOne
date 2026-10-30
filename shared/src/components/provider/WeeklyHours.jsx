@@ -1,5 +1,5 @@
 import toast from 'react-hot-toast';
-import { DAYS, MINUTE_STEPS, to12Hour, to24Hour, dayLength, incompleteDay, dayOf, withDay, weekdaysLike, meantPm } from './weeklyHoursRules';
+import { DAYS, MINUTE_STEPS, to12Hour, to24Hour, dayLength, incompleteDay, dayOf, withDay, weekdaysLike } from './weeklyHoursRules';
 
 export { DAYS, incompleteDay };
 
@@ -60,7 +60,6 @@ export default function WeeklyHours({ hours, onChange }) {
         {DAYS.map((label, day) => {
           const row = dayOf(hours, day);
           const len = row.isClosed ? null : dayLength(row.opensAt, row.closesAt);
-          const pm = row.isClosed ? null : meantPm(row.opensAt, row.closesAt);
           return (
             /* Day and Open/Closed lead; the times sit beside them on a wide screen and beneath on a phone. */
             <div key={day} className="flex flex-col gap-2 py-2.5 sm:flex-row sm:items-center sm:gap-3">
@@ -84,13 +83,8 @@ export default function WeeklyHours({ hours, onChange }) {
                   <TimeField label={`${label} closes at`} value={row.closesAt} onChange={(v) => setDay(day, { closesAt: v })} />
                   {len && (
                     <span className={`w-full text-[11px] font-semibold sm:w-auto ${len.short ? 'text-amber-600' : 'text-slate-400'}`}>
-                      {len.overnight ? 'overnight, ' : ''}{len.label}{len.short ? ' - is that right?' : ''}
+                      {len.overnight ? 'overnight, ' : ''}{len.label}{len.short ? ' — is that right?' : ''}
                     </span>
-                  )}
-                  {pm && (
-                    <button type="button" onClick={() => setDay(day, { closesAt: pm })} className="w-full rounded-lg bg-amber-50 px-2.5 py-1.5 text-left text-[11.5px] font-semibold text-amber-800 ring-1 ring-amber-200 hover:bg-amber-100 sm:w-auto">
-                      Closes next morning at {to12Hour(row.closesAt).hour} AM. Did you mean <span className="underline">{to12Hour(pm).hour}:{to12Hour(pm).minute} PM</span>?
-                    </button>
                   )}
                 </div>
               )}

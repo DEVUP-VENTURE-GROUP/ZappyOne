@@ -23,6 +23,7 @@ export function DispatchSettingsCard() {
       <View>
         <Text variant="bodySmall" weight="black">How jobs reach your team</Text>
         <Text variant="caption" color={ink[500]}>{data.openJobs} job{data.openJobs === 1 ? '' : 's'} open right now{data.dispatch.capacity ? ` of your limit of ${data.dispatch.capacity}` : ''}.</Text>
+        {data.commissionPct != null ? <Text variant="caption" color={ink[500]}>ZappyOne's commission: {data.commissionPct}% of the service money on each job{data.commissionUntil ? `, your agreed rate until ${new Date(data.commissionUntil).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}` : ''}.</Text> : null}
       </View>
       {DISPATCH_MODES.map((m) => {
         const on = data.dispatch.mode === m.key;

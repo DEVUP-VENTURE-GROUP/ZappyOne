@@ -27,8 +27,6 @@ beforeAll(async () => {
   await seedBands(BIKE.PRICING, 'bike_wash');
   await ServiceLine.create({ code: 'bike_wash', name: 'Bike Wash', domainCode: 'vehicles', repairVertical: 'bike_wash', status: 'live', staffDoes: true });
   model = await DeviceModel.findOne({ brandCode: 'bw_scooter' }).lean();
-  // Own staff are locked for version 1; these tests cover the version 2 behaviour.
-  await require('../src/modules/feature-flags/feature-flag.service').set('own_staff', true, null);
 });
 afterAll(async () => { await mongoose.disconnect(); await server.stop(); });
 
