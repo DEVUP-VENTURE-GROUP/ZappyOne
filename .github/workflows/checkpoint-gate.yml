@@ -35,7 +35,7 @@ jobs:
       - name: Install (server, apps, gate)
         run: |
           set -e
-          for d in server client servicepro rakshak admin events tools/checkpoint-gate; do
+          for d in server client servicepro rakshak admin tools/checkpoint-gate; do
             echo "::group::npm ci $d"; (cd "$d" && npm ci --no-audit --no-fund); echo "::endgroup::"
           done
 
