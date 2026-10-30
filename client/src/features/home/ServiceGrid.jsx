@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Wrench } from 'lucide-react';
 import { SERVICE_ICONS } from '@shared/components/home/LiveServices';
-import { distinctArt, servicePhoto, tilePhoto } from '@shared/components/home/serviceArt';
+import { servicePhoto, tilePhoto } from '@shared/components/home/serviceArt';
 import { problemPhotoIn } from '@shared/components/home/problemArt';
 
 /**
@@ -12,17 +12,16 @@ import { problemPhotoIn } from '@shared/components/home/problemArt';
  * address comes first, then the rest in catalog order. Every tile looks the
  * same so nothing competes by tint; the picture and the name do the work.
  */
-function Tile({ service, character, onOpen }) {
+function Tile({ service, onOpen }) {
   const Icon = SERVICE_ICONS[service.icon] || Wrench;
-  // An admin-set picture wins; then the service's own photo; then its ZappyOne character; then its icon.
-  const photo = tilePhoto(service.code) || servicePhoto(service);
-  const art = photo || character?.still;
+  // An admin-set picture wins; then the service's own photo; otherwise one clean icon, never a character beside photos.
+  const photo = service.imageUrl || tilePhoto(service.code) || servicePhoto(service);
   return (
     <button type="button" onClick={onOpen}
       className="group flex flex-col items-center gap-2 rounded-card text-center focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-zappy-600/20">
       <span className="flex aspect-square w-full items-center justify-center overflow-hidden rounded-card bg-sunken transition-colors duration-150 group-active:bg-line">
-        {art
-          ? <img src={art} alt="" loading="lazy" className={`h-full w-full ${photo ? 'object-cover' : 'object-contain mix-blend-multiply pt-1.5'}`} />
+        {photo
+          ? <img src={photo} alt="" loading="lazy" className="h-full w-full object-cover" />
           : <Icon strokeWidth={1.6} className="h-[36%] w-[36%] text-ink-700" />}
       </span>
       <span className="line-clamp-2 text-[13px] font-semibold leading-[1.25] text-ink-900">{service.name}</span>
@@ -35,7 +34,6 @@ export function ServiceGrid({ domains, onOpen }) {
   if (!all.length) return null;
   // Bookable here first; the sort is stable, so catalog order holds within each group.
   const tiles = [...all].sort((a, b) => Number(a.available === false) - Number(b.available === false));
-  const characters = new Map(domains.flatMap((d) => [...distinctArt(d.services, d.code)]));
 
   // Phones: three even columns. Wider: one fixed tile size, as many per row as fit.
   return (
@@ -43,7 +41,7 @@ export function ServiceGrid({ domains, onOpen }) {
       <h2 id="home-services" className="h-section">Services</h2>
       <div className="mt-3 grid grid-cols-3 gap-x-3 gap-y-4 sm:grid-cols-[repeat(auto-fill,112px)] sm:gap-x-3">
         {tiles.map((s) => (
-          <Tile key={s.code} service={s} character={characters.get(s.code)} onOpen={() => onOpen(s)} />
+          <Tile key={s.code} service={s} onOpen={() => onOpen(s)} />
         ))}
       </div>
     </section>
