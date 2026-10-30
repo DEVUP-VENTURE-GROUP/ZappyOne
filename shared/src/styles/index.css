@@ -399,10 +399,12 @@
 @keyframes fz-sheen   { 0% { transform: translateX(-120%); } 45%, 100% { transform: translateX(120%); } }
 .fz-marquee { stroke-dasharray: 0 11; stroke-linecap: round; animation: fz-marquee 1.1s linear infinite; }
 .fz-zoom    { animation: fz-zoom 9s ease-in-out infinite alternate; }
+.fz-bob     { animation: fz-bob 2.4s ease-in-out infinite alternate; }
+@keyframes fz-bob     { from { transform: translateY(-6px); } to { transform: translateY(4px); } }
 @keyframes fz-marquee { to { stroke-dashoffset: -22; } }
 @keyframes fz-zoom    { from { transform: scale(1); } to { transform: scale(1.08); } }
 @media (prefers-reduced-motion: reduce) {
-  .fz-sway, .fz-twinkle, .fz-flicker, .fz-float, .fz-breathe, .fz-fall, .fz-drop, .fz-rise, .fz-sheen::after, .fz-marquee, .fz-zoom { animation: none !important; }
+  .fz-sway, .fz-twinkle, .fz-flicker, .fz-float, .fz-breathe, .fz-fall, .fz-drop, .fz-rise, .fz-sheen::after, .fz-marquee, .fz-zoom, .fz-bob { animation: none !important; }
 }
 
 /* Festive band (home/festive/FestiveHero): the art pops in. */

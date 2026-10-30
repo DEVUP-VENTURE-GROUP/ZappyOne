@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { BellRing, Check, MapPin, MapPinOff } from 'lucide-react-native';
+import { BellRing, Check, MapPin } from 'lucide-react-native';
 import { useNotifyLaunchMutation } from '@zappy/core/api';
 import { useAppSelector } from '@zappy/core/store/hooks';
 import { Button, Text } from '@zappy/ui/components';
+import { GrowthArt } from '@zappy/ui/components/home/GrowthArt';
 import { toast } from '@zappy/ui/components/Toast';
 import { errText } from '@zappy/ui/lib/feedback';
-import { colors, ink, slate, zappy } from '@zappy/ui/theme/colors';
+import { colors, ink, slate } from '@zappy/ui/theme/colors';
 import { radius } from '@zappy/ui/theme/radius';
 import { spacing } from '@zappy/ui/theme/spacing';
 
@@ -29,10 +30,12 @@ export function NotInYourArea({ place, lat, lng, address, areas = [], onChangeLo
 
   return (
     <View style={styles.wrap}>
-      <View style={styles.mark}><MapPinOff size={40} color={zappy[600]} strokeWidth={1.6} /></View>
-      <Text variant="heading2" weight="extrabold" style={styles.center}>{soon ? `Pros are joining near ${place || 'you'}` : 'Not available in your area yet'}</Text>
+      <View style={styles.art}><GrowthArt width={300} /></View>
+      <Text variant="heading2" weight="extrabold" style={styles.center}>{soon ? `We are setting up in ${place || 'your area'}` : 'Your neighbourhood is on our list'}</Text>
       <Text variant="body" color={ink[500]} style={styles.center}>
-        {soon ? 'Nobody is verified at this address yet. We are adding pros every week.' : `We are launching new areas fast and will be in ${place || 'yours'} soon.`}
+        {soon
+          ? 'You are inside our service area, but no verified pro has joined this spot yet. We will tell you the day the first one does.'
+          : `ZappyOne is growing city by city. We are not in ${place || 'your area'} yet, and every request from here counts toward where we open next.`}
       </Text>
       <View style={styles.actions}>
         <Button label={notified ? 'We will tell you' : 'Notify me when live'} loading={isLoading} disabled={notified}
@@ -59,7 +62,7 @@ export function NotInYourArea({ place, lat, lng, address, areas = [], onChangeLo
 
 const styles = StyleSheet.create({
   wrap: { gap: spacing.md, paddingTop: spacing.base, paddingBottom: spacing.lg },
-  mark: { width: 96, height: 96, borderRadius: 48, alignSelf: 'center', alignItems: 'center', justifyContent: 'center', backgroundColor: zappy[50], marginBottom: spacing.sm },
+  art: { alignItems: 'center' },
   center: { textAlign: 'center' },
   actions: { gap: spacing.sm, marginTop: spacing.sm },
   live: { gap: spacing.md, marginTop: spacing.xl },

@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { BellRing, Check, Loader2, MapPin, MapPinOff } from 'lucide-react';
+import { BellRing, Check, Loader2, MapPin } from 'lucide-react';
+import GrowthArt from '@shared/components/home/GrowthArt';
 import { selectAuth } from '@shared/modules/auth/authSlice';
 import { useNotifyLaunchMutation } from '@shared/services/api';
 
@@ -26,15 +27,15 @@ export default function NotInYourArea({ place, lat, lng, address, areas = [], on
   }
 
   return (
-    <section className="mx-auto w-full max-w-lg pt-4 text-center">
-      <span className="mx-auto grid h-24 w-24 place-items-center rounded-full bg-zappy-50 text-zappy-600">
-        <MapPinOff size={40} strokeWidth={1.6} aria-hidden="true" />
-      </span>
-      <h1 className="mt-5 text-[24px] font-extrabold leading-tight tracking-[-0.02em] text-ink-900 [text-wrap:balance]">
-        {soon ? `Pros are joining near ${place || 'you'}` : 'Not available in your area yet'}
+    <section className="mx-auto w-full max-w-lg pt-2 text-center">
+      <GrowthArt className="mx-auto w-full max-w-[320px]" />
+      <h1 className="mt-4 text-[24px] font-extrabold leading-tight tracking-[-0.02em] text-ink-900 [text-wrap:balance]">
+        {soon ? `We are setting up in ${place || 'your area'}` : 'Your neighbourhood is on our list'}
       </h1>
       <p className="mx-auto mt-2 max-w-sm text-[15px] leading-relaxed text-ink-500">
-        {soon ? 'Nobody is verified at this address yet. We are adding pros every week.' : `We are launching new areas fast and will be in ${place || 'yours'} soon.`}
+        {soon
+          ? 'You are inside our service area, but no verified pro has joined this spot yet. We will tell you the day the first one does.'
+          : `ZappyOne is growing city by city. We are not in ${place || 'your area'} yet, and every request from here counts toward where we open next.`}
       </p>
 
       <div className="mt-6 flex flex-col gap-2.5 sm:flex-row">

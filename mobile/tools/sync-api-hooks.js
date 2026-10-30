@@ -64,6 +64,7 @@ const LOGIC = [
   { from: 'customer/repairBasket.js', to: 'shared/repairBasket.js', imports: {} },
   { from: 'customer/searchClock.js', to: 'shared/searchClock.js', imports: {} },
   { from: 'customer/season.js', to: 'shared/season.js', imports: { '../utils/money': './money' } },
+  { from: 'customer/growthArt.js', to: 'shared/growthArt.js', imports: {} },
   { from: 'customer/useCheckoutDraft.js', to: 'shared/useCheckoutDraft.js', imports: { react: 'react', '../services/api': '../api/hooks' } },
   { from: 'events/partnerBookings.js', to: 'shared/partnerBookings.js', imports: {} },
   { from: 'constants/telanganaPlaces.js', to: 'shared/telanganaPlaces.js', imports: {} },
