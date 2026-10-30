@@ -47,6 +47,8 @@ beforeAll(async () => {
 
   const shop = await Shop.create({
     businessName: 'City Mobile Care', ownerName: 'Rahul', phone: '9700000001',
+    // A complete business profile: a service is verified only after one (onboarding/profile-check).
+    email: 'owner@example.com', coverImageUrl: 'shop/cover.jpg', bio: 'Repairing phones and laptops in this area for many years.', yearsActive: 6, hours: [0, 1, 2, 3, 4, 5, 6].map((day) => ({ day, opensAt: '00:00', closesAt: '23:59' })),
     address: { text: '12 MG Road', location: { type: 'Point', coordinates: [78.48, 17.38] } },
   });
   const worker = await Worker.create({ phone: '9700000002', name: 'Imran', skills: ['mobile'] });
@@ -194,7 +196,8 @@ describe('submitting for review', () => {
     expect(res.status).toBe(400);
     expect(res.body.code).toBe('INCOMPLETE');
     const missing = res.body.missing.map((m) => m.code);
-    expect(missing).toEqual(expect.arrayContaining(['owner_id', 'shop_photo', 'selfie', 'years_active']));
+    // Years in business comes from the completed profile, so it is not asked again.
+    expect(missing).toEqual(expect.arrayContaining(['owner_id', 'shop_photo', 'selfie']));
     // Optional items are not treated as gaps.
     expect(missing).not.toContain('gst_certificate');
   });
@@ -279,6 +282,7 @@ describe('admin review', () => {
       .send({ decision: 'approved', note: 'Storefront and ID verified' });
     expect(res.status).toBe(200);
 
+    await Shop.updateOne({ _id: ctx.shopId }, { $unset: { coverImageUrl: 1 } });
     const status = await request(app).get(`${BASE}/status`).set(auth(ctx.shopToken));
     expect(status.body.approvedLineCodes).toEqual(['mobile_repair']);
     expect(status.body.repairVerticals).toEqual(['mobile']);
@@ -290,6 +294,7 @@ describe('admin review', () => {
     expect(done.photo).toBe(false);
     expect(status.body.isLive).toBe(false);
     expect(status.body.nextStep.code).toBe('ADD_PHOTO');
+    await Shop.updateOne({ _id: ctx.shopId }, { $set: { coverImageUrl: 'shop/cover.jpg' } });
   });
 
   it('suspends one line without touching another', async () => {
@@ -476,6 +481,8 @@ describe('customer catalog', () => {
     // used here rather than disturbing that shared fixture.
     const laptopShop = await Shop.create({
       businessName: 'Laptop Fix Co', ownerName: 'Asha', phone: '9700000099',
+    // A complete business profile: a service is verified only after one (onboarding/profile-check).
+    email: 'owner@example.com', coverImageUrl: 'shop/cover.jpg', bio: 'Repairing phones and laptops in this area for many years.', yearsActive: 6, hours: [0, 1, 2, 3, 4, 5, 6].map((day) => ({ day, opensAt: '00:00', closesAt: '23:59' })),
       address: { text: '1 Test Road', location: { type: 'Point', coordinates: [78.48, 17.38] } },
     });
     await ProviderEnrolment.create({

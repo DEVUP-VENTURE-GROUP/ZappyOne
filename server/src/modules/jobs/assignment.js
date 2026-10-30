@@ -20,6 +20,12 @@ const err = (message, status, code) => Object.assign(new Error(message), { statu
 // eslint-disable-next-line no-unused-vars
 function assertSomeoneTravels(kind, doc, next) {}
 
+// A shop's technician takes a job only while checked in for their shift, so the shop always knows who is out working.
+async function assertCheckedIn(workerId) {
+  const w = await require('../worker/worker.model').findById(workerId).select('shopId isOnline').lean();
+  if (w?.shopId && !w.isOnline) throw err('Check in for your shift first, then accept the job.', 409, 'NOT_CHECKED_IN');
+}
+
 /** The owner hands a job to one of their own technicians. */
 async function assignTechnician({ jobId, shopId, workerId }) {
   const found = await findJob(jobId);
@@ -56,4 +62,4 @@ async function assignTechnician({ jobId, shopId, workerId }) {
   return { kind, job: doc, worker };
 }
 
-module.exports = { assertSomeoneTravels, assignTechnician };
+module.exports = { assertSomeoneTravels, assertCheckedIn, assignTechnician };

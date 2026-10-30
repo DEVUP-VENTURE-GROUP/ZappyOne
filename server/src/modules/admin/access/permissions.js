@@ -76,6 +76,7 @@ const AREA_RULES = [
   [/^\/(pet\/bookings|helping\/tasks|repair\/bookings)(\/|$)/, 'bookings'],
   [/^\/onboarding\/(overview|domains|lines)(\/|$)/, 'catalog'],
   [/^\/onboarding(\/|$)/, 'providers'],
+  [/^\/service-plans(\/|$)/, 'catalog'],
   [/^\/(repair|pet|helping|verticals|pricing|pricing-config|toggles|dispatch)(\/|$)/, 'catalog'],
   [/^\/users(\/|$)/, 'customers'],
   [/^\/(bookings|orders|sos)(\/|$)/, 'bookings'],

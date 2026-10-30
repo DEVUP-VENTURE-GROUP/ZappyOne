@@ -277,7 +277,7 @@ const DIAGNOSIS_FLOWS = {
       type: 'single',
       options: [
         { id: 'yes', label: 'Yes, can push it aside'                   },
-        { id: 'no',  label: 'No — blocking road', urgency: 'high'      },
+        { id: 'no',  label: 'No - blocking road', urgency: 'high'      },
       ],
     },
   ],

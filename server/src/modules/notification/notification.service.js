@@ -32,7 +32,7 @@ const SMS_TYPES = new Set([
 
 async function notify({ recipient, type, title, body, data = {}, deepLink, sms = false, push = true }) {
   if (!Notification.TYPES.includes(type)) {
-    logger.warn({ type }, 'Unknown notification type — proceeding anyway');
+    logger.warn({ type }, 'Unknown notification type - proceeding anyway');
   }
 
   // 1. Persist

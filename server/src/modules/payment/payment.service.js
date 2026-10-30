@@ -21,6 +21,8 @@ const PaymentIntent = require('./payment-intent.model');
 const Order = require('../order/order.model');
 const Transaction = require('./transaction.model');
 const cashfree = require('./cashfree.client');
+const razorpay = require('./razorpay.client');
+const gateway = require('./gateway');
 const walletService = require('../wallet/wallet.service');
 const subscriptionService = require('../subscription/subscription.service');
 const payables = require('./payables');
@@ -51,7 +53,7 @@ async function resolveCustomer(owner) {
 async function createOrderForPurpose({ owner, purpose, planCode, amountPaise, orderId, returnUrl, bookingSource = null, bookingId = null }) {
   // Backup path: with no live gateway, say so plainly; the customer pays in cash instead.
   if (!payables.gatewayReady()) {
-    throw Object.assign(new Error('Online payment is not available right now — please pay in cash after the service.'), {
+    throw Object.assign(new Error('Online payment is not available right now - please pay in cash after the service.'), {
       status: 503, code: 'GATEWAY_UNAVAILABLE',
     });
   }
@@ -97,25 +99,24 @@ async function createOrderForPurpose({ owner, purpose, planCode, amountPaise, or
   // needing to store Cashfree's numeric cf_order_id alongside it.
   const cfOrderId = `zpy_${cfOrderIdPrefix}_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
 
-  const customer = await resolveCustomer(owner);
-  const cfOrder = await cashfree.createOrder({
-    orderId: cfOrderId,
-    amountPaise: resolvedAmount,
-    customer,
-    returnUrl,
-    tags: {
-      purpose,
-      ownerKind: owner.kind,
-      ownerId: String(owner.id),
-      ...(planCode ? { planCode } : {}),
-      ...(orderId  ? { orderId: String(orderId) } : {}),
-      ...(bookingId ? { bookingSource, bookingId: String(bookingId) } : {}),
-    },
-  });
+  const tags = {
+    purpose,
+    ownerKind: owner.kind,
+    ownerId: String(owner.id),
+    ...(planCode ? { planCode } : {}),
+    ...(orderId  ? { orderId: String(orderId) } : {}),
+    ...(bookingId ? { bookingSource, bookingId: String(bookingId) } : {}),
+  };
+  const gw = gateway.active();
+  let cfOrder = null; let razorpayOrder = null;
+  if (gw === 'razorpay') razorpayOrder = await razorpay.createOrder({ orderId: cfOrderId, amountPaise: resolvedAmount, tags });
+  else cfOrder = await cashfree.createOrder({ orderId: cfOrderId, amountPaise: resolvedAmount, customer: await resolveCustomer(owner), returnUrl, tags });
 
   const isBooking = purpose === 'repair_payment' || purpose === 'booking_payment';
   const intent = await PaymentIntent.create({
     cfOrderId,
+    gateway: gw,
+    gatewayOrderId: razorpayOrder?.id,
     owner,
     purpose: isBooking ? 'booking_payment' : purpose,
     planId,
@@ -130,7 +131,7 @@ async function createOrderForPurpose({ owner, purpose, planCode, amountPaise, or
     status: 'created',
   });
 
-  return { paymentIntent: intent, cfOrder };
+  return { paymentIntent: intent, cfOrder, razorpayOrder };
 }
 
 /**
@@ -171,30 +172,68 @@ async function handleWebhook(payload) {
     }
     case 'REFUND_STATUS_WEBHOOK': {
       const refund = payload.data?.refund;
-      if (refund?.cf_payment_id && refund.refund_status === 'SUCCESS') {
-        const intent = await PaymentIntent.findOneAndUpdate(
-          { cfPaymentId: String(refund.cf_payment_id) },
-          { $set: { status: 'refunded', 'refund.status': 'processed' }, $push: { events: { event: eventType, payload } } },
-          { new: true },
-        );
-        if (intent?.purpose === 'order_payment' && intent.orderId) {
-          await Order.updateOne({ _id: intent.orderId }, { $set: { 'payment.status': 'refunded' } });
-        }
-        // Reflect it on the booking so the customer sees "refunded", not "cancelled".
-        if (intent?.bookingSource && intent.bookingId) {
-          const booking = await payables.PAYABLES[intent.bookingSource].load(intent.bookingId);
-          if (booking) {
-            booking.paymentStatus = intent.refund.amountPaise < intent.amountPaise
-              ? (intent.bookingSource === 'repair' ? 'partial_refund' : 'partially_refunded')
-              : 'refunded';
-            await booking.save();
-          }
-        }
-      }
+      if (refund?.cf_payment_id && refund.refund_status === 'SUCCESS') await markRefunded(String(refund.cf_payment_id), eventType, payload);
       return { ok: true, action: 'refund_status_recorded' };
     }
     default:
       logger.info({ eventType }, 'Cashfree webhook event ignored');
+      return { ok: true, action: 'ignored' };
+  }
+}
+
+// A refund the gateway has paid out: the intent, and the order or booking it paid for, read refunded (both gateways).
+async function markRefunded(paymentId, eventType, payload) {
+  const intent = await PaymentIntent.findOneAndUpdate(
+    { cfPaymentId: paymentId },
+    { $set: { status: 'refunded', 'refund.status': 'processed' }, $push: { events: { event: eventType, payload } } },
+    { new: true },
+  );
+  if (intent?.purpose === 'order_payment' && intent.orderId) {
+    await Order.updateOne({ _id: intent.orderId }, { $set: { 'payment.status': 'refunded' } });
+  }
+  // Reflect it on the booking so the customer sees "refunded", not "cancelled".
+  if (intent?.bookingSource && intent.bookingId) {
+    const booking = await payables.PAYABLES[intent.bookingSource].load(intent.bookingId);
+    if (booking) {
+      booking.paymentStatus = intent.refund.amountPaise < intent.amountPaise
+        ? (intent.bookingSource === 'repair' ? 'partial_refund' : 'partially_refunded')
+        : 'refunded';
+      await booking.save();
+    }
+  }
+}
+
+/**
+ * Handle a Razorpay webhook (signature already checked by the route).
+ * Events: payment.authorized, payment.captured, order.paid, payment.failed, refund.processed.
+ */
+async function handleRazorpayWebhook(payload) {
+  const event = payload?.event;
+  const payment = payload?.payload?.payment?.entity;
+  const intentOf = (orderId) => (orderId ? PaymentIntent.findOne({ gatewayOrderId: orderId, gateway: 'razorpay' }).select('cfOrderId gateway gatewayOrderId').lean() : null);
+  switch (event) {
+    case 'payment.authorized':
+    case 'payment.captured':
+    case 'order.paid': {
+      const intent = await intentOf(payment?.order_id);
+      if (!intent || !payment?.id) return { ok: false, reason: 'unknown_order' };
+      return verifyRazorpay(intent, payment.id, null, `razorpay.${event}`);
+    }
+    case 'payment.failed': {
+      if (payment?.order_id) {
+        await PaymentIntent.updateOne(
+          { gatewayOrderId: payment.order_id, status: { $in: ['created', 'authorized'] } },
+          { $set: { status: 'failed', failureReason: payment.error_description || event }, $push: { events: { event, payload: { id: payment.id, error: payment.error_code } } } },
+        );
+      }
+      return { ok: true, action: 'marked_failed' };
+    }
+    case 'refund.processed': {
+      const refund = payload?.payload?.refund?.entity;
+      if (refund?.payment_id) await markRefunded(String(refund.payment_id), event, { id: refund.id, amount: refund.amount });
+      return { ok: true, action: 'refund_status_recorded' };
+    }
+    default:
       return { ok: true, action: 'ignored' };
   }
 }
@@ -215,13 +254,13 @@ async function capturePayment({ cfOrderId, cfPaymentId, amountPaise, eventName, 
   );
 
   if (!intent) {
-    logger.info({ cfOrderId, cfPaymentId }, 'Payment intent not claimable — likely already processed');
+    logger.info({ cfOrderId, cfPaymentId }, 'Payment intent not claimable - likely already processed');
     return { ok: true, action: 'already_applied_or_unknown' };
   }
 
   // Amount sanity check
   if (Math.abs(intent.amountPaise - amountPaise) > 100) {
-    logger.error({ expected: intent.amountPaise, got: amountPaise, cfPaymentId }, 'Amount mismatch — possible tampering');
+    logger.error({ expected: intent.amountPaise, got: amountPaise, cfPaymentId }, 'Amount mismatch - possible tampering');
     // Not applied, so it must not read as captured; appliedAt stays so a replay cannot apply it.
     await PaymentIntent.updateOne({ _id: intent._id }, { $set: { status: 'failed', failureReason: 'amount_mismatch' } });
     return { ok: false, action: 'amount_mismatch' };
@@ -287,7 +326,7 @@ async function capturePayment({ cfOrderId, cfPaymentId, amountPaise, eventName, 
   } catch (err) {
     // Side-effect failed after payment captured. Money is in Cashfree but our
     // domain didn't apply. Mark for reconciliation + alert ops. (#95/#96)
-    logger.error({ err: err.message, cfPaymentId, purpose: intent.purpose }, '[PAYMENT] Side-effect failed — marking for reconciliation');
+    logger.error({ err: err.message, cfPaymentId, purpose: intent.purpose }, '[PAYMENT] Side-effect failed - marking for reconciliation');
     await PaymentIntent.updateOne(
       { cfOrderId: intent.cfOrderId },
       {
@@ -316,7 +355,27 @@ async function capturePayment({ cfOrderId, cfPaymentId, amountPaise, eventName, 
  * Cashfree doesn't return a signature on checkout — we confirm by fetching
  * payment status from the Cashfree API. Webhook remains the source of truth.
  */
-async function handleCheckoutVerification({ cfOrderId, cfPaymentId }) {
+// Razorpay checkout returns a signed payment id; the signature is checked, then Razorpay is asked for the payment itself before anything is applied.
+async function verifyRazorpay(intent, paymentId, signature, eventName) {
+  if (signature != null && !razorpay.verifyCheckoutSignature(intent.gatewayOrderId, paymentId, signature)) {
+    throw Object.assign(new Error('This payment could not be verified'), { status: 400, code: 'BAD_SIGNATURE' });
+  }
+  let p;
+  try { p = await razorpay.getPayment(paymentId); } catch (err) {
+    throw Object.assign(new Error('Could not verify payment with gateway'), { status: 502, code: 'GATEWAY_VERIFY_FAILED' });
+  }
+  if (p.order_id !== intent.gatewayOrderId) return { ok: false, status: 'not_confirmed' };
+  if (p.status === 'authorized') p = await razorpay.capture(paymentId, p.amount);
+  if (p.status !== 'captured') return { ok: false, status: 'not_confirmed' };
+  return capturePayment({ cfOrderId: intent.cfOrderId, cfPaymentId: String(p.id), amountPaise: p.amount, eventName, rawPayload: { source: eventName, payment: { id: p.id, status: p.status, amount: p.amount, method: p.method } } });
+}
+
+async function handleCheckoutVerification({ cfOrderId, cfPaymentId, razorpaySignature = null }) {
+  const intent = await PaymentIntent.findOne({ cfOrderId }).select('cfOrderId gateway gatewayOrderId').lean();
+  if (intent?.gateway === 'razorpay') {
+    if (!razorpaySignature) throw Object.assign(new Error('This payment could not be verified'), { status: 400, code: 'BAD_SIGNATURE' });
+    return verifyRazorpay(intent, cfPaymentId, razorpaySignature, 'manual.verify');
+  }
   // Fetch all payments for this order — pick the successful one
   let payments;
   try {
@@ -360,6 +419,12 @@ async function reconcilePendingIntents({ now = Date.now(), limit = 50 } = {}) {
   let captured = 0, expired = 0;
   for (const intent of pending) {
     try {
+      if (intent.gateway === 'razorpay') {
+        const paid = (await razorpay.getOrderPayments(intent.gatewayOrderId)).find((p) => p.status === 'captured' || p.status === 'authorized');
+        if (paid) { const r = await verifyRazorpay(intent, paid.id, null, 'reconcile.sweep'); if (r.ok !== false) captured++; continue; }
+        if (now - new Date(intent.createdAt).getTime() > EXPIRE_AFTER_MS) { await PaymentIntent.updateOne({ _id: intent._id, status: 'created' }, { $set: { status: 'expired' } }); expired++; }
+        continue;
+      }
       const payments = await cashfree.getOrderPayments(intent.cfOrderId);
       const ok = Array.isArray(payments) && payments.find((p) => p.payment_status === 'SUCCESS');
       if (ok) {
@@ -376,7 +441,7 @@ async function reconcilePendingIntents({ now = Date.now(), limit = 50 } = {}) {
         expired++;
       }
     } catch (err) {
-      logger.warn({ err: err.message, cfOrderId: intent.cfOrderId }, '[PAYMENT] reconcile check failed — will retry');
+      logger.warn({ err: err.message, cfOrderId: intent.cfOrderId }, '[PAYMENT] reconcile check failed - will retry');
     }
   }
   return { checked: pending.length, captured, expired };
@@ -424,7 +489,7 @@ async function refundOrderPayment({ orderId, amountPaise, reason = 'Order failed
   return refundIntent(intent, { amountPaise, reason, label: 'order', ref: orderId });
 }
 
-/** Refund a captured Cashfree payment to where it came from — once. */
+/** Refund a captured payment to where it came from, through the gateway that took it, once. */
 async function refundIntent(intent, { amountPaise, reason, label, ref }) {
   if (!intent) return { refunded: false, reason: 'not_paid_online' };
   const amount = Math.min(amountPaise ?? intent.amountPaise, intent.amountPaise);
@@ -433,9 +498,11 @@ async function refundIntent(intent, { amountPaise, reason, label, ref }) {
 
   const refundId = `rf_${intent._id}`;
   try {
-    const res = await cashfree.createRefund({ orderId: intent.cfOrderId, amountPaise: amount, refundId, note: reason.slice(0, 100) });
+    const res = intent.gateway === 'razorpay'
+      ? await razorpay.createRefund({ paymentId: intent.cfPaymentId, amountPaise: amount, refundId, note: reason.slice(0, 100) })
+      : await cashfree.createRefund({ orderId: intent.cfOrderId, amountPaise: amount, refundId, note: reason.slice(0, 100) });
     await PaymentIntent.updateOne({ _id: intent._id }, {
-      $set: { refund: { status: 'requested', amountPaise: amount, cfRefundId: res?.cf_refund_id || refundId, reason, at: new Date() } },
+      $set: { refund: { status: 'requested', amountPaise: amount, cfRefundId: res?.cf_refund_id || res?.id || refundId, reason, at: new Date() } },
     });
     return { refunded: true, amountPaise: amount };
   } catch (err) {
@@ -458,6 +525,7 @@ async function refundIntent(intent, { amountPaise, reason, label, ref }) {
 }
 
 module.exports = {
+  handleRazorpayWebhook,
   createOrderForPurpose,
   handleWebhook,
   handleCheckoutVerification,

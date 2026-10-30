@@ -24,7 +24,7 @@ function splitFor(booking) {
     platformPaise = 0;
     logger.warn(
       { bookingId: String(booking._id) },
-      '[repair] booking has no snapshotted commission — settling at zero platform share',
+      '[repair] booking has no snapshotted commission - settling at zero platform share',
     );
   }
 

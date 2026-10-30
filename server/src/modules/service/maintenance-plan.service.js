@@ -44,7 +44,7 @@ async function createPlan({
   const plan = await MaintenancePlan.create({
     userId, service,
     label: visitsPerYear
-      ? `${service.replace(/_/g, ' ')} — ${visitsPerYear} visits a year`
+      ? `${service.replace(/_/g, ' ')} - ${visitsPerYear} visits a year`
       : `${service.replace(/_/g, ' ')} every ${freq} days`,
     frequencyDays: freq,
     preferredWorkerId: preferredWorkerId || null,

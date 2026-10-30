@@ -299,16 +299,16 @@ async function run({ reportOnly = false } = {}) {
   const isProdDb = !/_dev$|_test$|localhost|127\.0\.0\.1/.test(dbName) && !/_dev$/.test(uri);
   if (isProdDb && !process.argv.includes('--yes-production')) {
     throw new Error(
-      `Refusing to seed "${dbName}" — this looks like a production database.\n` +
+      `Refusing to seed "${dbName}" - this looks like a production database.\n` +
       `        Re-run with --yes-production if that is genuinely what you want.`,
     );
   }
 
   await mongoose.connect(uri, { serverSelectionTimeoutMS: 20000 });
-  console.log(`[seed] connected to database: ${dbName}${isProdDb ? '  (PRODUCTION — explicitly confirmed)' : ''}`);
+  console.log(`[seed] connected to database: ${dbName}${isProdDb ? '  (PRODUCTION - explicitly confirmed)' : ''}`);
 
   if (reportOnly) {
-    console.log('[seed] report only — nothing written');
+    console.log('[seed] report only - nothing written');
     console.table(await report());
     await mongoose.disconnect();
     return;

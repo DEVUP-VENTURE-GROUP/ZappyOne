@@ -39,6 +39,8 @@ const quoteItemSchema = new mongoose.Schema(
     partId: { type: mongoose.Schema.Types.ObjectId, ref: 'Part', default: null },
     partSku: { type: String, default: null },
     qualityCode: { type: String, default: null, lowercase: true },
+    // What the part really is, said before the customer approves: the fake-part complaint answered at the source.
+    partGrade: { type: String, enum: ['original', 'oem', 'compatible', null], default: null },
 
     quantity: { type: Number, default: 1, min: 1 },
     unitPricePaise: { type: Number, required: true, min: 0 },

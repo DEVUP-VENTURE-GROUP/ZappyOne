@@ -113,7 +113,7 @@ async function getZoneLabel(lat, lng) {
       }
     }
   } catch (err) {
-    logger.warn({ err: err.message }, 'getZoneLabel google failed — trying OSM');
+    logger.warn({ err: err.message }, 'getZoneLabel google failed - trying OSM');
   }
 
   // 2) OpenStreetMap Nominatim — free reverse geocode, no API key required.

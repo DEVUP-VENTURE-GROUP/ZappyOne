@@ -20,7 +20,7 @@ const DEFAULT_BASE = {
   user: 'https://www.zappyone.com',
   worker: 'https://rakshak.zappyone.com',
   shop: 'https://servicepro.zappyone.com',
-  event_partner: 'https://events.zappyone.com',
+  event_partner: 'https://servicepro.zappyone.com',
 };
 function baseUrlFor(req, r) {
   const origin = req.get('origin');

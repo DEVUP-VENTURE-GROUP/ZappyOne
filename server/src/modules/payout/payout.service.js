@@ -128,7 +128,7 @@ async function approvePayout({ payoutId, adminId, autoProcess = true }) {
     amountPaise: payout.amountPaise,
     reason: Transaction.REASONS.WITHDRAWAL,
     idempotencyKey: `payout:debit:${payout._id}`,
-    description: `Payout reservation — ${payout.method}`,
+    description: `Payout reservation - ${payout.method}`,
     metadata: { payoutId: String(payout._id) },
   });
 
@@ -176,7 +176,7 @@ async function reversePayout({ payout, reason }) {
     amountPaise: payout.amountPaise,
     reason: Transaction.REASONS.ADMIN_ADJUSTMENT_CREDIT,
     idempotencyKey: `payout:reversal:${payout._id}`,
-    description: `Payout reversed — ${reason}`,
+    description: `Payout reversed - ${reason}`,
     metadata: { payoutId: String(payout._id) },
   });
 

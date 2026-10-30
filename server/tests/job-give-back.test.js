@@ -139,9 +139,26 @@ describe('no-shows', () => {
     expect(row.type).toBe('provider_no_show');
     expect(row.penaltyPaise).toBe(5000);
     expect((await HelpingTask.findById(late._id).lean()).status).toBe('WORKER_SEARCHING');
+    // The customer is credited once for the broken promise; a second report does not pay twice.
+    expect(out.creditPaise).toBe(5000);
+    const Tx = require('../src/modules/payment/transaction.model');
+    expect(await Tx.countDocuments({ reason: 'no_show_credit', idempotencyKey: `noshow-credit:helping:${late._id}` })).toBe(1);
 
     const early = await task('WORKER_ACCEPTED', { minsAgo: 5 });
     await expect(gb.reportProviderAbsent({ kind: 'helping', id: early._id, userId })).rejects.toMatchObject({ code: 'TOO_SOON' });
+  });
+});
+
+describe('cash not paid', () => {
+  test('the pro reports it once, the customer record shows it to the next pros', async () => {
+    await require('../src/modules/user/user.model').collection.updateOne({ _id: userId }, { $setOnInsert: { phone: '9000009901', name: 'Test customer' } }, { upsert: true });
+    const done = await task('WORKER_ACCEPTED', { minsAgo: 5 });
+    const out = await gb.reportCashRefused({ kind: 'helping', id: done._id, actor: { kind: 'worker', id: workerId } });
+    expect(out.reported).toBe(true);
+    expect((await gb.reportCashRefused({ kind: 'helping', id: done._id, actor: { kind: 'worker', id: workerId } })).duplicate).toBe(true);
+    const summary = await require('../src/modules/jobs/customer-rating').summaryFor(userId);
+    expect(summary.cashRefused).toBe(1);
+    await expect(gb.reportCashRefused({ kind: 'helping', id: done._id, actor: { kind: 'worker', id: new (require('mongoose').Types.ObjectId)() } })).rejects.toMatchObject({ status: 403 });
   });
 });
 

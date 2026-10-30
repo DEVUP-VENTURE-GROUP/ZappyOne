@@ -45,7 +45,7 @@ async function updateLocation(req, res, next) {
     // Return 200 so the client doesn't retry-spam; log the failure server-side.
     if (err?.name === 'ReplyError' || err?.code === 'ECONNREFUSED' || err?.code === 'ENOTFOUND') {
       const logger = require('../../../core/logger');
-      logger.warn({ workerId: req.auth.sub, err: err.message }, '[LOCATION] Redis unavailable — location update skipped');
+      logger.warn({ workerId: req.auth.sub, err: err.message }, '[LOCATION] Redis unavailable - location update skipped');
       return res.json({ ok: true, degraded: true });
     }
     next(err);

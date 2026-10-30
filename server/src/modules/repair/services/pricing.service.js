@@ -489,7 +489,7 @@ async function buildPriceSnapshot({
      */
     rangeMinPaise: null,
     rangeMaxPaise: null,
-    warrantyDays: providerPrice?.warrantyDays || referencePrice?.warrantyDays || repair?.warrantyDays || 0,
+    warrantyDays: Math.max(providerPrice?.warrantyDays || referencePrice?.warrantyDays || repair?.warrantyDays || 0, cfg.redoGuaranteeDays ?? 7),
     snapshotAt: new Date(),
   };
 }

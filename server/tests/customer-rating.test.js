@@ -39,7 +39,7 @@ test('only the provider who did it, only when done, only once; rolls into the av
   expect((await HelpingTask.findById(t._id).lean()).customerRating).toMatchObject({ stars: 4, tags: ['on_time'] });
   const t2 = await task(u._id, w);
   await cr.rate({ kind: 'helping', id: t2._id, role: 'worker', providerId: w, stars: 2 });
-  expect(await cr.summaryFor(u._id)).toEqual({ rating: 3, count: 2 });
+  expect(await cr.summaryFor(u._id)).toEqual({ rating: 3, count: 2, missedVisits: 0, cashRefused: 0 });
 });
 
 test('"unsafe" flags the customer for ops at once', async () => {

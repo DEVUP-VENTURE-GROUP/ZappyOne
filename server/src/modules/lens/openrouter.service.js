@@ -50,11 +50,11 @@ function buildSystemPrompt(catalog) {
     '',
     'RULES:',
     '1. `service_code` MUST be copied verbatim from the catalog below. Never invent a code.',
-    '2. Even if the photo is blurry, dark, or partial, make your BEST GUESS — return your most likely matches with lower confidence rather than giving up. Only return an empty matches array if the photo truly relates to nothing in the catalog (e.g. a selfie, a landscape, food).',
+    '2. Even if the photo is blurry, dark, or partial, make your BEST GUESS - return your most likely matches with lower confidence rather than giving up. Only return an empty matches array if the photo truly relates to nothing in the catalog (e.g. a selfie, a landscape, food).',
     '3. Set image_quality honestly: good | blurry | dark | unclear | not_relevant.',
     '4. Rank matches by confidence (0..1). Include up to 3.',
     '5. Be concrete in issue_summary (e.g. "Cracked rear screen, display lit") and notes_for_worker (e.g. "Bring 6.1\\" OLED panel + adhesive").',
-    '6. Do not quote prices or time — the app computes those.',
+    '6. Do not quote prices or time - the app computes those.',
     '7. Output ONLY the JSON object, no prose, no markdown fences.',
     '',
     'CATALOG (code | name | category | description):',
@@ -135,8 +135,13 @@ async function analyzeImage({ imageUrls, catalog, model }) {
         // json_object and retry once before giving up.
         if (res.status === 400 && useSchema) {
           useSchema = false;
-          logger.warn({ model, detail: errText.slice(0, 200) }, 'ZappyLens json_schema rejected — retrying as json_object');
+          logger.warn({ model, detail: errText.slice(0, 200) }, 'ZappyLens json_schema rejected - retrying as json_object');
           continue;
+        }
+        // Out of credits or key refused: the customer is told plainly and ops see why; nothing else breaks.
+        if (res.status === 402 || res.status === 401 || res.status === 403) {
+          logger.error({ model, status: res.status, detail: errText.slice(0, 200) }, 'ZappyLens unavailable: OpenRouter refused the key or has no credits');
+          throw Object.assign(new Error('ZappyLens is taking a short break. Pick your service from the list instead.'), { status: 503, code: 'LENS_UNAVAILABLE' });
         }
         throw Object.assign(new Error(`OpenRouter error ${res.status}`), { status: 502, code: 'LENS_UPSTREAM', detail: errText.slice(0, 300) });
       }

@@ -30,7 +30,7 @@ async function seedEventCategories() {
     }
     logger.info({ count: DEFAULT_CATEGORIES.length }, '[SEED] Event categories seeded');
   } catch (err) {
-    logger.warn({ err: err.message }, '[SEED] Event category seed failed — non-fatal');
+    logger.warn({ err: err.message }, '[SEED] Event category seed failed - non-fatal');
   }
 }
 

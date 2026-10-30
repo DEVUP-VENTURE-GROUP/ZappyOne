@@ -24,7 +24,7 @@ function makeLimiter({ windowMs, max, prefix, skipFailedRequests = false, skipSu
     },
     handler: (req, res) => {
       res.status(429).json({
-        error: 'Too many requests — please slow down',
+        error: 'Too many requests - please slow down',
         retryAfterMs: Math.ceil(req.rateLimit.resetTime - Date.now()),
       });
     },

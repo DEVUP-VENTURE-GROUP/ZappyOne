@@ -94,7 +94,7 @@ async function apply({
     if (err.code === 11000) {
       // Already applied. Return the existing one.
       const existing = await Transaction.findOne({ idempotencyKey });
-      logger.info({ idempotencyKey }, 'Wallet apply skipped — already processed');
+      logger.info({ idempotencyKey }, 'Wallet apply skipped - already processed');
       return { transaction: existing, wallet: await getOrCreate({ kind, id }), deduped: true };
     }
     throw err;
@@ -151,7 +151,7 @@ async function apply({
       ? (kind === 'worker'
           ? 'Not enough balance in the wallet for this.'
           : 'Insufficient funds or wallet frozen')
-      : 'Wallet credit failed — wallet document could not be created';
+      : 'Wallet credit failed - wallet document could not be created';
     throw Object.assign(new Error(msg), {
       status: 400,
       code: type === 'debit'
@@ -208,7 +208,7 @@ async function reconcile({ kind, id }) {
 
   logger.warn(
     { kind, id, denorm: w.balancePaise, ledger: trueBalance },
-    'Wallet balance mismatch — reconciling'
+    'Wallet balance mismatch - reconciling'
   );
   w.balancePaise = trueBalance;
   await w.save();

@@ -153,6 +153,8 @@ beforeAll(async () => {
   const other = await User.create({ phone: '9812300002', name: 'Someone Else' });
   const shop = await Shop.create({
     businessName: 'Sri Balaji Mobiles', ownerName: 'Venkat', phone: '9812300010',
+    // A complete business profile: a service is verified only after one (onboarding/profile-check).
+    email: 'owner@example.com', coverImageUrl: 'shop/cover.jpg', bio: 'Repairing phones and laptops in this area for many years.', yearsActive: 6, hours: [0, 1, 2, 3, 4, 5, 6].map((day) => ({ day, opensAt: '00:00', closesAt: '23:59' })),
     address: { text: 'Shop 4, Ameerpet', location: { type: 'Point', coordinates: [HYD.lng, HYD.lat] } },
   });
   const tech = await Worker.create({

@@ -253,7 +253,8 @@ router.put('/fees/:line/:key',
     platformFeePaise: Joi.number().integer().min(0).max(100000),
     commissionPct: Joi.number().min(0).max(100),
     taxPct: Joi.number().min(0).max(40),
-  }).or('platformFeePaise', 'commissionPct', 'taxPct')),
+    redoGuaranteeDays: Joi.number().integer().min(0).max(365),
+  }).or('platformFeePaise', 'commissionPct', 'taxPct', 'redoGuaranteeDays')),
   async (req, res, next) => {
     try {
       const { line, key } = req.params;
@@ -333,7 +334,7 @@ router.get('/economics/partner-commission', async (req, res, next) => {
 });
 
 router.put('/economics/partner-commission',
-  validate(Joi.object(Object.fromEntries(['shop', 'agency', 'company', 'individual'].map((k) => [k, Joi.number().min(0).max(50)]))).min(1)),
+  validate(Joi.object({ ...Object.fromEntries(['shop', 'agency', 'company', 'individual', 'ownLinkPct'].map((k) => [k, Joi.number().min(0).max(50)])), ownLinkMonths: Joi.number().integer().min(0).max(36) }).min(1)),
   async (req, res, next) => {
     try {
       const cfg = require('../pricing/services/config.service');
@@ -426,10 +427,10 @@ router.get('/dues/shops', async (req, res, next) => {
 });
 
 router.post('/dues/shops/:shopId/payment',
-  validate(Joi.object({ amountRupees: Joi.number().positive().max(10000000).required(), reference: Joi.string().trim().min(3).max(80).required() })),
+  validate(Joi.object({ amountRupees: Joi.number().positive().max(10000000), reference: Joi.string().trim().min(3).max(80), claimId: Joi.string().hex().length(24) }).or('claimId', 'reference')),
   async (req, res, next) => {
     try {
-      const dues = await require('../shop/shop-dues').recordPayment({ shopId: req.params.shopId, amountPaise: Math.round(req.body.amountRupees * 100), reference: req.body.reference, adminId: req.auth.sub });
+      const dues = await require('../shop/shop-dues').recordPayment({ shopId: req.params.shopId, amountPaise: req.body.amountRupees ? Math.round(req.body.amountRupees * 100) : 0, reference: req.body.reference, claimId: req.body.claimId || null, adminId: req.auth.sub });
       await auditService.fromRequest(req, 'shop_dues.payment', { kind: 'shop', id: req.params.shopId }, null, { amountRupees: req.body.amountRupees, reference: req.body.reference });
       res.json({ dues });
     } catch (err) { next(err); }
@@ -463,7 +464,7 @@ router.post('/dues/claims/:id/reject',
   async (req, res, next) => {
     try {
       const claim = await require('../worker/worker-dues.service').rejectClaim({ claimId: req.params.id, adminId: req.auth.sub, note: req.body.note || '' });
-      await auditService.fromRequest(req, 'dues.claim_rejected', { kind: 'worker', id: String(claim.workerId) }, null, { claimId: req.params.id });
+      await auditService.fromRequest(req, 'dues.claim_rejected', claim.shopId ? { kind: 'shop', id: String(claim.shopId) } : { kind: 'worker', id: String(claim.workerId) }, null, { claimId: req.params.id });
       res.json({ claim });
     } catch (err) { next(err); }
   });

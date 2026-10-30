@@ -61,7 +61,7 @@ async function getAdsByPlacement({ placement, city, categoryId, keywords, userId
 
     return scored.slice(0, limit);
   } catch (err) {
-    logger.warn({ err: err.message, placement }, '[ADS] serveAds failed — returning empty');
+    logger.warn({ err: err.message, placement }, '[ADS] serveAds failed - returning empty');
     return [];
   }
 }
@@ -186,7 +186,7 @@ async function _chargeWallet(advertiserId, adId, costPaise) {
     await Ad.updateOne({ _id: adId }, { $set: { status: 'exhausted' } });
     // Bust cache
     await redis.keys('ads:p:*').then(keys => keys.length && redis.del(...keys)).catch(() => {});
-    logger.info({ advertiserId, adId }, '[ADS] Campaign exhausted — insufficient credits');
+    logger.info({ advertiserId, adId }, '[ADS] Campaign exhausted - insufficient credits');
     return;
   }
 

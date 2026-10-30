@@ -93,6 +93,8 @@ async function announce(kind, doc, status) {
   toRoom(id, 'job.status', payload);
   // The arrival promise: set on accept, kept on arrival, closed on hand-back or end (jobs/promise).
   require('./promise').onStatus(kind, doc, status).catch(() => {});
+  // Time inside the customer's home, for the safety check (jobs/safety-check).
+  require('./safety-check').onStatus(kind, doc, status).catch(() => {});
   // Personal channels too, so lists and home cards update without the job open.
   // `accepted` lets the customer's screen ring the moment a pro takes it.
   toProvider('user', doc.userId, 'job.update', accepted ? { ...payload, accepted: true } : payload);
@@ -165,6 +167,7 @@ async function alertNearbyProviders(kind, doc, { offlineOnly = false, round = 0 
     const start = k.open.start(doc);
     // Not back to whoever already passed on it or handed it back (jobs/give-back).
     const passed = new Set([...(doc.declinedBy || []), ...(doc.releasedBy || [])].map(String));
+    for (const id of await require('./customer-block').blockersOf(doc.userId)) passed.add(id);
     let providers = (await approvedProviders(line)).filter((p) => !passed.has(String(p.id)));
     // Staff on duty are rung one at a time, fairest first (jobs/fast-assign), not all at once.
     if (!offlineOnly && !require('./work-hours').isLater(doc.scheduledAt || doc.checkInAt)) {

@@ -135,7 +135,7 @@ async function main() {
 
   for (const [name, r] of Object.entries(results)) {
     console.log(`[model-seed] ${name.padEnd(15)} created ${String(r.created).padStart(3)} / ${r.total}`);
-    if (r.orphaned) console.warn(`[model-seed]   ! ${r.orphaned} skipped — brand not in the catalog`);
+    if (r.orphaned) console.warn(`[model-seed]   ! ${r.orphaned} skipped - brand not in the catalog`);
   }
 
   console.log('\n[model-seed] final state:');

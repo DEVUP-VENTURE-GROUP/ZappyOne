@@ -22,7 +22,7 @@ const PAYABLES = {
     payable(b) {
       // A diagnosis-first repair is not charged its estimate before a real quote is approved.
       if (b.priceSnapshot?.isEstimate && b.status !== 'APPROVED') {
-        throw fail('This repair is priced after diagnosis — approve the quote before paying.', 409, 'QUOTE_APPROVAL_REQUIRED');
+        throw fail('This repair is priced after diagnosis - approve the quote before paying.', 409, 'QUOTE_APPROVAL_REQUIRED');
       }
       // An earlier cancellation fee riding on the booking is paid with it (jobs/cancel-fee).
       return { amountPaise: (b.priceSnapshot?.totalPaise || 0) + require('../jobs/cancel-fee').carriedPaise(b) + require('../jobs/boost-tip').boostPaise(b)
@@ -72,9 +72,9 @@ async function resolvePayable({ source, bookingId, userId }) {
   return { booking, amountPaise, breakdown };
 }
 
-/** Online payment needs live Cashfree credentials; everything else settles in cash. */
+/** Online payment needs a gateway with keys (Cashfree first, else Razorpay: payment/gateway); everything else settles in cash. */
 function gatewayReady() {
-  return Boolean(config.cashfree.appId && config.cashfree.secretKey);
+  return Boolean(require('./gateway').active());
 }
 
 /**
@@ -83,7 +83,7 @@ function gatewayReady() {
  */
 function assertOnlineAvailable(paymentMethod) {
   if (paymentMethod === 'online' && !gatewayReady()) {
-    throw fail('Online payment is not available right now — choose cash and pay after the service.', 400, 'ONLINE_PAYMENTS_DISABLED');
+    throw fail('Online payment is not available right now - choose cash and pay after the service.', 400, 'ONLINE_PAYMENTS_DISABLED');
   }
 }
 

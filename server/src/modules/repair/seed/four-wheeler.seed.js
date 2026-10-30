@@ -155,7 +155,7 @@ const PROBLEMS = [
   P('fw_key_locked', 'Key locked inside or lost', 'fw_roadside', ['fw_lock_service'], { severity: 'high' }),
   P('fw_overheating_roadside', 'Overheating on the road', 'fw_roadside',
     ['fw_coolant_service', 'fw_towing'], { severity: 'high', appliesToFuelTypes: ICE }),
-  P('fw_breakdown', 'Broken down — cannot drive', 'fw_roadside',
+  P('fw_breakdown', 'Broken down - cannot drive', 'fw_roadside',
     ['fw_roadside_minor_repair', 'fw_towing'], { severity: 'high', requiresDiagnosis: true }),
   P('fw_ev_out_of_charge', 'Out of charge', 'fw_roadside',
     ['fw_towing', 'fw_ev_charge_assist'], { severity: 'high', appliesToFuelTypes: BEV }),

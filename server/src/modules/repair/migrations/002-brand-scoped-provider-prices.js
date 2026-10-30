@@ -66,7 +66,7 @@ async function up() {
   const { ProviderPricing } = require('../models/pricing.model');
   await ProviderPricing.syncIndexes();
 
-  console.log(`[migrate-002] done — ${dropped} dropped, brand-scoped indexes built`);
+  console.log(`[migrate-002] done - ${dropped} dropped, brand-scoped indexes built`);
   await mongoose.disconnect();
   return { dropped };
 }

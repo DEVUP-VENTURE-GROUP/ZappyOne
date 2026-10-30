@@ -58,7 +58,11 @@
   },
   "jest": {
     "testEnvironment": "node",
-    "setupFilesAfterEach": [
+    "setupFiles": [
+      "<rootDir>/tests/no-live-keys.js",
+      "<rootDir>/tests/mock-redis.js"
+    ],
+    "setupFilesAfterEnv": [
       "<rootDir>/tests/teardown.js"
     ],
     "testMatch": [

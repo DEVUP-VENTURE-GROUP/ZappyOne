@@ -55,7 +55,7 @@ const FLOWS = [
         options: [
           {
             id: 'external_fine',
-            label: 'External monitor is perfect — only the laptop screen is faulty',
+            label: 'External monitor is perfect - only the laptop screen is faulty',
             // Panel side: could be panel, its cable, or the hinge chafing it.
             urgency: 'normal',
           },
@@ -82,7 +82,7 @@ const FLOWS = [
             recommendedServiceCode: 'lt_display_cable_repair',
             tools: ['spudger', 'torx_set'],
             urgency: 'high',
-            priceHint: 'Often a cable repair rather than a full screen — considerably cheaper.',
+            priceHint: 'Often a cable repair rather than a full screen - considerably cheaper.',
           },
           {
             id: 'no',
@@ -104,7 +104,7 @@ const FLOWS = [
             // means the customer is back in a month.
             recommendedServiceCode: 'lt_hinge_repair',
             urgency: 'high',
-            priceHint: 'The hinge is likely damaging the cable — both usually need attention.',
+            priceHint: 'The hinge is likely damaging the cable - both usually need attention.',
           },
           { id: 'no', label: 'No, the hinge seems fine', recommendedServiceCode: 'lt_display_cable_repair' },
         ],
@@ -121,7 +121,7 @@ const FLOWS = [
             // Cheapest plausible cause, so it is offered before hardware work.
             recommendedServiceCode: 'lt_driver_installation',
             urgency: 'normal',
-            priceHint: 'Likely a driver issue — usually fixable without any parts.',
+            priceHint: 'Likely a driver issue - usually fixable without any parts.',
           },
           {
             id: 'no',
@@ -228,13 +228,13 @@ const FLOWS = [
         options: [
           {
             id: 'works',
-            label: 'Yes — it works with another charger',
+            label: 'Yes - it works with another charger',
             recommendedServiceCode: 'lt_adapter_replacement',
-            priceHint: 'Just the adapter — no internal repair needed.',
+            priceHint: 'Just the adapter - no internal repair needed.',
           },
           {
             id: 'still_dead',
-            label: 'Yes — still nothing',
+            label: 'Yes - still nothing',
             urgency: 'urgent',
           },
           { id: 'not_tried', label: "I haven't tried another charger", urgency: 'high' },
@@ -355,7 +355,7 @@ const FLOWS = [
       {
         id: 'storage_type',
         text: 'Does your laptop have a hard disk (HDD) or an SSD?',
-        subtitle: "If you're not sure, choose \"I don't know\" — a technician will check.",
+        subtitle: "If you're not sure, choose \"I don't know\" - a technician will check.",
         type: 'single',
         options: [
           {
@@ -385,7 +385,7 @@ const FLOWS = [
             label: 'After a while, or when doing heavy work',
             // Getting slower as it warms up is thermal, not software.
             recommendedServiceCode: 'lt_thermal_service',
-            priceHint: 'Sounds like heat — cleaning and fresh thermal paste usually restores speed.',
+            priceHint: 'Sounds like heat - cleaning and fresh thermal paste usually restores speed.',
           },
           {
             id: 'many_apps',
@@ -418,7 +418,7 @@ const FLOWS = [
             urgency: 'high',
           },
           { id: 'freezes', label: 'Freezes but no blue screen', recommendedServiceCode: 'lt_os_repair' },
-          { id: 'no', label: 'Neither — just slow' },
+          { id: 'no', label: 'Neither - just slow' },
         ],
       },
     ],

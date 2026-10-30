@@ -50,6 +50,7 @@ async function createAdvanceOrder(req, res, next) {
     const cfOrderId = `zpy_evt_adv_${String(booking._id).slice(-10)}_${crypto.randomBytes(3).toString('hex')}`;
     const customer  = await resolveUserContact(req.auth.sub);
 
+    require('../payment/gateway').assertCashfree();
     const cfOrder = await cashfree.createOrder({
       orderId:     cfOrderId,
       amountPaise: booking.pricing.advancePaise,
@@ -118,7 +119,7 @@ async function verifyAdvancePayment(req, res, next) {
       ),
     ]);
 
-    logger.info({ bookingId: booking._id, cfPaymentId }, '[EVENT_PAYMENT] Advance paid — booking confirmed');
+    logger.info({ bookingId: booking._id, cfPaymentId }, '[EVENT_PAYMENT] Advance paid - booking confirmed');
     require('../jobs/job-events').announce('event', { ...booking, status: 'confirmed' }, 'confirmed').catch(() => {});
 
     // Schedule 24h reminder notification
@@ -178,6 +179,7 @@ async function createRemainingOrder(req, res, next) {
     const cfOrderId = `zpy_evt_rem_${String(booking._id).slice(-10)}_${crypto.randomBytes(3).toString('hex')}`;
     const customer  = await resolveUserContact(req.auth.sub);
 
+    require('../payment/gateway').assertCashfree();
     const cfOrder = await cashfree.createOrder({
       orderId:     cfOrderId,
       amountPaise: booking.pricing.remainingPaise,

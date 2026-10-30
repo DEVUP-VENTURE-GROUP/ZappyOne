@@ -26,6 +26,7 @@ async function transition(bookingId, next, { actorRole, actorId, reason = '', me
   // A worker at their dues limit takes no new job (worker-dues); one under way finishes.
   if (next === 'WORKER_ACCEPTED' && actorRole === 'worker') {
     await require('../../../worker/worker-dues.service').assertCanWork(actorId);
+    await require('../../../jobs/assignment').assertCheckedIn(actorId);
     await require('../../../worker/presence').markLive(actorId).catch(() => {});
   }
 
@@ -259,7 +260,7 @@ async function assertQAPassed(booking) {
     return {
       ok: false,
       code: 'QA_FAILED',
-      message: `${qa.failedRequiredCount} required QA check(s) failed — resolve them before completing`,
+      message: `${qa.failedRequiredCount} required QA check(s) failed - resolve them before completing`,
     };
   }
   return { ok: true };

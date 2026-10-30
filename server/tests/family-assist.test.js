@@ -33,6 +33,8 @@ beforeAll(async () => {
   partner = await Worker.create({ name: 'Sita', phone: '9000000002' });
   await launch();
   pricingService.invalidateConfigCache();
+  // Own staff are locked for version 1; these tests cover the version 2 behaviour.
+  await require('../src/modules/feature-flags/feature-flag.service').set('own_staff', true, null);
 });
 afterAll(stopMongo);
 

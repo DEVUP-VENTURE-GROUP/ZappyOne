@@ -21,7 +21,7 @@ async function processPaymentsJob(job) {
   const { name, data } = job;
 
   if (name === 'refund') return handleRefund(data);
-  logger.warn({ name }, '[PAYMENTS] Unknown job name — skipping');
+  logger.warn({ name }, '[PAYMENTS] Unknown job name - skipping');
   return { skipped: true };
 }
 
@@ -30,20 +30,20 @@ async function handleRefund({ orderId, userId, amountPaise, reason }) {
 
   const order = await Order.findById(orderId).lean();
   if (!order) {
-    logger.warn({ orderId }, '[PAYMENTS] Order not found — skipping refund');
+    logger.warn({ orderId }, '[PAYMENTS] Order not found - skipping refund');
     return { skipped: true, reason: 'order_not_found' };
   }
 
   // Idempotency: skip if already refunded
   if (order.payment?.status === 'refunded') {
-    logger.info({ orderId }, '[PAYMENTS] Already refunded — skipping');
+    logger.info({ orderId }, '[PAYMENTS] Already refunded - skipping');
     return { skipped: true, reason: 'already_refunded' };
   }
 
   // Cash orders: no gateway refund needed, just mark + notify
   if (order.payment?.method === 'cash' || !order.payment?.transactionId) {
     await Order.findByIdAndUpdate(orderId, { $set: { 'payment.status': 'refunded' } });
-    logger.info({ orderId }, '[PAYMENTS] Cash/unpaid order — marked refunded, no gateway call needed');
+    logger.info({ orderId }, '[PAYMENTS] Cash/unpaid order - marked refunded, no gateway call needed');
     return { ok: true, method: 'cash_no_gateway' };
   }
 
@@ -52,7 +52,7 @@ async function handleRefund({ orderId, userId, amountPaise, reason }) {
   const paymentService = require('../modules/payment/payment.service');
   const result = await paymentService.refundOrderPayment({ orderId: order._id, amountPaise, reason: reason || 'order_failed' });
   if (!result.refunded) {
-    logger.error({ orderId, reason: result.reason }, '[PAYMENTS] Refund not sent — flagged for ops');
+    logger.error({ orderId, reason: result.reason }, '[PAYMENTS] Refund not sent - flagged for ops');
     await Order.findByIdAndUpdate(orderId, { $set: { 'payment.reconciliationRequired': true } });
     return { ok: false, reason: result.reason };
   }
@@ -88,7 +88,7 @@ async function start() {
   worker.on('completed', (job, result) => logger.info({ jobId: job.id, name: job.name, result }, '[PAYMENTS] Job completed'));
   worker.on('failed', (job, err) => logger.error({ jobId: job?.id, name: job?.name, err: err.message }, '[PAYMENTS] Job failed'));
 
-  logger.info('[PAYMENTS] Worker started — handling refunds and settlements');
+  logger.info('[PAYMENTS] Worker started - handling refunds and settlements');
 }
 
 start().catch((err) => { logger.error({ err }, '[PAYMENTS] Fatal startup error'); process.exit(1); });

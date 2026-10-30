@@ -25,7 +25,7 @@ async function getActiveConfig() {
       _localCache = { data: parsed, at: now };
       return parsed;
     }
-  } catch { /* Redis unavailable or bad JSON — fall through to DB/env */ }
+  } catch { /* Redis unavailable or bad JSON - fall through to DB/env */ }
 
   let view;
   try {
@@ -63,7 +63,7 @@ const WORKFORCE_DEFAULTS = {
 };
 
 // Percent taken from a partner's service money, by who holds the job; Economics → Partner commission.
-const PARTNER_COMMISSION_DEFAULTS = { shop: 5, agency: 5, company: 5, individual: 5 };
+const PARTNER_COMMISSION_DEFAULTS = { shop: 5, agency: 5, company: 5, individual: 5, ownLinkPct: 0, ownLinkMonths: 6 };
 
 const FAST_ASSIGN_DEFAULTS = {
   enabled: true,

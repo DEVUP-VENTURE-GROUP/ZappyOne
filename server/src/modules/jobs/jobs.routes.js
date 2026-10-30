@@ -201,6 +201,7 @@ router.get('/:id/options',
         reschedule: terminal ? { allowed: false } : await require('./reschedule').view(kind, doc),
         arrival: await require('./promise').viewFor(doc._id),
         search: await require('./fast-assign').searchView(kind, doc),
+        moreTime: terminal ? null : await require('./more-time').viewFor(doc._id),
         ...(terminal ? {} : await require('./give-back').customerView(kind, doc)),
       });
     } catch (err) { next(err); }
@@ -344,6 +345,43 @@ router.post('/:id/provider-absent',
     } catch (err) { next(err); }
   });
 
+/** "Never send me this customer again", from a job the worker did (jobs/customer-block). */
+router.post('/:id/block-customer',
+  authenticate, requireRole('worker'),
+  makeLimiter({ windowMs: 60_000, max: 5, prefix: 'jobblockcust' }),
+  validate(Joi.object({ reason: Joi.string().trim().max(300).allow('') })),
+  async (req, res, next) => {
+    try {
+      const { kind, doc } = await jobFor(req, 'workerId userId');
+      res.json(await require('./customer-block').blockFromJob({ kind, doc, workerId: req.auth.sub, reason: req.body.reason || '' }));
+    } catch (err) { next(err); }
+  });
+
+/** The job needs longer than planned: the customer is told the new finish time (jobs/more-time). */
+router.post('/:id/more-time',
+  authenticate, requireRole('worker', 'shop'),
+  makeLimiter({ windowMs: 60_000, max: 5, prefix: 'jobmoretime' }),
+  validate(Joi.object({ minutes: Joi.number().integer().valid(15, 30, 60, 120).required(), reason: Joi.string().max(40).required(), note: Joi.string().trim().max(200).allow('') })),
+  async (req, res, next) => {
+    try {
+      const { kind } = await jobFor(req, '_id');
+      res.json(await require('./more-time').ask({ kind, id: req.params.id, actor: actorOf(req), minutes: req.body.minutes, reason: req.body.reason, note: req.body.note || '' }));
+    } catch (err) { next(err); }
+  });
+
+/** "I'm safe": the provider answers the safety check on a long in-home job (jobs/safety-check). */
+router.post('/:id/safe',
+  authenticate, requireRole('worker', 'shop'),
+  makeLimiter({ windowMs: 60_000, max: 10, prefix: 'jobsafe' }),
+  async (req, res, next) => {
+    try {
+      const { doc } = await jobFor(req, 'workerId shopId');
+      const mine = req.auth.role === 'worker' ? String(doc.workerId || '') === String(req.auth.sub) : String(doc.shopId || '') === String(req.auth.sub);
+      if (!mine) return res.status(403).json({ error: 'This job is not yours' });
+      res.json(await require('./safety-check').confirmSafe(doc._id));
+    } catch (err) { next(err); }
+  });
+
 /** The provider's side: may they hand it back, what it costs, and the door wait. */
 router.get('/:id/give-back',
   authenticate, requireRole('worker', 'shop'),
@@ -353,9 +391,11 @@ router.get('/:id/give-back',
       const gb = require('./give-back');
       const doc = await require('./kinds').KINDS[kind].model().findById(req.params.id).lean();
       const actor = actorOf(req);
-      const view = await gb.providerView(kind, doc);
+      const mt = require('./more-time');
+      const [view, safety, moreTime] = await Promise.all([gb.providerView(kind, doc), require('./safety-check').viewFor(doc._id), mt.viewFor(doc._id)]);
       const quote = view.canGiveBack ? await gb.preview({ kind, id: req.params.id, actor, reason: req.query.reason || 'other' }) : null;
-      res.json({ kind, ...view, quote });
+      const canAskMore = mt.canAsk(kind, doc.status) && (moreTime?.left ?? mt.MAX_PER_JOB) > 0;
+      res.json({ kind, ...view, quote, safety, moreTime: { ...(moreTime || {}), canAsk: canAskMore, minutes: mt.MINUTES, reasons: mt.REASONS } });
     } catch (err) { next(err); }
   });
 
@@ -367,6 +407,17 @@ router.post('/:id/give-back',
     try {
       const { kind } = await jobFor(req, '_id');
       res.json(await require('./give-back').giveBack({ kind, id: req.params.id, actor: actorOf(req), reason: req.body.reason, note: req.body.note || '' }));
+    } catch (err) { next(err); }
+  });
+
+router.post('/:id/cash-refused',
+  authenticate, requireRole('worker', 'shop'),
+  makeLimiter({ windowMs: 60_000, max: 10, prefix: 'jobcashrefused' }),
+  validate(Joi.object({ note: Joi.string().trim().max(300).allow('') })),
+  async (req, res, next) => {
+    try {
+      const { kind } = await jobFor(req, '_id');
+      res.json(await require('./give-back').reportCashRefused({ kind, id: req.params.id, actor: actorOf(req), note: req.body.note || '' }));
     } catch (err) { next(err); }
   });
 

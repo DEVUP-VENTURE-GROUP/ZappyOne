@@ -1,7 +1,6 @@
 const walletService = require('./wallet.service');
 const paymentService = require('../payment/payment.service');
 const duesService = require('../worker/worker-dues.service');
-const config = require('../../config');
 
 async function getBalance(req, res, next) {
   try {
@@ -49,14 +48,7 @@ async function topup(req, res, next) {
       amountPaise: req.body.amountPaise,
       returnUrl: req.body.returnUrl,
     });
-    res.status(201).json({
-      paymentIntentId:  result.paymentIntent._id,
-      cfOrderId:        result.cfOrder.order_id,
-      paymentSessionId: result.cfOrder.payment_session_id,
-      amountPaise:      result.paymentIntent.amountPaise,
-      currency:         'INR',
-      cashfreeEnv:      config.cashfree.env,
-    });
+    res.status(201).json(require('../payment/payment.controller').checkoutBody(result));
   } catch (err) { next(err); }
 }
 

@@ -20,7 +20,7 @@ async function processTeamSlot(order, job) {
 
   const fresh = await Order.findById(orderId).select('status workerIds teamSize').lean();
   if (!fresh || fresh.status !== 'assigned') {
-    logger.info({ orderId, slotIndex }, '[TEAM] Order no longer assigned — dropping slot');
+    logger.info({ orderId, slotIndex }, '[TEAM] Order no longer assigned - dropping slot');
     return { ok: false, reason: 'order_not_assigned' };
   }
   if ((fresh.workerIds?.length || 0) >= teamSize) {
@@ -48,7 +48,7 @@ async function processTeamSlot(order, job) {
             recipient: { kind: 'worker', id: workerId },
             type: 'job_assigned',
             title: 'Team job assigned to you',
-            body: `${order.service.replace(/_/g, ' ')} — ₹${Math.round(order.pricing.total / teamSize)} (your share). Join the team at the pickup.`,
+            body: `${order.service.replace(/_/g, ' ')} - ₹${Math.round(order.pricing.total / teamSize)} (your share). Join the team at the pickup.`,
             deepLink: `/worker/jobs/${orderId}`,
             data: { orderId, isTeamJob: 'true', slotIndex: String(slotIndex) },
           }).catch(() => {});
@@ -61,7 +61,7 @@ async function processTeamSlot(order, job) {
 
   // No worker found — retry up to 2 times with 90s delay
   if (retryCount < 2) {
-    logger.warn({ orderId, slotIndex, retryCount }, '[TEAM] No worker found — retrying slot');
+    logger.warn({ orderId, slotIndex, retryCount }, '[TEAM] No worker found - retrying slot');
     await dispatchQueue.add('dispatch', { ...job.data, attempt: retryCount + 1 }, { delay: 90_000 });
     return { ok: false, reason: 'retrying' };
   }

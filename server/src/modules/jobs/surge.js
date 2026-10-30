@@ -526,7 +526,7 @@ async function settleSurge(kind, bookingId) {
     } else if (doc.shopId) {
       await Transaction.create({
         type: 'credit', owner: { kind: 'platform', id: null }, amountPaise: providerPaise, reason: Transaction.REASONS.WORKER_EARNING,
-        idempotencyKey: `surge:shop:${kind}:${doc._id}`, description: `Shop earning (surge) — ${kind} ${ref}`,
+        idempotencyKey: `surge:shop:${kind}:${doc._id}`, description: `Shop earning (surge) - ${kind} ${ref}`,
         metadata: { shopId: String(doc.shopId), bookingId: String(doc._id) }, status: 'succeeded',
       }).catch(ignoreDup);
     }
@@ -535,7 +535,7 @@ async function settleSurge(kind, bookingId) {
   if (platformPaise > 0) {
     await Transaction.create({
       type: 'credit', owner: { kind: 'platform', id: null }, amountPaise: platformPaise, reason: Transaction.REASONS.SURGE_REVENUE,
-      idempotencyKey: `surge:platform:${kind}:${doc._id}`, description: `Surge revenue — ${kind} ${ref}`,
+      idempotencyKey: `surge:platform:${kind}:${doc._id}`, description: `Surge revenue - ${kind} ${ref}`,
       metadata: { source: kind, bookingId: String(doc._id), lines: doc.surge.lines.map((l) => l.type), ...(cash ? { cash: true } : {}) }, status: 'succeeded',
     }).catch(ignoreDup);
   }
@@ -568,7 +568,7 @@ async function releaseHeld(kind, bookingId) {
   } else if (doc.shopId) {
     await Transaction.create({
       type: 'credit', owner: { kind: 'platform', id: null }, amountPaise: providerPaise, reason: Transaction.REASONS.WORKER_EARNING,
-      idempotencyKey: `surge:release:${kind}:${doc._id}`, description: `Shop earning (surge, released after review) — ${kind} ${ref}`,
+      idempotencyKey: `surge:release:${kind}:${doc._id}`, description: `Shop earning (surge, released after review) - ${kind} ${ref}`,
       metadata: { shopId: String(doc.shopId), bookingId: String(doc._id) }, status: 'succeeded',
     }).catch((e) => { if (e.code !== 11000) throw e; });
   }

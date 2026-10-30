@@ -137,6 +137,7 @@ async function createTopUpOrder(req, res, next) {
 
     const cfOrderId = `zpy_adwlt_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
 
+    require('../payment/gateway').assertCashfree();
     const cfOrder = await cashfree.createOrder({
       orderId:     cfOrderId,
       amountPaise,

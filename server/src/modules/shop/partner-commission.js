@@ -21,6 +21,10 @@ async function rateOf({ kind, id }) {
 
 async function pctFor(doc) {
   if (!doc?.shopId && !doc?.workerId) return null;
+  if (doc.viaOwnLink) {
+    const own = await require('./share-link').ownLinkPct(doc.shopId ? { kind: 'shop', id: doc.shopId } : { kind: 'worker', id: doc.workerId });
+    if (own != null) return own;
+  }
   return (await rateOf(doc.shopId ? { kind: 'shop', id: doc.shopId } : { kind: 'worker', id: doc.workerId }))?.pct ?? null;
 }
 
