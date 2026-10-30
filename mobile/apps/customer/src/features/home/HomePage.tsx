@@ -180,12 +180,6 @@ export function HomePage() {
         ) : (
           <>
             {svc?.status === 'closed_now' ? <ClosedNowBanner nextOpening={svc.nextOpening} /> : null}
-            {svc?.prosNearby > 0 ? (
-              <View accessibilityRole="text" style={styles.live}>
-                <View style={styles.liveDot} />
-                <Text variant="bodySmall" weight="semibold" color={ink[700]} style={styles.flexText}>{svc.prosNearby} verified {svc.prosNearby === 1 ? 'pro is' : 'pros are'} open near {loc.primary || 'you'} right now</Text>
-              </View>
-            ) : null}
             {nothingLive ? (
               <NotInYourArea soon place={loc.primary} lat={loc.lat ?? undefined} lng={loc.lng ?? undefined} address={[loc.primary, loc.secondary].filter(Boolean).join(', ')}
                 areas={svc?.areas || []} onChangeLocation={() => setLocSheet(true)} />
@@ -214,9 +208,6 @@ export function HomePage() {
 }
 
 const styles = StyleSheet.create({
-  flexText: { flex: 1, minWidth: 0 },
-  live: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  liveDot: { width: 9, height: 9, borderRadius: 5, backgroundColor: zappy[600] },
   page: { flex: 1, backgroundColor: colors.background },
   searchWrap: { paddingHorizontal: spacing.base, paddingBottom: spacing.base, paddingTop: 4, backgroundColor: zappy[100], borderBottomLeftRadius: radius.extraLarge, borderBottomRightRadius: radius.extraLarge },
   // Edge to edge, flush under the search: undoes the body's padding.

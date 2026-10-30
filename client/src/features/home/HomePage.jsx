@@ -316,17 +316,6 @@ export default function HomePage() {
           ) : (
             <>
               {svc?.status === 'closed_now' && <ClosedNowBanner nextOpening={svc.nextOpening} />}
-              {svc?.prosNearby > 0 && (
-                <div role="status" className="flex items-center gap-3">
-                  <span className="relative flex h-2.5 w-2.5 shrink-0">
-                    <span className="absolute inline-flex h-full w-full rounded-full bg-zappy-600 opacity-60 motion-safe:animate-ping" />
-                    <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-zappy-600" />
-                  </span>
-                  <p className="min-w-0 text-[13px] font-semibold leading-tight text-ink-700">
-                    {svc.prosNearby} verified {svc.prosNearby === 1 ? 'pro is' : 'pros are'} open near {loc.primary || 'you'} right now
-                  </p>
-                </div>
-              )}
               {nothingLive && (
                 <NotInYourArea soon place={loc.primary} lat={loc.lat} lng={loc.lng}
                   address={[loc.primary, loc.secondary].filter(Boolean).join(', ')} areas={svc?.areas || []} onChangeLocation={() => setLocSheet(true)} />
