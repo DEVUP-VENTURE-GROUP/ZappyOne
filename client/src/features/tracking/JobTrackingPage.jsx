@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import {
-  BadgeIndianRupee, Clock, HeadphonesIcon, Loader2, Navigation, Repeat2, ShieldAlert, ShieldCheck, UserPlus, UserX, X,
+  BadgeIndianRupee, Clock, HeadphonesIcon, Loader2, Navigation, Repeat2, ShieldAlert, ShieldCheck, MailPlus, UserPlus, UserX, X,
 } from 'lucide-react';
 import LiveTrackingMap from '@shared/modules/tracking/LiveTrackingMap';
 import { useTrackingFeed } from '@shared/hooks/useLiveTrip';
@@ -21,7 +21,7 @@ import SlowSearchCard from './cards/SlowSearchCard';
 import JobTipCard from './cards/JobTipCard';
 import RepeatCard from './cards/RepeatCard';
 import JobChat from '@shared/components/jobs/JobChat';
-import { useJobOptionsQuery, useReportProviderAbsentMutation, useShareJobMutation } from '@shared/services/api';
+import { useAccountMeQuery, useJobOptionsQuery, useReportProviderAbsentMutation, useShareJobMutation } from '@shared/services/api';
 import { useSelector } from 'react-redux';
 import { selectAuth } from '@shared/modules/auth/authSlice';
 import { API_BASE } from '@shared/services/apiBase';
@@ -66,6 +66,7 @@ export default function JobTrackingPage({ job, extras = null, startCode = null, 
   const { data: options, isFetching: optionsLoading, refetch: refetchOptions } = useJobOptionsQuery({ id: job.id, status: job.status }, { skip: !optionsOn });
   const [reportAbsent, { isLoading: reportingAbsent }] = useReportProviderAbsentMutation();
   const [shareJob] = useShareJobMutation();
+  const { data: acct } = useAccountMeQuery();
   const cancelQuote = options?.cancel;
   const { accessToken } = useSelector(selectAuth);
 
@@ -190,6 +191,13 @@ export default function JobTrackingPage({ job, extras = null, startCode = null, 
             <WorkerRichCard job={job}
               onCall={job.provider.phone ? () => { window.location.href = `tel:${job.provider.phone}`; } : undefined}
               onChat={job.kind !== 'order' ? () => setChatOpen(true) : undefined} />
+          )}
+
+          {acct && !acct.email && !acct.pendingEmail && (
+            <Section>
+              <Row Icon={MailPlus} title="Add your email for updates and the invoice"
+                right={<button type="button" onClick={() => nav('/account-security')} className="h-9 shrink-0 rounded-lg bg-zappy-600 px-3.5 text-[13px] font-bold text-white">Add now</button>} />
+            </Section>
           )}
 
           {options?.providerAbsent?.open && job.provider && (

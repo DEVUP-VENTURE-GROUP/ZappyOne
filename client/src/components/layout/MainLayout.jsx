@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import BottomNav from './BottomNav';
 import DesktopNav from './DesktopNav';
 import InstallPrompt from '../pwa/InstallPrompt';
+import ActiveJobPill from './ActiveJobPill';
 
 /** Phones: content + bottom bar. Tablet and up: top bar, no bottom bar. */
 export default function MainLayout() {
@@ -19,6 +20,7 @@ export default function MainLayout() {
         </AnimatePresence>
       </main>
       <InstallPrompt />
+      <ActiveJobPill />
       <div className="md:hidden">
         <BottomNav />
       </div>

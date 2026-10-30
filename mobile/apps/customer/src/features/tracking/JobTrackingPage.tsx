@@ -3,11 +3,11 @@
  * the map while someone travels, one headline with the start code, the pro, updates, booking details, the promise and cancel.
  */
 import { useMemo, useState } from 'react';
-import { ScrollView, Share, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BadgeIndianRupee, Clock, Headphones, Repeat2, ShieldCheck, UserPlus, X } from 'lucide-react-native';
-import { useJobOptionsQuery, useShareJobMutation } from '@zappy/core/api';
+import { BadgeIndianRupee, Clock, Headphones, MailPlus, Repeat2, ShieldCheck, UserPlus, X } from 'lucide-react-native';
+import { useAccountMeQuery, useJobOptionsQuery, useShareJobMutation } from '@zappy/core/api';
 import { toast } from '@zappy/ui/components/Toast';
 import { errText } from '@zappy/ui/lib/feedback';
 import { useTrackingFeed } from '@zappy/core/hooks/useTrackingFeed';
@@ -18,7 +18,7 @@ import { JobChat } from '@zappy/ui/components/jobs/JobChat';
 import { callNumber } from '@zappy/ui/lib/openLink';
 import { LiveTrackingMap } from '@zappy/ui/maps/LiveTrackingMap';
 import { mapsAvailable } from '@zappy/ui/lib/maps';
-import { colors, ink, slate } from '@zappy/ui/theme/colors';
+import { colors, ink, slate, zappy } from '@zappy/ui/theme/colors';
 import { spacing } from '@zappy/ui/theme/spacing';
 import { CancelSheet } from './cards/CancelSheet';
 import { JobBoostCard } from './cards/JobBoostCard';
@@ -54,6 +54,7 @@ export function JobTrackingPage({ job, extras = null, startCode = null, codeStag
   const [cancelOpen, setCancelOpen] = useState(false);
   const status = job.status;
   const [shareJob] = useShareJobMutation();
+  const { data: acct } = useAccountMeQuery(undefined);
 
   const optionsOn = ['repair', 'pet', 'helping'].includes(job.kind) && (!job.terminal || status === 'completed');
   const { data: options, isFetching: optionsLoading, refetch: refetchOptions } = useJobOptionsQuery({ id: job.id, status }, { skip: !optionsOn });
@@ -108,6 +109,12 @@ export function JobTrackingPage({ job, extras = null, startCode = null, codeStag
           <WorkerRichCard job={job}
             onCall={job.provider.phone ? () => callNumber(job.provider!.phone!) : undefined}
             onChat={job.kind !== 'order' ? () => setChatOpen(true) : undefined} />
+        ) : null}
+        {acct && !acct.email && !acct.pendingEmail ? (
+          <Section>
+            <Row first Icon={MailPlus} title="Add your email for updates and the invoice"
+              right={<Pressable onPress={() => router.push('/account-security' as never)} accessibilityRole="button" style={styles.addNow}><Text variant="bodySmall" weight="bold" color="#FFFFFF">Add now</Text></Pressable>} />
+          </Section>
         ) : null}
         <ProviderStatusNotes jobId={job.id} noun={job.noun} options={options} hasProvider={!!job.provider} onChanged={refetchOptions} />
 
@@ -177,6 +184,7 @@ const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: colors.surface },
   map: { height: 300, backgroundColor: slate[100] },
   stack: { gap: spacing.md },
+  addNow: { height: 36, paddingHorizontal: 14, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: zappy[600] },
   photos: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.sm },
   full: { width: '100%' },
   half: { width: '48%' },

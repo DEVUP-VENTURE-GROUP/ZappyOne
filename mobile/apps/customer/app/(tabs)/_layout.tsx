@@ -7,6 +7,7 @@ import { useT } from '@zappy/ui/lib/i18n';
 import { JhalarEdge } from '../../src/features/home/festive/JhalarEdge';
 import { SafeSection } from '@zappy/ui/components/common/SafeSection';
 import { colors } from '@zappy/ui/theme/colors';
+import { ActiveJobPill } from '../../src/features/home/ActiveJobPill';
 
 /**
  * The website's bottom bar on a phone (BottomNav): Home, Services, Bookings,
@@ -18,6 +19,7 @@ export default function CustomerTabs() {
   const { data } = useCurrentSeasonQuery(undefined);
   const festive = data?.season ? themeOf(data.season.theme) : null;
   return (
+    <View style={{ flex: 1 }}>
     <Tabs screenOptions={{
       headerShown: false,
       tabBarActiveTintColor: festive ? festive.accent : colors.primary,
@@ -37,5 +39,7 @@ export default function CustomerTabs() {
       <Tabs.Screen name="track" options={{ title: t('nav.track', 'Track'), tabBarIcon: ({ color, size }) => <MapPin color={color} size={size} /> }} />
       <Tabs.Screen name="profile" options={{ title: t('nav.profile', 'Profile'), tabBarIcon: ({ color, size }) => <User color={color} size={size} /> }} />
     </Tabs>
+    <ActiveJobPill />
+    </View>
   );
 }
