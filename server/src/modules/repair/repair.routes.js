@@ -1,7 +1,7 @@
 const express = require('express');
 const Joi = require('joi');
 const ctrl = require('./controllers');
-const { authenticate, requireRole } = require('../../middlewares/auth');
+const { authenticate, optionalAuth, requireRole } = require('../../middlewares/auth');
 const { requireKnownVertical, isValid } = require('./vertical');
 const { SERVICE_MODES } = require('./service-modes');
 const { validate } = require('../../middlewares/validate');
@@ -45,6 +45,8 @@ const locationSchema = Joi.object({
  * Deep catalog. Literal segments precede the parameterised model route so
  * `/models/:modelCode/configurations` is never swallowed by a brand path.
  */
+// Browsing a flow (diagnosis questions, prices, who can come) needs no account; only booking does.
+const browseLimiter = makeLimiter({ windowMs: 60_000, max: 120, prefix: 'repairbrowse' });
 router.get('/verticals', ctrl.listVerticals);
 
 // Zomato-style browsing: who near the customer offers this service, and one storefront's menu (services/storefront).
@@ -61,15 +63,15 @@ router.get('/storefronts/:kind/:id/menu', authenticate, requireKnownVertical, va
     res.json(menu);
   } catch (err) { next(err); }
 });
-router.get('/product-types', authenticate, requireKnownVertical, ctrl.listProductTypes);
-router.get('/brands', authenticate, requireKnownVertical, ctrl.listBrands);
-router.get('/brands/:brandCode/families', authenticate, requireKnownVertical, ctrl.listFamilies);
-router.get('/brands/:brandCode/series', authenticate, requireKnownVertical, ctrl.listSeries);
-router.get('/brands/:brandCode/models', authenticate, requireKnownVertical, ctrl.listModels);
-router.get('/models/:modelCode/configurations', authenticate, requireKnownVertical, ctrl.listConfigurations);
-router.get('/problems', authenticate, requireKnownVertical, ctrl.listProblems);
+router.get('/product-types', browseLimiter, optionalAuth, requireKnownVertical, ctrl.listProductTypes);
+router.get('/brands', browseLimiter, optionalAuth, requireKnownVertical, ctrl.listBrands);
+router.get('/brands/:brandCode/families', browseLimiter, optionalAuth, requireKnownVertical, ctrl.listFamilies);
+router.get('/brands/:brandCode/series', browseLimiter, optionalAuth, requireKnownVertical, ctrl.listSeries);
+router.get('/brands/:brandCode/models', browseLimiter, optionalAuth, requireKnownVertical, ctrl.listModels);
+router.get('/models/:modelCode/configurations', browseLimiter, optionalAuth, requireKnownVertical, ctrl.listConfigurations);
+router.get('/problems', browseLimiter, optionalAuth, requireKnownVertical, ctrl.listProblems);
 router.get('/repairs', authenticate, requireKnownVertical, ctrl.listRepairs);
-router.get('/addons', authenticate, requireKnownVertical, ctrl.listAddOns);
+router.get('/addons', browseLimiter, optionalAuth, requireKnownVertical, ctrl.listAddOns);
 router.get('/part-qualities', authenticate, ctrl.listPartQualities);
 
 /* Model identification (§7) */
@@ -99,18 +101,19 @@ router.post(
 
 /* Diagnostics */
 
-router.get('/diagnostics/:problemCode', authenticate, ctrl.getDiagnosticFlow);
+router.get('/diagnostics/:problemCode', browseLimiter, optionalAuth, ctrl.getDiagnosticFlow);
 router.post(
   '/diagnostics/:problemCode',
-  authenticate,
+  browseLimiter,
+  optionalAuth,
   validate(Joi.object({ answers: Joi.object().unknown(true).default({}) })),
   ctrl.submitDiagnostic,
 );
 
 /* Pricing preview + provider discovery */
 
-router.get('/price-preview', authenticate, ctrl.previewPrice);
-router.get('/providers', authenticate, ctrl.findProviders);
+router.get('/price-preview', browseLimiter, optionalAuth, ctrl.previewPrice);
+router.get('/providers', browseLimiter, optionalAuth, ctrl.findProviders);
 
 /* Catalog gap requests (§67) */
 

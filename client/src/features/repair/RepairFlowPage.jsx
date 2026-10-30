@@ -42,7 +42,7 @@ import StorefrontStrip from '../providers/StorefrontStrip';
 import { useRepairBasket } from './basket/useRepairBasket';
 import BasketBar from './basket/BasketBar';
 import GroupCheckout from './basket/GroupCheckout';
-import { selectAuth } from '@shared/modules/auth/authSlice';
+import { selectAuth, selectIsAuthed } from '@shared/modules/auth/authSlice';
 import { useClearCheckoutDraftMutation } from '@shared/services/api';
 
 /**
@@ -497,7 +497,8 @@ function ModelStep({ vertical, deep, brand, productType, family, onPick, onAuto 
    * If a request the customer sent earlier has since been identified, say so
    * here — this is where they gave up, so it is where the answer belongs.
    */
-  const { data: identifications } = useMyModelIdentificationsQuery(vertical, { skip: !deep });
+  const signedIn = useSelector(selectIsAuthed);
+  const { data: identifications } = useMyModelIdentificationsQuery(vertical, { skip: !deep || !signedIn });
   const identified = (identifications?.requests || [])
     .find((r) => r.status === 'identified' && r.resolvedModelId);
 
@@ -1568,6 +1569,9 @@ function ConfirmStep({
   diagnosticAnswers, diagnosticTranscript = [], addOnCodes = [], scheduledAt = null,
 }) {
   const [create, { isLoading }] = useCreateRepairBookingMutation();
+  // Anyone can browse to here; signing in is asked only to confirm, and the draft brings them straight back.
+  const signedIn = useSelector(selectIsAuthed);
+  const goSignIn = useNavigate();
   // A stable key per attempt so a double-tap cannot create two bookings (§46).
   const idempotencyKey = useMemo(() => `web-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, []);
 
@@ -1591,6 +1595,11 @@ function ConfirmStep({
   const [tip, setTip] = useState(0);
 
   async function book() {
+    if (!signedIn) {
+      toast('Sign in to confirm. Your booking is saved.');
+      goSignIn('/login', { state: { from: `${window.location.pathname}${window.location.search}` } });
+      return;
+    }
     try {
       if (onSite === 'incomplete') { toast.error('Add their name and mobile number, or untick "for someone else".'); return; }
       const res = await create({
