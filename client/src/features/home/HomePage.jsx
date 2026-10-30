@@ -314,6 +314,15 @@ export default function HomePage() {
           ) : (
             <>
               {svc?.status === 'closed_now' && <ClosedNowBanner nextOpening={svc.nextOpening} />}
+              {svc?.prosNearby > 0 && (
+                <p role="status" className="flex items-center gap-2 text-[13px] font-semibold text-ink-700">
+                  <span className="relative flex h-2.5 w-2.5">
+                    <span className="absolute inline-flex h-full w-full rounded-full bg-zappy-600 opacity-60 motion-safe:animate-ping" />
+                    <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-zappy-600" />
+                  </span>
+                  {svc.prosNearby} verified {svc.prosNearby === 1 ? 'pro is' : 'pros are'} open near {loc.primary || 'you'} right now
+                </p>
+              )}
               {nothingLive && (
                 <div className="rounded-card border border-line bg-surface px-4 py-4">
                   <p className="text-[16px] font-extrabold text-ink-900">Pros are joining near {loc.primary || 'you'}</p>
