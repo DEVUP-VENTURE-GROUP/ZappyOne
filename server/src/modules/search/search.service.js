@@ -87,13 +87,13 @@ function toResult(e) {
 async function search({ q, lat, lng, userId, limit = 8 }) {
   const raw = String(q || '').trim();
   const [corpus, pop, affinity, here] = await Promise.all([getCorpus(), getPopularity(), getAffinity(userId), liveLinesAt(lat, lng)]);
-  // Outside the launch region nothing is offered. Inside it every service is
-  // searchable; whether someone can come is the booking step's answer, and
-  // what is live at this point only ranks first.
+  // Outside the launch region nothing is offered. Inside it, only what someone covers at this point is
+  // found; a match nobody covers yet comes back as comingSoon, so the screen can say so.
   if (here && here.status === 'not_here') {
     return { query: raw, notHere: true, services: [], problems: [], categories: [], suggestions: [] };
   }
-  const pool = corpus;
+  const covered = (e) => !here || !e.lineCode || here.codes.has(e.lineCode);
+  const pool = corpus.filter(covered);
   const liveHere = (e) => (here ? here.codes.has(e.lineCode) : false);
   const rank = (e, text) => 55 * text * TYPE_WEIGHT[e.type] + 15 * (pop.get(e.lineCode) || 0)
     + 3 * (affinity.has(e.lineCode) ? 1 : 0) + (e.isPopular ? 2 : 0) + (liveHere(e) ? 4 : 0);
@@ -150,7 +150,11 @@ async function search({ q, lat, lng, userId, limit = 8 }) {
     ? pool.filter((e) => e.type === 'service').sort((a, b) => rank(b, 0) - rank(a, 0)).slice(0, 6).map(toResult)
     : [];
 
-  return resultCache.set(cacheKey, { query: raw, corrected, empty, services, problems, categories, suggestions });
+  const comingSoon = here && !services.length
+    ? corpus.filter((e) => e.type === 'service' && !covered(e) && scoreEntry(e, query).matched).slice(0, 3).map(toResult)
+    : [];
+
+  return resultCache.set(cacheKey, { query: raw, corrected, empty, services, problems, categories, suggestions, comingSoon });
 }
 
 /** Autocomplete: titles only, fast, prefix-weighted. */

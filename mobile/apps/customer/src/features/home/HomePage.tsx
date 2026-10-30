@@ -22,7 +22,7 @@ import { useMyJobs } from '@zappy/core/shared/useMyJobs';
 import { useAppSelector } from '@zappy/core/store/hooks';
 import { toast } from '@zappy/ui/components/Toast';
 import { describeCoordinates } from '@zappy/ui/location/geocode';
-import { colors, slate, zappy } from '@zappy/ui/theme/colors';
+import { colors, ink, slate, zappy } from '@zappy/ui/theme/colors';
 import { radius } from '@zappy/ui/theme/radius';
 import { spacing } from '@zappy/ui/theme/spacing';
 import { AdBanner } from '../../components/marketing/AdBanner';
@@ -38,12 +38,14 @@ import { themeOf } from '@zappy/core/shared/season';
 import { HeroCarousel } from './HeroCarousel';
 import { HomeHeader, SearchBar, type HomeLocation } from './HomeHeader';
 import { BookAgainRail, NearbyShopsLink, OffersRail } from './HomeRails';
+import { Text } from '@zappy/ui/components';
+import { ComingSoonRow } from './ComingSoonRow';
 import { HomeMarketplace } from './HomeMarketplace';
 import { LocationSheet, type PickedArea } from './LocationSheet';
 import { ProblemChips } from './ProblemChips';
 import { ServiceGrid } from './ServiceGrid';
 import { ServiceShowcase } from './ServiceShowcase';
-import { buildDomains, gridDomains, quickRebooks, searchTerms, type HomeDomain, type HomeService } from './homeCatalog';
+import { buildDomains, comingSoonOf, gridDomains, quickRebooks, searchTerms, type HomeDomain, type HomeService } from './homeCatalog';
 
 let remembered = false;   // a precise fix is saved on the customer's record once per app session
 
@@ -121,7 +123,10 @@ export function HomePage() {
   const { data: svc, isFetching: checkingArea, refetch: refetchArea } = useGetServiceabilityQuery({ lat: loc.lat, lng: loc.lng }, { skip: loc.lat == null });
   const { data: catalog, isLoading: loadingCatalog, refetch: refetchCatalog } = useLiveCatalogQuery();
   const { data: eventCats } = useGetEventCategoriesQuery();
-  const liveCodes = useMemo(() => (svc ? new Set<string>(svc.lines.map((l: { code: string }) => l.code)) : null), [svc]);
+  // Only what someone covers at this address is shown; the rest waits in "Coming to your area".
+  const liveCodes = useMemo(() => (svc && svc.status !== 'not_here' ? new Set<string>(svc.lines.map((l: { code: string }) => l.code)) : null), [svc]);
+  const comingSoon = useMemo(() => comingSoonOf(catalog?.domains || [], liveCodes), [catalog, liveCodes]);
+  const nothingLive = !!liveCodes && liveCodes.size === 0;
   const allDomains: HomeDomain[] = useMemo(() => buildDomains(catalog?.domains || [], liveCodes, eventCats?.categories || []), [catalog, liveCodes, eventCats]);
   const domains = useMemo(() => gridDomains(allDomains), [allDomains]);
   const services = useMemo(() => allDomains.flatMap((d) => d.services), [allDomains]);
@@ -175,7 +180,15 @@ export function HomePage() {
         ) : (
           <>
             {svc?.status === 'closed_now' ? <ClosedNowBanner nextOpening={svc.nextOpening} /> : null}
-            {!loadingCatalog ? <HeroCarousel domains={allDomains} onOpen={openService} /> : null}
+            {nothingLive ? (
+              <View style={styles.joining}>
+                <Text variant="body" weight="bold">Pros are joining near {loc.primary || 'you'}</Text>
+                <Text variant="caption" color={ink[500]}>Nobody is verified at this exact address yet. Tap the bell on what you need and we will tell you the day it opens, or try another address.</Text>
+                <Text variant="bodySmall" weight="bold" color={zappy[700]} onPress={() => setLocSheet(true)} accessibilityRole="button">Change address</Text>
+              </View>
+            ) : null}
+            {nothingLive && !loadingCatalog ? <ComingSoonRow services={comingSoon} loc={loc} /> : null}
+            {!loadingCatalog && !nothingLive ? <HeroCarousel domains={allDomains} onOpen={openService} /> : null}
             {/* During a festival each section rises in after the last. */}
             <Animated.View entering={rise(0)}><ProblemChips services={services} /></Animated.View>
             {loadingCatalog || (loc.lat != null && !svc && checkingArea) ? <SkeletonGrid /> : <Animated.View entering={rise(1)}><ServiceGrid domains={domains} onOpen={openService} /></Animated.View>}
@@ -184,6 +197,7 @@ export function HomePage() {
             <Animated.View entering={rise(3)}><OffersRail isAuthed={isAuthed} /></Animated.View>
             {!loadingCatalog ? <Animated.View entering={rise(4)}><ServiceShowcase domains={allDomains} onOpen={openService} /></Animated.View> : null}
             {isAuthed ? <HomeMarketplace loc={loc.lat != null && loc.lng != null ? { lat: loc.lat, lng: loc.lng, address: [loc.primary, loc.secondary].filter(Boolean).join(', ') } : null} /> : null}
+            {!loadingCatalog && !nothingLive ? <ComingSoonRow services={comingSoon} loc={loc} /> : null}
             {theme ? <SafeSection name="festive-divider"><FestiveDivider accent={theme.accent} /></SafeSection> : null}
             <AdBanner isAuthed={isAuthed} />
             <NearbyShopsLink />
@@ -197,6 +211,7 @@ export function HomePage() {
 }
 
 const styles = StyleSheet.create({
+  joining: { gap: spacing.xs, padding: spacing.base, borderRadius: radius.large, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
   page: { flex: 1, backgroundColor: colors.background },
   searchWrap: { paddingHorizontal: spacing.base, paddingBottom: spacing.base, paddingTop: 4, backgroundColor: zappy[100], borderBottomLeftRadius: radius.extraLarge, borderBottomRightRadius: radius.extraLarge },
   // Edge to edge, flush under the search: undoes the body's padding.
