@@ -63,3 +63,42 @@ export const firstNameOf = (n) => (n ? String(n).trim().split(/\s+/)[0] : '');
 export const shortId = (id) => (id ? String(id).slice(-6).toUpperCase() : '');
 export const money = (v) => `₹${Number(v).toLocaleString('en-IN')}`;
 export const rupeesOf = (paise) => `₹${Math.round((Number(paise) || 0) / 100).toLocaleString('en-IN')}`;
+
+const clockOf = (d) => new Date(d).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' });
+const dayOf = (d) => new Date(d).toLocaleString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
+
+// The one sentence at the top of tracking: who, what is happening, and the minutes while someone travels.
+export function statusHeadline(job, status, eta, { arrival = null, moreTime = null, needsYou = false } = {}) {
+  const who = firstNameOf(job.provider?.name) || `Your ${job.noun || 'pro'}`;
+  const due = arrival && !arrival.arrivedAt ? arrival : null;
+  const late = Boolean(due?.late);
+  const later = job.scheduledAt && new Date(job.scheduledAt).getTime() > Date.now() + 15 * 60_000;
+  if (needsYou) return { title: 'Your quote is ready', sub: 'Review it below. Nothing starts until you approve.' };
+  switch (status) {
+    case 'searching':
+      return { title: `Finding your ${job.noun || 'pro'}`, sub: 'We are asking verified pros near you.' };
+    case 'assigned':
+    case 'on_the_way':
+      if (later) return { title: 'Booking scheduled', sub: `${who} will reach you around ${dayOf(job.scheduledAt)}. Share the start code when they arrive.` };
+      if (eta != null) {
+        return {
+          title: `${who} is arriving in`, minutes: Math.max(1, Math.round(eta)), late,
+          sub: late ? 'They are running a little behind and should reach you soon.' : 'Share the start code with them when they arrive.',
+        };
+      }
+      if (late) return { title: `${who} is running late`, sub: 'We have told them. Call them, or we can find someone else.' };
+      return { title: `${who} accepted your booking`, sub: due?.dueBy ? `Due at your door by ${clockOf(due.dueBy)}.` : 'They will be on the way shortly.' };
+    case 'arrived':
+      return { title: `${who} has arrived`, sub: 'Share the start code to begin the job.' };
+    case 'in_progress':
+      return { title: 'Work in progress', sub: moreTime?.until ? `${moreTime.reason}. Expected to finish by ${clockOf(moreTime.until)}.` : `${who} is working on it.` };
+    case 'completed':
+      return { title: 'Job completed', sub: 'Thanks for booking with ZappyOne.' };
+    case 'cancelled':
+      return { title: 'Booking cancelled', sub: job.statusLabel || 'It is no longer being tracked.' };
+    case 'failed':
+      return { title: 'This could not be completed', sub: job.statusLabel || 'It is no longer being tracked.' };
+    default:
+      return { title: job.statusLabel || 'Booking update', sub: '' };
+  }
+}
