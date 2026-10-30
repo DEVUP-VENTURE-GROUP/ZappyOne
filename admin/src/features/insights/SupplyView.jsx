@@ -53,7 +53,7 @@ export default function SupplyView({ days }) {
                     </td>
                     <td className="px-1 py-2.5 text-right tabular-nums text-slate-700">{count(s.online)}</td>
                     <td className="px-1 py-2.5 text-right tabular-nums font-semibold text-slate-900">{count(s.bookings)}</td>
-                    <td className={`px-1 py-2.5 text-right tabular-nums ${s.perProvider >= 8 ? 'font-semibold text-amber-600' : 'text-slate-700'}`}>{s.perProvider ?? '—'}</td>
+                    <td className={`px-1 py-2.5 text-right tabular-nums ${s.perProvider >= 8 ? 'font-semibold text-amber-600' : 'text-slate-700'}`}>{s.perProvider ?? '-'}</td>
                     <td className={`px-1 py-2.5 text-right tabular-nums ${s.medianAssignMin > 15 ? 'font-semibold text-amber-600' : 'text-slate-700'}`}>{minutes(s.medianAssignMin)}</td>
                     <td className={`px-1 py-2.5 text-right tabular-nums ${s.stuck ? 'font-semibold text-rose-600' : 'text-slate-400'}`}>{count(s.stuck)}</td>
                   </tr>
@@ -84,7 +84,7 @@ export default function SupplyView({ days }) {
                     <td className="px-1 py-2.5 text-right tabular-nums font-semibold text-slate-900">{count(p.completed)}</td>
                     <td className="px-1 py-2.5 text-right tabular-nums text-emerald-700">{rupees(p.earnedPaise)}</td>
                     <td className="px-1 py-2.5 text-right tabular-nums text-slate-700">
-                      {p.rating ? <span className="inline-flex items-center gap-1"><Star size={12} className="fill-amber-400 text-amber-400" />{Number(p.rating).toFixed(1)}<span className="text-[11px] text-slate-400">({p.reviews})</span></span> : '—'}
+                      {p.rating ? <span className="inline-flex items-center gap-1"><Star size={12} className="fill-amber-400 text-amber-400" />{Number(p.rating).toFixed(1)}<span className="text-[11px] text-slate-400">({p.reviews})</span></span> : '-'}
                     </td>
                     <td className={`px-1 py-2.5 text-right tabular-nums ${p.declines >= 5 ? 'font-semibold text-amber-600' : 'text-slate-700'}`}>{count(p.declines)}</td>
                     <td className={`px-1 py-2.5 text-right tabular-nums ${p.dropped ? 'font-semibold text-rose-600' : 'text-slate-400'}`}>{count(p.dropped)}</td>

@@ -267,7 +267,7 @@ export default function MapView({ days }) {
                         <td className="px-1 py-2.5 font-medium text-slate-800">{a.area}</td>
                         <td className="px-1 py-2.5 text-right tabular-nums font-semibold text-slate-900">{count(a.bookings)}</td>
                         <td className="px-1 py-2.5 text-right tabular-nums text-slate-700">{count(a.searches)}</td>
-                        <td className={`px-1 py-2.5 text-right tabular-nums ${rate >= 30 ? 'font-semibold text-rose-600' : 'text-slate-700'}`}>{rate == null ? '—' : `${rate}%`}</td>
+                        <td className={`px-1 py-2.5 text-right tabular-nums ${rate >= 30 ? 'font-semibold text-rose-600' : 'text-slate-700'}`}>{rate == null ? '-' : `${rate}%`}</td>
                         <td className="px-1 py-2.5 text-right tabular-nums text-emerald-700">{rupees(a.takePaise)}</td>
                       </tr>
                     );

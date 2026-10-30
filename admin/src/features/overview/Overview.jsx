@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { useAdminMetricsQuery, useAdminInsightsOverviewQuery } from '@shared/services/api';
+import { useAdminMetricsQuery, useAdminInsightsOverviewQuery, useAdminMeQuery } from '@shared/services/api';
 import { PageLoader } from '../../ui/kit';
 import DemandAlerts from './DemandAlerts';
 import FleetSummary from './FleetSummary';
@@ -15,6 +15,7 @@ export default function Overview() {
   const { data: today, isLoading } = useAdminInsightsOverviewQuery(1, { pollingInterval: 60000 });
   const { data: week } = useAdminInsightsOverviewQuery(7, { pollingInterval: 120000 });
   const { data: m } = useAdminMetricsQuery(undefined, { pollingInterval: 60000 });
+  const { data: me } = useAdminMeQuery();
 
   if (isLoading) return <PageLoader />;
   const t = today?.current || {};
@@ -34,13 +35,13 @@ export default function Overview() {
           <Kpi label="Completed" value={count(t.completed)} delta={d.completed} />
           <Kpi label="Booked value" value={rupees(t.gmvPaise)} delta={d.gmvPaise} />
           <Kpi label="We earned" value={rupees(t.takePaise)} delta={d.takePaise} accent="#10B981" />
-          <Kpi label="Providers online" value={m ? `${count(m.onlineWorkers)}/${count(m.totalWorkers)}` : '—'} hint="Rakshak workers" />
-          <Kpi label="Customers" value={m ? count(m.totalUsers) : '—'} hint="All time" />
+          <Kpi label="Providers online" value={m ? `${count(m.onlineWorkers)}/${count(m.totalWorkers)}` : '-'} hint="Rakshak workers" />
+          <Kpi label="Customers" value={m ? count(m.totalUsers) : '-'} hint="All time" />
         </div>
       </div>
 
       {/* Our own staff and dark stores (Fleet), for roles that open it. */}
-      <FleetSummary />
+      {me?.areas?.includes('fleet') && <FleetSummary />}
 
       {week && (
         <Panel title="Last 7 days" note={<Link to="?tab=insights&sub=today&days=7" className="font-semibold text-[#1F4FD8] hover:underline">Open Insights</Link>}>

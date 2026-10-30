@@ -25,7 +25,7 @@ const NOTIFICATION_TYPES = [
 function StatCard({ label, value, sub, color = 'text-slate-800' }) {
   return (
     <div className="bg-slate-50 rounded-xl p-4 text-center">
-      <p className={`text-2xl font-black ${color}`}>{value ?? '—'}</p>
+      <p className={`text-2xl font-black ${color}`}>{value ?? '-'}</p>
       <p className="text-xs font-bold text-slate-500 mt-0.5">{label}</p>
       {sub && <p className="text-[10px] text-slate-400 mt-0.5">{sub}</p>}
     </div>
@@ -35,7 +35,7 @@ function StatCard({ label, value, sub, color = 'text-slate-800' }) {
 /* FCM Health Check */
 function FcmHealth() {
   const [checkHealth, { data, isFetching: loading, error }] = useLazyAdminNotificationHealthQuery();
-  const health = data ?? (error ? { ok: false, message: 'Failed to check — try again' } : null);
+  const health = data ?? (error ? { ok: false, message: 'Failed to check - try again' } : null);
 
   function check() { checkHealth(); }
 
@@ -369,7 +369,7 @@ function Broadcast() {
               className="bg-slate-50 rounded-2xl p-4">
               <p className="text-2xl font-black text-slate-900">{result.inAppDelivered ?? result.recipientCount ?? 0}</p>
               <p className="text-[11px] font-bold text-slate-500 mt-0.5">Delivered in-app</p>
-              <p className="text-[9px] text-green-600 font-bold mt-1">✓ Guaranteed — can't be missed</p>
+              <p className="text-[9px] text-green-600 font-bold mt-1">✓ Guaranteed - can't be missed</p>
             </motion.div>
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.38 }}
               className="bg-slate-50 rounded-2xl p-4">

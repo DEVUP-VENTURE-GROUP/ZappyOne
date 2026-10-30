@@ -20,7 +20,7 @@ export default function AskAgain({ docs, onSend }) {
     setBusy(true);
     try {
       await onSend({ docCodes: picked, message: message.trim() });
-      toast.success(`Asked for ${picked.length} document${picked.length > 1 ? 's' : ''} again — they have been notified`);
+      toast.success(`Asked for ${picked.length} document${picked.length > 1 ? 's' : ''} again - they have been notified`);
       setPicked([]); setMessage('');
     } catch (err) {
       toast.error(err?.data?.error || 'Could not send');

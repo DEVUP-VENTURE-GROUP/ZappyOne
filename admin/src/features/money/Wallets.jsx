@@ -18,7 +18,7 @@ export default function Wallet() {
     const amountPaise = Math.round(rupees * 100);
     try {
       const result = await adjust({ ...form, amountPaise }).unwrap();
-      toast.success(`Wallet ${form.type}ed ₹${rupees} — new balance: ₹${Math.round(result.newBalancePaise / 100)}`);
+      toast.success(`Wallet ${form.type}ed ₹${rupees} - new balance: ₹${Math.round(result.newBalancePaise / 100)}`);
       setForm(p => ({ ...p, id: '', amountRupees: '', description: '' }));
     } catch (err) {
       toast.error(err.data?.error || 'Adjustment failed');
@@ -29,7 +29,7 @@ export default function Wallet() {
     if (!reconcile.id.match(/^[a-f0-9]{24}$/i)) { toast.error('Enter a valid 24-character MongoDB ID'); return; }
     try {
       const result = await doReconcile(reconcile).unwrap();
-      toast.success(`Reconciled — balance set to ₹${Math.round((result.finalBalance || 0) / 100)}`);
+      toast.success(`Reconciled - balance set to ₹${Math.round((result.finalBalance || 0) / 100)}`);
     } catch (err) {
       toast.error(err.data?.error || 'Reconciliation failed');
     }

@@ -20,7 +20,7 @@ const slug = (s) => String(s || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, 
 function statusOf(line) {
   if (line.isActive === false) return { text: 'Hidden', tone: 'bg-slate-100 text-slate-500' };
   if (line.liveForCustomers) return { text: 'Live for customers', tone: 'bg-emerald-50 text-emerald-700' };
-  if (line.status === 'live') return { text: 'Live — no approved provider yet', tone: 'bg-amber-50 text-amber-700' };
+  if (line.status === 'live') return { text: 'Live - no approved provider yet', tone: 'bg-amber-50 text-amber-700' };
   return { text: 'Coming soon', tone: 'bg-slate-100 text-slate-600' };
 }
 
@@ -78,7 +78,7 @@ function DomainsView({ domains, onOpen, onChanged }) {
         </button>
       </Header>
       {editing && <DomainForm initial={editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); onChanged(); }} />}
-      {!domains.length ? <EmptyState message="No domains yet — add the first one" icon={Layers} /> : (
+      {!domains.length ? <EmptyState message="No domains yet - add the first one" icon={Layers} /> : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {domains.map((d) => (
             <button key={d._id} onClick={() => onOpen(d)} className="group overflow-hidden rounded-2xl bg-white text-left ring-1 ring-slate-200 transition hover:ring-zappy-300">

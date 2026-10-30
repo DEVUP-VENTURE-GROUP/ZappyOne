@@ -57,7 +57,7 @@ function OverviewTab() {
     try {
       const res = await trigger().unwrap();
       const paid = res.results?.filter(r => r.status === 'paid_out').length ?? 0;
-      toast.success(`Payout complete — ${paid} week(s) processed`);
+      toast.success(`Payout complete - ${paid} week(s) processed`);
     } catch (err) {
       toast.error(err.data?.error || 'Payout failed');
     }
@@ -76,7 +76,7 @@ function OverviewTab() {
           value={fmt(cw.totalCollectedPaise ?? 0)}
           Icon={Shield}
           color="text-zappy-600" bg="bg-zappy-50"
-          sub={`${cw.status === 'open' ? 'Accumulating — pays out Monday' : cw.status}`}
+          sub={`${cw.status === 'open' ? 'Accumulating - pays out Monday' : cw.status}`}
         />
         <StatCard
           label="Workers' pool (85%)"
@@ -134,7 +134,7 @@ function OverviewTab() {
           {[
             { step: '1', title: 'User cancels', desc: 'Fee assessed based on stage & repeat behaviour (₹0–₹75)' },
             { step: '2', title: 'Fee collected', desc: 'Deducted from wallet instantly, or deferred to next booking' },
-            { step: '3', title: 'Fund pools', desc: 'All fees go into the weekly Shield Fund — 85% workers, 15% platform' },
+            { step: '3', title: 'Fund pools', desc: 'All fees go into the weekly Shield Fund - 85% workers, 15% platform' },
             { step: '4', title: 'Monday payout', desc: 'Workers receive proportional share based on harm score' },
           ].map(({ step, title, desc }) => (
             <div key={step} className="flex gap-3">
@@ -196,7 +196,7 @@ function WeeklyFundsTab() {
                     <Td><span className="text-green-700 font-semibold">{fmt(week.workerPoolPaise)}</span></Td>
                     <Td><span className="text-blue-700 font-semibold">{fmt(week.platformCutPaise)}</span></Td>
                     <Td><StatusBadge status={week.status === 'paid_out' ? 'completed' : week.status} /></Td>
-                    <Td muted>{week.paidOutAt ? fmtDate(week.paidOutAt) : '—'}</Td>
+                    <Td muted>{week.paidOutAt ? fmtDate(week.paidOutAt) : '-'}</Td>
                     <Td>{week.payoutsCount ?? 0} workers</Td>
                     <Td>
                       {week.status === 'paid_out' && (
@@ -307,10 +307,10 @@ function FeeRecordsTab() {
                 <tr key={fee._id} className="hover:bg-slate-50/60 transition-colors">
                   <Td mono>#{String(fee.orderId?._id ?? fee.orderId).slice(-8)}</Td>
                   <Td>
-                    <p className="font-semibold text-slate-900">{fee.userId?.name ?? '—'}</p>
+                    <p className="font-semibold text-slate-900">{fee.userId?.name ?? '-'}</p>
                     <p className="text-xs text-slate-400">{fee.userId?.phone}</p>
                   </Td>
-                  <Td muted>{fee.workerId?.name ?? <span className="text-slate-300">—</span>}</Td>
+                  <Td muted>{fee.workerId?.name ?? <span className="text-slate-300">-</span>}</Td>
                   <Td><StageLabel stage={fee.cancelledAtStage} /></Td>
                   <Td>
                     {fee.isGrace
@@ -329,7 +329,7 @@ function FeeRecordsTab() {
                         ? 'bg-slate-100 text-slate-500'
                         : 'bg-red-100 text-red-600'
                     }`}>
-                      {(fee.collectionStatus ?? '—').replace(/_/g, ' ')}
+                      {(fee.collectionStatus ?? '-').replace(/_/g, ' ')}
                     </span>
                   </Td>
                   <Td muted>{fmtDate(fee.createdAt)}</Td>

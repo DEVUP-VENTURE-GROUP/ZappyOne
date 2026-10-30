@@ -130,7 +130,7 @@ function ZoneDrawer({ initial, coordinates, onClose, onSaved }) {
             <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: `rgba(${hexToRgb(form.color)}, 0.12)` }}>
               <Pentagon size={14} style={{ color: form.color }} />
             </div>
-            <p className="font-bold text-slate-900">{isEdit ? `Edit — ${initial.name}` : 'New Zone'}</p>
+            <p className="font-bold text-slate-900">{isEdit ? `Edit - ${initial.name}` : 'New Zone'}</p>
           </div>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
             <X size={16} />

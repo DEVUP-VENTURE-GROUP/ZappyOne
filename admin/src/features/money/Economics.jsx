@@ -54,20 +54,28 @@ function FeeRow({ row }) {
   const [pct, setPct] = useState(String(row.commissionPct));
   const hasTax = row.taxPct !== null;
   const [tax, setTax] = useState(String(row.taxPct ?? 0));
+  const hasRedo = row.redoGuaranteeDays != null;
+  const [redo, setRedo] = useState(String(row.redoGuaranteeDays ?? 7));
   const [save, { isLoading }] = useAdminUpdateFeeMutation();
 
+  useEffect(() => { setRedo(String(row.redoGuaranteeDays ?? 7)); }, [row.redoGuaranteeDays]);
   useEffect(() => {
     setFee(String(row.platformFeePaise / 100)); setPct(String(row.commissionPct)); setTax(String(row.taxPct ?? 0));
   }, [row.platformFeePaise, row.commissionPct, row.taxPct]);
 
-  const { feePaise, pctNum, taxNum, valid, dirty } = readRow(row, fee, pct, hasTax ? tax : null);
+  const read = readRow(row, fee, pct, hasTax ? tax : null);
+  const { feePaise, pctNum, taxNum } = read;
+  const redoNum = num(redo);
+  const redoOk = !hasRedo || within(redoNum, 0, 365);
+  const valid = read.valid && redoOk;
+  const dirty = read.dirty || (hasRedo && redoNum !== row.redoGuaranteeDays);
 
   const commission = Math.round(EXAMPLE_PAISE * (valid ? pctNum : 0) / 100);
   const taxPaise = valid ? Math.round((EXAMPLE_PAISE + feePaise) * taxNum / 100) : 0;
 
   async function submit() {
     try {
-      await save({ line: row.line, key: row.key, platformFeePaise: feePaise, commissionPct: pctNum, ...(hasTax && { taxPct: taxNum }) }).unwrap();
+      await save({ line: row.line, key: row.key, platformFeePaise: feePaise, commissionPct: pctNum, ...(hasTax && { taxPct: taxNum }), ...(hasRedo && { redoGuaranteeDays: Math.round(redoNum) }) }).unwrap();
       toast.success(`${row.label}: saved. New bookings use these rates.`);
     } catch (err) { toast.error(err?.data?.error || 'Could not save. Try again.'); }
   }
@@ -77,6 +85,11 @@ function FeeRow({ row }) {
       <td className="px-4 py-3">
         <p className="text-sm font-semibold text-slate-800">{row.label}</p>
         {!row.configured && <p className="mt-0.5 text-[11px] text-slate-400">Not saved yet: these defaults apply</p>}
+        {hasRedo && (
+          <label className="mt-1.5 flex items-center gap-1.5 text-[11px] text-slate-500">Redo guarantee
+            <input type="number" min="0" max="365" step="1" value={redo} onChange={(e) => setRedo(e.target.value)} aria-label={`${row.label} redo guarantee days`} className="w-14 rounded border border-slate-200 px-1.5 py-0.5 text-[12px] tabular-nums" /> days
+          </label>
+        )}
       </td>
       <td className="px-4 py-3">
         <label className="flex w-full max-w-[128px] items-center rounded-lg border border-slate-200 bg-white focus-within:ring-2 focus-within:ring-blue-500">
@@ -105,7 +118,7 @@ function FeeRow({ row }) {
       <td className="px-4 py-3 text-[12px] leading-relaxed text-slate-500 tabular-nums">
         {valid ? (
           <>Customer pays <b className="text-slate-700">{fmt(EXAMPLE_PAISE + feePaise + taxPaise)}</b>, provider gets <b className="text-slate-700">{fmt(EXAMPLE_PAISE - commission)}</b>, ZappyOne earns <b className="text-slate-700">{fmt(commission + feePaise)}</b></>
-        ) : '—'}
+        ) : '-'}
       </td>
       <td className="px-4 py-3 text-right">
         <button type="button" onClick={submit} disabled={!dirty || !valid || isLoading}

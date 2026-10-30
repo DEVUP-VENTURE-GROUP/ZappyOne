@@ -314,7 +314,7 @@ function IssueList({ filters, onOpen }) {
 /* ------------------------------------------------------------------ */
 
 const TEMPLATES = [
-  ['Fixed — please try again', 'Sorry about the trouble earlier. We have fixed it. Please open the app and try again.'],
+  ['Fixed - please try again', 'Sorry about the trouble earlier. We have fixed it. Please open the app and try again.'],
   ['We are on it', 'We noticed something went wrong for you. Our team is fixing it now and will let you know.'],
   ['Need your help', 'Something went wrong for you earlier. Could you reply in Help so we can sort it out with you?'],
 ];

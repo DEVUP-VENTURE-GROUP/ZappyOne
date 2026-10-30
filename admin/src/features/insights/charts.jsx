@@ -16,7 +16,7 @@ export function rupees(paise, { exact = false } = {}) {
   return `₹${(r / 10000000).toFixed(2)}Cr`;
 }
 export const count = (n) => (Number(n) || 0).toLocaleString('en-IN');
-export const minutes = (m) => (m == null ? '—' : m < 60 ? `${m} min` : `${Math.floor(m / 60)}h ${m % 60}m`);
+export const minutes = (m) => (m == null ? '-' : m < 60 ? `${m} min` : `${Math.floor(m / 60)}h ${m % 60}m`);
 const shortDay = (iso) => new Date(`${iso}T00:00:00`).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 
 /** Change against the previous period. `invert` when lower is better (cancellations). */
@@ -194,7 +194,7 @@ export function FunnelChart({ steps = [] }) {
               </span>
             )}
             <span className="text-right text-[12px] tabular-nums text-slate-500">
-              {i === 0 ? 'Start' : s.fromPrevious == null ? '—' : <><b className={weak ? 'text-rose-600' : 'text-slate-800'}>{s.fromPrevious}%</b> of previous</>}
+              {i === 0 ? 'Start' : s.fromPrevious == null ? '-' : <><b className={weak ? 'text-rose-600' : 'text-slate-800'}>{s.fromPrevious}%</b> of previous</>}
             </span>
           </li>
         );

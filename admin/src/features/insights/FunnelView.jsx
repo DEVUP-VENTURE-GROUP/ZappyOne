@@ -94,7 +94,7 @@ export default function FunnelView({ days }) {
                       <td className="px-1 py-2.5 text-right tabular-nums text-slate-700">{count(s.searched)}</td>
                       <td className="px-1 py-2.5 text-right tabular-nums font-semibold text-slate-900">{count(s.booked)}</td>
                       <td className="px-1 py-2.5 text-right tabular-nums text-slate-700">{count(s.completed)}</td>
-                      <td className={`px-1 py-2.5 text-right tabular-nums font-semibold ${done != null && done < 50 ? 'text-rose-600' : 'text-emerald-700'}`}>{done == null ? '—' : `${done}%`}</td>
+                      <td className={`px-1 py-2.5 text-right tabular-nums font-semibold ${done != null && done < 50 ? 'text-rose-600' : 'text-emerald-700'}`}>{done == null ? '-' : `${done}%`}</td>
                     </tr>
                   );
                 })}
