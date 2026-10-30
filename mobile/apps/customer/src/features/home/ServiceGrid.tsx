@@ -31,7 +31,8 @@ const Tile = memo(function Tile({ service, onOpen }: { service: HomeService; onO
 });
 
 export function ServiceGrid({ domains, onOpen }: { domains: HomeDomain[]; onOpen: (s: HomeService) => void }) {
-  const tiles = useMemo(() => domains.flatMap((d) => d.services).sort((a, b) => Number(a.available === false) - Number(b.available === false)), [domains]);
+  // A photo grid only: a service without its photo yet is listed under All services below, never as a bare icon here.
+  const tiles = useMemo(() => domains.flatMap((d) => d.services).filter((s) => tilePhoto(s.code) || servicePhoto(s)).sort((a, b) => Number(a.available === false) - Number(b.available === false)), [domains]);
   if (!tiles.length) return null;
   return (
     <View style={styles.section}>

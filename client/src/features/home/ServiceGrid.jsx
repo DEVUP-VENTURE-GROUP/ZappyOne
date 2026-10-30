@@ -30,7 +30,8 @@ function Tile({ service, onOpen }) {
 }
 
 export function ServiceGrid({ domains, onOpen }) {
-  const all = domains.flatMap((d) => d.services);
+  // A photo grid only: a service without its photo yet is listed under All services below, never as a bare icon here.
+  const all = domains.flatMap((d) => d.services).filter((s) => s.imageUrl || tilePhoto(s.code) || servicePhoto(s));
   if (!all.length) return null;
   // Bookable here first; the sort is stable, so catalog order holds within each group.
   const tiles = [...all].sort((a, b) => Number(a.available === false) - Number(b.available === false));
