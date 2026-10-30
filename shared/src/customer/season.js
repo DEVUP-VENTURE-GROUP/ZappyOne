@@ -229,3 +229,16 @@ export function tileTag(tile, service) {
 export const ARCH = { w: 400, h: 40 };
 export const archEdge = 'M0,40 L0,24 Q0,16 10,16 L132,16 C162,16 170,2 200,2 C230,2 238,16 268,16 L390,16 Q400,16 400,24 L400,40';
 export const archLights = 'M8,22 Q8,20 12,20 L132,20 C162,20 170,6 200,6 C230,6 238,20 268,20 L388,20 Q392,20 392,22';
+
+// The festive panel's tiles: admin's picks that are live here first, then other live services with a photo and a real starting price, cheapest first.
+export function festivePicks(tiles, services, photoOf, max = 5) {
+  services = services || [];
+  const byCode = new Map(services.map((s) => [s.code, s]));
+  const picked = (tiles || []).map((t) => ({ ...t, service: byCode.get(t.serviceCode) })).filter((t) => t.service);
+  const taken = new Set(picked.map((t) => t.serviceCode));
+  const more = services
+    .filter((s) => !taken.has(s.code) && Number.isFinite(s.fromPaise) && s.fromPaise > 0 && photoOf(s))
+    .sort((a, b) => a.fromPaise - b.fromPaise)
+    .map((s) => ({ serviceCode: s.code, title: s.name, service: s }));
+  return [...picked, ...more].slice(0, max);
+}

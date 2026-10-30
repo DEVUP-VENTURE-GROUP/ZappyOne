@@ -1,5 +1,5 @@
 import FestiveOffer from './FestiveOffer';
-import { ARCH, archEdge, archLights, tileTag } from '../../../customer/season';
+import { ARCH, archEdge, archLights, festivePicks, tileTag } from '../../../customer/season';
 import { servicePhoto, tilePhoto } from '../serviceArt';
 
 // One big tile with the rest beside it, as Blinkit lays out its festive picks; the grid follows how many are live.
@@ -31,8 +31,7 @@ function Tile({ t, theme, big, i, onOpen }) {
 
 // The festive panel under the festive header (Admin → Festive home): an arch edged with chasing lights, the line, the picks and the offer.
 export default function FestiveHero({ season, theme, services = [], onOpen }) {
-  const byCode = new Map(services.map((s) => [s.code, s]));
-  const picks = (season.tiles || []).map((t) => ({ ...t, service: byCode.get(t.serviceCode) })).filter((t) => t.service).slice(0, 6);
+  const picks = festivePicks(season.tiles, services, (sv) => tilePhoto(sv.code) || servicePhoto(sv));
   const ink = theme.dark ? theme.top : theme.ink;
   const big = bigFirst(picks.length);
   return (

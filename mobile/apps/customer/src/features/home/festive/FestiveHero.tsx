@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { Easing, FadeInDown, useAnimatedProps, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
 import { useReducedMotion } from '@zappy/core/hooks/useReducedMotion';
-import { ARCH, archEdge, archLights, tileTag } from '@zappy/core/shared/season';
+import { ARCH, archEdge, archLights, festivePicks, tileTag } from '@zappy/core/shared/season';
 import { servicePhoto, tilePhoto } from '@zappy/core/shared/serviceArt';
 import { Text } from '@zappy/ui/components';
 import { webAsset } from '@zappy/ui/lib/media';
@@ -55,8 +55,7 @@ function Tile({ t, theme, big, i, onOpen }: { t: Any; theme: Any; big: boolean; 
 // The festive panel under the festive header (the website's FestiveHero): an arch with chasing lights, the line, the picks and the offer.
 export function FestiveHero({ season, theme, services = [], onOpen }: { season: Any; theme: Any; services?: Any[]; onOpen?: (s: Any) => void }) {
   const reduce = useReducedMotion();
-  const byCode = new Map(services.map((s: Any) => [s.code, s]));
-  const picks = (season.tiles || []).map((t: Any) => ({ ...t, service: byCode.get(t.serviceCode) })).filter((t: Any) => t.service).slice(0, 6);
+  const picks = festivePicks(season.tiles, services, (sv: Any) => tilePhoto(sv.code) || servicePhoto(sv));
   const ink = theme.dark ? theme.top : theme.ink;
   const n = picks.length;
   const bigFirst = n === 3 || n === 5;
