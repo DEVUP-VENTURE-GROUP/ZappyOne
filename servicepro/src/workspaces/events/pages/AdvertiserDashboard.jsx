@@ -39,19 +39,19 @@ import toast from 'react-hot-toast';
 
 /* Helpers */
 const PLACEMENTS = [
-  { id: 'home_banner',       label: '🏠 Home Banner',        desc: 'Top of homepage carousel — highest reach' },
+  { id: 'home_banner',       label: '🏠 Home Banner',        desc: 'Top of homepage carousel - highest reach' },
   { id: 'category_listing',  label: '📋 Category Listing',   desc: 'Sponsored slot in event/service categories' },
   { id: 'search_ads',        label: '🔍 Search Results',      desc: 'Appear above organic search results' },
   { id: 'detail_cross_sell', label: '🔗 Detail Cross-sell',   desc: 'Shown on service detail page as add-on' },
   { id: 'booking_success',   label: '🎉 Booking Success',     desc: 'Highest-value: shown after booking (converts best)' },
-  { id: 'order_tracking',    label: '📍 Order Tracking',      desc: 'While customer waits — contextual only' },
+  { id: 'order_tracking',    label: '📍 Order Tracking',      desc: 'While customer waits - contextual only' },
   { id: 'wallet_page',       label: '💰 Wallet Page',         desc: 'Cashback & rewards context ads' },
 ];
 
 const BILLING_MODELS = [
-  { id: 'cpc',    label: 'CPC — Cost Per Click',          desc: 'Pay only when user clicks' },
-  { id: 'cpm',    label: 'CPM — Per 1000 Impressions',    desc: 'Pay for visibility / brand awareness' },
-  { id: 'cpl',    label: 'CPL — Cost Per Lead',           desc: 'Pay when user expresses intent' },
+  { id: 'cpc',    label: 'CPC - Cost Per Click',          desc: 'Pay only when user clicks' },
+  { id: 'cpm',    label: 'CPM - Per 1000 Impressions',    desc: 'Pay for visibility / brand awareness' },
+  { id: 'cpl',    label: 'CPL - Cost Per Lead',           desc: 'Pay when user expresses intent' },
   { id: 'fixed',  label: 'Fixed Campaign Budget',          desc: 'Fixed total spend, admin optimises delivery' },
 ];
 
@@ -594,7 +594,7 @@ export default function AdvertiserDashboard() {
   async function handleSave(form) {
     if (editAd) await updateCampaign({ id: editAd._id, ...form }).unwrap();
     else        await createCampaign({ ...form, _advertiserName: profile?.name || '' }).unwrap();
-    toast.success(editAd ? 'Campaign updated — pending review' : 'Campaign submitted for review! 🎉');
+    toast.success(editAd ? 'Campaign updated - pending review' : 'Campaign submitted for review! 🎉');
     refetch();
   }
 
@@ -761,7 +761,7 @@ export default function AdvertiserDashboard() {
                 <p>• CPC: ₹0.50–₹5 per click depending on category</p>
                 <p>• CPM: ₹2–₹10 per 1000 impressions</p>
                 <p>• Booking success placement has 3× higher conversion rate</p>
-                <p>• Unused credits are refundable — no risk</p>
+                <p>• Unused credits are refundable - no risk</p>
               </div>
             </div>
           </div>

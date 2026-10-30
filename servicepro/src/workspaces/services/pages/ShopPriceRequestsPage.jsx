@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import PageSkeleton from '@shared/components/common/Skeleton';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { ArrowLeft, Loader2, Clock, MapPin, Send, CheckCircle2, Inbox } from 'lucide-react';
@@ -36,7 +37,7 @@ function RequestCard({ r }) {
     if (!(total >= 5000)) return toast.error('Enter your price in rupees (at least ₹50)');
     try {
       await offer({ id: r._id, totalPaise: total, qualityCode: r.needsGrade ? grade : null, warrantyDays: Number(warranty) || 0, note }).unwrap();
-      toast.success(mine ? 'Price updated — the customer sees it now' : 'Price sent — the customer sees it now');
+      toast.success(mine ? 'Price updated - the customer sees it now' : 'Price sent - the customer sees it now');
     } catch (err) {
       toast.error(err?.data?.error || 'Could not send your price');
     }
@@ -58,7 +59,7 @@ function RequestCard({ r }) {
 
       {mine && (
         <p className="flex items-center gap-1.5 rounded-lg bg-emerald-50 px-2.5 py-1.5 text-xs font-semibold text-emerald-700">
-          <CheckCircle2 size={13} /> You sent ₹{Math.round(mine.totalPaise / 100).toLocaleString('en-IN')} — you can change it until they book
+          <CheckCircle2 size={13} /> You sent ₹{Math.round(mine.totalPaise / 100).toLocaleString('en-IN')} - you can change it until they book
         </p>
       )}
 
@@ -112,7 +113,7 @@ export default function ShopPriceRequestsPage() {
         </div>
       </div></header>
       <div className="mx-auto max-w-lg space-y-3 px-4 pt-4 lg:max-w-2xl">
-        {isLoading && <div className="flex justify-center py-16"><Loader2 className="animate-spin text-zappy-500" /></div>}
+        {isLoading && <PageSkeleton kind="list" label="Loading price requests" />}
         {!isLoading && !rows.length && (
           <div className="card flex flex-col items-center py-10 text-center">
             <Inbox size={22} className="text-slate-300" />

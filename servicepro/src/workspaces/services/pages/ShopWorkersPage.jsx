@@ -7,6 +7,7 @@ import { useShopWorkersQuery, useAddShopWorkerMutation, useRemoveShopWorkerMutat
 import DispatchSettingsCard from '../components/team/DispatchSettingsCard';
 import InviteTeamSheet from '../components/team/InviteTeamSheet';
 import toast from 'react-hot-toast';
+import { useTradeWords } from '../../../shell/useTradeWords';
 
 const KYC_PILL = {
   approved: { label: 'Verified', cls: 'bg-emerald-50 text-emerald-700', Icon: ShieldCheck },
@@ -16,6 +17,7 @@ const KYC_PILL = {
 };
 
 export default function ShopWorkersPage() {
+  const words = useTradeWords();
   const nav = useNavigate();
   const { data, isLoading } = useShopWorkersQuery();
   const [addWorker, { isLoading: adding }] = useAddShopWorkerMutation();
@@ -63,7 +65,7 @@ export default function ShopWorkersPage() {
     <div className="min-h-screen bg-[#F9FAFB] pb-10">
       <header className="page-header"><div className="page-header-inner">
         <button onClick={() => nav('/shop')} className="back-btn"><ArrowLeft size={18} strokeWidth={2.5} /></button>
-        <h1 className="h-card">Team</h1>
+        <h1 className="h-card">{words('team', 'Team')}</h1>
         <button onClick={() => setInviting(true)} className="ml-auto flex items-center gap-1 rounded-lg px-3 py-2 text-xs font-bold text-zappy-700 ring-1 ring-zappy-200">
           <Users size={14} strokeWidth={2.5} /> Add many
         </button>

@@ -79,7 +79,7 @@ export default function BookingDetailPage() {
             <p className="text-[17px] font-bold tabular-nums text-ink-900">{rupees(b.pricing?.totalPaise)}</p>
           </div>
           <div className="p-4">
-            <p className="text-[12px] text-ink-500">You get ({100 - (b.payout?.commissionPct ?? 10)}%)</p>
+            <p className="text-[12px] text-ink-500">You get</p>
             <p className="text-[17px] font-bold tabular-nums text-green-700">{rupees(b.payout?.netPaise)}</p>
           </div>
         </div>
@@ -163,7 +163,7 @@ function Row({ Icon, label, value, children }) {
       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-btn bg-sunken text-ink-700"><Icon size={16} /></span>
       <span className="min-w-0 flex-1">
         <span className="block text-[12px] text-ink-500">{label}</span>
-        <span className="block break-words text-[14px] font-medium text-ink-900">{value || '—'}</span>
+        <span className="block break-words text-[14px] font-medium text-ink-900">{value || '-'}</span>
       </span>
       {children}
     </div>

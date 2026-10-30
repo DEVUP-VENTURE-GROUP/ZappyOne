@@ -3,11 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import toast from 'react-hot-toast';
 import {
-  Store, Phone, Power, Loader2, ChevronRight, ClipboardList, ShieldCheck, Info,
+  Store, Phone, Power, Loader2, ChevronRight, ClipboardList, ShieldCheck, Info, Repeat,
 } from 'lucide-react';
 import {
-  useGetWorkerMeQuery, useGetMyShopQuery, useGetKycStatusQuery, useGoOnlineMutation, useGoOfflineMutation,
+  useGetWorkerMeQuery, useGetMyShopQuery, useGetKycStatusQuery, useGoOnlineMutation, useGoOfflineMutation, useProviderPlanVisitsQuery,
 } from '@shared/services/api';
+import VisitRow from '../components/PlanVisitRow';
 import { selectAuth } from '@shared/modules/auth/authSlice';
 import { useGeolocation } from '@shared/hooks/useGeolocation';
 import { formatPaise } from '@shared/utils/money';
@@ -27,6 +28,8 @@ export default function ShopWorkerHome() {
   const { data: kycData } = useGetKycStatusQuery();
   // A shop's team works what the shop takes: repairs and pet care.
   const { mine: jobs, isLoading: loadingJobs } = useProviderJobs({ kinds: ['repair', 'pet'] });
+  const { data: visitData } = useProviderPlanVisitsQuery({ days: 7 }, { pollingInterval: 60000 });
+  const visits = (visitData?.items || []).filter((v) => v.status === 'scheduled' || v.status === 'started');
   const [goOnline] = useGoOnlineMutation();
   const [goOffline] = useGoOfflineMutation();
   const { getCurrent } = useGeolocation();
@@ -41,8 +44,8 @@ export default function ShopWorkerHome() {
   // Location is shared app-wide while on duty (provider/OnlineLocation), not only on this page.
 
   async function toggleDuty() {
-    if (kycWaiting) { toast('Your ID is being checked — you can go on duty once it is approved'); return; }
-    if (!kycApproved) { toast.error('Verify your ID first — Aadhaar and a selfie, about 2 minutes'); nav('/worker/kyc'); return; }
+    if (kycWaiting) { toast('Your ID is being checked - you can go on duty once it is approved'); return; }
+    if (!kycApproved) { toast.error('Verify your ID first - Aadhaar and a selfie, about 2 minutes'); nav('/worker/kyc'); return; }
     setToggling(true);
     try {
       if (onDuty) {
@@ -107,7 +110,7 @@ export default function ShopWorkerHome() {
         )}
         {!kycApproved && !kycWaiting && (
           <button onClick={() => nav('/worker/kyc')} className="flex w-full items-center gap-2 rounded-2xl bg-amber-50 p-3 text-left text-xs font-semibold text-amber-800 ring-1 ring-amber-200">
-            <ShieldCheck size={15} /> Verify your ID to go on duty — Aadhaar and a selfie, about 2 minutes <ChevronRight size={14} className="ml-auto" />
+            <ShieldCheck size={15} /> Verify your ID to go on duty - Aadhaar and a selfie, about 2 minutes <ChevronRight size={14} className="ml-auto" />
           </button>
         )}
 
@@ -150,6 +153,12 @@ export default function ShopWorkerHome() {
           )}
         </section>
 
+        {visits.length > 0 && (
+          <section className="rounded-2xl bg-white p-4 ring-1 ring-slate-100">
+            <p className="flex items-center gap-2 text-sm font-black text-navy"><Repeat size={15} className="text-zappy-600" /> Plan visits this week</p>
+            <ul className="mt-3 space-y-2">{visits.map((v) => <VisitRow key={v._id} v={v} sos />)}</ul>
+          </section>
+        )}
       </main>
 
     </div>

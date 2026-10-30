@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import PageSkeleton from '@shared/components/common/Skeleton';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Upload, CheckCircle2, Clock, XCircle, ShieldCheck,
@@ -11,7 +12,7 @@ import { prepareImage } from '@shared/utils/prepareImage';
 import MyVerificationPanel from '@shared/provider/MyVerificationPanel';
 
 const DOCS = [
-  { key: 'ownerIdUrl', label: "Owner's ID Proof", sublabel: 'Aadhaar / PAN / Voter ID — clear photo', Icon: IdCard, required: true },
+  { key: 'ownerIdUrl', label: "Owner's ID Proof", sublabel: 'Aadhaar / PAN / Voter ID - clear photo', Icon: IdCard, required: true },
   { key: 'shopPhotoUrl', label: 'Shop Photo', sublabel: 'Photo of your shop front / signboard', Icon: Store, required: true },
   // Taken live with the front camera, with the place and time it was taken: never picked from a gallery.
   { key: 'selfieUrl', label: 'Owner Selfie', sublabel: 'Taken live with your front camera; your location is recorded', Icon: Camera, required: true, live: true },
@@ -57,7 +58,7 @@ export default function ShopKycPage() {
   async function handleUpload(docKey, picked, meta = null) {
     const file = await prepareImage(picked);
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) return toast.error('File too large — max 5MB');
+    if (file.size > 5 * 1024 * 1024) return toast.error('File too large - max 5MB');
     try {
       setUploading(docKey);
       const { data: signed } = await presign({ folder: 'kyc', contentType: file.type || 'image/jpeg' });
@@ -92,9 +93,7 @@ export default function ShopKycPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center">
-        <Loader2 size={28} className="text-zappy-500 animate-spin" />
-      </div>
+      <PageSkeleton kind="form" label="Loading verification" />
     );
   }
 

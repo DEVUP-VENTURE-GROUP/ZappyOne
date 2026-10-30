@@ -1,4 +1,6 @@
 import LoginSecurityCard from '@shared/components/account/LoginSecurityCard';
+import PageSkeleton from '@shared/components/common/Skeleton';
+import { useFormDraft, DraftRestored } from '@shared/hooks/useFormDraft';
 import AutoAcceptCard from '@shared/components/provider/AutoAcceptCard';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -23,6 +25,7 @@ export default function ShopProfilePage() {
   const [presign] = usePresignUploadMutation();
 
   const [form, setForm] = useState(null);
+  const draft = useFormDraft(data?.shop?._id && `shop-profile:${data.shop._id}`, form, setForm);
   const [pickingAddress, setPickingAddress] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
   // Local object-URL preview so the just-uploaded photo renders instantly —
@@ -33,7 +36,7 @@ export default function ShopProfilePage() {
   useEffect(() => {
     if (data?.shop && !form) {
       const s = data.shop;
-      setForm({
+      draft.take({
         businessName: s.businessName || '',
         category: s.category || '',
         services: s.services || [],
@@ -47,7 +50,7 @@ export default function ShopProfilePage() {
         coverImageUrl: s.coverImageUrl || '',
       });
     }
-  }, [data, form]);
+  }, [data, form]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /**
    * The shop's address, from the map.
@@ -72,7 +75,7 @@ export default function ShopProfilePage() {
   async function handleCoverUpload(picked) {
     const file = await prepareImage(picked);
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) return toast.error('Image too large — max 5MB');
+    if (file.size > 5 * 1024 * 1024) return toast.error('Image too large - max 5MB');
     try {
       setUploadingCover(true);
       const { data: signed } = await presign({ folder: 'shop', contentType: file.type || 'image/jpeg' });
@@ -111,6 +114,7 @@ export default function ShopProfilePage() {
           },
         }),
       }).unwrap();
+      draft.saved(form);
       toast.success('Profile updated');
     } catch (err) {
       toast.error(err?.data?.error || 'Failed to update profile');
@@ -119,9 +123,7 @@ export default function ShopProfilePage() {
 
   if (isLoading || !form) {
     return (
-      <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center">
-        <Loader2 size={28} className="text-zappy-500 animate-spin" />
-      </div>
+      <PageSkeleton kind="form" label="Loading your shop" />
     );
   }
 
@@ -146,6 +148,7 @@ export default function ShopProfilePage() {
       </div></header>
 
       <div className="max-w-lg lg:max-w-2xl mx-auto px-4 pt-4 space-y-3">
+        <DraftRestored show={draft.restored} onDiscard={draft.discard} />
         <AutoAcceptCard who="shops" />
         <LoginSecurityCard />
 
@@ -237,7 +240,7 @@ export default function ShopProfilePage() {
         <div className="card">
           <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Services You Offer</p>
           <p className="text-[11px] text-slate-400 mt-0.5 leading-relaxed">
-            Set by verification, not by this form — customers rely on it meaning something.
+            Set by verification, not by this form - customers rely on it meaning something.
           </p>
           <button
             type="button"

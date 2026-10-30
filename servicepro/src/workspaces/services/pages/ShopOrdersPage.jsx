@@ -6,11 +6,13 @@ import { useProviderJobs } from '@shared/provider/useProviderJobs';
 import { BOARD_COLUMNS, bucketOf } from '@shared/provider/partnerBoard';
 import { formatPaise } from '@shared/utils/money';
 import AssignTechnician from '@shared/provider/components/AssignTechnician';
+import { useTradeWords } from '../../../shell/useTradeWords';
 
 const SHOP_KINDS = ['repair', 'pet'];
 
 // Every job the partner holds as a board, filterable by member or lead's group.
 export default function ShopOrdersPage() {
+  const words = useTradeWords();
   const nav = useNavigate();
   const { mine, isLoading } = useProviderJobs({ kinds: SHOP_KINDS });
   const { data } = useShopWorkersQuery();
@@ -36,7 +38,7 @@ export default function ShopOrdersPage() {
     <div className="min-h-screen bg-slate-50 pb-24">
       <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-slate-100 bg-white px-4 py-3">
         <button onClick={() => nav('/shop')} aria-label="Back" className="text-slate-500"><ArrowLeft size={20} /></button>
-        <h1 className="h-card">Orders</h1>
+        <h1 className="h-card">{words('orders', 'Orders')}</h1>
         <select value={who} onChange={(e) => setWho(e.target.value)} aria-label="Show jobs of"
           className="ml-auto max-w-[55%] rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-[12px] text-slate-700">
           <option value="">Whole team</option>

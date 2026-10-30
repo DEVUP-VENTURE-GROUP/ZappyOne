@@ -10,6 +10,7 @@ import { logout } from '@shared/modules/auth/authSlice';
 import { ZappyWordmark } from '@shared/components/common/ZappyLogo';
 import NotificationPanel from './NotificationPanel';
 import { Spinner } from '../../components/ui';
+import ProfileGate from '../../../../shell/ProfileGate';
 
 /**
  * The frame of the partner portal: a sidebar on a computer; on a phone a top
@@ -71,7 +72,7 @@ export default function PartnerShell() {
   async function signOut() {
     try { await doLogout().unwrap(); } catch { /* signed out locally either way */ }
     dispatch(logout());
-    nav('/partner/login', { replace: true });
+    nav('/login', { replace: true });
   }
 
   const badgeFor = (item) => (item.to === '/partner/bookings' ? pending : 0);
@@ -128,7 +129,7 @@ export default function PartnerShell() {
 
         <main className="mx-auto max-w-5xl px-4 pb-28 pt-5 lg:px-8 lg:pb-12 lg:pt-7">
           <Suspense fallback={<Spinner />}>
-            <Outlet context={{ partner, verified }} />
+            <ProfileGate><Outlet context={{ partner, verified }} /></ProfileGate>
           </Suspense>
         </main>
       </div>

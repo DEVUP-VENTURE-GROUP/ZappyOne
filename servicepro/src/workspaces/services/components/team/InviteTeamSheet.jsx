@@ -41,7 +41,7 @@ export default function InviteTeamSheet({ onClose }) {
             <ul className="max-h-72 divide-y divide-slate-100 overflow-y-auto">
               {result.rows.map((r, i) => (
                 <li key={i} className="flex items-center justify-between gap-3 py-2 text-[13px]">
-                  <span className="min-w-0 truncate text-slate-700">{r.name || '—'} <span className="text-slate-400">{r.phone}</span></span>
+                  <span className="min-w-0 truncate text-slate-700">{r.name || '-'} <span className="text-slate-400">{r.phone}</span></span>
                   <span className={`shrink-0 font-semibold ${r.ok ? 'text-emerald-600' : 'text-red-600'}`}>{r.ok ? (r.isNew ? 'Added' : 'Linked') : r.error}</span>
                 </li>
               ))}

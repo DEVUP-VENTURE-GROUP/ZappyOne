@@ -50,7 +50,7 @@ export default function PackagesPage() {
                   <p className="text-[13px] text-ink-500">{t.categoryId?.name}</p>
                   <p className="mt-2 text-[18px] font-bold tabular-nums text-ink-900">{rupees(t.startingPricePaise)}</p>
                   <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-[12px] text-ink-500">
-                    <span className="flex items-center gap-1"><Users size={12} /> Up to {t.guestCapacity?.max || '—'}</span>
+                    <span className="flex items-center gap-1"><Users size={12} /> Up to {t.guestCapacity?.max || '-'}</span>
                     <span className="flex items-center gap-1"><Clock size={12} /> {Math.round((t.setupDurationMinutes || 120) / 6) / 10} h setup</span>
                     {t.reviewCount > 0 && <span className="flex items-center gap-1"><Star size={12} /> {Number(t.rating).toFixed(1)}</span>}
                     <span>{t.bookingCount || 0} booked</span>

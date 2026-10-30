@@ -1,16 +1,13 @@
-import { Loader2 } from 'lucide-react';
+import PageSkeleton from '@shared/components/common/Skeleton';
 
 /**
  * The few building blocks every partner page shares. Kept deliberately small:
  * anything used by one page lives with that page.
  */
 
-export function Spinner({ label = 'Loading' }) {
-  return (
-    <div className="flex items-center justify-center py-16" role="status" aria-label={label}>
-      <Loader2 size={22} className="animate-spin text-zappy-600" />
-    </div>
-  );
+// Pages loading show their shape, not a spinner (shared Skeleton).
+export function Spinner({ label = 'Loading', kind = 'list' }) {
+  return <PageSkeleton kind={kind} label={label} />;
 }
 
 export function PageHeader({ title, subtitle, action }) {

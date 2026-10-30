@@ -14,7 +14,6 @@ export default function DispatchSettingsCard() {
       <div>
         <p className="text-[14px] font-bold text-slate-900">How jobs reach your team</p>
         <p className="text-[12px] text-slate-500">{data.openJobs} job{data.openJobs === 1 ? '' : 's'} open right now{data.dispatch.capacity ? ` of your limit of ${data.dispatch.capacity}` : ''}.</p>
-        {data.commissionPct != null && <p className="mt-1 text-[12px] text-slate-500">ZappyOne's commission: {data.commissionPct}% of the service money on each job{data.commissionUntil ? `, your agreed rate until ${new Date(data.commissionUntil).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}` : ''}.</p>}
       </div>
       <div className="space-y-2">
         {DISPATCH_MODES.map((m) => (

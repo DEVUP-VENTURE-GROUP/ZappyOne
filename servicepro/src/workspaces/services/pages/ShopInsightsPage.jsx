@@ -68,7 +68,7 @@ export default function ShopInsightsPage() {
                     </span>
                     <span className="w-14 text-right tabular-nums text-slate-600">{m.jobs} job{m.jobs === 1 ? '' : 's'}</span>
                     <span className="w-20 text-right tabular-nums text-slate-600">{formatPaise(m.valuePaise)}</span>
-                    <span className="w-10 text-right tabular-nums text-slate-500">{m.rating ? `${Number(m.rating).toFixed(1)}★` : '—'}</span>
+                    <span className="w-10 text-right tabular-nums text-slate-500">{m.rating ? `${Number(m.rating).toFixed(1)}★` : '-'}</span>
                   </li>
                 ))}
               </ul>

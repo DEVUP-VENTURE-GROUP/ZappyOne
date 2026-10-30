@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
+import { Bone } from '@shared/components/common/Skeleton';
 import {
-  Wrench, PawPrint, ChevronRight, Loader2, Clock, Banknote, UserX,
+  Wrench, PawPrint, ChevronRight, Clock, Banknote, UserX,
 } from 'lucide-react';
 import { useProviderJobs } from '@shared/provider/useProviderJobs';
 import AssignTechnician from '@shared/provider/components/AssignTechnician';
@@ -21,7 +22,7 @@ export default function ShopJobs({ kinds = ['repair', 'pet'] }) {
   const { mine: jobs, isLoading, refetch } = useProviderJobs({ kinds });
 
   if (isLoading) {
-    return <div className="flex justify-center py-8"><Loader2 size={20} className="animate-spin text-zappy-400" /></div>;
+    return <div className="space-y-2" role="status" aria-label="Loading jobs">{[0, 1, 2].map((i) => <div key={i} className="flex items-center gap-3 py-1.5"><Bone className="h-9 w-9 rounded-xl" /><div className="flex-1 space-y-1.5"><Bone className="h-3.5 w-2/5" /><Bone className="h-3 w-3/5" /></div></div>)}</div>;
   }
 
   if (!jobs.length) {

@@ -1,4 +1,5 @@
 import LoginSecurityCard from '@shared/components/account/LoginSecurityCard';
+import { useFormDraft, DraftRestored } from '@shared/hooks/useFormDraft';
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import toast from 'react-hot-toast';
@@ -18,19 +19,20 @@ export default function ProfilePage() {
   const [presign] = usePresignUploadMutation();
   const partner = data?.partner;
   const [form, setForm] = useState(null);
+  const draft = useFormDraft(partner?._id && `event-profile:${partner._id}`, form, setForm);
   const [photo, setPhoto] = useState(null);
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     if (!partner) return;
-    setForm({
+    draft.take({
       businessName: partner.businessName || '', ownerName: partner.ownerName || '', bio: partner.bio || '',
       yearsExperience: partner.yearsExperience != null ? String(partner.yearsExperience) : '', cities: partner.cities || [],
       serviceRadiusKm: String(partner.serviceRadiusKm || 30),
     });
   }, [partner?._id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (isLoading || !form) return <Spinner />;
+  if (isLoading || !form) return <Spinner kind="form" />;
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
   async function pickPhoto(file) {
@@ -52,6 +54,7 @@ export default function ProfilePage() {
         yearsExperience: form.yearsExperience ? Number(form.yearsExperience) : undefined,
         cities: form.cities, serviceRadiusKm: Number(form.serviceRadiusKm) || 30,
       }).unwrap();
+      draft.saved(form);
       toast.success('Profile saved');
     } catch (e) { toast.error(e?.data?.error || 'Could not save'); }
   }
@@ -59,6 +62,7 @@ export default function ProfilePage() {
   return (
     <div className="space-y-4">
       <PageHeader title="Profile & KYC" subtitle="What customers see about your business." />
+      <DraftRestored show={draft.restored} onDiscard={draft.discard} />
 
       <Card className="space-y-4 p-4">
         <div className="flex items-center gap-4">

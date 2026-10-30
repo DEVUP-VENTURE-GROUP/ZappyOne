@@ -1,14 +1,15 @@
 import { useMemo } from 'react';
+import PageSkeleton from '@shared/components/common/Skeleton';
 import { useNavigate } from 'react-router-dom';
 import {
   ShieldCheck, Clock, XCircle, ChevronRight, Users, IndianRupee,
-  Wrench, MapPin, Loader2, AlertTriangle, Briefcase, Star, UserPlus,
+  Wrench, MapPin, AlertTriangle, Briefcase, Star, UserPlus,
 } from 'lucide-react';
 import {
   useShopMeQuery, useShopKycStatusQuery, useShopEarningsQuery,
   useShopWorkersQuery, useRepairOnboardingStatusQuery,
   useProviderOnboardingStatusQuery,
-  useShopPriceRequestsQuery,
+  useShopPriceRequestsQuery, useProviderWorkspaceQuery,
 } from '@shared/services/api';
 import ProviderServicesCard from '@shared/components/provider/ProviderServicesCard';
 import PartnerTermsCard from '@shared/provider/components/PartnerTermsCard';
@@ -16,8 +17,11 @@ import PartnerDuesCard from '@shared/provider/components/PartnerDuesCard';
 import ShopJobs from '../components/ShopJobs';
 import { useProviderJobs } from '@shared/provider/useProviderJobs';
 import { StatCard, Panel, inr, EarningsOverview, PerformanceGrid } from '@shared/components/worker/DashboardUI';
-import MyAreaChip from '@shared/components/worker/MyAreaChip';
 import { last7, weekDeltaPct } from '@shared/provider/workerHome';
+import ShareStorefront from '../components/ShareStorefront';
+import SetupJourney from '../components/SetupJourney';
+import ShopHeader from '../components/ShopHeader';
+import TradeToday from '../components/TradeToday';
 
 /**
  * The shop owner's dashboard.
@@ -134,6 +138,7 @@ export default function ShopDashboard() {
   // Open jobs of every kind, in one shape (shared with the technician's board).
   const { mine: jobs } = useProviderJobs({ kinds: SHOP_KINDS });
   const { data: setup } = useRepairOnboardingStatusQuery('mobile');
+  const { data: workspace } = useProviderWorkspaceQuery();
 
   /**
    * Service verification already collected the owner ID, storefront photo
@@ -173,9 +178,7 @@ export default function ShopDashboard() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#F8FAFC]">
-        <Loader2 size={28} className="animate-spin text-zappy-500" />
-      </div>
+      <PageSkeleton kind="dashboard" label="Loading your shop" />
     );
   }
 
@@ -199,7 +202,7 @@ export default function ShopDashboard() {
   const perfItems = [
     { label: 'Jobs This Week', value: weekEarnings?.jobs ?? 0, sub: `${earnings?.jobs ?? 0} today` },
     { label: 'Technicians', value: workers.length, sub: 'On your team' },
-    { label: 'Rating', value: shop?.rating ? Number(shop.rating).toFixed(1) : '—', sub: `${shop?.reviewCount || 0} reviews` },
+    { label: 'Rating', value: shop?.rating ? Number(shop.rating).toFixed(1) : '-', sub: `${shop?.reviewCount || 0} reviews` },
     { label: 'Completed', value: shop?.completedJobs ?? 0, sub: 'All time' },
   ];
 
@@ -208,32 +211,21 @@ export default function ShopDashboard() {
     { Icon: Briefcase, tone: 'amber', label: "Today's Jobs", value: earnings?.jobs || 0, sub: 'View all', onClick: () => nav('/shop/earnings') },
     { Icon: Wrench, tone: 'blue', label: 'Needs action', value: needsAction.length, sub: needsAction.length ? 'Assign now' : null, subTone: 'text-zappy-600' },
     { Icon: Users, tone: 'violet', label: 'Technicians', value: workers.length, sub: 'Manage team', onClick: () => nav('/shop/workers') },
-    { Icon: Star, tone: 'cyan', label: 'Rating', value: shop?.rating ? Number(shop.rating).toFixed(1) : '—', sub: `${shop?.reviewCount || 0} reviews`, onClick: () => nav('/shop/reviews') },
+    { Icon: Star, tone: 'cyan', label: 'Rating', value: shop?.rating ? Number(shop.rating).toFixed(1) : '-', sub: `${shop?.reviewCount || 0} reviews`, onClick: () => nav('/shop/reviews') },
     { Icon: ShieldCheck, tone: 'rose', label: 'Awaiting approval', value: pendingApprovals, sub: pendingApprovals ? 'Skills & prices' : null },
   ];
 
   return (
     <div className="pb-12">
       {/* Navigation and sign-out live in the frame (ServiceProShell); this is the shop's day. */}
-      <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 pt-5">
-        <div className="min-w-0 flex-1">
-          <p className="text-[10.5px] font-black uppercase tracking-[0.12em] text-slate-400">Shop partner</p>
-          <h1 className="truncate text-[20px] font-black tracking-tight text-[#0F172A]">{shop?.businessName}</h1>
-          {/* Where customers find the shop, on every screen size. */}
-          {hasPin && <MyAreaChip coordinates={shop.address.location.coordinates} live={liveNow} className="mt-1" />}
-        </div>
-        {/* Whether customers can find you, stated where it cannot be missed. */}
-        <span className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 ${
-          liveNow ? 'border-emerald-200 bg-emerald-50' : 'border-slate-200 bg-white'
-        }`}>
-          <span className={`h-2 w-2 rounded-full ${liveNow ? 'bg-emerald-500' : 'bg-slate-300'}`} />
-          <span className={`text-[12px] font-bold ${liveNow ? 'text-emerald-700' : 'text-slate-500'}`}>
-            {liveNow ? 'Live' : isOpen === false ? 'Closed now' : 'Not live'}
-          </span>
-        </span>
+      <div className="mx-auto max-w-6xl px-4 pt-5">
+        <ShopHeader shop={shop} trade={workspace?.domains?.[0]?.name} live={liveNow} isOpen={isOpen}
+          blocker={kycStatus !== 'approved' ? 'Documents not approved yet' : !hasPin ? 'Pin your shop address' : !shop?.services?.length ? 'Add a service' : null} />
       </div>
 
       <div className="mx-auto max-w-6xl px-4 pt-4">
+        <SetupJourney />
+        {liveNow && <div className="mb-4"><ShareStorefront /></div>}
         {askingNow > 0 && (
           <button type="button" onClick={() => nav('/shop/price-requests')}
             className="mb-4 flex w-full items-center justify-between gap-3 rounded-2xl border border-zappy-200 bg-zappy-50 p-4 text-left">
@@ -297,6 +289,7 @@ export default function ShopDashboard() {
         {/* Main grid */}
         <div className="mt-5 grid gap-5 lg:grid-cols-3">
           <div className="space-y-5 lg:col-span-2">
+            <TradeToday home={workspace?.home} kinds={SHOP_KINDS} />
             <PartnerTermsCard />
             <PartnerDuesCard />
             <Panel

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import PageSkeleton from '@shared/components/common/Skeleton';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { ArrowLeft, Loader2, Store, Landmark, Bell, Wallet, ShieldCheck, ChevronRight, Phone, Mail } from 'lucide-react';
@@ -17,7 +18,7 @@ export default function ShopAccountPage() {
   const [ownerName, setOwnerName] = useState('');
   useEffect(() => { if (shop) setOwnerName(shop.ownerName || ''); }, [shop]);
 
-  if (isLoading || !shop) return <div className="flex min-h-screen items-center justify-center"><Loader2 className="animate-spin text-zappy-500" /></div>;
+  if (isLoading || !shop) return <PageSkeleton kind="form" label="Loading your profile" />;
 
   async function submit() {
     try { await save({ ownerName: ownerName.trim() }).unwrap(); toast.success('Saved'); } catch (err) { toast.error(err?.data?.error || 'Could not save'); }

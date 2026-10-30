@@ -122,7 +122,7 @@ export default function PackageEditorPage() {
       </Card>
 
       <Card className="space-y-4 p-4">
-        <Field label="Price the customer pays (₹)" required hint={price ? `You keep about ₹${Math.round(price * (100 - pct) / 100).toLocaleString('en-IN')} after ZappyOne's ${pct}% commission.` : 'All-in: setup, materials and travel within the places you serve.'}>
+        <Field label="Price the customer pays (₹)" required hint={price ? `You keep about ₹${Math.round(price * (100 - pct) / 100).toLocaleString('en-IN')}.` : 'All-in: setup, materials and travel within the places you serve.'}>
           <input className="input w-full" inputMode="numeric" value={form.price} onChange={(e) => set('price', e.target.value.replace(/\D/g, ''))} placeholder="4999" />
         </Field>
         <div className="grid grid-cols-2 gap-3">
