@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import {
-  CheckCircle, HeadphonesIcon, Loader2, ShieldAlert, ShieldCheck, X, Navigation, Repeat2, Clock,
+  BadgeIndianRupee, Clock, HeadphonesIcon, Loader2, Navigation, Repeat2, ShieldAlert, ShieldCheck, UserX, X,
 } from 'lucide-react';
 import LiveTrackingMap from '@shared/modules/tracking/LiveTrackingMap';
 import { useTrackingFeed } from '@shared/hooks/useLiveTrip';
@@ -12,10 +12,9 @@ import { useSocketStatus } from '@shared/hooks/useSocket';
 import PageTransition from '../../components/common/PageTransition';
 import StatusNotificationBanner from './cards/StatusNotificationBanner';
 import {
-  TrackingHeader, MapETAChip, SearchingHero, WorkerRichCard, PremiumTimeline, ActivityFeed,
-  BookingSummary, ProofPhoto, RatingPanel, stepsFor, feedCopy, firstNameOf,
+  TrackingHeader, StatusBlock, Section, Row, SearchingHero, WorkerRichCard, ActivityFeed,
+  BookingSummary, ProofPhoto, RatingPanel, feedCopy, firstNameOf,
 } from './redesign';
-import { staggerContainer, fadeInUp } from '../../lib/animations';
 import StartCodeCard from './StartCodeCard';
 import JobBoostCard from './cards/JobBoostCard';
 import SlowSearchCard from './cards/SlowSearchCard';
@@ -90,9 +89,6 @@ export default function JobTrackingPage({ job, extras = null, startCode = null, 
   const workerLocation = live?.workerLocation ?? feed.workerLocation;
   const eta = live?.etaMinutes ?? feed.etaMinutes;
   const status = job.status;
-  const steps = useMemo(() => stepsFor(job.noun), [job.noun]);
-  const activeStepIdx = steps.findIndex((s) => s.key === status);
-  const timesByStatus = useMemo(() => Object.fromEntries(job.history.map((h) => [h.stage, h.at])), [job.history]);
   const feedEvents = useMemo(() => {
     const fn = firstNameOf(job.provider?.name);
     return job.history
@@ -122,197 +118,147 @@ export default function JobTrackingPage({ job, extras = null, startCode = null, 
     }
   }
 
+  const stopped = ['cancelled', 'failed'].includes(status);
+  const needsYou = ['CUSTOMER_APPROVAL_PENDING', 'AWAITING_CUSTOMER_APPROVAL', 'APPROVAL_REQUIRED'].includes(job.rawStatus);
+  const openCancel = () => { setCancelReason(''); setCancelOpen(true); if (optionsOn) refetchOptions(); };
+
   return (
     <PageTransition>
       <StatusNotificationBanner
         status={status}
-        needsYou={['CUSTOMER_APPROVAL_PENDING', 'AWAITING_CUSTOMER_APPROVAL', 'APPROVAL_REQUIRED'].includes(job.rawStatus)}
+        needsYou={needsYou}
         workerName={job.provider?.name}
         workerRating={job.provider?.rating ?? null}
         workerJobs={job.provider?.jobs}
         etaMinutes={eta}
       />
 
-      <div className="min-h-screen bg-canvas pb-[164px]">
-        <AnimatePresence>
-          {socketStatus !== 'connected' && !job.terminal && (
-            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-              <div className={`flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold text-white ${socketStatus === 'offline' ? 'bg-red-600' : 'bg-amber-500'}`}>
-                <Loader2 size={12} className="shrink-0 animate-spin" />
-                {socketStatus === 'offline' ? 'Live updates unavailable. Showing the last known state' : 'Reconnecting live updates…'}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+      <div className="min-h-screen bg-sunken">
+        <div className={`mx-auto min-h-screen w-full max-w-2xl bg-white ${job.terminal ? 'pb-[260px]' : 'pb-10'}`}>
+          <AnimatePresence>
+            {socketStatus !== 'connected' && !job.terminal && (
+              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                <div className={`flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold text-white ${socketStatus === 'offline' ? 'bg-red-600' : 'bg-amber-500'}`}>
+                  <Loader2 size={12} className="shrink-0 animate-spin" />
+                  {socketStatus === 'offline' ? 'Live updates unavailable. Showing the last known state' : 'Reconnecting live updates…'}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-        <TrackingHeader
-          job={job} status={status} eta={eta} terminal={job.terminal}
-          onBack={onBack || (() => goBack())}
-          onSOS={() => setSosOpen(true)}
-          onSupport={() => nav('/support')}
-        />
+          <TrackingHeader job={job} terminal={job.terminal} onBack={onBack || (() => goBack())} onSOS={() => setSosOpen(true)} onSupport={() => nav('/support')} />
 
-        <motion.div
-          className="mx-auto w-full max-w-2xl space-y-3.5 px-4 pt-4 sm:px-6 lg:max-w-4xl lg:columns-2 lg:gap-4 lg:space-y-0 lg:[&>*]:mb-3.5 lg:[&>*]:break-inside-avoid"
-          variants={staggerContainer} initial="initial" animate="animate"
-        >
           {showMap && (
-            <motion.div variants={fadeInUp} ref={mapRef} className="relative lg:[column-span:all]">
+            <div ref={mapRef} className="relative">
               <LiveTrackingMap
                 pickup={target}
                 workerLocation={workerLocation}
                 status={status === 'arrived' ? 'arrived' : 'on_the_way'}
-                height="42vh"
+                height="38vh"
                 pickupLabel={job.trip && !job.trip.toCustomer ? 'Drop-off' : "You're here"}
               />
-              <MapETAChip eta={eta} status={status} />
               {route && (
                 <a href={route} target="_blank" rel="noopener noreferrer"
-                  className="absolute right-3 top-3 z-20 flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[12.5px] font-semibold text-navy shadow-md ring-1 ring-slate-200">
-                  <Navigation size={13} className="text-zappy-600" /> Open in Maps
+                  className="absolute right-3 top-3 z-20 flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[12.5px] font-semibold text-ink-900 shadow-md">
+                  <Navigation size={13} /> Open in Maps
                 </a>
               )}
-            </motion.div>
+            </div>
           )}
 
-          {status === 'searching' && <SearchingHero etaMinutes={null} search={options?.search} noun={job.noun} />}
+          <StatusBlock job={job} status={status} eta={eta} options={options} needsYou={needsYou}>
+            {status === 'searching' && <SearchingHero search={options?.search} noun={job.noun} />}
+            <StartCodeCard jobKey={`${job.kind}:${job.id}`} code={startCode} stage={codeStage || status} noun={job.noun} />
+            {options?.moreTime?.until && !job.terminal && status !== 'in_progress' && (
+              <Row Icon={Clock} title={`Finishing by ${new Date(options.moreTime.until).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' })}`}
+                sub={`${options.moreTime.reason}. Nothing extra is charged unless you approve a new quote.`} />
+            )}
+          </StatusBlock>
 
           {job.provider && !job.terminal && (
-            <div className="lg:[column-span:all]">
-              <WorkerRichCard
-                job={job} eta={eta} status={status}
-                onCall={job.provider.phone ? () => { window.location.href = `tel:${job.provider.phone}`; } : undefined}
-                onChat={job.kind !== 'order' ? () => setChatOpen(true) : undefined}
-                onLive={showMap ? () => mapRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }) : undefined}
-              />
-            </div>
+            <WorkerRichCard job={job}
+              onCall={job.provider.phone ? () => { window.location.href = `tel:${job.provider.phone}`; } : undefined}
+              onChat={job.kind !== 'order' ? () => setChatOpen(true) : undefined} />
           )}
 
-          {/* The arrival promise (jobs/promise): due by when, said plainly when it slips. */}
-          {options?.arrival && !options.arrival.arrivedAt && job.provider && !job.terminal && (
-            <div className={`flex items-center gap-3 rounded-2xl px-4 py-3 ring-1 lg:[column-span:all] ${options.arrival.late ? 'bg-amber-50 ring-amber-200' : 'bg-white ring-slate-100'}`}>
-              <Clock size={18} className={options.arrival.late ? 'text-amber-600' : 'text-zappy-600'} />
-              <p className="text-[13px] text-slate-700">
-                {options.arrival.late
-                  ? <>Running late. We have told your {job.noun}; follow them live below, or call them.</>
-                  : <>Your {job.noun} is due by <b className="text-navy">{new Date(options.arrival.dueBy).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' })}</b>{options.arrival.scheduled ? ' (your booked time)' : ''}.</>}
-              </p>
-            </div>
-          )}
-
-          <StartCodeCard jobKey={`${job.kind}:${job.id}`} code={startCode} stage={codeStage || status} noun={job.noun} />
-
-          {/* The pro said the work needs longer (jobs/more-time). */}
-          {options?.moreTime?.until && !job.terminal && (
-            <div className="flex items-center gap-3 rounded-2xl bg-white px-4 py-3 ring-1 ring-slate-100 lg:[column-span:all]">
-              <Clock size={18} className="text-zappy-600" />
-              <p className="text-[13px] text-slate-700">
-                {options.moreTime.reason}. Your {job.noun} expects to finish by <b className="text-navy">{new Date(options.moreTime.until).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' })}</b>. Nothing extra is charged unless you approve a new quote.
-              </p>
-            </div>
-          )}
-
-          {options?.providerChangedAt && !job.provider && (
-            <div className="rounded-2xl bg-amber-50 px-4 py-3 text-[13px] leading-relaxed text-amber-900 ring-1 ring-amber-100">
-              <p className="font-semibold">Your {job.noun} could not make it</p>
-              <p className="mt-0.5">We are finding the next one now. If you would rather not wait, you can cancel free.</p>
-            </div>
-          )}
-          {!job.provider && !job.terminal && options?.search && (
-            <SlowSearchCard jobId={job.id} noun={job.noun} search={options.search} reschedule={options.reschedule}
-              onCancel={cancel ? () => { setCancelReason(''); setCancelOpen(true); refetchOptions(); } : null} onMoved={refetchOptions} />
-          )}
-          {!job.provider && !job.terminal && (
-            <JobBoostCard jobId={job.id} boost={options?.boost} since={job.createdAt} noun={job.noun} onBoosted={refetchOptions} />
-          )}
           {options?.providerAbsent?.open && job.provider && (
-            <div className="rounded-2xl bg-white px-4 py-3 ring-1 ring-slate-100">
-              <p className="text-[13px] font-semibold text-navy">Is your {job.noun} not coming?</p>
-              <p className="mt-0.5 text-[12.5px] text-slate-500">Try calling them first. If they still are not on their way, we will find someone else.</p>
-              <button type="button" disabled={reportingAbsent}
-                onClick={async () => {
-                  try { const r = await reportAbsent(job.id).unwrap(); toast.success(r.message); refetchOptions(); }
-                  catch (err) { toast.error(err?.data?.error || 'Could not report that'); }
-                }}
-                className="mt-2.5 flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 text-[13px] font-semibold text-slate-700 disabled:opacity-50">
-                {reportingAbsent && <Loader2 size={14} className="animate-spin" />} Find me someone else
-              </button>
-            </div>
+            <Section>
+              <Row Icon={UserX} title={`Is your ${job.noun} not coming?`} sub="Call them first. If they still are not on their way, we will find someone else."
+                right={(
+                  <button type="button" disabled={reportingAbsent}
+                    onClick={async () => {
+                      try { const r = await reportAbsent(job.id).unwrap(); toast.success(r.message); refetchOptions(); }
+                      catch (err) { toast.error(err?.data?.error || 'Could not report that'); }
+                    }}
+                    className="flex h-9 shrink-0 items-center gap-1.5 rounded-lg border border-line px-3 text-[13px] font-semibold text-ink-900 disabled:opacity-50">
+                    {reportingAbsent && <Loader2 size={13} className="animate-spin" />} Find another
+                  </button>
+                )} />
+            </Section>
           )}
 
-          {extras}
-
-          {/* The same booking on a schedule (jobs/recurring): repairs/services and helping. */}
-          {['repair', 'helping'].includes(job.kind) && status === 'completed' && (
-            <RepeatCard jobId={job.id} noun={job.noun === 'helper' ? 'task' : 'booking'} />
+          {!job.provider && !job.terminal && (
+            <Section className="space-y-3">
+              {options?.providerChangedAt && (
+                <p className="text-[14px] text-ink-700"><b className="text-ink-900">Your {job.noun} could not make it.</b> We are finding the next one now. If you would rather not wait, you can cancel free.</p>
+              )}
+              {options?.search && (
+                <SlowSearchCard jobId={job.id} noun={job.noun} search={options.search} reschedule={options.reschedule}
+                  onCancel={cancel ? openCancel : null} onMoved={refetchOptions} />
+              )}
+              <JobBoostCard jobId={job.id} boost={options?.boost} since={job.createdAt} noun={job.noun} onBoosted={refetchOptions} />
+            </Section>
           )}
 
-          {/* At the bill (optional tip, total with it in), or after the job. */}
+          {extras && <Section className="space-y-3">{extras}</Section>}
+
           {(status === 'completed' || options?.tip?.beforePayment) && (
-            <JobTipCard jobId={job.id} tip={options?.tip} name={job.provider?.name ? firstNameOf(job.provider.name) : null} onTipped={refetchOptions} />
+            <Section className="space-y-3">
+              <JobTipCard jobId={job.id} tip={options?.tip} name={job.provider?.name ? firstNameOf(job.provider.name) : null} onTipped={refetchOptions} />
+              {['repair', 'helping'].includes(job.kind) && status === 'completed' && <RepeatCard jobId={job.id} noun={job.noun === 'helper' ? 'task' : 'booking'} />}
+            </Section>
           )}
 
-          {!['cancelled', 'failed'].includes(status) && (
-            <PremiumTimeline steps={steps} activeStepIdx={activeStepIdx} timesByStatus={timesByStatus} />
+          {status === 'completed' && job.proofs.length > 0 && (
+            <Section title="Photos of the work">
+              <div className={`mt-2 grid gap-2 ${job.proofs.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                {job.proofs.map((url, i) => <ProofPhoto key={i} url={url} index={i} />)}
+              </div>
+            </Section>
           )}
-          {!['cancelled', 'failed'].includes(status) && <ActivityFeed events={feedEvents} live={!job.terminal} />}
 
-          {['cancelled', 'failed'].includes(status) && (
-            <motion.div variants={fadeInUp} className="rounded-[24px] bg-white p-6 text-center ring-1 ring-slate-900/5 lg:[column-span:all]">
-              <p className="text-lg font-bold text-navy">{status === 'cancelled' ? 'Booking cancelled' : 'This could not be completed'}</p>
-              <p className="mx-auto mt-1.5 max-w-xs text-sm text-slate-500">{job.statusLabel || 'It is no longer being tracked.'}</p>
-            </motion.div>
-          )}
+          {!stopped && <ActivityFeed events={feedEvents} live={!job.terminal} />}
 
           <BookingSummary job={job} onReceipt={receiptHandler} />
 
-          {status === 'completed' && job.proofs.length > 0 && (
-            <motion.div variants={fadeInUp} className="rounded-2xl bg-white p-4 ring-1 ring-slate-100">
-              <p className="mb-3 flex items-center gap-2 text-sm font-bold text-navy"><CheckCircle size={15} className="text-emerald-600" /> Photos of the work</p>
-              <div className={`grid gap-2 ${job.proofs.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
-                {job.proofs.map((url, i) => <ProofPhoto key={i} url={url} index={i} />)}
+          {!stopped && (
+            <Section title="ZappyOne promise">
+              <div className="divide-y divide-line">
+                <Row Icon={ShieldCheck} title="Verified professionals" sub="ID and skills checked before their first job" />
+                <Row Icon={BadgeIndianRupee} title="Price agreed before work" sub="Nothing extra is charged without your approval" />
+                <Row Icon={HeadphonesIcon} title="Help when you need it" sub="Chat with ZappyOne support" onClick={() => nav('/support')} />
               </div>
-            </motion.div>
+            </Section>
           )}
 
-          {!job.terminal && (
-            <p className="flex items-center justify-center gap-2 pt-1 text-[11.5px] font-semibold text-[#647084]">
-              <ShieldCheck size={14} className="text-[#12A150]" /> Payment protected, Verified professionals
-            </p>
+          {cancel && !job.terminal && (
+            <Section title="Cancel booking">
+              <Row Icon={X} title="Cancel this booking" sub={cancel.note || 'You see any fee before you confirm.'} onClick={openCancel} tone="danger" />
+            </Section>
           )}
-        </motion.div>
-
-        {/* Bottom bar: rate when done, otherwise help and (when allowed) cancel. */}
-        <div className="fixed inset-x-0 bottom-0 z-30" style={{ background: 'linear-gradient(180deg, rgba(245,246,248,0) 0%, rgba(245,246,248,.94) 26%, #F5F6F8 62%)' }}>
-          <div className="mx-auto w-full max-w-2xl space-y-2.5 px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-4 sm:px-6 lg:max-w-4xl">
-            {status === 'completed' && onRate && <RatingPanel onRate={onRate} />}
-            {job.terminal ? (
-              <>
-                {/* The same job again, one tap: the booking opens with it already chosen. */}
-                {rebookHref && status === 'completed' && (
-                  <button type="button" onClick={() => nav(rebookHref)} className="btn-primary w-full">
-                    <Repeat2 size={18} /> Book again
-                  </button>
-                )}
-                <button type="button" onClick={() => nav('/')} className={rebookHref && status === 'completed' ? 'btn-outline w-full' : 'btn-primary w-full'}>
-                  Back to home
-                </button>
-              </>
-            ) : (
-              <>
-                <button type="button" onClick={() => nav('/support')} className="btn-outline w-full">
-                  <HeadphonesIcon size={18} /> Get help
-                </button>
-                {cancel && (
-                  <button type="button" onClick={() => { setCancelReason(''); setCancelOpen(true); if (optionsOn) refetchOptions(); }}
-                    className="flex h-11 w-full items-center justify-center gap-2 rounded-btn text-[14px] font-semibold text-ink-500 hover:text-red-600">
-                    <X size={16} /> Cancel booking
-                  </button>
-                )}
-              </>
-            )}
-          </div>
         </div>
+
+        {job.terminal && (
+          <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-white">
+            <div className="mx-auto w-full max-w-2xl space-y-2.5 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 sm:px-6">
+              {status === 'completed' && onRate && <RatingPanel onRate={onRate} name={job.provider?.name ? firstNameOf(job.provider.name) : null} />}
+              {rebookHref && status === 'completed' && (
+                <button type="button" onClick={() => nav(rebookHref)} className="btn-primary w-full"><Repeat2 size={18} /> Book again</button>
+              )}
+              <button type="button" onClick={() => nav('/')} className={rebookHref && status === 'completed' ? 'btn-outline w-full' : 'btn-primary w-full'}>Back to home</button>
+            </div>
+          </div>
+        )}
 
         <AnimatePresence>
           {cancelOpen && cancel?.run && (

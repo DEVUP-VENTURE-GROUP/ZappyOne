@@ -60,7 +60,7 @@ export function EventBookingDetailPage() {
       {header}
       <ScrollView contentContainerStyle={[styles.body, { paddingBottom: insets.bottom + spacing.xxl }]}
         refreshControl={<RefreshControl refreshing={isFetching && !isLoading} onRefresh={refetch} />}>
-        {codeStage && booking.startCode ? <StartCodeCard jobKey={`event:${booking._id}`} code={booking.startCode} stage={codeStage} noun="decor team" /> : null}
+        {codeStage && booking.startCode ? <StartCodeCard framed jobKey={`event:${booking._id}`} code={booking.startCode} stage={codeStage} noun="decor team" /> : null}
         {st.step >= 0 ? <EventTimeline step={st.step} /> : null}
 
         <View style={styles.card}>

@@ -328,11 +328,8 @@ export default function HomePage() {
                 </div>
               )}
               {nothingLive && (
-                <div className="rounded-card border border-line bg-surface px-4 py-4">
-                  <p className="text-[16px] font-extrabold text-ink-900">Pros are joining near {loc.primary || 'you'}</p>
-                  <p className="mt-1 text-[13.5px] leading-relaxed text-ink-500">Nobody is verified at this exact address yet. Tap the bell on what you need and we will tell you the day it opens, or try another address.</p>
-                  <button type="button" onClick={() => setLocSheet(true)} className="mt-3 text-[13px] font-bold text-zappy-700">Change address</button>
-                </div>
+                <NotInYourArea soon place={loc.primary} lat={loc.lat} lng={loc.lng}
+                  address={[loc.primary, loc.secondary].filter(Boolean).join(', ')} areas={svc?.areas || []} onChangeLocation={() => setLocSheet(true)} />
               )}
               {nothingLive && !loadingCatalog && <ComingSoonRow groups={comingSoon} loc={loc} />}
 

@@ -34,6 +34,7 @@ import WarrantyCard from './cards/WarrantyCard';
 import SmartMatchSheet from './cards/SmartMatchSheet';
 import QuickRebook from './cards/QuickRebook';
 import CashbackCelebration from '../wallet/CashbackCelebration';
+import StatusBlock from './redesign/StatusBlock';
 
 // The redesigned presentational pieces
 import {
@@ -406,6 +407,8 @@ export default function OrderTrackingPage() {
           onSOS={() => setShowSOSConfirm(true)} onSupport={() => nav('/support')}
         />
 
+        <StatusBlock job={job} status={status} eta={eta} />
+
         {/* BODY */}
         <motion.div
           className="w-full max-w-2xl lg:max-w-4xl mx-auto px-4 sm:px-6 pt-4 space-y-3.5 lg:space-y-0 lg:columns-2 lg:gap-4 lg:[&>*]:mb-3.5 lg:[&>*]:break-inside-avoid"
@@ -427,39 +430,13 @@ export default function OrderTrackingPage() {
             />
           )}
 
-          {/* Failed state — expansion hype card */}
           {status === 'failed' && (
-            <motion.div variants={fadeInUp} className="rounded-card overflow-hidden lg:[column-span:all]"
-              style={{ background: 'linear-gradient(#0F172A, #0F172A)', boxShadow: '0 12px 40px rgba(15,23,42,0.45)' }}>
-              <div className="h-1 w-full" style={{ background: 'linear-gradient(#3B82F6, #3B82F6)' }} />
-              <div className="px-5 pt-5 pb-6">
-                <motion.div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4 mx-auto"
-                  style={{ background: 'rgba(59,130,246,0.18)', border: '1.5px solid rgba(59,130,246,0.35)' }}
-                  animate={{ y: [0, -5, 0] }} transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}>
-                  <span className="text-3xl">🚀</span>
-                </motion.div>
-                <p className="text-center font-black text-white text-lg leading-snug mb-1">We're launching in your area soon!</p>
-                <p className="text-center text-xs font-semibold text-zappy-300 mb-4">
-                  You're one of our <span className="text-amber-400">early pioneers</span> in this location
-                </p>
-                <div className="rounded-xl px-4 py-3 mb-5 text-xs text-zappy-200 text-center leading-relaxed" style={{ background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.2)' }}>
-                  No ZappyOne workers are in your zone <strong className="text-white">yet</strong> - but we're expanding fast.
-                  <br /><span className="text-amber-300 font-semibold">Sit tight - it won't be long.</span>
-                </div>
-                <div className="space-y-2.5">
-                  <motion.button whileTap={{ scale: 0.97 }}
-                    onClick={() => toast("We'll notify you the moment workers go live in your area!", { duration: 4000, style: { fontWeight: 600 } })}
-                    className="w-full h-12 rounded-2xl font-extrabold text-sm flex items-center justify-center gap-2 text-white"
-                    style={{ background: 'linear-gradient(#3B82F6, #3B82F6)', boxShadow: '0 6px 20px rgba(59,130,246,0.45)' }}>
-                    <span>🔔</span> Notify me when live here
-                  </motion.button>
-                  <button onClick={() => nav(`/book/${order.service}`)}
-                    className="w-full h-10 rounded-2xl border font-semibold text-xs flex items-center justify-center gap-1.5"
-                    style={{ borderColor: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.55)' }}>
-                    <RefreshCw size={12} /> Try again anyway
-                  </button>
-                </div>
-              </div>
+            <motion.div variants={fadeInUp} className="rounded-card border border-line bg-white p-5 lg:[column-span:all]">
+              <p className="text-[15px] font-bold text-ink-900">No pro is free near you right now</p>
+              <p className="mt-1 text-[13px] text-ink-500">We are adding pros in your area. You can try again now, or later today.</p>
+              <button type="button" onClick={() => nav(`/book/${order.service}`)} className="btn-primary mt-4 w-full">
+                <RefreshCw size={15} /> Try again
+              </button>
             </motion.div>
           )}
 
@@ -496,7 +473,7 @@ export default function OrderTrackingPage() {
 
           {/* SEARCHING hero — replaces the empty worker slot with a live-search visual */}
           {['searching', 'created'].includes(status) && (
-            <SearchingHero etaMinutes={eta} />
+            <SearchingHero framed />
           )}
 
           {/* WORKER card (rich) — full width on desktop */}

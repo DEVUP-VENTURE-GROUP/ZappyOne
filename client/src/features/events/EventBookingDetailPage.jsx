@@ -136,7 +136,7 @@ export default function EventBookingDetailPage() {
 
       <div className="px-4 py-4 space-y-4">
         {/* The host reads this out before the team starts at the venue (server: jobs/start-code). */}
-        <StartCodeCard
+        <StartCodeCard framed
           jobKey={`event:${booking._id}`}
           code={booking.startCode}
           stage={status === 'partner_assigned' ? 'arrived' : status === 'confirmed' ? 'on_the_way' : null}

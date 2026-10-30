@@ -10,4 +10,6 @@ export { default as RatingPanel }    from './RatingPanel';
 export { default as ProofPhoto }     from './ProofPhoto';
 export { default as SearchingHero }  from './SearchingHero';
 export { default as Avatar }         from './Avatar';
+export { default as StatusBlock }    from './StatusBlock';
+export { Section, Row }               from './Section';
 export { STEPS, stepsFor, STATUS_PILL, feedCopy, fmtTime, firstNameOf, shortId, money, rupeesOf } from '@shared/customer/trackingSteps';

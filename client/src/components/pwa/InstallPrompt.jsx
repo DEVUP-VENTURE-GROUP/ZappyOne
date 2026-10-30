@@ -1,116 +1,41 @@
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { AnimatePresence, motion } from 'framer-motion';
-import { X, BadgeCheck, Zap, MapPin, Bell, ShieldCheck } from 'lucide-react';
+import { Loader2, X } from 'lucide-react';
 import { usePWAInstall } from '../../hooks/usePWAInstall';
 import { ZappyAppIcon } from '@shared/components/common/ZappyLogo';
-import InstallButton from './InstallButton';
 import IOSInstallModal from './IOSInstallModal';
 
-const FEATURES = [
-  { Icon: Zap,         label: 'Faster Experience' },
-  { Icon: MapPin,      label: 'Live Tracking' },
-  { Icon: Bell,        label: 'Instant Notifications' },
-  { Icon: ShieldCheck, label: 'Secure Payments' },
-];
-
-// Paths that count as the Home Page. Never render anywhere else.
 const HOME_PATHS = new Set(['/', '/home']);
 
-/**
- * InstallPrompt — the premium "Install Zappy" card.
- *
- * Renders only on the Home Page, only when installable and not dismissed.
- * Floats above the bottom nav on mobile / bottom-right on desktop. All install
- * behavior is delegated to `usePWAInstall`; this file is composition + motion.
- */
+// One slim row above the bottom bar, as Swiggy and Blinkit ask: it never covers the page it sits on.
 export default function InstallPrompt() {
   const { pathname } = useLocation();
   const { canShow, isIOS, installing, promptInstall, dismiss } = usePWAInstall();
   const [iosModalOpen, setIosModalOpen] = useState(false);
 
-  const onHome = HOME_PATHS.has(pathname);
-
-  const handleInstall = async () => {
-    const result = await promptInstall();
-    if (result === 'ios') setIosModalOpen(true);
-    // 'accepted' / 'dismissed' / 'unavailable' are handled inside the hook.
-  };
-
-  const visible = onHome && canShow;
+  async function install() {
+    if ((await promptInstall()) === 'ios') setIosModalOpen(true);
+  }
 
   return (
     <>
-      <AnimatePresence>
-        {visible && (
-          <motion.div
-            key="install-prompt"
-            role="dialog"
-            aria-label="Install the ZappyOne app"
-            initial={false}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed z-[110] pointer-events-none
-                       left-3 right-3 sm:left-auto sm:right-6 sm:w-[400px]
-                       bottom-[calc(104px_+_env(safe-area-inset-bottom))]
-                       sm:bottom-6"
-          >
-            <div
-              className="pointer-events-auto relative overflow-hidden rounded-card
-                         border border-white/60 bg-white
-                         shadow-[0_20px_50px_-12px_rgba(15,23,42,0.28)]
-                         p-4 sm:p-5"
-            >
-              {/* Close */}
-              <button
-                type="button"
-                onClick={dismiss}
-                aria-label="Dismiss install prompt"
-                className="absolute right-3 top-3 grid place-items-center w-7 h-7 rounded-full
-                           text-slate-400 hover:text-slate-600 hover:bg-slate-900/5 transition-colors z-10"
-              >
-                <X size={16} />
-              </button>
-
-              {/* Header: logo + title + verified badge */}
-              <div className="relative flex items-start gap-3 pr-6">
-                <ZappyAppIcon size={52} variant="light" className="shrink-0" />
-                <div className="min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <h3 className="text-base font-bold text-navy-900 leading-tight">Install ZappyOne</h3>
-                    <BadgeCheck size={16} className="text-zappy-600 shrink-0" aria-label="Verified" />
-                  </div>
-                  <p className="mt-1 text-[13px] leading-snug text-slate-500">
-                    Book trusted professionals, track your services in real time, receive instant
-                    updates, and enjoy a faster app-like experience.
-                  </p>
-                </div>
-              </div>
-
-              {/* Feature chips */}
-              <div className="relative mt-3 flex flex-wrap gap-1.5">
-                {FEATURES.map(({ Icon, label }) => (
-                  <span
-                    key={label}
-                    className="inline-flex items-center gap-1 rounded-full bg-slate-900/[0.04]
-                               px-2.5 py-1 text-[11px] font-medium text-slate-600"
-                  >
-                    <Icon size={12} className="text-zappy-600" strokeWidth={2.25} />
-                    {label}
-                  </span>
-                ))}
-              </div>
-
-              {/* Primary CTA */}
-              <div className="relative mt-4">
-                <InstallButton onClick={handleInstall} loading={installing} />
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
+      {HOME_PATHS.has(pathname) && canShow && (
+        <div role="region" aria-label="Get the ZappyOne app"
+          className="fixed inset-x-3 bottom-[calc(84px_+_env(safe-area-inset-bottom))] z-[110] mx-auto flex max-w-md items-center gap-3 rounded-2xl bg-ink-900 py-2 pl-2 pr-2 text-white shadow-lg sm:bottom-6 sm:left-auto sm:right-6">
+          <ZappyAppIcon size={36} variant="light" className="shrink-0" />
+          <div className="min-w-0 flex-1">
+            <p className="text-[13px] font-bold leading-tight">Get the ZappyOne app</p>
+            <p className="truncate text-[11.5px] text-white/60">Live tracking and instant updates</p>
+          </div>
+          <button type="button" onClick={install} disabled={installing} aria-busy={installing}
+            className="flex h-8 shrink-0 items-center gap-1 rounded-lg bg-white px-3 text-[12.5px] font-bold text-ink-900 disabled:opacity-70">
+            {installing ? <Loader2 size={14} className="animate-spin" /> : null}{isIOS ? 'How to' : 'Install'}
+          </button>
+          <button type="button" onClick={dismiss} aria-label="Not now" className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-white/60 hover:text-white">
+            <X size={16} />
+          </button>
+        </div>
+      )}
       <IOSInstallModal open={iosModalOpen} onClose={() => setIosModalOpen(false)} />
     </>
   );

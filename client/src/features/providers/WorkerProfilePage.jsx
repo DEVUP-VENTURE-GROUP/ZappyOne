@@ -1,6 +1,6 @@
 import { useSafeBack } from '../../hooks/useBookingFlow';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ShieldCheck, Star, BadgeCheck, CalendarDays, Briefcase, MessageSquareQuote } from 'lucide-react';
+import { ArrowLeft, BadgeCheck, MessageSquareQuote, ShieldCheck, Star, UserRound } from 'lucide-react';
 import { useGetOrderQuery, useGetWorkerPublicProfileQuery } from '@shared/services/api';
 
 /**
@@ -22,28 +22,6 @@ function ago(date) {
   if (days < 7) return `${days} day${days === 1 ? '' : 's'} ago`;
   if (days < 30) return `${Math.floor(days / 7)} week${days < 14 ? '' : 's'} ago`;
   return new Date(date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
-}
-
-function Stars({ value, size = 14 }) {
-  return (
-    <span className="flex items-center gap-0.5" aria-label={`${value} out of 5`}>
-      {[1, 2, 3, 4, 5].map((n) => (
-        <Star key={n} size={size} className={n <= Math.round(value) ? 'fill-amber-400 text-amber-400' : 'text-line-strong'} />
-      ))}
-    </span>
-  );
-}
-
-function Fact({ icon: Icon, label, value }) {
-  return (
-    <div className="flex items-center gap-3 rounded-card border border-line bg-white p-3.5">
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-btn bg-sunken text-ink-700"><Icon size={17} /></span>
-      <span className="min-w-0">
-        <span className="block text-[12px] text-ink-500">{label}</span>
-        <span className="block truncate text-[15px] font-semibold text-ink-900">{value}</span>
-      </span>
-    </div>
-  );
 }
 
 export default function WorkerProfilePage() {
@@ -75,112 +53,107 @@ export default function WorkerProfilePage() {
   const bookablePath = verifiedServices.find((s) => s.path)?.path || null;
   const rebook = () => (bookablePath ? nav(`${bookablePath}?preferredWorker=${workerId}`) : nav('/services'));
 
+  const levels = [[5, 'Excellent', 'bg-green-600'], [4, 'Good', 'bg-lime-500'], [3, 'Average', 'bg-yellow-400'], [2, 'Bad', 'bg-orange-400'], [1, 'Very bad', 'bg-red-500']];
+
   return (
-    <div className="min-h-screen bg-canvas pb-32">
-      <header className="sticky top-0 z-20 border-b border-line bg-white">
-        <div className="mx-auto flex max-w-2xl items-center gap-2 px-4 py-2.5">
-          <button type="button" onClick={() => goBack()} aria-label="Back" className="back-btn -ml-1.5"><ArrowLeft size={19} /></button>
-          <p className="text-[17px] font-bold text-ink-900">Profile</p>
-        </div>
-      </header>
+    <div className="min-h-screen bg-sunken">
+      <div className="mx-auto min-h-screen max-w-2xl bg-white pb-28">
+        <header className="sticky top-0 z-20 bg-white px-2 py-2">
+          <button type="button" onClick={() => goBack()} aria-label="Back" className="grid h-10 w-10 place-items-center rounded-full text-ink-900 hover:bg-sunken"><ArrowLeft size={21} /></button>
+        </header>
 
-      <main className="mx-auto flex max-w-2xl flex-col gap-4 px-4 pt-5">
-        {/* Who */}
-        <section className="flex items-center gap-4 rounded-card border border-line bg-white p-4">
-          <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-zappy-50 text-[22px] font-bold text-zappy-700">
-            {initials}
-          </span>
-          <div className="min-w-0">
-            <h1 className="truncate text-[21px] font-bold text-ink-900">{isLoading ? '…' : name}</h1>
-            <div className="mt-1 flex flex-wrap items-center gap-1.5">
-              {isVerified && <span className="chip bg-green-50 text-green-700"><ShieldCheck size={12} /> ID verified</span>}
-              {rating != null
-                ? <span className="chip bg-amber-50 text-amber-800"><Star size={12} className="fill-amber-400 text-amber-400" /> {Number(rating).toFixed(1)}, {ratingCount} rating{ratingCount === 1 ? '' : 's'}</span>
-                : <span className="chip bg-sunken text-ink-700">New on ZappyOne</span>}
+        <section className="border-b-8 border-sunken px-4 pb-6 text-center">
+          <span className="mx-auto flex h-24 w-24 items-center justify-center rounded-2xl bg-zappy-50 text-[30px] font-extrabold text-zappy-700">{initials}</span>
+          <h1 className="mt-4 text-[24px] font-bold text-ink-900">{isLoading ? '…' : name}</h1>
+          {verifiedServices.length > 0 && <p className="mt-1 text-[14px] text-ink-500">{verifiedServices.slice(0, 2).map((s) => s.name).join(', ')}</p>}
+          <dl className="mx-auto mt-6 grid max-w-xs grid-cols-2">
+            <div>
+              <dt className="sr-only">Rating</dt>
+              <dd className="flex items-center justify-center gap-1 text-[24px] font-semibold tabular-nums text-ink-900">
+                {rating != null ? <><Star size={20} className="fill-ink-900 text-ink-900" />{Number(rating).toFixed(2)}</> : 'New'}
+              </dd>
+              <p className="mt-0.5 text-[13px] text-ink-500">Rating</p>
             </div>
+            <div>
+              <dt className="sr-only">Bookings</dt>
+              <dd className="text-[24px] font-semibold tabular-nums text-ink-900">{completedJobs.toLocaleString('en-IN')}</dd>
+              <p className="mt-0.5 text-[13px] text-ink-500">Bookings</p>
+            </div>
+          </dl>
+        </section>
+
+        <section className="border-b-8 border-sunken px-4 py-1">
+          <div className="flex items-center gap-4 py-4">
+            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-green-50 text-green-700"><ShieldCheck size={24} /></span>
+            <p className="flex-1 text-[15px] text-ink-900">{isVerified ? 'ID and documents checked by ZappyOne' : 'Verification in progress'}</p>
           </div>
-        </section>
-
-        {/* Facts, all from records */}
-        <section className="grid grid-cols-2 gap-3">
-          <Fact icon={Briefcase} label="Jobs completed" value={completedJobs ? completedJobs.toLocaleString('en-IN') : 'None yet'} />
-          <Fact icon={CalendarDays} label="On ZappyOne since" value={since(worker?.memberSince) || '-'} />
-        </section>
-
-        {/* Verified for */}
-        <section className="rounded-card border border-line bg-white p-4">
-          <h2 className="text-[15px] font-bold text-ink-900">Verified for</h2>
-          <p className="mt-0.5 text-[13px] text-ink-500">ZappyOne checked their documents for each of these.</p>
-          {verifiedServices.length ? (
-            <div className="mt-3 flex flex-wrap gap-2">
-              {verifiedServices.map((s) => (
-                <span key={s.code} className="chip bg-zappy-50 text-zappy-700"><BadgeCheck size={13} /> {s.name}</span>
-              ))}
+          {verifiedServices.length > 0 && (
+            <div className="flex flex-wrap gap-2 border-t border-line py-4">
+              {verifiedServices.map((s) => <span key={s.code} className="chip bg-sunken text-ink-700"><BadgeCheck size={13} className="text-green-700" /> {s.name}</span>)}
             </div>
-          ) : (
-            <p className="mt-3 text-[14px] text-ink-500">No services verified yet.</p>
           )}
+          {worker?.memberSince && <p className="border-t border-line py-3.5 text-[13px] text-ink-500">On ZappyOne since {since(worker.memberSince)}</p>}
         </section>
 
-        {/* Rating spread */}
-        {ratingCount > 0 && breakdown && (
-          <section className="rounded-card border border-line bg-white p-4">
-            <div className="flex items-center gap-3">
-              <span className="text-[32px] font-bold leading-none tabular-nums text-ink-900">{Number(rating).toFixed(1)}</span>
-              <div>
-                <Stars value={rating} />
-                <p className="mt-0.5 text-[13px] text-ink-500">{ratingCount} rating{ratingCount === 1 ? '' : 's'}</p>
+        <section className="px-4 py-5">
+          <h2 className="text-[17px] font-semibold text-ink-900">Customer reviews</h2>
+          {ratingCount > 0 && breakdown && (
+            <div className="mt-4 flex items-start gap-6 border-b border-line pb-6">
+              <div className="shrink-0 text-right">
+                <p className="text-[44px] font-medium leading-none tabular-nums text-green-700">{Number(rating).toFixed(2)}</p>
+                <div className="mt-2 space-y-1 text-[13px] text-ink-500">
+                  {levels.map(([n, label]) => <p key={n} className="h-[18px] tabular-nums">{label} ({breakdown[n] || 0})</p>)}
+                </div>
+              </div>
+              <div className="min-w-0 flex-1">
+                <span className="flex gap-0.5 text-green-700" aria-label={`${Number(rating).toFixed(1)} out of 5`}>
+                  {[1, 2, 3, 4, 5].map((n) => <Star key={n} size={20} className={n <= Math.round(rating) ? 'fill-current' : 'text-line-strong'} />)}
+                </span>
+                <p className="text-[13px] text-ink-500">{ratingCount} rating{ratingCount === 1 ? '' : 's'}</p>
+                <div className="mt-2 space-y-1">
+                  {levels.map(([n, , color]) => (
+                    <div key={n} className="flex h-[18px] items-center">
+                      <span className={`block h-2 rounded-full ${color}`} style={{ width: `${Math.max(3, ((breakdown[n] || 0) / ratingCount) * 100)}%` }} />
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
-            <div className="mt-3 space-y-1.5">
-              {[5, 4, 3, 2, 1].map((n) => {
-                const c = breakdown[n] || 0;
-                return (
-                  <div key={n} className="flex items-center gap-2 text-[12px] tabular-nums text-ink-500">
-                    <span className="w-3">{n}</span>
-                    <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-sunken">
-                      <span className="block h-full rounded-full bg-amber-400" style={{ width: `${(c / ratingCount) * 100}%` }} />
-                    </span>
-                    <span className="w-6 text-right">{c}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </section>
-        )}
+          )}
 
-        {/* What customers said */}
-        <section className="rounded-card border border-line bg-white p-4">
-          <h2 className="text-[15px] font-bold text-ink-900">What customers said</h2>
           {reviews.length ? (
-            <ul className="mt-3 divide-y divide-line">
-              {reviews.map((r, i) => (
-                <li key={r.id || i} className="py-3 first:pt-0 last:pb-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-[14px] font-semibold text-ink-900">{r.by || 'Customer'}</span>
-                    <span className="text-[12px] text-ink-400">{ago(r.at)}</span>
-                  </div>
-                  <div className="mt-1 flex items-center gap-2">
-                    <Stars value={r.rating} size={12} />
-                    {r.service && <span className="text-[12px] capitalize text-ink-500">{r.service}</span>}
-                  </div>
-                  <p className="mt-1.5 text-[14px] leading-relaxed text-ink-700">{r.text}</p>
-                </li>
-              ))}
-            </ul>
+            <>
+              <h3 className="mt-5 text-[16px] font-semibold text-ink-900">Most helpful reviews</h3>
+              <ul className="mt-2 divide-y divide-line">
+                {reviews.map((r, i) => (
+                  <li key={r.id || i} className="flex gap-3.5 py-4">
+                    <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-line text-ink-400"><UserRound size={22} /></span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <p className="text-[15px] text-ink-900">{r.by || 'Customer'}</p>
+                          <p className="text-[13px] text-ink-500">{ago(r.at)}{r.service ? <span className="capitalize">, {r.service}</span> : null}</p>
+                        </div>
+                        <span className="flex items-center gap-0.5 text-[15px] tabular-nums text-green-700"><Star size={15} className="fill-current" />{r.rating}</span>
+                      </div>
+                      {r.text && <p className="mt-2 whitespace-pre-line text-[14px] leading-relaxed text-ink-500">{r.text}</p>}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </>
           ) : (
-            <div className="mt-3 flex items-center gap-3 rounded-btn bg-sunken p-3 text-[14px] text-ink-500">
-              <MessageSquareQuote size={18} className="shrink-0" />
-              No written reviews yet. Reviews appear here after customers rate a finished job.
-            </div>
+            <p className="mt-4 flex items-center gap-3 text-[14px] text-ink-500">
+              <MessageSquareQuote size={18} className="shrink-0" /> No written reviews yet. They appear here after customers rate a finished job.
+            </p>
           )}
         </section>
-      </main>
+      </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-white p-4" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)' }}>
+      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-white px-4 pt-3" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)' }}>
         <div className="mx-auto max-w-2xl">
           <button type="button" onClick={rebook} className="btn-primary w-full">
-            {bookablePath ? `Book ${name.split(' ')[0]} again` : 'See services'}
+            {bookablePath ? 'Book again' : 'See services'}
           </button>
         </div>
       </div>

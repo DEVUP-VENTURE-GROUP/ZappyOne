@@ -187,11 +187,8 @@ export function HomePage() {
               </View>
             ) : null}
             {nothingLive ? (
-              <View style={styles.joining}>
-                <Text variant="body" weight="bold">Pros are joining near {loc.primary || 'you'}</Text>
-                <Text variant="caption" color={ink[500]}>Nobody is verified at this exact address yet. Tap the bell on what you need and we will tell you the day it opens, or try another address.</Text>
-                <Text variant="bodySmall" weight="bold" color={zappy[700]} onPress={() => setLocSheet(true)} accessibilityRole="button">Change address</Text>
-              </View>
+              <NotInYourArea soon place={loc.primary} lat={loc.lat ?? undefined} lng={loc.lng ?? undefined} address={[loc.primary, loc.secondary].filter(Boolean).join(', ')}
+                areas={svc?.areas || []} onChangeLocation={() => setLocSheet(true)} />
             ) : null}
             {nothingLive && !loadingCatalog ? <ComingSoonRow groups={comingSoon} loc={loc} /> : null}
             {!loadingCatalog && !nothingLive ? <HeroCarousel domains={allDomains} onOpen={openService} /> : null}
@@ -220,7 +217,6 @@ const styles = StyleSheet.create({
   flexText: { flex: 1, minWidth: 0 },
   live: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   liveDot: { width: 9, height: 9, borderRadius: 5, backgroundColor: zappy[600] },
-  joining: { gap: spacing.xs, padding: spacing.base, borderRadius: radius.large, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
   page: { flex: 1, backgroundColor: colors.background },
   searchWrap: { paddingHorizontal: spacing.base, paddingBottom: spacing.base, paddingTop: 4, backgroundColor: zappy[100], borderBottomLeftRadius: radius.extraLarge, borderBottomRightRadius: radius.extraLarge },
   // Edge to edge, flush under the search: undoes the body's padding.
