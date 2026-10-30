@@ -135,7 +135,7 @@ export function WorkerHelpingJobPage() {
 
         {helpingPaidAt(task).includes(task.status) && !pendingApproval && !due.itemsPending && due.totalPaise > 0 ? (
           <CollectPaymentCard amountPaise={due.totalPaise} tipPaise={billTipPaise(task)} paymentMethod={due.feePaise > 0 ? task.paymentMethod : 'cash'}
-            paid={false} collecting={collecting} onCollect={recordCash} what={due.itemsPaise > 0 ? 'items and service fee' : 'service fee'} />
+            paid={false} collecting={collecting} onCollect={recordCash} what={due.itemsPaise > 0 ? 'items and service fee' : 'service fee'} jobId={task._id} />
         ) : null}
 
         {helpingFinishesAt(task).includes(task.status) && !pendingApproval && settledUp

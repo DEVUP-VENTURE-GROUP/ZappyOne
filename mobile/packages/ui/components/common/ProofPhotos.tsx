@@ -36,7 +36,7 @@ export function ProofPhotos({ photos, onChange, folder = 'order-proof', max = 3,
     } catch {
       // A failed upload stays marked, never mistaken for evidence that exists.
       onChange((prev) => prev.map((p) => (p.id === id ? { ...p, key: null, uploading: false, error: true } : p)));
-      toast.error('Could not upload the photo. Check your connection and try again — if it keeps failing, contact support.');
+      toast.error('Could not upload the photo. Check your connection and try again - if it keeps failing, contact support.');
     }
   }
 
@@ -48,7 +48,7 @@ export function ProofPhotos({ photos, onChange, folder = 'order-proof', max = 3,
         </View>
         <View style={styles.flex}>
           <Text variant="bodySmall" weight="extrabold" color={done ? success[700] : ink[900]}>{done ? 'Proof photos ready' : (title || 'Add proof-of-work photos')}</Text>
-          <Text variant="caption" color={done ? success[600] : ink[500]}>{done ? `${ready} photo${ready > 1 ? 's' : ''} uploaded — you can add ${max - photos.length} more` : (hint || requiredNote)}</Text>
+          <Text variant="caption" color={done ? success[600] : ink[500]}>{done ? `${ready} photo${ready > 1 ? 's' : ''} uploaded - you can add ${max - photos.length} more` : (hint || requiredNote)}</Text>
         </View>
         <View style={[styles.counter, { backgroundColor: done ? success[600] : zappy[100] }]}><Text variant="caption" weight="extrabold" color={done ? '#fff' : zappy[700]}>{ready}/{max}</Text></View>
       </View>

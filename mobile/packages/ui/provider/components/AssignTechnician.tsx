@@ -24,7 +24,7 @@ export function AssignTechnician({ jobId, workerId, busy = {}, onDone, startOpen
   async function give(id: string) {
     try {
       const res = await assign({ id: jobId, workerId: id }).unwrap();
-      toast.success(`${res.workerName || 'Technician'} has the job — they have been told`);
+      toast.success(`${res.workerName || 'Technician'} has the job - they have been told`);
       setOpen(false);
       onDone?.();
     } catch (err) { toast.error(errText(err, 'Could not assign that technician')); }

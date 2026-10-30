@@ -38,6 +38,7 @@ import { themeOf } from '@zappy/core/shared/season';
 import { HeroCarousel } from './HeroCarousel';
 import { HomeHeader, SearchBar, type HomeLocation } from './HomeHeader';
 import { BookAgainRail, NearbyShopsLink, OffersRail } from './HomeRails';
+import { HomeMarketplace } from './HomeMarketplace';
 import { LocationSheet, type PickedArea } from './LocationSheet';
 import { ProblemChips } from './ProblemChips';
 import { ServiceGrid } from './ServiceGrid';
@@ -182,6 +183,7 @@ export function HomePage() {
             <Animated.View entering={rise(2)}><BookAgainRail items={rebooks} /></Animated.View>
             <Animated.View entering={rise(3)}><OffersRail isAuthed={isAuthed} /></Animated.View>
             {!loadingCatalog ? <Animated.View entering={rise(4)}><ServiceShowcase domains={allDomains} onOpen={openService} /></Animated.View> : null}
+            {isAuthed ? <HomeMarketplace loc={loc.lat != null && loc.lng != null ? { lat: loc.lat, lng: loc.lng, address: [loc.primary, loc.secondary].filter(Boolean).join(', ') } : null} /> : null}
             {theme ? <SafeSection name="festive-divider"><FestiveDivider accent={theme.accent} /></SafeSection> : null}
             <AdBanner isAuthed={isAuthed} />
             <NearbyShopsLink />

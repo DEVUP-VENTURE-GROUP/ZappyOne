@@ -22,7 +22,7 @@ export function StatementButton() {
   return (
     <View style={styles.card}>
       <Text variant="bodySmall" weight="bold">Monthly statement</Text>
-      <Text variant="caption" color={ink[500]}>Earnings, commission, dues and payouts, for your accounts and GST.</Text>
+      <Text variant="caption" color={ink[500]}>Earnings, fees, dues and payouts, for your accounts and GST.</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
         {list.map((m) => <Chip key={m.key} label={m.label} selected={month === m.key} onPress={() => setMonth(m.key)} />)}
       </ScrollView>

@@ -20,7 +20,7 @@ export function PartnerTermsCard() {
   return (
     <View style={styles.card}>
       <View style={styles.head}><FileSignature size={18} color="#B45309" /><Text variant="body" weight="bold">{d.agreement ? 'Our partner terms have changed' : 'Accept the partner terms'}</Text></View>
-      <Text variant="bodySmall" weight="bold">Commission: {d.terms.ratePct}% per completed job</Text>
+      <Text variant="bodySmall" weight="bold">Keep what you charge</Text>
       {d.terms.points.map((p) => (
         <View key={p} style={styles.point}><CheckCircle2 size={14} color={success[600]} style={styles.tick} /><Text variant="caption" color={ink[500]} style={styles.flex}>{p}</Text></View>
       ))}

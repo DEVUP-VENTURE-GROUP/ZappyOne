@@ -19,7 +19,7 @@ import { callNumber } from '../../lib/openLink';
 
 const HOLD_MS = 3000;
 
-export function SOSButton({ jobId, kind, service }: { jobId: string; kind: string; service?: string }) {
+export function SOSButton({ jobId, kind = '', service }: { jobId?: string; kind?: string; service?: string }) {
   const [triggerSOS] = useTriggerSOSMutation();
   const [holding, setHolding] = useState(false);
   const [left, setLeft] = useState(3);
@@ -44,7 +44,7 @@ export function SOSButton({ jobId, kind, service }: { jobId: string; kind: strin
     // Send even without a fix: the server uses the last known position.
     const here = await getBestPosition({ windowMs: 4000 }).catch(() => null);
     try {
-      await triggerSOS({ jobId, lat: here?.lat, lng: here?.lng, type: pet ? 'pet_emergency' : 'worker_sos' }).unwrap();
+      await triggerSOS({ ...(jobId && { jobId }), lat: here?.lat, lng: here?.lng, type: pet ? 'pet_emergency' : 'worker_sos' }).unwrap();
       setTriggered(true);
       toast.error(pet ? 'SOS sent. Your emergency contact and support are told. Vet contacts are below.' : 'SOS sent. Your emergency contact and support are told.', { duration: 8000 });
     } catch {

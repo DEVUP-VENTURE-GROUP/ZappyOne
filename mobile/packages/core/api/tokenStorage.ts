@@ -39,7 +39,7 @@ const memoryStore = new Map<string, string>();
 
 if (isWeb) {
   log.warn(
-    'secure storage is unavailable on web — using an in-memory store. ' +
+    'secure storage is unavailable on web - using an in-memory store. ' +
       'Sessions will not survive a page reload. Android/iOS use the Keychain / EncryptedSharedPreferences.',
   );
 }
@@ -168,6 +168,7 @@ export async function clearSession(): Promise<void> {
     deleteItem(ACCESS_TOKEN_KEY).catch(() => {}),
     deleteItem(REFRESH_TOKEN_KEY).catch(() => {}),
     deleteItem(ROLE_KEY).catch(() => {}),
+    require('../lib/drafts').clearFormDrafts(),
   ]);
   notify(null);
 }

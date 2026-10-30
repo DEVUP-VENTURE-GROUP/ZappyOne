@@ -27,8 +27,8 @@ export function QAPanel({ bookingId, onDone }: { bookingId: string; onDone: () =
   async function send() {
     try {
       const res = await submit({ id: bookingId, ...qaPayload(checklist, results) }).unwrap();
-      if (res.passed) { toast.success('QA passed — you can complete the job'); onDone(); }
-      else toast.error('QA failed — fix the failed checks and re-run');
+      if (res.passed) { toast.success('QA passed - you can complete the job'); onDone(); }
+      else toast.error('QA failed - fix the failed checks and re-run');
     } catch (err) { toast.error(errText(err, 'Could not submit QA')); }
   }
 

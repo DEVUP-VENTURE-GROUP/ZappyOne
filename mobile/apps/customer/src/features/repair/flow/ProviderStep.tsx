@@ -3,7 +3,9 @@
  * The pin is checked first; then what the customer chose, when, and who can
  * actually do it at what price, sortable without hiding anyone.
  */
-import { useState } from 'react';
+import { PartsNote, PrivacyPledge } from '@zappy/ui/components/common/PartsNote';
+import { useEffect, useRef, useState } from 'react';
+import { useLocalSearchParams } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Vibration, View } from 'react-native';
 import { AlertTriangle, HelpCircle } from 'lucide-react-native';
 import { useRepairPricePreviewQuery, useRepairProvidersQuery } from '@zappy/core/api';
@@ -52,10 +54,21 @@ export function ProviderStep({ vertical, diagnosis, model, brand, configuration,
   const providers = result?.providers || [];
   const { data: standard } = useRepairPricePreviewQuery({ vertical, repairCode, brandCode: brand?.code, modelCode: model?.code, serviceMode }, { skip: !!providers.length || !result || !repairCode });
   const standardPaise = standard?.reference && standard?.estimate?.totalPaise > 0 ? standard.estimate.totalPaise as number : null;
+  // From a storefront menu (?provider=shop:<id>): that provider is chosen once the list confirms they can take it here.
+  const { provider: wanted } = useLocalSearchParams<{ provider?: string }>();
+  const triedWanted = useRef(false);
+  useEffect(() => {
+    if (!wanted || triedWanted.current || !result || isFetching || !repairCode) return;
+    triedWanted.current = true;
+    const all = [result.recommended, ...providers].filter(Boolean) as Provider[];
+    const hit = all.find((p) => wanted === `shop:${p.shopId}` || wanted === `worker:${p.workerId}`);
+    if (hit) onPick(hit, repairCode, (hit as { priceOptions?: { qualityCode?: string | null }[] }).priceOptions?.[0]?.qualityCode ?? null);
+    else toast('That provider cannot take this at your address right now. Pick another below.');
+  }, [wanted, result, isFetching, repairCode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!ready) return <ConfirmPinCard location={location} onConfirm={onPinConfirmed} onPick={onChangeLocation} />;
 
-  const summary = <ChosenSummary brand={brand} model={model} configuration={configuration} problem={problem} diagnosis={diagnosis} serviceMode={serviceMode} location={location} onChangeLocation={onChangeLocation} />;
+  const summary = <><ChosenSummary brand={brand} model={model} configuration={configuration} problem={problem} diagnosis={diagnosis} serviceMode={serviceMode} location={location} onChangeLocation={onChangeLocation} /><PartsNote vertical={vertical} who="customer" /><PrivacyPledge who="customer" /></>;
 
   if (inspectionOnly || !repairCode) {
     return (

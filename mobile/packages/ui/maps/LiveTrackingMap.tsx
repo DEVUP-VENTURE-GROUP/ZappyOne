@@ -109,6 +109,26 @@ function LiveTrackingMapBase({
     return () => socketClient.off('worker.location', handler);
   }, [socketClient]);
 
+  // The marker glides to each new ping (12 eased steps over a second) instead of jumping, like a ride app.
+  const [shown, setShown] = useState(workerLocation);
+  const shownRef = useRef(workerLocation);
+  useEffect(() => {
+    if (!workerLocation) return undefined;
+    const from = shownRef.current || workerLocation;
+    const to = workerLocation;
+    let step = 0;
+    const STEPS = 12;
+    const id = setInterval(() => {
+      step += 1;
+      const e = 1 - (1 - step / STEPS) ** 3;
+      const p = { lat: from.lat + (to.lat - from.lat) * e, lng: from.lng + (to.lng - from.lng) * e };
+      shownRef.current = p;
+      setShown(p);
+      if (step >= STEPS) clearInterval(id);
+    }, 1000 / STEPS);
+    return () => clearInterval(id);
+  }, [workerLocation]);
+
   // A later prop (from a refetch) should still seed the marker if the socket
   // has been quiet — but must never overwrite a fresher socket position.
   useEffect(() => {
@@ -179,10 +199,10 @@ function LiveTrackingMapBase({
           </View>
         </Marker>
 
-        {workerLocation ? (
+        {shown ? (
           <>
             <Marker
-              coordinate={{ latitude: workerLocation.lat, longitude: workerLocation.lng }}
+              coordinate={{ latitude: shown.lat, longitude: shown.lng }}
               title="Your professional"
               anchor={{ x: 0.5, y: 0.5 }}
               // The arrow points where they are heading (the icon itself points north-east).
@@ -199,7 +219,7 @@ function LiveTrackingMapBase({
 
             <Polyline
               coordinates={[
-                { latitude: workerLocation.lat, longitude: workerLocation.lng },
+                { latitude: shown.lat, longitude: shown.lng },
                 { latitude: pickupLat, longitude: pickupLng },
               ]}
               strokeColor={colors.primary}

@@ -5,6 +5,7 @@
  * who was away still hears them. Shaping and choosing are the shared
  * jobOffers logic, so the app and the web show the same offer.
  */
+import { useCheckInThen } from '../../provider/useCheckIn';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'expo-router';
 import {
@@ -41,6 +42,7 @@ export function JobOfferHost({ kinds = ['repair', 'pet', 'helping'] }: { kinds?:
   const [declineRepair] = useDeclineRepairBookingMutation();
   const [claimRepair] = useClaimRepairBookingMutation();
   const [acceptPet] = useAcceptPetBookingMutation();
+  const checkedIn = useCheckInThen();
   const [declinePet] = useDeclinePetBookingMutation();
   const [acceptHelping] = useAcceptHelpingTaskMutation();
 
@@ -70,6 +72,7 @@ export function JobOfferHost({ kinds = ['repair', 'pet', 'helping'] }: { kinds?:
   async function accept() {
     if (!offer) return;
     try {
+      await checkedIn(async () => {
       if (offer.kind === 'repair' && offer.broadcast) {
         await claimRepair(offer.id).unwrap();
         router.push(`/worker/repair/${offer.id}` as never);
@@ -83,6 +86,7 @@ export function JobOfferHost({ kinds = ['repair', 'pet', 'helping'] }: { kinds?:
         await acceptHelping(offer.id).unwrap();
         router.push(`/worker/helping/${offer.id}` as never);
       }
+      });
       toast.success('It’s yours');
     } catch (err) {
       toast.error(takeError(err as ApiErr, errText(err as ApiErr, 'Could not accept this job')));

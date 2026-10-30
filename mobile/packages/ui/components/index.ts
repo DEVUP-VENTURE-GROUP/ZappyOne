@@ -58,6 +58,7 @@ export { HScrollRail } from './HScrollRail';
 export type { HScrollRailProps } from './HScrollRail';
 
 export { BottomSheet } from './BottomSheet';
+export { LiveDot } from './LiveDot';
 export type { BottomSheetProps } from './BottomSheet';
 
 export { Appear } from './Appear';

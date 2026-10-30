@@ -151,3 +151,12 @@ export function withOffer(queue, offer) {
     ? queue
     : [...queue.filter((o) => !(o.kind === offer.kind && o.id === offer.id)), offer];
 }
+
+// The customer's record a pro sees before accepting (server jobs/customer-rating summaryFor): missed visits and unpaid cash, worded plainly; null when clean.
+export function customerRecordLine(customer) {
+  if (!customer) return null;
+  const bits = [];
+  if (customer.missedVisits) bits.push(`not home ${customer.missedVisits} time${customer.missedVisits === 1 ? '' : 's'}`);
+  if (customer.cashRefused) bits.push(`did not pay ${customer.cashRefused} time${customer.cashRefused === 1 ? '' : 's'}`);
+  return bits.length ? `Before: ${bits.join(', ')}` : null;
+}

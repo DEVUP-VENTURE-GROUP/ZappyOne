@@ -4,7 +4,9 @@
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { ShieldAlert, Star } from 'lucide-react-native';
-import { useRateCustomerMutation } from '@zappy/core/api';
+import { useBlockJobCustomerMutation, useRateCustomerMutation } from '@zappy/core/api';
+import { useAppSelector } from '@zappy/core/store/hooks';
+import { CheckRow } from '../common/CheckRow';
 import { rateOptions } from '@zappy/core/shared/jobFlows';
 import { Button, Text } from '..';
 import { type ApiErr, errText } from '../../lib/feedback';
@@ -20,6 +22,9 @@ export function RateCustomerCard({ jobId, rated }: { jobId: string; rated?: bool
   const [tags, setTags] = useState<string[]>([]);
   const [note, setNote] = useState('');
   const [done, setDone] = useState(false);
+  const [block, setBlock] = useState(false);
+  const [blockCustomer] = useBlockJobCustomerMutation();
+  const isWorker = useAppSelector((st) => st.auth.role) === 'worker';
   if (rated || done) return <View style={styles.thanks}><Text variant="caption" color={ink[500]}>You rated this customer. Thank you.</Text></View>;
   const options = rateOptions(stars) as [string, string][];
   const toggle = (t: string) => setTags((xs) => (xs.includes(t) ? xs.filter((x) => x !== t) : [...xs, t]));
@@ -27,6 +32,7 @@ export function RateCustomerCard({ jobId, rated }: { jobId: string; rated?: bool
   async function send() {
     try {
       const r = await rate({ id: jobId, stars, tags, note: note.trim() }).unwrap();
+      if (block) await blockCustomer({ id: jobId, reason: note.trim() }).unwrap().catch(() => toast.error('Rating saved, but the block did not go through'));
       toast.success(r.message);
       setDone(true);
     } catch (err) {
@@ -62,6 +68,7 @@ export function RateCustomerCard({ jobId, rated }: { jobId: string; rated?: bool
             })}
           </View>
           {stars <= 3 ? <TextInput value={note} onChangeText={setNote} maxLength={300} multiline placeholder="What happened? (optional, only ZappyOne reads this)" placeholderTextColor={ink[400]} style={styles.textArea} /> : null}
+          {isWorker && stars <= 2 ? <CheckRow checked={block} onChange={setBlock}><Text variant="caption" weight="semibold" color={ink[700]}>Do not send me jobs from this customer again</Text></CheckRow> : null}
           <Button label="Send rating" onPress={send} loading={isLoading} fullWidth />
         </>
       ) : null}

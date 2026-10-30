@@ -4,10 +4,12 @@
  * update refreshes that kind's lists, an open job refreshes the open list,
  * a repair quote refreshes repairs. `onTip` hears a tip put on the bill.
  */
+import { useEffect, useRef } from 'react';
 import { useAppDispatch } from '../store/hooks';
 import { api } from '../api/sharedApi';
 import { useSocketEvent } from './useSocketEvent';
 import type { JobStatusEvent } from '../socket/events';
+import { NOTIFICATION_TAGS } from '../shared/realtimeTags';
 
 const JOB_TAGS: Record<string, string> = { pet: 'PetBookings', helping: 'HelpingTasks', repair: 'RepairBookings', event: 'EventBooking' };
 const OPEN_TAGS: Record<string, string> = { pet: 'PetAvailable', helping: 'HelpingAvailable' };
@@ -26,6 +28,13 @@ export function useJobRealtime({ enabled = true, onTip, onAvailable }: {
     if (type) refresh([type, { type, id: p.id }, ...(OPEN_TAGS[p.kind] ? [OPEN_TAGS[p.kind]] : [])]);
     if ((p?.tipPaise ?? 0) > 0) onTip?.(p.tipPaise as number);
   };
+  // A notification means something changed for this person; bursts collapse into one refresh.
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
+  useSocketEvent('notification', () => {
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => refresh(NOTIFICATION_TAGS), 250);
+  }, enabled);
   useSocketEvent('job.status', onJob, enabled);
   useSocketEvent('job.update', onJob, enabled);
   useSocketEvent('job.available', (p) => {
