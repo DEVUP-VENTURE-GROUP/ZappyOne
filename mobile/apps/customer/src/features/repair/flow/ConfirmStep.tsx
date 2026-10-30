@@ -7,6 +7,9 @@
 import { deviceName } from '@zappy/core/shared/deviceName';
 import { useEffect, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { usePathname, useRouter } from 'expo-router';
+import { useAppSelector } from '@zappy/core/store/hooks';
+import { rememberReturn } from '@zappy/ui/app/AppRoot';
 import { StyleSheet, View } from 'react-native';
 import { Check } from 'lucide-react-native';
 import { useCreateRepairBookingMutation } from '@zappy/core/api';
@@ -35,6 +38,9 @@ export function ConfirmStep({ vertical, brand, model, configuration, problem, di
   onDone: (booking: { _id: string }) => void;
 }) {
   const [create, { isLoading }] = useCreateRepairBookingMutation();
+  const signedIn = useAppSelector((st) => st.auth.isAuthenticated);
+  const router = useRouter();
+  const pathname = usePathname();
   // Arrived through this provider's own link (StorefrontPage kept the code): the server checks it is theirs.
   const [via, setVia] = useState<string | null>(null);
   useEffect(() => {
@@ -51,6 +57,8 @@ export function ConfirmStep({ vertical, brand, model, configuration, problem, di
   const surge = useSurge({ kind: 'repair', vertical, serviceMode, loc: location, basePaise: price, skip: price == null });
 
   async function book() {
+    // Anyone can browse to here; signing in is asked only to confirm, and the flow's draft brings them straight back.
+    if (!signedIn) { toast('Sign in to confirm. Your booking is saved.'); rememberReturn(pathname); router.push('/(auth)/login' as never); return; }
     if (onSite === 'incomplete') { toast.error('Add their name and mobile number, or untick "for someone else".'); return; }
     try {
       const res = await create({
