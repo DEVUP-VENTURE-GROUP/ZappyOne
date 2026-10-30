@@ -13,10 +13,12 @@ export const RELEASE = {
   /** Accounts created on or after this date start on this release; it is not news to them. */
   since: '2026-10-30',
   user: [
-    ['Tracking, redone', 'See who is coming, how many minutes away, and your start code on one screen.'],
+    ['Tracking, redone', 'See who is coming, their photo, how many minutes away, and your start code on one screen.'],
+    ['Share a booking', 'Booked for someone else? Send them a live link so they can follow the job and give the code.'],
+    ['Fix your address', 'Change the address or move the pin before your pro sets off.'],
+    ['Change the time', 'Move a booking made for later right from tracking.'],
     ['Look before you sign in', 'Browse brands, problems and prices first; sign in only when you book.'],
     ['Late pro, free cancel', 'If your pro misses the promised time, cancelling costs you nothing.'],
-    ['Know when it needs longer', 'Your pro tells you when a job needs more time, and why.'],
   ],
   worker: [
     ['Ask for more time', 'Tell the customer the job needs longer, with a reason, from the job screen.'],
