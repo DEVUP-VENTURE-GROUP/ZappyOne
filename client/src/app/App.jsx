@@ -50,6 +50,10 @@ const EventBookingListPage         = lazy(() => import('../features/events/Event
 const EventBookingDetailPage       = lazy(() => import('../features/events/EventBookingDetailPage'));
 const EventSavedThemesPage         = lazy(() => import('../features/events/EventSavedThemesPage'));
 const NearbyShopsPage              = lazy(() => import('../features/providers/NearbyShopsPage'));
+const ServiceFlowRoute             = lazy(() => import('../features/repair/ServiceFlowRoute'));
+const StorefrontsPage              = lazy(() => import('../features/providers/StorefrontsPage'));
+const StorefrontPage               = lazy(() => import('../features/providers/StorefrontPage'));
+const MyPlansPage                  = lazy(() => import('../features/plans/MyPlansPage'));
 const RepairFlowPage               = lazy(() => import('../features/repair/RepairFlowPage'));
 const CategoryProblemsPage         = lazy(() => import('../features/repair/CategoryProblemsPage'));
 const LegacyServiceRedirect        = lazy(() => import('../features/catalog/LegacyServiceRedirect'));
@@ -188,9 +192,10 @@ export default function App() {
 
         {/* Providers moved to their own apps; keep old bookmarks working. */}
         <Route path="/shop/*" element={<ExternalRedirect base={PORTAL_URLS.servicepro} />} />
-        <Route path="/worker/*" element={<ExternalRedirect base={PORTAL_URLS.rakshak} />} />
-        <Route path="/provider/*" element={<ExternalRedirect base={PORTAL_URLS.rakshak} />} />
-        <Route path="/partner/*" element={<ExternalRedirect base={PORTAL_URLS.events} />} />
+        {/* Version 1 runs on partners; own staff (Rakshak) is locked, so provider links go to ServicePro. */}
+        <Route path="/worker/*" element={<ExternalRedirect base={PORTAL_URLS.servicepro} />} />
+        <Route path="/provider/*" element={<ExternalRedirect base={PORTAL_URLS.servicepro} />} />
+        <Route path="/partner/*" element={<ExternalRedirect base={PORTAL_URLS.servicepro} />} />
 
         {/* Provider onboarding — one path for shops and independent technicians */}
 
@@ -208,6 +213,10 @@ export default function App() {
         <Route path="/repair/plumbing" element={<RequireAuth role="user"><RepairFlowPage vertical="plumbing" /></RequireAuth>} />
         <Route path="/repair/ac-service" element={<RequireAuth role="user"><RepairFlowPage vertical="ac_service" /></RequireAuth>} />
         <Route path="/repair/car-wash" element={<RequireAuth role="user"><RepairFlowPage vertical="car_wash" /></RequireAuth>} />
+        <Route path="/repair/:slug" element={<RequireAuth role="user"><ServiceFlowRoute /></RequireAuth>} />
+        <Route path="/providers/:slug" element={<RequireAuth role="user"><StorefrontsPage /></RequireAuth>} />
+        <Route path="/storefront/:kind/:id" element={<RequireAuth role="user"><StorefrontPage /></RequireAuth>} />
+        <Route path="/my-plans" element={<RequireAuth role="user"><MyPlansPage /></RequireAuth>} />
         <Route path="/my-assets" element={<RequireAuth role="user"><MyAssetsPage /></RequireAuth>} />
         <Route path="/helping" element={<RequireAuth role="user"><HelpingServicesPage /></RequireAuth>} />
         <Route path="/helping/shopping" element={<RequireAuth role="user"><ShoppingTaskPage /></RequireAuth>} />

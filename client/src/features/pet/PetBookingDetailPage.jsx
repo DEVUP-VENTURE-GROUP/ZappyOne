@@ -1,4 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
+import RefundStatus from '@shared/components/common/RefundStatus';
 import { Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useGetPetBookingQuery, useCancelPetBookingMutation, useRatePetBookingMutation } from '@shared/services/api';
@@ -68,7 +69,7 @@ export default function PetBookingDetailPage() {
           <p className="mt-0.5 text-[12.5px] text-slate-500">{formatPaise((b.pricing?.totalPaise || 0) + billAddOnsPaise(b))} for this booking</p>
           <PayNowButton bookingSource="pet" bookingId={b._id} amountLabel={formatPaise((b.pricing?.totalPaise || 0) + billAddOnsPaise(b))} label="Pet care booking" className="mt-3" />
         </div>
-      ) : null}
+      ) : <RefundStatus source="pet" id={b._id} />}
     />
   );
 }

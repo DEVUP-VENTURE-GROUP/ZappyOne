@@ -10,7 +10,7 @@ import { reverseGeocode } from '@shared/utils/reverseGeocode';
 import { getBestPosition, tooRough, roughLocationMessage } from '@shared/hooks/useGeolocation';
 import AddressAutocomplete from '../../components/common/AddressAutocomplete';
 import { useT } from '@shared/i18n/I18nProvider';
-import LanguageSwitcher from '../../components/common/LanguageSwitcher';
+import LanguageSwitcher from '@shared/components/common/LanguageSwitcher';
 import { selectAuth, logout } from '@shared/modules/auth/authSlice';
 import {
   useGetMeQuery, useGetAddressesQuery, useAddAddressMutation,
@@ -214,7 +214,7 @@ export default function ProfilePage() {
                 <ProfilePhoto url={user?.avatar} role="user" size={88} />
                 <div className="flex-1 min-w-0">
                   <h2 className="font-black text-2xl tracking-tight text-[#0F172A]">{user?.name || 'User'}</h2>
-                  <p className="text-sm font-semibold text-slate-500 mt-1">{user?.phone || user?.email || '—'}</p>
+                  <p className="text-sm font-semibold text-slate-500 mt-1">{user?.phone || user?.email || '-'}</p>
                 </div>
                 <div className="flex items-center gap-1.5 bg-success-50/80 px-3 py-1.5 rounded-full mt-2 shadow-sm border border-success-100">
                   <ShieldCheck size={14} strokeWidth={3} className="text-success-600" />
@@ -237,6 +237,7 @@ export default function ProfilePage() {
                   <MenuItem Icon={Bell} label={t('profile.notifications', 'Notifications')} onClick={() => nav('/notifications')} />
                   <MenuItem Icon={TrendingUp} label={t('profile.spending', 'Spending Analytics')} sublabel={t('profile.spending.sub', 'Monthly & service breakdown')} onClick={() => nav('/spending')} />
                   <MenuItem Icon={Tag} label={t('profile.promos', 'Promo Codes')} sublabel={t('profile.promos.sub', 'Browse all active offers')} onClick={() => nav('/promos')} />
+                  <MenuItem Icon={Calendar} label={t('profile.plans', 'My plans')} sublabel={t('profile.plans.sub', 'Monthly plans, start codes, pause a day')} onClick={() => nav('/my-plans')} />
                   <MenuItem Icon={Calendar} label={t('profile.scheduled', 'Your schedule')} sublabel={t('profile.scheduled.sub', 'Upcoming bookings, change times, add to calendar')} onClick={() => nav('/scheduled')} />
                 </MenuSection>
               </motion.div>
@@ -245,7 +246,7 @@ export default function ProfilePage() {
               <motion.div variants={fadeInUp}>
                 <p className="section-title px-1 mb-2">{t('profile.language', 'Language')}</p>
                 <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-3">
-                  <LanguageSwitcher variant="menu" />
+                  <LanguageSwitcher />
                 </div>
               </motion.div>
 

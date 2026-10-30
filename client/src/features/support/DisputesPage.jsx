@@ -189,7 +189,7 @@ function NewDisputeForm({ onClose, onCreated }) {
         description: form.description.trim(),
         ...(form.orderId.trim() ? { orderId: form.orderId.trim() } : {}),
       }).unwrap();
-      toast.success('Dispute raised — our team will review it shortly');
+      toast.success('Dispute raised - our team will review it shortly');
       onCreated(res.dispute._id);
     } catch (err) {
       toast.error(err?.data?.error || 'Could not raise dispute');

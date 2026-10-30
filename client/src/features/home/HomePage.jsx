@@ -24,6 +24,7 @@ import HomeHeader, { SearchBar } from './HomeHeader';
 import LocationSheet from './LocationSheet';
 import { ServiceGrid, ProblemChips } from './ServiceGrid';
 import { OffersRail, BookAgainRail, NearbyShopsLink } from './HomeRails';
+import HomeMarketplace from './HomeMarketplace';
 import { eventPhoto, eventTone } from '../events/eventPhotos';
 import ContinueBookingCard from './ContinueBookingCard';
 import FestiveHero from '@shared/components/home/festive/FestiveHero';
@@ -321,6 +322,7 @@ export default function HomePage() {
               <FestiveReveal on={!!season}><OffersRail isAuthed={isAuthed} /></FestiveReveal>
 
               {!loadingCatalog && <FestiveReveal on={!!season}><ServiceShowcase domains={allDomains} onOpen={openService} /></FestiveReveal>}
+              {isAuthed && <FestiveReveal on={!!season}><HomeMarketplace /></FestiveReveal>}
               {season && <FestiveDivider theme={theme} />}
               <FestiveReveal on={!!season}><AdBanner /></FestiveReveal>
               <FestiveReveal on={!!season}><NearbyShopsLink /></FestiveReveal>

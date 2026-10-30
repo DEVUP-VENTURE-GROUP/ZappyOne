@@ -67,7 +67,7 @@ export default function NearbyShopsPage() {
               <SearchX size={28} className="text-slate-300" />
             </div>
             <p className="font-bold text-slate-700 text-sm">No shops found nearby</p>
-            <p className="text-xs text-slate-400 mt-1">You can still book any service from the home screen — we find a verified provider for you.</p>
+            <p className="text-xs text-slate-400 mt-1">You can still book any service from the home screen - we find a verified provider for you.</p>
           </div>
         ) : (
           <div className={`space-y-3 ${isFetching ? 'opacity-60' : ''}`}>
@@ -97,7 +97,7 @@ export default function NearbyShopsPage() {
 
                     {/*
                       Whether the shop is open decides whether it is worth
-                      walking to. `openNow: null` means hours were never set —
+                      walking to. `openNow: null` means hours were never set -
                       said plainly rather than guessed in either direction.
                     */}
                     {s.openNow === true && (

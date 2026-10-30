@@ -31,9 +31,9 @@ const HELP_FIXED = [
 
 // Each audience signs in on its own app; the customer site only links to them.
 const PARTNERS = [
-  { label: "Become a Rakshak", href: PORTAL_URLS.rakshak },
+  { label: "Become a partner", href: PORTAL_URLS.servicepro },
   { label: "List your shop", href: `${PORTAL_URLS.servicepro}/shop/login` },
-  { label: "Event partners", href: PORTAL_URLS.events },
+  { label: "Event partners", href: `${PORTAL_URLS.servicepro}/partner/login` },
   { label: "partners@zappyone.com", href: "mailto:partners@zappyone.com" },
 ];
 
@@ -84,7 +84,7 @@ export default function Footer({ services = [], areas = [], season = null, theme
               <ZappyWordmark size={32} tone="dark" />
             </a>
             <p className="mt-3 max-w-xs text-[14px] leading-relaxed text-slate-400">
-              Verified professionals near you — booked in a few taps, tracked
+              Verified professionals near you - booked in a few taps, tracked
               live, priced before the work starts.
             </p>
             {cities.length > 0 && (

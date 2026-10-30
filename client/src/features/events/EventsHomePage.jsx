@@ -276,7 +276,7 @@ export default function EventsHomePage() {
           {!trending.length && (
             <div className="text-center py-20 bg-white rounded-[2rem] border border-slate-100 shadow-sm mt-4">
               <PartyPopper size={56} className="mx-auto text-zappy-200 mb-5" strokeWidth={1.5} />
-              <p className="text-slate-500 font-bold text-lg">No themes yet — check back soon!</p>
+              <p className="text-slate-500 font-bold text-lg">No themes yet - check back soon!</p>
             </div>
           )}
         </section>

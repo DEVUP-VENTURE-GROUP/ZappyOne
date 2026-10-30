@@ -22,7 +22,7 @@ export default function HandoverCodeCard({
   state = code ? 'ready' : 'locked',
   title,
   hint,
-  lockedTitle = 'Handover code — locked',
+  lockedTitle = 'Handover code - locked',
   lockedHint = 'Revealed when your technician is ready for it',
 }) {
   if (state === 'waiting') {

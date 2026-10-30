@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import RefundStatus from '@shared/components/common/RefundStatus';
+import { PART_GRADES } from '@shared/provider/jobFlows';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Loader2, Check, X, ShieldCheck, FileText, MessageSquare, Star, Download,
@@ -64,12 +66,14 @@ function QuoteCard({ quote, onDecided }) {
   const [asking, setAsking] = useState(false);
   const foundMidRepair = !!quote.isAdditional;
   const [note, setNote] = useState('');
+  const hasParts = (quote.items || []).some((i) => i.kind === 'part');
+  const [oldPartsBack, setOldPartsBack] = useState(false);
 
   async function decide(decision) {
     try {
-      await respond({ quoteId: quote._id, decision, reason: note }).unwrap();
+      await respond({ quoteId: quote._id, decision, reason: note, ...(decision === 'approve' && hasParts && { returnOldParts: oldPartsBack }) }).unwrap();
       toast.success(
-        decision === 'approve' ? 'Approved — work can begin'
+        decision === 'approve' ? 'Approved - work can begin'
           : decision === 'reject' ? 'Quote rejected'
             : 'Question sent to your technician',
       );
@@ -86,11 +90,16 @@ function QuoteCard({ quote, onDecided }) {
       <div className="flex items-center gap-2">
         <FileText size={16} className="text-amber-600" />
         <p className="font-bold text-sm text-amber-900">
-          Quote {quote.revision > 1 ? `(revision ${quote.revision})` : ''} — your approval needed
+          Quote {quote.revision > 1 ? `(revision ${quote.revision})` : ''} - your approval needed
         </p>
       </div>
 
       <p className="text-xs text-slate-600 mt-2 leading-relaxed">{quote.diagnosisSummary}</p>
+      {quote.photoUrls?.length > 0 && (
+        <div className="mt-2 flex gap-2 overflow-x-auto">
+          {quote.photoUrls.map((u) => <a key={u} href={u} target="_blank" rel="noreferrer" className="shrink-0"><img src={u} alt="What the technician found" className="h-20 w-20 rounded-xl object-cover ring-1 ring-slate-200" /></a>)}
+        </div>
+      )}
 
       {quote.replacesPaise > 0 && (
         <p className="mt-2 rounded-lg bg-white px-2.5 py-2 text-[11.5px] text-slate-700">
@@ -109,6 +118,7 @@ function QuoteCard({ quote, onDecided }) {
           <div key={i} className="flex items-start justify-between gap-3 text-sm">
             <div className="min-w-0">
               <p className="text-[#0F172A] truncate">{quote.basePaise > 0 ? '+ ' : ''}{item.label}</p>
+              {item.kind === 'part' && item.partGrade && <p className="text-[11px] font-semibold text-zappy-700">{PART_GRADES.find((g) => g.key === item.partGrade)?.label} part · {PART_GRADES.find((g) => g.key === item.partGrade)?.hint}</p>}
               {item.quantity > 1 && <p className="text-[11px] text-slate-400">× {item.quantity}</p>}
             </div>
             <span className="font-semibold text-[#0F172A] shrink-0">{rupees(item.amountPaise)}</span>
@@ -159,6 +169,13 @@ function QuoteCard({ quote, onDecided }) {
           </div>
         </div>
       ) : (
+        <>
+        {hasParts && (
+          <label className="mt-3 flex items-start gap-2.5 rounded-xl bg-white px-3 py-2.5 text-[12.5px] font-semibold text-slate-700 ring-1 ring-slate-200">
+            <input type="checkbox" checked={oldPartsBack} onChange={(e) => setOldPartsBack(e.target.checked)} className="mt-0.5 h-4 w-4 rounded text-zappy-600" />
+            <span>Give me my old part back<span className="block text-[11.5px] font-normal text-slate-500">Your technician hands over the replaced part when the job is done.</span></span>
+          </label>
+        )}
         <div className="grid grid-cols-2 gap-2 mt-3">
           <button onClick={() => decide('approve')} disabled={isLoading}
             className="flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold text-sm py-2.5 rounded-xl">
@@ -173,6 +190,7 @@ function QuoteCard({ quote, onDecided }) {
             <MessageSquare size={14} /> Ask a question first
           </button>
         </div>
+        </>
       )}
     </div>
   );
@@ -207,7 +225,7 @@ function HandoverCode({ booking }) {
     },
     handover: {
       title: 'Share this when handing your device over',
-      hint: 'Proof your device was collected — never give it before this is asked for.',
+      hint: 'Proof your device was collected - never give it before this is asked for.',
     },
     return: {
       title: 'Share this when you get your device back',
@@ -305,7 +323,7 @@ function RateRepair({ booking }) {
   async function submit() {
     try {
       await rate({ id: booking._id, rating: stars, comment }).unwrap();
-      toast.success('Thanks — that helps the next customer');
+      toast.success('Thanks - that helps the next customer');
     } catch (err) {
       toast.error(err?.data?.error || 'Could not save your rating');
     }
@@ -433,6 +451,7 @@ export default function RepairBookingPage() {
               <p className="rounded-2xl bg-white px-4 py-3 text-[13px] leading-relaxed text-slate-600 ring-1 ring-slate-100">{STATUS_COPY[booking.status].hint}</p>
             )}
             {pendingQuote && <QuoteCard quote={pendingQuote} onDecided={refetch} />}
+            <RefundStatus source="repair" id={booking._id} />
             <ServiceReport booking={booking} />
             <RateRepair booking={booking} />
             <RepairWarrantyCard booking={booking} />

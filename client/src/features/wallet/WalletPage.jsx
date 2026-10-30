@@ -41,16 +41,11 @@ export default function WalletPage() {
     try {
       setBusy(true);
       const orderInfo = await topup(amountRs * 100).unwrap();
-      const checkoutResp = await openCheckout({
-        paymentSessionId: orderInfo.paymentSessionId,
-        cfOrderId:        orderInfo.cfOrderId,
-        cashfreeEnv:      orderInfo.cashfreeEnv || 'sandbox',
-        amountPaise:      orderInfo.amountPaise,
-        purpose:          'Wallet Top-up',
-      });
+      const checkoutResp = await openCheckout({ ...orderInfo, purpose: 'Wallet Top-up' });
       await verify({
         cfOrderId:   checkoutResp.cfOrderId,
         cfPaymentId: checkoutResp.cfPaymentId,
+        ...(checkoutResp.razorpaySignature && { razorpaySignature: checkoutResp.razorpaySignature }),
       }).unwrap();
       toast.success(tr('wallet.toast.added', '₹{n} added to wallet!').replace('{n}', amountRs));
       setCustomAmount('');

@@ -15,7 +15,7 @@ import Avatar from './Avatar';
 export default function WorkerRichCard({ job, eta, status, onCall, onChat, onLive, onProfile }) {
   const p = job.provider || {};
   const rating = p.rating != null ? Number(p.rating).toFixed(1) : 'New';
-  const jobs = p.jobs != null ? String(p.jobs) : '—';
+  const jobs = p.jobs != null ? String(p.jobs) : '-';
   const tiles = [
     onCall && { key: 'call', label: 'Call', tone: 'g', Icon: Phone, onClick: onCall },
     onChat && { key: 'chat', label: 'Chat', tone: 'b', Icon: MessageCircle, onClick: onChat },

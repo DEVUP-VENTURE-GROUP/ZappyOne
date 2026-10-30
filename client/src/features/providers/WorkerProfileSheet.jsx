@@ -14,7 +14,7 @@ function timeAgo(d) {
 }
 
 function memberSince(d) {
-  if (!d) return '—';
+  if (!d) return '-';
   return new Date(d).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
 }
 
@@ -77,7 +77,7 @@ export default function WorkerProfileSheet({ workerId, open, onClose }) {
                   </div>
                   <div className="bg-white/10 rounded-xl p-2.5 text-center">
                     <ThumbsUp size={14} className="mx-auto text-white/70 mb-1" />
-                    <p className="text-sm font-black">{w.acceptRate != null ? `${w.acceptRate}%` : '—'}</p>
+                    <p className="text-sm font-black">{w.acceptRate != null ? `${w.acceptRate}%` : '-'}</p>
                     <p className="text-[10px] text-white/50 font-semibold">Accept rate</p>
                   </div>
                   <div className="bg-white/10 rounded-xl p-2.5 text-center">
@@ -127,7 +127,7 @@ export default function WorkerProfileSheet({ workerId, open, onClose }) {
                 <div>
                   <p className="text-[11px] font-black uppercase tracking-wide text-slate-400 mb-2">Customer reviews</p>
                   {reviews.length === 0 ? (
-                    <p className="text-sm text-slate-400 py-3 text-center">No written reviews yet — be the first!</p>
+                    <p className="text-sm text-slate-400 py-3 text-center">No written reviews yet - be the first!</p>
                   ) : (
                     <div className="space-y-3">
                       {reviews.map((r, i) => (

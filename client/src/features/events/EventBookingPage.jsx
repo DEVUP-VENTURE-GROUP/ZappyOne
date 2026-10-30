@@ -129,7 +129,7 @@ export default function EventBookingPage() {
       setLocDetected(true);
       toast.success('Location detected! Review and edit if needed.');
     } catch (err) {
-      if (err.code === 1) toast.error('Location access denied — please allow it in browser settings');
+      if (err.code === 1) toast.error('Location access denied - please allow it in browser settings');
       else toast.error('Could not detect your location. Enter manually.');
     } finally {
       setLocating(false);
@@ -176,7 +176,7 @@ export default function EventBookingPage() {
           cfOrderId:        orderRes.cfOrderId,
           cashfreeEnv:      orderRes.cashfreeEnv || import.meta.env.VITE_CASHFREE_ENV || 'sandbox',
           amountPaise:      orderRes.amountPaise,
-          purpose:          'Event Booking — Advance',
+          purpose:          'Event Booking - Advance',
         });
         await verifyAdvancePayment({
           id:          bookingId,
@@ -266,7 +266,7 @@ export default function EventBookingPage() {
                   {locating ? (
                     <><Loader2 size={16} className="animate-spin" /> Detecting location…</>
                   ) : locDetected ? (
-                    <><CheckCircle size={16} className="text-emerald-500" /> Location detected — edit below if needed</>
+                    <><CheckCircle size={16} className="text-emerald-500" /> Location detected - edit below if needed</>
                   ) : (
                     <><LocateFixed size={16} /> Use My Current Location</>
                   )}
