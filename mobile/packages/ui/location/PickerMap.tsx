@@ -21,7 +21,11 @@
  * ----------------------------------------------------------------------------
  */
 
-import React, { memo, useCallback, useEffect, useRef } from 'react';
+import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
+import Svg, { Ellipse, Path, Rect } from 'react-native-svg';
+import { useLazyGetNearbyWorkersQuery } from '@zappy/core/api';
+import { useAppSelector } from '@zappy/core/store/hooks';
+import { SCOOTER, SCOOTER_BOX, bearingOf } from '@zappy/core/shared/mapArt';
 import { StyleSheet, View } from 'react-native';
 import MapView, { Marker, type MapPressEvent, type MarkerDragStartEndEvent } from 'react-native-maps';
 import { LocateFixed, MapPin } from 'lucide-react-native';
@@ -49,10 +53,58 @@ export interface PickerMapProps {
 }
 
 /** Roughly a neighbourhood — close enough to place a door, wide enough to orient. */
-const ZOOM_DELTA = 0.006;
+const ZOOM_DELTA = 0.0032;
+
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Part = any;
+type Pro = { key: string; lat: number; lng: number; heading: number };
+
+function Scooter() {
+  return (
+    <Svg width={SCOOTER_BOX} height={SCOOTER_BOX} viewBox={`0 0 ${SCOOTER_BOX} ${SCOOTER_BOX}`}>
+      {SCOOTER.map((p: Part, i: number) => (p.t === 'rect'
+        ? <Rect key={i} x={p.x} y={p.y} width={p.w} height={p.h} rx={p.r} fill={p.fill} />
+        : p.t === 'ellipse'
+          ? <Ellipse key={i} cx={p.cx} cy={p.cy} rx={p.rx} ry={p.ry} fill={p.fill} />
+          : <Path key={i} d={p.d} fill={p.fill} stroke={p.stroke} strokeWidth={p.sw} />))}
+    </Svg>
+  );
+}
+
+// Pros near the pin (blurred, anonymous; worker/nearby), refreshed every 8 s and turned toward where they moved (the website's picker).
+function useNearbyPros(lat: number, lng: number) {
+  const [fetchNearby] = useLazyGetNearbyWorkersQuery();
+  const [pros, setPros] = useState<Pro[]>([]);
+  const at = useRef({ lat, lng });
+  at.current = { lat, lng };
+  // Customers and guests only; a shop placing its own address has no use for them.
+  const role = useAppSelector((st: { auth: { role?: string | null } }) => st.auth.role);
+  const customer = !role || role === 'user';
+  useEffect(() => {
+    if (!customer) return undefined;
+    let alive = true;
+    const load = async () => {
+      try {
+        const res = await fetchNearby({ lat: at.current.lat, lng: at.current.lng }).unwrap();
+        if (!alive) return;
+        setPros((prev) => (res?.workers || []).map((w: { key: string; lat: number; lng: number }, i: number) => {
+          const was = prev.find((p) => p.key === w.key);
+          const moved = was && (was.lat !== w.lat || was.lng !== w.lng);
+          return { key: w.key || `i${i}`, lat: w.lat, lng: w.lng, heading: moved ? bearingOf(was, w) : was?.heading ?? (i * 67) % 360 };
+        }));
+      } catch { /* the map works without them */ }
+    };
+    load();
+    const id = setInterval(load, 8000);
+    return () => { alive = false; clearInterval(id); };
+  }, [fetchNearby, lat, lng, customer]);
+  return customer ? pros : [];
+}
 
 function PickerMapBase({ lat, lng, hasPin = true, onMove, onRecenter, busy }: PickerMapProps) {
   const mapRef = useRef<MapView>(null);
+  const pros = useNearbyPros(lat, lng);
 
   // Follow the coordinate when it changes from outside (search result, saved
   // address, recentre). Dragging the marker already moved the camera, so
@@ -95,6 +147,11 @@ function PickerMapBase({ lat, lng, hasPin = true, onMove, onRecenter, busy }: Pi
         showsCompass={false}
         toolbarEnabled={false}
       >
+        {pros.map((p) => (
+          <Marker key={p.key} coordinate={{ latitude: p.lat, longitude: p.lng }} anchor={{ x: 0.5, y: 0.5 }} flat rotation={p.heading} tracksViewChanges={false}>
+            <Scooter />
+          </Marker>
+        ))}
         <Marker
           coordinate={{ latitude: lat, longitude: lng }}
           draggable

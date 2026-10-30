@@ -1,0 +1,26 @@
+// A pro on the customer's map, drawn top-down like Uber's cars, and which way they are heading; websites and apps draw the same.
+export const SCOOTER_BOX = 30;
+export const SCOOTER = [
+  { t: 'rect', x: 11, y: 3, w: 8, h: 5, r: 2.5, fill: '#101828' },
+  { t: 'rect', x: 11, y: 22, w: 8, h: 5, r: 2.5, fill: '#101828' },
+  { t: 'path', d: 'M10 9 Q15 5 20 9 L20 21 Q15 25 10 21 Z', fill: '#1F4FD8', stroke: '#FFFFFF', sw: 1.5 },
+  { t: 'rect', x: 7, y: 8.5, w: 16, h: 2.2, r: 1.1, fill: '#101828' },
+  { t: 'ellipse', cx: 15, cy: 17, rx: 3, ry: 3.6, fill: '#F59E0B' },
+];
+
+export function scooterSvg() {
+  const parts = SCOOTER.map((p) => (p.t === 'rect'
+    ? `<rect x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" rx="${p.r}" fill="${p.fill}"/>`
+    : p.t === 'ellipse'
+      ? `<ellipse cx="${p.cx}" cy="${p.cy}" rx="${p.rx}" ry="${p.ry}" fill="${p.fill}"/>`
+      : `<path d="${p.d}" fill="${p.fill}" stroke="${p.stroke}" stroke-width="${p.sw}"/>`)).join('');
+  return `<svg viewBox="0 0 ${SCOOTER_BOX} ${SCOOTER_BOX}" width="${SCOOTER_BOX}" height="${SCOOTER_BOX}" aria-hidden="true">${parts}</svg>`;
+}
+
+// Compass bearing from one point to the next, in degrees.
+export function bearingOf(a, b) {
+  const rad = (d) => (d * Math.PI) / 180;
+  const y = Math.sin(rad(b.lng - a.lng)) * Math.cos(rad(b.lat));
+  const x = Math.cos(rad(a.lat)) * Math.sin(rad(b.lat)) - Math.sin(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.cos(rad(b.lng - a.lng));
+  return (Math.atan2(y, x) * 180) / Math.PI;
+}

@@ -36,6 +36,7 @@ import {
 } from '../../hooks/useGeolocation';
 import { useGoogleMaps } from '../../services/maps';
 import { geocodeGoogle, placeSuggestions, pointOf } from '../../services/googlePlaces';
+import { bearingOf, scooterSvg } from '../../customer/mapArt';
 import { useT } from '../../i18n/I18nProvider';
 import { setLocation as setReduxLocation, selectLocation, selectHasLocation } from '../../store/locationSlice';
 
@@ -106,27 +107,13 @@ function ensureLocPickStyles() {
   document.head.appendChild(s);
 }
 
-// A pro nearby, drawn top-down like Uber's cars: a scooter in brand blue that turns to face where it is heading.
+// A pro nearby (customer/mapArt): a scooter that turns to face where it is heading.
 function makeScooterEl() {
   const wrap = document.createElement('div');
   wrap.style.cssText = 'width:30px;height:30px;pointer-events:none;';
-  wrap.innerHTML = `<div data-body style="width:30px;height:30px;transition:transform 1.2s ease;filter:drop-shadow(0 2px 3px rgba(15,23,42,.35))">
-    <svg viewBox="0 0 30 30" width="30" height="30" aria-hidden="true">
-      <rect x="11" y="3" width="8" height="5" rx="2.5" fill="#101828"/>
-      <rect x="11" y="22" width="8" height="5" rx="2.5" fill="#101828"/>
-      <path d="M10 9 Q15 5 20 9 L20 21 Q15 25 10 21 Z" fill="#1F4FD8" stroke="#fff" stroke-width="1.5"/>
-      <rect x="7" y="8.5" width="16" height="2.2" rx="1.1" fill="#101828"/>
-      <ellipse cx="15" cy="17" rx="3" ry="3.6" fill="#F59E0B"/>
-    </svg></div>`;
+  wrap.innerHTML = `<div style="width:30px;height:30px;transition:transform 1.2s ease;filter:drop-shadow(0 2px 3px rgba(15,23,42,.35))">${scooterSvg()}</div>`;
   return wrap;
 }
-
-const bearingOf = (a, b) => {
-  const y = Math.sin(((b.lng - a.lng) * Math.PI) / 180) * Math.cos((b.lat * Math.PI) / 180);
-  const x = Math.cos((a.lat * Math.PI) / 180) * Math.sin((b.lat * Math.PI) / 180)
-    - Math.sin((a.lat * Math.PI) / 180) * Math.cos((b.lat * Math.PI) / 180) * Math.cos(((b.lng - a.lng) * Math.PI) / 180);
-  return (Math.atan2(y, x) * 180) / Math.PI;
-};
 
 function makeUserLocationEl() {
   ensureLocPickStyles();
@@ -519,6 +506,8 @@ export default function LocationPicker({ onConfirm, onCancel, serviceLabel, serv
 
   // Pros near the pin, refreshed every few seconds; each one glides to its new spot and turns toward it.
   async function _loadNearbyWorkers(map, loc) {
+    // Customers and guests only; a shop placing its own address has no use for them.
+    if (authRole && !isCustomer) return;
     nearbyLocRef.current = loc;
     try {
       const res = await fetchNearby({ lat: loc.lat, lng: loc.lng }).unwrap();
