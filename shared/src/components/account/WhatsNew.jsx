@@ -12,6 +12,7 @@ export default function WhatsNew({ role, appName = 'ZappyOne' }) {
   const [seen, { isLoading }] = useMarkReleaseSeenMutation();
   const items = RELEASE[role] || [];
   const close = () => seen(RELEASE.id).catch(() => {});
+  if (!items.length) return null;
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}

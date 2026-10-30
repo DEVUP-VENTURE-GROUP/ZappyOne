@@ -9,31 +9,26 @@
  * the app before sees it on their next visit. Only list what people can use.
  */
 export const RELEASE = {
-  id: '2026-10',
+  id: '2026-11',
   /** Accounts created on or after this date start on this release; it is not news to them. */
-  since: '2026-10-06',
+  since: '2026-10-30',
   user: [
-    ['Message your provider', 'Chat with whoever is doing your job, right from the booking.'],
-    ['A bill that adds up', 'Every booking shows each charge, the platform fee and the total.'],
-    ['Live updates', 'Each step of your job ticks off as it happens.'],
-    ['Your photo', 'Add a profile photo so your technician recognises you.'],
+    ['Tracking, redone', 'See who is coming, how many minutes away, and your start code on one screen.'],
+    ['Look before you sign in', 'Browse brands, problems and prices first; sign in only when you book.'],
+    ['Late pro, free cancel', 'If your pro misses the promised time, cancelling costs you nothing.'],
+    ['Know when it needs longer', 'Your pro tells you when a job needs more time, and why.'],
   ],
   worker: [
-    ['My reviews', 'See every review customers left, and report one that is not right.'],
-    ['Message customers', 'Chat with the customer from the job screen.'],
-    ['Prices in rupees', 'Type quotes in rupees; we handle the rest.'],
-    ['Your photo', 'Change your profile photo any time from your profile.'],
+    ['Ask for more time', 'Tell the customer the job needs longer, with a reason, from the job screen.'],
+    ['Safety check', 'On long visits we check you are safe; one tap answers.'],
+    ['Skip a customer', 'After a bad visit, choose not to get jobs from that customer again.'],
+    ['Cash not paid', 'If a customer will not pay cash, report it from the job and we follow up.'],
   ],
   shop: [
-    ['Reviews', 'See what customers say about your shop and report a wrong review.'],
-    ['Message customers', 'Chat with the customer from any job.'],
-    ['Quotes in rupees', 'Your team types prices in rupees, with a clear minimum.'],
-    ['Shop photo', 'Add a photo of your shop; customers see it when they book.'],
+    ['Ask for more time', 'Your team can tell the customer a job needs longer, with a reason.'],
+    ['Safety check', 'On long visits we check your technician is safe.'],
+    ['Cash not paid', 'Report a customer who will not pay cash, right from the job.'],
   ],
-  event_partner: [
-    ['Reviews', 'See every review customers left on your setups.'],
-    ['Clear earnings', 'Your earnings show your package price and commission; our customer fee is never taken from you.'],
-    ['Setup photos', 'Add before and after photos to each booking.'],
-    ['Your photo', 'Add a business photo from your profile.'],
-  ],
+  // Nothing new for event partners in this release.
+  event_partner: [],
 };
