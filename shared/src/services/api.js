@@ -439,6 +439,9 @@ export const {
   useConfirmJobSafeMutation,
   useAskJobMoreTimeMutation,
   useBlockJobCustomerMutation,
+  useShareJobMutation,
+  useUnshareJobMutation,
+  useGetSharedJobQuery,
   useReportCustomerAbsentMutation, useReportCashRefusedMutation,
   useSendJobChatMutation,
   // Account

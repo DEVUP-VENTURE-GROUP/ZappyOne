@@ -9,6 +9,26 @@ const { makeLimiter } = require('../../middlewares/rateLimit');
  */
 const router = express.Router();
 
+// Shared tracking (jobs/share): the person at the door follows the job from a private link, no account.
+const shareLimiter = makeLimiter({ windowMs: 60_000, max: 30, prefix: 'jobshare' });
+router.get('/shared/:token', shareLimiter, async (req, res, next) => {
+  try {
+    const share = await require('./share').resolve(req.params.token);
+    if (!share) return res.status(404).json({ error: 'This link has expired or was turned off', code: 'SHARE_GONE' });
+    return require('./share').view(share, req, res, next);
+  } catch (err) { return next(err); }
+});
+router.post('/:id/share', authenticate, requireRole('user'), async (req, res, next) => {
+  try {
+    const share = await require('./share').create(req.auth.sub, req.params.id);
+    const base = (process.env.CLIENT_URL || 'https://zappyone.com').replace(/\/$/, '');
+    res.status(201).json({ url: `${base}/t/${share.token}`, expiresAt: share.expiresAt });
+  } catch (err) { next(err); }
+});
+router.delete('/:id/share', authenticate, requireRole('user'), async (req, res, next) => {
+  try { await require('./share').revoke(req.auth.sub, req.params.id); res.json({ ok: true }); } catch (err) { next(err); }
+});
+
 /**
  * Cancellation fees the customer still owes from earlier bookings: shown before
  * they confirm the next one, which carries them (jobs/cancel-fee).

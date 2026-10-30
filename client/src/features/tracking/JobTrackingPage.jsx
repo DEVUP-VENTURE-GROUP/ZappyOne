@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import {
-  BadgeIndianRupee, Clock, HeadphonesIcon, Loader2, Navigation, Repeat2, ShieldAlert, ShieldCheck, UserX, X,
+  BadgeIndianRupee, Clock, HeadphonesIcon, Loader2, Navigation, Repeat2, ShieldAlert, ShieldCheck, UserPlus, UserX, X,
 } from 'lucide-react';
 import LiveTrackingMap from '@shared/modules/tracking/LiveTrackingMap';
 import { useTrackingFeed } from '@shared/hooks/useLiveTrip';
@@ -21,7 +21,7 @@ import SlowSearchCard from './cards/SlowSearchCard';
 import JobTipCard from './cards/JobTipCard';
 import RepeatCard from './cards/RepeatCard';
 import JobChat from '@shared/components/jobs/JobChat';
-import { useJobOptionsQuery, useReportProviderAbsentMutation } from '@shared/services/api';
+import { useJobOptionsQuery, useReportProviderAbsentMutation, useShareJobMutation } from '@shared/services/api';
 import { useSelector } from 'react-redux';
 import { selectAuth } from '@shared/modules/auth/authSlice';
 import { API_BASE } from '@shared/services/apiBase';
@@ -65,6 +65,7 @@ export default function JobTrackingPage({ job, extras = null, startCode = null, 
   const optionsOn = ['repair', 'pet', 'helping'].includes(job.kind) && (!job.terminal || job.status === 'completed');
   const { data: options, isFetching: optionsLoading, refetch: refetchOptions } = useJobOptionsQuery({ id: job.id, status: job.status }, { skip: !optionsOn });
   const [reportAbsent, { isLoading: reportingAbsent }] = useReportProviderAbsentMutation();
+  const [shareJob] = useShareJobMutation();
   const cancelQuote = options?.cancel;
   const { accessToken } = useSelector(selectAuth);
 
@@ -169,6 +170,16 @@ export default function JobTrackingPage({ job, extras = null, startCode = null, 
           <StatusBlock job={job} status={status} eta={eta} options={options} needsYou={needsYou}>
             {status === 'searching' && <SearchingHero search={options?.search} noun={job.noun} />}
             <StartCodeCard jobKey={`${job.kind}:${job.id}`} code={startCode} stage={codeStage || status} noun={job.noun} />
+            {['repair', 'pet', 'helping'].includes(job.kind) && !job.terminal && (
+              <Row Icon={UserPlus} title="Booked for someone else?" sub="Share a live link so they can follow the job and give the start code"
+                onClick={async () => {
+                  try {
+                    const { url } = await shareJob(job.id).unwrap();
+                    if (navigator.share) { await navigator.share({ title: `${job.service} on ZappyOne`, text: 'Follow this booking live', url }).catch(() => {}); }
+                    else { await navigator.clipboard.writeText(url); toast.success('Link copied. Send it to them.'); }
+                  } catch (err) { toast.error(err?.data?.error || 'Could not make a link. Try again.'); }
+                }} />
+            )}
             {options?.moreTime?.until && !job.terminal && status !== 'in_progress' && (
               <Row Icon={Clock} title={`Finishing by ${new Date(options.moreTime.until).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' })}`}
                 sub={`${options.moreTime.reason}. Nothing extra is charged unless you approve a new quote.`} />

@@ -28,6 +28,7 @@ import LoginPage from '../features/auth/LoginPage';
 
 const HomePage            = lazy(() => import('../features/home/HomePage'));
 const OrderTrackingPage   = lazy(() => import('../features/tracking/OrderTrackingPage'));
+const SharedTrackingPage  = lazy(() => import('../features/tracking/SharedTrackingPage'));
 const OrdersListPage      = lazy(() => import('../features/bookings/OrdersListPage'));
 const TrackPage           = lazy(() => import('../features/bookings/TrackPage'));
 const ProfilePage         = lazy(() => import('../features/account/ProfilePage'));
@@ -140,6 +141,8 @@ export default function App() {
         {/* Public, signed out: how to delete an account (Google Play account-deletion link). */}
         <Route path="/delete-account" element={<DeleteAccountPage />} />
         <Route path="/policy/:slug" element={<PolicyPage />} />
+        {/* Public: a booking shared with the person at the door (jobs/share). */}
+        <Route path="/t/:token" element={<SharedTrackingPage />} />
 
         <Route path="/login" element={token ? <Navigate to="/" replace /> : <LoginPage />} />
 

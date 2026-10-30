@@ -3,11 +3,13 @@
  * the map while someone travels, one headline with the start code, the pro, updates, booking details, the promise and cancel.
  */
 import { useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, Share, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BadgeIndianRupee, Clock, Headphones, Repeat2, ShieldCheck, X } from 'lucide-react-native';
-import { useJobOptionsQuery } from '@zappy/core/api';
+import { BadgeIndianRupee, Clock, Headphones, Repeat2, ShieldCheck, UserPlus, X } from 'lucide-react-native';
+import { useJobOptionsQuery, useShareJobMutation } from '@zappy/core/api';
+import { toast } from '@zappy/ui/components/Toast';
+import { errText } from '@zappy/ui/lib/feedback';
 import { useTrackingFeed } from '@zappy/core/hooks/useTrackingFeed';
 import { feedCopy, firstNameOf } from '@zappy/core/shared/trackingSteps';
 import { Button, Text } from '@zappy/ui/components';
@@ -51,6 +53,7 @@ export function JobTrackingPage({ job, extras = null, startCode = null, codeStag
   const [chatOpen, setChatOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
   const status = job.status;
+  const [shareJob] = useShareJobMutation();
 
   const optionsOn = ['repair', 'pet', 'helping'].includes(job.kind) && (!job.terminal || status === 'completed');
   const { data: options, isFetching: optionsLoading, refetch: refetchOptions } = useJobOptionsQuery({ id: job.id, status }, { skip: !optionsOn });
@@ -87,6 +90,15 @@ export function JobTrackingPage({ job, extras = null, startCode = null, codeStag
         <StatusBlock job={job} status={status} eta={eta} options={options} needsYou={needsYou}>
           {status === 'searching' ? <SearchingHero search={options?.search} noun={job.noun} /> : null}
           <StartCodeCard jobKey={`${job.kind}:${job.id}`} code={startCode} stage={codeStage || status} noun={job.noun} />
+          {['repair', 'pet', 'helping'].includes(job.kind) && !job.terminal ? (
+            <Row Icon={UserPlus} title="Booked for someone else?" sub="Share a live link so they can follow the job and give the start code"
+              onPress={async () => {
+                try {
+                  const { url } = await shareJob(job.id).unwrap();
+                  await Share.share({ message: `Follow my ${job.service} booking live on ZappyOne: ${url}` });
+                } catch (err) { toast.error(errText(err, 'Could not make a link. Try again.')); }
+              }} />
+          ) : null}
           {options?.moreTime?.until && !job.terminal && status !== 'in_progress' ? (
             <Row Icon={Clock} title={`Finishing by ${clock(options.moreTime.until)}`} sub={`${options.moreTime.reason}. Nothing extra is charged unless you approve a new quote.`} />
           ) : null}

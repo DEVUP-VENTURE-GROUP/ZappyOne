@@ -167,6 +167,10 @@ export function endpoints(b, { adminApiPath }) {
     giveBackJob: b.mutation({ query: ({ id, ...body }) => ({ url: `/jobs/${id}/give-back`, method: 'POST', body }) }),
     confirmJobSafe: b.mutation({ query: (id) => ({ url: `/jobs/${id}/safe`, method: 'POST' }) }),
     askJobMoreTime: b.mutation({ query: ({ id, ...body }) => ({ url: `/jobs/${id}/more-time`, method: 'POST', body }) }),
+    // "Booked for someone else?": a private live link for the person at the door (jobs/share).
+    shareJob: b.mutation({ query: (id) => ({ url: `/jobs/${id}/share`, method: 'POST' }) }),
+    unshareJob: b.mutation({ query: (id) => ({ url: `/jobs/${id}/share`, method: 'DELETE' }) }),
+    getSharedJob: b.query({ query: (token) => `/jobs/shared/${token}` }),
     blockJobCustomer: b.mutation({ query: ({ id, reason = '' }) => ({ url: `/jobs/${id}/block-customer`, method: 'POST', body: { reason } }) }),
     // The pro reports the customer would not pay cash after the job (jobs/give-back reportCashRefused).
     reportCashRefused: b.mutation({ query: ({ id, note }) => ({ url: `/jobs/${id}/cash-refused`, method: 'POST', body: { note } }) }),
