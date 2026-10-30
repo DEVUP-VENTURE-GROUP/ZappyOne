@@ -166,7 +166,7 @@ export function HomePage() {
 
   return (
     <View style={[styles.page, theme ? { backgroundColor: theme.wash } : null]}>
-      <HomeHeader loc={loc} isAuthed={isAuthed} onPickLocation={() => setLocSheet(true)} tint={tint} />
+      <HomeHeader loc={loc} isAuthed={isAuthed} onPickLocation={() => setLocSheet(true)} tint={tint} eta={svc?.fastestMin != null && svc.fastestMin <= 60 ? svc.fastestMin : null} />
       {/* Search stays pinned while the rest scrolls. */}
       <View style={[styles.searchWrap, tint ? { backgroundColor: tint, borderBottomLeftRadius: 0, borderBottomRightRadius: 0 } : null]}><SearchBar terms={terms} onOpen={() => setSpotOpen(true)} /></View>
       <ScrollView contentContainerStyle={styles.body} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
@@ -183,12 +183,7 @@ export function HomePage() {
             {svc?.prosNearby > 0 ? (
               <View accessibilityRole="text" style={styles.live}>
                 <View style={styles.liveDot} />
-                <View style={styles.flexText}>
-                  {svc.fastestMin != null && svc.fastestMin <= 60 ? (
-                    <Text variant="heading3" weight="bold">Pro at your door in <Text variant="heading3" weight="bold" color={zappy[600]}>{svc.fastestMin} min</Text></Text>
-                  ) : null}
-                  <Text variant="caption" weight="semibold" color={ink[500]}>{svc.prosNearby} verified {svc.prosNearby === 1 ? 'pro' : 'pros'} open near {loc.primary || 'you'} now</Text>
-                </View>
+                <Text variant="bodySmall" weight="semibold" color={ink[700]} style={styles.flexText}>{svc.prosNearby} verified {svc.prosNearby === 1 ? 'pro is' : 'pros are'} open near {loc.primary || 'you'} right now</Text>
               </View>
             ) : null}
             {nothingLive ? (

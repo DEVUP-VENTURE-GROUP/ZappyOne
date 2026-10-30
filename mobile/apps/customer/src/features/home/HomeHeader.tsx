@@ -60,12 +60,24 @@ function useUnread(isAuthed: boolean) {
 }
 
 /** tint: a light festive season's colour, so the festive top flows out of the header. */
-export function HomeHeader({ loc, isAuthed, onPickLocation, tint = null }: { loc: HomeLocation; isAuthed: boolean; onPickLocation: () => void; tint?: string | null }) {
+export function HomeHeader({ loc, isAuthed, onPickLocation, tint = null, eta = null }: { loc: HomeLocation; isAuthed: boolean; onPickLocation: () => void; tint?: string | null; eta?: number | null }) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const unread = useUnread(isAuthed);
   return (
     <View style={[styles.header, { paddingTop: insets.top + spacing.sm }, tint ? { backgroundColor: tint } : null]}>
+      {/* Blinkit's top: how soon someone can be at the door, big, with the address right under it. */}
+      {eta != null && !loc.loading ? (
+        <Pressable onPress={onPickLocation} accessibilityRole="button" accessibilityLabel={`Pro at your door in ${eta} minutes, at ${loc.primary}. Change location`} style={styles.flex}>
+          <Text variant="caption" weight="bold" color={ink[500]} style={styles.etaLabel}>PRO AT YOUR DOOR IN</Text>
+          <Text variant="heading1" weight="black" style={styles.eta}>{eta} min</Text>
+          <View style={styles.loc}>
+            <MapPin size={13} color={zappy[600]} strokeWidth={2.4} />
+            <Text variant="bodySmall" weight="bold" color={zappy[700]} numberOfLines={1} style={styles.shrink}>{loc.primary}{loc.secondary ? <Text variant="caption" color={ink[500]}>, {loc.secondary}</Text> : null}</Text>
+            <ChevronDown size={14} color={zappy[600]} strokeWidth={2.6} />
+          </View>
+        </Pressable>
+      ) : (
       <View style={styles.flex}>
         <ZappyWordmark size={22} />
         <Pressable onPress={onPickLocation} accessibilityRole="button" accessibilityLabel={`Service location: ${loc.primary}. Change location`} style={styles.loc}>
@@ -75,6 +87,7 @@ export function HomeHeader({ loc, isAuthed, onPickLocation, tint = null }: { loc
         </Pressable>
         {!loc.loading && loc.secondary ? <Text variant="caption" color={ink[500]} numberOfLines={1}>{loc.secondary}</Text> : null}
       </View>
+      )}
       {isAuthed ? (
         <Pressable onPress={() => router.push('/notifications' as never)} accessibilityRole="button" accessibilityLabel={unread ? `${unread} unread notifications` : 'Notifications'} style={styles.bell}>
           <Bell size={17} color={zappy[700]} />
@@ -88,6 +101,8 @@ export function HomeHeader({ loc, isAuthed, onPickLocation, tint = null }: { loc
 const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0, gap: 2 },
   shrink: { flexShrink: 1 },
+  etaLabel: { letterSpacing: 1 },
+  eta: { letterSpacing: -0.8, lineHeight: 32 },
   header: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingHorizontal: spacing.base, paddingBottom: spacing.sm, backgroundColor: zappy[100] },
   loc: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
   bell: { width: 40, height: 40, borderRadius: radius.button, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: zappy[100], backgroundColor: '#fff' },

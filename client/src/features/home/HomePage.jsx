@@ -287,6 +287,7 @@ export default function HomePage() {
           search={searchBar}
           tint={tint}
           festive={theme}
+          eta={svc?.fastestMin != null && svc.fastestMin <= 60 ? svc.fastestMin : null}
         />
 
         {/* Phone: search stays pinned while the rest scrolls (desktop has it in the bar). */}
@@ -321,15 +322,8 @@ export default function HomePage() {
                     <span className="absolute inline-flex h-full w-full rounded-full bg-zappy-600 opacity-60 motion-safe:animate-ping" />
                     <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-zappy-600" />
                   </span>
-                  <p className="min-w-0 leading-tight">
-                    {svc.fastestMin != null && svc.fastestMin <= 60 && (
-                      <span className="block text-[20px] font-black tracking-[-0.02em] text-ink-900">
-                        Pro at your door in <span className="text-zappy-600">{svc.fastestMin} min</span>
-                      </span>
-                    )}
-                    <span className={svc.fastestMin != null && svc.fastestMin <= 60 ? 'block text-[12.5px] font-semibold text-ink-500' : 'block text-[13px] font-semibold text-ink-700'}>
-                      {svc.prosNearby} verified {svc.prosNearby === 1 ? 'pro' : 'pros'} open near {loc.primary || 'you'} now
-                    </span>
+                  <p className="min-w-0 text-[13px] font-semibold leading-tight text-ink-700">
+                    {svc.prosNearby} verified {svc.prosNearby === 1 ? 'pro is' : 'pros are'} open near {loc.primary || 'you'} right now
                   </p>
                 </div>
               )}

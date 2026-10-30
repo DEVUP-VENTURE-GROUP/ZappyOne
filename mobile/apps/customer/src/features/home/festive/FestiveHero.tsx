@@ -1,8 +1,9 @@
-import { Image, StyleSheet, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
 import { useReducedMotion } from '@zappy/core/hooks/useReducedMotion';
 import { rayShapes } from '@zappy/core/shared/season';
+import { servicePhoto, tilePhoto } from '@zappy/core/shared/serviceArt';
 import { Text } from '@zappy/ui/components';
 import { webAsset } from '@zappy/ui/lib/media';
 import { radius } from '@zappy/ui/theme/radius';
@@ -16,7 +17,10 @@ type Any = any;
 const RAYS = rayShapes();
 
 // The top of home during a festival (the website's FestiveHero), as Blinkit does it: one festive band, one line and the offer; the services stay in the grid below.
-export function FestiveHero({ season, theme }: { season: Any; theme: Any; services?: Any[]; onOpen?: (s: Any) => void }) {
+export function FestiveHero({ season, theme, services = [], onOpen }: { season: Any; theme: Any; services?: Any[]; onOpen?: (s: Any) => void }) {
+  // The festival's picked services that are live here, as tappable pills: the band always leads somewhere.
+  const byCode = new Map(services.map((s: Any) => [s.code, s]));
+  const picks = (season.tiles || []).map((t: Any) => ({ ...t, service: byCode.get(t.serviceCode) })).filter((t: Any) => t.service).slice(0, 6);
   const reduce = useReducedMotion();
   const rise = (ms: number) => (reduce ? undefined : FadeInDown.delay(ms).springify().damping(16));
   const art = webAsset(season.artUrl || null);
@@ -39,6 +43,20 @@ export function FestiveHero({ season, theme }: { season: Any; theme: Any; servic
           {art ? <Image source={{ uri: art }} style={styles.art} resizeMode="cover" /> : null}
         </Animated.View>
 
+        {picks.length ? (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pills}>
+            {picks.map((t: Any) => {
+              const photo = webAsset(t.imageUrl || tilePhoto(t.service.code) || servicePhoto(t.service));
+              return (
+                <Pressable key={t.serviceCode} onPress={() => onOpen?.(t.service)} accessibilityRole="button"
+                  style={({ pressed }) => [styles.pill, { backgroundColor: theme.tile, borderColor: theme.line }, pressed && styles.pressed]}>
+                  {photo ? <Image source={{ uri: photo }} style={styles.pillImg} /> : <View style={[styles.pillImg, { backgroundColor: theme.line }]} />}
+                  <Text variant="caption" weight="bold" color={theme.tileInk}>{t.title || t.service.name}</Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        ) : null}
         {season.offer ? (
           <Animated.View entering={rise(200)}>
             <FestiveOffer offer={season.offer} accent={theme.accent} />
@@ -57,4 +75,8 @@ const styles = StyleSheet.create({
   greeting: { letterSpacing: 2 },
   headline: { letterSpacing: -0.5 },
   art: { width: 88, height: 88, borderRadius: radius.large },
+  pills: { gap: spacing.sm, paddingRight: spacing.base },
+  pill: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingVertical: 4, paddingLeft: 4, paddingRight: 14, borderRadius: 999, borderWidth: 1 },
+  pillImg: { width: 32, height: 32, borderRadius: 16 },
+  pressed: { transform: [{ scale: 0.97 }] },
 });

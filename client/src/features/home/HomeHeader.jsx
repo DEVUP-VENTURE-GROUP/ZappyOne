@@ -142,7 +142,23 @@ export function SearchBar({ terms, onOpen, onVoice, onLens }) {
  */
 const FLIP_MS = 5000;
 
-function BrandOrPlace({ loc, onPickLocation }) {
+// Blinkit's top: how soon someone can be at the door, big, with the address right under it.
+function EtaPlace({ eta, loc, onPickLocation }) {
+  return (
+    <button type="button" onClick={onPickLocation} className="group min-w-0 flex-1 text-left" aria-label={`Pro at your door in ${eta} minutes, at ${loc.primary}. Change location`}>
+      <span className="block text-[11px] font-bold uppercase tracking-[0.08em] text-ink-500">Pro at your door in</span>
+      <span className="block text-[26px] font-black leading-none tracking-[-0.03em] text-ink-900">{eta} min</span>
+      <span className="mt-1 flex min-w-0 items-center gap-1">
+        <MapPin size={13} strokeWidth={2.4} className="shrink-0 text-zappy-600" />
+        <span className="truncate text-[13px] font-bold text-zappy-700">{loc.primary}</span>
+        {loc.secondary && <span className="truncate text-[12px] text-ink-500">, {loc.secondary}</span>}
+        <ChevronDown size={14} strokeWidth={2.6} className="shrink-0 text-zappy-600" />
+      </span>
+    </button>
+  );
+}
+
+function BrandOrPlace({ loc, onPickLocation, eta = null }) {
   const reduce = useReducedMotion();
   const [face, setFace] = useState('brand');
   const [tick, setTick] = useState(0);
@@ -153,6 +169,7 @@ function BrandOrPlace({ loc, onPickLocation }) {
     return () => clearTimeout(id);
   }, [face, tick, reduce]);
 
+  if (eta != null && !loc.loading) return <EtaPlace eta={eta} loc={loc} onPickLocation={onPickLocation} />;
   if (reduce) {
     return (
       <div className="flex min-w-0 flex-1 items-center gap-3">
@@ -200,7 +217,7 @@ const LINKS = [
   { to: '/track', label: 'Track' },
 ];
 
-export default function HomeHeader({ loc, isAuthed, avatar, onPickLocation, search, tint = null, festive = null }) {
+export default function HomeHeader({ loc, isAuthed, avatar, onPickLocation, search, tint = null, festive = null, eta = null }) {
   const nav = useNavigate();
   const unread = useUnread(isAuthed);
 
@@ -241,7 +258,7 @@ export default function HomeHeader({ loc, isAuthed, avatar, onPickLocation, sear
         {/* Brand and place take turns in one slot. Profile lives in the bottom
             bar, so the phone header keeps the bell (signed in) or Sign in. */}
         <div className="flex items-center gap-2.5 px-4 pb-2.5 pt-4">
-          <BrandOrPlace loc={loc} onPickLocation={onPickLocation} />
+          <BrandOrPlace loc={loc} onPickLocation={onPickLocation} eta={eta} />
           {isAuthed ? (
             <IconButton label={unread ? `${unread} unread notifications` : 'Notifications'} onClick={() => nav('/notifications')} badge={unread}>
               <Bell size={17} />
