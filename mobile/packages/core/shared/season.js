@@ -114,24 +114,29 @@ export function motifShapes(themeKey) {
       out.push({ t: 'circle', cx: x - 0.9, cy: y - 0.9, r: long ? 1.1 : 0.9, fill: '#FFFFFF', o: 0.55, ...sway });
     }
   } else if (th.motif === 'lights') {
-    // Two strings of lights, each bulb with a soft glow, and diyas along the bottom edge.
-    [[0, 8, 34], [0, 30, 58]].forEach(([, y0, sag], row) => {
-      const p0 = { x: -10, y: y0 }; const p1 = { x: w / 2, y: y0 + sag }; const p2 = { x: w + 10, y: y0 };
-      out.push({ t: 'path', d: `M${p0.x},${p0.y} Q${p1.x},${p1.y} ${p2.x},${p2.y}`, stroke: d, sw: 1.2, o: 0.8 });
-      for (let k = 1; k < 15; k += 1) {
-        const p = quad(p0, p1, p2, k / 15);
-        const tw = { anim: 'twinkle', delay: ((k * 7 + row * 3) % 10) * 0.18 };
-        out.push({ t: 'circle', cx: p.x, cy: p.y + 4, r: 8, fill: k % 2 ? a : b, o: 0.22, ...tw });
-        out.push({ t: 'circle', cx: p.x, cy: p.y + 4, r: 3.4, fill: (k + row) % 3 ? a : c, ...tw });
+    // A marigold toran across the top: swags of flowers between nails, mango leaves hanging and swaying at each nail.
+    const nails = [0, 90, 180, 270, 360];
+    const flower = (x, y) => {
+      out.push({ t: 'circle', cx: x, cy: y, r: 5.2, fill: '#FBBF24' });
+      for (let k = 0; k < 8; k += 1) {
+        const ang = (k / 8) * Math.PI * 2;
+        out.push({ t: 'circle', cx: x + Math.cos(ang) * 4.2, cy: y + Math.sin(ang) * 4.2, r: 2.3, fill: '#F59E0B' });
       }
-    });
-    for (let k = 0; k < 6; k += 1) {
-      const x = 30 + k * 60;
-      out.push({ t: 'path', d: `M${x - 9},88 Q${x},96 ${x + 9},88 Z`, fill: b });
-      const fl = { anim: 'flicker', g: `d${k}`, px: x, py: 87, delay: k * 0.23 };
-      out.push({ t: 'path', d: `M${x},76 Q${x + 4},83 ${x},87 Q${x - 4},83 ${x},76 Z`, fill: a, ...fl });
-      out.push({ t: 'circle', cx: x, cy: 83, r: 9, fill: a, o: 0.18, ...fl });
+      out.push({ t: 'circle', cx: x, cy: y, r: 2, fill: '#C2410C' });
+    };
+    for (let n = 0; n < nails.length - 1; n += 1) {
+      const p0 = { x: nails[n], y: 3 }; const p1 = { x: nails[n] + 45, y: 22 }; const p2 = { x: nails[n + 1], y: 3 };
+      out.push({ t: 'path', d: `M${p0.x},${p0.y} Q${p1.x},${p1.y} ${p2.x},${p2.y}`, stroke: '#7C2D12', sw: 1, o: 0.6 });
+      for (let k = 1; k < 7; k += 1) { const q = quad(p0, p1, p2, k / 7); flower(q.x, q.y); }
     }
+    nails.slice(1, -1).forEach((x, i) => {
+      const leaf = { anim: 'sway', g: `leaf${i}`, px: x, py: 4, delay: i * 0.5 };
+      [-7, 0, 7].forEach((tip) => {
+        out.push({ t: 'path', d: `M${x},4 C${x + 6 + tip / 2},9 ${x + 4 + tip},20 ${x + tip},27 C${x - 4 + tip},20 ${x - 6 + tip / 2},9 ${x},4 Z`, fill: '#2F7D4A', ...leaf });
+        out.push({ t: 'path', d: `M${x},5 L${x + tip},26`, stroke: '#1F5A35', sw: 0.8, ...leaf });
+      });
+      flower(x, 4);
+    });
   } else if (th.motif === 'splash') {
     // Holi colour: soft clouds of gulal.
     for (let k = 0; k < 26; k += 1) {
