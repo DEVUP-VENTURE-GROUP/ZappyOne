@@ -1,7 +1,7 @@
 const svc = require('./event.service');
 
 async function getCategories(req, res, next) {
-  try { res.json({ categories: await svc.listCategories() }); } catch (e) { next(e); }
+  try { res.json({ categories: await svc.listCategories({ city: req.query.city }) }); } catch (e) { next(e); }
 }
 
 async function getThemes(req, res, next) {

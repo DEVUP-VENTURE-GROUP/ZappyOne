@@ -5,13 +5,13 @@
  * customer's own "book again" list.
  */
 import { foldIntoHub } from '@zappy/core/shared/serviceArt';
-import { eventPhoto, eventTone } from '../events/eventTones';
+import { eventPhoto } from '../events/eventTones';
 
 export interface HomeService {
   code: string; name: string; icon?: string; path: string; domainCode: string; available?: boolean; artKey?: string;
   tagline?: string; description?: string; highlights?: { code: string; name: string; categoryCode?: string }[];
   coverage?: { code: string; name: string; imageUrl?: string; problems?: { name: string }[] }[];
-  options?: { code: string; name: string; icon?: string; imageUrl?: string; emoji?: string; toneColor?: string; path: string; service?: HomeService }[];
+  options?: { code: string; name: string; icon?: string; imageUrl?: string; path: string; service?: HomeService }[];
   countLabel?: string;
   fromPaise?: number | null;
 }
@@ -26,7 +26,7 @@ export function comingSoonOf(catalogDomains: HomeDomain[], liveCodes: Set<string
     .filter((g) => g.services.length);
 }
 
-export function buildDomains(catalogDomains: HomeDomain[], liveCodes: Set<string> | null, eventCats: { slug: string; name: string; emoji?: string; coverImage?: string }[]): HomeDomain[] {
+export function buildDomains(catalogDomains: HomeDomain[], liveCodes: Set<string> | null, eventCats: { slug: string; name: string; coverImage?: string }[]): HomeDomain[] {
   const list = catalogDomains
     .map((d) => ({ ...d, services: d.services.map((s) => ({ ...s, domainCode: d.code, available: liveCodes ? liveCodes.has(s.code) : undefined })).filter((s) => s.available !== false) }))
     .filter((d) => d.services.length);
@@ -38,7 +38,7 @@ export function buildDomains(catalogDomains: HomeDomain[], liveCodes: Set<string
       code: 'events', domainCode: 'events', name: 'Events & décor', icon: 'PartyPopper', path: '/events',
       tagline: 'Birthdays, baby showers, anniversaries and more', highlights: [], coverage: [],
       options: eventCats.map((c) => ({
-        code: c.slug, name: c.name, icon: 'PartyPopper', imageUrl: eventPhoto(c) || undefined, emoji: c.emoji, toneColor: eventTone(c), path: `/events/browse?category=${c.slug}`,
+        code: c.slug, name: c.name, icon: 'PartyPopper', imageUrl: eventPhoto(c) || undefined, path: `/events/browse?category=${c.slug}`,
       })),
     }],
   };

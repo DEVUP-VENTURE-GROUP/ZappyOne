@@ -122,12 +122,14 @@ export function HomePage() {
   /* What we serve here. A failed check never holds the grid in skeletons. */
   const { data: svc, isFetching: checkingArea, refetch: refetchArea } = useGetServiceabilityQuery({ lat: loc.lat, lng: loc.lng }, { skip: loc.lat == null });
   const { data: catalog, isLoading: loadingCatalog, refetch: refetchCatalog } = useLiveCatalogQuery();
-  const { data: eventCats } = useGetEventCategoriesQuery();
   // Only what someone covers at this address is shown; the rest waits in "Coming to your area".
   const liveCodes = useMemo(() => (svc && svc.status !== 'not_here' ? new Set<string>(svc.lines.map((l: { code: string }) => l.code)) : null), [svc]);
   const comingSoon = useMemo(() => comingSoonOf(catalog?.domains || [], liveCodes), [catalog, liveCodes]);
   const nothingLive = !!liveCodes && liveCodes.size === 0;
-  const allDomains: HomeDomain[] = useMemo(() => buildDomains(catalog?.domains || [], liveCodes, eventCats?.categories || []), [catalog, liveCodes, eventCats]);
+  // Events only where an approved partner has a package in this city (svc.events); unknown location shows them, as with every service.
+  const eventsHere = !liveCodes || Boolean(svc?.events);
+  const { data: eventCats } = useGetEventCategoriesQuery(svc?.zone?.city ? { city: svc.zone.city } : {}, { skip: !eventsHere });
+  const allDomains: HomeDomain[] = useMemo(() => buildDomains(catalog?.domains || [], liveCodes, eventsHere ? eventCats?.categories || [] : []), [catalog, liveCodes, eventCats, eventsHere]);
   const domains = useMemo(() => gridDomains(allDomains), [allDomains]);
   const services = useMemo(() => allDomains.flatMap((d) => d.services), [allDomains]);
   const terms = useMemo(() => searchTerms(services), [services]);

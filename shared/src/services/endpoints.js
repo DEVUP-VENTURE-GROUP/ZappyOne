@@ -1325,7 +1325,7 @@ export function endpoints(b, { adminApiPath }) {
     eventDeclineQuote: b.query({ query: (id) => `/events/partner/bookings/${id}/decline-quote`, keepUnusedDataFor: 0 }),
 
     // Events (user-facing)
-    getEventCategories: b.query({ query: () => '/events/categories', providesTags: ['EventCategory'] }),
+    getEventCategories: b.query({ query: (params = {}) => ({ url: '/events/categories', params }), providesTags: ['EventCategory'] }),
     getEventThemes: b.query({
       query: (params = {}) => ({ url: '/events/themes', params }),
       providesTags: ['EventTheme'],

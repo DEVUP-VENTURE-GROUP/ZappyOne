@@ -7,7 +7,13 @@ const svc = require('../src/modules/events/event.service');
 
 jest.setTimeout(60000);
 let app;
-beforeAll(async () => { await startMongo(); app = require('../src/app')(); await EventCategory.create({ slug: 'birthday', name: 'Birthday', emoji: '🎂' }); });
+beforeAll(async () => {
+  await startMongo(); app = require('../src/app')();
+  const cat = await EventCategory.create({ slug: 'birthday', name: 'Birthday', emoji: '🎂' });
+  // An occasion is listed only when an approved partner offers a package in it.
+  const partner = await require('../src/modules/events/event-partner.model').create({ businessName: 'Decor Co', ownerName: 'A', cities: ['hyderabad'], kyc: { status: 'approved' } });
+  await require('../src/modules/events/event-theme.model').collection.insertOne({ categoryId: cat._id, partnerId: partner._id, title: 'Balloon arch', status: 'approved', cities: [] });
+});
 afterAll(stopMongo);
 
 test('off hides everything and refuses bookings; on restores it', async () => {

@@ -26,7 +26,7 @@ import LocationSheet from './LocationSheet';
 import { ServiceGrid, ProblemChips } from './ServiceGrid';
 import { OffersRail, BookAgainRail, NearbyShopsLink } from './HomeRails';
 import HomeMarketplace from './HomeMarketplace';
-import { eventPhoto, eventTone } from '../events/eventPhotos';
+import { eventPhoto } from '../events/eventPhotos';
 import ContinueBookingCard from './ContinueBookingCard';
 import FestiveHero from '@shared/components/home/festive/FestiveHero';
 import FestiveReveal from '@shared/components/home/festive/FestiveReveal';
@@ -167,7 +167,9 @@ export default function HomePage() {
   const liveCodes = useMemo(() => (svc && svc.status !== 'not_here' ? new Set(svc.lines.map((l) => l.code)) : null), [svc]);
   // Events run on their own module; they join the catalog as a section here,
   // before pet services, with each celebration as a tile.
-  const { data: eventCats } = useGetEventCategoriesQuery();
+  // Only where an approved partner has a package in this city (svc.events); unknown location shows them, as with every service.
+  const eventsHere = !liveCodes || Boolean(svc?.events);
+  const { data: eventCats } = useGetEventCategoriesQuery(svc?.zone?.city ? { city: svc.zone.city } : {}, { skip: !eventsHere });
   const allDomains = useMemo(() => {
     const list = (catalog?.domains || [])
       .map((d) => ({
@@ -175,7 +177,7 @@ export default function HomePage() {
         services: d.services.map((s) => ({ ...s, domainCode: d.code, available: liveCodes ? liveCodes.has(s.code) : undefined })).filter((s) => s.available !== false),
       }))
       .filter((d) => d.services.length);
-    const cats = eventCats?.categories || [];
+    const cats = eventsHere ? eventCats?.categories || [] : [];
     if (!cats.length) return list;
     const events = {
       code: 'events',
@@ -186,13 +188,13 @@ export default function HomePage() {
         tagline: 'Birthdays, baby showers, anniversaries and more', highlights: [], coverage: [],
         options: cats.map((c) => ({
           code: c.slug, name: c.name, icon: 'PartyPopper',
-          imageUrl: eventPhoto(c) || undefined, emoji: c.emoji, tone: eventTone(c), path: `/events/browse?category=${c.slug}`,
+          imageUrl: eventPhoto(c) || undefined, path: `/events/browse?category=${c.slug}`,
         })),
       }],
     };
     const at = list.findIndex((d) => d.code === 'pet_services');
     return at < 0 ? [...list, events] : [...list.slice(0, at), events, ...list.slice(at)];
-  }, [catalog, liveCodes, eventCats]);
+  }, [catalog, liveCodes, eventCats, eventsHere]);
   // The quick grid folds a section with its own page (pet care) into one tile.
   const domains = useMemo(() => allDomains.map(foldIntoHub), [allDomains]);
   const services = useMemo(() => allDomains.flatMap((d) => d.services), [allDomains]);

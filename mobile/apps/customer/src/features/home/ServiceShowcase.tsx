@@ -47,7 +47,7 @@ const ServiceCard = memo(function ServiceCard({ service, onOpen }: { service: Ho
   const key = service.artKey || service.code;
   const repairTiles = (service.coverage || []).map((c) => ({ tile: { ...c, imageUrl: categoryPhoto(key, c) || c.imageUrl } as TileCategory, path: `/repair/category/${key}/${c.code}`, target: undefined as HomeService | undefined }));
   const optionTiles = (service.options || []).map((o) => ({
-    tile: { code: o.code, name: o.name, icon: o.icon, emoji: o.emoji, toneColor: o.toneColor, imageUrl: o.imageUrl || servicePhoto({ code: o.code }) || '', subtitle: '' } as TileCategory, path: o.path, target: o.service,
+    tile: { code: o.code, name: o.name, icon: o.icon, imageUrl: o.imageUrl || servicePhoto({ code: o.code }) || '', subtitle: '' } as TileCategory, path: o.path, target: o.service,
   }));
   const tiles = repairTiles.length ? repairTiles : optionTiles;
   const count = repairTiles.length ? `${repairTiles.length} problem areas` : optionTiles.length ? `${optionTiles.length} ${service.countLabel || 'options'}` : '';

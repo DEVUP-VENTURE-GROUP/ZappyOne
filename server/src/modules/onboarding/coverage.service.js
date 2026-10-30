@@ -182,6 +182,8 @@ async function serviceabilityAt({ lat, lng }) {
       lines: covered,
       prosNearby,
       fastestMin,
+      // An approved event partner with a live package in this city (events/event.service).
+      events: await require('../events/event.service').liveInCity(zone?.city).catch(() => false),
       ...(status === 'closed_now' && { nextOpening }),
     };
   }
