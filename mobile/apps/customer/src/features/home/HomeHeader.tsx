@@ -87,8 +87,9 @@ export function HomeHeader({ loc, isAuthed, onPickLocation, tint = null, eta = n
   const insets = useSafeAreaInsets();
   const unread = useUnread(isAuthed);
   return (
-    <View style={[styles.header, { paddingTop: insets.top + spacing.sm }, festive ? { backgroundColor: festive.top, overflow: 'hidden' } : tint ? { backgroundColor: tint } : null]}>
-      {festive ? <FestiveMotif theme={festive.key} /> : null}
+    <View style={[styles.header, { paddingTop: insets.top + (festive ? 36 : spacing.sm) }, festive ? { backgroundColor: festive.top, overflow: 'hidden' } : tint ? { backgroundColor: tint } : null]}>
+      {/* Only the top string of lights, above the words, never behind them. */}
+      {festive ? <View pointerEvents="none" style={[styles.lights, { top: insets.top }]}><FestiveMotif theme={festive.key} /></View> : null}
       {/* Blinkit's top: how soon someone can be at the door, big, with the address right under it. */}
       {festive ? <FestivePlace theme={festive} greeting={greeting} eta={eta} loc={loc} onPickLocation={onPickLocation} /> : eta != null && !loc.loading ? (
         <Pressable onPress={onPickLocation} accessibilityRole="button" accessibilityLabel={`Pro at your door in ${eta} minutes, at ${loc.primary}. Change location`} style={styles.flex}>
@@ -123,6 +124,7 @@ export function HomeHeader({ loc, isAuthed, onPickLocation, tint = null, eta = n
 
 const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0, gap: 2 },
+  lights: { position: 'absolute', left: 0, right: 0, height: 33, overflow: 'hidden' },
   shrink: { flexShrink: 1 },
   etaLabel: { letterSpacing: 1 },
   eta: { letterSpacing: -0.8, lineHeight: 32 },

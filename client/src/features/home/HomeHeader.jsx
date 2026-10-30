@@ -101,7 +101,7 @@ function SearchHint({ terms }) {
   }, [terms.length]);
   const term = terms[i % Math.max(terms.length, 1)];
   return (
-    <span className="relative flex h-full min-w-0 flex-1 items-center overflow-hidden">
+    <span className="relative flex h-full min-w-0 flex-1 items-center overflow-hidden [clip-path:inset(0)]">
       <AnimatePresence initial={false}>
         <motion.span
           key={term || 'default'}
@@ -273,8 +273,8 @@ export default function HomeHeader({ loc, isAuthed, avatar, onPickLocation, sear
       {/* Phone: scrolls away; search is pinned by the page below it. A festival paints it and strings its lights across. */}
       <div className={`relative overflow-hidden md:hidden ${festive ? '' : 'bg-zappy-100'}`} style={{ paddingTop: 'env(safe-area-inset-top, 0px)', ...(festive ? { background: festive.top } : tint ? { background: tint } : {}) }}>
         {festive && festive.rays && <FestiveRays />}
-        {festive && <span className="opacity-90"><FestiveMotif theme={festive.key} /></span>}
-        <div className="relative flex items-center gap-2.5 px-4 pb-2.5 pt-4">
+        {festive && <span aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-[33px] overflow-hidden"><FestiveMotif theme={festive.key} /></span>}
+        <div className={`relative flex items-center gap-2.5 px-4 pb-2.5 ${festive ? 'pt-[42px]' : 'pt-4'}`}>
           {festive
             ? <FestivePlace theme={festive} greeting={greeting} eta={eta} loc={loc} onPickLocation={onPickLocation} />
             : <BrandOrPlace loc={loc} onPickLocation={onPickLocation} eta={eta} />}
