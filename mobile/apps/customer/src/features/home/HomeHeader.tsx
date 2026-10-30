@@ -14,7 +14,6 @@ import { Button, Text, ZappyWordmark } from '@zappy/ui/components';
 import { accent, danger, ink, slate, zappy } from '@zappy/ui/theme/colors';
 import { radius } from '@zappy/ui/theme/radius';
 import { spacing } from '@zappy/ui/theme/spacing';
-import { FestiveMotif } from './festive/FestiveMotif';
 
 export interface HomeLocation { primary: string; secondary: string | null; loading: boolean; lat?: number; lng?: number }
 
@@ -81,15 +80,13 @@ function FestivePlace({ theme, greeting, eta, loc, onPickLocation }: { theme: Th
   );
 }
 
-/** festive: the season's theme (with its key); the header takes its colour and strings its lights across. */
+/** festive: the season's theme; the header takes its colour. */
 export function HomeHeader({ loc, isAuthed, onPickLocation, tint = null, eta = null, festive = null, greeting = '' }: { loc: HomeLocation; isAuthed: boolean; onPickLocation: () => void; tint?: string | null; eta?: number | null; festive?: Theme; greeting?: string }) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const unread = useUnread(isAuthed);
   return (
-    <View style={[styles.header, { paddingTop: insets.top + (festive ? 36 : spacing.sm) }, festive ? { backgroundColor: festive.top, overflow: 'hidden' } : tint ? { backgroundColor: tint } : null]}>
-      {/* Only the top string of lights, above the words, never behind them. */}
-      {festive ? <View pointerEvents="none" style={[styles.lights, { top: insets.top }]}><FestiveMotif theme={festive.key} /></View> : null}
+    <View style={[styles.header, { paddingTop: insets.top + spacing.sm }, festive ? { backgroundColor: festive.top, overflow: 'hidden' } : tint ? { backgroundColor: tint } : null]}>
       {/* Blinkit's top: how soon someone can be at the door, big, with the address right under it. */}
       {festive ? <FestivePlace theme={festive} greeting={greeting} eta={eta} loc={loc} onPickLocation={onPickLocation} /> : eta != null && !loc.loading ? (
         <Pressable onPress={onPickLocation} accessibilityRole="button" accessibilityLabel={`Pro at your door in ${eta} minutes, at ${loc.primary}. Change location`} style={styles.flex}>
@@ -124,7 +121,6 @@ export function HomeHeader({ loc, isAuthed, onPickLocation, tint = null, eta = n
 
 const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0, gap: 2 },
-  lights: { position: 'absolute', left: 0, right: 0, height: 33, overflow: 'hidden' },
   shrink: { flexShrink: 1 },
   etaLabel: { letterSpacing: 1 },
   eta: { letterSpacing: -0.8, lineHeight: 32 },

@@ -6,7 +6,6 @@ import { useListNotificationsQuery } from '@shared/services/api';
 import { ZappyWordmark, ZAPPY_MARK } from '@shared/components/common/ZappyLogo';
 import VoiceSearchButton from '../../components/common/VoiceSearchButton';
 import { jhalarCss } from '@shared/customer/season';
-import FestiveMotif from '@shared/components/home/festive/FestiveMotif';
 import FestiveRays from '@shared/components/home/festive/FestiveRays';
 import { prefetchRoute } from '../../lib/routePrefetch';
 
@@ -270,11 +269,10 @@ export default function HomeHeader({ loc, isAuthed, avatar, onPickLocation, sear
         <div className="mx-auto w-full max-w-6xl px-6 pb-3 lg:hidden">{search}</div>
       </header>
 
-      {/* Phone: scrolls away; search is pinned by the page below it. A festival paints it and strings its lights across. */}
+      {/* Phone: scrolls away; search is pinned by the page below it. A festival paints it in its colour. */}
       <div className={`relative overflow-hidden md:hidden ${festive ? '' : 'bg-zappy-100'}`} style={{ paddingTop: 'env(safe-area-inset-top, 0px)', ...(festive ? { background: festive.top } : tint ? { background: tint } : {}) }}>
         {festive && festive.rays && <FestiveRays />}
-        {festive && <span aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-[34px] overflow-hidden"><FestiveMotif theme={festive.key} /></span>}
-        <div className={`relative flex items-center gap-2.5 px-4 pb-2.5 ${festive ? 'pt-[42px]' : 'pt-4'}`}>
+        <div className={`relative flex items-center gap-2.5 px-4 pb-2.5 pt-4`}>
           {festive
             ? <FestivePlace theme={festive} greeting={greeting} eta={eta} loc={loc} onPickLocation={onPickLocation} />
             : <BrandOrPlace loc={loc} onPickLocation={onPickLocation} eta={eta} />}

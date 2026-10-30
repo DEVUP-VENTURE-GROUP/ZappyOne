@@ -1,5 +1,6 @@
-// Monogram for a pro without a photo: Ravi Kumar → RK.
-export default function Avatar({ name, size = 44, radius = 14 }) {
+// The pro's photo when there is one, else a monogram: Ravi Kumar → RK.
+export default function Avatar({ name, photo = null, size = 44, radius = 14 }) {
+  if (photo) return <img src={photo} alt="" className="shrink-0 bg-sunken object-cover" style={{ width: size, height: size, borderRadius: radius }} />;
   const words = (name || 'Pro').trim().split(/\s+/).filter(Boolean);
   const initials = (words.length > 1 ? words[0][0] + words[words.length - 1][0] : words[0].slice(0, 2)).toUpperCase();
   return (

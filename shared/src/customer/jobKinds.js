@@ -135,7 +135,7 @@ function repairLines(s = {}, quote = null) {
 
 /** Who holds the job, as the server's provider card describes them (worker/provider-card). */
 const cardOf = (p) => (p ? {
-  name: p.name, phone: p.phone, rating: p.rating, jobs: p.completedJobs, from: p.from || null,
+  name: p.name, phone: p.phone, rating: p.rating, jobs: p.completedJobs, from: p.from || null, photo: p.photo || null, neverCancels: Boolean(p.neverCancels),
 } : null);
 
 export const KINDS = {
