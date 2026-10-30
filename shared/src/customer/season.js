@@ -217,3 +217,15 @@ export function offerTerms(p) {
   if (p.minOrderPaise) parts.push(`on ${formatPaise(p.minOrderPaise)}+`);
   return parts.join(', ');
 }
+
+// A festive tile's tag: admin's own badge, else the service's real starting price; never an invented discount.
+export function tileTag(tile, service) {
+  if (tile?.badge) return tile.badge;
+  const from = service?.fromPaise;
+  return Number.isFinite(from) && from > 0 ? `From ${formatPaise(from)}` : null;
+}
+
+// The arched top of the festive panel, in a 400×40 box; the same curve carries the marquee lights.
+export const ARCH = { w: 400, h: 40 };
+export const archEdge = 'M0,40 L0,24 Q0,16 10,16 L132,16 C162,16 170,2 200,2 C230,2 238,16 268,16 L390,16 Q400,16 400,24 L400,40';
+export const archLights = 'M8,22 Q8,20 12,20 L132,20 C162,20 170,6 200,6 C230,6 238,20 268,20 L388,20 Q392,20 392,22';

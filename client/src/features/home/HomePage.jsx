@@ -247,8 +247,8 @@ export default function HomePage() {
   // A festival running (Admin → Festive home): its own top on home; light ones also tint the header.
   const { data: seasonData } = useCurrentSeasonQuery();
   const season = !notHere && !loadingCatalog ? seasonData?.season : null;
-  const theme = season ? themeOf(season.theme) : null;
-  const tint = theme && !theme.dark ? theme.top : null;
+  const theme = season ? { ...themeOf(season.theme), key: season.theme } : null;
+  const tint = theme ? theme.top : null;
   const searchBar = (
     <SearchBar
       terms={searchTerms}
@@ -287,6 +287,7 @@ export default function HomePage() {
           search={searchBar}
           tint={tint}
           festive={theme}
+          greeting={season?.greeting || ''}
           eta={svc?.fastestMin != null && svc.fastestMin <= 60 ? svc.fastestMin : null}
         />
 
@@ -322,7 +323,7 @@ export default function HomePage() {
               )}
               {nothingLive && !loadingCatalog && <ComingSoonRow groups={comingSoon} loc={loc} />}
 
-              {!loadingCatalog && !nothingLive && <HeroCarousel domains={allDomains} onOpen={openService} />}
+              {!loadingCatalog && !nothingLive && !season && <HeroCarousel domains={allDomains} onOpen={openService} />}
 
               {/* Intent first: the problem in their words, then the services. */}
               <FestiveReveal on={!!season}><ProblemChips services={services} /></FestiveReveal>

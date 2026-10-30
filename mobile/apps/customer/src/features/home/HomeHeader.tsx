@@ -14,6 +14,7 @@ import { Button, Text, ZappyWordmark } from '@zappy/ui/components';
 import { accent, danger, ink, slate, zappy } from '@zappy/ui/theme/colors';
 import { radius } from '@zappy/ui/theme/radius';
 import { spacing } from '@zappy/ui/theme/spacing';
+import { FestiveMotif } from './festive/FestiveMotif';
 
 export interface HomeLocation { primary: string; secondary: string | null; loading: boolean; lat?: number; lng?: number }
 
@@ -59,15 +60,37 @@ function useUnread(isAuthed: boolean) {
   return data?.unread ?? data?.notifications?.length ?? 0;
 }
 
-/** tint: a light festive season's colour, so the festive top flows out of the header. */
-export function HomeHeader({ loc, isAuthed, onPickLocation, tint = null, eta = null }: { loc: HomeLocation; isAuthed: boolean; onPickLocation: () => void; tint?: string | null; eta?: number | null }) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Theme = any;
+
+// The festive header line (the website's FestivePlace): greeting or arrival small, minutes or place large, in the festival's colours.
+function FestivePlace({ theme, greeting, eta, loc, onPickLocation }: { theme: Theme; greeting: string; eta: number | null; loc: HomeLocation; onPickLocation: () => void }) {
+  return (
+    <Pressable onPress={onPickLocation} accessibilityRole="button" accessibilityLabel={`${eta != null ? `Pro at your door in ${eta} minutes, at ` : ''}${loc.primary}. Change location`} style={styles.flex}>
+      <Text variant="caption" weight="extrabold" color={theme.accent} style={styles.etaLabel}>{(eta != null ? 'Pro at your door in' : greeting || 'ZappyOne').toUpperCase()}</Text>
+      <Text variant="heading1" weight="black" color={theme.ink} numberOfLines={1} style={styles.eta}>{eta != null ? `${eta} min` : loc.loading ? 'Finding you…' : loc.primary}</Text>
+      <View style={styles.loc}>
+        <MapPin size={13} color={theme.accent} strokeWidth={2.4} />
+        <Text variant="bodySmall" weight="bold" color={theme.ink} numberOfLines={1} style={styles.shrink}>
+          {eta != null ? loc.primary : loc.secondary || 'Change location'}
+          {eta != null && loc.secondary ? <Text variant="caption" color={theme.sub}>, {loc.secondary}</Text> : null}
+        </Text>
+        <ChevronDown size={14} color={theme.sub} strokeWidth={2.6} />
+      </View>
+    </Pressable>
+  );
+}
+
+/** festive: the season's theme (with its key); the header takes its colour and strings its lights across. */
+export function HomeHeader({ loc, isAuthed, onPickLocation, tint = null, eta = null, festive = null, greeting = '' }: { loc: HomeLocation; isAuthed: boolean; onPickLocation: () => void; tint?: string | null; eta?: number | null; festive?: Theme; greeting?: string }) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const unread = useUnread(isAuthed);
   return (
-    <View style={[styles.header, { paddingTop: insets.top + spacing.sm }, tint ? { backgroundColor: tint } : null]}>
+    <View style={[styles.header, { paddingTop: insets.top + spacing.sm }, festive ? { backgroundColor: festive.top, overflow: 'hidden' } : tint ? { backgroundColor: tint } : null]}>
+      {festive ? <FestiveMotif theme={festive.key} /> : null}
       {/* Blinkit's top: how soon someone can be at the door, big, with the address right under it. */}
-      {eta != null && !loc.loading ? (
+      {festive ? <FestivePlace theme={festive} greeting={greeting} eta={eta} loc={loc} onPickLocation={onPickLocation} /> : eta != null && !loc.loading ? (
         <Pressable onPress={onPickLocation} accessibilityRole="button" accessibilityLabel={`Pro at your door in ${eta} minutes, at ${loc.primary}. Change location`} style={styles.flex}>
           <Text variant="caption" weight="bold" color={ink[500]} style={styles.etaLabel}>PRO AT YOUR DOOR IN</Text>
           <Text variant="heading1" weight="black" style={styles.eta}>{eta} min</Text>

@@ -154,8 +154,8 @@ export function HomePage() {
   // A festival running (Admin → Festive home): its own top on home; light ones also tint the header.
   const { data: seasonData, refetch: refetchSeason } = useCurrentSeasonQuery(undefined);
   const season = !notHere && !loadingCatalog ? seasonData?.season : null;
-  const theme = season ? themeOf(season.theme) : null;
-  const tint = theme && !theme.dark ? theme.top : null;
+  const theme = season ? { ...themeOf(season.theme), key: season.theme } : null;
+  const tint = theme ? theme.top : null;
   const rise = (i: number) => (theme ? FadeInDown.delay(250 + i * 110).duration(600) : undefined);
 
   async function onRefresh() {
@@ -166,7 +166,7 @@ export function HomePage() {
 
   return (
     <View style={[styles.page, theme ? { backgroundColor: theme.wash } : null]}>
-      <HomeHeader loc={loc} isAuthed={isAuthed} onPickLocation={() => setLocSheet(true)} tint={tint} eta={svc?.fastestMin != null && svc.fastestMin <= 60 ? svc.fastestMin : null} />
+      <HomeHeader loc={loc} isAuthed={isAuthed} onPickLocation={() => setLocSheet(true)} tint={tint} festive={theme} greeting={season?.greeting || ''} eta={svc?.fastestMin != null && svc.fastestMin <= 60 ? svc.fastestMin : null} />
       {/* Search stays pinned while the rest scrolls. */}
       <View style={[styles.searchWrap, tint ? { backgroundColor: tint, borderBottomLeftRadius: 0, borderBottomRightRadius: 0 } : null]}><SearchBar terms={terms} onOpen={() => setSpotOpen(true)} /></View>
       <ScrollView contentContainerStyle={styles.body} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
@@ -185,7 +185,7 @@ export function HomePage() {
                 areas={svc?.areas || []} onChangeLocation={() => setLocSheet(true)} />
             ) : null}
             {nothingLive && !loadingCatalog ? <ComingSoonRow groups={comingSoon} loc={loc} /> : null}
-            {!loadingCatalog && !nothingLive ? <HeroCarousel domains={allDomains} onOpen={openService} /> : null}
+            {!loadingCatalog && !nothingLive && !season ? <HeroCarousel domains={allDomains} onOpen={openService} /> : null}
             {/* During a festival each section rises in after the last. */}
             <Animated.View entering={rise(0)}><ProblemChips services={services} /></Animated.View>
             {loadingCatalog || (loc.lat != null && !svc && checkingArea) ? <SkeletonGrid /> : <Animated.View entering={rise(1)}><ServiceGrid domains={domains} onOpen={openService} /></Animated.View>}

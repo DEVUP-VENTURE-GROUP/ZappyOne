@@ -6,6 +6,8 @@ import { useListNotificationsQuery } from '@shared/services/api';
 import { ZappyWordmark, ZAPPY_MARK } from '@shared/components/common/ZappyLogo';
 import VoiceSearchButton from '../../components/common/VoiceSearchButton';
 import { jhalarCss } from '@shared/customer/season';
+import FestiveMotif from '@shared/components/home/festive/FestiveMotif';
+import FestiveRays from '@shared/components/home/festive/FestiveRays';
 import { prefetchRoute } from '../../lib/routePrefetch';
 
 /**
@@ -158,6 +160,22 @@ function EtaPlace({ eta, loc, onPickLocation }) {
   );
 }
 
+// The festive header line: the greeting or the arrival time small, the minutes or the place large, in the festival's colours.
+function FestivePlace({ theme, greeting, eta, loc, onPickLocation }) {
+  return (
+    <button type="button" onClick={onPickLocation} className="min-w-0 flex-1 text-left" aria-label={`${eta != null ? `Pro at your door in ${eta} minutes, at ` : ''}${loc.primary}. Change location`}>
+      <span className="block text-[11px] font-extrabold uppercase tracking-[0.12em]" style={{ color: theme.accent }}>{eta != null ? 'Pro at your door in' : greeting || 'ZappyOne'}</span>
+      <span className="block truncate text-[27px] font-black leading-none tracking-[-0.03em]" style={{ color: theme.ink }}>{eta != null ? `${eta} min` : loc.loading ? 'Finding you…' : loc.primary}</span>
+      <span className="mt-1 flex min-w-0 items-center gap-1" style={{ color: theme.sub }}>
+        <MapPin size={13} strokeWidth={2.4} className="shrink-0" style={{ color: theme.accent }} />
+        <span className="truncate text-[13px] font-bold" style={{ color: theme.ink }}>{eta != null ? loc.primary : loc.secondary || 'Change location'}</span>
+        {eta != null && loc.secondary && <span className="truncate text-[12px]">, {loc.secondary}</span>}
+        <ChevronDown size={14} strokeWidth={2.6} className="shrink-0" />
+      </span>
+    </button>
+  );
+}
+
 function BrandOrPlace({ loc, onPickLocation, eta = null }) {
   const reduce = useReducedMotion();
   const [face, setFace] = useState('brand');
@@ -217,7 +235,7 @@ const LINKS = [
   { to: '/track', label: 'Track' },
 ];
 
-export default function HomeHeader({ loc, isAuthed, avatar, onPickLocation, search, tint = null, festive = null, eta = null }) {
+export default function HomeHeader({ loc, isAuthed, avatar, onPickLocation, search, tint = null, festive = null, greeting = '', eta = null }) {
   const nav = useNavigate();
   const unread = useUnread(isAuthed);
 
@@ -252,13 +270,14 @@ export default function HomeHeader({ loc, isAuthed, avatar, onPickLocation, sear
         <div className="mx-auto w-full max-w-6xl px-6 pb-3 lg:hidden">{search}</div>
       </header>
 
-      {/* Phone: light header, scrolls away; search is pinned by the page below it. */}
-      {/* tint: a light festive season's colour, so the festive top flows out of the header. */}
-      <div className="bg-zappy-100 md:hidden" style={{ paddingTop: 'env(safe-area-inset-top, 0px)', ...(tint ? { background: tint } : {}) }}>
-        {/* Brand and place take turns in one slot. Profile lives in the bottom
-            bar, so the phone header keeps the bell (signed in) or Sign in. */}
-        <div className="flex items-center gap-2.5 px-4 pb-2.5 pt-4">
-          <BrandOrPlace loc={loc} onPickLocation={onPickLocation} eta={eta} />
+      {/* Phone: scrolls away; search is pinned by the page below it. A festival paints it and strings its lights across. */}
+      <div className={`relative overflow-hidden md:hidden ${festive ? '' : 'bg-zappy-100'}`} style={{ paddingTop: 'env(safe-area-inset-top, 0px)', ...(festive ? { background: festive.top } : tint ? { background: tint } : {}) }}>
+        {festive && festive.rays && <FestiveRays />}
+        {festive && <span className="opacity-90"><FestiveMotif theme={festive.key} /></span>}
+        <div className="relative flex items-center gap-2.5 px-4 pb-2.5 pt-4">
+          {festive
+            ? <FestivePlace theme={festive} greeting={greeting} eta={eta} loc={loc} onPickLocation={onPickLocation} />
+            : <BrandOrPlace loc={loc} onPickLocation={onPickLocation} eta={eta} />}
           {isAuthed ? (
             <IconButton label={unread ? `${unread} unread notifications` : 'Notifications'} onClick={() => nav('/notifications')} badge={unread}>
               <Bell size={17} />
