@@ -311,6 +311,7 @@ export const useConfirmJobSafeMutation = h.useConfirmJobSafeMutation;
 export const useAskJobMoreTimeMutation = h.useAskJobMoreTimeMutation;
 export const useBlockJobCustomerMutation = h.useBlockJobCustomerMutation;
 export const useShareJobMutation = h.useShareJobMutation;
+export const useEditJobPlaceMutation = h.useEditJobPlaceMutation;
 export const useUnshareJobMutation = h.useUnshareJobMutation;
 export const useGetSharedJobQuery = h.useGetSharedJobQuery;
 export const useReportCustomerAbsentMutation = h.useReportCustomerAbsentMutation;

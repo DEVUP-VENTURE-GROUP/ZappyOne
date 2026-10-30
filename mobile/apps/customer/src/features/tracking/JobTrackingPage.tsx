@@ -21,6 +21,7 @@ import { mapsAvailable } from '@zappy/ui/lib/maps';
 import { colors, ink, slate, zappy } from '@zappy/ui/theme/colors';
 import { spacing } from '@zappy/ui/theme/spacing';
 import { CancelSheet } from './cards/CancelSheet';
+import { EditPlaceSheet } from './cards/EditPlaceSheet';
 import { JobBoostCard } from './cards/JobBoostCard';
 import { SlowSearchCard } from './cards/SlowSearchCard';
 import { JobTipCard } from './cards/JobTipCard';
@@ -53,6 +54,7 @@ export function JobTrackingPage({ job, extras = null, startCode = null, codeStag
   const [sosOpen, setSosOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
+  const [editPlace, setEditPlace] = useState(false);
   const status = job.status;
   const [shareJob] = useShareJobMutation();
   const { data: acct } = useAccountMeQuery(undefined);
@@ -148,7 +150,8 @@ export function JobTrackingPage({ job, extras = null, startCode = null, codeStag
 
         {!stopped ? <ActivityFeed events={feedEvents} live={!job.terminal} /> : null}
 
-        <BookingSummary job={job} onReceipt={hasReceipt ? () => router.push(`/bill?source=job&id=${job.id}` as never) : undefined} />
+        <BookingSummary job={job} onReceipt={hasReceipt ? () => router.push(`/bill?source=job&id=${job.id}` as never) : undefined}
+          onEditPlace={options?.place?.allowed && !job.terminal ? () => setEditPlace(true) : undefined} />
 
         {!stopped ? (
           <Section title="ZappyOne promise">
@@ -170,6 +173,7 @@ export function JobTrackingPage({ job, extras = null, startCode = null, codeStag
       ) : null}
 
       {cancel ? <CancelSheet visible={cancelOpen} onClose={() => setCancelOpen(false)} quote={options?.cancel} loading={optionsLoading} quoteNeeded={optionsOn} reasons={options?.reasons || []} note={cancel.note} onCancel={cancel.run} /> : null}
+      {editPlace ? <EditPlaceSheet job={job} maxMoveM={options?.place?.maxMoveM} onClose={() => setEditPlace(false)} onSaved={refetchOptions} /> : null}
       <SosSheet visible={sosOpen} onClose={() => setSosOpen(false)} onAlert={onSOS} />
       {chatOpen ? <JobChat jobId={job.id} title={job.provider?.name || `Your ${job.noun}`} onClose={() => setChatOpen(false)} /> : null}
       <ConnectionBanner />

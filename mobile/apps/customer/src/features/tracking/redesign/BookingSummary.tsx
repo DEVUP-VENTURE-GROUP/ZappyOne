@@ -1,4 +1,4 @@
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { Clock, FileText, Hash, MapPin, ReceiptText, Wallet, Wrench } from 'lucide-react-native';
 import { rupeesOf, shortId } from '@zappy/core/shared/trackingSteps';
 import { Text } from '@zappy/ui/components';
@@ -7,7 +7,7 @@ import type { TrackedJob } from '../types';
 import { Row, Section } from './Section';
 
 // Booking details as UC lists them (the website's BookingSummary): when, where, what and the money; only lines the server recorded.
-export function BookingSummary({ job, onReceipt }: { job: TrackedJob; onReceipt?: () => void }) {
+export function BookingSummary({ job, onReceipt, onEditPlace }: { job: TrackedJob; onReceipt?: () => void; onEditPlace?: () => void }) {
   const price = job.price;
   const when = job.scheduledAt || job.createdAt;
   const lines = (price.lines || []).filter(([, paise]) => paise && paise !== 0);
@@ -15,7 +15,7 @@ export function BookingSummary({ job, onReceipt }: { job: TrackedJob; onReceipt?
   return (
     <Section title="Booking details">
       {when ? <Row first Icon={Clock} title={new Date(when).toLocaleString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })} sub={job.scheduledAt ? 'Booked for' : 'Booked at'} /> : null}
-      {job.place?.address ? <Row first={!when} Icon={MapPin} title={job.place.address} /> : null}
+      {job.place?.address ? <Row first={!when} Icon={MapPin} title={job.place.address} right={onEditPlace ? <Pressable onPress={onEditPlace} accessibilityRole="button" hitSlop={8}><Text variant="bodySmall" weight="bold" style={styles.edit}>Edit</Text></Pressable> : undefined} /> : null}
       <Row Icon={Wrench} title={<Text variant="body" style={styles.cap}>{job.service}</Text>} sub={job.subtitle ? `${job.subtitleLabel || 'For'}: ${job.subtitle}` : undefined} />
       {price.method ? <Row Icon={Wallet} title={price.method} sub="Payment" /> : null}
       {price.totalPaise != null ? (
@@ -41,6 +41,7 @@ export function BookingSummary({ job, onReceipt }: { job: TrackedJob; onReceipt?
 
 const styles = StyleSheet.create({
   cap: { textTransform: 'capitalize' },
+  edit: { textDecorationLine: 'underline' },
   lines: { gap: 4, marginTop: 6 },
   line: { flexDirection: 'row', gap: 12 },
   flex: { flex: 1, minWidth: 0 },

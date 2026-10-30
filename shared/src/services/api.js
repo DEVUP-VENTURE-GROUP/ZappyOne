@@ -440,6 +440,7 @@ export const {
   useAskJobMoreTimeMutation,
   useBlockJobCustomerMutation,
   useShareJobMutation,
+  useEditJobPlaceMutation,
   useUnshareJobMutation,
   useGetSharedJobQuery,
   useReportCustomerAbsentMutation, useReportCashRefusedMutation,

@@ -3,7 +3,7 @@ import { rupeesOf, shortId } from '@shared/customer/trackingSteps';
 import { Row, Section } from './Section';
 
 // Booking details as UC lists them: one line each for when, where, what and the money; only lines the server recorded.
-export default function BookingSummary({ job, onReceipt }) {
+export default function BookingSummary({ job, onReceipt, onEditPlace }) {
   const price = job.price || {};
   const when = job.scheduledAt || job.createdAt;
   const lines = (price.lines || []).filter(([, paise]) => paise && paise !== 0);
@@ -13,7 +13,8 @@ export default function BookingSummary({ job, onReceipt }) {
     <Section title="Booking details">
       <div className="divide-y divide-line">
         {when && <Row Icon={Clock} title={new Date(when).toLocaleString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })} sub={job.scheduledAt ? 'Booked for' : 'Booked at'} />}
-        {job.place?.address && <Row Icon={MapPin} title={<span className="line-clamp-2">{job.place.address}</span>} />}
+        {job.place?.address && <Row Icon={MapPin} title={<span className="line-clamp-2">{job.place.address}</span>}
+          right={onEditPlace ? <button type="button" onClick={onEditPlace} className="shrink-0 text-[14px] font-bold text-ink-900 underline underline-offset-2">Edit</button> : undefined} />}
         <Row Icon={Wrench} title={<span className="capitalize">{job.service}</span>} sub={job.subtitle ? `${job.subtitleLabel || 'For'}: ${job.subtitle}` : null} />
         {price.method && <Row Icon={Wallet} title={price.method} sub="Payment" />}
         {price.totalPaise != null && (

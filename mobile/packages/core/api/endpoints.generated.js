@@ -140,6 +140,8 @@ export function endpoints(b, { adminApiPath }) {
     repeatAction: b.mutation({ query: ({ planId, action }) => ({ url: `/jobs/recurring/${planId}/${action}`, method: 'POST' }), invalidatesTags: ['Repeats'] }),
     jobArrival: b.query({ query: ({ line, lat, lng }) => ({ url: '/jobs/arrival', params: { line, lat, lng } }), keepUnusedDataFor: 30 }),
     /** Move a booking made for later (jobs/reschedule): repairs, pet care, helping. */
+    // Fix the address or door directions before the pro sets off (jobs/place-edit).
+    editJobPlace: b.mutation({ query: ({ id, ...body }) => ({ url: `/jobs/${id}/place`, method: 'PATCH', body }), invalidatesTags: ['RepairBookings', 'PetBookings', 'HelpingTasks'] }),
     rescheduleJob: b.mutation({ query: ({ id, scheduledAt }) => ({ url: `/jobs/${id}/reschedule`, method: 'POST', body: { scheduledAt } }), invalidatesTags: ['RepairBookings', 'PetBookings', 'HelpingTasks'] }),
     /** Customer: boost while searching, tip once done (jobs/boost-tip). */
     boostJob: b.mutation({ query: ({ id, amountPaise }) => ({ url: `/jobs/${id}/boost`, method: 'POST', body: { amountPaise } }) }),

@@ -17,6 +17,7 @@ import {
 } from './redesign';
 import StartCodeCard from './StartCodeCard';
 import RescheduleCancel from './redesign/RescheduleCancel';
+import EditPlaceSheet from './redesign/EditPlaceSheet';
 import JobBoostCard from './cards/JobBoostCard';
 import SlowSearchCard from './cards/SlowSearchCard';
 import JobTipCard from './cards/JobTipCard';
@@ -59,6 +60,7 @@ export default function JobTrackingPage({ job, extras = null, startCode = null, 
   const [sosOpen, setSosOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
+  const [editPlace, setEditPlace] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
   // The cancel fee, a changed provider, and "not coming": the server's answer for this moment.
@@ -249,7 +251,8 @@ export default function JobTrackingPage({ job, extras = null, startCode = null, 
 
           {!stopped && <ActivityFeed events={feedEvents} live={!job.terminal} />}
 
-          <BookingSummary job={job} onReceipt={receiptHandler} />
+          <BookingSummary job={job} onReceipt={receiptHandler} onEditPlace={options?.place?.allowed && !job.terminal ? () => setEditPlace(true) : undefined} />
+          {editPlace && <EditPlaceSheet job={job} place={options?.place} onClose={() => setEditPlace(false)} onSaved={refetchOptions} />}
 
           {!stopped && (
             <Section title="ZappyOne promise">

@@ -219,6 +219,7 @@ router.get('/:id/options',
         boost: await bt.boostView(kind, doc, s),
         tip: await bt.tipView(kind, doc, s),
         reschedule: terminal ? { allowed: false } : await require('./reschedule').view(kind, doc),
+        place: terminal ? { allowed: false } : await require('./place-edit').editable(kind, doc),
         arrival: await require('./promise').viewFor(doc._id),
         search: await require('./fast-assign').searchView(kind, doc),
         moreTime: terminal ? null : await require('./more-time').viewFor(doc._id),
@@ -341,6 +342,16 @@ router.post('/recurring/:planId/:action',
       if (!['skip', 'pause', 'resume', 'stop'].includes(req.params.action)) return res.status(400).json({ error: 'Unknown action' });
       res.json({ plan: await require('./recurring').act({ id: req.params.planId, userId: req.auth.sub, action: req.params.action }) });
     } catch (err) { next(err); }
+  });
+
+/** Fix the address or add door directions before the pro sets off (jobs/place-edit). */
+router.patch('/:id/place', authenticate, requireRole('user'),
+  validate(Joi.object({
+    lat: Joi.number().min(-90).max(90), lng: Joi.number().min(-180).max(180),
+    address: Joi.string().max(300).allow(''), directions: Joi.string().max(200).allow(''),
+  }).and('lat', 'lng')),
+  async (req, res, next) => {
+    try { res.json(await require('./place-edit').editPlace({ id: req.params.id, userId: req.auth.sub, ...req.body })); } catch (err) { next(err); }
   });
 
 /** Move a booking made for later, before the provider sets off (jobs/reschedule). */
