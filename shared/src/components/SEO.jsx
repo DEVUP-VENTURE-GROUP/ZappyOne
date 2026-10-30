@@ -103,7 +103,7 @@ export const HOME_SCHEMA = [
     '@context': 'https://schema.org',
     '@type': 'WebPage',
     '@id': `${BASE_URL}/#webpage`,
-    name: 'ZappyOne — Instant Home Services India',
+    name: 'ZappyOne - Instant Home Services India',
     url: BASE_URL,
     description: 'Book verified professionals at your door, with the price shown before you book and live tracking. Live in Hyderabad, launching across India.',
     isPartOf: { '@id': `${BASE_URL}/#website` },
@@ -120,7 +120,7 @@ export const PLANS_SCHEMA = [
   {
     '@context': 'https://schema.org',
     '@type': 'WebPage',
-    name: 'ZappyOne Premium Plans — Surge Protection, Cashback & Priority Booking',
+    name: 'ZappyOne Premium Plans - Surge Protection, Cashback & Priority Booking',
     url: `${BASE_URL}/plans`,
     description: 'Upgrade to ZappyOne Premium for zero surge pricing, higher cashback, zero platform fees, and priority worker assignment.',
     inLanguage: 'en-IN',
@@ -141,7 +141,7 @@ export const LOGIN_SCHEMA = [
   {
     '@context': 'https://schema.org',
     '@type': 'WebPage',
-    name: 'Login to ZappyOne — Book Home Services Instantly',
+    name: 'Login to ZappyOne - Book Home Services Instantly',
     url: `${BASE_URL}/login`,
     description: 'Login to ZappyOne with your phone number. Get OTP via call and start booking home services instantly.',
     inLanguage: 'en-IN',

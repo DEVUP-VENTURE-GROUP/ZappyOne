@@ -25,6 +25,11 @@ export const PACKAGE_TYPE_WORD = { bike_wash: 'vehicle', car_wash: 'car type', h
 /** "vehicle", "device" or "tank", for "+ Add another …". */
 export const thingOf = (vertical) => ({ two_wheeler: 'vehicle', four_wheeler: 'vehicle', bike_wash: 'vehicle', car_wash: 'vehicle', water_tank_care: 'tank', home_cleaning: 'home', electrician: 'job', plumbing: 'job', ac_service: 'AC' }[vertical] || 'device');
 
+// The built-in lists above, joined with every service the server books (useRepairVerticalsQuery items), so a service opened in admin appears without an app change.
+export const targetsWith = (items = []) => [...ADD_TARGETS, ...items.filter((i) => i.status === 'live' && !ADD_TARGETS.some((t) => t.vertical === i.vertical)).map((i) => ({ vertical: i.vertical, label: i.name, path: i.path }))];
+export const typeWordOf = (vertical, items = []) => PACKAGE_TYPE_WORD[vertical] || items.find((i) => i.vertical === vertical)?.typeWord?.toLowerCase() || undefined;
+export const thingFor = (vertical, items = []) => (PACKAGE_TYPE_WORD[vertical] || ['two_wheeler', 'four_wheeler', 'water_tank_care', 'mobile', 'laptop'].includes(vertical) ? thingOf(vertical) : items.find((i) => i.vertical === vertical)?.thing || thingOf(vertical));
+
 /** The chosen repair of a flow: what the diagnosis landed on. */
 export const repairOf = (diagnosis) => diagnosis?.primaryRepairCode || diagnosis?.recommendations?.[0]?.repairCode || null;
 

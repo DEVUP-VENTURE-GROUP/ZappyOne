@@ -38,11 +38,11 @@ const TYPE_CFG = {
   worker_earning:       { emoji: '💰', label: 'Earnings',          bg: 'bg-green-50',  ring: 'ring-green-200',  color: 'text-green-700',  Icon: BadgeIndianRupee   },
   wallet_credited:      { emoji: '💰', label: 'Money In',          bg: 'bg-green-50',  ring: 'ring-green-200',  color: 'text-green-700',  Icon: Wallet             },
   penalty_applied:      { emoji: '⚠️', label: 'Penalty',           bg: 'bg-red-50',    ring: 'ring-red-200',    color: 'text-red-700',    Icon: TriangleAlert      },
-  milestone_reached:    { emoji: '🎯', label: 'Milestone Bonus',   bg: 'bg-purple-50', ring: 'ring-purple-200', color: 'text-purple-700', Icon: Trophy             },
+  milestone_reached:    { emoji: '🎯', label: 'Milestone Bonus',   bg: 'bg-zappy-50', ring: 'ring-zappy-200', color: 'text-zappy-700', Icon: Trophy             },
   rating_received:      { emoji: '⭐', label: 'New Rating',        bg: 'bg-amber-50',  ring: 'ring-amber-200',  color: 'text-amber-700',  Icon: Star               },
 
   // Fee / cancellation (worker receives info)
-  cancellation_fee_charged:  { emoji: '🔔', label: 'Fee Charged', bg: 'bg-blue-50',   ring: 'ring-blue-200',   color: 'text-blue-700',   Icon: Wallet             },
+  cancellation_fee_charged:  { emoji: '🔔', label: 'Fee Charged', bg: 'bg-zappy-50',   ring: 'ring-zappy-200',   color: 'text-zappy-700',   Icon: Wallet             },
   cancellation_fee_pending:  { emoji: '⏳', label: 'Fee Pending', bg: 'bg-amber-50',  ring: 'ring-amber-200',  color: 'text-amber-700',  Icon: Clock              },
   cancellation_warning:      { emoji: '⚠️', label: 'Warning',     bg: 'bg-amber-50',  ring: 'ring-amber-200',  color: 'text-amber-700',  Icon: AlertTriangle      },
 
@@ -165,7 +165,7 @@ export default function WorkerNotificationsPage() {
         if (base.find((n) => n._id === notif._id)) return base;
         return [notif, ...base];
       });
-      toast(notif.title, { icon: TYPE_CFG[notif.type]?.emoji ?? '🔔', duration: 4000 });
+      toast(notif.title, { duration: 4000 });
     };
     socket.on('notification', onNotif);
     return () => socket.off('notification', onNotif);

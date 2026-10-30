@@ -1,0 +1,7 @@
+// A notification means something changed for this person (an approval, a booking, a payment), so every list they might be looking at re-reads; only screens on show refetch.
+export const NOTIFICATION_TAGS = [
+  'Notification', 'Me', 'Account', 'Onboarding', 'Kyc', 'ShopKyc', 'IdCheck', 'Shop', 'ShopWorkers', 'Worker',
+  'RepairPricing', 'RepairProvider', 'RepairBookings', 'PriceRequest', 'ProviderPlans', 'PlanVisits', 'MyPlans',
+  'PetBookings', 'HelpingTasks', 'EventBooking', 'EventPartner', 'PartnerNotification', 'Earnings', 'Wallet',
+  'Payouts', 'ShopPayouts', 'Payments', 'Reviews', 'UserDisputes', 'UserTickets', 'Order', 'Subscription',
+];

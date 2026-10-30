@@ -36,7 +36,7 @@ export function weekDeltaPct(breakdown = []) {
 export const hm = (sec) => `${Math.floor(sec / 3600)}h ${String(Math.floor((sec % 3600) / 60)).padStart(2, '0')}m`;
 
 /** "4.8", or a dash before the first completed job. */
-export const ratingLabel = (worker) => (worker?.completedJobs > 0 && worker?.rating != null ? Number(worker.rating).toFixed(1) : '—');
+export const ratingLabel = (worker) => (worker?.completedJobs > 0 && worker?.rating != null ? Number(worker.rating).toFixed(1) : '-');
 
 /** What the verification banner says, by KYC status. */
 export function kycBannerText(status) {
@@ -92,7 +92,7 @@ export function servicesHeadline(status) {
   const next = status?.nextStep;
   const approved = enrolments.filter((e) => e.status === 'approved');
   if (!enrolments.length) return { title: 'Choose what you work on', body: 'Pick your services to start receiving jobs.', tone: 'none' };
-  if (next?.code === 'AWAITING_REVIEW') return { title: "We're reviewing your documents", body: 'Usually within a day — we\'ll notify you.', tone: 'pending' };
+  if (next?.code === 'AWAITING_REVIEW') return { title: "We're reviewing your documents", body: 'Usually within a day - we\'ll notify you.', tone: 'pending' };
   if (next?.code === 'FIX_REJECTED') return { title: 'Verification needs changes', body: next.label, tone: 'attention' };
   if (next?.code === 'COMPLETE_VERIFICATION') return { title: 'Finish your verification', body: next.label, tone: 'pending' };
   return {

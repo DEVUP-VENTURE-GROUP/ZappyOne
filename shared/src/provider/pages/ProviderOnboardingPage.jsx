@@ -130,7 +130,7 @@ function Summary({ status, onAddService, onOpenEnrolment }) {
 
       {/*
         The provider's real question is "can customers see me?". Approval alone
-        does not answer it — a verified shop with no photo, no hours or no price
+        does not answer it - a verified shop with no photo, no hours or no price
         is invisible in practice, so the gap is named rather than implied.
       */}
       {status.isLive ? (
@@ -293,12 +293,15 @@ function LineStep({ domain, onPick, onRequest }) {
 /** Provider proposes a service we do not carry. Admin reviews it. */
 function RequestSheet({ domain, onClose }) {
   const [form, setForm] = useState({ proposedName: '', description: '' });
+  const [jobs, setJobs] = useState([{ name: '', minutes: '', price: '' }]);
   const [submit, { isLoading }] = useProviderRequestServiceLineMutation();
+  const filled = jobs.filter((j) => j.name.trim().length >= 2 && Number(j.minutes) >= 5 && Number(j.price) >= 1);
+  const setJob = (i, k, v) => setJobs((js) => js.map((j, n) => (n === i ? { ...j, [k]: v } : j)));
 
   async function send() {
     try {
-      await submit({ domainCode: domain?.code || '', ...form }).unwrap();
-      toast.success("Sent — we'll review it and get back to you.");
+      await submit({ domainCode: domain?.code || '', ...form, packages: filled.map((j) => ({ name: j.name.trim(), minutes: Math.round(Number(j.minutes)), pricePaise: Math.round(Number(j.price) * 100) })) }).unwrap();
+      toast.success("Sent - we'll review it and get back to you.");
       onClose();
     } catch (err) {
       toast.error(err?.data?.error || 'Could not send that');
@@ -313,8 +316,8 @@ function RequestSheet({ domain, onClose }) {
           <button onClick={onClose} className="text-slate-400"><X size={20} /></button>
         </div>
         <p className="text-xs text-slate-500 -mt-1 leading-relaxed">
-          If enough providers ask for the same work, we open it — with proper pricing and verification
-          behind it rather than a listing that goes nowhere.
+          Add the jobs you do with your price. Once ZappyOne approves the service, you get verified for it
+          and customers near you can book these jobs.
         </p>
         <input className="input text-sm w-full" placeholder="Service name (e.g. Smart Watch Repair)"
           value={form.proposedName} onChange={(e) => setForm((f) => ({ ...f, proposedName: e.target.value }))} />
@@ -322,6 +325,17 @@ function RequestSheet({ domain, onClose }) {
           className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-zappy-100 resize-none"
           placeholder="What exactly do you do, and how long have you done it?"
           value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
+        <div className="space-y-2">
+          <p className="text-xs font-semibold text-slate-600">Jobs and your prices</p>
+          {jobs.map((j, i) => (
+            <div key={i} className="grid grid-cols-[1fr_64px_76px] gap-2">
+              <input className="input text-sm" placeholder="Job, e.g. Hem trousers" aria-label="Job name" value={j.name} maxLength={80} onChange={(e) => setJob(i, 'name', e.target.value)} />
+              <input className="input text-sm" placeholder="Min" aria-label="Minutes it takes" inputMode="numeric" value={j.minutes} onChange={(e) => setJob(i, 'minutes', e.target.value.replace(/\D/g, ''))} />
+              <input className="input text-sm" placeholder="₹" aria-label="Your price in rupees" inputMode="decimal" value={j.price} onChange={(e) => setJob(i, 'price', e.target.value.replace(/[^\d.]/g, ''))} />
+            </div>
+          ))}
+          {jobs.length < 20 && <button type="button" onClick={() => setJobs((js) => [...js, { name: '', minutes: '', price: '' }])} className="text-xs font-semibold text-zappy-600"><Plus size={12} className="inline" /> Add another job</button>}
+        </div>
         <button onClick={send} disabled={isLoading || !form.proposedName.trim()} className="btn-primary w-full">
           {isLoading ? <><Loader2 size={15} className="animate-spin" /> Sending…</> : 'Send request'}
         </button>
@@ -378,7 +392,7 @@ function VerifyStep({ lineCode, onDone }) {
         <div className="card bg-amber-50 ring-amber-200">
           <p className="text-sm font-bold text-amber-900">Verification isn't configured for this service yet</p>
           <p className="text-xs text-amber-700 mt-1">
-            We'll let you know as soon as it is — you don't need to do anything.
+            We'll let you know as soon as it is - you don't need to do anything.
           </p>
         </div>
       </Shell>
@@ -404,7 +418,7 @@ function VerifyStep({ lineCode, onDone }) {
   async function upload(code, picked, meta = null) {
     const file = await prepareImage(picked);
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) return toast.error('File too large — max 5MB');
+    if (file.size > 5 * 1024 * 1024) return toast.error('File too large - max 5MB');
     try {
       setUploading(code);
       const contentType = file.type || 'image/jpeg';
@@ -430,7 +444,7 @@ function VerifyStep({ lineCode, onDone }) {
       await refetch();
       toast.success(meta ? 'Photo captured' : 'Uploaded');
     } catch {
-      toast.error('Upload failed — please try again');
+      toast.error('Upload failed - please try again');
     } finally {
       setUploading(null);
       setCapturing(null);

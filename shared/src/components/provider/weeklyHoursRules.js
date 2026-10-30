@@ -41,6 +41,24 @@ export function dayLength(opensAt, closesAt) {
   };
 }
 
+// A morning closing time that makes the day run overnight, where the same hour in the afternoon would not: almost always AM picked for PM. Returns the PM time to offer, or null.
+export function meantPm(opensAt, closesAt) {
+  const len = dayLength(opensAt, closesAt);
+  if (!len?.overnight) return null;
+  const close = Number(closesAt.slice(0, 2));
+  if (close < 1 || close > 11) return null;
+  const pm = `${String(close + 12).padStart(2, '0')}${closesAt.slice(2)}`;
+  return pm > opensAt ? pm : null;
+}
+
+// "Opens 10:00 AM", "Opens tomorrow 9:30 AM", "Opens Mon 10:00 AM" from the server's opensNext ({ day, opensAt, daysAhead }).
+export function opensLabel(next) {
+  if (!next?.opensAt) return null;
+  const t = to12Hour(next.opensAt);
+  const when = next.daysAhead === 0 ? '' : next.daysAhead === 1 ? 'tomorrow ' : `${DAYS[next.day]} `;
+  return `Opens ${when}${t.hour}:${t.minute} ${t.meridiem}`;
+}
+
 /** The first open day with no times, if any — check before saving. */
 export function incompleteDay(hours) {
   const bad = hours.find((h) => !h.isClosed && (!h.opensAt || !h.closesAt));

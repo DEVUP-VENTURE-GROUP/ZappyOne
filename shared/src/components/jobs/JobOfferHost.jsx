@@ -1,3 +1,4 @@
+import { useCheckInThen } from '../../provider/useCheckIn';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
@@ -42,6 +43,7 @@ export default function JobOfferHost({ kinds = ['repair', 'pet', 'helping'], myL
   const [declineRepair] = useDeclineRepairBookingMutation();
   const [claimRepair] = useClaimRepairBookingMutation();
   const [acceptPet] = useAcceptPetBookingMutation();
+  const checkedIn = useCheckInThen();
   const [declinePet] = useDeclinePetBookingMutation();
   const [acceptHelping] = useAcceptHelpingTaskMutation();
 
@@ -91,6 +93,7 @@ export default function JobOfferHost({ kinds = ['repair', 'pet', 'helping'], myL
 
   async function accept() {
     try {
+      await checkedIn(async () => {
       if (offer.kind === 'repair' && offer.broadcast) {
         await claimRepair(offer.id).unwrap();
         nav(`/worker/repair/${offer.id}`);
@@ -104,6 +107,7 @@ export default function JobOfferHost({ kinds = ['repair', 'pet', 'helping'], myL
         await acceptHelping(offer.id).unwrap();
         nav(`/worker/helping/${offer.id}`);
       }
+      });
       toast.success('It’s yours');
     } catch (err) {
       toast.error(takeError(err));
