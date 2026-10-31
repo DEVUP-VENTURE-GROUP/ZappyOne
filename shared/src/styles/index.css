@@ -74,11 +74,15 @@
   }
 
   button {
-    @apply outline-none cursor-pointer;
+    @apply cursor-pointer;
     font-family: inherit;
   }
 
   a { @apply cursor-pointer; }
+
+  /* Keyboard users always see where they are; taps and clicks show nothing. */
+  :where(button, a, [role='button'], [role='radio'], [tabindex]):focus { outline: none; }
+  :where(button, a, [role='button'], [role='radio'], [tabindex]):focus-visible { outline: 2px solid #1F4FD8; outline-offset: 2px; }
 
   * { box-sizing: border-box; }
 }
