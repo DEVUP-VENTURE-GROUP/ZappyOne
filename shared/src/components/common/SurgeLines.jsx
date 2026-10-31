@@ -12,7 +12,7 @@ import { formatPaise } from '../../utils/money';
  * Pass the quote's id with the booking (surgeQuoteId) and its base (surgeBasePaise).
  */
 const ICON = { surge: Flame, busy: Flame, peak: Clock, weekend: CalendarDays, rain: CloudRain, night: Moon };
-const TONE = { surge: 'text-orange-600', busy: 'text-orange-600', peak: 'text-amber-600', weekend: 'text-violet-600', rain: 'text-sky-600', night: 'text-indigo-600' };
+const TONE = { surge: 'text-orange-600', busy: 'text-orange-600', peak: 'text-amber-600', weekend: 'text-zappy-600', rain: 'text-sky-600', night: 'text-indigo-600' };
 
 export function useSurge({ kind, line, vertical, serviceMode, loc, basePaise, skip = false }) {
   const ok = !skip && !!kind && typeof loc?.lat === 'number' && basePaise != null;

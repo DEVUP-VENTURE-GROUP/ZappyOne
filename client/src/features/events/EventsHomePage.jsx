@@ -46,11 +46,11 @@ function VideoReelCard({ theme, onSave }) {
         </div>
       </div>
       <button onClick={e => { e.stopPropagation(); onSave(theme._id); }}
-        className={`absolute top-4 right-4 w-9 h-9 rounded-full flex items-center justify-center transition-all ${theme.isSaved ? 'bg-rose-500 scale-110' : 'bg-black/30 backdrop-blur-md border border-white/20 hover:bg-black/50'}`}>
+        className={`absolute top-4 right-4 w-9 h-9 rounded-full flex items-center justify-center transition-all ${theme.isSaved ? 'bg-rose-500 scale-110' : 'bg-black/30 border border-white/20 hover:bg-black/50'}`}>
         <Heart size={16} className={theme.isSaved ? 'text-white fill-white' : 'text-white'} />
       </button>
       {theme.status === 'featured' && (
-        <div className="absolute top-4 left-4 px-3 py-1 bg-fuchsia-500 rounded-full text-white text-[10px] font-black tracking-widest flex items-center gap-1.5 shadow-lg border border-white/20">
+        <div className="absolute top-4 left-4 px-3 py-1 bg-zappy-500 rounded-full text-white text-[10px] font-black tracking-widest flex items-center gap-1.5 shadow-lg border border-white/20">
           <Star size={12} />FEATURED
         </div>
       )}
@@ -74,7 +74,7 @@ function ThemeCard({ theme, onSave }) {
           </div>
         )}
         <button onClick={e => { e.stopPropagation(); onSave(theme._id); }}
-          className={`absolute top-4 right-4 w-9 h-9 rounded-full flex items-center justify-center transition-all ${theme.isSaved ? 'bg-rose-500 scale-110' : 'bg-black/20 backdrop-blur-md border border-white/20 hover:bg-black/40'}`}>
+          className={`absolute top-4 right-4 w-9 h-9 rounded-full flex items-center justify-center transition-all ${theme.isSaved ? 'bg-rose-500 scale-110' : 'bg-black/20 border border-white/20 hover:bg-black/40'}`}>
           <Heart size={16} className={theme.isSaved ? 'text-white fill-white' : 'text-white'} />
         </button>
         {theme.isTrending && (

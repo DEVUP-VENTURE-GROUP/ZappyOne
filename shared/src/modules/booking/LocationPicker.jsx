@@ -44,7 +44,7 @@ const TOKEN    = import.meta.env.VITE_MAPBOX_TOKEN;
 
 const TAG_META = {
   home:  { icon: Home,      bg: 'bg-zappy-600',    ring: 'ring-blue-200'   },
-  work:  { icon: Briefcase, bg: 'bg-zappy-700', ring: 'ring-purple-200' },
+  work:  { icon: Briefcase, bg: 'bg-zappy-700', ring: 'ring-zappy-200' },
   other: { icon: MapPin,    bg: 'bg-slate-500',   ring: 'ring-slate-200'  },
 };
 

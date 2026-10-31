@@ -41,7 +41,7 @@ function MethodCard({ method, onDelete, onSetDefault, deleting, settingDefault }
       <div className="p-4 flex items-center gap-3">
         {/* Type icon */}
         <div className={`w-12 h-9 rounded-xl flex items-center justify-center shrink-0 ${
-          isCard ? net.bg : isUpi ? 'bg-violet-600' : 'bg-slate-600'
+          isCard ? net.bg : isUpi ? 'bg-zappy-600' : 'bg-slate-600'
         }`}>
           {isCard ? (
             <span className="text-[10px] font-black text-white">{net.label}</span>

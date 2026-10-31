@@ -5,6 +5,7 @@
  */
 import { useRepairHandoverCodeQuery } from '@zappy/core/api';
 import { CodeReveal } from '../../tracking/cards/CodeReveal';
+import { zappy } from '@zappy/ui/theme/colors';
 
 const CLOSED = ['COMPLETED', 'CANCELLED', 'REJECTED', 'EXPIRED', 'FAILED', 'REFUNDED'];
 const COPY: Record<string, { title: string; hint: string }> = {
@@ -18,5 +19,5 @@ export function HandoverCode({ booking }: { booking: { _id: string; status: stri
   const { data } = useRepairHandoverCodeQuery(booking._id, { skip: closed });
   if (closed || !data?.code) return null;
   const copy = COPY[data.kind] || { title: 'Your handover code', hint: 'Share this with your technician.' };
-  return <CodeReveal code={data.code} title={copy.title} hint={copy.hint} color="#7C3AED" />;
+  return <CodeReveal code={data.code} title={copy.title} hint={copy.hint} color={zappy[700]} />;
 }

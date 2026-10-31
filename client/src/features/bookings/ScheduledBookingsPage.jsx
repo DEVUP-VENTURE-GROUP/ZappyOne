@@ -61,7 +61,7 @@ export default function ScheduledBookingsPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 pb-16">
-      <header className="sticky top-0 z-10 border-b border-slate-100 bg-white/90 backdrop-blur">
+      <header className="sticky top-0 z-10 border-b border-slate-100 bg-white/90">
         <div className="mx-auto flex max-w-2xl items-center gap-3 px-4 py-3">
           <button type="button" onClick={() => goBack()} className="rounded-full p-1.5 hover:bg-slate-100" aria-label="Back">
             <ArrowLeft className="h-5 w-5 text-slate-700" />

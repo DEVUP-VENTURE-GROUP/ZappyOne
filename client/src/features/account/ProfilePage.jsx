@@ -23,7 +23,7 @@ import toast from 'react-hot-toast';
 
 const TAG_META = {
   home:  { icon: Home,      bg: 'bg-blue-50',   text: 'text-blue-600',   label: 'Home' },
-  work:  { icon: Briefcase, bg: 'bg-purple-50',  text: 'text-purple-600', label: 'Work' },
+  work:  { icon: Briefcase, bg: 'bg-zappy-50',  text: 'text-zappy-600', label: 'Work' },
   other: { icon: MapPin,    bg: 'bg-slate-50',   text: 'text-slate-500',  label: 'Other' },
 };
 

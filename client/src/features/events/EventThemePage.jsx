@@ -197,9 +197,9 @@ export default function EventThemePage() {
 
           {/* Capacity Bento */}
           {theme.guestCapacity && (
-            <div className="col-span-1 bg-white rounded-[2rem] p-5 shadow-sm border border-slate-200/60 flex flex-col justify-between min-h-[140px] group hover:border-fuchsia-200 transition-colors">
-              <div className="w-10 h-10 rounded-2xl bg-fuchsia-50 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                <Users className="text-fuchsia-600" size={20} />
+            <div className="col-span-1 bg-white rounded-[2rem] p-5 shadow-sm border border-slate-200/60 flex flex-col justify-between min-h-[140px] group hover:border-zappy-200 transition-colors">
+              <div className="w-10 h-10 rounded-2xl bg-zappy-50 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <Users className="text-zappy-600" size={20} />
               </div>
               <div>
                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Capacity</p>

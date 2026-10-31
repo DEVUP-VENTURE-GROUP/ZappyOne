@@ -522,22 +522,22 @@ export default function OrderTrackingPage() {
                 </motion.div>
               ) : status === 'arrived' && !workerConfirmed ? (
                 <motion.div key="otp-pending" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                  className="rounded-card overflow-hidden border border-violet-200/50" style={{ background: 'linear-gradient(#f5f3ff, #f5f3ff)', boxShadow: '0 8px 24px -4px rgba(139, 92, 246, 0.15)' }}>
+                  className="rounded-card overflow-hidden border border-zappy-200/50" style={{ background: 'linear-gradient(#f5f3ff, #f5f3ff)', boxShadow: '0 8px 24px -4px rgba(31,79,216, 0.15)' }}>
                   <div className="px-4 py-4 flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-2xl bg-violet-100 flex items-center justify-center shrink-0">
-                      <HelpCircle size={18} strokeWidth={2} className="text-violet-600" />
+                    <div className="w-10 h-10 rounded-2xl bg-zappy-100 flex items-center justify-center shrink-0">
+                      <HelpCircle size={18} strokeWidth={2} className="text-zappy-600" />
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm font-extrabold text-violet-900">Confirm the worker is here</p>
-                      <p className="text-xs text-violet-500 mt-0.5">Your OTP will appear once you confirm</p>
+                      <p className="text-sm font-extrabold text-zappy-900">Confirm the worker is here</p>
+                      <p className="text-xs text-zappy-500 mt-0.5">Your OTP will appear once you confirm</p>
                     </div>
-                    <button onClick={() => setShowArrivedSheet(true)} className="px-3 py-1.5 rounded-xl bg-violet-600 text-white text-xs font-bold">Confirm</button>
+                    <button onClick={() => setShowArrivedSheet(true)} className="px-3 py-1.5 rounded-xl bg-zappy-600 text-white text-xs font-bold">Confirm</button>
                   </div>
                 </motion.div>
               ) : status === 'arrived' && workerConfirmed ? (
                 <motion.div key="otp-card" initial={{ opacity: 0, scale: 0.95, y: 8 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }}
                   transition={{ type: 'spring', damping: 20, stiffness: 260 }} className="rounded-card overflow-hidden border border-white/10"
-                  style={{ background: 'linear-gradient(#7c3aed, #7c3aed)', boxShadow: '0 12px 32px -4px rgba(124,58,237,0.4)' }}>
+                  style={{ background: 'linear-gradient(#1F4FD8, #1F4FD8)', boxShadow: '0 12px 32px -4px rgba(31,79,216,0.4)' }}>
                   <div className="px-4 pt-4 pb-2 flex items-center gap-2">
                     <ShieldCheck size={15} strokeWidth={2} className="text-white/80" />
                     <p className="text-xs font-extrabold text-white/80 uppercase tracking-widest">Worker is here - share your OTP</p>
@@ -604,7 +604,7 @@ export default function OrderTrackingPage() {
                 <FileText size={15} strokeWidth={2} className="text-blue-600" /> Invoice
               </button>
               <button onClick={() => nav('/support')} className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl bg-white ring-1 ring-slate-200 text-sm font-bold text-slate-700 hover:bg-slate-50 transition">
-                <HeadphonesIcon size={15} strokeWidth={2} className="text-violet-600" /> Get Help
+                <HeadphonesIcon size={15} strokeWidth={2} className="text-zappy-600" /> Get Help
               </button>
             </motion.div>
           )}
@@ -842,8 +842,8 @@ export default function OrderTrackingPage() {
                 initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', damping: 28, stiffness: 300 }}>
                 <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mt-3 mb-5" />
                 <div className="flex flex-col items-center px-6 pb-2">
-                  <div className="w-16 h-16 rounded-2xl bg-violet-500 flex items-center justify-center text-white font-black text-xl mb-3 shadow-lg"
-                    style={{ boxShadow: '0 8px 24px rgba(124,58,237,0.4)' }}>
+                  <div className="w-16 h-16 rounded-2xl bg-zappy-500 flex items-center justify-center text-white font-black text-xl mb-3 shadow-lg"
+                    style={{ boxShadow: '0 8px 24px rgba(31,79,216,0.4)' }}>
                     {(order.workerName || 'W').slice(0, 2).toUpperCase()}
                   </div>
                   <p className="text-xl font-black text-[#0F172A] text-center leading-tight">
@@ -855,11 +855,11 @@ export default function OrderTrackingPage() {
                   <div className="relative w-16 h-16">
                     <svg width="64" height="64" viewBox="0 0 64 64" className="-rotate-90">
                       <circle cx="32" cy="32" r="26" fill="none" stroke="#f1f5f9" strokeWidth="5" />
-                      <circle cx="32" cy="32" r="26" fill="none" stroke="#7c3aed" strokeWidth="5" strokeLinecap="round"
+                      <circle cx="32" cy="32" r="26" fill="none" stroke="#1F4FD8" strokeWidth="5" strokeLinecap="round"
                         strokeDasharray={`${2 * Math.PI * 26}`} strokeDashoffset={`${2 * Math.PI * 26 * (1 - confirmCountdown / 90)}`}
                         style={{ transition: 'stroke-dashoffset 1s linear' }} />
                     </svg>
-                    <span className="absolute inset-0 flex items-center justify-center text-sm font-black text-violet-700">{confirmCountdown}s</span>
+                    <span className="absolute inset-0 flex items-center justify-center text-sm font-black text-zappy-700">{confirmCountdown}s</span>
                   </div>
                   <p className="text-xs text-slate-400 mt-2 font-medium">OTP auto-reveals in {confirmCountdown} s</p>
                 </div>
@@ -868,7 +868,7 @@ export default function OrderTrackingPage() {
                     <>
                       <motion.button onClick={confirmWorkerArrived} whileTap={{ scale: 0.97 }}
                         className="w-full h-14 rounded-2xl text-white font-extrabold text-base flex items-center justify-center gap-2.5"
-                        style={{ background: 'linear-gradient(#7c3aed, #7c3aed)', boxShadow: '0 8px 24px rgba(124,58,237,0.4)' }}>
+                        style={{ background: 'linear-gradient(#1F4FD8, #1F4FD8)', boxShadow: '0 8px 24px rgba(31,79,216,0.4)' }}>
                         <CheckCircle2 size={20} strokeWidth={2.5} /> Yes, they're here - show OTP
                       </motion.button>
                       <button onClick={() => { clearInterval(countdownRef.current); setWorkerNotHereMode(true); }}

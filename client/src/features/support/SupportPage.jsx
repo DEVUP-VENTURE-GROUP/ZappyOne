@@ -23,7 +23,7 @@ const CATEGORIES = [
 
 const STATUS_META = {
   open:         { label: 'Open',          cls: 'bg-blue-50 text-blue-700',    dot: 'bg-blue-500' },
-  in_progress:  { label: 'In Progress',   cls: 'bg-violet-50 text-violet-700', dot: 'bg-violet-500' },
+  in_progress:  { label: 'In Progress',   cls: 'bg-zappy-50 text-zappy-700', dot: 'bg-zappy-500' },
   waiting_user: { label: 'Awaiting You',  cls: 'bg-amber-50 text-amber-700',  dot: 'bg-amber-500' },
   resolved:     { label: 'Resolved',      cls: 'bg-green-50 text-green-700',  dot: 'bg-green-500' },
   closed:       { label: 'Closed',        cls: 'bg-slate-100 text-slate-500', dot: 'bg-slate-400' },
@@ -340,7 +340,7 @@ export default function SupportPage() {
               <ChevronLeft size={16} className="text-white" />
             </button>
             <h1 className="font-black text-white flex-1 flex items-center gap-2">
-              <HeadphonesIcon size={16} className="text-violet-400" />
+              <HeadphonesIcon size={16} className="text-zappy-400" />
               Help & Support
             </h1>
             <button

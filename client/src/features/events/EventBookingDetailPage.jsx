@@ -98,7 +98,7 @@ export default function EventBookingDetailPage() {
 
   if (isLoading) return (
     <div className="min-h-screen bg-white flex items-center justify-center">
-      <Loader2 size={24} className="animate-spin text-violet-400" />
+      <Loader2 size={24} className="animate-spin text-zappy-400" />
     </div>
   );
   if (!booking) return (
@@ -115,7 +115,7 @@ export default function EventBookingDetailPage() {
     <div className="min-h-screen bg-slate-50 pb-28">
       {/* Confetti banner on new payment */}
       {isPaid && (
-        <motion.div initial={{ y: -60 }} animate={{ y: 0 }} className=" bg-violet-600 text-white px-4 py-3 flex items-center gap-2">
+        <motion.div initial={{ y: -60 }} animate={{ y: 0 }} className=" bg-zappy-600 text-white px-4 py-3 flex items-center gap-2">
           <PartyPopper size={18} />
           <p className="text-sm font-bold">Booking confirmed. Your event is all set.</p>
         </motion.div>
@@ -149,10 +149,10 @@ export default function EventBookingDetailPage() {
             <div className="flex items-center justify-between">
               {TIMELINE.map((label, i) => (
                 <div key={label} className="flex-1 flex flex-col items-center gap-1">
-                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${i < currentStep ? 'bg-green-500 text-white' : i === currentStep ? 'bg-violet-600 text-white ring-4 ring-violet-100' : 'bg-slate-100 text-slate-400'}`}>
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${i < currentStep ? 'bg-green-500 text-white' : i === currentStep ? 'bg-zappy-600 text-white ring-4 ring-zappy-100' : 'bg-slate-100 text-slate-400'}`}>
                     {i < currentStep ? <CheckCircle size={14} /> : i + 1}
                   </div>
-                  <span className={`text-[9px] font-semibold text-center ${i === currentStep ? 'text-violet-600' : i < currentStep ? 'text-green-600' : 'text-slate-400'}`}>{label}</span>
+                  <span className={`text-[9px] font-semibold text-center ${i === currentStep ? 'text-zappy-600' : i < currentStep ? 'text-green-600' : 'text-slate-400'}`}>{label}</span>
                   {i < TIMELINE.length - 1 && (
                     <div className={`absolute h-0.5 w-8 translate-x-5 ${i < currentStep ? 'bg-green-400' : 'bg-slate-200'}`} style={{ left: `${(i / (TIMELINE.length - 1)) * 100}%` }} />
                   )}
@@ -170,10 +170,10 @@ export default function EventBookingDetailPage() {
           <div className="p-4 space-y-2">
             <h2 className="font-bold text-slate-900">{booking.themeId?.title}</h2>
             <div className="grid grid-cols-2 gap-2 text-xs text-slate-600">
-              <div className="flex items-center gap-1.5"><Calendar size={12} className="text-violet-500" />{booking.eventDate ? new Date(booking.eventDate).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' }) : '-'}</div>
-              <div className="flex items-center gap-1.5"><Clock size={12} className="text-violet-500" />{booking.eventTimeSlot}</div>
-              <div className="flex items-center gap-1.5"><MapPin size={12} className="text-violet-500" />{booking.address?.line1}, {booking.address?.city}</div>
-              <div className="flex items-center gap-1.5"><Users size={12} className="text-violet-500" />{booking.guestCount} guests</div>
+              <div className="flex items-center gap-1.5"><Calendar size={12} className="text-zappy-500" />{booking.eventDate ? new Date(booking.eventDate).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' }) : '-'}</div>
+              <div className="flex items-center gap-1.5"><Clock size={12} className="text-zappy-500" />{booking.eventTimeSlot}</div>
+              <div className="flex items-center gap-1.5"><MapPin size={12} className="text-zappy-500" />{booking.address?.line1}, {booking.address?.city}</div>
+              <div className="flex items-center gap-1.5"><Users size={12} className="text-zappy-500" />{booking.guestCount} guests</div>
             </div>
             {booking.notes && <p className="text-xs text-zappy-600 bg-zappy-50 rounded-lg px-3 py-2 mt-1">{booking.notes}</p>}
           </div>
@@ -266,9 +266,9 @@ export default function EventBookingDetailPage() {
               ))}
             </div>
             <textarea value={review} onChange={e => setReview(e.target.value)} placeholder="Tell us about your experience…" rows={3}
-              className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-violet-400 resize-none" />
+              className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-zappy-400 resize-none" />
             <button onClick={handleReview} disabled={submitting}
-              className="w-full py-3 bg-violet-600 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-60">
+              className="w-full py-3 bg-zappy-600 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-60">
               {submitting ? <Loader2 size={15} className="animate-spin" /> : <CheckCircle size={15} />}
               Submit Review
             </button>
@@ -291,7 +291,7 @@ export default function EventBookingDetailPage() {
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 px-4 py-4 space-y-2">
         {canPayRem && (
           <button onClick={handlePayRemaining} disabled={payingRemaining}
-            className="w-full py-3.5 bg-violet-600 text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-60">
+            className="w-full py-3.5 bg-zappy-600 text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-60">
             {payingRemaining ? <Loader2 size={15} className="animate-spin" /> : <CreditCard size={15} />}
             Pay Remaining ₹{Math.round((booking?.pricing?.remainingPaise || 0) / 100).toLocaleString('en-IN')}
           </button>

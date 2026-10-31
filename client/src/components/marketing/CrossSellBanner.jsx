@@ -46,7 +46,7 @@ export default function CrossSellBanner({ placement, categoryId, city, title = '
         {ads.map(ad => (
           <motion.button key={ad._id} whileTap={{ scale: 0.96 }} onClick={() => handleClick(ad)}
             className="shrink-0 w-44 rounded-2xl overflow-hidden text-left shadow-sm hover:shadow-md transition-shadow"
-            style={{ background: ad.content?.backgroundColor || '#7c3aed' }}>
+            style={{ background: ad.content?.backgroundColor || '#1F4FD8' }}>
             {ad.content?.imageUrl && (
               <div className="h-24 overflow-hidden">
                 <img src={ad.content.imageUrl} alt="" className="w-full h-full object-cover" />
