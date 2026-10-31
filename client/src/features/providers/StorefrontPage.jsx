@@ -2,48 +2,58 @@ import { useState } from 'react';
 import { partsQuotedSeparately, PARTS_NOTE } from '@shared/utils/partsRule';
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowLeft, BadgeCheck, ChevronDown, Clock3, MapPin, ShieldCheck, Star, Store, Timer } from 'lucide-react';
-import { useGetShopProfileQuery, useRepairVerticalsQuery, useStorefrontMenuQuery } from '@shared/services/api';
+import toast from 'react-hot-toast';
+import { ArrowLeft, BadgeCheck, BadgeIndianRupee, ChevronDown, Clock3, MapPin, Share2, ShieldCheck, Star, ThumbsUp } from 'lucide-react';
+import { useGetShopProfileQuery, useGetWorkerPublicProfileQuery, useRepairVerticalsQuery, useStorefrontMenuQuery } from '@shared/services/api';
 import { useSafeBack } from '../../hooks/useBookingFlow';
+import Avatar from '../tracking/redesign/Avatar';
 import PlansNear from '../plans/PlansNear';
 
 const rupees = (p) => `₹${Math.round(p / 100).toLocaleString('en-IN')}`;
+const monthYear = (d) => new Date(d).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
 
-function MenuItem({ item, index, onBook }) {
-  const [open, setOpen] = useState(item.options.length === 1);
+function MenuItem({ item, onBook }) {
   const single = item.options.length === 1;
+  const [open, setOpen] = useState(false);
   return (
-    <motion.li initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(index, 10) * 0.035 }} className="card">
-      <button type="button" onClick={() => (single ? onBook(item.options[0]) : setOpen((o) => !o))} aria-expanded={single ? undefined : open} className="flex w-full items-start gap-3 text-left">
+    <li className="py-4">
+      <button type="button" onClick={() => (single ? onBook(item.options[0]) : setOpen((o) => !o))} aria-expanded={single ? undefined : open} className="flex w-full items-center gap-3 text-left">
         <span className="min-w-0 flex-1">
-          <span className="block font-bold text-[#0F172A]">{item.name}</span>
-          <span className="mt-0.5 flex items-center gap-2 text-[12px] text-slate-500">
-            {item.minutes && <span className="flex items-center gap-1"><Clock3 size={12} /> about {item.minutes} min</span>}
+          <span className="block text-[15.5px] font-bold text-ink-900">{item.name}</span>
+          <span className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[13px] text-ink-500">
+            <span className="font-semibold tabular-nums text-ink-900">{single ? '' : 'from '}{rupees(item.fromPaise)}</span>
+            {item.minutes && <span className="flex items-center gap-1"><Clock3 size={13} /> about {item.minutes} min</span>}
             {item.quoted && <span>Final price after a look</span>}
           </span>
         </span>
-        <span className="shrink-0 text-right">
-          <span className="block text-[11px] font-semibold text-slate-500">{single ? '' : 'from'}</span>
-          <span className="block font-extrabold text-[#0F172A]">{rupees(item.fromPaise)}</span>
-        </span>
-        {single ? <span className="shrink-0 self-center rounded-xl bg-zappy-600 px-3 py-1.5 text-[12.5px] font-bold text-white">Book</span> : <ChevronDown size={18} className={`mt-1 shrink-0 text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`} />}
+        {single
+          ? <span className="shrink-0 rounded-btn border border-zappy-600 px-4 py-1.5 text-[14px] font-bold text-zappy-700">Book</span>
+          : <span className="flex shrink-0 items-center gap-1 rounded-btn border border-line px-3 py-1.5 text-[13.5px] font-semibold text-ink-700">{item.options.length} options <ChevronDown size={15} className={`transition-transform ${open ? 'rotate-180' : ''}`} /></span>}
       </button>
       <AnimatePresence initial={false}>
         {open && !single && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
             <div className="mt-3 grid grid-cols-2 gap-2">
               {item.options.map((o) => (
-                <motion.button key={o.brandCode} type="button" whileTap={{ scale: 0.96 }} onClick={() => onBook(o)}
-                  className="rounded-xl border border-slate-200 px-3 py-2 text-left hover:border-zappy-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zappy-400">
-                  <span className="block text-[12.5px] font-semibold text-slate-600">{o.typeName}</span>
-                  <span className="block font-extrabold text-[#0F172A]">{rupees(o.totalPaise)}</span>
-                </motion.button>
+                <button key={o.brandCode} type="button" onClick={() => onBook(o)}
+                  className="rounded-btn border border-line px-3 py-2.5 text-left hover:border-zappy-600">
+                  <span className="block text-[13px] text-ink-500">{o.typeName}</span>
+                  <span className="block text-[15px] font-bold tabular-nums text-ink-900">{rupees(o.totalPaise)}</span>
+                </button>
               ))}
             </div>
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.li>
+    </li>
+  );
+}
+
+function Stars({ value }) {
+  return (
+    <span className="flex gap-0.5" aria-label={`${value} out of 5`}>
+      {[1, 2, 3, 4, 5].map((n) => <Star key={n} size={13} className={n <= value ? 'fill-amber-400 text-amber-400' : 'fill-line text-line'} />)}
+    </span>
   );
 }
 
@@ -59,61 +69,127 @@ export default function StorefrontPage() {
   if (via && /^[a-z0-9]{8,24}$/.test(via)) { try { sessionStorage.setItem(`zappy:via:${kind}:${id}`, via); } catch { /* private mode */ } }
   const passed = useLocation().state?.storefront || null;
   const { data: shopData } = useGetShopProfileQuery(id, { skip: kind !== 'shop' });
+  const { data: workerData } = useGetWorkerPublicProfileQuery(id, { skip: kind !== 'worker' });
   const { data: services } = useRepairVerticalsQuery();
   const shop = shopData?.shop;
+  const pro = workerData?.worker;
   // Every service this provider is verified for that books on the repair engine; a link without one opens the first.
-  const offered = (services?.items || []).filter((i) => (shop?.services || []).some((x) => (x.code || x) === i.line));
+  const lines = shop ? (shop.services || []).map((x) => x.code || x) : (pro?.verifiedServices || []).map((v) => v.code);
+  const offered = (services?.items || []).filter((i) => lines.includes(i.line));
   const vertical = picked || offered[0]?.vertical || '';
   const { data: menu, isLoading } = useStorefrontMenuQuery({ kind, id, vertical }, { skip: !vertical });
   const service = services?.items?.find((i) => i.vertical === vertical);
-  const name = shop?.businessName || passed?.name || 'Provider';
-  const rating = shop ? (shop.reviewCount ? shop.rating : null) : passed?.rating ?? null;
-  const cover = shop?.coverImageUrl || passed?.imageUrl || null;
+  const name = shop?.businessName || pro?.name || passed?.name || 'Provider';
+  const rating = shop ? (shop.reviewCount ? shop.rating : null) : pro ? pro.rating : passed?.rating ?? null;
+  const reviewCount = shop?.reviewCount ?? pro?.ratingCount ?? passed?.reviewCount ?? 0;
+  const jobs = shop?.completedJobs ?? pro?.completedJobs ?? passed?.completedJobs ?? 0;
+  const cover = shop?.coverImageUrl || null;
+  const photo = pro?.photo || passed?.imageUrl || null;
+  const verified = shop ? true : pro ? pro.verified : true;
   const items = menu?.items || [];
+  const reviews = (workerData?.reviews || []).filter((r) => r.text).slice(0, 3);
+
+  async function share() {
+    const url = window.location.href.split('#')[0];
+    try {
+      if (navigator.share) await navigator.share({ title: name, text: `${name} on ZappyOne`, url });
+      else { await navigator.clipboard.writeText(url); toast.success('Link copied'); }
+    } catch { /* closed the share sheet */ }
+  }
 
   return (
-    <div className="min-h-screen bg-[#F9FAFB] pb-20">
-      <div className="relative h-56 overflow-hidden bg-zappy-100">
-        {cover
-          ? <motion.img initial={{ scale: 1.08 }} animate={{ scale: 1 }} transition={{ duration: 0.8 }} src={cover} alt="" className="h-full w-full object-cover" />
-          : <div className="flex h-full w-full items-center justify-center"><Store size={44} className="text-zappy-300" /></div>}
-        <div className="absolute inset-x-0 bottom-0 h-24 bg-black/40" />
-        <button onClick={() => goBack()} aria-label="Back" className="absolute left-4 top-4 grid h-10 w-10 place-items-center rounded-full bg-white/95 shadow"><ArrowLeft size={18} strokeWidth={2.5} /></button>
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="absolute inset-x-4 bottom-4 text-white">
-          <p className="text-[12px] font-semibold text-white/85">{service?.name || 'Service'}</p>
-          <h1 className="text-2xl font-extrabold leading-tight">{name}</h1>
-        </motion.div>
-      </div>
-
-      <div className="mx-auto -mt-3 max-w-lg space-y-3 px-4 lg:max-w-2xl">
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="card relative grid grid-cols-3 gap-2 text-center">
-          <div><p className="flex items-center justify-center gap-1 font-extrabold text-[#0F172A]">{rating != null ? <><Star size={14} className="fill-amber-400 text-amber-400" />{rating.toFixed(1)}</> : 'New'}</p><p className="text-[11px] text-slate-500">{shop?.reviewCount || passed?.reviewCount || 0} reviews</p></div>
-          <div><p className="font-extrabold text-[#0F172A]">{(shop?.completedJobs ?? passed?.completedJobs ?? 0).toLocaleString('en-IN')}</p><p className="text-[11px] text-slate-500">jobs done</p></div>
-          <div><p className="flex items-center justify-center gap-1 font-extrabold text-[#0F172A]"><Timer size={14} />{passed?.arrivalMinutes != null ? `${passed.arrivalMinutes}m` : '-'}</p><p className="text-[11px] text-slate-500">to arrive</p></div>
-        </motion.div>
-
-        <div className="flex flex-wrap gap-2 text-[12px] font-semibold">
-          <span className="flex items-center gap-1 rounded-full bg-white px-3 py-1 text-zappy-700 ring-1 ring-zappy-100"><BadgeCheck size={13} /> Verified for this service</span>
-          <span className="flex items-center gap-1 rounded-full bg-white px-3 py-1 text-slate-700 ring-1 ring-slate-200"><ShieldCheck size={13} /> Price fixed before they arrive</span>
-          {shop?.address?.city && <span className="flex items-center gap-1 rounded-full bg-white px-3 py-1 text-slate-700 ring-1 ring-slate-200"><MapPin size={13} /> {shop.address.city}</span>}
-          {shop?.todayHours && <span className="flex items-center gap-1 rounded-full bg-white px-3 py-1 text-slate-700 ring-1 ring-slate-200"><Clock3 size={13} /> {shop.openNow ? 'Open now' : 'Closed now'} · {shop.todayHours}</span>}
+    <div className="min-h-screen bg-sunken">
+      <div className="mx-auto min-h-screen max-w-2xl bg-white pb-16">
+        <div className="relative h-36 overflow-hidden bg-zappy-700 sm:h-44">
+          {cover
+            ? <><img src={cover} alt="" className="h-full w-full object-cover" /><div className="absolute inset-0 bg-black/25" /></>
+            : <img src="/branding/zappy-mark.webp" alt="" className="pointer-events-none absolute -right-8 -top-10 h-56 w-56 rotate-12 object-contain opacity-[0.12] brightness-0 invert" />}
+          <button type="button" onClick={() => goBack()} aria-label="Back" className="absolute left-3 top-3 grid h-10 w-10 place-items-center rounded-full bg-white text-ink-900"><ArrowLeft size={19} strokeWidth={2.4} /></button>
+          <button type="button" onClick={share} aria-label="Share" className="absolute right-3 top-3 grid h-10 w-10 place-items-center rounded-full bg-white text-ink-900"><Share2 size={17} /></button>
         </div>
-        {shop?.bio && <p className="text-sm leading-relaxed text-slate-600">{shop.bio}</p>}
-        {offered.length > 1 && (
-          <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4" role="tablist" aria-label="Services">
-            {offered.map((o) => <button key={o.vertical} type="button" role="tab" aria-selected={o.vertical === vertical} onClick={() => setPicked(o.vertical)} className={`shrink-0 rounded-full px-3.5 py-1.5 text-[12.5px] font-bold ${o.vertical === vertical ? 'bg-[#0F172A] text-white' : 'bg-white text-slate-700 ring-1 ring-slate-200'}`}>{o.name}</button>)}
+
+        <section className="border-b-8 border-sunken px-4 pb-5 sm:px-6">
+          <div className="relative z-10 -mt-12 flex items-end justify-between gap-3">
+            <span className="rounded-[30px] bg-white p-1"><Avatar name={name} photo={photo} size={96} radius={26} /></span>
           </div>
-        )}
+          <h1 className="mt-3 text-[24px] font-extrabold leading-tight tracking-[-0.02em] text-ink-900 [text-wrap:balance]">{name}</h1>
+          <p className="mt-0.5 text-[14px] text-ink-500">
+            {service?.name || 'Service'}{pro?.memberSince ? ` · on ZappyOne since ${monthYear(pro.memberSince)}` : ''}{shop?.address?.city ? ` · ${shop.address.city}` : ''}
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2 text-[12.5px] font-semibold">
+            {verified && <span className="flex items-center gap-1 rounded-full bg-zappy-50 px-2.5 py-1 text-zappy-700"><BadgeCheck size={14} /> Verified</span>}
+            {pro?.neverCancels && <span className="flex items-center gap-1 rounded-full bg-green-50 px-2.5 py-1 text-green-800"><ThumbsUp size={13} /> Never cancels</span>}
+            {shop?.todayHours && <span className="flex items-center gap-1 rounded-full bg-sunken px-2.5 py-1 text-ink-700"><Clock3 size={13} /> {shop.openNow ? 'Open now' : 'Closed now'} · {shop.todayHours}</span>}
+          </div>
+
+          <dl className="mt-5 grid grid-cols-3 divide-x divide-line rounded-card border border-line py-3 text-center">
+            <div>
+              <dd className="flex items-center justify-center gap-1 text-[18px] font-extrabold tabular-nums text-ink-900">{rating != null ? <><Star size={16} className="fill-amber-400 text-amber-400" />{Number(rating).toFixed(1)}</> : 'New'}</dd>
+              <dt className="text-[12.5px] text-ink-500">{reviewCount} {reviewCount === 1 ? 'review' : 'reviews'}</dt>
+            </div>
+            <div>
+              <dd className="text-[18px] font-extrabold tabular-nums text-ink-900">{Number(jobs).toLocaleString('en-IN')}</dd>
+              <dt className="text-[12.5px] text-ink-500">jobs done</dt>
+            </div>
+            <div>
+              <dd className="text-[18px] font-extrabold tabular-nums text-ink-900">{passed?.arrivalMinutes != null ? `${passed.arrivalMinutes} min` : pro?.acceptRate != null ? `${pro.acceptRate}%` : '-'}</dd>
+              <dt className="text-[12.5px] text-ink-500">{passed?.arrivalMinutes != null ? 'to arrive' : 'jobs accepted'}</dt>
+            </div>
+          </dl>
+          {shop?.bio && <p className="mt-4 text-[14.5px] leading-relaxed text-ink-700">{shop.bio}</p>}
+        </section>
+
+        <section className="border-b-8 border-sunken px-4 py-2 sm:px-6">
+          {[
+            [ShieldCheck, 'Checked by ZappyOne', 'ID and skills verified before their first job'],
+            [BadgeIndianRupee, 'Price agreed before work', 'Nothing extra is charged without your OK'],
+            ...(shop?.address?.city ? [[MapPin, shop.address.city, 'Where they work from']] : []),
+          ].map(([Icon, t, sub]) => (
+            <div key={t} className="flex items-center gap-3.5 py-3">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-sunken text-ink-900"><Icon size={19} /></span>
+              <span className="min-w-0"><span className="block text-[15px] font-semibold text-ink-900">{t}</span><span className="block text-[13px] text-ink-500">{sub}</span></span>
+            </div>
+          ))}
+        </section>
+
+        <section className="border-b-8 border-sunken px-4 pt-5 sm:px-6">
+          <h2 className="text-[19px] font-extrabold text-ink-900">Their prices</h2>
+          {offered.length > 1 && (
+            <div className="no-scrollbar -mx-4 mt-3 flex gap-2 overflow-x-auto px-4 sm:-mx-6 sm:px-6" role="tablist" aria-label="Services">
+              {offered.map((o) => (
+                <button key={o.vertical} type="button" role="tab" aria-selected={o.vertical === vertical} onClick={() => setPicked(o.vertical)}
+                  className={`shrink-0 rounded-full px-4 py-2 text-[13.5px] font-semibold ${o.vertical === vertical ? 'bg-ink-900 text-white' : 'border border-line text-ink-700'}`}>{o.name}</button>
+              ))}
+            </div>
+          )}
+          {partsQuotedSeparately(vertical, services?.items) && <p className="mt-3 rounded-btn bg-sunken px-3 py-2.5 text-[13px] text-ink-700">{PARTS_NOTE.customer}</p>}
+          {isLoading && <div className="mt-3 space-y-3 pb-4">{[0, 1, 2].map((k) => <div key={k} className="h-14 animate-pulse rounded-btn bg-sunken" />)}</div>}
+          {!isLoading && !items.length && <p className="py-5 text-[14px] text-ink-500">{vertical ? 'No bookable prices for this service right now.' : 'This provider has no services you can book here yet.'}</p>}
+          <ul className="divide-y divide-line">
+            {items.map((item) => <MenuItem key={item.repairCode} item={item} onBook={(o) => nav(o.path)} />)}
+          </ul>
+        </section>
 
         <PlansNear vertical={vertical} providerId={id} title="Their monthly plans" />
-        <h2 className="pt-2 text-lg font-extrabold text-[#0F172A]">Menu</h2>
-        {partsQuotedSeparately(vertical, services?.items) && <p className="rounded-xl bg-zappy-50 px-3 py-2 text-[12.5px] font-semibold text-zappy-800">{PARTS_NOTE.customer}</p>}
-        {isLoading && [0, 1, 2].map((k) => <div key={k} className="card h-16 animate-pulse bg-slate-100" />)}
-        {!isLoading && !items.length && <p className="card text-sm text-slate-600">This provider has no bookable prices for this service right now.</p>}
-        <ul className="space-y-2">
-          {items.map((item, i) => <MenuItem key={item.repairCode} item={item} index={i} onBook={(o) => nav(o.path)} />)}
-        </ul>
-        <p className="pt-2 text-center text-[12px] text-slate-500">Anything extra on the day is sent to you in the app first, with a photo. You pay only what you approve.</p>
+
+        {reviews.length > 0 && (
+          <section className="border-b-8 border-sunken px-4 py-5 sm:px-6">
+            <h2 className="text-[19px] font-extrabold text-ink-900">What customers say</h2>
+            <ul className="mt-2 divide-y divide-line">
+              {reviews.map((r, i) => (
+                <li key={i} className="py-3.5">
+                  <div className="flex items-center justify-between gap-3">
+                    <Stars value={r.rating} />
+                    {r.at && <span className="text-[12px] text-ink-400">{monthYear(r.at)}</span>}
+                  </div>
+                  <p className="mt-1.5 text-[14.5px] leading-relaxed text-ink-900">{r.text}</p>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        <p className="px-6 pt-5 text-center text-[12.5px] text-ink-500">Anything extra on the day is sent to you in the app first, with a photo. You pay only what you approve.</p>
       </div>
     </div>
   );

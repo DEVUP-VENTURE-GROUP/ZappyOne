@@ -270,7 +270,7 @@ async function fixedPrices(vertical, modelCode, problems, at = {}) {
   const line = out.size && Number.isFinite(Number(at.lat)) && Number.isFinite(Number(at.lng)) ? await require('../../jobs/kinds').KINDS.repair.line({ vertical }) : null;
   if (line) {
     const rows = [...out.values()];
-    const extra = await require('../../jobs/surge').preview({ line, lat: Number(at.lat), lng: Number(at.lng), bases: rows.map((x) => x.pricePaise), userId: req.auth?.sub });
+    const extra = await require('../../jobs/surge').preview({ line, lat: Number(at.lat), lng: Number(at.lng), bases: rows.map((x) => x.pricePaise), userId: at.userId || null });
     rows.forEach((x, i) => { if (extra[i] > 0) x.surgePaise = extra[i]; });
   }
   return out;
@@ -338,7 +338,7 @@ async function listProblems(req, res, next) {
      */
     const problems = await s3Service.signDocsMedia(rows);
     const signedCategories = await s3Service.signDocsMedia(categories);
-    const fixed = await fixedPrices(verticalOf(req), modelCode, rows, { lat: req.query.lat, lng: req.query.lng });
+    const fixed = await fixedPrices(verticalOf(req), modelCode, rows, { lat: req.query.lat, lng: req.query.lng, userId: req.auth?.sub });
 
     const byCategory = signedCategories.map((c) => ({
       code: c.code,
