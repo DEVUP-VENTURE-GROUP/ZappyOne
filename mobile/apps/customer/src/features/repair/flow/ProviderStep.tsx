@@ -3,7 +3,7 @@
  * The pin is checked first; then what the customer chose, when, and who can
  * actually do it at what price, sortable without hiding anyone.
  */
-import { PartsNote, PrivacyPledge } from '@zappy/ui/components/common/PartsNote';
+import { PartsNote } from '@zappy/ui/components/common/PartsNote';
 import { useEffect, useRef, useState } from 'react';
 import { useLocalSearchParams } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Vibration, View } from 'react-native';
@@ -68,7 +68,7 @@ export function ProviderStep({ vertical, diagnosis, model, brand, configuration,
 
   if (!ready) return <ConfirmPinCard location={location} onConfirm={onPinConfirmed} onPick={onChangeLocation} />;
 
-  const summary = <><ChosenSummary brand={brand} model={model} configuration={configuration} problem={problem} diagnosis={diagnosis} serviceMode={serviceMode} location={location} onChangeLocation={onChangeLocation} /><PartsNote vertical={vertical} who="customer" /><PrivacyPledge who="customer" /></>;
+  const summary = <><ChosenSummary vertical={vertical} brand={brand} model={model} configuration={configuration} problem={problem} diagnosis={diagnosis} serviceMode={serviceMode} location={location} onChangeLocation={onChangeLocation} /><PartsNote vertical={vertical} who="customer" /></>;
 
   if (inspectionOnly || !repairCode) {
     return (

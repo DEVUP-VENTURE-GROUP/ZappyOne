@@ -5,17 +5,20 @@
  * book at the standard price for whoever comes online first. Otherwise an
  * inspection holds the place.
  */
-import { StyleSheet, View } from 'react-native';
+import { Image, Pressable, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Check, MapPin, ShieldCheck, Store, Wrench } from 'lucide-react-native';
+import { ActivityIndicator } from 'react-native';
+import { Check, ChevronRight, MapPin, ShieldCheck, Store, Wrench } from 'lucide-react-native';
+import type { LucideIcon } from 'lucide-react-native';
 import { useCreatePriceRequestMutation } from '@zappy/core/api';
 import { doorAddress } from '@zappy/core/shared/doorAddress';
 import { formatPaise } from '@zappy/core/shared/money';
 import { Button, Text } from '@zappy/ui/components';
 import { toast } from '@zappy/ui/components/Toast';
 import { errText } from '@zappy/ui/lib/feedback';
+import { webAsset } from '@zappy/ui/lib/media';
 import type { BookingLocation } from '@zappy/ui/lib/bookingLocation';
-import { ink, slate } from '@zappy/ui/theme/colors';
+import { ink, slate, success, zappy } from '@zappy/ui/theme/colors';
 import { spacing } from '@zappy/ui/theme/spacing';
 import { GrowingHere } from '../../catalog/serviceability/GrowingHere';
 import { flow } from './FlowChrome';
@@ -57,23 +60,74 @@ export function NoProvidersCard({ data, vertical, request, location, standardPai
     body = 'Try again shortly, or book an inspection to hold your place.';
   } else if (nearby > 0) { title = `${plural('shop')} near you, none free right now`; body = 'Try again shortly, or book an inspection to hold your place.'; }
 
+  const others = ([
+    notListed && !needsDiagnosis ? { key: 'ask', Icon: Store, title: 'Ask nearby shops for their price', sub: 'Each shop sends its own price. You pick one.', onPress: askShops, busy: asking } : null,
+    nearby > 0 && onInspectInstead ? { key: 'inspect', Icon: ShieldCheck, title: 'Book an inspection instead', sub: 'A pro checks it first, then gives you a quote to approve.', onPress: onInspectInstead, busy: false } : null,
+    nearby === 0 ? { key: 'loc', Icon: MapPin, title: 'Change location', sub: 'A nearby area may have someone free.', onPress: onChangeLocation, busy: false } : null,
+  ].filter(Boolean)) as { key: string; Icon: LucideIcon; title: string; sub: string; onPress: () => void; busy: boolean }[];
+  const mark = webAsset('/branding/zappy-mark.webp');
+
   return (
     <View style={[flow.card, styles.card]}>
-      <Wrench size={24} color={slate[300]} />
-      <Text variant="bodySmall" weight="bold" color={ink[700]} style={styles.center}>{title}</Text>
-      <Text variant="caption" color={ink[500]} style={styles.center}>{body}</Text>
-      <View style={styles.actions}>
-        {bookNow ? <Button label={`Book now for ${formatPaise(standardPaise)}`} size="small" icon={<Check size={14} color="#fff" />} onPress={onBookStandard} /> : null}
-        {notListed && !needsDiagnosis ? <Button label="Ask nearby shops for their price" size="small" loading={asking} icon={<Store size={14} color="#fff" />} onPress={askShops} /> : null}
-        {nearby > 0 && onInspectInstead ? <Button label="Book an inspection instead" size="small" variant="secondary" icon={<ShieldCheck size={14} color={ink[700]} />} onPress={onInspectInstead} /> : null}
-        {nearby === 0 ? <Button label="Change location" size="small" variant="outline" icon={<MapPin size={14} color={ink[700]} />} onPress={onChangeLocation} /> : null}
+      <View style={styles.body}>
+        {bookNow ? (
+          <>
+            <View style={styles.head}>
+              <View style={[styles.badge, { backgroundColor: zappy[50] }]}>{mark ? <Image source={{ uri: mark }} style={styles.mark} resizeMode="contain" /> : null}</View>
+              <View style={styles.flex}>
+                <Text variant="bodyLarge" weight="extrabold">Nearest ZappyOne pro</Text>
+                <Text variant="bodySmall" color={ink[500]}>Nobody has listed this repair right now. We send it to the closest pro who is free.</Text>
+              </View>
+              <Text variant="heading3" weight="extrabold">{formatPaise(standardPaise!)}</Text>
+            </View>
+            {['Verified, ID-checked professional', 'Nothing extra is charged without your OK', 'Free to cancel until a pro accepts'].map((t) => (
+              <View key={t} style={styles.tickRow}>
+                <View style={styles.tick}><Check size={13} strokeWidth={3} color={success[700]} /></View>
+                <Text variant="bodySmall" color={ink[700]} style={styles.flex}>{t}</Text>
+              </View>
+            ))}
+            <Button label={`Book now · ${formatPaise(standardPaise!)}`} size="large" onPress={onBookStandard} fullWidth />
+          </>
+        ) : (
+          <View style={styles.head}>
+            <View style={[styles.badge, { backgroundColor: slate[100] }]}><Wrench size={22} color={ink[500]} /></View>
+            <View style={styles.flex}>
+              <Text variant="bodyLarge" weight="extrabold">{title}</Text>
+              <Text variant="bodySmall" color={ink[500]}>{body}</Text>
+            </View>
+          </View>
+        )}
       </View>
+      {others.length ? (
+        <View style={styles.others}>
+          {bookNow ? <Text variant="caption" weight="bold" color={ink[400]} style={styles.otherLabel}>OTHER WAYS</Text> : null}
+          {others.map(({ key, Icon, title: t, sub, onPress, busy }) => (
+            <Pressable key={key} onPress={onPress} disabled={busy} accessibilityRole="button" style={styles.other}>
+              <View style={styles.otherIcon}>{busy ? <ActivityIndicator size="small" color={ink[700]} /> : <Icon size={18} color={ink[900]} />}</View>
+              <View style={styles.flex}>
+                <Text variant="body" weight="semibold">{t}</Text>
+                <Text variant="caption" color={ink[500]}>{sub}</Text>
+              </View>
+              <ChevronRight size={18} color={ink[400]} />
+            </Pressable>
+          ))}
+        </View>
+      ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  card: { alignItems: 'center', gap: spacing.xs, paddingVertical: spacing.xl },
-  center: { textAlign: 'center' },
-  actions: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: spacing.sm, marginTop: spacing.md },
+  card: { padding: 0, overflow: 'hidden' },
+  body: { gap: spacing.md, padding: spacing.lg },
+  head: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md },
+  badge: { width: 48, height: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  mark: { width: 28, height: 28 },
+  flex: { flex: 1, minWidth: 0, gap: 2 },
+  tickRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  tick: { width: 20, height: 20, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: '#ECFDF3' },
+  others: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: slate[300] },
+  otherLabel: { paddingHorizontal: spacing.lg, paddingTop: spacing.md, letterSpacing: 0.8 },
+  other: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingHorizontal: spacing.lg, paddingVertical: spacing.md },
+  otherIcon: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: slate[100] },
 });
