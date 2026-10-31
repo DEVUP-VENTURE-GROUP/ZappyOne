@@ -19,6 +19,7 @@ import { BasketBar } from './basket/BasketBar';
 import { GroupCheckout } from './basket/GroupCheckout';
 import { useRepairBasket } from './basket/useRepairBasket';
 import { ResumeBanner } from '@zappy/ui/components/common/ResumeBanner';
+import { BookedCelebration } from '@zappy/ui/components/common/BookedCelebration';
 import { useDraft, useFlowStep } from '@zappy/ui/lib/bookingFlow';
 import { useBookingLocation } from '@zappy/ui/lib/bookingLocation';
 import { colors } from '@zappy/ui/theme/colors';
@@ -63,6 +64,7 @@ export function RepairFlow({ vertical, saved, draftKey, onStartOver, onAddAnothe
   const [configuration, setConfiguration] = useState<Coded | null>(saved?.configuration ?? null);
   const [fuelType, setFuelType] = useState<string | null>(saved?.fuelType ?? null);
   const [problem, setProblem] = useState<Coded | null>(saved?.problem ?? null);
+  const [booked, setBooked] = useState<{ _id: string; reference?: string } | null>(null);
   const [diagnosis, setDiagnosis] = useState<Diagnosis | null>(saved?.diagnosis ?? null);
   const [diagnosticAnswers, setDiagnosticAnswers] = useState<Record<string, unknown> | null>(saved?.diagnosticAnswers ?? null);
   const [diagnosticTranscript, setDiagnosticTranscript] = useState<QA[]>(saved?.diagnosticTranscript ?? []);
@@ -216,7 +218,12 @@ export function RepairFlow({ vertical, saved, draftKey, onStartOver, onAddAnothe
           provider={provider} repairCode={repairCode} qualityCode={qualityCode} serviceMode={serviceMode} inspectionFeePaise={inspectionFeePaise}
           location={location} fuelType={fuelType} diagnosticAnswers={diagnosticAnswers} diagnosticTranscript={diagnosticTranscript}
           addOnCodes={addOnCodes} scheduledAt={when}
-          onDone={(b) => { clearDraft(draftKey); draftDone(); router.replace(`/repair/bookings/${b._id}` as never); }} />
+          onDone={(b) => { clearDraft(draftKey); draftDone(); setBooked(b); }} />
+      ) : null}
+      {booked ? (
+        <BookedCelebration title={serviceMode === 'diagnosis_only' ? 'Inspection booked' : 'Booking confirmed'}
+          lines={[deviceName(brand, model), problem?.name]} reference={booked.reference}
+          onDone={() => router.replace(`/repair/bookings/${booked._id}` as never)} />
       ) : null}
     </View>
   );

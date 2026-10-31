@@ -35,7 +35,7 @@ export function ConfirmStep({ vertical, brand, model, configuration, problem, di
   vertical: string; brand: Named; model: Named; configuration: Named | null; problem: Named; diagnosis: Diagnosis | null; provider: Provider | null;
   repairCode: string | null; qualityCode: string | null; serviceMode: string; inspectionFeePaise: number | null; location: BookingLocation;
   fuelType: string | null; diagnosticAnswers: Record<string, unknown> | null; diagnosticTranscript: QA[]; addOnCodes: string[]; scheduledAt: Date | null;
-  onDone: (booking: { _id: string }) => void;
+  onDone: (booking: { _id: string; reference?: string }) => void;
 }) {
   const [create, { isLoading }] = useCreateRepairBookingMutation();
   const signedIn = useAppSelector((st) => st.auth.isAuthenticated);
@@ -77,7 +77,6 @@ export function ConfirmStep({ vertical, brand, model, configuration, problem, di
         ...(tip > 0 && { tipPaise: tip * 100 }),
         ...(scheduledAt && { scheduledAt: scheduledAt.toISOString(), slotLabel: slotLabel(scheduledAt) }),
       }).unwrap();
-      toast.success('Booking confirmed');
       onDone(res.booking);
     } catch (err) {
       if (surgeChanged(err, surge.refetch)) { toast((err as { data: { error: string } }).data.error); return; }
