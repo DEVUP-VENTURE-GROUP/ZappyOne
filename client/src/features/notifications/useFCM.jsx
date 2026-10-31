@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
+import { Bell } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import { selectAuth } from '@shared/modules/auth/authSlice';
 import {
@@ -177,7 +178,7 @@ export function useFCM() {
                   toast.dismiss(t.id);
                 }}
               >
-                <span style={{ fontSize: 20 }}>🔔</span>
+                <Bell size={18} color="#1F4FD8" aria-hidden="true" />
                 <div>
                   <div style={{ fontWeight: 700, fontSize: 13 }}>{title}</div>
                   {body && <div style={{ fontSize: 12, opacity: 0.8 }}>{body}</div>}

@@ -22,7 +22,6 @@ function buildOptions(amounts) {
   return (amounts ?? [10, 20, 30, 50, 100]).map((n) => ({
     amount: n,
     label:  `+₹${n}`,
-    emoji:  n >= 100 ? '🚀' : n >= 30 ? '🔥' : '⚡',
   }));
 }
 
@@ -64,7 +63,6 @@ export default function BoostOfferCard({ orderId, baseTotal, sendTip, boostOptio
         {
           duration: 3000,
           style: { background: '#0f172a', color: '#f8fafc', fontWeight: 700, border: '1px solid rgba(59,130,246,0.4)' },
-          icon: amt >= 50 ? '🚀' : '⚡',
         }
       );
     } catch {

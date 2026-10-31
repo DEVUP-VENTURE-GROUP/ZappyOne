@@ -1,3 +1,4 @@
+import { useReferralLink } from '../hooks/useReferralLink';
 import AccountSetupGate from '@shared/components/account/AccountSetupGate';
 import { VerifyEmailPage, ResetPasswordPage } from '@shared/components/account/AccountLinkPages';
 import { lazy, Suspense, useEffect } from 'react';
@@ -101,6 +102,7 @@ export default function App() {
   useTelemetry();
   const { accessToken: token, role } = useSelector(selectAuth);
   const location = useLocation();
+  useReferralLink({ token, role });
 
   // Load the admin-managed category taxonomy once at startup so the customer
   // catalog, worker skill pickers and booking all reflect admin categories.

@@ -79,7 +79,7 @@ function ThemeCard({ theme, onSave }) {
         </button>
         {theme.isTrending && (
           <div className="absolute top-4 left-4 px-3 py-1 bg-orange-500 rounded-full text-white text-[10px] font-black tracking-widest shadow-lg border border-white/20">
-            🔥 TRENDING
+            Trending
           </div>
         )}
       </div>

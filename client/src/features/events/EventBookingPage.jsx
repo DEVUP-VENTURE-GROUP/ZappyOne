@@ -155,7 +155,7 @@ export default function EventBookingPage() {
         return signed.key;
       }));
       set('roomPhotos', [...form.roomPhotos, ...keys]);
-      toast.success(`${keys.length} photo(s) added beautifully! ✨`);
+      toast.success(`${keys.length} photo${keys.length === 1 ? '' : 's'} added`);
     } catch { toast.error('Upload failed. The magic got interrupted.'); }
     finally { setUploading(false); }
   }
@@ -183,7 +183,7 @@ export default function EventBookingPage() {
           cfOrderId:   checkoutResp.cfOrderId,
           cfPaymentId: checkoutResp.cfPaymentId,
         }).unwrap();
-        toast.success('🎉 Booking Confirmed! Your slot is locked.');
+        toast.success('Booking confirmed. Your slot is held for you.');
         clearDraft(draftKey);
         navigate(`/events/bookings/${bookingId}?paid=true`, { replace: true });
       } catch (payErr) {

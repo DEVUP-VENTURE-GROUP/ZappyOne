@@ -140,7 +140,7 @@ export default function WalletPage() {
             <button type="button" onClick={() => nav('/referral')} className="card flex w-full items-center gap-3 text-left">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-btn bg-sunken text-ink-700"><Gift size={20} /></span>
               <span className="min-w-0 flex-1">
-                <span className="block text-[15px] font-semibold text-ink-900">{tr('wallet.referTitle', 'Refer a friend, get ₹100')}</span>
+                <span className="block text-[15px] font-semibold text-ink-900">{tr('wallet.referTitle', 'Invite friends')}</span>
                 <span className="block text-[13px] text-ink-500">{tr('wallet.referLine', 'Paid to your wallet when they complete their first booking.')}</span>
               </span>
               <ChevronRight size={18} className="shrink-0 text-ink-400" />

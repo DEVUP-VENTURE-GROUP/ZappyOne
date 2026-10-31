@@ -1157,6 +1157,8 @@ export function endpoints(b, { adminApiPath }) {
       query: () => '/referrals/me',
       providesTags: ['Referral'],
     }),
+    // A friend's code from their link, applied once after a new customer signs in (server checks it is a new account).
+    applyReferral: b.mutation({ query: (code) => ({ url: '/referrals/apply', method: 'POST', body: { code } }), invalidatesTags: ['Referral'] }),
     getReferralHistory: b.query({
       query: () => '/referrals/history',
       providesTags: ['Referral'],

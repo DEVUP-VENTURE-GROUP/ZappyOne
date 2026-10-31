@@ -46,7 +46,7 @@ export function WalletPage() {
         <Pressable onPress={() => router.push('/referral' as never)} android_ripple={RIPPLE} accessibilityRole="button" style={[styles.card, styles.row]}>
           <View style={styles.giftIcon}><Gift size={20} color={ink[700]} /></View>
           <View style={styles.flex}>
-            <Text variant="bodySmall" weight="semibold">{t('wallet.referTitle', 'Refer a friend, get ₹100')}</Text>
+            <Text variant="bodySmall" weight="semibold">{t('wallet.referTitle', 'Invite friends')}</Text>
             <Text variant="caption" color={ink[500]}>{t('wallet.referLine', 'Paid to your wallet when they complete their first booking.')}</Text>
           </View>
           <ChevronRight size={18} color={ink[400]} />

@@ -13,12 +13,12 @@ import {
 import PageTransition from '../../components/common/PageTransition';
 
 const CATEGORIES = [
-  { value: 'payment',   label: '💳 Payment' },
-  { value: 'order',     label: '📦 Order Issue' },
-  { value: 'account',   label: '👤 Account' },
-  { value: 'app_bug',   label: '🐛 App Bug' },
-  { value: 'kyc',       label: '📋 KYC / Verification' },
-  { value: 'other',     label: '💬 Other' },
+  { value: 'payment',   label: 'Payment' },
+  { value: 'order',     label: 'Order Issue' },
+  { value: 'account',   label: 'Account' },
+  { value: 'app_bug',   label: 'App Bug' },
+  { value: 'kyc',       label: 'KYC / Verification' },
+  { value: 'other',     label: 'Other' },
 ];
 
 const STATUS_META = {

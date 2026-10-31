@@ -12,15 +12,15 @@ import {
 import PageTransition from '../../components/common/PageTransition';
 
 const CATEGORIES = [
-  { value: 'overcharged',      label: '💰 Overcharged' },
-  { value: 'poor_quality',     label: '⭐ Poor Quality' },
-  { value: 'service_not_done', label: '❌ Service Not Done' },
-  { value: 'no_show',          label: '🚫 Worker No-Show' },
-  { value: 'damage',           label: '🔧 Property Damage' },
-  { value: 'rude_behavior',    label: '😠 Rude Behaviour' },
-  { value: 'safety_concern',   label: '🛡 Safety Issue' },
-  { value: 'wrong_address',    label: '📍 Wrong Address' },
-  { value: 'other',            label: '💬 Other' },
+  { value: 'overcharged',      label: 'Overcharged' },
+  { value: 'poor_quality',     label: 'Poor Quality' },
+  { value: 'service_not_done', label: 'Service Not Done' },
+  { value: 'no_show',          label: 'Worker No-Show' },
+  { value: 'damage',           label: 'Property Damage' },
+  { value: 'rude_behavior',    label: 'Rude Behaviour' },
+  { value: 'safety_concern',   label: 'Safety Issue' },
+  { value: 'wrong_address',    label: 'Wrong Address' },
+  { value: 'other',            label: 'Other' },
 ];
 
 const STATUS_META = {

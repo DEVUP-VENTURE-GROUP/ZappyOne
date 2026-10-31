@@ -21,7 +21,7 @@ export default function EventThemePage() {
   async function handleSave() {
     try {
       const res = await toggleSave(id).unwrap();
-      toast.success(res.saved ? 'Saved to favorites! ✨' : 'Removed from favorites');
+      toast.success(res.saved ? 'Saved' : 'Removed from saved');
     } catch { toast.error('Sign in to save themes'); }
   }
 
@@ -176,12 +176,9 @@ export default function EventThemePage() {
                   </span>
                 </div>
               </div>
-              <div className="flex -space-x-3">
-                <div className="w-10 h-10 rounded-full bg-slate-100 border-2 border-white flex items-center justify-center text-xs font-bold text-slate-500 z-30">+3</div>
-                <div className="w-10 h-10 rounded-full bg-zappy-100 border-2 border-white flex items-center justify-center text-zappy-500 z-20">👍</div>
-                <div className="w-10 h-10 rounded-full bg-rose-100 border-2 border-white flex items-center justify-center text-rose-500 z-10">❤️</div>
-                <div className="pl-6 text-xs font-bold text-slate-500 self-center uppercase tracking-widest">{theme.bookingCount || 'Many'} Booked</div>
-              </div>
+              {theme.bookingCount > 0 && (
+                <p className="text-[13px] font-semibold text-ink-500 tabular-nums">{theme.bookingCount} booked</p>
+              )}
             </div>
           </div>
 

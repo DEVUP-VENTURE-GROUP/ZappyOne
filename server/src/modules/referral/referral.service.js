@@ -20,6 +20,7 @@ const logger = require('../../core/logger');
 
 const REFEREE_BONUS_PAISE = 5000;    // ₹50 — instant on signup
 const REFERRER_REWARD_PAISE = 10000; // ₹100 — on referee's first completed order
+const NEW_ACCOUNT_DAYS = 7;
 
 const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // No I,O,0,1 (look-alikes)
 
@@ -70,6 +71,13 @@ async function applyAtSignup({ code, referee, refereeIp, refereeDeviceId }) {
     codeDoc.owner.kind === referee.kind
   ) {
     throw Object.assign(new Error('Cannot refer yourself'), { status: 400, code: 'REFERRAL_SELF' });
+  }
+
+  // A referral is for a new account: one older than NEW_ACCOUNT_DAYS cannot claim the signup bonus later.
+  const Model = referee.kind === 'worker' ? require('../worker/worker.model') : require('../user/user.model');
+  const account = await Model.findById(referee.id).select('createdAt').lean();
+  if (!account || Date.now() - new Date(account.createdAt).getTime() > NEW_ACCOUNT_DAYS * 86400000) {
+    throw Object.assign(new Error('A referral code can only be used on a new account'), { status: 400, code: 'REFERRAL_NOT_NEW' });
   }
 
   const REFERRAL_WINDOW_MS = 30 * 86400 * 1000; // 30 days
@@ -225,6 +233,7 @@ async function onRefereeFirstOrder({ refereeKind, refereeId, orderId }) {
 }
 
 module.exports = {
+  REFEREE_BONUS_PAISE, REFERRER_REWARD_PAISE, NEW_ACCOUNT_DAYS,
   getOrCreateCode,
   applyAtSignup,
   onRefereeFirstOrder,

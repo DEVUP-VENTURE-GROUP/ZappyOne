@@ -23,13 +23,6 @@ const NETWORK_COLORS = {
   Unknown:    { bg: 'bg-slate-500',  label: '••' },
 };
 
-const UPI_ICONS = {
-  gpay:    '🎯',
-  phonepe: '💜',
-  paytm:   '🔵',
-  bhim:    '🇮🇳',
-  other:   '📱',
-};
 
 function MethodCard({ method, onDelete, onSetDefault, deleting, settingDefault }) {
   const isCard = method.type === 'card';
@@ -193,9 +186,9 @@ function AddMethodForm({ onClose, onAdded }) {
           {/* Type tabs */}
           <div className="flex gap-2 mb-4">
             {[
-              { id: 'card',       label: '💳 Card' },
-              { id: 'upi',        label: '📱 UPI' },
-              { id: 'netbanking', label: '🏦 Net Banking' },
+              { id: 'card',       label: 'Card' },
+              { id: 'upi',        label: 'UPI' },
+              { id: 'netbanking', label: 'Net banking' },
             ].map(t => (
               <button
                 key={t.id}
@@ -290,7 +283,7 @@ function AddMethodForm({ onClose, onAdded }) {
                           form.upiProvider === p ? 'bg-[#0F172A] text-white' : 'bg-slate-50 text-slate-700'
                         }`}
                       >
-                        {UPI_ICONS[p]} {p}
+                        {p}
                       </button>
                     ))}
                   </div>

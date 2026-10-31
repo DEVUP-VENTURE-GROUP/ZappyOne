@@ -341,6 +341,7 @@ export const {
   // Referrals
   useGetReferralCodeQuery,
   useGetReferralHistoryQuery,
+  useApplyReferralMutation,
   // Worker public profile + leaderboard
   useGetWorkerPublicProfileQuery,
   // Diagnosis flow

@@ -75,7 +75,7 @@ export default function TipCard({ orderId, onDone, tipOptions, tipMax }) {
     try {
       await sendTip({ orderId, amountPaise: selected, voiceNoteUrl, message }).unwrap();
       setSent(true);
-      toast.success('Tip sent! Worker will love this 💝');
+      toast.success('Tip sent. It goes to your pro in full.');
       setTimeout(() => onDone?.(), 2000);
     } catch (err) {
       toast.error(err.data?.error || 'Could not send tip');
@@ -91,7 +91,7 @@ export default function TipCard({ orderId, onDone, tipOptions, tipMax }) {
       >
         <CheckCircle2 size={32} className="text-green-500" />
         <p className="font-bold text-green-800">Tip sent!</p>
-        <p className="text-xs text-green-600 text-center">Worker will receive your message 💝</p>
+        <p className="text-xs text-green-600 text-center">Your pro will see your message</p>
       </motion.div>
     );
   }

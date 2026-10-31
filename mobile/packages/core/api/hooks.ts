@@ -194,6 +194,7 @@ export const useAdminLiveOpsQuery = h.useAdminLiveOpsQuery;
 export const useAdminStuckJobsQuery = h.useAdminStuckJobsQuery;
 export const useGetReferralCodeQuery = h.useGetReferralCodeQuery;
 export const useGetReferralHistoryQuery = h.useGetReferralHistoryQuery;
+export const useApplyReferralMutation = h.useApplyReferralMutation;
 export const useGetWorkerPublicProfileQuery = h.useGetWorkerPublicProfileQuery;
 export const useSendTipMutation = h.useSendTipMutation;
 export const useGetPriceRevisionQuery = h.useGetPriceRevisionQuery;

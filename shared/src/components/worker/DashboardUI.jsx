@@ -267,7 +267,7 @@ export function GreetingCard({ name, locationLabel, isOnline, busy, disabled, on
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <h1 className="text-[22px] font-black tracking-tight text-navy-900 sm:text-[26px]">
-            Hello, {name} <span aria-hidden>👋</span>
+            Hello, {name}
           </h1>
           <p className="mt-0.5 text-[13px] font-medium text-slate-500">
             {isOnline ? 'You’re online - new jobs will ring in.' : 'Go online to get more jobs'}

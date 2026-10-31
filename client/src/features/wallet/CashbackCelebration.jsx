@@ -80,7 +80,7 @@ function SparkleRing({ amount }) {
         animate={{ scale: 1, rotate: 0 }}
         transition={{ type: 'spring', stiffness: 280, damping: 18, delay: 0.1 }}
       >
-        <span className="text-5xl select-none">💰</span>
+        <Wallet size={44} className="text-white" aria-hidden="true" />
         {/* Shimmer sweep */}
         <motion.div
           className="absolute inset-0 rounded-full overflow-hidden"

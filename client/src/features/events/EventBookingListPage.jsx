@@ -2,7 +2,7 @@ import { useSafeBack } from '../../hooks/useBookingFlow';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Package, Star, ChevronRight, Clock, Calendar } from 'lucide-react';
+import { ArrowLeft, Package, Star, ChevronRight, Clock, Calendar, PartyPopper } from 'lucide-react';
 import { useGetEventBookingsQuery } from '@shared/services/api';
 
 const STATUS_COLORS = {
@@ -70,8 +70,8 @@ export default function EventBookingListPage() {
                 {b.themeId?.coverImage ? (
                   <img src={b.themeId.coverImage} alt="" className="w-16 h-16 rounded-xl object-cover shrink-0" />
                 ) : (
-                  <div className="w-16 h-16 rounded-xl bg-violet-100 flex items-center justify-center shrink-0">
-                    <span className="text-2xl">🎉</span>
+                  <div className="w-16 h-16 rounded-xl bg-zappy-50 flex items-center justify-center shrink-0">
+                    <PartyPopper size={24} className="text-zappy-600" />
                   </div>
                 )}
                 <div className="flex-1 min-w-0">

@@ -66,8 +66,8 @@ export default function SOSButton({ orderId, jobId, kind, lat, lng, service }) {
       await triggerSOS({ orderId, jobId, lat: here?.lat, lng: here?.lng, type: isPetJob ? 'pet_emergency' : 'worker_sos' }).unwrap();
       setTriggered(true);
       const msg = isPetJob
-        ? '🐾 SOS sent. Emergency contact + support notified. See vet contacts below.'
-        : '🆘 SOS sent. Emergency contact + support notified.';
+        ? 'SOS sent. Your emergency contact and support have been told. Vet contacts are below.'
+        : 'SOS sent. Your emergency contact and support have been told.';
       toast.error(msg, { duration: 8000 });
     } catch {
       toast.error('SOS failed to send. Call 112 immediately.');

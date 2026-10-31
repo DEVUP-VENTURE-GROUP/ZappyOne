@@ -103,7 +103,7 @@ export default function EventBookingDetailPage() {
   );
   if (!booking) return (
     <div className="min-h-screen bg-white flex items-center justify-center">
-      <div className="text-center"><p className="text-4xl mb-2">😔</p><p className="text-slate-600">Booking not found</p></div>
+      <div className="text-center"><p className="text-[15px] font-semibold text-ink-700">Booking not found</p></div>
     </div>
   );
 
@@ -117,7 +117,7 @@ export default function EventBookingDetailPage() {
       {isPaid && (
         <motion.div initial={{ y: -60 }} animate={{ y: 0 }} className=" bg-violet-600 text-white px-4 py-3 flex items-center gap-2">
           <PartyPopper size={18} />
-          <p className="text-sm font-bold">Booking confirmed! Your event is all set 🎉</p>
+          <p className="text-sm font-bold">Booking confirmed. Your event is all set.</p>
         </motion.div>
       )}
 
@@ -175,7 +175,7 @@ export default function EventBookingDetailPage() {
               <div className="flex items-center gap-1.5"><MapPin size={12} className="text-violet-500" />{booking.address?.line1}, {booking.address?.city}</div>
               <div className="flex items-center gap-1.5"><Users size={12} className="text-violet-500" />{booking.guestCount} guests</div>
             </div>
-            {booking.notes && <p className="text-xs text-zappy-600 bg-zappy-50 rounded-lg px-3 py-2 mt-1">📝 {booking.notes}</p>}
+            {booking.notes && <p className="text-xs text-zappy-600 bg-zappy-50 rounded-lg px-3 py-2 mt-1">{booking.notes}</p>}
           </div>
         </div>
 
@@ -193,13 +193,13 @@ export default function EventBookingDetailPage() {
             <div className="flex justify-between">
               <span className="text-slate-600">Advance Paid</span>
               <span className={`font-semibold ${booking.advancePayment?.status === 'paid' ? 'text-green-600' : 'text-slate-400'}`}>
-                {booking.advancePayment?.status === 'paid' ? `✅ ₹${Math.round((booking.pricing?.advancePaise || 0) / 100).toLocaleString('en-IN')}` : 'Pending'}
+                {booking.advancePayment?.status === 'paid' ? `Paid ₹${Math.round((booking.pricing?.advancePaise || 0) / 100).toLocaleString('en-IN')}` : 'Pending'}
               </span>
             </div>
             <div className="flex justify-between">
               <span className="text-slate-600">Remaining</span>
               <span className={`font-semibold ${booking.remainingPayment?.status === 'paid' ? 'text-green-600' : 'text-orange-600'}`}>
-                {booking.remainingPayment?.status === 'paid' ? `✅ ₹${Math.round((booking.pricing?.remainingPaise || 0) / 100).toLocaleString('en-IN')}` : `₹${Math.round((booking.pricing?.remainingPaise || 0) / 100).toLocaleString('en-IN')} due`}
+                {booking.remainingPayment?.status === 'paid' ? `Paid ₹${Math.round((booking.pricing?.remainingPaise || 0) / 100).toLocaleString('en-IN')}` : `₹${Math.round((booking.pricing?.remainingPaise || 0) / 100).toLocaleString('en-IN')} due`}
               </span>
             </div>
           </div>
