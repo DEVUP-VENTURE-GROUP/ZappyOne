@@ -1118,7 +1118,7 @@ function ProviderStep({
   return (
     <Shell>
       <ChosenSummary
-        brand={brand} model={model} configuration={configuration}
+        vertical={vertical} brand={brand} model={model} configuration={configuration}
         problem={problem} diagnosis={diagnosis} serviceMode={serviceMode}
         location={location} onChangeLocation={() => setPicking(true)}
       />
