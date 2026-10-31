@@ -75,6 +75,7 @@ async function createBooking({
     if (existing) return { booking: existing, replayed: true };
   }
   await require('../../../jobs/customer-gate').assertCustomerCanBook(userId);
+  if ((await require('../../../jobs/member').perks(userId)).waivePlatformFee) skipPlatformFee = true;
   await zoneService.assertBookableLocation(location);
 
   const repair = repairCode

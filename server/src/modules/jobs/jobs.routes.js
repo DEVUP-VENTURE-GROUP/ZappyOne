@@ -220,6 +220,9 @@ router.get('/:id/options',
         tip: await bt.tipView(kind, doc, s),
         reschedule: terminal ? { allowed: false } : await require('./reschedule').view(kind, doc),
         place: terminal ? { allowed: false } : await require('./place-edit').editable(kind, doc),
+        contact: { allowed: !terminal && ['repair', 'pet', 'helping'].includes(kind), onSite: doc.onSite?.name ? doc.onSite : null },
+        extras: terminal ? { allowed: false } : await require('./extras').view(kind, doc),
+        addedExtras: (doc.extras || []).map((e) => ({ name: e.name, pricePaise: e.pricePaise + (e.taxPaise || 0), addedAt: e.addedAt })),
         arrival: await require('./promise').viewFor(doc._id),
         search: await require('./fast-assign').searchView(kind, doc),
         moreTime: terminal ? null : await require('./more-time').viewFor(doc._id),
@@ -352,6 +355,22 @@ router.patch('/:id/place', authenticate, requireRole('user'),
   }).and('lat', 'lng')),
   async (req, res, next) => {
     try { res.json(await require('./place-edit').editPlace({ id: req.params.id, userId: req.auth.sub, ...req.body })); } catch (err) { next(err); }
+  });
+
+/** Change who the pro meets at the door (jobs/place-edit). */
+router.patch('/:id/contact', authenticate, requireRole('user'),
+  makeLimiter({ windowMs: 10 * 60_000, max: 10, prefix: 'jobcontact' }),
+  validate(Joi.object({ onSite: require('./on-site').onSiteSchema.required() })),
+  async (req, res, next) => {
+    try { res.json(await require('./place-edit').editContact({ id: req.params.id, userId: req.auth.sub, onSite: req.body.onSite })); } catch (err) { next(err); }
+  });
+
+/** Add a service to a live booking, paid in cash at the end (jobs/extras). */
+router.post('/:id/extras', authenticate, requireRole('user'),
+  makeLimiter({ windowMs: 10 * 60_000, max: 20, prefix: 'jobextra' }),
+  validate(Joi.object({ code: Joi.string().trim().max(80).required(), petIndex: Joi.number().integer().min(0).max(10).allow(null) })),
+  async (req, res, next) => {
+    try { res.json(await require('./extras').add({ id: req.params.id, userId: req.auth.sub, code: req.body.code, petIndex: req.body.petIndex ?? null })); } catch (err) { next(err); }
   });
 
 /** Move a booking made for later, before the provider sets off (jobs/reschedule). */

@@ -287,6 +287,7 @@ const petBookingSchema = new mongoose.Schema(
     categoryCode: { type: String, required: true, lowercase: true, index: true },
     serviceMode: { type: String, enum: SERVICE_MODES, required: true },
     pets: { type: [bookingPetSchema], default: [] },
+    extras: { type: require('../../jobs/extras.field'), default: undefined },
 
     status: { type: String, enum: BOOKING_STATUSES, default: 'REQUESTED', index: true },
     statusHistory: { type: [statusEventSchema], default: [] },

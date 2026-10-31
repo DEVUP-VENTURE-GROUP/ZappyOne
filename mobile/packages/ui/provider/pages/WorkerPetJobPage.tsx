@@ -49,6 +49,7 @@ import { radius } from '../../theme/radius';
 import { spacing } from '../../theme/spacing';
 import { GiveBackCard } from '../GiveBackCard';
 import { OnSiteCard } from '../OnSiteCard';
+import { ExtrasCard } from '../ExtrasCard';
 import { AssignTechnician } from '../components/AssignTechnician';
 
 export function WorkerPetJobPage() {
@@ -121,6 +122,7 @@ export function WorkerPetJobPage() {
       <ScrollView contentContainerStyle={[styles.body, { paddingBottom: insets.bottom + spacing.xxxl }]}>
         {trip && (!isOwner || ownerGoing) ? <TripSharingBanner sharing={sharing} to={trip.to} toCustomer={trip.toCustomer} /> : null}
         <OnSiteCard onSite={booking.onSite} />
+        <ExtrasCard extras={booking.extras} />
         <GiveBackCard jobId={booking._id} status={booking.status} />
         {isOwner ? (
           <JobCard>

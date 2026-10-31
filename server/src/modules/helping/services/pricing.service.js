@@ -91,6 +91,7 @@ async function quote({
   specialHandling = false,
   discountPaise = 0,
   itemBudgetPaise = 0,
+  waivePlatformFee = false,
 }) {
   const cfg = await getConfig(serviceType);
 
@@ -131,7 +132,7 @@ async function quote({
     + timeExtensionPaise
     + specialHandlingPaise;
 
-  const platformFeePaise = cfg.platformFeePaise || 0;
+  const platformFeePaise = waivePlatformFee ? 0 : (cfg.platformFeePaise || 0);
   const discounted = Math.max(0, feesPaise + platformFeePaise - (discountPaise || 0));
   const taxPaise = Math.round((discounted * (cfg.taxPct || 0)) / 100);
   const serviceChargePaise = discounted + taxPaise;

@@ -18,6 +18,8 @@ import {
 import StartCodeCard from './StartCodeCard';
 import RescheduleCancel from './redesign/RescheduleCancel';
 import EditPlaceSheet from './redesign/EditPlaceSheet';
+import ContactSheet from './redesign/ContactSheet';
+import AddServices from './redesign/AddServices';
 import JobBoostCard from './cards/JobBoostCard';
 import SlowSearchCard from './cards/SlowSearchCard';
 import JobTipCard from './cards/JobTipCard';
@@ -61,6 +63,7 @@ export default function JobTrackingPage({ job, extras = null, startCode = null, 
   const [chatOpen, setChatOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [editPlace, setEditPlace] = useState(false);
+  const [editContact, setEditContact] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
   // The cancel fee, a changed provider, and "not coming": the server's answer for this moment.
@@ -251,8 +254,12 @@ export default function JobTrackingPage({ job, extras = null, startCode = null, 
 
           {!stopped && <ActivityFeed events={feedEvents} live={!job.terminal} />}
 
-          <BookingSummary job={job} onReceipt={receiptHandler} onEditPlace={options?.place?.allowed && !job.terminal ? () => setEditPlace(true) : undefined} />
+          {!job.terminal && <AddServices job={job} extras={options?.extras} added={options?.addedExtras} onAdded={refetchOptions} />}
+
+          <BookingSummary job={job} onReceipt={receiptHandler} onEditPlace={options?.place?.allowed && !job.terminal ? () => setEditPlace(true) : undefined}
+            contact={options?.contact} onEditContact={options?.contact?.allowed && !job.terminal ? () => setEditContact(true) : undefined} />
           {editPlace && <EditPlaceSheet job={job} place={options?.place} onClose={() => setEditPlace(false)} onSaved={refetchOptions} />}
+          {editContact && <ContactSheet job={job} onSite={options?.contact?.onSite} onClose={() => setEditContact(false)} onSaved={refetchOptions} />}
 
           {!stopped && (
             <Section title="ZappyOne promise">

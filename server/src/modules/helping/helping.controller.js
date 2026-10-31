@@ -81,6 +81,7 @@ async function quote(req, res, next) {
 
     const charge = await pricingService.quote({
       serviceType, pickupLocation, destination, stops, specialHandling, itemBudgetPaise,
+      waivePlatformFee: (await require('../jobs/member').perks(req.auth?.sub)).waivePlatformFee,
     });
 
     res.json({

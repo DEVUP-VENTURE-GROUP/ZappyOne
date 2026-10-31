@@ -143,6 +143,7 @@ async function createBooking({
   const providerLocation = capability?.baseLocation?.coordinates || null;
 
   const pricing = await pricingService.quote({
+    waivePlatformFee: (await require('../../jobs/member').perks(userId)).waivePlatformFee,
     categoryCode,
     serviceMode,
     pets: withPets,

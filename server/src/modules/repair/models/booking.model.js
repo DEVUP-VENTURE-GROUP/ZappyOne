@@ -162,6 +162,8 @@ const addOnSnapshotSchema = new mongoose.Schema(
     warrantyDays: { type: Number, default: 0, min: 0 },
     /** False when no provider price existed and a reference band was used. */
     fromProvider: { type: Boolean, default: false },
+    // Set when the customer added it after booking (jobs/extras); paid in cash.
+    addedAt: { type: Date, default: null },
   },
   { _id: false },
 );
@@ -241,6 +243,7 @@ const repairBookingSchema = new mongoose.Schema(
      * the totals in `priceSnapshot` already include these lines.
      */
     addOns: { type: [addOnSnapshotSchema], default: [] },
+    extras: { type: require('../../jobs/extras.field'), default: undefined },
 
     serviceMode: {
       type: String,

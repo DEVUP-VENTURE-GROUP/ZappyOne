@@ -270,7 +270,7 @@ async function fixedPrices(vertical, modelCode, problems, at = {}) {
   const line = out.size && Number.isFinite(Number(at.lat)) && Number.isFinite(Number(at.lng)) ? await require('../../jobs/kinds').KINDS.repair.line({ vertical }) : null;
   if (line) {
     const rows = [...out.values()];
-    const extra = await require('../../jobs/surge').preview({ line, lat: Number(at.lat), lng: Number(at.lng), bases: rows.map((x) => x.pricePaise) });
+    const extra = await require('../../jobs/surge').preview({ line, lat: Number(at.lat), lng: Number(at.lng), bases: rows.map((x) => x.pricePaise), userId: req.auth?.sub });
     rows.forEach((x, i) => { if (extra[i] > 0) x.surgePaise = extra[i]; });
   }
   return out;
@@ -497,6 +497,7 @@ async function previewPrice(req, res, next) {
     const reference = repairCode ? await pricingService.resolveReferencePrice(ctx) : null;
     const snapshot = await pricingService.buildPriceSnapshot({
       vertical: verticalOf(req), repairCode, referencePrice: reference, serviceMode,
+      skipPlatformFee: (await require('../../jobs/member').perks(req.auth?.sub)).waivePlatformFee,
     });
     const cfg = await pricingService.getConfig(verticalOf(req));
 

@@ -2,6 +2,7 @@ import { useCheckInThen } from '../useCheckIn';
 import { PRIVACY_PLEDGE } from '../../utils/partsRule';
 import JobChatButton from '../../components/jobs/JobChatButton';
 import OnSiteCard from '../OnSiteCard';
+import ExtrasCard from '../ExtrasCard';
 import GiveBackCard from '../GiveBackCard';
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -505,6 +506,7 @@ export default function WorkerRepairJobPage() {
         {!['COMPLETED', 'CANCELLED'].includes(booking.status) && <p className="px-1 text-[11.5px] font-semibold text-slate-500">{PRIVACY_PLEDGE.partner}</p>}
         {onTrip && (!isOwner || ownerGoing) && <TripSharingBanner sharing={sharingLocation} {...tripOf('repair', booking)} />}
         <OnSiteCard onSite={booking.onSite} />
+        <ExtrasCard extras={booking.extras} />
         {isOwner && (
           <div className="card">
             <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Technician</p>

@@ -65,4 +65,34 @@ async function editPlace({ id, userId, lat, lng, address, directions }) {
   return { ok: true, message: provider ? 'Updated. Your pro has been told.' : 'Updated.' };
 }
 
-module.exports = { editable, editPlace, MAX_MOVE_M, FIELDS, DIRECTIONS };
+// Who the pro meets at the door can change until the job is over; null means the booker is there themselves.
+async function editContact({ id, userId, onSite }) {
+  const { findJob, KINDS } = require('./kinds');
+  const found = await findJob(id, 'userId status workerId shopId reference');
+  if (!found || !KINDS[found.kind]?.model) throw fail(404, 'NOT_FOUND', 'Booking not found');
+  const { kind, doc } = found;
+  if (String(doc.userId) !== String(userId)) throw fail(403, 'FORBIDDEN', 'This is not your booking');
+  const terminal = KINDS[kind].ops?.terminal || [];
+  if (!['repair', 'pet', 'helping'].includes(kind) || terminal.includes(doc.status)) throw fail(409, 'NOT_EDITABLE', 'This booking is over, so the contact cannot change.');
+
+  const value = onSite ? { name: onSite.name.trim(), phone: onSite.phone.trim() } : null;
+  const update = value ? { $set: { onSite: value } } : { $unset: { onSite: 1 } };
+  const row = await KINDS[kind].model().findOneAndUpdate({ _id: doc._id, userId, status: { $nin: terminal } }, update, { new: true }).lean();
+  if (!row) throw fail(409, 'CHANGED', 'This booking just changed. Refresh and try again.');
+
+  const events = require('./job-events');
+  const payload = { kind, id: String(row._id), status: row.status, at: new Date().toISOString() };
+  events.toProvider('user', row.userId, 'job.update', payload);
+  const provider = row.workerId ? { kind: 'worker', id: row.workerId } : row.shopId ? { kind: 'shop', id: row.shopId } : null;
+  if (provider) {
+    events.toProvider(provider.kind, provider.id, 'job.update', payload);
+    await events.push(provider, {
+      title: 'New contact at the door',
+      body: value ? `${row.reference || 'A booking'}: meet ${value.name}. Call them, not the booker.` : `${row.reference || 'A booking'}: the customer will be there themselves.`,
+      deepLink: KINDS[kind].providerLink(String(row._id)), data: payload,
+    }).catch(() => {});
+  }
+  return { ok: true, onSite: value, message: provider ? 'Saved. Your pro has been told.' : 'Saved.' };
+}
+
+module.exports = { editable, editPlace, editContact, MAX_MOVE_M, FIELDS, DIRECTIONS };

@@ -9,7 +9,7 @@
  * the app before sees it on their next visit. Only list what people can use.
  */
 export const RELEASE = {
-  id: '2026-11',
+  id: '2026-11b',
   /** Accounts created on or after this date start on this release; it is not news to them. */
   since: '2026-10-30',
   user: [
@@ -17,6 +17,8 @@ export const RELEASE = {
     ['Share a booking', 'Booked for someone else? Send them a live link so they can follow the job and give the code.'],
     ['Fix your address', 'Change the address or move the pin before your pro sets off.'],
     ['Change the time', 'Move a booking made for later right from tracking.'],
+    ['Add a service', 'Need something extra while your pro is on the job? Add it from tracking and pay in cash at the end.'],
+    ['Change who is home', 'Booked for someone else? Change the person your pro meets at the door, any time before the job ends.'],
     ['Look before you sign in', 'Browse brands, problems and prices first; sign in only when you book.'],
     ['Late pro, free cancel', 'If your pro misses the promised time, cancelling costs you nothing.'],
   ],
@@ -25,11 +27,13 @@ export const RELEASE = {
     ['Safety check', 'On long visits we check you are safe; one tap answers.'],
     ['Skip a customer', 'After a bad visit, choose not to get jobs from that customer again.'],
     ['Cash not paid', 'If a customer will not pay cash, report it from the job and we follow up.'],
+    ['Extras added by the customer', 'See what the customer added after booking and the extra cash to collect.'],
   ],
   shop: [
     ['Ask for more time', 'Your team can tell the customer a job needs longer, with a reason.'],
     ['Safety check', 'On long visits we check your technician is safe.'],
     ['Cash not paid', 'Report a customer who will not pay cash, right from the job.'],
+    ['Extras added by the customer', 'See what the customer added after booking and the extra cash to collect.'],
   ],
   // Nothing new for event partners in this release.
   event_partner: [],

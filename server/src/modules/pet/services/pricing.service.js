@@ -209,6 +209,7 @@ async function quote({
   packageCode = null,
   isPeak = false,
   isHoliday = false,
+  waivePlatformFee = false,
 }) {
   if (!pets.length) throw httpError('A booking needs at least one pet', 400, 'NO_PETS');
 
@@ -329,7 +330,7 @@ async function quote({
     - (couponPaise || 0),
   );
 
-  const platformFeePaise = sharedRule.platformFeePaise || 0;
+  const platformFeePaise = waivePlatformFee ? 0 : (sharedRule.platformFeePaise || 0);
   const taxable = subtotalPaise + platformFeePaise;
   const taxPaise = Math.round(taxable * ((sharedRule.taxPct || 0) / 100));
   const totalPaise = taxable + taxPaise;

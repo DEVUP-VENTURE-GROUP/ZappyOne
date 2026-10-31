@@ -128,6 +128,7 @@ async function createTask({
 
   const charge = await pricingService.quote({
     serviceType, pickupLocation, destination, stops, specialHandling, itemBudgetPaise,
+    waivePlatformFee: (await require('../../jobs/member').perks(userId)).waivePlatformFee,
   });
 
   if (charge.quoteRequired) {

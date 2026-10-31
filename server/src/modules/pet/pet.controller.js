@@ -180,6 +180,7 @@ async function quote(req, res, next) {
     const withPets = await bookingService.loadOwnedPets(req.auth.sub, petEntries);
     const result = await pricingService.quote({
       ...rest,
+      waivePlatformFee: (await require('../jobs/member').perks(req.auth.sub)).waivePlatformFee,
       pets: withPets.map((e) => ({ pet: e.pet, variantCode: e.variantCode, addonCodes: e.addonCodes, durationMinutes: e.durationMinutes })),
       serviceLocation: rest.serviceLocation?.coordinates || null,
     });

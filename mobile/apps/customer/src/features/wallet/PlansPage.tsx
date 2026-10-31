@@ -1,78 +1,101 @@
-/**
- * Plans (the website's PlansPage). Memberships are not sold until every
- * benefit they list applies at checkout, and buying one is online-only, which
- * the apps do not take; so a customer without a plan sees "coming soon", and
- * one who already holds a plan sees it here and can cancel it.
- */
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { CheckCircle2, Crown } from 'lucide-react-native';
-import { useCancelSubscriptionMutation, useMySubscriptionQuery } from '@zappy/core/api';
+import { Check } from 'lucide-react-native';
+import { useCancelSubscriptionMutation, useListPlansQuery, useMySubscriptionQuery } from '@zappy/core/api';
 import { Button, LoadingState, ScreenHeader, Text } from '@zappy/ui/components';
 import { toast } from '@zappy/ui/components/Toast';
 import { errText } from '@zappy/ui/lib/feedback';
-import { useT } from '@zappy/ui/lib/i18n';
-import { accent, colors, danger, ink, success } from '@zappy/ui/theme/colors';
-import { radius } from '@zappy/ui/theme/radius';
+import { openLink } from '@zappy/ui/lib/openLink';
+import { colors, danger, ink, slate, success } from '@zappy/ui/theme/colors';
 import { spacing } from '@zappy/ui/theme/spacing';
 
+type Plan = { code: string; name: string; priceInPaise: number; durationDays: number; benefits?: string[] };
+type Sub = { _id: string; planCode: string; endAt: string; benefits?: string[] };
+const rupees = (p: number) => `₹${Math.round((p || 0) / 100).toLocaleString('en-IN')}`;
+
+function Benefits({ items }: { items: string[] }) {
+  return (
+    <View style={styles.list}>
+      {items.map((b) => (
+        <View key={b} style={styles.row}><Check size={17} color={success[700]} /><Text variant="body" style={styles.flex}>{b}</Text></View>
+      ))}
+    </View>
+  );
+}
+
+// Membership (the website's PlansPage): only perks the server applies at booking; joining opens the website checkout once payment is live.
 export function PlansPage() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const t = useT();
-  const { data, isLoading, refetch } = useMySubscriptionQuery(undefined);
+  const { data: plansData, isLoading } = useListPlansQuery('user');
+  const { data, isLoading: subLoading, refetch } = useMySubscriptionQuery(undefined);
   const [cancel, { isLoading: cancelling }] = useCancelSubscriptionMutation();
   const [confirming, setConfirming] = useState(false);
-  const sub = data?.subscription as { _id: string; planCode: string; endAt: string } | undefined;
+  const sub = data?.subscription as Sub | undefined;
+  const plans: Plan[] = (plansData?.plans || []).filter((p: Plan) => p.benefits?.length);
+  const purchasable = !!plansData?.purchasable;
   const back = () => (router.canGoBack() ? router.back() : router.replace('/profile' as never));
 
   async function stop() {
-    try { await cancel(sub!._id).unwrap(); toast.success(t('plans.cancelled', 'Subscription cancelled')); setConfirming(false); refetch(); }
-    catch (err) { toast.error(errText(err, t('plans.cancelFailed', 'Could not cancel. Try again.'))); }
+    try { await cancel(sub!._id).unwrap(); toast.success('Membership cancelled'); setConfirming(false); refetch(); }
+    catch (err) { toast.error(errText(err, 'Could not cancel. Try again.')); }
   }
 
   return (
     <View style={[styles.page, { paddingTop: insets.top }]}>
-      <ScreenHeader title={t('plans.title', 'Plans')} onBack={back} />
-      {isLoading ? <LoadingState /> : (
-        <View style={styles.body}>
-          <View style={styles.icon}><Crown size={32} color={accent[600]} /></View>
-          {!sub ? (
-            <>
-              <Text variant="heading3" weight="bold" style={styles.center}>{t('plans.soon', 'Plans are coming soon')}</Text>
-              <Text variant="bodySmall" color={ink[500]} style={styles.center}>{t('plans.soonBody', 'We are finishing ZappyOne memberships. When they open, every benefit listed will apply to your bookings automatically.')}</Text>
-              <Button label={t('common.back', 'Go back')} variant="outline" onPress={back} fullWidth />
-            </>
-          ) : (
-            <View style={styles.card}>
-              <View style={styles.row}><CheckCircle2 size={18} color={success[600]} /><Text variant="body" weight="black">{sub.planCode}</Text></View>
-              <Text variant="caption" color={ink[500]}>{t('plans.renews', 'Renews')} {new Date(sub.endAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</Text>
+      <ScreenHeader title="Membership" onBack={back} />
+      {isLoading || subLoading ? <LoadingState /> : (
+        <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + spacing.xxl }}>
+          {sub ? (
+            <View style={styles.section}>
+              <Text variant="caption" weight="bold" color={success[700]}>ACTIVE</Text>
+              <Text variant="heading2" weight="extrabold">{plans.find((p) => p.code === sub.planCode)?.name || sub.planCode}</Text>
+              <Text variant="bodySmall" color={ink[500]}>Valid until {new Date(sub.endAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</Text>
+              <Benefits items={sub.benefits || []} />
               {confirming ? (
                 <View style={styles.confirm}>
-                  <Text variant="bodySmall" weight="semibold" color={danger[600]}>{t('plans.confirm', 'Cancel your subscription? Its benefits stop at the end of this period.')}</Text>
+                  <Text variant="bodySmall" weight="semibold" color={danger[600]}>Cancel your membership? Its benefits stop now.</Text>
                   <View style={styles.row}>
-                    <View style={styles.flex}><Button label={t('plans.keep', 'Keep it')} variant="outline" onPress={() => setConfirming(false)} fullWidth /></View>
-                    <View style={styles.flex}><Button label={t('plans.cancelIt', 'Cancel it')} variant="danger" loading={cancelling} onPress={stop} fullWidth /></View>
+                    <View style={styles.flex}><Button label="Keep it" variant="outline" onPress={() => setConfirming(false)} fullWidth /></View>
+                    <View style={styles.flex}><Button label="Cancel it" variant="danger" loading={cancelling} onPress={stop} fullWidth /></View>
                   </View>
                 </View>
-              ) : <Button label={t('plans.cancel', 'Cancel subscription')} variant="ghost" onPress={() => setConfirming(true)} fullWidth />}
+              ) : <Button label="Cancel membership" variant="ghost" onPress={() => setConfirming(true)} fullWidth />}
             </View>
+          ) : (
+            <>
+              <View style={styles.section}>
+                <Text variant="heading2" weight="extrabold">Pay less on every booking</Text>
+                <Text variant="body" color={ink[500]}>One monthly price. The benefits apply to every repair, pet care and helper booking on its own, at checkout.</Text>
+                {!purchasable ? <View style={styles.note}><Text variant="bodySmall" color={ink[700]}>Memberships open when online payment starts. You will see them here.</Text></View> : null}
+              </View>
+              {plans.length === 0 ? <View style={styles.section}><Text variant="body" color={ink[500]}>No memberships are on offer right now.</Text></View> : plans.map((plan) => (
+                <View key={plan.code} style={styles.section}>
+                  <View style={styles.head}>
+                    <Text variant="heading3" weight="extrabold" style={styles.flex}>{plan.name}</Text>
+                    <Text variant="body" weight="bold">{rupees(plan.priceInPaise)}<Text variant="bodySmall" color={ink[500]}> / {plan.durationDays} days</Text></Text>
+                  </View>
+                  <Benefits items={plan.benefits || []} />
+                  {purchasable ? <Button label={`Join for ${rupees(plan.priceInPaise)}`} onPress={() => openLink('https://zappyone.com/plans', 'The website could not be opened.')} fullWidth /> : null}
+                </View>
+              ))}
+            </>
           )}
-        </View>
+        </ScrollView>
       )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: colors.background },
-  body: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.md, padding: spacing.xl },
-  icon: { width: 72, height: 72, borderRadius: 36, alignItems: 'center', justifyContent: 'center', backgroundColor: accent[50] },
-  center: { textAlign: 'center' },
-  card: { alignSelf: 'stretch', gap: spacing.sm, padding: spacing.lg, borderRadius: radius.large, borderWidth: 1, borderColor: success[100], backgroundColor: colors.surface },
-  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  page: { flex: 1, backgroundColor: colors.surface },
+  section: { gap: spacing.sm, padding: spacing.base, borderBottomWidth: 8, borderBottomColor: slate[100] },
+  head: { flexDirection: 'row', alignItems: 'baseline', gap: spacing.md },
+  list: { gap: spacing.sm, marginVertical: spacing.xs },
+  row: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },
+  note: { padding: spacing.md, borderRadius: 10, backgroundColor: slate[100] },
   confirm: { gap: spacing.sm, marginTop: spacing.sm },
-  flex: { flex: 1 },
+  flex: { flex: 1, minWidth: 0 },
 });
