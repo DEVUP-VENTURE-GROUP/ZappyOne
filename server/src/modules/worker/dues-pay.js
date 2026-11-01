@@ -28,6 +28,12 @@ async function applyPaid({ owner, amountPaise, paymentId, intentId }) {
     });
     const { redis } = require('../../config/redis');
     await redis.del(`dues:told:${owner.id}:blocked`, `dues:told:${owner.id}:warning`).catch(() => {});
+    // Shops hear this from shop-dues.recordPayment.
+    const after = await require('./worker-dues.service').getDuesStatus(owner.id);
+    require('../messaging/send').send('provider.dues', {
+      to: { kind: 'worker', id: owner.id }, refId: `paid:online:${paymentId}`,
+      ctx: { state: 'paid', duesPaise: after.duesPaise, limitPaise: after.limitPaise },
+    }).catch(() => {});
   } else if (owner.kind === 'shop') {
     await require('../shop/shop-dues').recordPayment({ shopId: owner.id, amountPaise, reference: `online:${paymentId}` })
       .catch((e) => { if (e.code !== 'DUPLICATE_REFERENCE') throw e; });

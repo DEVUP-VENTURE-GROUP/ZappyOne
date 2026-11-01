@@ -16,6 +16,8 @@
 const { rupees } = require('./facts');
 
 const first = (name) => String(name || '').trim().split(/\s+/)[0] || 'there';
+// A partner's own portal: ServicePro for a shop, Rakshak for a pro.
+const home = (kind) => (kind === 'shop' ? '/shop' : '/worker');
 const noun = (kind) => ({ repair: 'technician', pet: 'pet pro', helping: 'helper' }[kind] || 'provider');
 const prov = (f) => f.provider?.name || `your ${noun(f.kind)}`;
 
@@ -269,27 +271,27 @@ const CATALOG = {
   },
   'provider.paid': {
     audience: 'provider', type: 'worker_earning', channels: ['push'], label: 'Paid for a job',
-    sample: () => ({ ...sampleJob(), earningPaise: 220500, cash: true }),
-    build: ({ f, earningPaise, cash }) => ({
-      push: { title: `You earned ${rupees(earningPaise)}`, body: cash ? `${f.service} (${f.reference}). You collected cash; ZappyOne's commission comes off your wallet.` : `${f.service} (${f.reference}). It is in your wallet.`, link: '/worker/earnings' },
+    sample: () => ({ ...sampleJob(), earningPaise: 220500, zappyPaise: 24500, cash: true }),
+    build: ({ f, earningPaise, zappyPaise, cash, recipientKind }) => ({
+      push: { title: `You earned ${rupees(earningPaise)}`, body: cash ? `${f.service} (${f.reference}). The customer paid you; ${rupees(zappyPaise)} is your ZappyOne amount for this job.` : `${f.service} (${f.reference}). It is in your wallet.`, link: `${home(recipientKind)}/earnings` },
     }),
   },
   'provider.dues': {
     audience: 'provider', type: 'penalty_applied', channels: ['push', 'email'], urgent: true, label: 'Dues warning / jobs paused / payment confirmed',
     sample: () => ({ name: 'Ravi', state: 'warning', duesPaise: 84000, limitPaise: 100000, payInstructions: 'Pay to UPI zappyone@okaxis and tap I have paid' }),
-    build: ({ name, state, duesPaise, limitPaise, payInstructions, url }) => {
+    build: ({ name, state, duesPaise, limitPaise, payInstructions, url, recipientKind }) => {
       const T = {
         warning: [`You owe ${rupees(duesPaise)}`, `New jobs stop at ${rupees(limitPaise)}. Pay some now to keep getting work.`],
         blocked: ['New jobs are paused', `You owe ZappyOne ${rupees(duesPaise)}. Pay it to start getting jobs again.`],
         paid: ['Payment received', duesPaise > 0 ? `Thanks. You now owe ${rupees(duesPaise)}.` : 'Thanks. You owe nothing now.'],
       }[state] || ['Your dues', `You owe ${rupees(duesPaise)}.`];
       return {
-        push: { title: T[0], body: T[1], link: '/worker' },
+        push: { title: T[0], body: T[1], link: home(recipientKind) },
         email: state === 'paid' ? null : {
           subject: T[0], preheader: T[1], heading: T[0],
-          intro: [`Hi ${first(name)}, on cash jobs you keep the whole amount and owe ZappyOne its commission. ${T[1]}`],
+          intro: [`Hi ${first(name)}, customers pay you directly, and the ZappyOne amount from each job adds up here. ${T[1]}`],
           rows: [['You owe', rupees(duesPaise)], ['New jobs stop at', rupees(limitPaise)]],
-          button: { label: 'Open your dues', url: url('/worker') },
+          button: { label: 'Pay now', url: url(home(recipientKind)) },
           note: payInstructions ? `How to pay: ${payInstructions}` : '',
         },
       };
@@ -298,9 +300,9 @@ const CATALOG = {
   'provider.kyc': {
     audience: 'provider', type: 'report_received', channels: ['push', 'email'], label: 'Verification approved / needs changes',
     sample: () => ({ name: 'Ravi', approved: true, service: 'Mobile Phones', reason: '' }),
-    build: ({ name, approved, service, reason, url }) => ({
+    build: ({ name, approved, service, reason, url, recipientKind }) => ({
       push: approved
-        ? { title: `You are verified for ${service}`, body: 'Go online to start getting jobs.', link: '/worker' }
+        ? { title: `You are verified for ${service}`, body: 'Go online to start getting jobs.', link: home(recipientKind) }
         : { title: 'Your verification needs changes', body: reason || 'Open the app to see what to fix.', link: '/provider/onboarding' },
       email: {
         subject: approved ? `You are verified for ${service}` : 'Your verification needs changes',
@@ -309,7 +311,19 @@ const CATALOG = {
         intro: approved
           ? [`Hi ${first(name)}, welcome aboard. You are verified for ${service}. Set your prices and service area, go online, and jobs near you will ring.`]
           : [`Hi ${first(name)}, we could not approve your verification for ${service} yet.`, reason ? `What to fix: ${reason}` : null].filter(Boolean),
-        button: approved ? { label: 'Go online', url: url('/worker') } : { label: 'Fix and resubmit', url: url('/provider/onboarding') },
+        button: approved ? { label: 'Go online', url: url(home(recipientKind)) } : { label: 'Fix and resubmit', url: url('/provider/onboarding') },
+      },
+    }),
+  },
+  'provider.setup_next': {
+    audience: 'provider', type: 'report_received', channels: ['push', 'email'], label: 'Finish your setup (next step)',
+    sample: () => ({ name: 'Ravi', step: 'Set your work and prices', path: '/provider/services', done: 3, total: 5 }),
+    build: ({ name, step, path, done, total, url }) => ({
+      push: { title: `Next: ${step.toLowerCase()}`, body: `You are ${done} of ${total} steps in. Finish setup and jobs near you start ringing.`, link: path },
+      email: {
+        subject: `Next: ${step.toLowerCase()}`, preheader: `${done} of ${total} steps done.`, heading: 'Finish your setup',
+        intro: [`Hi ${first(name)}, you are ${done} of ${total} steps in. Next: ${step.toLowerCase()}. Once setup is done, customers near you can book you.`],
+        button: { label: 'Continue setup', url: url(path) },
       },
     }),
   },

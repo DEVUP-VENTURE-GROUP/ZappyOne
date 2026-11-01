@@ -86,7 +86,7 @@ async function build(key, ctx = {}, recipientKind = 'user') {
   const s = await settings.get();
   const base = recipientKind === 'ops' ? s.adminUrl : settings.appUrl(s, recipientKind);
   const url = (path) => (/^https?:/.test(path) ? path : `${base}${path}`);
-  const msg = ev.build({ ...ctx, s, url });
+  const msg = ev.build({ ...ctx, s, url, recipientKind });
   const email = msg.email ? { subject: msg.email.subject, ...render({ s, recipientKind: recipientKind === 'ops' ? 'admin' : recipientKind, promotional: !!ev.promotional, ...msg.email }) } : null;
   return { ev, s, push: msg.push || null, email };
 }

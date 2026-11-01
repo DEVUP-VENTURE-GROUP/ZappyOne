@@ -35,6 +35,23 @@ async function blockedShops(shopIds) {
   return new Set(ledger.filter((r) => Math.max(0, (out.get(String(r._id)) || 0) - r.net) >= limitPaise).map((r) => String(r._id)));
 }
 
+// Once when the shop reaches the warning line, and once when new jobs stop; at most daily. Best effort.
+async function notifyIfCrossed(shopId) {
+  try {
+    const d = await duesOf(shopId);
+    const state = d.isBlocked ? 'blocked' : d.duesPaise >= d.warnPaise ? 'warning' : null;
+    if (!state) return;
+    const { redis } = require('../../config/redis');
+    if (!(await redis.set(`dues:told:shop:${shopId}:${state}`, '1', 'EX', 24 * 3600, 'NX'))) return;
+    await require('../messaging/send').send('provider.dues', {
+      to: { kind: 'shop', id: shopId },
+      ctx: { state, duesPaise: d.duesPaise, limitPaise: d.limitPaise, payInstructions: d.payInstructions },
+    });
+  } catch (e) {
+    require('../../core/logger').warn({ err: e.message }, '[shop-dues] notify failed');
+  }
+}
+
 async function assertShopCanWork(shopId) {
   const d = await duesOf(shopId);
   if (!d.isBlocked) return d;
@@ -75,7 +92,14 @@ async function recordPayment({ shopId, amountPaise, reference, adminId, claimId 
     metadata: { shopId: String(shopId), reference, adminId: adminId ? String(adminId) : null }, status: 'succeeded',
   }).catch((e) => { throw e?.code === 11000 ? dup : e; });
   if (claimId) await DuesClaim.updateOne({ _id: claimId, status: 'pending' }, { $set: { status: 'confirmed', decidedBy: adminId || null, decidedAt: new Date(), amountPaise } });
-  return duesOf(shopId);
+  const after = await duesOf(shopId);
+  const { redis } = require('../../config/redis');
+  await redis.del(`dues:told:shop:${shopId}:blocked`, `dues:told:shop:${shopId}:warning`).catch(() => {});
+  require('../messaging/send').send('provider.dues', {
+    to: { kind: 'shop', id: shopId }, refId: `paid:${key}`,
+    ctx: { state: 'paid', duesPaise: after.duesPaise, limitPaise: after.limitPaise },
+  }).catch(() => {});
+  return after;
 }
 
 // Every shop that owes anything, most first, for ops.
@@ -102,4 +126,4 @@ async function owingShops() {
     .sort((a, b) => b.duesPaise - a.duesPaise);
 }
 
-module.exports = { duesOf, blockedShops, assertShopCanWork, claimPayment, recordPayment, owingShops };
+module.exports = { duesOf, blockedShops, notifyIfCrossed, assertShopCanWork, claimPayment, recordPayment, owingShops };
