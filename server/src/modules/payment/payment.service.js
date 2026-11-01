@@ -76,6 +76,10 @@ async function createOrderForPurpose({ owner, purpose, planCode, amountPaise, or
     // A partner paying what they owe ZappyOne from jobs paid to them directly; the whole amount, or part of it.
     resolvedAmount = await require('../worker/dues-pay').amountFor(owner, amountPaise);
     cfOrderIdPrefix = 'due';
+  } else if (purpose === 'event_advance_payment' || purpose === 'event_remaining_payment') {
+    if (!bookingId) throw Object.assign(new Error('bookingId required'), { status: 400, code: 'BOOKING_ID_REQUIRED' });
+    resolvedAmount = await require('../events/event-pay').amountFor({ purpose, bookingId, userId: owner.id });
+    cfOrderIdPrefix = purpose === 'event_advance_payment' ? 'eva' : 'evr';
   } else if (purpose === 'wallet_topup') {
     if (!Number.isInteger(amountPaise) || amountPaise < 1000) {
       throw Object.assign(new Error('Wallet top-up minimum is ₹10'), { status: 400, code: 'TOPUP_MIN' });
@@ -121,6 +125,7 @@ async function createOrderForPurpose({ owner, purpose, planCode, amountPaise, or
   else cfOrder = await cashfree.createOrder({ orderId: cfOrderId, amountPaise: resolvedAmount, customer: await resolveCustomer(owner), returnUrl, tags });
 
   const isBooking = purpose === 'repair_payment' || purpose === 'booking_payment';
+  const isEvent = purpose === 'event_advance_payment' || purpose === 'event_remaining_payment';
   const intent = await PaymentIntent.create({
     cfOrderId,
     gateway: gw,
@@ -132,12 +137,15 @@ async function createOrderForPurpose({ owner, purpose, planCode, amountPaise, or
     orderId: isBooking ? null : orderId,
     bookingSource: isBooking ? bookingSource : null,
     bookingId: isBooking ? bookingId : null,
+    eventBookingId: isEvent ? bookingId : null,
     amountPaise: resolvedAmount,
     // What each part of this charge pays for, so capture applies it exactly as charged.
     breakdown,
     currency: 'INR',
     status: 'created',
   });
+
+  if (isEvent) await require('../events/event-pay').remember(purpose, bookingId, cfOrderId);
 
   return { paymentIntent: intent, cfOrder, razorpayOrder, paymentLink };
 }
@@ -316,6 +324,9 @@ async function capturePayment({ cfOrderId, cfPaymentId, amountPaise, eventName, 
         idempotencyKey: `platform:sub:${cfPaymentId}`,
         description: 'Subscription payment received',
       }).catch((e) => { if (e.code !== 11000) throw e; });
+
+    } else if (intent.purpose === 'event_advance_payment' || intent.purpose === 'event_remaining_payment') {
+      await require('../events/event-pay').applyPaid(intent, cfPaymentId);
 
     } else if (intent.purpose === 'dues_payment') {
       await require('../worker/dues-pay').applyPaid({ owner: intent.owner, amountPaise: intent.amountPaise, paymentId: cfPaymentId, intentId: intent._id });

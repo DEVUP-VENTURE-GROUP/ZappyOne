@@ -76,17 +76,12 @@ export default function EventBookingDetailPage() {
     setPayingRemaining(true);
     try {
       const orderRes = await createRemainingOrder(id).unwrap();
-      const checkoutResp = await openCheckout({
-        paymentSessionId: orderRes.paymentSessionId,
-        cfOrderId:        orderRes.cfOrderId,
-        cashfreeEnv:      orderRes.cashfreeEnv || import.meta.env.VITE_CASHFREE_ENV || 'sandbox',
-        amountPaise:      orderRes.amountPaise,
-        purpose:          'Event - Remaining Payment',
-      });
+      const checkoutResp = await openCheckout({ ...orderRes, purpose: 'Event balance' });
       await verifyRemainingPayment({
         id,
         cfOrderId:   checkoutResp.cfOrderId,
         cfPaymentId: checkoutResp.cfPaymentId,
+        ...(checkoutResp.razorpaySignature && { razorpaySignature: checkoutResp.razorpaySignature }),
       }).unwrap();
       toast.success('Remaining payment done!');
       refetch();

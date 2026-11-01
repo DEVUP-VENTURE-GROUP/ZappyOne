@@ -171,17 +171,12 @@ export default function EventBookingPage() {
       const orderRes = await createAdvanceOrder(bookingId).unwrap();
 
       try {
-        const checkoutResp = await openCheckout({
-          paymentSessionId: orderRes.paymentSessionId,
-          cfOrderId:        orderRes.cfOrderId,
-          cashfreeEnv:      orderRes.cashfreeEnv || import.meta.env.VITE_CASHFREE_ENV || 'sandbox',
-          amountPaise:      orderRes.amountPaise,
-          purpose:          'Event Booking - Advance',
-        });
+        const checkoutResp = await openCheckout({ ...orderRes, purpose: 'Event booking advance' });
         await verifyAdvancePayment({
           id:          bookingId,
           cfOrderId:   checkoutResp.cfOrderId,
           cfPaymentId: checkoutResp.cfPaymentId,
+          ...(checkoutResp.razorpaySignature && { razorpaySignature: checkoutResp.razorpaySignature }),
         }).unwrap();
         toast.success('Booking confirmed. Your slot is held for you.');
         clearDraft(draftKey);
