@@ -13,6 +13,7 @@ import { colors, zappy, ink, slate, success, accent, danger } from '../theme/col
 import { radius } from '../theme/radius';
 import { spacing } from '../theme/spacing';
 import { errText } from '../lib/feedback';
+import { PayDuesButton } from './PayDuesButton';
 
 const rupees = (p: number) => `₹${Math.round((p || 0) / 100).toLocaleString('en-IN')}`;
 
@@ -102,13 +103,16 @@ export function DuesCard({ compact = false }: { compact?: boolean }) {
               </View>
             </View>
           ) : (
+            <>
+            <View style={styles.mtMd}><PayDuesButton duesPaise={data?.dues?.duesPaise ?? 0} /></View>
             <View style={[styles.methods, styles.mtMd]}>
-              <Button label="I have paid" onPress={() => setPaying(true)} style={styles.flex} />
+              <Button label="Paid another way" variant="outline" onPress={() => setPaying(true)} style={styles.flex} />
               <Pressable onPress={() => setOpen((o) => !o)} accessibilityRole="button" accessibilityState={{ expanded: open }} style={styles.whatBtn}>
                 <Text variant="bodySmall" weight="semibold">What is this</Text>
                 <ChevronDown size={14} color={ink[700]} style={open ? styles.flip : undefined} />
               </Pressable>
             </View>
+            </>
           )}
           {open ? (
             <View style={styles.recent}>

@@ -64,7 +64,7 @@ export function ShopWithdrawPage() {
           <Text variant="caption" weight="semibold" color={slate[400]}>Available to withdraw</Text>
           <Text variant="display" weight="black" color="#fff">{formatPaise(b.availablePaise)}</Text>
           <View style={styles.split}>
-            {([['Earned online', b.earnedPaise, ''], ['Owed from cash jobs', b.owedPaise, '− '], ['Paid out', b.paidOutPaise, '− ']] as [string, number, string][]).map(([label, v, sign]) => (
+            {([['Earned online', b.earnedPaise, ''], ['Owed to ZappyOne', b.owedPaise, '− '], ['Paid out', b.paidOutPaise, '− ']] as [string, number, string][]).map(([label, v, sign]) => (
               <View key={label} style={styles.flex}><Text variant="caption" color={slate[400]}>{label}</Text><Text variant="caption" weight="bold" color="#fff">{sign}{formatPaise(v)}</Text></View>
             ))}
           </View>

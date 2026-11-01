@@ -168,15 +168,15 @@ async function alertNearbyProviders(kind, doc, { offlineOnly = false, round = 0 
     // Not back to whoever already passed on it or handed it back (jobs/give-back).
     const passed = new Set([...(doc.declinedBy || []), ...(doc.releasedBy || [])].map(String));
     for (const id of await require('./customer-block').blockersOf(doc.userId)) passed.add(id);
-    let providers = (await approvedProviders(line)).filter((p) => !passed.has(String(p.id)));
+    let providers = (await approvedProviders(line, { includeBlocked: true })).filter((p) => !passed.has(String(p.id)));
     // Staff on duty are rung one at a time, fairest first (jobs/fast-assign), not all at once.
     if (!offlineOnly && !require('./work-hours').isLater(doc.scheduledAt || doc.checkInAt)) {
       const onDuty = await require('../workforce/staff').onDutyIds();
       providers = providers.filter((p) => p.kind !== 'worker' || !onDuty.has(String(p.id)));
     }
-    // Nobody at their dues limit is rung for new work (worker-dues).
+    // At the dues limit they still hear about the job, marked to pay first; accepting stays refused until they do (worker-dues, shop-dues).
     const working = await require('../worker/worker-dues.service').filterWorkingWorkers(providers.filter((p) => p.kind === 'worker').map((p) => p.id));
-    providers = providers.filter((p) => p.kind !== 'worker' || working.has(String(p.id)));
+    const mustPay = new Set(providers.filter((p) => p.blocked || (p.kind === 'worker' && !working.has(String(p.id)))).map((p) => `${p.kind}:${p.id}`));
     // Free workers first (or on the last stretch of a job); only if none is free
     // are those mid-job with room for one more told (jobs/workload).
     if (!require('./work-hours').isLater(doc.scheduledAt || doc.checkInAt)) {
@@ -230,6 +230,7 @@ async function alertNearbyProviders(kind, doc, { offlineOnly = false, round = 0 
         // Before anyone accepts: the area and a rounded pin, never the house (jobs/privacy).
         kind, id: String(doc._id), reference: doc.reference, line, area: areaOf(start?.address), km: p.km,
         coordinates: start ? roughCoords([start.lng, start.lat]) : null, ...(k.open.summary ? k.open.summary(doc) : {}), customer, ...ring,
+        ...(mustPay.has(`${p.kind}:${p.id}`) && { mustPay: true }),
       });
       const summary = k.open.summary ? k.open.summary(doc) : {};
       // A later round re-rings the app; the phone push goes once per pro.

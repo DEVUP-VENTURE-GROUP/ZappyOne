@@ -100,7 +100,7 @@ export const fromPetOffer = (b) => ({
 
 export const fromOpen = (p) => ({
   kind: p.kind, id: String(p.id), mode: 'open', askReason: false,
-  heading: p.yourTurn ? 'New job for you, accept before the timer ends' : 'New job near you, first to accept',
+  heading: p.mustPay ? 'New job near you. Pay your ZappyOne dues to take it' : p.yourTurn ? 'New job for you, accept before the timer ends' : 'New job near you, first to accept',
   title: p.title || 'New job',
   valueLabel: 'You earn',
   valuePaise: p.earningPaise || 0,
@@ -115,8 +115,12 @@ export const fromOpen = (p) => ({
   frontPaise: p.frontPaise || 0,
   expiresAt: p.expiresAt || new Date(Date.now() + OPEN_WINDOW_SEC * 1000).toISOString(),
   windowSec: p.windowSec || OPEN_WINDOW_SEC,
-  acceptLabel: 'Take this job',
+  acceptLabel: p.mustPay ? 'Pay and take this job' : 'Take this job',
+  mustPay: !!p.mustPay,
 });
+
+// Accepting was refused for dues (worker-dues WALLET_BLOCKED, shop-dues SHOP_DUES): how much is owed, else null.
+export const duesBlock = (err) => (['WALLET_BLOCKED', 'SHOP_DUES'].includes(err?.data?.code) ? (err.data.dues?.duesPaise || 0) : null);
 
 /** Offers still inside their window, from the job lists (before this screen opened). */
 export function recoveredOffers(repairData, petData, now = Date.now()) {

@@ -3,6 +3,7 @@ import toast from 'react-hot-toast';
 import { AlertTriangle, ChevronDown, Loader2, Wallet } from 'lucide-react';
 import { useWorkerDuesQuery, useClaimDuesPaymentMutation } from '../services/api';
 import { duesView, duesClaimError } from './workerHome';
+import PayDuesButton from './components/PayDuesButton';
 
 const rupees = (p) => `₹${Math.round((p || 0) / 100).toLocaleString('en-IN')}`;
 
@@ -108,9 +109,10 @@ export default function DuesCard({ compact = false }) {
               </div>
             </div>
           ) : (
-            <div className="mt-3 flex gap-2">
+            <div className="mt-3 flex flex-wrap gap-2">
+              <PayDuesButton duesPaise={d.duesPaise} />
               <button type="button" onClick={() => setPaying(true)}
-                className="flex-1 rounded-xl bg-zappy-600 py-2.5 text-sm font-semibold text-white">I have paid</button>
+                className="flex-1 rounded-xl border border-slate-200 bg-white py-2.5 text-sm font-semibold text-slate-700">Paid another way</button>
               <button type="button" onClick={() => setOpen((o) => !o)}
                 className="flex flex-1 items-center justify-center gap-1 rounded-xl border border-slate-200 bg-white py-2.5 text-sm font-semibold text-slate-700">
                 What is this <ChevronDown size={14} className={open ? 'rotate-180' : ''} />

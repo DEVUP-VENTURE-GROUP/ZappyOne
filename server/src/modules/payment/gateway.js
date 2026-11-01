@@ -2,8 +2,12 @@
 const config = require('../../config');
 
 function active() {
-  if (config.cashfree.appId && config.cashfree.secretKey) return 'cashfree';
-  if (config.razorpay.keyId && config.razorpay.keySecret) return 'razorpay';
+  const cf = Boolean(config.cashfree.appId && config.cashfree.secretKey);
+  const rz = Boolean(config.razorpay.keyId && config.razorpay.keySecret);
+  if (config.paymentGateway === 'razorpay' && rz) return 'razorpay';
+  if (config.paymentGateway === 'cashfree' && cf) return 'cashfree';
+  if (cf) return 'cashfree';
+  if (rz) return 'razorpay';
   return null;
 }
 

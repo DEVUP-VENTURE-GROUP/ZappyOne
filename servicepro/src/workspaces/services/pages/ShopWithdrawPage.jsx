@@ -59,7 +59,7 @@ export default function ShopWithdrawPage() {
           <p className="mt-1 text-[32px] font-black tabular-nums">{formatPaise(b.availablePaise)}</p>
           <div className="mt-3 grid grid-cols-3 gap-2 text-[11.5px]">
             <div><p className="text-white/50">Earned online</p><p className="font-bold tabular-nums">{formatPaise(b.earnedPaise)}</p></div>
-            <div><p className="text-white/50">Owed from cash jobs</p><p className="font-bold tabular-nums">− {formatPaise(b.owedPaise)}</p></div>
+            <div><p className="text-white/50">Owed to ZappyOne</p><p className="font-bold tabular-nums">− {formatPaise(b.owedPaise)}</p></div>
             <div><p className="text-white/50">Paid out</p><p className="font-bold tabular-nums">− {formatPaise(b.paidOutPaise)}</p></div>
           </div>
         </section>

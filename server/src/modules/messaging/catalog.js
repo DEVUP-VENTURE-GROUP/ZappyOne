@@ -280,7 +280,7 @@ const CATALOG = {
     build: ({ name, state, duesPaise, limitPaise, payInstructions, url }) => {
       const T = {
         warning: [`You owe ${rupees(duesPaise)}`, `New jobs stop at ${rupees(limitPaise)}. Pay some now to keep getting work.`],
-        blocked: ['New jobs are paused', `You owe ${rupees(duesPaise)} from cash jobs. Pay it to start getting jobs again.`],
+        blocked: ['New jobs are paused', `You owe ZappyOne ${rupees(duesPaise)}. Pay it to start getting jobs again.`],
         paid: ['Payment received', duesPaise > 0 ? `Thanks. You now owe ${rupees(duesPaise)}.` : 'Thanks. You owe nothing now.'],
       }[state] || ['Your dues', `You owe ${rupees(duesPaise)}.`];
       return {

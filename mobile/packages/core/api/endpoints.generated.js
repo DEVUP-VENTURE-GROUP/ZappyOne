@@ -606,6 +606,10 @@ export function endpoints(b, { adminApiPath }) {
       query: () => '/payments/availability',
       keepUnusedDataFor: 60,
     }),
+    // A partner paying its dues to ZappyOne: checkout on the web, a Razorpay page in the apps (worker/dues-pay).
+    createDuesPayment: b.mutation({ query: ({ amountPaise } = {}) => ({ url: '/payments/create-order', method: 'POST', body: { purpose: 'dues_payment', ...(amountPaise && { amountPaise }) } }) }),
+    createDuesLink: b.mutation({ query: ({ amountPaise, returnUrl } = {}) => ({ url: '/payments/dues-link', method: 'POST', body: { ...(amountPaise && { amountPaise }), ...(returnUrl && { returnUrl }) } }) }),
+    checkDuesLink: b.mutation({ query: (cfOrderId) => ({ url: `/payments/dues-link/${cfOrderId}`, method: 'GET' }), invalidatesTags: ['Wallet'] }),
     // Cashfree order for a repair, pet or helping booking; the amount comes from the booking.
     createBookingPayment: b.mutation({
       query: ({ bookingSource, bookingId }) => ({

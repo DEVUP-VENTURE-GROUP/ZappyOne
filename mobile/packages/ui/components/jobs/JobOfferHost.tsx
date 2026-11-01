@@ -20,7 +20,8 @@ import {
   useGetWorkerMeQuery,
 } from '@zappy/core/api';
 import { useSocketEvent } from '@zappy/core/hooks/useSocketEvent';
-import { keyOf, fromRepair, fromPetOffer, fromOpen, recoveredOffers, pickOffer, withOffer, takeError } from '@zappy/core/shared/jobOffers';
+import { keyOf, fromRepair, fromPetOffer, fromOpen, recoveredOffers, pickOffer, withOffer, takeError, duesBlock } from '@zappy/core/shared/jobOffers';
+import { PayToAccept } from './PayToAccept';
 import { useAppSelector } from '@zappy/core/store/hooks';
 import type { ApiErr } from '../../lib/feedback';
 import { toast } from '../Toast';
@@ -48,6 +49,8 @@ export function JobOfferHost({ kinds = ['repair', 'pet', 'helping'] }: { kinds?:
 
   const [live, setLive] = useState<Offer[]>([]);
   const [handled, setHandled] = useState<Set<string>>(() => new Set());
+  // An offer waiting on the dues being paid; null while there is none.
+  const [payFor, setPayFor] = useState<{ duesPaise: number | null } | null>(null);
   const push = useCallback((offer: Offer) => setLive((q) => withOffer(q, offer)), []);
 
   useSocketEvent('repair.offer', (p) => { if (has('repair')) push(fromRepair(p)); });
@@ -71,6 +74,7 @@ export function JobOfferHost({ kinds = ['repair', 'pet', 'helping'] }: { kinds?:
 
   async function accept() {
     if (!offer) return;
+    if ((offer as Offer & { mustPay?: boolean }).mustPay && !payFor) { setPayFor({ duesPaise: null }); return; }
     try {
       await checkedIn(async () => {
       if (offer.kind === 'repair' && offer.broadcast) {
@@ -89,8 +93,11 @@ export function JobOfferHost({ kinds = ['repair', 'pet', 'helping'] }: { kinds?:
       });
       toast.success('It’s yours');
     } catch (err) {
+      const owed = duesBlock(err);
+      if (owed != null) { setPayFor({ duesPaise: owed }); return; }
       toast.error(takeError(err as ApiErr, errText(err as ApiErr, 'Could not accept this job')));
     }
+    setPayFor(null);
     done(offer);
   }
 
@@ -113,6 +120,7 @@ export function JobOfferHost({ kinds = ['repair', 'pet', 'helping'] }: { kinds?:
   }
 
   return (
+    <>
     <JobOfferAlert
       key={keyOf(offer)}
       offer={offer}
@@ -120,7 +128,9 @@ export function JobOfferHost({ kinds = ['repair', 'pet', 'helping'] }: { kinds?:
       onAccept={accept}
       onDecline={decline}
       declineTitle={isShopTechnician ? 'Why are you passing this back to your shop?' : undefined}
-      onClose={(why) => done(offer, why)}
+      onClose={(why) => { setPayFor(null); done(offer, why); }}
     />
+    {payFor ? <PayToAccept duesPaise={payFor.duesPaise} onPaid={accept} onClose={() => setPayFor(null)} /> : null}
+    </>
   );
 }

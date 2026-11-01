@@ -1,5 +1,6 @@
 /** What this business owes ZappyOne from cash jobs, and telling ZappyOne once it has paid (the website's PartnerDuesCard); hidden when nothing is owed. */
 import { useState } from 'react';
+import { PayDuesButton } from '@zappy/ui/provider/PayDuesButton';
 import { StyleSheet, TextInput, View } from 'react-native';
 import { AlertTriangle, CircleCheck, Clock3, Wallet } from 'lucide-react-native';
 import { useClaimShopDuesPaymentMutation, useShopDuesQuery } from '@zappy/core/api';
@@ -38,7 +39,7 @@ export function PartnerDuesCard() {
         <Text variant="body" weight="bold">You owe ZappyOne {formatPaise(d.duesPaise)}</Text>
       </View>
       <Text variant="caption" color={ink[500]}>
-        {d.isBlocked ? `New jobs are paused until it is under ${formatPaise(d.limitPaise)}.` : `ZappyOne fees from cash jobs. New jobs pause at ${formatPaise(d.limitPaise)}.`} Online jobs pay it down by themselves.
+        {d.isBlocked ? `New jobs are paused until it is under ${formatPaise(d.limitPaise)}.` : `Your ZappyOne amount from finished jobs. New jobs pause at ${formatPaise(d.limitPaise)}.`}
       </Text>
       {d.payInstructions ? <View style={styles.pay}><Text variant="caption" weight="semibold">{d.payInstructions}</Text></View> : null}
       {(d.claims || []).slice(0, 3).map((c) => { const [label, Icon, tone] = STATE[c.status] || STATE.pending; return (
@@ -51,7 +52,10 @@ export function PartnerDuesCard() {
           <Button label="Send" onPress={send} loading={isLoading} disabled={!Number(amount) || reference.trim().length < 4} fullWidth />
         </View>
       ) : d.duesPaise > 0 ? (
-        <Text variant="bodySmall" weight="bold" color={zappy[600]} onPress={() => setOpen(true)} accessibilityRole="button">I have paid, tell ZappyOne</Text>
+        <>
+          <PayDuesButton duesPaise={d.duesPaise} />
+          <Text variant="bodySmall" weight="bold" color={zappy[600]} onPress={() => setOpen(true)} accessibilityRole="button">Paid another way? Tell ZappyOne</Text>
+        </>
       ) : null}
     </View>
   );

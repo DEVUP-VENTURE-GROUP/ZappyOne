@@ -3,6 +3,7 @@ import toast from 'react-hot-toast';
 import { AlertTriangle, CircleCheck, Clock3, Wallet } from 'lucide-react';
 import { useShopDuesQuery, useClaimShopDuesPaymentMutation } from '../../services/api';
 import { formatPaise } from '../../utils/money';
+import PayDuesButton from './PayDuesButton';
 
 const STATE = { pending: ['Being checked', Clock3, 'text-amber-700'], confirmed: ['Received', CircleCheck, 'text-emerald-700'], rejected: ['Not found', AlertTriangle, 'text-red-700'] };
 
@@ -32,8 +33,7 @@ export default function PartnerDuesCard() {
       <p className="mt-1 text-[13px] text-slate-600">
         {stopped
           ? `New jobs are paused until it is under ${formatPaise(data.limitPaise)}.`
-          : `ZappyOne fees from cash jobs. New jobs pause at ${formatPaise(data.limitPaise)}.`}
-        {' '}Online jobs pay it down by themselves.
+          : `Your ZappyOne amount from finished jobs. New jobs pause at ${formatPaise(data.limitPaise)}.`}
       </p>
       {data.payInstructions && <p className="mt-2 rounded-lg bg-white/70 px-3 py-2 text-[12.5px] font-semibold text-slate-700">{data.payInstructions}</p>}
       {(data.claims || []).slice(0, 3).map((c) => { const [label, Icon, tone] = STATE[c.status] || STATE.pending; return (
@@ -46,7 +46,10 @@ export default function PartnerDuesCard() {
           <button type="submit" disabled={isLoading} className="btn-primary px-4 text-sm">Send</button>
         </form>
       ) : data.duesPaise > 0 && (
-        <button type="button" onClick={() => setOpen(true)} className="mt-3 text-[13px] font-bold text-zappy-600">I have paid, tell ZappyOne</button>
+        <>
+          <PayDuesButton duesPaise={data.duesPaise} className="mt-3" />
+          <button type="button" onClick={() => setOpen(true)} className="mt-2 text-[13px] font-bold text-zappy-600">Paid another way? Tell ZappyOne</button>
+        </>
       )}
     </section>
   );

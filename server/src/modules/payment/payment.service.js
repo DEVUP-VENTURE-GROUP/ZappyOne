@@ -50,7 +50,7 @@ async function resolveCustomer(owner) {
  * Create a Cashfree order for one of three purposes.
  * Returns { paymentIntent, cfOrder } — frontend uses cfOrder.payment_session_id.
  */
-async function createOrderForPurpose({ owner, purpose, planCode, amountPaise, orderId, returnUrl, bookingSource = null, bookingId = null }) {
+async function createOrderForPurpose({ owner, purpose, planCode, amountPaise, orderId, returnUrl, bookingSource = null, bookingId = null, link = false }) {
   // Backup path: with no live gateway, say so plainly; the customer pays in cash instead.
   if (!payables.gatewayReady()) {
     throw Object.assign(new Error('Online payment is not available right now - please pay in cash after the service.'), {
@@ -72,6 +72,10 @@ async function createOrderForPurpose({ owner, purpose, planCode, amountPaise, or
     planId = plan._id;
     subscriptionId = subscription._id;
     cfOrderIdPrefix = 'sub';
+  } else if (purpose === 'dues_payment') {
+    // A partner paying what they owe ZappyOne from jobs paid to them directly; the whole amount, or part of it.
+    resolvedAmount = await require('../worker/dues-pay').amountFor(owner, amountPaise);
+    cfOrderIdPrefix = 'due';
   } else if (purpose === 'wallet_topup') {
     if (!Number.isInteger(amountPaise) || amountPaise < 1000) {
       throw Object.assign(new Error('Wallet top-up minimum is ₹10'), { status: 400, code: 'TOPUP_MIN' });
@@ -108,15 +112,19 @@ async function createOrderForPurpose({ owner, purpose, planCode, amountPaise, or
     ...(bookingId ? { bookingSource, bookingId: String(bookingId) } : {}),
   };
   const gw = gateway.active();
-  let cfOrder = null; let razorpayOrder = null;
-  if (gw === 'razorpay') razorpayOrder = await razorpay.createOrder({ orderId: cfOrderId, amountPaise: resolvedAmount, tags });
+  let cfOrder = null; let razorpayOrder = null; let paymentLink = null;
+  if (link) {
+    // Apps pay on Razorpay's own page (no checkout SDK in the app); only Razorpay has it here.
+    if (gw !== 'razorpay') throw Object.assign(new Error('Paying from the app is not available yet. Pay from the website, or pay by UPI and tell us the reference.'), { status: 503, code: 'LINK_UNAVAILABLE' });
+    paymentLink = await razorpay.createPaymentLink({ orderId: cfOrderId, amountPaise: resolvedAmount, description: purpose === 'dues_payment' ? 'ZappyOne dues' : 'ZappyOne payment', tags, callbackUrl: returnUrl });
+  } else if (gw === 'razorpay') razorpayOrder = await razorpay.createOrder({ orderId: cfOrderId, amountPaise: resolvedAmount, tags });
   else cfOrder = await cashfree.createOrder({ orderId: cfOrderId, amountPaise: resolvedAmount, customer: await resolveCustomer(owner), returnUrl, tags });
 
   const isBooking = purpose === 'repair_payment' || purpose === 'booking_payment';
   const intent = await PaymentIntent.create({
     cfOrderId,
     gateway: gw,
-    gatewayOrderId: razorpayOrder?.id,
+    gatewayOrderId: razorpayOrder?.id || paymentLink?.id,
     owner,
     purpose: isBooking ? 'booking_payment' : purpose,
     planId,
@@ -131,7 +139,26 @@ async function createOrderForPurpose({ owner, purpose, planCode, amountPaise, or
     status: 'created',
   });
 
-  return { paymentIntent: intent, cfOrder, razorpayOrder };
+  return { paymentIntent: intent, cfOrder, razorpayOrder, paymentLink };
+}
+
+// A payment link is settled when Razorpay says the link is paid; the same exactly-once capture as every payment.
+async function settleLink(intent, eventName) {
+  let l;
+  try { l = await razorpay.getPaymentLink(intent.gatewayOrderId); } catch {
+    throw Object.assign(new Error('Could not check the payment with Razorpay'), { status: 502, code: 'GATEWAY_VERIFY_FAILED' });
+  }
+  const paid = l.status === 'paid' && (l.payments || []).find((p) => p.status === 'captured');
+  if (!paid) return { ok: false, status: l.status || 'not_paid' };
+  return capturePayment({ cfOrderId: intent.cfOrderId, cfPaymentId: String(paid.payment_id), amountPaise: paid.amount, eventName, rawPayload: { source: eventName, link: { id: l.id, status: l.status } } });
+}
+
+// The app comes back from Razorpay's page and asks whether its payment went through.
+async function checkLink({ cfOrderId, owner }) {
+  const intent = await PaymentIntent.findOne({ cfOrderId, 'owner.kind': owner.kind, 'owner.id': owner.id, gateway: 'razorpay' }).lean();
+  if (!intent || !String(intent.gatewayOrderId || '').startsWith('plink_')) throw Object.assign(new Error('Payment not found'), { status: 404, code: 'NOT_FOUND' });
+  if (intent.appliedAt) return { ok: true, action: 'already_applied' };
+  return settleLink(intent, 'link.check');
 }
 
 /**
@@ -219,6 +246,12 @@ async function handleRazorpayWebhook(payload) {
       if (!intent || !payment?.id) return { ok: false, reason: 'unknown_order' };
       return verifyRazorpay(intent, payment.id, null, `razorpay.${event}`);
     }
+    case 'payment_link.paid': {
+      const linkId = payload?.payload?.payment_link?.entity?.id;
+      const intent = await intentOf(linkId);
+      if (!intent) return { ok: false, reason: 'unknown_link' };
+      return settleLink(intent, 'razorpay.payment_link.paid');
+    }
     case 'payment.failed': {
       if (payment?.order_id) {
         await PaymentIntent.updateOne(
@@ -283,6 +316,9 @@ async function capturePayment({ cfOrderId, cfPaymentId, amountPaise, eventName, 
         idempotencyKey: `platform:sub:${cfPaymentId}`,
         description: 'Subscription payment received',
       }).catch((e) => { if (e.code !== 11000) throw e; });
+
+    } else if (intent.purpose === 'dues_payment') {
+      await require('../worker/dues-pay').applyPaid({ owner: intent.owner, amountPaise: intent.amountPaise, paymentId: cfPaymentId, intentId: intent._id });
 
     } else if (intent.purpose === 'wallet_topup') {
       await walletService.apply({
@@ -419,6 +455,12 @@ async function reconcilePendingIntents({ now = Date.now(), limit = 50 } = {}) {
   let captured = 0, expired = 0;
   for (const intent of pending) {
     try {
+      if (intent.gateway === 'razorpay' && String(intent.gatewayOrderId || '').startsWith('plink_')) {
+        const r = await settleLink(intent, 'reconcile.sweep');
+        if (r.ok !== false) { captured++; continue; }
+        if (now - new Date(intent.createdAt).getTime() > EXPIRE_AFTER_MS) { await PaymentIntent.updateOne({ _id: intent._id, status: 'created' }, { $set: { status: 'expired' } }); expired++; }
+        continue;
+      }
       if (intent.gateway === 'razorpay') {
         const paid = (await razorpay.getOrderPayments(intent.gatewayOrderId)).find((p) => p.status === 'captured' || p.status === 'authorized');
         if (paid) { const r = await verifyRazorpay(intent, paid.id, null, 'reconcile.sweep'); if (r.ok !== false) captured++; continue; }
@@ -526,6 +568,7 @@ async function refundIntent(intent, { amountPaise, reason, label, ref }) {
 
 module.exports = {
   handleRazorpayWebhook,
+  checkLink,
   createOrderForPurpose,
   handleWebhook,
   handleCheckoutVerification,
