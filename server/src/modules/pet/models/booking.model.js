@@ -288,6 +288,7 @@ const petBookingSchema = new mongoose.Schema(
     serviceMode: { type: String, enum: SERVICE_MODES, required: true },
     pets: { type: [bookingPetSchema], default: [] },
     extras: { type: require('../../jobs/extras.field'), default: undefined },
+    payClaim: { type: new mongoose.Schema(require('../../jobs/pay-claim.field'), { _id: false }), default: undefined },
 
     status: { type: String, enum: BOOKING_STATUSES, default: 'REQUESTED', index: true },
     statusHistory: { type: [statusEventSchema], default: [] },

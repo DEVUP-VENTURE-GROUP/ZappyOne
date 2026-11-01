@@ -26,56 +26,51 @@ export function CashRefusedControl({ jobId }) {
   );
 }
 
+const timeOf = (d) => new Date(d).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' });
+
 /**
- * What the provider does about money at the end of a job.
- *   paid                → confirmation
- *   cash                → "collect ₹X", then record it
- *   online, not paid    → "waiting for ₹X online", with cash as the fallback
- * The job cannot close until one of these has happened, so this sits right
- * where the provider finishes the work. A tip the customer put on the bill is
- * inside amountPaise and called out (tipPaise): it is all theirs.
+ * The money step at the end of every job: the customer pays the pro directly
+ * (UPI to the pro's own ID, or cash), the customer may tap "I've paid" (claim),
+ * and the pro taps Received once the money is really in hand.
  */
-export default function CollectPaymentCard({ amountPaise, paymentMethod, paid, collecting, onCollect, what = 'payment', tipPaise = 0, jobId = null }) {
+export default function CollectPaymentCard({ amountPaise, paymentMethod, paid, collecting, onCollect, tipPaise = 0, carriedPaise = 0, jobId = null, claim = null }) {
   if (!amountPaise || amountPaise <= 0) return null;
   const amount = formatPaise(amountPaise);
   const tipLine = tipPaise > 0 && (
-    <p className="mt-1.5 flex items-center gap-1.5 rounded-xl bg-rose-50 px-2.5 py-1.5 text-[12px] font-bold text-rose-700">
+    <p className="mt-2 flex items-center gap-1.5 rounded-xl bg-rose-50 px-2.5 py-1.5 text-[12.5px] font-semibold text-rose-700">
       <Heart size={13} className="fill-rose-500 text-rose-500" /> Includes a {formatPaise(tipPaise)} tip from the customer. All yours.
     </p>
   );
 
   if (paid) {
+    const how = paymentMethod === 'online' ? 'paid online' : claim?.method === 'upi' ? 'received by UPI' : 'received';
     return (
-      <div className="rounded-2xl border-2 border-emerald-200 bg-emerald-50/60 p-4">
-        <p className="flex items-center gap-1.5 text-sm font-bold text-emerald-800">
-          <Check size={15} /> {amount} {paymentMethod === 'cash' ? 'collected in cash' : 'paid online'}
-        </p>
+      <div className="rounded-2xl border border-green-200 bg-green-50 p-4">
+        <p className="flex items-center gap-1.5 text-[15px] font-bold text-green-800"><Check size={16} /> {amount} {how}</p>
         {tipLine}
       </div>
     );
   }
 
-  const cash = paymentMethod === 'cash';
   return (
-    <div className="rounded-2xl border-2 border-amber-200 bg-amber-50/60 p-4">
-      <p className="text-sm font-bold text-[#0F172A]">{cash ? `Collect ${amount} in cash` : `Waiting for ${amount} online`}</p>
-      <p className="mt-0.5 text-[11px] leading-relaxed text-slate-600">
-        {cash
-          ? `Take the ${what} from the customer, then record it here. The platform's share is deducted from your wallet.`
-          : 'The customer chose to pay online and can pay from their booking screen. If they cannot, take cash and record it here.'}
+    <div className="rounded-2xl border border-line bg-white p-4">
+      <p className="text-[17px] font-extrabold text-ink-900">Collect {amount}</p>
+      <p className="mt-0.5 text-[13px] leading-relaxed text-ink-500">
+        The customer pays you by UPI or cash. Tap Received once the money is with you.
+        {carriedPaise > 0 && ` It includes ${formatPaise(carriedPaise)} they owed from an earlier cancelled booking.`}
       </p>
+      {claim?.method && (
+        <p className="mt-2.5 rounded-xl bg-zappy-50 px-3 py-2 text-[13px] font-semibold text-zappy-800">
+          {claim.method === 'upi'
+            ? `The customer says they paid ${amount} by UPI at ${timeOf(claim.at)}. Check your UPI app first.`
+            : `The customer is paying ${amount} in cash.`}
+        </p>
+      )}
       {tipLine}
-      <button
-        type="button"
-        onClick={onCollect}
-        disabled={collecting}
-        className={`w-full mt-2.5 rounded-2xl font-bold py-3 disabled:opacity-50 ${cash ? 'bg-[#0F172A] text-white' : 'border-2 border-slate-300 bg-white text-[#0F172A]'}`}
-      >
-        {collecting
-          ? <span className="inline-flex items-center gap-1.5"><Loader2 size={15} className="animate-spin" /> Recording…</span>
-          : `I've collected ${amount} in cash`}
+      <button type="button" onClick={onCollect} disabled={collecting} className="btn-primary mt-3 h-12 w-full">
+        {collecting ? <><Loader2 size={15} className="animate-spin" /> Recording</> : `Received ${amount}`}
       </button>
-      {cash && jobId && <CashRefusedControl jobId={jobId} />}
+      {jobId && <CashRefusedControl jobId={jobId} />}
     </div>
   );
 }

@@ -60,6 +60,7 @@ const LOGIC = [
   { from: 'customer/prosArrive.js', to: 'shared/prosArrive.js', imports: { react: 'react' } },
   { from: 'customer/jobKinds.js', to: 'shared/jobKinds.js', imports: { '../provider/jobFlows': './jobFlows', './repairBill': './repairBill' } },
   { from: 'customer/trackingSteps.js', to: 'shared/trackingSteps.js', imports: {} },
+  { from: 'customer/upiPay.js', to: 'shared/upiPay.js', imports: {} },
   { from: 'customer/repairBill.js', to: 'shared/repairBill.js', imports: {} },
   { from: 'customer/repairBasket.js', to: 'shared/repairBasket.js', imports: {} },
   { from: 'customer/searchClock.js', to: 'shared/searchClock.js', imports: {} },

@@ -15,7 +15,8 @@ const router = express.Router();
 /** Public: apps offer "Pay online" only while this says it works. */
 router.get('/availability', (req, res) => {
   const gw = require('./gateway').active();
-  res.json({ online: !!gw, cash: true, gateway: gw, env: require('../../config').cashfree.env });
+  // Jobs are paid to the pro directly, so no booking is ever offered "Pay online"; the gateway serves memberships and dues.
+  res.json({ online: false, cash: true, gateway: gw, env: require('../../config').cashfree.env });
 });
 
 // A customer's own payment for one booking and where its refund is: amount, status, date and the gateway's reference, so "refund initiated" is never a black box.

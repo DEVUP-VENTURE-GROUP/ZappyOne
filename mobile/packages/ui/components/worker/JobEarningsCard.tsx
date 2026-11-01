@@ -14,7 +14,7 @@ import { JobCard, Eyebrow } from '../jobs/JobCard';
 
 type Line = { label: string; paise: number; note?: string };
 
-function Block({ title, total, rows, you }: { title: string; total: number; rows: Line[]; you?: boolean }) {
+function Block({ title, total, rows = [], you }: { title: string; total: number; rows?: Line[]; you?: boolean }) {
   return (
     <View style={[styles.block, you ? styles.blockYou : null]}>
       <View style={styles.between}>
@@ -43,12 +43,12 @@ export function JobEarningsCard({ jobId }: { jobId: string }) {
   return (
     <JobCard>
       <View style={styles.row}><Wallet size={14} color={ink[500]} /><Eyebrow>PAYMENT BREAKDOWN</Eyebrow></View>
-      <Block title="Customer paid" total={e.customerPaidPaise} rows={e.bill} />
-      <Block title="ZappyOne keeps" total={e.zappyKeepsPaise} rows={e.zappy} />
+      <Block title="Customer paid" total={e.customerPaidPaise} />
+      <Block title="ZappyOne" total={e.zappyKeepsPaise} />
       <Block title="You earn" total={e.youEarnPaise} rows={e.yours} you />
       <Text variant="caption" color={ink[700]}>
         {e.cash
-          ? `You collected ${formatPaise(e.customerPaidPaise)} in cash. ZappyOne's ${formatPaise(e.zappyKeepsPaise)} comes off your wallet, so you keep ${formatPaise(e.youEarnPaise)}.`
+          ? `You collected ${formatPaise(e.customerPaidPaise)}. ZappyOne's ${formatPaise(e.zappyKeepsPaise)} is added to what you pay ZappyOne, so you keep ${formatPaise(e.youEarnPaise)}.`
           : `The customer paid online. Your ${formatPaise(e.youEarnPaise)} goes to your wallet.`}
       </Text>
     </JobCard>

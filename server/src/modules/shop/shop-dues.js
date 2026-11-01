@@ -39,7 +39,7 @@ async function assertShopCanWork(shopId) {
   const d = await duesOf(shopId);
   if (!d.isBlocked) return d;
   throw Object.assign(
-    new Error(`Your business owes ZappyOne ${rupees(d.duesPaise)} in commission from cash jobs. Clear at least ${rupees(d.duesPaise - d.limitPaise + 100)} to take new jobs again.`),
+    new Error(`You owe ZappyOne ${rupees(d.duesPaise)}. Pay at least ${rupees(d.duesPaise - d.limitPaise + 100)} to take new jobs again.`),
     { status: 402, code: 'SHOP_DUES', dues: d },
   );
 }

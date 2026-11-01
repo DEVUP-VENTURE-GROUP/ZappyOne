@@ -185,7 +185,7 @@ export function WorkerRepairJobPage() {
 
         {repairReadyForPayment(booking) && (snap.totalPaise || 0) > 0 ? (
           <CollectPaymentCard amountPaise={duePaise} tipPaise={tipPaise} carriedPaise={carriedPaise} paymentMethod={booking.paymentMethod}
-            paid={booking.paymentStatus === 'paid'} collecting={collecting} onCollect={collect} jobId={booking._id} />
+            paid={booking.paymentStatus === 'paid'} collecting={collecting} onCollect={collect} jobId={booking._id}  claim={(booking as { payClaim?: { method?: 'upi' | 'cash'; at?: string } }).payClaim} />
         ) : null}
 
         <JobCard>

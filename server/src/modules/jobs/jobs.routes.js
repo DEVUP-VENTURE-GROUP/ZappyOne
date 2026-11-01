@@ -222,6 +222,7 @@ router.get('/:id/options',
         place: terminal ? { allowed: false } : await require('./place-edit').editable(kind, doc),
         contact: { allowed: !terminal && ['repair', 'pet', 'helping'].includes(kind), onSite: doc.onSite?.name ? doc.onSite : null },
         extras: terminal ? { allowed: false } : await require('./extras').view(kind, doc),
+        payTo: await require('./pay-direct').view(kind, doc),
         addedExtras: (doc.extras || []).map((e) => ({ name: e.name, pricePaise: e.pricePaise + (e.taxPaise || 0), addedAt: e.addedAt })),
         arrival: await require('./promise').viewFor(doc._id),
         search: await require('./fast-assign').searchView(kind, doc),
@@ -355,6 +356,14 @@ router.patch('/:id/place', authenticate, requireRole('user'),
   }).and('lat', 'lng')),
   async (req, res, next) => {
     try { res.json(await require('./place-edit').editPlace({ id: req.params.id, userId: req.auth.sub, ...req.body })); } catch (err) { next(err); }
+  });
+
+/** The customer says they paid the pro (UPI or cash); the pro confirms it (jobs/pay-direct). */
+router.post('/:id/pay-claim', authenticate, requireRole('user'),
+  makeLimiter({ windowMs: 10 * 60_000, max: 10, prefix: 'jobpayclaim' }),
+  validate(Joi.object({ method: Joi.string().valid('upi', 'cash').required() })),
+  async (req, res, next) => {
+    try { res.json(await require('./pay-direct').claim({ id: req.params.id, userId: req.auth.sub, method: req.body.method })); } catch (err) { next(err); }
   });
 
 /** Change who the pro meets at the door (jobs/place-edit). */

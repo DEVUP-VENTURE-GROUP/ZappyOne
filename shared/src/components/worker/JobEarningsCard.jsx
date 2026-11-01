@@ -2,7 +2,7 @@ import { Loader2, Wallet } from 'lucide-react';
 import { useJobEarningsQuery } from '../../services/api';
 import { formatPaise } from '../../utils/money';
 
-function Lines({ rows }) {
+function Lines({ rows = [] }) {
   return rows.map((r) => (
     <div key={r.label} className="flex items-start justify-between gap-3 text-[13px]">
       <span className="text-slate-600">{r.label}{r.note && <span className="block text-[11px] text-slate-400">{r.note}</span>}</span>
@@ -42,12 +42,12 @@ export default function JobEarningsCard({ jobId }) {
   return (
     <div className="card space-y-2.5">
       <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-slate-500"><Wallet size={14} /> Payment breakdown</p>
-      <Block title="Customer paid" totalPaise={e.customerPaidPaise} rows={e.bill} />
-      <Block title="ZappyOne keeps" totalPaise={e.zappyKeepsPaise} rows={e.zappy} tone="zappy" />
+      <Block title="Customer paid" totalPaise={e.customerPaidPaise} />
+      <Block title="ZappyOne" totalPaise={e.zappyKeepsPaise} tone="zappy" />
       <Block title="You earn" totalPaise={e.youEarnPaise} rows={e.yours} tone="you" />
       <p className="text-[12px] leading-relaxed text-slate-600">
         {e.cash
-          ? `You collected ${formatPaise(e.customerPaidPaise)} in cash. ZappyOne's ${formatPaise(e.zappyKeepsPaise)} comes off your wallet, so you keep ${formatPaise(e.youEarnPaise)}.`
+          ? `You collected ${formatPaise(e.customerPaidPaise)}. ZappyOne's ${formatPaise(e.zappyKeepsPaise)} is added to what you pay ZappyOne, so you keep ${formatPaise(e.youEarnPaise)}.`
           : `The customer paid online. Your ${formatPaise(e.youEarnPaise)} goes to your wallet.`}
       </p>
     </div>

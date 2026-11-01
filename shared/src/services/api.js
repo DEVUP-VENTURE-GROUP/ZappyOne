@@ -444,6 +444,7 @@ export const {
   useEditJobPlaceMutation,
   useEditJobContactMutation,
   useAddJobExtraMutation,
+  useClaimJobPaymentMutation,
   useUnshareJobMutation,
   useGetSharedJobQuery,
   useReportCustomerAbsentMutation, useReportCashRefusedMutation,

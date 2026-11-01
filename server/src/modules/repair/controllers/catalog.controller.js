@@ -10,7 +10,6 @@ const diagnosticService = require('../services/diagnostic.service');
 const matchingService = require('../services/matching.service');
 const pricingService = require('../services/pricing.service');
 const { verticalOf, verticalFilter } = require('../vertical');
-const { gatewayReady } = require('../../payment/payables');
 
 /**
  * Repair catalog, as the customer browses it: brands, models, problems,
@@ -500,7 +499,7 @@ async function previewPrice(req, res, next) {
       skipPlatformFee: (await require('../../jobs/member').perks(req.auth?.sub)).waivePlatformFee,
     });
 
-    const onlineEnabled = gatewayReady();
+    const onlineEnabled = false;
     res.json({
       /**
        * How this can be paid for. Sent so the app never offers a method that

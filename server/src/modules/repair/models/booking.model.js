@@ -244,6 +244,7 @@ const repairBookingSchema = new mongoose.Schema(
      */
     addOns: { type: [addOnSnapshotSchema], default: [] },
     extras: { type: require('../../jobs/extras.field'), default: undefined },
+    payClaim: { type: new mongoose.Schema(require('../../jobs/pay-claim.field'), { _id: false }), default: undefined },
 
     serviceMode: {
       type: String,

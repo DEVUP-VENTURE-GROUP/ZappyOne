@@ -315,6 +315,7 @@ export const useShareJobMutation = h.useShareJobMutation;
 export const useEditJobPlaceMutation = h.useEditJobPlaceMutation;
 export const useEditJobContactMutation = h.useEditJobContactMutation;
 export const useAddJobExtraMutation = h.useAddJobExtraMutation;
+export const useClaimJobPaymentMutation = h.useClaimJobPaymentMutation;
 export const useUnshareJobMutation = h.useUnshareJobMutation;
 export const useGetSharedJobQuery = h.useGetSharedJobQuery;
 export const useReportCustomerAbsentMutation = h.useReportCustomerAbsentMutation;

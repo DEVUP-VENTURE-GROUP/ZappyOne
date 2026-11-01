@@ -95,9 +95,11 @@ async function bookAndComplete(
     // Stated rather than defaulted: the two methods settle in opposite
     // directions, so a test that does not say which it means is testing
     // whatever the default happens to be today.
-    paymentMethod,
+    paymentMethod: 'cash',
     location: loc, idempotencyKey: key,
   });
+  // Customers can no longer book online (jobs are paid to the pro directly); bookings made before that still settle this way.
+  if (paymentMethod !== 'cash') await RepairBooking.updateOne({ _id: booking._id }, { $set: { paymentMethod } });
 
   // The customer gave their handover codes; this suite is not about that.
   await passHandoverGates(booking._id);
@@ -334,7 +336,7 @@ describe('cash repairs', () => {
     // Already at the limit, the way a run of cash jobs would leave them.
     await Wallet.updateOne(
       { 'owner.kind': 'worker', 'owner.id': workerId },
-      { $set: { balancePaise: -99000 } }, // just under the ₹1,000 limit, so they may still accept
+      { $set: { balancePaise: -199000 } }, // just under the ₹2,000 limit, so they may still accept
     );
 
     const booking = await bookAndComplete('cash-at-limit', {
@@ -346,7 +348,7 @@ describe('cash repairs', () => {
     expect(debit.status).toBe('succeeded');
     expect(debit.amountPaise).toBe(-15000);
     const w = await Wallet.findOne({ 'owner.kind': 'worker', 'owner.id': workerId }).lean();
-    expect(w.balancePaise).toBe(-114000);
+    expect(w.balancePaise).toBe(-214000);
     expect(await Transaction.findOne({ idempotencyKey: `repair:cash_commission_unpaid:${booking._id}` })).toBeNull();
     // Now past the limit: no new work until they pay.
     await expect(require('../src/modules/worker/worker-dues.service').assertCanWork(workerId)).rejects.toMatchObject({ code: 'WALLET_BLOCKED' });

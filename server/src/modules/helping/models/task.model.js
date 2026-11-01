@@ -350,6 +350,7 @@ const helpingTaskSchema = new mongoose.Schema(
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     /** Booking for someone else: who the provider meets (jobs/on-site.js). */
     onSite: { type: new mongoose.Schema(require('../../jobs/on-site').onSiteField, { _id: false }), default: undefined },
+    payClaim: { type: new mongoose.Schema(require('../../jobs/pay-claim.field'), { _id: false }), default: undefined },
     /** An earlier cancellation fee paid with this booking (jobs/cancel-fee). */
     carriedFee: { type: require('../../jobs/carried-fee.field'), default: undefined },
     /** Customer's boost while searching, and tip once done; 100% the provider's (jobs/boost-tip). */

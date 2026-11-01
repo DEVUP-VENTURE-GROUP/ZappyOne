@@ -25,6 +25,7 @@ import { CancelSheet } from './cards/CancelSheet';
 import { EditPlaceSheet } from './cards/EditPlaceSheet';
 import { ContactSheet } from './cards/ContactSheet';
 import { AddServices } from './redesign/AddServices';
+import { PayPro } from './redesign/PayPro';
 import { JobBoostCard } from './cards/JobBoostCard';
 import { SlowSearchCard } from './cards/SlowSearchCard';
 import { JobTipCard } from './cards/JobTipCard';
@@ -114,6 +115,7 @@ export function JobTrackingPage({ job, extras = null, startCode = null, codeStag
             <Row Icon={Clock} title={`Finishing by ${clock(options.moreTime.until)}`} sub={`${options.moreTime.reason}. Nothing extra is charged unless you approve a new quote.`} />
           ) : null}
         </StatusBlock>
+        {options?.payTo ? <PayPro jobId={job.id} payTo={options.payTo} onClaimed={refetchOptions} /> : null}
 
         {job.provider && !job.terminal ? (
           <WorkerRichCard job={job}

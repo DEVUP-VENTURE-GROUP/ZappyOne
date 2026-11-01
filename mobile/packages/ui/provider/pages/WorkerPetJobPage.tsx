@@ -169,7 +169,7 @@ export function WorkerPetJobPage() {
 
         {PET_PAY_STAGES.includes(booking.status) ? (
           <CollectPaymentCard amountPaise={petDuePaise(booking)} tipPaise={billTipPaise(booking)} paymentMethod={booking.paymentMethod}
-            paid={booking.paymentStatus === 'paid'} collecting={collecting} onCollect={recordCash} jobId={booking._id} />
+            paid={booking.paymentStatus === 'paid'} collecting={collecting} onCollect={recordCash} jobId={booking._id}  claim={(booking as { payClaim?: { method?: 'upi' | 'cash'; at?: string } }).payClaim} />
         ) : null}
         {PET_DONE.includes(booking.status) ? <JobEarningsCard jobId={booking._id} /> : null}
         {PET_DONE.includes(booking.status) ? <RateCustomerCard jobId={booking._id} rated={!!booking.customerRating?.stars} /> : null}

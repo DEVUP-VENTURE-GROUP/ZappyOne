@@ -203,6 +203,7 @@ export default function WorkerPetJobPage() {
             collecting={collecting}
             onCollect={recordCash}
             jobId={booking._id}
+            claim={booking.payClaim}
           />
         )}
         {PET_DONE.includes(booking.status) && <JobEarningsCard jobId={booking._id} />}

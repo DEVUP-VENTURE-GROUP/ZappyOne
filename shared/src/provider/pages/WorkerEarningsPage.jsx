@@ -40,7 +40,7 @@ function EarningRow({ job, expanded, onToggle, index }) {
           >
             <div className="border-t border-slate-50 px-5 pb-5 pt-4 bg-slate-50/50 space-y-2.5 text-sm">
               <div className="flex justify-between items-center"><span className="text-slate-500 font-medium">Gross earnings</span><span className="font-bold text-slate-700">{fmt(job.gross)}</span></div>
-              <div className="flex justify-between items-center"><span className="text-slate-500 font-medium">Platform fee</span><span className="font-bold text-rose-500 bg-rose-50 px-2 py-0.5 rounded-md">-{fmt(job.platformFee)}</span></div>
+              <div className="flex justify-between items-center"><span className="text-slate-500 font-medium">ZappyOne</span><span className="font-bold text-rose-500 bg-rose-50 px-2 py-0.5 rounded-md">-{fmt(job.platformFee)}</span></div>
               {job.tip > 0 && <div className="flex justify-between items-center"><span className="text-slate-500 font-medium">Customer tip</span><span className="font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">+{fmt(job.tip)}</span></div>}
               {job.bonus > 0 && <div className="flex justify-between items-center"><span className="text-slate-500 font-medium">Bonus</span><span className="font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">+{fmt(job.bonus)}</span></div>}
               {hasSurge && (
@@ -61,7 +61,7 @@ function EarningRow({ job, expanded, onToggle, index }) {
 }
 
 function generatePayslipCSV(jobs, period) {
-  const rows = [['Date', 'Service', 'Gross', 'Platform Fee', 'Tip', 'Bonus', 'Surge', 'Net']];
+  const rows = [['Date', 'Service', 'Gross', 'ZappyOne', 'Tip', 'Bonus', 'Surge', 'Net']];
   jobs.forEach(j => {
     rows.push([
       new Date(j.completedAt).toLocaleDateString('en-IN'),
@@ -153,10 +153,10 @@ export default function WorkerEarningsPage() {
             </div>
           </motion.div>
 
-          {/* Platform fee info */}
+          {/* ZappyOne amount note */}
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="bg-zappy-50/50 border border-zappy-100/50 rounded-2xl p-4 flex gap-3 text-[13px] text-zappy-800/80 mb-8 font-medium">
             <Info size={16} className="shrink-0 mt-0.5 text-zappy-500" />
-            <p>The platform fee is ZappyOne's commission, taken from each job. Tips and customer boosts are all yours.</p>
+            <p>ZappyOne's amount on each job is added to what you pay ZappyOne. Tips and customer boosts are all yours.</p>
           </motion.div>
 
           {/* Jobs list */}
