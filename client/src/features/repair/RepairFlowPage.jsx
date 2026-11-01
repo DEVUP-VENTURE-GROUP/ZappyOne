@@ -32,7 +32,6 @@ import { PayMethodPicker } from '@shared/components/common/PayMethodPicker';
 import SomeoneElse from '@shared/components/booking/SomeoneElse';
 import PendingFeeNotice from '@shared/components/booking/PendingFeeNotice';
 import BrandLogo from '@shared/components/common/BrandLogo';
-import BookedCelebration from '../../components/feedback/BookedCelebration';
 import { categoryPhoto, problemPhoto } from '@shared/components/home/problemArt';
 import { ProblemLayout } from './ProblemCard';
 import { usePayBooking } from '@shared/hooks/usePayBooking';
@@ -1847,7 +1846,6 @@ function RepairFlow({ vertical, saved, draftKey, onStartOver, onAddAnother }) {
   const [model, setModel] = useState(saved?.model ?? null);
   const [configuration, setConfiguration] = useState(saved?.configuration ?? null);
   const [problem, setProblem] = useState(saved?.problem ?? null);
-  const [booked, setBooked] = useState(null);
   const [diagnosis, setDiagnosis] = useState(saved?.diagnosis ?? null);
   const [diagnosticAnswers, setDiagnosticAnswers] = useState(saved?.diagnosticAnswers ?? null);
   const [diagnosticTranscript, setDiagnosticTranscript] = useState(saved?.diagnosticTranscript ?? []);
@@ -2139,15 +2137,7 @@ function RepairFlow({ vertical, saved, draftKey, onStartOver, onAddAnother }) {
           diagnosticAnswers={diagnosticAnswers} diagnosticTranscript={diagnosticTranscript}
           serviceMode={serviceMode} inspectionFeePaise={inspectionFeePaise}
           fuelType={fuelType} scheduledAt={when}
-          onDone={(b) => { clearDraft(draftKey); draftDone(); setBooked(b); }}
-        />
-      )}
-      {booked && (
-        <BookedCelebration
-          title={serviceMode === 'diagnosis_only' ? 'Inspection booked' : 'Booking confirmed'}
-          lines={[deviceName(brand, model), problem?.name]}
-          reference={booked.reference}
-          onDone={() => nav(`/repair/bookings/${booked._id}`, { replace: true })}
+          onDone={(b) => { clearDraft(draftKey); draftDone(); nav(`/repair/bookings/${b._id}`, { replace: true, state: { justBooked: true } }); }}
         />
       )}
     </div>

@@ -235,13 +235,12 @@ function PetBookingFlow({ categoryCode, saved, draftKey, onStartOver }) {
         ...surge.bookingFields,
         ...(tip > 0 && { tipPaise: tip * 100 }),
       }).unwrap();
-      toast.success('Booked');
       if (res.booking?.paymentMethod === 'online') {
         await pay({ bookingSource: 'pet', bookingId: res.booking._id, label: 'Pet care booking' });
       }
       clearDraft(draftKey);
       draftDone();
-      nav(`/pet/bookings/${res.booking._id}`, { replace: true });
+      nav(`/pet/bookings/${res.booking._id}`, { replace: true, state: { justBooked: true } });
     } catch (err) {
       if (surgeChanged(err, surge.refetch)) {
         toast(err.data.error);

@@ -25,8 +25,8 @@ function Rise({ delay, children, style }: { delay: number; children: React.React
 }
 
 // The few seconds after Confirm (the website's BookedCelebration): the booking is real, what happens next, then tracking opens on its own.
-export function BookedCelebration({ title = 'Booking confirmed', lines = [], reference, onDone }: {
-  title?: string; lines?: (string | null | undefined)[]; reference?: string; onDone: () => void;
+export function BookedCelebration({ title = 'Booking confirmed', lines = [], reference, noun = 'pro', onDone }: {
+  title?: string; lines?: (string | null | undefined)[]; reference?: string; noun?: string; onDone: () => void;
 }) {
   const insets = useSafeAreaInsets();
   const [reduce, setReduce] = useState(false);
@@ -46,7 +46,7 @@ export function BookedCelebration({ title = 'Booking confirmed', lines = [], ref
     return () => clearTimeout(t);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const steps: [string, boolean][] = [['Booking placed', true], ['Finding the nearest pro', false], ['You will get their name and start code here', false]];
+  const steps: [string, boolean][] = [['Booking placed', true], [`Finding the nearest ${noun}`, false], ['You will get their name and start code here', false]];
 
   return (
     <Modal visible animationType="fade" onRequestClose={finish}>

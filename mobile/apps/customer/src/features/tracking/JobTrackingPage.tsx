@@ -4,7 +4,8 @@
  */
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { BookedCelebration } from '@zappy/ui/components/common/BookedCelebration';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BadgeIndianRupee, Clock, Headphones, MailPlus, Repeat2, ShieldCheck, UserPlus } from 'lucide-react-native';
 import { useAccountMeQuery, useJobOptionsQuery, useShareJobMutation } from '@zappy/core/api';
@@ -58,6 +59,9 @@ export function JobTrackingPage({ job, extras = null, startCode = null, codeStag
   const [cancelOpen, setCancelOpen] = useState(false);
   const [editPlace, setEditPlace] = useState(false);
   const [editContact, setEditContact] = useState(false);
+  // Opened straight from Confirm (?booked=1): the booking-confirmed moment plays over tracking once.
+  const { booked } = useLocalSearchParams<{ booked?: string }>();
+  const [celebrate, setCelebrate] = useState(booked === '1');
   const status = job.status;
   const [shareJob] = useShareJobMutation();
   const { data: acct } = useAccountMeQuery(undefined);
@@ -180,6 +184,7 @@ export function JobTrackingPage({ job, extras = null, startCode = null, codeStag
 
       {cancel ? <CancelSheet visible={cancelOpen} onClose={() => setCancelOpen(false)} quote={options?.cancel} loading={optionsLoading} quoteNeeded={optionsOn} reasons={options?.reasons || []} note={cancel.note} onCancel={cancel.run} /> : null}
       {editPlace ? <EditPlaceSheet job={job} maxMoveM={options?.place?.maxMoveM} onClose={() => setEditPlace(false)} onSaved={refetchOptions} /> : null}
+      {celebrate ? <BookedCelebration lines={[job.service, job.subtitle]} reference={job.reference} noun={job.noun} onDone={() => { setCelebrate(false); router.setParams({ booked: undefined } as never); }} /> : null}
       {editContact ? <ContactSheet job={job} onSite={options?.contact?.onSite ?? null} onClose={() => setEditContact(false)} onSaved={refetchOptions} /> : null}
       <SosSheet visible={sosOpen} onClose={() => setSosOpen(false)} onAlert={onSOS} />
       {chatOpen ? <JobChat jobId={job.id} title={job.provider?.name || `Your ${job.noun}`} onClose={() => setChatOpen(false)} /> : null}

@@ -499,9 +499,8 @@ async function previewPrice(req, res, next) {
       vertical: verticalOf(req), repairCode, referencePrice: reference, serviceMode,
       skipPlatformFee: (await require('../../jobs/member').perks(req.auth?.sub)).waivePlatformFee,
     });
-    const cfg = await pricingService.getConfig(verticalOf(req));
 
-    const onlineEnabled = !!cfg?.onlinePaymentsEnabled && gatewayReady();
+    const onlineEnabled = gatewayReady();
     res.json({
       /**
        * How this can be paid for. Sent so the app never offers a method that

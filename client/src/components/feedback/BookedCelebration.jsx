@@ -9,12 +9,12 @@ const DOTS = Array.from({ length: 14 }, (_, i) => {
 });
 
 // The few seconds after Confirm: the booking is real, what happens next, then tracking opens on its own.
-export default function BookedCelebration({ title = 'Booking confirmed', lines = [], reference, steps, onDone }) {
+export default function BookedCelebration({ title = 'Booking confirmed', lines = [], reference, noun = 'pro', onDone }) {
   const reduce = useReducedMotion();
   const done = useRef(false);
   const finish = () => { if (!done.current) { done.current = true; onDone(); } };
   useEffect(() => { const t = setTimeout(finish, reduce ? 2500 : HOLD_MS); return () => clearTimeout(t); }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  const next = steps || [['Booking placed', true], ['Finding the nearest pro', false], ['You will get their name and start code here', false]];
+  const next = [['Booking placed', true], [`Finding the nearest ${noun}`, false], ['You will get their name and start code here', false]];
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed inset-0 z-[300] flex flex-col bg-white" role="dialog" aria-modal="true" aria-labelledby="booked-title">

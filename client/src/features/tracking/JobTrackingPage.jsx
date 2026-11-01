@@ -1,6 +1,7 @@
 import { useSafeBack } from '../../hooks/useBookingFlow';
 import { useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import BookedCelebration from '../../components/feedback/BookedCelebration';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import {
@@ -64,6 +65,9 @@ export default function JobTrackingPage({ job, extras = null, startCode = null, 
   const [cancelOpen, setCancelOpen] = useState(false);
   const [editPlace, setEditPlace] = useState(false);
   const [editContact, setEditContact] = useState(false);
+  const here = useLocation();
+  // Opened straight from Confirm (state.justBooked): the booking-confirmed moment plays over tracking once.
+  const [celebrate, setCelebrate] = useState(!!here.state?.justBooked);
   const [cancelling, setCancelling] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
   // The cancel fee, a changed provider, and "not coming": the server's answer for this moment.
@@ -259,6 +263,10 @@ export default function JobTrackingPage({ job, extras = null, startCode = null, 
           <BookingSummary job={job} onReceipt={receiptHandler} onEditPlace={options?.place?.allowed && !job.terminal ? () => setEditPlace(true) : undefined}
             contact={options?.contact} onEditContact={options?.contact?.allowed && !job.terminal ? () => setEditContact(true) : undefined} />
           {editPlace && <EditPlaceSheet job={job} place={options?.place} onClose={() => setEditPlace(false)} onSaved={refetchOptions} />}
+          {celebrate && (
+            <BookedCelebration lines={[job.service, job.subtitle]} reference={job.reference} noun={job.noun}
+              onDone={() => { setCelebrate(false); nav(here.pathname + here.search, { replace: true, state: null }); }} />
+          )}
           {editContact && <ContactSheet job={job} onSite={options?.contact?.onSite} onClose={() => setEditContact(false)} onSaved={refetchOptions} />}
 
           {!stopped && (

@@ -151,7 +151,7 @@ export function PetBookingFlow({ categoryCode, saved, draftKey, onStartOver }: {
         {step === 'confirm' && provider && loc ? (
           <PetConfirmStep categoryCode={categoryCode} serviceMode={mode} variantName={variant?.name} petNames={chosenPets.map((p) => p.name)} pets={entries()}
             provider={provider} quote={quoteResult} loc={loc} dest={dest} scheduledAt={scheduledAt} checkIn={checkIn} checkOut={checkOut}
-            onBooked={(id) => { clearDraft(draftKey); draftDone(); router.replace(`/pet/bookings/${id}` as never); }} />
+            onBooked={(id) => { clearDraft(draftKey); draftDone(); router.replace(`/pet/bookings/${id}?booked=1` as never); }} />
         ) : null}
       </ScrollView>
     </View>

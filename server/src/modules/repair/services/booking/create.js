@@ -124,25 +124,8 @@ async function createBooking({
    * itself supports. Every other mode must be one the repair allows.
    */
   const isInspectionOnly = serviceMode === 'diagnosis_only';
-  /**
-   * Online payment is refused unless a gateway is actually configured.
-   *
-   * The flag existed on RepairConfig but nothing read it, so a client could ask
-   * for `online` and get a booking the platform has no means of charging —
-   * completed work, no money, and no error anywhere to explain it. Cash is
-   * always available, so this is a hard refusal rather than a silent downgrade:
-   * quietly changing how someone pays is its own kind of wrong.
-   */
-  if (paymentMethod === 'online') {
-    require('../../../payment/payables').assertOnlineAvailable(paymentMethod);
-    const payCfg = await pricingService.getConfig(vertical);
-    if (!payCfg?.onlinePaymentsEnabled) {
-      const err = new Error('Online payment is not available yet - this booking can be paid in cash.');
-      err.status = 400;
-      err.code = 'ONLINE_PAYMENTS_DISABLED';
-      throw err;
-    }
-  }
+  // Online payment turns on by itself once gateway keys are set; until then it is refused, never silently switched to cash.
+  require('../../../payment/payables').assertOnlineAvailable(paymentMethod);
 
   if (repair && !isInspectionOnly && !repair.allowedServiceModes.includes(serviceMode)) {
     throw httpError('This repair is not available in that service mode', 400, 'SERVICE_MODE_NOT_ALLOWED');
