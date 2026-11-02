@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft, ChevronRight, Loader2, Check, Clock, AlertTriangle, Upload,
-  ShieldCheck, Plus, X, Store, User, FileText, Ban, Camera,
+  ShieldCheck, Plus, X, Store, User, FileText, Ban, Camera, Home,
 } from 'lucide-react';
 import PhotoTiles from '../../components/common/PhotoTiles';
 import {
@@ -343,71 +343,100 @@ function RequestSheet({ domain, onClose }) {
     }
   }
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center" onClick={onClose}>
-      <div className="max-h-[92dvh] w-full overflow-y-auto rounded-t-3xl bg-white p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:max-w-lg sm:rounded-3xl" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-bold text-slate-900">Tell us what you do</h3>
-          <button onClick={onClose} aria-label="Close" className="text-slate-400"><X size={20} /></button>
-        </div>
-        <p className="mt-1 text-xs leading-relaxed text-slate-500">
-          Add your jobs with your prices and photos of your work. Once ZappyOne approves the service, it becomes your menu: finish verification and customers near you can book.
-          {sent > 0 && <span className="ml-1 font-semibold text-emerald-700">{sent} sent so far.</span>}
-        </p>
+  const field = 'h-11 w-full rounded-btn border border-line-strong bg-white px-3 text-[15px] text-ink-900 outline-none transition placeholder:text-ink-400 focus:border-zappy-600 focus:ring-2 focus:ring-zappy-100';
+  const label = 'mb-1.5 block text-[13px] font-semibold text-ink-700';
+  const MODES = [['doorstep', "At the customer's place", Home], ['workshop', 'At my shop', Store]];
 
-        <div className="mt-4 space-y-4">
-          <input className="input w-full text-sm" placeholder="Service name (e.g. Smart watch repair)" maxLength={120}
-            value={form.proposedName} onChange={(e) => setForm((f) => ({ ...f, proposedName: e.target.value }))} />
-          <textarea rows={3} maxLength={1000}
-            className="w-full resize-none rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-zappy-100"
-            placeholder="What exactly do you do?"
-            value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink-900/50 sm:items-center" onClick={onClose}>
+      <div role="dialog" aria-modal="true" aria-labelledby="req-title" className="flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-sheet bg-white sm:max-w-lg sm:rounded-sheet" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-start justify-between gap-3 border-b border-line px-5 pb-3 pt-5">
+          <div className="min-w-0">
+            <h3 id="req-title" className="text-[18px] font-extrabold text-ink-900">Tell us what you do</h3>
+            <p className="mt-0.5 text-[12.5px] leading-relaxed text-ink-500">Once ZappyOne approves it, this becomes your menu at your prices.{sent > 0 && <span className="ml-1 font-semibold text-emerald-700">{sent} sent so far.</span>}</p>
+          </div>
+          <button type="button" onClick={onClose} aria-label="Close" className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-ink-500 hover:bg-sunken"><X size={18} /></button>
+        </div>
+
+        <div className="flex-1 space-y-5 overflow-y-auto px-5 py-4">
+          <div>
+            <label className={label} htmlFor="req-name">Service name</label>
+            <input id="req-name" className={field} placeholder="e.g. Smart watch repair" maxLength={120}
+              value={form.proposedName} onChange={(e) => setForm((f) => ({ ...f, proposedName: e.target.value }))} />
+          </div>
+          <div>
+            <label className={label} htmlFor="req-about">What exactly do you do?</label>
+            <textarea id="req-about" rows={3} maxLength={1000} className={`${field} h-auto resize-none py-2.5`}
+              placeholder="The work, the brands or items you handle, anything customers should know"
+              value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
+          </div>
 
           <div>
-            <p className="mb-2 text-xs font-semibold text-slate-600">Photos of your work</p>
+            <p className={label}>Photos of your work <span className="font-normal text-ink-400">up to 6</span></p>
             <PhotoTiles value={photos} onChange={setPhotos} max={6} folder="line-requests" />
           </div>
 
-          <div className="grid grid-cols-[1fr_auto] items-end gap-3">
-            <div>
-              <p className="mb-2 text-xs font-semibold text-slate-600">Where you do it</p>
-              <div className="flex flex-wrap gap-2">
-                {[['doorstep', "At the customer's place"], ['workshop', 'At my shop']].map(([m, l]) => (
-                  <button key={m} type="button" aria-pressed={form.modes.includes(m)} onClick={() => toggleMode(m)}
-                    className={`rounded-full border px-3 py-1.5 text-[12.5px] font-semibold ${form.modes.includes(m) ? 'border-zappy-500 bg-zappy-50 text-zappy-800' : 'border-slate-200 text-slate-600'}`}>{l}</button>
-                ))}
-              </div>
+          <div>
+            <p className={label}>Where you do it</p>
+            <div className="grid grid-cols-2 gap-2">
+              {MODES.map(([m, l, Icon]) => {
+                const on = form.modes.includes(m);
+                return (
+                  <button key={m} type="button" aria-pressed={on} onClick={() => toggleMode(m)}
+                    className={`flex items-center gap-2 rounded-btn border px-3 py-2.5 text-left text-[13.5px] font-semibold transition ${on ? 'border-zappy-600 bg-zappy-50 text-zappy-800 ring-1 ring-zappy-600' : 'border-line-strong text-ink-700 hover:border-zappy-400'}`}>
+                    <Icon size={16} className="shrink-0" />
+                    <span className="min-w-0 leading-snug">{l}</span>
+                  </button>
+                );
+              })}
             </div>
-            <label className="block text-xs font-semibold text-slate-600">Years doing it
-              <input className="input mt-1 w-24 text-sm" inputMode="numeric" value={form.years} onChange={(e) => setForm((f) => ({ ...f, years: e.target.value.replace(/\D/g, '').slice(0, 2) }))} placeholder="e.g. 5" />
-            </label>
           </div>
 
-          <div className="space-y-2">
-            <p className="text-xs font-semibold text-slate-600">Your jobs and prices</p>
+          <div className="max-w-[10rem]">
+            <label className={label} htmlFor="req-years">Years doing it</label>
+            <input id="req-years" className={field} inputMode="numeric" value={form.years} onChange={(e) => setForm((f) => ({ ...f, years: e.target.value.replace(/\D/g, '').slice(0, 2) }))} placeholder="e.g. 5" />
+          </div>
+
+          <div className="space-y-3">
+            <p className={`${label} mb-0`}>Your jobs and prices</p>
             {jobs.map((j, i) => (
-              <div key={i} className="space-y-2 rounded-2xl border border-slate-200 p-3">
-                <div className="flex gap-2">
-                  <PhotoTiles value={j.photos} onChange={(v) => setJob(i, 'photos', v)} max={1} size="h-16 w-16" label="Photo" folder="line-requests" />
+              <div key={i} className="space-y-3 rounded-card border border-line bg-canvas p-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[12px] font-bold uppercase tracking-[0.08em] text-ink-400">Job {i + 1}</span>
+                  {jobs.length > 1 && <button type="button" onClick={() => setJobs((js) => js.filter((_, n) => n !== i))} className="text-[12.5px] font-semibold text-ink-500 hover:text-red-700">Remove</button>}
+                </div>
+                <div className="flex gap-3">
+                  <PhotoTiles value={j.photos} onChange={(v) => setJob(i, 'photos', v)} max={1} size="h-[92px] w-[92px]" label="Photo" folder="line-requests" />
                   <div className="min-w-0 flex-1 space-y-2">
-                    <input className="input w-full text-sm" placeholder="Job, e.g. Strap replacement" aria-label="Job name" value={j.name} maxLength={80} onChange={(e) => setJob(i, 'name', e.target.value)} />
+                    <input className={field} placeholder="Job name, e.g. Strap replacement" aria-label="Job name" value={j.name} maxLength={80} onChange={(e) => setJob(i, 'name', e.target.value)} />
                     <div className="grid grid-cols-2 gap-2">
-                      <input className="input text-sm" placeholder="Minutes" aria-label="Minutes it takes" inputMode="numeric" value={j.minutes} onChange={(e) => setJob(i, 'minutes', e.target.value.replace(/\D/g, '').slice(0, 4))} />
-                      <input className="input text-sm" placeholder="Price ₹" aria-label="Your price in rupees" inputMode="numeric" value={j.price} onChange={(e) => setJob(i, 'price', e.target.value.replace(/\D/g, '').slice(0, 6))} />
+                      <span className="flex h-11 items-center rounded-btn border border-line-strong bg-white px-3 focus-within:border-zappy-600 focus-within:ring-2 focus-within:ring-zappy-100">
+                        <input className="min-w-0 flex-1 bg-transparent text-[15px] outline-none placeholder:text-ink-400" placeholder="30" aria-label="Minutes it takes" inputMode="numeric" value={j.minutes} onChange={(e) => setJob(i, 'minutes', e.target.value.replace(/\D/g, '').slice(0, 4))} />
+                        <span className="text-[12.5px] text-ink-400">min</span>
+                      </span>
+                      <span className="flex h-11 items-center rounded-btn border border-line-strong bg-white px-3 focus-within:border-zappy-600 focus-within:ring-2 focus-within:ring-zappy-100">
+                        <span className="text-[14px] font-semibold text-ink-400">₹</span>
+                        <input className="min-w-0 flex-1 bg-transparent pl-1 text-[15px] font-semibold outline-none placeholder:font-normal placeholder:text-ink-400" placeholder="Price" aria-label="Your price in rupees" inputMode="numeric" value={j.price} onChange={(e) => setJob(i, 'price', e.target.value.replace(/\D/g, '').slice(0, 6))} />
+                      </span>
                     </div>
                   </div>
-                  {jobs.length > 1 && <button type="button" onClick={() => setJobs((js) => js.filter((_, n) => n !== i))} aria-label="Remove this job" className="self-start text-slate-400"><X size={16} /></button>}
                 </div>
-                <input className="input w-full text-sm" placeholder="What's included, separated by commas" aria-label="What is included" value={j.includes} maxLength={300} onChange={(e) => setJob(i, 'includes', e.target.value)} />
+                <input className={field} placeholder="What's included, separated by commas" aria-label="What is included" value={j.includes} maxLength={300} onChange={(e) => setJob(i, 'includes', e.target.value)} />
               </div>
             ))}
-            {jobs.length < 20 && <button type="button" onClick={() => setJobs((js) => [...js, blankJob()])} className="text-xs font-semibold text-zappy-600"><Plus size={12} className="inline" /> Add another job</button>}
+            {jobs.length < 20 && (
+              <button type="button" onClick={() => setJobs((js) => [...js, blankJob()])} className="flex w-full items-center justify-center gap-1.5 rounded-card border border-dashed border-line-strong py-3 text-[13.5px] font-semibold text-zappy-700 hover:border-zappy-400">
+                <Plus size={15} /> Add another job
+              </button>
+            )}
           </div>
         </div>
 
-        <button onClick={send} disabled={isLoading || form.proposedName.trim().length < 2 || !filled.length} className="btn-primary mt-5 w-full">
-          {isLoading ? <><Loader2 size={15} className="animate-spin" /> Sending…</> : 'Send request'}
-        </button>
+        <div className="border-t border-line px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
+          <button type="button" onClick={send} disabled={isLoading || form.proposedName.trim().length < 2 || !filled.length} className="btn-primary h-12 w-full">
+            {isLoading ? <><Loader2 size={16} className="animate-spin" /> Sending…</> : filled.length ? `Send request with ${filled.length} job${filled.length === 1 ? '' : 's'}` : 'Add a job with time and price to send'}
+          </button>
+        </div>
       </div>
     </div>
   );
