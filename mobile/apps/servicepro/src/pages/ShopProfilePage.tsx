@@ -13,7 +13,7 @@ import { Check, ImageIcon, MapPin } from 'lucide-react-native';
 import { useShopMeQuery, useUpdateShopMeMutation } from '@zappy/core/api';
 import { pickPhoto, uploadPhoto } from '@zappy/core/lib/upload';
 import { incompleteDay } from '@zappy/core/shared/weeklyHoursRules';
-import { Button, LoadingState, ScreenHeader, Text } from '@zappy/ui/components';
+import { Button, ErrorState, LoadingState, ScreenHeader, Text } from '@zappy/ui/components';
 import { toast } from '@zappy/ui/components/Toast';
 import { LoginSecurityCard } from '@zappy/ui/components/account/LoginSecurityCard';
 import { AutoAcceptCard } from '@zappy/ui/components/provider/AutoAcceptCard';
@@ -32,7 +32,7 @@ interface Form {
 export function ShopProfilePage() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { data, isLoading } = useShopMeQuery();
+  const { data, isLoading, isError, refetch } = useShopMeQuery();
   const [updateShop, { isLoading: saving }] = useUpdateShopMeMutation();
   const [form, setForm] = useState<Form | null>(null);
   const draft = useFormDraft<Form>(data?.shop?._id ? `shop-profile:${data.shop._id}` : null, form, setForm);
@@ -51,6 +51,7 @@ export function ShopProfilePage() {
     });
   }, [data, form]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  if (isError && !form) return <View style={styles.page}><ScreenHeader title="Shop & hours" safeArea /><ErrorState title="Your shop did not load" onRetry={refetch} /></View>;
   if (isLoading || !form) return <View style={styles.page}><ScreenHeader title="Shop & hours" safeArea /><LoadingState /></View>;
   const set = (patch: Partial<Form>) => setForm((f) => (f ? { ...f, ...patch } : f));
 

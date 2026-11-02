@@ -9,7 +9,7 @@ import { useRouter } from 'expo-router';
 import { Bell, ChevronRight, Landmark, LogOut, Mail, Phone, ShieldCheck, Store, Wallet } from 'lucide-react-native';
 import { useShopMeQuery, useUpdateShopMeMutation } from '@zappy/core/api';
 import { useSignOut } from '@zappy/core/hooks/useSignOut';
-import { Button, LoadingState, ScreenHeader, Text } from '@zappy/ui/components';
+import { Button, ErrorState, LoadingState, ScreenHeader, Text } from '@zappy/ui/components';
 import { toast } from '@zappy/ui/components/Toast';
 import { RIPPLE, errText } from '@zappy/ui/lib/feedback';
 import { colors, danger, ink, slate, zappy } from '@zappy/ui/theme/colors';
@@ -29,12 +29,13 @@ const LINKS: [string, string, typeof Store, string][] = [
 export function ShopAccountPage() {
   const router = useRouter();
   const signOut = useSignOut();
-  const { data, isLoading } = useShopMeQuery();
+  const { data, isLoading, isError, refetch } = useShopMeQuery();
   const [save, { isLoading: saving }] = useUpdateShopMeMutation();
   const shop = data?.shop;
   const [ownerName, setOwnerName] = useState('');
   useEffect(() => { if (shop) setOwnerName(shop.ownerName || ''); }, [shop]);
 
+  if (isError && !shop) return <View style={styles.page}><ScreenHeader title="Profile" safeArea /><ErrorState title="Your profile did not load" onRetry={refetch} /></View>;
   if (isLoading || !shop) return <View style={styles.page}><ScreenHeader title="Profile" safeArea /><LoadingState /></View>;
 
   async function submit() {

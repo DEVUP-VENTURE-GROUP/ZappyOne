@@ -21,6 +21,10 @@ export function isStaleChunkError(err) {
   return /Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module|Loading chunk .* failed|ChunkLoadError|Unable to preload CSS/i.test(msg);
 }
 
+let reloading = false;
+/** A reload onto the new version is already under way. */
+export const isReloading = () => reloading;
+
 /** Reload onto the new version, at most once in a short while. Returns whether it reloaded. */
 export function reloadForUpdate() {
   try {
@@ -28,6 +32,7 @@ export function reloadForUpdate() {
     if (Date.now() - last < 15000) return false; // just reloaded: something else is wrong
     sessionStorage.setItem(RELOAD_KEY, String(Date.now()));
   } catch { /* storage blocked: reload anyway, once per page life */ }
+  reloading = true;
   window.location.reload();
   return true;
 }
@@ -57,10 +62,8 @@ export function watchForUpdates() {
   current = entryOf(document.documentElement.outerHTML);
 
   // Vite's own signal that a page file failed to load.
-  window.addEventListener('vite:preloadError', (event) => {
-    event.preventDefault?.();
-    reloadForUpdate();
-  });
+  // Not prevented: a suppressed failure hands React an undefined page ("reading 'default'"); the error boundary shows "updating" instead.
+  window.addEventListener('vite:preloadError', () => { reloadForUpdate(); });
   window.addEventListener('unhandledrejection', (event) => {
     if (isStaleChunkError(event.reason)) reloadForUpdate();
   });

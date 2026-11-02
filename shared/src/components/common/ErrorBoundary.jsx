@@ -21,7 +21,7 @@ function AutoRetry({ tries, onRetry }) {
     </>
   );
 }
-import { isStaleChunkError, reloadForUpdate } from '../../app/appUpdate';
+import { isReloading, isStaleChunkError, reloadForUpdate } from '../../app/appUpdate';
 
 /**
  * App-wide error boundary. Without one, a single render error white-screens the
@@ -41,7 +41,7 @@ export default class ErrorBoundary extends Component {
 
   componentDidCatch(error, info) {
     // A page file missing after a deploy is not an error: load the new version (app/appUpdate).
-    if (isStaleChunkError(error) && reloadForUpdate()) { this.setState({ reloading: true }); return; }
+    if (isStaleChunkError(error) && (isReloading() || reloadForUpdate())) { this.setState({ reloading: true }); return; }
 
     /*
      * Heal before asking anyone to. Most crashes are momentary (data arriving

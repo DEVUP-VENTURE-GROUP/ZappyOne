@@ -1,5 +1,6 @@
 import LoginSecurityCard from '@shared/components/account/LoginSecurityCard';
 import PageSkeleton from '@shared/components/common/Skeleton';
+import LoadFailed from '@shared/components/common/LoadFailed';
 import { useFormDraft, DraftRestored } from '@shared/hooks/useFormDraft';
 import AutoAcceptCard from '@shared/components/provider/AutoAcceptCard';
 import { useState, useEffect } from 'react';
@@ -20,7 +21,7 @@ import { prepareImage } from '@shared/utils/prepareImage';
 
 export default function ShopProfilePage() {
   const nav = useNavigate();
-  const { data, isLoading } = useShopMeQuery();
+  const { data, isLoading, isError, refetch } = useShopMeQuery();
   const [updateShop, { isLoading: saving }] = useUpdateShopMeMutation();
   const [presign] = usePresignUploadMutation();
 
@@ -121,6 +122,7 @@ export default function ShopProfilePage() {
     }
   }
 
+  if (isError && !form) return <LoadFailed what="Your shop" onRetry={refetch} />;
   if (isLoading || !form) {
     return (
       <PageSkeleton kind="form" label="Loading your shop" />
