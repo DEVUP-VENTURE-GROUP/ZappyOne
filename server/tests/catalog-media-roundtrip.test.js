@@ -18,7 +18,9 @@ const {
   keyFromMedia, normalizeDocMedia, signMedia, MEDIA_FIELDS,
 } = require('../src/core/storage/s3');
 
-const BUCKET_URL = 'https://hyperlocal-uploads-workers.s3.ap-south-1.amazonaws.com';
+// Whatever bucket this run is configured with (the test env on CI, the developer's .env locally).
+const { aws } = require('../src/config');
+const BUCKET_URL = `https://${aws.bucket}.s3.${aws.region}.amazonaws.com`;
 
 describe('keyFromMedia — reduce any media value to the key we store', () => {
   it('leaves a bare key untouched', () => {
