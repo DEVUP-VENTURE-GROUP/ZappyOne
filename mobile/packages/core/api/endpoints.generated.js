@@ -1028,9 +1028,9 @@ export function endpoints(b, { adminApiPath }) {
 
     // --- Admin: Support Tickets ---
     adminSupportTickets: b.query({
-      query: ({ status, priority, category, page = 1 } = {}) => ({
+      query: ({ status, priority, category, kind, page = 1 } = {}) => ({
         url: adminApiPath('/support'),
-        params: { status, priority, category, page },
+        params: { status, priority, category, kind, page },
       }),
       providesTags: ['SupportTickets'],
     }),

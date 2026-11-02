@@ -13,6 +13,7 @@ async function listSupportTickets(req, res, next) {
     if (req.query.status) filter.status = req.query.status;
     if (req.query.priority) filter.priority = req.query.priority;
     if (req.query.category) filter.category = req.query.category;
+    if (req.query.kind) filter['raisedBy.kind'] = req.query.kind;
     const [tickets, total] = await Promise.all([
       SupportTicket.find(filter)
         .sort({ priority: -1, createdAt: -1 })
@@ -21,7 +22,7 @@ async function listSupportTickets(req, res, next) {
         .lean(),
       SupportTicket.countDocuments(filter),
     ]);
-    res.json({ tickets, total, page, totalPages: Math.ceil(total / limit) });
+    res.json({ tickets: await require('../../engagement/support-notify').withRaisers(tickets), total, page, totalPages: Math.ceil(total / limit) });
   } catch (err) {
     next(err);
   }
@@ -54,6 +55,7 @@ async function replyToSupportTicket(req, res, next) {
       update,
       { new: true },
     );
+    require('../../engagement/support-notify').toRaiser(updated, req.body.text);
     await auditService.fromRequest(
       req,
       'admin.support_reply',

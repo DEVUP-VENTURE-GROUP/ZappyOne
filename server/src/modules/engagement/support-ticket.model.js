@@ -11,12 +11,12 @@ const mongoose = require('mongoose');
 const ticketSchema = new mongoose.Schema(
   {
     raisedBy: {
-      kind: { type: String, enum: ['user', 'worker'], required: true },
+      kind: { type: String, enum: ['user', 'worker', 'shop', 'event_partner'], required: true },
       id: { type: mongoose.Schema.Types.ObjectId, required: true, index: true },
     },
     category: {
       type: String,
-      enum: ['payment', 'account', 'order', 'kyc', 'app_bug', 'other'],
+      enum: ['payment', 'account', 'order', 'kyc', 'app_bug', 'feature_request', 'complaint', 'other'],
       required: true,
       index: true,
     },
@@ -43,7 +43,7 @@ const ticketSchema = new mongoose.Schema(
 
     messages: [
       {
-        from: { type: String, enum: ['user', 'worker', 'admin'] },
+        from: { type: String, enum: ['user', 'worker', 'shop', 'event_partner', 'admin'] },
         fromId: mongoose.Schema.Types.ObjectId,
         text: String,
         at: { type: Date, default: Date.now },

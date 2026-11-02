@@ -26,6 +26,7 @@ const ShopPriceRequestsPage = lazy(() => import('./workspaces/services/pages/Sho
 const AppealsPage = lazy(() => import('@shared/provider/pages/WorkerAppealsPage'));
 // Shared with workers: notifications and saved bank / UPI (the server keeps a shop's on the shop).
 const NotificationsPage = lazy(() => import('@shared/provider/pages/WorkerNotificationsPage'));
+const SupportPage = lazy(() => import('@shared/components/support/SupportPage'));
 const BankPage = lazy(() => import('@shared/provider/pages/WorkerBankPage'));
 const ShopWithdrawPage = lazy(() => import('./workspaces/services/pages/ShopWithdrawPage'));
 const ShopAccountPage = lazy(() => import('./workspaces/services/pages/ShopAccountPage'));
@@ -91,6 +92,7 @@ export default function App() {
             <Route path="/partner" element={eventPartner(<PartnerShell />)}>
               <Route index element={<EventOverviewPage />} />
               <Route path="profile" element={<EventProfilePage />} />
+              <Route path="support" element={<SupportPage audience="partner" backTo="/partner" />} />
               <Route element={<EventVerifiedOnly />}>
                 <Route path="bookings" element={<EventBookingsPage />} />
                 <Route path="bookings/:id" element={<EventBookingDetailPage />} />
@@ -116,6 +118,7 @@ export default function App() {
             <Route path="/shop/appeals" element={shop(<AppealsPage />)} />
             <Route path="/shop/account" element={shop(<ShopAccountPage />)} />
             <Route path="/shop/notifications" element={shop(<NotificationsPage />)} />
+            <Route path="/shop/support" element={shop(<SupportPage audience="partner" backTo="/shop" />)} />
             <Route path="/shop/bank" element={shop(<BankPage />)} />
             <Route path="/shop/withdraw" element={shop(<ShopWithdrawPage />)} />
             <Route path="/shop/reviews" element={shop(<ProviderReviewsPage back="/shop" />)} />

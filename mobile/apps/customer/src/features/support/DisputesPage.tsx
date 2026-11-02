@@ -13,7 +13,7 @@ import { radius } from '@zappy/ui/theme/radius';
 import { spacing } from '@zappy/ui/theme/spacing';
 import { DISPUTE_STATUS } from './disputeMeta';
 import { NewDisputeSheet } from './NewDisputeSheet';
-import { StatusBadge } from './StatusBadge';
+import { StatusBadge } from '@zappy/ui/support/StatusBadge';
 
 interface Dispute { _id: string; category?: string; description?: string; status: string; createdAt: string; messages?: unknown[] }
 

@@ -41,7 +41,7 @@ const PlansPage           = lazy(() => import('../features/wallet/PlansPage'));
 const WalletPage          = lazy(() => import('../features/wallet/WalletPage'));
 const ReferralPage        = lazy(() => import('../features/wallet/ReferralPage'));
 const DisputesPage        = lazy(() => import('../features/support/DisputesPage'));
-const SupportPage         = lazy(() => import('../features/support/SupportPage'));
+const SupportPage         = lazy(() => import('@shared/components/support/SupportPage'));
 const PaymentMethodsPage  = lazy(() => import('../features/account/PaymentMethodsPage'));
 const WorkerProfilePage     = lazy(() => import('../features/providers/WorkerProfilePage'));
 const EventsHomePage               = lazy(() => import('../features/events/EventsHomePage'));

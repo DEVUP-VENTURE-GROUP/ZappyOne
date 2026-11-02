@@ -6,7 +6,7 @@
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Bell, ChevronRight, LogOut, ShieldCheck, Star, Wallet, type LucideIcon } from 'lucide-react-native';
+import { Bell, ChevronRight, Headphones, LogOut, ShieldCheck, Star, Wallet, type LucideIcon } from 'lucide-react-native';
 import { useUpdatePartnerMeMutation } from '@zappy/core/api';
 import { useSignOut } from '@zappy/core/hooks/useSignOut';
 import { Button, Input, LoadingState, ScreenHeader, Text } from '@zappy/ui/components';
@@ -27,6 +27,7 @@ const LINKS: [string, string, LucideIcon, string][] = [
   ['Reviews', 'What customers said', Star, '/partner/reviews'],
   ['Verification', 'Your documents and where they stand', ShieldCheck, '/partner/kyc'],
   ['Notifications', 'Everything we have told you', Bell, '/partner/notifications'],
+  ['Talk to ZappyOne', 'Help, complaints and ideas for the app', Headphones, '/partner/support'],
 ];
 
 export function PartnerAccountPage() {

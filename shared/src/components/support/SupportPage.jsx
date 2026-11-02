@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   HeadphonesIcon, Plus, ChevronLeft, X, Clock, Send,
@@ -9,17 +9,35 @@ import toast from 'react-hot-toast';
 import {
   useGetMyTicketsQuery, useGetTicketQuery,
   useCreateTicketMutation, useAddTicketMessageMutation,
-} from '@shared/services/api';
-import PageTransition from '../../components/common/PageTransition';
+} from '../../services/api';
 
-const CATEGORIES = [
-  { value: 'payment',   label: 'Payment' },
-  { value: 'order',     label: 'Order Issue' },
-  { value: 'account',   label: 'Account' },
-  { value: 'app_bug',   label: 'App Bug' },
-  { value: 'kyc',       label: 'KYC / Verification' },
-  { value: 'other',     label: 'Other' },
-];
+// Talk to ZappyOne: customers and partners raise help, complaints and feature requests here and chat with the team (server engagement/support-notify).
+const CATEGORIES = {
+  customer: [
+    { value: 'order', label: 'A booking' },
+    { value: 'payment', label: 'Payment or refund' },
+    { value: 'complaint', label: 'Complaint' },
+    { value: 'feature_request', label: 'Suggest a feature' },
+    { value: 'app_bug', label: 'App problem' },
+    { value: 'account', label: 'My account' },
+    { value: 'other', label: 'Something else' },
+  ],
+  partner: [
+    { value: 'feature_request', label: 'Suggest a feature' },
+    { value: 'complaint', label: 'Complaint' },
+    { value: 'order', label: 'Jobs and bookings' },
+    { value: 'payment', label: 'Payments and dues' },
+    { value: 'kyc', label: 'Verification' },
+    { value: 'app_bug', label: 'App problem' },
+    { value: 'other', label: 'Something else' },
+  ],
+};
+const TOPIC = Object.fromEntries([...CATEGORIES.customer, ...CATEGORIES.partner].map((c) => [c.value, c.label]));
+// A plain page shell; the scroll resets when a thread opens or closes.
+function PageTransition({ children }) {
+  useEffect(() => { window.scrollTo(0, 0); }, []);
+  return <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.18 }}>{children}</motion.div>;
+}
 
 const STATUS_META = {
   open:         { label: 'Open',          cls: 'bg-blue-50 text-blue-700',    dot: 'bg-blue-500' },
@@ -42,7 +60,8 @@ function StatusBadge({ status }) {
 const PRIORITY_SLA = { urgent: 1, high: 2, normal: 4, low: 24 };
 
 function TicketThread({ ticketId, onBack }) {
-  const { data, isLoading, refetch } = useGetTicketQuery(ticketId);
+  // Checked every few seconds while open, so replies arrive like a chat.
+  const { data, isLoading, refetch } = useGetTicketQuery(ticketId, { pollingInterval: 8000 });
   const [addMsg, { isLoading: sending }] = useAddTicketMessageMutation();
   const [text, setText] = useState('');
 
@@ -111,7 +130,7 @@ function TicketThread({ ticketId, onBack }) {
               }`}>
                 {isSupport && (
                   <p className="text-[10px] font-black text-slate-500 mb-0.5 uppercase tracking-wide">
-                    ZappyOne Support
+                    ZappyOne
                   </p>
                 )}
                 <p className="text-sm leading-relaxed">{msg.text}</p>
@@ -158,7 +177,7 @@ function TicketThread({ ticketId, onBack }) {
   );
 }
 
-function NewTicketForm({ onClose, onCreated }) {
+function NewTicketForm({ audience, onClose, onCreated }) {
   const [createTicket, { isLoading }] = useCreateTicketMutation();
   const [form, setForm] = useState({
     category: '',
@@ -191,9 +210,8 @@ function NewTicketForm({ onClose, onCreated }) {
         subject: form.subject.trim(),
         description: form.description.trim(),
         priority: form.priority,
-        ...(form.orderId.trim() ? { orderId: form.orderId.trim() } : {}),
       }).unwrap();
-      toast.success('Ticket created - we\'ll reply shortly');
+      toast.success("Sent. We'll reply here and send you a notification.");
       onCreated(res.ticket._id);
     } catch (err) {
       toast.error(err?.data?.error || 'Could not create ticket');
@@ -213,7 +231,7 @@ function NewTicketForm({ onClose, onCreated }) {
       >
         <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mt-3 mb-4" />
         <div className="flex items-center justify-between px-5 mb-4">
-          <p className="font-extrabold text-lg text-[#0F172A]">New Support Ticket</p>
+          <p className="font-extrabold text-lg text-[#0F172A]">Talk to ZappyOne</p>
           <button onClick={onClose} className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center">
             <X size={16} />
           </button>
@@ -221,9 +239,9 @@ function NewTicketForm({ onClose, onCreated }) {
 
         <form onSubmit={handleSubmit} className="px-5 space-y-3 max-h-[70vh] overflow-y-auto">
           <div>
-            <p className="text-xs font-bold text-slate-500 mb-1.5">Category *</p>
+            <p className="text-xs font-bold text-slate-500 mb-1.5">What is it about? *</p>
             <div className="grid grid-cols-2 gap-2">
-              {CATEGORIES.map(cat => (
+              {CATEGORIES[audience].map(cat => (
                 <button
                   key={cat.value}
                   type="button"
@@ -244,7 +262,7 @@ function NewTicketForm({ onClose, onCreated }) {
             <p className="text-xs font-bold text-slate-500 mb-1.5">Subject *</p>
             <input
               className="w-full text-sm border border-slate-200 rounded-xl px-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Brief summary of your issue"
+              placeholder={form.category === 'feature_request' ? 'The feature in a few words' : 'A short summary'}
               maxLength={200}
               {...f('subject')}
             />
@@ -254,21 +272,13 @@ function NewTicketForm({ onClose, onCreated }) {
             <p className="text-xs font-bold text-slate-500 mb-1.5">Description *</p>
             <textarea
               className="w-full text-sm border border-slate-200 rounded-xl px-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-              placeholder="Explain the issue in detail…"
+              placeholder={form.category === 'feature_request' ? 'What should it do, and how would it help you?' : 'Tell us what happened, so we can fix it'}
               rows={4}
               value={form.description}
               onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
             />
           </div>
 
-          <div>
-            <p className="text-xs font-bold text-slate-500 mb-1.5">Order ID (optional)</p>
-            <input
-              className="w-full text-sm border border-slate-200 rounded-xl px-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Related order ID"
-              {...f('orderId')}
-            />
-          </div>
 
           <div>
             <p className="text-xs font-bold text-slate-500 mb-1.5">Priority</p>
@@ -301,7 +311,7 @@ function NewTicketForm({ onClose, onCreated }) {
             <button type="submit" disabled={isLoading}
               className="flex-1 h-12 rounded-2xl bg-[#0F172A] text-white font-bold flex items-center justify-center gap-2 disabled:opacity-50">
               {isLoading ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
-              {isLoading ? 'Sending…' : 'Submit Ticket'}
+              {isLoading ? 'Sending…' : 'Send to ZappyOne'}
             </button>
           </div>
         </form>
@@ -310,11 +320,13 @@ function NewTicketForm({ onClose, onCreated }) {
   );
 }
 
-export default function SupportPage() {
+// `audience` picks the topics (customer or partner); `backTo` is where the header's back goes. A notification link opens its conversation (?ticket=).
+export default function SupportPage({ audience = 'customer', backTo = '/profile' }) {
   const nav = useNavigate();
-  const { data, isLoading, refetch } = useGetMyTicketsQuery();
+  const [params] = useSearchParams();
+  const { data, isLoading, refetch } = useGetMyTicketsQuery(undefined, { pollingInterval: 30000 });
   const [showNew, setShowNew] = useState(false);
-  const [activeId, setActiveId] = useState(null);
+  const [activeId, setActiveId] = useState(params.get('ticket'));
 
   const tickets = data?.tickets || [];
 
@@ -336,18 +348,18 @@ export default function SupportPage() {
       <div className="min-h-screen bg-[#F9FAFB] pb-40">
         <header className="sticky top-0 z-20" style={{ background: 'rgba(15,23,42,0.97)' }}>
           <div className="w-full max-w-2xl mx-auto px-4 h-14 flex items-center gap-3">
-            <button onClick={() => nav('/profile')} className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center">
+            <button onClick={() => nav(backTo)} aria-label="Back" className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center">
               <ChevronLeft size={16} className="text-white" />
             </button>
             <h1 className="font-black text-white flex-1 flex items-center gap-2">
               <HeadphonesIcon size={16} className="text-zappy-400" />
-              Help & Support
+              Talk to ZappyOne
             </h1>
             <button
               onClick={() => setShowNew(true)}
               className="flex items-center gap-1.5 text-xs font-bold text-white bg-white/15 px-3 py-1.5 rounded-full hover:bg-white/25 transition"
             >
-              <Plus size={13} /> New Ticket
+              <Plus size={13} /> New message
             </button>
           </div>
         </header>
@@ -377,12 +389,12 @@ export default function SupportPage() {
               <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mb-4">
                 <HeadphonesIcon size={24} strokeWidth={1.5} className="text-slate-400" />
               </div>
-              <p className="font-bold text-slate-900">No support tickets yet</p>
+              <p className="font-bold text-slate-900">Nothing here yet</p>
               <p className="text-sm text-slate-400 mt-1 leading-relaxed">
-                Need help? Create a ticket and our team<br />will get back to you.
+                Ask for help, raise a complaint or suggest a feature.<br />The ZappyOne team replies right here.
               </p>
               <button onClick={() => setShowNew(true)} className="mt-4 btn-primary text-sm">
-                Create Support Ticket
+                Message ZappyOne
               </button>
             </div>
           ) : (
@@ -407,7 +419,7 @@ export default function SupportPage() {
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
                         <p className="font-bold text-sm text-slate-900 truncate">{t.subject}</p>
-                        <p className="text-xs text-slate-400 capitalize mt-0.5">{t.category?.replace(/_/g, ' ')}</p>
+                        <p className="text-xs text-slate-400 mt-0.5">{TOPIC[t.category] || t.category}</p>
                       </div>
                       <StatusBadge status={t.status} />
                     </div>
@@ -434,6 +446,7 @@ export default function SupportPage() {
         <AnimatePresence>
           {showNew && (
             <NewTicketForm
+              audience={audience}
               onClose={() => setShowNew(false)}
               onCreated={(id) => { setShowNew(false); refetch(); setActiveId(id); }}
             />

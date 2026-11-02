@@ -3,8 +3,7 @@ import { motion } from 'framer-motion';
 import { LogOut, PhoneCall,
   LayoutDashboard, IndianRupee, Wallet as WalletIcon, Bell, Star, User, ChevronRight, Wifi,
   TrendingUp, TrendingDown, Search, Radio, Loader2, Target, Building2, GraduationCap,
-  ShieldCheck, ShoppingBag, Scale, FileText, CalendarClock, Lock,
-} from 'lucide-react';
+  ShieldCheck, ShoppingBag, Scale, FileText, CalendarClock, Lock, Headphones } from 'lucide-react';
 import { staffMenu, STAFF_PORTAL } from '../../provider/staffPortal';
 import { STAFF_HELP_PHONE } from '../../provider/partnerPages';
 import { ZappyWordmark } from '../common/ZappyLogo';
@@ -64,6 +63,7 @@ const ALL_NAV_ITEMS = [
   { key: 'withdraw', label: 'Withdraw', Icon: WalletIcon, to: '/worker/withdraw' },
   { key: 'bank', label: 'Bank & UPI', Icon: Building2, to: '/worker/bank' },
   { key: 'reviews', label: 'Reviews', Icon: Star, to: '/worker/reviews' },
+  { key: 'support', label: 'Talk to ZappyOne', Icon: Headphones, to: '/worker/support' },
   { key: 'appeals', label: 'Appeals', Icon: Scale, to: '/worker/appeals' },
   { key: 'training', label: 'Training', Icon: GraduationCap, to: '/worker/training' },
   { key: 'goals', label: 'Goals', Icon: Target, to: '/worker/goals' },

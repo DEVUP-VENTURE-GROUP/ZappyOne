@@ -9,7 +9,7 @@ import { errText } from '@zappy/ui/lib/feedback';
 import { useT } from '@zappy/ui/lib/i18n';
 import { ink } from '@zappy/ui/theme/colors';
 import { spacing } from '@zappy/ui/theme/spacing';
-import { CategoryGrid } from './CategoryGrid';
+import { CategoryGrid } from '@zappy/ui/support/CategoryGrid';
 import { DISPUTE_CATEGORIES } from './disputeMeta';
 
 const EMPTY = { orderId: '', category: '', description: '' };

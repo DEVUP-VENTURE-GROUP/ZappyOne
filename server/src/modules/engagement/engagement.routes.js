@@ -44,7 +44,7 @@ router.post(
   '/support',
   authenticate,
   validate(Joi.object({
-    category: Joi.string().valid('payment', 'account', 'order', 'kyc', 'app_bug', 'other').required(),
+    category: Joi.string().valid('payment', 'account', 'order', 'kyc', 'app_bug', 'feature_request', 'complaint', 'other').required(),
     subject: Joi.string().min(3).max(200).required(),
     description: Joi.string().min(10).max(2000).required(),
     orderId: Joi.string().hex().length(24).optional(),

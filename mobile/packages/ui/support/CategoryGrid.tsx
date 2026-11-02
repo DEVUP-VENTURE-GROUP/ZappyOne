@@ -1,11 +1,11 @@
 /** Pick what a ticket or dispute is about: a two-column grid of icon choices, one selected. */
 import { Pressable, StyleSheet, View } from 'react-native';
 import type { LucideIcon } from 'lucide-react-native';
-import { Text } from '@zappy/ui/components';
-import { useT } from '@zappy/ui/lib/i18n';
-import { colors, ink, slate } from '@zappy/ui/theme/colors';
-import { radius } from '@zappy/ui/theme/radius';
-import { spacing } from '@zappy/ui/theme/spacing';
+import { Text } from '../components';
+import { useT } from '../lib/i18n';
+import { colors, ink, slate } from '../theme/colors';
+import { radius } from '../theme/radius';
+import { spacing } from '../theme/spacing';
 
 export function CategoryGrid({ options, value, onChange, keyPrefix }: { options: { value: string; label: string; Icon: LucideIcon }[]; value: string; onChange: (v: string) => void; keyPrefix: string }) {
   const t = useT();

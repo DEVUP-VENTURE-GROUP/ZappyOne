@@ -1,3 +1,3 @@
-import { TicketThreadPage } from '../../../src/features/support/TicketThreadPage';
+import { TicketThreadPage } from '@zappy/ui/support/TicketThreadPage';
 
 export default TicketThreadPage;

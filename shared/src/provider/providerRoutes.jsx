@@ -16,6 +16,7 @@ const WorkerDashboard = page(() => import('./pages/WorkerDashboard'));
 const WorkerKycPage = page(() => import('./pages/WorkerKycPage'));
 const WorkerEditProfilePage = page(() => import('./pages/WorkerEditProfilePage'));
 const WorkerNotificationsPage = page(() => import('./pages/WorkerNotificationsPage'));
+const SupportPage = page(() => import('../components/support/SupportPage'));
 const WorkerBankPage = page(() => import('./pages/WorkerBankPage'));
 const WorkerWithdrawPage = page(() => import('./pages/WorkerWithdrawPage'));
 const WorkerAppealsPage = page(() => import('./pages/WorkerAppealsPage'));
@@ -72,6 +73,7 @@ export function providerRoutes({ loginPath, helping = false, onboardRoles = ['wo
     <Route key="w-appeals" path="/worker/appeals" element={w(STAFF_PORTAL ? <Navigate to="/worker/shifts" replace /> : <WorkerAppealsPage />)} />,
     <Route key="p-docs" path="/provider/documents" element={job(<MyDocumentsPage />)} />,
     <Route key="w-notif" path="/worker/notifications" element={w(<WorkerNotificationsPage />)} />,
+    <Route key="w-support" path="/worker/support" element={w(<SupportPage audience="partner" backTo="/worker" />)} />,
     <Route key="w-reviews" path="/worker/reviews" element={w(<ProviderReviewsPage back="/worker" />)} />,
     ...independentOnly,
     <Route key="w-repair" path="/worker/repair/:id" element={job(<WorkerRepairJobPage />)} />,

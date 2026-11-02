@@ -21,6 +21,7 @@ import {
   Wallet,
   ChevronRight,
   PhoneCall,
+  Headphones,
 } from 'lucide-react-native';
 import { useSignOut } from '@zappy/core/hooks/useSignOut';
 import { BottomSheet, Text } from '../components';
@@ -41,10 +42,11 @@ const ALL_WORKER_MENU = [
   { key: 'appeals', label: 'Appeals', Icon: Scale, to: '/worker/appeals' },
   { key: 'training', label: 'Training', Icon: GraduationCap, to: '/worker/training' },
   { key: 'goals', label: 'Goals', Icon: Target, to: '/worker/goals' },
+  { key: 'support', label: 'Talk to ZappyOne', Icon: Headphones, to: '/worker/support' },
 ];
 
 // On Rakshak (ZappyOne staff only) the partner-only pages are left out (shared partnerPages).
-export const WORKER_MENU = staffMenu(ALL_WORKER_MENU, STAFF_APP);
+export const WORKER_MENU = staffMenu(ALL_WORKER_MENU, STAFF_APP).filter((i) => !(STAFF_APP && i.key === 'support'));
 
 export function WorkerMenuSheet({ visible, onClose, items = WORKER_MENU }: { visible: boolean; onClose: () => void; items?: typeof WORKER_MENU }) {
   const router = useRouter();

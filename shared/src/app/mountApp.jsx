@@ -49,17 +49,32 @@ async function restoreSession(store, roles) {
   } catch { /* offline - stay signed out */ }
 }
 
+// Whether this browser was signed in last time; a visitor known to be signed out need not wait for the session check.
+const SIGNED_IN_HINT = 'zappy_signed_in';
+const readHint = () => { try { return localStorage.getItem(SIGNED_IN_HINT); } catch { return null; } };
+const writeHint = (on) => { try { localStorage.setItem(SIGNED_IN_HINT, on ? '1' : '0'); } catch { /* storage blocked */ } };
+function trackHint(store) {
+  let last = !!store.getState().auth?.accessToken;
+  writeHint(last);
+  store.subscribe(() => {
+    const now = !!store.getState().auth?.accessToken;
+    if (now !== last) { last = now; writeHint(now); }
+  });
+}
+
+// Same look as the boot screen in index.html, so the hand-over is seamless.
 const Spinner = () => (
-  <div className="min-h-screen flex items-center justify-center bg-slate-50">
-    <div className="w-8 h-8 rounded-full border-2 border-zappy-200 border-t-zappy-600 animate-spin" />
+  <div className="min-h-screen flex flex-col items-center justify-center gap-5 bg-slate-50">
+    <img src="/icons/icon-192.png" width="56" height="56" alt="ZappyOne" className="rounded-[14px]" />
+    <div className="w-6 h-6 rounded-full border-2 border-zappy-200 border-t-zappy-600 animate-spin" />
   </div>
 );
 
 /** Boots a ZappyOne web app: session restore, store, router, i18n, toasts. */
 export function mountApp({ App, store, roles = null, toastPosition = 'top-center' }) {
   function Root() {
-    const [ready, setReady] = useState(false);
-    useEffect(() => { restoreSession(store, roles).finally(() => setReady(true)); }, []);
+    const [ready, setReady] = useState(() => readHint() === '0');
+    useEffect(() => { restoreSession(store, roles).finally(() => { trackHint(store); setReady(true); }); }, []);
     if (!ready) return <Spinner />;
     return (
       <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>

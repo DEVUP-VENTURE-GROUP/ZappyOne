@@ -5,6 +5,10 @@ import { MessageSquare, Send, Loader2, ChevronDown, ChevronUp } from 'lucide-rea
 
 const PRIORITIES = { urgent: 'bg-red-100 text-red-700', high: 'bg-orange-100 text-orange-700', normal: 'bg-slate-100 text-slate-600', low: 'bg-green-100 text-green-700' };
 
+const KIND = { user: ['Customer', 'bg-sky-50 text-sky-700'], worker: ['Pro', 'bg-zappy-50 text-zappy-700'], shop: ['Partner', 'bg-emerald-50 text-emerald-700'], event_partner: ['Event partner', 'bg-amber-50 text-amber-800'] };
+const TOPIC = { feature_request: 'Feature request', complaint: 'Complaint', app_bug: 'App problem', payment: 'Payment', account: 'Account', order: 'Booking', kyc: 'Verification', other: 'Other' };
+const FROM = { admin: 'ZappyOne', user: 'Customer', worker: 'Pro', shop: 'Partner', event_partner: 'Event partner' };
+
 function PriorityBadge({ p }) {
   return <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full capitalize ${PRIORITIES[p] || PRIORITIES.normal}`}>{p}</span>;
 }
@@ -29,10 +33,13 @@ function TicketRow({ ticket }) {
         className="hover:bg-slate-50 cursor-pointer transition"
         onClick={() => setOpen(o => !o)}
       >
-        <Td mono>{String(ticket._id).slice(-6)}</Td>
         <Td>
-          <p className="font-semibold text-slate-800 text-sm truncate max-w-[180px]">{ticket.subject}</p>
-          <p className="text-xs text-slate-400 capitalize">{ticket.category?.replace(/_/g, ' ')}</p>
+          <p className="max-w-[160px] truncate text-sm font-semibold text-slate-800">{ticket.raiser?.name || 'Unknown'}</p>
+          <span className={`mt-0.5 inline-block rounded-full px-2 py-0.5 text-[10px] font-bold ${(KIND[ticket.raisedBy?.kind] || KIND.user)[1]}`}>{(KIND[ticket.raisedBy?.kind] || KIND.user)[0]}</span>
+        </Td>
+        <Td>
+          <p className="font-semibold text-slate-800 text-sm truncate max-w-[200px]">{ticket.subject}</p>
+          <p className={`text-xs ${['feature_request', 'complaint'].includes(ticket.category) ? 'font-bold text-zappy-700' : 'text-slate-400'}`}>{TOPIC[ticket.category] || ticket.category}</p>
         </Td>
         <Td><StatusBadge status={ticket.status} /></Td>
         <Td><PriorityBadge p={ticket.priority} /></Td>
@@ -48,7 +55,7 @@ function TicketRow({ ticket }) {
             <div className="px-5 py-4 space-y-3">
               {/* Original message */}
               <div className="bg-white rounded-lg border border-slate-100 p-3">
-                <p className="text-xs font-bold text-slate-500 mb-1">User Description</p>
+                <p className="text-xs font-bold text-slate-500 mb-1">What they wrote{ticket.raiser?.phone ? ` · ${ticket.raiser.phone}` : ''}</p>
                 <p className="text-sm text-slate-700 whitespace-pre-line">{ticket.description}</p>
               </div>
               {/* Thread */}
@@ -56,7 +63,7 @@ function TicketRow({ ticket }) {
                 <div className="space-y-2">
                   {ticket.messages.map((m, i) => (
                     <div key={i} className={`rounded-lg p-3 text-sm ${m.from === 'admin' ? 'bg-blue-50 border border-blue-100 ml-8' : 'bg-white border border-slate-100 mr-8'}`}>
-                      <p className={`text-[10px] font-bold uppercase mb-1 ${m.from === 'admin' ? 'text-blue-600' : 'text-slate-500'}`}>{m.from}</p>
+                      <p className={`text-[10px] font-bold uppercase mb-1 ${m.from === 'admin' ? 'text-blue-600' : 'text-slate-500'}`}>{FROM[m.from] || m.from}</p>
                       <p className="text-slate-700 whitespace-pre-line">{m.text}</p>
                       <p className="text-[10px] text-slate-400 mt-1">{new Date(m.at).toLocaleString('en-IN')}</p>
                     </div>
@@ -110,8 +117,11 @@ export default function Support() {
   const [page, setPage]         = useState(1);
   const [status, setStatus]     = useState('');
   const [priority, setPriority] = useState('');
+  const [kind, setKind]         = useState('');
+  const [category, setCategory] = useState('');
 
-  const { data, isLoading } = useAdminSupportTicketsQuery({ status, priority, page });
+  // Refreshed often, so a conversation reads like a chat.
+  const { data, isLoading } = useAdminSupportTicketsQuery({ status, priority, kind, category, page }, { pollingInterval: 20000 });
 
   if (isLoading) return <PageLoader />;
 
@@ -120,8 +130,8 @@ export default function Support() {
   return (
     <div className="space-y-6">
       <SectionHeader
-        title="Support Tickets"
-        subtitle={`${data?.total || 0} total, click a row to read & reply`}
+        title="Support and feedback"
+        subtitle={`${data?.total || 0} conversations from customers and partners: complaints, feature requests and help. Open one to reply; they get a push.`}
       />
 
       {/* Filters */}
@@ -136,6 +146,16 @@ export default function Support() {
           <option value="">All priorities</option>
           {['urgent', 'high', 'normal', 'low'].map(p => <option key={p} value={p}>{p}</option>)}
         </select>
+        <select value={kind} onChange={e => { setKind(e.target.value); setPage(1); }}
+          className="text-xs border border-slate-200 rounded-lg px-3 py-1.5 bg-white text-slate-700 outline-none focus:ring-2 focus:ring-blue-500">
+          <option value="">Everyone</option>
+          {Object.entries(KIND).map(([k, [l]]) => <option key={k} value={k}>{l}s</option>)}
+        </select>
+        <select value={category} onChange={e => { setCategory(e.target.value); setPage(1); }}
+          className="text-xs border border-slate-200 rounded-lg px-3 py-1.5 bg-white text-slate-700 outline-none focus:ring-2 focus:ring-blue-500">
+          <option value="">All topics</option>
+          {Object.entries(TOPIC).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
+        </select>
       </div>
 
       {tickets.length === 0 ? (
@@ -149,7 +169,7 @@ export default function Support() {
             <table className="min-w-full">
               <thead>
                 <tr>
-                  <Th>ID</Th>
+                  <Th>From</Th>
                   <Th>Subject</Th>
                   <Th>Status</Th>
                   <Th>Priority</Th>

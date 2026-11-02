@@ -14,8 +14,8 @@ import { colors, ink, slate, success, zappy } from '@zappy/ui/theme/colors';
 import { radius } from '@zappy/ui/theme/radius';
 import { spacing } from '@zappy/ui/theme/spacing';
 import { DISPUTE_STATUS } from './disputeMeta';
-import { MessageThread } from './MessageThread';
-import { StatusBadge } from './StatusBadge';
+import { MessageThread } from '@zappy/ui/support/MessageThread';
+import { StatusBadge } from '@zappy/ui/support/StatusBadge';
 
 export function DisputeThreadPage() {
   const { id } = useLocalSearchParams<{ id: string }>();

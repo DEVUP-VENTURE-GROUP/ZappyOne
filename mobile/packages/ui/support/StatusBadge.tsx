@@ -1,8 +1,8 @@
 /** Where a ticket or dispute stands, as a dotted pill; `meta` is that case type's status table. */
 import { StyleSheet, View } from 'react-native';
-import { Text } from '@zappy/ui/components';
-import { useT } from '@zappy/ui/lib/i18n';
-import { radius } from '@zappy/ui/theme/radius';
+import { Text } from '../components';
+import { useT } from '../lib/i18n';
+import { radius } from '../theme/radius';
 import { STATUS } from './ticketMeta';
 
 export function StatusBadge({ status, meta = STATUS }: { status: string; meta?: Record<string, { label: string; bg: string; fg: string }> }) {

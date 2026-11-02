@@ -11,7 +11,9 @@
     <title>ZappyOne ServicePro</title>
   </head>
   <body class="bg-slate-50">
-    <div id="root"></div>
+    <!-- Shown until the app draws its first screen, so a slow connection never shows a blank page. -->
+    <div id="root"><div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;background:#F8FAFC"><img src="/icons/icon-192.png" width="56" height="56" alt="ZappyOne" style="border-radius:14px" /><span style="width:24px;height:24px;border-radius:50%;border:2px solid #C7D7F7;border-top-color:#1F4FD8;animation:zboot .8s linear infinite"></span></div></div>
+    <style>@keyframes zboot{to{transform:rotate(360deg)}}</style>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

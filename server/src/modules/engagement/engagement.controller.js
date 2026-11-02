@@ -120,7 +120,7 @@ async function submitFeedback(req, res, next) {
 
 async function createTicket(req, res, next) {
   try {
-    if (!['user', 'worker'].includes(req.auth.role)) {
+    if (!['user', 'worker', 'shop', 'event_partner'].includes(req.auth.role)) {
       return res.status(403).json({ error: 'Forbidden' });
     }
     const slaHours = { urgent: 1, high: 2, normal: 4, low: 24 }[req.body.priority] || 4;
@@ -130,6 +130,7 @@ async function createTicket(req, res, next) {
       slaDeadline: new Date(Date.now() + slaHours * 3600 * 1000),
       messages: [{ from: req.auth.role, fromId: req.auth.sub, text: req.body.description }],
     });
+    require('./support-notify').toAdmin(ticket, req.body.description, { isNew: true });
     res.status(201).json({ ticket });
   } catch (err) { next(err); }
 }
@@ -148,6 +149,7 @@ async function getTicket(req, res, next) {
   try {
     const ticket = await SupportTicket.findOne({
       _id: req.params.id,
+      'raisedBy.kind': req.auth.role,
       'raisedBy.id': req.auth.sub,
     }).lean();
     if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
@@ -167,6 +169,8 @@ async function addTicketMessage(req, res, next) {
       ticket.status = 'in_progress';
     }
     await ticket.save();
+    if (req.auth.role === 'admin') require('./support-notify').toRaiser(ticket, req.body.text);
+    else require('./support-notify').toAdmin(ticket, req.body.text);
     res.json({ ticket });
   } catch (err) { next(err); }
 }
@@ -179,6 +183,7 @@ async function adminListTickets(req, res, next) {
     if (req.query.status)   filter.status   = req.query.status;
     if (req.query.priority) filter.priority  = req.query.priority;
     if (req.query.category) filter.category  = req.query.category;
+    if (req.query.kind)     filter['raisedBy.kind'] = req.query.kind;
     const [items, total] = await Promise.all([
       SupportTicket.find(filter)
         .sort({ priority: -1, slaDeadline: 1, createdAt: -1 })
@@ -187,7 +192,7 @@ async function adminListTickets(req, res, next) {
         .lean(),
       SupportTicket.countDocuments(filter),
     ]);
-    res.json({ tickets: items, total, page, totalPages: Math.ceil(total / limit) });
+    res.json({ tickets: await require('./support-notify').withRaisers(items), total, page, totalPages: Math.ceil(total / limit) });
   } catch (err) { next(err); }
 }
 
@@ -205,6 +210,7 @@ async function adminReplyTicket(req, res, next) {
       ticket.status = 'in_progress';
     }
     await ticket.save();
+    require('./support-notify').toRaiser(ticket, req.body.text);
     res.json({ ticket });
   } catch (err) { next(err); }
 }

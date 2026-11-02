@@ -7,10 +7,10 @@ import { useRef, useState, type ReactElement } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Send } from 'lucide-react-native';
-import { Text } from '@zappy/ui/components';
-import { colors, ink, slate } from '@zappy/ui/theme/colors';
-import { radius } from '@zappy/ui/theme/radius';
-import { spacing } from '@zappy/ui/theme/spacing';
+import { Text } from '../components';
+import { colors, ink, slate } from '../theme/colors';
+import { radius } from '../theme/radius';
+import { spacing } from '../theme/spacing';
 
 export interface ThreadMsg { from: string; text: string; at: string }
 

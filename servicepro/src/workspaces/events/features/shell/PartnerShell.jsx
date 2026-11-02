@@ -3,8 +3,7 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  LayoutDashboard, CalendarCheck, Images, CalendarDays, Wallet, UserRound, Megaphone, Bell, Menu, X, LogOut, Lock, Star,
-} from 'lucide-react';
+  LayoutDashboard, CalendarCheck, Images, CalendarDays, Wallet, UserRound, Megaphone, Bell, Menu, X, LogOut, Lock, Star, Headphones } from 'lucide-react';
 import { usePartnerMeQuery, usePartnerOverviewQuery, usePartnerNotificationsQuery, useLogoutMutation } from '@shared/services/api';
 import { logout } from '@shared/modules/auth/authSlice';
 import { ZappyWordmark } from '@shared/components/common/ZappyLogo';
@@ -27,6 +26,7 @@ export const NAV = [
   { to: '/partner/reviews', label: 'Reviews', Icon: Star, gated: true },
   { to: '/partner/profile', label: 'Profile & KYC', Icon: UserRound },
   { to: '/partner/advertise', label: 'Advertise', Icon: Megaphone },
+  { to: '/partner/support', label: 'Talk to ZappyOne', Icon: Headphones },
 ];
 
 function Item({ item, locked, badge, onPick, compact = false }) {

@@ -8,25 +8,25 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CheckCircle2, Clock } from 'lucide-react-native';
 import { useAddTicketMessageMutation, useGetTicketQuery } from '@zappy/core/api';
-import { LoadingState, ScreenHeader, Text } from '@zappy/ui/components';
-import { toast } from '@zappy/ui/components/Toast';
-import { useT } from '@zappy/ui/lib/i18n';
-import { colors, danger, ink, slate, success } from '@zappy/ui/theme/colors';
-import { radius } from '@zappy/ui/theme/radius';
-import { spacing } from '@zappy/ui/theme/spacing';
+import { LoadingState, ScreenHeader, Text } from '../components';
+import { toast } from '../components/Toast';
+import { useT } from '../lib/i18n';
+import { colors, danger, ink, slate, success } from '../theme/colors';
+import { radius } from '../theme/radius';
+import { spacing } from '../theme/spacing';
 import { MessageThread } from './MessageThread';
 import { StatusBadge } from './StatusBadge';
 import { CLOSED } from './ticketMeta';
 
-export function TicketThreadPage() {
+export function TicketThreadPage({ base = '/support' }: { base?: string }) {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const t = useT();
-  const { data, isLoading, refetch } = useGetTicketQuery(id, { pollingInterval: 30000 });
+  const { data, isLoading, refetch } = useGetTicketQuery(id, { pollingInterval: 8000 }); // checked often while open, so replies arrive like a chat
   const [send, { isLoading: sending }] = useAddTicketMessageMutation();
   const ticket = data?.ticket;
-  const back = () => (router.canGoBack() ? router.back() : router.replace('/support' as never));
+  const back = () => (router.canGoBack() ? router.back() : router.replace(base as never));
 
   async function reply(text: string) {
     try { await send({ id, text }).unwrap(); refetch(); return true; }
@@ -48,13 +48,13 @@ export function TicketThreadPage() {
           <Text variant="caption" weight="semibold" color={overdue ? danger[600] : ink[500]}>{overdue ? t('ticket.overdue', 'Response overdue. Escalated to our senior team') : `${t('ticket.replyWithin', 'Expected reply within')} ${hoursLeft}h`}</Text>
         </View>
       ) : null}
-      <MessageThread messages={ticket.messages || []} teamLabel="ZappyOne Support" open={open} sending={sending} placeholder={t('ticket.replyHint', 'Reply to support…')} onSend={reply}
+      <MessageThread messages={ticket.messages || []} teamLabel="ZappyOne" open={open} sending={sending} placeholder={t('ticket.replyHint', 'Write to ZappyOne…')} onSend={reply}
         footer={ticket.status === 'resolved' ? (
           <View style={styles.resolved}>
             <CheckCircle2 size={16} color={success[600]} />
             <View style={styles.flex}>
-              <Text variant="caption" weight="bold" color={success[700]}>{t('ticket.resolved', 'Ticket resolved')}</Text>
-              <Text variant="caption" color={success[600]}>{ticket.resolutionNote || t('ticket.resolvedNote', 'Your issue has been addressed. If you have further questions, open a new ticket.')}</Text>
+              <Text variant="caption" weight="bold" color={success[700]}>{t('ticket.resolved', 'Sorted')}</Text>
+              <Text variant="caption" color={success[600]}>{ticket.resolutionNote || t('ticket.resolvedNote', 'ZappyOne marked this done. Start a new message if you need anything else.')}</Text>
             </View>
           </View>
         ) : null} />

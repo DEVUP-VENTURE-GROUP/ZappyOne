@@ -1,7 +1,7 @@
 import { Outlet, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import {
-  LayoutDashboard, Wrench, Users, IndianRupee, Store, ShieldCheck, PlusCircle, Bell, UserRound, Star, MessageSquareQuote, Scale, FileText, Wallet, Landmark, KanbanSquare, BarChart3, Repeat } from 'lucide-react';
+  LayoutDashboard, Wrench, Users, IndianRupee, Store, ShieldCheck, PlusCircle, Bell, UserRound, Star, MessageSquareQuote, Scale, FileText, Wallet, Landmark, KanbanSquare, BarChart3, Repeat, Headphones } from 'lucide-react';
 import PortalShell from '@shared/components/worker/PortalShell';
 import ProfileGate, { ALWAYS } from './ProfileGate';
 import { STAFF_HELP_PHONE } from '@shared/provider/partnerPages';
@@ -37,6 +37,7 @@ const OWNER_PAGES = [
   { key: 'kyc', label: 'Verification', Icon: ShieldCheck, to: '/shop/kyc' },
   { key: 'appeals', label: 'Appeals', Icon: Scale, to: '/shop/appeals' },
   { key: 'services', label: 'Add a service', Icon: PlusCircle, to: '/provider/onboarding' },
+  { key: 'support', label: 'Talk to ZappyOne', Icon: Headphones, to: '/shop/support' },
 ];
 
 // While the profile is unfinished every other page is locked and opens the next missing step instead.
