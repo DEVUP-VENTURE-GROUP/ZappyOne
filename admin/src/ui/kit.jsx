@@ -125,7 +125,7 @@ export function StatusBadge({ status }) {
   const cls = map[status] || 'bg-slate-100 text-slate-600';
   return (
     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold capitalize ${cls}`}>
-      {(status || '—').replace(/_/g, ' ')}
+      {(status || '-').replace(/_/g, ' ')}
     </span>
   );
 }

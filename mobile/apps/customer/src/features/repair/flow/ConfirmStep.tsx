@@ -5,7 +5,8 @@
  * moved while they decided is refreshed and they book again.
  */
 import { deviceName } from '@zappy/core/shared/deviceName';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StyleSheet, View } from 'react-native';
 import { Check } from 'lucide-react-native';
 import { useCreateRepairBookingMutation } from '@zappy/core/api';
@@ -34,6 +35,12 @@ export function ConfirmStep({ vertical, brand, model, configuration, problem, di
   onDone: (booking: { _id: string }) => void;
 }) {
   const [create, { isLoading }] = useCreateRepairBookingMutation();
+  // Arrived through this provider's own link (StorefrontPage kept the code): the server checks it is theirs.
+  const [via, setVia] = useState<string | null>(null);
+  useEffect(() => {
+    const key = provider?.shopId ? `shop:${provider.shopId}` : provider?.workerId ? `worker:${provider.workerId}` : null;
+    if (key) AsyncStorage.getItem(`zappy:via:${key}`).then(setVia).catch(() => setVia(null));
+  }, [provider?.shopId, provider?.workerId]);
   const idempotencyKey = useMemo(() => `app-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, []);
   const [onSite, setOnSite] = useState<{ name: string; phone: string } | 'incomplete' | null>(null);
   const [tip, setTip] = useState(0);
@@ -55,7 +62,7 @@ export function ConfirmStep({ vertical, brand, model, configuration, problem, di
         diagnosisSummary: diagnosis?.summary || '',
         repairCode: inspectionOnly ? null : repairCode || null,
         qualityCode: qualityCode || diagnosis?.recommendedQuality || null,
-        serviceMode, workerId: provider?.workerId || null, shopId: provider?.shopId || null, zappyRecommended: !!provider?.zappyRecommended,
+        serviceMode, workerId: provider?.workerId || null, shopId: provider?.shopId || null, zappyRecommended: !!provider?.zappyRecommended, via,
         location: { coordinates: [location.lng, location.lat], address: doorAddress(location) || 'Current location', landmark: (location.notes || '').slice(0, 150) },
         paymentMethod: 'cash', idempotencyKey,
         ...surge.bookingFields,

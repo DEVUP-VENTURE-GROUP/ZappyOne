@@ -100,7 +100,7 @@ async function sendFallbackOtp(phone, otp) {
       logger.info({ phone: mobile91 }, '[OTP] Sent via Fast2SMS');
       return;
     } catch (err) {
-      logger.warn({ err: err.message }, '[OTP] Fast2SMS failed — trying MSG91');
+      logger.warn({ err: err.message }, '[OTP] Fast2SMS failed - trying MSG91');
     }
   }
 
@@ -125,7 +125,7 @@ async function sendFallbackOtp(phone, otp) {
       logger.info({ phone: mobile91 }, '[OTP] Sent via MSG91');
       return;
     } catch (err) {
-      logger.warn({ err: err.message }, '[OTP] MSG91 failed — using console');
+      logger.warn({ err: err.message }, '[OTP] MSG91 failed - using console');
     }
   }
 
@@ -133,7 +133,7 @@ async function sendFallbackOtp(phone, otp) {
   // delivery is misconfigured — log the failure WITHOUT leaking the code, so a log
   // reader can never see a live OTP and take over an account.
   if (process.env.NODE_ENV === 'production') {
-    logger.error({ phone: mobile }, '[OTP] No SMS provider configured — OTP NOT delivered (code withheld from logs)');
+    logger.error({ phone: mobile }, '[OTP] No SMS provider configured - OTP NOT delivered (code withheld from logs)');
   } else {
     logger.warn({ phone: mobile, otp }, '[DEV] OTP (no SMS provider configured)');
   }
@@ -147,7 +147,7 @@ async function trackOtpEvent(event) {
       .incr(`otp:stats:${event}:${today}`)
       .expire(`otp:stats:${event}:${today}`, 90 * 86400)
       .exec();
-  } catch { /* non-fatal — never block auth on analytics */ }
+  } catch { /* non-fatal - never block auth on analytics */ }
 }
 
 async function hashPassword(pw) {
@@ -343,7 +343,7 @@ async function verifyOtp(phone, otp) {
   if (attempts >= OTP_MAX_ATTEMPTS) {
     await redis.del(`otp:${phone}`);
     await trackOtpEvent('blocked');
-    logger.warn({ phone }, '[OTP] Session killed — max attempts exceeded');
+    logger.warn({ phone }, '[OTP] Session killed - max attempts exceeded');
     return false;
   }
 
@@ -421,8 +421,9 @@ function assertWorkerPortal(worker, portal) {
   }
 }
 
-async function loginWorkerWithOtp({ phone, otp, name, skills, deviceId, portal = null }) {
-  const ok = await verifyOtp(phone, otp);
+async function loginWorkerWithOtp({ phone, otp, name, skills, deviceId, portal = null }, { preVerified = false } = {}) {
+  // preVerified is passed only by the server's own ServicePro sign-in (serviceproLogin), never from a request.
+  const ok = preVerified || await verifyOtp(phone, otp);
   if (!ok) throw Object.assign(new Error('Invalid OTP'), { status: 401, code: 'OTP_INVALID' });
 
   let worker = await Worker.findOne({ phone });
@@ -531,8 +532,9 @@ async function loginWorkerWithOtp({ phone, otp, name, skills, deviceId, portal =
 }
 
 // ---- Event Partner (phone OTP) — self-registration allowed, admin approves KYC ----
-async function loginEventPartnerWithOtp({ phone, otp, businessName, ownerName, cities }) {
-  const ok = await verifyOtp(phone, otp);
+async function loginEventPartnerWithOtp({ phone, otp, businessName, ownerName, cities }, { preVerified = false } = {}) {
+  // preVerified is passed only by the server's own ServicePro sign-in (serviceproLogin), never from a request.
+  const ok = preVerified || await verifyOtp(phone, otp);
   if (!ok) throw Object.assign(new Error('Invalid OTP'), { status: 401, code: 'OTP_INVALID' });
 
   const EventPartner = require('../events/event-partner.model');
@@ -571,8 +573,9 @@ async function loginEventPartnerWithOtp({ phone, otp, businessName, ownerName, c
 // events-only one. First login only collects the identity fields a login form
 // can reasonably ask for; category/services/address are completed afterward
 // via the shop's own profile endpoint (shop.isDiscoverable() gates the rest).
-async function loginShopWithOtp({ phone, otp, businessName, ownerName, category, services, partnerType = 'shop', acceptTerms }) {
-  const ok = await verifyOtp(phone, otp);
+async function loginShopWithOtp({ phone, otp, businessName, ownerName, category, services, partnerType = 'shop', acceptTerms }, { preVerified = false } = {}) {
+  // preVerified is passed only by the server's own ServicePro sign-in (serviceproLogin), never from a request.
+  const ok = preVerified || await verifyOtp(phone, otp);
   if (!ok) throw Object.assign(new Error('Invalid OTP'), { status: 401, code: 'OTP_INVALID' });
 
   let shop = await Shop.findOne({ phone });

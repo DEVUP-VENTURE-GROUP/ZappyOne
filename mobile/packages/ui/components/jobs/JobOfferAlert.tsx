@@ -9,7 +9,7 @@ import { Modal, Pressable, StyleSheet, Vibration, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Banknote, Briefcase, Clock, IndianRupee, MapPin, Navigation, Sparkles, Star, X } from 'lucide-react-native';
 import { kmBetween } from '@zappy/core/shared/distance';
-import { offerClock, DEFAULT_WINDOW_SEC, PASS_REASONS } from '@zappy/core/shared/jobOffers';
+import { offerClock, DEFAULT_WINDOW_SEC, PASS_REASONS, customerRecordLine } from '@zappy/core/shared/jobOffers';
 import { formatPaise } from '@zappy/core/shared/money';
 import { Button, Text } from '..';
 import { colors, zappy, ink, slate, success, accent, danger } from '../../theme/colors';
@@ -134,6 +134,7 @@ export function JobOfferAlert({ offer, myLocation, onAccept, onDecline, onClose,
                 </Text>
               </View>
             ) : null}
+            {customerRecordLine(offer.customer) ? <Text variant="caption" weight="bold" color={accent[700]}>{customerRecordLine(offer.customer)}</Text> : null}
             {offer.whenLabel ? <View style={styles.inline}><Clock size={12} color={ink[700]} /><Text variant="caption" weight="medium" color={ink[700]}>{offer.whenLabel}</Text></View> : null}
             {(offer.frontPaise ?? 0) > 0 ? (
               <View style={styles.front}><Banknote size={13} color={accent[700]} />
@@ -165,7 +166,7 @@ export function JobOfferAlert({ offer, myLocation, onAccept, onDecline, onClose,
           </View>
 
           <Pressable onPress={() => onClose('dismissed')} accessibilityRole="button" style={styles.hide}>
-            <X size={12} color={ink[500]} /><Text variant="caption" weight="medium" color={ink[500]}>Hide — it stays on your Work page</Text>
+            <X size={12} color={ink[500]} /><Text variant="caption" weight="medium" color={ink[500]}>Hide - it stays on your Work page</Text>
           </Pressable>
         </View>
       </View>

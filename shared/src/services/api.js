@@ -12,7 +12,7 @@ let _sessionReplacedAt = 0;
 function sessionReplacedToast() {
   if (Date.now() - _sessionReplacedAt < 4000) return;
   _sessionReplacedAt = Date.now();
-  toast.error('You were signed out — your account was opened on another device.', { id: 'session-replaced', duration: 5000 });
+  toast.error('You were signed out - your account was opened on another device.', { id: 'session-replaced', duration: 5000 });
 }
 
 const rawBaseQuery = fetchBaseQuery({
@@ -234,6 +234,7 @@ export const {
   useAdminListUsersQuery,
   useAdminGetUserQuery,
   useAdminBlockUserMutation,
+  useAdminWaiveCashDueMutation,
   useAdminWalletAdjustMutation,
   useAdminWalletReconcileMutation,
   useAdminAuditLogsQuery,
@@ -409,6 +410,12 @@ export const {
   useCreateRepairGroupMutation,
   useRepairGroupQuery,
   useRepairSuggestionsQuery,
+  useRepairVerticalsQuery,
+  useStorefrontsQuery,
+  useStorefrontMenuQuery,
+  usePlansNearQuery, usePlansNearAnyQuery, usePlanQuoteQuery, useSubscribePlanMutation, useMyPlansQuery, usePausePlanDayMutation, useCancelPlanMutation, useRatePlanVisitMutation,
+  useProviderPlanCatalogQuery, useProviderPlansQuery, useSaveProviderPlanMutation, useSubmitProviderPlanMutation, useSetProviderPlanLiveMutation, useProviderPlanSubscriptionsQuery,
+  useProviderPlanVisitsQuery, useAssignPlanVisitMutation, useStartPlanVisitMutation, useCompletePlanVisitMutation,
   useLensStatusQuery,
   useReportProviderAbsentMutation,
   useBoostJobMutation,
@@ -429,7 +436,10 @@ export const {
   useAdminPartnerRateOverridesQuery,
   useJobGiveBackQuery,
   useGiveBackJobMutation,
-  useReportCustomerAbsentMutation,
+  useConfirmJobSafeMutation,
+  useAskJobMoreTimeMutation,
+  useBlockJobCustomerMutation,
+  useReportCustomerAbsentMutation, useReportCashRefusedMutation,
   useSendJobChatMutation,
   // Account
   useAccountMeQuery,
@@ -509,6 +519,8 @@ export const {
   // Shop
   useLoginShopMutation,
   useShopMeQuery,
+  useShopShareLinkQuery,
+  useServiceproLoginMutation, useServiceproRegisterMutation, useProviderWorkspaceQuery, useProviderProfileStatusQuery, useProviderSetupJourneyQuery,
   useUpdateShopMeMutation,
   useShopKycStatusQuery,
   useSubmitShopKycMutation,
@@ -561,6 +573,7 @@ export const {
   useAdminOnboardingEnrolmentsQuery,
   useAdminDecideEnrolmentMutation,
   useAdminOnboardingLineRequestsQuery,
+  useAdminPendingPlansQuery, useAdminReviewPlanMutation, useAdminPlanConfigQuery, useAdminSetPlanConfigMutation,
   useAdminApproveLineRequestMutation,
   useAdminRejectLineRequestMutation,
   useRepairWorkCatalogQuery,
@@ -577,7 +590,7 @@ export const {
   useSubmitRepairDiagnosticMutation,
   useRepairPricePreviewQuery,
   useRepairAddOnsQuery,
-  useMyAssetsQuery, useCreateAssetMutation, useDeleteAssetMutation,
+  useMyAssetsQuery, useMyAssetHistoryQuery, useCreateAssetMutation, useDeleteAssetMutation,
   useHelpingServicesQuery, useHelpingQuoteMutation,
   useCreateHelpingTaskMutation, useMyHelpingTasksQuery, useGetHelpingTaskQuery,
   useRespondHelpingApprovalMutation, useCancelHelpingTaskMutation, useRateHelpingTaskMutation,
@@ -612,7 +625,7 @@ export const {
   usePartnerSettingsQuery,
   useSavePartnerSettingsMutation,
   usePartnerTermsQuery,
-  useShopDuesQuery,
+  useShopDuesQuery, useClaimShopDuesPaymentMutation, useMyBookingPaymentQuery,
   useAdminShopDuesQuery,
   useAdminRecordShopDuesPaymentMutation,
   useShopAgreementQuery,

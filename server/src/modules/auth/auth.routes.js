@@ -176,6 +176,34 @@ router.post(
   ctrl.loginWithPassword,
 );
 
+// ServicePro's one sign-in: code once, then the number's accounts (auth/servicepro-login).
+router.post(
+  '/servicepro/login',
+  authLimiter,
+  validate(Joi.object({
+    phone: Joi.string().pattern(/^[0-9]{10,15}$/),
+    otp: Joi.string().min(4).max(6),
+    ticket: Joi.string().max(600),
+    role: Joi.string().valid('shop', 'worker', 'event_partner'),
+    deviceId: Joi.string().max(200),
+  }).xor('otp', 'ticket').with('otp', 'phone')),
+  ctrl.serviceproLogin,
+);
+router.post(
+  '/servicepro/register',
+  authLimiter,
+  validate(Joi.object({
+    ticket: Joi.string().max(600).required(),
+    kind: Joi.string().valid('services', 'events').required(),
+    businessName: Joi.string().trim().min(2).max(120).required(),
+    ownerName: Joi.string().trim().min(2).max(100).required(),
+    partnerType: Joi.string().valid('shop', 'agency', 'company', 'individual').default('individual'),
+    acceptTerms: Joi.boolean().valid(true).required(),
+    cities: Joi.array().items(Joi.string().max(60)).max(20),
+  })),
+  ctrl.serviceproRegister,
+);
+
 router.post('/refresh', refreshLimiter, ctrl.refresh);
 router.post('/logout', ctrl.logout);
 

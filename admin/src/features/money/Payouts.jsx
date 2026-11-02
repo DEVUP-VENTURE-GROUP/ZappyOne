@@ -44,7 +44,7 @@ export default function Payouts() {
   async function doProcess(id) {
     try {
       const p = await process(id).unwrap();
-      toast.success(p.manualTransferRequired ? 'No payout gateway — transfer it by hand, then mark it paid' : 'Payout sent');
+      toast.success(p.manualTransferRequired ? 'No payout gateway - transfer it by hand, then mark it paid' : 'Payout sent');
       refetch();
     } catch (err) { toast.error(err.data?.error || 'Failed'); }
   }
@@ -52,7 +52,7 @@ export default function Payouts() {
   async function doMarkPaid() {
     try {
       await markPaid({ id: paidTarget, reference: reference.trim() }).unwrap();
-      toast.success('Marked paid — the worker has been told');
+      toast.success('Marked paid - the worker has been told');
       setPaidTarget(null);
       setReference('');
       refetch();
@@ -89,11 +89,11 @@ export default function Payouts() {
                 <tr key={p._id} className="hover:bg-slate-50/60 transition-colors">
                   <Td mono>#{p._id.slice(-8)}</Td>
                   <Td>
-                    <p className="font-semibold text-slate-900">{p.workerId?.name || '—'}</p>
+                    <p className="font-semibold text-slate-900">{p.workerId?.name || '-'}</p>
                     <p className="text-xs text-slate-400">{p.workerId?.phone}</p>
                   </Td>
                   <Td><span className="font-bold text-slate-900">{fmt(p.amountPaise)}</span></Td>
-                  <Td muted className="capitalize">{p.method || '—'}{p.destination?.upiId ? `, ${p.destination.upiId}` : ''}</Td>
+                  <Td muted className="capitalize">{p.method || '-'}{p.destination?.upiId ? `, ${p.destination.upiId}` : ''}</Td>
                   <Td><StatusBadge status={p.status} /></Td>
                   <Td muted>{fmtDate(p.createdAt)}</Td>
                   <Td>

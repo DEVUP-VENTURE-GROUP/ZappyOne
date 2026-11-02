@@ -85,7 +85,7 @@ async function applyAtSignup({ code, referee, refereeIp, refereeDeviceId }) {
       createdAt: { $gte: new Date(Date.now() - REFERRAL_WINDOW_MS) },
     });
     if (recentByDevice) {
-      logger.warn({ refereeIp, refereeDeviceId }, 'Referral abuse suspected — same IP/device');
+      logger.warn({ refereeIp, refereeDeviceId }, 'Referral abuse suspected - same IP/device');
       throw Object.assign(new Error('Referral cannot be applied'), { status: 400, code: 'REFERRAL_DUPLICATE' });
     }
   }
@@ -96,7 +96,7 @@ async function applyAtSignup({ code, referee, refereeIp, refereeDeviceId }) {
     createdAt: { $gte: new Date(Date.now() - REFERRAL_WINDOW_MS) },
   });
   if (referrerMonthlyCount >= MAX_REFERRALS_PER_REFERRER) {
-    logger.warn({ referrerId: codeDoc.owner.id, count: referrerMonthlyCount }, '[REFERRAL] Monthly cap hit — possible farming');
+    logger.warn({ referrerId: codeDoc.owner.id, count: referrerMonthlyCount }, '[REFERRAL] Monthly cap hit - possible farming');
     throw Object.assign(new Error('Referral limit reached'), { status: 429, code: 'REFERRAL_CAP' });
   }
 
@@ -176,7 +176,7 @@ async function onRefereeFirstOrder({ refereeKind, refereeId, orderId }) {
     amountPaise: REFEREE_BONUS_PAISE,
     reason: Transaction.REASONS.REFERRAL_REWARD,
     idempotencyKey: `referral:referee:${use._id}`,
-    description: `Welcome bonus — you completed your first order via referral ${use.code}`,
+    description: `Welcome bonus - you completed your first order via referral ${use.code}`,
     refs: { orderId },
   });
 
@@ -196,7 +196,7 @@ async function onRefereeFirstOrder({ refereeKind, refereeId, orderId }) {
     amountPaise: REFERRER_REWARD_PAISE,
     reason: Transaction.REASONS.REFERRAL_REWARD,
     idempotencyKey: `referral:referrer:${use._id}`,
-    description: 'Referral reward — your friend just completed their first order!',
+    description: 'Referral reward - your friend just completed their first order!',
     refs: { orderId },
   });
 

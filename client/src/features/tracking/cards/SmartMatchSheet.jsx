@@ -90,7 +90,7 @@ export default function SmartMatchSheet({ worker, onDismiss }) {
             <div className="text-right">
               <p className="text-[10px] text-slate-400">ETA</p>
               <p className="font-extrabold text-[#0F172A] text-sm">
-                {worker?.etaMinutes != null ? `${worker.etaMinutes} min` : '—'}
+                {worker?.etaMinutes != null ? `${worker.etaMinutes} min` : '-'}
               </p>
             </div>
           </div>

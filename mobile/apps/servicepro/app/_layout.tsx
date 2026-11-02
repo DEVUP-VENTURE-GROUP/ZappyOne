@@ -5,7 +5,7 @@ import { WorkerFrame } from '@zappy/ui/provider/WorkerFrame';
 import { isPublic, resolveRoute } from '../routes';
 import { homeFor } from '../src/menus';
 
-/** Shops and their technicians, and event partners (the web keeps events.zappyone.com for them too). */
+/** Shops and their technicians, and event partners, as on the web. */
 const ROLES = ['shop', 'worker', 'event_partner'] as const;
 /** The kinds of work a shop takes (the website's JobOfferHost kinds). */
 const KINDS = ['repair', 'pet'];

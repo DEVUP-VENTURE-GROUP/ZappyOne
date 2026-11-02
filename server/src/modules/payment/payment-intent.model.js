@@ -19,6 +19,9 @@ const paymentIntentSchema = new mongoose.Schema(
   {
     cfOrderId:   { type: String, required: true, unique: true, index: true }, // Cashfree order_id (we set this)
     cfPaymentId: { type: String, sparse: true, unique: true },                // cf_payment_id — set on capture
+    // cfOrderId and cfPaymentId are our order id and the gateway's payment id for either gateway; Razorpay also names its own order (payment/gateway).
+    gateway:        { type: String, enum: ['cashfree', 'razorpay'], default: 'cashfree' },
+    gatewayOrderId: { type: String, default: undefined },
 
     owner: {
       kind: { type: String, enum: ['user', 'worker'], required: true },
@@ -94,6 +97,7 @@ const paymentIntentSchema = new mongoose.Schema(
 
 paymentIntentSchema.index({ 'owner.id': 1, createdAt: -1 });
 paymentIntentSchema.index({ status: 1, createdAt: -1 });
+paymentIntentSchema.index({ gatewayOrderId: 1 }, { unique: true, partialFilterExpression: { gatewayOrderId: { $type: 'string' } } });
 paymentIntentSchema.index({ reconciliationRequired: 1, createdAt: -1 });
 
 module.exports = mongoose.model('PaymentIntent', paymentIntentSchema);

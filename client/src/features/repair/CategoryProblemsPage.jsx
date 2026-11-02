@@ -60,7 +60,7 @@ export default function CategoryProblemsPage() {
   return (
     <div className="min-h-screen bg-canvas pb-16">
       <SEO
-        title={`${category.name} — ${service.name} | ZappyOne`}
+        title={`${category.name} - ${service.name} | ZappyOne`}
         description={`${category.name} problems we fix, with a technician at your door. Diagnosed before you are quoted.`}
       />
 
@@ -97,7 +97,7 @@ export default function CategoryProblemsPage() {
         >
           <span className="block text-sm font-bold text-slate-700">Not seeing your problem?</span>
           <span className="mt-0.5 block text-xs text-slate-500">
-            Start the booking anyway — the technician diagnoses it on site.
+            Start the booking anyway - the technician diagnoses it on site.
           </span>
         </button>
       </div>

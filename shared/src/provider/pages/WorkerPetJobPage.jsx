@@ -1,3 +1,4 @@
+import { useCheckInThen } from '../useCheckIn';
 import JobChatButton from '../../components/jobs/JobChatButton';
 import OnSiteCard from '../OnSiteCard';
 import GiveBackCard from '../GiveBackCard';
@@ -40,6 +41,7 @@ export default function WorkerPetJobPage() {
   const [addProof] = useAddPetBookingProofMutation();
   const [collectCash, { isLoading: collecting }] = useCollectPetCashMutation();
   const [acceptOffer, { isLoading: accepting }] = useAcceptPetBookingMutation();
+  const checkedIn = useCheckInThen();
   const [declineOffer, { isLoading: declining }] = useDeclinePetBookingMutation();
   const [beforePhotos, setBeforePhotos] = useState([]);
   const [afterPhotos, setAfterPhotos] = useState([]);
@@ -98,7 +100,7 @@ export default function WorkerPetJobPage() {
 
   async function answerOffer(yes) {
     try {
-      if (yes) { await acceptOffer(booking._id).unwrap(); toast.success('Accepted. The customer has been told.'); refetch(); }
+      if (yes) { await checkedIn(() => acceptOffer(booking._id).unwrap()); toast.success('Accepted. The customer has been told.'); refetch(); }
       else { await declineOffer({ id: booking._id, reason: 'Declined by provider' }).unwrap(); toast('Declined. We will find someone else.'); nav('/worker/work'); }
     } catch (err) {
       toast.error(err?.data?.error || 'Could not send your answer');
@@ -198,6 +200,7 @@ export default function WorkerPetJobPage() {
             paid={booking.paymentStatus === 'paid'}
             collecting={collecting}
             onCollect={recordCash}
+            jobId={booking._id}
           />
         )}
         {PET_DONE.includes(booking.status) && <JobEarningsCard jobId={booking._id} />}

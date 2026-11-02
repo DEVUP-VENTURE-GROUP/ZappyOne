@@ -2,10 +2,10 @@
  * Which brand: the popular ones first, then all, and a way to tell us a missing one (the website's BrandStep).
  */
 import { useEffect, useState } from 'react';
-import { PACKAGE_TYPE_WORD } from '@zappy/core/shared/repairBasket';
+import { typeWordOf } from '@zappy/core/shared/repairBasket';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { HelpCircle } from 'lucide-react-native';
-import { useRepairBrandsQuery } from '@zappy/core/api';
+import { useRepairBrandsQuery, useRepairVerticalsQuery } from '@zappy/core/api';
 import { Text } from '@zappy/ui/components';
 import { BrandLogo } from '@zappy/ui/components/common/BrandLogo';
 import { RIPPLE } from '@zappy/ui/lib/feedback';
@@ -13,6 +13,7 @@ import { ink, zappy } from '@zappy/ui/theme/colors';
 import { spacing } from '@zappy/ui/theme/spacing';
 import { MissingItemSheet } from './CatalogRequestSheets';
 import { Shell, Spinner, flow } from './FlowChrome';
+import { StorefrontStrip } from '../../providers/StorefrontStrip';
 
 export interface Coded { code: string; name: string; description?: string; logoUrl?: string }
 
@@ -28,7 +29,8 @@ function Tile({ b, onPick }: { b: Coded; onPick: (b: Coded) => void }) {
 export function BrandStep({ vertical, onPick, onAuto }: { vertical: string; onPick: (b: Coded) => void; onAuto?: (b: Coded) => void }) {
   const { data, isLoading } = useRepairBrandsQuery(vertical);
   const [missing, setMissing] = useState(false);
-  const typeWord = (PACKAGE_TYPE_WORD as Record<string, string>)[vertical];
+  const { data: services } = useRepairVerticalsQuery(undefined);
+  const typeWord: string | undefined = typeWordOf(vertical, services?.items);
   const only: Coded | null = !isLoading && data?.brands?.length === 1 ? data.brands[0] : null;
   useEffect(() => { if (only && onAuto) onAuto(only); }, [only]); // eslint-disable-line react-hooks/exhaustive-deps
   if (isLoading || only) return <Spinner />;
@@ -37,6 +39,7 @@ export function BrandStep({ vertical, onPick, onAuto }: { vertical: string; onPi
   const rest = brands.filter((b) => !popular.some((p) => p.code === b.code));
   return (
     <Shell>
+      <StorefrontStrip vertical={vertical} />
       {missing ? <MissingItemSheet kind="brand" onClose={() => setMissing(false)} /> : null}
       {typeWord ? (
         <>

@@ -44,7 +44,7 @@ function OtpAnalyticsCard() {
           {otpFetching && <RefreshCw size={12} className="animate-spin text-slate-400" />}
         </div>
       </div>
-      <p className="text-xs text-slate-400 mb-4">SMS delivery health — sent / verified / failed per day</p>
+      <p className="text-xs text-slate-400 mb-4">SMS delivery health - sent / verified / failed per day</p>
 
       <div className="grid grid-cols-5 gap-2 mb-4">
         {rows.map(({ label, value, color, bg }) => (

@@ -184,7 +184,7 @@ async function upsertServiceArea(req, res, next) {
      */
     if (!hasCenter && !(pincodes || []).length) {
       return res.status(400).json({
-        error: 'Drop a pin on your shop location, or list the pincodes you cover — '
+        error: 'Drop a pin on your shop location, or list the pincodes you cover - '
           + 'without one of the two, no customer can ever be matched to you.',
         code: 'SERVICE_AREA_UNREACHABLE',
       });

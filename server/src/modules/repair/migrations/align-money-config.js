@@ -64,7 +64,7 @@ async function report() {
   if (tinyFees.length) {
     console.warn(
       `\n  ! platform fee is under ₹5 for: ${tinyFees.map((c) => `${c.vertical} (${rupees(c.platformFeePaise)})`).join(', ')}`
-      + '\n    Worth confirming — this field was in paise on the old admin screen.',
+      + '\n    Worth confirming - this field was in paise on the old admin screen.',
     );
   }
 }

@@ -27,11 +27,17 @@ const mongoose = require('mongoose');
 // .env.<NODE_ENV> overlay. Plain dotenv would read only the base file, whose
 // MONGO_URI points at live `zappy`, and seed production without saying so.
 const projectRoot = path.resolve(__dirname, '../../../../');
-require('dotenv').config({ path: path.join(projectRoot, '.env') });
-const overlayPath = path.join(projectRoot, `.env.${process.env.NODE_ENV || 'development'}`);
-if (fs.existsSync(overlayPath)) {
-  require('dotenv').config({ path: overlayPath, override: true });
+// Read only when nothing has set the database yet: imported by the server or a test, the env it runs with must never be overridden.
+function loadEnv() {
+  if (process.env.MONGO_URI) return;
+  require('dotenv').config({ path: path.join(projectRoot, '.env') });
+  const overlayPath = path.join(projectRoot, `.env.${process.env.NODE_ENV || 'development'}`);
+  if (fs.existsSync(overlayPath)) {
+    require('dotenv').config({ path: overlayPath, override: true });
+  }
 }
+
+loadEnv();
 
 const { ProblemCategory, Problem } = require('../models/problem.model');
 const { Repair } = require('../models/repair.model');
@@ -340,6 +346,22 @@ async function report(V) {
   };
 }
 
+// The seeding steps on an open connection, so a service line created in admin (repair/package-lines) builds its catalog the same way a seed file does.
+async function applySeed(vertical, { data: seed, FLOWS = [], models = null }) {
+  return {
+    brands: await seedBrands(vertical, seed),
+    productTypes: await seedProductTypes(vertical, seed),
+    models: await seedModels(vertical, models),
+    problemCategories: await seedProblemCategories(vertical, seed),
+    problems: await seedProblems(vertical, seed),
+    repairs: await seedRepairs(vertical, seed),
+    skillLevels: await seedSkillLevels(vertical, seed),
+    qaChecklists: await seedQAChecklists(vertical, seed),
+    diagnosticFlows: await seedDiagnosticFlows(vertical, FLOWS),
+    config: await seedConfig(vertical),
+  };
+}
+
 /* Runner */
 
 async function run(vertical, { reportOnly = false, allowProduction = false } = {}) {
@@ -371,22 +393,11 @@ async function run(vertical, { reportOnly = false, allowProduction = false } = {
     return;
   }
 
-  const results = {
-    brands: await seedBrands(vertical, seed),
-    productTypes: await seedProductTypes(vertical, seed),
-    models: await seedModels(vertical, models),
-    problemCategories: await seedProblemCategories(vertical, seed),
-    problems: await seedProblems(vertical, seed),
-    repairs: await seedRepairs(vertical, seed),
-    skillLevels: await seedSkillLevels(vertical, seed),
-    qaChecklists: await seedQAChecklists(vertical, seed),
-    diagnosticFlows: await seedDiagnosticFlows(vertical, FLOWS),
-    config: await seedConfig(vertical),
-  };
+  const results = await applySeed(vertical, { data: seed, FLOWS, models });
 
   for (const [name, r] of Object.entries(results)) {
     console.log(`${tag} ${name.padEnd(18)} created ${String(r.created).padStart(3)} / ${r.total}`);
-    if (r.orphaned) console.warn(`${tag}   ! ${r.orphaned} skipped — unknown category`);
+    if (r.orphaned) console.warn(`${tag}   ! ${r.orphaned} skipped - unknown category`);
     if (r.linked != null) console.log(`${tag}   ${r.linked} problems linked to a diagnostic flow`);
   }
 
@@ -414,4 +425,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = { run, report, SEEDS };
+module.exports = { run, report, applySeed, SEEDS };

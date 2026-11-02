@@ -31,8 +31,8 @@ function isMediaField(field) {
 
 function displayValue(row, field) {
   const v = row[field.key];
-  if (v == null || v === '') return <span className="text-slate-300">—</span>;
-  if (field.type === 'boolean') return v ? <Check size={13} className="text-green-600" /> : <span className="text-slate-300">—</span>;
+  if (v == null || v === '') return <span className="text-slate-300">-</span>;
+  if (field.type === 'boolean') return v ? <Check size={13} className="text-green-600" /> : <span className="text-slate-300">-</span>;
   if (field.type === 'array') return Array.isArray(v) ? v.slice(0, 3).join(', ') + (v.length > 3 ? ` +${v.length - 3}` : '') : String(v);
   if (field.type === 'money') return `₹${(v / 100).toLocaleString('en-IN')}`;
   if (field.type === 'status') return <StatusBadge status={String(v)} />;
@@ -104,7 +104,7 @@ function FieldInput({ field, value, onChange }) {
   if (field.type === 'select') {
     return (
       <select className={base} value={value ?? ''} onChange={(e) => onChange(e.target.value)}>
-        <option value="">—</option>
+        <option value="">-</option>
         {field.options.map((o) => (
           <option key={typeof o === 'string' ? o : o.value} value={typeof o === 'string' ? o : o.value}>
             {typeof o === 'string' ? o : o.label}
@@ -185,7 +185,7 @@ export default function CatalogTable({ resource, title, fields, baseParams = {},
   }
 
   async function doArchive(row) {
-    if (!window.confirm(`Archive "${row.name || row.code || row.sku}"?\n\nIt stays in the database — existing bookings that reference it keep working — but it will no longer be offered to customers.`)) return;
+    if (!window.confirm(`Archive "${row.name || row.code || row.sku}"?\n\nIt stays in the database - existing bookings that reference it keep working - but it will no longer be offered to customers.`)) return;
     try {
       await archive({ resource, vertical, id: row._id }).unwrap();
       toast.success('Archived');
@@ -236,7 +236,7 @@ export default function CatalogTable({ resource, title, fields, baseParams = {},
                 <tr className="bg-blue-50/40">
                   {fields.map((f) => (
                     <Td key={f.key}>
-                      {f.readOnly ? <span className="text-slate-300">—</span>
+                      {f.readOnly ? <span className="text-slate-300">-</span>
                         : <FieldInput field={f} value={draft[f.key]} onChange={(v) => setDraft((d) => ({ ...d, [f.key]: v }))} />}
                     </Td>
                   ))}

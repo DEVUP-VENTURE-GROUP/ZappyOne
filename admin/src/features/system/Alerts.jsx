@@ -54,14 +54,14 @@ export default function Alerts() {
       {/* Snapshot metrics */}
       <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3">
         {[
-          { label: 'Online Workers',   value: snap.onlineWorkers ?? '—', Icon: Users,       color: 'text-blue-600',   bg: 'bg-blue-50' },
-          { label: 'Active Orders',    value: snap.activeOrders ?? '—',  Icon: ShoppingBag, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-          { label: 'Cancels (1h)',     value: snap.recentCancels ?? '—', Icon: XCircle,     color: 'text-red-500',     bg: 'bg-red-50' },
-          { label: 'Completed (1h)',   value: snap.recentCompleted ?? '—', Icon: CheckCircle2, color: 'text-green-600', bg: 'bg-green-50' },
-          { label: 'Failed Dispatch',  value: snap.failedOrders ?? '—',  Icon: AlertTriangle, color: 'text-amber-600', bg: 'bg-amber-50' },
-          { label: 'Stuck Searching',  value: snap.longSearching ?? '—', Icon: Clock,       color: 'text-purple-600', bg: 'bg-purple-50' },
-          { label: 'Jobs stuck', value: snap.jobsStuck ?? '—', Icon: Hourglass, color: 'text-orange-600', bg: 'bg-orange-50' },
-          { label: 'Payments To Fix', value: snap.paymentsNeedingAction ?? '—', Icon: IndianRupee, color: 'text-rose-600', bg: 'bg-rose-50' },
+          { label: 'Online Workers',   value: snap.onlineWorkers ?? '-', Icon: Users,       color: 'text-blue-600',   bg: 'bg-blue-50' },
+          { label: 'Active Orders',    value: snap.activeOrders ?? '-',  Icon: ShoppingBag, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+          { label: 'Cancels (1h)',     value: snap.recentCancels ?? '-', Icon: XCircle,     color: 'text-red-500',     bg: 'bg-red-50' },
+          { label: 'Completed (1h)',   value: snap.recentCompleted ?? '-', Icon: CheckCircle2, color: 'text-green-600', bg: 'bg-green-50' },
+          { label: 'Failed Dispatch',  value: snap.failedOrders ?? '-',  Icon: AlertTriangle, color: 'text-amber-600', bg: 'bg-amber-50' },
+          { label: 'Stuck Searching',  value: snap.longSearching ?? '-', Icon: Clock,       color: 'text-purple-600', bg: 'bg-purple-50' },
+          { label: 'Jobs stuck', value: snap.jobsStuck ?? '-', Icon: Hourglass, color: 'text-orange-600', bg: 'bg-orange-50' },
+          { label: 'Payments To Fix', value: snap.paymentsNeedingAction ?? '-', Icon: IndianRupee, color: 'text-rose-600', bg: 'bg-rose-50' },
         ].map(({ label, value, Icon, color, bg }) => (
           <Card key={label} className="p-3 flex flex-col items-center text-center">
             <div className={`w-8 h-8 rounded-lg ${bg} flex items-center justify-center mb-2`}>

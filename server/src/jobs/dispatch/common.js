@@ -45,7 +45,7 @@ async function markOrderFailed(order, reason) {
       logger.info({ orderId: order._id, result }, '[DISPATCH] Auto-refund on order failure');
     } catch (refundErr) {
       // Non-blocking — admin can manually refund if this fails.
-      logger.error({ err: refundErr.message, orderId: order._id }, '[DISPATCH] Auto-refund failed — manual action required');
+      logger.error({ err: refundErr.message, orderId: order._id }, '[DISPATCH] Auto-refund failed - manual action required');
     }
   }
 

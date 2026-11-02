@@ -309,7 +309,7 @@ KINDS.event = {
     terminal: ['completed', 'cancelled'],
     fields: 'status userId partnerId eventDate address createdAt updatedAt statusHistory',
     where: () => null,
-    title: (b) => `Event on ${b.eventDate ? new Date(b.eventDate).toLocaleDateString('en-IN') : '—'}`,
+    title: (b) => `Event on ${b.eventDate ? new Date(b.eventDate).toLocaleDateString('en-IN') : '-'}`,
     waiting: ['pending_payment'],
     // Booked days ahead, so time in a status means little; a date that has passed does.
     stuck: (b, mins, now) => {

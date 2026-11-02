@@ -211,7 +211,7 @@ router.put('/shield/fee-schedule', async (req, res, next) => {
       }
       // Searching tier 0 must always be 0 (grace — not overrideable)
       if (feeSchedule.searching?.[0] !== 0) {
-        return res.status(400).json({ error: 'feeSchedule.searching[0] must be 0 (grace — cannot charge for first searching cancel)' });
+        return res.status(400).json({ error: 'feeSchedule.searching[0] must be 0 (grace - cannot charge for first searching cancel)' });
       }
     }
 

@@ -32,7 +32,9 @@ async function limits() {
 
 /** A worker's own claim that they paid ZappyOne directly, for admin to confirm. */
 const claimSchema = new mongoose.Schema({
-  workerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Worker', required: true, index: true },
+  workerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Worker', default: null, index: true },
+  // A business's own claim (shop/shop-dues): exactly one of workerId and shopId is set.
+  shopId: { type: mongoose.Schema.Types.ObjectId, ref: 'Shop', default: null, index: true },
   amountPaise: { type: Number, required: true, min: 100 },
   method: { type: String, enum: ['upi', 'cash', 'bank'], default: 'upi' },
   reference: { type: String, default: '', maxlength: 80 },
@@ -42,6 +44,9 @@ const claimSchema = new mongoose.Schema({
   decidedAt: { type: Date, default: null },
   decisionNote: { type: String, default: '' },
 }, { timestamps: true });
+claimSchema.pre('validate', function oneOwner(next) {
+  next(!this.workerId === !this.shopId ? new Error('A dues claim belongs to one worker or one shop') : undefined);
+});
 const DuesClaim = mongoose.models.WorkerDuesClaim || mongoose.model('WorkerDuesClaim', claimSchema);
 
 /**
@@ -207,7 +212,7 @@ async function rejectClaim({ claimId, adminId, note = '' }) {
     { new: true },
   ).lean();
   if (!claim) throw Object.assign(new Error('That claim was already decided'), { status: 409 });
-  require('../jobs/job-events').push({ kind: 'worker', id: claim.workerId }, {
+  require('../jobs/job-events').push(claim.shopId ? { kind: 'shop', id: claim.shopId } : { kind: 'worker', id: claim.workerId }, {
     title: 'Payment not found',
     body: note || 'We could not find the payment you told us about. Check the reference and try again.',
     deepLink: '/worker', data: { kind: 'dues' },
@@ -224,7 +229,7 @@ async function listOwing({ limit = 100 } = {}) {
   const Worker = require('./worker.model');
   const [workers, claims] = await Promise.all([
     Worker.find({ _id: { $in: ids } }).select('name phone isOnline').lean(),
-    DuesClaim.find({ status: 'pending' }).sort({ createdAt: 1 }).lean(),
+    DuesClaim.find({ status: 'pending', workerId: { $ne: null } }).sort({ createdAt: 1 }).lean(),
   ]);
   const byId = new Map(workers.map((w) => [String(w._id), w]));
   const claimsBy = new Map();

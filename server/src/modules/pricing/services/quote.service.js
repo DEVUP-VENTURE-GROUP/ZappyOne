@@ -186,7 +186,7 @@ async function calculatePrice({ origin, dest, service, userId, priority = 'norma
         result.surgeMultiplier = _pendingSurge;
       }
     }
-  } catch (_) { /* non-fatal — pricing still works if catalog lookup fails */ }
+  } catch (_) { /* non-fatal - pricing still works if catalog lookup fails */ }
 
   return result;
 }

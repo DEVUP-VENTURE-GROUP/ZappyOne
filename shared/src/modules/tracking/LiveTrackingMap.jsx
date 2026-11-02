@@ -42,7 +42,9 @@ function makeDoorEl(label) {
 }
 
 // The pro: a white disc with a brand arrow that turns to their heading, and one soft pulse so it reads as live.
-function makeProEl(label) {
+const BIKE = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="${BRAND}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="15" cy="5" r="1"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></svg>`;
+
+function makeProEl(label, vehicle) {
   ensureStyles();
   const wrap = document.createElement('div');
   wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;';
@@ -50,7 +52,7 @@ function makeProEl(label) {
     <div style="position:relative;width:36px;height:36px">
       <div style="position:absolute;inset:0;border-radius:50%;background:${BRAND};animation:lt3-pulse 2.4s ease-out infinite"></div>
       <div style="position:absolute;inset:0;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(16,24,40,.3);display:flex;align-items:center;justify-content:center">
-        <svg class="lt3-pro-arrow" width="20" height="20" viewBox="0 0 24 24"><path d="M12 2 20 21 12 16.5 4 21Z" fill="${BRAND}"/></svg>
+        ${vehicle === 'bike' ? BIKE : `<svg class="lt3-pro-arrow" width="20" height="20" viewBox="0 0 24 24"><path d="M12 2 20 21 12 16.5 4 21Z" fill="${BRAND}"/></svg>`}
       </div>
     </div>
     ${label ? chip(label, BRAND, '#fff') : ''}`;
@@ -140,7 +142,7 @@ async function fetchRoute(map, st, from, to) {
 }
 
 // Live map of a pro heading to a door: follows them, zooms in as they near, and gives the camera back to the viewer when they move it.
-export default function LiveTrackingMap({ pickup, workerLocation, status, height = '60vh', pickupLabel = 'Your location', workerLabel = 'Your pro' }) {
+export default function LiveTrackingMap({ pickup, workerLocation, status, height = '60vh', pickupLabel = 'Your location', workerLabel = 'Your pro', vehicle = 'arrow' }) {
   const containerRef = useRef(null);
   const [mapReady, setMapReady] = useState(false);
   const [mapError, setMapError] = useState(false);
@@ -148,7 +150,7 @@ export default function LiveTrackingMap({ pickup, workerLocation, status, height
 
   const sr = useRef({
     map: null, ready: false, doorMarker: null, proMarker: null, prevPro: null, lastRoute: 0,
-    pendingDoor: null, pendingPro: null, routeAnimFrame: null, drFrame: null, drAnchor: null, heldUntil: 0, holdTimer: null,
+    pendingDoor: pickup || null, pendingPro: workerLocation || null, routeAnimFrame: null, drFrame: null, drAnchor: null, heldUntil: 0, holdTimer: null,
   });
 
   const following = () => Date.now() >= sr.current.heldUntil;
@@ -197,7 +199,7 @@ export default function LiveTrackingMap({ pickup, workerLocation, status, height
       const p = st.pendingPro;
       if (d) st.doorMarker = new mapboxgl.Marker({ element: makeDoorEl(pickupLabel), anchor: 'bottom' }).setLngLat([d.lng, d.lat]).addTo(map);
       if (p) {
-        st.proMarker = new mapboxgl.Marker({ element: makeProEl(workerLabel), anchor: 'top', offset: [0, -18] }).setLngLat([p.lng, p.lat]).addTo(map);
+        st.proMarker = new mapboxgl.Marker({ element: makeProEl(workerLabel, vehicle), anchor: 'top', offset: [0, -18] }).setLngLat([p.lng, p.lat]).addTo(map);
         st.prevPro = p;
       }
       follow(map, d, p);
@@ -229,7 +231,7 @@ export default function LiveTrackingMap({ pickup, workerLocation, status, height
     st.pendingPro = workerLocation || null;
     if (!st.map || !st.ready || !workerLocation) return;
     if (st.proMarker) animateMarkerTo(st.proMarker, st.prevPro || workerLocation, workerLocation);
-    else st.proMarker = new mapboxgl.Marker({ element: makeProEl(workerLabel), anchor: 'top', offset: [0, -18] }).setLngLat([workerLocation.lng, workerLocation.lat]).addTo(st.map);
+    else st.proMarker = new mapboxgl.Marker({ element: makeProEl(workerLabel, vehicle), anchor: 'top', offset: [0, -18] }).setLngLat([workerLocation.lng, workerLocation.lat]).addTo(st.map);
     st.prevPro = workerLocation;
 
     const d = st.pendingDoor;

@@ -23,7 +23,8 @@ const { PetBooking } = require('../src/modules/pet/models/booking.model');
 jest.setTimeout(60000);
 
 const userId = new mongoose.Types.ObjectId();
-const withCredentials = (on) => { config.cashfree.appId = on ? 'app' : ''; config.cashfree.secretKey = on ? 'secret' : ''; };
+// Razorpay keys in a developer's .env must not leak in: these cases are about Cashfree alone (Razorpay has its own suite).
+const withCredentials = (on) => { config.cashfree.appId = on ? 'app' : ''; config.cashfree.secretKey = on ? 'secret' : ''; config.razorpay.keyId = ''; config.razorpay.keySecret = ''; };
 const petBooking = (extra = {}) => PetBooking.create({
   reference: `ZP${Math.random().toString(36).slice(2, 8).toUpperCase()}`, userId, categoryCode: 'pet_grooming',
   status: 'BOOKED', serviceMode: 'doorstep', paymentMethod: 'online', pricing: { totalPaise: 90000, commissionPaise: 9000 }, pets: [], ...extra,

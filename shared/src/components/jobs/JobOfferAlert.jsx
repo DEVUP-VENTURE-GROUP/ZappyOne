@@ -5,7 +5,7 @@ import { kmBetween } from '../../utils/distance';
 import PassReasonPicker from '../worker/PassReasonPicker';
 import { startRinging } from '../../utils/alertSound';
 import { formatPaise } from '../../utils/money';
-import { offerClock as clock, DEFAULT_WINDOW_SEC } from './jobOffers';
+import { offerClock as clock, DEFAULT_WINDOW_SEC, customerRecordLine } from './jobOffers';
 import { STAFF_PORTAL } from '../../provider/staffPortal';
 
 /**
@@ -200,6 +200,7 @@ export default function JobOfferAlert({ offer, myLocation, onAccept, onDecline, 
                 {offer.customer.rating != null ? `Customer rated ${Number(offer.customer.rating).toFixed(1)} by ${offer.customer.count} provider${offer.customer.count === 1 ? '' : 's'}` : 'New customer'}
               </p>
             )}
+            {customerRecordLine(offer.customer) && <p className="mt-1 text-[12px] font-bold text-amber-700">{customerRecordLine(offer.customer)}</p>}
 
             {offer.whenLabel && (
               <p className="mt-2 flex items-center gap-1.5 text-[12px] font-medium text-slate-600">
@@ -244,7 +245,7 @@ export default function JobOfferAlert({ offer, myLocation, onAccept, onDecline, 
             onClick={() => onClose?.('dismissed')}
             className="flex w-full items-center justify-center gap-1 border-t border-slate-100 py-2.5 text-[12px] font-medium text-slate-500"
           >
-            <X size={12} /> Hide — it stays on your Work page
+            <X size={12} /> Hide - it stays on your Work page
           </button>
         </motion.div>
       </motion.div>

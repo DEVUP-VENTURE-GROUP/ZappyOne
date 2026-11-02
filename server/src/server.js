@@ -69,7 +69,7 @@ async function reconcileWorkers() {
   } catch (err) {
     logger.error(
       { err: err.message },
-      "[RECONCILE] Worker reconciliation failed — continuing startup",
+      "[RECONCILE] Worker reconciliation failed - continuing startup",
     );
   }
 }
@@ -84,17 +84,17 @@ function warnMissingEnv() {
   if (missingFCM.length > 0) {
     logger.warn(
       { missing: missingFCM },
-      "[STARTUP] Firebase env vars missing — push notifications will be disabled. Set these before going live.",
+      "[STARTUP] Firebase env vars missing - push notifications will be disabled. Set these before going live.",
     );
   }
   if (!process.env.CASHFREE_APP_ID || !process.env.CASHFREE_SECRET_KEY) {
     logger.warn(
-      "[STARTUP] Cashfree credentials missing — payment collection will fail. Set CASHFREE_APP_ID and CASHFREE_SECRET_KEY.",
+      "[STARTUP] Cashfree credentials missing - payment collection will fail. Set CASHFREE_APP_ID and CASHFREE_SECRET_KEY.",
     );
   }
   if (!process.env.CLIENT_URL && process.env.NODE_ENV === "production") {
     logger.warn(
-      "[STARTUP] CLIENT_URL not set in production — CORS will reject all browser requests.",
+      "[STARTUP] CLIENT_URL not set in production - CORS will reject all browser requests.",
     );
   }
 }
@@ -106,6 +106,7 @@ async function start() {
   await ensureAdminSeeded();
   await seedPlans();
   await seedEventCategories();
+  require('./modules/repair/vertical').startRefresh();
 
   const app = buildApp();
   const server = http.createServer(app);
@@ -136,7 +137,7 @@ async function start() {
     }, 3 * 60 * 1000);
     logger.info('[BOOT] Inline workers started (dispatch, notifications, stale, shield, payment reconcile). Set RUN_INLINE_WORKERS=false when using dedicated worker processes.');
   } else {
-    logger.info('[BOOT] RUN_INLINE_WORKERS=false — API only. Dispatch/notifications/stale/shield must run as dedicated processes.');
+    logger.info('[BOOT] RUN_INLINE_WORKERS=false - API only. Dispatch/notifications/stale/shield must run as dedicated processes.');
   }
   startWorkerHeartbeatSweep();
 
@@ -227,7 +228,7 @@ function startDispatchWorker() {
   } catch (err) {
     logger.error(
       { err: err.message },
-      "[DISPATCH] Failed to start worker — dispatch will not work",
+      "[DISPATCH] Failed to start worker - dispatch will not work",
     );
   }
 }
@@ -366,10 +367,14 @@ function startMatchingWaves() {
     require("./modules/workforce/shifts.service").sweep().catch((err) => logger.warn({ err: err.message }, "[SHIFTS] sweep failed"));
     // Reminders, no-show chases, the 8 am fleet email (workforce/watchdog).
     require("./modules/workforce/watchdog.service").tick().catch((err) => logger.warn({ err: err.message }, "[FLEET] watchdog failed"));
+    // Partner plans: visits not started are missed and made up; finished plans close (service-plan/).
+    require("./modules/service-plan/plan.service").sweep().catch((err) => logger.warn({ err: err.message }, "[PLANS] sweep failed"));
   }, 5 * 60 * 1000);
   setInterval(() => {
     // Arrival promises past due with nobody there: customer told, provider nudged (jobs/promise).
     require("./modules/jobs/promise").sweep().catch((err) => logger.warn({ err: err.message }, "[PROMISE] sweep failed"));
+    // Long time inside a customer's home: ask the pro, then SOS to ops if they do not answer (jobs/safety-check).
+    require("./modules/jobs/safety-check").sweep().catch((err) => logger.warn({ err: err.message }, "[SAFETY] sweep failed"));
     // Automatic surge: every active zone, every minute (jobs/surge).
     require("./modules/jobs/surge").tick().catch((err) => logger.warn({ err: err.message }, "[SURGE] tick failed"));
   }, 60 * 1000);

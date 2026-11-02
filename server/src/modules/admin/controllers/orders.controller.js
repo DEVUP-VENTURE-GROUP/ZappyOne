@@ -84,7 +84,7 @@ async function refundOrder(req, res, next) {
     if (order.payment?.status !== 'paid') {
       return res
         .status(400)
-        .json({ error: 'Order has not been paid — nothing to refund' });
+        .json({ error: 'Order has not been paid - nothing to refund' });
     }
 
     const intent = await PaymentIntent.findOne({
@@ -124,7 +124,7 @@ async function refundOrder(req, res, next) {
       reason: Transaction.REASONS.ADMIN_ADJUSTMENT_CREDIT,
       idempotencyKey: `refund:${cfRefund.cf_refund_id || intent.cfOrderId}`,
       refs: { orderId: order._id, paymentIntentId: intent._id },
-      description: `Refund for order ${order._id} — admin initiated`,
+      description: `Refund for order ${order._id} - admin initiated`,
       metadata: { adminId: req.auth.sub, cfRefundId: cfRefund.cf_refund_id },
     });
 
@@ -295,7 +295,7 @@ async function reassignOrder(req, res, next) {
       recipient: { kind: 'worker', id: worker._id },
       type:      'job_assigned',
       title:     'New job assigned to you',
-      body:      `${svcLabel}${totalRs ? ` — ${totalRs}` : ''}. Admin has assigned this order directly to you. Please start your trip.`,
+      body:      `${svcLabel}${totalRs ? ` - ${totalRs}` : ''}. Admin has assigned this order directly to you. Please start your trip.`,
       deepLink:  `/worker/jobs/${String(order._id)}`,
       data:      { orderId: String(order._id), adminAssigned: 'true' },
     }).catch(() => {});
@@ -573,7 +573,7 @@ async function refundOnForceCancel(order, refundFull, req) {
     reason: Transaction.REASONS.ADMIN_ADJUSTMENT_CREDIT,
     idempotencyKey: `refund:${cfRefund.cf_refund_id || intent.cfOrderId}`,
     refs: { orderId: order._id, paymentIntentId: intent._id },
-    description: `Full refund — admin force-cancelled order ${order._id}`,
+    description: `Full refund - admin force-cancelled order ${order._id}`,
     metadata: { adminId: req.auth?.sub, cfRefundId: cfRefund.cf_refund_id },
   });
 

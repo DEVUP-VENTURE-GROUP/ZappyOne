@@ -103,9 +103,9 @@ function MyDocuments({ token, kycStatus }) {
 }
 
 const DOCS = [
-  { key: 'aadhaarUrl', label: 'Aadhaar Card (Front)', sublabel: 'Government-issued ID — clear photo, all 4 corners visible', Icon: FileText, required: true,  liveCam: false },
+  { key: 'aadhaarUrl', label: 'Aadhaar Card (Front)', sublabel: 'Government-issued ID - clear photo, all 4 corners visible', Icon: FileText, required: true,  liveCam: false },
   // Optional: a shop technician fixing phones at the bench need not drive.
-  { key: 'licenseUrl', label: 'Driving License',       sublabel: 'Optional — add it if you ride to customers', Icon: FileText, required: false, liveCam: false },
+  { key: 'licenseUrl', label: 'Driving License',       sublabel: 'Optional - add it if you ride to customers', Icon: FileText, required: false, liveCam: false },
 ];
 
 export default function WorkerKycPage() {
@@ -166,7 +166,7 @@ export default function WorkerKycPage() {
   async function handleUpload(docKey, picked) {
     const file = await prepareImage(picked);
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) { toast.error('File too large — max 5MB'); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error('File too large - max 5MB'); return; }
     try {
       setUploading(docKey);
       const { data: signed } = await presign({ folder: 'kyc', contentType: file.type || 'image/jpeg' });
@@ -445,7 +445,7 @@ export default function WorkerKycPage() {
                   <span className="text-red-500 text-xs font-bold">*</span>
                   <span className="text-[10px] font-bold bg-zappy-100 text-zappy-700 px-1.5 py-0.5 rounded-full">LIVE ONLY</span>
                 </div>
-                <p className="text-xs text-slate-400 mt-0.5">Photo taken live from your front camera — gallery not allowed</p>
+                <p className="text-xs text-slate-400 mt-0.5">Photo taken live from your front camera - gallery not allowed</p>
 
                 {selfieUploaded && selfieMetadata ? (
                   <div className="mt-2 space-y-1">

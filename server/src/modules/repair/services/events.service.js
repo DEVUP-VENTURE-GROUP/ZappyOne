@@ -38,10 +38,10 @@ const EVENT_COPY = {
     customer: { title: 'Diagnosis started', body: 'Your device is being inspected.' },
   },
   CUSTOMER_APPROVAL_PENDING: {
-    customer: { title: '📋 Quote ready — your approval needed', body: 'Review the quote to let work begin.' },
+    customer: { title: '📋 Quote ready - your approval needed', body: 'Review the quote to let work begin.' },
   },
   APPROVED: {
-    provider: { title: 'Quote approved', body: 'The customer approved your quote — you can start work.' },
+    provider: { title: 'Quote approved', body: 'The customer approved your quote - you can start work.' },
   },
   PICKUP_SCHEDULED: {
     customer: { title: 'Pickup scheduled', body: 'We will collect your device shortly.' },
@@ -66,7 +66,7 @@ const EVENT_COPY = {
   },
   COMPLETED: {
     customer: { title: '✅ Repair completed', body: 'Your repair is finished. Warranty details are in the app.' },
-    provider: { title: 'Job completed', body: 'Nice work — this job is now closed.' },
+    provider: { title: 'Job completed', body: 'Nice work - this job is now closed.' },
   },
   CANCELLED: {
     customer: { title: 'Booking cancelled', body: 'Your repair booking was cancelled.' },
@@ -308,7 +308,7 @@ async function announceQuoteDecision(booking, quote, decision) {
   if (!providerId) return;
 
   const copy = {
-    approve: { title: '✅ Quote approved', body: 'The customer approved your quote — you can start work.' },
+    approve: { title: '✅ Quote approved', body: 'The customer approved your quote - you can start work.' },
     reject: { title: 'Quote declined', body: 'The customer declined the quote. Do not proceed.' },
     clarify: { title: 'Customer has a question', body: quote.clarificationNote || 'They asked something about your quote.' },
   }[decision];

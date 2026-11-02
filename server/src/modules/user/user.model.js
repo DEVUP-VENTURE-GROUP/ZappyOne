@@ -49,6 +49,8 @@ const userSchema = new mongoose.Schema(
       totalCancels:           { type: Number, default: 0 }, // all cancels ever
       cancelAfterAssignment:  { type: Number, default: 0 }, // subset: after worker assigned
       totalDisputes:          { type: Number, default: 0 },
+      missedVisits:           { type: Number, default: 0 }, // a pro waited at the door and nobody came (jobs/give-back)
+      cashRefused:            { type: Number, default: 0 }, // a pro reported the customer would not pay cash after the job
       freezeCount:            { type: Number, default: 0 }, // how many times frozen
       lastFreezeAt:           { type: Date },
     },

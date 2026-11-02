@@ -12,5 +12,6 @@ router.post(
   validate(Joi.object({ blocked: Joi.boolean().required() })),
   ctrl.blockUser,
 );
+router.post('/users/:id/cash-due/:jobId/waive', ctrl.waiveCashDue);
 
 module.exports = router;

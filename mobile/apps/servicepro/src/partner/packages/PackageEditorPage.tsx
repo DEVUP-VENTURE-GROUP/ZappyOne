@@ -99,7 +99,7 @@ export function PackageEditorPage() {
             {form.gallery.map((g, i) => <MediaTile key={g.key} size="small" uri={g.url || null} onPick={() => {}} onClear={() => set('gallery', form.gallery.filter((_, j) => j !== i))} />)}
             {form.gallery.length < 12 ? <MediaTile size="small" busy={busy === 'gallery'} onPick={() => addPhoto('gallery')} onClear={() => {}} /> : null}
           </View>
-          <Text variant="caption" color={ink[500]}>{form.video ? 'Your video stays on this package.' : 'A short video can be added from events.zappyone.com.'}</Text>
+          <Text variant="caption" color={ink[500]}>{form.video ? 'Your video stays on this package.' : 'A short video can be added from ServicePro on the web.'}</Text>
         </View>
 
         <View style={styles.card}>
@@ -113,7 +113,7 @@ export function PackageEditorPage() {
 
         <View style={styles.card}>
           <Input label="Price the customer pays (₹)" value={form.price} onChangeText={(v) => set('price', v.replace(/\D/g, ''))} keyboardType="number-pad" placeholder="4999" />
-          <Text variant="caption" color={ink[500]}>{price ? `You keep about ₹${Math.round(price * (100 - pct) / 100).toLocaleString('en-IN')} after ZappyOne's ${pct}% commission.` : 'All-in: setup, materials and travel within the places you serve.'}</Text>
+          <Text variant="caption" color={ink[500]}>{price ? `You keep about ₹${Math.round(price * (100 - pct) / 100).toLocaleString('en-IN')}.` : 'All-in: setup, materials and travel within the places you serve.'}</Text>
           <View style={styles.row}>
             <View style={styles.flex}><Input label="Setup time (hours)" value={form.setupHours} onChangeText={(v) => set('setupHours', v.replace(/[^\d.]/g, ''))} keyboardType="decimal-pad" /></View>
             <View style={styles.flex}><Input label="Up to guests" value={form.guestsMax} onChangeText={(v) => set('guestsMax', v.replace(/\D/g, ''))} keyboardType="number-pad" /></View>

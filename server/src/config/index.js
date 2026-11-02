@@ -65,10 +65,14 @@ const schema = Joi.object({
   // Frontend origin — used for CORS. Must be set in production.
   CLIENT_URL: Joi.string().uri().optional(),
   // Cashfree Payment Gateway
-  CASHFREE_APP_ID:        Joi.string().default(''),
-  CASHFREE_SECRET_KEY:    Joi.string().default(''),
+  CASHFREE_APP_ID:        Joi.string().allow('').default(''),
+  CASHFREE_SECRET_KEY:    Joi.string().allow('').default(''),
   CASHFREE_WEBHOOK_URL:   Joi.string().uri().optional(),   // set to your /api/payments/webhook URL
   CASHFREE_ENV:           Joi.string().valid('sandbox', 'production').default('sandbox'),
+  // Razorpay takes online payments only while Cashfree has no keys (payment/gateway).
+  RAZORPAY_KEY_ID:        Joi.string().allow('').default(''),
+  RAZORPAY_KEY_SECRET:    Joi.string().allow('').default(''),
+  RAZORPAY_WEBHOOK_SECRET: Joi.string().allow('').default(''),
   // Firebase Admin SDK (service account — replaces legacy server key)
   FIREBASE_PROJECT_ID:    Joi.string().default(''),
   FIREBASE_CLIENT_EMAIL:  Joi.string().default(''),
@@ -155,6 +159,11 @@ module.exports = {
     secretKey: env.CASHFREE_SECRET_KEY,
     webhookUrl: env.CASHFREE_WEBHOOK_URL || '',
     env:        env.CASHFREE_ENV,
+  },
+  razorpay: {
+    keyId:         env.RAZORPAY_KEY_ID,
+    keySecret:     env.RAZORPAY_KEY_SECRET,
+    webhookSecret: env.RAZORPAY_WEBHOOK_SECRET,
   },
   firebase: {
     projectId:   env.FIREBASE_PROJECT_ID,

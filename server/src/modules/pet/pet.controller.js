@@ -329,6 +329,10 @@ async function listAvailableBookings(req, res, next) {
       workerId: null, shopId: null, status: { $in: OPEN }, categoryCode: { $in: [...lines] },
       declinedBy: { $ne: req.auth.sub }, // not offered back to someone who passed
     };
+    if (req.auth.role === 'worker') {
+      const blocked = (await require('../worker/worker.model').findById(req.auth.sub).select('trust.blockedFromUserIds').lean())?.trust?.blockedFromUserIds || [];
+      if (blocked.length) filter.userId = { $nin: blocked };
+    }
     if (req.query.categoryCode) filter.categoryCode = lines.has(req.query.categoryCode) ? req.query.categoryCode : '__none__';
     const at = await providerPoint(req.auth);
     const query = at?.length === 2
@@ -411,6 +415,7 @@ async function acceptBooking(req, res, next) {
       }
     }
 
+    if (auth.role === 'worker') await require('../jobs/assignment').assertCheckedIn(auth.id);
     const booking = await PetBooking.findOneAndUpdate(
       offeredToMe
         ? { _id: req.params.id, status: 'PROVIDER_ASSIGNED', ...owner }

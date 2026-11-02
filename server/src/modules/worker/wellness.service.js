@@ -150,7 +150,7 @@ async function computeWellnessScore(workerId) {
     intervention = {
       type: 'strong_nudge',
       title: 'Your wellbeing matters',
-      message: 'Our data shows signs of overwork. Schedule a lighter day or take the day off — your earnings won\'t disappear.',
+      message: 'Our data shows signs of overwork. Schedule a lighter day or take the day off - your earnings won\'t disappear.',
       bonusPaise: 20000,
       showSupport: true,
     };
@@ -226,7 +226,7 @@ async function creditBreakBonus(workerId) {
       amountPaise: data.intervention.bonusPaise,
       reason: Transaction.REASONS.ADMIN_ADJUSTMENT_CREDIT,
       idempotencyKey: idKey,
-      description: 'Wellness break bonus — thank you for taking care of yourself',
+      description: 'Wellness break bonus - thank you for taking care of yourself',
     });
     await redis.del(cacheKey).catch(() => {});
     logger.info({ workerId, bonusPaise: data.intervention.bonusPaise }, '[Wellness] Break bonus credited');

@@ -56,17 +56,14 @@ const NAV_SECTIONS = STAFF_PORTAL
     ...ALL_NAV_SECTIONS.map((s) => ({ ...s, items: s.items.filter((i) => !PARTNER_ONLY.has(i.to)) })).filter((s) => s.items.length)]
   : ALL_NAV_SECTIONS;
 
+// Menu icons in ZappyOne blue and ink; green for money, amber and red only where something needs attention.
+const BRAND = { bg: 'bg-zappy-50', icon: 'text-zappy-600' };
+const INK = { bg: 'bg-slate-100', icon: 'text-navy-900' };
 const COLOR_MAP = {
-  indigo:  { bg: 'bg-zappy-50',  icon: 'text-zappy-600' },
-  purple:  { bg: 'bg-purple-50',  icon: 'text-purple-600' },
-  blue:    { bg: 'bg-blue-50',    icon: 'text-blue-600' },
+  indigo: BRAND, blue: BRAND, purple: INK, cyan: INK, violet: INK, slate: INK, orange: INK,
   emerald: { bg: 'bg-emerald-50', icon: 'text-emerald-600' },
-  amber:   { bg: 'bg-amber-50',   icon: 'text-amber-600' },
-  rose:    { bg: 'bg-rose-50',    icon: 'text-rose-600' },
-  orange:  { bg: 'bg-orange-50',  icon: 'text-orange-600' },
-  cyan:    { bg: 'bg-cyan-50',    icon: 'text-cyan-600' },
-  violet:  { bg: 'bg-violet-50',  icon: 'text-violet-600' },
-  slate:   { bg: 'bg-slate-100',  icon: 'text-slate-600' },
+  amber: { bg: 'bg-amber-50', icon: 'text-amber-600' },
+  rose: { bg: 'bg-rose-50', icon: 'text-rose-600' },
 };
 
 export default function WorkerEditProfilePage() {
@@ -158,7 +155,7 @@ export default function WorkerEditProfilePage() {
           <div className="flex-1 min-w-0">
             <p className="font-bold text-slate-800 truncate">{me?.name || 'Your Name'}</p>
             <p className="text-xs text-slate-500 mt-0.5">
-              ⭐ {me?.rating?.toFixed(1) ?? '—'}, {me?.completedJobs ?? 0} jobs completed
+              ⭐ {me?.rating?.toFixed(1) ?? '-'}, {me?.completedJobs ?? 0} jobs completed
             </p>
           </div>
           {me?.trust?.isVerified && (
@@ -186,7 +183,7 @@ export default function WorkerEditProfilePage() {
             <span className="ml-auto text-xs text-slate-400">{bio.length}/300</span>
           </div>
           <textarea value={bio} onChange={e => setBio(e.target.value)} maxLength={300} rows={3}
-            placeholder="Describe your experience — shown to customers when they view your profile…"
+            placeholder="Describe your experience - shown to customers when they view your profile…"
             className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-800 resize-none focus:outline-none focus:ring-2 focus:ring-zappy-300 transition" />
         </div>
 
@@ -195,7 +192,7 @@ export default function WorkerEditProfilePage() {
           A worker used to tick up to ten codes here and become dispatchable for
           all of them, with nothing verified behind the claim. That decision now
           belongs to onboarding, where each service is approved on its own
-          evidence — so this card reports the outcome and links there.
+          evidence - so this card reports the outcome and links there.
         */}
         <div className="bg-white rounded-2xl p-5 shadow-sm">
           <div className="flex items-center gap-2 mb-3">
@@ -217,7 +214,7 @@ export default function WorkerEditProfilePage() {
             </div>
           ) : (
             <p className="text-xs text-slate-500">
-              Nothing yet — choose what you work on and get verified to start receiving jobs.
+              Nothing yet - choose what you work on and get verified to start receiving jobs.
             </p>
           )}
 

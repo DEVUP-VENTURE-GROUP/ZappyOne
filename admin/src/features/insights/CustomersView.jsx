@@ -8,7 +8,7 @@ import { Kpi, TrendChart, Findings, Panel, RankBars, count } from './charts';
  * customers, monthly cohorts, sign-ups who went on to book, ratings and the
  * latest low ones to follow up.
  */
-const pct = (v) => (v == null ? '—' : `${v}%`);
+const pct = (v) => (v == null ? '-' : `${v}%`);
 
 /** A cell in the cohort grid, darker for a higher share coming back. */
 function CohortCell({ value }) {
@@ -45,7 +45,7 @@ export default function CustomersView({ days }) {
         <Kpi label="Customers who booked" value={count(t.customers)} spark={data.daily.map((d) => d.customers)} hint={`${count(t.newCustomers)} new, ${count(t.returning)} returning`} />
         <Kpi label="Came back" value={pct(t.repeatRate)} accent="#10B981" spark={data.daily.map((d) => d.returning)} hint="Had booked before this period" />
         <Kpi label="Sign-ups who booked" value={pct(t.activationRate)} hint={`${count(t.activated)} of ${count(t.signups)} new accounts`} />
-        <Kpi label="Average rating" value={t.averageRating ?? '—'} hint={`${count(t.reviews)} reviews`} accent="#F59E0B" />
+        <Kpi label="Average rating" value={t.averageRating ?? '-'} hint={`${count(t.reviews)} reviews`} accent="#F59E0B" />
       </div>
 
       <Panel title="Customers per day" note={`New and returning, last ${span} days`}>

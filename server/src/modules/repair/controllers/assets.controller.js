@@ -38,7 +38,7 @@ async function listMyAssets(req, res, next) {
     const lastByKey = new Map();
     const bookings = await RepairBooking.find({
       userId: req.auth.sub, status: 'COMPLETED',
-    }).select('vertical brandCode modelCode completedAt repairCode').sort({ completedAt: -1 }).lean();
+    }).select('vertical brandCode modelCode completedAt repairCode').sort({ completedAt: -1 }).limit(500).lean();
     for (const b of bookings) {
       const key = `${b.vertical}|${b.brandCode}|${b.modelCode}`;
       if (!lastByKey.has(key)) lastByKey.set(key, b);
@@ -132,7 +132,18 @@ async function getAssetHistory(req, res, next) {
       .limit(50)
       .lean();
 
-    res.json({ asset, bookings });
+    // The parts fitted on each job, from its approved quotes: what went in, its grade and its warranty.
+    const { RepairQuote } = require('../models/quote.model');
+    const quotes = bookings.length ? await RepairQuote.find({ bookingId: { $in: bookings.map((b) => b._id) }, status: 'approved' })
+      .select('bookingId items.kind items.label items.partGrade items.quantity items.warrantyDays').lean() : [];
+    const partsBy = new Map();
+    for (const q of quotes) {
+      const list = partsBy.get(String(q.bookingId)) || [];
+      for (const i of q.items || []) if (i.kind === 'part') list.push({ label: i.label, grade: i.partGrade || null, quantity: i.quantity || 1, warrantyDays: i.warrantyDays || 0 });
+      partsBy.set(String(q.bookingId), list);
+    }
+
+    res.json({ asset, bookings: bookings.map((b) => ({ ...b, parts: partsBy.get(String(b._id)) || [] })) });
   } catch (err) { next(err); }
 }
 

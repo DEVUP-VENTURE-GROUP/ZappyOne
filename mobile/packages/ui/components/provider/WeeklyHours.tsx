@@ -9,7 +9,7 @@
  */
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { DAYS, dayLength, dayOf, to12Hour, weekdaysLike, withDay } from '@zappy/core/shared/weeklyHoursRules';
+import { DAYS, dayLength, dayOf, meantPm, to12Hour, weekdaysLike, withDay } from '@zappy/core/shared/weeklyHoursRules';
 import { Text } from '..';
 import { toast } from '../Toast';
 import { accent, colors, ink, slate, success, zappy } from '../../theme/colors';
@@ -44,6 +44,7 @@ export function WeeklyHours({ hours, onChange }: { hours: DayHours[]; onChange: 
         {DAYS.map((label: string, day: number) => {
           const row: DayHours = dayOf(hours, day);
           const len = row.isClosed ? null : dayLength(row.opensAt, row.closesAt);
+          const pm = row.isClosed ? null : meantPm(row.opensAt, row.closesAt);
           return (
             <View key={day} style={[styles.day, day > 0 && styles.rule]}>
               <View style={styles.row}>
@@ -67,6 +68,11 @@ export function WeeklyHours({ hours, onChange }: { hours: DayHours[]; onChange: 
                     <Text variant="caption" weight="semibold" color={len.short ? accent[600] : ink[400]} style={styles.len}>
                       {len.overnight ? 'overnight, ' : ''}{len.label}{len.short ? ', is that right?' : ''}
                     </Text>
+                  ) : null}
+                  {pm ? (
+                    <Pressable onPress={() => setDay(day, { closesAt: pm })} accessibilityRole="button" style={styles.pmFix}>
+                      <Text variant="caption" weight="semibold" color={accent[700]}>Closes next morning at {to12Hour(row.closesAt).hour} AM. Did you mean {to12Hour(pm).hour}:{to12Hour(pm).minute} PM?</Text>
+                    </Pressable>
                   ) : null}
                 </View>
               ) : null}
@@ -96,4 +102,5 @@ const styles = StyleSheet.create({
   times: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.sm },
   time: { minHeight: 38, minWidth: 96, alignItems: 'center', justifyContent: 'center', borderRadius: radius.medium, borderWidth: 1, borderColor: slate[200], paddingHorizontal: spacing.md },
   len: { width: '100%' },
+  pmFix: { width: '100%', paddingHorizontal: spacing.sm, paddingVertical: spacing.xs, borderRadius: radius.medium, borderWidth: 1, borderColor: accent[100], backgroundColor: accent[50] },
 });

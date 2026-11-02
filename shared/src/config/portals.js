@@ -7,5 +7,4 @@ export const PORTAL_URLS = {
   admin: pick(env.VITE_ADMIN_URL, 'https://admin.zappyone.com', 5174),
   servicepro: pick(env.VITE_SERVICEPRO_URL, 'https://servicepro.zappyone.com', 5175),
   rakshak: pick(env.VITE_RAKSHAK_URL, 'https://rakshak.zappyone.com', 5176),
-  events: pick(env.VITE_EVENTS_URL, 'https://events.zappyone.com', 5177),
 };

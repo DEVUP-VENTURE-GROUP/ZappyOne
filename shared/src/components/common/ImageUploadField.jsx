@@ -34,7 +34,7 @@ export default function ImageUploadField({
     const file = await prepareImage(picked);
     if (!file) return;
     if (file.size > maxMb * 1024 * 1024) {
-      toast.error(`That file is over ${maxMb}MB — pick a smaller one`);
+      toast.error(`That file is over ${maxMb}MB - pick a smaller one`);
       return;
     }
 

@@ -5,12 +5,13 @@
  * menu sheet for the rest.
  */
 import {
-  BarChart3, FileText, KanbanSquare, Landmark, MessageSquareQuote, PlusCircle, Scale, ShieldCheck, Star, Store, Wallet, Wrench,
+  BarChart3, FileText, KanbanSquare, Landmark, MessageSquareQuote, PlusCircle, Repeat, Scale, ShieldCheck, Star, Store, Wallet, Wrench,
 } from 'lucide-react-native';
 
 /** The owner's pages the tabs (Home, Team, Earnings, Alerts, Profile) don't show. */
 export const OWNER_MENU = [
   { key: 'orders', label: 'Orders', Icon: KanbanSquare, to: '/shop/orders' },
+  { key: 'plans', label: 'Plans', Icon: Repeat, to: '/shop/plans' },
   { key: 'insights', label: 'Insights', Icon: BarChart3, to: '/shop/insights' },
   { key: 'work', label: 'Work & prices', Icon: Wrench, to: '/provider/services' },
   { key: 'pricereq', label: 'Price requests', Icon: MessageSquareQuote, to: '/shop/price-requests' },

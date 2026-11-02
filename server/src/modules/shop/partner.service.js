@@ -57,6 +57,18 @@ async function pickMember(shop, kind, doc) {
   return fairness.fairOrder(ready.map((m) => ({ m, kind: 'worker', km: km(m), stats: fairness.statsOf(m) })), { promiseMin: fairBandMin })[0]?.m || null;
 }
 
+// A job no checked-in technician can take is never left silent: the owner hears once, so they assign it or check someone in.
+async function warnNobodyOnDuty(shopId, kind, job) {
+  const { redis } = require('../../config/redis');
+  const first = await redis.set(`shopwarn:noduty:${kind}:${job._id}`, '1', 'EX', 86400, 'NX').catch(() => null);
+  if (!first) return;
+  await require('../notification/notification.service').notify({
+    recipient: { kind: 'shop', id: shopId }, type: 'job_reminder',
+    title: 'A job is waiting for a technician', body: 'Nobody on your team is checked in. Assign it now or ask someone to check in.',
+    data: { kind, jobId: String(job._id) },
+  }).catch(() => {});
+}
+
 // Gives partners' unassigned jobs to a member by each partner's rule; manual partners are left alone.
 async function dispatchSweep() {
   const auto = await Shop.find({ 'dispatch.mode': { $in: ['nearest', 'round_robin'] } }).select('dispatch').lean();
@@ -70,7 +82,7 @@ async function dispatchSweep() {
       const shop = byId.get(String(job.shopId));
       try {
         const member = await pickMember(shop, kind, job);
-        if (!member) continue;
+        if (!member) { await warnNobodyOnDuty(shop._id, kind, job); continue; }
         await require('../jobs/assignment').assignTechnician({ jobId: job._id, shopId: shop._id, workerId: member._id });
         await Worker.updateOne({ _id: member._id }, { $set: { 'team.lastAssignedAt': new Date() } });
         assigned += 1;

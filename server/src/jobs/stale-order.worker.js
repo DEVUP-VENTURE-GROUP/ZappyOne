@@ -156,7 +156,7 @@ async function nudgeStaleAssigned(order) {
   await redis.publish('order:event', JSON.stringify({
     orderId,
     event: 'order.dispatch_update',
-    payload: { message: 'Worker confirmed — starting your service shortly' },
+    payload: { message: 'Worker confirmed - starting your service shortly' },
   }));
 }
 
@@ -169,7 +169,7 @@ async function redispatchFromAssigned(order) {
   if (alreadyRedispatching) return;
   await redis.setex(`stale:redispatch:${orderId}`, 1800, '1');
 
-  logger.warn({ orderId, workerId }, '[STALE] Re-dispatching assigned order — worker never started trip');
+  logger.warn({ orderId, workerId }, '[STALE] Re-dispatching assigned order - worker never started trip');
 
   const notificationService = require('../modules/notification/notification.service');
 
@@ -190,7 +190,7 @@ async function redispatchFromAssigned(order) {
     notificationService.notify({
       recipient: { kind: 'worker', id: workerId },
       type: 'job_removed',
-      title: 'Job reassigned — please respond faster',
+      title: 'Job reassigned - please respond faster',
       body: 'You were assigned a job but did not start the trip in time. Your dispatch priority has been reduced.',
       deepLink: '/worker',
       data: { orderId },
@@ -234,7 +234,7 @@ async function redispatchFromAssigned(order) {
   await redis.publish('order:event', JSON.stringify({
     orderId,
     event: 'order.dispatch_update',
-    payload: { message: 'Reassigning — finding a new worker for you…' },
+    payload: { message: 'Reassigning - finding a new worker for you…' },
   }));
 
   // Inform the worker's client that the job was pulled — triggers redirect
@@ -278,7 +278,7 @@ async function autoCancelNoWorker(order, now) {
   if (!updated) return; // got assigned in the meantime — leave it
 
   logger.warn({ orderId, service: updated.service, minutes: Math.round(searchingMinutes(order, now)) },
-    '[STALE] Auto-cancelled — no worker found within window');
+    '[STALE] Auto-cancelled - no worker found within window');
 
   // Stop it from searching: remove any pending dispatch job.
   try { const j = await dispatchQueue.getJob(`order_${orderId}`); if (j) await j.remove(); } catch { /* noop */ }
@@ -313,7 +313,7 @@ async function redispatchStuckOnTheWay(order) {
 
   const notificationService = require('../modules/notification/notification.service');
   logger.warn({ orderId, workerId: order.workerId, minutes: OTW_REDISPATCH_MIN },
-    '[STALE] Worker stuck on_the_way — stripping worker and re-dispatching');
+    '[STALE] Worker stuck on_the_way - stripping worker and re-dispatching');
 
   if (order.workerId) {
     await Worker.updateOne(
@@ -325,7 +325,7 @@ async function redispatchStuckOnTheWay(order) {
     notificationService.notify({
       recipient: { kind: 'worker', id: order.workerId },
       type: 'job_removed',
-      title: 'Job reassigned — you never arrived',
+      title: 'Job reassigned - you never arrived',
       body: 'You marked on the way but did not arrive in time. The job was reassigned.',
       deepLink: '/worker', data: { orderId },
     }).catch(() => {});
@@ -387,7 +387,7 @@ async function handleStaleSearching(now, stale) {
     const alreadyRequeued = await redis.get(`stale:search_requeue:${orderId}`);
     if (alreadyRequeued) continue;
 
-    logger.warn({ orderId }, '[STALE] Order stuck in searching — re-queuing dispatch');
+    logger.warn({ orderId }, '[STALE] Order stuck in searching - re-queuing dispatch');
     await redis.setex(`stale:search_requeue:${orderId}`, 900, '1');
 
     await dispatchQueue.add(
@@ -458,7 +458,7 @@ async function handleStaleArrived(now, stale) {
     await redis.setex(`stale:arrived:${orderId}`, 3600, '1');
 
     logger.warn({ orderId, workerId: order.workerId, minutes: ARRIVED_STALE_MIN },
-      '[STALE] Worker arrived but OTP never entered — cancelling and re-dispatching');
+      '[STALE] Worker arrived but OTP never entered - cancelling and re-dispatching');
 
     const notificationService = require('../modules/notification/notification.service');
 
@@ -475,7 +475,7 @@ async function handleStaleArrived(now, stale) {
       notificationService.notify({
         recipient: { kind: 'worker', id: order.workerId },
         type: 'job_removed',
-        title: 'Job cancelled — no-show after arriving',
+        title: 'Job cancelled - no-show after arriving',
         body: 'You marked arrived but did not start the service. Penalty recorded.',
         deepLink: '/worker',
         data: { orderId },
@@ -514,7 +514,7 @@ async function handleStaleArrived(now, stale) {
     await redis.publish('order:event', JSON.stringify({
       orderId,
       event: 'order.dispatch_update',
-      payload: { message: 'Worker did not start service — finding a replacement…' },
+      payload: { message: 'Worker did not start service - finding a replacement…' },
     }));
   }
 }
@@ -540,11 +540,11 @@ async function handleStaleInProgress(now, stale) {
         await Order.findByIdAndUpdate(orderId, {
           $set: { 'payment.reconciliationRequired': true },
         });
-        logger.error({ orderId, minutesIn }, '[STALE] IN_PROGRESS > 24h — flagged for manual reconciliation');
+        logger.error({ orderId, minutesIn }, '[STALE] IN_PROGRESS > 24h - flagged for manual reconciliation');
         await redis.publish('order:event', JSON.stringify({
           orderId,
           event: 'order.admin_alert',
-          payload: { reason: 'abandoned_in_progress', minutesIn, message: 'Order stuck in_progress for 24+ hours — manual review required' },
+          payload: { reason: 'abandoned_in_progress', minutesIn, message: 'Order stuck in_progress for 24+ hours - manual review required' },
         }));
       }
       continue;
@@ -557,7 +557,7 @@ async function handleStaleInProgress(now, stale) {
         await redis.setex(`stale:inprogress:admin:${orderId}`, 7200, '1');
         logger.error(
           { orderId, workerId: order.workerId, minutesIn },
-          '[STALE] IN_PROGRESS > 3 hours — admin alert required'
+          '[STALE] IN_PROGRESS > 3 hours - admin alert required'
         );
         // Publish to admin channel for manual investigation
         await redis.publish('order:event', JSON.stringify({
@@ -566,7 +566,7 @@ async function handleStaleInProgress(now, stale) {
           payload: {
             reason: 'in_progress_too_long',
             minutesIn,
-            message: `Order in_progress for ${minutesIn} minutes — possible abandonment`,
+            message: `Order in_progress for ${minutesIn} minutes - possible abandonment`,
           },
         }));
         // Notify user so they know to contact support
@@ -587,7 +587,7 @@ async function handleStaleInProgress(now, stale) {
     if (alreadyNudged) continue;
     await redis.setex(`stale:inprogress:nudge:${orderId}`, 3600, '1');
 
-    logger.warn({ orderId, workerId: order.workerId, minutesIn }, '[STALE] In-progress order running long — nudging worker');
+    logger.warn({ orderId, workerId: order.workerId, minutesIn }, '[STALE] In-progress order running long - nudging worker');
 
     if (order.workerId) {
       notificationService.notify({

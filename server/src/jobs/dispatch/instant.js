@@ -50,14 +50,14 @@ async function tryInstantMatch(order, cfg, lng, lat, jobStartMs) {
         },
       }).catch(() => {});
 
-      logger.info({ orderId, workerId, latencyMs }, '[ZEROWAIT] Instant match — worker had pre-accepted');
+      logger.info({ orderId, workerId, latencyMs }, '[ZEROWAIT] Instant match - worker had pre-accepted');
       await onInstantAssigned(order, workerId, readyBonus, latencyMs);
       recordOutcomes(workerId, 'accept', [], []);
       return { ok: true, workerId, instant: true, latencyMs };
     }
     return { ok: false, reason: 'no_lockable_ready_workers' };
   } catch (err) {
-    logger.warn({ err: err.message, orderId }, '[ZEROWAIT] Instant match failed — falling back to normal dispatch');
+    logger.warn({ err: err.message, orderId }, '[ZEROWAIT] Instant match failed - falling back to normal dispatch');
     return { ok: false, reason: 'error' };
   }
 }
@@ -105,7 +105,7 @@ async function onInstantAssigned(order, workerId, readyBonusPaise, latencyMs) {
         recipient: { kind: 'worker', id: workerId },
         type:  'job_assigned',
         title: `⚡ Ready Mode job${bonusRs ? ` + ₹${bonusRs} bonus` : ''}`,
-        body:  `${order.service.replace(/_/g, ' ')} — ₹${order.pricing.total}. You pre-accepted this, so it's yours.${bonusRs ? ` ₹${bonusRs} Ready bonus is paid on completion.` : ''} Please start your trip.`,
+        body:  `${order.service.replace(/_/g, ' ')} - ₹${order.pricing.total}. You pre-accepted this, so it's yours.${bonusRs ? ` ₹${bonusRs} Ready bonus is paid on completion.` : ''} Please start your trip.`,
         deepLink: `/worker/jobs/${orderId}`,
         data: { orderId, instantMatch: 'true', readyBonusPaise: String(readyBonusPaise || 0) },
       }),

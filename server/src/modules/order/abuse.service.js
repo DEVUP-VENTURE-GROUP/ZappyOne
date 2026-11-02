@@ -58,7 +58,20 @@ async function assertIpCanBook(ip) {
 
 // ---- 1. Booking rate cap ----
 async function assertCanBook(userId) {
-  // Check freeze (from rapid cancels — escalating duration)
+  await assertNotFrozen(userId);
+
+  const key = `book:rate:${userId}`;
+  const count = await redis.incr(key);
+  if (count === 1) await redis.expire(key, BOOKING_WINDOW_SEC);
+  if (count > BOOKING_MAX) {
+    throw Object.assign(new Error(`Too many bookings - max ${BOOKING_MAX} per 10 minutes`), {
+      status: 429, code: 'BOOKING_RATE_CAP',
+    });
+  }
+}
+
+// The escalating freeze from repeated cancels, checked by every kind of booking (jobs/customer-gate).
+async function assertNotFrozen(userId) {
   const [frozen, frozenTtl] = await Promise.all([
     redis.get(`user:frozen:${userId}`),
     redis.ttl(`user:frozen:${userId}`),
@@ -71,15 +84,6 @@ async function assertCanBook(userId) {
       new Error(`Bookings are paused due to repeated cancellations. Try again in ${hours}.`),
       { status: 429, code: 'USER_BOOKING_FROZEN', retryAfterSec: frozenTtl }
     );
-  }
-
-  const key = `book:rate:${userId}`;
-  const count = await redis.incr(key);
-  if (count === 1) await redis.expire(key, BOOKING_WINDOW_SEC);
-  if (count > BOOKING_MAX) {
-    throw Object.assign(new Error(`Too many bookings — max ${BOOKING_MAX} per 10 minutes`), {
-      status: 429, code: 'BOOKING_RATE_CAP',
-    });
   }
 }
 
@@ -144,7 +148,7 @@ async function applyEscalatingFreeze(userId, reason) {
   await redis.setex(`user:frozen:${userId}`, durationSec, reason);
   logger.warn(
     { userId, reason, freezeCount, durationSec, hours: Math.round(durationSec / 3600) },
-    `User booking frozen (escalation level ${freezeCount + 1}) — ${Math.round(durationSec / 3600)}h`
+    `User booking frozen (escalation level ${freezeCount + 1}) - ${Math.round(durationSec / 3600)}h`
   );
 
   // Notify user
@@ -250,6 +254,7 @@ async function recordWorkerOutcome(workerId, outcome /* 'accept' | 'reject' | 't
 module.exports = {
   assertIpCanBook,
   assertCanBook,
+  assertNotFrozen,
   releaseBookingSlot,
   recordPreAssignmentCancel,
   recordCancelAfterAssignment,

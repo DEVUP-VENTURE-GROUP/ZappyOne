@@ -124,12 +124,12 @@ async function analyze({ userId, imageKeys, location }) {
           parsed = smart.parsed; matches = smartMatches; model = smart.model; escalated = true;
         }
       } catch (err) {
-        logger.warn({ err: err.message }, 'ZappyLens escalation failed — keeping fast result');
+        logger.warn({ err: err.message }, 'ZappyLens escalation failed - keeping fast result');
       }
     }
   } catch (err) {
     modelFailed = true;
-    logger.warn({ err: err.message }, 'ZappyLens model failed — serving popular fallbacks');
+    logger.warn({ err: err.message }, 'ZappyLens model failed - serving popular fallbacks');
   }
 
   const isServiceable = matches.length > 0;
@@ -186,16 +186,16 @@ function buildFallbacks(catalog, n = 4) {
     }));
 }
 function computeHint({ isServiceable, imageQuality, modelFailed }) {
-  if (modelFailed) return "We couldn't analyze that photo just now — here are popular services you can book.";
+  if (modelFailed) return "We couldn't analyze that photo just now - here are popular services you can book.";
   if (isServiceable) {
-    if (imageQuality === 'blurry') return 'Best read below — the photo was a little blurry, so retake for a more exact match if needed.';
-    if (imageQuality === 'dark')   return "Best read below — it was a bit dark, but here's what we found.";
+    if (imageQuality === 'blurry') return 'Best read below - the photo was a little blurry, so retake for a more exact match if needed.';
+    if (imageQuality === 'dark')   return "Best read below - it was a bit dark, but here's what we found.";
     return null;
   }
-  if (imageQuality === 'blurry')       return 'That looked a bit blurry — retake in better focus, or pick a popular service below.';
-  if (imageQuality === 'dark')         return 'That was a little dark — try better lighting, or pick a service below.';
-  if (imageQuality === 'not_relevant') return "That doesn't look like something we service — here's what people usually book.";
-  return "We couldn't pin down an exact match — here are popular services to get you started.";
+  if (imageQuality === 'blurry')       return 'That looked a bit blurry - retake in better focus, or pick a popular service below.';
+  if (imageQuality === 'dark')         return 'That was a little dark - try better lighting, or pick a service below.';
+  if (imageQuality === 'not_relevant') return "That doesn't look like something we service - here's what people usually book.";
+  return "We couldn't pin down an exact match - here are popular services to get you started.";
 }
 
 /** Owner-scoped scan read (for the booking page to hydrate notes + photo). */

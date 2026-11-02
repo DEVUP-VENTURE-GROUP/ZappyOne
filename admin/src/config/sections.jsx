@@ -40,6 +40,7 @@ import {
   Bug,
   Sparkles,
   Warehouse,
+  Repeat,
 } from 'lucide-react';
 import { ADMIN_FLEET_VIEWS } from '@/features/fleet/views';
 import Hub from '../ui/Hub';
@@ -98,6 +99,7 @@ const P = {
   LiveErrors: page(() => import('../features/system/LiveErrors')),
   AuditLog: page(() => import('../features/system/AuditLog')),
   Team: page(() => import('../features/system/Team')),
+  PartnerPlans: page(() => import('../features/catalog/PartnerPlans')),
 };
 
 /** A sidebar entry that is several related screens as tabs. */
@@ -154,6 +156,7 @@ export const NAV_GROUPS = [
   ] },
   { label: 'Catalog', items: [
     { id: 'services', area: 'catalog', label: 'Services', icon: Layers, Comp: P.Services },
+    { id: 'partner-plans', area: 'catalog', label: 'Partner plans', icon: Repeat, Comp: P.PartnerPlans },
   ] },
   { label: 'Customers', items: [
     { id: 'users', area: 'customers', label: 'Customers', icon: Users, Comp: P.Customers },

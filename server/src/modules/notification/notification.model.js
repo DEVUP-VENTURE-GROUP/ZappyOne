@@ -94,6 +94,7 @@ const TYPES = [
   'service_due',   // retention: recurring service is due for a rebook
   'service_live_in_area', // "notify me": ZappyOne now serves where the customer asked
   'system_alert',
+  'plan_update',   // a partner's monthly plan: subscribed, visit tomorrow, visit done, paused, missed
 ];
 
 const notificationSchema = new mongoose.Schema(

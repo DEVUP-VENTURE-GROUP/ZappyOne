@@ -69,6 +69,9 @@ function mountRoutes(app) {
   app.use('/api/shops', shopRoutes);
   // Repair verticals — catalog, diagnostics, providers, bookings, quotes.
   app.use('/api/repair', repairRoutes);
+  // Partners' own monthly plans and packs (service-plan/), and their admin review.
+  app.use('/api/service-plans', require('../modules/service-plan/plan.routes'));
+  app.use(`/api/${slug}/service-plans`, require('../modules/service-plan/plan.routes').adminRouter);
   // Actions that work the same on every job kind (jobs/kinds.js): customer SOS.
   app.use('/api/jobs', require('../modules/jobs/jobs.routes'));
   app.use('/api/helping', helpingRoutes);

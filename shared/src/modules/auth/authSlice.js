@@ -1,3 +1,4 @@
+import { clearFormDrafts } from '../../utils/formDrafts';
 import { createSlice } from '@reduxjs/toolkit';
 
 /**
@@ -53,6 +54,7 @@ const slice = createSlice({
       if (payload.profile) saveProfile({ ...payload.profile, role: payload.role });
     },
     logout: (state) => {
+      clearFormDrafts();
       state.accessToken  = null;
       state.refreshToken = null;
       state.profile      = null;

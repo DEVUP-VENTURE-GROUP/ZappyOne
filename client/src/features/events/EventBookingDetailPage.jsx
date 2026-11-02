@@ -81,7 +81,7 @@ export default function EventBookingDetailPage() {
         cfOrderId:        orderRes.cfOrderId,
         cashfreeEnv:      orderRes.cashfreeEnv || import.meta.env.VITE_CASHFREE_ENV || 'sandbox',
         amountPaise:      orderRes.amountPaise,
-        purpose:          'Event — Remaining Payment',
+        purpose:          'Event - Remaining Payment',
       });
       await verifyRemainingPayment({
         id,
@@ -170,7 +170,7 @@ export default function EventBookingDetailPage() {
           <div className="p-4 space-y-2">
             <h2 className="font-bold text-slate-900">{booking.themeId?.title}</h2>
             <div className="grid grid-cols-2 gap-2 text-xs text-slate-600">
-              <div className="flex items-center gap-1.5"><Calendar size={12} className="text-violet-500" />{booking.eventDate ? new Date(booking.eventDate).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' }) : '—'}</div>
+              <div className="flex items-center gap-1.5"><Calendar size={12} className="text-violet-500" />{booking.eventDate ? new Date(booking.eventDate).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' }) : '-'}</div>
               <div className="flex items-center gap-1.5"><Clock size={12} className="text-violet-500" />{booking.eventTimeSlot}</div>
               <div className="flex items-center gap-1.5"><MapPin size={12} className="text-violet-500" />{booking.address?.line1}, {booking.address?.city}</div>
               <div className="flex items-center gap-1.5"><Users size={12} className="text-violet-500" />{booking.guestCount} guests</div>

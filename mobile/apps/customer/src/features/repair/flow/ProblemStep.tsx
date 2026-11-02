@@ -17,6 +17,7 @@ import { ProblemLayout, type Problem } from '../ProblemCard';
 import type { Coded } from './BrandStep';
 import { Shell, Spinner, flow } from './FlowChrome';
 import type { Model } from './ModelStep';
+import { StorefrontStrip } from '../../providers/StorefrontStrip';
 
 interface Category { code: string; name: string; imageUrl?: string; problems: Problem[] }
 
@@ -37,6 +38,7 @@ export function ProblemStep({ vertical, model, productType, fuelType, presetCode
   if (isLoading) return <Spinner />;
   return (
     <Shell>
+      <StorefrontStrip vertical={vertical} />
       <Text variant="caption" color={ink[500]} style={flow.label}>Tell us what you're seeing. We'll work out the repair; we never assume it from the symptom alone.</Text>
       {categories.map((cat) => {
         const cover = webAsset(categoryPhoto(vertical, cat));

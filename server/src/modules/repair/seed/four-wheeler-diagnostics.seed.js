@@ -133,7 +133,7 @@ const FLOWS = [
         subtitle: 'This tells us whether the battery is delivering power at all.',
         type: 'single',
         options: [
-          { id: 'dead', label: 'Nothing at all — completely dead', urgency: 'high' },
+          { id: 'dead', label: 'Nothing at all - completely dead', urgency: 'high' },
           { id: 'dim', label: 'Lights come on but look dim' },
           { id: 'normal', label: 'Lights come on normally' },
         ],
@@ -282,11 +282,11 @@ const FLOWS = [
         options: [
           {
             id: 'hazard_yes',
-            label: 'Yes — one or more of these is true',
+            label: 'Yes - one or more of these is true',
             recommendedServiceCode: 'fw_ev_safety_inspection',
             urgency: 'urgent',
           },
-          { id: 'hazard_no', label: 'No — nothing hot, smoking or burning' },
+          { id: 'hazard_no', label: 'No - nothing hot, smoking or burning' },
         ],
       },
       {
@@ -369,7 +369,7 @@ const FLOWS = [
         options: [
           {
             id: 'never_switches',
-            label: 'It never switches — stays on petrol',
+            label: 'It never switches - stays on petrol',
             recommendedServiceCode: 'fw_cng_system_service',
           },
           {

@@ -67,7 +67,7 @@ async function getConfig() {
   try {
     const cached = await redis.get(CONFIG_CACHE_KEY);
     if (cached) return JSON.parse(cached);
-  } catch { /* redis unavailable — fallthrough */ }
+  } catch { /* redis unavailable - fallthrough */ }
 
   try {
     const doc = await ShieldConfig.findOne({ isActive: true }).lean();
@@ -81,7 +81,7 @@ async function getConfig() {
       redis.setex(CONFIG_CACHE_KEY, CONFIG_CACHE_TTL, JSON.stringify(cfg)).catch(() => {});
       return cfg;
     }
-  } catch { /* DB unavailable — fallthrough */ }
+  } catch { /* DB unavailable - fallthrough */ }
 
   // Fallback to hardcoded defaults (safe for cold start before first DB write)
   return {
@@ -269,7 +269,7 @@ async function handleUserCancellation(order, userId) {
       recipient: { kind: 'user', id: userId },
       type: 'cancellation_warning',
       title: '⚠️ Cancellation noted',
-      body: 'No charge this time — but future cancellations may incur a fee.',
+      body: 'No charge this time - but future cancellations may incur a fee.',
       deepLink: '/orders',
       data: { orderId: String(order._id) },
     }).catch(() => {});
@@ -300,7 +300,7 @@ async function handleUserCancellation(order, userId) {
       reason:          Transaction.REASONS.CANCELLATION_FEE,
       idempotencyKey:  `shield:fee:${order._id}`,
       refs:            { orderId: order._id },
-      description:     `Cancellation fee (${stage.replace(/_/g, ' ')}) — goes to Worker Shield Fund`,
+      description:     `Cancellation fee (${stage.replace(/_/g, ' ')}) - goes to Worker Shield Fund`,
     });
     collectionStatus = 'collected_wallet';
 
@@ -320,7 +320,7 @@ async function handleUserCancellation(order, userId) {
     if (err.code === 'WALLET_INSUFFICIENT') {
       // Keep pending — will be collected on next booking
       collectionStatus = 'pending_next_order';
-      logger.warn({ orderId: order._id, userId, feePaise }, 'Shield fee deferred — wallet insufficient');
+      logger.warn({ orderId: order._id, userId, feePaise }, 'Shield fee deferred - wallet insufficient');
 
       notifService.notify({
         recipient: { kind: 'user', id: userId },
@@ -391,7 +391,7 @@ async function collectPendingFees(userId, newOrderId) {
       reason:         Transaction.REASONS.CANCELLATION_FEE,
       idempotencyKey: `shield:pending:${userId}:${newOrderId}`,
       refs:           { orderId: newOrderId },
-      description:    `Deferred cancellation fee(s) — Worker Shield Fund`,
+      description:    `Deferred cancellation fee(s) - Worker Shield Fund`,
     });
 
     // All pending records → collected_next_order + add to fund
@@ -412,7 +412,7 @@ async function collectPendingFees(userId, newOrderId) {
     return { collected: totalPaise, count: records.length };
   } catch (err) {
     if (err.code === 'WALLET_INSUFFICIENT') {
-      logger.warn({ userId, totalPaise }, 'Deferred shield fee still uncollectable — stays pending');
+      logger.warn({ userId, totalPaise }, 'Deferred shield fee still uncollectable - stays pending');
       return { collected: 0 };
     }
     throw err;
@@ -500,7 +500,7 @@ async function runWeeklyPayout({ triggeredBy = 'cron', triggeredById = null } = 
           reason:         Transaction.REASONS.SHIELD_PAYOUT,
           idempotencyKey: `shield:payout:${week._id}:${entry.workerId}`,
           refs:           {},
-          description:    `Worker Shield Fund payout — week of ${new Date(week.weekStart).toDateString()}`,
+          description:    `Worker Shield Fund payout - week of ${new Date(week.weekStart).toDateString()}`,
         });
 
         await ShieldWorkerPayout.updateOne(

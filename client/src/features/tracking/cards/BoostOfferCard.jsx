@@ -59,8 +59,8 @@ export default function BoostOfferCard({ orderId, baseTotal, sendTip, boostOptio
       try { navigator.vibrate?.([40, 30, 80, 30, 120]); } catch {}
       toast.success(
         amt >= 50
-          ? `₹${amt} boost applied — workers are racing to accept!`
-          : `₹${amt} added to worker offer — acceptance likely faster`,
+          ? `₹${amt} boost applied - workers are racing to accept!`
+          : `₹${amt} added to worker offer - acceptance likely faster`,
         {
           duration: 3000,
           style: { background: '#0f172a', color: '#f8fafc', fontWeight: 700, border: '1px solid rgba(59,130,246,0.4)' },
@@ -120,7 +120,7 @@ export default function BoostOfferCard({ orderId, baseTotal, sendTip, boostOptio
               </div>
               <div>
                 <p className="text-[13px] font-black text-white leading-tight">
-                  {appliedBoost > 0 ? 'Offer boosted — workers notified' : 'Faster acceptance available'}
+                  {appliedBoost > 0 ? 'Offer boosted - workers notified' : 'Faster acceptance available'}
                 </p>
                 <p className="text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.38)' }}>
                   {appliedBoost > 0

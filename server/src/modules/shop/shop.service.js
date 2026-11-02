@@ -52,6 +52,7 @@ function withOpenState(shop) {
     ...shop,
     openNow,
     todayHours: today && !today.isClosed ? { opensAt: today.opensAt, closesAt: today.closesAt } : null,
+    opensNext: openNow ? null : Shop.nextOpeningOf(hours),
   };
 }
 

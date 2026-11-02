@@ -56,7 +56,7 @@ export default function WorkerOps() {
       <div className="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col sm:flex-row items-start gap-3">
         <div className="w-10 h-10 rounded-xl bg-zappy-50 flex items-center justify-center shrink-0 mb-2 sm:mb-0"><Smartphone size={18} className="text-zappy-600" /></div>
         <div className="flex-1">
-          <p className="text-sm font-bold text-slate-900">Single active device — {data.singleDevice?.enforced ? 'Enforced' : 'Off'}</p>
+          <p className="text-sm font-bold text-slate-900">Single active device - {data.singleDevice?.enforced ? 'Enforced' : 'Off'}</p>
           <p className="text-xs text-slate-500 mt-1 leading-relaxed">
             A worker can be signed in on one device at a time; a new login signs the old one out.
             New-device hard block is {data.singleDevice?.hardBlockNewDevice ? 'ON' : 'OFF'} (env <code>WORKER_NEW_DEVICE_BLOCK</code>).

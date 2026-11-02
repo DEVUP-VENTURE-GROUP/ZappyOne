@@ -24,3 +24,11 @@ export function saveDraft(key: string, value: unknown): void {
 export function clearDraft(key: string): void {
   AsyncStorage.removeItem(keyOf(key)).catch(() => {});
 }
+
+// Sign-out on a shared phone leaves no one's half-typed forms behind (bookings in progress are the customer's own and kept).
+export async function clearFormDrafts(): Promise<void> {
+  try {
+    const keys = (await AsyncStorage.getAllKeys()).filter((k) => k.startsWith('draft:form:'));
+    if (keys.length) await AsyncStorage.multiRemove(keys);
+  } catch { /* storage unavailable */ }
+}

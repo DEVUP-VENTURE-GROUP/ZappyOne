@@ -362,14 +362,14 @@ function gradeAccuracy(metres) {
     return { grade: 'good', text: `Located to within ${pretty}`, tone: 'text-[#16A34A]', good: true };
   }
   if (metres <= ACCURACY_WARN_M) {
-    return { grade: 'fair', text: `Close — within ${pretty}. Drag the pin to be exact.`, tone: 'text-[#B45309]', good: false };
+    return { grade: 'fair', text: `Close - within ${pretty}. Drag the pin to be exact.`, tone: 'text-[#B45309]', good: false };
   }
   if (metres <= ACCURACY_BAD_M) {
-    return { grade: 'poor', text: `Approximate — ±${pretty}. Drag the pin to your exact spot.`, tone: 'text-[#B45309]', good: false };
+    return { grade: 'poor', text: `Approximate - ±${pretty}. Drag the pin to your exact spot.`, tone: 'text-[#B45309]', good: false };
   }
   return {
     grade: 'rough',
-    text: `Rough area only — ±${pretty}. Drag the pin to where you actually are.`,
+    text: `Rough area only - ±${pretty}. Drag the pin to where you actually are.`,
     tone: 'text-[#DC2626]',
     good: false,
   };
@@ -914,7 +914,7 @@ export default function LocationPicker({ onConfirm, onCancel, serviceLabel, serv
         {!TOKEN && (
           <div className="absolute inset-0 flex items-center justify-center bg-slate-100 z-20">
             <p className="text-sm text-red-500 font-medium px-6 text-center">
-              VITE_MAPBOX_TOKEN not set — add it to .env
+              VITE_MAPBOX_TOKEN not set - add it to .env
             </p>
           </div>
         )}
@@ -1131,7 +1131,7 @@ export default function LocationPicker({ onConfirm, onCancel, serviceLabel, serv
                           <input
                             value={locNote}
                             onChange={(e) => setLocNote(e.target.value.slice(0, 140))}
-                            placeholder={tr('locpick.noteDetails', 'Add {x} details — number, floor, landmark…').replace('{x}', activeChip.toLowerCase())}
+                            placeholder={tr('locpick.noteDetails', 'Add {x} details - number, floor, landmark…').replace('{x}', activeChip.toLowerCase())}
                             className="w-full mt-2.5 rounded-xl bg-slate-50 border border-slate-200 px-3.5 py-2.5 text-[13px] text-slate-800 placeholder:text-slate-400 outline-none focus:border-blue-300"
                           />
                         </motion.div>

@@ -61,7 +61,7 @@ export function ProviderReviewsPage() {
           ListHeaderComponent={
             <View style={[styles.card, styles.summary]}>
               <View style={styles.centerCol}>
-                <Text variant="display" weight="extrabold">{total ? Number(data.rating).toFixed(1) : '—'}</Text>
+                <Text variant="display" weight="extrabold">{total ? Number(data.rating).toFixed(1) : '-'}</Text>
                 <Stars value={Math.round(data?.rating || 0)} />
                 <Text variant="caption" color={ink[500]}>{total ? `${total} review${total === 1 ? '' : 's'}` : 'No reviews yet'}</Text>
               </View>

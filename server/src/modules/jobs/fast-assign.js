@@ -60,6 +60,7 @@ async function autoAcceptCandidates(kind, doc, radiusKm, { anyone = false } = {}
   if (!at || !line) return [];
   const approved = await require('../onboarding/eligibility').approvedProviders(line);
   const passed = passersOf(doc);
+  for (const id of await require('./customer-block').blockersOf(doc.userId)) passed.add(id);
   const now = new Date();
   const notPaused = anyone ? {} : { 'autoAccept.enabled': true, $or: [{ 'autoAccept.pausedUntil': null }, { 'autoAccept.pausedUntil': { $lte: now } }] };
   const workerIds = approved.filter((p) => p.kind === 'worker' && !passed.has(p.id)).map((p) => p.id);

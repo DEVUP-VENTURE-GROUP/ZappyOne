@@ -8,8 +8,8 @@ import { useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ChevronRight, ClipboardList, Info, Menu, Phone, ShieldCheck, Store } from 'lucide-react-native';
-import { useGetKycStatusQuery, useGetMyShopQuery, useGetWorkerMeQuery, useGoOfflineMutation, useGoOnlineMutation } from '@zappy/core/api';
+import { ChevronRight, ClipboardList, Info, Menu, Phone, Repeat, ShieldCheck, Store } from 'lucide-react-native';
+import { useGetKycStatusQuery, useGetMyShopQuery, useGetWorkerMeQuery, useGoOfflineMutation, useGoOnlineMutation, useProviderPlanVisitsQuery } from '@zappy/core/api';
 import { getBestPosition } from '@zappy/core/hooks/useBestPosition';
 import { formatPaise } from '@zappy/core/shared/money';
 import { useProviderJobs } from '@zappy/core/shared/useProviderJobs';
@@ -26,7 +26,9 @@ import { colors, ink, slate, success, zappy } from '@zappy/ui/theme/colors';
 import { radius } from '@zappy/ui/theme/radius';
 import { spacing } from '@zappy/ui/theme/spacing';
 import { TECHNICIAN_MENU } from '../menus';
+import { HeaderBell } from '../components/HeaderBell';
 import { LeadBoardCard } from '../components/LeadBoardCard';
+import { VisitCard, type Visit } from '../components/PlanVisitCard';
 
 interface Job { kind: string; id: string; to: string; title: string; subtitle?: string; status: string; attention?: boolean }
 
@@ -39,6 +41,8 @@ export function ShopWorkerHome() {
   const { data: kycData } = useGetKycStatusQuery();
   // A shop's team works what the shop takes: repairs and pet care.
   const { mine, isLoading: loadingJobs, refetch: refetchJobs } = useProviderJobs({ kinds: ['repair', 'pet'] });
+  const { data: visitData } = useProviderPlanVisitsQuery({ days: 7 }, { pollingInterval: 60000 });
+  const visits = ((visitData?.items || []) as Visit[]).filter((v) => v.status === 'scheduled' || v.status === 'started');
   const [goOnline] = useGoOnlineMutation();
   const [goOffline] = useGoOfflineMutation();
   const [toggling, setToggling] = useState(false);
@@ -93,6 +97,7 @@ export function ShopWorkerHome() {
             <Phone size={14} color={ink[700]} /><Text variant="caption" weight="bold" color={ink[700]}>Owner</Text>
           </Pressable>
         ) : null}
+        <HeaderBell to="/worker/notifications" />
       </View>
 
       <ScrollView contentContainerStyle={styles.body} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
@@ -140,6 +145,13 @@ export function ShopWorkerHome() {
             </Pressable>
           ))}
         </View>
+
+        {visits.length ? (
+          <View style={styles.card}>
+            <View style={styles.titleRow}><Repeat size={15} color={zappy[600]} /><Text variant="bodySmall" weight="black">Plan visits this week</Text></View>
+            {visits.map((v) => <VisitCard key={v._id} v={v} sos />)}
+          </View>
+        ) : null}
       </ScrollView>
       <WorkerMenuSheet visible={menuOpen} onClose={() => setMenuOpen(false)} items={TECHNICIAN_MENU} />
     </View>

@@ -67,7 +67,7 @@ async function sendFcm({ tokens, title, body, data = {}, imageUrl } = {}) {
 
   const app = getFirebaseApp();
   if (!app) {
-    logger.info({ tokens: tokens.length, title }, '[FCM] Firebase not configured — skipping push');
+    logger.info({ tokens: tokens.length, title }, '[FCM] Firebase not configured - skipping push');
     return { skipped: true, reason: 'firebase_not_configured' };
   }
 
@@ -165,7 +165,7 @@ async function sendSms({ phone, message }) {
   if (!phone) return { skipped: true, reason: 'no_phone' };
 
   if (!config.sms.providerKey) {
-    logger.info({ phone, message: message?.slice(0, 60) }, '[SMS] No provider key — skipping');
+    logger.info({ phone, message: message?.slice(0, 60) }, '[SMS] No provider key - skipping');
     return { skipped: true, reason: 'no_provider_key' };
   }
 
@@ -249,7 +249,7 @@ async function processJob(job) {
     const result = await getTokens({ kind: recipient.kind, id: recipient.id });
     const tokens = Array.isArray(result) ? result : result.tokens;
     if (!tokens?.length) {
-      logger.info({ recipient, title }, '[Push] No device tokens — skipping');
+      logger.info({ recipient, title }, '[Push] No device tokens - skipping');
       return { skipped: true, reason: 'no_tokens' };
     }
 
@@ -339,7 +339,7 @@ async function processJob(job) {
           recipient: { kind: 'event_partner', id: partnerId },
           type: 'event_booking_reminder',
           title: '📋 Event reminder: Tomorrow',
-          body: `You have a decoration event tomorrow — ${dateStr} at ${booking.eventTimeSlot}. Confirm all materials are ready.`,
+          body: `You have a decoration event tomorrow - ${dateStr} at ${booking.eventTimeSlot}. Confirm all materials are ready.`,
           deepLink: `/partner`,
           data: { bookingId },
         }),

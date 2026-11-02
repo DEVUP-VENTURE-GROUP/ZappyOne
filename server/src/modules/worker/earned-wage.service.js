@@ -99,7 +99,7 @@ async function requestAdvance(workerId) {
     amountPaise: data.advailablePaise,
     reason: Transaction.REASONS.WORKER_EARNING,
     idempotencyKey: `wage_advance:${workerId}:${new Date().toDateString()}`,
-    description: `Same-day pay advance — ${data.jobCount} completed job${data.jobCount !== 1 ? 's' : ''} today`,
+    description: `Same-day pay advance - ${data.jobCount} completed job${data.jobCount !== 1 ? 's' : ''} today`,
   });
 
   /* Mark as advanced for today (24h) */

@@ -40,6 +40,7 @@ const DEFAULTS = {
   workerRejectLimit:          5,   // offers passed in a row before the worker is set offline
   customerWaitMinutes:        10,  // at the door before "customer not here"
   providerLateMinutes:        30,  // past the booked time before "provider not coming"
+  noShowCreditPaise:          5000, // the customer's apology credit for a pro who did not come
   workerCancelLimit:          3,   // penalised cancels in the window before auto-offline
   workerPauseMinutes:         120, // how long that auto-offline lasts
   maxActiveJobs:              2,   // jobs one worker may hold at once (jobs/workload)
@@ -165,7 +166,7 @@ async function previewCancelFee(order) {
 
   let message;
   if (!['assigned', 'on_the_way', 'arrived'].includes(order.status)) {
-    message = 'No charge — worker not yet assigned';
+    message = 'No charge - worker not yet assigned';
   } else if (isFree && result.secsLeft > 0) {
     const mins = Math.floor(result.secsLeft / 60);
     const secs = result.secsLeft % 60;
@@ -177,10 +178,10 @@ async function previewCancelFee(order) {
   } else {
     const rs = Math.round(result.feePaise / 100);
     message = order.status === 'arrived'
-      ? `₹${rs} fee — worker is already at your location`
+      ? `₹${rs} fee - worker is already at your location`
       : order.status === 'on_the_way'
-      ? `₹${rs} fee — worker is on the way`
-      : `₹${rs} fee — worker was assigned to you`;
+      ? `₹${rs} fee - worker is on the way`
+      : `₹${rs} fee - worker was assigned to you`;
   }
 
   return {

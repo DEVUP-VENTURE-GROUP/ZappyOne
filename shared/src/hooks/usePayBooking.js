@@ -23,14 +23,8 @@ export function usePayBooking() {
     setPaying(true);
     try {
       const order = await createPayment({ bookingSource, bookingId }).unwrap();
-      const done = await openCheckout({
-        paymentSessionId: order.paymentSessionId,
-        cfOrderId: order.cfOrderId,
-        cashfreeEnv: order.cashfreeEnv || 'sandbox',
-        amountPaise: order.amountPaise,
-        purpose: label,
-      });
-      await verify({ cfOrderId: done.cfOrderId, cfPaymentId: done.cfPaymentId }).unwrap();
+      const done = await openCheckout({ ...order, purpose: label });
+      await verify({ cfOrderId: done.cfOrderId, cfPaymentId: done.cfPaymentId, ...(done.razorpaySignature && { razorpaySignature: done.razorpaySignature }) }).unwrap();
       toast.success('Payment received');
       return true;
     } catch (err) {

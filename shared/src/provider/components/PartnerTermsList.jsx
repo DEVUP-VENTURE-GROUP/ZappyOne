@@ -5,7 +5,7 @@ export default function PartnerTermsList({ terms }) {
   if (!terms) return null;
   return (
     <div className="rounded-xl border border-slate-200 bg-slate-50 p-3.5">
-      <p className="text-[13px] font-bold text-slate-900">Commission: {terms.ratePct}% per completed job</p>
+      <p className="text-[13px] font-bold text-slate-900">Keep what you charge</p>
       <ul className="mt-2 space-y-1.5">
         {terms.points.map((p) => (
           <li key={p} className="flex gap-2 text-[12.5px] leading-snug text-slate-600">

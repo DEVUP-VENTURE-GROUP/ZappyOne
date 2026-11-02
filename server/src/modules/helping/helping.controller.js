@@ -279,6 +279,9 @@ async function listAvailable(req, res, next) {
     const coords = worker?.currentLocation?.coordinates;
 
     const filter = { status: { $in: ['CONFIRMED', 'WORKER_SEARCHING'] }, workerId: null, serviceType: { $in: types }, releasedBy: { $ne: req.auth.sub } };
+    // Customers this worker blocked never show up for them (jobs/customer-block).
+    const blocked = (await require('../worker/worker.model').findById(req.auth.sub).select('trust.blockedFromUserIds').lean())?.trust?.blockedFromUserIds || [];
+    if (blocked.length) filter.userId = { $nin: blocked };
     const query = coords?.length === 2
       ? HelpingTask.find({
         ...filter,

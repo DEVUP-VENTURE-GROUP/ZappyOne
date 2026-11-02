@@ -296,7 +296,7 @@ export default function WorkerLoginPage({ allowSignup = true, portalLabel = 'Wor
   return (
     <>
       <SEO
-        title="Worker Login — ZappyOne Partner Portal"
+        title="Worker Login - ZappyOne Partner Portal"
         description="Sign in to your ZappyOne worker dashboard. Accept nearby jobs, track earnings and get paid instantly."
         canonical={`${BASE_URL}/worker/login`}
         jsonLd={LOGIN_SCHEMA}
@@ -307,8 +307,6 @@ export default function WorkerLoginPage({ allowSignup = true, portalLabel = 'Wor
         {/* HERO (mobile: top · desktop: left) */}
         <section className="relative flex-1 min-h-0 lg:flex-none lg:w-[54%] lg:min-h-[100dvh] flex flex-col justify-between lg:justify-center px-6 pt-7 pb-0 lg:px-16 lg:py-14 overflow-hidden">
           {/* soft ambient blobs */}
-          <div className="pointer-events-none absolute -top-24 -left-24 w-72 h-72 rounded-full bg-blue-200/40 blur-3xl" />
-          <div className="pointer-events-none absolute top-1/3 right-0 w-72 h-72 rounded-full bg-zappy-200/30 blur-3xl" />
 
           <div>
             {/* Brand */}
@@ -523,7 +521,7 @@ export default function WorkerLoginPage({ allowSignup = true, portalLabel = 'Wor
                         </div>
                       </div>
                       <p className="text-[12.5px] leading-relaxed text-slate-500">
-                        Next you'll choose what you work on — phones, laptops and more — and we'll
+                        Next you'll choose what you work on - phones, laptops and more - and we'll
                         verify you for it. That takes a couple of minutes.
                       </p>
                     </div>

@@ -30,7 +30,7 @@ export default function AdminActivity({ admin, onClose }) {
                   <tr key={l._id}>
                     <Td muted><span className="whitespace-nowrap">{fmtDate(l.at)}</span></Td>
                     <Td><span className="text-xs font-semibold capitalize text-slate-800">{l.action?.replace(/[._]/g, ' ')}</span></Td>
-                    <Td muted><span className="text-xs">{PORTAL[l.portal] || l.portal || '—'}</span><span className="block text-[11px] text-slate-400">{l.ip || ''}</span></Td>
+                    <Td muted><span className="text-xs">{PORTAL[l.portal] || l.portal || '-'}</span><span className="block text-[11px] text-slate-400">{l.ip || ''}</span></Td>
                   </tr>
                 ))}
               </tbody>

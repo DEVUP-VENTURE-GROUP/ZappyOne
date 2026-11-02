@@ -185,7 +185,7 @@ async function onForceAssigned(order, workerId) {
       reason: Transaction.REASONS.WORKER_EARNING,
       idempotencyKey: `forceassign:bonus:${orderId}`,
       refs: { orderId },
-      description: 'Force-assign bonus — job auto-routed to you',
+      description: 'Force-assign bonus - job auto-routed to you',
     });
   } catch (err) {
     logger.warn({ err: err.message, workerId, orderId }, '[DISPATCH] Force-assign bonus credit failed');
@@ -210,7 +210,7 @@ async function onForceAssigned(order, workerId) {
         recipient: { kind: 'worker', id: workerId },
         type:  'job_assigned',
         title: 'Job auto-routed to you + ₹15 bonus',
-        body:  `${order.service.replace(/_/g, ' ')} — ₹${order.pricing.total}. A ₹15 priority bonus has been added to your wallet. Please start your trip promptly.`,
+        body:  `${order.service.replace(/_/g, ' ')} - ₹${order.pricing.total}. A ₹15 priority bonus has been added to your wallet. Please start your trip promptly.`,
         deepLink: `/worker/jobs/${orderId}`,
         data: { orderId, forceAssigned: 'true', bonusPaise: String(FORCE_ASSIGN_BONUS_PAISE) },
       }),

@@ -2,6 +2,9 @@
  * The provider's menu: every place the bottom tabs don't show (the websites'
  * MENU_ITEMS, same order), plus sign out.
  */
+import { labelKey } from '@zappy/core/shared/translations';
+import { useT } from '../lib/i18n';
+import { LanguageSwitcher } from '../components/account/LanguageSwitcher';
 import React from 'react';
 import { Linking, Pressable, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -46,6 +49,7 @@ export const WORKER_MENU = staffMenu(ALL_WORKER_MENU, STAFF_APP);
 export function WorkerMenuSheet({ visible, onClose, items = WORKER_MENU }: { visible: boolean; onClose: () => void; items?: typeof WORKER_MENU }) {
   const router = useRouter();
   const signOut = useSignOut();
+  const t = useT();
   return (
     <BottomSheet visible={visible} onClose={onClose} title="Menu">
       <View style={styles.list}>
@@ -53,19 +57,19 @@ export function WorkerMenuSheet({ visible, onClose, items = WORKER_MENU }: { vis
           <Pressable key={key} accessibilityRole="button" onPress={() => { onClose(); router.push(to as never); }}
             android_ripple={RIPPLE} style={[styles.item]}>
             <Icon size={19} color={ink[700]} strokeWidth={2.1} />
-            <Text variant="body" weight="semibold" style={styles.flex}>{label}</Text>
+            <Text variant="body" weight="semibold" style={styles.flex}>{t(labelKey(label), label)}</Text>
             <ChevronRight size={16} color={ink[400]} />
           </Pressable>
         ))}
-        {STAFF_APP ? (
-          <Pressable accessibilityRole="button" onPress={() => { onClose(); void Linking.openURL(`tel:+91${STAFF_HELP_PHONE}`); }} android_ripple={RIPPLE} style={[styles.item]}>
-            <PhoneCall size={19} color={danger[600]} strokeWidth={2.1} />
-            <Text variant="body" weight="bold" color={danger[600]} style={styles.flex}>Call ZappyOne help</Text>
-          </Pressable>
-        ) : null}
+        {/* Every partner, staff or not, reaches ZappyOne in one tap. */}
+        <Pressable accessibilityRole="button" onPress={() => { onClose(); void Linking.openURL(`tel:+91${STAFF_HELP_PHONE}`); }} android_ripple={RIPPLE} style={[styles.item]}>
+          <PhoneCall size={19} color={danger[600]} strokeWidth={2.1} />
+          <Text variant="body" weight="bold" color={danger[600]} style={styles.flex}>{t('sp.call_zappyone_help', 'Call ZappyOne help')}</Text>
+        </Pressable>
+        <LanguageSwitcher />
         <Pressable accessibilityRole="button" onPress={() => { onClose(); void signOut(); }} android_ripple={RIPPLE} style={[styles.item]}>
           <LogOut size={19} color={danger[600]} />
-          <Text variant="body" weight="semibold" color={danger[600]} style={styles.flex}>Sign out</Text>
+          <Text variant="body" weight="semibold" color={danger[600]} style={styles.flex}>{t('sp.sign_out', 'Sign out')}</Text>
         </Pressable>
       </View>
     </BottomSheet>

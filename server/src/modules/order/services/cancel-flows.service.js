@@ -18,14 +18,14 @@ async function cancelByUser({ orderId, userId, reason }) {
   // Users can cancel up to and including 'arrived' (with the maximum fee applied).
   // Once service is 'in_progress' or later, cancellation is blocked.
   if (!['created', 'searching', 'assigned', 'on_the_way', 'arrived'].includes(order.status)) {
-    throw Object.assign(new Error('Too late to cancel — service is already in progress'), { status: 409 });
+    throw Object.assign(new Error('Too late to cancel - service is already in progress'), { status: 409 });
   }
 
   // Worker Cancellation Shield Fund — assess fee, collect or defer, add to weekly pool.
   // Replaces the old direct worker compensation flow; workers now get paid every Monday.
   const shieldService = require('../shield.service');
   const { feePaise, isGrace, collectionStatus } = await shieldService.handleUserCancellation(order, userId).catch((err) => {
-    logger.error({ orderId, userId, err: err.message }, 'Shield fee assessment failed — continuing');
+    logger.error({ orderId, userId, err: err.message }, 'Shield fee assessment failed - continuing');
     return { feePaise: 0, isGrace: false, collectionStatus: 'zero_fee' };
   });
   const feeReason = isGrace ? 'grace_period' : collectionStatus === 'zero_fee' ? 'no_fee' : 'cancellation_fee';
@@ -143,11 +143,11 @@ async function workerCancel({ orderId, workerId, reason }) {
         reason: Transaction.REASONS.ADMIN_ADJUSTMENT_DEBIT,
         idempotencyKey: `workercancel:${orderId}`,
         refs: { orderId },
-        description: `Worker cancellation penalty — ${penaltyReason}`,
+        description: `Worker cancellation penalty - ${penaltyReason}`,
       });
     } catch (err) {
       if (err.code !== 'WALLET_HARD_LIMIT') throw err;
-      logger.error({ workerId, orderId }, 'Worker cancel penalty blocked by hard limit — proceeding anyway');
+      logger.error({ workerId, orderId }, 'Worker cancel penalty blocked by hard limit - proceeding anyway');
     }
   }
 
@@ -241,12 +241,12 @@ async function workerCancel({ orderId, workerId, reason }) {
         notificationService.notify({
           recipient: { kind: 'worker', id: workerId },
           type: 'account_warning',
-          title: '⚠️ Taken offline — too many cancellations',
+          title: '⚠️ Taken offline - too many cancellations',
           body: `You cancelled ${count} jobs recently. To protect service quality you've been set offline. You can go back online later.`,
           deepLink: '/worker',
           data: { orderId: String(orderId), cancels: count, limit },
         }).catch(() => {});
-        logger.warn({ workerId, count, limit }, '[WORKER-CANCEL] Escalation — worker auto-offlined for repeated cancels');
+        logger.warn({ workerId, count, limit }, '[WORKER-CANCEL] Escalation - worker auto-offlined for repeated cancels');
       }
     } catch (err) {
       logger.warn({ err: err.message, workerId }, '[WORKER-CANCEL] Escalation check failed');
@@ -270,11 +270,11 @@ async function workerCancel({ orderId, workerId, reason }) {
         recipient: { kind: 'worker', id: workerId },
         type: 'account_warning',
         title: 'Ready Mode paused',
-        body: `You cancelled a job you had pre-accepted. Ready Mode is paused for ${banHours}h — customers are promised an instant match on those jobs.`,
+        body: `You cancelled a job you had pre-accepted. Ready Mode is paused for ${banHours}h - customers are promised an instant match on those jobs.`,
         deepLink: '/worker',
         data: { orderId: String(orderId), banHours },
       }).catch(() => {});
-      logger.warn({ workerId, orderId: String(orderId), banHours }, '[ZEROWAIT] Ready Mode banned — cancelled a pre-accepted job');
+      logger.warn({ workerId, orderId: String(orderId), banHours }, '[ZEROWAIT] Ready Mode banned - cancelled a pre-accepted job');
     } catch (err) {
       logger.warn({ err: err.message, workerId }, '[ZEROWAIT] Ready ban failed');
     }
@@ -347,10 +347,10 @@ async function workerNoResponseCancel({ orderId, workerId }) {
       reason: Transaction.REASONS.ADMIN_ADJUSTMENT_DEBIT,
       idempotencyKey: `noresponse:user:${orderId}`,
       refs: { orderId },
-      description: 'No-response fee — worker arrived but customer unreachable',
+      description: 'No-response fee - worker arrived but customer unreachable',
     });
   } catch (err) {
-    logger.warn({ orderId, err: err.message }, '[NO_RESPONSE] Fee collection failed — proceeding');
+    logger.warn({ orderId, err: err.message }, '[NO_RESPONSE] Fee collection failed - proceeding');
   }
 
   // Credit worker for showing up (no penalty)
@@ -361,7 +361,7 @@ async function workerNoResponseCancel({ orderId, workerId }) {
       reason: Transaction.REASONS.WORKER_EARNING,
       idempotencyKey: `noresponse:worker:${orderId}`,
       refs: { orderId },
-      description: 'Arrival compensation — customer didn\'t respond',
+      description: 'Arrival compensation - customer didn\'t respond',
     }).catch(() => {});
   }
 
@@ -379,7 +379,7 @@ async function workerNoResponseCancel({ orderId, workerId }) {
   notificationService.notify({
     recipient: { kind: 'user', id: order.userId },
     type: 'order_cancelled',
-    title: '❌ Order cancelled — No response',
+    title: '❌ Order cancelled - No response',
     body: 'Your worker arrived but could not reach you. A ₹50 arrival fee was charged.',
     deepLink: `/orders/${order._id}`,
     data: { orderId: String(order._id) },
@@ -392,7 +392,7 @@ async function workerNoResponseCancel({ orderId, workerId }) {
       orderId: order._id,
       userId: order.userId,
       workerId,
-      subject: 'Customer no-response — worker cancelled',
+      subject: 'Customer no-response - worker cancelled',
       body: `Worker arrived for order ${order._id} but customer did not respond. Arrival fee of ₹${feePaise / 100} charged. Worker compensated ₹${workerCompPaise / 100}.`,
       source: 'system',
       status: 'open',
@@ -429,7 +429,7 @@ async function workerPartUnavailableCancel({ orderId, workerId, partName, notes 
     reason: Transaction.REASONS.WORKER_EARNING,
     idempotencyKey: `partunav:worker:${orderId}`,
     refs: { orderId },
-    description: `Diagnostic fee — spare part (${partName}) unavailable`,
+    description: `Diagnostic fee - spare part (${partName}) unavailable`,
   }).catch(() => {});
 
   // Deduct diagnostic fee from customer refund — charge partial
@@ -440,7 +440,7 @@ async function workerPartUnavailableCancel({ orderId, workerId, partName, notes 
       const paymentService = require('../../payment/payment.service');
       await paymentService.refund({ orderId: String(order._id), amountPaise: refundPaise, reason: 'part_unavailable' });
     } catch (err) {
-      logger.warn({ orderId, err: err.message }, '[PART_UNAVAILABLE] Refund failed — admin review needed');
+      logger.warn({ orderId, err: err.message }, '[PART_UNAVAILABLE] Refund failed - admin review needed');
     }
   }
 
@@ -472,8 +472,8 @@ async function workerPartUnavailableCancel({ orderId, workerId, partName, notes 
   notificationService.notify({
     recipient: { kind: 'user', id: order.userId },
     type: 'order_cancelled',
-    title: '🔧 Part unavailable — order closed',
-    body: `Worker couldn't complete the job — ${partName} is out of stock. Refund of ₹${Math.round(refundPaise / 100)} is on its way.`,
+    title: '🔧 Part unavailable - order closed',
+    body: `Worker couldn't complete the job - ${partName} is out of stock. Refund of ₹${Math.round(refundPaise / 100)} is on its way.`,
     deepLink: `/orders/${order._id}`,
     data: { orderId: String(order._id) },
   }).catch(() => {});

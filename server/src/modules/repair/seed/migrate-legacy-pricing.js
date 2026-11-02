@@ -93,7 +93,7 @@ async function run({ dryRun = false } = {}) {
   const dbName = (uri.match(/\/([^/?]+)(\?|$)/) || [])[1] || 'unknown';
 
   await mongoose.connect(uri, { serverSelectionTimeoutMS: 20000 });
-  console.log(`[migrate] database: ${dbName}${dryRun ? '  (DRY RUN — nothing will be written)' : ''}`);
+  console.log(`[migrate] database: ${dbName}${dryRun ? '  (DRY RUN - nothing will be written)' : ''}`);
 
   const variants = await ServiceVariant.find({}).lean();
   console.log(`[migrate] legacy servicevariants found: ${variants.length}`);
@@ -165,11 +165,11 @@ async function run({ dryRun = false } = {}) {
   console.log(`[migrate] invalid price:        ${stats.invalid}`);
 
   if (stats.unmappedService.length) {
-    console.log(`\n[migrate] not mobile — skipped by design (${stats.unmappedService.length} codes):`);
+    console.log(`\n[migrate] not mobile - skipped by design (${stats.unmappedService.length} codes):`);
     stats.unmappedService.forEach((c) => console.log(`[migrate]     ${c}`));
   }
   if (stats.missingRepair.length) {
-    console.warn(`\n[migrate] ! repair catalog missing in this database — run the seed first:`);
+    console.warn(`\n[migrate] ! repair catalog missing in this database - run the seed first:`);
     console.warn(`[migrate]   NODE_ENV=<env> node src/modules/repair/seed/run-seed.js`);
     stats.missingRepair.forEach((c) => console.warn(`[migrate]     needs: ${c}`));
   }

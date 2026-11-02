@@ -186,7 +186,7 @@ async function settleBoost(kind, bookingId) {
     await Transaction.create({
       type: 'credit', owner: { kind: 'platform', id: null }, amountPaise: doc.boost.paise,
       reason: Transaction.REASONS.WORKER_EARNING, idempotencyKey: `boost:shop:${kind}:${doc._id}`,
-      description: `Shop earning (customer's boost) — ${kind} ${doc.reference || ''}`,
+      description: `Shop earning (customer's boost) - ${kind} ${doc.reference || ''}`,
       metadata: { shopId: String(doc.shopId), bookingId: String(doc._id) }, status: 'succeeded',
     }).catch((e) => { if (e.code !== 11000) throw e; });
   }

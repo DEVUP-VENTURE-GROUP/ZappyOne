@@ -30,7 +30,7 @@ function bookCommission({ source, bookingId, reference, platformPaise, cash, met
     amountPaise: platformPaise,
     reason: Transaction.REASONS.PLATFORM_COMMISSION,
     idempotencyKey: `${source}:commission:${bookingId}`,
-    description: `${source} commission — ${reference}`,
+    description: `${source} commission - ${reference}`,
     metadata: { source, bookingId: String(bookingId), ...(cash ? { cash: true } : {}), ...(meta || {}) },
     status: 'succeeded',
   }).catch(ignoreDuplicate);
@@ -74,12 +74,12 @@ async function settleCash({ source, bookingId, reference, isShop, ownerId, total
         amountPaise: -platformPaise,
         reason: Transaction.REASONS.PLATFORM_COMMISSION,
         idempotencyKey: `${source}:cash_commission_unpaid:${bookingId}`,
-        description: `Commission due (wallet at limit) — ${source} ${reference}`,
+        description: `Commission due (wallet at limit) - ${source} ${reference}`,
         metadata: { source, bookingId: String(bookingId), cash: true, walletRefused: err.message },
         status: 'pending',
       }).catch(ignoreDuplicate);
       logger.warn({ source, bookingId: String(bookingId), workerId: String(ownerId), platformPaise },
-        '[settlement] commission recorded as a due — provider wallet at its limit');
+        '[settlement] commission recorded as a due - provider wallet at its limit');
     }
   }
   await bookCommission({ source, bookingId, reference, platformPaise, cash: true });
@@ -123,7 +123,7 @@ async function settleStaff({ source, booking, reference, paymentMethod, totalPai
     await walletService.apply({
       kind: 'worker', id: booking.workerId, type: 'debit', amountPaise: all, allowDebt: true,
       reason: Transaction.REASONS.PLATFORM_COMMISSION, idempotencyKey: `${source}:staff_cash:${booking._id}`, refs,
-      description: `Cash to deposit at your hub — ${source} ${reference}`,
+      description: `Cash to deposit at your hub - ${source} ${reference}`,
     });
   }
   // Tagged with the staff member and their hub, for the hub's profit and loss (workforce/finance).
@@ -197,7 +197,7 @@ async function settleShare({ source, booking, reference, paymentMethod, totalPai
       amountPaise: providerPaise,
       reason: Transaction.REASONS.WORKER_EARNING,
       idempotencyKey: `${source}:shop_earning:${bookingId}`,
-      description: `Shop earning — ${source} ${reference}`,
+      description: `Shop earning - ${source} ${reference}`,
       metadata: { source, shopId: String(ownerId), bookingId: String(bookingId), totalPaise },
       status: 'succeeded',
     }).catch(ignoreDuplicate);
@@ -232,9 +232,9 @@ async function settleSafely(args) {
     return result;
   } catch (err) {
     logger.error({ err: err.message, source: args.source, bookingId: String(args.booking._id) },
-      `[${args.source}] SETTLEMENT FAILED — provider not credited, needs reconciliation`);
+      `[${args.source}] SETTLEMENT FAILED - provider not credited, needs reconciliation`);
     return { settled: false, reason: 'error', error: err.message };
   }
 }
 
-module.exports = { settleProviderShare, settleSafely };
+module.exports = { settleProviderShare, settleSafely, settleCash };

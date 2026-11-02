@@ -35,16 +35,11 @@ export default function PlansPage() {
     try {
       setPurchasing(plan.code);
       const orderInfo = await subscribe(plan.code).unwrap();
-      const checkoutResp = await openCheckout({
-        paymentSessionId: orderInfo.paymentSessionId,
-        cfOrderId:        orderInfo.cfOrderId,
-        cashfreeEnv:      orderInfo.cashfreeEnv || 'sandbox',
-        amountPaise:      orderInfo.amountPaise,
-        purpose:          `${plan.name} Plan`,
-      });
+      const checkoutResp = await openCheckout({ ...orderInfo, purpose: `${plan.name} Plan` });
       await verifyPayment({
         cfOrderId:   checkoutResp.cfOrderId,
         cfPaymentId: checkoutResp.cfPaymentId,
+        ...(checkoutResp.razorpaySignature && { razorpaySignature: checkoutResp.razorpaySignature }),
       }).unwrap();
       toast.success(`${plan.name} activated!`);
       refetchSub();
@@ -98,7 +93,7 @@ export default function PlansPage() {
   return (
     <div className="min-h-screen bg-slate-50 md:flex md:justify-center">
       <SEO
-        title="ZappyOne Premium Plans — No Surge Pricing, Max Cashback | ZappyOne"
+        title="ZappyOne Premium Plans - No Surge Pricing, Max Cashback | ZappyOne"
         description="Upgrade to ZappyOne Premium. Get zero surge pricing, zero platform fees, 10% cashback, and priority worker dispatch. Plans starting from ₹99/month."
         canonical={`${BASE_URL}/plans`}
         keywords="ZappyOne premium, ZappyOne gold, ZappyOne platinum, home services subscription India, no surge pricing app"

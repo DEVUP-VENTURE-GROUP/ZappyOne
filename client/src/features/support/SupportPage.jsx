@@ -92,7 +92,7 @@ function TicketThread({ ticketId, onBack }) {
           }`}>
             <Clock size={10} />
             {slaBreached
-              ? 'Response overdue — escalated to senior team'
+              ? 'Response overdue - escalated to senior team'
               : `Expected reply within ${slaLeft}h`
             }
           </div>
@@ -193,7 +193,7 @@ function NewTicketForm({ onClose, onCreated }) {
         priority: form.priority,
         ...(form.orderId.trim() ? { orderId: form.orderId.trim() } : {}),
       }).unwrap();
-      toast.success('Ticket created — we\'ll reply shortly');
+      toast.success('Ticket created - we\'ll reply shortly');
       onCreated(res.ticket._id);
     } catch (err) {
       toast.error(err?.data?.error || 'Could not create ticket');
@@ -401,7 +401,7 @@ export default function SupportPage() {
                   >
                     {awaiting && (
                       <div className="flex items-center gap-1.5 text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-1 rounded-lg mb-2 w-fit">
-                        <AlertCircle size={10} /> Action required — reply to support
+                        <AlertCircle size={10} /> Action required - reply to support
                       </div>
                     )}
                     <div className="flex items-start justify-between gap-2">

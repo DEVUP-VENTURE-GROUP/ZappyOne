@@ -88,6 +88,7 @@ async function createBooking({
     const existing = await PetBooking.findOne({ idempotencyKey }).lean();
     if (existing) return { booking: existing, replayed: true };
   }
+  if (!recurringId) await require('../../jobs/customer-gate').assertCustomerCanBook(userId);
   await zoneService.assertBookableLocation(serviceLocation);
   require('../../payment/payables').assertOnlineAvailable(paymentMethod);
   if (!petEntries.length) throw httpError('Choose at least one pet', 400, 'NO_PETS');

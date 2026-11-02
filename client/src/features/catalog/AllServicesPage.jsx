@@ -24,7 +24,7 @@ export default function AllServicesPage() {
   return (
     <div className="min-h-screen bg-[#F9FAFB] pb-16">
       <SEO
-        title="Services — ZappyOne"
+        title="Services - ZappyOne"
         description="Phone and laptop repair at your door, diagnosed before you are quoted."
       />
 

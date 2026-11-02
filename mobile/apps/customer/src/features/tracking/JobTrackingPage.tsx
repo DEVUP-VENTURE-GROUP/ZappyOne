@@ -9,7 +9,7 @@ import { useMemo, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { CheckCircle, Headphones, Repeat2, ShieldCheck, X } from 'lucide-react-native';
+import { CheckCircle, Clock, Headphones, Repeat2, ShieldCheck, X } from 'lucide-react-native';
 import { useJobOptionsQuery } from '@zappy/core/api';
 import { useTrackingFeed } from '@zappy/core/hooks/useTrackingFeed';
 import { feedCopy, firstNameOf, stepsFor } from '@zappy/core/shared/trackingSteps';
@@ -20,7 +20,7 @@ import { callNumber } from '@zappy/ui/lib/openLink';
 import { LiveTrackingMap } from '@zappy/ui/maps/LiveTrackingMap';
 import { mapsAvailable } from '@zappy/ui/lib/maps';
 import { useOpenDocument } from '@zappy/ui/lib/openDocument';
-import { colors, ink, success } from '@zappy/ui/theme/colors';
+import { colors, ink, success, zappy } from '@zappy/ui/theme/colors';
 import { radius } from '@zappy/ui/theme/radius';
 import { spacing } from '@zappy/ui/theme/spacing';
 import { CancelSheet } from './cards/CancelSheet';
@@ -98,6 +98,12 @@ export function JobTrackingPage({ job, extras = null, startCode = null, codeStag
         ) : null}
         <ProviderStatusNotes jobId={job.id} noun={job.noun} options={options} hasProvider={!!job.provider} live={!job.terminal} onChanged={refetchOptions} />
         <StartCodeCard jobKey={`${job.kind}:${job.id}`} code={startCode} stage={codeStage || status} noun={job.noun} />
+        {options?.moreTime?.until && !job.terminal ? (
+          <View style={styles.moreTime}>
+            <Clock size={18} color={zappy[600]} />
+            <Text variant="bodySmall" color={ink[700]} style={styles.flexText}>{options.moreTime.reason}. Your {job.noun} expects to finish by {new Date(options.moreTime.until).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' })}. Nothing extra is charged unless you approve a new quote.</Text>
+          </View>
+        ) : null}
         {!job.provider && !job.terminal && options?.search ? (
           <SlowSearchCard jobId={job.id} noun={job.noun} search={options.search} reschedule={options.reschedule}
             onCancel={cancel ? () => { setCancelOpen(true); refetchOptions(); } : null} onMoved={refetchOptions} />
@@ -148,6 +154,8 @@ export function JobTrackingPage({ job, extras = null, startCode = null, codeStag
 }
 
 const styles = StyleSheet.create({
+  moreTime: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.md, borderRadius: radius.large, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
+  flexText: { flex: 1, minWidth: 0 },
   page: { flex: 1, backgroundColor: colors.background },
   body: { gap: spacing.md, padding: spacing.base },
   map: { height: 300, borderRadius: radius.large, overflow: 'hidden', backgroundColor: colors.border },

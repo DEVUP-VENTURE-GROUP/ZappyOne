@@ -213,7 +213,7 @@ function ReferralStats() {
           <MoneyCard label="Referral Signups" value={s.totalSignups ?? 0} icon={Users} color="text-zappy-600" bg="bg-zappy-50" />
           <MoneyCard label="Converted (1st Order)" value={s.converted ?? 0} sub={`${s.conversionPct ?? 0}% conversion`} icon={CheckCircle} />
           <MoneyCard label="Total Reward Spend" value={`₹${s.totalSpendRupees?.toLocaleString() ?? 0}`} icon={Gift} color="text-pink-600" bg="bg-pink-50" />
-          <MoneyCard label="Avg Cost per Signup" value={s.totalSignups ? `₹${Math.round((s.totalSpendRupees ?? 0) / s.totalSignups)}` : '—'} icon={TrendingUp} color="text-amber-600" bg="bg-amber-50" />
+          <MoneyCard label="Avg Cost per Signup" value={s.totalSignups ? `₹${Math.round((s.totalSpendRupees ?? 0) / s.totalSignups)}` : '-'} icon={TrendingUp} color="text-amber-600" bg="bg-amber-50" />
         </div>
       )}
 
@@ -295,7 +295,7 @@ function DeferredMilestones() {
       <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
         <div>
           <p className="text-sm font-bold text-slate-800">Deferred Milestone Bonuses</p>
-          <p className="text-xs text-slate-400 mt-0.5">Workers whose rating was below 3.5 when they hit a milestone — held pending rating improvement</p>
+          <p className="text-xs text-slate-400 mt-0.5">Workers whose rating was below 3.5 when they hit a milestone - held pending rating improvement</p>
         </div>
         <span className={`px-3 py-1 rounded-full text-xs font-bold ${items.length > 0 ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'}`}>
           {items.length} pending
@@ -304,7 +304,7 @@ function DeferredMilestones() {
       {items.length === 0 ? (
         <div className="py-10 text-center text-slate-400 text-sm">
           <Award size={28} className="mx-auto mb-2 text-slate-300" />
-          No deferred milestones — all workers received their bonuses
+          No deferred milestones - all workers received their bonuses
         </div>
       ) : (
         <div className="divide-y divide-slate-50">
@@ -316,9 +316,9 @@ function DeferredMilestones() {
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-mono text-slate-400 truncate">Worker: {item.workerId}</p>
                 <p className="text-sm font-semibold text-slate-800">
-                  Milestone #{item.milestone} — ₹{item.bonusPaise / 100}
+                  Milestone #{item.milestone} - ₹{item.bonusPaise / 100}
                 </p>
-                <p className="text-xs text-slate-400">Deferred on {item.deferredAt ? new Date(item.deferredAt).toLocaleDateString('en-IN') : '—'}</p>
+                <p className="text-xs text-slate-400">Deferred on {item.deferredAt ? new Date(item.deferredAt).toLocaleDateString('en-IN') : '-'}</p>
               </div>
               <button
                 onClick={() => handleRelease(item.workerId, item.milestone, item.bonusPaise)}

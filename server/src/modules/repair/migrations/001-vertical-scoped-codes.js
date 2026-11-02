@@ -80,7 +80,7 @@ async function up() {
   for (const { collection, oldIndex, codeField = 'code' } of TARGETS) {
     const exists = (await db.listCollections({ name: collection }).toArray()).length > 0;
     if (!exists) {
-      console.log(`[migrate-001] ${collection.padEnd(20)} collection absent — nothing to do`);
+      console.log(`[migrate-001] ${collection.padEnd(20)} collection absent - nothing to do`);
       continue;
     }
 
@@ -114,7 +114,7 @@ async function up() {
     .filter((n) => ['ProblemCategory', 'Problem', 'Repair', 'SkillLevel', 'QAChecklist'].includes(n))
     .map((n) => mongoose.model(n).syncIndexes()));
 
-  console.log(`\n[migrate-001] done — ${dropped} dropped, ${alreadyDone} already migrated, compound indexes rebuilt`);
+  console.log(`\n[migrate-001] done - ${dropped} dropped, ${alreadyDone} already migrated, compound indexes rebuilt`);
   await mongoose.disconnect();
   return { dropped, alreadyDone };
 }

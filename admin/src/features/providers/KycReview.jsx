@@ -174,7 +174,7 @@ export function SelfieMetaBadges({ meta }) {
     return (
       <div className="flex items-center gap-1.5 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
         <AlertTriangle size={12} className="text-red-500 shrink-0" />
-        <span className="text-[11px] font-bold text-red-600">No liveness metadata — may be a static upload</span>
+        <span className="text-[11px] font-bold text-red-600">No liveness metadata - may be a static upload</span>
       </div>
     );
   }
@@ -190,7 +190,7 @@ export function SelfieMetaBadges({ meta }) {
           : <AlertTriangle size={13} className="text-red-500" />
         }
         <span className={`text-[11px] font-bold ${isLive ? 'text-green-700' : 'text-red-600'}`}>
-          {isLive ? 'Live camera capture ✓' : '⚠ Static upload — not live camera'}
+          {isLive ? 'Live camera capture ✓' : '⚠ Static upload - not live camera'}
         </span>
       </div>
 
@@ -280,7 +280,7 @@ function KycDetailPanel({ worker, onDone }) {
     }
     try {
       await reject({ id: worker._id, reason: rejectReason }).unwrap();
-      toast.success(isUpdate ? `Update rejected — ${worker.name} reverted to previous approved docs` : `${worker.name} rejected`);
+      toast.success(isUpdate ? `Update rejected - ${worker.name} reverted to previous approved docs` : `${worker.name} rejected`);
       setShowReject(false);
       onDone();
     } catch (err) { toast.error(err.data?.error || 'Failed'); }
@@ -451,13 +451,13 @@ function KycDetailPanel({ worker, onDone }) {
         <div className="px-5 pb-5 space-y-3">
           <div className="bg-red-50 border border-red-200 rounded-xl p-3">
             <p className="text-xs font-bold text-red-700 mb-1">
-              {isUpdate ? 'Reject update — worker reverts to previously approved docs' : 'Reject KYC'}
+              {isUpdate ? 'Reject update - worker reverts to previously approved docs' : 'Reject KYC'}
             </p>
             <textarea
               rows={3}
               autoFocus
               className="w-full bg-white border border-red-200 rounded-lg px-3 py-2 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-red-400 resize-none"
-              placeholder="e.g. Aadhaar image is blurry — please re-upload with all 4 corners visible…"
+              placeholder="e.g. Aadhaar image is blurry - please re-upload with all 4 corners visible…"
               value={rejectReason}
               onChange={(e) => setRejectReason(e.target.value)}
             />
@@ -505,7 +505,7 @@ function ChangeRequestsPanel() {
   async function handleRespond(id, decision) {
     try {
       await respond({ id, decision, denialReason: denial || undefined }).unwrap();
-      toast.success(decision === 'approved' ? 'Change approved — worker can now resubmit' : 'Change request denied');
+      toast.success(decision === 'approved' ? 'Change approved - worker can now resubmit' : 'Change request denied');
       setSelected(null);
       setDenial('');
       refetch();

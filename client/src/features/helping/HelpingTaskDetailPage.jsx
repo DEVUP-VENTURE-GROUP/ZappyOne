@@ -1,4 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
+import RefundStatus from '@shared/components/common/RefundStatus';
 import { Loader2, Check, X, AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import {
@@ -130,6 +131,7 @@ export default function HelpingTaskDetailPage() {
             label={due.itemsPaise > 0 ? 'Helper: items and service fee' : 'Helper service charge'} className="mt-3" />
         </div>
       )}
+      <RefundStatus source="helping" id={task._id} />
     </>
   );
 

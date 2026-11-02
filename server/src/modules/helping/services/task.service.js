@@ -80,6 +80,7 @@ async function createTask({
     const existing = await HelpingTask.findOne({ idempotencyKey }).lean();
     if (existing) return { task: existing, replayed: true };
   }
+  await require('../../jobs/customer-gate').assertCustomerCanBook(userId);
   await zoneService.assertBookableLocation(pickupLocation);
   require('../../payment/payables').assertOnlineAvailable(paymentMethod);
 
@@ -120,7 +121,7 @@ async function createTask({
   // A helper fronting the shopping is capped; above that the customer prepays.
   if (model === 'worker_advance' && itemBudgetPaise > cfg.maxWorkerAdvancePaise) {
     throw httpError(
-      'That is more than a helper can pay upfront — prepay the budget from your wallet, or reduce it',
+      'That is more than a helper can pay upfront - prepay the budget from your wallet, or reduce it',
       409, 'ADVANCE_LIMIT_EXCEEDED', { limitPaise: cfg.maxWorkerAdvancePaise },
     );
   }
@@ -131,7 +132,7 @@ async function createTask({
 
   if (charge.quoteRequired) {
     throw httpError(
-      'This trip is longer than we price automatically — our team will quote it',
+      'This trip is longer than we price automatically - our team will quote it',
       409, 'MANUAL_QUOTE_REQUIRED', { distanceKm: charge.distanceKm },
     );
   }
@@ -211,7 +212,7 @@ async function updateItem({ taskId, workerId, itemId, status, actualPricePaise =
     if (!ok) {
       // Refused at the till, not reconciled later.
       throw httpError(
-        'That is more than the customer approved — request approval first',
+        'That is more than the customer approved - request approval first',
         409, 'APPROVAL_REQUIRED',
         { approvedPaise: approvedCeiling, attemptedPaise: actualPricePaise },
       );
@@ -225,7 +226,7 @@ async function updateItem({ taskId, workerId, itemId, status, actualPricePaise =
       const check = await pricingService.advanceCheck(task.serviceType, spendAfter);
       if (!check.allowed) {
         throw httpError(
-          'That takes the shopping past what a helper may pay upfront — ask the customer first',
+          'That takes the shopping past what a helper may pay upfront - ask the customer first',
           409, 'ADVANCE_LIMIT_EXCEEDED', { limitPaise: check.limitPaise, attemptedPaise: spendAfter },
         );
       }
@@ -363,7 +364,7 @@ async function recordWorkerAdvance({ taskId, workerId, amountPaise }) {
   const check = await pricingService.advanceCheck(task.serviceType, amountPaise);
   if (!check.allowed) {
     throw httpError(
-      'That is more than a helper may advance — the customer must fund it',
+      'That is more than a helper may advance - the customer must fund it',
       409, 'ADVANCE_LIMIT_EXCEEDED', { limitPaise: check.limitPaise },
     );
   }

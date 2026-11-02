@@ -16,6 +16,7 @@ const REASONS = {
   // Credits (positive)
   WORKER_EARNING: 'worker_earning',
   CASHBACK: 'cashback',
+  NO_SHOW_CREDIT: 'no_show_credit',          // our apology when a pro did not turn up (Economics, Cancellations)
   REFERRAL_REWARD: 'referral_reward',
   REFUND: 'refund',
   WALLET_TOPUP: 'wallet_topup',

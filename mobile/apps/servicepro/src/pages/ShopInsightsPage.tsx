@@ -62,7 +62,7 @@ export function ShopInsightsPage() {
                 {m.role === 'lead' ? <Crown size={11} color={accent[600]} /> : null}
                 <Text variant="caption" color={ink[700]}>{m.jobs} job{m.jobs === 1 ? '' : 's'}</Text>
                 <Text variant="caption" color={ink[700]}>{formatPaise(m.valuePaise)}</Text>
-                <Text variant="caption" color={ink[500]}>{m.rating ? `${Number(m.rating).toFixed(1)}★` : '—'}</Text>
+                <Text variant="caption" color={ink[500]}>{m.rating ? `${Number(m.rating).toFixed(1)}★` : '-'}</Text>
               </View>
             ))}
           </View>

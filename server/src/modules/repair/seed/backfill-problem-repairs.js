@@ -150,7 +150,7 @@ async function main() {
       + `, refreshed ${String(refreshed).padStart(3)} repair reverse-links`,
     );
     if (skippedUnknown) {
-      console.warn(`[backfill]   ! ${skippedUnknown} seed reference(s) skipped — no such repair in this vertical`);
+      console.warn(`[backfill]   ! ${skippedUnknown} seed reference(s) skipped - no such repair in this vertical`);
     }
   }
 

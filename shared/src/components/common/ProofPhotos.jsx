@@ -71,7 +71,7 @@ export default function ProofPhotos({
       onChange((prev) => prev.map((p) => (
         p.id === id ? { ...p, key: null, uploading: false, error: true } : p
       )));
-      toast.error('Could not upload the photo. Check your connection and try again — if it keeps failing, contact support.');
+      toast.error('Could not upload the photo. Check your connection and try again - if it keeps failing, contact support.');
     }
   }, [onChange, presign, folder, max]);
 
@@ -117,7 +117,7 @@ export default function ProofPhotos({
           </p>
           <p className={`text-[11px] font-medium mt-0.5 ${done ? 'text-green-600' : 'text-violet-500'}`}>
             {done
-              ? `${ready} photo${ready > 1 ? 's' : ''} uploaded — you can add ${max - photos.length} more`
+              ? `${ready} photo${ready > 1 ? 's' : ''} uploaded - you can add ${max - photos.length} more`
               : (hint || requiredNote)}
           </p>
         </div>

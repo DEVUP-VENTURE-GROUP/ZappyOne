@@ -24,7 +24,7 @@ const DEFAULT_PLANS = [
   {
     code: 'ZAPPY_PREMIUM',
     name: 'Zappy Premium',
-    description: 'The best of Zappy — zero surge, zero platform fees, and priority workers.',
+    description: 'The best of Zappy - zero surge, zero platform fees, and priority workers.',
     audience: 'user',
     priceInPaise: 14900,      // ₹149
     durationDays: 30,
@@ -55,7 +55,7 @@ const DEFAULT_PLANS = [
   {
     code: 'PARTNER_PRO',
     name: 'Partner Pro',
-    description: 'Maximum earnings — lowest commission, 1.5× job offers, and Pro badge.',
+    description: 'Maximum earnings - lowest commission, 1.5× job offers, and Pro badge.',
     audience: 'worker',
     priceInPaise: 19900,      // ₹199
     durationDays: 30,

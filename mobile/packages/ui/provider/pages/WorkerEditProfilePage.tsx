@@ -118,7 +118,7 @@ export function WorkerEditProfilePage() {
             <ProfilePhoto url={account?.photoUrl} role="worker" size={64} />
             <View style={styles.flex}>
               <Text variant="body" weight="bold" numberOfLines={1}>{me?.name || 'Your name'}</Text>
-              <View style={styles.row}><Star size={12} color={accent[500]} fill={accent[500]} /><Text variant="caption" color={ink[500]}>{me?.rating?.toFixed(1) ?? '—'}, {me?.completedJobs ?? 0} jobs completed</Text></View>
+              <View style={styles.row}><Star size={12} color={accent[500]} fill={accent[500]} /><Text variant="caption" color={ink[500]}>{me?.rating?.toFixed(1) ?? '-'}, {me?.completedJobs ?? 0} jobs completed</Text></View>
             </View>
             {me?.trust?.isVerified ? <View style={[styles.tag, { backgroundColor: success[100] }]}><Shield size={9} color={success[700]} /><Text variant="caption" weight="bold" color={success[700]}>Verified</Text></View> : null}
           </View>

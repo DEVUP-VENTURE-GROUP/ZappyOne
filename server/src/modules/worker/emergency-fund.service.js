@@ -77,7 +77,7 @@ async function submitClaim({ workerId, reason, category, requestedPaise }) {
   await redis.publish('notification:admin:ops', JSON.stringify({
     type:  'emergency_fund_claim',
     title: `🆘 Emergency Fund Claim: ${worker?.name}`,
-    body:  `${category} — ₹${Math.round(requestedPaise / 100)}: ${reason.slice(0, 80)}`,
+    body:  `${category} - ₹${Math.round(requestedPaise / 100)}: ${reason.slice(0, 80)}`,
     data:  { claimId: String(claim._id), workerId: String(workerId) },
   }));
 
@@ -104,7 +104,7 @@ async function approveClaim({ claimId, adminId, adminNote }) {
     amountPaise: claim.requestedPaise,
     reason: Transaction.REASONS.ADMIN_ADJUSTMENT_CREDIT,
     idempotencyKey: `emerg:${claimId}`,
-    description: `Emergency mutual aid fund — ${claim.category}`,
+    description: `Emergency mutual aid fund - ${claim.category}`,
   });
 
   /* Deduct from fund */

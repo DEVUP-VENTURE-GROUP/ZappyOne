@@ -3,11 +3,15 @@ import { motion } from 'framer-motion';
 import { LogOut, PhoneCall,
   LayoutDashboard, IndianRupee, Wallet as WalletIcon, Bell, Star, User, ChevronRight, Wifi,
   TrendingUp, TrendingDown, Search, Radio, Loader2, Target, Building2, GraduationCap,
-  ShieldCheck, ShoppingBag, Scale, FileText, CalendarClock,
+  ShieldCheck, ShoppingBag, Scale, FileText, CalendarClock, Lock,
 } from 'lucide-react';
 import { staffMenu, STAFF_PORTAL } from '../../provider/staffPortal';
 import { STAFF_HELP_PHONE } from '../../provider/partnerPages';
 import { ZappyWordmark } from '../common/ZappyLogo';
+import CountUp from '../common/CountUp';
+import LanguageSwitcher from '../common/LanguageSwitcher';
+import { useI18n, useT } from '../../i18n/I18nProvider';
+import { labelKey } from '../../i18n/translations';
 
 /**
  * Presentational building blocks for the worker dashboard.
@@ -74,13 +78,14 @@ export const MENU_ITEMS = NAV_ITEMS.filter((i) => !i.primary);
 const BOTTOM_NAV = NAV_ITEMS.filter((i) => i.primary);
 
 
+// ZappyOne's own palette: brand blue and ink for most things; green only for money in, amber only for something that needs you.
 const TONE = {
-  blue: { bg: 'bg-blue-50', fg: 'text-blue-600' },
+  blue: { bg: 'bg-zappy-50', fg: 'text-zappy-600' },
   amber: { bg: 'bg-amber-50', fg: 'text-amber-600' },
   green: { bg: 'bg-emerald-50', fg: 'text-emerald-600' },
-  violet: { bg: 'bg-violet-50', fg: 'text-violet-600' },
-  cyan: { bg: 'bg-cyan-50', fg: 'text-cyan-600' },
-  rose: { bg: 'bg-rose-50', fg: 'text-rose-600' },
+  violet: { bg: 'bg-slate-100', fg: 'text-navy-900' },
+  cyan: { bg: 'bg-slate-100', fg: 'text-navy-900' },
+  rose: { bg: 'bg-zappy-50', fg: 'text-zappy-600' },
 };
 
 /* Avatar */
@@ -139,13 +144,14 @@ export function OnlineControl({ isOnline, busy, onToggle }) {
 export const WorkerSidebar = memo(function WorkerSidebar({
   activeKey, unread, onNavigate, onGoOnline, isOnline, onSignOut,
   // Other portals pass their own pages; Rakshak uses NAV_ITEMS.
-  items = NAV_ITEMS, label = 'Worker', account = null,
+  items = NAV_ITEMS, label = 'Worker', account = null, helpPhone = null,
 }) {
+  const t = useT();
   return (
     <aside className="fixed inset-y-0 left-0 hidden w-64 flex-col border-r border-slate-200 bg-white lg:flex">
-      <div className="flex items-center gap-2 px-6 py-5">
+      <div className="flex flex-col items-start gap-1 px-6 py-5">
         <ZappyWordmark size={24} />
-        <span className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">{label}</span>
+        <span className="max-w-full truncate text-[10.5px] font-black uppercase tracking-[0.16em] text-slate-400">{label}</span>
       </div>
       {account && <div className="px-3 pb-2">{account}</div>}
 
@@ -158,15 +164,17 @@ export const WorkerSidebar = memo(function WorkerSidebar({
               type="button"
               onClick={() => onNavigate(item)}
               aria-current={active ? 'page' : undefined}
+              title={item.locked ? 'Opens when your profile is complete' : undefined}
               className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[14px] font-semibold transition-colors ${
                 active
                   ? 'bg-zappy-600 text-white shadow-sm'
-                  : 'text-slate-600 hover:bg-slate-100 hover:text-navy-900'
+                  : item.locked ? 'text-slate-400 hover:bg-slate-50' : 'text-slate-600 hover:bg-slate-100 hover:text-navy-900'
               }`}
             >
               <item.Icon size={18} strokeWidth={2.2} />
-              <span className="flex-1 text-left">{item.label}</span>
-              {item.key === 'notifications' && unread > 0 && (
+              <span className="flex-1 text-left">{t(labelKey(item.label), item.label)}</span>
+              {item.locked && !active && <Lock size={14} className="shrink-0 text-slate-300" aria-label="Locked" />}
+              {(item.key === 'notifications' || item.key === 'alerts') && unread > 0 && (
                 <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-black ${active ? 'bg-white/25 text-white' : 'bg-zappy-600 text-white'}`}>
                   {unread > 99 ? '99+' : unread}
                 </span>
@@ -189,21 +197,22 @@ export const WorkerSidebar = memo(function WorkerSidebar({
         </div>
       )}
 
-      {STAFF_PORTAL && (
+      {(STAFF_PORTAL || helpPhone) && (
         <div className="px-3 pt-2">
-          <a href={`tel:+91${STAFF_HELP_PHONE}`} className="flex w-full items-center gap-3 rounded-xl bg-rose-50 px-3 py-2.5 text-[14px] font-bold text-rose-700 hover:bg-rose-100">
-            <PhoneCall size={18} strokeWidth={2.2} /> Call ZappyOne help
+          <a href={`tel:+91${helpPhone || STAFF_HELP_PHONE}`} className="flex w-full items-center gap-3 rounded-xl bg-rose-50 px-3 py-2.5 text-[14px] font-bold text-rose-700 hover:bg-rose-100">
+            <PhoneCall size={18} strokeWidth={2.2} /> {t('sp.call_zappyone_help', 'Call ZappyOne help')}
           </a>
         </div>
       )}
       {onSignOut && (
         <div className="border-t border-slate-200 p-3">
+          <LanguageSwitcher className="mb-2" />
           <button
             type="button"
             onClick={onSignOut}
             className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[14px] font-semibold text-slate-500 transition-colors hover:bg-rose-50 hover:text-rose-600"
           >
-            <LogOut size={18} strokeWidth={2.2} /> Sign out
+            <LogOut size={18} strokeWidth={2.2} /> {t('sp.sign_out', 'Sign out')}
           </button>
         </div>
       )}
@@ -213,6 +222,7 @@ export const WorkerSidebar = memo(function WorkerSidebar({
 
 /* Mobile bottom nav */
 export function WorkerBottomNav({ activeKey, onNavigate, items = BOTTOM_NAV }) {
+  const { t, lang } = useI18n();
   return (
     <nav
       className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white lg:hidden"
@@ -226,15 +236,21 @@ export function WorkerBottomNav({ activeKey, onNavigate, items = BOTTOM_NAV }) {
               key={item.key}
               type="button"
               onClick={() => onNavigate(item)}
-              className="flex flex-1 flex-col items-center gap-1 py-2.5"
+              aria-label={item.label}
+              aria-current={active ? 'page' : undefined}
+              className="flex min-w-0 flex-1 flex-col items-center gap-1 py-2.5"
             >
-              <item.Icon
-                size={21}
-                strokeWidth={active ? 2.6 : 2}
-                className={active ? 'text-zappy-600' : 'text-slate-400'}
-              />
-              <span className={`text-[10px] font-bold ${active ? 'text-zappy-600' : 'text-slate-400'}`}>
-                {item.label}
+              <span className="relative">
+                <item.Icon
+                  size={21}
+                  strokeWidth={active ? 2.6 : 2}
+                  className={active ? 'text-zappy-600' : item.locked ? 'text-slate-300' : 'text-slate-400'}
+                />
+                {item.locked && !active && <Lock size={10} strokeWidth={3} className="absolute -right-1.5 -top-1 rounded-full bg-white text-slate-400" aria-label="Locked" />}
+              </span>
+              {/* One line, one word: "Services & prices" reads "Services" here and in full in the menu. */}
+              <span className={`max-w-full truncate whitespace-nowrap px-0.5 text-[10.5px] font-bold ${active ? 'text-zappy-600' : 'text-slate-400'}`}>
+                {lang === 'en' ? item.short || item.label.split(' & ')[0] : t(labelKey(item.label), item.label)}
               </span>
             </button>
           );
@@ -254,7 +270,7 @@ export function GreetingCard({ name, locationLabel, isOnline, busy, disabled, on
             Hello, {name} <span aria-hidden>👋</span>
           </h1>
           <p className="mt-0.5 text-[13px] font-medium text-slate-500">
-            {isOnline ? 'You’re online — new jobs will ring in.' : 'Go online to get more jobs'}
+            {isOnline ? 'You’re online - new jobs will ring in.' : 'Go online to get more jobs'}
           </p>
           {locationLabel && (
             <p className="mt-1 flex items-center gap-1 text-[12.5px] font-semibold text-slate-600">
@@ -284,7 +300,7 @@ export const StatCard = memo(function StatCard({ Icon, tone = 'blue', label, val
         <Icon size={19} strokeWidth={2.3} className={t.fg} />
       </span>
       <span className="mt-3 text-[11.5px] font-semibold text-slate-500">{label}</span>
-      <span className="mt-0.5 text-[22px] font-black leading-none text-navy-900">{value}</span>
+      <span className="mt-0.5 text-[22px] font-black leading-none text-navy-900"><CountUp value={value} /></span>
       {sub && (
         <span className={`mt-2 flex items-center gap-0.5 text-[11.5px] font-bold ${subTone || 'text-zappy-600'}`}>
           {sub} <ChevronRight size={12} strokeWidth={3} />

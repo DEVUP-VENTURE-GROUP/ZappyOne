@@ -1,4 +1,5 @@
 import { useScrollTopOnChange } from '../../components/common/ScrollToTop';
+import { partsQuotedSeparately, PARTS_NOTE } from '../../utils/partsRule';
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -22,11 +23,12 @@ import {
   useProviderOnboardingStatusQuery,
   useRepairBrandsQuery,
   useRepairWorkCatalogQuery,
+  useRepairVerticalsQuery,
   useSaveRepairCapabilitiesMutation,
   useRequestRepairCatalogAdditionMutation,
   useRepairServiceAreasQuery, useUpsertRepairServiceAreaMutation,
   useRepairProviderPricingQuery, useBulkRepairProviderPricingMutation,
-  useLazyRepairProviderSuggestedPricingQuery, useRepairProviderSuggestedPricingQuery, useSetShopWarrantyMutation,
+  useRepairProviderSuggestedPricingQuery, useSetShopWarrantyMutation,
   useRepairModelsQuery,
 } from '../../services/api';
 import { useUpdateShopMeMutation } from '../../services/api';
@@ -224,7 +226,7 @@ function MissingWorkSheet({ vertical, group, cityCode, onClose }) {
         cityCode,
         ...form,
       }).unwrap();
-      toast.success("Sent — we'll review it and add it if it checks out.");
+      toast.success("Sent - we'll review it and add it if it checks out.");
       onClose();
     } catch (err) {
       toast.error(err?.data?.error || 'Could not send that');
@@ -240,7 +242,7 @@ function MissingWorkSheet({ vertical, group, cityCode, onClose }) {
         </div>
         <p className="-mt-1 text-xs leading-relaxed text-slate-500">
           Under <span className="font-semibold">{group?.name || 'this heading'}</span>. We check it before customers
-          can book it — it needs a price, a skill level and a quality check behind it. Approved jobs start in your
+          can book it - it needs a price, a skill level and a quality check behind it. Approved jobs start in your
           city only.
         </p>
         <input
@@ -366,7 +368,7 @@ function WorkStep({ vertical, cityCode, brandCodes, onBack, onNext }) {
       }).unwrap();
 
       if (res.skipped?.length) {
-        toast.error(`${res.skipped.length} need a higher skill level — raise it or untick them`);
+        toast.error(`${res.skipped.length} need a higher skill level - raise it or untick them`);
         await refetch();
         return false;
       }
@@ -480,7 +482,7 @@ function WorkStep({ vertical, cityCode, brandCodes, onBack, onNext }) {
               <button
                 key={l.level}
                 onClick={() => (below
-                  ? toast.error(`Level ${requiredLevel} — you have ticked work that needs it. Untick it to come down.`)
+                  ? toast.error(`Level ${requiredLevel} - you have ticked work that needs it. Untick it to come down.`)
                   : setSkillLevel(l.level))}
                 className={`rounded-xl py-2 text-xs font-bold transition ${
                   skillLevel === l.level ? 'bg-zappy-600 text-white'
@@ -716,7 +718,7 @@ function AreaStep({ vertical, profile, onBack, onNext, onCity }) {
 
       <p className="-mt-1 px-1 text-[11px] leading-relaxed text-slate-400">
         This is a fixed address, not where you happen to be. Jobs are matched to your
-        shop even when you are out — you can hand them to a technician from anywhere.
+        shop even when you are out - you can hand them to a technician from anywhere.
       </p>
 
       <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4">
@@ -746,7 +748,7 @@ function AreaStep({ vertical, profile, onBack, onNext, onCity }) {
           />
           {/* 20km is the cap: past that the travel eats the job. */}
           <p className="mt-1 text-[11px] text-slate-400">
-            Measured from your shop pin. Up to 20 km — beyond that the travel costs more than the repair.
+            Measured from your shop pin. Up to 20 km - beyond that the travel costs more than the repair.
           </p>
         </div>
 
@@ -754,7 +756,7 @@ function AreaStep({ vertical, profile, onBack, onNext, onCity }) {
           <label className="text-xs font-bold uppercase tracking-wide text-slate-500">Pincodes you cover</label>
           <input
             className="input mt-1.5 w-full text-sm"
-            placeholder="500081, 500084 — optional"
+            placeholder="500081, 500084 - optional"
             value={form.pincodes}
             onChange={(e) => setForm((f) => ({ ...f, pincodes: e.target.value }))}
           />
@@ -929,7 +931,7 @@ function WarrantySettings({ vertical, claimed, rows, onSaved }) {
   async function change(code, days) {
     try {
       const res = await setWarranty({ vertical, repairCode: code, warrantyDays: days }).unwrap();
-      toast.success(res.updated ? `Warranty set to ${days ? `${days} days` : 'none'}` : 'Saved — it applies once you set a price for this job');
+      toast.success(res.updated ? `Warranty set to ${days ? `${days} days` : 'none'}` : 'Saved - it applies once you set a price for this job');
       onSaved?.();
     } catch (err) {
       toast.error(err?.data?.error || 'Could not save the warranty');
@@ -1034,7 +1036,7 @@ function PriceRow({
             </span>
           ) : typed.length ? (
             <span className="mt-0.5 block text-[11px] font-semibold text-zappy-600">
-              {typed.length} price{typed.length === 1 ? '' : 's'} typed — not saved yet
+              {typed.length} price{typed.length === 1 ? '' : 's'} typed - not saved yet
             </span>
           ) : (
             <span className="mt-0.5 block text-[11px] font-semibold text-amber-600">No price yet</span>
@@ -1108,10 +1110,10 @@ function PriceRow({
  * instead of typing 150 model sheets before they can take a booking.
  */
 function PricingStep({ vertical, onBack, onNext }) {
+  const { data: verticalList } = useRepairVerticalsQuery();
   const { data: catalog } = useRepairWorkCatalogQuery({ vertical });
   const { data: pricing, isLoading, refetch } = useRepairProviderPricingQuery(vertical);
   const [bulkSave, { isLoading: saving }] = useBulkRepairProviderPricingMutation();
-  const [fetchSuggested, { isFetching: suggesting }] = useLazyRepairProviderSuggestedPricingQuery();
 
   const brandCodes = catalog?.brands || [];
   const [saveWork] = useSaveRepairCapabilitiesMutation();
@@ -1153,7 +1155,6 @@ function PricingStep({ vertical, onBack, onNext }) {
   const [modelLabel, setModelLabel] = useState('');
   const [search, setSearch] = useState('');
   const [values, setValues] = useState({});
-  const [fillingAll, setFillingAll] = useState(false);
 
   const activeBrand = brand || brandCodes[0] || null;
 
@@ -1213,71 +1214,6 @@ function PricingStep({ vertical, onBack, onNext }) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  /**
-   * Fill every empty box on this sheet with the ZappyOne market price, so a
-   * shop prices a whole brand in one tap and only edits what it charges
-   * differently. Nothing saves until the owner taps Save.
-   */
-  async function fillMarketPrices() {
-    try {
-      const { suggestions = [] } = await fetchSuggested({
-        vertical, brandCode: activeBrand, modelCode: model ?? undefined,
-      }).unwrap();
-      const fill = {};
-      for (const s of suggestions) {
-        const k = cellKey(s.repairCode, s.qualityCode);
-        if (values[k] || existing.has(k)) continue;
-        fill[k] = String(Math.round(s.totalPaise / 100));
-      }
-      const n = Object.keys(fill).length;
-      if (!n) return toast('No market prices to add here — enter yours below.');
-      setValues((v) => ({ ...v, ...fill }));
-      toast.success(`${n} price${n === 1 ? '' : 's'} filled — change any, then Save prices`);
-    } catch {
-      toast.error('Could not load market prices');
-    }
-  }
-
-  /**
-   * Every brand at once: the market price becomes each brand's baseline
-   * wherever the shop has not set its own. One tap instead of a sheet per
-   * brand; any brand or model can still be edited after.
-   */
-  async function priceAllBrandsAtMarket() {
-    setFillingAll(true);
-    try {
-      // Brands are independent prices, so they are set side by side.
-      const counts = await Promise.all(brandCodes.map(async (code) => {
-        const have = new Set((pricing?.pricing || [])
-          .filter((r) => r.brandCode === code && !r.modelCode)
-          .map((r) => cellKey(r.repairCode, r.qualityCode)));
-        const { suggestions = [] } = await fetchSuggested({ vertical, brandCode: code }).unwrap();
-        const rows = suggestions
-          .filter((x) => !have.has(cellKey(x.repairCode, x.qualityCode)))
-          .map((x) => ({
-            repairCode: x.repairCode,
-            brandCode: code,
-            modelCode: null,
-            qualityCode: x.qualityCode,
-            totalPaise: x.totalPaise,
-            warrantyDays: claimed.find((r) => r.code === x.repairCode)?.warrantyDays || 0,
-          }));
-        if (!rows.length) return 0;
-        const res = await bulkSave({ vertical, rows }).unwrap();
-        return res.savedCount || 0;
-      }));
-      const saved = counts.reduce((a, n) => a + n, 0);
-      toast.success(saved
-        ? `${saved} prices set across ${brandCodes.length} brands — edit any brand or model to change them`
-        : 'Every brand already has its prices');
-      refetch();
-    } catch (err) {
-      toast.error(err?.data?.error || 'Could not set market prices');
-    } finally {
-      setFillingAll(false);
-    }
-  }
-
   async function saveSheet() {
     const rows = [];
     for (const [key, raw] of Object.entries(values)) {
@@ -1323,12 +1259,15 @@ function PricingStep({ vertical, onBack, onNext }) {
         title={label}
         hint={model === null
           ? 'A starting price for the whole brand. Any model you price separately overrides this.'
-          : 'Your final price for this model — part and labour together.'}
+          : 'Your final price for this model - part and labour together.'}
         onBack={() => { setModel(undefined); setValues({}); }}
         onNext={saveSheet}
         nextLabel={saving ? 'Saving…' : 'Save prices'}
         busy={saving}
       >
+        {partsQuotedSeparately(vertical, verticalList?.items) && (
+          <p className="mb-3 rounded-xl border border-zappy-100 bg-zappy-50 px-3 py-2.5 text-[12.5px] font-semibold leading-relaxed text-zappy-800">{PARTS_NOTE.partner}</p>
+        )}
         {!claimed.length ? (
           <div className="rounded-2xl border border-dashed border-slate-200 p-5 text-center">
             <p className="text-sm font-bold text-slate-700">No jobs selected yet</p>
@@ -1336,15 +1275,6 @@ function PricingStep({ vertical, onBack, onNext }) {
           </div>
         ) : (
           <div className="space-y-2">
-            <button
-              type="button"
-              onClick={fillMarketPrices}
-              disabled={suggesting}
-              className="flex w-full items-center justify-center gap-2 rounded-2xl border border-zappy-200 bg-zappy-50/60 px-3 py-3 text-sm font-bold text-zappy-800 disabled:opacity-60"
-            >
-              {suggesting ? <Loader2 size={15} className="animate-spin" /> : <IndianRupee size={15} />}
-              Fill with ZappyOne market prices
-            </button>
             {claimed.map((r) => (
               <PriceRow
                 key={r.code}
@@ -1365,7 +1295,7 @@ function PricingStep({ vertical, onBack, onNext }) {
   return (
     <StepShell
       title="What do you charge?"
-      hint="Fastest: one tap sets ZappyOne market prices for every brand. Then change only what you charge differently — a brand, or a single model."
+      hint="Set your own price for each job, per brand. Change a single model only where you charge differently."
       onBack={onBack}
       onNext={onNext}
       nextLabel={pricing?.pricing?.length ? 'Continue' : 'Skip for now'}
@@ -1393,15 +1323,6 @@ function PricingStep({ vertical, onBack, onNext }) {
             ))}
           </div>
 
-          <button
-            type="button"
-            onClick={priceAllBrandsAtMarket}
-            disabled={fillingAll}
-            className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-zappy-600 px-3 py-3 text-sm font-bold text-white disabled:opacity-60"
-          >
-            {fillingAll ? <Loader2 size={15} className="animate-spin" /> : <IndianRupee size={15} />}
-            {fillingAll ? 'Setting prices…' : `Use ZappyOne market prices for all ${brandCodes.length} brands`}
-          </button>
 
           {/* The brand-wide baseline, before the individual handsets. */}
           <button
@@ -1414,7 +1335,7 @@ function PricingStep({ vertical, onBack, onNext }) {
               </span>
               <span className="mt-0.5 block text-[11px] text-zappy-700">
                 {pricedCountFor.get('__brand__')
-                  ? `${pricedCountFor.get('__brand__')} price${pricedCountFor.get('__brand__') === 1 ? '' : 's'} set — used where a model has none of its own`
+                  ? `${pricedCountFor.get('__brand__')} price${pricedCountFor.get('__brand__') === 1 ? '' : 's'} set - used where a model has none of its own`
                   : 'Set one price sheet that covers the whole brand'}
               </span>
             </span>
@@ -1464,7 +1385,7 @@ function PricingStep({ vertical, onBack, onNext }) {
 
               {/* §67 — the catalog is never presented as complete. */}
               <p className="pt-2 text-center text-[11px] text-slate-400">
-                Model not listed? Set the brand price above — it covers every model,
+                Model not listed? Set the brand price above - it covers every model,
                 including ones we have not added yet.
               </p>
             </div>
@@ -1526,6 +1447,8 @@ export default function ProviderRepairSetupPage() {
   }, [work, brandCodes]);
 
   const isShop = onboarding?.providerKind === 'shop';
+  const { data: services } = useRepairVerticalsQuery();
+  const lineName = (v) => services?.items?.find((i) => i.vertical === v)?.name || v;
   const LABEL = { mobile: 'Phone repair', laptop: 'Laptop repair', two_wheeler: '2-wheeler repair', four_wheeler: '4-wheeler repair', water_tank_care: 'Water & tank care', bike_wash: 'Bike wash', car_wash: 'Car wash', home_cleaning: 'Home cleaning', electrician: 'Electrician', plumbing: 'Plumbing', ac_service: 'AC service' };
 
   // Every step shows what is really saved, read from the same data the step uses.
@@ -1564,8 +1487,8 @@ export default function ProviderRepairSetupPage() {
               <ArrowLeft size={17} strokeWidth={2.5} />
             </button>
             <div className="min-w-0">
-              <p className="truncate font-bold text-[#0F172A]">{other ? other.name : `Set up ${LABEL[active] || active}`}</p>
-              <p className="text-xs text-slate-400">A few quick steps — you can come back any time</p>
+              <p className="truncate font-bold text-[#0F172A]">{other ? other.name : `Set up ${LABEL[active] || lineName(active)}`}</p>
+              <p className="text-xs text-slate-400">A few quick steps - you can come back any time</p>
             </div>
           </div>
 
@@ -1579,7 +1502,7 @@ export default function ProviderRepairSetupPage() {
                     active === v ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600'
                   }`}
                 >
-                  {LABEL[v] || others.find((o) => o.key === v)?.name || v}
+                  {LABEL[v] || others.find((o) => o.key === v)?.name || lineName(v)}
                 </button>
               ))}
             </div>
@@ -1641,7 +1564,7 @@ export default function ProviderRepairSetupPage() {
                 vertical={active}
                 onBack={() => go('area')}
                 onNext={() => {
-                  toast.success("Setup saved — you're ready for jobs");
+                  toast.success("Setup saved - you're ready for jobs");
                   nav('/worker');
                 }}
               />
@@ -1651,7 +1574,7 @@ export default function ProviderRepairSetupPage() {
                 vertical={active}
                 onBack={() => go(isShop ? 'hours' : 'area')}
                 onNext={() => {
-                  toast.success("Setup saved — you're ready for jobs");
+                  toast.success("Setup saved - you're ready for jobs");
                   nav(isShop ? '/shop' : '/worker');
                 }}
               />

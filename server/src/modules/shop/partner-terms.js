@@ -3,9 +3,11 @@ const VERSION = '2026-10';
 const TYPES = ['shop', 'agency', 'company', 'individual'];
 
 const points = (pct) => [
-  `You pay ZappyOne ${pct}% commission on the price of each job you complete through ZappyOne. Nothing to join, no monthly fee.`,
+  pct > 0
+    ? 'Nothing to join, no monthly fee and nothing on parts. Customers pay ZappyOne a small booking fee; a small service fee on your work, at the rate in your partner terms, is settled from your balance.'
+    : 'You keep 100% of your price. Nothing to join, no monthly fee; customers pay ZappyOne a small booking fee.',
   'Customers pay the price shown in the app. You never charge more without the customer approving the new price in the app.',
-  'Online payments build up in your ZappyOne balance; withdraw to your bank or UPI any time from ₹100. On cash jobs you keep the cash and the commission is taken from your balance or paid to ZappyOne.',
+  'Online payments build up in your ZappyOne balance; withdraw to your bank or UPI any time from ₹100. On cash jobs you keep the cash and the service fee is settled from your balance or paid to ZappyOne.',
   'You and everyone in your team complete ID verification, and keep your documents current.',
   'Ratings, cancellations and no-shows decide how many jobs you are offered. You can appeal any decision in the app.',
   'Either side can end the partnership at any time; what is owed either way is settled within 7 days.',

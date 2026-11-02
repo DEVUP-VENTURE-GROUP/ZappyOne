@@ -49,7 +49,7 @@ function _onReconnected() {
 
 function _onDisconnected() {
   _isConnected = false;
-  logger.warn('[MONGO] Disconnected — attempting reconnect with backoff');
+  logger.warn('[MONGO] Disconnected - attempting reconnect with backoff');
   _scheduleReconnect(1000);
 }
 
@@ -61,7 +61,7 @@ function _scheduleReconnect(delayMs) {
       await mongoose.connect(config.mongo.uri, MONGO_OPTS);
       _reconnecting = false;
     } catch (err) {
-      logger.warn({ err: err.message, nextRetryMs: Math.min(delayMs * 2, 30_000) }, '[MONGO] Reconnect failed — retrying');
+      logger.warn({ err: err.message, nextRetryMs: Math.min(delayMs * 2, 30_000) }, '[MONGO] Reconnect failed - retrying');
       _reconnecting = false;
       _scheduleReconnect(Math.min(delayMs * 2, 30_000)); // exponential back-off, cap 30s
     }

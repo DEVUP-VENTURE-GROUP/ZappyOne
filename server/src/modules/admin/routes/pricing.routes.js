@@ -120,6 +120,7 @@ router.patch(
     workerRejectLimit:           Joi.number().integer().min(1).max(50),
     customerWaitMinutes:         Joi.number().integer().min(1).max(60),
     providerLateMinutes:         Joi.number().integer().min(5).max(180),
+    noShowCreditPaise:           Joi.number().integer().min(0).max(50000),
     workerCancelLimit:           Joi.number().integer().min(1),
     workerPauseMinutes:          Joi.number().integer().min(15).max(1440),
     maxActiveJobs:               Joi.number().integer().min(1).max(10),

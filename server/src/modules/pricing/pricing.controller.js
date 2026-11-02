@@ -64,9 +64,9 @@ async function getSurgeInfo(req, res, next) {
     /* Human-readable reason */
     let reason = null;
     if (surge >= 2.0) reason = `Very high demand (${demandRaw} requests) with only ${supplyRaw} workers online`;
-    else if (surge >= 1.5) reason = `High demand — ${demandRaw} active requests, ${supplyRaw} workers available`;
+    else if (surge >= 1.5) reason = `High demand - ${demandRaw} active requests, ${supplyRaw} workers available`;
     else if (surge >= 1.2) reason = `Moderate demand spike in your area`;
-    else reason = 'Normal demand — standard pricing applies';
+    else reason = 'Normal demand - standard pricing applies';
 
     res.json({
       surge,

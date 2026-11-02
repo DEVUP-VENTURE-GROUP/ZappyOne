@@ -175,7 +175,7 @@ function RuleRow({ rule }) {
         minPaise: Math.round(form.minPaise * 100),
         maxPaise: Math.round(form.maxPaise * 100),
       }).unwrap();
-      toast.success('Saved — live on the next quote');
+      toast.success('Saved - live on the next quote');
     } catch (err) {
       toast.error(err?.data?.error || 'Could not save');
     }
@@ -201,7 +201,7 @@ function RuleRow({ rule }) {
         <FormRow label="Per minute (₹)"><Input type="number" value={form.perMinutePaise} onChange={(e) => set('perMinutePaise', e.target.value)} /></FormRow>
         <FormRow label="Per km (₹)"><Input type="number" value={form.perKmPaise} onChange={(e) => set('perKmPaise', e.target.value)} /></FormRow>
         <FormRow label="Commission (%)"><Input type="number" value={form.commissionPct} onChange={(e) => set('commissionPct', e.target.value)} /></FormRow>
-        <FormRow label="Platform fee — customer (₹)"><Input type="number" value={form.platformFeePaise} onChange={(e) => set('platformFeePaise', e.target.value)} /></FormRow>
+        <FormRow label="Platform fee - customer (₹)"><Input type="number" value={form.platformFeePaise} onChange={(e) => set('platformFeePaise', e.target.value)} /></FormRow>
         <FormRow label="Min (₹)"><Input type="number" value={form.minPaise} onChange={(e) => set('minPaise', e.target.value)} /></FormRow>
         <FormRow label="Max (₹)"><Input type="number" value={form.maxPaise} onChange={(e) => set('maxPaise', e.target.value)} /></FormRow>
       </div>
