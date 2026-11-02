@@ -27,7 +27,7 @@ import { radius } from '@zappy/ui/theme/radius';
 import { spacing } from '@zappy/ui/theme/spacing';
 import { AdBanner } from '../../components/marketing/AdBanner';
 import { SpotlightSearch } from '../catalog/SpotlightSearch';
-import { ClosedNowBanner } from '../catalog/serviceability/ClosedNowBanner';
+import { backAt } from '@zappy/core/shared/opening';
 import { NotInYourArea } from '../catalog/serviceability/NotInYourArea';
 import { ActiveJobCard } from './ActiveJobCard';
 import { ContinueBookingCard } from './ContinueBookingCard';
@@ -38,7 +38,7 @@ import { themeOf } from '@zappy/core/shared/season';
 import { HeroCarousel } from './HeroCarousel';
 import { HomeHeader, SearchBar, type HomeLocation } from './HomeHeader';
 import { BookAgainRail, NearbyShopsLink, OffersRail } from './HomeRails';
-import { Text } from '@zappy/ui/components';
+import { Skeleton, Text } from '@zappy/ui/components';
 import { ComingSoonRow } from './ComingSoonRow';
 import { HomeMarketplace } from './HomeMarketplace';
 import { LocationSheet, type PickedArea } from './LocationSheet';
@@ -122,12 +122,14 @@ export function HomePage() {
   /* What we serve here. A failed check never holds the grid in skeletons. */
   const { data: svc, isFetching: checkingArea, refetch: refetchArea } = useGetServiceabilityQuery({ lat: loc.lat, lng: loc.lng }, { skip: loc.lat == null });
   const { data: catalog, isLoading: loadingCatalog, refetch: refetchCatalog } = useLiveCatalogQuery();
-  const { data: eventCats } = useGetEventCategoriesQuery();
   // Only what someone covers at this address is shown; the rest waits in "Coming to your area".
   const liveCodes = useMemo(() => (svc && svc.status !== 'not_here' ? new Set<string>(svc.lines.map((l: { code: string }) => l.code)) : null), [svc]);
   const comingSoon = useMemo(() => comingSoonOf(catalog?.domains || [], liveCodes), [catalog, liveCodes]);
   const nothingLive = !!liveCodes && liveCodes.size === 0;
-  const allDomains: HomeDomain[] = useMemo(() => buildDomains(catalog?.domains || [], liveCodes, eventCats?.categories || []), [catalog, liveCodes, eventCats]);
+  // Events only where an approved partner has a package in this city (svc.events); unknown location shows them, as with every service.
+  const eventsHere = !liveCodes || Boolean(svc?.events);
+  const { data: eventCats } = useGetEventCategoriesQuery(svc?.zone?.city ? { city: svc.zone.city } : {}, { skip: !eventsHere });
+  const allDomains: HomeDomain[] = useMemo(() => buildDomains(catalog?.domains || [], liveCodes, eventsHere ? eventCats?.categories || [] : []), [catalog, liveCodes, eventCats, eventsHere]);
   const domains = useMemo(() => gridDomains(allDomains), [allDomains]);
   const services = useMemo(() => allDomains.flatMap((d) => d.services), [allDomains]);
   const terms = useMemo(() => searchTerms(services), [services]);
@@ -152,10 +154,12 @@ export function HomePage() {
   const rebooks = useMemo(() => quickRebooks(pastJobs), [pastJobs]);
   const notHere = svc?.status === 'not_here';
   // A festival running (Admin → Festive home): its own top on home; light ones also tint the header.
-  const { data: seasonData, refetch: refetchSeason } = useCurrentSeasonQuery(undefined);
-  const season = !notHere && !loadingCatalog ? seasonData?.season : null;
-  const theme = season ? themeOf(season.theme) : null;
-  const tint = theme && !theme.dark ? theme.top : null;
+  const { data: seasonData, isLoading: loadingSeason, refetch: refetchSeason } = useCurrentSeasonQuery(undefined);
+  // The layout is chosen once both are known, so the plain look never flashes before a festive one.
+  const settling = loadingCatalog || loadingSeason;
+  const season = !notHere && !settling ? seasonData?.season : null;
+  const theme = season ? { ...themeOf(season.theme), key: season.theme } : null;
+  const tint = theme ? theme.top : null;
   const rise = (i: number) => (theme ? FadeInDown.delay(250 + i * 110).duration(600) : undefined);
 
   async function onRefresh() {
@@ -166,7 +170,7 @@ export function HomePage() {
 
   return (
     <View style={[styles.page, theme ? { backgroundColor: theme.wash } : null]}>
-      <HomeHeader loc={loc} isAuthed={isAuthed} onPickLocation={() => setLocSheet(true)} tint={tint} />
+      <HomeHeader loc={loc} isAuthed={isAuthed} onPickLocation={() => setLocSheet(true)} tint={tint} festive={theme} greeting={season?.greeting || ''} eta={svc?.fastestMin != null && svc.fastestMin <= 60 ? svc.fastestMin : null} closed={svc?.status === 'closed_now' ? backAt(svc.nextOpening) : null} />
       {/* Search stays pinned while the rest scrolls. */}
       <View style={[styles.searchWrap, tint ? { backgroundColor: tint, borderBottomLeftRadius: 0, borderBottomRightRadius: 0 } : null]}><SearchBar terms={terms} onOpen={() => setSpotOpen(true)} /></View>
       <ScrollView contentContainerStyle={styles.body} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
@@ -179,31 +183,22 @@ export function HomePage() {
             areas={svc.areas} onChangeLocation={() => setLocSheet(true)} />
         ) : (
           <>
-            {svc?.status === 'closed_now' ? <ClosedNowBanner nextOpening={svc.nextOpening} /> : null}
-            {svc?.prosNearby > 0 ? (
-              <View accessibilityRole="text" style={styles.live}>
-                <View style={styles.liveDot} />
-                <Text variant="bodySmall" weight="semibold" color={ink[700]}>{svc.prosNearby} verified {svc.prosNearby === 1 ? 'pro is' : 'pros are'} open near {loc.primary || 'you'} right now</Text>
-              </View>
-            ) : null}
             {nothingLive ? (
-              <View style={styles.joining}>
-                <Text variant="body" weight="bold">Pros are joining near {loc.primary || 'you'}</Text>
-                <Text variant="caption" color={ink[500]}>Nobody is verified at this exact address yet. Tap the bell on what you need and we will tell you the day it opens, or try another address.</Text>
-                <Text variant="bodySmall" weight="bold" color={zappy[700]} onPress={() => setLocSheet(true)} accessibilityRole="button">Change address</Text>
-              </View>
+              <NotInYourArea soon place={loc.primary} lat={loc.lat ?? undefined} lng={loc.lng ?? undefined} address={[loc.primary, loc.secondary].filter(Boolean).join(', ')}
+                areas={svc?.areas || []} onChangeLocation={() => setLocSheet(true)} />
             ) : null}
-            {nothingLive && !loadingCatalog ? <ComingSoonRow services={comingSoon} loc={loc} /> : null}
-            {!loadingCatalog && !nothingLive ? <HeroCarousel domains={allDomains} onOpen={openService} /> : null}
+            {nothingLive && !loadingCatalog ? <ComingSoonRow groups={comingSoon} loc={loc} /> : null}
+            {settling ? <Skeleton height={160} style={styles.heroSkel} /> : null}
+            {!settling && !nothingLive && !season ? <HeroCarousel domains={allDomains} onOpen={openService} /> : null}
             {/* During a festival each section rises in after the last. */}
             <Animated.View entering={rise(0)}><ProblemChips services={services} /></Animated.View>
-            {loadingCatalog || (loc.lat != null && !svc && checkingArea) ? <SkeletonGrid /> : <Animated.View entering={rise(1)}><ServiceGrid domains={domains} onOpen={openService} /></Animated.View>}
+            {settling || (loc.lat != null && !svc && checkingArea) ? <SkeletonGrid /> : <Animated.View entering={rise(1)}><ServiceGrid domains={domains} onOpen={openService} /></Animated.View>}
             {theme ? <SafeSection name="festive-divider"><FestiveDivider accent={theme.accent} /></SafeSection> : null}
             <Animated.View entering={rise(2)}><BookAgainRail items={rebooks} /></Animated.View>
             <Animated.View entering={rise(3)}><OffersRail isAuthed={isAuthed} /></Animated.View>
-            {!loadingCatalog ? <Animated.View entering={rise(4)}><ServiceShowcase domains={allDomains} onOpen={openService} /></Animated.View> : null}
+            {!settling ? <Animated.View entering={rise(4)}><ServiceShowcase domains={allDomains} onOpen={openService} /></Animated.View> : null}
             {isAuthed ? <HomeMarketplace loc={loc.lat != null && loc.lng != null ? { lat: loc.lat, lng: loc.lng, address: [loc.primary, loc.secondary].filter(Boolean).join(', ') } : null} /> : null}
-            {!loadingCatalog && !nothingLive ? <ComingSoonRow services={comingSoon} loc={loc} /> : null}
+            {!loadingCatalog && !nothingLive ? <ComingSoonRow groups={comingSoon} loc={loc} /> : null}
             {theme ? <SafeSection name="festive-divider"><FestiveDivider accent={theme.accent} /></SafeSection> : null}
             <AdBanner isAuthed={isAuthed} />
             <NearbyShopsLink />
@@ -217,9 +212,7 @@ export function HomePage() {
 }
 
 const styles = StyleSheet.create({
-  live: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  liveDot: { width: 9, height: 9, borderRadius: 5, backgroundColor: zappy[600] },
-  joining: { gap: spacing.xs, padding: spacing.base, borderRadius: radius.large, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
+  heroSkel: { marginHorizontal: 16, marginTop: 12, borderRadius: 14 },
   page: { flex: 1, backgroundColor: colors.background },
   searchWrap: { paddingHorizontal: spacing.base, paddingBottom: spacing.base, paddingTop: 4, backgroundColor: zappy[100], borderBottomLeftRadius: radius.extraLarge, borderBottomRightRadius: radius.extraLarge },
   // Edge to edge, flush under the search: undoes the body's padding.

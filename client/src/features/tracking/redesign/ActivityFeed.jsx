@@ -16,9 +16,9 @@ export default function ActivityFeed({ events, live = true }) {
   if (!events?.length) return null;
 
   return (
-    <motion.div variants={fadeInUp} className="rounded-card border border-line bg-white p-[18px]">
+    <motion.section variants={fadeInUp} className="border-b-8 border-sunken bg-white px-4 py-4 sm:px-6">
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-[16px] font-bold text-ink-900">Live updates</h3>
+        <h2 className="text-[18px] font-extrabold tracking-[-0.01em] text-ink-900">Updates</h2>
         {live && (
           <span className="flex items-center gap-1.5 text-[11px] font-semibold text-ink-400">
             <span className="h-1.5 w-1.5 rounded-full bg-green-600" aria-hidden="true" /> Live
@@ -74,6 +74,6 @@ export default function ActivityFeed({ events, live = true }) {
           })}
         </AnimatePresence>
       </ol>
-    </motion.div>
+    </motion.section>
   );
 }

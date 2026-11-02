@@ -66,6 +66,21 @@ async function getOrders(req, res, next) {
   } catch (err) { next(err); }
 }
 
+// Who is near, for the map only: a key that changes daily (so a marker can glide) and a spot blurred to ~160 m; never who or exactly where.
+const CELL = 0.0015;
+function publicPosition(w) {
+  const day = new Date().toISOString().slice(0, 10);
+  const h = require('crypto').createHmac('sha256', process.env.JWT_SECRET || 'nearby').update(`${w.id}:${day}`).digest();
+  const jitter = (byte) => ((byte / 255) - 0.5) * CELL * 0.8;
+  const snap = (v) => Math.round(v / CELL) * CELL;
+  return {
+    key: h.subarray(0, 6).toString('base64url'),
+    lat: +(snap(w.lat) + jitter(h[6])).toFixed(5),
+    lng: +(snap(w.lng) + jitter(h[7])).toFixed(5),
+    distanceKm: Math.round(w.distanceKm * 10) / 10,
+  };
+}
+
 async function getNearbyWorkers(req, res, next) {
   try {
     const lat = parseFloat(req.query.lat);
@@ -74,8 +89,8 @@ async function getNearbyWorkers(req, res, next) {
       return res.status(400).json({ error: 'lat and lng required' });
     }
     const geoService = require('../geo.service');
-    const workers = await geoService.findNearbyWorkers({ lat, lng, radiusKm: 5, limit: 25 });
-    res.json({ workers, count: workers.length });
+    const found = await geoService.findNearbyWorkers({ lat, lng, radiusKm: 5, limit: 25 });
+    res.json({ workers: found.map(publicPosition), count: found.length });
   } catch (err) { next(err); }
 }
 
@@ -206,6 +221,7 @@ module.exports = {
   getEarnings,
   getOrders,
   getNearbyWorkers,
+  publicPosition,
   setReadyMode,
   getReadyMode,
 };

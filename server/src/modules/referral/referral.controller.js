@@ -11,7 +11,9 @@ async function getMyCode(req, res, next) {
     const rewarded = await ReferralUse.countDocuments({ code: code.code, status: 'rewarded' });
     res.json({
       code: code.code,
-      shareUrl: `https://zappyone.com/signup?ref=${code.code}`,
+      shareUrl: `${(process.env.CLIENT_URL || 'https://zappyone.com').replace(/\/$/, '')}/login?ref=${code.code}`,
+      // The real amounts (referral.service), so screens never promise a different reward.
+      rewards: { friendPaise: referralService.REFEREE_BONUS_PAISE, youPaise: referralService.REFERRER_REWARD_PAISE },
       stats: {
         totalReferrals: uses,
         pendingReferrals: uses - rewarded,

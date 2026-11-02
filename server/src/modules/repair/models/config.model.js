@@ -92,21 +92,6 @@ const repairConfigSchema = new mongoose.Schema(
      * cash only instead of a button that fails. Flipping it on is an admin
      * toggle, not a deploy.
      */
-    /**
-     * Whether customers may pay online for this vertical.
-     *
-     * Defaults to FALSE and means exactly what it says: with no payment gateway
-     * configured, an online booking is money the platform has promised to
-     * collect and has no way to take. The flag is enforced when a booking is
-     * created, and the app is told about it so it never offers a method that
-     * cannot complete — an option that fails at the last step is worse than one
-     * that was never shown.
-     *
-     * Turning this on requires live gateway keys. Nothing else is needed: cash
-     * remains available either way, because most repair work settles that way
-     * regardless.
-     */
-    onlinePaymentsEnabled: { type: Boolean, default: false },
 
     /**
      * How long each stage of a repair may take.

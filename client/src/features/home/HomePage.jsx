@@ -10,7 +10,7 @@ import { saveGeoLocation } from '@shared/utils/geoCache';
 import { reverseGeocode } from '@shared/utils/reverseGeocode';
 import SEO, { HOME_SCHEMA, BASE_URL } from '@shared/components/SEO';
 import NotInYourArea from '../catalog/serviceability/NotInYourArea';
-import ClosedNowBanner from '../catalog/serviceability/ClosedNowBanner';
+import { backAt } from '@shared/customer/opening';
 import ComingSoonRow from './ComingSoonRow';
 import ServiceShowcase from './ServiceShowcase';
 import HeroCarousel from './HeroCarousel';
@@ -26,7 +26,7 @@ import LocationSheet from './LocationSheet';
 import { ServiceGrid, ProblemChips } from './ServiceGrid';
 import { OffersRail, BookAgainRail, NearbyShopsLink } from './HomeRails';
 import HomeMarketplace from './HomeMarketplace';
-import { eventPhoto, eventTone } from '../events/eventPhotos';
+import { eventPhoto } from '../events/eventPhotos';
 import ContinueBookingCard from './ContinueBookingCard';
 import FestiveHero from '@shared/components/home/festive/FestiveHero';
 import FestiveReveal from '@shared/components/home/festive/FestiveReveal';
@@ -167,7 +167,9 @@ export default function HomePage() {
   const liveCodes = useMemo(() => (svc && svc.status !== 'not_here' ? new Set(svc.lines.map((l) => l.code)) : null), [svc]);
   // Events run on their own module; they join the catalog as a section here,
   // before pet services, with each celebration as a tile.
-  const { data: eventCats } = useGetEventCategoriesQuery();
+  // Only where an approved partner has a package in this city (svc.events); unknown location shows them, as with every service.
+  const eventsHere = !liveCodes || Boolean(svc?.events);
+  const { data: eventCats } = useGetEventCategoriesQuery(svc?.zone?.city ? { city: svc.zone.city } : {}, { skip: !eventsHere });
   const allDomains = useMemo(() => {
     const list = (catalog?.domains || [])
       .map((d) => ({
@@ -175,7 +177,7 @@ export default function HomePage() {
         services: d.services.map((s) => ({ ...s, domainCode: d.code, available: liveCodes ? liveCodes.has(s.code) : undefined })).filter((s) => s.available !== false),
       }))
       .filter((d) => d.services.length);
-    const cats = eventCats?.categories || [];
+    const cats = eventsHere ? eventCats?.categories || [] : [];
     if (!cats.length) return list;
     const events = {
       code: 'events',
@@ -186,18 +188,19 @@ export default function HomePage() {
         tagline: 'Birthdays, baby showers, anniversaries and more', highlights: [], coverage: [],
         options: cats.map((c) => ({
           code: c.slug, name: c.name, icon: 'PartyPopper',
-          imageUrl: eventPhoto(c) || undefined, emoji: c.emoji, tone: eventTone(c), path: `/events/browse?category=${c.slug}`,
+          imageUrl: eventPhoto(c) || undefined, path: `/events/browse?category=${c.slug}`,
         })),
       }],
     };
     const at = list.findIndex((d) => d.code === 'pet_services');
     return at < 0 ? [...list, events] : [...list.slice(0, at), events, ...list.slice(at)];
-  }, [catalog, liveCodes, eventCats]);
+  }, [catalog, liveCodes, eventCats, eventsHere]);
   // The quick grid folds a section with its own page (pet care) into one tile.
   const domains = useMemo(() => allDomains.map(foldIntoHub), [allDomains]);
   const services = useMemo(() => allDomains.flatMap((d) => d.services), [allDomains]);
+  // Grouped by category, one row each, so the list reads like a menu rather than one long strip.
   const comingSoon = useMemo(() => (liveCodes
-    ? (catalog?.domains || []).flatMap((d) => d.services.filter((s) => !liveCodes.has(s.code)).map((s) => ({ ...s, domainCode: d.code })))
+    ? (catalog?.domains || []).map((d) => ({ code: d.code, name: d.name, services: d.services.filter((s) => !liveCodes.has(s.code)).map((s) => ({ ...s, domainCode: d.code })) })).filter((g) => g.services.length)
     : []), [catalog, liveCodes]);
   const allServices = useMemo(() => (catalog?.domains || []).flatMap((d) => d.services), [catalog]);
   const searchTerms = useMemo(() => {
@@ -244,10 +247,12 @@ export default function HomePage() {
   // In the city, but no pro has joined at this address yet: say so honestly and lead with what is coming.
   const nothingLive = !!liveCodes && liveCodes.size === 0;
   // A festival running (Admin → Festive home): its own top on home; light ones also tint the header.
-  const { data: seasonData } = useCurrentSeasonQuery();
-  const season = !notHere && !loadingCatalog ? seasonData?.season : null;
-  const theme = season ? themeOf(season.theme) : null;
-  const tint = theme && !theme.dark ? theme.top : null;
+  const { data: seasonData, isLoading: loadingSeason } = useCurrentSeasonQuery();
+  // The layout is chosen once both are known, so the plain look never flashes before a festive one.
+  const settling = loadingCatalog || loadingSeason;
+  const season = !notHere && !settling ? seasonData?.season : null;
+  const theme = season ? { ...themeOf(season.theme), key: season.theme } : null;
+  const tint = theme ? theme.top : null;
   const searchBar = (
     <SearchBar
       terms={searchTerms}
@@ -276,8 +281,8 @@ export default function HomePage() {
 
       {/* overflow-x-clip, not hidden: hidden makes this a scroll box and breaks the sticky header. */}
       <div className="min-h-screen w-full overflow-x-clip bg-canvas"
-        // A festival carries all the way down: the page takes its soft wash and warm glows.
-        style={theme ? { background: `radial-gradient(60rem 40rem at 100% 30%, ${theme.accent}12, transparent 60%), radial-gradient(50rem 36rem at 0% 70%, ${theme.top}33, transparent 60%), ${theme.wash}` } : undefined}>
+        // A festival carries all the way down in the page's own plain wash.
+        style={theme ? { background: theme.wash } : undefined}>
         <HomeHeader
           loc={loc}
           isAuthed={isAuthed}
@@ -286,6 +291,9 @@ export default function HomePage() {
           search={searchBar}
           tint={tint}
           festive={theme}
+          greeting={season?.greeting || ''}
+          eta={svc?.fastestMin != null && svc.fastestMin <= 60 ? svc.fastestMin : null}
+          closed={svc?.status === 'closed_now' ? backAt(svc.nextOpening) : null}
         />
 
         {/* Phone: search stays pinned while the rest scrolls (desktop has it in the bar). */}
@@ -313,30 +321,18 @@ export default function HomePage() {
             />
           ) : (
             <>
-              {svc?.status === 'closed_now' && <ClosedNowBanner nextOpening={svc.nextOpening} />}
-              {svc?.prosNearby > 0 && (
-                <p role="status" className="flex items-center gap-2 text-[13px] font-semibold text-ink-700">
-                  <span className="relative flex h-2.5 w-2.5">
-                    <span className="absolute inline-flex h-full w-full rounded-full bg-zappy-600 opacity-60 motion-safe:animate-ping" />
-                    <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-zappy-600" />
-                  </span>
-                  {svc.prosNearby} verified {svc.prosNearby === 1 ? 'pro is' : 'pros are'} open near {loc.primary || 'you'} right now
-                </p>
-              )}
               {nothingLive && (
-                <div className="rounded-card border border-line bg-surface px-4 py-4">
-                  <p className="text-[16px] font-extrabold text-ink-900">Pros are joining near {loc.primary || 'you'}</p>
-                  <p className="mt-1 text-[13.5px] leading-relaxed text-ink-500">Nobody is verified at this exact address yet. Tap the bell on what you need and we will tell you the day it opens, or try another address.</p>
-                  <button type="button" onClick={() => setLocSheet(true)} className="mt-3 text-[13px] font-bold text-zappy-700">Change address</button>
-                </div>
+                <NotInYourArea soon place={loc.primary} lat={loc.lat} lng={loc.lng}
+                  address={[loc.primary, loc.secondary].filter(Boolean).join(', ')} areas={svc?.areas || []} onChangeLocation={() => setLocSheet(true)} />
               )}
-              {nothingLive && !loadingCatalog && <ComingSoonRow services={comingSoon} loc={loc} />}
+              {nothingLive && !loadingCatalog && <ComingSoonRow groups={comingSoon} loc={loc} />}
 
-              {!loadingCatalog && !nothingLive && <HeroCarousel domains={allDomains} onOpen={openService} />}
+              {settling && <div className="mx-4 mt-3 h-40 animate-pulse rounded-card bg-sunken md:mx-0" aria-hidden="true" />}
+              {!settling && !nothingLive && !season && <HeroCarousel domains={allDomains} onOpen={openService} />}
 
               {/* Intent first: the problem in their words, then the services. */}
               <FestiveReveal on={!!season}><ProblemChips services={services} /></FestiveReveal>
-              {loadingCatalog || (loc.lat != null && !svc && checkingArea)
+              {settling || (loc.lat != null && !svc && checkingArea)
                 ? <SkeletonGrid />
                 : <FestiveReveal on={!!season}><ServiceGrid domains={domains} onOpen={openService} /></FestiveReveal>}
               {season && <FestiveDivider theme={theme} />}
@@ -345,9 +341,9 @@ export default function HomePage() {
               <FestiveReveal on={!!season}><BookAgainRail items={quickRebooks} onOpen={nav} /></FestiveReveal>
               <FestiveReveal on={!!season}><OffersRail isAuthed={isAuthed} /></FestiveReveal>
 
-              {!loadingCatalog && <FestiveReveal on={!!season}><ServiceShowcase domains={allDomains} onOpen={openService} /></FestiveReveal>}
+              {!settling && <FestiveReveal on={!!season}><ServiceShowcase domains={allDomains} onOpen={openService} /></FestiveReveal>}
               {isAuthed && <FestiveReveal on={!!season}><HomeMarketplace /></FestiveReveal>}
-              {!loadingCatalog && !nothingLive && <FestiveReveal on={!!season}><ComingSoonRow services={comingSoon} loc={loc} /></FestiveReveal>}
+              {!loadingCatalog && !nothingLive && <FestiveReveal on={!!season}><ComingSoonRow groups={comingSoon} loc={loc} /></FestiveReveal>}
               {season && <FestiveDivider theme={theme} />}
               <FestiveReveal on={!!season}><AdBanner /></FestiveReveal>
               <FestiveReveal on={!!season}><NearbyShopsLink /></FestiveReveal>

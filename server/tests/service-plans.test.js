@@ -1,4 +1,4 @@
-// Partner monthly plans end to end: a verified partner sets a plan, the price band decides live or review, a customer near them subscribes, visits are booked with a start code, pauses become makeup visits, the first finished visit of a month books the partner's dues, missed visits are made up.
+// Partner monthly plans end to end: a verified partner sets a plan at their own price and it goes live at once, admin can hide it, a customer near them subscribes, visits are booked with a start code, pauses become makeup visits, the first finished visit of a month books the partner's dues, missed visits are made up.
 const mongoose = require('mongoose');
 const { startMongo, stopMongo } = require('./helpers');
 
@@ -28,14 +28,14 @@ afterAll(stopMongo);
 
 const PLAN = { vertical: 'daily_cleaning', name: 'Daily clean, 2 BHK', type: 'monthly', items: [{ repairCode: 'daicle_full_daily', brandCode: 'daicle_2bhk' }], visitsPerMonth: 26, weekdays: [1, 2, 3, 4, 5, 6], pricePaise: 399900, durations: [{ months: 3, discountPct: 8 }, { months: 5, discountPct: 12 }], pauseDaysPerMonth: 4 };
 
-test('a plan inside the price band goes live at once; one far below it waits for review', async () => {
-  const cheap = await svc.savePlan(owner(), { ...PLAN, name: 'Too cheap', pricePaise: 99900 });
-  expect((await svc.submitPlan(owner(), cheap._id)).status).toBe('pending');
+test('a plan goes live at once at the partner own price; admin can hide it and the partner cannot republish it', async () => {
+  const odd = await svc.savePlan(owner(), { ...PLAN, name: 'Too cheap', pricePaise: 99900 });
+  expect((await svc.submitPlan(owner(), odd._id)).status).toBe('live');
+  expect((await svc.setPlanHidden(odd._id, true, 'Looks like a typo')).status).toBe('rejected');
+  await expect(svc.submitPlan(owner(), odd._id)).rejects.toMatchObject({ code: 'PLAN_HIDDEN' });
   const plan = await svc.savePlan(owner(), PLAN);
-  expect(plan.referencePaise).toBe(44900 * 26);
   expect(plan.durations.map((d) => d.months)).toEqual([1, 3, 5]);
   expect((await svc.submitPlan(owner(), plan._id)).status).toBe('live');
-  expect((await svc.reviewPlan(cheap._id, false, 'Below cost')).status).toBe('rejected');
   await expect(svc.savePlan({ kind: 'shop', id: String(new mongoose.Types.ObjectId()) }, PLAN)).rejects.toMatchObject({ status: 403 });
 });
 

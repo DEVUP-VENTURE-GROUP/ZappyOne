@@ -11,7 +11,7 @@ import { eventPhoto } from './eventPhotos';
 const GRADIENTS = [
   [/birth|kid|party|graduat/, 'from-pink-600/90 via-pink-500/50 to-transparent'],
   [/baby|gender|shower/, 'from-blue-600/90 via-blue-500/50 to-transparent'],
-  [/anniversar|engage/, 'from-purple-600/90 via-purple-500/50 to-transparent'],
+  [/anniversar|engage/, 'from-zappy-600/90 via-zappy-500/50 to-transparent'],
   [/house|corporate|farewell/, 'from-amber-600/90 via-amber-500/50 to-transparent'],
   [/romant/, 'from-rose-600/90 via-rose-500/50 to-transparent'],
 ];
@@ -48,7 +48,7 @@ function ThemeCard({ theme, onSave }) {
           </div>
         )}
         <button onClick={e => { e.stopPropagation(); onSave(theme._id); }}
-          className={`absolute top-4 right-4 w-9 h-9 rounded-full flex items-center justify-center transition-all ${theme.isSaved ? 'bg-rose-500 scale-110' : 'bg-black/20 backdrop-blur-md border border-white/20 hover:bg-black/40'}`}>
+          className={`absolute top-4 right-4 w-9 h-9 rounded-full flex items-center justify-center transition-all ${theme.isSaved ? 'bg-rose-500 scale-110' : 'bg-black/20 border border-white/20 hover:bg-black/40'}`}>
           <Heart size={16} className={theme.isSaved ? 'text-white fill-white' : 'text-white'} />
         </button>
         {theme.isTrending && (

@@ -8,7 +8,7 @@
  * Event commerce → Occasions), else our photo for that exact occasion, else
  * null. A photo is never borrowed: Engagement showing the anniversary photo
  * and Corporate showing the housewarming one read as the same option twice.
- * Without a picture, screens draw the occasion's own emoji tile instead.
+ * Without a picture, screens show the occasion as a plain name chip.
  *
  * Photos live in the global assets folder (assets/web/occasions, served at
  * /occasions on every website), so the apps load the same files.
@@ -28,15 +28,4 @@ export function eventPhoto(occasion) {
   }
   const key = String(occasion || '').toLowerCase();
   return (RULES.find(([re]) => re.test(key)) || [null, null])[1];
-}
-
-/** How many tile colours there are; each screen keeps its own palette in this order. */
-export const TONE_COUNT = 8;
-
-/** A stable colour slot per occasion, so tiles without a photo still differ. */
-export function eventToneIndex(occasion) {
-  const key = String(occasion?.slug || occasion?.name || occasion || '');
-  let h = 0;
-  for (const ch of key) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
-  return h % TONE_COUNT;
 }

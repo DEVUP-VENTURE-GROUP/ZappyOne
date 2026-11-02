@@ -15,7 +15,7 @@ import { radius } from '../../theme/radius';
 import { spacing } from '../../theme/spacing';
 
 export interface TileCategory {
-  code: string; name: string; icon?: string; imageUrl?: string; emoji?: string; toneColor?: string; subtitle?: string;
+  code: string; name: string; icon?: string; imageUrl?: string; subtitle?: string;
   problems?: { name: string }[];
 }
 
@@ -30,9 +30,8 @@ export const CategoryTile = memo(function CategoryTile({ category, onOpen }: { c
 
   return (
     <Pressable onPress={onOpen} accessibilityRole="button" accessibilityLabel={category.name} style={styles.tile}>
-      <View style={[styles.art, !img && category.emoji && category.toneColor ? { backgroundColor: category.toneColor } : null]}>
+      <View style={styles.art}>
         {img ? <Image source={{ uri: img }} style={StyleSheet.absoluteFill} resizeMode={character ? 'contain' : 'cover'} />
-          : category.emoji ? <Text style={styles.emoji}>{category.emoji}</Text>
             : <View style={styles.iconRing}><Icon size={24} color={zappy[600]} strokeWidth={1.8} /></View>}
         {count ? <View style={styles.count}><Text variant="caption" weight="semibold">{count} {count === 1 ? 'problem' : 'problems'}</Text></View> : null}
       </View>
@@ -61,7 +60,6 @@ export const CategoryTile = memo(function CategoryTile({ category, onOpen }: { c
 const styles = StyleSheet.create({
   tile: { width: 200, overflow: 'hidden', borderRadius: radius.large, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
   art: { aspectRatio: 4 / 5, alignItems: 'center', justifyContent: 'center', overflow: 'hidden', backgroundColor: slate[100] },
-  emoji: { fontSize: 56 },
   iconRing: { width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
   count: { position: 'absolute', left: 8, bottom: 8, borderRadius: radius.pill, paddingHorizontal: 8, paddingVertical: 2, backgroundColor: 'rgba(255,255,255,0.95)' },
   body: { gap: 4, padding: spacing.md },

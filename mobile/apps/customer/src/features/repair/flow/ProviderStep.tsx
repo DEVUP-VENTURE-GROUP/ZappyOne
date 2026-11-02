@@ -3,7 +3,7 @@
  * The pin is checked first; then what the customer chose, when, and who can
  * actually do it at what price, sortable without hiding anyone.
  */
-import { PartsNote, PrivacyPledge } from '@zappy/ui/components/common/PartsNote';
+import { PartsNote } from '@zappy/ui/components/common/PartsNote';
 import { useEffect, useRef, useState } from 'react';
 import { useLocalSearchParams } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Vibration, View } from 'react-native';
@@ -52,7 +52,7 @@ export function ProviderStep({ vertical, diagnosis, model, brand, configuration,
   });
   const result = data as (ProvidersResult & { providers?: Provider[]; recommended?: Provider }) | undefined;
   const providers = result?.providers || [];
-  const { data: standard } = useRepairPricePreviewQuery({ vertical, repairCode, brandCode: brand?.code, modelCode: model?.code, serviceMode }, { skip: !!providers.length || !result || !repairCode });
+  const { data: standard } = useRepairPricePreviewQuery({ vertical, repairCode, brandCode: brand?.code, modelCode: model?.code, serviceMode, lat: location?.lat, lng: location?.lng }, { skip: !!providers.length || !result || !repairCode });
   const standardPaise = standard?.reference && standard?.estimate?.totalPaise > 0 ? standard.estimate.totalPaise as number : null;
   // From a storefront menu (?provider=shop:<id>): that provider is chosen once the list confirms they can take it here.
   const { provider: wanted } = useLocalSearchParams<{ provider?: string }>();
@@ -68,7 +68,7 @@ export function ProviderStep({ vertical, diagnosis, model, brand, configuration,
 
   if (!ready) return <ConfirmPinCard location={location} onConfirm={onPinConfirmed} onPick={onChangeLocation} />;
 
-  const summary = <><ChosenSummary brand={brand} model={model} configuration={configuration} problem={problem} diagnosis={diagnosis} serviceMode={serviceMode} location={location} onChangeLocation={onChangeLocation} /><PartsNote vertical={vertical} who="customer" /><PrivacyPledge who="customer" /></>;
+  const summary = <><ChosenSummary vertical={vertical} brand={brand} model={model} configuration={configuration} problem={problem} diagnosis={diagnosis} serviceMode={serviceMode} location={location} onChangeLocation={onChangeLocation} /><PartsNote vertical={vertical} who="customer" /></>;
 
   if (inspectionOnly || !repairCode) {
     return (

@@ -177,10 +177,6 @@ function NotificationPreview({ title, body, type }) {
     <div className="sticky top-6">
       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 ml-1">Live Preview</p>
       <div className="relative rounded-[2rem] p-4 bg-slate-900 shadow-2xl overflow-hidden ring-1 ring-white/10">
-        {/* Glossy lighting */}
-        <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/5 to-white/10 pointer-events-none" />
-        <div className="absolute top-0 right-0 -mr-12 -mt-12 w-32 h-32 bg-blue-500/30 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-0 -ml-12 -mb-12 w-32 h-32 bg-orange-500/20 rounded-full blur-3xl pointer-events-none" />
         
         {/* Mock Screen Context */}
         <div className="h-6 flex justify-between items-center px-2 mb-2 text-white/50 text-[10px] font-medium">
@@ -198,7 +194,6 @@ function NotificationPreview({ title, body, type }) {
           transition={{ type: 'spring', stiffness: 400, damping: 25 }}
           className="bg-white rounded-[1.2rem] p-3.5 shadow-[0_8px_30px_rgb(0,0,0,0.15)] flex gap-3 relative border border-white/50 overflow-hidden"
         >
-          <div className="absolute inset-0 bg-gradient-to-br from-white/60 to-transparent pointer-events-none" />
           
           <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center shrink-0 shadow-inner relative z-10 border border-slate-200/50 p-1">
              <img src={logoUrl} className="w-full h-full object-contain drop-shadow-sm" alt="ZappyOne" />

@@ -70,6 +70,8 @@ const schema = Joi.object({
   CASHFREE_WEBHOOK_URL:   Joi.string().uri().optional(),   // set to your /api/payments/webhook URL
   CASHFREE_ENV:           Joi.string().valid('sandbox', 'production').default('sandbox'),
   // Razorpay takes online payments only while Cashfree has no keys (payment/gateway).
+  // Which gateway takes money when both have keys; empty keeps the default order (Cashfree, then Razorpay).
+  PAYMENT_GATEWAY:        Joi.string().valid('', 'cashfree', 'razorpay').default(''),
   RAZORPAY_KEY_ID:        Joi.string().allow('').default(''),
   RAZORPAY_KEY_SECRET:    Joi.string().allow('').default(''),
   RAZORPAY_WEBHOOK_SECRET: Joi.string().allow('').default(''),
@@ -160,6 +162,7 @@ module.exports = {
     webhookUrl: env.CASHFREE_WEBHOOK_URL || '',
     env:        env.CASHFREE_ENV,
   },
+  paymentGateway: env.PAYMENT_GATEWAY,
   razorpay: {
     keyId:         env.RAZORPAY_KEY_ID,
     keySecret:     env.RAZORPAY_KEY_SECRET,

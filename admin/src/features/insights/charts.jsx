@@ -188,7 +188,7 @@ export function FunnelChart({ steps = [] }) {
             ) : (
               <span className="h-9 overflow-hidden rounded-lg bg-slate-100">
                 <span className="flex h-full items-center rounded-lg px-3 text-[12.5px] font-semibold text-white tabular-nums"
-                  style={{ width: `${w}%`, background: `linear-gradient(90deg, #1F4FD8, ${i ? '#3B6BEA' : '#1F4FD8'})`, opacity: 1 - i * 0.12 }}>
+                  style={{ width: `${w}%`, background: '#1F4FD8', opacity: 1 - i * 0.12 }}>
                   {count(s.people)}
                 </span>
               </span>

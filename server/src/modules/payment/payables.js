@@ -77,13 +77,10 @@ function gatewayReady() {
   return Boolean(require('./gateway').active());
 }
 
-/**
- * Refuse — never silently downgrade — an online booking while online payment
- * is unavailable. The customer is told to choose cash instead.
- */
+// Jobs are paid to the pro directly (UPI or cash, jobs/pay-direct); ZappyOne never takes job money online. Refused, never silently switched.
 function assertOnlineAvailable(paymentMethod) {
-  if (paymentMethod === 'online' && !gatewayReady()) {
-    throw fail('Online payment is not available right now - choose cash and pay after the service.', 400, 'ONLINE_PAYMENTS_DISABLED');
+  if (paymentMethod === 'online') {
+    throw fail('Pay your pro directly by UPI or cash once the job is done.', 400, 'ONLINE_PAYMENTS_DISABLED');
   }
 }
 

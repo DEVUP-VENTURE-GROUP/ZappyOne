@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Loader2, Send, Sparkles } from 'lucide-react';
+import { Loader2, Send, Lightbulb } from 'lucide-react';
 import { useLazyAdminFleetAiBriefingQuery, useAdminFleetAiAskMutation } from '@shared/services/api';
 
 const ASKS = ['Why is my weakest hub losing money?', 'Who deserves a bonus this month?', 'Where should I hire next?'];
@@ -23,7 +23,7 @@ export default function FleetAiPanel({ month }) {
   return (
     <section className="rounded-2xl border border-[#1F4FD8]/25 bg-white p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="flex items-center gap-1.5 text-[13px] font-bold text-[#1F4FD8]"><Sparkles size={14} /> Fleet AI</p>
+        <p className="flex items-center gap-1.5 text-[13px] font-bold text-[#1F4FD8]"><Lightbulb size={14} /> Fleet AI</p>
         <button type="button" onClick={() => getBrief(month, false)} disabled={brief.isFetching}
           className="inline-flex items-center gap-1.5 rounded-lg bg-[#1F4FD8] px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-60">
           {brief.isFetching ? <><Loader2 size={13} className="animate-spin" /> Reading the month…</> : brief.data ? 'Refresh briefing' : 'Brief me on this month'}

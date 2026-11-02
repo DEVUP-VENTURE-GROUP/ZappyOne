@@ -190,14 +190,37 @@ async function dailySummary(now = new Date()) {
   return true;
 }
 
+const SETUP_NUDGE_DAYS = [1, 2, 4, 7, 14];
+async function setupNudges(now = new Date()) {
+  const ist = IST(now);
+  if (ist.getHours() < 10) return 0;
+  const day = ist.toISOString().slice(0, 10);
+  const { redis } = require('../../config/redis');
+  if (!(await redis.set(`setup-nudge:ran:${day}`, '1', 'EX', 36 * 3600, 'NX'))) return 0;
+  const Shop = require('../shop/shop.model');
+  const { setupJourney } = require('../onboarding/profile-check');
+  const shops = await Shop.find({ isBlocked: { $ne: true }, createdAt: { $gte: new Date(now - 15 * 86400000) } }).select('_id createdAt').limit(1000).lean();
+  let sent = 0;
+  for (const sh of shops) {
+    const age = Math.floor((now - new Date(sh.createdAt)) / 86400000);
+    if (!SETUP_NUDGE_DAYS.includes(age)) continue;
+    const j = await setupJourney(sh._id);
+    if (j.complete || !j.next) continue;
+    await send('provider.setup_next', { to: { kind: 'shop', id: sh._id }, refId: `setup:${day}`, ctx: { step: j.next.label, path: j.next.path, done: j.done, total: j.total } });
+    sent += 1;
+  }
+  return sent;
+}
+
 async function sweep() {
   const out = {};
   out.reminders = await rateReminders().catch((e) => { logger.warn({ err: e.message }, '[messaging] reminders failed'); return 0; });
   out.weekly = await weeklySummaries().catch((e) => { logger.warn({ err: e.message }, '[messaging] weekly failed'); return 0; });
+  out.setup = await setupNudges().catch((e) => { logger.warn({ err: e.message }, '[messaging] setup nudges failed'); return 0; });
   out.daily = await dailySummary().catch((e) => { logger.warn({ err: e.message }, '[messaging] daily failed'); return false; });
   // A booking started and left: one nudge to finish it (jobs/checkout-draft).
   out.unfinished = await require('../jobs/checkout-draft').sweep().then((r) => r.sent).catch((e) => { logger.warn({ err: e.message }, '[messaging] unfinished failed'); return 0; });
   return out;
 }
 
-module.exports = { onStatus, sweep, rateReminders, weeklySummaries, dailySummary, MAP };
+module.exports = { onStatus, sweep, rateReminders, weeklySummaries, dailySummary, setupNudges, MAP };

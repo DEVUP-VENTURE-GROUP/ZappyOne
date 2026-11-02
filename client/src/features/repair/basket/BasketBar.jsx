@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Sparkles } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useRepairSuggestionsQuery, useRepairVerticalsQuery } from '@shared/services/api';
 import { targetsWith, thingFor } from '@shared/customer/repairBasket';
 
@@ -21,7 +21,7 @@ export default function BasketBar({ vertical, current, count, onAddAnother, onAd
       {count > 0 && <p className="text-[12px] font-bold text-zappy-700">{count + 1} items in this visit, one visit fee</p>}
       {sameKind.length > 0 && (
         <div>
-          <p className="mb-1.5 flex items-center gap-1 text-[11px] font-bold uppercase tracking-wide text-slate-500"><Sparkles size={12} /> Also add for this {thing}</p>
+          <p className="mb-1.5 flex items-center gap-1 text-[11px] font-bold uppercase tracking-wide text-slate-500"><Plus size={12} /> Also add for this {thing}</p>
           <div className="flex flex-wrap gap-2">
             {sameKind.map((s) => (
               <button key={s.repairCode} type="button" onClick={() => onAddSuggestion(s)}

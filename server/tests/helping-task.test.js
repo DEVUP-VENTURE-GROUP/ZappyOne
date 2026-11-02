@@ -89,6 +89,9 @@ beforeEach(async () => {
   await Transaction.deleteMany({});
   await Wallet.deleteMany({});
   await seedConfig();
+  // Every errand is priced at a helper's own rates; this one mirrors the config above.
+  await require('../src/modules/helping/models/provider-rate.model').deleteMany({});
+  await require('./helpers').ratedHelper({ serviceTypes: ['shopping', 'return', 'exchange'], at: HERE.coordinates });
 });
 
 const twoItems = () => ([
@@ -180,24 +183,25 @@ describe('item money and service money never mix', () => {
     // ₹250 + (₹50 × 2) = ₹350 of goods…
     expect(task.itemMoney.budgetPaise).toBe(inr(350));
     // …and the errand itself is priced entirely separately.
-    expect(task.charge.serviceChargePaise).toBe(inr(110));
+    // The helper's own base fee; their rate has no per-km charge for this short trip.
+    expect(task.charge.serviceChargePaise).toBe(inr(80));
     expect(task.charge.serviceChargePaise).not.toBe(inr(460));
   });
 
   it('presents the authorisation as two numbers, never one', async () => {
     const { task } = await taskService.createTask(baseTask());
     const auth = pricingService.authorisationTotal(task.charge, task.itemMoney.budgetPaise);
-    expect(auth.serviceChargePaise).toBe(inr(110));
+    expect(auth.serviceChargePaise).toBe(inr(80));
     expect(auth.itemBudgetPaise).toBe(inr(350));
-    expect(auth.maxAuthorisationPaise).toBe(inr(460));
+    expect(auth.maxAuthorisationPaise).toBe(inr(430));
     expect(auth.note).toMatch(/separate/i);
   });
 
   it('never commissions the item money', async () => {
     const { task } = await taskService.createTask(baseTask());
     // 20% of the ₹110 fee, not of ₹460.
-    expect(task.charge.commissionPaise).toBe(inr(22));
-    expect(task.charge.workerEarningPaise).toBe(inr(88));
+    expect(task.charge.commissionPaise).toBe(inr(16));
+    expect(task.charge.workerEarningPaise).toBe(inr(64));
   });
 
   it('pays the helper their fee and their money back as SEPARATE ledger rows', async () => {
@@ -221,14 +225,14 @@ describe('item money and service money never mix', () => {
     // The reimbursement is the helper's own ₹240 coming back…
     expect(byReason[Transaction.REASONS.WORKER_REIMBURSEMENT]).toBe(inr(240));
     // …and the earning is the ₹88 fee. Two rows, two reasons.
-    expect(byReason[Transaction.REASONS.WORKER_EARNING]).toBe(inr(88));
+    expect(byReason[Transaction.REASONS.WORKER_EARNING]).toBe(inr(64));
 
     // The invariant that matters: an earnings report reading WORKER_EARNING
     // sees ₹88, not ₹328.
     const earnings = rows
       .filter((r) => r.reason === Transaction.REASONS.WORKER_EARNING)
       .reduce((s, r) => s + r.amountPaise, 0);
-    expect(earnings).toBe(inr(88));
+    expect(earnings).toBe(inr(64));
   });
 
   it('a cash fee is not paid to the helper again: they are billed the commission instead', async () => {
@@ -598,5 +602,23 @@ describe('restricted items', () => {
       items: [{ name: 'Whisky bottle (alcohol)', quantity: 1, maxApprovedPricePaise: inr(2000) }],
     }));
     expect(task.reference).toMatch(/^ZH/);
+  });
+});
+
+describe('every helper charges their own rates; ZappyOne sets none', () => {
+  it('prices an errand at the cheapest nearby helper\'s rates, and offers it only to helpers whose rates fit', async () => {
+    const Rate = require('../src/modules/helping/models/provider-rate.model');
+    await Rate.deleteMany({});
+    const dear = await require('./helpers').ratedHelper({ serviceTypes: ['shopping'], at: HERE.coordinates });
+    const cheap = await require('./helpers').ratedHelper({ serviceTypes: ['shopping'], at: HERE.coordinates });
+    await Rate.updateOne({ workerId: dear }, { $set: { baseFeePaise: inr(150) } });
+    await Rate.updateOne({ workerId: cheap }, { $set: { baseFeePaise: inr(60) } });
+    const { task } = await taskService.createTask(baseTask());
+    expect(task.charge.baseFeePaise).toBe(inr(60));
+    const { KINDS } = require('../src/modules/jobs/kinds');
+    const fit = await KINDS.helping.open.fits(task, [{ kind: 'worker', id: String(dear) }, { kind: 'worker', id: String(cheap) }]);
+    expect(fit.map((p) => p.id)).toEqual([String(cheap)]);
+    await Rate.deleteMany({});
+    await expect(taskService.createTask(baseTask({ idempotencyKey: 'none-priced' }))).rejects.toMatchObject({ code: 'NO_PROVIDER_PRICE' });
   });
 });

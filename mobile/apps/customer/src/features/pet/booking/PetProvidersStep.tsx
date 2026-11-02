@@ -43,6 +43,7 @@ export function PetProvidersStep({ result, categoryCode, loc, onChangeLocation, 
             <Text variant="caption" color={ink[500]}>{p.rating != null ? p.rating.toFixed(1) : 'New'}{p.distanceKm != null ? `, ${p.distanceKm} km` : ''}{p.completedJobs ? `, ${p.completedJobs} jobs` : ''}</Text>
           </View>
           {p.arrivalMinutes != null ? <ArrivalBadge minutes={p.arrivalMinutes} withinPromise={p.arrivalWithinPromise} /> : null}
+          {p.fromPaise != null ? <Text variant="bodySmall" weight="extrabold">₹{Math.round(p.fromPaise / 100).toLocaleString('en-IN')} <Text variant="caption" color={ink[500]}>their price</Text></Text> : null}
         </Pressable>
       ))}
     </View>

@@ -114,24 +114,29 @@ export function motifShapes(themeKey) {
       out.push({ t: 'circle', cx: x - 0.9, cy: y - 0.9, r: long ? 1.1 : 0.9, fill: '#FFFFFF', o: 0.55, ...sway });
     }
   } else if (th.motif === 'lights') {
-    // Two strings of lights, each bulb with a soft glow, and diyas along the bottom edge.
-    [[0, 8, 34], [0, 30, 58]].forEach(([, y0, sag], row) => {
-      const p0 = { x: -10, y: y0 }; const p1 = { x: w / 2, y: y0 + sag }; const p2 = { x: w + 10, y: y0 };
-      out.push({ t: 'path', d: `M${p0.x},${p0.y} Q${p1.x},${p1.y} ${p2.x},${p2.y}`, stroke: d, sw: 1.2, o: 0.8 });
-      for (let k = 1; k < 15; k += 1) {
-        const p = quad(p0, p1, p2, k / 15);
-        const tw = { anim: 'twinkle', delay: ((k * 7 + row * 3) % 10) * 0.18 };
-        out.push({ t: 'circle', cx: p.x, cy: p.y + 4, r: 8, fill: k % 2 ? a : b, o: 0.22, ...tw });
-        out.push({ t: 'circle', cx: p.x, cy: p.y + 4, r: 3.4, fill: (k + row) % 3 ? a : c, ...tw });
+    // A marigold toran across the top: swags of flowers between nails, mango leaves hanging and swaying at each nail.
+    const nails = [0, 90, 180, 270, 360];
+    const flower = (x, y) => {
+      out.push({ t: 'circle', cx: x, cy: y, r: 5.2, fill: '#FBBF24' });
+      for (let k = 0; k < 8; k += 1) {
+        const ang = (k / 8) * Math.PI * 2;
+        out.push({ t: 'circle', cx: x + Math.cos(ang) * 4.2, cy: y + Math.sin(ang) * 4.2, r: 2.3, fill: '#F59E0B' });
       }
-    });
-    for (let k = 0; k < 6; k += 1) {
-      const x = 30 + k * 60;
-      out.push({ t: 'path', d: `M${x - 9},88 Q${x},96 ${x + 9},88 Z`, fill: b });
-      const fl = { anim: 'flicker', g: `d${k}`, px: x, py: 87, delay: k * 0.23 };
-      out.push({ t: 'path', d: `M${x},76 Q${x + 4},83 ${x},87 Q${x - 4},83 ${x},76 Z`, fill: a, ...fl });
-      out.push({ t: 'circle', cx: x, cy: 83, r: 9, fill: a, o: 0.18, ...fl });
+      out.push({ t: 'circle', cx: x, cy: y, r: 2, fill: '#C2410C' });
+    };
+    for (let n = 0; n < nails.length - 1; n += 1) {
+      const p0 = { x: nails[n], y: 3 }; const p1 = { x: nails[n] + 45, y: 22 }; const p2 = { x: nails[n + 1], y: 3 };
+      out.push({ t: 'path', d: `M${p0.x},${p0.y} Q${p1.x},${p1.y} ${p2.x},${p2.y}`, stroke: '#7C2D12', sw: 1, o: 0.6 });
+      for (let k = 1; k < 7; k += 1) { const q = quad(p0, p1, p2, k / 7); flower(q.x, q.y); }
     }
+    nails.slice(1, -1).forEach((x, i) => {
+      const leaf = { anim: 'sway', g: `leaf${i}`, px: x, py: 4, delay: i * 0.5 };
+      [-7, 0, 7].forEach((tip) => {
+        out.push({ t: 'path', d: `M${x},4 C${x + 6 + tip / 2},9 ${x + 4 + tip},20 ${x + tip},27 C${x - 4 + tip},20 ${x - 6 + tip / 2},9 ${x},4 Z`, fill: '#2F7D4A', ...leaf });
+        out.push({ t: 'path', d: `M${x},5 L${x + tip},26`, stroke: '#1F5A35', sw: 0.8, ...leaf });
+      });
+      flower(x, 4);
+    });
   } else if (th.motif === 'splash') {
     // Holi colour: soft clouds of gulal.
     for (let k = 0; k < 26; k += 1) {
@@ -178,147 +183,6 @@ export function rayShapes(w = 360, h = 420) {
 }
 
 /**
- * A real photo for a festive tile, by service (website paths, assets/web);
- * services not here use their own picture or art.
- */
-export const FESTIVE_PHOTOS = {
-  two_wheeler: '/problems/two_wheeler/headings/tw_maintenance.webp',
-  four_wheeler: '/problems/four_wheeler/headings/fw_body.webp',
-  water_tank_care: '/problems/water_tank_care/headings/wt_cleaning.webp',
-  mobile_repair: '/hero/phone-repair.webp',
-  laptop_repair: '/hero/phone-bench.webp',
-  events: '/hero/events.webp',
-  shopping_pickup: '/hero/helping.webp',
-};
-
-/**
- * How the tiles sit, so the grid is always full (Blinkit's festive grid):
- * 5 → a tall feature tile and four beside it; 4 → two by two; else rows of 3
- * (or 2, or 1 wide). `feature`: the first tile spans two rows.
- */
-export function tileLayout(n) {
-  if (n === 5) return { cols: 3, feature: true };
-  if (n === 4 || n === 2) return { cols: 2, feature: false };
-  if (n === 1) return { cols: 1, feature: false };
-  return { cols: 3, feature: false };
-}
-
-/** How long each spotlight scene stays, in ms (Zepto's run 3–5 s). */
-export const SCENE_MS = 4200;
-
-/**
- * The festive spotlight's scenes, Zepto-style: each an animated festive stage
- * with one line from the season. Curtains opening on the greeting, fireworks
- * bursting behind the festival's name, petals falling and lanterns rising
- * behind the promise, and the offer with confetti (only while it is live).
- */
-export function spotlightScenes(season) {
-  if (!season) return [];
-  const th = themeOf(season.theme);
-  const scenes = [{ kind: 'curtains', key: 'curtains' }];
-  const lottie = (key, title) => ({ kind: 'lottie', key, ...SCENE_LOTTIES[key], title });
-  if (th.motif === 'toran') {
-    // Navratri, Dussehra, Bathukamma: a garba dancer, then Durga Maa.
-    scenes.push(lottie('garba', season.headline), lottie('durga', season.subline || season.headline));
-  } else if (season.theme === 'diwali') {
-    scenes.push(lottie('diwali', season.headline), { kind: 'fireworks', key: 'fireworks' });
-  } else {
-    scenes.push({ kind: 'fireworks', key: 'fireworks' });
-    if (season.subline) scenes.push({ kind: 'petals', key: 'petals' });
-  }
-  if (season.offer) scenes.push({ kind: 'offer', key: 'offer', offer: season.offer });
-  return scenes;
-}
-
-/**
- * Animated festival scenes (Lottie, assets/web/festive/lottie, Lottie Simple
- * License; credits there): the animation, the line above the title, and the
- * card colour behind it (the animation's own ground, so it sits seamlessly).
- */
-export const SCENE_LOTTIES = {
-  garba: { src: '/festive/lottie/garba.json', kicker: 'Navratri garba', card: '#FFDDD1' },
-  durga: { src: '/festive/lottie/durga.json', kicker: 'Durga Puja, Dussehra', card: '#FFFFFF' },
-  diwali: { src: '/festive/lottie/diwali.json', kicker: 'Happy Diwali', card: '#FFFFFF' },
-};
-
-/**
- * Fireworks for the stage (360×200): bursts, each a ring of sparks from its
- * centre, in the festival's colours: [{ cx, cy, r, color, delay, sparks: [{ x2, y2 }] }].
- */
-export function fireworkBursts(colors) {
-  const at = [[62, 58, 34], [298, 52, 30], [180, 30, 26], [118, 120, 22], [250, 128, 24]];
-  return at.map(([cx, cy, r], i) => ({
-    cx, cy, r, color: colors[i % colors.length], delay: i * 0.45,
-    sparks: Array.from({ length: 14 }, (_, k) => {
-      const a = (k / 14) * Math.PI * 2;
-      return { x1: cx + Math.cos(a) * r * 0.35, y1: cy + Math.sin(a) * r * 0.35, x2: cx + Math.cos(a) * r, y2: cy + Math.sin(a) * r };
-    }),
-  }));
-}
-
-/** Marigold petals falling across the stage: [{ x (%), size, color, delay, dur, drift }]. */
-export function fallingPetals(colors, n = 22) {
-  const rnd = seeded(5);
-  return Array.from({ length: n }, (_, i) => ({
-    x: Math.round(rnd() * 100), size: 7 + Math.round(rnd() * 7), color: colors[i % colors.length],
-    delay: Math.round(rnd() * 3000), dur: 3200 + Math.round(rnd() * 2400), drift: Math.round((rnd() - 0.5) * 60),
-  }));
-}
-
-/** Lanterns rising from the bottom of the stage: [{ x (%), size, delay, dur }]. */
-export function risingLanterns(n = 6) {
-  const rnd = seeded(3);
-  return Array.from({ length: n }, (_, i) => ({
-    x: 8 + Math.round((i / n) * 84 + rnd() * 6), size: 16 + Math.round(rnd() * 10), delay: Math.round(rnd() * 2500), dur: 4200 + Math.round(rnd() * 1800),
-  }));
-}
-
-/**
- * Stage curtains for the greeting scene, in a 360×200 box: a drape from each
- * top corner, swept aside, with folds; `fill` is the curtain's colour.
- */
-export function curtainShapes(fill) {
-  const left = 'M0,0 L118,0 C96,40 70,92 26,128 C18,134 8,140 0,142 Z';
-  const right = 'M360,0 L242,0 C264,40 290,92 334,128 C342,134 352,140 360,142 Z';
-  const folds = [
-    'M30,0 C30,40 22,80 8,118', 'M62,0 C58,44 44,86 20,124', 'M92,0 C84,40 66,84 34,120',
-    'M330,0 C330,40 338,80 352,118', 'M298,0 C302,44 316,86 340,124', 'M268,0 C276,40 294,84 326,120',
-  ];
-  return [
-    { t: 'path', d: left, fill, o: 0.9, side: 'left' },
-    { t: 'path', d: right, fill, o: 0.9, side: 'right' },
-    ...folds.map((d, i) => ({ t: 'path', d, stroke: '#FFFFFF', sw: 1.2, o: 0.22, side: i < 3 ? 'left' : 'right' })),
-    // The tie-backs.
-    { t: 'path', d: 'M10,122 Q24,112 36,124', stroke: '#FFFFFF', sw: 2.4, o: 0.6, side: 'left' },
-    { t: 'path', d: 'M350,122 Q336,112 324,124', stroke: '#FFFFFF', sw: 2.4, o: 0.6, side: 'right' },
-  ];
-}
-
-/** Fairy lights strung in arcs across the stage (360×200): [{ cx, cy, r, delay }]. */
-export function fairyLights() {
-  const out = [];
-  // Both strings stay above the greeting (text starts around y 70).
-  [[6, 22, 62], [26, 20, 44]].forEach(([y0, sag, n]) => {
-    const p0 = { x: 6, y: y0 }; const p1 = { x: 180, y: y0 + sag }; const p2 = { x: 354, y: y0 };
-    const count = Math.round(n / 2);
-    for (let k = 0; k <= count; k += 1) {
-      const p = quad(p0, p1, p2, k / count);
-      out.push({ cx: p.x, cy: p.y, r: k % 3 ? 1.6 : 2.2, delay: (k % 7) * 0.22 });
-    }
-  });
-  return out;
-}
-
-/** Confetti for the offer scene: [{ x, rot, color, delay, dur, w, h }], x in %. */
-export function confettiPieces(colors, n = 26) {
-  const rnd = seeded(11);
-  return Array.from({ length: n }, (_, i) => ({
-    x: Math.round(rnd() * 100), rot: Math.round(rnd() * 360), color: colors[i % colors.length],
-    delay: Math.round(rnd() * 900), dur: 1600 + Math.round(rnd() * 1400), w: 5 + Math.round(rnd() * 4), h: 8 + Math.round(rnd() * 6),
-  }));
-}
-
-/**
  * The jhalar edge for bars (header, footer, the bottom tab bar): one 24×12
  * repeat of a fine line, a scallop and a bead, to tile along an edge.
  * `flip` hangs it upward (for a bar's top edge).
@@ -353,26 +217,6 @@ export function motifGroups(shapes) {
   return out;
 }
 
-/**
- * The season's tiles that can be shown: each tied to a live service (a tile for
- * a service not offered is dropped, never shown broken). Without its own photo,
- * a tile uses the service's art (`artOf(service)`).
- * @param {any} season
- * @param {any[]} services
- * @param {(service: any) => (string | null)} [artOf]
- */
-export function seasonTiles(season, services, artOf = () => null) {
-  const byCode = new Map((services || []).map((s) => [s.code, s]));
-  return (season?.tiles || [])
-    .map((t) => {
-      const s = byCode.get(t.serviceCode);
-      if (!s) return null;
-      return { ...t, service: s, image: t.imageUrl || artOf(s) || null };
-    })
-    .filter(Boolean)
-    .slice(0, 6);
-}
-
 /** "20% off" or "₹100 off", from a live promo. */
 export const offerHeadline = (p) => (p.type === 'percent' ? `${p.discountValue}% off` : `${formatPaise(p.discountValue)} off`);
 
@@ -382,4 +226,29 @@ export function offerTerms(p) {
   if (p.type === 'percent' && p.maxDiscountPaise) parts.push(`up to ${formatPaise(p.maxDiscountPaise)}`);
   if (p.minOrderPaise) parts.push(`on ${formatPaise(p.minOrderPaise)}+`);
   return parts.join(', ');
+}
+
+// A festive tile's tag: admin's own badge, else the service's real starting price; never an invented discount.
+export function tileTag(tile, service) {
+  if (tile?.badge) return tile.badge;
+  const from = service?.fromPaise;
+  return Number.isFinite(from) && from > 0 ? `From ${formatPaise(from)}` : null;
+}
+
+// The arched top of the festive panel, in a 400×40 box; the same curve carries the marquee lights.
+export const ARCH = { w: 400, h: 40 };
+export const archEdge = 'M0,40 L0,24 Q0,16 10,16 L132,16 C162,16 170,2 200,2 C230,2 238,16 268,16 L390,16 Q400,16 400,24 L400,40';
+export const archLights = 'M8,22 Q8,20 12,20 L132,20 C162,20 170,6 200,6 C230,6 238,20 268,20 L388,20 Q392,20 392,22';
+
+// The festive panel's tiles: admin's picks that are live here first, then other live services with a photo and a real starting price, cheapest first.
+export function festivePicks(tiles, services, photoOf, max = 5) {
+  services = services || [];
+  const byCode = new Map(services.map((s) => [s.code, s]));
+  const picked = (tiles || []).map((t) => ({ ...t, service: byCode.get(t.serviceCode) })).filter((t) => t.service);
+  const taken = new Set(picked.map((t) => t.serviceCode));
+  const more = services
+    .filter((s) => !taken.has(s.code) && Number.isFinite(s.fromPaise) && s.fromPaise > 0 && photoOf(s))
+    .sort((a, b) => a.fromPaise - b.fromPaise)
+    .map((s) => ({ serviceCode: s.code, title: s.name, service: s }));
+  return [...picked, ...more].slice(0, max);
 }

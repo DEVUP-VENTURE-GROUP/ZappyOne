@@ -1,3 +1,4 @@
+import { useReferralLink } from '../hooks/useReferralLink';
 import AccountSetupGate from '@shared/components/account/AccountSetupGate';
 import { VerifyEmailPage, ResetPasswordPage } from '@shared/components/account/AccountLinkPages';
 import { lazy, Suspense, useEffect } from 'react';
@@ -28,6 +29,7 @@ import LoginPage from '../features/auth/LoginPage';
 
 const HomePage            = lazy(() => import('../features/home/HomePage'));
 const OrderTrackingPage   = lazy(() => import('../features/tracking/OrderTrackingPage'));
+const SharedTrackingPage  = lazy(() => import('../features/tracking/SharedTrackingPage'));
 const OrdersListPage      = lazy(() => import('../features/bookings/OrdersListPage'));
 const TrackPage           = lazy(() => import('../features/bookings/TrackPage'));
 const ProfilePage         = lazy(() => import('../features/account/ProfilePage'));
@@ -100,6 +102,7 @@ export default function App() {
   useTelemetry();
   const { accessToken: token, role } = useSelector(selectAuth);
   const location = useLocation();
+  useReferralLink({ token, role });
 
   // Load the admin-managed category taxonomy once at startup so the customer
   // catalog, worker skill pickers and booking all reflect admin categories.
@@ -140,6 +143,8 @@ export default function App() {
         {/* Public, signed out: how to delete an account (Google Play account-deletion link). */}
         <Route path="/delete-account" element={<DeleteAccountPage />} />
         <Route path="/policy/:slug" element={<PolicyPage />} />
+        {/* Public: a booking shared with the person at the door (jobs/share). */}
+        <Route path="/t/:token" element={<SharedTrackingPage />} />
 
         <Route path="/login" element={token ? <Navigate to="/" replace /> : <LoginPage />} />
 
@@ -200,20 +205,20 @@ export default function App() {
         {/* Provider onboarding — one path for shops and independent technicians */}
 
         {/* Repair verticals — one flow component, the vertical is data */}
-        <Route path="/repair" element={<RequireAuth role="user"><RepairFlowPage vertical="mobile" /></RequireAuth>} />
-        <Route path="/repair/laptop" element={<RequireAuth role="user"><RepairFlowPage vertical="laptop" /></RequireAuth>} />
+        <Route path="/repair" element={<RepairFlowPage vertical="mobile" />} />
+        <Route path="/repair/laptop" element={<RepairFlowPage vertical="laptop" />} />
         {/* Hyphenated in the URL, underscored in the data — the vertical code is
             two_wheeler everywhere behind this line. */}
-        <Route path="/repair/two-wheeler" element={<RequireAuth role="user"><RepairFlowPage vertical="two_wheeler" /></RequireAuth>} />
-        <Route path="/repair/four-wheeler" element={<RequireAuth role="user"><RepairFlowPage vertical="four_wheeler" /></RequireAuth>} />
-        <Route path="/repair/water-tank-care" element={<RequireAuth role="user"><RepairFlowPage vertical="water_tank_care" /></RequireAuth>} />
-        <Route path="/repair/bike-wash" element={<RequireAuth role="user"><RepairFlowPage vertical="bike_wash" /></RequireAuth>} />
-        <Route path="/repair/home-cleaning" element={<RequireAuth role="user"><RepairFlowPage vertical="home_cleaning" /></RequireAuth>} />
-        <Route path="/repair/electrician" element={<RequireAuth role="user"><RepairFlowPage vertical="electrician" /></RequireAuth>} />
-        <Route path="/repair/plumbing" element={<RequireAuth role="user"><RepairFlowPage vertical="plumbing" /></RequireAuth>} />
-        <Route path="/repair/ac-service" element={<RequireAuth role="user"><RepairFlowPage vertical="ac_service" /></RequireAuth>} />
-        <Route path="/repair/car-wash" element={<RequireAuth role="user"><RepairFlowPage vertical="car_wash" /></RequireAuth>} />
-        <Route path="/repair/:slug" element={<RequireAuth role="user"><ServiceFlowRoute /></RequireAuth>} />
+        <Route path="/repair/two-wheeler" element={<RepairFlowPage vertical="two_wheeler" />} />
+        <Route path="/repair/four-wheeler" element={<RepairFlowPage vertical="four_wheeler" />} />
+        <Route path="/repair/water-tank-care" element={<RepairFlowPage vertical="water_tank_care" />} />
+        <Route path="/repair/bike-wash" element={<RepairFlowPage vertical="bike_wash" />} />
+        <Route path="/repair/home-cleaning" element={<RepairFlowPage vertical="home_cleaning" />} />
+        <Route path="/repair/electrician" element={<RepairFlowPage vertical="electrician" />} />
+        <Route path="/repair/plumbing" element={<RepairFlowPage vertical="plumbing" />} />
+        <Route path="/repair/ac-service" element={<RepairFlowPage vertical="ac_service" />} />
+        <Route path="/repair/car-wash" element={<RepairFlowPage vertical="car_wash" />} />
+        <Route path="/repair/:slug" element={<ServiceFlowRoute />} />
         <Route path="/providers/:slug" element={<RequireAuth role="user"><StorefrontsPage /></RequireAuth>} />
         <Route path="/storefront/:kind/:id" element={<RequireAuth role="user"><StorefrontPage /></RequireAuth>} />
         <Route path="/my-plans" element={<RequireAuth role="user"><MyPlansPage /></RequireAuth>} />
@@ -233,7 +238,7 @@ export default function App() {
         {/* One heading — Display, Storage, Connectivity — and everything under it. */}
         <Route
           path="/repair/category/:vertical/:categoryCode"
-          element={<RequireAuth role="user"><CategoryProblemsPage /></RequireAuth>}
+          element={<CategoryProblemsPage />}
         />
         <Route path="/repair/bookings/:id" element={<RequireAuth role="user"><RepairBookingPage /></RequireAuth>} />
         <Route path="/repair/groups/:id" element={<RequireAuth role="user"><RepairGroupPage /></RequireAuth>} />

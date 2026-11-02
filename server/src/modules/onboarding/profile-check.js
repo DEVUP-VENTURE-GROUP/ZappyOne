@@ -69,7 +69,8 @@ async function setupJourney(shopId) {
   ];
   const live = isLive(shop);
   const next = steps.find((st) => !st.done && !st.waiting) || null;
-  return { live, steps, next, done: steps.filter((st) => st.done).length, total: steps.length };
+  const done = steps.filter((st) => st.done).length;
+  return { live, complete: done === steps.length, steps, next, done, total: steps.length };
 }
 
 module.exports = { profileStatus, setupJourney, RULES };

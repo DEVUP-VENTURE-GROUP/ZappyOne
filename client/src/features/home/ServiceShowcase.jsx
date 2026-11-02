@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { ChevronRight, Wrench } from 'lucide-react';
 import { SERVICE_ICONS, CategoryTile } from '@shared/components/home/LiveServices';
-import { artFor, PITCH, servicePhoto, tilePhoto } from '@shared/components/home/serviceArt';
+import { PITCH, servicePhoto, tilePhoto } from '@shared/components/home/serviceArt';
 import { categoryPhoto } from '@shared/components/home/problemArt';
 import { formatPaise } from '@shared/utils/money';
 
@@ -52,7 +52,7 @@ function ServiceCard({ service, onOpen }) {
     tile: { ...c, imageUrl: categoryPhoto(service.artKey || service.code, c) || c.imageUrl }, path: `/repair/category/${service.artKey || service.code}/${c.code}`,
   }));
   const optionTiles = (service.options || []).map((o) => ({
-    tile: { code: o.code, name: o.name, icon: o.icon, emoji: o.emoji, tone: o.tone, imageUrl: o.imageUrl || servicePhoto({ code: o.code }) || '', subtitle: '' }, path: o.path, target: o.service,
+    tile: { code: o.code, name: o.name, icon: o.icon, imageUrl: o.imageUrl || servicePhoto({ code: o.code }) || '', subtitle: '' }, path: o.path, target: o.service,
   }));
   const tiles = repairTiles.length ? repairTiles : optionTiles;
   const count = repairTiles.length
@@ -97,17 +97,17 @@ function ServiceCard({ service, onOpen }) {
 }
 
 function Section({ domain, onOpen }) {
-  // The section's own photo when it has one (helping errands), else its character.
-  const photo = servicePhoto(domain.services[0]);
-  const art = photo ? { still: photo } : artFor(domain.services[0]?.code, domain.code);
+  // The section's real photo, else its icon: no characters beside photos.
+  const first = domain.services[0];
+  const photo = servicePhoto(first) || tilePhoto(first?.code);
+  const Icon = SERVICE_ICONS[first?.icon] || Wrench;
   const [title, line] = PITCH[domain.code] || [domain.name, domain.description];
   return (
     <section aria-labelledby={`band-${domain.code}`} className="grid gap-3 lg:grid-cols-[280px_minmax(0,1fr)] lg:gap-8">
       <div className="flex items-center gap-3 lg:items-start">
-        {art && (
-          <img src={art.still} alt="" loading="lazy"
-            className={`h-12 w-12 shrink-0 rounded-full bg-sunken lg:h-16 lg:w-16 ${photo ? 'object-cover' : 'object-contain mix-blend-multiply'}`} />
-        )}
+        {photo
+          ? <img src={photo} alt="" loading="lazy" className="h-12 w-12 shrink-0 rounded-full bg-sunken object-cover lg:h-16 lg:w-16" />
+          : <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-zappy-50 lg:h-16 lg:w-16"><Icon size={22} strokeWidth={1.7} className="text-zappy-700" /></span>}
         <div className="min-w-0">
           <h3 id={`band-${domain.code}`} className="text-[17px] font-bold leading-snug text-ink-900">{domain.name}</h3>
           <p className="text-[13px] leading-snug text-ink-500">{line || title}</p>

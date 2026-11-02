@@ -140,7 +140,7 @@ export default function WalletPage() {
             <button type="button" onClick={() => nav('/referral')} className="card flex w-full items-center gap-3 text-left">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-btn bg-sunken text-ink-700"><Gift size={20} /></span>
               <span className="min-w-0 flex-1">
-                <span className="block text-[15px] font-semibold text-ink-900">{tr('wallet.referTitle', 'Refer a friend, get ₹100')}</span>
+                <span className="block text-[15px] font-semibold text-ink-900">{tr('wallet.referTitle', 'Invite friends')}</span>
                 <span className="block text-[13px] text-ink-500">{tr('wallet.referLine', 'Paid to your wallet when they complete their first booking.')}</span>
               </span>
               <ChevronRight size={18} className="shrink-0 text-ink-400" />
@@ -166,7 +166,7 @@ export default function WalletPage() {
                   txns.items.map((t, i) => {
                     const positive = t.amountPaise > 0;
                     const TXN_META = {
-                      cashback:                { Icon: Gift, bg: 'bg-fuchsia-50 border-fuchsia-100 text-fuchsia-600', label: tr('wallet.txn.cashback', 'Cashback Reward') },
+                      cashback:                { Icon: Gift, bg: 'bg-zappy-50 border-zappy-100 text-zappy-600', label: tr('wallet.txn.cashback', 'Cashback Reward') },
                       referral_reward:         { Icon: Gift,     bg: 'bg-rose-50 border-rose-100 text-rose-600',   label: tr('wallet.txn.referral', 'Referral Bonus') },
                       admin_adjustment_credit: { Icon: Crown,    bg: 'bg-amber-50 border-amber-100 text-amber-600',  label: tr('wallet.txn.bonusCredit', 'Bonus Credit') },
                       admin_adjustment_debit:  { Icon: Receipt,  bg: 'bg-slate-50 border-slate-200 text-slate-600',    label: tr('wallet.txn.adjustmentDebit', 'Adjustment Debit') },
@@ -188,7 +188,7 @@ export default function WalletPage() {
 
                     return (
                       <motion.div key={t._id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 + (i * 0.05) }}
-                        className={`flex items-center gap-4 p-4 transition-colors hover:bg-slate-50 ${isReward ? 'bg-gradient-to-r from-fuchsia-50/30 to-transparent' : ''}`}>
+                        className={`flex items-center gap-4 p-4 transition-colors hover:bg-slate-50 ${isReward ? 'bg-gradient-to-r from-zappy-50/30 to-transparent' : ''}`}>
                         
                         <div className={`w-12 h-12 rounded-[1.25rem] flex items-center justify-center shrink-0 border shadow-sm ${bg}`}>
                           <TxnIcon size={20} strokeWidth={2} />
@@ -197,7 +197,7 @@ export default function WalletPage() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-0.5">
                             <p className="text-[14px] font-black text-slate-800 truncate leading-tight">{label}</p>
-                            {isReward && <span className="text-[9px] font-black bg-fuchsia-500 text-white px-2 py-0.5 rounded shadow-sm uppercase tracking-widest shrink-0">{tr('wallet.reward', 'Reward')}</span>}
+                            {isReward && <span className="text-[9px] font-black bg-zappy-500 text-white px-2 py-0.5 rounded shadow-sm uppercase tracking-widest shrink-0">{tr('wallet.reward', 'Reward')}</span>}
                           </div>
                           <p className="text-[11px] font-bold text-slate-400">
                             {new Date(t.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}

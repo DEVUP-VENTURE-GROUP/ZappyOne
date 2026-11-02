@@ -7,6 +7,9 @@
 import { deviceName } from '@zappy/core/shared/deviceName';
 import { useEffect, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { usePathname, useRouter } from 'expo-router';
+import { useAppSelector } from '@zappy/core/store/hooks';
+import { rememberReturn } from '@zappy/ui/app/AppRoot';
 import { StyleSheet, View } from 'react-native';
 import { Check } from 'lucide-react-native';
 import { useCreateRepairBookingMutation } from '@zappy/core/api';
@@ -32,9 +35,12 @@ export function ConfirmStep({ vertical, brand, model, configuration, problem, di
   vertical: string; brand: Named; model: Named; configuration: Named | null; problem: Named; diagnosis: Diagnosis | null; provider: Provider | null;
   repairCode: string | null; qualityCode: string | null; serviceMode: string; inspectionFeePaise: number | null; location: BookingLocation;
   fuelType: string | null; diagnosticAnswers: Record<string, unknown> | null; diagnosticTranscript: QA[]; addOnCodes: string[]; scheduledAt: Date | null;
-  onDone: (booking: { _id: string }) => void;
+  onDone: (booking: { _id: string; reference?: string }) => void;
 }) {
   const [create, { isLoading }] = useCreateRepairBookingMutation();
+  const signedIn = useAppSelector((st) => st.auth.isAuthenticated);
+  const router = useRouter();
+  const pathname = usePathname();
   // Arrived through this provider's own link (StorefrontPage kept the code): the server checks it is theirs.
   const [via, setVia] = useState<string | null>(null);
   useEffect(() => {
@@ -51,6 +57,8 @@ export function ConfirmStep({ vertical, brand, model, configuration, problem, di
   const surge = useSurge({ kind: 'repair', vertical, serviceMode, loc: location, basePaise: price, skip: price == null });
 
   async function book() {
+    // Anyone can browse to here; signing in is asked only to confirm, and the flow's draft brings them straight back.
+    if (!signedIn) { toast('Sign in to confirm. Your booking is saved.'); rememberReturn(pathname); router.push('/(auth)/login' as never); return; }
     if (onSite === 'incomplete') { toast.error('Add their name and mobile number, or untick "for someone else".'); return; }
     try {
       const res = await create({
@@ -69,7 +77,6 @@ export function ConfirmStep({ vertical, brand, model, configuration, problem, di
         ...(tip > 0 && { tipPaise: tip * 100 }),
         ...(scheduledAt && { scheduledAt: scheduledAt.toISOString(), slotLabel: slotLabel(scheduledAt) }),
       }).unwrap();
-      toast.success('Booking confirmed');
       onDone(res.booking);
     } catch (err) {
       if (surgeChanged(err, surge.refetch)) { toast((err as { data: { error: string } }).data.error); return; }

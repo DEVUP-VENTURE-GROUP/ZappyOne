@@ -110,12 +110,11 @@ export default function ReturnTaskPage() {
         ...surge.bookingFields,
         ...(tip > 0 && { tipPaise: tip * 100 }),
       }).unwrap();
-      toast.success('Task requested');
       if (res.task?.paymentMethod === 'online') {
         await pay({ bookingSource: 'helping', bookingId: res.task._id, label: 'Helper service charge' });
       }
       draftDone();
-      nav(`/helping/tasks/${res.task._id}`);
+      nav(`/helping/tasks/${res.task._id}`, { replace: true, state: { justBooked: true } });
     } catch (err) {
       if (surgeChanged(err, surge.refetch)) { toast(err.data.error); return; }
       toast.error(err?.data?.error || 'Could not create the task');

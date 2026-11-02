@@ -33,10 +33,10 @@ function PremiumStepIndicator({ currentStep }) {
           const isActive = idx === currentStep;
           return (
             <div key={idx} className="relative flex flex-col items-center">
-              <div className={`relative z-10 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-500 ${isCompleted ? 'bg-zappy-600 text-white shadow-lg shadow-zappy-500/30' : isActive ? 'bg-white border-2 border-fuchsia-500 text-fuchsia-600 shadow-xl shadow-fuchsia-500/20 scale-110' : 'bg-white border-2 border-slate-200 text-slate-400'}`}>
+              <div className={`relative z-10 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-500 ${isCompleted ? 'bg-zappy-600 text-white shadow-lg shadow-zappy-500/30' : isActive ? 'bg-white border-2 border-zappy-500 text-zappy-600 shadow-xl shadow-zappy-500/20 scale-110' : 'bg-white border-2 border-slate-200 text-slate-400'}`}>
                 {isCompleted ? <Check size={14} strokeWidth={3} /> : <span className="text-xs font-black">{idx + 1}</span>}
               </div>
-              <span className={`absolute -bottom-6 w-20 text-center text-[9px] font-bold uppercase tracking-widest transition-colors ${isActive ? 'text-fuchsia-600' : isCompleted ? 'text-zappy-600' : 'text-slate-400'}`}>
+              <span className={`absolute -bottom-6 w-20 text-center text-[9px] font-bold uppercase tracking-widest transition-colors ${isActive ? 'text-zappy-600' : isCompleted ? 'text-zappy-600' : 'text-slate-400'}`}>
                 {STEPS[idx]}
               </span>
             </div>
@@ -155,7 +155,7 @@ export default function EventBookingPage() {
         return signed.key;
       }));
       set('roomPhotos', [...form.roomPhotos, ...keys]);
-      toast.success(`${keys.length} photo(s) added beautifully! ✨`);
+      toast.success(`${keys.length} photo${keys.length === 1 ? '' : 's'} added`);
     } catch { toast.error('Upload failed. The magic got interrupted.'); }
     finally { setUploading(false); }
   }
@@ -171,19 +171,14 @@ export default function EventBookingPage() {
       const orderRes = await createAdvanceOrder(bookingId).unwrap();
 
       try {
-        const checkoutResp = await openCheckout({
-          paymentSessionId: orderRes.paymentSessionId,
-          cfOrderId:        orderRes.cfOrderId,
-          cashfreeEnv:      orderRes.cashfreeEnv || import.meta.env.VITE_CASHFREE_ENV || 'sandbox',
-          amountPaise:      orderRes.amountPaise,
-          purpose:          'Event Booking - Advance',
-        });
+        const checkoutResp = await openCheckout({ ...orderRes, purpose: 'Event booking advance' });
         await verifyAdvancePayment({
           id:          bookingId,
           cfOrderId:   checkoutResp.cfOrderId,
           cfPaymentId: checkoutResp.cfPaymentId,
+          ...(checkoutResp.razorpaySignature && { razorpaySignature: checkoutResp.razorpaySignature }),
         }).unwrap();
-        toast.success('🎉 Booking Confirmed! Your slot is locked.');
+        toast.success('Booking confirmed. Your slot is held for you.');
         clearDraft(draftKey);
         navigate(`/events/bookings/${bookingId}?paid=true`, { replace: true });
       } catch (payErr) {
@@ -210,10 +205,10 @@ export default function EventBookingPage() {
     true,
   ];
 
-  if (!theme) return <div className="min-h-screen bg-slate-50 flex items-center justify-center"><Loader2 size={32} className="animate-spin text-fuchsia-500" /></div>;
+  if (!theme) return <div className="min-h-screen bg-slate-50 flex items-center justify-center"><Loader2 size={32} className="animate-spin text-zappy-500" /></div>;
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-32 font-sans selection:bg-fuchsia-100 selection:text-fuchsia-900">
+    <div className="min-h-screen bg-slate-50 pb-32 font-sans selection:bg-zappy-100 selection:text-zappy-900">
       
       {/* Premium Glassy Header */}
       <div className="sticky top-0 z-40 bg-white border-b border-slate-200/50 pt-10 pb-8 px-4 shadow-[0_4px_30px_rgba(0,0,0,0.03)]">

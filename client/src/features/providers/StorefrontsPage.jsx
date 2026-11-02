@@ -73,10 +73,12 @@ export default function StorefrontsPage() {
   const loc = useSelector(selectLocation);
   const hasLocation = useSelector(selectHasLocation);
   const [sort, setSort] = useState('best');
+  const [mode, setMode] = useState('doorstep');
+  const [openOnly, setOpenOnly] = useState(false);
   const { data: services } = useRepairVerticalsQuery();
   const service = useMemo(() => services?.items?.find((i) => i.vertical === vertical), [services, vertical]);
-  const { data, isLoading, isFetching } = useStorefrontsQuery({ vertical, lat: loc.lat, lng: loc.lng, sort }, { skip: !hasLocation });
-  const items = data?.items || [];
+  const { data, isLoading, isFetching } = useStorefrontsQuery({ vertical, lat: loc.lat, lng: loc.lng, sort, serviceMode: mode }, { skip: !hasLocation });
+  const items = (data?.items || []).filter((s) => !openOnly || s.openNow !== false);
   const flowPath = service?.path || `/repair/${slug}`;
 
   return (
@@ -114,16 +116,29 @@ export default function StorefrontsPage() {
           ))}
         </div>
 
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex rounded-full bg-white p-0.5 ring-1 ring-slate-200" role="radiogroup" aria-label="Where the work happens">
+            {[['doorstep', 'At my home'], ['workshop', 'At their shop']].map(([k, l]) => (
+              <button key={k} type="button" role="radio" aria-checked={mode === k} onClick={() => setMode(k)}
+                className={`rounded-full px-3 py-1 text-[12.5px] font-bold ${mode === k ? 'bg-zappy-600 text-white' : 'text-slate-600'}`}>{l}</button>
+            ))}
+          </div>
+          <button type="button" aria-pressed={openOnly} onClick={() => setOpenOnly((v) => !v)}
+            className={`rounded-full px-3 py-1.5 text-[12.5px] font-bold ring-1 ${openOnly ? 'bg-emerald-50 text-emerald-800 ring-emerald-300' : 'bg-white text-slate-600 ring-slate-200'}`}>
+            Open now
+          </button>
+        </div>
+
         {!hasLocation && <p className="card text-sm text-slate-600">Set your location to see who can come to you.</p>}
         {(isLoading || (isFetching && !items.length)) && hasLocation && [0, 1, 2].map((k) => <Skeleton key={k} />)}
         {!isLoading && !isFetching && hasLocation && !items.length && (
           <div className="card text-center">
             <Store size={28} className="mx-auto text-slate-300" />
-            <p className="mt-2 font-bold text-slate-800">No one listed here yet</p>
-            <p className="mt-1 text-sm text-slate-500">Book Fastest available and we ring every verified pro who covers your address.</p>
+            <p className="mt-2 font-bold text-slate-800">{openOnly && data?.items?.length ? 'No one is open right now' : 'No one listed here yet'}</p>
+            <p className="mt-1 text-sm text-slate-500">{openOnly && data?.items?.length ? 'Turn off "Open now" to book someone for later.' : mode === 'workshop' ? 'Try "At my home" instead.' : 'Book Fastest available and we ring every verified pro who covers your address.'}</p>
           </div>
         )}
-        {items.length > 0 && <p className="text-[12px] font-semibold text-slate-500">{data.total} verified {data.total === 1 ? 'provider' : 'providers'} cover your address</p>}
+        {items.length > 0 && <p className="text-[12px] font-semibold text-slate-500">{items.length} verified {items.length === 1 ? 'provider' : 'providers'} {mode === 'workshop' ? 'near you' : 'cover your address'}</p>}
         <AnimatePresence mode="popLayout">
           {items.map((s, i) => <Card key={`${s.kind}:${s.id}`} s={s} index={i} onOpen={() => nav(`/storefront/${s.kind}/${s.id}?service=${vertical}`, { state: { storefront: s } })} />)}
         </AnimatePresence>

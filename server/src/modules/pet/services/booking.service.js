@@ -142,7 +142,8 @@ async function createBooking({
 
   const providerLocation = capability?.baseLocation?.coordinates || null;
 
-  const pricing = await pricingService.quote({
+  const quoteArgs = {
+    waivePlatformFee: (await require('../../jobs/member').perks(userId)).waivePlatformFee,
     categoryCode,
     serviceMode,
     pets: withPets,
@@ -155,7 +156,18 @@ async function createBooking({
     specialHandling,
     couponPaise,
     packageCode,
-  });
+  };
+  // The chosen provider's own prices; with nobody chosen, the cheapest provider near the customer who can take it.
+  let pricing;
+  if (capability) pricing = await pricingService.quoteFor(quoteArgs, capability);
+  else {
+    const best = await pricingService.cheapestNearby(quoteArgs, {
+      categoryCode, variantCode: withPets[0].variantCode, pets: withPets, serviceMode,
+      serviceLocation: serviceLocation?.coordinates || null, checkInAt, checkOutAt, scheduledAt, serviceAreaCode,
+    });
+    if (!best) throw httpError('No pet care provider near you has priced this yet. Try another time or service.', 409, 'NO_PROVIDER_PRICE');
+    pricing = best.quote;
+  }
 
   const lineByPet = new Map(pricing.lines.map((l) => [String(l.petId), l]));
 

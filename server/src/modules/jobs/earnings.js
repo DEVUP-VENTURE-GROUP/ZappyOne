@@ -60,12 +60,10 @@ async function forJob(kind, id) {
   const b = k.earning.bill(doc);
   const surgePaise = doc.surge?.paise || 0;
   const surgeYoursPaise = require('./surge').providerSurgePaise(doc);
-  const surgeHeldPaise = require('./surge').heldSurgePaise(doc);
   const boostPaise = doc.boost?.paise || 0;
   const tipPaise = doc.tip?.paise || 0;
   const tipOnBill = doc.tip?.method === 'with_payment' ? tipPaise : 0;
   const carriedPaise = doc.carriedFee?.paise > 0 ? doc.carriedFee.paise : 0;
-  const discountPaise = Math.max(0, b.servicePaise + b.platformFeePaise + b.taxPaise - b.creditPaise - b.totalPaise);
 
   const customerPaidPaise = b.totalPaise + surgePaise + boostPaise + tipOnBill + carriedPaise;
   const youEarnPaise = b.providerPaise + boostPaise + surgeYoursPaise + tipPaise;
@@ -75,33 +73,12 @@ async function forJob(kind, id) {
   const smallJobPaise = b.smallJobPaise || 0;
   const km = b.distanceKm != null ? ` (${Math.round(b.distanceKm * 10) / 10} km)` : '';
   const journeyName = `${b.journeyLabel || 'Travel'}${km}`;
-  const pct = b.servicePaise > 0 ? Math.round((b.commissionPaise / b.servicePaise) * 100) : 0;
 
   return {
     kind, reference: doc.reference || null, status: doc.status,
     done: k.earning.done.includes(doc.status), cash: doc.paymentMethod === 'cash',
     customerPaidPaise,
-    bill: [
-      ...line('Service', b.servicePaise - journeyPaise - smallJobPaise),
-      ...line(journeyName, journeyPaise),
-      ...line('Small job top-up', smallJobPaise),
-      ...line('Platform fee', b.platformFeePaise),
-      ...line('GST', b.taxPaise),
-      ...line('Discount', -discountPaise),
-      ...line('Inspection already paid', -b.creditPaise),
-      ...line((doc.surge?.lines?.length === 1 && doc.surge.lines[0].label) || 'Surge fee', surgePaise),
-      ...line('Priority boost', boostPaise),
-      ...line('Tip', tipOnBill),
-      ...line('Earlier cancellation fee', carriedPaise),
-    ],
-    zappy: [
-      ...line(`Commission${pct ? ` (${pct}%)` : ''}`, b.commissionPaise),
-      ...line('Platform fee', b.platformFeePaise),
-      ...line('GST', b.taxPaise),
-      ...line('ZappyOne share of the surge fee', surgePaise - surgeYoursPaise - surgeHeldPaise),
-      ...line('Your surge share, held for review', surgeHeldPaise, 'paid to you if the review clears it'),
-      ...line('Earlier cancellation fee', carriedPaise, 'owed by the customer from a cancelled booking'),
-    ],
+    // The partner sees three numbers (customer pays, ZappyOne, you earn): no commission, fee or tax lines (user rule).
     zappyKeepsPaise: Math.max(0, customerPaidPaise - (youEarnPaise - (tipPaise - tipOnBill))),
     youEarnPaise,
     yours: [

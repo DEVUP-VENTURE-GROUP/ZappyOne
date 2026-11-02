@@ -20,8 +20,6 @@ const planSchema = new mongoose.Schema({
   // Off the monthly price for paying for more months at once, set by the partner.
   durations: { type: [{ _id: false, months: { type: Number, enum: [1, 3, 5, 6, 12] }, discountPct: { type: Number, min: 0, max: 40, default: 0 } }], default: [{ months: 1, discountPct: 0 }] },
   pauseDaysPerMonth: { type: Number, min: 0, max: 10, default: 4 },
-  // The standard price of the same visits, at the time it was set, so review can judge it.
-  referencePaise: { type: Number, default: null },
   status: { type: String, enum: ['draft', 'pending', 'live', 'paused', 'rejected'], default: 'draft', index: true },
   reviewNote: { type: String, default: '' },
 }, { timestamps: true });
@@ -82,9 +80,6 @@ const configSchema = new mongoose.Schema({
   key: { type: String, default: 'main', unique: true },
   // Charged to the customer once per plan month, like the platform fee on a booking.
   platformFeePaise: { type: Number, default: 4900, min: 0 },
-  // A plan is live at once when its price per visit is within this band of the standard price; otherwise admin reviews it.
-  autoApproveMinPct: { type: Number, default: 25 },
-  autoApproveMaxPct: { type: Number, default: 130 },
   bookAheadDays: { type: Number, default: 7, min: 1, max: 30 },
 }, { timestamps: true });
 

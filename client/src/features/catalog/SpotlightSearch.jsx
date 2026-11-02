@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, ChevronRight, Clock, Search, X, Wrench } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Clock, Search, Star, X, Wrench } from 'lucide-react';
+import { useSelector } from 'react-redux';
+import { selectIsAuthed } from '@shared/modules/auth/authSlice';
 import { problemPhoto, categoryPhoto, servicePhoto } from '@shared/components/home/problemArt';
-import { useLazySmartSearchQuery, useSearchTrendingQuery } from '@shared/services/api';
+import { useLazySmartSearchQuery, useMenuSearchQuery, useSearchTrendingQuery } from '@shared/services/api';
 import { getRecent, addRecent, clearRecent } from './recentSearches';
 import VoiceSearchButton from '../../components/common/VoiceSearchButton';
 import { trackSearch } from '../../hooks/useTelemetry';
@@ -95,6 +97,37 @@ function ProblemGroups({ problems, onOpen, words }) {
   ));
 }
 
+const inr = (p) => `₹${Math.round(p / 100).toLocaleString('en-IN')}`;
+
+// Matching jobs from the menus of pros near the customer, cheapest first; a tap opens that pro's storefront.
+function MenuHits({ items, onOpen }) {
+  return (
+    <section className="pt-3">
+      <h3 className="px-4 pb-1 text-[12px] font-semibold uppercase tracking-[0.08em] text-slate-500">From pros near you</h3>
+      <ul>
+        {items.map((i) => (
+          <li key={`${i.provider.kind}:${i.provider.id}:${i.repairCode}`}>
+            <button type="button" onClick={() => onOpen(i)} className="flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-slate-50">
+              <span className="h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-slate-100">
+                {(i.photoUrl || i.provider.imageUrl) && <img src={i.photoUrl || i.provider.imageUrl} alt="" className="h-full w-full object-cover" />}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[15px] font-semibold text-slate-800">{i.name}</span>
+                <span className="flex items-center gap-1.5 truncate text-[12.5px] text-slate-500">
+                  {i.provider.name}
+                  {i.provider.rating != null && <span className="flex items-center gap-0.5"><Star size={11} className="fill-amber-400 text-amber-400" />{Number(i.provider.rating).toFixed(1)}</span>}
+                  {i.provider.arrivalMinutes != null && <span>· {i.provider.arrivalMinutes} min away</span>}
+                </span>
+              </span>
+              <span className="shrink-0 text-[14px] font-bold tabular-nums text-slate-900">{inr(i.fromPaise)}</span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 export default function SpotlightSearch({ open, onClose, lat, lng, initialQuery = '' }) {
   const nav = useNavigate();
   const inputRef = useRef(null);
@@ -102,6 +135,11 @@ export default function SpotlightSearch({ open, onClose, lat, lng, initialQuery 
   const [recent, setRecent] = useState(getRecent());
   const [runSearch, searchState] = useLazySmartSearchQuery();
   const { data: trendData } = useSearchTrendingQuery({ lat, lng }, { skip: !open });
+  // Jobs on the menus of pros near them, once they have typed a little (repair menu-search).
+  const signedIn = useSelector(selectIsAuthed);
+  const [menuTerm, setMenuTerm] = useState('');
+  useEffect(() => { const t = setTimeout(() => setMenuTerm(q.trim()), 350); return () => clearTimeout(t); }, [q]);
+  const { data: menuHits } = useMenuSearchQuery({ q: menuTerm, lat, lng }, { skip: !open || !signedIn || menuTerm.length < 2 || typeof lat !== 'number' });
 
   useEffect(() => {
     if (!open) return undefined;
@@ -227,6 +265,7 @@ export default function SpotlightSearch({ open, onClose, lat, lng, initialQuery 
           {data && !data.notHere && (
             <>
               {data.corrected && <p className="px-4 pt-3 text-[13px] text-slate-500">Showing results for “{data.corrected}”</p>}
+              {menuHits?.items?.length > 0 && <MenuHits items={menuHits.items} onOpen={openResult} />}
               <Group title={GROUP_LABEL.services} items={data.services} onOpen={openResult} words={words} />
               <ProblemGroups problems={data.problems} onOpen={openResult} words={words} />
               <Group title={GROUP_LABEL.categories} items={data.categories} onOpen={openResult} words={words} />

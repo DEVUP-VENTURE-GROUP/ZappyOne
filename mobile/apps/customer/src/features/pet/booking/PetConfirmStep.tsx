@@ -44,7 +44,6 @@ export function PetConfirmStep({ categoryCode, serviceMode, variantName, petName
         workerId: provider.workerId || undefined, shopId: provider.shopId || undefined,
         paymentMethod: 'cash', idempotencyKey, ...surge.bookingFields, ...(tip > 0 && { tipPaise: tip * 100 }),
       }).unwrap();
-      toast.success(t('book.booked', 'Booked'));
       onBooked(res.booking._id);
     } catch (err) {
       if (surgeChanged(err, surge.refetch)) { toast((err as { data: { error: string } }).data.error); return; }

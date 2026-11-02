@@ -42,6 +42,11 @@ const repairSchema = new mongoose.Schema(
     /** Symptoms this repair can resolve. Drives problem → repair recommendation. */
     problemCodes: { type: [String], default: [], index: true },
 
+    // A job one provider added to their own menu; null for ZappyOne's catalog jobs every provider can offer.
+    owner: { type: { _id: false, kind: { type: String, enum: ['shop', 'worker'] }, id: mongoose.Schema.Types.ObjectId }, default: null },
+    includes: { type: [String], default: [] },
+    photoKey: { type: String, default: '' },
+
     /**
      * Where this repair is offered. Empty = everywhere.
      *
@@ -133,6 +138,7 @@ repairSchema.methods.needsDiagnosis = function needsDiagnosis() {
 
 // Unique per vertical — see problem.model.js for the reasoning.
 repairSchema.index({ vertical: 1, code: 1 }, { unique: true });
+repairSchema.index({ 'owner.id': 1, vertical: 1 }, { partialFilterExpression: { 'owner.id': { $exists: true } } });
 
 const Repair = mongoose.model('Repair', repairSchema);
 

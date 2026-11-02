@@ -12,7 +12,7 @@ import { useReducedMotion } from '@zappy/core/hooks/useReducedMotion';
 import { Text } from '@zappy/ui/components';
 import { serviceIcon } from '@zappy/ui/components/home/serviceIcons';
 import { webAsset } from '@zappy/ui/lib/media';
-import { colors, ink, zappy } from '@zappy/ui/theme/colors';
+import { colors, ink, slate, zappy } from '@zappy/ui/theme/colors';
 import { radius } from '@zappy/ui/theme/radius';
 import { spacing } from '@zappy/ui/theme/spacing';
 import type { HomeService } from './homeCatalog';
@@ -54,7 +54,10 @@ export function ProblemChips({ services }: { services: HomeService[] }) {
   if (!chips.length) return null;
   return (
     <View style={styles.section}>
-      <Text variant="caption" weight="semibold" color={ink[500]}>Common problems</Text>
+      <View>
+        <Text variant="heading3" weight="bold">What's wrong?</Text>
+        <Text variant="caption" color={ink[500]}>Tap the problem, see the price</Text>
+      </View>
       <ScrollView ref={row} horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}
         onLayout={(e) => { width.current.view = e.nativeEvent.layout.width; }}
         onContentSizeChange={(w) => { width.current.content = w; }}
@@ -65,9 +68,10 @@ export function ProblemChips({ services }: { services: HomeService[] }) {
           const Icon = serviceIcon(c.service.icon);
           const photo = webAsset(problemPhotoIn(c.service.artKey || c.service.code, c, c.categoryCode ? { code: c.categoryCode } : null));
           return (
-            <Pressable key={`${c.service.code}:${c.code}`} onPress={() => router.push(c.service.path as never)} accessibilityRole="button" style={styles.chip}>
-              {photo ? <Image source={{ uri: photo }} style={styles.thumb} /> : <View style={[styles.thumb, styles.iconThumb]}><Icon size={14} color={zappy[600]} /></View>}
-              <Text variant="caption" weight="medium">{c.name}</Text>
+            <Pressable key={`${c.service.code}:${c.code}`} onPress={() => router.push(c.service.path as never)} accessibilityRole="button" accessibilityLabel={`${c.name}, ${c.service.name}`} style={({ pressed }) => [styles.card, pressed && styles.pressed]}>
+              {photo ? <Image source={{ uri: photo }} style={styles.thumb} resizeMode="cover" /> : <View style={[styles.thumb, styles.iconThumb]}><Icon size={26} strokeWidth={1.6} color={zappy[600]} /></View>}
+              <Text variant="bodySmall" weight="semibold" numberOfLines={2}>{c.name}</Text>
+              <Text variant="caption" color={ink[500]} numberOfLines={1}>{c.service.name}</Text>
             </Pressable>
           );
         })}
@@ -78,8 +82,9 @@ export function ProblemChips({ services }: { services: HomeService[] }) {
 
 const styles = StyleSheet.create({
   section: { gap: spacing.sm },
-  row: { gap: spacing.sm, paddingRight: spacing.base },
-  chip: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: 44, paddingLeft: 6, paddingRight: 14, borderRadius: radius.pill, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
-  thumb: { width: 28, height: 28, borderRadius: 14 },
+  row: { gap: spacing.md, paddingRight: spacing.base },
+  card: { width: 118, gap: 4 },
+  pressed: { opacity: 0.85 },
+  thumb: { width: 118, aspectRatio: 4 / 5, borderRadius: radius.large, borderWidth: 1, borderColor: colors.border, backgroundColor: slate[100] },
   iconThumb: { alignItems: 'center', justifyContent: 'center', backgroundColor: zappy[50] },
 });

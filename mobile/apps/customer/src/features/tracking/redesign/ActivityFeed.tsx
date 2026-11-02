@@ -8,8 +8,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Check } from 'lucide-react-native';
 import { fmtTime } from '@zappy/core/shared/trackingSteps';
 import { Text } from '@zappy/ui/components';
-import { colors, ink, success, zappy } from '@zappy/ui/theme/colors';
-import { radius } from '@zappy/ui/theme/radius';
+import { colors, ink, slate, success, zappy } from '@zappy/ui/theme/colors';
 import { spacing } from '@zappy/ui/theme/spacing';
 
 export interface FeedEvent { status: string; at: string; text: string }
@@ -19,7 +18,7 @@ export function ActivityFeed({ events, live }: { events: FeedEvent[]; live: bool
   return (
     <View style={styles.card}>
       <View style={styles.head}>
-        <Text variant="body" weight="bold">Live updates</Text>
+        <Text variant="heading3" weight="extrabold" style={styles.title}>Updates</Text>
         {live ? <View style={styles.inline}><View style={styles.liveDot} /><Text variant="caption" weight="semibold" color={ink[400]}>Live</Text></View> : null}
       </View>
       {events.map((e, i) => {
@@ -43,7 +42,8 @@ export function ActivityFeed({ events, live }: { events: FeedEvent[]; live: bool
 }
 
 const styles = StyleSheet.create({
-  card: { padding: spacing.lg, borderRadius: radius.large, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
+  card: { padding: spacing.base, backgroundColor: colors.surface, borderBottomWidth: 8, borderBottomColor: slate[100] },
+  title: { fontSize: 18 },
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.md },
   inline: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   liveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: success[600] },

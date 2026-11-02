@@ -1,7 +1,7 @@
 /** One event booking in the list: cover, theme, day and slot, status, total. */
 import { memo } from 'react';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
-import { ChevronRight } from 'lucide-react-native';
+import { ChevronRight, PartyPopper } from 'lucide-react-native';
 import { Text } from '@zappy/ui/components';
 import { RIPPLE } from '@zappy/ui/lib/feedback';
 import { webAsset } from '@zappy/ui/lib/media';
@@ -21,7 +21,7 @@ export const EventBookingRow = memo(function EventBookingRow({ booking, onPress 
   const st = statusOf(booking.status);
   return (
     <Pressable onPress={onPress} android_ripple={RIPPLE} accessibilityRole="button" style={styles.card}>
-      <View style={styles.cover}>{cover ? <Image source={{ uri: cover }} style={StyleSheet.absoluteFill} /> : <Text style={styles.emoji}>🎉</Text>}</View>
+      <View style={styles.cover}>{cover ? <Image source={{ uri: cover }} style={StyleSheet.absoluteFill} /> : <PartyPopper size={22} color={ink[300]} />}</View>
       <View style={styles.body}>
         <Text variant="bodySmall" weight="black" numberOfLines={1}>{booking.themeId?.title || 'Event booking'}</Text>
         <Text variant="caption" color={ink[500]}>{eventDay(booking.eventDate)}{booking.eventTimeSlot ? `, ${booking.eventTimeSlot}` : ''}</Text>
@@ -38,7 +38,6 @@ export const EventBookingRow = memo(function EventBookingRow({ booking, onPress 
 const styles = StyleSheet.create({
   card: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.md, borderRadius: radius.large, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
   cover: { width: 64, height: 64, overflow: 'hidden', borderRadius: radius.medium, alignItems: 'center', justifyContent: 'center', backgroundColor: zappy[50] },
-  emoji: { fontSize: 28 },
   body: { flex: 1, gap: 2 },
   foot: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 },
 });

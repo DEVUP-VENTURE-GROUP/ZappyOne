@@ -61,6 +61,7 @@ async function getPublicProfile(req, res, next) {
     reviews.sort((a, b) => new Date(b.at) - new Date(a.at));
     const ratingCount = Object.values(breakdown).reduce((a, b) => a + b, 0);
     const topServices = Object.entries(serviceCounts).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([s]) => s);
+    const card = await require('../provider-card').providerCard({ workerId: worker._id }, { active: false }).catch(() => null);
 
     res.json({
       worker: {
@@ -71,6 +72,8 @@ async function getPublicProfile(req, res, next) {
         completedJobs: worker.completedJobs,
         skills:        worker.skills || [],
         verified:      worker.kyc?.status === 'approved',
+        photo:         card?.photo || null,
+        neverCancels:  !!card?.neverCancels,
         verifiedServices: worker.verifiedServices,
         memberSince:   worker.createdAt,
         acceptRate:    worker.penalties?.totalOffers > 0

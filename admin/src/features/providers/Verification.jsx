@@ -287,9 +287,26 @@ function Requests() {
             <div className="min-w-0">
               <p className="font-bold text-slate-900">{row.proposedName}</p>
               {row.description && <p className="text-xs text-slate-500 mt-0.5">{row.description}</p>}
+              {(row.serviceModes?.length > 0 || row.yearsExperience != null) && (
+                <p className="mt-1 text-xs text-slate-600">
+                  {(row.serviceModes || []).map((m) => (m === 'workshop' ? 'At their shop' : "At the customer's place")).join(' · ')}
+                  {row.yearsExperience != null && ` · ${row.yearsExperience} years doing it`}
+                </p>
+              )}
+              {row.photoUrls?.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {row.photoUrls.map((u) => <a key={u} href={u} target="_blank" rel="noreferrer"><img src={u} alt="Their work" className="h-16 w-16 rounded-lg object-cover" /></a>)}
+                </div>
+              )}
               {row.packages?.length > 0 && (
-                <ul className="mt-2 space-y-0.5 text-xs text-slate-700">
-                  {row.packages.map((p, i) => <li key={i}>{p.name} · {p.minutes} min · <span className="font-semibold">₹{Math.round(p.pricePaise / 100).toLocaleString('en-IN')}</span></li>)}
+                <ul className="mt-2 space-y-1.5 text-xs text-slate-700">
+                  {row.packages.map((p, i) => (
+                    <li key={i} className="flex items-start gap-2">
+                      {p.photoUrl && <img src={p.photoUrl} alt="" className="h-9 w-9 shrink-0 rounded-md object-cover" />}
+                      <span>{p.name} · {p.minutes} min · <span className="font-semibold">₹{Math.round(p.pricePaise / 100).toLocaleString('en-IN')}</span>
+                        {p.includes?.length > 0 && <span className="block text-slate-500">Includes {p.includes.join(', ')}</span>}</span>
+                    </li>
+                  ))}
                 </ul>
               )}
               <p className="text-[11px] text-slate-400 mt-1">

@@ -113,11 +113,29 @@ function baseForUnit({ rule, variant, durationMinutes, nights, days, visits, dis
  * customer to see every component and a support agent to be able to explain
  * any of them.
  */
+// One unit of a service at the provider's own price for this pet's size; null when they have not priced it.
+function ownRateOf(capability, variantCode, size) {
+  const row = (capability?.rates || []).find((r) => r.variantCode === variantCode);
+  const paise = row?.prices?.[size || 'medium'];
+  return paise > 0 ? paise : null;
+}
+
+// The provider's own rate, taken for as many nights, days or visits as booked; their price already reflects the pet's size.
+function ownBase(rate, variant, { nights, days, visits }) {
+  if (variant.pricingUnit === 'quote') return null;
+  if (variant.pricingUnit === 'per_night') return rate * Math.max(1, nights || 1);
+  if (variant.pricingUnit === 'per_day') return rate * Math.max(1, days || 1);
+  if (variant.pricingUnit === 'per_visit') return rate * Math.max(1, visits || 1);
+  return rate;
+}
+
 async function priceOnePet({
   rule,
   variant,
   pet,
   addons = [],
+  ownRate = null,
+  ownAddonPrice = null,
   durationMinutes = null,
   nights = null,
   days = null,
@@ -125,13 +143,15 @@ async function priceOnePet({
   distanceKm = null,
   isAdditionalPet = false,
 }) {
-  const base = baseForUnit({ rule, variant, durationMinutes, nights, days, visits, distanceKm });
+  const base = ownRate != null
+    ? ownBase(ownRate, variant, { nights, days, visits })
+    : baseForUnit({ rule, variant, durationMinutes, nights, days, visits, distanceKm });
   if (base == null) {
     throw httpError('This service is quoted individually', 409, 'QUOTE_REQUIRED');
   }
 
   const size = pet.size || 'medium';
-  const sizeMultiplier = rule.sizeMultipliers?.[size] ?? 1;
+  const sizeMultiplier = ownRate != null ? 1 : (rule.sizeMultipliers?.[size] ?? 1);
   const afterSize = Math.round(base * sizeMultiplier);
   const sizeAdjustmentPaise = afterSize - base;
 
@@ -141,7 +161,7 @@ async function priceOnePet({
    * Beagle take exactly as long.
    */
   let breedMultiplier = 1;
-  if (rule.applyBreedComplexity && pet.breedCode) {
+  if (ownRate == null && rule.applyBreedComplexity && pet.breedCode) {
     const breed = await Breed.findOne({ code: pet.breedCode, isActive: true }).lean();
     if (breed?.groomingComplexity) {
       breedMultiplier = Math.min(breed.groomingComplexity, rule.maxBreedComplexity || 2);
@@ -154,6 +174,12 @@ async function priceOnePet({
   // not the same job as de-shedding a small one.
   let addonsPaise = 0;
   for (const addon of addons) {
+    if (ownAddonPrice) {
+      const own = ownAddonPrice(addon.code);
+      if (own == null) throw httpError(`${addon.name} is not offered by this provider`, 409, 'ADDON_NOT_OFFERED');
+      addonsPaise += own;
+      continue;
+    }
     const price = addon.scalesWithSize
       ? Math.round(addon.pricePaise * sizeMultiplier)
       : addon.pricePaise;
@@ -209,6 +235,10 @@ async function quote({
   packageCode = null,
   isPeak = false,
   isHoliday = false,
+  waivePlatformFee = false,
+  // The chosen provider's capability: their own prices replace ZappyOne's rules for the service money and their fees (ZappyOne staff keep the rules).
+  capability = null,
+  ownPricing = !!capability,
 }) {
   if (!pets.length) throw httpError('A booking needs at least one pet', 400, 'NO_PETS');
 
@@ -253,11 +283,17 @@ async function quote({
       .map((c) => addonByCode.get(c))
       .filter(Boolean);
 
+    const ownRate = ownPricing ? ownRateOf(capability, entry.variantCode, entry.pet.size) : null;
+    if (ownPricing && ownRate == null) {
+      throw httpError(`This provider has not set a price for ${variant.name} for a ${String(entry.pet.size || 'medium').replace('_', ' ')} pet`, 409, 'NO_PROVIDER_PRICE');
+    }
     const line = await priceOnePet({
       rule,
       variant,
       pet: entry.pet,
       addons,
+      ownRate,
+      ownAddonPrice: ownPricing ? (code) => (capability.addonPrices || []).find((a) => a.code === code)?.pricePaise ?? null : null,
       durationMinutes: entry.durationMinutes,
       nights,
       days,
@@ -277,20 +313,21 @@ async function quote({
   // regardless of how many animals are at the other end.
   const sharedRule = await resolveRule({ categoryCode, cityCode });
 
-  const travelPaise = distanceKm != null
+  // On the provider's own prices their travel is in their price, and pickup and return are their own fees.
+  const travelPaise = !ownPricing && distanceKm != null
     ? Math.round(sharedRule.perKmPaise * Math.max(0, distanceKm - (sharedRule.includedKm || 0)))
     : 0;
-  const pickupPaise = needsPickup ? sharedRule.pickupPaise : 0;
-  const returnPaise = needsReturn ? sharedRule.returnPaise : 0;
-  const specialHandlingPaise = specialHandling ? sharedRule.specialHandlingPaise : 0;
+  const pickupPaise = needsPickup ? (ownPricing ? capability.pickupPaise || 0 : sharedRule.pickupPaise) : 0;
+  const returnPaise = needsReturn ? (ownPricing ? capability.returnPaise || 0 : sharedRule.returnPaise) : 0;
+  const specialHandlingPaise = specialHandling && !ownPricing ? sharedRule.specialHandlingPaise : 0;
 
   const billableWaiting = Math.max(0, waitingMinutes - (sharedRule.waitingFreeMinutes || 0));
-  const waitingPaise = billableWaiting * (sharedRule.waitingPerMinutePaise || 0);
+  const waitingPaise = ownPricing ? 0 : billableWaiting * (sharedRule.waitingPerMinutePaise || 0);
 
   const overtimeBlocks = overtimeMinutes > 0
     ? Math.ceil(overtimeMinutes / (sharedRule.overtimeBlockMinutes || 15))
     : 0;
-  const overtimePaise = overtimeBlocks * (sharedRule.overtimeBlockPaise || 0);
+  const overtimePaise = ownPricing ? 0 : overtimeBlocks * (sharedRule.overtimeBlockPaise || 0);
 
   /*
    * Multi-night stays are discounted. Every boarding operator researched does
@@ -298,7 +335,8 @@ async function quote({
    * not match it simply loses long stays to the operator's own phone line.
    */
   let stayDiscountPct = 0;
-  if (nights >= (sharedRule.monthlyThresholdNights || 30)) {
+  if (ownPricing) stayDiscountPct = 0;
+  else if (nights >= (sharedRule.monthlyThresholdNights || 30)) {
     stayDiscountPct = sharedRule.monthlyDiscountPct || 0;
   } else if (nights >= (sharedRule.weeklyThresholdNights || 7)) {
     stayDiscountPct = sharedRule.weeklyDiscountPct || 0;
@@ -315,7 +353,7 @@ async function quote({
     }
   }
 
-  const demandMultiplier = (isHoliday ? (sharedRule.holidayMultiplier || 1)
+  const demandMultiplier = ownPricing ? 1 : (isHoliday ? (sharedRule.holidayMultiplier || 1)
     : isPeak ? (sharedRule.peakMultiplier || 1) : 1);
 
   const serviceMoney = Math.round(
@@ -329,7 +367,7 @@ async function quote({
     - (couponPaise || 0),
   );
 
-  const platformFeePaise = sharedRule.platformFeePaise || 0;
+  const platformFeePaise = waivePlatformFee ? 0 : (sharedRule.platformFeePaise || 0);
   const taxable = subtotalPaise + platformFeePaise;
   const taxPaise = Math.round(taxable * ((sharedRule.taxPct || 0) / 100));
   const totalPaise = taxable + taxPaise;
@@ -339,7 +377,9 @@ async function quote({
    * government's), not the platform fee (already ours), and not the travel
    * cost — the provider spent that on fuel to get there.
    */
-  const commissionPaise = Math.round(serviceMoney * ((sharedRule.commissionPct || 0) / 100));
+  // A partner on their own prices pays their partner commission (shop/partner-commission); the rule's rate is for ZappyOne staff.
+  const partnerPct = ownPricing ? await require('../../shop/partner-commission').pctFor(capability.shopId ? { shopId: capability.shopId } : { workerId: capability.workerId }) : null;
+  const commissionPaise = Math.round(serviceMoney * ((partnerPct ?? sharedRule.commissionPct ?? 0) / 100));
   const providerAmountPaise = Math.max(
     0,
     serviceMoney + travelPaise + pickupPaise + returnPaise + waitingPaise
@@ -396,7 +436,29 @@ async function checkProviderPrice({ categoryCode, variantCode, species, cityCode
   return { allowed: true, minPaise: min, maxPaise: max };
 }
 
+// A quote at one provider's own prices; ZappyOne's own staff keep the rules.
+async function quoteFor(args, capability) {
+  const staff = capability?.workerId && await require('../../workforce/staff').isStaff(capability.workerId);
+  return quote({ ...args, capability: staff ? null : capability });
+}
+
+// The cheapest quote among providers who can take this booking near the customer, for a booking any of them may take; null when nobody has priced it.
+async function cheapestNearby(args, matchArgs) {
+  const { PetProviderCapability } = require('../models/config.model');
+  const { providers } = await require('./matching.service').findProviders(matchArgs);
+  let best = null;
+  for (const p of providers) {
+    const capability = await PetProviderCapability.findById(p.capabilityId).lean();
+    const q = await quoteFor(args, capability).catch(() => null);
+    if (q && (!best || q.totalPaise < best.quote.totalPaise)) best = { quote: q, provider: p };
+  }
+  return best;
+}
+
 module.exports = {
+  ownRateOf,
+  quoteFor,
+  cheapestNearby,
   quote,
   priceOnePet,
   resolveRule,

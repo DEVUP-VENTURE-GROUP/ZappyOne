@@ -33,6 +33,15 @@ const notesOf = (tags = {}) => Object.fromEntries(Object.entries(tags).slice(0, 
 const createOrder = ({ orderId, amountPaise, tags }) =>
   rzRequest('POST', '/orders', { amount: amountPaise, currency: 'INR', receipt: orderId.slice(0, 40), notes: notesOf(tags), payment_capture: 1 });
 
+// A hosted Razorpay page for apps with no checkout of their own: our order id rides as reference_id.
+const createPaymentLink = ({ orderId, amountPaise, description, tags, callbackUrl }) =>
+  rzRequest('POST', '/payment_links', {
+    amount: amountPaise, currency: 'INR', reference_id: orderId.slice(0, 40), description: String(description).slice(0, 2048),
+    notes: notesOf(tags), reminder_enable: false, ...(callbackUrl && { callback_url: callbackUrl, callback_method: 'get' }),
+  });
+
+const getPaymentLink = (linkId) => rzRequest('GET', `/payment_links/${encodeURIComponent(linkId)}`);
+
 const getOrderPayments = async (rzOrderId) => (await rzRequest('GET', `/orders/${encodeURIComponent(rzOrderId)}/payments`)).items || [];
 
 const getPayment = (paymentId) => rzRequest('GET', `/payments/${encodeURIComponent(paymentId)}`);
@@ -62,4 +71,4 @@ function verifyWebhookSignature(rawBody, signature) {
   return safeEqual(expected, signature);
 }
 
-module.exports = { createOrder, getOrderPayments, getPayment, capture, createRefund, verifyCheckoutSignature, verifyWebhookSignature };
+module.exports = { createOrder, createPaymentLink, getPaymentLink, getOrderPayments, getPayment, capture, createRefund, verifyCheckoutSignature, verifyWebhookSignature };

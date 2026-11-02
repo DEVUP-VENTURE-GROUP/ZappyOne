@@ -1,17 +1,8 @@
 import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
 import { searchStage } from '@shared/customer/searchClock';
-import { Zap, MapPin, ShieldCheck } from 'lucide-react';
-import { fadeInUp } from '../../../lib/animations';
 
-/**
- * Visual filler for the "searching" phase, when there's no worker to
- * populate the WorkerRichCard yet. Sets expectations, shows we're actively
- * looking, and communicates the trust story so the pane never feels empty.
- * With `search` (server jobs/fast-assign), a live clock and what is happening
- * now, in plain words.
- */
-export default function SearchingHero({ etaMinutes, search = null, noun = 'pro' }) {
+// What the search is doing right now, with its clock (server jobs/fast-assign); a quiet line under the headline.
+export default function SearchingHero({ search = null, noun = 'pro', framed = false }) {
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
     if (!search) return undefined;
@@ -20,66 +11,19 @@ export default function SearchingHero({ etaMinutes, search = null, noun = 'pro' 
   }, [search]);
   const stage = searchStage(search, noun, now);
   return (
-    <motion.div
-      variants={fadeInUp}
-      className="relative overflow-hidden rounded-card p-[18px]"
-      style={{
-        background: 'linear-gradient(#0A1830, #0A1830)',
-        boxShadow: '0 12px 34px -12px rgba(15,23,42,.28)',
-      }}
-    >
-      {/* animated aura */}
-      <div className="absolute -top-8 -right-8 w-40 h-40 rounded-full pointer-events-none"
-        style={{ background: 'radial-gradient(circle,rgba(37,99,235,.45),transparent 70%)', animation: 'zpt-aura 4s ease-in-out infinite' }} />
-
-      <div className="flex items-center gap-3 relative">
-        <div className="w-11 h-11 rounded-[14px] flex items-center justify-center shrink-0"
-          style={{ background: 'rgba(37,99,235,.22)', border: '1px solid rgba(159,192,255,.25)' }}>
-          <Zap size={20} className="text-[#9FC0FF]" fill="currentColor" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <p className="text-white font-extrabold tracking-[-.02em] text-[16px]">{stage ? `Finding your ${noun}` : 'Finding the best pro nearby'}</p>
-            <span className="inline-flex items-center gap-1 text-[10px] font-extrabold px-2 py-[3px] rounded-lg"
-              style={{ color: '#5AE39A', background: 'rgba(18,161,80,.16)' }}>
-              <span className="w-[6px] h-[6px] rounded-full" style={{ background: '#34D27B', animation: 'zpt-beat 1.6s infinite' }} />
-              Live
-            </span>
-          </div>
-          <p className="text-[12.5px] text-white/60 mt-0.5">
-            {stage ? stage.line : 'Broadcasting your request to top-rated professionals in your area'}
-          </p>
-        </div>
-      </div>
-
-      {/* scanning bar */}
-      <div className="relative mt-4 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,.08)' }}>
+    <div className={`py-3.5 ${framed ? 'rounded-card border border-line bg-white px-4' : ''}`} role="status">
+      <div className="relative h-1 overflow-hidden rounded-full bg-sunken">
         {stage ? (
-          <span className="absolute top-0 bottom-0 left-0 rounded-full transition-[width] duration-1000"
-            style={{ width: `${Math.round(stage.pct * 100)}%`, background: stage.overdue ? '#F59E0B' : '#2563FF' }} />
+          <span className={`absolute inset-y-0 left-0 rounded-full transition-[width] duration-1000 ${stage.overdue ? 'bg-amber-500' : 'bg-zappy-600'}`}
+            style={{ width: `${Math.round(stage.pct * 100)}%` }} />
         ) : (
-          <span className="absolute top-0 bottom-0 w-1/3 rounded-full"
-            style={{ background: 'linear-gradient(90deg,transparent,#2563FF,transparent)', animation: 'zpt-scan 1.8s linear infinite' }} />
+          <span className="absolute inset-y-0 w-1/3 rounded-full bg-zappy-600" style={{ animation: 'zpt-scan 1.8s linear infinite' }} />
         )}
       </div>
-
-      <div className="grid grid-cols-3 gap-2 mt-4 relative">
-        <MiniStat icon={<MapPin size={14} />} n={etaMinutes ? `~${etaMinutes} min` : 'Nearby'} l="Estimated match" />
-        <MiniStat icon={<ShieldCheck size={14} />} n="Verified" l="ID + background" />
-        <MiniStat icon={<Zap size={14} />} n={stage ? stage.clock : 'Fast'} l={stage ? 'Searching for' : 'Quick match'} />
+      <div className="mt-2 flex items-center justify-between gap-3 text-[13px]">
+        <span className="text-ink-500">{stage ? stage.line : `Sending your request to verified ${noun}s nearby`}</span>
+        {stage && <span className="shrink-0 font-semibold tabular-nums text-ink-900">{stage.clock}</span>}
       </div>
-    </motion.div>
-  );
-}
-
-function MiniStat({ icon, n, l }) {
-  return (
-    <div className="rounded-2xl py-2.5 px-2 text-center"
-      style={{ background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.08)' }}>
-      <div className="flex items-center justify-center gap-1 text-[13px] font-extrabold text-white tabular-nums">
-        <span className="text-[#9FC0FF]">{icon}</span>{n}
-      </div>
-      <div className="text-[10px] font-semibold text-white/50 mt-1">{l}</div>
     </div>
   );
 }

@@ -88,4 +88,43 @@ async function adminToken(role = 'super_admin') {
   return signAccessToken({ sub: String(admin._id), role: 'admin', email: admin.email });
 }
 
-module.exports = { startMongo, stopMongo, resetDb, passHandoverGates, adminToken };
+// A provider's own live price for a job: every provider sets theirs, and nothing stands in for a missing one.
+async function ownPrice(owner, { vertical = 'mobile', repairCode, totalPaise, brandCode = null }) {
+  const { ProviderPricing } = require('../src/modules/repair/models/pricing.model');
+  return ProviderPricing.create({ ...owner, vertical, repairCode, brandCode, totalPaise, approvalStatus: 'auto_approved' });
+}
+
+// A verified shop covering a spot with its own price, so a booking any provider may take has a price near the customer.
+async function pricedShopNear({ lng, lat, vertical = 'mobile', lineCode = 'mobile_repair', domainCode = 'electronics', repairCode, totalPaise, phone = `9${Math.floor(100000000 + Math.random() * 899999999)}` }) {
+  const Shop = require('../src/modules/shop/shop.model');
+  const { ProviderServiceArea } = require('../src/modules/repair/models/config.model');
+  const { ProviderEnrolment, ServiceLine } = require('../src/modules/onboarding/onboarding.model');
+  await ServiceLine.updateOne({ code: lineCode }, { $setOnInsert: { code: lineCode, name: lineCode, domainCode, repairVertical: vertical, status: 'live' } }, { upsert: true });
+  const shop = await Shop.create({ businessName: 'Nearby Pricer', ownerName: 'Owner', phone, isActive: true, kyc: { status: 'approved' } });
+  await ProviderEnrolment.create({ providerKind: 'shop', shopId: shop._id, domainCode, lineCode, status: 'approved' });
+  await ProviderServiceArea.create({ shopId: shop._id, cityCode: 'hyderabad', center: { type: 'Point', coordinates: [lng, lat] }, radiusKm: 15, serviceModes: ['doorstep', 'workshop', 'pickup_repair'] });
+  await ownPrice({ shopId: shop._id }, { vertical, repairCode, totalPaise });
+  return shop;
+}
+
+// A verified helper next to `at` whose own rates mirror ZappyOne's old config for these errands, so a task has a price and amounts read as before.
+async function ratedHelper({ serviceTypes, at = [78.4867, 17.385] }) {
+  const { HelpingConfig } = require('../src/modules/helping/models/config.model');
+  const Rate = require('../src/modules/helping/models/provider-rate.model');
+  const { ProviderEnrolment } = require('../src/modules/onboarding/onboarding.model');
+  const { KINDS } = require('../src/modules/jobs/kinds');
+  const workerId = new mongoose.Types.ObjectId();
+  await mongoose.connection.collection('workers').insertOne({ _id: workerId, name: 'Rated Helper', phone: `96${String(Date.now()).slice(-8)}`, currentLocation: { type: 'Point', coordinates: at } });
+  for (const serviceType of serviceTypes) {
+    const cfg = await HelpingConfig.findOne({ serviceType }).lean();
+    const lineCode = await KINDS.helping.line({ serviceType });
+    if (lineCode) await ProviderEnrolment.updateOne({ workerId, lineCode }, { $setOnInsert: { providerKind: 'individual', workerId, domainCode: 'family_assist', lineCode, status: 'approved' } }, { upsert: true });
+    await Rate.create({
+      workerId, serviceType, baseFeePaise: cfg?.baseFeePaise || 9900, waitingPerMinutePaise: cfg?.waitingPerMinutePaise || 0,
+      extraStopPaise: cfg?.additionalStopFeePaise || 0, specialHandlingPaise: cfg?.specialHandlingFeePaise || 0,
+    });
+  }
+  return workerId;
+}
+
+module.exports = { startMongo, stopMongo, resetDb, passHandoverGates, adminToken, ownPrice, pricedShopNear, ratedHelper };

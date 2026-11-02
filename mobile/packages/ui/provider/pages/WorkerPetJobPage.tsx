@@ -49,6 +49,7 @@ import { radius } from '../../theme/radius';
 import { spacing } from '../../theme/spacing';
 import { GiveBackCard } from '../GiveBackCard';
 import { OnSiteCard } from '../OnSiteCard';
+import { ExtrasCard } from '../ExtrasCard';
 import { AssignTechnician } from '../components/AssignTechnician';
 
 export function WorkerPetJobPage() {
@@ -121,6 +122,7 @@ export function WorkerPetJobPage() {
       <ScrollView contentContainerStyle={[styles.body, { paddingBottom: insets.bottom + spacing.xxxl }]}>
         {trip && (!isOwner || ownerGoing) ? <TripSharingBanner sharing={sharing} to={trip.to} toCustomer={trip.toCustomer} /> : null}
         <OnSiteCard onSite={booking.onSite} />
+        <ExtrasCard extras={booking.extras} />
         <GiveBackCard jobId={booking._id} status={booking.status} />
         {isOwner ? (
           <JobCard>
@@ -167,7 +169,7 @@ export function WorkerPetJobPage() {
 
         {PET_PAY_STAGES.includes(booking.status) ? (
           <CollectPaymentCard amountPaise={petDuePaise(booking)} tipPaise={billTipPaise(booking)} paymentMethod={booking.paymentMethod}
-            paid={booking.paymentStatus === 'paid'} collecting={collecting} onCollect={recordCash} jobId={booking._id} />
+            paid={booking.paymentStatus === 'paid'} collecting={collecting} onCollect={recordCash} jobId={booking._id}  claim={(booking as { payClaim?: { method?: 'upi' | 'cash'; at?: string } }).payClaim} />
         ) : null}
         {PET_DONE.includes(booking.status) ? <JobEarningsCard jobId={booking._id} /> : null}
         {PET_DONE.includes(booking.status) ? <RateCustomerCard jobId={booking._id} rated={!!booking.customerRating?.stars} /> : null}

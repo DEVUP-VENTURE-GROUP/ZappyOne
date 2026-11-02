@@ -10,7 +10,7 @@ import { useRouter } from 'expo-router';
 import { ChevronRight } from 'lucide-react-native';
 import { categoryPhoto } from '@zappy/core/shared/problemArt';
 import { formatPaise } from '@zappy/core/shared/money';
-import { artFor, PITCH, servicePhoto, tilePhoto } from '@zappy/core/shared/serviceArt';
+import { PITCH, servicePhoto, tilePhoto } from '@zappy/core/shared/serviceArt';
 import { Text } from '@zappy/ui/components';
 import { CategoryTile, type TileCategory } from '@zappy/ui/components/home/CategoryTile';
 import { serviceIcon } from '@zappy/ui/components/home/serviceIcons';
@@ -47,7 +47,7 @@ const ServiceCard = memo(function ServiceCard({ service, onOpen }: { service: Ho
   const key = service.artKey || service.code;
   const repairTiles = (service.coverage || []).map((c) => ({ tile: { ...c, imageUrl: categoryPhoto(key, c) || c.imageUrl } as TileCategory, path: `/repair/category/${key}/${c.code}`, target: undefined as HomeService | undefined }));
   const optionTiles = (service.options || []).map((o) => ({
-    tile: { code: o.code, name: o.name, icon: o.icon, emoji: o.emoji, toneColor: o.toneColor, imageUrl: o.imageUrl || servicePhoto({ code: o.code }) || '', subtitle: '' } as TileCategory, path: o.path, target: o.service,
+    tile: { code: o.code, name: o.name, icon: o.icon, imageUrl: o.imageUrl || servicePhoto({ code: o.code }) || '', subtitle: '' } as TileCategory, path: o.path, target: o.service,
   }));
   const tiles = repairTiles.length ? repairTiles : optionTiles;
   const count = repairTiles.length ? `${repairTiles.length} problem areas` : optionTiles.length ? `${optionTiles.length} ${service.countLabel || 'options'}` : '';
@@ -80,14 +80,16 @@ const ServiceCard = memo(function ServiceCard({ service, onOpen }: { service: Ho
 });
 
 function Section({ domain, onOpen }: { domain: HomeDomain; onOpen: (s: HomeService, path?: string) => void }) {
-  // The section's own photo when it has one, else its character.
-  const photo = servicePhoto(domain.services[0]);
-  const art = webAsset(photo || artFor(domain.services[0]?.code, domain.code)?.still);
+  // The section's real photo, else its icon: no characters beside photos.
+  const first = domain.services[0];
+  const photo = servicePhoto(first) || tilePhoto(first?.code);
+  const art = webAsset(photo);
+  const Icon = serviceIcon(first?.icon);
   const [title, line] = (PITCH as Record<string, string[]>)[domain.code] || [domain.name, domain.description];
   return (
     <View style={styles.section}>
       <View style={styles.sectionHead}>
-        {art ? <Image source={{ uri: art }} style={styles.avatar} resizeMode={photo ? 'cover' : 'contain'} /> : null}
+        {art ? <Image source={{ uri: art }} style={styles.avatar} resizeMode="cover" /> : <View style={[styles.avatar, styles.iconAvatar]}><Icon size={22} strokeWidth={1.7} color={zappy[700]} /></View>}
         <View style={styles.flex}>
           <Text variant="body" weight="bold">{domain.name}</Text>
           <Text variant="caption" color={ink[500]}>{line || title}</Text>
@@ -115,6 +117,7 @@ export function ServiceShowcase({ domains, onOpen }: { domains: HomeDomain[]; on
 }
 
 const styles = StyleSheet.create({
+  iconAvatar: { alignItems: 'center', justifyContent: 'center', backgroundColor: zappy[50] },
   flex: { flex: 1, minWidth: 0 },
   inline: { flexDirection: 'row', alignItems: 'center' },
   from: { flexDirection: 'row', alignItems: 'baseline', gap: 6 },

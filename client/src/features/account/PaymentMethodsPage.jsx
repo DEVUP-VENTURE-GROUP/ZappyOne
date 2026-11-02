@@ -23,13 +23,6 @@ const NETWORK_COLORS = {
   Unknown:    { bg: 'bg-slate-500',  label: '••' },
 };
 
-const UPI_ICONS = {
-  gpay:    '🎯',
-  phonepe: '💜',
-  paytm:   '🔵',
-  bhim:    '🇮🇳',
-  other:   '📱',
-};
 
 function MethodCard({ method, onDelete, onSetDefault, deleting, settingDefault }) {
   const isCard = method.type === 'card';
@@ -48,7 +41,7 @@ function MethodCard({ method, onDelete, onSetDefault, deleting, settingDefault }
       <div className="p-4 flex items-center gap-3">
         {/* Type icon */}
         <div className={`w-12 h-9 rounded-xl flex items-center justify-center shrink-0 ${
-          isCard ? net.bg : isUpi ? 'bg-violet-600' : 'bg-slate-600'
+          isCard ? net.bg : isUpi ? 'bg-zappy-600' : 'bg-slate-600'
         }`}>
           {isCard ? (
             <span className="text-[10px] font-black text-white">{net.label}</span>
@@ -193,9 +186,9 @@ function AddMethodForm({ onClose, onAdded }) {
           {/* Type tabs */}
           <div className="flex gap-2 mb-4">
             {[
-              { id: 'card',       label: '💳 Card' },
-              { id: 'upi',        label: '📱 UPI' },
-              { id: 'netbanking', label: '🏦 Net Banking' },
+              { id: 'card',       label: 'Card' },
+              { id: 'upi',        label: 'UPI' },
+              { id: 'netbanking', label: 'Net banking' },
             ].map(t => (
               <button
                 key={t.id}
@@ -290,7 +283,7 @@ function AddMethodForm({ onClose, onAdded }) {
                           form.upiProvider === p ? 'bg-[#0F172A] text-white' : 'bg-slate-50 text-slate-700'
                         }`}
                       >
-                        {UPI_ICONS[p]} {p}
+                        {p}
                       </button>
                     ))}
                   </div>

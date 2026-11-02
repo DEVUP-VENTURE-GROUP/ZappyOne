@@ -281,6 +281,7 @@ async function settleCarried(kind, bookingId) {
       description: `Earlier cancellation fee collected in cash by the shop on ${doc.reference || 'a job'}`,
       metadata: { shopId: String(doc.shopId), bookingId: String(doc._id), cash: true }, status: 'succeeded',
     }).catch((e) => { if (e.code !== 11000) throw e; });
+    require('../shop/shop-dues').notifyIfCrossed(doc.shopId);
   }
   for (const id of doc.carriedFee.recordIds || []) {
     const rec = await Records().findOneAndUpdate(

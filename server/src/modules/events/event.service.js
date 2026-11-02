@@ -65,9 +65,33 @@ function defaultConfig() {
 // Events switched off (feature-flags 'events'): customers are offered nothing, so every home section and banner drops away, old apps included.
 const eventsOn = () => require('../feature-flags/feature-flag.service').isEnabled('events');
 
-async function listCategories() {
+// Who may be offered to a customer: active, KYC-approved, not blocked, suspended or paused; in this city when one is given.
+async function offerablePartnerIds(city) {
+  const paused = await require('./partner-cancel').pausedPartnerIds();
+  const q = { isActive: true, isBlocked: { $ne: true }, suspendedAt: null, 'kyc.status': 'approved' };
+  if (paused.length) q._id = { $nin: paused };
+  if (city) q.cities = String(city).trim().toLowerCase();
+  return EventPartner.distinct('_id', q);
+}
+
+// The one filter for a theme a customer can see: approved, from an offerable partner, and for this city (a theme with no cities follows its partner's).
+async function liveThemeQuery(city) {
+  const q = { status: { $in: ['approved', 'featured'] }, partnerId: { $in: await offerablePartnerIds(city) } };
+  if (city) q.$or = [{ cities: String(city).trim().toLowerCase() }, { cities: { $size: 0 } }];
+  return q;
+}
+
+// Whether a customer in this city has any event package to book; drives the Events tile on home.
+async function liveInCity(city) {
+  if (!city || !(await eventsOn())) return false;
+  return Boolean(await EventTheme.exists(await liveThemeQuery(city)));
+}
+
+// Only occasions someone can actually be booked for (in this city when given); an empty occasion is never shown.
+async function listCategories({ city } = {}) {
   if (!(await eventsOn())) return [];
-  const rows = await EventCategory.find({ isActive: true }).sort({ sortOrder: 1, name: 1 }).lean();
+  const ids = await EventTheme.distinct('categoryId', await liveThemeQuery(city));
+  const rows = await EventCategory.find({ isActive: true, _id: { $in: ids } }).sort({ sortOrder: 1, name: 1 }).lean();
   return s3Service.signDocsMedia(rows);
 }
 
@@ -75,15 +99,11 @@ async function listCategories() {
 
 async function listThemes({ categorySlug, city, budgetMaxPaise, guestCount, page = 1, sort = 'trending', search } = {}) {
   if (!(await eventsOn())) return { themes: [], total: 0, page: 1, pages: 0 };
-  const q = { status: { $in: ['approved', 'featured'] } };
-  // A partner paused for cancelling too often is not offered (events/partner-cancel).
-  const paused = await require('./partner-cancel').pausedPartnerIds();
-  if (paused.length) q.partnerId = { $nin: paused };
+  const q = await liveThemeQuery(city);
   if (categorySlug) {
     const cat = await EventCategory.findOne({ slug: categorySlug }).select('_id').lean();
     if (cat) q.categoryId = cat._id;
   }
-  if (city)           q.cities = city.toLowerCase();
   if (budgetMaxPaise) q.startingPricePaise = { $lte: Number(budgetMaxPaise) };
   if (guestCount)     { q['guestCapacity.min'] = { $lte: Number(guestCount) }; q['guestCapacity.max'] = { $gte: Number(guestCount) }; }
   if (search)         q.$text = { $search: search };
@@ -225,7 +245,7 @@ async function createBooking({ userId, themeId, eventDate, eventTimeSlot, addres
 
   const partner = theme.partnerId;
   // Paused for cancelling too often (events/partner-cancel): not bookable until reinstated.
-  if (!partner || !partner.isActive || partner.isBlocked || partner.suspendedAt) {
+  if (!partner || !partner.isActive || partner.isBlocked || partner.suspendedAt || partner.kyc?.status !== 'approved') {
     throw Object.assign(new Error('This theme is not currently available'), { status: 409 });
   }
 
@@ -599,7 +619,7 @@ async function adminDeleteCategory(slug) {
 
 module.exports = {
   paidPaiseOf,
-  getActiveConfig, listCategories, listThemes, getTheme, getThemeAvailability, toggleSave, getSavedThemes,
+  getActiveConfig, listCategories, listThemes, liveInCity, getTheme, getThemeAvailability, toggleSave, getSavedThemes,
   createBooking, getUserBookings, getBooking, cancelBooking, submitReview,
   adminListThemes, adminUpdateThemeStatus, adminListBookings,
   adminListPartners, adminCreatePartner, adminUpdatePartner,

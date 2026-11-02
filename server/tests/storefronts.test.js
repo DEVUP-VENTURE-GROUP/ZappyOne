@@ -54,3 +54,16 @@ test('a storefront menu shows only approved prices and links into the flow with 
   expect(url.searchParams.get('model')).toBeTruthy();
   expect(await svc.storefrontMenu({ kind: 'hacker', id: 'x', vertical: 'pest_control' })).toBeNull();
 });
+
+test('before a provider is chosen the price is the lowest a verified provider near the customer set, never a ZappyOne figure', async () => {
+  const pricing = require('../src/modules/repair/services/pricing.service');
+  const ctx = { vertical: 'pest_control', brandCode: 'pescon_2bhk' };
+  const near = await pricing.nearbyPriceMap(ctx, ['pescon_general', 'pescon_cockroach'], { lat: LAT, lng: LNG });
+  expect(Object.fromEntries(near)).toEqual({ pescon_general: 89900, pescon_cockroach: 79900 });
+  expect((await pricing.nearbyPrice({ ...ctx, repairCode: 'pescon_general' }, { lat: LAT, lng: LNG })).recommendedPaise).toBe(89900);
+  expect((await pricing.nearbyPriceMap(ctx, ['pescon_general'], { lat: 12.97, lng: 77.59 })).size).toBe(0);
+  expect((await pricing.nearbyPriceMap(ctx, ['pescon_general'], {})).size).toBe(0);
+  const { ProviderPricing } = require('../src/modules/repair/models/pricing.model');
+  await ProviderPricing.updateMany({ shopId: shops[1]._id, repairCode: 'pescon_general' }, { $set: { approvalStatus: 'rejected' } });
+  expect((await pricing.nearbyPriceMap(ctx, ['pescon_general'], { lat: LAT, lng: LNG })).get('pescon_general')).toBe(109900);
+});

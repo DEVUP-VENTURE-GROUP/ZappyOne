@@ -24,8 +24,8 @@ const logger = require('../../core/logger');
 async function limits() {
   const cfg = await require('../order/cancellation.service').getConfig();
   return {
-    warnPaise: Math.abs(cfg.workerDuesWarnPaise ?? 80000),
-    limitPaise: Math.abs(cfg.workerDuesLimitPaise ?? 100000),
+    warnPaise: Math.abs(cfg.workerDuesWarnPaise ?? 150000),
+    limitPaise: Math.abs(cfg.workerDuesLimitPaise ?? 200000),
     payInstructions: cfg.duesPayInstructions || '',
   };
 }

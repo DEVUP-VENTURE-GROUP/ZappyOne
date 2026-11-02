@@ -19,8 +19,8 @@ test('over the limit: blocked from claims and from alerts; online earnings and a
   const other = await Shop.create({ phone: '9822200002', businessName: 'Fine Co', ownerName: 'Bina' });
   for (const s of [shop, other]) await ProviderEnrolment.create({ providerKind: 'shop', shopId: s._id, domainCode: 'home_services', lineCode: 'cleaning', status: 'approved' });
 
-  await owe(shop._id, 120000, 'c1');
-  expect(await dues.duesOf(shop._id)).toMatchObject({ duesPaise: 120000, limitPaise: 100000, isBlocked: true });
+  await owe(shop._id, 220000, 'c1');
+  expect(await dues.duesOf(shop._id)).toMatchObject({ duesPaise: 220000, limitPaise: 200000, isBlocked: true });
   await expect(dues.assertShopCanWork(shop._id)).rejects.toMatchObject({ code: 'SHOP_DUES' });
   expect((await approvedProviders('cleaning')).map((p) => p.id)).toEqual([String(other._id)]);
   expect([...(await dues.blockedShops([shop._id, other._id]))]).toEqual([String(shop._id)]);
@@ -28,9 +28,9 @@ test('over the limit: blocked from claims and from alerts; online earnings and a
   await earn(shop._id, 30000, 'e1');
   expect((await dues.duesOf(shop._id)).isBlocked).toBe(false);
   await owe(shop._id, 50000, 'c2');
-  expect((await dues.duesOf(shop._id)).duesPaise).toBe(140000);
-  await expect(dues.recordPayment({ shopId: shop._id, amountPaise: 140000 })).rejects.toMatchObject({ code: 'REFERENCE_REQUIRED' });
-  expect(await dues.recordPayment({ shopId: shop._id, amountPaise: 140000, reference: 'UTR998' })).toMatchObject({ duesPaise: 0, isBlocked: false });
+  expect((await dues.duesOf(shop._id)).duesPaise).toBe(240000);
+  await expect(dues.recordPayment({ shopId: shop._id, amountPaise: 240000 })).rejects.toMatchObject({ code: 'REFERENCE_REQUIRED' });
+  expect(await dues.recordPayment({ shopId: shop._id, amountPaise: 240000, reference: 'UTR998' })).toMatchObject({ duesPaise: 0, isBlocked: false });
   expect((await approvedProviders('cleaning')).length).toBe(2);
   expect((await dues.owingShops()).find((r) => r.shopId === String(shop._id))).toBeUndefined();
 });

@@ -172,6 +172,14 @@ async function isWorkerPro(workerId) {
   return !!sub;
 }
 
+// The perks a customer plan really applies at booking (jobs/member); anything not enforced is never listed.
+function benefitsOf(effects = {}) {
+  const out = [];
+  if (effects.waivePlatformFee) out.push('No platform fee on any booking');
+  if (typeof effects.surgeCap === 'number' && effects.surgeCap <= 1) out.push('No surge price, even when it is busy');
+  return out;
+}
+
 async function getEffects({ kind, id }) {
   const sub = await getActiveFor({ kind, id });
   return sub?.effects || {};
@@ -196,6 +204,7 @@ async function expireOverdue() {
 }
 
 module.exports = {
+  benefitsOf,
   listPlans,
   startPurchase,
   activateFromPayment,

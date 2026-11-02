@@ -9,6 +9,26 @@ const { makeLimiter } = require('../../middlewares/rateLimit');
  */
 const router = express.Router();
 
+// Shared tracking (jobs/share): the person at the door follows the job from a private link, no account.
+const shareLimiter = makeLimiter({ windowMs: 60_000, max: 30, prefix: 'jobshare' });
+router.get('/shared/:token', shareLimiter, async (req, res, next) => {
+  try {
+    const share = await require('./share').resolve(req.params.token);
+    if (!share) return res.status(404).json({ error: 'This link has expired or was turned off', code: 'SHARE_GONE' });
+    return require('./share').view(share, req, res, next);
+  } catch (err) { return next(err); }
+});
+router.post('/:id/share', authenticate, requireRole('user'), async (req, res, next) => {
+  try {
+    const share = await require('./share').create(req.auth.sub, req.params.id);
+    const base = (process.env.CLIENT_URL || 'https://zappyone.com').replace(/\/$/, '');
+    res.status(201).json({ url: `${base}/t/${share.token}`, expiresAt: share.expiresAt });
+  } catch (err) { next(err); }
+});
+router.delete('/:id/share', authenticate, requireRole('user'), async (req, res, next) => {
+  try { await require('./share').revoke(req.auth.sub, req.params.id); res.json({ ok: true }); } catch (err) { next(err); }
+});
+
 /**
  * Cancellation fees the customer still owes from earlier bookings: shown before
  * they confirm the next one, which carries them (jobs/cancel-fee).
@@ -199,6 +219,11 @@ router.get('/:id/options',
         boost: await bt.boostView(kind, doc, s),
         tip: await bt.tipView(kind, doc, s),
         reschedule: terminal ? { allowed: false } : await require('./reschedule').view(kind, doc),
+        place: terminal ? { allowed: false } : await require('./place-edit').editable(kind, doc),
+        contact: { allowed: !terminal && ['repair', 'pet', 'helping'].includes(kind), onSite: doc.onSite?.name ? doc.onSite : null },
+        extras: terminal ? { allowed: false } : await require('./extras').view(kind, doc),
+        payTo: await require('./pay-direct').view(kind, doc),
+        addedExtras: (doc.extras || []).map((e) => ({ name: e.name, pricePaise: e.pricePaise + (e.taxPaise || 0), addedAt: e.addedAt })),
         arrival: await require('./promise').viewFor(doc._id),
         search: await require('./fast-assign').searchView(kind, doc),
         moreTime: terminal ? null : await require('./more-time').viewFor(doc._id),
@@ -321,6 +346,40 @@ router.post('/recurring/:planId/:action',
       if (!['skip', 'pause', 'resume', 'stop'].includes(req.params.action)) return res.status(400).json({ error: 'Unknown action' });
       res.json({ plan: await require('./recurring').act({ id: req.params.planId, userId: req.auth.sub, action: req.params.action }) });
     } catch (err) { next(err); }
+  });
+
+/** Fix the address or add door directions before the pro sets off (jobs/place-edit). */
+router.patch('/:id/place', authenticate, requireRole('user'),
+  validate(Joi.object({
+    lat: Joi.number().min(-90).max(90), lng: Joi.number().min(-180).max(180),
+    address: Joi.string().max(300).allow(''), directions: Joi.string().max(200).allow(''),
+  }).and('lat', 'lng')),
+  async (req, res, next) => {
+    try { res.json(await require('./place-edit').editPlace({ id: req.params.id, userId: req.auth.sub, ...req.body })); } catch (err) { next(err); }
+  });
+
+/** The customer says they paid the pro (UPI or cash); the pro confirms it (jobs/pay-direct). */
+router.post('/:id/pay-claim', authenticate, requireRole('user'),
+  makeLimiter({ windowMs: 10 * 60_000, max: 10, prefix: 'jobpayclaim' }),
+  validate(Joi.object({ method: Joi.string().valid('upi', 'cash').required() })),
+  async (req, res, next) => {
+    try { res.json(await require('./pay-direct').claim({ id: req.params.id, userId: req.auth.sub, method: req.body.method })); } catch (err) { next(err); }
+  });
+
+/** Change who the pro meets at the door (jobs/place-edit). */
+router.patch('/:id/contact', authenticate, requireRole('user'),
+  makeLimiter({ windowMs: 10 * 60_000, max: 10, prefix: 'jobcontact' }),
+  validate(Joi.object({ onSite: require('./on-site').onSiteSchema.required() })),
+  async (req, res, next) => {
+    try { res.json(await require('./place-edit').editContact({ id: req.params.id, userId: req.auth.sub, onSite: req.body.onSite })); } catch (err) { next(err); }
+  });
+
+/** Add a service to a live booking, paid in cash at the end (jobs/extras). */
+router.post('/:id/extras', authenticate, requireRole('user'),
+  makeLimiter({ windowMs: 10 * 60_000, max: 20, prefix: 'jobextra' }),
+  validate(Joi.object({ code: Joi.string().trim().max(80).required(), petIndex: Joi.number().integer().min(0).max(10).allow(null) })),
+  async (req, res, next) => {
+    try { res.json(await require('./extras').add({ id: req.params.id, userId: req.auth.sub, code: req.body.code, petIndex: req.body.petIndex ?? null })); } catch (err) { next(err); }
   });
 
 /** Move a booking made for later, before the provider sets off (jobs/reschedule). */

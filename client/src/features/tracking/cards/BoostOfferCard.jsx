@@ -22,7 +22,6 @@ function buildOptions(amounts) {
   return (amounts ?? [10, 20, 30, 50, 100]).map((n) => ({
     amount: n,
     label:  `+₹${n}`,
-    emoji:  n >= 100 ? '🚀' : n >= 30 ? '🔥' : '⚡',
   }));
 }
 
@@ -64,7 +63,6 @@ export default function BoostOfferCard({ orderId, baseTotal, sendTip, boostOptio
         {
           duration: 3000,
           style: { background: '#0f172a', color: '#f8fafc', fontWeight: 700, border: '1px solid rgba(59,130,246,0.4)' },
-          icon: amt >= 50 ? '🚀' : '⚡',
         }
       );
     } catch {
@@ -247,7 +245,7 @@ export default function BoostOfferCard({ orderId, baseTotal, sendTip, boostOptio
                 {/* Icon */}
                 <motion.div
                   className="w-14 h-14 rounded-2xl mx-auto mb-5 flex items-center justify-center"
-                  style={{ background: 'linear-gradient(135deg,rgba(249,115,22,0.2),rgba(251,146,60,0.1))', border: '1px solid rgba(249,115,22,0.3)' }}
+                  style={{ background: 'rgba(249,115,22,0.12)', border: '1px solid rgba(249,115,22,0.3)' }}
                   animate={{ boxShadow: ['0 0 0 0px rgba(249,115,22,0.2)', '0 0 0 10px rgba(249,115,22,0)', '0 0 0 0px rgba(249,115,22,0)'] }}
                   transition={{ duration: 1.8, repeat: Infinity }}
                 >

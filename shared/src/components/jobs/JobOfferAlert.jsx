@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, Navigation, Clock, IndianRupee, Briefcase, Banknote, Loader2, X, Sparkles, Star } from 'lucide-react';
+import { MapPin, Navigation, Clock, IndianRupee, Briefcase, Banknote, Loader2, X, Star, TrendingUp } from 'lucide-react';
 import { kmBetween } from '../../utils/distance';
 import PassReasonPicker from '../worker/PassReasonPicker';
 import { startRinging } from '../../utils/alertSound';
@@ -112,7 +112,7 @@ export default function JobOfferAlert({ offer, myLocation, onAccept, onDecline, 
           {/* A raised offer is the first thing they see, and it is all theirs. */}
           {boost > 0 && (
             <motion.div
-              className="relative overflow-hidden bg-gradient-to-r from-amber-400 via-amber-300 to-amber-400 px-5 py-3 text-amber-950"
+              className="relative overflow-hidden bg-amber-300 px-5 py-3 text-amber-950"
               initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
             >
@@ -123,7 +123,7 @@ export default function JobOfferAlert({ offer, myLocation, onAccept, onDecline, 
                 transition={{ duration: 1.8, repeat: Infinity, repeatDelay: 1.2, ease: 'easeInOut' }}
               />
               <p className="relative flex items-center gap-2 text-[13px] font-extrabold">
-                <Sparkles size={16} /> Customer raised the offer by {formatPaise(boost)}
+                <TrendingUp size={16} /> Customer raised the offer by {formatPaise(boost)}
               </p>
               <p className="relative text-[11px] font-semibold text-amber-900">All of it is yours on top of the job price. Take it before someone else does.</p>
             </motion.div>

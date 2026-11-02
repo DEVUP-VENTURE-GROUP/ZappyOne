@@ -3,7 +3,7 @@ const Joi = require('joi');
 const ctrl = require('./payment.controller');
 const paymentService = require('./payment.service');
 const cashfree = require('./cashfree.client');
-const { authenticate } = require('../../middlewares/auth');
+const { authenticate, requireRole } = require('../../middlewares/auth');
 const { validate } = require('../../middlewares/validate');
 const { authLimiter } = require('../../middlewares/rateLimit');
 const logger = require('../../core/logger');
@@ -15,7 +15,8 @@ const router = express.Router();
 /** Public: apps offer "Pay online" only while this says it works. */
 router.get('/availability', (req, res) => {
   const gw = require('./gateway').active();
-  res.json({ online: !!gw, cash: true, gateway: gw, env: require('../../config').cashfree.env });
+  // Jobs are paid to the pro directly, so no booking is ever offered "Pay online"; the gateway serves memberships and dues.
+  res.json({ online: false, cash: true, gateway: gw, env: require('../../config').cashfree.env });
 });
 
 // A customer's own payment for one booking and where its refund is: amount, status, date and the gateway's reference, so "refund initiated" is never a black box.
@@ -40,7 +41,7 @@ router.post(
   authenticate,
   authLimiter,
   validate(Joi.object({
-    purpose:     Joi.string().valid('subscription', 'wallet_topup', 'order_payment', 'repair_payment', 'booking_payment').required(),
+    purpose:     Joi.string().valid('subscription', 'wallet_topup', 'order_payment', 'repair_payment', 'booking_payment', 'dues_payment').required(),
     bookingSource: Joi.string().valid('repair', 'pet', 'helping').when('purpose', { is: 'booking_payment', then: Joi.required() }),
     bookingId:   Joi.string().hex().length(24).when('purpose', { is: 'booking_payment', then: Joi.required() }),
     planCode:    Joi.string().when('purpose', { is: 'subscription', then: Joi.required() }),
@@ -57,6 +58,11 @@ router.post(
   })),
   ctrl.createOrder
 );
+
+// Partners pay their dues: a Razorpay page for the apps, checked when they come back (payment.service checkLink).
+router.post('/dues-link', authenticate, requireRole('worker', 'shop'), authLimiter,
+  validate(Joi.object({ amountPaise: Joi.number().integer().min(100), returnUrl: Joi.string().uri().max(500) })), ctrl.createDuesLink);
+router.get('/dues-link/:cfOrderId', authenticate, requireRole('worker', 'shop'), ctrl.checkDuesLink);
 
 router.post(
   '/verify',

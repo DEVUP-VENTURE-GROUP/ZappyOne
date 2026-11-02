@@ -100,14 +100,15 @@ async function storefrontMenu({ kind, id, vertical }) {
   const owner = kind === 'shop' ? { shopId: new mongoose.Types.ObjectId(id) } : { workerId: new mongoose.Types.ObjectId(id) };
   const [prices, caps] = await Promise.all([
     ProviderPricing.find({ ...owner, vertical, ...BOOKABLE }).select('repairCode brandCode modelCode totalPaise estimatedDurationMin warrantyDays qualityCode').lean(),
-    ProviderCapability.find({ ...owner, isActive: true }).select('repairCode').lean(),
+    ProviderCapability.find({ ...owner, isActive: true }).select('repairCode includes photoKey estimatedDurationMin').lean(),
   ]);
-  const can = new Set(caps.map((c) => c.repairCode));
+  const capOf = new Map(caps.map((c) => [c.repairCode, c]));
+  const can = new Set(capOf.keys());
   const usable = prices.filter((p) => can.has(p.repairCode));
   if (!usable.length) return { items: [] };
   const codes = [...new Set(usable.map((p) => p.repairCode))];
   const [repairs, problems, brands] = await Promise.all([
-    Repair.find({ vertical, code: { $in: codes }, isActive: true }).select('code name estimatedDurationMin pricingMode').lean(),
+    Repair.find({ vertical, code: { $in: codes }, isActive: true }).select('code name description estimatedDurationMin pricingMode includes photoKey owner').lean(),
     Problem.find({ vertical, candidateRepairCodes: { $in: codes } }).select('code candidateRepairCodes displayOrder').lean(),
     Brand.find({ category: vertical }).select('code name sortOrder').sort({ sortOrder: 1 }).lean(),
   ]);
@@ -116,7 +117,9 @@ async function storefrontMenu({ kind, id, vertical }) {
   for (const m of models) if (!firstModel.has(m.brandCode)) firstModel.set(m.brandCode, m.code);
   const pathOf = `/repair/${vertical.replace(/_/g, '-')}`;
 
-  const items = repairs.map((r) => {
+  const items = await Promise.all(repairs.map(async (r) => {
+    const cap = capOf.get(r.code);
+    const photoKey = cap?.photoKey || r.photoKey || '';
     const problem = problems.find((p) => p.candidateRepairCodes.includes(r.code));
     const rows = usable.filter((p) => p.repairCode === r.code);
     const options = brands.flatMap((b) => {
@@ -126,9 +129,61 @@ async function storefrontMenu({ kind, id, vertical }) {
       const q = new URLSearchParams({ brand: b.code, ...(model && { model }), ...(problem && { problem: problem.code }), provider: `${kind}:${id}` });
       return [{ brandCode: b.code, typeName: b.name, totalPaise: row.totalPaise, warrantyDays: row.warrantyDays || 0, path: `${pathOf}?${q}` }];
     });
-    return { repairCode: r.code, name: r.name, minutes: rows[0]?.estimatedDurationMin || r.estimatedDurationMin || null, quoted: r.pricingMode === 'diagnosis_required', options, fromPaise: options.length ? Math.min(...options.map((o) => o.totalPaise)) : null };
-  }).filter((i) => i.options.length).sort((a, b) => a.fromPaise - b.fromPaise);
-  return { items };
+    return {
+      repairCode: r.code, name: r.name, description: r.description || '', own: !!r.owner,
+      includes: cap?.includes?.length ? cap.includes : (r.includes || []),
+      photoUrl: photoKey ? await s3Service.signMedia(photoKey).catch(() => null) : null,
+      minutes: cap?.estimatedDurationMin || rows[0]?.estimatedDurationMin || r.estimatedDurationMin || null,
+      quoted: r.pricingMode === 'diagnosis_required', options, fromPaise: options.length ? Math.min(...options.map((o) => o.totalPaise)) : null,
+    };
+  }));
+  return { items: items.filter((i) => i.options.length).sort((a, b) => a.fromPaise - b.fromPaise) };
 }
 
-module.exports = { listStorefronts, storefrontMenu, SORTS };
+// One search across the menus near the customer: every job whose name matches, from each verified provider covering the spot who prices it, cheapest first.
+async function searchMenus({ q, lat, lng, limit = 12 }) {
+  const term = String(q || '').trim().slice(0, 60);
+  if (term.length < 2 || !Number.isFinite(Number(lat)) || !Number.isFinite(Number(lng))) return { items: [] };
+  const rx = new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').split(/\s+/).join('.*'), 'i');
+  const matched = await Repair.find({ name: rx, isActive: true, isArchived: false, isAddOn: { $ne: true } })
+    .select('code name vertical owner includes photoKey').limit(200).lean();
+  const menu = require('./provider-menu.service');
+  const verticals = [];
+  for (const v of [...new Set(matched.map((r) => r.vertical))]) {
+    if (verticals.length >= 6) break;
+    if (await menu.isMenuService(v)) verticals.push(v);
+  }
+  const out = [];
+  for (const vertical of verticals) {
+    const { items: fronts } = await listStorefronts({ vertical, lat: Number(lat), lng: Number(lng), limit: 50 });
+    if (!fronts.length) continue;
+    const jobs = matched.filter((r) => r.vertical === vertical);
+    const byKey = new Map(fronts.map((f) => [`${f.kind}:${f.id}`, f]));
+    const rows = await ProviderPricing.find({
+      vertical, ...BOOKABLE, repairCode: { $in: jobs.map((j) => j.code) },
+      $or: [{ shopId: { $in: fronts.filter((f) => f.kind === 'shop').map((f) => f.id) } }, { workerId: { $in: fronts.filter((f) => f.kind === 'worker').map((f) => f.id) } }],
+    }).select('shopId workerId repairCode totalPaise').lean();
+    const best = new Map();
+    for (const r of rows) {
+      const k = `${keyOf(r)}|${r.repairCode}`;
+      if (!best.has(k) || r.totalPaise < best.get(k)) best.set(k, r.totalPaise);
+    }
+    for (const [k, fromPaise] of best) {
+      const [provider, code] = k.split('|');
+      const job = jobs.find((j) => j.code === code);
+      const front = byKey.get(provider);
+      if (!job || !front || (job.owner && `${job.owner.kind}:${job.owner.id}` !== provider)) continue;
+      out.push({
+        repairCode: code, name: job.name, vertical, fromPaise, photoKey: job.photoKey || '',
+        provider: { kind: front.kind, id: front.id, name: front.name, rating: front.rating, imageUrl: front.imageUrl, arrivalMinutes: front.arrivalMinutes ?? null, openNow: front.openNow },
+        path: `/storefront/${front.kind}/${front.id}?service=${vertical}`,
+      });
+    }
+  }
+  out.sort((a, b) => a.fromPaise - b.fromPaise || (b.provider.rating || 0) - (a.provider.rating || 0));
+  const page = out.slice(0, limit);
+  await Promise.all(page.map(async (i) => { i.photoUrl = i.photoKey ? await s3Service.signMedia(i.photoKey).catch(() => null) : null; delete i.photoKey; }));
+  return { items: page };
+}
+
+module.exports = { listStorefronts, storefrontMenu, searchMenus, SORTS };

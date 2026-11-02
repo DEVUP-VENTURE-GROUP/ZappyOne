@@ -4,12 +4,12 @@ import { motion } from 'framer-motion';
 import { ArrowRight, CircleCheck, CircleDashed, Clock3 } from 'lucide-react';
 import { useProviderSetupJourneyQuery } from '@shared/services/api';
 
-// Where the shop is on the way to taking work: done, waiting on ZappyOne, and the one thing to do next. Gone once the shop is live.
+// Where the shop is on the way to taking work: done, waiting on ZappyOne, and the one thing to do next. Gone once every step is done.
 export default function SetupJourney() {
   const nav = useNavigate();
   const t = useT();
   const { data } = useProviderSetupJourneyQuery();
-  if (!data || data.live) return null;
+  if (!data || data.complete) return null;
   const pct = Math.round((data.done / data.total) * 100);
   return (
     <motion.section initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="mb-4 rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">

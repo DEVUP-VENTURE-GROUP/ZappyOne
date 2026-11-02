@@ -24,7 +24,7 @@ interface Svc { vertical: string; name: string; items: { repairCode: string; nam
 interface Plan { _id: string; name: string; type: string; status: string; pricePaise: number; visitsPerMonth: number; reviewNote?: string }
 const rupees = (p: number) => `₹${Math.round((p || 0) / 100).toLocaleString('en-IN')}`;
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-const STATUS: Record<string, string> = { draft: 'Draft', pending: 'In review', live: 'Live', paused: 'Paused', rejected: 'Not approved' };
+const STATUS: Record<string, string> = { draft: 'Draft', pending: 'Not live yet', live: 'Live', paused: 'Paused', rejected: 'Hidden by ZappyOne' };
 const dayLabel = (d: string) => new Date(`${d}T12:00:00+05:30`).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
 const digits = (v: string) => v.replace(/\D/g, '');
 
@@ -48,7 +48,7 @@ function NewPlan({ services, onClose }: { services: Svc[]; onClose: () => void }
       const body = { vertical, name: name.trim(), type, items, pricePaise, weekdays: type === 'pack' ? [] : weekdays,
         ...(type === 'monthly' && { visitsPerMonth: Number(visits) || 1, durations: [{ months: 1, discountPct: 0 }, { months: 3, discountPct: Number(d3) || 0 }, { months: 5, discountPct: Number(d5) || 0 }], pauseDaysPerMonth: Number(pauses) || 0 }) };
       const { plan } = await save(body).unwrap();
-      if (publish) { const r = await submit(plan._id).unwrap(); toast.success(r.plan.status === 'live' ? 'Your plan is live. Customers near you can subscribe now.' : 'Sent to ZappyOne for review.'); } else toast.success('Saved as a draft');
+      if (publish) { await submit(plan._id).unwrap(); toast.success('Your plan is live. Customers near you can subscribe now.'); } else toast.success('Saved as a draft');
       onClose();
     } catch (err) { toast.error(errText(err, 'Could not save the plan')); }
   }
@@ -127,7 +127,7 @@ export function ShopPlansPage() {
                 <View style={styles.row}>
                   {p.status === 'live' ? <Button label="Pause" size="small" variant="outline" icon={<Pause size={13} color={ink[700]} />} onPress={() => setLive({ id: p._id, live: false })} /> : null}
                   {p.status === 'paused' ? <Button label="Resume" size="small" variant="outline" icon={<Play size={13} color={ink[700]} />} onPress={() => setLive({ id: p._id, live: true })} /> : null}
-                  {['draft', 'rejected'].includes(p.status) ? <Button label="Publish" size="small" variant="outline" onPress={async () => { try { const r = await submit(p._id).unwrap(); toast.success(r.plan.status === 'live' ? 'Live now' : 'Sent for review'); } catch (err) { toast.error(errText(err, 'Could not publish')); } }} /> : null}
+                  {['draft', 'pending'].includes(p.status) ? <Button label="Publish" size="small" variant="outline" onPress={async () => { try { await submit(p._id).unwrap(); toast.success('Live now'); } catch (err) { toast.error(errText(err, 'Could not publish')); } }} /> : null}
                 </View>
               </Appear>
             ))}

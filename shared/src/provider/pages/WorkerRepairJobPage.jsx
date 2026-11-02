@@ -2,6 +2,8 @@ import { useCheckInThen } from '../useCheckIn';
 import { PRIVACY_PLEDGE } from '../../utils/partsRule';
 import JobChatButton from '../../components/jobs/JobChatButton';
 import OnSiteCard from '../OnSiteCard';
+import CollectPaymentCard from '../../components/common/CollectPaymentCard';
+import ExtrasCard from '../ExtrasCard';
 import GiveBackCard from '../GiveBackCard';
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -27,7 +29,6 @@ import SOSButton from '../../components/worker/SOSButton';
 import { useVerifyRepairHandoverCodeMutation, useDeclineRepairBookingMutation, useRepairWorkCatalogQuery } from '../../services/api';
 import PassReasonPicker from '../../components/worker/PassReasonPicker';
 import OtpEntry from '../../components/common/OtpEntry';
-import { CashRefusedControl } from '../../components/common/CollectPaymentCard';
 import ArrivalProximity, { useArrivalProximity } from '../../components/common/ArrivalProximity';
 import ProofPhotos, { readyKeys, photosSettled } from '../../components/common/ProofPhotos';
 import { useAttachRepairCompletionPhotosMutation } from '../../services/api';
@@ -505,6 +506,7 @@ export default function WorkerRepairJobPage() {
         {!['COMPLETED', 'CANCELLED'].includes(booking.status) && <p className="px-1 text-[11.5px] font-semibold text-slate-500">{PRIVACY_PLEDGE.partner}</p>}
         {onTrip && (!isOwner || ownerGoing) && <TripSharingBanner sharing={sharingLocation} {...tripOf('repair', booking)} />}
         <OnSiteCard onSite={booking.onSite} />
+        <ExtrasCard extras={booking.extras} />
         {isOwner && (
           <div className="card">
             <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Technician</p>
@@ -544,52 +546,8 @@ export default function WorkerRepairJobPage() {
         {booking.status === 'COMPLETED' && <RateCustomerCard jobId={booking._id} rated={!!booking.customerRating?.stars} />}
 
         {readyForPayment && (snap.totalPaise || 0) > 0 && (
-          <div className={`card ${booking.paymentStatus === 'paid' ? 'ring-emerald-200 bg-emerald-50/40' : 'ring-amber-200 bg-amber-50/40'}`}>
-            {booking.paymentStatus === 'paid' ? (
-              <>
-                <p className="flex items-center gap-1.5 text-sm font-bold text-emerald-800">
-                  <Check size={15} /> {rupees(duePaise)} {booking.paymentMethod === 'cash' ? 'collected in cash' : 'paid online'}
-                </p>
-                {tipPaise > 0 && <p className="mt-1 text-[12px] font-bold text-rose-700">Includes a {rupees(tipPaise)} tip from the customer.</p>}
-              </>
-            ) : (
-              <>
-                {booking.paymentMethod === 'cash' ? (
-                  <>
-                    <p className="text-sm font-bold text-[#0F172A]">Collect {rupees(duePaise)} in cash</p>
-                    <p className="mt-0.5 text-[11px] leading-relaxed text-slate-600">
-                      Take the payment from the customer, then record it here. Your commission is
-                      deducted from your wallet afterwards.
-                      {carriedPaise > 0 && ` This includes ${rupees(carriedPaise)} the customer owed from an earlier cancelled booking; it comes off your wallet too.`}
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <p className="text-sm font-bold text-[#0F172A]">Waiting for {rupees(duePaise)} online</p>
-                    <p className="mt-0.5 text-[11px] leading-relaxed text-slate-600">
-                      The customer chose to pay online and can pay from their booking screen. If they
-                      cannot, take cash instead and record it here.
-                    </p>
-                  </>
-                )}
-                {tipPaise > 0 && (
-                  <p className="mt-2 rounded-xl bg-rose-50 px-2.5 py-1.5 text-[12px] font-bold text-rose-700">
-                    Includes a {rupees(tipPaise)} tip from the customer. All yours.
-                  </p>
-                )}
-                <button
-                  onClick={collect}
-                  disabled={collecting}
-                  className={`${booking.paymentMethod === 'cash' ? 'btn-primary' : 'btn-secondary'} w-full mt-2.5`}
-                >
-                {collecting
-                    ? <><Loader2 size={15} className="animate-spin" /> Recording…</>
-                    : <>I've collected {rupees(duePaise)} in cash</>}
-                </button>
-                {booking.paymentMethod === 'cash' && <CashRefusedControl jobId={booking._id} />}
-              </>
-            )}
-          </div>
+          <CollectPaymentCard amountPaise={duePaise} tipPaise={tipPaise} carriedPaise={carriedPaise} paymentMethod={booking.paymentMethod}
+            paid={booking.paymentStatus === 'paid'} collecting={collecting} onCollect={collect} jobId={booking._id} claim={booking.payClaim} />
         )}
 
 

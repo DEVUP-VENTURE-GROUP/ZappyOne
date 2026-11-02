@@ -58,10 +58,10 @@ const FAMILY_ASSIST_LINES = [
 
 // Partner-run home services on the repair engine (repair/seed/home-services.seed).
 const HOME_SERVICE_LINES = [
-  { code: 'cleaning', name: 'Home Cleaning', domainCode: 'home_services', repairVertical: 'home_cleaning', status: 'live', displayOrder: 1, icon: 'Sparkles', customerPath: '/repair/home-cleaning', tagline: 'Deep clean by trained teams, from ₹499', description: 'Full home, kitchen, bathroom and move-in or move-out deep cleaning', isPopular: true },
-  { code: 'electrical', name: 'Electrician', domainCode: 'home_services', repairVertical: 'electrician', status: 'live', displayOrder: 2, icon: 'Zap', customerPath: '/repair/electrician', tagline: 'Fans, switches, lights and wiring, from ₹129', description: 'Fan and light installs, switch and socket repairs, MCB, inverter and inspection visits', isPopular: true },
-  { code: 'plumbing', name: 'Plumber', domainCode: 'home_services', repairVertical: 'plumbing', status: 'live', displayOrder: 3, icon: 'Droplet', customerPath: '/repair/plumbing', tagline: 'Taps, leaks and blockages, from ₹149', description: 'Tap and mixer replacement, leak repair, blockage clearing, flush tanks and motor installs', isPopular: true },
-  { code: 'appliance', name: 'AC Service & Repair', domainCode: 'home_services', repairVertical: 'ac_service', status: 'live', displayOrder: 4, icon: 'AirVent', customerPath: '/repair/ac-service', tagline: 'Split and window AC, from ₹299', description: 'Foam jet service, gas refill, repair visits, installation and uninstallation', isPopular: true },
+  { code: 'cleaning', name: 'Home Cleaning', domainCode: 'home_services', repairVertical: 'home_cleaning', status: 'live', displayOrder: 1, icon: 'Sparkles', customerPath: '/repair/home-cleaning', tagline: 'Deep clean by verified pros near you', taglineWas: 'Deep clean by trained teams, from ₹499', description: 'Full home, kitchen, bathroom and move-in or move-out deep cleaning', isPopular: true },
+  { code: 'electrical', name: 'Electrician', domainCode: 'home_services', repairVertical: 'electrician', status: 'live', displayOrder: 2, icon: 'Zap', customerPath: '/repair/electrician', tagline: 'Fans, switches, lights and wiring', taglineWas: 'Fans, switches, lights and wiring, from ₹129', description: 'Fan and light installs, switch and socket repairs, MCB, inverter and inspection visits', isPopular: true },
+  { code: 'plumbing', name: 'Plumber', domainCode: 'home_services', repairVertical: 'plumbing', status: 'live', displayOrder: 3, icon: 'Droplet', customerPath: '/repair/plumbing', tagline: 'Taps, leaks and blockages', taglineWas: 'Taps, leaks and blockages, from ₹149', description: 'Tap and mixer replacement, leak repair, blockage clearing, flush tanks and motor installs', isPopular: true },
+  { code: 'appliance', name: 'AC Service & Repair', domainCode: 'home_services', repairVertical: 'ac_service', status: 'live', displayOrder: 4, icon: 'AirVent', customerPath: '/repair/ac-service', tagline: 'Split and window AC', taglineWas: 'Split and window AC, from ₹299', description: 'Foam jet service, gas refill, repair visits, installation and uninstallation', isPopular: true },
 ];
 
 const DOMAINS = [
@@ -95,8 +95,8 @@ const LINES = [
   // liveCatalog filters it out without one. A line can otherwise be `live`,
   // fully priced and completely unreachable, which is exactly what both
   // vehicle lines were until this was noticed.
-  { code: 'bike_wash', name: 'Bike Wash', domainCode: 'vehicles', repairVertical: 'bike_wash', status: 'live', displayOrder: 0, icon: 'Bike', customerPath: '/repair/bike-wash', tagline: 'At your door, from ₹99', isPopular: true, staffDoes: true },
-  { code: 'car_wash', name: 'Car Wash', domainCode: 'vehicles', repairVertical: 'car_wash', status: 'live', displayOrder: 0, icon: 'Car', customerPath: '/repair/car-wash', tagline: 'At your door, from ₹299', isPopular: true, staffDoes: true },
+  { code: 'bike_wash', name: 'Bike Wash', domainCode: 'vehicles', repairVertical: 'bike_wash', status: 'live', displayOrder: 0, icon: 'Bike', customerPath: '/repair/bike-wash', tagline: 'At your door', taglineWas: 'At your door, from ₹99', isPopular: true, staffDoes: true },
+  { code: 'car_wash', name: 'Car Wash', domainCode: 'vehicles', repairVertical: 'car_wash', status: 'live', displayOrder: 0, icon: 'Car', customerPath: '/repair/car-wash', tagline: 'At your door', taglineWas: 'At your door, from ₹299', isPopular: true, staffDoes: true },
   {
     code: 'two_wheeler', name: '2-Wheeler', domainCode: 'vehicles', status: 'live',
     displayOrder: 1, icon: 'Bike', repairVertical: 'two_wheeler',

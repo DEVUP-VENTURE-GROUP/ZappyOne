@@ -5,26 +5,28 @@
  * customer's own "book again" list.
  */
 import { foldIntoHub } from '@zappy/core/shared/serviceArt';
-import { eventPhoto, eventTone } from '../events/eventTones';
+import { eventPhoto } from '../events/eventTones';
 
 export interface HomeService {
   code: string; name: string; icon?: string; path: string; domainCode: string; available?: boolean; artKey?: string;
   tagline?: string; description?: string; highlights?: { code: string; name: string; categoryCode?: string }[];
   coverage?: { code: string; name: string; imageUrl?: string; problems?: { name: string }[] }[];
-  options?: { code: string; name: string; icon?: string; imageUrl?: string; emoji?: string; toneColor?: string; path: string; service?: HomeService }[];
+  options?: { code: string; name: string; icon?: string; imageUrl?: string; path: string; service?: HomeService }[];
   countLabel?: string;
   fromPaise?: number | null;
 }
 export interface HomeDomain { code: string; name: string; description?: string; services: HomeService[] }
 
 /** Every service shows; whether it can be booked HERE is serviceability's answer (unknown location: bookable). */
-// What nobody covers at this address yet, for "Coming to your area".
-export function comingSoonOf(catalogDomains: HomeDomain[], liveCodes: Set<string> | null): HomeService[] {
+// What nobody covers at this address yet, for "Coming to your area", one row per category.
+export function comingSoonOf(catalogDomains: HomeDomain[], liveCodes: Set<string> | null): HomeDomain[] {
   if (!liveCodes) return [];
-  return catalogDomains.flatMap((d) => d.services.filter((s) => !liveCodes.has(s.code)).map((s) => ({ ...s, domainCode: d.code })));
+  return catalogDomains
+    .map((d) => ({ code: d.code, name: d.name, services: d.services.filter((s) => !liveCodes.has(s.code)).map((s) => ({ ...s, domainCode: d.code })) }))
+    .filter((g) => g.services.length);
 }
 
-export function buildDomains(catalogDomains: HomeDomain[], liveCodes: Set<string> | null, eventCats: { slug: string; name: string; emoji?: string; coverImage?: string }[]): HomeDomain[] {
+export function buildDomains(catalogDomains: HomeDomain[], liveCodes: Set<string> | null, eventCats: { slug: string; name: string; coverImage?: string }[]): HomeDomain[] {
   const list = catalogDomains
     .map((d) => ({ ...d, services: d.services.map((s) => ({ ...s, domainCode: d.code, available: liveCodes ? liveCodes.has(s.code) : undefined })).filter((s) => s.available !== false) }))
     .filter((d) => d.services.length);
@@ -36,7 +38,7 @@ export function buildDomains(catalogDomains: HomeDomain[], liveCodes: Set<string
       code: 'events', domainCode: 'events', name: 'Events & décor', icon: 'PartyPopper', path: '/events',
       tagline: 'Birthdays, baby showers, anniversaries and more', highlights: [], coverage: [],
       options: eventCats.map((c) => ({
-        code: c.slug, name: c.name, icon: 'PartyPopper', imageUrl: eventPhoto(c) || undefined, emoji: c.emoji, toneColor: eventTone(c), path: `/events/browse?category=${c.slug}`,
+        code: c.slug, name: c.name, icon: 'PartyPopper', imageUrl: eventPhoto(c) || undefined, path: `/events/browse?category=${c.slug}`,
       })),
     }],
   };

@@ -70,9 +70,8 @@ export function useHelpingBooking({ serviceType, coverageLine, homeFirst = false
         ...(onSite && { onSite }), serviceType, ...places(), destination: places().destination || undefined,
         ...fields, paymentMethod: 'cash', idempotencyKey, ...surge.bookingFields, ...(tip > 0 && { tipPaise: tip * 100 }),
       }).unwrap();
-      toast.success('Task requested');
       draftDone();
-      router.replace(`/helping/tasks/${res.task._id}` as never);
+      router.replace(`/helping/tasks/${res.task._id}?booked=1` as never);
       return true;
     } catch (err) {
       if (surgeChanged(err, surge.refetch)) toast((err as { data: { error: string } }).data.error);

@@ -127,7 +127,8 @@ export function RepairFlow({ vertical, saved, draftKey, onStartOver, onAddAnothe
 
   // The inspection fee is ZappyOne's (admin config): read from the price preview, null until known.
   const previewRepair = diagnosis?.primaryRepairCode || diagnosis?.recommendations?.[0]?.repairCode;
-  const { data: preview } = useRepairPricePreviewQuery({ vertical, repairCode: previewRepair || undefined, brandCode: brand?.code, modelCode: model?.code, serviceMode: 'diagnosis_only' });
+  // The lowest inspection fee a provider near this address set (free where nobody charges).
+  const { data: preview } = useRepairPricePreviewQuery({ vertical, repairCode: previewRepair || undefined, brandCode: brand?.code, modelCode: model?.code, serviceMode: 'diagnosis_only', ...(typeof location?.lat === 'number' && { lat: location.lat, lng: location.lng }) });
   const inspectionFeePaise: number | null = preview ? (preview.estimate?.totalPaise ?? 0) : null;
 
   /** The step `delta` away, walking past steps this catalog had nothing to show for. */
@@ -216,7 +217,7 @@ export function RepairFlow({ vertical, saved, draftKey, onStartOver, onAddAnothe
           provider={provider} repairCode={repairCode} qualityCode={qualityCode} serviceMode={serviceMode} inspectionFeePaise={inspectionFeePaise}
           location={location} fuelType={fuelType} diagnosticAnswers={diagnosticAnswers} diagnosticTranscript={diagnosticTranscript}
           addOnCodes={addOnCodes} scheduledAt={when}
-          onDone={(b) => { clearDraft(draftKey); draftDone(); router.replace(`/repair/bookings/${b._id}` as never); }} />
+          onDone={(b) => { clearDraft(draftKey); draftDone(); router.replace(`/repair/bookings/${b._id}?booked=1` as never); }} />
       ) : null}
     </View>
   );

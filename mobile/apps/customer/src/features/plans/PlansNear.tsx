@@ -10,11 +10,11 @@ import { usePlanQuoteQuery, usePlansNearAnyQuery, usePlansNearQuery, useSubscrib
 import { Appear, BottomSheet, Button, Chip, Skeleton, Text } from '@zappy/ui/components';
 import { toast } from '@zappy/ui/components/Toast';
 import { RIPPLE, errText } from '@zappy/ui/lib/feedback';
-import { colors, ink, success, zappy } from '@zappy/ui/theme/colors';
+import { colors, ink, zappy } from '@zappy/ui/theme/colors';
 import { radius } from '@zappy/ui/theme/radius';
 import { spacing } from '@zappy/ui/theme/spacing';
 
-interface Plan { _id: string; name: string; type: 'monthly' | 'pack'; visitsPerMonth: number; pricePaise: number; perVisitPaise: number; savingsPct: number | null; pauseDaysPerMonth: number; durations: { months: number; discountPct: number }[]; provider: { id: string; name: string; rating: number | null } }
+interface Plan { _id: string; name: string; type: 'monthly' | 'pack'; visitsPerMonth: number; pricePaise: number; perVisitPaise: number; pauseDaysPerMonth: number; durations: { months: number; discountPct: number }[]; provider: { id: string; name: string; rating: number | null } }
 const rupees = (p: number) => `₹${Math.round((p || 0) / 100).toLocaleString('en-IN')}`;
 const istDay = (plus = 0) => new Date(Date.now() + 330 * 60000 + plus * 86400000).toISOString().slice(0, 10);
 const SLOTS = ['07:00', '08:00', '09:00', '10:00', '11:00', '14:00', '16:00', '18:00'];
@@ -87,7 +87,6 @@ export function PlansNear({ vertical, loc, providerId = null, title = 'Monthly p
               <Text variant="bodySmall" weight="bold" numberOfLines={2}>{p.name}</Text>
               <View style={styles.inline}><Text variant="caption" color={ink[500]}>{p.provider.name}</Text>{p.provider.rating != null ? <><Star size={10} color="#F59E0B" fill="#F59E0B" /><Text variant="caption" color={ink[500]}>{p.provider.rating.toFixed(1)}</Text></> : null}</View>
               <View style={styles.price}><Text variant="bodyLarge" weight="bold">{rupees(p.pricePaise)}</Text>{p.type === 'monthly' ? <Text variant="caption" color={ink[500]}>/month · {rupees(p.perVisitPaise)} a visit</Text> : null}</View>
-              {p.savingsPct ? <Text variant="caption" weight="bold" color={success[600]}>{p.savingsPct}% less than booking each visit</Text> : null}
             </Pressable>
           </Appear>
         ))}

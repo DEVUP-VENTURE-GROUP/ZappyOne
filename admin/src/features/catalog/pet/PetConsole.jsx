@@ -21,7 +21,7 @@ export default function Pet() {
 
   return (
     <div className="space-y-5">
-      <SectionHeader title="Pet Services" subtitle="Grooming, boarding, walking and care for dogs and cats" />
+      <SectionHeader title="Pet Services" subtitle="Grooming, boarding, walking and care for dogs and cats. Providers set their own prices per pet size; the pricing rules here apply only to ZappyOne staff, plus everyone's platform fee, tax and commission." />
 
       <div className="flex gap-1 rounded-xl bg-slate-100 p-1 w-fit">
         {[['bookings', 'Bookings'], ['providers', 'Providers'], ['pricing', 'Pricing']].map(([k, label]) => (

@@ -21,13 +21,14 @@ import { spacing } from '../../../theme/spacing';
 import { PriceRow } from './PriceRow';
 import { StepShell } from './StepShell';
 import { WarrantySettings } from './WarrantySettings';
+import { InspectionFeeCard } from './InspectionFeeCard';
 import { workModesFor } from './setupFlow';
 import {
   countsFor, existingFor, rowsFromValues, type ClaimedRepair, type PriceRowData,
 } from './priceSheet';
 import { uniqueRepairs, type RepairGroup } from './workSelection';
 
-export function PricingStep({ vertical, onBack, onNext }: { vertical: string; onBack: () => void; onNext: () => void }) {
+export function PricingStep({ vertical, isShop, onBack, onNext }: { vertical: string; isShop: boolean; onBack: () => void; onNext: () => void }) {
   const { data: catalog } = useRepairWorkCatalogQuery({ vertical });
   const { data: pricingData, isLoading, refetch } = useRepairProviderPricingQuery(vertical);
   const [bulkSave, { isLoading: saving }] = useBulkRepairProviderPricingMutation();
@@ -109,6 +110,7 @@ export function PricingStep({ vertical, onBack, onNext }: { vertical: string; on
     <StepShell title="What do you charge?" hint="Set your own price for each job, per brand. Change a single model only where you charge differently."
       onBack={onBack} onNext={onNext} nextLabel={pricing.length ? 'Continue' : 'Skip for now'}>
       <PartsNote vertical={vertical} who="partner" />
+      <InspectionFeeCard vertical={vertical} />
       {!brandCodes.length ? (
         <View style={styles.empty}><Text variant="bodySmall" weight="bold" color={ink[700]}>No brands chosen yet</Text><Text variant="caption" color={ink[500]}>Go back to the first step and pick the brands you handle.</Text></View>
       ) : (
@@ -151,7 +153,7 @@ export function PricingStep({ vertical, onBack, onNext }: { vertical: string; on
           <Text variant="caption" color={ink[400]} style={styles.center}>Model not listed? Set the brand price above: it covers every model, including ones we have not added yet.</Text>
         </>
       )}
-      {claimed.length ? <WarrantySettings vertical={vertical} claimed={claimed} rows={pricing} onSaved={refetch} /> : null}
+      {isShop && claimed.length ? <WarrantySettings vertical={vertical} claimed={claimed} rows={pricing} onSaved={refetch} /> : null}
     </StepShell>
   );
 }

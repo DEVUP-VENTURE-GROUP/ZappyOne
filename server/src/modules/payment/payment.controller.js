@@ -18,6 +18,20 @@ async function createOrder(req, res, next) {
   } catch (err) { next(err); }
 }
 
+// Partners paying dues from the app: a Razorpay page to open, then a check once they come back.
+async function createDuesLink(req, res, next) {
+  try {
+    const r = await paymentService.createOrderForPurpose({
+      owner: { kind: req.auth.role, id: req.auth.sub }, purpose: 'dues_payment', amountPaise: req.body.amountPaise, returnUrl: req.body.returnUrl, link: true,
+    });
+    res.status(201).json({ url: r.paymentLink.short_url, cfOrderId: r.paymentIntent.cfOrderId, amountPaise: r.paymentIntent.amountPaise });
+  } catch (err) { next(err); }
+}
+
+async function checkDuesLink(req, res, next) {
+  try { res.json(await paymentService.checkLink({ cfOrderId: req.params.cfOrderId, owner: { kind: req.auth.role, id: req.auth.sub } })); } catch (err) { next(err); }
+}
+
 async function verify(req, res, next) {
   try {
     const result = await paymentService.handleCheckoutVerification({
@@ -29,4 +43,4 @@ async function verify(req, res, next) {
   } catch (err) { next(err); }
 }
 
-module.exports = { createOrder, verify, checkoutBody };
+module.exports = { createOrder, verify, checkoutBody, createDuesLink, checkDuesLink };

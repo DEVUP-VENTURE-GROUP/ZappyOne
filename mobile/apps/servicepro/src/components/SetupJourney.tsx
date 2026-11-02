@@ -10,11 +10,11 @@ import { spacing } from '@zappy/ui/theme/spacing';
 
 interface Step { key: string; label: string; done: boolean; waiting?: boolean; path: string }
 
-// Where the shop is on the way to taking work: done, waiting on ZappyOne, and the one thing to do next. Gone once the shop is live.
+// Where the shop is on the way to taking work: done, waiting on ZappyOne, and the one thing to do next. Gone once every step is done.
 export function SetupJourney() {
   const router = useRouter();
   const { data } = useProviderSetupJourneyQuery(undefined);
-  if (!data || data.live) return null;
+  if (!data || data.complete) return null;
   const go = (path: string) => router.push(providerPath(path) as never);
   const steps = data.steps as Step[];
   return (

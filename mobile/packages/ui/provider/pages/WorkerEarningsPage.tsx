@@ -19,7 +19,7 @@ const PERIODS = [{ id: 'week', label: 'This week' }, { id: 'month', label: 'This
 type Job = { _id: string; serviceLabel?: string; completedAt: string; gross: number; platformFee: number; tip: number; bonus: number; net: number; surgeMultiplier?: number; orderId?: string };
 
 function payslipCsv(jobs: Job[]) {
-  const rows = [['Date', 'Service', 'Gross', 'Platform Fee', 'Tip', 'Bonus', 'Surge', 'Net']];
+  const rows = [['Date', 'Service', 'Gross', 'ZappyOne', 'Tip', 'Bonus', 'Surge', 'Net']];
   jobs.forEach((j) => rows.push([
     new Date(j.completedAt).toLocaleDateString('en-IN'), j.serviceLabel ?? 'Service', (j.gross / 100).toFixed(2),
     (j.platformFee / 100).toFixed(2), (j.tip / 100).toFixed(2), (j.bonus / 100).toFixed(2), String(j.surgeMultiplier ?? 1), (j.net / 100).toFixed(2),
@@ -57,7 +57,7 @@ function EarningRow({ job, open, onToggle }: { job: Job; open: boolean; onToggle
       {open ? (
         <View style={styles.breakdown}>
           <Line label="Gross earnings" value={fmt(job.gross)} />
-          <Line label="Platform fee" value={`-${fmt(job.platformFee)}`} tone={danger[500]} />
+          <Line label="ZappyOne" value={`-${fmt(job.platformFee)}`} tone={danger[500]} />
           {job.tip > 0 ? <Line label="Customer tip" value={`+${fmt(job.tip)}`} tone={success[600]} /> : null}
           {job.bonus > 0 ? <Line label="Bonus" value={`+${fmt(job.bonus)}`} tone={success[600]} /> : null}
           {surge ? <Line label="Surge multiplier" value={`${job.surgeMultiplier}×`} tone={accent[600]} /> : null}
@@ -117,7 +117,7 @@ export function WorkerEarningsPage() {
             </View>
             <View style={styles.info}>
               <Info size={16} color={zappy[500]} />
-              <Text variant="bodySmall" color={zappy[800]} style={styles.flex}>The platform fee is ZappyOne's commission, taken from each job. Tips and customer boosts are all yours.</Text>
+              <Text variant="bodySmall" color={zappy[800]} style={styles.flex}>ZappyOne's amount on each job is added to what you pay ZappyOne. Tips and customer boosts are all yours.</Text>
             </View>
             <Text variant="caption" weight="black" color={ink[400]} style={styles.label}>JOB BREAKDOWN</Text>
             {isLoading ? <SkeletonList count={4} /> : null}

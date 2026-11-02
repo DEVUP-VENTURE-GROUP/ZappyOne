@@ -103,7 +103,13 @@ router.post(
     domainCode: Joi.string().max(60).allow('', null),
     proposedName: Joi.string().max(120).required(),
     description: Joi.string().max(1000).allow('', null),
-    packages: Joi.array().max(20).items(Joi.object({ name: Joi.string().trim().min(2).max(80).required(), minutes: Joi.number().integer().min(5).max(1440).required(), pricePaise: Joi.number().integer().min(100).max(100000000).required() })).default([]),
+    packages: Joi.array().max(20).items(Joi.object({
+      name: Joi.string().trim().min(2).max(80).required(), minutes: Joi.number().integer().min(5).max(1440).required(), pricePaise: Joi.number().integer().min(100).max(100000000).required(),
+      includes: Joi.array().items(Joi.string().trim().max(60)).max(8).default([]), photoKey: Joi.string().max(300).allow(''),
+    })).default([]),
+    photos: Joi.array().items(Joi.string().max(300)).max(6).default([]),
+    serviceModes: Joi.array().items(Joi.string().valid('doorstep', 'workshop')).max(2).default([]),
+    yearsExperience: Joi.number().integer().min(0).max(60).allow(null),
   })),
   ctrl.requestLine,
 );

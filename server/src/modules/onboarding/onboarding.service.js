@@ -352,7 +352,7 @@ async function decide({ enrolmentId, decision, note = '', adminId, docCodes = []
 
 /* "My service isn't listed" */
 
-async function requestLine({ owner, providerKind, domainCode = '', proposedName, description = '', packages = [] }) {
+async function requestLine({ owner, providerKind, domainCode = '', proposedName, description = '', packages = [], photos = [], serviceModes = [], yearsExperience = null }) {
   const filter = {
     ...ownerFilter(owner),
     proposedName: new RegExp(`^${String(proposedName).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i'),
@@ -368,6 +368,9 @@ async function requestLine({ owner, providerKind, domainCode = '', proposedName,
     proposedName,
     description,
     packages,
+    photos,
+    serviceModes,
+    yearsExperience,
   });
   return { request, deduped: false };
 }

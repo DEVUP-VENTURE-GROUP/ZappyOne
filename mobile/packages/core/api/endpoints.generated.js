@@ -16,7 +16,7 @@
  * ----------------------------------------------------------------------------
  */
 
-export const TAG_TYPES = ['CheckoutDrafts', 'ServicePlans', 'MyPlans', 'ProviderPlans', 'PlanVisits', 'PartnerRates', 'PriceRequest', 'Reviews', 'Fees', 'JobChat', 'Account', 'AdminTeam', 'Payments', 'Me', 'Order', 'Worker', 'Earnings', 'AdminMetrics', 'Kyc', 'Plan', 'Subscription', 'Wallet', 'Notification', 'AdminUsers', 'Disputes', 'Payouts', 'Incentives', 'CancellationConfig', 'PricingCfg', 'AuditLogs', 'Addresses', 'Ad', 'Promo', 'Gamification', 'Recommendations', 'FeatureFlags', 'SupportTickets', 'Referral', 'ShieldFund', 'EventTheme', 'EventBooking', 'EventPartner', 'EventConfig', 'EventCategory', 'PartnerNotification', 'Fraud', 'Zone', 'City', 'PaymentMethods', 'UserDisputes', 'UserTickets', 'AdminAppeals', 'AdminTraining', 'WorkerGoals', 'Plans', 'Content', 'Rewards', 'WorkerOps', 'ReadyMode', 'Shop', 'ShopWorkers', 'ShopKyc',
+export const TAG_TYPES = ['ProviderMenu', 'CheckoutDrafts', 'ServicePlans', 'MyPlans', 'ProviderPlans', 'PlanVisits', 'PartnerRates', 'PriceRequest', 'Reviews', 'Fees', 'JobChat', 'Account', 'AdminTeam', 'Payments', 'Me', 'Order', 'Worker', 'Earnings', 'AdminMetrics', 'Kyc', 'Plan', 'Subscription', 'Wallet', 'Notification', 'AdminUsers', 'Disputes', 'Payouts', 'Incentives', 'CancellationConfig', 'PricingCfg', 'AuditLogs', 'Addresses', 'Ad', 'Promo', 'Gamification', 'Recommendations', 'FeatureFlags', 'SupportTickets', 'Referral', 'ShieldFund', 'EventTheme', 'EventBooking', 'EventPartner', 'EventConfig', 'EventCategory', 'PartnerNotification', 'Fraud', 'Zone', 'City', 'PaymentMethods', 'UserDisputes', 'UserTickets', 'AdminAppeals', 'AdminTraining', 'WorkerGoals', 'Plans', 'Content', 'Rewards', 'WorkerOps', 'ReadyMode', 'Shop', 'ShopWorkers', 'ShopKyc',
     'RepairCatalog', 'RepairConfig', 'RepairPricing', 'RepairRequests', 'RepairBookings', 'RepairProvider', 'MyAssets',
     'HelpingConfig', 'HelpingTasks', 'HelpingAvailable', 'AdminHelpingTasks',
     'PetCatalog', 'MyPets', 'PetBookings', 'PetAvailable', 'PetRecurring', 'AdminPetBookings', 'AdminPetPricing', 'AdminPetCapabilities',
@@ -52,6 +52,8 @@ export function endpoints(b, { adminApiPath }) {
     // Zomato-style browsing (server repair/services/storefront).
     storefronts: b.query({ query: ({ vertical, lat, lng, sort = 'best', serviceMode }) => ({ url: '/repair/storefronts', params: { vertical, lat, lng, sort, ...(serviceMode && { serviceMode }) } }) }),
     storefrontMenu: b.query({ query: ({ kind, id, vertical }) => ({ url: `/repair/storefronts/${kind}/${id}/menu`, params: { vertical } }) }),
+    // One search across every provider's menu near the customer (repair storefront searchMenus).
+    menuSearch: b.query({ query: ({ q, lat, lng }) => ({ url: '/repair/menu-search', params: { q, lat, lng } }) }),
     // Partners' monthly plans and packs (server service-plan/).
     plansNear: b.query({ query: ({ vertical, lat, lng }) => ({ url: '/service-plans/near', params: { vertical, lat, lng } }), providesTags: ['ServicePlans'] }),
     // The home's rail: plans near the customer across every service (service-plan plansNearAny).
@@ -140,6 +142,11 @@ export function endpoints(b, { adminApiPath }) {
     repeatAction: b.mutation({ query: ({ planId, action }) => ({ url: `/jobs/recurring/${planId}/${action}`, method: 'POST' }), invalidatesTags: ['Repeats'] }),
     jobArrival: b.query({ query: ({ line, lat, lng }) => ({ url: '/jobs/arrival', params: { line, lat, lng } }), keepUnusedDataFor: 30 }),
     /** Move a booking made for later (jobs/reschedule): repairs, pet care, helping. */
+    // Fix the address or door directions before the pro sets off (jobs/place-edit).
+    editJobPlace: b.mutation({ query: ({ id, ...body }) => ({ url: `/jobs/${id}/place`, method: 'PATCH', body }), invalidatesTags: ['RepairBookings', 'PetBookings', 'HelpingTasks'] }),
+    editJobContact: b.mutation({ query: ({ id, onSite }) => ({ url: `/jobs/${id}/contact`, method: 'PATCH', body: { onSite } }), invalidatesTags: ['RepairBookings', 'PetBookings', 'HelpingTasks'] }),
+    claimJobPayment: b.mutation({ query: ({ id, method }) => ({ url: `/jobs/${id}/pay-claim`, method: 'POST', body: { method } }) }),
+    addJobExtra: b.mutation({ query: ({ id, code, petIndex = null }) => ({ url: `/jobs/${id}/extras`, method: 'POST', body: { code, petIndex } }), invalidatesTags: ['RepairBookings', 'PetBookings', 'HelpingTasks'] }),
     rescheduleJob: b.mutation({ query: ({ id, scheduledAt }) => ({ url: `/jobs/${id}/reschedule`, method: 'POST', body: { scheduledAt } }), invalidatesTags: ['RepairBookings', 'PetBookings', 'HelpingTasks'] }),
     /** Customer: boost while searching, tip once done (jobs/boost-tip). */
     boostJob: b.mutation({ query: ({ id, amountPaise }) => ({ url: `/jobs/${id}/boost`, method: 'POST', body: { amountPaise } }) }),
@@ -167,6 +174,10 @@ export function endpoints(b, { adminApiPath }) {
     giveBackJob: b.mutation({ query: ({ id, ...body }) => ({ url: `/jobs/${id}/give-back`, method: 'POST', body }) }),
     confirmJobSafe: b.mutation({ query: (id) => ({ url: `/jobs/${id}/safe`, method: 'POST' }) }),
     askJobMoreTime: b.mutation({ query: ({ id, ...body }) => ({ url: `/jobs/${id}/more-time`, method: 'POST', body }) }),
+    // "Booked for someone else?": a private live link for the person at the door (jobs/share).
+    shareJob: b.mutation({ query: (id) => ({ url: `/jobs/${id}/share`, method: 'POST' }) }),
+    unshareJob: b.mutation({ query: (id) => ({ url: `/jobs/${id}/share`, method: 'DELETE' }) }),
+    getSharedJob: b.query({ query: (token) => `/jobs/shared/${token}` }),
     blockJobCustomer: b.mutation({ query: ({ id, reason = '' }) => ({ url: `/jobs/${id}/block-customer`, method: 'POST', body: { reason } }) }),
     // The pro reports the customer would not pay cash after the job (jobs/give-back reportCashRefused).
     reportCashRefused: b.mutation({ query: ({ id, note }) => ({ url: `/jobs/${id}/cash-refused`, method: 'POST', body: { note } }) }),
@@ -597,6 +608,10 @@ export function endpoints(b, { adminApiPath }) {
       query: () => '/payments/availability',
       keepUnusedDataFor: 60,
     }),
+    // A partner paying its dues to ZappyOne: checkout on the web, a Razorpay page in the apps (worker/dues-pay).
+    createDuesPayment: b.mutation({ query: ({ amountPaise } = {}) => ({ url: '/payments/create-order', method: 'POST', body: { purpose: 'dues_payment', ...(amountPaise && { amountPaise }) } }) }),
+    createDuesLink: b.mutation({ query: ({ amountPaise, returnUrl } = {}) => ({ url: '/payments/dues-link', method: 'POST', body: { ...(amountPaise && { amountPaise }), ...(returnUrl && { returnUrl }) } }) }),
+    checkDuesLink: b.mutation({ query: (cfOrderId) => ({ url: `/payments/dues-link/${cfOrderId}`, method: 'GET' }), invalidatesTags: ['Wallet'] }),
     // Cashfree order for a repair, pet or helping booking; the amount comes from the booking.
     createBookingPayment: b.mutation({
       query: ({ bookingSource, bookingId }) => ({
@@ -1156,6 +1171,8 @@ export function endpoints(b, { adminApiPath }) {
       query: () => '/referrals/me',
       providesTags: ['Referral'],
     }),
+    // A friend's code from their link, applied once after a new customer signs in (server checks it is a new account).
+    applyReferral: b.mutation({ query: (code) => ({ url: '/referrals/apply', method: 'POST', body: { code } }), invalidatesTags: ['Referral'] }),
     getReferralHistory: b.query({
       query: () => '/referrals/history',
       providesTags: ['Referral'],
@@ -1330,7 +1347,7 @@ export function endpoints(b, { adminApiPath }) {
     eventDeclineQuote: b.query({ query: (id) => `/events/partner/bookings/${id}/decline-quote`, keepUnusedDataFor: 0 }),
 
     // Events (user-facing)
-    getEventCategories: b.query({ query: () => '/events/categories', providesTags: ['EventCategory'] }),
+    getEventCategories: b.query({ query: (params = {}) => ({ url: '/events/categories', params }), providesTags: ['EventCategory'] }),
     getEventThemes: b.query({
       query: (params = {}) => ({ url: '/events/themes', params }),
       providesTags: ['EventTheme'],
@@ -1561,8 +1578,8 @@ export function endpoints(b, { adminApiPath }) {
       }),
       invalidatesTags: (r, e, a) => [{ type: 'RepairConfig', id: a.vertical || 'mobile' }, 'RepairCatalog'],
     }),
-    adminRepairPendingPrices: b.query({
-      query: () => adminApiPath('/repair/provider-pricing/pending'),
+    adminRepairProviderPrices: b.query({
+      query: (vertical) => ({ url: adminApiPath('/repair/provider-pricing/recent'), params: { vertical } }),
       providesTags: ['RepairPricing'],
     }),
     adminDecideRepairPrice: b.mutation({
@@ -1715,8 +1732,8 @@ export function endpoints(b, { adminApiPath }) {
     adminPlanErrorIssue: b.mutation({ query: ({ id, ...body }) => ({ url: adminApiPath(`/errors/issues/${id}/plan`), method: 'PATCH', body }), invalidatesTags: ['ErrorIssues'] }),
     adminMessageErrorIssue: b.mutation({ query: ({ id, ...body }) => ({ url: adminApiPath(`/errors/issues/${id}/message`), method: 'POST', body }), invalidatesTags: ['ErrorIssues'] }),
     // Partner plans outside the price band, and the plan money rules (server service-plan/).
-    adminPendingPlans: b.query({ query: () => ({ url: adminApiPath('/service-plans/pending') }), providesTags: ['ServicePlans'] }),
-    adminReviewPlan: b.mutation({ query: ({ id, approve, note }) => ({ url: adminApiPath(`/service-plans/${id}/review`), method: 'POST', body: { approve, note } }), invalidatesTags: ['ServicePlans'] }),
+    adminPartnerPlans: b.query({ query: () => ({ url: adminApiPath('/service-plans') }), providesTags: ['ServicePlans'] }),
+    adminSetPlanHidden: b.mutation({ query: ({ id, hidden, note }) => ({ url: adminApiPath(`/service-plans/${id}/hidden`), method: 'POST', body: { hidden, note } }), invalidatesTags: ['ServicePlans'] }),
     adminPlanConfig: b.query({ query: () => ({ url: adminApiPath('/service-plans/config') }), providesTags: ['ServicePlans'] }),
     adminSetPlanConfig: b.mutation({ query: (body) => ({ url: adminApiPath('/service-plans/config'), method: 'PUT', body }), invalidatesTags: ['ServicePlans'] }),
     adminOnboardingLineRequests: b.query({
@@ -2113,6 +2130,21 @@ export function endpoints(b, { adminApiPath }) {
       query: (vertical = 'mobile') => ({ url: '/repair/provider/pricing', params: { vertical } }),
       providesTags: ['RepairProvider'],
     }),
+    // A provider's own menu for a fixed-price service: sample jobs, their own jobs, prices per option (repair/services/provider-menu).
+    // A provider's own inspection visit fee for a service; 0 is a free inspection.
+    providerInspectionFee: b.query({ query: (vertical) => ({ url: '/repair/provider/inspection-fee', params: { vertical } }), providesTags: ['ProviderMenu'] }),
+    setProviderInspectionFee: b.mutation({ query: (body) => ({ url: '/repair/provider/inspection-fee', method: 'PUT', body }), invalidatesTags: ['ProviderMenu'] }),
+    // A pet care provider's own rate card (pet/services/provider-rates).
+    petProviderRates: b.query({ query: () => '/pet/provider/rates', providesTags: ['ProviderMenu'] }),
+    savePetProviderRates: b.mutation({ query: (body) => ({ url: '/pet/provider/rates', method: 'PUT', body }), invalidatesTags: ['ProviderMenu'] }),
+    // A helper's own rates per errand (helping/services/provider-rates).
+    helpingProviderRates: b.query({ query: (lineCode) => `/helping/provider/rates/${lineCode}`, providesTags: ['ProviderMenu'] }),
+    saveHelpingProviderRate: b.mutation({ query: ({ lineCode, serviceType, ...body }) => ({ url: `/helping/provider/rates/${lineCode}/${serviceType}`, method: 'PUT', body }), invalidatesTags: ['ProviderMenu'] }),
+    providerMenu: b.query({ query: (vertical) => ({ url: '/repair/provider/menu', params: { vertical } }), providesTags: ['ProviderMenu'] }),
+    saveProviderMenuItem: b.mutation({ query: (body) => ({ url: '/repair/provider/menu/item', method: 'PUT', body }), invalidatesTags: ['ProviderMenu', 'RepairProvider'] }),
+    removeProviderMenuItem: b.mutation({ query: ({ vertical, repairCode }) => ({ url: `/repair/provider/menu/item/${repairCode}`, method: 'DELETE', params: { vertical } }), invalidatesTags: ['ProviderMenu', 'RepairProvider'] }),
+    adjustProviderMenu: b.mutation({ query: (body) => ({ url: '/repair/provider/menu/adjust', method: 'POST', body }), invalidatesTags: ['ProviderMenu', 'RepairProvider'] }),
+    startMenuFromSamples: b.mutation({ query: (body) => ({ url: '/repair/provider/menu/samples', method: 'POST', body }), invalidatesTags: ['ProviderMenu', 'RepairProvider'] }),
     /** Headings + the repairs under them, with what this provider already claims. */
     repairWorkCatalog: b.query({
       query: ({ vertical = 'mobile', cityCode } = {}) => ({

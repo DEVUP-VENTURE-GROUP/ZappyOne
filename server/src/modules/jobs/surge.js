@@ -340,6 +340,7 @@ async function quote({ kind, line, lat, lng, basePaise = 0, userId = null, visit
   try {
     if (typeof lat !== 'number' || typeof lng !== 'number') return none;
     recordDemand({ line, lat, lng, userId }).catch(() => {});
+    if ((await require('./member').perks(userId)).noSurge) return none;
     const { s } = await settings();
     if (!lineOn(s, line) || !visit) return none;
     const f = await factorsNow({ line, lat, lng });
@@ -360,10 +361,11 @@ async function quote({ kind, line, lat, lng, basePaise = 0, userId = null, visit
 }
 
 // What surge adds to each of several prices right now, for list screens: same factors and lines as quote(), but no lock and no demand recorded. Never throws.
-async function preview({ line, lat, lng, bases }) {
+async function preview({ line, lat, lng, bases, userId = null }) {
   const none = bases.map(() => 0);
   try {
     if (typeof lat !== 'number' || typeof lng !== 'number') return none;
+    if ((await require('./member').perks(userId)).noSurge) return none;
     const { s } = await settings();
     if (!lineOn(s, line)) return none;
     const f = await factorsNow({ line, lat, lng });
@@ -431,6 +433,7 @@ async function attach(kind, booking, { quoteId = null, userId } = {}) {
     const line = await KINDS[kind].line(doc);
     const at = require('./kinds').whereOf(kind, doc);
     if (!line || !at || !isVisit(kind, doc)) return null;
+    if ((await require('./member').perks(userId || doc.userId)).noSurge) return null;
     const { s } = await settings();
     if (!lineOn(s, line)) return null;
     recordDemand({ line, lat: at.lat, lng: at.lng, userId }).catch(() => {});

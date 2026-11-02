@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import {
   Smartphone, Laptop, Cpu, Bike, Car, Truck, Home, HeartHandshake, Baby, Users,
-  Zap, Droplet, Droplets, AirVent, Sparkles, Wrench, ChevronRight,
+  Zap, Droplet, Droplets, AirVent, SprayCan, Wrench, ChevronRight,
   Monitor, Battery, Plug, Keyboard, Volume2, Camera, HardDrive, Gauge,
   Wifi, Thermometer, CircuitBoard, Database, ArrowUpCircle, Wand2, ShieldAlert,
   ClipboardCheck, ShieldCheck, Footprints, PackageCheck, PawPrint, Scissors, ShoppingBag, ShoppingBasket, Stethoscope, PartyPopper,
@@ -32,7 +32,7 @@ import { servicePhoto, categoryPhoto } from './problemArt';
 /** Icon names are stored as data; this maps them, with a sane fallback. */
 export const SERVICE_ICONS = {
   Smartphone, Laptop, Cpu, Bike, Car, Truck, Home, HeartHandshake, Baby, Users,
-  Zap, Droplet, Droplets, AirVent, Sparkles, Wrench,
+  Zap, Droplet, Droplets, AirVent, Sparkles: SprayCan, Wrench,
   ClipboardCheck, Footprints, PackageCheck, PawPrint, Scissors, ShoppingBag, ShoppingBasket, Stethoscope, PartyPopper,
   ShoppingCart, Pill, Package, Landmark, Flower2,
   UtensilsCrossed, Shirt, BedDouble, Bath, Hammer, WashingMachine, GlassWater, KeyRound, BatteryCharging, Sparkle, Palette, Leaf, FileText, Bug, Sofa, PaintRoller, GraduationCap, Music, Dumbbell, Plug, Camera, ShieldCheck,
@@ -95,7 +95,7 @@ export function CategoryTile({ category, onOpen }) {
       onClick={onOpen}
       className="group flex w-[200px] shrink-0 snap-start flex-col overflow-hidden rounded-card border border-line bg-white text-left transition-colors duration-150 hover:border-line-strong active:bg-canvas sm:w-[232px]"
     >
-      <span className={`relative flex aspect-[4/5] w-full items-center justify-center overflow-hidden ${!category.imageUrl && category.emoji && category.tone ? `bg-gradient-to-br ${category.tone}` : 'bg-sunken'}`}>
+      <span className="relative flex aspect-[4/5] w-full items-center justify-center overflow-hidden bg-sunken">
         {category.imageUrl ? (
           <img
             src={category.imageUrl}
@@ -106,9 +106,6 @@ export function CategoryTile({ category, onOpen }) {
             className={`h-full w-full transition-transform duration-300 group-hover:scale-105 ${
               category.imageUrl.startsWith('/characters/') ? 'object-contain mix-blend-multiply pt-1' : 'object-cover'}`}
           />
-        ) : category.emoji ? (
-          // An occasion with no photo yet: its own emoji, not another one's picture.
-          <span className="text-6xl drop-shadow-md transition-transform duration-300 group-hover:scale-110" aria-hidden="true">{category.emoji}</span>
         ) : (
           <span className="flex h-14 w-14 items-center justify-center rounded-full border border-line bg-white text-zappy-600">
             <Icon size={24} strokeWidth={1.8} />

@@ -35,12 +35,14 @@ async function assertApproved(auth, lineCode) {
   throw Object.assign(new Error('You are not verified for this service yet'), { status: 403, code: 'NOT_APPROVED_FOR_SERVICE' });
 }
 
-/** Everyone approved for a line — for alerting them to a new job. */
-async function approvedProviders(lineCode) {
+/** Everyone approved for a line — for alerting them to a new job. A shop over its dues limit is left out, or marked when includeBlocked. */
+async function approvedProviders(lineCode, { includeBlocked = false } = {}) {
   const rows = await ProviderEnrolment.find({ lineCode, status: 'approved' }).select('workerId shopId').lean();
   const blocked = await require('../shop/shop-dues').blockedShops(rows.filter((r) => r.shopId).map((r) => r.shopId));
   return rows.map((r) => (r.shopId ? { kind: 'shop', id: String(r.shopId) } : { kind: 'worker', id: String(r.workerId) }))
-    .filter((p) => p.id && p.id !== 'null' && !(p.kind === 'shop' && blocked.has(p.id)));
+    .filter((p) => p.id && p.id !== 'null')
+    .map((p) => (p.kind === 'shop' && blocked.has(p.id) ? { ...p, blocked: true } : p))
+    .filter((p) => includeBlocked || !p.blocked);
 }
 
 module.exports = { lineOf, approvedLines, assertApproved, approvedProviders, HELPING_LINE };

@@ -1,0 +1,11 @@
+// The UPI payment link every UPI app understands (NPCI deep link): to the pro's own ID, exact amount, booking ID as the note.
+export function upiLink({ upiId, name, amountPaise, reference }) {
+  const params = new URLSearchParams({
+    pa: upiId,
+    pn: String(name || 'ZappyOne pro').slice(0, 40),
+    am: (Math.round(amountPaise) / 100).toFixed(2),
+    cu: 'INR',
+    ...(reference && { tn: `ZappyOne ${reference}`.slice(0, 60) }),
+  });
+  return `upi://pay?${params.toString()}`;
+}

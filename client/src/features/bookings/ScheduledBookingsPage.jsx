@@ -61,7 +61,7 @@ export default function ScheduledBookingsPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 pb-16">
-      <header className="sticky top-0 z-10 border-b border-slate-100 bg-white/90 backdrop-blur">
+      <header className="sticky top-0 z-10 border-b border-slate-100 bg-white/90">
         <div className="mx-auto flex max-w-2xl items-center gap-3 px-4 py-3">
           <button type="button" onClick={() => goBack()} className="rounded-full p-1.5 hover:bg-slate-100" aria-label="Back">
             <ArrowLeft className="h-5 w-5 text-slate-700" />
@@ -174,7 +174,7 @@ function NextUpCard({ item, now, onOpen, onMove }) {
   const movable = item.kind !== 'event';
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-      className="overflow-hidden rounded-3xl bg-gradient-to-br from-zappy-600 to-zappy-800 text-white shadow-[0_18px_40px_-22px_rgba(31,79,216,0.8)]">
+      className="overflow-hidden rounded-3xl bg-zappy-600 text-white">
       <button type="button" onClick={onOpen} className="block w-full p-5 text-left">
         <div className="flex items-start gap-4">
           <span className="flex w-16 shrink-0 flex-col items-center rounded-2xl bg-white/15 py-2 ring-1 ring-white/20">
@@ -410,7 +410,7 @@ function EmptySchedule({ onBook }) {
   return (
     <div className="space-y-5">
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-        className="rounded-3xl bg-gradient-to-br from-zappy-50 via-white to-white p-6 text-center ring-1 ring-zappy-100">
+        className="rounded-3xl bg-white p-6 text-center ring-1 ring-zappy-100">
         <div className="mx-auto grid w-40 grid-cols-7 gap-1" aria-hidden>
           {Array.from({ length: 21 }).map((_, i) => (
             <motion.span key={i} className={`h-4 rounded ${i === 10 ? 'bg-zappy-500' : 'bg-zappy-100'}`}

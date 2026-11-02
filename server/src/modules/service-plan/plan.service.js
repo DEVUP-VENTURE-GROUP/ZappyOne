@@ -24,18 +24,6 @@ async function setConfig(patch) {
   return PlanConfig.findOneAndUpdate({ key: 'main' }, { $set: patch }, { upsert: true, new: true, runValidators: true }).lean();
 }
 
-// The standard price of one visit of this plan, from ZappyOne's reference prices.
-async function referenceVisitPaise(vertical, items) {
-  const { resolveReferencePrice } = require('../repair/services/pricing.service');
-  let sum = 0;
-  for (const i of items) {
-    const ref = await resolveReferencePrice({ vertical, repairCode: i.repairCode, brandCode: i.brandCode });
-    if (!ref) return null;
-    sum += ref.recommendedPaise;
-  }
-  return sum;
-}
-
 async function assertCanSell(owner, vertical) {
   const line = await require('../jobs/kinds').KINDS.repair.line({ vertical });
   if (!line) throw httpError('That service is not open.', 400, 'UNKNOWN_SERVICE');
@@ -56,13 +44,12 @@ async function savePlan(owner, body, planId = null) {
   const durations = (body.durations?.length ? body.durations : [{ months: 1, discountPct: 0 }]).filter((d, i, a) => a.findIndex((x) => x.months === d.months) === i);
   if (!durations.some((d) => d.months === 1) && body.type === 'monthly') durations.unshift({ months: 1, discountPct: 0 });
   const visitsPerMonth = body.type === 'pack' ? 1 : body.visitsPerMonth;
-  const perVisit = await referenceVisitPaise(body.vertical, items);
   const set = {
     vertical: body.vertical, name: body.name, description: body.description || '', type: body.type, items, visitsPerMonth,
     weekdays: body.type === 'pack' ? [] : (body.weekdays || []), pricePaise: body.pricePaise,
     durations: body.type === 'pack' ? [{ months: 1, discountPct: 0 }] : durations,
     pauseDaysPerMonth: body.type === 'pack' ? 0 : (body.pauseDaysPerMonth ?? 4),
-    referencePaise: perVisit == null ? null : perVisit * visitsPerMonth, status: 'draft', reviewNote: '',
+    status: 'draft', reviewNote: '',
   };
   if (planId) {
     const r = await ServicePlan.findOneAndUpdate({ _id: planId, ...ownerKey(owner) }, { $set: set }, { new: true }).lean();
@@ -73,16 +60,15 @@ async function savePlan(owner, body, planId = null) {
   return (await ServicePlan.create({ owner: { kind: owner.kind, id: owner.id }, ...set })).toObject();
 }
 
-// Inside the band of the standard price it goes live at once; outside, or with no standard price to compare, admin reviews it.
+// The partner's own price goes live at once; admin can pause a plan.
 async function submitPlan(owner, planId) {
   const plan = await ServicePlan.findOne({ _id: planId, ...ownerKey(owner) });
   if (!plan) throw httpError('Plan not found.', 404, 'NOT_FOUND');
-  if (!['draft', 'paused', 'rejected'].includes(plan.status)) throw httpError('This plan is already submitted.', 409, 'ALREADY_SUBMITTED');
+  if (plan.status === 'rejected') throw httpError('ZappyOne has hidden this plan. Contact support to show it again.', 409, 'PLAN_HIDDEN');
+  if (!['draft', 'paused', 'pending'].includes(plan.status)) throw httpError('This plan is already live.', 409, 'ALREADY_SUBMITTED');
   await assertCanSell(owner, plan.vertical);
-  const cfg = await config();
-  const pct = plan.referencePaise ? (plan.pricePaise / plan.referencePaise) * 100 : null;
-  plan.status = pct != null && pct >= cfg.autoApproveMinPct && pct <= cfg.autoApproveMaxPct ? 'live' : 'pending';
-  plan.reviewNote = plan.status === 'pending' ? (pct == null ? 'No standard price to compare with; ZappyOne will review it.' : `The price is ${Math.round(pct)}% of the standard price; ZappyOne will review it.`) : '';
+  plan.status = 'live';
+  plan.reviewNote = '';
   await plan.save();
   return plan.toObject();
 }
@@ -93,9 +79,14 @@ async function setPlanLive(owner, planId, live) {
   return plan;
 }
 
-async function reviewPlan(planId, approve, note = '') {
-  const plan = await ServicePlan.findOneAndUpdate({ _id: planId, status: 'pending' }, { $set: { status: approve ? 'live' : 'rejected', reviewNote: note } }, { new: true }).lean();
-  if (!plan) throw httpError('No plan waiting for review with that id.', 404, 'NOT_FOUND');
+// Admin hides a plan that looks wrong (the partner cannot publish it again), or shows it again.
+async function setPlanHidden(planId, hidden, note = '') {
+  const plan = await ServicePlan.findOneAndUpdate(
+    { _id: planId, status: hidden ? { $in: ['pending', 'live', 'paused'] } : { $in: ['rejected', 'pending'] } },
+    { $set: { status: hidden ? 'rejected' : 'live', reviewNote: hidden ? (note || 'Hidden by ZappyOne') : '' } },
+    { new: true },
+  ).lean();
+  if (!plan) throw httpError('That plan cannot be changed now.', 409, 'BAD_STATE');
   return plan;
 }
 
@@ -114,7 +105,7 @@ async function sellable(owner) {
 }
 
 const mine = (owner) => ServicePlan.find({ ...ownerKey(owner) }).sort({ updatedAt: -1 }).limit(50).lean();
-const pending = () => ServicePlan.find({ status: 'pending' }).sort({ updatedAt: 1 }).limit(100).lean();
+const forAdmin = () => ServicePlan.find({ status: { $in: ['pending', 'live', 'paused', 'rejected'] } }).sort({ updatedAt: -1 }).limit(200).lean();
 
 // Live plans from providers who cover this address for this service right now (the storefront rules).
 async function plansNear({ vertical, lat, lng }) {
@@ -129,7 +120,6 @@ async function plansNear({ vertical, lat, lng }) {
       ...p, provider: { kind: s.kind, id: s.id, name: s.name, rating: s.rating, completedJobs: s.completedJobs, imageUrl: s.imageUrl },
       platformFeePaise: cfg.platformFeePaise,
       perVisitPaise: Math.round(p.pricePaise / (p.visitsPerMonth || 1)),
-      savingsPct: p.referencePaise ? Math.max(0, Math.round((1 - p.pricePaise / p.referencePaise) * 100)) : null,
     };
   }).sort((a, b) => a.perVisitPaise - b.perVisitPaise);
 }
@@ -338,6 +328,6 @@ async function notifyOwner(owner, title, body, data) {
 
 module.exports = {
   plansNearAny,
-  config, setConfig, sellable, savePlan, submitPlan, setPlanLive, reviewPlan, mine, pending, plansNear, quote, subscribe, pauseDay, cancel,
+  config, setConfig, sellable, savePlan, submitPlan, setPlanLive, setPlanHidden, mine, forAdmin, plansNear, quote, subscribe, pauseDay, cancel,
   mySubscriptions, ownerVisits, ownerSubscriptions, assignWorker, startVisit, completeVisit, rateVisit, sweep, visitDays, istDay, addDays,
 };

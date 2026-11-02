@@ -108,6 +108,11 @@ beforeAll(async () => {
     warrantyDays: 90, approvalStatus: 'approved',
   });
 
+  // Verified for the service, so its price is the nearby price a no-provider booking is charged.
+  const { ProviderEnrolment, ServiceLine } = require('../src/modules/onboarding/onboarding.model');
+  await ServiceLine.create({ code: 'mobile_repair', name: 'Mobile Repair', domainCode: 'electronics', repairVertical: 'mobile', status: 'live' });
+  await ProviderEnrolment.create({ providerKind: 'shop', shopId: shop._id, domainCode: 'electronics', lineCode: 'mobile_repair', status: 'approved' });
+
   pricingService.invalidateConfigCache();
 });
 

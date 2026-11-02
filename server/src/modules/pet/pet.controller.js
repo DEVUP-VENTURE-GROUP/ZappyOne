@@ -178,12 +178,25 @@ async function quote(req, res, next) {
   try {
     const { pets: petEntries = [], ...rest } = req.body;
     const withPets = await bookingService.loadOwnedPets(req.auth.sub, petEntries);
-    const result = await pricingService.quote({
-      ...rest,
+    const { shopId = null, workerId = null, ...args } = rest;
+    const quoteArgs = {
+      ...args,
+      waivePlatformFee: (await require('../jobs/member').perks(req.auth.sub)).waivePlatformFee,
       pets: withPets.map((e) => ({ pet: e.pet, variantCode: e.variantCode, addonCodes: e.addonCodes, durationMinutes: e.durationMinutes })),
-      serviceLocation: rest.serviceLocation?.coordinates || null,
+      serviceLocation: args.serviceLocation?.coordinates || null,
+    };
+    // The chosen provider's own prices, or the cheapest one near the customer who can take it.
+    if (shopId || workerId) {
+      const capability = await PetProviderCapability.findOne({ ...(shopId ? { shopId } : { workerId }), isActive: true, verificationStatus: 'verified' }).lean();
+      if (!capability) return res.status(409).json({ error: 'That provider is not available', code: 'PROVIDER_UNAVAILABLE' });
+      return res.json({ quote: await pricingService.quoteFor(quoteArgs, capability) });
+    }
+    const best = await pricingService.cheapestNearby(quoteArgs, {
+      categoryCode: args.categoryCode, variantCode: withPets[0]?.variantCode, pets: withPets, serviceMode: args.serviceMode,
+      serviceLocation: quoteArgs.serviceLocation, checkInAt: args.checkInAt || null, checkOutAt: args.checkOutAt || null,
     });
-    res.json({ quote: result });
+    if (!best) return res.status(409).json({ error: 'No pet care provider near you has priced this yet.', code: 'NO_PROVIDER_PRICE' });
+    res.json({ quote: best.quote });
   } catch (err) { next(err); }
 }
 

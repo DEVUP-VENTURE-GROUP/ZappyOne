@@ -77,8 +77,8 @@ export default function HandoverCodeCard({
       transition={{ type: 'spring', damping: 20, stiffness: 260 }}
       className="overflow-hidden rounded-card border border-white/10"
       style={{
-        background: 'linear-gradient(#7c3aed, #7c3aed)',
-        boxShadow: '0 12px 32px -4px rgba(124,58,237,0.4)',
+        background: 'linear-gradient(#1F4FD8, #1F4FD8)',
+        boxShadow: '0 12px 32px -4px rgba(31,79,216,0.4)',
       }}
     >
       <div className="flex items-center gap-2 px-4 pb-2 pt-4">

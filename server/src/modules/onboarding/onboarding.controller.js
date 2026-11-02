@@ -133,6 +133,9 @@ async function requestLine(req, res, next) {
       proposedName: req.body.proposedName,
       description: req.body.description,
       packages: req.body.packages,
+      photos: req.body.photos,
+      serviceModes: req.body.serviceModes,
+      yearsExperience: req.body.yearsExperience,
     });
     res.status(deduped ? 200 : 201).json({ request, deduped });
   } catch (err) { next(err); }
@@ -361,7 +364,7 @@ async function liveCatalog(req, res, next) {
           vertical: { $in: verticals }, isActive: true, isArchived: false,
         }).sort({ displayOrder: 1, name: 1 }).select('code name icon imageUrl vertical').lean(),
         Problem.find({
-          vertical: { $in: verticals }, isActive: true, isArchived: false,
+          vertical: { $in: verticals }, isActive: true, isArchived: false, ownerKey: null,
         }).sort({ displayOrder: 1, name: 1 })
           .select('code name vertical categoryCode severity requiresDiagnosis isPopular')
           .lean(),

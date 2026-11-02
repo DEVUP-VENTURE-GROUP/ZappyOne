@@ -45,7 +45,7 @@ router.get('/repair/reference-pricing', ctrl.referencePricing.list);
 router.post('/repair/reference-pricing', ctrl.referencePricing.create);
 router.patch('/repair/reference-pricing/:id', ctrl.referencePricing.update);
 
-router.get('/repair/provider-pricing/pending', ctrl.providerPricing.pending);
+router.get('/repair/provider-pricing/recent', ctrl.providerPricing.recent);
 router.get('/repair/provider-pricing', ctrl.providerPricing.list);
 router.post('/repair/provider-pricing/:id/decide', ctrl.providerPricing.decide);
 

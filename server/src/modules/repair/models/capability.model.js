@@ -75,6 +75,9 @@ const capabilitySchema = new mongoose.Schema(
 
     /** Provider's own turnaround claim, used for ETA ranking. */
     estimatedDurationMin: { type: Number, default: null },
+    // How this provider describes the job on their menu: what is included and a photo of their work.
+    includes: { type: [String], default: [] },
+    photoKey: { type: String, default: '' },
 
     isActive: { type: Boolean, default: true, index: true },
   },

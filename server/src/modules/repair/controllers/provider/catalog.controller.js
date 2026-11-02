@@ -114,9 +114,10 @@ async function workCatalog(req, res, next) {
     const [categories, problems, repairs, mine, levels] = await Promise.all([
       ProblemCategory.find({ vertical, isActive: true, isArchived: false })
         .sort({ displayOrder: 1, name: 1 }).lean(),
-      Problem.find({ vertical, isActive: true, isArchived: false })
+      Problem.find({ vertical, isActive: true, isArchived: false, ownerKey: null })
         .select('code name categoryCode candidateRepairCodes').lean(),
-      Repair.find({ vertical, isActive: true, isArchived: false })
+      // ZappyOne's shared jobs; a provider's own jobs live on their menu (repair/services/provider-menu).
+      Repair.find({ vertical, isActive: true, isArchived: false, owner: null })
         .sort({ displayOrder: 1, name: 1 }).lean(),
       ProviderCapability.find({ ...ownerFilter(req), vertical })
         .select('repairCode skillLevel serviceModes brandCodes isActive').lean(),
@@ -252,6 +253,8 @@ async function workCatalog(req, res, next) {
         level: l.level, name: l.name, description: l.description, requiresVerification: l.requiresVerification,
       })),
       selectedCount: mine.length,
+      // A fixed-price service is set up as the provider's own menu, not this price sheet.
+      menu: await require('../../services/provider-menu.service').isMenuService(vertical),
     });
   } catch (err) { next(err); }
 }

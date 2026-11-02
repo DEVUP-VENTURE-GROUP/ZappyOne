@@ -15,7 +15,7 @@ import { ink, slate } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
 
 const ICON: Record<string, LucideIcon> = { surge: Flame, busy: Flame, peak: Clock, weekend: CalendarDays, rain: CloudRain, night: Moon };
-const TONE: Record<string, string> = { surge: '#EA580C', busy: '#EA580C', peak: '#D97706', weekend: '#7C3AED', rain: '#0284C7', night: '#4F46E5' };
+const TONE: Record<string, string> = { surge: '#EA580C', busy: '#EA580C', peak: '#D97706', weekend: '#1A41B4', rain: '#0284C7', night: '#173891' };
 
 export interface SurgeQuote { quoteId?: string; totalPaise?: number; expiresAt?: string; lines?: { type: string; label: string; paise: number; reason?: string }[] }
 

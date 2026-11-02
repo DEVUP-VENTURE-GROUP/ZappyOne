@@ -135,12 +135,31 @@ async function makeCat(over = {}) {
   return PetPassport.create({ userId, name: 'Whiskers', species: 'cat', size: 'medium', ...over });
 }
 
+// Every provider sets its own prices (pet/services/provider-rates); these match the rules above so amounts read the same.
+const allSizes = (paise) => ({ small: paise, medium: paise, large: paise, extra_large: paise });
+const OWN_RATES = [
+  { variantCode: 'pw_walk_30', prices: allSizes(20000) }, { variantCode: 'pw_activity_visit', prices: allSizes(10000) },
+  { variantCode: 'pb_overnight', prices: allSizes(80000) }, { variantCode: 'pg_full_grooming', prices: allSizes(100000) },
+];
+
+// A verified carer next door with their own prices, so a booking nobody chose a provider for has a price.
+async function anyCarer() {
+  const w = await Worker.create({ phone: `98${String(Date.now()).slice(-8)}`, name: 'Nearby Carer' });
+  return PetProviderCapability.create({
+    workerId: w._id, providerType: 'dog_walker', rates: OWN_RATES,
+    species: ['dog', 'cat'], sizes: ['small', 'medium', 'large', 'extra_large'],
+    categoryCodes: ['pet_walk', 'pet_grooming', 'pet_boarding'], modes: ['doorstep', 'boarding', 'home_visit'], verificationStatus: 'verified',
+    baseLocation: { type: 'Point', coordinates: [78.4, 17.4] }, serviceRadiusKm: 15, boardingCapacity: 5,
+  });
+}
+
 async function makeBoardingProvider(boardingCapacity = 2) {
   const shop = await Shop.create({
     businessName: 'Test Boarding', ownerName: 'Op', phone: `9${Date.now()}`.slice(0, 10),
     address: { text: 'Test', location: { type: 'Point', coordinates: [78.4, 17.4] } },
   });
   const cap = await PetProviderCapability.create({
+    rates: OWN_RATES,
     shopId: shop._id, providerType: 'boarding_provider',
     species: ['dog', 'cat'], sizes: ['small', 'medium', 'large', 'extra_large'],
     categoryCodes: ['pet_boarding'], modes: ['boarding'],
@@ -179,6 +198,7 @@ describe('findProviders explains an empty result instead of going silent', () =>
 
   it('distinguishes "found but too far" from "nobody onboarded"', async () => {
     await PetProviderCapability.create({
+    rates: OWN_RATES,
       workerId: new mongoose.Types.ObjectId(), providerType: 'dog_walker',
       species: ['dog'], sizes: ['small', 'medium', 'large', 'extra_large'],
       categoryCodes: ['pet_walk'], modes: ['doorstep'], verificationStatus: 'verified',
@@ -223,6 +243,7 @@ describe('findProviders explains an empty result instead of going silent', () =>
   it('returns real candidates, ranked, when supply genuinely exists', async () => {
     const walker = await Worker.create({ phone: '9800000099', name: 'Real Walker' });
     await PetProviderCapability.create({
+    rates: OWN_RATES,
       workerId: walker._id, providerType: 'dog_walker',
       species: ['dog'], sizes: ['small', 'medium', 'large', 'extra_large'],
       categoryCodes: ['pet_walk'], modes: ['doorstep'], verificationStatus: 'verified',
@@ -262,6 +283,7 @@ describe('compatibility is enforced before anything else', () => {
   });
 
   it('allows the same cat to book the compatible variant', async () => {
+    await anyCarer();
     const cat = await makeCat();
     const { booking } = await bookingService.createBooking({
       userId, categoryCode: 'pet_walk', serviceMode: 'home_visit',
@@ -423,6 +445,7 @@ describe('boarding capacity is a hard limit', () => {
 
   it('never assigns a provider with no capacity configured at all', async () => {
     const cap = await PetProviderCapability.create({
+    rates: OWN_RATES,
       workerId: new mongoose.Types.ObjectId(), providerType: 'dog_walker',
       species: ['dog'], sizes: ['medium'], categoryCodes: ['pet_boarding'], modes: ['boarding'],
       boardingCapacity: 0, verificationStatus: 'verified',
@@ -439,6 +462,7 @@ describe('boarding capacity is a hard limit', () => {
 
 describe('the booking snapshot is immutable', () => {
   it('keeps the original price after the pricing rule changes', async () => {
+    await anyCarer();
     const dog = await makeDog({ size: 'small' });
     const { booking } = await bookingService.createBooking({
       userId, categoryCode: 'pet_grooming', serviceMode: 'doorstep',
@@ -458,6 +482,7 @@ describe('the booking snapshot is immutable', () => {
   });
 
   it('keeps the pet snapshot after the pet profile changes', async () => {
+    await anyCarer();
     const dog = await makeDog({ size: 'small' });
     const { booking } = await bookingService.createBooking({
       userId, categoryCode: 'pet_grooming', serviceMode: 'doorstep',
@@ -486,6 +511,7 @@ describe('a booking can only be made against a pet you own', () => {
   });
 
   it('refuses to cancel someone else\'s booking', async () => {
+    await anyCarer();
     const dog = await makeDog();
     const { booking } = await bookingService.createBooking({
       userId, categoryCode: 'pet_grooming', serviceMode: 'doorstep',
@@ -501,6 +527,7 @@ describe('a booking can only be made against a pet you own', () => {
 
 describe('the server owns the booking state', () => {
   it('refuses an illegal jump', async () => {
+    await anyCarer();
     const dog = await makeDog();
     const { booking } = await bookingService.createBooking({
       userId, categoryCode: 'pet_grooming', serviceMode: 'doorstep',
@@ -513,6 +540,7 @@ describe('the server owns the booking state', () => {
   });
 
   it('requires the configured proof before a job can complete', async () => {
+    await anyCarer();
     const dog = await makeDog();
     const shop = await Shop.create({
       businessName: 'Groom Co', ownerName: 'Op', phone: `9${Date.now()}`.slice(0, 10),
@@ -593,6 +621,7 @@ describe('cancellation cost depends on how close to the booking it is', () => {
 
 describe('recurring generation is idempotent', () => {
   it('creates the due occurrences and never duplicates them on a second run', async () => {
+    await anyCarer();
     const dog = await makeDog();
     const schedule = await PetRecurringBooking.create({
       userId, petIds: [dog._id], categoryCode: 'pet_walk', variantCode: 'pw_walk_30',
@@ -632,5 +661,32 @@ describe('recurring generation is idempotent', () => {
 
     const dates = schedule.dueDates();
     expect(dates.some((dt) => dt.getFullYear() === y && dt.getMonth() + 1 === Number(m) && dt.getDate() === Number(d))).toBe(false);
+  });
+});
+
+describe('every pet provider charges their own price; ZappyOne sets none', () => {
+  it('quotes the provider\'s own price for the pet\'s size, refuses a size they did not price, and an any-provider booking takes the cheapest nearby', async () => {
+    const pricing = require('../src/modules/pet/services/pricing.service');
+    const dog = await makeDog({ size: 'large' });
+    const mk = async (name, price, prices) => {
+      const w = await Worker.create({ phone: `97${String(Date.now()).slice(-8)}`, name });
+      return PetProviderCapability.create({
+        workerId: w._id, providerType: 'dog_walker', species: ['dog'], sizes: ['small', 'medium', 'large', 'extra_large'],
+        categoryCodes: ['pet_walk'], modes: ['doorstep'], verificationStatus: 'verified', serviceRadiusKm: 15,
+        baseLocation: { type: 'Point', coordinates: [78.4, 17.4] }, rates: [{ variantCode: 'pw_walk_30', prices: prices || { large: price } }],
+      });
+    };
+    const dear = await mk('Dear Walker', 45000);
+    const cheap = await mk('Cheap Walker', 30000);
+    const smallOnly = await mk('Small Only', 0, { small: 10000 });
+    const args = { categoryCode: 'pet_walk', serviceMode: 'doorstep', pets: [{ pet: dog, variantCode: 'pw_walk_30' }] };
+    expect((await pricing.quoteFor(args, dear.toObject())).servicesPaise).toBe(45000);
+    await expect(pricing.quoteFor(args, smallOnly.toObject())).rejects.toMatchObject({ code: 'NO_PROVIDER_PRICE' });
+    const best = await pricing.cheapestNearby(args, { categoryCode: 'pet_walk', variantCode: 'pw_walk_30', pets: [{ pet: dog }], serviceMode: 'doorstep', serviceLocation: [78.4, 17.4] });
+    expect(best.quote.servicesPaise).toBe(30000);
+    expect(String(best.provider.workerId)).toBe(String(cheap.workerId));
+    const { providers } = await matchingService.findProviders({ categoryCode: 'pet_walk', variantCode: 'pw_walk_30', pets: [{ pet: dog }], serviceMode: 'doorstep', serviceLocation: [78.4, 17.4] });
+    expect(providers.map((p) => p.name)).not.toContain('Small Only');
+    expect(providers.find((p) => p.name === 'Cheap Walker').fromPaise).toBe(30000);
   });
 });

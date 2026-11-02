@@ -63,10 +63,10 @@ export function duesView(dues) {
     ? 'New jobs are paused'
     : `You owe ZappyOne ${rupees(d.duesPaise)}`;
   const body = d.status === 'blocked'
-    ? `You owe ${rupees(d.duesPaise)} from cash jobs. Pay at least ${rupees(d.duesPaise - d.limitPaise + 100)} to get jobs again. A job you are already on is not affected.`
+    ? `You owe ${rupees(d.duesPaise)}. Pay at least ${rupees(d.duesPaise - d.limitPaise + 100)} to get jobs again. A job you are already on is not affected.`
     : d.status === 'warning'
       ? `New jobs stop at ${rupees(d.limitPaise)}. ${rupees(d.leftPaise)} left. Pay some now to keep working.`
-      : `This is ZappyOne's commission on cash jobs. New jobs stop at ${rupees(d.limitPaise)}. Online-paid jobs reduce it on their own.`;
+      : `Your ZappyOne amount from finished jobs. New jobs stop at ${rupees(d.limitPaise)}.`;
   return {
     status: d.status, title, body, used, owedLabel: rupees(d.duesPaise), limitLabel: rupees(d.limitPaise),
     owes: d.duesPaise > 0, waiting: waiting.map((c) => rupees(c.amountPaise)),

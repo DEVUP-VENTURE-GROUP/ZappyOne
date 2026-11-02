@@ -165,7 +165,7 @@ async function alertOffline(kind, doc) {
     const coords = doc.location?.coordinates;
     if (coords?.length !== 2) return;
     const providers = await require('../repair/services/matching.service')
-      .findInspectors({ vertical: doc.vertical, lat: coords[1], lng: coords[0], cityCode: doc.location?.cityCode || null, includeOffline: true });
+      .inspectorsWithin({ vertical: doc.vertical, lat: coords[1], lng: coords[0], cityCode: doc.location?.cityCode || null, includeOffline: true }, doc.priceSnapshot?.diagnosisFeePaise ?? null);
     const offline = providers.filter((p) => p.workerId && !p.live).slice(0, 30);
     await Promise.all(offline.map((p) => require('../messaging/send').send('provider.job_waiting', {
       to: { kind: 'worker', id: p.workerId }, ctx: { label: 'repair', km: p.distanceKm },

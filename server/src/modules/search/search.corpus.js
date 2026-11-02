@@ -62,7 +62,7 @@ async function build() {
   const [categories, problems] = verticals.length ? await Promise.all([
     ProblemCategory.find({ vertical: { $in: verticals }, isActive: true, isArchived: false })
       .select('code name vertical displayOrder').lean(),
-    Problem.find({ vertical: { $in: verticals }, isActive: true, isArchived: false })
+    Problem.find({ vertical: { $in: verticals }, isActive: true, isArchived: false, ownerKey: null })
       .select('code name vertical categoryCode isPopular displayOrder').lean(),
   ]) : [[], []];
 

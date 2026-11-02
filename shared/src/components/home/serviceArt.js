@@ -115,6 +115,10 @@ export function servicePhoto(service) {
   return photo && photo.startsWith('/services/helping/') ? photo : null;
 }
 
-// The square photo for a service's tile in the home grid only (assets/web/services/tiles); everywhere else keeps its own picture.
+// The square photo for a service's tile in the home grid only; every tile is a real photo, so the grid never mixes photos with characters.
 const TILES = new Set(['bike_wash', 'car_wash', 'water_tank_care', 'shopping_pickup', 'fa_grocery_run', 'fa_doctor_escort', 'fa_elder_checkin', 'fa_party_helper', 'fa_puja_help']);
-export const tilePhoto = (code) => (TILES.has(code) ? `/services/tiles/${code}.webp` : null);
+const TILE_PHOTOS = {
+  mobile_repair: '/hero/phone-repair.webp', laptop_repair: '/problems/laptop/headings/display.webp', two_wheeler: '/hero/two-wheeler.webp',
+  four_wheeler: '/hero/vehicle-care.webp', events: '/hero/events.webp', pet_services: '/hero/pet-care.webp',
+};
+export const tilePhoto = (code) => TILE_PHOTOS[code] || (TILES.has(code) ? `/services/tiles/${code}.webp` : null);

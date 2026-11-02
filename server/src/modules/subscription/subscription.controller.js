@@ -5,7 +5,10 @@ const Subscription = require('./subscription.model');
 async function listPlans(req, res, next) {
   try {
     const plans = await subscriptionService.listPlans({ audience: req.query.audience });
-    res.json({ plans });
+    res.json({
+      plans: plans.map((p) => ({ ...p, benefits: subscriptionService.benefitsOf(p.effects) })),
+      purchasable: require('../payment/payables').gatewayReady(),
+    });
   } catch (err) { next(err); }
 }
 
@@ -13,7 +16,7 @@ async function getMySubscription(req, res, next) {
   try {
     const view = await subscriptionService.getActiveFor({ kind: req.auth.role, id: req.auth.sub });
     if (!view) return res.json({ subscription: null });
-    res.json({ subscription: view });
+    res.json({ subscription: { ...view, benefits: subscriptionService.benefitsOf(view.effects) } });
   } catch (err) { next(err); }
 }
 

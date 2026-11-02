@@ -1,7 +1,7 @@
 const express = require('express');
 const Joi = require('joi');
 const ctrl = require('./controllers');
-const { authenticate, requireRole } = require('../../middlewares/auth');
+const { authenticate, optionalAuth, requireRole } = require('../../middlewares/auth');
 const { requireKnownVertical, isValid } = require('./vertical');
 const { SERVICE_MODES } = require('./service-modes');
 const { validate } = require('../../middlewares/validate');
@@ -45,6 +45,8 @@ const locationSchema = Joi.object({
  * Deep catalog. Literal segments precede the parameterised model route so
  * `/models/:modelCode/configurations` is never swallowed by a brand path.
  */
+// Browsing a flow (diagnosis questions, prices, who can come) needs no account; only booking does.
+const browseLimiter = makeLimiter({ windowMs: 60_000, max: 120, prefix: 'repairbrowse' });
 router.get('/verticals', ctrl.listVerticals);
 
 // Zomato-style browsing: who near the customer offers this service, and one storefront's menu (services/storefront).
@@ -54,6 +56,10 @@ router.get('/storefronts', authenticate, requireKnownVertical, validate(Joi.obje
 }), 'query'), async (req, res, next) => {
   try { res.json(await require('./services/storefront.service').listStorefronts(req.query)); } catch (err) { next(err); }
 });
+// One search across every menu near the customer (services/storefront searchMenus).
+router.get('/menu-search', authenticate, validate(Joi.object({ q: Joi.string().trim().min(2).max(60).required(), lat: Joi.number().min(-90).max(90).required(), lng: Joi.number().min(-180).max(180).required() }), 'query'), async (req, res, next) => {
+  try { res.json(await require('./services/storefront.service').searchMenus(req.query)); } catch (err) { next(err); }
+});
 router.get('/storefronts/:kind/:id/menu', authenticate, requireKnownVertical, validate(Joi.object({ vertical: Joi.string().max(40).required() }), 'query'), async (req, res, next) => {
   try {
     const menu = await require('./services/storefront.service').storefrontMenu({ kind: req.params.kind, id: req.params.id, vertical: req.query.vertical });
@@ -61,15 +67,15 @@ router.get('/storefronts/:kind/:id/menu', authenticate, requireKnownVertical, va
     res.json(menu);
   } catch (err) { next(err); }
 });
-router.get('/product-types', authenticate, requireKnownVertical, ctrl.listProductTypes);
-router.get('/brands', authenticate, requireKnownVertical, ctrl.listBrands);
-router.get('/brands/:brandCode/families', authenticate, requireKnownVertical, ctrl.listFamilies);
-router.get('/brands/:brandCode/series', authenticate, requireKnownVertical, ctrl.listSeries);
-router.get('/brands/:brandCode/models', authenticate, requireKnownVertical, ctrl.listModels);
-router.get('/models/:modelCode/configurations', authenticate, requireKnownVertical, ctrl.listConfigurations);
-router.get('/problems', authenticate, requireKnownVertical, ctrl.listProblems);
+router.get('/product-types', browseLimiter, optionalAuth, requireKnownVertical, ctrl.listProductTypes);
+router.get('/brands', browseLimiter, optionalAuth, requireKnownVertical, ctrl.listBrands);
+router.get('/brands/:brandCode/families', browseLimiter, optionalAuth, requireKnownVertical, ctrl.listFamilies);
+router.get('/brands/:brandCode/series', browseLimiter, optionalAuth, requireKnownVertical, ctrl.listSeries);
+router.get('/brands/:brandCode/models', browseLimiter, optionalAuth, requireKnownVertical, ctrl.listModels);
+router.get('/models/:modelCode/configurations', browseLimiter, optionalAuth, requireKnownVertical, ctrl.listConfigurations);
+router.get('/problems', browseLimiter, optionalAuth, requireKnownVertical, ctrl.listProblems);
 router.get('/repairs', authenticate, requireKnownVertical, ctrl.listRepairs);
-router.get('/addons', authenticate, requireKnownVertical, ctrl.listAddOns);
+router.get('/addons', browseLimiter, optionalAuth, requireKnownVertical, ctrl.listAddOns);
 router.get('/part-qualities', authenticate, ctrl.listPartQualities);
 
 /* Model identification (§7) */
@@ -99,18 +105,19 @@ router.post(
 
 /* Diagnostics */
 
-router.get('/diagnostics/:problemCode', authenticate, ctrl.getDiagnosticFlow);
+router.get('/diagnostics/:problemCode', browseLimiter, optionalAuth, ctrl.getDiagnosticFlow);
 router.post(
   '/diagnostics/:problemCode',
-  authenticate,
+  browseLimiter,
+  optionalAuth,
   validate(Joi.object({ answers: Joi.object().unknown(true).default({}) })),
   ctrl.submitDiagnostic,
 );
 
 /* Pricing preview + provider discovery */
 
-router.get('/price-preview', authenticate, ctrl.previewPrice);
-router.get('/providers', authenticate, ctrl.findProviders);
+router.get('/price-preview', browseLimiter, optionalAuth, ctrl.previewPrice);
+router.get('/providers', browseLimiter, optionalAuth, ctrl.findProviders);
 
 /* Catalog gap requests (§67) */
 
@@ -585,6 +592,42 @@ router.put(
   })),
   provider.upsertInventory,
 );
+
+// A provider's own menu for a fixed-price service (repair/services/provider-menu).
+const menuSvc = require('./services/provider-menu.service');
+const menuVertical = Joi.string().custom((v, h) => (isValid(v) ? v.toLowerCase() : h.error('any.only'))).required();
+const actorOf = (req) => ({ role: req.auth.role === 'shop' ? 'shop' : 'worker', id: req.auth.sub });
+// A provider's own inspection visit fee for a service; 0 means a free inspection. ZappyOne takes nothing from it.
+router.get('/provider/inspection-fee', ...providerOnly, validate(Joi.object({ vertical: menuVertical }), 'query'), wrap(async (req) => {
+  const o = menuSvc.ownerFromAuth(req.auth);
+  return { feePaise: await require('./services/pricing.service').inspectionFeeFor({ vertical: req.query.vertical, shopId: o.shopId, workerId: o.workerId }) };
+}));
+router.put('/provider/inspection-fee', ...providerOnly, validate(Joi.object({ vertical: menuVertical, feePaise: Joi.number().integer().min(0).max(10000000).required() })), wrap(async (req) => {
+  const o = menuSvc.ownerFromAuth(req.auth);
+  const { ProviderInspectionFee } = require('./models/pricing.model');
+  const who = o.shopId ? { shopId: o.shopId } : { workerId: o.workerId };
+  await ProviderInspectionFee.updateOne({ ...who, vertical: req.body.vertical }, { $set: { feePaise: req.body.feePaise }, $setOnInsert: { ...who, vertical: req.body.vertical } }, { upsert: true });
+  return { feePaise: req.body.feePaise };
+}));
+router.get('/provider/menu', ...providerOnly, validate(Joi.object({ vertical: menuVertical }), 'query'),
+  wrap((req) => menuSvc.menu(menuSvc.ownerFromAuth(req.auth), req.query.vertical)));
+router.put('/provider/menu/item', ...providerOnly,
+  validate(Joi.object({
+    vertical: menuVertical,
+    repairCode: Joi.string().max(80).allow(null, ''),
+    name: Joi.string().trim().max(80).allow(''),
+    includes: Joi.array().items(Joi.string().trim().max(60).allow('')).max(12).default([]),
+    minutes: Joi.number().integer().min(5).max(1440).allow(null),
+    photoKey: Joi.string().max(300).allow(''),
+    prices: Joi.object().pattern(Joi.string().max(60), Joi.number().integer().min(0).max(100000000).allow(null)).default({}),
+  })),
+  wrap((req) => menuSvc.saveItem(menuSvc.ownerFromAuth(req.auth), req.body.vertical, req.body, actorOf(req))));
+router.delete('/provider/menu/item/:code', ...providerOnly, validate(Joi.object({ vertical: menuVertical }), 'query'),
+  wrap((req) => menuSvc.removeItem(menuSvc.ownerFromAuth(req.auth), req.query.vertical, String(req.params.code).toLowerCase())));
+router.post('/provider/menu/adjust', ...providerOnly, validate(Joi.object({ vertical: menuVertical, pct: Joi.number().min(-50).max(100).required() })),
+  wrap((req) => menuSvc.adjustAll(menuSvc.ownerFromAuth(req.auth), req.body.vertical, req.body.pct, actorOf(req))));
+router.post('/provider/menu/samples', ...providerOnly, validate(Joi.object({ vertical: menuVertical })),
+  wrap((req) => menuSvc.useSamples(menuSvc.ownerFromAuth(req.auth), req.body.vertical, actorOf(req))));
 
 router.get('/provider/pricing/reference', ...providerOnly, provider.getReferenceBand);
 router.get('/provider/pricing/suggested', ...providerOnly, provider.suggestedPricing);

@@ -3,10 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { AnimatePresence, motion } from 'framer-motion';
 import toast from 'react-hot-toast';
-import { ArrowRight, Briefcase, ChevronLeft, Loader2, PartyPopper, Store, UserRound, Wrench } from 'lucide-react';
+import { ArrowRight, ChevronLeft, Loader2, PartyPopper, Store, UserRound, Wrench } from 'lucide-react';
 import PasswordLogin from '@shared/components/account/PasswordLogin';
 import { useScrollTopOnChange } from '@shared/components/common/ScrollToTop';
 import LegalConsent from '@shared/components/auth/LegalConsent';
+import AuthShell from '@shared/components/auth/AuthShell';
+import PhoneField from '@shared/components/auth/PhoneField';
 import ResendOtp from '@shared/components/auth/ResendOtp';
 import { PARTNER_TYPES } from '@shared/provider/partnerBoard';
 import PartnerTermsList from '@shared/provider/components/PartnerTermsList';
@@ -30,12 +32,13 @@ function OtpBoxes({ digits, setDigits, refs, onDone }) {
     if (next.every(Boolean) && i === 5) setTimeout(() => onDone(next.join('')), 80);
   };
   return (
-    <div className="mb-6 flex justify-between gap-1.5 sm:gap-2">
+    <div className="mb-4 flex justify-between gap-2">
       {digits.map((d, i) => (
         <motion.input key={i} ref={(el) => { refs.current[i] = el; }} type="text" inputMode="numeric" maxLength={1} value={d} aria-label={`Digit ${i + 1}`}
           onChange={(e) => put(i, e.target.value)} onKeyDown={(e) => e.key === 'Backspace' && !d && i > 0 && refs.current[i - 1]?.focus()}
           animate={d ? { scale: [1, 1.08, 1] } : {}} transition={{ duration: 0.15 }}
-          className={`h-12 w-0 flex-1 rounded-xl border-2 bg-white text-center text-lg font-black text-slate-900 outline-none sm:h-14 sm:rounded-2xl ${d ? 'border-zappy-600 ring-4 ring-zappy-100' : 'border-slate-200'}`} />
+          autoComplete={i === 0 ? 'one-time-code' : 'off'}
+          className={`h-14 w-0 min-w-0 flex-1 rounded-btn border text-center text-[22px] font-bold text-ink-900 outline-none transition ${d ? 'border-zappy-600 bg-zappy-50 ring-1 ring-zappy-600' : 'border-line-strong bg-white focus:border-zappy-600 focus:ring-2 focus:ring-zappy-100'}`} />
       ))}
     </div>
   );
@@ -101,56 +104,56 @@ export default function ServiceProLogin() {
   }
   const slide = { initial: { opacity: 0, x: 20 }, animate: { opacity: 1, x: 0 }, exit: { opacity: 0, x: -20 } };
   const canCreate = reg.businessName.trim().length >= 2 && reg.ownerName.trim().length >= 2 && reg.acceptTerms;
+  const head = {
+    phone: ['Sign in or join ServicePro', 'For shops, solo pros, technicians and event partners.'],
+    password: ['Sign in with password', null],
+    otp: ['Enter the code', `We sent a 6-digit code to +91 ${phone}.`],
+    choose: ['Which account?', 'This number has more than one ZappyOne account.'],
+    register: ['What do you do?', 'You choose your exact services and get verified for each right after this.'],
+  }[step];
+  const primary = 'flex h-[52px] w-full items-center justify-center gap-2 rounded-btn bg-zappy-600 text-[16px] font-bold text-white transition hover:bg-zappy-700 active:scale-[0.98] disabled:bg-zappy-200';
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#f8f7fc] p-4 sm:p-6">
-      <div className="w-full max-w-[440px]">
-        <div className="mb-8 flex flex-col items-center">
-          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-zappy-600 shadow-lg shadow-zappy-200"><Briefcase size={26} className="text-white" /></div>
-          <h1 className="text-[22px] font-black tracking-tight text-slate-900">ZappyOne ServicePro</h1>
-          <p className="mt-1 text-[13px] font-medium text-slate-500">For every business, team and professional on ZappyOne</p>
-        </div>
-        <div className="rounded-card bg-white p-8 shadow-[0_8px_40px_rgba(0,0,0,0.06)]">
+    <AuthShell
+      photos={['/hero/phone-bench.webp', '/hero/vehicle-care.webp', '/hero/water-tank.webp']}
+      eyebrow="ZappyOne ServicePro"
+      pitch="More customers near you, on your terms."
+      points={['Jobs from customers in your area', 'Your own services and prices', 'Customers pay you directly, by UPI or cash']}
+      title={head[0]}
+      subtitle={head[1]}
+      footer={step === 'phone' ? <LegalConsent audience="provider" /> : null}
+    >
           <AnimatePresence mode="wait">
             {step === 'phone' && (
               <motion.form key="phone" {...slide} onSubmit={sendOtp} className="flex flex-col">
-                <h2 className="mb-1 text-lg font-bold text-slate-900">Sign in or join</h2>
-                <p className="mb-6 text-sm text-slate-500">Shop owners, solo pros, technicians and event partners all sign in here.</p>
-                <label className="mb-6 flex items-center overflow-hidden rounded-xl border border-slate-200 bg-white px-4 py-3 focus-within:border-zappy-500 focus-within:ring-1 focus-within:ring-zappy-500">
-                  <span className="mr-2 text-[13px] font-bold text-slate-700">+91</span>
-                  <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))} placeholder="Mobile number" aria-label="Mobile number" autoFocus className="w-full min-w-0 flex-1 bg-transparent text-[14px] font-medium text-slate-900 outline-none placeholder:text-slate-400" />
-                </label>
-                <button type="submit" disabled={sending || phone.length < 10} className="relative flex w-full items-center justify-center rounded-xl bg-zappy-600 py-3.5 text-[14px] font-bold text-white hover:bg-zappy-700 disabled:opacity-50">
-                  {sending ? <Loader2 size={18} className="animate-spin" /> : 'Get code'}{!sending && <ArrowRight size={16} className="absolute right-4" />}
+                <PhoneField value={phone} onChange={setPhone} />
+                <button type="submit" disabled={sending || phone.length < 10} className={`mt-4 ${primary}`}>
+                  {sending && <Loader2 size={18} className="animate-spin" />} Get code
                 </button>
-                <button type="button" onClick={() => setStep('password')} className="mt-4 text-center text-[14px] font-semibold text-zappy-600">Shop owner? Sign in with password</button>
-                <LegalConsent audience="provider" className="mt-3" />
+                <button type="button" onClick={() => setStep('password')} className="mt-5 text-center text-[14px] font-semibold text-zappy-700 hover:underline">Shop owner? Use password instead</button>
               </motion.form>
             )}
             {step === 'password' && (
               <motion.div key="password" {...slide}>
-                <h2 className="mb-4 text-lg font-bold text-slate-900">Sign in with password</h2>
                 <PasswordLogin role="shop" onSuccess={(r) => enter({ ...r, role: 'shop', account: r.shop })} onUseOtp={() => setStep('phone')} />
               </motion.div>
             )}
             {step === 'otp' && (
               <motion.div key="otp" {...slide} className="flex flex-col">
-                <button type="button" onClick={() => setStep('phone')} className="mb-6 flex items-center gap-1 self-start text-[13px] font-bold text-zappy-600"><ChevronLeft size={16} /> Back</button>
-                <h3 className="mb-1 text-lg font-bold text-slate-900">Enter the code</h3>
-                <p className="mb-6 text-sm text-slate-500">Sent to +91 {phone}</p>
                 <OtpBoxes digits={digits} setDigits={setDigits} refs={refs} onDone={verify} />
-                <ResendOtp phone={phone} tone="light" cooldownSec={otpMeta.cooldownSec} resendsLeft={otpMeta.resendsLeft} onResent={() => setDigits(Array(6).fill(''))} onStartOver={() => setStep('phone')} />
-                <button type="button" onClick={() => verify()} disabled={digits.join('').length < 6 || logging} className="mt-6 flex w-full items-center justify-center rounded-xl bg-zappy-600 py-4 text-[15px] font-bold text-white hover:bg-zappy-700 disabled:opacity-50">
-                  {logging ? <Loader2 size={20} className="animate-spin" /> : 'Continue'}
+                <div className="flex items-center justify-between gap-3">
+                  <ResendOtp phone={phone} tone="light" cooldownSec={otpMeta.cooldownSec} resendsLeft={otpMeta.resendsLeft} onResent={() => setDigits(Array(6).fill(''))} onStartOver={() => setStep('phone')} />
+                  <button type="button" onClick={() => setStep('phone')} className="flex items-center gap-0.5 text-[13px] font-semibold text-zappy-700 hover:underline"><ChevronLeft size={15} /> Change number</button>
+                </div>
+                <button type="button" onClick={() => verify()} disabled={digits.join('').length < 6 || logging} className={`mt-6 ${primary}`}>
+                  {logging && <Loader2 size={18} className="animate-spin" />} Continue
                 </button>
               </motion.div>
             )}
             {step === 'choose' && (
               <motion.div key="choose" {...slide} className="space-y-3">
-                <h3 className="text-lg font-bold text-slate-900">Which account?</h3>
-                <p className="text-sm text-slate-500">This number has more than one ZappyOne account.</p>
                 {accounts.map((a, i) => { const A = ACCOUNT[a.role]; return (
                   <motion.button key={a.role} type="button" onClick={() => pick(a.role)} disabled={logging} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }} whileTap={{ scale: 0.98 }}
-                    className="flex w-full items-center gap-3 rounded-2xl border border-slate-200 p-3 text-left hover:border-zappy-400">
+                    className="flex w-full items-center gap-3 rounded-card border border-line p-3.5 text-left transition hover:border-zappy-400">
                     <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-zappy-50 text-zappy-700"><A.Icon size={18} /></span>
                     <span className="min-w-0 flex-1"><span className="block truncate font-bold text-slate-900">{A.title(a)}</span><span className="block text-xs text-slate-500">{A.sub(a)}</span></span>
                     <ArrowRight size={16} className="text-slate-400" />
@@ -160,7 +163,6 @@ export default function ServiceProLogin() {
             )}
             {step === 'register' && (
               <motion.form key="register" {...slide} onSubmit={create} className="space-y-4">
-                <div><h3 className="text-lg font-bold text-slate-900">What do you do?</h3><p className="text-sm text-slate-500">You choose your exact services and get verified for each right after this.</p></div>
                 <div className="grid grid-cols-2 gap-2">
                   {[['services', 'Doorstep services', 'Repairs, cleaning, beauty, vehicles, tutoring and more', UserRound], ['events', 'Events & decor', 'Decorators, planners and event vendors', PartyPopper]].map(([k, l, h, I]) => (
                     <button key={k} type="button" aria-pressed={kind === k} onClick={() => setKind(k)} className={`rounded-xl border p-3 text-left ${kind === k ? 'border-zappy-500 bg-zappy-50 ring-2 ring-zappy-100' : 'border-slate-200'}`}>
@@ -187,14 +189,12 @@ export default function ServiceProLogin() {
                   <input type="checkbox" checked={reg.acceptTerms} onChange={(e) => setReg((r) => ({ ...r, acceptTerms: e.target.checked }))} className="mt-0.5 h-4 w-4 rounded text-zappy-600" />
                   <span className="text-[13px] font-semibold text-slate-700">I accept the ZappyOne partner terms.</span>
                 </label>
-                <button type="submit" disabled={registering || !canCreate} className="flex w-full items-center justify-center rounded-xl bg-zappy-600 py-4 text-[15px] font-bold text-white hover:bg-zappy-700 disabled:opacity-50">
-                  {registering ? <Loader2 size={20} className="animate-spin" /> : 'Create my account'}
+                <button type="submit" disabled={registering || !canCreate} className={primary}>
+                  {registering && <Loader2 size={18} className="animate-spin" />} Create my account
                 </button>
               </motion.form>
             )}
           </AnimatePresence>
-        </div>
-      </div>
-    </div>
+    </AuthShell>
   );
 }

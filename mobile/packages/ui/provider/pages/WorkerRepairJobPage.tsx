@@ -57,6 +57,7 @@ import { radius } from '../../theme/radius';
 import { spacing } from '../../theme/spacing';
 import { GiveBackCard } from '../GiveBackCard';
 import { OnSiteCard } from '../OnSiteCard';
+import { ExtrasCard } from '../ExtrasCard';
 import { AssignTechnician } from '../components/AssignTechnician';
 import { QAPanel } from '../components/repair/QAPanel';
 import { rupees, QuoteBuilder } from '../components/repair/QuoteBuilder';
@@ -164,6 +165,7 @@ export function WorkerRepairJobPage() {
         {!['COMPLETED', 'CANCELLED'].includes(booking.status) ? <PrivacyPledge who="partner" /> : null}
         {onTrip && (!isOwner || ownerGoing) && trip ? <TripSharingBanner sharing={sharing} to={trip.to} toCustomer={trip.toCustomer} /> : null}
         <OnSiteCard onSite={booking.onSite} />
+        <ExtrasCard extras={booking.extras} />
         {isOwner ? (
           <JobCard>
             <Eyebrow>TECHNICIAN</Eyebrow>
@@ -183,7 +185,7 @@ export function WorkerRepairJobPage() {
 
         {repairReadyForPayment(booking) && (snap.totalPaise || 0) > 0 ? (
           <CollectPaymentCard amountPaise={duePaise} tipPaise={tipPaise} carriedPaise={carriedPaise} paymentMethod={booking.paymentMethod}
-            paid={booking.paymentStatus === 'paid'} collecting={collecting} onCollect={collect} jobId={booking._id} />
+            paid={booking.paymentStatus === 'paid'} collecting={collecting} onCollect={collect} jobId={booking._id}  claim={(booking as { payClaim?: { method?: 'upi' | 'cash'; at?: string } }).payClaim} />
         ) : null}
 
         <JobCard>

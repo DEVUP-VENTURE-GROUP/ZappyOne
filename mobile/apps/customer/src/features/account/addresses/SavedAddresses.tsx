@@ -16,7 +16,7 @@ import { AddressForm, type AddressDraft } from './AddressForm';
 
 interface Address { _id: string; label: string; address: string; tag?: string; isDefault?: boolean; location?: { coordinates?: [number, number] } }
 
-const TAG_ICON = { home: [Home, zappy[600], zappy[50]], work: [Briefcase, '#7C3AED', '#F3EEFF'], other: [MapPin, ink[500], slate[100]] } as const;
+const TAG_ICON = { home: [Home, zappy[600], zappy[50]], work: [Briefcase, accent[700], accent[50]], other: [MapPin, ink[500], slate[100]] } as const;
 const EMPTY: AddressDraft = { label: '', tag: 'other', place: null };
 
 function IconBtn({ onPress, bg, children, label }: { onPress: () => void; bg: string; children: React.ReactNode; label: string }) {

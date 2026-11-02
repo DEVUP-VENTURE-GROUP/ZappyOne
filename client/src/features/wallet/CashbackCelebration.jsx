@@ -57,7 +57,7 @@ function SparkleRing({ amount }) {
     <div className="relative flex items-center justify-center">
       {/* Outer pulse rings */}
       <motion.div
-        className="absolute rounded-full border-2 border-violet-300/40"
+        className="absolute rounded-full border-2 border-zappy-300/40"
         style={{ width: 160, height: 160 }}
         animate={{ scale: [1, 1.18, 1], opacity: [0.4, 0.1, 0.4] }}
         transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
@@ -80,7 +80,7 @@ function SparkleRing({ amount }) {
         animate={{ scale: 1, rotate: 0 }}
         transition={{ type: 'spring', stiffness: 280, damping: 18, delay: 0.1 }}
       >
-        <span className="text-5xl select-none">💰</span>
+        <Wallet size={44} className="text-white" aria-hidden="true" />
         {/* Shimmer sweep */}
         <motion.div
           className="absolute inset-0 rounded-full overflow-hidden"
@@ -165,9 +165,6 @@ export default function CashbackCelebration({ amountPaise, totalEarnedPaise, onC
             <X size={14} />
           </button>
 
-          {/* Top gradient glow */}
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-32 rounded-full opacity-30"
-            style={{ background: 'radial-gradient(ellipse, #8b5cf6, transparent)', filter: 'blur(20px)' }} />
 
           <div className="relative px-6 pt-8 pb-6 space-y-5">
             {/* Sparkle ring */}
@@ -176,7 +173,7 @@ export default function CashbackCelebration({ amountPaise, totalEarnedPaise, onC
             {/* Copy */}
             <div className="space-y-2">
               <motion.p
-                className="text-[11px] font-black uppercase tracking-[0.2em] text-violet-400"
+                className="text-[11px] font-black uppercase tracking-[0.2em] text-zappy-400"
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}

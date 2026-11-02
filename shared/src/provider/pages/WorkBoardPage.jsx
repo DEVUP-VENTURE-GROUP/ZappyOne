@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, ChevronRight, Loader2, MapPin, Banknote, ShieldCheck, Sparkles } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Loader2, MapPin, Banknote, ShieldCheck, TrendingUp } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { formatPaise } from '../../utils/money';
 import { useProviderJobs } from '../useProviderJobs';
@@ -45,8 +45,8 @@ function OpenCard({ job, busy, onTake }) {
   return (
     <article className={`flex flex-col gap-3 overflow-hidden rounded-xl bg-white p-4 ${job.boostPaise > 0 ? 'ring-2 ring-amber-300 shadow-[0_6px_20px_-8px_rgba(245,158,11,0.45)]' : 'ring-1 ring-slate-200/80'}`}>
       {job.boostPaise > 0 && !STAFF_PORTAL && (
-        <p className="-mx-4 -mt-4 flex items-center gap-1.5 bg-gradient-to-r from-amber-400 to-amber-300 px-4 py-1.5 text-[12px] font-extrabold text-amber-950">
-          <Sparkles size={13} /> Customer raised the offer by {formatPaise(job.boostPaise)}, all yours
+        <p className="-mx-4 -mt-4 flex items-center gap-1.5 bg-amber-300 px-4 py-1.5 text-[12px] font-extrabold text-amber-950">
+          <TrendingUp size={13} /> Customer raised the offer by {formatPaise(job.boostPaise)}, all yours
         </p>
       )}
       <div className="flex items-start justify-between gap-3">

@@ -42,13 +42,18 @@ test('one price per type and package, never a range', async () => {
   expect((await resolveReferencePrice({ vertical: 'ac_service', repairCode: 'ac_gas', brandCode: 'ac_window' })).recommendedPaise).toBe(219900);
 });
 
-test('package list carries each package price and time for the chosen type', async () => {
+test('package cards show the lowest price a verified provider near the customer set, and no price without a pin', async () => {
   const { listProblems } = require('../src/modules/repair/controllers/catalog.controller');
   const DeviceModel = require('../src/modules/service/device-model.model');
   const model = await DeviceModel.findOne({ brandCode: 'hc_2bhk' }).lean();
-  let body;
-  await listProblems({ query: { vertical: 'home_cleaning', modelCode: model.code } }, { json: (b) => { body = b; } }, (e) => { throw e; });
-  const full = body.categories.flatMap((c) => c.problems).find((p) => p.code === 'hc_full_deep_req');
-  expect(full).toMatchObject({ pricePaise: 399900 });
-  expect(full.durationMin).toBeGreaterThan(0);
+  await require('./helpers').pricedShopNear({ lng: 78.39, lat: 17.44, vertical: 'home_cleaning', lineCode: 'cleaning', domainCode: 'home_services', repairCode: 'hc_full_deep', totalPaise: 349900 });
+  const cards = async (query) => {
+    let body;
+    await listProblems({ query: { vertical: 'home_cleaning', modelCode: model.code, ...query } }, { json: (b) => { body = b; } }, (e) => { throw e; });
+    return body.categories.flatMap((c) => c.problems).find((p) => p.code === 'hc_full_deep_req');
+  };
+  const near = await cards({ lat: 17.44, lng: 78.39 });
+  expect(near).toMatchObject({ pricePaise: 349900 });
+  expect(near.durationMin).toBeGreaterThan(0);
+  expect((await cards({})).pricePaise).toBeUndefined();
 });

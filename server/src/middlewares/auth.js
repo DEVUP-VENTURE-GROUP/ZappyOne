@@ -116,4 +116,11 @@ async function requireRecentOtp(req, res, next) {
   next();
 }
 
-module.exports = { authenticate, requireRole, requireRecentOtp, invalidateBanCache };
+// For pages anyone may browse: a sent token is checked as usual, no token is a guest.
+function optionalAuth(req, res, next) {
+  const header = req.headers.authorization || '';
+  if (!header.startsWith('Bearer ')) return next();
+  return authenticate(req, res, next);
+}
+
+module.exports = { authenticate, optionalAuth, requireRole, requireRecentOtp, invalidateBanCache };

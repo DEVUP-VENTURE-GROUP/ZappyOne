@@ -7,7 +7,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Modal, Pressable, StyleSheet, Vibration, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Banknote, Briefcase, Clock, IndianRupee, MapPin, Navigation, Sparkles, Star, X } from 'lucide-react-native';
+import { Banknote, Briefcase, Clock, IndianRupee, MapPin, Navigation, Star, X, TrendingUp } from 'lucide-react-native';
 import { kmBetween } from '@zappy/core/shared/distance';
 import { offerClock, DEFAULT_WINDOW_SEC, PASS_REASONS, customerRecordLine } from '@zappy/core/shared/jobOffers';
 import { formatPaise } from '@zappy/core/shared/money';
@@ -82,7 +82,7 @@ export function JobOfferAlert({ offer, myLocation, onAccept, onDecline, onClose,
 
           {boost > 0 ? (
             <View style={styles.boost}>
-              <View style={styles.inline}><Sparkles size={16} color={accent[700]} />
+              <View style={styles.inline}><TrendingUp size={16} color={accent[700]} />
                 <Text variant="bodySmall" weight="extrabold" color={accent[700]}>Customer raised the offer by {formatPaise(boost)}</Text></View>
               <Text variant="caption" weight="semibold" color={accent[700]}>All of it is yours on top of the job price. Take it before someone else does.</Text>
             </View>

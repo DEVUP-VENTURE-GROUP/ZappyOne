@@ -10,7 +10,7 @@ import { formatPaise } from '@zappy/core/shared/money';
 import { Button, Text } from '..';
 import { toast } from '../Toast';
 import { errText } from '../../lib/feedback';
-import { ink, success, danger } from '../../theme/colors';
+import { ink, success, danger, zappy } from '../../theme/colors';
 import { radius } from '../../theme/radius';
 import { spacing } from '../../theme/spacing';
 import { JobCard } from '../jobs/JobCard';
@@ -37,9 +37,12 @@ export function CashRefusedControl({ jobId }: { jobId: string }) {
   );
 }
 
-/* The money step: collect cash and record it, or wait for the online payment. */
-export function CollectPaymentCard({ amountPaise, paymentMethod, paid, collecting, onCollect, what = 'payment', tipPaise = 0, carriedPaise = 0, jobId }: {
+const timeOf = (d: string | Date) => new Date(d).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' });
+
+/* The money step (the websites' CollectPaymentCard): the customer pays the pro directly by UPI or cash, may tap "I've paid", and the pro taps Received. */
+export function CollectPaymentCard({ amountPaise, paymentMethod, paid, collecting, onCollect, tipPaise = 0, carriedPaise = 0, jobId, claim }: {
   amountPaise: number; paymentMethod?: string; paid?: boolean; collecting?: boolean; onCollect: () => void; what?: string; tipPaise?: number; carriedPaise?: number; jobId?: string;
+  claim?: { method?: 'upi' | 'cash'; at?: string } | null;
 }) {
   if (!amountPaise || amountPaise <= 0) return null;
   const amount = formatPaise(amountPaise);
@@ -48,25 +51,30 @@ export function CollectPaymentCard({ amountPaise, paymentMethod, paid, collectin
       <Text variant="caption" weight="bold" color={danger[600]}>Includes a {formatPaise(tipPaise)} tip from the customer. All yours.</Text></View>
   ) : null;
   if (paid) {
+    const how = paymentMethod === 'online' ? 'paid online' : claim?.method === 'upi' ? 'received by UPI' : 'received';
     return (
       <JobCard tone="green">
-        <View style={styles.row}><Check size={15} color={success[700]} /><Text variant="bodySmall" weight="bold" color={success[700]}>{amount} {paymentMethod === 'cash' ? 'collected in cash' : 'paid online'}</Text></View>
+        <View style={styles.row}><Check size={15} color={success[700]} /><Text variant="body" weight="bold" color={success[700]}>{amount} {how}</Text></View>
         {tip}
       </JobCard>
     );
   }
-  const cash = paymentMethod === 'cash';
   return (
-    <JobCard tone="amber">
-      <Text variant="body" weight="bold">{cash ? `Collect ${amount} in cash` : `Waiting for ${amount} online`}</Text>
-      <Text variant="caption" color={ink[700]} style={styles.mtXs}>
-        {cash
-          ? `Take the ${what} from the customer, then record it here. The platform's share is deducted from your wallet.${carriedPaise > 0 ? ` This includes ${formatPaise(carriedPaise)} the customer owed from an earlier cancelled booking; it comes off your wallet too.` : ''}`
-          : 'The customer chose to pay online and can pay from their booking screen. If they cannot, take cash and record it here.'}
+    <JobCard>
+      <Text variant="heading3" weight="extrabold">Collect {amount}</Text>
+      <Text variant="bodySmall" color={ink[500]} style={styles.mtXs}>
+        {`The customer pays you by UPI or cash. Tap Received once the money is with you.${carriedPaise > 0 ? ` It includes ${formatPaise(carriedPaise)} they owed from an earlier cancelled booking.` : ''}`}
       </Text>
+      {claim?.method ? (
+        <View style={styles.claim}>
+          <Text variant="bodySmall" weight="semibold" color={zappy[800]}>
+            {claim.method === 'upi' ? `The customer says they paid ${amount} by UPI${claim.at ? ` at ${timeOf(claim.at)}` : ''}. Check your UPI app first.` : `The customer is paying ${amount} in cash.`}
+          </Text>
+        </View>
+      ) : null}
       {tip}
-      <Button label={`I've collected ${amount} in cash`} variant={cash ? 'primary' : 'outline'} onPress={onCollect} loading={collecting} fullWidth style={styles.mtSm} />
-      {cash && jobId ? <CashRefusedControl jobId={jobId} /> : null}
+      <Button label={`Received ${amount}`} onPress={onCollect} loading={collecting} fullWidth size="large" style={styles.mtSm} />
+      {jobId ? <CashRefusedControl jobId={jobId} /> : null}
     </JobCard>
   );
 }
@@ -77,5 +85,6 @@ const styles = StyleSheet.create({
   mtSm: { marginTop: spacing.sm },
   link: { textAlign: 'center', paddingVertical: spacing.xs, marginTop: spacing.sm },
   unpaid: { gap: spacing.sm, padding: spacing.md, borderRadius: radius.medium, backgroundColor: danger[50], marginTop: spacing.sm },
+  claim: { marginTop: spacing.sm, padding: spacing.md, borderRadius: radius.medium, backgroundColor: zappy[50] },
   tip: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: danger[50], borderRadius: radius.button, paddingHorizontal: spacing.sm, paddingVertical: 6, marginTop: spacing.sm },
 });

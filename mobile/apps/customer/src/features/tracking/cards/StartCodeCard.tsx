@@ -1,23 +1,28 @@
-/**
- * The start code, the customer's proof that the right person is at the door
- * (the website's StartCodeCard): locked while they travel; on arrival "is your
- * pro with you?", then the digits (shown by itself after 90 s so a busy
- * customer is never stuck). The confirmation is remembered for the job.
- */
 import { useEffect, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
-import { HelpCircle } from 'lucide-react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { KeyRound } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Button, Text } from '@zappy/ui/components';
-import { zappy } from '@zappy/ui/theme/colors';
+import { Text } from '@zappy/ui/components';
+import { colors, ink, slate } from '@zappy/ui/theme/colors';
 import { radius } from '@zappy/ui/theme/radius';
 import { spacing } from '@zappy/ui/theme/spacing';
-import { CodeReveal } from './CodeReveal';
-import { LockedCode } from './LockedCode';
 
+// Locked while the pro travels, "are they with you?" on arrival (shown anyway after 90 s), then the digits (the website's StartCodeCard).
 const REVEAL_AFTER_S = 90;
 
-export function StartCodeCard({ jobKey, code, stage, noun }: { jobKey: string; code: string | null; stage: string; noun: string }) {
+function Digits({ code, hidden }: { code: string; hidden: boolean }) {
+  return (
+    <View style={styles.digits} accessibilityLabel={hidden ? 'Start code hidden' : `Start code ${code.split('').join(' ')}`}>
+      {code.split('').map((d, i) => (
+        <View key={i} style={[styles.digit, hidden && styles.digitHidden]}>
+          <Text variant="bodyLarge" weight="bold" color={hidden ? ink[300] : '#FFFFFF'}>{hidden ? '•' : d}</Text>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+export function StartCodeCard({ jobKey, code, stage, noun, framed = false }: { jobKey: string; code: string | null; stage: string; noun: string; framed?: boolean }) {
   const storeKey = `start-code-ok:${jobKey}`;
   const [confirmed, setConfirmed] = useState(false);
   const [left, setLeft] = useState(REVEAL_AFTER_S);
@@ -34,25 +39,29 @@ export function StartCodeCard({ jobKey, code, stage, noun }: { jobKey: string; c
   useEffect(() => { if (left === 0 && !confirmed) confirm(); }, [left]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!code || !['assigned', 'on_the_way', 'arrived'].includes(stage)) return null;
-  if (stage !== 'arrived') return <LockedCode digits={String(code).length} title="Start code: locked" hint={`You'll see it when your ${noun} arrives`} />;
-  if (!confirmed) {
-    return (
-      <View style={styles.ask}>
-        <View style={styles.icon}><HelpCircle size={18} color={zappy[700]} /></View>
-        <View style={styles.flex}>
-          <Text variant="bodySmall" weight="black" color={zappy[800]}>Is your {noun} with you?</Text>
-          <Text variant="caption" color={zappy[700]}>Confirm to see the start code, shows in {left}s</Text>
-        </View>
-        <Button label="Yes, show" size="small" onPress={confirm} />
+  const asking = stage === 'arrived' && !confirmed;
+  const shown = stage === 'arrived' && confirmed;
+  return (
+    <View style={[styles.row, framed ? styles.framed : styles.line]}>
+      <KeyRound size={18} color={ink[900]} />
+      <View style={styles.flex}>
+        <Text variant="body">{asking ? `Is your ${noun} with you?` : 'Start code for the job'}</Text>
+        <Text variant="caption" color={ink[500]}>{asking ? `It shows in ${left}s` : shown ? 'Give it only in person. ZappyOne never asks for it.' : `Shows when your ${noun} arrives`}</Text>
       </View>
-    );
-  }
-  return <CodeReveal code={code} title="Share this code to start" hint={`Only give it to your ${noun} in person. ZappyOne never asks for it.`} color={zappy[700]} />;
+      {asking ? (
+        <Pressable onPress={confirm} accessibilityRole="button" style={styles.show}><Text variant="bodySmall" weight="bold" color="#FFFFFF">Yes, show</Text></Pressable>
+      ) : <Digits code={String(code)} hidden={!shown} />}
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
-  ask: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.base, borderRadius: radius.large, borderWidth: 1, borderColor: zappy[200], backgroundColor: zappy[50] },
-  icon: { width: 40, height: 40, borderRadius: radius.large, alignItems: 'center', justifyContent: 'center', backgroundColor: zappy[100] },
+  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: 14 },
+  line: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: slate[300] },
+  framed: { paddingHorizontal: spacing.base, borderRadius: radius.large, borderWidth: 1, borderColor: slate[200], backgroundColor: colors.surface },
   flex: { flex: 1, minWidth: 0 },
+  digits: { flexDirection: 'row', gap: 6 },
+  digit: { width: 32, height: 38, borderRadius: 6, alignItems: 'center', justifyContent: 'center', backgroundColor: ink[900] },
+  digitHidden: { backgroundColor: slate[100] },
+  show: { height: 36, paddingHorizontal: 14, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: ink[900] },
 });
-

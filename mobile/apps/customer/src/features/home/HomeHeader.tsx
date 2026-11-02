@@ -59,13 +59,47 @@ function useUnread(isAuthed: boolean) {
   return data?.unread ?? data?.notifications?.length ?? 0;
 }
 
-/** tint: a light festive season's colour, so the festive top flows out of the header. */
-export function HomeHeader({ loc, isAuthed, onPickLocation, tint = null }: { loc: HomeLocation; isAuthed: boolean; onPickLocation: () => void; tint?: string | null }) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Theme = any;
+
+// The festive header line (the website's FestivePlace): greeting or arrival small, minutes or place large, in the festival's colours.
+function FestivePlace({ theme, greeting, eta, closed, loc, onPickLocation }: { theme: Theme; greeting: string; eta: number | null; closed: string | null; loc: HomeLocation; onPickLocation: () => void }) {
+  const timed = eta != null || Boolean(closed);
+  return (
+    <Pressable onPress={onPickLocation} accessibilityRole="button" accessibilityLabel={`${timed ? `${closed ? 'Pros are offline' : 'Pro at your door in'} ${closed || `${eta} minutes`}, at ` : ''}${loc.primary}. Change location`} style={styles.flex}>
+      <Text variant="caption" weight="extrabold" color={theme.accent} style={styles.etaLabel}>{(closed ? 'Pros are offline' : eta != null ? 'Pro at your door in' : greeting || 'ZappyOne').toUpperCase()}</Text>
+      <Text variant="heading1" weight="black" color={theme.ink} numberOfLines={1} style={styles.eta}>{closed || (eta != null ? `${eta} min` : loc.loading ? 'Finding you…' : loc.primary)}</Text>
+      <View style={styles.loc}>
+        <MapPin size={13} color={theme.accent} strokeWidth={2.4} />
+        <Text variant="bodySmall" weight="bold" color={theme.ink} numberOfLines={1} style={styles.shrink}>
+          {timed ? loc.primary : loc.secondary || 'Change location'}
+          {timed && loc.secondary ? <Text variant="caption" color={theme.sub}>, {loc.secondary}</Text> : null}
+        </Text>
+        <ChevronDown size={14} color={theme.sub} strokeWidth={2.6} />
+      </View>
+    </Pressable>
+  );
+}
+
+/** festive: the season's theme; the header takes its colour. */
+export function HomeHeader({ loc, isAuthed, onPickLocation, tint = null, eta = null, festive = null, greeting = '', closed = null }: { loc: HomeLocation; isAuthed: boolean; onPickLocation: () => void; tint?: string | null; eta?: number | null; festive?: Theme; greeting?: string; closed?: string | null }) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const unread = useUnread(isAuthed);
   return (
-    <View style={[styles.header, { paddingTop: insets.top + spacing.sm }, tint ? { backgroundColor: tint } : null]}>
+    <View style={[styles.header, { paddingTop: insets.top + spacing.sm }, festive ? { backgroundColor: festive.top, overflow: 'hidden' } : tint ? { backgroundColor: tint } : null]}>
+      {/* Blinkit's top: how soon someone can be at the door, big, with the address right under it. */}
+      {festive ? <FestivePlace theme={festive} greeting={greeting} eta={eta} closed={closed} loc={loc} onPickLocation={onPickLocation} /> : (eta != null || closed) && !loc.loading ? (
+        <Pressable onPress={onPickLocation} accessibilityRole="button" accessibilityLabel={`${closed ? 'Pros are offline' : 'Pro at your door in'} ${closed || `${eta} minutes`}, at ${loc.primary}. Change location`} style={styles.flex}>
+          <Text variant="caption" weight="bold" color={closed ? accent[700] : ink[500]} style={styles.etaLabel}>{closed ? 'PROS ARE OFFLINE' : 'PRO AT YOUR DOOR IN'}</Text>
+          <Text variant="heading1" weight="black" numberOfLines={1} style={styles.eta}>{closed || `${eta} min`}</Text>
+          <View style={styles.loc}>
+            <MapPin size={13} color={zappy[600]} strokeWidth={2.4} />
+            <Text variant="bodySmall" weight="bold" color={zappy[700]} numberOfLines={1} style={styles.shrink}>{loc.primary}{loc.secondary ? <Text variant="caption" color={ink[500]}>, {loc.secondary}</Text> : null}</Text>
+            <ChevronDown size={14} color={zappy[600]} strokeWidth={2.6} />
+          </View>
+        </Pressable>
+      ) : (
       <View style={styles.flex}>
         <ZappyWordmark size={22} />
         <Pressable onPress={onPickLocation} accessibilityRole="button" accessibilityLabel={`Service location: ${loc.primary}. Change location`} style={styles.loc}>
@@ -75,6 +109,7 @@ export function HomeHeader({ loc, isAuthed, onPickLocation, tint = null }: { loc
         </Pressable>
         {!loc.loading && loc.secondary ? <Text variant="caption" color={ink[500]} numberOfLines={1}>{loc.secondary}</Text> : null}
       </View>
+      )}
       {isAuthed ? (
         <Pressable onPress={() => router.push('/notifications' as never)} accessibilityRole="button" accessibilityLabel={unread ? `${unread} unread notifications` : 'Notifications'} style={styles.bell}>
           <Bell size={17} color={zappy[700]} />
@@ -88,6 +123,8 @@ export function HomeHeader({ loc, isAuthed, onPickLocation, tint = null }: { loc
 const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0, gap: 2 },
   shrink: { flexShrink: 1 },
+  etaLabel: { letterSpacing: 1 },
+  eta: { letterSpacing: -0.8, lineHeight: 32 },
   header: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingHorizontal: spacing.base, paddingBottom: spacing.sm, backgroundColor: zappy[100] },
   loc: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
   bell: { width: 40, height: 40, borderRadius: radius.button, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: zappy[100], backgroundColor: '#fff' },

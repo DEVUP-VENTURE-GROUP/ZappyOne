@@ -21,7 +21,7 @@ export default function EventThemePage() {
   async function handleSave() {
     try {
       const res = await toggleSave(id).unwrap();
-      toast.success(res.saved ? 'Saved to favorites! ✨' : 'Removed from favorites');
+      toast.success(res.saved ? 'Saved' : 'Removed from saved');
     } catch { toast.error('Sign in to save themes'); }
   }
 
@@ -176,12 +176,9 @@ export default function EventThemePage() {
                   </span>
                 </div>
               </div>
-              <div className="flex -space-x-3">
-                <div className="w-10 h-10 rounded-full bg-slate-100 border-2 border-white flex items-center justify-center text-xs font-bold text-slate-500 z-30">+3</div>
-                <div className="w-10 h-10 rounded-full bg-zappy-100 border-2 border-white flex items-center justify-center text-zappy-500 z-20">👍</div>
-                <div className="w-10 h-10 rounded-full bg-rose-100 border-2 border-white flex items-center justify-center text-rose-500 z-10">❤️</div>
-                <div className="pl-6 text-xs font-bold text-slate-500 self-center uppercase tracking-widest">{theme.bookingCount || 'Many'} Booked</div>
-              </div>
+              {theme.bookingCount > 0 && (
+                <p className="text-[13px] font-semibold text-ink-500 tabular-nums">{theme.bookingCount} booked</p>
+              )}
             </div>
           </div>
 
@@ -200,9 +197,9 @@ export default function EventThemePage() {
 
           {/* Capacity Bento */}
           {theme.guestCapacity && (
-            <div className="col-span-1 bg-white rounded-[2rem] p-5 shadow-sm border border-slate-200/60 flex flex-col justify-between min-h-[140px] group hover:border-fuchsia-200 transition-colors">
-              <div className="w-10 h-10 rounded-2xl bg-fuchsia-50 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                <Users className="text-fuchsia-600" size={20} />
+            <div className="col-span-1 bg-white rounded-[2rem] p-5 shadow-sm border border-slate-200/60 flex flex-col justify-between min-h-[140px] group hover:border-zappy-200 transition-colors">
+              <div className="w-10 h-10 rounded-2xl bg-zappy-50 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <Users className="text-zappy-600" size={20} />
               </div>
               <div>
                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Capacity</p>
@@ -280,7 +277,6 @@ export default function EventThemePage() {
           {/* Partner Bento */}
           {theme.partnerId && (
             <div className="col-span-2 md:col-span-4 bg-slate-900 rounded-[2rem] p-6 flex flex-col sm:flex-row items-center gap-5 relative overflow-hidden mt-2">
-              <div className="absolute right-0 top-0 w-64 h-64 bg-gradient-to-br from-zappy-500/20 to-fuchsia-500/20 rounded-full blur-3xl pointer-events-none" />
               
               <div className="w-20 h-20 bg-white rounded-[1.5rem] flex items-center justify-center text-slate-900 font-black text-3xl shrink-0 shadow-lg transform -rotate-3 z-10">
                 {theme.partnerId.businessName?.[0]?.toUpperCase()}

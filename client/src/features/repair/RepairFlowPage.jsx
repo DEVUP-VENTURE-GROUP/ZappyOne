@@ -1,5 +1,5 @@
 import { useScrollTopOnChange } from '@shared/components/common/ScrollToTop';
-import { partsQuotedSeparately, PARTS_NOTE, PRIVACY_PLEDGE } from '@shared/utils/partsRule';
+import { partsQuotedSeparately, PARTS_NOTE } from '@shared/utils/partsRule';
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useFlowStep, useDraft, readDraft, clearDraft, useSafeBack } from '../../hooks/useBookingFlow';
@@ -10,7 +10,7 @@ import { useProsArrive } from '@shared/customer/prosArrive';
 import { useSelector, useDispatch } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ArrowLeft, Search, ChevronRight, Loader2, ShieldCheck, Star, MapPin, Clock, Check, AlertTriangle, Smartphone, Laptop, Wrench, HelpCircle, X, Home, Truck, Lock, Store, EyeOff } from 'lucide-react';
+  ArrowLeft, Search, ChevronRight, Loader2, ShieldCheck, Star, MapPin, Clock, Check, AlertTriangle, Smartphone, Laptop, Wrench, HelpCircle, X, Home, Truck, Lock, Store } from 'lucide-react';
 import {
   useRepairBrandsQuery, useRepairModelsQuery, useRepairProblemsQuery, useRepairVerticalsQuery,
   useRepairProductTypesQuery, useRepairFamiliesQuery, useRepairConfigurationsQuery,
@@ -32,7 +32,7 @@ import { PayMethodPicker } from '@shared/components/common/PayMethodPicker';
 import SomeoneElse from '@shared/components/booking/SomeoneElse';
 import PendingFeeNotice from '@shared/components/booking/PendingFeeNotice';
 import BrandLogo from '@shared/components/common/BrandLogo';
-import { categoryPhoto } from '@shared/components/home/problemArt';
+import { categoryPhoto, problemPhoto } from '@shared/components/home/problemArt';
 import { ProblemLayout } from './ProblemCard';
 import { usePayBooking } from '@shared/hooks/usePayBooking';
 import { billExtras, chosenPrice, freeVisit, totalOf } from '@shared/customer/repairBill';
@@ -42,7 +42,7 @@ import StorefrontStrip from '../providers/StorefrontStrip';
 import { useRepairBasket } from './basket/useRepairBasket';
 import BasketBar from './basket/BasketBar';
 import GroupCheckout from './basket/GroupCheckout';
-import { selectAuth } from '@shared/modules/auth/authSlice';
+import { selectAuth, selectIsAuthed } from '@shared/modules/auth/authSlice';
 import { useClearCheckoutDraftMutation } from '@shared/services/api';
 
 /**
@@ -497,7 +497,8 @@ function ModelStep({ vertical, deep, brand, productType, family, onPick, onAuto 
    * If a request the customer sent earlier has since been identified, say so
    * here — this is where they gave up, so it is where the answer belongs.
    */
-  const { data: identifications } = useMyModelIdentificationsQuery(vertical, { skip: !deep });
+  const signedIn = useSelector(selectIsAuthed);
+  const { data: identifications } = useMyModelIdentificationsQuery(vertical, { skip: !deep || !signedIn });
   const identified = (identifications?.requests || [])
     .find((r) => r.status === 'identified' && r.resolvedModelId);
 
@@ -610,8 +611,12 @@ function ProblemStep({ vertical, model, productType, fuelType, presetCode, onPic
    * what is actually wrong. The model's own type is preferred over the step the
    * customer picked — the catalog knows better than the tap did.
    */
+  // From a storefront, that provider's own menu jobs are listed too.
+  const [fromQs] = useSearchParams();
+  const fromProvider = fromQs.get('provider');
   const { data, isLoading } = useRepairProblemsQuery({
     vertical,
+    ...(fromProvider && { provider: fromProvider }),
     modelCode: model.code,
     productTypeCode: model.productTypeCode || productType?.code,
     // An EV owner is never asked about spark plugs, a petrol owner never about
@@ -987,9 +992,9 @@ function ProviderStep({
 
   /*
    * Technicians cover this address but none is online right now. Instead of a
-   * dead end, the customer can book at ZappyOne's standard price: the job is
-   * offered to whoever comes online first (jobs/waves), and they are told the
-   * moment someone accepts. Only when a standard price exists for the repair.
+   * dead end, the customer can book at the lowest price a provider near them
+   * set: the job is offered to whoever comes online first (jobs/waves), and
+   * they are told the moment someone accepts. Only when someone nearby priced it.
    */
   const allOffline = !data?.providers?.length && (data?.nearbyCount || 0) > 0 && data?.primaryReason === 'offline';
 
@@ -1009,7 +1014,7 @@ function ProviderStep({
     }
   }
   const { data: standard } = useRepairPricePreviewQuery(
-    { vertical, repairCode, brandCode: brand?.code, modelCode: model?.code, serviceMode },
+    { vertical, repairCode, brandCode: brand?.code, modelCode: model?.code, serviceMode, lat: location?.lat, lng: location?.lng },
     { skip: !!data?.providers?.length || !data || !repairCode },
   );
   const standardPaise = standard?.reference && standard?.estimate?.totalPaise > 0 ? standard.estimate.totalPaise : null;
@@ -1039,7 +1044,7 @@ function ProviderStep({
     return (
       <Shell>
         <ChosenSummary
-          brand={brand} model={model} configuration={configuration}
+          vertical={vertical} brand={brand} model={model} configuration={configuration}
           problem={problem} diagnosis={diagnosis} serviceMode={serviceMode}
           location={location} onChangeLocation={() => setPicking(true)}
         />
@@ -1066,7 +1071,7 @@ function ProviderStep({
     return (
       <Shell>
         <ChosenSummary
-          brand={brand} model={model} configuration={configuration}
+          vertical={vertical} brand={brand} model={model} configuration={configuration}
           problem={problem} diagnosis={diagnosis} serviceMode={serviceMode}
           location={location} onChangeLocation={() => setPicking(true)}
         />
@@ -1117,7 +1122,7 @@ function ProviderStep({
   return (
     <Shell>
       <ChosenSummary
-        brand={brand} model={model} configuration={configuration}
+        vertical={vertical} brand={brand} model={model} configuration={configuration}
         problem={problem} diagnosis={diagnosis} serviceMode={serviceMode}
         location={location} onChangeLocation={() => setPicking(true)}
       />
@@ -1126,7 +1131,6 @@ function ProviderStep({
           <ShieldCheck size={15} className="mt-0.5 shrink-0" /> {PARTS_NOTE.customer}
         </p>
       )}
-      <p className="flex items-start gap-2 px-1 text-[12px] font-semibold text-slate-500"><EyeOff size={14} className="mt-0.5 shrink-0" /> {PRIVACY_PLEDGE.customer}</p>
 
       {/* When: now, or a time later (pros whose hours cover it, online or not). */}
       {onWhen && <WhenChooser value={scheduledAt} onChange={onWhen} />}
@@ -1195,46 +1199,66 @@ function ProviderStep({
           body = 'Try again shortly, or book an inspection to hold your place.';
         }
 
+        const others = [
+          notListed && repairCode && !needsDiagnosis && { key: 'ask', Icon: Store, title: 'Ask nearby shops for their price', sub: 'Each shop sends its own price. You pick one.', onClick: askShops, busy: asking },
+          nearby > 0 && onInspectInstead && { key: 'inspect', Icon: ShieldCheck, title: 'Book an inspection instead', sub: 'A pro checks it first, then gives you a quote to approve.', onClick: onInspectInstead },
+          (locationProblem || nearby === 0) && { key: 'loc', Icon: MapPin, title: 'Change location', sub: 'A nearby area may have someone free.', onClick: () => setPicking(true) },
+        ].filter(Boolean);
+
         return (
-          <div className="card py-8 text-center">
-            <Wrench size={24} className="mx-auto text-slate-300" />
-            <p className="mt-3 text-sm font-bold text-slate-700">{title}</p>
-            <p className="mt-1 text-xs leading-relaxed text-slate-500">{body}</p>
-            <div className="mt-4 flex flex-wrap justify-center gap-2">
-              {bookNow && (
-                <button
-                  onClick={() => onPick({ auto: true, name: 'ZappyOne pro', totalPaise: standardPaise }, repairCode, null)}
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-zappy-600 px-4 py-2.5 text-xs font-bold text-white"
-                >
-                  <Check size={13} /> Book now for {formatPaise(standardPaise)}
-                </button>
-              )}
-              {notListed && repairCode && !needsDiagnosis && (
-                <button
-                  onClick={askShops}
-                  disabled={asking}
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-zappy-600 px-4 py-2.5 text-xs font-bold text-white disabled:opacity-60"
-                >
-                  {asking ? <Loader2 size={13} className="animate-spin" /> : <Store size={13} />} Ask nearby shops for their price
-                </button>
-              )}
-              {nearby > 0 && onInspectInstead && (
-                <button
-                  onClick={onInspectInstead}
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-[#0F172A] px-4 py-2.5 text-xs font-bold text-white"
-                >
-                  <ShieldCheck size={13} /> Book an inspection instead
-                </button>
-              )}
-              {(locationProblem || nearby === 0) && (
-                <button
-                  onClick={() => setPicking(true)}
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-bold text-slate-600"
-                >
-                  <MapPin size={13} /> Change location
-                </button>
+          <div className="overflow-hidden rounded-card border border-line bg-white">
+            <div className="p-5">
+              {bookNow ? (
+                <>
+                  <div className="flex items-start gap-3.5">
+                    <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-zappy-50">
+                      <img src="/branding/zappy-mark.webp" alt="" className="h-7 w-7 object-contain" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[17px] font-extrabold leading-tight text-ink-900">Nearest ZappyOne pro</p>
+                      <p className="mt-1 text-[13.5px] leading-snug text-ink-500">Nobody has listed this repair right now. We send it to the closest pro who is free.</p>
+                    </div>
+                    <p className="shrink-0 text-[20px] font-extrabold tabular-nums text-ink-900">{formatPaise(standardPaise)}</p>
+                  </div>
+                  <ul className="mt-4 space-y-2">
+                    {['Verified, ID-checked professional', 'Nothing extra is charged without your OK', 'Free to cancel until a pro accepts'].map((t) => (
+                      <li key={t} className="flex items-center gap-2.5 text-[14px] text-ink-700">
+                        <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-green-50 text-green-700"><Check size={13} strokeWidth={3} /></span>{t}
+                      </li>
+                    ))}
+                  </ul>
+                  <button type="button" onClick={() => onPick({ auto: true, name: 'ZappyOne pro', totalPaise: standardPaise }, repairCode, null)}
+                    className="btn-primary mt-5 h-12 w-full text-[15.5px]">
+                    Book now · {formatPaise(standardPaise)}
+                  </button>
+                </>
+              ) : (
+                <div className="flex items-start gap-3.5">
+                  <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-sunken text-ink-500"><Wrench size={22} /></span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[17px] font-extrabold leading-tight text-ink-900 [text-wrap:balance]">{title}</p>
+                    <p className="mt-1 text-[13.5px] leading-snug text-ink-500">{body}</p>
+                  </div>
+                </div>
               )}
             </div>
+            {others.length > 0 && (
+              <div className="border-t border-line">
+                {bookNow && <p className="px-5 pt-3.5 text-[11px] font-bold uppercase tracking-[0.08em] text-ink-400">Other ways</p>}
+                <div className="divide-y divide-line">
+                  {others.map(({ key, Icon, title: t, sub, onClick, busy }) => (
+                    <button key={key} type="button" onClick={onClick} disabled={busy} className="flex w-full items-center gap-3.5 px-5 py-3.5 text-left hover:bg-canvas disabled:opacity-60">
+                      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-sunken text-ink-900">{busy ? <Loader2 size={18} className="animate-spin" /> : <Icon size={18} />}</span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-[15px] font-semibold text-ink-900">{t}</span>
+                        <span className="block text-[13px] text-ink-500">{sub}</span>
+                      </span>
+                      <ChevronRight size={18} className="shrink-0 text-ink-400" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         );
       })()}
@@ -1299,43 +1323,52 @@ function samePlace(a, b) {
  * address can be corrected without losing the rest of the flow.
  */
 function ChosenSummary({
-  brand, model, configuration, problem, diagnosis, serviceMode, location, onChangeLocation,
+  vertical, brand, model, configuration, problem, diagnosis, serviceMode, location, onChangeLocation,
 }) {
   const device = deviceName(brand, model) || 'Your device';
   const fault = problem?.name || diagnosis?.recommendations?.[0]?.repairName || diagnosis?.summary;
+  const photo = model?.imageUrl || null;
+  const faultPhoto = problem ? problemPhoto(vertical, problem) : null;
 
   return (
     <div className="card">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <p className="text-[10.5px] font-black uppercase tracking-wide text-slate-400">Your booking</p>
-          <p className="mt-1 truncate text-sm font-bold text-[#0F172A]">{device}</p>
-          {configuration?.name && (
-            <p className="text-[11px] text-slate-500">{configuration.name}</p>
-          )}
-        </div>
-        <span className="shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-[10.5px] font-bold text-slate-600">
-          {MODE_LABEL[serviceMode] || serviceMode}
+      <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-ink-400">Your booking</p>
+      <div className="mt-2.5 flex items-center gap-3.5">
+        <span className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-2xl border border-line bg-canvas">
+          {photo ? <img src={photo} alt="" className="h-full w-full object-contain p-1.5" />
+            : brand?.logoUrl ? <BrandLogo name={brand.name} url={brand.logoUrl} className="h-6 max-w-[80%]" />
+              : <Smartphone size={26} className="text-ink-400" />}
         </span>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[16px] font-bold text-ink-900">{device}</p>
+          {configuration?.name && <p className="truncate text-[13px] text-ink-500">{configuration.name}</p>}
+          <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-zappy-50 px-2.5 py-0.5 text-[12px] font-semibold text-zappy-700">
+            {MODE_LABEL[serviceMode] || serviceMode}
+          </span>
+        </div>
       </div>
 
-      {fault && (
-        <p className="mt-2 flex items-start gap-1.5 text-[12px] leading-snug text-slate-600">
-          <Wrench size={12} className="mt-0.5 shrink-0 text-slate-400" />
-          <span className="min-w-0">{fault}</span>
-        </p>
-      )}
-
-      <button
-        onClick={onChangeLocation}
-        className="mt-2.5 flex w-full items-start gap-1.5 rounded-xl bg-slate-50 p-2.5 text-left"
-      >
-        <MapPin size={12} className="mt-0.5 shrink-0 text-zappy-500" />
-        <span className="min-w-0 flex-1 text-[12px] leading-snug text-slate-600">
-          {location.address || 'Your pinned location'}
-        </span>
-        <span className="shrink-0 text-[11px] font-bold text-zappy-600">Change</span>
-      </button>
+      <div className="mt-4 divide-y divide-line border-t border-line">
+        {fault && (
+          <div className="flex items-center gap-3 py-3">
+            <span className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-xl bg-sunken text-ink-700">
+              {faultPhoto ? <img src={faultPhoto} alt="" className="h-full w-full object-cover" /> : <Wrench size={17} />}
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-[12px] text-ink-500">Problem</span>
+              <span className="block text-[14.5px] font-semibold text-ink-900">{fault}</span>
+            </span>
+          </div>
+        )}
+        <button type="button" onClick={onChangeLocation} className="flex w-full items-center gap-3 py-3 text-left">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-sunken text-ink-700"><MapPin size={17} /></span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[12px] text-ink-500">Address</span>
+            <span className="line-clamp-2 block text-[14px] leading-snug text-ink-900">{location.address || 'Your pinned location'}</span>
+          </span>
+          <span className="shrink-0 text-[13.5px] font-bold text-zappy-700">Change</span>
+        </button>
+      </div>
     </div>
   );
 }
@@ -1568,6 +1601,9 @@ function ConfirmStep({
   diagnosticAnswers, diagnosticTranscript = [], addOnCodes = [], scheduledAt = null,
 }) {
   const [create, { isLoading }] = useCreateRepairBookingMutation();
+  // Anyone can browse to here; signing in is asked only to confirm, and the draft brings them straight back.
+  const signedIn = useSelector(selectIsAuthed);
+  const goSignIn = useNavigate();
   // A stable key per attempt so a double-tap cannot create two bookings (§46).
   const idempotencyKey = useMemo(() => `web-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, []);
 
@@ -1591,6 +1627,11 @@ function ConfirmStep({
   const [tip, setTip] = useState(0);
 
   async function book() {
+    if (!signedIn) {
+      toast('Sign in to confirm. Your booking is saved.');
+      goSignIn('/login', { state: { from: `${window.location.pathname}${window.location.search}` } });
+      return;
+    }
     try {
       if (onSite === 'incomplete') { toast.error('Add their name and mobile number, or untick "for someone else".'); return; }
       const res = await create({
@@ -1641,7 +1682,6 @@ function ConfirmStep({
         ...(tip > 0 && { tipPaise: tip * 100 }),
         ...(scheduledAt && { scheduledAt: new Date(scheduledAt).toISOString(), slotLabel: slotLabel(scheduledAt) }),
       }).unwrap();
-      toast.success('Booking confirmed');
       // A fixed price is paid now; a diagnosis-first job is paid once its quote is approved.
       if (res.booking?.paymentMethod === 'online' && !res.booking?.priceSnapshot?.isEstimate) {
         await pay({ bookingSource: 'repair', bookingId: res.booking._id, label: 'Repair booking' });
@@ -1901,7 +1941,8 @@ function RepairFlow({ vertical, saved, draftKey, onStartOver, onAddAnother }) {
   const previewRepair = diagnosis?.primaryRepairCode || diagnosis?.recommendations?.[0]?.repairCode;
   // Asked even with no repair suggested: the inspection fee does not depend on one.
   const { data: preview } = useRepairPricePreviewQuery(
-    { vertical, repairCode: previewRepair || undefined, brandCode: brand?.code, modelCode: model?.code, serviceMode: 'diagnosis_only' },
+    // The lowest inspection fee a provider near this address set (free where nobody charges).
+    { vertical, repairCode: previewRepair || undefined, brandCode: brand?.code, modelCode: model?.code, serviceMode: 'diagnosis_only', ...(hasLocation && { lat: loc.lat, lng: loc.lng }) },
     { skip: !vertical },
   );
   // null until known, so nothing is claimed about the fee before it has loaded.
@@ -2101,7 +2142,7 @@ function RepairFlow({ vertical, saved, draftKey, onStartOver, onAddAnother }) {
           diagnosticAnswers={diagnosticAnswers} diagnosticTranscript={diagnosticTranscript}
           serviceMode={serviceMode} inspectionFeePaise={inspectionFeePaise}
           fuelType={fuelType} scheduledAt={when}
-          onDone={(b) => { clearDraft(draftKey); draftDone(); nav(`/repair/bookings/${b._id}`, { replace: true }); }}
+          onDone={(b) => { clearDraft(draftKey); draftDone(); nav(`/repair/bookings/${b._id}`, { replace: true, state: { justBooked: true } }); }}
         />
       )}
     </div>

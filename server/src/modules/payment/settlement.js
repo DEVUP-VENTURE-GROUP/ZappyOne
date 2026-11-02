@@ -50,6 +50,7 @@ async function settleCash({ source, bookingId, reference, isShop, ownerId, total
       metadata: { source, shopId: String(ownerId), bookingId: String(bookingId), totalPaise, cash: true },
       status: 'succeeded',
     }).catch(ignoreDuplicate);
+    require('../shop/shop-dues').notifyIfCrossed(ownerId);
   } else if (platformPaise > 0) {
     try {
       await walletService.apply({
@@ -164,7 +165,7 @@ async function settleProviderShare(args) {
       .then((doc) => doc && require('../messaging/facts').jobFacts(args.source, doc))
       .then((f) => f && require('../messaging/send').send('provider.paid', {
         to, refId: `${args.source}:${args.booking._id}`,
-        ctx: { f, earningPaise: (result.providerPaise || 0) + (f.linesPaise.find(([l]) => l === 'Boost for a faster match')?.[1] || 0), cash: !!result.cash },
+        ctx: { f, earningPaise: (result.providerPaise || 0) + (f.linesPaise.find(([l]) => l === 'Boost for a faster match')?.[1] || 0), zappyPaise: result.platformPaise || 0, cash: !!result.cash },
       }))
       .catch(() => {});
   }

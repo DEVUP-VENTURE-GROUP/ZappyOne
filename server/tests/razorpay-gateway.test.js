@@ -45,6 +45,9 @@ test('Cashfree wins whenever it has keys; Razorpay is used only without them; ne
   expect(gateway.active()).toBe('razorpay');
   Object.assign(config.cashfree, { appId: 'a', secretKey: 's' });
   expect(gateway.active()).toBe('cashfree');
+  config.paymentGateway = 'razorpay';
+  expect(gateway.active()).toBe('razorpay');
+  config.paymentGateway = '';
   Object.assign(config.cashfree, { appId: '', secretKey: '' });
   Object.assign(config.razorpay, { keyId: '' });
   expect(gateway.active()).toBeNull();

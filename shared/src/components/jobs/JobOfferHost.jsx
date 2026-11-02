@@ -3,8 +3,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import toast from 'react-hot-toast';
+import PayToAccept from './PayToAccept';
 import JobOfferAlert from './JobOfferAlert';
-import { keyOf, fromRepair, fromPetOffer, fromOpen, recoveredOffers, pickOffer, withOffer, takeError } from './jobOffers';
+import { keyOf, fromRepair, fromPetOffer, fromOpen, recoveredOffers, pickOffer, withOffer, takeError, duesBlock } from './jobOffers';
 import { selectRole, selectAuth } from '../../modules/auth/authSlice';
 import { getSocket } from '../../services/socket';
 import {
@@ -49,6 +50,7 @@ export default function JobOfferHost({ kinds = ['repair', 'pet', 'helping'], myL
 
   const [live, setLive] = useState([]);           // offers heard over the socket
   const [handled, setHandled] = useState(() => new Set()); // answered, hidden or expired
+  const [payFor, setPayFor] = useState(null);              // an offer waiting on the dues being paid
 
   const push = useCallback((offer) => {
     // The same job at a higher amount replaces the older alert.
@@ -92,6 +94,7 @@ export default function JobOfferHost({ kinds = ['repair', 'pet', 'helping'], myL
   if (!offer) return null;
 
   async function accept() {
+    if (offer.mustPay && !payFor) { setPayFor({ offer, duesPaise: null }); return; }
     try {
       await checkedIn(async () => {
       if (offer.kind === 'repair' && offer.broadcast) {
@@ -110,8 +113,11 @@ export default function JobOfferHost({ kinds = ['repair', 'pet', 'helping'], myL
       });
       toast.success('It’s yours');
     } catch (err) {
+      const owed = duesBlock(err);
+      if (owed != null) { setPayFor({ offer, duesPaise: owed }); return; }
       toast.error(takeError(err));
     }
+    setPayFor(null);
     done(offer);
   }
 
@@ -133,6 +139,8 @@ export default function JobOfferHost({ kinds = ['repair', 'pet', 'helping'], myL
   }
 
   return (
+    <>
+    {payFor && <PayToAccept duesPaise={payFor.duesPaise} onPaid={accept} onClose={() => setPayFor(null)} />}
     <JobOfferAlert
       key={keyOf(offer)}
       offer={offer}
@@ -140,7 +148,8 @@ export default function JobOfferHost({ kinds = ['repair', 'pet', 'helping'], myL
       onAccept={accept}
       onDecline={decline}
       declineTitle={isShopTechnician ? 'Why are you passing this back to your shop?' : undefined}
-      onClose={(why) => done(offer, why)}
+      onClose={(why) => { setPayFor(null); done(offer, why); }}
     />
+    </>
   );
 }

@@ -53,11 +53,14 @@ export function StorefrontsPage() {
   const vertical = String(slug).replace(/-/g, '_');
   const [loc, setLoc] = useState<CachedLocation | null | undefined>(undefined);
   const [sort, setSort] = useState<string>('best');
+  const [mode, setMode] = useState<'doorstep' | 'workshop'>('doorstep');
+  const [openOnly, setOpenOnly] = useState(false);
   useEffect(() => { loadGeoLocation().then(setLoc); }, []);
   const { data: services } = useRepairVerticalsQuery(undefined);
   const service = useMemo(() => (services?.items || []).find((i: { vertical: string }) => i.vertical === vertical), [services, vertical]);
-  const { data, isLoading, isFetching } = useStorefrontsQuery({ vertical, lat: loc?.lat, lng: loc?.lng, sort }, { skip: !loc });
-  const items: Storefront[] = data?.items || [];
+  const { data, isLoading, isFetching } = useStorefrontsQuery({ vertical, lat: loc?.lat, lng: loc?.lng, sort, serviceMode: mode }, { skip: !loc });
+  const all: Storefront[] = data?.items || [];
+  const items = all.filter((s) => !openOnly || s.openNow !== false);
   const back = () => (router.canGoBack() ? router.back() : router.replace('/' as never));
   const flowPath = service?.path || `/repair/${slug}`;
 
@@ -76,10 +79,15 @@ export function StorefrontsPage() {
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
           {SORTS.map(([k, l]) => <Chip key={k} label={l} selected={sort === k} onPress={() => setSort(k)} />)}
         </ScrollView>
+        <View style={styles.filters}>
+          <Chip label="At my home" selected={mode === 'doorstep'} onPress={() => setMode('doorstep')} />
+          <Chip label="At their shop" selected={mode === 'workshop'} onPress={() => setMode('workshop')} />
+          <Chip label="Open now" selected={openOnly} onPress={() => setOpenOnly((v) => !v)} />
+        </View>
         {loc === null ? <EmptyState icon={<MapPin size={28} color={slate[300]} />} title="Set your location" message="Choose your location on the home screen to see who can come to you." /> : null}
         {loc && (isLoading || (isFetching && !items.length)) ? [0, 1, 2].map((k) => <Skeleton key={k} height={104} style={styles.skel} />) : null}
-        {loc && !isLoading && !isFetching && !items.length ? <EmptyState icon={<Store size={28} color={slate[300]} />} title="No one listed here yet" message="Book Fastest available and we ring every verified pro who covers your address." /> : null}
-        {items.length ? <Text variant="caption" weight="semibold" color={ink[500]}>{data.total} verified {data.total === 1 ? 'provider covers' : 'providers cover'} your address</Text> : null}
+        {loc && !isLoading && !isFetching && !items.length ? <EmptyState icon={<Store size={28} color={slate[300]} />} title={openOnly && all.length ? 'No one is open right now' : 'No one listed here yet'} message={openOnly && all.length ? 'Turn off "Open now" to book someone for later.' : mode === 'workshop' ? 'Try "At my home" instead.' : 'Book Fastest available and we ring every verified pro who covers your address.'} /> : null}
+        {items.length ? <Text variant="caption" weight="semibold" color={ink[500]}>{items.length} verified {items.length === 1 ? 'provider' : 'providers'} {mode === 'workshop' ? 'near you' : 'cover your address'}</Text> : null}
         {items.map((s, i) => (
           <Appear key={`${s.kind}:${s.id}:${sort}`} delay={Math.min(i, 8) * 40}>
             <Card s={s} onOpen={() => router.push({ pathname: '/storefront/[kind]/[id]', params: { kind: s.kind, id: s.id, service: vertical, name: s.name, arrival: s.arrivalMinutes ?? '' } } as never)} />
@@ -96,6 +104,7 @@ const styles = StyleSheet.create({
   fast: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.base, borderRadius: radius.extraLarge, backgroundColor: zappy[600] },
   fastIcon: { width: 44, height: 44, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.15)' },
   chips: { gap: spacing.sm },
+  filters: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   skel: { borderRadius: radius.large },
   card: { flexDirection: 'row', gap: spacing.md, padding: spacing.md, borderRadius: radius.large, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
   cover: { width: 76, height: 76, borderRadius: radius.medium, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', backgroundColor: zappy[50] },

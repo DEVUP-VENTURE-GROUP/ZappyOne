@@ -57,7 +57,7 @@ export default function EventSavedThemesPage() {
                 </div>
                 <div className="p-3">
                   <p className="font-semibold text-sm text-slate-900 leading-tight truncate">{theme.title}</p>
-                  <p className="text-xs text-slate-400 mt-0.5">{theme.categoryId?.emoji} {theme.categoryId?.name}</p>
+                  <p className="text-xs text-slate-400 mt-0.5">{theme.categoryId?.name}</p>
                   <div className="flex items-center justify-between mt-2">
                     <span className="text-sm font-bold text-zappy-600">₹{Math.round((theme.startingPricePaise || 0) / 100).toLocaleString('en-IN')}</span>
                     <div className="flex items-center gap-0.5">

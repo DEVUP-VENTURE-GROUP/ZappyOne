@@ -2,24 +2,13 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSafeBack } from '../../hooks/useBookingFlow';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, TrendingUp, Play, Heart, Star, ArrowUpRight, PartyPopper, ArrowLeft } from 'lucide-react';
-import { useGetEventCategoriesQuery, useGetEventConfigQuery, useGetEventThemesQuery, useToggleSaveEventThemeMutation } from '@shared/services/api';
-import CrossSellBanner from '../../components/marketing/CrossSellBanner';
+import { Search, Play, Heart, Star, ArrowUpRight, PartyPopper, ArrowLeft } from 'lucide-react';
+import { useGetEventCategoriesQuery, useGetEventConfigQuery, useGetEventThemesQuery, useGetServiceabilityQuery, useToggleSaveEventThemeMutation } from '@shared/services/api';
 import toast from 'react-hot-toast';
 
-import { eventPhoto, eventTone } from './eventPhotos';
-
-function getCatStyles(cat) {
-  // Its own cover, else its exact photo; no photo: the occasion's emoji on its own colour.
-  const img = eventPhoto(cat);
-  return { img, color: 'from-black/10 to-transparent', tone: eventTone(cat), emoji: cat?.emoji || '🎉' };
-}
-
-/* Bento Grid Classes based on index */
-function getBentoClass(idx) {
-  if (idx === 0) return "col-span-2 row-span-2 min-h-[240px] sm:min-h-[280px]";
-  return "col-span-1 row-span-1 min-h-[140px]";
-}
+import { eventPhoto } from './eventPhotos';
+import { loadGeoLocation } from '@shared/hooks/useGeolocation';
+import NotInYourArea from '../catalog/serviceability/NotInYourArea';
 
 /* Video reel card with auto-play on intersection */
 function VideoReelCard({ theme, onSave }) {
@@ -57,11 +46,11 @@ function VideoReelCard({ theme, onSave }) {
         </div>
       </div>
       <button onClick={e => { e.stopPropagation(); onSave(theme._id); }}
-        className={`absolute top-4 right-4 w-9 h-9 rounded-full flex items-center justify-center transition-all ${theme.isSaved ? 'bg-rose-500 scale-110' : 'bg-black/30 backdrop-blur-md border border-white/20 hover:bg-black/50'}`}>
+        className={`absolute top-4 right-4 w-9 h-9 rounded-full flex items-center justify-center transition-all ${theme.isSaved ? 'bg-rose-500 scale-110' : 'bg-black/30 border border-white/20 hover:bg-black/50'}`}>
         <Heart size={16} className={theme.isSaved ? 'text-white fill-white' : 'text-white'} />
       </button>
       {theme.status === 'featured' && (
-        <div className="absolute top-4 left-4 px-3 py-1 bg-fuchsia-500 rounded-full text-white text-[10px] font-black tracking-widest flex items-center gap-1.5 shadow-lg border border-white/20">
+        <div className="absolute top-4 left-4 px-3 py-1 bg-zappy-500 rounded-full text-white text-[10px] font-black tracking-widest flex items-center gap-1.5 shadow-lg border border-white/20">
           <Star size={12} />FEATURED
         </div>
       )}
@@ -85,12 +74,12 @@ function ThemeCard({ theme, onSave }) {
           </div>
         )}
         <button onClick={e => { e.stopPropagation(); onSave(theme._id); }}
-          className={`absolute top-4 right-4 w-9 h-9 rounded-full flex items-center justify-center transition-all ${theme.isSaved ? 'bg-rose-500 scale-110' : 'bg-black/20 backdrop-blur-md border border-white/20 hover:bg-black/40'}`}>
+          className={`absolute top-4 right-4 w-9 h-9 rounded-full flex items-center justify-center transition-all ${theme.isSaved ? 'bg-rose-500 scale-110' : 'bg-black/20 border border-white/20 hover:bg-black/40'}`}>
           <Heart size={16} className={theme.isSaved ? 'text-white fill-white' : 'text-white'} />
         </button>
         {theme.isTrending && (
           <div className="absolute top-4 left-4 px-3 py-1 bg-orange-500 rounded-full text-white text-[10px] font-black tracking-widest shadow-lg border border-white/20">
-            🔥 TRENDING
+            Trending
           </div>
         )}
       </div>
@@ -98,7 +87,7 @@ function ThemeCard({ theme, onSave }) {
         <p className="font-black text-[15px] text-slate-900 leading-tight line-clamp-1">{theme.title}</p>
         <p className="text-xs font-semibold text-slate-400 mt-1.5 line-clamp-1">{theme.categoryId?.name}, {theme.partnerId?.businessName}</p>
         <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-100">
-          <span className="text-base font-black text-rose-600">₹{Math.round((theme.startingPricePaise || 0) / 100).toLocaleString('en-IN')}</span>
+          <span className="text-base font-black text-ink-900">₹{Math.round((theme.startingPricePaise || 0) / 100).toLocaleString('en-IN')}</span>
           <div className="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-100">
             <Star size={12} className="text-yellow-500 fill-yellow-500" />
             <span className="text-xs font-bold text-slate-700">{theme.rating?.toFixed(1) || '–'}</span>
@@ -116,10 +105,15 @@ export default function EventsHomePage() {
   const [search, setSearch] = useState('');
   const [showReels, setShowReels] = useState(false);
 
-  const { data: catData } = useGetEventCategoriesQuery();
+  // Only what an approved partner offers in this city (server events/event.service liveThemeQuery).
+  const [here] = useState(() => loadGeoLocation());
+  const { data: svc } = useGetServiceabilityQuery({ lat: here?.lat, lng: here?.lng }, { skip: !here });
+  const city = svc?.zone?.city || undefined;
+  const scope = city ? { city } : {};
+  const { data: catData } = useGetEventCategoriesQuery(scope);
   const { data: config } = useGetEventConfigQuery();
-  const { data: trendingData } = useGetEventThemesQuery({ sort: 'trending', limit: 12 });
-  const { data: videoData } = useGetEventThemesQuery({ sort: 'trending', limit: 6 });
+  const { data: trendingData } = useGetEventThemesQuery({ ...scope, sort: 'trending', limit: 12 });
+  const { data: videoData } = useGetEventThemesQuery({ ...scope, sort: 'trending', limit: 6 });
   const [toggleSave] = useToggleSaveEventThemeMutation();
 
   const categories = catData?.categories || [];
@@ -137,11 +131,10 @@ export default function EventsHomePage() {
     if (search.trim()) navigate(`/events/browse?search=${encodeURIComponent(search.trim())}`);
   }
 
-  const fallbackCategories = [
-    { name: 'Birthday' }, { name: 'Baby Shower' }, { name: 'Anniversary' }, { name: 'Housewarming' }, { name: 'Romantic' }
-  ];
-
-  const renderCategories = categories.length ? categories : fallbackCategories;
+  const withPhoto = categories.filter((c) => eventPhoto(c));
+  const without = categories.filter((c) => !eventPhoto(c));
+  const noneHere = svc && !svc.events;
+  const openCat = (cat) => navigate(`/events/browse?category=${cat.slug}${city ? `&city=${encodeURIComponent(city)}` : ''}`);
 
   if (paused) {
     return (
@@ -179,66 +172,52 @@ export default function EventsHomePage() {
         </div>
       </div>
 
-      {/* Main Content Container */}
-      <div className="max-w-5xl mx-auto px-5 mt-10 space-y-12">
-        
-        {/* CRAZY UNIQUE BENTO GRID CATEGORIES */}
-        <section>
-          <div className="flex items-end justify-between mb-6">
-            <h2 className="text-2xl font-black text-slate-900 tracking-tight">Browse by Occasion</h2>
-            <button onClick={() => navigate('/events/browse')} className="text-sm font-bold text-rose-600 flex items-center gap-1 hover:text-rose-700 transition-colors">
-              Explore All <ArrowUpRight size={18} strokeWidth={3} />
-            </button>
-          </div>
-          
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-            {renderCategories.slice(0, 5).map((cat, idx) => {
-              const style = getCatStyles(cat);
-              return (
-                <button key={cat._id || idx} onClick={() => navigate(`/events/browse?category=${cat.slug || cat.name?.toLowerCase()}`)}
-                  className={`relative rounded-card overflow-hidden group cursor-pointer shadow-sm hover:shadow-xl transition-all duration-500 ${getBentoClass(idx)}`}>
-                  
-                  {/* Background Image */}
-                  {style.img
-                    ? <img src={style.img} alt={cat.name} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 group-hover:rotate-1 transition-all duration-700" />
-                    : (
-                      <div className={`absolute inset-0 bg-gradient-to-br ${style.tone} flex items-center justify-center`}>
-                        <span className="text-5xl sm:text-6xl drop-shadow-md transition-transform duration-700 group-hover:scale-110" aria-hidden="true">{style.emoji}</span>
-                      </div>
-                    )}
-                  
-                  {/* Gradient Overlay */}
-                  <div className={`absolute inset-0 bg-gradient-to-t ${style.color} mix-blend-multiply opacity-60 group-hover:opacity-80 transition-opacity duration-500`} />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80" />
-                  
-                  {/* Content */}
-                  <div className="absolute inset-0 p-5 flex flex-col justify-end">
-                    <div className="transform translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
-                      <h3 className="text-white font-black text-lg sm:text-xl drop-shadow-md text-left">{cat.name}</h3>
-                      <div className="h-0 opacity-0 group-hover:h-auto group-hover:opacity-100 group-hover:mt-2 transition-all duration-500 overflow-hidden flex items-center gap-1 text-white/90 text-xs font-bold uppercase tracking-wider">
-                        Explore <ArrowUpRight size={14} strokeWidth={3} />
-                      </div>
-                    </div>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* Sponsored cross-sell banner */}
-        <CrossSellBanner placement="category_listing" title="Sponsored Partners" />
+      <div className="mx-auto mt-8 max-w-5xl space-y-10 px-5">
+        {noneHere ? (
+          <NotInYourArea soon place={svc.zone?.name || city} lat={here?.lat} lng={here?.lng} areas={svc.areas || []} onChangeLocation={() => navigate('/')} />
+        ) : (
+        <>
+        {categories.length > 0 && (
+          <section>
+            <div className="mb-4 flex items-end justify-between">
+              <h2 className="h-section">Pick the occasion</h2>
+              <button type="button" onClick={() => navigate('/events/browse')} className="flex items-center gap-1 text-[14px] font-bold text-zappy-700">
+                See all <ArrowUpRight size={16} />
+              </button>
+            </div>
+            {withPhoto.length > 0 && (
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {withPhoto.map((cat) => (
+                  <button key={cat._id} type="button" onClick={() => openCat(cat)} className="group text-left">
+                    <span className="block aspect-[4/5] overflow-hidden rounded-card bg-sunken">
+                      <img src={eventPhoto(cat)} alt="" loading="lazy" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                    </span>
+                    <span className="mt-2 block text-[15px] font-bold text-ink-900">{cat.name}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+            {without.length > 0 && (
+              <div className={withPhoto.length ? 'mt-5' : ''}>
+                {withPhoto.length > 0 && <p className="mb-2 text-[13px] font-semibold text-ink-500">More occasions</p>}
+                <div className="flex flex-wrap gap-2">
+                  {without.map((cat) => (
+                    <button key={cat._id} type="button" onClick={() => openCat(cat)}
+                      className="rounded-full border border-line bg-white px-4 py-2 text-[14px] font-semibold text-ink-900 hover:border-zappy-600">
+                      {cat.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </section>
+        )}
 
         {/* Video Reels toggle */}
         {videoThemes.length > 0 && (
           <section>
             <div className="flex items-end justify-between mb-6">
-              <h2 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-3">
-                <span className="w-8 h-8 bg-zappy-500 rounded-xl flex items-center justify-center shadow-lg shadow-zappy-500/30">
-                  <Play size={14} className="text-white ml-0.5" />
-                </span>
-                See it Live
-              </h2>
+              <h2 className="h-section flex items-center gap-2"><Play size={18} className="text-zappy-600" /> See it set up</h2>
               <button onClick={() => setShowReels(v => !v)} className="text-sm font-bold text-zappy-600 hover:text-zappy-700 transition-colors">
                 {showReels ? 'Hide reels' : 'Play reels'}
               </button>
@@ -258,14 +237,9 @@ export default function EventsHomePage() {
         {/* Trending */}
         <section>
           <div className="flex items-end justify-between mb-6">
-            <h2 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-3">
-              <span className="w-8 h-8 bg-orange-400 rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/30">
-                <TrendingUp size={16} className="text-white" strokeWidth={2.5} />
-              </span>
-              Trending Now
-            </h2>
-            <button onClick={() => navigate('/events/browse?sort=trending')} className="text-sm font-bold text-rose-600 flex items-center gap-1 hover:text-rose-700 transition-colors">
-              See all <ArrowUpRight size={18} strokeWidth={3} />
+            <h2 className="h-section">Popular packages</h2>
+            <button type="button" onClick={() => navigate('/events/browse?sort=trending')} className="flex items-center gap-1 text-[14px] font-bold text-zappy-700">
+              See all <ArrowUpRight size={16} />
             </button>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 sm:gap-6">
@@ -274,14 +248,16 @@ export default function EventsHomePage() {
             ))}
           </div>
           {!trending.length && (
-            <div className="text-center py-20 bg-white rounded-[2rem] border border-slate-100 shadow-sm mt-4">
-              <PartyPopper size={56} className="mx-auto text-zappy-200 mb-5" strokeWidth={1.5} />
-              <p className="text-slate-500 font-bold text-lg">No themes yet - check back soon!</p>
+            <div className="mt-4 rounded-card border border-line bg-white px-5 py-10 text-center">
+              <PartyPopper size={32} className="mx-auto text-ink-300" strokeWidth={1.6} />
+              <p className="mt-3 text-[15px] font-semibold text-ink-700">Packages are being added</p>
+              <p className="mt-1 text-[13px] text-ink-500">Partners near you are setting up their décor packages.</p>
             </div>
           )}
         </section>
+        </>
+        )}
       </div>
     </div>
   );
 }
-

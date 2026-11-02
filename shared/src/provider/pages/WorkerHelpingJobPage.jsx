@@ -179,6 +179,7 @@ export default function WorkerHelpingJobPage() {
             onCollect={recordCash}
             what={due.itemsPaise > 0 ? 'items and service fee' : 'service fee'}
             jobId={task._id}
+            claim={task.payClaim}
           />
         )}
 

@@ -98,7 +98,7 @@ export default function PriceRevisionCard({ revision, onResolved }) {
         {/* Auto-approve notice */}
         {secondsLeft > 0 && (
           <p className="text-[10px] text-amber-600 mb-2 font-medium">
-            ⚠️ Auto-approved if no response in {Math.floor(secondsLeft / 60)}:{String(secondsLeft % 60).padStart(2, '0')}
+            Auto-approved if no response in {Math.floor(secondsLeft / 60)}:{String(secondsLeft % 60).padStart(2, '0')}
           </p>
         )}
 

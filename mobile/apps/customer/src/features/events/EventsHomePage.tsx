@@ -2,22 +2,24 @@
  * Events and décor (the website's EventsHomePage): search, browse by occasion,
  * and what is trending. Saved themes and bookings are one tap away.
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowUpRight, CalendarCheck, Heart, PartyPopper, Search, TrendingUp } from 'lucide-react-native';
-import { useGetEventCategoriesQuery, useGetEventConfigQuery, useGetEventThemesQuery } from '@zappy/core/api';
+import { ArrowUpRight, CalendarCheck, Heart, PartyPopper, Search } from 'lucide-react-native';
+import { useGetEventCategoriesQuery, useGetEventConfigQuery, useGetEventThemesQuery, useGetServiceabilityQuery } from '@zappy/core/api';
+import { loadGeoLocation } from '@zappy/core/lib/geoCache';
 import { EmptyState, ScreenHeader, Skeleton, Text } from '@zappy/ui/components';
 import { useT } from '@zappy/ui/lib/i18n';
-import { colors, danger, ink, slate } from '@zappy/ui/theme/colors';
+import { colors, ink, slate, zappy } from '@zappy/ui/theme/colors';
 import { radius } from '@zappy/ui/theme/radius';
 import { spacing } from '@zappy/ui/theme/spacing';
+import { NotInYourArea } from '../catalog/serviceability/NotInYourArea';
+import { eventPhoto } from './eventTones';
 import { OccasionTile, type Occasion } from './OccasionTile';
 import { ThemeCard, type Theme } from './ThemeCard';
 import { useSaveTheme } from './useSaveTheme';
 
-const FALLBACK: Occasion[] = [{ name: 'Birthday' }, { name: 'Baby Shower' }, { name: 'Anniversary' }, { name: 'Housewarming' }, { name: 'Romantic' }];
 const browse = (occ: Occasion) => `/events/browse?category=${encodeURIComponent(occ.slug || occ.name.toLowerCase())}`;
 
 export function EventsHomePage() {
@@ -25,11 +27,20 @@ export function EventsHomePage() {
   const insets = useSafeAreaInsets();
   const t = useT();
   const [search, setSearch] = useState('');
-  const { data: cats } = useGetEventCategoriesQuery(undefined);
+  // Only what an approved partner offers in this city (server events/event.service liveThemeQuery).
+  const [here, setHere] = useState<{ lat: number; lng: number } | null>(null);
+  useEffect(() => { loadGeoLocation().then((g: { lat: number; lng: number } | null) => setHere(g)).catch(() => {}); }, []);
+  const { data: svc } = useGetServiceabilityQuery({ lat: here?.lat, lng: here?.lng }, { skip: !here });
+  const city: string | undefined = svc?.zone?.city || undefined;
+  const scope = city ? { city } : {};
+  const { data: cats } = useGetEventCategoriesQuery(scope);
   const { data: config } = useGetEventConfigQuery(undefined);
-  const { data: trending, isLoading } = useGetEventThemesQuery({ sort: 'trending', limit: 12 });
+  const { data: trending, isLoading } = useGetEventThemesQuery({ ...scope, sort: 'trending', limit: 12 });
   const save = useSaveTheme();
-  const occasions: Occasion[] = (cats?.categories?.length ? cats.categories : FALLBACK).slice(0, 5);
+  const occasions: Occasion[] = cats?.categories || [];
+  const withPhoto = occasions.filter((o) => eventPhoto(o));
+  const without = occasions.filter((o) => !eventPhoto(o));
+  const noneHere = svc && !svc.events;
   const themes: Theme[] = trending?.themes || [];
   const back = () => (router.canGoBack() ? router.back() : router.replace('/' as never));
   const submit = () => { if (search.trim()) router.push(`/events/browse?search=${encodeURIComponent(search.trim())}` as never); };
@@ -60,21 +71,36 @@ export function EventsHomePage() {
           <TextInput value={search} onChangeText={setSearch} onSubmitEditing={submit} returnKeyType="search" placeholder={t('events.searchHint', 'Birthday, anniversary, baby shower')} placeholderTextColor={ink[400]} style={styles.input} />
         </View>
 
-        <View style={styles.head}>
-          <Text variant="heading3" weight="black">{t('events.byOccasion', 'Browse by occasion')}</Text>
-          <Pressable onPress={() => router.push('/events/browse' as never)} accessibilityRole="button" style={styles.link}><Text variant="bodySmall" weight="bold" color={danger[600]}>{t('events.all', 'Explore all')}</Text><ArrowUpRight size={16} color={danger[600]} /></Pressable>
-        </View>
-        <View style={styles.grid}>
-          {occasions.map((o, i) => <OccasionTile key={o._id || o.name} occasion={o} big={i === 0} onPress={() => router.push(browse(o) as never)} />)}
-        </View>
+        {noneHere ? (
+          <NotInYourArea soon place={svc.zone?.name || city} lat={here?.lat} lng={here?.lng} areas={svc.areas || []} onChangeLocation={() => router.replace('/' as never)} />
+        ) : (
+          <>
+            {occasions.length ? (
+              <>
+                <View style={styles.head}>
+                  <Text variant="heading3" weight="black">{t('events.byOccasion', 'Pick the occasion')}</Text>
+                  <Pressable onPress={() => router.push('/events/browse' as never)} accessibilityRole="button" style={styles.link}><Text variant="bodySmall" weight="bold" color={zappy[700]}>{t('events.all', 'See all')}</Text><ArrowUpRight size={16} color={zappy[700]} /></Pressable>
+                </View>
+                {withPhoto.length ? <View style={styles.grid}>{withPhoto.map((o) => <OccasionTile key={o._id || o.name} occasion={o} onPress={() => router.push(browse(o) as never)} />)}</View> : null}
+                {without.length ? (
+                  <View style={styles.chips}>
+                    {without.map((o) => (
+                      <Pressable key={o._id || o.name} onPress={() => router.push(browse(o) as never)} accessibilityRole="button" style={styles.chip}><Text variant="bodySmall" weight="semibold">{o.name}</Text></Pressable>
+                    ))}
+                  </View>
+                ) : null}
+              </>
+            ) : null}
 
-        <View style={styles.head}>
-          <View style={styles.link}><TrendingUp size={18} color={ink[700]} /><Text variant="heading3" weight="black">{t('events.trending', 'Trending now')}</Text></View>
-          <Pressable onPress={() => router.push('/events/browse?sort=trending' as never)} accessibilityRole="button" style={styles.link}><Text variant="bodySmall" weight="bold" color={danger[600]}>{t('events.seeAll', 'See all')}</Text><ArrowUpRight size={16} color={danger[600]} /></Pressable>
-        </View>
-        {isLoading ? [0, 1].map((i) => <Skeleton key={i} height={280} borderRadius={radius.large} />)
-          : themes.length ? themes.map((th) => <ThemeCard key={th._id} theme={th} onSave={save} />)
-            : <EmptyState icon={<PartyPopper size={44} color={slate[300]} />} title={t('events.noThemes', 'No themes yet. Check back soon!')} />}
+            <View style={styles.head}>
+              <Text variant="heading3" weight="black">{t('events.trending', 'Popular packages')}</Text>
+              <Pressable onPress={() => router.push('/events/browse?sort=trending' as never)} accessibilityRole="button" style={styles.link}><Text variant="bodySmall" weight="bold" color={zappy[700]}>{t('events.seeAll', 'See all')}</Text><ArrowUpRight size={16} color={zappy[700]} /></Pressable>
+            </View>
+            {isLoading ? [0, 1].map((i) => <Skeleton key={i} height={280} borderRadius={radius.large} />)
+              : themes.length ? themes.map((th) => <ThemeCard key={th._id} theme={th} onSave={save} />)
+                : <EmptyState icon={<PartyPopper size={40} color={slate[300]} />} title={t('events.noThemes', 'Packages are being added')} message={t('events.noThemesHint', 'Partners near you are setting up their décor packages.')} />}
+          </>
+        )}
       </ScrollView>
     </View>
   );
@@ -90,4 +116,6 @@ const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: spacing.md },
   link: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  chip: { paddingHorizontal: 16, paddingVertical: 9, borderRadius: 999, borderWidth: 1, borderColor: slate[200], backgroundColor: colors.surface },
 });

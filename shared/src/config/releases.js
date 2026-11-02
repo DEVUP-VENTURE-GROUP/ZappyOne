@@ -4,31 +4,29 @@
  * the app before sees it on their next visit. Only list what people can use.
  */
 export const RELEASE = {
-  id: '2026-10',
+  id: '2026-11c',
   /** Accounts created on or after this date start on this release; it is not news to them. */
-  since: '2026-10-06',
+  since: '2026-11-02',
   user: [
-    ['Message your provider', 'Chat with whoever is doing your job, right from the booking.'],
-    ['A bill that adds up', 'Every booking shows each charge, the platform fee and the total.'],
-    ['Live updates', 'Each step of your job ticks off as it happens.'],
-    ['Your photo', 'Add a profile photo so your technician recognises you.'],
+    ['Pay your pro directly', 'When the work is done, pay your pro by UPI or cash from the tracking screen.'],
+    ['Every pro, their own menu', 'Open a pro to see their own jobs, photos, what is included and their prices.'],
+    ['Search every menu near you', 'Search a job and see which pros near you do it, and for how much.'],
+    ['Open now, at home or at their shop', 'Filter the pros for a service by who is open and where the work happens.'],
+    ['A new sign-in', 'A faster, clearer sign-in with your phone number.'],
   ],
   worker: [
-    ['My reviews', 'See every review customers left, and report one that is not right.'],
-    ['Message customers', 'Chat with the customer from the job screen.'],
-    ['Prices in rupees', 'Type quotes in rupees; we handle the rest.'],
-    ['Your photo', 'Change your profile photo any time from your profile.'],
+    ['Your own prices', 'Set your own price for every job you do. It is live the moment you save.'],
+    ['Your own menu', 'Keep the sample jobs, add your own with photos and what is included, and change all prices at once.'],
+    ['Pay ZappyOne online', 'Pay what you owe ZappyOne in the app, and never miss a job over the limit.'],
+    ['Ask for a new service', 'Not listed? Send it with your jobs, prices and photos. Once approved, it is your menu.'],
   ],
   shop: [
-    ['Reviews', 'See what customers say about your shop and report a wrong review.'],
-    ['Message customers', 'Chat with the customer from any job.'],
-    ['Quotes in rupees', 'Your team types prices in rupees, with a clear minimum.'],
-    ['Shop photo', 'Add a photo of your shop; customers see it when they book.'],
+    ['Your own menu', 'Keep the sample jobs, add your own with photos and what is included, and change all prices at once.'],
+    ['Several services at once', 'Tick every service you do and send your documents once.'],
+    ['Pay ZappyOne online', 'Pay what you owe ZappyOne in the app, and never miss a job over the limit.'],
+    ['Reminders and alerts', 'Get told when your dues near the limit, when payment lands, and what to finish in your setup.'],
+    ['Ask for a new service', 'Not listed? Send it with your jobs, prices and photos. Once approved, it is your menu.'],
   ],
-  event_partner: [
-    ['Reviews', 'See every review customers left on your setups.'],
-    ['Clear earnings', 'Your earnings show your package price and commission; our customer fee is never taken from you.'],
-    ['Setup photos', 'Add before and after photos to each booking.'],
-    ['Your photo', 'Add a business photo from your profile.'],
-  ],
+  // Nothing new for event partners in this release.
+  event_partner: [],
 };

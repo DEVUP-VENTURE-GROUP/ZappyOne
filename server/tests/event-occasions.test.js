@@ -17,7 +17,8 @@ test('add, edit, hide, remove; an occasion in use is kept', async () => {
 
   await svc.adminUpsertCategory({ slug: 'naming-ceremony', name: 'Naamkaran', isActive: false });
   expect(await EventCategory.findOne({ slug: 'naming-ceremony' }).lean()).toMatchObject({ name: 'Naamkaran', isActive: false });
-  expect((await svc.listCategories()).map((c) => c.slug)).toEqual(['birthday']);
+  // Nothing to book yet: no occasion is offered.
+  expect(await svc.listCategories()).toEqual([]);
 
   const birthday = await EventCategory.findOne({ slug: 'birthday' }).lean();
   await EventTheme.collection.insertOne({ categoryId: birthday._id, partnerId: new mongoose.Types.ObjectId(), title: 'Balloon arch', status: 'approved' });
@@ -25,4 +26,25 @@ test('add, edit, hide, remove; an occasion in use is kept', async () => {
   await expect(svc.adminDeleteCategory('birthday')).rejects.toMatchObject({ code: 'IN_USE' });
   expect(await svc.adminDeleteCategory('naming-ceremony')).toEqual({ deleted: 'naming-ceremony' });
   await expect(svc.adminDeleteCategory('naming-ceremony')).rejects.toMatchObject({ code: 'NOT_FOUND' });
+});
+
+test('occasions and packages come only from approved partners serving the city', async () => {
+  const EventPartner = require('../src/modules/events/event-partner.model');
+  const cat = await EventCategory.create({ slug: 'anniversary', name: 'Anniversary' });
+  const pending = await EventPartner.create({ businessName: 'Pending Decor', ownerName: 'B', cities: ['hyderabad'], kyc: { status: 'pending' } });
+  await EventTheme.collection.insertOne({ categoryId: cat._id, partnerId: pending._id, title: 'Rose setup', status: 'approved', cities: [] });
+  expect(await svc.liveInCity('Hyderabad')).toBe(false);
+  expect((await svc.listCategories({ city: 'hyderabad' })).map((c) => c.slug)).not.toContain('anniversary');
+
+  const live = await EventPartner.create({ businessName: 'Live Decor', ownerName: 'C', cities: ['hyderabad'], kyc: { status: 'approved' } });
+  await EventTheme.collection.insertOne({ categoryId: cat._id, partnerId: live._id, title: 'Candle setup', status: 'approved', cities: [] });
+  expect(await svc.liveInCity('Hyderabad')).toBe(true);
+  expect(await svc.liveInCity('Mumbai')).toBe(false);
+  expect((await svc.listCategories({ city: 'hyderabad' })).map((c) => c.slug)).toContain('anniversary');
+  expect(await svc.listCategories({ city: 'mumbai' })).toEqual([]);
+  const { themes } = await svc.listThemes({ city: 'hyderabad' });
+  expect(themes.map((t) => t.title)).toEqual(['Candle setup']);
+
+  await EventPartner.updateOne({ _id: live._id }, { isBlocked: true });
+  expect(await svc.liveInCity('Hyderabad')).toBe(false);
 });

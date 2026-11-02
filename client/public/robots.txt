@@ -5,9 +5,6 @@ User-agent: *
 Allow: /
 Allow: /login
 Allow: /services
-Allow: /how-it-works
-Allow: /pricing
-Allow: /plans
 Allow: /faq
 Allow: /policy/
 Allow: /images/
@@ -23,6 +20,7 @@ Disallow: /orders/
 Disallow: /profile/
 Disallow: /wallet/
 Disallow: /partner/
+Disallow: /plans
 
 # Block all search-like query params to prevent duplicate content
 Disallow: /*?page=

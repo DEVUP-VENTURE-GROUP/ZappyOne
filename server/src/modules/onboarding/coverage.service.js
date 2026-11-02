@@ -166,7 +166,14 @@ async function serviceabilityAt({ lat, lng }) {
     const status = !covered.length ? (region ? 'coming_soon' : 'not_here')
       : covered.some((l) => l.openNow) ? 'available' : 'closed_now';
     // Verified pros open right now who cover this point: the live count home shows.
-    const prosNearby = new Set([...coveredOwners.values()].flat().filter((k) => open.has(k) && !blocked.has(k))).size;
+    const openKeys = [...new Set([...coveredOwners.values()].flat().filter((k) => open.has(k) && !blocked.has(k)))];
+    const prosNearby = openKeys.length;
+    // The soonest one of them can be at the door, from where they really are (jobs/arrival); null when nobody can say.
+    const etas = openKeys.length
+      ? await require('../jobs/arrival').forProviders(openKeys.slice(0, 25).map((k) => ({ kind: k.startsWith('s:') ? 'shop' : 'worker', id: k.slice(2) })), { lat: Number(lat), lng: Number(lng) }).catch(() => new Map())
+      : new Map();
+    const fastest = Math.min(...[...etas.values()].map((e) => e.minutes).filter(Number.isFinite));
+    const fastestMin = Number.isFinite(fastest) ? Math.max(1, Math.round(fastest)) : null;
     result = {
       status,
       region,
@@ -174,6 +181,9 @@ async function serviceabilityAt({ lat, lng }) {
       areas,
       lines: covered,
       prosNearby,
+      fastestMin,
+      // An approved event partner with a live package in this city (events/event.service).
+      events: await require('../events/event.service').liveInCity(zone?.city).catch(() => false),
       ...(status === 'closed_now' && { nextOpening }),
     };
   }

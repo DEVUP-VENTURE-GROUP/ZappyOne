@@ -51,7 +51,8 @@ test('a job\'s breakdown adds up and matches the Earnings page', async () => {
   const e = await forJob('repair', doc.insertedId);
 
   expect(e.customerPaidPaise).toBe(101000 + 5000 + 2000);
-  expect(e.bill.map((l) => l.label)).toEqual(['Service', 'Platform fee', 'Rain fee', 'Tip']);
+  expect(e.bill).toBeUndefined();
+  expect(e.zappy).toBeUndefined();
   expect(e.youEarnPaise).toBe(90000 + 3000 + 2000);
   expect(e.zappyKeepsPaise).toBe(10000 + 1000 + 2000);
   expect(e.customerPaidPaise).toBe(e.youEarnPaise + e.zappyKeepsPaise);
@@ -71,7 +72,7 @@ test('the provider sees the travel fee and the distance apart, all of it theirs,
   });
   const { forJob } = require('../src/modules/jobs/earnings');
   const e = await forJob('repair', doc.insertedId);
-  expect(e.bill).toEqual([{ label: 'Service', paise: 75000 }, { label: 'Travel (5 km)', paise: 1200 }, { label: 'Platform fee', paise: 1000 }]);
+  expect(e.bill).toBeUndefined();
   expect(e.yours).toEqual([{ label: 'Your share of the service', paise: 67500 }, { label: 'Travel (5 km), all yours', paise: 1200 }]);
   expect(e.youEarnPaise).toBe(68700);
   expect(e.customerPaidPaise).toBe(e.youEarnPaise + e.zappyKeepsPaise);

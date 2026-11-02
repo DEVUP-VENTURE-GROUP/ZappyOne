@@ -100,7 +100,7 @@ export default function ProofPhotos({
       <div className="flex items-center gap-3 px-4 pt-4 pb-3">
         <motion.div
           className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 ${
-            done ? 'bg-green-100' : 'bg-violet-100'
+            done ? 'bg-green-100' : 'bg-zappy-100'
           }`}
           animate={!done ? {
             boxShadow: ['0 0 0 0px rgba(139,92,246,0.3)', '0 0 0 8px rgba(139,92,246,0)', '0 0 0 0px rgba(139,92,246,0)'],
@@ -109,13 +109,13 @@ export default function ProofPhotos({
         >
           {done
             ? <CheckCircle size={20} strokeWidth={2} className="text-green-600" />
-            : <Camera size={20} strokeWidth={1.75} className="text-violet-600" />}
+            : <Camera size={20} strokeWidth={1.75} className="text-zappy-600" />}
         </motion.div>
         <div className="flex-1 min-w-0">
-          <p className={`text-sm font-extrabold ${done ? 'text-green-800' : 'text-violet-900'}`}>
+          <p className={`text-sm font-extrabold ${done ? 'text-green-800' : 'text-zappy-900'}`}>
             {done ? 'Proof photos ready' : (title || 'Add proof-of-work photos')}
           </p>
-          <p className={`text-[11px] font-medium mt-0.5 ${done ? 'text-green-600' : 'text-violet-500'}`}>
+          <p className={`text-[11px] font-medium mt-0.5 ${done ? 'text-green-600' : 'text-zappy-500'}`}>
             {done
               ? `${ready} photo${ready > 1 ? 's' : ''} uploaded - you can add ${max - photos.length} more`
               : (hint || requiredNote)}
@@ -123,7 +123,7 @@ export default function ProofPhotos({
         </div>
         {/* Counter pill */}
         <div className={`px-2.5 py-1 rounded-full text-xs font-extrabold shrink-0 ${
-          done ? 'bg-green-500 text-white' : 'bg-violet-200 text-violet-700'
+          done ? 'bg-green-500 text-white' : 'bg-zappy-200 text-zappy-700'
         }`}>
           {ready}/{max}
         </div>
@@ -136,7 +136,7 @@ export default function ProofPhotos({
             <div key={photo.id} className="relative aspect-square">
               <img src={photo.preview} alt="Proof"
                 className={`w-full h-full object-cover rounded-2xl ${
-                  photo.error ? 'ring-2 ring-red-400' : photo.uploading ? 'ring-2 ring-violet-300' : 'ring-2 ring-green-400'
+                  photo.error ? 'ring-2 ring-red-400' : photo.uploading ? 'ring-2 ring-zappy-300' : 'ring-2 ring-green-400'
                 }`}
                 style={{ boxShadow: photo.error ? '0 4px 12px rgba(239,68,68,0.25)' : '0 4px 12px rgba(0,0,0,0.12)' }}
               />
@@ -174,7 +174,7 @@ export default function ProofPhotos({
             className="hidden" onChange={capture} />
           <button
             onClick={() => inputRef.current?.click()}
-            className="w-full py-3 rounded-xl bg-white text-violet-700 font-bold text-sm ring-1 ring-violet-200 flex items-center justify-center gap-2"
+            className="w-full py-3 rounded-xl bg-white text-zappy-700 font-bold text-sm ring-1 ring-zappy-200 flex items-center justify-center gap-2"
           >
             <Camera size={17} strokeWidth={2} />
             <span>{photos.length === 0 ? 'Take Proof Photo' : 'Add Another Photo'}</span>

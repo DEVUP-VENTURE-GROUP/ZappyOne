@@ -57,7 +57,9 @@ const UPLOAD_FOLDERS = [
       // Staff check-in selfies at the hub (workforce/).
       'staff-checkin',
       // Fleet expense receipts, uploaded by admin (workforce/finance).
-      'fleet-receipts'
+      'fleet-receipts',
+      // A provider's menu photos and the photos sent with a new-service request.
+      'menu', 'line-requests'
 ];
 
 router.post(

@@ -24,7 +24,7 @@ const paymentIntentSchema = new mongoose.Schema(
     gatewayOrderId: { type: String, default: undefined },
 
     owner: {
-      kind: { type: String, enum: ['user', 'worker'], required: true },
+      kind: { type: String, enum: ['user', 'worker', 'shop'], required: true },
       id: { type: mongoose.Schema.Types.ObjectId, required: true, index: true },
     },
 
@@ -33,7 +33,7 @@ const paymentIntentSchema = new mongoose.Schema(
       // repair_payment was accepted by the service but missing here, so every
       // repair checkout failed at save. booking_payment covers every engine.
       enum: ['subscription', 'wallet_topup', 'order_payment', 'repair_payment', 'booking_payment',
-        'event_advance_payment', 'event_remaining_payment'],
+        'event_advance_payment', 'event_remaining_payment', 'dues_payment'],
       required: true,
       index: true,
     },

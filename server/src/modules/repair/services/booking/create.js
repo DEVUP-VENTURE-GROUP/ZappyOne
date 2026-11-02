@@ -75,6 +75,7 @@ async function createBooking({
     if (existing) return { booking: existing, replayed: true };
   }
   await require('../../../jobs/customer-gate').assertCustomerCanBook(userId);
+  if ((await require('../../../jobs/member').perks(userId)).waivePlatformFee) skipPlatformFee = true;
   await zoneService.assertBookableLocation(location);
 
   const repair = repairCode
@@ -123,25 +124,8 @@ async function createBooking({
    * itself supports. Every other mode must be one the repair allows.
    */
   const isInspectionOnly = serviceMode === 'diagnosis_only';
-  /**
-   * Online payment is refused unless a gateway is actually configured.
-   *
-   * The flag existed on RepairConfig but nothing read it, so a client could ask
-   * for `online` and get a booking the platform has no means of charging —
-   * completed work, no money, and no error anywhere to explain it. Cash is
-   * always available, so this is a hard refusal rather than a silent downgrade:
-   * quietly changing how someone pays is its own kind of wrong.
-   */
-  if (paymentMethod === 'online') {
-    require('../../../payment/payables').assertOnlineAvailable(paymentMethod);
-    const payCfg = await pricingService.getConfig(vertical);
-    if (!payCfg?.onlinePaymentsEnabled) {
-      const err = new Error('Online payment is not available yet - this booking can be paid in cash.');
-      err.status = 400;
-      err.code = 'ONLINE_PAYMENTS_DISABLED';
-      throw err;
-    }
-  }
+  // Online payment turns on by itself once gateway keys are set; until then it is refused, never silently switched to cash.
+  require('../../../payment/payables').assertOnlineAvailable(paymentMethod);
 
   if (repair && !isInspectionOnly && !repair.allowedServiceModes.includes(serviceMode)) {
     throw httpError('This repair is not available in that service mode', 400, 'SERVICE_MODE_NOT_ALLOWED');
@@ -156,7 +140,8 @@ async function createBooking({
     cityCode: location.cityCode || null,
   };
 
-  const referencePrice = repairCode ? await pricingService.resolveReferencePrice(ctx) : null;
+  const [lng, lat] = location.coordinates;
+  const referencePrice = repairCode && !shopId && !workerId ? await pricingService.nearbyPrice({ vertical, ...ctx }, { lat, lng, cityCode: ctx.cityCode }) : null;
 
   /**
    * The chosen provider's own price, wherever they have one.
@@ -207,10 +192,16 @@ async function createBooking({
     })
     : { addOns: [], addOnsTotalPaise: 0, addOnsCommissionPaise: 0 };
 
+  // A visit to look first is priced at the provider's own inspection fee, or the lowest one nearby when anyone may come.
+  const inspectionFeePaise = (isInspectionOnly || needsDiagnosis)
+    ? ((shopId || workerId)
+      ? await pricingService.inspectionFeeFor({ vertical, shopId, workerId })
+      : await pricingService.nearbyInspectionFee(vertical, { lat: location.coordinates[1], lng: location.coordinates[0], cityCode: location.cityCode || null })) ?? 0
+    : 0;
   const priceSnapshot = (repairCode || isInspectionOnly)
     ? await pricingService.buildPriceSnapshot({
       vertical, repairCode, providerPrice, referencePrice, serviceMode, discountPaise, distanceKm,
-      addOnsTotalPaise, addOnsCommissionPaise, addOnsCommissionBasePaise, skipJourney, skipPlatformFee,
+      addOnsTotalPaise, addOnsCommissionPaise, addOnsCommissionBasePaise, skipJourney, skipPlatformFee, inspectionFeePaise,
     })
     : {
       subtotalPaise: 0, totalPaise: 0, currency: 'INR',
