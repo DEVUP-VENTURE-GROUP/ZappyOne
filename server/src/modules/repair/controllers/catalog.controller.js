@@ -497,8 +497,9 @@ async function previewPrice(req, res, next) {
       cityCode: cityCode || null,
     };
     const reference = repairCode ? await pricingService.nearbyPrice(ctx, { lat, lng, cityCode }) : null;
+    const inspectionFeePaise = serviceMode === 'diagnosis_only' ? await pricingService.nearbyInspectionFee(verticalOf(req), { lat, lng, cityCode }) : null;
     const snapshot = await pricingService.buildPriceSnapshot({
-      vertical: verticalOf(req), repairCode, referencePrice: reference, serviceMode,
+      vertical: verticalOf(req), repairCode, referencePrice: reference, serviceMode, inspectionFeePaise: inspectionFeePaise ?? 0,
       skipPlatformFee: (await require('../../jobs/member').perks(req.auth?.sub)).waivePlatformFee,
     });
 

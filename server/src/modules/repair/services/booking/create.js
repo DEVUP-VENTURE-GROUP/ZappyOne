@@ -192,10 +192,16 @@ async function createBooking({
     })
     : { addOns: [], addOnsTotalPaise: 0, addOnsCommissionPaise: 0 };
 
+  // A visit to look first is priced at the provider's own inspection fee, or the lowest one nearby when anyone may come.
+  const inspectionFeePaise = (isInspectionOnly || needsDiagnosis)
+    ? ((shopId || workerId)
+      ? await pricingService.inspectionFeeFor({ vertical, shopId, workerId })
+      : await pricingService.nearbyInspectionFee(vertical, { lat: location.coordinates[1], lng: location.coordinates[0], cityCode: location.cityCode || null })) ?? 0
+    : 0;
   const priceSnapshot = (repairCode || isInspectionOnly)
     ? await pricingService.buildPriceSnapshot({
       vertical, repairCode, providerPrice, referencePrice, serviceMode, discountPaise, distanceKm,
-      addOnsTotalPaise, addOnsCommissionPaise, addOnsCommissionBasePaise, skipJourney, skipPlatformFee,
+      addOnsTotalPaise, addOnsCommissionPaise, addOnsCommissionBasePaise, skipJourney, skipPlatformFee, inspectionFeePaise,
     })
     : {
       subtotalPaise: 0, totalPaise: 0, currency: 'INR',

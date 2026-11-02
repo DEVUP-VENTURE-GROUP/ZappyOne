@@ -1,5 +1,6 @@
 import { useScrollTopOnChange } from '../../components/common/ScrollToTop';
 import MenuEditor from '../components/menu/MenuEditor';
+import InspectionFeeCard from '../components/InspectionFeeCard';
 import { partsQuotedSeparately, PARTS_NOTE } from '../../utils/partsRule';
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -1267,6 +1268,7 @@ function PricingStep({ vertical, isShop, onBack, onNext }) {
       onNext={onNext}
       nextLabel={pricing?.pricing?.length ? 'Continue' : 'Skip for now'}
     >
+      <InspectionFeeCard vertical={vertical} />
       {!brandCodes.length && (
         <div className="rounded-2xl border border-dashed border-slate-200 p-5 text-center">
           <p className="text-sm font-bold text-slate-700">No brands chosen yet</p>

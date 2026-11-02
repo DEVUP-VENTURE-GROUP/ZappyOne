@@ -1,4 +1,4 @@
-const { ZappyReferencePricing, ProviderPricing } = require('../models/pricing.model');
+const { ZappyReferencePricing, ProviderPricing, ProviderInspectionFee } = require('../models/pricing.model');
 const { RepairConfig } = require('../models/config.model');
 const { Repair } = require('../models/repair.model');
 const { httpError } = require('../../../core/errors');
@@ -156,6 +156,31 @@ async function nearbyPriceMap(ctx, repairCodes, { lat, lng, pincode = null, city
     if (row && (!out.has(code) || row.totalPaise < out.get(code))) out.set(code, row.totalPaise);
   }
   return out;
+}
+
+// A provider's own inspection fee for a service (free when they set none); ZappyOne's own staff charge the fee set in admin.
+async function inspectionFeeFor({ vertical, shopId = null, workerId = null }) {
+  if (!shopId && workerId && await require('../../workforce/staff').isStaff(workerId)) return (await getConfig(vertical)).diagnosisFeePaise || 0;
+  if (!shopId && !workerId) return null;
+  const row = await ProviderInspectionFee.findOne({ vertical, ...(shopId ? { shopId } : { workerId }) }).select('feePaise').lean();
+  return row?.feePaise ?? 0;
+}
+
+// The lowest inspection fee among providers who can come and look near the customer; null when nobody can.
+async function nearbyInspectionFee(vertical, { lat, lng, cityCode = null } = {}) {
+  if (!Number.isFinite(Number(lat)) || !Number.isFinite(Number(lng))) return null;
+  const near = await require('./matching.service').findInspectors({ vertical, lat: Number(lat), lng: Number(lng), cityCode, includeOffline: true });
+  if (!near.length) return null;
+  const fees = await feesOf(vertical, near);
+  return Math.min(...near.map((p) => fees.get(String(p.shopId || p.workerId)) ?? 0));
+}
+
+// Each provider's inspection fee in one read: id -> paise (free when none is set).
+async function feesOf(vertical, providers) {
+  const shopIds = providers.filter((p) => p.shopId).map((p) => p.shopId);
+  const workerIds = providers.filter((p) => !p.shopId && p.workerId).map((p) => p.workerId);
+  const rows = await ProviderInspectionFee.find({ vertical, $or: [{ shopId: { $in: shopIds } }, { workerId: { $in: workerIds } }] }).select('shopId workerId feePaise').lean();
+  return new Map(rows.map((r) => [String(r.shopId || r.workerId), r.feePaise]));
 }
 
 // One job's nearby price, shaped like a reference so the price build takes it as is.
@@ -375,6 +400,8 @@ async function buildPriceSnapshot({
   // group's first item (skipPlatformFee).
   skipJourney = false,
   skipPlatformFee = false,
+  // The visiting provider's own inspection fee (inspectionFeeFor / nearbyInspectionFee).
+  inspectionFeePaise = 0,
 }) {
   const cfg = await getConfig(vertical);
   const repair = repairCode ? await Repair.findOne({ code: repairCode, vertical }).lean() : null;
@@ -395,7 +422,7 @@ async function buildPriceSnapshot({
    */
   const isInspectionOnly = serviceMode === 'diagnosis_only';
   if (isInspectionOnly || pricingMode === 'diagnosis_required') {
-    const diagnosisFeePaise = cfg.diagnosisFeePaise || 0;
+    const diagnosisFeePaise = inspectionFeePaise || 0;
     const taxPaise = Math.round((diagnosisFeePaise * (cfg.taxPct || 0)) / 100);
     return {
       diagnosisFeePaise,
@@ -403,8 +430,7 @@ async function buildPriceSnapshot({
       taxPaise,
       totalPaise: diagnosisFeePaise + taxPaise,
       platformFeePaise: 0,
-      // The inspection fee is ZappyOne's, not the provider's, so no commission
-      // is split out of it — the platform is the principal here.
+      // The inspection fee is the provider's own and all of it is theirs: no commission, no platform fee.
       commissionPaise: 0,
       discountPaise: 0,
       currency: 'INR',
@@ -613,6 +639,9 @@ module.exports = {
   resolveReferencePrice,
   nearbyPriceMap,
   nearbyPrice,
+  inspectionFeeFor,
+  nearbyInspectionFee,
+  feesOf,
   resolveProviderPrice,
   resolveProviderPriceOptions,
   standardPriceOptions,

@@ -1,11 +1,12 @@
 /**
  * Inspection bookings + service-mode economics.
  *
- * An inspection is a product in its own right: the customer pays ZappyOne for a
- * technician's time and an honest diagnosis, with no obligation to repair. The
- * rules that make that fair — and that stop it reading as a bait charge — are:
+ * An inspection is a product in its own right: the customer pays the provider
+ * their own inspection fee for a technician's time and an honest diagnosis,
+ * with no obligation to repair. The rules that make that fair are:
  *
- *   - the fee is the platform's, so no provider commission is split from it
+ *   - the fee is the provider's own and ZappyOne takes nothing from it
+ *   - a provider who sets no fee inspects for free
  *   - a repair is never assumed; the booking carries no repairCode
  *   - if the customer then goes ahead, the fee they already PAID comes off the
  *     repair bill, so one visit is never billed twice
@@ -16,7 +17,7 @@ const { startMongo, stopMongo } = require('./helpers');
 
 const { Repair } = require('../src/modules/repair/models/repair.model');
 const { RepairConfig } = require('../src/modules/repair/models/config.model');
-const { ZappyReferencePricing } = require('../src/modules/repair/models/pricing.model');
+const { ZappyReferencePricing, ProviderInspectionFee } = require('../src/modules/repair/models/pricing.model');
 const { RepairBooking } = require('../src/modules/repair/models/booking.model');
 const { RepairQuote } = require('../src/modules/repair/models/quote.model');
 const pricingService = require('../src/modules/repair/services/pricing.service');
@@ -62,14 +63,18 @@ beforeAll(async () => {
     vertical: 'mobile', repairCode: 'battery_replacement',
     minPaise: 90000, recommendedPaise: 100000, maxPaise: 120000,
   });
+  // The visiting provider's own inspection fee.
+  await ProviderInspectionFee.create({ workerId, vertical: 'mobile', feePaise: INSPECTION_FEE });
 });
 
 afterAll(async () => { await stopMongo(); });
 
 describe('inspection pricing', () => {
-  it('charges only the inspection fee, with tax', async () => {
+  it('charges only the provider own inspection fee, with tax', async () => {
+    const fee = await pricingService.inspectionFeeFor({ vertical: 'mobile', workerId });
+    expect(fee).toBe(INSPECTION_FEE);
     const snap = await pricingService.buildPriceSnapshot({
-      vertical: 'mobile', repairCode: 'battery_replacement', serviceMode: 'diagnosis_only',
+      vertical: 'mobile', repairCode: 'battery_replacement', serviceMode: 'diagnosis_only', inspectionFeePaise: fee,
     });
     expect(snap.diagnosisFeePaise).toBe(INSPECTION_FEE);
     expect(snap.subtotalPaise).toBe(INSPECTION_FEE);
@@ -81,8 +86,9 @@ describe('inspection pricing', () => {
     const snap = await pricingService.buildPriceSnapshot({
       vertical: 'mobile', repairCode: 'battery_replacement', serviceMode: 'diagnosis_only',
     });
-    // The fee is ZappyOne's, not a job the provider is being paid a share of.
+    // All of the fee is the provider's: no commission, no platform fee.
     expect(snap.commissionPaise).toBe(0);
+    expect(snap.platformFeePaise).toBe(0);
   });
 
   it('is a firm price, not an estimate', async () => {
@@ -96,9 +102,13 @@ describe('inspection pricing', () => {
 
   it('prices an inspection even when no repair has been chosen', async () => {
     const snap = await pricingService.buildPriceSnapshot({
-      vertical: 'mobile', repairCode: null, serviceMode: 'diagnosis_only',
+      vertical: 'mobile', repairCode: null, serviceMode: 'diagnosis_only', inspectionFeePaise: INSPECTION_FEE,
     });
     expect(snap.totalPaise).toBeGreaterThan(0);
+  });
+
+  it('a provider who set no fee inspects for free, and the ZappyOne staff fee never applies to partners', async () => {
+    expect(await pricingService.inspectionFeeFor({ vertical: 'mobile', workerId: new mongoose.Types.ObjectId() })).toBe(0);
   });
 });
 
@@ -119,10 +129,10 @@ describe('service mode rules', () => {
       serviceMode: 'diagnosis_only',
       location: loc, idempotencyKey: 'insp-mode-2',
     });
-    // Looking at a device is always possible, whatever the repair needs.
+    // Looking at a device is always possible, whatever the repair needs; with nobody nearby who charges, it is free.
     expect(booking.serviceMode).toBe('diagnosis_only');
     expect(booking.repairCode).toBeNull();
-    expect(booking.priceSnapshot.totalPaise).toBeGreaterThan(0);
+    expect(booking.priceSnapshot.totalPaise).toBe(0);
   });
 
   it('adds pickup and return legs only for pickup_repair', async () => {

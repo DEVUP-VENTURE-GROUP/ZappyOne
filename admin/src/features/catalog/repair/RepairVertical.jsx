@@ -653,7 +653,7 @@ const CONFIG_FIELDS = [
     ['commissionPct', 'Commission from provider (%)'],
     ['taxPct', 'Tax (%)'],
     ['platformFeePaise', 'Platform fee - charged to customer (₹)', 'money'],
-    ['diagnosisFeePaise', 'Inspection fee (₹)', 'money'],
+    ['diagnosisFeePaise', 'Inspection fee for ZappyOne staff only (₹); partners set their own', 'money'],
     ['inspectionFeeCreditedOnRepair', 'Credit inspection fee against repair', 'bool'],
     ['minJobPaise', 'Minimum job value - smaller jobs are topped up (₹, 0 = off)', 'money'],
     ['groupDiscountPct', 'Discount on each extra item in one visit (%, 0 = off)'],

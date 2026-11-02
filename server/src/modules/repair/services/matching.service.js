@@ -580,7 +580,7 @@ function toPublic(provider) {
  * at least one job in this vertical and covers the address can look at it:
  * nearest first, never someone blocked, unverified, or at their dues limit.
  */
-async function findInspectors({ vertical, lat, lng, cityCode = null, includeOffline = false }) {
+async function findInspectors({ vertical, lat, lng, cityCode = null, includeOffline = false, maxFeePaise = null }) {
   const areas = await findServiceableProviders({ lat, lng, cityCode, serviceMode: 'doorstep' });
   if (!areas.length) return [];
 
@@ -622,11 +622,20 @@ async function findInspectors({ vertical, lat, lng, cityCode = null, includeOffl
     .sort((x, y) => (x.distanceKm ?? 99) - (y.distanceKm ?? 99) || (profile.get(String(y.workerId || y.shopId))?.rating || 0) - (profile.get(String(x.workerId || x.shopId))?.rating || 0));
 }
 
+// Inspectors whose own fee fits what the customer agreed to pay for the visit.
+async function inspectorsWithin(args, maxFeePaise) {
+  const near = await findInspectors(args);
+  if (maxFeePaise == null || !near.length) return near;
+  const fees = await pricingService.feesOf(args.vertical, near);
+  return near.filter((p) => (fees.get(String(p.shopId || p.workerId)) ?? 0) <= maxFeePaise);
+}
+
 module.exports = {
   poolStaff,
   candidateAreas,
   findProviders,
   findInspectors,
+  inspectorsWithin,
   findServiceableProviders,
   checkInventory,
   rank,

@@ -1941,7 +1941,8 @@ function RepairFlow({ vertical, saved, draftKey, onStartOver, onAddAnother }) {
   const previewRepair = diagnosis?.primaryRepairCode || diagnosis?.recommendations?.[0]?.repairCode;
   // Asked even with no repair suggested: the inspection fee does not depend on one.
   const { data: preview } = useRepairPricePreviewQuery(
-    { vertical, repairCode: previewRepair || undefined, brandCode: brand?.code, modelCode: model?.code, serviceMode: 'diagnosis_only' },
+    // The lowest inspection fee a provider near this address set (free where nobody charges).
+    { vertical, repairCode: previewRepair || undefined, brandCode: brand?.code, modelCode: model?.code, serviceMode: 'diagnosis_only', ...(hasLocation && { lat: loc.lat, lng: loc.lng }) },
     { skip: !vertical },
   );
   // null until known, so nothing is claimed about the fee before it has loaded.

@@ -706,6 +706,7 @@ export const {
   useRepairServiceAreasQuery,
   useUpsertRepairServiceAreaMutation,
   useRepairProviderPricingQuery,
+  useProviderInspectionFeeQuery, useSetProviderInspectionFeeMutation,
   useProviderMenuQuery, useSaveProviderMenuItemMutation, useRemoveProviderMenuItemMutation, useAdjustProviderMenuMutation, useStartMenuFromSamplesMutation,
   useBulkRepairProviderPricingMutation,
   useLazyRepairProviderSuggestedPricingQuery,

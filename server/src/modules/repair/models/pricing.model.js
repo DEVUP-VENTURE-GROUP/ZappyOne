@@ -159,7 +159,18 @@ providerPricingSchema.methods.isBookable = function isBookable() {
   );
 };
 
+// A provider's own fee for an inspection visit in one service; none set means their inspection is free. ZappyOne takes nothing from it.
+const inspectionFeeSchema = new mongoose.Schema({
+  shopId: { type: mongoose.Schema.Types.ObjectId, ref: 'Shop', default: null },
+  workerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Worker', default: null },
+  vertical: { type: String, required: true, lowercase: true },
+  feePaise: { type: Number, required: true, min: 0, max: 10000000 },
+}, { timestamps: true });
+inspectionFeeSchema.index({ shopId: 1, vertical: 1 }, { unique: true, partialFilterExpression: { shopId: { $type: 'objectId' } } });
+inspectionFeeSchema.index({ workerId: 1, vertical: 1 }, { unique: true, partialFilterExpression: { workerId: { $type: 'objectId' } } });
+
 const ZappyReferencePricing = mongoose.model('ZappyReferencePricing', referencePricingSchema);
 const ProviderPricing = mongoose.model('ProviderPricing', providerPricingSchema);
+const ProviderInspectionFee = mongoose.models.ProviderInspectionFee || mongoose.model('ProviderInspectionFee', inspectionFeeSchema);
 
-module.exports = { ZappyReferencePricing, ProviderPricing, APPROVAL_BANDS, APPROVAL_STATUSES };
+module.exports = { ZappyReferencePricing, ProviderPricing, ProviderInspectionFee, APPROVAL_BANDS, APPROVAL_STATUSES };

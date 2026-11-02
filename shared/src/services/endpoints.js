@@ -2126,6 +2126,9 @@ export function endpoints(b, { adminApiPath }) {
       providesTags: ['RepairProvider'],
     }),
     // A provider's own menu for a fixed-price service: sample jobs, their own jobs, prices per option (repair/services/provider-menu).
+    // A provider's own inspection visit fee for a service; 0 is a free inspection.
+    providerInspectionFee: b.query({ query: (vertical) => ({ url: '/repair/provider/inspection-fee', params: { vertical } }), providesTags: ['ProviderMenu'] }),
+    setProviderInspectionFee: b.mutation({ query: (body) => ({ url: '/repair/provider/inspection-fee', method: 'PUT', body }), invalidatesTags: ['ProviderMenu'] }),
     providerMenu: b.query({ query: (vertical) => ({ url: '/repair/provider/menu', params: { vertical } }), providesTags: ['ProviderMenu'] }),
     saveProviderMenuItem: b.mutation({ query: (body) => ({ url: '/repair/provider/menu/item', method: 'PUT', body }), invalidatesTags: ['ProviderMenu', 'RepairProvider'] }),
     removeProviderMenuItem: b.mutation({ query: ({ vertical, repairCode }) => ({ url: `/repair/provider/menu/item/${repairCode}`, method: 'DELETE', params: { vertical } }), invalidatesTags: ['ProviderMenu', 'RepairProvider'] }),

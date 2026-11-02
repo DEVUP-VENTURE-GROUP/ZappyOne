@@ -694,11 +694,15 @@ describe('the customer journey', () => {
     expect(res.body.diagnosis.summary).toMatch(/inspect/i);
   });
 
-  it('42. quotes the inspection fee ZappyOne charges, not zero', async () => {
+  it('42. quotes the lowest inspection fee a provider near the customer set, which the shop set itself', async () => {
+    const set = await request(app).put('/api/repair/provider/inspection-fee').set(auth(ctx.shopToken)).send({ vertical: 'mobile', feePaise: 19900 });
+    expect(set.status).toBe(200);
     const res = await request(app)
-      .get('/api/repair/price-preview?repairCode=display_assembly_replacement&serviceMode=diagnosis_only')
+      .get(`/api/repair/price-preview?repairCode=display_assembly_replacement&serviceMode=diagnosis_only&lat=${HYD.lat}&lng=${HYD.lng}&cityCode=hyderabad`)
       .set(auth(ctx.customerToken));
-    expect(res.body.estimate.totalPaise).toBeGreaterThan(0);
+    expect(res.body.estimate.diagnosisFeePaise).toBe(19900);
+    expect(res.body.estimate.platformFeePaise).toBe(0);
+    expect(res.body.estimate.commissionPaise).toBe(0);
   });
 
   it('43. finds the shop that is verified, priced, stocked and nearby', async () => {

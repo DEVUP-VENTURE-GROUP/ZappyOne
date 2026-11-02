@@ -597,6 +597,18 @@ router.put(
 const menuSvc = require('./services/provider-menu.service');
 const menuVertical = Joi.string().custom((v, h) => (isValid(v) ? v.toLowerCase() : h.error('any.only'))).required();
 const actorOf = (req) => ({ role: req.auth.role === 'shop' ? 'shop' : 'worker', id: req.auth.sub });
+// A provider's own inspection visit fee for a service; 0 means a free inspection. ZappyOne takes nothing from it.
+router.get('/provider/inspection-fee', ...providerOnly, validate(Joi.object({ vertical: menuVertical }), 'query'), wrap(async (req) => {
+  const o = menuSvc.ownerFromAuth(req.auth);
+  return { feePaise: await require('./services/pricing.service').inspectionFeeFor({ vertical: req.query.vertical, shopId: o.shopId, workerId: o.workerId }) };
+}));
+router.put('/provider/inspection-fee', ...providerOnly, validate(Joi.object({ vertical: menuVertical, feePaise: Joi.number().integer().min(0).max(10000000).required() })), wrap(async (req) => {
+  const o = menuSvc.ownerFromAuth(req.auth);
+  const { ProviderInspectionFee } = require('./models/pricing.model');
+  const who = o.shopId ? { shopId: o.shopId } : { workerId: o.workerId };
+  await ProviderInspectionFee.updateOne({ ...who, vertical: req.body.vertical }, { $set: { feePaise: req.body.feePaise }, $setOnInsert: { ...who, vertical: req.body.vertical } }, { upsert: true });
+  return { feePaise: req.body.feePaise };
+}));
 router.get('/provider/menu', ...providerOnly, validate(Joi.object({ vertical: menuVertical }), 'query'),
   wrap((req) => menuSvc.menu(menuSvc.ownerFromAuth(req.auth), req.query.vertical)));
 router.put('/provider/menu/item', ...providerOnly,
