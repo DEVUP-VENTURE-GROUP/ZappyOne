@@ -263,7 +263,8 @@ function ConfigForm({ config }) {
   return (
     <div className="space-y-4">
       <Card>
-        <h3 className="mb-3 text-sm font-black text-slate-900">Service charge</h3>
+        <h3 className="mb-1 text-sm font-black text-slate-900">Service charge</h3>
+        <p className="mb-3 text-xs text-slate-500">Helpers set their own rates and customers are priced at the best nearby rate. The fees here apply only to ZappyOne staff; the platform fee, tax, commission and limits apply to everyone.</p>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <FormRow label="Base fee (₹)">
             <Input type="number" value={form.baseFee} onChange={(e) => set('baseFee', e.target.value)} />

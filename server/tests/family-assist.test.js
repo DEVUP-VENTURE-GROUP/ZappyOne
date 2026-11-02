@@ -99,6 +99,8 @@ test('at-home help takes the customer code when work starts; grocery at handover
 });
 
 test('a booking is priced on the server and carries its listed duration', async () => {
+  // Priced at a nearby helper's own rates, which mirror the old fees here.
+  await require('./helpers').ratedHelper({ serviceTypes: ['party_helper', 'grocery_run'], at: HOME.coordinates });
   const { task } = await taskService.createTask({
     userId, serviceType: 'party_helper', title: 'Party helper', instructions: 'Birthday, 20 guests', pickupLocation: HOME,
     scheduledAt: new Date(Date.now() + 86400000),

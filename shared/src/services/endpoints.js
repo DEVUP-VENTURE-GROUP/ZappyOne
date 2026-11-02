@@ -2129,6 +2129,12 @@ export function endpoints(b, { adminApiPath }) {
     // A provider's own inspection visit fee for a service; 0 is a free inspection.
     providerInspectionFee: b.query({ query: (vertical) => ({ url: '/repair/provider/inspection-fee', params: { vertical } }), providesTags: ['ProviderMenu'] }),
     setProviderInspectionFee: b.mutation({ query: (body) => ({ url: '/repair/provider/inspection-fee', method: 'PUT', body }), invalidatesTags: ['ProviderMenu'] }),
+    // A pet care provider's own rate card (pet/services/provider-rates).
+    petProviderRates: b.query({ query: () => '/pet/provider/rates', providesTags: ['ProviderMenu'] }),
+    savePetProviderRates: b.mutation({ query: (body) => ({ url: '/pet/provider/rates', method: 'PUT', body }), invalidatesTags: ['ProviderMenu'] }),
+    // A helper's own rates per errand (helping/services/provider-rates).
+    helpingProviderRates: b.query({ query: (lineCode) => `/helping/provider/rates/${lineCode}`, providesTags: ['ProviderMenu'] }),
+    saveHelpingProviderRate: b.mutation({ query: ({ lineCode, serviceType, ...body }) => ({ url: `/helping/provider/rates/${lineCode}/${serviceType}`, method: 'PUT', body }), invalidatesTags: ['ProviderMenu'] }),
     providerMenu: b.query({ query: (vertical) => ({ url: '/repair/provider/menu', params: { vertical } }), providesTags: ['ProviderMenu'] }),
     saveProviderMenuItem: b.mutation({ query: (body) => ({ url: '/repair/provider/menu/item', method: 'PUT', body }), invalidatesTags: ['ProviderMenu', 'RepairProvider'] }),
     removeProviderMenuItem: b.mutation({ query: ({ vertical, repairCode }) => ({ url: `/repair/provider/menu/item/${repairCode}`, method: 'DELETE', params: { vertical } }), invalidatesTags: ['ProviderMenu', 'RepairProvider'] }),

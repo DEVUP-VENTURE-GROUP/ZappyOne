@@ -181,9 +181,12 @@ function PetBookingFlow({ categoryCode, saved, draftKey, onStartOver }) {
     setStep(needsDates || needsTransport ? 'location' : 'schedule');
   }
 
-  async function refreshQuote() {
+  // With a provider chosen, their own prices; before that, the cheapest provider near the customer.
+  async function refreshQuote(chosen = null) {
     try {
       await getQuote({
+        ...(chosen?.workerId && { workerId: chosen.workerId }),
+        ...(chosen?.shopId && { shopId: chosen.shopId }),
         categoryCode,
         pets: petEntries(),
         checkInAt: checkInAt || null,
@@ -393,7 +396,7 @@ function PetBookingFlow({ categoryCode, saved, draftKey, onStartOver }) {
               </span>
             </button>
           )}
-          <button type="button" onClick={refreshQuote} disabled={!loc || quoting || (needsDates && (!checkInAt || !checkOutAt))}
+          <button type="button" onClick={() => refreshQuote()} disabled={!loc || quoting || (needsDates && (!checkInAt || !checkOutAt))}
             className="w-full rounded-2xl bg-slate-100 text-slate-700 font-bold py-3 disabled:opacity-50">
             {quoting ? <Loader2 size={16} className="animate-spin mx-auto" /> : 'See the price'}
           </button>
@@ -451,7 +454,7 @@ function PetBookingFlow({ categoryCode, saved, draftKey, onStartOver }) {
           {(providersData?.providers || []).map((p) => (
             <button
               key={p.capabilityId} type="button"
-              onClick={() => { setProvider(p); setStep('confirm'); }}
+              onClick={() => { setProvider(p); refreshQuote(p); setStep('confirm'); }}
               className="w-full flex items-center gap-3 rounded-2xl border-2 border-slate-200 bg-white p-4 text-left"
             >
               <span className="flex-1 min-w-0">
@@ -464,6 +467,7 @@ function PetBookingFlow({ categoryCode, saved, draftKey, onStartOver }) {
                 {/* A visit: how soon they can be at the door (jobs/arrival). */}
                 {p.arrivalMinutes != null && <ArrivalBadge minutes={p.arrivalMinutes} withinPromise={p.arrivalWithinPromise} className="mt-1.5" />}
               </span>
+              {p.fromPaise != null && <span className="shrink-0 text-right"><span className="block text-[15px] font-extrabold tabular-nums text-[#0F172A]">{formatPaise(p.fromPaise)}</span><span className="block text-[11px] text-slate-500">their price</span></span>}
             </button>
           ))}
         </Shell>

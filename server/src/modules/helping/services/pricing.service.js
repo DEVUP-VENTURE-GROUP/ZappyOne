@@ -92,6 +92,8 @@ async function quote({
   discountPaise = 0,
   itemBudgetPaise = 0,
   waivePlatformFee = false,
+  // A helper's own rates (helping/models/provider-rate): their fees replace ZappyOne's; the platform fee, tax and commission stay.
+  rate = null,
 }) {
   const cfg = await getConfig(serviceType);
 
@@ -108,24 +110,28 @@ async function quote({
   }
 
   const distanceKm = tripDistanceKm({ pickupLocation, destination, stops });
-  const { feePaise: distanceFeePaise, requiresQuote } = cfg.distanceFeeFor(distanceKm);
+  // A trip past the last band is still quoted by a person, whoever's rates price it.
+  const banded = cfg.distanceFeeFor(distanceKm);
+  const distanceFeePaise = rate ? Math.round(rate.perKmPaise * Math.max(0, (distanceKm || 0) - (rate.includedKm || 0))) : banded.feePaise;
+  const requiresQuote = banded.requiresQuote;
 
   // Only minutes BEYOND the free allowance are billable.
   const billableWaiting = Math.max(0, waitingMinutes - cfg.freeWaitingMinutes);
-  const waitingFeePaise = billableWaiting * cfg.waitingPerMinutePaise;
+  const waitingFeePaise = billableWaiting * (rate ? rate.waitingPerMinutePaise || 0 : cfg.waitingPerMinutePaise);
 
   // The first stop is the errand itself; extras are extra work.
   const extraStops = Math.max(0, stops.length - cfg.includedStops);
-  const multiStopFeePaise = extraStops * cfg.additionalStopFeePaise;
+  const multiStopFeePaise = extraStops * (rate ? rate.extraStopPaise || 0 : cfg.additionalStopFeePaise);
 
   const blocks = overtimeMinutes > 0
     ? Math.ceil(overtimeMinutes / cfg.timeExtensionBlockMinutes)
     : 0;
-  const timeExtensionPaise = blocks * cfg.timeExtensionFeePaise;
+  const timeExtensionPaise = rate ? 0 : blocks * cfg.timeExtensionFeePaise;
 
-  const specialHandlingPaise = specialHandling ? cfg.specialHandlingFeePaise : 0;
+  const specialHandlingPaise = specialHandling ? (rate ? rate.specialHandlingPaise || 0 : cfg.specialHandlingFeePaise) : 0;
+  const baseFeePaise = rate ? rate.baseFeePaise : cfg.baseFeePaise;
 
-  const feesPaise = cfg.baseFeePaise
+  const feesPaise = baseFeePaise
     + distanceFeePaise
     + waitingFeePaise
     + multiStopFeePaise
@@ -146,7 +152,7 @@ async function quote({
   const workerEarningPaise = Math.max(0, feesPaise - commissionPaise);
 
   return {
-    baseFeePaise: cfg.baseFeePaise,
+    baseFeePaise,
     distanceFeePaise,
     waitingFeePaise,
     multiStopFeePaise,
@@ -214,7 +220,43 @@ async function withinTolerance(serviceType, approvedPaise, actualPaise) {
   return actualPaise <= ceiling;
 }
 
+// Helpers verified for this errand near its start who set their own rates, each with their rate.
+async function ratedHelpersNear(serviceType, at) {
+  const Rate = require('../models/provider-rate.model');
+  const cfg = await getConfig(serviceType);
+  const line = await require('../../jobs/kinds').KINDS.helping.line({ serviceType });
+  const approved = line ? await require('../../onboarding/eligibility').approvedProviders(line).catch(() => []) : [];
+  const workerIds = approved.filter((p) => p.kind === 'worker').map((p) => p.id);
+  const shopIds = approved.filter((p) => p.kind === 'shop').map((p) => p.id);
+  if (!workerIds.length && !shopIds.length) return [];
+  const rates = await Rate.find({ serviceType, $or: [{ workerId: { $in: workerIds } }, { shopId: { $in: shopIds } }] }).lean();
+  if (!at?.coordinates?.length) return rates.map((rate) => ({ rate }));
+  const [Worker, Shop] = [require('../../worker/worker.model'), require('../../shop/shop.model')];
+  const [workers, shops] = await Promise.all([
+    Worker.find({ _id: { $in: rates.filter((r) => r.workerId).map((r) => r.workerId) } }).select('currentLocation').lean(),
+    Shop.find({ _id: { $in: rates.filter((r) => r.shopId).map((r) => r.shopId) } }).select('address.location').lean(),
+  ]);
+  const where = new Map([...workers.map((w) => [String(w._id), w.currentLocation?.coordinates]), ...shops.map((s) => [String(s._id), s.address?.location?.coordinates])]);
+  return rates.filter((r) => {
+    const c = where.get(String(r.workerId || r.shopId));
+    return !c || c.length !== 2 || kmBetween(c, at.coordinates) <= (cfg.matchRadiusKm || 15);
+  }).map((rate) => ({ rate }));
+}
+
+// The cheapest quote among nearby helpers' own rates, for an errand any of them may take; null when nobody has priced it.
+async function cheapestNearby(args) {
+  const near = await ratedHelpersNear(args.serviceType, args.pickupLocation);
+  let best = null;
+  for (const { rate } of near) {
+    const q = await quote({ ...args, rate }).catch(() => null);
+    if (q && (!best || q.serviceChargePaise < best.serviceChargePaise)) best = q;
+  }
+  return best;
+}
+
 module.exports = {
+  ratedHelpersNear,
+  cheapestNearby,
   maxMatchRadiusKm,
   getConfig,
   invalidateConfigCache,

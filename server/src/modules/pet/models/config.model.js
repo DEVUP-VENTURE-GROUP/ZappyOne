@@ -178,6 +178,15 @@ const providerCapabilitySchema = new mongoose.Schema(
     equipment: { type: [String], default: [] },
     experienceYears: { type: Number, default: 0, min: 0 },
 
+    // The provider's own prices (ZappyOne sets none): per service a price for one visit, night, day or session for each pet size, and their own add-on, pickup and return fees.
+    rates: {
+      type: [{ _id: false, variantCode: { type: String, lowercase: true }, prices: { small: Number, medium: Number, large: Number, extra_large: Number } }],
+      default: [],
+    },
+    addonPrices: { type: [{ _id: false, code: { type: String, lowercase: true }, pricePaise: { type: Number, min: 0 } }], default: [] },
+    pickupPaise: { type: Number, default: 0, min: 0 },
+    returnPaise: { type: Number, default: 0, min: 0 },
+
     /** Clearly-marked demo rows, so they can never be mistaken for real ones. */
     isDemo: { type: Boolean, default: false, index: true },
     isActive: { type: Boolean, default: true, index: true },

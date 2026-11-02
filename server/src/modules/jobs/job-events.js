@@ -169,6 +169,7 @@ async function alertNearbyProviders(kind, doc, { offlineOnly = false, round = 0 
     const passed = new Set([...(doc.declinedBy || []), ...(doc.releasedBy || [])].map(String));
     for (const id of await require('./customer-block').blockersOf(doc.userId)) passed.add(id);
     let providers = (await approvedProviders(line, { includeBlocked: true })).filter((p) => !passed.has(String(p.id)));
+    if (k.open.fits) providers = await k.open.fits(doc, providers).catch(() => providers);
     // Staff on duty are rung one at a time, fairest first (jobs/fast-assign), not all at once.
     if (!offlineOnly && !require('./work-hours').isLater(doc.scheduledAt || doc.checkInAt)) {
       const onDuty = await require('../workforce/staff').onDutyIds();

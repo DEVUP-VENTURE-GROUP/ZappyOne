@@ -27,13 +27,15 @@ import { AreaStep } from '../components/setup/AreaStep';
 import { BrandsStep } from '../components/setup/BrandsStep';
 import { HoursStep } from '../components/setup/HoursStep';
 import { MenuEditor } from '../components/menu/MenuEditor';
+import { PetRateCard } from '../components/setup/PetRateCard';
+import { HelpingRateCard } from '../components/setup/HelpingRateCard';
 import { PricingStep } from '../components/setup/PricingStep';
 import { ReadyService } from '../components/setup/ReadyService';
 import { StepRail } from '../components/setup/StepRail';
 import { WorkStep } from '../components/setup/WorkStep';
 import { VERTICAL_LABEL, stepsFor, type SetupStep } from '../components/setup/setupFlow';
 
-interface Enrolment { lineCode: string; status: string; line?: { name?: string; repairVertical?: string } }
+interface Enrolment { lineCode: string; status: string; line?: { name?: string; repairVertical?: string; domainCode?: string } }
 /** The step before each one, for Back and Android's back button. */
 const previousOf = (step: SetupStep, isShop: boolean, menu: boolean): SetupStep | undefined =>
   ((menu ? { area: 'menu', hours: 'area' } : { work: 'brands', area: 'work', hours: 'area', pricing: isShop ? 'hours' : 'area' }) as Partial<Record<SetupStep, SetupStep>>)[step];
@@ -47,7 +49,7 @@ export function ProviderRepairSetupPage() {
 
   const others = useMemo(() => ((onboarding?.enrolments || []) as Enrolment[])
     .filter((e) => e.status === 'approved' && !e.line?.repairVertical)
-    .map((e) => ({ key: `line:${e.lineCode}`, name: e.line?.name || e.lineCode.replace(/_/g, ' ') })), [onboarding]);
+    .map((e) => ({ key: `line:${e.lineCode}`, code: e.lineCode, domain: e.line?.domainCode || '', name: e.line?.name || e.lineCode.replace(/_/g, ' ') })), [onboarding]);
   const verticals: string[] = onboarding?.repairVerticals?.length ? onboarding.repairVerticals : (others.length ? [] : ['mobile']);
   const tabs = [...verticals, ...others.map((o) => o.key)];
   const [tab, setTab] = useState<string | null>(null);
@@ -127,7 +129,7 @@ export function ProviderRepairSetupPage() {
       </View>
 
       <View style={styles.flex}>
-        {other ? <ReadyService name={other.name} isShop={isShop} onHours={() => router.push((isShop ? '/shop/profile' : '/worker/hours') as never)} /> : !active ? null : (
+        {other?.domain === 'pet_services' ? <PetRateCard category={other.code} /> : other ? <HelpingRateCard lineCode={other.code} fallback={<ReadyService name={other.name} isShop={isShop} onHours={() => router.push((isShop ? '/shop/profile' : '/worker/hours') as never)} />} /> : !active ? null : (
           <>
             {step === 'menu' ? <MenuEditor key={active} vertical={active} onNext={() => setStep('area')} /> : null}
             {step === 'brands' && brandCodes !== null && !work?.menu ? <BrandsStep key={active} vertical={active} selected={brandCodes} onChange={setBrandCodes} onNext={() => setStep('work')} /> : null}

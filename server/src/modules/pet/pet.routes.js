@@ -127,6 +127,9 @@ const quoteBody = Joi.object({
   overtimeMinutes: Joi.number().integer().min(0).default(0),
   couponPaise: Joi.number().integer().min(0).default(0),
   packageCode: Joi.string().max(80).allow(null),
+  // The provider whose own prices to quote; none means the cheapest one nearby.
+  workerId: objectId.allow(null),
+  shopId: objectId.allow(null),
 });
 
 router.post('/quote', authenticate, requireRole('user'), validate(quoteBody), ctrl.quote);
@@ -180,6 +183,18 @@ router.post('/bookings', authenticate, requireRole('user'),
 
 router.get('/bookings', authenticate, requireRole('user'), ctrl.listMyBookings);
 
+// A provider's own rate card (pet/services/provider-rates): ZappyOne sets no pet price.
+const petOwner = (req) => (req.auth.role === 'shop' ? { shopId: req.auth.sub } : { workerId: req.auth.sub });
+const runRates = (fn) => async (req, res, next) => { try { res.json(await fn(req)); } catch (e) { next(e); } };
+router.get('/provider/rates', authenticate, requireRole('worker', 'shop'), runRates((req) => require('./services/provider-rates.service').card(petOwner(req))));
+router.put('/provider/rates', authenticate, requireRole('worker', 'shop'),
+  validate(Joi.object({
+    rates: Joi.array().max(100).items(Joi.object({ variantCode: Joi.string().max(80).required(), prices: Joi.object().pattern(Joi.string().valid(...PET_SIZES), Joi.number().integer().min(0).allow(null)).required() })).default([]),
+    addonPrices: Joi.array().max(60).items(Joi.object({ code: Joi.string().max(80).required(), pricePaise: Joi.number().integer().min(0).allow(null) })).default([]),
+    pickupPaise: Joi.number().integer().min(0).max(10000000).default(0),
+    returnPaise: Joi.number().integer().min(0).max(10000000).default(0),
+  })),
+  runRates((req) => require('./services/provider-rates.service').saveCard(petOwner(req), req.body)));
 router.get('/bookings/available', authenticate, requireRole('worker', 'shop'), ctrl.listAvailableBookings);
 router.get('/bookings/assigned', authenticate, requireRole('worker', 'shop'), ctrl.listAssignedBookings);
 

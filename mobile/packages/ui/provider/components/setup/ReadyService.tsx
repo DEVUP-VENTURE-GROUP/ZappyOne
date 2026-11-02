@@ -14,7 +14,7 @@ export function ReadyService({ name, isShop, onHours }: { name: string; isShop: 
         <View style={styles.flex}>
           <Text variant="body" weight="bold">{name} is ready</Text>
           <Text variant="bodySmall" color={ink[700]}>
-            Nothing to set up here. ZappyOne sets the price for this service, and jobs near you
+            Nothing to set up here. Jobs near you
             {isShop ? ' come to your shop while it is open.' : ' ring while you are online, and bookings for later come inside your hours.'}
           </Text>
         </View>

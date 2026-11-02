@@ -250,6 +250,11 @@ async function findProviders({
       if (!capacity.ok) { reject('no_capacity'); continue; }
     }
 
+    // Only providers who priced this service for every pet on the booking; ZappyOne staff work at the rules.
+    const staff = cap.workerId && await require('../../workforce/staff').isStaff(cap.workerId);
+    const own = staff ? [] : pets.map((p) => require('./pricing.service').ownRateOf(cap, variantCode, p.pet.size || 'medium'));
+    if (own.some((x) => x == null)) { reject('no_price'); continue; }
+
     const provider = cap.shopId
       ? await Shop.findById(cap.shopId).select('businessName phone rating reviewCount isActive isBlocked kyc.status address.location services hours').lean()
       : await Worker.findById(cap.workerId).select('name phone rating reviewCount completedJobs acceptanceRate workHours').lean();
@@ -287,6 +292,8 @@ async function findProviders({
       experienceYears: cap.experienceYears || 0,
       distanceKm,
       capacity,
+      // One unit of the service for these pets at their own price (a night, a visit, a session).
+      fromPaise: own.length ? own.reduce((t, x) => t + x, 0) : null,
       isDemo: !!cap.isDemo,
       score: Math.round(score * 100) / 100,
     });

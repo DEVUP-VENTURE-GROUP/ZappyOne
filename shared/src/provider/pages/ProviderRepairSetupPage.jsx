@@ -1,6 +1,8 @@
 import { useScrollTopOnChange } from '../../components/common/ScrollToTop';
 import MenuEditor from '../components/menu/MenuEditor';
 import InspectionFeeCard from '../components/InspectionFeeCard';
+import PetRateCard from '../components/PetRateCard';
+import HelpingRateCard from '../components/HelpingRateCard';
 import { partsQuotedSeparately, PARTS_NOTE } from '../../utils/partsRule';
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -1375,7 +1377,7 @@ function ReadyService({ name, isShop, onHours }) {
         <div>
           <p className="font-bold text-[#0F172A]">{name} is ready</p>
           <p className="mt-0.5 text-[13px] leading-relaxed text-slate-600">
-            Nothing to set up here. ZappyOne sets the price for this service, and jobs near you
+            Nothing to set up here. Jobs near you
             {isShop ? ' come to your shop while it is open.' : ' ring while you are online, and bookings for later come inside your hours.'}
           </p>
         </div>
@@ -1395,7 +1397,7 @@ export default function ProviderRepairSetupPage() {
   // helping) need nothing set here, and say so, rather than vanishing.
   const others = (onboarding?.enrolments || [])
     .filter((e) => e.status === 'approved' && !e.line?.repairVertical)
-    .map((e) => ({ key: `line:${e.lineCode}`, code: e.lineCode, name: e.line?.name || e.lineCode.replace(/_/g, ' ') }));
+    .map((e) => ({ key: `line:${e.lineCode}`, code: e.lineCode, domain: e.line?.domainCode || '', name: e.line?.name || e.lineCode.replace(/_/g, ' ') }));
   const verticals = onboarding?.repairVerticals?.length ? onboarding.repairVerticals : (others.length ? [] : ['mobile']);
   const tabs = [...verticals, ...others.map((o) => o.key)];
   const [vertical, setVertical] = useState(null);
@@ -1488,7 +1490,7 @@ export default function ProviderRepairSetupPage() {
       </header>
 
       <div className="mx-auto max-w-2xl px-4 pt-4">
-        {other ? <ReadyService name={other.name} isShop={isShop} onHours={() => nav(isShop ? '/shop/profile' : '/worker/hours')} /> : (
+        {other?.domain === 'pet_services' ? <PetRateCard category={other.code} /> : other ? <HelpingRateCard lineCode={other.code} fallback={<ReadyService name={other.name} isShop={isShop} onHours={() => nav(isShop ? '/shop/profile' : '/worker/hours')} />} /> : (
         <AnimatePresence mode="wait">
           <motion.div
             key={`${active}:${step}`}

@@ -103,8 +103,9 @@ export function PetBookingFlow({ categoryCode, saved, draftKey, onStartOver }: {
     pickVariant(preset);
   }, [step, variants]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  async function quote() {
-    try { await getQuote({ categoryCode, pets: entries(), checkInAt: checkIn || null, checkOutAt: checkOut || null, serviceLocation: place() }).unwrap(); }
+  // With a provider chosen, their own prices; before that, the cheapest provider near the customer.
+  async function quote(chosen: { workerId?: string; shopId?: string } | null = null) {
+    try { await getQuote({ ...(chosen?.workerId && { workerId: chosen.workerId }), ...(chosen?.shopId && { shopId: chosen.shopId }), categoryCode, pets: entries(), checkInAt: checkIn || null, checkOutAt: checkOut || null, serviceLocation: place() }).unwrap(); }
     catch (err) { toast.error(errText(err, t('petBook.priceFailed', 'Could not price this. Try again.'))); }
   }
   async function find() {
@@ -147,7 +148,7 @@ export function PetBookingFlow({ categoryCode, saved, draftKey, onStartOver }: {
             loc={loc} dest={dest} onPickLoc={() => pickLoc(loc)} onPickDest={() => pickDest(dest || loc)}
             quote={quoteResult} names={chosenPets.map((p) => p.name)} quoting={quoting} onQuote={quote} searching={searching} onFind={find} />
         ) : null}
-        {step === 'providers' ? <PetProvidersStep result={found} categoryCode={categoryCode} loc={loc} onChangeLocation={() => backTo('location')} onPick={(p) => { setProvider(p); setStep('confirm'); }} /> : null}
+        {step === 'providers' ? <PetProvidersStep result={found} categoryCode={categoryCode} loc={loc} onChangeLocation={() => backTo('location')} onPick={(p) => { setProvider(p); quote(p as { workerId?: string; shopId?: string }); setStep('confirm'); }} /> : null}
         {step === 'confirm' && provider && loc ? (
           <PetConfirmStep categoryCode={categoryCode} serviceMode={mode} variantName={variant?.name} petNames={chosenPets.map((p) => p.name)} pets={entries()}
             provider={provider} quote={quoteResult} loc={loc} dest={dest} scheduledAt={scheduledAt} checkIn={checkIn} checkOut={checkOut}

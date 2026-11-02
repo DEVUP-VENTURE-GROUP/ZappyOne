@@ -145,6 +145,18 @@ const KINDS = {
       statuses: ['BOOKED', 'PROVIDER_SEARCHING'],
       start: (b) => place(b.serviceLocation),
       listPath: '/worker/work',
+      // Only providers whose own prices for these pets come to no more than the agreed service money.
+      fits: async (b, providers) => {
+        const { PetProviderCapability } = require('../pet/models/config.model');
+        const { ownRateOf } = require('../pet/services/pricing.service');
+        const caps = await PetProviderCapability.find({ $or: [{ workerId: { $in: providers.filter((p) => p.kind === 'worker').map((p) => p.id) } }, { shopId: { $in: providers.filter((p) => p.kind === 'shop').map((p) => p.id) } }] }).lean();
+        const units = Math.max(1, b.pricing?.nights || 1);
+        const ok = new Set(caps.filter((c) => {
+          const own = (b.pets || []).map((p) => ownRateOf(c, p.variantCode, p.snapshot?.size));
+          return own.every((x) => x != null) && own.reduce((t, x) => t + x * units, 0) <= (b.pricing?.servicesPaise ?? Infinity);
+        }).map((c) => String(c.workerId || c.shopId)));
+        return providers.filter((p) => ok.has(String(p.id)));
+      },
       // What the alert card shows, before anyone opens the job.
       summary: (b) => ({
         title: (b.pets || []).map((p) => p.snapshot?.name).filter(Boolean).join(', ') || 'Pet care',
@@ -231,6 +243,17 @@ const KINDS = {
       statuses: ['CONFIRMED', 'WORKER_SEARCHING'],
       start: (t) => place(t.pickupLocation),
       listPath: '/worker/work',
+      // Only helpers whose own rates come to no more than the agreed charge.
+      fits: async (t, providers) => {
+        const pricing = require('../helping/services/pricing.service');
+        const near = await pricing.ratedHelpersNear(t.serviceType, null);
+        const ok = new Set();
+        for (const { rate } of near) {
+          const q = await pricing.quote({ serviceType: t.serviceType, pickupLocation: t.pickupLocation, destination: t.destination, stops: t.stops || [], specialHandling: !!t.specialHandling, rate }).catch(() => null);
+          if (q && q.commissionBasePaise <= (t.charge?.commissionBasePaise ?? Infinity)) ok.add(String(rate.workerId || rate.shopId));
+        }
+        return providers.filter((p) => ok.has(String(p.id)));
+      },
       summary: (t) => ({
         title: t.title || ((t.items || []).length ? `${t.items.length} item${t.items.length > 1 ? 's' : ''}` : 'Errand'),
         service: t.serviceType || 'helping',

@@ -6,7 +6,7 @@
  */
 export interface PetVariant { code: string; name: string; description?: string; species: string[]; isPopular?: boolean; pricingUnit?: string; allowedModes?: string[] }
 export interface PetQuote { lines: { linePaise: number }[]; totalPaise: number; taxPaise?: number; platformFeePaise?: number; addonsPaise?: number; travelPaise?: number; pickupPaise?: number; returnPaise?: number; specialHandlingPaise?: number; stayDiscountPaise?: number; couponPaise?: number }
-export interface PetProvider { capabilityId: string; workerId?: string; shopId?: string; name: string; rating?: number | null; distanceKm?: number | null; completedJobs?: number; arrivalMinutes?: number | null; arrivalWithinPromise?: boolean }
+export interface PetProvider { fromPaise?: number | null; capabilityId: string; workerId?: string; shopId?: string; name: string; rating?: number | null; distanceKm?: number | null; completedJobs?: number; arrivalMinutes?: number | null; arrivalWithinPromise?: boolean }
 
 export const STEPS = ['pets', 'variant', 'addons', 'schedule', 'location', 'providers', 'confirm'];
 
