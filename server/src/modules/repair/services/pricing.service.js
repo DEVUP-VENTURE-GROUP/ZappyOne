@@ -137,6 +137,8 @@ async function nearbyPriceMap(ctx, repairCodes, { lat, lng, pincode = null, city
   if (!repairCodes.length || !Number.isFinite(Number(lat)) || !Number.isFinite(Number(lng))) return out;
   const found = await require('./matching.service').findServiceableProviders({ lat: Number(lat), lng: Number(lng), pincode, cityCode, serviceMode: ctx.serviceMode || 'doorstep' });
   const line = await require('../../jobs/kinds').KINDS.repair.line({ vertical: ctx.vertical });
+  // A service ZappyOne's own staff do: ZappyOne is that provider, so its standard price is one of the prices on offer.
+  if (line && await isStaffLine(line)) for (const [code, paise] of await standardPriceMap(ctx, repairCodes)) out.set(code, paise);
   const approved = line ? new Set((await require('../../onboarding/eligibility').approvedProviders(line)).map((p) => p.id)) : new Set();
   const shopIds = [...new Set(found.filter((f) => f.shopId && approved.has(String(f.shopId))).map((f) => String(f.shopId)))];
   const workerIds = [...new Set(found.filter((f) => !f.shopId && f.workerId && approved.has(String(f.workerId))).map((f) => String(f.workerId)))];
@@ -181,6 +183,24 @@ async function feesOf(vertical, providers) {
   const workerIds = providers.filter((p) => !p.shopId && p.workerId).map((p) => p.workerId);
   const rows = await ProviderInspectionFee.find({ vertical, $or: [{ shopId: { $in: shopIds } }, { workerId: { $in: workerIds } }] }).select('shopId workerId feePaise').lean();
   return new Map(rows.map((r) => [String(r.shopId || r.workerId), r.feePaise]));
+}
+
+// Done by ZappyOne staff (only, or alongside partners) while own staff are switched on (v3.0): ZappyOne's own price applies to its staff.
+async function isStaffLine(lineCode) {
+  if (!(await require('../../feature-flags/feature-flag.service').isEnabled('own_staff'))) return false;
+  const { ServiceLine } = require('../../onboarding/onboarding.model');
+  return !!(await ServiceLine.exists({ code: lineCode, $or: [{ staffOnly: true }, { staffDoes: true }] }));
+}
+
+// ZappyOne's standard price per job, for its own staff only: repairCode -> the most specific row's price.
+async function standardPriceMap(ctx, repairCodes) {
+  const rows = await ZappyReferencePricing.find({ vertical: ctx.vertical, repairCode: { $in: repairCodes }, supersededAt: null, isActive: true }).lean();
+  const out = new Map();
+  for (const code of repairCodes) {
+    const row = pickMostSpecific(rows.filter((r) => r.repairCode === code), { ...ctx, repairCode: code });
+    if (row) out.set(code, row.recommendedPaise);
+  }
+  return out;
 }
 
 // One job's nearby price, shaped like a reference so the price build takes it as is.

@@ -49,3 +49,16 @@ test('an individual with no price of their own has none: no standard stands in',
   expect(await pricing.resolveProviderPrice(ctx, { workerId: other })).toBeNull();
   expect(await pricing.resolveProviderPriceOptions(ctx, { workerId: other })).toEqual([]);
 });
+
+test('a service ZappyOne staff do keeps ZappyOne\'s price on offer near the customer, with no partner priced', async () => {
+  const { ServiceLine } = require('../src/modules/onboarding/onboarding.model');
+  await ServiceLine.create({ code: 'mobile_repair', name: 'Mobile Repair', domainCode: 'electronics', repairVertical: 'mobile', status: 'live', staffDoes: true });
+  const flags = require('../src/modules/feature-flags/feature-flag.service');
+  const ask = () => pricing.nearbyPriceMap({ vertical: 'mobile', brandCode: 'samsung', modelCode: 'galaxy-s23' }, ['battery_replacement'], { lat: 17.44, lng: 78.39 });
+  // Version 1: own staff are off, so only partners' own prices count.
+  await flags.set('own_staff', false, null);
+  expect((await ask()).has('battery_replacement')).toBe(false);
+  await flags.set('own_staff', true, null);
+  expect((await ask()).get('battery_replacement')).toBe(150000);
+  await flags.set('own_staff', false, null);
+});

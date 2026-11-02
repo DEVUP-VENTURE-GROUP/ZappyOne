@@ -148,7 +148,9 @@ async function quote({
    * platform fee and tax — Zappy does not take a commission on its own fee or
    * on the government's tax. And never, under any circumstance, on item money.
    */
-  const commissionPaise = Math.round((feesPaise * (cfg.commissionPct || 0)) / 100);
+  // A partner at their own rates pays their partner commission (shop/partner-commission); the service's rate is for ZappyOne staff.
+  const partnerPct = rate ? await require('../../shop/partner-commission').pctFor(rate.shopId ? { shopId: rate.shopId } : { workerId: rate.workerId }) : null;
+  const commissionPaise = Math.round((feesPaise * (partnerPct ?? cfg.commissionPct ?? 0)) / 100);
   const workerEarningPaise = Math.max(0, feesPaise - commissionPaise);
 
   return {
@@ -246,7 +248,12 @@ async function ratedHelpersNear(serviceType, at) {
 // The cheapest quote among nearby helpers' own rates, for an errand any of them may take; null when nobody has priced it.
 async function cheapestNearby(args) {
   const near = await ratedHelpersNear(args.serviceType, args.pickupLocation);
-  let best = null;
+  // An errand ZappyOne's own staff do is offered at ZappyOne's price for its staff, beside any partner's own rates.
+  const line = await require('../../jobs/kinds').KINDS.helping.line({ serviceType: args.serviceType });
+  const { ServiceLine } = require('../../onboarding/onboarding.model');
+  const staffOn = await require('../../feature-flags/feature-flag.service').isEnabled('own_staff');
+  const staffDone = staffOn && line && await ServiceLine.exists({ code: line, $or: [{ staffOnly: true }, { staffDoes: true }] });
+  let best = staffDone ? await quote(args).catch(() => null) : null;
   for (const { rate } of near) {
     const q = await quote({ ...args, rate }).catch(() => null);
     if (q && (!best || q.serviceChargePaise < best.serviceChargePaise)) best = q;
