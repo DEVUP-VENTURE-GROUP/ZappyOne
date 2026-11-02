@@ -84,7 +84,7 @@ export default function PetRateCard({ category }) {
         </div>
       )}
       <div className="card grid grid-cols-2 gap-3">
-        <label className="block text-[12px] font-semibold text-ink-500">Pickup fee (if you collect the pet)<span className="mt-1 block">{money(fees.pickup, (v) => setFees((f) => ({ ...f, pickup: v })), 'Pickup fee')}</span></label>
+        <label className="block text-[12px] font-semibold text-ink-500">Pickup fee<span className="mt-1 block">{money(fees.pickup, (v) => setFees((f) => ({ ...f, pickup: v })), 'Pickup fee')}</span></label>
         <label className="block text-[12px] font-semibold text-ink-500">Drop-back fee<span className="mt-1 block">{money(fees.ret, (v) => setFees((f) => ({ ...f, ret: v })), 'Drop-back fee')}</span></label>
       </div>
       <button type="button" onClick={submit} disabled={saving} className="btn-primary h-12 w-full">{saving && <Loader2 size={16} className="animate-spin" />} Save my prices{priced ? ` (${priced} priced)` : ''}</button>

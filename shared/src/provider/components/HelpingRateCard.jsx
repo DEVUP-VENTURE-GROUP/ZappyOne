@@ -4,12 +4,12 @@ import { Footprints, Loader2 } from 'lucide-react';
 import { useHelpingProviderRatesQuery, useSaveHelpingProviderRateMutation } from '../../services/api';
 
 const FIELDS = [
-  ['baseFeePaise', 'Your fee for the errand', true],
-  ['perKmPaise', 'Per km travelled', true],
-  ['includedKm', 'Km included in your fee', false],
-  ['waitingPerMinutePaise', 'Per minute of waiting, after the first few', true],
-  ['extraStopPaise', 'Each extra stop', true],
-  ['specialHandlingPaise', 'Heavy or fragile handling', true],
+  ['baseFeePaise', 'Errand fee', true],
+  ['perKmPaise', 'Per km', true],
+  ['includedKm', 'Free km', false],
+  ['waitingPerMinutePaise', 'Waiting, per minute', true],
+  ['extraStopPaise', 'Extra stop', true],
+  ['specialHandlingPaise', 'Heavy or fragile', true],
 ];
 
 // A helper's own rates for each errand in one service; ZappyOne adds only its platform fee. `fallback` shows when the service has no errands to price.
@@ -48,7 +48,7 @@ function ErrandRate({ lineCode, errand }) {
       <p className="text-[14px] font-bold text-ink-900">{errand.name}{!errand.rate && <span className="ml-2 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-800">Not priced yet</span>}</p>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
         {FIELDS.map(([k, label, money]) => (
-          <label key={k} className="block text-[12px] font-semibold text-ink-500">{label}
+          <label key={k} className="flex flex-col justify-end text-[12px] font-semibold text-ink-500">{label}
             <span className="mt-1 flex h-10 items-center rounded-btn border border-line-strong bg-white px-2 focus-within:border-zappy-600">
               {money && <span className="text-[13px] font-semibold text-ink-400">₹</span>}
               <input value={v[k] ?? ''} onChange={(e) => setV((x) => ({ ...x, [k]: e.target.value.replace(/\D/g, '').slice(0, 6) }))} inputMode="numeric" aria-label={`${errand.name}, ${label}`} className="w-full min-w-0 bg-transparent pl-1 text-[14px] font-bold tabular-nums outline-none" />

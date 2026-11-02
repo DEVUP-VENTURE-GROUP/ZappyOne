@@ -12,12 +12,12 @@ import { spacing } from '../../../theme/spacing';
 
 type Field = [string, string, boolean];
 const FIELDS: Field[] = [
-  ['baseFeePaise', 'Your fee for the errand', true],
-  ['perKmPaise', 'Per km travelled', true],
-  ['includedKm', 'Km included in your fee', false],
-  ['waitingPerMinutePaise', 'Per minute of waiting', true],
-  ['extraStopPaise', 'Each extra stop', true],
-  ['specialHandlingPaise', 'Heavy or fragile handling', true],
+  ['baseFeePaise', 'Errand fee', true],
+  ['perKmPaise', 'Per km', true],
+  ['includedKm', 'Free km', false],
+  ['waitingPerMinutePaise', 'Waiting, per minute', true],
+  ['extraStopPaise', 'Extra stop', true],
+  ['specialHandlingPaise', 'Heavy or fragile', true],
 ];
 interface Errand { serviceType: string; name: string; rate: Record<string, number> | null }
 
