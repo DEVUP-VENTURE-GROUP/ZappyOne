@@ -38,7 +38,7 @@ import { themeOf } from '@zappy/core/shared/season';
 import { HeroCarousel } from './HeroCarousel';
 import { HomeHeader, SearchBar, type HomeLocation } from './HomeHeader';
 import { BookAgainRail, NearbyShopsLink, OffersRail } from './HomeRails';
-import { Text } from '@zappy/ui/components';
+import { Skeleton, Text } from '@zappy/ui/components';
 import { ComingSoonRow } from './ComingSoonRow';
 import { HomeMarketplace } from './HomeMarketplace';
 import { LocationSheet, type PickedArea } from './LocationSheet';
@@ -154,8 +154,10 @@ export function HomePage() {
   const rebooks = useMemo(() => quickRebooks(pastJobs), [pastJobs]);
   const notHere = svc?.status === 'not_here';
   // A festival running (Admin → Festive home): its own top on home; light ones also tint the header.
-  const { data: seasonData, refetch: refetchSeason } = useCurrentSeasonQuery(undefined);
-  const season = !notHere && !loadingCatalog ? seasonData?.season : null;
+  const { data: seasonData, isLoading: loadingSeason, refetch: refetchSeason } = useCurrentSeasonQuery(undefined);
+  // The layout is chosen once both are known, so the plain look never flashes before a festive one.
+  const settling = loadingCatalog || loadingSeason;
+  const season = !notHere && !settling ? seasonData?.season : null;
   const theme = season ? { ...themeOf(season.theme), key: season.theme } : null;
   const tint = theme ? theme.top : null;
   const rise = (i: number) => (theme ? FadeInDown.delay(250 + i * 110).duration(600) : undefined);
@@ -186,14 +188,15 @@ export function HomePage() {
                 areas={svc?.areas || []} onChangeLocation={() => setLocSheet(true)} />
             ) : null}
             {nothingLive && !loadingCatalog ? <ComingSoonRow groups={comingSoon} loc={loc} /> : null}
-            {!loadingCatalog && !nothingLive && !season ? <HeroCarousel domains={allDomains} onOpen={openService} /> : null}
+            {settling ? <Skeleton height={160} style={styles.heroSkel} /> : null}
+            {!settling && !nothingLive && !season ? <HeroCarousel domains={allDomains} onOpen={openService} /> : null}
             {/* During a festival each section rises in after the last. */}
             <Animated.View entering={rise(0)}><ProblemChips services={services} /></Animated.View>
-            {loadingCatalog || (loc.lat != null && !svc && checkingArea) ? <SkeletonGrid /> : <Animated.View entering={rise(1)}><ServiceGrid domains={domains} onOpen={openService} /></Animated.View>}
+            {settling || (loc.lat != null && !svc && checkingArea) ? <SkeletonGrid /> : <Animated.View entering={rise(1)}><ServiceGrid domains={domains} onOpen={openService} /></Animated.View>}
             {theme ? <SafeSection name="festive-divider"><FestiveDivider accent={theme.accent} /></SafeSection> : null}
             <Animated.View entering={rise(2)}><BookAgainRail items={rebooks} /></Animated.View>
             <Animated.View entering={rise(3)}><OffersRail isAuthed={isAuthed} /></Animated.View>
-            {!loadingCatalog ? <Animated.View entering={rise(4)}><ServiceShowcase domains={allDomains} onOpen={openService} /></Animated.View> : null}
+            {!settling ? <Animated.View entering={rise(4)}><ServiceShowcase domains={allDomains} onOpen={openService} /></Animated.View> : null}
             {isAuthed ? <HomeMarketplace loc={loc.lat != null && loc.lng != null ? { lat: loc.lat, lng: loc.lng, address: [loc.primary, loc.secondary].filter(Boolean).join(', ') } : null} /> : null}
             {!loadingCatalog && !nothingLive ? <ComingSoonRow groups={comingSoon} loc={loc} /> : null}
             {theme ? <SafeSection name="festive-divider"><FestiveDivider accent={theme.accent} /></SafeSection> : null}
@@ -209,6 +212,7 @@ export function HomePage() {
 }
 
 const styles = StyleSheet.create({
+  heroSkel: { marginHorizontal: 16, marginTop: 12, borderRadius: 14 },
   page: { flex: 1, backgroundColor: colors.background },
   searchWrap: { paddingHorizontal: spacing.base, paddingBottom: spacing.base, paddingTop: 4, backgroundColor: zappy[100], borderBottomLeftRadius: radius.extraLarge, borderBottomRightRadius: radius.extraLarge },
   // Edge to edge, flush under the search: undoes the body's padding.

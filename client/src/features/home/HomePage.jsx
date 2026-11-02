@@ -247,8 +247,10 @@ export default function HomePage() {
   // In the city, but no pro has joined at this address yet: say so honestly and lead with what is coming.
   const nothingLive = !!liveCodes && liveCodes.size === 0;
   // A festival running (Admin → Festive home): its own top on home; light ones also tint the header.
-  const { data: seasonData } = useCurrentSeasonQuery();
-  const season = !notHere && !loadingCatalog ? seasonData?.season : null;
+  const { data: seasonData, isLoading: loadingSeason } = useCurrentSeasonQuery();
+  // The layout is chosen once both are known, so the plain look never flashes before a festive one.
+  const settling = loadingCatalog || loadingSeason;
+  const season = !notHere && !settling ? seasonData?.season : null;
   const theme = season ? { ...themeOf(season.theme), key: season.theme } : null;
   const tint = theme ? theme.top : null;
   const searchBar = (
@@ -325,11 +327,12 @@ export default function HomePage() {
               )}
               {nothingLive && !loadingCatalog && <ComingSoonRow groups={comingSoon} loc={loc} />}
 
-              {!loadingCatalog && !nothingLive && !season && <HeroCarousel domains={allDomains} onOpen={openService} />}
+              {settling && <div className="mx-4 mt-3 h-40 animate-pulse rounded-card bg-sunken md:mx-0" aria-hidden="true" />}
+              {!settling && !nothingLive && !season && <HeroCarousel domains={allDomains} onOpen={openService} />}
 
               {/* Intent first: the problem in their words, then the services. */}
               <FestiveReveal on={!!season}><ProblemChips services={services} /></FestiveReveal>
-              {loadingCatalog || (loc.lat != null && !svc && checkingArea)
+              {settling || (loc.lat != null && !svc && checkingArea)
                 ? <SkeletonGrid />
                 : <FestiveReveal on={!!season}><ServiceGrid domains={domains} onOpen={openService} /></FestiveReveal>}
               {season && <FestiveDivider theme={theme} />}
@@ -338,7 +341,7 @@ export default function HomePage() {
               <FestiveReveal on={!!season}><BookAgainRail items={quickRebooks} onOpen={nav} /></FestiveReveal>
               <FestiveReveal on={!!season}><OffersRail isAuthed={isAuthed} /></FestiveReveal>
 
-              {!loadingCatalog && <FestiveReveal on={!!season}><ServiceShowcase domains={allDomains} onOpen={openService} /></FestiveReveal>}
+              {!settling && <FestiveReveal on={!!season}><ServiceShowcase domains={allDomains} onOpen={openService} /></FestiveReveal>}
               {isAuthed && <FestiveReveal on={!!season}><HomeMarketplace /></FestiveReveal>}
               {!loadingCatalog && !nothingLive && <FestiveReveal on={!!season}><ComingSoonRow groups={comingSoon} loc={loc} /></FestiveReveal>}
               {season && <FestiveDivider theme={theme} />}

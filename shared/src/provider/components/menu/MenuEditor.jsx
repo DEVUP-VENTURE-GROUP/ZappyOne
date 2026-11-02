@@ -21,7 +21,7 @@ export default function MenuEditor({ vertical, onNext, nextLabel = 'Continue' })
   const [pct, setPct] = useState('');
   const [preview, setPreview] = useState(false);
 
-  if (isLoading || !data) return <div className="grid place-items-center py-16"><Loader2 className="animate-spin text-ink-400" /></div>;
+  if (isLoading || !data) return <div className="space-y-2" aria-hidden="true">{[0, 1, 2].map((k) => <div key={k} className="h-20 animate-pulse rounded-card bg-sunken" />)}</div>;
   const offered = data.items.filter((i) => i.offered);
   const more = data.items.filter((i) => !i.offered && !i.own);
   const allIncludes = [...new Set([...data.items.flatMap((i) => i.includes), ...COMMON_INCLUDES])];

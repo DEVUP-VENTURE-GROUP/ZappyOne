@@ -15,7 +15,7 @@ const FIELDS = [
 // A helper's own rates for each errand in one service; ZappyOne adds only its platform fee. `fallback` shows when the service has no errands to price.
 export default function HelpingRateCard({ lineCode, fallback = null }) {
   const { data, isLoading } = useHelpingProviderRatesQuery(lineCode);
-  if (isLoading) return <div className="grid place-items-center py-12"><Loader2 className="animate-spin text-ink-400" /></div>;
+  if (isLoading) return <div className="space-y-2" aria-hidden="true">{[0, 1, 2].map((k) => <div key={k} className="h-20 animate-pulse rounded-card bg-sunken" />)}</div>;
   if (!data?.types?.length) return fallback;
   return (
     <div className="space-y-4">

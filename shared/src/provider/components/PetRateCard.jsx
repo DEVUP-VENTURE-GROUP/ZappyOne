@@ -21,7 +21,7 @@ export default function PetRateCard({ category }) {
     setFees({ pickup: toR(data.pickupPaise || null), ret: toR(data.returnPaise || null) });
   }, [data]);
 
-  if (isLoading || !data) return <div className="grid place-items-center py-12"><Loader2 className="animate-spin text-ink-400" /></div>;
+  if (isLoading || !data) return <div className="space-y-2" aria-hidden="true">{[0, 1, 2].map((k) => <div key={k} className="h-20 animate-pulse rounded-card bg-sunken" />)}</div>;
   const mine = data.services.filter((s) => !category || s.categoryCode === category);
   const priced = mine.filter((s) => Object.values(rates[s.code] || {}).some((v) => Number(v) >= 1)).length;
 
