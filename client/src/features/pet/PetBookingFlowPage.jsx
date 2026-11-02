@@ -1,5 +1,6 @@
 import { useScrollTopOnChange } from '@shared/components/common/ScrollToTop';
 import { useMemo, useState, useEffect, useRef } from 'react';
+import { useSelector } from 'react-redux';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useFlowStep, useDraft, readDraft, clearDraft, useSafeBack } from '../../hooks/useBookingFlow';
 import ResumeBanner from '../../components/common/ResumeBanner';
@@ -217,6 +218,22 @@ function PetBookingFlow({ categoryCode, saved, draftKey, onStartOver }) {
     }
   }
 
+  const quote = quoteData?.quote;
+  // Got as far as where: home's "Continue your booking" and one reminder push (jobs/checkout-draft).
+  const signedIn = !!useSelector(selectAuth)?.accessToken;
+  const draftDone = useCheckoutDraft('pet', ['location', 'providers', 'confirm'].includes(step) ? {
+    title: categoryCode.replace(/_/g, ' '), step: step === 'confirm' ? 'Confirm' : 'Choose who',
+    path: `/pet/book/${categoryCode}`, pricePaise: quote?.totalPaise ?? null,
+  } : null, signedIn);
+  // Busy area, rain, night on a visit: own lines, held while they decide (jobs/surge).
+  const surge = useSurge({
+    kind: 'pet', line: categoryCode, serviceMode: primaryVariant?.allowedModes?.[0] || 'doorstep', loc,
+    basePaise: quote ? Math.max(0, (quote.totalPaise || 0) - (quote.taxPaise || 0) - (quote.platformFeePaise || 0)) : null,
+    skip: step !== 'confirm' || !quote,
+  });
+  // An optional tip, in the total before paying (jobs/boost-tip tipAtBooking). Rupees.
+  const [tip, setTip] = useState(0);
+
   async function book() {
     if (!loc) { toast.error('Choose a location'); return; }
     try {
@@ -254,22 +271,6 @@ function PetBookingFlow({ categoryCode, saved, draftKey, onStartOver }) {
       }
     }
   }
-
-  const quote = quoteData?.quote;
-  // Got as far as where: home's "Continue your booking" and one reminder push (jobs/checkout-draft).
-  const signedIn = !!useSelector(selectAuth)?.accessToken;
-  const draftDone = useCheckoutDraft('pet', ['location', 'providers', 'confirm'].includes(step) ? {
-    title: categoryCode.replace(/_/g, ' '), step: step === 'confirm' ? 'Confirm' : 'Choose who',
-    path: `/pet/book/${categoryCode}`, pricePaise: quote?.totalPaise ?? null,
-  } : null, signedIn);
-  // Busy area, rain, night on a visit: own lines, held while they decide (jobs/surge).
-  const surge = useSurge({
-    kind: 'pet', line: categoryCode, serviceMode: primaryVariant?.allowedModes?.[0] || 'doorstep', loc,
-    basePaise: quote ? Math.max(0, (quote.totalPaise || 0) - (quote.taxPaise || 0) - (quote.platformFeePaise || 0)) : null,
-    skip: step !== 'confirm' || !quote,
-  });
-  // An optional tip, in the total before paying (jobs/boost-tip tipAtBooking). Rupees.
-  const [tip, setTip] = useState(0);
 
   return (
     <div className="min-h-screen bg-slate-50">

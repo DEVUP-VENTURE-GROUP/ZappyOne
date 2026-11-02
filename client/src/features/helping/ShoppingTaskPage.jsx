@@ -111,6 +111,21 @@ export default function ShoppingTaskPage() {
     }
   }
 
+  const charge = quoteData?.charge;
+  // Priced and ready to request: home's "Continue your booking" and one reminder push (jobs/checkout-draft).
+  const signedIn = !!useSelector(selectAuth)?.accessToken;
+  const draftDone = useCheckoutDraft('helping', charge ? {
+    title: spec.draft || spec.title, step: 'Confirm', path: `/helping/shopping?mode=${mode}`, pricePaise: charge.serviceChargePaise ?? null,
+  } : null, signedIn);
+  // Busy area, rain, night: own lines on the service fee, held while they decide (jobs/surge).
+  const surge = useSurge({
+    kind: 'helping', line: spec.type, loc: pickupLoc,
+    basePaise: charge ? Math.max(0, (charge.serviceChargePaise || 0) - (charge.taxPaise || 0) - (charge.platformFeePaise || 0)) : null,
+    skip: !charge,
+  });
+  // An optional tip, in the total before paying (jobs/boost-tip tipAtBooking). Rupees.
+  const [tip, setTip] = useState(0);
+
   async function book() {
     if (!pickupLoc) { toast.error(mode === 'shop' ? 'Where should the helper shop?' : `Choose: ${spec.start}`); return; }
     if (spec.endRequired && !destLoc) { toast.error(`Choose: ${spec.end}`); return; }
@@ -149,21 +164,6 @@ export default function ShoppingTaskPage() {
       toast.error(err?.data?.error || 'Could not create the task');
     }
   }
-
-  const charge = quoteData?.charge;
-  // Priced and ready to request: home's "Continue your booking" and one reminder push (jobs/checkout-draft).
-  const signedIn = !!useSelector(selectAuth)?.accessToken;
-  const draftDone = useCheckoutDraft('helping', charge ? {
-    title: spec.draft || spec.title, step: 'Confirm', path: `/helping/shopping?mode=${mode}`, pricePaise: charge.serviceChargePaise ?? null,
-  } : null, signedIn);
-  // Busy area, rain, night: own lines on the service fee, held while they decide (jobs/surge).
-  const surge = useSurge({
-    kind: 'helping', line: spec.type, loc: pickupLoc,
-    basePaise: charge ? Math.max(0, (charge.serviceChargePaise || 0) - (charge.taxPaise || 0) - (charge.platformFeePaise || 0)) : null,
-    skip: !charge,
-  });
-  // An optional tip, in the total before paying (jobs/boost-tip tipAtBooking). Rupees.
-  const [tip, setTip] = useState(0);
   const canQuote = !!pickupLoc && (!spec.endRequired || !!destLoc) && (!shopping || items.some((i) => i.name.trim()));
 
 
