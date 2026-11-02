@@ -37,6 +37,7 @@ import {
   repairReadyForPayment, repairDue, canPassBackToShop, repairAgreedPaise, quoteTotalPaise, quotePayload, quoteRepairOptions, PART_GRADES,
   qaState, qaPayload, QUOTE_LINE_KINDS, rupeesInput, REPAIR_PHOTO_STAGES, REPAIR_ENDED, REPAIR_NO_SOS,
 } from '../jobFlows';
+import { useLivePoll } from '../../hooks/useSocket';
 
 /**
  * Worker's repair job screen.
@@ -340,7 +341,7 @@ function QAPanel({ bookingId, onDone }) {
 export default function WorkerRepairJobPage() {
   const { id } = useParams();
   const nav = useNavigate();
-  const { data, isLoading, refetch } = useGetRepairBookingQuery(id, { pollingInterval: 20000 });
+  const { data, isLoading, refetch } = useGetRepairBookingQuery(id, { pollingInterval: useLivePoll(20000) });
   const [transition, { isLoading: moving }] = useTransitionRepairBookingMutation();
   const checkedIn = useCheckInThen();
   const [collectCash, { isLoading: collecting }] = useCollectRepairCashMutation();

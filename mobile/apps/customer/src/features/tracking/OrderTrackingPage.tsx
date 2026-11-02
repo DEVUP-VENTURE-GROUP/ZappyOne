@@ -15,12 +15,13 @@ import { useT } from '@zappy/ui/lib/i18n';
 import { colors } from '@zappy/ui/theme/colors';
 import { JobTrackingPage } from './JobTrackingPage';
 import type { TrackedJob } from './types';
+import { useLivePoll } from '@zappy/core/hooks/useLivePoll';
 
 export function OrderTrackingPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const t = useT();
-  const { data, isLoading, refetch } = useGetOrderQuery(id, { pollingInterval: 30000 });
+  const { data, isLoading, refetch } = useGetOrderQuery(id, { pollingInterval: useLivePoll(30000) });
   const [cancel] = useCancelOrderMutation();
   const [rate] = useRateOrderMutation();
 

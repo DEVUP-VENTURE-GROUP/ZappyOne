@@ -6,6 +6,7 @@ import { useListNotificationsQuery } from '@shared/services/api';
 import { useT } from '@shared/i18n/I18nProvider';
 import { ZappyWordmark } from '@shared/components/common/ZappyLogo';
 import { prefetchRoute } from '../../lib/routePrefetch';
+import { useLivePoll } from '@shared/hooks/useSocket';
 
 /**
  * Top navigation from tablet width up; phones keep the bottom bar.
@@ -25,7 +26,7 @@ export default function DesktopNav() {
   const t = useT();
   const isAuthed = useSelector(selectIsAuthed);
   const { profile } = useSelector(selectAuth);
-  const { data } = useListNotificationsQuery({ page: 1, unreadOnly: true }, { skip: !isAuthed, pollingInterval: 60000 });
+  const { data } = useListNotificationsQuery({ page: 1, unreadOnly: true }, { skip: !isAuthed, pollingInterval: useLivePoll(60000) });
   const unread = data?.unread ?? data?.notifications?.length ?? 0;
 
   // Home draws its own bar (location + search inside it): see pages/home/HomeHeader.

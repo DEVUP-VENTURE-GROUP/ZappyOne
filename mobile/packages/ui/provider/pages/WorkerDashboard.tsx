@@ -60,11 +60,12 @@ import { STAFF_APP } from '../staffApp';
 import { WorkerMenuSheet } from '../WorkerMenuSheet';
 import { WorkerOnboarding } from './WorkerOnboarding';
 import { errText } from '../../lib/feedback';
+import { useLivePoll } from '@zappy/core/hooks/useLivePoll';
 
 const KINDS = ['repair', 'pet', 'helping'];
 
 function NotifBell({ onPress }: { onPress: () => void }) {
-  const { data, refetch } = useListNotificationsQuery({ page: 1, unreadOnly: true }, { pollingInterval: 60000 });
+  const { data, refetch } = useListNotificationsQuery({ page: 1, unreadOnly: true }, { pollingInterval: useLivePoll(60000) });
   useSocketEvent('notification', () => { refetch(); });
   const count = data?.unread ?? 0;
   return (
@@ -80,7 +81,7 @@ export function WorkerDashboard({ kinds = KINDS }: { kinds?: string[] }) {
   const go = (to: string) => router.push(to as never);
   const insets = useSafeAreaInsets();
 
-  const { data: meData, refetch: refetchMe } = useGetWorkerMeQuery(undefined, { pollingInterval: 60000 });
+  const { data: meData, refetch: refetchMe } = useGetWorkerMeQuery(undefined, { pollingInterval: useLivePoll(60000) });
   // ZappyOne staff see their shift and salary here (server workforce/); partners get { staff: false }.
   const { data: staffMe } = useWorkforceMeQuery(undefined);
   const { data: todayData, refetch: refetchToday } = useGetEarningsQuery('today');

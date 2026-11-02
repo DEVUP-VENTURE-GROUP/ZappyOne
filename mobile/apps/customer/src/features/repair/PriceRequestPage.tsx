@@ -17,6 +17,7 @@ import { colors, ink, zappy } from '@zappy/ui/theme/colors';
 import { radius } from '@zappy/ui/theme/radius';
 import { spacing } from '@zappy/ui/theme/spacing';
 import { ShopOfferCard, type ShopOffer } from './ShopOfferCard';
+import { useLivePoll } from '@zappy/core/hooks/useLivePoll';
 
 function timeLeft(at?: string) {
   const ms = at ? new Date(at).getTime() - Date.now() : 0;
@@ -29,7 +30,7 @@ export function PriceRequestPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { data, isLoading, refetch } = usePriceRequestQuery(id, { pollingInterval: 30000 });
+  const { data, isLoading, refetch } = usePriceRequestQuery(id, { pollingInterval: useLivePoll(30000) });
   const [cancel, { isLoading: cancelling }] = useCancelPriceRequestMutation();
   const [book, { isLoading: booking }] = useCreateRepairBookingMutation();
   const [confirming, setConfirming] = useState<string | null>(null);

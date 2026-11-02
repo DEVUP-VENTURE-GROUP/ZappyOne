@@ -28,6 +28,7 @@ import {
 } from '../jobFlows';
 import JobMapCard, { pointOf } from '../../components/worker/JobMapCard';
 import JobEarningsCard from '../../components/worker/JobEarningsCard';
+import { useLivePoll } from '../../hooks/useSocket';
 
 /**
  * Worker execution — §10, §11, §12, §13, §27, §28, §29.
@@ -43,7 +44,7 @@ function Shell({ children }) {
 export default function WorkerHelpingJobPage() {
   const { id } = useParams();
   const nav = useNavigate();
-  const { data, isLoading, refetch } = useGetHelpingTaskQuery(id, { pollingInterval: 10000 });
+  const { data, isLoading, refetch } = useGetHelpingTaskQuery(id, { pollingInterval: useLivePoll(10000) });
   const [advance] = useAdvanceHelpingStatusMutation();
   const [addProof] = useAddHelpingProofMutation();
   const [complete, { isLoading: completing }] = useCompleteHelpingTaskMutation();

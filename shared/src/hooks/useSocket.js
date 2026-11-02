@@ -290,3 +290,11 @@ export function useSocketEvent(event, handler) {
     return () => socket.off(event, on);
   }, [token, event]);
 }
+
+// While the socket is live it pushes every change, so a poll only needs to be a slow safety net; offline it keeps its pace.
+export const LIVE_SAFETY_POLL_MS = 120000;
+export function useLivePoll(ms) {
+  const { accessToken } = useSelector(selectAuth);
+  const live = useSocketStatus() === 'connected' && !!accessToken;
+  return live ? Math.max(ms, LIVE_SAFETY_POLL_MS) : ms;
+}

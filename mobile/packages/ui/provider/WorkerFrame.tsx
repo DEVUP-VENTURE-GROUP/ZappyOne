@@ -14,12 +14,13 @@ import { useAppSelector } from '@zappy/core/store/hooks';
 import { toast } from '../components/Toast';
 import { ConnectionBanner } from '../components/common/ConnectionBanner';
 import { JobOfferHost } from '../components/jobs/JobOfferHost';
+import { useLivePoll } from '@zappy/core/hooks/useLivePoll';
 
 export function WorkerFrame({ kinds }: { kinds: string[] }) {
   const signedIn = useAppSelector((s) => s.auth.isAuthenticated);
   const role = useAppSelector((s) => s.auth.role);
   const isWorker = signedIn && role === 'worker';
-  const { data, refetch } = useGetWorkerMeQuery(undefined, { skip: !isWorker, pollingInterval: 60000 });
+  const { data, refetch } = useGetWorkerMeQuery(undefined, { skip: !isWorker, pollingInterval: useLivePoll(60000) });
   const me = data?.worker;
 
   useOnlinePresence({

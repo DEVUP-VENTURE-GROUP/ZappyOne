@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { ArrowLeft, Loader2, Store, Star, MapPin, ShieldCheck, Clock, X } from 'lucide-react';
 import { usePriceRequestQuery, useCancelPriceRequestMutation, useCreateRepairBookingMutation } from '@shared/services/api';
-import { useSocketEvent } from '@shared/hooks/useSocket';
+import { useSocketEvent, useLivePoll } from '@shared/hooks/useSocket';
 import { formatPaise } from '@shared/utils/money';
 
 /**
@@ -22,7 +22,7 @@ function timeLeft(at) {
 export default function PriceRequestPage() {
   const { id } = useParams();
   const nav = useNavigate();
-  const { data, isLoading, refetch } = usePriceRequestQuery(id, { pollingInterval: 30000 });
+  const { data, isLoading, refetch } = usePriceRequestQuery(id, { pollingInterval: useLivePoll(30000) });
   const [cancel, { isLoading: cancelling }] = useCancelPriceRequestMutation();
   const [book, { isLoading: booking }] = useCreateRepairBookingMutation();
   const [confirming, setConfirming] = useState(null);

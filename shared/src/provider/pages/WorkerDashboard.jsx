@@ -36,6 +36,7 @@ import {
   WorkerSidebar, WorkerBottomNav, OnlineControl, MENU_ITEMS, inr,
 } from '../../components/worker/DashboardUI';
 import toast from 'react-hot-toast';
+import { useLivePoll } from '../../hooks/useSocket';
 
 /**
  * Rakshak home — the partner-app home every gig worker knows.
@@ -51,7 +52,7 @@ import toast from 'react-hot-toast';
 const KINDS = ['repair', 'pet', 'helping'];
 
 function NotifBell({ token, onTap }) {
-  const { data } = useListNotificationsQuery({ page: 1, unreadOnly: true }, { skip: !token, pollingInterval: 60000 });
+  const { data } = useListNotificationsQuery({ page: 1, unreadOnly: true }, { skip: !token, pollingInterval: useLivePoll(60000) });
   const [bump, setBump] = useState(0);
   useEffect(() => {
     if (!token) return undefined;
@@ -85,11 +86,11 @@ export default function WorkerDashboard() {
   const dispatch = useDispatch();
   const { accessToken: token } = useSelector(selectAuth);
 
-  const { data: meData, refetch: refetchMe } = useGetWorkerMeQuery(undefined, { pollingInterval: 60000, skip: !token });
+  const { data: meData, refetch: refetchMe } = useGetWorkerMeQuery(undefined, { pollingInterval: useLivePoll(60000), skip: !token });
   const { data: todayData } = useGetEarningsQuery('today', { skip: !token });
   const { data: weekData } = useGetEarningsQuery('week', { skip: !token });
   const { data: kycData } = useGetKycStatusQuery(undefined, { skip: !token });
-  const { data: notifData } = useListNotificationsQuery({ page: 1, unreadOnly: true }, { skip: !token, pollingInterval: 60000 });
+  const { data: notifData } = useListNotificationsQuery({ page: 1, unreadOnly: true }, { skip: !token, pollingInterval: useLivePoll(60000) });
   const { data: providerStatus } = useProviderOnboardingStatusQuery();
   const { mine, open, notApproved } = useProviderJobs({ kinds: KINDS });
   const [goOnline] = useGoOnlineMutation();

@@ -18,6 +18,7 @@ import { VerifyFirst } from '../VerifyFirst';
 import { BookingPreview } from './BookingPreview';
 import { OverviewShortcut } from './OverviewShortcut';
 import { OverviewStat } from './OverviewStat';
+import { useLivePoll } from '@zappy/core/hooks/useLivePoll';
 
 export function PartnerOverviewPage() {
   const router = useRouter();
@@ -26,7 +27,7 @@ export function PartnerOverviewPage() {
   const { data, isLoading, refetch, isFetching } = usePartnerOverviewQuery(undefined, { pollingInterval: 60000 });
   const { data: newOnes } = usePartnerBookingsQuery({ status: 'confirmed' }, { skip: !verified });
   const { data: upcoming } = usePartnerBookingsQuery({ status: 'upcoming' }, { skip: !verified });
-  const { data: notes } = usePartnerNotificationsQuery({ page: 1, unreadOnly: false }, { pollingInterval: 30000 });
+  const { data: notes } = usePartnerNotificationsQuery({ page: 1, unreadOnly: false }, { pollingInterval: useLivePoll(30000) });
   const unread: number = notes?.unread || 0;
 
   if (isLoading && !partner) return <View style={[styles.page, { paddingTop: insets.top }]}><LoadingState /></View>;

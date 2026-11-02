@@ -25,6 +25,7 @@ import {
   useAcceptPetBookingMutation, useDeclinePetBookingMutation,
 } from '../../services/api';
 import { PET_NEXT as NEXT, PET_DONE, PET_PAY_STAGES, PET_LIVE, petDuePaise, petBrief } from '../jobFlows';
+import { useLivePoll } from '../../hooks/useSocket';
 
 /**
  * Worker execution (§10, §38, §39).
@@ -37,7 +38,7 @@ import { PET_NEXT as NEXT, PET_DONE, PET_PAY_STAGES, PET_LIVE, petDuePaise, petB
 export default function WorkerPetJobPage() {
   const { id } = useParams();
   const nav = useNavigate();
-  const { data, isLoading, refetch } = useGetPetBookingQuery(id, { pollingInterval: 10000 });
+  const { data, isLoading, refetch } = useGetPetBookingQuery(id, { pollingInterval: useLivePoll(10000) });
   const [advance] = useAdvancePetBookingStatusMutation();
   const [addProof] = useAddPetBookingProofMutation();
   const [collectCash, { isLoading: collecting }] = useCollectPetCashMutation();

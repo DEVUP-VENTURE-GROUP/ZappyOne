@@ -5,6 +5,7 @@ import { WorkerSidebar, NAV_ITEMS } from '../components/worker/DashboardUI';
 import { selectAuth, logout } from '../modules/auth/authSlice';
 import { useGetWorkerMeQuery, useListNotificationsQuery, useLogoutMutation } from '../services/api';
 import { prefetchWorkerPages } from './providerRoutes';
+import { useLivePoll } from '../hooks/useSocket';
 
 // Pages inside the frame skip drawing their own sidebar; home lends it the real go-online toggle.
 const InFrame = createContext(null);
@@ -40,9 +41,9 @@ export default function WorkerFrame() {
   const { pathname } = useLocation();
   const { accessToken, role } = useSelector(selectAuth);
   const signedIn = !!accessToken && role === 'worker';
-  const { data: meData } = useGetWorkerMeQuery(undefined, { pollingInterval: 60000, skip: !signedIn });
+  const { data: meData } = useGetWorkerMeQuery(undefined, { pollingInterval: useLivePoll(60000), skip: !signedIn });
   const isOnline = meData?.worker?.isOnline ?? false;
-  const { data: notifData } = useListNotificationsQuery({ page: 1, unreadOnly: true }, { skip: !signedIn, pollingInterval: 60000 });
+  const { data: notifData } = useListNotificationsQuery({ page: 1, unreadOnly: true }, { skip: !signedIn, pollingInterval: useLivePoll(60000) });
   const [callLogout] = useLogoutMutation();
   const goOnline = useRef(null);
   const frame = useMemo(() => ({ goOnline }), []);

@@ -5,11 +5,12 @@ import { useListNotificationsQuery } from '@zappy/core/api';
 import { Text } from '@zappy/ui/components';
 import { colors, danger, ink } from '@zappy/ui/theme/colors';
 import { radius } from '@zappy/ui/theme/radius';
+import { useLivePoll } from '@zappy/core/hooks/useLivePoll';
 
 // The top-right bell: unread count at a glance, the notifications tab a tap away; refreshed live with every notification.
 export function HeaderBell({ to }: { to: string }) {
   const router = useRouter();
-  const { data } = useListNotificationsQuery({ page: 1, unreadOnly: false }, { pollingInterval: 120000 });
+  const { data } = useListNotificationsQuery({ page: 1, unreadOnly: false }, { pollingInterval: useLivePoll(120000) });
   const unread: number = data?.unread ?? 0;
   return (
     <Pressable onPress={() => router.push(to as never)} accessibilityRole="button" accessibilityLabel={unread ? `Notifications, ${unread} unread` : 'Notifications'} style={styles.btn}>

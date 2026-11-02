@@ -16,13 +16,14 @@ import { spacing } from '@zappy/ui/theme/spacing';
 import { DISPUTE_STATUS } from './disputeMeta';
 import { MessageThread } from '@zappy/ui/support/MessageThread';
 import { StatusBadge } from '@zappy/ui/support/StatusBadge';
+import { useLivePoll } from '@zappy/core/hooks/useLivePoll';
 
 export function DisputeThreadPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const t = useT();
-  const { data, isLoading, refetch } = useGetDisputeQuery(id, { pollingInterval: 30000 });
+  const { data, isLoading, refetch } = useGetDisputeQuery(id, { pollingInterval: useLivePoll(30000) });
   const [send, { isLoading: sending }] = useAddDisputeMessageMutation();
   const d = data?.dispute;
   const back = () => (router.canGoBack() ? router.back() : router.replace('/disputes' as never));

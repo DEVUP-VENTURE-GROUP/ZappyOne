@@ -25,6 +25,7 @@ import { useJobSOS } from '../tracking/useJobSOS';
 import { ApprovalCard, type Approval } from './task/ApprovalCard';
 import { ReturnStatusCard } from './task/ReturnStatusCard';
 import { TaskItemsCard } from './task/TaskItemsCard';
+import { useLivePoll } from '@zappy/core/hooks/useLivePoll';
 
 const STATUS_LABEL: Record<string, string> = {
   DRAFT: 'Draft', REQUESTED: 'Requested', PAYMENT_PENDING: 'Payment pending', CONFIRMED: 'Confirmed', WORKER_SEARCHING: 'Finding a helper',
@@ -47,7 +48,7 @@ export function HelpingTaskDetailPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const t = useT();
-  const { data, isLoading, refetch } = useGetHelpingTaskQuery(id, { pollingInterval: 30000 });
+  const { data, isLoading, refetch } = useGetHelpingTaskQuery(id, { pollingInterval: useLivePoll(30000) });
   const [respond] = useRespondHelpingApprovalMutation();
   const [cancel] = useCancelHelpingTaskMutation();
   const [rate] = useRateHelpingTaskMutation();

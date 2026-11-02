@@ -14,6 +14,7 @@ import { Button, Text, ZappyWordmark } from '@zappy/ui/components';
 import { accent, danger, ink, slate, zappy } from '@zappy/ui/theme/colors';
 import { radius } from '@zappy/ui/theme/radius';
 import { spacing } from '@zappy/ui/theme/spacing';
+import { useLivePoll } from '@zappy/core/hooks/useLivePoll';
 
 export interface HomeLocation { primary: string; secondary: string | null; loading: boolean; lat?: number; lng?: number }
 
@@ -55,7 +56,7 @@ export function SearchBar({ terms, onOpen, onLens }: { terms: string[]; onOpen: 
 }
 
 function useUnread(isAuthed: boolean) {
-  const { data } = useListNotificationsQuery({ page: 1, unreadOnly: true }, { skip: !isAuthed, pollingInterval: 60000 });
+  const { data } = useListNotificationsQuery({ page: 1, unreadOnly: true }, { skip: !isAuthed, pollingInterval: useLivePoll(60000) });
   return data?.unread ?? data?.notifications?.length ?? 0;
 }
 

@@ -5,6 +5,7 @@ import { KINDS } from '@shared/customer/jobKinds';
 import { STAGE_LABEL } from '@shared/customer/repairBasket';
 import { formatPaise } from '@shared/utils/money';
 import { useSafeBack } from '../../../hooks/useBookingFlow';
+import { useLivePoll } from '@shared/hooks/useSocket';
 
 const deviceName = (b) => [b.brandCode, b.modelCode].filter(Boolean).join(' ').replace(/-/g, ' ');
 
@@ -15,7 +16,7 @@ const deviceName = (b) => [b.brandCode, b.modelCode].filter(Boolean).join(' ').r
 export default function RepairGroupPage() {
   const { id } = useParams();
   const back = useSafeBack('/orders');
-  const { data, isLoading } = useRepairGroupQuery(id, { pollingInterval: 30000 });
+  const { data, isLoading } = useRepairGroupQuery(id, { pollingInterval: useLivePoll(30000) });
   if (isLoading) return <div className="flex justify-center py-16"><Loader2 size={24} className="animate-spin text-zappy-400" /></div>;
   if (!data?.group) return <div className="mx-auto max-w-lg p-6 text-center text-slate-500">This visit could not be found.</div>;
   const { group, bookings } = data;

@@ -16,6 +16,7 @@ import { RIPPLE } from '@zappy/ui/lib/feedback';
 import { colors, ink, slate } from '@zappy/ui/theme/colors';
 import { radius } from '@zappy/ui/theme/radius';
 import { spacing } from '@zappy/ui/theme/spacing';
+import { useLivePoll } from '@zappy/core/hooks/useLivePoll';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Booking = any;
@@ -25,7 +26,7 @@ export function RepairGroupPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { data, isLoading, refetch, isFetching } = useRepairGroupQuery(id, { skip: !id, pollingInterval: 30000 });
+  const { data, isLoading, refetch, isFetching } = useRepairGroupQuery(id, { skip: !id, pollingInterval: useLivePoll(30000) });
   const back = () => (router.canGoBack() ? router.back() : router.replace('/orders' as never));
   const header = <ScreenHeader title="Your visit" onBack={back} />;
   if (isLoading) return <View style={[styles.page, { paddingTop: insets.top }]}>{header}<LoadingState /></View>;

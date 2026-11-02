@@ -17,13 +17,14 @@ import { spacing } from '../theme/spacing';
 import { MessageThread } from './MessageThread';
 import { StatusBadge } from './StatusBadge';
 import { CLOSED } from './ticketMeta';
+import { useLivePoll } from '@zappy/core/hooks/useLivePoll';
 
 export function TicketThreadPage({ base = '/support' }: { base?: string }) {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const t = useT();
-  const { data, isLoading, refetch } = useGetTicketQuery(id, { pollingInterval: 8000 }); // checked often while open, so replies arrive like a chat
+  const { data, isLoading, refetch } = useGetTicketQuery(id, { pollingInterval: useLivePoll(8000) });
   const [send, { isLoading: sending }] = useAddTicketMessageMutation();
   const ticket = data?.ticket;
   const back = () => (router.canGoBack() ? router.back() : router.replace(base as never));

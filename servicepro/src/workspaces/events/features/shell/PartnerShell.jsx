@@ -10,6 +10,7 @@ import { ZappyWordmark } from '@shared/components/common/ZappyLogo';
 import NotificationPanel from './NotificationPanel';
 import { Spinner } from '../../components/ui';
 import ProfileGate from '../../../../shell/ProfileGate';
+import { useLivePoll } from '@shared/hooks/useSocket';
 
 /**
  * The frame of the partner portal: a sidebar on a computer; on a phone a top
@@ -62,7 +63,7 @@ export default function PartnerShell() {
 
   const { data: meData } = usePartnerMeQuery();
   const { data: overview } = usePartnerOverviewQuery(undefined, { pollingInterval: 60000 });
-  const { data: notifData } = usePartnerNotificationsQuery({ page: 1, unreadOnly: false }, { pollingInterval: 30000 });
+  const { data: notifData } = usePartnerNotificationsQuery({ page: 1, unreadOnly: false }, { pollingInterval: useLivePoll(30000) });
 
   const partner = meData?.partner;
   const verified = partner?.kyc?.status === 'approved';

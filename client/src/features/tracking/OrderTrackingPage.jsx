@@ -17,7 +17,7 @@ import {
   useRespondShopHandoffMutation, useGetShopProfileQuery,
 } from '@shared/services/api';
 import { API_BASE } from '@shared/services/apiBase';
-import { useOrderSocket, useSocketStatus } from '@shared/hooks/useSocket';
+import { useOrderSocket, useSocketStatus, useLivePoll } from '@shared/hooks/useSocket';
 import { selectOrder, setActiveOrder, setWorkerLocation } from '@shared/modules/order/orderSlice';
 import { selectAuth } from '@shared/modules/auth/authSlice';
 
@@ -96,7 +96,7 @@ export default function OrderTrackingPage() {
 
   // Server state
   // Socket delivers real-time state; REST poll is a safety net for missed events.
-  const { data, isLoading, refetch } = useGetOrderQuery(id, { pollingInterval: 30000 });
+  const { data, isLoading, refetch } = useGetOrderQuery(id, { pollingInterval: useLivePoll(30000) });
   const [cancelOrder, { isLoading: cancelling }] = useCancelOrderMutation();
   const [rateOrder] = useRateOrderMutation();
   const liveOrder = useSelector(selectOrder);

@@ -23,6 +23,7 @@ import { API_BASE } from '@shared/services/apiBase';
 import { useSelector } from 'react-redux';
 import { selectAuth } from '@shared/modules/auth/authSlice';
 import { fetchOk } from '@shared/utils/fetchOk';
+import { useLivePoll } from '@shared/hooks/useSocket';
 
 /**
  * Customer view of a repair booking.
@@ -405,7 +406,7 @@ function PaymentNote({ booking }) {
 export default function RepairBookingPage() {
   const { id } = useParams();
   const nav = useNavigate();
-  const { data, isLoading, refetch } = useGetRepairBookingQuery(id, { pollingInterval: 30000 });
+  const { data, isLoading, refetch } = useGetRepairBookingQuery(id, { pollingInterval: useLivePoll(30000) });
   const [cancel] = useCancelRepairBookingMutation();
   const sos = useJobSOS(id);
 

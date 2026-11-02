@@ -44,6 +44,7 @@ import { colors, zappy, ink, slate, success, accent, danger } from '../../theme/
 import { radius } from '../../theme/radius';
 import { spacing } from '../../theme/spacing';
 import { providerPath } from '../paths';
+import { useLivePoll } from '@zappy/core/hooks/useLivePoll';
 
 type Item = { _id: string; type: string; title: string; body?: string; createdAt: string; readAt?: string | null; deepLink?: string; data?: Record<string, unknown> };
 
@@ -64,7 +65,7 @@ export function WorkerNotificationsPage() {
   const router = useRouter();
   const [tab, setTab] = useState('all');
   const [local, setLocal] = useState<Item[] | null>(null);
-  const { data, isLoading, refetch } = useListNotificationsQuery({ page: 1, unreadOnly: false }, { refetchOnMountOrArgChange: true, pollingInterval: 30000 });
+  const { data, isLoading, refetch } = useListNotificationsQuery({ page: 1, unreadOnly: false }, { refetchOnMountOrArgChange: true, pollingInterval: useLivePoll(30000) });
   const [markRead] = useMarkNotificationReadMutation();
   const [markAll, { isLoading: markingAll }] = useMarkAllNotificationsReadMutation();
   const [refreshing, setRefreshing] = useState(false);

@@ -61,12 +61,13 @@ import { ExtrasCard } from '../ExtrasCard';
 import { AssignTechnician } from '../components/AssignTechnician';
 import { QAPanel } from '../components/repair/QAPanel';
 import { rupees, QuoteBuilder } from '../components/repair/QuoteBuilder';
+import { useLivePoll } from '@zappy/core/hooks/useLivePoll';
 
 export function WorkerRepairJobPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { data, isLoading, refetch } = useGetRepairBookingQuery(id, { pollingInterval: 20000 });
+  const { data, isLoading, refetch } = useGetRepairBookingQuery(id, { pollingInterval: useLivePoll(20000) });
   const [transition, { isLoading: moving }] = useTransitionRepairBookingMutation();
   const checkedIn = useCheckInThen();
   const [collectCash, { isLoading: collecting }] = useCollectRepairCashMutation();

@@ -8,6 +8,7 @@ import VoiceSearchButton from '../../components/common/VoiceSearchButton';
 import { jhalarCss } from '@shared/customer/season';
 import FestiveRays from '@shared/components/home/festive/FestiveRays';
 import { prefetchRoute } from '../../lib/routePrefetch';
+import { useLivePoll } from '@shared/hooks/useSocket';
 
 /**
  * The top of Home, the way people already read Blinkit, Zepto and Swiggy:
@@ -22,7 +23,7 @@ import { prefetchRoute } from '../../lib/routePrefetch';
 
 
 function useUnread(isAuthed) {
-  const { data } = useListNotificationsQuery({ page: 1, unreadOnly: true }, { skip: !isAuthed, pollingInterval: 60000 });
+  const { data } = useListNotificationsQuery({ page: 1, unreadOnly: true }, { skip: !isAuthed, pollingInterval: useLivePoll(60000) });
   return data?.unread ?? data?.notifications?.length ?? 0;
 }
 

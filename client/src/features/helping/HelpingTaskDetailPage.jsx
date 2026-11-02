@@ -12,6 +12,7 @@ import { KINDS } from '@shared/customer/jobKinds';
 import { startsAtCustomer } from '@shared/provider/jobFlows';
 import { rebookPath } from '@shared/customer/helpModes';
 import { useJobSOS } from '../tracking/useJobSOS';
+import { useLivePoll } from '@shared/hooks/useSocket';
 
 /**
  * A helping task, tracked live on the shared page (tracking/JobTrackingPage).
@@ -55,7 +56,7 @@ function codeStageFor(t) {
 export default function HelpingTaskDetailPage() {
   const { id } = useParams();
   const nav = useNavigate();
-  const { data, isLoading, refetch } = useGetHelpingTaskQuery(id, { pollingInterval: 30000 });
+  const { data, isLoading, refetch } = useGetHelpingTaskQuery(id, { pollingInterval: useLivePoll(30000) });
   const [respond] = useRespondHelpingApprovalMutation();
   const [cancel] = useCancelHelpingTaskMutation();
   const [rate] = useRateHelpingTaskMutation();

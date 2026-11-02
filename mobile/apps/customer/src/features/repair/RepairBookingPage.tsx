@@ -27,11 +27,12 @@ import { RateRepair } from './booking/RateRepair';
 import { REPAIR_STATUS } from './booking/repairStatusCopy';
 import { RepairWarrantyCard } from './booking/RepairWarrantyCard';
 import { ServiceReport } from './booking/ServiceReport';
+import { useLivePoll } from '@zappy/core/hooks/useLivePoll';
 
 export function RepairBookingPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { data, isLoading, refetch } = useGetRepairBookingQuery(id, { pollingInterval: 30000 });
+  const { data, isLoading, refetch } = useGetRepairBookingQuery(id, { pollingInterval: useLivePoll(30000) });
   const [cancel] = useCancelRepairBookingMutation();
   const sos = useJobSOS(id);
 

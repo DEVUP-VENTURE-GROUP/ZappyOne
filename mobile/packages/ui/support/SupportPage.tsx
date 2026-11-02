@@ -19,6 +19,7 @@ import { spacing } from '../theme/spacing';
 import { NewTicketSheet } from './NewTicketSheet';
 import { StatusBadge } from './StatusBadge';
 import { TOPIC, type Audience } from './ticketMeta';
+import { useLivePoll } from '@zappy/core/hooks/useLivePoll';
 
 const EMAIL = 'support@zappyone.com';
 interface Ticket { _id: string; subject: string; category?: string; status: string; createdAt: string; messages?: unknown[] }
@@ -28,7 +29,7 @@ export function SupportPage({ audience = 'customer', base = '/support', home = '
   const insets = useSafeAreaInsets();
   const t = useT();
   const { ticket } = useLocalSearchParams<{ ticket?: string }>();
-  const { data, isLoading, isFetching, refetch } = useGetMyTicketsQuery(undefined, { pollingInterval: 30000 });
+  const { data, isLoading, isFetching, refetch } = useGetMyTicketsQuery(undefined, { pollingInterval: useLivePoll(30000) });
   const [showNew, setShowNew] = useState(false);
   const tickets: Ticket[] = [...(data?.tickets || [])].sort((a: Ticket, b: Ticket) => Number(b.status === 'waiting_user') - Number(a.status === 'waiting_user'));
   const open = (id: string) => router.push(`${base}/tickets/${id}` as never);

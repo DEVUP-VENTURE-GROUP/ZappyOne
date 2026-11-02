@@ -6,6 +6,7 @@ import { useSelector } from 'react-redux';
 import { selectIsAuthed } from '@shared/modules/auth/authSlice';
 import { prefetchRoute } from '../../lib/routePrefetch';
 import { useT } from '@shared/i18n/I18nProvider';
+import { useLivePoll } from '@shared/hooks/useSocket';
 
 // Five even tabs. Booking starts from Services (or search on Home) like any
 // other destination; no raised button competing with the content above it.
@@ -52,7 +53,7 @@ export default function BottomNav({ active }) {
 
   const { data: notifData } = useListNotificationsQuery(
     { page: 1, unreadOnly: true },
-    { skip: !isAuthed, pollingInterval: 60000 }
+    { skip: !isAuthed, pollingInterval: useLivePoll(60000) }
   );
   const unreadCount = notifData?.notifications?.length || 0;
   // A festival running (Admin → Festive home): the bar wears it lightly.

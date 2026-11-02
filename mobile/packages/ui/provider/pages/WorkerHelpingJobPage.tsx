@@ -51,12 +51,13 @@ import { OnSiteCard } from '../OnSiteCard';
 import { ReturnExecution } from '../components/helping/ReturnExecution';
 import { ShoppingExecution } from '../components/helping/ShoppingExecution';
 import type { Task } from '../components/helping/types';
+import { useLivePoll } from '@zappy/core/hooks/useLivePoll';
 
 export function WorkerHelpingJobPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { data, isLoading, refetch } = useGetHelpingTaskQuery(id, { pollingInterval: 10000 });
+  const { data, isLoading, refetch } = useGetHelpingTaskQuery(id, { pollingInterval: useLivePoll(10000) });
   const [advance] = useAdvanceHelpingStatusMutation();
   const [addProof] = useAddHelpingProofMutation();
   const [complete, { isLoading: completing }] = useCompleteHelpingTaskMutation();

@@ -8,6 +8,7 @@ import { PayNowButton } from '@shared/components/common/PayMethodPicker';
 import JobTrackingPage from '../tracking/JobTrackingPage';
 import { KINDS } from '@shared/customer/jobKinds';
 import { useJobSOS } from '../tracking/useJobSOS';
+import { useLivePoll } from '@shared/hooks/useSocket';
 
 /**
  * A pet booking, tracked live on the shared page (tracking/JobTrackingPage).
@@ -27,7 +28,7 @@ const NOTHING_TO_PAY = ['CANCELLED', 'REFUNDED', 'FAILED', 'EXPIRED', 'REJECTED'
 export default function PetBookingDetailPage() {
   const { id } = useParams();
   const nav = useNavigate();
-  const { data, isLoading, refetch } = useGetPetBookingQuery(id, { pollingInterval: 30000 });
+  const { data, isLoading, refetch } = useGetPetBookingQuery(id, { pollingInterval: useLivePoll(30000) });
   const [cancel] = useCancelPetBookingMutation();
   const [rate] = useRatePetBookingMutation();
   const sos = useJobSOS(id);

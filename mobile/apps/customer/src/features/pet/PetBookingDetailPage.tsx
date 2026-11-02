@@ -15,6 +15,7 @@ import { colors } from '@zappy/ui/theme/colors';
 import { JobTrackingPage } from '../tracking/JobTrackingPage';
 import type { TrackedJob } from '../tracking/types';
 import { useJobSOS } from '../tracking/useJobSOS';
+import { useLivePoll } from '@zappy/core/hooks/useLivePoll';
 
 const STATUS_LABEL: Record<string, string> = {
   REQUESTED: 'Requested', PRICE_PENDING: 'Getting your price', AWAITING_CUSTOMER_APPROVAL: 'Your approval needed',
@@ -28,7 +29,7 @@ export function PetBookingDetailPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const t = useT();
-  const { data, isLoading, refetch } = useGetPetBookingQuery(id, { pollingInterval: 30000 });
+  const { data, isLoading, refetch } = useGetPetBookingQuery(id, { pollingInterval: useLivePoll(30000) });
   const [cancel] = useCancelPetBookingMutation();
   const [rate] = useRatePetBookingMutation();
   const sos = useJobSOS(id);

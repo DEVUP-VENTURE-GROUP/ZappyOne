@@ -51,12 +51,13 @@ import { GiveBackCard } from '../GiveBackCard';
 import { OnSiteCard } from '../OnSiteCard';
 import { ExtrasCard } from '../ExtrasCard';
 import { AssignTechnician } from '../components/AssignTechnician';
+import { useLivePoll } from '@zappy/core/hooks/useLivePoll';
 
 export function WorkerPetJobPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { data, isLoading, refetch } = useGetPetBookingQuery(id, { pollingInterval: 10000 });
+  const { data, isLoading, refetch } = useGetPetBookingQuery(id, { pollingInterval: useLivePoll(10000) });
   const [advance] = useAdvancePetBookingStatusMutation();
   const [addProof] = useAddPetBookingProofMutation();
   const [collectCash, { isLoading: collecting }] = useCollectPetCashMutation();

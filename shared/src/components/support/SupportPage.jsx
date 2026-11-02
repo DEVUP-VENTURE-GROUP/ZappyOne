@@ -10,6 +10,7 @@ import {
   useGetMyTicketsQuery, useGetTicketQuery,
   useCreateTicketMutation, useAddTicketMessageMutation,
 } from '../../services/api';
+import { useLivePoll } from '../../hooks/useSocket';
 
 // Talk to ZappyOne: customers and partners raise help, complaints and feature requests here and chat with the team (server engagement/support-notify).
 const CATEGORIES = {
@@ -61,7 +62,7 @@ const PRIORITY_SLA = { urgent: 1, high: 2, normal: 4, low: 24 };
 
 function TicketThread({ ticketId, onBack }) {
   // Checked every few seconds while open, so replies arrive like a chat.
-  const { data, isLoading, refetch } = useGetTicketQuery(ticketId, { pollingInterval: 8000 });
+  const { data, isLoading, refetch } = useGetTicketQuery(ticketId, { pollingInterval: useLivePoll(8000) });
   const [addMsg, { isLoading: sending }] = useAddTicketMessageMutation();
   const [text, setText] = useState('');
 
@@ -324,7 +325,7 @@ function NewTicketForm({ audience, onClose, onCreated }) {
 export default function SupportPage({ audience = 'customer', backTo = '/profile' }) {
   const nav = useNavigate();
   const [params] = useSearchParams();
-  const { data, isLoading, refetch } = useGetMyTicketsQuery(undefined, { pollingInterval: 30000 });
+  const { data, isLoading, refetch } = useGetMyTicketsQuery(undefined, { pollingInterval: useLivePoll(30000) });
   const [showNew, setShowNew] = useState(false);
   const [activeId, setActiveId] = useState(params.get('ticket'));
 

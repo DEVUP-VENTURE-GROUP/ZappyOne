@@ -20,6 +20,7 @@ import {
   NOTIFICATION_TABS as TABS, NOTIFICATION_TAB_TYPES as TAB_TYPES, timeAgo, groupByDay, notificationPath as deepLinkPath,
   emptyNotificationText,
 } from '../workerNotifications';
+import { useLivePoll } from '../../hooks/useSocket';
 
 /* Worker-specific type → visual config */
 const TYPE_CFG = {
@@ -144,7 +145,7 @@ export default function WorkerNotificationsPage() {
 
   const { data, refetch } = useListNotificationsQuery({ page, unreadOnly: false }, {
     refetchOnMountOrArgChange: true,
-    pollingInterval: 30000,
+    pollingInterval: useLivePoll(30000),
   });
 
   const [markRead]    = useMarkNotificationReadMutation();
