@@ -15,13 +15,19 @@ const optionalAuth = (req, res, next) => {
 };
 
 // Public Catalog & Dynamic Engine APIs
-router.get('/categories', ctrl.listCategories);
+// Admin-managed and the same for everyone, so a page refresh reuses the browser's copy; errors are never cached.
+const publicCache = (req, res, next) => {
+  const json = res.json.bind(res);
+  res.json = (body) => { if (res.statusCode < 400) res.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=600'); return json(body); };
+  next();
+};
+router.get('/categories', publicCache, ctrl.listCategories);
 router.get('/services', ctrl.listServices);
-router.get('/services/brands', ctrl.listBrands);
-router.get('/services/models', ctrl.listModels);
-router.get('/services/variants', ctrl.listVariants);
-router.get('/services/diagnostics/:code', ctrl.getDiagnosticFlow);
-router.get('/services/:code', ctrl.getService);
+router.get('/services/brands', publicCache, ctrl.listBrands);
+router.get('/services/models', publicCache, ctrl.listModels);
+router.get('/services/variants', publicCache, ctrl.listVariants);
+router.get('/services/diagnostics/:code', publicCache, ctrl.getDiagnosticFlow);
+router.get('/services/:code', publicCache, ctrl.getService);
 
 // Demand Analytics
 router.post('/services/demand-event', optionalAuth, ctrl.recordDemandEvent);
