@@ -3,10 +3,11 @@
  *
  *   from     a worker: their live position (fresh while online, worker/presence);
  *            a shop: its pinned address, plus SHOP_PREP_MIN to send someone
- *   travel   close (≤ GOOGLE_KM): Google driving time in current traffic
- *            (maps/google-maps.service, cached ~30 s); further, or with no key
- *            or a failed call: road distance (straight line × ROAD_FACTOR) at
- *            CITY_KMH. Never a blank: the estimate falls back, it does not fail.
+ *   travel   close (≤ GOOGLE_KM): driving time in current traffic, from Mapbox
+ *            (one matrix call for the nearest few, maps/mapbox.service, cached
+ *            60 s) or else Google (maps/google-maps.service); further, or with
+ *            no key or a failed call: road distance (straight line × ROAD_FACTOR)
+ *            at CITY_KMH. Never a blank: the estimate falls back, it does not fail.
  *   busy     a provider finishing another job adds what is left of it.
  *
  *   promise  "10 min" is shown only when the estimate is ≤ PROMISE_MIN
@@ -36,11 +37,21 @@ const kmWithinPromise = (min = PROMISE_MIN) => Math.max(0, ((min - TRAVEL.fixedM
 const roughMinutes = (km, kind = 'worker') => round(((km * ROAD_FACTOR) / CITY_KMH) * 60 + TRAVEL.fixedMin) + (kind === 'shop' ? SHOP_PREP_MIN : 0);
 
 /** Driving minutes from a to b ({ lat, lng }). Google when close and allowed; otherwise a road estimate. */
-async function travel(a, b, { google = true } = {}) {
+const roughTravel = (a, b) => {
   const km = haversineKm(a.lat, a.lng, b.lat, b.lng);
-  const rough = { minutes: round(((km * ROAD_FACTOR) / CITY_KMH) * 60 + 2), km: Math.round(km * 10) / 10, source: 'estimate' };
-  // Tests never call Google (paid, and the network is not theirs to depend on).
-  if (!google || km > GOOGLE_KM || process.env.NODE_ENV === 'test') return rough;
+  return { minutes: round(((km * ROAD_FACTOR) / CITY_KMH) * 60 + 2), km: Math.round(km * 10) / 10, source: 'estimate' };
+};
+// Tests never call a maps provider (paid, and the network is not theirs to depend on).
+const mapsAllowed = () => process.env.NODE_ENV !== 'test';
+const mapbox = () => require('../maps/mapbox.service');
+
+async function travel(a, b, { google = true } = {}) {
+  const rough = roughTravel(a, b);
+  if (!google || rough.km > GOOGLE_KM || !mapsAllowed()) return rough;
+  if (mapbox().configured()) {
+    const [t] = await mapbox().driveTimes([a], b).catch(() => [null]);
+    if (t) return { ...t, source: 'traffic' };
+  }
   try {
     const dm = await require('../maps/google-maps.service').getDistanceMatrix(a.lat, a.lng, b.lat, b.lng);
     return { minutes: round(dm.durationInTrafficSeconds / 60), km: Math.round(dm.distanceMeters / 100) / 10, source: 'traffic' };
@@ -77,8 +88,16 @@ async function forProviders(items, to) {
     if (from) located.push({ p, from, km: haversineKm(from.lat, from.lng, to.lat, to.lng) });
   }));
   located.sort((a, b) => a.km - b.km);
-  await Promise.all(located.map(async ({ p, from }, i) => {
-    const t = await travel(from, to, { google: i < GOOGLE_PER_CALL });
+  // The nearest few in one Mapbox call; anyone it could not route goes the old way.
+  const routed = new Map();
+  if (mapsAllowed() && mapbox().configured()) {
+    const near = located.filter((l) => l.km <= GOOGLE_KM).slice(0, mapbox().MATRIX_MAX_ORIGINS);
+    const times = await mapbox().driveTimes(near.map((l) => l.from), to).catch(() => []);
+    near.forEach((l, i) => { if (times[i]) routed.set(l, { ...times[i], source: 'traffic' }); });
+  }
+  await Promise.all(located.map(async (l, i) => {
+    const { p, from } = l;
+    const t = routed.get(l) || (routed.size ? roughTravel(from, to) : await travel(from, to, { google: i < GOOGLE_PER_CALL }));
     const minutes = t.minutes + (from.prep || 0) + (p.busyMin || 0);
     out.set(`${p.kind}:${p.id}`, { minutes, km: t.km, source: t.source, withinPromise: minutes <= PROMISE_MIN, busy: !!p.busyMin });
   }));

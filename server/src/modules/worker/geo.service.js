@@ -44,6 +44,9 @@ async function flushGeoBuffer() {
     pipe.geoadd(ONLINE_GEO_KEY, lng, lat, wid);
     pipe.zadd(ALIVE_ZSET_KEY, now, wid);
   }
+  // Location-only updates must keep the shared sets alive too, or they expire and every search drops to Mongo.
+  pipe.expire(ONLINE_GEO_KEY, 600);
+  pipe.expire(ALIVE_ZSET_KEY, 600);
   try { await pipe.exec(); } catch { /* dropped batch - next tick refreshes */ }
 }
 
@@ -612,6 +615,7 @@ module.exports = {
   getReadyMeta,
   findReadyCandidates,
   updateLocation,
+  flushGeoBuffer,
   setAvailability,
   findCandidates,
   findNearbyWorkers,

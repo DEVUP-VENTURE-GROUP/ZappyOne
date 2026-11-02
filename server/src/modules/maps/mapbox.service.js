@@ -1,4 +1,4 @@
-// Mapbox geocoding for India: place search, and the area of a pincode or locality as a box; cached in Redis.
+// Mapbox for India: place search, the area of a pincode or locality as a box, and driving times in traffic; cached in Redis.
 const { redis } = require('../../config/redis');
 
 const TOKEN = () => process.env.MAPBOX_TOKEN;
@@ -35,4 +35,32 @@ async function areaOf(text, near = null) {
   return { ...view(f), kind: pin ? 'pincode' : 'locality', key: pin ? text : f.id, name: pin ? (f.context?.find((c) => c.id.startsWith('place') || c.id.startsWith('locality'))?.text || '') : f.text };
 }
 
-module.exports = { configured, search, areaOf };
+// Driving-with-traffic allows 10 points per call: up to 9 origins to one door.
+const MATRIX_MAX_ORIGINS = 9;
+const pt = (p) => `${p.lng.toFixed(5)},${p.lat.toFixed(5)}`;
+
+// Driving minutes and km from each origin to `to`, in one call; null for a pair Mapbox could not route. Cached 60 s on ~100 m cells.
+async function driveTimes(origins, to) {
+  const from = origins.slice(0, MATRIX_MAX_ORIGINS);
+  if (!from.length) return [];
+  const cell = (p) => `${p.lat.toFixed(3)},${p.lng.toFixed(3)}`;
+  const key = `mapbox:eta:${cell(to)}|${from.map(cell).join(';')}`;
+  const cached = await redis.get(key).catch(() => null);
+  if (cached) return JSON.parse(cached);
+  const coords = [...from, to].map(pt).join(';');
+  // Mapbox needs at least two pairs, so a single pro also asks door to door (unused).
+  const sources = (from.length === 1 ? [0, 1] : from.map((_, i) => i)).join(';');
+  const url = `https://api.mapbox.com/directions-matrix/v1/mapbox/driving-traffic/${coords}?sources=${sources}&destinations=${from.length}&annotations=duration,distance&access_token=${TOKEN()}`;
+  const r = await fetch(url, { signal: AbortSignal.timeout(4000) });
+  if (!r.ok) throw Object.assign(new Error(`Route times failed (${r.status})`), { status: 502, code: 'MAPS_FAILED' });
+  const body = await r.json();
+  const out = from.map((_, i) => {
+    const sec = body.durations?.[i]?.[0];
+    const m = body.distances?.[i]?.[0];
+    return sec == null ? null : { minutes: Math.max(1, Math.round(sec / 60)), km: Math.round((m || 0) / 100) / 10 };
+  });
+  await redis.set(key, JSON.stringify(out), 'EX', 60).catch(() => {});
+  return out;
+}
+
+module.exports = { configured, search, areaOf, driveTimes, MATRIX_MAX_ORIGINS };
