@@ -10,6 +10,8 @@ process.env.AWS_S3_BUCKET = 'test';
 process.env.AWS_ACCESS_KEY_ID = 'test';
 process.env.AWS_SECRET_ACCESS_KEY = 'test';
 process.env.ADMIN_LOGIN_SLUG = 'test-admin';
+// Tests change the catalog and read it straight back; the minute cache has its own test.
+process.env.LIVE_CATALOG_CACHE_SEC = '0';
 
 // No test may reach a real sender
 // config/index.js loads the project .env, which carries LIVE SMS keys. A test

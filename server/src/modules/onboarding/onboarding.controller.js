@@ -1,4 +1,5 @@
 const service = require('./onboarding.service');
+const { redis } = require('../../config/redis');
 const coverage = require('./coverage.service');
 const { ProviderEnrolment } = require('./onboarding.model');
 const Shop = require('../shop/shop.model');
@@ -335,9 +336,16 @@ async function liveCatalog(req, res, next) {
     // Every live service, provider or not: customers in a launch region see the
     // whole catalog, and each service says whether anyone is verified for it
     // yet. Whether it can be booked HERE is serviceability's answer.
-    const { domains, lines: offered } = await coverage.loadOfferedLines();
     // An app below a service's UI level would open the wrong screen, so it does not see it; the website is always current.
     const uiLevel = req.get('x-client-type') === 'mobile' ? Number(req.get('x-ui-level')) || 0 : Infinity;
+    // The same for everyone at a UI level, and the heaviest call on Home: built once a minute, not per visit.
+    const cacheSec = Number(process.env.LIVE_CATALOG_CACHE_SEC ?? 60);
+    const cacheKey = `catalog:live:${uiLevel}`;
+    if (cacheSec > 0) {
+      const hit = await redis.get(cacheKey).catch(() => null);
+      if (hit) return res.type('application/json').send(hit);
+    }
+    const { domains, lines: offered } = await coverage.loadOfferedLines();
     const lines = offered.filter((l) => (l.minUiLevel || 0) <= uiLevel);
 
 
@@ -459,7 +467,7 @@ async function liveCatalog(req, res, next) {
 
     // A domain with nothing live in it is not shown — an empty category is a
     // dead end that makes the whole catalog feel broken.
-    res.json({
+    const payload = JSON.stringify({
       domains: domains
         .filter((d) => byDomain.has(d.code))
         .map((d) => ({
@@ -471,6 +479,8 @@ async function liveCatalog(req, res, next) {
           services: byDomain.get(d.code),
         })),
     });
+    if (cacheSec > 0) redis.set(cacheKey, payload, 'EX', cacheSec).catch(() => {});
+    res.type('application/json').send(payload);
   } catch (err) { next(err); }
 }
 
