@@ -25,7 +25,9 @@ function MenuItem({ item, onBook }) {
             {item.minutes && <span className="flex items-center gap-1"><Clock3 size={13} /> about {item.minutes} min</span>}
             {item.quoted && <span>Final price after a look</span>}
           </span>
+          {item.includes?.length > 0 && <span className="mt-1.5 block text-[12.5px] leading-snug text-ink-500">Includes {item.includes.join(' · ')}</span>}
         </span>
+        {item.photoUrl && <img src={item.photoUrl} alt="" loading="lazy" className="h-20 w-20 shrink-0 rounded-btn object-cover sm:h-24 sm:w-24" />}
         {single
           ? <span className="shrink-0 rounded-btn border border-zappy-600 px-4 py-1.5 text-[14px] font-bold text-zappy-700">Book</span>
           : <span className="flex shrink-0 items-center gap-1 rounded-btn border border-line px-3 py-1.5 text-[13.5px] font-semibold text-ink-700">{item.options.length} options <ChevronDown size={15} className={`transition-transform ${open ? 'rotate-180' : ''}`} /></span>}

@@ -95,13 +95,20 @@ test('a provider proposes a missing service with their prices, and approval open
   const { ServiceLineRequest } = require('../src/modules/onboarding/onboarding.model');
   const { Repair } = require('../src/modules/repair/models/repair.model');
   const owner = { kind: 'shop', id: new mongoose.Types.ObjectId(), providerKind: 'shop' };
-  const { request } = await requestLine({ owner: { shopId: owner.id, kind: 'shop', id: owner.id }, providerKind: 'shop', domainCode: 'local_pros', proposedName: 'Tailoring at home', packages: [{ name: 'Hem trousers', minutes: 20, pricePaise: 9900 }, { name: 'Blouse fitting', minutes: 45, pricePaise: 29900 }] });
+  const { request } = await requestLine({ owner: { shopId: owner.id, kind: 'shop', id: owner.id }, providerKind: 'shop', domainCode: 'local_pros', proposedName: 'Tailoring at home', packages: [{ name: 'Hem trousers', minutes: 20, pricePaise: 9900, includes: ['Measure', 'Stitch'], photoKey: 'req/hem.jpg' }, { name: 'Blouse fitting', minutes: 45, pricePaise: 29900 }], photos: ['req/shop.jpg'], serviceModes: ['doorstep'], yearsExperience: 8 });
   expect((await ServiceLineRequest.findById(request._id).lean()).packages).toHaveLength(2);
   let out;
   await lineRequests.approve({ params: { id: String(request._id) }, body: { code: 'tailoring', domainCode: 'local_pros' }, auth: { sub: String(new mongoose.Types.ObjectId()), role: 'admin' }, headers: {}, ip: '127.0.0.1', get: () => '' }, { json: (b) => { out = b; }, status: () => ({ json: (b) => { out = b; } }) }, (e) => { throw e; });
   expect(out.line).toMatchObject({ code: 'tailoring', repairVertical: 'tailoring', status: 'live', customerPath: '/repair/tailoring' });
   expect((await Repair.find({ vertical: 'tailoring' }).lean()).map((r) => r.name).sort()).toEqual(['Blouse fitting', 'Hem trousers']);
   expect(isValid('tailoring')).toBe(true);
+  expect((await Repair.findOne({ vertical: 'tailoring', name: 'Hem trousers' }).lean())).toMatchObject({ includes: ['Measure', 'Stitch'], photoKey: 'req/hem.jpg' });
+  expect((await ServiceLine.findOne({ code: 'tailoring' }).lean()).imageUrl).toBe('req/shop.jpg');
+  // The requester's own menu is ready at their prices, and they are enrolled to finish verification.
+  const { ProviderEnrolment } = require('../src/modules/onboarding/onboarding.model');
+  expect(await ProviderEnrolment.exists({ shopId: owner.id, lineCode: 'tailoring' })).toBeTruthy();
+  const { ProviderPricing } = require('../src/modules/repair/models/pricing.model');
+  expect((await ProviderPricing.find({ shopId: owner.id, vertical: 'tailoring', isActive: true }).lean()).map((p) => p.totalPaise).sort((a, b) => a - b)).toEqual([9900, 29900]);
 });
 
 test('a partner\'s dashboard follows their trades: sections joined, words from their main trade, admin overrides win', async () => {

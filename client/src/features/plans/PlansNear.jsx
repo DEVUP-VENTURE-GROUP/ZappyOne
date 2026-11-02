@@ -95,7 +95,6 @@ export default function PlansNear({ vertical, providerId = null, title = 'Monthl
               <span><span className="text-xl font-extrabold text-[#0F172A]">{rupees(p.pricePaise)}</span><span className="text-[12px] text-slate-500">{p.type === 'monthly' ? '/month' : ''}</span></span>
               {p.type === 'monthly' && <span className="text-[11px] font-bold text-slate-500">{rupees(p.perVisitPaise)} a visit</span>}
             </div>
-            {p.savingsPct ? <p className="mt-1 text-[11px] font-bold text-emerald-700">{p.savingsPct}% less than booking each visit</p> : null}
           </motion.button>
         ))}
       </div>

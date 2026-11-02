@@ -9,31 +9,28 @@
  * the app before sees it on their next visit. Only list what people can use.
  */
 export const RELEASE = {
-  id: '2026-11b',
+  id: '2026-11c',
   /** Accounts created on or after this date start on this release; it is not news to them. */
-  since: '2026-10-30',
+  since: '2026-11-02',
   user: [
-    ['Tracking, redone', 'See who is coming, their photo, how many minutes away, and your start code on one screen.'],
-    ['Share a booking', 'Booked for someone else? Send them a live link so they can follow the job and give the code.'],
-    ['Fix your address', 'Change the address or move the pin before your pro sets off.'],
-    ['Change the time', 'Move a booking made for later right from tracking.'],
-    ['Add a service', 'Need something extra while your pro is on the job? Add it from tracking and pay in cash at the end.'],
-    ['Change who is home', 'Booked for someone else? Change the person your pro meets at the door, any time before the job ends.'],
-    ['Look before you sign in', 'Browse brands, problems and prices first; sign in only when you book.'],
-    ['Late pro, free cancel', 'If your pro misses the promised time, cancelling costs you nothing.'],
+    ['Pay your pro directly', 'When the work is done, pay your pro by UPI or cash from the tracking screen.'],
+    ['Every pro, their own menu', 'Open a pro to see their own jobs, photos, what is included and their prices.'],
+    ['Search every menu near you', 'Search a job and see which pros near you do it, and for how much.'],
+    ['Open now, at home or at their shop', 'Filter the pros for a service by who is open and where the work happens.'],
+    ['A new sign-in', 'A faster, clearer sign-in with your phone number.'],
   ],
   worker: [
-    ['Ask for more time', 'Tell the customer the job needs longer, with a reason, from the job screen.'],
-    ['Safety check', 'On long visits we check you are safe; one tap answers.'],
-    ['Skip a customer', 'After a bad visit, choose not to get jobs from that customer again.'],
-    ['Cash not paid', 'If a customer will not pay cash, report it from the job and we follow up.'],
-    ['Extras added by the customer', 'See what the customer added after booking and the extra cash to collect.'],
+    ['Your own prices', 'Set your own price for every job you do. It is live the moment you save.'],
+    ['Your own menu', 'Keep the sample jobs, add your own with photos and what is included, and change all prices at once.'],
+    ['Pay ZappyOne online', 'Pay what you owe ZappyOne in the app, and never miss a job over the limit.'],
+    ['Ask for a new service', 'Not listed? Send it with your jobs, prices and photos. Once approved, it is your menu.'],
   ],
   shop: [
-    ['Ask for more time', 'Your team can tell the customer a job needs longer, with a reason.'],
-    ['Safety check', 'On long visits we check your technician is safe.'],
-    ['Cash not paid', 'Report a customer who will not pay cash, right from the job.'],
-    ['Extras added by the customer', 'See what the customer added after booking and the extra cash to collect.'],
+    ['Your own menu', 'Keep the sample jobs, add your own with photos and what is included, and change all prices at once.'],
+    ['Several services at once', 'Tick every service you do and send your documents once.'],
+    ['Pay ZappyOne online', 'Pay what you owe ZappyOne in the app, and never miss a job over the limit.'],
+    ['Reminders and alerts', 'Get told when your dues near the limit, when payment lands, and what to finish in your setup.'],
+    ['Ask for a new service', 'Not listed? Send it with your jobs, prices and photos. Once approved, it is your menu.'],
   ],
   // Nothing new for event partners in this release.
   event_partner: [],

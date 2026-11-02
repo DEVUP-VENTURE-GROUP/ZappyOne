@@ -88,4 +88,23 @@ async function adminToken(role = 'super_admin') {
   return signAccessToken({ sub: String(admin._id), role: 'admin', email: admin.email });
 }
 
-module.exports = { startMongo, stopMongo, resetDb, passHandoverGates, adminToken };
+// A provider's own live price for a job: every provider sets theirs, and nothing stands in for a missing one.
+async function ownPrice(owner, { vertical = 'mobile', repairCode, totalPaise, brandCode = null }) {
+  const { ProviderPricing } = require('../src/modules/repair/models/pricing.model');
+  return ProviderPricing.create({ ...owner, vertical, repairCode, brandCode, totalPaise, approvalStatus: 'auto_approved' });
+}
+
+// A verified shop covering a spot with its own price, so a booking any provider may take has a price near the customer.
+async function pricedShopNear({ lng, lat, vertical = 'mobile', lineCode = 'mobile_repair', domainCode = 'electronics', repairCode, totalPaise, phone = `9${Math.floor(100000000 + Math.random() * 899999999)}` }) {
+  const Shop = require('../src/modules/shop/shop.model');
+  const { ProviderServiceArea } = require('../src/modules/repair/models/config.model');
+  const { ProviderEnrolment, ServiceLine } = require('../src/modules/onboarding/onboarding.model');
+  await ServiceLine.updateOne({ code: lineCode }, { $setOnInsert: { code: lineCode, name: lineCode, domainCode, repairVertical: vertical, status: 'live' } }, { upsert: true });
+  const shop = await Shop.create({ businessName: 'Nearby Pricer', ownerName: 'Owner', phone, isActive: true, kyc: { status: 'approved' } });
+  await ProviderEnrolment.create({ providerKind: 'shop', shopId: shop._id, domainCode, lineCode, status: 'approved' });
+  await ProviderServiceArea.create({ shopId: shop._id, cityCode: 'hyderabad', center: { type: 'Point', coordinates: [lng, lat] }, radiusKm: 15, serviceModes: ['doorstep', 'workshop', 'pickup_repair'] });
+  await ownPrice({ shopId: shop._id }, { vertical, repairCode, totalPaise });
+  return shop;
+}
+
+module.exports = { startMongo, stopMongo, resetDb, passHandoverGates, adminToken, ownPrice, pricedShopNear };

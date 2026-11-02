@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import {
   useAdminRepairDashboardQuery,
-  useAdminRepairPendingPricesQuery,
+  useAdminRepairProviderPricesQuery,
   useAdminDecideRepairPriceMutation,
   useAdminRepairCatalogRequestsQuery,
   useAdminRepairIdentificationsQuery,
@@ -282,7 +282,7 @@ const TABS = [
   { id: 'skill-levels', label: 'Skills', icon: ShieldCheck },
   { id: 'qa-checklists', label: 'QA', icon: ClipboardList },
   { id: 'suppliers', label: 'Suppliers', icon: Package },
-  { id: 'pricing', label: 'Price Approvals', icon: IndianRupee },
+  { id: 'pricing', label: 'Provider prices', icon: IndianRupee },
   { id: 'requests', label: 'Customer Requests', icon: Inbox },
   { id: 'bookings', label: 'Bookings', icon: ClipboardList },
   { id: 'config', label: 'Configuration', icon: Settings },
@@ -311,9 +311,8 @@ function Overview({ vertical }) {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
         {[
-          { label: 'Provider prices awaiting review', value: data?.queues?.pendingProviderPrices || 0, tone: 'text-amber-700 bg-amber-50' },
           { label: 'Customer catalog requests', value: data?.queues?.pendingCatalogRequests || 0, tone: 'text-blue-700 bg-blue-50' },
           { label: 'Open warranty claims', value: data?.queues?.openWarrantyClaims || 0, tone: 'text-red-700 bg-red-50' },
         ].map((q) => (
@@ -346,10 +345,10 @@ function Overview({ vertical }) {
   );
 }
 
-/* Provider price approvals (§12/§68) */
+/* Providers' own prices: live the moment they are saved; admin hides one that looks wrong. */
 
-function PriceApprovals({ vertical }) {
-  const { data, isLoading, refetch } = useAdminRepairPendingPricesQuery();
+function ProviderPrices({ vertical }) {
+  const { data, isLoading, refetch } = useAdminRepairProviderPricesQuery(vertical);
   const [decide, { isLoading: deciding }] = useAdminDecideRepairPriceMutation();
 
   if (isLoading) return <PageLoader />;
@@ -358,7 +357,7 @@ function PriceApprovals({ vertical }) {
   async function act(id, decision) {
     try {
       await decide({ id, decision, note: '' }).unwrap();
-      toast.success(decision === 'approve' ? 'Price approved' : 'Price rejected');
+      toast.success(decision === 'approve' ? 'Price is live again' : 'Price hidden from customers');
       refetch();
     } catch (err) { toast.error(err?.data?.error || 'Failed'); }
   }
@@ -366,54 +365,38 @@ function PriceApprovals({ vertical }) {
   return (
     <div className="space-y-3">
       <SectionHeader
-        title="Provider price approvals"
-        subtitle="Each price is judged against the ZappyOne reference band for the same repair, model and quality."
+        title="Provider prices"
+        subtitle="Every provider sets their own price, and it goes live at once. Hide any that looks wrong (a missing zero, a joke price)."
       />
       <Card className="overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-slate-100">
-                <Th>Repair</Th><Th>Model</Th><Th>Quality</Th>
-                <Th>Provider price</Th><Th>ZappyOne reference</Th><Th>Deviation</Th><Th right>Decision</Th>
+                <Th>Provider</Th><Th>Job</Th><Th>Size or model</Th><Th>Quality</Th><Th>Price</Th><Th right>Shown to customers</Th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
               {items.map((row) => {
-                const ref = row.reference?.recommendedPaise;
-                const dev = ref ? ((row.totalPaise - ref) / ref) * 100 : null;
-                const band = dev == null ? 'unknown' : dev <= 15 ? 'green' : dev <= 35 ? 'yellow' : 'red';
-                const bandCls = { green: 'bg-green-100 text-green-700', yellow: 'bg-amber-100 text-amber-700', red: 'bg-red-100 text-red-700', unknown: 'bg-slate-100 text-slate-600' }[band];
+                const hidden = row.approvalStatus === 'rejected';
                 return (
                   <tr key={row._id} className="hover:bg-slate-50/60">
-                    <Td>{row.repairCode}</Td>
-                    <Td muted>{row.modelCode || 'any'}</Td>
+                    <Td>{row.providerName || (row.shopId ? 'Shop' : 'Individual')}</Td>
+                    <Td>{row.jobName || row.repairCode}{row.ownJob && <span className="ml-1.5 rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-500">Their own job</span>}</Td>
+                    <Td muted>{row.modelCode || row.brandCode || 'any'}</Td>
                     <Td muted>{row.qualityCode || 'any'}</Td>
                     <Td><span className="font-semibold">{fmt(row.totalPaise)}</span></Td>
-                    <Td muted>{ref ? fmt(ref) : <span className="text-amber-600">none set</span>}</Td>
-                    <Td>
-                      <span className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-bold ${bandCls}`}>
-                        {dev == null ? 'no reference' : `${dev > 0 ? '+' : ''}${dev.toFixed(1)}%`}
-                      </span>
-                    </Td>
                     <Td right>
-                      <div className="flex items-center gap-1.5 justify-end">
-                        <button onClick={() => act(row._id, 'approve')} disabled={deciding}
-                          className="px-2.5 py-1 rounded-lg bg-green-100 text-green-700 hover:bg-green-200 text-xs font-bold">
-                          Approve
-                        </button>
-                        <button onClick={() => act(row._id, 'reject')} disabled={deciding}
-                          className="px-2.5 py-1 rounded-lg bg-red-50 text-red-700 hover:bg-red-100 text-xs font-bold">
-                          Reject
-                        </button>
-                      </div>
+                      {hidden
+                        ? <button onClick={() => act(row._id, 'approve')} disabled={deciding} className="px-2.5 py-1 rounded-lg bg-green-100 text-green-700 hover:bg-green-200 text-xs font-bold">Show again</button>
+                        : <button onClick={() => act(row._id, 'reject')} disabled={deciding} className="px-2.5 py-1 rounded-lg bg-red-50 text-red-700 hover:bg-red-100 text-xs font-bold">Hide</button>}
                     </Td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
-          {!items.length && <EmptyState message="No prices awaiting review" icon={IndianRupee} />}
+          {!items.length && <EmptyState message="No provider prices for this service yet" icon={IndianRupee} />}
         </div>
       </Card>
     </div>
@@ -801,7 +784,7 @@ export default function RepairVertical({ vertical = 'mobile', label = 'Mobile Re
 
   function renderTab() {
     if (tab === 'overview') return <Overview vertical={vertical} />;
-    if (tab === 'pricing') return <PriceApprovals vertical={vertical} />;
+    if (tab === 'pricing') return <ProviderPrices vertical={vertical} />;
     if (tab === 'requests') return <CatalogRequests vertical={vertical} />;
     if (tab === 'bookings') return <Bookings vertical={vertical} />;
     if (tab === 'config') return <Configuration vertical={vertical} />;

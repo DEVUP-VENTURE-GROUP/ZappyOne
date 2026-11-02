@@ -20,7 +20,7 @@ import { spacing } from '@zappy/ui/theme/spacing';
 import { PlansNear } from '../plans/PlansNear';
 
 interface Option { brandCode: string; typeName: string; totalPaise: number; path: string }
-interface Item { repairCode: string; name: string; minutes: number | null; quoted: boolean; options: Option[]; fromPaise: number }
+interface Item { repairCode: string; name: string; minutes: number | null; quoted: boolean; options: Option[]; fromPaise: number; includes?: string[]; photoUrl?: string | null }
 interface Review { rating: number; text?: string; at?: string }
 const rupees = (p: number) => `₹${Math.round(p / 100).toLocaleString('en-IN')}`;
 const monthYear = (d: string) => new Date(d).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
@@ -47,7 +47,9 @@ function MenuItem({ item, onBook }: { item: Item; onBook: (o: Option) => void })
             {item.minutes ? <><Clock3 size={13} color={ink[500]} /><Text variant="bodySmall" color={ink[500]}>about {item.minutes} min</Text></> : null}
             {item.quoted ? <Text variant="bodySmall" color={ink[500]}>Final price after a look</Text> : null}
           </View>
+          {item.includes?.length ? <Text variant="caption" color={ink[500]}>Includes {item.includes.join(' · ')}</Text> : null}
         </View>
+        {item.photoUrl ? <Image source={{ uri: item.photoUrl }} style={styles.dish} /> : null}
         {single
           ? <View style={styles.book}><Text variant="bodySmall" weight="bold" color={zappy[700]}>Book</Text></View>
           : <View style={styles.more}><Text variant="bodySmall" weight="semibold" color={ink[700]}>{item.options.length} options</Text><ChevronDown size={15} color={ink[700]} style={open ? styles.flip : undefined} /></View>}
@@ -200,6 +202,7 @@ const styles = StyleSheet.create({
   trustIcon: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: slate[100] },
   chips: { gap: spacing.sm },
   menuRow: { paddingVertical: spacing.md, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: slate[300] },
+  dish: { width: 76, height: 76, borderRadius: radius.button, backgroundColor: slate[100] },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   flex: { flex: 1, minWidth: 0, gap: 2 },
   inline: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6 },

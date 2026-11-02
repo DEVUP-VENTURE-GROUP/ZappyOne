@@ -258,7 +258,7 @@ async function fixedPrices(vertical, modelCode, problems, at = {}) {
     DeviceModel.findOne({ code: modelCode }).select('brandCode').lean(),
     Repair.find({ vertical, code: { $in: codes }, pricingMode: 'fixed', isActive: { $ne: false } }).select('code estimatedDurationMin').lean(),
   ]);
-  const prices = await pricingService.referencePriceMap({ vertical, brandCode: model?.brandCode || null, modelCode }, repairs.map((r) => r.code));
+  const prices = await pricingService.nearbyPriceMap({ vertical, brandCode: model?.brandCode || null, modelCode }, repairs.map((r) => r.code), at);
   const out = new Map();
   for (const p of single) {
     const r = repairs.find((x) => x.code === p.candidateRepairCodes[0]);
@@ -284,9 +284,12 @@ async function listProblems(req, res, next) {
       .lean();
 
     // Unpublishing a category hides its problems everywhere, including "popular".
+    // A provider's own menu job is shown only when the customer came from that provider's storefront.
+    const from = /^(shop|worker):[a-f0-9]{24}$/.test(req.query.provider || '') ? req.query.provider : null;
     const filter = {
       vertical: verticalOf(req), isActive: true, isArchived: false,
       categoryCode: { $in: categories.map((c) => c.code) },
+      ownerKey: from ? { $in: [null, from] } : null,
     };
 
     /**
@@ -367,7 +370,7 @@ async function listRepairs(req, res, next) {
     // Add-ons are bought alongside a repair, never returned as one — they would
     // otherwise appear as candidate answers to the customer's problem.
     const filter = {
-      vertical: verticalOf(req), isActive: true, isArchived: false, isAddOn: { $ne: true },
+      vertical: verticalOf(req), isActive: true, isArchived: false, isAddOn: { $ne: true }, owner: null,
     };
     if (req.query.problemCode) filter.problemCodes = req.query.problemCode;
     const repairs = await Repair.find(filter).sort({ displayOrder: 1, name: 1 }).lean();
@@ -407,8 +410,8 @@ async function listAddOns(req, res, next) {
       const provider = (shopId || workerId)
         ? await pricingService.resolveProviderPrice(lineCtx, { shopId, workerId })
         : null;
-      const reference = provider ? null : await pricingService.resolveReferencePrice(lineCtx);
-      const totalPaise = provider?.totalPaise ?? reference?.recommendedPaise ?? null;
+      // Only a chosen provider's own price; nobody else's number is offered.
+      const totalPaise = provider?.totalPaise ?? null;
       if (totalPaise == null) continue;
 
       priced.push({
@@ -416,7 +419,7 @@ async function listAddOns(req, res, next) {
         name: a.name,
         description: a.description || '',
         totalPaise,
-        isEstimate: !provider,
+        isEstimate: false,
         estimatedDurationMin: a.estimatedDurationMin || 0,
         warrantyDays: a.warrantyDays || 0,
       });
@@ -482,7 +485,7 @@ async function submitDiagnostic(req, res, next) {
  */
 async function previewPrice(req, res, next) {
   try {
-    const { repairCode, brandCode, modelCode, qualityCode, serviceMode = 'doorstep', cityCode } = req.query;
+    const { repairCode, brandCode, modelCode, qualityCode, serviceMode = 'doorstep', cityCode, lat, lng } = req.query;
     // An inspection's fee does not depend on a repair; everything else does.
     if (!repairCode && serviceMode !== 'diagnosis_only') return res.status(400).json({ error: 'repairCode is required', code: 'REPAIR_REQUIRED' });
 
@@ -493,7 +496,7 @@ async function previewPrice(req, res, next) {
       serviceMode,
       cityCode: cityCode || null,
     };
-    const reference = repairCode ? await pricingService.resolveReferencePrice(ctx) : null;
+    const reference = repairCode ? await pricingService.nearbyPrice(ctx, { lat, lng, cityCode }) : null;
     const snapshot = await pricingService.buildPriceSnapshot({
       vertical: verticalOf(req), repairCode, referencePrice: reference, serviceMode,
       skipPlatformFee: (await require('../../jobs/member').perks(req.auth?.sub)).waivePlatformFee,

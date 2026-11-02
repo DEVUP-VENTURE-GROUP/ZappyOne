@@ -72,6 +72,7 @@ beforeAll(async () => {
     pricingMode: 'fixed', minSkillLevel: 1, allowedServiceModes: ['doorstep'], warrantyDays: 180,
   });
   await ZappyReferencePricing.create({ vertical: 'mobile', repairCode: 'battery_replacement', minPaise: 150000, recommendedPaise: 200000, maxPaise: 300000 });
+  await require('./helpers').pricedShopNear({ lng: HOME.coordinates[0], lat: HOME.coordinates[1], repairCode: 'battery_replacement', totalPaise: 200000 });
 });
 afterAll(stopMongo);
 

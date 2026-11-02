@@ -59,6 +59,8 @@ const problemSchema = new mongoose.Schema(
      */
     imageUrl: { type: String, default: '' },
     videoUrl: { type: String, default: '' },
+    // `shop:<id>` / `worker:<id>` for a job on one provider's own menu: shown only on that storefront, never in the shared list.
+    ownerKey: { type: String, default: null, index: true },
 
     categoryId: { type: mongoose.Schema.Types.ObjectId, ref: 'ProblemCategory', required: true, index: true },
     categoryCode: { type: String, required: true, lowercase: true, index: true },

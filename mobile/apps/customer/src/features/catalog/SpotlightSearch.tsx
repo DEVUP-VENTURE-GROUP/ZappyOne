@@ -9,8 +9,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Image, Modal, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowLeft, ChevronRight, Clock, Search, Wrench, X } from 'lucide-react-native';
-import { useLazySmartSearchQuery, useSearchTrendingQuery } from '@zappy/core/api';
+import { ArrowLeft, ChevronRight, Clock, Search, Star, Wrench, X } from 'lucide-react-native';
+import { useLazySmartSearchQuery, useMenuSearchQuery, useSearchTrendingQuery } from '@zappy/core/api';
+import { useAppSelector } from '@zappy/core/store/hooks';
 import { addRecent, clearRecent, getRecent } from '@zappy/core/lib/recentSearches';
 import { trackSearch } from '@zappy/core/lib/telemetry';
 import { categoryPhoto, problemPhoto, servicePhoto } from '@zappy/core/shared/problemArt';
@@ -88,6 +89,32 @@ function ProblemGroups({ problems, onOpen, words }: { problems?: Item[]; onOpen:
   );
 }
 
+interface MenuHit { repairCode: string; name: string; vertical: string; fromPaise: number; photoUrl?: string | null; provider: { kind: string; id: string; name: string; rating?: number | null; imageUrl?: string | null; arrivalMinutes?: number | null } }
+const inr = (p: number) => `₹${Math.round(p / 100).toLocaleString('en-IN')}`;
+
+// Matching jobs from the menus of pros near the customer, cheapest first; a tap opens that pro's storefront.
+function MenuHits({ items, onOpen }: { items: MenuHit[]; onOpen: (h: MenuHit) => void }) {
+  return (
+    <View style={styles.section}>
+      <Text variant="caption" weight="semibold" color={ink[500]} style={styles.sectionTitle}>FROM PROS NEAR YOU</Text>
+      {items.map((h) => (
+        <Pressable key={`${h.provider.kind}:${h.provider.id}:${h.repairCode}`} onPress={() => onOpen(h)} android_ripple={RIPPLE} accessibilityRole="button" style={styles.row}>
+          <View style={styles.thumb}>{h.photoUrl || h.provider.imageUrl ? <Image source={{ uri: (h.photoUrl || h.provider.imageUrl) as string }} style={StyleSheet.absoluteFill} /> : <Wrench size={18} color={ink[400]} />}</View>
+          <View style={styles.hitBody}>
+            <Text variant="body" weight="semibold" numberOfLines={1}>{h.name}</Text>
+            <View style={styles.hitMeta}>
+              <Text variant="caption" color={ink[500]} numberOfLines={1}>{h.provider.name}</Text>
+              {h.provider.rating != null ? <><Star size={11} color="#F59E0B" fill="#F59E0B" /><Text variant="caption" color={ink[500]}>{Number(h.provider.rating).toFixed(1)}</Text></> : null}
+              {h.provider.arrivalMinutes != null ? <Text variant="caption" color={ink[500]}>· {h.provider.arrivalMinutes} min away</Text> : null}
+            </View>
+          </View>
+          <Text variant="bodySmall" weight="bold">{inr(h.fromPaise)}</Text>
+        </Pressable>
+      ))}
+    </View>
+  );
+}
+
 export function SpotlightSearch({ open, onClose, lat, lng }: { open: boolean; onClose: () => void; lat?: number; lng?: number }) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -95,6 +122,15 @@ export function SpotlightSearch({ open, onClose, lat, lng }: { open: boolean; on
   const [recent, setRecent] = useState<string[]>([]);
   const [runSearch, state] = useLazySmartSearchQuery();
   const { data: trendData } = useSearchTrendingQuery({ lat, lng }, { skip: !open });
+  // Jobs on the menus of pros near them, once they have typed a little (repair menu-search).
+  const signedIn = useAppSelector((s) => s.auth.isAuthenticated);
+  const [menuTerm, setMenuTerm] = useState('');
+  useEffect(() => { const t = setTimeout(() => setMenuTerm(q.trim()), 350); return () => clearTimeout(t); }, [q]);
+  const { data: menuHits } = useMenuSearchQuery({ q: menuTerm, lat, lng }, { skip: !open || !signedIn || menuTerm.length < 2 || typeof lat !== 'number' });
+  const openMenuHit = (h: MenuHit) => {
+    onClose();
+    router.push({ pathname: '/storefront/[kind]/[id]', params: { kind: h.provider.kind, id: h.provider.id, service: h.vertical, name: h.provider.name } } as never);
+  };
 
   useEffect(() => { if (open) getRecent().then(setRecent); else setQ(''); }, [open]);
 
@@ -174,6 +210,7 @@ export function SpotlightSearch({ open, onClose, lat, lng }: { open: boolean; on
           {data && !data.notHere ? (
             <>
               {data.corrected ? <Text variant="caption" color={ink[500]} style={styles.note}>Showing results for “{data.corrected}”</Text> : null}
+              {menuHits?.items?.length ? <MenuHits items={menuHits.items} onOpen={openMenuHit} /> : null}
               <Group title="Services" items={data.services} onOpen={openResult} words={words} />
               <ProblemGroups problems={data.problems} onOpen={openResult} words={words} />
               <Group title="Browse by type of problem" items={data.categories} onOpen={openResult} words={words} />
@@ -198,6 +235,10 @@ export function SpotlightSearch({ open, onClose, lat, lng }: { open: boolean; on
 
 const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: colors.surface },
+  section: { paddingTop: spacing.md },
+  sectionTitle: { paddingHorizontal: spacing.base, paddingBottom: 4 },
+  hitBody: { flex: 1, minWidth: 0, gap: 2 },
+  hitMeta: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   flex: { flex: 1, minWidth: 0 },
   between: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   bar: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingHorizontal: spacing.md, paddingVertical: spacing.md, borderBottomWidth: 1, borderBottomColor: slate[100] },

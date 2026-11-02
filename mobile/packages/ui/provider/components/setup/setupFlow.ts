@@ -6,7 +6,7 @@
  */
 import { Clock, IndianRupee, MapPin, Store, Wrench, type LucideIcon } from 'lucide-react-native';
 
-export type SetupStep = 'brands' | 'work' | 'area' | 'hours' | 'pricing';
+export type SetupStep = 'menu' | 'brands' | 'work' | 'area' | 'hours' | 'pricing';
 export interface StepDef { key: SetupStep; label: string; Icon: LucideIcon }
 
 const BASE_STEPS: StepDef[] = [
@@ -16,8 +16,15 @@ const BASE_STEPS: StepDef[] = [
   { key: 'pricing', label: 'Prices', Icon: IndianRupee },
 ];
 
+// A fixed-price service is the provider's own menu, then where they work (and a shop's hours).
+const MENU_STEPS: StepDef[] = [
+  { key: 'menu', label: 'Your menu', Icon: IndianRupee },
+  { key: 'area', label: 'Where', Icon: MapPin },
+];
+
 /** A shop states its opening hours; an independent technician has none to state. */
-export function stepsFor(isShop: boolean): StepDef[] {
+export function stepsFor(isShop: boolean, menu = false): StepDef[] {
+  if (menu) return isShop ? [...MENU_STEPS, { key: 'hours', label: 'Timings', Icon: Clock }] : MENU_STEPS;
   if (!isShop) return BASE_STEPS;
   const at = BASE_STEPS.findIndex((s) => s.key === 'pricing');
   return [...BASE_STEPS.slice(0, at), { key: 'hours', label: 'Timings', Icon: Clock }, ...BASE_STEPS.slice(at)];

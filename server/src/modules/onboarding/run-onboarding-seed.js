@@ -98,6 +98,8 @@ async function seedLines() {
         { $set: { customerPath: l.customerPath, tagline: l.tagline || '', isPopular: !!l.isPopular } },
       );
     }
+    // A tagline the seed once wrote with a ZappyOne price is replaced, only while nobody has edited it.
+    if (l.taglineWas) await ServiceLine.updateOne({ code: l.code, tagline: l.taglineWas }, { $set: { tagline: l.tagline } });
   }
   return { total: seed.LINES.length, created };
 }

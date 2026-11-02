@@ -10,7 +10,7 @@ import VisitRow from '../components/PlanVisitRow';
 
 const rupees = (p) => `₹${Math.round((p || 0) / 100).toLocaleString('en-IN')}`;
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-const STATUS = { draft: ['Draft', 'bg-slate-100 text-slate-700'], pending: ['In review', 'bg-amber-100 text-amber-800'], live: ['Live', 'bg-emerald-100 text-emerald-800'], paused: ['Paused', 'bg-slate-200 text-slate-700'], rejected: ['Not approved', 'bg-red-100 text-red-700'] };
+const STATUS = { draft: ['Draft', 'bg-slate-100 text-slate-700'], pending: ['Not live yet', 'bg-amber-100 text-amber-800'], live: ['Live', 'bg-emerald-100 text-emerald-800'], paused: ['Paused', 'bg-slate-200 text-slate-700'], rejected: ['Hidden by ZappyOne', 'bg-red-100 text-red-700'] };
 const errOf = (e) => e?.data?.error || 'That did not go through. Try again.';
 const dayLabel = (d) => new Date(`${d}T12:00:00+05:30`).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
 
@@ -34,7 +34,7 @@ function PlanForm({ services, onClose }) {
       const { plan } = await save(body).unwrap();
       if (andSubmit) {
         const r = await submit(plan._id).unwrap();
-        toast.success(r.plan.status === 'live' ? 'Your plan is live. Customers near you can subscribe now.' : 'Sent to ZappyOne for review.');
+        if (r.plan.status === 'live') toast.success('Your plan is live. Customers near you can subscribe now.');
       } else toast.success('Saved as a draft');
       onClose();
     } catch (e) { toast.error(errOf(e)); }
@@ -153,7 +153,7 @@ export default function ShopPlansPage() {
                 <div className="mt-2 flex gap-2">
                   {p.status === 'live' && <button type="button" onClick={() => setLive({ id: p._id, live: false })} className="btn-secondary text-xs"><Pause size={13} /> Pause</button>}
                   {p.status === 'paused' && <button type="button" onClick={() => setLive({ id: p._id, live: true })} className="btn-secondary text-xs"><Play size={13} /> Resume</button>}
-                  {['draft', 'rejected'].includes(p.status) && <button type="button" onClick={async () => { try { const r = await submit(p._id).unwrap(); toast.success(r.plan.status === 'live' ? 'Live now' : 'Sent for review'); } catch (e) { toast.error(errOf(e)); } }} className="btn-secondary text-xs"><Send size={13} /> Publish</button>}
+                  {['draft', 'pending'].includes(p.status) && <button type="button" onClick={async () => { try { await submit(p._id).unwrap(); toast.success('Live now'); } catch (e) { toast.error(errOf(e)); } }} className="btn-secondary text-xs"><Send size={13} /> Publish</button>}
                 </div>
               </motion.li>
             );

@@ -129,26 +129,42 @@ async function resolveReferencePrice(ctx) {
   };
 }
 
-// One query for a whole list: repairCode -> the most specific reference row's recommended price.
-async function referencePriceMap(ctx, repairCodes) {
-  if (!repairCodes.length) return new Map();
-  const rows = await ZappyReferencePricing.find({ vertical: ctx.vertical, repairCode: { $in: repairCodes }, supersededAt: null, isActive: true }).lean();
-  const byRepair = new Map();
-  for (const r of rows) byRepair.set(r.repairCode, [...(byRepair.get(r.repairCode) || []), r]);
+const LIVE_PRICE = { supersededAt: null, isActive: true, approvalStatus: { $in: ['approved', 'auto_approved'] } };
+
+// Before a provider is chosen the price is the lowest one a verified provider near the customer set: what the card shows and what an any-provider booking charges. No location, or nobody priced, means no price.
+async function nearbyPriceMap(ctx, repairCodes, { lat, lng, pincode = null, cityCode = null } = {}) {
   const out = new Map();
-  for (const [code, list] of byRepair) {
+  if (!repairCodes.length || !Number.isFinite(Number(lat)) || !Number.isFinite(Number(lng))) return out;
+  const found = await require('./matching.service').findServiceableProviders({ lat: Number(lat), lng: Number(lng), pincode, cityCode, serviceMode: ctx.serviceMode || 'doorstep' });
+  const line = await require('../../jobs/kinds').KINDS.repair.line({ vertical: ctx.vertical });
+  const approved = line ? new Set((await require('../../onboarding/eligibility').approvedProviders(line)).map((p) => p.id)) : new Set();
+  const shopIds = [...new Set(found.filter((f) => f.shopId && approved.has(String(f.shopId))).map((f) => String(f.shopId)))];
+  const workerIds = [...new Set(found.filter((f) => !f.shopId && f.workerId && approved.has(String(f.workerId))).map((f) => String(f.workerId)))];
+  if (!shopIds.length && !workerIds.length) return out;
+  const rows = await ProviderPricing.find({
+    ...LIVE_PRICE, vertical: ctx.vertical, repairCode: { $in: repairCodes },
+    $or: [{ shopId: { $in: shopIds } }, { workerId: { $in: workerIds } }],
+  }).lean();
+  const groups = new Map();
+  for (const r of rows) {
+    const key = `${r.repairCode}|${r.shopId || r.workerId}`;
+    groups.set(key, [...(groups.get(key) || []), r]);
+  }
+  for (const list of groups.values()) {
+    const code = list[0].repairCode;
     const row = pickMostSpecific(list, { ...ctx, repairCode: code });
-    if (row) out.set(code, row.recommendedPaise);
+    if (row && (!out.has(code) || row.totalPaise < out.get(code))) out.set(code, row.totalPaise);
   }
   return out;
 }
 
-/*
- * Two supply models. A SHOP sets its own prices (its rows below). An
- * INDIVIDUAL is ZappyOne's own provider and always charges the ZappyOne
- * standard price, the same number the "market price" suggestion shows. Only
- * where no standard is set yet does their own price stand in.
- */
+// One job's nearby price, shaped like a reference so the price build takes it as is.
+async function nearbyPrice(ctx, at) {
+  const paise = (await nearbyPriceMap(ctx, [ctx.repairCode], at)).get(ctx.repairCode);
+  return paise > 0 ? { minPaise: paise, recommendedPaise: paise, maxPaise: paise, partCostPaise: 0, labourPaise: 0, warrantyDays: 0, referencePricingId: null, version: 1, resolutionPath: 'nearby:lowest' } : null;
+}
+
+// Every provider, shop or individual, sets its own prices; only ZappyOne's own salaried staff charge the ZappyOne standard price.
 const PART_GRADES = ['oem', 'premium', 'standard'];
 
 function standardAsProvider(ref) {
@@ -185,10 +201,8 @@ async function standardPriceOptions(ctx) {
 /** A specific provider's bookable price for a job, or null if they have none. */
 async function resolveProviderPrice(ctx, { shopId = null, workerId = null } = {}) {
   if (!shopId && !workerId) return null;
-  if (!shopId) {
+  if (!shopId && await require('../../workforce/staff').isStaff(workerId)) {
     const options = await standardPriceOptions(ctx);
-    // Where ZappyOne has not set a standard yet (most vehicle work today), the
-    // individual's own price stands in until it does.
     if (options.length) return (ctx.qualityCode ? options.find((o) => o.qualityCode === ctx.qualityCode) : null) || options[0];
   }
 
@@ -244,7 +258,7 @@ function shapePrice(row) {
  */
 async function resolveProviderPriceOptions(ctx, { shopId = null, workerId = null } = {}) {
   if (!shopId && !workerId) return [];
-  if (!shopId) {
+  if (!shopId && await require('../../workforce/staff').isStaff(workerId)) {
     const standard = await standardPriceOptions(ctx);
     if (standard.length) return standard;
   }
@@ -597,7 +611,8 @@ module.exports = {
   getConfig,
   invalidateConfigCache,
   resolveReferencePrice,
-  referencePriceMap,
+  nearbyPriceMap,
+  nearbyPrice,
   resolveProviderPrice,
   resolveProviderPriceOptions,
   standardPriceOptions,

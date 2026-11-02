@@ -140,7 +140,8 @@ async function createBooking({
     cityCode: location.cityCode || null,
   };
 
-  const referencePrice = repairCode ? await pricingService.resolveReferencePrice(ctx) : null;
+  const [lng, lat] = location.coordinates;
+  const referencePrice = repairCode && !shopId && !workerId ? await pricingService.nearbyPrice({ vertical, ...ctx }, { lat, lng, cityCode: ctx.cityCode }) : null;
 
   /**
    * The chosen provider's own price, wherever they have one.

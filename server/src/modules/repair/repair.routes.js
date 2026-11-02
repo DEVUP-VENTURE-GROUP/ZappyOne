@@ -56,6 +56,10 @@ router.get('/storefronts', authenticate, requireKnownVertical, validate(Joi.obje
 }), 'query'), async (req, res, next) => {
   try { res.json(await require('./services/storefront.service').listStorefronts(req.query)); } catch (err) { next(err); }
 });
+// One search across every menu near the customer (services/storefront searchMenus).
+router.get('/menu-search', authenticate, validate(Joi.object({ q: Joi.string().trim().min(2).max(60).required(), lat: Joi.number().min(-90).max(90).required(), lng: Joi.number().min(-180).max(180).required() }), 'query'), async (req, res, next) => {
+  try { res.json(await require('./services/storefront.service').searchMenus(req.query)); } catch (err) { next(err); }
+});
 router.get('/storefronts/:kind/:id/menu', authenticate, requireKnownVertical, validate(Joi.object({ vertical: Joi.string().max(40).required() }), 'query'), async (req, res, next) => {
   try {
     const menu = await require('./services/storefront.service').storefrontMenu({ kind: req.params.kind, id: req.params.id, vertical: req.query.vertical });
@@ -588,6 +592,30 @@ router.put(
   })),
   provider.upsertInventory,
 );
+
+// A provider's own menu for a fixed-price service (repair/services/provider-menu).
+const menuSvc = require('./services/provider-menu.service');
+const menuVertical = Joi.string().custom((v, h) => (isValid(v) ? v.toLowerCase() : h.error('any.only'))).required();
+const actorOf = (req) => ({ role: req.auth.role === 'shop' ? 'shop' : 'worker', id: req.auth.sub });
+router.get('/provider/menu', ...providerOnly, validate(Joi.object({ vertical: menuVertical }), 'query'),
+  wrap((req) => menuSvc.menu(menuSvc.ownerFromAuth(req.auth), req.query.vertical)));
+router.put('/provider/menu/item', ...providerOnly,
+  validate(Joi.object({
+    vertical: menuVertical,
+    repairCode: Joi.string().max(80).allow(null, ''),
+    name: Joi.string().trim().max(80).allow(''),
+    includes: Joi.array().items(Joi.string().trim().max(60).allow('')).max(12).default([]),
+    minutes: Joi.number().integer().min(5).max(1440).allow(null),
+    photoKey: Joi.string().max(300).allow(''),
+    prices: Joi.object().pattern(Joi.string().max(60), Joi.number().integer().min(0).max(100000000).allow(null)).default({}),
+  })),
+  wrap((req) => menuSvc.saveItem(menuSvc.ownerFromAuth(req.auth), req.body.vertical, req.body, actorOf(req))));
+router.delete('/provider/menu/item/:code', ...providerOnly, validate(Joi.object({ vertical: menuVertical }), 'query'),
+  wrap((req) => menuSvc.removeItem(menuSvc.ownerFromAuth(req.auth), req.query.vertical, String(req.params.code).toLowerCase())));
+router.post('/provider/menu/adjust', ...providerOnly, validate(Joi.object({ vertical: menuVertical, pct: Joi.number().min(-50).max(100).required() })),
+  wrap((req) => menuSvc.adjustAll(menuSvc.ownerFromAuth(req.auth), req.body.vertical, req.body.pct, actorOf(req))));
+router.post('/provider/menu/samples', ...providerOnly, validate(Joi.object({ vertical: menuVertical })),
+  wrap((req) => menuSvc.useSamples(menuSvc.ownerFromAuth(req.auth), req.body.vertical, actorOf(req))));
 
 router.get('/provider/pricing/reference', ...providerOnly, provider.getReferenceBand);
 router.get('/provider/pricing/suggested', ...providerOnly, provider.suggestedPricing);

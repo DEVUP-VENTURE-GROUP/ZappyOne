@@ -2,7 +2,7 @@
  * Nobody to show for this repair (the website's no-providers card), saying
  * what is actually wrong. Nobody covers the address: GrowingHere. Shops are
  * near but none priced this repair: ask them. Technicians near but offline:
- * book at the standard price for whoever comes online first. Otherwise an
+ * book at the lowest nearby price for whoever comes online first. Otherwise an
  * inspection holds the place.
  */
 import { Image, Pressable, StyleSheet, View } from 'react-native';

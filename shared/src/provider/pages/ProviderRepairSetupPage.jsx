@@ -1,4 +1,5 @@
 import { useScrollTopOnChange } from '../../components/common/ScrollToTop';
+import MenuEditor from '../components/menu/MenuEditor';
 import { partsQuotedSeparately, PARTS_NOTE } from '../../utils/partsRule';
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -28,7 +29,7 @@ import {
   useRequestRepairCatalogAdditionMutation,
   useRepairServiceAreasQuery, useUpsertRepairServiceAreaMutation,
   useRepairProviderPricingQuery, useBulkRepairProviderPricingMutation,
-  useRepairProviderSuggestedPricingQuery, useSetShopWarrantyMutation,
+  useSetShopWarrantyMutation,
   useRepairModelsQuery,
 } from '../../services/api';
 import { useUpdateShopMeMutation } from '../../services/api';
@@ -65,8 +66,15 @@ const BASE_STEPS = [
   { key: 'pricing', label: 'Prices', Icon: IndianRupee },
 ];
 
+// A fixed-price service is the provider's own menu, then where they work (and a shop's hours).
+const MENU_STEPS = [
+  { key: 'menu', label: 'Your menu', Icon: IndianRupee },
+  { key: 'area', label: 'Where', Icon: MapPin },
+];
+
 /** A shop states its opening hours; an independent technician has none to state. */
-function stepsFor(isShop) {
+function stepsFor(isShop, menu = false) {
+  if (menu) return isShop ? [...MENU_STEPS, { key: 'hours', label: 'Timings', Icon: Clock }] : MENU_STEPS;
   if (!isShop) return BASE_STEPS;
   const at = BASE_STEPS.findIndex((s) => s.key === 'pricing');
   return [
@@ -876,47 +884,6 @@ function HoursStep({ profile, onBack, onNext }) {
   );
 }
 
-/* 4a. Prices, for an individual: ZappyOne's standard, nothing to set */
-
-/**
- * Individual providers are ZappyOne's own: customers pay the ZappyOne standard
- * price for their work (shops set their own). Shown so they know what each job
- * pays, never as a sheet to fill.
- */
-function StandardPricesStep({ vertical, onBack, onNext }) {
-  const { data: work } = useRepairWorkCatalogQuery({ vertical });
-  const { data, isLoading } = useRepairProviderSuggestedPricingQuery({ vertical });
-  const names = new Map((work?.groups || []).flatMap((g) => g.repairs).map((r) => [r.code, r.name]));
-  const best = new Map();
-  for (const s of data?.suggestions || []) {
-    const cur = best.get(s.repairCode);
-    if (!cur || s.totalPaise < cur) best.set(s.repairCode, s.totalPaise);
-  }
-  const rows = [...best.entries()].sort((a, b) => (names.get(a[0]) || a[0]).localeCompare(names.get(b[0]) || b[0]));
-  return (
-    <StepShell
-      title="ZappyOne sets your prices"
-      hint="Customers pay the ZappyOne standard price for your work, and you keep it after the 10% platform commission. Nothing to set here."
-      onBack={onBack}
-      onNext={onNext}
-      nextLabel="Finish"
-    >
-      <div className="card divide-y divide-slate-100 p-0">
-        {isLoading && <div className="p-4"><Spinner pad="py-6" /></div>}
-        {!isLoading && !rows.length && (
-          <p className="p-4 text-xs text-slate-500">Standard prices for your work will show here as ZappyOne sets them.</p>
-        )}
-        {rows.map(([code, paise]) => (
-          <div key={code} className="flex items-center justify-between gap-3 px-4 py-2.5">
-            <span className="text-[13px] text-slate-700">{names.get(code) || code}</span>
-            <span className="text-[13px] font-bold tabular-nums text-[#0F172A]">from {rupees(paise)}</span>
-          </div>
-        ))}
-      </div>
-    </StepShell>
-  );
-}
-
 /**
  * The warranty the shop gives, per repair. It rides on every price the shop has
  * for that repair and is what the customer is shown and can claim against.
@@ -1109,7 +1076,7 @@ function PriceRow({
  * set a sensible default once and override only the handsets that differ,
  * instead of typing 150 model sheets before they can take a booking.
  */
-function PricingStep({ vertical, onBack, onNext }) {
+function PricingStep({ vertical, isShop, onBack, onNext }) {
   const { data: verticalList } = useRepairVerticalsQuery();
   const { data: catalog } = useRepairWorkCatalogQuery({ vertical });
   const { data: pricing, isLoading, refetch } = useRepairProviderPricingQuery(vertical);
@@ -1392,7 +1359,7 @@ function PricingStep({ vertical, onBack, onNext }) {
           )}
         </>
       )}
-      {claimed.length > 0 && <WarrantySettings vertical={vertical} claimed={claimed} rows={pricing?.pricing || []} onSaved={refetch} />}
+      {isShop && claimed.length > 0 && <WarrantySettings vertical={vertical} claimed={claimed} rows={pricing?.pricing || []} onSaved={refetch} />}
     </StepShell>
   );
 }
@@ -1460,11 +1427,12 @@ export default function ProviderRepairSetupPage() {
     if (work?.selectedCount) set.add('work');
     if ((areaData?.areas || []).some((a) => a.center?.coordinates?.length === 2 || a.pincodes?.length)) set.add('area');
     if (onboarding?.profile?.hours?.length) set.add('hours');
-    if (priceData?.pricing?.length) set.add('pricing');
+    if (priceData?.pricing?.length) { set.add('pricing'); set.add('menu'); }
     return set;
   }, [brandCodes, work, areaData, priceData, onboarding]);
 
   const go = (next) => { setStep(next); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+  const finish = () => { toast.success("Setup saved - you're ready for jobs"); nav(isShop ? '/shop' : '/worker'); };
 
   // Already set up: open on the prices (what people come back to change), not
   // at step one. Every earlier step is still a tap away in the bar above.
@@ -1472,7 +1440,8 @@ export default function ProviderRepairSetupPage() {
   useEffect(() => {
     if (!work || landed === active) return;
     setLanded(active);
-    if (work.selectedCount && brandCodes?.length !== 0) setStep('pricing');
+    if (work.menu) setStep('menu');
+    else if (work.selectedCount && brandCodes?.length !== 0) setStep('pricing');
   }, [work, active, landed, brandCodes]);
 
   return (
@@ -1510,7 +1479,7 @@ export default function ProviderRepairSetupPage() {
 
           {!other && (
             <div className="mt-2.5">
-              <StepRail steps={stepsFor(isShop)} current={step} done={done} onJump={go} />
+              <StepRail steps={stepsFor(isShop, !!work?.menu)} current={step} done={done} onJump={go} />
             </div>
           )}
         </div>
@@ -1526,7 +1495,8 @@ export default function ProviderRepairSetupPage() {
             exit={{ opacity: 0, x: -12 }}
             transition={{ duration: 0.18 }}
           >
-            {step === 'brands' && brandCodes !== null && (
+            {step === 'menu' && <MenuEditor vertical={active} onNext={() => go('area')} />}
+            {step === 'brands' && brandCodes !== null && !work?.menu && (
               <BrandsStep
                 vertical={active}
                 selected={brandCodes}
@@ -1547,8 +1517,8 @@ export default function ProviderRepairSetupPage() {
               <AreaStep
                 vertical={active}
                 profile={onboarding?.profile}
-                onBack={() => go('work')}
-                onNext={() => go(isShop ? 'hours' : 'pricing')}
+                onBack={() => go(work?.menu ? 'menu' : 'work')}
+                onNext={() => (isShop ? go('hours') : work?.menu ? finish() : go('pricing'))}
                 onCity={setCityCode}
               />
             )}
@@ -1556,27 +1526,15 @@ export default function ProviderRepairSetupPage() {
               <HoursStep
                 profile={onboarding?.profile}
                 onBack={() => go('area')}
-                onNext={() => go('pricing')}
+                onNext={() => (work?.menu ? finish() : go('pricing'))}
               />
             )}
-            {step === 'pricing' && !isShop && (
-              <StandardPricesStep
-                vertical={active}
-                onBack={() => go('area')}
-                onNext={() => {
-                  toast.success("Setup saved - you're ready for jobs");
-                  nav('/worker');
-                }}
-              />
-            )}
-            {step === 'pricing' && isShop && (
+            {step === 'pricing' && (
               <PricingStep
                 vertical={active}
+                isShop={isShop}
                 onBack={() => go(isShop ? 'hours' : 'area')}
-                onNext={() => {
-                  toast.success("Setup saved - you're ready for jobs");
-                  nav(isShop ? '/shop' : '/worker');
-                }}
+                onNext={finish}
               />
             )}
           </motion.div>

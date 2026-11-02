@@ -6,6 +6,7 @@ import {
   ArrowLeft, ChevronRight, Loader2, Check, Clock, AlertTriangle, Upload,
   ShieldCheck, Plus, X, Store, User, FileText, Ban, Camera,
 } from 'lucide-react';
+import PhotoTiles from '../../components/common/PhotoTiles';
 import {
   useProviderOnboardingStatusQuery,
   useProviderDomainsQuery,
@@ -239,28 +240,36 @@ function DomainStep({ onPick }) {
 
 function LineStep({ domain, onPick, onRequest }) {
   const { data, isLoading } = useProviderServiceLinesQuery(domain.code);
-  const [enrol, { isLoading: enrolling }] = useProviderEnrolMutation();
+  const [enrol] = useProviderEnrolMutation();
+  const [picked, setPicked] = useState([]);
+  const [adding, setAdding] = useState(false);
 
   if (isLoading) return <Spinner />;
   const lines = data?.lines || [];
+  const toggle = (code) => setPicked((p) => (p.includes(code) ? p.filter((c) => c !== code) : [...p, code]));
 
-  async function choose(line) {
-    if (line.myStatus) return onPick(line);   // already started — go straight in
-    try {
-      await enrol({ lineCode: line.code }).unwrap();
-      onPick(line);
-    } catch (err) {
-      toast.error(err?.data?.error || 'Could not start that service');
+  async function addPicked() {
+    setAdding(true);
+    const started = [];
+    for (const code of picked) {
+      try { await enrol({ lineCode: code }).unwrap(); started.push(code); } catch (err) { toast.error(err?.data?.error || 'Could not start one of them'); }
     }
+    setAdding(false);
+    if (!started.length) return;
+    if (started.length > 1) toast.success(`${started.length} services added. Your documents carry over to each one.`);
+    onPick(lines.find((l) => l.code === started[0]));
   }
 
   return (
     <Shell>
+      <p className="-mt-1 text-[13px] text-slate-500">Tick every service you do. You send your documents once.</p>
       {lines.map((l) => {
         const live = l.status === 'live';
+        const on = picked.includes(l.code);
+        const go = () => (!live ? null : l.myStatus ? onPick(l) : toggle(l.code));
         return (
-          <button key={l.code} onClick={() => (live ? choose(l) : null)} disabled={!live || enrolling}
-            className={`card w-full text-left transition ${live ? 'hover:ring-2 hover:ring-zappy-100' : 'opacity-70 cursor-default'}`}>
+          <button key={l.code} type="button" onClick={go} disabled={!live || adding} aria-pressed={l.myStatus ? undefined : on}
+            className={`card w-full text-left transition ${!live ? 'cursor-default opacity-70' : on ? 'ring-2 ring-zappy-500' : 'hover:ring-2 hover:ring-zappy-100'}`}>
             <div className="flex items-start justify-between gap-3">
               <Thumb src={pictureOf(l.code, domain.code, l.imageUrl)} />
               <div className="min-w-0 flex-1">
@@ -276,7 +285,9 @@ function LineStep({ domain, onPick, onRequest }) {
                     )}
                 </div>
               </div>
-              {live && <ChevronRight size={16} className="text-slate-300 shrink-0" />}
+              {live && (l.myStatus
+                ? <ChevronRight size={16} className="text-slate-300 shrink-0" />
+                : <span className={`grid h-6 w-6 shrink-0 place-items-center rounded-md border-2 ${on ? 'border-zappy-600 bg-zappy-600 text-white' : 'border-slate-300'}`}>{on && <Check size={14} strokeWidth={3} />}</span>)}
             </div>
           </button>
         );
@@ -286,57 +297,115 @@ function LineStep({ domain, onPick, onRequest }) {
         className="w-full flex items-center justify-center gap-2 text-sm font-semibold text-zappy-600 py-3">
         <Plus size={15} /> My service isn't listed
       </button>
+
+      {picked.length > 0 && (
+        <div className="sticky bottom-0 -mx-4 border-t border-slate-100 bg-white/95 px-4 py-3 backdrop-blur">
+          <button type="button" onClick={addPicked} disabled={adding} className="btn-primary h-12 w-full">
+            {adding ? <Loader2 size={16} className="animate-spin" /> : null}
+            Add {picked.length} service{picked.length === 1 ? '' : 's'}
+          </button>
+        </div>
+      )}
     </Shell>
   );
 }
 
-/** Provider proposes a service we do not carry. Admin reviews it. */
+const blankJob = () => ({ name: '', includes: '', minutes: '', price: '', photos: [] });
+
+// Provider proposes a service we do not carry, with photos and their own jobs and prices; on approval it becomes their menu. Several can be sent one after another.
 function RequestSheet({ domain, onClose }) {
-  const [form, setForm] = useState({ proposedName: '', description: '' });
-  const [jobs, setJobs] = useState([{ name: '', minutes: '', price: '' }]);
+  const [form, setForm] = useState({ proposedName: '', description: '', years: '', modes: ['doorstep'] });
+  const [photos, setPhotos] = useState([]);
+  const [jobs, setJobs] = useState([blankJob()]);
+  const [sent, setSent] = useState(0);
   const [submit, { isLoading }] = useProviderRequestServiceLineMutation();
   const filled = jobs.filter((j) => j.name.trim().length >= 2 && Number(j.minutes) >= 5 && Number(j.price) >= 1);
-  const setJob = (i, k, v) => setJobs((js) => js.map((j, n) => (n === i ? { ...j, [k]: v } : j)));
+  const setJob = (i, k, v) => setJobs((js) => js.map((j, n) => (n === i ? { ...j, [k]: typeof v === 'function' ? v(j[k]) : v } : j)));
+  const toggleMode = (m) => setForm((f) => ({ ...f, modes: f.modes.includes(m) ? f.modes.filter((x) => x !== m) : [...f.modes, m] }));
 
   async function send() {
     try {
-      await submit({ domainCode: domain?.code || '', ...form, packages: filled.map((j) => ({ name: j.name.trim(), minutes: Math.round(Number(j.minutes)), pricePaise: Math.round(Number(j.price) * 100) })) }).unwrap();
-      toast.success("Sent - we'll review it and get back to you.");
-      onClose();
+      await submit({
+        domainCode: domain?.code || '', proposedName: form.proposedName.trim(), description: form.description.trim(),
+        photos, serviceModes: form.modes, yearsExperience: form.years === '' ? null : Number(form.years),
+        packages: filled.map((j) => ({
+          name: j.name.trim(), minutes: Math.round(Number(j.minutes)), pricePaise: Math.round(Number(j.price) * 100),
+          includes: j.includes.split(',').map((x) => x.trim()).filter((x) => x.length >= 2).slice(0, 8), photoKey: j.photos[0] || '',
+        })),
+      }).unwrap();
+      setSent((n) => n + 1);
+      toast.success('Sent. ZappyOne will review it. Add another service, or close.');
+      setForm({ proposedName: '', description: '', years: '', modes: ['doorstep'] });
+      setPhotos([]);
+      setJobs([blankJob()]);
     } catch (err) {
       toast.error(err?.data?.error || 'Could not send that');
     }
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 flex items-end sm:items-center justify-center" onClick={onClose}>
-      <div className="bg-white rounded-t-3xl sm:rounded-3xl w-full sm:max-w-md p-6 space-y-3" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center" onClick={onClose}>
+      <div className="max-h-[92dvh] w-full overflow-y-auto rounded-t-3xl bg-white p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:max-w-lg sm:rounded-3xl" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-bold text-slate-900">Tell us what you do</h3>
-          <button onClick={onClose} className="text-slate-400"><X size={20} /></button>
+          <button onClick={onClose} aria-label="Close" className="text-slate-400"><X size={20} /></button>
         </div>
-        <p className="text-xs text-slate-500 -mt-1 leading-relaxed">
-          Add the jobs you do with your price. Once ZappyOne approves the service, you get verified for it
-          and customers near you can book these jobs.
+        <p className="mt-1 text-xs leading-relaxed text-slate-500">
+          Add your jobs with your prices and photos of your work. Once ZappyOne approves the service, it becomes your menu: finish verification and customers near you can book.
+          {sent > 0 && <span className="ml-1 font-semibold text-emerald-700">{sent} sent so far.</span>}
         </p>
-        <input className="input text-sm w-full" placeholder="Service name (e.g. Smart Watch Repair)"
-          value={form.proposedName} onChange={(e) => setForm((f) => ({ ...f, proposedName: e.target.value }))} />
-        <textarea rows={3}
-          className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-zappy-100 resize-none"
-          placeholder="What exactly do you do, and how long have you done it?"
-          value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
-        <div className="space-y-2">
-          <p className="text-xs font-semibold text-slate-600">Jobs and your prices</p>
-          {jobs.map((j, i) => (
-            <div key={i} className="grid grid-cols-[1fr_64px_76px] gap-2">
-              <input className="input text-sm" placeholder="Job, e.g. Hem trousers" aria-label="Job name" value={j.name} maxLength={80} onChange={(e) => setJob(i, 'name', e.target.value)} />
-              <input className="input text-sm" placeholder="Min" aria-label="Minutes it takes" inputMode="numeric" value={j.minutes} onChange={(e) => setJob(i, 'minutes', e.target.value.replace(/\D/g, ''))} />
-              <input className="input text-sm" placeholder="₹" aria-label="Your price in rupees" inputMode="decimal" value={j.price} onChange={(e) => setJob(i, 'price', e.target.value.replace(/[^\d.]/g, ''))} />
+
+        <div className="mt-4 space-y-4">
+          <input className="input w-full text-sm" placeholder="Service name (e.g. Smart watch repair)" maxLength={120}
+            value={form.proposedName} onChange={(e) => setForm((f) => ({ ...f, proposedName: e.target.value }))} />
+          <textarea rows={3} maxLength={1000}
+            className="w-full resize-none rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-zappy-100"
+            placeholder="What exactly do you do?"
+            value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
+
+          <div>
+            <p className="mb-2 text-xs font-semibold text-slate-600">Photos of your work</p>
+            <PhotoTiles value={photos} onChange={setPhotos} max={6} folder="line-requests" />
+          </div>
+
+          <div className="grid grid-cols-[1fr_auto] items-end gap-3">
+            <div>
+              <p className="mb-2 text-xs font-semibold text-slate-600">Where you do it</p>
+              <div className="flex flex-wrap gap-2">
+                {[['doorstep', "At the customer's place"], ['workshop', 'At my shop']].map(([m, l]) => (
+                  <button key={m} type="button" aria-pressed={form.modes.includes(m)} onClick={() => toggleMode(m)}
+                    className={`rounded-full border px-3 py-1.5 text-[12.5px] font-semibold ${form.modes.includes(m) ? 'border-zappy-500 bg-zappy-50 text-zappy-800' : 'border-slate-200 text-slate-600'}`}>{l}</button>
+                ))}
+              </div>
             </div>
-          ))}
-          {jobs.length < 20 && <button type="button" onClick={() => setJobs((js) => [...js, { name: '', minutes: '', price: '' }])} className="text-xs font-semibold text-zappy-600"><Plus size={12} className="inline" /> Add another job</button>}
+            <label className="block text-xs font-semibold text-slate-600">Years doing it
+              <input className="input mt-1 w-24 text-sm" inputMode="numeric" value={form.years} onChange={(e) => setForm((f) => ({ ...f, years: e.target.value.replace(/\D/g, '').slice(0, 2) }))} placeholder="e.g. 5" />
+            </label>
+          </div>
+
+          <div className="space-y-2">
+            <p className="text-xs font-semibold text-slate-600">Your jobs and prices</p>
+            {jobs.map((j, i) => (
+              <div key={i} className="space-y-2 rounded-2xl border border-slate-200 p-3">
+                <div className="flex gap-2">
+                  <PhotoTiles value={j.photos} onChange={(v) => setJob(i, 'photos', v)} max={1} size="h-16 w-16" label="Photo" folder="line-requests" />
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <input className="input w-full text-sm" placeholder="Job, e.g. Strap replacement" aria-label="Job name" value={j.name} maxLength={80} onChange={(e) => setJob(i, 'name', e.target.value)} />
+                    <div className="grid grid-cols-2 gap-2">
+                      <input className="input text-sm" placeholder="Minutes" aria-label="Minutes it takes" inputMode="numeric" value={j.minutes} onChange={(e) => setJob(i, 'minutes', e.target.value.replace(/\D/g, '').slice(0, 4))} />
+                      <input className="input text-sm" placeholder="Price ₹" aria-label="Your price in rupees" inputMode="numeric" value={j.price} onChange={(e) => setJob(i, 'price', e.target.value.replace(/\D/g, '').slice(0, 6))} />
+                    </div>
+                  </div>
+                  {jobs.length > 1 && <button type="button" onClick={() => setJobs((js) => js.filter((_, n) => n !== i))} aria-label="Remove this job" className="self-start text-slate-400"><X size={16} /></button>}
+                </div>
+                <input className="input w-full text-sm" placeholder="What's included, separated by commas" aria-label="What is included" value={j.includes} maxLength={300} onChange={(e) => setJob(i, 'includes', e.target.value)} />
+              </div>
+            ))}
+            {jobs.length < 20 && <button type="button" onClick={() => setJobs((js) => [...js, blankJob()])} className="text-xs font-semibold text-zappy-600"><Plus size={12} className="inline" /> Add another job</button>}
+          </div>
         </div>
-        <button onClick={send} disabled={isLoading || !form.proposedName.trim()} className="btn-primary w-full">
+
+        <button onClick={send} disabled={isLoading || form.proposedName.trim().length < 2 || !filled.length} className="btn-primary mt-5 w-full">
           {isLoading ? <><Loader2 size={15} className="animate-spin" /> Sending…</> : 'Send request'}
         </button>
       </div>

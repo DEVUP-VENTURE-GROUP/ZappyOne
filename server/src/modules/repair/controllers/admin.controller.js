@@ -519,25 +519,21 @@ const providerPricing = {
     baseFilter: { supersededAt: null },
   }),
 
-  /** Pending queue, enriched with the reference figure the decision hinges on. */
-  pending: async (req, res, next) => {
+  /** Providers' own prices for one service, newest first, with who set them, so admin can hide one that looks wrong. */
+  recent: async (req, res, next) => {
     try {
-      const rows = await ProviderPricing.find({ approvalStatus: 'pending', supersededAt: null })
-        .sort({ createdAt: 1 })
-        .lean();
-
-      const enriched = await Promise.all(rows.map(async (row) => {
-        const ref = await pricingService.resolveReferencePrice({
-          repairCode: row.repairCode, brandCode: row.brandCode, modelCode: row.modelCode,
-          qualityCode: row.qualityCode, serviceMode: row.serviceMode, cityCode: row.cityCode,
-        });
-        return {
-          ...row,
-          reference: ref ? { minPaise: ref.minPaise, recommendedPaise: ref.recommendedPaise, maxPaise: ref.maxPaise } : null,
-        };
-      }));
-
-      res.json({ items: enriched, total: enriched.length });
+      const rows = await ProviderPricing.find({ vertical: verticalOf(req), supersededAt: null, approvalStatus: { $in: ['approved', 'auto_approved', 'pending', 'rejected'] } })
+        .sort({ createdAt: -1 }).limit(300).lean();
+      const shopIds = [...new Set(rows.filter((r) => r.shopId).map((r) => String(r.shopId)))];
+      const workerIds = [...new Set(rows.filter((r) => r.workerId).map((r) => String(r.workerId)))];
+      const [shops, workers] = await Promise.all([
+        require('../../shop/shop.model').find({ _id: { $in: shopIds } }).select('businessName').lean(),
+        require('../../worker/worker.model').find({ _id: { $in: workerIds } }).select('name').lean(),
+      ]);
+      const names = new Map([...shops.map((s) => [String(s._id), s.businessName]), ...workers.map((w) => [String(w._id), w.name])]);
+      const jobs = await Repair.find({ vertical: verticalOf(req), code: { $in: [...new Set(rows.map((r) => r.repairCode))] } }).select('code name owner').lean();
+      const jobOf = new Map(jobs.map((j) => [j.code, j]));
+      res.json({ items: rows.map((r) => ({ ...r, providerName: names.get(String(r.shopId || r.workerId)) || '', jobName: jobOf.get(r.repairCode)?.name || r.repairCode, ownJob: !!jobOf.get(r.repairCode)?.owner })), total: rows.length });
     } catch (err) { next(err); }
   },
 
@@ -716,7 +712,7 @@ const operations = {
        */
       const scope = verticalFilter(verticalOf(req));
 
-      const [byStatus, revenue, pendingPrices, pendingRequests, openClaims] = await Promise.all([
+      const [byStatus, revenue, pendingRequests, openClaims] = await Promise.all([
         RepairBooking.aggregate([
           { $match: scope },
           { $group: { _id: '$status', count: { $sum: 1 } } },
@@ -725,7 +721,6 @@ const operations = {
           { $match: { ...scope, status: 'COMPLETED' } },
           { $group: { _id: null, revenuePaise: { $sum: '$priceSnapshot.totalPaise' }, commissionPaise: { $sum: '$priceSnapshot.commissionPaise' }, count: { $sum: 1 } } },
         ]),
-        ProviderPricing.countDocuments({ ...scope, approvalStatus: 'pending', supersededAt: null }),
         CustomerCatalogRequest.countDocuments({ ...scope, status: 'pending' }),
         RepairWarrantyClaim.countDocuments({ status: { $in: ['submitted', 'under_review'] } }),
       ]);
@@ -735,7 +730,7 @@ const operations = {
         completed: revenue[0]?.count || 0,
         revenuePaise: revenue[0]?.revenuePaise || 0,
         commissionPaise: revenue[0]?.commissionPaise || 0,
-        queues: { pendingProviderPrices: pendingPrices, pendingCatalogRequests: pendingRequests, openWarrantyClaims: openClaims },
+        queues: { pendingCatalogRequests: pendingRequests, openWarrantyClaims: openClaims },
       });
     } catch (err) { next(err); }
   },

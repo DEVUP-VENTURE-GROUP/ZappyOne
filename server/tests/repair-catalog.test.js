@@ -31,7 +31,6 @@ const {
 } = require('../src/modules/repair/models/catalog.model');
 const { Repair } = require('../src/modules/repair/models/repair.model');
 const { QAChecklist, RepairConfig } = require('../src/modules/repair/models/config.model');
-const { ZappyReferencePricing } = require('../src/modules/repair/models/pricing.model');
 const { RepairBooking } = require('../src/modules/repair/models/booking.model');
 const bookingService = require('../src/modules/repair/services/booking.service');
 
@@ -123,12 +122,8 @@ beforeAll(async () => {
     qaChecklistCodes: ['display'],
   });
 
-  // A reference band so the booking below is priceable without a provider.
-  await ZappyReferencePricing.create({
-    vertical: 'laptop', repairCode: 'screen_replacement',
-    minPaise: 450000, recommendedPaise: 620000, maxPaise: 900000,
-    partCostPaise: 480000, labourPaise: 140000, warrantyDays: 90,
-  });
+  // A verified laptop shop nearby with its own price, so the booking below has a price without a provider chosen.
+  await require('./helpers').pricedShopNear({ lng: 78.34, lat: 17.44, vertical: 'laptop', lineCode: 'laptop_repair', repairCode: 'screen_replacement', totalPaise: 620000 });
 
   /* Actors */
   const customer = await User.create({ phone: '9800000001', name: 'Laptop Owner' });

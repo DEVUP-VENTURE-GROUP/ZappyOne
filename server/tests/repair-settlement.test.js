@@ -79,6 +79,7 @@ beforeAll(async () => {
     skills: ['battery_replacement'], kyc: { status: 'approved' },
   });
   workerId = w._id;
+  await require('./helpers').ownPrice({ workerId }, { repairCode: 'battery_replacement', totalPaise: 100000 });
 });
 
 afterAll(async () => { await stopMongo(); });

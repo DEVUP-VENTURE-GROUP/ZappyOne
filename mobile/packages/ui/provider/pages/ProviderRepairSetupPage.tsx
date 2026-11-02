@@ -8,7 +8,7 @@
  * Every approved service has a tab: repairs have these steps; the rest (pet
  * care, helping) need nothing set here, and say so. Nothing is hardcoded:
  * brands, headings and repairs are the rows the customer screens read.
- * An individual is paid ZappyOne's standard prices; a shop sets its own.
+ * Every provider, shop or individual, sets its own prices.
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { BackHandler, Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -26,17 +26,17 @@ import { spacing } from '../../theme/spacing';
 import { AreaStep } from '../components/setup/AreaStep';
 import { BrandsStep } from '../components/setup/BrandsStep';
 import { HoursStep } from '../components/setup/HoursStep';
+import { MenuEditor } from '../components/menu/MenuEditor';
 import { PricingStep } from '../components/setup/PricingStep';
 import { ReadyService } from '../components/setup/ReadyService';
-import { StandardPricesStep } from '../components/setup/StandardPricesStep';
 import { StepRail } from '../components/setup/StepRail';
 import { WorkStep } from '../components/setup/WorkStep';
 import { VERTICAL_LABEL, stepsFor, type SetupStep } from '../components/setup/setupFlow';
 
 interface Enrolment { lineCode: string; status: string; line?: { name?: string; repairVertical?: string } }
 /** The step before each one, for Back and Android's back button. */
-const previousOf = (step: SetupStep, isShop: boolean): SetupStep | undefined =>
-  ({ work: 'brands', area: 'work', hours: 'area', pricing: isShop ? 'hours' : 'area' } as Partial<Record<SetupStep, SetupStep>>)[step];
+const previousOf = (step: SetupStep, isShop: boolean, menu: boolean): SetupStep | undefined =>
+  ((menu ? { area: 'menu', hours: 'area' } : { work: 'brands', area: 'work', hours: 'area', pricing: isShop ? 'hours' : 'area' }) as Partial<Record<SetupStep, SetupStep>>)[step];
 
 export function ProviderRepairSetupPage() {
   const router = useRouter();
@@ -72,7 +72,8 @@ export function ProviderRepairSetupPage() {
   useEffect(() => {
     if (!work || landed === active) return;
     setLanded(active);
-    if (work.selectedCount && brandCodes?.length !== 0) setStep('pricing');
+    if (work.menu) setStep('menu');
+    else if (work.selectedCount && brandCodes?.length !== 0) setStep('pricing');
   }, [work, active, landed, brandCodes]);
 
   const done = useMemo(() => {
@@ -81,7 +82,7 @@ export function ProviderRepairSetupPage() {
     if (work?.selectedCount) set.add('work');
     if ((areaData?.areas || []).some((a: { center?: { coordinates?: number[] }; pincodes?: string[] }) => a.center?.coordinates?.length === 2 || a.pincodes?.length)) set.add('area');
     if (onboarding?.profile?.hours?.length) set.add('hours');
-    if (priceData?.pricing?.length) set.add('pricing');
+    if (priceData?.pricing?.length) { set.add('pricing'); set.add('menu'); }
     return set;
   }, [brandCodes, work, areaData, priceData, onboarding]);
 
@@ -91,12 +92,12 @@ export function ProviderRepairSetupPage() {
   // Android back steps back through the setup before leaving it.
   useFocusEffect(useCallback(() => {
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
-      const prev = !other ? previousOf(step, isShop) : undefined;
+      const prev = !other ? previousOf(step, isShop, !!work?.menu) : undefined;
       if (prev) setStep(prev); else leave();
       return true;
     });
     return () => sub.remove();
-  }, [step, other, isShop, leave]));
+  }, [step, other, isShop, leave, work?.menu]));
 
   function switchTab(t: string) { setTab(t); setBrandCodes(null); setStep('brands'); }
 
@@ -122,18 +123,18 @@ export function ProviderRepairSetupPage() {
             ))}
           </ScrollView>
         ) : null}
-        {!other ? <StepRail steps={stepsFor(isShop)} current={step} done={done} onJump={setStep} /> : null}
+        {!other ? <StepRail steps={stepsFor(isShop, !!work?.menu)} current={step} done={done} onJump={setStep} /> : null}
       </View>
 
       <View style={styles.flex}>
         {other ? <ReadyService name={other.name} isShop={isShop} onHours={() => router.push((isShop ? '/shop/profile' : '/worker/hours') as never)} /> : !active ? null : (
           <>
-            {step === 'brands' && brandCodes !== null ? <BrandsStep key={active} vertical={active} selected={brandCodes} onChange={setBrandCodes} onNext={() => setStep('work')} /> : null}
+            {step === 'menu' ? <MenuEditor key={active} vertical={active} onNext={() => setStep('area')} /> : null}
+            {step === 'brands' && brandCodes !== null && !work?.menu ? <BrandsStep key={active} vertical={active} selected={brandCodes} onChange={setBrandCodes} onNext={() => setStep('work')} /> : null}
             {step === 'work' ? <WorkStep key={active} vertical={active} cityCode={cityCode} brandCodes={brandCodes || []} onBack={() => setStep('brands')} onNext={() => setStep('area')} /> : null}
-            {step === 'area' ? <AreaStep key={active} vertical={active} profile={onboarding?.profile} onBack={() => setStep('work')} onNext={() => setStep(isShop ? 'hours' : 'pricing')} onCity={setCityCode} /> : null}
-            {step === 'hours' && isShop ? <HoursStep profile={onboarding?.profile} onBack={() => setStep('area')} onNext={() => setStep('pricing')} /> : null}
-            {step === 'pricing' && !isShop ? <StandardPricesStep key={active} vertical={active} onBack={() => setStep('area')} onNext={finish} /> : null}
-            {step === 'pricing' && isShop ? <PricingStep key={active} vertical={active} onBack={() => setStep('hours')} onNext={finish} /> : null}
+            {step === 'area' ? <AreaStep key={active} vertical={active} profile={onboarding?.profile} onBack={() => setStep(work?.menu ? 'menu' : 'work')} onNext={() => (isShop ? setStep('hours') : work?.menu ? finish() : setStep('pricing'))} onCity={setCityCode} /> : null}
+            {step === 'hours' && isShop ? <HoursStep profile={onboarding?.profile} onBack={() => setStep('area')} onNext={() => (work?.menu ? finish() : setStep('pricing'))} /> : null}
+            {step === 'pricing' ? <PricingStep key={active} vertical={active} isShop={isShop} onBack={() => setStep(isShop ? 'hours' : 'area')} onNext={finish} /> : null}
           </>
         )}
       </View>

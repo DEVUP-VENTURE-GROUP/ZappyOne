@@ -27,7 +27,7 @@ import {
 } from './priceSheet';
 import { uniqueRepairs, type RepairGroup } from './workSelection';
 
-export function PricingStep({ vertical, onBack, onNext }: { vertical: string; onBack: () => void; onNext: () => void }) {
+export function PricingStep({ vertical, isShop, onBack, onNext }: { vertical: string; isShop: boolean; onBack: () => void; onNext: () => void }) {
   const { data: catalog } = useRepairWorkCatalogQuery({ vertical });
   const { data: pricingData, isLoading, refetch } = useRepairProviderPricingQuery(vertical);
   const [bulkSave, { isLoading: saving }] = useBulkRepairProviderPricingMutation();
@@ -151,7 +151,7 @@ export function PricingStep({ vertical, onBack, onNext }: { vertical: string; on
           <Text variant="caption" color={ink[400]} style={styles.center}>Model not listed? Set the brand price above: it covers every model, including ones we have not added yet.</Text>
         </>
       )}
-      {claimed.length ? <WarrantySettings vertical={vertical} claimed={claimed} rows={pricing} onSaved={refetch} /> : null}
+      {isShop && claimed.length ? <WarrantySettings vertical={vertical} claimed={claimed} rows={pricing} onSaved={refetch} /> : null}
     </StepShell>
   );
 }

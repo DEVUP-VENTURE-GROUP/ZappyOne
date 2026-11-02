@@ -56,11 +56,11 @@ router.post('/provider/visits/:id/start', ...providerOnly, validate(Joi.object({
 router.post('/provider/visits/:id/complete', ...providerOnly, validate(Joi.object({ photoKeys: Joi.array().items(Joi.string().max(300)).min(1).max(6).required(), note: Joi.string().trim().max(500).allow('') })),
   run(async (req) => ({ visit: await svc.completeVisit(owner(req), req.params.id, req.body) })));
 
-// Admin: plans outside the price band, and the plan money rules.
-adminRouter.get('/pending', run(async () => ({ items: await svc.pending() })));
-adminRouter.post('/:id/review', validate(Joi.object({ approve: Joi.boolean().required(), note: Joi.string().trim().max(300).allow('') })), run(async (req) => ({ plan: await svc.reviewPlan(req.params.id, req.body.approve, req.body.note) })));
+// Admin: every partner plan, to hide one that looks wrong, and the plan money rules.
+adminRouter.get('/', run(async () => ({ items: await svc.forAdmin() })));
+adminRouter.post('/:id/hidden', validate(Joi.object({ hidden: Joi.boolean().required(), note: Joi.string().trim().max(300).allow('') })), run(async (req) => ({ plan: await svc.setPlanHidden(req.params.id, req.body.hidden, req.body.note) })));
 adminRouter.get('/config', run(async () => ({ config: await svc.config() })));
-adminRouter.put('/config', validate(Joi.object({ platformFeePaise: Joi.number().integer().min(0).max(100000), autoApproveMinPct: Joi.number().min(0).max(100), autoApproveMaxPct: Joi.number().min(100).max(300), bookAheadDays: Joi.number().integer().min(1).max(30) }).min(1)),
+adminRouter.put('/config', validate(Joi.object({ platformFeePaise: Joi.number().integer().min(0).max(100000), bookAheadDays: Joi.number().integer().min(1).max(30) }).min(1)),
   run(async (req) => ({ config: await svc.setConfig(req.body) })));
 
 module.exports = router;

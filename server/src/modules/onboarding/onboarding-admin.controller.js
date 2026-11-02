@@ -1,6 +1,32 @@
 const {
   ServiceDomain, ServiceLine, KycRequirementSet, ProviderEnrolment, ServiceLineRequest,
 } = require('./onboarding.model');
+// What the provider sent rides into the new service: each job's included items and photo, the service photo, and the requester's own menu at their prices, enrolled to finish verification.
+async function carryRequestOver(reqDoc, line, offered, slug) {
+  const { Repair } = require('../repair/models/repair.model');
+  const prefix = (line.repairVertical || line.code).split('_').map((w) => w.slice(0, 3)).join('').slice(0, 8);
+  for (const [i, p] of offered.entries()) {
+    const code = `${prefix}_${p.code || `${slug(p.name)}_${i + 1}`.slice(0, 30)}`;
+    const src = (reqDoc.packages || []).find((x) => x.name === p.name) || p;
+    await Repair.updateOne({ vertical: line.repairVertical, code }, { $set: { includes: src.includes || [], photoKey: src.photoKey || '' } });
+  }
+  if (reqDoc.photos?.[0]) await ServiceLine.updateOne({ code: line.code, imageUrl: { $in: ['', null] } }, { $set: { imageUrl: reqDoc.photos[0] } });
+  if (line.status !== 'live' || !line.repairVertical) return;
+  const owner = reqDoc.shopId ? { shopId: reqDoc.shopId, workerId: null } : { shopId: null, workerId: reqDoc.workerId };
+  try {
+    await require('./onboarding.service').enrol({ owner: { kind: reqDoc.shopId ? 'shop' : 'worker', id: reqDoc.shopId || reqDoc.workerId }, providerKind: reqDoc.providerKind, lineCode: line.code });
+    await require('../repair/services/provider-menu.service').useSamples(owner, line.repairVertical, { role: reqDoc.shopId ? 'shop' : 'worker', id: String(reqDoc.shopId || reqDoc.workerId) });
+  } catch (e) {
+    require('../../core/logger').warn({ err: e.message, line: line.code }, '[line-request] could not set up the requester');
+  }
+  require('../notification/notification.service').notify({
+    recipient: reqDoc.shopId ? { kind: 'shop', id: reqDoc.shopId } : { kind: 'worker', id: reqDoc.workerId },
+    type: 'report_received', title: `${line.name} is approved`,
+    body: 'Your jobs and prices are on your menu. Finish verification for this service to start getting bookings.',
+    deepLink: '/provider/onboarding',
+  }).catch(() => {});
+}
+
 const { getViewUrl } = require('../../core/storage/s3');
 const service = require('./onboarding.service');
 const Shop = require('../shop/shop.model');
@@ -351,11 +377,23 @@ const enrolments = {
 
 /* Provider-proposed services */
 
+const listLineRequests = listHandler(ServiceLineRequest, {
+  searchFields: ['proposedName', 'description'],
+  defaultSort: { status: 1, requestCount: -1, createdAt: -1 },
+});
+const signed = (key) => (key ? require('../../core/storage/s3').signMedia(key).catch(() => null) : null);
 const lineRequests = {
-  list: listHandler(ServiceLineRequest, {
-    searchFields: ['proposedName', 'description'],
-    defaultSort: { status: 1, requestCount: -1, createdAt: -1 },
-  }),
+  // With the provider's photos signed so admin can judge the work.
+  list: (req, res, next) => listLineRequests(req, { json: async (body) => {
+    try {
+      const items = await Promise.all((body.items || []).map(async (r) => ({
+        ...r,
+        photoUrls: (await Promise.all((r.photos || []).map(signed))).filter(Boolean),
+        packages: await Promise.all((r.packages || []).map(async (p) => ({ ...p, photoUrl: await signed(p.photoKey) }))),
+      })));
+      res.json({ ...body, items });
+    } catch (err) { next(err); }
+  } }, next),
 
   /**
    * Approving a request creates the real line, so the provider who asked can
@@ -380,6 +418,7 @@ const lineRequests = {
           code: String(code).toLowerCase(), name: name || reqDoc.proposedName, domainCode: String(domainCode).toLowerCase(), description: reqDoc.description,
           typeWord: req.body.typeWord || '', types: req.body.types, thing: req.body.thing || 'job',
           packages: offered.map((p, i) => ({ code: p.code || `${slug(p.name)}_${i + 1}`.slice(0, 30), name: p.name, minutes: p.minutes, prices: p.prices || { one: Math.round((p.pricePaise || 0) / 100) } })),
+          modes: reqDoc.serviceModes?.length ? reqDoc.serviceModes : undefined,
         })
         : await ServiceLine.create({
           code: String(code).toLowerCase(),
@@ -389,6 +428,8 @@ const lineRequests = {
           status,
           repairVertical,
         });
+
+      if (offered.length) await carryRequestOver(reqDoc, line, offered, slug);
 
       reqDoc.status = 'approved';
       reqDoc.resultLineCode = line.code;

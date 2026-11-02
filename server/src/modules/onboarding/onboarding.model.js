@@ -319,7 +319,11 @@ const serviceLineRequestSchema = new mongoose.Schema(
     proposedName: { type: String, required: true, trim: true, maxlength: 120 },
     description: { type: String, default: '', maxlength: 1000 },
     // What the provider would offer: package name, how long it takes and their price; admin turns it into a bookable line on approval.
-    packages: { type: [{ _id: false, name: String, minutes: Number, pricePaise: Number }], default: [] },
+    packages: { type: [{ _id: false, name: String, minutes: Number, pricePaise: Number, includes: [String], photoKey: String }], default: [] },
+    // Photos of the provider's work, where they do it and for how long: what admin judges the request on.
+    photos: { type: [String], default: [] },
+    serviceModes: { type: [String], default: [] },
+    yearsExperience: { type: Number, default: null },
     /** How many providers asked for the same thing — demand, not noise. */
     requestCount: { type: Number, default: 1 },
 

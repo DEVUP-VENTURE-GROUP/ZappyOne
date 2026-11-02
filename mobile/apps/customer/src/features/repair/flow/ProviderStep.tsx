@@ -52,7 +52,7 @@ export function ProviderStep({ vertical, diagnosis, model, brand, configuration,
   });
   const result = data as (ProvidersResult & { providers?: Provider[]; recommended?: Provider }) | undefined;
   const providers = result?.providers || [];
-  const { data: standard } = useRepairPricePreviewQuery({ vertical, repairCode, brandCode: brand?.code, modelCode: model?.code, serviceMode }, { skip: !!providers.length || !result || !repairCode });
+  const { data: standard } = useRepairPricePreviewQuery({ vertical, repairCode, brandCode: brand?.code, modelCode: model?.code, serviceMode, lat: location?.lat, lng: location?.lng }, { skip: !!providers.length || !result || !repairCode });
   const standardPaise = standard?.reference && standard?.estimate?.totalPaise > 0 ? standard.estimate.totalPaise as number : null;
   // From a storefront menu (?provider=shop:<id>): that provider is chosen once the list confirms they can take it here.
   const { provider: wanted } = useLocalSearchParams<{ provider?: string }>();

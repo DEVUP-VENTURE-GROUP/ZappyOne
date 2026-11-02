@@ -36,6 +36,7 @@ beforeAll(async () => {
     vertical: 'mobile', repairCode: 'battery_replacement',
     minPaise: 150000, recommendedPaise: 200000, maxPaise: 300000,
   });
+  await require('./helpers').ownPrice({ workerId }, { repairCode: 'battery_replacement', totalPaise: 200000 });
 });
 
 afterAll(async () => { await stopMongo(); });

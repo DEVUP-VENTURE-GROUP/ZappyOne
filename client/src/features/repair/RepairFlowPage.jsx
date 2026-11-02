@@ -611,8 +611,12 @@ function ProblemStep({ vertical, model, productType, fuelType, presetCode, onPic
    * what is actually wrong. The model's own type is preferred over the step the
    * customer picked — the catalog knows better than the tap did.
    */
+  // From a storefront, that provider's own menu jobs are listed too.
+  const [fromQs] = useSearchParams();
+  const fromProvider = fromQs.get('provider');
   const { data, isLoading } = useRepairProblemsQuery({
     vertical,
+    ...(fromProvider && { provider: fromProvider }),
     modelCode: model.code,
     productTypeCode: model.productTypeCode || productType?.code,
     // An EV owner is never asked about spark plugs, a petrol owner never about
@@ -988,9 +992,9 @@ function ProviderStep({
 
   /*
    * Technicians cover this address but none is online right now. Instead of a
-   * dead end, the customer can book at ZappyOne's standard price: the job is
-   * offered to whoever comes online first (jobs/waves), and they are told the
-   * moment someone accepts. Only when a standard price exists for the repair.
+   * dead end, the customer can book at the lowest price a provider near them
+   * set: the job is offered to whoever comes online first (jobs/waves), and
+   * they are told the moment someone accepts. Only when someone nearby priced it.
    */
   const allOffline = !data?.providers?.length && (data?.nearbyCount || 0) > 0 && data?.primaryReason === 'offline';
 
@@ -1010,7 +1014,7 @@ function ProviderStep({
     }
   }
   const { data: standard } = useRepairPricePreviewQuery(
-    { vertical, repairCode, brandCode: brand?.code, modelCode: model?.code, serviceMode },
+    { vertical, repairCode, brandCode: brand?.code, modelCode: model?.code, serviceMode, lat: location?.lat, lng: location?.lng },
     { skip: !!data?.providers?.length || !data || !repairCode },
   );
   const standardPaise = standard?.reference && standard?.estimate?.totalPaise > 0 ? standard.estimate.totalPaise : null;
