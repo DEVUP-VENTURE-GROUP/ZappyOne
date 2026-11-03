@@ -20,11 +20,29 @@ router.get('/themes/:id',    c.getTheme);
 // Auth-required user routes
 router.post('/themes/:id/save', authenticate, c.toggleSave);
 router.get('/saved',             authenticate, c.getSaved);
-router.post('/bookings',         authenticate, requireRole('user'), c.createBooking);
+// What a booking may carry; anything else (a userId, a price) is dropped before it reaches the service.
+const objectId = Joi.string().hex().length(24);
+router.post('/bookings', authenticate, requireRole('user'), validate(Joi.object({
+  themeId: objectId.required(),
+  eventDate: Joi.date().iso().required(),
+  eventTimeSlot: Joi.string().trim().min(1).max(40).required(),
+  address: Joi.object({
+    line1: Joi.string().trim().min(3).max(300).required(),
+    city: Joi.string().trim().max(80).allow(''),
+    // A map lookup fills this and is not always six digits, so only its size is bounded.
+    pincode: Joi.string().trim().max(10).allow(''),
+    landmark: Joi.string().trim().max(200).allow(''),
+    lat: Joi.number().min(-90).max(90),
+    lng: Joi.number().min(-180).max(180),
+  }).required(),
+  guestCount: Joi.number().integer().min(1).max(5000).default(1),
+  notes: Joi.string().trim().max(1000).allow(''),
+  roomPhotos: Joi.array().items(Joi.string().max(300)).max(10).default([]),
+})), c.createBooking);
 router.get('/bookings',          authenticate, requireRole('user'), c.getBookings);
 router.get('/bookings/:id',      authenticate, requireRole('user'), c.getBooking);
-router.post('/bookings/:id/cancel',              authenticate, requireRole('user'), c.cancelBooking);
-router.post('/bookings/:id/review',              authenticate, requireRole('user'), c.submitReview);
+router.post('/bookings/:id/cancel', authenticate, requireRole('user'), validate(Joi.object({ reason: Joi.string().trim().max(300).allow('') })), c.cancelBooking);
+router.post('/bookings/:id/review', authenticate, requireRole('user'), validate(Joi.object({ rating: Joi.number().integer().min(1).max(5).required(), review: Joi.string().trim().max(1000).allow('') })), c.submitReview);
 // Payment routes
 router.post('/bookings/:id/pay/advance',         authenticate, requireRole('user'), ep.createAdvanceOrder);
 router.post('/bookings/:id/pay/advance/verify',  authenticate, requireRole('user'), ep.verifyAdvancePayment);

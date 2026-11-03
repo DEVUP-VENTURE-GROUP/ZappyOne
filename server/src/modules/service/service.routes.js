@@ -1,4 +1,7 @@
 const express = require('express');
+const Joi = require('joi');
+const { validate } = require('../../middlewares/validate');
+const { makeLimiter } = require('../../middlewares/rateLimit');
 const ctrl = require('./service.controller');
 const { authenticate, requireRole } = require('../../middlewares/auth');
 const { verifyToken } = require('../auth/auth.service');
@@ -30,7 +33,14 @@ router.get('/services/diagnostics/:code', publicCache, ctrl.getDiagnosticFlow);
 router.get('/services/:code', publicCache, ctrl.getService);
 
 // Demand Analytics
-router.post('/services/demand-event', optionalAuth, ctrl.recordDemandEvent);
+// Open to signed-out visitors, so bounded in size and rate.
+const demandLimiter = makeLimiter({ windowMs: 60_000, max: 20, prefix: 'demand' });
+router.post('/services/demand-event', demandLimiter, optionalAuth, validate(Joi.object({
+  cityCode: Joi.string().trim().max(40).allow(''), pincode: Joi.string().trim().max(10).allow(''),
+  category: Joi.string().trim().max(40).allow(''), brandName: Joi.string().trim().max(80).allow(''),
+  modelName: Joi.string().trim().max(120).allow(''), requestedService: Joi.string().trim().max(120).allow(''),
+  reason: Joi.string().trim().max(40).allow(''), customerNote: Joi.string().trim().max(500).allow(''),
+})), ctrl.recordDemandEvent);
 
 // Invoices & Heatmaps
 router.get('/invoices/:orderId', authenticate, ctrl.getInvoice);

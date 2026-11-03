@@ -35,7 +35,8 @@ async function getSaved(req, res, next) {
 
 async function createBooking(req, res, next) {
   try {
-    const result = await svc.createBooking({ userId: req.auth.sub, ...req.body });
+    // The signed-in customer last, so nothing in the body can book as someone else.
+    const result = await svc.createBooking({ ...req.body, userId: req.auth.sub });
     res.status(201).json(result);
   } catch (e) { next(e); }
 }
