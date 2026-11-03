@@ -29,7 +29,9 @@ import {
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
+  withDelay,
   withRepeat,
+  withSpring,
   withTiming,
 } from 'react-native-reanimated';
 import { ChevronDown } from 'lucide-react-native';
@@ -120,6 +122,18 @@ export interface OtpBoxesProps {
   autoFocus?: boolean;
 }
 
+/** A digit that pops in as it lands; a pasted or autofilled code lands box by box. */
+function Digit({ char, delay }: { char: string; delay: number }) {
+  const reducedMotion = useReducedMotion();
+  const pop = useSharedValue(reducedMotion ? 1 : 0.6);
+  useEffect(() => {
+    if (reducedMotion) return;
+    pop.value = withDelay(delay, withSpring(1, { damping: 9, stiffness: 260 }));
+  }, [pop, delay, reducedMotion]);
+  const style = useAnimatedStyle(() => ({ transform: [{ scale: pop.value }] }));
+  return <Animated.View style={style}><Text variant="heading2">{char}</Text></Animated.View>;
+}
+
 /** Blinking caret in the active cell. Static under reduced motion. */
 function Caret() {
   const reducedMotion = useReducedMotion();
@@ -145,6 +159,10 @@ export const OtpBoxes = memo(function OtpBoxes({
   const [focused, setFocused] = useState(false);
 
   const digits = value.split('');
+  // Several digits at once (paste, autofill) land one after another; a typed digit lands at once.
+  const prevLen = useRef(0);
+  const burst = value.length - prevLen.current > 1;
+  useEffect(() => { prevLen.current = value.length; }, [value]);
 
   return (
     <Pressable
@@ -167,7 +185,7 @@ export const OtpBoxes = memo(function OtpBoxes({
             ]}
           >
             {char ? (
-              <Text variant="heading2">{char}</Text>
+              <Digit char={char} delay={burst ? i * 35 : 0} />
             ) : isActive ? (
               <Caret />
             ) : null}

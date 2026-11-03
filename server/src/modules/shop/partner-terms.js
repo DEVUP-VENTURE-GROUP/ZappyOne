@@ -17,7 +17,7 @@ async function termsFor(type = 'shop') {
   const t = TYPES.includes(type) ? type : 'shop';
   const rates = await require('../pricing/services/config.service').partnerCommissionSettings();
   const ratePct = Number.isFinite(Number(rates[t])) ? Number(rates[t]) : 5;
-  return { version: VERSION, type: t, ratePct, points: points(ratePct), fullTermsUrl: 'https://www.zappyone.com/policy/terms' };
+  return { version: VERSION, type: t, ratePct, points: points(ratePct), fullTermsUrl: 'https://www.zappyone.com/policy/partner-terms' };
 }
 
 async function accept(shopId) {

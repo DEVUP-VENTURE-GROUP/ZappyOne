@@ -1,7 +1,8 @@
 import { CheckCircle2 } from 'lucide-react';
 
 // The partner terms as plain points, with the rate first (server shop/partner-terms).
-export default function PartnerTermsList({ terms }) {
+// `onRead` opens the full terms over the page (sign-up keeps its place); without it the terms open in a new tab.
+export default function PartnerTermsList({ terms, onRead }) {
   if (!terms) return null;
   return (
     <div className="rounded-xl border border-slate-200 bg-slate-50 p-3.5">
@@ -14,7 +15,9 @@ export default function PartnerTermsList({ terms }) {
           </li>
         ))}
       </ul>
-      <a href={terms.fullTermsUrl} target="_blank" rel="noreferrer" className="mt-2 inline-block text-[12px] font-semibold text-zappy-600">Read the full terms</a>
+      {onRead
+        ? <button type="button" onClick={onRead} className="mt-2 inline-block text-[12px] font-semibold text-zappy-600 underline-offset-2 hover:underline">Read the full terms</button>
+        : <a href={terms.fullTermsUrl} target="_blank" rel="noreferrer" className="mt-2 inline-block text-[12px] font-semibold text-zappy-600">Read the full terms</a>}
     </div>
   );
 }

@@ -69,7 +69,13 @@ export default function AccountScreen() {
           <Chip label="Doorstep services" selected={kind === 'services'} onPress={() => setKind('services')} />
           <Chip label="Events & decor" selected={kind === 'events'} onPress={() => setKind('events')} />
         </View>
-        {kind === 'services' ? <View style={styles.row}>{PARTNER_TYPES.map((t: { key: string; label: string }) => <Chip key={t.key} label={t.label} selected={partnerType === t.key} onPress={() => setPartnerType(t.key)} />)}</View> : null}
+        {kind === 'services' ? (
+          <View style={styles.list}>
+            <Text variant="caption" weight="bold" color={ink[700]}>How do you work?</Text>
+            <View style={styles.row}>{PARTNER_TYPES.map((t: { key: string; label: string }) => <Chip key={t.key} label={t.label} selected={partnerType === t.key} onPress={() => setPartnerType(t.key)} />)}</View>
+            <Text variant="caption" color={ink[500]}>{PARTNER_TYPES.find((t: { key: string; hint: string }) => t.key === partnerType)?.hint} This sets your partner terms; you can change it later.</Text>
+          </View>
+        ) : null}
         <TextInput value={businessName} onChangeText={setBusinessName} maxLength={120} placeholder={kind === 'services' && partnerType === 'individual' ? 'Your work name, e.g. Ramesh Electricals' : 'Business name'} placeholderTextColor={ink[400]} style={styles.input} />
         <TextInput value={ownerName} onChangeText={setOwnerName} maxLength={100} placeholder="Your name" placeholderTextColor={ink[400]} style={styles.input} />
         <Pressable onPress={() => setAccepted((v) => !v)} accessibilityRole="checkbox" accessibilityState={{ checked: accepted }} style={styles.row}>

@@ -10,6 +10,7 @@ import ResendOtp from '@shared/components/auth/ResendOtp';
 import LegalConsent from '@shared/components/auth/LegalConsent';
 import AuthShell from '@shared/components/auth/AuthShell';
 import PhoneField from '@shared/components/auth/PhoneField';
+import OtpBoxes from '@shared/components/auth/OtpBoxes';
 import OtpOrbit from './OtpOrbit';
 import { setAuth } from '@shared/modules/auth/authSlice';
 import toast from 'react-hot-toast';
@@ -57,31 +58,6 @@ export default function LoginPage() {
   useEffect(() => {
     if (step === 'otp' && otp.length === OTP_LEN && !isNewUser) verify();
   }, [otp]);
-
-  function handleOtpChange(i, char) {
-    const d = char.replace(/\D/g, '').slice(-1);
-    const next = [...otpDigits];
-    next[i] = d;
-    setOtpDigits(next);
-    if (d && i < OTP_LEN - 1) otpRefs.current[i + 1]?.focus();
-  }
-
-  function handleOtpKey(i, e) {
-    if (e.key === 'Backspace' && !otpDigits[i] && i > 0) {
-      const next = [...otpDigits];
-      next[i - 1] = '';
-      setOtpDigits(next);
-      otpRefs.current[i - 1]?.focus();
-    }
-  }
-
-  function handleOtpPaste(e) {
-    const text = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, OTP_LEN);
-    if (text.length >= 4) {
-      setOtpDigits(text.split('').concat(Array(Math.max(0, OTP_LEN - text.length)).fill('')));
-      otpRefs.current[Math.min(text.length, OTP_LEN - 1)]?.focus();
-    }
-  }
 
   async function send() {
     if (!/^[0-9]{10,15}$/.test(phone)) { toast.error('Enter a valid phone number'); return; }
@@ -210,25 +186,8 @@ export default function LoginPage() {
                 animate={{ height: otpStatus === 'idle' ? 'auto' : 236 }}
                 transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
               >
-                <div
-                  className={`flex justify-between gap-2 transition-opacity duration-300 ${otpStatus === 'idle' ? 'opacity-100' : 'pointer-events-none opacity-0'}`}
-                  onPaste={handleOtpPaste}
-                >
-                  {otpDigits.map((d, i) => (
-                    <input
-                      key={i}
-                      ref={(el) => { otpRefs.current[i] = el; }}
-                      type="text"
-                      inputMode="numeric"
-                      autoComplete={i === 0 ? 'one-time-code' : 'off'}
-                      aria-label={`Digit ${i + 1}`}
-                      maxLength={1}
-                      value={d}
-                      onChange={(e) => handleOtpChange(i, e.target.value)}
-                      onKeyDown={(e) => handleOtpKey(i, e)}
-                      className={`h-14 w-0 min-w-0 flex-1 rounded-btn border text-center text-[22px] font-bold text-ink-900 outline-none transition ${d ? 'border-zappy-600 bg-zappy-50 ring-1 ring-zappy-600' : 'border-line-strong bg-white focus:border-zappy-600 focus:ring-2 focus:ring-zappy-100'}`}
-                    />
-                  ))}
+                <div className={`transition-opacity duration-300 ${otpStatus === 'idle' ? 'opacity-100' : 'pointer-events-none opacity-0'}`}>
+                  <OtpBoxes digits={otpDigits} setDigits={setOtpDigits} refs={otpRefs} disabled={otpStatus !== 'idle'} />
                 </div>
                 <OtpOrbit
                   digits={otpDigits}

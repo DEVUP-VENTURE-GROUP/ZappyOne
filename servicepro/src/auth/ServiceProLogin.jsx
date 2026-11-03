@@ -3,15 +3,17 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { AnimatePresence, motion } from 'framer-motion';
 import toast from 'react-hot-toast';
-import { ArrowRight, ChevronLeft, Loader2, PartyPopper, Store, UserRound, Wrench } from 'lucide-react';
+import { ArrowRight, CheckCircle2, ChevronLeft, Loader2, PartyPopper, Store, UserRound, Wrench } from 'lucide-react';
 import PasswordLogin from '@shared/components/account/PasswordLogin';
 import { useScrollTopOnChange } from '@shared/components/common/ScrollToTop';
 import LegalConsent from '@shared/components/auth/LegalConsent';
 import AuthShell from '@shared/components/auth/AuthShell';
 import PhoneField from '@shared/components/auth/PhoneField';
 import ResendOtp from '@shared/components/auth/ResendOtp';
+import OtpBoxes from '@shared/components/auth/OtpBoxes';
 import { PARTNER_TYPES } from '@shared/provider/partnerBoard';
 import PartnerTermsList from '@shared/provider/components/PartnerTermsList';
+import PolicySheet from '@shared/components/support/PolicySheet';
 import { setAuth } from '@shared/modules/auth/authSlice';
 import { usePartnerTermsQuery, useRequestOtpMutation, useServiceproLoginMutation, useServiceproRegisterMutation } from '@shared/services/api';
 
@@ -23,26 +25,6 @@ const ACCOUNT = {
   event_partner: { Icon: PartyPopper, title: (a) => a.name, sub: () => 'Event partner' },
 };
 const profileOf = (role, a) => (role === 'worker' ? a : { name: a.businessName, phone: a.phone, _id: a._id });
-
-function OtpBoxes({ digits, setDigits, refs, onDone }) {
-  const put = (i, v) => {
-    if (!/^[0-9]?$/.test(v)) return;
-    const next = [...digits]; next[i] = v; setDigits(next);
-    if (v && i < 5) setTimeout(() => refs.current[i + 1]?.focus(), 0);
-    if (next.every(Boolean) && i === 5) setTimeout(() => onDone(next.join('')), 80);
-  };
-  return (
-    <div className="mb-4 flex justify-between gap-2">
-      {digits.map((d, i) => (
-        <motion.input key={i} ref={(el) => { refs.current[i] = el; }} type="text" inputMode="numeric" maxLength={1} value={d} aria-label={`Digit ${i + 1}`}
-          onChange={(e) => put(i, e.target.value)} onKeyDown={(e) => e.key === 'Backspace' && !d && i > 0 && refs.current[i - 1]?.focus()}
-          animate={d ? { scale: [1, 1.08, 1] } : {}} transition={{ duration: 0.15 }}
-          autoComplete={i === 0 ? 'one-time-code' : 'off'}
-          className={`h-14 w-0 min-w-0 flex-1 rounded-btn border text-center text-[22px] font-bold text-ink-900 outline-none transition ${d ? 'border-zappy-600 bg-zappy-50 ring-1 ring-zappy-600' : 'border-line-strong bg-white focus:border-zappy-600 focus:ring-2 focus:ring-zappy-100'}`} />
-      ))}
-    </div>
-  );
-}
 
 // One door into ServicePro for every partner: phone and code once; the number's accounts decide what opens, and a new number picks what it does.
 export default function ServiceProLogin() {
@@ -57,6 +39,7 @@ export default function ServiceProLogin() {
   const [accounts, setAccounts] = useState([]);
   const [kind, setKind] = useState('services');
   const [reg, setReg] = useState({ businessName: '', ownerName: '', partnerType: 'individual', acceptTerms: false });
+  const [readingTerms, setReadingTerms] = useState(false);
   const refs = useRef([]);
   const [requestOtp, { isLoading: sending }] = useRequestOtpMutation();
   const [login, { isLoading: logging }] = useServiceproLoginMutation();
@@ -139,7 +122,7 @@ export default function ServiceProLogin() {
             )}
             {step === 'otp' && (
               <motion.div key="otp" {...slide} className="flex flex-col">
-                <OtpBoxes digits={digits} setDigits={setDigits} refs={refs} onDone={verify} />
+                <div className="mb-4"><OtpBoxes digits={digits} setDigits={setDigits} refs={refs} onComplete={verify} /></div>
                 <div className="flex items-center justify-between gap-3">
                   <ResendOtp phone={phone} tone="light" cooldownSec={otpMeta.cooldownSec} resendsLeft={otpMeta.resendsLeft} onResent={() => setDigits(Array(6).fill(''))} onStartOver={() => setStep('phone')} />
                   <button type="button" onClick={() => setStep('phone')} className="flex items-center gap-0.5 text-[13px] font-semibold text-zappy-700 hover:underline"><ChevronLeft size={15} /> Change number</button>
@@ -163,32 +146,49 @@ export default function ServiceProLogin() {
             )}
             {step === 'register' && (
               <motion.form key="register" {...slide} onSubmit={create} className="space-y-4">
-                <div className="grid grid-cols-2 gap-2">
-                  {[['services', 'Doorstep services', 'Repairs, cleaning, beauty, vehicles, tutoring and more', UserRound], ['events', 'Events & decor', 'Decorators, planners and event vendors', PartyPopper]].map(([k, l, h, I]) => (
-                    <button key={k} type="button" aria-pressed={kind === k} onClick={() => setKind(k)} className={`rounded-xl border p-3 text-left ${kind === k ? 'border-zappy-500 bg-zappy-50 ring-2 ring-zappy-100' : 'border-slate-200'}`}>
-                      <I size={16} className="mb-1 text-zappy-700" /><span className="block text-[13px] font-bold text-slate-900">{l}</span><span className="block text-[11px] leading-snug text-slate-500">{h}</span>
-                    </button>
-                  ))}
-                </div>
-                {kind === 'services' && (
-                  <div className="grid grid-cols-2 gap-2">
-                    {PARTNER_TYPES.map((t) => (
-                      <button key={t.key} type="button" aria-pressed={reg.partnerType === t.key} onClick={() => setReg((r) => ({ ...r, partnerType: t.key }))} className={`rounded-xl border px-3 py-2 text-left ${reg.partnerType === t.key ? 'border-zappy-500 bg-zappy-50' : 'border-slate-200'}`}>
-                        <span className="block text-[13px] font-bold text-slate-900">{t.label}</span><span className="block text-[11px] leading-snug text-slate-500">{t.hint}</span>
-                      </button>
+                <fieldset>
+                  <legend className="mb-2 text-[12px] font-bold text-slate-700">What do you do?</legend>
+                  <div role="radiogroup" className="grid grid-cols-2 gap-2">
+                    {[['services', 'Doorstep services', 'Repairs, cleaning, beauty, vehicles, tutoring and more', UserRound], ['events', 'Events & decor', 'Decorators, planners and event vendors', PartyPopper]].map(([k, l, h, I]) => (
+                      <motion.button key={k} type="button" role="radio" aria-checked={kind === k} onClick={() => setKind(k)} whileTap={{ scale: 0.97 }}
+                        className={`relative rounded-2xl border p-3.5 text-left transition-colors ${kind === k ? 'border-zappy-600 bg-zappy-50 ring-2 ring-zappy-100' : 'border-slate-200 bg-white hover:border-slate-300'}`}>
+                        {kind === k && <CheckCircle2 size={16} className="absolute right-3 top-3 text-zappy-600" />}
+                        <I size={18} className="mb-1.5 text-zappy-700" /><span className="block text-[13.5px] font-bold text-slate-900">{l}</span><span className="mt-0.5 block text-[11.5px] leading-snug text-slate-500">{h}</span>
+                      </motion.button>
                     ))}
                   </div>
-                )}
+                </fieldset>
+                <AnimatePresence initial={false}>
+                  {kind === 'services' && (
+                    <motion.fieldset key="how" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
+                      <legend className="text-[12px] font-bold text-slate-700">How do you work?</legend>
+                      <p className="mb-2 text-[11.5px] text-slate-500">This sets your partner terms and how customers see you. You can change it later.</p>
+                      <div role="radiogroup" className="divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200 bg-white">
+                        {PARTNER_TYPES.map((t) => {
+                          const on = reg.partnerType === t.key;
+                          return (
+                            <button key={t.key} type="button" role="radio" aria-checked={on} onClick={() => setReg((r) => ({ ...r, partnerType: t.key }))}
+                              className={`flex w-full items-center gap-3 px-3.5 py-3 text-left transition-colors ${on ? 'bg-zappy-50' : 'hover:bg-slate-50'}`}>
+                              <span className={`flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border-2 ${on ? 'border-zappy-600' : 'border-slate-300'}`}>{on && <span className="h-2 w-2 rounded-full bg-zappy-600" />}</span>
+                              <span className="min-w-0"><span className="block text-[13px] font-bold text-slate-900">{t.label}</span><span className="block text-[11.5px] leading-snug text-slate-500">{t.hint}</span></span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </motion.fieldset>
+                  )}
+                </AnimatePresence>
                 {[['businessName', kind === 'events' ? 'Business name' : reg.partnerType === 'individual' ? 'Your work name' : 'Business name', 'e.g. Ramesh Electricals'], ['ownerName', 'Your name', 'e.g. Ramesh Sharma']].map(([k, l, ph]) => (
                   <label key={k} className="block text-[12px] font-bold text-slate-700">{l}
                     <input value={reg[k]} onChange={(e) => setReg((r) => ({ ...r, [k]: e.target.value }))} placeholder={ph} maxLength={120} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-normal text-slate-900 outline-none focus:border-zappy-500 focus:bg-white" />
                   </label>
                 ))}
-                {kind === 'services' && <PartnerTermsList terms={terms} />}
+                {kind === 'services' && <PartnerTermsList terms={terms} onRead={() => setReadingTerms(true)} />}
                 <label className="flex cursor-pointer items-start gap-2.5">
                   <input type="checkbox" checked={reg.acceptTerms} onChange={(e) => setReg((r) => ({ ...r, acceptTerms: e.target.checked }))} className="mt-0.5 h-4 w-4 rounded text-zappy-600" />
-                  <span className="text-[13px] font-semibold text-slate-700">I accept the ZappyOne partner terms.</span>
+                  <span className="text-[13px] font-semibold text-slate-700">I accept the ZappyOne partner terms. <button type="button" onClick={(e) => { e.preventDefault(); setReadingTerms(true); }} className="font-semibold text-zappy-600 underline-offset-2 hover:underline">Read them</button></span>
                 </label>
+                <PolicySheet slug="partner-terms" open={readingTerms} onClose={() => setReadingTerms(false)} />
                 <button type="submit" disabled={registering || !canCreate} className={primary}>
                   {registering && <Loader2 size={18} className="animate-spin" />} Create my account
                 </button>

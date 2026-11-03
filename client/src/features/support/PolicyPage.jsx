@@ -2,6 +2,7 @@ import { useSafeBack } from '../../hooks/useBookingFlow';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Loader2, FileText } from 'lucide-react';
 import { useGetPolicyQuery } from '@shared/services/api';
+import PolicyBody from '@shared/components/support/PolicyBody';
 
 /**
  * Renders any admin-managed policy page by slug (refund-policy, privacy-policy,
@@ -40,23 +41,7 @@ export default function PolicyPage() {
           </div>
         ) : (
           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
-            <div className="space-y-2.5">
-              {String(policy.body || '').split('\n').map((line, i) => {
-                const t = line.trim();
-                if (!t) return <div key={i} className="h-2" />;
-                const isHeading = /^\d+\./.test(t);
-                return (
-                  <p key={i} className={`text-sm leading-relaxed ${isHeading ? 'font-semibold text-[#0F172A]' : 'text-slate-600'}`}>
-                    {t}
-                  </p>
-                );
-              })}
-            </div>
-            {policy.updatedAt && (
-              <p className="text-[11px] text-slate-400 mt-5 pt-4 border-t border-slate-100">
-                Last updated {new Date(policy.updatedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
-              </p>
-            )}
+            <PolicyBody policy={policy} />
           </div>
         )}
       </div>
