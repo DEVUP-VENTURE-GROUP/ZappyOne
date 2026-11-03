@@ -5,9 +5,9 @@
  * cannot smuggle in a symptom the model does not have.
  */
 import { useEffect } from 'react';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Image, StyleSheet, View } from 'react-native';
-import { useRepairProblemsQuery } from '@zappy/core/api';
+import { useRepairProblemsQuery, useStorefrontsQuery } from '@zappy/core/api';
 import { categoryPhoto } from '@zappy/core/shared/problemArt';
 import { EmptyState, Text } from '@zappy/ui/components';
 import { webAsset } from '@zappy/ui/lib/media';
@@ -38,13 +38,20 @@ export function ProblemStep({ vertical, model, productType, fuelType, presetCode
     if (match) onPick(match);
   }, [presetCode, isLoading, categories, onPick]);
 
+  // The same list the "Choose who comes" strip reads: pros near who list only their own jobs leave the shared list empty, but are here.
+  const router = useRouter();
+  const hasPin = typeof pin?.lat === 'number' && typeof pin?.lng === 'number';
+  const { data: near } = useStorefrontsQuery({ vertical, lat: pin?.lat, lng: pin?.lng }, { skip: !hasPin || !!fromProvider || categories.length > 0 || isLoading });
+
   if (isLoading) return <Spinner />;
   return (
     <Shell>
       <StorefrontStrip vertical={vertical} />
       <Text variant="caption" color={ink[500]} style={flow.label}>Tell us what you're seeing. We'll work out the repair; we never assume it from the symptom alone.</Text>
       {!categories.length ? (
-        <EmptyState title="Nobody near this address takes this yet" message="Verified pros join every week. Try another address, or check back soon." />
+        near?.total > 0
+          ? <EmptyState title={near.total === 1 ? 'The pro near you lists their own jobs' : `${near.total} pros near you list their own jobs`} message={`Open ${near.total === 1 ? 'their page' : 'a pro'} to see what they do and book it.`} actionLabel="Choose who comes" onAction={() => router.push(`/providers/${vertical.replace(/_/g, '-')}` as never)} />
+          : <EmptyState title="Nobody near this address takes this yet" message="Verified pros join every week. Try another address, or check back soon." />
       ) : null}
       {categories.map((cat) => {
         const cover = webAsset(categoryPhoto(vertical, cat));

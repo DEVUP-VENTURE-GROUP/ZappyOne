@@ -18,6 +18,7 @@ import {
   useSubmitRepairDiagnosticMutation, useRepairProvidersQuery, useRepairPricePreviewQuery,
   useCreateRepairBookingMutation, useSubmitRepairCatalogRequestMutation, useCreatePriceRequestMutation,
   useRepairAddOnsQuery,
+  useStorefrontsQuery,
 } from '@shared/services/api';
 import { selectLocation, selectHasLocation, setLocation } from '@shared/store/locationSlice';
 import LocationPicker from '@shared/modules/booking/LocationPicker';
@@ -642,6 +643,11 @@ function ProblemStep({ vertical, model, productType, fuelType, presetCode, onPic
     if (match) onPick(match);
   }, [presetCode, isLoading, categories, onPick]);
 
+  // The same list the "Choose who comes" strip reads: pros near who list only their own jobs leave the shared list empty, but are here.
+  const hasLocation = typeof loc?.lat === 'number';
+  const { data: near } = useStorefrontsQuery({ vertical, lat: loc?.lat, lng: loc?.lng }, { skip: !hasLocation || !!fromProvider || categories.length > 0 || isLoading });
+  const nav = useNavigate();
+
   if (isLoading) return <Spinner />;
 
   return (
@@ -650,13 +656,19 @@ function ProblemStep({ vertical, model, productType, fuelType, presetCode, onPic
       <p className="text-xs text-slate-500 px-1">
         Tell us what you're seeing. We'll work out the repair - we never assume it from the symptom alone.
       </p>
-      {!categories.length && (
+      {!categories.length && (near?.total > 0 ? (
+        <div className="card p-5 text-center">
+          <p className="font-bold text-ink-900">{near.total === 1 ? 'The pro near you lists their own jobs' : `${near.total} pros near you list their own jobs`}</p>
+          <p className="mt-1 text-[13.5px] text-ink-500">Open {near.total === 1 ? 'their page' : 'a pro'} to see what they do and book it.</p>
+          <button type="button" onClick={() => nav(`/providers/${vertical.replace(/_/g, '-')}`)} className="btn-primary mt-3 inline-flex min-h-[40px] px-4 text-[13.5px]">Choose who comes</button>
+        </div>
+      ) : (
         <div className="card p-5 text-center">
           <p className="font-bold text-ink-900">Nobody near this address takes this yet</p>
           <p className="mt-1 text-[13.5px] text-ink-500">Verified pros join every week. Try another address, or check back soon.</p>
           <a href="/" className="btn-outline mt-3 inline-flex min-h-[40px] px-4 text-[13.5px]">Back to home</a>
         </div>
-      )}
+      ))}
       {categories.map((cat) => {
         const cover = categoryPhoto(vertical, cat);
         return (
