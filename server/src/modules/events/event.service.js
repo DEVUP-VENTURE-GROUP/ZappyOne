@@ -474,11 +474,18 @@ async function adminListBookings({ status, page = 1 } = {}) {
 
 async function adminListPartners({ page = 1 } = {}) {
   const limit = 20;
-  const [partners, total] = await Promise.all([
-    EventPartner.find().sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).lean(),
+  // Waiting for review first (latest sent on top), so a request is never on a page admin cannot reach.
+  const [partners, total, waiting] = await Promise.all([
+    EventPartner.aggregate([
+      { $addFields: { _waiting: { $cond: [{ $eq: ['$kyc.status', 'pending'] }, 1, 0] } } },
+      { $sort: { _waiting: -1, updatedAt: -1 } },
+      { $skip: (page - 1) * limit }, { $limit: limit },
+      { $project: { _waiting: 0, passwordHash: 0, emailVerification: 0 } },
+    ]),
     EventPartner.countDocuments(),
+    EventPartner.countDocuments({ 'kyc.status': 'pending' }),
   ]);
-  return { partners, total, page, pages: Math.ceil(total / limit) };
+  return { partners, total, waiting, page, pages: Math.ceil(total / limit) };
 }
 
 async function adminCreatePartner(data, adminId) {

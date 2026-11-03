@@ -526,7 +526,7 @@ function PartnersTab() {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <p className="text-sm text-slate-500">{data?.total || 0} partners</p>
+        <p className="text-sm text-slate-500">{data?.total || 0} partners{data?.waiting ? <span className="ml-2 font-semibold text-amber-700">{data.waiting} waiting for your review, shown first</span> : null}</p>
         <button onClick={() => setShowForm(true)} className="flex items-center gap-1.5 px-3 py-1.5 bg-zappy-600 text-white rounded-lg text-sm font-medium hover:bg-zappy-700"><Plus size={14} />Add Partner</button>
       </div>
 
@@ -571,7 +571,7 @@ function PartnersTab() {
                       </span>
                       {p.isBlocked && <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-50 text-red-700 border border-red-200">Blocked</span>}
                       {p.suspendedAt && <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">Paused</span>}
-                      {p.kyc?.status === 'not_submitted' && <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-600 border border-amber-200">Pending Review</span>}
+                      {p.kyc?.status === 'pending' && <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-600 border border-amber-200">Waiting for review</span>}
                     </div>
                     <p className="text-xs text-slate-500 mt-0.5">{p.ownerName}, {p.phone}</p>
                     <p className="text-xs text-slate-400 mt-0.5">{p.cities?.join(', ')}, {p.completedEvents} events, ⭐ {p.rating?.toFixed(1) || '–'}</p>
