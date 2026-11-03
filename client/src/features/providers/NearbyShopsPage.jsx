@@ -1,4 +1,5 @@
 import { useSafeBack } from '../../hooks/useBookingFlow';
+import { to12h } from '@shared/customer/opening';
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
@@ -102,7 +103,7 @@ export default function NearbyShopsPage() {
                     */}
                     {s.openNow === true && (
                       <span className="text-[11px] font-bold text-emerald-600">
-                        Open now{s.todayHours ? `, till ${s.todayHours.closesAt}` : ''}
+                        Open now{s.todayHours ? `, till ${to12h(s.todayHours.closesAt)}` : ''}
                       </span>
                     )}
                     {s.openNow === false && (

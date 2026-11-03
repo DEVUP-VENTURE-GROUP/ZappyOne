@@ -128,7 +128,7 @@ export default function StorefrontPage() {
           <div className="mt-3 flex flex-wrap gap-2 text-[12.5px] font-semibold">
             {verified && <span className="flex items-center gap-1 rounded-full bg-zappy-50 px-2.5 py-1 text-zappy-700"><BadgeCheck size={14} /> Verified</span>}
             {pro?.neverCancels && <span className="flex items-center gap-1 rounded-full bg-green-50 px-2.5 py-1 text-green-800"><ThumbsUp size={13} /> Never cancels</span>}
-            {shop?.todayHours && <span className="flex items-center gap-1 rounded-full bg-sunken px-2.5 py-1 text-ink-700"><Clock3 size={13} /> {shop.openNow ? 'Open now' : 'Closed now'} · {shop.todayHours}</span>}
+            {shop?.todayHours && <span className="flex items-center gap-1 rounded-full bg-sunken px-2.5 py-1 text-ink-700"><Clock3 size={13} /> {shop.openNow ? 'Open now' : 'Closed now'} · {to12h(shop.todayHours.opensAt)} – {to12h(shop.todayHours.closesAt)}</span>}
           </div>
 
           <dl className="mt-5 grid grid-cols-3 divide-x divide-line rounded-card border border-line py-3 text-center">

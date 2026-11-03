@@ -4,6 +4,7 @@
  * some shop nearby actually has, open or closed said plainly.
  */
 import { useEffect, useMemo, useState } from 'react';
+import { to12h } from '@zappy/core/shared/opening';
 import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -57,7 +58,7 @@ export function NearbyShopsPage() {
                     <View style={styles.meta}>
                       {s.rating ? <View style={styles.inline}><Star size={11} color={accent[500]} fill={accent[500]} /><Text variant="caption" weight="bold" color={ink[700]}>{s.rating.toFixed(1)}</Text></View> : null}
                       {s.completedJobs ? <Text variant="caption" color={ink[400]}>{s.completedJobs} {t('shops.jobs', 'jobs done')}</Text> : null}
-                      {s.openNow === true ? <Text variant="caption" weight="bold" color={success[600]}>{t('shops.open', 'Open now')}{s.todayHours?.closesAt ? `, till ${s.todayHours.closesAt}` : ''}</Text> : null}
+                      {s.openNow === true ? <Text variant="caption" weight="bold" color={success[600]}>{t('shops.open', 'Open now')}{s.todayHours?.closesAt ? `, till ${to12h(s.todayHours.closesAt)}` : ''}</Text> : null}
                       {s.openNow === false ? <Text variant="caption" weight="bold" color={ink[400]}>{t('shops.closed', 'Closed now')}</Text> : null}
                     </View>
                   </View>

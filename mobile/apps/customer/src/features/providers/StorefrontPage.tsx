@@ -3,6 +3,7 @@
  * they are, why to trust them, their own prices and reviews; a tap books them.
  */
 import { PartsNote } from '@zappy/ui/components/common/PartsNote';
+import { to12h } from '@zappy/core/shared/opening';
 import { useEffect, useState } from 'react';
 import { Image, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -123,7 +124,7 @@ export function StorefrontPage() {
           <View style={styles.badges}>
             {verified ? <View style={[styles.badge, { backgroundColor: zappy[50] }]}><BadgeCheck size={14} color={zappy[700]} /><Text variant="caption" weight="semibold" color={zappy[700]}>Verified</Text></View> : null}
             {pro?.neverCancels ? <View style={[styles.badge, { backgroundColor: '#ECFDF3' }]}><ThumbsUp size={13} color={success[700]} /><Text variant="caption" weight="semibold" color={success[700]}>Never cancels</Text></View> : null}
-            {shop?.todayHours ? <View style={[styles.badge, { backgroundColor: slate[100] }]}><Clock3 size={13} color={ink[700]} /><Text variant="caption" weight="semibold" color={ink[700]}>{shop.openNow ? 'Open now' : 'Closed now'} · {shop.todayHours}</Text></View> : null}
+            {shop?.todayHours ? <View style={[styles.badge, { backgroundColor: slate[100] }]}><Clock3 size={13} color={ink[700]} /><Text variant="caption" weight="semibold" color={ink[700]}>{shop.openNow ? 'Open now' : 'Closed now'} · {to12h(shop.todayHours.opensAt)} – {to12h(shop.todayHours.closesAt)}</Text></View> : null}
           </View>
           <View style={styles.stats}>
             <View style={styles.stat}>
