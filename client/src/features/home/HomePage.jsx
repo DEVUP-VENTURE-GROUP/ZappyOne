@@ -4,7 +4,8 @@ import { useSelector } from 'react-redux';
 import toast from 'react-hot-toast';
 import { ChevronRight } from 'lucide-react';
 import { selectAuth, selectIsAuthed } from '@shared/modules/auth/authSlice';
-import { useGetServiceabilityQuery, useLiveCatalogQuery, useGetEventCategoriesQuery, useLensStatusQuery, useSaveRecentLocationMutation, useCurrentSeasonQuery } from '@shared/services/api';
+import { useGetServiceabilityQuery, useLiveCatalogQuery, useGetEventCategoriesQuery, useLensStatusQuery, useSaveRecentLocationMutation } from '@shared/services/api';
+import useSeason from './useSeason';
 import { useGeolocation, loadGeoLocation, tooRough, roughLocationMessage } from '@shared/hooks/useGeolocation';
 import { saveGeoLocation } from '@shared/utils/geoCache';
 import { reverseGeocode } from '@shared/utils/reverseGeocode';
@@ -260,12 +261,12 @@ export default function HomePage() {
   // In the city, but no pro has joined at this address yet: say so honestly and lead with what is coming.
   const nothingLive = !!liveCodes && liveCodes.size === 0;
   // A festival running (Admin → Festive home): its own top on home; light ones also tint the header.
-  const { data: seasonData, isLoading: loadingSeason } = useCurrentSeasonQuery();
+  const { season: seasonNow, loading: loadingSeason } = useSeason();
   // The layout is chosen once both are known, so the plain look never flashes before a festive one.
   const settling = loadingCatalog || loadingSeason;
-  const season = !notHere && !settling ? seasonData?.season : null;
-  // Each festival has a few looks; home moves to the next every 30 s.
-  const theme = useFestiveLook(season?.theme, reducedMotion);
+  const season = !notHere && !settling ? seasonNow : null;
+  // Each festival has a few looks; home moves to the next every 30 s. The colours do not wait for the catalog, so a refresh opens in the festival's look.
+  const theme = useFestiveLook(!notHere ? seasonNow?.theme : null, reducedMotion);
   const tint = theme ? theme.top : null;
   const searchBar = (
     <SearchBar
@@ -305,7 +306,7 @@ export default function HomePage() {
           search={searchBar}
           tint={tint}
           festive={theme}
-          greeting={season?.greeting || ''}
+          greeting={(!notHere && seasonNow?.greeting) || ''}
           eta={svc?.fastestMin != null && svc.fastestMin <= 60 ? svc.fastestMin : null}
           closed={svc?.status === 'closed_now' ? backAt(svc.nextOpening) : null}
         />
