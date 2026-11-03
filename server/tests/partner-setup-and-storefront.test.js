@@ -74,3 +74,18 @@ test('a shop listed under a service shows the business name it registered for th
   expect(menu.serviceName).toBe('Zappy dance School');
   expect(mongoose.isValidObjectId(String(shop._id))).toBe(true);
 });
+
+test('admin picks which of the partner photos becomes the service picture, or none; never a photo they did not send', async () => {
+  const admin = await adminToken();
+  const { ServiceLineRequest, ServiceLine, ServiceDomain } = require('../src/modules/onboarding/onboarding.model');
+  const Shop = require('../src/modules/shop/shop.model');
+  await ServiceDomain.updateOne({ code: 'tutors_test' }, { $setOnInsert: { code: 'tutors_test', name: 'Tutors' } }, { upsert: true });
+  const shop = await Shop.create({ businessName: 'Steps Studio', ownerName: 'Kiran', phone: '9000000981' });
+  const reqDoc = await ServiceLineRequest.create({ providerKind: 'shop', shopId: shop._id, proposedName: 'Salsa classes', photos: ['line-requests/sky.jpg', 'line-requests/dance.jpg'] });
+  const approve = (body) => request(app).post(`/api/${process.env.ADMIN_LOGIN_SLUG}/onboarding/line-requests/${reqDoc._id}/approve`)
+    .set('Authorization', `Bearer ${admin}`).set('Origin', process.env.ADMIN_ORIGIN || 'http://localhost:5174').send({ code: 'salsa_test', domainCode: 'tutors_test', ...body });
+  expect((await approve({ serviceImage: 'someone-else/photo.jpg' })).status).toBe(400);
+  expect(await ServiceLine.exists({ code: 'salsa_test' })).toBeNull();
+  expect((await approve({ serviceImage: 'line-requests/dance.jpg' })).status).toBe(200);
+  expect((await ServiceLine.findOne({ code: 'salsa_test' }).lean()).imageUrl).toBe('line-requests/dance.jpg');
+});

@@ -290,6 +290,7 @@ function Requests() {
         name: f.name || row.proposedName,
         domainCode: f.domainCode || row.domainCode,
         status: f.status || 'coming_soon',
+        serviceImage: f.serviceImage ?? row.photoKeys?.[0] ?? '',
       }).unwrap();
       toast.success(row.packages?.length ? 'Service opened with the proposed jobs; the provider can now get verified for it' : 'Service created');
       refetch();
@@ -322,11 +323,29 @@ function Requests() {
                   {row.yearsExperience != null && ` · ${row.yearsExperience} years doing it`}
                 </p>
               )}
-              {row.photoUrls?.length > 0 && (
+              {row.photoUrls?.length > 0 && row.status !== 'pending' && (
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   {row.photoUrls.map((u) => <a key={u} href={u} target="_blank" rel="noreferrer"><img src={u} alt="Their work" className="h-16 w-16 rounded-lg object-cover" /></a>)}
                 </div>
               )}
+              {row.photoUrls?.length > 0 && row.status === 'pending' && (() => {
+                // The service picture every customer sees: one of these, or none. Each partner's own photos still show on their jobs.
+                const picked = form[row._id]?.serviceImage ?? row.photoKeys?.[0] ?? '';
+                const pick = (key) => setForm((f) => ({ ...f, [row._id]: { ...f[row._id], serviceImage: key } }));
+                return (
+                  <div className="mt-2">
+                    <p className="text-[11px] font-semibold text-slate-500">Service picture for customers: tap one, or none</p>
+                    <div className="mt-1 flex flex-wrap gap-1.5">
+                      {row.photoUrls.map((u, i) => (
+                        <button key={u} type="button" onClick={() => pick(row.photoKeys[i])} aria-pressed={picked === row.photoKeys[i]} className={`overflow-hidden rounded-lg ${picked === row.photoKeys[i] ? 'ring-2 ring-zappy-600 ring-offset-1' : 'opacity-70 hover:opacity-100'}`}>
+                          <img src={u} alt="Their work" className="h-16 w-16 object-cover" />
+                        </button>
+                      ))}
+                      <button type="button" onClick={() => pick('')} aria-pressed={picked === ''} className={`h-16 rounded-lg border px-2 text-[11px] font-semibold ${picked === '' ? 'border-zappy-600 text-zappy-700' : 'border-slate-200 text-slate-500'}`}>No photo</button>
+                    </div>
+                  </div>
+                );
+              })()}
               {row.packages?.length > 0 && (
                 <ul className="mt-2 space-y-1.5 text-xs text-slate-700">
                   {row.packages.map((p, i) => (

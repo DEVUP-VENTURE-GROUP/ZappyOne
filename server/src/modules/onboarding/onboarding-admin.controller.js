@@ -2,7 +2,7 @@ const {
   ServiceDomain, ServiceLine, KycRequirementSet, ProviderEnrolment, ServiceLineRequest,
 } = require('./onboarding.model');
 // What the provider sent rides into the new service: each job's included items and photo, the service photo, and the requester's own menu at their prices, enrolled to finish verification.
-async function carryRequestOver(reqDoc, line, offered, slug) {
+async function carryRequestOver(reqDoc, line, offered, slug, { serviceImage } = {}) {
   const { Repair } = require('../repair/models/repair.model');
   const prefix = (line.repairVertical || line.code).split('_').map((w) => w.slice(0, 3)).join('').slice(0, 8);
   for (const [i, p] of offered.entries()) {
@@ -12,7 +12,9 @@ async function carryRequestOver(reqDoc, line, offered, slug) {
     const photos = reqDoc.photos || [];
     await Repair.updateOne({ vertical: line.repairVertical, code }, { $set: { includes: src.includes || [], photoKey: src.photoKey || photos[i % (photos.length || 1)] || '' } });
   }
-  if (reqDoc.photos?.[0]) await ServiceLine.updateOne({ code: line.code, imageUrl: { $in: ['', null] } }, { $set: { imageUrl: reqDoc.photos[0] } });
+  // The picture every customer sees for the service: the one admin picked from what the partner sent, or by default their first photo when the service has none.
+  if (serviceImage !== undefined) await ServiceLine.updateOne({ code: line.code }, { $set: { imageUrl: serviceImage } });
+  else if (reqDoc.photos?.[0]) await ServiceLine.updateOne({ code: line.code, imageUrl: { $in: ['', null] } }, { $set: { imageUrl: reqDoc.photos[0] } });
   if (line.status !== 'live' || !line.repairVertical) return;
   const owner = reqDoc.shopId ? { shopId: reqDoc.shopId, workerId: null } : { shopId: null, workerId: reqDoc.workerId };
   try {
@@ -406,7 +408,11 @@ const lineRequests = {
       const items = await Promise.all((body.items || []).map(async (r) => ({
         ...r,
         requester: who(r),
-        photoUrls: (await Promise.all((r.photos || []).map(signed))).filter(Boolean),
+        // Signed links and their stored keys stay paired, so picking a photo picks the right one.
+        ...await (async () => {
+          const pairs = (await Promise.all((r.photos || []).map(async (k) => [k, await signed(k)]))).filter(([, u]) => u);
+          return { photoUrls: pairs.map(([, u]) => u), photoKeys: pairs.map(([k]) => k) };
+        })(),
         packages: await Promise.all((r.packages || []).map(async (p) => ({ ...p, photoUrl: await signed(p.photoKey) }))),
       })));
       res.json({ ...body, items });
@@ -424,6 +430,9 @@ const lineRequests = {
       const before = reqDoc.toObject();
 
       const { code, name, domainCode, status = 'coming_soon', repairVertical = null } = req.body;
+      // Only one of the partner's own photos, or none (''): never an arbitrary key.
+      const serviceImage = req.body.serviceImage === undefined ? undefined : String(req.body.serviceImage || '');
+      if (serviceImage && !(reqDoc.photos || []).includes(serviceImage)) return res.status(400).json({ error: 'Pick one of the photos this partner sent, or none.', code: 'BAD_SERVICE_IMAGE' });
       if (!code || !domainCode) {
         return res.status(400).json({ error: 'code and domainCode are required', code: 'PARAMS_REQUIRED' });
       }
@@ -447,7 +456,8 @@ const lineRequests = {
           repairVertical,
         });
 
-      if (offered.length) await carryRequestOver(reqDoc, line, offered, slug);
+      if (offered.length) await carryRequestOver(reqDoc, line, offered, slug, { serviceImage });
+      else if (serviceImage !== undefined) await ServiceLine.updateOne({ code: line.code }, { $set: { imageUrl: serviceImage } });
 
       reqDoc.status = 'approved';
       reqDoc.resultLineCode = line.code;
