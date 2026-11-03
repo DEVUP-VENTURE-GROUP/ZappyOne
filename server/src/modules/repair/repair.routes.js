@@ -60,7 +60,7 @@ router.get('/storefronts', authenticate, requireKnownVertical, validate(Joi.obje
 router.get('/menu-search', authenticate, validate(Joi.object({ q: Joi.string().trim().min(2).max(60).required(), lat: Joi.number().min(-90).max(90).required(), lng: Joi.number().min(-180).max(180).required() }), 'query'), async (req, res, next) => {
   try { res.json(await require('./services/storefront.service').searchMenus(req.query)); } catch (err) { next(err); }
 });
-router.get('/storefronts/:kind/:id/menu', authenticate, requireKnownVertical, validate(Joi.object({ vertical: Joi.string().max(40).required() }), 'query'), async (req, res, next) => {
+router.get('/storefronts/:kind/:id/menu', browseLimiter, optionalAuth, requireKnownVertical, validate(Joi.object({ vertical: Joi.string().max(40).required() }), 'query'), async (req, res, next) => {
   try {
     const menu = await require('./services/storefront.service').storefrontMenu({ kind: req.params.kind, id: req.params.id, vertical: req.query.vertical });
     if (!menu) return res.status(404).json({ error: 'Storefront not found', code: 'NOT_FOUND' });

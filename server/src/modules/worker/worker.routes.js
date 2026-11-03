@@ -3,7 +3,7 @@ const Joi = require('joi');
 const ctrl = require('./controllers');
 const { authenticate, optionalAuth, requireRole, requireRecentOtp } = require('../../middlewares/auth');
 const { validate } = require('../../middlewares/validate');
-const { nearbyLimiter, workerOnlineLimiter } = require('../../middlewares/rateLimit');
+const { nearbyLimiter, workerOnlineLimiter, storefrontLimiter } = require('../../middlewares/rateLimit');
 
 const router = express.Router();
 
@@ -153,7 +153,8 @@ router.get('/:id/rep', authenticate, ctrl.getNeighborhoodRep);
 router.get('/leaderboard', authenticate, ctrl.getLeaderboard);
 
 /* Public profile — customer-facing */
-router.get('/:id/public', authenticate, ctrl.getPublicProfile);
+// Public, like a shop's: the response is a whitelist of what customers may see (controllers/profile getPublicProfile).
+router.get('/:id/public', storefrontLimiter, optionalAuth, ctrl.getPublicProfile);
 
 /* Bank Accounts + UPI */
 // Workers and shop owners (their payouts go here).

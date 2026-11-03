@@ -1,7 +1,8 @@
 const express = require('express');
 const Joi = require('joi');
 const ctrl = require('./shop.controller');
-const { authenticate, requireRole, requireRecentOtp } = require('../../middlewares/auth');
+const { authenticate, optionalAuth, requireRole, requireRecentOtp } = require('../../middlewares/auth');
+const { storefrontLimiter } = require('../../middlewares/rateLimit');
 const { validate } = require('../../middlewares/validate');
 
 const router = express.Router();
@@ -18,7 +19,8 @@ router.get(
   }), 'query'),
   ctrl.listNearby,
 );
-router.get('/:id', authenticate, ctrl.getPublicProfile);
+// Public: a partner's shared storefront link opens before the customer signs in (public fields only, shop.service getShopProfile).
+router.get('/:id', storefrontLimiter, optionalAuth, ctrl.getPublicProfile);
 
 // Shop owner's own account — everything below requires role 'shop'
 router.use(authenticate, requireRole('shop'));

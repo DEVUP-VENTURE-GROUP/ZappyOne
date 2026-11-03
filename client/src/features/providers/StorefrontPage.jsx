@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { to12h } from '@shared/customer/opening';
 import { partsQuotedSeparately, PARTS_NOTE } from '@shared/utils/partsRule';
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -10,6 +11,7 @@ import Avatar from '../tracking/redesign/Avatar';
 import PlansNear from '../plans/PlansNear';
 
 const rupees = (p) => `₹${Math.round(p / 100).toLocaleString('en-IN')}`;
+const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const monthYear = (d) => new Date(d).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
 
 function MenuItem({ item, onBook }) {
@@ -66,6 +68,7 @@ export default function StorefrontPage() {
   const { kind, id } = useParams();
   const [params] = useSearchParams();
   const [picked, setPicked] = useState(params.get('service') || '');
+  const [viewing, setViewing] = useState(null);
   // Opened from the provider's own shared link: kept for this tab so the booking that follows counts as their customer.
   const via = params.get('via');
   if (via && /^[a-z0-9]{8,24}$/.test(via)) { try { sessionStorage.setItem(`zappy:via:${kind}:${id}`, via); } catch { /* private mode */ } }
@@ -90,6 +93,9 @@ export default function StorefrontPage() {
   const verified = shop ? true : pro ? pro.verified : true;
   const items = menu?.items || [];
   const reviews = (workerData?.reviews || []).filter((r) => r.text).slice(0, 3);
+  const gallery = [cover, ...(shop?.galleryImages || [])].filter((u, i, a) => u && u.startsWith('http') && a.indexOf(u) === i);
+  const week = [...(shop?.hours || [])].sort((x, y) => x.day - y.day);
+  const today = new Date(Date.now() + 330 * 60000).getUTCDay();
 
   async function share() {
     const url = window.location.href.split('#')[0];
@@ -139,7 +145,42 @@ export default function StorefrontPage() {
             </div>
           </dl>
           {shop?.bio && <p className="mt-4 text-[14.5px] leading-relaxed text-ink-700">{shop.bio}</p>}
+          {Number.isFinite(shop?.yearsActive) && shop.yearsActive > 0 && <p className="mt-2 text-[13px] font-semibold text-ink-500">{shop.yearsActive} {shop.yearsActive === 1 ? 'year' : 'years'} in this work</p>}
         </section>
+
+        {gallery.length > 0 && (
+          <section className="border-b-8 border-sunken py-5">
+            <h2 className="px-4 text-[17px] font-extrabold text-ink-900 sm:px-6">Their work</h2>
+            <div className="no-scrollbar mt-3 flex snap-x gap-2.5 overflow-x-auto px-4 sm:px-6">
+              {gallery.map((src, i) => (
+                <button key={src} type="button" onClick={() => setViewing(i)} aria-label={`Photo ${i + 1} of ${gallery.length}`} className="h-32 w-44 shrink-0 snap-start overflow-hidden rounded-card bg-sunken">
+                  <img src={src} alt="" loading="lazy" className="h-full w-full object-cover" />
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
+        <AnimatePresence>
+          {viewing != null && (
+            <motion.div className="fixed inset-0 z-50 grid place-items-center bg-black/85 p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setViewing(null)} role="dialog" aria-label="Photo">
+              <img src={gallery[viewing]} alt="" className="max-h-[85vh] max-w-full rounded-xl object-contain" />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {week.length > 0 && (
+          <section className="border-b-8 border-sunken px-4 py-5 sm:px-6">
+            <h2 className="text-[17px] font-extrabold text-ink-900">Opening hours</h2>
+            <dl className="mt-3 divide-y divide-line">
+              {week.map((h) => (
+                <div key={h.day} className={`flex justify-between py-2 text-[14px] ${h.day === today ? 'font-bold text-ink-900' : 'text-ink-700'}`}>
+                  <dt>{DAY_NAMES[h.day]}{h.day === today ? ' (today)' : ''}</dt>
+                  <dd className="tabular-nums">{h.isClosed || !h.opensAt ? 'Closed' : `${to12h(h.opensAt)} – ${to12h(h.closesAt)}`}</dd>
+                </div>
+              ))}
+            </dl>
+          </section>
+        )}
 
         <section className="border-b-8 border-sunken px-4 py-2 sm:px-6">
           {[

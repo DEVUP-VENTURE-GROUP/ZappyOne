@@ -686,7 +686,8 @@ async function loginPartnerWithGoogle({ idToken, businessName, ownerName, cities
 
   if (partner.isBlocked) throw Object.assign(new Error('Account suspended'), { status: 403, code: 'ACCOUNT_BLOCKED' });
 
-  const tokens = await tokenService.issueTokenPair({ sub: partner._id, role: 'event_partner', email: partner.email });
+  // The phone rides in the token too: the OTP check on money details sends its code there.
+  const tokens = await tokenService.issueTokenPair({ sub: partner._id, role: 'event_partner', email: partner.email, phone: partner.phone });
   return { partner, isNew, ...tokens };
 }
 

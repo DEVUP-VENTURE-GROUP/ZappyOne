@@ -45,7 +45,9 @@ async function restoreSession(store, roles) {
     if (!data.accessToken || (roles && !roles.includes(role))) return;
     let cached = null;
     try { cached = JSON.parse(sessionStorage.getItem('zappy_profile_v2')); } catch { /* none */ }
-    store.dispatch(setAuth({ accessToken: data.accessToken, profile: cached ?? { sub: claims?.sub }, role }));
+    // A new tab has no cached profile; the token still names the account and its phone (the OTP checks on money details need it).
+    const profile = { ...(cached || {}), sub: cached?.sub ?? claims?.sub, ...(!cached?.phone && claims?.phone && { phone: claims.phone }) };
+    store.dispatch(setAuth({ accessToken: data.accessToken, profile, role }));
   } catch { /* offline - stay signed out */ }
 }
 

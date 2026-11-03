@@ -68,6 +68,8 @@ const workerOnlineLimiter = makeLimiter({ windowMs: 60_000, max: 30,  prefix: 'w
 
 // Cancel + refund storm: 5 per 10 min (unchanged)
 const cancelLimiter   = makeLimiter({ windowMs: 600_000,    max: 5,   prefix: 'cancel' });
+// Public storefront profiles (a partner's shared link opens signed out): enough to browse, not to scrape.
+const storefrontLimiter = makeLimiter({ windowMs: 60_000,   max: 60,  prefix: 'store' });
 
 // Wallet top-up: 10 per hour (unchanged)
 const topupLimiter    = makeLimiter({ windowMs: 3_600_000,  max: 10,  prefix: 'topup'  });
@@ -110,5 +112,5 @@ module.exports = {
   globalLimiter, authLimiter, refreshLimiter, adminAuthLimiter, otpPhoneLimiter, orderLimiter, workerOnlineLimiter,
   cancelLimiter, topupLimiter, ratingLimiter,
   quoteLimiter, nearbyLimiter, disputeLimiter, telemetryLimiter, lensLimiter,
-  makeLimiter, codeAttemptLimiter,
+  makeLimiter, codeAttemptLimiter, storefrontLimiter,
 };

@@ -220,7 +220,8 @@ export default function App() {
         <Route path="/repair/car-wash" element={<RepairFlowPage vertical="car_wash" />} />
         <Route path="/repair/:slug" element={<ServiceFlowRoute />} />
         <Route path="/providers/:slug" element={<RequireAuth role="user"><StorefrontsPage /></RequireAuth>} />
-        <Route path="/storefront/:kind/:id" element={<RequireAuth role="user"><StorefrontPage /></RequireAuth>} />
+        {/* Public: a partner's shared link shows their whole storefront before sign-in; booking asks at checkout. */}
+        <Route path="/storefront/:kind/:id" element={<StorefrontPage />} />
         <Route path="/my-plans" element={<RequireAuth role="user"><MyPlansPage /></RequireAuth>} />
         <Route path="/my-assets" element={<RequireAuth role="user"><MyAssetsPage /></RequireAuth>} />
         <Route path="/helping" element={<RequireAuth role="user"><HelpingServicesPage /></RequireAuth>} />
@@ -247,7 +248,7 @@ export default function App() {
 
         {/* Nearby Shops — customer-facing discovery */}
         <Route path="/nearby-shops" element={<RequireAuth role="user"><NearbyShopsPage /></RequireAuth>} />
-        <Route path="/shops/:id" element={<RequireAuth role="user"><ShopPublicProfilePage /></RequireAuth>} />
+        <Route path="/shops/:id" element={<ShopPublicProfilePage />} />
 
         {/* Event Commerce */}
         <Route path="/events"                    element={<RequireAuth role="user"><EventsHomePage /></RequireAuth>} />

@@ -21,7 +21,8 @@ export function RequireAuth({ role, children, loginPath: loginOverride }) {
       : primary === 'event_partner' ? '/partner/login'
       : primary === 'shop' ? '/shop/login'
       : '/login');
-    return <Navigate to={loginPath} state={{ from: loc.pathname }} replace />;
+    // The query string comes back too: a partner's link carries ?via=, which decides whose customer this is.
+    return <Navigate to={loginPath} state={{ from: loc.pathname + loc.search }} replace />;
   }
   if (allowed && !allowed.includes(currentRole)) {
     const home = currentRole === 'worker' ? '/worker'
