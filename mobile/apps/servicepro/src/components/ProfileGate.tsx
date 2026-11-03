@@ -5,7 +5,7 @@ import { useProviderProfileStatusQuery } from '@zappy/core/api';
 
 // The web addresses the server names, as this app's screens.
 export const MOBILE_PATH: Record<string, string> = { '/partner/profile': '/partner/account' };
-const ALWAYS = ['/shop/profile', '/shop/kyc', '/shop/account', '/worker/profile', '/worker/kyc', '/partner/account', '/partner/kyc', '/finish-profile'];
+const ALWAYS = ['/shop/profile', '/shop/kyc', '/shop/account', '/shop/bank', '/worker/bank', '/worker/profile', '/worker/kyc', '/partner/account', '/partner/kyc', '/finish-profile'];
 
 export function ProfileGate({ children }: { children: ReactNode }) {
   const path = usePathname();

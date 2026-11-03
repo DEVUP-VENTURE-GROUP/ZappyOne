@@ -7,7 +7,7 @@ import { selectAuth } from '@shared/modules/auth/authSlice';
 import { useProviderProfileStatusQuery } from '@shared/services/api';
 
 // Pages a partner can always open, so they can fill in what is missing and still manage their account.
-export const ALWAYS = ['/shop/profile', '/shop/kyc', '/shop/account', '/shop/notifications', '/worker/notifications', '/worker/profile', '/worker/kyc', '/partner/profile', '/verify-email', '/shop/support', '/worker/support', '/partner/support'];
+export const ALWAYS = ['/shop/profile', '/shop/kyc', '/shop/account', '/shop/bank', '/worker/bank', '/shop/notifications', '/worker/notifications', '/worker/profile', '/worker/kyc', '/partner/profile', '/verify-email', '/shop/support', '/worker/support', '/partner/support'];
 
 // Until every required detail is filled (server onboarding/profile-check), the dashboard is replaced by the list of what is left.
 export default function ProfileGate({ children }) {

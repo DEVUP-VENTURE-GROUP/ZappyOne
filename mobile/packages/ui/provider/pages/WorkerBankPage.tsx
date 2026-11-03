@@ -3,6 +3,7 @@
  * Adding one needs a fresh OTP, asked for only when the server wants it.
  */
 import React, { useState } from 'react';
+import { useLocalSearchParams } from 'expo-router';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { AlertCircle, Building2, CheckCircle2, Plus, ShieldCheck, Smartphone, Star, Trash2 } from 'lucide-react-native';
 import {
@@ -21,8 +22,8 @@ import { colors, zappy, ink, slate, success, danger } from '../../theme/colors';
 import { radius } from '../../theme/radius';
 import { spacing } from '../../theme/spacing';
 
-function AddMethodSheet({ onClose }: { onClose: () => void }) {
-  const [tab, setTab] = useState<'bank' | 'upi'>('bank');
+function AddMethodSheet({ onClose, start = 'bank' }: { onClose: () => void; start?: 'bank' | 'upi' }) {
+  const [tab, setTab] = useState<'bank' | 'upi'>(start);
   const [form, setForm] = useState({ label: '', accountName: '', accountNumber: '', bankName: '', ifsc: '', upiId: '', upiLabel: '' });
   const [add, { isLoading }] = useAddWorkerBankAccountMutation();
   const otp = useOtpGate();
@@ -77,7 +78,9 @@ export function WorkerBankPage() {
   const { data, isLoading } = useGetWorkerBankAccountsQuery();
   const [deleteAcc] = useDeleteWorkerBankAccountMutation();
   const [setDefault] = useSetDefaultWorkerBankAccountMutation();
-  const [showAdd, setShowAdd] = useState(false);
+  // From the setup list's UPI step (?focus=upi): open straight on Add UPI ID.
+  const upiFirst = useLocalSearchParams<{ focus?: string }>().focus === 'upi';
+  const [showAdd, setShowAdd] = useState(upiFirst);
   const banks: Bank[] = data?.banks ?? [];
   const upiIds: Upi[] = data?.upiIds ?? [];
 
@@ -148,7 +151,7 @@ export function WorkerBankPage() {
           ) : null}
         </ScrollView>
       )}
-      {showAdd ? <AddMethodSheet onClose={() => setShowAdd(false)} /> : null}
+      {showAdd ? <AddMethodSheet start={upiFirst ? 'upi' : 'bank'} onClose={() => setShowAdd(false)} /> : null}
     </View>
   );
 }

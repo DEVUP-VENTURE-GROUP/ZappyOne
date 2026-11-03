@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Plus, Trash2, Star, Building2, Smartphone, X, Check, Loader2, AlertCircle, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -9,8 +9,8 @@ import {
 } from '../../services/api';
 import { useOtpGate } from '../../components/common/OtpGate';
 
-function AddSheet({ onClose }) {
-  const [tab, setTab] = useState('bank');
+function AddSheet({ onClose, start = 'bank' }) {
+  const [tab, setTab] = useState(start);
   const [form, setForm] = useState({ label: '', accountName: '', accountNumber: '', bankName: '', ifsc: '', upiId: '', upiLabel: '' });
   const [add, { isLoading }] = useAddWorkerBankAccountMutation();
   // Bank details need a fresh OTP; asked for here when the server wants it.
@@ -115,7 +115,9 @@ export default function WorkerBankPage() {
   const { data, isLoading } = useGetWorkerBankAccountsQuery();
   const [deleteAcc] = useDeleteWorkerBankAccountMutation();
   const [setDefault] = useSetDefaultWorkerBankAccountMutation();
-  const [showAdd, setShowAdd] = useState(false);
+  // From the setup list's UPI step (?focus=upi): open straight on Add UPI ID.
+  const upiFirst = useSearchParams()[0].get('focus') === 'upi';
+  const [showAdd, setShowAdd] = useState(upiFirst);
 
   const banks = data?.banks ?? [];
   const upiIds = data?.upiIds ?? [];
@@ -288,7 +290,7 @@ export default function WorkerBankPage() {
       </div>
 
       <AnimatePresence>
-        {showAdd && <AddSheet onClose={() => setShowAdd(false)} />}
+        {showAdd && <AddSheet start={upiFirst ? 'upi' : 'bank'} onClose={() => setShowAdd(false)} />}
       </AnimatePresence>
 
       <style>{`
