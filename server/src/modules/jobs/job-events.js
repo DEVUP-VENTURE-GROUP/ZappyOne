@@ -93,6 +93,8 @@ async function announce(kind, doc, status) {
   toRoom(id, 'job.status', payload);
   // The arrival promise: set on accept, kept on arrival, closed on hand-back or end (jobs/promise).
   require('./promise').onStatus(kind, doc, status).catch(() => {});
+  // Pros who offered a time hear the job is gone (taken, or cancelled), and their offers are cleared (jobs/offers).
+  require('./offers').onStatus(kind, doc).catch(() => {});
   // Time inside the customer's home, for the safety check (jobs/safety-check).
   require('./safety-check').onStatus(kind, doc, status).catch(() => {});
   // Personal channels too, so lists and home cards update without the job open.
@@ -221,7 +223,7 @@ async function alertNearbyProviders(kind, doc, { offlineOnly = false, round = 0 
     // is online and in reach. Judged across the whole city, one free pro offline far away left the only nearby pro unrung.
     if (load && near.some((p) => p.kind === 'worker' && load.free.has(p.id))) near = near.filter((p) => p.kind !== 'worker' || load.free.has(p.id));
     const reach = near.slice(0, ALERT_MAX);
-    const ring = fa ? { windowSec: fa.ringSec, expiresAt: new Date(Date.now() + fa.ringSec * 1000).toISOString(), round } : {};
+    const ring = fa ? { windowSec: fa.ringSec, expiresAt: new Date(Date.now() + fa.ringSec * 1000).toISOString(), round, laterChoicesMin: fa.laterChoicesMin } : {};
     const pushedBefore = new Set(doc.matching?.pushed || []);
     if (fa && reach.length) await KINDS[kind].model().updateOne({ _id: doc._id }, { $addToSet: { 'matching.pushed': { $each: reach.map((p) => `${p.kind}:${p.id}`) } } });
 

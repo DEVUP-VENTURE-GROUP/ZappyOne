@@ -89,9 +89,15 @@ async function sweep({ now = Date.now() } = {}) {
       // From when it last started waiting for a pro: a job handed back starts the clock again.
       const sinceBookedSec = (now - waitingSince(d)) / 1000;
       try {
-        // Waited past the limit with nobody (from the booked time, if it is a later booking): closed free.
+        // A pro offered a time (jobs/offers): the customer is choosing. Silent past customerDecisionSec, the soonest is taken for them.
+        const offers = require('./offers');
+        const standing = offers.live(d, now);
+        if (standing.length) {
+          if (await offers.autoChoose(kind, d, now)) { out.offerTaken = (out.offerTaken || 0) + 1; continue; }
+        }
+        // Waited past the limit with nobody (from the booked time, if it is a later booking): closed free; never while an offer stands.
         const from = Math.max(waitingSince(d), d.scheduledAt ? new Date(d.scheduledAt).getTime() : 0);
-        if ((now - from) / 60000 >= unmatchedCloseMinutes) {
+        if (!standing.length && (now - from) / 60000 >= unmatchedCloseMinutes) {
           await closeUnmatched(kind, d);
           // If someone comes online near them soon, they are told (jobs/comeback).
           await require('./comeback').remember(kind, d);
@@ -105,7 +111,7 @@ async function sweep({ now = Date.now() } = {}) {
           if (mine.modifiedCount && await fast.ringNextStaff(kind, d, fa.autoAcceptKm)) { out.staffRung = (out.staffRung || 0) + 1; continue; }
         }
         // Nobody tapped Accept in time: the fairest nearby free pro is given it, as far as widenKm.
-        if (quick && sinceBookedSec >= fa.autoAssignSec && !d.matching?.autoWideTriedAt) {
+        if (quick && !standing.length && sinceBookedSec >= fa.autoAssignSec && !d.matching?.autoWideTriedAt) {
           const mine = await Model.updateOne({ _id: d._id, 'matching.autoWideTriedAt': null }, { $set: { 'matching.autoWideTriedAt': new Date(now) } });
           if (mine.modifiedCount && await fast.autoAssign(kind, d, fa.widenKm)) { out.autoAssigned = (out.autoAssigned || 0) + 1; continue; }
         }

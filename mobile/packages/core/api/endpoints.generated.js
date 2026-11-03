@@ -16,7 +16,7 @@
  * ----------------------------------------------------------------------------
  */
 
-export const TAG_TYPES = ['ProviderMenu', 'CheckoutDrafts', 'ServicePlans', 'MyPlans', 'ProviderPlans', 'PlanVisits', 'PartnerRates', 'PriceRequest', 'Reviews', 'Fees', 'JobChat', 'Account', 'AdminTeam', 'Payments', 'Me', 'Order', 'Worker', 'Earnings', 'AdminMetrics', 'Kyc', 'Plan', 'Subscription', 'Wallet', 'Notification', 'AdminUsers', 'Disputes', 'Payouts', 'Incentives', 'CancellationConfig', 'PricingCfg', 'AuditLogs', 'Addresses', 'Ad', 'Promo', 'Gamification', 'Recommendations', 'FeatureFlags', 'SupportTickets', 'Referral', 'ShieldFund', 'EventTheme', 'EventBooking', 'EventPartner', 'EventConfig', 'EventCategory', 'PartnerNotification', 'Fraud', 'Zone', 'City', 'PaymentMethods', 'UserDisputes', 'UserTickets', 'AdminAppeals', 'AdminTraining', 'WorkerGoals', 'Plans', 'Content', 'Rewards', 'WorkerOps', 'ReadyMode', 'Shop', 'ShopWorkers', 'ShopKyc',
+export const TAG_TYPES = ['JobOffers', 'ProviderMenu', 'CheckoutDrafts', 'ServicePlans', 'MyPlans', 'ProviderPlans', 'PlanVisits', 'PartnerRates', 'PriceRequest', 'Reviews', 'Fees', 'JobChat', 'Account', 'AdminTeam', 'Payments', 'Me', 'Order', 'Worker', 'Earnings', 'AdminMetrics', 'Kyc', 'Plan', 'Subscription', 'Wallet', 'Notification', 'AdminUsers', 'Disputes', 'Payouts', 'Incentives', 'CancellationConfig', 'PricingCfg', 'AuditLogs', 'Addresses', 'Ad', 'Promo', 'Gamification', 'Recommendations', 'FeatureFlags', 'SupportTickets', 'Referral', 'ShieldFund', 'EventTheme', 'EventBooking', 'EventPartner', 'EventConfig', 'EventCategory', 'PartnerNotification', 'Fraud', 'Zone', 'City', 'PaymentMethods', 'UserDisputes', 'UserTickets', 'AdminAppeals', 'AdminTraining', 'WorkerGoals', 'Plans', 'Content', 'Rewards', 'WorkerOps', 'ReadyMode', 'Shop', 'ShopWorkers', 'ShopKyc',
     'RepairCatalog', 'RepairConfig', 'RepairPricing', 'RepairRequests', 'RepairBookings', 'RepairProvider', 'MyAssets',
     'HelpingConfig', 'HelpingTasks', 'HelpingAvailable', 'AdminHelpingTasks',
     'PetCatalog', 'MyPets', 'PetBookings', 'PetAvailable', 'PetRecurring', 'AdminPetBookings', 'AdminPetPricing', 'AdminPetCapabilities',
@@ -144,6 +144,10 @@ export function endpoints(b, { adminApiPath }) {
     /** Move a booking made for later (jobs/reschedule): repairs, pet care, helping. */
     // Fix the address or door directions before the pro sets off (jobs/place-edit).
     editJobPlace: b.mutation({ query: ({ id, ...body }) => ({ url: `/jobs/${id}/place`, method: 'PATCH', body }), invalidatesTags: ['RepairBookings', 'PetBookings', 'HelpingTasks'] }),
+    // "I can come by …" (server jobs/offers): a pro offers a time; the customer sees the offers and says OK to one.
+    offerJobLater: b.mutation({ query: ({ id, minutes }) => ({ url: `/jobs/${id}/offers`, method: 'POST', body: { minutes } }) }),
+    jobOffers: b.query({ query: (id) => `/jobs/${id}/offers`, providesTags: (r, e, id) => [{ type: 'JobOffers', id }, 'JobOffers'] }),
+    chooseJobOffer: b.mutation({ query: ({ id, by }) => ({ url: `/jobs/${id}/offers/choose`, method: 'POST', body: { by } }), invalidatesTags: ['JobOffers', 'RepairBookings', 'PetBookings', 'HelpingTasks'] }),
     editJobContact: b.mutation({ query: ({ id, onSite }) => ({ url: `/jobs/${id}/contact`, method: 'PATCH', body: { onSite } }), invalidatesTags: ['RepairBookings', 'PetBookings', 'HelpingTasks'] }),
     claimJobPayment: b.mutation({ query: ({ id, method }) => ({ url: `/jobs/${id}/pay-claim`, method: 'POST', body: { method } }) }),
     addJobExtra: b.mutation({ query: ({ id, code, petIndex = null }) => ({ url: `/jobs/${id}/extras`, method: 'POST', body: { code, petIndex } }), invalidatesTags: ['RepairBookings', 'PetBookings', 'HelpingTasks'] }),

@@ -8,5 +8,5 @@ export const NOTIFICATION_TAGS = [
   'Notification', 'Me', 'Account', 'Onboarding', 'Kyc', 'ShopKyc', 'IdCheck', 'Shop', 'ShopWorkers', 'Worker',
   'RepairPricing', 'RepairProvider', 'RepairBookings', 'PriceRequest', 'ProviderPlans', 'PlanVisits', 'MyPlans',
   'PetBookings', 'HelpingTasks', 'EventBooking', 'EventPartner', 'PartnerNotification', 'Earnings', 'Wallet',
-  'Payouts', 'ShopPayouts', 'Payments', 'Reviews', 'UserDisputes', 'UserTickets', 'Order', 'Subscription',
+  'Payouts', 'ShopPayouts', 'Payments', 'Reviews', 'UserDisputes', 'UserTickets', 'Order', 'Subscription', 'JobOffers',
 ];

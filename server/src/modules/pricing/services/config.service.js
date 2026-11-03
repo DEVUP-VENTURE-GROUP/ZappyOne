@@ -77,8 +77,11 @@ const FAST_ASSIGN_DEFAULTS = {
   widenKm: 15,             // after the broadcast, and for auto-accept at the deadline
   autoAcceptPauseDays: 7,  // cancelling an auto-accepted job pauses auto-accept this long
   staffRingSec: 10,        // each on-duty staff member, fairest first, is rung this long; the job is theirs only on Accept
-  ringSec: 30,             // every nearby free pro is rung this long, round after round, a little wider each time
-  autoAssignSec: 180,      // nobody tapped Accept by now: the fairest nearby free pro is given it
+  ringSec: 40,             // every nearby free pro is rung this long, round after round, a little wider each time
+  autoAssignSec: 300,      // nobody tapped Accept by now: the fairest nearby free pro is given it (the 5-minute open list comes first)
+  laterChoicesMin: [10, 20, 30, 45, 60], // what a pro who cannot come now may offer instead (jobs/offers)
+  customerDecisionSec: 120, // the customer did not answer an offer: the earliest is taken for them, if it is soon enough
+  autoChooseMaxMin: 30,    // an offer later than this always needs the customer's own OK
 };
 
 const SURGE_DEFAULTS = {

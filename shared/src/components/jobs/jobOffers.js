@@ -35,6 +35,11 @@ const when = (at) => (at ? new Date(at).toLocaleString('en-IN', { weekday: 'shor
 // boosted job rings again for everyone, including whoever passed or hid it.
 export const keyOf = (o) => `${o.kind}:${o.id}:${o.boostPaise || 0}`;
 
+/** A job still open to everyone (not one a customer chose this pro for) can be answered with "I can come by …" (server jobs/offers). */
+export const canOfferLater = (o) => o.mode === 'open' || (o.kind === 'repair' && !!o.broadcast);
+// The times a pro may offer: from the ring (Economics → Dispatch), these when it did not say.
+export const laterChoicesOf = (o) => (Array.isArray(o.laterChoicesMin) && o.laterChoicesMin.length ? o.laterChoicesMin : [10, 20, 30, 45, 60]);
+
 /** What to say when a job could not be taken. */
 export const takeError = (err, fallback = 'Could not accept this job') => (
   err?.data?.code === 'ALREADY_CLAIMED' || err?.status === 409 ? 'Taken by another pro' : err?.data?.error || fallback
@@ -94,7 +99,7 @@ export const fromPetOffer = (b) => ({
 });
 
 export const fromOpen = (p) => ({
-  kind: p.kind, id: String(p.id), mode: 'open', askReason: false,
+  kind: p.kind, id: String(p.id), mode: 'open', askReason: false, laterChoicesMin: p.laterChoicesMin,
   heading: p.mustPay ? 'New job near you. Pay your ZappyOne dues to take it' : p.yourTurn ? 'New job for you, accept before the timer ends' : 'New job near you, first to accept',
   title: p.title || 'New job',
   valueLabel: 'You earn',

@@ -6,7 +6,7 @@ import PassReasonPicker from '../worker/PassReasonPicker';
 import DistanceStrip from './DistanceStrip';
 import { startRinging } from '../../utils/alertSound';
 import { formatPaise } from '../../utils/money';
-import { offerClock as clock, DEFAULT_WINDOW_SEC, customerRecordLine } from './jobOffers';
+import { offerClock as clock, DEFAULT_WINDOW_SEC, customerRecordLine, canOfferLater, laterChoicesOf } from './jobOffers';
 import { STAFF_PORTAL } from '../../provider/staffPortal';
 
 /**
@@ -30,9 +30,10 @@ import { STAFF_PORTAL } from '../../provider/staffPortal';
  * onAccept() / onDecline(reason) are the kind's own calls; both may throw.
  */
 
-export default function JobOfferAlert({ offer, myLocation, onAccept, onDecline, onClose, declineTitle, more = 0 }) {
+export default function JobOfferAlert({ offer, myLocation, onAccept, onDecline, onClose, declineTitle, more = 0, onOfferLater }) {
   const [busy, setBusy] = useState(null); // 'accept' | 'decline'
   const [askingReason, setAskingReason] = useState(false);
+  const [offeringTime, setOfferingTime] = useState(false);
 
   const windowSec = offer?.windowSec || DEFAULT_WINDOW_SEC;
   const expiry = useMemo(
@@ -241,6 +242,24 @@ export default function JobOfferAlert({ offer, myLocation, onAccept, onDecline, 
                   {busy === 'accept' ? <Loader2 size={16} className="animate-spin" /> : (offer.acceptLabel || 'Accept job')}
                 </button>
               </div>
+            )}
+            {/* Busy or far right now: offer a time instead of passing (server jobs/offers); the customer says OK or picks someone else. */}
+            {onOfferLater && canOfferLater(offer) && !askingReason && (
+              offeringTime ? (
+                <div className="mt-3 rounded-2xl bg-slate-50 p-3">
+                  <p className="text-[12.5px] font-semibold text-slate-700">I can be there in</p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {laterChoicesOf(offer).map((m) => (
+                      <button key={m} type="button" disabled={!!busy} onClick={() => act('later', () => onOfferLater(m))}
+                        className="rounded-full border border-zappy-200 bg-white px-3.5 py-1.5 text-[13px] font-bold text-zappy-700 hover:bg-zappy-50 disabled:opacity-50">{m} min</button>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <button type="button" onClick={() => setOfferingTime(true)} className="mt-3 w-full text-center text-[12.5px] font-semibold text-zappy-700">
+                  Can't come now? Offer a time
+                </button>
+              )
             )}
           </div>
 

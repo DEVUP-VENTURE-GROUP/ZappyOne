@@ -9,7 +9,7 @@ import { Modal, Pressable, StyleSheet, Vibration, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Banknote, Briefcase, Clock, IndianRupee, MapPin, Navigation, Star, X, TrendingUp } from 'lucide-react-native';
 import { kmBetween } from '@zappy/core/shared/distance';
-import { offerClock, DEFAULT_WINDOW_SEC, PASS_REASONS, customerRecordLine } from '@zappy/core/shared/jobOffers';
+import { offerClock, DEFAULT_WINDOW_SEC, PASS_REASONS, customerRecordLine, canOfferLater, laterChoicesOf } from '@zappy/core/shared/jobOffers';
 import { formatPaise } from '@zappy/core/shared/money';
 import { Button, Text } from '..';
 import { colors, zappy, ink, slate, success, accent, danger } from '../../theme/colors';
@@ -23,7 +23,7 @@ export interface Offer {
   kind: string; id: string; mode: string; askReason: boolean; heading: string; title: string;
   valueLabel: string; valuePaise: number; boostPaise?: number; surgePaise?: number; travelPaise?: number; distanceKm?: number | null; groupSize?: number; cash?: boolean;
   howLabel?: string; address?: string; landmark?: string; coordinates?: number[] | null; km?: number | null;
-  whenLabel?: string; frontPaise?: number; expiresAt?: string; windowSec?: number; acceptLabel?: string; broadcast?: boolean;
+  whenLabel?: string; frontPaise?: number; expiresAt?: string; windowSec?: number; acceptLabel?: string; broadcast?: boolean; laterChoicesMin?: number[];
   customer?: { rating?: number | null; count?: number } | null;
 }
 
@@ -36,13 +36,14 @@ function useRinging(active: boolean) {
   }, [active]);
 }
 
-export function JobOfferAlert({ offer, myLocation, onAccept, onDecline, onClose, declineTitle, more = 0 }: {
+export function JobOfferAlert({ offer, myLocation, onAccept, onDecline, onClose, declineTitle, more = 0, onOfferLater }: {
   offer: Offer; myLocation?: number[] | null;
   onAccept: () => Promise<void>; onDecline: (reason: string) => Promise<void>;
-  onClose: (why: 'expired' | 'dismissed') => void; declineTitle?: string; more?: number;
+  onClose: (why: 'expired' | 'dismissed') => void; declineTitle?: string; more?: number; onOfferLater?: (minutes: number) => Promise<void>;
 }) {
   const insets = useSafeAreaInsets();
-  const [busy, setBusy] = useState<'accept' | 'decline' | null>(null);
+  const [busy, setBusy] = useState<'accept' | 'decline' | 'later' | null>(null);
+  const [offeringTime, setOfferingTime] = useState(false);
   const [askingReason, setAskingReason] = useState(false);
   const windowSec = offer.windowSec || DEFAULT_WINDOW_SEC;
   const expiry = useMemo(() => (offer.expiresAt ? new Date(offer.expiresAt).getTime() : Date.now() + windowSec * 1000), [offer, windowSec]);
@@ -64,7 +65,7 @@ export function JobOfferAlert({ offer, myLocation, onAccept, onDecline, onClose,
   const urgent = left <= windowSec / 5;
   const boost = !STAFF_APP && (offer.boostPaise ?? 0) > 0 ? (offer.boostPaise as number) : 0;
 
-  const act = async (which: 'accept' | 'decline', fn: () => Promise<void>) => {
+  const act = async (which: 'accept' | 'decline' | 'later', fn: () => Promise<void>) => {
     setBusy(which);
     try { await fn(); } finally { setBusy(null); }
   };
@@ -167,6 +168,25 @@ export function JobOfferAlert({ offer, myLocation, onAccept, onDecline, onClose,
                   onPress={() => act('accept', onAccept)} style={styles.flex} size="large" />
               </View>
             )}
+            {/* Busy or far right now: offer a time instead of passing (server jobs/offers; the website's card). */}
+            {onOfferLater && canOfferLater(offer) && !askingReason ? (
+              offeringTime ? (
+                <View style={styles.later}>
+                  <Text variant="caption" weight="semibold" color={ink[700]}>I can be there in</Text>
+                  <View style={styles.laterRow}>
+                    {laterChoicesOf(offer).map((m: number) => (
+                      <Pressable key={m} disabled={!!busy} onPress={() => act('later', () => onOfferLater(m))} accessibilityRole="button" style={styles.laterChip}>
+                        <Text variant="caption" weight="bold" color={zappy[700]}>{m} min</Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                </View>
+              ) : (
+                <Pressable onPress={() => setOfferingTime(true)} accessibilityRole="button" style={styles.laterLink}>
+                  <Text variant="caption" weight="semibold" color={zappy[700]}>Can't come now? Offer a time</Text>
+                </Pressable>
+              )
+            ) : null}
           </View>
 
           <Pressable onPress={() => onClose('dismissed')} accessibilityRole="button" style={styles.hide}>
@@ -179,6 +199,10 @@ export function JobOfferAlert({ offer, myLocation, onAccept, onDecline, onClose,
 }
 
 const styles = StyleSheet.create({
+  later: { marginTop: spacing.md, gap: spacing.sm, padding: spacing.md, borderRadius: radius.large, backgroundColor: slate[50] },
+  laterRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  laterChip: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: radius.pill, borderWidth: 1, borderColor: zappy[200], backgroundColor: colors.surface },
+  laterLink: { marginTop: spacing.md, alignItems: 'center', paddingVertical: 4 },
   flex: { flex: 1, minWidth: 0 },
   inline: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   capitalize: { textTransform: 'capitalize' },

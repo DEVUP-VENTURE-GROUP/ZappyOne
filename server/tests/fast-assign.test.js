@@ -159,7 +159,7 @@ describe('the customer search clock', () => {
   test('counts from booking, and is gone once someone has the job or it is for later', async () => {
     const job = await openPet();
     const view = await fastAssign.searchView('pet', job);
-    expect(view).toMatchObject({ firstLookSec: 30, broadcastSec: 45, deadlineSec: 180 });
+    expect(view).toMatchObject({ firstLookSec: 30, broadcastSec: 45, deadlineSec: 300 });
     expect(await fastAssign.searchView('pet', { ...job, workerId: oid() })).toBeNull();
     expect(await fastAssign.searchView('pet', { ...job, scheduledAt: new Date(Date.now() + 3600000) })).toBeNull();
   });

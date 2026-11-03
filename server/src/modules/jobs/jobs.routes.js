@@ -480,6 +480,24 @@ router.post('/:id/cash-refused',
     } catch (err) { next(err); }
   });
 
+// "I can come by …" (jobs/offers): a pro who cannot come now offers a time; the customer sees every offer and says OK to one.
+router.post('/:id/offers',
+  authenticate, requireRole('worker', 'shop'),
+  makeLimiter({ windowMs: 60_000, max: 20, prefix: 'joboffer' }),
+  validate(Joi.object({ minutes: Joi.number().integer().min(5).max(240).required() })),
+  async (req, res, next) => {
+    try { res.status(201).json(await require('./offers').offerLater({ jobId: req.params.id, who: actorOf(req), minutes: req.body.minutes })); } catch (err) { next(err); }
+  });
+router.get('/:id/offers', authenticate, requireRole('user'), async (req, res, next) => {
+  try { res.json(await require('./offers').viewFor({ jobId: req.params.id, userId: req.auth.sub })); } catch (err) { next(err); }
+});
+router.post('/:id/offers/choose',
+  authenticate, requireRole('user'),
+  validate(Joi.object({ by: Joi.string().pattern(/^(worker|shop):[a-f0-9]{24}$/).required() })),
+  async (req, res, next) => {
+    try { res.json(await require('./offers').choose({ jobId: req.params.id, userId: req.auth.sub, by: req.body.by })); } catch (err) { next(err); }
+  });
+
 router.post('/:id/customer-absent',
   authenticate, requireRole('worker', 'shop'),
   makeLimiter({ windowMs: 60_000, max: 10, prefix: 'jobnoshow' }),

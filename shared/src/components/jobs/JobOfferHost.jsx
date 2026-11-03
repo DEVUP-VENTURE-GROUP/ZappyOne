@@ -9,7 +9,7 @@ import { keyOf, fromRepair, fromPetOffer, fromOpen, recoveredOffers, openOffers,
 import { selectRole, selectAuth } from '../../modules/auth/authSlice';
 import { getSocket } from '../../services/socket';
 import {
-  useRepairProviderJobsQuery, useTransitionRepairBookingMutation, useDeclineRepairBookingMutation, useClaimRepairBookingMutation,
+  useRepairProviderJobsQuery, useTransitionRepairBookingMutation, useDeclineRepairBookingMutation, useClaimRepairBookingMutation, useOfferJobLaterMutation,
   useAssignedPetBookingsQuery, useAcceptPetBookingMutation, useDeclinePetBookingMutation,
   useAcceptHelpingTaskMutation, useGetWorkerMeQuery,
 } from '../../services/api';
@@ -43,6 +43,7 @@ export default function JobOfferHost({ kinds = ['repair', 'pet', 'helping'], myL
   const [acceptRepair] = useTransitionRepairBookingMutation();
   const [declineRepair] = useDeclineRepairBookingMutation();
   const [claimRepair] = useClaimRepairBookingMutation();
+  const [sendLater] = useOfferJobLaterMutation();
   const [acceptPet] = useAcceptPetBookingMutation();
   const checkedIn = useCheckInThen();
   const [declinePet] = useDeclinePetBookingMutation();
@@ -122,6 +123,15 @@ export default function JobOfferHost({ kinds = ['repair', 'pet', 'helping'], myL
     done(offer);
   }
 
+  // Cannot come now: offer a time (server jobs/offers); the job leaves the screen and the customer decides.
+  async function offerLater(minutes) {
+    try {
+      await sendLater({ id: offer.id, minutes }).unwrap();
+      toast.success(`Sent: you can be there in ${minutes} min. The customer will say OK or pick someone else.`);
+      done(offer);
+    } catch (err) { toast.error(err?.data?.error || 'Could not send your time'); }
+  }
+
   async function decline(reason) {
     try {
       if (offer.kind === 'repair' && !offer.broadcast) {
@@ -146,6 +156,7 @@ export default function JobOfferHost({ kinds = ['repair', 'pet', 'helping'], myL
       key={keyOf(offer)}
       offer={offer}
       more={queue.length - 1}
+      onOfferLater={offerLater}
       myLocation={myLocation}
       onAccept={accept}
       onDecline={decline}

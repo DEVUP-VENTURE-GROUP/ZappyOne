@@ -13,6 +13,7 @@ import {
   useTransitionRepairBookingMutation,
   useDeclineRepairBookingMutation,
   useClaimRepairBookingMutation,
+  useOfferJobLaterMutation,
   useAssignedPetBookingsQuery,
   useAcceptPetBookingMutation,
   useDeclinePetBookingMutation,
@@ -42,6 +43,7 @@ export function JobOfferHost({ kinds = ['repair', 'pet', 'helping'] }: { kinds?:
   const [acceptRepair] = useTransitionRepairBookingMutation();
   const [declineRepair] = useDeclineRepairBookingMutation();
   const [claimRepair] = useClaimRepairBookingMutation();
+  const [sendLater] = useOfferJobLaterMutation();
   const [acceptPet] = useAcceptPetBookingMutation();
   const checkedIn = useCheckInThen();
   const [declinePet] = useDeclinePetBookingMutation();
@@ -102,6 +104,16 @@ export function JobOfferHost({ kinds = ['repair', 'pet', 'helping'] }: { kinds?:
     done(offer);
   }
 
+  // Cannot come now: offer a time (server jobs/offers); the job leaves the screen and the customer decides.
+  async function offerLater(minutes: number) {
+    if (!offer) return;
+    try {
+      await sendLater({ id: offer.id, minutes }).unwrap();
+      toast.success(`Sent: you can be there in ${minutes} min. The customer will say OK or pick someone else.`);
+      done(offer);
+    } catch (err) { toast.error((err as { data?: { error?: string } })?.data?.error || 'Could not send your time'); }
+  }
+
   async function decline(reason: string) {
     if (!offer) return;
     try {
@@ -125,6 +137,7 @@ export function JobOfferHost({ kinds = ['repair', 'pet', 'helping'] }: { kinds?:
     <JobOfferAlert
       key={keyOf(offer)}
       more={queue.length - 1}
+      onOfferLater={offerLater}
       offer={offer}
       myLocation={myLocation}
       onAccept={accept}

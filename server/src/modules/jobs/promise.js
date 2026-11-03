@@ -73,7 +73,11 @@ async function start(kind, doc) {
   const booked = doc.scheduledAt ? new Date(doc.scheduledAt).getTime() : null;
   const later = booked && booked - now > LATER_AFTER_MIN * 60000;
   let promisedBy; let minutes = null; let source = 'booked_time';
-  if (later) {
+  // Taken on an offered time ("I can come by 10:45", jobs/offers): that time is the promise.
+  const offered = doc.matching?.promise;
+  if (!later && offered?.arriveBy && offered.by === `${provider.kind}:${provider.id}`) {
+    promisedBy = new Date(offered.arriveBy); minutes = offered.minutes; source = 'offered_time';
+  } else if (later) {
     promisedBy = new Date(booked);
   } else {
     const est = (await require('./arrival').forProviders([provider], { lat: at.lat, lng: at.lng })).get(`${provider.kind}:${provider.id}`);

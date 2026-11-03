@@ -24,6 +24,7 @@ import AddServices from './redesign/AddServices';
 import PayPro from './redesign/PayPro';
 import JobBoostCard from './cards/JobBoostCard';
 import SlowSearchCard from './cards/SlowSearchCard';
+import LaterOffersCard from './cards/LaterOffersCard';
 import JobTipCard from './cards/JobTipCard';
 import RepeatCard from './cards/RepeatCard';
 import JobChat from '@shared/components/jobs/JobChat';
@@ -234,6 +235,7 @@ export default function JobTrackingPage({ job, extras = null, startCode = null, 
               {options?.providerChangedAt && (
                 <p className="text-[14px] text-ink-700"><b className="text-ink-900">Your {job.noun} could not make it.</b> We are finding the next one now. If you would rather not wait, you can cancel free.</p>
               )}
+              {status === 'searching' && <LaterOffersCard jobId={job.id} />}
               {options?.search && (
                 <SlowSearchCard jobId={job.id} noun={job.noun} search={options.search} reschedule={options.reschedule}
                   onCancel={cancel ? openCancel : null} onMoved={refetchOptions} />

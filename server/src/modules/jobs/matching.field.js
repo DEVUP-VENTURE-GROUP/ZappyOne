@@ -27,4 +27,11 @@ module.exports = new mongoose.Schema({
   /** Ring rounds to nearby pros (jobs/waves): the last round sent, and who was already pushed, so a round re-rings the app but never re-pushes. */
   ringRound: { type: Number, default: 0 },
   pushed: { type: [String], default: [] },
+  /** Pros who cannot come now but can by a time (jobs/offers): one per pro, the customer picks or the earliest is taken for them. */
+  offers: {
+    type: [new mongoose.Schema({ by: String, minutes: Number, arriveBy: Date, at: Date }, { _id: false })],
+    default: [],
+  },
+  /** The offered time the job was given on, by the customer or for them; the arrival promise keeps to it (jobs/promise). */
+  promise: { type: new mongoose.Schema({ by: String, minutes: Number, arriveBy: Date, chosenAt: Date, how: String }, { _id: false }), default: null },
 }, { _id: false });

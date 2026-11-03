@@ -191,8 +191,8 @@ describe('what rings on the provider’s phone', () => {
     }, 'CONFIRMED'));
     const alerts = heard.filter((h) => h.event === 'job.available');
     expect(alerts.map((a) => a.id)).toEqual([String(approved._id)]);
-    expect(alerts[0].payload).toMatchObject({ kind: 'helping', title: 'Groceries', earningPaise: 9000, windowSec: 30, round: 0 });
-    expect(new Date(alerts[0].payload.expiresAt).getTime() - Date.now()).toBeLessThanOrEqual(30000);
+    expect(alerts[0].payload).toMatchObject({ kind: 'helping', title: 'Groceries', earningPaise: 9000, windowSec: 40, round: 0 });
+    expect(new Date(alerts[0].payload.expiresAt).getTime() - Date.now()).toBeLessThanOrEqual(40000);
   });
 
   test('over the dues limit they still hear the job, marked to pay first; paid up, the mark goes', async () => {
