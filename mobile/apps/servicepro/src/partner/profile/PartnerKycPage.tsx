@@ -49,7 +49,7 @@ export function PartnerKycPage() {
   const [pan, setPan] = useState<string | null>(null);
   const [gst, setGst] = useState<string | null>(null);
 
-  if (isLoading || !partner) return <View style={styles.page}><ScreenHeader title="Verification" safeArea /><LoadingState /></View>;
+  if (isLoading || !partner) return <View style={styles.page}><ScreenHeader title="ID check" safeArea /><LoadingState /></View>;
 
   const kyc = (partner.kyc || {}) as Record<string, unknown> & NonNullable<typeof partner.kyc>;
   const status = kyc.status || 'not_submitted';
@@ -96,7 +96,7 @@ export function PartnerKycPage() {
 
   return (
     <View style={styles.page}>
-      <ScreenHeader title="Verification" safeArea />
+      <ScreenHeader title="ID check" safeArea />
       <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
         <View style={[styles.banner, { backgroundColor: st.bg }]}>
           <st.Icon size={18} color={st.fg} />

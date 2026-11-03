@@ -56,7 +56,7 @@ export function ProviderOnboardingPage() {
     summary: 'Your services',
     domain: 'What kind of work do you do?',
     line: domain?.name || 'Choose a service',
-    verify: 'Verification',
+    verify: 'Send your documents',
   };
   const subtitle = status?.providerKind === 'shop' ? status?.profile?.businessName : status?.profile?.name;
 

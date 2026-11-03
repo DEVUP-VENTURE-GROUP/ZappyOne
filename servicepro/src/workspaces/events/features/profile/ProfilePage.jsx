@@ -63,7 +63,7 @@ export default function ProfilePage() {
 
   return (
     <div className="space-y-4">
-      <PageHeader title="Profile & KYC" subtitle="What customers see about your business." />
+      <PageHeader title="Profile & ID check" subtitle="What customers see about your business." />
       <DraftRestored show={draft.restored} onDiscard={draft.discard} />
 
       <Card className="space-y-4 p-4">

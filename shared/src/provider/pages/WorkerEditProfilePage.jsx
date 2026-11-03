@@ -26,7 +26,7 @@ const ALL_NAV_SECTIONS = [
     title: 'Earnings & Finance',
     items: [
       { to: '/worker/earnings',  Icon: BarChart2,    label: 'Earnings Breakdown',  desc: 'Per-job breakdown & payslip',      color: 'indigo' },
-      { to: '/worker/goals',     Icon: Target,       label: 'Earnings Goals',       desc: 'Daily & weekly targets',           color: 'purple' },
+      { to: '/worker/goals',     Icon: Target,       label: 'Earning targets',       desc: 'Daily & weekly targets',           color: 'purple' },
       { to: '/worker/bank',      Icon: Building2,    label: 'Bank & UPI Accounts',  desc: 'Manage payment destinations',      color: 'blue' },
       { to: '/worker/withdraw',  Icon: CreditCard,   label: 'Withdraw Earnings',    desc: 'Transfer to bank or UPI',          color: 'emerald' },
     ],
@@ -39,11 +39,11 @@ const ALL_NAV_SECTIONS = [
       { to: '/provider/onboarding', Icon: ShieldCheck, label: 'Services & Verification', desc: 'What you are approved to work on', color: 'emerald' },
       { to: '/worker/training',  Icon: GraduationCap,label: 'Training & Certification', desc: 'Video courses + quiz certs',   color: 'rose' },
       { to: '/worker/reviews',   Icon: Star,         label: 'My reviews',               desc: 'What customers said about you', color: 'orange' },
-      { to: '/worker/appeals',   Icon: AlertCircle,  label: 'Appeals',                  desc: 'Contest penalties',            color: 'orange' },
+      { to: '/worker/appeals',   Icon: AlertCircle,  label: 'Ask us to recheck',                  desc: 'If you think a penalty is wrong',            color: 'orange' },
     ],
   },
   {
-    title: 'Insights',
+    title: 'How you are doing',
     items: [
       { to: '/worker/goals',     Icon: TrendingUp,   label: 'Zone Benchmark',       desc: 'See how you rank nearby',          color: 'cyan' },
       { to: '/worker/kyc',       Icon: Shield,       label: 'KYC Documents',        desc: 'Verification & compliance',        color: 'slate' },

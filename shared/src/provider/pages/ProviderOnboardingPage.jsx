@@ -759,7 +759,7 @@ export default function ProviderOnboardingPage() {
     summary: 'Your services',
     domain: 'What kind of work do you do?',
     line: domain?.name || 'Choose a service',
-    verify: 'Verification',
+    verify: 'Send your documents',
   };
 
   function back() {

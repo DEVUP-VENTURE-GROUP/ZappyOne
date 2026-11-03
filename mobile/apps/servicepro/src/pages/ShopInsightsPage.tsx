@@ -23,7 +23,7 @@ export function ShopInsightsPage() {
 
   return (
     <View style={styles.page}>
-      <ScreenHeader title="Insights" safeArea onBack={() => router.back()} />
+      <ScreenHeader title="How you are doing" safeArea onBack={() => router.back()} />
       <View style={styles.chips}>{RANGES.map((r) => <Chip key={r} label={`${r} days`} selected={days === r} onPress={() => setDays(r)} />)}</View>
       {isLoading || !data ? <LoadingState /> : (
         <ScrollView contentContainerStyle={styles.body}>

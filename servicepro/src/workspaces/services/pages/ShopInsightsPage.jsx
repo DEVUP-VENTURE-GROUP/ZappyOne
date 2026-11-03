@@ -17,7 +17,7 @@ export default function ShopInsightsPage() {
     <div className="min-h-screen bg-slate-50 pb-24">
       <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-slate-100 bg-white px-4 py-3">
         <button onClick={() => nav('/shop')} aria-label="Back" className="text-slate-500"><ArrowLeft size={20} /></button>
-        <h1 className="h-card">Insights</h1>
+        <h1 className="h-card">How you are doing</h1>
         <div className="ml-auto flex rounded-lg bg-slate-100 p-0.5">
           {RANGES.map((r) => (
             <button key={r} type="button" onClick={() => setDays(r)}

@@ -94,7 +94,7 @@ export function ShopPriceRequestsPage() {
   const rows: Request[] = data?.requests || [];
   return (
     <View style={styles.page}>
-      <ScreenHeader title="Price requests" subtitle="Customers near you asking what you charge" safeArea />
+      <ScreenHeader title="Customers asking your price" subtitle="Customers near you asking what you charge" safeArea />
       {isLoading ? <LoadingState /> : (
         <FlatList data={rows} keyExtractor={(r) => r._id} contentContainerStyle={styles.body} ItemSeparatorComponent={() => <View style={styles.sep} />}
           renderItem={({ item }) => <RequestCard r={item} />} keyboardShouldPersistTaps="handled"

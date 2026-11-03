@@ -112,7 +112,7 @@ export default function WorkerEarningsPage() {
                 <ArrowLeft size={20} strokeWidth={2.5} />
               </motion.button>
               <h1 className="text-white font-black tracking-wide text-lg">Earnings</h1>
-              <motion.button onClick={() => generatePayslipCSV(jobs, period)} whileTap={{ scale: 0.9 }} className="w-10 h-10 rounded-full bg-white/10 border border-white/10 flex items-center justify-center text-white" title="Download CSV">
+              <motion.button onClick={() => generatePayslipCSV(jobs, period)} whileTap={{ scale: 0.9 }} className="w-10 h-10 rounded-full bg-white/10 border border-white/10 flex items-center justify-center text-white" title="Download list">
                 <Download size={18} strokeWidth={2} />
               </motion.button>
             </div>

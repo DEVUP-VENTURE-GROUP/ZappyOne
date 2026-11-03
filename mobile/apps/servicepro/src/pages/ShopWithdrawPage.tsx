@@ -41,7 +41,7 @@ export function ShopWithdrawPage() {
   ], [accounts]);
   useEffect(() => { if (!dest && options.length) setDest(options.find((o) => o.isDefault) || options[0]); }, [options, dest]);
 
-  if (isLoading) return <View style={styles.page}><ScreenHeader title="Withdraw" safeArea /><LoadingState /></View>;
+  if (isLoading) return <View style={styles.page}><ScreenHeader title="Take out money" safeArea /><LoadingState /></View>;
   const b = data || {};
   const paise = Math.round(Number(amount || 0) * 100);
   const history: Payout[] = b.history || [];
@@ -58,7 +58,7 @@ export function ShopWithdrawPage() {
   return (
     <View style={styles.page}>
       {otp.modal}
-      <ScreenHeader title="Withdraw" safeArea />
+      <ScreenHeader title="Take out money" safeArea />
       <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
         <View style={styles.hero}>
           <Text variant="caption" weight="semibold" color={slate[400]}>Available to withdraw</Text>

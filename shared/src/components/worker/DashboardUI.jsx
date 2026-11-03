@@ -60,13 +60,13 @@ const ALL_NAV_ITEMS = [
   { key: 'services', label: 'My services', Icon: ShieldCheck, to: '/provider/onboarding' },
   { key: 'documents', label: 'My documents', Icon: FileText, to: '/provider/documents' },
   { key: 'hours', label: 'My hours', Icon: CalendarClock, to: '/worker/hours' },
-  { key: 'withdraw', label: 'Withdraw', Icon: WalletIcon, to: '/worker/withdraw' },
+  { key: 'withdraw', label: 'Take out money', Icon: WalletIcon, to: '/worker/withdraw' },
   { key: 'bank', label: 'Bank & UPI', Icon: Building2, to: '/worker/bank' },
   { key: 'reviews', label: 'Reviews', Icon: Star, to: '/worker/reviews' },
   { key: 'support', label: 'Talk to ZappyOne', Icon: Headphones, to: '/worker/support' },
-  { key: 'appeals', label: 'Appeals', Icon: Scale, to: '/worker/appeals' },
-  { key: 'training', label: 'Training', Icon: GraduationCap, to: '/worker/training' },
-  { key: 'goals', label: 'Goals', Icon: Target, to: '/worker/goals' },
+  { key: 'appeals', label: 'Ask us to recheck', Icon: Scale, to: '/worker/appeals' },
+  { key: 'training', label: 'Learn the job', Icon: GraduationCap, to: '/worker/training' },
+  { key: 'goals', label: 'Earning targets', Icon: Target, to: '/worker/goals' },
 ];
 
 // On Rakshak (ZappyOne staff only) the money pages give way to their shifts (provider/staffPortal).

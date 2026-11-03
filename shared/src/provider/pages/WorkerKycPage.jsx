@@ -232,7 +232,7 @@ export default function WorkerKycPage() {
       <div className="min-h-screen bg-[#F9FAFB]">
         <header className="page-header"><div className="page-header-inner">
           <button onClick={() => nav('/worker')} className="back-btn"><ArrowLeft size={18} strokeWidth={2.5} /></button>
-          <h1 className="h-card">KYC Verification</h1>
+          <h1 className="h-card">ID check</h1>
         </div></header>
         <div className="max-w-lg lg:max-w-2xl mx-auto px-4 pt-4 space-y-3">
           <div className="card bg-amber-50 ring-1 ring-amber-200 flex items-center gap-3">
@@ -253,7 +253,7 @@ export default function WorkerKycPage() {
       <div className="min-h-screen bg-[#F9FAFB] pb-10">
         <header className="page-header"><div className="page-header-inner">
           <button onClick={() => nav('/worker')} className="back-btn"><ArrowLeft size={18} strokeWidth={2.5} /></button>
-          <h1 className="h-card">KYC Verification</h1>
+          <h1 className="h-card">ID check</h1>
         </div></header>
         <div className="max-w-lg lg:max-w-2xl mx-auto px-4 pt-4 space-y-3">
           <div className="card bg-success-50 ring-1 ring-success-200 flex items-center gap-3">
@@ -337,7 +337,7 @@ export default function WorkerKycPage() {
               <ArrowLeft size={18} strokeWidth={2.5} />
             </button>
             <div>
-              <p className="t-label">Verification</p>
+              <p className="t-label">ID check</p>
               <p className="font-semibold text-[#0F172A]">KYC Documents</p>
             </div>
           </div>
@@ -533,7 +533,7 @@ function StatusScreen({ type, onBack }) {
       <header className="page-header">
         <div className="page-header-inner">
           <button onClick={onBack} className="back-btn"><ArrowLeft size={18} strokeWidth={2.5} /></button>
-          <h1 className="h-card">Verification</h1>
+          <h1 className="h-card">ID check</h1>
         </div>
       </header>
       <div className="flex-1 flex flex-col items-center justify-center px-8 gap-6 text-center">

@@ -50,7 +50,7 @@ export default function ShopWithdrawPage() {
       {otp.modal}
       <header className="page-header"><div className="page-header-inner">
         <button type="button" onClick={() => nav('/shop')} className="back-btn" aria-label="Back"><ArrowLeft size={18} strokeWidth={2.5} /></button>
-        <h1 className="h-card">Withdraw</h1>
+        <h1 className="h-card">Take out money</h1>
       </div></header>
 
       <div className="mx-auto max-w-lg space-y-4 px-4 pt-4 lg:max-w-2xl">

@@ -58,9 +58,9 @@ const ALL_NAV_SECTIONS = [
     { to: '/provider/onboarding', Icon: ShieldCheck, label: 'Services & verification', desc: 'What you are approved to work on', bg: success[50], fg: success[600] },
     { to: '/worker/training', Icon: GraduationCap, label: 'Training & certification', desc: 'Video courses + quiz certs', bg: '#FFF1F2', fg: '#E11D48' },
     { to: '/worker/reviews', Icon: Star, label: 'My reviews', desc: 'What customers said about you', bg: '#FFF7ED', fg: '#EA580C' },
-    { to: '/worker/appeals', Icon: AlertCircle, label: 'Appeals', desc: 'Contest penalties', bg: '#FFF7ED', fg: '#EA580C' },
+    { to: '/worker/appeals', Icon: AlertCircle, label: 'Ask us to recheck', desc: 'If you think a penalty is wrong', bg: '#FFF7ED', fg: '#EA580C' },
   ] },
-  { title: 'Insights', items: [
+  { title: 'How you are doing', items: [
     { to: '/worker/goals', Icon: TrendingUp, label: 'Zone benchmark', desc: 'See how you rank nearby', bg: '#ECFEFF', fg: '#0891B2' },
     { to: '/provider/documents', Icon: Shield, label: 'My documents', desc: 'Verification & compliance', bg: slate[100], fg: ink[700] },
   ] },

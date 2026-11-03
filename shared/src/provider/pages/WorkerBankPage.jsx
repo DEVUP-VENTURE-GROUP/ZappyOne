@@ -262,7 +262,7 @@ export default function WorkerBankPage() {
 
                         <div className="flex flex-col gap-2">
                           {!u.isDefault && (
-                            <button onClick={() => handleDefault(u._id, 'upi')} className="p-2 rounded-lg text-zappy-600 bg-zappy-50 hover:bg-zappy-100 transition-colors" title="Make Default">
+                            <button onClick={() => handleDefault(u._id, 'upi')} className="p-2 rounded-lg text-zappy-600 bg-zappy-50 hover:bg-zappy-100 transition-colors" title="Use this one">
                               <Star size={14} className="fill-zappy-600" />
                             </button>
                           )}

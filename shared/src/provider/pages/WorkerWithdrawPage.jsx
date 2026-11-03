@@ -93,7 +93,7 @@ export default function WorkerWithdrawPage() {
               <motion.button onClick={() => nav(-1)} whileTap={{ scale: 0.9 }} className="w-10 h-10 rounded-full bg-white/10 border border-white/10 flex items-center justify-center text-white">
                 <ArrowLeft size={20} strokeWidth={2.5} />
               </motion.button>
-              <h1 className="text-white font-black tracking-wide text-lg">Withdraw Funds</h1>
+              <h1 className="text-white font-black tracking-wide text-lg">Take out money</h1>
               <div className="w-10 h-10" /> {/* Balancer */}
             </div>
 

@@ -25,8 +25,8 @@ export const NAV = [
   { to: '/partner/calendar', label: 'Calendar', Icon: CalendarDays, primary: true, gated: true },
   { to: '/partner/earnings', label: 'Earnings', Icon: Wallet, primary: true, gated: true },
   { to: '/partner/reviews', label: 'Reviews', Icon: Star, gated: true },
-  { to: '/partner/profile', label: 'Profile & KYC', Icon: UserRound },
-  { to: '/partner/advertise', label: 'Advertise', Icon: Megaphone },
+  { to: '/partner/profile', label: 'Profile & ID check', Icon: UserRound },
+  { to: '/partner/advertise', label: 'Get more customers', Icon: Megaphone },
   { to: '/partner/support', label: 'Talk to ZappyOne', Icon: Headphones },
 ];
 

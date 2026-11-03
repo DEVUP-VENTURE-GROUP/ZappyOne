@@ -103,7 +103,7 @@ export default function ShopKycPage() {
       <div className="min-h-screen bg-[#F9FAFB]">
         <header className="page-header"><div className="page-header-inner">
           <button onClick={() => nav('/shop')} className="back-btn"><ArrowLeft size={18} strokeWidth={2.5} /></button>
-          <h1 className="h-card">Shop Verification</h1>
+          <h1 className="h-card">ID check</h1>
         </div></header>
         <div className="max-w-lg lg:max-w-2xl mx-auto px-4 pt-4">
           <div className={`card ${meta.card} flex items-center gap-3`}>
@@ -124,7 +124,7 @@ export default function ShopKycPage() {
     <div className="min-h-screen bg-[#F9FAFB] pb-32">
       <header className="page-header"><div className="page-header-inner">
         <button onClick={() => nav('/shop')} className="back-btn"><ArrowLeft size={18} strokeWidth={2.5} /></button>
-        <h1 className="h-card">Shop Verification</h1>
+        <h1 className="h-card">ID check</h1>
       </div></header>
 
       <div className="max-w-lg lg:max-w-2xl mx-auto px-4 pt-4 space-y-3">

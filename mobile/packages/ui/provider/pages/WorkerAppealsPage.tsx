@@ -82,7 +82,7 @@ export function WorkerAppealsPage() {
   const appeals: Appeal[] = data?.appeals ?? [];
   return (
     <View style={styles.page}>
-      <ScreenHeader title="Appeals" safeArea right={<Button label="File appeal" size="small" icon={<Plus size={14} color="#fff" />} onPress={() => setShowNew(true)} />} />
+      <ScreenHeader title="Ask us to recheck" safeArea right={<Button label="Ask now" size="small" icon={<Plus size={14} color="#fff" />} onPress={() => setShowNew(true)} />} />
       {isLoading ? <LoadingState /> : (
         <FlatList
           data={appeals}

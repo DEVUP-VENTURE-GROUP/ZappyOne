@@ -41,6 +41,15 @@ export const translations = {
   hi: {
     // ServicePro labels (sp.*), keyed by their English text (labelKey)
     "sp.home": "होम",
+    "sp.how_you_are_doing": "आपका काम कैसा चल रहा है",
+    "sp.customers_asking_your_price": "ग्राहक आपका दाम पूछ रहे हैं",
+    "sp.take_out_money": "पैसा निकालें",
+    "sp.ask_us_to_recheck": "दोबारा जांच के लिए कहें",
+    "sp.learn_the_job": "काम सीखें",
+    "sp.earning_targets": "कमाई का लक्ष्य",
+    "sp.get_more_customers": "ज़्यादा ग्राहक पाएं",
+    "sp.profile_id_check": "प्रोफ़ाइल और पहचान जांच",
+    "sp.send_your_documents": "अपने दस्तावेज़ भेजें",
     "sp.work_prices": "काम और दाम",
     "sp.services_prices": "सेवाएं और दाम",
     "sp.repairs_prices": "रिपेयर और दाम",
@@ -436,6 +445,15 @@ export const translations = {
   te: {
     // ServicePro labels (sp.*), keyed by their English text (labelKey)
     "sp.home": "హోమ్",
+    "sp.how_you_are_doing": "మీ పని ఎలా సాగుతోంది",
+    "sp.customers_asking_your_price": "మీ ధర అడుగుతున్న కస్టమర్లు",
+    "sp.take_out_money": "డబ్బు తీసుకోండి",
+    "sp.ask_us_to_recheck": "మళ్లీ పరిశీలించమని అడగండి",
+    "sp.learn_the_job": "పని నేర్చుకోండి",
+    "sp.earning_targets": "సంపాదన లక్ష్యం",
+    "sp.get_more_customers": "ఎక్కువ కస్టమర్లను పొందండి",
+    "sp.profile_id_check": "ప్రొఫైల్ & గుర్తింపు తనిఖీ",
+    "sp.send_your_documents": "మీ పత్రాలు పంపండి",
     "sp.work_prices": "పని & ధరలు",
     "sp.services_prices": "సేవలు & ధరలు",
     "sp.repairs_prices": "రిపేర్లు & ధరలు",

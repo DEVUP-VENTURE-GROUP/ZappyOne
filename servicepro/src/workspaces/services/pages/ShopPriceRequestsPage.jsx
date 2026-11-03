@@ -108,7 +108,7 @@ export default function ShopPriceRequestsPage() {
       <header className="page-header"><div className="page-header-inner">
         <button onClick={() => nav('/shop')} className="back-btn"><ArrowLeft size={18} strokeWidth={2.5} /></button>
         <div>
-          <h1 className="h-card">Price requests</h1>
+          <h1 className="h-card">Customers asking your price</h1>
           <p className="text-xs text-slate-500">Customers near you asking what you charge</p>
         </div>
       </div></header>

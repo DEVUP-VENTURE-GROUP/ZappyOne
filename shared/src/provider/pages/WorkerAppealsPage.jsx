@@ -154,7 +154,7 @@ export default function WorkerAppealsPage() {
               <motion.button onClick={() => nav(-1)} whileTap={{ scale: 0.9 }} className="w-10 h-10 rounded-full bg-white/10 border border-white/10 flex items-center justify-center text-white shadow-sm">
                 <ArrowLeft size={20} strokeWidth={2.5} />
               </motion.button>
-              <h1 className="text-white font-black tracking-wide text-lg">Appeals Center</h1>
+              <h1 className="text-white font-black tracking-wide text-lg">Ask us to recheck</h1>
               <motion.button onClick={() => setShowNew(true)} whileTap={{ scale: 0.9 }} className="h-10 px-4 rounded-full bg-white text-zappy-600 font-bold text-sm flex items-center justify-center gap-1.5 shadow-md">
                 <Plus size={16} strokeWidth={2.5} /> File Appeal
               </motion.button>

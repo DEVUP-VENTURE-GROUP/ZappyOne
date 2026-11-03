@@ -25,7 +25,7 @@ import { usePartner } from '../usePartner';
 const LINKS: [string, string, LucideIcon, string][] = [
   ['Earnings', 'What you have earned, event by event', Wallet, '/partner/earnings'],
   ['Reviews', 'What customers said', Star, '/partner/reviews'],
-  ['Verification', 'Your documents and where they stand', ShieldCheck, '/partner/kyc'],
+  ['ID check', 'Your documents and where they stand', ShieldCheck, '/partner/kyc'],
   ['Notifications', 'Everything we have told you', Bell, '/partner/notifications'],
   ['Talk to ZappyOne', 'Help, complaints and ideas for the app', Headphones, '/partner/support'],
 ];
