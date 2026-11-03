@@ -27,6 +27,12 @@ export default function GroupCheckout({ items, shown, location, serviceMode, sch
 
   const options = data?.options?.length ? data.options : data?.split ? [data.split] : [];
   const chosen = picked || options[0] || null;
+  // Items nobody near can do (server repair/services/group), marked in the list and removable in one tap.
+  const missing = new Set(!isLoading && data?.unavailable?.length ? data.unavailable : []);
+  const missingNames = shown.filter((_, i) => missing.has(i)).map((it) => [it.show?.title, it.show?.service].filter(Boolean).join(', '));
+  const left = shown.length - missing.size;
+  // From the last index down, so each removal leaves the others' places as they were.
+  const removeMissing = () => [...missing].sort((a, b) => b - a).forEach((i) => onRemove(i));
 
   async function book() {
     try {
@@ -48,10 +54,11 @@ export default function GroupCheckout({ items, shown, location, serviceMode, sch
             <span className="min-w-0">
               <span className="block truncate text-[14px] font-bold text-[#0F172A]">{it.show?.title}</span>
               <span className="block truncate text-[12px] text-slate-500">{it.show?.service}</span>
+              {missing.has(i) && <span className="block text-[12px] font-semibold text-red-600">No pro near you does this yet</span>}
             </span>
             <span className="flex shrink-0 items-center gap-2">
               {chosen?.lines?.[i] && <span className="text-[13px] font-bold">{formatPaise(chosen.lines[i].pricePaise)}</span>}
-              {i < shown.length - 1 && <button type="button" onClick={() => onRemove(i)} aria-label="Remove" className="p-1 text-slate-400 hover:text-slate-700"><X size={14} /></button>}
+              {shown.length > 1 && <button type="button" onClick={() => onRemove(i)} aria-label={`Remove ${it.show?.title || 'this item'}`} className="p-1 text-slate-400 hover:text-slate-700"><X size={14} /></button>}
             </span>
           </div>
         ))}
@@ -59,7 +66,18 @@ export default function GroupCheckout({ items, shown, location, serviceMode, sch
 
       {isLoading ? <div className="flex justify-center py-8"><Loader2 size={22} className="animate-spin text-zappy-400" /></div>
         : error || (data && !options.length) ? (
-          <div className="card text-sm text-slate-600">Nobody nearby can do {data?.unavailable?.length ? 'one of these' : 'these'} right now. Remove an item, or book them separately.</div>
+          <div className="card space-y-3 text-sm text-slate-700">
+            {missing.size ? (
+              <>
+                <p>Nobody near you does <b>{missingNames.join(' and ')}</b> yet. Everything else in this visit can be booked.</p>
+                {left >= 2 ? (
+                  <button type="button" onClick={removeMissing} className="btn-primary w-full">Remove {missing.size === 1 ? 'it' : 'them'} and book the rest</button>
+                ) : (
+                  <p className="text-slate-500">Remove {missing.size === 1 ? 'it' : 'them'} with the cross above, then book what is left on its own.</p>
+                )}
+              </>
+            ) : <p>Nobody nearby can do these together right now. Remove an item, or book them separately.</p>}
+          </div>
         ) : (
           <>
             {options.length > 0 && (

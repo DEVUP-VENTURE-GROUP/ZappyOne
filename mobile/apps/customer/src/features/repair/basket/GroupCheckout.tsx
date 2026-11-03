@@ -16,7 +16,7 @@ import { Button, LoadingState, Text } from '@zappy/ui/components';
 import { toast } from '@zappy/ui/components/Toast';
 import { errText } from '@zappy/ui/lib/feedback';
 import type { BookingLocation } from '@zappy/ui/lib/bookingLocation';
-import { accent, colors, ink, zappy } from '@zappy/ui/theme/colors';
+import { accent, colors, danger, ink, zappy } from '@zappy/ui/theme/colors';
 import { radius } from '@zappy/ui/theme/radius';
 import { spacing } from '@zappy/ui/theme/spacing';
 import { flow } from '../flow/FlowChrome';
@@ -44,6 +44,12 @@ export function GroupCheckout({ items, shown, location, serviceMode, scheduledAt
 
   const options: Any[] = data?.options?.length ? data.options : data?.split ? [data.split] : [];
   const chosen = picked || options[0] || null;
+  // Items nobody near can do (server repair/services/group), marked in the list and removable in one tap.
+  const missing = new Set<number>(!isLoading && data?.unavailable?.length ? data.unavailable : []);
+  const missingNames = shown.filter((_, i) => missing.has(i)).map((it) => [it.show?.title, it.show?.service].filter(Boolean).join(', '));
+  const left = shown.length - missing.size;
+  // From the last index down, so each removal leaves the others' places as they were.
+  const removeMissing = () => [...missing].sort((a, b) => b - a).forEach((i) => onRemove(i));
 
   async function book() {
     try {
@@ -65,15 +71,25 @@ export function GroupCheckout({ items, shown, location, serviceMode, scheduledAt
             <View style={styles.flex}>
               <Text variant="bodySmall" weight="bold" numberOfLines={1}>{it.show?.title}</Text>
               <Text variant="caption" color={ink[500]} numberOfLines={1}>{it.show?.service}</Text>
+              {missing.has(i) ? <Text variant="caption" weight="semibold" color={danger[600]}>No pro near you does this yet</Text> : null}
             </View>
             {chosen?.lines?.[i] ? <Text variant="bodySmall" weight="bold">{formatPaise(chosen.lines[i].pricePaise)}</Text> : null}
-            {i < shown.length - 1 ? <Pressable onPress={() => onRemove(i)} accessibilityRole="button" accessibilityLabel="Remove" hitSlop={8}><X size={14} color={ink[400]} /></Pressable> : null}
+            {shown.length > 1 ? <Pressable onPress={() => onRemove(i)} accessibilityRole="button" accessibilityLabel={`Remove ${it.show?.title || 'this item'}`} hitSlop={8}><X size={14} color={ink[400]} /></Pressable> : null}
           </View>
         ))}
       </View>
 
       {isLoading ? <LoadingState /> : error || (data && !options.length) ? (
-        <View style={flow.card}><Text variant="bodySmall" color={ink[700]}>Nobody nearby can do {data?.unavailable?.length ? 'one of these' : 'these'} right now. Remove an item, or book them separately.</Text></View>
+        <View style={[flow.card, styles.gap]}>
+          {missing.size ? (
+            <>
+              <Text variant="bodySmall" color={ink[700]}>Nobody near you does <Text variant="bodySmall" weight="bold">{missingNames.join(' and ')}</Text> yet. Everything else in this visit can be booked.</Text>
+              {left >= 2
+                ? <Button label={`Remove ${missing.size === 1 ? 'it' : 'them'} and book the rest`} onPress={removeMissing} fullWidth />
+                : <Text variant="caption" color={ink[500]}>Remove {missing.size === 1 ? 'it' : 'them'} with the cross above, then book what is left on its own.</Text>}
+            </>
+          ) : <Text variant="bodySmall" color={ink[700]}>Nobody nearby can do these together right now. Remove an item, or book them separately.</Text>}
+        </View>
       ) : (
         <>
           {options.length ? (

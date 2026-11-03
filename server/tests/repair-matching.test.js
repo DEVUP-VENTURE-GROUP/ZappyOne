@@ -522,6 +522,15 @@ describe('several items in one booking (services/group)', () => {
     expect(after.every((b) => !b.workerId)).toBe(true);
   });
 
+  it('names every item nobody near can do, so the screen can mark each and book the rest', async () => {
+    await makeProvider({ name: 'Screens Only', priceP: 75000, distanceKm: 5 });
+    const nobody = (label) => ({ ...item(label), repairCode: 'nobody_does_this' });
+    const q = await group.quote({ items: [item('A'), nobody('X'), item('B'), nobody('Y')], location: where, serviceMode: 'doorstep' });
+    expect(q).toMatchObject({ options: [], reason: 'NO_PROVIDER_FOR_ITEM', unavailable: [1, 3] });
+    // The rest on their own can be booked.
+    expect((await group.quote({ items: [item('A'), item('B')], location: where, serviceMode: 'doorstep' })).options.length).toBeGreaterThan(0);
+  });
+
   it('suggests other services even before there is history', async () => {
     const out = await require('../src/modules/repair/services/suggest.service').suggest({ vertical: 'mobile', repairCode: baseQuery.repairCode });
     expect(Array.isArray(out)).toBe(true);

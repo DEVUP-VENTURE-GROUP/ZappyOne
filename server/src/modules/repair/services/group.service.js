@@ -104,9 +104,10 @@ async function quote({ items, location, serviceMode = 'doorstep', scheduledAt = 
   if (items.some((it) => !it.repairCode)) throw httpError('Each item needs its repair or service chosen', 400, 'GROUP_ITEM_UNPRICED');
 
   const perItem = await candidatesPerItem({ items, location, serviceMode, scheduledAt });
-  const missing = perItem.findIndex((list) => !list.length);
-  if (missing >= 0) {
-    return { options: [], split: null, unavailable: [missing], reason: 'NO_PROVIDER_FOR_ITEM' };
+  // Every item nobody near can do, so the screen can mark each one and offer to book the rest.
+  const missing = perItem.map((list, i) => (list.length ? -1 : i)).filter((i) => i >= 0);
+  if (missing.length) {
+    return { options: [], split: null, unavailable: missing, reason: 'NO_PROVIDER_FOR_ITEM' };
   }
 
   // Providers who can do every item, with each item's own row for that provider.

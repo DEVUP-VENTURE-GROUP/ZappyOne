@@ -38,6 +38,9 @@ export const thingFor = (vertical, items = []) => (PACKAGE_TYPE_WORD[vertical] |
 /** The chosen repair of a flow: what the diagnosis landed on. */
 export const repairOf = (diagnosis) => diagnosis?.primaryRepairCode || diagnosis?.recommendations?.[0]?.repairCode || null;
 
+// "Maruti Suzuki Dzire", but never "Bike Bike": a model already named after its brand stands alone.
+const titleOf = (brand = '', model = '') => (!model ? brand : !brand || model.toLowerCase().startsWith(brand.toLowerCase()) ? model : `${brand} ${model}`);
+
 /**
  * One item from the flow's choices, as the server takes it, plus what the
  * basket shows. Null until a repair is chosen (an item must be priced).
@@ -56,7 +59,7 @@ export function itemFrom({ vertical, brand, model, configuration = null, fuelTyp
     repairCode: code, qualityCode: qualityCode || diagnosis?.recommendedQuality || null,
     // For the basket only; stripped before it is sent.
     show: {
-      title: [brand.name, model.name].filter(Boolean).join(' '),
+      title: titleOf(brand.name, model.name),
       service: repairName || diagnosis?.recommendations?.[0]?.repairName || problem?.name || 'Service',
     },
   };

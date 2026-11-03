@@ -1901,6 +1901,9 @@ function RepairFlow({ vertical, saved, draftKey, onStartOver, onAddAnother }) {
     [vertical, brand, model, configuration, fuelType, problem, diagnosis, qualityCode]);
   // Booking together once there is another item and this one is priced (not an inspection).
   const groupMode = basket.items.length > 0 && !!currentItem && serviceMode !== 'diagnosis_only';
+  // The item being added now, taken out of this visit (nobody near does it); a different choice brings it back.
+  const [skipCurrent, setSkipCurrent] = useState(false);
+  useEffect(() => { setSkipCurrent(false); }, [currentItem?.repairCode, currentItem?.modelCode]);
   const late = !!problem && ['provider', 'addons', 'confirm'].includes(step);
   const draftDone = useCheckoutDraft('repair', late ? {
     title: problem.name || 'Repair', step: step === 'confirm' ? 'Confirm' : 'Choose who',
@@ -2094,9 +2097,9 @@ function RepairFlow({ vertical, saved, draftKey, onStartOver, onAddAnother }) {
         <>
           <WhenChooser value={when} onChange={setWhen} />
           <GroupCheckout
-            items={groupItems(basket.items, currentItem)} shown={[...basket.items, currentItem].filter(Boolean)}
+            items={groupItems(basket.items, skipCurrent ? null : currentItem)} shown={[...basket.items, skipCurrent ? null : currentItem].filter(Boolean)}
             location={loc} serviceMode={serviceMode} scheduledAt={when} slotLabel={when ? slotLabel(when) : ''}
-            onRemove={(i) => basket.remove(i)}
+            onRemove={(i) => (i >= basket.items.length ? setSkipCurrent(true) : basket.remove(i))}
             onBooked={(g) => { basket.clear(); clearDraft(draftKey); draftDone(); nav(`/repair/groups/${g._id}`, { replace: true }); }} />
         </>
       )}
