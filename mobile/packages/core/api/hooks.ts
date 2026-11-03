@@ -67,6 +67,7 @@ export const useGetWalletQuery = h.useGetWalletQuery;
 export const useWorkerDuesQuery = h.useWorkerDuesQuery;
 export const useClaimDuesPaymentMutation = h.useClaimDuesPaymentMutation;
 export const useAdminDuesQuery = h.useAdminDuesQuery;
+export const useAdminDuesOverviewQuery = h.useAdminDuesOverviewQuery;
 export const useAdminRecordDuesPaymentMutation = h.useAdminRecordDuesPaymentMutation;
 export const useAdminRejectDuesClaimMutation = h.useAdminRejectDuesClaimMutation;
 export const useWalletTransactionsQuery = h.useWalletTransactionsQuery;

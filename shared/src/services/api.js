@@ -208,6 +208,7 @@ export const {
   useWorkerDuesQuery,
   useClaimDuesPaymentMutation,
   useAdminDuesQuery,
+  useAdminDuesOverviewQuery,
   useAdminRecordDuesPaymentMutation,
   useAdminRejectDuesClaimMutation,
   useWalletTransactionsQuery,

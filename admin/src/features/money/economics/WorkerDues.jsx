@@ -6,6 +6,7 @@ import { Card, PageLoader, StatCard, fmt } from '../../../ui/kit';
 import { RupeeInput, Setting, toPaise } from './fields';
 import { useRuleForm, rupeeField } from './CancellationRules';
 import ShopDues from './ShopDues';
+import DuesOverview from './DuesOverview';
 
 const STATUS = {
   blocked: ['New jobs stopped', 'bg-red-50 text-red-700'],
@@ -122,6 +123,7 @@ export default function WorkerDues() {
   const { data, isLoading } = useAdminDuesQuery(undefined, { pollingInterval: 60000 });
   return (
     <div className="space-y-5">
+      <DuesOverview />
       <Limits />
       {isLoading ? <PageLoader /> : (
         <>

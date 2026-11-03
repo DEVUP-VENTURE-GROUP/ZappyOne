@@ -575,6 +575,8 @@ export function endpoints(b, { adminApiPath }) {
     claimDuesPayment: b.mutation({ query: (body) => ({ url: '/wallet/dues/claims', method: 'POST', body }), invalidatesTags: ['Wallet'] }),
     /** Admin: who owes what, and recording what they paid. */
     adminDues: b.query({ query: () => adminApiPath('/dues'), providesTags: ['Wallet'] }),
+    // Everything partners owe and pay ZappyOne together: totals and every payment received (server wallet/dues-overview).
+    adminDuesOverview: b.query({ query: () => adminApiPath('/dues/overview'), providesTags: ['Wallet'] }),
     adminRecordDuesPayment: b.mutation({ query: ({ workerId, ...body }) => ({ url: adminApiPath(`/dues/${workerId}/payments`), method: 'POST', body }), invalidatesTags: ['Wallet'] }),
     // Partner shops' commission owed from cash jobs (shop/shop-dues).
     shopDues: b.query({ query: () => '/shops/me/dues', providesTags: ['Wallet'] }),

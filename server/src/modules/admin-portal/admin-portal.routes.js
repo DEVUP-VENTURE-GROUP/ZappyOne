@@ -420,6 +420,11 @@ router.post('/payouts/shops/:id/decide',
     } catch (err) { next(err); }
   });
 
+/* Everything partners owe and pay ZappyOne, together: totals and every payment received (wallet/dues-overview) */
+router.get('/dues/overview', async (req, res, next) => {
+  try { res.json(await require('../wallet/dues-overview').overview()); } catch (err) { next(err); }
+});
+
 /* Shop dues: commission partner shops owe from cash jobs, and recording what they paid (shop/shop-dues) */
 
 router.get('/dues/shops', async (req, res, next) => {
