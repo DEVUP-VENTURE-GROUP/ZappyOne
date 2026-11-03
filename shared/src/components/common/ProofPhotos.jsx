@@ -31,6 +31,7 @@ export default function ProofPhotos({
   requiredNote = 'Minimum 1 photo required before marking complete',
 }) {
   const inputRef = useRef(null);
+  const galleryRef = useRef(null);
   const [presign] = usePresignUploadMutation();
 
   const ready = readyKeys(photos).length;
@@ -172,6 +173,7 @@ export default function ProofPhotos({
         <div className="px-4 pb-4">
           <input ref={inputRef} type="file" accept="image/*" capture="environment"
             className="hidden" onChange={capture} />
+          <input ref={galleryRef} type="file" accept="image/*" className="hidden" onChange={capture} />
           <button
             onClick={() => inputRef.current?.click()}
             className="w-full py-3 rounded-xl bg-white text-zappy-700 font-bold text-sm ring-1 ring-zappy-200 flex items-center justify-center gap-2"
@@ -181,6 +183,10 @@ export default function ProofPhotos({
             {photos.length === 0 && (
               <span className="ml-1 text-[10px] font-black bg-red-500 text-white px-1.5 py-0.5 rounded-full">Required</span>
             )}
+          </button>
+          {/* A photo already taken (the camera would not open, or it was shot moments ago): from the gallery instead. */}
+          <button type="button" onClick={() => galleryRef.current?.click()} className="mt-2 w-full py-2 text-[12.5px] font-semibold text-zappy-700">
+            Upload from gallery instead
           </button>
         </div>
       )}
@@ -194,6 +200,7 @@ export function readyKeys(photos = []) {
 }
 
 /** Is anything still in flight or broken? Blocks completion while true. */
-export function photosSettled(photos = []) {
-  return !photos.some((p) => p.uploading) && !photos.some((p) => p.error);
+export function photosSettled(photos = [], { min = 1 } = {}) {
+  // At least `min` saved photos: none at all is not evidence either (it used to pass).
+  return photos.filter((p) => !p.uploading && !p.error).length >= min && !photos.some((p) => p.uploading) && !photos.some((p) => p.error);
 }

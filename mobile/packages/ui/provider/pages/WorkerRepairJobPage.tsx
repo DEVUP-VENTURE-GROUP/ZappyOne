@@ -99,7 +99,9 @@ export function WorkerRepairJobPage() {
 
   const action = repairNextAction(booking.status, booking.serviceMode);
   const wantsPhotos = REPAIR_PHOTO_STAGES.includes(booking.status);
-  const photosBlocked = wantsPhotos && !photosSettled(photos);
+  // Photos saved before a reload count too; the server refuses to move on without one (the website's job page).
+  const savedBefore = (booking.completionPhotos || []).length > 0;
+  const photosBlocked = wantsPhotos && !(photosSettled(photos) || (savedBefore && photosSettled(photos, { min: 0 })));
   const tooFarToArrive = headingToCustomer && !proximity.withinRadius;
   const gateKind: 'start' | 'handover' | 'return' | null = action ? repairGateFor(action.to, booking.serviceMode) : null;
   const gatePassed = gateKind ? !!booking.otpVerified?.[`${gateKind}At`] : true;

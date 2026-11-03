@@ -53,6 +53,11 @@ async function transition(bookingId, next, { actorRole, actorId, reason = '', me
     if (!cash.ok) throw httpError(cash.message, 409, cash.code);
   }
 
+  // Photos of the finished work are evidence for both sides: a pro or shop cannot move past QA without at least one (admin may).
+  if (['QA_PENDING', 'READY_FOR_RETURN'].includes(booking.status) && ['worker', 'shop'].includes(actorRole) && !(booking.completionPhotos || []).length) {
+    throw httpError('Add at least one photo of the finished work first.', 409, 'PHOTO_REQUIRED');
+  }
+
   /**
    * Start the clock on the stage being entered.
    *

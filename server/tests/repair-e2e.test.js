@@ -247,6 +247,7 @@ describe('§49 golden path — doorstep display replacement', () => {
 
   it('7. refuses completion until QA has actually passed', async () => {
     await booking.transition(ctx.bookingId, 'QA_PENDING', { actorRole: 'worker', actorId: ctx.workerId });
+    await require('./helpers').withProof(ctx.bookingId);
 
     // No QA record yet.
     await expect(
@@ -412,6 +413,9 @@ describe('§28 pickup & repair path', () => {
       performedByWorkerId: ctx.workerId,
     });
 
+    // No photo of the finished work yet: the pro cannot move on (the screen's Required is enforced here too).
+    await expect(booking.transition(b._id, 'READY_FOR_RETURN', { actorRole: 'worker', actorId: ctx.workerId })).rejects.toMatchObject({ code: 'PHOTO_REQUIRED' });
+    await require('./helpers').withProof(b._id);
     await booking.transition(b._id, 'READY_FOR_RETURN', { actorRole: 'worker', actorId: ctx.workerId });
     await booking.transition(b._id, 'OUT_FOR_RETURN', { actorRole: 'worker', actorId: ctx.workerId });
 

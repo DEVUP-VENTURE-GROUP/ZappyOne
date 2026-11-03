@@ -404,7 +404,9 @@ export default function WorkerRepairJobPage() {
    */
   const wantsPhotos = REPAIR_PHOTO_STAGES.includes(booking?.status);
   // A photo still uploading, or one that failed, is not evidence.
-  const photosBlocked = wantsPhotos && !photosSettled(photos);
+  // Photos saved before a reload count too; the server refuses to move on without one (repair lifecycle PHOTO_REQUIRED).
+  const savedBefore = (booking.completionPhotos || []).length > 0;
+  const photosBlocked = wantsPhotos && !(photosSettled(photos) || (savedBefore && photosSettled(photos, { min: 0 })));
 
   // `headingToCustomer`, `customerCoords` and `proximity` are computed above the
   // early returns (hooks must run every render). Only the plain derived value

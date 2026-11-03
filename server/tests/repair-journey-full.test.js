@@ -188,6 +188,7 @@ describe('the happy path, all the way through', () => {
     const actor = { actorRole: 'worker', actorId: String(tech._id) };
     for (const step of ['ON_THE_WAY', 'ARRIVED', 'DIAGNOSING', 'REPAIR_IN_PROGRESS', 'QA_PENDING']) {
       // eslint-disable-next-line no-await-in-loop
+      await require('./helpers').withProof(id);
       await bookingService.transition(id, step, actor);
     }
 
@@ -198,6 +199,7 @@ describe('the happy path, all the way through', () => {
 
     // The device is handed back, and the owner proves they received it.
     await passGate(id, 'COMPLETED', 'workshop', String(tech._id));
+    await require('./helpers').withProof(id);
     await bookingService.transition(id, 'COMPLETED', actor);
     const done = await RepairBooking.findById(id).lean();
     expect(done.status).toBe('COMPLETED');
@@ -214,6 +216,7 @@ describe('the happy path, all the way through', () => {
     await bookingService.assignWorker({ bookingId: id, shopId: shop._id, workerId: tech._id });
     for (const step of ['ON_THE_WAY', 'ARRIVED', 'DIAGNOSING', 'REPAIR_IN_PROGRESS', 'QA_PENDING']) {
       // eslint-disable-next-line no-await-in-loop
+      await require('./helpers').withProof(id);
       await bookingService.transition(id, step, actor);
     }
 
@@ -404,6 +407,7 @@ describe('no state is a dead end', () => {
       // eslint-disable-next-line no-await-in-loop
       await passGate(id, to, 'pickup_repair', String(tech._id));
       // eslint-disable-next-line no-await-in-loop
+      await require('./helpers').withProof(id);
       await bookingService.transition(id, to, actor);
       visited.push(to);
       status = to;

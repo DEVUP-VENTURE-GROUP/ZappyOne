@@ -95,6 +95,12 @@ async function ownPrice(owner, { vertical = 'mobile', repairCode, totalPaise, br
 }
 
 // A verified shop covering a spot with its own price, so a booking any provider may take has a price near the customer.
+// A photo of the finished work on a repair, as a pro saves it before moving past QA (repair lifecycle PHOTO_REQUIRED).
+async function withProof(bookingId) {
+  const { RepairBooking } = require('../src/modules/repair/models/booking.model');
+  await RepairBooking.updateOne({ _id: bookingId }, { $set: { completionPhotos: ['order-proof/after.jpg'] } });
+}
+
 async function pricedShopNear({ lng, lat, vertical = 'mobile', lineCode = 'mobile_repair', domainCode = 'electronics', repairCode, totalPaise, phone = `9${Math.floor(100000000 + Math.random() * 899999999)}` }) {
   const Shop = require('../src/modules/shop/shop.model');
   const { ProviderServiceArea } = require('../src/modules/repair/models/config.model');
@@ -130,4 +136,4 @@ async function ratedHelper({ serviceTypes, at = [78.4867, 17.385] }) {
   return workerId;
 }
 
-module.exports = { startMongo, stopMongo, resetDb, passHandoverGates, adminToken, ownPrice, pricedShopNear, ratedHelper };
+module.exports = { withProof, startMongo, stopMongo, resetDb, passHandoverGates, adminToken, ownPrice, pricedShopNear, ratedHelper };

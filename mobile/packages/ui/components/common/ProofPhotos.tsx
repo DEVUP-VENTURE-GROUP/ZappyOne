@@ -16,7 +16,8 @@ export interface ProofPhoto { id: number; uri: string; key: string | null; uploa
 
 export const readyKeys = (photos: ProofPhoto[] = []) => photos.filter((p) => p.key && !p.uploading && !p.error).map((p) => p.key as string);
 
-export const photosSettled = (photos: ProofPhoto[] = []) => !photos.some((p) => p.uploading) && !photos.some((p) => p.error);
+// At least `min` saved photos, none still uploading or failed: none at all is not evidence either (the website's ProofPhotos).
+export const photosSettled = (photos: ProofPhoto[] = [], { min = 1 }: { min?: number } = {}) => photos.filter((p) => !p.uploading && !p.error).length >= min && !photos.some((p) => p.uploading) && !photos.some((p) => p.error);
 
 export function ProofPhotos({ photos, onChange, folder = 'order-proof', max = 3, title, hint, requiredNote = 'Minimum 1 photo required before marking complete' }: {
   photos: ProofPhoto[]; onChange: React.Dispatch<React.SetStateAction<ProofPhoto[]>>; folder?: string; max?: number; title?: string; hint?: string; requiredNote?: string;
@@ -24,9 +25,9 @@ export function ProofPhotos({ photos, onChange, folder = 'order-proof', max = 3,
   const ready = readyKeys(photos).length;
   const done = ready > 0;
 
-  async function capture() {
+  async function capture(camera = true) {
     let picked;
-    try { picked = await pickPhoto({ camera: true }); } catch (e) { toast.error((e as Error).message); return; }
+    try { picked = await pickPhoto({ camera }); } catch (e) { toast.error((e as Error).message); return; }
     if (!picked) return;
     const id = Date.now();
     onChange((prev) => (prev.length >= max ? prev : [...prev, { id, uri: picked.uri, key: null, uploading: true }]));
@@ -67,7 +68,9 @@ export function ProofPhotos({ photos, onChange, folder = 'order-proof', max = 3,
         </View>
       ) : null}
       {photos.length < max ? (
-        <Button variant="outline" icon={<Camera size={17} color={ink[900]} />} label={photos.length === 0 ? 'Take proof photo' : 'Add another photo'} onPress={capture} fullWidth />
+        <Button variant="outline" icon={<Camera size={17} color={ink[900]} />} label={photos.length === 0 ? 'Take proof photo' : 'Add another photo'} onPress={() => capture(true)} fullWidth />
+        {/* A photo already taken (the camera would not open): from the gallery instead (the website's ProofPhotos). */}
+        <Button variant="ghost" label="Upload from gallery instead" onPress={() => capture(false)} fullWidth />
       ) : null}
     </View>
   );

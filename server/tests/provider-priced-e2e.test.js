@@ -64,6 +64,7 @@ test('menu service: the pro builds their menu, a customer finds and books their 
   const claim = await request(app).post(`/api/jobs/${b._id}/pay-claim`).set(tok(customer._id, 'user')).send({ method: 'cash' });
   expect(claim.status).toBe(200);
   await bookingService.collectCash({ bookingId: b._id, actorRole: 'worker', actorId: worker._id });
+  await require('./helpers').withProof(b._id);
   const done = await bookingService.transition(b._id, 'COMPLETED', { actorRole: 'worker', actorId: worker._id });
   expect((done.booking || done).status).toBe('COMPLETED');
 

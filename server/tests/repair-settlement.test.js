@@ -123,6 +123,7 @@ async function bookAndComplete(
     await RepairBooking.updateOne({ _id: booking._id }, { $set: { paymentStatus: 'paid' } });
   }
 
+  await require('./helpers').withProof(booking._id);
   return bookingService.transition(booking._id, 'COMPLETED', { actorRole: 'worker', actorId: workerId });
 }
 
