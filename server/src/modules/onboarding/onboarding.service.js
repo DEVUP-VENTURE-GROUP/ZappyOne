@@ -283,7 +283,23 @@ async function submitForReview({ owner, enrolmentId }) {
   enrolment.redo = { codes: [], note: '', requestedAt: null };
   await enrolment.save();
   require('../messaging/verification').submitted(enrolment).catch(() => {});
+  // Partners list directly once their ID is verified: the service opens now and admin reviews afterwards, unless its requirements ask admin to check each one.
+  if (!set.manualReview && await identityVerified(owner)) {
+    const approved = await decide({ enrolmentId: enrolment._id, decision: 'approved', note: 'Approved on submit: ID already verified. Admin can review any time.', adminId: null });
+    require('../../config/redis').redis.publish('notification:admin:ops', JSON.stringify({
+      type: 'service_opened', title: 'Partner went live on a service', body: `${enrolment.lineCode}: approved on submit (ID verified). Review in Verification, Service applications.`,
+      data: { enrolmentId: String(enrolment._id), lineCode: enrolment.lineCode },
+    })).catch(() => {});
+    return approved;
+  }
   return enrolment;
+}
+
+// The account's own identity check (shop or technician KYC) is approved by ZappyOne: that check never goes automatic.
+async function identityVerified(owner) {
+  const Model = owner.kind === 'shop' ? require('../shop/shop.model') : require('../worker/worker.model');
+  const doc = await Model.findById(owner.id).select('kyc.status').lean();
+  return doc?.kyc?.status === 'approved';
 }
 
 /* Admin decision */
@@ -377,7 +393,40 @@ async function requestLine({ owner, providerKind, domainCode = '', proposedName,
     serviceModes,
     yearsExperience,
   });
-  return { request, deduped: false };
+  const warnings = await requestWarnings(request);
+  // Partners list directly: with a domain and at least one priced job, and no service of that name already, it goes live now;
+  // admin reviews afterwards and can edit or hide it. Otherwise it waits for admin, and the warnings say why.
+  const blocking = warnings.some((w) => w.blocking);
+  if (!blocking) {
+    const slug = String(proposedName).toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 24) || 'service';
+    const line = await require('./line-open').openService(request, {
+      code: `${slug}_${request._id.toString().slice(-4)}`, name: proposedName, domainCode: request.domainCode, status: 'live',
+      // The first photo is the cover the partner chose (the request form says so).
+      serviceImage: photos[0] || '', note: 'Opened by the partner directly. Review, edit or hide it any time.',
+    });
+    require('../../config/redis').redis.publish('notification:admin:ops', JSON.stringify({
+      type: 'service_opened', title: `New service live: ${line.name}`, body: 'A partner listed it directly. Review it in Verification, Service requests.',
+      data: { requestId: String(request._id), lineCode: line.code },
+    })).catch(() => {});
+    return { request, deduped: false, opened: { code: line.code, name: line.name }, warnings };
+  }
+  return { request, deduped: false, warnings };
+}
+
+// What a partner should know about a new service before it goes out; `blocking` ones keep it for admin.
+async function requestWarnings(r) {
+  const out = [];
+  const esc = (t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const same = await ServiceLine.findOne({ name: new RegExp(`^\\s*${esc(String(r.proposedName).trim())}\\s*$`, 'i'), isActive: { $ne: false } }).select('code name').lean();
+  if (same) out.push({ code: 'DUPLICATE', blocking: true, message: `"${same.name}" already exists. Add yourself to it from Add a service instead; ZappyOne will check this one.` });
+  if (!r.domainCode) out.push({ code: 'NO_GROUP', blocking: true, message: 'Pick which group it belongs to, so ZappyOne can place it.' });
+  if (!r.packages?.length) out.push({ code: 'NO_JOBS', blocking: true, message: 'Add at least one job with its time and price to go live straight away; until then ZappyOne reviews it.' });
+  if (!r.photos?.length) out.push({ code: 'NO_PHOTO', message: 'Add a photo of your work. Customers choose pros with photos.' });
+  if (String(r.description || '').trim().length < 30) out.push({ code: 'SHORT_ABOUT', message: 'Say a little more about what you do (30 letters or more).' });
+  for (const p of r.packages || []) {
+    if (p.pricePaise < 5000 || p.pricePaise > 5000000) out.push({ code: 'PRICE_CHECK', message: `Check the price of "${p.name}": ₹${Math.round(p.pricePaise / 100)} looks unusual.` });
+  }
+  return out;
 }
 
 // This provider's own requests, newest first, with photos signed so they can see what they sent.

@@ -412,6 +412,8 @@ const SPECS = {
       { key: 'lineCode', label: 'Service' },
       { key: 'providerKind', label: 'Kind', type: 'select', options: ['shop', 'individual'] },
       { key: 'minSkillLevel', label: 'Min skill', type: 'number' },
+      // On: admin checks each application (safety-critical work). Off: an ID-verified partner goes live on submit.
+      { key: 'manualReview', label: 'Admin checks each one', type: 'boolean' },
       { key: 'isActive', label: 'Active', type: 'boolean' },
     ],
   },

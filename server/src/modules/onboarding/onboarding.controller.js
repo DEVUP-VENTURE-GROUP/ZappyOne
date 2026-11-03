@@ -127,7 +127,7 @@ async function submitForReview(req, res, next) {
 async function requestLine(req, res, next) {
   try {
     const owner = ownerOf(req);
-    const { request, deduped } = await service.requestLine({
+    const { request, deduped, opened = null, warnings = [] } = await service.requestLine({
       owner,
       providerKind: owner.providerKind,
       domainCode: req.body.domainCode,
@@ -138,7 +138,7 @@ async function requestLine(req, res, next) {
       serviceModes: req.body.serviceModes,
       yearsExperience: req.body.yearsExperience,
     });
-    res.status(deduped ? 200 : 201).json({ request, deduped });
+    res.status(deduped ? 200 : 201).json({ request, deduped, opened, warnings });
   } catch (err) { next(err); }
 }
 

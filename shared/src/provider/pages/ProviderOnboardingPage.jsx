@@ -326,7 +326,7 @@ function RequestSheet({ domain, onClose }) {
 
   async function send() {
     try {
-      await submit({
+      const res = await submit({
         domainCode: domain?.code || '', proposedName: form.proposedName.trim(), description: form.description.trim(),
         photos, serviceModes: form.modes, yearsExperience: form.years === '' ? null : Number(form.years),
         packages: filled.map((j) => ({
@@ -335,7 +335,10 @@ function RequestSheet({ domain, onClose }) {
         })),
       }).unwrap();
       setSent((n) => n + 1);
-      toast.success('Sent. ZappyOne will review it. Add another service, or close.');
+      // Live at once when it can be; otherwise what keeps it for ZappyOne, and anything worth fixing either way.
+      if (res.opened) toast.success(`${res.opened.name} is live. Customers near you can book it now.`, { duration: 6000 });
+      else toast.success('Sent. ZappyOne will check it and tell you.', { duration: 5000 });
+      for (const w of res.warnings || []) toast(w.message, { duration: 9000 });
       setForm({ proposedName: '', description: '', years: '', modes: ['doorstep'] });
       setPhotos([]);
       setJobs([blankJob()]);
@@ -374,6 +377,7 @@ function RequestSheet({ domain, onClose }) {
 
           <div>
             <p className={label}>Photos of your work <span className="font-normal text-ink-400">up to 6</span></p>
+            <p className="-mt-1 mb-1.5 text-[12px] text-ink-500">The first photo is the cover customers see for this service.</p>
             <PhotoTiles value={photos} onChange={setPhotos} max={6} folder="line-requests" />
           </div>
 

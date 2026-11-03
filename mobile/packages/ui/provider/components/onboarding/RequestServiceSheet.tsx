@@ -30,7 +30,7 @@ export function RequestServiceSheet({ domain, onClose }: { domain: Domain | null
 
   async function send() {
     try {
-      await submit({
+      const res: { opened?: { name: string } | null; warnings?: { message: string }[] } = await submit({
         domainCode: domain?.code || '', proposedName: form.proposedName.trim(), description: form.description.trim(),
         photos, serviceModes: form.modes, yearsExperience: form.years === '' ? null : Number(form.years),
         packages: filled.map((j) => ({
@@ -39,7 +39,10 @@ export function RequestServiceSheet({ domain, onClose }: { domain: Domain | null
         })),
       }).unwrap();
       setSent((n) => n + 1);
-      toast.success('Sent. ZappyOne will review it. Add another service, or close.');
+      // Live at once when it can be; otherwise what keeps it for ZappyOne, and anything worth fixing either way (the website's sheet).
+      if (res.opened) toast.success(`${res.opened.name} is live. Customers near you can book it now.`);
+      else toast.success('Sent. ZappyOne will check it and tell you.');
+      for (const w of res.warnings || []) toast(w.message);
       setForm({ proposedName: '', description: '', years: '', modes: ['doorstep'] });
       setPhotos([]);
       setJobs([blank()]);
@@ -57,6 +60,7 @@ export function RequestServiceSheet({ domain, onClose }: { domain: Domain | null
       <TextInput value={form.description} onChangeText={(v) => setForm((f) => ({ ...f, description: v }))} multiline maxLength={1000} placeholder="What exactly do you do?"
         placeholderTextColor={ink[400]} style={[styles.input, styles.area]} />
       <Text variant="caption" weight="semibold" color={ink[700]}>Photos of your work</Text>
+      <Text variant="caption" color={ink[500]}>The first photo is the cover customers see for this service.</Text>
       <PhotoTiles value={photos} onChange={setPhotos} max={6} folder="line-requests" />
       <Text variant="caption" weight="semibold" color={ink[700]}>Where you do it</Text>
       <View style={styles.wrap}>

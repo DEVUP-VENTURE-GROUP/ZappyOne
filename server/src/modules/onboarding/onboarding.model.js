@@ -199,6 +199,8 @@ const kycRequirementSetSchema = new mongoose.Schema(
 
     /** Minimum repair skill level, for lines wired to the repair engine. */
     minSkillLevel: { type: Number, default: null },
+    // Admin checks each application for this service (safety-critical work); otherwise an ID-verified partner is approved on submit.
+    manualReview: { type: Boolean, default: false },
 
     isActive: { type: Boolean, default: true, index: true },
     isArchived: { type: Boolean, default: false, index: true },
