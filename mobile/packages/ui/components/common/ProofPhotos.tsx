@@ -68,9 +68,11 @@ export function ProofPhotos({ photos, onChange, folder = 'order-proof', max = 3,
         </View>
       ) : null}
       {photos.length < max ? (
-        <Button variant="outline" icon={<Camera size={17} color={ink[900]} />} label={photos.length === 0 ? 'Take proof photo' : 'Add another photo'} onPress={() => capture(true)} fullWidth />
-        {/* A photo already taken (the camera would not open): from the gallery instead (the website's ProofPhotos). */}
-        <Button variant="ghost" label="Upload from gallery instead" onPress={() => capture(false)} fullWidth />
+        <>
+          <Button variant="outline" icon={<Camera size={17} color={ink[900]} />} label={photos.length === 0 ? 'Take proof photo' : 'Add another photo'} onPress={() => capture(true)} fullWidth />
+          {/* A photo already taken (the camera would not open): from the gallery instead (the website's ProofPhotos). */}
+          <Button variant="ghost" label="Upload from gallery instead" onPress={() => capture(false)} fullWidth />
+        </>
       ) : null}
     </View>
   );
