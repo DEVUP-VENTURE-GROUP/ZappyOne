@@ -25,6 +25,8 @@ test('totals, who is paused, and each payment with who paid and how', async () =
   expect(res.body.totals.paused).toBeGreaterThanOrEqual(1);
   expect(res.body.totals.collectedThisMonthPaise).toBeGreaterThanOrEqual(30000);
   expect(res.body.payments[0]).toMatchObject({ amountPaise: 30000, how: 'Recorded by admin', reference: 'UTR123456', partner: { kind: 'shop', name: 'Kondapur Fixers' } });
+  // Which gateway Pay now uses, from payment/gateway, so admin knows the receiving account is the gateway's own.
+  expect(res.body.onlineGateway).toBe(require('../src/modules/payment/gateway').active());
 });
 
 test('admin sets the ZappyOne receiving account; partners see where to pay; a bad UPI ID is refused', async () => {

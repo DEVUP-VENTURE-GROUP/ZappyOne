@@ -66,6 +66,8 @@ async function overview() {
       paymentsThisMonth: monthAgg[0]?.n || 0,
     },
     limits: { warnPaise: workerList.warnAtPaise, limitPaise: workerList.limitPaise },
+    // Pay now goes through this gateway straight to the account linked to it; null means partners can only pay outside the app.
+    onlineGateway: require('../payment/gateway').active(),
     payments: recent,
   };
 }

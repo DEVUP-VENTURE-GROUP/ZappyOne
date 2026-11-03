@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { Loader2, CheckCircle2 } from 'lucide-react';
-import { useAdminDuesQuery, useAdminRecordDuesPaymentMutation, useAdminRejectDuesClaimMutation } from '@shared/services/api';
+import { useAdminDuesQuery, useAdminDuesOverviewQuery, useAdminRecordDuesPaymentMutation, useAdminRejectDuesClaimMutation } from '@shared/services/api';
 import { Card, PageLoader, StatCard, fmt } from '../../../ui/kit';
 import { RupeeInput, Setting, toPaise } from './fields';
 import { useRuleForm, rupeeField } from './CancellationRules';
@@ -35,6 +35,7 @@ const ACCOUNT = [
 ];
 
 function Limits() {
+  const gateway = useAdminDuesOverviewQuery().data?.onlineGateway;
   const f = useRuleForm(DUES_FIELDS);
   if (!f.form) return <PageLoader />;
   const order = f.form && toPaise(f.form.workerDuesWarnPaise) <= toPaise(f.form.workerDuesLimitPaise);
@@ -63,10 +64,14 @@ function Limits() {
       </Setting>
       <div className="border-t border-slate-100 px-4 py-3">
         <h4 className="text-[13px] font-bold text-slate-800">ZappyOne receiving account</h4>
-        <p className="mt-0.5 text-[12px] text-slate-500">Where partners pay what they owe, and pro subscriptions. Shown on every partner's dues card with an Open UPI app button. Pay now online needs none of this.</p>
-        {!f.form.zappyPayUpiId && !f.form.zappyPayAccountNumber && (
-          <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-[12.5px] font-semibold text-amber-800">Not set yet: partners paying outside the app do not know where to pay. Add at least the UPI ID.</p>
+        {gateway ? (
+          <p className="mt-2 rounded-lg bg-green-50 px-3 py-2 text-[12.5px] font-semibold text-green-800">
+            Set by default: Pay now and pro subscriptions are paid online through {gateway === 'razorpay' ? 'Razorpay' : 'Cashfree'} and settle to the bank account linked there. Nothing to add here.
+          </p>
+        ) : (
+          <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-[12.5px] font-semibold text-amber-800">No payment gateway is set up, so partners can only pay outside the app. Add at least the UPI ID below.</p>
         )}
+        <p className="mt-2 text-[12px] text-slate-500">Optional: a UPI ID or bank account for partners who pay you directly instead. When added, it shows on their dues card with an Open UPI app button.</p>
         <div className="mt-2 grid gap-2 sm:grid-cols-2">
           {ACCOUNT.map(([key, label, ph, max]) => (
             <label key={key} className="text-[12px] font-semibold text-slate-600">{label}
