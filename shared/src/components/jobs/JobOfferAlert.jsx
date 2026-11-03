@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Navigation, Clock, IndianRupee, Briefcase, Banknote, Loader2, X, Star, TrendingUp } from 'lucide-react';
 import { kmBetween } from '../../utils/distance';
 import PassReasonPicker from '../worker/PassReasonPicker';
+import DistanceStrip from './DistanceStrip';
 import { startRinging } from '../../utils/alertSound';
 import { formatPaise } from '../../utils/money';
 import { offerClock as clock, DEFAULT_WINDOW_SEC, customerRecordLine } from './jobOffers';
@@ -60,7 +61,8 @@ export default function JobOfferAlert({ offer, myLocation, onAccept, onDecline, 
   if (!offer) return null;
 
   // Straight-line, from the one shared helper — a rough guide, not a route.
-  const km = offer.km ?? kmBetween(myLocation, offer.coordinates);
+  // Live distance when we know where you are; otherwise the trip the price was worked out on.
+  const km = offer.km ?? kmBetween(myLocation, offer.coordinates) ?? offer.distanceKm ?? null;
   const pct = Math.max(0, Math.min(100, (left / windowSec) * 100));
   const urgent = left <= windowSec / 5;
   const boost = offer.boostPaise > 0 ? offer.boostPaise : 0;
@@ -174,9 +176,10 @@ export default function JobOfferAlert({ offer, myLocation, onAccept, onDecline, 
                   <Briefcase size={11} /> How
                 </p>
                 <p className="mt-0.5 text-[14px] font-semibold capitalize leading-tight text-navy">{offer.howLabel}</p>
-                {km != null && <p className="text-[11px] font-medium text-slate-500">{Number(km).toFixed(1)} km away</p>}
               </div>
             </div>
+
+            <DistanceStrip km={km != null ? Number(km) : null} />
 
             <button
               type="button"

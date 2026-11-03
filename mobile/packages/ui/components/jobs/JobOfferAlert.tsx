@@ -17,6 +17,7 @@ import { radius } from '../../theme/radius';
 import { spacing } from '../../theme/spacing';
 import { openLink } from '../../lib/openLink';
 import { STAFF_APP } from '../../provider/staffApp';
+import { DistanceStrip } from './DistanceStrip';
 
 export interface Offer {
   kind: string; id: string; mode: string; askReason: boolean; heading: string; title: string;
@@ -57,7 +58,8 @@ export function JobOfferAlert({ offer, myLocation, onAccept, onDecline, onClose,
     return () => clearInterval(t);
   }, [expiry, onClose]);
 
-  const km = offer.km ?? kmBetween(myLocation, offer.coordinates);
+  // Live distance when we know where you are; otherwise the trip the price was worked out on.
+  const km = offer.km ?? kmBetween(myLocation, offer.coordinates) ?? offer.distanceKm ?? null;
   const pct = Math.max(0, Math.min(100, (left / windowSec) * 100));
   const urgent = left <= windowSec / 5;
   const boost = !STAFF_APP && (offer.boostPaise ?? 0) > 0 ? (offer.boostPaise as number) : 0;
@@ -113,9 +115,10 @@ export function JobOfferAlert({ offer, myLocation, onAccept, onDecline, onClose,
               <View style={styles.tile}>
                 <View style={styles.inline}><Briefcase size={11} color={ink[500]} /><Text variant="caption" weight="semibold" color={ink[500]}>How</Text></View>
                 <Text variant="body" weight="semibold" style={styles.capitalize}>{offer.howLabel}</Text>
-                {km != null ? <Text variant="caption" color={ink[500]}>{Number(km).toFixed(1)} km away</Text> : null}
               </View>
             </View>
+
+            <DistanceStrip km={km != null ? Number(km) : null} />
 
             <Pressable onPress={directions} accessibilityRole="link" accessibilityLabel="Open directions" style={styles.address}>
               <MapPin size={15} color={zappy[500]} />

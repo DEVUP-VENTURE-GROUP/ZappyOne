@@ -65,3 +65,9 @@ export function formatDistance(metres) {
     ? `${Math.round(metres)} m`
     : `${(metres / 1000).toFixed(1)} km`;
 }
+
+// Rough road minutes for a straight-line distance, the same rule as the server's estimate (jobs/arrival TRAVEL: ×1.35 at 22 km/h, +2 min).
+export function roadMinutes(km) {
+  if (km == null || !Number.isFinite(Number(km))) return null;
+  return Math.max(1, Math.round(((Number(km) * 1.35) / 22) * 60 + 2));
+}
