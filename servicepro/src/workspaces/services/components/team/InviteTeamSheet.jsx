@@ -46,7 +46,7 @@ export default function InviteTeamSheet({ onClose }) {
                 </li>
               ))}
             </ul>
-            <p className="rounded-xl bg-slate-50 p-3 text-[11.5px] text-slate-500">Each person signs in at Shop worker login with their number and verifies their ID before taking jobs.</p>
+            <p className="rounded-xl bg-slate-50 p-3 text-[11.5px] text-slate-500">Each person opens servicepro.zappyone.com, signs in with their own phone number and the code we text, and checks their ID once before taking jobs.</p>
             <button type="button" onClick={onClose} className="btn-primary w-full">Done</button>
           </>
         )}

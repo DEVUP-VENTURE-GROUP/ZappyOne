@@ -40,7 +40,7 @@ export default function ShopWorkersPage() {
     try {
       const res = await addWorker({ phone, name: name || undefined }).unwrap();
       toast.success(res.isNew
-        ? 'Added. They sign in at Shop worker login with this number and verify their ID (Aadhaar + selfie) to go on duty.'
+        ? 'Added. They open servicepro.zappyone.com, sign in with this number and the code we text, and check their ID (Aadhaar and a selfie) once to start.'
         : 'Linked to your shop', { duration: 6000 });
       setShowAdd(false);
       setPhone(''); setName('');
