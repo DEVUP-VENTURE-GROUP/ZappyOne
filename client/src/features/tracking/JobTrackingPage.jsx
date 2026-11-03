@@ -138,7 +138,7 @@ export default function JobTrackingPage({ job, extras = null, startCode = null, 
   return (
     <PageTransition>
       <StatusNotificationBanner
-        status={status}
+        status={job.rawStatus === 'PROVIDER_ASSIGNED' ? 'waiting' : status}
         needsYou={needsYou}
         workerName={job.provider?.name}
         workerRating={job.provider?.rating ?? null}

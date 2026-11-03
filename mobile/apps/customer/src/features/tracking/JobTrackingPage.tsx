@@ -79,7 +79,8 @@ export function JobTrackingPage({ job, extras = null, startCode = null, codeStag
     .sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime()), [job.history, firstName, job.noun]);
   const needsYou = NEEDS_YOU.includes(job.rawStatus || '');
 
-  useStatusNotice(status, needsYou, { name: job.provider?.name, rating: job.provider?.rating, jobs: job.provider?.jobs, eta });
+  // Chosen but not yet accepted: no "accepted" notice until they tap Accept.
+  useStatusNotice(job.rawStatus === 'PROVIDER_ASSIGNED' ? 'waiting' : status, needsYou, { name: job.provider?.name, rating: job.provider?.rating, jobs: job.provider?.jobs, eta });
 
   const target = job.trip?.to || (job.place.lat != null && job.place.lng != null ? { lat: job.place.lat, lng: job.place.lng } : null);
   const showMap = mapsAvailable && !job.terminal && ['assigned', 'on_the_way', 'arrived'].includes(status) && !!target;

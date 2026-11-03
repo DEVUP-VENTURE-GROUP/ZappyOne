@@ -174,7 +174,7 @@ export default function ShopDashboard() {
   const liveNow = isDiscoverable && isOpen !== false;
 
   const needsAction = jobs.filter((j) => j.attention || !j.workerId);
-  const pendingApprovals = (setup?.pending?.skillVerifications || 0) + (setup?.pending?.priceApprovals || 0);
+  const pendingApprovals = Number(setup?.pending?.skillVerifications || 0) + Number(setup?.pending?.priceApprovals || 0);
 
   if (isLoading) {
     return (
@@ -287,8 +287,9 @@ export default function ShopDashboard() {
         </div>
 
         {/* Main grid */}
-        <div className="mt-5 grid gap-5 lg:grid-cols-3">
-          <div className="space-y-5 lg:col-span-2">
+        {/* grid-cols-1 is minmax(0, 1fr): a long address truncates instead of pushing the page past the phone's edge. */}
+        <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-3">
+          <div className="min-w-0 space-y-5 lg:col-span-2">
             <TradeToday home={workspace?.home} kinds={SHOP_KINDS} />
             <PartnerTermsCard />
             <PartnerDuesCard />
@@ -317,7 +318,7 @@ export default function ShopDashboard() {
             </Panel>
           </div>
 
-          <div className="space-y-5">
+          <div className="min-w-0 space-y-5">
             <TeamPanel workers={workers} jobs={jobs} onManage={() => nav('/shop/workers')} />
 
           </div>

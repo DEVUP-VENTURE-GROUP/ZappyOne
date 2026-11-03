@@ -88,7 +88,7 @@ export function ShopDashboard() {
   const isOpen: boolean | null = shop?.openNow ?? null;
   const liveNow = isDiscoverable && isOpen !== false;
   const needsAction = (jobs as { attention?: boolean; workerId?: string | null }[]).filter((j) => j.attention || !j.workerId);
-  const pendingApprovals = (setup?.pending?.skillVerifications || 0) + (setup?.pending?.priceApprovals || 0);
+  const pendingApprovals = Number(setup?.pending?.skillVerifications || 0) + Number(setup?.pending?.priceApprovals || 0);
   const days = last7(week?.dailyBreakdown);
   const rating = shop?.rating ? Number(shop.rating).toFixed(1) : '-';
 

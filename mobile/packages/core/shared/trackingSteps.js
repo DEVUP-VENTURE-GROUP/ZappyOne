@@ -79,6 +79,8 @@ export function statusHeadline(job, status, eta, { arrival = null, moreTime = nu
       return { title: `Finding your ${job.noun || 'pro'}`, sub: 'We are asking verified pros near you.' };
     case 'assigned':
     case 'on_the_way':
+      // Chosen but not yet accepted: never say they accepted until they tap Accept.
+      if (job.rawStatus === 'PROVIDER_ASSIGNED') return { title: `Waiting for ${who} to accept`, sub: 'They have a few minutes to accept. If they cannot, we find you someone else.' };
       if (later) return { title: 'Booking scheduled', sub: `${who} will reach you around ${dayOf(job.scheduledAt)}. Share the start code when they arrive.` };
       if (eta != null) {
         return {
