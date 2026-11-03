@@ -111,6 +111,20 @@ async function availabilityOf(ownerKeys, now = new Date()) {
   return { open, blocked, nextOpening };
 }
 
+// "<vertical>|<owner key>" for every provider here with an active priced job in that repair service (repair/ProviderCapability).
+async function pricedRepairOwners(ownerKeys, lines) {
+  if (!ownerKeys.length) return new Set();
+  const { ProviderCapability } = require('../repair/models/capability.model');
+  const shopIds = ownerKeys.filter((k) => k.startsWith('s:')).map((k) => k.slice(2));
+  const workerIds = ownerKeys.filter((k) => k.startsWith('w:')).map((k) => k.slice(2));
+  const verticals = [...new Set(lines.map((l) => l.repairVertical).filter(Boolean))];
+  const caps = await ProviderCapability.find({
+    isActive: true, vertical: { $in: verticals },
+    $or: [{ shopId: { $in: shopIds } }, { workerId: { $in: workerIds }, shopId: null }],
+  }).select('vertical shopId workerId').lean();
+  return new Set(caps.map((c) => `${c.vertical}|${ownerKey(c)}`));
+}
+
 /**
  * Can ZappyOne serve this point, and with what?
  *   available  — at least one live service has a provider covering it who can take work now
@@ -148,11 +162,15 @@ async function serviceabilityAt({ lat, lng }) {
       enrolledBy.get(e.lineCode).push(ownerKey(e));
     }
 
+    // A repair service is bookable from a provider only once they have priced at least one of its jobs; approved but unpriced led customers to an empty "choose who repairs it".
+    const repairOwners = [...new Set(lines.filter((l) => engineOf(l) === 'repair').flatMap((l) => (enrolledBy.get(l.code) || []).filter((k) => covering.repair.has(k))))];
+    const priced = await pricedRepairOwners(repairOwners, lines);
+
     const coveredOwners = new Map();
     for (const line of lines) {
       const engine = engineOf(line);
       const pool = engine === 'pet' ? covering.pet.get(line.code) : covering[engine];
-      const owners = (enrolledBy.get(line.code) || []).filter((k) => pool?.has(k));
+      const owners = (enrolledBy.get(line.code) || []).filter((k) => pool?.has(k) && (engine !== 'repair' || priced.has(`${line.repairVertical}|${k}`)));
       if (owners.length) coveredOwners.set(line.code, owners);
     }
 

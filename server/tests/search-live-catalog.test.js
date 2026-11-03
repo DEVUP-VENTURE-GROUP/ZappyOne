@@ -10,6 +10,7 @@ const { startMongo, stopMongo } = require('./helpers');
 const { redis } = require('../src/config/redis');
 const { ServiceDomain, ServiceLine, ProviderEnrolment } = require('../src/modules/onboarding/onboarding.model');
 const { ProviderServiceArea } = require('../src/modules/repair/models/config.model');
+const { ProviderCapability } = require('../src/modules/repair/models/capability.model');
 const { ProblemCategory, Problem } = require('../src/modules/repair/models/problem.model');
 const Shop = require('../src/modules/shop/shop.model');
 const search = require('../src/modules/search/search.service');
@@ -32,6 +33,7 @@ beforeAll(async () => {
   ]);
   const shop = await Shop.create({ phone: '9000000301', businessName: 'Madhapur Mobiles', ownerName: 'Ravi', isActive: true });
   await ProviderEnrolment.create({ providerKind: 'shop', shopId: shop._id, domainCode: 'electronics', lineCode: 'mobile_repair', status: 'approved' });
+  await ProviderCapability.create({ shopId: shop._id, vertical: 'mobile', repairCode: 'screen_replacement', isActive: true });
   await ProviderServiceArea.create({
     shopId: shop._id, cityCode: 'hyderabad', isActive: true, serviceModes: ['doorstep'],
     center: { type: 'Point', coordinates: [MADHAPUR.lng, MADHAPUR.lat] }, radiusKm: 5,

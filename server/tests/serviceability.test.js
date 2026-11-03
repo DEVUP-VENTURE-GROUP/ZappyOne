@@ -10,6 +10,7 @@ const { startMongo, stopMongo } = require('./helpers');
 const { redis } = require('../src/config/redis');
 const { ServiceDomain, ServiceLine, ProviderEnrolment } = require('../src/modules/onboarding/onboarding.model');
 const { ProviderServiceArea } = require('../src/modules/repair/models/config.model');
+const { ProviderCapability } = require('../src/modules/repair/models/capability.model');
 const Shop = require('../src/modules/shop/shop.model');
 const Zone = require('../src/modules/zone/zone.model');
 const zoneService = require('../src/modules/zone/zone.service');
@@ -35,10 +36,14 @@ beforeAll(async () => {
     code: 'mobile_repair', name: 'Mobile Repair', domainCode: 'repair', status: 'live',
     repairVertical: 'mobile', customerPath: '/repair',
   });
+  // Approved for laptops too but nothing priced there: not bookable from this shop, so not listed.
+  await ServiceLine.create({ code: 'laptop_repair', name: 'Laptops', domainCode: 'repair', status: 'live', repairVertical: 'laptop', customerPath: '/repair/laptop' });
   shop = await Shop.create({ phone: '9000000101', businessName: 'Ravi Mobiles', ownerName: 'Ravi', isActive: true });
   await ProviderEnrolment.create({
     providerKind: 'shop', shopId: shop._id, domainCode: 'repair', lineCode: 'mobile_repair', status: 'approved',
   });
+  await ProviderEnrolment.create({ providerKind: 'shop', shopId: shop._id, domainCode: 'repair', lineCode: 'laptop_repair', status: 'approved' });
+  await ProviderCapability.create({ shopId: shop._id, vertical: 'mobile', repairCode: 'screen_replacement', isActive: true });
   await ProviderServiceArea.create({
     shopId: shop._id, cityCode: 'hyderabad', isActive: true, serviceModes: ['doorstep'],
     center: { type: 'Point', coordinates: [MADHAPUR.lng, MADHAPUR.lat] }, radiusKm: 5,
