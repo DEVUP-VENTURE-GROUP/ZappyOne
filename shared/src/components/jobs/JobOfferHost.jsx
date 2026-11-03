@@ -5,7 +5,7 @@ import { useSelector } from 'react-redux';
 import toast from 'react-hot-toast';
 import PayToAccept from './PayToAccept';
 import JobOfferAlert from './JobOfferAlert';
-import { keyOf, fromRepair, fromPetOffer, fromOpen, recoveredOffers, pickOffer, withOffer, takeError, duesBlock } from './jobOffers';
+import { keyOf, fromRepair, fromPetOffer, fromOpen, recoveredOffers, openOffers, withOffer, takeError, duesBlock } from './jobOffers';
 import { selectRole, selectAuth } from '../../modules/auth/authSlice';
 import { getSocket } from '../../services/socket';
 import {
@@ -81,7 +81,8 @@ export default function JobOfferHost({ kinds = ['repair', 'pet', 'helping'], myL
   const recovered = useMemo(() => recoveredOffers(repairData, petData), [repairData, petData]);
 
   // Offered-to-you first: they're yours to lose. Then open jobs, oldest first.
-  const offer = useMemo(() => pickOffer(live, recovered, handled), [live, recovered, handled]);
+  const queue = useMemo(() => openOffers(live, recovered, handled), [live, recovered, handled]);
+  const offer = queue[0] || null;
 
   // A ring that ran out is only off screen; the next ring round may show it again.
   const done = useCallback((o, why) => {
@@ -144,6 +145,7 @@ export default function JobOfferHost({ kinds = ['repair', 'pet', 'helping'], myL
     <JobOfferAlert
       key={keyOf(offer)}
       offer={offer}
+      more={queue.length - 1}
       myLocation={myLocation}
       onAccept={accept}
       onDecline={decline}

@@ -137,6 +137,11 @@ export function recoveredOffers(repairData, petData, now = Date.now()) {
  * amount or less: a list fetched before a boost cannot bring back the lower one.
  */
 export function pickOffer(live, recovered, handled) {
+  return openOffers(live, recovered, handled)[0] || null;
+}
+
+/** Every offer still to answer, in the order they are shown (the first is on screen; the rest wait behind it). */
+export function openOffers(live, recovered, handled) {
   const seen = new Set();
   return [...live, ...recovered]
     .filter((o) => {
@@ -146,7 +151,7 @@ export function pickOffer(live, recovered, handled) {
       seen.add(job);
       return true;
     })
-    .sort((a, b) => Number(b.mode === 'offered') - Number(a.mode === 'offered'))[0] || null;
+    .sort((a, b) => Number(b.mode === 'offered') - Number(a.mode === 'offered'));
 }
 
 /** Add a live offer; the same job at a higher amount replaces the older alert. */

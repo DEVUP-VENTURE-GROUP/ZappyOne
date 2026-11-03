@@ -360,3 +360,41 @@ describe('SOS files a real ticket now', () => {
     expect(await SupportTicket.countDocuments({ 'raisedBy.id': approved._id, priority: 'urgent' })).toBe(before + 1);
   });
 });
+
+describe('two jobs at once', () => {
+  const { redis } = require('../src/config/redis');
+  async function listen(run) {
+    const heard = [];
+    const sub = redis.duplicate();
+    await sub.subscribe('provider:repair');
+    sub.on('message', (_c, m) => heard.push(JSON.parse(m)));
+    await run();
+    await new Promise((r) => setTimeout(r, 300));
+    await sub.quit();
+    return heard;
+  }
+
+  test('the only pro nearby is rung for a second job while on their first, even if a free pro elsewhere is offline', async () => {
+    const { alertNearbyProviders } = require('../src/modules/jobs/job-events');
+    jest.spyOn(require('../src/modules/messaging/send'), 'send').mockResolvedValue(null);
+    const busy = await worker('9000000431');
+    await Worker.updateOne({ _id: busy._id }, { $set: { lastSeenAt: new Date() } });
+    const away = await Worker.create({ name: 'Away', phone: '9000000432', kyc: { status: 'approved' }, isOnline: false, currentLocation: { type: 'Point', coordinates: [78.6, 17.3] } });
+    await Promise.all([enrol(busy, 'shopping_pickup', 'helping_services'), enrol(away, 'shopping_pickup', 'helping_services')]);
+    await HelpingTask.collection.insertOne({
+      reference: 'ZHFIRST', userId: customer, workerId: busy._id, status: 'TASK_STARTED', serviceType: 'shopping', title: 'First',
+      pickupLocation: HOME, charge: { workerEarningPaise: 9000 }, items: [], statusHistory: [], updatedAt: new Date(), createdAt: new Date(),
+    });
+    const { insertedId } = await HelpingTask.collection.insertOne({
+      reference: 'ZHSECOND', userId: oid(), status: 'CONFIRMED', serviceType: 'shopping', title: 'Second',
+      pickupLocation: HOME, charge: { workerEarningPaise: 9000 }, items: [], statusHistory: [], matching: {}, createdAt: new Date(), updatedAt: new Date(),
+    });
+    // The file's other free helper goes offline, so the busy pro is the only one near.
+    await Worker.updateOne({ _id: approved._id }, { $set: { isOnline: false } });
+    const heard = await listen(async () => alertNearbyProviders('helping', await HelpingTask.findById(insertedId).lean(), { round: 0 }));
+    await Worker.updateOne({ _id: approved._id }, { $set: { isOnline: true } });
+    const rung = heard.filter((h) => h.event === 'job.available').map((h) => h.id);
+    expect(rung).toEqual([String(busy._id)]);
+    jest.restoreAllMocks();
+  });
+});

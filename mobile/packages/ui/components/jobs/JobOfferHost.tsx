@@ -20,7 +20,7 @@ import {
   useGetWorkerMeQuery,
 } from '@zappy/core/api';
 import { useSocketEvent } from '@zappy/core/hooks/useSocketEvent';
-import { keyOf, fromRepair, fromPetOffer, fromOpen, recoveredOffers, pickOffer, withOffer, takeError, duesBlock } from '@zappy/core/shared/jobOffers';
+import { keyOf, fromRepair, fromPetOffer, fromOpen, recoveredOffers, openOffers, withOffer, takeError, duesBlock } from '@zappy/core/shared/jobOffers';
 import { PayToAccept } from './PayToAccept';
 import { useAppSelector } from '@zappy/core/store/hooks';
 import type { ApiErr } from '../../lib/feedback';
@@ -60,7 +60,8 @@ export function JobOfferHost({ kinds = ['repair', 'pet', 'helping'] }: { kinds?:
   useSocketEvent('repair.offer_closed', (p) => setLive((q) => q.filter((o) => o.id !== String(p?.bookingId))));
 
   const recovered = useMemo(() => recoveredOffers(repairData, petData), [repairData, petData]);
-  const offer: Offer | null = useMemo(() => pickOffer(live, recovered, handled), [live, recovered, handled]);
+  const queue: Offer[] = useMemo(() => openOffers(live, recovered, handled), [live, recovered, handled]);
+  const offer: Offer | null = queue[0] || null;
 
   // A ring that ran out is only off screen; the next ring round may show it again.
   const done = useCallback((o: Offer, why?: 'expired' | 'dismissed') => {
@@ -123,6 +124,7 @@ export function JobOfferHost({ kinds = ['repair', 'pet', 'helping'] }: { kinds?:
     <>
     <JobOfferAlert
       key={keyOf(offer)}
+      more={queue.length - 1}
       offer={offer}
       myLocation={myLocation}
       onAccept={accept}

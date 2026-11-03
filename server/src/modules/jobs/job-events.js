@@ -178,13 +178,10 @@ async function alertNearbyProviders(kind, doc, { offlineOnly = false, round = 0 
     // At the dues limit they still hear about the job, marked to pay first; accepting stays refused until they do (worker-dues, shop-dues).
     const working = await require('../worker/worker-dues.service').filterWorkingWorkers(providers.filter((p) => p.kind === 'worker').map((p) => p.id));
     const mustPay = new Set(providers.filter((p) => p.blocked || (p.kind === 'worker' && !working.has(String(p.id)))).map((p) => `${p.kind}:${p.id}`));
-    // Free workers first (or on the last stretch of a job); only if none is free
-    // are those mid-job with room for one more told (jobs/workload).
-    if (!require('./work-hours').isLater(doc.scheduledAt || doc.checkInAt)) {
-      const { free, busy } = await require('./workload').classify(providers.filter((p) => p.kind === 'worker').map((p) => p.id));
-      const anyFree = providers.some((p) => p.kind === 'worker' && free.has(String(p.id)));
-      providers = providers.filter((p) => p.kind !== 'worker' || free.has(String(p.id)) || (!anyFree && busy.has(String(p.id))));
-    }
+    // Workers at their job cap are never rung (jobs/workload); free versus mid-job is decided below, among those actually in reach.
+    const nowJob = !require('./work-hours').isLater(doc.scheduledAt || doc.checkInAt);
+    const load = nowJob ? await require('./workload').classify(providers.filter((p) => p.kind === 'worker').map((p) => p.id)) : null;
+    if (load) providers = providers.filter((p) => p.kind !== 'worker' || load.free.has(String(p.id)) || load.busy.has(String(p.id)));
     if (!providers.length) return;
 
     const Worker = require('../worker/worker.model');
@@ -219,7 +216,11 @@ async function alertNearbyProviders(kind, doc, { offlineOnly = false, round = 0 
     const rounds = fa ? Math.max(1, Math.floor(fa.autoAssignSec / fa.ringSec) - 1) : 1;
     const radiusKm = fa ? fa.autoAcceptKm + ((fa.widenKm - fa.autoAcceptKm) * Math.min(round, rounds)) / rounds : ALERT_RADIUS_KM;
     const within = (r) => all.filter((p) => p.km == null || p.km <= r);
-    const reach = (within(radiusKm).length ? within(radiusKm) : within(fa ? fa.widenKm : ALERT_RADIUS_KM)).slice(0, ALERT_MAX);
+    let near = within(radiusKm).length ? within(radiusKm) : within(fa ? fa.widenKm : ALERT_RADIUS_KM);
+    // Free workers first (or on the last stretch of a job); someone mid-job with room for one more is rung only when no free worker
+    // is online and in reach. Judged across the whole city, one free pro offline far away left the only nearby pro unrung.
+    if (load && near.some((p) => p.kind === 'worker' && load.free.has(p.id))) near = near.filter((p) => p.kind !== 'worker' || load.free.has(p.id));
+    const reach = near.slice(0, ALERT_MAX);
     const ring = fa ? { windowSec: fa.ringSec, expiresAt: new Date(Date.now() + fa.ringSec * 1000).toISOString(), round } : {};
     const pushedBefore = new Set(doc.matching?.pushed || []);
     if (fa && reach.length) await KINDS[kind].model().updateOne({ _id: doc._id }, { $addToSet: { 'matching.pushed': { $each: reach.map((p) => `${p.kind}:${p.id}`) } } });

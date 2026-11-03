@@ -44,3 +44,32 @@ Based on the code as of 2026-11-03 (main `6033c6a1`).
 
 - 2026-11-03 Talk to ZappyOne (web, customer and ServicePro apps, admin replies with push).
 - 2026-11-03 No white screen on load: boot screen in HTML, page chunk loads during session restore.
+
+## F7 plan: "Busy now, I can come in 45 min" (accept with a later start)
+
+Status: planned, not built. Like Urban Company and ride apps: a pro who is busy or far can still take a job by promising a time, and the customer decides.
+
+### How it works
+
+1. **Pro's offer card**: three choices, *Take now*, *Take, I'll come in [20 · 30 · 45 · 60] min* and *Pass*. The later times shown are capped by Economics → Dispatch (`maxLaterStartMin`, default 60); a pro at their job cap sees none.
+2. **Server holds offers for one ring window**: a *Take now* inside the window wins at once, as today. *Come later* offers are collected; when the window ends the earliest promise (then reliability, then fairness) is chosen. Nobody is given a job they did not tap.
+3. **Customer approves**: "Ravi can be with you around 10:45 (in 45 min). OK, or find someone sooner?" The job is held for `customerDecisionSec` (default 120). OK books it at that time. *Sooner* keeps ringing, with Ravi's promise kept as the fallback. No answer means OK; an ASAP booking never silently becomes a much later one, because a promise over 30 minutes needs a tap.
+4. **The promise drives everything after**: tracking shows "arrives around 10:45", the late/no-show guard (F1) measures against the promised time, and the pro's reliability score (D2) counts promises kept.
+
+### Data
+`matching.promise { minutes, at, workerId|shopId, offeredAt, customerDecision: 'pending'|'ok'|'sooner', decidedAt }`; the job stays in its waiting status until the customer says OK, so workload, capacity and ring rules need no new status.
+
+### Edge cases to cover
+- Two pros promise; one says *now* during the window: *now* wins and the others hear "taken".
+- The customer says *sooner*, nobody else takes it: the kept promise is booked automatically before the original pro's offer lapses.
+- The customer cancels while deciding: free, no fee, the pro hears at once.
+- The pro cancels after promising: counts like a cancellation; the job re-rings at once with the original priority.
+- The pro's current job runs long: at promise minus 10 min, ask "still on time?"; *running late* gives the customer the choice again.
+- A scheduled booking: no *come later* option (it already has a time).
+- A shop's offer: the promise is the shop's; the owner assigns a technician before the promised time or the job falls back.
+- Cap: a promise counts toward `maxActiveJobs` from the moment it is accepted.
+- Surge and boosts keep their amounts; a promise never changes the price.
+- Rakshak staff stay on the current ring-one-at-a-time rule (v3).
+
+### Build list
+Server: offer `promiseMin` on accept, window collection in `waves`, customer decision endpoint, promise-aware `arrival` and `workload`, messages (customer decision, pro outcome). Web + app: offer card buttons, customer decision sheet, tracking line. Tests: each edge case above as a route-level test.

@@ -30,7 +30,7 @@ import { STAFF_PORTAL } from '../../provider/staffPortal';
  * onAccept() / onDecline(reason) are the kind's own calls; both may throw.
  */
 
-export default function JobOfferAlert({ offer, myLocation, onAccept, onDecline, onClose, declineTitle }) {
+export default function JobOfferAlert({ offer, myLocation, onAccept, onDecline, onClose, declineTitle, more = 0 }) {
   const [busy, setBusy] = useState(null); // 'accept' | 'decline'
   const [askingReason, setAskingReason] = useState(false);
 
@@ -135,6 +135,7 @@ export default function JobOfferAlert({ offer, myLocation, onAccept, onDecline, 
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-[12px] font-semibold text-zappy-700">{offer.heading}</p>
+                {more > 0 && <p className="mt-0.5 inline-block rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-800">+{more} more {more === 1 ? 'job' : 'jobs'} waiting after this</p>}
                 <p className="mt-0.5 truncate text-[18px] font-bold capitalize text-navy">{offer.title}</p>
               </div>
               <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-bold tabular-nums ${

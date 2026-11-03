@@ -36,10 +36,10 @@ function useRinging(active: boolean) {
   }, [active]);
 }
 
-export function JobOfferAlert({ offer, myLocation, onAccept, onDecline, onClose, declineTitle }: {
+export function JobOfferAlert({ offer, myLocation, onAccept, onDecline, onClose, declineTitle, more = 0 }: {
   offer: Offer; myLocation?: number[] | null;
   onAccept: () => Promise<void>; onDecline: (reason: string) => Promise<void>;
-  onClose: (why: 'expired' | 'dismissed') => void; declineTitle?: string;
+  onClose: (why: 'expired' | 'dismissed') => void; declineTitle?: string; more?: number;
 }) {
   const insets = useSafeAreaInsets();
   const [busy, setBusy] = useState<'accept' | 'decline' | null>(null);
@@ -94,6 +94,7 @@ export function JobOfferAlert({ offer, myLocation, onAccept, onDecline, onClose,
             <View style={styles.head}>
               <View style={styles.flex}>
                 <Text variant="caption" weight="semibold" color={zappy[700]}>{offer.heading}</Text>
+                {more > 0 ? <Text variant="caption" weight="bold" color={accent[700]}>+{more} more {more === 1 ? 'job' : 'jobs'} waiting after this</Text> : null}
                 <Text variant="heading2" weight="bold" numberOfLines={1} style={styles.capitalize}>{offer.title}</Text>
               </View>
               <View style={[styles.clock, { backgroundColor: urgent ? danger[50] : slate[100] }]}>
