@@ -1398,7 +1398,8 @@ export default function ProviderRepairSetupPage() {
   const others = (onboarding?.enrolments || [])
     .filter((e) => e.status === 'approved' && !e.line?.repairVertical)
     .map((e) => ({ key: `line:${e.lineCode}`, code: e.lineCode, domain: e.line?.domainCode || '', name: e.line?.name || e.lineCode.replace(/_/g, ' ') }));
-  const verticals = onboarding?.repairVerticals?.length ? onboarding.repairVerticals : (others.length ? [] : ['mobile']);
+  // Approved services first, else the ones they picked and are waiting on; never a default trade (a vehicles partner was shown phone repair).
+  const verticals = onboarding?.repairVerticals?.length ? onboarding.repairVerticals : (onboarding?.chosenVerticals || []);
   const tabs = [...verticals, ...others.map((o) => o.key)];
   const [vertical, setVertical] = useState(null);
   const active = vertical && tabs.includes(vertical) ? vertical : tabs[0];
@@ -1410,7 +1411,7 @@ export default function ProviderRepairSetupPage() {
   const [brandCodes, setBrandCodes] = useState(null);
   const [cityCode, setCityCode] = useState('');
 
-  const { data: work } = useRepairWorkCatalogQuery({ vertical: active }, { skip: !!other });
+  const { data: work } = useRepairWorkCatalogQuery({ vertical: active }, { skip: !active || !!other });
 
   // Seed brands from what they already claim, so a return visit is not blank.
   useEffect(() => {
@@ -1423,8 +1424,8 @@ export default function ProviderRepairSetupPage() {
   const LABEL = { mobile: 'Phone repair', laptop: 'Laptop repair', two_wheeler: '2-wheeler repair', four_wheeler: '4-wheeler repair', water_tank_care: 'Water & tank care', bike_wash: 'Bike wash', car_wash: 'Car wash', home_cleaning: 'Home cleaning', electrician: 'Electrician', plumbing: 'Plumbing', ac_service: 'AC service' };
 
   // Every step shows what is really saved, read from the same data the step uses.
-  const { data: areaData } = useRepairServiceAreasQuery(active, { skip: !!other });
-  const { data: priceData } = useRepairProviderPricingQuery(active, { skip: !!other });
+  const { data: areaData } = useRepairServiceAreasQuery(active, { skip: !active || !!other });
+  const { data: priceData } = useRepairProviderPricingQuery(active, { skip: !active || !!other });
   const done = useMemo(() => {
     const set = new Set();
     if (brandCodes?.length) set.add('brands');
@@ -1447,6 +1448,16 @@ export default function ProviderRepairSetupPage() {
     if (work.menu) setStep('menu');
     else if (work.selectedCount && brandCodes?.length !== 0) setStep('pricing');
   }, [work, active, landed, brandCodes]);
+
+  if (onboarding && !tabs.length) {
+    return (
+      <div className="mx-auto max-w-lg px-4 py-16 text-center">
+        <p className="text-[17px] font-bold text-ink-900">Choose your services first</p>
+        <p className="mt-1 text-[14px] text-ink-500">Pick the work you do. Its jobs and prices are set up here after that.</p>
+        <button type="button" onClick={() => nav('/provider/onboarding')} className="btn-primary mt-4 px-5">Add a service</button>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] pb-10">

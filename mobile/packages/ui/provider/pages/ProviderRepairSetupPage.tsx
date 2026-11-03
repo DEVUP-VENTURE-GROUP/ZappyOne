@@ -18,7 +18,7 @@ import { ArrowLeft, ShieldCheck } from 'lucide-react-native';
 import {
   useProviderOnboardingStatusQuery, useRepairWorkCatalogQuery, useRepairServiceAreasQuery, useRepairProviderPricingQuery,
 } from '@zappy/core/api';
-import { Text } from '../../components';
+import { EmptyState, Text } from '../../components';
 import { toast } from '../../components/Toast';
 import { colors, ink, slate } from '../../theme/colors';
 import { radius } from '../../theme/radius';
@@ -50,7 +50,8 @@ export function ProviderRepairSetupPage() {
   const others = useMemo(() => ((onboarding?.enrolments || []) as Enrolment[])
     .filter((e) => e.status === 'approved' && !e.line?.repairVertical)
     .map((e) => ({ key: `line:${e.lineCode}`, code: e.lineCode, domain: e.line?.domainCode || '', name: e.line?.name || e.lineCode.replace(/_/g, ' ') })), [onboarding]);
-  const verticals: string[] = onboarding?.repairVerticals?.length ? onboarding.repairVerticals : (others.length ? [] : ['mobile']);
+  // Approved services first, else the ones they picked and are waiting on; never a default trade (the website's setup page).
+  const verticals: string[] = onboarding?.repairVerticals?.length ? onboarding.repairVerticals : (onboarding?.chosenVerticals || []);
   const tabs = [...verticals, ...others.map((o) => o.key)];
   const [tab, setTab] = useState<string | null>(null);
   const active = tab && tabs.includes(tab) ? tab : tabs[0];
@@ -102,6 +103,14 @@ export function ProviderRepairSetupPage() {
   }, [step, other, isShop, leave, work?.menu]));
 
   function switchTab(t: string) { setTab(t); setBrandCodes(null); setStep('brands'); }
+
+  if (onboarding && !tabs.length) {
+    return (
+      <View style={[styles.page, { alignItems: 'center', justifyContent: 'center' }]}>
+        <EmptyState title="Choose your services first" message="Pick the work you do. Its jobs and prices are set up here after that." actionLabel="Add a service" onAction={() => router.push('/provider/onboarding' as never)} />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.page}>

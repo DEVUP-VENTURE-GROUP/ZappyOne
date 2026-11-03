@@ -71,9 +71,11 @@ export function ShopDashboard() {
   const { data: teamData } = useShopWorkersQuery();
   const { mine: jobs } = useProviderJobs({ kinds: SHOP_KINDS });
   const { data: workspace } = useProviderWorkspaceQuery(undefined);
-  const { data: setup } = useRepairOnboardingStatusQuery('mobile');
-  // Service verification already collected the owner's ID, shop photo and selfie: no second ask while it is in flight.
+  // Their own service, not phone repair for everyone.
   const { data: providerStatus } = useProviderOnboardingStatusQuery();
+  const myVertical = providerStatus?.repairVerticals?.[0] || providerStatus?.chosenVerticals?.[0];
+  const { data: setup } = useRepairOnboardingStatusQuery(myVertical, { skip: !myVertical });
+  // Service verification already collected the owner's ID, shop photo and selfie: no second ask while it is in flight.
   const verificationInFlight = ((providerStatus?.enrolments || []) as { status: string }[]).some((e) => ['pending_review', 'approved'].includes(e.status));
 
   if (isLoading) return <View style={styles.page}><LoadingState /></View>;

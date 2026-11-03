@@ -137,7 +137,10 @@ export default function ShopDashboard() {
   const { data: teamData } = useShopWorkersQuery();
   // Open jobs of every kind, in one shape (shared with the technician's board).
   const { mine: jobs } = useProviderJobs({ kinds: SHOP_KINDS });
-  const { data: setup } = useRepairOnboardingStatusQuery('mobile');
+  // Their own service, not phone repair for everyone.
+  const { data: providerStatus } = useProviderOnboardingStatusQuery();
+  const myVertical = providerStatus?.repairVerticals?.[0] || providerStatus?.chosenVerticals?.[0];
+  const { data: setup } = useRepairOnboardingStatusQuery(myVertical, { skip: !myVertical });
   const { data: workspace } = useProviderWorkspaceQuery();
 
   /**
@@ -146,7 +149,6 @@ export default function ShopDashboard() {
    * is asking for the same papers twice — so the separate prompt only
    * appears when nothing is under review.
    */
-  const { data: providerStatus } = useProviderOnboardingStatusQuery();
   const verificationInFlight = (providerStatus?.enrolments || [])
     .some((e) => ['pending_review', 'approved'].includes(e.status));
 

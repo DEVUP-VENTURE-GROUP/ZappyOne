@@ -181,6 +181,8 @@ async function status(req, res, next) {
       enrolments,
       approvedLineCodes: approved.map((e) => e.lineCode),
       repairVerticals: verticals,
+      // The services they picked, waiting or approved: their setup opens on these, never on someone else's trade.
+      chosenVerticals: [...new Set(enrolments.filter((e) => e.status !== 'rejected').map((e) => e.line?.repairVertical).filter(Boolean))],
       storefront,
       // Live means a customer can actually find and book them, which needs the
       // storefront as well as the verification.

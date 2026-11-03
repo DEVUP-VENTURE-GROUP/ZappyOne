@@ -89,3 +89,15 @@ test('admin picks which of the partner photos becomes the service picture, or no
   expect((await approve({ serviceImage: 'line-requests/dance.jpg' })).status).toBe(200);
   expect((await ServiceLine.findOne({ code: 'salsa_test' }).lean()).imageUrl).toBe('line-requests/dance.jpg');
 });
+
+test('a partner waiting on their vehicle service is set up for vehicles, never phone repair by default', async () => {
+  const { ServiceLine, ProviderEnrolment } = require('../src/modules/onboarding/onboarding.model');
+  const Shop = require('../src/modules/shop/shop.model');
+  await ServiceLine.updateOne({ code: 'tw_test_line' }, { $setOnInsert: { code: 'tw_test_line', name: '2-wheeler repair', domainCode: 'vehicles', repairVertical: 'two_wheeler', status: 'live' } }, { upsert: true });
+  const shop = await Shop.create({ businessName: 'Kukatpally Bikes', ownerName: 'Salman', phone: '9000000991' });
+  await ProviderEnrolment.create({ providerKind: 'shop', shopId: shop._id, domainCode: 'vehicles', lineCode: 'tw_test_line', status: 'pending_review' });
+  const res = await request(app).get('/api/provider/onboarding/status').set('Authorization', `Bearer ${signAccessToken({ sub: String(shop._id), role: 'shop' })}`);
+  expect(res.status).toBe(200);
+  expect(res.body.repairVerticals).toEqual([]);
+  expect(res.body.chosenVerticals).toEqual(['two_wheeler']);
+});
