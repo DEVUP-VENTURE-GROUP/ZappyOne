@@ -3,10 +3,11 @@
  * every app, saving to the same place, so the photo is always the same one.
  */
 import React, { useState } from 'react';
+import { pickPhotoAsking } from '@zappy/core/lib/pickDocument';
 import { ActivityIndicator, Image, Pressable, StyleSheet, View } from 'react-native';
 import { Camera, UserRound } from 'lucide-react-native';
 import { useSetAccountPhotoMutation } from '@zappy/core/api';
-import { pickPhoto, uploadPhoto } from '@zappy/core/lib/upload';
+import { uploadPhoto } from '@zappy/core/lib/upload';
 import { Text } from '..';
 import { errText } from '../../lib/feedback';
 import { colors, zappy, ink, slate } from '../../theme/colors';
@@ -26,7 +27,7 @@ export function ProfilePhoto({ url, role = 'user', size = 88, label = 'Your phot
   async function pick() {
     let photo;
     // A refused permission says how to allow it; that message is for the person.
-    try { photo = await pickPhoto({ camera: false }); } catch (err) { toast.error((err as Error).message); return; }
+    try { photo = await pickPhotoAsking('Your photo'); } catch (err) { toast.error((err as Error).message); return; }
     if (!photo) return;
     try {
       setPreview(photo.uri);

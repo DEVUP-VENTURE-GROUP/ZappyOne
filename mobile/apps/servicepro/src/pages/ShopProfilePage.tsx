@@ -12,8 +12,9 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Check, ImageIcon, MapPin } from 'lucide-react-native';
 import { useShopMeQuery, useUpdateShopMeMutation } from '@zappy/core/api';
-import { pickPhoto, uploadPhoto } from '@zappy/core/lib/upload';
-import { incompleteDay } from '@zappy/core/shared/weeklyHoursRules';
+import { uploadPhoto } from '@zappy/core/lib/upload';
+import { pickPhotoAsking } from '@zappy/core/lib/pickDocument';
+import { incompleteDay, withDefaultWeek } from '@zappy/core/shared/weeklyHoursRules';
 import { Button, ErrorState, LoadingState, ScreenHeader, Text } from '@zappy/ui/components';
 import { toast } from '@zappy/ui/components/Toast';
 import { LoginSecurityCard } from '@zappy/ui/components/account/LoginSecurityCard';
@@ -48,7 +49,7 @@ export function ShopProfilePage() {
     if (!s || form) return;
     draft.take({
       businessName: s.businessName || '', category: s.category || '', bio: s.bio || '', yearsActive: s.yearsActive != null ? String(s.yearsActive) : '',
-      hours: s.hours || [], address: s.address?.text || '', landmark: s.address?.landmark || '',
+      hours: withDefaultWeek(s.hours), address: s.address?.text || '', landmark: s.address?.landmark || '',
       lat: s.address?.location?.coordinates?.[1] ?? null, lng: s.address?.location?.coordinates?.[0] ?? null, coverImageUrl: s.coverImageUrl || '',
     });
   }, [data, form]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -59,7 +60,7 @@ export function ShopProfilePage() {
 
   async function pickCover() {
     let photo;
-    try { photo = await pickPhoto({ camera: false }); } catch (err) { toast.error((err as Error).message); return; }
+    try { photo = await pickPhotoAsking('Cover photo'); } catch (err) { toast.error((err as Error).message); return; }
     if (!photo) return;
     setUploading(true);
     try { const key = await uploadPhoto(photo, 'shop'); set({ coverImageUrl: key }); setCoverPreview(photo.uri); toast.success('Cover photo uploaded'); }

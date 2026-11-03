@@ -6,13 +6,14 @@
  * the website (shared/events/partnerBookings).
  */
 import { useEffect, useState } from 'react';
+import { pickPhotoAsking } from '@zappy/core/lib/pickDocument';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   useCreateEventThemeMutation, useGetEventCategoriesQuery, usePartnerEarningsQuery, usePartnerThemesQuery, useUpdateEventThemeMutation,
 } from '@zappy/core/api';
-import { pickPhoto, uploadPhoto } from '@zappy/core/lib/upload';
+import { uploadPhoto } from '@zappy/core/lib/upload';
 import { EDITABLE, EMPTY_PACKAGE, packageBody, packageForm, packageProblems } from '@zappy/core/shared/partnerBookings';
 import { Button, Chip, EmptyState, Input, LoadingState, ScreenHeader, Text } from '@zappy/ui/components';
 import { toast } from '@zappy/ui/components/Toast';
@@ -60,7 +61,7 @@ export function PackageEditorPage() {
 
   async function addPhoto(kind: 'cover' | 'gallery') {
     let photo;
-    try { photo = await pickPhoto({ camera: false }); } catch (err) { toast.error((err as Error).message); return; }
+    try { photo = await pickPhotoAsking('Package photo'); } catch (err) { toast.error((err as Error).message); return; }
     if (!photo) return;
     setBusy(kind);
     try {

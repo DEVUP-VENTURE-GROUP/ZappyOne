@@ -93,3 +93,10 @@ export function weekdaysLike(hours) {
     ...hours.filter((h) => h.day === 0),
   ];
 }
+
+// A shop that has not set hours starts open every day, 9 AM to 9 PM, so nothing reads as closed until they change a day.
+export const DEFAULT_OPEN = '09:00';
+export const DEFAULT_CLOSE = '21:00';
+export function withDefaultWeek(hours) {
+  return hours?.length ? hours : DAYS.map((_, day) => ({ day, opensAt: DEFAULT_OPEN, closesAt: DEFAULT_CLOSE, isClosed: false }));
+}

@@ -1,7 +1,9 @@
 import LoginSecurityCard from '@shared/components/account/LoginSecurityCard';
+import { withDefaultWeek } from '@shared/components/provider/weeklyHoursRules';
 import { useFocusField } from '@shared/hooks/useFocusField';
 import PageSkeleton from '@shared/components/common/Skeleton';
 import LoadFailed from '@shared/components/common/LoadFailed';
+import PhotoSourceButtons from '@shared/components/common/PhotoSourceButtons';
 import { useFormDraft, DraftRestored } from '@shared/hooks/useFormDraft';
 import AutoAcceptCard from '@shared/components/provider/AutoAcceptCard';
 import { useState, useEffect } from 'react';
@@ -43,7 +45,7 @@ export default function ShopProfilePage() {
         businessName: s.businessName || '',
         category: s.category || '',
         services: s.services || [],
-        hours: s.hours || [],
+        hours: withDefaultWeek(s.hours),
         address: s.address?.text || '',
         landmark: s.address?.landmark || '',
         lat: s.address?.location?.coordinates?.[1] ?? '',
@@ -170,6 +172,7 @@ export default function ShopProfilePage() {
             )}
             <input type="file" accept="image/*" className="hidden" disabled={uploadingCover} onChange={(e) => handleCoverUpload(e.target.files?.[0])} />
           </label>
+          <PhotoSourceButtons onFile={handleCoverUpload} disabled={uploadingCover} className="mt-2" />
         </div>
 
         {/* Basic info */}
