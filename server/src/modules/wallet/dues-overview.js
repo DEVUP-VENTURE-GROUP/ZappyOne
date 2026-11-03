@@ -43,8 +43,36 @@ async function payments({ limit = 100 } = {}) {
   });
 }
 
+// Key a dues payment to its partner, the way payments() tells shops and pros apart.
+const partnerKey = { $cond: [{ $ifNull: ['$metadata.shopId', false] }, { $concat: ['shop:', { $toString: '$metadata.shopId' }] }, { $concat: ['worker:', { $toString: '$owner.id' }] }] };
+
+// Total paid and last payment per partner, for the owing list (one grouped read over dues payments).
+async function paidByPartner() {
+  const rows = await Transaction.aggregate([
+    { $match: { reason: Transaction.REASONS.DUES_PAYMENT, status: 'succeeded' } },
+    { $group: { _id: partnerKey, paidPaise: { $sum: { $abs: '$amountPaise' } }, lastPaidAt: { $max: '$createdAt' } } },
+  ]);
+  return new Map(rows.map((r) => [r._id, r]));
+}
+
+// Collected per IST month, oldest first, for the last `n` months (months with nothing show as 0).
+async function monthly(n = 6, now = new Date()) {
+  const ist = new Date(now.getTime() + 330 * 60000);
+  const start = new Date(Date.UTC(ist.getUTCFullYear(), ist.getUTCMonth() - (n - 1), 1) - 330 * 60000);
+  const rows = await Transaction.aggregate([
+    { $match: { reason: Transaction.REASONS.DUES_PAYMENT, status: 'succeeded', createdAt: { $gte: start } } },
+    { $group: { _id: { $dateToString: { format: '%Y-%m', date: '$createdAt', timezone: '+05:30' } }, paise: { $sum: { $abs: '$amountPaise' } }, count: { $sum: 1 } } },
+  ]);
+  const by = new Map(rows.map((r) => [r._id, r]));
+  return Array.from({ length: n }, (_, i) => {
+    const d = new Date(Date.UTC(ist.getUTCFullYear(), ist.getUTCMonth() - (n - 1 - i), 1));
+    const month = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
+    return { month, paise: by.get(month)?.paise || 0, count: by.get(month)?.count || 0 };
+  });
+}
+
 async function overview() {
-  const [shopRows, workerList, recent, monthAgg] = await Promise.all([
+  const [shopRows, workerList, recent, monthAgg, paid, months] = await Promise.all([
     require('../shop/shop-dues').owingShops(),
     require('../worker/worker-dues.service').listOwing(),
     payments({ limit: 100 }),
@@ -52,10 +80,28 @@ async function overview() {
       { $match: { reason: Transaction.REASONS.DUES_PAYMENT, status: 'succeeded', createdAt: { $gte: istMonthStart() } } },
       { $group: { _id: null, paise: { $sum: { $abs: '$amountPaise' } }, n: { $sum: 1 } } },
     ]),
+    paidByPartner(),
+    monthly(6),
   ]);
   const shops = shopRows || [];
   const workers = workerList.rows || [];
   const owing = [...shops.filter((s) => s.duesPaise > 0), ...workers.filter((w) => w.duesPaise > 0)];
+  const warnPaise = workerList.warnAtPaise;
+  const row = (kind, id, r, status) => {
+    const p = paid.get(`${kind}:${id}`);
+    const claims = r.claims || [];
+    return {
+      kind, id, name: r.businessName || r.name || 'Partner', phone: r.phone || '',
+      owedPaise: Math.max(0, r.duesPaise || 0), status,
+      claimsCount: claims.length, claimsPaise: claims.reduce((t, c) => t + (c.amountPaise || 0), 0),
+      paidPaise: p?.paidPaise || 0, lastPaidAt: p?.lastPaidAt || null,
+    };
+  };
+  // Everyone who owes or has a payment to confirm, most owed first: who to chase, in one list.
+  const partners = [
+    ...shops.map((s) => row('shop', s.shopId, s, s.blocked ? 'paused' : s.duesPaise >= warnPaise ? 'warned' : 'owes')),
+    ...workers.map((w) => row('worker', w.workerId, w, w.status === 'blocked' ? 'paused' : w.status === 'warning' ? 'warned' : w.duesPaise > 0 ? 'owes' : 'clear')),
+  ].filter((r) => r.owedPaise > 0 || r.claimsCount > 0).sort((a, b) => b.owedPaise - a.owedPaise);
   return {
     totals: {
       owedPaise: shops.reduce((t, s) => t + Math.max(0, s.duesPaise || 0), 0) + workers.reduce((t, w) => t + Math.max(0, w.duesPaise || 0), 0),
@@ -68,8 +114,10 @@ async function overview() {
     limits: { warnPaise: workerList.warnAtPaise, limitPaise: workerList.limitPaise },
     // Pay now goes through this gateway straight to the account linked to it; null means partners can only pay outside the app.
     onlineGateway: require('../payment/gateway').active(),
+    partners,
+    monthly: months,
     payments: recent,
   };
 }
 
-module.exports = { overview, payments, howPaid };
+module.exports = { overview, payments, howPaid, monthly };

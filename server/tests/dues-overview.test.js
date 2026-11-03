@@ -25,6 +25,16 @@ test('totals, who is paused, and each payment with who paid and how', async () =
   expect(res.body.totals.paused).toBeGreaterThanOrEqual(1);
   expect(res.body.totals.collectedThisMonthPaise).toBeGreaterThanOrEqual(30000);
   expect(res.body.payments[0]).toMatchObject({ amountPaise: 30000, how: 'Recorded by admin', reference: 'UTR123456', partner: { kind: 'shop', name: 'Kondapur Fixers' } });
+  // Who owes, most owed first, with status and what they have paid before.
+  const imran = res.body.partners.find((p) => p.name === 'Imran');
+  expect(imran).toMatchObject({ kind: 'worker', owedPaise: 250000, status: 'paused', paidPaise: 0, lastPaidAt: null });
+  expect(res.body.partners[0].owedPaise).toBeGreaterThanOrEqual(res.body.partners[res.body.partners.length - 1].owedPaise);
+  // A shop that has paid everything is not on the list.
+  expect(res.body.partners.some((p) => p.name === 'Kondapur Fixers')).toBe(false);
+  // Six months, oldest first, this month last with the payment just recorded.
+  expect(res.body.monthly).toHaveLength(6);
+  expect(res.body.monthly[5].paise).toBeGreaterThanOrEqual(30000);
+  expect(res.body.monthly[5].count).toBeGreaterThanOrEqual(1);
   // Which gateway Pay now uses, from payment/gateway, so admin knows the receiving account is the gateway's own.
   expect(res.body.onlineGateway).toBe(require('../src/modules/payment/gateway').active());
 });
