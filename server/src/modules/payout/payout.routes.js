@@ -18,7 +18,7 @@ router.post(
     upiId: Joi.string().when('method', { is: 'upi', then: Joi.required() }),
     bankAccount: Joi.string().when('method', { is: 'bank', then: Joi.required() }),
     bankIfsc: Joi.string().when('method', { is: 'bank', then: Joi.required() }),
-    accountName: Joi.string().max(100).optional(),
+    accountName: Joi.string().max(100).allow('').optional(),
   })),
   ctrl.requestPayout
 );

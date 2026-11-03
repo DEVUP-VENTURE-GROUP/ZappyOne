@@ -18,6 +18,7 @@ import { toast } from '../../components/Toast';
 import { FieldLabel, FormField } from '../../components/common/FormField';
 import { FullScreenSheet } from '../../components/common/FullScreenSheet';
 import { useOtpGate } from '../../components/common/OtpGate';
+import { bankFormErrors } from '@zappy/core/shared/bankRules';
 import { type ApiErr, errText } from '../../lib/feedback';
 import { colors, zappy, ink, slate, success, danger } from '../../theme/colors';
 import { radius } from '../../theme/radius';
@@ -33,10 +34,13 @@ function AddMethodSheet({ onClose, start = 'bank' }: { onClose: () => void; star
   const isLoading = saving || checking;
   const otp = useOtpGate();
   const set = (k: keyof typeof form, v: string) => { setForm((f) => ({ ...f, [k]: v })); if (k === 'upiId') setUpiName(null); };
-  const ready = tab === 'upi' ? form.upiId.trim() : form.accountName.trim() && form.accountNumber.trim() && form.ifsc.trim();
+  // Shown once save is tapped, then kept current as each field is fixed.
+  const [tried, setTried] = useState(false);
+  const errors = (tried ? bankFormErrors(tab, form) : {}) as Record<string, string | undefined>;
 
   async function submit() {
-    if (!ready) { toast.error('Fill in the required details'); return; }
+    setTried(true);
+    if (Object.keys(bankFormErrors(tab, form)).length) return;
     if (tab === 'upi' && upiName === null) {
       try {
         const r = await checkUpi(form.upiId.trim()).unwrap();
@@ -46,7 +50,9 @@ function AddMethodSheet({ onClose, start = 'bank' }: { onClose: () => void; star
       } catch { /* checking is a help, never a blocker: the server checks again when saving */ }
     }
     try {
-      await otp.run(() => add({ type: tab, ...form }).unwrap());
+      // Only this tab's fields: the other tab's empty ones are not part of what is saved.
+      const body = tab === 'upi' ? { type: 'upi', upiId: form.upiId.trim(), upiLabel: form.upiLabel.trim() } : { type: 'bank', label: form.label.trim(), accountName: form.accountName.trim(), accountNumber: form.accountNumber.replace(/\s/g, ''), bankName: form.bankName.trim(), ifsc: form.ifsc.trim().toUpperCase() };
+      await otp.run(() => add(body).unwrap());
       toast.success(tab === 'upi' ? 'UPI ID added' : 'Bank account added');
       onClose();
     } catch (err) { if ((err as ApiErr)?.message !== 'cancelled') toast.error(errText(err, 'Failed to add payment method')); }
@@ -65,15 +71,15 @@ function AddMethodSheet({ onClose, start = 'bank' }: { onClose: () => void; star
       </View>
       {tab === 'bank' ? (
         <>
-          <FormField label="ACCOUNT HOLDER" placeholder="Name as per bank record" value={form.accountName} onChangeText={(v) => set('accountName', v)} />
-          <FormField label="ACCOUNT NUMBER" placeholder="0000 0000 0000" keyboardType="number-pad" value={form.accountNumber} onChangeText={(v) => set('accountNumber', v.replace(/\D/g, ''))} />
-          <FormField label="IFSC CODE" placeholder="SBIN0001234" autoCapitalize="characters" maxLength={11} value={form.ifsc} onChangeText={(v) => set('ifsc', v.toUpperCase())} />
+          <FormField label="ACCOUNT HOLDER" placeholder="Name as per bank record" value={form.accountName} onChangeText={(v) => set('accountName', v)} error={errors.accountName} />
+          <FormField label="ACCOUNT NUMBER" placeholder="0000 0000 0000" keyboardType="number-pad" value={form.accountNumber} onChangeText={(v) => set('accountNumber', v.replace(/\D/g, ''))} error={errors.accountNumber} />
+          <FormField label="IFSC CODE" placeholder="SBIN0001234" autoCapitalize="characters" maxLength={11} value={form.ifsc} onChangeText={(v) => set('ifsc', v.toUpperCase())} error={errors.ifsc} />
           <FormField label="BANK NAME" placeholder="e.g. State Bank" value={form.bankName} onChangeText={(v) => set('bankName', v)} />
           <FormField label="NICKNAME (OPTIONAL)" placeholder="e.g. Main salary account" value={form.label} onChangeText={(v) => set('label', v)} />
         </>
       ) : (
         <>
-          <FormField label="UPI ID" placeholder="username@bank" autoCapitalize="none" keyboardType="email-address" value={form.upiId} onChangeText={(v) => set('upiId', v.trim())} />
+          <FormField label="UPI ID" placeholder="username@bank" autoCapitalize="none" keyboardType="email-address" value={form.upiId} onChangeText={(v) => set('upiId', v.trim())} error={errors.upiId} />
           {upiName ? (
             <View style={styles.verified}>
               <CheckCircle2 size={16} color={success[600]} />
@@ -83,7 +89,7 @@ function AddMethodSheet({ onClose, start = 'bank' }: { onClose: () => void; star
           <FormField label="NICKNAME (OPTIONAL)" placeholder="e.g. PhonePe / GPay" value={form.upiLabel} onChangeText={(v) => set('upiLabel', v)} />
         </>
       )}
-      <Button label={tab === 'upi' && upiName ? 'Yes, save this UPI ID' : tab === 'upi' ? 'Check and save' : 'Save securely'} onPress={submit} loading={isLoading} disabled={!ready} fullWidth size="large" />
+      <Button label={tab === 'upi' && upiName ? 'Yes, save this UPI ID' : tab === 'upi' ? 'Check and save' : 'Save securely'} onPress={submit} loading={isLoading} fullWidth size="large" />
       <View style={[styles.row, { justifyContent: 'center' }]}><ShieldCheck size={12} color={success[500]} /><Text variant="caption" color={ink[400]}>Information is securely encrypted</Text></View>
     </FullScreenSheet>
   );

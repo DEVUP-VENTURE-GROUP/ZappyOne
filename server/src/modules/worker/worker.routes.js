@@ -167,12 +167,13 @@ router.post(
   validate(Joi.object({
     type: Joi.string().valid('bank', 'upi').required(),
     label: Joi.string().max(80).allow('', null),
-    accountName: Joi.string().max(100).when('type', { is: 'bank', then: Joi.required() }),
-    accountNumber: Joi.string().max(20).when('type', { is: 'bank', then: Joi.required() }),
-    bankName: Joi.string().max(80).allow('', null),
-    ifsc: Joi.string().length(11).when('type', { is: 'bank', then: Joi.required() }),
-    upiId: Joi.string().max(100).when('type', { is: 'upi', then: Joi.required() }),
-    upiLabel: Joi.string().max(60).allow('', null),
+    // Each type's own fields are required; the other type's are ignored, even when sent empty (the form sends both tabs).
+    accountName: Joi.when('type', { is: 'bank', then: Joi.string().trim().max(100).required(), otherwise: Joi.any().strip() }),
+    accountNumber: Joi.when('type', { is: 'bank', then: Joi.string().trim().pattern(/^\d{6,18}$/).required(), otherwise: Joi.any().strip() }),
+    bankName: Joi.when('type', { is: 'bank', then: Joi.string().trim().max(80).allow('', null), otherwise: Joi.any().strip() }),
+    ifsc: Joi.when('type', { is: 'bank', then: Joi.string().trim().uppercase().pattern(/^[A-Z]{4}0[A-Z0-9]{6}$/).required(), otherwise: Joi.any().strip() }),
+    upiId: Joi.when('type', { is: 'upi', then: Joi.string().trim().max(100).required(), otherwise: Joi.any().strip() }),
+    upiLabel: Joi.when('type', { is: 'upi', then: Joi.string().trim().max(60).allow('', null), otherwise: Joi.any().strip() }),
   })),
   ctrl.addBankAccount
 );

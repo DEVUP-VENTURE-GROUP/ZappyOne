@@ -8,6 +8,7 @@ import {
   useDeleteWorkerBankAccountMutation, useSetDefaultWorkerBankAccountMutation,
 } from '../../services/api';
 import { useOtpGate } from '../../components/common/OtpGate';
+import { bankFormErrors } from '../bankRules';
 
 function AddSheet({ onClose, start = 'bank' }) {
   const [tab, setTab] = useState(start);
@@ -19,10 +20,15 @@ function AddSheet({ onClose, start = 'bank' }) {
   const isLoading = saving || checking;
   // Bank details need a fresh OTP; asked for here when the server wants it.
   const otp = useOtpGate();
+  // Shown once save is tapped, then kept current as each field is fixed.
+  const [tried, setTried] = useState(false);
+  const errors = tried ? bankFormErrors(tab, form) : {};
   function set(k, v) { setForm(f => ({ ...f, [k]: v })); if (k === 'upiId') setUpiName(null); }
 
   async function submit(e) {
     e.preventDefault();
+    setTried(true);
+    if (Object.keys(bankFormErrors(tab, form)).length) return;
     if (tab === 'upi' && upiName === null) {
       try {
         const r = await checkUpi(form.upiId.trim()).unwrap();
@@ -32,7 +38,9 @@ function AddSheet({ onClose, start = 'bank' }) {
       } catch { /* checking is a help, never a blocker: the server checks again when saving */ }
     }
     try {
-      await otp.run(() => add({ type: tab, ...form }).unwrap());
+      // Only this tab's fields: the other tab's empty ones are not part of what is saved.
+      const body = tab === 'upi' ? { type: 'upi', upiId: form.upiId.trim(), upiLabel: form.upiLabel.trim() } : { type: 'bank', label: form.label.trim(), accountName: form.accountName.trim(), accountNumber: form.accountNumber.replace(/\s/g, ''), bankName: form.bankName.trim(), ifsc: form.ifsc.trim().toUpperCase() };
+      await otp.run(() => add(body).unwrap());
       toast.success(tab === 'upi' ? 'UPI ID added successfully!' : 'Bank account added successfully!');
       onClose();
     } catch (err) { if (err?.message !== 'cancelled') toast.error(err?.data?.error || 'Failed to add payment method'); }
@@ -71,16 +79,19 @@ function AddSheet({ onClose, start = 'bank' }) {
               <motion.div key="bank" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} className="space-y-4">
                 <div>
                   <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 pl-1">Account Holder</label>
-                  <input className="input-field" placeholder="Name as per bank record" value={form.accountName} onChange={e => set('accountName', e.target.value)} required />
+                  <input aria-invalid={!!errors.accountName} aria-describedby={errors.accountName ? 'err-accountName' : undefined} className="input-field" placeholder="Name as per bank record" value={form.accountName} onChange={e => set('accountName', e.target.value)} />
+                  {errors.accountName && <p id="err-accountName" className="mt-1 pl-1 text-[12px] font-semibold text-red-600">{errors.accountName}</p>}
                 </div>
                 <div>
                   <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 pl-1">Account Number</label>
-                  <input className="input-field font-mono" placeholder="0000 0000 0000" value={form.accountNumber} onChange={e => set('accountNumber', e.target.value)} required />
+                  <input inputMode="numeric" aria-invalid={!!errors.accountNumber} aria-describedby={errors.accountNumber ? 'err-accountNumber' : undefined} className="input-field font-mono" placeholder="0000 0000 0000" value={form.accountNumber} onChange={e => set('accountNumber', e.target.value)} />
+                  {errors.accountNumber && <p id="err-accountNumber" className="mt-1 pl-1 text-[12px] font-semibold text-red-600">{errors.accountNumber}</p>}
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 pl-1">IFSC Code</label>
-                    <input className="input-field font-mono uppercase" placeholder="SBIN0001234" value={form.ifsc} onChange={e => set('ifsc', e.target.value.toUpperCase())} maxLength={11} required />
+                    <input aria-invalid={!!errors.ifsc} aria-describedby={errors.ifsc ? 'err-ifsc' : undefined} className="input-field font-mono uppercase" placeholder="SBIN0001234" value={form.ifsc} onChange={e => set('ifsc', e.target.value.toUpperCase())} maxLength={11} />
+                  {errors.ifsc && <p id="err-ifsc" className="mt-1 pl-1 text-[12px] font-semibold text-red-600">{errors.ifsc}</p>}
                   </div>
                   <div>
                     <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 pl-1">Bank Name</label>
@@ -96,7 +107,8 @@ function AddSheet({ onClose, start = 'bank' }) {
               <motion.div key="upi" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} className="space-y-4">
                 <div>
                   <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 pl-1">UPI ID</label>
-                  <input className="input-field font-mono" placeholder="username@bank" value={form.upiId} onChange={e => set('upiId', e.target.value)} required />
+                  <input aria-invalid={!!errors.upiId} aria-describedby={errors.upiId ? 'err-upiId' : undefined} className="input-field font-mono" placeholder="username@bank" value={form.upiId} onChange={e => set('upiId', e.target.value)} />
+                  {errors.upiId && <p id="err-upiId" className="mt-1 pl-1 text-[12px] font-semibold text-red-600">{errors.upiId}</p>}
                 </div>
                 {upiName && (
                   <p className="flex items-start gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-3.5 py-3 text-[13px] text-emerald-900">
