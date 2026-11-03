@@ -51,3 +51,11 @@ test('two staff with no location yet still take turns: fewest jobs, then longest
   expect(ids(fairOrder([c('had2', null, 2, 0, st), c('had1', null, 1, 0, st)]))).toEqual(['had1', 'had2']);
   expect(ids(fairOrder([c('justDid', null, 1, Date.now(), st), c('idle', null, 1, Date.now() - 600000, st)]))).toEqual(['idle', 'justDid']);
 });
+
+test('inside the promise, a pro who answers rings goes before one who ignores them; new pros are not judged yet', () => {
+  const { fairOrder, statsOf } = require('../src/modules/jobs/fairness');
+  const ignores = { kind: 'worker', id: 'ignores', km: 1, stats: statsOf({ penalties: { totalOffers: 20, totalRejects: 16 } }) };
+  const answers = { kind: 'worker', id: 'answers', km: 1.5, stats: statsOf({ penalties: { totalOffers: 20, totalRejects: 4 }, dispatchStats: { day: null, jobs: 0 } }) };
+  const fresh = { kind: 'worker', id: 'fresh', km: 2, stats: statsOf({ penalties: { totalOffers: 3, totalRejects: 3 } }) };
+  expect(fairOrder([ignores, answers, fresh]).map((c) => c.id)).toEqual(['answers', 'fresh', 'ignores']);
+});

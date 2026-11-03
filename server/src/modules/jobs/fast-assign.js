@@ -70,8 +70,8 @@ async function autoAcceptCandidates(kind, doc, radiusKm, { anyone = false } = {}
   // ZappyOne's own staff on duty take jobs first, with or without the switch (workforce/).
   const onDuty = [...await require('../workforce/staff').onDutyIds(now)].filter((id) => workerIds.includes(id));
   const [workers, shops] = await Promise.all([
-    Worker.find({ _id: { $in: workerIds }, isBlocked: { $ne: true }, ...(anyone ? { shopId: null } : { $or: [notPaused, { _id: { $in: onDuty } }] }) }).select('currentLocation autoAccept employment dispatchStats').lean(),
-    anyone ? [] : Shop.find({ _id: { $in: shopIds }, ...notPaused }).select(`${require('../shop/shop.service').LIVE_FIELDS} autoAccept dispatchStats`).lean(),
+    Worker.find({ _id: { $in: workerIds }, isBlocked: { $ne: true }, ...(anyone ? { shopId: null } : { $or: [notPaused, { _id: { $in: onDuty } }] }) }).select(`currentLocation autoAccept employment ${require('./fairness').STATS_FIELDS}`).lean(),
+    anyone ? [] : Shop.find({ _id: { $in: shopIds }, ...notPaused }).select(`${require('../shop/shop.service').LIVE_FIELDS} autoAccept ${require('./fairness').STATS_FIELDS}`).lean(),
   ]);
   const live = await require('../worker/presence').liveIds(workers.map((w) => w._id));
   const fullShops = await require('../shop/partner.service').atCapacity(shops.map((s) => s._id));
