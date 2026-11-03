@@ -108,7 +108,11 @@ const codeAttemptLimiter = (prefix) => makeLimiter({
   keyGenerator: (req) => `${req.auth?.sub || req.ip}:${req.params.id || ''}`,
 });
 
+// Checking a UPI ID asks Razorpay: a few per account per minute is plenty for typing one in.
+const upiCheckLimiter = makeLimiter({ windowMs: 60_000, max: 10, prefix: 'upichk', keyGenerator: (req) => `${req.auth?.sub || req.ip}` });
+
 module.exports = {
+  upiCheckLimiter,
   globalLimiter, authLimiter, refreshLimiter, adminAuthLimiter, otpPhoneLimiter, orderLimiter, workerOnlineLimiter,
   cancelLimiter, topupLimiter, ratingLimiter,
   quoteLimiter, nearbyLimiter, disputeLimiter, telemetryLimiter, lensLimiter,

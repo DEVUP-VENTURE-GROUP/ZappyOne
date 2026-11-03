@@ -3,7 +3,7 @@ const Joi = require('joi');
 const ctrl = require('./controllers');
 const { authenticate, optionalAuth, requireRole, requireRecentOtp } = require('../../middlewares/auth');
 const { validate } = require('../../middlewares/validate');
-const { nearbyLimiter, workerOnlineLimiter, storefrontLimiter } = require('../../middlewares/rateLimit');
+const { nearbyLimiter, workerOnlineLimiter, storefrontLimiter, upiCheckLimiter } = require('../../middlewares/rateLimit');
 
 const router = express.Router();
 
@@ -175,6 +175,15 @@ router.post(
     upiLabel: Joi.string().max(60).allow('', null),
   })),
   ctrl.addBankAccount
+);
+// Before saving: is this UPI ID real, and whose name is it under (shown to confirm). No code needed, nothing is saved.
+router.post(
+  '/bank-accounts/upi/check',
+  authenticate,
+  requireRole('worker', 'shop'),
+  upiCheckLimiter,
+  validate(Joi.object({ upiId: Joi.string().trim().max(100).required() })),
+  async (req, res, next) => { try { res.json(await require('../payment/upi-check').checkUpi(req.body.upiId)); } catch (err) { next(err); } },
 );
 router.delete('/bank-accounts/:type/:id', authenticate, requireRole('worker', 'shop'), ctrl.deleteBankAccount);
 router.patch('/bank-accounts/:type/:id/default', authenticate, requireRole('worker', 'shop'), ctrl.setDefaultBankAccount);

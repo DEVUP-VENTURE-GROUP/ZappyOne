@@ -3,11 +3,11 @@ import { StyleSheet, View } from 'react-native';
 import { Landmark, Smartphone } from 'lucide-react-native';
 import { Button, Text } from '../../components';
 import { openLink } from '../../lib/openLink';
-import { colors, ink, zappy } from '../../theme/colors';
+import { colors, ink, success, zappy } from '../../theme/colors';
 import { radius } from '../../theme/radius';
 import { spacing } from '../../theme/spacing';
 
-export interface PayTo { upiId: string | null; accountName: string; bankName: string | null; accountNumber: string | null; ifsc: string | null }
+export interface PayTo { upiId: string | null; upiName?: string | null; accountName: string; bankName: string | null; accountNumber: string | null; ifsc: string | null }
 
 export function ZappyPayTo({ payTo, amountPaise = 0 }: { payTo?: PayTo | null; amountPaise?: number }) {
   if (!payTo) return null;
@@ -22,6 +22,7 @@ export function ZappyPayTo({ payTo, amountPaise = 0 }: { payTo?: PayTo | null; a
           <Button label="Open UPI app" size="small" onPress={() => openLink(`upi://pay?${q}`, 'No UPI app on this phone. Copy the UPI ID instead.')} />
         </View>
       ) : null}
+      {payTo.upiId && payTo.upiName ? <Text variant="caption" weight="semibold" color={success[700]}>Verified: goes to {payTo.upiName}</Text> : null}
       {payTo.accountNumber ? (
         <View style={styles.row}>
           <Landmark size={15} color={zappy[600]} />

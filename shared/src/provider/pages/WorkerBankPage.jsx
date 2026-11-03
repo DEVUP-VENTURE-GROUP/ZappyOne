@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Plus, Trash2, Star, Building2, Smartphone, X, Check, Loader2, AlertCircle, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import {
-  useGetWorkerBankAccountsQuery, useAddWorkerBankAccountMutation,
+  useGetWorkerBankAccountsQuery, useAddWorkerBankAccountMutation, useCheckUpiIdMutation,
   useDeleteWorkerBankAccountMutation, useSetDefaultWorkerBankAccountMutation,
 } from '../../services/api';
 import { useOtpGate } from '../../components/common/OtpGate';
@@ -12,13 +12,25 @@ import { useOtpGate } from '../../components/common/OtpGate';
 function AddSheet({ onClose, start = 'bank' }) {
   const [tab, setTab] = useState(start);
   const [form, setForm] = useState({ label: '', accountName: '', accountNumber: '', bankName: '', ifsc: '', upiId: '', upiLabel: '' });
-  const [add, { isLoading }] = useAddWorkerBankAccountMutation();
+  const [add, { isLoading: saving }] = useAddWorkerBankAccountMutation();
+  const [checkUpi, { isLoading: checking }] = useCheckUpiIdMutation();
+  // The name a UPI ID is under, shown to confirm before saving (null until checked).
+  const [upiName, setUpiName] = useState(null);
+  const isLoading = saving || checking;
   // Bank details need a fresh OTP; asked for here when the server wants it.
   const otp = useOtpGate();
-  function set(k, v) { setForm(f => ({ ...f, [k]: v })); }
+  function set(k, v) { setForm(f => ({ ...f, [k]: v })); if (k === 'upiId') setUpiName(null); }
 
   async function submit(e) {
     e.preventDefault();
+    if (tab === 'upi' && upiName === null) {
+      try {
+        const r = await checkUpi(form.upiId.trim()).unwrap();
+        if (r.status === 'invalid') { toast.error('This UPI ID does not exist. Check it in your UPI app.'); return; }
+        // Verified: show whose it is and wait for "Yes, save". Could not check: save as it is.
+        if (r.status === 'verified' && r.name) { setUpiName(r.name); return; }
+      } catch { /* checking is a help, never a blocker: the server checks again when saving */ }
+    }
     try {
       await otp.run(() => add({ type: tab, ...form }).unwrap());
       toast.success(tab === 'upi' ? 'UPI ID added successfully!' : 'Bank account added successfully!');
@@ -86,6 +98,12 @@ function AddSheet({ onClose, start = 'bank' }) {
                   <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 pl-1">UPI ID</label>
                   <input className="input-field font-mono" placeholder="username@bank" value={form.upiId} onChange={e => set('upiId', e.target.value)} required />
                 </div>
+                {upiName && (
+                  <p className="flex items-start gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-3.5 py-3 text-[13px] text-emerald-900">
+                    <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-emerald-600" />
+                    <span>Payments to this UPI ID go to <b>{upiName}</b>. Is this you?</span>
+                  </p>
+                )}
                 <div>
                   <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 pl-1">Nickname (Optional)</label>
                   <input className="input-field" placeholder="e.g. PhonePe / GPay" value={form.upiLabel} onChange={e => set('upiLabel', e.target.value)} />
@@ -98,7 +116,7 @@ function AddSheet({ onClose, start = 'bank' }) {
             <button type="submit" disabled={isLoading}
               className="w-full py-4 rounded-[1.25rem] bg-zappy-600 hover:bg-zappy-700 text-white font-black text-[15px] flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg shadow-zappy-600/20 transition-all active:scale-[0.98]">
               {isLoading ? <Loader2 size={18} className="animate-spin" /> : <Check size={18} strokeWidth={2.5} />}
-              Save Securely
+              {tab === 'upi' && upiName ? 'Yes, save this UPI ID' : tab === 'upi' ? 'Check and save' : 'Save Securely'}
             </button>
             <p className="text-[10px] text-center text-slate-400 font-medium mt-3 flex items-center justify-center gap-1">
               <ShieldCheck size={12} className="text-emerald-500" /> Information is securely encrypted
@@ -255,6 +273,7 @@ export default function WorkerBankPage() {
                           </div>
                           <div>
                             <p className="font-black text-slate-800 text-[15px]">{u.upiId}</p>
+                            {u.verifiedName && <p className="mt-0.5 flex items-center gap-1 text-[12px] font-semibold text-emerald-700"><CheckCircle2 size={12} /> Verified: {u.verifiedName}</p>}
                             <div className="flex items-center gap-2 mt-1">
                               <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded uppercase tracking-wider">{u.label || 'Saved'}</span>
                               {u.isDefault && <span className="text-[10px] font-bold text-zappy-600 flex items-center gap-0.5"><CheckCircle2 size={10} /> Default</span>}

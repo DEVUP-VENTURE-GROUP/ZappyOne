@@ -29,7 +29,7 @@ async function limits() {
     payInstructions: cfg.duesPayInstructions || '',
     // ZappyOne's own account, only the parts admin has set (null when none is).
     payTo: (cfg.zappyPayUpiId || cfg.zappyPayAccountNumber) ? {
-      upiId: cfg.zappyPayUpiId || null, accountName: cfg.zappyPayAccountName || 'ZappyOne', bankName: cfg.zappyPayBankName || null,
+      upiId: cfg.zappyPayUpiId || null, upiName: cfg.zappyPayUpiName || null, accountName: cfg.zappyPayAccountName || 'ZappyOne', bankName: cfg.zappyPayBankName || null,
       accountNumber: cfg.zappyPayAccountNumber || null, ifsc: cfg.zappyPayIfsc || null,
     } : null,
   };

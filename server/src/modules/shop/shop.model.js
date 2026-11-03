@@ -39,6 +39,9 @@ const shopSchema = new mongoose.Schema(
       label:     { type: String, maxlength: 60 },
       isDefault: { type: Boolean, default: false },
       addedAt:   { type: Date, default: Date.now },
+      // From payment/upi-check when saved: the name the UPI ID is under, or empty when it could not be checked.
+      verifiedName: { type: String, maxlength: 100, default: '' },
+      verifiedAt:   { type: Date, default: null },
     }],
 
     // What this shop offers — service codes from the SAME catalog customers

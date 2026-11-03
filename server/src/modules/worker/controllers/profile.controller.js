@@ -205,7 +205,11 @@ async function addBankAccount(req, res, next) {
       const exists = (worker.savedUpiIds || []).some(u => u.upiId === upiId);
       if (exists) return res.status(409).json({ error: 'This UPI ID is already saved' });
 
-      await ownerModel(req).updateOne({ _id: req.auth.sub }, { $push: { savedUpiIds: { upiId, label: upiLabel || upiId, isDefault: false } } });
+      // Checked again here, whatever the page showed: a UPI ID that does not exist is never saved.
+      const check = await require('../../payment/upi-check').checkUpi(upiId);
+      if (check.status === 'invalid') return res.status(400).json({ error: 'This UPI ID does not exist. Check it in your UPI app and try again.', code: 'UPI_NOT_FOUND' });
+      const verified = check.status === 'verified' ? { verifiedName: check.name, verifiedAt: new Date() } : {};
+      await ownerModel(req).updateOne({ _id: req.auth.sub }, { $push: { savedUpiIds: { upiId: upiId.trim(), label: upiLabel || upiId, isDefault: false, ...verified } } });
     } else {
       if ((worker.savedBankAccounts || []).length >= MAX_ACCOUNTS) {
         return res.status(400).json({ error: `Maximum ${MAX_ACCOUNTS} bank accounts allowed. Delete one first.` });

@@ -9,6 +9,7 @@ import { AlertCircle, Building2, CheckCircle2, Plus, ShieldCheck, Smartphone, St
 import {
   useGetWorkerBankAccountsQuery,
   useAddWorkerBankAccountMutation,
+  useCheckUpiIdMutation,
   useDeleteWorkerBankAccountMutation,
   useSetDefaultWorkerBankAccountMutation,
 } from '@zappy/core/api';
@@ -25,13 +26,25 @@ import { spacing } from '../../theme/spacing';
 function AddMethodSheet({ onClose, start = 'bank' }: { onClose: () => void; start?: 'bank' | 'upi' }) {
   const [tab, setTab] = useState<'bank' | 'upi'>(start);
   const [form, setForm] = useState({ label: '', accountName: '', accountNumber: '', bankName: '', ifsc: '', upiId: '', upiLabel: '' });
-  const [add, { isLoading }] = useAddWorkerBankAccountMutation();
+  const [add, { isLoading: saving }] = useAddWorkerBankAccountMutation();
+  const [checkUpi, { isLoading: checking }] = useCheckUpiIdMutation();
+  // The name a UPI ID is under, shown to confirm before saving (null until checked).
+  const [upiName, setUpiName] = useState<string | null>(null);
+  const isLoading = saving || checking;
   const otp = useOtpGate();
-  const set = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v }));
+  const set = (k: keyof typeof form, v: string) => { setForm((f) => ({ ...f, [k]: v })); if (k === 'upiId') setUpiName(null); };
   const ready = tab === 'upi' ? form.upiId.trim() : form.accountName.trim() && form.accountNumber.trim() && form.ifsc.trim();
 
   async function submit() {
     if (!ready) { toast.error('Fill in the required details'); return; }
+    if (tab === 'upi' && upiName === null) {
+      try {
+        const r = await checkUpi(form.upiId.trim()).unwrap();
+        if (r.status === 'invalid') { toast.error('This UPI ID does not exist. Check it in your UPI app.'); return; }
+        // Verified: show whose it is and wait for "Yes, save". Could not check: save as it is.
+        if (r.status === 'verified' && r.name) { setUpiName(r.name); return; }
+      } catch { /* checking is a help, never a blocker: the server checks again when saving */ }
+    }
     try {
       await otp.run(() => add({ type: tab, ...form }).unwrap());
       toast.success(tab === 'upi' ? 'UPI ID added' : 'Bank account added');
@@ -61,10 +74,16 @@ function AddMethodSheet({ onClose, start = 'bank' }: { onClose: () => void; star
       ) : (
         <>
           <FormField label="UPI ID" placeholder="username@bank" autoCapitalize="none" keyboardType="email-address" value={form.upiId} onChangeText={(v) => set('upiId', v.trim())} />
+          {upiName ? (
+            <View style={styles.verified}>
+              <CheckCircle2 size={16} color={success[600]} />
+              <Text variant="bodySmall" color={success[700]} style={styles.flex}>Payments to this UPI ID go to <Text variant="bodySmall" weight="bold" color={success[700]}>{upiName}</Text>. Is this you?</Text>
+            </View>
+          ) : null}
           <FormField label="NICKNAME (OPTIONAL)" placeholder="e.g. PhonePe / GPay" value={form.upiLabel} onChangeText={(v) => set('upiLabel', v)} />
         </>
       )}
-      <Button label="Save securely" onPress={submit} loading={isLoading} disabled={!ready} fullWidth size="large" />
+      <Button label={tab === 'upi' && upiName ? 'Yes, save this UPI ID' : tab === 'upi' ? 'Check and save' : 'Save securely'} onPress={submit} loading={isLoading} disabled={!ready} fullWidth size="large" />
       <View style={[styles.row, { justifyContent: 'center' }]}><ShieldCheck size={12} color={success[500]} /><Text variant="caption" color={ink[400]}>Information is securely encrypted</Text></View>
     </FullScreenSheet>
   );
@@ -72,7 +91,7 @@ function AddMethodSheet({ onClose, start = 'bank' }: { onClose: () => void; star
 
 export type Bank = { _id: string; bankName?: string; accountName: string; accountNumber: string; ifsc: string; label?: string; isDefault?: boolean };
 
-export type Upi = { _id: string; upiId: string; label?: string; isDefault?: boolean };
+export type Upi = { _id: string; upiId: string; label?: string; isDefault?: boolean; verifiedName?: string };
 
 export function WorkerBankPage() {
   const { data, isLoading } = useGetWorkerBankAccountsQuery();
@@ -134,6 +153,7 @@ export function WorkerBankPage() {
               <View style={[styles.iconBox]}><Smartphone size={20} color={zappy[500]} /></View>
               <View style={styles.flex}>
                 <Text variant="body" weight="black">{u.upiId}</Text>
+                {u.verifiedName ? <View style={styles.row}><CheckCircle2 size={12} color={success[600]} /><Text variant="caption" weight="semibold" color={success[700]}>Verified: {u.verifiedName}</Text></View> : null}
                 <View style={styles.row}>
                   <View style={styles.tag}><Text variant="caption" weight="bold" color={ink[500]}>{u.label || 'Saved'}</Text></View>
                   {u.isDefault ? <Text variant="caption" weight="bold" color={zappy[600]}>Default</Text> : null}
@@ -167,6 +187,7 @@ const styles = StyleSheet.create({
   sunken: { backgroundColor: slate[50], borderRadius: radius.medium, padding: spacing.md, borderWidth: 1, borderColor: slate[100] },
   tag: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: slate[100], borderRadius: radius.pill, paddingHorizontal: 8, paddingVertical: 2, alignSelf: 'flex-start' },
   iconBtn: { width: 32, height: 32, borderRadius: radius.button, alignItems: 'center', justifyContent: 'center', backgroundColor: slate[100] },
+  verified: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, padding: 12, borderRadius: radius.large, borderWidth: 1, borderColor: success[100], backgroundColor: success[50] },
   iconBox: { width: 40, height: 40, borderRadius: radius.button, alignItems: 'center', justifyContent: 'center', backgroundColor: slate[100] },
   segment: { flexDirection: 'row', gap: 6, backgroundColor: slate[100], borderRadius: radius.large, padding: 6 },
   segmentBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, minHeight: 44, borderRadius: radius.medium },

@@ -94,8 +94,15 @@ async function updateCancellationConfig(req, res, next) {
   try {
     const cancellationService = require('../../order/cancellation.service');
     const before = await cancellationService.getConfig();
+    const body = { ...req.body };
+    // ZappyOne's UPI ID gets the same check as a partner's (payment/upi-check); its verified name is kept beside it.
+    if (body.zappyPayUpiId !== undefined && body.zappyPayUpiId !== before.zappyPayUpiId) {
+      const check = body.zappyPayUpiId ? await require('../../payment/upi-check').checkUpi(body.zappyPayUpiId) : { status: 'unchecked' };
+      if (check.status === 'invalid') return res.status(400).json({ error: 'This UPI ID does not exist. Check it in your UPI app and try again.', code: 'UPI_NOT_FOUND' });
+      body.zappyPayUpiName = check.status === 'verified' ? check.name : '';
+    }
     const updated = await cancellationService.updateConfig(
-      req.body,
+      body,
       req.auth.sub,
     );
     await auditService.fromRequest(

@@ -31,6 +31,8 @@ const cancellationConfigSchema = new mongoose.Schema(
     duesPayInstructions:  { type: String, default: '', maxlength: 300 },
     // Where partners pay ZappyOne (dues, subscriptions): shown on their cards with a UPI button; admin sets it in Economics → Dues.
     zappyPayUpiId:        { type: String, default: '', maxlength: 100 },
+    // Set by the server from payment/upi-check when the UPI ID is saved; empty when it could not be checked.
+    zappyPayUpiName:      { type: String, default: '', maxlength: 100 },
     zappyPayAccountName:  { type: String, default: '', maxlength: 120 },
     zappyPayBankName:     { type: String, default: '', maxlength: 120 },
     zappyPayAccountNumber: { type: String, default: '', maxlength: 20 },

@@ -71,4 +71,7 @@ function verifyWebhookSignature(rawBody, signature) {
   return safeEqual(expected, signature);
 }
 
-module.exports = { createOrder, createPaymentLink, getPaymentLink, getOrderPayments, getPayment, capture, createRefund, verifyCheckoutSignature, verifyWebhookSignature };
+// Whether a UPI ID exists and whose name it is under: { vpa, success, customer_name }.
+const validateVpa = (vpa) => rzRequest('POST', '/payments/validate/vpa', { vpa });
+
+module.exports = { createOrder, createPaymentLink, getPaymentLink, getOrderPayments, getPayment, capture, createRefund, verifyCheckoutSignature, verifyWebhookSignature, validateVpa };

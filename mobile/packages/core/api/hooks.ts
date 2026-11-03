@@ -248,6 +248,7 @@ export const useAdminReinstateEventPartnerMutation = h.useAdminReinstateEventPar
 export const useEventDeclineQuoteQuery = h.useEventDeclineQuoteQuery;
 export const useRequestActionOtpMutation = h.useRequestActionOtpMutation;
 export const useVerifyActionOtpMutation = h.useVerifyActionOtpMutation;
+export const useCheckUpiIdMutation = h.useCheckUpiIdMutation;
 export const useShopPayoutsQuery = h.useShopPayoutsQuery;
 export const useRequestShopPayoutMutation = h.useRequestShopPayoutMutation;
 export const useAdminShopPayoutsQuery = h.useAdminShopPayoutsQuery;

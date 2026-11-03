@@ -29,6 +29,7 @@ const DEFAULTS = {
   workerDuesLimitPaise:       200000,
   duesPayInstructions:        '',
   zappyPayUpiId:              '',
+  zappyPayUpiName:            '',
   zappyPayAccountName:        '',
   zappyPayBankName:           '',
   zappyPayAccountNumber:      '',

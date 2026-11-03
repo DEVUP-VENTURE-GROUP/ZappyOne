@@ -15,6 +15,7 @@ export default function ZappyPayTo({ payTo, amountPaise = 0 }) {
           <span className="font-mono font-semibold text-slate-800">{payTo.upiId}</span>
           <button type="button" onClick={() => copy(payTo.upiId)} className="inline-flex items-center gap-1 text-[12px] font-semibold text-zappy-700"><Copy size={12} /> Copy</button>
           <a href={upiLink} className="ml-auto rounded-lg bg-zappy-600 px-3 py-1.5 text-[12.5px] font-semibold text-white">Open UPI app</a>
+          {payTo.upiName && <span className="basis-full text-[12px] font-semibold text-green-700">Verified: goes to {payTo.upiName}</span>}
         </div>
       )}
       {payTo.accountNumber && (

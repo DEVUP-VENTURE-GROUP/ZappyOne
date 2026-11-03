@@ -1108,6 +1108,8 @@ export function endpoints(b, { adminApiPath }) {
       query: () => '/workers/bank-accounts',
       providesTags: ['Worker'],
     }),
+    // Is a UPI ID real and whose is it (payment/upi-check), before it is saved.
+    checkUpiId: b.mutation({ query: (upiId) => ({ url: '/workers/bank-accounts/upi/check', method: 'POST', body: { upiId } }) }),
     addWorkerBankAccount: b.mutation({
       query: (body) => ({ url: '/workers/bank-accounts', method: 'POST', body }),
       invalidatesTags: ['Worker'],

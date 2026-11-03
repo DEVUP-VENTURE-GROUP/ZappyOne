@@ -77,6 +77,11 @@ function Limits() {
             <label key={key} className="text-[12px] font-semibold text-slate-600">{label}
               <input value={f.form[key]} onChange={(e) => f.set(key)(e.target.value)} placeholder={ph} maxLength={max}
                 className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-normal text-slate-800 outline-none focus:ring-2 focus:ring-blue-500" />
+              {key === 'zappyPayUpiId' && f.cfg?.zappyPayUpiId && f.form.zappyPayUpiId === f.cfg.zappyPayUpiId && (
+                <span className={`mt-1 block text-[11.5px] font-semibold ${f.cfg.zappyPayUpiName ? 'text-green-700' : 'text-slate-500'}`}>
+                  {f.cfg.zappyPayUpiName ? `Verified with Razorpay: ${f.cfg.zappyPayUpiName}` : 'Saved, not checked with Razorpay'}
+                </span>
+              )}
             </label>
           ))}
         </div>
