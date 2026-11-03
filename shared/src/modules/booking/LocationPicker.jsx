@@ -193,7 +193,8 @@ function gradeAccuracy(metres) {
   };
 }
 
-export default function LocationPicker({ onConfirm, onCancel, serviceLabel, service }) {
+// `initial` ({ lat, lng }): open on a pin already saved (a shop's area) instead of the phone's position.
+export default function LocationPicker({ onConfirm, onCancel, serviceLabel, service, initial = null }) {
   const tr = useT();
   const { getCurrent } = useGeolocation();
   const { isLoaded: gmapsLoaded } = useGoogleMaps();
@@ -252,7 +253,7 @@ export default function LocationPicker({ onConfirm, onCancel, serviceLabel, serv
     return () => ro.disconnect();
   }, []);
   const mapRef        = useRef(null);
-  const stateRef      = useRef({ pendingCenter: null, ready: false, userLocMarker: null });
+  const stateRef      = useRef({ pendingCenter: initial?.lat != null ? [initial.lng, initial.lat] : null, ready: false, userLocMarker: null });
   const workerMarkers = useRef([]);   // { key, marker, el, at }[]
   const nearbyLocRef  = useRef(null);
   const revTimer      = useRef(null);
@@ -310,7 +311,7 @@ export default function LocationPicker({ onConfirm, onCancel, serviceLabel, serv
         setGpsAccuracy(loc.accuracy);
         setGeoState('done');
         dispatch(setReduxLocation({ lat: loc.lat, lng: loc.lng, accuracy: loc.accuracy }));
-        _flyTo(loc); // recenter the always-mounted map on the fresh fix
+        if (initial?.lat == null) _flyTo(loc); // recenter the always-mounted map on the fresh fix, unless it opened on a saved pin
       })
       .catch(() => {
         setGeoState(detectedLoc ? 'done' : 'error');

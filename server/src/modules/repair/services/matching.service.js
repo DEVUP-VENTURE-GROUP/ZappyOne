@@ -91,10 +91,11 @@ async function candidateAreas({ lat, lng, pincode = null, extra = {} }) {
   }).lean();
 }
 
-async function findServiceableProviders({ lat, lng, pincode = null, cityCode = null, serviceMode }) {
+// The pin and radius decide who covers a point, as coverage.service does; an area's city name is a label and never excludes a provider minutes away across a city line.
+async function findServiceableProviders({ lat, lng, pincode = null, serviceMode }) {
   const areas = await candidateAreas({
     lat, lng, pincode,
-    extra: { serviceModes: serviceMode, ...(cityCode ? { cityCode } : {}) },
+    extra: { serviceModes: serviceMode },
   });
 
   const out = [];

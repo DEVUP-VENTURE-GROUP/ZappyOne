@@ -132,7 +132,7 @@ async function removeCapability(req, res, next) {
 
 async function listServiceAreas(req, res, next) {
   try {
-    const areas = await ProviderServiceArea.find(ownerFilter(req)).lean();
+    const areas = await ProviderServiceArea.find(ownerFilter(req)).sort({ createdAt: 1 }).lean();
     res.json({ areas });
   } catch (err) { next(err); }
 }
@@ -153,7 +153,10 @@ async function upsertServiceArea(req, res, next) {
     }
 
     const owner = ownerOf(req);
-    const filter = owner.shopId ? { shopId: owner.shopId, cityCode } : { workerId: owner.workerId, cityCode };
+    // One area per provider, the one the screen edits: a new city name moves it instead of leaving the old one behind.
+    const mine = owner.shopId ? { shopId: owner.shopId } : { workerId: owner.workerId };
+    const current = await ProviderServiceArea.findOne(mine).sort({ createdAt: 1 }).select('_id').lean();
+    const filter = current ? { _id: current._id } : { ...mine, cityCode };
 
     /**
      * A half-written GeoJSON point breaks the 2dsphere index.

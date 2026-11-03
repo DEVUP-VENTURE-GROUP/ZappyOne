@@ -1,3 +1,4 @@
+import { kmBetween } from '../../utils/distance';
 import { useScrollTopOnChange } from '../../components/common/ScrollToTop';
 import MenuEditor from '../components/menu/MenuEditor';
 import InspectionFeeCard from '../components/InspectionFeeCard';
@@ -627,15 +628,15 @@ function AreaStep({ vertical, profile, onBack, onNext, onCity }) {
         <LocationPicker
           serviceLabel="Your shop location"
           service={vertical}
+          initial={form.center ? { lng: form.center[0], lat: form.center[1] } : shopPin ? { lng: shopPin[0], lat: shopPin[1] } : null}
           onCancel={() => setPicking(false)}
           onConfirm={({ address, lat, lng }) => {
             setForm((f) => ({
               ...f,
               center: [lng, lat],
               centerAddress: address,
-              // The shop address doubles as the drop-off address unless they
-              // have already written a different one.
-              workshopAddress: f.workshopAddress || address,
+              // The drop-off address follows the pin unless they wrote a different one themselves.
+              workshopAddress: !f.workshopAddress || f.workshopAddress === f.centerAddress ? address : f.workshopAddress,
             }));
             setPicking(false);
           }}
@@ -645,6 +646,9 @@ function AreaStep({ vertical, profile, onBack, onNext, onCity }) {
   }
 
   const needsWorkshop = form.serviceModes.some((m) => m === 'workshop' || m === 'pickup_repair');
+  // A pin outside its own radius of the shop's address is almost always a mistake (the map opened on the phone's position).
+  const pinToShopKm = form.center && shopPin ? kmBetween(form.center, shopPin) : null;
+  const farKm = pinToShopKm != null && pinToShopKm > Number(form.radiusKm || 0) ? pinToShopKm : null;
 
   function toggleMode(key) {
     setForm((f) => ({
@@ -726,6 +730,11 @@ function AreaStep({ vertical, profile, onBack, onNext, onCity }) {
           {form.center ? 'Change' : 'Set'}
         </span>
       </button>
+      {farKm != null && (
+        <p role="alert" className="rounded-2xl border border-amber-200 bg-amber-50 px-3.5 py-3 text-[12.5px] font-semibold text-amber-900">
+          This pin is {Math.round(farKm)} km from your shop address{shopAddress ? ` (${shopAddress})` : ''}. Customers near your shop will not see you. Tap Change and move the pin to your shop.
+        </p>
+      )}
 
       <p className="-mt-1 px-1 text-[11px] leading-relaxed text-slate-400">
         This is a fixed address, not where you happen to be. Jobs are matched to your

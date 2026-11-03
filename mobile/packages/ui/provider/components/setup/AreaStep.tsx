@@ -11,7 +11,8 @@ import { LoadingState, Text } from '../../../components';
 import { toast } from '../../../components/Toast';
 import { LocationPicker } from '../../../components/common/LocationPicker';
 import { errText } from '../../../lib/feedback';
-import { colors, ink, slate, success, zappy } from '../../../theme/colors';
+import { kmBetween } from '@zappy/core/shared/distance';
+import { accent, colors, ink, slate, success, zappy } from '../../../theme/colors';
 import { radius } from '../../../theme/radius';
 import { spacing } from '../../../theme/spacing';
 import { StepShell } from './StepShell';
@@ -48,6 +49,10 @@ export function AreaStep({ vertical, profile, onBack, onNext, onCity }: { vertic
   if (isLoading || !form) return <LoadingState />;
   const set = (patch: Partial<AreaForm>) => setForm((f) => (f ? { ...f, ...patch } : f));
   const needsWorkshop = form.serviceModes.some((m) => m === 'workshop' || m === 'pickup_repair');
+  // A pin outside its own radius of the shop's address is almost always a mistake (the map opened on the phone's position).
+  const shopPin = profile?.address?.location?.coordinates?.length === 2 ? profile.address.location.coordinates : null;
+  const pinToShopKm = form.center && shopPin ? kmBetween(form.center, shopPin) : null;
+  const farKm = pinToShopKm != null && pinToShopKm > Number(form.radiusKm || 0) ? pinToShopKm : null;
   const toggleMode = (key: string) => set({ serviceModes: form.serviceModes.includes(key) ? form.serviceModes.filter((m) => m !== key) : [...form.serviceModes, key] });
 
   async function persist({ quiet = false } = {}) {
@@ -82,7 +87,7 @@ export function AreaStep({ vertical, profile, onBack, onNext, onCity }: { vertic
         <LocationPicker title="Your shop location" initial={initial} onCancel={() => setPicking(false)}
           onConfirm={({ address, lat, lng }) => {
             // The shop address doubles as the drop-off address unless they wrote a different one.
-            set({ center: [lng, lat], centerAddress: address, workshopAddress: form.workshopAddress || address });
+            set({ center: [lng, lat], centerAddress: address, workshopAddress: !form.workshopAddress || form.workshopAddress === form.centerAddress ? address : form.workshopAddress });
             setPicking(false);
           }} />
       ) : null}
@@ -96,6 +101,11 @@ export function AreaStep({ vertical, profile, onBack, onNext, onCity }: { vertic
           </View>
           <Text variant="caption" weight="bold" color={zappy[600]}>{form.center ? 'Change' : 'Set'}</Text>
         </Pressable>
+        {farKm != null ? (
+          <View accessibilityRole="alert" style={styles.far}>
+            <Text variant="caption" weight="semibold" color={ink[900]}>This pin is {Math.round(farKm)} km from your shop address{profile?.address?.text ? ` (${profile.address.text})` : ''}. Customers near your shop will not see you. Tap Change and move the pin to your shop.</Text>
+          </View>
+        ) : null}
         <Text variant="caption" color={ink[400]} style={styles.note}>This is a fixed address, not where you happen to be. Jobs are matched to your shop even when you are out.</Text>
 
         <View style={styles.card}>
@@ -143,6 +153,7 @@ const styles = StyleSheet.create({
   card: { backgroundColor: colors.surface, borderRadius: radius.large, borderWidth: 1, borderColor: colors.border, padding: spacing.base, gap: spacing.sm },
   pin: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md, padding: spacing.base, borderRadius: radius.large, borderWidth: 1, borderColor: slate[200], backgroundColor: colors.surface },
   pinEmpty: { borderColor: zappy[300], backgroundColor: zappy[50] },
+  far: { padding: spacing.md, borderRadius: radius.medium, borderWidth: 1, borderColor: accent[500], backgroundColor: accent[50] },
   pinIcon: { width: 36, height: 36, borderRadius: radius.medium, alignItems: 'center', justifyContent: 'center' },
   note: { paddingHorizontal: 4 },
   input: { minHeight: 46, borderWidth: 1, borderColor: colors.border, borderRadius: radius.button, paddingHorizontal: spacing.md, fontSize: 15, fontFamily: 'Figtree-Regular', color: ink[900], backgroundColor: colors.surface },
