@@ -91,8 +91,6 @@ function mountRoutes(app) {
   app.use('/api/workers', workerFeaturesRoutes);       // Worker features: /sos, /earned-wage, /emergency-fund, /area-notes
   app.use('/api/worker/appeals', appealRoutes);
   app.use('/api/worker/training', trainingRoutes);
-  app.use(`/api/${slug}/worker/appeals`, appealRoutes.adminRouter);
-  app.use(`/api/${slug}/worker/training`, trainingRoutes.adminRouter);
   app.use('/api/service-features', serviceFeaturesRouter); // Diagnosis, warranty, maintenance plans, portfolio, time-estimate
   app.use(`/api/${slug}`, adminRoutes);
   app.use(`/api/${slug}/pricing`, pricingRoutes.adminRouter);
@@ -106,7 +104,6 @@ function mountRoutes(app) {
   app.use('/api/notifications', notificationRoutes);
   app.use('/api/catalog', serviceRoutes);
   app.use('/api/payouts', payoutRoutes);
-  app.use(`/api/${slug}/payouts`, payoutRoutes.adminRouter);
 
   // Vertical service configs (admin-only)
   app.use(`/api/${slug}/verticals`, verticalConfigRoutes);

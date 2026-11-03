@@ -3,72 +3,6 @@ const { redis } = require('../../../config/redis');
 const auditService = require('../audit.service');
 const cachedAnalytics = require('../lib/cached-analytics');
 
-
-async function listSupportTickets(req, res, next) {
-  try {
-    const SupportTicket = require('../../engagement/support-ticket.model');
-    const page = Number(req.query.page) || 1;
-    const limit = 30;
-    const filter = {};
-    if (req.query.status) filter.status = req.query.status;
-    if (req.query.priority) filter.priority = req.query.priority;
-    if (req.query.category) filter.category = req.query.category;
-    if (req.query.kind) filter['raisedBy.kind'] = req.query.kind;
-    const [tickets, total] = await Promise.all([
-      SupportTicket.find(filter)
-        .sort({ priority: -1, createdAt: -1 })
-        .skip((page - 1) * limit)
-        .limit(limit)
-        .lean(),
-      SupportTicket.countDocuments(filter),
-    ]);
-    res.json({ tickets: await require('../../engagement/support-notify').withRaisers(tickets), total, page, totalPages: Math.ceil(total / limit) });
-  } catch (err) {
-    next(err);
-  }
-}
-
-async function replyToSupportTicket(req, res, next) {
-  try {
-    const SupportTicket = require('../../engagement/support-ticket.model');
-    const ticket = await SupportTicket.findById(req.params.id);
-    if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
-    const update = {
-      $push: {
-        messages: {
-          from: 'admin',
-          fromId: req.auth.sub,
-          text: req.body.text,
-          at: new Date(),
-        },
-      },
-    };
-    const setFields = {};
-    if (!ticket.firstResponseAt) setFields.firstResponseAt = new Date();
-    if (req.body.status) {
-      setFields.status = req.body.status;
-      if (req.body.status === 'resolved') setFields.resolvedAt = new Date();
-    }
-    if (Object.keys(setFields).length) update.$set = setFields;
-    const updated = await SupportTicket.findByIdAndUpdate(
-      req.params.id,
-      update,
-      { new: true },
-    );
-    require('../../engagement/support-notify').toRaiser(updated, req.body.text);
-    await auditService.fromRequest(
-      req,
-      'admin.support_reply',
-      { kind: 'ticket', id: req.params.id },
-      null,
-      { text: req.body.text, status: req.body.status },
-    );
-    res.json({ ticket: updated });
-  } catch (err) {
-    next(err);
-  }
-}
-
 async function getLiveOps(req, res, next) {
   try {
     // 10s cache — admin live-ops map updates fast enough at 10s; the full
@@ -331,8 +265,6 @@ async function listRecentReferrals(req, res, next) {
 }
 
 module.exports = {
-  listSupportTickets,
-  replyToSupportTicket,
   getLiveOps,
   getCashbackConfig,
   setCashbackConfig,

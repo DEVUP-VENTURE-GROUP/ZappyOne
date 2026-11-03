@@ -25,12 +25,4 @@ router.post(
 
 router.get('/mine', authenticate, requireRole('worker'), ctrl.listMine);
 
-const adminRouter = express.Router();
-adminRouter.use(authenticate, requireRole('admin'));
-adminRouter.get('/', ctrl.adminList);
-adminRouter.post('/:id/approve', ctrl.adminApprove);
-adminRouter.post('/:id/reject', validate(Joi.object({ reason: Joi.string().min(3).max(500).required() })), ctrl.adminReject);
-adminRouter.post('/:id/process', ctrl.adminProcess);
-
 module.exports = router;
-module.exports.adminRouter = adminRouter;

@@ -25,7 +25,6 @@ router.use('/', require('./routes/plans.routes'));
 router.use('/', require('./routes/system.routes'));
 // Admin → Live errors: what real people are hitting, in every app (telemetry/errors).
 router.use('/', require('../telemetry/errors-admin.routes'));
-router.use('/', require('./routes/support.routes'));
 router.use('/', require('./routes/audit.routes'));
 router.use('/', require('./routes/shield.routes'));
 router.use('/', require('../fraud/fraud.routes'));

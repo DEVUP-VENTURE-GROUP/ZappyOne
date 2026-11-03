@@ -50,7 +50,7 @@ router.post('/payouts/:id/approve', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.post('/payouts/:id/reject', async (req, res, next) => {
+router.post('/payouts/:id/reject', validate(Joi.object({ reason: Joi.string().trim().min(3).max(500).required() })), async (req, res, next) => {
   try {
     const payoutService = require('../../payout/payout.service');
     const result = await payoutService.rejectPayout({ payoutId: req.params.id, adminId: req.auth.sub, reason: req.body.reason });

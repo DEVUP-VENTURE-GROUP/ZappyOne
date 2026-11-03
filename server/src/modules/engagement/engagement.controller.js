@@ -211,6 +211,7 @@ async function adminReplyTicket(req, res, next) {
     }
     await ticket.save();
     require('./support-notify').toRaiser(ticket, req.body.text);
+    await require('../admin/audit.service').fromRequest(req, 'admin.support_reply', { kind: 'ticket', id: req.params.id }, null, { text: req.body.text, status: req.body.status });
     res.json({ ticket });
   } catch (err) { next(err); }
 }
