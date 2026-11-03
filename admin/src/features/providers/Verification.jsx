@@ -244,8 +244,31 @@ function Queue() {
 
 /* Provider-proposed services */
 
+const REQUEST_TABS = [['pending', 'Waiting'], ['approved', 'Approved'], ['rejected', 'Not approved'], ['', 'All']];
+const KYC_TONE = { approved: 'bg-emerald-50 text-emerald-700', pending_review: 'bg-amber-50 text-amber-800', rejected: 'bg-red-50 text-red-700' };
+const DECISION = { approved: ['Approved', 'bg-emerald-50 text-emerald-700'], rejected: ['Not approved', 'bg-red-50 text-red-700'], pending: ['Waiting', 'bg-amber-50 text-amber-800'] };
+
+// Who sent a request, for ZappyOne's records: kept on every request, decided or not.
+function Requester({ who }) {
+  if (!who) return <p className="mt-2 text-[11px] text-slate-400">Sender account no longer exists</p>;
+  return (
+    <div className="mt-3 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 text-xs text-slate-700">
+      <p className="font-bold text-slate-900">{who.name || 'Unnamed'}{who.ownerName && who.ownerName !== who.name ? ` · ${who.ownerName}` : ''}</p>
+      <p className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5">
+        <span className="capitalize">{who.kind === 'shop' ? (who.partnerType || 'shop') : who.partnerType}</span>
+        {who.phone && <a href={`tel:${who.phone}`} className="font-semibold text-zappy-700">{who.phone}</a>}
+        {who.email && <span>{who.email}</span>}
+        {who.city && <span>{who.city}</span>}
+        {who.joinedAt && <span>joined {fmtDate(who.joinedAt)}</span>}
+        <span className={`rounded-full px-2 font-bold ${KYC_TONE[who.kycStatus] || 'bg-slate-200 text-slate-600'}`}>ID {String(who.kycStatus).replace(/_/g, ' ')}</span>
+      </p>
+    </div>
+  );
+}
+
 function Requests() {
-  const { data, isLoading, refetch } = useAdminOnboardingLineRequestsQuery({ status: 'pending' });
+  const [status, setStatus] = useState('pending');
+  const { data, isLoading, refetch } = useAdminOnboardingLineRequestsQuery({ status });
   const { data: domainData } = useAdminOnboardingListQuery({ resource: 'domains' });
   const [approve] = useAdminApproveLineRequestMutation();
   const [reject] = useAdminRejectLineRequestMutation();
@@ -277,9 +300,15 @@ function Requests() {
     <div className="space-y-3">
       <SectionHeader
         title="Service requests"
-        subtitle="Work providers asked for that we do not carry. Approving one creates the real service."
+        subtitle="Work providers asked for that we do not carry. Approving one creates the real service. Decided requests stay here with who sent them."
       />
-      {!items.length && <EmptyState message="No pending requests" icon={MessageSquarePlus} />}
+      <div className="flex flex-wrap gap-1.5" role="tablist">
+        {REQUEST_TABS.map(([k, l]) => (
+          <button key={l} type="button" role="tab" aria-selected={status === k} onClick={() => setStatus(k)}
+            className={`rounded-lg px-3 py-1.5 text-xs font-bold ${status === k ? 'bg-zappy-600 text-white' : 'bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50'}`}>{l}</button>
+        ))}
+      </div>
+      {!items.length && <EmptyState message={status === 'pending' ? 'No pending requests' : 'Nothing here yet'} icon={MessageSquarePlus} />}
 
       {items.map((row) => (
         <Card key={row._id} className="p-4">
@@ -310,9 +339,15 @@ function Requests() {
                 </ul>
               )}
               <p className="text-[11px] text-slate-400 mt-1">
-                {row.domainCode || 'no domain'}, {row.providerKind}, {fmtDate(row.createdAt)}
+                {row.domainCode || 'no domain'}, {row.providerKind}, sent {fmtDate(row.createdAt)}
+                {row.reviewedAt && `, decided ${fmtDate(row.reviewedAt)}`}{row.resultLineCode && `, service ${row.resultLineCode}`}
               </p>
+              {row.reviewNote && <p className="mt-1 text-xs text-slate-600">Note: {row.reviewNote}</p>}
+              <Requester who={row.requester} />
             </div>
+            {row.status !== 'pending' ? (
+              <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${(DECISION[row.status] || DECISION.pending)[1]}`}>{(DECISION[row.status] || DECISION.pending)[0]}</span>
+            ) : (
             <div className="flex items-end gap-2 flex-wrap">
               <select
                 className="border border-slate-200 rounded-lg px-2.5 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-500"
@@ -337,6 +372,7 @@ function Requests() {
                 Reject
               </button>
             </div>
+            )}
           </div>
         </Card>
       ))}

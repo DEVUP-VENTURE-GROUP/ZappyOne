@@ -382,12 +382,28 @@ const listLineRequests = listHandler(ServiceLineRequest, {
   defaultSort: { status: 1, requestCount: -1, createdAt: -1 },
 });
 const signed = (key) => (key ? require('../../core/storage/s3').signMedia(key).catch(() => null) : null);
+
+// Who asked, for admin's records only (never shown to other partners): one read per kind of account.
+async function requesters(rows) {
+  const ids = (k) => [...new Set(rows.map((r) => r[k]).filter(Boolean).map(String))];
+  const [shops, workers] = await Promise.all([
+    require('../shop/shop.model').find({ _id: { $in: ids('shopId') } }).select('businessName ownerName phone email partnerType kyc.status address.city createdAt').lean(),
+    require('../worker/worker.model').find({ _id: { $in: ids('workerId') } }).select('name phone email kyc.status shopId createdAt').lean(),
+  ]);
+  const card = (d, kind) => ({ kind, id: String(d._id), name: d.businessName || d.name || '', ownerName: d.ownerName || '', phone: d.phone || '', email: d.email || '',
+    partnerType: d.partnerType || (kind === 'worker' ? (d.shopId ? 'technician' : 'individual') : ''), kycStatus: d.kyc?.status || 'not_submitted', city: d.address?.city || '', joinedAt: d.createdAt });
+  const by = new Map([...shops.map((d) => [String(d._id), card(d, 'shop')]), ...workers.map((d) => [String(d._id), card(d, 'worker')])]);
+  return (r) => by.get(String(r.shopId || r.workerId)) || null;
+}
+
 const lineRequests = {
-  // With the provider's photos signed so admin can judge the work.
+  // With the provider's photos signed so admin can judge the work, and who sent it.
   list: (req, res, next) => listLineRequests(req, { json: async (body) => {
     try {
+      const who = await requesters(body.items || []);
       const items = await Promise.all((body.items || []).map(async (r) => ({
         ...r,
+        requester: who(r),
         photoUrls: (await Promise.all((r.photos || []).map(signed))).filter(Boolean),
         packages: await Promise.all((r.packages || []).map(async (p) => ({ ...p, photoUrl: await signed(p.photoKey) }))),
       })));

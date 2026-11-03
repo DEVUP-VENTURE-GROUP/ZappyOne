@@ -1676,6 +1676,7 @@ export function endpoints(b, { adminApiPath }) {
       query: (body) => ({ url: '/provider/onboarding/line-requests', method: 'POST', body }),
       invalidatesTags: ['Onboarding'],
     }),
+    providerMyLineRequests: b.query({ query: () => '/provider/onboarding/line-requests', providesTags: ['Onboarding'] }),
 
     // Provider onboarding: admin
     adminOnboardingList: b.query({

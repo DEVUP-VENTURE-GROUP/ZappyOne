@@ -446,6 +446,7 @@ export const useProviderEnrolMutation = h.useProviderEnrolMutation;
 export const useProviderSaveEnrolmentMutation = h.useProviderSaveEnrolmentMutation;
 export const useProviderSubmitEnrolmentMutation = h.useProviderSubmitEnrolmentMutation;
 export const useProviderRequestServiceLineMutation = h.useProviderRequestServiceLineMutation;
+export const useProviderMyLineRequestsQuery = h.useProviderMyLineRequestsQuery;
 export const useAdminOnboardingListQuery = h.useAdminOnboardingListQuery;
 export const useAdminServicesOverviewQuery = h.useAdminServicesOverviewQuery;
 export const useAdminOnboardingCreateMutation = h.useAdminOnboardingCreateMutation;

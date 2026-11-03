@@ -577,6 +577,7 @@ export const {
   useProviderSaveEnrolmentMutation,
   useProviderSubmitEnrolmentMutation,
   useProviderRequestServiceLineMutation,
+  useProviderMyLineRequestsQuery,
   useAdminOnboardingListQuery,
   useAdminServicesOverviewQuery,
   useAdminOnboardingCreateMutation,

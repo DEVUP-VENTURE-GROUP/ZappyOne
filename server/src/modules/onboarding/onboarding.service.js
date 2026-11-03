@@ -359,7 +359,12 @@ async function requestLine({ owner, providerKind, domainCode = '', proposedName,
     status: 'pending',
   };
   const existing = await ServiceLineRequest.findOne(filter);
-  if (existing) return { request: existing, deduped: true };
+  // Sending the same service again while it waits updates it: the latest photos, jobs and prices are what admin reviews.
+  if (existing) {
+    Object.assign(existing, { domainCode: String(domainCode || existing.domainCode || '').toLowerCase(), description, packages, photos, serviceModes, yearsExperience });
+    await existing.save();
+    return { request: existing, deduped: true };
+  }
 
   const request = await ServiceLineRequest.create({
     providerKind,
@@ -375,7 +380,20 @@ async function requestLine({ owner, providerKind, domainCode = '', proposedName,
   return { request, deduped: false };
 }
 
+// This provider's own requests, newest first, with photos signed so they can see what they sent.
+async function myLineRequests(owner) {
+  const s3 = require('../../core/storage/s3');
+  const rows = await ServiceLineRequest.find(ownerFilter(owner)).sort({ createdAt: -1 }).limit(30)
+    .select('proposedName description packages photos serviceModes yearsExperience status reviewNote resultLineCode createdAt updatedAt').lean();
+  return Promise.all(rows.map(async (r) => ({
+    ...r,
+    photoUrls: (await Promise.all((r.photos || []).map((k) => s3.signMedia(k)))).filter(Boolean),
+    packages: await Promise.all((r.packages || []).map(async (p) => ({ ...p, photoUrl: p.photoKey ? await s3.signMedia(p.photoKey) : null }))),
+  })));
+}
+
 module.exports = {
+  myLineRequests,
   listDomains,
   listLines,
   resolveRequirements,

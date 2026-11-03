@@ -9,6 +9,7 @@
  * Android's back button step back through the flow before leaving it.
  */
 import { useCallback, useRef, useState } from 'react';
+import { MyServiceRequests } from '../components/onboarding/MyServiceRequests';
 import { BackHandler, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -73,6 +74,7 @@ export function ProviderOnboardingPage() {
           {step === 'summary' && status ? (
             <OnboardingSummary status={status} onAddService={() => go('domain')} onOpenEnrolment={(e) => { setLineCode(e.lineCode); go('verify'); }} />
           ) : null}
+          {step === 'summary' ? <MyServiceRequests /> : null}
           {step === 'domain' ? <DomainStep onPick={(d) => { setDomain(d); go('line'); }} /> : null}
           {step === 'line' && domain ? (
             <LineStep domain={domain} onPick={(l) => { setLineCode(l.code); go('verify'); }} onRequest={() => setShowRequest(true)} />

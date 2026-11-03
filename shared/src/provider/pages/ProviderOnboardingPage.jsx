@@ -1,4 +1,5 @@
 import { useScrollTopOnChange } from '../../components/common/ScrollToTop';
+import MyServiceRequests from '../components/MyServiceRequests';
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -784,6 +785,7 @@ export default function ProviderOnboardingPage() {
               onOpenEnrolment={(e) => { setLineCode(e.lineCode); setStep('verify'); }}
             />
           )}
+          {step === 'summary' && <MyServiceRequests />}
           {step === 'domain' && <DomainStep onPick={(d) => { setDomain(d); setStep('line'); }} />}
           {step === 'line' && (
             <LineStep domain={domain}

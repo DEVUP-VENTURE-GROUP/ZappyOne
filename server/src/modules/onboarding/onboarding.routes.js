@@ -96,6 +96,13 @@ router.patch(
 
 router.post('/enrolments/:id/submit', ...providerOnly, ctrl.submitForReview);
 
+router.get('/line-requests', ...providerOnly, async (req, res, next) => {
+  try {
+    const owner = req.auth.role === 'shop' ? { kind: 'shop', id: req.auth.sub } : { kind: 'worker', id: req.auth.sub };
+    res.json({ requests: await require('./onboarding.service').myLineRequests(owner) });
+  } catch (err) { next(err); }
+});
+
 router.post(
   '/line-requests',
   ...providerOnly,
