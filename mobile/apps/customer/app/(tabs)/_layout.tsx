@@ -2,7 +2,8 @@ import { View } from 'react-native';
 import { Tabs } from 'expo-router';
 import { ClipboardList, Home, LayoutGrid, MapPin, User } from 'lucide-react-native';
 import { useCurrentSeasonQuery } from '@zappy/core/api';
-import { themeOf } from '@zappy/core/shared/season';
+import useFestiveLook from '@zappy/core/shared/useFestiveLook';
+import { useReducedMotion } from '@zappy/core/hooks/useReducedMotion';
 import { useT } from '@zappy/ui/lib/i18n';
 import { JhalarEdge } from '../../src/features/home/festive/JhalarEdge';
 import { SafeSection } from '@zappy/ui/components/common/SafeSection';
@@ -17,7 +18,7 @@ import { ActiveJobPill } from '../../src/features/home/ActiveJobPill';
 export default function CustomerTabs() {
   const t = useT();
   const { data } = useCurrentSeasonQuery(undefined);
-  const festive = data?.season ? themeOf(data.season.theme) : null;
+  const festive = useFestiveLook(data?.season?.theme, useReducedMotion());
   return (
     <View style={{ flex: 1 }}>
     <Tabs screenOptions={{

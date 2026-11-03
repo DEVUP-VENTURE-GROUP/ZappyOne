@@ -9,6 +9,7 @@ import { Text } from '@zappy/ui/components';
 import { webAsset } from '@zappy/ui/lib/media';
 import { spacing } from '@zappy/ui/theme/spacing';
 import { FestiveOffer } from './FestiveOffer';
+import { FestiveSwap } from './FestiveSwap';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Any = any;
@@ -80,9 +81,12 @@ export function FestiveHero({ season, theme, services = [], onOpen }: { season: 
         <ArchLights color={theme.accent} />
       </Svg>
       <View style={[styles.panel, { backgroundColor: theme.wash }]}>
+        {/* Keyed on the look, so the words rise in again when the festival changes look. */}
+        <View key={theme.look || 0}>
         {season.greeting ? <Animated.View entering={rise(0)}><Text variant="caption" weight="extrabold" color={theme.dark ? theme.bottom : theme.accent} style={styles.greeting}>{String(season.greeting).toUpperCase()}</Text></Animated.View> : null}
         <Animated.View entering={rise(80)}><Text variant="heading1" weight="black" color={ink} style={styles.headline}>{String(season.headline).toUpperCase()}</Text></Animated.View>
         {season.subline ? <Animated.View entering={rise(140)}><Text variant="bodySmall" weight="semibold" color={ink} style={styles.subline}>{season.subline}</Text></Animated.View> : null}
+        </View>
         {n ? (
           bigFirst ? (
             <View style={styles.row}>
@@ -93,6 +97,7 @@ export function FestiveHero({ season, theme, services = [], onOpen }: { season: 
         ) : null}
         {season.offer ? <Animated.View entering={rise(500)} style={styles.offer}><FestiveOffer offer={season.offer} accent={theme.accent} /></Animated.View> : null}
       </View>
+      <FestiveSwap theme={theme} />
     </View>
   );
 }

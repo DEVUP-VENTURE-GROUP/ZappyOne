@@ -9,9 +9,9 @@
  * fix, it asks. Nothing here is a claim the data doesn't back.
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { RefreshControl, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 import {
   useCurrentSeasonQuery, useGetEventCategoriesQuery, useGetServiceabilityQuery, useLiveCatalogQuery, useSaveRecentLocationMutation,
 } from '@zappy/core/api';
@@ -33,8 +33,10 @@ import { ActiveJobCard } from './ActiveJobCard';
 import { ContinueBookingCard } from './ContinueBookingCard';
 import { FestiveHero } from './festive/FestiveHero';
 import { FestiveDivider } from './festive/FestiveDivider';
+import { HomeScrollY, Reveal } from './festive/ScrollReveal';
 import { SafeSection } from '@zappy/ui/components/common/SafeSection';
-import { themeOf } from '@zappy/core/shared/season';
+import useFestiveLook from '@zappy/core/shared/useFestiveLook';
+import { useReducedMotion } from '@zappy/core/hooks/useReducedMotion';
 import { HeroCarousel } from './HeroCarousel';
 import { HomeHeader, SearchBar, type HomeLocation } from './HomeHeader';
 import { BookAgainRail, NearbyShopsLink, OffersRail } from './HomeRails';
@@ -158,9 +160,12 @@ export function HomePage() {
   // The layout is chosen once both are known, so the plain look never flashes before a festive one.
   const settling = loadingCatalog || loadingSeason;
   const season = !notHere && !settling ? seasonData?.season : null;
-  const theme = season ? { ...themeOf(season.theme), key: season.theme } : null;
+  // Each festival has a few looks; home moves to the next every 30 s.
+  const theme = useFestiveLook(season?.theme, useReducedMotion());
   const tint = theme ? theme.top : null;
-  const rise = (i: number) => (theme ? FadeInDown.delay(250 + i * 110).duration(600) : undefined);
+  // The scroll position, so festive sections and dividers play as they come up the screen.
+  const scrollY = useSharedValue(0);
+  const onScroll = useAnimatedScrollHandler((e) => { scrollY.value = e.contentOffset.y; });
 
   async function onRefresh() {
     setRefreshing(true);
@@ -173,7 +178,8 @@ export function HomePage() {
       <HomeHeader loc={loc} isAuthed={isAuthed} onPickLocation={() => setLocSheet(true)} tint={tint} festive={theme} greeting={season?.greeting || ''} eta={svc?.fastestMin != null && svc.fastestMin <= 60 ? svc.fastestMin : null} closed={svc?.status === 'closed_now' ? backAt(svc.nextOpening) : null} />
       {/* Search stays pinned while the rest scrolls. */}
       <View style={[styles.searchWrap, tint ? { backgroundColor: tint, borderBottomLeftRadius: 0, borderBottomRightRadius: 0 } : null]}><SearchBar terms={terms} onOpen={() => setSpotOpen(true)} /></View>
-      <ScrollView contentContainerStyle={styles.body} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
+      <HomeScrollY.Provider value={scrollY}>
+      <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={styles.body} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
         {season ? <SafeSection name="festive-hero"><View style={styles.festive}><FestiveHero season={season} theme={theme} services={services} onOpen={(s) => openService(s)} /></View></SafeSection> : null}
         {activeJob ? <ActiveJobCard job={activeJob} onOpen={() => router.push(activeJob.href as never)} /> : null}
         {/* A booking started and left: back to where they stopped (jobs/checkout-draft). */}
@@ -191,20 +197,22 @@ export function HomePage() {
             {settling ? <Skeleton height={160} style={styles.heroSkel} /> : null}
             {!settling && !nothingLive && !season ? <HeroCarousel domains={allDomains} onOpen={openService} /> : null}
             {/* During a festival each section rises in after the last. */}
-            <Animated.View entering={rise(0)}><ProblemChips services={services} /></Animated.View>
-            {settling || (loc.lat != null && !svc && checkingArea) ? <SkeletonGrid /> : <Animated.View entering={rise(1)}><ServiceGrid domains={domains} onOpen={openService} /></Animated.View>}
-            {theme ? <SafeSection name="festive-divider"><FestiveDivider accent={theme.accent} /></SafeSection> : null}
-            <Animated.View entering={rise(2)}><BookAgainRail items={rebooks} /></Animated.View>
-            <Animated.View entering={rise(3)}><OffersRail isAuthed={isAuthed} /></Animated.View>
-            {!settling ? <Animated.View entering={rise(4)}><ServiceShowcase domains={allDomains} onOpen={openService} /></Animated.View> : null}
+            <Reveal on={!!theme}><ProblemChips services={services} /></Reveal>
+            {settling || (loc.lat != null && !svc && checkingArea) ? <SkeletonGrid /> : <Reveal on={!!theme}><ServiceGrid domains={domains} onOpen={openService} /></Reveal>}
+            {theme ? <SafeSection name="festive-divider"><FestiveDivider accent={theme.accent} strip={theme.dark ? theme.accent : theme.paint[4] || theme.accent} /></SafeSection> : null}
+            <Reveal on={!!theme}><BookAgainRail items={rebooks} /></Reveal>
+            <Reveal on={!!theme}><OffersRail isAuthed={isAuthed} /></Reveal>
+            {theme ? <SafeSection name="festive-divider"><FestiveDivider accent={theme.accent} strip={theme.dark ? theme.accent : theme.paint[4] || theme.accent} /></SafeSection> : null}
+            {!settling ? <Reveal on={!!theme}><ServiceShowcase domains={allDomains} onOpen={openService} /></Reveal> : null}
             {isAuthed ? <HomeMarketplace loc={loc.lat != null && loc.lng != null ? { lat: loc.lat, lng: loc.lng, address: [loc.primary, loc.secondary].filter(Boolean).join(', ') } : null} /> : null}
             {!loadingCatalog && !nothingLive ? <ComingSoonRow groups={comingSoon} loc={loc} /> : null}
-            {theme ? <SafeSection name="festive-divider"><FestiveDivider accent={theme.accent} /></SafeSection> : null}
+            {theme ? <SafeSection name="festive-divider"><FestiveDivider accent={theme.accent} strip={theme.dark ? theme.accent : theme.paint[4] || theme.accent} /></SafeSection> : null}
             <AdBanner isAuthed={isAuthed} />
             <NearbyShopsLink />
           </>
         )}
-      </ScrollView>
+      </Animated.ScrollView>
+      </HomeScrollY.Provider>
       <SpotlightSearch open={spotOpen} onClose={() => setSpotOpen(false)} lat={loc.lat} lng={loc.lng} />
       <LocationSheet open={locSheet} onClose={() => setLocSheet(false)} onUseCurrent={useCurrent} detecting={detecting} onPick={pick} />
     </View>

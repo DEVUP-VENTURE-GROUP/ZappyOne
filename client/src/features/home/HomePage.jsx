@@ -31,7 +31,8 @@ import ContinueBookingCard from './ContinueBookingCard';
 import FestiveHero from '@shared/components/home/festive/FestiveHero';
 import FestiveReveal from '@shared/components/home/festive/FestiveReveal';
 import FestiveDivider from '@shared/components/home/festive/FestiveDivider';
-import { themeOf } from '@shared/customer/season';
+import useFestiveLook from '@shared/customer/useFestiveLook';
+import { reducedMotion } from '../../lib/animations';
 
 /**
  * Home — what a customer can get done, right where they are.
@@ -251,7 +252,8 @@ export default function HomePage() {
   // The layout is chosen once both are known, so the plain look never flashes before a festive one.
   const settling = loadingCatalog || loadingSeason;
   const season = !notHere && !settling ? seasonData?.season : null;
-  const theme = season ? { ...themeOf(season.theme), key: season.theme } : null;
+  // Each festival has a few looks; home moves to the next every 30 s.
+  const theme = useFestiveLook(season?.theme, reducedMotion);
   const tint = theme ? theme.top : null;
   const searchBar = (
     <SearchBar
@@ -280,7 +282,7 @@ export default function HomePage() {
       />
 
       {/* overflow-x-clip, not hidden: hidden makes this a scroll box and breaks the sticky header. */}
-      <div className="min-h-screen w-full overflow-x-clip bg-canvas"
+      <div className="fz-look min-h-screen w-full overflow-x-clip bg-canvas"
         // A festival carries all the way down in the page's own plain wash.
         style={theme ? { background: theme.wash } : undefined}>
         <HomeHeader
@@ -340,6 +342,7 @@ export default function HomePage() {
               {/* Personal and real only: their own past bookings, live offers. */}
               <FestiveReveal on={!!season}><BookAgainRail items={quickRebooks} onOpen={nav} /></FestiveReveal>
               <FestiveReveal on={!!season}><OffersRail isAuthed={isAuthed} /></FestiveReveal>
+              {season && <FestiveDivider theme={theme} />}
 
               {!settling && <FestiveReveal on={!!season}><ServiceShowcase domains={allDomains} onOpen={openService} /></FestiveReveal>}
               {isAuthed && <FestiveReveal on={!!season}><HomeMarketplace /></FestiveReveal>}

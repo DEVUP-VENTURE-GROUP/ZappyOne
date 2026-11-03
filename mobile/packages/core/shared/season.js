@@ -58,6 +58,59 @@ export const THEMES = {
 
 export const themeOf = (key) => THEMES[key] || THEMES.navratri;
 
+// More looks of the same festival (same darkness and decoration), shown in turn on home; the theme itself is look 0.
+const LOOKS = {
+  navratri: [
+    { top: '#FF9EC4', bottom: '#FFE6F0', ink: '#5A0A2E', sub: '#7E1F4A', accent: '#BE185D', tile: '#FFF0F6', tileInk: '#5A0A2E', line: '#F7B6D0', curtain: '#E7568F', wash: '#FFF5F9' },
+    { top: '#B9E4A1', bottom: '#F1FAE9', ink: '#183A12', sub: '#2F5A22', accent: '#B45309', tile: '#F4FBEE', tileInk: '#183A12', line: '#CDE8BC', curtain: '#6FB24F', wash: '#F6FBF1' },
+  ],
+  diwali: [
+    { top: '#3B0A12', bottom: '#6B1424', ink: '#FFF1DC', sub: '#FBD9B0', accent: '#FBBF24', tile: '#4E1019', tileInk: '#FFF1DC', line: '#7A2433', curtain: '#7A1626', wash: '#FFF7EE' },
+    { top: '#062F3A', bottom: '#0E4E5C', ink: '#FFF6E0', sub: '#C9F1F5', accent: '#F59E0B', tile: '#0A3E4A', tileInk: '#FFF6E0', line: '#17616F', curtain: '#0F5A69', wash: '#F2FAFB' },
+  ],
+  holi: [
+    { top: '#FDE68A', bottom: '#EDE9FE', ink: '#3B0764', sub: '#5B21B6', accent: '#7C3AED', tile: '#FFFFFF', tileInk: '#3B0764', line: '#F5DFA0', curtain: '#FACC15', wash: '#FFFBEB' },
+    { top: '#A7F3D0', bottom: '#DBEAFE', ink: '#064E3B', sub: '#065F46', accent: '#2563EB', tile: '#FFFFFF', tileInk: '#064E3B', line: '#BEEBD7', curtain: '#34D399', wash: '#F0FDF7' },
+  ],
+  sankranti: [
+    { top: '#FFD39A', bottom: '#FFF3E2', ink: '#5A2A06', sub: '#7A3E12', accent: '#0369A1', tile: '#FFFFFF', tileInk: '#5A2A06', line: '#F6CF9C', curtain: '#F59E0B', wash: '#FFF8EE' },
+    { top: '#BDE7B0', bottom: '#EEF9EA', ink: '#173F14', sub: '#2D5C26', accent: '#C2410C', tile: '#FFFFFF', tileInk: '#173F14', line: '#CBE8C1', curtain: '#5DB24A', wash: '#F4FBF1' },
+  ],
+  eid: [
+    { top: '#0B1E46', bottom: '#16336B', ink: '#EEF4FF', sub: '#BFD3FF', accent: '#FCD34D', tile: '#132A5A', tileInk: '#EEF4FF', line: '#24427E', curtain: '#1C3D7A', wash: '#F3F6FD' },
+    { top: '#2E0F3D', bottom: '#4A1A5F', ink: '#FBF0FF', sub: '#E2C7F0', accent: '#FCD34D', tile: '#3A1450', tileInk: '#FBF0FF', line: '#5C2878', curtain: '#52206B', wash: '#FAF5FC' },
+  ],
+  christmas: [
+    { top: '#0F3B26', bottom: '#17573A', ink: '#F0FFF5', sub: '#BFEBD0', accent: '#FDE68A', tile: '#144A31', tileInk: '#F0FFF5', line: '#23704C', curtain: '#1B6644', wash: '#F3FAF6' },
+    { top: '#101A3A', bottom: '#1E2C5C', ink: '#F1F4FF', sub: '#C7D2F5', accent: '#FDE68A', tile: '#18244B', tileInk: '#F1F4FF', line: '#2B3C74', curtain: '#24356A', wash: '#F4F6FC' },
+  ],
+};
+
+/** How long each look stays before the next. */
+export const LOOK_MS = 30000;
+
+export const lookCount = (key) => 1 + (LOOKS[key]?.length || 0);
+
+/** Which look shows at `now`: from the clock, so every part of the screen (and the tab bar) changes together. */
+export const lookIndex = (key, now = Date.now()) => Math.floor(now / LOOK_MS) % lookCount(key);
+
+/** The burst when a look changes: x/y in % of the top, r in px, drift dx/dy in px, delay in s. */
+export function swapSparks(theme, n = 18) {
+  const rnd = seeded(31 + (theme.look || 0));
+  const paint = [theme.accent, ...theme.paint];
+  return Array.from({ length: n }, (_, i) => {
+    const ang = rnd() * Math.PI * 2;
+    const dist = 40 + rnd() * 70;
+    return { x: 10 + rnd() * 80, y: 20 + rnd() * 50, r: 2 + rnd() * 3, dx: Math.round(Math.cos(ang) * dist), dy: Math.round(Math.sin(ang) * dist), fill: paint[i % paint.length], delay: +(0.35 + rnd() * 0.3).toFixed(2) };
+  });
+}
+
+/** The festival's theme in look `n`, with `key` and `look` added. */
+export function lookOf(key, n = 0) {
+  const i = n % lookCount(key);
+  return { ...themeOf(key), ...(i ? LOOKS[key][i - 1] : null), key, look: i };
+}
+
 /** The drawing area every motif is laid out in, drawn at about phone width. */
 export const MOTIF_BOX = { w: 360, h: 96 };
 

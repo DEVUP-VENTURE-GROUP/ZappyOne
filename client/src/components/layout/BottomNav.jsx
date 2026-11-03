@@ -1,7 +1,9 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Home, ClipboardList, MapPin, User, LayoutGrid } from 'lucide-react';
 import { api, useListNotificationsQuery, useCurrentSeasonQuery } from '@shared/services/api';
-import { themeOf, jhalarCss } from '@shared/customer/season';
+import { jhalarCss } from '@shared/customer/season';
+import useFestiveLook from '@shared/customer/useFestiveLook';
+import { reducedMotion } from '../../lib/animations';
 import { useSelector } from 'react-redux';
 import { selectIsAuthed } from '@shared/modules/auth/authSlice';
 import { prefetchRoute } from '../../lib/routePrefetch';
@@ -58,7 +60,7 @@ export default function BottomNav({ active }) {
   const unreadCount = notifData?.notifications?.length || 0;
   // A festival running (Admin → Festive home): the bar wears it lightly.
   const { data: seasonData } = useCurrentSeasonQuery();
-  const festive = seasonData?.season ? themeOf(seasonData.season.theme) : null;
+  const festive = useFestiveLook(seasonData?.season?.theme, reducedMotion);
 
   // Prefetch a tab's data into the RTK cache so the page shows real content,
   // not a skeleton, by the time the navigation completes.

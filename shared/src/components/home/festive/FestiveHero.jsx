@@ -1,4 +1,5 @@
 import FestiveOffer from './FestiveOffer';
+import FestiveSwap from './FestiveSwap';
 import { ARCH, archEdge, archLights, festivePicks, tileTag } from '../../../customer/season';
 import { servicePhoto, tilePhoto } from '../serviceArt';
 
@@ -36,13 +37,15 @@ export default function FestiveHero({ season, theme, services = [], onOpen }) {
   const big = bigFirst(picks.length);
   return (
     <section aria-label={season.name} className="relative" style={{ background: theme.top }}>
-      <div className="mx-auto w-full max-w-5xl px-3 pt-2 sm:px-6">
+      <FestiveSwap theme={theme} />
+      <div className="fz-settle mx-auto w-full max-w-5xl px-3 pt-2 sm:px-6">
         <svg viewBox={`0 0 ${ARCH.w} ${ARCH.h}`} preserveAspectRatio="none" className="fz-drop block h-10 w-full" aria-hidden="true">
           <path d={`${archEdge} Z`} fill={theme.wash} />
           <path d={archLights} fill="none" stroke={theme.accent} strokeWidth="4" className="fz-marquee" vectorEffect="non-scaling-stroke" />
         </svg>
         <div className="-mt-px rounded-b-3xl px-3 pb-4 sm:px-5" style={{ background: theme.wash }}>
-          <div className="text-center">
+          {/* Keyed on the look, so the words rise in again when the festival changes look. */}
+          <div key={theme.look || 0} className="text-center">
             {season.greeting && (
               <p className="fz-rise text-[11px] font-extrabold uppercase tracking-[0.2em]" style={{ color: theme.dark ? theme.bottom : theme.accent }}>{season.greeting}</p>
             )}
