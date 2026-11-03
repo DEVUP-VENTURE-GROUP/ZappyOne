@@ -116,3 +116,21 @@ test('one search across nearby menus finds matching jobs from every provider pri
   expect((await searchMenus({ q: 'daily clean', lat: 12.97, lng: 77.59 })).items).toEqual([]);
   expect((await searchMenus({ q: 'd', lat: LAT, lng: LNG })).items).toEqual([]);
 });
+
+test('at a known address the shared job list shows only jobs a provider covering it has priced', async () => {
+  const { listProblems } = require('../src/modules/repair/controllers/catalog.controller');
+  const DeviceModel = require('../src/modules/service/device-model.model');
+  const model = await DeviceModel.findOne({ brandCode: 'daicle_2bhk' }).lean();
+  const codes = async (query) => {
+    let body;
+    await listProblems({ query: { vertical: V, modelCode: model.code, ...query } }, { json: (b) => { body = b; } }, (e) => { throw e; });
+    return body.categories.flatMap((c) => c.problems).map((p) => p.code);
+  };
+  const everywhere = await codes({});
+  const here = await codes({ lat: LAT, lng: LNG });
+  const farAway = await codes({ lat: 12.97, lng: 77.59 });
+  expect(here.length).toBeGreaterThan(0);
+  expect(here.every((c) => everywhere.includes(c))).toBe(true);
+  expect(here).toContain('daicle_full_daily_req');
+  expect(farAway).toEqual([]);
+});

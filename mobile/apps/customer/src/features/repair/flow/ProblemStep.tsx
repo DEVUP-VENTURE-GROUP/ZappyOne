@@ -9,7 +9,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { Image, StyleSheet, View } from 'react-native';
 import { useRepairProblemsQuery } from '@zappy/core/api';
 import { categoryPhoto } from '@zappy/core/shared/problemArt';
-import { Text } from '@zappy/ui/components';
+import { EmptyState, Text } from '@zappy/ui/components';
 import { webAsset } from '@zappy/ui/lib/media';
 import { ink } from '@zappy/ui/theme/colors';
 import { radius } from '@zappy/ui/theme/radius';
@@ -43,6 +43,9 @@ export function ProblemStep({ vertical, model, productType, fuelType, presetCode
     <Shell>
       <StorefrontStrip vertical={vertical} />
       <Text variant="caption" color={ink[500]} style={flow.label}>Tell us what you're seeing. We'll work out the repair; we never assume it from the symptom alone.</Text>
+      {!categories.length ? (
+        <EmptyState title="Nobody near this address takes this yet" message="Verified pros join every week. Try another address, or check back soon." />
+      ) : null}
       {categories.map((cat) => {
         const cover = webAsset(categoryPhoto(vertical, cat));
         return (

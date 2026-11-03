@@ -650,6 +650,13 @@ function ProblemStep({ vertical, model, productType, fuelType, presetCode, onPic
       <p className="text-xs text-slate-500 px-1">
         Tell us what you're seeing. We'll work out the repair - we never assume it from the symptom alone.
       </p>
+      {!categories.length && (
+        <div className="card p-5 text-center">
+          <p className="font-bold text-ink-900">Nobody near this address takes this yet</p>
+          <p className="mt-1 text-[13.5px] text-ink-500">Verified pros join every week. Try another address, or check back soon.</p>
+          <a href="/" className="btn-outline mt-3 inline-flex min-h-[40px] px-4 text-[13.5px]">Back to home</a>
+        </div>
+      )}
       {categories.map((cat) => {
         const cover = categoryPhoto(vertical, cat);
         return (

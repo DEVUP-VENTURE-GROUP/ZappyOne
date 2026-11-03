@@ -286,6 +286,12 @@ async function listProblems(req, res, next) {
     // Unpublishing a category hides its problems everywhere, including "popular".
     // A provider's own menu job is shown only when the customer came from that provider's storefront.
     const from = /^(shop|worker):[a-f0-9]{24}$/.test(req.query.provider || '') ? req.query.provider : null;
+    // A provider-priced service at a known address lists only the shared jobs someone covering it can take; otherwise a customer
+    // picked a job nobody near had priced and learned so only on the last step. Providers' own jobs stay on their storefronts.
+    const lat = Number(req.query.lat); const lng = Number(req.query.lng);
+    const near = !from && Number.isFinite(lat) && Number.isFinite(lng) && await require('../services/provider-menu.service').isMenuService(verticalOf(req))
+      ? await require('../services/storefront.service').bookableNear({ vertical: verticalOf(req), lat, lng })
+      : null;
     const filter = {
       vertical: verticalOf(req), isActive: true, isArchived: false,
       categoryCode: { $in: categories.map((c) => c.code) },
@@ -327,7 +333,8 @@ async function listProblems(req, res, next) {
       });
     }
     if (scopes.length) filter.$and = scopes;
-    const rows = await Problem.find(filter).sort({ displayOrder: 1, name: 1 }).lean();
+    const found = await Problem.find(filter).sort({ displayOrder: 1, name: 1 }).lean();
+    const rows = near ? found.filter((p) => (p.candidateRepairCodes || []).some((c) => near.codes.has(c))) : found;
 
     /*
      * Media is signed AND forwarded.

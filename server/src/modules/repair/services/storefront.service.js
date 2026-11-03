@@ -59,6 +59,26 @@ async function serviceFace(vertical, owners) {
   return out;
 }
 
+// The jobs of a provider-priced service someone verified can actually take at this address (at the door or at their shop):
+// the repair codes with an active, approved price from a provider covering the point.
+async function bookableNear({ vertical, lat, lng }) {
+  const matching = require('./matching.service');
+  const found = (await Promise.all(['doorstep', 'workshop'].map((serviceMode) => matching.findServiceableProviders({ lat, lng, serviceMode }).catch(() => [])))).flat();
+  const line = await require('../../jobs/kinds').KINDS.repair.line({ vertical });
+  if (!found.length || !line) return { codes: new Set() };
+  const approved = new Set((await require('../../onboarding/eligibility').approvedProviders(line)).map((p) => String(p.id)));
+  const near = found.filter((f) => approved.has(String(f.shopId || f.workerId)));
+  if (!near.length) return { codes: new Set() };
+  const or = [{ shopId: { $in: near.filter((f) => f.shopId).map((f) => f.shopId) } }, { workerId: { $in: near.filter((f) => f.workerId).map((f) => f.workerId) } }];
+  const [caps, priced] = await Promise.all([
+    ProviderCapability.find({ vertical, isActive: true, $or: or }).select('shopId workerId repairCode').lean(),
+    ProviderPricing.find({ vertical, ...BOOKABLE, $or: or }).select('shopId workerId repairCode').lean(),
+  ]);
+  const has = new Set(priced.map((r) => `${keyOf(r)}|${r.repairCode}`));
+  const live = caps.filter((c) => has.has(`${keyOf(c)}|${c.repairCode}`));
+  return { codes: new Set(live.map((c) => c.repairCode)) };
+}
+
 async function listStorefronts({ vertical, lat, lng, serviceMode = 'doorstep', sort = 'best', limit = 30 }) {
   const matching = require('./matching.service');
   const found = await matching.findServiceableProviders({ lat, lng, serviceMode });
@@ -216,4 +236,5 @@ async function searchMenus({ q, lat, lng, limit = 12 }) {
   return { items: page };
 }
 
-module.exports = { listStorefronts, storefrontMenu, searchMenus, SORTS };
+module.exports = {
+  bookableNear, listStorefronts, storefrontMenu, searchMenus, SORTS };

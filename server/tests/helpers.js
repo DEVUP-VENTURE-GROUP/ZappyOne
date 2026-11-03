@@ -104,6 +104,9 @@ async function pricedShopNear({ lng, lat, vertical = 'mobile', lineCode = 'mobil
   await ProviderEnrolment.create({ providerKind: 'shop', shopId: shop._id, domainCode, lineCode, status: 'approved' });
   await ProviderServiceArea.create({ shopId: shop._id, cityCode: 'hyderabad', center: { type: 'Point', coordinates: [lng, lat] }, radiusKm: 15, serviceModes: ['doorstep', 'workshop', 'pickup_repair'] });
   await ownPrice({ shopId: shop._id }, { vertical, repairCode, totalPaise });
+  // Saving a job on a menu records the capability with the price (provider-menu saveItem); matching needs both.
+  const { ProviderCapability } = require('../src/modules/repair/models/capability.model');
+  await ProviderCapability.updateOne({ shopId: shop._id, repairCode }, { $set: { vertical, isActive: true }, $setOnInsert: { shopId: shop._id, repairCode } }, { upsert: true });
   return shop;
 }
 
