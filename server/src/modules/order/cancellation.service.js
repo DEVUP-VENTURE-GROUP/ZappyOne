@@ -28,6 +28,11 @@ const DEFAULTS = {
   workerDuesWarnPaise:        150000,
   workerDuesLimitPaise:       200000,
   duesPayInstructions:        '',
+  zappyPayUpiId:              '',
+  zappyPayAccountName:        '',
+  zappyPayBankName:           '',
+  zappyPayAccountNumber:      '',
+  zappyPayIfsc:               '',
   freeCancelWindowSec:       120,   // 2 min grace after worker assigned
   userCancelFeeAssignedPaise: 2000, // ₹20 — assigned but within trip
   userCancelFeeOnWayPaise:    3000, // ₹30 — worker already on the way

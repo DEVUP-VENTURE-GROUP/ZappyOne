@@ -20,7 +20,7 @@ test('a new shop starts at its profile, then waits on review, then sets prices a
   let j = await journey(shop._id);
   expect(j).toMatchObject({ live: false, complete: false, done: 0, total: 5, next: { key: 'profile' } });
 
-  await Shop.updateOne({ _id: shop._id }, { $set: { email: 'ravi@example.com', bio: 'Phone and laptop repairs for twelve years in Kondapur.', yearsActive: 12, coverImageUrl: 'shop-covers/r.jpg', hours: [{ day: 1, opensAt: '10:00', closesAt: '21:00' }], address: { text: 'Kondapur Main Road', location: { type: 'Point', coordinates: [78.39, 17.44] } }, 'kyc.status': 'pending_review' } });
+  await Shop.updateOne({ _id: shop._id }, { $set: { email: 'ravi@example.com', bio: 'Phone and laptop repairs for twelve years in Kondapur.', yearsActive: 12, coverImageUrl: 'shop-covers/r.jpg', hours: [{ day: 1, opensAt: '10:00', closesAt: '21:00' }], address: { text: 'Kondapur Main Road', location: { type: 'Point', coordinates: [78.39, 17.44] } }, 'kyc.status': 'pending_review', savedUpiIds: [{ upiId: 'ravi@okaxis', isDefault: true }] } });
   await models.ProviderEnrolment.create({ providerKind: 'shop', shopId: shop._id, domainCode: 'electronics', lineCode: 'mobile_repair', status: 'pending_review' });
   j = await journey(shop._id);
   expect(j.steps.find((s) => s.key === 'approved')).toMatchObject({ done: false, waiting: true });

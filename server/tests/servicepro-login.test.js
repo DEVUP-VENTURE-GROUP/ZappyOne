@@ -74,11 +74,12 @@ test('the dashboard opens only once every required detail is filled, per kind of
   const shop = await Shop.findOne({ phone: '9822200001' });
   const before = await profileStatus('shop', shop._id);
   expect(before.complete).toBe(false);
-  expect(before.missing.map((m) => m.key)).toEqual(['email', 'address', 'photo', 'hours', 'bio', 'years', 'kyc']);
+  expect(before.missing.map((m) => m.key)).toEqual(['email', 'address', 'photo', 'hours', 'bio', 'years', 'kyc', 'upi']);
   expect(before.missing.find((m) => m.key === 'kyc').path).toBe('/shop/kyc');
   await Shop.updateOne({ _id: shop._id }, { $set: {
     email: 'asha@example.com', address: { text: 'Flat 2, Kondapur', location: { type: 'Point', coordinates: [78.36, 17.46] } }, coverImageUrl: 'shop/a.jpg',
     hours: [{ day: 1, opensAt: '09:00', closesAt: '19:00' }], bio: 'Bridal makeup and salon services at home since 2018.', yearsActive: 7, 'kyc.status': 'pending_review',
+    savedUpiIds: [{ upiId: 'asha@okaxis', isDefault: true }],
   } });
   expect(await profileStatus('shop', shop._id)).toMatchObject({ complete: true, missing: [] });
   const EventPartner = require('../src/modules/events/event-partner.model');

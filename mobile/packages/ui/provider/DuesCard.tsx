@@ -3,6 +3,7 @@
  * how much, by when, and telling us it was paid.
  */
 import React, { useState } from 'react';
+import { ZappyPayTo } from './components/ZappyPayTo';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { AlertTriangle, ChevronDown, Wallet } from 'lucide-react-native';
 import { useWorkerDuesQuery, useClaimDuesPaymentMutation } from '@zappy/core/api';
@@ -77,6 +78,7 @@ export function DuesCard({ compact = false }: { compact?: boolean }) {
               <Text variant="bodySmall" color={ink[700]}><Text variant="bodySmall" weight="bold">How to pay: </Text>{view.payInstructions}</Text>
             </View>
           ) : null}
+          <ZappyPayTo payTo={data?.dues?.payTo} amountPaise={data?.dues?.duesPaise} />
           {paying ? (
             <View style={styles.form}>
               <Text variant="bodySmall" weight="semibold">Tell us what you paid</Text>

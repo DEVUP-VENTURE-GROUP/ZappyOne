@@ -19,6 +19,19 @@ const DUES_FIELDS = [
   rupeeField('workerDuesWarnPaise', 10000000),
   rupeeField('workerDuesLimitPaise', 10000000),
   { key: 'duesPayInstructions', toForm: (v) => v || '', toValue: (v) => String(v || '').trim(), valid: (v) => v.length <= 300 },
+  // ZappyOne's own receiving account: where partners pay dues and subscriptions (shown on their cards with a UPI button).
+  { key: 'zappyPayUpiId', toForm: (v) => v || '', toValue: (v) => String(v || '').trim(), valid: (v) => !v || /^[a-zA-Z0-9._-]{2,256}@[a-zA-Z][a-zA-Z0-9.-]{1,64}$/.test(v.trim()) },
+  { key: 'zappyPayAccountName', toForm: (v) => v || '', toValue: (v) => String(v || '').trim(), valid: (v) => v.length <= 120 },
+  { key: 'zappyPayBankName', toForm: (v) => v || '', toValue: (v) => String(v || '').trim(), valid: (v) => v.length <= 120 },
+  { key: 'zappyPayAccountNumber', toForm: (v) => v || '', toValue: (v) => String(v || '').replace(/\s/g, ''), valid: (v) => !v || /^\d{6,18}$/.test(v.replace(/\s/g, '')) },
+  { key: 'zappyPayIfsc', toForm: (v) => v || '', toValue: (v) => String(v || '').trim().toUpperCase(), valid: (v) => !v || /^[A-Z]{4}0[A-Z0-9]{6}$/.test(v.trim().toUpperCase()) },
+];
+const ACCOUNT = [
+  ['zappyPayUpiId', 'ZappyOne UPI ID', 'zappyone@okaxis', 100],
+  ['zappyPayAccountName', 'Account holder name', 'DEVUP Venture Group', 120],
+  ['zappyPayBankName', 'Bank name', 'HDFC Bank', 120],
+  ['zappyPayAccountNumber', 'Account number', '50100123456789', 20],
+  ['zappyPayIfsc', 'IFSC', 'HDFC0001234', 11],
 ];
 
 function Limits() {
@@ -48,6 +61,21 @@ function Limits() {
           placeholder="Pay to UPI zappyone@okaxis and tap I have paid"
           className="w-full min-w-[260px] rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 sm:w-80" />
       </Setting>
+      <div className="border-t border-slate-100 px-4 py-3">
+        <h4 className="text-[13px] font-bold text-slate-800">ZappyOne receiving account</h4>
+        <p className="mt-0.5 text-[12px] text-slate-500">Where partners pay what they owe, and pro subscriptions. Shown on every partner's dues card with an Open UPI app button. Pay now online needs none of this.</p>
+        {!f.form.zappyPayUpiId && !f.form.zappyPayAccountNumber && (
+          <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-[12.5px] font-semibold text-amber-800">Not set yet: partners paying outside the app do not know where to pay. Add at least the UPI ID.</p>
+        )}
+        <div className="mt-2 grid gap-2 sm:grid-cols-2">
+          {ACCOUNT.map(([key, label, ph, max]) => (
+            <label key={key} className="text-[12px] font-semibold text-slate-600">{label}
+              <input value={f.form[key]} onChange={(e) => f.set(key)(e.target.value)} placeholder={ph} maxLength={max}
+                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-normal text-slate-800 outline-none focus:ring-2 focus:ring-blue-500" />
+            </label>
+          ))}
+        </div>
+      </div>
       {!order && <p className="px-4 pb-3 text-[12px] text-red-600">The warning must be at or below the limit.</p>}
     </Card>
   );

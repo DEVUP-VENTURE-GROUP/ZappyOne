@@ -218,7 +218,8 @@ async function submitForReview({ owner, enrolmentId }) {
   // A business's service is verified only once its profile is complete (onboarding/profile-check); a technician's identity travels with the application itself.
   const status = owner.kind === 'shop' ? await require('./profile-check').profileStatus('shop', owner.id) : { missing: [] };
   // Identity documents arrive with the application itself, so only the business details are required first.
-  const profile = { missing: status.missing.filter((m) => m.key !== 'kyc') };
+  // The UPI ID is needed to go live (customers pay them), not to apply.
+  const profile = { missing: status.missing.filter((m) => m.key !== 'kyc' && m.key !== 'upi') };
   profile.complete = profile.missing.length === 0;
   if (!profile.complete) throw httpError(`Finish your profile first: ${profile.missing.map((m) => m.label.toLowerCase()).join(', ')}.`, 409, 'PROFILE_INCOMPLETE', { missing: profile.missing });
 

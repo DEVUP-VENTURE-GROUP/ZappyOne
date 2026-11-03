@@ -1,5 +1,6 @@
 /** What this business owes ZappyOne from cash jobs, and telling ZappyOne once it has paid (the website's PartnerDuesCard); hidden when nothing is owed. */
 import { useState } from 'react';
+import { ZappyPayTo, type PayTo } from '@zappy/ui/provider/components/ZappyPayTo';
 import { PayDuesButton } from '@zappy/ui/provider/PayDuesButton';
 import { StyleSheet, TextInput, View } from 'react-native';
 import { AlertTriangle, CircleCheck, Clock3, Wallet } from 'lucide-react-native';
@@ -13,7 +14,7 @@ import { radius } from '@zappy/ui/theme/radius';
 import { spacing } from '@zappy/ui/theme/spacing';
 
 interface Claim { _id: string; amountPaise: number; reference: string; status: 'pending' | 'confirmed' | 'rejected' }
-interface Dues { duesPaise: number; limitPaise: number; warnPaise: number; isBlocked: boolean; payInstructions: string; claims?: Claim[] }
+interface Dues { duesPaise: number; limitPaise: number; warnPaise: number; isBlocked: boolean; payInstructions: string; payTo?: PayTo | null; claims?: Claim[] }
 const STATE = { pending: ['Being checked', Clock3, accent[700]], confirmed: ['Received', CircleCheck, success[700]], rejected: ['Not found', AlertTriangle, danger[600]] } as const;
 
 export function PartnerDuesCard() {
@@ -42,6 +43,7 @@ export function PartnerDuesCard() {
         {d.isBlocked ? `New jobs are paused until it is under ${formatPaise(d.limitPaise)}.` : `Your ZappyOne amount from finished jobs. New jobs pause at ${formatPaise(d.limitPaise)}.`}
       </Text>
       {d.payInstructions ? <View style={styles.pay}><Text variant="caption" weight="semibold">{d.payInstructions}</Text></View> : null}
+      <ZappyPayTo payTo={d.payTo} amountPaise={d.duesPaise} />
       {(d.claims || []).slice(0, 3).map((c) => { const [label, Icon, tone] = STATE[c.status] || STATE.pending; return (
         <View key={c._id} style={styles.head}><Icon size={14} color={tone} /><Text variant="caption" weight="semibold" color={tone}>{formatPaise(c.amountPaise)} · {c.reference} · {label}</Text></View>
       ); })}

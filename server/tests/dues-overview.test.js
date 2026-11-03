@@ -26,3 +26,16 @@ test('totals, who is paused, and each payment with who paid and how', async () =
   expect(res.body.totals.collectedThisMonthPaise).toBeGreaterThanOrEqual(30000);
   expect(res.body.payments[0]).toMatchObject({ amountPaise: 30000, how: 'Recorded by admin', reference: 'UTR123456', partner: { kind: 'shop', name: 'Kondapur Fixers' } });
 });
+
+test('admin sets the ZappyOne receiving account; partners see where to pay; a bad UPI ID is refused', async () => {
+  const Shop = require('../src/modules/shop/shop.model');
+  const { signAccessToken } = require('../src/modules/auth/token.service');
+  const bad = await call('patch', '/cancellation-config').send({ zappyPayUpiId: 'not a upi' });
+  expect(bad.status).toBe(400);
+  const ok = await call('patch', '/cancellation-config').send({ zappyPayUpiId: 'zappyone@okaxis', zappyPayAccountName: 'DEVUP Venture Group', zappyPayAccountNumber: '50100123456789', zappyPayIfsc: 'hdfc0001234' });
+  expect(ok.status).toBe(200);
+  const shop = await Shop.create({ businessName: 'Madhapur Mobiles', ownerName: 'Asif', phone: '9000000603' });
+  const dues = await request(app).get('/api/shops/me/dues').set('Authorization', `Bearer ${signAccessToken({ sub: String(shop._id), role: 'shop' })}`);
+  expect(dues.status).toBe(200);
+  expect((dues.body.dues || dues.body).payTo).toMatchObject({ upiId: 'zappyone@okaxis', accountNumber: '50100123456789', ifsc: 'HDFC0001234' });
+});

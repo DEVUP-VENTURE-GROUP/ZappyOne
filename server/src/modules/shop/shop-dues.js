@@ -11,7 +11,7 @@ async function duesOf(shopId) {
     DuesClaim.find({ shopId }).sort({ createdAt: -1 }).limit(5).select('amountPaise method reference status decisionNote createdAt').lean(),
   ]);
   const duesPaise = Math.max(0, b.owedPaise + b.paidOutPaise - b.earnedPaise);
-  return { duesPaise, limitPaise: lim.limitPaise, warnPaise: lim.warnPaise, isBlocked: duesPaise >= lim.limitPaise, payInstructions: lim.payInstructions, claims };
+  return { duesPaise, limitPaise: lim.limitPaise, warnPaise: lim.warnPaise, isBlocked: duesPaise >= lim.limitPaise, payInstructions: lim.payInstructions, payTo: lim.payTo, claims };
 }
 
 // The shops in this list at or over the limit, in two aggregate reads however many shops.

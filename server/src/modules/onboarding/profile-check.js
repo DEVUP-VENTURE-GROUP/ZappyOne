@@ -1,5 +1,7 @@
 // What a ServicePro partner must fill in before their dashboard opens: one rule per kind of account, decided here so every app shows the same list. Each missing item says where in ServicePro it is filled.
 const SUBMITTED = (s) => !!s && s !== 'not_submitted' && s !== 'rejected';
+// Customers pay partners directly (jobs/pay-direct): without a valid UPI ID they can only pay cash.
+const hasUpi = (p) => (p.savedUpiIds || []).some((u) => /^[a-zA-Z0-9._-]{2,256}@[a-zA-Z][a-zA-Z0-9.-]{1,64}$/.test(String(u.upiId || '').trim()));
 const filled = (v, min = 1) => typeof v === 'string' ? v.trim().length >= min : v != null && v !== '';
 
 const RULES = {
@@ -13,6 +15,7 @@ const RULES = {
     ['bio', 'About your work (30 letters or more)', filled(p.bio, 30), '/shop/profile'],
     ['years', 'Years in this work', Number.isFinite(p.yearsActive) && p.yearsActive >= 0, '/shop/profile'],
     ['kyc', 'Identity documents sent for verification', SUBMITTED(p.kyc?.status), '/shop/kyc'],
+    ['upi', 'UPI ID where customers pay you', hasUpi(p), '/shop/bank'],
   ],
   event_partner: (p) => [
     ['businessName', 'Business name', filled(p.businessName, 2), '/partner/profile'],
@@ -27,13 +30,15 @@ const RULES = {
     ['name', 'Your name', filled(p.name, 2), '/worker/profile'],
     ['photo', 'Your photo', filled(p.profilePhotoKey), '/worker/profile'],
     ['kyc', 'Identity documents sent for verification', SUBMITTED(p.kyc?.status), '/worker/kyc'],
+    // Independent pros are paid by the customer; a shop's technician (paid through the shop) and ZappyOne staff are not.
+    ...(p.shopId || p.employment?.type === 'staff' ? [] : [['upi', 'UPI ID where customers pay you', hasUpi(p), '/worker/bank']]),
   ],
 };
 
 const FIELDS = {
-  shop: 'businessName ownerName email address hours coverImageUrl bio yearsActive kyc.status',
+  shop: 'businessName ownerName email address hours coverImageUrl bio yearsActive kyc.status savedUpiIds',
   event_partner: 'businessName ownerName cities profilePhotoKey bio yearsExperience kyc.status',
-  worker: 'name profilePhotoKey kyc.status',
+  worker: 'name profilePhotoKey kyc.status savedUpiIds shopId employment.type',
 };
 
 async function profileStatus(role, id) {

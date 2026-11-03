@@ -67,7 +67,7 @@ test('independent pros and event partners are nudged too, with every step left a
 
   const left = await setupLeft('worker', pro._id);
   expect(left).toMatchObject({ step: 'Your photo', path: '/worker/profile?focus=photo' });
-  expect(left.left).toEqual(['Your photo', 'Identity documents sent for verification']);
+  expect(left.left).toEqual(['Your photo', 'Identity documents sent for verification', 'UPI ID where customers pay you']);
 
   await setupNudges(now);
   const sentTo = (kind, id) => MessageLog.find({ toKind: kind, toId: String(id), key: 'provider.setup_next', channel: 'push' }).lean();

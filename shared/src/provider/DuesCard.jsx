@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import ZappyPayTo from './components/ZappyPayTo';
 import toast from 'react-hot-toast';
 import { AlertTriangle, ChevronDown, Loader2, Wallet } from 'lucide-react';
 import { useWorkerDuesQuery, useClaimDuesPaymentMutation } from '../services/api';
@@ -81,6 +82,7 @@ export default function DuesCard({ compact = false }) {
               <b>How to pay:</b> {d.payInstructions}
             </p>
           )}
+          <ZappyPayTo payTo={d.payTo} amountPaise={d.duesPaise} />
 
           {paying ? (
             <div className="mt-3 space-y-2 rounded-xl bg-white p-3 ring-1 ring-slate-100">

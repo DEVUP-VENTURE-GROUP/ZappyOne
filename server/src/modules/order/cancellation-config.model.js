@@ -29,6 +29,12 @@ const cancellationConfigSchema = new mongoose.Schema(
     workerDuesWarnPaise:  { type: Number, default: 150000, min: 0 },  // ₹1,500: warned
     workerDuesLimitPaise: { type: Number, default: 200000, min: 0 },  // ₹2,000: new jobs stop
     duesPayInstructions:  { type: String, default: '', maxlength: 300 },
+    // Where partners pay ZappyOne (dues, subscriptions): shown on their cards with a UPI button; admin sets it in Economics → Dues.
+    zappyPayUpiId:        { type: String, default: '', maxlength: 100 },
+    zappyPayAccountName:  { type: String, default: '', maxlength: 120 },
+    zappyPayBankName:     { type: String, default: '', maxlength: 120 },
+    zappyPayAccountNumber: { type: String, default: '', maxlength: 20 },
+    zappyPayIfsc:         { type: String, default: '', maxlength: 11 },
 
     // Behaviour thresholds
     workerRejectLimit:      { type: Number, default: 5 },   // consecutive rejects → auto-unavailable
