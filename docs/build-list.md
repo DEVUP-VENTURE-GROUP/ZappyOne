@@ -45,31 +45,40 @@ Based on the code as of 2026-11-03 (main `6033c6a1`).
 - 2026-11-03 Talk to ZappyOne (web, customer and ServicePro apps, admin replies with push).
 - 2026-11-03 No white screen on load: boot screen in HTML, page chunk loads during session restore.
 
-## F7 plan: "Busy now, I can come in 45 min" (accept with a later start)
+## F7 plan: offer queue, "I can come by", and an order that is never lost
 
-Status: planned, not built. Like Urban Company and ride apps: a pro who is busy or far can still take a job by promising a time, and the customer decides.
+Status: planned, not built. Today: each ring 30 s (`ringSec`), auto-assign at 3 min (`autoAssignSec`), offline nudge at 5 min, customer told at 10 min.
+All times below live in Economics → Dispatch; the numbers are the defaults.
 
-### How it works
+### The timeline of one ASAP booking
 
-1. **Pro's offer card**: three choices, *Take now*, *Take, I'll come in [20 · 30 · 45 · 60] min* and *Pass*. The later times shown are capped by Economics → Dispatch (`maxLaterStartMin`, default 60); a pro at their job cap sees none.
-2. **Server holds offers for one ring window**: a *Take now* inside the window wins at once, as today. *Come later* offers are collected; when the window ends the earliest promise (then reliability, then fairness) is chosen. Nobody is given a job they did not tap.
-3. **Customer approves**: "Ravi can be with you around 10:45 (in 45 min). OK, or find someone sooner?" The job is held for `customerDecisionSec` (default 120). OK books it at that time. *Sooner* keeps ringing, with Ravi's promise kept as the fallback. No answer means OK; an ASAP booking never silently becomes a much later one, because a promise over 30 minutes needs a tap.
-4. **The promise drives everything after**: tracking shows "arrives around 10:45", the late/no-show guard (F1) measures against the promised time, and the pro's reliability score (D2) counts promises kept.
+| When | What happens | Customer sees |
+|---|---|---|
+| 0 s | The nearest free pros ring, each for **40 s** (`ringSec` 40). A pro already on a job is rung only if nobody free is in reach. | "Finding your pro" |
+| every 40 s | Rung again, a little wider each round, up to `widenKm`. The card says "+N more jobs waiting" when several ring. | Pros asked so far, live |
+| 0 to 5 min | The job sits in every reached pro's **Work → Open jobs near you** list for **5 minutes** (`openListMin` 5), takeable any time, even after the ring ends. | |
+| any time | A pro can tap **Take now** (wins at once) or **I can come by [time]** (10, 20, 30, 45, 60 min; capped by `maxLaterStartMin`). | Each offer appears as it arrives |
+| on an offer | "Ravi can be with you around 10:45. **OK**", and below it **other pros near you** to pick instead (their own prices and arrival times). Nobody is ever given the job without tapping Take. | OK, or pick another |
+| 5 min, nothing yet | Offline pros nearby get "a job near you is waiting" (today's wave 2). Pros with auto-accept on can be given it (moved from 3 to 5 min, so the 5-minute list rule holds). | "Still looking; we have asked N pros" |
+| 10 min | Ops gets it in **Needs intervention** with a call button for the customer and the nearest pros (today). | Choices: keep waiting, pick a time, or cancel free |
+| no pro at all in the area | Says so at once (nobody covers the address), never a spinner. | "Nobody near this address does this yet" (live now) |
+
+### Never lost: the backups
+
+1. **Socket down on the pro's phone**: the offer also goes as a push; when the app opens, offers still inside their window are recovered from the server (exists today).
+2. **Pro taps Take as someone else does**: the job is claimed in one atomic step; the second sees "taken by another pro" (exists).
+3. **Customer's chosen pro ignores it**: after their window it opens to everyone near, without a new booking (exists).
+4. **Pro accepts, then cancels or vanishes**: it re-rings at once with its original place in line; the customer keeps their booking (exists for give-back; extend to no-show with F1).
+5. **Several offers at once**: the earliest time wins, then reliability (D2), then fairness. The customer can still pick any of them.
+6. **Customer does not answer an offer**: under 30 minutes away it is accepted for them after `customerDecisionSec` (120 s); over 30 minutes it always needs their tap, and keeps the job open meanwhile.
+7. **Server restarts mid-search**: the waves sweep picks every waiting job back up from the database every 10 s (exists).
+8. **Nothing, ever**: the job is never cancelled silently. Only the customer cancels, or ops after calling them.
 
 ### Data
-`matching.promise { minutes, at, workerId|shopId, offeredAt, customerDecision: 'pending'|'ok'|'sooner', decidedAt }`; the job stays in its waiting status until the customer says OK, so workload, capacity and ring rules need no new status.
+`matching.offers [{ by: 'shop:<id>'|'worker:<id>', at, minutes, kind: 'now'|'later' }]`, `matching.customerChoice { by, at }`, new Economics keys `openListMin`, `maxLaterStartMin`, `customerDecisionSec`; `ringSec` default 30 → 40, `autoAssignSec` 180 → 300.
 
-### Edge cases to cover
-- Two pros promise; one says *now* during the window: *now* wins and the others hear "taken".
-- The customer says *sooner*, nobody else takes it: the kept promise is booked automatically before the original pro's offer lapses.
-- The customer cancels while deciding: free, no fee, the pro hears at once.
-- The pro cancels after promising: counts like a cancellation; the job re-rings at once with the original priority.
-- The pro's current job runs long: at promise minus 10 min, ask "still on time?"; *running late* gives the customer the choice again.
-- A scheduled booking: no *come later* option (it already has a time).
-- A shop's offer: the promise is the shop's; the owner assigns a technician before the promised time or the job falls back.
-- Cap: a promise counts toward `maxActiveJobs` from the moment it is accepted.
-- Surge and boosts keep their amounts; a promise never changes the price.
-- Rakshak staff stay on the current ring-one-at-a-time rule (v3).
-
-### Build list
-Server: offer `promiseMin` on accept, window collection in `waves`, customer decision endpoint, promise-aware `arrival` and `workload`, messages (customer decision, pro outcome). Web + app: offer card buttons, customer decision sheet, tracking line. Tests: each edge case above as a route-level test.
+### Build order
+1. Server: offers collection on accept ('now' / 'later'), the 5-minute open list, customer choice endpoint, timing defaults, messages.
+2. ServicePro web + app: offer card "I can come by", Open jobs list countdown.
+3. Customer web + app: offers with OK plus other pros below, the waiting screen choices.
+4. Tests: every row and backup above as a route-level test (one booking, two pros, ten bookings at one pro, sockets off, restart).
