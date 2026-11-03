@@ -1,5 +1,6 @@
 /** What the shop earned today, this week or this month, across all its technicians (the website's ShopEarningsPage). */
 import { useState } from 'react';
+import { PartnerDuesCard } from '../components/PartnerDuesCard';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Briefcase, Users } from 'lucide-react-native';
 import { useShopEarningsQuery } from '@zappy/core/api';
@@ -19,6 +20,8 @@ export function ShopEarningsPage() {
     <View style={styles.page}>
       <ScreenHeader title="Earnings" safeArea />
       <ScrollView contentContainerStyle={styles.body}>
+        {/* What is owed to ZappyOne, apart from what they earned, with Pay (the website's earnings page). */}
+        <PartnerDuesCard />
         <StatementButton />
         <View style={styles.row}>
           {RANGES.map((r) => (

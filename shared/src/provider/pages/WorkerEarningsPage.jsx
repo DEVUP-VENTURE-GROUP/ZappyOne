@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import DuesCard from '../DuesCard';
+import { STAFF_PORTAL } from '../staffPortal';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, TrendingUp, Download, Zap, ChevronDown, ChevronUp, Loader2, Info, BarChart2 } from 'lucide-react';
@@ -126,6 +128,8 @@ export default function WorkerEarningsPage() {
 
         {/* Content Container (pulled up over header) */}
         <div className="relative z-20 px-4 -mt-16 pb-20">
+          {/* What is owed to ZappyOne, apart from what they earned, with Pay (worker-dues); not for ZappyOne staff. */}
+          {!STAFF_PORTAL && <div className="mb-4"><DuesCard /></div>}
           
           {/* Period Tabs */}
           <div className="bg-white p-1.5 rounded-2xl shadow-lg ring-1 ring-black/5 flex gap-1 mb-6 max-w-sm mx-auto">

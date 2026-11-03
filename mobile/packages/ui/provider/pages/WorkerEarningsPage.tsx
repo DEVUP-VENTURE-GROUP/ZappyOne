@@ -11,6 +11,8 @@ import { EmptyState, ScreenHeader, SkeletonList, Text } from '../../components';
 import { colors, zappy, ink, slate, success, accent, danger } from '../../theme/colors';
 import { radius } from '../../theme/radius';
 import { spacing } from '../../theme/spacing';
+import { DuesCard } from '../DuesCard';
+import { STAFF_APP } from '../staffApp';
 
 const fmt = (v: number) => `₹${((v || 0) / 100).toFixed(2)}`;
 
@@ -98,6 +100,8 @@ export function WorkerEarningsPage() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await refetch(); setRefreshing(false); }} />}
         ListHeaderComponent={
           <View style={styles.headerBlock}>
+            {/* What is owed to ZappyOne, apart from what they earned, with Pay (the website's earnings page); not for ZappyOne staff. */}
+            {!STAFF_APP ? <DuesCard /> : null}
             <View style={styles.total}>
               <Text variant="caption" weight="bold" color="rgba(255,255,255,0.7)">TOTAL NET EARNINGS</Text>
               <Text variant="display" weight="black" color="#fff">{fmt(summary.totalNet ?? 0)}</Text>

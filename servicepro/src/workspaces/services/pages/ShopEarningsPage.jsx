@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import PartnerDuesCard from '@shared/provider/components/PartnerDuesCard';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, IndianRupee, Briefcase, Users, Loader2 } from 'lucide-react';
 import { useShopEarningsQuery } from '@shared/services/api';
@@ -23,6 +24,8 @@ export default function ShopEarningsPage() {
       </div></header>
 
       <div className="max-w-lg lg:max-w-2xl mx-auto px-4 pt-4 space-y-3">
+        {/* What is owed to ZappyOne, apart from what they earned, with Pay (shop-dues). */}
+        <PartnerDuesCard />
         <StatementDownload />
 
         <div className="flex gap-2">
