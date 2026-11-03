@@ -8,10 +8,8 @@ const zoneService = require('../zone/zone.service');
 const Zone = require('../zone/zone.model');
 const { regionAt } = require('../zone/region');
 const { metresBetween } = require('../../core/geo/distance');
-const { redis } = require('../../config/redis');
 
 const EARTH_RADIUS_KM = 6378.1;
-const CACHE_TTL_SEC = 60;
 const PET_MAX_RADIUS_KM = 50;
 
 /**
@@ -72,8 +70,9 @@ async function coveringOwners(lat, lng) {
   const helpers = await Worker.find({ shopId: null, isBlocked: { $ne: true }, currentLocation: within(point, helpRadiusKm) })
     .select('_id').lean();
 
+  // Measured from where each provider works from (matching withBase: a shop's address, else the area's centre), as matching does.
   const repair = new Set(areas
-    .filter((a) => a.center?.coordinates && kmFrom(point, a.center.coordinates) <= (a.radiusKm || 0))
+    .filter((a) => a.base && kmFrom(point, a.base) <= Math.min(a.radiusKm || 0, 20))
     .map(ownerKey));
   const pet = new Map();
   for (const c of caps) {
@@ -131,12 +130,8 @@ async function pricedRepairOwners(ownerKeys, lines) {
  *   closed_now — covered, but every covering provider is offline or closed; nextOpening when known
  *   not_here   — outside every active zone, or no provider covers it
  */
+// Worked out on every call from the hexagon index (core/geo/hex): no answer about a place is kept, so a provider's change shows on the next request.
 async function serviceabilityAt({ lat, lng }) {
-  const cacheKey = `svc:cov:${await require('./coverage-version').current()}:${Number(lat).toFixed(3)}:${Number(lng).toFixed(3)}`;
-  try {
-    const hit = await redis.get(cacheKey);
-    if (hit) return JSON.parse(hit);
-  } catch { /* cache is best-effort */ }
 
   const region = regionAt(lat, lng);
   const [enforced, zone, activeZones] = await Promise.all([
@@ -206,7 +201,6 @@ async function serviceabilityAt({ lat, lng }) {
     };
   }
 
-  try { await redis.set(cacheKey, JSON.stringify(result), 'EX', CACHE_TTL_SEC); } catch { /* best-effort */ }
   return result;
 }
 

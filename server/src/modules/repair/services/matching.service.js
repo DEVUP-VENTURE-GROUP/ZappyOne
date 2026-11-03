@@ -9,6 +9,7 @@ const Shop = require('../../shop/shop.model');
 const s3Service = require('../../../core/storage/s3');
 const pricingService = require('./pricing.service');
 const { haversineKm } = require('../../../core/geo/distance');
+const hex = require('../../../core/geo/hex');
 
 /**
  * The point at which a provider stops being offered cash work.
@@ -66,6 +67,9 @@ function normalise(value, min, max) {
  * radius, and radius circles routinely spill across areas they do not serve.
  */
 let radiusCache = { km: 0, at: 0 };
+// The farthest anyone is offered a job from, and the rings a search widens through on the way there.
+const MAX_REACH_KM = 20;
+const RINGS_KM = [3, 5, 10, MAX_REACH_KM];
 
 /** Largest radius any active area covers, cached for a minute: it bounds the geo query. */
 async function maxAreaRadiusKm() {
@@ -78,17 +82,42 @@ async function maxAreaRadiusKm() {
   return radiusCache.km;
 }
 
-/** Service areas that could cover a point: within the widest radius, or listing its pincode. */
+/**
+ * Where each area's provider works from, as `base` [lng, lat]: a shop's own
+ * address pin (the point the card's distance and arrival time use), else the
+ * area's centre. One base for coverage and matching, so they never disagree.
+ */
+async function withBase(areas) {
+  const ids = [...new Set(areas.filter((a) => a.shopId).map((a) => String(a.shopId)))];
+  const pins = ids.length
+    ? new Map((await Shop.find({ _id: { $in: ids } }).select('address.location').lean()).map((s) => [String(s._id), s.address?.location?.coordinates]))
+    : new Map();
+  return areas.map((a) => {
+    const pin = a.shopId && pins.get(String(a.shopId));
+    return { ...a, base: pin?.length === 2 ? pin : a.center?.coordinates || null };
+  });
+}
+
+/** Service areas that could cover a point: centred within the widest radius, a shop whose address is, or listing its pincode. */
 async function candidateAreas({ lat, lng, pincode = null, extra = {} }) {
-  const maxKm = await maxAreaRadiusKm();
-  return ProviderServiceArea.find({
+  const maxKm = Math.max(await maxAreaRadiusKm(), MAX_REACH_KM);
+  // The hexagons around the customer (core/geo/hex), read from the index; a record saved before the index existed is still found by its pin.
+  const cells = hex.cellsWithin(Number(lng), Number(lat), maxKm);
+  const circle = { $centerSphere: [[Number(lng), Number(lat)], maxKm / EARTH_RADIUS_KM] };
+  const nearShops = await Shop.find({
+    $or: [{ addressHex: { $in: cells } }, { addressHex: null, 'address.location': { $geoWithin: circle } }],
+  }).distinct('_id');
+  const areas = await ProviderServiceArea.find({
     isActive: true,
     ...extra,
     $or: [
       ...(pincode ? [{ pincodes: pincode }] : []),
-      { center: { $geoWithin: { $centerSphere: [[Number(lng), Number(lat)], maxKm / EARTH_RADIUS_KM] } } },
+      { centerHex: { $in: cells } },
+      { centerHex: null, center: { $geoWithin: circle } },
+      ...(nearShops.length ? [{ shopId: { $in: nearShops } }] : []),
     ],
   }).lean();
+  return withBase(areas);
 }
 
 // The pin and radius decide who covers a point, as coverage.service does; an area's city name is a label and never excludes a provider minutes away across a city line.
@@ -107,7 +136,7 @@ async function findServiceableProviders({ lat, lng, pincode = null, serviceMode 
       covered = true;
     }
 
-    const coords = area.center?.coordinates;
+    const coords = area.base;
     if (coords?.length === 2) {
       distanceKm = haversineKm(lat, lng, coords[1], coords[0]);
       if (distanceKm <= (area.radiusKm || 0)) covered = true;
@@ -134,6 +163,7 @@ async function findServiceableProviders({ lat, lng, pincode = null, serviceMode 
       shopId: area.shopId ? String(area.shopId) : null,
       workerId: area.workerId ? String(area.workerId) : null,
       distanceKm,
+      radiusKm: area.radiusKm || null,
       areaId: area._id,
       workshopLocation: area.workshopLocation,
     });
@@ -403,6 +433,7 @@ async function findProviders({
        */
       imageUrl: await s3Service.signMedia(s.shopId ? profile.coverImageUrl : profile.profilePhotoKey),
       distanceKm: s.distanceKm,
+      radiusKm: s.radiusKm ?? null,
       // From the provider's base pin, as the booking prices it (create.js), so the
       // journey fee on the card is the one on the bill; distanceKm may later be
       // replaced by the road distance from where they are now, for arrival.
@@ -477,11 +508,23 @@ async function findProviders({
     }
   }
 
+  // Never farther than they serve: measured from where the provider really is (the arrival estimate), up to their own radius and never past 20 km.
+  for (let i = candidates.length - 1; i >= 0; i -= 1) {
+    const c = candidates[i];
+    if (c.distanceKm != null && c.distanceKm > Math.min(c.radiusKm || MAX_REACH_KM, MAX_REACH_KM)) {
+      rejected.push({ label: c.shopId ? `shop:${c.shopId}` : `worker:${c.workerId}`, reason: 'too_far' });
+      candidates.splice(i, 1);
+    }
+  }
+  if (!candidates.length) return { recommended: null, providers: [], rejected, reason: 'no_eligible_provider', nearbyCount: serviceable.length, primaryReason: 'too_far', repairName: repair.name };
+
   // Kept their arrival promises lately (jobs/promise): part of the ranking, neutral when too few visits.
   const kept = await require('../../jobs/promise').onTimeRates(candidates.map((c) => c.shopId || c.workerId)).catch(() => new Map());
   for (const c of candidates) c.onTimeRate = kept.get(String(c.shopId || c.workerId)) ?? null;
 
-  const ranked = rank(candidates, cfg);
+  // Nearest first: everyone within 3 km comes before anyone at 5, then 10, then 20; the ranking orders each ring.
+  const ringOf = (c) => (c.distanceKm == null ? RINGS_KM.length : RINGS_KM.findIndex((km) => c.distanceKm <= km));
+  const ranked = rank(candidates, cfg).map((c, i) => ({ c, i })).sort((a, b) => (ringOf(a.c) - ringOf(b.c)) || (a.i - b.i)).map(({ c }) => c);
   const capped = ranked.slice(0, limit || cfg.maxProvidersShown || 10);
 
   return {

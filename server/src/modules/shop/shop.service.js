@@ -214,12 +214,6 @@ async function updateProfile(shopId, patch) {
   }
   const shop = await Shop.findByIdAndUpdate(shopId, { $set: set }, { new: true, runValidators: true });
   if (!shop) throw Object.assign(new Error('Shop not found'), { status: 404 });
-  // A shop works from its address: moving it moves the service area customers are matched by, so the two never disagree.
-  const pin = set.address?.location?.coordinates;
-  if (Array.isArray(pin) && pin.length === 2) {
-    const { ProviderServiceArea } = require('../repair/models/config.model');
-    await ProviderServiceArea.updateMany({ shopId }, { $set: { center: { type: 'Point', coordinates: pin.map(Number) }, workshopAddress: set.address.text || '' } });
-  }
   // Saving new hours must move the badge immediately, not on the next reload.
   return withOpenState(await resolveShopImages(shop.toObject()));
 }

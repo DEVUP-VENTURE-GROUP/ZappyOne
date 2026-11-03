@@ -49,7 +49,6 @@ function ttlCache(ms, max = 2000) {
   };
 }
 const affinityCache = ttlCache(5 * 60_000);
-const placeCache = ttlCache(60_000);
 const resultCache = ttlCache(30_000, 5000);
 
 /** Lines this customer has opened before — a light personal boost. */
@@ -64,12 +63,9 @@ async function getAffinity(userId) {
 /** Which lines are live at this point (about 1 km cells); null when we don't know the location. */
 async function liveLinesAt(lat, lng) {
   if (lat == null || lng == null || Number.isNaN(Number(lat)) || Number.isNaN(Number(lng))) return null;
-  const cell = `${await require('../onboarding/coverage-version').current()}|${Number(lat).toFixed(2)},${Number(lng).toFixed(2)}`;
-  const hit = placeCache.get(cell);
-  if (hit) return hit;
   try {
     const svc = await serviceabilityAt({ lat: Number(lat), lng: Number(lng) });
-    return placeCache.set(cell, { status: svc.status, codes: new Set((svc.lines || []).map((l) => l.code)) });
+    return { status: svc.status, codes: new Set((svc.lines || []).map((l) => l.code)) };
   } catch (err) {
     logger.warn({ err: err.message }, '[SEARCH] serviceability lookup failed; not filtering by location');
     return null;

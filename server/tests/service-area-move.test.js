@@ -42,13 +42,14 @@ test('the pin moves to Hyderabad: one area, at the new pin, and Hyderabad custom
   expect(listed.body.areas[0].workshopAddress).toBe('Gachibowli, Hyderabad');
 });
 
-test('the shop changes its own address to Vikarabad: its service area follows, and Vikarabad customers find it', async () => {
-  const patch = await request(app).patch('/api/shops/me/profile').set('Authorization', `Bearer ${token}`)
-    .send({ address: { text: 'Market Mainroad 143, Vikarabad', location: { coordinates: VIKARABAD } } });
-  expect(patch.status).toBe(200);
-  const area = await ProviderServiceArea.findOne({ shopId: shop._id }).lean();
-  expect(area.center.coordinates).toEqual(VIKARABAD);
-  expect(area.workshopAddress).toBe('Market Mainroad 143, Vikarabad');
-  const near = await matching.findServiceableProviders({ lng: VIKARABAD[0], lat: VIKARABAD[1] + 0.01, serviceMode: 'doorstep' });
-  expect(near.some((p) => String(p.shopId) === String(shop._id))).toBe(true);
+test('a shop is measured from its own address: Vikarabad customers see the Vikarabad shop, Gachibowli (48 km) does not', async () => {
+  const Shop = require('../src/modules/shop/shop.model');
+  const vkb = await Shop.create({ businessName: 'VKB Wash', ownerName: 'Asif', phone: '9000000922', isActive: true, kyc: { status: 'approved' }, address: { text: 'Market Mainroad, Vikarabad', location: { type: 'Point', coordinates: VIKARABAD } } });
+  // The area pin left near Gachibowli, as MB GROUPS had it.
+  await ProviderServiceArea.create({ shopId: vkb._id, cityCode: 'vikarabad', center: { type: 'Point', coordinates: GACHIBOWLI }, radiusKm: 20, serviceModes: ['doorstep'] });
+  const at = async ([lng, lat]) => (await matching.findServiceableProviders({ lng, lat, serviceMode: 'doorstep' })).find((p) => String(p.shopId) === String(vkb._id));
+  const inVikarabad = await at([VIKARABAD[0] + 0.02, VIKARABAD[1]]);
+  expect(inVikarabad).toBeTruthy();
+  expect(inVikarabad.distanceKm).toBeLessThan(3);
+  expect(await at([GACHIBOWLI[0], GACHIBOWLI[1] + 0.01])).toBeUndefined();
 });

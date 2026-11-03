@@ -71,3 +71,14 @@ test("a pro's location heartbeat does not throw the caches away", async () => {
   await next();
   expect(await version.current()).not.toBe(v1);
 });
+
+test("a shop moving its address shows to customers about a second later", async () => {
+  const shop = await Shop.findOne({ businessName: 'Nearby Pricer' });
+  await ProviderServiceArea.updateOne({ shopId: shop._id }, { $set: { center: { type: 'Point', coordinates: [AT.lng, AT.lat] } } });
+  await Shop.updateOne({ _id: shop._id }, { $set: { address: { text: 'Far away', location: { type: 'Point', coordinates: [AT.lng, AT.lat + 1] } } } });
+  await next();
+  expect(await bikeWashLive()).toBe(false);
+  await Shop.updateOne({ _id: shop._id }, { $set: { address: { text: 'Right here', location: { type: 'Point', coordinates: [AT.lng, AT.lat] } } } });
+  await next();
+  expect(await bikeWashLive()).toBe(true);
+});

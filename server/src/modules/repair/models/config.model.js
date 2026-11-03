@@ -280,6 +280,9 @@ serviceAreaSchema.index({ cityCode: 1, isActive: 1 });
 const RepairConfig = mongoose.model('RepairConfig', repairConfigSchema);
 const QAChecklist = mongoose.model('QAChecklist', qaChecklistSchema);
 // What is bookable where changes with this (onboarding/coverage-version): caches refresh on the next request.
+// The area centre's hexagon (core/geo/hex), kept with the pin: the index customers' searches read.
+serviceAreaSchema.add({ centerHex: { type: String, default: null, index: true } });
+require('../../../core/geo/hex').indexOn(serviceAreaSchema, { path: 'center', field: 'centerHex' });
 require('../../onboarding/coverage-version').watch(serviceAreaSchema);
 const ProviderServiceArea = mongoose.model('ProviderServiceArea', serviceAreaSchema);
 
