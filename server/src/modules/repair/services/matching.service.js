@@ -523,8 +523,12 @@ async function findProviders({
   for (const c of candidates) c.onTimeRate = kept.get(String(c.shopId || c.workerId)) ?? null;
 
   // Nearest first: everyone within 3 km comes before anyone at 5, then 10, then 20; the ranking orders each ring.
+  // Only while distance counts in admin's ranking weights: weighted to 0, the configured weights alone decide.
   const ringOf = (c) => (c.distanceKm == null ? RINGS_KM.length : RINGS_KM.findIndex((km) => c.distanceKm <= km));
-  const ranked = rank(candidates, cfg).map((c, i) => ({ c, i })).sort((a, b) => (ringOf(a.c) - ringOf(b.c)) || (a.i - b.i)).map(({ c }) => c);
+  const byWeights = rank(candidates, cfg);
+  const ranked = (cfg.rankingWeights?.distance ?? 1) > 0
+    ? byWeights.map((c, i) => ({ c, i })).sort((a, b) => (ringOf(a.c) - ringOf(b.c)) || (a.i - b.i)).map(({ c }) => c)
+    : byWeights;
   const capped = ranked.slice(0, limit || cfg.maxProvidersShown || 10);
 
   return {

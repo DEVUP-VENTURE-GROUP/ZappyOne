@@ -305,6 +305,14 @@ describe('ranking', () => {
     pricingService.invalidateConfigCache();
   });
 
+  it('nearest first within 20 km: a pro 2 km away comes before a cheaper one 12 km away; 25 km is never offered', async () => {
+    await makeProvider({ name: 'Far Cheap', priceP: 1200000, distanceKm: 12, rating: 4.9, warrantyDays: 365 });
+    await makeProvider({ name: 'Near', priceP: 1500000, distanceKm: 2, rating: 4.0, warrantyDays: 90 });
+    await makeProvider({ name: 'Too Far', priceP: 900000, distanceKm: 25 });
+    const res = await matching.findProviders(baseQuery);
+    expect(res.providers.map((p) => p.name)).toEqual(['Near', 'Far Cheap']);
+  });
+
   it('returns real per-provider differences for the customer to compare', async () => {
     await makeProvider({ name: 'A', priceP: 1950000, distanceKm: 2, warrantyDays: 180 });
     await makeProvider({ name: 'B', priceP: 2050000, distanceKm: 3, warrantyDays: 365 });
