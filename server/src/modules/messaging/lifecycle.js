@@ -190,24 +190,52 @@ async function dailySummary(now = new Date()) {
   return true;
 }
 
-const SETUP_NUDGE_DAYS = [1, 2, 4, 7, 14];
+// Days after joining when an unfinished setup is nudged, for every kind of partner; each nudge lists every step still open.
+const SETUP_NUDGE_DAYS = [1, 2, 4, 7, 14, 21, 30];
+const SETUP_WINDOW_DAYS = 31;
+const withFocus = (item) => `${item.path}?focus=${item.key}`;
+
+// What is left for one partner: the first step to open and every label still to do; null when nothing is.
+async function setupLeft(kind, id) {
+  const { setupJourney, profileStatus } = require('../onboarding/profile-check');
+  if (kind === 'shop') {
+    const j = await setupJourney(id);
+    if (j.complete || !j.next) return null;
+    const profile = await profileStatus('shop', id);
+    const steps = j.steps.filter((st) => st.key !== 'profile' && !st.done && !st.waiting);
+    const left = [...profile.missing.map((m) => m.label), ...steps.map((st) => st.label)];
+    const first = profile.missing[0];
+    return { step: first ? first.label : j.next.label, path: first ? withFocus(first) : j.next.path, done: j.done, total: j.total, left };
+  }
+  const st = await profileStatus(kind, id);
+  if (st.complete || !st.missing.length) return null;
+  return { step: st.missing[0].label, path: withFocus(st.missing[0]), done: st.total - st.missing.length, total: st.total, left: st.missing.map((m) => m.label) };
+}
+
 async function setupNudges(now = new Date()) {
   const ist = IST(now);
   if (ist.getHours() < 10) return 0;
   const day = ist.toISOString().slice(0, 10);
   const { redis } = require('../../config/redis');
   if (!(await redis.set(`setup-nudge:ran:${day}`, '1', 'EX', 36 * 3600, 'NX'))) return 0;
-  const Shop = require('../shop/shop.model');
-  const { setupJourney } = require('../onboarding/profile-check');
-  const shops = await Shop.find({ isBlocked: { $ne: true }, createdAt: { $gte: new Date(now - 15 * 86400000) } }).select('_id createdAt').limit(1000).lean();
+  const since = new Date(now - SETUP_WINDOW_DAYS * 86400000);
+  const fresh = { isBlocked: { $ne: true }, createdAt: { $gte: since } };
+  const [shops, workers, partners] = await Promise.all([
+    require('../shop/shop.model').find(fresh).select('_id createdAt').limit(1000).lean(),
+    // Independent pros only: a shop's technician is set up by the shop, and ZappyOne staff are not partners.
+    require('../worker/worker.model').find({ ...fresh, shopId: null, 'employment.type': { $ne: 'staff' } }).select('_id createdAt').limit(1000).lean(),
+    require('../events/event-partner.model').find(fresh).select('_id createdAt').limit(1000).lean(),
+  ]);
   let sent = 0;
-  for (const sh of shops) {
-    const age = Math.floor((now - new Date(sh.createdAt)) / 86400000);
-    if (!SETUP_NUDGE_DAYS.includes(age)) continue;
-    const j = await setupJourney(sh._id);
-    if (j.complete || !j.next) continue;
-    await send('provider.setup_next', { to: { kind: 'shop', id: sh._id }, refId: `setup:${day}`, ctx: { step: j.next.label, path: j.next.path, done: j.done, total: j.total } });
-    sent += 1;
+  for (const [kind, rows] of [['shop', shops], ['worker', workers], ['event_partner', partners]]) {
+    for (const row of rows) {
+      const age = Math.floor((now - new Date(row.createdAt)) / 86400000);
+      if (!SETUP_NUDGE_DAYS.includes(age)) continue;
+      const left = await setupLeft(kind, row._id).catch(() => null);
+      if (!left) continue;
+      await send('provider.setup_next', { to: { kind, id: row._id }, refId: `setup:${day}`, ctx: left });
+      sent += 1;
+    }
   }
   return sent;
 }
@@ -223,4 +251,4 @@ async function sweep() {
   return out;
 }
 
-module.exports = { onStatus, sweep, rateReminders, weeklySummaries, dailySummary, setupNudges, MAP };
+module.exports = { onStatus, sweep, rateReminders, weeklySummaries, dailySummary, setupNudges, setupLeft, MAP };

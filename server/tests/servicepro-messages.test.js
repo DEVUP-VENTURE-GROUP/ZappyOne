@@ -49,6 +49,29 @@ test('a new shop still setting up hears its next step once that day, and a finis
   expect(await setupNudges(now)).toBe(1);
   expect(await setupNudges(now)).toBe(0);
   const [log] = await logs(fresh._id, 'provider.setup_next');
-  expect(log.subject).toBe('Next: profile complete');
+  // The first real field still open, not the step's group name.
+  expect(log.subject).toBe('Next: email for receipts and notices');
   expect(await logs(old._id, 'provider.setup_next')).toHaveLength(0);
+});
+
+test('independent pros and event partners are nudged too, with every step left and a link that opens the field; ZappyOne staff are not', async () => {
+  const Worker = require('../src/modules/worker/worker.model');
+  const EventPartner = require('../src/modules/events/event-partner.model');
+  const { setupLeft } = require('../src/modules/messaging/lifecycle');
+  const now = new Date('2027-07-03T06:30:00Z');
+  const joined = new Date(now - 2 * 86400000 - 3600000);
+  const pro = await Worker.create({ phone: '9822300011', name: 'Imran', createdAt: joined });
+  const staff = await Worker.create({ phone: '9822300012', name: 'Staff', employment: { type: 'staff' }, createdAt: joined });
+  const partner = await EventPartner.create({ phone: '9822300013', businessName: 'Gala Decor', ownerName: 'Ria', createdAt: joined });
+  await redis.del('setup-nudge:ran:2027-07-03');
+
+  const left = await setupLeft('worker', pro._id);
+  expect(left).toMatchObject({ step: 'Your photo', path: '/worker/profile?focus=photo' });
+  expect(left.left).toEqual(['Your photo', 'Identity documents sent for verification']);
+
+  await setupNudges(now);
+  const sentTo = (kind, id) => MessageLog.find({ toKind: kind, toId: String(id), key: 'provider.setup_next', channel: 'push' }).lean();
+  expect(await sentTo('worker', pro._id)).toHaveLength(1);
+  expect(await sentTo('event_partner', partner._id)).toHaveLength(1);
+  expect(await sentTo('worker', staff._id)).toHaveLength(0);
 });

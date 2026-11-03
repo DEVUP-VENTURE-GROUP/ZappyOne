@@ -316,16 +316,20 @@ const CATALOG = {
     }),
   },
   'provider.setup_next': {
-    audience: 'provider', type: 'report_received', channels: ['push', 'email'], label: 'Finish your setup (next step)',
-    sample: () => ({ name: 'Ravi', step: 'Set your work and prices', path: '/provider/services', done: 3, total: 5 }),
-    build: ({ name, step, path, done, total, url }) => ({
-      push: { title: `Next: ${step.toLowerCase()}`, body: `You are ${done} of ${total} steps in. Finish setup and jobs near you start ringing.`, link: path },
-      email: {
-        subject: `Next: ${step.toLowerCase()}`, preheader: `${done} of ${total} steps done.`, heading: 'Finish your setup',
-        intro: [`Hi ${first(name)}, you are ${done} of ${total} steps in. Next: ${step.toLowerCase()}. Once setup is done, customers near you can book you.`],
-        button: { label: 'Continue setup', url: url(path) },
-      },
-    }),
+    audience: 'provider', type: 'report_received', channels: ['push', 'email'], label: 'Finish your setup (every step left)',
+    sample: () => ({ name: 'Ravi', step: 'Set your work and prices', path: '/provider/services', done: 3, total: 5, left: ['Set your work and prices', 'Where you work'] }),
+    build: ({ name, step, path, done, total, left = [], url }) => {
+      // Every step still open, so nothing is forgotten; the tap opens the first one.
+      const rest = left.length > 1 ? ` Still to do: ${left.slice(0, 4).join(', ').toLowerCase()}${left.length > 4 ? ` and ${left.length - 4} more` : ''}.` : '';
+      return {
+        push: { title: `Next: ${step.toLowerCase()}`, body: `You are ${done} of ${total} steps in.${rest} Finish setup and jobs near you start ringing.`, link: path },
+        email: {
+          subject: `Next: ${step.toLowerCase()}`, preheader: `${done} of ${total} steps done.`, heading: 'Finish your setup',
+          intro: [`Hi ${first(name)}, you are ${done} of ${total} steps in. Next: ${step.toLowerCase()}. Once setup is done, customers near you can book you.`, ...(left.length > 1 ? [`What is left: ${left.join(', ')}.`] : [])],
+          button: { label: 'Continue setup', url: url(path) },
+        },
+      };
+    },
   },
   'provider.weekly_summary': {
     audience: 'provider', type: 'milestone_reached', channels: ['email'], label: 'Weekly earnings summary (Monday)',

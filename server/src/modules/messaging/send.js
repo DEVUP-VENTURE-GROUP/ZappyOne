@@ -40,6 +40,7 @@ const MODEL = {
   user: () => require('../user/user.model'),
   worker: () => require('../worker/worker.model'),
   shop: () => require('../shop/shop.model'),
+  event_partner: () => require('../events/event-partner.model'),
 };
 
 /** Name, verified email and email choices of a person. */
