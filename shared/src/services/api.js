@@ -397,7 +397,7 @@ export const {
   useJobArrivalQuery,
   useAdminReinstateEventPartnerMutation,
   useEventDeclineQuoteQuery,
-  useVerifyActionOtpMutation, useShopPayoutsQuery, useRequestShopPayoutMutation, useAdminShopPayoutsQuery, useAdminDecideShopPayoutMutation,
+  useRequestActionOtpMutation, useVerifyActionOtpMutation, useShopPayoutsQuery, useRequestShopPayoutMutation, useAdminShopPayoutsQuery, useAdminDecideShopPayoutMutation,
   useMyRepeatsQuery, useRepeatJobMutation, useRepeatActionMutation,
   useWorkerHoursQuery, useSaveWorkerHoursMutation,
   useRateCustomerMutation,

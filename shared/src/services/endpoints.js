@@ -214,6 +214,8 @@ export function endpoints(b, { adminApiPath }) {
       query: (body) => ({ url: '/auth/otp/request', method: 'POST', body }),
     }),
     /** Re-confirm with an OTP before a sensitive change (bank details, payouts): 10 minutes. */
+    // The code goes to the signed-in account's own number (the server reads it from the session).
+    requestActionOtp: b.mutation({ query: () => ({ url: '/auth/otp/request-action', method: 'POST' }) }),
     verifyActionOtp: b.mutation({ query: (body) => ({ url: '/auth/otp/verify-action', method: 'POST', body }) }),
     /** Shop withdraw (shop/shop-payout). */
     shopPayouts: b.query({ query: () => '/shops/me/payouts', providesTags: ['ShopPayouts'], keepUnusedDataFor: 0 }),

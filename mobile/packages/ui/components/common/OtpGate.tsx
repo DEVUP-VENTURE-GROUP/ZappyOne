@@ -11,10 +11,9 @@
 import React, { useCallback, useRef, useState } from 'react';
 import { Modal, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { ShieldCheck, X } from 'lucide-react-native';
-import { useAccountMeQuery, useRequestOtpMutation, useVerifyActionOtpMutation } from '@zappy/core/api';
-import { useAppSelector } from '@zappy/core/store/hooks';
+import { useRequestActionOtpMutation, useVerifyActionOtpMutation } from '@zappy/core/api';
 import type { ApiErr } from '../../lib/feedback';
-import { colors, ink, success, danger } from '../../theme/colors';
+import { colors, ink, success } from '../../theme/colors';
 import { radius } from '../../theme/radius';
 import { spacing } from '../../theme/spacing';
 import { Button } from '../Button';
@@ -23,14 +22,11 @@ import { toast } from '../Toast';
 import { errText } from '../../lib/feedback';
 
 export function useOtpGate() {
-  // Provider sessions boot without a profile, so the account status fills in the number.
-  const { data: account } = useAccountMeQuery();
-  const phone = useAppSelector((s) => s.auth.user?.phone) || account?.phone || '';
-  const role = useAppSelector((s) => s.auth.role);
   const [open, setOpen] = useState(false);
   const [code, setCode] = useState('');
   const [sent, setSent] = useState(false);
-  const [requestOtp, { isLoading: sending }] = useRequestOtpMutation();
+  // The server sends to the signed-in account's own number.
+  const [requestOtp, { isLoading: sending }] = useRequestActionOtpMutation();
   const [verify, { isLoading: verifying }] = useVerifyActionOtpMutation();
   const pending = useRef<{ resolve: () => void; reject: (e: Error) => void } | null>(null);
 
@@ -49,9 +45,9 @@ export function useOtpGate() {
 
   async function send() {
     try {
-      await requestOtp({ phone, role }).unwrap();
+      const r = await requestOtp(undefined).unwrap();
       setSent(true);
-      toast.success(`Code sent to ${phone.replace(/^(\+91)?(\d{2})\d{6}(\d{2})$/, '$2••••••$3')}`);
+      toast.success(r?.sentTo ? `Code sent to ${r.sentTo}` : 'Code sent');
     } catch (err) { toast.error(errText(err, 'Could not send the code')); }
   }
   async function confirm() {
@@ -73,7 +69,7 @@ export function useOtpGate() {
           </View>
           <Text variant="caption" color={ink[500]}>Money details are protected. We send a code to your registered number.</Text>
           {!sent ? (
-            <Button label="Send code" onPress={send} loading={sending} disabled={!phone} fullWidth />
+            <Button label="Send code" onPress={send} loading={sending} fullWidth />
           ) : (
             <View style={styles.row}>
               <TextInput value={code} onChangeText={(v) => setCode(v.replace(/\D/g, '').slice(0, 6))} keyboardType="number-pad" textContentType="oneTimeCode"
@@ -81,7 +77,6 @@ export function useOtpGate() {
               <Button label="Confirm" variant="success" onPress={confirm} loading={verifying} disabled={code.length < 4} />
             </View>
           )}
-          {!phone ? <Text variant="caption" color={danger[600]}>No phone number on this account. Sign in again.</Text> : null}
         </View>
       </View>
     </Modal>

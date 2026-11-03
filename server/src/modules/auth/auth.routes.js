@@ -210,8 +210,8 @@ router.post('/logout', ctrl.logout);
 // Revoke all sessions for the authenticated user (sign out everywhere).
 router.post('/revoke-all', authenticate, ctrl.revokeAll);
 
-// Re-verify OTP for sensitive actions (payout, bank account changes).
-// Must have first requested an OTP via /otp/request for their phone number.
+// Re-verify OTP for sensitive actions (payout, bank account changes): request sends to the account's own number, then verify.
+router.post('/otp/request-action', otpPhoneLimiter, authLimiter, authenticate, ctrl.requestSensitiveOtp);
 router.post(
   '/otp/verify-action',
   authLimiter,

@@ -292,10 +292,34 @@ async function revokeAll(req, res, next) {
  * The OTP must have been requested via /otp/request for the authenticated user's phone.
  * On success sets a 10-minute Redis flag — subsequent sensitive requests are allowed.
  */
+// The signed-in account's own phone: from the session, else from the account (an email sign-in may not carry it).
+const ACCOUNT_MODEL = { user: '../user/user.model', worker: '../worker/worker.model', shop: '../shop/shop.model', event_partner: '../events/event-partner.model' };
+async function sessionPhone({ sub, role, phone }) {
+  if (phone) return phone;
+  if (!ACCOUNT_MODEL[role]) return '';
+  const acc = await require(ACCOUNT_MODEL[role]).findById(sub).select('phone').lean();
+  return acc?.phone || '';
+}
+
+// A code for a money or bank change, sent to the account's own number; the browser never chooses where it goes.
+async function requestSensitiveOtp(req, res, next) {
+  try {
+    const phone = await sessionPhone(req.auth);
+    if (!phone) return res.status(400).json({ error: 'Add a phone number to your account first', code: 'NO_PHONE' });
+    const { otp, cooldownSec, resendsLeft, expiresInSec } = await authService.requestOtp(phone, req.auth.role);
+    res.json({
+      ok: true, cooldownSec, resendsLeft, expiresInSec,
+      sentTo: String(phone).replace(/^(\+91)?(\d{2})\d{6}(\d{2})$/, '$2••••••$3'),
+      ...(config.env !== 'production' && otp ? { otp } : {}),
+    });
+  } catch (err) { next(err); }
+}
+
 async function verifySensitiveOtp(req, res, next) {
   try {
     const { otp } = req.body;
-    const { sub, role, phone } = req.auth;
+    const { sub } = req.auth;
+    const phone = await sessionPhone(req.auth);
     if (!phone) return res.status(400).json({ error: 'No phone on session', code: 'NO_PHONE' });
 
     const ok = await authService.verifyOtp(phone, otp);
@@ -367,7 +391,7 @@ async function changeWorkerPassword(req, res, next) {
 module.exports = {
   serviceproLogin, serviceproRegister,
   requestOtp, resendOtp, loginUser, loginWorker, loginPartner, loginShop, googlePartnerLogin,
-  loginAdmin, refresh, logout, revokeAll, verifySensitiveOtp,
+  loginAdmin, refresh, logout, revokeAll, verifySensitiveOtp, requestSensitiveOtp,
   setWorkerCredentials, loginWorkerPassword, forgotWorkerPassword,
   resetWorkerPassword, changeWorkerPassword, loginWithPassword,
 };

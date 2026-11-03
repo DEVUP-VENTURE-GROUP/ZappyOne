@@ -246,6 +246,7 @@ export const useRescheduleJobMutation = h.useRescheduleJobMutation;
 export const useJobArrivalQuery = h.useJobArrivalQuery;
 export const useAdminReinstateEventPartnerMutation = h.useAdminReinstateEventPartnerMutation;
 export const useEventDeclineQuoteQuery = h.useEventDeclineQuoteQuery;
+export const useRequestActionOtpMutation = h.useRequestActionOtpMutation;
 export const useVerifyActionOtpMutation = h.useVerifyActionOtpMutation;
 export const useShopPayoutsQuery = h.useShopPayoutsQuery;
 export const useRequestShopPayoutMutation = h.useRequestShopPayoutMutation;
