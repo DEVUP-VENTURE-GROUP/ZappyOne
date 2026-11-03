@@ -56,15 +56,7 @@ async function assertMayOffer(kind, doc, who) {
     const working = await require('../worker/worker-dues.service').filterWorkingWorkers([who.id]);
     if (!working.has(String(who.id))) throw err(402, 'DUES', 'Pay what you owe ZappyOne to take new jobs.');
   }
-  // Never more standing offers than jobs they could hold: ten customers must not all wait on one person who can do two.
-  if (who.kind === 'worker') {
-    const { maxActiveJobs = 2 } = await require('../order/cancellation.service').getConfig();
-    let standing = 0;
-    for (const [k, w] of Object.entries(WAITING)) {
-      standing += await KINDS[k].model().countDocuments({ _id: { $ne: doc._id }, 'matching.offers': { $elemMatch: { by: keyOf(who), arriveBy: { $gt: new Date() } } }, status: { $in: w.status }, ...w.unheld });
-    }
-    if (standing >= maxActiveJobs) throw err(409, 'TOO_MANY_OFFERS', `You have offered a time on ${standing} jobs. Let those customers answer first.`);
-  }
+
 }
 
 /** A pro offers to come by `minutes` from now. */

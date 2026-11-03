@@ -95,10 +95,9 @@ test('never lost: the sweep does not close a job while an offer stands; an offer
   await require('../src/modules/jobs/waves').sweep({ now: Date.now() });
   expect((await HelpingTask.findById(t.id).lean()).status).toBe('CONFIRMED');
 
-  // They took two other jobs meanwhile (the cap): saying OK to them fails cleanly, their offer goes.
-  for (let i = 0; i < 2; i += 1) {
-    await HelpingTask.collection.insertOne({ reference: `ZHBUSY${i}`, userId: oid(), workerId: w._id, status: 'TASK_STARTED', serviceType: 'shopping', pickupLocation: HOME, items: [], statusHistory: [], updatedAt: new Date(), createdAt: new Date() });
-  }
+  // Meanwhile they went over their dues limit: saying OK to them fails cleanly, their offer goes.
+  const Wallet = require('../src/modules/wallet/wallet.model');
+  await Wallet.updateOne({ 'owner.kind': 'worker', 'owner.id': w._id }, { $set: { balancePaise: -250000 } }, { upsert: true });
   expect((await choose(t, w)).status).toBe(409);
   const after = await HelpingTask.findById(t.id).lean();
   expect(after.workerId).toBeNull();
@@ -106,7 +105,7 @@ test('never lost: the sweep does not close a job while an offer stands; an offer
   expect(after.matching.promise).toBeNull();
 });
 
-test('worst cases: a cancelled booking tells everyone who offered; one pro cannot stack more offers than jobs they could hold', async () => {
+test('worst cases: a cancelled booking tells everyone who offered; a partner may offer on as many jobs as they choose', async () => {
   const Notification = require('../src/modules/notification/notification.model');
   const t = await task(); const a = await helper(); const b = await helper();
   await offer(t.id, a, 20); await offer(t.id, b, 30);
@@ -116,11 +115,8 @@ test('worst cases: a cancelled booking tells everyone who offered; one pro canno
   for (const w of [a, b]) expect(await Notification.findOne({ 'recipient.id': w._id, title: 'That booking was cancelled' }).lean()).toBeTruthy();
   expect((await HelpingTask.findById(t.id).lean()).matching.offers).toHaveLength(0);
 
-  const greedy = await helper();
+  // ServicePro partners have no job cap: one pro may offer a time on as many jobs as they choose.
+  const busyPro = await helper();
   const jobs = await Promise.all([task(), task(), task()]);
-  expect((await offer(jobs[0].id, greedy, 20)).status).toBe(201);
-  expect((await offer(jobs[1].id, greedy, 20)).status).toBe(201);
-  const third = await offer(jobs[2].id, greedy, 20);
-  expect(third.status).toBe(409);
-  expect(third.body.code).toBe('TOO_MANY_OFFERS');
+  for (const j of jobs) expect((await offer(j.id, busyPro, 20)).status).toBe(201);
 });

@@ -4,8 +4,8 @@
  * A job is held from the moment it is accepted until it is finished or
  * cancelled. Accepting more than a person can actually do (one tester took
  * nine at once) leaves customers waiting on someone who cannot come; the cap
- * is set in Economics (maxActiveJobs). Shops are not capped: they hand jobs to
- * their team.
+ * is set in Economics (maxActiveJobs) and applies to ZappyOne's own staff only;
+ * ServicePro partners (shops and independent pros) are not capped.
  */
 const mongoose = require('mongoose');
 const { KINDS } = require('./kinds');
@@ -27,8 +27,16 @@ async function activeJobs(workerId) {
   return n;
 }
 
-/** Throws when this worker already holds as many jobs as they may. */
+// Only ZappyOne's own staff have a job cap (Economics maxActiveJobs): ZappyOne plans their day. ServicePro partners take as many as they choose.
+async function staffAmong(ids) {
+  const Worker = require('../worker/worker.model');
+  const rows = await Worker.find({ _id: { $in: ids }, 'employment.type': 'staff' }).select('_id').lean();
+  return new Set(rows.map((r) => String(r._id)));
+}
+
+/** Throws when this worker already holds as many jobs as they may (staff only). */
 async function assertCanTakeAnother(workerId) {
+  if (!(await staffAmong([workerId])).has(String(workerId))) return;
   const { maxActiveJobs = 2 } = await require('../order/cancellation.service').getConfig();
   const n = await activeJobs(workerId);
   if (n >= maxActiveJobs) {
@@ -60,6 +68,8 @@ async function classify(workerIds = []) {
   const ids = [...new Set(workerIds.map(String))];
   if (!ids.length) return { free: new Set(), busy: new Set() };
   const { maxActiveJobs = 2 } = await require('../order/cancellation.service').getConfig();
+  const staff = await staffAmong(ids);
+  const capOf = (id) => (staff.has(id) ? maxActiveJobs : Infinity);
   const oids = ids.map((i) => new mongoose.Types.ObjectId(i));
   const since = new Date(Date.now() - 48 * 3600e3);
   const held = new Map(); // workerId -> { n, midway }
@@ -79,8 +89,8 @@ async function classify(workerIds = []) {
   const free = new Set(); const busy = new Set();
   for (const id of ids) {
     const h = held.get(id);
-    if (!h || (h.n < maxActiveJobs && !h.midway)) free.add(id);
-    else if (h.n < maxActiveJobs) busy.add(id);
+    if (!h || (h.n < capOf(id) && !h.midway)) free.add(id);
+    else if (h.n < capOf(id)) busy.add(id);
   }
   return { free, busy };
 }

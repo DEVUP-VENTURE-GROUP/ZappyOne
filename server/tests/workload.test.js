@@ -22,14 +22,20 @@ const task = (workerId, status) => HelpingTask.collection.insertOne({
   reference: `W${Math.random()}`, userId: oid(), workerId, serviceType: 'pickup', status, pickupLocation: HERE, destination: HERE, updatedAt: new Date(),
 });
 
-test('free, finishing, busy and full are told apart', async () => {
-  const idle = oid(); const finishing = oid(); const midway = oid(); const full = oid();
+test('free, finishing, busy and full are told apart; only ZappyOne staff have a job cap, partners take as many as they choose', async () => {
+  const idle = oid(); const finishing = oid(); const midway = oid(); const full = oid(); const partner = oid();
+  // The cap is for ZappyOne's own staff (Economics maxActiveJobs); a ServicePro partner with the same two jobs can take more.
+  await require('../src/modules/worker/worker.model').collection.insertOne({ _id: full, name: 'Staff', phone: '9000000881', employment: { type: 'staff' } });
   await task(finishing, 'RETURNING');
   await task(midway, 'IN_PROGRESS');
   await task(full, 'IN_PROGRESS'); await task(full, 'EN_ROUTE');
-  const { free, busy } = await workload.classify([idle, finishing, midway, full]);
+  await task(partner, 'IN_PROGRESS'); await task(partner, 'EN_ROUTE');
+  const { free, busy } = await workload.classify([idle, finishing, midway, full, partner]);
   expect([...free].sort()).toEqual([String(idle), String(finishing)].sort());
-  expect([...busy]).toEqual([String(midway)]);
+  expect([...busy].sort()).toEqual([String(midway), String(partner)].sort());
   await expect(workload.assertCanTakeAnother(full)).rejects.toMatchObject({ code: 'TOO_MANY_JOBS' });
+  await expect(workload.assertCanTakeAnother(midway)).resolves.toBeUndefined();
+  await expect(workload.assertCanTakeAnother(partner)).resolves.toBeUndefined();
+});
   await expect(workload.assertCanTakeAnother(midway)).resolves.toBeUndefined();
 });
