@@ -259,7 +259,7 @@ export default function WorkerKycPage() {
           <div className="card bg-success-50 ring-1 ring-success-200 flex items-center gap-3">
             <ShieldCheck size={18} className="text-success-600 shrink-0" />
             <div>
-              <p className="font-bold text-success-800 text-sm">KYC Approved ✓</p>
+              <p className="font-bold text-success-800 text-sm">ID checked</p>
               <p className="text-xs text-success-600 mt-0.5">Your identity is verified. Go online and start accepting jobs.</p>
             </div>
           </div>
@@ -338,7 +338,7 @@ export default function WorkerKycPage() {
             </button>
             <div>
               <p className="t-label">ID check</p>
-              <p className="font-semibold text-[#0F172A]">KYC Documents</p>
+              <p className="font-semibold text-[#0F172A]">ID documents</p>
             </div>
           </div>
         </header>
@@ -545,7 +545,7 @@ function StatusScreen({ type, onBack }) {
         </div>
         <div>
           <h2 className="text-xl font-bold text-[#0F172A]">
-            {isPending ? 'Under Review' : 'KYC Approved'}
+            {isPending ? 'Under Review' : 'ID checked'}
           </h2>
           <p className="text-sm text-slate-400 mt-2 leading-relaxed max-w-xs">
             {isPending

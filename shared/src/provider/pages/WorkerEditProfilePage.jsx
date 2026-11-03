@@ -46,7 +46,7 @@ const ALL_NAV_SECTIONS = [
     title: 'How you are doing',
     items: [
       { to: '/worker/goals',     Icon: TrendingUp,   label: 'Zone Benchmark',       desc: 'See how you rank nearby',          color: 'cyan' },
-      { to: '/worker/kyc',       Icon: Shield,       label: 'KYC Documents',        desc: 'Verification & compliance',        color: 'slate' },
+      { to: '/worker/kyc',       Icon: Shield,       label: 'ID documents',        desc: 'Verification & compliance',        color: 'slate' },
     ],
   },
 ];

@@ -566,7 +566,7 @@ function VerifyStep({ lineCode, onDone }) {
 
       await submit(enrolment._id).unwrap();
       setMissing([]);
-      toast.success('Sent for verification');
+      toast.success('Sent to ZappyOne to check');
       onDone();
     } catch (err) {
       const body = err?.data;
@@ -658,7 +658,7 @@ function VerifyStep({ lineCode, onDone }) {
                   : redo
                     ? <p className="text-xs text-emerald-700 mt-0.5">Accepted</p>
                     : carried.has(d.code)
-                  ? <p className="text-xs text-emerald-700 mt-0.5 leading-relaxed">Already on file from your verification. Nothing to do.</p>
+                  ? <p className="text-xs text-emerald-700 mt-0.5 leading-relaxed">We already have this from your ID check. Nothing to do.</p>
                   : d.hint && <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">{d.hint}</p>}
               </div>
               {!locked && (again || !carried.has(d.code)) && (d.capture ? (
@@ -737,7 +737,7 @@ function VerifyStep({ lineCode, onDone }) {
         <button onClick={send} disabled={submitting || enrolment?.status === 'pending_review'} className="btn-primary w-full">
           {submitting
             ? <><Loader2 size={15} className="animate-spin" /> Sending…</>
-            : enrolment?.status === 'pending_review' ? 'Awaiting review' : redo ? 'Send for review again' : 'Submit for verification'}
+            : enrolment?.status === 'pending_review' ? 'Awaiting review' : redo ? 'Send for review again' : 'Send to ZappyOne to check'}
         </button>
       )}
     </Shell>

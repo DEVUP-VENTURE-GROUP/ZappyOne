@@ -15,7 +15,7 @@ export function OverviewShortcut({ Icon, title, text, to, locked }: { Icon: Luci
       <View style={styles.icon}><Icon size={18} color={zappy[600]} /></View>
       <View style={styles.flex}>
         <Text variant="bodySmall" weight="bold">{title}</Text>
-        <Text variant="caption" color={ink[500]}>{locked ? 'After verification' : text}</Text>
+        <Text variant="caption" color={ink[500]}>{locked ? 'After ZappyOne checks it' : text}</Text>
       </View>
       {locked ? <Lock size={16} color={slate[300]} /> : <ChevronRight size={16} color={slate[300]} />}
     </Pressable>

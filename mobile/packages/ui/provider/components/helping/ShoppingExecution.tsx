@@ -89,7 +89,7 @@ export function ShoppingExecution({ task, onChanged, disabled }: { task: Task; o
     if (!advanceAmount) return;
     try {
       await recordAdvance({ id: task._id, amountPaise: Math.round(Number(advanceAmount) * 100) }).unwrap();
-      toast.success('Advance recorded - you will be reimbursed on settlement'); setAdvanceAmount(''); onChanged();
+      toast.success('Saved. We pay you back from this job’s money.'); setAdvanceAmount(''); onChanged();
     } catch (err) { toast.error(errText(err, 'That is more than the advance limit - the customer must fund it')); }
   }
 

@@ -42,7 +42,7 @@ export default function ShopWithdrawPage() {
       const r = await otp.run(() => request({ amountPaise: paise, type: dest.type, accountId: dest.id }).unwrap());
       toast.success(r.message);
       setAmount('');
-    } catch (err) { if (err?.message !== 'cancelled') toast.error(err?.data?.error || 'Could not ask for the payout'); }
+    } catch (err) { if (err?.message !== 'cancelled') toast.error(err?.data?.error || 'Could not ask for your money'); }
   }
 
   return (
@@ -65,7 +65,7 @@ export default function ShopWithdrawPage() {
         </section>
 
         <section className="space-y-3 rounded-2xl bg-white p-4 ring-1 ring-slate-100">
-          <p className="text-sm font-bold text-slate-900">Ask for a payout</p>
+          <p className="text-sm font-bold text-slate-900">Ask for your money</p>
           {!options.length ? (
             <button type="button" onClick={() => nav('/shop/bank')} className="w-full rounded-xl border-2 border-dashed border-slate-200 py-4 text-sm font-semibold text-zappy-700">
               Add a bank account or UPI id first
@@ -89,9 +89,9 @@ export default function ShopWithdrawPage() {
               </label>
               <button type="button" onClick={submit} disabled={sending || b.open || paise < (b.minPaise || 0) || paise > (b.availablePaise || 0)}
                 className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#0F172A] text-sm font-bold text-white disabled:opacity-40">
-                {sending && <Loader2 size={15} className="animate-spin" />} {b.open ? 'A payout is already on its way' : `Withdraw ${paise ? formatPaise(paise) : ''}`}
+                {sending && <Loader2 size={15} className="animate-spin" />} {b.open ? 'Your money is already on its way' : `Withdraw ${paise ? formatPaise(paise) : ''}`}
               </button>
-              <p className="text-[11.5px] text-slate-500">Reaches your account within 2 working days. You can have one payout on its way at a time.</p>
+              <p className="text-[11.5px] text-slate-500">Reaches your bank within 2 working days. One request at a time.</p>
             </>
           )}
         </section>

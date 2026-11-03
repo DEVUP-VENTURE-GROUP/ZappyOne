@@ -49,7 +49,7 @@ function EarningRow({ job, expanded, onToggle, index }) {
                 </div>
               )}
               <div className="border-t border-slate-200/60 pt-3 mt-1 flex justify-between items-center">
-                <span className="text-slate-800 font-black">Net payout</span><span className="text-zappy-600 font-black text-lg">{fmt(job.net)}</span>
+                <span className="text-slate-800 font-black">Money you get</span><span className="text-zappy-600 font-black text-lg">{fmt(job.net)}</span>
               </div>
               {job.orderId && <p className="text-[10px] text-slate-400 font-semibold pt-1">Order ID: {job.orderId}</p>}
             </div>

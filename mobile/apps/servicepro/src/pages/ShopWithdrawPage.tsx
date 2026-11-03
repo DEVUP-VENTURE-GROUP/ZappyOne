@@ -52,7 +52,7 @@ export function ShopWithdrawPage() {
       const r = (await otp.run(() => request({ amountPaise: paise, type: dest.type, accountId: dest.id }).unwrap())) as { message: string };
       toast.success(r.message);
       setAmount('');
-    } catch (err) { if ((err as ApiErr)?.message !== 'cancelled') toast.error(errText(err, 'Could not ask for the payout')); }
+    } catch (err) { if ((err as ApiErr)?.message !== 'cancelled') toast.error(errText(err, 'Could not ask for your money')); }
   }
 
   return (
@@ -71,7 +71,7 @@ export function ShopWithdrawPage() {
         </View>
 
         <View style={styles.card}>
-          <Text variant="bodySmall" weight="bold">Ask for a payout</Text>
+          <Text variant="bodySmall" weight="bold">Ask for your money</Text>
           {!options.length ? (
             <Pressable onPress={() => router.push('/shop/bank' as never)} accessibilityRole="button" style={styles.dashed}>
               <Text variant="bodySmall" weight="semibold" color={zappy[700]}>Add a bank account or UPI ID first</Text>
@@ -89,9 +89,9 @@ export function ShopWithdrawPage() {
                 <TextInput value={amount} onChangeText={(v) => setAmount(v.replace(/[^\d.]/g, ''))} keyboardType="decimal-pad" placeholder={`At least ${formatPaise(b.minPaise)}`} placeholderTextColor={ink[400]} style={styles.amountInput} />
                 <Pressable onPress={() => setAmount(String(Math.floor((b.availablePaise || 0) / 100)))} hitSlop={8}><Text variant="caption" weight="bold" color={zappy[600]}>All</Text></Pressable>
               </View>
-              <Button label={b.open ? 'A payout is already on its way' : `Withdraw ${paise ? formatPaise(paise) : ''}`} onPress={submit} loading={sending}
+              <Button label={b.open ? 'Your money is already on its way' : `Withdraw ${paise ? formatPaise(paise) : ''}`} onPress={submit} loading={sending}
                 disabled={!!b.open || paise < (b.minPaise || 0) || paise > (b.availablePaise || 0)} fullWidth size="large" />
-              <Text variant="caption" color={ink[500]}>Reaches your account within 2 working days. You can have one payout on its way at a time.</Text>
+              <Text variant="caption" color={ink[500]}>Reaches your bank within 2 working days. One request at a time.</Text>
             </>
           )}
         </View>

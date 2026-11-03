@@ -55,7 +55,7 @@ const ALL_NAV_SECTIONS = [
     { to: '/worker/withdraw', Icon: CreditCard, label: 'Withdraw earnings', desc: 'Transfer to bank or UPI', bg: success[50], fg: success[600] },
   ] },
   { title: 'Services & growth', items: [
-    { to: '/provider/onboarding', Icon: ShieldCheck, label: 'Services & verification', desc: 'What you are approved to work on', bg: success[50], fg: success[600] },
+    { to: '/provider/onboarding', Icon: ShieldCheck, label: 'Your services and ID check', desc: 'What you are approved to work on', bg: success[50], fg: success[600] },
     { to: '/worker/training', Icon: GraduationCap, label: 'Training & certification', desc: 'Video courses + quiz certs', bg: '#FFF1F2', fg: '#E11D48' },
     { to: '/worker/reviews', Icon: Star, label: 'My reviews', desc: 'What customers said about you', bg: '#FFF7ED', fg: '#EA580C' },
     { to: '/worker/appeals', Icon: AlertCircle, label: 'Ask us to recheck', desc: 'If you think a penalty is wrong', bg: '#FFF7ED', fg: '#EA580C' },
@@ -142,7 +142,7 @@ export function WorkerEditProfilePage() {
               </View>
             ) : <Text variant="caption" color={ink[500]}>Nothing yet. Choose what you work on and get verified to start receiving jobs.</Text>}
             <Pressable onPress={() => router.push('/provider/onboarding' as never)} style={styles.row} hitSlop={6}>
-              <Text variant="caption" weight="semibold" color={zappy[600]}>Manage services & verification</Text><ChevronRight size={12} color={zappy[600]} />
+              <Text variant="caption" weight="semibold" color={zappy[600]}>Your services and ID check</Text><ChevronRight size={12} color={zappy[600]} />
             </Pressable>
           </View>
 

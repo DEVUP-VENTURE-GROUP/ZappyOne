@@ -105,7 +105,7 @@ function Shortcut({ to, Icon, title, text, locked }) {
       <span className="flex h-10 w-10 items-center justify-center rounded-btn bg-zappy-50 text-zappy-700"><Icon size={18} /></span>
       <span>
         <span className="block text-[15px] font-semibold text-ink-900">{title}</span>
-        <span className="block text-[13px] text-ink-500">{locked ? 'After verification' : text}</span>
+        <span className="block text-[13px] text-ink-500">{locked ? 'After ZappyOne checks it' : text}</span>
       </span>
     </>
   );

@@ -120,7 +120,7 @@ export function WorkerDashboard({ kinds = KINDS }: { kinds?: string[] }) {
 
   // Verification can be revoked while online.
   useSocketEvent('kyc.rejected', (p) => {
-    toast.error(p?.reason ? `Verification rejected: ${p.reason}` : 'Your verification was not approved. Please resubmit.', { duration: 8000 });
+    toast.error(p?.reason ? `Verification rejected: ${p.reason}` : 'ZappyOne could not approve your documents. Please send them again.', { duration: 8000 });
     refetchMe();
     refetchKyc();
   });

@@ -25,9 +25,9 @@ import { useLivePoll } from '../../hooks/useSocket';
 /* Worker-specific type → visual config */
 const TYPE_CFG = {
   // KYC
-  kyc_approved:         { emoji: '✅', label: 'KYC Approved',      bg: 'bg-green-50',  ring: 'ring-green-200',  color: 'text-green-700',  Icon: FileCheck          },
-  kyc_rejected:         { emoji: '🚫', label: 'KYC Rejected',      bg: 'bg-red-50',    ring: 'ring-red-200',    color: 'text-red-700',    Icon: AlertTriangle      },
-  kyc_clarification:    { emoji: '📋', label: 'KYC Query',         bg: 'bg-amber-50',  ring: 'ring-amber-200',  color: 'text-amber-700',  Icon: MessageSquare      },
+  kyc_approved:         { emoji: '✅', label: 'ID checked',      bg: 'bg-green-50',  ring: 'ring-green-200',  color: 'text-green-700',  Icon: FileCheck          },
+  kyc_rejected:         { emoji: '🚫', label: 'ID check not approved',      bg: 'bg-red-50',    ring: 'ring-red-200',    color: 'text-red-700',    Icon: AlertTriangle      },
+  kyc_clarification:    { emoji: '📋', label: 'Question about your ID',         bg: 'bg-amber-50',  ring: 'ring-amber-200',  color: 'text-amber-700',  Icon: MessageSquare      },
 
   // Jobs
   order_cancelled:      { emoji: '❌', label: 'Job Cancelled',     bg: 'bg-red-50',    ring: 'ring-red-200',    color: 'text-red-700',    Icon: Briefcase          },

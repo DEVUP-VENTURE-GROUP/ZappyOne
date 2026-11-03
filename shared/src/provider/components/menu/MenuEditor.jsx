@@ -77,9 +77,10 @@ export default function MenuEditor({ vertical, onNext, nextLabel = 'Continue' })
         <ul className="space-y-2">
           {offered.map((item) => (
             <motion.li layout key={item.repairCode} className="card flex items-start gap-3 p-3">
-              <div className="h-16 w-16 shrink-0 overflow-hidden rounded-btn bg-sunken">
-                {item.photoUrl ? <img src={item.photoUrl} alt="" className="h-full w-full object-cover" /> : <span className="grid h-full w-full place-items-center text-ink-300"><ImageIcon size={20} /></span>}
-              </div>
+              {/* The photo opens the job's editor, where it is added or changed. */}
+              <button type="button" onClick={() => setEditing(item)} aria-label={item.photoUrl ? `Change the photo of ${item.name}` : `Add a photo to ${item.name}`} className="h-16 w-16 shrink-0 overflow-hidden rounded-btn bg-sunken ring-zappy-300 hover:ring-2">
+                {item.photoUrl ? <img src={item.photoUrl} alt="" className="h-full w-full object-cover" /> : <span className="flex h-full w-full flex-col items-center justify-center gap-0.5 text-ink-400"><ImageIcon size={18} /><span className="text-[10px] font-semibold">Add photo</span></span>}
+              </button>
               <div className="min-w-0 flex-1">
                 <p className="font-bold text-ink-900">{item.name}{item.own && <span className="ml-1.5 rounded-full bg-sunken px-2 py-0.5 align-middle text-[10.5px] font-bold text-ink-500">Your job</span>}</p>
                 <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[12.5px] text-ink-500">

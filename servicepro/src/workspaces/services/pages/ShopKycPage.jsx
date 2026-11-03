@@ -30,7 +30,7 @@ const STATUS_META = {
     card: 'bg-emerald-50 ring-1 ring-emerald-200', icon: 'text-emerald-600', title_: 'text-emerald-800', body_: 'text-emerald-600',
   },
   suspended: {
-    title: 'Verification Suspended', body: 'Contact support for help with your shop verification.', Icon: XCircle,
+    title: 'Verification Suspended', body: 'Talk to ZappyOne if you need help with your shop ID check.', Icon: XCircle,
     card: 'bg-red-50 ring-1 ring-red-200', icon: 'text-red-600', title_: 'text-red-800', body_: 'text-red-600',
   },
 };

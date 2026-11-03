@@ -43,7 +43,7 @@ export function RequirementDocument({ doc, uploaded, missing, locked, again, red
           <Text variant="bodySmall" weight="semibold">{doc.label}{!doc.required ? <Text variant="caption" color={ink[400]}>, optional</Text> : null}</Text>
           {again ? <Text variant="caption" weight="semibold" color={danger[600]}>{uploaded ? 'New copy added. Submit when ready.' : 'Asked for again: send a new, clear copy.'}</Text>
             : redo ? <Text variant="caption" color={success[700]}>Accepted</Text>
-            : carried ? <Text variant="caption" color={success[700]}>Already on file from your verification. Nothing to do.</Text>
+            : carried ? <Text variant="caption" color={success[700]}>We already have this from your ID check. Nothing to do.</Text>
             : doc.hint ? <Text variant="caption" color={ink[400]}>{doc.hint}</Text> : null}
         </View>
         {canChange ? (

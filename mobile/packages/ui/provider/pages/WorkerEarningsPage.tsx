@@ -62,7 +62,7 @@ function EarningRow({ job, open, onToggle }: { job: Job; open: boolean; onToggle
           {job.bonus > 0 ? <Line label="Bonus" value={`+${fmt(job.bonus)}`} tone={success[600]} /> : null}
           {surge ? <Line label="Surge multiplier" value={`${job.surgeMultiplier}×`} tone={accent[600]} /> : null}
           <View style={[styles.line, styles.net]}>
-            <Text variant="body" weight="black">Net payout</Text>
+            <Text variant="body" weight="black">Money you get</Text>
             <Text variant="heading3" weight="black" color={colors.primary}>{fmt(job.net)}</Text>
           </View>
           {job.orderId ? <Text variant="caption" color={ink[400]}>Order ID: {job.orderId}</Text> : null}

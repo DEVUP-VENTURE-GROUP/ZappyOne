@@ -152,7 +152,7 @@ export function ShopProfilePage() {
         <View style={styles.card}>
           <Text variant="caption" weight="bold" color={ink[500]}>SERVICES YOU OFFER</Text>
           <Text variant="caption" color={ink[400]}>Set by verification, not by this form. Customers rely on it meaning something.</Text>
-          <Button label="Manage services & verification" variant="outline" onPress={() => router.push('/provider/onboarding' as never)} fullWidth />
+          <Button label="Your services and ID check" variant="outline" onPress={() => router.push('/provider/onboarding' as never)} fullWidth />
         </View>
       </ScrollView>
       <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.md }]}>

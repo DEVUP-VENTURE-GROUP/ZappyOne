@@ -27,9 +27,9 @@ export function QAPanel({ bookingId, onDone }: { bookingId: string; onDone: () =
   async function send() {
     try {
       const res = await submit({ id: bookingId, ...qaPayload(checklist, results) }).unwrap();
-      if (res.passed) { toast.success('QA passed - you can complete the job'); onDone(); }
-      else toast.error('QA failed - fix the failed checks and re-run');
-    } catch (err) { toast.error(errText(err, 'Could not submit QA')); }
+      if (res.passed) { toast.success('All checks passed. You can finish the job.'); onDone(); }
+      else toast.error('Some checks failed. Fix them and check again.');
+    } catch (err) { toast.error(errText(err, 'Could not save the checks')); }
   }
 
   return (
@@ -58,7 +58,7 @@ export function QAPanel({ bookingId, onDone }: { bookingId: string; onDone: () =
         <View style={[styles.row, styles.alert]}><AlertTriangle size={14} color={danger[600]} />
           <Text variant="caption" color={danger[600]} style={styles.flex}>{failedRequired.length} required check{failedRequired.length > 1 ? 's' : ''} failed. Completion is blocked until resolved.</Text></View>
       ) : null}
-      <Button label={requiredUntested.length ? `${requiredUntested.length} required check(s) left` : 'Submit QA'} onPress={send} loading={submitting} disabled={requiredUntested.length > 0} fullWidth />
+      <Button label={requiredUntested.length ? `${requiredUntested.length} required check(s) left` : 'Save the checks'} onPress={send} loading={submitting} disabled={requiredUntested.length > 0} fullWidth />
     </JobCard>
   );
 }

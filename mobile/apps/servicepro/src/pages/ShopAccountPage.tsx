@@ -20,7 +20,7 @@ import { LegalLinks } from '@zappy/ui/components/account/LegalLinks';
 
 const LINKS: [string, string, typeof Store, string][] = [
   ['Shop & hours', 'Name, photos, address and opening hours', Store, '/shop/profile'],
-  ['Bank & UPI', 'Where your payouts go', Landmark, '/shop/bank'],
+  ['Bank & UPI', 'Where we send your money', Landmark, '/shop/bank'],
   ['Take out money', 'What ZappyOne owes you, and asking for it', Wallet, '/shop/withdraw'],
   ['Notifications', 'Everything we have told you', Bell, '/shop/notifications'],
   ['ID check', 'Your documents and services', ShieldCheck, '/shop/kyc'],

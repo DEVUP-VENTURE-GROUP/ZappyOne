@@ -37,7 +37,7 @@ export default function StatementDownload() {
     <div className="card grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center">
       <div className="min-w-0">
         <p className="text-sm font-bold text-slate-900">Monthly statement</p>
-        <p className="text-[12px] text-slate-500">Earnings, fees, dues and payouts, for your accounts and GST.</p>
+        <p className="text-[12px] text-slate-500">What you earned, fees, what you owe and money sent to you, for your accounts and GST.</p>
       </div>
       <div className="flex min-w-0 gap-2">
         <select value={month} onChange={(e) => setMonth(e.target.value)} className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm sm:flex-none" aria-label="Month">

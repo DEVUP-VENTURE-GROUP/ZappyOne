@@ -33,7 +33,7 @@ const DOCS = [
 const DONE: Record<string, { title: string; body: string; Icon: typeof Clock; bg: string; fg: string }> = {
   pending_review: { title: 'Under review', body: "Your shop documents are being verified. We'll notify you within 24 hours.", Icon: Clock, bg: accent[50], fg: accent[700] },
   approved: { title: 'Shop identity verified', body: 'Your documents are checked. Jobs come only for the services approved below.', Icon: ShieldCheck, bg: success[50], fg: success[700] },
-  suspended: { title: 'Verification suspended', body: 'Contact support for help with your shop verification.', Icon: XCircle, bg: danger[50], fg: danger[600] },
+  suspended: { title: 'Verification suspended', body: 'Talk to ZappyOne if you need help with your shop ID check.', Icon: XCircle, bg: danger[50], fg: danger[600] },
 };
 
 export function ShopKycPage() {
@@ -46,7 +46,7 @@ export function ShopKycPage() {
   const [uploading, setUploading] = useState<string | null>(null);
   const [selfieMeta, setSelfieMeta] = useState<LiveCaptureMeta | null>(null);
 
-  if (isLoading) return <View style={styles.page}><ScreenHeader title="Shop verification" safeArea /><LoadingState /></View>;
+  if (isLoading) return <View style={styles.page}><ScreenHeader title="Shop ID check" safeArea /><LoadingState /></View>;
 
   const status: string = data?.kyc?.status || 'not_submitted';
   // The reviewer asked for named documents again: only those open, the rest are kept.
@@ -59,7 +59,7 @@ export function ShopKycPage() {
     const m = DONE[status];
     return (
       <View style={styles.page}>
-        <ScreenHeader title="Shop verification" safeArea />
+        <ScreenHeader title="Shop ID check" safeArea />
         <ScrollView contentContainerStyle={styles.body}>
           <View style={[styles.banner, { backgroundColor: m.bg }]}>
             <m.Icon size={18} color={m.fg} />
@@ -103,7 +103,7 @@ export function ShopKycPage() {
 
   return (
     <View style={styles.page}>
-      <ScreenHeader title="Shop verification" safeArea />
+      <ScreenHeader title="Shop ID check" safeArea />
       <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
         {clar ? (
           <View style={[styles.banner, { backgroundColor: accent[50] }]}>
@@ -137,7 +137,7 @@ export function ShopKycPage() {
         </View>
       </ScrollView>
       <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.md }]}>
-        <Button label="Submit for verification" icon={<ShieldCheck size={15} color="#fff" />} onPress={submit} loading={submitting} disabled={!ready} fullWidth size="large" />
+        <Button label="Send to ZappyOne to check" icon={<ShieldCheck size={15} color="#fff" />} onPress={submit} loading={submitting} disabled={!ready} fullWidth size="large" />
       </View>
     </View>
   );

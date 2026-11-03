@@ -46,7 +46,7 @@ function AddWorkerSheet({ onClose }: { onClose: () => void }) {
       <TextInput value={phone} onChangeText={(v) => setPhone(v.replace(/\D/g, '').slice(0, 10))} keyboardType="phone-pad" placeholder="10-digit mobile number" placeholderTextColor={ink[400]} style={styles.input} />
       <Text variant="caption" weight="bold" color={ink[700]}>Name (required if new)</Text>
       <TextInput value={name} onChangeText={setName} placeholder="Worker's name" placeholderTextColor={ink[400]} autoCapitalize="words" style={styles.input} />
-      <View style={styles.note}><Text variant="caption" color={ink[500]}>They will be able to work on everything your shop is approved for. They still complete their own verification before taking jobs.</Text></View>
+      <View style={styles.note}><Text variant="caption" color={ink[500]}>They can do every job your shop is approved for. They still check their own ID before taking jobs.</Text></View>
       <Button label="Add worker" onPress={add} loading={isLoading} disabled={phone.length < 10 || !name.trim()} fullWidth size="large" />
     </FullScreenSheet>
   );

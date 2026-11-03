@@ -8,9 +8,9 @@
 
 /** type → label and tone (good, bad, warn, brand, neutral, hot). Icons are each app's own. */
 export const NOTIFICATION_TYPES = {
-  kyc_approved: { label: 'KYC Approved', tone: 'good' },
-  kyc_rejected: { label: 'KYC Rejected', tone: 'bad' },
-  kyc_clarification: { label: 'KYC Query', tone: 'warn' },
+  kyc_approved: { label: 'ID checked', tone: 'good' },
+  kyc_rejected: { label: 'ID check not approved', tone: 'bad' },
+  kyc_clarification: { label: 'Question about your ID', tone: 'warn' },
   order_cancelled: { label: 'Job Cancelled', tone: 'bad' },
   job_assigned: { label: 'Job Assigned', tone: 'brand' },
   order_completed: { label: 'Job Completed', tone: 'warn' },

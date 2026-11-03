@@ -77,7 +77,7 @@ export function InstantIdCheck() {
         )}
       </View>
       <View style={styles.card}>
-        <Text variant="bodySmall" weight="bold">PAN <Text variant="caption" color={ink[400]}>(needed for payouts above ₹20,000 a month)</Text></Text>
+        <Text variant="bodySmall" weight="bold">PAN <Text variant="caption" color={ink[400]}>(needed if we pay you more than ₹20,000 a month)</Text></Text>
         {pOk ? (
           <View style={styles.row}><BadgeCheck size={14} color={success[700]} /><Text variant="caption" weight="semibold" color={success[700]}>Verified, {data.pan.pan}, {data.pan.nameOnId}</Text></View>
         ) : (

@@ -245,7 +245,7 @@ function ShoppingExecution({ task, onChanged, disabled }) {
     if (!advanceAmount) return;
     try {
       await recordAdvance({ id: task._id, amountPaise: Math.round(Number(advanceAmount) * 100) }).unwrap();
-      toast.success('Advance recorded - you will be reimbursed on settlement');
+      toast.success('Saved. We pay you back from this job’s money.');
       setAdvanceAmount('');
       onChanged();
     } catch (err) {

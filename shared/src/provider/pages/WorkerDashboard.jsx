@@ -135,7 +135,7 @@ export default function WorkerDashboard() {
     const socket = getSocket(token);
     const onRejected = ({ reason }) => {
       dispatch(setOnline(false));
-      toast.error(reason ? `Verification rejected: ${reason}` : 'Your verification was not approved. Please resubmit.', { duration: 8000 });
+      toast.error(reason ? `Verification rejected: ${reason}` : 'ZappyOne could not approve your documents. Please send them again.', { duration: 8000 });
       refetchMe?.();
     };
     socket.on('kyc.rejected', onRejected);

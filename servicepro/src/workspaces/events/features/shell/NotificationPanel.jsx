@@ -61,7 +61,7 @@ export default function NotificationPanel({ onClose }) {
             : !items.length ? (
               <div className="px-6 py-16 text-center">
                 <p className="text-[15px] font-semibold text-ink-900">Nothing here yet</p>
-                <p className="mt-1 text-[13px] text-ink-500">New bookings, verification and payment updates show up here.</p>
+                <p className="mt-1 text-[13px] text-ink-500">New bookings, ID check and payment news show up here.</p>
               </div>
             ) : (
               <ul className="divide-y divide-line">

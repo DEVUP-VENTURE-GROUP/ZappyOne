@@ -86,7 +86,7 @@ export default function InstantIdCheck({ className = '' }) {
       </div>
 
       <div className="mt-2 rounded-xl bg-white p-3 ring-1 ring-emerald-100">
-        <p className="text-[13px] font-bold text-slate-800">PAN <span className="font-normal text-slate-400">(needed for payouts above ₹20,000 a month)</span></p>
+        <p className="text-[13px] font-bold text-slate-800">PAN <span className="font-normal text-slate-400">(needed if we pay you more than ₹20,000 a month)</span></p>
         {pOk ? (
           <p className="mt-1 flex items-center gap-1.5 text-[12.5px] font-semibold text-emerald-700"><BadgeCheck size={14} /> Verified, {data.pan.pan}, {data.pan.nameOnId}</p>
         ) : (

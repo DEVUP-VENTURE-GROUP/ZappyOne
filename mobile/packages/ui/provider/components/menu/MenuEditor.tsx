@@ -81,7 +81,7 @@ export function MenuEditor({ vertical, onBack, onNext }: { vertical: string; onB
         {!preview && offered.map((item) => (
           <Pressable key={item.repairCode} onPress={() => setEditing(item)} accessibilityRole="button" accessibilityLabel={`Edit ${item.name}`} style={styles.card}>
             <View style={styles.thumb}>
-              {item.photoUrl ? <Image source={{ uri: item.photoUrl }} style={StyleSheet.absoluteFill} /> : <ImageIcon size={20} color={slate[300]} />}
+              {item.photoUrl ? <Image source={{ uri: item.photoUrl }} style={StyleSheet.absoluteFill} /> : <><ImageIcon size={18} color={slate[400]} /><Text variant="caption" weight="semibold" color={slate[400]}>Add photo</Text></>}
             </View>
             <View style={[styles.flex, styles.gapXs]}>
               <Text variant="bodySmall" weight="bold" numberOfLines={2}>{item.name}{item.own ? '  · Your job' : ''}</Text>

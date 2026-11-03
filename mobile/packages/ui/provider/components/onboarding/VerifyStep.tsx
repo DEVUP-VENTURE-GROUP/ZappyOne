@@ -101,7 +101,7 @@ export function VerifyStep({ lineCode, onDone }: { lineCode: string; onDone: () 
       }).unwrap();
       await submit(enrolment._id).unwrap();
       setMissing([]);
-      toast.success('Sent for verification');
+      toast.success('Sent to ZappyOne to check');
       onDone();
     } catch (err) {
       const body = (err as ApiErr & { data?: { missing?: Missing[]; fields?: Missing[] } })?.data;
@@ -184,7 +184,7 @@ export function VerifyStep({ lineCode, onDone }: { lineCode: string; onDone: () 
       ) : null}
 
       {!decided ? (
-        <Button label={pending ? 'Awaiting review' : redo ? 'Send for review again' : 'Submit for verification'}
+        <Button label={pending ? 'Awaiting review' : redo ? 'Send for review again' : 'Send to ZappyOne to check'}
           onPress={send} loading={submitting} disabled={pending} fullWidth size="large" />
       ) : null}
     </View>

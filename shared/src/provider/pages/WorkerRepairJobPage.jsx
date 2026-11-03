@@ -271,13 +271,13 @@ function QAPanel({ bookingId, onDone }) {
       const res = await submit({ id: bookingId, ...qaPayload(checklist, results) }).unwrap();
 
       if (res.passed) {
-        toast.success('QA passed - you can complete the job');
+        toast.success('All checks passed. You can finish the job.');
         onDone();
       } else {
-        toast.error('QA failed - fix the failed checks and re-run');
+        toast.error('Some checks failed. Fix them and check again.');
       }
     } catch (err) {
-      toast.error(err?.data?.error || 'Could not submit QA');
+      toast.error(err?.data?.error || 'Could not save the checks');
     }
   }
 
@@ -330,7 +330,7 @@ function QAPanel({ bookingId, onDone }) {
       <button onClick={send} disabled={submitting || requiredUntested.length > 0} className="btn-primary w-full">
         {submitting ? <><Loader2 size={15} className="animate-spin" /> Submitting…</>
           : requiredUntested.length > 0 ? `${requiredUntested.length} required check(s) left`
-            : 'Submit QA'}
+            : 'Save the checks'}
       </button>
     </div>
   );

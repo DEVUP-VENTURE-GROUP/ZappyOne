@@ -150,14 +150,14 @@ export function WorkerKycPage() {
         {status === 'rejected' && kyc?.rejectionReason ? (
           <Banner tone="red" Icon={XCircle} title="Previous submission rejected">{kyc.rejectionReason} Please upload and submit your documents again.</Banner>
         ) : null}
-        <Banner tone="blue" Icon={ShieldCheck}>Documents are encrypted and used only for identity verification. Submissions are reviewed within 24 hours.</Banner>
+        <Banner tone="blue" Icon={ShieldCheck}>Your documents are kept safe and used only to check your ID. We check them within 24 hours.</Banner>
         {DOCS.map((d) => (
           <KycDocRow key={d.key} Icon={d.Icon} label={d.label} sublabel={d.sublabel} required={d.required} live={d.live}
             uploaded={!!urls[d.key]} busy={uploading === d.key} locked={!opens(d.key)} onPick={() => add(d.key, d.live)} />
         ))}
       </ScrollView>
       <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.md }]}>
-        <Button label="Submit for verification" icon={<ShieldCheck size={15} color="#fff" />} onPress={submit} loading={submitting} disabled={!ready} fullWidth size="large" />
+        <Button label="Send to ZappyOne to check" icon={<ShieldCheck size={15} color="#fff" />} onPress={submit} loading={submitting} disabled={!ready} fullWidth size="large" />
       </View>
     </View>
   );
