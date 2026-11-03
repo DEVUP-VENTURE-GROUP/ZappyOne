@@ -84,11 +84,12 @@ export default function StorefrontPage() {
   const vertical = picked || offered[0]?.vertical || '';
   const { data: menu, isLoading } = useStorefrontMenuQuery({ kind, id, vertical }, { skip: !vertical });
   const service = services?.items?.find((i) => i.vertical === vertical);
-  const name = shop?.businessName || pro?.name || passed?.name || 'Provider';
+  // The name they registered for this service comes first (a dance school inside a repair shop's account).
+  const name = menu?.serviceName || shop?.businessName || pro?.name || passed?.name || 'Provider';
   const rating = shop ? (shop.reviewCount ? shop.rating : null) : pro ? pro.rating : passed?.rating ?? null;
   const reviewCount = shop?.reviewCount ?? pro?.ratingCount ?? passed?.reviewCount ?? 0;
   const jobs = shop?.completedJobs ?? pro?.completedJobs ?? passed?.completedJobs ?? 0;
-  const cover = shop?.coverImageUrl || null;
+  const cover = menu?.serviceImageUrl || shop?.coverImageUrl || null;
   const photo = pro?.photo || passed?.imageUrl || null;
   const verified = shop ? true : pro ? pro.verified : true;
   const items = menu?.items || [];

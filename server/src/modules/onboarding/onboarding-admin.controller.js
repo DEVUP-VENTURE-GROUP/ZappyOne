@@ -8,7 +8,9 @@ async function carryRequestOver(reqDoc, line, offered, slug) {
   for (const [i, p] of offered.entries()) {
     const code = `${prefix}_${p.code || `${slug(p.name)}_${i + 1}`.slice(0, 30)}`;
     const src = (reqDoc.packages || []).find((x) => x.name === p.name) || p;
-    await Repair.updateOne({ vertical: line.repairVertical, code }, { $set: { includes: src.includes || [], photoKey: src.photoKey || '' } });
+    // A job sent without its own photo takes one of the photos sent for the whole service, so no job starts blank.
+    const photos = reqDoc.photos || [];
+    await Repair.updateOne({ vertical: line.repairVertical, code }, { $set: { includes: src.includes || [], photoKey: src.photoKey || photos[i % (photos.length || 1)] || '' } });
   }
   if (reqDoc.photos?.[0]) await ServiceLine.updateOne({ code: line.code, imageUrl: { $in: ['', null] } }, { $set: { imageUrl: reqDoc.photos[0] } });
   if (line.status !== 'live' || !line.repairVertical) return;

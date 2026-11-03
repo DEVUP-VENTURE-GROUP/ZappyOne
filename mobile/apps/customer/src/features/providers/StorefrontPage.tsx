@@ -91,11 +91,12 @@ export function StorefrontPage() {
   const { data: menu, isLoading } = useStorefrontMenuQuery({ kind, id, vertical }, { skip: !vertical });
   const items: Item[] = menu?.items || [];
   const service = (services?.items || []).find((i: { vertical: string }) => i.vertical === vertical);
-  const name: string = shop?.businessName || pro?.name || p.name || 'Provider';
+  // The name they registered for this service comes first (the website's StorefrontPage).
+  const name: string = menu?.serviceName || shop?.businessName || pro?.name || p.name || 'Provider';
   const rating: number | null = shop ? (shop.reviewCount ? shop.rating : null) : pro ? pro.rating : null;
   const reviewCount: number = shop?.reviewCount ?? pro?.ratingCount ?? 0;
   const jobs: number = shop?.completedJobs ?? pro?.completedJobs ?? 0;
-  const cover = shop?.coverImageUrl ? webAsset(shop.coverImageUrl) : null;
+  const cover = menu?.serviceImageUrl || (shop?.coverImageUrl ? webAsset(shop.coverImageUrl) : null);
   const verified = shop ? true : pro ? !!pro.verified : true;
   const reviews: Review[] = (workerData?.reviews || []).filter((r: Review) => r.text).slice(0, 3);
   const mark = webAsset('/branding/zappy-mark.webp');

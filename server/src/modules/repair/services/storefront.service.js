@@ -39,6 +39,26 @@ const order = {
   fastest: (a, b) => (a.arrivalMinutes ?? 999) - (b.arrivalMinutes ?? 999),
 };
 
+// How each provider presents in one service: the business name they registered for it (its verification details), and a photo of their work in it; null where they gave none, so the account's own name and cover stand.
+async function serviceFace(vertical, owners) {
+  if (!owners.length) return new Map();
+  const line = await require('../../jobs/kinds').KINDS.repair.line({ vertical });
+  const { ProviderEnrolment } = require('../../onboarding/onboarding.model');
+  const or = (k) => ({ $or: [{ shopId: { $in: owners.filter((o) => o.shopId).map((o) => o.shopId) } }, { workerId: { $in: owners.filter((o) => o.workerId).map((o) => o.workerId) } }], ...k });
+  const [enrolments, caps] = await Promise.all([
+    line ? ProviderEnrolment.find(or({ lineCode: line.code, status: 'approved' })).select('shopId workerId fields').lean() : [],
+    ProviderCapability.find(or({ vertical, isActive: true, photoKey: { $nin: ['', null] } })).select('shopId workerId photoKey').lean(),
+  ]);
+  const out = new Map();
+  const at = (k) => out.get(k) || out.set(k, {}).get(k);
+  for (const e of enrolments) {
+    const name = (e.fields || []).find((f) => f.code === 'business_name')?.value?.trim();
+    if (name) at(keyOf(e)).name = name;
+  }
+  for (const c of caps) if (!at(keyOf(c)).imageKey) at(keyOf(c)).imageKey = c.photoKey;
+  return out;
+}
+
 async function listStorefronts({ vertical, lat, lng, serviceMode = 'doorstep', sort = 'best', limit = 30 }) {
   const matching = require('./matching.service');
   const found = await matching.findServiceableProviders({ lat, lng, serviceMode });
@@ -51,12 +71,13 @@ async function listStorefronts({ vertical, lat, lng, serviceMode = 'doorstep', s
   const shopIds = eligible.filter((f) => f.shopId).map((f) => f.shopId);
   const workerIds = eligible.filter((f) => f.workerId).map((f) => f.workerId);
   const shopSvc = require('../../shop/shop.service');
-  const [prices, shops, workers, live, working] = await Promise.all([
+  const [prices, shops, workers, live, working, faces] = await Promise.all([
     lowestPrices(vertical, eligible),
     Shop.find({ _id: { $in: shopIds } }).select(`businessName partnerType rating reviewCount completedJobs yearsActive coverImageUrl ${shopSvc.LIVE_FIELDS}`).lean(),
     Worker.find({ _id: { $in: workerIds }, isBlocked: { $ne: true }, 'kyc.status': 'approved' }).select('name rating reviewCount completedJobs profilePhotoKey workHours').lean(),
     require('../../worker/presence').liveIds(workerIds),
     require('../../worker/worker-dues.service').filterWorkingWorkers(workerIds),
+    serviceFace(vertical, eligible),
   ]);
   const shopById = new Map(shops.map((x) => [String(x._id), x]));
   const workerById = new Map(workers.map((x) => [String(x._id), x]));
@@ -70,11 +91,11 @@ async function listStorefronts({ vertical, lat, lng, serviceMode = 'doorstep', s
       const s = shopById.get(String(f.shopId));
       if (!s || !shopSvc.isLive(s)) continue;
       const open = shopSvc.withOpenState(s);
-      items.push({ kind: 'shop', id: String(s._id), name: s.businessName, partnerType: s.partnerType || 'shop', imageKey: s.coverImageUrl, rating: s.reviewCount ? s.rating : null, reviewCount: s.reviewCount || 0, completedJobs: s.completedJobs || 0, yearsActive: s.yearsActive || null, distanceKm: f.distanceKm, openNow: open.openNow, todayHours: open.todayHours, ...price });
+      items.push({ kind: 'shop', id: String(s._id), name: faces.get(k)?.name || s.businessName, partnerType: s.partnerType || 'shop', imageKey: faces.get(k)?.imageKey || s.coverImageUrl, rating: s.reviewCount ? s.rating : null, reviewCount: s.reviewCount || 0, completedJobs: s.completedJobs || 0, yearsActive: s.yearsActive || null, distanceKm: f.distanceKm, openNow: open.openNow, todayHours: open.todayHours, ...price });
     } else {
       const w = workerById.get(String(f.workerId));
       if (!w || !working.has(String(f.workerId))) continue;
-      items.push({ kind: 'worker', id: String(w._id), name: w.name, partnerType: 'individual', imageKey: w.profilePhotoKey, rating: w.reviewCount ? w.rating : null, reviewCount: w.reviewCount || 0, completedJobs: w.completedJobs || 0, distanceKm: f.distanceKm, openNow: live.has(String(w._id)), ...price });
+      items.push({ kind: 'worker', id: String(w._id), name: faces.get(k)?.name || w.name, partnerType: 'individual', imageKey: w.profilePhotoKey || faces.get(k)?.imageKey, rating: w.reviewCount ? w.rating : null, reviewCount: w.reviewCount || 0, completedJobs: w.completedJobs || 0, distanceKm: f.distanceKm, openNow: live.has(String(w._id)), ...price });
     }
   }
   if (!items.length) return { items: [], total: 0 };
@@ -95,7 +116,7 @@ async function listStorefronts({ vertical, lat, lng, serviceMode = 'doorstep', s
 }
 
 // One storefront's menu for one service: every job it has a bookable price for, per option (home size, vehicle…), with the link the booking flow opens.
-async function storefrontMenu({ kind, id, vertical }) {
+async function menuItems({ kind, id, vertical }) {
   if (!['shop', 'worker'].includes(kind) || !mongoose.Types.ObjectId.isValid(id)) return null;
   const owner = kind === 'shop' ? { shopId: new mongoose.Types.ObjectId(id) } : { workerId: new mongoose.Types.ObjectId(id) };
   const [prices, caps] = await Promise.all([
@@ -138,6 +159,15 @@ async function storefrontMenu({ kind, id, vertical }) {
     };
   }));
   return { items: items.filter((i) => i.options.length).sort((a, b) => a.fromPaise - b.fromPaise) };
+}
+
+// The menu plus how this provider presents in the service: the name they registered for it and a photo of their work, for the storefront heading.
+async function storefrontMenu({ kind, id, vertical }) {
+  const menu = await menuItems({ kind, id, vertical });
+  if (!menu) return menu;
+  const owner = kind === 'shop' ? { shopId: id } : { workerId: id };
+  const face = (await serviceFace(vertical, [owner])).get(keyOf(owner)) || {};
+  return { ...menu, serviceName: face.name || null, serviceImageUrl: face.imageKey ? await s3Service.signMedia(face.imageKey).catch(() => null) : null };
 }
 
 // One search across the menus near the customer: every job whose name matches, from each verified provider covering the spot who prices it, cheapest first.
