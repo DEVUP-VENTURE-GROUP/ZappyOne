@@ -306,4 +306,6 @@ workerSchema.plugin(require('../account/account.plugin'));
 
 workerSchema.index({ 'employment.staffId': 1 }, { unique: true, partialFilterExpression: { 'employment.staffId': { $type: 'string' } } });
 
+// What is bookable where changes with this (onboarding/coverage-version): caches refresh on the next request.
+require('../onboarding/coverage-version').watch(workerSchema, { fields: ['isOnline', 'isBlocked'] });
 module.exports = mongoose.model('Worker', workerSchema);

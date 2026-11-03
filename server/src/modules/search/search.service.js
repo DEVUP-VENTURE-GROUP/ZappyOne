@@ -64,7 +64,7 @@ async function getAffinity(userId) {
 /** Which lines are live at this point (about 1 km cells); null when we don't know the location. */
 async function liveLinesAt(lat, lng) {
   if (lat == null || lng == null || Number.isNaN(Number(lat)) || Number.isNaN(Number(lng))) return null;
-  const cell = `${Number(lat).toFixed(2)},${Number(lng).toFixed(2)}`;
+  const cell = `${await require('../onboarding/coverage-version').current()}|${Number(lat).toFixed(2)},${Number(lng).toFixed(2)}`;
   const hit = placeCache.get(cell);
   if (hit) return hit;
   try {

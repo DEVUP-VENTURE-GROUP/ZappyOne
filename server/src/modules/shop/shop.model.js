@@ -261,4 +261,6 @@ shopSchema.methods.isDiscoverable = function isDiscoverable() {
 // Password, verified email and first-time setup, shared by every account type.
 shopSchema.plugin(require('../account/account.plugin'));
 
+// What is bookable where changes with this (onboarding/coverage-version): caches refresh on the next request.
+require('../onboarding/coverage-version').watch(shopSchema, { fields: ['hours', 'isActive', 'isBlocked'] });
 module.exports = mongoose.model('Shop', shopSchema);

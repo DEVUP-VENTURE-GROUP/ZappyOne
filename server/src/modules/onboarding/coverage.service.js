@@ -132,7 +132,7 @@ async function pricedRepairOwners(ownerKeys, lines) {
  *   not_here   — outside every active zone, or no provider covers it
  */
 async function serviceabilityAt({ lat, lng }) {
-  const cacheKey = `svc:cov:${Number(lat).toFixed(3)}:${Number(lng).toFixed(3)}`;
+  const cacheKey = `svc:cov:${await require('./coverage-version').current()}:${Number(lat).toFixed(3)}:${Number(lng).toFixed(3)}`;
   try {
     const hit = await redis.get(cacheKey);
     if (hit) return JSON.parse(hit);

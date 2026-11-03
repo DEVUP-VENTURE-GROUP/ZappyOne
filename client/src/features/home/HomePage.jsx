@@ -161,8 +161,20 @@ export default function HomePage() {
   /* What we serve here. */
   // A failed check must not hold the grid in skeletons forever: once it has
   // answered (or failed), the catalog is shown as it is.
-  const { data: svc, isFetching: checkingArea } = useGetServiceabilityQuery({ lat: loc.lat, lng: loc.lng }, { skip: loc.lat == null });
-  const { data: catalog, isLoading: loadingCatalog } = useLiveCatalogQuery();
+  const { data: svc, isFetching: checkingArea, refetch: refetchArea } = useGetServiceabilityQuery({ lat: loc.lat, lng: loc.lng }, { skip: loc.lat == null });
+  const { data: catalog, isLoading: loadingCatalog, refetch: refetchCatalog } = useLiveCatalogQuery();
+  // Back on the tab: what is bookable here may have changed (a pro joined, went offline). One check, at most every 30 s.
+  useEffect(() => {
+    let last = Date.now();
+    const onShow = () => {
+      if (document.hidden || Date.now() - last < 30000) return;
+      last = Date.now();
+      refetchCatalog();
+      if (loc.lat != null) refetchArea();
+    };
+    document.addEventListener('visibilitychange', onShow);
+    return () => document.removeEventListener('visibilitychange', onShow);
+  }, [loc.lat, refetchArea, refetchCatalog]);
   // Only what someone covers at this address is shown; the rest waits in "Coming to your area".
   // Unknown location → everything shows (the flow asks for an address).
   const liveCodes = useMemo(() => (svc && svc.status !== 'not_here' ? new Set(svc.lines.map((l) => l.code)) : null), [svc]);

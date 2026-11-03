@@ -279,6 +279,8 @@ serviceAreaSchema.index({ cityCode: 1, isActive: 1 });
 
 const RepairConfig = mongoose.model('RepairConfig', repairConfigSchema);
 const QAChecklist = mongoose.model('QAChecklist', qaChecklistSchema);
+// What is bookable where changes with this (onboarding/coverage-version): caches refresh on the next request.
+require('../../onboarding/coverage-version').watch(serviceAreaSchema);
 const ProviderServiceArea = mongoose.model('ProviderServiceArea', serviceAreaSchema);
 
 module.exports = { RepairConfig, QAChecklist, ProviderServiceArea };

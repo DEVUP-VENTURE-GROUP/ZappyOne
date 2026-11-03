@@ -8,9 +8,9 @@
  * Location: the remembered place first, then GPS; when neither gives a precise
  * fix, it asks. Nothing here is a claim the data doesn't back.
  */
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { RefreshControl, StyleSheet, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 import {
   useCurrentSeasonQuery, useGetEventCategoriesQuery, useGetServiceabilityQuery, useLiveCatalogQuery, useSaveRecentLocationMutation,
@@ -124,6 +124,14 @@ export function HomePage() {
   /* What we serve here. A failed check never holds the grid in skeletons. */
   const { data: svc, isFetching: checkingArea, refetch: refetchArea } = useGetServiceabilityQuery({ lat: loc.lat, lng: loc.lng }, { skip: loc.lat == null });
   const { data: catalog, isLoading: loadingCatalog, refetch: refetchCatalog } = useLiveCatalogQuery();
+  // Back on Home: what is bookable here may have changed (a pro joined, went offline). One check, at most every 30 s.
+  const lastCheck = useRef(Date.now());
+  useFocusEffect(useCallback(() => {
+    if (Date.now() - lastCheck.current < 30000) return;
+    lastCheck.current = Date.now();
+    refetchCatalog();
+    if (loc.lat != null) refetchArea();
+  }, [loc.lat, refetchArea, refetchCatalog]));
   // Only what someone covers at this address is shown; the rest waits in "Coming to your area".
   const liveCodes = useMemo(() => (svc && svc.status !== 'not_here' ? new Set<string>(svc.lines.map((l: { code: string }) => l.code)) : null), [svc]);
   const comingSoon = useMemo(() => comingSoonOf(catalog?.domains || [], liveCodes), [catalog, liveCodes]);

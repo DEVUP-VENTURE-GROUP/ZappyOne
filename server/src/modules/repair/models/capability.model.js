@@ -107,6 +107,8 @@ capabilitySchema.methods.covers = function covers({ brandCode, modelCode, qualit
 };
 
 const SkillLevel = mongoose.model('SkillLevel', skillLevelSchema);
+// What is bookable where changes with this (onboarding/coverage-version): caches refresh on the next request.
+require('../../onboarding/coverage-version').watch(capabilitySchema);
 const ProviderCapability = mongoose.model('ProviderCapability', capabilitySchema);
 
 module.exports = { SkillLevel, ProviderCapability };

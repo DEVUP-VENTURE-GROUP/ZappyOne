@@ -345,6 +345,10 @@ const serviceLineRequestSchema = new mongoose.Schema(
 
 serviceLineRequestSchema.index({ status: 1, requestCount: -1, createdAt: -1 });
 
+// What is bookable where changes with this (onboarding/coverage-version): caches refresh on the next request.
+require('./coverage-version').watch(serviceLineSchema);
+require('./coverage-version').watch(providerEnrolmentSchema);
+
 module.exports = {
   PROVIDER_KINDS,
   ENROLMENT_STATUSES,

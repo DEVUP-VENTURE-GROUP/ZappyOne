@@ -242,6 +242,8 @@ const cancellationPolicySchema = new mongoose.Schema(
 );
 
 const PetPricingRule = mongoose.model('PetPricingRule', pricingRuleSchema);
+// What is bookable where changes with this (onboarding/coverage-version): caches refresh on the next request.
+require('../../onboarding/coverage-version').watch(providerCapabilitySchema);
 const PetProviderCapability = mongoose.model('PetProviderCapability', providerCapabilitySchema);
 const PetCancellationPolicy = mongoose.model('PetCancellationPolicy', cancellationPolicySchema);
 

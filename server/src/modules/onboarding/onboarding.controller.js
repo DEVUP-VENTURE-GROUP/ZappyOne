@@ -342,7 +342,7 @@ async function liveCatalog(req, res, next) {
     const uiLevel = req.get('x-client-type') === 'mobile' ? Number(req.get('x-ui-level')) || 0 : Infinity;
     // The same for everyone at a UI level, and the heaviest call on Home: built once a minute, not per visit.
     const cacheSec = Number(process.env.LIVE_CATALOG_CACHE_SEC ?? 60);
-    const cacheKey = `catalog:live:${uiLevel}`;
+    const cacheKey = `catalog:live:${await require('./coverage-version').current()}:${uiLevel}`;
     if (cacheSec > 0) {
       const hit = await redis.get(cacheKey).catch(() => null);
       if (hit) return res.type('application/json').send(hit);
