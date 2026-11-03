@@ -41,3 +41,14 @@ test('the pin moves to Hyderabad: one area, at the new pin, and Hyderabad custom
   const listed = await request(app).get('/api/repair/provider/service-areas?vertical=bike_wash').set('Authorization', `Bearer ${token}`);
   expect(listed.body.areas[0].workshopAddress).toBe('Gachibowli, Hyderabad');
 });
+
+test('the shop changes its own address to Vikarabad: its service area follows, and Vikarabad customers find it', async () => {
+  const patch = await request(app).patch('/api/shops/me/profile').set('Authorization', `Bearer ${token}`)
+    .send({ address: { text: 'Market Mainroad 143, Vikarabad', location: { coordinates: VIKARABAD } } });
+  expect(patch.status).toBe(200);
+  const area = await ProviderServiceArea.findOne({ shopId: shop._id }).lean();
+  expect(area.center.coordinates).toEqual(VIKARABAD);
+  expect(area.workshopAddress).toBe('Market Mainroad 143, Vikarabad');
+  const near = await matching.findServiceableProviders({ lng: VIKARABAD[0], lat: VIKARABAD[1] + 0.01, serviceMode: 'doorstep' });
+  expect(near.some((p) => String(p.shopId) === String(shop._id))).toBe(true);
+});
