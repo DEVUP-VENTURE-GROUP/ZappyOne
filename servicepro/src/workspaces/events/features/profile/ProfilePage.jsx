@@ -10,6 +10,7 @@ import { PageHeader, Spinner, Card, Field } from '../../components/ui';
 import { uploadFile } from '../../lib/upload';
 import PlacePicker from './PlacePicker';
 import KycSection from './KycSection';
+import { useFocusField } from '@shared/hooks/useFocusField';
 
 /** The business customers see, where it works, and its verification. */
 export default function ProfilePage() {
@@ -22,6 +23,7 @@ export default function ProfilePage() {
   const draft = useFormDraft(partner?._id && `event-profile:${partner._id}`, form, setForm);
   const [photo, setPhoto] = useState(null);
   const [uploading, setUploading] = useState(false);
+  useFocusField(!!form);
 
   useEffect(() => {
     if (!partner) return;
@@ -65,7 +67,7 @@ export default function ProfilePage() {
       <DraftRestored show={draft.restored} onDiscard={draft.discard} />
 
       <Card className="space-y-4 p-4">
-        <div className="flex items-center gap-4">
+        <div data-field="photo" className="flex items-center gap-4">
           <label className="relative flex h-20 w-20 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full border border-line bg-sunken text-ink-500">
             {(photo || partner.profilePhotoUrl) ? <img src={photo || partner.profilePhotoUrl} alt="" className="h-full w-full object-cover" /> : <span className="text-[26px] font-bold text-zappy-700">{form.businessName?.[0]?.toUpperCase() || 'P'}</span>}
             <span className="absolute inset-x-0 bottom-0 flex justify-center bg-ink-900/60 py-0.5 text-white">{uploading ? <Loader2 size={13} className="animate-spin" /> : <Camera size={13} />}</span>
@@ -77,17 +79,17 @@ export default function ProfilePage() {
           </div>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Business name" required><input className="input w-full" value={form.businessName} onChange={(e) => set('businessName', e.target.value)} /></Field>
-          <Field label="Your name"><input className="input w-full" value={form.ownerName} onChange={(e) => set('ownerName', e.target.value)} /></Field>
-          <Field label="Years of experience"><input className="input w-full" inputMode="numeric" value={form.yearsExperience} onChange={(e) => set('yearsExperience', e.target.value.replace(/\D/g, '').slice(0, 2))} /></Field>
+          <div data-field="businessName"><Field label="Business name" required><input className="input w-full" value={form.businessName} onChange={(e) => set('businessName', e.target.value)} /></Field></div>
+          <div data-field="ownerName"><Field label="Your name"><input className="input w-full" value={form.ownerName} onChange={(e) => set('ownerName', e.target.value)} /></Field></div>
+          <div data-field="years"><Field label="Years of experience"><input className="input w-full" inputMode="numeric" value={form.yearsExperience} onChange={(e) => set('yearsExperience', e.target.value.replace(/\D/g, '').slice(0, 2))} /></Field></div>
           <Field label="Travel up to (km)" hint="From your base, for venues within the places you serve.">
             <input className="input w-full" inputMode="numeric" value={form.serviceRadiusKm} onChange={(e) => set('serviceRadiusKm', e.target.value.replace(/\D/g, '').slice(0, 3))} />
           </Field>
         </div>
-        <Field label="About your business" hint="Your style, the events you do best.">
+        <div data-field="bio"><Field label="About your business" hint="Your style, the events you do best.">
           <textarea className="input w-full" rows={3} maxLength={600} value={form.bio} onChange={(e) => set('bio', e.target.value)} />
-        </Field>
-        <div>
+        </Field></div>
+        <div data-field="cities">
           <p className="mb-1.5 text-[13px] font-semibold text-ink-700">Where you work <span className="text-red-600">*</span></p>
           <PlacePicker value={form.cities} onChange={(v) => set('cities', v)} />
         </div>
@@ -98,7 +100,7 @@ export default function ProfilePage() {
 
       <LoginSecurityCard />
 
-      <KycSection partner={partner} token={accessToken} />
+      <div data-field="kyc"><KycSection partner={partner} token={accessToken} /></div>
     </div>
   );
 }

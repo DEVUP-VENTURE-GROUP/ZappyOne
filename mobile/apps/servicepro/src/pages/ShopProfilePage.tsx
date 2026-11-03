@@ -5,6 +5,7 @@
  * rely on them meaning something.
  */
 import { useEffect, useState } from 'react';
+import { useFocusField } from '@zappy/ui/lib/useFocusField';
 import { useFormDraft } from '@zappy/core/hooks/useFormDraft';
 import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -40,6 +41,7 @@ export function ShopProfilePage() {
   const [uploading, setUploading] = useState(false);
   // The just-taken photo shows at once; the saved key is private until the next load signs it.
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const { scrollRef, field, focused } = useFocusField(!!form);
 
   useEffect(() => {
     const s = data?.shop;
@@ -92,7 +94,7 @@ export function ShopProfilePage() {
         <LocationPicker title="Your shop address" initial={form.lat != null && form.lng != null ? { lat: form.lat, lng: form.lng, address: form.address } : null}
           onCancel={() => setPicking(false)} onConfirm={({ address, lat, lng }) => { set({ address, lat, lng }); setPicking(false); }} />
       ) : null}
-      <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+      <ScrollView ref={scrollRef} contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
         {draft.restored ? (
           <View style={styles.restored}>
             <Text variant="caption" weight="semibold" color={zappy[800]} style={{ flex: 1 }}>Your unsaved changes are back.</Text>
@@ -100,9 +102,9 @@ export function ShopProfilePage() {
           </View>
         ) : null}
         <AutoAcceptCard who="shops" />
-        <LoginSecurityCard />
+        <View {...field('email')} style={focused('email') && styles.cardFocus}><LoginSecurityCard /></View>
 
-        <View style={styles.card}>
+        <View {...field('photo')} style={[styles.card, focused('photo') && styles.cardFocus]}>
           <Text variant="caption" weight="bold" color={ink[500]}>COVER PHOTO</Text>
           <Pressable onPress={pickCover} disabled={uploading} accessibilityRole="button" accessibilityLabel="Upload a photo of your shop" style={[styles.cover, uploading && styles.dim]}>
             {cover ? <Image source={{ uri: cover }} style={StyleSheet.absoluteFill} resizeMode="cover" /> : (
@@ -114,7 +116,7 @@ export function ShopProfilePage() {
           </Pressable>
         </View>
 
-        <View style={styles.card}>
+        <View {...field('businessName', 'bio', 'years')} style={[styles.card, focused('businessName', 'bio', 'years') && styles.cardFocus]}>
           <Text variant="caption" weight="bold" color={ink[700]}>Business name *</Text>
           <TextInput value={form.businessName} onChangeText={(v) => set({ businessName: v })} placeholder="e.g. Sharma Mobile Repair" placeholderTextColor={ink[400]} style={styles.input} />
           <Text variant="caption" weight="bold" color={ink[700]}>Category</Text>
@@ -125,7 +127,7 @@ export function ShopProfilePage() {
           <TextInput value={form.yearsActive} onChangeText={(v) => set({ yearsActive: v.replace(/\D/g, '') })} keyboardType="number-pad" placeholder="e.g. 5" placeholderTextColor={ink[400]} style={styles.input} />
         </View>
 
-        <View style={styles.card}>
+        <View {...field('address')} style={[styles.card, focused('address') && styles.cardFocus]}>
           <Text variant="caption" weight="bold" color={ink[500]}>SHOP ADDRESS</Text>
           <Text variant="caption" color={ink[400]}>Customers are matched against this pin, so put it on the shop door.</Text>
           <Pressable onPress={() => setPicking(true)} accessibilityRole="button" style={[styles.pin, !form.address && styles.pinEmpty]}>
@@ -139,7 +141,7 @@ export function ShopProfilePage() {
           <TextInput value={form.landmark} onChangeText={(v) => set({ landmark: v })} placeholder="Landmark (optional)" placeholderTextColor={ink[400]} style={styles.input} />
         </View>
 
-        <View style={styles.card}>
+        <View {...field('hours')} style={[styles.card, focused('hours') && styles.cardFocus]}>
           <Text variant="caption" weight="bold" color={ink[500]}>OPENING HOURS</Text>
           <Text variant="caption" color={ink[400]}>Customers see these before booking. A day left closed takes no bookings.</Text>
           <WeeklyHours hours={form.hours} onChange={(hours) => set({ hours })} />
@@ -160,6 +162,7 @@ export function ShopProfilePage() {
 }
 
 const styles = StyleSheet.create({
+  cardFocus: { borderRadius: radius.large, borderWidth: 2, borderColor: zappy[300] },
   restored: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, borderWidth: 1, borderColor: zappy[200], backgroundColor: zappy[50] },
   page: { flex: 1, backgroundColor: colors.background },
   flex: { flex: 1, minWidth: 0 },

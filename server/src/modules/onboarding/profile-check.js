@@ -5,8 +5,8 @@ const filled = (v, min = 1) => typeof v === 'string' ? v.trim().length >= min : 
 const RULES = {
   shop: (p) => [
     ['businessName', 'Business name', filled(p.businessName, 2), '/shop/profile'],
-    ['ownerName', 'Owner name', filled(p.ownerName, 2), '/shop/profile'],
-    ['email', 'Email for receipts and notices', filled(p.email, 5), '/shop/account'],
+    ['ownerName', 'Owner name', filled(p.ownerName, 2), '/shop/account'],
+    ['email', 'Email for receipts and notices', filled(p.email, 5), '/shop/profile'],
     ['address', 'Address and map pin', filled(p.address?.text, 5) && p.address?.location?.coordinates?.length === 2, '/shop/profile'],
     ['photo', 'Storefront or work photo', filled(p.coverImageUrl), '/shop/profile'],
     ['hours', 'Working hours', (p.hours || []).length > 0, '/shop/profile'],
@@ -41,8 +41,10 @@ async function profileStatus(role, id) {
   if (!RULES[role]) return { complete: true, missing: [], total: 0 };
   const doc = await Model.findById(id).select(FIELDS[role]).lean();
   const items = RULES[role](doc || {});
-  const missing = items.filter(([, , done]) => !done).map(([key, label, , path]) => ({ key, label, path }));
-  return { complete: missing.length === 0, missing, total: items.length };
+  // Every step in order with its state, so the gate can show what is done as well as what is left; `missing` stays for older apps.
+  const all = items.map(([key, label, done, path]) => ({ key, label, path, done: !!done }));
+  const missing = all.filter((i) => !i.done).map(({ key, label, path }) => ({ key, label, path }));
+  return { complete: missing.length === 0, missing, items: all, total: items.length };
 }
 
 // A shop's road from sign-up to taking work, so the home can say what is done, what waits on ZappyOne and what to do next. Each step reads the same records the matching gate reads.

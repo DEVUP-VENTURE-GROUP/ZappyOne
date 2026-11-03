@@ -422,3 +422,8 @@
 @media (prefers-reduced-motion: reduce) {
   .fz-reveal { opacity: 1; transform: none; transition: none; }
 }
+
+/* A field a link pointed to (hooks/useFocusField): a short blue pulse so the eye lands on it. */
+@keyframes field-flash { 0%, 100% { box-shadow: 0 0 0 0 rgba(31, 79, 216, 0); } 30% { box-shadow: 0 0 0 4px rgba(31, 79, 216, .28); } }
+.field-flash { border-radius: 14px; animation: field-flash 1.6s ease-out; scroll-margin-top: 96px; }
+@media (prefers-reduced-motion: reduce) { .field-flash { animation: none; outline: 2px solid var(--zappy-blue); } }

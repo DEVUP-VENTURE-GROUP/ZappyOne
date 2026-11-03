@@ -1,5 +1,6 @@
 import LoginSecurityCard from '../../components/account/LoginSecurityCard';
 import ProfilePhoto from '../../components/account/ProfilePhoto';
+import { useFocusField } from '../../hooks/useFocusField';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -87,6 +88,7 @@ export default function WorkerEditProfilePage() {
   const [name,   setName]   = useState('');
   const [bio,    setBio]    = useState('');
   const [loaded, setLoaded] = useState(false);
+  useFocusField(loaded);
   // Login credentials
   const [username, setUsername]   = useState('');
 
@@ -150,7 +152,7 @@ export default function WorkerEditProfilePage() {
       <div className="max-w-lg lg:max-w-2xl mx-auto px-4 pt-5 space-y-5">
 
         {/* Photo (same one as the dashboard) + stats */}
-        <div className="bg-white rounded-2xl p-4 flex items-center gap-4 shadow-sm">
+        <div data-field="photo" className="bg-white rounded-2xl p-4 flex items-center gap-4 shadow-sm">
           <ProfilePhoto url={account?.photoUrl} role="worker" size={64} />
           <div className="flex-1 min-w-0">
             <p className="font-bold text-slate-800 truncate">{me?.name || 'Your Name'}</p>
@@ -166,7 +168,7 @@ export default function WorkerEditProfilePage() {
         </div>
 
         {/* Name */}
-        <div className="bg-white rounded-2xl p-5 shadow-sm">
+        <div data-field="name" className="bg-white rounded-2xl p-5 shadow-sm">
           <div className="flex items-center gap-2 mb-3">
             <User size={15} className="text-zappy-500" />
             <span className="text-sm font-semibold text-slate-700">Display Name</span>

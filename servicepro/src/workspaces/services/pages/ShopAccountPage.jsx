@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import PageSkeleton from '@shared/components/common/Skeleton';
 import LoadFailed from '@shared/components/common/LoadFailed';
+import { useFocusField } from '@shared/hooks/useFocusField';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { ArrowLeft, Loader2, Store, Landmark, Bell, Wallet, ShieldCheck, ChevronRight, Phone, Mail } from 'lucide-react';
@@ -18,6 +19,7 @@ export default function ShopAccountPage() {
   const shop = data?.shop;
   const [ownerName, setOwnerName] = useState('');
   useEffect(() => { if (shop) setOwnerName(shop.ownerName || ''); }, [shop]);
+  useFocusField(!!shop);
 
   if (isError && !shop) return <LoadFailed what="Your profile" onRetry={refetch} />;
   if (isLoading || !shop) return <PageSkeleton kind="form" label="Loading your profile" />;
@@ -53,7 +55,7 @@ export default function ShopAccountPage() {
         </section>
 
         <section className="space-y-3 rounded-2xl bg-white p-4 ring-1 ring-slate-100">
-          <label className="block">
+          <label data-field="ownerName" className="block">
             <span className="mb-1 block text-[12px] font-semibold text-slate-600">Your name (as on your ID)</span>
             <input value={ownerName} onChange={(e) => setOwnerName(e.target.value)} maxLength={100}
               className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-zappy-100" />

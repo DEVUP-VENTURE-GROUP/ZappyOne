@@ -1,4 +1,5 @@
 import LoginSecurityCard from '@shared/components/account/LoginSecurityCard';
+import { useFocusField } from '@shared/hooks/useFocusField';
 import PageSkeleton from '@shared/components/common/Skeleton';
 import LoadFailed from '@shared/components/common/LoadFailed';
 import { useFormDraft, DraftRestored } from '@shared/hooks/useFormDraft';
@@ -29,6 +30,7 @@ export default function ShopProfilePage() {
   const draft = useFormDraft(data?.shop?._id && `shop-profile:${data.shop._id}`, form, setForm);
   const [pickingAddress, setPickingAddress] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
+  useFocusField(!!form);
   // Local object-URL preview so the just-uploaded photo renders instantly —
   // the S3 key we save isn't viewable directly (private bucket) until the
   // next GET resolves it to a signed URL.
@@ -152,10 +154,10 @@ export default function ShopProfilePage() {
       <div className="max-w-lg lg:max-w-2xl mx-auto px-4 pt-4 space-y-3">
         <DraftRestored show={draft.restored} onDiscard={draft.discard} />
         <AutoAcceptCard who="shops" />
-        <LoginSecurityCard />
+        <div data-field="email"><LoginSecurityCard /></div>
 
         {/* Cover photo */}
-        <div className="card">
+        <div data-field="photo" className="card">
           <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Cover Photo</p>
           <label className={`relative block aspect-[16/9] rounded-xl overflow-hidden bg-slate-100 border-2 border-dashed border-slate-200 cursor-pointer ${uploadingCover ? 'opacity-60' : ''}`}>
             {coverPreview || (form.coverImageUrl && form.coverImageUrl.startsWith('http')) ? (
@@ -172,7 +174,7 @@ export default function ShopProfilePage() {
 
         {/* Basic info */}
         <div className="card space-y-3">
-          <div>
+          <div data-field="businessName">
             <label className="text-[12px] font-bold text-slate-700 block mb-1.5">Business Name <span className="text-red-500">*</span></label>
             <input value={form.businessName} onChange={(e) => setForm((p) => ({ ...p, businessName: e.target.value }))}
               className="input text-sm w-full" placeholder="e.g. Sharma Mobile Repair" />
@@ -182,13 +184,13 @@ export default function ShopProfilePage() {
             <input value={form.category} onChange={(e) => setForm((p) => ({ ...p, category: e.target.value }))}
               className="input text-sm w-full" placeholder="e.g. Mobile & Laptop Repair" />
           </div>
-          <div>
+          <div data-field="bio">
             <label className="text-[12px] font-bold text-slate-700 block mb-1.5">About your shop</label>
             <textarea rows={3} value={form.bio} onChange={(e) => setForm((p) => ({ ...p, bio: e.target.value }))}
               className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-zappy-100 focus:border-zappy-400 resize-none"
               placeholder="Tell customers what makes your shop trustworthy…" />
           </div>
-          <div>
+          <div data-field="years">
             <label className="text-[12px] font-bold text-slate-700 block mb-1.5">Years in business</label>
             <input type="number" min="0" value={form.yearsActive} onChange={(e) => setForm((p) => ({ ...p, yearsActive: e.target.value }))}
               className="input text-sm w-full" placeholder="e.g. 5" />
@@ -196,7 +198,7 @@ export default function ShopProfilePage() {
         </div>
 
         {/* Address */}
-        <div className="card space-y-3">
+        <div data-field="address" className="card space-y-3">
           <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Shop Address</p>
           <p className="text-[11px] text-slate-400">
             Customers are matched against this pin, so put it on the shop door.
@@ -230,7 +232,7 @@ export default function ShopProfilePage() {
         </div>
 
         {/* Opening hours */}
-        <div className="card">
+        <div data-field="hours" className="card">
           <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Opening Hours</p>
           <p className="mt-0.5 mb-3 text-[11px] text-slate-400">
             Customers see these before booking. A day left closed takes no bookings.
