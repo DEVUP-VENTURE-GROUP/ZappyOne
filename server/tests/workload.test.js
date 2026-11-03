@@ -37,5 +37,3 @@ test('free, finishing, busy and full are told apart; only ZappyOne staff have a 
   await expect(workload.assertCanTakeAnother(midway)).resolves.toBeUndefined();
   await expect(workload.assertCanTakeAnother(partner)).resolves.toBeUndefined();
 });
-  await expect(workload.assertCanTakeAnother(midway)).resolves.toBeUndefined();
-});
