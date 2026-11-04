@@ -86,7 +86,7 @@ const pricingRuleSchema = new mongoose.Schema(
     /* Platform economics */
     commissionPct: { type: Number, default: 10, min: 0, max: 100 },
     platformFeePaise: { type: Number, default: 1000, min: 0 }, // ₹10, admin-set
-    taxPct: { type: Number, default: 0, min: 0, max: 100 },
+    taxPct: { type: Number, default: 3, min: 0, max: 100 }, // 3% unless admin sets otherwise
 
     /**
      * Guardrails on what a provider may charge (§29). A provider price

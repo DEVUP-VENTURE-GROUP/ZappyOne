@@ -70,7 +70,9 @@ test('menu service: the pro builds their menu, a customer finds and books their 
 
   const { RepairBooking } = require('../src/modules/repair/models/booking.model');
   const final = await RepairBooking.findById(b._id).lean();
-  const zappy = (final.priceSnapshot.commissionPaise || 0) + (final.priceSnapshot.platformFeePaise || 0);
+  // ZappyOne's part of a cash job: its commission, the platform fee and the tax the pro collected for it.
+  const zappy = (final.priceSnapshot.commissionPaise || 0) + (final.priceSnapshot.platformFeePaise || 0) + (final.priceSnapshot.taxPaise || 0);
+  expect(final.priceSnapshot.taxPaise).toBeGreaterThan(0);
   const dues = await require('../src/modules/worker/worker-dues.service').getDuesStatus(worker._id);
   expect(dues.duesPaise).toBe(zappy);
   expect(zappy).toBeLessThan(final.priceSnapshot.totalPaise);
