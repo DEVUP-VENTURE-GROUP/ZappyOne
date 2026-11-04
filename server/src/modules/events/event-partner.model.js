@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const eventPartnerSchema = new mongoose.Schema({
   businessName: { type: String, required: true, trim: true },
   ownerName:    { type: String, required: true },
-  phone:        { type: String, sparse: true },  // required for OTP path; optional for Google auth
+  phone:        { type: String },  // required for OTP path; optional for Google auth
   email:        { type: String, sparse: true },
   googleId:     { type: String, sparse: true },  // set when partner signs in via Google
 
@@ -62,6 +62,9 @@ const eventPartnerSchema = new mongoose.Schema({
 
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin' },
 }, { timestamps: true });
+
+// One partner per phone; partners who signed in with Google and have no phone are not counted.
+eventPartnerSchema.index({ phone: 1 }, { unique: true, partialFilterExpression: { phone: { $type: 'string', $gt: '' } } });
 
 // Password, verified email and first-time setup, shared by every account type.
 eventPartnerSchema.plugin(require('../account/account.plugin'));

@@ -34,3 +34,16 @@ test('the stale unique index blocks the second payment; the script drops only it
   await PaymentIntent.create(intent(3));
   expect(await PaymentIntent.countDocuments()).toBe(3);
 });
+
+test('events partners: one per phone, and any number without a phone (Google sign-in)', async () => {
+  const EventPartner = require('../src/modules/events/event-partner.model');
+  await EventPartner.init();
+  const p = (x) => ({ businessName: 'B', ownerName: 'O', ...x });
+  await EventPartner.create(p({ phone: '9000000801' }));
+  await expect(EventPartner.create(p({ phone: '9000000801' }))).rejects.toMatchObject({ code: 11000 });
+  await EventPartner.create(p({ googleId: 'g1' }));
+  await EventPartner.create(p({ googleId: 'g2' }));
+  await EventPartner.create(p({ googleId: 'g3', phone: null }));
+  await EventPartner.create(p({ googleId: 'g4', phone: null }));
+  expect(await EventPartner.countDocuments()).toBe(5);
+});
