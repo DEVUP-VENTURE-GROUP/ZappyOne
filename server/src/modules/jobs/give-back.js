@@ -404,14 +404,14 @@ async function reportCashRefused({ kind, id, actor, note = '' }) {
   if (!disputed) await require('../user/user.model').updateOne({ _id: doc.userId }, { $inc: { 'abuse.cashRefused': 1 } }).catch(() => {});
   const rupees = `₹${Math.round((doc.payClaim?.amountPaise || 0) / 100).toLocaleString('en-IN')}`;
   require('./job-events').push({ kind: 'user', id: doc.userId }, disputed
-    ? { title: 'ZappyOne is checking your payment', body: 'Your pro says the payment has not reached them. We will call you both and sort it out.', deepLink: KINDS[kind].link(String(doc._id)), data: { kind, id: String(doc._id) } }
+    ? { title: 'Your pro has not received the payment', body: `Check your UPI app${doc.payClaim?.utr ? ` for reference ${doc.payClaim.utr}` : ''}. Your next booking opens once your pro confirms it, or you pay again from this booking.`, deepLink: KINDS[kind].link(String(doc._id)), data: { kind, id: String(doc._id) } }
     : { title: 'Payment still due', body: 'Your pro says the cash for this job was not paid. New bookings open again once it is paid, or tell us what went wrong from the booking.', deepLink: KINDS[kind].link(String(doc._id)), data: { kind, id: String(doc._id) } },
   ).catch(() => {});
   await require('../admin/ops-alerts').raise({
-    type: disputed ? 'pay_disputed' : 'cash_refused', key: `pay:${doc._id}`, urgent: true,
+    type: disputed ? 'pay_disputed' : 'cash_refused', key: `pay:${doc._id}`, urgent: false,
     title: disputed ? `Payment dispute on ${doc.reference || 'a job'}` : `Customer did not pay on ${doc.reference || 'a job'}`,
     body: disputed
-      ? `Customer says they paid ${rupees} by ${doc.payClaim.method === 'upi' ? 'UPI' : 'cash'}; the pro says it has not reached them.${note ? ` Pro: ${note}` : ''} Call both.`
+      ? `Customer says they paid ${rupees} by ${doc.payClaim.method === 'upi' ? `UPI (ref ${doc.payClaim.utr || 'none'})` : 'cash'}; the pro says it has not reached them.${note ? ` Pro: ${note}` : ''} The customer's next booking is held until the pro confirms.`
       : `The pro says the customer did not pay for this ${kind} job.${note ? ` Pro: ${note}` : ''}`,
     data: { kind, id: String(doc._id), reference: doc.reference || null },
   });

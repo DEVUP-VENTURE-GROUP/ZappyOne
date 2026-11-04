@@ -1,6 +1,8 @@
 // The customer pays the pro directly (UPI to the pro's own ID, or cash); ZappyOne only shows whom and how much, and tells the pro.
 const fail = (status, code, message) => Object.assign(new Error(message), { status, code });
 const UPI_ID = /^[a-zA-Z0-9._-]{2,256}@[a-zA-Z][a-zA-Z0-9.-]{1,64}$/;
+// The 12-digit reference every UPI app shows on a payment (the bank's UTR).
+const UPI_REF = /^\d{12}$/;
 const AT_CUSTOMER = ['return', 'exchange', 'parcel_drop', 'doctor_escort', 'queue_errand', 'elder_checkin', 'party_helper', 'puja_help'];
 
 // When the money is due, per kind: the same moments the pro's screen asks them to collect.
@@ -42,12 +44,19 @@ async function view(kind, doc) {
   return {
     amountPaise, to, reference: doc.reference || null,
     methods: to.upiId ? ['upi', 'cash'] : ['cash'],
-    claim: doc.payClaim?.method ? { method: doc.payClaim.method, at: doc.payClaim.at } : null,
+    claim: doc.payClaim?.method ? { method: doc.payClaim.method, at: doc.payClaim.at, utr: doc.payClaim.utr || null } : null,
+    help: await helpLine(),
   };
 }
 
-// "I've paid": recorded and the pro is told to check and tap Received; it never marks the job paid by itself.
-async function claim({ id, userId, method }) {
+// ZappyOne's phone for a stuck payment (Admin -> Messages -> Business details), and when the button shows.
+async function helpLine() {
+  const [s, cfg] = await Promise.all([require('../messaging/settings').get().catch(() => ({})), require('../order/cancellation.service').getConfig()]);
+  return s.supportPhone ? { phone: s.supportPhone, afterMinutes: cfg.payConfirmRemindMinutes ?? 5 } : null;
+}
+
+// "I've paid": recorded and the pro is told to check and tap Received. UPI needs its reference, which the pro checks against their app.
+async function claim({ id, userId, method, utr = null }) {
   const { findJob, KINDS } = require('./kinds');
   const found = await findJob(id, '_id');
   if (!found || !DUE_AT[found.kind]) throw fail(404, 'NOT_FOUND', 'Booking not found');
@@ -58,8 +67,16 @@ async function claim({ id, userId, method }) {
   const v = await view(kind, doc);
   if (!v) throw fail(409, 'NOT_DUE', 'There is nothing to pay on this booking right now.');
   if (!v.methods.includes(method)) throw fail(400, 'BAD_METHOD', 'Your pro has not added a UPI ID. Pay in cash.');
+  const ref = method === 'upi' ? String(utr || '').replace(/\s+/g, '') : null;
+  if (method === 'upi' && !UPI_REF.test(ref)) throw fail(400, 'UPI_REF_REQUIRED', 'Enter the 12-digit UPI reference from your UPI app (it is on the payment receipt).');
+  // One payment pays one job.
+  if (ref) {
+    for (const k of Object.keys(DUE_AT)) {
+      if (await KINDS[k].model().exists({ 'payClaim.utr': ref, _id: { $ne: doc._id } })) throw fail(409, 'UPI_REF_USED', 'That UPI reference is already used on another booking. Check it in your UPI app.');
+    }
+  }
 
-  await Model.updateOne({ _id: doc._id, userId }, { $set: { payClaim: { method, at: new Date(), amountPaise: v.amountPaise } } });
+  await Model.updateOne({ _id: doc._id, userId }, { $set: { payClaim: { method, at: new Date(), amountPaise: v.amountPaise, ...(ref && { utr: ref }) } } });
   const events = require('./job-events');
   const payload = { kind, id: String(doc._id), status: doc.status, at: new Date().toISOString() };
   const rupees = `₹${Math.round(v.amountPaise / 100).toLocaleString('en-IN')}`;
@@ -71,7 +88,7 @@ async function claim({ id, userId, method }) {
     await events.push(provider, {
       title: method === 'upi' ? `Customer paid ${rupees} by UPI` : `Customer is paying ${rupees} in cash`,
       body: method === 'upi'
-        ? `${doc.reference || 'A booking'}: check your UPI app for ${rupees}, then tap Received.`
+        ? `${doc.reference || 'A booking'}: check your UPI app for ${rupees} (ref ${ref}), then tap Received.`
         : `${doc.reference || 'A booking'}: take ${rupees} in cash, then tap Received.`,
       deepLink: KINDS[kind].providerLink(String(doc._id)), data: payload,
     }).catch(() => {});
@@ -79,7 +96,7 @@ async function claim({ id, userId, method }) {
   // The pro already said it was not paid: now two stories about the same money, so a person decides.
   if (await require('./give-back').JobGiveBack.exists({ jobId: doc._id, type: 'cash_refused' })) {
     await require('../admin/ops-alerts').raise({
-      type: 'pay_disputed', key: `pay:${doc._id}`, urgent: true, title: `Payment dispute on ${doc.reference || 'a job'}`,
+      type: 'pay_disputed', key: `pay:${doc._id}`, urgent: false, title: `Payment dispute on ${doc.reference || 'a job'}`,
       body: `Customer says they paid ${rupees} by ${method === 'upi' ? 'UPI' : 'cash'}; the pro reported it was not paid. Call both.`,
       data: { kind, id: String(doc._id), reference: doc.reference || null },
     });
@@ -88,54 +105,82 @@ async function claim({ id, userId, method }) {
 }
 
 const minutesAgo = (m, now) => new Date(now - m * 60000);
-const providerOf = (doc) => (doc.workerId ? { kind: 'worker', id: doc.workerId } : doc.shopId ? { kind: 'shop', id: doc.shopId } : null);
+const providerOf = (doc) => (doc.shopId && !doc.workerId ? { kind: 'shop', id: doc.shopId } : doc.workerId ? { kind: 'worker', id: doc.workerId } : null);
 
-// Customer said they paid and the pro has not answered: remind the pro, then call in ZappyOne. Never marks anything paid; only the pro's Received does.
+// Records the payment exactly as the pro's own Received button does, per kind, acting as the job's holder.
+const RECEIVE = {
+  repair: (doc) => require('../repair/services/booking.service').collectCash({ bookingId: doc._id, actorRole: doc.shopId ? 'shop' : 'worker', actorId: doc.shopId || doc.workerId }),
+  pet: (doc) => require('../pet/services/payment.service').recordCash({ bookingId: doc._id, providerId: doc.workerId || doc.shopId }),
+  helping: (doc) => require('../helping/services/task.service').recordCash({ taskId: doc._id, workerId: doc.workerId }),
+};
+
+// After "I've paid": the pro is reminded twice; a UPI payment with its reference that the pro never answers counts as received. Cash is only ever closed by the pro.
 async function sweepClaims({ now = Date.now(), limit = 50 } = {}) {
   const cfg = await require('../order/cancellation.service').getConfig();
-  const remindMin = cfg.payConfirmRemindMinutes ?? 5;
-  const escalateMin = Math.max(cfg.payConfirmEscalateMinutes ?? 10, remindMin + 1);
+  const first = cfg.payConfirmRemindMinutes ?? 5;
+  const again = Math.max(cfg.payConfirmRemindAgainMinutes ?? 10, first + 1);
+  const auto = Math.max(cfg.payAutoReceiveMinutes ?? 30, again + 1);
   const { KINDS } = require('./kinds');
   const { PAYABLES } = require('../payment/payables');
+  const { JobGiveBack } = require('./give-back');
   const events = require('./job-events');
-  const alerts = require('../admin/ops-alerts');
-  let reminded = 0; let escalated = 0;
+  const out = { reminded: 0, autoReceived: 0 };
   for (const kind of Object.keys(DUE_AT)) {
     const Model = KINDS[kind].model();
-    const due = await Model.find({
-      'payClaim.at': { $lte: minutesAgo(remindMin, now) },
-      $or: [{ 'payClaim.remindedAt': null }, { 'payClaim.escalatedAt': null, 'payClaim.at': { $lte: minutesAgo(escalateMin, now) } }],
-    }).sort({ 'payClaim.at': 1 }).limit(limit);
-    for (const doc of due) {
+    const rows = await Model.find({
+      'payClaim.at': { $lte: minutesAgo(first, now) },
+      'payClaim.autoReceivedAt': null,
+      $or: [
+        { 'payClaim.remindedAt': null },
+        { 'payClaim.remindedAgainAt': null, 'payClaim.at': { $lte: minutesAgo(again, now) } },
+        { 'payClaim.method': 'upi', 'payClaim.utr': { $type: 'string' }, 'payClaim.at': { $lte: minutesAgo(auto, now) } },
+      ],
+    }).sort({ 'payClaim.at': 1 }).limit(limit).lean();
+    for (const doc of rows) {
+      const c = doc.payClaim;
+      const age = (now - new Date(c.at).getTime()) / 60000;
       const paid = PAYABLES[kind]?.isPaid(doc);
-      const late = doc.payClaim.at <= minutesAgo(escalateMin, now);
-      const set = { 'payClaim.remindedAt': doc.payClaim.remindedAt || new Date(now), ...(late || paid ? { 'payClaim.escalatedAt': doc.payClaim.escalatedAt || new Date(now) } : {}) };
-      const claimed = await Model.updateOne({ _id: doc._id, 'payClaim.at': doc.payClaim.at, 'payClaim.escalatedAt': doc.payClaim.escalatedAt ?? null, 'payClaim.remindedAt': doc.payClaim.remindedAt ?? null }, { $set: set });
-      if (!claimed.modifiedCount || paid) continue;
-      // The pro did answer (Customer did not pay): that is already a dispute case, not silence.
-      if (await require('./give-back').JobGiveBack.exists({ jobId: doc._id, type: 'cash_refused' })) continue;
-      const rupees = `₹${Math.round((doc.payClaim.amountPaise || 0) / 100).toLocaleString('en-IN')}`;
-      const by = doc.payClaim.method === 'upi' ? 'UPI' : 'cash';
+      const answered = paid || await JobGiveBack.exists({ jobId: doc._id, type: 'cash_refused' });
+      const step = answered ? 'closed' : age >= auto && c.method === 'upi' && c.utr ? 'auto' : age >= again && c.remindedAt ? 'again' : 'first';
+      const set = step === 'closed' ? { 'payClaim.remindedAt': c.remindedAt || new Date(now), 'payClaim.remindedAgainAt': c.remindedAgainAt || new Date(now), 'payClaim.autoReceivedAt': c.autoReceivedAt || new Date(0) }
+        : step === 'auto' ? { 'payClaim.autoReceivedAt': new Date(now) }
+          : step === 'again' ? { 'payClaim.remindedAgainAt': new Date(now) } : { 'payClaim.remindedAt': new Date(now) };
+      // Claimed by exactly one sweep, however many servers run it.
+      const won = await Model.updateOne({ _id: doc._id, 'payClaim.at': c.at, 'payClaim.remindedAt': c.remindedAt ?? null, 'payClaim.remindedAgainAt': c.remindedAgainAt ?? null, 'payClaim.autoReceivedAt': null }, { $set: set });
+      if (!won.modifiedCount || step === 'closed') continue;
+      const rupees = `₹${Math.round((c.amountPaise || 0) / 100).toLocaleString('en-IN')}`;
+      const by = c.method === 'upi' ? `UPI (ref ${c.utr})` : 'cash';
       const payload = { kind, id: String(doc._id), status: doc.status, at: new Date(now).toISOString() };
       const provider = providerOf(doc);
-      if (late) {
-        escalated++;
-        await alerts.raise({
-          type: 'pay_unconfirmed', key: `pay:${doc._id}`, urgent: true, title: `Pro has not confirmed payment on ${doc.reference || 'a job'}`,
-          body: `Customer said they paid ${rupees} by ${by} ${escalateMin}+ minutes ago and the pro has not tapped Received or Not paid. Call the pro.`,
-          data: { kind, id: String(doc._id), reference: doc.reference || null },
-        });
-        events.push({ kind: 'user', id: doc.userId }, { title: 'ZappyOne is checking your payment', body: 'Your pro has not confirmed it yet. We are calling them now.', deepLink: KINDS[kind].link(String(doc._id)), data: payload }).catch(() => {});
-      } else if (provider) {
-        reminded++;
-        events.push(provider, {
-          title: `Did you get ${rupees}?`, body: `${doc.reference || 'A booking'}: the customer says they paid by ${by}. Tap Received, or Customer did not pay.`,
+      const holders = [provider, doc.shopId && doc.workerId ? { kind: 'shop', id: doc.shopId } : null].filter(Boolean);
+      if (step === 'auto') {
+        try { await RECEIVE[kind](doc); } catch (err) {
+          await Model.updateOne({ _id: doc._id }, { $unset: { 'payClaim.autoReceivedAt': 1 } });
+          require('../../core/logger').error({ err: err.message, kind, id: String(doc._id) }, '[pay] auto receive failed - will retry');
+          continue;
+        }
+        out.autoReceived++;
+        for (const h of holders) {
+          events.toProvider(h.kind, h.id, 'job.update', payload);
+          events.push(h, { title: `${rupees} marked received`, body: `${doc.reference || 'A booking'}: the customer paid by ${by} and there was no answer for ${auto} minutes. Find that reference in your UPI app.`, deepLink: KINDS[kind].providerLink(String(doc._id)), data: payload }).catch(() => {});
+        }
+        events.toProvider('user', doc.userId, 'job.update', payload);
+        events.push({ kind: 'user', id: doc.userId }, { title: 'Payment confirmed', body: `${rupees} for ${doc.reference || 'your booking'} is recorded. Thank you.`, deepLink: KINDS[kind].link(String(doc._id)), data: payload }).catch(() => {});
+        require('../admin/ops-alerts').raise({ type: 'pay_auto_received', urgent: false, title: `Payment auto-confirmed on ${doc.reference || 'a job'}`, body: `${rupees} by ${by}. The pro did not answer for ${auto} minutes.`, data: { kind, id: String(doc._id), reference: doc.reference || null } }).catch(() => {});
+        continue;
+      }
+      out.reminded++;
+      for (const h of holders) {
+        events.push(h, {
+          title: step === 'again' ? `Still waiting: did you get ${rupees}?` : `Did you get ${rupees}?`,
+          body: `${doc.reference || 'A booking'}: the customer says they paid by ${by}. Tap Received, or Customer did not pay.${c.method === 'upi' && c.utr ? ` No answer in ${auto} minutes counts as received.` : ''}`,
           deepLink: KINDS[kind].providerLink(String(doc._id)), data: payload,
         }).catch(() => {});
       }
+      if (step === 'first') events.toProvider('user', doc.userId, 'job.update', payload);
     }
   }
-  return { reminded, escalated };
+  return out;
 }
 
-module.exports = { view, claim, payee, sweepClaims, DUE_AT, UPI_ID };
+module.exports = { view, claim, payee, sweepClaims, helpLine, DUE_AT, UPI_ID, UPI_REF };

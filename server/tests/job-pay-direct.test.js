@@ -38,10 +38,10 @@ test('done job: the pro, the amount and their UPI ID; "I paid by UPI" is saved a
   const o = await request(app).get(`/api/jobs/${id}/options`).set(auth(owner));
   expect(o.body.payTo).toMatchObject({ amountPaise: 60000, to: { name: 'Ravi', upiId: 'ravi.k@okhdfcbank' }, methods: ['upi', 'cash'], claim: null });
 
-  const r = await request(app).post(`/api/jobs/${id}/pay-claim`).set(auth(owner)).send({ method: 'upi' });
+  const r = await request(app).post(`/api/jobs/${id}/pay-claim`).set(auth(owner)).send({ method: 'upi', utr: '431298760099' });
   expect(r.status).toBe(200);
   const b = await PetBooking.findById(id).lean();
-  expect(b.payClaim).toMatchObject({ method: 'upi', amountPaise: 60000 });
+  expect(b.payClaim).toMatchObject({ method: 'upi', amountPaise: 60000, utr: '431298760099' });
   expect(b.paymentStatus).toBe('unpaid');
   expect((await request(app).get(`/api/jobs/${id}/options`).set(auth(owner))).body.payTo.claim.method).toBe('upi');
 });

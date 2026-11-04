@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import QRCode from 'qrcode';
-import { Banknote, Check, Copy, Loader2, Smartphone } from 'lucide-react';
+import { Banknote, Check, Copy, Loader2, Phone, Smartphone } from 'lucide-react';
 import { rupeesOf } from '@shared/customer/trackingSteps';
-import { upiLink } from '@shared/customer/upiPay';
+import { upiLink, cleanUpiRef, isUpiRef, helpPhoneFor } from '@shared/customer/upiPay';
 import { useClaimJobPaymentMutation } from '@shared/services/api';
 import { Section } from './Section';
 
@@ -14,6 +14,8 @@ export default function PayPro({ jobId, payTo, onClaimed }) {
   const [method, setMethod] = useState(payTo.claim?.method || (payTo.methods.includes('upi') ? 'upi' : 'cash'));
   const [qr, setQr] = useState(null);
   const [claim, { isLoading }] = useClaimJobPaymentMutation();
+  const [utr, setUtr] = useState('');
+  const [changing, setChanging] = useState(false);
   const { amountPaise, to, reference } = payTo;
   const amount = rupeesOf(amountPaise);
   const link = to.upiId ? upiLink({ upiId: to.upiId, name: to.name, amountPaise, reference }) : null;
@@ -25,14 +27,15 @@ export default function PayPro({ jobId, payTo, onClaimed }) {
   }, [method, link, phone]);
 
   async function say(m) {
-    try { toast.success((await claim({ id: jobId, method: m }).unwrap()).message); onClaimed?.(); }
+    try { toast.success((await claim({ id: jobId, method: m, ...(m === 'upi' && { utr }) }).unwrap()).message); setChanging(false); onClaimed?.(); }
     catch (err) { toast.error(err?.data?.error || 'Could not send that. Try again.'); }
   }
   async function copy() {
     try { await navigator.clipboard.writeText(to.upiId); toast.success('UPI ID copied'); } catch { toast(to.upiId); }
   }
 
-  const waiting = payTo.claim?.method;
+  const waiting = changing ? null : payTo.claim?.method;
+  const helpPhone = helpPhoneFor(payTo.claim, payTo.help);
   return (
     <Section>
       <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-ink-400">Job done</p>
@@ -43,8 +46,8 @@ export default function PayPro({ jobId, payTo, onClaimed }) {
         <div className="mt-4 flex items-start gap-3 rounded-card bg-zappy-50 p-3.5">
           <Loader2 size={18} className="mt-0.5 shrink-0 animate-spin text-zappy-700" />
           <p className="text-[14px] text-zappy-900">
-            {waiting === 'upi' ? `Waiting for ${to.name} to confirm your UPI payment.` : `Hand ${amount} in cash to ${to.name}. They will confirm it.`}
-            <button type="button" onClick={() => say(waiting === 'upi' ? 'cash' : 'upi')} disabled={isLoading || (waiting === 'cash' && !link)}
+            {waiting === 'upi' ? `Waiting for ${to.name} to confirm your UPI payment${payTo.claim?.utr ? ` (ref ${payTo.claim.utr})` : ''}.` : `Hand ${amount} in cash to ${to.name}. They will confirm it.`}
+            <button type="button" onClick={() => (waiting === 'upi' ? say('cash') : (setMethod('upi'), setChanging(true)))} disabled={isLoading || (waiting === 'cash' && !link)}
               className="ml-1 font-semibold text-zappy-700 underline disabled:hidden">{waiting === 'upi' ? 'Paying cash instead?' : 'Pay by UPI instead?'}</button>
           </p>
         </div>
@@ -74,7 +77,13 @@ export default function PayPro({ jobId, payTo, onClaimed }) {
                 <span className="min-w-0 flex-1 truncate text-[14px] text-ink-900"><span className="text-ink-500">UPI ID </span>{to.upiId}</span>
                 <button type="button" onClick={copy} className="flex items-center gap-1 text-[13.5px] font-bold text-zappy-700"><Copy size={14} /> Copy</button>
               </div>
-              <button type="button" onClick={() => say('upi')} disabled={isLoading} className={`${phone ? 'btn-outline' : 'btn-primary'} h-12 w-full`}>
+              <label className="block">
+                <span className="text-[13px] font-semibold text-ink-700">UPI reference (12 digits)</span>
+                <input inputMode="numeric" autoComplete="off" value={utr} onChange={(e) => setUtr(cleanUpiRef(e.target.value))} placeholder="e.g. 431298765012"
+                  className="input mt-1 w-full tabular-nums tracking-wider" aria-describedby="utr-hint" />
+                <span id="utr-hint" className="mt-1 block text-[12px] text-ink-500">In your UPI app, open this payment. The 12-digit UPI ref or UTR number is on the receipt.</span>
+              </label>
+              <button type="button" onClick={() => say('upi')} disabled={isLoading || !isUpiRef(utr)} className={`${phone ? 'btn-outline' : 'btn-primary'} h-12 w-full disabled:opacity-50`}>
                 {isLoading ? <Loader2 size={16} className="animate-spin" /> : <Check size={17} />} I've paid {amount}
               </button>
             </div>
@@ -85,6 +94,12 @@ export default function PayPro({ jobId, payTo, onClaimed }) {
             </button>
           )}
         </>
+      )}
+      {helpPhone && (
+        <div className="mt-3 flex flex-wrap items-center gap-2 rounded-card border border-line p-3 text-[13.5px] text-ink-700">
+          <span className="min-w-0 flex-1">Not confirmed yet? ZappyOne can help: <b className="select-all tabular-nums">{helpPhone}</b></span>
+          <a href={`tel:${helpPhone.replace(/\s+/g, '')}`} className="btn-outline inline-flex h-10 items-center gap-1.5 px-3 text-[13.5px]"><Phone size={15} /> Call ZappyOne</a>
+        </div>
       )}
     </Section>
   );

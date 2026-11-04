@@ -144,7 +144,8 @@ export function endpoints(b, { adminApiPath }) {
     jobOffers: b.query({ query: (id) => `/jobs/${id}/offers`, providesTags: (r, e, id) => [{ type: 'JobOffers', id }, 'JobOffers'] }),
     chooseJobOffer: b.mutation({ query: ({ id, by }) => ({ url: `/jobs/${id}/offers/choose`, method: 'POST', body: { by } }), invalidatesTags: ['JobOffers', 'RepairBookings', 'PetBookings', 'HelpingTasks'] }),
     editJobContact: b.mutation({ query: ({ id, onSite }) => ({ url: `/jobs/${id}/contact`, method: 'PATCH', body: { onSite } }), invalidatesTags: ['RepairBookings', 'PetBookings', 'HelpingTasks'] }),
-    claimJobPayment: b.mutation({ query: ({ id, method }) => ({ url: `/jobs/${id}/pay-claim`, method: 'POST', body: { method } }) }),
+    claimJobPayment: b.mutation({ query: ({ id, method, utr }) => ({ url: `/jobs/${id}/pay-claim`, method: 'POST', body: { method, ...(utr && { utr }) } }) }),
+    helpLine: b.query({ query: () => '/content/help-line', keepUnusedDataFor: 600 }),
     addJobExtra: b.mutation({ query: ({ id, code, petIndex = null }) => ({ url: `/jobs/${id}/extras`, method: 'POST', body: { code, petIndex } }), invalidatesTags: ['RepairBookings', 'PetBookings', 'HelpingTasks'] }),
     rescheduleJob: b.mutation({ query: ({ id, scheduledAt }) => ({ url: `/jobs/${id}/reschedule`, method: 'POST', body: { scheduledAt } }), invalidatesTags: ['RepairBookings', 'PetBookings', 'HelpingTasks'] }),
     /** Customer: boost while searching, tip once done (jobs/boost-tip). */

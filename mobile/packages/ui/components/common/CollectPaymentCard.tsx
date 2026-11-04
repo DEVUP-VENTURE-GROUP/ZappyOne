@@ -3,9 +3,10 @@
  * (the websites' CollectPaymentCard).
  */
 import React, { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
-import { Check, Heart } from 'lucide-react-native';
-import { useReportCashRefusedMutation } from '@zappy/core/api';
+import { Linking, StyleSheet, View } from 'react-native';
+import { Check, Heart, Phone } from 'lucide-react-native';
+import { useReportCashRefusedMutation, useHelpLineQuery } from '@zappy/core/api';
+import { helpPhoneFor } from '@zappy/core/shared/upiPay';
 import { formatPaise } from '@zappy/core/shared/money';
 import { Button, Text } from '..';
 import { toast } from '../Toast';
@@ -42,10 +43,12 @@ const timeOf = (d: string | Date) => new Date(d).toLocaleTimeString('en-IN', { h
 /* The money step (the websites' CollectPaymentCard): the customer pays the pro directly by UPI or cash, may tap "I've paid", and the pro taps Received. */
 export function CollectPaymentCard({ amountPaise, paymentMethod, paid, collecting, onCollect, tipPaise = 0, carriedPaise = 0, jobId, claim }: {
   amountPaise: number; paymentMethod?: string; paid?: boolean; collecting?: boolean; onCollect: () => void; what?: string; tipPaise?: number; carriedPaise?: number; jobId?: string;
-  claim?: { method?: 'upi' | 'cash'; at?: string } | null;
+  claim?: { method?: 'upi' | 'cash'; at?: string; utr?: string | null } | null;
 }) {
+  const { data: line } = useHelpLineQuery(undefined, { skip: !claim?.at || paid });
   if (!amountPaise || amountPaise <= 0) return null;
   const amount = formatPaise(amountPaise);
+  const helpPhone = helpPhoneFor(claim, (line as { help?: { phone: string; afterMinutes: number } | null } | undefined)?.help);
   const tip = tipPaise > 0 ? (
     <View style={styles.tip}><Heart size={13} color={danger[500]} fill={danger[500]} />
       <Text variant="caption" weight="bold" color={danger[600]}>Includes a {formatPaise(tipPaise)} tip from the customer. All yours.</Text></View>
@@ -68,13 +71,19 @@ export function CollectPaymentCard({ amountPaise, paymentMethod, paid, collectin
       {claim?.method ? (
         <View style={styles.claim}>
           <Text variant="bodySmall" weight="semibold" color={zappy[800]}>
-            {claim.method === 'upi' ? `The customer says they paid ${amount} by UPI${claim.at ? ` at ${timeOf(claim.at)}` : ''}. Check your UPI app first.` : `The customer is paying ${amount} in cash.`}
+            {claim.method === 'upi' ? `The customer says they paid ${amount} by UPI${claim.at ? ` at ${timeOf(claim.at)}` : ''}${claim.utr ? `, ref ${claim.utr}` : ''}. Find it in your UPI app, then tap Received.` : `The customer is paying ${amount} in cash.`}
           </Text>
         </View>
       ) : null}
       {tip}
       <Button label={`Received ${amount}`} onPress={onCollect} loading={collecting} fullWidth size="large" style={styles.mtSm} />
       {jobId ? <CashRefusedControl jobId={jobId} /> : null}
+      {helpPhone ? (
+        <Text variant="bodySmall" weight="semibold" color={zappy[700]} style={styles.link} accessibilityRole="button"
+          onPress={() => Linking.openURL(`tel:${helpPhone.replace(/\s+/g, '')}`).catch(() => toast(helpPhone))}>
+          <Phone size={13} color={zappy[700]} /> Need help? Call ZappyOne {helpPhone}
+        </Text>
+      ) : null}
     </JobCard>
   );
 }

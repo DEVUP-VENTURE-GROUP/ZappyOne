@@ -31,43 +31,67 @@ async function job(claimAgoMin, extra = {}) {
     reference: `PB-F${n}`, userId: owner, workerId: w, status: 'SERVICE_COMPLETED', serviceMode: 'home_visit', categoryCode: 'pet_grooming',
     paymentMethod: 'cash', paymentStatus: 'unpaid', pets: [], pricing: { subtotalPaise: 27000, totalPaise: 27000 },
     serviceLocation: { type: 'Point', coordinates: [78.48, 17.38], address: 'Flat 2' }, statusHistory: [], createdAt: new Date(),
-    payClaim: { method: 'upi', amountPaise: 27000, at: new Date(Date.now() - claimAgoMin * MIN) }, ...extra,
+    payClaim: { method: 'upi', amountPaise: 27000, at: new Date(Date.now() - claimAgoMin * MIN) },
+    ...Object.fromEntries(Object.entries(extra).filter(([k]) => !k.includes('.'))),
   });
+  const nested = Object.fromEntries(Object.entries(extra).filter(([k]) => k.includes('.')));
+  if (Object.keys(nested).length) await PetBooking.collection.updateOne({ _id: insertedId }, { $set: nested });
   return { id: insertedId, workerId: w };
 }
 const openFor = async (id) => alerts.OpsAlert.find({ 'data.id': String(id), doneAt: null }).lean();
 
-test('pro silent: reminded after 5 min, urgent case after 10, never marked paid, each step once', async () => {
+test('pro silent: reminded at 5 and 10 min; a UPI payment with its reference counts as received at 30; each step once', async () => {
   const fresh = await job(2);
-  const remind = await job(6);
-  const late = await job(12);
+  const first = await job(6);
+  const again = await job(11, { 'payClaim.remindedAt': new Date(Date.now() - 5 * MIN) });
+  const auto = await job(31, { 'payClaim.remindedAt': new Date(), 'payClaim.remindedAgainAt': new Date() });
+  for (const j of [fresh, first, again, auto]) await PetBooking.collection.updateOne({ _id: j.id }, { $set: { 'payClaim.utr': `43129876${String(j.id).slice(-4).replace(/\D/g, '0').padStart(4, '0')}` } });
   const out = await payDirect.sweepClaims();
-  expect(out).toMatchObject({ reminded: 1, escalated: 1 });
+  expect(out).toMatchObject({ reminded: 2, autoReceived: 1 });
 
   expect((await PetBooking.findById(fresh.id).lean()).payClaim.remindedAt).toBeUndefined();
-  const r = await PetBooking.findById(remind.id).lean();
-  expect(r.payClaim.remindedAt).toBeInstanceOf(Date);
-  expect(r.payClaim.escalatedAt).toBeUndefined();
-  expect(await openFor(remind.id)).toHaveLength(0);
+  expect((await PetBooking.findById(first.id).lean()).payClaim.remindedAt).toBeInstanceOf(Date);
+  expect((await PetBooking.findById(again.id).lean()).payClaim.remindedAgainAt).toBeInstanceOf(Date);
+  const a = await PetBooking.findById(auto.id).lean();
+  expect(a.paymentStatus).toBe('paid');
+  expect(a.payClaim.autoReceivedAt).toBeInstanceOf(Date);
+  expect(a.status).toBe('PAYMENT_COMPLETED');
 
-  const l = await PetBooking.findById(late.id).lean();
-  expect(l.payClaim.escalatedAt).toBeInstanceOf(Date);
-  expect(l.paymentStatus).toBe('unpaid');
-  const [a] = await openFor(late.id);
-  expect(a).toMatchObject({ type: 'pay_unconfirmed', urgent: true });
-
-  expect(await payDirect.sweepClaims()).toMatchObject({ reminded: 0, escalated: 0 });
-  expect(await payDirect.sweepClaims({ now: Date.now() + 6 * MIN })).toMatchObject({ escalated: 1 });
-  expect(await openFor(remind.id)).toHaveLength(1);
+  expect(await payDirect.sweepClaims()).toMatchObject({ reminded: 0, autoReceived: 0 });
 });
 
-test('already paid, or the pro already said not paid: no reminder and no "not confirmed" case', async () => {
-  const paid = await job(15, { paymentStatus: 'paid' });
-  const refused = await job(15);
-  await giveBack.JobGiveBack.create({ kind: 'pet', jobId: refused.id, providerKind: 'worker', providerId: refused.workerId, userId: owner, type: 'cash_refused', reason: 'cash_refused' });
+test('cash is never closed by the sweep, however long; a UPI claim with no reference is not either', async () => {
+  const cash = await job(90, { 'payClaim.method': 'cash', 'payClaim.remindedAt': new Date(), 'payClaim.remindedAgainAt': new Date() });
+  const noRef = await job(90, { 'payClaim.remindedAt': new Date(), 'payClaim.remindedAgainAt': new Date() });
   await payDirect.sweepClaims();
-  expect(await openFor(paid.id)).toHaveLength(0);
-  expect((await openFor(refused.id)).filter((x) => x.type === 'pay_unconfirmed')).toHaveLength(0);
+  expect((await PetBooking.findById(cash.id).lean()).paymentStatus).toBe('unpaid');
+  expect((await PetBooking.findById(noRef.id).lean()).paymentStatus).toBe('unpaid');
+});
+
+test('already paid, or the pro said not received: no reminder, never auto-received', async () => {
+  const paid = await job(40, { paymentStatus: 'paid', 'payClaim.utr': '431298760001' });
+  const refused = await job(40, { 'payClaim.utr': '431298760002' });
+  await giveBack.JobGiveBack.create({ kind: 'pet', jobId: refused.id, providerKind: 'worker', providerId: refused.workerId, userId: owner, type: 'cash_refused', reason: 'cash_refused' });
+  expect(await payDirect.sweepClaims()).toMatchObject({ autoReceived: 0 });
+  expect((await PetBooking.findById(refused.id).lean()).paymentStatus).toBe('unpaid');
+  expect((await PetBooking.findById(paid.id).lean()).payClaim.autoReceivedAt).toBeInstanceOf(Date);
+});
+
+test('"I paid by UPI" needs the 12-digit reference, and one reference pays one job', async () => {
+  const cust = { Authorization: `Bearer ${sign({ sub: String(owner), role: 'user' })}` };
+  const one = await job(0, { payClaim: undefined });
+  const two = await job(0, { payClaim: undefined });
+  await PetBooking.collection.updateMany({ _id: { $in: [one.id, two.id] } }, { $unset: { payClaim: 1 } });
+  expect((await request(app).post(`/api/jobs/${one.id}/pay-claim`).set(cust).send({ method: 'upi' })).body.code).toBe('UPI_REF_REQUIRED');
+  expect((await request(app).post(`/api/jobs/${one.id}/pay-claim`).set(cust).send({ method: 'upi', utr: '12345' })).body.code).toBe('UPI_REF_REQUIRED');
+  expect((await request(app).post(`/api/jobs/${one.id}/pay-claim`).set(cust).send({ method: 'upi', utr: '4312 9876 5012' })).status).toBe(200);
+  expect((await PetBooking.findById(one.id).lean()).payClaim.utr).toBe('431298765012');
+  expect((await request(app).post(`/api/jobs/${two.id}/pay-claim`).set(cust).send({ method: 'upi', utr: '431298765012' })).body.code).toBe('UPI_REF_USED');
+  expect((await request(app).post(`/api/jobs/${two.id}/pay-claim`).set(cust).send({ method: 'cash' })).status).toBe(200);
+  const o = await request(app).get(`/api/jobs/${one.id}/options`).set(cust);
+  expect(o.body.payTo.claim.utr).toBe('431298765012');
+  expect(o.body.payTo.help).toMatchObject({ afterMinutes: 5 });
+  expect((await request(app).get('/api/content/help-line')).body.help.phone).toBeTruthy();
 });
 
 test('customer says paid and the pro says not paid: one urgent dispute case, no strike on the customer', async () => {
@@ -79,7 +103,7 @@ test('customer says paid and the pro says not paid: one urgent dispute case, no 
   expect(res.status).toBe(200);
   const open = await openFor(j.id);
   expect(open).toHaveLength(1);
-  expect(open[0]).toMatchObject({ type: 'pay_disputed', urgent: true });
+  expect(open[0]).toMatchObject({ type: 'pay_disputed' });
   expect(open[0].body).toMatch(/says they paid ₹270 by UPI/);
   expect((await User.findById(owner).lean()).abuse?.cashRefused || 0).toBe(0);
 });

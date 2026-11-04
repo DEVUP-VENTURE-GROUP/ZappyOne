@@ -3,7 +3,10 @@ module.exports = {
   method: { type: String, enum: ['upi', 'cash'] },
   amountPaise: { type: Number, min: 0 },
   at: { type: Date },
-  // The timed follow-up (jobs/pay-direct sweep): when the pro was reminded, and when ZappyOne was called in.
+  // The 12-digit UPI reference the customer typed; the pro checks it in their UPI app.
+  utr: { type: String, maxlength: 12 },
+  // The timed follow-up (jobs/pay-direct sweep): two reminders to the pro, then a UPI payment counts as received.
   remindedAt: { type: Date },
-  escalatedAt: { type: Date },
+  remindedAgainAt: { type: Date },
+  autoReceivedAt: { type: Date },
 };

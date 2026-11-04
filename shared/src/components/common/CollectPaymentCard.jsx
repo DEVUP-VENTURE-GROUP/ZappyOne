@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import toast from 'react-hot-toast';
-import { Check, Loader2, Heart } from 'lucide-react';
+import { Check, Loader2, Heart, Phone } from 'lucide-react';
 import { formatPaise } from '../../utils/money';
-import { useReportCashRefusedMutation } from '../../services/api';
+import { useReportCashRefusedMutation, useHelpLineQuery } from '../../services/api';
+import { helpPhoneFor } from '../../customer/upiPay';
 
 // "Customer did not pay", with a confirm step; the same control on every kind of job (server: jobs/give-back reportCashRefused).
 export function CashRefusedControl({ jobId }) {
@@ -34,8 +35,10 @@ const timeOf = (d) => new Date(d).toLocaleTimeString('en-IN', { hour: 'numeric',
  * and the pro taps Received once the money is really in hand.
  */
 export default function CollectPaymentCard({ amountPaise, paymentMethod, paid, collecting, onCollect, tipPaise = 0, carriedPaise = 0, jobId = null, claim = null }) {
+  const { data: line } = useHelpLineQuery(undefined, { skip: !claim?.at || paid });
   if (!amountPaise || amountPaise <= 0) return null;
   const amount = formatPaise(amountPaise);
+  const helpPhone = helpPhoneFor(claim, line?.help);
   const tipLine = tipPaise > 0 && (
     <p className="mt-2 flex items-center gap-1.5 rounded-xl bg-rose-50 px-2.5 py-1.5 text-[12.5px] font-semibold text-rose-700">
       <Heart size={13} className="fill-rose-500 text-rose-500" /> Includes a {formatPaise(tipPaise)} tip from the customer. All yours.
@@ -62,7 +65,7 @@ export default function CollectPaymentCard({ amountPaise, paymentMethod, paid, c
       {claim?.method && (
         <p className="mt-2.5 rounded-xl bg-zappy-50 px-3 py-2 text-[13px] font-semibold text-zappy-800">
           {claim.method === 'upi'
-            ? `The customer says they paid ${amount} by UPI at ${timeOf(claim.at)}. Check your UPI app first.`
+            ? `The customer says they paid ${amount} by UPI at ${timeOf(claim.at)}${claim.utr ? `, ref ${claim.utr}` : ''}. Find it in your UPI app, then tap Received.`
             : `The customer is paying ${amount} in cash.`}
         </p>
       )}
@@ -71,6 +74,11 @@ export default function CollectPaymentCard({ amountPaise, paymentMethod, paid, c
         {collecting ? <><Loader2 size={15} className="animate-spin" /> Recording</> : `Received ${amount}`}
       </button>
       {jobId && <CashRefusedControl jobId={jobId} />}
+      {helpPhone && (
+        <a href={`tel:${helpPhone.replace(/\s+/g, '')}`} className="mt-2 flex items-center justify-center gap-1.5 text-[13px] font-semibold text-zappy-700">
+          <Phone size={14} /> Need help? Call ZappyOne <span className="tabular-nums">{helpPhone}</span>
+        </a>
+      )}
     </div>
   );
 }

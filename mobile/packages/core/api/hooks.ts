@@ -189,6 +189,7 @@ export const useAdminSetFeatureFlagMutation = h.useAdminSetFeatureFlagMutation;
 export const useAdminAlertsQuery = h.useAdminAlertsQuery;
 export const useAdminTodoQuery = h.useAdminTodoQuery;
 export const useAdminOpsAlertDoneMutation = h.useAdminOpsAlertDoneMutation;
+export const useHelpLineQuery = h.useHelpLineQuery;
 export const useAdminBookingHealthQuery = h.useAdminBookingHealthQuery;
 export const useAdminSupportTicketsQuery = h.useAdminSupportTicketsQuery;
 export const useAdminReplyTicketMutation = h.useAdminReplyTicketMutation;

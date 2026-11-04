@@ -52,7 +52,8 @@ const DEFAULTS = {
   maxActiveJobs:              2,   // jobs one worker may hold at once (jobs/workload)
   unmatchedCloseMinutes:      15,  // nobody took it: closed free after this (jobs/waves)
   payConfirmRemindMinutes:    5,   // customer said paid, pro silent: remind the pro (jobs/pay-direct)
-  payConfirmEscalateMinutes:  10,  // still silent: urgent case for ZappyOne
+  payConfirmRemindAgainMinutes: 10, // second reminder
+  payAutoReceiveMinutes:      30,  // UPI with its reference, still no answer: counts as received
   workerShareOnWayPct:        50,
   workerShareArrivedPct:      70,
   workerCancelWindowSec:      86400, // 24h = "per day"

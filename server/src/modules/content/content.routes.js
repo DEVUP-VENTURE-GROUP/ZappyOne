@@ -8,6 +8,10 @@ router.get('/faqs', ctrl.getFaqs);            // ?audience=user|worker
 router.get('/policies', ctrl.listPolicies);   // list slugs+titles
 router.get('/policy/:slug', ctrl.getPolicy);  // single policy page
 // The festive season on the customer home now, or { season: null } (content/season.service).
+// ZappyOne's help phone and when a stuck payment shows "Call ZappyOne" (jobs/pay-direct helpLine); public, the same for everyone.
+router.get('/help-line', async (req, res, next) => {
+  try { res.set('Cache-Control', 'public, max-age=300').json({ help: await require('../jobs/pay-direct').helpLine() }); } catch (err) { next(err); }
+});
 router.get('/season', async (req, res, next) => {
   try { res.set('Cache-Control', 'public, max-age=60'); res.json({ season: await require('./season.service').current() }); } catch (err) { next(err); }
 });

@@ -361,9 +361,9 @@ router.patch('/:id/place', authenticate, requireRole('user'),
 /** The customer says they paid the pro (UPI or cash); the pro confirms it (jobs/pay-direct). */
 router.post('/:id/pay-claim', authenticate, requireRole('user'),
   makeLimiter({ windowMs: 10 * 60_000, max: 10, prefix: 'jobpayclaim' }),
-  validate(Joi.object({ method: Joi.string().valid('upi', 'cash').required() })),
+  validate(Joi.object({ method: Joi.string().valid('upi', 'cash').required(), utr: Joi.string().trim().max(20).allow('', null) })),
   async (req, res, next) => {
-    try { res.json(await require('./pay-direct').claim({ id: req.params.id, userId: req.auth.sub, method: req.body.method })); } catch (err) { next(err); }
+    try { res.json(await require('./pay-direct').claim({ id: req.params.id, userId: req.auth.sub, method: req.body.method, utr: req.body.utr })); } catch (err) { next(err); }
   });
 
 /** Change who the pro meets at the door (jobs/place-edit). */

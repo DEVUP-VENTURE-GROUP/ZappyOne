@@ -9,3 +9,13 @@ export function upiLink({ upiId, name, amountPaise, reference }) {
   });
   return `upi://pay?${params.toString()}`;
 }
+
+/** The 12-digit reference a UPI app shows on every payment (the bank's UTR): digits only, as the customer types. */
+export const cleanUpiRef = (s) => String(s || '').replace(/\D/g, '').slice(0, 12);
+export const isUpiRef = (s) => /^\d{12}$/.test(String(s || ''));
+
+/** ZappyOne's phone once a customer's "I've paid" has waited long enough (server jobs/pay-direct helpLine); null before then. */
+export function helpPhoneFor(claim, help, now = Date.now()) {
+  if (!help?.phone || !claim?.at) return null;
+  return now - new Date(claim.at).getTime() >= (help.afterMinutes ?? 5) * 60000 ? help.phone : null;
+}
