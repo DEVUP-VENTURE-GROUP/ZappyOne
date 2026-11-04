@@ -10,7 +10,7 @@ type Any = any;
 
 // The headline of tracking (the website's StatusBlock): one sentence in large type, the minutes in colour, and this moment's rows.
 export function StatusBlock({ job, status, eta, options, needsYou, children }: { job: TrackedJob; status: string; eta: number | null; options?: Any; needsYou?: boolean; children?: React.ReactNode }) {
-  const h = statusHeadline(job, status, eta, { arrival: options?.arrival, moreTime: options?.moreTime, needsYou });
+  const h = statusHeadline(job, status, eta, { arrival: options?.arrival, moreTime: options?.moreTime, needsYou, payTo: options?.payTo || null });
   return (
     <View style={styles.block} accessibilityLiveRegion="polite">
       <Text variant="heading2" weight="extrabold" style={styles.title}>

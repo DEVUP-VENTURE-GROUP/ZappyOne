@@ -68,7 +68,7 @@ const clockOf = (d) => new Date(d).toLocaleTimeString('en-IN', { hour: 'numeric'
 const dayOf = (d) => new Date(d).toLocaleString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
 
 // The one sentence at the top of tracking: who, what is happening, and the minutes while someone travels.
-export function statusHeadline(job, status, eta, { arrival = null, moreTime = null, needsYou = false } = {}) {
+export function statusHeadline(job, status, eta, { arrival = null, moreTime = null, needsYou = false, payTo = null } = {}) {
   const who = firstNameOf(job.provider?.name) || `Your ${job.noun || 'pro'}`;
   const due = arrival && !arrival.arrivedAt ? arrival : null;
   const late = Boolean(due?.late);
@@ -93,6 +93,8 @@ export function statusHeadline(job, status, eta, { arrival = null, moreTime = nu
     case 'arrived':
       return { title: `${who} has arrived`, sub: 'Share the start code to begin the job.' };
     case 'in_progress':
+      // The server says the money is due (jobs/pay-direct): the work is done, whatever step the pro is still closing.
+      if (payTo) return { title: 'Work done', sub: payTo.claim ? `Waiting for ${who} to confirm your payment.` : `Pay ${who} below. They will confirm it.` };
       return { title: 'Work in progress', sub: moreTime?.until ? `${moreTime.reason}. Expected to finish by ${clockOf(moreTime.until)}.` : `${who} is working on it.` };
     case 'completed':
       return { title: 'Job completed', sub: 'Thanks for booking with ZappyOne.' };
