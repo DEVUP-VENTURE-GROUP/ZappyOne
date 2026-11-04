@@ -146,7 +146,7 @@ export function WorkerRepairJobPage() {
   const terms = termsOf(booking.vertical, (verticals as { items?: unknown[] } | undefined)?.items);
   // A packaged service (a dance class) is one line: what was booked. Repairs keep device, problem and repair.
   const details: [string, string | undefined][] = [
-    ...(terms.packaged ? [[capWord(terms.job), booking.repairCode?.replace(/_/g, ' ') || '-'] as [string, string]] : [
+    ...(terms.packaged ? [[capWord(terms.job), (booking as { repairName?: string }).repairName || booking.repairCode?.replace(/_/g, ' ') || '-'] as [string, string]] : [
       ['Device', booking.deviceName || `${booking.brandCode} ${booking.modelCode}`] as [string, string],
       ...(booking.fuelType ? [['Fuel', booking.fuelType] as [string, string]] : []),
       ...(booking.configurationLabel ? [['Build', booking.configurationLabel] as [string, string]] : []),

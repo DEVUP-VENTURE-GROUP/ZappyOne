@@ -102,12 +102,20 @@ const CARRIED = 'Cancellation fee from an earlier booking';
 const carried = (doc) => (doc?.carriedFee?.paise > 0 ? doc.carriedFee.paise : 0);
 /** The customer's boost for a faster match: also its own line, and all the provider's. */
 const boosted = (doc) => (doc?.boost?.paise > 0 ? doc.boost.paise : 0);
+/** A tip put on the bill at checkout, and the surge lines (late-night, rain, busy) as the customer saw them: the server bills both (payment/payables, jobs/surge). */
+const billTip = (doc) => (doc?.tip?.paise > 0 && doc.tip.method === 'with_payment' ? doc.tip.paise : 0);
+const surgeLines = (doc) => (doc?.surge?.paise > 0 ? (doc.surge.lines || []).filter((l) => l.paise > 0) : []);
+const surged = (doc) => (doc?.surge?.paise > 0 ? doc.surge.paise : 0);
+// Every line the server bills on top of the job's own price, so this screen adds up to exactly what the pro collects.
 const withCarried = (lines, doc) => [
   ...lines,
+  ...surgeLines(doc).map((l) => [l.label, l.paise]),
+  ...(surged(doc) && !surgeLines(doc).length ? [['Busy-time fee', surged(doc)]] : []),
   ...(boosted(doc) ? [['Boost for a faster match', boosted(doc)]] : []),
+  ...(billTip(doc) ? [['Tip for your pro', billTip(doc)]] : []),
   ...(carried(doc) ? [[CARRIED, carried(doc)]] : []),
 ];
-const plusCarried = (total, doc) => (total == null ? null : total + carried(doc) + boosted(doc));
+const plusCarried = (total, doc) => (total == null ? null : total + carried(doc) + boosted(doc) + billTip(doc) + surged(doc));
 
 function repairLines(s = {}, quote = null) {
   const lines = quote?.items?.length
@@ -151,7 +159,7 @@ export const KINDS = {
       return finish({
         kind: 'repair', id: b._id, reference: b.reference, noun: t.pro,
         service: t.packaged ? (t.name || human(b.vertical)) : `${human(b.vertical)} ${t.job}`,
-        subtitle: t.packaged ? human(b.repairCode || '') : deviceName(b.brandCode, b.modelCode),
+        subtitle: t.packaged ? (b.repairName || human(b.repairCode || '')) : deviceName(b.brandCode, b.modelCode),
         subtitleLabel: t.packaged ? t.job.charAt(0).toUpperCase() + t.job.slice(1) : 'Device',
         status: repairStage(b.status) || 'in_progress', statusLabel, rawStatus: b.status,
         provider: cardOf(data.provider),

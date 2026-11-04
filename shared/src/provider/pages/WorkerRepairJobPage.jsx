@@ -562,7 +562,7 @@ export default function WorkerRepairJobPage() {
           <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Job</p>
           {[
             // A packaged service (a dance class) is one line: what was booked. Repairs keep device, problem and repair.
-            ...(termsOf(booking.vertical, verticals?.items).packaged ? [[capWord(termsOf(booking.vertical, verticals?.items).job), booking.repairCode?.replace(/_/g, ' ') || '-']] : [
+            ...(termsOf(booking.vertical, verticals?.items).packaged ? [[capWord(termsOf(booking.vertical, verticals?.items).job), booking.repairName || booking.repairCode?.replace(/_/g, ' ') || '-']] : [
             ['Device', booking.deviceName || `${booking.brandCode} ${booking.modelCode}`],
             /*
              * The powertrain, where the vertical has one.

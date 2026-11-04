@@ -218,6 +218,8 @@ async function getBooking(req, res, next) {
       require('../../service/device-model.model').findOne({ code: booking.modelCode }).select('name').lean(),
     ]).catch(() => [null, null]);
     booking.deviceName = [brandDoc?.name || booking.brandCode, modelDoc?.name || booking.modelCode].filter(Boolean).join(' ');
+    // What was booked by its name ("Zumba"), never its code ("dan001_zumba_1").
+    if (booking.repairCode) booking.repairName = (await require('../models/repair.model').Repair.findOne({ code: booking.repairCode }).select('name').lean().catch(() => null))?.name || null;
 
     res.json({
       booking,
