@@ -3,7 +3,8 @@ import ZappyPayTo from './components/ZappyPayTo';
 import toast from 'react-hot-toast';
 import { AlertTriangle, ChevronDown, Loader2, Wallet } from 'lucide-react';
 import { useWorkerDuesQuery, useClaimDuesPaymentMutation } from '../services/api';
-import { duesView, duesClaimError } from './workerHome';
+import { duesView, duesClaimError, duesPaidView } from './workerHome';
+import DuesPaidCard, { LastPaidLine } from './components/DuesPaidCard';
 import PayDuesButton from './components/PayDuesButton';
 
 const rupees = (p) => `₹${Math.round((p || 0) / 100).toLocaleString('en-IN')}`;
@@ -31,7 +32,9 @@ export default function DuesCard({ compact = false }) {
 
   const d = data?.dues;
   const view = duesView(d);
-  if (isLoading || !view) return null;
+  const paid = duesPaidView(d);
+  if (isLoading) return null;
+  if (!view) return paid?.cleared && !compact ? <DuesPaidCard paid={paid} /> : null;
   const waiting = (d?.claims || []).filter((c) => c.status === 'pending');
   const { used, title, body } = view;
 
@@ -67,6 +70,7 @@ export default function DuesCard({ compact = false }) {
               </p>
             </div>
           )}
+          <LastPaidLine paid={paid} />
           {waiting.length > 0 && (
             <p className="mt-2 text-[12px] text-slate-600">
               Waiting to confirm: {waiting.map((c) => rupees(c.amountPaise)).join(', ')}

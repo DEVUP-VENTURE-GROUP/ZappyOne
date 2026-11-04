@@ -125,7 +125,10 @@ router.get('/me/statement', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 router.get('/me/dues', async (req, res, next) => {
-  try { res.json(await require('./shop-dues').duesOf(req.auth.sub)); } catch (err) { next(err); }
+  try {
+    const [d, lastPaid] = await Promise.all([require('./shop-dues').duesOf(req.auth.sub), require('../wallet/dues-overview').lastPaidOf({ kind: 'shop', id: req.auth.sub })]);
+    res.json({ ...d, lastPaid });
+  } catch (err) { next(err); }
 });
 // The shop tells ZappyOne it paid its dues, with the UPI or bank reference; admin confirms against the bank.
 router.post('/me/dues/claims',

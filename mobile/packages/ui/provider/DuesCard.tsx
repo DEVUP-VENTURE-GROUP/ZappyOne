@@ -7,7 +7,8 @@ import { ZappyPayTo } from './components/ZappyPayTo';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { AlertTriangle, ChevronDown, Wallet } from 'lucide-react-native';
 import { useWorkerDuesQuery, useClaimDuesPaymentMutation } from '@zappy/core/api';
-import { duesView, duesClaimError } from '@zappy/core/shared/workerHome';
+import { duesView, duesClaimError, duesPaidView } from '@zappy/core/shared/workerHome';
+import { DuesPaidCard, LastPaidLine } from './DuesPaidCard';
 import { Button, Text } from '../components';
 import { toast } from '../components/Toast';
 import { colors, zappy, ink, slate, success, accent, danger } from '../theme/colors';
@@ -34,7 +35,9 @@ export function DuesCard({ compact = false }: { compact?: boolean }) {
   const [reference, setReference] = useState('');
 
   const view = duesView(data?.dues);
-  if (isLoading || !view) return null;
+  const paid = duesPaidView(data?.dues);
+  if (isLoading) return null;
+  if (!view) return paid?.cleared && !compact ? <DuesPaidCard paid={paid} /> : null;
   const t = DUES_TONE[view.status] || DUES_TONE.in_debt;
 
   async function submit() {
@@ -67,6 +70,7 @@ export function DuesCard({ compact = false }: { compact?: boolean }) {
               </View>
             </View>
           ) : null}
+          <LastPaidLine paid={paid} />
           {view.waiting.length ? <Text variant="caption" color={ink[700]} style={styles.mtSm}>Waiting to confirm: {view.waiting.join(', ')}</Text> : null}
         </View>
       </View>

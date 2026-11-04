@@ -83,3 +83,13 @@ test('a shop pays its dues online the same way, recorded once', async () => {
   await payments.handleRazorpayWebhook({ event: 'payment_link.paid', payload: { payment_link: { entity: { id: r.paymentIntent.gatewayOrderId } } } });
   expect(await shopDues.duesOf(shopId)).toMatchObject({ duesPaise: 0, isBlocked: false });
 });
+
+test('each partner reads back its own last payment, for "Payment done"', async () => {
+  const { lastPaidOf } = require('../src/modules/wallet/dues-overview');
+  expect(await lastPaidOf({ kind: 'shop', id: new mongoose.Types.ObjectId() })).toBeNull();
+  const shopId = (await require('../src/modules/payment/transaction.model').findOne({ 'metadata.reference': 'online:pay_shop' }).lean()).metadata.shopId;
+  expect(await lastPaidOf({ kind: 'shop', id: shopId })).toMatchObject({ amountPaise: 210000, how: 'Pay now (online)' });
+  const w = await lastPaidOf({ kind: 'worker', id: workerId });
+  expect(w.amountPaise).toBeGreaterThan(0);
+  expect(w.at).toBeInstanceOf(Date);
+});

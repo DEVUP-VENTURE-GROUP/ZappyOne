@@ -2,6 +2,8 @@
 import { useState } from 'react';
 import { ZappyPayTo, type PayTo } from '@zappy/ui/provider/components/ZappyPayTo';
 import { PayDuesButton } from '@zappy/ui/provider/PayDuesButton';
+import { DuesPaidCard, LastPaidLine } from '@zappy/ui/provider/DuesPaidCard';
+import { duesPaidView } from '@zappy/core/shared/workerHome';
 import { StyleSheet, TextInput, View } from 'react-native';
 import { AlertTriangle, CircleCheck, Clock3, Wallet } from 'lucide-react-native';
 import { useClaimShopDuesPaymentMutation, useShopDuesQuery } from '@zappy/core/api';
@@ -14,7 +16,7 @@ import { radius } from '@zappy/ui/theme/radius';
 import { spacing } from '@zappy/ui/theme/spacing';
 
 interface Claim { _id: string; amountPaise: number; reference: string; status: 'pending' | 'confirmed' | 'rejected' }
-interface Dues { duesPaise: number; limitPaise: number; warnPaise: number; isBlocked: boolean; payInstructions: string; payTo?: PayTo | null; claims?: Claim[] }
+interface Dues { duesPaise: number; limitPaise: number; warnPaise: number; isBlocked: boolean; payInstructions: string; payTo?: PayTo | null; claims?: Claim[]; lastPaid?: { amountPaise: number; at: string } | null }
 const STATE = { pending: ['Being checked', Clock3, accent[700]], confirmed: ['Received', CircleCheck, success[700]], rejected: ['Not found', AlertTriangle, danger[600]] } as const;
 
 export function PartnerDuesCard() {
@@ -24,7 +26,8 @@ export function PartnerDuesCard() {
   const [amount, setAmount] = useState('');
   const [reference, setReference] = useState('');
   const d = data as Dues | undefined;
-  if (!d || (d.duesPaise <= 0 && !d.claims?.some((c) => c.status === 'pending'))) return null;
+  const paid = duesPaidView(d);
+  if (!d || (d.duesPaise <= 0 && !d.claims?.some((c) => c.status === 'pending'))) return paid?.cleared ? <DuesPaidCard paid={paid} /> : null;
   const near = !d.isBlocked && d.duesPaise >= d.warnPaise;
   const send = async () => {
     try {
@@ -44,6 +47,7 @@ export function PartnerDuesCard() {
       </Text>
       {d.payInstructions ? <View style={styles.pay}><Text variant="caption" weight="semibold">{d.payInstructions}</Text></View> : null}
       <ZappyPayTo payTo={d.payTo} amountPaise={d.duesPaise} />
+      <LastPaidLine paid={paid} />
       {(d.claims || []).slice(0, 3).map((c) => { const [label, Icon, tone] = STATE[c.status] || STATE.pending; return (
         <View key={c._id} style={styles.head}><Icon size={14} color={tone} /><Text variant="caption" weight="semibold" color={tone}>{formatPaise(c.amountPaise)} · {c.reference} · {label}</Text></View>
       ); })}

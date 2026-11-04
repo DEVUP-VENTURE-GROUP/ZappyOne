@@ -5,6 +5,8 @@ import { AlertTriangle, CircleCheck, Clock3, Wallet } from 'lucide-react';
 import { useShopDuesQuery, useClaimShopDuesPaymentMutation } from '../../services/api';
 import { formatPaise } from '../../utils/money';
 import PayDuesButton from './PayDuesButton';
+import DuesPaidCard, { LastPaidLine } from './DuesPaidCard';
+import { duesPaidView } from '../workerHome';
 
 const STATE = { pending: ['Being checked', Clock3, 'text-amber-700'], confirmed: ['Received', CircleCheck, 'text-emerald-700'], rejected: ['Not found', AlertTriangle, 'text-red-700'] };
 
@@ -14,7 +16,8 @@ export default function PartnerDuesCard() {
   const [claim, { isLoading }] = useClaimShopDuesPaymentMutation();
   const [open, setOpen] = useState(false);
   const [f, setF] = useState({ amount: '', reference: '' });
-  if (!data || (data.duesPaise <= 0 && !data.claims?.some((c) => c.status === 'pending'))) return null;
+  const paid = duesPaidView(data);
+  if (!data || (data.duesPaise <= 0 && !data.claims?.some((c) => c.status === 'pending'))) return paid?.cleared ? <DuesPaidCard paid={paid} /> : null;
   const stopped = data.isBlocked;
   const near = !stopped && data.duesPaise >= data.warnPaise;
   async function send(e) {
@@ -38,6 +41,7 @@ export default function PartnerDuesCard() {
       </p>
       {data.payInstructions && <p className="mt-2 rounded-lg bg-white/70 px-3 py-2 text-[12.5px] font-semibold text-slate-700">{data.payInstructions}</p>}
       <ZappyPayTo payTo={data.payTo} amountPaise={data.duesPaise} />
+      <LastPaidLine paid={paid} />
       {(data.claims || []).slice(0, 3).map((c) => { const [label, Icon, tone] = STATE[c.status] || STATE.pending; return (
         <p key={c._id} className={`mt-2 flex items-center gap-1.5 text-[12.5px] font-semibold ${tone}`}><Icon size={14} /> {formatPaise(c.amountPaise)} · {c.reference} · {label}</p>
       ); })}

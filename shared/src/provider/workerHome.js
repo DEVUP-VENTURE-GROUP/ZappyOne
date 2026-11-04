@@ -69,6 +69,24 @@ export function duesView(dues) {
   };
 }
 
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+// India time without Intl, which the apps' engine does not fully carry.
+function istWhen(at) {
+  const d = new Date(new Date(at).getTime() + 330 * 60000);
+  const h = d.getUTCHours();
+  return `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}, ${h % 12 || 12}:${String(d.getUTCMinutes()).padStart(2, '0')} ${h < 12 ? 'am' : 'pm'}`;
+}
+
+/** The partner's latest payment to ZappyOne: "Payment done" when nothing is owed now (for 3 days), else a "last paid" line. Null when there is none. */
+export function duesPaidView(dues, now = Date.now()) {
+  const p = dues?.lastPaid;
+  if (!p?.at || !(p.amountPaise > 0)) return null;
+  const line = `${rupees(p.amountPaise)} paid on ${istWhen(p.at)}`;
+  const cleared = !(dues.duesPaise > 0);
+  if (cleared && now - new Date(p.at).getTime() > 3 * 86400000) return null;
+  return { cleared, title: cleared ? 'Payment done' : null, line, body: cleared ? 'You owe ZappyOne nothing now.' : null };
+}
+
 /** Validates an "I have paid" claim; returns an error message or null. */
 export function duesClaimError({ amount, method, reference }) {
   const paise = Math.round(Number(amount) * 100);

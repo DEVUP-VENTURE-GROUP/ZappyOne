@@ -18,8 +18,11 @@ async function getBalance(req, res, next) {
 
 async function getDues(req, res, next) {
   try {
-    const dues = await duesService.getDuesStatus(req.auth.sub, { detail: true });
-    res.json({ dues });
+    const [dues, lastPaid] = await Promise.all([
+      duesService.getDuesStatus(req.auth.sub, { detail: true }),
+      require('./dues-overview').lastPaidOf({ kind: 'worker', id: req.auth.sub }),
+    ]);
+    res.json({ dues: { ...dues, lastPaid } });
   } catch (err) { next(err); }
 }
 

@@ -43,6 +43,14 @@ async function payments({ limit = 100 } = {}) {
   });
 }
 
+// A partner's own latest payment, for "Payment done" on their dues card.
+async function lastPaidOf(owner) {
+  const who = owner.kind === 'shop' ? { 'metadata.shopId': String(owner.id) } : { 'owner.kind': 'worker', 'owner.id': owner.id };
+  const t = await Transaction.findOne({ reason: Transaction.REASONS.DUES_PAYMENT, status: 'succeeded', ...who })
+    .sort({ createdAt: -1 }).select('amountPaise createdAt metadata refs').lean();
+  return t ? { amountPaise: Math.abs(t.amountPaise), at: t.createdAt, how: howPaid(t) } : null;
+}
+
 // Key a dues payment to its partner, the way payments() tells shops and pros apart.
 const partnerKey = { $cond: [{ $ifNull: ['$metadata.shopId', false] }, { $concat: ['shop:', { $toString: '$metadata.shopId' }] }, { $concat: ['worker:', { $toString: '$owner.id' }] }] };
 
@@ -120,4 +128,4 @@ async function overview() {
   };
 }
 
-module.exports = { overview, payments, howPaid, monthly };
+module.exports = { overview, payments, howPaid, monthly, lastPaidOf };
