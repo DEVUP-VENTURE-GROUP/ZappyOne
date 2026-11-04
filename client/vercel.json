@@ -16,7 +16,7 @@
       "destination": "https://api.zappyone.com/sitemap.xml"
     },
     {
-      "source": "/(.*)",
+      "source": "/((?!assets/).*)",
       "destination": "/index.html"
     }
   ],

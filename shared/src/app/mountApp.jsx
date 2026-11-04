@@ -30,11 +30,17 @@ function jwtClaims(token) {
  * restored from this app's httpOnly refresh cookie. A session for a role this
  * app does not serve is ignored rather than half-rendered.
  */
+// A stalled request on a weak mobile network must never hold the app on its boot screen.
+const RESTORE_TIMEOUT_MS = 8000;
+
 async function restoreSession(store, roles) {
+  const abort = new AbortController();
+  const timer = setTimeout(() => abort.abort(), RESTORE_TIMEOUT_MS);
   try {
     const res = await fetch(`${API_BASE}/api/auth/refresh`, {
       method: 'POST',
       credentials: 'include',
+      signal: abort.signal,
       headers: { 'Content-Type': 'application/json', ...(SURFACE && { 'X-Client-Type': SURFACE }) },
       body: '{}',
     });
@@ -48,7 +54,7 @@ async function restoreSession(store, roles) {
     // A new tab has no cached profile; the token still names the account and its phone (the OTP checks on money details need it).
     const profile = { ...(cached || {}), sub: cached?.sub ?? claims?.sub, ...(!cached?.phone && claims?.phone && { phone: claims.phone }) };
     store.dispatch(setAuth({ accessToken: data.accessToken, profile, role }));
-  } catch { /* offline - stay signed out */ }
+  } catch { /* offline or too slow: open signed out; the next request restores the session */ } finally { clearTimeout(timer); }
 }
 
 // Whether this browser was signed in last time; a visitor known to be signed out need not wait for the session check.
