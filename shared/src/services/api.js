@@ -335,6 +335,7 @@ export const {
   useAdminSetFeatureFlagMutation,
   useAdminAlertsQuery,
   useAdminTodoQuery,
+  useAdminOpsAlertDoneMutation,
   useAdminBookingHealthQuery,
   useAdminSupportTicketsQuery,
   useAdminReplyTicketMutation,

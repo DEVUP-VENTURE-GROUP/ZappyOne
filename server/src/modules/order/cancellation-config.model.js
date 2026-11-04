@@ -47,6 +47,8 @@ const cancellationConfigSchema = new mongoose.Schema(
     workerPauseMinutes:     { type: Number, default: 120, min: 15, max: 1440 }, // how long that lasts
     maxActiveJobs:          { type: Number, default: 2, min: 1, max: 10 },      // jobs one worker may hold at once
     unmatchedCloseMinutes:  { type: Number, default: 15, min: 10, max: 1440 },  // nobody took it: closed free after this
+    payConfirmRemindMinutes:   { type: Number, default: 5, min: 1, max: 60 },   // customer said paid, pro silent: remind the pro
+    payConfirmEscalateMinutes: { type: Number, default: 10, min: 2, max: 240 }, // still silent: urgent case for ZappyOne
     workerCancelWindowSec:  { type: Number, default: 86400 }, // 24h window for cancel counting
 
     // Score degradation weights (added to dispatch score — higher = worse rank)

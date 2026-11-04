@@ -76,7 +76,66 @@ async function claim({ id, userId, method }) {
       deepLink: KINDS[kind].providerLink(String(doc._id)), data: payload,
     }).catch(() => {});
   }
+  // The pro already said it was not paid: now two stories about the same money, so a person decides.
+  if (await require('./give-back').JobGiveBack.exists({ jobId: doc._id, type: 'cash_refused' })) {
+    await require('../admin/ops-alerts').raise({
+      type: 'pay_disputed', key: `pay:${doc._id}`, urgent: true, title: `Payment dispute on ${doc.reference || 'a job'}`,
+      body: `Customer says they paid ${rupees} by ${method === 'upi' ? 'UPI' : 'cash'}; the pro reported it was not paid. Call both.`,
+      data: { kind, id: String(doc._id), reference: doc.reference || null },
+    });
+  }
   return { ok: true, message: method === 'upi' ? 'Thanks. Your pro will confirm they got it.' : `Hand ${rupees} to your pro. They will confirm it.` };
 }
 
-module.exports = { view, claim, payee, DUE_AT, UPI_ID };
+const minutesAgo = (m, now) => new Date(now - m * 60000);
+const providerOf = (doc) => (doc.workerId ? { kind: 'worker', id: doc.workerId } : doc.shopId ? { kind: 'shop', id: doc.shopId } : null);
+
+// Customer said they paid and the pro has not answered: remind the pro, then call in ZappyOne. Never marks anything paid; only the pro's Received does.
+async function sweepClaims({ now = Date.now(), limit = 50 } = {}) {
+  const cfg = await require('../order/cancellation.service').getConfig();
+  const remindMin = cfg.payConfirmRemindMinutes ?? 5;
+  const escalateMin = Math.max(cfg.payConfirmEscalateMinutes ?? 10, remindMin + 1);
+  const { KINDS } = require('./kinds');
+  const { PAYABLES } = require('../payment/payables');
+  const events = require('./job-events');
+  const alerts = require('../admin/ops-alerts');
+  let reminded = 0; let escalated = 0;
+  for (const kind of Object.keys(DUE_AT)) {
+    const Model = KINDS[kind].model();
+    const due = await Model.find({
+      'payClaim.at': { $lte: minutesAgo(remindMin, now) },
+      $or: [{ 'payClaim.remindedAt': null }, { 'payClaim.escalatedAt': null, 'payClaim.at': { $lte: minutesAgo(escalateMin, now) } }],
+    }).sort({ 'payClaim.at': 1 }).limit(limit);
+    for (const doc of due) {
+      const paid = PAYABLES[kind]?.isPaid(doc);
+      const late = doc.payClaim.at <= minutesAgo(escalateMin, now);
+      const set = { 'payClaim.remindedAt': doc.payClaim.remindedAt || new Date(now), ...(late || paid ? { 'payClaim.escalatedAt': doc.payClaim.escalatedAt || new Date(now) } : {}) };
+      const claimed = await Model.updateOne({ _id: doc._id, 'payClaim.at': doc.payClaim.at, 'payClaim.escalatedAt': doc.payClaim.escalatedAt ?? null, 'payClaim.remindedAt': doc.payClaim.remindedAt ?? null }, { $set: set });
+      if (!claimed.modifiedCount || paid) continue;
+      // The pro did answer (Customer did not pay): that is already a dispute case, not silence.
+      if (await require('./give-back').JobGiveBack.exists({ jobId: doc._id, type: 'cash_refused' })) continue;
+      const rupees = `₹${Math.round((doc.payClaim.amountPaise || 0) / 100).toLocaleString('en-IN')}`;
+      const by = doc.payClaim.method === 'upi' ? 'UPI' : 'cash';
+      const payload = { kind, id: String(doc._id), status: doc.status, at: new Date(now).toISOString() };
+      const provider = providerOf(doc);
+      if (late) {
+        escalated++;
+        await alerts.raise({
+          type: 'pay_unconfirmed', key: `pay:${doc._id}`, urgent: true, title: `Pro has not confirmed payment on ${doc.reference || 'a job'}`,
+          body: `Customer said they paid ${rupees} by ${by} ${escalateMin}+ minutes ago and the pro has not tapped Received or Not paid. Call the pro.`,
+          data: { kind, id: String(doc._id), reference: doc.reference || null },
+        });
+        events.push({ kind: 'user', id: doc.userId }, { title: 'ZappyOne is checking your payment', body: 'Your pro has not confirmed it yet. We are calling them now.', deepLink: KINDS[kind].link(String(doc._id)), data: payload }).catch(() => {});
+      } else if (provider) {
+        reminded++;
+        events.push(provider, {
+          title: `Did you get ${rupees}?`, body: `${doc.reference || 'A booking'}: the customer says they paid by ${by}. Tap Received, or Customer did not pay.`,
+          deepLink: KINDS[kind].providerLink(String(doc._id)), data: payload,
+        }).catch(() => {});
+      }
+    }
+  }
+  return { reminded, escalated };
+}
+
+module.exports = { view, claim, payee, sweepClaims, DUE_AT, UPI_ID };

@@ -386,13 +386,13 @@ async function capturePayment({ cfOrderId, cfPaymentId, amountPaise, eventName, 
     ).catch(() => {});
 
     const { redis: r } = require('../../config/redis');
-    r.publish('notification:admin:ops', JSON.stringify({
+    require('../admin/ops-alerts').raise({
       type: 'payment_reconciliation_required',
       title: '⚠️ Payment needs reconciliation',
       body: `${intent.purpose}, ₹${(intent.amountPaise / 100).toFixed(0)}, ${cfPaymentId}`,
       data: { cfPaymentId, cfOrderId: intent.cfOrderId, purpose: intent.purpose, err: err.message },
       urgent: true,
-    })).catch(() => {});
+    }).catch(() => {});
     throw err;
   }
 }
@@ -566,13 +566,13 @@ async function refundIntent(intent, { amountPaise, reason, label, ref }) {
       },
     });
     const { redis: r } = require('../../config/redis');
-    r.publish('notification:admin:ops', JSON.stringify({
+    require('../admin/ops-alerts').raise({
       type: 'refund_manual_required',
       title: 'Refund needs manual action',
       body: `${label}, ₹${(amount / 100).toFixed(0)}, ${intent.cfOrderId}`,
       data: { cfOrderId: intent.cfOrderId, source: label, ref: String(ref) },
       urgent: true,
-    })).catch(() => {});
+    }).catch(() => {});
     return { refunded: false, reason: 'manual_required' };
   }
 }

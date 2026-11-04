@@ -287,10 +287,10 @@ async function submitForReview({ owner, enrolmentId }) {
   // Partners list directly once their ID is verified: the service opens now and admin reviews afterwards, unless its requirements ask admin to check each one.
   if (!set.manualReview && await identityVerified(owner)) {
     const approved = await decide({ enrolmentId: enrolment._id, decision: 'approved', note: 'Approved on submit: ID already verified. Admin can review any time.', adminId: null });
-    require('../../config/redis').redis.publish('notification:admin:ops', JSON.stringify({
+    require('../admin/ops-alerts').raise({
       type: 'service_opened', title: 'Partner went live on a service', body: `${enrolment.lineCode}: approved on submit (ID verified). Review in Verification, Service applications.`,
       data: { enrolmentId: String(enrolment._id), lineCode: enrolment.lineCode },
-    })).catch(() => {});
+    }).catch(() => {});
     return approved;
   }
   return enrolment;
@@ -405,10 +405,10 @@ async function requestLine({ owner, providerKind, domainCode = '', proposedName,
       // The first photo is the cover the partner chose (the request form says so).
       serviceImage: photos[0] || '', note: 'Opened by the partner directly. Review, edit or hide it any time.',
     });
-    require('../../config/redis').redis.publish('notification:admin:ops', JSON.stringify({
+    require('../admin/ops-alerts').raise({
       type: 'service_opened', title: `New service live: ${line.name}`, body: 'A partner listed it directly. Review it in Verification, Service requests.',
       data: { requestId: String(request._id), lineCode: line.code },
-    })).catch(() => {});
+    }).catch(() => {});
     return { request, deduped: false, opened: { code: line.code, name: line.name }, warnings };
   }
   return { request, deduped: false, warnings };

@@ -581,13 +581,13 @@ async function reportWorker(req, res, next) {
     // Notify admin ops for safety concerns
     if (isSafety) {
       const { redis } = require('../../config/redis');
-      await redis.publish('notification:admin:ops', JSON.stringify({
+      await require('../admin/ops-alerts').raise({
         type: 'worker_safety_complaint',
         title: `⚠️ Safety complaint: ${worker?.name || 'Worker'}`,
         body: description.slice(0, 120),
         data: { orderId, workerId: String(order.workerId), category },
         urgent: true,
-      }));
+      });
     }
 
     // Acknowledge to the user

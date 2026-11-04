@@ -140,6 +140,8 @@ const PROVIDER_FIELDS = [
   numField('workerRejectLimit', 1, 50),
   numField('customerWaitMinutes', 1, 60),
   numField('providerLateMinutes', 5, 180),
+  numField('payConfirmRemindMinutes', 1, 60),
+  numField('payConfirmEscalateMinutes', 2, 240),
   rupeeField('noShowCreditPaise', 50000),
 ];
 
@@ -190,6 +192,12 @@ function ProviderRules() {
       </Setting>
       <Setting title="Late before 'provider not coming'" hint="This long past the booked time with nobody there, the customer can report it: the provider pays the no-show penalty and the next one is sent.">
         <UnitInput value={f.form.providerLateMinutes} onChange={f.set('providerLateMinutes')} unit="min" min={5} max={180} label="Provider late by" />
+      </Setting>
+      <Setting title="Customer says they paid, pro has not confirmed" hint="Nothing is marked paid until the pro taps Received. After the first wait the pro is reminded; after the second, ZappyOne gets an urgent case and the customer is told we are checking.">
+        <div className="flex flex-wrap gap-2">
+          <UnitInput value={f.form.payConfirmRemindMinutes} onChange={f.set('payConfirmRemindMinutes')} unit="min" min={1} max={60} label="Remind the pro after" />
+          <UnitInput value={f.form.payConfirmEscalateMinutes} onChange={f.set('payConfirmEscalateMinutes')} unit="min" min={2} max={240} label="Call in ZappyOne after" />
+        </div>
       </Setting>
       <Setting title="Sorry credit when a pro does not come" hint="Put in the customer's ZappyOne wallet once, when they report a no-show. ₹0 turns it off.">
         <RupeeInput value={f.form.noShowCreditPaise} onChange={f.set('noShowCreditPaise')} max={500} label="Sorry credit" />

@@ -24,7 +24,11 @@ async function forAdmin(admin) {
   // One slow or missing queue never empties the whole list.
   const counts = await Promise.all(mine.map((q) => Promise.resolve().then(q.count).catch(() => null)));
   const items = mine.map((q, i) => ({ key: q.key, label: q.label, tab: q.tab, count: counts[i] })).filter((x) => x.count > 0);
-  return { items, total: items.reduce((s, x) => s + x.count, 0) };
+  // Urgent alerts (admin/ops-alerts) are for whoever is on duty, whatever their area.
+  const alerts = (await require('./ops-alerts').open(20).catch(() => [])).map((a) => ({
+    id: String(a._id), type: a.type, title: a.title, body: a.body, urgent: a.urgent, at: a.updatedAt, reference: a.data?.reference || null,
+  }));
+  return { items, alerts, total: items.reduce((s, x) => s + x.count, 0) + alerts.length };
 }
 
 module.exports = { forAdmin, QUEUES };

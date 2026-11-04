@@ -30,6 +30,15 @@ router.get('/alerts', ctrl.getAlerts);
 router.get('/todo', async (req, res, next) => {
   try { res.json(await require('../todo.service').forAdmin(req.admin)); } catch (err) { next(err); }
 });
+// An urgent alert handled: off the bell, with who closed it in the audit log.
+router.post('/ops-alerts/:id/done', validate(Joi.object({ note: Joi.string().trim().max(300).allow('') })), async (req, res, next) => {
+  try {
+    if (!require('mongoose').isValidObjectId(req.params.id)) return res.status(404).json({ error: 'Alert not found' });
+    const out = await require('../ops-alerts').done(req.params.id, req.admin?._id || req.auth?.sub);
+    await require('../audit.service').fromRequest(req, 'admin.ops_alert_done', { kind: 'ops_alert', id: req.params.id }, null, { note: req.body.note || '' });
+    res.json(out);
+  } catch (err) { next(err); }
+});
 
 
 // FCM health check

@@ -81,7 +81,7 @@ async function sweep({ now = Date.now() } = {}) {
         .catch((e) => logger.error({ err: e.message, jobId: String(row.jobId) }, '[safety-check] SOS not raised'));
     } else {
       const { redis } = require('../../config/redis');
-      redis.publish('notification:admin:ops', JSON.stringify({ type: 'safety_check_missed', title: 'Safety check not answered', body: message, data: { kind: row.kind, id: String(row.jobId) }, urgent: true })).catch(() => {});
+      require('../admin/ops-alerts').raise({ type: 'safety_check_missed', title: 'Safety check not answered', body: message, data: { kind: row.kind, id: String(row.jobId) }, urgent: true }).catch(() => {});
     }
   }
   return { asked: toAsk.length, escalated: silent.length };

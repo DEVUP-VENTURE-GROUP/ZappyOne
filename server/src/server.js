@@ -135,6 +135,11 @@ async function start() {
       require('./modules/payment/payment.service').reconcilePendingIntents()
         .catch((err) => logger.warn({ err: err.message }, '[PAYMENT] reconcile sweep failed'));
     }, 3 * 60 * 1000);
+    // Customer said they paid, pro silent: remind, then an urgent case for ZappyOne (jobs/pay-direct).
+    setInterval(() => {
+      require('./modules/jobs/pay-direct').sweepClaims()
+        .catch((err) => logger.warn({ err: err.message }, '[PAY] claim follow-up sweep failed'));
+    }, 60 * 1000);
     logger.info('[BOOT] Inline workers started (dispatch, notifications, stale, shield, payment reconcile). Set RUN_INLINE_WORKERS=false when using dedicated worker processes.');
   } else {
     logger.info('[BOOT] RUN_INLINE_WORKERS=false - API only. Dispatch/notifications/stale/shield must run as dedicated processes.');

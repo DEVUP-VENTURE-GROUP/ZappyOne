@@ -99,13 +99,13 @@ async function triggerSOS({ workerId, lat: givenLat, lng: givenLng, orderId, job
   }
 
   /* 3. Broadcast to admin ops room */
-  await redis.publish('notification:admin:ops', JSON.stringify({
+  await require('../admin/ops-alerts').raise({
     type:  'worker_sos',
     title: `🆘 SOS: ${worker.name}`,
     body:  `${incident.address || 'Unknown address'}, ${lat?.toFixed(4)},${lng?.toFixed(4)}`,
     data:  { ...incident, incidentKey },
     urgent: true,
-  }));
+  });
 
   /* 4. Notify customer with 112 CTA */
   if (order) {
@@ -151,13 +151,13 @@ async function triggerSOS({ workerId, lat: givenLat, lng: givenLng, orderId, job
       const stored = JSON.parse(raw);
       if (!stored.acknowledged) {
         logger.error({ incidentKey, workerName: worker.name }, '[SOS] UNACKNOWLEDGED - RE-ESCALATING');
-        await redis.publish('notification:admin:ops', JSON.stringify({
+        await require('../admin/ops-alerts').raise({
           type:  'worker_sos_unacknowledged',
           title: `🆘🔁 UNACKNOWLEDGED SOS: ${worker.name}`,
           body:  'No admin acknowledged this SOS in 5 minutes. Immediate action required.',
           data:  { ...stored, incidentKey },
           urgent: true,
-        }));
+        });
       }
     } catch { /* non-fatal */ }
   }, ESCALATION_DELAY_MS);
@@ -252,13 +252,13 @@ async function triggerCustomerSOS({ userId, orderId, jobId, lat, lng, message })
   await redis.expire('sos:active', 86400);
 
   /* 2. Ops room, marked urgent. */
-  await redis.publish('notification:admin:ops', JSON.stringify({
+  await require('../admin/ops-alerts').raise({
     type: 'customer_sos',
     title: `🆘 CUSTOMER SOS: ${user.name}`,
     body: `${incident.address || 'Unknown address'}${worker ? `, worker on site: ${worker.name}` : ''}`,
     data: { ...incident, incidentKey },
     urgent: true,
-  }));
+  });
 
   /* 3. Urgent ticket, so it survives a dropped socket. */
   try {
@@ -290,13 +290,13 @@ async function triggerCustomerSOS({ userId, orderId, jobId, lat, lng, message })
       const stored = JSON.parse(raw);
       if (!stored.acknowledged) {
         logger.error({ incidentKey, customerName: user.name }, '[SOS] CUSTOMER SOS UNACKNOWLEDGED - RE-ESCALATING');
-        await redis.publish('notification:admin:ops', JSON.stringify({
+        await require('../admin/ops-alerts').raise({
           type: 'customer_sos_unacknowledged',
           title: `🆘🔁 UNACKNOWLEDGED CUSTOMER SOS: ${user.name}`,
           body: 'No admin acknowledged this SOS in 5 minutes. Immediate action required.',
           data: { ...stored, incidentKey },
           urgent: true,
-        }));
+        });
       }
     } catch { /* non-fatal */ }
   }, ESCALATION_DELAY_MS);

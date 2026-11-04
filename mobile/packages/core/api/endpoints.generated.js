@@ -16,7 +16,7 @@
  * ----------------------------------------------------------------------------
  */
 
-export const TAG_TYPES = ['JobOffers', 'ProviderMenu', 'CheckoutDrafts', 'ServicePlans', 'MyPlans', 'ProviderPlans', 'PlanVisits', 'PartnerRates', 'PriceRequest', 'Reviews', 'Fees', 'JobChat', 'Account', 'AdminTeam', 'Payments', 'Me', 'Order', 'Worker', 'Earnings', 'AdminMetrics', 'Kyc', 'Plan', 'Subscription', 'Wallet', 'Notification', 'AdminUsers', 'Disputes', 'Payouts', 'Incentives', 'CancellationConfig', 'PricingCfg', 'AuditLogs', 'Addresses', 'Ad', 'Promo', 'Gamification', 'Recommendations', 'FeatureFlags', 'SupportTickets', 'Referral', 'ShieldFund', 'EventTheme', 'EventBooking', 'EventPartner', 'EventConfig', 'EventCategory', 'PartnerNotification', 'Fraud', 'Zone', 'City', 'PaymentMethods', 'UserDisputes', 'UserTickets', 'AdminAppeals', 'AdminTraining', 'WorkerGoals', 'Plans', 'Content', 'Rewards', 'WorkerOps', 'ReadyMode', 'Shop', 'ShopWorkers', 'ShopKyc',
+export const TAG_TYPES = ['AdminTodo', 'JobOffers', 'ProviderMenu', 'CheckoutDrafts', 'ServicePlans', 'MyPlans', 'ProviderPlans', 'PlanVisits', 'PartnerRates', 'PriceRequest', 'Reviews', 'Fees', 'JobChat', 'Account', 'AdminTeam', 'Payments', 'Me', 'Order', 'Worker', 'Earnings', 'AdminMetrics', 'Kyc', 'Plan', 'Subscription', 'Wallet', 'Notification', 'AdminUsers', 'Disputes', 'Payouts', 'Incentives', 'CancellationConfig', 'PricingCfg', 'AuditLogs', 'Addresses', 'Ad', 'Promo', 'Gamification', 'Recommendations', 'FeatureFlags', 'SupportTickets', 'Referral', 'ShieldFund', 'EventTheme', 'EventBooking', 'EventPartner', 'EventConfig', 'EventCategory', 'PartnerNotification', 'Fraud', 'Zone', 'City', 'PaymentMethods', 'UserDisputes', 'UserTickets', 'AdminAppeals', 'AdminTraining', 'WorkerGoals', 'Plans', 'Content', 'Rewards', 'WorkerOps', 'ReadyMode', 'Shop', 'ShopWorkers', 'ShopKyc',
     'RepairCatalog', 'RepairConfig', 'RepairPricing', 'RepairRequests', 'RepairBookings', 'RepairProvider', 'MyAssets',
     'HelpingConfig', 'HelpingTasks', 'HelpingAvailable', 'AdminHelpingTasks',
     'PetCatalog', 'MyPets', 'PetBookings', 'PetAvailable', 'PetRecurring', 'AdminPetBookings', 'AdminPetPricing', 'AdminPetCapabilities',
@@ -1029,7 +1029,8 @@ export function endpoints(b, { adminApiPath }) {
       query: () => adminApiPath('/alerts'),
     }),
     // What is waiting on a person (admin/todo.service), for the sidebar bell.
-    adminTodo: b.query({ query: () => adminApiPath('/todo') }),
+    adminTodo: b.query({ query: () => adminApiPath('/todo'), providesTags: ['AdminTodo'] }),
+    adminOpsAlertDone: b.mutation({ query: ({ id, note }) => ({ url: adminApiPath(`/ops-alerts/${id}/done`), method: 'POST', body: { note: note || '' } }), invalidatesTags: ['AdminTodo'] }),
     adminBookingHealth: b.query({ query: (days = 7) => ({ url: adminApiPath('/insights/booking-health'), params: { days } }) }),
 
     // --- Admin: Retention ---

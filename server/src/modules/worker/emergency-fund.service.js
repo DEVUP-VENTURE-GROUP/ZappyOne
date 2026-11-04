@@ -74,12 +74,12 @@ async function submitClaim({ workerId, reason, category, requestedPaise }) {
   });
 
   /* Alert admin */
-  await redis.publish('notification:admin:ops', JSON.stringify({
+  await require('../admin/ops-alerts').raise({
     type:  'emergency_fund_claim',
     title: `🆘 Emergency Fund Claim: ${worker?.name}`,
     body:  `${category} - ₹${Math.round(requestedPaise / 100)}: ${reason.slice(0, 80)}`,
     data:  { claimId: String(claim._id), workerId: String(workerId) },
-  }));
+  });
 
   logger.info({ workerId, category, requestedPaise }, '[EmergencyFund] Claim submitted');
   return claim;

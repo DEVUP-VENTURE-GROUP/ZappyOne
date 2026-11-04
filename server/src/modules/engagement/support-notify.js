@@ -7,13 +7,13 @@ const short = (text) => (String(text || '').length > 120 ? `${String(text).slice
 
 function toAdmin(ticket, text, { isNew = false } = {}) {
   const { redis } = require('../../config/redis');
-  redis.publish('notification:admin:ops', JSON.stringify({
+  require('../admin/ops-alerts').raise({
     type: 'support_message',
     title: `${WHO[ticket.raisedBy.kind] || 'Someone'} ${isNew ? 'opened' : 'wrote on'}: ${ticket.subject}`,
     body: short(text),
     data: { ticketId: String(ticket._id), category: ticket.category, kind: ticket.raisedBy.kind },
     urgent: ticket.category === 'complaint' || ticket.priority === 'urgent',
-  })).catch((e) => logger.warn({ err: e.message }, '[support] ops alert failed'));
+  }).catch((e) => logger.warn({ err: e.message }, '[support] ops alert failed'));
 }
 
 function toRaiser(ticket, text) {
